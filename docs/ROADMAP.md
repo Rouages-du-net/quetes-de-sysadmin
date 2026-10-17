@@ -31,9 +31,11 @@ garde cette mention et le lien vers l'original.
   mode réduit pour les animations, utilisable sur mobile (clavier virtuel).
 - **Progression locale** (`localStorage`), sans compte, sans pisteur.
 - **En français d'abord**, textes séparés du code pour pouvoir traduire.
-- **Licence** à choisir avec le propriétaire du dépôt (code libre ; contenus
-  CC BY-SA comme rouages.net ?), après vérification de la licence de
-  l'original.
+- **Licences** : code sous GPL v3 ou ultérieure, textes sous CC BY-SA 4.0.
+- **Apprendre à se dépanner** : `man`, `--help`, `man -k`/`apropos` et
+  `whatis` partout, dès la première quête ; des énigmes qui ne se résolvent
+  qu'en lisant le manuel ; des messages d'erreur fidèles qui renvoient vers
+  `--help`.
 
 ---
 
@@ -41,12 +43,15 @@ garde cette mention et le lien vers l'original.
 
 - [ ] Récupérer le moteur de Terminus en français (`shell.ts`, `commandes/`,
       `monde.ts`, `chapitres/`) avec son historique si possible
-- [ ] Nom, mention « inspiré de Terminus (MIT) », licence, README, CLAUDE.md
-      (consignes de l'agent dédié), charte de contribution
+- [x] Nom, mention « inspiré de Terminus (MIT) », README, CLAUDE.md
+      (consignes de l'agent dédié)
+- [x] Licences : GPL v3 (code), CC BY-SA 4.0 (textes)
+- [ ] Charte de contribution (format d'une quête, tests, relecture)
 - [ ] Choix de la pile : petite appli statique (Astro ou Vite) ; tests
       unitaires du moteur ; tests Playwright des quêtes (une quête = un
       scénario de solution rejoué automatiquement)
-- [ ] Déploiement statique (sous-domaine ou page de rouages.net ?)
+- [ ] Déploiement statique sur un sous-domaine de rouages.net (nom à
+      choisir, par ex. `sysadmin.rouages.net`)
 - [x] Réécrire les chapitres 1 et 2 dans un univers propre (fait dans
       rouages.net le 17 octobre 2026 : « L'Île du Phare » et « Le Bourg »)
 - [ ] Migrer la progression des joueur·ses existant·es (clé
@@ -69,6 +74,10 @@ demandent plusieurs.
       de Terminus), `sudoers`, `umask`
 - [ ] **Éditeur de fichiers** minimal (façon `nano`) pour modifier des
       fichiers de configuration, avec vérification de syntaxe par service
+- [ ] **Manuel intégré** : pages `man` complètes générées depuis la
+      définition de chaque commande, `--help`, `man -k`, `apropos`, `whatis` ;
+      option inconnue → vrai message d'erreur (repris du travail fait dans
+      rouages.net)
 - [ ] **Vérificateur d'objectifs** : prédicats sur l'état (« le port 22
       n'accepte plus les mots de passe », « le site répond en HTTPS »…)
 

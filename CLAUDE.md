@@ -8,6 +8,8 @@ reprend le moteur « Terminus en français » (`src/scripts/terminus/`).
 ## Langue
 
 Contenu du jeu, documentation, messages de commit et PR **en français**.
+Licences : code sous **GPL v3 ou ultérieure** (`LICENSE`), textes sous
+**CC BY-SA 4.0** (`LICENSE-CONTENUS.txt`) ; toute contribution s'y conforme.
 Écriture inclusive au point médian quand c'est naturel (« administrateur·rice »).
 Les sorties des commandes simulées restent en anglais quand le vrai outil
 répond en anglais.
@@ -32,6 +34,11 @@ répond en anglais.
 - **Vraies commandes, vrais comportements** : noms, options courantes, codes de
   retour et messages fidèles. Tout écart volontaire va dans le tableau des
   écarts de la documentation.
+- **Le manuel d'abord** : chaque commande simulée a sa page `man` (NOM,
+  SYNOPSIS, DESCRIPTION, OPTIONS, EXEMPLES, VOIR AUSSI), répond à `--help`, et
+  apparaît dans `man -k` / `apropos`. Une option inconnue donne le vrai message
+  (« Saisissez « ls --help » pour plus d'informations »). Les indices du jeu
+  renvoient vers le manuel plutôt que de donner la réponse.
 - **Objectifs vérifiés sur l'état du système simulé**, pas sur la commande
   exacte tapée : plusieurs solutions correctes doivent passer.
 - **Chaque quête finit par un débrief** : ce qui s'est passé, la bonne

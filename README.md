@@ -24,8 +24,12 @@ internet, l'informatique et l'IA.
 
 ## Principes
 
-- **Statique** : un site sans serveur ni base de données ; tout se passe dans
-  le navigateur, la progression est gardée localement, sans compte.
+- **Statique** : un site sans serveur ni base de données, publié sur un
+  sous-domaine de rouages.net ; tout se passe dans le navigateur, la
+  progression est gardée localement, sans compte.
+- **Apprendre à se dépanner** : `man`, `--help` et `man -k` marchent partout
+  dès la première quête, et certaines énigmes ne se résolvent qu'en lisant le
+  manuel.
 - **Vraies commandes** : mêmes noms, mêmes options courantes, mêmes sorties ;
   chaque écart volontaire avec un vrai Linux est documenté.
 - **Sans danger** : adresses et noms de domaine réservés aux exemples, aucune
@@ -34,6 +38,15 @@ internet, l'informatique et l'IA.
 - **Sans pisteur**, sans publicité, sans ressource tierce.
 - **En français d'abord**, textes séparés du code pour pouvoir traduire.
 
-## Licence
+## Licences
 
-À définir.
+- **Code** : [GNU GPL version 3](LICENSE) (ou toute version ultérieure).
+  Tu peux utiliser, étudier, modifier et redistribuer le jeu ; les versions
+  modifiées que tu distribues restent sous GPL.
+- **Textes** (histoires, dialogues, débriefs, documentation) :
+  [Creative Commons Attribution - Partage dans les mêmes conditions 4.0
+  International (CC BY-SA 4.0)](LICENSE-CONTENUS.txt), comme
+  [Les rouages du net](https://rouages.net).
+
+Terminus, le jeu du MIT qui a inspiré celui-ci, n'est pas repris : ni son
+code, ni ses textes.
