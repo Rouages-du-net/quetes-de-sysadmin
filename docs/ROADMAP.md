@@ -1,0 +1,198 @@
+# Quêtes de Sysadmin — feuille de route
+
+*Apprendre le métier d'administrateur·rice système en jouant, dans le
+navigateur, avec de vraies commandes et de vrais comportements.*
+
+Projet issu de « Terminus en français » ([rouages.net](https://rouages.net/jeux/terminus/),
+code dans `src/scripts/terminus/` du dépôt
+[Rouages-du-net/rouages.net](https://github.com/Rouages-du-net/rouages.net)),
+lui-même **inspiré de [Terminus](https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html),
+créé au MIT par Shawn Conrad et Michele Pratusevich**. Le nouveau projet
+garde cette mention et le lien vers l'original.
+
+---
+
+## Principes (repris de Terminus en français, à confirmer)
+
+- **100 % statique**, dans le navigateur : aucune vraie machine, aucun vrai
+  réseau. Tout est simulé (fichiers, services, réseau, temps), de façon
+  déterministe et testable.
+- **Vraies commandes, vrais comportements** : mêmes noms, mêmes options
+  courantes, mêmes sorties (en anglais quand le vrai outil répond en
+  anglais). Chaque écart volontaire est listé dans un tableau.
+- **Une quête = un incident ou une mission réaliste** : un ticket, un
+  objectif vérifiable par l'état du système simulé (pas par la commande
+  exacte tapée), une ou plusieurs solutions acceptées.
+- **On apprend aussi le « pourquoi »** : chaque quête finit par un débrief
+  court (ce qui s'est passé, la bonne pratique, le lien vers la doc officielle).
+- **Sans danger** : adresses de documentation (RFC 5737, 3849), domaines
+  `.example`, aucune vraie cible ; les quêtes de sécurité restent défensives.
+- **Accessible** : clavier, lecteur d'écran (sortie annoncée), contraste AA,
+  mode réduit pour les animations, utilisable sur mobile (clavier virtuel).
+- **Progression locale** (`localStorage`), sans compte, sans pisteur.
+- **En français d'abord**, textes séparés du code pour pouvoir traduire.
+- **Licence** à choisir avec le propriétaire du dépôt (code libre ; contenus
+  CC BY-SA comme rouages.net ?), après vérification de la licence de
+  l'original.
+
+---
+
+## Phase 0 — Fondations du nouveau dépôt
+
+- [ ] Récupérer le moteur de Terminus en français (`shell.ts`, `commandes/`,
+      `monde.ts`, `chapitres/`) avec son historique si possible
+- [ ] Nom, mention « inspiré de Terminus (MIT) », licence, README, CLAUDE.md
+      (consignes de l'agent dédié), charte de contribution
+- [ ] Choix de la pile : petite appli statique (Astro ou Vite) ; tests
+      unitaires du moteur ; tests Playwright des quêtes (une quête = un
+      scénario de solution rejoué automatiquement)
+- [ ] Déploiement statique (sous-domaine ou page de rouages.net ?)
+- [x] Réécrire les chapitres 1 et 2 dans un univers propre (fait dans
+      rouages.net le 17 octobre 2026 : « L'Île du Phare » et « Le Bourg »)
+- [ ] Migrer la progression des joueur·ses existant·es (clé
+      `rouages-terminus`) ou l'annoncer
+
+## Phase 1 — Un moteur de « machines » simulées
+
+Aujourd'hui, le moteur simule **une** machine. Les quêtes d'administration en
+demandent plusieurs.
+
+- [ ] **Plusieurs hôtes** : chacun son système de fichiers, ses comptes, ses
+      services, ses ports ; invite `utilisateur@hôte:~$`
+- [ ] **Réseau simulé** : adresses, ports ouverts, résolution de noms
+      (`/etc/hosts`, DNS), routes, latence ; ce qu'un pare-feu laisse passer
+- [ ] **Services** (`systemd` simulé) : état, démarrage, échec, dépendances,
+      `systemctl`, `journalctl` avec de vrais journaux qui évoluent
+- [ ] **Temps simulé** : horloge accélérée, tâches planifiées (cron,
+      timers), journaux qui défilent, attaques qui arrivent « pendant » la quête
+- [ ] **Utilisateur·rices et groupes** (les vrais droits de groupe, absents
+      de Terminus), `sudoers`, `umask`
+- [ ] **Éditeur de fichiers** minimal (façon `nano`) pour modifier des
+      fichiers de configuration, avec vérification de syntaxe par service
+- [ ] **Vérificateur d'objectifs** : prédicats sur l'état (« le port 22
+      n'accepte plus les mots de passe », « le site répond en HTTPS »…)
+
+## Phase 2 — Se connecter et se déplacer
+
+- [ ] **SSH** : `ssh`, clés (`ssh-keygen`, `ssh-copy-id`), `~/.ssh/config`,
+      empreinte de l'hôte (`known_hosts`), refus de mot de passe
+- [ ] **Rebonds** : hôte bastion, `ssh -J` / `ProxyJump`, redirection de ports
+      (`-L`, `-R`) pour atteindre un service interne
+- [ ] **Durcissement SSH** : `PermitRootLogin no`, `PasswordAuthentication
+      no`, port, `AllowUsers` ; quête « ne pas s'enfermer dehors »
+- [ ] **Transferts** : **`scp`**, `sftp`, `rsync` (options `-a`, `--delete`,
+      `--dry-run`), et pourquoi FTP en clair est à proscrire ; **FTPS** pour
+      les hébergeurs mutualisés qui l'imposent (le cas de rouages.net !)
+- [ ] `tmux` ou `screen` : garder une session vivante quand la connexion
+      tombe
+
+## Phase 3 — Sécuriser le serveur
+
+- [ ] **Pare-feu** : `ufw` (défaut « tout refuser en entrée », ouvrir 22,
+      80, 443, limiter SSH), puis un aperçu de `nftables` en dessous
+- [ ] **fail2ban** : lire `auth.log`, voir les tentatives de force brute,
+      configurer une prison, débannir une adresse légitime
+- [ ] **Mises à jour** : `apt update/upgrade`, mises à jour automatiques de
+      sécurité, redémarrage nécessaire, noyau
+- [ ] **Comptes** : supprimer un compte inutile, désactiver un compte d'ancien
+      collègue, mots de passe et clés à révoquer
+- [ ] **Surface d'attaque** : `ss -tlnp`, services qui écoutent sur
+      `0.0.0.0` au lieu de `127.0.0.1`, base de données exposée
+- [ ] **Certificats TLS** : Let's Encrypt (`certbot`), renouvellement
+      automatique, quête « le certificat a expiré cette nuit »
+- [ ] **Secrets** : fichier `.env` publié par erreur, rotation d'une clé
+
+## Phase 4 — Servir des sites
+
+- [ ] **Serveur web** : **Nginx** (et Apache pour comparer), **hôtes virtuels** (plusieurs
+      sites sur une même machine, comme dans le module « De l'Entrée à la
+      page » de rouages.net), `nginx -t` avant de recharger
+- [ ] **Reverse proxy** devant une application, en-têtes, HTTP → HTTPS
+- [ ] **DNS** : enregistrements A, AAAA, CNAME, MX, TXT, TTL, propagation ;
+      quête « le site ne marche que chez moi »
+- [ ] **Journaux d'accès** : trouver qui fait tomber le site (`awk`, `sort`,
+      `uniq -c`), limiter le débit
+
+## Phase 5 — Conteneurs
+
+- [ ] **Docker** : image, conteneur, `docker run/ps/logs/exec`, ports, volumes
+      (et ce qu'on perd sans volume)
+- [ ] **Docker Compose** : plusieurs services (web, base, cache), réseau
+      interne, variables d'environnement, redémarrage
+- [ ] Mettre à jour une image sans perdre les données ; nettoyer le disque
+      (`docker system df`, `prune`)
+- [ ] Sécurité : ne pas exposer la base, ne pas tourner en root, `ufw` et
+      Docker (les règles contournées : un piège classique)
+
+## Phase 6 — Déployer
+
+- [ ] **Déploiement par git** : dépôt nu sur le serveur, crochet
+      `post-receive`, ou `git pull` dans un dossier de publication
+- [ ] **Intégration continue** (simulée) : tests qui bloquent un déploiement
+- [ ] **Bleu/vert** : deux versions côte à côte, bascule du proxy, retour
+      arrière instantané
+- [ ] **Canari** et vérifications de santé (`/health`)
+- [ ] **Migrations de base de données** qui empêchent le retour arrière
+- [ ] **Retour arrière** (`rollback`) après un déploiement raté
+
+## Phase 7 — Sauvegarder et restaurer
+
+- [ ] **La règle 3-2-1**, et pourquoi une copie sur le même disque n'est pas
+      une sauvegarde
+- [ ] **rsync** et **rsnapshot** (instantanés par liens physiques, rotation
+      horaire, quotidienne, hebdomadaire)
+- [ ] **restic** (chiffrement, déduplication, `snapshots`, `restore`,
+      `forget --prune`, `check`)
+- [ ] Sauvegarder une base (`mysqldump`, `pg_dump`) plutôt que ses fichiers
+- [ ] **Restauration de service** : quête « le serveur a brûlé » (repartir
+      d'une machine vide avec les sauvegardes et la documentation)
+- [ ] **Exercice de restauration** : une sauvegarde jamais testée n'en est
+      pas une ; rançongiciel et sauvegardes hors ligne
+
+## Phase 8 — Surveiller et réagir
+
+- [ ] Charge et ressources : `top`/`htop`, `free`, `df`, `du`, `iostat`
+- [ ] Pannes classiques : disque plein, mémoire épuisée (OOM), processus
+      zombie, fuite de journaux, horloge décalée (NTP), inodes épuisés
+- [ ] Rotation des journaux (`logrotate`)
+- [ ] Supervision et alertes (sonde HTTP, seuils) ; astreinte simulée
+- [ ] **Post-mortem sans reproche** : rédiger ce qui s'est passé
+
+## Phase 9 — Le réseau d'entreprise
+
+- [ ] Commutateurs et **VLAN** : séparer postes, serveurs, invité·es et
+      téléphonie ; ports d'accès et ports « trunk » (802.1Q)
+- [ ] Boucles réseau et tempêtes de diffusion, et le protocole qui les évite
+      (Spanning Tree)
+- [ ] DHCP, NAT, routage entre VLAN, pare-feu entre zones (DMZ)
+- [ ] VPN (WireGuard) pour le télétravail et entre sites
+- [ ] Wi-Fi d'entreprise (réseau invité isolé)
+- [ ] Annuaire et authentification centralisée (aperçu)
+
+---
+
+## Idées en plus
+
+- **Le carnet du sysadmin** : chaque commande découverte s'ajoute à un aide-mémoire
+  personnel, exportable.
+- **Mode « examen »** : une machine en panne, sans indices, avec un chrono.
+- **Quêtes à plusieurs bonnes réponses** : comparer deux solutions (`ufw` ou
+  `nftables`, `rsnapshot` ou `restic`) et leurs compromis.
+- **Défis de la communauté** : format de quête documenté pour que d'autres
+  en écrivent.
+- **Lien avec rouages.net** : chaque quête renvoie au module qui explique le
+  concept (DNS, TLS, hôtes virtuels…), et inversement.
+- **Pour les enseignant·es** : fiches par quête (objectifs, prérequis, durée),
+  progression exportable sans compte.
+
+---
+
+## Organisation
+
+- Un **agent dédié** sur le dépôt, avec un CLAUDE.md qui reprend les règles de
+  rouages.net : français, accessibilité, statique, tests avant de pousser, PR
+  automatique, écarts avec le vrai Linux documentés, aucune donnée
+  personnelle.
+- Ordre conseillé : phase 0, puis 1 (moteur multi-hôtes), puis 2 et 3 (le
+  cœur du métier), puis 7 (sauvegardes), avant les conteneurs et le
+  déploiement.
