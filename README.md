@@ -36,7 +36,9 @@ internet, l'informatique et l'IA.
   vraie cible ; les quêtes de sécurité restent défensives.
 - **Accessible** : clavier, lecteur d'écran, contraste, mobile.
 - **Sans pisteur**, sans publicité, sans ressource tierce.
-- **En français d'abord**, textes séparés du code pour pouvoir traduire.
+- **En français d'abord**, puis traduit (anglais, allemand, espagnol,
+  mandarin, coréen…) une fois terminé : les textes sont séparés du code dès
+  le départ.
 
 ## Licences
 

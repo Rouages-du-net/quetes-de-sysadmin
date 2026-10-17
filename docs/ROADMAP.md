@@ -30,7 +30,8 @@ garde cette mention et le lien vers l'original.
 - **Accessible** : clavier, lecteur d'écran (sortie annoncée), contraste AA,
   mode réduit pour les animations, utilisable sur mobile (clavier virtuel).
 - **Progression locale** (`localStorage`), sans compte, sans pisteur.
-- **En français d'abord**, textes séparés du code pour pouvoir traduire.
+- **En français d'abord**, textes séparés du code pour pouvoir traduire
+  (anglais, allemand, espagnol, mandarin, coréen… une fois le jeu terminé).
 - **Licences** : code sous GPL v3 ou ultérieure, textes sous CC BY-SA 4.0.
 - **Apprendre à se dépanner** : `man`, `--help`, `man -k`/`apropos` et
   `whatis` partout, dès la première quête ; des énigmes qui ne se résolvent
@@ -179,6 +180,18 @@ demandent plusieurs.
 - [ ] Annuaire et authentification centralisée (aperçu)
 
 ---
+
+## Phase 10 — Traductions
+
+Une fois le jeu terminé en français (l'architecture le prépare dès la
+phase 0 : voir « Traductions » dans `CLAUDE.md`).
+
+- [ ] Anglais, allemand, espagnol, mandarin, coréen, puis d'autres langues
+- [ ] Sorties des commandes simulées selon `LANG`, comme les vrais outils
+- [ ] Noms de lieux traduits et faciles à taper ; complétion testée
+- [ ] Terminal simulé compatible avec les caractères larges (CJK)
+- [ ] Relecture par des locuteur·rices natif·ves, glossaire technique par langue
+- [ ] Quêtes rejouées automatiquement dans chaque langue
 
 ## Idées en plus
 

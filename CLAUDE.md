@@ -50,6 +50,33 @@ répond en anglais.
   Conrad et Michele Pratusevich » et le lien vers l'original. Ne pas reprendre
   les lieux, textes ni énigmes de l'original.
 
+## Traductions (prévues : anglais, allemand, espagnol, mandarin, coréen…)
+
+Le jeu sera traduit une fois terminé. Tout le code doit le permettre dès
+maintenant :
+
+- **Aucun texte en dur dans le code** : histoires, dialogues, débriefs,
+  messages du jeu et pages `man` vivent dans des fichiers de textes par langue
+  (le français est la langue de référence) ; le code n'utilise que des clés.
+- **Pluriels, nombres et dates** via `Intl` (`Intl.PluralRules`,
+  `Intl.NumberFormat`, `Intl.DateTimeFormat`), jamais par concaténation.
+- **Pas de phrase fabriquée par morceaux** : une phrase entière par clé, avec
+  des variables nommées (`{fichier}`), car l'ordre des mots change d'une
+  langue à l'autre.
+- **Noms de lieux et d'objets traduisibles**, mais toujours faciles à taper :
+  prévoir pour chaque langue des noms sans caractère difficile à saisir, et
+  tester la complétion par Tab.
+- **Sorties des commandes** : elles imitent l'outil réel dans la langue du
+  système (`LANG`), comme sur un vrai Linux ; les identifiants techniques
+  (commandes, options, chemins système) ne se traduisent jamais.
+- **Écritures non latines** (chinois, coréen…) : mise en page qui supporte
+  les caractères larges dans le terminal simulé (alignement des colonnes),
+  polices servies par le site ou polices système, jamais de police tierce.
+- **Mise en page** : prévoir des textes jusqu'à 40 % plus longs qu'en
+  français ; `lang` correct sur la page ; prévoir le sens d'écriture si une
+  langue de droite à gauche est ajoutée.
+- Les tests rejouent chaque quête dans chaque langue disponible.
+
 ## Accessibilité et vie privée
 
 - Jouable au clavier ; sorties annoncées aux lecteurs d'écran ; contraste AA ;
