@@ -51,8 +51,9 @@ garde cette mention et le lien vers l'original.
 - [ ] Choix de la pile : petite appli statique (Astro ou Vite) ; tests
       unitaires du moteur ; tests Playwright des quêtes (une quête = un
       scénario de solution rejoué automatiquement)
-- [ ] Déploiement statique sur un sous-domaine de rouages.net (nom à
-      choisir, par ex. `sysadmin.rouages.net`)
+- [ ] Déploiement statique sur **sysadmin.rouages.net** (sous-domaine de
+      rouages.net, même hébergement cPanel ; déploiement automatique depuis
+      `main`, comme rouages.net)
 - [x] Réécrire les chapitres 1 et 2 dans un univers propre (fait dans
       rouages.net le 17 octobre 2026 : « L'Île du Phare » et « Le Bourg »)
 - [ ] Migrer la progression des joueur·ses existant·es (clé

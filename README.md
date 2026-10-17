@@ -24,8 +24,8 @@ internet, l'informatique et l'IA.
 
 ## Principes
 
-- **Statique** : un site sans serveur ni base de données, publié sur un
-  sous-domaine de rouages.net ; tout se passe dans le navigateur, la
+- **Statique** : un site sans serveur ni base de données, publié sur
+  [sysadmin.rouages.net](https://sysadmin.rouages.net) ; tout se passe dans le navigateur, la
   progression est gardée localement, sans compte.
 - **Apprendre à se dépanner** : `man`, `--help` et `man -k` marchent partout
   dès la première quête, et certaines énigmes ne se résolvent qu'en lisant le

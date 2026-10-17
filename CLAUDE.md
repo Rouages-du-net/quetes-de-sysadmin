@@ -5,6 +5,10 @@ Jeu éducatif dans le navigateur pour apprendre l'administration système Linux
 [Les rouages du net](https://github.com/Rouages-du-net/rouages.net), dont il
 reprend le moteur « Terminus en français » (`src/scripts/terminus/`).
 
+Le jeu sera publié sur **https://sysadmin.rouages.net** : un site 100 %
+statique (pas de serveur Node, pas de base de données), hébergé comme
+rouages.net.
+
 ## Langue
 
 Contenu du jeu, documentation, messages de commit et PR **en français**.
