@@ -10,9 +10,9 @@ chapitre-premier-jour = Premier jour
 ## Fichiers
 
 premier-jour-courriel-awa =
-    De : Awa (responsable d'exploitation)
-    À : toi, stagiaire
-    Objet : Bienvenue… et urgence !
+    De :     Awa (responsable d'exploitation)
+    À :      toi, stagiaire
+    Objet :  Bienvenue… et urgence !
 
     Bienvenue dans l'équipe ! Tu tombes bien : depuis 20 h 25, le site de la
     médiathèque répond par des erreurs 503 (« Service indisponible »).

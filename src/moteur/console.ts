@@ -40,6 +40,8 @@ export class Console {
   private nouveauPoste(hotesConnus = this.options.hotesConnus): Shell {
     const cles = MACHINES.filter((m) => this.ouverte(m.histoire!));
     const s = new Shell(poste(cles), this.t.langue, 'poste');
+    // ssh demande au serveur d'en face sa configuration appliquée (sshd).
+    s.etat.sshdDistant = (nom: string) => this.sessions.get(nom)?.etat.sshd?.charge ?? null;
     if (hotesConnus) s.placer('ssh', '~/.ssh/known_hosts', f(hotesConnus, { lignes: true }));
     return s;
   }
@@ -95,10 +97,14 @@ export class Console {
     const banniere = [`Linux ${machine.nom} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.nom}-motd`)];
     const ancienne = this.sessions.get(nom);
     if (!chapitre && ancienne && (ancienne.chapitre === c || !ancienne.termine)) {
-      // Comme une nouvelle connexion : on repart de sa maison.
+      // Comme une nouvelle connexion : on repart de sa maison. Se reconnecter
+      // peut être un objectif (ex. vérifier qu'on ne s'est pas enfermé dehors).
       ancienne.cwd = ancienne.maison;
+      ancienne.etat.connexions = (ancienne.etat.connexions ?? 1) + 1;
       this.distant = { machine, histoire, shell: ancienne };
-      return [...banniere, this.titre(histoire, ancienne.chapitre)].join('\n\n');
+      const dejaFini = ancienne.termine;
+      const suite = ancienne.evenements();
+      return [...banniere, this.titre(histoire, ancienne.chapitre), suite, this.noterFin(ancienne, dejaFini)].filter(Boolean).join('\n\n');
     }
     this.distant = { machine, histoire, shell: this.nouvelleSession(machine, c) };
     return [...banniere, this.ouvrirChapitre(c)].join('\n\n');

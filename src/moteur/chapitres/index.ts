@@ -11,6 +11,7 @@ import { redemarrage } from './redemarrage';
 import { paquet } from './paquet';
 import { temps } from './temps';
 import { archives } from './archives';
+import { porte } from './porte';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -32,6 +33,10 @@ export const HISTOIRES: Histoire[] = [
   {
     id: 'archives',
     chapitres: [archives],
+  },
+  {
+    id: 'lettres',
+    chapitres: [porte],
   },
 ];
 

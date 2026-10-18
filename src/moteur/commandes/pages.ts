@@ -40,6 +40,8 @@ export const PAGES: Record<string, Page> = {
   rm: { exemples: ['rm barricade'], voir: ['mv', 'cp'] },
   sort: { options: ['n', 'r'], exemples: ['sort -n tailles.txt'], voir: ['uniq', 'wc'] },
   ssh: { options: ['i', 'p'], exemples: ['ssh royaume', 'ssh -i ~/.ssh/id_royaume vous@royaume.example', 'cat ~/.ssh/config'], voir: ['exit', 'chmod'] },
+  sshd: { section: 8, options: ['t', 'T', 'f'], exemples: ['sudo sshd -t', 'sudo sshd -T | grep -i password'], voir: ['sshd_config', 'ssh', 'systemctl'] },
+  sshd_config: { exemples: ['sudo nano /etc/ssh/sshd_config', 'ls /etc/ssh/sshd_config.d'], voir: ['sshd', 'ssh', 'nano'] },
   sudo: { exemples: ['sudo cat /etc/sudoers'], voir: ['whoami', 'chmod'] },
   systemctl: { exemples: ['systemctl status nginx', 'systemctl --failed', 'sudo systemctl restart nginx', 'sudo systemctl enable --now nginx'], voir: ['journalctl', 'ps', 'sudo', 'reboot'] },
   tail: { options: ['n'], exemples: ['tail -n 5 /var/log/syslog'], voir: ['head', 'cat'] },

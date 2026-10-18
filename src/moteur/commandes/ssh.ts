@@ -16,6 +16,7 @@ import type { Fichier } from '../monde';
 import type { Shell } from '../shell';
 import { joker } from '../outils';
 import { cleHote, clePrivee, empreinte, machineParAdresse, POSTE, type Machine } from '../machines';
+import { autorise, methodes } from '../sshd';
 import type { Commande } from './index';
 
 const USAGE = 'usage: ssh [-i identity_file] [-p port] destination [command [argument ...]]';
@@ -86,8 +87,13 @@ function authentifier(jeu: Shell, d: Destination, m: Machine): string {
       break;
     }
   }
-  if (acceptee) jeu.demandeConnexion = m.nom;
-  else sortie.push(`${d.utilisateur}@${d.hote}: Permission denied (publickey).`);
+  // La configuration appliquée par le serveur d'en face (sshd_config).
+  const config: Record<string, string> | null = jeu.etat.sshdDistant?.(m.nom) ?? null;
+  const refuse = acceptee && config !== null && !autorise(config, d.utilisateur);
+  if (acceptee && !refuse) jeu.demandeConnexion = m.nom;
+  else sortie.push(`${d.utilisateur}@${d.hote}: Permission denied (${config ? methodes(config) : 'publickey'}).`);
+  // La bonne clé, mais un serveur qui refuse le compte : on s'est enfermé dehors.
+  if (refuse && d.utilisateur === 'vous') sortie.push(jeu.t('ssh-enferme', { machine: m.nom }));
   return sortie.join('\n');
 }
 

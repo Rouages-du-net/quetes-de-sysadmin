@@ -22,6 +22,12 @@ export interface Service {
   // Au démarrage : null si tout va bien, sinon les messages d'erreur que le
   // programme écrit dans le journal avant de s'arrêter.
   verifier?: (jeu: Jeu) => string[] | null;
+  // Après un démarrage ou un rechargement réussi : le service applique sa
+  // configuration (ex. sshd).
+  charger?: (jeu: Jeu) => void;
+  // reload vérifie d'abord la configuration avec `verifier` (comme
+  // ExecReload=/usr/sbin/sshd -t) ; sinon, il recharge sans vérifier.
+  verifierAuRechargement?: boolean;
 }
 
 export interface Entree {
@@ -77,6 +83,7 @@ export function demarrer(jeu: Jeu, sd: Systemd, nom: string, auDemarrage = false
     return false;
   }
   journaliser(sd, unite, 'systemd', 1, `Started ${unite} - ${s.description}.`);
+  s.charger?.(jeu);
   s.etat = 'active';
   s.depuis = sd.horloge;
   const liste: Processus[] = (jeu.etat.processus ??= []);
@@ -168,4 +175,22 @@ export function nouveauSystemd(hote: string, demarre: number, maintenant: number
   }
   sd.horloge = maintenant;
   return sd;
+}
+
+/** systemctl reload : renvoie false si la configuration est refusée (le service garde l'ancienne). */
+export function recharger(jeu: Jeu, sd: Systemd, nom: string): boolean {
+  const s = sd.services[nom];
+  const unite = `${nom}.service`;
+  const pid = s.processus[0]?.pid ?? 1;
+  journaliser(sd, unite, 'systemd', 1, `Reloading ${unite} - ${s.description}...`);
+  const erreurs = s.verifierAuRechargement ? s.verifier?.(jeu) : null;
+  if (erreurs) {
+    erreurs.forEach((e, i) => journaliser(sd, unite, s.executable, pid, e, 3, i === 0));
+    journaliser(sd, unite, 'systemd', 1, `${unite}: Control process exited, code=exited, status=255/EXCEPTION`, 4, false);
+    journaliser(sd, unite, 'systemd', 1, `Reload failed for ${unite} - ${s.description}.`, 3, false);
+    return false;
+  }
+  s.charger?.(jeu);
+  journaliser(sd, unite, 'systemd', 1, `Reloaded ${unite} - ${s.description}.`);
+  return true;
 }

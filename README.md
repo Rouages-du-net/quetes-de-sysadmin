@@ -8,10 +8,11 @@ On y apprend la ligne de commande Linux, puis à se connecter à des serveurs,
 quand tout casse. Chaque quête est un incident ou une mission réaliste, dans
 un système entièrement simulé : rien ne sort du navigateur.
 
-> **État** : cinq histoires jouables (ligne de commande, permissions et
-> sudo, journaux et processus, réseau, git, archives), avec un manuel intégré.
-> La suite (SSH, pare-feu, Nginx, Docker, sauvegardes…) est dans la
-> [feuille de route](docs/ROADMAP.md).
+> **État** : six histoires jouables, reliées par `ssh` depuis son poste
+> (ligne de commande, permissions et sudo, journaux et processus, comptes et
+> groupes, services systemd, réseau, git, archives, durcissement SSH), avec
+> un manuel intégré et un éditeur `nano`. La suite (pare-feu, fail2ban,
+> Nginx, Docker, sauvegardes…) est dans la [feuille de route](docs/ROADMAP.md).
 
 ## Jouer
 

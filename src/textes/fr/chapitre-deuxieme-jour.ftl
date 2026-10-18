@@ -10,9 +10,9 @@ chapitre-deuxieme-jour = Deuxième jour
 ## Fichiers
 
 deuxieme-jour-courriel-awa =
-    De : Awa (responsable d'exploitation)
-    À : toi
-    Objet : Deuxième jour, deux petites choses
+    De :     Awa (responsable d'exploitation)
+    À :      toi
+    Objet :  Deuxième jour, deux petites choses
 
     Merci pour hier ! Aujourd'hui, Malo arrive en renfort. Son compte existe
     déjà (malo). Deux choses à régler avant son arrivée :

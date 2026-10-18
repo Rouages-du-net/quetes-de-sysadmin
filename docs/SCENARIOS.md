@@ -111,6 +111,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | systemd | services seuls (pas de cibles, de dépendances, de timers ni de fichiers d'unité modifiables) ; l'horloge avance d'une seconde par action ; `journalctl -f` non simulé | unités de tous types, `daemon-reload`, `journalctl -f` |
 | `systemctl` sans être root | « Access denied », il faut `sudo` | demande le mot de passe (polkit) |
 | `sudo` après `reboot` | se souvient encore du mot de passe | le redemande |
+| `sshd` | une partie des mots-clés ; toutes les erreurs listées d'un coup ; pas de mot de passe demandé quand `PasswordAuthentication yes` (le refus annonce `publickey,password`) | s'arrête à la première erreur ; propose le mot de passe |
+| s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
 ## Histoire 1 : l'Effaceur
@@ -282,6 +284,43 @@ périphérique »). `find fonds -name "*.tmp"` trouve 120 Mo de fichiers
 temporaires, effacés avec `-delete`. L'archive compressée (`tar -czf`)
 fait alors 48 Mo ; `tar -tzf` la vérifie. Morale d'archiviste : une seule
 copie n'est pas une sauvegarde.
+
+## Histoire 6 : Les Lettres du quartier (commencée)
+
+L'association de Kofi (vue dans Le Paquet perdu) loue un petit serveur pour
+son site, `lettres.example` (machine `lettres`, même adresse que dans Le
+Paquet perdu). L'hébergeur l'a livré avec la configuration par défaut :
+connexion root et mots de passe acceptés.
+
+### Chapitre 1 — Fermer la porte (fait)
+
+Le serveur SSH simulé (`src/moteur/sshd.ts`) lit `/etc/ssh/sshd_config`
+comme OpenSSH : mots-clés, `Include` lu à sa place, **première valeur lue
+qui l'emporte**, valeurs par défaut. La configuration appliquée est celle du
+dernier démarrage ou rechargement du service `ssh`, et c'est elle que la
+commande `ssh` du poste consulte pour accepter ou refuser une connexion.
+
+| Étape | Commande apprise |
+|---|---|
+| Voir les attaques | `journalctl -u ssh` (force brute sur root, admin, test, ubuntu) |
+| Changer la configuration | `sudo nano /etc/ssh/sshd_config` : `PermitRootLogin no`, `PasswordAuthentication no` |
+| Vérifier | `sudo sshd -t` (fichier et ligne de l'erreur), `sudo sshd -T` (configuration effective) |
+| Appliquer | `sudo systemctl reload ssh` (refusé si la configuration est fausse : l'ancienne reste) |
+| Prouver qu'on peut encore entrer | `exit`, puis `ssh lettres` |
+
+Objectif vérifié sur l'état : la configuration *appliquée* refuse root et
+les mots de passe, accepte toujours le compte `vous`, et une nouvelle
+connexion a réussi depuis.
+
+Pièges prévus : faute de frappe (`PermitRootLogin non`), le fichier
+`sshd_config.d/50-cloud-init.conf` inclus en tête qui garde
+`PasswordAuthentication yes`, modifier sans recharger, un `AllowUsers` qui
+oublie son propre compte (on s'enferme dehors : la session en cours reste
+ouverte, et le menu du jeu sert de console de secours de l'hébergeur).
+Autre solution acceptée : un fichier `sshd_config.d/00-…conf`, lu en
+premier. Débrief : clés seulement, jamais root en direct, `sshd -t` et
+`sshd -T`, garder une session ouverte, liens vers `sshd_config(5)` et
+`sshd(8)` (man.openbsd.org).
 
 ## Idées pour la suite
 
