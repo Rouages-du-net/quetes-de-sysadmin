@@ -1101,6 +1101,63 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('La Gazette, chapitre 4 — Le canari (upstream, weight, access.log)', () => {
+      const site = (s: Shell, change: (texte: string) => string) => {
+        s.executer('sudo nano /etc/nginx/sites-available/gazette');
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const CANARI = (t: string) =>
+        `upstream kiosque {\n    server 127.0.0.1:3002 weight=9;\n    server 127.0.0.1:3001 weight=1;\n}\n\n${t.replace('http://127.0.0.1:3002/', 'http://kiosque/')}`;
+      const recharger = (s: Shell) => ['sudo nginx -t', 'sudo systemctl reload nginx'].map((l) => s.executer(l)).join('\n');
+
+      it('solution : canari de la 1.6.0, les 500 dans access.log, arrêt, 1.6.1, canari propre, bascule', () => {
+        const { s } = jouer('canari', [
+          'ln -sfn /srv/kiosque/versions/1.6.0 /srv/kiosque/bleu',
+          'sudo systemctl restart kiosque-bleu',
+          'gazette-2027',
+        ]);
+        expect(s.executer('curl -s localhost:3001/health')).toBe('{"status":"ok","version":"1.6.0"}');
+        site(s, CANARI);
+        const heure = recharger(s);
+        contient(heure, '60 visites sur le Kiosque');
+        contient(heure, 'Le canari est en place');
+        expect(s.executer("awk '{print $9}' /var/log/nginx/access.log | sort | uniq -c")).toMatch(/\s+\d+ 500/);
+        const erreurs = s.executer('grep " 500 " /var/log/nginx/access.log') ?? '';
+        expect(erreurs).toContain('"GET /kiosque/archives HTTP/1.1" 500');
+        contient(erreurs, 'Des 500 sur /kiosque/archives');
+        expect(s.executer('curl -s localhost:3001/archives')).toBe('Internal Server Error');
+        site(s, (t) => t.replace('3001 weight=1;', '3001 weight=1 down;'));
+        contient(recharger(s), 'Canari arrêté');
+        s.executer('ln -sfn /srv/kiosque/versions/1.6.1 /srv/kiosque/bleu');
+        s.executer('sudo systemctl restart kiosque-bleu');
+        site(s, (t) => t.replace(' down;', ';'));
+        contient(recharger(s), 'aucune erreur dans ce lot');
+        expect(s.termine).toBe(false);
+        site(s, (t) => t.replace('3002 weight=9;', '3002 weight=9 down;'));
+        contient(recharger(s), 'Tu as terminé le chapitre 4 de La Gazette');
+        expect(s.executer('curl -s http://gazette.example/kiosque/')).toContain('Kiosque 1.6.1');
+        expect(s.termine).toBe(true);
+      });
+
+      it("fausses pistes : tout d'un coup sur la 1.6.0, puis un « canari » à 50 %", () => {
+        const { s } = jouer('canari', [
+          'ln -sfn /srv/kiosque/versions/1.6.0 /srv/kiosque/bleu',
+          'sudo systemctl restart kiosque-bleu',
+          'gazette-2027',
+        ]);
+        site(s, (t) => t.replace('127.0.0.1:3002/', '127.0.0.1:3001/'));
+        contient(recharger(s), "Tout le trafic est passé d'un coup à la 1.6.0");
+        site(
+          s,
+          (t) =>
+            `upstream kiosque {\n    server 127.0.0.1:3002;\n    server 127.0.0.1:3001;\n}\n\n${t.replace('http://127.0.0.1:3001/', 'http://kiosque/')}`,
+        );
+        contient(recharger(s), 'Une grosse part du trafic');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

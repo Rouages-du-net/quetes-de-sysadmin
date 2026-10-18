@@ -12,7 +12,8 @@
 import { d, f, type Droits, type Noeud } from '../monde';
 import type { Jeu } from '../shell';
 import type { DefinitionService } from '../systemd';
-import type { Appli } from '../nginx';
+import { requete, type Appli, type Configuration } from '../nginx';
+import { systemd } from '../systemd';
 import { lireEnv } from '../compose';
 
 export const KIOSQUE = '/srv/kiosque';
@@ -28,7 +29,13 @@ export interface VersionKiosque {
   schema: number;
 }
 
-export const VERSIONS: Record<string, VersionKiosque> = { '1.4.2': { requiert: [], schema: 3 }, '1.5.0': { requiert: ['KIOSQUE_SMTP'], schema: 3 } };
+export const VERSIONS: Record<string, VersionKiosque> = {
+  '1.4.2': { requiert: [], schema: 3 },
+  '1.5.0': { requiert: ['KIOSQUE_SMTP'], schema: 3 },
+  // La recherche dans les archives plante : /health n'en sait rien.
+  '1.6.0': { requiert: ['KIOSQUE_SMTP'], panne: ['/archives'], schema: 3 },
+  '1.6.1': { requiert: ['KIOSQUE_SMTP'], schema: 3 },
+};
 
 export interface Instance {
   version: string;
@@ -129,3 +136,68 @@ Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target`;
+
+/**
+ * La part du trafic de /kiosque/ que reçoit chaque emplacement, d'après la
+ * configuration chargée de nginx (proxy_pass direct, ou upstream et ses poids).
+ */
+export function repartition(j: Jeu): Record<string, number> {
+  const config: Configuration | null = j.etat.nginx?.charge ?? null;
+  const proxy = config?.serveurs.flatMap((s) => s.locations).find((l) => l.chemin === '/kiosque/')?.proxy ?? '';
+  const hote = /^https?:\/\/([^/]+)/.exec(proxy)?.[1] ?? '';
+  const couleur = (adresse: string) => Object.keys(PORTS).find((c) => adresse.endsWith(`:${PORTS[c]}`));
+  const amont = config?.amonts?.[hote];
+  const parts: Record<string, number> = {};
+  if (!amont) {
+    const c = couleur(hote);
+    if (c) parts[c] = 1;
+    return parts;
+  }
+  const actifs = amont.serveurs.filter((x) => !x.eteint && !x.secours);
+  const total = actifs.reduce((t, x) => t + x.poids, 0);
+  for (const x of actifs) {
+    const c = couleur(x.adresse);
+    if (c) parts[c] = (parts[c] ?? 0) + x.poids / total;
+  }
+  return parts;
+}
+
+export interface Lot {
+  total: number;
+  // Par version servie : visites et erreurs (5xx).
+  parVersion: Record<string, { visites: number; erreurs: number }>;
+  erreurs: number;
+}
+
+/**
+ * Une heure de lecteur·rices sur le Kiosque : des visites (accueil et
+ * archives) qui passent par nginx et s'écrivent dans access.log ; l'horloge
+ * avance. Adresses de documentation (RFC 5737).
+ */
+export function lecteurs(j: Jeu, nombre = 60): Lot {
+  const sd = systemd(j)!;
+  const lot: Lot = { total: 0, parVersion: {}, erreurs: 0 };
+  for (let i = 0; i < nombre; i++) {
+    const chemin = i % 3 === 1 ? '/kiosque/archives' : '/kiosque/';
+    const client = {
+      adresse: `198.51.100.${((i * 37) % 240) + 10}`,
+      temps: sd.horloge + i * 60_000,
+      agent: 'Mozilla/5.0 (X11; Linux x86_64; rv:139.0) Gecko/20100101 Firefox/139.0',
+    };
+    j.etat.nginxDernierAmont = null;
+    const r = requete(j, 'gazette.example', chemin, 80, true, client);
+    const port = Number(String(j.etat.nginxDernierAmont ?? '').split(':')[1]);
+    const couleur = Object.keys(PORTS).find((c) => PORTS[c] === port);
+    const version = couleur ? instances(j)[couleur]?.version : undefined;
+    lot.total++;
+    const erreur = !r || r.code >= 500;
+    if (erreur) lot.erreurs++;
+    if (version) {
+      const v = (lot.parVersion[version] ??= { visites: 0, erreurs: 0 });
+      v.visites++;
+      if (erreur) v.erreurs++;
+    }
+  }
+  sd.horloge += nombre * 60_000;
+  return lot;
+}

@@ -63,7 +63,12 @@ const DIRECTIVES: Record<string, Regle> = {
   limit_req: r(1, 3, HTTP),
   limit_req_status: r(1, 1, HTTP),
   deny: r(1, 1, HTTP),
+  upstream: r(1, 1, ['http'], true),
+  keepalive: r(1, 1, ['upstream']),
+  least_conn: r(0, 0, ['upstream']),
 };
+// Dans un bloc upstream, server est une simple directive : server adresse [weight=N] [backup] [down]…
+const SERVEUR_AMONT = r(1, 9, ['upstream']);
 
 interface Directive {
   nom: string;
@@ -120,8 +125,14 @@ export interface Serveur {
   limiteStatut?: number;
 }
 
+// Un groupe de serveurs (upstream) : proxy_pass http://nom/ répartit entre eux.
+export interface Amont {
+  serveurs: { adresse: string; poids: number; secours: boolean; eteint: boolean }[];
+}
+
 export interface Configuration {
   serveurs: Serveur[];
+  amonts: Record<string, Amont>;
   // Les avertissements de nginx -t ([warn]) : la configuration reste valable.
   avertissements: string[];
   zones: Record<string, ZoneLimite>;
@@ -183,7 +194,7 @@ function analyser(jeu: Jeu, fichier: string, contexte: string, lus: string[]): D
         mots = [];
         // Dans « types », chaque ligne associe un type MIME à des extensions.
         if (ctx === 'types') continue;
-        const regle = DIRECTIVES[nom];
+        const regle = ctx === 'upstream' && nom === 'server' ? SERVEUR_AMONT : DIRECTIVES[nom];
         if (!regle) echec(`unknown directive "${nom}"`, fichier, ligne);
         if (!regle.dans.includes(ctx)) echec(`"${nom}" directive is not allowed here`, fichier, ligne);
         if (j.mot === '{' && !regle.bloc) echec(`directive "${nom}" is not terminated by ";"`, fichier, ligne);
@@ -345,7 +356,57 @@ function construire(jeu: Jeu, lus: string[] = []): Configuration {
         refus: [...valeurs(http, 'deny'), ...valeurs(enfants, 'deny')],
       };
     });
-  return { serveurs, avertissements, zones };
+  return { serveurs, avertissements, zones, amonts: lireAmonts(http) };
+}
+
+// upstream nom { server 127.0.0.1:3001 weight=9; server 127.0.0.1:3002 weight=1; }
+// https://nginx.org/en/docs/http/ngx_http_upstream_module.html#server
+function lireAmonts(http: Directive[]): Record<string, Amont> {
+  const amonts: Record<string, Amont> = {};
+  for (const u of http.filter((d) => d.nom === 'upstream')) {
+    const nom = u.args[0];
+    if (amonts[nom]) echec(`duplicate upstream "${nom}"`, u.fichier, u.ligne);
+    const serveurs = (u.enfants ?? [])
+      .filter((d) => d.nom === 'server')
+      .map((d) => {
+        const [adr, ...params] = d.args;
+        let poids = 1;
+        for (const p of params) {
+          if (p.startsWith('weight=')) {
+            poids = Number(p.slice(7));
+            if (!Number.isInteger(poids) || poids < 1) echec(`invalid parameter "${p}"`, d.fichier, d.ligne);
+          } else if (!['backup', 'down'].includes(p) && !/^(max_fails|fail_timeout|max_conns)=/.test(p))
+            echec(`invalid parameter "${p}"`, d.fichier, d.ligne);
+        }
+        return {
+          adresse: adr.includes(':') ? adr.replace(/^localhost/, '127.0.0.1') : `${adr}:80`,
+          poids,
+          secours: params.includes('backup'),
+          eteint: params.includes('down'),
+        };
+      });
+    if (!serveurs.length) echec(`no servers are inside upstream`, u.fichier, u.ligne);
+    amonts[nom] = { serveurs };
+  }
+  return amonts;
+}
+
+// Le tourniquet pondéré de nginx (smooth weighted round-robin) : à chaque
+// requête, chaque serveur gagne son poids, le plus haut est choisi et perd la
+// somme des poids. Avec 9 et 1 : 9 requêtes sur 10 pour le premier.
+function tourniquet(jeu: Jeu, nom: string, amont: Amont, exclus: string[], trace: boolean): string | null {
+  const candidats = amont.serveurs.filter((x) => !x.eteint && !x.secours && !exclus.includes(x.adresse));
+  const liste = candidats.length ? candidats : amont.serveurs.filter((x) => !x.eteint && x.secours && !exclus.includes(x.adresse));
+  if (!liste.length) return null;
+  const etats: Record<string, Record<string, number>> = (jeu.etat.nginxTourniquets ??= {});
+  const courant = { ...(etats[nom] ?? {}) };
+  const total = liste.reduce((t, x) => t + x.poids, 0);
+  for (const x of liste) courant[x.adresse] = (courant[x.adresse] ?? 0) + x.poids;
+  const choisi = liste.reduce((a, b) => (courant[b.adresse] > courant[a.adresse] ? b : a));
+  courant[choisi.adresse] -= total;
+  // Les vérifications du jeu ne font pas tourner le tourniquet.
+  if (trace) etats[nom] = courant;
+  return choisi.adresse;
 }
 
 /** Vérifie la configuration : null si elle est bonne, sinon le message [emerg]. */
@@ -568,18 +629,45 @@ function traiter(jeu: Jeu, hote: string, chemin: string, port: number, client: C
   if (loc?.retour) return retourner(loc.retour);
   if (loc?.proxy) {
     const m = /^https?:\/\/([^/]+)(\/.*)?$/.exec(loc.proxy);
-    const adresse = (m?.[1] ?? '').replace(/^localhost(?=:|$)/, '127.0.0.1');
+    const hoteAmont = (m?.[1] ?? '').replace(/^localhost(?=:|$)/, '127.0.0.1');
     // Avec une partie chemin dans proxy_pass, elle remplace le préfixe de la location.
     const amont = m?.[2] !== undefined ? m[2] + chemin.slice(loc.chemin.length) : chemin;
-    const appli: Appli | undefined = jeu.etat.applis?.[adresse.includes(':') ? adresse : `${adresse}:80`];
-    if (!appli || sd!.services[appli.service]?.etat !== 'active') {
-      journalErreur(
-        jeu,
-        'error',
-        `connect() failed (111: Connection refused) while connecting to upstream, client: 127.0.0.1, server: ${serveur.noms[0] ?? '_'}, request: "GET ${chemin} HTTP/1.1", upstream: "http://${adresse}${amont}", host: "${hote}"`,
-      );
-      return reponse(502, page(502));
+    const groupe = config.amonts?.[hoteAmont];
+    const connexion = (adresse: string) =>
+      `connect() failed (111: Connection refused) while connecting to upstream, client: ${client.adresse}, server: ${serveur.noms[0] ?? '_'}, request: "GET ${chemin} HTTP/1.1", upstream: "http://${adresse}${amont}", host: "${hote}"`;
+    const joindre = (adresse: string): Appli | null => {
+      const a: Appli | undefined = jeu.etat.applis?.[adresse.includes(':') ? adresse : `${adresse}:80`];
+      return a && sd!.services[a.service]?.etat === 'active' ? a : null;
+    };
+    let adresse = hoteAmont;
+    let appli: Appli | null = null;
+    if (groupe) {
+      // Un serveur qui ne répond pas : nginx essaie le suivant (proxy_next_upstream error).
+      const essayes: string[] = [];
+      for (;;) {
+        const choisi = tourniquet(jeu, hoteAmont, groupe, essayes, !!jeu.etat.nginxTrace);
+        if (!choisi) {
+          journalErreur(
+            jeu,
+            'error',
+            `no live upstreams while connecting to upstream, client: ${client.adresse}, server: ${serveur.noms[0] ?? '_'}, request: "GET ${chemin} HTTP/1.1", upstream: "http://${hoteAmont}${amont}", host: "${hote}"`,
+          );
+          return reponse(502, page(502));
+        }
+        adresse = choisi;
+        appli = joindre(choisi);
+        if (appli) break;
+        journalErreur(jeu, 'error', connexion(choisi));
+        essayes.push(choisi);
+      }
+    } else {
+      appli = joindre(adresse);
+      if (!appli) {
+        journalErreur(jeu, 'error', connexion(adresse));
+        return reponse(502, page(502));
+      }
     }
+    jeu.etat.nginxDernierAmont = adresse;
     // Une appli a une capacité : au-delà, elle ne répond plus à temps (504).
     if (appli.capacite) {
       const charge: Record<string, number> = (jeu.etat.appliCharge ??= {});

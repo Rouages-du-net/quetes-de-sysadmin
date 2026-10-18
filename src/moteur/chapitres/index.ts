@@ -28,6 +28,7 @@ import { pleinsPouvoirs } from './pleins-pouvoirs';
 import { depotNu } from './depot-nu';
 import { retourArriere } from './retour-arriere';
 import { bleuVert } from './bleu-vert';
+import { canari } from './canari';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -60,7 +61,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'gazette',
-    chapitres: [depotNu, retourArriere, bleuVert],
+    chapitres: [depotNu, retourArriere, bleuVert, canari],
   },
 ];
 
