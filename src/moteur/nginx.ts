@@ -11,7 +11,8 @@
 
 import type { Jeu } from './shell';
 import { joker } from './outils';
-import { systemd } from './systemd';
+import { systemd, versUtc } from './systemd';
+import { lire as lireCertificat } from './tls';
 
 export const VERSION = '1.26.3';
 export const CONF = '/etc/nginx/nginx.conf';
@@ -40,6 +41,8 @@ const DIRECTIVES: Record<string, Regle> = {
   default_type: r(1, 1, HTTP),
   ssl_protocols: r(1, 9, ['http', 'server']),
   ssl_prefer_server_ciphers: r(1, 1, ['http', 'server']),
+  ssl_certificate: r(1, 1, ['http', 'server']),
+  ssl_certificate_key: r(1, 1, ['http', 'server']),
   access_log: r(1, 3, HTTP),
   gzip: r(1, 1, HTTP),
   server_tokens: r(1, 1, HTTP),
@@ -71,6 +74,10 @@ export interface Serveur {
   racine: string;
   index: string[];
   refus: string[];
+  // Adresses en HTTPS (listen … ssl) et le certificat lu au chargement :
+  // renouveler le fichier ne change rien tant que nginx n'a pas rechargé.
+  ssl: string[];
+  certificat: string | null;
 }
 
 export interface Configuration {
@@ -154,6 +161,36 @@ function analyser(jeu: Jeu, fichier: string, contexte: string, lus: string[]): D
   return bloc(contexte, false);
 }
 
+// nginx lit le certificat et sa clé au chargement ; messages d'OpenSSL 3.
+function chargerCertificat(jeu: Jeu, enfants: Directive[], http: Directive[], serveur: Directive): string {
+  const trouve = (nom: string) => enfants.find((d) => d.nom === nom) ?? http.find((d) => d.nom === nom);
+  const cert = trouve('ssl_certificate');
+  const cle = trouve('ssl_certificate_key');
+  const listen = enfants.find((d) => d.nom === 'listen' && d.args.includes('ssl')) ?? serveur;
+  if (!cert) echec(`no "ssl_certificate" is defined for the "listen ... ssl" directive`, listen.fichier, listen.ligne);
+  const ouvrir = (d: Directive, quoi: string) => {
+    const chemin = d.args[0];
+    const n = jeu.trouver(chemin);
+    if (!n || n.type !== 'fichier')
+      echec(
+        `cannot load ${quoi} "${chemin}": BIO_new_file() failed (SSL: error:80000002:system library::No such file or directory:calling fopen(${chemin}, r) error:10000080:BIO routines::no such file)`,
+        d.fichier,
+        d.ligne,
+      );
+    return jeu.lire(chemin) ?? '';
+  };
+  const contenu = ouvrir(cert!, 'certificate');
+  if (!lireCertificat(contenu))
+    echec(
+      `cannot load certificate "${cert!.args[0]}": PEM_read_bio_X509_AUX() failed (SSL: error:0480006C:PEM routines::no start line:Expecting: TRUSTED CERTIFICATE)`,
+      cert!.fichier,
+      cert!.ligne,
+    );
+  if (!cle) echec(`no "ssl_certificate_key" is defined for certificate "${cert!.args[0]}"`, listen.fichier, listen.ligne);
+  ouvrir(cle!, 'certificate key');
+  return contenu;
+}
+
 // « 80 », « [::]:80 », « 192.0.2.11:80 » → adresse:port.
 const adresse = (valeur: string) => (/^\d+$/.test(valeur) ? `0.0.0.0:${valeur}` : valeur.includes(':') ? valeur : `${valeur}:80`);
 
@@ -170,16 +207,21 @@ function construire(jeu: Jeu, lus: string[] = []): Configuration {
       const enfants = s.enfants ?? [];
       const ecoute: string[] = [];
       const parDefaut: string[] = [];
+      const ssl: string[] = [];
       for (const l of enfants.filter((d) => d.nom === 'listen')) {
         const a = adresse(l.args[0]);
         ecoute.push(a);
+        if (l.args.includes('ssl')) ssl.push(a);
         if (l.args.includes('default_server')) {
           if (parDefautVus[a]) echec(`a duplicate default server for ${a}`, l.fichier, l.ligne);
           parDefautVus[a] = true;
           parDefaut.push(a);
         }
       }
+      const certificat = ssl.length ? chargerCertificat(jeu, enfants, http, s) : null;
       return {
+        ssl,
+        certificat,
         ecoute: ecoute.length ? ecoute : ['0.0.0.0:80'],
         parDefaut,
         noms: valeurs(enfants, 'server_name'),
@@ -228,6 +270,8 @@ export interface Reponse {
   code: number;
   corps: string;
   entetes: string[];
+  // En HTTPS : le certificat présenté par le serveur (PEM).
+  certificat?: string;
 }
 
 const RAISONS: Record<number, string> = { 200: 'OK', 403: 'Forbidden', 404: 'Not Found' };
@@ -235,28 +279,31 @@ const page = (code: number) =>
   `<html>\n<head><title>${code} ${RAISONS[code]}</title></head>\n<body>\n<center><h1>${code} ${RAISONS[code]}</h1></center>\n<hr><center>nginx/${VERSION}</center>\n</body>\n</html>`;
 const JOURS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MOIS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-// En-tête Date (GMT) ; l'horloge de la machine est à l'heure d'été de Paris (UTC+2).
+// En-tête Date (GMT) ; l'horloge de la machine est à l'heure de Paris.
 const dateHttp = (ms: number) => {
-  const d = new Date(ms - 2 * 3600_000);
+  const d = new Date(versUtc(ms));
   return `${JOURS[d.getUTCDay()]}, ${String(d.getUTCDate()).padStart(2, '0')} ${MOIS[d.getUTCMonth()]} ${d.getUTCFullYear()} ${d.toISOString().slice(11, 19)} GMT`;
 };
 
 /**
- * Une requête HTTP (port 80) vers cette machine : null si personne n'écoute.
- * Le serveur est choisi par son nom (en-tête Host), sinon c'est celui par
- * défaut du port, sinon le premier.
+ * Une requête HTTP (port 80) ou HTTPS (443) vers cette machine : null si
+ * personne n'écoute. Le serveur est choisi par son nom (en-tête Host, ou SNI
+ * en HTTPS), sinon c'est celui par défaut du port, sinon le premier.
  */
-export function requete(jeu: Jeu, hote: string, chemin: string): Reponse | null {
+export function requete(jeu: Jeu, hote: string, chemin: string, port = 80): Reponse | null {
   const sd = systemd(jeu);
   const config: Configuration | null = jeu.etat.nginx?.charge ?? null;
   if (!config || sd?.services.nginx?.etat !== 'active') return null;
-  const a = /^\[|:/.test(hote) ? '[::]:80' : '0.0.0.0:80';
+  const a = /^\[|:/.test(hote) ? `[::]:${port}` : `0.0.0.0:${port}`;
   const candidats = config.serveurs.filter((s) => s.ecoute.includes(a));
   const serveur = candidats.find((s) => s.noms.includes(hote.toLowerCase())) ?? candidats.find((s) => s.parDefaut.includes(a)) ?? candidats[0];
   if (!serveur) return null;
+  // Un port en HTTPS ne répond pas en clair (et inversement) : on ne simule que le bon cas.
+  if (serveur.ssl.includes(a) !== (port === 443)) return null;
   const reponse = (code: number, corps: string): Reponse => ({
     code,
     corps,
+    certificat: port === 443 ? (serveur.certificat ?? undefined) : undefined,
     entetes: [
       `HTTP/1.1 ${code} ${RAISONS[code]}`,
       `Server: nginx/${VERSION}`,

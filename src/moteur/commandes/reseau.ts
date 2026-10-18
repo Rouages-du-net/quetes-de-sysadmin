@@ -17,6 +17,26 @@
 import type { Shell } from '../shell';
 import type { Commande } from './index';
 import { requete } from '../nginx';
+import { couvre, lire } from '../tls';
+import { systemd, versUtc } from '../systemd';
+
+// Ce que curl ajoute quand la vérification du certificat échoue (curl 8).
+const AIDE_SSL = `More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the webpage mentioned above.`;
+
+/** Le problème du certificat présenté, au format de curl ; null s'il est bon. */
+export function verifierCertificat(jeu: Shell, contenu: string | null, hote: string): string | null {
+  const c = lire(contenu);
+  if (!c) return 'SSL certificate problem: unable to get local issuer certificate';
+  const maintenant = versUtc(systemd(jeu)?.horloge ?? 0);
+  if (maintenant > c.fin) return 'SSL certificate problem: certificate has expired';
+  if (maintenant < c.debut) return 'SSL certificate problem: certificate is not yet valid';
+  if (!couvre(c, hote)) return `SSL: no alternative certificate subject name matches target hostname '${hote}'`;
+  return null;
+}
 
 interface Reseau {
   machines: Record<string, { ping: boolean; ms: number }>;
@@ -144,6 +164,8 @@ export const RESEAU: Record<string, Commande> = {
   },
 
   curl: {
+    // curl a beaucoup d'options (-s, -L, -v…) : on ignore celles qu'on ne simule pas.
+    propresOptions: true,
     lancer: ({ args, jeu }) => {
       const entetes = args.includes('-I') || args.includes('--head');
       const url = args.find((a) => !a.startsWith('-'));
@@ -156,8 +178,12 @@ export const RESEAU: Record<string, Commande> = {
       if (jeu.etat.nginx) {
         if (![...LOCAL_DE_BASE, ...(jeu.etat.nginx.noms ?? [])].includes(hote.toLowerCase()))
           return jeu.erreur(`curl: (6) Could not resolve host: ${hote}`);
-        const r = requete(jeu, hote, m[3] || '/');
-        if (!r) return jeu.erreur(`curl: (7) Failed to connect to ${hote} port 80 after 0 ms: Couldn't connect to server`);
+        const port = m[1] === 'https' ? 443 : 80;
+        const r = requete(jeu, hote, m[3] || '/', port);
+        if (!r) return jeu.erreur(`curl: (7) Failed to connect to ${hote} port ${port} after 0 ms: Couldn't connect to server`);
+        // HTTPS : curl vérifie le certificat présenté (dates, nom), sauf avec -k.
+        const probleme = port === 443 && !args.some((a) => a === '-k' || a === '--insecure') ? verifierCertificat(jeu, r.certificat ?? null, hote) : null;
+        if (probleme) return jeu.erreur(`curl: (60) ${probleme}\n${AIDE_SSL}`);
         return entetes ? r.entetes.join('\n') : r.corps;
       }
       const res = resoudreNom(jeu, hote);

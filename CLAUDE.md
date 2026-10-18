@@ -32,6 +32,9 @@ rouages.net.
 - `src/moteur/nginx.ts` : nginx d'une machine (configuration lue et vérifiée
   comme `nginx -t`, appliquée au reload ; `curl` s'y adresse) ; `apt` et la
   commande `nginx` dans `commandes/apt.ts`.
+- `src/moteur/tls.ts` : certificats (fichiers PEM lisibles par le jeu) ;
+  `certbot` et `openssl` dans `commandes/certbot.ts` (le défi HTTP-01 passe
+  par le nginx simulé).
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;
   on part du poste et on se connecte en `ssh` à la machine de chaque
   histoire (`commandes/ssh.ts`).

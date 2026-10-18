@@ -122,6 +122,10 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse) | tout le réseau |
 | `tar` | `-C` ; une archive coupée s'arrête à la coupure (messages proches de GNU tar) ; root garde propriétaires et droits | aussi `--strip-components`, `-p`, archives multi-volumes… |
 | `ssh-keygen` | `-R`, `-F`, `-l -f` seulement ; ne crée pas de clés | crée et convertit des clés, signe des certificats… |
+| `certbot` | un seul certificat, celui du chapitre ; `certificates`, `renew`, `certonly`, `reconfigure` ; autorité simulée (le défi HTTP-01 passe par le nginx simulé) ; les fichiers de `live/` sont réécrits (pas de liens vers `archive/`) ; le module nginx ne modifie pas la configuration | plusieurs certificats, vraie autorité ACME, liens symboliques, défis DNS |
+| `openssl` | `x509` (`-dates`, `-subject`, `-issuer`, `-ext`, `-checkend`) et `s_client -connect` (rend la main tout de suite) ; le contenu des PEM est propre au jeu | des centaines de sous-commandes ; vrai X.509 ; `s_client` attend une entrée |
+| `curl https://` | vérifie dates et noms du certificat présenté (erreur 60), `-k` pour passer outre | vérifie aussi la chaîne de confiance complète, OCSP… |
+| horloge | heure de Paris : CET l'hiver, CEST l'été | fuseau de la machine |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -219,7 +223,7 @@ acceptée : `@daily`, copie du dossier entier, restauration avec `cp`.
 Débrief : barre finale, `-n`, planifier, tester la restauration, règle
 3-2-1 et versions ; liens vers `rsync(1)` et `crontab(5)`.
 
-## Histoire 2 : Le Datacenter (faite, quatre chapitres)
+## Histoire 2 : Le Datacenter (faite, cinq chapitres)
 
 Premier jour de stage : le site de la médiathèque répond par des erreurs 503.
 Awa, responsable d'exploitation, est en réunion ; ses notes guident.
@@ -321,6 +325,41 @@ site de Debian et enlever `default_server` de la médiathèque, `cd /` puis
 écrit et essayé, relire ses sauvegardes, perte acceptée (une journée),
 clé d'hôte, `nginx -t` ; liens vers apt(8), la documentation de nginx, GNU
 tar et ssh-keygen.
+
+### Chapitre 5 — Le certificat a expiré (fait)
+
+Trois mois après l'incendie, le certificat HTTPS de la médiathèque a expiré
+ce matin ; les navigateurs affichent une alerte. Le jour de l'incendie, le
+certificat avait été demandé avant la restauration du site : certbot a noté
+`/var/www/html` (le site par défaut de Debian) comme dossier du défi. Depuis
+30 jours, chaque renouvellement automatique échoue en silence (404). Depuis
+juin 2025, Let's Encrypt n'envoie plus de courriel avant l'expiration.
+
+| Étape | Commande apprise |
+|---|---|
+| Voir comme un visiteur | `curl https://mediatheque.example` (erreur 60), `openssl s_client -connect … \| openssl x509 -noout -dates` |
+| Le certificat sur le disque | `sudo certbot certificates`, `openssl x509 -in … -noout -dates -subject -ext subjectAltName` |
+| Pourquoi pas renouvelé | `systemctl --failed`, `journalctl -u certbot`, `sudo certbot renew --dry-run` (le défi en 404) |
+| Le bon dossier | `cat /etc/letsencrypt/renewal/mediatheque.example.conf` ; `sudo certbot renew --webroot -w /var/www/mediatheque` |
+| Que nginx serve le nouveau | `sudo systemctl reload nginx` (nginx lit le certificat au chargement) |
+| Que ça tienne | `sudo certbot reconfigure --cert-name mediatheque.example --deploy-hook "systemctl reload nginx"` |
+
+Objectif vérifié sur l'état : nginx présente un certificat valide pour les
+deux noms du site, le prochain renouvellement automatique réussirait (le
+défi est servi), et nginx sera rechargé après (deploy hook dans le fichier
+de renouvellement, script exécutable dans `renewal-hooks/deploy/`, ou module
+nginx de certbot).
+
+Pièges prévus : `certbot` sans `sudo`, `--dry-run` qui n'enregistre rien,
+ne corriger que `webroot_path` sans `[[webroot_map]]`, le certificat
+renouvelé que nginx ne sert pas encore, un script de deploy hook non
+exécutable, `--nginx` sans le paquet `python3-certbot-nginx`. Autres
+solutions acceptées : modifier le fichier de renouvellement avec `nano`,
+`certonly --webroot -w … -d … -d …`, `--deploy-hook` sur `renew`, le module
+nginx (`apt install python3-certbot-nginx`, `certbot renew --nginx`), relancer
+le service `certbot`. Débrief : 90 jours et 30 jours, surveiller soi-même
+l'expiration, `--dry-run`, le défi HTTP-01, deploy hook ; liens vers la
+documentation de certbot, les défis de Let's Encrypt et `openssl x509`.
 
 ## Histoire 3 : Le Paquet perdu (faite)
 
@@ -456,8 +495,6 @@ explique pourquoi c'est une mauvaise idée). Autre solution acceptée :
 
 ## Idées pour la suite
 
-- Le Datacenter, chapitre 5 : les certificats TLS et `openssl`, en lien avec
-  « Le cadenas » du module 1.
 - Le Paquet perdu, chapitre 2 : le réseau local (`ip a`, adresses privées,
   NAT), en lien avec « La box ».
 

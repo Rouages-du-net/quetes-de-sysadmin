@@ -153,8 +153,10 @@ demandent plusieurs.
       collègue, mots de passe et clés à révoquer
 - [x] **Surface d'attaque** : `ss -tlnp`, un service qui écoute sur
       `0.0.0.0` au lieu de `127.0.0.1` (la base de données exposée)
-- [ ] **Certificats TLS** : Let's Encrypt (`certbot`), renouvellement
-      automatique, quête « le certificat a expiré cette nuit »
+- [x] **Certificats TLS** : Let's Encrypt (`certbot`), défi HTTP-01,
+      renouvellement automatique, deploy hook, `openssl x509` et `s_client`,
+      `curl https://` ; quête « Le certificat a expiré » (Datacenter,
+      chapitre 5)
 - [ ] **Secrets** : fichier `.env` publié par erreur, rotation d'une clé
 
 ## Phase 4 — Servir des sites

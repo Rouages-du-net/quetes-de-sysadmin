@@ -28,6 +28,9 @@ export interface Service {
   // reload vérifie d'abord la configuration avec `verifier` (comme
   // ExecReload=/usr/sbin/sshd -t) ; sinon, il recharge sans vérifier.
   verifierAuRechargement?: boolean;
+  // Type=oneshot : le service fait son travail puis s'arrête (ex. certbot,
+  // lancé par un timer) ; il ne reste pas « active (running) ».
+  ponctuel?: boolean;
 }
 
 export interface Entree {
@@ -82,6 +85,13 @@ export function demarrer(jeu: Jeu, sd: Systemd, nom: string, auDemarrage = false
     retirerProcessus(jeu, s);
     return false;
   }
+  if (s.ponctuel) {
+    journaliser(sd, unite, 'systemd', 1, `${unite}: Deactivated successfully.`);
+    journaliser(sd, unite, 'systemd', 1, `Finished ${unite} - ${s.description}.`, 6, false);
+    s.etat = 'inactive';
+    s.depuis = sd.horloge;
+    return true;
+  }
   journaliser(sd, unite, 'systemd', 1, `Started ${unite} - ${s.description}.`);
   s.charger?.(jeu);
   s.etat = 'active';
@@ -134,10 +144,26 @@ export function dateJournal(ms: number, langue: string): string {
   return `${month} ${new Date(ms).toISOString().slice(8, 10)} ${heure(ms)}`;
 }
 
+// Le dernier dimanche d'un mois, à 1 h UTC : changement d'heure en Europe.
+const dernierDimanche = (annee: number, mois: number) => {
+  const d = new Date(Date.UTC(annee, mois + 1, 0, 1));
+  return d.getTime() - d.getUTCDay() * 86_400_000;
+};
+
+/** L'horloge des machines suit l'heure de Paris : vrai en heure d'été (CEST, UTC+2). */
+export function heureEte(local: number): boolean {
+  const annee = new Date(local).getUTCFullYear();
+  const utc = local - 3600_000;
+  return utc >= dernierDimanche(annee, 2) && utc < dernierDimanche(annee, 9);
+}
+
+/** Heure locale de la machine → heure UTC (millisecondes). */
+export const versUtc = (local: number) => local - (heureEte(local) ? 2 : 1) * 3600_000;
+
 /** « mar. 2026-10-13 20:00:01 CEST », comme systemctl status. */
 export function dateComplete(ms: number, langue: string): string {
   const { weekday } = parties(ms, langue, { weekday: 'short' });
-  return `${weekday} ${new Date(ms).toISOString().slice(0, 10)} ${heure(ms)} CEST`;
+  return `${weekday} ${new Date(ms).toISOString().slice(0, 10)} ${heure(ms)} ${heureEte(ms) ? 'CEST' : 'CET'}`;
 }
 
 /** « 1h 2min », « 3min 12s », « 5s », comme systemd. */

@@ -19,6 +19,7 @@ import { SS } from './ss';
 import { FAIL2BAN } from './fail2ban';
 import { SAUVEGARDE } from './sauvegarde';
 import { APT } from './apt';
+import { CERTBOT } from './certbot';
 
 export interface Contexte {
   args: string[];
@@ -61,6 +62,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...FAIL2BAN,
   ...SAUVEGARDE,
   ...APT,
+  ...CERTBOT,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },

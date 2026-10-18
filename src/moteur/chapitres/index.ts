@@ -10,6 +10,7 @@ import { datacenter } from './datacenter';
 import { deuxiemeJour } from './deuxieme-jour';
 import { redemarrage } from './redemarrage';
 import { incendie } from './incendie';
+import { certificat } from './certificat';
 import { paquet } from './paquet';
 import { temps } from './temps';
 import { archives } from './archives';
@@ -24,7 +25,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'datacenter',
-    chapitres: [datacenter, deuxiemeJour, redemarrage, incendie],
+    chapitres: [datacenter, deuxiemeJour, redemarrage, incendie, certificat],
   },
   {
     id: 'paquet',

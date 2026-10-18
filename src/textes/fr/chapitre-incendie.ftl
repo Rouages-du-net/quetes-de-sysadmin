@@ -143,7 +143,8 @@ incendie-evenement-fin =
     feu a coupée. Je la remettrai. Tout le reste est là, parce que les
     sauvegardes étaient AILLEURS. »
 
-    Bravo ! Tu as terminé le chapitre 4 et toute l'histoire du Datacenter.
+    Bravo ! Tu as terminé le chapitre 4 du Datacenter. (Un dernier chapitre
+    t'attend, trois mois plus tard : Le certificat a expiré.)
 
     CE QUI S'EST PASSÉ
     Le feu a détruit le serveur et ses disques. Ce qui a sauvé le site : une

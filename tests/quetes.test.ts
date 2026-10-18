@@ -368,6 +368,71 @@ for (const langue of LANGUES)
         expect(s.termine).toBe(true);
       });
 
+      it('Le Datacenter, chapitre 5 — Le certificat a expiré', () => {
+        const { s, tout } = jouer('certificat', [
+          'curl https://mediatheque.example',
+          'journalctl -u certbot -n 8',
+          'sudo certbot certificates',
+          'bienvenue-2026',
+          'sudo certbot renew --dry-run',
+          'sudo cat /etc/letsencrypt/renewal/mediatheque.example.conf',
+          // Fausse piste : --dry-run n'enregistre rien.
+          'sudo certbot renew --dry-run --webroot -w /var/www/mediatheque',
+          'sudo certbot renew --webroot -w /var/www/mediatheque',
+          // Fausse piste : renouvelé sur le disque, mais nginx sert encore l'ancien.
+          'curl https://mediatheque.example',
+          'sudo certbot reconfigure --cert-name mediatheque.example --deploy-hook "systemctl reload nginx"',
+          'sudo systemctl reload nginx',
+          'curl -I https://mediatheque.example',
+        ]);
+        expect(tout).toContain('curl: (60) SSL certificate problem: certificate has expired');
+        expect(tout).toContain('(INVALID: EXPIRED)');
+        expect(tout).toContain('Invalid response from http://mediatheque.example/.well-known/acme-challenge/');
+        expect(tout).toContain('Congratulations, all simulated renewals succeeded');
+        expect(tout).toContain('Congratulations, all renewals succeeded');
+        expect(tout).toContain('Dry run: skipping deploy hook command: systemctl reload nginx');
+        expect(tout).toContain('HTTP/1.1 200 OK');
+        contient(tout, 'Le certificat a bien expiré');
+        contient(tout, 'pas là où nginx sert ce site');
+        contient(tout, 'mais curl voit encore');
+        expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter, chapitre 5 — corriger le fichier de renouvellement, script de deploy hook', () => {
+        const { s, tout } = jouer('certificat', [
+          'sudo certbot renew',
+          'bienvenue-2026',
+          'sudo nano /etc/letsencrypt/renewal/mediatheque.example.conf',
+        ]);
+        expect(tout).toContain('Some challenges have failed');
+        s.enregistrerEdition(s.edition!.texte.replaceAll('/var/www/html', '/var/www/mediatheque'));
+        s.quitterEdition();
+        const suite = [
+          'sudo certbot renew --dry-run',
+          'echo "systemctl reload nginx" | sudo tee /etc/letsencrypt/renewal-hooks/deploy/recharger-nginx',
+          // Fausse piste : un script qui n'est pas exécutable est ignoré.
+          'sudo certbot renew',
+        ].map((l) => s.executer(l) ?? '');
+        expect(suite.join('\n')).toContain("Skipping deploy-hook '/etc/letsencrypt/renewal-hooks/deploy/recharger-nginx' as it is not executable.");
+        expect(s.termine).toBe(false);
+        s.executer('sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/recharger-nginx');
+        s.executer('sudo systemctl reload nginx');
+        expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter, chapitre 5 — le module nginx de certbot', () => {
+        const { s, tout } = jouer('certificat', [
+          'sudo certbot renew --nginx',
+          'bienvenue-2026',
+          'sudo apt install -y python3-certbot-nginx',
+          'sudo certbot renew --nginx',
+          'openssl s_client -connect mediatheque.example:443 | openssl x509 -noout -enddate',
+        ]);
+        expect(tout).toContain('The requested nginx plugin does not appear to be installed');
+        expect(tout).toContain('notAfter=Apr 21');
+        expect(s.termine).toBe(true);
+      });
+
       it('Le Paquet perdu', () => {
         const { s } = jouer('paquet-perdu', [
           'cat carnet.txt',

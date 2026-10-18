@@ -27,7 +27,7 @@ interface Paquet {
 }
 
 // Les pages et la configuration de nginx sur Debian (en anglais, comme les vraies).
-const NGINX_CONF = `user www-data;
+export const NGINX_CONF = `user www-data;
 worker_processes auto;
 pid /run/nginx.pid;
 error_log /var/log/nginx/error.log;
@@ -56,7 +56,7 @@ http {
     include /etc/nginx/sites-enabled/*;
 }`;
 
-const MIME = `types {
+export const MIME = `types {
     text/html                             html htm shtml;
     text/css                              css;
     text/plain                            txt;
@@ -178,6 +178,23 @@ const PAQUETS: Record<string, Paquet> = {
         verifierAuRechargement: true,
       };
     },
+  },
+  certbot: {
+    version: '4.0.0-2',
+    architecture: 'all',
+    telecharger: 384,
+    installe: 1530,
+    poser: (jeu) => poser(jeu, '/usr/bin', d({ certbot: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 966 }) }, undefined, racine)),
+  },
+  // Le module nginx de certbot : il sert le défi et recharge nginx après un renouvellement.
+  'python3-certbot-nginx': {
+    version: '4.0.0-1',
+    architecture: 'all',
+    telecharger: 70,
+    installe: 318,
+    dependances: ['certbot'],
+    poser: (jeu) =>
+      poser(jeu, '/usr/lib/python3/dist-packages', d({ certbot_nginx: d({ '__init__.py': f('', { proprio: 'root' }) }, undefined, racine) }, undefined, racine)),
   },
   curl: { version: '8.14.1-2', architecture: 'amd64', telecharger: 269, installe: 497 },
   rsync: { version: '3.4.1+ds1-5', architecture: 'amd64', telecharger: 445, installe: 806 },
