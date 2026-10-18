@@ -96,3 +96,8 @@ erreur-lecture-seule = { $commande }: { $cible }: Système de fichiers accessibl
 
 # sudo -u avec un compte qui n'existe pas ; { $compte } : le nom donné
 sudo-compte-inconnu = sudo: unknown user { $compte }
+
+# Un joker qui donne trop de noms : la limite des arguments d'un programme (ARG_MAX).
+# { $programme } : le chemin du programme, ex. /usr/bin/rm
+liste-arguments-trop-longue = bash: { $programme }: Liste d'arguments trop longue
+sudo-liste-arguments-trop-longue = sudo: impossible d'exécuter { $programme }: Liste d'arguments trop longue

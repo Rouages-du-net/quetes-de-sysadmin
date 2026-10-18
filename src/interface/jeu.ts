@@ -26,6 +26,9 @@ function el<K extends keyof HTMLElementTagNameMap>(nom: K, attrs: Record<string,
   return e;
 }
 
+// Les lignes gardées à l'écran pour une seule sortie.
+const MAX_LIGNES = 2000;
+
 export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) {
   const t = traducteur(options.langue);
   const typo = (texte: string) => typographie(texte, t.langue);
@@ -106,7 +109,14 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const afficher = (texte: string, classe?: string) => {
     if (!texte) return;
     const pre = document.createElement('pre');
-    const lignes = texte.split('\n');
+    let lignes = texte.split('\n');
+    // Une sortie géante (ls d'un lieu de 60 000 fichiers) : comme l'historique
+    // d'un terminal, on n'en garde que la fin, pour que la page reste fluide.
+    if (lignes.length > MAX_LIGNES) {
+      const coupees = lignes.length - MAX_LIGNES;
+      lignes = lignes.slice(-MAX_LIGNES);
+      sortie.appendChild(el('p', { class: 'coupure' }, t('sortie-coupee', { lignes: coupees })));
+    }
     lignes.forEach((ligne, i) => {
       const fin = i < lignes.length - 1 ? '\n' : '';
       if (enColonnes(ligne)) pre.append(el('span', { class: 'colonnes' }, ligne + fin));

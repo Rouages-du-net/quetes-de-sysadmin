@@ -57,7 +57,9 @@ chmod-mode-incorrect = chmod : mode incorrect : « { $droits } » (voir man chmo
 ## find
 
 # { $predicat } : l'option inconnue tapée
-find-predicat-inconnu = find : prédicat inconnu « { $predicat } » (ici : -name, -type, -delete)
+find-predicat-inconnu = find : prédicat inconnu « { $predicat } » (ici : -name, -type, -mtime, -maxdepth, -delete)
+# { $predicat } : -mtime, -maxdepth ; { $valeur } : ce qui a été tapé
+find-argument-numerique = find: argument « { $valeur } » non valable pour « { $predicat } »
 find-introuvable = find : '{ $cible }' : aucun fichier ou dossier de ce nom
 find-permission = find : '{ $cible }' : Permission non accordée
 find-supprimer-non-vide = find : impossible de supprimer '{ $cible }' : Le dossier n'est pas vide
@@ -69,6 +71,8 @@ du-introuvable = du : impossible d'accéder à '{ $cible }' : aucun fichier ou d
 # En-tête des colonnes de df : les largeurs doivent rester alignées avec
 # les colonnes (18, 6, 7, 6 et 4 caractères).
 df-entete = Sys. de fichiers   Taille Utilisé  Dispo Uti% Monté sur
+df-entete-inodes = Sys. de fichiers    Inœuds  IUtil.  ILibre IUti% Monté sur
+du-profondeur = du: profondeur maximale non valable
 
 ## tar
 

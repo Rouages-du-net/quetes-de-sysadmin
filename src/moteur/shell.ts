@@ -15,8 +15,12 @@ import { aide, apropos, ligneWhatis, optionInvalide, pageMan } from './commandes
 import { traducteur, typographie, type Langue, type Traduire } from '../textes';
 
 export { decouper, appliquerMode } from './outils';
-import { contenu, decouper, joker, tailleDe, type Mot } from './outils';
+import { comparerNoms, contenu, decouper, joker, tailleDe, type Mot } from './outils';
 import { lancerScript } from './commandes/scripts';
+
+// La place des arguments d'un programme (getconf ARG_MAX), et les commandes intégrées au shell, qui n'y sont pas soumises.
+const ARG_MAX = 2_097_152;
+const INTEGRES = ['cd', 'echo', 'pwd', 'test', 'printf'];
 
 // Ce que le jeu (les chapitres et les commandes) peut consulter ou modifier.
 export interface Jeu {
@@ -282,14 +286,39 @@ export class Shell implements Jeu {
   }
 
   // Les supports montés (clé USB…) ont une capacité : etat.montages.
-  montage(absolu: string): { chemin: string; capacite: number } | null {
-    const montages: { chemin: string; capacite: number }[] = this.etat.montages ?? [];
-    return montages.find((m) => absolu === m.chemin || absolu.startsWith(m.chemin + '/')) ?? null;
+  // Le support le plus précis qui contient ce chemin (/srv/radio avant /).
+  montage(absolu: string): { chemin: string; capacite: number; inodes?: number; inodesBase?: number } | null {
+    const montages: { chemin: string; capacite: number; inodes?: number }[] = this.etat.montages ?? [];
+    return (
+      montages
+        .filter((m) => m.chemin === '/' || absolu === m.chemin || absolu.startsWith(m.chemin + '/'))
+        .sort((a, b) => b.chemin.length - a.chemin.length)[0] ?? null
+    );
+  }
+
+  /** Les inodes occupés sur un support : chaque fichier et chaque lieu, plus ceux du système (inodesBase). */
+  inodesUtilises(m: { chemin: string; inodesBase?: number }): number {
+    const autres: string[] = (this.etat.montages ?? []).map((x: { chemin: string }) => x.chemin).filter((c: string) => c !== m.chemin);
+    const compter = (chemin: string, n: Noeud): number => {
+      if (autres.includes(chemin)) return 0;
+      if (n.type === 'fichier') return 1;
+      let total = 1;
+      // Seuls les lieux ont besoin de leur chemin (pour reconnaître un autre support monté dedans).
+      for (const k in n.enfants) {
+        const e = n.enfants[k];
+        total += e.type === 'fichier' ? 1 : compter(`${chemin === '/' ? '' : chemin}/${k}`, e);
+      }
+      return total;
+    };
+    const lieu = this.trouver(m.chemin);
+    return (m.inodesBase ?? 0) + (lieu ? compter(m.chemin, lieu) : 0);
   }
 
   private placeManquante(absolu: string, n: Noeud, ancien?: Noeud): boolean {
     const m = this.montage(absolu);
     if (!m) return false;
+    // Plus d'inode libre : plus moyen de créer un fichier, même vide (« No space left on device »).
+    if (m.inodes && !ancien && this.inodesUtilises(m) >= m.inodes) return true;
     const lieu = this.trouver(m.chemin);
     const utilise = lieu ? this.taille(lieu) : 0;
     return utilise - (ancien ? this.taille(ancien) : 0) + this.taille(n) > m.capacite;
@@ -333,7 +362,7 @@ export class Shell implements Jeu {
     const re = joker(motif);
     const trouves = Object.keys(lieu.enfants)
       .filter((n) => re.test(n) && (motif.startsWith('.') || !n.startsWith('.')))
-      .sort((a, b) => a.localeCompare(b, 'fr'))
+      .sort(comparerNoms)
       .map((n) => base + n);
     return trouves.length ? trouves : [mot];
   }
@@ -598,6 +627,13 @@ export class Shell implements Jeu {
     const commande: Commande | undefined = COMMANDES[cmd]?.section === 5 ? undefined : COMMANDES[cmd];
     if (!this.connues().includes(cmd) || !commande)
       return this.erreur(this.t(commande || cmd === 'sudo' ? 'commande-pas-encore' : 'commande-introuvable', { commande: cmd }));
+    // Un programme reçoit ses arguments dans une zone limitée (ARG_MAX, 2 Mio
+    // sous Linux) : un joker qui donne des dizaines de milliers de noms
+    // dépasse. echo, intégré au shell, n'a pas cette limite.
+    if (!INTEGRES.includes(cmd) && args.reduce((t, a) => t + a.length + 1, 0) > ARG_MAX) {
+      this.etat.argumentsTropLongs = (this.etat.argumentsTropLongs ?? 0) + 1;
+      return this.erreur(this.t(root ? 'sudo-liste-arguments-trop-longue' : 'liste-arguments-trop-longue', { programme: `/usr/bin/${cmd}` }));
+    }
     // Les réflexes d'auto-dépannage : --help et les options inconnues.
     if (reste.includes('--help')) return aide(cmd, commande, this.t);
     const invalide = optionInvalide(cmd, commande, reste, this.t);

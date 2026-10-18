@@ -27,6 +27,9 @@ export type Fichier = {
   // Lien symbolique (ln -s) : le chemin visé, tel qu'il a été écrit (relatif
   // au lieu du lien, ou absolu). On le suit pour lire, écrire, entrer.
   lien?: string;
+  // Date de dernière modification (ms, heure locale lue comme UTC, comme
+  // l'horloge de systemd) ; sans elle, le fichier est considéré comme récent.
+  mtime?: number;
 } & Droits;
 // Propriétaire, groupe et permissions Unix (rwx pour le propriétaire, le
 // groupe, les autres). Par défaut : « vous », le groupe qui porte le nom du

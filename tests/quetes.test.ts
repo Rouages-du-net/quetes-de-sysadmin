@@ -1489,6 +1489,63 @@ for (const langue of LANGUES)
       });
     });
 
+    describe("L'Astreinte, chapitre 3 — Les inodes (df -i, du --inodes, find -mtime -delete, cron)", () => {
+      const crontab = (s: Shell, commande: string, ligne: string) => {
+        s.executer(commande);
+        s.enregistrerEdition(`${s.edition!.texte}${ligne}\n`);
+        return s.quitterEdition();
+      };
+
+      it('solution : df -i, du --inodes, find -mtime +30 -delete, puis une tâche cron', { timeout: 30_000 }, () => {
+        const { s, tout } = jouer('inodes', [
+          'df -h',
+          'sudo df -i',
+          'antenne-2027',
+          'sudo du --inodes -d 1 /srv/radio',
+          'sudo find /srv/radio/stats -type f -mtime +30 | wc -l',
+          'sudo find /srv/radio/stats -type f -mtime +30 -delete',
+          'df -ih /srv/radio',
+        ]);
+        expect(tout).toMatch(/\/dev\/vdb1 +1,0G +223M +801M +22% \/srv\/radio/);
+        expect(tout).toMatch(/\/dev\/vdb1 +65536 +65536 +0 +100% \/srv\/radio/);
+        expect(tout).toMatch(/^65519\t\/srv\/radio\/stats$/m);
+        contient(tout, "l'enregistrement de nuit a repris");
+        expect(s.trouver('/srv/radio/emissions/nuit-2027-08-29.ogg')).toBeTruthy();
+        expect(s.termine).toBe(false);
+        const nuit = crontab(s, 'sudo crontab -e', '15 4 * * * find /srv/radio/stats -type f -mtime +30 -delete');
+        contient(nuit, 'Une journée et une nuit passent');
+        contient(nuit, 'le plus ancien a 30 jours');
+        contient(nuit, "Tu as terminé le chapitre 3 de L'Astreinte");
+        expect(s.termine).toBe(true);
+      });
+
+      it('autre solution : la tâche cron du compte radio fait aussi le grand ménage', { timeout: 30_000 }, () => {
+        const { s } = jouer('inodes', ['sudo df -i /srv/radio', 'antenne-2027']);
+        const nuit = crontab(s, 'sudo crontab -u radio -e', '0 3 * * * find /srv/radio/stats -name "ecoute-*" -mtime +45 -delete');
+        contient(nuit, 'Une journée et une nuit passent');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : rm *, une crontab sans les droits, une tâche qui efface tout', { timeout: 30_000 }, () => {
+        const { s, tout } = jouer('inodes', ['sudo touch /srv/radio/essai', 'antenne-2027', 'cd /srv/radio/stats', 'sudo rm *']);
+        expect(tout).toContain('Aucun espace disponible sur le périphérique');
+        expect(tout).toContain("sudo: impossible d'exécuter /usr/bin/rm: Liste d'arguments trop longue");
+        contient(tout, 'le shell remplace * par tous les noms du lieu');
+        // La crontab de « vous » : pas le droit d'effacer les fichiers du compte radio.
+        const nuit = crontab(s, 'crontab -e', '15 4 * * * find /srv/radio/stats -type f -mtime +30 -delete');
+        contient(nuit, 'Courrier de cron');
+        expect(nuit).toContain('Permission non accordée');
+        contient(nuit, 'la tâche n');
+        expect(s.termine).toBe(false);
+        // Une tâche qui efface tout, sans regarder l'âge.
+        contient(
+          crontab(s, 'sudo crontab -e', '15 4 * * * find /srv/radio/stats -type f -delete'),
+          'des statistiques de moins de 30 jours ont disparu',
+        );
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

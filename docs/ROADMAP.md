@@ -232,8 +232,8 @@ demandent plusieurs.
 - [ ] Charge et ressources : `top`, `free`, `df`, `du` faits (L'Astreinte,
       chapitres 1 et 2) ; reste `iostat`
 - [ ] Pannes classiques : disque plein et fuite de journaux (« Le disque
-      plein »), mémoire épuisée (OOM) et processus zombies (« La mémoire »)
-      faits ; restent horloge décalée (NTP) et inodes épuisés
+      plein »), mémoire épuisée (OOM) et processus zombies (« La mémoire »),
+      inodes épuisés (« Les inodes ») faits ; reste horloge décalée (NTP)
 - [x] Rotation des journaux (`logrotate`) ; « Le disque plein »
       (L'Astreinte, chapitre 1)
 - [ ] Supervision et alertes (sonde HTTP, seuils) ; astreinte simulée

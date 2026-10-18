@@ -19,6 +19,12 @@ cle-aide = 🔑 Les histoires grisées s'ouvrent quand tu termines La Racine (L'
 bouton-suivant = Chapitre suivant →
 bouton-recommencer = Recommencer ce chapitre
 astuces = Astuces : Tab complète les noms, ↑ rappelle les commandes, « aide » liste celles que tu connais, « man commande » ouvre le manuel, « exit » ramène à ton poste. Comme dans la plupart des terminaux Linux, sélectionner du texte le copie et le clic droit le colle. Ta progression est gardée dans ce navigateur.
+# { $lignes } : nombre de lignes non affichées
+sortie-coupee =
+    { $lignes ->
+        [one] (… { $lignes } ligne plus haut, non affichée)
+       *[other] (… { $lignes } lignes plus haut, non affichées)
+    }
 poste-titre = Ton poste
 saisie-etiquette = Commande
 credit = Quêtes de Sysadmin, jeu libre (GPL v3, textes CC BY-SA 4.0), inspiré de Terminus, créé au MIT par Shawn Conrad et Michele Pratusevich.
