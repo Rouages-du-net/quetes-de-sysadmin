@@ -44,6 +44,8 @@ export class Console {
     s.etat.sshdDistant = (nom: string) => this.sessions.get(nom)?.etat.sshd?.charge ?? null;
     // … et son pare-feu (ufw), qui peut bloquer la connexion avant même sshd.
     s.etat.pareFeuDistant = (nom: string) => this.sessions.get(nom)?.etat.ufw ?? null;
+    // … et les adresses que son fail2ban a bannies.
+    s.etat.bannisDistant = (nom: string): string[] => this.sessions.get(nom)?.etat.fail2ban?.bannis ?? [];
     if (hotesConnus) s.placer('ssh', '~/.ssh/known_hosts', f(hotesConnus, { lignes: true }));
     return s;
   }

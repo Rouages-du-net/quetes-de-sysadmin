@@ -149,6 +149,10 @@ export const SSH: Record<string, Commande> = {
       if (m === POSTE || adresse.startsWith('127.') || (m && d.port !== '22'))
         return jeu.erreur(`ssh: connect to host ${d.hote} port ${d.port}: Connection refused`);
       if (!m) return jeu.erreur(`ssh: connect to host ${d.hote} port ${d.port}: No route to host`);
+      // fail2ban d'en face a banni le poste : sur Debian, l'action par défaut
+      // rejette (REJECT) les paquets de l'adresse vers le port surveillé.
+      if ((jeu.etat.bannisDistant?.(m.nom) ?? []).includes(POSTE.adresse))
+        return jeu.erreur(`ssh: connect to host ${d.hote} port ${d.port}: Connection refused\n` + jeu.t('ssh-banni', { machine: m.nom, adresse: POSTE.adresse }));
       // Le pare-feu d'en face : deny laisse attendre (timeout), reject refuse tout de suite.
       const pf: PareFeu | null = jeu.etat.pareFeuDistant?.(m.nom) ?? null;
       const passe = pf ? verdict(pf, Number(d.port), POSTE.adresse) : 'accepte';

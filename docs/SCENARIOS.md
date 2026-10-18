@@ -114,6 +114,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `sshd` | une partie des mots-clés ; toutes les erreurs listées d'un coup ; pas de mot de passe demandé quand `PasswordAuthentication yes` (le refus annonce `publickey,password`) | s'arrête à la première erreur ; propose le mot de passe |
 | `ufw` | règles IPv4 et IPv6 confondues (lignes « (v6) » pour la forme) ; pas de règles sortantes, de routage, de journalisation, d'`insert` ni de `reset` ; messages proches de la traduction française d'ufw | tout cela |
 | `ss` | sockets décrites par le chapitre, et la session ssh en cours | toutes les sockets du système |
+| fail2ban | une seule prison (`sshd`) ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -350,6 +351,38 @@ suivante est bloquée : le menu sert de console de secours), `default allow`
 acceptée : `default reject` et SSH depuis l'adresse du poste seulement.
 Débrief : `ss -tlnp` d'abord, autoriser SSH avant `enable`, `limit`,
 `bind-address`, liens vers `ufw(8)` et `ss(8)`.
+
+### Chapitre 3 — La sentinelle (fait)
+
+fail2ban tourne avec les réglages de Debian (prison `sshd`, bannissement de
+10 minutes). `/var/log/fail2ban.log` montre les robots qui reviennent dès la
+fin de leur bannissement, et Rania, la webmestre, bannie après cinq erreurs
+de nom d'utilisateur. Le fail2ban simulé (`src/moteur/fail2ban.ts`) lit la
+configuration dans l'ordre `jail.conf`, `jail.d/*.conf`, `jail.local`,
+`jail.d/*.local` (le dernier lu l'emporte, `[sshd]` sur `[DEFAULT]`), compte
+les échecs dans le journal de SSH et bannit à `maxretry`, sauf `ignoreip`.
+La commande `ssh` du poste se heurte aux bannissements (`Connection
+refused`).
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `cat /var/log/fail2ban.log`, `sudo fail2ban-client status sshd`, `journalctl -u ssh` |
+| Rendre l'accès à Rania | `sudo fail2ban-client set sshd unbanip 198.51.100.40` |
+| Régler | `sudo nano /etc/fail2ban/jail.local` : `bantime = 1h`, `ignoreip = 127.0.0.1/8 ::1 192.0.2.2 198.51.100.40` |
+| Appliquer et vérifier | `sudo fail2ban-client -t`, `sudo systemctl reload fail2ban`, `sudo fail2ban-client status sshd` |
+
+Objectif vérifié sur l'état : la configuration chargée active la prison,
+bannit au moins une heure et ignore Rania et le poste ; Rania et le poste ne
+sont pas bannis, les deux robots si ; et l'on a consulté l'état de la prison
+depuis.
+
+Pièges prévus : faute de syntaxe (le vrai message de configparser),
+`maxretry = 3` sans `ignoreip` (le poste, qui a raté trois connexions hier,
+se bannit lui-même : le menu sert de console de secours), oublier de
+recharger, oublier que Rania reste bannie (un bannissement survit au
+rechargement), modifier `jail.conf` (ça marche, mais un avertissement
+explique pourquoi c'est une mauvaise idée). Autre solution acceptée :
+`jail.d/*.local`, `bantime = -1`, `ignoreip` en CIDR.
 
 ## Idées pour la suite
 

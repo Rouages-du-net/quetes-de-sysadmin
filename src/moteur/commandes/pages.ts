@@ -19,6 +19,8 @@ export const PAGES: Record<string, Page> = {
   df: { options: ['h'], voir: ['du'] },
   dig: { voir: ['ping', 'curl'] },
   du: { options: ['h', 's'], voir: ['df', 'find'] },
+  'fail2ban-client': { exemples: ['sudo fail2ban-client status', 'sudo fail2ban-client status sshd', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client -t', 'sudo fail2ban-client reload'], voir: ['jail.conf', 'journalctl', 'ufw'] },
+  'jail.conf': { section: 5, exemples: ['sudo nano /etc/fail2ban/jail.local', 'sudo fail2ban-client get sshd bantime'], voir: ['fail2ban-client', 'nano'] },
   find: { voir: ['ls', 'grep', 'du'] },
   grep: { options: ['i', 'v', 'c'], exemples: ['grep Effaceur chronique.txt', 'grep -i effaceur *', 'grep "mot de passe" journal.txt'], voir: ['cat', 'find'] },
   groups: { exemples: ['groups', 'groups malo'], voir: ['id', 'usermod'] },

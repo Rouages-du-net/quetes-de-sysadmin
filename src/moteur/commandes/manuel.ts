@@ -8,13 +8,17 @@
 import type { Traduire } from '../../textes';
 import { COMMANDES, type Commande } from './index';
 
+// Identifiant Fluent de la page : le point est réservé aux attributs
+// (« jail.conf » → man-jail_conf).
+const page = (nom: string) => `man-${nom.replace(/\./g, '_')}`;
+
 const section = (nom: string) => COMMANDES[nom]?.section ?? 1;
 
 function textes(nom: string, t: Traduire) {
-  const synopsis = t.existe(`man-${nom}.synopsis`) ? t(`man-${nom}.synopsis`) : '';
-  const options = (nom: string, c: Commande): [string, string][] => (c.options ?? []).map((o) => [o, t(`man-${nom}.option-${o}`)]);
-  const exemples = (nom: string, c: Commande): [string, string][] => (c.exemples ?? []).map((e, i) => [e, t(`man-${nom}.exemple-${i + 1}`)]);
-  return { synopsis, description: t(`man-${nom}`), options, exemples };
+  const synopsis = t.existe(`${page(nom)}.synopsis`) ? t(`${page(nom)}.synopsis`) : '';
+  const options = (nom: string, c: Commande): [string, string][] => (c.options ?? []).map((o) => [o, t(`${page(nom)}.option-${o}`)]);
+  const exemples = (nom: string, c: Commande): [string, string][] => (c.exemples ?? []).map((e, i) => [e, t(`${page(nom)}.exemple-${i + 1}`)]);
+  return { synopsis, description: t(page(nom)), options, exemples };
 }
 
 // La première phrase, sans point final, pour la ligne NOM et whatis.
@@ -27,7 +31,7 @@ const retrait = (texte: string, n = 7) =>
     .join('\n');
 
 export function ligneWhatis(nom: string, t: Traduire): string {
-  return `${`${nom} (${section(nom)})`.padEnd(21)}- ${resume(t(`man-${nom}`))}`;
+  return `${`${nom} (${section(nom)})`.padEnd(21)}- ${resume(t(page(nom)))}`;
 }
 
 const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);

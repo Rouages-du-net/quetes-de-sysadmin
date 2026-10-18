@@ -16,6 +16,7 @@ import { EDITEUR } from './editeur';
 import { SSHD } from './sshd';
 import { UFW } from './ufw';
 import { SS } from './ss';
+import { FAIL2BAN } from './fail2ban';
 
 export interface Contexte {
   args: string[];
@@ -55,6 +56,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...SSHD,
   ...UFW,
   ...SS,
+  ...FAIL2BAN,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },

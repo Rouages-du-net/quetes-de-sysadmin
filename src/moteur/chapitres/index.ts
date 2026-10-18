@@ -13,6 +13,7 @@ import { temps } from './temps';
 import { archives } from './archives';
 import { porte } from './porte';
 import { pareFeu } from './pare-feu';
+import { sentinelle } from './sentinelle';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -37,7 +38,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'lettres',
-    chapitres: [porte, pareFeu],
+    chapitres: [porte, pareFeu, sentinelle],
   },
 ];
 

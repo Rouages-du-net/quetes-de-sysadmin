@@ -138,8 +138,12 @@ demandent plusieurs.
       s'arrête au pare-feu (timeout) ; quête « Le pare-feu » (Les Lettres du
       quartier, chapitre 2)
 - [ ] Un aperçu de `nftables` sous `ufw`
-- [ ] **fail2ban** : lire `auth.log`, voir les tentatives de force brute,
-      configurer une prison, débannir une adresse légitime
+- [x] **fail2ban** : lire `fail2ban.log` et le journal de SSH, `jail.local`
+      (jamais `jail.conf`), `bantime`, `maxretry`, `ignoreip` (CIDR),
+      `fail2ban-client status`, `unbanip`, `-t`, `reload` ; quête « La
+      sentinelle » (Les Lettres du quartier, chapitre 3), où l'on peut se
+      bannir soi-même
+- [ ] La prison `recidive`, d'autres prisons (nginx)
 - [ ] **Mises à jour** : `apt update/upgrade`, mises à jour automatiques de
       sécurité, redémarrage nécessaire, noyau
 - [ ] **Comptes** : supprimer un compte inutile, désactiver un compte d'ancien
