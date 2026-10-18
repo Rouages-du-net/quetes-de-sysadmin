@@ -2,7 +2,7 @@
 ### et le résumé de chaque chapitre sont dans le fichier de son histoire.
 
 histoire-effaceur = L’Effaceur
-    .resume = Une créature efface tout dans le royaume. Se déplacer, créer, chercher, puis les permissions et sudo.
+    .resume = Une créature efface tout dans le royaume. Se déplacer, créer, chercher, les permissions et sudo, puis les sauvegardes.
 histoire-datacenter = Le Datacenter
     .resume = Un site en panne, une nouvelle recrue, une nuit de redémarrage : journaux, tubes |, processus, comptes et groupes, services systemd.
 histoire-paquet = Le Paquet perdu

@@ -152,7 +152,8 @@ racine-evenement-corrige =
        *[non] {""}
     }
 
-    FIN DE L'HISTOIRE DE L'EFFACEUR.
+    LE ROYAUME EST SAUVÉ. (Un dernier chapitre t'attend : La Sauvegarde,
+    pour que plus rien ne se perde.)
 
     Tu connais maintenant les permissions (ls -l, chmod), la différence entre
     un utilisateur et root, et sudo — avec ses trois règles. La deuxième est

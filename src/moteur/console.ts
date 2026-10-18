@@ -21,6 +21,9 @@ export interface OptionsConsole {
 
 // L'histoire à finir pour recevoir les autres clés.
 const PREMIERE = 'effaceur';
+// Le chapitre qui donne les clés : la fin de l'histoire d'origine (les
+// chapitres ajoutés ensuite ne doivent pas reprendre les clés déjà données).
+const CHAPITRE_DES_CLES = 'racine';
 
 export class Console {
   t: Traduire;
@@ -59,7 +62,7 @@ export class Console {
   /** Une histoire est ouverte si l'on a sa clé : la première, puis toutes une fois celle-ci finie. */
   ouverte(histoire: string): boolean {
     if (histoire === PREMIERE) return true;
-    return HISTOIRES.find((h) => h.id === PREMIERE)!.chapitres.every((c) => this.termines.includes(c.id));
+    return this.termines.includes(CHAPITRE_DES_CLES);
   }
 
   hotesConnus(): string {

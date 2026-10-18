@@ -18,7 +18,7 @@ poste-bienvenue =
 
     Les machines que tu connais sont dans ~/.ssh/config, et tes clés dans le
     dossier caché ~/.ssh. Pour l'instant, tu n'as que la clé du royaume ;
-    termine l'Effaceur pour recevoir les autres. Pour les voir :
+    termine La Racine (chapitre 3 de l'Effaceur) pour recevoir les autres. Pour les voir :
 
       ls -a ~/.ssh
 # Commentaire en tête de ~/.ssh/config (chaque ligne devient un commentaire « # »)
