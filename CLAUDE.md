@@ -20,6 +20,9 @@ rouages.net.
 - `src/moteur/` : shell simulé (`shell.ts`), commandes (`commandes/`, dont
   le manuel : `manuel.ts`, `pages.ts`), monde (`monde.ts`), histoires
   (`chapitres/`). Aucune dépendance au DOM.
+- `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;
+  on part du poste et on se connecte en `ssh` à la machine de chaque
+  histoire (`commandes/ssh.ts`).
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).
 - `src/element.ts` : l'élément `<quetes-de-sysadmin>` (Shadow DOM).

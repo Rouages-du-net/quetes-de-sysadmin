@@ -78,13 +78,15 @@ garde cette mention et le lien vers l'original.
 Aujourd'hui, le moteur simule **une** machine. Les quêtes d'administration en
 demandent plusieurs.
 
-- [ ] **Un seul monde** (proposition) : chaque histoire devient une machine
+- [x] **Un seul monde** : chaque histoire devient une machine
       du même réseau simulé, et l'on passe de l'une à l'autre avec `ssh`
-      (`ssh paquet.example`) une fois la première histoire finie. Le menu des
+      (`ssh fourmiliere`). Finir l'Effaceur donne les clés des autres
+      machines, à jouer ensuite dans l'ordre voulu. Le menu des
       histoires reste disponible (accessibilité, enseignant·es, intégration
       avec l'attribut `histoire`) ; une seule progression.
-- [ ] **Plusieurs hôtes** : chacun son système de fichiers, ses comptes, ses
-      services, ses ports ; invite `utilisateur@hôte:~$`
+- [x] **Plusieurs hôtes** : chacun son système de fichiers et son nom,
+      invite `utilisateur@hôte:~$` (`console.ts`, `machines.ts`, `poste.ts`)
+- [ ] Comptes, services et ports propres à chaque machine
 - [ ] **Réseau simulé** : adresses, ports ouverts, résolution de noms
       (`/etc/hosts`, DNS), routes, latence ; ce qu'un pare-feu laisse passer
 - [ ] **Services** (`systemd` simulé) : état, démarrage, échec, dépendances,
@@ -105,7 +107,9 @@ demandent plusieurs.
 ## Phase 2 — Se connecter et se déplacer
 
 - [ ] **SSH** : `ssh`, clés (`ssh-keygen`, `ssh-copy-id`), `~/.ssh/config`,
-      empreinte de l'hôte (`known_hosts`), refus de mot de passe
+      empreinte de l'hôte (`known_hosts`), refus de mot de passe. Déjà là :
+      `ssh` avec `~/.ssh/config`, `/etc/hosts`, `known_hosts` (question de la
+      première connexion), clés et leurs permissions, `-i`, `-p`, `exit`
 - [ ] **Rebonds** : hôte bastion, `ssh -J` / `ProxyJump`, redirection de ports
       (`-L`, `-R`) pour atteindre un service interne
 - [ ] **Durcissement SSH** : `PermitRootLogin no`, `PasswordAuthentication

@@ -9,6 +9,7 @@ import { SYSTEME } from './systeme';
 import { RESEAU } from './reseau';
 import { GIT } from './git';
 import { PAGES } from './pages';
+import { SSH } from './ssh';
 
 export interface Contexte {
   args: string[];
@@ -37,6 +38,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...SYSTEME,
   ...RESEAU,
   ...GIT,
+  ...SSH,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },

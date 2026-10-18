@@ -37,6 +37,14 @@ export interface Jeu {
   peut(n: Noeud, droit: 'r' | 'w' | 'x', utilisateur?: string): boolean;
   // Les textes dans la langue du jeu (voir src/textes/).
   t: Traduire;
+  // Nom de la machine (invite « vous@nom »).
+  hote: string;
+  // Pose une question (ex. « yes/no » de ssh) : la ligne suivante est la
+  // réponse, passée à `repondre`, dont le texte s'affiche.
+  demander(invite: string, repondre: (reponse: string) => string): void;
+  // Demande d'ouvrir une session sur une autre machine (ssh) ; la console
+  // (console.ts) s'en charge après la ligne en cours.
+  demandeConnexion: string | null;
 }
 
 export class Shell implements Jeu {
@@ -52,6 +60,11 @@ export class Shell implements Jeu {
   private authentifie = false;
   private sermonFait = false;
   attente: { ligne: string; essais: number } | null = null;
+  // Question en cours (ssh : « Are you sure you want to continue connecting? »).
+  question: { invite: string; repondre: (reponse: string) => string } | null = null;
+  // exit tapé : la console ferme la session (voir console.ts).
+  sortie = false;
+  demandeConnexion: string | null = null;
   // Sortie d'erreur et remarques de la ligne en cours.
   private erreurs: string[] = [];
 
@@ -60,6 +73,7 @@ export class Shell implements Jeu {
   constructor(
     public chapitre: Chapitre,
     langue?: Langue,
+    public hote = 'sysadmin',
   ) {
     this.t = traducteur(langue);
     this.racine = chapitre.creerMonde(this.t);
@@ -217,9 +231,14 @@ export class Shell implements Jeu {
 
   invite(): string {
     if (this.attente) return this.t('sudo-invite', { utilisateur: 'vous' });
+    if (this.question) return this.question.invite;
     const ici =
       this.cwd === this.maison ? '~' : this.cwd.startsWith(this.maison + '/') ? '~' + this.cwd.slice(this.maison.length) : this.cwd;
-    return `vous@sysadmin:${ici}$`;
+    return `vous@${this.hote}:${ici}$`;
+  }
+
+  demander(invite: string, repondre: (reponse: string) => string): void {
+    this.question = { invite, repondre };
   }
 
   // Développe * et ? comme le fait le shell, avant la commande. Les fichiers
@@ -248,6 +267,11 @@ export class Shell implements Jeu {
       const cmds = this.connues().filter((c) => c.startsWith(dernier));
       return cmds.length === 1 ? [...mots, cmds[0] + ' '].join(' ') : ligne;
     }
+    // Comme bash-completion : après ssh, les machines de ~/.ssh/config.
+    if (avant[0] === 'ssh' && !dernier.startsWith('-') && !dernier.includes('/') && avant.at(-1) !== '-i') {
+      const hotes = [...(this.lire('~/.ssh/config') ?? '').matchAll(/^Host\s+(\S+)/gm)].map((m) => m[1]).filter((h) => h.startsWith(dernier));
+      return hotes.length === 1 ? [...mots, hotes[0] + ' '].join(' ') : ligne;
+    }
     const i = dernier.lastIndexOf('/');
     const base = i >= 0 ? dernier.slice(0, i + 1) : '';
     const debut = dernier.slice(i + 1);
@@ -268,7 +292,7 @@ export class Shell implements Jeu {
   }
 
   connues(): string[] {
-    return [...this.chapitre.commandes, 'man', 'apropos', 'whatis', 'clear', 'aide'];
+    return [...this.chapitre.commandes, 'man', 'apropos', 'whatis', 'clear', 'exit', 'aide'];
   }
 
 
@@ -304,9 +328,19 @@ export class Shell implements Jeu {
   // Si sudo attend un mot de passe, la ligne est ce mot de passe.
   executer(ligne: string): string | null {
     if (this.attente) return this.motDePasse(ligne);
+    if (this.question) {
+      const { repondre } = this.question;
+      this.question = null;
+      return this.conclure(repondre(ligne.trim()), true);
+    }
     const mots = decouper(ligne);
     if (!mots.length) return '';
     if (mots.length === 1 && mots[0].texte === 'clear' && !mots[0].cite) return null;
+    // exit est intégré au shell : la console ferme la session.
+    if (mots[0].texte === 'exit' && !mots[0].cite && mots.length <= 2) {
+      this.sortie = true;
+      return '';
+    }
     // sudo demande le mot de passe avant de lancer quoi que ce soit.
     const avecSudo = mots.some((m, i) => !m.cite && m.texte === 'sudo' && (i === 0 || mots[i - 1].op === '|'));
     if (avecSudo && this.connues().includes('sudo') && !this.authentifie) {

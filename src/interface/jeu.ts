@@ -1,15 +1,17 @@
-// L'interface du jeu : choix de l'histoire et du chapitre, terminal simulé,
-// progression gardée dans le navigateur. monter() construit tout dans un
-// conteneur (un élément ou la racine fantôme d'un composant), sans rien
-// supposer de la page qui l'accueille.
+// L'interface du jeu : le terminal simulé (une console qui part du poste et
+// se connecte en ssh aux machines des histoires), le menu des histoires et
+// des chapitres (des raccourcis), la progression gardée dans le navigateur.
+// monter() construit tout dans un conteneur (un élément ou la racine
+// fantôme d'un composant), sans rien supposer de la page qui l'accueille.
 
-import { Shell } from '../moteur/shell';
+import { Console } from '../moteur/console';
 import { HISTOIRES } from '../moteur/chapitres';
+import { machineDeHistoire } from '../moteur/machines';
 import { traducteur, typographie, type Langue } from '../textes';
 
 export interface Options {
   langue?: Langue;
-  /** Histoire à ouvrir au départ (identifiant, ex. « datacenter »). */
+  /** Histoire à ouvrir au départ (identifiant, ex. « datacenter »), même sans sa clé. */
   histoire?: string;
   /** Clé de sauvegarde dans localStorage (à changer si plusieurs jeux partagent un site). */
   cle?: string;
@@ -37,8 +39,9 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
       el('span', { class: 'resume' }, typo(t(`histoire-${h.id}.resume`))),
       el('span', { class: 'etat' })),
   );
+  const boutonPoste = el('button', { type: 'button', 'data-poste': '' }, el('span', { class: 'titre' }, t('poste-titre')));
   const navHistoires = el('nav', { class: 'histoires', 'aria-label': t('histoires-titre') },
-    el('ol', {}, ...boutonsHistoires.map((b) => el('li', {}, b))));
+    el('ol', {}, el('li', {}, boutonPoste), ...boutonsHistoires.map((b) => el('li', {}, b))));
 
   const navsChapitres = HISTOIRES.map((h, i) =>
     el('nav', { class: 'chapitres', 'aria-label': t('chapitres-titre', { histoire: titreHistoire(i) }), 'data-chapitres': String(i) },
@@ -71,22 +74,24 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
-  let termines: string[] = [];
-  let histoire = Math.max(0, HISTOIRES.findIndex((h) => h.id === options.histoire));
+  let sauve: { termines?: string[]; histoire?: string | null; connus?: string } = {};
   try {
-    const sauve = JSON.parse(localStorage.getItem(CLE) ?? '{}');
-    termines = sauve.termines ?? [];
-    if (!options.histoire) histoire = Math.max(0, HISTOIRES.findIndex((h) => h.id === sauve.histoire));
+    sauve = JSON.parse(localStorage.getItem(CLE) ?? '{}');
   } catch {}
+  const terminalJeu = new Console({ langue: t.langue, termines: sauve.termines, hotesConnus: sauve.connus });
+  const termines = terminalJeu.termines;
+  // Histoire et chapitre en cours (-1 : sur le poste).
+  const histoire = () => (terminalJeu.distant ? HISTOIRES.indexOf(terminalJeu.distant.histoire) : -1);
+  const courant = () => (terminalJeu.distant ? terminalJeu.distant.histoire.chapitres.indexOf(terminalJeu.distant.shell.chapitre) : -1);
   const sauver = () => {
     try {
-      localStorage.setItem(CLE, JSON.stringify({ termines, histoire: HISTOIRES[histoire].id }));
+      localStorage.setItem(CLE, JSON.stringify({ termines, histoire: terminalJeu.distant?.histoire.id ?? null, connus: terminalJeu.hotesConnus() }));
     } catch {}
   };
   const ouvert = (h: number, c: number) => c === 0 || termines.includes(chapitres(h)[c - 1].id);
+  // L'attribut histoire ouvre son histoire même sans la clé (intégration dans un cours).
+  const accessible = (h: number) => terminalJeu.ouverte(HISTOIRES[h].id) || HISTOIRES[h].id === options.histoire;
 
-  let shell: Shell;
-  let courant = 0;
   const historique: string[] = [];
   let position = 0;
 
@@ -99,23 +104,30 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   };
 
   const majInvite = () => {
-    invite.textContent = shell.invite();
-    saisie.type = shell.attente ? 'password' : 'text';
+    invite.textContent = terminalJeu.invite();
+    saisie.type = terminalJeu.shell.attente ? 'password' : 'text';
   };
 
   const majNav = () => {
+    boutonPoste.setAttribute('aria-current', String(histoire() === -1));
     boutonsHistoires.forEach((b, h) => {
-      b.setAttribute('aria-current', String(h === histoire));
+      b.setAttribute('aria-current', String(h === histoire()));
+      b.disabled = !accessible(h);
       const faits = chapitres(h).filter((c) => termines.includes(c.id)).length;
       const total = chapitres(h).length;
-      b.querySelector('.etat')!.textContent =
-        faits === total ? t('etat-histoire-terminee') : total > 1 ? t('etat-chapitres-faits', { faits, total }) : '';
+      b.querySelector('.etat')!.textContent = !accessible(h)
+        ? t('etat-cle-manquante')
+        : faits === total
+          ? t('etat-histoire-terminee')
+          : total > 1
+            ? t('etat-chapitres-faits', { faits, total })
+            : '';
     });
     navsChapitres.forEach((nav, h) => {
-      nav.hidden = h !== histoire || chapitres(h).length < 2;
+      nav.hidden = h !== histoire() || chapitres(h).length < 2;
       nav.querySelectorAll<HTMLButtonElement>('[data-chapitre]').forEach((b, c) => {
         b.disabled = !ouvert(h, c);
-        b.setAttribute('aria-current', String(h === histoire && c === courant));
+        b.setAttribute('aria-current', String(h === histoire() && c === courant()));
         b.querySelector('.etat')!.textContent = termines.includes(chapitres(h)[c].id)
           ? t('etat-chapitre-termine')
           : ouvert(h, c)
@@ -123,61 +135,55 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
             : t('etat-verrouille');
       });
     });
+    // « Chapitre suivant » : après un chapitre fini, s'il en reste un.
+    const h = histoire();
+    fin.hidden = !(h >= 0 && terminalJeu.distant!.shell.termine && courant() < chapitres(h).length - 1);
   };
 
-  const demarrer = (h: number, c: number) => {
-    histoire = h;
-    courant = c;
-    const chapitre = chapitres(h)[c];
-    shell = new Shell(chapitre, t.langue);
-    sortie.replaceChildren();
-    fin.hidden = true;
-    const titre =
-      chapitres(h).length > 1
-        ? t('chapitre-titre-complet', { histoire: titreHistoire(h), numero: chapitre.numero, titre: t(`chapitre-${chapitre.id}`) })
-        : titreHistoire(h);
-    afficher(`— ${titre} —`);
-    afficher(shell.executer(`cat ${chapitre.accueil}`) ?? '');
+  const apres = () => {
     majInvite();
     majNav();
     sauver();
+    terminal.scrollTop = terminal.scrollHeight;
   };
 
-  // Reprend une histoire à son premier chapitre pas encore terminé.
-  const reprendre = (h: number) => {
-    const c = chapitres(h).findIndex((ch) => !termines.includes(ch.id));
-    demarrer(h, c === -1 ? chapitres(h).length - 1 : c);
+  // Les raccourcis du menu : un écran neuf, directement sur la bonne machine.
+  const allerPoste = () => {
+    sortie.replaceChildren();
+    if (terminalJeu.distant) terminalJeu.deconnecter();
+    afficher(`— ${t('poste-titre')} —`);
+    afficher(terminalJeu.reinitialiserPoste());
+    apres();
+  };
+  const demarrer = (h: number, c?: number) => {
+    sortie.replaceChildren();
+    const chapitre = c === undefined ? undefined : chapitres(h)[c];
+    if (terminalJeu.distant?.histoire === HISTOIRES[h] && chapitre) afficher(terminalJeu.ouvrir(chapitre));
+    else afficher(terminalJeu.connecter(machineDeHistoire(HISTOIRES[h].id)!.nom, chapitre));
+    apres();
   };
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const ligne = saisie.value;
     // Un mot de passe ne s'affiche pas et ne va pas dans l'historique.
-    const secret = shell.attente !== null;
+    const secret = terminalJeu.shell.attente !== null;
+    const reponse = secret || terminalJeu.shell.question !== null;
     afficher(secret ? (invite.textContent ?? '') : `${invite.textContent} ${ligne}`, 'cmd');
-    if (ligne.trim() && !secret) historique.push(ligne);
+    if (ligne.trim() && !reponse) historique.push(ligne);
     position = historique.length;
-    const dejaFini = shell.termine;
-    const resultat = shell.executer(ligne);
+    const resultat = terminalJeu.executer(ligne);
     if (resultat === null) sortie.replaceChildren();
     else afficher(resultat);
-    if (shell.termine && !dejaFini) {
-      const id = chapitres(histoire)[courant].id;
-      if (!termines.includes(id)) termines.push(id);
-      sauver();
-      majNav();
-      fin.hidden = courant >= chapitres(histoire).length - 1;
-    }
     saisie.value = '';
-    majInvite();
-    terminal.scrollTop = terminal.scrollHeight;
+    apres();
   });
 
   saisie.addEventListener('keydown', (e) => {
-    if (shell.attente) return;
+    if (terminalJeu.shell.attente || terminalJeu.shell.question) return;
     if (e.key === 'Tab') {
       e.preventDefault();
-      saisie.value = shell.completer(saisie.value);
+      saisie.value = terminalJeu.completer(saisie.value);
     } else if (e.key === 'ArrowUp' && position > 0) {
       e.preventDefault();
       saisie.value = historique[--position];
@@ -191,9 +197,13 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   terminal.addEventListener('click', () => {
     if (!window.getSelection()?.toString()) saisie.focus();
   });
+  boutonPoste.addEventListener('click', () => {
+    allerPoste();
+    saisie.focus();
+  });
   boutonsHistoires.forEach((b, h) =>
     b.addEventListener('click', () => {
-      reprendre(h);
+      demarrer(h);
       saisie.focus();
     }),
   );
@@ -206,14 +216,19 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     ),
   );
   suivant.addEventListener('click', () => {
-    demarrer(histoire, courant + 1);
+    demarrer(histoire(), courant() + 1);
     saisie.focus();
   });
   recommencer.addEventListener('click', () => {
-    demarrer(histoire, courant);
+    if (histoire() === -1) allerPoste();
+    else demarrer(histoire(), courant());
     saisie.focus();
   });
 
-  reprendre(histoire);
+  // Au départ : l'histoire demandée par l'attribut, sinon celle où l'on
+  // s'était arrêté, sinon le poste.
+  const depart = HISTOIRES.findIndex((h) => h.id === (options.histoire ?? sauve.histoire));
+  if (depart >= 0 && accessible(depart)) demarrer(depart);
+  else allerPoste();
   return { racine: jeu };
 }

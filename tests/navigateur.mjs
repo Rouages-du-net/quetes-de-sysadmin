@@ -47,6 +47,15 @@ for (const largeur of [1000, 375]) {
     await saisie.fill(c);
     await saisie.press('Enter');
   };
+  verifier((await jeu.locator('.sortie').textContent()).includes('Bienvenue sur ton poste'), `${largeur} px : on part du poste`);
+  verifier(await jeu.locator('button[data-histoire="1"]').isDisabled(), `${largeur} px : sans sa clé, le Datacenter est verrouillé`);
+  await saisie.fill('ssh roy');
+  await saisie.press('Tab');
+  verifier((await saisie.inputValue()) === 'ssh royaume ', `${largeur} px : Tab complète le nom de la machine`);
+  await saisie.press('Enter');
+  verifier((await jeu.locator('.invite').textContent()).startsWith('Are you sure'), `${largeur} px : ssh demande de confirmer l’empreinte`);
+  await tape('yes');
+  verifier((await jeu.locator('.invite').textContent()) === 'vous@royaume:~$', `${largeur} px : connecté·e à royaume`);
   verifier((await jeu.locator('.sortie').textContent()).includes('L’Effaceur — chapitre 1'), `${largeur} px : le chapitre 1 s’ouvre`);
   await tape('man ls');
   verifier((await jeu.locator('.sortie').textContent()).includes('VOIR AUSSI'), `${largeur} px : man ls s’affiche`);
@@ -61,6 +70,10 @@ for (const largeur of [1000, 375]) {
   verifier((await jeu.locator('.sortie').textContent()).includes('chapitre 2'), `${largeur} px : chapitre 2 ouvert`);
   await page.reload();
   verifier((await jeu.locator('.sortie').textContent()).includes('chapitre 2'), `${largeur} px : reprise après rechargement`);
+  await tape('exit');
+  verifier((await jeu.locator('.sortie').textContent()).includes('Connection to royaume.example closed.'), `${largeur} px : exit ramène au poste`);
+  await tape('ssh royaume');
+  verifier((await jeu.locator('.invite').textContent()) === 'vous@royaume:~$', `${largeur} px : hôte connu gardé, pas de nouvelle question`);
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${largeur} px : pas de défilement horizontal`);
   verifier(erreurs.length === 0, `${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
   verifier(externes.length === 0, `${largeur} px : aucune ressource tierce ${externes.join(' ')}`);
