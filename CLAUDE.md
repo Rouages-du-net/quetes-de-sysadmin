@@ -26,6 +26,8 @@ rouages.net.
   `sshd_config` comme OpenSSH, configuration appliquée au reload).
 - `src/moteur/parefeu.ts` : le pare-feu d'une machine (règles ufw ; `ssh`
   s'y heurte).
+- `src/moteur/fail2ban.ts` : fail2ban d'une machine (configuration, bannissements ;
+  `ssh` s'y heurte).
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;
   on part du poste et on se connecte en `ssh` à la machine de chaque
   histoire (`commandes/ssh.ts`).

@@ -242,6 +242,18 @@ man-ss = affiche les « sockets » de la machine : les ports où un programme at
     .exemple-1 = qui écoute, sur quelle adresse et quel port ?
     .exemple-2 = les connexions TCP établies
 
+man-fail2ban-client = pilote fail2ban, le gardien qui lit les journaux et bannit les adresses qui échouent trop souvent à se connecter (force brute). Une « prison » (jail) surveille un service : sshd pour SSH. status donne la liste des prisons ; status sshd, les échecs et les adresses bannies ; set sshd unbanip ADRESSE lève un bannissement ; -t vérifie la configuration ; reload la recharge. Réservé à root.
+    .synopsis = fail2ban-client status [prison] ; fail2ban-client set prison banip|unbanip ADRESSE ; fail2ban-client get prison bantime|findtime|maxretry|ignoreip ; fail2ban-client -t ; fail2ban-client reload
+    .exemple-1 = les prisons actives
+    .exemple-2 = les échecs et les adresses bannies de la prison sshd
+    .exemple-3 = débannir une adresse
+    .exemple-4 = vérifier la configuration
+    .exemple-5 = recharger la configuration
+man-jail_conf = la configuration de fail2ban. Ne modifiez pas /etc/fail2ban/jail.conf, qu'une mise à jour remplacerait : écrivez vos réglages dans /etc/fail2ban/jail.local (ou jail.d/*.local), lus APRÈS et qui l'emportent. Format : des sections ([DEFAULT] pour tout, [sshd] pour la prison SSH) et des lignes « clé = valeur ». enabled = true active une prison ; maxretry : nombre d'échecs avant le bannissement ; findtime : la fenêtre où on les compte ; bantime : la durée du bannissement (600, 10m, 1h, 1d, 1w ; -1 pour toujours) ; ignoreip : les adresses ou réseaux (CIDR, ex. 192.0.2.0/24) jamais bannis, séparés par des espaces.
+    .synopsis = /etc/fail2ban/jail.local
+    .exemple-1 = écrire ses réglages
+    .exemple-2 = la valeur appliquée
+
 ## Mise en page du manuel et messages de man-db et des coreutils
 
 # En-tête de chaque page, entre « LS(1) » et « LS(1) »

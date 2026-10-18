@@ -141,3 +141,74 @@ for (const langue of LANGUES)
       expect(c.termines).not.toContain('pare-feu');
     });
   });
+
+// Les Lettres du quartier, « La sentinelle » : fail2ban.
+for (const langue of LANGUES)
+  describe(`La sentinelle — ${langue}`, () => {
+    const fr = langue === LANGUE_DE_REFERENCE;
+    const partie = () => {
+      const c = new Console({ langue, termines: [...EFFACEUR, 'fermer-la-porte', 'pare-feu'] });
+      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+      const ecrire = (fichier: string, texte: string) => {
+        c.executer(`sudo nano ${fichier}`);
+        if (c.shell.attente) c.executer('fourmis-2026');
+        c.enregistrer(texte);
+        return c.quitterEdition();
+      };
+      jouer(['ssh lettres', 'yes']);
+      expect(c.distant?.shell.chapitre.id).toBe('sentinelle');
+      return { c, jouer, ecrire };
+    };
+    const BON = '[DEFAULT]\nbantime = 1h\nignoreip = 127.0.0.1/8 ::1 192.0.2.2 198.51.100.40\n';
+
+    it('solution : lire le journal, débannir Rania, jail.local, recharger, vérifier', () => {
+      const { c, jouer, ecrire } = partie();
+      let tout = jouer(['cat /var/log/fail2ban.log', 'sudo fail2ban-client status sshd', 'fourmis-2026', 'sudo fail2ban-client set sshd unbanip 198.51.100.40']);
+      expect(tout).toContain('Ban 198.51.100.40');
+      expect(tout).toContain('`- Banned IP list:\t203.0.113.66 198.51.100.40 198.51.100.23');
+      tout += ecrire('/etc/fail2ban/jail.local', BON);
+      tout += jouer(['sudo fail2ban-client -t', 'sudo systemctl reload fail2ban', 'sudo fail2ban-client get sshd bantime']);
+      expect(tout).toContain('OK: configuration test is successful');
+      expect(tout).toContain('3600');
+      expect(c.termines).not.toContain('sentinelle');
+      tout += jouer(['sudo fail2ban-client status sshd']);
+      if (fr) expect(tout).toContain('https://manpages.debian.org/bookworm/fail2ban/jail.conf.5.en.html');
+      expect(c.termines).toContain('sentinelle');
+    });
+
+    it('une autre solution : jail.d/*.local, bantime -1, ignoreip en CIDR', () => {
+      const { c, jouer, ecrire } = partie();
+      ecrire('/etc/fail2ban/jail.d/lettres.local', '[sshd]\nbantime = -1\nignoreip = 192.0.2.0/24 198.51.100.40\n');
+      jouer(['sudo fail2ban-client reload', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client status sshd']);
+      expect(c.termines).toContain('sentinelle');
+    });
+
+    it('se bannir soi-même : Connection refused, puis la console de secours', () => {
+      const { c, jouer, ecrire } = partie();
+      const alerte = ecrire('/etc/fail2ban/jail.local', '[DEFAULT]\nmaxretry = 3\n') + jouer(['sudo systemctl reload fail2ban']);
+      if (fr) expect(alerte).toContain("l'adresse de ton propre");
+      const dehors = jouer(['exit', 'ssh lettres']);
+      expect(dehors).toContain('ssh: connect to host lettres.example port 22: Connection refused');
+      c.connecter('lettres');
+      ecrire('/etc/fail2ban/jail.local', BON);
+      jouer([
+        'sudo fail2ban-client set sshd unbanip 192.0.2.2', 'sudo fail2ban-client reload',
+        'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client status sshd',
+      ]);
+      expect(c.termines).toContain('sentinelle');
+    });
+
+    it('fausses pistes : syntaxe, ne pas recharger, oublier Rania, modifier jail.conf', () => {
+      const { c, jouer, ecrire } = partie();
+      let tout = ecrire('/etc/fail2ban/jail.local', '[DEFAULT]\nbantime 1h\n') + jouer(['sudo fail2ban-client -t', 'sudo systemctl reload fail2ban']);
+      expect(tout).toContain("Source contains parsing errors: '/etc/fail2ban/jail.local'");
+      expect(tout).toContain('Job for fail2ban.service failed');
+      ecrire('/etc/fail2ban/jail.local', BON);
+      jouer(['sudo fail2ban-client status sshd']);
+      expect(c.termines).not.toContain('sentinelle');
+      jouer(['sudo fail2ban-client reload', 'sudo fail2ban-client status sshd']);
+      expect(c.termines).not.toContain('sentinelle');
+      tout = ecrire('/etc/fail2ban/jail.conf', '[DEFAULT]\nbantime = 1h\n');
+      if (fr) expect(tout).toContain('YOU SHOULD NOT MODIFY THIS');
+    });
+  });
