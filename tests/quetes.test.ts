@@ -127,7 +127,12 @@ for (const langue of LANGUES)
       };
 
       it('solution : rsync, crontab, la nuit, la restauration', () => {
-        const { s, tout } = jouer('sauvegarde', ['cat mot_de_maelle.txt', 'rsync souvenirs /mnt/sauvegarde', 'rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'crontab -l']);
+        const { s, tout } = jouer('sauvegarde', [
+          'cat mot_de_maelle.txt',
+          'rsync souvenirs /mnt/sauvegarde',
+          'rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/',
+          'crontab -l',
+        ]);
         expect(tout).toContain('skipping directory souvenirs');
         expect(tout).toContain('sending incremental file list');
         expect(tout).toContain('no crontab for vous');
@@ -249,7 +254,7 @@ for (const langue of LANGUES)
           'systemctl --failed',
         ]);
         contient(tout, '× catalogue.service');
-        contient(tout, "Loaded: loaded (/usr/lib/systemd/system/nginx.service; disabled; preset: enabled)");
+        contient(tout, 'Loaded: loaded (/usr/lib/systemd/system/nginx.service; disabled; preset: enabled)');
         contient(tout, 'failed to open error_log (/var/log/catalogue/error.log): Permission denied (13)');
         contient(tout, 'Failed to start nginx.service: Access denied');
         contient(tout, 'Job for catalogue.service failed because the control process exited with error code.');
@@ -280,6 +285,152 @@ for (const langue of LANGUES)
           'systemctl --failed',
         ]);
         expect(s.termine).toBe(false);
+      });
+
+      it('Le Datacenter, chapitre 4 — Le grand incendie', () => {
+        const { s, tout } = jouer('incendie', [
+          'cat /mnt/sauvegarde/PRA.txt',
+          // Fausse piste : une machine neuve ne connaît encore aucun paquet.
+          'sudo apt install nginx',
+          'bienvenue-2026',
+          'sudo apt update',
+          'sudo apt install nginx',
+          'y',
+          'curl http://localhost',
+          // Fausse piste : l'archive de cette nuit a été coupée par le feu.
+          'tar -tzf /mnt/sauvegarde/mediatheque-2026-10-23.tar.gz',
+          'tar -tzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
+          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /',
+          // Fausse piste : deux sites « default_server » sur le port 80.
+          'sudo nginx -t',
+          'sudo systemctl reload nginx',
+          'sudo rm /etc/nginx/sites-enabled/default',
+          'sudo nginx -t',
+          'sudo systemctl reload nginx',
+          'curl http://mediatheque.example',
+        ]);
+        expect(tout).toContain('Error: Unable to locate package nginx');
+        expect(tout).toContain('Welcome to nginx!');
+        expect(tout).toContain('a duplicate default server for 0.0.0.0:80 in /etc/nginx/sites-enabled/mediatheque:2');
+        expect(tout).toContain('Job for nginx.service failed');
+        expect(tout).toContain('test is successful');
+        contient(tout, 'Une machine neuve ne connaît encore aucun paquet');
+        contient(tout, 'Fin de fichier inattendue');
+        contient(tout, 'le feu a pris');
+        contient(tout, 'tant que la nouvelle configuration est refusée');
+        contient(tout, 'Vacances de la Toussaint');
+        expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter, chapitre 4 — restaurer d’abord, installer ensuite, garder le site Debian', () => {
+        const { s, tout } = jouer('incendie', [
+          'cd /',
+          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
+          'bienvenue-2026',
+          'sudo apt update',
+          // nginx ne démarre pas : deux serveurs par défaut.
+          'sudo apt install -y nginx',
+          'systemctl is-active nginx',
+        ]);
+        expect(tout).toContain('dpkg: error processing package nginx (--configure):');
+        expect(tout).toContain('failed');
+        expect(s.termine).toBe(false);
+        // Autre solution : la médiathèque n'est plus le site par défaut ; on la joint par son nom.
+        const conf = '/etc/nginx/sites-enabled/mediatheque';
+        s.executer(`sudo nano ${conf}`);
+        s.enregistrerEdition(s.edition!.texte.replaceAll(' default_server', ''));
+        s.quitterEdition();
+        s.executer('sudo nginx -t');
+        s.executer('sudo systemctl start nginx');
+        expect(s.executer('curl localhost')).toContain('Welcome to nginx!');
+        expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter, chapitre 4 — fausses pistes : extraire dans ~, l’archive coupée, celle de mercredi', () => {
+        const { s, tout } = jouer('incendie', [
+          'sudo apt update',
+          'bienvenue-2026',
+          'sudo apt install -y nginx',
+          'sudo rm /etc/nginx/sites-enabled/default',
+          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
+          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-23.tar.gz -C /',
+          'sudo systemctl reload nginx',
+          'curl -I mediatheque.example',
+          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-21.tar.gz -C /',
+          'sudo systemctl reload nginx',
+        ]);
+        contient(tout, 'extraite là où tu étais');
+        // L'archive coupée rend la configuration, mais aucune page : 404.
+        expect(tout).toContain('HTTP/1.1 404 Not Found');
+        contient(tout, 'avec la page de mercredi');
+        expect(s.termine).toBe(false);
+        s.executer('sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /');
+        expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter, chapitre 5 — Le certificat a expiré', () => {
+        const { s, tout } = jouer('certificat', [
+          'curl https://mediatheque.example',
+          'journalctl -u certbot -n 8',
+          'sudo certbot certificates',
+          'bienvenue-2026',
+          'sudo certbot renew --dry-run',
+          'sudo cat /etc/letsencrypt/renewal/mediatheque.example.conf',
+          // Fausse piste : --dry-run n'enregistre rien.
+          'sudo certbot renew --dry-run --webroot -w /var/www/mediatheque',
+          'sudo certbot renew --webroot -w /var/www/mediatheque',
+          // Fausse piste : renouvelé sur le disque, mais nginx sert encore l'ancien.
+          'curl https://mediatheque.example',
+          'sudo certbot reconfigure --cert-name mediatheque.example --deploy-hook "systemctl reload nginx"',
+          'sudo systemctl reload nginx',
+          'curl -I https://mediatheque.example',
+        ]);
+        expect(tout).toContain('curl: (60) SSL certificate problem: certificate has expired');
+        expect(tout).toContain('(INVALID: EXPIRED)');
+        expect(tout).toContain('Invalid response from http://mediatheque.example/.well-known/acme-challenge/');
+        expect(tout).toContain('Congratulations, all simulated renewals succeeded');
+        expect(tout).toContain('Congratulations, all renewals succeeded');
+        expect(tout).toContain('Dry run: skipping deploy hook command: systemctl reload nginx');
+        expect(tout).toContain('HTTP/1.1 200 OK');
+        contient(tout, 'Le certificat a bien expiré');
+        contient(tout, 'pas là où nginx sert ce site');
+        contient(tout, 'mais curl voit encore');
+        expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter, chapitre 5 — corriger le fichier de renouvellement, script de deploy hook', () => {
+        const { s, tout } = jouer('certificat', [
+          'sudo certbot renew',
+          'bienvenue-2026',
+          'sudo nano /etc/letsencrypt/renewal/mediatheque.example.conf',
+        ]);
+        expect(tout).toContain('Some challenges have failed');
+        s.enregistrerEdition(s.edition!.texte.replaceAll('/var/www/html', '/var/www/mediatheque'));
+        s.quitterEdition();
+        const suite = [
+          'sudo certbot renew --dry-run',
+          'echo "systemctl reload nginx" | sudo tee /etc/letsencrypt/renewal-hooks/deploy/recharger-nginx',
+          // Fausse piste : un script qui n'est pas exécutable est ignoré.
+          'sudo certbot renew',
+        ].map((l) => s.executer(l) ?? '');
+        expect(suite.join('\n')).toContain("Skipping deploy-hook '/etc/letsencrypt/renewal-hooks/deploy/recharger-nginx' as it is not executable.");
+        expect(s.termine).toBe(false);
+        s.executer('sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/recharger-nginx');
+        s.executer('sudo systemctl reload nginx');
+        expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter, chapitre 5 — le module nginx de certbot', () => {
+        const { s, tout } = jouer('certificat', [
+          'sudo certbot renew --nginx',
+          'bienvenue-2026',
+          'sudo apt install -y python3-certbot-nginx',
+          'sudo certbot renew --nginx',
+          'openssl s_client -connect mediatheque.example:443 | openssl x509 -noout -enddate',
+        ]);
+        expect(tout).toContain('The requested nginx plugin does not appear to be installed');
+        expect(tout).toContain('notAfter=Apr 21');
+        expect(s.termine).toBe(true);
       });
 
       it('Le Paquet perdu', () => {
@@ -328,6 +479,62 @@ for (const langue of LANGUES)
           'tar -tzf /media/cle/fonds.tar.gz',
         ]);
         expect(s.termine).toBe(true);
+      });
+    });
+
+    describe('Les Archives, chapitre 2 — Les versions (restic)', () => {
+      const R = 'restic -r /mnt/mairie/restic-bibliotheque --password-file ~/.config/restic/mot-de-passe';
+      // Les identifiants des instantanés, du plus ancien au plus récent.
+      const instantanes = (s: Shell) => [...(s.executer(`${R} snapshots`) ?? '').matchAll(/^([0-9a-f]{8}) {2}/gm)].map((m) => m[1]);
+
+      it('solution : find, restore, forget, prune, check, chmod', () => {
+        const { s, tout } = jouer('versions', ['df -h /mnt/mairie', `${R} find --long journal_de_marie.txt`]);
+        expect(tout).toContain('2027-02-02 02:00:13 /home/vous/fonds/manuscrits/journal_de_marie.txt');
+        const ids = instantanes(s);
+        expect(ids).toHaveLength(30);
+        const bon = ids[25];
+        const suite = [
+          `${R} diff ${bon} ${ids[26]}`,
+          `${R} restore ${bon} --target /tmp/restauration --include /home/vous/fonds/manuscrits/journal_de_marie.txt`,
+          'cp /tmp/restauration/home/vous/fonds/manuscrits/journal_de_marie.txt ~/fonds/manuscrits/',
+          `${R} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --dry-run`,
+          // Fausse piste : forget seul ne rend pas la place.
+          `${R} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12`,
+          `${R} prune`,
+          'chmod 600 ~/.config/restic/mot-de-passe',
+          `${R} check`,
+        ]
+          .map((l) => s.executer(l) ?? '')
+          .join('\n');
+        expect(suite).toContain('M    /home/vous/fonds/manuscrits/journal_de_marie.txt');
+        expect(suite).toContain('Would have removed the snapshots above (dry run).');
+        expect(suite).toContain('remove 21 snapshots:');
+        expect(suite).toContain('no errors were found');
+        contient(suite, 'pas à sa place');
+        contient(suite, 'mais df -h /mnt/mairie ne');
+        contient(suite, 'Le disque respire');
+        expect(s.termine).toBe(true);
+      });
+
+      it('autre solution : le mot de passe tapé, dump, forget --prune, puis une sauvegarde', () => {
+        const { s, tout } = jouer('versions', ['chmod go-rwx ~/.config/restic/mot-de-passe', 'restic -r /mnt/mairie/restic-bibliotheque snapshots', 'mauvais']);
+        expect(tout).toContain('Fatal: wrong password or no key found');
+        contient(tout, 'Mauvais mot de passe');
+        const ids = instantanes(s);
+        for (const l of [
+          `${R} dump ${ids[20]} /home/vous/fonds/manuscrits/journal_de_marie.txt > ~/fonds/manuscrits/journal_de_marie.txt`,
+          `${R} backup ~/fonds`,
+          `${R} forget --keep-last 2 --prune`,
+          `${R} check`,
+        ])
+          s.executer(l);
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausse piste : forget trop sévère avant de restaurer', () => {
+        const { s, tout } = jouer('versions', [`${R} forget --keep-last 3 --prune`, `${R} check`, 'chmod 600 ~/.config/restic/mot-de-passe']);
+        contient(tout, 'Plus aucun instantané ne contient la bonne version');
+        expect(s.termine).toBe(false);
       });
     });
 

@@ -16,6 +16,27 @@
 
 import type { Shell } from '../shell';
 import type { Commande } from './index';
+import { requete } from '../nginx';
+import { couvre, lire } from '../tls';
+import { systemd, versUtc } from '../systemd';
+
+// Ce que curl ajoute quand la vérification du certificat échoue (curl 8).
+const AIDE_SSL = `More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the webpage mentioned above.`;
+
+/** Le problème du certificat présenté, au format de curl ; null s'il est bon. */
+export function verifierCertificat(jeu: Shell, contenu: string | null, hote: string): string | null {
+  const c = lire(contenu);
+  if (!c) return 'SSL certificate problem: unable to get local issuer certificate';
+  const maintenant = versUtc(systemd(jeu)?.horloge ?? 0);
+  if (maintenant > c.fin) return 'SSL certificate problem: certificate has expired';
+  if (maintenant < c.debut) return 'SSL certificate problem: certificate is not yet valid';
+  if (!couvre(c, hote)) return `SSL: no alternative certificate subject name matches target hostname '${hote}'`;
+  return null;
+}
 
 interface Reseau {
   machines: Record<string, { ping: boolean; ms: number }>;
@@ -24,6 +45,9 @@ interface Reseau {
   routes: Record<string, { ip: string; nom?: string; ms: number }[]>;
   web: Record<string, { entetes: string[]; corps: string }>;
 }
+
+// Les noms sous lesquels une machine avec nginx se joint elle-même : etat.nginx.noms.
+const LOCAL_DE_BASE = ['localhost', '127.0.0.1'];
 
 const estIp = (s: string) => /^\d{1,3}(\.\d{1,3}){3}$/.test(s);
 const ms = (v: number) => v.toFixed(3);
@@ -140,17 +164,33 @@ export const RESEAU: Record<string, Commande> = {
   },
 
   curl: {
+    // curl a beaucoup d'options (-s, -L, -v…) : on ignore celles qu'on ne simule pas.
+    propresOptions: true,
     lancer: ({ args, jeu }) => {
       const entetes = args.includes('-I') || args.includes('--head');
       const url = args.find((a) => !a.startsWith('-'));
-      if (!url) return jeu.erreur('curl: try \'curl --help\' for more information');
+      if (!url) return jeu.erreur("curl: try 'curl --help' for more information");
       const m = /^(?:(https?):\/\/)?([^/:]+)(.*)$/.exec(url);
       if (!m) return jeu.erreur(`curl: (3) URL rejected: Malformed input to a URL function`);
       const hote = m[2];
+      // Une machine avec nginx : la requête part vers elle-même (localhost,
+      // son nom, son adresse), et nginx répond selon sa configuration chargée.
+      if (jeu.etat.nginx) {
+        if (![...LOCAL_DE_BASE, ...(jeu.etat.nginx.noms ?? [])].includes(hote.toLowerCase()))
+          return jeu.erreur(`curl: (6) Could not resolve host: ${hote}`);
+        const port = m[1] === 'https' ? 443 : 80;
+        const r = requete(jeu, hote, m[3] || '/', port);
+        if (!r) return jeu.erreur(`curl: (7) Failed to connect to ${hote} port ${port} after 0 ms: Couldn't connect to server`);
+        // HTTPS : curl vérifie le certificat présenté (dates, nom), sauf avec -k.
+        const probleme = port === 443 && !args.some((a) => a === '-k' || a === '--insecure') ? verifierCertificat(jeu, r.certificat ?? null, hote) : null;
+        if (probleme) return jeu.erreur(`curl: (60) ${probleme}\n${AIDE_SSL}`);
+        return entetes ? r.entetes.join('\n') : r.corps;
+      }
       const res = resoudreNom(jeu, hote);
       if ('erreur' in res) return jeu.erreur(`curl: (6) Could not resolve host: ${hote}`);
       const site = (jeu.etat.reseau as Reseau).web[hote];
-      if (!site) return jeu.erreur(`curl: (7) Failed to connect to ${hote} port ${m[1] === 'http' ? 80 : 443} after 3002 ms: Couldn't connect to server`);
+      if (!site)
+        return jeu.erreur(`curl: (7) Failed to connect to ${hote} port ${m[1] === 'http' ? 80 : 443} after 3002 ms: Couldn't connect to server`);
       return entetes ? site.entetes.join('\n') : site.corps;
     },
   },

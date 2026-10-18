@@ -49,6 +49,8 @@ export class Console {
     s.etat.pareFeuDistant = (nom: string) => this.sessions.get(nom)?.etat.ufw ?? null;
     // … et les adresses que son fail2ban a bannies.
     s.etat.bannisDistant = (nom: string): string[] => this.sessions.get(nom)?.etat.fail2ban?.bannis ?? [];
+    // … et sa clé d'hôte, qui change quand la machine a été réinstallée.
+    s.etat.cleDistante = (nom: string): string => this.chapitreDeConnexion(nom).cleHote ?? '';
     if (hotesConnus) s.placer('ssh', '~/.ssh/known_hosts', f(hotesConnus, { lignes: true }));
     return s;
   }
@@ -83,13 +85,22 @@ export class Console {
 
   titre(h: Histoire, c: Chapitre): string {
     const histoire = this.t(`histoire-${h.id}`);
-    const titre = h.chapitres.length > 1 ? this.t('chapitre-titre-complet', { histoire, numero: c.numero, titre: this.t(`chapitre-${c.id}`) }) : histoire;
+    const titre =
+      h.chapitres.length > 1 ? this.t('chapitre-titre-complet', { histoire, numero: c.numero, titre: this.t(`chapitre-${c.id}`) }) : histoire;
     return `— ${titre} —`;
   }
 
   /** Le premier chapitre pas encore terminé d'une histoire (ou le dernier). */
   chapitreCourant(h: Histoire): Chapitre {
     return h.chapitres.find((c) => !this.termines.includes(c.id)) ?? h.chapitres.at(-1)!;
+  }
+
+  // Le chapitre que trouvera une connexion à cette machine (voir connecter).
+  private chapitreDeConnexion(nom: string): Chapitre {
+    const machine = MACHINES.find((m) => m.nom === nom)!;
+    const c = this.chapitreCourant(HISTOIRES.find((h) => h.id === machine.histoire)!);
+    const ancienne = this.sessions.get(nom);
+    return ancienne && (ancienne.chapitre === c || !ancienne.termine) ? ancienne.chapitre : c;
   }
 
   /**
@@ -202,4 +213,3 @@ export class Console {
     return [sh.quitterEdition(), this.noterFin(sh, this.finiAvantEdition)].filter(Boolean).join('\n\n');
   }
 }
-

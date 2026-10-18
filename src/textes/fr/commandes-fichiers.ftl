@@ -61,8 +61,14 @@ df-entete = Sys. de fichiers   Taille Utilisé  Dispo Uti% Monté sur
 
 ## tar
 
-tar-usage = Usage : tar -czf archive.tar.gz lieu  |  tar -tzf archive.tar.gz  |  tar -xzf archive.tar.gz
+tar-usage = Usage : tar -czf archive.tar.gz lieu  |  tar -tzf archive.tar.gz  |  tar -xzf archive.tar.gz [-C lieu]
 tar-archive-vide = tar : refus de créer une archive vide
 tar-open-impossible = tar : { $cible } : open impossible : aucun fichier ou dossier de ce nom
 tar-pas-une-archive = tar : { $cible } : ne ressemble pas à une archive tar
+# Une archive coupée en cours d'écriture (gzip, puis tar, comme GNU tar).
+tar-tronquee =
+    gzip: stdin : fin de fichier inattendue
+    tar: Fin de fichier inattendue dans l'archive
+    tar: Erreur non récupérable : arrêt immédiat
+tar-lieu-introuvable = tar : { $cible } : chdir impossible : aucun fichier ou dossier de ce nom
 tar-option-manquante = tar : il faut une de ces options : -c, -t ou -x

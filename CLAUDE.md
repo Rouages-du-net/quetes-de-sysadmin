@@ -29,6 +29,14 @@ rouages.net.
 - `src/moteur/fail2ban.ts` : fail2ban d'une machine (configuration, bannissements ;
   `ssh` s'y heurte).
 - `src/moteur/cron.ts` : crontabs (analyse comme cron) et nuit simulée.
+- `src/moteur/nginx.ts` : nginx d'une machine (configuration lue et vérifiée
+  comme `nginx -t`, appliquée au reload ; `curl` s'y adresse) ; `apt` et la
+  commande `nginx` dans `commandes/apt.ts`.
+- `src/moteur/tls.ts` : certificats (fichiers PEM lisibles par le jeu) ;
+  `certbot` et `openssl` dans `commandes/certbot.ts` (le défi HTTP-01 passe
+  par le nginx simulé).
+- `commandes/restic.ts` : dépôts restic (instantanés, déduplication,
+  politiques de `forget`, `prune`), rangés dans `etat.restic`.
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;
   on part du poste et on se connecte en `ssh` à la machine de chaque
   histoire (`commandes/ssh.ts`).

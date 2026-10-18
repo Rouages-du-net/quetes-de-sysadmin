@@ -85,7 +85,7 @@ archives-evenement-sauve =
 
     Rosa débranche la clé à 23 h 58. « Tout y est. Merci ! »
 
-    FIN DE L'HISTOIRE « LES ARCHIVES ».
+    (Un deuxième chapitre t'attend : Les versions.)
 
     Tu sais maintenant mesurer (du, df), chercher et trier (find, -delete) et
     empaqueter (tar). Et une règle d'or des archivistes : une seule copie, ce

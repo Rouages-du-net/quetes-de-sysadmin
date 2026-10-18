@@ -117,6 +117,16 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | fail2ban | une seule prison (`sshd`) ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
 | `rsync` | copie locale seulement (pas de `user@machine:`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | aussi à distance par SSH, compare taille et date |
 | `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
+| `apt` | `update`, `install [-y]`, `list --installed` ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » | tout le catalogue Debian, `upgrade`, `remove`, `search`, `show`… ; dpkg garde l'état du paquet |
+| `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server`, les pages par `root` et `index` (pas de `location`, de HTTPS ni de proxy) ; `sites-enabled` contient des copies | toutes les directives et modules ; sur Debian, `sites-enabled` contient des liens symboliques |
+| `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse) | tout le réseau |
+| `tar` | `-C` ; une archive coupée s'arrête à la coupure (messages proches de GNU tar) ; root garde propriétaires et droits | aussi `--strip-components`, `-p`, archives multi-volumes… |
+| `ssh-keygen` | `-R`, `-F`, `-l -f` seulement ; ne crée pas de clés | crée et convertit des clés, signe des certificats… |
+| `certbot` | un seul certificat, celui du chapitre ; `certificates`, `renew`, `certonly`, `reconfigure` ; autorité simulée (le défi HTTP-01 passe par le nginx simulé) ; les fichiers de `live/` sont réécrits (pas de liens vers `archive/`) ; le module nginx ne modifie pas la configuration | plusieurs certificats, vraie autorité ACME, liens symboliques, défis DNS |
+| `openssl` | `x509` (`-dates`, `-subject`, `-issuer`, `-ext`, `-checkend`) et `s_client -connect` (rend la main tout de suite) ; le contenu des PEM est propre au jeu | des centaines de sous-commandes ; vrai X.509 ; `s_client` attend une entrée |
+| `curl https://` | vérifie dates et noms du certificat présenté (erreur 60), `-k` pour passer outre | vérifie aussi la chaîne de confiance complète, OCSP… |
+| horloge | heure de Paris : CET l'hiver, CEST l'été | fuseau de la machine |
+| `restic` | `-r` et `--password-file` obligatoires (pas de variables d'environnement) ; `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check`, `stats` ; pas d'`init` ; un « pack » par sauvegarde ; fichiers du dépôt illisibles mais pas binaires ; pas de barres de progression | tout cela, et `mount`, `copy`, `key`, `tag`, dépôts distants (sftp, S3, rest-server) |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -214,7 +224,7 @@ acceptée : `@daily`, copie du dossier entier, restauration avec `cp`.
 Débrief : barre finale, `-n`, planifier, tester la restauration, règle
 3-2-1 et versions ; liens vers `rsync(1)` et `crontab(5)`.
 
-## Histoire 2 : Le Datacenter (faite)
+## Histoire 2 : Le Datacenter (faite, cinq chapitres)
 
 Premier jour de stage : le site de la médiathèque répond par des erreurs 503.
 Awa, responsable d'exploitation, est en réunion ; ses notes guident.
@@ -282,6 +292,76 @@ Débrief : `--failed` après chaque redémarrage, `journalctl -xeu`, start
 n'est pas enable, le dossier d'un service appartient à son compte, liens
 vers `systemctl` et `journalctl` (freedesktop.org).
 
+### Chapitre 4 — Le grand incendie (fait)
+
+Cette nuit, le datacenter de l'hébergeur a brûlé (clin d'œil à l'incendie
+d'OVHcloud à Strasbourg, en mars 2021). L'hébergeur livre une machine neuve,
+même nom et même adresse, mais vide, et avec une **nouvelle clé d'hôte SSH**.
+Les sauvegardes de chaque nuit étaient dans un autre datacenter : elles sont
+montées sur `/mnt/sauvegarde`, avec le plan de reprise d'Awa (`PRA.txt`).
+
+| Étape | Commande apprise |
+|---|---|
+| Se reconnecter | `ssh datacenter` refuse (« REMOTE HOST IDENTIFICATION HAS CHANGED! ») ; comparer l'empreinte annoncée, `ssh-keygen -R datacenter.example` (le nom écrit dans `known_hosts`), puis `yes` |
+| Installer le serveur web | `sudo apt update`, puis `sudo apt install nginx` (qui le démarre et l'active) ; `curl http://localhost` |
+| Vérifier la sauvegarde | `tar -tzf` : l'archive de cette nuit est coupée (« Fin de fichier inattendue ») ; `ls -l` montre sa taille |
+| Restaurer | `sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /` |
+| Recharger sans casser | `sudo nginx -t` (« a duplicate default server »), retirer `sites-enabled/default`, `sudo nginx -t`, `sudo systemctl reload nginx` |
+| Tester | `curl http://mediatheque.example` |
+
+Objectif vérifié sur l'état : nginx tourne, démarre avec la machine, et sert
+pour `mediatheque.example` la page de la dernière sauvegarde intacte (celle
+du 22).
+
+Pièges prévus : `apt install` avant `apt update` (« Unable to locate
+package »), `apt` sans `sudo` (verrou de dpkg), l'archive coupée (extraite,
+elle rend la configuration sans les pages : 404), une extraction dans `~`
+(sans `-C /`), la sauvegarde de mercredi (plus ancienne que nécessaire), les
+deux `default_server` (le rechargement est refusé, l'ancienne configuration
+reste), `ssh-keygen -R datacenter` (le nom court n'est pas dans
+`known_hosts`). Autres solutions acceptées : restaurer avant d'installer
+(nginx ne démarre pas à l'installation, puis `systemctl start`), garder le
+site de Debian et enlever `default_server` de la médiathèque, `cd /` puis
+`tar -xzf` sans `-C`. Débrief : 3-2-1 avec une copie loin, plan de reprise
+écrit et essayé, relire ses sauvegardes, perte acceptée (une journée),
+clé d'hôte, `nginx -t` ; liens vers apt(8), la documentation de nginx, GNU
+tar et ssh-keygen.
+
+### Chapitre 5 — Le certificat a expiré (fait)
+
+Trois mois après l'incendie, le certificat HTTPS de la médiathèque a expiré
+ce matin ; les navigateurs affichent une alerte. Le jour de l'incendie, le
+certificat avait été demandé avant la restauration du site : certbot a noté
+`/var/www/html` (le site par défaut de Debian) comme dossier du défi. Depuis
+30 jours, chaque renouvellement automatique échoue en silence (404). Depuis
+juin 2025, Let's Encrypt n'envoie plus de courriel avant l'expiration.
+
+| Étape | Commande apprise |
+|---|---|
+| Voir comme un visiteur | `curl https://mediatheque.example` (erreur 60), `openssl s_client -connect … \| openssl x509 -noout -dates` |
+| Le certificat sur le disque | `sudo certbot certificates`, `openssl x509 -in … -noout -dates -subject -ext subjectAltName` |
+| Pourquoi pas renouvelé | `systemctl --failed`, `journalctl -u certbot`, `sudo certbot renew --dry-run` (le défi en 404) |
+| Le bon dossier | `cat /etc/letsencrypt/renewal/mediatheque.example.conf` ; `sudo certbot renew --webroot -w /var/www/mediatheque` |
+| Que nginx serve le nouveau | `sudo systemctl reload nginx` (nginx lit le certificat au chargement) |
+| Que ça tienne | `sudo certbot reconfigure --cert-name mediatheque.example --deploy-hook "systemctl reload nginx"` |
+
+Objectif vérifié sur l'état : nginx présente un certificat valide pour les
+deux noms du site, le prochain renouvellement automatique réussirait (le
+défi est servi), et nginx sera rechargé après (deploy hook dans le fichier
+de renouvellement, script exécutable dans `renewal-hooks/deploy/`, ou module
+nginx de certbot).
+
+Pièges prévus : `certbot` sans `sudo`, `--dry-run` qui n'enregistre rien,
+ne corriger que `webroot_path` sans `[[webroot_map]]`, le certificat
+renouvelé que nginx ne sert pas encore, un script de deploy hook non
+exécutable, `--nginx` sans le paquet `python3-certbot-nginx`. Autres
+solutions acceptées : modifier le fichier de renouvellement avec `nano`,
+`certonly --webroot -w … -d … -d …`, `--deploy-hook` sur `renew`, le module
+nginx (`apt install python3-certbot-nginx`, `certbot renew --nginx`), relancer
+le service `certbot`. Débrief : 90 jours et 30 jours, surveiller soi-même
+l'expiration, `--dry-run`, le défi HTTP-01, deploy hook ; liens vers la
+documentation de certbot, les défis de Let's Encrypt et `openssl x509`.
+
 ## Histoire 3 : Le Paquet perdu (faite)
 
 « Internet ne marche plus » au café associatif. Le carnet de Kofi donne la
@@ -308,7 +388,7 @@ fait un commit. `git log`, `git show HEAD`, `git diff HEAD~1 roman.txt`,
 pour enregistrer la version réparée (sans effacer l'histoire). Ensuite,
 mettre ses poèmes à l'abri : `git init`, `git add .`, `git commit -m`.
 
-## Histoire 5 : Les Archives (faite)
+## Histoire 5 : Les Archives (faite, deux chapitres)
 
 Le serveur de la bibliothèque du quartier s'éteint à minuit ; Rosa n'a
 qu'une clé USB de 64 Mo. `du -sh` et `df -h` montrent que le fonds (174 Mo)
@@ -317,6 +397,38 @@ périphérique »). `find fonds -name "*.tmp"` trouve 120 Mo de fichiers
 temporaires, effacés avec `-delete`. L'archive compressée (`tar -czf`)
 fait alors 48 Mo ; `tar -tzf` la vérifie. Morale d'archiviste : une seule
 copie n'est pas une sauvegarde.
+
+### Chapitre 2 — Les versions (fait)
+
+Depuis janvier, le fonds vit sur un nouveau serveur, sauvegardé chaque nuit
+avec restic sur le disque que la mairie prête (`/mnt/mairie`, presque
+plein). Il y a quatre nuits, un script de « correction automatique » a
+abîmé la transcription du journal de Marie ; chaque sauvegarde a gardé la
+version abîmée. Trente instantanés, du 7 janvier au 5 février.
+
+| Étape | Commande apprise |
+|---|---|
+| Ouvrir le dépôt | `restic -r … --password-file … snapshots` (ou le mot de passe tapé) |
+| Trouver quand c'est arrivé | `restic find --long journal_de_marie.txt` (la date change le 2 février), `restic diff A B`, `restic dump ID fichier` |
+| Restaurer | `restic restore ID --target /tmp/restauration --include …` puis `cp` (le chemin complet est recréé), ou `restic dump … > fichier` |
+| Faire de la place | `restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --dry-run`, puis sans `--dry-run`, puis `restic prune` (ou `--prune`) ; `df -h /mnt/mairie` |
+| Vérifier | `restic check` |
+| Protéger le mot de passe | `chmod 600 ~/.config/restic/mot-de-passe` |
+
+Objectif vérifié sur l'état : le journal est revenu à l'identique, un
+instantané contient encore la bonne version, le disque a retrouvé de la
+place, le dépôt a été vérifié depuis sa dernière modification, et le
+fichier du mot de passe n'est plus lisible par les autres comptes.
+
+Pièges prévus : `restic` sans `-r`, un mauvais mot de passe, la restauration
+qui recrée le chemin complet sous `--target`, `forget` sans `prune` (la
+place ne revient pas), une politique trop sévère avant d'avoir restauré
+(plus aucun instantané ne contient la bonne version). Autres solutions
+acceptées : `dump` redirigé, `forget --prune` d'un coup, une nouvelle
+sauvegarde après restauration puis une politique plus courte. Débrief :
+versions plutôt que miroir, politique de rétention, forget n'est pas prune,
+check et restaurations d'essai, chiffrement et garde du mot de passe ;
+liens vers la documentation de restic.
 
 ## Histoire 6 : Les Lettres du quartier (en cours)
 
@@ -416,10 +528,6 @@ explique pourquoi c'est une mauvaise idée). Autre solution acceptée :
 
 ## Idées pour la suite
 
-- L'Effaceur, chapitre 4 : les sauvegardes (`rsync`, `cron`) pour que plus
-  rien ne se perde.
-- Le Datacenter, chapitre 4 : les certificats TLS et `openssl`, en lien avec
-  « Le cadenas » du module 1.
 - Le Paquet perdu, chapitre 2 : le réseau local (`ip a`, adresses privées,
   NAT), en lien avec « La box ».
 

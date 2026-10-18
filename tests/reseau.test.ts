@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
+import { cleHote, empreinte, machineDeHistoire } from '../src/moteur/machines';
 import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
 
 // Les trois chapitres qui donnent les clés (le quatrième, ajouté ensuite, ne compte pas).
@@ -57,9 +58,7 @@ for (const langue of LANGUES)
       const fin = new Console({ langue, termines: EFFACEUR.slice(0, 2) });
       fin.connecter('royaume');
       expect(fin.distant?.shell.chapitre.id).toBe('racine');
-      const derniere = jouer(fin, [
-        'cat arrivee.txt', 'chmod o-w souvenirs', 'sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf', 'tournesol',
-      ]);
+      const derniere = jouer(fin, ['cat arrivee.txt', 'chmod o-w souvenirs', 'sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf', 'tournesol']);
       expect(fin.termines).toEqual(EFFACEUR);
       expect(derniere).toContain('~/.ssh/id_datacenter');
       expect(jouer(fin, ['exit', 'ls -a ~/.ssh'])).toContain('id_bibliotheque');
@@ -102,7 +101,9 @@ for (const langue of LANGUES)
     });
 
     it('reboot coupe la session ssh ; la machine a redémarré quand on revient', () => {
-      const termines = HISTOIRES.find((h) => h.id === 'datacenter')!.chapitres.slice(0, 2).map((c) => c.id);
+      const termines = HISTOIRES.find((h) => h.id === 'datacenter')!
+        .chapitres.slice(0, 2)
+        .map((c) => c.id);
       const c = new Console({ langue, termines: [...EFFACEUR, ...termines] });
       jouer(c, ['ssh datacenter', 'yes']);
       expect(c.distant?.shell.chapitre.id).toBe('redemarrage');
@@ -111,6 +112,38 @@ for (const langue of LANGUES)
       expect(c.invite()).toBe('vous@poste:~$');
       jouer(c, ['ssh datacenter']);
       expect(jouer(c, ['journalctl -b -u catalogue -n 1'])).toContain('Failed to start catalogue.service');
+    });
+
+    it('la machine réinstallée après l’incendie : nouvelle clé d’hôte, ssh refuse, ssh-keygen -R', () => {
+      const termines = HISTOIRES.find((h) => h.id === 'datacenter')!
+        .chapitres.slice(0, 3)
+        .map((c) => c.id);
+      const c = new Console({ langue, termines: [...EFFACEUR, ...termines] });
+      // La clé de l'ancien serveur, connue depuis les chapitres précédents.
+      const ancienne = `datacenter.example ${cleHote(machineDeHistoire('datacenter')!)}`;
+      c.poste.placer('test', '~/.ssh/known_hosts', { type: 'fichier', contenu: ancienne, lignes: true });
+      const refus = jouer(c, ['ssh datacenter']);
+      expect(refus).toContain('WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!');
+      expect(refus).toContain("ssh-keygen -f '/home/vous/.ssh/known_hosts' -R 'datacenter.example'");
+      expect(refus).toContain('Host key verification failed.');
+      expect(c.invite()).toBe('vous@poste:~$');
+      // Le nom court n'est pas celui écrit dans known_hosts.
+      expect(jouer(c, ['ssh-keygen -R datacenter'])).toContain('Host datacenter not found');
+      expect(jouer(c, ['ssh-keygen -F datacenter.example'])).toContain('# Host datacenter.example found: line 1');
+      const retire = jouer(c, ['ssh-keygen -R datacenter.example']);
+      expect(retire).toContain('/home/vous/.ssh/known_hosts updated.');
+      expect(c.poste.lire('~/.ssh/known_hosts.old')).toBe(ancienne);
+      const question = jouer(c, ['ssh datacenter']);
+      expect(question).toContain(`ED25519 key fingerprint is ${empreinte(machineDeHistoire('datacenter')!, '-apres-incendie')}.`);
+      jouer(c, ['yes']);
+      expect(c.distant?.shell.chapitre.id).toBe('incendie');
+      // Se reconnecter ne pose plus de question : la nouvelle clé est connue.
+      jouer(c, ['exit']);
+      expect(jouer(c, ['ssh datacenter'])).not.toContain('WARNING');
+      expect(c.invite()).toBe('vous@datacenter:~$');
+      expect(jouer(c, ['exit', 'ssh-keygen -l -f ~/.ssh/known_hosts'])).toContain(
+        `${empreinte(machineDeHistoire('datacenter')!, '-apres-incendie')} datacenter.example (ED25519)`,
+      );
     });
 
     it('Tab complète les machines de ~/.ssh/config', () => {

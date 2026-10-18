@@ -9,9 +9,12 @@ import { sauvegarde } from './sauvegarde';
 import { datacenter } from './datacenter';
 import { deuxiemeJour } from './deuxieme-jour';
 import { redemarrage } from './redemarrage';
+import { incendie } from './incendie';
+import { certificat } from './certificat';
 import { paquet } from './paquet';
 import { temps } from './temps';
 import { archives } from './archives';
+import { versions } from './versions';
 import { porte } from './porte';
 import { pareFeu } from './pare-feu';
 import { sentinelle } from './sentinelle';
@@ -23,7 +26,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'datacenter',
-    chapitres: [datacenter, deuxiemeJour, redemarrage],
+    chapitres: [datacenter, deuxiemeJour, redemarrage, incendie, certificat],
   },
   {
     id: 'paquet',
@@ -35,7 +38,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'archives',
-    chapitres: [archives],
+    chapitres: [archives, versions],
   },
   {
     id: 'lettres',

@@ -21,7 +21,9 @@ export type Fichier = {
   // Taille simulée en octets (images, vidéos…), sinon celle du texte.
   taille?: number;
   // Contenu d'une archive tar : chemins relatifs → copies des fichiers.
-  archive?: { fichiers: Record<string, Fichier>; compresse: boolean };
+  // `tronquee` : l'archive a été coupée en cours d'écriture ; seuls ses
+  // `tronquee` premiers fichiers sont lisibles.
+  archive?: { fichiers: Record<string, Fichier>; compresse: boolean; tronquee?: number };
 } & Droits;
 // Propriétaire, groupe et permissions Unix (rwx pour le propriétaire, le
 // groupe, les autres). Par défaut : « vous », le groupe qui porte le nom du
@@ -88,6 +90,9 @@ export interface Chapitre {
   // État propre à l'histoire (processus, réseau, dépôts git…), recréé à
   // chaque partie. Les commandes spécialisées le lisent et le modifient.
   etat?: (t: Traduire) => Record<string, unknown>;
+  // La machine a été réinstallée pour ce chapitre : nouvelle clé d'hôte SSH
+  // (voir machines.ts), que le known_hosts du poste ne connaît pas encore.
+  cleHote?: string;
 }
 
 // Une histoire : une suite de chapitres. Les histoires sont indépendantes.

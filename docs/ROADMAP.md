@@ -105,7 +105,8 @@ demandent plusieurs.
 - [x] **Éditeur de fichiers** façon `nano` (`^O`, `^X`, boutons sur
       mobile), droits vérifiés à l'enregistrement, objectifs des quêtes mis
       à jour ; solution alternative au chapitre 1 du Datacenter
-- [ ] Vérification de syntaxe par service : `sshd -t` fait, `nginx -t` à venir
+- [x] Vérification de syntaxe par service : `sshd -t`, `nginx -t` (et
+      `nginx -T`), rechargement refusé si la configuration est fausse
 - [ ] **Manuel intégré** : pages `man` complètes générées depuis la
       définition de chaque commande, `--help`, `man -k`, `apropos`, `whatis` ;
       option inconnue → vrai message d'erreur (repris du travail fait dans
@@ -145,14 +146,17 @@ demandent plusieurs.
       sentinelle » (Les Lettres du quartier, chapitre 3), où l'on peut se
       bannir soi-même
 - [ ] La prison `recidive`, d'autres prisons (nginx)
-- [ ] **Mises à jour** : `apt update/upgrade`, mises à jour automatiques de
+- [ ] **Mises à jour** : `apt update/upgrade` (`apt update` et `install`
+      déjà là, « Le grand incendie »), mises à jour automatiques de
       sécurité, redémarrage nécessaire, noyau
 - [ ] **Comptes** : supprimer un compte inutile, désactiver un compte d'ancien
       collègue, mots de passe et clés à révoquer
 - [x] **Surface d'attaque** : `ss -tlnp`, un service qui écoute sur
       `0.0.0.0` au lieu de `127.0.0.1` (la base de données exposée)
-- [ ] **Certificats TLS** : Let's Encrypt (`certbot`), renouvellement
-      automatique, quête « le certificat a expiré cette nuit »
+- [x] **Certificats TLS** : Let's Encrypt (`certbot`), défi HTTP-01,
+      renouvellement automatique, deploy hook, `openssl x509` et `s_client`,
+      `curl https://` ; quête « Le certificat a expiré » (Datacenter,
+      chapitre 5)
 - [ ] **Secrets** : fichier `.env` publié par erreur, rotation d'une clé
 
 ## Phase 4 — Servir des sites
@@ -196,11 +200,14 @@ demandent plusieurs.
       avec `cron` ; quête « La Sauvegarde » (Effaceur, chapitre 4)
 - [ ] **rsnapshot** (instantanés par liens physiques, rotation horaire,
       quotidienne, hebdomadaire)
-- [ ] **restic** (chiffrement, déduplication, `snapshots`, `restore`,
-      `forget --prune`, `check`)
+- [x] **restic** (chiffrement, déduplication, `snapshots`, `find`, `diff`,
+      `dump`, `restore`, `forget --prune`, `check`) ; quête « Les versions »
+      (Les Archives, chapitre 2)
 - [ ] Sauvegarder une base (`mysqldump`, `pg_dump`) plutôt que ses fichiers
-- [ ] **Restauration de service** : quête « le serveur a brûlé » (repartir
-      d'une machine vide avec les sauvegardes et la documentation)
+- [x] **Restauration de service** : quête « Le grand incendie » (Datacenter,
+      chapitre 4) : repartir d'une machine vide avec les sauvegardes et le
+      plan de reprise ; archive coupée à vérifier avec `tar -tzf`, `apt`,
+      `nginx -t`, clé d'hôte SSH qui change (`ssh-keygen -R`)
 - [x] **Exercice de restauration** : un souvenir effacé à restaurer depuis
       la sauvegarde (« La Sauvegarde »)
 - [ ] Rançongiciel et sauvegardes hors ligne

@@ -4,7 +4,9 @@
 //   2. résolution du nom par /etc/hosts ;
 //   3. connexion au port (seul le 22 est ouvert) ;
 //   4. clé d'hôte : vérifiée dans ~/.ssh/known_hosts, sinon question
-//      « yes/no/[fingerprint] » (confiance à la première connexion) ;
+//      « yes/no/[fingerprint] » (confiance à la première connexion) ; une clé
+//      différente de celle qu'on connaît arrête tout (machine réinstallée,
+//      ou quelqu'un qui se fait passer pour elle) ;
 //   5. authentification par clé uniquement (comme PasswordAuthentication no) ;
 //      une clé privée lisible par d'autres est ignorée, comme le vrai ssh.
 // La session elle-même est ouverte par la console (console.ts).
@@ -15,7 +17,7 @@
 import type { Fichier } from '../monde';
 import type { Shell } from '../shell';
 import { joker } from '../outils';
-import { cleHote, clePrivee, empreinte, machineParAdresse, POSTE, type Machine } from '../machines';
+import { cleHote, clePrivee, empreinte, empreinteDeCle, machineParAdresse, POSTE, type Machine } from '../machines';
 import { autorise, methodes } from '../sshd';
 import { verdict, type PareFeu } from '../parefeu';
 import type { Commande } from './index';
@@ -98,8 +100,11 @@ function authentifier(jeu: Shell, d: Destination, m: Machine): string {
   return sortie.join('\n');
 }
 
+// La génération de clé d'hôte de la machine d'en face (machines.ts).
+const generation = (jeu: Shell, m: Machine): string => jeu.etat.cleDistante?.(m.nom) ?? '';
+
 function ajouterHoteConnu(jeu: Shell, d: Destination, m: Machine) {
-  const ligne = `${d.hote} ${cleHote(m)}`;
+  const ligne = `${d.hote} ${cleHote(m, generation(jeu, m))}`;
   const n = jeu.trouver('~/.ssh/known_hosts');
   if (n?.type === 'fichier') n.contenu = [jeu.lire('~/.ssh/known_hosts'), ligne].filter(Boolean).join('\n');
   else jeu.placer('ssh', '~/.ssh/known_hosts', { type: 'fichier', contenu: ligne, lignes: true });
@@ -108,7 +113,7 @@ function ajouterHoteConnu(jeu: Shell, d: Destination, m: Machine) {
 // Question de la première connexion : yes, no, ou l'empreinte elle-même.
 function confirmer(jeu: Shell, d: Destination, m: Machine, invite: string) {
   jeu.demander(invite, (reponse) => {
-    if (reponse === 'yes' || reponse === empreinte(m)) {
+    if (reponse === 'yes' || reponse === empreinte(m, generation(jeu, m))) {
       ajouterHoteConnu(jeu, d, m);
       return [`Warning: Permanently added '${d.hote}' (ED25519) to the list of known hosts.`, authentifier(jeu, d, m)].filter(Boolean).join('\n');
     }
@@ -116,6 +121,31 @@ function confirmer(jeu: Shell, d: Destination, m: Machine, invite: string) {
     confirmer(jeu, d, m, "Please type 'yes', 'no' or the fingerprint:");
     return '';
   });
+}
+
+// La clé envoyée par le serveur n'est pas celle de known_hosts : OpenSSH
+// refuse (StrictHostKeyChecking), et dit comment retirer l'ancienne.
+function cleChangee(jeu: Shell, d: Destination, m: Machine, ligne: number): string {
+  const fichier = jeu.resoudre('~/.ssh/known_hosts');
+  const cadre = '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@';
+  return [
+    cadre,
+    '@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @',
+    cadre,
+    'IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!',
+    'Someone could be eavesdropping on you right now (man-in-the-middle attack)!',
+    'It is also possible that a host key has just been changed.',
+    'The fingerprint for the ED25519 key sent by the remote host is',
+    `${empreinte(m, generation(jeu, m))}.`,
+    'Please contact your system administrator.',
+    `Add correct host key in ${fichier} to get rid of this message.`,
+    `Offending ED25519 key in ${fichier}:${ligne}`,
+    '  remove with:',
+    `  ssh-keygen -f '${fichier}' -R '${d.hote}'`,
+    `Host key for ${d.hote} has changed and you have requested strict checking.`,
+    'Host key verification failed.',
+    jeu.t('ssh-cle-changee', { machine: m.nom, empreinte: empreinte(m, generation(jeu, m)) }),
+  ].join('\n');
 }
 
 export const SSH: Record<string, Commande> = {
@@ -152,7 +182,9 @@ export const SSH: Record<string, Commande> = {
       // fail2ban d'en face a banni le poste : sur Debian, l'action par défaut
       // rejette (REJECT) les paquets de l'adresse vers le port surveillé.
       if ((jeu.etat.bannisDistant?.(m.nom) ?? []).includes(POSTE.adresse))
-        return jeu.erreur(`ssh: connect to host ${d.hote} port ${d.port}: Connection refused\n` + jeu.t('ssh-banni', { machine: m.nom, adresse: POSTE.adresse }));
+        return jeu.erreur(
+          `ssh: connect to host ${d.hote} port ${d.port}: Connection refused\n` + jeu.t('ssh-banni', { machine: m.nom, adresse: POSTE.adresse }),
+        );
       // Le pare-feu d'en face : deny laisse attendre (timeout), reject refuse tout de suite.
       const pf: PareFeu | null = jeu.etat.pareFeuDistant?.(m.nom) ?? null;
       const passe = pf ? verdict(pf, Number(d.port), POSTE.adresse) : 'accepte';
@@ -162,17 +194,75 @@ export const SSH: Record<string, Commande> = {
             jeu.t('ssh-pare-feu', { machine: m.nom }),
         );
       const remarque = commande.length ? jeu.t('ssh-commande-distante') + '\n' : '';
-      const connu = (jeu.lire('~/.ssh/known_hosts') ?? '').split('\n').some((l) => l.split(' ')[0] === d.hote);
-      if (connu) return remarque + authentifier(jeu, d, m);
+      const lignes = (jeu.lire('~/.ssh/known_hosts') ?? '').split('\n');
+      const numero = lignes.findIndex((l) => l.split(' ')[0] === d.hote);
+      if (numero >= 0) {
+        const cle = cleHote(m, generation(jeu, m));
+        if (lignes.some((l) => l === `${d.hote} ${cle}`)) return remarque + authentifier(jeu, d, m);
+        return jeu.erreur(cleChangee(jeu, d, m, numero + 1));
+      }
       confirmer(jeu, d, m, 'Are you sure you want to continue connecting (yes/no/[fingerprint])?');
       return [
         remarque.trim(),
         `The authenticity of host '${d.hote} (${adresse})' can't be established.`,
-        `ED25519 key fingerprint is ${empreinte(m)}.`,
+        `ED25519 key fingerprint is ${empreinte(m, generation(jeu, m))}.`,
         'This key is not known by any other names.',
       ]
         .filter(Boolean)
         .join('\n');
+    },
+  },
+  // ssh-keygen (https://man.openbsd.org/ssh-keygen) : seulement la gestion
+  // de known_hosts (-R, -F) et les empreintes (-l). Écart : il ne crée pas
+  // de clés (le jeu les donne).
+  'ssh-keygen': {
+    propresOptions: true,
+    lancer: ({ args, jeu }) => {
+      const usage = 'usage: ssh-keygen [-l] [-f file] [-F hostname] [-R hostname]';
+      let fichier = '~/.ssh/known_hosts';
+      let action: 'R' | 'F' | 'l' | null = null;
+      let hote = '';
+      for (let i = 0; i < args.length; i++) {
+        const a = args[i];
+        if (a === '-f' || a === '-R' || a === '-F') {
+          const valeur = args[++i];
+          if (valeur === undefined) return jeu.erreur(`ssh-keygen: option requires an argument -- ${a.slice(1)}\n${usage}`);
+          if (a === '-f') fichier = valeur;
+          else [action, hote] = [a.slice(1) as 'R' | 'F', valeur];
+        } else if (a === '-l') action ??= 'l';
+        else if (a.startsWith('-')) return jeu.erreur(`ssh-keygen: illegal option -- ${a.slice(1, 2)}\n${usage}`);
+        else return jeu.erreur(usage);
+      }
+      if (!action) return jeu.erreur(jeu.t('ssh-keygen-generer'));
+      const chemin = jeu.resoudre(fichier);
+      const n = jeu.trouver(fichier);
+      if (!n || n.type !== 'fichier') return jeu.erreur(`${chemin}: No such file or directory`);
+      if (!jeu.peut(n, 'r')) return jeu.erreur(`${chemin}: Permission denied`);
+      const lignes = (jeu.lire(fichier) ?? '').split('\n').filter(Boolean);
+      if (action === 'l')
+        return lignes
+          .map((l) => {
+            const [nom, ...cle] = l.split(' ');
+            // Une ligne de known_hosts commence par le nom ; une clé .pub finit par un commentaire.
+            return nom.startsWith('ssh-')
+              ? `256 ${empreinteDeCle(l)} ${cle.slice(1).join(' ') || 'no comment'} (ED25519)`
+              : `256 ${empreinteDeCle(cle.join(' '))} ${nom} (ED25519)`;
+          })
+          .join('\n');
+      const trouvees = lignes.map((l, i) => [l, i + 1] as const).filter(([l]) => l.split(' ')[0].split(',').includes(hote));
+      if (action === 'F') {
+        if (!trouvees.length) return '';
+        return trouvees.flatMap(([l, i]) => [`# Host ${hote} found: line ${i}`, l]).join('\n');
+      }
+      if (!trouvees.length) return jeu.erreur(`Host ${hote} not found in ${chemin}`);
+      if (!jeu.peut(n, 'w')) return jeu.erreur(`${chemin}: Permission denied`);
+      jeu.placer('ssh-keygen', `${fichier}.old`, { ...n, lu: undefined });
+      n.contenu = lignes.filter((l) => !trouvees.some(([t]) => t === l)).join('\n');
+      return [
+        ...trouvees.map(([, i]) => `# Host ${hote} found: line ${i}`),
+        `${chemin} updated.`,
+        `Original contents retained as ${chemin}.old`,
+      ].join('\n');
     },
   },
   // exit est intégré au shell (shell.ts) ; cette entrée sert au manuel.
