@@ -42,22 +42,31 @@ garde cette mention et le lien vers l'original.
 
 ## Phase 0 — Fondations du nouveau dépôt
 
-- [ ] Récupérer le moteur de Terminus en français (`shell.ts`, `commandes/`,
-      `monde.ts`, `chapitres/`) avec son historique si possible
+- [x] Reprendre le moteur de Terminus en français (shell, commandes,
+      manuel, monde, cinq histoires) dans `src/moteur/` : le projet ne dépend
+      plus de rouages.net
+- [x] Interface autonome (`src/interface/`) et élément intégrable
+      `<quetes-de-sysadmin>` (Shadow DOM, attributs `histoire`, `cle`,
+      `theme`, `langue`, couleurs en variables CSS) ; mode d'emploi
+      `docs/INTEGRER.md`
+- [ ] **Extraire les textes** des histoires, des commandes et du manuel vers
+      `src/textes/` (aujourd'hui en dur dans `src/moteur/`), pour préparer les
+      traductions
 - [x] Nom, mention « inspiré de Terminus (MIT) », README, CLAUDE.md
       (consignes de l'agent dédié)
 - [x] Licences : GPL v3 (code), CC BY-SA 4.0 (textes)
 - [ ] Charte de contribution (format d'une quête, tests, relecture)
-- [ ] Choix de la pile : petite appli statique (Astro ou Vite) ; tests
-      unitaires du moteur ; tests Playwright des quêtes (une quête = un
-      scénario de solution rejoué automatiquement)
-- [ ] Déploiement statique sur **sysadmin.rouages.net** (sous-domaine de
-      rouages.net, même hébergement cPanel ; déploiement automatique depuis
-      `main`, comme rouages.net)
+- [x] Pile : Vite et TypeScript, sans framework ; tests Vitest (chaque
+      chapitre rejoué) et vérification Playwright (`tests/navigateur.mjs`)
+- [x] Déploiement statique sur **sysadmin.rouages.net** : workflow
+      `.github/workflows/deploy.yml` (FTPS depuis `main`) ; secrets à
+      renseigner dans le dépôt
+- [ ] Rediriger l'ancienne page `rouages.net/jeux/terminus/` vers
+      sysadmin.rouages.net (ou y intégrer l'élément)
 - [x] Réécrire les chapitres 1 et 2 dans un univers propre (fait dans
       rouages.net le 17 octobre 2026 : « L'Île du Phare » et « Le Bourg »)
-- [ ] Migrer la progression des joueur·ses existant·es (clé
-      `rouages-terminus`) ou l'annoncer
+- [ ] Progression : les joueur·ses de rouages.net (clé `rouages-terminus`,
+      autre domaine) repartent de zéro ; l'annoncer sur l'ancienne page
 
 ## Phase 1 — Un moteur de « machines » simulées
 

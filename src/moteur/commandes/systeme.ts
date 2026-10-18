@@ -1,0 +1,76 @@
+// Commandes système : processus (ps, kill) et services (systemctl).
+// Les processus et services sont simulés dans l'état de l'histoire :
+//   etat.processus : liste de { pid, utilisateur, cpu, mem, commande }
+//   etat.services  : { nom: { description, actif } }
+//   etat.surKill(jeu, processus), etat.surSystemctl(jeu, action, nom) :
+//   réactions propres à l'histoire, qui renvoient un message éventuel.
+
+import type { Commande } from './index';
+
+export interface Processus {
+  pid: number;
+  utilisateur: string;
+  cpu: number;
+  mem: number;
+  commande: string;
+}
+
+export const SYSTEME: Record<string, Commande> = {
+  ps: {
+    manuel:
+      'ps [aux] — liste les processus, c’est-à-dire les programmes en cours d’exécution (process status). Sans option : les tiens ; « ps aux » : ceux de tout le monde, avec la part de processeur (%CPU) et de mémoire (%MEM).',
+    lancer: ({ args, jeu }) => {
+      const tous = args.some((a) => /a/.test(a));
+      const liste: Processus[] = (jeu.etat.processus ?? [])
+        .filter((p: Processus) => tous || p.utilisateur === 'vous')
+        .sort((a: Processus, b: Processus) => a.pid - b.pid);
+      const ligne = (p: Processus) =>
+        `${p.utilisateur.padEnd(10)} ${String(p.pid).padStart(6)} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${p.commande}`;
+      return ['USER          PID  %CPU  %MEM COMMAND', ...liste.map(ligne)].join('\n');
+    },
+  },
+
+  kill: {
+    manuel:
+      'kill PID — demande à un processus de s’arrêter (il reçoit un signal). PID est son numéro, donné par ps. kill -9 PID force l’arrêt. On ne peut arrêter que ses propres processus (ou tous, en root).',
+    lancer: ({ args, jeu }) => {
+      const pids = args.filter((a) => !a.startsWith('-'));
+      if (!pids.length) return jeu.erreur('Usage : kill PID (le numéro du processus, donné par ps)');
+      const messages: string[] = [];
+      for (const brut of pids) {
+        const liste: Processus[] = jeu.etat.processus ?? [];
+        const p = liste.find((q) => String(q.pid) === brut);
+        if (!p) jeu.erreur(`kill : (${brut}) - Aucun processus de ce type`);
+        else if (jeu.qui !== 'root' && p.utilisateur !== jeu.qui) jeu.erreur(`kill : (${brut}) - Opération non permise`);
+        else {
+          jeu.etat.processus = liste.filter((q) => q !== p);
+          const m = jeu.etat.surKill?.(jeu, p);
+          if (m) messages.push(m);
+        }
+      }
+      return messages.join('\n');
+    },
+  },
+
+  systemctl: {
+    manuel:
+      'systemctl status|start|stop|restart|reload service — gère les services, ces programmes qui tournent en permanence (serveur web…). « reload » leur fait relire leur configuration. Seul root peut les démarrer ou les arrêter : sudo systemctl reload nginx',
+    lancer: ({ args, jeu }) => {
+      const [action, brut] = args;
+      const services: Record<string, { description: string; actif: boolean }> = jeu.etat.services ?? {};
+      const nom = brut?.replace(/\.service$/, '');
+      if (!action || !nom) return jeu.erreur('Usage : systemctl status service (ex. : systemctl status nginx)');
+      const s = services[nom];
+      if (!s) return jeu.erreur(`Unit ${nom}.service could not be found.`);
+      if (action === 'status')
+        return `● ${nom}.service - ${s.description}\n     Active: ${s.actif ? 'active (running)' : 'failed'}`;
+      if (!['start', 'stop', 'restart', 'reload'].includes(action)) return jeu.erreur(`systemctl : action inconnue « ${action} »`);
+      // Sans être root, systemctl demanderait un mot de passe ; ici, on
+      // renvoie vers sudo.
+      if (jeu.qui !== 'root') return jeu.erreur(`Failed to ${action} ${nom}.service: Access denied\n(il faut être root : sudo systemctl ${action} ${nom})`);
+      if (action === 'stop') s.actif = false;
+      else s.actif = true;
+      return jeu.etat.surSystemctl?.(jeu, action, nom) ?? '';
+    },
+  },
+};

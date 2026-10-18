@@ -8,9 +8,35 @@ On y apprend la ligne de commande Linux, puis à se connecter à des serveurs,
 quand tout casse. Chaque quête est un incident ou une mission réaliste, dans
 un système entièrement simulé : rien ne sort du navigateur.
 
-> **État** : projet en démarrage. Le jeu de départ, « Terminus en français »,
-> tourne aujourd'hui sur [rouages.net](https://rouages.net/jeux/terminus/) ;
-> il sera repris ici. Voir la [feuille de route](docs/ROADMAP.md).
+> **État** : cinq histoires jouables (ligne de commande, permissions et
+> sudo, journaux et processus, réseau, git, archives), avec un manuel intégré.
+> La suite (SSH, pare-feu, Nginx, Docker, sauvegardes…) est dans la
+> [feuille de route](docs/ROADMAP.md).
+
+## Jouer
+
+- En ligne : **https://sysadmin.rouages.net**
+- Sur ton site, en deux lignes : voir [docs/INTEGRER.md](docs/INTEGRER.md).
+
+## Développer
+
+```bash
+npm install
+npm run dev                # http://localhost:5173
+npm test                   # rejoue toutes les quêtes (Vitest)
+npm run build              # dist/ : le site, et dist/integration/ : le fichier à intégrer
+npx vite preview --port 4340 &
+npm run test:navigateur    # vérifie le jeu dans Chromium (1000 et 375 px, intégration)
+```
+
+| Dossier | Contenu |
+|---|---|
+| `src/moteur/` | le shell simulé, les commandes, le manuel, les histoires et leurs chapitres |
+| `src/interface/` | l'interface du jeu (terminal, choix des histoires, progression) et ses styles |
+| `src/element.ts` | l'élément `<quetes-de-sysadmin>` à intégrer |
+| `src/textes/` | les textes de l'interface, par langue |
+| `tests/` | parties rejouées (`quetes.test.ts`) et vérifications dans le navigateur |
+| `docs/` | [scénarios](docs/SCENARIOS.md), [intégration](docs/INTEGRER.md), [feuille de route](docs/ROADMAP.md) |
 
 ## D'où vient ce jeu
 
@@ -18,9 +44,10 @@ Quêtes de Sysadmin est **inspiré de
 [Terminus](https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html),
 créé au MIT par Shawn Conrad et Michele Pratusevich** : l'idée d'un monde où
 chaque lieu est un dossier et chaque objet un fichier vient de là. Les lieux,
-les histoires, les énigmes et le code sont les nôtres, écrits d'abord pour
-[Les rouages du net](https://rouages.net), un site de vulgarisation sur
-internet, l'informatique et l'IA.
+les histoires, les énigmes et le code sont les nôtres. Le jeu est né sous le
+nom « Terminus en français » sur [Les rouages du net](https://rouages.net), un
+site de vulgarisation sur internet, l'informatique et l'IA, avant de devenir
+ce projet indépendant.
 
 ## Principes
 
