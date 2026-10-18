@@ -1,0 +1,29 @@
+/* Page autonome de sysadmin.rouages.net (le jeu a ses propres styles). */
+:root {
+  --fond: #fbf8f3;
+  --texte: #1d1b19;
+  --discret: #5f5a54;
+  --bord: #ddd6cc;
+  --accent: #a8430b;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --fond: #181614; --texte: #ece6dd; --discret: #b3aba1; --bord: #3b3631; --accent: #f0995c; }
+}
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font: 1rem/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+}
+header, main, footer { max-width: 60rem; margin: 0 auto; padding: 0 1rem; }
+header { padding-top: 1rem; border-bottom: 1px solid var(--bord); }
+.nom { font-weight: 700; margin: 0 0 1rem; }
+h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.15; }
+.intro { max-width: 40rem; }
+code, pre { font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', 'DejaVu Sans Mono', Menlo, Consolas, monospace; }
+pre { overflow-x: auto; padding: 0.75rem; border: 1px solid var(--bord); border-radius: 0.5rem; font-size: 0.85rem; }
+quetes-de-sysadmin { margin: 1.5rem 0 3rem; }
+a { color: var(--accent); }
+footer { margin-top: 3rem; padding-bottom: 2rem; border-top: 1px solid var(--bord); color: var(--discret); font-size: 0.9rem; }
+.avertissement { padding: 1rem; border: 1px solid var(--bord); border-radius: 0.5rem; }

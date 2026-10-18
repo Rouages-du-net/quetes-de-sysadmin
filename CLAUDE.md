@@ -1,13 +1,40 @@
 # Quêtes de Sysadmin — consignes pour Claude
 
 Jeu éducatif dans le navigateur pour apprendre l'administration système Linux
-(voir `README.md` et `docs/ROADMAP.md`). Projet frère de
-[Les rouages du net](https://github.com/Rouages-du-net/rouages.net), dont il
-reprend le moteur « Terminus en français » (`src/scripts/terminus/`).
+(voir `README.md`, `docs/SCENARIOS.md` et `docs/ROADMAP.md`). Projet
+**indépendant** : tout le code et toute la documentation sont dans ce dépôt
+(il est né dans Les rouages du net, mais il n'en dépend plus). Il doit pouvoir
+s'intégrer dans n'importe quel site (`docs/INTEGRER.md`) : ne rien supposer de
+la page qui l'accueille.
 
 Le jeu sera publié sur **https://sysadmin.rouages.net** : un site 100 %
 statique (pas de serveur Node, pas de base de données), hébergé comme
 rouages.net.
+
+## Structure et commandes
+
+- `src/moteur/` : shell simulé (`shell.ts`), commandes (`commandes/`, dont
+  le manuel : `manuel.ts`, `pages.ts`), monde (`monde.ts`), histoires
+  (`chapitres/`). Aucune dépendance au DOM.
+- `src/interface/` : interface (`jeu.ts`, fonction `monter()`) et styles
+  (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).
+- `src/element.ts` : l'élément `<quetes-de-sysadmin>` (Shadow DOM).
+- `src/textes/` : textes de l'interface par langue (clés, `Intl`).
+- `tests/quetes.test.ts` : chaque chapitre rejoué ; `tests/navigateur.mjs` :
+  Chromium, 1000 et 375 px, intégration dans une autre page.
+
+```bash
+npm install
+npm test                    # Vitest
+npm run build               # tsc + site (dist/) + fichier d'intégration (dist/integration/)
+npx vite preview --port 4340 &   # puis :
+npm run test:navigateur
+```
+
+**Dette connue** : les textes des histoires, des commandes et du manuel sont
+encore écrits en français dans `src/moteur/`. Les extraire vers `src/textes/`
+est une tâche de la phase 0 (voir la feuille de route) ; tout nouveau texte
+va directement dans `src/textes/`.
 
 ## Langue
 
@@ -22,7 +49,7 @@ répond en anglais.
 
 - **Ouvrir une PR automatiquement à la fin de chaque travail**, vers `main`.
 - Si la PR précédente de la branche a été fusionnée, repartir de `main` à jour.
-- Avant de pousser : la construction et les tests doivent passer ; pour tout
+- Avant de pousser : `npm test` et `npm run build` doivent passer ; pour tout
   changement visible, vérifier dans Chromium (Playwright,
   `executablePath: '/opt/pw-browsers/chromium'`, `args: ['--headless=new']`),
   y compris à 375 px de large, sans erreur console.

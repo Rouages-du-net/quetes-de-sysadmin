@@ -1,0 +1,126 @@
+/* Styles du jeu. Tout est rangé sous .qds pour ne rien changer à la page qui
+   l'accueille ; les couleurs sont des variables qu'un site peut redéfinir
+   (--qds-fond, --qds-accent…). Thème clair et sombre selon le système, ou
+   forcé par l'attribut theme="clair" | "sombre" de l'élément. */
+
+.qds {
+  --qds-fond: #fbf8f3;
+  --qds-carte: #ffffff;
+  --qds-texte: #1d1b19;
+  --qds-discret: #5f5a54;
+  --qds-bord: #ddd6cc;
+  --qds-accent: #a8430b;
+  --qds-terminal-fond: #111611;
+  --qds-terminal-texte: #d6f5d6;
+  --qds-terminal-invite: #f4b860;
+  --qds-police: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+  --qds-police-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'DejaVu Sans Mono', 'Noto Sans Mono', Menlo, Consolas, monospace;
+  color: var(--qds-texte);
+  font-family: var(--qds-police);
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host(:not([theme='clair'])) .qds,
+  .qds:not([data-theme='clair']) {
+    --qds-fond: #181614;
+    --qds-carte: #221f1c;
+    --qds-texte: #ece6dd;
+    --qds-discret: #b3aba1;
+    --qds-bord: #3b3631;
+    --qds-accent: #f0995c;
+  }
+}
+:host([theme='sombre']) .qds,
+.qds[data-theme='sombre'] {
+  --qds-fond: #181614;
+  --qds-carte: #221f1c;
+  --qds-texte: #ece6dd;
+  --qds-discret: #b3aba1;
+  --qds-bord: #3b3631;
+  --qds-accent: #f0995c;
+}
+
+.qds *, .qds *::before, .qds *::after { box-sizing: border-box; }
+.qds [hidden] { display: none !important; }
+
+.qds .histoires ol, .qds .chapitres ol {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+}
+.qds .chapitres ol { grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.qds .histoires button, .qds .chapitres button {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  height: 100%;
+  text-align: left;
+  font: inherit;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--qds-bord);
+  border-radius: 0.75rem;
+  background: var(--qds-carte);
+  color: var(--qds-texte);
+  cursor: pointer;
+}
+.qds .chapitres button { background: var(--qds-fond); }
+.qds .chapitres button:disabled { cursor: default; opacity: 0.6; }
+.qds button[aria-current='true'] { border: 2px solid var(--qds-accent); }
+.qds button:focus-visible, .qds a:focus-visible { outline: 3px solid var(--qds-accent); outline-offset: 2px; }
+.qds .num { font-size: 0.8rem; color: var(--qds-discret); }
+.qds .titre { font-weight: 700; }
+.qds .resume { font-size: 0.9rem; color: var(--qds-discret); }
+.qds .etat { font-size: 0.85rem; font-weight: 600; color: var(--qds-accent); }
+
+.qds .terminal {
+  background: var(--qds-terminal-fond);
+  color: var(--qds-terminal-texte);
+  font: 0.95rem/1.5 var(--qds-police-mono);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  min-height: 24rem;
+  max-height: 70vh;
+  overflow-y: auto;
+  cursor: text;
+}
+.qds .sortie pre { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: inherit; }
+.qds .sortie .cmd { color: color-mix(in oklab, var(--qds-terminal-texte) 75%, var(--qds-terminal-fond)); }
+.qds form { display: flex; flex-wrap: wrap; gap: 0 0.5ch; margin: 0; }
+.qds .invite { color: var(--qds-terminal-invite); overflow-wrap: anywhere; }
+.qds input {
+  flex: 1;
+  min-width: 12ch;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  outline: none;
+  caret-color: var(--qds-terminal-texte);
+}
+
+.qds .fin { margin-top: 1rem; }
+.qds .bouton {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--qds-accent);
+  background: var(--qds-accent);
+  color: var(--qds-fond);
+  cursor: pointer;
+}
+.qds .astuces, .qds .credit { font-size: 0.85rem; color: var(--qds-discret); margin: 1rem 0 0; }
+.qds a { color: var(--qds-accent); }
+.qds .lien { font: inherit; background: none; border: none; padding: 0; color: var(--qds-accent); text-decoration: underline; cursor: pointer; }
+
+@media (max-width: 40rem) {
+  .qds .histoires ol, .qds .chapitres ol { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .qds .resume { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qds * { scroll-behavior: auto !important; transition: none !important; }
+}

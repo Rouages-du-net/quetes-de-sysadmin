@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quêtes de Sysadmin</title>
+  <meta name="description" content="Apprendre l'administration système Linux en jouant, dans le navigateur, avec de vraies commandes : se déplacer, chercher, les permissions, les journaux, le réseau, git, les archives." />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="./src/site.css" />
+</head>
+<body>
+  <header>
+    <p class="nom">Quêtes de Sysadmin</p>
+  </header>
+  <main>
+    <h1>Quêtes de Sysadmin</h1>
+    <p class="intro">
+      Des aventures où l'on agit avec de <strong>vraies commandes Linux</strong>. Chaque lieu est
+      un dossier, chaque objet un fichier. Cinq histoires indépendantes : commence par
+      l'Effaceur si tu n'as jamais ouvert un terminal.
+    </p>
+    <p class="intro">
+      Bloqué·e ? Fais comme les pros : <code>man commande</code> ouvre le manuel,
+      <code>commande --help</code> en donne un résumé, et <code>man -k mot</code> cherche la
+      commande qui fait ce que tu veux.
+    </p>
+    <noscript><p class="avertissement">Ce jeu a besoin de JavaScript pour simuler un terminal dans ton navigateur.</p></noscript>
+
+    <quetes-de-sysadmin></quetes-de-sysadmin>
+
+    <section aria-labelledby="integrer">
+      <h2 id="integrer">Mettre le jeu sur ton site</h2>
+      <p>Le jeu est libre et s'intègre dans n'importe quelle page avec deux lignes :</p>
+      <pre><code>&lt;script type="module" src="https://sysadmin.rouages.net/integration/quetes-de-sysadmin.js"&gt;&lt;/script&gt;
+&lt;quetes-de-sysadmin&gt;&lt;/quetes-de-sysadmin&gt;</code></pre>
+      <p>Mode d'emploi complet : <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/docs/INTEGRER.md">docs/INTEGRER.md</a>.</p>
+    </section>
+  </main>
+  <footer>
+    <p>
+      Inspiré de <a href="https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html" hreflang="en">Terminus</a>,
+      créé au MIT par Shawn Conrad et Michele Pratusevich : l'idée d'apprendre les commandes en se
+      déplaçant de dossier en dossier vient de là ; les lieux, les énigmes et les textes sont les nôtres.
+      Les commandes répondent souvent en anglais, comme sur un vrai système ; les adresses et les noms
+      de domaine utilisés sont réservés aux exemples (RFC 5737, RFC 6761).
+    </p>
+    <p>
+      Code sous licence <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/LICENSE">GPL v3</a>,
+      textes sous <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.fr">CC BY-SA 4.0</a>.
+      <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin">Code source</a> ·
+      un projet de <a href="https://rouages.net">Les rouages du net</a>. Sans pisteur ni publicité.
+    </p>
+  </footer>
+  <script type="module" src="./src/element.ts"></script>
+</body>
+</html>
