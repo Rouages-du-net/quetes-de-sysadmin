@@ -4,6 +4,7 @@ import { defineConfig } from 'vite';
 // dépendance, qui définit l'élément <quetes-de-sysadmin>. Publié avec le site
 // dans dist/integration/.
 export default defineConfig({
+  publicDir: false,
   build: {
     outDir: 'dist/integration',
     emptyOutDir: true,

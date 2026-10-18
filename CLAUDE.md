@@ -13,6 +13,10 @@ rouages.net.
 
 ## Structure et commandes
 
+- Site : **Astro** (`astro.config.mjs`, `output: 'static'`, `compressHTML`
+  désactivé comme sur rouages.net). Pages dans `src/pages/`, gabarit
+  `src/layouts/Base.astro`, styles du site `src/styles/site.css`, config
+  Apache `public/.htaccess` (HTTPS, cache, CSP, CORS du fichier à intégrer).
 - `src/moteur/` : shell simulé (`shell.ts`), commandes (`commandes/`, dont
   le manuel : `manuel.ts`, `pages.ts`), monde (`monde.ts`), histoires
   (`chapitres/`). Aucune dépendance au DOM.
@@ -21,13 +25,18 @@ rouages.net.
 - `src/element.ts` : l'élément `<quetes-de-sysadmin>` (Shadow DOM).
 - `src/textes/` : textes de l'interface par langue (clés, `Intl`).
 - `tests/quetes.test.ts` : chaque chapitre rejoué ; `tests/navigateur.mjs` :
-  Chromium, 1000 et 375 px, intégration dans une autre page.
+  Chromium, 1000 et 375 px, CSP de `.htaccess` appliquée, page 404,
+  intégration dans une autre page.
+- Déploiement : `.github/workflows/deploy.yml` (tests sur chaque PR, FTPS et
+  vérification du site en ligne depuis `main`) ; voir `docs/DEPLOIEMENT.md`.
+  Toute nouvelle ressource doit respecter la CSP (aucun script en ligne).
 
 ```bash
 npm install
 npm test                    # Vitest
-npm run build               # tsc + site (dist/) + fichier d'intégration (dist/integration/)
-npx vite preview --port 4340 &   # puis :
+npm run dev                 # http://localhost:4321
+npm run build               # site Astro (dist/) + fichier d'intégration (dist/integration/) + tsc
+npm run preview &           # http://localhost:4340, puis :
 npm run test:navigateur
 ```
 
