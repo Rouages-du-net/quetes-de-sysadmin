@@ -66,7 +66,7 @@ export interface Chapitre {
   motDePasse?: string;
   // État propre à l'histoire (processus, réseau, dépôts git…), recréé à
   // chaque partie. Les commandes spécialisées le lisent et le modifient.
-  etat?: () => Record<string, unknown>;
+  etat?: (t: Traduire) => Record<string, unknown>;
 }
 
 // Une histoire : une suite de chapitres. Les histoires sont indépendantes.

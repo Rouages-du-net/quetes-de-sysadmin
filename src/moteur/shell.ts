@@ -65,7 +65,7 @@ export class Shell implements Jeu {
     this.racine = chapitre.creerMonde(this.t);
     this.maison = chapitre.maison;
     this.cwd = chapitre.maison;
-    this.etat = chapitre.etat?.() ?? {};
+    this.etat = chapitre.etat?.(this.t) ?? {};
   }
 
   // ——— Chemins et fichiers ———

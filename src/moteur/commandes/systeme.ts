@@ -31,13 +31,13 @@ export const SYSTEME: Record<string, Commande> = {
   kill: {
     lancer: ({ args, jeu }) => {
       const pids = args.filter((a) => !a.startsWith('-'));
-      if (!pids.length) return jeu.erreur('Usage : kill PID (le numéro du processus, donné par ps)');
+      if (!pids.length) return jeu.erreur(jeu.t('kill-usage'));
       const messages: string[] = [];
       for (const brut of pids) {
         const liste: Processus[] = jeu.etat.processus ?? [];
         const p = liste.find((q) => String(q.pid) === brut);
-        if (!p) jeu.erreur(`kill : (${brut}) - Aucun processus de ce type`);
-        else if (jeu.qui !== 'root' && p.utilisateur !== jeu.qui) jeu.erreur(`kill : (${brut}) - Opération non permise`);
+        if (!p) jeu.erreur(jeu.t('kill-aucun', { pid: brut }));
+        else if (jeu.qui !== 'root' && p.utilisateur !== jeu.qui) jeu.erreur(jeu.t('kill-non-permise', { pid: brut }));
         else {
           jeu.etat.processus = liste.filter((q) => q !== p);
           const m = jeu.etat.surKill?.(jeu, p);
@@ -53,15 +53,15 @@ export const SYSTEME: Record<string, Commande> = {
       const [action, brut] = args;
       const services: Record<string, { description: string; actif: boolean }> = jeu.etat.services ?? {};
       const nom = brut?.replace(/\.service$/, '');
-      if (!action || !nom) return jeu.erreur('Usage : systemctl status service (ex. : systemctl status nginx)');
+      if (!action || !nom) return jeu.erreur(jeu.t('systemctl-usage'));
       const s = services[nom];
       if (!s) return jeu.erreur(`Unit ${nom}.service could not be found.`);
       if (action === 'status')
         return `● ${nom}.service - ${s.description}\n     Active: ${s.actif ? 'active (running)' : 'failed'}`;
-      if (!['start', 'stop', 'restart', 'reload'].includes(action)) return jeu.erreur(`systemctl : action inconnue « ${action} »`);
+      if (!['start', 'stop', 'restart', 'reload'].includes(action)) return jeu.erreur(jeu.t('systemctl-action-inconnue', { action }));
       // Sans être root, systemctl demanderait un mot de passe ; ici, on
       // renvoie vers sudo.
-      if (jeu.qui !== 'root') return jeu.erreur(`Failed to ${action} ${nom}.service: Access denied\n(il faut être root : sudo systemctl ${action} ${nom})`);
+      if (jeu.qui !== 'root') return jeu.erreur(jeu.t('systemctl-acces-refuse', { action, service: nom }));
       if (action === 'stop') s.actif = false;
       else s.actif = true;
       return jeu.etat.surSystemctl?.(jeu, action, nom) ?? '';

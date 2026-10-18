@@ -87,7 +87,7 @@ export const RESEAU: Record<string, Commande> = {
       const serveur = args.find((a) => a.startsWith('@'))?.slice(1);
       const court = args.includes('+short');
       const nom = args.find((a) => !a.startsWith('@') && !a.startsWith('+'));
-      if (!nom) return jeu.erreur('Usage : dig nom (ex. : dig lettres.example)');
+      if (!nom) return jeu.erreur(jeu.t('dig-usage'));
       const res = resoudreNom(jeu, nom, serveur);
       const entete = `; <<>> DiG 9.18.28 <<>> ${args.join(' ')}\n;; global options: +cmd`;
       if ('erreur' in res && res.erreur === 'delai') {
@@ -116,7 +116,7 @@ export const RESEAU: Record<string, Commande> = {
   traceroute: {
     lancer: ({ args, jeu }) => {
       const hote = args.find((a) => !a.startsWith('-'));
-      if (!hote) return jeu.erreur('Usage : traceroute machine');
+      if (!hote) return jeu.erreur(jeu.t('traceroute-usage'));
       const res = resoudreNom(jeu, hote);
       if ('erreur' in res)
         return jeu.erreur(
@@ -133,7 +133,7 @@ export const RESEAU: Record<string, Commande> = {
       if (!arrive) {
         for (let i = sauts.length + 1; i <= sauts.length + 3; i++) lignes.push(`${String(i).padStart(2)}  * * *`);
         // Écart volontaire : le vrai traceroute continue jusqu'à 30 sauts.
-        lignes.push('    (… et ainsi de suite jusqu’à 30 : plus personne ne répond)');
+        lignes.push('    ' + jeu.t('traceroute-plus-personne'));
       }
       return lignes.join('\n');
     },

@@ -8,7 +8,7 @@ import type { Commande, Contexte } from './index';
 // Les lignes à traiter : celles des fichiers donnés, sinon l'entrée du tube.
 function textes(cmd: string, { entree, jeu }: Contexte, fichiers: string[]): { nom: string; texte: string }[] {
   if (!fichiers.length) {
-    if (entree === null) jeu.erreur(`${cmd} : il faut un fichier (ou du texte qui arrive par un tube |)`);
+    if (entree === null) jeu.erreur(jeu.t('texte-sans-entree', { commande: cmd }));
     return entree === null ? [] : [{ nom: '', texte: entree }];
   }
   return fichiers
@@ -55,7 +55,7 @@ export const TEXTE: Record<string, Commande> = {
     lancer: (c) => {
       const { lettres, reste } = options(c.args);
       const [motif, ...fichiers] = reste;
-      if (motif === undefined) return c.jeu.erreur('Usage : grep motif fichier (ex. : grep poivre livre.txt)');
+      if (motif === undefined) return c.jeu.erreur(c.jeu.t('grep-usage'));
       const casse = lettres.has('i');
       const cherche = casse ? motif.toLowerCase() : motif;
       const ts = textes('grep', c, fichiers);
@@ -67,7 +67,7 @@ export const TEXTE: Record<string, Commande> = {
       }
       // Écart volontaire : le vrai grep ne dit rien quand il ne trouve rien ;
       // ici, on le précise (seulement à l'écran, jamais dans un tube).
-      if (!sorties.length && c.dernier && ts.length) c.jeu.erreur(`(aucune ligne ne contient « ${motif} »)`);
+      if (!sorties.length && c.dernier && ts.length) c.jeu.erreur(c.jeu.t('grep-rien', { motif }));
       return sorties.join('\n');
     },
   },
@@ -134,8 +134,8 @@ export const TEXTE: Record<string, Commande> = {
         else if (a.startsWith('-f')) champs = a.slice(2).split(',').map(Number);
         else fichiers.push(a);
       }
-      if (!champs.length || champs.some((n) => !n)) return c.jeu.erreur('cut : il faut préciser les champs avec -f (ex. : cut -d " " -f 1)');
-      if (sep.length !== 1) return c.jeu.erreur('cut : le séparateur doit être un seul caractère');
+      if (!champs.length || champs.some((n) => !n)) return c.jeu.erreur(c.jeu.t('cut-champs'));
+      if (sep.length !== 1) return c.jeu.erreur(c.jeu.t('cut-separateur'));
       return textes('cut', c, fichiers)
         .flatMap((t) => lignesDe(t.texte))
         .map((l) => {

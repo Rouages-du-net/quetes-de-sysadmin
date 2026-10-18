@@ -13,7 +13,7 @@ const modeDe = (n: Noeud) => n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw
 function ligneLongue(jeu: Shell, nom: string, n: Noeud, humain: boolean): string {
   const proprio = n.proprio ?? 'vous';
   const octets = n.type === 'dossier' ? 4096 : tailleDe(n, jeu);
-  const taille = humain ? lisible(octets) : String(octets);
+  const taille = humain ? lisible(octets, jeu.t.langue) : String(octets);
   const suffixe = n.type === 'dossier' && nom !== '.' && nom !== '..' ? '/' : '';
   return `${n.type === 'dossier' ? 'd' : '-'}${modeDe(n)} ${proprio.padEnd(8)} ${proprio.padEnd(8)} ${taille.padStart(6)} ${nom}${suffixe}`;
 }
@@ -45,12 +45,12 @@ export const FICHIERS: Record<string, Commande> = {
       const { lettres, reste } = options(args);
       const cible = reste[0] ?? '.';
       const n = jeu.trouver(cible);
-      if (!n) return jeu.erreur(`ls : impossible d'accéder à '${cible}' : aucun fichier ou dossier de ce nom`);
+      if (!n) return jeu.erreur(jeu.t('ls-acces-introuvable', { cible }));
       const raison = jeu.blocage(cible);
       if (raison) return jeu.erreur(raison);
-      if (!jeu.traverse(cible)) return jeu.erreur(`ls : impossible d'accéder à '${cible}' : Permission non accordée`);
+      if (!jeu.traverse(cible)) return jeu.erreur(jeu.t('ls-acces-permission', { cible }));
       if (n.type === 'fichier') return lettres.has('l') ? ligneLongue(jeu, cible, n, lettres.has('h')) : cible;
-      if (!jeu.peut(n, 'r')) return jeu.erreur(`ls : impossible d'ouvrir le répertoire '${cible}' : Permission non accordée`);
+      if (!jeu.peut(n, 'r')) return jeu.erreur(jeu.t('ls-ouvrir-permission', { cible }));
       const entrees: [string, Noeud][] = Object.entries(n.enfants)
         .filter(([nom]) => lettres.has('a') || !nom.startsWith('.'))
         .sort(([a], [b]) => a.localeCompare(b, 'fr'));
@@ -67,11 +67,11 @@ export const FICHIERS: Record<string, Commande> = {
     lancer: ({ args, jeu }) => {
       const cible = args[0] ?? '~';
       const n = jeu.trouver(cible);
-      if (!n) return jeu.erreur(`cd : ${cible} : aucun fichier ou dossier de ce nom`);
-      if (n.type !== 'dossier') return jeu.erreur(`cd : ${cible} : n’est pas un dossier (c’est un objet : essaie cat)`);
+      if (!n) return jeu.erreur(jeu.t('erreur-introuvable', { commande: 'cd', cible }));
+      if (n.type !== 'dossier') return jeu.erreur(jeu.t('cd-pas-un-dossier', { cible }));
       const raison = jeu.blocage(cible);
       if (raison) return jeu.erreur(raison);
-      if (!jeu.traverse(cible) || !jeu.peut(n, 'x')) return jeu.erreur(`cd : ${cible} : Permission non accordée`);
+      if (!jeu.traverse(cible) || !jeu.peut(n, 'x')) return jeu.erreur(jeu.t('erreur-permission', { commande: 'cd', cible }));
       jeu.cwd = jeu.resoudre(cible);
       return '';
     },
@@ -79,7 +79,7 @@ export const FICHIERS: Record<string, Commande> = {
 
   cat: {
     lancer: ({ args, entree, jeu }) => {
-      if (!args.length) return entree ?? jeu.erreur('Usage : cat fichier');
+      if (!args.length) return entree ?? jeu.erreur(jeu.t('cat-usage'));
       return args
         .map((cible) => {
           const texte = jeu.lirePour('cat', cible);
@@ -105,7 +105,7 @@ export const FICHIERS: Record<string, Commande> = {
         const n = jeu.trouver(cible);
         if (n?.type === 'fichier') {
           if (!jeu.traverse(cible) || !jeu.peut(n, 'w')) {
-            jeu.erreur(`tee : ${cible} : Permission non accordée`);
+            jeu.erreur(jeu.t('erreur-permission', { commande: 'tee', cible }));
             continue;
           }
           const avant = contenu(n, jeu);
@@ -124,17 +124,17 @@ export const FICHIERS: Record<string, Commande> = {
   mv: {
     lancer: ({ args, jeu }) => {
       const [source, dest] = args;
-      if (!source || !dest) return jeu.erreur('Usage : mv source destination');
+      if (!source || !dest) return jeu.erreur(jeu.t('mv-usage'));
       const n = jeu.trouver(source);
-      if (!n) return jeu.erreur(`mv : impossible d'évaluer '${source}' : aucun fichier ou dossier de ce nom`);
+      if (!n) return jeu.erreur(jeu.t('mv-introuvable', { cible: source }));
       // Simplification du jeu : on déplace des objets, jamais des lieux.
-      if (n.type === 'dossier') return jeu.erreur(`mv : ${source} est un lieu ; dans ce jeu, on ne déplace que des objets`);
+      if (n.type === 'dossier') return jeu.erreur(jeu.t('mv-lieu', { cible: source }));
       if (n.protege?.mv) return jeu.erreur(n.protege.mv);
       const cible = destination(jeu, source, dest);
       const raison = jeu.blocage(source) ?? jeu.blocage(cible + '/..');
       if (raison) return jeu.erreur(raison);
       if (jeu.resoudre(source) === cible) return '';
-      if (!jeu.ecritDans(source)) return jeu.erreur(`mv : impossible de déplacer '${source}' : Permission non accordée`);
+      if (!jeu.ecritDans(source)) return jeu.erreur(jeu.t('mv-permission', { cible: source }));
       const erreur = jeu.placer('mv', cible, n);
       if (erreur) return jeu.erreur(erreur);
       jeu.effacer(source);
@@ -146,16 +146,16 @@ export const FICHIERS: Record<string, Commande> = {
     lancer: ({ args, jeu }) => {
       const { lettres, reste } = options(args);
       const [source, dest] = reste;
-      if (!source || !dest) return jeu.erreur('Usage : cp source destination');
+      if (!source || !dest) return jeu.erreur(jeu.t('cp-usage'));
       const n = jeu.trouver(source);
-      if (!n) return jeu.erreur(`cp : impossible d'évaluer '${source}' : aucun fichier ou dossier de ce nom`);
-      if (n.type === 'dossier' && !lettres.has('r')) return jeu.erreur(`cp : -r non spécifié ; omission du répertoire '${source}'`);
+      if (!n) return jeu.erreur(jeu.t('cp-introuvable', { cible: source }));
+      if (n.type === 'dossier' && !lettres.has('r')) return jeu.erreur(jeu.t('cp-repertoire', { cible: source }));
       const cible = destination(jeu, source, dest);
       const raison = jeu.blocage(source) ?? jeu.blocage(cible + '/..');
       if (raison) return jeu.erreur(raison);
-      if (jeu.resoudre(source) === cible) return jeu.erreur(`cp : '${source}' et '${dest}' sont le même fichier`);
+      if (jeu.resoudre(source) === cible) return jeu.erreur(jeu.t('cp-meme-fichier', { source, destination: dest }));
       if (!jeu.traverse(source) || !jeu.peut(n, 'r'))
-        return jeu.erreur(`cp : impossible d'ouvrir '${source}' en lecture : Permission non accordée`);
+        return jeu.erreur(jeu.t('cp-lecture-permission', { cible: source }));
       const erreur = jeu.placer('cp', cible, copier(n, jeu.qui));
       return erreur ? jeu.erreur(erreur) : '';
     },
@@ -163,17 +163,16 @@ export const FICHIERS: Record<string, Commande> = {
 
   rm: {
     lancer: ({ args, jeu }) => {
-      if (!args.length) return jeu.erreur('Usage : rm fichier');
+      if (!args.length) return jeu.erreur(jeu.t('rm-usage'));
       for (const cible of args.filter((a) => !a.startsWith('-'))) {
         const n = jeu.trouver(cible);
-        if (!n) jeu.erreur(`rm : impossible de supprimer '${cible}' : aucun fichier ou dossier de ce nom`);
-        else if (n.type === 'dossier')
-          jeu.erreur(`rm : impossible de supprimer '${cible}' : est un dossier (il faudrait rm -r, et c’est dangereux : on ne l’utilise pas ici)`);
+        if (!n) jeu.erreur(jeu.t('rm-introuvable', { cible }));
+        else if (n.type === 'dossier') jeu.erreur(jeu.t('rm-dossier', { cible }));
         else if (n.protege?.rm) jeu.erreur(n.protege.rm);
         else if (jeu.blocage(cible)) jeu.erreur(jeu.blocage(cible)!);
         // Effacer un fichier, c'est modifier le lieu qui le contient : il faut
         // le droit d'écrire dans ce lieu, pas sur le fichier.
-        else if (!jeu.ecritDans(cible)) jeu.erreur(`rm : impossible de supprimer '${cible}' : Permission non accordée`);
+        else if (!jeu.ecritDans(cible)) jeu.erreur(jeu.t('rm-permission', { cible }));
         else jeu.effacer(cible);
       }
       return '';
@@ -182,7 +181,7 @@ export const FICHIERS: Record<string, Commande> = {
 
   touch: {
     lancer: ({ args, jeu }) => {
-      if (!args.length) return jeu.erreur('Usage : touch fichier');
+      if (!args.length) return jeu.erreur(jeu.t('touch-usage'));
       for (const cible of args) {
         if (jeu.existe(cible)) continue;
         const erreur = jeu.placer('touch', cible, { type: 'fichier', contenu: '', proprio: jeu.qui });
@@ -194,9 +193,9 @@ export const FICHIERS: Record<string, Commande> = {
 
   mkdir: {
     lancer: ({ args, jeu }) => {
-      if (!args.length) return jeu.erreur('Usage : mkdir lieu');
+      if (!args.length) return jeu.erreur(jeu.t('mkdir-usage'));
       for (const cible of args) {
-        if (jeu.existe(cible)) jeu.erreur(`mkdir : impossible de créer le répertoire '${cible}' : Le fichier existe`);
+        if (jeu.existe(cible)) jeu.erreur(jeu.t('mkdir-existe', { cible }));
         else {
           const erreur = jeu.placer('mkdir', cible, { type: 'dossier', enfants: {}, proprio: jeu.qui });
           if (erreur) jeu.erreur(erreur);
@@ -209,16 +208,15 @@ export const FICHIERS: Record<string, Commande> = {
   chmod: {
     lancer: ({ args, jeu }) => {
       const [droits, ...cibles] = args;
-      if (!droits || !cibles.length) return jeu.erreur('Usage : chmod droits fichier (ex. : chmod o-w souvenirs, chmod 755 souvenirs)');
+      if (!droits || !cibles.length) return jeu.erreur(jeu.t('chmod-usage'));
       for (const cible of cibles) {
         const n = jeu.trouver(cible);
-        if (!n) jeu.erreur(`chmod : impossible d'accéder à '${cible}' : aucun fichier ou dossier de ce nom`);
-        else if (!jeu.traverse(cible)) jeu.erreur(`chmod : impossible d'accéder à '${cible}' : Permission non accordée`);
-        else if (jeu.qui !== 'root' && (n.proprio ?? 'vous') !== jeu.qui)
-          jeu.erreur(`chmod : modification des droits de '${cible}' : Opération non permise`);
+        if (!n) jeu.erreur(jeu.t('chmod-acces-introuvable', { cible }));
+        else if (!jeu.traverse(cible)) jeu.erreur(jeu.t('chmod-acces-permission', { cible }));
+        else if (jeu.qui !== 'root' && (n.proprio ?? 'vous') !== jeu.qui) jeu.erreur(jeu.t('chmod-non-permise', { cible }));
         else {
           const nouveau = appliquerMode(modeDe(n), droits);
-          if (!nouveau) jeu.erreur(`chmod : mode incorrect : « ${droits} » (voir man chmod)`);
+          if (!nouveau) jeu.erreur(jeu.t('chmod-mode-incorrect', { droits }));
           else n.mode = nouveau;
         }
       }
@@ -237,16 +235,16 @@ export const FICHIERS: Record<string, Commande> = {
         if (crit[i] === '-name') nom = joker(crit[++i] ?? '');
         else if (crit[i] === '-type') type = crit[++i] ?? null;
         else if (crit[i] === '-delete') effacer = true;
-        else return jeu.erreur(`find : prédicat inconnu « ${crit[i]} » (ici : -name, -type, -delete)`);
+        else return jeu.erreur(jeu.t('find-predicat-inconnu', { predicat: crit[i] }));
       }
       const n = jeu.trouver(depart);
-      if (!n) return jeu.erreur(`find : '${depart}' : aucun fichier ou dossier de ce nom`);
+      if (!n) return jeu.erreur(jeu.t('find-introuvable', { cible: depart }));
       const trouves: string[] = [];
       const parcourir = (chemin: string, e: Noeud) => {
         const garde = (!nom || nom.test(chemin.split('/').pop()!)) && (!type || (type === 'd') === (e.type === 'dossier'));
         if (garde) trouves.push(chemin);
         if (e.type !== 'dossier') return;
-        if (!jeu.peut(e, 'r') || !jeu.peut(e, 'x')) return void jeu.erreur(`find : '${chemin}' : Permission non accordée`);
+        if (!jeu.peut(e, 'r') || !jeu.peut(e, 'x')) return void jeu.erreur(jeu.t('find-permission', { cible: chemin }));
         for (const [k, enfant] of Object.entries(e.enfants).sort(([a], [b]) => a.localeCompare(b, 'fr')))
           parcourir(`${chemin.replace(/\/$/, '')}/${k}`, enfant);
       };
@@ -254,8 +252,8 @@ export const FICHIERS: Record<string, Commande> = {
       if (!effacer) return trouves.join('\n');
       for (const chemin of trouves.reverse()) {
         const e = jeu.trouver(chemin)!;
-        if (e.type === 'dossier' && Object.keys(e.enfants).length) jeu.erreur(`find : impossible de supprimer '${chemin}' : Le dossier n'est pas vide`);
-        else if (!jeu.ecritDans(chemin)) jeu.erreur(`find : impossible de supprimer '${chemin}' : Permission non accordée`);
+        if (e.type === 'dossier' && Object.keys(e.enfants).length) jeu.erreur(jeu.t('find-supprimer-non-vide', { cible: chemin }));
+        else if (!jeu.ecritDans(chemin)) jeu.erreur(jeu.t('find-supprimer-permission', { cible: chemin }));
         else jeu.effacer(chemin);
       }
       return '';
@@ -265,7 +263,7 @@ export const FICHIERS: Record<string, Commande> = {
   du: {
     lancer: ({ args, jeu }) => {
       const { lettres, reste } = options(args);
-      const fmt = (o: number) => (lettres.has('h') ? lisible(o) : String(Math.ceil(o / 1024)));
+      const fmt = (o: number) => (lettres.has('h') ? lisible(o, jeu.t.langue) : String(Math.ceil(o / 1024)));
       const lignes: string[] = [];
       const parcourir = (chemin: string, e: Noeud): number => {
         if (e.type === 'fichier') return tailleDe(e, jeu);
@@ -277,7 +275,7 @@ export const FICHIERS: Record<string, Commande> = {
       for (const cible of reste.length ? reste : ['.']) {
         const n = jeu.trouver(cible);
         if (!n) {
-          jeu.erreur(`du : impossible d'accéder à '${cible}' : aucun fichier ou dossier de ce nom`);
+          jeu.erreur(jeu.t('du-introuvable', { cible }));
           continue;
         }
         const total = parcourir(cible, n);
@@ -290,12 +288,12 @@ export const FICHIERS: Record<string, Commande> = {
   df: {
     lancer: ({ args, jeu }) => {
       const { lettres, reste } = options(args);
-      const fmt = (o: number) => (lettres.has('h') ? lisible(o) : String(Math.ceil(o / 1024)));
+      const fmt = (o: number) => (lettres.has('h') ? lisible(o, jeu.t.langue) : String(Math.ceil(o / 1024)));
       const montages: { chemin: string; capacite: number; nom: string }[] = jeu.etat.montages ?? [];
       const choisis = reste.length
         ? reste.map((r) => jeu.montage(jeu.resoudre(r))).filter(Boolean)
         : montages;
-      const lignes = ['Sys. de fichiers   Taille Utilisé  Dispo Uti% Monté sur'];
+      const lignes = [jeu.t('df-entete')];
       for (const m of choisis as typeof montages) {
         const lieu = jeu.trouver(m.chemin);
         const utilise = lieu ? jeu.taille(lieu) : 0;
@@ -311,20 +309,20 @@ export const FICHIERS: Record<string, Commande> = {
   tar: {
     lancer: ({ args, jeu }) => {
       const { lettres, reste } = options(args);
-      if (!lettres.has('f') || !reste.length) return jeu.erreur('Usage : tar -czf archive.tar.gz lieu  |  tar -tzf archive.tar.gz  |  tar -xzf archive.tar.gz');
+      if (!lettres.has('f') || !reste.length) return jeu.erreur(jeu.t('tar-usage'));
       const [nomArchive, ...sources] = reste;
       if (lettres.has('c')) {
-        if (!sources.length) return jeu.erreur('tar : refus de créer une archive vide');
+        if (!sources.length) return jeu.erreur(jeu.t('tar-archive-vide'));
         const fichiers: Record<string, Fichier> = {};
         const ajouter = (chemin: string, e: Noeud) => {
           if (e.type === 'fichier') {
-            if (!jeu.peut(e, 'r')) return void jeu.erreur(`tar : ${chemin} : Permission non accordée`);
+            if (!jeu.peut(e, 'r')) return void jeu.erreur(jeu.t('erreur-permission', { commande: 'tar', cible: chemin }));
             fichiers[chemin] = { ...e, lu: undefined } as Fichier;
           } else for (const [k, enfant] of Object.entries(e.enfants)) ajouter(`${chemin.replace(/\/$/, '')}/${k}`, enfant);
         };
         for (const s of sources) {
           const e = jeu.trouver(s);
-          if (!e) jeu.erreur(`tar : ${s} : aucun fichier ou dossier de ce nom`);
+          if (!e) jeu.erreur(jeu.t('erreur-introuvable', { commande: 'tar', cible: s }));
           else ajouter(s.replace(/^\.?\/+/, ''), e);
         }
         const compresse = lettres.has('z');
@@ -342,8 +340,8 @@ export const FICHIERS: Record<string, Commande> = {
         return lettres.has('v') ? Object.keys(fichiers).join('\n') : '';
       }
       const n = jeu.trouver(nomArchive);
-      if (!n) return jeu.erreur(`tar : ${nomArchive} : open impossible : aucun fichier ou dossier de ce nom`);
-      if (n.type !== 'fichier' || !n.archive) return jeu.erreur(`tar : ${nomArchive} : ne ressemble pas à une archive tar`);
+      if (!n) return jeu.erreur(jeu.t('tar-open-impossible', { cible: nomArchive }));
+      if (n.type !== 'fichier' || !n.archive) return jeu.erreur(jeu.t('tar-pas-une-archive', { cible: nomArchive }));
       if (lettres.has('t')) return Object.keys(n.archive.fichiers).join('\n');
       if (lettres.has('x')) {
         for (const [chemin, f] of Object.entries(n.archive.fichiers)) {
@@ -358,7 +356,7 @@ export const FICHIERS: Record<string, Commande> = {
         }
         return '';
       }
-      return jeu.erreur('tar : il faut une de ces options : -c, -t ou -x');
+      return jeu.erreur(jeu.t('tar-option-manquante'));
     },
   },
 };
