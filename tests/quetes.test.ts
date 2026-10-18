@@ -985,6 +985,68 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('La Gazette, chapitre 2 — Le retour arrière (versions, lien current, tests)', () => {
+      const crochet = (s: Shell, change: (texte: string) => string) => {
+        s.executer('nano /srv/git/gazette.git/hooks/post-receive');
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const AVEC_TESTS = (t: string) => t.replace('ln -sfn', 'cd /srv/gazette/releases/$VERSION\nsh tests.sh\nln -sfn');
+      const publierTheo = (s: Shell) =>
+        [
+          'cd ~/gazette',
+          'git pull prod main',
+          'mv accueil.html index.html',
+          'git add .',
+          'git commit -m "Accueil : index.html"',
+          'git push prod main',
+        ]
+          .map((l) => s.executer(l))
+          .join('\n');
+
+      it("solution : ln -sfn vers la version d'avant, tests.sh dans le crochet avant de basculer, puis la mise en page réparée", () => {
+        const { s, tout } = jouer('retour-arriere', [
+          'curl -I http://gazette.example/',
+          'ls -l /srv/gazette',
+          'cd /srv/gazette',
+          'ln -sfn releases/20270514101502 current',
+        ]);
+        expect(tout).toContain('HTTP/1.1 403 Forbidden');
+        expect(tout).toContain('current -> /srv/gazette/releases/20270517203012');
+        contient(tout, "nginx sert /srv/gazette/current, mais n'y trouve pas");
+        contient(tout, 'Le site répond de nouveau');
+        expect(s.executer('readlink -f /srv/gazette/current')).toBe('/srv/gazette/releases/20270514101502');
+        const theo = crochet(s, AVEC_TESTS);
+        expect(theo).toContain("remote: Vérification de la page d'accueil (index.html)...");
+        expect(theo).not.toContain('en ligne');
+        contient(theo, "le crochet s'est arrêté avant de basculer current");
+        expect(s.termine).toBe(false);
+        const fin = publierTheo(s);
+        expect(fin).toContain('Avance rapide');
+        expect(fin).toContain('remote: Tests OK');
+        expect(fin).toMatch(/remote: Version \d{14} en ligne/);
+        contient(fin, 'Tu as terminé le chapitre 2 de La Gazette');
+        expect(s.executer('curl -s http://gazette.example/')).toContain('class="une"');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : ln sans -n, tests après la bascule, tests lancés depuis le dépôt', () => {
+        const { s, tout } = jouer('retour-arriere', ['cd /srv/gazette', 'ln -sf releases/20270514101502 current', 'curl -I http://gazette.example/']);
+        contient(tout, 'Le nouveau lien a été créé DANS la version cassée');
+        expect(tout).toContain('HTTP/1.1 403 Forbidden');
+        s.executer('ln -sfn /srv/gazette/releases/20270514101502 /srv/gazette/current');
+        // Les tests après la bascule : trop tard, la version de Théo est en ligne.
+        const trop = crochet(s, (t) => t.replace('echo', 'sh tests.sh\necho'));
+        contient(trop, 'Le push cassé de Théo est passé en ligne');
+        expect(s.executer('curl -I http://gazette.example/')).toContain('403 Forbidden');
+        s.executer('ln -sfn /srv/gazette/releases/20270514101502 /srv/gazette/current');
+        // Avant la bascule, mais depuis le dépôt : tout est refusé, même une bonne version.
+        crochet(s, (t) => t.replace('sh tests.sh\necho', 'echo').replace('ln -sfn', 'sh tests.sh\nln -sfn'));
+        contient(publierTheo(s), 'tests.sh cherche index.html dans le lieu');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

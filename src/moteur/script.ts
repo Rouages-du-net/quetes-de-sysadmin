@@ -6,7 +6,8 @@
 // les commentaires et la ligne #!, les lignes coupées par « \ », set -e
 // (s'arrêter à la première commande qui échoue), exit N, les variables
 // (NOM=valeur, export, $NOM, ${NOM}, $1…, $?), $(commande), read (une ligne
-// de l'entrée), cd, true, false, :, et les suites « a && b », « a || b ».
+// de l'entrée), cd, true, false, :, [ … ] (la commande test), et les suites
+// « a && b », « a || b ».
 // Une affectation devant une commande (GIT_WORK_TREE=… git …) ne vaut que
 // pour git, qui la lit comme l'option correspondante.
 // Écarts : pas de if, for, while, case ni de fonctions (une erreur le dit),
@@ -104,6 +105,14 @@ export function executerScript(jeu: Shell, texte: string, options: OptionsScript
     let ligne = developper(brute).trim();
     if (!ligne || ligne === ':' || ligne === 'true') return 0;
     if (ligne === 'false') return 1;
+    // [ condition ] est la commande test (son dernier argument doit être « ] »).
+    if (/^\[(\s|$)/.test(ligne)) {
+      if (!/\s\]$/.test(ligne)) {
+        sorties.push(jeu.t('test-crochet-manquant', { script: options.nom, numero }));
+        return 2;
+      }
+      ligne = `test ${ligne.slice(1, -1).trim()}`;
+    }
     const premier = ligne.split(/\s+/)[0];
     if (MOTS_RESERVES.includes(premier)) {
       sorties.push(jeu.t('script-non-simule', { script: options.nom, numero, mot: premier }));

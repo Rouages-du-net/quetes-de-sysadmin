@@ -4,7 +4,7 @@
 import type { Fichier, Noeud } from '../monde';
 import type { Shell } from '../shell';
 import { appliquerMode, contenu, joker, lisible, options, tailleDe } from '../outils';
-import type { Commande } from './index';
+import type { Commande, Contexte } from './index';
 
 const modeDe = (n: Noeud) => n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--');
 
@@ -38,6 +38,32 @@ const copier = (n: Noeud, proprio: string): Noeud =>
     ? { ...n, proprio, groupe: undefined, lu: undefined, protege: undefined }
     : { type: 'dossier', proprio, mode: n.mode, enfants: Object.fromEntries(Object.entries(n.enfants).map(([k, e]) => [k, copier(e, proprio)])) };
 
+// ls d'un seul lieu (ou fichier).
+function lister({ args, jeu, dernier }: Contexte): string {
+  const { lettres, reste } = options(args);
+  const cible = reste[0] ?? '.';
+  // ls -l d'un lien montre le lien lui-même ; sans -l, ls entre dans le lieu visé.
+  const lien = jeu.trouver(cible, false);
+  const n = (lettres.has('l') || lettres.has('n')) && lien?.type === 'fichier' && lien.lien !== undefined ? lien : jeu.trouver(cible);
+  if (!n) return jeu.erreur(jeu.t('ls-acces-introuvable', { cible }));
+  const raison = jeu.blocage(cible);
+  if (raison) return jeu.erreur(raison);
+  if (!jeu.traverse(cible)) return jeu.erreur(jeu.t('ls-acces-permission', { cible }));
+  // -n est un -l qui montre les numéros.
+  const long = lettres.has('l') || lettres.has('n');
+  if (n.type === 'fichier') return long ? ligneLongue(jeu, cible, n, lettres.has('h'), lettres.has('n')) : cible;
+  if (!jeu.peut(n, 'r')) return jeu.erreur(jeu.t('ls-ouvrir-permission', { cible }));
+  const entrees: [string, Noeud][] = Object.entries(n.enfants)
+    .filter(([nom]) => lettres.has('a') || !nom.startsWith('.'))
+    .sort(([a], [b]) => a.localeCompare(b, 'fr'));
+  if (lettres.has('a')) entrees.unshift(['.', n], ['..', jeu.trouver(cible + '/..') ?? n]);
+  if (long) return entrees.map(([nom, e]) => ligneLongue(jeu, nom, e, lettres.has('h'), lettres.has('n'))).join('\n');
+  // Comme le vrai ls : en colonnes à l'écran, un nom par ligne dans un
+  // tube ou un fichier (et sans le / ajouté aux lieux).
+  if (!dernier) return entrees.map(([nom]) => nom).join('\n');
+  return entrees.map(([nom, e]) => (e.type === 'dossier' && nom !== '.' && nom !== '..' ? nom + '/' : nom)).join('    ');
+}
+
 export const FICHIERS: Record<string, Commande> = {
   pwd: {
     lancer: ({ jeu }) => jeu.cwd,
@@ -48,29 +74,16 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   ls: {
-    lancer: ({ args, jeu, dernier }) => {
-      const { lettres, reste } = options(args);
-      const cible = reste[0] ?? '.';
-      // ls -l d'un lien montre le lien lui-même ; sans -l, ls entre dans le lieu visé.
-      const lien = jeu.trouver(cible, false);
-      const n = (lettres.has('l') || lettres.has('n')) && lien?.type === 'fichier' && lien.lien !== undefined ? lien : jeu.trouver(cible);
-      if (!n) return jeu.erreur(jeu.t('ls-acces-introuvable', { cible }));
-      const raison = jeu.blocage(cible);
-      if (raison) return jeu.erreur(raison);
-      if (!jeu.traverse(cible)) return jeu.erreur(jeu.t('ls-acces-permission', { cible }));
-      // -n est un -l qui montre les numéros.
-      const long = lettres.has('l') || lettres.has('n');
-      if (n.type === 'fichier') return long ? ligneLongue(jeu, cible, n, lettres.has('h'), lettres.has('n')) : cible;
-      if (!jeu.peut(n, 'r')) return jeu.erreur(jeu.t('ls-ouvrir-permission', { cible }));
-      const entrees: [string, Noeud][] = Object.entries(n.enfants)
-        .filter(([nom]) => lettres.has('a') || !nom.startsWith('.'))
-        .sort(([a], [b]) => a.localeCompare(b, 'fr'));
-      if (lettres.has('a')) entrees.unshift(['.', n], ['..', jeu.trouver(cible + '/..') ?? n]);
-      if (long) return entrees.map(([nom, e]) => ligneLongue(jeu, nom, e, lettres.has('h'), lettres.has('n'))).join('\n');
-      // Comme le vrai ls : en colonnes à l'écran, un nom par ligne dans un
-      // tube ou un fichier (et sans le / ajouté aux lieux).
-      if (!dernier) return entrees.map(([nom]) => nom).join('\n');
-      return entrees.map(([nom, e]) => (e.type === 'dossier' && nom !== '.' && nom !== '..' ? nom + '/' : nom)).join('    ');
+    lancer: (c) => {
+      const { reste } = options(c.args);
+      if (reste.length <= 1) return lister(c);
+      // Plusieurs cibles : les fichiers d'abord, puis un bloc par lieu, avec son nom (comme ls).
+      const lettres = c.args.filter((a) => a.startsWith('-'));
+      const fichiers = reste.filter((r) => c.jeu.trouver(r)?.type !== 'dossier');
+      const lieux = reste.filter((r) => c.jeu.trouver(r)?.type === 'dossier');
+      const blocs = fichiers.map((f) => lister({ ...c, args: [...lettres, f] })).filter(Boolean);
+      for (const l of lieux) blocs.push(`${l}:\n${lister({ ...c, args: [...lettres, l] })}`);
+      return blocs.join('\n\n');
     },
   },
 
@@ -198,7 +211,9 @@ export const FICHIERS: Record<string, Commande> = {
       const { lettres, reste } = options(args);
       if (!reste.length) return jeu.erreur(jeu.t('ln-operande-manquant'));
       const [cible, dest = '.'] = reste;
-      const lieu = jeu.trouver(dest);
+      // -n : si la destination est un lien vers un lieu, on remplace le lien
+      // au lieu d'entrer dans le lieu (ln -sfn, pour basculer un lien « current »).
+      const lieu = lettres.has('n') ? jeu.trouver(dest, false) : jeu.trouver(dest);
       const chemin = lieu?.type === 'dossier' ? `${jeu.resoudre(dest)}/${cible.replace(/\/$/, '').split('/').at(-1)}` : jeu.resoudre(dest);
       const affiche = lieu?.type === 'dossier' ? chemin : dest;
       const symbolique = lettres.has('s');
@@ -237,9 +252,24 @@ export const FICHIERS: Record<string, Commande> = {
 
   mkdir: {
     lancer: ({ args, jeu }) => {
-      if (!args.length) return jeu.erreur(jeu.t('mkdir-usage'));
-      for (const cible of args) {
-        if (jeu.existe(cible)) jeu.erreur(jeu.t('mkdir-existe', { cible }));
+      // -p : crée aussi les lieux parents, sans erreur s'ils existent déjà.
+      const parents = args.includes('-p') || args.includes('--parents');
+      const cibles = args.filter((a) => a !== '-p' && a !== '--parents');
+      if (!cibles.length) return jeu.erreur(jeu.t('mkdir-usage'));
+      for (const cible of cibles) {
+        if (parents) {
+          const morceaux = jeu.resoudre(cible).split('/').filter(Boolean);
+          for (let i = 1; i <= morceaux.length; i++) {
+            const chemin = '/' + morceaux.slice(0, i).join('/');
+            const n = jeu.trouver(chemin);
+            if (n?.type === 'dossier') continue;
+            const erreur = n ? jeu.t('mkdir-existe', { cible: chemin }) : jeu.placer('mkdir', chemin, { type: 'dossier', enfants: {}, proprio: jeu.qui });
+            if (erreur) {
+              jeu.erreur(erreur);
+              break;
+            }
+          }
+        } else if (jeu.existe(cible)) jeu.erreur(jeu.t('mkdir-existe', { cible }));
         else {
           const erreur = jeu.placer('mkdir', cible, { type: 'dossier', enfants: {}, proprio: jeu.qui });
           if (erreur) jeu.erreur(erreur);

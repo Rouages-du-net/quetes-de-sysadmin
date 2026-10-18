@@ -22,6 +22,7 @@ import type { Dossier, Fichier, Noeud } from '../monde';
 import type { Shell } from '../shell';
 import { contenu } from '../outils';
 import { executerScript } from '../script';
+import { systemd } from '../systemd';
 import type { Commande } from './index';
 
 export interface Commit {
@@ -552,6 +553,9 @@ const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
     if (lieuObjets && !jeu.peut(lieuObjets, 'w')) return jeu.erreur([...lignes, jeu.t('git-push-droits'), refus('unpacker error')].join('\n'));
     // Pousser vers la branche extraite d'un dépôt non nu : refusé (receive.denyCurrentBranch).
     if (!distant.nu) return jeu.erreur([...lignes, jeu.t('git-push-branche-extraite'), refus('branch is currently checked out')].join('\n'));
+    // Envoyer prend un peu de temps (l'horloge de la machine avance).
+    const sd = systemd(jeu);
+    if (sd) sd.horloge += 20_000;
     const distantes: string[] = [];
     const crochet = (nomCrochet: string): { code: number } | null => {
       const fichier = `${chemin}/hooks/${nomCrochet}`;

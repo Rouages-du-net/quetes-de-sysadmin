@@ -16,6 +16,7 @@ import { traducteur, typographie, type Langue, type Traduire } from '../textes';
 
 export { decouper, appliquerMode } from './outils';
 import { contenu, decouper, joker, tailleDe, type Mot } from './outils';
+import { lancerScript } from './commandes/scripts';
 
 // Ce que le jeu (les chapitres et les commandes) peut consulter ou modifier.
 export interface Jeu {
@@ -552,6 +553,20 @@ export class Shell implements Jeu {
     if (root && cmd === 'cd') return this.erreur(this.t('sudo-cd'));
     if (cmd === 'help' || cmd === 'aide') return this.t('aide-commandes', { commandes: this.connues().join(', ') });
     if (cmd === 'man' || cmd === 'apropos' || cmd === 'whatis') return this.consulter(cmd, reste);
+    // Un chemin (./deployer.sh, /srv/site/deployer.sh) : un script, s'il est exécutable.
+    if (cmd.includes('/')) {
+      const n = this.trouver(cmd);
+      if (!n) return this.erreur(this.t('script-introuvable', { commande: cmd }));
+      if (n.type === 'dossier') return this.erreur(this.t('script-dossier', { commande: cmd }));
+      if (!this.traverse(cmd) || !this.peut(n, 'x') || !this.peut(n, 'r')) return this.erreur(this.t('script-permission', { commande: cmd }));
+      const avant = this.qui;
+      if (root) this.qui = 'root';
+      try {
+        return lancerScript(this, cmd, reste);
+      } finally {
+        this.qui = avant;
+      }
+    }
     // Une page de manuel de fichier (section 5, ex. sshd_config) n'est pas une commande.
     const commande: Commande | undefined = COMMANDES[cmd]?.section === 5 ? undefined : COMMANDES[cmd];
     if (!this.connues().includes(cmd) || !commande)

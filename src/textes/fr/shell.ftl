@@ -58,3 +58,22 @@ manuel-pas-de-page = Il n'y a pas de page de manuel pour { $commande }.
 
 # { $script } : le nom du script ; { $numero } : la ligne ; { $mot } : le mot du shell
 script-non-simule = { $script }: { $numero }: « { $mot } » : cette construction du shell n'est pas simulée dans ce jeu (ni if, ni for, ni while). Écrire une commande par ligne, avec && ou || pour les enchaîner.
+# { $script } : le nom du script ; { $numero } : la ligne
+test-crochet-manquant = { $script }: { $numero }: [: missing ]
+# { $operateur } : ce qui a été donné à test
+test-operateur = { $operateur }: unexpected operator
+test-trop-d-arguments = too many arguments
+# { $fichier } : le script demandé
+sh-introuvable = sh: 0: cannot open { $fichier }: No such file
+sh-interactif = (Dans ce jeu, sh lance un script : sh fichier. Le shell interactif, c'est déjà celui où tu tapes.)
+# { $argument } : ce qui n'a pas été compris
+date-invalide = date: date incorrecte « { $argument } »
+# Le format de date sans argument, comme date avec LANG=fr_FR.UTF-8
+date-format = %a %e %b %Y %T %Z
+readlink-operande =
+    readlink: opérande manquant
+    Saisissez « readlink --help » pour plus d'informations.
+# Lancer ./script : { $commande } est le chemin tapé
+script-introuvable = bash: { $commande }: Aucun fichier ou dossier de ce nom
+script-dossier = bash: { $commande }: est un dossier
+script-permission = bash: { $commande }: Permission non accordée
