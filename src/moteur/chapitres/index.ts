@@ -30,6 +30,7 @@ import { retourArriere } from './retour-arriere';
 import { bleuVert } from './bleu-vert';
 import { canari } from './canari';
 import { migration } from './migration';
+import { rancon } from './rancon';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -63,6 +64,10 @@ export const HISTOIRES: Histoire[] = [
   {
     id: 'gazette',
     chapitres: [depotNu, retourArriere, bleuVert, canari, migration],
+  },
+  {
+    id: 'ludotheque',
+    chapitres: [rancon],
   },
 ];
 

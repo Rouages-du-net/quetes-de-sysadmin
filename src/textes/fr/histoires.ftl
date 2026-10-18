@@ -17,3 +17,5 @@ histoire-fabrique = La Fabrique
     .resume = Le fablab du quartier passe aux conteneurs : docker, volumes, docker compose, le pare-feu que Docker contourne, et des conteneurs qui ne tournent plus en root.
 histoire-gazette = La Gazette
     .resume = Le journal en ligne du quartier apprend à déployer : git push, crochets, et revenir en arrière quand ça casse.
+histoire-ludotheque = La Ludothèque
+    .resume = Le serveur de la ludothèque du quartier : un rançongiciel, des sauvegardes qui tiennent le coup, et une base de données à sauver proprement.

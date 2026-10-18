@@ -556,7 +556,8 @@ export const RESTIC: Record<string, Commande> = {
       if (!depotChemin) return jeu.erreur('Fatal: Please specify repository location (-r or --repository-file)');
       const chemin = jeu.resoudre(depotChemin).replace(/\/$/, '');
       const depots: Record<string, Depot> = (jeu.etat.restic ??= {});
-      const depot = depots[chemin];
+      // Un dépôt se reconnaît à son fichier config, où qu'il soit monté (une clé USB, par exemple).
+      const depot = depots[chemin] ?? Object.values(depots).find((d) => jeu.lire(`${chemin}/config`) === chiffre(`config-${d.id}`).contenu);
       if (action === 'init') {
         if (depot || jeu.existe(`${chemin}/config`))
           return jeu.erreur(`Fatal: create repository at ${depotChemin} failed: config file already exists`);

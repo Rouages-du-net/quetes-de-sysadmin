@@ -29,6 +29,16 @@ man-date = affiche la date et l'heure de la machine. Avec +FORMAT, les écrit à
     .exemple-1 = la date et l'heure
     .exemple-2 = un nom qui se trie dans l'ordre : année, mois, jour, heure, minutes, secondes
     .exemple-3 = la date seule, au format ISO
+man-lsblk = liste les disques et leurs partitions (list block devices) : leur nom (/dev/sdb1…), leur taille, s'ils sont amovibles (RM = 1, une clé ou un disque USB) et où ils sont montés. -f ajoute le système de fichiers et l'étiquette (LABEL), pratique pour reconnaître un disque.
+    .synopsis = lsblk [-f]
+    .option-f = montre le système de fichiers, l'étiquette et l'UUID (filesystems).
+    .exemple-1 = les disques et leurs partitions
+    .exemple-2 = avec leurs étiquettes
+man-mount = branche un système de fichiers (une partition, une clé USB, un partage réseau) dans l'arborescence, à un point de montage : un dossier existant, dont le contenu montré devient celui du périphérique. Sans argument, liste ce qui est monté. -o ro monte en lecture seule : rien ne peut y être écrit ni effacé (la bonne façon de brancher une sauvegarde qu'on veut seulement lire). Réservé à root. umount détache.
+    .synopsis = mount [-o ro] périphérique point_de_montage
+    .exemple-1 = ce qui est monté
+    .exemple-2 = brancher la partition sdb1 en lecture seule sur /mnt/cle
+    .exemple-3 = la détacher
 man-openssl = la boîte à outils de la cryptographie (TLS, certificats, clés). openssl x509 lit un certificat : ses dates (-dates), son titulaire (-subject), son émetteur (-issuer), ses noms (-ext subjectAltName) ; -checkend secondes dit s'il expire d'ici là. openssl s_client se connecte à un serveur en TLS et montre le certificat qu'il présente vraiment, et si on peut lui faire confiance (Verify return code).
     .synopsis = openssl x509 [-in fichier] -noout [-dates] [-subject] [-issuer] [-checkend secondes] ; openssl s_client -connect machine:port [-servername nom]
     .exemple-1 = les dates de validité d'un certificat
@@ -289,6 +299,9 @@ man-touch = crée un fichier vide (ou met à jour sa date s’il existe déjà).
     .exemple-1 = créer un fichier vide
 man-traceroute = montre le chemin des paquets, routeur par routeur (« saut » par « saut »), avec le temps de réponse de chacun. « * * * » : ce saut n’a pas répondu.
     .synopsis = traceroute machine
+man-umount = détache un système de fichiers monté (unmount). On lui donne le point de montage ou le périphérique. Impossible tant qu'on se trouve dedans (« target is busy ») : sortir d'abord du dossier. Réservé à root.
+    .synopsis = umount point_de_montage | périphérique
+    .exemple-1 = détacher la clé
 man-uniq = fusionne les lignes identiques qui se suivent. -c indique combien de fois chacune apparaît. On trie d’abord (sort) pour que les doublons se suivent : sort | uniq -c
     .synopsis = uniq [-c] [fichier]
     .option-c = compte combien de fois chaque ligne se répète.
@@ -327,12 +340,15 @@ man-id = affiche l'identité d'un compte : son numéro (uid), son groupe princip
     .synopsis = id [utilisateur]
     .exemple-1 = qui suis-je, et dans quels groupes ?
     .exemple-2 = l'identité de malo
-man-usermod = modifie un compte (user modify), notamment ses groupes. -G donne la liste des groupes secondaires, séparés par des virgules : elle REMPLACE les groupes actuels. Avec -a (append), les groupes sont AJOUTÉS. Réservé à root.
-    .synopsis = usermod [-a] -G groupe[,groupe...] utilisateur
+man-usermod = modifie un compte (user modify), notamment ses groupes. -G donne la liste des groupes secondaires, séparés par des virgules : elle REMPLACE les groupes actuels. Avec -a (append), les groupes sont AJOUTÉS. -L verrouille le mot de passe d'un compte (plus personne ne peut se connecter avec), -U le déverrouille. Réservé à root.
+    .synopsis = usermod [-a] -G groupe[,groupe...] utilisateur ; usermod -L|-U utilisateur
     .option-a = ajoute les groupes de -G au lieu de remplacer les groupes actuels (append).
     .option-G = la liste des groupes secondaires, séparés par des virgules.
+    .option-L = verrouille le mot de passe du compte (lock).
+    .option-U = déverrouille le mot de passe du compte (unlock).
     .exemple-1 = ajouter malo au groupe adm, sans toucher à ses autres groupes
     .exemple-2 = attention : malo n'est plus que dans adm (ses autres groupes secondaires sont retirés)
+    .exemple-3 = verrouiller le compte de malo
 
 man-journalctl = lit le journal de systemd, où les services écrivent leurs messages (et leurs erreurs). -u ne garde qu'un service, -n les N dernières lignes, -b le démarrage en cours, -p err les erreurs. -x ajoute des explications et -e va à la fin : journalctl -xeu nginx est la formule classique quand un service refuse de démarrer. Il faut être root, ou dans le groupe adm ou systemd-journal, pour tout lire.
     .synopsis = journalctl [-u service] [-n N] [-b] [-p priorité] [-x] [-e]
@@ -413,11 +429,12 @@ man-rsync = copie des fichiers et des dossiers, en ne recopiant que ce qui a cha
     .exemple-1 = sauvegarder le contenu d'un dossier dans un autre
     .exemple-2 = d'abord essayer, avec --delete : rien n'est touché
     .exemple-3 = restaurer un seul fichier depuis la sauvegarde
-man-crontab = gère tes tâches planifiées : des commandes que cron lance tout seul, à heure fixe. crontab -e ouvre ta crontab dans l'éditeur ; à la fermeture, elle est vérifiée puis installée. crontab -l l'affiche, crontab -r la supprime. Une ligne = cinq champs pour l'heure, puis la commande : minute (0-59), heure (0-23), jour du mois (1-31), mois (1-12), jour de la semaine (0-7, 0 et 7 = dimanche). * veut dire « chaque », 1-5 une plage, 1,15 une liste, */10 « toutes les 10 ». Ou un raccourci : @daily (chaque nuit à minuit), @hourly, @weekly, @reboot (au démarrage). Les tâches tournent depuis ta maison ; ce qu'elles écrivent t'est envoyé par courrier.
-    .synopsis = crontab -e | -l | -r | fichier
+man-crontab = gère tes tâches planifiées : des commandes que cron lance tout seul, à heure fixe. crontab -e ouvre ta crontab dans l'éditeur ; à la fermeture, elle est vérifiée puis installée. crontab -l l'affiche, crontab -r la supprime. Une ligne = cinq champs pour l'heure, puis la commande : minute (0-59), heure (0-23), jour du mois (1-31), mois (1-12), jour de la semaine (0-7, 0 et 7 = dimanche). * veut dire « chaque », 1-5 une plage, 1,15 une liste, */10 « toutes les 10 ». Ou un raccourci : @daily (chaque nuit à minuit), @hourly, @weekly, @reboot (au démarrage). Les tâches tournent depuis ta maison ; ce qu'elles écrivent t'est envoyé par courrier. root peut voir et modifier la crontab d'un autre compte avec -u : sudo crontab -u malo -l.
+    .synopsis = crontab [-u compte] -e | -l | -r | fichier
     .exemple-1 = modifier ses tâches planifiées
     .exemple-2 = les afficher
     .exemple-3 = une ligne de crontab : chaque nuit à 3 h 15
+    .exemple-4 = la crontab d'un autre compte
 
 ## Mise en page du manuel et messages de man-db et des coreutils
 

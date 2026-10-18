@@ -77,3 +77,19 @@ readlink-operande =
 script-introuvable = bash: { $commande }: Aucun fichier ou dossier de ce nom
 script-dossier = bash: { $commande }: est un dossier
 script-permission = bash: { $commande }: Permission non accordée
+
+## Disques (mount, umount)
+
+mount-usage =
+    Usage:
+     mount [-lhV]
+     mount -a [options]
+     mount [options] [--source] <source> | [--target] <directory>
+     mount [options] <source> <directory>
+    (Ici : mount, ou sudo mount [-o ro] périphérique point_de_montage ; voir man mount)
+umount-usage =
+    Usage:
+     umount [-hV]
+     umount <source> | <directory> [options]
+# { $commande } : la commande ; { $cible } : le chemin
+erreur-lecture-seule = { $commande }: { $cible }: Système de fichiers accessible en lecture seulement

@@ -43,3 +43,4 @@ machine-bibliotheque-motd = Bibliothèque du quartier — ce serveur sera étein
 machine-lettres-motd = Les Lettres du quartier — le serveur de l'association. Merci de prendre soin de lui !
 machine-fabrique-motd = La Fabrique — le serveur du fablab. Ici, on répare, on prête, on bidouille.
 machine-gazette-motd = La Gazette du quartier — le serveur du journal. On publie avec git push, pas à la main.
+machine-ludotheque-motd = La Ludothèque du quartier — le serveur des bénévoles. On joue, on prête, on range les pions.

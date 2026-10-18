@@ -34,7 +34,7 @@ export const PAGES: Record<string, Page> = {
     voir: ['chgrp', 'chmod', 'id'],
   },
   cp: { options: ['r'], exemples: ['cp levain levain_2', 'cp ~/Marche/fromage .'], voir: ['mv', 'rm'] },
-  crontab: { exemples: ['crontab -e', 'crontab -l', '15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/'], voir: ['rsync', 'nano', 'systemctl'] },
+  crontab: { exemples: ['crontab -e', 'crontab -l', '15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'sudo crontab -u malo -l'], voir: ['rsync', 'nano', 'systemctl'] },
   curl: { options: ['I', 'i', 'k'], voir: ['dig', 'nginx', 'openssl'] },
   df: { options: ['h'], voir: ['du'] },
   diff: {
@@ -76,6 +76,9 @@ export const PAGES: Record<string, Page> = {
   ln: {
     options: ['s', 'f', 'n', 'v'],
     exemples: ['sudo ln -s /etc/nginx/sites-available/site /etc/nginx/sites-enabled/', 'ls -l /etc/nginx/sites-enabled', 'ln -sfn /srv/site/releases/2 /srv/site/current'], voir: ['ls', 'rm', 'cp'] },
+  lsblk: { options: ['f'], exemples: ['lsblk', 'lsblk -f'], voir: ['mount', 'df'] },
+  mount: { section: 8, exemples: ['mount', 'sudo mount -o ro /dev/sdb1 /mnt/cle', 'sudo umount /mnt/cle'], voir: ['umount', 'lsblk', 'df'] },
+  umount: { section: 8, exemples: ['sudo umount /mnt/cle'], voir: ['mount', 'lsblk'] },
   ls: { options: ['a', 'l', 'h', 'n'], exemples: ['ls', 'ls -a', 'ls -l ~/souvenirs'], voir: ['cd', 'pwd', 'chmod'] },
   man: { options: ['k'], exemples: ['man ls', 'man -k copie', 'ls --help'], voir: ['apropos', 'whatis'] },
   mkdir: { options: ['p'], exemples: ['mkdir Classe', 'mkdir -p /srv/site/releases/1'], voir: ['touch', 'cd'] },
@@ -129,7 +132,7 @@ export const PAGES: Record<string, Page> = {
   uniq: { options: ['c'], exemples: ['sort visites | uniq -c | sort -n'], voir: ['sort'] },
   ufw: { section: 8, exemples: ['sudo ufw status verbose', 'sudo ufw allow OpenSSH', 'sudo ufw allow from 192.0.2.2 to any port 22', 'sudo ufw default deny incoming', 'sudo ufw enable', 'sudo ufw delete allow 80'], voir: ['ss', 'ssh', 'systemctl'] },
   wc: { options: ['l', 'w', 'c'], exemples: ['grep erreur journal | wc -l'], voir: ['grep', 'sort'] },
-  usermod: { section: 8, options: ['a', 'G'], exemples: ['sudo usermod -aG adm malo', 'sudo usermod -G adm malo'], voir: ['id', 'groups', 'chgrp'] },
+  usermod: { section: 8, options: ['a', 'G', 'L', 'U'], exemples: ['sudo usermod -aG adm malo', 'sudo usermod -G adm malo', 'sudo usermod -L malo'], voir: ['id', 'groups', 'chgrp'] },
   whatis: { voir: ['man', 'apropos'] },
   whoami: { voir: ['sudo'] },
 };

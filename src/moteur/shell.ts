@@ -212,8 +212,14 @@ export class Shell implements Jeu {
     return true;
   }
 
+  /** Ce chemin est-il sur un support monté en lecture seule (mount -o ro) ? */
+  lectureSeule(chemin: string): boolean {
+    return !!(this.montage(this.resoudre(chemin)) as { lectureSeule?: boolean } | null)?.lectureSeule;
+  }
+
   // Droit d'écrire dans le lieu qui contient ce chemin (créer, effacer, déplacer).
   ecritDans(chemin: string): boolean {
+    if (this.lectureSeule(chemin)) return false;
     const parent = this.trouver(chemin + '/..');
     return !!parent && this.traverse(chemin + '/..') && this.peut(parent, 'x') && this.peut(parent, 'w');
   }
@@ -253,6 +259,7 @@ export class Shell implements Jeu {
     if (parent?.type !== 'dossier') return this.t('erreur-introuvable', v);
     const raison = this.blocage(chemin + '/..');
     if (raison) return raison;
+    if (this.lectureSeule(chemin)) return this.t('erreur-lecture-seule', v);
     if (!this.ecritDans(chemin)) return this.t(cmd === 'bash' ? 'redirection-permission' : 'erreur-creation-permission', v);
     const nom = this.nom(chemin);
     const ancien = parent.enfants[nom];
@@ -533,6 +540,7 @@ export class Shell implements Jeu {
     const n = this.trouver(fichier);
     if (n?.type === 'dossier') return this.t('redirection-est-un-dossier', { cible: fichier });
     if (n) {
+      if (this.lectureSeule(fichier)) return this.t('erreur-lecture-seule', { commande: 'bash', cible: fichier });
       if (!this.traverse(fichier) || !this.peut(n, 'w')) return this.t('redirection-permission', { cible: fichier });
       const avant = contenu(n, this);
       n.contenu = ajout && avant ? `${avant}\n${texte}` : texte;

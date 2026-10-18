@@ -96,15 +96,27 @@ export const COMPTES: Record<string, Commande> = {
     lancer: ({ args, jeu }) => {
       let ajout = false;
       let liste: string | null = null;
+      let verrou: boolean | null = null;
       const reste: string[] = [];
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
         if (/^-[a-zA-Z]+$/.test(a)) {
           if (a.includes('a')) ajout = true;
+          // -L verrouille le mot de passe (un « ! » devant son empreinte dans /etc/shadow), -U le déverrouille.
+          if (a.includes('L')) verrou = true;
+          if (a.includes('U')) verrou = false;
           if (a.includes('G')) liste = args[++i] ?? '';
         } else reste.push(a);
       }
       const nom = reste[0];
+      if (verrou !== null && liste === null) {
+        if (!nom) return jeu.erreur(jeu.t('usermod-usage'));
+        if (jeu.qui !== 'root') return jeu.erreur(jeu.t('usermod-permission'));
+        if (!jeu.comptes.utilisateurs[nom]) return jeu.erreur(jeu.t('usermod-utilisateur-inexistant', { utilisateur: nom }));
+        const verrous: string[] = (jeu.etat.comptesVerrouilles ??= []);
+        jeu.etat.comptesVerrouilles = verrou ? [...new Set([...verrous, nom])] : verrous.filter((v) => v !== nom);
+        return '';
+      }
       if (!nom || liste === null) return jeu.erreur(jeu.t(ajout && liste === null ? 'usermod-a-sans-G' : 'usermod-usage'));
       if (jeu.qui !== 'root') return jeu.erreur(jeu.t('usermod-permission'));
       if (!jeu.comptes.utilisateurs[nom]) return jeu.erreur(jeu.t('usermod-utilisateur-inexistant', { utilisateur: nom }));

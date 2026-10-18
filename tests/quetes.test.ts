@@ -1196,6 +1196,73 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('La Ludothèque, chapitre 1 — La rançon (rançongiciel, sauvegarde hors ligne)', () => {
+      const RESTIC = 'sudo restic -r /mnt/cle/depot';
+      const MDP = 'pion-cavalier-tour-27';
+
+      it('solution : arrêter le chiffreur et sa crontab, verrouiller le compte, restaurer depuis la clé en lecture seule, la démonter', () => {
+        const { s, tout } = jouer('rancon', [
+          'find /srv/partage -name "*.locked" | wc -l',
+          'ps aux',
+          'sudo kill 3141',
+          'ludo-2027',
+          'sudo crontab -u accueil -l',
+          'sudo crontab -u accueil -r',
+          'sudo usermod -L accueil',
+          'sudo journalctl -u ssh',
+          'ls /mnt/nas/partage',
+          'lsblk -f',
+          'sudo mount -o ro /dev/sdb1 /mnt/cle',
+          'touch /mnt/cle/essai',
+          `${RESTIC} snapshots`,
+          MDP,
+          `${RESTIC} restore latest --target /`,
+          MDP,
+        ]);
+        expect(tout).toMatch(/^6$/m);
+        expect(tout).toContain('accueil      3141  97.3   1.4 /home/accueil/.cache/.maj/maj-systeme --silencieux');
+        expect(tout).toContain('*/10 * * * * /home/accueil/.cache/.maj/maj-systeme --silencieux');
+        expect(tout).toContain('Accepted password for accueil from 203.0.113.66');
+        expect(tout).toContain('SAUVEGARDE');
+        expect(tout).toContain('touch: /mnt/cle/essai: Système de fichiers accessible en lecture seulement');
+        expect(tout).toContain('Summary: Restored 6 files/dirs');
+        contient(tout, 'On ne paie pas');
+        contient(tout, "Une copie synchronisée, toujours branchée, n'est pas une sauvegarde");
+        contient(tout, 'Les six fichiers sont revenus');
+        expect(s.termine).toBe(false);
+        const fin = [
+          'sudo find /srv/partage -name "*.locked" -delete',
+          'sudo find /srv/partage -name LISEZ-MOI-POUR-RECUPERER.txt -delete',
+          'sudo umount /mnt/cle',
+        ]
+          .map((l) => s.executer(l))
+          .join('\n');
+        contient(fin, 'Tu as terminé le chapitre 1 de La Ludothèque');
+        expect(s.executer('cat /srv/partage/regles/dames.txt')).toContain('devient une dame');
+        expect(s.termine).toBe(true);
+      });
+
+      it("fausses pistes : restaurer avant d'arrêter le chiffreur, l'oublier dans la crontab, démonter depuis dedans", () => {
+        const { s, tout } = jouer('rancon', [
+          'sudo mount /dev/sdb1 /mnt/cle',
+          'ludo-2027',
+          `${RESTIC} restore latest --target /`,
+          MDP,
+          'ls /srv/partage',
+        ]);
+        contient(tout, 'le disque de sauvegarde est branché alors que le chiffreur tourne encore');
+        contient(tout, "Des fichiers restaurés viennent d'être chiffrés à leur tour");
+        expect(tout).not.toMatch(/inventaire\.csv(?!\.locked)/);
+        // Arrêté, mais sa crontab le relance.
+        const retour = ['sudo kill 3141', 'ls', 'ls', 'ls'].map((l) => s.executer(l)).join('\n');
+        contient(retour, 'Le chiffreur est revenu');
+        expect(s.executer('ps aux')).toContain('maj-systeme');
+        s.executer('cd /mnt/cle');
+        expect(s.executer('sudo umount /mnt/cle')).toBe('umount: /mnt/cle: target is busy.');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {
