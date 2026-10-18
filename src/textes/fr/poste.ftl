@@ -44,3 +44,4 @@ machine-lettres-motd = Les Lettres du quartier — le serveur de l'association. 
 machine-fabrique-motd = La Fabrique — le serveur du fablab. Ici, on répare, on prête, on bidouille.
 machine-gazette-motd = La Gazette du quartier — le serveur du journal. On publie avec git push, pas à la main.
 machine-ludotheque-motd = La Ludothèque du quartier — le serveur des bénévoles. On joue, on prête, on range les pions.
+machine-radio-motd = Radio Quartier — le serveur de l'antenne. Astreinte : un œil sur le flux, l'autre sur les journaux.

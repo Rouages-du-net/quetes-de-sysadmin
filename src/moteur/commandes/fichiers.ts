@@ -4,6 +4,7 @@
 import type { Fichier, Noeud } from '../monde';
 import type { Shell } from '../shell';
 import { appliquerMode, contenu, joker, lisible, options, tailleDe } from '../outils';
+import { placeFantome } from '../ouverts';
 import type { Commande, Contexte } from './index';
 
 // Le numéro d'inode d'un fichier (ls -i) : un par nœud, donné à la première
@@ -394,7 +395,8 @@ export const FICHIERS: Record<string, Commande> = {
       const lignes = [jeu.t('df-entete')];
       for (const m of choisis as typeof montages) {
         const lieu = jeu.trouver(m.chemin);
-        const utilise = lieu ? jeu.taille(lieu) : 0;
+        // Les fichiers effacés mais encore ouverts par un processus occupent toujours leur place.
+        const utilise = Math.min(m.capacite, (lieu ? jeu.taille(lieu) : 0) + placeFantome(jeu, m.chemin));
         const pct = Math.round((100 * utilise) / m.capacite);
         lignes.push(
           `${(m.nom ?? m.chemin).padEnd(18)} ${fmt(m.capacite).padStart(6)} ${fmt(utilise).padStart(7)} ${fmt(Math.max(0, m.capacite - utilise)).padStart(6)} ${String(pct).padStart(3)}% ${m.chemin}`,

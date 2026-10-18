@@ -1373,6 +1373,56 @@ for (const langue of LANGUES)
       });
     });
 
+    describe("L'Astreinte, chapitre 1 — Le disque plein (du, lsof, truncate, logrotate)", () => {
+      const editer = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const ROTATION = (fin: string) => () =>
+        `/var/log/radio/*.log {\n    daily\n    rotate 7\n    compress\n    delaycompress\n    missingok\n    notifempty\n${fin}}`;
+
+      it('solution : du, le debug, truncate, info, logrotate avec copytruncate', () => {
+        const { s, tout } = jouer('disque-plein', [
+          'df -h',
+          'sudo du -sh /var/log/*',
+          'antenne-2027',
+          'sudo tail -n 2 /var/log/radio/flux.log',
+          'sudo truncate -s 0 /var/log/radio/flux.log',
+          'df -h',
+        ]);
+        expect(tout).toMatch(/\/dev\/vda1 +19G +19G +0 100% \//);
+        expect(tout).toMatch(/^15G\t\/var\/log\/radio$/m);
+        expect(tout).toContain('DEBUG relay: packet');
+        contient(tout, 'Le disque respire');
+        editer(s, '/etc/radio/flux.conf', (t) => t.replace('loglevel = debug', 'loglevel = info'));
+        s.executer('sudo systemctl restart radio-flux');
+        expect(s.termine).toBe(false);
+        contient(editer(s, '/etc/logrotate.d/radio', ROTATION('    copytruncate\n')), "Tu as terminé le chapitre 1 de L'Astreinte");
+        expect(s.executer('sudo logrotate -d /etc/logrotate.d/radio')).toContain('rotating pattern: /var/log/radio/*.log');
+        expect(s.termine).toBe(true);
+      });
+
+      it("fausses pistes : rm d'un fichier ouvert, logrotate qui renomme sans faire rouvrir, une directive inconnue", () => {
+        const { s, tout } = jouer('disque-plein', ['sudo rm /var/log/radio/flux.log', 'antenne-2027', 'df -h', 'sudo lsof +L1']);
+        expect(tout).toContain('100% /');
+        expect(tout).toContain('/var/log/radio/flux.log (deleted)');
+        contient(tout, 'df dit toujours plein, mais du ne trouve plus le fichier');
+        s.executer('sudo systemctl restart radio-flux');
+        expect(s.executer('df -h')).not.toContain('100%');
+        editer(s, '/etc/radio/flux.conf', (t) => t.replace('loglevel = debug', 'loglevel = info'));
+        s.executer('sudo systemctl restart radio-flux');
+        editer(s, '/etc/logrotate.d/radio', () => '/var/log/radio/*.log {\n    dayly\n    rotate 7\n}');
+        expect(s.executer('sudo logrotate -d /etc/logrotate.d/radio')).toContain(
+          "error: /etc/logrotate.d/radio:2 unknown option 'dayly' -- ignoring line",
+        );
+        editer(s, '/etc/logrotate.d/radio', ROTATION(''));
+        contient(s.executer('sudo logrotate -f /etc/logrotate.d/radio') ?? '', "le relais écrit toujours dans l'ancien fichier");
+        expect(s.executer('sudo lsof -p 1730')).toContain('/var/log/radio/flux.log.1');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

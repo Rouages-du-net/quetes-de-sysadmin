@@ -33,6 +33,7 @@ import { migration } from './migration';
 import { rancon } from './rancon';
 import { instantanesChapitre } from './instantanes';
 import { base } from './base';
+import { disquePlein } from './disque-plein';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -70,6 +71,10 @@ export const HISTOIRES: Histoire[] = [
   {
     id: 'ludotheque',
     chapitres: [rancon, instantanesChapitre, base],
+  },
+  {
+    id: 'astreinte',
+    chapitres: [disquePlein],
   },
 ];
 

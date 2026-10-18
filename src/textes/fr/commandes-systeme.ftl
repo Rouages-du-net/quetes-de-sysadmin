@@ -16,3 +16,20 @@ journalctl-suivre = (journalctl -f suit le journal en continu, jusqu'à Ctrl+C :
 reboot-refuse =
     Failed to reboot system: Access denied
     (il faut être root : sudo reboot)
+
+## Journaux (truncate, logrotate)
+
+truncate-taille = truncate: vous devez spécifier « --size »
+truncate-operande =
+    truncate: opérande de fichier manquant
+    Saisissez « truncate --help » pour plus d'informations.
+# { $taille } : la taille donnée
+truncate-taille-incorrecte = truncate: Taille incorrecte : « { $taille } »
+# { $fichier } : le fichier
+truncate-dossier = truncate: impossible d'ouvrir '{ $fichier }' en écriture: Est un dossier
+truncate-permission = truncate: impossible d'ouvrir '{ $fichier }' en écriture: Permission non accordée
+logrotate-usage =
+    logrotate 3.21.0 - Copyright (C) 1995-2001 Red Hat, Inc.
+    This may be freely redistributed under the terms of the GNU General Public License
+
+    Usage: logrotate [-dfv?] [-d|--debug] [-f|--force] [-v|--verbose] <configfile>

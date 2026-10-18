@@ -19,3 +19,5 @@ histoire-gazette = La Gazette
     .resume = Le journal en ligne du quartier apprend à déployer : git push, crochets, et revenir en arrière quand ça casse.
 histoire-ludotheque = La Ludothèque
     .resume = Le serveur de la ludothèque du quartier : un rançongiciel, des sauvegardes qui tiennent le coup, et une base de données à sauver proprement.
+histoire-astreinte = L'Astreinte
+    .resume = Des nuits d'astreinte pour Radio Quartier : disque plein, mémoire, inodes, horloge… puis la supervision qui prévient avant que ça casse.
