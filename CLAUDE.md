@@ -20,6 +20,8 @@ rouages.net.
 - `src/moteur/` : shell simulé (`shell.ts`), commandes (`commandes/`, dont
   le manuel : `manuel.ts`, `pages.ts`), monde (`monde.ts`), histoires
   (`chapitres/`). Aucune dépendance au DOM.
+- `src/moteur/systemd.ts` : services, journal et horloge d'une machine
+  (`systemctl`, `journalctl`, `reboot` dans `commandes/systemd.ts`).
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;
   on part du poste et on se connecte en `ssh` à la machine de chaque
   histoire (`commandes/ssh.ts`).

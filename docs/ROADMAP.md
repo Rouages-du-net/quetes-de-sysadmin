@@ -91,8 +91,10 @@ demandent plusieurs.
 - [ ] Services et ports propres à chaque machine
 - [ ] **Réseau simulé** : adresses, ports ouverts, résolution de noms
       (`/etc/hosts`, DNS), routes, latence ; ce qu'un pare-feu laisse passer
-- [ ] **Services** (`systemd` simulé) : état, démarrage, échec, dépendances,
-      `systemctl`, `journalctl` avec de vrais journaux qui évoluent
+- [x] **Services** (`systemd` simulé, `src/moteur/systemd.ts`) : état,
+      démarrage, échec, activation au démarrage, `systemctl`, `journalctl`,
+      `reboot` ; quête « La nuit du redémarrage » (Datacenter, chapitre 3)
+- [ ] Dépendances entre services, timers, fichiers d'unité modifiables
 - [ ] **Temps simulé** : horloge accélérée, tâches planifiées (cron,
       timers), journaux qui défilent, attaques qui arrivent « pendant » la quête
 - [x] **Utilisateur·rices et groupes** : vrais droits de groupe, comptes par

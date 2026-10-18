@@ -179,6 +179,61 @@ for (const langue of LANGUES)
         expect(s.termine).toBe(true);
       });
 
+      it('Le Datacenter, chapitre 3 — La nuit du redémarrage', () => {
+        const { s, tout } = jouer('redemarrage', [
+          'systemctl --failed',
+          'systemctl status nginx',
+          'systemctl status catalogue',
+          'journalctl -xeu catalogue',
+          'systemctl start nginx',
+          'sudo systemctl start nginx',
+          'bienvenue-2026',
+          'sudo systemctl restart catalogue',
+          'sudo chmod 777 /var/log/catalogue',
+          'sudo chmod 755 /var/log/catalogue',
+          'sudo chown www-data: /var/log/catalogue',
+          'sudo systemctl restart catalogue',
+          'sudo reboot',
+          'systemctl is-active nginx',
+          'sudo systemctl enable --now nginx',
+          'systemctl --failed',
+          'sudo reboot',
+          'systemctl --failed',
+        ]);
+        contient(tout, '× catalogue.service');
+        contient(tout, "Loaded: loaded (/usr/lib/systemd/system/nginx.service; disabled; preset: enabled)");
+        contient(tout, 'failed to open error_log (/var/log/catalogue/error.log): Permission denied (13)');
+        contient(tout, 'Failed to start nginx.service: Access denied');
+        contient(tout, 'Job for catalogue.service failed because the control process exited with error code.');
+        contient(tout, 'n’importe quel compte peut maintenant écrire'.replace('’', "'"));
+        contient(tout, 'systemctl start ne vaut que jusqu');
+        contient(tout, 'Created symlink /etc/systemd/system/multi-user.target.wants/nginx.service');
+        contient(tout, 'https://www.freedesktop.org/software/systemd/man/latest/journalctl.html');
+        expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter, chapitre 3 — une autre solution correcte', () => {
+        const { s } = jouer('redemarrage', [
+          'sudo chown -R www-data:www-data /var/log/catalogue',
+          'bienvenue-2026',
+          'sudo systemctl enable nginx',
+          'sudo reboot',
+          'systemctl status nginx catalogue',
+        ]);
+        expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter, chapitre 3 — réparer sans redémarrer ne suffit pas', () => {
+        const { s } = jouer('redemarrage', [
+          'sudo chown www-data: /var/log/catalogue',
+          'bienvenue-2026',
+          'sudo systemctl enable --now nginx',
+          'sudo systemctl restart catalogue',
+          'systemctl --failed',
+        ]);
+        expect(s.termine).toBe(false);
+      });
+
       it('Le Paquet perdu', () => {
         const { s } = jouer('paquet-perdu', [
           'cat carnet.txt',

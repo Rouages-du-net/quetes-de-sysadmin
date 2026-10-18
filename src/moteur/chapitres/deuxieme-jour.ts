@@ -9,7 +9,7 @@
 
 import { d, f, fichiersComptes, type Chapitre, type Fichier } from '../monde';
 import type { Jeu } from '../shell';
-import { JOURNAL_NGINX } from './datacenter';
+import { comptesDatacenter, JOURNAL_NGINX } from './datacenter';
 
 const M = '/home/vous';
 const LOGS = '/var/log/nginx';
@@ -38,27 +38,7 @@ export const deuxiemeJour: Chapitre = {
   accueil: 'courriel_awa.txt',
   final: 'fin',
   motDePasse: 'bienvenue-2026',
-  comptes: () => ({
-    utilisateurs: {
-      root: { uid: 0, groupe: 'root', maison: '/root' },
-      'www-data': { uid: 33, groupe: 'www-data', maison: '/var/www', shell: '/usr/sbin/nologin' },
-      nobody: { uid: 65534, groupe: 'nogroup', maison: '/nonexistent', shell: '/usr/sbin/nologin' },
-      vous: { uid: 1000, groupe: 'vous' },
-      awa: { uid: 1001, groupe: 'awa' },
-      malo: { uid: 1002, groupe: 'malo' },
-    },
-    groupes: {
-      root: { gid: 0, membres: [] },
-      adm: { gid: 4, membres: ['vous'] },
-      sudo: { gid: 27, membres: ['vous', 'awa'] },
-      'www-data': { gid: 33, membres: [] },
-      nogroup: { gid: 65534, membres: [] },
-      vous: { gid: 1000, membres: [] },
-      awa: { gid: 1001, membres: [] },
-      malo: { gid: 1002, membres: [] },
-      'equipe-web': { gid: 1003, membres: ['vous', 'awa', 'malo'] },
-    },
-  }),
+  comptes: comptesDatacenter,
   creerMonde: (t) => {
     const racine = { proprio: 'root' };
     const maison = (nom: string) => d({}, undefined, { proprio: nom, mode: 'rwxr-x---' });

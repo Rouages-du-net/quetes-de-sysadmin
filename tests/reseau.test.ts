@@ -100,6 +100,18 @@ for (const langue of LANGUES)
       expect(jouer(c, ['ls Colline/EcoleDesSignaux/SalleDExercice/Seau'])).toBe('crabe');
     });
 
+    it('reboot coupe la session ssh ; la machine a redémarré quand on revient', () => {
+      const termines = HISTOIRES.find((h) => h.id === 'datacenter')!.chapitres.slice(0, 2).map((c) => c.id);
+      const c = new Console({ langue, termines: [...EFFACEUR, ...termines] });
+      jouer(c, ['ssh datacenter', 'yes']);
+      expect(c.distant?.shell.chapitre.id).toBe('redemarrage');
+      const coupure = jouer(c, ['sudo reboot', 'bienvenue-2026']);
+      expect(coupure).toContain('Connection to datacenter.example closed by remote host.');
+      expect(c.invite()).toBe('vous@poste:~$');
+      jouer(c, ['ssh datacenter']);
+      expect(jouer(c, ['journalctl -b -u catalogue -n 1'])).toContain('Failed to start catalogue.service');
+    });
+
     it('Tab complète les machines de ~/.ssh/config', () => {
       const c = new Console({ langue });
       expect(c.completer('ssh roy')).toBe('ssh royaume ');

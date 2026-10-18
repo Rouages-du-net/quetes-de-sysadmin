@@ -101,14 +101,16 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `ping` | 4 envois par défaut | continue jusqu'à Ctrl+C |
 | `traceroute` | s'arrête 3 sauts après le dernier qui répond | continue jusqu'à 30 sauts |
 | `ps aux` | utilisateur, PID, %CPU, %MEM, commande | ajoute VSZ, RSS, TTY, STAT, START, TIME |
-| `systemctl` sans être root | « Access denied », il faut `sudo` | demande le mot de passe (polkit) |
 | `tar` | taille calculée (texte compressé au tiers, médias à 98 %) ; s'il n'y a pas la place, rien n'est écrit | vraie compression ; une archive partielle peut rester |
 | `git` | une seule branche (`main`), fichiers à la racine du dépôt seulement, identifiants calculés par le jeu, `commit` exige `-m` | branches, sous-dossiers, SHA-1/SHA-256, éditeur de texte |
 | journal nginx | format « combined » sans la page d'origine ni le navigateur | deux champs de plus en fin de ligne |
 | `ssh` | clé seulement (pas de mot de passe ni d'agent) ; une clé est acceptée si c'est la bonne machine ; pas de commande à distance ; message d'usage raccourci ; option inconnue : message des coreutils | mot de passe, agent, `authorized_keys` côté serveur, commande à distance |
 | `exit` | a sa page `man` | commande intégrée à bash : `help exit` |
 | session `ssh` | la machine garde son état tant que la page reste ouverte ; un rechargement relance le chapitre en cours | la machine garde son état |
-| sections du manuel | 1 (commandes) et 8 (administration : `usermod`) | aussi 2 à 7 (appels système, fichiers de configuration…) |
+| sections du manuel | 1 (commandes) et 8 (administration : `usermod`, `reboot`) | aussi 2 à 7 (appels système, fichiers de configuration…) |
+| systemd | services seuls (pas de cibles, de dépendances, de timers ni de fichiers d'unité modifiables) ; l'horloge avance d'une seconde par action ; `journalctl -f` non simulé | unités de tous types, `daemon-reload`, `journalctl -f` |
+| `systemctl` sans être root | « Access denied », il faut `sudo` | demande le mot de passe (polkit) |
+| `sudo` après `reboot` | se souvient encore du mot de passe | le redemande |
 
 ## Histoire 1 : l'Effaceur
 
@@ -218,6 +220,32 @@ personnelles), `chmod 777` sur le partage, `chgrp` sans être propriétaire.
 Débrief : moindre privilège, `-aG`, setgid pour aller plus loin, liens vers
 `usermod(8)`, `chmod(1)` et les groupes système de Debian.
 
+### Chapitre 3 — La nuit du redémarrage (fait)
+
+Le serveur a redémarré cette nuit (mises à jour automatiques) et le site
+est tombé. Deux problèmes cachés depuis vendredi : `nginx` a été désactivé
+pendant un test, et un `chown -R root:` a donné à root le dossier où
+`php-fpm` (compte `www-data`) écrit son journal. La machine a un vrai
+systemd simulé (`src/moteur/systemd.ts`) : services, journal, horloge,
+redémarrages.
+
+| Étape | Commande apprise |
+|---|---|
+| Trouver ce qui ne tourne pas | `systemctl --failed`, `systemctl status nginx catalogue` |
+| Comprendre pourquoi | `journalctl -xeu catalogue`, `journalctl -b -p err`, `ls -l /var/log` |
+| Réparer | `sudo chown www-data: /var/log/catalogue`, `sudo systemctl restart catalogue` |
+| Que ça tienne | `sudo systemctl enable --now nginx` |
+| Le prouver | `sudo reboot` (la session ssh est coupée), puis `systemctl --failed` |
+
+Objectif vérifié sur l'état : après un redémarrage, sans rien relancer à la
+main, les deux services tournent, et on a consulté leur état.
+
+Pièges prévus : `start` sans `enable` (nginx ne revient pas au redémarrage
+suivant), `chmod 777` sur le dossier des journaux, `systemctl` sans `sudo`.
+Débrief : `--failed` après chaque redémarrage, `journalctl -xeu`, start
+n'est pas enable, le dossier d'un service appartient à son compte, liens
+vers `systemctl` et `journalctl` (freedesktop.org).
+
 ## Histoire 3 : Le Paquet perdu (faite)
 
 « Internet ne marche plus » au café associatif. Le carnet de Kofi donne la
@@ -258,7 +286,7 @@ copie n'est pas une sauvegarde.
 
 - L'Effaceur, chapitre 4 : les sauvegardes (`rsync`, `cron`) pour que plus
   rien ne se perde.
-- Le Datacenter, chapitre 3 : les certificats TLS et `openssl`, en lien avec
+- Le Datacenter, chapitre 4 : les certificats TLS et `openssl`, en lien avec
   « Le cadenas » du module 1.
 - Le Paquet perdu, chapitre 2 : le réseau local (`ip a`, adresses privées,
   NAT), en lien avec « La box ».

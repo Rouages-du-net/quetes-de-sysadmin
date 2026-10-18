@@ -11,6 +11,7 @@ import { GIT } from './git';
 import { PAGES } from './pages';
 import { SSH } from './ssh';
 import { COMPTES } from './comptes';
+import { SYSTEMD } from './systemd';
 
 export interface Contexte {
   args: string[];
@@ -30,6 +31,8 @@ export interface Commande {
   // Commandes d'exemple (leur explication : .exemple-N dans manuel.ftl).
   exemples?: string[];
   voir?: string[];
+  // La commande analyse elle-même ses options (pas de contrôle générique).
+  propresOptions?: boolean;
   // Section du manuel : 1 (commandes), 8 (administration, ex. usermod).
   section?: number;
   lancer: (c: Contexte) => string;
@@ -43,6 +46,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...GIT,
   ...SSH,
   ...COMPTES,
+  ...SYSTEMD,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },
