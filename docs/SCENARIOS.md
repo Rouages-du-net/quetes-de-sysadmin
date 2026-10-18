@@ -17,8 +17,9 @@ https://sysadmin.rouages.net et intégrable dans d'autres sites
   `man -k`).
 
 L'interface est dans `src/interface/` (`jeu.ts`, `styles.css`), l'élément
-`<quetes-de-sysadmin>` dans `src/element.ts`, les textes de l'interface dans
-`src/textes/`. Les parties sont rejouées par `tests/quetes.test.ts`.
+`<quetes-de-sysadmin>` dans `src/element.ts`. Tous les textes (histoires,
+messages, manuel, interface) sont dans `src/textes/fr/*.ftl` (voir
+`docs/TRADUIRE.md`). Les parties sont rejouées par `tests/quetes.test.ts`.
 
 ## Principes
 

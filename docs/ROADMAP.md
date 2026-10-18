@@ -49,11 +49,10 @@ garde cette mention et le lien vers l'original.
       `<quetes-de-sysadmin>` (Shadow DOM, attributs `histoire`, `cle`,
       `theme`, `langue`, couleurs en variables CSS) ; mode d'emploi
       `docs/INTEGRER.md`
-- [ ] **Extraire les textes** des histoires, des commandes et du manuel vers
-      `src/textes/` (aujourd'hui en dur dans `src/moteur/`), pour préparer les
-      traductions, dans un **format standard** que les plateformes de
-      traduction libres (Weblate, Pontoon) savent ouvrir : Fluent (`.ftl`)
-      pressenti, à confirmer
+- [x] **Extraire les textes** des histoires, des commandes, du manuel et de
+      l'interface vers `src/textes/fr/*.ftl`, au format standard **Fluent**
+      (Weblate, Pontoon) ; aucun texte en dur, vérifié par les tests ; mode
+      d'emploi `docs/TRADUIRE.md`
 - [x] Nom, mention « inspiré de Terminus (MIT) », README, CLAUDE.md
       (consignes de l'agent dédié)
 - [x] Licences : GPL v3 (code), CC BY-SA 4.0 (textes)
@@ -209,7 +208,13 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 - [ ] Anglais, allemand, espagnol, mandarin, coréen, puis d'autres langues
 - [ ] Sorties des commandes simulées selon `LANG`, comme les vrais outils
-- [ ] Noms de lieux traduits et faciles à taper ; complétion testée
+- [ ] Noms de lieux et d'objets traduits et faciles à taper (encore dans le
+      code) ; complétion testée ; nom de l'utilisateur·rice (`vous`) et de
+      la machine dans l'invite
+- [ ] Recollage des paragraphes et typographie selon la langue (le chinois et
+      le coréen ne séparent pas les lignes par une espace)
+- [ ] Plateforme de traduction (Weblate hébergé, gratuit pour les projets
+      libres) branchée sur `src/textes/`
 - [ ] Terminal simulé compatible avec les caractères larges (CJK)
 - [ ] Relecture par des locuteur·rices natif·ves, glossaire technique par langue
 - [ ] Quêtes rejouées automatiquement dans chaque langue
