@@ -1,0 +1,39 @@
+# Quêtes de Sysadmin — configuration Apache (cPanel), sysadmin.rouages.net
+
+Options -Indexes
+
+# HTTPS obligatoire
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Ne pas exposer l'état de synchronisation du déploiement FTP
+<Files ".ftp-deploy-sync-state.json">
+  Require all denied
+</Files>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript image/svg+xml
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  # Fichiers versionnés par Vite : en cache un an.
+  <If "%{REQUEST_URI} =~ m#^/assets/#">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </If>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  # Le fichier d'intégration est chargé par d'autres sites : un script
+  # « module » venu d'une autre origine exige l'en-tête CORS. Son nom ne
+  # change pas d'une version à l'autre : on le revalide à chaque visite.
+  <If "%{REQUEST_URI} =~ m#^/integration/#">
+    Header set Access-Control-Allow-Origin "*"
+    Header set Cache-Control "no-cache"
+  </If>
+</IfModule>
