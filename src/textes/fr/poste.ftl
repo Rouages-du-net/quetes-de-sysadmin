@@ -41,3 +41,4 @@ machine-fourmiliere-motd = La Fourmilière — l'ordinateur du café associatif.
 machine-manuscrit-motd = Manuscrit — l'ordinateur d'Inès. Ne pas toucher au roman sans sauvegarde !
 machine-bibliotheque-motd = Bibliothèque du quartier — ce serveur sera éteint ce soir à minuit.
 machine-lettres-motd = Les Lettres du quartier — le serveur de l'association. Merci de prendre soin de lui !
+machine-fabrique-motd = La Fabrique — le serveur du fablab. Ici, on répare, on prête, on bidouille.

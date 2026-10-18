@@ -132,6 +132,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | DNS (BIND) | zones A, AAAA, CNAME, MX, NS, TXT, SOA ; un primaire (`named`), un secondaire qui recopie quand le serial augmente (tout de suite), un résolveur public avec cache ; `dig` (`@serveur`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (accolades et fichiers), `rndc reload`/`status` ; pas de section AUTHORITY, de DNSSEC ni de zones inverses | tout cela |
 | `awk` | programme entre apostrophes : motifs, `BEGIN`/`END`, champs, tableaux, `printf`, fonctions courantes, `-F`, `-v` ; pas de `getline`, de redirection dans `print`, de fonctions définies ni de `?:` | le langage complet (mawk sur Debian) |
 | trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
+| Docker | images d'un registre simulé, conteneurs (couche, volumes, dossiers montés, ports, `--restart`), `run`, `ps`, `images`, `pull`, `logs` (`-n`, `-t`), `exec` (`ls`, `cat`, `env`, `id`, `whoami`), `cp`, `stop`, `start`, `restart`, `rm`, `port`, `update --restart`, `inspect` (`-f '{{.Champ}}'`), `volume` ; sans `-d`, `run` rend la main ; pas de réseau entre conteneurs hors Compose, pas de `build` | tout Docker |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -622,6 +623,45 @@ soir, mais pas une règle durable). Autres solutions acceptées : la zone dans
 Débrief : lire les journaux avant d'agir, limiter par adresse là où c'est
 coûteux, rafale et `nodelay`, 429, `deny` contre règle durable ; liens vers
 `limit_req`, le format des journaux et awk (POSIX).
+
+## Histoire 7 : La Fabrique (en cours)
+
+Le fablab du quartier (machine `fabrique`, 192.0.2.15) prête des outils aux
+habitant·es grâce à l'outilthèque, une petite appli web qui tourne dans
+Docker. Yasmine s'en occupe. Docker est simulé dans `src/moteur/docker.ts`
+(images, conteneurs et leur couche, volumes, dossiers montés, ports publiés,
+politiques de redémarrage) ; les applis des images sont décrites par les
+chapitres.
+
+### Chapitre 1 — La mise à jour (fait)
+
+L'outilthèque a été lancée il y a deux semaines avec un simple `docker run`,
+sans volume : sa base vit dans la couche du conteneur. La version 1.5 est
+sortie, et il y a 37 prêts en cours à ne pas perdre.
+
+| Étape | Commande apprise |
+|---|---|
+| Voir ce qui tourne | `sudo docker ps -a`, `docker logs`, `curl http://localhost:8080` (et `docker` sans `sudo` : le socket refuse) |
+| Savoir où sont les données | `sudo docker inspect -f '{{json .Mounts}}' outiltheque`, `docker exec outiltheque ls -l /var/lib/outiltheque` |
+| Mettre la base à l'abri | `sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde` |
+| Le nouveau conteneur | `docker stop outiltheque`, `docker run -d --name … -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque --restart unless-stopped registre.example/outiltheque:1.5` |
+| Remettre la base | `docker cp sauvegarde/. conteneur:/var/lib/outiltheque`, `docker restart` (la base migre), `docker logs` |
+
+Objectif vérifié sur l'état : un conteneur de la version 1.5 tourne, publie
+le port 8080, garde sa base dans un volume ou un dossier de la machine, y
+retrouve les 37 prêts, et repartira avec la machine (`always` ou
+`unless-stopped`).
+
+Pièges prévus : `docker` sans `sudo`, `docker rm` d'un conteneur qui tourne,
+`docker rm -f` avant d'avoir copié la base (perdue pour de bon : le chapitre
+se recommence depuis le menu), le port 8080 encore pris par l'ancien
+conteneur (« port is already allocated »), le nouveau conteneur qui crée une
+base vide, l'oubli de `--restart`. Autres solutions acceptées : un dossier
+de la machine (`-v /srv/outiltheque:/var/lib/outiltheque`), copier la base
+dans le volume avant de lancer, `docker update --restart`, `always`.
+Débrief : `inspect` avant de toucher, volumes, `docker cp`, remplacer sans
+supprimer trop tôt, `--restart`, le groupe docker vaut root ; liens vers
+la documentation de Docker.
 
 ## Idées pour la suite
 

@@ -34,6 +34,17 @@ export const PAGES: Record<string, Page> = {
   curl: { options: ['I', 'k'], voir: ['dig', 'nginx', 'openssl'] },
   df: { options: ['h'], voir: ['du'] },
   dig: { exemples: ['dig cafe.example', 'dig @ns1.lettres.example cafe.example', 'dig cafe.example NS +short', 'dig cafe.example SOA +short'], voir: ['host', 'ping', 'curl', 'named-checkzone'] },
+  docker: {
+    exemples: [
+      'sudo docker ps -a',
+      'sudo docker logs outiltheque',
+      'sudo docker exec outiltheque ls /var/lib/outiltheque',
+      'sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde',
+      'sudo docker run -d --name appli -p 8080:8080 -v donnees:/var/lib/appli --restart unless-stopped image:1.0',
+      "sudo docker inspect -f '{{json .Mounts}}' appli",
+    ],
+    voir: ['systemctl', 'curl'],
+  },
   du: { options: ['h', 's'], voir: ['df', 'find'] },
   'fail2ban-client': { exemples: ['sudo fail2ban-client status', 'sudo fail2ban-client status sshd', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client -t', 'sudo fail2ban-client reload'], voir: ['jail.conf', 'journalctl', 'ufw'] },
   'jail.conf': { section: 5, exemples: ['sudo nano /etc/fail2ban/jail.local', 'sudo fail2ban-client get sshd bantime'], voir: ['fail2ban-client', 'nano'] },

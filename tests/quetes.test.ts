@@ -689,6 +689,56 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('La Fabrique, chapitre 1 — La mise à jour (docker)', () => {
+      it('solution : copier la base, volume, nouveau conteneur, --restart, et ça tient après un redémarrage', () => {
+        const { s, tout } = jouer('mise-a-jour', [
+          'docker ps',
+          'sudo docker ps -a',
+          'fablab-2027',
+          "sudo docker inspect -f '{{json .Mounts}}' outiltheque",
+          'sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde',
+          // Fausse piste : l'ancien conteneur occupe encore le port 8080.
+          'sudo docker run -d --name outiltheque-15 -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque registre.example/outiltheque:1.5',
+          'sudo docker stop outiltheque',
+          'sudo docker start outiltheque-15',
+          'sudo docker cp sauvegarde/. outiltheque-15:/var/lib/outiltheque',
+          'sudo docker restart outiltheque-15',
+          'sudo docker logs -n 3 outiltheque-15',
+          'curl http://localhost:8080',
+        ]);
+        expect(tout).toContain('permission denied while trying to connect to the Docker daemon socket');
+        expect(tout).toContain('Bind for 0.0.0.0:8080 failed: port is already allocated.');
+        expect(tout).toContain('Migrating database schema 3 -> 4');
+        expect(tout).toContain('37 prêts en cours');
+        contient(tout, 'la couche du conteneur');
+        contient(tout, 'une base toute neuve et vide');
+        expect(s.termine).toBe(false);
+        s.executer('sudo docker update --restart unless-stopped outiltheque-15');
+        expect(s.termine).toBe(true);
+        s.executer('sudo reboot');
+        expect(s.executer('curl http://localhost:8080')).toContain('outiltheque 1.5');
+      });
+
+      it('autre solution : un dossier de la machine (bind mount), --restart always, l’ancien supprimé', () => {
+        const { s } = jouer('mise-a-jour', [
+          'sudo mkdir /srv/outiltheque',
+          'fablab-2027',
+          'sudo docker cp outiltheque:/var/lib/outiltheque/outiltheque.db /srv/outiltheque/',
+          'sudo docker rm -f outiltheque',
+          'sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v /srv/outiltheque:/var/lib/outiltheque registre.example/outiltheque:1.5',
+        ]);
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausse piste : supprimer le conteneur avant de copier sa base', () => {
+        const { s, tout } = jouer('mise-a-jour', ['sudo docker rm outiltheque', 'fablab-2027', 'sudo docker rm -f outiltheque']);
+        expect(tout).toContain('container is running: stop the container before removing or force remove');
+        contient(tout, 'Les 37 prêts ont disparu');
+        s.executer('sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v outiltheque:/var/lib/outiltheque registre.example/outiltheque:1.5');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

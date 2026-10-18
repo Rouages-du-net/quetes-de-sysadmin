@@ -21,6 +21,7 @@ import { sentinelle } from './sentinelle';
 import { colocation } from './colocation';
 import { chezMoi } from './chez-moi';
 import { concert } from './concert';
+import { miseAJour } from './mise-a-jour';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -46,6 +47,10 @@ export const HISTOIRES: Histoire[] = [
   {
     id: 'lettres',
     chapitres: [porte, pareFeu, sentinelle, colocation, chezMoi, concert],
+  },
+  {
+    id: 'fabrique',
+    chapitres: [miseAJour],
   },
 ];
 

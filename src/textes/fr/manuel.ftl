@@ -68,6 +68,14 @@ man-dig = pose une question au DNS : « quelle est l’adresse IP de ce nom ? »
     .exemple-2 = la même question, posée directement à un serveur qui fait autorité
     .exemple-3 = les serveurs DNS d'une zone
     .exemple-4 = le SOA : son numéro de série change à chaque modification
+man-docker = lance des applications dans des conteneurs : chacune avec ses fichiers, isolée du reste de la machine, à partir d'une image (une application prête à l'emploi, qu'on télécharge avec pull). docker run crée et démarre un conteneur : -d en arrière-plan, --name pour le nommer, -p machine:conteneur publie un port, -v nom:/chemin y monte un volume (ou -v /dossier:/chemin un dossier de la machine), -e VARIABLE=valeur, --restart unless-stopped pour qu'il reparte avec la machine. Attention : ce qu'un conteneur écrit ailleurs que dans un volume vit dans sa propre couche, et disparaît avec lui (docker rm) ; mettre à jour une application, c'est supprimer le conteneur et en créer un neuf avec la nouvelle image. docker ps (-a) liste les conteneurs, logs montre leur journal, exec lance une commande dedans, cp copie des fichiers entre la machine et un conteneur. Il faut être root (ou dans le groupe docker, qui revient au même).
+    .synopsis = docker run [-d] [--name nom] [-p port:port] [-v volume:/chemin] [-e VAR=valeur] [--restart politique] image ; docker ps [-a] ; docker logs conteneur ; docker exec conteneur commande ; docker cp source destination ; docker stop|start|rm conteneur ; docker pull image ; docker images ; docker volume ls|create|rm ; docker inspect conteneur
+    .exemple-1 = les conteneurs, même arrêtés
+    .exemple-2 = le journal d'un conteneur
+    .exemple-3 = ce qu'il y a dans un dossier du conteneur
+    .exemple-4 = copier un dossier du conteneur vers la machine
+    .exemple-5 = un conteneur en arrière-plan, son port publié, ses données dans un volume, et qui repart avec la machine
+    .exemple-6 = les volumes d'un conteneur
 man-du = mesure la place occupée (disk usage), lieu par lieu. -s donne seulement le total, -h écrit en K, M, G. Ex. : du -sh *
     .synopsis = du [-s] [-h] [lieu...]
     .option-h = tailles lisibles : K, M, G.

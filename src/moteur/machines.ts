@@ -26,6 +26,7 @@ export const MACHINES: Machine[] = [
   // Le serveur des Lettres du quartier : la même adresse que lettres.example
   // dans Le Paquet perdu.
   machine('lettres', '203.0.113.10', 'lettres'),
+  machine('fabrique', '192.0.2.15', 'fabrique'),
 ];
 
 export const machineDeHistoire = (histoire: string) => MACHINES.find((m) => m.histoire === histoire);

@@ -178,12 +178,13 @@ demandent plusieurs.
 
 ## Phase 5 — Conteneurs
 
-- [ ] **Docker** : image, conteneur, `docker run/ps/logs/exec`, ports, volumes
-      (et ce qu'on perd sans volume)
+- [x] **Docker** : image, conteneur, `docker run/ps/logs/exec/cp`, ports,
+      volumes (et ce qu'on perd sans volume), `--restart` ; quête « La mise
+      à jour » (La Fabrique, chapitre 1)
 - [ ] **Docker Compose** : plusieurs services (web, base, cache), réseau
       interne, variables d'environnement, redémarrage
-- [ ] Mettre à jour une image sans perdre les données ; nettoyer le disque
-      (`docker system df`, `prune`)
+- [x] Mettre à jour une image sans perdre les données (« La mise à jour »)
+- [ ] Nettoyer le disque (`docker system df`, `prune`)
 - [ ] Sécurité : ne pas exposer la base, ne pas tourner en root, `ufw` et
       Docker (les règles contournées : un piège classique)
 
