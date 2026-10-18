@@ -4,8 +4,11 @@
 https://sysadmin.rouages.net et intégrable dans d'autres sites
 (voir [INTEGRER.md](INTEGRER.md)). Le moteur est dans `src/moteur/` :
 
-- `shell.ts` : le moteur (chemins, permissions, tubes `|`, redirections `>`
-  et `>>`, `sudo`, événements) ;
+- `shell.ts` : le moteur d'une machine (chemins, permissions, tubes `|`,
+  redirections `>` et `>>`, `sudo`, événements) ;
+- `console.ts`, `machines.ts`, `poste.ts` : le réseau simulé (le poste de
+  départ, une machine par histoire, `ssh` et `exit` pour passer de l'une à
+  l'autre) ;
 - `commandes/` : les commandes, par famille (`fichiers`, `texte`, `systeme`,
   `reseau`, `git`) ; chacune lit ses arguments et l'entrée du tube, renvoie
   sa sortie et signale ses erreurs à part (elles ne passent pas dans les
@@ -37,7 +40,15 @@ messages, manuel, interface) sont dans `src/textes/fr/*.ftl` (voir
   `/`), mêmes règles (`mv` renomme, `cp` copie, `rm` est définitif, les
   jokers `*` sont développés avant la commande, comme le fait le shell). Les
   écarts volontaires sont signalés dans le code et listés ci-dessous.
-- **Histoires et chapitres** : cinq histoires indépendantes ; dans une
+- **Un seul monde, relié par `ssh`** : on part de son **poste**
+  (`vous@poste`) ; chaque histoire tourne sur une machine du réseau
+  (`royaume`, `datacenter`, `fourmiliere`, `manuscrit`, `bibliotheque`), que
+  l'on rejoint avec `ssh` et que l'on quitte avec `exit`. Le poste n'a au
+  départ que la clé du royaume : finir l'Effaceur donne les clés des quatre
+  autres machines, qui se jouent ensuite dans l'ordre que l'on veut. Le menu
+  reste un raccourci (accessibilité, enseignant·es) ; l'attribut `histoire`
+  ouvre directement une histoire, même sans sa clé.
+- **Histoires et chapitres** : cinq histoires ; dans une
   histoire, chaque chapitre a son monde, ses commandes et sa fin, et s'ouvre
   quand le précédent est terminé. La progression est gardée dans le
   navigateur (`localStorage`, clé `quetes-de-sysadmin`, réglable par l’attribut `cle`), chapitre par chapitre.
@@ -92,6 +103,9 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `tar` | taille calculée (texte compressé au tiers, médias à 98 %) ; s'il n'y a pas la place, rien n'est écrit | vraie compression ; une archive partielle peut rester |
 | `git` | une seule branche (`main`), fichiers à la racine du dépôt seulement, identifiants calculés par le jeu, `commit` exige `-m` | branches, sous-dossiers, SHA-1/SHA-256, éditeur de texte |
 | journal nginx | format « combined » sans la page d'origine ni le navigateur | deux champs de plus en fin de ligne |
+| `ssh` | clé seulement (pas de mot de passe ni d'agent) ; une clé est acceptée si c'est la bonne machine ; pas de commande à distance ; message d'usage raccourci ; option inconnue : message des coreutils | mot de passe, agent, `authorized_keys` côté serveur, commande à distance |
+| `exit` | a sa page `man` | commande intégrée à bash : `help exit` |
+| session `ssh` | la machine d'une histoire repart du début du chapitre en cours à chaque connexion | la machine garde son état |
 
 ## Histoire 1 : l'Effaceur
 

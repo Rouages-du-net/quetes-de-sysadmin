@@ -1,0 +1,102 @@
+// Le réseau simulé : du poste, on se connecte en ssh aux machines des
+// histoires ; finir l'Effaceur donne les autres clés. Messages d'OpenSSH
+// fidèles (en anglais, comme le vrai ssh). Rejoué dans chaque langue.
+
+import { describe, expect, it } from 'vitest';
+import { Console } from '../src/moteur/console';
+import { HISTOIRES } from '../src/moteur/chapitres';
+import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
+
+const EFFACEUR = HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id);
+
+for (const langue of LANGUES)
+  describe(`Langue : ${langue}`, () => {
+    const jouer = (c: Console, lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+
+    it('première connexion : empreinte, yes, bannière, chapitre, exit', () => {
+      const c = new Console({ langue });
+      expect(c.invite()).toBe('vous@poste:~$');
+      const question = jouer(c, ['ssh royaume']);
+      expect(question).toContain("The authenticity of host 'royaume.example (192.0.2.10)' can't be established.");
+      expect(question).toMatch(/ED25519 key fingerprint is SHA256:[A-Za-z0-9+/]{43}\./);
+      expect(c.invite()).toBe('Are you sure you want to continue connecting (yes/no/[fingerprint])?');
+      expect(jouer(c, ['peut-être'])).toBe('');
+      expect(c.invite()).toBe("Please type 'yes', 'no' or the fingerprint:");
+      const connexion = jouer(c, ['yes']);
+      expect(connexion).toContain("Warning: Permanently added 'royaume.example' (ED25519) to the list of known hosts.");
+      expect(connexion).toContain('Linux royaume');
+      expect(c.invite()).toBe('vous@royaume:~$');
+      expect(c.distant?.shell.chapitre.id).toBe('eveil');
+      expect(jouer(c, ['exit'])).toBe('logout\nConnection to royaume.example closed.');
+      expect(c.invite()).toBe('vous@poste:~$');
+      // Deuxième fois : la machine est connue, pas de question.
+      expect(jouer(c, ['ssh royaume'])).not.toContain('authenticity');
+      expect(c.invite()).toBe('vous@royaume:~$');
+    });
+
+    it('no : la vérification de la clé d’hôte échoue', () => {
+      const c = new Console({ langue });
+      expect(jouer(c, ['ssh royaume', 'no'])).toContain('Host key verification failed.');
+      expect(c.invite()).toBe('vous@poste:~$');
+    });
+
+    it('fausses pistes : nom inconnu, mauvais port, mauvais utilisateur, poste lui-même', () => {
+      const c = new Console({ langue });
+      expect(jouer(c, ['ssh nulle-part'])).toBe('ssh: Could not resolve hostname nulle-part: Name or service not known');
+      expect(jouer(c, ['ssh -p 2222 royaume'])).toBe('ssh: connect to host royaume.example port 2222: Connection refused');
+      expect(jouer(c, ['ssh poste'])).toBe('ssh: connect to host poste port 22: Connection refused');
+      expect(jouer(c, ['ssh', ''])).toContain('usage: ssh');
+      expect(jouer(c, ['ssh root@royaume', 'yes'])).toContain('root@royaume.example: Permission denied (publickey).');
+    });
+
+    it('sans la clé : Permission denied, puis la clé gagnée en finissant l’Effaceur', () => {
+      const c = new Console({ langue });
+      expect(c.ouverte('datacenter')).toBe(false);
+      expect(jouer(c, ['ssh datacenter', 'yes'])).toContain('vous@datacenter.example: Permission denied (publickey).');
+      const fin = new Console({ langue, termines: EFFACEUR.slice(0, 2) });
+      fin.connecter('royaume');
+      expect(fin.distant?.shell.chapitre.id).toBe('racine');
+      const derniere = jouer(fin, [
+        'cat arrivee.txt', 'chmod o-w souvenirs', 'sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf', 'tournesol',
+      ]);
+      expect(fin.termines).toEqual(EFFACEUR);
+      expect(derniere).toContain('~/.ssh/id_datacenter');
+      expect(jouer(fin, ['exit', 'ls -a ~/.ssh'])).toContain('id_bibliotheque');
+      jouer(fin, ['ssh datacenter', 'yes']);
+      expect(fin.invite()).toBe('vous@datacenter:~$');
+      expect(fin.distant?.histoire.id).toBe('datacenter');
+    });
+
+    it('une clé privée trop ouverte est ignorée, comme avec le vrai ssh', () => {
+      const c = new Console({ langue });
+      const sortie = jouer(c, ['chmod 644 ~/.ssh/id_royaume', 'ssh royaume', 'yes']);
+      expect(sortie).toContain('WARNING: UNPROTECTED PRIVATE KEY FILE!');
+      expect(sortie).toContain("Permissions 0644 for '/home/vous/.ssh/id_royaume' are too open.");
+      expect(sortie).toContain('vous@royaume.example: Permission denied (publickey).');
+      jouer(c, ['chmod 600 ~/.ssh/id_royaume', 'ssh royaume']);
+      expect(c.invite()).toBe('vous@royaume:~$');
+    });
+
+    it('-i : une clé copiée ailleurs marche aussi', () => {
+      const c = new Console({ langue, hotesConnus: '' });
+      jouer(c, ['ssh -i ~/.ssh/id_royaume vous@192.0.2.10', 'yes']);
+      expect(c.invite()).toBe('vous@royaume:~$');
+    });
+
+    it('hôtes connus gardés d’une partie à l’autre', () => {
+      const c = new Console({ langue });
+      jouer(c, ['ssh royaume', 'yes', 'exit']);
+      const suite = new Console({ langue, hotesConnus: c.hotesConnus() });
+      expect(jouer(suite, ['ssh royaume'])).not.toContain('authenticity');
+    });
+
+    it('Tab complète les machines de ~/.ssh/config', () => {
+      const c = new Console({ langue });
+      expect(c.completer('ssh roy')).toBe('ssh royaume ');
+      expect(c.completer('ssh bib')).toBe('ssh bibliotheque ');
+    });
+
+    it.runIf(langue === LANGUE_DE_REFERENCE)('exit sur le poste explique où l’on est', () => {
+      expect(jouer(new Console({ langue }), ['exit'])).toContain('Tu es sur ton propre poste');
+    });
+  });
