@@ -132,9 +132,10 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | DNS (BIND) | zones A, AAAA, CNAME, MX, NS, TXT, SOA ; un primaire (`named`), un secondaire qui recopie quand le serial augmente (tout de suite), un résolveur public avec cache ; `dig` (`@serveur`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (accolades et fichiers), `rndc reload`/`status` ; pas de section AUTHORITY, de DNSSEC ni de zones inverses | tout cela |
 | `awk` | programme entre apostrophes : motifs, `BEGIN`/`END`, champs, tableaux, `printf`, fonctions courantes, `-F`, `-v` ; pas de `getline`, de redirection dans `print`, de fonctions définies ni de `?:` | le langage complet (mawk sur Debian) |
 | trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
-| Docker | images d'un registre simulé, conteneurs (couche, volumes, dossiers montés, ports, `--restart`), `run`, `ps`, `images`, `pull`, `logs` (`-n`, `-t`), `exec` (`ls`, `cat`, `env`, `id`, `whoami`), `cp`, `stop`, `start`, `restart`, `rm`, `port`, `update --restart`, `inspect` (`-f '{{.Champ}}'`), `volume` ; sans `-d`, `run` rend la main ; pas de réseau entre conteneurs hors Compose, pas de `build` | tout Docker |
-| Docker Compose | `compose.yaml` en YAML réduit (correspondances, listes, chaînes, `[a, b]`) ; clés `image`, `ports`, `volumes`, `environment`, `env_file`, `depends_on`, `restart` ; `up` (recrée ce qui a changé), `down` (`-v`), `ps`, `logs`, `config`, `restart`, `stop`, `start`, `exec`, `pull` ; un service qui échoue au démarrage est relancé une fois s'il a une politique `restart` | toute la spécification Compose, `build`, `healthcheck`, profils |
+| Docker | images d'un registre simulé, conteneurs (couche, volumes, dossiers montés, ports, `--restart`), `run`, `ps`, `images`, `pull`, `logs` (`-n`, `-t`), `exec` (`-u` ; `ls`, `cat`, `env`, `id`, `whoami`), `cp`, `stop`, `start`, `restart`, `rm`, `port`, `update --restart`, `inspect` (`-f '{{.Champ}}'`), `volume` ; sans `-d`, `run` rend la main ; pas de réseau entre conteneurs hors Compose, pas de `build` | tout Docker |
+| Docker Compose | `compose.yaml` en YAML réduit (correspondances, listes, chaînes, `[a, b]`) ; clés `image`, `ports`, `volumes`, `environment`, `env_file`, `depends_on`, `restart`, `user`, `read_only`, `cap_drop`, `security_opt` ; `up` (recrée ce qui a changé), `down` (`-v`), `ps`, `logs`, `config`, `restart`, `stop`, `start`, `exec`, `pull` ; un service qui échoue au démarrage est relancé une fois s'il a une politique `restart` | toute la spécification Compose, `build`, `healthcheck`, profils |
 | Docker et le pare-feu | un port publié sur 0.0.0.0 répond de l'extérieur quelles que soient les règles ufw (comme les règles iptables de Docker) ; `nc -zv` depuis une autre machine ; `system df`, `image prune` (`-a`), `container prune`, `volume prune` (`-a`), `system prune` (`-a`, `--volumes`), `rmi` | chaîne DOCKER-USER, ufw-docker, `iptables -L` |
+| Utilisateur d'un conteneur | `--user`/`-u` et `user:` (nom de l'image ou `uid[:gid]`, un uid inconnu de l'image prend le gid 0), `docker exec -u` ; l'uid du conteneur est celui de la machine (pas de userns-remap) : droits Unix appliqués par numéro sur les dossiers montés, fichiers créés au nom de cet uid, processus visibles dans `ps aux` ; `--read-only` empêche d'écrire hors des volumes ; `--cap-drop` et `--security-opt` sont gardés (et montrés par `inspect`) sans autre effet ; un conteneur tombé est relancé à chaque commande (pas d'attente qui double) | userns-remap, mode rootless, capacités réelles, seccomp, AppArmor, droits sur les volumes nommés |
 | `nc` | `-z`, `-v`, une plage de ports ; sans `-z`, rend la main | netcat complet (écouter, envoyer, proxy) |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
@@ -627,7 +628,7 @@ Débrief : lire les journaux avant d'agir, limiter par adresse là où c'est
 coûteux, rafale et `nodelay`, 429, `deny` contre règle durable ; liens vers
 `limit_req`, le format des journaux et awk (POSIX).
 
-## Histoire 7 : La Fabrique (en cours, trois chapitres)
+## Histoire 7 : La Fabrique (quatre chapitres)
 
 Le fablab du quartier (machine `fabrique`, 192.0.2.15) prête des outils aux
 habitant·es grâce à l'outilthèque, une petite appli web qui tourne dans
@@ -726,6 +727,40 @@ Autres solutions acceptées : plus de port du tout pour la base,
 possible, `127.0.0.1` et tunnel SSH, tester de l'extérieur, `system df` et
 `prune`, le danger de `volume prune -a` ; liens vers la documentation de
 Docker (ufw, ports publiés, ménage).
+
+### Chapitre 4 — Les pleins pouvoirs (fait)
+
+La galerie photo du fablab (`/srv/galerie`, port 8082) reçoit les photos
+envoyées par les visiteur·ses. Son image ne déclare pas d'utilisateur et
+`compose.yaml` n'a pas de `user:` : elle tourne en root. Les fichiers
+qu'elle écrit dans le dossier monté `photos/` appartiennent à root sur la
+machine, et Yasmine ne peut plus gérer les photos sans `sudo`. Rania
+rappelle qu'une faille dans la galerie donnerait root sur tout ce qui est
+monté.
+
+| Étape | Commande apprise |
+|---|---|
+| Qui suis-je, dedans et dehors | `sudo docker exec galerie-galerie-1 id` (uid=0), `ps aux` sur la machine (le processus de la galerie au nom de root) |
+| Changer d'utilisateur | `user: "1001:1001"` dans `compose.yaml` (ou `docker run --user`), `sudo docker compose up -d` |
+| Comprendre l'échec | `docker compose ps` (Restarting), `docker compose logs` (EACCES), `ls -lan photos` (uid et gid en numéros, fichiers cachés) |
+| Donner le dossier | `sudo chown -R 1001:1001 /srv/galerie/photos` ; Docker relance la galerie tout seul |
+
+Objectif vérifié sur l'état : un conteneur de la galerie tourne sous un uid
+autre que 0 et répond, les 14 photos sont là, Yasmine (uid 1001) peut
+écrire dans le dossier, et ni celui-ci ni `.miniatures` ne sont ouverts en
+écriture à tous.
+
+Pièges prévus : un nom inconnu de l'image (`user: galerie` : « unable to
+find user galerie: no matching entries in passwd file »), `chown` sans `-R`
+(le dossier `.miniatures` reste à root), `user: node` (uid 1000 : sur la
+machine, ses fichiers appartiennent à « vous », et Yasmine ne peut toujours
+pas écrire), `chmod 777`, une photo effacée (le chapitre se recommence
+depuis le menu). Autres solutions acceptées : `docker run -u`, un autre uid
+avec le groupe de Yasmine et `chmod -R g+w`. Débrief : `id` et `ps aux`,
+l'uid partagé avec la machine (sans userns-remap), `USER`/`--user`/`user:`,
+des numéros plutôt que des noms, `chown -R` plutôt que `chmod 777`,
+`--cap-drop ALL`, `no-new-privileges`, `--read-only`, ni `--privileged` ni
+socket Docker monté, mode rootless ; liens vers la documentation de Docker.
 
 ## Idées pour la suite
 

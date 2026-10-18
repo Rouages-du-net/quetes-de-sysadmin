@@ -9,11 +9,15 @@ import type { Shell } from '../shell';
 import {
   APPLIS,
   complet,
+  comptesImage,
   docker,
   ecrireDans,
   horloge,
   identifiant,
+  identite,
+  imageDu,
   lancer,
+  noeudDans,
   lireDans,
   majDisque,
   listerDans,
@@ -22,6 +26,7 @@ import {
   stopper,
   tailleDocker,
   trouverConteneur,
+  utilisateurImage,
   type Conteneur,
   type EtatDocker,
   type Montage,
@@ -146,12 +151,26 @@ interface OptionsRun {
   env: string[];
   redemarrage: string;
   supprimer: boolean;
+  utilisateur?: string;
+  lectureSeule: boolean;
+  capDrop: string[];
+  securite: string[];
   image?: string;
   inconnue?: string;
 }
 
 function analyserRun(args: string[]): OptionsRun {
-  const o: OptionsRun = { detache: false, ports: [], volumes: [], env: [], redemarrage: 'no', supprimer: false };
+  const o: OptionsRun = {
+    detache: false,
+    ports: [],
+    volumes: [],
+    env: [],
+    redemarrage: 'no',
+    supprimer: false,
+    lectureSeule: false,
+    capDrop: [],
+    securite: [],
+  };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     const [cle, egal] = a.startsWith('--') && a.includes('=') ? [a.slice(0, a.indexOf('=')), a.slice(a.indexOf('=') + 1)] : [a, undefined];
@@ -164,6 +183,10 @@ function analyserRun(args: string[]): OptionsRun {
     else if (cle === '-e' || cle === '--env') o.env.push(valeur());
     else if (cle === '--restart') o.redemarrage = valeur();
     else if (cle === '--rm') o.supprimer = true;
+    else if (cle === '-u' || cle === '--user') o.utilisateur = valeur();
+    else if (cle === '--read-only') o.lectureSeule = true;
+    else if (cle === '--cap-drop') o.capDrop.push(valeur());
+    else if (cle === '--security-opt') o.securite.push(valeur());
     else if (cle === '--interactive' || cle === '--tty') continue;
     else if (cle.startsWith('-')) {
       o.inconnue = cle;
@@ -256,6 +279,10 @@ function run(d: EtatDocker, jeu: Shell, args: string[]): string {
     couche: { ...(APPLIS[image.appli]?.fichiers?.(image) ?? {}) },
     journal: [],
     ip: `172.17.0.${d.conteneurs.filter((x) => x.etat === 'running').length + 2}`,
+    ...(o.utilisateur ? { utilisateur: o.utilisateur } : {}),
+    ...(o.lectureSeule ? { lectureSeule: true } : {}),
+    ...(o.capDrop.length ? { capDrop: o.capDrop } : {}),
+    ...(o.securite.length ? { securite: o.securite } : {}),
   };
   // Un port de la machine déjà publié par un conteneur qui tourne : refus au démarrage.
   const occupe = publies.find((p) => d.conteneurs.some((x) => x.etat === 'running' && x.ports.some((q) => q.hote === p.hote)));
@@ -270,7 +297,9 @@ function run(d: EtatDocker, jeu: Shell, args: string[]): string {
       ].join('\n'),
     );
   }
-  lancer(jeu, c);
+  const echec = lancer(jeu, c);
+  if (echec)
+    return jeu.erreur([...sortie, `docker: Error response from daemon: ${echec}.`, '', "Run 'docker run --help' for more information"].join('\n'));
   jeu.etat.dockerRun = (jeu.etat.dockerRun ?? 0) + 1;
   if (o.detache) return [...sortie, id].join('\n');
   // Sans -d, docker resterait attaché au conteneur : on montre son journal.
@@ -347,23 +376,31 @@ function cp(d: EtatDocker, jeu: Shell, args: string[]): string {
 }
 
 function exec(d: EtatDocker, jeu: Shell, args: string[]): string {
-  const reste = args.filter((a, i) => !(a.startsWith('-') && args.slice(0, i).every((b) => b.startsWith('-'))));
-  const [nom, commande, ...params] = reste;
+  // Les options avant le conteneur : -i, -t, -it, -u utilisateur (--user).
+  let i = 0;
+  let demande: string | undefined;
+  for (; i < args.length && args[i].startsWith('-'); i++) {
+    if (args[i] === '-u' || args[i] === '--user') demande = args[++i];
+    else if (args[i].startsWith('--user=')) demande = args[i].slice(7);
+  }
+  const [nom, commande, ...params] = args.slice(i);
   if (!nom || !commande)
     return jeu.erreur(`docker: 'docker exec' requires at least 2 arguments.\n\nUsage:  docker exec [OPTIONS] CONTAINER COMMAND [ARG...]`);
   const c = trouverConteneur(d, nom);
   if (!c) return jeu.erreur(`Error response from daemon: No such container: ${nom}`);
   if (c.etat !== 'running') return jeu.erreur(`Error response from daemon: container ${c.id} is not running`);
   const image = imageDe(d, c)!;
+  const id = identite(image, c, demande);
+  if ('erreur' in id) return jeu.erreur(`Error response from daemon: ${id.erreur}`);
   if (commande === 'env')
     return [
       `PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`,
       `HOSTNAME=${c.id.slice(0, 12)}`,
       ...Object.entries(c.env).map(([k, v]) => `${k}=${v}`),
     ].join('\n');
-  if (commande === 'id')
-    return image.appli === 'outiltheque' ? 'uid=1000(outil) gid=1000(outil) groups=1000(outil)' : 'uid=0(root) gid=0(root) groups=0(root)';
-  if (commande === 'whoami') return image.appli === 'outiltheque' ? 'outil' : 'root';
+  const avecNom = (n: number, nomDe: string | null) => (nomDe === null ? String(n) : `${n}(${nomDe})`);
+  if (commande === 'id') return `uid=${avecNom(id.uid, id.nom)} gid=${avecNom(id.gid, id.groupe)} groups=${avecNom(id.gid, id.groupe)}`;
+  if (commande === 'whoami') return id.nom ?? jeu.erreur(`whoami: cannot find name for user ID ${id.uid}`);
   if (commande === 'cat') {
     const sorties: string[] = [];
     for (const p of params) {
@@ -383,11 +420,25 @@ function exec(d: EtatDocker, jeu: Shell, args: string[]): string {
       return jeu.erreur(`ls: cannot access '${lieu}': No such file or directory`);
     const noms = [...new Set(fichiers.map((f) => (f === lieu ? f : f.slice(lieu.replace(/\/$/, '').length + 1).split('/')[0])))].sort();
     if (!long) return noms.join('  ');
+    // Le propriétaire vu du conteneur : le nom de son uid dans l'image (sinon le numéro).
+    const comptes = comptesImage(image);
+    const nomDans = (uid: number) => Object.entries(comptes).find(([, x]) => x === uid)?.[0] ?? String(uid);
+    const parDefaut = utilisateurImage(image);
     return noms
-      .map(
-        (n) =>
-          `-rw-r--r-- 1 outil outil ${String(new TextEncoder().encode(lireDans(jeu, c, `${lieu.replace(/\/$/, '')}/${n}`) ?? '').length).padStart(6)} ${n}`,
-      )
+      .map((n) => {
+        const chemin = `${lieu.replace(/\/$/, '')}/${n}`;
+        const hote = noeudDans(jeu, c, chemin);
+        const uid = hote ? (jeu.comptes.utilisateurs[hote.proprio ?? 'vous']?.uid ?? Number(hote.proprio)) : (comptes[parDefaut] ?? 0);
+        const proprio = Number.isNaN(uid) ? 'root' : nomDans(uid);
+        const dossier = hote?.type === 'dossier';
+        const mode = hote?.mode ?? (dossier ? 'rwxr-xr-x' : 'rw-r--r--');
+        const taille = dossier
+          ? 4096
+          : hote?.type === 'fichier' && hote.taille !== undefined
+            ? hote.taille
+            : new TextEncoder().encode(lireDans(jeu, c, chemin) ?? '').length;
+        return `${dossier ? 'd' : '-'}${mode} 1 ${proprio} ${proprio} ${String(taille).padStart(6)} ${n}`;
+      })
       .join('\n');
   }
   return jeu.erreur(
@@ -630,7 +681,8 @@ function compose(d: EtatDocker, jeu: Shell, args: string[]): string {
       const liste = noms.length ? conteneurs().filter((c) => noms.includes(c.service)) : conteneurs();
       for (const c of liste) {
         if (action !== 'start') stopper(jeu, c);
-        if (action !== 'stop') lancer(jeu, c);
+        const echec = action !== 'stop' ? lancer(jeu, c) : null;
+        if (echec) return jeu.erreur(`Error response from daemon: ${echec}`);
       }
       const verbe = { restart: 'Started', stop: 'Stopped', start: 'Started' }[action];
       return [
@@ -658,12 +710,16 @@ function afficherProjet(p: Projet): string {
   const lignes = [`name: ${p.nom}`, 'services:'];
   for (const s of p.services) {
     lignes.push(`  ${s.nom}:`);
+    if (s.capDrop.length) lignes.push('    cap_drop:', ...s.capDrop.map((x) => `      - ${x}`));
     if (s.dependances.length)
       lignes.push('    depends_on:', ...s.dependances.map((d) => `      ${d}:\n        condition: service_started\n        required: true`));
     if (Object.keys(s.env).length) lignes.push('    environment:', ...Object.entries(s.env).map(([k, v]) => `      ${k}: ${v === '' ? '""' : v}`));
     lignes.push(`    image: ${s.image}`, '    networks:', '      default: null');
     if (s.ports.length) lignes.push('    ports:', ...s.ports.map((x) => `      - ${x}`));
+    if (s.lectureSeule) lignes.push('    read_only: true');
     if (s.redemarrage !== 'no') lignes.push(`    restart: ${s.redemarrage}`);
+    if (s.securite.length) lignes.push('    security_opt:', ...s.securite.map((x) => `      - ${x}`));
+    if (s.utilisateur) lignes.push(`    user: ${s.utilisateur}`);
     if (s.volumes.length) lignes.push('    volumes:', ...s.volumes.map((v) => `      - ${v}`));
   }
   lignes.push('networks:', '  default:', `    name: ${p.nom}_default`);
@@ -690,6 +746,9 @@ function inspecter(jeu: Shell, c: Conteneur) {
     Name: `/${c.nom}`,
     HostConfig: {
       RestartPolicy: { Name: c.redemarrage.split(':')[0], MaximumRetryCount: Number(c.redemarrage.split(':')[1] ?? 0) },
+      ReadonlyRootfs: !!c.lectureSeule,
+      CapDrop: c.capDrop ?? null,
+      SecurityOpt: c.securite ?? null,
       PortBindings: Object.fromEntries(
         c.ports.map((p) => [`${p.conteneur}/tcp`, [{ HostIp: p.ip === '0.0.0.0' ? '' : p.ip, HostPort: String(p.hote) }]]),
       ),
@@ -700,7 +759,11 @@ function inspecter(jeu: Shell, c: Conteneur) {
       Destination: m.cible,
       RW: !m.lectureSeule,
     })),
-    Config: { Image: c.image, Env: Object.entries(c.env).map(([k, v]) => `${k}=${v}`) },
+    Config: {
+      Image: c.image,
+      User: c.utilisateur ?? (utilisateurImage(imageDu(jeu, c)) === 'root' ? '' : utilisateurImage(imageDu(jeu, c))),
+      Env: Object.entries(c.env).map(([k, v]) => `${k}=${v}`),
+    },
     NetworkSettings: { IPAddress: c.ip },
   };
 }
@@ -809,7 +872,11 @@ function executer(d: EtatDocker, jeu: Shell, args: string[]): string {
               );
               continue;
             }
-            lancer(jeu, c);
+            const echec = lancer(jeu, c);
+            if (echec) {
+              jeu.erreur(`Error response from daemon: ${echec}\nError: failed to start containers: ${nom}`);
+              continue;
+            }
           }
         }
         sorties.push(nom);

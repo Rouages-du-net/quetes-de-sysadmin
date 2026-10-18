@@ -24,6 +24,7 @@ import { concert } from './concert';
 import { miseAJour } from './mise-a-jour';
 import { composition } from './composition';
 import { contournement } from './contournement';
+import { pleinsPouvoirs } from './pleins-pouvoirs';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -52,7 +53,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'fabrique',
-    chapitres: [miseAJour, composition, contournement],
+    chapitres: [miseAJour, composition, contournement, pleinsPouvoirs],
   },
 ];
 

@@ -5,8 +5,8 @@
 // docker compose (https://docs.docker.com/reference/cli/docker/compose/).
 // Écarts : YAML réduit (correspondances, listes, chaînes, listes [a, b]) ;
 // clés de service : image, ports, volumes, environment, env_file,
-// depends_on, restart, command (ignorée) ; pas de build, de healthcheck, ni
-// de profils.
+// depends_on, restart, user, read_only, cap_drop, security_opt, command
+// (ignorée) ; pas de build, de healthcheck, ni de profils.
 
 import type { Jeu, Shell } from './shell';
 import { docker, horloge, identifiant, lancer, stopper, type Conteneur, type EtatDocker, type Montage, type Port } from './docker';
@@ -112,6 +112,10 @@ export interface Service {
   env: Record<string, string>;
   dependances: string[];
   redemarrage: string;
+  utilisateur: string;
+  lectureSeule: boolean;
+  capDrop: string[];
+  securite: string[];
 }
 
 export interface Projet {
@@ -122,7 +126,21 @@ export interface Projet {
   avertissements: string[];
 }
 
-const CLES_SERVICE = ['image', 'ports', 'volumes', 'environment', 'env_file', 'depends_on', 'restart', 'command', 'container_name'];
+const CLES_SERVICE = [
+  'image',
+  'ports',
+  'volumes',
+  'environment',
+  'env_file',
+  'depends_on',
+  'restart',
+  'command',
+  'container_name',
+  'user',
+  'read_only',
+  'cap_drop',
+  'security_opt',
+];
 
 /** Lit compose.yaml et .env d'un dossier ; lève une erreur au format de docker compose. */
 export function lireProjet(jeu: Jeu, dossier: string): Projet {
@@ -178,6 +196,10 @@ export function lireProjet(jeu: Jeu, dossier: string): Projet {
       env: variables,
       dependances: Array.isArray(dep) ? dep.map(String) : dep && typeof dep === 'object' ? Object.keys(dep) : [],
       redemarrage: s.restart ? String(s.restart) : 'no',
+      utilisateur: s.user ? String(s.user) : '',
+      lectureSeule: String(s.read_only ?? '') === 'true',
+      capDrop: liste(s.cap_drop, `services.${nom}.cap_drop`),
+      securite: liste(s.security_opt, `services.${nom}.security_opt`),
     };
   });
   for (const s of resultat)
@@ -215,7 +237,15 @@ export function ordre(p: Projet): Service[] {
 export const nomConteneur = (p: Projet, s: Service) => `${p.nom}-${s.nom}-1`;
 
 // L'empreinte de la configuration d'un service : si elle change, up recrée le conteneur.
-export const empreinte = (s: Service) => JSON.stringify([s.image, s.ports, s.volumes, s.env, s.redemarrage]);
+export const empreinte = (s: Service) =>
+  JSON.stringify([
+    s.image,
+    s.ports,
+    s.volumes,
+    s.env,
+    s.redemarrage,
+    ...(s.utilisateur || s.lectureSeule || s.capDrop.length || s.securite.length ? [s.utilisateur, s.lectureSeule, s.capDrop, s.securite] : []),
+  ]);
 
 export interface ConteneurCompose extends Conteneur {
   projet: string;
@@ -249,7 +279,8 @@ export function monter(jeu: Shell, p: Projet, creerImage: (nom: string) => boole
     const nom = nomConteneur(p, s);
     const existant = conteneursDuProjet(d, p.nom).find((c) => c.service === s.nom);
     if (existant && existant.empreinte === empreinte(s)) {
-      if (existant.etat !== 'running') lancer(jeu, existant);
+      const echec = existant.etat !== 'running' ? lancer(jeu, existant) : null;
+      if (echec) return { lignes, erreur: `Error response from daemon: ${echec}` };
       lignes.push(` ✔ Container ${nom}  ${existant.etat === 'running' ? 'Running' : 'Started'}`);
       continue;
     }
@@ -298,9 +329,15 @@ export function monter(jeu: Shell, p: Projet, creerImage: (nom: string) => boole
       projet: p.nom,
       service: s.nom,
       empreinte: empreinte(s),
+      ...(s.utilisateur ? { utilisateur: s.utilisateur } : {}),
+      ...(s.lectureSeule ? { lectureSeule: true } : {}),
+      ...(s.capDrop.length ? { capDrop: s.capDrop } : {}),
+      ...(s.securite.length ? { securite: s.securite } : {}),
     };
     d.conteneurs.push(c);
-    lancer(jeu, c);
+    const echec = lancer(jeu, c);
+    if (echec)
+      return { lignes: [...lignes, ` ✔ Container ${nom}  ${existant ? 'Recreated' : 'Created'}`], erreur: `Error response from daemon: ${echec}` };
     lignes.push(` ✔ Container ${nom}  ${existant ? 'Recreated' : 'Started'}`);
   }
   // Un service qui s'est arrêté au démarrage (sa dépendance n'était pas prête)

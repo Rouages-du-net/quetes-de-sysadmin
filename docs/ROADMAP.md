@@ -188,7 +188,9 @@ demandent plusieurs.
 - [x] Nettoyer le disque (`docker system df`, `prune`) ; « Le trou dans le pare-feu »
 - [x] Sécurité : ne pas exposer la base, `ufw` et Docker (les ports publiés
       contournent ufw) ; « Le trou dans le pare-feu » (La Fabrique, chapitre 3)
-- [ ] Ne pas tourner en root dans le conteneur
+- [x] Ne pas tourner en root dans le conteneur : `--user`, `user:`, l'uid
+      partagé avec la machine, `chown -R` ; « Les pleins pouvoirs » (La Fabrique,
+      chapitre 4)
 
 ## Phase 6 — Déployer
 

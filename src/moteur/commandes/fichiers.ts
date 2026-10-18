@@ -10,9 +10,12 @@ const modeDe = (n: Noeud) => n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw
 
 // Une ligne de « ls -l ». Écart volontaire : on omet le nombre de liens et
 // la date.
-function ligneLongue(jeu: Shell, nom: string, n: Noeud, humain: boolean): string {
-  const proprio = n.proprio ?? 'vous';
-  const groupe = n.groupe ?? proprio;
+function ligneLongue(jeu: Shell, nom: string, n: Noeud, humain: boolean, numerique = false): string {
+  // -n : les numéros (uid, gid) au lieu des noms.
+  const nomProprio = n.proprio ?? 'vous';
+  const nomGroupe = n.groupe ?? nomProprio;
+  const proprio = numerique ? String(jeu.comptes.utilisateurs[nomProprio]?.uid ?? nomProprio) : nomProprio;
+  const groupe = numerique ? String(jeu.comptes.groupes[nomGroupe]?.gid ?? nomGroupe) : nomGroupe;
   const octets = n.type === 'dossier' ? 4096 : tailleDe(n, jeu);
   const taille = humain ? lisible(octets, jeu.t.langue) : String(octets);
   const suffixe = n.type === 'dossier' && nom !== '.' && nom !== '..' ? '/' : '';
@@ -50,18 +53,20 @@ export const FICHIERS: Record<string, Commande> = {
       const cible = reste[0] ?? '.';
       // ls -l d'un lien montre le lien lui-même ; sans -l, ls entre dans le lieu visé.
       const lien = jeu.trouver(cible, false);
-      const n = lettres.has('l') && lien?.type === 'fichier' && lien.lien !== undefined ? lien : jeu.trouver(cible);
+      const n = (lettres.has('l') || lettres.has('n')) && lien?.type === 'fichier' && lien.lien !== undefined ? lien : jeu.trouver(cible);
       if (!n) return jeu.erreur(jeu.t('ls-acces-introuvable', { cible }));
       const raison = jeu.blocage(cible);
       if (raison) return jeu.erreur(raison);
       if (!jeu.traverse(cible)) return jeu.erreur(jeu.t('ls-acces-permission', { cible }));
-      if (n.type === 'fichier') return lettres.has('l') ? ligneLongue(jeu, cible, n, lettres.has('h')) : cible;
+      // -n est un -l qui montre les numéros.
+      const long = lettres.has('l') || lettres.has('n');
+      if (n.type === 'fichier') return long ? ligneLongue(jeu, cible, n, lettres.has('h'), lettres.has('n')) : cible;
       if (!jeu.peut(n, 'r')) return jeu.erreur(jeu.t('ls-ouvrir-permission', { cible }));
       const entrees: [string, Noeud][] = Object.entries(n.enfants)
         .filter(([nom]) => lettres.has('a') || !nom.startsWith('.'))
         .sort(([a], [b]) => a.localeCompare(b, 'fr'));
       if (lettres.has('a')) entrees.unshift(['.', n], ['..', jeu.trouver(cible + '/..') ?? n]);
-      if (lettres.has('l')) return entrees.map(([nom, e]) => ligneLongue(jeu, nom, e, lettres.has('h'))).join('\n');
+      if (long) return entrees.map(([nom, e]) => ligneLongue(jeu, nom, e, lettres.has('h'), lettres.has('n'))).join('\n');
       // Comme le vrai ls : en colonnes à l'écran, un nom par ligne dans un
       // tube ou un fichier (et sans le / ajouté aux lieux).
       if (!dernier) return entrees.map(([nom]) => nom).join('\n');
@@ -245,19 +250,26 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   chmod: {
+    // -R (récursif) ; les autres arguments qui commencent par « - » sont des
+    // modes (chmod -w fichier), comme pour le vrai chmod.
+    propresOptions: true,
     lancer: ({ args, jeu }) => {
-      const [droits, ...cibles] = args;
+      const recursif = args.some((a) => a === '-R' || a === '--recursive');
+      const [droits, ...cibles] = args.filter((a) => a !== '-R' && a !== '--recursive');
       if (!droits || !cibles.length) return jeu.erreur(jeu.t('chmod-usage'));
+      const appliquer = (n: Noeud) => {
+        const nouveau = appliquerMode(modeDe(n), droits);
+        if (nouveau) n.mode = nouveau;
+        if (recursif && n.type === 'dossier') Object.values(n.enfants).forEach(appliquer);
+        return nouveau;
+      };
       for (const cible of cibles) {
         const n = jeu.trouver(cible);
         if (!n) jeu.erreur(jeu.t('chmod-acces-introuvable', { cible }));
         else if (!jeu.traverse(cible)) jeu.erreur(jeu.t('chmod-acces-permission', { cible }));
         else if (jeu.qui !== 'root' && (n.proprio ?? 'vous') !== jeu.qui) jeu.erreur(jeu.t('chmod-non-permise', { cible }));
-        else {
-          const nouveau = appliquerMode(modeDe(n), droits);
-          if (!nouveau) jeu.erreur(jeu.t('chmod-mode-incorrect', { droits }));
-          else n.mode = nouveau;
-        }
+        else if (!appliquerMode(modeDe(n), droits)) jeu.erreur(jeu.t('chmod-mode-incorrect', { droits }));
+        else appliquer(n);
       }
       return '';
     },

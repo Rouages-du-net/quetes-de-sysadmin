@@ -30,6 +30,7 @@ const journal = (jeu: Jeu, c: Conteneur, texte: string) => c.journal.push({ temp
 // PostgreSQL (image officielle) : la base n'est créée qu'une fois, quand le
 // dossier des données est vide ; POSTGRES_PASSWORD ne sert qu'à ce moment-là.
 APPLIS.postgres = {
+  comptes: { postgres: 999 },
   demarrer: (jeu, c) => {
     if (lireDans(jeu, c, `${DONNEES}/PG_VERSION`)) {
       journal(jeu, c, '');
@@ -83,6 +84,8 @@ export function connecter(jeu: Jeu, c: Conteneur): string | null {
 }
 
 APPLIS.reservations = {
+  // Construite sur l'image node, qui a un compte node (uid 1000)… mais ne s'en sert pas.
+  comptes: { node: 1000 },
   demarrer: (jeu, c) => {
     journal(jeu, c, '> reservations@2.1.0 start');
     journal(jeu, c, '> node serveur.js');

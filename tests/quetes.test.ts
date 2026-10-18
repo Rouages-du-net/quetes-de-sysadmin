@@ -838,6 +838,84 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('La Fabrique, chapitre 4 — Les pleins pouvoirs (conteneur sans root)', () => {
+      const modifier = (s: Shell, change: (texte: string) => string) => {
+        s.executer('sudo nano /srv/galerie/compose.yaml');
+        s.enregistrerEdition(change(s.edition!.texte));
+        s.quitterEdition();
+      };
+      const avecUtilisateur = (u: string) => (t: string) => t.replace('    restart: unless-stopped', `    restart: unless-stopped\n    user: ${u}`);
+
+      it('solution : user: "1001:1001" dans compose.yaml, puis chown -R', () => {
+        const { s, tout } = jouer('pleins-pouvoirs', [
+          'cd /srv/galerie',
+          'sudo docker exec galerie-galerie-1 id',
+          'fablab-2027',
+          'ps aux',
+          'ls -lan photos',
+        ]);
+        expect(tout).toContain('uid=0(root) gid=0(root) groups=0(root)');
+        expect(tout).toMatch(/^root\s+\d+.*node serveur\.js$/m);
+        contient(tout, "l'uid 0 du conteneur EST l'uid 0 de la machine");
+        modifier(s, avecUtilisateur('"1001:1001"'));
+        const echec = ['sudo docker compose up -d', 'sudo docker compose ps', 'sudo docker compose logs galerie']
+          .map((l) => s.executer(l))
+          .join('\n');
+        expect(echec).toContain('Restarting (1)');
+        expect(echec).toContain("Error: EACCES: permission denied, open '/app/photos/.miniatures/index.json'");
+        contient(echec, 'EACCES, permission refusée');
+        expect(s.termine).toBe(false);
+        // Sans -R, le dossier change de propriétaire, pas ce qu'il contient.
+        s.executer('sudo chown 1001:1001 /srv/galerie/photos');
+        expect(s.termine).toBe(false);
+        const fin = ['sudo chown -R 1001:1001 /srv/galerie/photos', 'sudo docker exec galerie-galerie-1 id', 'ps aux', 'curl -s localhost:8082']
+          .map((l) => s.executer(l))
+          .join('\n');
+        expect(fin).toContain('uid=1001 gid=1001 groups=1001');
+        expect(fin).toMatch(/^yasmine\s+\d+.*node serveur\.js$/m);
+        expect(fin).toContain('14 photos');
+        contient(fin, 'Tu as terminé le chapitre 4 de La Fabrique');
+        expect(s.termine).toBe(true);
+      });
+
+      it('autre solution : docker run -u node, le groupe de Yasmine et chmod -R g+w', () => {
+        const { s, tout } = jouer('pleins-pouvoirs', [
+          'sudo docker rm -f galerie-galerie-1',
+          'fablab-2027',
+          'sudo docker run -d --name galerie -u node -p 8082:3000 -v /srv/galerie/photos:/app/photos --restart unless-stopped registre.example/galerie:3.2',
+          'sudo chown -R 1000 /srv/galerie/photos',
+          'sudo docker exec galerie whoami',
+          'ls -l /srv/galerie',
+        ]);
+        expect(tout).toContain('node');
+        expect(tout).toMatch(/drwxr-xr-x vous +vous +4096 photos/);
+        contient(tout, "l'uid 1000, c'est toi");
+        expect(s.termine).toBe(false);
+        s.executer('sudo chgrp -R yasmine /srv/galerie/photos');
+        s.executer('sudo chmod -R g+w /srv/galerie/photos');
+        expect(s.executer('ls -ln /srv/galerie')).toMatch(/drwxrwxr-x 1000 +1001 +4096 photos/);
+        expect(s.termine).toBe(true);
+      });
+
+      it("fausses pistes : un nom inconnu de l'image, chmod 777, une photo effacée", () => {
+        const { s } = jouer('pleins-pouvoirs', ['cd /srv/galerie', 'sudo id', 'fablab-2027']);
+        modifier(s, avecUtilisateur('galerie'));
+        const inconnu = s.executer('sudo docker compose up -d') ?? '';
+        expect(inconnu).toContain('unable to find user galerie: no matching entries in passwd file');
+        contient(inconnu, "DE L'IMAGE");
+        modifier(s, (t) => t.replace('user: galerie', 'user: "1001:1001"'));
+        s.executer('sudo docker compose up -d');
+        const ouvert = s.executer('sudo chmod -R 777 /srv/galerie/photos') ?? '';
+        contient(ouvert, 'ouvert en écriture à tous');
+        expect(s.executer('sudo docker exec galerie-galerie-1 id')).toContain('uid=1001');
+        expect(s.termine).toBe(false);
+        const perdu = s.executer('sudo rm /srv/galerie/photos/velo-repare.jpg') ?? '';
+        contient(perdu, 'Une photo a disparu');
+        s.executer('sudo chmod -R o-w /srv/galerie/photos');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {
