@@ -5,6 +5,7 @@ import type { Chapitre, Histoire } from '../monde';
 import { eveil } from './eveil';
 import { bourg } from './bourg';
 import { racine } from './racine';
+import { sauvegarde } from './sauvegarde';
 import { datacenter } from './datacenter';
 import { deuxiemeJour } from './deuxieme-jour';
 import { redemarrage } from './redemarrage';
@@ -18,7 +19,7 @@ import { sentinelle } from './sentinelle';
 export const HISTOIRES: Histoire[] = [
   {
     id: 'effaceur',
-    chapitres: [eveil, bourg, racine],
+    chapitres: [eveil, bourg, racine, sauvegarde],
   },
   {
     id: 'datacenter',

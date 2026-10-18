@@ -7,7 +7,8 @@ import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
 
-const EFFACEUR = HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id);
+// Les trois chapitres qui donnent les clés (le quatrième, ajouté ensuite, ne compte pas).
+const EFFACEUR = ['eveil', 'bourg', 'racine'];
 
 for (const langue of LANGUES)
   describe(`Langue : ${langue}`, () => {

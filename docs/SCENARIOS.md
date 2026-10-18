@@ -115,6 +115,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `ufw` | règles IPv4 et IPv6 confondues (lignes « (v6) » pour la forme) ; pas de règles sortantes, de routage, de journalisation, d'`insert` ni de `reset` ; messages proches de la traduction française d'ufw | tout cela |
 | `ss` | sockets décrites par le chapitre, et la session ssh en cours | toutes les sockets du système |
 | fail2ban | une seule prison (`sshd`) ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
+| `rsync` | copie locale seulement (pas de `user@machine:`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | aussi à distance par SSH, compare taille et date |
+| `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -130,6 +132,7 @@ Morale technique : un programme fait ce qu'on lui a dit, pas ce qu'on voulait.
 flowchart LR
   C1["Chapitre 1 · L'Île du Phare<br/>ls, cd, pwd, cat, less, ls -a, mv"] --> C2["Chapitre 2 · Le Bourg<br/>grep, touch, cp, mkdir, rm"]
   C2 --> C3["Chapitre 3 · La Racine<br/>ls -l, chmod, whoami, sudo"]
+  C3 --> C4["Chapitre 4 · La Sauvegarde<br/>rsync, crontab"]
 ```
 
 ### Chapitre 1 — L'Île du Phare (fait)
@@ -183,6 +186,33 @@ Le dénouement : le personnage était l'administrateur·ice du royaume. C'est
 lui ou elle qui avait écrit la configuration, avec une espace de trop.
 L'Effaceur n'était pas méchant : il faisait exactement ce qu'on lui avait
 écrit. Le message de `sudo` (« Réfléchissez avant de taper ») est le vrai.
+
+### Chapitre 4 — La Sauvegarde (fait)
+
+Maëlle veut que les souvenirs ne puissent plus disparaître : un disque de
+sauvegarde est monté sur `/mnt/sauvegarde`. Le chapitre se joue sur
+`royaume` ; les clés des autres machines restent données à la fin de La
+Racine (chapitre 3).
+
+| Étape | Commande apprise |
+|---|---|
+| Copier | `rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/` (la barre finale compte), `rsync -n` pour essayer |
+| Automatiser | `crontab -e`, une ligne `15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/` (ou `@daily`) ; `crontab -l` |
+| La nuit passe | le jeu lance les tâches qui tombent entre minuit et 6 h (`src/moteur/cron.ts`) ; un souvenir arrivé dans la journée doit se retrouver dans la sauvegarde |
+| Restaurer | au matin, un souvenir est effacé : `rsync -a` ou `cp` depuis la sauvegarde |
+
+Objectif vérifié sur l'état : la nuit a mis la sauvegarde à jour (y compris
+le nouveau souvenir), le souvenir effacé est revenu à l'identique, et une
+tâche de nuit avec `rsync` reste planifiée.
+
+Pièges prévus : `rsync` sans `-a` (`skipping directory`), la barre finale
+oubliée (`souvenirs/souvenirs`), une crontab invalide (`bad hour`, refusée
+à l'installation), une tâche qui ne tombe pas la nuit, une tâche qui échoue
+(le courrier de cron montre l'erreur de rsync), `--delete` après
+l'effacement (la sauvegarde perd aussi le souvenir). Autre solution
+acceptée : `@daily`, copie du dossier entier, restauration avec `cp`.
+Débrief : barre finale, `-n`, planifier, tester la restauration, règle
+3-2-1 et versions ; liens vers `rsync(1)` et `crontab(5)`.
 
 ## Histoire 2 : Le Datacenter (faite)
 

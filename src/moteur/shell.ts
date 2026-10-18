@@ -58,6 +58,8 @@ export interface Edition {
   root: boolean;
   // Message de la ligne d'état à l'ouverture (« Nouveau fichier »…).
   message: string;
+  // À la fermeture (ex. crontab -e vérifie et installe) : message à afficher.
+  apres?: () => string;
 }
 
 export class Shell implements Jeu {
@@ -400,6 +402,21 @@ export class Shell implements Jeu {
     return this.t('sudo-trois-echecs');
   }
 
+  /**
+   * Lance une ligne de commande comme le ferait cron : depuis la maison, sans
+   * événements de l'histoire ; renvoie tout ce qu'elle a écrit (sortie et
+   * erreurs), que cron enverrait par courrier.
+   */
+  executerTache(ligne: string): string {
+    const cwd = this.cwd;
+    this.cwd = this.maison;
+    try {
+      return this.tube(ligne, decouper(ligne));
+    } finally {
+      this.cwd = cwd;
+    }
+  }
+
   /** Vérifie les événements de l'histoire hors d'une commande (ex. à la reconnexion). */
   evenements(): string {
     return this.conclure('', false);
@@ -538,8 +555,11 @@ export class Shell implements Jeu {
 
   /** Ferme l'éditeur ; renvoie les messages de l'histoire en attente. */
   quitterEdition(): string {
+    const apres = this.edition?.apres?.() ?? '';
     this.edition = null;
-    const messages = this.enAttente.join('\n\n');
+    // Ce que la fermeture a changé (ex. une crontab installée) compte comme une commande.
+    const suite = apres ? this.conclure('', true) : '';
+    const messages = [apres, ...this.enAttente, suite].filter(Boolean).join('\n\n');
     this.enAttente = [];
     return messages;
   }

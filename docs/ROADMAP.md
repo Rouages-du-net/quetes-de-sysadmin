@@ -95,8 +95,9 @@ demandent plusieurs.
       démarrage, échec, activation au démarrage, `systemctl`, `journalctl`,
       `reboot` ; quête « La nuit du redémarrage » (Datacenter, chapitre 3)
 - [ ] Dépendances entre services, timers, fichiers d'unité modifiables
-- [ ] **Temps simulé** : horloge accélérée, tâches planifiées (cron,
-      timers), journaux qui défilent, attaques qui arrivent « pendant » la quête
+- [x] **Temps simulé** : horloge de systemd, tâches planifiées (`cron` :
+      une nuit simulée lance les tâches qui y tombent)
+- [ ] Timers systemd, journaux qui défilent, attaques « pendant » la quête
 - [x] **Utilisateur·rices et groupes** : vrais droits de groupe, comptes par
       machine (`/etc/passwd`, `/etc/group`), `id`, `groups`, `usermod -aG`,
       `chgrp`, `chown` ; quête « Deuxième jour » (Datacenter, chapitre 2)
@@ -189,20 +190,20 @@ demandent plusieurs.
 
 ## Phase 7 — Sauvegarder et restaurer
 
-- [ ] **La règle 3-2-1**, et pourquoi une copie sur le même disque n'est pas
-      une sauvegarde
-- [ ] **rsync** et **rsnapshot** (instantanés par liens physiques, rotation
-      horaire, quotidienne, hebdomadaire)
+- [x] **La règle 3-2-1**, et pourquoi une copie sur le même disque n'est pas
+      une sauvegarde (débrief de « La Sauvegarde »)
+- [x] **rsync** : `-a`, `-v`, `-n`, `--delete`, la barre finale ; planifié
+      avec `cron` ; quête « La Sauvegarde » (Effaceur, chapitre 4)
+- [ ] **rsnapshot** (instantanés par liens physiques, rotation horaire,
+      quotidienne, hebdomadaire)
 - [ ] **restic** (chiffrement, déduplication, `snapshots`, `restore`,
       `forget --prune`, `check`)
 - [ ] Sauvegarder une base (`mysqldump`, `pg_dump`) plutôt que ses fichiers
 - [ ] **Restauration de service** : quête « le serveur a brûlé » (repartir
       d'une machine vide avec les sauvegardes et la documentation)
-- [ ] **Exercice de restauration** : une sauvegarde jamais testée n'en est
-      pas une ; rançongiciel et sauvegardes hors ligne
-
-## Phase 8 — Surveiller et réagir
-
+- [x] **Exercice de restauration** : un souvenir effacé à restaurer depuis
+      la sauvegarde (« La Sauvegarde »)
+- [ ] Rançongiciel et sauvegardes hors ligne
 - [ ] Charge et ressources : `top`/`htop`, `free`, `df`, `du`, `iostat`
 - [ ] Pannes classiques : disque plein, mémoire épuisée (OOM), processus
       zombie, fuite de journaux, horloge décalée (NTP), inodes épuisés

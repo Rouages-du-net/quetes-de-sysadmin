@@ -10,7 +10,8 @@ un système entièrement simulé : rien ne sort du navigateur.
 
 > **État** : six histoires jouables, reliées par `ssh` depuis son poste
 > (ligne de commande, permissions et sudo, journaux et processus, comptes et
-> groupes, services systemd, réseau, git, archives, durcissement SSH), avec
+> groupes, services systemd, réseau, git, archives, durcissement SSH, pare-feu,
+> fail2ban, sauvegardes avec rsync et cron), avec
 > un manuel intégré et un éditeur `nano`. La suite (pare-feu, fail2ban,
 > Nginx, Docker, sauvegardes…) est dans la [feuille de route](docs/ROADMAP.md).
 

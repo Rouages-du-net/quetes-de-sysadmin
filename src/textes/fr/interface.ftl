@@ -14,7 +14,7 @@ etat-chapitres-faits =
     } sur { $total }
 etat-chapitre-termine = ✓ Terminé
 etat-verrouille = 🔒 Termine le chapitre précédent
-etat-cle-manquante = 🔑 Termine l’Effaceur pour recevoir la clé
+etat-cle-manquante = 🔑 Termine La Racine (Effaceur, chapitre 3) pour recevoir la clé
 bouton-suivant = Chapitre suivant →
 bouton-recommencer = Recommencer ce chapitre
 astuces = Astuces : Tab complète les noms, ↑ rappelle les commandes, « aide » liste celles que tu connais, « man commande » ouvre le manuel, « exit » ramène à ton poste. Ta progression est gardée dans ce navigateur.

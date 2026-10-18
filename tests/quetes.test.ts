@@ -118,6 +118,54 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('L’Effaceur, chapitre 4 — La Sauvegarde', () => {
+      // crontab -e : écrire la crontab dans l'éditeur, puis la fermer.
+      const crontab = (s: Shell, changer: (texte: string) => string) => {
+        s.executer('crontab -e');
+        s.enregistrerEdition(changer(s.edition!.texte));
+        return s.quitterEdition();
+      };
+
+      it('solution : rsync, crontab, la nuit, la restauration', () => {
+        const { s, tout } = jouer('sauvegarde', ['cat mot_de_maelle.txt', 'rsync souvenirs /mnt/sauvegarde', 'rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'crontab -l']);
+        expect(tout).toContain('skipping directory souvenirs');
+        expect(tout).toContain('sending incremental file list');
+        expect(tout).toContain('no crontab for vous');
+        contient(tout, 'Demande à cron de la refaire chaque nuit');
+        const erreur = crontab(s, (t) => t + '15 25 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n');
+        expect(erreur).toContain('"/tmp/crontab.Zx81Ab/crontab":24: bad hour');
+        expect(erreur).toContain("errors in crontab file, can't install.");
+        const nuit = crontab(s, (t) => t + '15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n');
+        expect(nuit).toContain('crontab: installing new crontab');
+        contient(nuit, 'fete-du-phare.txt y est, sans que tu aies rien tapé');
+        expect(s.existe('/mnt/sauvegarde/souvenirs/fete-du-phare.txt')).toBe(true);
+        expect(s.existe('/home/vous/souvenirs/premiere-lettre.txt')).toBe(false);
+        s.executer('rsync -av /mnt/sauvegarde/souvenirs/premiere-lettre.txt ~/souvenirs/');
+        expect(s.termine).toBe(true);
+      });
+
+      it('une autre solution : @daily, copie dans un dossier, restauration avec cp', () => {
+        const s = new Shell(chapitre('sauvegarde'), langue);
+        crontab(s, (t) => t + '@daily rsync -a souvenirs /mnt/sauvegarde/\n');
+        expect(s.drapeaux.has('nuit-ok')).toBe(true);
+        s.executer('cp /mnt/sauvegarde/souvenirs/premiere-lettre.txt souvenirs/');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : une tâche qui ne tourne pas la nuit, une tâche fausse, --delete après l’effacement', () => {
+        const s = new Shell(chapitre('sauvegarde'), langue);
+        const rien = crontab(s, (t) => t + '0 12 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n');
+        contient(rien, 'aucune tâche de ta crontab ne tombait cette nuit');
+        const courrier = crontab(s, (t) => t.replace('0 12', '0 2').replace('~/souvenirs/', '~/souvenir/'));
+        expect(courrier).toContain('rsync: [sender] link_stat "/home/vous/souvenir" failed: No such file or directory (2)');
+        crontab(s, (t) => t.replace('~/souvenir/', '~/souvenirs/'));
+        expect(s.drapeaux.has('nuit-ok')).toBe(true);
+        const perdu = s.executer('rsync -a --delete ~/souvenirs/ /mnt/sauvegarde/souvenirs/')!;
+        contient(perdu, 'de la sauvegarde aussi');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe('Autres histoires', () => {
       it('Le Datacenter', () => {
         const L = '/var/log/nginx/access.log';

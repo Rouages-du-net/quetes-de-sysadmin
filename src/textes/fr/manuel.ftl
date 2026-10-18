@@ -254,6 +254,21 @@ man-jail_conf = la configuration de fail2ban. Ne modifiez pas /etc/fail2ban/jail
     .exemple-1 = écrire ses réglages
     .exemple-2 = la valeur appliquée
 
+man-rsync = copie des fichiers et des dossiers, en ne recopiant que ce qui a changé : l'outil classique des sauvegardes. -a (archive) copie tout un dossier en gardant les droits ; -v montre ce qui est copié ; -n (--dry-run) montre ce qui SERAIT fait, sans rien toucher ; --delete retire de la destination ce qui n'est plus dans la source (un miroir exact : prudence, il recopie aussi les effacements). Attention à la barre finale : « rsync -a souvenirs/ dest/ » copie le CONTENU de souvenirs dans dest, « rsync -a souvenirs dest/ » crée dest/souvenirs.
+    .synopsis = rsync [-a] [-v] [-n] [--delete] source... destination
+    .option-a = mode archive : récursif, en gardant droits et dates.
+    .option-r = récursif : copie aussi le contenu des dossiers.
+    .option-v = bavard : liste ce qui est copié (verbose).
+    .option-n = essai : montre ce qui serait fait, sans rien écrire (dry run).
+    .exemple-1 = sauvegarder le contenu d'un dossier dans un autre
+    .exemple-2 = d'abord essayer, avec --delete : rien n'est touché
+    .exemple-3 = restaurer un seul fichier depuis la sauvegarde
+man-crontab = gère tes tâches planifiées : des commandes que cron lance tout seul, à heure fixe. crontab -e ouvre ta crontab dans l'éditeur ; à la fermeture, elle est vérifiée puis installée. crontab -l l'affiche, crontab -r la supprime. Une ligne = cinq champs pour l'heure, puis la commande : minute (0-59), heure (0-23), jour du mois (1-31), mois (1-12), jour de la semaine (0-7, 0 et 7 = dimanche). * veut dire « chaque », 1-5 une plage, 1,15 une liste, */10 « toutes les 10 ». Ou un raccourci : @daily (chaque nuit à minuit), @hourly, @weekly, @reboot (au démarrage). Les tâches tournent depuis ta maison ; ce qu'elles écrivent t'est envoyé par courrier.
+    .synopsis = crontab -e | -l | -r | fichier
+    .exemple-1 = modifier ses tâches planifiées
+    .exemple-2 = les afficher
+    .exemple-3 = une ligne de crontab : chaque nuit à 3 h 15
+
 ## Mise en page du manuel et messages de man-db et des coreutils
 
 # En-tête de chaque page, entre « LS(1) » et « LS(1) »
