@@ -916,6 +916,579 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('La Gazette, chapitre 1 — Le dépôt nu (déployer par git)', () => {
+      const editer = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        s.quitterEdition();
+      };
+      const CROCHET = '#!/bin/sh\ngit --work-tree=/var/www/gazette checkout -f main\necho "Site publié"';
+
+      it("solution : la dérive d'abord, un dépôt nu à soi, un crochet exécutable, puis chaque correction par git push", () => {
+        const { s, tout } = jouer('depot-nu', ['diff -r gazette /var/www/gazette', 'sudo git init --bare /srv/git/gazette.git', 'gazette-2027']);
+        expect(tout).toContain('Seulement dans gazette : fete-des-voisins.html');
+        expect(tout).toContain('> <h1>La Gazette du quartier</h1>');
+        contient(tout, 'Voilà la correction de Théo');
+        expect(tout).toContain('Dépôt Git vide initialisé dans /srv/git/gazette.git/');
+        s.executer('sudo chown -R vous:vous /srv/git/gazette.git');
+        editer(s, '/srv/git/gazette.git/hooks/post-receive', () => CROCHET);
+        s.executer('chmod +x /srv/git/gazette.git/hooks/post-receive');
+        s.executer('cd ~/gazette');
+        editer(s, 'index.html', (t) => t.replaceAll('Gazzette', 'Gazette'));
+        expect(s.executer('git commit -am "Titre : Gazette, sans faute"')).toContain('2 insertions(+), 2 suppressions(-)');
+        s.executer('git remote add prod /srv/git/gazette.git');
+        const push = s.executer('git push prod main') ?? '';
+        expect(push).toContain('remote: Site publié');
+        expect(push).toContain(' * [new branch]      main -> main');
+        contient(push, 'Mon article est en ligne');
+        expect(s.termine).toBe(false);
+        editer(s, 'agenda.html', (t) => t.replace('2027-06-21', '2027-06-12').replace('>21 ', '>12 '));
+        s.executer('git commit -am "Agenda : le vide-grenier est le 12 juin"');
+        const fin = s.executer('git push prod') ?? '';
+        expect(fin).toMatch(/ {3}[0-9a-f]{7}\.\.[0-9a-f]{7} {2}main -> main/);
+        contient(fin, 'Tu as terminé le chapitre 1 de La Gazette');
+        expect(s.executer('curl -s http://gazette.example/agenda.html')).toContain('datetime="2027-06-12"');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : dépôt à root, crochet non exécutable, checkout sans -f, correction de Théo perdue, retouche sur le serveur', () => {
+        const { s } = jouer('depot-nu', [
+          'sudo git init --bare /srv/git/gazette.git',
+          'gazette-2027',
+          'cd ~/gazette',
+          'git remote add prod /srv/git/gazette.git',
+        ]);
+        const root = s.executer('git push prod main') ?? '';
+        expect(root).toContain('error: droits insuffisants pour ajouter un objet');
+        expect(root).toContain(' ! [remote rejected] main -> main (unpacker error)');
+        contient(root, 'il appartient à root');
+        s.executer('sudo chown -R vous: /srv/git/gazette.git');
+        contient(s.executer('git push prod main') ?? '', 'rien ne les extrait');
+        editer(s, '/srv/git/gazette.git/hooks/post-receive', () => '#!/bin/sh\ngit --work-tree=/var/www/gazette checkout main');
+        s.executer('git rm style.css');
+        s.executer('git commit -m "Sans style"');
+        contient(s.executer('git push prod main') ?? '', "il n'est pas exécutable");
+        s.executer('chmod +x /srv/git/gazette.git/hooks/post-receive');
+        s.executer('git restore --source=HEAD~1 style.css');
+        s.executer('git add style.css');
+        s.executer('git commit -m "Le style revient"');
+        const sansF = s.executer('git push prod main') ?? '';
+        expect(sansF).toContain("remote: error: Les fichiers suivants non suivis de la copie de travail seraient écrasés par l'extraction :");
+        contient(sansF, 'Avec -f (force)');
+        editer(s, '/srv/git/gazette.git/hooks/post-receive', (t) => t.replace('checkout main', 'checkout -f main'));
+        editer(s, 'agenda.html', (t) => t.replace('8 h', '9 h'));
+        s.executer('git commit -am "Ouverture à 9 h"');
+        contient(s.executer('git push prod main') ?? '', 'La correction de Théo a disparu');
+        // Corriger l'agenda sur le serveur, sans git : refusé.
+        s.executer('echo \'<time datetime="2027-06-12">\' > /var/www/gazette/agenda.html');
+        expect(s.termine).toBe(false);
+      });
+    });
+
+    describe('La Gazette, chapitre 2 — Le retour arrière (versions, lien current, tests)', () => {
+      const crochet = (s: Shell, change: (texte: string) => string) => {
+        s.executer('nano /srv/git/gazette.git/hooks/post-receive');
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const AVEC_TESTS = (t: string) => t.replace('ln -sfn', 'cd /srv/gazette/releases/$VERSION\nsh tests.sh\nln -sfn');
+      const publierTheo = (s: Shell) =>
+        [
+          'cd ~/gazette',
+          'git pull prod main',
+          'mv accueil.html index.html',
+          'git add .',
+          'git commit -m "Accueil : index.html"',
+          'git push prod main',
+        ]
+          .map((l) => s.executer(l))
+          .join('\n');
+
+      it("solution : ln -sfn vers la version d'avant, tests.sh dans le crochet avant de basculer, puis la mise en page réparée", () => {
+        const { s, tout } = jouer('retour-arriere', [
+          'curl -I http://gazette.example/',
+          'ls -l /srv/gazette',
+          'cd /srv/gazette',
+          'ln -sfn releases/20270514101502 current',
+        ]);
+        expect(tout).toContain('HTTP/1.1 403 Forbidden');
+        expect(tout).toContain('current -> /srv/gazette/releases/20270517203012');
+        contient(tout, "nginx sert /srv/gazette/current, mais n'y trouve pas");
+        contient(tout, 'Le site répond de nouveau');
+        expect(s.executer('readlink -f /srv/gazette/current')).toBe('/srv/gazette/releases/20270514101502');
+        const theo = crochet(s, AVEC_TESTS);
+        expect(theo).toContain("remote: Vérification de la page d'accueil (index.html)...");
+        expect(theo).not.toContain('en ligne');
+        contient(theo, "le crochet s'est arrêté avant de basculer current");
+        expect(s.termine).toBe(false);
+        const fin = publierTheo(s);
+        expect(fin).toContain('Avance rapide');
+        expect(fin).toContain('remote: Tests OK');
+        expect(fin).toMatch(/remote: Version \d{14} en ligne/);
+        contient(fin, 'Tu as terminé le chapitre 2 de La Gazette');
+        expect(s.executer('curl -s http://gazette.example/')).toContain('class="une"');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : ln sans -n, tests après la bascule, tests lancés depuis le dépôt', () => {
+        const { s, tout } = jouer('retour-arriere', ['cd /srv/gazette', 'ln -sf releases/20270514101502 current', 'curl -I http://gazette.example/']);
+        contient(tout, 'Le nouveau lien a été créé DANS la version cassée');
+        expect(tout).toContain('HTTP/1.1 403 Forbidden');
+        s.executer('ln -sfn /srv/gazette/releases/20270514101502 /srv/gazette/current');
+        // Les tests après la bascule : trop tard, la version de Théo est en ligne.
+        const trop = crochet(s, (t) => t.replace('echo', 'sh tests.sh\necho'));
+        contient(trop, 'Le push cassé de Théo est passé en ligne');
+        expect(s.executer('curl -I http://gazette.example/')).toContain('403 Forbidden');
+        s.executer('ln -sfn /srv/gazette/releases/20270514101502 /srv/gazette/current');
+        // Avant la bascule, mais depuis le dépôt : tout est refusé, même une bonne version.
+        crochet(s, (t) => t.replace('sh tests.sh\necho', 'echo').replace('ln -sfn', 'sh tests.sh\nln -sfn'));
+        contient(publierTheo(s), 'tests.sh cherche index.html dans le lieu');
+        expect(s.termine).toBe(false);
+      });
+    });
+
+    describe('La Gazette, chapitre 3 — Bleu et vert (déployer sans coupure)', () => {
+      const editer = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const VERS_VERT = (t: string) => t.replace('127.0.0.1:3001', '127.0.0.1:3002');
+      const SMTP = (t: string) => `${t}\nKIOSQUE_SMTP=smtp.gazette.example`;
+
+      it('solution : la 1.5.0 sur vert, /health, la configuration des notes, puis nginx bascule et bleu reste allumé', () => {
+        const { s, tout } = jouer('bleu-vert', [
+          'curl -s http://localhost:3001/health',
+          'ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert',
+          'sudo systemctl start kiosque-vert',
+          'gazette-2027',
+          'curl -s localhost:3002/health',
+          'cat /srv/kiosque/versions/1.5.0/NOTES.txt',
+        ]);
+        expect(tout).toContain('{"status":"ok","version":"1.4.2"}');
+        expect(tout).toContain('{"status":"error","version":"1.5.0","error":"KIOSQUE_SMTP is not set"}');
+        contient(tout, '/health répond 503');
+        editer(s, '/etc/kiosque/kiosque.env', SMTP);
+        const sante = ['sudo systemctl restart kiosque-vert', 'curl -i localhost:3002/health'].map((l) => s.executer(l)).join('\n');
+        expect(sante).toContain('HTTP/1.1 200 OK');
+        expect(sante).toContain('{"status":"ok","version":"1.5.0"}');
+        editer(s, '/etc/nginx/sites-available/gazette', VERS_VERT);
+        const fin = ['sudo nginx -t', 'sudo systemctl reload nginx'].map((l) => s.executer(l)).join('\n');
+        expect(fin).toContain('test is successful');
+        contient(fin, 'Tu as terminé le chapitre 3 de La Gazette');
+        expect(s.executer('curl -s http://gazette.example/kiosque/')).toContain('Kiosque 1.5.0');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : sans redémarrer, bascule avant /health, sans reload, puis bleu arrêté trop tôt', () => {
+        const { s, tout } = jouer('bleu-vert', [
+          'sudo systemctl start kiosque-vert',
+          'gazette-2027',
+          'ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert',
+          'curl -s localhost:3002/health',
+        ]);
+        contient(tout, 'un programme lit son code');
+        s.executer('sudo systemctl restart kiosque-vert');
+        editer(s, '/etc/nginx/sites-available/gazette', VERS_VERT);
+        contient(s.executer('curl -s http://gazette.example/kiosque/') ?? '', 'il ne relit sa configuration');
+        contient(s.executer('sudo systemctl reload nginx') ?? '', 'les lecteur·rices reçoivent une erreur');
+        expect(s.executer('curl -s http://gazette.example/kiosque/')).toBe('Internal Server Error');
+        editer(s, '/etc/kiosque/kiosque.env', SMTP);
+        s.executer('sudo systemctl restart kiosque-vert');
+        expect(s.termine).toBe(true);
+        // Une fois la bascule faite, arrêter bleu enlève le filet.
+        contient(s.executer('sudo systemctl stop kiosque-bleu') ?? '', 'plus de retour arrière instantané');
+      });
+    });
+
+    describe('La Gazette, chapitre 4 — Le canari (upstream, weight, access.log)', () => {
+      const site = (s: Shell, change: (texte: string) => string) => {
+        s.executer('sudo nano /etc/nginx/sites-available/gazette');
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const CANARI = (t: string) =>
+        `upstream kiosque {\n    server 127.0.0.1:3002 weight=9;\n    server 127.0.0.1:3001 weight=1;\n}\n\n${t.replace('http://127.0.0.1:3002/', 'http://kiosque/')}`;
+      const recharger = (s: Shell) => ['sudo nginx -t', 'sudo systemctl reload nginx'].map((l) => s.executer(l)).join('\n');
+
+      it('solution : canari de la 1.6.0, les 500 dans access.log, arrêt, 1.6.1, canari propre, bascule', () => {
+        const { s } = jouer('canari', [
+          'ln -sfn /srv/kiosque/versions/1.6.0 /srv/kiosque/bleu',
+          'sudo systemctl restart kiosque-bleu',
+          'gazette-2027',
+        ]);
+        expect(s.executer('curl -s localhost:3001/health')).toBe('{"status":"ok","version":"1.6.0"}');
+        site(s, CANARI);
+        const heure = recharger(s);
+        contient(heure, '60 visites sur le Kiosque');
+        contient(heure, 'Le canari est en place');
+        expect(s.executer("awk '{print $9}' /var/log/nginx/access.log | sort | uniq -c")).toMatch(/\s+\d+ 500/);
+        const erreurs = s.executer('grep " 500 " /var/log/nginx/access.log') ?? '';
+        expect(erreurs).toContain('"GET /kiosque/archives HTTP/1.1" 500');
+        contient(erreurs, 'Des 500 sur /kiosque/archives');
+        expect(s.executer('curl -s localhost:3001/archives')).toBe('Internal Server Error');
+        site(s, (t) => t.replace('3001 weight=1;', '3001 weight=1 down;'));
+        contient(recharger(s), 'Canari arrêté');
+        s.executer('ln -sfn /srv/kiosque/versions/1.6.1 /srv/kiosque/bleu');
+        s.executer('sudo systemctl restart kiosque-bleu');
+        site(s, (t) => t.replace(' down;', ';'));
+        contient(recharger(s), 'aucune erreur dans ce lot');
+        expect(s.termine).toBe(false);
+        site(s, (t) => t.replace('3002 weight=9;', '3002 weight=9 down;'));
+        contient(recharger(s), 'Tu as terminé le chapitre 4 de La Gazette');
+        expect(s.executer('curl -s http://gazette.example/kiosque/')).toContain('Kiosque 1.6.1');
+        expect(s.termine).toBe(true);
+      });
+
+      it("fausses pistes : tout d'un coup sur la 1.6.0, puis un « canari » à 50 %", () => {
+        const { s } = jouer('canari', [
+          'ln -sfn /srv/kiosque/versions/1.6.0 /srv/kiosque/bleu',
+          'sudo systemctl restart kiosque-bleu',
+          'gazette-2027',
+        ]);
+        site(s, (t) => t.replace('127.0.0.1:3002/', '127.0.0.1:3001/'));
+        contient(recharger(s), "Tout le trafic est passé d'un coup à la 1.6.0");
+        site(
+          s,
+          (t) =>
+            `upstream kiosque {\n    server 127.0.0.1:3002;\n    server 127.0.0.1:3001;\n}\n\n${t.replace('http://127.0.0.1:3001/', 'http://kiosque/')}`,
+        );
+        contient(recharger(s), 'Une grosse part du trafic');
+        expect(s.termine).toBe(false);
+      });
+    });
+
+    describe('La Gazette, chapitre 5 — La migration (réparer en avant)', () => {
+      const editer = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const SMTP_URL = (t: string) => `${t}\nKIOSQUE_SMTP_URL=smtp://smtp.gazette.example:587`;
+
+      it('solution : le journal raconte la migration, la variable renommée, puis bleu en 2.0.0', () => {
+        const { s, tout } = jouer('migration', [
+          'curl -s localhost:3002/health',
+          'curl -s localhost:3001/health',
+          'sudo journalctl -u kiosque-vert',
+          'gazette-2027',
+        ]);
+        expect(tout).toContain('"error":"KIOSQUE_SMTP_URL is not set"');
+        expect(tout).toContain('"error":"database schema 4 is newer than supported (3)"');
+        expect(tout).toContain('Running migration 004_rename_abonnes_courriel_to_email... done');
+        contient(tout, 'il reste à réparer en avant');
+        editer(s, '/etc/kiosque/kiosque.env', SMTP_URL);
+        contient(s.executer('sudo systemctl restart kiosque-vert') ?? '', 'Le Kiosque répond de nouveau');
+        expect(s.termine).toBe(false);
+        s.executer('ln -sfn /srv/kiosque/versions/2.0.0 /srv/kiosque/bleu');
+        contient(s.executer('sudo systemctl restart kiosque-bleu') ?? '', 'Tu as terminé le chapitre 5 de La Gazette');
+        expect(s.executer('curl -s localhost:3001/health')).toBe('{"status":"ok","version":"2.0.0"}');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausse piste : revenir sur bleu (1.6.1) ne répare rien, la base a changé', () => {
+        const { s } = jouer('migration', ['sudo id', 'gazette-2027']);
+        const retour = editer(s, '/etc/nginx/sites-available/gazette', (t) => t.replace('127.0.0.1:3002/', '127.0.0.1:3001/'));
+        const recharge = (s.executer('sudo systemctl reload nginx') ?? '') + retour;
+        contient(recharge, 'la base a été migrée sous ses pieds');
+        expect(s.executer('curl -s http://gazette.example/kiosque/')).toBe('Internal Server Error');
+        expect(s.termine).toBe(false);
+      });
+    });
+
+    describe('La Ludothèque, chapitre 1 — La rançon (rançongiciel, sauvegarde hors ligne)', () => {
+      const RESTIC = 'sudo restic -r /mnt/cle/depot';
+      const MDP = 'pion-cavalier-tour-27';
+
+      it('solution : arrêter le chiffreur et sa crontab, verrouiller le compte, restaurer depuis la clé en lecture seule, la démonter', () => {
+        const { s, tout } = jouer('rancon', [
+          'find /srv/partage -name "*.locked" | wc -l',
+          'ps aux',
+          'sudo kill 3141',
+          'ludo-2027',
+          'sudo crontab -u accueil -l',
+          'sudo crontab -u accueil -r',
+          'sudo usermod -L accueil',
+          'sudo journalctl -u ssh',
+          'ls /mnt/nas/partage',
+          'lsblk -f',
+          'sudo mount -o ro /dev/sdb1 /mnt/cle',
+          'touch /mnt/cle/essai',
+          `${RESTIC} snapshots`,
+          MDP,
+          `${RESTIC} restore latest --target /`,
+          MDP,
+        ]);
+        expect(tout).toMatch(/^6$/m);
+        expect(tout).toContain('accueil      3141  97.3   1.4 /home/accueil/.cache/.maj/maj-systeme --silencieux');
+        expect(tout).toContain('*/10 * * * * /home/accueil/.cache/.maj/maj-systeme --silencieux');
+        expect(tout).toContain('Accepted password for accueil from 203.0.113.66');
+        expect(tout).toContain('SAUVEGARDE');
+        expect(tout).toContain('touch: /mnt/cle/essai: Système de fichiers accessible en lecture seulement');
+        expect(tout).toContain('Summary: Restored 6 files/dirs');
+        contient(tout, 'On ne paie pas');
+        contient(tout, "Une copie synchronisée, toujours branchée, n'est pas une sauvegarde");
+        contient(tout, 'Les six fichiers sont revenus');
+        expect(s.termine).toBe(false);
+        const fin = [
+          'sudo find /srv/partage -name "*.locked" -delete',
+          'sudo find /srv/partage -name LISEZ-MOI-POUR-RECUPERER.txt -delete',
+          'sudo umount /mnt/cle',
+        ]
+          .map((l) => s.executer(l))
+          .join('\n');
+        contient(fin, 'Tu as terminé le chapitre 1 de La Ludothèque');
+        expect(s.executer('cat /srv/partage/regles/dames.txt')).toContain('devient une dame');
+        expect(s.termine).toBe(true);
+      });
+
+      it("fausses pistes : restaurer avant d'arrêter le chiffreur, l'oublier dans la crontab, démonter depuis dedans", () => {
+        const { s, tout } = jouer('rancon', [
+          'sudo mount /dev/sdb1 /mnt/cle',
+          'ludo-2027',
+          `${RESTIC} restore latest --target /`,
+          MDP,
+          'ls /srv/partage',
+        ]);
+        contient(tout, 'le disque de sauvegarde est branché alors que le chiffreur tourne encore');
+        contient(tout, "Des fichiers restaurés viennent d'être chiffrés à leur tour");
+        expect(tout).not.toMatch(/inventaire\.csv(?!\.locked)/);
+        // Arrêté, mais sa crontab le relance.
+        const retour = ['sudo kill 3141', 'ls', 'ls', 'ls'].map((l) => s.executer(l)).join('\n');
+        contient(retour, 'Le chiffreur est revenu');
+        expect(s.executer('ps aux')).toContain('maj-systeme');
+        s.executer('cd /mnt/cle');
+        expect(s.executer('sudo umount /mnt/cle')).toBe('umount: /mnt/cle: target is busy.');
+        expect(s.termine).toBe(false);
+      });
+    });
+
+    describe('La Ludothèque, chapitre 2 — Les instantanés (rsnapshot, liens physiques, cron)', () => {
+      const editer = (s: Shell, commande: string, change: (texte: string) => string) => {
+        s.executer(commande);
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const REGLAGES = (t: string) =>
+        t
+          .replace('snapshot_root\t/var/cache/rsnapshot/', 'snapshot_root\t/mnt/instantanes/')
+          .replace('retain\talpha\t6\nretain\tbeta\t7\nretain\tgamma\t4', 'retain\tdaily\t7\nretain\tweekly\t4')
+          .replace('backup\t/home/\t\tlocalhost/\nbackup\t/etc/\t\tlocalhost/\nbackup\t/usr/local/\tlocalhost/', 'backup\t/srv/partage/\tlocalhost/');
+      const CRON = (t: string) => `${t}0 3 * * 1 /usr/bin/rsnapshot weekly\n30 3 * * * /usr/bin/rsnapshot daily\n`;
+      const D = '/mnt/instantanes';
+
+      it("solution : la configuration (tabulations), configtest, cron de root, puis l'inventaire de la veille", () => {
+        const { s } = jouer('instantanes', ['sudo rsnapshot configtest', 'ludo-2027']);
+        editer(s, 'sudo nano /etc/rsnapshot.conf', REGLAGES);
+        expect(s.executer('sudo rsnapshot configtest')).toBe('Syntax OK');
+        expect(s.executer('sudo rsnapshot -t daily')).toContain(
+          `/usr/bin/rsync -a --delete --numeric-ids --relative --delete-excluded /srv/partage/ ${D}/daily.0/localhost/`,
+        );
+        const semaines = editer(s, 'sudo crontab -e', CRON);
+        contient(semaines, 'Deux semaines passent');
+        contient(semaines, "Hier soir, j'ai remplacé l'inventaire");
+        expect(s.executer(`ls ${D}`)).toBe('daily.0/    daily.1/    daily.2/    daily.3/    daily.4/    daily.5/    daily.6/    weekly.0/');
+        const du = s.executer('sudo rsnapshot du') ?? '';
+        expect(du).toMatch(/^46M\t\/mnt\/instantanes\/daily\.0\/$/m);
+        expect(du).toMatch(/^\d+K?\t\/mnt\/instantanes\/daily\.1\/$/m);
+        const inodes =
+          s.executer(`ls -i ${D}/daily.0/localhost/srv/partage/regles/scans-regles.pdf ${D}/daily.6/localhost/srv/partage/regles/scans-regles.pdf`) ??
+          '';
+        const [a, b] = inodes.split('\n\n').map((l) => l.trim().split(' ')[0]);
+        expect(a).toBe(b);
+        expect(s.executer(`diff ${D}/daily.0/localhost/srv/partage/inventaire.csv ${D}/daily.1/localhost/srv/partage/inventaire.csv`)).toContain(
+          '> jeu offert n°13;1;neuf',
+        );
+        expect(s.termine).toBe(false);
+        contient(
+          s.executer(`sudo cp ${D}/daily.1/localhost/srv/partage/inventaire.csv /srv/partage/`) ?? '',
+          'Tu as terminé le chapitre 2 de La Ludothèque',
+        );
+        expect(s.termine).toBe(true);
+      });
+
+      it("fausses pistes : des espaces au lieu de tabulations, la crontab d'un compte ordinaire, la version de cette nuit", () => {
+        const { s } = jouer('instantanes', ['sudo id', 'ludo-2027']);
+        editer(s, 'sudo nano /etc/rsnapshot.conf', (t) => REGLAGES(t).replace('snapshot_root\t/mnt/instantanes/', 'snapshot_root /mnt/instantanes/'));
+        const erreur = s.executer('sudo rsnapshot configtest') ?? '';
+        expect(erreur).toContain('ERROR: snapshot_root /mnt/instantanes/ - Unknown config directive');
+        expect(erreur).toContain("ERROR: sure you don't have spaces where only tabs should be.");
+        contient(erreur, 'jamais par des espaces');
+        editer(s, 'sudo nano /etc/rsnapshot.conf', (t) => t.replace('snapshot_root /mnt/instantanes/', 'snapshot_root\t/mnt/instantanes/'));
+        const mails = editer(s, 'crontab -e', CRON);
+        contient(mails, "n'a pas les droits de root");
+        expect(s.executer(`ls ${D}`)).toBe('');
+        expect(s.termine).toBe(false);
+      });
+    });
+
+    describe('La Ludothèque, chapitre 3 — La base (pg_dump, restauration de test, pg_restore -t)', () => {
+      const PG = 'sudo -u postgres';
+      const DUMP = '/var/backups/postgresql/ludo.dump';
+      const compter = (s: Shell, base: string, table: string) => s.executer(`${PG} psql -d ${base} -c "SELECT count(*) FROM ${table};"`) ?? '';
+
+      it('solution : pg_dump -Fc sous postgres, restauration dans ludo_test, la table prets remise, crontab de postgres', () => {
+        const { s, tout } = jouer('base', [
+          'psql -l',
+          `${PG} psql -l`,
+          'ludo-2027',
+          `${PG} psql -d ludo -c "\\dt"`,
+          `${PG} pg_dump -Fc -f ${DUMP} ludo`,
+          `${PG} createdb ludo_test`,
+          `${PG} pg_restore -d ludo_test ${DUMP}`,
+        ]);
+        expect(tout).toContain('FATAL:  role "vous" does not exist');
+        expect(tout).toContain(' public | prets   | table | ludo');
+        contient(tout, 'sudo -u postgres (man sudo)');
+        contient(tout, 'la sauvegarde se restaure');
+        // La commande suivante : l'incident.
+        const test = compter(s, 'ludo_test', 'prets');
+        expect(test).toContain('  1873 ');
+        contient(test, 'Un bénévole a cliqué');
+        expect(compter(s, 'ludo', 'prets')).toMatch(/^\s+0 $/m);
+        contient(s.executer(`${PG} pg_restore -d ludo --data-only -t prets ${DUMP}`) ?? '', 'sont revenus');
+        expect(compter(s, 'ludo', 'jeux')).toContain('   412 ');
+        expect(s.termine).toBe(false);
+        s.executer('sudo crontab -u postgres -e');
+        s.enregistrerEdition(`${s.edition!.texte}15 2 * * * pg_dump -Fc -f ${DUMP} ludo\n`);
+        contient(s.quitterEdition(), 'Tu as terminé le chapitre 3 de La Ludothèque');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : la redirection, restaurer par-dessus ludo, réinjecter dans une table pleine, cron de root', () => {
+        const { s, tout } = jouer('base', [
+          'sudo -u postgres pg_dump ludo > /var/backups/postgresql/ludo.sql',
+          'ludo-2027',
+          `${PG} pg_dump -Fc -f ${DUMP} ludo`,
+          `${PG} pg_restore -d ludo ${DUMP}`,
+        ]);
+        expect(tout).toContain('/var/backups/postgresql/ludo.sql : Permission non accordée');
+        expect(tout).toContain('pg_restore: error: could not execute query: ERROR:  relation "jeux" already exists');
+        contient(tout, 'Restaurer par-dessus la vraie base');
+        expect(compter(s, 'ludo', 'prets')).toContain('  1873 ');
+        s.executer('sudo crontab -e');
+        s.enregistrerEdition(`${s.edition!.texte}15 2 * * * pg_dump -Fc -f ${DUMP} ludo\n`);
+        contient(s.quitterEdition(), "root, qui n'est pas un");
+        expect(s.termine).toBe(false);
+      });
+    });
+
+    describe("L'Astreinte, chapitre 1 — Le disque plein (du, lsof, truncate, logrotate)", () => {
+      const editer = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const ROTATION = (fin: string) => () =>
+        `/var/log/radio/*.log {\n    daily\n    rotate 7\n    compress\n    delaycompress\n    missingok\n    notifempty\n${fin}}`;
+
+      it('solution : du, le debug, truncate, info, logrotate avec copytruncate', () => {
+        const { s, tout } = jouer('disque-plein', [
+          'df -h',
+          'sudo du -sh /var/log/*',
+          'antenne-2027',
+          'sudo tail -n 2 /var/log/radio/flux.log',
+          'sudo truncate -s 0 /var/log/radio/flux.log',
+          'df -h',
+        ]);
+        expect(tout).toMatch(/\/dev\/vda1 +19G +19G +0 100% \//);
+        expect(tout).toMatch(/^15G\t\/var\/log\/radio$/m);
+        expect(tout).toContain('DEBUG relay: packet');
+        contient(tout, 'Le disque respire');
+        editer(s, '/etc/radio/flux.conf', (t) => t.replace('loglevel = debug', 'loglevel = info'));
+        s.executer('sudo systemctl restart radio-flux');
+        expect(s.termine).toBe(false);
+        contient(editer(s, '/etc/logrotate.d/radio', ROTATION('    copytruncate\n')), "Tu as terminé le chapitre 1 de L'Astreinte");
+        expect(s.executer('sudo logrotate -d /etc/logrotate.d/radio')).toContain('rotating pattern: /var/log/radio/*.log');
+        expect(s.termine).toBe(true);
+      });
+
+      it("fausses pistes : rm d'un fichier ouvert, logrotate qui renomme sans faire rouvrir, une directive inconnue", () => {
+        const { s, tout } = jouer('disque-plein', ['sudo rm /var/log/radio/flux.log', 'antenne-2027', 'df -h', 'sudo lsof +L1']);
+        expect(tout).toContain('100% /');
+        expect(tout).toContain('/var/log/radio/flux.log (deleted)');
+        contient(tout, 'df dit toujours plein, mais du ne trouve plus le fichier');
+        s.executer('sudo systemctl restart radio-flux');
+        expect(s.executer('df -h')).not.toContain('100%');
+        editer(s, '/etc/radio/flux.conf', (t) => t.replace('loglevel = debug', 'loglevel = info'));
+        s.executer('sudo systemctl restart radio-flux');
+        editer(s, '/etc/logrotate.d/radio', () => '/var/log/radio/*.log {\n    dayly\n    rotate 7\n}');
+        expect(s.executer('sudo logrotate -d /etc/logrotate.d/radio')).toContain(
+          "error: /etc/logrotate.d/radio:2 unknown option 'dayly' -- ignoring line",
+        );
+        editer(s, '/etc/logrotate.d/radio', ROTATION(''));
+        contient(s.executer('sudo logrotate -f /etc/logrotate.d/radio') ?? '', "le relais écrit toujours dans l'ancien fichier");
+        expect(s.executer('sudo lsof -p 1730')).toContain('/var/log/radio/flux.log.1');
+        expect(s.termine).toBe(false);
+      });
+    });
+
+    describe("L'Astreinte, chapitre 2 — La mémoire (OOM killer, MemoryMax=, Restart=, zombies)", () => {
+      it('solution : dmesg, top, systemctl edit (MemoryMax=, Restart=), le parent des zombies redémarré', () => {
+        const { s, tout } = jouer('memoire', [
+          'systemctl status radio-playlist',
+          'sudo dmesg -T',
+          'antenne-2027',
+          'free -h',
+          'ps -ef',
+          'sudo systemctl edit radio-playlist',
+        ]);
+        expect(tout).toContain('Active: failed (Result: oom-kill)');
+        expect(tout).toContain('[Sun Aug 22 04:12:30 2027] Out of memory: Killed process 2601 (node)');
+        expect(tout).toMatch(/^Mem: +2\.0Gi +\d+Mi/m);
+        expect(tout).toMatch(/radio +2411 +2305 .*\[convertir\] <defunct>/);
+        contient(tout, "l'OOM killer");
+        s.enregistrerEdition(`[Service]\nMemoryMax=600M\nRestart=on-failure\n${s.edition!.texte}`);
+        s.quitterEdition();
+        expect(s.lire('/etc/systemd/system/radio-playlist.service.d/override.conf')).toBe('[Service]\nMemoryMax=600M\nRestart=on-failure');
+        s.executer('sudo systemctl start radio-playlist');
+        expect(s.executer('systemctl status radio-playlist')).toMatch(/Memory: \d+\.\dM \(max: 600\.0M/);
+        // La fuite atteint la limite : systemd tue la playlist et la relance, la machine ne sent rien.
+        let sorties = '';
+        for (let i = 0; i < 8; i++) sorties += s.executer('top -b -n 1 -o %MEM');
+        contient(sorties, 'systemd l');
+        expect(s.executer('sudo dmesg')).toContain('Memory cgroup out of memory: Killed process');
+        expect(s.executer('systemctl status radio-playlist')).toContain('restart counter is at 1');
+        expect(s.termine).toBe(false);
+        contient(s.executer('sudo systemctl restart radio-podcast') ?? '', "Tu as terminé le chapitre 2 de L'Astreinte");
+        expect(s.executer('ps aux')).not.toContain('<defunct>');
+        expect(s.termine).toBe(true);
+      });
+
+      it('autre solution : systemctl set-property, puis Restart= écrit à la main et daemon-reload', () => {
+        const { s } = jouer('memoire', ['sudo systemctl set-property radio-playlist MemoryMax=512M', 'antenne-2027']);
+        expect(s.lire('/etc/systemd/system.control/radio-playlist.service.d/50-MemoryMax.conf')).toContain('MemoryMax=536870912');
+        expect(s.executer('sudo systemctl set-property radio-playlist Restart=on-failure')).toContain('Cannot set property Restart');
+        s.executer('sudo mkdir -p /etc/systemd/system/radio-playlist.service.d');
+        s.executer('sudo nano /etc/systemd/system/radio-playlist.service.d/restart.conf');
+        s.enregistrerEdition('[Service]\nRestart=on-failure\n');
+        s.quitterEdition();
+        expect(s.executer('sudo systemctl start radio-playlist')).toContain("Run 'systemctl daemon-reload' to reload units.");
+        s.executer('sudo systemctl restart radio-podcast');
+        expect(s.termine).toBe(false);
+        s.executer('sudo systemctl daemon-reload');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : kill -9 sur un zombie, relancer sans limite, une limite sans relance', () => {
+        const { s, tout } = jouer('memoire', ['sudo kill -9 2411', 'antenne-2027', 'ps aux', 'sudo systemctl start radio-playlist']);
+        expect(tout).toContain('[convertir] <defunct>');
+        contient(tout, 'kill ne fait rien à un zombie');
+        let sorties = '';
+        for (let i = 0; i < 16; i++) sorties += s.executer('free -m');
+        contient(sorties, 'Et voilà');
+        expect(s.executer('sudo dmesg')).toContain('node invoked oom-killer');
+        contient(s.executer('sudo systemctl set-property radio-playlist MemoryMax=100M') ?? '', 'Cette limite est trop basse');
+        s.executer('sudo systemctl set-property radio-playlist MemoryMax=400M');
+        s.executer('sudo systemctl start radio-playlist');
+        sorties = '';
+        for (let i = 0; i < 5; i++) sorties += s.executer('free -m');
+        contient(sorties, 'elle est restée arrêtée');
+        expect(s.executer('systemctl is-active radio-playlist')).toBe('failed');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

@@ -56,6 +56,12 @@
   gap: 0.75rem;
   grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
 }
+/* Les histoires en lignes : le titre et l'état sur une ligne, le résumé dessous. */
+.qds .histoires ol { grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 0.5rem; margin-bottom: 0.5rem; align-items: start; }
+.qds .histoires button { height: auto; grid-template-columns: 1fr auto; align-content: start; column-gap: 0.75rem; padding: 0.55rem 0.9rem; }
+.qds .histoires .resume { grid-column: 1 / -1; }
+.qds .histoires .etat { grid-row: 1; grid-column: 2; align-self: center; }
+.qds .cle-aide { font-size: 0.85rem; color: var(--_discret); margin: 0 0 1rem; }
 .qds .chapitres ol { grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
 .qds .histoires button, .qds .chapitres button {
   display: grid;
@@ -73,8 +79,12 @@
 }
 .qds .chapitres button { background: var(--_fond); }
 .qds .chapitres button:disabled { cursor: default; opacity: 0.6; }
-/* Histoire sans sa clé : bordure en pointillés (la transparence nuirait au contraste). */
-.qds .histoires button:disabled { cursor: default; border-style: dashed; }
+/* Histoire sans sa clé : grisée (couleurs discrètes plutôt que transparence,
+   qui nuirait au contraste), bordure en pointillés, sans résumé. */
+.qds .histoires button:disabled { cursor: default; border-style: dashed; background: var(--_fond); }
+.qds .histoires button[data-verrouillee] .titre { font-weight: 600; color: var(--_discret); }
+.qds .histoires button[data-verrouillee] .etat { color: var(--_discret); font-weight: 400; }
+.qds .histoires button[data-verrouillee] .resume { display: none; }
 .qds button[aria-current='true'] { border: 2px solid var(--_accent); }
 .qds button:focus-visible, .qds a:focus-visible { outline: 3px solid var(--_accent); outline-offset: 2px; }
 .qds .num { font-size: 0.8rem; color: var(--_discret); }
@@ -126,6 +136,8 @@
 
 @media (max-width: 40rem) {
   .qds .histoires ol, .qds .chapitres ol { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .qds .histoires button { grid-template-columns: 1fr; }
+  .qds .histoires .etat { grid-row: auto; grid-column: auto; align-self: start; }
   .qds .resume { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

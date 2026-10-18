@@ -162,8 +162,34 @@ export const SAUVEGARDE: Record<string, Commande> = {
     propresOptions: true,
     lancer: ({ args, jeu }) => {
       const crontabs: Record<string, string> = (jeu.etat.crontabs ??= {});
+      // -u compte : la crontab d'un autre compte (root seulement).
+      if (args[0] === '-u') {
+        if (jeu.qui !== 'root') return jeu.erreur('crontab: must be privileged to use -u');
+        const cible = args[1];
+        if (!cible || !jeu.comptes.utilisateurs[cible]) return jeu.erreur(`crontab: user '${cible ?? ''}' unknown`);
+        const avant = jeu.qui;
+        jeu.qui = cible;
+        try {
+          const sortie = SAUVEGARDE.crontab.lancer({ args: args.slice(2), jeu, entree: null, dernier: true });
+          // crontab -e : l'installation, à la fermeture de l'éditeur, se fait aussi pour ce compte.
+          const apres = jeu.edition?.apres;
+          if (jeu.edition && apres)
+            jeu.edition.apres = () => {
+              const qui = jeu.qui;
+              jeu.qui = cible;
+              try {
+                return apres();
+              } finally {
+                jeu.qui = qui;
+              }
+            };
+          if (jeu.edition) jeu.edition.root = true;
+          return sortie;
+        } finally {
+          jeu.qui = avant;
+        }
+      }
       const action = args[0];
-      if (action === '-u') return jeu.erreur('crontab: must be privileged to use -u');
       if (action === '-l') return crontabs[jeu.qui] ?? jeu.erreur(`no crontab for ${jeu.qui}`);
       if (action === '-r') {
         if (!(jeu.qui in crontabs)) return jeu.erreur(`no crontab for ${jeu.qui}`);
@@ -174,6 +200,7 @@ export const SAUVEGARDE: Record<string, Commande> = {
       if (action === '-e') {
         // Comme le vrai crontab -e : une copie dans /tmp, ouverte dans l'éditeur,
         // vérifiée et installée à la fermeture.
+        const compte = jeu.qui;
         const texte = crontabs[jeu.qui] ?? MODELE;
         if (!jeu.existe(TEMP)) jeu.placer('crontab', TEMP, { type: 'dossier', enfants: {}, proprio: jeu.qui, mode: 'rwx------' });
         const fichier = `${TEMP}/crontab`;
@@ -183,10 +210,17 @@ export const SAUVEGARDE: Record<string, Commande> = {
           texte: texte.endsWith('\n') ? texte : texte + '\n',
           root: jeu.qui === 'root',
           message: jeu.t('nano-lignes-lues', { lignes: texte.split('\n').length - (texte.endsWith('\n') ? 1 : 0) }),
+          // La crontab est installée pour le compte qui l'a ouverte (root avec sudo), à la fermeture de l'éditeur.
           apres: () => {
-            const nouveau = (jeu.lire(fichier) ?? '').replace(/\n$/, '');
-            if (nouveau === texte.replace(/\n$/, '')) return 'crontab: no changes made to crontab';
-            return installer(jeu, nouveau, fichier);
+            const qui = jeu.qui;
+            jeu.qui = compte;
+            try {
+              const nouveau = (jeu.lire(fichier) ?? '').replace(/\n$/, '');
+              if (nouveau === texte.replace(/\n$/, '')) return 'crontab: no changes made to crontab';
+              return installer(jeu, nouveau, fichier);
+            } finally {
+              jeu.qui = qui;
+            }
           },
         };
         // Écart : l'éditeur est toujours nano (pas de select-editor).

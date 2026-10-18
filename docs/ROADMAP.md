@@ -194,14 +194,19 @@ demandent plusieurs.
 
 ## Phase 6 — Déployer
 
-- [ ] **Déploiement par git** : dépôt nu sur le serveur, crochet
-      `post-receive`, ou `git pull` dans un dossier de publication
-- [ ] **Intégration continue** (simulée) : tests qui bloquent un déploiement
-- [ ] **Bleu/vert** : deux versions côte à côte, bascule du proxy, retour
-      arrière instantané
-- [ ] **Canari** et vérifications de santé (`/health`)
-- [ ] **Migrations de base de données** qui empêchent le retour arrière
-- [ ] **Retour arrière** (`rollback`) après un déploiement raté
+- [x] **Déploiement par git** : dépôt nu sur le serveur, crochet
+      `post-receive` ; « Le dépôt nu » (La Gazette, chapitre 1)
+- [x] **Intégration continue** (simulée) : tests qui bloquent un déploiement
+      (`tests.sh` lancé par le crochet avant la bascule) ; « Le retour arrière »
+      (La Gazette, chapitre 2)
+- [x] **Bleu/vert** : deux versions côte à côte, bascule du proxy, retour
+      arrière instantané ; « Bleu et vert » (La Gazette, chapitre 3)
+- [x] **Canari** et vérifications de santé (`/health`) : `upstream` et
+      `weight`, les 500 dans `access.log` ; « Le canari » (La Gazette, chapitre 4)
+- [x] **Migrations de base de données** qui empêchent le retour arrière ;
+      « La migration » (La Gazette, chapitre 5)
+- [x] **Retour arrière** (`rollback`) après un déploiement raté : `ln -sfn`
+      vers la version d'avant (chapitre 2), rebascule du proxy (chapitres 3 et 4)
 
 ## Phase 7 — Sauvegarder et restaurer
 
@@ -209,23 +214,28 @@ demandent plusieurs.
       une sauvegarde (débrief de « La Sauvegarde »)
 - [x] **rsync** : `-a`, `-v`, `-n`, `--delete`, la barre finale ; planifié
       avec `cron` ; quête « La Sauvegarde » (Effaceur, chapitre 4)
-- [ ] **rsnapshot** (instantanés par liens physiques, rotation horaire,
-      quotidienne, hebdomadaire)
+- [x] **rsnapshot** (instantanés par liens physiques, rotation quotidienne et
+      hebdomadaire, cron) ; « Les instantanés » (La Ludothèque, chapitre 2)
 - [x] **restic** (chiffrement, déduplication, `snapshots`, `find`, `diff`,
       `dump`, `restore`, `forget --prune`, `check`) ; quête « Les versions »
       (Les Archives, chapitre 2)
-- [ ] Sauvegarder une base (`mysqldump`, `pg_dump`) plutôt que ses fichiers
+- [x] Sauvegarder une base (`pg_dump`, `pg_restore`) plutôt que ses fichiers,
+      restauration de test ; « La base » (La Ludothèque, chapitre 3)
 - [x] **Restauration de service** : quête « Le grand incendie » (Datacenter,
       chapitre 4) : repartir d'une machine vide avec les sauvegardes et le
       plan de reprise ; archive coupée à vérifier avec `tar -tzf`, `apt`,
       `nginx -t`, clé d'hôte SSH qui change (`ssh-keygen -R`)
 - [x] **Exercice de restauration** : un souvenir effacé à restaurer depuis
       la sauvegarde (« La Sauvegarde »)
-- [ ] Rançongiciel et sauvegardes hors ligne
-- [ ] Charge et ressources : `top`/`htop`, `free`, `df`, `du`, `iostat`
-- [ ] Pannes classiques : disque plein, mémoire épuisée (OOM), processus
-      zombie, fuite de journaux, horloge décalée (NTP), inodes épuisés
-- [ ] Rotation des journaux (`logrotate`)
+- [x] Rançongiciel et sauvegardes hors ligne (`mount -o ro`, restic) ;
+      « La rançon » (La Ludothèque, chapitre 1)
+- [ ] Charge et ressources : `top`, `free`, `df`, `du` faits (L'Astreinte,
+      chapitres 1 et 2) ; reste `iostat`
+- [ ] Pannes classiques : disque plein et fuite de journaux (« Le disque
+      plein »), mémoire épuisée (OOM) et processus zombies (« La mémoire »)
+      faits ; restent horloge décalée (NTP) et inodes épuisés
+- [x] Rotation des journaux (`logrotate`) ; « Le disque plein »
+      (L'Astreinte, chapitre 1)
 - [ ] Supervision et alertes (sonde HTTP, seuils) ; astreinte simulée
 - [ ] **Post-mortem sans reproche** : rédiger ce qui s'est passé
 

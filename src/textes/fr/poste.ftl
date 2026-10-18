@@ -42,3 +42,10 @@ machine-manuscrit-motd = Manuscrit — l'ordinateur d'Inès. Ne pas toucher au r
 machine-bibliotheque-motd = Bibliothèque du quartier — ce serveur sera éteint ce soir à minuit.
 machine-lettres-motd = Les Lettres du quartier — le serveur de l'association. Merci de prendre soin de lui !
 machine-fabrique-motd = La Fabrique — le serveur du fablab. Ici, on répare, on prête, on bidouille.
+machine-gazette-motd = La Gazette du quartier — le serveur du journal. On publie avec git push, pas à la main.
+machine-ludotheque-motd = La Ludothèque du quartier — le serveur des bénévoles. On joue, on prête, on range les pions.
+machine-radio-motd = Radio Quartier — le serveur de l'antenne. Astreinte : un œil sur le flux, l'autre sur les journaux.
+
+# En se reconnectant à une machine dont le chapitre est en cours.
+# { $fichier } : le fichier d'accueil du chapitre (ex. bienvenue.txt)
+reprise-chapitre = Tu reprends ce chapitre là où tu l'avais laissé. Pour relire ce qui t'attend :   cat { $fichier }

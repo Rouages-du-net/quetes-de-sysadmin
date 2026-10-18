@@ -14,6 +14,9 @@ man-apt = installe et met à jour les logiciels d'une Debian, sous forme de paqu
     .exemple-1 = récupérer la liste des paquets disponibles (à faire en premier)
     .exemple-2 = installer le serveur web nginx
     .exemple-3 = les paquets déjà installés
+man-bash = le shell de ta session (Bourne-Again SHell) : il lit les commandes que tu tapes. bash script lance un script, comme sh.
+    .synopsis = bash script [argument...]
+    .exemple-1 = lancer un script
 man-certbot = demande et renouvelle les certificats HTTPS gratuits de Let's Encrypt. Pour prouver qu'on tient le site, certbot dépose un fichier « défi » que l'autorité vient chercher en HTTP : avec --webroot, dans le dossier donné par -w, qui doit être celui que le serveur web sert pour ce nom ; avec --nginx (paquet python3-certbot-nginx), c'est nginx qui le sert. Chaque certificat vaut 90 jours ; un timer systemd lance certbot renew deux fois par jour, qui renouvelle ce qui expire dans moins de 30 jours. La façon de renouveler est notée dans /etc/letsencrypt/renewal/nom.conf (réécrit à chaque renouvellement réussi). Un deploy hook est une commande lancée après chaque renouvellement réussi, par exemple pour recharger nginx ; les scripts exécutables de /etc/letsencrypt/renewal-hooks/deploy/ aussi. Réservé à root.
     .synopsis = certbot certificates ; certbot renew [--dry-run] [--webroot -w dossier] [--deploy-hook commande] ; certbot certonly --webroot -w dossier -d nom [-d nom...] ; certbot reconfigure --cert-name nom [options]
     .exemple-1 = les certificats, leurs noms et leur date d'expiration
@@ -21,6 +24,37 @@ man-certbot = demande et renouvelle les certificats HTTPS gratuits de Let's Encr
     .exemple-3 = renouveler en déposant le défi dans le dossier du site
     .exemple-4 = recharger nginx après chaque renouvellement réussi
     .exemple-5 = changer la façon de renouveler, testée sans renouveler maintenant
+man-createdb = crée une base PostgreSQL vide. Il faut en avoir le droit : sudo -u postgres createdb nom.
+    .synopsis = createdb nom
+    .exemple-1 = une base de test, pour essayer une restauration
+man-date = affiche la date et l'heure de la machine. Avec +FORMAT, les écrit à sa façon : %Y l'année, %m le mois, %d le jour, %H l'heure, %M les minutes, %S les secondes, %F pour 2027-05-17, %T pour 20:30:12. Pratique pour nommer un dossier ou une sauvegarde : date +%Y%m%d%H%M%S.
+    .synopsis = date [+FORMAT]
+    .exemple-1 = la date et l'heure
+    .exemple-2 = un nom qui se trie dans l'ordre : année, mois, jour, heure, minutes, secondes
+    .exemple-3 = la date seule, au format ISO
+man-dropdb = supprime une base PostgreSQL et tout ce qu'elle contient, sans confirmation. À réserver aux bases de test.
+    .synopsis = dropdb nom
+    .exemple-1 = supprimer la base de test
+man-logrotate = fait tourner les journaux pour qu'ils ne grossissent pas sans fin : chaque jour (ou semaine…), le journal est renommé (.1), les anciens remontent d'un cran (.2, .3…), le plus vieux est effacé, et les vieux sont compressés (.gz). Lancé chaque jour par cron ou un timer systemd ; sa configuration : /etc/logrotate.conf, et un fichier par programme dans /etc/logrotate.d/. Un bloc par motif de journaux, entre accolades : daily, weekly ; rotate 7 (combien en garder) ; compress, delaycompress ; missingok (pas d'erreur s'il manque) ; notifempty (pas s'il est vide) ; create 0640 radio adm (le nouveau fichier) ou copytruncate (copier puis vider, pour un programme qui ne sait pas rouvrir son journal) ; postrotate … endscript (une commande après, par exemple systemctl reload). Attention : un programme garde son fichier ouvert ; renommé, il continue d'écrire dedans, d'où copytruncate ou le postrotate. -d essaie la configuration sans rien faire ; -f force la rotation.
+    .synopsis = logrotate [-d] [-f] [-v] fichier_de_configuration
+    .exemple-1 = essayer une configuration, sans rien toucher
+    .exemple-2 = forcer une rotation maintenant
+    .exemple-3 = un exemple de configuration livré avec Debian
+man-lsblk = liste les disques et leurs partitions (list block devices) : leur nom (/dev/sdb1…), leur taille, s'ils sont amovibles (RM = 1, une clé ou un disque USB) et où ils sont montés. -f ajoute le système de fichiers et l'étiquette (LABEL), pratique pour reconnaître un disque.
+    .synopsis = lsblk [-f]
+    .option-f = montre le système de fichiers, l'étiquette et l'UUID (filesystems).
+    .exemple-1 = les disques et leurs partitions
+    .exemple-2 = avec leurs étiquettes
+man-lsof = liste les fichiers ouverts, et les processus qui les tiennent (list open files). +L1 ne montre que les fichiers effacés mais encore ouverts : leur place n'est rendue qu'à la fermeture (quand le programme s'arrête ou rouvre son fichier). C'est la cause classique d'un df plein alors que du ne trouve rien. Sans être root, on ne voit que ses propres processus.
+    .synopsis = lsof [+L1] [-p pid] [-u compte] [fichier]
+    .exemple-1 = les fichiers effacés mais encore ouverts
+    .exemple-2 = qui tient ce journal ouvert ?
+    .exemple-3 = les fichiers ouverts par un processus
+man-mount = branche un système de fichiers (une partition, une clé USB, un partage réseau) dans l'arborescence, à un point de montage : un dossier existant, dont le contenu montré devient celui du périphérique. Sans argument, liste ce qui est monté. -o ro monte en lecture seule : rien ne peut y être écrit ni effacé (la bonne façon de brancher une sauvegarde qu'on veut seulement lire). Réservé à root. umount détache.
+    .synopsis = mount [-o ro] périphérique point_de_montage
+    .exemple-1 = ce qui est monté
+    .exemple-2 = brancher la partition sdb1 en lecture seule sur /mnt/cle
+    .exemple-3 = la détacher
 man-openssl = la boîte à outils de la cryptographie (TLS, certificats, clés). openssl x509 lit un certificat : ses dates (-dates), son titulaire (-subject), son émetteur (-issuer), ses noms (-ext subjectAltName) ; -checkend secondes dit s'il expire d'ici là. openssl s_client se connecte à un serveur en TLS et montre le certificat qu'il présente vraiment, et si on peut lui faire confiance (Verify return code).
     .synopsis = openssl x509 [-in fichier] -noout [-dates] [-subject] [-issuer] [-checkend secondes] ; openssl s_client -connect machine:port [-servername nom]
     .exemple-1 = les dates de validité d'un certificat
@@ -56,11 +90,18 @@ man-cp = copie un fichier (copy). L’original reste en place. -r copie un lieu 
     .exemple-1 = faire une copie à côté
     .exemple-2 = copier ici (.) un fichier d’ailleurs
 man-curl = va chercher une page web, comme un navigateur mais sans l’afficher joliment. -I ne demande que l’en-tête de la réponse (le code d’état, par exemple 200 = OK). En HTTPS (https://…), curl vérifie le certificat du serveur comme un navigateur : dates de validité, nom du site, autorité de confiance ; s’il y a un problème, il s’arrête avec une erreur 60.
-    .synopsis = curl [-I] [-k] adresse
+    .synopsis = curl [-I] [-i] [-k] adresse
     .option-I = ne demande que l’en-tête de la réponse (HEAD).
+    .option-i = montre l’en-tête de la réponse, puis la page (include).
     .option-k = ne vérifie pas le certificat (insecure) : à ne faire que pour un essai, jamais pour de vrai.
 man-cut = découpe chaque ligne en champs selon le séparateur et garde le champ N (ou N,M). Ex. : cut -d " " -f 1 garde le premier mot.
     .synopsis = cut -d séparateur -f N [fichier]
+man-dmesg = affiche les messages du noyau (display message) : le matériel détecté au démarrage, les erreurs de disque… et l’OOM killer (« Out of memory: Killed process »), quand le noyau tue un processus faute de mémoire. Chaque ligne commence par le temps écoulé depuis le démarrage, en secondes ; -T le traduit en date et heure. Réservé à root sur Debian ; journalctl -k montre les mêmes messages.
+    .synopsis = dmesg [-T]
+    .option-T = date et heure lisibles, au lieu des secondes depuis le démarrage.
+    .exemple-1 = les messages du noyau
+    .exemple-2 = avec la date et l’heure
+    .exemple-3 = seulement ceux de l’OOM killer
 man-df = place libre sur les supports (disk free) : disque, clé USB… -h écrit en K, M, G.
     .synopsis = df [-h] [lieu]
     .option-h = tailles lisibles : K, M, G.
@@ -87,7 +128,15 @@ man-docker-compose = lance plusieurs conteneurs qui vont ensemble (une appli et 
     .exemple-3 = le journal d'un service
     .exemple-4 = le fichier tel que Compose le comprend, variables remplacées
     .exemple-5 = tout arrêter et supprimer (avec -v, les volumes aussi : leurs données sont perdues)
-man-du = mesure la place occupée (disk usage), lieu par lieu. -s donne seulement le total, -h écrit en K, M, G. Ex. : du -sh *
+man-diff = compare deux fichiers ligne à ligne, et montre ce qu'il faut changer pour passer du premier au second. En format normal, « 3c3 » veut dire : la ligne 3 du premier devient la ligne 3 du second (c pour change, d pour delete, a pour add) ; les lignes qui commencent par < viennent du premier fichier, celles par > du second. -u donne le format unifié, celui de git diff : - pour ce qui part, + pour ce qui arrive, avec trois lignes autour. Avec deux lieux, diff compare les fichiers de même nom, et -r descend dans les sous-lieux. Rien n'est affiché si les fichiers sont identiques.
+    .synopsis = diff [-u] [-r] [-q] fichier1 fichier2
+    .option-u = format unifié (unified) : - et +, avec trois lignes de contexte.
+    .option-r = compare aussi les sous-lieux, récursivement.
+    .option-q = dit seulement si les fichiers diffèrent (quiet).
+    .exemple-1 = ce qui change entre deux fichiers
+    .exemple-2 = la même chose, au format de git diff
+    .exemple-3 = tout ce qui diffère entre deux lieux
+man-du = mesure la place occupée (disk usage), lieu par lieu. Un fichier qui a plusieurs noms (liens physiques) n'est compté qu'une fois. -s donne seulement le total, -h écrit en K, M, G. Ex. : du -sh *
     .synopsis = du [-s] [-h] [lieu...]
     .option-h = tailles lisibles : K, M, G.
     .option-s = un seul total par lieu (summary), sans le détail.
@@ -97,46 +146,67 @@ man-exit = quitte le shell. Dans une session ssh, ferme la connexion et ramène 
     .synopsis = exit
 man-find = cherche des fichiers dans un lieu et tous ses sous-lieux. Ex. : find . -name "*.pdf" ; -type f ne garde que les fichiers, -type d que les dossiers ; -delete efface ce qui est trouvé (prudence !).
     .synopsis = find [lieu] [-name motif] [-type f|d] [-delete]
+man-free = montre la mémoire vive de la machine (et le swap) : total, utilisée (used), libre (free), le cache disque (buff/cache) et surtout available, ce qui reste vraiment pour lancer des programmes. -h écrit en Ki, Mi, Gi ; -m en mégaoctets. Pour savoir QUI prend la mémoire : top ou ps aux.
+    .synopsis = free [-h] [-m]
+    .option-h = tailles lisibles : Ki, Mi, Gi.
+    .option-m = en mégaoctets (Mio).
+    .option-b = en octets.
+    .option-k = en kilooctets (par défaut).
+    .option-g = en gigaoctets.
+    .exemple-1 = la mémoire, en tailles lisibles
 man-git =
     garde l'historique d'un dossier (un « dépôt »). Les principales commandes :
       git init                    transforme le lieu en dépôt
       git status                  ce qui a changé depuis le dernier commit
       git add fichier (ou .)      prépare un fichier pour le prochain commit
       git commit -m "message"     enregistre une photo de tous les fichiers préparés
+      git commit -am "message"    la même chose, en préparant d'abord tous les fichiers suivis modifiés
+      git rm fichier              efface un fichier et le retire du suivi
       git log [--oneline]         l'historique des commits
       git diff [ID] [fichier]     les différences (- avant, + après)
       git show [ID]               un commit et ses changements
       git restore --source=ID f   remet le fichier f tel qu'il était dans le commit ID
+    Pour travailler à plusieurs, ou publier, on envoie ses commits vers un autre dépôt (un « distant ») :
+      git init --bare lieu.git    crée un dépôt nu (sans copie de travail), comme sur un serveur
+      git clone lieu.git          copie un dépôt (son distant s'appelle origin)
+      git remote add nom lieu     déclare un distant ; git remote -v les liste
+      git push nom main           envoie ses commits au distant
+      git pull nom main           récupère ceux du distant
+    Un dépôt nu peut réagir à un push : ses crochets (hooks/pre-receive, hooks/post-receive) sont des scripts lancés à chaque réception, s'ils sont exécutables (chmod +x). pre-receive peut refuser le push (code de retour non nul). Pour déployer, post-receive extrait les fichiers dans un lieu : git --work-tree=lieu checkout -f main.
     Un commit se désigne par le début de son identifiant (au moins 4 caractères), ou par HEAD (le dernier), HEAD~1 (l'avant-dernier)…
-    .synopsis = git commande
-man-grep = affiche les lignes qui contiennent le motif. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes. Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu.
-    .synopsis = grep [-i] [-v] [-c] motif [fichier...]
+    .synopsis = git [--git-dir=dépôt] [--work-tree=lieu] commande
+man-grep = affiche les lignes qui contiennent le motif. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu.
+    .synopsis = grep [-i] [-v] [-c] [-q] motif [fichier...]
     .option-i = ignore la différence entre majuscules et minuscules.
     .option-v = inverse la recherche : garde les lignes qui ne contiennent PAS le motif.
     .option-c = compte les lignes trouvées au lieu de les afficher.
+    .option-q = silencieux (quiet) : n'affiche rien, réussit si le motif est trouvé, échoue sinon.
     .exemple-1 = les lignes qui parlent de l’Effaceur
     .exemple-2 = dans tous les fichiers d’ici, majuscule ou pas
     .exemple-3 = un motif avec des espaces, entre guillemets
 man-head = affiche le début d’un fichier (les 10 premières lignes, ou N).
     .synopsis = head [-n N] [fichier]
     .option-n = nombre de lignes à afficher (10 par défaut) : head -n 3 fichier.
-man-kill = demande à un processus de s’arrêter (il reçoit un signal). PID est son numéro, donné par ps. kill -9 PID force l’arrêt. On ne peut arrêter que ses propres processus (ou tous, en root).
+man-kill = demande à un processus de s’arrêter (il reçoit un signal). PID est son numéro, donné par ps. kill -9 PID force l’arrêt. On ne peut arrêter que ses propres processus (ou tous, en root). Un zombie (<defunct>) ne réagit à aucun signal : il est déjà mort, seul son parent peut le récupérer.
     .synopsis = kill PID
 man-less = affiche un fichier page par page. Ici, les fichiers sont courts : less fait comme cat.
     .synopsis = less fichier
-man-ln = crée un lien (link). Avec -s, un lien symbolique : un petit fichier qui contient le chemin d'un autre, et que les commandes suivent pour lire, écrire ou entrer (ls -l le montre avec une flèche ->). Si la destination est un lieu, le lien y prend le nom de la cible. Attention : un chemin relatif est lu depuis le lieu du lien, pas depuis là où l'on est ; dans le doute, donner un chemin absolu. Effacer le lien (rm) n'efface pas le fichier visé. Sans -s, un lien physique : un deuxième nom pour le même fichier.
-    .synopsis = ln [-s] [-f] [-v] cible [lien | lieu]
+man-ln = crée un lien (link). Avec -s, un lien symbolique : un petit fichier qui contient le chemin d'un autre, et que les commandes suivent pour lire, écrire ou entrer (ls -l le montre avec une flèche ->). Si la destination est un lieu, le lien y prend le nom de la cible. Attention : un chemin relatif est lu depuis le lieu du lien, pas depuis là où l'on est ; dans le doute, donner un chemin absolu. Effacer le lien (rm) n'efface pas le fichier visé. Sans -s, un lien physique : un deuxième nom pour le même fichier. Pour remplacer un lien qui vise un lieu (un lien « current » vers la version en ligne), il faut -f et -n : sans -n, ln entre dans le lieu visé et y crée le nouveau lien. Remplacer un lien est instantané : c'est ainsi qu'on bascule d'une version à l'autre, et qu'on revient en arrière.
+    .synopsis = ln [-s] [-f] [-n] [-v] cible [lien | lieu]
     .option-s = lien symbolique (sinon : lien physique).
     .option-f = remplace le lien s'il existe déjà (force).
+    .option-n = si la destination est un lien vers un lieu, la traiter comme un fichier (no-dereference) : avec -f, le lien est remplacé.
     .option-v = dit ce qui a été fait (verbose).
     .exemple-1 = activer un site nginx, à la façon de Debian
     .exemple-2 = voir les liens et ce qu'ils visent
+    .exemple-3 = basculer le lien current vers une autre version, d'un coup
 man-ls = liste le contenu d’un lieu (list). -a montre aussi les fichiers cachés, dont le nom commence par un point. -l (long) montre les permissions, le propriétaire et la taille ; -h écrit les tailles en K, M, G ; -n montre les numéros (uid, gid) au lieu des noms.
     .synopsis = ls [-a] [-l] [-h] [-n] [lieu]
     .option-a = montre tout (all), y compris les fichiers cachés, dont le nom commence par un point, et les lieux . et ..
     .option-l = format long : type, permissions, propriétaire, groupe, taille et nom, une entrée par ligne.
     .option-h = avec -l, écrit les tailles de façon lisible (human-readable) : 1,2K, 34M, 5G.
     .option-n = comme -l, mais avec les numéros du propriétaire (uid) et du groupe (gid) au lieu de leurs noms (numeric).
+    .option-i = montre le numéro d'inode de chaque fichier : deux noms avec le même numéro sont le même fichier (un lien physique).
     .exemple-1 = ce qu’il y a ici
     .exemple-2 = tout, même ce qui est caché
     .exemple-3 = les permissions du lieu souvenirs
@@ -146,9 +216,11 @@ man-man = affiche le manuel d’une commande (manual). C’est le premier réfle
     .exemple-1 = le manuel de ls
     .exemple-2 = quelles commandes parlent de copier ?
     .exemple-3 = un résumé rapide, sans ouvrir le manuel
-man-mkdir = crée un nouveau lieu, c’est-à-dire un dossier (make directory).
-    .synopsis = mkdir lieu
+man-mkdir = crée un nouveau lieu, c’est-à-dire un dossier (make directory). -p crée aussi les lieux parents qui manquent, et ne dit rien si le lieu existe déjà.
+    .synopsis = mkdir [-p] lieu
+    .option-p = crée aussi les lieux parents (parents), sans erreur s'ils existent.
     .exemple-1 = créer un lieu
+    .exemple-2 = créer un lieu et tous ses parents d'un coup
 man-mv = déplace un fichier dans un lieu (move), ou le renomme si la destination est un nouveau nom.
     .synopsis = mv source destination
     .exemple-1 = déplacer crabe dans le lieu Seau
@@ -158,7 +230,7 @@ man-nc = netcat, le couteau suisse du réseau. Ici, pour tester si un port TCP d
     .synopsis = nc -zv machine port[-port]
     .exemple-1 = le port 22 (SSH) de la machine fabrique répond-il ?
     .exemple-2 = les ports de 5430 à 5435
-man-nginx = le serveur web (et proxy). Ce n'est pas lui qu'on lance à la main : systemd s'en occupe (systemctl start, reload nginx). Sa configuration part de /etc/nginx/nginx.conf, qui inclut les sites de /etc/nginx/sites-enabled/ : un bloc server par site, avec listen (le port ; default_server pour le site qui répond quand aucun nom ne correspond, un seul par port), server_name (les noms du site), root (le lieu des pages) et index (la page d'accueil). Chaque directive finit par un point-virgule. Avant tout rechargement : sudo nginx -t, qui donne le fichier et la ligne de l'erreur. Plusieurs sites sur une machine (hôtes virtuels) : un bloc server par site, chacun avec son server_name. Dans un bloc location (le préfixe d'un chemin), proxy_pass passe la visite à un autre programme (reverse proxy) : avec une adresse qui finit par une barre (http://127.0.0.1:3000/), le préfixe de la location est remplacé par /, sinon le chemin est transmis tel quel. return 301 https://$host$request_uri; renvoie ailleurs. Les erreurs de service vont dans /var/log/nginx/error.log. Limiter le débit : limit_req_zone $binary_remote_addr zone=nom:10m rate=2r/s; (dans le bloc http, une clé par adresse, 2 requêtes par seconde) puis limit_req zone=nom burst=10 nodelay; là où on veut limiter : au-delà du débit, une rafale de 10 requêtes est encore servie ; au-delà, refus (503, ou le code de limit_req_status, par exemple 429). deny adresse; refuse une adresse (403).
+man-nginx = le serveur web (et proxy). Ce n'est pas lui qu'on lance à la main : systemd s'en occupe (systemctl start, reload nginx). Sa configuration part de /etc/nginx/nginx.conf, qui inclut les sites de /etc/nginx/sites-enabled/ : un bloc server par site, avec listen (le port ; default_server pour le site qui répond quand aucun nom ne correspond, un seul par port), server_name (les noms du site), root (le lieu des pages) et index (la page d'accueil). Chaque directive finit par un point-virgule. Avant tout rechargement : sudo nginx -t, qui donne le fichier et la ligne de l'erreur. Plusieurs sites sur une machine (hôtes virtuels) : un bloc server par site, chacun avec son server_name. Dans un bloc location (le préfixe d'un chemin), proxy_pass passe la visite à un autre programme (reverse proxy) : avec une adresse qui finit par une barre (http://127.0.0.1:3000/), le préfixe de la location est remplacé par /, sinon le chemin est transmis tel quel. return 301 https://$host$request_uri; renvoie ailleurs. Les erreurs de service vont dans /var/log/nginx/error.log. Limiter le débit : limit_req_zone $binary_remote_addr zone=nom:10m rate=2r/s; (dans le bloc http, une clé par adresse, 2 requêtes par seconde) puis limit_req zone=nom burst=10 nodelay; là où on veut limiter : au-delà du débit, une rafale de 10 requêtes est encore servie ; au-delà, refus (503, ou le code de limit_req_status, par exemple 429). deny adresse; refuse une adresse (403). Répartir entre plusieurs exemplaires d'une appli : un bloc upstream nom {"{"} server 127.0.0.1:3001 weight=9; server 127.0.0.1:3002 weight=1; {"}"} dans le bloc http (un fichier de sites-enabled y est inclus), puis proxy_pass http://nom/; weight donne la part de chacun (ici 9 visites sur 10 pour le premier), down le met de côté, backup ne sert que si les autres ne répondent pas. Un serveur qui ne répond pas est sauté ; une page qui répond 500 arrive telle quelle au visiteur.
     .synopsis = nginx -t ; nginx -T ; nginx -v
     .option-t = vérifie la configuration (test) et s'arrête.
     .option-T = vérifie, puis affiche toute la configuration lue, fichier par fichier.
@@ -166,12 +238,31 @@ man-nginx = le serveur web (et proxy). Ce n'est pas lui qu'on lance à la main :
     .exemple-1 = vérifier la configuration avant de recharger
     .exemple-2 = relire toute la configuration, include compris
     .exemple-3 = la version de nginx
+man-pg_dump = sauvegarde une base PostgreSQL pendant qu'elle tourne, de façon cohérente : tout ce qu'elle contenait à un instant donné (copier les fichiers de /var/lib/postgresql pendant que la base écrit ne le garantit pas). Sans option, écrit du SQL ; -Fc écrit une archive au format « custom », à relire avec pg_restore (qui peut n'en restaurer qu'une table). -f donne le fichier (écrit avec les droits du compte qui lance pg_dump), -t ne prend qu'une table.
+    .synopsis = pg_dump [-Fc] [-f fichier] [-t table] base
+    .exemple-1 = une archive de la base ludo, à relire avec pg_restore
+    .exemple-2 = le SQL de la base, à l'écran
+man-pg_restore = restaure une archive écrite par pg_dump -Fc dans une base (-d), qui doit exister (createdb). -l liste ce que contient l'archive, -t ne restaure qu'une table, --data-only (-a) seulement les données (dans des tables qui existent déjà), --clean (-c) efface d'abord ce qui existe. Un dump au format texte se relit avec psql -f.
+    .synopsis = pg_restore [-l] [-d base] [-t table] [--data-only] [--clean] archive
+    .exemple-1 = ce que contient l'archive
+    .exemple-2 = la restaurer dans une base de test
+    .exemple-3 = ne remettre que les lignes de la table prets
 man-ping = envoie de petits messages (ICMP « echo ») à une machine et mesure le temps de l’aller-retour. Ici, 4 envois par défaut (sous Linux, ping continue jusqu’à Ctrl+C). Attention : beaucoup de serveurs ne répondent pas au ping, sans être en panne pour autant.
     .synopsis = ping [-c N] machine
-man-ps = liste les processus, c’est-à-dire les programmes en cours d’exécution (process status). Sans option : les tiens ; « ps aux » : ceux de tout le monde, avec la part de processeur (%CPU) et de mémoire (%MEM).
-    .synopsis = ps [aux]
+man-ps = liste les processus, c’est-à-dire les programmes en cours d’exécution (process status). Sans option : les tiens ; « ps aux » : ceux de tout le monde, avec la part de processeur (%CPU) et de mémoire (%MEM). « ps -ef » : tout le monde aussi, avec le parent de chaque processus (PPID), celui qui l’a lancé. Un processus marqué <defunct> est un zombie : terminé, mais son parent n’a pas encore lu son résultat.
+    .synopsis = ps [aux] ; ps -ef
+man-psql = le client de PostgreSQL : envoie une requête SQL à une base et affiche le résultat. On se connecte sous le nom de son compte : pour l'administrateur de la base, sudo -u postgres psql. -d choisit la base, -c donne la requête (entre guillemets), -f lit un fichier de SQL (un dump au format texte, par exemple), -l liste les bases. Quelques commandes : \l (les bases), \dt (les tables), \d table (ses colonnes), SELECT count(*) FROM table; (combien de lignes). Attention, DELETE FROM table; sans WHERE efface TOUTES les lignes.
+    .synopsis = psql [-d base] [-c requête | -f fichier] ; psql -l
+    .exemple-1 = la liste des bases
+    .exemple-2 = les tables de la base ludo
+    .exemple-3 = combien de lignes dans la table prets
 man-pwd = affiche le chemin complet du lieu où tu es (print working directory).
     .synopsis = pwd
+man-readlink = affiche ce que vise un lien symbolique. -f donne le chemin complet, en suivant tous les liens : utile pour savoir quelle version est en ligne derrière un lien « current ».
+    .synopsis = readlink [-f] lien
+    .option-f = le chemin complet, tous les liens suivis (canonicalize).
+    .exemple-1 = où pointe le lien
+    .exemple-2 = le chemin complet, liens suivis
 man-restic = sauvegarde des dossiers dans un dépôt chiffré, en instantanés (snapshots) : chaque sauvegarde garde l'état complet du moment, mais seules les données nouvelles prennent de la place (déduplication). Il faut le dépôt (-r) et son mot de passe (--password-file, sinon il le demande) : sans mot de passe, rien n'est lisible, pas même la liste. snapshots liste les instantanés ; ls, find, diff et dump regardent dedans ; restore ID --target lieu recrée les fichiers (avec leur chemin complet) sous ce lieu, --include pour n'en prendre qu'une partie ; forget retire des instantanés selon une politique (--keep-daily 7…) ou par leur ID, sans libérer de place : c'est prune qui supprime les données devenues inutiles (ou forget --prune) ; check vérifie le dépôt.
     .synopsis = restic -r dépôt [--password-file fichier] snapshots|ls ID [lieu]|find motif|diff ID ID|dump ID fichier|restore ID --target lieu [--include chemin]|backup lieu|forget [--keep-daily N --keep-weekly N --keep-monthly N] [--prune] [--dry-run]|prune|check|stats
     .exemple-1 = la liste des instantanés
@@ -188,6 +279,18 @@ man-rndc = pilote le serveur DNS named (BIND) qui tourne. rndc reload relit les 
 man-rm = efface un fichier (remove). Attention : sous Linux, il n’y a pas de corbeille, c’est définitif.
     .synopsis = rm fichier
     .exemple-1 = effacer un fichier, pour toujours
+man-rsnapshot = garde des instantanés d'un ou plusieurs dossiers (snapshots) : l'état complet du moment, à intervalles réguliers. Les fichiers qui n'ont pas changé d'un instantané à l'autre ne sont pas recopiés mais liés (liens physiques : le même fichier sous deux noms, voir ls -i) ; chaque instantané paraît complet, mais seuls les changements prennent de la place. Tout se règle dans /etc/rsnapshot.conf, avec des TABULATIONS entre les éléments (jamais d'espaces) : snapshot_root (où ranger les instantanés, avec une barre finale), retain nom nombre (un niveau, du plus fréquent au plus rare, et combien en garder : retain daily 7, puis retain weekly 4), backup source destination (backup /srv/partage/ localhost/). rsnapshot configtest vérifie le fichier. rsnapshot daily fait tourner le niveau daily : daily.0 est le plus récent, le plus vieux est supprimé ; un niveau plus rare (weekly) reprend le plus vieux daily. -t montre ce qui serait fait, sans rien faire. rsnapshot du mesure la place réelle. On le lance avec cron : le niveau le plus rare un peu avant le plus fréquent.
+    .synopsis = rsnapshot [-t] [-v] [-c fichier] configtest | du | niveau
+    .exemple-1 = vérifier la configuration
+    .exemple-2 = voir ce que ferait un tour du niveau daily, sans rien faire
+    .exemple-3 = faire tourner le niveau daily
+    .exemple-4 = la place prise par chaque instantané
+    .exemple-5 = une ligne de crontab : chaque nuit à 3 h 30
+man-sh = lance un script : un fichier de commandes, une par ligne (le shell /bin/sh, dash sur Debian). Un script commence par #!/bin/sh ; rendu exécutable (chmod +x), il se lance aussi par son chemin : ./deployer.sh. Dans un script : # commente, NOM=valeur crée une variable lue par $NOM, $(commande) se remplace par ce qu'écrit la commande, set -e arrête tout à la première commande qui échoue, exit 1 termine en échec. « a && b » lance b seulement si a a réussi, « a || b » seulement s'il a échoué. Dans ce jeu, pas de if, for ni while : une commande par ligne.
+    .synopsis = sh script [argument...]
+    .exemple-1 = lancer un script
+    .exemple-2 = lancer un script exécutable par son chemin
+    .exemple-3 = le rendre exécutable
 man-sort = trie les lignes : par ordre alphabétique, ou -n numérique (2 avant 10), -r à l’envers.
     .synopsis = sort [-n] [-r] [fichier]
     .option-n = trie les nombres par valeur (2 avant 10).
@@ -209,15 +312,18 @@ man-ssh-keygen = gère les clés SSH et la liste des machines connues (~/.ssh/kn
     .exemple-1 = oublier l'ancienne clé de la machine (après avoir vérifié la nouvelle empreinte !)
     .exemple-2 = la machine est-elle dans known_hosts ?
     .exemple-3 = les empreintes de toutes les machines connues
-man-sudo = exécute une commande en tant que root, l’administrateur qui a tous les droits (superuser do). Demande TON mot de passe, pas celui de root.
-    .synopsis = sudo commande
+man-sudo = exécute une commande en tant que root, l’administrateur qui a tous les droits (superuser do). Demande TON mot de passe, pas celui de root. Avec -u compte, la commande tourne sous un autre compte que root (par exemple postgres, pour la base de données).
+    .synopsis = sudo [-u compte] commande
     .exemple-1 = lire un fichier réservé à root
-man-systemctl = gère les services, ces programmes qui tournent en permanence (serveur web…), à travers systemd. status montre l'état d'un service et ses derniers messages ; start, stop, restart le démarrent, l'arrêtent ou le relancent ; reload lui fait relire sa configuration. enable le fait démarrer avec la machine, disable non : start ne vaut que jusqu'au prochain redémarrage. --failed liste les services en échec. Seul root peut changer l'état d'un service.
-    .synopsis = systemctl [status|start|stop|restart|reload|enable|disable|is-active|is-enabled] service ; systemctl --failed ; systemctl reboot
+    .exemple-2 = lister les bases de données, en tant que postgres
+man-systemctl = gère les services, ces programmes qui tournent en permanence (serveur web…), à travers systemd. status montre l'état d'un service et ses derniers messages ; start, stop, restart le démarrent, l'arrêtent ou le relancent ; reload lui fait relire sa configuration. enable le fait démarrer avec la machine, disable non : start ne vaut que jusqu'au prochain redémarrage. --failed liste les services en échec. Seul root peut changer l'état d'un service. Pour modifier un service sans toucher au fichier livré (dans /usr/lib/systemd/system), on écrit une surcharge (drop-in) : edit l'ouvre dans l'éditeur (/etc/systemd/system/service.service.d/override.conf), avec la section {"["}Service] et les seules lignes à changer, par exemple MemoryMax=512M (la mémoire au-delà de laquelle systemd tue le service) ou Restart=on-failure (le relancer s'il meurt en échec). Après avoir écrit une surcharge à la main, daemon-reload la fait relire. set-property change une propriété tout de suite et la garde : systemctl set-property service MemoryMax=512M.
+    .synopsis = systemctl [status|start|stop|restart|reload|enable|disable|is-active|is-enabled|edit] service ; systemctl set-property service propriété=valeur ; systemctl daemon-reload ; systemctl --failed ; systemctl reboot
     .exemple-1 = l'état de nginx et ses derniers messages
     .exemple-2 = les services en échec (le premier réflexe après un redémarrage)
     .exemple-3 = relancer nginx
     .exemple-4 = démarrer nginx maintenant ET à chaque démarrage de la machine
+    .exemple-5 = écrire une surcharge pour un service (ex. MemoryMax=, Restart=)
+    .exemple-6 = limiter tout de suite la mémoire d'un service
 man-tail = affiche la fin d’un fichier (les 10 dernières lignes, ou N). Pratique pour les journaux, où le plus récent est à la fin.
     .synopsis = tail [-n N] [fichier]
     .option-n = nombre de lignes à afficher (10 par défaut) : tail -n 3 fichier.
@@ -238,11 +344,30 @@ man-tar = archive (tape archive) : -c crée une archive avec des fichiers et des
 man-tee = recopie ce qui arrive par un tube à la fois à l’écran et dans un fichier (comme un raccord en T). -a ajoute à la fin au lieu d’écraser. Avec sudo, c’est root qui écrit le fichier.
     .synopsis = tee [-a] fichier
     .option-a = ajoute à la fin du fichier au lieu de l’écraser.
+man-test = vérifie une condition, sans rien afficher : réussit si elle est vraie, échoue sinon. -f fichier (un fichier existe), -d lieu (un lieu existe), -e (l'un ou l'autre), -s (fichier non vide), -x (exécutable), -n texte (non vide), -z texte (vide), a = b, a != b, et pour des nombres -eq, -ne, -lt, -gt. Dans un script, on écrit souvent [ condition ] (avec des espaces autour des crochets) : c'est la même commande. Avec || exit 1, un script s'arrête si la condition est fausse.
+    .synopsis = test condition ; [ condition ]
+    .exemple-1 = index.html existe-t-il ?
+    .exemple-2 = la même chose, avec des crochets (dans un script)
+    .exemple-3 = arrêter le script si le fichier manque
+man-top = les processus qui prennent le plus de ressources, avec en tête l'état de la machine : depuis quand elle tourne (up), les tâches (dont les zombies), le processeur et la mémoire. Par défaut, trié par %CPU ; -o %MEM trie par mémoire. Colonnes : RES, la mémoire vraiment occupée (en Kio, ou m, g) ; S, l'état (S endormi, R en cours, Z zombie). Pour suivre une fuite de mémoire, relancer top et comparer RES. Le vrai top se met à jour toutes les 3 secondes jusqu'à q ; ici, il montre un instantané (comme top -b -n 1).
+    .synopsis = top [-b] [-n N] [-o champ] [-c]
+    .option-b = mode « batch » : affiche et rend la main (pour un script).
+    .option-n = nombre de mises à jour avant de s'arrêter.
+    .option-o = trie selon ce champ : %MEM, %CPU, RES, PID.
+    .option-c = la ligne de commande complète au lieu du nom du programme.
+    .exemple-1 = les processus les plus gourmands en mémoire
+    .exemple-2 = un instantané, pour un script
 man-touch = crée un fichier vide (ou met à jour sa date s’il existe déjà).
     .synopsis = touch fichier
     .exemple-1 = créer un fichier vide
 man-traceroute = montre le chemin des paquets, routeur par routeur (« saut » par « saut »), avec le temps de réponse de chacun. « * * * » : ce saut n’a pas répondu.
     .synopsis = traceroute machine
+man-truncate = change la taille d'un fichier : truncate -s 0 le vide sans le supprimer. Le programme qui l'écrit peut continuer (au même endroit), et la place est rendue tout de suite, contrairement à rm sur un fichier encore ouvert.
+    .synopsis = truncate -s taille fichier...
+    .exemple-1 = vider un journal énorme sans arrêter le programme
+man-umount = détache un système de fichiers monté (unmount). On lui donne le point de montage ou le périphérique. Impossible tant qu'on se trouve dedans (« target is busy ») : sortir d'abord du dossier. Réservé à root.
+    .synopsis = umount point_de_montage | périphérique
+    .exemple-1 = détacher la clé
 man-uniq = fusionne les lignes identiques qui se suivent. -c indique combien de fois chacune apparaît. On trie d’abord (sort) pour que les doublons se suivent : sort | uniq -c
     .synopsis = uniq [-c] [fichier]
     .option-c = compte combien de fois chaque ligne se répète.
@@ -281,15 +406,19 @@ man-id = affiche l'identité d'un compte : son numéro (uid), son groupe princip
     .synopsis = id [utilisateur]
     .exemple-1 = qui suis-je, et dans quels groupes ?
     .exemple-2 = l'identité de malo
-man-usermod = modifie un compte (user modify), notamment ses groupes. -G donne la liste des groupes secondaires, séparés par des virgules : elle REMPLACE les groupes actuels. Avec -a (append), les groupes sont AJOUTÉS. Réservé à root.
-    .synopsis = usermod [-a] -G groupe[,groupe...] utilisateur
+man-usermod = modifie un compte (user modify), notamment ses groupes. -G donne la liste des groupes secondaires, séparés par des virgules : elle REMPLACE les groupes actuels. Avec -a (append), les groupes sont AJOUTÉS. -L verrouille le mot de passe d'un compte (plus personne ne peut se connecter avec), -U le déverrouille. Réservé à root.
+    .synopsis = usermod [-a] -G groupe[,groupe...] utilisateur ; usermod -L|-U utilisateur
     .option-a = ajoute les groupes de -G au lieu de remplacer les groupes actuels (append).
     .option-G = la liste des groupes secondaires, séparés par des virgules.
+    .option-L = verrouille le mot de passe du compte (lock).
+    .option-U = déverrouille le mot de passe du compte (unlock).
     .exemple-1 = ajouter malo au groupe adm, sans toucher à ses autres groupes
     .exemple-2 = attention : malo n'est plus que dans adm (ses autres groupes secondaires sont retirés)
+    .exemple-3 = verrouiller le compte de malo
 
-man-journalctl = lit le journal de systemd, où les services écrivent leurs messages (et leurs erreurs). -u ne garde qu'un service, -n les N dernières lignes, -b le démarrage en cours, -p err les erreurs. -x ajoute des explications et -e va à la fin : journalctl -xeu nginx est la formule classique quand un service refuse de démarrer. Il faut être root, ou dans le groupe adm ou systemd-journal, pour tout lire.
-    .synopsis = journalctl [-u service] [-n N] [-b] [-p priorité] [-x] [-e]
+man-journalctl = lit le journal de systemd, où les services écrivent leurs messages (et leurs erreurs). -u ne garde qu'un service, -n les N dernières lignes, -b le démarrage en cours, -p err les erreurs, -k les messages du noyau (comme dmesg). -x ajoute des explications et -e va à la fin : journalctl -xeu nginx est la formule classique quand un service refuse de démarrer. Il faut être root, ou dans le groupe adm ou systemd-journal, pour tout lire.
+    .synopsis = journalctl [-u service] [-n N] [-b] [-k] [-p priorité] [-x] [-e]
+    .option-k = seulement les messages du noyau, depuis le démarrage (kernel).
     .option-u = seulement les messages de ce service (unit).
     .option-n = seulement les N dernières lignes.
     .option-b = seulement depuis le dernier démarrage de la machine (boot).
@@ -367,11 +496,12 @@ man-rsync = copie des fichiers et des dossiers, en ne recopiant que ce qui a cha
     .exemple-1 = sauvegarder le contenu d'un dossier dans un autre
     .exemple-2 = d'abord essayer, avec --delete : rien n'est touché
     .exemple-3 = restaurer un seul fichier depuis la sauvegarde
-man-crontab = gère tes tâches planifiées : des commandes que cron lance tout seul, à heure fixe. crontab -e ouvre ta crontab dans l'éditeur ; à la fermeture, elle est vérifiée puis installée. crontab -l l'affiche, crontab -r la supprime. Une ligne = cinq champs pour l'heure, puis la commande : minute (0-59), heure (0-23), jour du mois (1-31), mois (1-12), jour de la semaine (0-7, 0 et 7 = dimanche). * veut dire « chaque », 1-5 une plage, 1,15 une liste, */10 « toutes les 10 ». Ou un raccourci : @daily (chaque nuit à minuit), @hourly, @weekly, @reboot (au démarrage). Les tâches tournent depuis ta maison ; ce qu'elles écrivent t'est envoyé par courrier.
-    .synopsis = crontab -e | -l | -r | fichier
+man-crontab = gère tes tâches planifiées : des commandes que cron lance tout seul, à heure fixe. crontab -e ouvre ta crontab dans l'éditeur ; à la fermeture, elle est vérifiée puis installée. crontab -l l'affiche, crontab -r la supprime. Une ligne = cinq champs pour l'heure, puis la commande : minute (0-59), heure (0-23), jour du mois (1-31), mois (1-12), jour de la semaine (0-7, 0 et 7 = dimanche). * veut dire « chaque », 1-5 une plage, 1,15 une liste, */10 « toutes les 10 ». Ou un raccourci : @daily (chaque nuit à minuit), @hourly, @weekly, @reboot (au démarrage). Les tâches tournent depuis ta maison ; ce qu'elles écrivent t'est envoyé par courrier. root peut voir et modifier la crontab d'un autre compte avec -u : sudo crontab -u malo -l.
+    .synopsis = crontab [-u compte] -e | -l | -r | fichier
     .exemple-1 = modifier ses tâches planifiées
     .exemple-2 = les afficher
     .exemple-3 = une ligne de crontab : chaque nuit à 3 h 15
+    .exemple-4 = la crontab d'un autre compte
 
 ## Mise en page du manuel et messages de man-db et des coreutils
 

@@ -41,8 +41,9 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
       el('span', { class: 'etat' })),
   );
   const boutonPoste = el('button', { type: 'button', 'data-poste': '' }, el('span', { class: 'titre' }, t('poste-titre')));
+  const aideCle = el('p', { class: 'cle-aide' }, typo(t('cle-aide')));
   const navHistoires = el('nav', { class: 'histoires', 'aria-label': t('histoires-titre') },
-    el('ol', {}, el('li', {}, boutonPoste), ...boutonsHistoires.map((b) => el('li', {}, b))));
+    el('ol', {}, el('li', {}, boutonPoste), ...boutonsHistoires.map((b) => el('li', {}, b))), aideCle);
 
   const navsChapitres = HISTOIRES.map((h, i) =>
     el('nav', { class: 'chapitres', 'aria-label': t('chapitres-titre', { histoire: titreHistoire(i) }), 'data-chapitres': String(i) },
@@ -125,6 +126,8 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     boutonsHistoires.forEach((b, h) => {
       b.setAttribute('aria-current', String(h === histoire()));
       b.disabled = !accessible(h);
+      // Les histoires sans leur clé sont grisées : on avance de l'une à l'autre.
+      b.toggleAttribute('data-verrouillee', !accessible(h));
       const faits = chapitres(h).filter((c) => termines.includes(c.id)).length;
       const total = chapitres(h).length;
       b.querySelector('.etat')!.textContent = !accessible(h)
@@ -135,6 +138,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
             ? t('etat-chapitres-faits', { faits, total })
             : '';
     });
+    aideCle.hidden = boutonsHistoires.every((b) => !b.disabled);
     navsChapitres.forEach((nav, h) => {
       nav.hidden = h !== histoire() || chapitres(h).length < 2;
       nav.querySelectorAll<HTMLButtonElement>('[data-chapitre]').forEach((b, c) => {
@@ -230,8 +234,39 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     }
   });
 
+  // Copier-coller comme dans la plupart des terminaux Linux : le texte
+  // sélectionné est copié, le clic droit (ou celui du milieu) le colle.
+  // Maj + clic droit garde le menu du navigateur.
+  const selection = () => ((racine as ShadowRoot & { getSelection?: () => Selection | null }).getSelection?.() ?? window.getSelection())?.toString() ?? '';
+  let copie = '';
+  terminal.addEventListener('mouseup', () => {
+    const texte = selection();
+    if (!texte) return;
+    copie = texte;
+    navigator.clipboard?.writeText(texte).catch(() => {});
+  });
+  const coller = async (e: MouseEvent) => {
+    e.preventDefault();
+    let texte = copie;
+    if (!texte) texte = (await navigator.clipboard?.readText().catch(() => '')) ?? '';
+    if (!texte) return;
+    const nano = terminal.querySelector('textarea');
+    // Dans nano, le texte garde ses lignes ; sur la ligne de commande, il tient sur une ligne.
+    const cible = nano ?? saisie;
+    if (!nano) texte = texte.replace(/\s*\n\s*/g, ' ').trim();
+    const debut = cible.selectionStart ?? cible.value.length;
+    const fin = cible.selectionEnd ?? debut;
+    cible.setRangeText(texte, debut, fin, 'end');
+    cible.focus();
+  };
+  terminal.addEventListener('contextmenu', (e) => {
+    if (!e.shiftKey) coller(e);
+  });
+  terminal.addEventListener('auxclick', (e) => {
+    if (e.button === 1) coller(e);
+  });
   terminal.addEventListener('click', () => {
-    if (!form.hidden && !window.getSelection()?.toString()) saisie.focus();
+    if (!form.hidden && !selection()) saisie.focus();
   });
   boutonPoste.addEventListener('click', () => {
     allerPoste();

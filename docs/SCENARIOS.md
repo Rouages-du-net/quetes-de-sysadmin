@@ -102,7 +102,11 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `traceroute` | s'arrête 3 sauts après le dernier qui répond | continue jusqu'à 30 sauts |
 | `ps aux` | utilisateur, PID, %CPU, %MEM, commande | ajoute VSZ, RSS, TTY, STAT, START, TIME |
 | `tar` | taille calculée (texte compressé au tiers, médias à 98 %) ; s'il n'y a pas la place, rien n'est écrit | vraie compression ; une archive partielle peut rester |
-| `git` | une seule branche (`main`), fichiers à la racine du dépôt seulement, identifiants calculés par le jeu, `commit` exige `-m` | branches, sous-dossiers, SHA-1/SHA-256, éditeur de texte |
+| `git` | une seule branche (`main`), fichiers à la racine du dépôt seulement, identifiants calculés par le jeu, `commit` exige `-m` ; distants par chemin seulement (dépôts nus de la machine) ; `push` et `pull` en avance rapide seulement (pas de fusion) ; crochets `pre-receive` et `post-receive` ; chiffres de `push` indicatifs | branches, sous-dossiers, SHA-1/SHA-256, éditeur de texte, distants par SSH ou HTTPS, fusions, tous les crochets |
+| scripts (`sh`, crochets) | `/bin/sh` réduit (`script.ts`) : une commande par ligne, `#`, `set -e`, `exit`, variables, `$(…)`, `read`, `&&`, `\|\|`, `[ … ]` ; pas de `if`, `for`, `while`, `case` ni de fonctions ; une commande réussit si elle n'a écrit aucune erreur | le langage complet |
+| `diff` | format normal, `-u` (trois lignes de contexte), `-r`, `-q` ; l'heure de l'en-tête `-u` est l'heure de la machine | toutes les options |
+| `date`, `test`, `readlink` | `date` sans option ou `+FORMAT` (directives courantes) ; `test` (et `[ … ]` dans un script) : `-e -f -d -L -s -r -w -x -n -z`, `=`, `!=`, comparaisons numériques ; `readlink [-f]` | `date -d`, `-u`… ; `test` complet ; `realpath` |
+| Le Kiosque (La Gazette) | une appli Node.js simulée : version lue au démarrage via un lien, `/health` en JSON, configuration dans un fichier `.env`, migration de schéma au démarrage (jamais en arrière) ; une heure de visites simulée à chaque rechargement de nginx dans « Le canari » | une vraie appli et sa base PostgreSQL |
 | journal nginx | format « combined » sans la page d'origine ni le navigateur | deux champs de plus en fin de ligne |
 | `ssh` | clé seulement (pas de mot de passe ni d'agent) ; une clé est acceptée si c'est la bonne machine ; pas de commande à distance ; message d'usage raccourci ; option inconnue : message des coreutils | mot de passe, agent, `authorized_keys` côté serveur, commande à distance |
 | `exit` | a sa page `man` | commande intégrée à bash : `help exit` |
@@ -118,7 +122,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `rsync` | copie locale seulement (pas de `user@machine:`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | aussi à distance par SSH, compare taille et date |
 | `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
 | `apt` | `update`, `install [-y]`, `list --installed` ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » | tout le catalogue Debian, `upgrade`, `remove`, `search`, `show`… ; dpkg garde l'état du paquet |
-| `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe ou `=` (pas d'expressions régulières), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ; `try_files` lu mais pas appliqué | toutes les directives et modules |
+| `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe ou `=` (pas d'expressions régulières), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
 | `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse) | tout le réseau |
 | `tar` | `-C` ; une archive coupée s'arrête à la coupure (messages proches de GNU tar) ; root garde propriétaires et droits | aussi `--strip-components`, `-p`, archives multi-volumes… |
 | `ssh-keygen` | `-R`, `-F`, `-l -f` seulement ; ne crée pas de clés | crée et convertit des clés, signe des certificats… |
@@ -127,8 +131,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `curl https://` | vérifie dates et noms du certificat présenté (erreur 60), `-k` pour passer outre | vérifie aussi la chaîne de confiance complète, OCSP… |
 | horloge | heure de Paris : CET l'hiver, CEST l'été | fuseau de la machine |
 | `restic` | `-r` et `--password-file` obligatoires (pas de variables d'environnement) ; `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check`, `stats` ; pas d'`init` ; un « pack » par sauvegarde ; fichiers du dépôt illisibles mais pas binaires ; pas de barres de progression | tout cela, et `mount`, `copy`, `key`, `tag`, dépôts distants (sftp, S3, rest-server) |
-| liens symboliques | `ln -s`, suivis pour lire, écrire et entrer ; `ls -l` les montre ; pas de `readlink` | aussi `readlink`, `realpath`, `find -L`… |
-| `curl` | `-I`, `-k`, `-L`, `-H "Host: …"` ; ne joint que la machine où l'on est | toutes les options, tout le réseau |
+| liens symboliques | `ln -s` (`-f`, `-n`), suivis pour lire, écrire et entrer ; `ls -l` les montre ; `readlink` | aussi `realpath`, `find -L`… |
+| `curl` | `-I`, `-i`, `-k`, `-L`, `-H "Host: …"` ; ne joint que la machine où l'on est (nginx, une appli sur son port, un conteneur) | toutes les options, tout le réseau |
 | DNS (BIND) | zones A, AAAA, CNAME, MX, NS, TXT, SOA ; un primaire (`named`), un secondaire qui recopie quand le serial augmente (tout de suite), un résolveur public avec cache ; `dig` (`@serveur`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (accolades et fichiers), `rndc reload`/`status` ; pas de section AUTHORITY, de DNSSEC ni de zones inverses | tout cela |
 | `awk` | programme entre apostrophes : motifs, `BEGIN`/`END`, champs, tableaux, `printf`, fonctions courantes, `-F`, `-v` ; pas de `getline`, de redirection dans `print`, de fonctions définies ni de `?:` | le langage complet (mawk sur Debian) |
 | trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
@@ -137,6 +141,14 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | Docker et le pare-feu | un port publié sur 0.0.0.0 répond de l'extérieur quelles que soient les règles ufw (comme les règles iptables de Docker) ; `nc -zv` depuis une autre machine ; `system df`, `image prune` (`-a`), `container prune`, `volume prune` (`-a`), `system prune` (`-a`, `--volumes`), `rmi` | chaîne DOCKER-USER, ufw-docker, `iptables -L` |
 | Utilisateur d'un conteneur | `--user`/`-u` et `user:` (nom de l'image ou `uid[:gid]`, un uid inconnu de l'image prend le gid 0), `docker exec -u` ; l'uid du conteneur est celui de la machine (pas de userns-remap) : droits Unix appliqués par numéro sur les dossiers montés, fichiers créés au nom de cet uid, processus visibles dans `ps aux` ; `--read-only` empêche d'écrire hors des volumes ; `--cap-drop` et `--security-opt` sont gardés (et montrés par `inspect`) sans autre effet ; un conteneur tombé est relancé à chaque commande (pas d'attente qui double) | userns-remap, mode rootless, capacités réelles, seccomp, AppArmor, droits sur les volumes nommés |
 | `nc` | `-z`, `-v`, une plage de ports ; sans `-z`, rend la main | netcat complet (écouter, envoyer, proxy) |
+| disques (`lsblk`, `mount`, `umount`) | périphériques décrits par le chapitre ; `mount` sans argument, `-o ro` ; un support en lecture seule refuse toute création (le contenu d'un fichier existant reste modifiable par une redirection) ; pas de `/etc/fstab` | toutes les options, `fstab`, systèmes de fichiers réels |
+| `rsnapshot` | `configtest`, `-t`, `-v`, `du`, la rotation des niveaux (`cp -al` puis `rsync`) ; une partie des directives ; messages proches de rsnapshot 1.4 | `backup_script`, `link_dest`, `sync_first`, sauvegardes distantes |
+| PostgreSQL | rôles et authentification « peer » ; `psql -c/-f/-l` avec un SQL réduit (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `\l`, `\dt`, `\d`) ; `pg_dump` (texte, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb` ; une archive `-Fc` ne contient qu'une référence gardée par le jeu ; une seule clé primaire par table | tout PostgreSQL, psql interactif, WAL et restauration à un instant donné |
+| `lsof`, `truncate`, `logrotate` | `lsof` ne connaît que les fichiers ouverts décrits par le chapitre (`+L1`, `-p`, `-u`, un fichier) ; `logrotate` : une partie des directives, `-d`, `-f`, `-v`, sorties abrégées | toutes les options, tous les fichiers ouverts du système |
+| mémoire (`free`, `top`, `dmesg`) | la mémoire de chaque processus est décrite par le chapitre ; pas de swap, le cache ne se libère pas (`available` = `free`) ; l'OOM killer tue le plus gros processus (sans `oom_score_adj`) ; `top` affiche un instantané et rend la main (`-b`, `-n`, `-o`, `-c`) ; `dmesg` (`-T`) réservé à root | swap, récupération du cache, score de l'OOM killer, `top` interactif, `htop` |
+| surcharges systemd | `systemctl edit`, `set-property` (seulement `MemoryMax=`), `daemon-reload` ; dans les surcharges, seuls `MemoryMax=` et `Restart=` de `[Service]` comptent ; un service relancé par `Restart=` repart aussitôt | toutes les directives, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
+| zombies | `ps -ef` montre le parent ; aucun signal n'agit sur un zombie ; ils disparaissent quand leur parent s'arrête | `wait()`, `SIGCHLD`, adoption par un sous-reaper |
+| `sudo -u`, `crontab -u`, `usermod -L` | `sudo -u compte` sans autre option ; `crontab -u` réservé à root ; `usermod -L/-U` marque le compte sans montrer `/etc/shadow` | toutes les options |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -761,6 +773,215 @@ l'uid partagé avec la machine (sans userns-remap), `USER`/`--user`/`user:`,
 des numéros plutôt que des noms, `chown -R` plutôt que `chmod 777`,
 `--cap-drop ALL`, `no-new-privileges`, `--read-only`, ni `--privileged` ni
 socket Docker monté, mode rootless ; liens vers la documentation de Docker.
+
+## Histoire 8 : La Gazette (cinq chapitres)
+
+Le journal en ligne du quartier (machine `gazette`, 192.0.2.16) apprend à
+déployer : Samia (rédactrice en chef) et Théo (stagiaire). Phase 6 de la
+feuille de route.
+
+### Chapitre 1 — Le dépôt nu (fait)
+
+Le site est servi par nginx depuis `/var/www/gazette`, où chacun·e copiait
+ses fichiers à la main. Le code est suivi par git dans `~/gazette`.
+
+| Étape | Commande apprise |
+|---|---|
+| Voir ce qui a dérivé | `diff -r ~/gazette /var/www/gazette` (la correction de Théo n'existe que sur le serveur) |
+| Le dépôt du serveur | `sudo git init --bare /srv/git/gazette.git`, `sudo chown -R vous: …` |
+| Le crochet | `hooks/post-receive` : `git --work-tree=/var/www/gazette checkout -f main`, `chmod +x` |
+| Publier | `git remote add prod /srv/git/gazette.git`, `git commit -am`, `git push prod main` |
+
+Objectif vérifié sur l'état : le site est exactement le dernier commit du
+dépôt du serveur, extrait par son crochet, avec l'article, la correction de
+Théo, puis la date de l'agenda corrigée (demandée une fois le site en ligne).
+Pièges prévus : dépôt créé avec sudo (« droits insuffisants »), pas de
+crochet, crochet non exécutable (l'astuce de git), `checkout` sans `-f`
+(fichiers non suivis), correction de Théo écrasée par le déploiement,
+correction faite directement sur le serveur. Débrief : une seule source,
+dépôt nu, crochets, `--shared=group` ; liens vers le livre de git et
+githooks.
+
+### Chapitre 2 — Le retour arrière (fait)
+
+Chaque push est publié dans `/srv/gazette/releases/<date>`, et le lien
+`/srv/gazette/current` (servi par nginx) désigne la version en ligne. La
+mise en page de Théo, sans `index.html`, donne un 403.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `curl -I`, `ls -l /srv/gazette`, `readlink`, `ls releases/*` |
+| Revenir en arrière | `ln -sfn releases/20270514101502 current` |
+| Le garde-fou | dans le crochet, `cd` dans la nouvelle version puis `sh tests.sh` AVANT `ln -sfn` (avec `set -e`) |
+| Publier la réparation | `git pull prod main`, `mv accueil.html index.html`, `git add .`, `git commit`, `git push` |
+
+Objectif vérifié sur l'état : la nouvelle mise en page est en ligne,
+publiée par le crochet après ses tests, et un nouveau push cassé de Théo
+(simulé dès que le crochet lance les tests) n'a pas été mis en ligne.
+Pièges prévus : `ln -sf` sans `-n` (le lien est créé dans la version
+cassée), tests après la bascule, tests lancés depuis le dépôt (tout est
+refusé), `push` refusé tant qu'on n'a pas récupéré les commits de Théo.
+
+### Chapitre 3 — Bleu et vert (fait)
+
+Le Kiosque (abonnements à la lettre, Node.js) tourne sur l'emplacement bleu
+(port 3001) derrière nginx ; l'emplacement vert (3002) est libre.
+
+| Étape | Commande apprise |
+|---|---|
+| La nouvelle version à côté | `ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert`, `sudo systemctl start kiosque-vert` |
+| Vérifier sa santé | `curl -s localhost:3002/health` (503), `cat …/NOTES.txt`, la variable dans `/etc/kiosque/kiosque.env`, `systemctl restart` |
+| Basculer | `proxy_pass http://127.0.0.1:3002/;`, `sudo nginx -t`, `sudo systemctl reload nginx` |
+
+Objectif vérifié sur l'état : nginx (configuration chargée) envoie
+`/kiosque/` vers une instance 1.5.0 en bonne santé, et l'autre instance
+tourne toujours. Pièges prévus : changer le lien sans redémarrer, basculer
+avant `/health`, oublier le `reload`, arrêter bleu tout de suite.
+
+### Chapitre 4 — Le canari (fait)
+
+La 1.6.0 passe `/health` mais plante sur `/archives`. Vert sert la 1.5.0.
+
+| Étape | Commande apprise |
+|---|---|
+| Le canari | `upstream kiosque { server 127.0.0.1:3002 weight=9; server 127.0.0.1:3001 weight=1; }`, `proxy_pass http://kiosque/;`, reload |
+| Regarder | `awk '{print $9}' access.log \| sort \| uniq -c`, `grep " 500 "`, `curl localhost:3001/archives` |
+| Arrêter, recommencer | `down`, reload ; la 1.6.1 publiée ; nouveau canari ; puis tout vers bleu |
+
+Objectif vérifié sur l'état : tout `/kiosque/` va à la 1.6.1 en bonne
+santé, après un canari de la 1.6.1 sans erreur, vert toujours allumé.
+Pièges prévus : tout basculer d'un coup sur la 1.6.0 (toutes les visites
+d'archives en 500), un « canari » à 50 %.
+
+### Chapitre 5 — La migration (fait)
+
+Théo a mis la 2.0.0 sur vert et basculé nginx ; au démarrage, elle a migré
+la base (schéma 3 → 4). Elle ne marche pas (variable renommée), et bleu
+(1.6.1) ne sait plus lire la base.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `curl localhost:3002/health`, `curl localhost:3001/health`, `sudo journalctl -u kiosque-vert` (la migration), les notes de version |
+| Réparer en avant | `KIOSQUE_SMTP_URL=…` dans `kiosque.env`, `systemctl restart kiosque-vert` |
+| Refaire le filet | `ln -sfn …/2.0.0 /srv/kiosque/bleu`, `systemctl restart kiosque-bleu` |
+
+Objectif vérifié sur l'état : nginx sert une instance 2.x en bonne santé, et
+l'autre instance tourne aussi en 2.x en bonne santé. Piège prévu : revenir
+sur bleu (1.6.1), qui répond 500. Débrief : sauvegarder avant une
+migration (`pg_dump`), étendre puis contracter, réparer en avant.
+
+## Histoire 9 : La Ludothèque (trois chapitres)
+
+Le serveur de la ludothèque du quartier (machine `ludotheque`, 192.0.2.17) :
+Bérénice (présidente) et Malo (bénévole). Phase 7 de la feuille de route.
+
+### Chapitre 1 — La rançon (fait)
+
+Lundi matin, le partage (`/srv/partage`) est chiffré (`.locked`) ; une
+demande de rançon traîne dans chaque dossier. Le mot de passe du compte
+`accueil` a été deviné ; un programme tourne encore sous ce compte, et sa
+crontab le relance. La copie nocturne du NAS (`rsync --delete`) est chiffrée
+aussi.
+
+| Étape | Commande apprise |
+|---|---|
+| Mesurer | `find /srv/partage -name "*.locked" \| wc -l`, `cat LISEZ-MOI…` (on ne paie pas) |
+| Arrêter l'attaque | `ps aux`, `sudo kill 3141`, `sudo crontab -u accueil -l/-r`, `sudo usermod -L accueil`, `journalctl -u ssh` |
+| Trouver une sauvegarde | `ls /mnt/nas/partage` (chiffrée), `lsblk -f` (le disque `SAUVEGARDE`) |
+| Restaurer | `sudo mount -o ro /dev/sdb1 /mnt/cle`, `restic snapshots`, `restic restore latest --target /`, `find … -delete`, `sudo umount /mnt/cle` |
+
+Objectif vérifié sur l'état : le chiffreur est arrêté et ne revient plus,
+le compte est verrouillé, les six fichiers sont restaurés, plus aucun
+`.locked` ni demande de rançon, et le disque est démonté. Pièges prévus :
+restaurer avant d'arrêter le chiffreur (les fichiers sont rechiffrés),
+oublier la crontab (il revient), brancher la sauvegarde pendant l'attaque,
+démonter depuis le point de montage (« target is busy »).
+
+### Chapitre 2 — Les instantanés (fait)
+
+Régler rsnapshot (configuration de Debian) pour `/srv/partage/` vers le
+second disque, 7 quotidiens et 4 hebdomadaires, et le lancer avec cron. Le
+jeu fait passer deux semaines ; le dernier soir, Bérénice écrase
+l'inventaire par une vieille copie.
+
+| Étape | Commande apprise |
+|---|---|
+| Régler | `/etc/rsnapshot.conf` (tabulations), `rsnapshot configtest`, `rsnapshot -t daily` |
+| Planifier | `sudo crontab -e` : `0 3 * * 1 … weekly`, `30 3 * * * … daily` |
+| Constater | `ls /mnt/instantanes`, `rsnapshot du`, `ls -i` (même inode), `diff` |
+| Restaurer | `cp …/daily.1/localhost/srv/partage/inventaire.csv /srv/partage/` |
+
+Objectif vérifié sur l'état : 7 instantanés quotidiens et un hebdomadaire
+sur `/mnt/instantanes`, et l'inventaire revenu à sa version de
+l'avant-veille. Pièges prévus : des espaces au lieu de tabulations, la
+crontab d'un compte ordinaire (le courrier de cron le dit), le dernier
+instantané (pris après l'erreur).
+
+### Chapitre 3 — La base (fait)
+
+Les prêts vivent dans une base PostgreSQL ; Malo copie ses fichiers avec
+rsnapshot pendant qu'elle tourne.
+
+| Étape | Commande apprise |
+|---|---|
+| Se connecter | `psql -l` (rôle inconnu), `sudo -u postgres psql -d ludo -c "\dt"` |
+| Sauvegarder | `sudo -u postgres pg_dump -Fc -f /var/backups/postgresql/ludo.dump ludo` |
+| Tester | `createdb ludo_test`, `pg_restore -d ludo_test …`, `SELECT count(*)` |
+| Réparer | la table `prets` vidée : `pg_restore -d ludo --data-only -t prets …` |
+| Planifier | `sudo crontab -u postgres -e` |
+
+Objectif vérifié sur l'état : une tâche cron fait le `pg_dump` de `ludo`
+sous `postgres`, une archive existe, une base de test a les mêmes nombres
+de lignes, et les prêts sont revenus. Pièges prévus : la redirection `>`
+avec `sudo -u`, restaurer par-dessus la base en service, réinjecter dans
+une table pleine (doublons), `pg_dump` dans la crontab de root.
+
+## Histoire 10 : L'Astreinte (en cours)
+
+Des nuits d'astreinte pour Radio Quartier (machine `radio`, 192.0.2.18),
+avec Zoé, bénévole technique. Les pannes classiques, une par nuit, puis la
+supervision qui prévient avant que ça casse. Phase 7 de la feuille de route.
+
+### Chapitre 1 — Le disque plein (fait)
+
+2 h 47 : l'enregistrement de nuit échoue, « No space left on device ». Le
+relais du flux (`radio-flux`) écrit son journal en mode debug depuis trois
+jours (16 Go).
+
+| Étape | Commande apprise |
+|---|---|
+| Trouver | `df -h`, `sudo du -sh /var/log/*`, `tail` (des lignes DEBUG) |
+| Le piège | `rm` d'un fichier encore ouvert : `df` reste plein, `sudo lsof +L1` montre `(deleted)` |
+| Vider | `sudo truncate -s 0 /var/log/radio/flux.log` (ou redémarrer le relais) |
+| Corriger | `loglevel = info` dans `/etc/radio/flux.conf`, `systemctl restart radio-flux` |
+| Éviter | `/etc/logrotate.d/radio` (`rotate`, `daily`, `copytruncate` ou `postrotate … systemctl reload`), `logrotate -d` |
+
+Objectif vérifié sur l'état : le disque est sous 80 %, aucun fichier effacé
+n'est encore tenu ouvert, le relais tourne sans debug, et une configuration
+logrotate valable couvre son journal et sait le faire rouvrir. Pièges
+prévus : `rm` d'un fichier ouvert, une rotation qui renomme sans faire
+rouvrir (le relais écrit dans `flux.log.1`), une directive mal écrite.
+
+### Chapitre 2 — La mémoire (fait)
+
+4 h 31 : le direct ne diffuse plus que du silence. La playlist de la nuit
+(`radio-playlist`, un programme Node) a été tuée par l'OOM killer : elle
+garde en mémoire chaque morceau décodé (une fuite). Et des processus
+zombies (`<defunct>`) résistent à `kill -9`.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `systemctl status` (`Result: oom-kill`), `sudo dmesg -T` ou `journalctl -k` (`Out of memory: Killed process`), `free -h` |
+| Voir la fuite | relancer, puis `top -o %MEM` d'une commande à l'autre ; le noyau frappe à nouveau |
+| Contenir | `sudo systemctl edit radio-playlist` : `[Service]`, `MemoryMax=600M`, `Restart=on-failure` (ou `systemctl set-property … MemoryMax=`, une surcharge écrite à la main et `daemon-reload`) |
+| Les zombies | `ps -ef` (le parent, PPID 2305), `kill` n'y peut rien, `sudo systemctl restart radio-podcast` |
+
+Objectif vérifié sur l'état : la playlist tourne avec une limite de mémoire
+entre 256 Mo et 1 Go et une relance automatique, plus aucun zombie, le
+relais actif. Pièges prévus : `kill -9` sur un zombie, relancer sans limite
+(l'OOM killer revient), une limite sans `Restart=` (la playlist reste
+arrêtée), une limite trop basse (tuée au démarrage) ou trop haute, une
+surcharge écrite à la main sans `daemon-reload`.
 
 ## Idées pour la suite
 

@@ -143,7 +143,9 @@ export class Console {
       this.distant = { machine, histoire, shell: ancienne };
       const dejaFini = ancienne.termine;
       const suite = ancienne.evenements();
-      return [...banniere, this.titre(histoire, ancienne.chapitre), suite, this.noterFin(ancienne, dejaFini)].filter(Boolean).join('\n\n');
+      // Un chapitre en cours : rappeler où relire ses consignes.
+      const rappel = ancienne.termine ? '' : this.t('reprise-chapitre', { fichier: ancienne.chapitre.accueil });
+      return [...banniere, this.titre(histoire, ancienne.chapitre), rappel, suite, this.noterFin(ancienne, dejaFini)].filter(Boolean).join('\n\n');
     }
     this.distant = { machine, histoire, shell: this.nouvelleSession(machine, c) };
     return [...banniere, this.ouvrirChapitre(c)].join('\n\n');

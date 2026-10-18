@@ -31,6 +31,13 @@ export interface Service {
   // Type=oneshot : le service fait son travail puis s'arrête (ex. certbot,
   // lancé par un timer) ; il ne reste pas « active (running) ».
   ponctuel?: boolean;
+  // Comment il s'est arrêté en échec (exit-code, oom-kill…).
+  resultat?: string;
+  // Les réglages des fichiers de surcharge (systemctl edit) : MemoryMax=, Restart=.
+  memoireMax?: number;
+  redemarrage?: string;
+  surcharges?: string[];
+  empreinteSurcharges?: string;
 }
 
 export interface Entree {
@@ -95,14 +102,19 @@ export function demarrer(jeu: Jeu, sd: Systemd, nom: string, auDemarrage = false
   journaliser(sd, unite, 'systemd', 1, `Started ${unite} - ${s.description}.`);
   s.charger?.(jeu);
   s.etat = 'active';
+  s.resultat = undefined;
   s.depuis = sd.horloge;
   const liste: Processus[] = (jeu.etat.processus ??= []);
   for (const p of s.processus) if (!liste.some((q) => q.pid === p.pid)) liste.push({ ...p });
   return true;
 }
 
+// Les processus du service s'arrêtent ; leurs enfants zombies disparaissent avec eux (init les récupère).
 function retirerProcessus(jeu: Jeu, s: Service) {
-  if (jeu.etat.processus) jeu.etat.processus = (jeu.etat.processus as Processus[]).filter((p) => !s.processus.some((q) => q.pid === p.pid));
+  if (jeu.etat.processus)
+    jeu.etat.processus = (jeu.etat.processus as Processus[]).filter(
+      (p) => !s.processus.some((q) => q.pid === p.pid || (p.ppid === q.pid && p.zombie)),
+    );
 }
 
 export function arreter(jeu: Jeu, sd: Systemd, nom: string) {

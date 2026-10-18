@@ -14,15 +14,24 @@ export interface Processus {
   cpu: number;
   mem: number;
   commande: string;
+  // Le parent, et un processus zombie (terminé, que son parent n'a pas récupéré).
+  ppid?: number;
+  zombie?: boolean;
 }
 
 export const SYSTEME: Record<string, Commande> = {
   ps: {
     lancer: ({ args, jeu }) => {
-      const tous = args.some((a) => /a/.test(a));
+      const tous = args.some((a) => /[ae]/.test(a));
       const liste: Processus[] = [...(jeu.etat.processus ?? []), ...processusDocker(jeu)]
         .filter((p: Processus) => tous || p.utilisateur === 'vous')
         .sort((a: Processus, b: Processus) => a.pid - b.pid);
+      // -f (ps -ef) : le format complet, avec le parent (PPID).
+      if (args.some((a) => /^-\w*f/.test(a))) {
+        const ligneF = (p: Processus) =>
+          `${p.utilisateur.slice(0, 8).padEnd(8)} ${String(p.pid).padStart(7)} ${String(p.ppid ?? (p.pid === 1 ? 0 : 1)).padStart(7)}  0 04:00 ?        00:00:00 ${p.commande}`;
+        return ['UID          PID    PPID  C STIME TTY          TIME CMD', ...liste.map(ligneF)].join('\n');
+      }
       const ligne = (p: Processus) =>
         `${p.utilisateur.padEnd(10)} ${String(p.pid).padStart(6)} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${p.commande}`;
       return ['USER          PID  %CPU  %MEM COMMAND', ...liste.map(ligne)].join('\n');
@@ -39,6 +48,8 @@ export const SYSTEME: Record<string, Commande> = {
         const p = liste.find((q) => String(q.pid) === brut);
         if (!p) jeu.erreur(jeu.t('kill-aucun', { pid: brut }));
         else if (jeu.qui !== 'root' && p.utilisateur !== jeu.qui) jeu.erreur(jeu.t('kill-non-permise', { pid: brut }));
+        // Un zombie est déjà mort : aucun signal n'y fait rien, seul son parent peut le récupérer.
+        else if (p.zombie) continue;
         else {
           jeu.etat.processus = liste.filter((q) => q !== p);
           const m = jeu.etat.surKill?.(jeu, p);

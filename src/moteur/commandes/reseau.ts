@@ -16,7 +16,7 @@
 
 import type { Shell } from '../shell';
 import type { Commande } from './index';
-import { requete, type Reponse } from '../nginx';
+import { requete, requeteAppli, type Reponse } from '../nginx';
 import { requeteDocker } from '../docker';
 import { digDns } from './bind';
 import { couvre, lire } from '../tls';
@@ -30,13 +30,13 @@ establish a secure connection to it. To learn more about this situation and
 how to fix it, please visit the webpage mentioned above.`;
 
 // La réponse d'une appli dans un conteneur, avec ses en-têtes.
-function reponseAppli(jeu: Shell, r: { code: number; corps: string }): Reponse {
-  const raisons: Record<number, string> = { 200: 'OK', 404: 'Not Found', 500: 'Internal Server Error' };
+function reponseAppli(jeu: Shell, r: { code: number; corps: string; type?: string }): Reponse {
+  const raisons: Record<number, string> = { 200: 'OK', 404: 'Not Found', 500: 'Internal Server Error', 503: 'Service Unavailable' };
   const date = new Date(versUtc(systemd(jeu)?.horloge ?? 0)).toUTCString();
   return {
     code: r.code,
     corps: r.corps,
-    entetes: [`HTTP/1.1 ${r.code} ${raisons[r.code] ?? ''}`.trimEnd(), 'Content-Type: text/html; charset=utf-8', `Content-Length: ${new TextEncoder().encode(r.corps).length}`, `Date: ${date}`],
+    entetes: [`HTTP/1.1 ${r.code} ${raisons[r.code] ?? ''}`.trimEnd(), `Content-Type: ${r.type ?? 'text/html; charset=utf-8'}`, `Content-Length: ${new TextEncoder().encode(r.corps).length}`, `Date: ${date}`],
   };
 }
 
@@ -195,6 +195,8 @@ export const RESEAU: Record<string, Commande> = {
         } else if (!args[i].startsWith('-')) positionnels.push(args[i]);
       }
       const entetes = args.includes('-I') || args.includes('--head');
+      // -i : les en-têtes, puis le corps (include).
+      const avecEntetes = args.includes('-i') || args.includes('--include');
       const suivre = args.includes('-L') || args.includes('--location');
       const url = positionnels[0];
       if (!url) return jeu.erreur("curl: try 'curl --help' for more information");
@@ -213,12 +215,16 @@ export const RESEAU: Record<string, Commande> = {
           if (!locaux.includes(cible.toLowerCase())) return jeu.erreur(`curl: (6) Could not resolve host: ${cible}`);
           // Un port publié par un conteneur (docker run -p) : c'est lui qui répond.
           const viaDocker = requeteDocker(jeu, cible.toLowerCase() === 'localhost' ? '127.0.0.1' : cible, port, chemin);
+          // Une appli de la machine, jointe sur son propre port (sans nginx).
+          const viaAppli = port !== 80 && port !== 443 && LOCAL_DE_BASE.includes(cible.toLowerCase()) ? requeteAppli(jeu, port, chemin) : null;
           const r =
             viaDocker !== undefined
               ? viaDocker && viaDocker.code !== 0 && reponseAppli(jeu, viaDocker)
-              : jeu.etat.nginx && (port === 80 || port === 443)
-                ? requete(jeu, nom, chemin, port)
-                : null;
+              : viaAppli
+                ? reponseAppli(jeu, viaAppli)
+                : jeu.etat.nginx && (port === 80 || port === 443)
+                  ? requete(jeu, nom, chemin, port)
+                  : null;
           // Un service qui ne parle pas HTTP (une base de données) : réponse vide.
           if (viaDocker?.code === 0) return jeu.erreur('curl: (52) Empty reply from server');
           if (!r) return jeu.erreur(`curl: (7) Failed to connect to ${cible} port ${port} after 0 ms: Couldn't connect to server`);
@@ -228,7 +234,7 @@ export const RESEAU: Record<string, Commande> = {
           if (probleme) return jeu.erreur(`curl: (60) ${probleme}\n${AIDE_SSL}`);
           const ailleurs = r.entetes.find((e) => e.startsWith('Location: '))?.slice(10);
           if (!suivre || !ailleurs || r.code < 300 || r.code >= 400) {
-            blocs.push(entetes ? r.entetes.join('\n') : r.corps);
+            blocs.push(entetes ? r.entetes.join('\n') : avecEntetes ? `${r.entetes.join('\n')}\n\n${r.corps}` : r.corps);
             return blocs.join('\n\n');
           }
           if (entetes) blocs.push(r.entetes.join('\n'));

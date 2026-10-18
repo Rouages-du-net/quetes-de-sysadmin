@@ -25,6 +25,16 @@ import { miseAJour } from './mise-a-jour';
 import { composition } from './composition';
 import { contournement } from './contournement';
 import { pleinsPouvoirs } from './pleins-pouvoirs';
+import { depotNu } from './depot-nu';
+import { retourArriere } from './retour-arriere';
+import { bleuVert } from './bleu-vert';
+import { canari } from './canari';
+import { migration } from './migration';
+import { rancon } from './rancon';
+import { instantanesChapitre } from './instantanes';
+import { base } from './base';
+import { disquePlein } from './disque-plein';
+import { memoireChapitre } from './memoire';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -54,6 +64,18 @@ export const HISTOIRES: Histoire[] = [
   {
     id: 'fabrique',
     chapitres: [miseAJour, composition, contournement, pleinsPouvoirs],
+  },
+  {
+    id: 'gazette',
+    chapitres: [depotNu, retourArriere, bleuVert, canari, migration],
+  },
+  {
+    id: 'ludotheque',
+    chapitres: [rancon, instantanesChapitre, base],
+  },
+  {
+    id: 'astreinte',
+    chapitres: [disquePlein, memoireChapitre],
   },
 ];
 

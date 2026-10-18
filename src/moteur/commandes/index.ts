@@ -25,6 +25,13 @@ import { BIND } from './bind';
 import { AWK } from './awk';
 import { DOCKER } from './docker';
 import { NC } from './nc';
+import { DIFF } from './diff';
+import { SCRIPTS } from './scripts';
+import { DISQUES } from './disques';
+import { RSNAPSHOT } from './rsnapshot';
+import { POSTGRES } from './postgres';
+import { JOURNAUX } from './journaux';
+import { MEMOIRE } from './memoire';
 
 export interface Contexte {
   args: string[];
@@ -73,6 +80,13 @@ export const COMMANDES: Record<string, Commande> = {
   ...AWK,
   ...DOCKER,
   ...NC,
+  ...DIFF,
+  ...SCRIPTS,
+  ...DISQUES,
+  ...RSNAPSHOT,
+  ...POSTGRES,
+  ...JOURNAUX,
+  ...MEMOIRE,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },

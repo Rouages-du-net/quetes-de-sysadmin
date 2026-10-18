@@ -16,6 +16,7 @@ import { traducteur, typographie, type Langue, type Traduire } from '../textes';
 
 export { decouper, appliquerMode } from './outils';
 import { contenu, decouper, joker, tailleDe, type Mot } from './outils';
+import { lancerScript } from './commandes/scripts';
 
 // Ce que le jeu (les chapitres et les commandes) peut consulter ou modifier.
 export interface Jeu {
@@ -60,6 +61,8 @@ export interface Edition {
   message: string;
   // À la fermeture (ex. crontab -e vérifie et installe) : message à afficher.
   apres?: () => string;
+  // La fermeture change l'état (ex. systemctl edit) : elle compte comme une commande, même sans message.
+  conclure?: boolean;
 }
 
 export class Shell implements Jeu {
@@ -71,6 +74,8 @@ export class Shell implements Jeu {
   termine = false;
   qui = 'vous';
   derniere: Jeu['derniere'] = { ligne: '', commandes: [], sortie: '', erreurs: [], redirection: null };
+  // Le compte sous lequel sudo lance la commande en cours (sudo -u).
+  private comme = 'root';
   // sudo : mot de passe déjà donné ? ligne en attente du mot de passe ?
   private authentifie = false;
   private sermonFait = false;
@@ -197,7 +202,8 @@ export class Shell implements Jeu {
     const proprio = n.proprio ?? 'vous';
     const triplet =
       proprio === utilisateur ? mode.slice(0, 3) : this.groupesDe(utilisateur).includes(n.groupe ?? proprio) ? mode.slice(3, 6) : mode.slice(6, 9);
-    return triplet.includes(droit);
+    // s et t (setuid, setgid, sticky) en dernière position valent aussi x.
+    return triplet.includes(droit) || (droit === 'x' && /[st]$/.test(triplet));
   }
 
   // Droit de traverser (x) chaque lieu qui mène à ce chemin (sans le dernier).
@@ -211,8 +217,14 @@ export class Shell implements Jeu {
     return true;
   }
 
+  /** Ce chemin est-il sur un support monté en lecture seule (mount -o ro) ? */
+  lectureSeule(chemin: string): boolean {
+    return !!(this.montage(this.resoudre(chemin)) as { lectureSeule?: boolean } | null)?.lectureSeule;
+  }
+
   // Droit d'écrire dans le lieu qui contient ce chemin (créer, effacer, déplacer).
   ecritDans(chemin: string): boolean {
+    if (this.lectureSeule(chemin)) return false;
     const parent = this.trouver(chemin + '/..');
     return !!parent && this.traverse(chemin + '/..') && this.peut(parent, 'x') && this.peut(parent, 'w');
   }
@@ -252,6 +264,7 @@ export class Shell implements Jeu {
     if (parent?.type !== 'dossier') return this.t('erreur-introuvable', v);
     const raison = this.blocage(chemin + '/..');
     if (raison) return raison;
+    if (this.lectureSeule(chemin)) return this.t('erreur-lecture-seule', v);
     if (!this.ecritDans(chemin)) return this.t(cmd === 'bash' ? 'redirection-permission' : 'erreur-creation-permission', v);
     const nom = this.nom(chemin);
     const ancien = parent.enfants[nom];
@@ -447,6 +460,25 @@ export class Shell implements Jeu {
     }
   }
 
+  /**
+   * Lance une ligne pour un script (script.ts : crochet de git, script de
+   * déploiement), depuis ce lieu, sans toucher à la ligne en cours : renvoie
+   * ce qu'elle a écrit, si elle a réussi (aucune erreur) et le lieu où le
+   * script se trouve ensuite (cd).
+   */
+  sousCommande(ligne: string, cwd: string): { sortie: string; ok: boolean; cwd: string } {
+    const avant = { cwd: this.cwd, erreurs: this.erreurs, derniere: this.derniere };
+    this.cwd = cwd;
+    try {
+      const sortie = this.tube(ligne, decouper(ligne));
+      return { sortie, ok: this.erreurs.length === 0, cwd: this.cwd };
+    } finally {
+      this.cwd = avant.cwd;
+      this.erreurs = avant.erreurs;
+      this.derniere = avant.derniere;
+    }
+  }
+
   /** Vérifie les événements de l'histoire hors d'une commande (ex. à la reconnexion). */
   evenements(): string {
     return this.conclure('', false);
@@ -485,12 +517,24 @@ export class Shell implements Jeu {
       // Comme le shell : les jokers ne sont pas développés entre guillemets.
       let args = segment.flatMap((m) => (m.cite ? [m.texte] : this.developper(m.texte)));
       let root = false;
+      // sudo -u compte : agir sous ce compte plutôt que root.
+      let comme = 'root';
       if (args[0] === 'sudo') {
         args = args.slice(1);
         root = true;
+        if (args[0] === '-u') {
+          comme = args[1] ?? '';
+          args = args.slice(2);
+          if (!this.comptes.utilisateurs[comme]) {
+            this.erreur(this.t('sudo-compte-inconnu', { compte: comme }));
+            entree = '';
+            return;
+          }
+        }
       }
       commandes.push(args);
       const dernier = i === segments.length - 1 && !redirection;
+      this.comme = comme;
       entree = this.lancer(args, entree, root, dernier);
     });
     let sortie: string = entree ?? '';
@@ -513,6 +557,7 @@ export class Shell implements Jeu {
     const n = this.trouver(fichier);
     if (n?.type === 'dossier') return this.t('redirection-est-un-dossier', { cible: fichier });
     if (n) {
+      if (this.lectureSeule(fichier)) return this.t('erreur-lecture-seule', { commande: 'bash', cible: fichier });
       if (!this.traverse(fichier) || !this.peut(n, 'w')) return this.t('redirection-permission', { cible: fichier });
       const avant = contenu(n, this);
       n.contenu = ajout && avant ? `${avant}\n${texte}` : texte;
@@ -526,13 +571,29 @@ export class Shell implements Jeu {
   // Lance une commande. `dernier` : sa sortie s'affiche à l'écran (sinon elle
   // part dans un tube ou un fichier).
   private lancer(args: string[], entree: string | null, root: boolean, dernier: boolean): string {
-    const [cmd, ...reste] = args;
+    const [brut, ...reste] = args;
+    // /usr/bin/rsnapshot, /bin/ls… : le chemin complet d'une commande du jeu.
+    const cmd = brut && /^\/(usr\/)?s?bin\/[\w.-]+$/.test(brut) && COMMANDES[brut.split('/').at(-1)!] ? brut.split('/').at(-1)! : brut;
     if (!cmd) return '';
     if (root && !this.connues().includes('sudo')) return this.erreur(this.t('sudo-pas-encore'));
     // Vrai comportement : cd est intégré au shell, ce n'est pas un programme.
     if (root && cmd === 'cd') return this.erreur(this.t('sudo-cd'));
     if (cmd === 'help' || cmd === 'aide') return this.t('aide-commandes', { commandes: this.connues().join(', ') });
     if (cmd === 'man' || cmd === 'apropos' || cmd === 'whatis') return this.consulter(cmd, reste);
+    // Un chemin (./deployer.sh, /srv/site/deployer.sh) : un script, s'il est exécutable.
+    if (cmd.includes('/')) {
+      const n = this.trouver(cmd);
+      if (!n) return this.erreur(this.t('script-introuvable', { commande: cmd }));
+      if (n.type === 'dossier') return this.erreur(this.t('script-dossier', { commande: cmd }));
+      if (!this.traverse(cmd) || !this.peut(n, 'x') || !this.peut(n, 'r')) return this.erreur(this.t('script-permission', { commande: cmd }));
+      const avant = this.qui;
+      if (root) this.qui = this.comme;
+      try {
+        return lancerScript(this, cmd, reste);
+      } finally {
+        this.qui = avant;
+      }
+    }
     // Une page de manuel de fichier (section 5, ex. sshd_config) n'est pas une commande.
     const commande: Commande | undefined = COMMANDES[cmd]?.section === 5 ? undefined : COMMANDES[cmd];
     if (!this.connues().includes(cmd) || !commande)
@@ -542,7 +603,7 @@ export class Shell implements Jeu {
     const invalide = optionInvalide(cmd, commande, reste, this.t);
     if (invalide) return this.erreur(invalide);
     const avant = this.qui;
-    if (root) this.qui = 'root';
+    if (root) this.qui = this.comme;
     try {
       return commande.lancer({ args: reste, entree, jeu: this, dernier });
     } finally {
@@ -586,9 +647,10 @@ export class Shell implements Jeu {
   /** Ferme l'éditeur ; renvoie les messages de l'histoire en attente. */
   quitterEdition(): string {
     const apres = this.edition?.apres?.() ?? '';
+    const conclure = this.edition?.conclure;
     this.edition = null;
     // Ce que la fermeture a changé (ex. une crontab installée) compte comme une commande.
-    const suite = apres ? this.conclure('', true) : '';
+    const suite = apres || conclure ? this.conclure('', true) : '';
     const messages = [apres, ...this.enAttente, suite].filter(Boolean).join('\n\n');
     this.enAttente = [];
     return messages;

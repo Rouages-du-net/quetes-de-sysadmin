@@ -67,6 +67,8 @@ export const TEXTE: Record<string, Commande> = {
       }
       // Écart volontaire : le vrai grep ne dit rien quand il ne trouve rien ;
       // ici, on le précise (seulement à l'écran, jamais dans un tube).
+      // -q : rien à l'écran ; seul compte le code de retour (échec si rien trouvé).
+      if (lettres.has('q')) return sorties.length ? '' : c.jeu.erreur('');
       if (!sorties.length && c.dernier && ts.length) c.jeu.erreur(c.jeu.t('grep-rien', { motif }));
       return sorties.join('\n');
     },

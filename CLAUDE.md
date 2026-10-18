@@ -42,6 +42,22 @@ rouages.net.
   les dossiers montés) ; les applis des images sont
   déclarées par les chapitres (`APPLIS`) ; la commande dans `commandes/docker.ts`.
   Docker Compose (`compose.yaml`, `.env`, réseau du projet) dans `src/moteur/compose.ts`.
+- `src/moteur/script.ts` : un petit `/bin/sh` pour les crochets de git et
+  les scripts (`sh`, `./script`, `test`, `date` dans `commandes/scripts.ts`) ;
+  git (dépôts nus, `push`, crochets) dans `commandes/git.ts`, `diff` dans
+  `commandes/diff.ts`.
+- `chapitres/kiosque.ts` : l'appli des chapitres de déploiement de La
+  Gazette (bleu/vert, `/health`, migration, visites simulées) ; nginx sait
+  répartir entre plusieurs serveurs (`upstream`).
+- `commandes/disques.ts` (`lsblk`, `mount`, `umount`, `etat.peripheriques`),
+  `commandes/rsnapshot.ts`, `src/moteur/postgres.ts` et `commandes/postgres.ts`
+  (`psql`, `pg_dump`, `pg_restore`, `createdb`, `dropdb`).
+- `src/moteur/ouverts.ts` (fichiers tenus ouverts par un service : `lsof`,
+  place des fichiers effacés), `commandes/journaux.ts` (`lsof`, `truncate`,
+  `logrotate`) ; `src/moteur/memoire.ts` (mémoire des processus, OOM killer,
+  `MemoryMax=`) et `commandes/memoire.ts` (`free`, `top`, `dmesg`) ; les
+  surcharges systemd (`systemctl edit`, `set-property`, `daemon-reload`)
+  dans `commandes/systemd.ts`.
 - `commandes/restic.ts` : dépôts restic (instantanés, déduplication,
   politiques de `forget`, `prune`), rangés dans `etat.restic`.
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;
