@@ -64,8 +64,9 @@ man-cp = copie un fichier (copy). L’original reste en place. -r copie un lieu 
     .exemple-1 = faire une copie à côté
     .exemple-2 = copier ici (.) un fichier d’ailleurs
 man-curl = va chercher une page web, comme un navigateur mais sans l’afficher joliment. -I ne demande que l’en-tête de la réponse (le code d’état, par exemple 200 = OK). En HTTPS (https://…), curl vérifie le certificat du serveur comme un navigateur : dates de validité, nom du site, autorité de confiance ; s’il y a un problème, il s’arrête avec une erreur 60.
-    .synopsis = curl [-I] [-k] adresse
+    .synopsis = curl [-I] [-i] [-k] adresse
     .option-I = ne demande que l’en-tête de la réponse (HEAD).
+    .option-i = montre l’en-tête de la réponse, puis la page (include).
     .option-k = ne vérifie pas le certificat (insecure) : à ne faire que pour un essai, jamais pour de vrai.
 man-cut = découpe chaque ligne en champs selon le séparateur et garde le champ N (ou N,M). Ex. : cut -d " " -f 1 garde le premier mot.
     .synopsis = cut -d séparateur -f N [fichier]

@@ -396,6 +396,7 @@ const RAISONS: Record<number, string> = {
   403: 'Forbidden',
   404: 'Not Found',
   429: 'Too Many Requests',
+  500: 'Internal Server Error',
   502: 'Bad Gateway',
   503: 'Service Temporarily Unavailable',
   504: 'Gateway Time-out',
@@ -416,12 +417,28 @@ export interface Appli {
   service: string;
   // Les pages qu'elle sert, par chemin ; ailleurs, la page 404 d'Express.
   pages: Record<string, string>;
+  // Ou une appli qui calcule sa réponse (version, configuration, santé…).
+  repondre?: (jeu: Jeu, chemin: string) => { code: number; corps: string; type?: string };
   // Requêtes par seconde qu'elle sait servir (sans limite si absent).
   capacite?: number;
 }
 
 const PAGE_EXPRESS = (chemin: string) =>
   `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET ${chemin}</pre>\n</body>\n</html>`;
+
+/** Ce que répond une appli (sans passer par nginx). */
+export function repondreAppli(jeu: Jeu, appli: Appli, chemin: string): { code: number; corps: string; type?: string } {
+  if (appli.repondre) return appli.repondre(jeu, chemin.split('?')[0]);
+  const corps = appli.pages[chemin.split('?')[0]];
+  return corps === undefined ? { code: 404, corps: PAGE_EXPRESS(chemin) } : { code: 200, corps };
+}
+
+/** Une appli jointe directement sur son port (curl http://127.0.0.1:3001/) : null si personne n'écoute. */
+export function requeteAppli(jeu: Jeu, port: number, chemin: string): { code: number; corps: string; type?: string } | null {
+  const appli: Appli | undefined = jeu.etat.applis?.[`127.0.0.1:${port}`];
+  if (!appli || systemd(jeu)?.services[appli.service]?.etat !== 'active') return null;
+  return repondreAppli(jeu, appli, chemin);
+}
 
 // Une ligne de /var/log/nginx/error.log (si le fichier existe).
 function journalErreur(jeu: Jeu, niveau: string, message: string) {
@@ -577,8 +594,8 @@ function traiter(jeu: Jeu, hote: string, chemin: string, port: number, client: C
         return reponse(504, page(504));
       }
     }
-    const corps = appli.pages[amont.split('?')[0]];
-    return corps === undefined ? reponse(404, PAGE_EXPRESS(amont)) : reponse(200, corps);
+    const r = repondreAppli(jeu, appli, amont);
+    return reponse(r.code, r.corps);
   }
   // Un fichier : root + chemin, ou alias à la place du préfixe de la location.
   const sansRequete = chemin.split('?')[0] || '/';

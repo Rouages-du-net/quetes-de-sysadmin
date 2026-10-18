@@ -35,7 +35,7 @@ export const PAGES: Record<string, Page> = {
   },
   cp: { options: ['r'], exemples: ['cp levain levain_2', 'cp ~/Marche/fromage .'], voir: ['mv', 'rm'] },
   crontab: { exemples: ['crontab -e', 'crontab -l', '15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/'], voir: ['rsync', 'nano', 'systemctl'] },
-  curl: { options: ['I', 'k'], voir: ['dig', 'nginx', 'openssl'] },
+  curl: { options: ['I', 'i', 'k'], voir: ['dig', 'nginx', 'openssl'] },
   df: { options: ['h'], voir: ['du'] },
   diff: {
     options: ['u', 'r', 'q'],

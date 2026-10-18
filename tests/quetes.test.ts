@@ -1047,6 +1047,60 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('La Gazette, chapitre 3 — Bleu et vert (déployer sans coupure)', () => {
+      const editer = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const VERS_VERT = (t: string) => t.replace('127.0.0.1:3001', '127.0.0.1:3002');
+      const SMTP = (t: string) => `${t}\nKIOSQUE_SMTP=smtp.gazette.example`;
+
+      it('solution : la 1.5.0 sur vert, /health, la configuration des notes, puis nginx bascule et bleu reste allumé', () => {
+        const { s, tout } = jouer('bleu-vert', [
+          'curl -s http://localhost:3001/health',
+          'ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert',
+          'sudo systemctl start kiosque-vert',
+          'gazette-2027',
+          'curl -s localhost:3002/health',
+          'cat /srv/kiosque/versions/1.5.0/NOTES.txt',
+        ]);
+        expect(tout).toContain('{"status":"ok","version":"1.4.2"}');
+        expect(tout).toContain('{"status":"error","version":"1.5.0","error":"KIOSQUE_SMTP is not set"}');
+        contient(tout, '/health répond 503');
+        editer(s, '/etc/kiosque/kiosque.env', SMTP);
+        const sante = ['sudo systemctl restart kiosque-vert', 'curl -i localhost:3002/health'].map((l) => s.executer(l)).join('\n');
+        expect(sante).toContain('HTTP/1.1 200 OK');
+        expect(sante).toContain('{"status":"ok","version":"1.5.0"}');
+        editer(s, '/etc/nginx/sites-available/gazette', VERS_VERT);
+        const fin = ['sudo nginx -t', 'sudo systemctl reload nginx'].map((l) => s.executer(l)).join('\n');
+        expect(fin).toContain('test is successful');
+        contient(fin, 'Tu as terminé le chapitre 3 de La Gazette');
+        expect(s.executer('curl -s http://gazette.example/kiosque/')).toContain('Kiosque 1.5.0');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : sans redémarrer, bascule avant /health, sans reload, puis bleu arrêté trop tôt', () => {
+        const { s, tout } = jouer('bleu-vert', [
+          'sudo systemctl start kiosque-vert',
+          'gazette-2027',
+          'ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert',
+          'curl -s localhost:3002/health',
+        ]);
+        contient(tout, 'un programme lit son code');
+        s.executer('sudo systemctl restart kiosque-vert');
+        editer(s, '/etc/nginx/sites-available/gazette', VERS_VERT);
+        contient(s.executer('curl -s http://gazette.example/kiosque/') ?? '', 'il ne relit sa configuration');
+        contient(s.executer('sudo systemctl reload nginx') ?? '', 'les lecteur·rices reçoivent une erreur');
+        expect(s.executer('curl -s http://gazette.example/kiosque/')).toBe('Internal Server Error');
+        editer(s, '/etc/kiosque/kiosque.env', SMTP);
+        s.executer('sudo systemctl restart kiosque-vert');
+        expect(s.termine).toBe(true);
+        // Une fois la bascule faite, arrêter bleu enlève le filet.
+        contient(s.executer('sudo systemctl stop kiosque-bleu') ?? '', 'plus de retour arrière instantané');
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

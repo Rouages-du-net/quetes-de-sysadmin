@@ -27,6 +27,7 @@ import { contournement } from './contournement';
 import { pleinsPouvoirs } from './pleins-pouvoirs';
 import { depotNu } from './depot-nu';
 import { retourArriere } from './retour-arriere';
+import { bleuVert } from './bleu-vert';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -59,7 +60,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'gazette',
-    chapitres: [depotNu, retourArriere],
+    chapitres: [depotNu, retourArriere, bleuVert],
   },
 ];
 
