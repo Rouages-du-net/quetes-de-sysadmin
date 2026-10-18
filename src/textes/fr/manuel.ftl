@@ -223,6 +223,25 @@ man-sshd_config = le fichier de configuration du serveur SSH : une option par li
     .exemple-1 = modifier la configuration
     .exemple-2 = les fichiers inclus, qui passent AVANT la suite du fichier principal
 
+man-ufw = gère le pare-feu de la machine (Uncomplicated Firewall) : quelles connexions ENTRANTES sont acceptées. On fixe une politique par défaut (le plus sûr : tout refuser en entrée), puis on autorise une à une les portes utiles, par numéro de port (22/tcp), par nom de service (ssh, http) ou par profil d'application (OpenSSH, « Nginx Full »). La première règle qui correspond décide. limit accepte mais freine les connexions trop rapprochées (contre la force brute). Avant enable, autoriser SSH : sinon, plus aucune nouvelle connexion. Réservé à root.
+    .synopsis = ufw status [verbose|numbered] ; ufw enable|disable ; ufw default allow|deny|reject [incoming|outgoing] ; ufw allow|deny|reject|limit RÈGLE ; ufw delete RÈGLE|NUMÉRO ; ufw app list
+    .exemple-1 = l'état du pare-feu, les politiques par défaut et les règles
+    .exemple-2 = autoriser SSH (profil d'application)
+    .exemple-3 = autoriser SSH seulement depuis une adresse
+    .exemple-4 = refuser par défaut tout ce qui entre
+    .exemple-5 = activer le pare-feu (après avoir autorisé SSH !)
+    .exemple-6 = supprimer une règle
+man-ss = affiche les « sockets » de la machine : les ports où un programme attend des connexions, et les connexions établies (socket statistics). -t TCP, -u UDP, -l seulement ce qui écoute, -a tout, -n les numéros de port plutôt que leurs noms, -p le programme (il faut être root pour voir ceux des autres comptes). Une adresse 0.0.0.0 veut dire « sur toutes les interfaces », donc joignable depuis le réseau ; 127.0.0.1, seulement depuis la machine elle-même.
+    .synopsis = ss [-t] [-u] [-l] [-a] [-n] [-p]
+    .option-t = sockets TCP.
+    .option-u = sockets UDP.
+    .option-l = seulement les sockets en écoute (listening).
+    .option-a = toutes les sockets, en écoute et établies.
+    .option-n = numéros de port, sans les traduire en noms de services.
+    .option-p = le programme qui utilise chaque socket.
+    .exemple-1 = qui écoute, sur quelle adresse et quel port ?
+    .exemple-2 = les connexions TCP établies
+
 ## Mise en page du manuel et messages de man-db et des coreutils
 
 # En-tête de chaque page, entre « LS(1) » et « LS(1) »

@@ -112,6 +112,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `systemctl` sans être root | « Access denied », il faut `sudo` | demande le mot de passe (polkit) |
 | `sudo` après `reboot` | se souvient encore du mot de passe | le redemande |
 | `sshd` | une partie des mots-clés ; toutes les erreurs listées d'un coup ; pas de mot de passe demandé quand `PasswordAuthentication yes` (le refus annonce `publickey,password`) | s'arrête à la première erreur ; propose le mot de passe |
+| `ufw` | règles IPv4 et IPv6 confondues (lignes « (v6) » pour la forme) ; pas de règles sortantes, de routage, de journalisation, d'`insert` ni de `reset` ; messages proches de la traduction française d'ufw | tout cela |
+| `ss` | sockets décrites par le chapitre, et la session ssh en cours | toutes les sockets du système |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -285,7 +287,7 @@ temporaires, effacés avec `-delete`. L'archive compressée (`tar -czf`)
 fait alors 48 Mo ; `tar -tzf` la vérifie. Morale d'archiviste : une seule
 copie n'est pas une sauvegarde.
 
-## Histoire 6 : Les Lettres du quartier (commencée)
+## Histoire 6 : Les Lettres du quartier (en cours)
 
 L'association de Kofi (vue dans Le Paquet perdu) loue un petit serveur pour
 son site, `lettres.example` (machine `lettres`, même adresse que dans Le
@@ -321,6 +323,33 @@ Autre solution acceptée : un fichier `sshd_config.d/00-…conf`, lu en
 premier. Débrief : clés seulement, jamais root en direct, `sshd -t` et
 `sshd -T`, garder une session ouverte, liens vers `sshd_config(5)` et
 `sshd(8)` (man.openbsd.org).
+
+### Chapitre 2 — Le pare-feu (fait)
+
+Un scan (sortie de nmap) montre la base de données du site (MariaDB, 3306)
+joignable depuis internet. Le pare-feu simulé (`src/moteur/parefeu.ts`)
+suit ufw : politique par défaut, règles ordonnées (la première qui
+correspond décide), connexions établies jamais coupées. La commande `ssh`
+du poste s'y heurte : `deny` donne `Connection timed out`, `reject`
+`Connection refused`.
+
+| Étape | Commande apprise |
+|---|---|
+| Qui écoute, et où ? | `ss -tln`, `sudo ss -tlnp` (0.0.0.0 contre 127.0.0.1) |
+| Autoriser les portes utiles | `sudo ufw allow "Nginx Full"`, `sudo ufw limit OpenSSH` (ou `allow from 192.0.2.2 to any port 22`) |
+| Activer | `sudo ufw enable` (question o/n) |
+| Vérifier | `sudo ufw status verbose`, puis `exit` et `ssh lettres` |
+
+Objectif vérifié sur l'état : pare-feu actif, entrant refusé par défaut,
+SSH joignable depuis le poste, 80 et 443 depuis internet, 3306 fermé, et
+une nouvelle connexion ssh réussie depuis l'activation.
+
+Pièges prévus : activer avant d'autoriser SSH (la session tient, la
+suivante est bloquée : le menu sert de console de secours), `default allow`
+(la base reste ouverte), oublier le site, ne pas activer. Autre solution
+acceptée : `default reject` et SSH depuis l'adresse du poste seulement.
+Débrief : `ss -tlnp` d'abord, autoriser SSH avant `enable`, `limit`,
+`bind-address`, liens vers `ufw(8)` et `ss(8)`.
 
 ## Idées pour la suite
 

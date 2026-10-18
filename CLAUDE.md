@@ -24,6 +24,8 @@ rouages.net.
   (`systemctl`, `journalctl`, `reboot` dans `commandes/systemd.ts`).
 - `src/moteur/sshd.ts` : le serveur SSH d'une machine (lecture de
   `sshd_config` comme OpenSSH, configuration appliquée au reload).
+- `src/moteur/parefeu.ts` : le pare-feu d'une machine (règles ufw ; `ssh`
+  s'y heurte).
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;
   on part du poste et on se connecte en `ssh` à la machine de chaque
   histoire (`commandes/ssh.ts`).

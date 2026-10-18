@@ -93,7 +93,8 @@
   overflow-y: auto;
   cursor: text;
 }
-.qds .sortie pre { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: inherit; }
+.qds .sortie pre { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: inherit; overflow-x: auto; }
+.qds .sortie .colonnes { white-space: pre; word-break: normal; }
 .qds .sortie .cmd { color: color-mix(in oklab, var(--_terminal-texte) 75%, var(--_terminal-fond)); }
 .qds form { display: flex; flex-wrap: wrap; gap: 0 0.5ch; margin: 0; }
 .qds .invite { color: var(--_terminal-invite); overflow-wrap: anywhere; }

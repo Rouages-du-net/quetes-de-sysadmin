@@ -17,6 +17,7 @@ import type { Shell } from '../shell';
 import { joker } from '../outils';
 import { cleHote, clePrivee, empreinte, machineParAdresse, POSTE, type Machine } from '../machines';
 import { autorise, methodes } from '../sshd';
+import { verdict, type PareFeu } from '../parefeu';
 import type { Commande } from './index';
 
 const USAGE = 'usage: ssh [-i identity_file] [-p port] destination [command [argument ...]]';
@@ -148,6 +149,14 @@ export const SSH: Record<string, Commande> = {
       if (m === POSTE || adresse.startsWith('127.') || (m && d.port !== '22'))
         return jeu.erreur(`ssh: connect to host ${d.hote} port ${d.port}: Connection refused`);
       if (!m) return jeu.erreur(`ssh: connect to host ${d.hote} port ${d.port}: No route to host`);
+      // Le pare-feu d'en face : deny laisse attendre (timeout), reject refuse tout de suite.
+      const pf: PareFeu | null = jeu.etat.pareFeuDistant?.(m.nom) ?? null;
+      const passe = pf ? verdict(pf, Number(d.port), POSTE.adresse) : 'accepte';
+      if (passe !== 'accepte')
+        return jeu.erreur(
+          `ssh: connect to host ${d.hote} port ${d.port}: ${passe === 'bloque' ? 'Connection timed out' : 'Connection refused'}\n` +
+            jeu.t('ssh-pare-feu', { machine: m.nom }),
+        );
       const remarque = commande.length ? jeu.t('ssh-commande-distante') + '\n' : '';
       const connu = (jeu.lire('~/.ssh/known_hosts') ?? '').split('\n').some((l) => l.split(' ')[0] === d.hote);
       if (connu) return remarque + authentifier(jeu, d, m);

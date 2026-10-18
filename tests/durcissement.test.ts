@@ -86,3 +86,58 @@ for (const langue of LANGUES)
       expect(c.termines).not.toContain('fermer-la-porte');
     });
   });
+
+// Les Lettres du quartier, « Le pare-feu » : ufw.
+for (const langue of LANGUES)
+  describe(`Le pare-feu — ${langue}`, () => {
+    const fr = langue === LANGUE_DE_REFERENCE;
+    const partie = () => {
+      const c = new Console({ langue, termines: [...EFFACEUR, 'fermer-la-porte'] });
+      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+      jouer(['ssh lettres', 'yes']);
+      expect(c.distant?.shell.chapitre.id).toBe('pare-feu');
+      return { c, jouer };
+    };
+
+    it('solution : ss, ufw, le piège de l’activation, la reconnexion', () => {
+      const { c, jouer } = partie();
+      let tout = jouer(['cat scan_yasmine.txt', 'ss -tln', 'ufw status', 'sudo ufw allow "Nginx Full"', 'fourmis-2026', 'sudo ufw enable', 'o']);
+      expect(tout).toContain('0.0.0.0:3306');
+      if (fr) expect(tout).toContain('ERREUR : Vous devez être root pour exécuter ce script');
+      if (fr) expect(tout).toContain('bloque SSH');
+      tout = jouer(['sudo ufw limit OpenSSH', 'sudo ufw status verbose', 'exit', 'ssh lettres']);
+      expect(tout).toContain('LIMIT IN');
+      if (fr) expect(tout).toContain('https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html');
+      expect(c.termines).toContain('pare-feu');
+    });
+
+    it('une autre solution : reject par défaut, SSH depuis le poste seulement', () => {
+      const { c, jouer } = partie();
+      jouer([
+        'sudo ufw default reject incoming', 'fourmis-2026', 'sudo ufw allow from 192.0.2.2 to any port 22 proto tcp',
+        'sudo ufw allow 80/tcp', 'sudo ufw allow https', 'sudo ufw enable', 'y', 'exit', 'ssh lettres',
+      ]);
+      expect(c.termines).toContain('pare-feu');
+    });
+
+    it('s’enfermer dehors : timeout, puis la console de secours', () => {
+      const { c, jouer } = partie();
+      jouer(['sudo ufw allow http', 'fourmis-2026', 'sudo ufw allow https', 'sudo ufw enable', 'o']);
+      const dehors = jouer(['exit', 'ssh lettres']);
+      expect(dehors).toContain('ssh: connect to host lettres.example port 22: Connection timed out');
+      expect(c.invite()).toBe('vous@poste:~$');
+      c.connecter('lettres');
+      jouer(['sudo ufw allow OpenSSH', 'exit', 'ssh lettres']);
+      expect(c.termines).toContain('pare-feu');
+    });
+
+    it('fausses pistes : laisser la base ouverte, couper le site, ne pas activer', () => {
+      const { c, jouer } = partie();
+      const tout = jouer(['sudo ufw allow OpenSSH', 'fourmis-2026', 'sudo ufw default allow', 'sudo ufw enable', 'o', 'sudo ufw default deny', 'exit', 'ssh lettres']);
+      if (fr) expect(tout).toContain('la base de données (3306) est toujours');
+      if (fr) expect(tout).toContain('le site des Lettres ne répond plus');
+      expect(c.termines).not.toContain('pare-feu');
+      jouer(['sudo ufw disable', 'sudo ufw allow "Nginx Full"', 'exit', 'ssh lettres']);
+      expect(c.termines).not.toContain('pare-feu');
+    });
+  });

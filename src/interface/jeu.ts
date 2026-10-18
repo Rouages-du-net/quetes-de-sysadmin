@@ -96,10 +96,19 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const historique: string[] = [];
   let position = 0;
 
+  // Les tableaux d'au moins trois colonnes (ls -l, ufw status, ss, ps…) ne
+  // se replient pas : sur un petit écran, le bloc défile de côté. Le reste,
+  // paragraphes et consignes (« tape :   ls »), passe à la ligne.
+  const enColonnes = (ligne: string) => (ligne.match(/\S {2,}(?=\S)/g) ?? []).length >= 2;
   const afficher = (texte: string, classe?: string) => {
     if (!texte) return;
     const pre = document.createElement('pre');
-    pre.textContent = texte;
+    const lignes = texte.split('\n');
+    lignes.forEach((ligne, i) => {
+      const fin = i < lignes.length - 1 ? '\n' : '';
+      if (enColonnes(ligne)) pre.append(el('span', { class: 'colonnes' }, ligne + fin));
+      else pre.append(ligne + fin);
+    });
     if (classe) pre.className = classe;
     sortie.appendChild(pre);
   };

@@ -42,6 +42,8 @@ export class Console {
     const s = new Shell(poste(cles), this.t.langue, 'poste');
     // ssh demande au serveur d'en face sa configuration appliquée (sshd).
     s.etat.sshdDistant = (nom: string) => this.sessions.get(nom)?.etat.sshd?.charge ?? null;
+    // … et son pare-feu (ufw), qui peut bloquer la connexion avant même sshd.
+    s.etat.pareFeuDistant = (nom: string) => this.sessions.get(nom)?.etat.ufw ?? null;
     if (hotesConnus) s.placer('ssh', '~/.ssh/known_hosts', f(hotesConnus, { lignes: true }));
     return s;
   }

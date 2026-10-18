@@ -14,6 +14,8 @@ import { COMPTES } from './comptes';
 import { SYSTEMD } from './systemd';
 import { EDITEUR } from './editeur';
 import { SSHD } from './sshd';
+import { UFW } from './ufw';
+import { SS } from './ss';
 
 export interface Contexte {
   args: string[];
@@ -51,6 +53,8 @@ export const COMMANDES: Record<string, Commande> = {
   ...SYSTEMD,
   ...EDITEUR,
   ...SSHD,
+  ...UFW,
+  ...SS,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },
