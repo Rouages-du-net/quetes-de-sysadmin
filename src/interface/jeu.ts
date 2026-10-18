@@ -5,7 +5,7 @@
 
 import { Shell } from '../moteur/shell';
 import { HISTOIRES } from '../moteur/chapitres';
-import { textes, type Langue } from '../textes';
+import { traducteur, typographie, type Langue } from '../textes';
 
 export interface Options {
   langue?: Langue;
@@ -15,8 +15,6 @@ export interface Options {
   cle?: string;
 }
 
-// Espaces insécables de la typographie française (avant : ; ! ? », après «).
-const typo = (t: string) => t.replace(/« /g, '« ').replace(/ ([:;!?»])/g, ' $1');
 
 function el<K extends keyof HTMLElementTagNameMap>(nom: K, attrs: Record<string, string> = {}, ...enfants: (Node | string)[]) {
   const e = document.createElement(nom);
@@ -26,27 +24,29 @@ function el<K extends keyof HTMLElementTagNameMap>(nom: K, attrs: Record<string,
 }
 
 export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) {
-  const t = textes(options.langue);
+  const t = traducteur(options.langue);
+  const typo = (texte: string) => typographie(texte, t.langue);
+  const titreHistoire = (h: number) => t(`histoire-${HISTOIRES[h].id}`);
   const CLE = options.cle ?? 'quetes-de-sysadmin';
   const chapitres = (h: number) => HISTOIRES[h].chapitres;
 
   // ——— Construction ———
   const boutonsHistoires = HISTOIRES.map((h, i) =>
     el('button', { type: 'button', 'data-histoire': String(i) },
-      el('span', { class: 'titre' }, h.titre),
-      el('span', { class: 'resume' }, typo(h.resume)),
+      el('span', { class: 'titre' }, titreHistoire(i)),
+      el('span', { class: 'resume' }, typo(t(`histoire-${h.id}.resume`))),
       el('span', { class: 'etat' })),
   );
-  const navHistoires = el('nav', { class: 'histoires', 'aria-label': t('histoires.titre') },
+  const navHistoires = el('nav', { class: 'histoires', 'aria-label': t('histoires-titre') },
     el('ol', {}, ...boutonsHistoires.map((b) => el('li', {}, b))));
 
   const navsChapitres = HISTOIRES.map((h, i) =>
-    el('nav', { class: 'chapitres', 'aria-label': t('chapitres.titre', { histoire: h.titre }), 'data-chapitres': String(i) },
+    el('nav', { class: 'chapitres', 'aria-label': t('chapitres-titre', { histoire: titreHistoire(i) }), 'data-chapitres': String(i) },
       el('ol', {}, ...h.chapitres.map((c, j) =>
         el('li', {}, el('button', { type: 'button', 'data-chapitre': String(j) },
-          el('span', { class: 'num' }, t('chapitre.numero', { numero: c.numero })),
-          el('span', { class: 'titre' }, c.titre),
-          el('span', { class: 'resume' }, typo(c.resume)),
+          el('span', { class: 'num' }, t('chapitre-numero', { numero: c.numero })),
+          el('span', { class: 'titre' }, t(`chapitre-${c.id}`)),
+          el('span', { class: 'resume' }, typo(t(`chapitre-${c.id}.resume`))),
           el('span', { class: 'etat' })))))),
   );
 
@@ -55,19 +55,19 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const invite = el('label', { class: 'invite', for: id });
   const saisie = el('input', {
     id, type: 'text', spellcheck: 'false', autocapitalize: 'off', autocorrect: 'off', autocomplete: 'off',
-    'aria-label': t('saisie.etiquette'),
+    'aria-label': t('saisie-etiquette'),
   }) as HTMLInputElement;
   const form = el('form', { autocomplete: 'off' }, invite, saisie);
   const terminal = el('div', { class: 'terminal' }, sortie, form);
-  const suivant = el('button', { type: 'button', class: 'bouton principal' }, t('bouton.suivant'));
+  const suivant = el('button', { type: 'button', class: 'bouton principal' }, t('bouton-suivant'));
   const fin = el('div', { class: 'fin', hidden: '' }, suivant);
-  const recommencer = el('button', { type: 'button', class: 'lien' }, t('bouton.recommencer'));
+  const recommencer = el('button', { type: 'button', class: 'lien' }, t('bouton-recommencer'));
   const astuces = el('p', { class: 'astuces' }, typo(t('astuces')), ' ', recommencer);
   const credit = el('p', { class: 'credit' }, typo(t('credit')), ' ',
-    el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit.lienProjet')), ' · ',
-    el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit.lienOriginal')));
+    el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit-lien-projet')), ' · ',
+    el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-lien-original')));
 
-  const jeu = el('div', { class: 'qds', lang: options.langue ?? 'fr' }, navHistoires, ...navsChapitres, terminal, fin, astuces, credit);
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, terminal, fin, astuces, credit);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -109,7 +109,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
       const faits = chapitres(h).filter((c) => termines.includes(c.id)).length;
       const total = chapitres(h).length;
       b.querySelector('.etat')!.textContent =
-        faits === total ? t('etat.histoireTerminee') : total > 1 ? t('etat.chapitresFaits', { faits, total }) : '';
+        faits === total ? t('etat-histoire-terminee') : total > 1 ? t('etat-chapitres-faits', { faits, total }) : '';
     });
     navsChapitres.forEach((nav, h) => {
       nav.hidden = h !== histoire || chapitres(h).length < 2;
@@ -117,10 +117,10 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
         b.disabled = !ouvert(h, c);
         b.setAttribute('aria-current', String(h === histoire && c === courant));
         b.querySelector('.etat')!.textContent = termines.includes(chapitres(h)[c].id)
-          ? t('etat.chapitreTermine')
+          ? t('etat-chapitre-termine')
           : ouvert(h, c)
             ? ''
-            : t('etat.verrouille');
+            : t('etat-verrouille');
       });
     });
   };
@@ -129,13 +129,13 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     histoire = h;
     courant = c;
     const chapitre = chapitres(h)[c];
-    shell = new Shell(chapitre);
+    shell = new Shell(chapitre, t.langue);
     sortie.replaceChildren();
     fin.hidden = true;
     const titre =
       chapitres(h).length > 1
-        ? t('chapitre.titre', { histoire: HISTOIRES[h].titre, numero: chapitre.numero, titre: chapitre.titre })
-        : HISTOIRES[h].titre;
+        ? t('chapitre-titre-complet', { histoire: titreHistoire(h), numero: chapitre.numero, titre: t(`chapitre-${chapitre.id}`) })
+        : titreHistoire(h);
     afficher(`— ${titre} —`);
     afficher(shell.executer(`cat ${chapitre.accueil}`) ?? '');
     majInvite();

@@ -131,7 +131,7 @@ function trouverCommit(d: Depot, ref: string): Commit | null {
 function ecrire(jeu: Shell, chemin: string, texte: string): string | null {
   const n = jeu.trouver(chemin);
   if (n?.type === 'fichier') {
-    if (!jeu.peut(n, 'w')) return `error: impossible d'ouvrir '${jeu.nom(chemin)}' : Permission non accordée`;
+    if (!jeu.peut(n, 'w')) return jeu.t('git-ecriture-permission', { fichier: jeu.nom(chemin) });
     n.contenu = texte;
     delete n.taille;
     return null;
@@ -139,13 +139,11 @@ function ecrire(jeu: Shell, chemin: string, texte: string): string | null {
   return jeu.placer('git', chemin, { type: 'fichier', contenu: texte, proprio: jeu.qui, lignes: true });
 }
 
-const PAS_DE_DEPOT = "fatal: ni ceci ni aucun de ses répertoires parents n'est un dépôt git : .git";
-
 const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
   init: (jeu) => {
     const depots: Record<string, Depot> = (jeu.etat.git ??= {});
     const chemin = jeu.cwd;
-    if (depots[chemin]) return `Dépôt Git existant réinitialisé dans ${chemin}/.git/`;
+    if (depots[chemin]) return jeu.t('git-init-existant', { chemin });
     const erreur = jeu.placer('git', `${chemin}/.git`, {
       type: 'dossier',
       proprio: jeu.qui,
@@ -153,91 +151,81 @@ const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
     });
     if (erreur) return jeu.erreur(erreur);
     depots[chemin] = { commits: [], index: {} };
-    return `Dépôt Git vide initialisé dans ${chemin}/.git/`;
+    return jeu.t('git-init-vide', { chemin });
   },
 
   status: (jeu) => {
     const ici = depotIci(jeu);
-    if (!ici) return jeu.erreur(PAS_DE_DEPOT);
+    if (!ici) return jeu.erreur(jeu.t('git-pas-de-depot'));
     const { depot } = ici;
     const head = tete(depot)?.fichiers ?? {};
     const w = travail(jeu, ici.chemin);
     const indexes: string[] = [];
     const nonIndexes: string[] = [];
     const nonSuivis: string[] = [];
+    const ligne = (etat: string, fichier: string) => '\t' + jeu.t(`git-status-${etat}`, { fichier });
     for (const nom of Object.keys({ ...head, ...depot.index }).sort()) {
-      if (!(nom in depot.index)) indexes.push(`\tsupprimé :        ${nom}`);
-      else if (!(nom in head)) indexes.push(`\tnouveau fichier : ${nom}`);
-      else if (head[nom] !== depot.index[nom]) indexes.push(`\tmodifié :         ${nom}`);
+      if (!(nom in depot.index)) indexes.push(ligne('supprime', nom));
+      else if (!(nom in head)) indexes.push(ligne('nouveau', nom));
+      else if (head[nom] !== depot.index[nom]) indexes.push(ligne('modifie', nom));
     }
     for (const nom of Object.keys(depot.index).sort()) {
-      if (!(nom in w)) nonIndexes.push(`\tsupprimé :        ${nom}`);
-      else if (w[nom] !== depot.index[nom]) nonIndexes.push(`\tmodifié :         ${nom}`);
+      if (!(nom in w)) nonIndexes.push(ligne('supprime', nom));
+      else if (w[nom] !== depot.index[nom]) nonIndexes.push(ligne('modifie', nom));
     }
     for (const nom of Object.keys(w).sort()) if (!(nom in depot.index)) nonSuivis.push(`\t${nom}`);
-    const blocs = ['Sur la branche main'];
-    if (!depot.commits.length) blocs.push('\nAucun commit');
-    if (indexes.length)
-      blocs.push('\nModifications qui seront validées :\n  (utilisez "git restore --staged <fichier>..." pour désindexer)\n' + indexes.join('\n'));
-    if (nonIndexes.length)
-      blocs.push(
-        '\nModifications qui ne seront pas validées :\n  (utilisez "git add <fichier>..." pour mettre à jour ce qui sera validé)\n  (utilisez "git restore <fichier>..." pour annuler les modifications dans le répertoire de travail)\n' +
-          nonIndexes.join('\n'),
-      );
-    if (nonSuivis.length)
-      blocs.push('\nFichiers non suivis :\n  (utilisez "git add <fichier>..." pour inclure dans ce qui sera validé)\n' + nonSuivis.join('\n'));
-    if (!indexes.length && !nonIndexes.length && !nonSuivis.length) blocs.push('rien à valider, la copie de travail est propre');
+    const blocs = [jeu.t('git-status-branche')];
+    if (!depot.commits.length) blocs.push('\n' + jeu.t('git-status-aucun-commit'));
+    if (indexes.length) blocs.push('\n' + jeu.t('git-status-indexes') + '\n' + indexes.join('\n'));
+    if (nonIndexes.length) blocs.push('\n' + jeu.t('git-status-non-indexes') + '\n' + nonIndexes.join('\n'));
+    if (nonSuivis.length) blocs.push('\n' + jeu.t('git-status-non-suivis') + '\n' + nonSuivis.join('\n'));
+    if (!indexes.length && !nonIndexes.length && !nonSuivis.length) blocs.push(jeu.t('git-status-propre'));
     else if (!indexes.length)
-      blocs.push(
-        nonSuivis.length && !nonIndexes.length
-          ? '\naucune modification ajoutée à la validation mais des fichiers non suivis sont présents (utilisez "git add" pour les suivre)'
-          : '\naucune modification n\'a été ajoutée à la validation (utilisez "git add")',
-      );
+      blocs.push('\n' + jeu.t(nonSuivis.length && !nonIndexes.length ? 'git-status-seulement-non-suivis' : 'git-status-rien-ajoute'));
     return blocs.join('\n');
   },
 
   add: (jeu, args) => {
     const ici = depotIci(jeu);
-    if (!ici) return jeu.erreur(PAS_DE_DEPOT);
-    if (!args.length) return jeu.erreur('Rien de spécifié, rien n\'a été ajouté.\n(par exemple : git add roman.txt, ou git add . pour tout)');
+    if (!ici) return jeu.erreur(jeu.t('git-pas-de-depot'));
+    if (!args.length) return jeu.erreur(jeu.t('git-add-rien'));
     const w = travail(jeu, ici.chemin);
     const tous = args.includes('.') || args.includes('-A') || args.includes('--all');
     const noms = tous ? [...new Set([...Object.keys(w), ...Object.keys(ici.depot.index)])] : args.map((a) => jeu.nom(a));
     for (const nom of noms) {
       if (nom in w) ici.depot.index[nom] = w[nom];
       else if (nom in ici.depot.index) delete ici.depot.index[nom];
-      else return jeu.erreur(`fatal: le chemin '${nom}' ne correspond à aucun fichier`);
+      else return jeu.erreur(jeu.t('git-chemin-inconnu', { fichier: nom }));
     }
     return '';
   },
 
   commit: (jeu, args) => {
     const ici = depotIci(jeu);
-    if (!ici) return jeu.erreur(PAS_DE_DEPOT);
+    if (!ici) return jeu.erreur(jeu.t('git-pas-de-depot'));
     const i = args.indexOf('-m');
     const message = i >= 0 ? args[i + 1] : undefined;
-    if (!message)
-      return jeu.erreur('Écrire le message avec -m, entre guillemets : git commit -m "Ce que j’ai changé"\n(le vrai git ouvrirait un éditeur de texte)');
+    if (!message) return jeu.erreur(jeu.t('git-commit-sans-message'));
     const parent = tete(ici.depot);
     const avant = parent?.fichiers ?? {};
     const { fichiers, plus, moins } = compte(avant, ici.depot.index);
-    if (!fichiers) return jeu.erreur('Sur la branche main\nrien à valider (utilisez "git add" pour indiquer ce qu’il faut valider)');
+    if (!fichiers) return jeu.erreur(jeu.t('git-rien-a-valider'));
     const c = nouveauCommit(parent, message, jeu.etat.auteur ?? 'vous <vous@example.org>', jeu.etat.date ?? 'Tue Oct 13 21:04:00 2026 +0200', ici.depot.index);
     ici.depot.commits.push(c);
-    const pluriel = (n: number, s: string, p: string) => `${n} ${n > 1 ? p : s}`;
     // Comme git : on ne mentionne pas les insertions ou suppressions nulles.
     const bilan = [
-      pluriel(fichiers, 'fichier modifié', 'fichiers modifiés'),
-      ...(plus ? [pluriel(plus, 'insertion(+)', 'insertions(+)')] : []),
-      ...(moins ? [pluriel(moins, 'suppression(-)', 'suppressions(-)')] : []),
+      jeu.t('git-commit-fichiers', { nombre: fichiers }),
+      ...(plus ? [jeu.t('git-commit-insertions', { nombre: plus })] : []),
+      ...(moins ? [jeu.t('git-commit-suppressions', { nombre: moins })] : []),
     ].join(', ');
-    return `[main${parent ? '' : ' (commit racine)'} ${c.id.slice(0, 7)}] ${message}\n ${bilan}`;
+    const entete = jeu.t(parent ? 'git-commit-entete' : 'git-commit-entete-racine', { id: c.id.slice(0, 7), message });
+    return `${entete}\n ${bilan}`;
   },
 
   log: (jeu, args) => {
     const ici = depotIci(jeu);
-    if (!ici) return jeu.erreur(PAS_DE_DEPOT);
-    if (!ici.depot.commits.length) return jeu.erreur("fatal: votre branche actuelle 'main' ne contient encore aucun commit");
+    if (!ici) return jeu.erreur(jeu.t('git-pas-de-depot'));
+    if (!ici.depot.commits.length) return jeu.erreur(jeu.t('git-aucun-commit-branche'));
     const court = args.includes('--oneline');
     return [...ici.depot.commits]
       .reverse()
@@ -251,7 +239,7 @@ const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
 
   diff: (jeu, args) => {
     const ici = depotIci(jeu);
-    if (!ici) return jeu.erreur(PAS_DE_DEPOT);
+    if (!ici) return jeu.erreur(jeu.t('git-pas-de-depot'));
     const { depot } = ici;
     const w = travail(jeu, ici.chemin);
     const indexe = args.includes('--staged') || args.includes('--cached');
@@ -264,7 +252,7 @@ const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
       apres = depot.index;
     } else if (mots[0] && !jeu.existe(`${ici.chemin}/${mots[0]}`)) {
       const c = trouverCommit(depot, mots[0]);
-      if (!c) return jeu.erreur(`fatal: argument '${mots[0]}' ambigu : révision inconnue ou chemin inexistant.`);
+      if (!c) return jeu.erreur(jeu.t('git-revision-ambigue', { revision: mots[0] }));
       avant = c.fichiers;
       reste = mots.slice(1);
     }
@@ -279,9 +267,9 @@ const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
 
   show: (jeu, args) => {
     const ici = depotIci(jeu);
-    if (!ici) return jeu.erreur(PAS_DE_DEPOT);
+    if (!ici) return jeu.erreur(jeu.t('git-pas-de-depot'));
     const c = trouverCommit(ici.depot, args[0] ?? 'HEAD');
-    if (!c) return jeu.erreur(`fatal: argument '${args[0]}' ambigu : révision inconnue ou chemin inexistant.`);
+    if (!c) return jeu.erreur(jeu.t('git-revision-ambigue', { revision: String(args[0]) }));
     const parent = c.parent ? ici.depot.commits.find((p) => p.id === c.parent)!.fichiers : {};
     const noms = [...new Set([...Object.keys(parent), ...Object.keys(c.fichiers)])].sort();
     return [
@@ -292,19 +280,19 @@ const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
 
   restore: (jeu, args) => {
     const ici = depotIci(jeu);
-    if (!ici) return jeu.erreur(PAS_DE_DEPOT);
+    if (!ici) return jeu.erreur(jeu.t('git-pas-de-depot'));
     const source = args.find((a) => a.startsWith('--source='))?.slice(9);
     const indexe = args.includes('--staged');
     const noms = args.filter((a) => !a.startsWith('-')).map((a) => jeu.nom(a));
-    if (!noms.length) return jeu.erreur('fatal: vous devez spécifier un ou plusieurs chemins à restaurer');
+    if (!noms.length) return jeu.erreur(jeu.t('git-restore-sans-chemin'));
     let depuis: Record<string, string> = ici.depot.index;
     if (source) {
       const c = trouverCommit(ici.depot, source);
-      if (!c) return jeu.erreur(`fatal: référence invalide : ${source}`);
+      if (!c) return jeu.erreur(jeu.t('git-reference-invalide', { revision: source }));
       depuis = c.fichiers;
     } else if (indexe) depuis = tete(ici.depot)?.fichiers ?? {};
     for (const nom of noms) {
-      if (!(nom in depuis)) return jeu.erreur(`error: la spécification de chemin '${nom}' ne correspond à aucun fichier connu de git`);
+      if (!(nom in depuis)) return jeu.erreur(jeu.t('git-restore-inconnu', { fichier: nom }));
       if (indexe) ici.depot.index[nom] = depuis[nom];
       else {
         const erreur = ecrire(jeu, `${ici.chemin}/${nom}`, depuis[nom]);
@@ -317,7 +305,7 @@ const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
   // git checkout ID -- fichier : l'ancienne façon de restaurer un fichier.
   checkout: (jeu, args) => {
     const sep = args.indexOf('--');
-    if (sep < 0) return jeu.erreur('Dans ce jeu, git checkout sert à restaurer un fichier : git checkout ID -- fichier\n(on préfère aujourd’hui : git restore --source=ID fichier)');
+    if (sep < 0) return jeu.erreur(jeu.t('git-checkout-usage'));
     const ref = args.slice(0, sep)[0];
     return SOUS.restore(jeu, [...(ref ? [`--source=${ref}`] : []), ...args.slice(sep + 1)]);
   },
@@ -325,21 +313,11 @@ const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
 
 export const GIT: Record<string, Commande> = {
   git: {
-    manuel: `git commande — garde l'historique d'un dossier (un « dépôt »). Les principales commandes :
-  git init                    transforme le lieu en dépôt
-  git status                  ce qui a changé depuis le dernier commit
-  git add fichier (ou .)      prépare un fichier pour le prochain commit
-  git commit -m "message"     enregistre une photo de tous les fichiers préparés
-  git log [--oneline]         l'historique des commits
-  git diff [ID] [fichier]     les différences (- avant, + après)
-  git show [ID]               un commit et ses changements
-  git restore --source=ID f   remet le fichier f tel qu'il était dans le commit ID
-Un commit se désigne par le début de son identifiant (au moins 4 caractères), ou par HEAD (le dernier), HEAD~1 (l'avant-dernier)…`,
     lancer: ({ args, jeu }) => {
       const [sous, ...reste] = args;
-      if (!sous) return jeu.erreur('usage : git <commande> [<args>]\n(voir man git)');
+      if (!sous) return jeu.erreur(jeu.t('git-usage'));
       const f = SOUS[sous];
-      if (!f) return jeu.erreur(`git : '${sous}' n'est pas une commande git (dans ce jeu : ${Object.keys(SOUS).join(', ')}).`);
+      if (!f) return jeu.erreur(jeu.t('git-sous-commande-inconnue', { commande: sous, commandes: Object.keys(SOUS).join(', ') }));
       return f(jeu, reste);
     },
   },

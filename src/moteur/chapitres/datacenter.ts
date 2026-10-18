@@ -9,6 +9,7 @@
 
 import { d, f, type Chapitre } from '../monde';
 import type { Processus } from '../commandes/systeme';
+import type { Traduire } from '../../textes';
 
 const M = '/home/vous';
 const ROBOT = '198.51.100.77';
@@ -44,7 +45,7 @@ const JOURNAL = journal();
 export const ERREURS_503 = JOURNAL.erreurs503;
 export const REQUETES_ROBOT = JOURNAL.requetesRobot;
 
-const BLOQUES_INITIAL = `# Adresses bloquées par nginx (une règle par ligne)
+const bloquesInitial = (t: Traduire) => `# ${t('premier-jour-bloques-commentaire')}
 deny 203.0.113.5;
 deny 192.0.2.99;`;
 
@@ -53,14 +54,14 @@ const catalogueStable = (): Processus => ({ pid: 4243, utilisateur: 'www-data', 
 export const datacenter: Chapitre = {
   id: 'premier-jour',
   numero: 1,
-  titre: 'Premier jour',
-  resume: 'Lire un journal de serveur, enchaîner les commandes avec |, écrire avec > et >>, arrêter un processus.',
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'wc', 'grep', 'cut', 'sort', 'uniq', 'echo', 'tee', 'cp', 'mv', 'rm', 'ps', 'kill', 'systemctl', 'sudo', 'whoami'],
   maison: M,
   accueil: 'courriel_awa.txt',
   final: 'rapport',
   motDePasse: 'bienvenue-2026',
-  etat: () => ({
+  // t : les textes dans la langue du jeu (français tant que le shell ne le
+  // transmet pas).
+  etat: (t) => ({
     processus: [
       { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
       { pid: 612, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx' },
@@ -70,11 +71,11 @@ export const datacenter: Chapitre = {
     ] satisfies Processus[],
     services: {
       nginx: { description: 'A high performance web server and a reverse proxy server', actif: true },
-      catalogue: { description: 'Catalogue en ligne de la médiathèque (php-fpm)', actif: true },
+      catalogue: { description: t('premier-jour-service-catalogue'), actif: true },
     },
     // Configuration que nginx a réellement chargée (il ne relit le fichier
     // qu'au reload ou au restart).
-    confChargee: BLOQUES_INITIAL,
+    confChargee: bloquesInitial(t),
     surSystemctl: (jeu: any, action: string, nom: string) => {
       if (nom !== 'nginx' || action === 'stop') return '';
       jeu.etat.confChargee = jeu.lire(BLOQUES) ?? '';
@@ -86,77 +87,17 @@ export const datacenter: Chapitre = {
       const bloque = jeu.etat.confChargee.includes(`deny ${ROBOT};`);
       const nouveau = bloque ? catalogueStable() : { ...catalogueStable(), pid: p.pid + 2, cpu: 99.1, mem: 37.9 };
       jeu.etat.processus.push(nouveau);
-      return bloque
-        ? `systemd relance le service catalogue : nouveau processus ${nouveau.pid}. Le robot étant bloqué, il reste calme.`
-        : `systemd relance aussitôt le service catalogue : nouveau processus ${nouveau.pid}… et le robot recommence. Il est déjà à 99 % !`;
+      return jeu.t(bloque ? 'premier-jour-relance-calme' : 'premier-jour-relance-robot', { pid: String(nouveau.pid) });
     },
   }),
-  creerMonde: () =>
+  creerMonde: (t) =>
     d(
       {
         home: d(
           {
             vous: d({
-              'courriel_awa.txt': f(`
-De : Awa (responsable d'exploitation)
-À : toi, stagiaire
-Objet : Bienvenue… et urgence !
-
-Bienvenue dans l'équipe ! Tu tombes bien : depuis 20 h 25, le site de la
-médiathèque répond par des erreurs 503 (« Service indisponible »).
-
-Je suis coincée en réunion. Peux-tu enquêter ? Le journal du serveur web
-est ici :
-
-  /var/log/nginx/access.log
-
-Chaque ligne est une visite : l'adresse IP du visiteur, la date, la page
-demandée, puis le code de réponse (200 = OK, 503 = en panne).
-
-1. Combien y a-t-il d'erreurs 503 dans le journal ?
-2. Qui envoie autant de demandes ?
-3. Remets le site en état, puis écris-moi un petit rapport dans
-   ~/rapport.txt : le nombre d'erreurs 503 et l'adresse du coupable.
-
-Ton mot de passe provisoire (pour sudo) : bienvenue-2026
-Change-le vite, et ne le note nulle part !
-
-Mes notes sont dans ~/notes_awa.txt.
-`),
-              'notes_awa.txt': f(`
-NOTES D'AWA — LES COMMANDES DU QUOTIDIEN
-
-  head fichier        le début (10 lignes)       tail fichier   la fin
-  wc -l fichier       compte les lignes
-  grep motif fichier  les lignes qui contiennent le motif
-
-La vraie force d'Unix : le TUBE |. La sortie d'une commande devient
-l'entrée de la suivante. Par exemple :
-
-  grep " 503 " access.log | wc -l     compte les lignes qui contiennent « 503 »
-
-(les guillemets gardent les espaces : on cherche « 503 » entouré d'espaces,
-pour ne pas tomber sur un 503 caché dans une adresse ou une taille).
-
-Pour savoir qui demande le plus souvent :
-
-  cut -d " " -f 1 fichier     garde le 1er champ de chaque ligne (l'IP)
-  sort                        trie les lignes
-  uniq -c                     compte les lignes identiques qui se suivent
-  sort -n                     trie par nombre
-  tail -3                     garde les 3 dernières (les plus grandes)
-
-On les enchaîne toutes avec des | . Essaie !
-
-Écrire dans un fichier :
-  commande > fichier     ÉCRASE le fichier avec le résultat
-  commande >> fichier    AJOUTE le résultat à la fin
-
-Le serveur web (nginx) bloque les adresses listées dans
-/etc/nginx/bloques.conf, au format : deny ADRESSE;
-Ce fichier appartient à root. Après l'avoir modifié, il faut demander à
-nginx de le relire : sudo systemctl reload nginx
-`),
+              'courriel_awa.txt': f(t('premier-jour-courriel-awa')),
+              'notes_awa.txt': f(t('premier-jour-notes-awa')),
             }),
           },
           undefined,
@@ -185,8 +126,8 @@ nginx de le relire : sudo systemctl reload nginx
           {
             nginx: d(
               {
-                'bloques.conf': f(BLOQUES_INITIAL, { proprio: 'root', lignes: true }),
-                'bloques.conf.bak': f(BLOQUES_INITIAL, { proprio: 'root', lignes: true }),
+                'bloques.conf': f(bloquesInitial(t), { proprio: 'root', lignes: true }),
+                'bloques.conf.bak': f(bloquesInitial(t), { proprio: 'root', lignes: true }),
               },
               undefined,
               { proprio: 'root' },
@@ -206,79 +147,43 @@ nginx de le relire : sudo systemctl reload nginx
         const cmds = j.derniere.commandes.flat();
         return cmds.includes('grep') && j.derniere.sortie.trim().split(/\s+/)[0] === String(ERREURS_503);
       },
-      message: `
-Exact : ${ERREURS_503} erreurs 503. Tu viens d'enchaîner deux petits outils :
-grep filtre les lignes, wc les compte. C'est toute la philosophie d'Unix :
-des outils simples, qu'on branche les uns aux autres.
-
-Question suivante : qui envoie autant de demandes ? (voir ~/notes_awa.txt)
-`,
+      message: (j) => j.t('premier-jour-evenement-compte', { erreurs: String(ERREURS_503) }),
     },
     {
       id: 'robot',
       condition: (j) => j.derniere.commandes.flat().includes('uniq') && j.derniere.sortie.includes(ROBOT),
-      message: `
-${ROBOT} : ${REQUETES_ROBOT} demandes en quelques minutes, toutes vers
-/catalogue/recherche. Ce n'est pas un humain : c'est un robot qui aspire
-le catalogue, et le service « catalogue » n'arrive plus à suivre.
-
-Regarde ce qui se passe sur la machine :  ps aux
-`,
+      message: (j) => j.t('premier-jour-evenement-robot', { robot: ROBOT, requetes: String(REQUETES_ROBOT) }),
     },
     {
       id: 'surcharge',
       condition: (j) => j.derniere.commandes[0]?.[0] === 'ps' && j.derniere.sortie.includes('99.3'),
-      message: `
-Le processus 4242 (php-fpm: pool catalogue) utilise 99 % du processeur.
-Tu pourrais l'arrêter avec kill… mais si le robot continue, il retombera
-aussitôt. Bloque d'abord le robot dans /etc/nginx/bloques.conf.
-
-Ce fichier appartient à root, et  sudo echo … >> fichier  ne marche pas :
-la redirection >> est faite par TON shell, pas par sudo. L'astuce
-classique, c'est tee, qui écrit ce qu'il reçoit dans un fichier :
-
-  echo "deny ${ROBOT};" | sudo tee -a ${BLOQUES}
-`,
+      message: (j) => j.t('premier-jour-evenement-surcharge', { robot: ROBOT, bloques: BLOQUES }),
     },
     {
       id: 'ecrase',
       condition: (j) => !(j.lire(BLOQUES) ?? '').includes('deny 203.0.113.5;'),
-      message: `
-Oups ! Les anciennes règles de bloques.conf ont disparu : le fichier a été
-ÉCRASÉ (> ou tee sans -a) au lieu d'être complété (>> ou tee -a). Pas de
-panique : une copie de sauvegarde existe. Restaure-la avec
-sudo cp /etc/nginx/bloques.conf.bak ${BLOQUES}, puis recommence avec -a.
-`,
+      message: (j) => j.t('premier-jour-evenement-ecrase', { bloques: BLOQUES }),
     },
     {
       id: 'regle',
       condition: (j) => (j.lire(BLOQUES) ?? '').includes(`deny ${ROBOT};`),
-      message: `La règle est écrite. Mais nginx ne relit pas son fichier tout seul : sudo systemctl reload nginx`,
+      message: (j) => j.t('premier-jour-evenement-regle'),
     },
     {
       id: 'bloque',
       condition: (j) => j.etat.confChargee.includes(`deny ${ROBOT};`),
       message: (j) => {
         const p = (j.etat.processus as Processus[]).find((q) => q.cpu > 90);
-        return `
-nginx a relu sa configuration : ${ROBOT} reçoit maintenant « 403 Forbidden »
-au lieu de pages.${p ? ` Reste le processus ${p.pid}, toujours bloqué à 99 % : arrête-le
-(il appartient à www-data, donc… sudo). systemd le relancera tout propre.` : ''}
-`;
+        return p
+          ? j.t('premier-jour-evenement-bloque-processus', { robot: ROBOT, pid: String(p.pid) })
+          : j.t('premier-jour-evenement-bloque', { robot: ROBOT });
       },
     },
     {
       id: 'repare',
       condition: (j) =>
         j.drapeaux.has('bloque') && !(j.etat.processus as Processus[]).some((p) => p.cpu > 90),
-      message: `
-Le site de la médiathèque répond de nouveau ! Dernière chose : le rapport
-pour Awa, dans ~/rapport.txt. Avec > on crée le fichier, avec >> on ajoute
-une ligne. Par exemple :
-
-  grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt
-  echo "Coupable : ${ROBOT}" >> ~/rapport.txt
-`,
+      message: (j) => j.t('premier-jour-evenement-repare', { robot: ROBOT }),
     },
     {
       id: 'rapport',
@@ -286,18 +191,7 @@ une ligne. Par exemple :
         const r = j.lire(`${M}/rapport.txt`) ?? '';
         return j.drapeaux.has('repare') && r.includes(String(ERREURS_503)) && r.includes(ROBOT);
       },
-      message: `
-Awa sort de réunion et lit ton rapport : « ${ERREURS_503} erreurs, robot
-identifié, bloqué, service relancé. Pour un premier jour… bravo ! »
-
-FIN DU CHAPITRE « PREMIER JOUR ».
-
-Tu sais maintenant lire un journal (head, tail, grep), compter et classer
-(wc, cut, sort, uniq), enchaîner les outils avec |, écrire dans un fichier
-(> écrase, >> ajoute), et gérer processus et services (ps, kill,
-systemctl). Ce sont les gestes de tous les jours des personnes qui font
-tourner les serveurs d'internet.
-`,
+      message: (j) => j.t('premier-jour-evenement-rapport', { erreurs: String(ERREURS_503) }),
     },
   ],
 };

@@ -23,7 +23,8 @@ rouages.net.
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).
 - `src/element.ts` : l'élément `<quetes-de-sysadmin>` (Shadow DOM).
-- `src/textes/` : textes de l'interface par langue (clés, `Intl`).
+- `src/textes/<langue>/*.ftl` : tous les textes (Fluent), chargés par
+  `src/textes/index.ts` (`traducteur()`, `typographie()`).
 - `tests/quetes.test.ts` : chaque chapitre rejoué ; `tests/navigateur.mjs` :
   Chromium, 1000 et 375 px, CSP de `.htaccess` appliquée, page 404,
   intégration dans une autre page.
@@ -40,10 +41,11 @@ npm run preview &           # http://localhost:4340, puis :
 npm run test:navigateur
 ```
 
-**Dette connue** : les textes des histoires, des commandes et du manuel sont
-encore écrits en français dans `src/moteur/`. Les extraire vers `src/textes/`
-est une tâche de la phase 0 (voir la feuille de route) ; tout nouveau texte
-va directement dans `src/textes/`.
+**Textes** : tout texte affiché (histoire, dialogue, débrief, message,
+page `man`) va dans `src/textes/fr/*.ftl` (format Fluent), jamais dans le
+code ; le code appelle `t('id', { variable })` ou `jeu.t(...)`. Mode
+d'emploi : `docs/TRADUIRE.md`. `tests/textes.test.ts` échoue si du français
+reste dans `src/moteur/` ou `src/interface/`.
 
 ## Langue
 
@@ -96,12 +98,14 @@ Le jeu sera traduit une fois terminé. Tout le code doit le permettre dès
 maintenant :
 
 - **Aucun texte en dur dans le code** : histoires, dialogues, débriefs,
-  messages du jeu et pages `man` vivent dans des fichiers de textes par langue
-  (le français est la langue de référence) ; le code n'utilise que des clés.
-- **Pluriels, nombres et dates** via `Intl` (`Intl.PluralRules`,
-  `Intl.NumberFormat`, `Intl.DateTimeFormat`), jamais par concaténation.
+  messages du jeu et pages `man` vivent dans `src/textes/<langue>/*.ftl`
+  (format **Fluent**, le français est la langue de référence) ; le code
+  n'utilise que des identifiants (voir `docs/TRADUIRE.md`).
+- **Pluriels, nombres et dates** via Fluent (sélecteurs, qui s'appuient sur
+  `Intl`) ou `Intl` directement, jamais par concaténation. Un nombre
+  technique (PID, port, taille brute) passe en texte : `String(pid)`.
 - **Pas de phrase fabriquée par morceaux** : une phrase entière par clé, avec
-  des variables nommées (`{fichier}`), car l'ordre des mots change d'une
+  des variables nommées (`{ $fichier }`), car l'ordre des mots change d'une
   langue à l'autre.
 - **Noms de lieux et d'objets traduisibles**, mais toujours faciles à taper :
   prévoir pour chaque langue des noms sans caractère difficile à saisir, et
