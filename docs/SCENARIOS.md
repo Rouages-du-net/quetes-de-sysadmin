@@ -134,6 +134,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
 | Docker | images d'un registre simulé, conteneurs (couche, volumes, dossiers montés, ports, `--restart`), `run`, `ps`, `images`, `pull`, `logs` (`-n`, `-t`), `exec` (`ls`, `cat`, `env`, `id`, `whoami`), `cp`, `stop`, `start`, `restart`, `rm`, `port`, `update --restart`, `inspect` (`-f '{{.Champ}}'`), `volume` ; sans `-d`, `run` rend la main ; pas de réseau entre conteneurs hors Compose, pas de `build` | tout Docker |
 | Docker Compose | `compose.yaml` en YAML réduit (correspondances, listes, chaînes, `[a, b]`) ; clés `image`, `ports`, `volumes`, `environment`, `env_file`, `depends_on`, `restart` ; `up` (recrée ce qui a changé), `down` (`-v`), `ps`, `logs`, `config`, `restart`, `stop`, `start`, `exec`, `pull` ; un service qui échoue au démarrage est relancé une fois s'il a une politique `restart` | toute la spécification Compose, `build`, `healthcheck`, profils |
+| Docker et le pare-feu | un port publié sur 0.0.0.0 répond de l'extérieur quelles que soient les règles ufw (comme les règles iptables de Docker) ; `nc -zv` depuis une autre machine ; `system df`, `image prune` (`-a`), `container prune`, `volume prune` (`-a`), `system prune` (`-a`, `--volumes`), `rmi` | chaîne DOCKER-USER, ufw-docker, `iptables -L` |
+| `nc` | `-z`, `-v`, une plage de ports ; sans `-z`, rend la main | netcat complet (écouter, envoyer, proxy) |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -625,7 +627,7 @@ Débrief : lire les journaux avant d'agir, limiter par adresse là où c'est
 coûteux, rafale et `nodelay`, 429, `deny` contre règle durable ; liens vers
 `limit_req`, le format des journaux et awk (POSIX).
 
-## Histoire 7 : La Fabrique (en cours)
+## Histoire 7 : La Fabrique (en cours, trois chapitres)
 
 Le fablab du quartier (machine `fabrique`, 192.0.2.15) prête des outils aux
 habitant·es grâce à l'outilthèque, une petite appli web qui tourne dans
@@ -694,6 +696,36 @@ ne sert qu'à l'initialisation ; `down -v` efface les volumes), `.env`
 lisible par tous, l'oubli de `restart`. Débrief : nom des services, volume
 nommé, secrets dans `.env`, `config`, `down -v`, `restart` ; liens vers la
 documentation de Compose et l'image PostgreSQL.
+
+### Chapitre 3 — Le trou dans le pare-feu (fait)
+
+Rania a testé le serveur depuis chez elle : PostgreSQL répond sur le port
+5432, alors qu'ufw n'autorise que SSH, 8080 et 8081. Yasmine avait ajouté
+`ports: - "5432:5432"` à la base pour pgAdmin. Docker publie ce port avec
+ses propres règles iptables, appliquées avant celles d'ufw. Et le disque est
+plein à 92 %.
+
+| Étape | Commande apprise |
+|---|---|
+| Tester comme le monde | depuis le poste : `nc -zv fabrique 5432` (puis 22, 3306…) |
+| Comprendre | `sudo ss -tlnp` (docker-proxy sur 0.0.0.0:5432), `sudo ufw status` (pas de 5432) ; `ufw deny 5432` ne change rien |
+| Fermer | dans `compose.yaml` : retirer `ports:` de la base, ou `"127.0.0.1:5432:5432"` ; `sudo docker compose up -d` ; retester depuis le poste |
+| Faire de la place | `df -h /`, `sudo docker system df`, `docker image prune -a`, `docker container prune` |
+
+Objectif vérifié sur l'état : le port 5432 ne répond plus depuis
+l'extérieur, les deux applis répondent toujours, le disque est sous 75 %, et
+les volumes utiles (dont `wiki-ancien`, qu'aucun conteneur n'utilise) sont
+toujours là.
+
+Pièges prévus : croire `ufw status`, ajouter une règle ufw (sans effet),
+`docker image prune` sans `-a` (trop peu de place gagnée),
+`docker volume prune -a` qui efface le wiki (le chapitre se recommence
+depuis le menu), une image utilisée par un conteneur arrêté (protégée).
+Autres solutions acceptées : plus de port du tout pour la base,
+`docker system prune -a -f`, `docker rmi`. Débrief : publier le moins
+possible, `127.0.0.1` et tunnel SSH, tester de l'extérieur, `system df` et
+`prune`, le danger de `volume prune -a` ; liens vers la documentation de
+Docker (ufw, ports publiés, ménage).
 
 ## Idées pour la suite
 

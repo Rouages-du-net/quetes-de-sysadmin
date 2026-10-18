@@ -23,6 +23,7 @@ import { chezMoi } from './chez-moi';
 import { concert } from './concert';
 import { miseAJour } from './mise-a-jour';
 import { composition } from './composition';
+import { contournement } from './contournement';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -51,7 +52,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'fabrique',
-    chapitres: [miseAJour, composition],
+    chapitres: [miseAJour, composition, contournement],
   },
 ];
 

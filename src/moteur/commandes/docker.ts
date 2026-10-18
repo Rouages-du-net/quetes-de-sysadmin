@@ -15,6 +15,7 @@ import {
   identifiant,
   lancer,
   lireDans,
+  majDisque,
   listerDans,
   nomImage,
   rfc3339,
@@ -394,6 +395,135 @@ function exec(d: EtatDocker, jeu: Shell, args: string[]): string {
   );
 }
 
+// ——— Le disque : system df, prune, rmi ———
+
+const utilisees = (d: EtatDocker) => new Set(d.conteneurs.map((c) => c.image));
+const volumesUtilises = (d: EtatDocker) => new Set(d.conteneurs.flatMap((c) => c.montages.filter((m) => m.type === 'volume').map((m) => m.source)));
+const tailleVolume = (v: EtatDocker['volumes'][string]) => Object.values(v.donnees).reduce((t, x) => t + x.length, 0) + (v.taille ?? 0);
+
+function systemeDf(d: EtatDocker): string {
+  const imgs = Object.values(d.images);
+  const enService = utilisees(d);
+  const taille = imgs.reduce((t, i) => t + i.taille, 0);
+  const libre = imgs.filter((i) => !enService.has(nomImage(i))).reduce((t, i) => t + i.taille, 0);
+  const volumes = Object.entries(d.volumes);
+  const vUtilises = volumesUtilises(d);
+  const tailleVolumes = volumes.reduce((t, [, v]) => t + tailleVolume(v), 0);
+  const vLibre = volumes.filter(([n]) => !vUtilises.has(n)).reduce((t, [, v]) => t + tailleVolume(v), 0);
+  const pourcent = (a: number, b: number) => `${tailleDocker(a)} (${b ? Math.round((a / b) * 100) : 0}%)`;
+  const arretes = d.conteneurs.filter((c) => c.etat !== 'running');
+  return tableau(
+    ['TYPE', 'TOTAL', 'ACTIVE', 'SIZE', 'RECLAIMABLE'],
+    [
+      ['Images', String(imgs.length), String(imgs.filter((i) => enService.has(nomImage(i))).length), tailleDocker(taille), pourcent(libre, taille)],
+      [
+        'Containers',
+        String(d.conteneurs.length),
+        String(d.conteneurs.length - arretes.length),
+        tailleDocker(d.conteneurs.length * 4096),
+        pourcent(arretes.length * 4096, d.conteneurs.length * 4096),
+      ],
+      ['Local Volumes', String(volumes.length), String(vUtilises.size), tailleDocker(tailleVolumes), pourcent(vLibre, tailleVolumes)],
+      ['Build Cache', '0', '0', '0B', '0B'],
+    ],
+  );
+}
+
+const AVERTISSEMENTS = {
+  image: 'WARNING! This will remove all dangling images.',
+  imageTout: 'WARNING! This will remove all images without at least one container associated to them.',
+  container: 'WARNING! This will remove all stopped containers.',
+  volume: 'WARNING! This will remove anonymous local volumes not used by at least one container.',
+  volumeTout: 'WARNING! This will remove all local volumes not used by at least one container.',
+};
+
+// docker image|container|volume|system prune : demande confirmation, sauf avec -f.
+function elaguer(d: EtatDocker, jeu: Shell, quoi: 'image' | 'container' | 'volume' | 'system', options: string[]): string {
+  const tout = options.some((o) => o === '-a' || o === '--all');
+  const force = options.some((o) => o === '-f' || o === '--force');
+  const avecVolumes = options.includes('--volumes');
+  const faire = (): string => {
+    const lignes: string[] = [];
+    let recupere = 0;
+    if (quoi === 'container' || quoi === 'system') {
+      const arretes = d.conteneurs.filter((c) => c.etat !== 'running');
+      d.conteneurs = d.conteneurs.filter((c) => c.etat === 'running');
+      if (arretes.length) lignes.push('Deleted Containers:', ...arretes.map((c) => c.id), '');
+      recupere += arretes.length * 4096;
+    }
+    if (quoi === 'image' || quoi === 'system') {
+      const enService = utilisees(d);
+      const parties = Object.entries(d.images).filter(([, i]) => !enService.has(nomImage(i)) && (tout || i.depot === '<none>'));
+      for (const [cle] of parties) delete d.images[cle];
+      if (parties.length)
+        lignes.push(
+          'Deleted Images:',
+          ...parties.flatMap(([, i]) => [...(i.depot === '<none>' ? [] : [`untagged: ${nomImage(i)}`]), `deleted: sha256:${i.id}`]),
+          '',
+        );
+      recupere += parties.reduce((t, [, i]) => t + i.taille, 0);
+    }
+    // Les volumes nommés ne partent qu'avec volume prune -a (depuis Docker 23).
+    if (quoi === 'volume' && tout) {
+      const enService = volumesUtilises(d);
+      const partis = Object.keys(d.volumes).filter((n) => !enService.has(n));
+      recupere += partis.reduce((t, n) => t + tailleVolume(d.volumes[n]), 0);
+      for (const n of partis) delete d.volumes[n];
+      if (partis.length) lignes.push('Deleted Volumes:', ...partis, '');
+      jeu.etat.dockerVolumesElagues = [...(jeu.etat.dockerVolumesElagues ?? []), ...partis];
+    }
+    majDisque(jeu);
+    return [...lignes, `Total reclaimed space: ${tailleDocker(recupere)}`].join('\n');
+  };
+  const avertissement =
+    quoi === 'system'
+      ? [
+          'WARNING! This will remove:',
+          '  - all stopped containers',
+          '  - all networks not used by at least one container',
+          ...(avecVolumes ? ['  - all anonymous volumes not used by at least one container'] : []),
+          tout ? '  - all images without at least one container associated to them' : '  - all dangling images',
+          '  - unused build cache',
+          '',
+        ].join('\n')
+      : quoi === 'image'
+        ? tout
+          ? AVERTISSEMENTS.imageTout
+          : AVERTISSEMENTS.image
+        : quoi === 'volume'
+          ? tout
+            ? AVERTISSEMENTS.volumeTout
+            : AVERTISSEMENTS.volume
+          : AVERTISSEMENTS.container;
+  if (force) return faire();
+  jeu.demander('Are you sure you want to continue? [y/N] ', (reponse) => (/^y(es)?$/i.test(reponse) ? faire() : ''));
+  return avertissement;
+}
+
+// docker rmi : une image utilisée par un conteneur (même arrêté) est protégée.
+function rmi(d: EtatDocker, jeu: Shell, args: string[]): string {
+  const force = args.some((a) => a === '-f' || a === '--force');
+  const lignes: string[] = [];
+  for (const nom of args.filter((a) => !a.startsWith('-'))) {
+    const cle = Object.keys(d.images).find((k) => k === complet(nom) || d.images[k].id.startsWith(nom));
+    if (!cle) {
+      jeu.erreur(`Error response from daemon: No such image: ${complet(nom)}`);
+      continue;
+    }
+    const i = d.images[cle];
+    const conteneur = d.conteneurs.find((c) => c.image === nomImage(i));
+    if (conteneur && !force) {
+      jeu.erreur(
+        `Error response from daemon: conflict: unable to remove repository reference "${nom}" (must force) - container ${conteneur.id.slice(0, 12)} is using its referenced image ${i.id.slice(0, 12)}`,
+      );
+      continue;
+    }
+    delete d.images[cle];
+    lignes.push(...(i.depot === '<none>' ? [] : [`Untagged: ${nomImage(i)}`]), `Deleted: sha256:${i.id}`);
+  }
+  return lignes.join('\n');
+}
+
 // ——— docker compose ———
 
 function compose(d: EtatDocker, jeu: Shell, args: string[]): string {
@@ -599,154 +729,177 @@ export const DOCKER: Record<string, Commande> = {
       // Chaque commande prend un peu de temps (l'horloge de la machine avance).
       const sd = systemd(jeu);
       if (sd) sd.horloge += 2000;
-      let [action, ...reste] = args;
-      // docker container ls, docker image ls, docker container rm… : les mêmes commandes.
-      if (action === 'container' || action === 'image') {
-        const sous = reste.shift() ?? '';
-        action = sous === 'ls' || sous === 'list' ? (action === 'container' ? 'ps' : 'images') : sous;
-      }
-      switch (action) {
-        case 'ps':
-          return ps(d, jeu, reste.includes('-a') || reste.includes('--all'));
-        case 'images':
-          return images(d, jeu);
-        case 'pull': {
-          const nom = reste.find((a) => !a.startsWith('-'));
-          if (!nom) return jeu.erreur(`"docker pull" requires exactly 1 argument.`);
-          return (
-            tirer(d, nom) ?? jeu.erreur(`Error response from daemon: manifest for ${complet(nom)} not found: manifest unknown: manifest unknown`)
-          );
-        }
-        case 'run':
-          return run(d, jeu, reste);
-        case 'start':
-        case 'stop':
-        case 'restart':
-        case 'rm': {
-          const force = reste.some((a) => a === '-f' || a === '--force');
-          const noms = reste.filter((a) => !a.startsWith('-'));
-          if (!noms.length) return jeu.erreur(`"docker ${action}" requires at least 1 argument.`);
-          const sorties: string[] = [];
-          for (const nom of noms) {
-            const c = trouverConteneur(d, nom);
-            if (!c) {
-              jeu.erreur(`Error response from daemon: No such container: ${nom}`);
-              continue;
-            }
-            if (action === 'rm') {
-              if (c.etat === 'running' && !force) {
-                jeu.erreur(
-                  `Error response from daemon: cannot remove container "/${c.nom}": container is running: stop the container before removing or force remove`,
-                );
-                continue;
-              }
-              // La couche du conteneur disparaît avec lui ; les volumes restent.
-              d.conteneurs = d.conteneurs.filter((x) => x !== c);
-              jeu.etat.dockerSupprimes = [...(jeu.etat.dockerSupprimes ?? []), c];
-            } else {
-              if (action !== 'start') stopper(jeu, c);
-              if (action !== 'stop') {
-                const occupe = c.ports.find((p) =>
-                  d.conteneurs.some((x) => x !== c && x.etat === 'running' && x.ports.some((q) => q.hote === p.hote)),
-                );
-                if (occupe) {
-                  jeu.erreur(
-                    `Error response from daemon: driver failed programming external connectivity on endpoint ${c.nom} (${identifiant('ep' + c.id)}): Bind for 0.0.0.0:${occupe.hote} failed: port is already allocated\nError: failed to start containers: ${nom}`,
-                  );
-                  continue;
-                }
-                lancer(jeu, c);
-              }
-            }
-            sorties.push(nom);
-          }
-          return sorties.join('\n');
-        }
-        case 'logs': {
-          const nom = reste.filter((a, i) => !a.startsWith('-') && !['-n', '--tail'].includes(reste[i - 1])).at(0);
-          const c = nom ? trouverConteneur(d, nom) : null;
-          if (!nom) return jeu.erreur(`"docker logs" requires exactly 1 argument.`);
-          if (!c) return jeu.erreur(`Error response from daemon: No such container: ${nom}`);
-          const n =
-            reste.indexOf('-n') >= 0 ? reste[reste.indexOf('-n') + 1] : reste.indexOf('--tail') >= 0 ? reste[reste.indexOf('--tail') + 1] : undefined;
-          const temps = reste.includes('-t') || reste.includes('--timestamps');
-          const lignes = c.journal.map((l) => (temps ? `${rfc3339(l.temps)} ${l.texte}` : l.texte));
-          return (n !== undefined && n !== 'all' ? lignes.slice(-Number(n)) : lignes).join('\n');
-        }
-        case 'exec':
-          return exec(d, jeu, reste);
-        case 'cp':
-          return cp(d, jeu, reste);
-        case 'port': {
-          const c = trouverConteneur(d, reste[0] ?? '');
-          if (!c) return jeu.erreur(`Error response from daemon: No such container: ${reste[0] ?? ''}`);
-          return c.ports
-            .flatMap((p) =>
-              p.ip === '0.0.0.0'
-                ? [`${p.conteneur}/tcp -> 0.0.0.0:${p.hote}`, `${p.conteneur}/tcp -> [::]:${p.hote}`]
-                : [`${p.conteneur}/tcp -> ${p.ip}:${p.hote}`],
-            )
-            .join('\n');
-        }
-        case 'update': {
-          const i = reste.indexOf('--restart');
-          const politique = i >= 0 ? reste[i + 1] : reste.find((a) => a.startsWith('--restart='))?.slice(10);
-          const noms = reste.filter((a, k) => !a.startsWith('-') && reste[k - 1] !== '--restart');
-          if (!politique || !noms.length) return jeu.erreur(jeu.t('docker-update-usage'));
-          for (const nom of noms) {
-            const c = trouverConteneur(d, nom);
-            if (!c) jeu.erreur(`Error response from daemon: No such container: ${nom}`);
-            else c.redemarrage = politique;
-          }
-          return noms.join('\n');
-        }
-        case 'inspect': {
-          const i = reste.findIndex((a) => a === '-f' || a === '--format');
-          const modele = i >= 0 ? reste[i + 1] : reste.find((a) => a.startsWith('--format='))?.slice(9);
-          const noms = reste.filter((a, k) => !a.startsWith('-') && k !== i + 1);
-          const objets = noms.map((n) => {
-            const c = trouverConteneur(d, n);
-            if (c) return inspecter(jeu, c);
-            const v = d.volumes[n];
-            if (v) return { CreatedAt: rfc3339(v.cree), Driver: 'local', Mountpoint: `/var/lib/docker/volumes/${n}/_data`, Name: n, Scope: 'local' };
-            jeu.erreur(`Error: No such object: ${n}`);
-            return null;
-          });
-          const trouves = objets.filter(Boolean);
-          if (modele) return trouves.map((o) => formatGo(o, modele)).join('\n');
-          return trouves.length ? JSON.stringify(trouves, null, 4) : '[]';
-        }
-        case 'volume': {
-          const [sous, ...noms] = reste;
-          if (sous === 'ls' || sous === 'list')
-            return tableau(
-              ['DRIVER', 'VOLUME NAME'],
-              Object.keys(d.volumes).map((n) => ['local', n]),
-            );
-          if (sous === 'create') {
-            const nom = noms[0] ?? identifiant('volume' + d.prochain++);
-            d.volumes[nom] ??= { cree: horloge(jeu), donnees: {} };
-            return nom;
-          }
-          if (sous === 'inspect') return DOCKER.docker.lancer({ args: ['inspect', ...noms], jeu, entree: null, dernier: true });
-          if (sous === 'rm') {
-            for (const n of noms) {
-              const utilise = d.conteneurs.find((c) => c.montages.some((m) => m.type === 'volume' && m.source === n));
-              if (!d.volumes[n]) jeu.erreur(`Error response from daemon: get ${n}: no such volume`);
-              else if (utilise) jeu.erreur(`Error response from daemon: remove ${n}: volume is in use - [${utilise.id}]`);
-              else delete d.volumes[n];
-            }
-            return noms.filter((n) => !d.volumes[n]).join('\n');
-          }
-          return jeu.erreur(jeu.t('docker-volume-usage'));
-        }
-        case 'compose':
-          return compose(d, jeu, reste);
-        case undefined:
-          return AIDE(jeu);
-        default:
-          return jeu.erreur(`docker: unknown command: docker ${action}\n\nRun 'docker --help' for more information`);
-      }
+      const sortie = executer(d, jeu, args);
+      majDisque(jeu);
+      return sortie;
     },
   },
 };
+
+function executer(d: EtatDocker, jeu: Shell, args: string[]): string {
+  let [action, ...reste] = args;
+  // docker container ls, docker image ls, docker container rm… : les mêmes commandes.
+  if (action === 'container' || action === 'image') {
+    const groupe = action;
+    const sous = reste.shift() ?? '';
+    action =
+      sous === 'ls' || sous === 'list'
+        ? groupe === 'container'
+          ? 'ps'
+          : 'images'
+        : sous === 'prune'
+          ? `${groupe}-prune`
+          : groupe === 'image' && sous === 'rm'
+            ? 'rmi'
+            : sous;
+  }
+  switch (action) {
+    case 'system':
+      if (reste[0] === 'df') return systemeDf(d);
+      if (reste[0] === 'prune') return elaguer(d, jeu, 'system', reste.slice(1));
+      return jeu.erreur(`docker: unknown command: docker system ${reste[0] ?? ''}`);
+    case 'image-prune':
+      return elaguer(d, jeu, 'image', reste);
+    case 'container-prune':
+      return elaguer(d, jeu, 'container', reste);
+    case 'rmi':
+      return rmi(d, jeu, reste);
+    case 'ps':
+      return ps(d, jeu, reste.includes('-a') || reste.includes('--all'));
+    case 'images':
+      return images(d, jeu);
+    case 'pull': {
+      const nom = reste.find((a) => !a.startsWith('-'));
+      if (!nom) return jeu.erreur(`"docker pull" requires exactly 1 argument.`);
+      return tirer(d, nom) ?? jeu.erreur(`Error response from daemon: manifest for ${complet(nom)} not found: manifest unknown: manifest unknown`);
+    }
+    case 'run':
+      return run(d, jeu, reste);
+    case 'start':
+    case 'stop':
+    case 'restart':
+    case 'rm': {
+      const force = reste.some((a) => a === '-f' || a === '--force');
+      const noms = reste.filter((a) => !a.startsWith('-'));
+      if (!noms.length) return jeu.erreur(`"docker ${action}" requires at least 1 argument.`);
+      const sorties: string[] = [];
+      for (const nom of noms) {
+        const c = trouverConteneur(d, nom);
+        if (!c) {
+          jeu.erreur(`Error response from daemon: No such container: ${nom}`);
+          continue;
+        }
+        if (action === 'rm') {
+          if (c.etat === 'running' && !force) {
+            jeu.erreur(
+              `Error response from daemon: cannot remove container "/${c.nom}": container is running: stop the container before removing or force remove`,
+            );
+            continue;
+          }
+          // La couche du conteneur disparaît avec lui ; les volumes restent.
+          d.conteneurs = d.conteneurs.filter((x) => x !== c);
+          jeu.etat.dockerSupprimes = [...(jeu.etat.dockerSupprimes ?? []), c];
+        } else {
+          if (action !== 'start') stopper(jeu, c);
+          if (action !== 'stop') {
+            const occupe = c.ports.find((p) => d.conteneurs.some((x) => x !== c && x.etat === 'running' && x.ports.some((q) => q.hote === p.hote)));
+            if (occupe) {
+              jeu.erreur(
+                `Error response from daemon: driver failed programming external connectivity on endpoint ${c.nom} (${identifiant('ep' + c.id)}): Bind for 0.0.0.0:${occupe.hote} failed: port is already allocated\nError: failed to start containers: ${nom}`,
+              );
+              continue;
+            }
+            lancer(jeu, c);
+          }
+        }
+        sorties.push(nom);
+      }
+      return sorties.join('\n');
+    }
+    case 'logs': {
+      const nom = reste.filter((a, i) => !a.startsWith('-') && !['-n', '--tail'].includes(reste[i - 1])).at(0);
+      const c = nom ? trouverConteneur(d, nom) : null;
+      if (!nom) return jeu.erreur(`"docker logs" requires exactly 1 argument.`);
+      if (!c) return jeu.erreur(`Error response from daemon: No such container: ${nom}`);
+      const n =
+        reste.indexOf('-n') >= 0 ? reste[reste.indexOf('-n') + 1] : reste.indexOf('--tail') >= 0 ? reste[reste.indexOf('--tail') + 1] : undefined;
+      const temps = reste.includes('-t') || reste.includes('--timestamps');
+      const lignes = c.journal.map((l) => (temps ? `${rfc3339(l.temps)} ${l.texte}` : l.texte));
+      return (n !== undefined && n !== 'all' ? lignes.slice(-Number(n)) : lignes).join('\n');
+    }
+    case 'exec':
+      return exec(d, jeu, reste);
+    case 'cp':
+      return cp(d, jeu, reste);
+    case 'port': {
+      const c = trouverConteneur(d, reste[0] ?? '');
+      if (!c) return jeu.erreur(`Error response from daemon: No such container: ${reste[0] ?? ''}`);
+      return c.ports
+        .flatMap((p) =>
+          p.ip === '0.0.0.0'
+            ? [`${p.conteneur}/tcp -> 0.0.0.0:${p.hote}`, `${p.conteneur}/tcp -> [::]:${p.hote}`]
+            : [`${p.conteneur}/tcp -> ${p.ip}:${p.hote}`],
+        )
+        .join('\n');
+    }
+    case 'update': {
+      const i = reste.indexOf('--restart');
+      const politique = i >= 0 ? reste[i + 1] : reste.find((a) => a.startsWith('--restart='))?.slice(10);
+      const noms = reste.filter((a, k) => !a.startsWith('-') && reste[k - 1] !== '--restart');
+      if (!politique || !noms.length) return jeu.erreur(jeu.t('docker-update-usage'));
+      for (const nom of noms) {
+        const c = trouverConteneur(d, nom);
+        if (!c) jeu.erreur(`Error response from daemon: No such container: ${nom}`);
+        else c.redemarrage = politique;
+      }
+      return noms.join('\n');
+    }
+    case 'inspect': {
+      const i = reste.findIndex((a) => a === '-f' || a === '--format');
+      const modele = i >= 0 ? reste[i + 1] : reste.find((a) => a.startsWith('--format='))?.slice(9);
+      const noms = reste.filter((a, k) => !a.startsWith('-') && k !== i + 1);
+      const objets = noms.map((n) => {
+        const c = trouverConteneur(d, n);
+        if (c) return inspecter(jeu, c);
+        const v = d.volumes[n];
+        if (v) return { CreatedAt: rfc3339(v.cree), Driver: 'local', Mountpoint: `/var/lib/docker/volumes/${n}/_data`, Name: n, Scope: 'local' };
+        jeu.erreur(`Error: No such object: ${n}`);
+        return null;
+      });
+      const trouves = objets.filter(Boolean);
+      if (modele) return trouves.map((o) => formatGo(o, modele)).join('\n');
+      return trouves.length ? JSON.stringify(trouves, null, 4) : '[]';
+    }
+    case 'volume': {
+      const [sous, ...noms] = reste;
+      if (sous === 'ls' || sous === 'list')
+        return tableau(
+          ['DRIVER', 'VOLUME NAME'],
+          Object.keys(d.volumes).map((n) => ['local', n]),
+        );
+      if (sous === 'create') {
+        const nom = noms[0] ?? identifiant('volume' + d.prochain++);
+        d.volumes[nom] ??= { cree: horloge(jeu), donnees: {} };
+        return nom;
+      }
+      if (sous === 'inspect') return DOCKER.docker.lancer({ args: ['inspect', ...noms], jeu, entree: null, dernier: true });
+      if (sous === 'prune') return elaguer(d, jeu, 'volume', noms);
+      if (sous === 'rm') {
+        for (const n of noms) {
+          const utilise = d.conteneurs.find((c) => c.montages.some((m) => m.type === 'volume' && m.source === n));
+          if (!d.volumes[n]) jeu.erreur(`Error response from daemon: get ${n}: no such volume`);
+          else if (utilise) jeu.erreur(`Error response from daemon: remove ${n}: volume is in use - [${utilise.id}]`);
+          else delete d.volumes[n];
+        }
+        return noms.filter((n) => !d.volumes[n]).join('\n');
+      }
+      return jeu.erreur(jeu.t('docker-volume-usage'));
+    }
+    case 'compose':
+      return compose(d, jeu, reste);
+    case undefined:
+      return AIDE(jeu);
+    default:
+      return jeu.erreur(`docker: unknown command: docker ${action}\n\nRun 'docker --help' for more information`);
+  }
+}

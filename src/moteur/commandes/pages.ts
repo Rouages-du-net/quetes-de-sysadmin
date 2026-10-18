@@ -70,6 +70,7 @@ export const PAGES: Record<string, Page> = {
   'named-checkzone': { section: 8, exemples: ['named-checkzone cafe.example /etc/bind/zones/db.cafe.example'], voir: ['rndc', 'dig', 'named-checkconf'] },
   'named-checkconf': { section: 8, exemples: ['sudo named-checkconf'], voir: ['named-checkzone', 'rndc'] },
   nano: { exemples: ['nano notes.txt', 'sudo nano /etc/nginx/bloques.conf'], voir: ['cat', 'sudo'] },
+  nc: { exemples: ['nc -zv fabrique 22', 'nc -zv fabrique 5430-5435'], voir: ['ss', 'ufw', 'ssh'] },
   nginx: { options: ['t', 'T', 'v'], exemples: ['sudo nginx -t', 'sudo nginx -T | less', 'nginx -v'], voir: ['systemctl', 'journalctl', 'curl', 'apt'] },
   openssl: {
     exemples: ['openssl x509 -in /etc/letsencrypt/live/site.example/cert.pem -noout -dates', 'openssl s_client -connect site.example:443 | openssl x509 -noout -dates', 'openssl x509 -in cert.pem -noout -checkend 1296000'],

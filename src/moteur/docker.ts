@@ -66,7 +66,8 @@ export interface EtatDocker {
   images: Record<string, Image>;
   registre: Record<string, Image>;
   conteneurs: Conteneur[];
-  volumes: Record<string, { cree: number; donnees: Record<string, string> }>;
+  // taille : ce que le volume occupe en plus de ses fichiers simulés (une vraie base, par exemple).
+  volumes: Record<string, { cree: number; donnees: Record<string, string>; taille?: number }>;
   prochain: number;
 }
 
@@ -265,3 +266,60 @@ export function tailleDocker(octets: number): string {
 
 /** L'heure UTC d'un instant local, au format RFC 3339 (docker logs -t, inspect). */
 export const rfc3339 = (local: number) => new Date(versUtc(local)).toISOString().replace(/\.\d+Z$/, '.000000000Z');
+
+// ——— Le réseau et le disque vus de la machine ———
+
+/** Les sockets de docker-proxy pour les ports publiés (pour ss). */
+export function ecoutesDocker(jeu: Jeu): { proto: 'tcp'; adresse: string; port: number; processus: string; pid: number }[] {
+  const d = docker(jeu);
+  if (!d) return [];
+  return d.conteneurs
+    .filter((c) => c.etat === 'running')
+    .flatMap((c, i) =>
+      c.ports.flatMap((p) => {
+        const pid = 3100 + i * 10 + (p.hote % 7);
+        const v4 = { proto: 'tcp' as const, adresse: p.ip, port: p.hote, processus: 'docker-proxy', pid };
+        return p.ip === '0.0.0.0' ? [v4, { ...v4, adresse: '[::]', pid: pid + 1 }] : [v4];
+      }),
+    );
+}
+
+/**
+ * Un port publié vers l'extérieur sur toutes les adresses (0.0.0.0) : Docker
+ * écrit ses propres règles iptables (chaîne DOCKER, table nat), consultées
+ * AVANT celles d'ufw. Le paquet est redirigé vers le conteneur sans jamais
+ * passer par les règles d'ufw : il entre, quoi qu'en dise ufw status.
+ * https://docs.docker.com/engine/network/packet-filtering-firewalls/#docker-and-ufw
+ */
+export function publieAuMonde(jeu: Jeu, port: number): boolean {
+  const d = docker(jeu);
+  return !!d?.conteneurs.some((c) => c.etat === 'running' && c.ports.some((p) => p.hote === port && p.ip === '0.0.0.0'));
+}
+
+/** La place prise par Docker sur le disque (images, conteneurs, volumes), en octets. */
+export function placeDocker(d: EtatDocker): { images: number; conteneurs: number; volumes: number } {
+  const volumes = Object.values(d.volumes).reduce((t, v) => t + Object.values(v.donnees).reduce((a, x) => a + x.length, 0) + (v.taille ?? 0), 0);
+  return { images: Object.values(d.images).reduce((t, i) => t + i.taille, 0), conteneurs: d.conteneurs.length * 4096, volumes };
+}
+
+/** Met à jour /var/lib/docker sur le disque simulé (pour df et du). */
+export function majDisque(jeu: Jeu) {
+  const d = docker(jeu);
+  const n = jeu.trouver('/var/lib/docker');
+  if (!d || n?.type !== 'dossier') return;
+  const p = placeDocker(d);
+  n.enfants = {
+    overlay2: {
+      type: 'dossier',
+      proprio: 'root',
+      mode: 'rwx--x---',
+      enfants: { couches: { type: 'fichier', contenu: '', taille: p.images + p.conteneurs, proprio: 'root' } },
+    },
+    volumes: {
+      type: 'dossier',
+      proprio: 'root',
+      mode: 'rwx------',
+      enfants: { donnees: { type: 'fichier', contenu: '', taille: p.volumes, proprio: 'root' } },
+    },
+  };
+}

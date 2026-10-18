@@ -65,7 +65,7 @@ APPLIS.postgres = {
 };
 
 // La connexion de l'appli à sa base, d'après DATABASE_URL.
-function connecter(jeu: Jeu, c: Conteneur): string | null {
+export function connecter(jeu: Jeu, c: Conteneur): string | null {
   const url = c.env.DATABASE_URL;
   if (!url) return 'Error: DATABASE_URL is not set';
   const m = /^postgres(?:ql)?:\/\/([^:@/]*)(?::([^@/]*))?@([^:/]+)(?::(\d+))?\/([^?]+)/.exec(url);

@@ -185,9 +185,10 @@ demandent plusieurs.
       interne (le nom du service), variables et `.env`, volumes, redémarrage ;
       quête « La composition » (La Fabrique, chapitre 2)
 - [x] Mettre à jour une image sans perdre les données (« La mise à jour »)
-- [ ] Nettoyer le disque (`docker system df`, `prune`)
-- [ ] Sécurité : ne pas exposer la base, ne pas tourner en root, `ufw` et
-      Docker (les règles contournées : un piège classique)
+- [x] Nettoyer le disque (`docker system df`, `prune`) ; « Le trou dans le pare-feu »
+- [x] Sécurité : ne pas exposer la base, `ufw` et Docker (les ports publiés
+      contournent ufw) ; « Le trou dans le pare-feu » (La Fabrique, chapitre 3)
+- [ ] Ne pas tourner en root dans le conteneur
 
 ## Phase 6 — Déployer
 

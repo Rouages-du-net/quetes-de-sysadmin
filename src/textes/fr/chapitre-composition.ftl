@@ -94,7 +94,8 @@ composition-evenement-fin =
     repartira après une coupure. Yasmine publie compose.yaml sur le dépôt
     git du fablab, sans aucun secret dedans.
 
-    Bravo ! Tu as terminé le chapitre 2 de La Fabrique.
+    Bravo ! Tu as terminé le chapitre 2 de La Fabrique. (La suite t'attend :
+    Le trou dans le pare-feu.)
 
     CE QUI S'EST PASSÉ
     Le compose.yaml du tutoriel avait quatre défauts : l'appli cherchait la

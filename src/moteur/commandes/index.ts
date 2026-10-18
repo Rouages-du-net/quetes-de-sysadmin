@@ -24,6 +24,7 @@ import { RESTIC } from './restic';
 import { BIND } from './bind';
 import { AWK } from './awk';
 import { DOCKER } from './docker';
+import { NC } from './nc';
 
 export interface Contexte {
   args: string[];
@@ -71,6 +72,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...BIND,
   ...AWK,
   ...DOCKER,
+  ...NC,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },

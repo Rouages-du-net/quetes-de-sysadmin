@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/moteur/shell';
+import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
 
@@ -789,6 +790,51 @@ for (const langue of LANGUES)
         const refait = ['sudo docker compose down -v', 'sudo docker compose up -d'].map((l) => s.executer(l) ?? '').join('\n');
         contient(refait, 'les volumes du projet sont effacés');
         expect(s.termine).toBe(true);
+      });
+    });
+
+    describe('La Fabrique, chapitre 3 — Le trou dans le pare-feu (docker et ufw)', () => {
+      const AVANT = ['eveil', 'bourg', 'racine', 'mise-a-jour', 'composition'];
+      const modifier = (s: Shell, change: (texte: string) => string) => {
+        s.executer('sudo nano /srv/reservations/compose.yaml');
+        s.enregistrerEdition(change(s.edition!.texte));
+        s.quitterEdition();
+      };
+
+      it('solution, testée depuis le poste : ufw ne suffit pas, port lié à 127.0.0.1, ménage', () => {
+        const c = new Console({ langue, termines: AVANT });
+        const jouerC = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+        expect(jouerC(['nc -zv fabrique 5432'])).toContain('Connection to fabrique (192.0.2.15) 5432 port [tcp/postgresql] succeeded!');
+        const dedans = jouerC(['ssh fabrique', 'yes', 'sudo ss -tlnp', 'fablab-2027', 'sudo ufw deny 5432', 'df -h /']);
+        expect(dedans).toContain('0.0.0.0:5432');
+        expect(dedans).toMatch(/9\d% \//);
+        contient(dedans, 'contourne ufw');
+        contient(dedans, 'ne change rien');
+        expect(jouerC(['exit', 'nc -zv fabrique 5432'])).toContain('succeeded!');
+        jouerC(['ssh fabrique', 'cd /srv/reservations']);
+        modifier(c.shell, (t) => t.replace('      - "5432:5432"', '      - "127.0.0.1:5432:5432"'));
+        jouerC(['sudo docker compose up -d', 'sudo docker image prune -a', 'y']);
+        expect(c.termines).toContain('contournement');
+        const dehors = jouerC(['exit', 'nc -zv fabrique 5432']);
+        expect(dehors).toContain('timed out');
+      });
+
+      it('autre solution : plus de port pour la base, docker system prune -a -f', () => {
+        const { s } = jouer('contournement', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
+        modifier(s, (t) => t.replace('    # Pour pgAdmin, depuis mon portable (Yasmine)\n    ports:\n      - "5432:5432"\n', ''));
+        s.executer('sudo docker compose up -d');
+        const menage = s.executer('sudo docker system prune -a -f') ?? '';
+        expect(menage).toContain('Deleted Containers:');
+        expect(menage).toContain('untagged: registre.example/ia-locale:latest');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausse piste : docker volume prune -a emporte le wiki', () => {
+        const { s, tout } = jouer('contournement', ['sudo docker volume prune', 'fablab-2027', 'y', 'sudo docker volume ls', 'sudo docker volume prune -a', 'y']);
+        expect(tout).toContain('WARNING! This will remove anonymous local volumes not used by at least one container.');
+        expect(tout).toContain('Deleted Volumes:\nwiki-ancien');
+        contient(tout, 'Le volume wiki-ancien a disparu');
+        expect(s.termine).toBe(false);
       });
     });
 
