@@ -152,7 +152,8 @@ colocation-evenement-fin =
     pages, depuis un seul serveur. Kofi : « On fait une fête pour
     l'emménagement du café. Tu es invité·e ! »
 
-    Bravo ! Tu as terminé le chapitre 4 des Lettres du quartier.
+    Bravo ! Tu as terminé le chapitre 4 des Lettres du quartier. (La suite
+    t'attend : Ça marche chez moi.)
 
     CE QUI S'EST PASSÉ
     Une seule adresse IP, un seul nginx, plusieurs sites : chaque visite

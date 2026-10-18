@@ -129,6 +129,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `restic` | `-r` et `--password-file` obligatoires (pas de variables d'environnement) ; `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check`, `stats` ; pas d'`init` ; un « pack » par sauvegarde ; fichiers du dépôt illisibles mais pas binaires ; pas de barres de progression | tout cela, et `mount`, `copy`, `key`, `tag`, dépôts distants (sftp, S3, rest-server) |
 | liens symboliques | `ln -s`, suivis pour lire, écrire et entrer ; `ls -l` les montre ; pas de `readlink` | aussi `readlink`, `realpath`, `find -L`… |
 | `curl` | `-I`, `-k`, `-L`, `-H "Host: …"` ; ne joint que la machine où l'on est | toutes les options, tout le réseau |
+| DNS (BIND) | zones A, AAAA, CNAME, MX, NS, TXT, SOA ; un primaire (`named`), un secondaire qui recopie quand le serial augmente (tout de suite), un résolveur public avec cache ; `dig` (`@serveur`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (accolades et fichiers), `rndc reload`/`status` ; pas de section AUTHORITY, de DNSSEC ni de zones inverses | tout cela |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -432,7 +433,7 @@ versions plutôt que miroir, politique de rétention, forget n'est pas prune,
 check et restaurations d'essai, chiffrement et garde du mot de passe ;
 liens vers la documentation de restic.
 
-## Histoire 6 : Les Lettres du quartier (en cours, quatre chapitres)
+## Histoire 6 : Les Lettres du quartier (en cours, cinq chapitres)
 
 L'association de Kofi (vue dans Le Paquet perdu) loue un petit serveur pour
 son site, `lettres.example` (machine `lettres`, même adresse que dans Le
@@ -560,6 +561,36 @@ copie au lieu d'un lien dans `sites-enabled`. Débrief : sites-available et
 sites-enabled, default_server et server_name, tester avec `Host`, barre
 finale de proxy_pass, 502 et error.log, appli derrière un proxy sur
 127.0.0.1 ; liens vers la documentation de nginx.
+
+### Chapitre 5 — Ça marche chez moi (fait)
+
+Kofi a « fait pointer » cafe.example vers le serveur… dans le `/etc/hosts`
+de son propre ordinateur. Chez lui, le site du café marche ; ailleurs, le
+nom mène à l'ancien hébergeur, et `www.cafe.example` n'existe pas. Le
+serveur des Lettres fait autorité pour la zone (BIND, `named`) ; le registre
+en garde une copie (`ns2.registre.example`). Le DNS simulé est dans
+`src/moteur/dns.ts`.
+
+| Étape | Commande apprise |
+|---|---|
+| Voir ce que voient les autres | `dig cafe.example` (résolveur public, ancienne adresse, TTL qui décroît) |
+| Interroger les serveurs qui font autorité | `dig @localhost cafe.example`, `dig @ns2.registre.example cafe.example SOA +short` |
+| Corriger la zone | `sudo nano /etc/bind/zones/db.cafe.example` : l'adresse, `www IN CNAME cafe.example.`, le serial |
+| Vérifier, recharger | `named-checkzone cafe.example …`, `sudo rndc reload`, `journalctl -u named` |
+
+Objectif vérifié sur l'état : les deux serveurs qui font autorité répondent
+la nouvelle adresse pour `cafe.example` et `www.cafe.example`, le MX est
+toujours là, la zone des Lettres n'a pas bougé.
+
+Pièges prévus : `/etc/hosts` « maison », le résolveur qui garde l'ancienne
+réponse en cache (TTL de 24 heures), une adresse mal tapée (`bad dotted
+quad`, la zone reste l'ancienne), le serial oublié (« zone serial
+unchanged », ns2 garde l'ancienne zone), le point final oublié
+(`cafe.example.cafe.example.`), `rndc` sans `sudo`. Autres solutions
+acceptées : un enregistrement A pour `www`, `systemctl reload named`.
+Débrief : tester comme les autres, serveurs faisant autorité contre
+résolveur, serial, `named-checkzone`, point final, baisser le TTL avant un
+déménagement ; liens vers la documentation de BIND et la RFC 1034.
 
 ## Idées pour la suite
 

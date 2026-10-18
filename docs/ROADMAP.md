@@ -169,8 +169,9 @@ demandent plusieurs.
       502 et `error.log`) ; `return 301` simulé
 - [ ] En-têtes transmis à l'appli (`proxy_set_header`, `X-Forwarded-For`),
       HTTP → HTTPS dans une quête
-- [ ] **DNS** : enregistrements A, AAAA, CNAME, MX, TXT, TTL, propagation ;
-      quête « le site ne marche que chez moi »
+- [x] **DNS** : enregistrements A, AAAA, CNAME, MX, TXT, TTL et caches (la
+      « propagation »), zone BIND, serial, secondaire ; quête « Ça marche
+      chez moi » (Les Lettres du quartier, chapitre 5)
 - [ ] **Journaux d'accès** : trouver qui fait tomber le site (`awk`, `sort`,
       `uniq -c`), limiter le débit
 

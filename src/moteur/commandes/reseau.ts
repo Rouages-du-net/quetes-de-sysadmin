@@ -17,6 +17,7 @@
 import type { Shell } from '../shell';
 import type { Commande } from './index';
 import { requete } from '../nginx';
+import { digDns } from './bind';
 import { couvre, lire } from '../tls';
 import { systemd, versUtc } from '../systemd';
 
@@ -107,7 +108,10 @@ export const RESEAU: Record<string, Commande> = {
   },
 
   dig: {
+    propresOptions: true,
     lancer: ({ args, jeu }) => {
+      // Une machine avec un vrai DNS simulé (zones, serveurs, cache) : bind.ts.
+      if (jeu.etat.dns) return digDns(args, jeu);
       const serveur = args.find((a) => a.startsWith('@'))?.slice(1);
       const court = args.includes('+short');
       const nom = args.find((a) => !a.startsWith('@') && !a.startsWith('+'));

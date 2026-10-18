@@ -598,6 +598,51 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('Les Lettres du quartier, chapitre 5 — Ça marche chez moi (DNS)', () => {
+      const ZONE = '/etc/bind/zones/db.cafe.example';
+      const modifier = (s: Shell, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${ZONE}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        s.quitterEdition();
+      };
+
+      it('solution, avec les fausses pistes : serial oublié, point final oublié, zone fausse', () => {
+        const { s, tout } = jouer('chez-moi', ['dig cafe.example', 'dig @localhost cafe.example +short', 'dig www.cafe.example', 'sudo rndc status', 'fourmis-2026']);
+        expect(tout).toContain('198.51.100.80');
+        expect(tout).toContain('status: NXDOMAIN');
+        expect(tout).toContain('server is up and running');
+        // Une adresse mal tapée : named garde l'ancienne zone.
+        modifier(s, (t) => t.replace('198.51.100.80', '203.0.113.310'));
+        const fausse = ['named-checkzone cafe.example ' + ZONE, 'sudo rndc reload cafe.example'].map((l) => s.executer(l) ?? '').join('\n');
+        expect(fausse).toContain("near '203.0.113.310': bad dotted quad");
+        expect(fausse).toContain("rndc: 'reload' failed: failure");
+        contient(fausse, 'named refuse la zone');
+        // Le bon contenu, mais ni serial ni point final.
+        modifier(s, (t) => t.replace('203.0.113.310', '203.0.113.10') + '\nwww     IN CNAME cafe.example');
+        const demi = ['sudo rndc reload cafe.example', 'journalctl -u named', 'dig @localhost www.cafe.example', 'dig @ns2.registre.example cafe.example +short', 'dig cafe.example']
+          .map((l) => s.executer(l) ?? '')
+          .join('\n');
+        expect(demi).toContain('zone serial (2026091501) unchanged. zone may fail to transfer to secondaries.');
+        expect(demi).toContain('cafe.example.cafe.example.');
+        contient(demi, 'son numéro de série');
+        contient(demi, 'sans point final');
+        contient(demi, 'les caches');
+        expect(s.termine).toBe(false);
+        modifier(s, (t) => t.replace('2026091501', '2027032001').replace('CNAME cafe.example', 'CNAME cafe.example.'));
+        s.executer('named-checkzone cafe.example ' + ZONE);
+        expect(s.executer('sudo rndc reload')).toContain('server reload successful');
+        expect(s.termine).toBe(true);
+        expect(s.executer('dig @ns2.registre.example www.cafe.example +short')).toBe('cafe.example.\n203.0.113.10');
+      });
+
+      it('autre solution : un enregistrement A pour www, et systemctl reload named', () => {
+        const { s } = jouer('chez-moi', ['sudo id', 'fourmis-2026']);
+        modifier(s, (t) => t.replace('2026091501', '2026091502').replaceAll('198.51.100.80', '203.0.113.10') + '\nwww 300 IN A 203.0.113.10');
+        s.executer('sudo systemctl reload named');
+        expect(s.termine).toBe(true);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

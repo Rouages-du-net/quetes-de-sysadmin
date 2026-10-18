@@ -100,7 +100,8 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // se replient pas : sur un petit écran, le bloc défile de côté. Le reste,
   // paragraphes et consignes (« tape :   ls »), passe à la ligne. Les traits
   // qui soulignent un tableau (------, ======) restent aussi d'un seul tenant.
-  const enColonnes = (ligne: string) => (ligne.match(/\S {2,}(?=\S)/g) ?? []).length >= 2 || /^[-=]{20,}$/.test(ligne);
+  // Une tabulation sépare aussi des colonnes (dig).
+  const enColonnes = (ligne: string) => (ligne.match(/\S(?: {2,}|\t)(?=\S)/g) ?? []).length >= 2 || /^[-=]{20,}$/.test(ligne);
   const afficher = (texte: string, classe?: string) => {
     if (!texte) return;
     const pre = document.createElement('pre');
