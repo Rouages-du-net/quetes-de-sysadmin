@@ -86,15 +86,19 @@ demandent plusieurs.
       avec l'attribut `histoire`) ; une seule progression.
 - [x] **Plusieurs hôtes** : chacun son système de fichiers et son nom,
       invite `utilisateur@hôte:~$` (`console.ts`, `machines.ts`, `poste.ts`)
-- [ ] Comptes, services et ports propres à chaque machine
+- [x] Comptes propres à chaque machine ; l'état d'une machine est gardé
+      entre deux connexions ssh (tant que la page est ouverte)
+- [ ] Services et ports propres à chaque machine
 - [ ] **Réseau simulé** : adresses, ports ouverts, résolution de noms
       (`/etc/hosts`, DNS), routes, latence ; ce qu'un pare-feu laisse passer
 - [ ] **Services** (`systemd` simulé) : état, démarrage, échec, dépendances,
       `systemctl`, `journalctl` avec de vrais journaux qui évoluent
 - [ ] **Temps simulé** : horloge accélérée, tâches planifiées (cron,
       timers), journaux qui défilent, attaques qui arrivent « pendant » la quête
-- [ ] **Utilisateur·rices et groupes** (les vrais droits de groupe, absents
-      de Terminus), `sudoers`, `umask`
+- [x] **Utilisateur·rices et groupes** : vrais droits de groupe, comptes par
+      machine (`/etc/passwd`, `/etc/group`), `id`, `groups`, `usermod -aG`,
+      `chgrp`, `chown` ; quête « Deuxième jour » (Datacenter, chapitre 2)
+- [ ] `sudoers`, `umask`, bit setgid des dossiers partagés
 - [ ] **Éditeur de fichiers** minimal (façon `nano`) pour modifier des
       fichiers de configuration, avec vérification de syntaxe par service
 - [ ] **Manuel intégré** : pages `man` complètes générées depuis la

@@ -139,6 +139,46 @@ for (const langue of LANGUES)
         expect(s.termine).toBe(true);
       });
 
+      it('Le Datacenter, chapitre 2 — Deuxième jour', () => {
+        const { s, tout } = jouer('deuxieme-jour', [
+          'id',
+          'id malo',
+          'ls -l /var/log/nginx',
+          'cat /home/malo/x',
+          'usermod -aG adm malo',
+          'sudo usermod -G adm malo',
+          'bienvenue-2026',
+          'groups malo',
+          'sudo usermod -aG equipe-web malo',
+          'sudo chmod o+r /var/log/nginx/access.log',
+          'sudo chmod 640 /var/log/nginx/access.log',
+          'chgrp equipe-web /srv/equipe',
+          'sudo chmod 777 /srv/equipe',
+          'sudo chgrp equipe-web /srv/equipe',
+          'sudo chmod 770 /srv/equipe',
+        ]);
+        contient(tout, 'uid=1000(vous) gid=1000(vous) groupes=1000(vous),4(adm),27(sudo),1003(equipe-web)');
+        contient(tout, '-rw-r----- www-data adm');
+        contient(tout, 'usermod : Permission non accordée.');
+        contient(tout, 'malo : malo adm');
+        contient(tout, 'Malo n’est plus dans le groupe equipe-web'.replace('’', "'"));
+        contient(tout, 'TOUS les comptes de la machine peuvent lire');
+        contient(tout, "chgrp : modification du groupe de '/srv/equipe' : Opération non permise");
+        contient(tout, 'n’importe quel compte'.replace('’', "'"));
+        contient(tout, 'https://wiki.debian.org/SystemGroups');
+        expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter, chapitre 2 — une autre solution correcte', () => {
+        const { s } = jouer('deuxieme-jour', [
+          'sudo usermod -aG adm malo',
+          'bienvenue-2026',
+          'sudo chown root:equipe-web /srv/equipe',
+          'sudo chmod g+w,o-rx /srv/equipe',
+        ]);
+        expect(s.termine).toBe(true);
+      });
+
       it('Le Paquet perdu', () => {
         const { s } = jouer('paquet-perdu', [
           'cat carnet.txt',
@@ -214,6 +254,6 @@ for (const langue of LANGUES)
       const s = new Shell(chapitre('eveil'), langue);
       for (const h of HISTOIRES)
         for (const c of h.chapitres)
-          for (const cmd of c.commandes) expect(s.executer(`man ${cmd}`)).toMatch(new RegExp(`^${cmd.toUpperCase()}\\(1\\)`));
+          for (const cmd of c.commandes) expect(s.executer(`man ${cmd}`)).toMatch(new RegExp(`^${cmd.toUpperCase()}\\([18]\\)`));
     });
   });

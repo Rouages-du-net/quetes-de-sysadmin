@@ -9,13 +9,14 @@ import type { Commande } from './index';
 const modeDe = (n: Noeud) => n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--');
 
 // Une ligne de « ls -l ». Écart volontaire : on omet le nombre de liens et
-// la date, et le groupe porte le nom du propriétaire.
+// la date.
 function ligneLongue(jeu: Shell, nom: string, n: Noeud, humain: boolean): string {
   const proprio = n.proprio ?? 'vous';
+  const groupe = n.groupe ?? proprio;
   const octets = n.type === 'dossier' ? 4096 : tailleDe(n, jeu);
   const taille = humain ? lisible(octets, jeu.t.langue) : String(octets);
   const suffixe = n.type === 'dossier' && nom !== '.' && nom !== '..' ? '/' : '';
-  return `${n.type === 'dossier' ? 'd' : '-'}${modeDe(n)} ${proprio.padEnd(8)} ${proprio.padEnd(8)} ${taille.padStart(6)} ${nom}${suffixe}`;
+  return `${n.type === 'dossier' ? 'd' : '-'}${modeDe(n)} ${proprio.padEnd(8)} ${groupe.padEnd(8)} ${taille.padStart(6)} ${nom}${suffixe}`;
 }
 
 // Source → (lieu de destination, nom final), comme mv et cp sous Linux :
@@ -28,7 +29,7 @@ function destination(jeu: Shell, source: string, dest: string): string {
 
 const copier = (n: Noeud, proprio: string): Noeud =>
   n.type === 'fichier'
-    ? { ...n, proprio, lu: undefined, protege: undefined }
+    ? { ...n, proprio, groupe: undefined, lu: undefined, protege: undefined }
     : { type: 'dossier', proprio, mode: n.mode, enfants: Object.fromEntries(Object.entries(n.enfants).map(([k, e]) => [k, copier(e, proprio)])) };
 
 export const FICHIERS: Record<string, Commande> = {

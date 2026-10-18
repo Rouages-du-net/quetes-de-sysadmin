@@ -90,6 +90,16 @@ for (const langue of LANGUES)
       expect(jouer(suite, ['ssh royaume'])).not.toContain('authenticity');
     });
 
+    it('la machine garde son état d’une connexion à l’autre', () => {
+      const c = new Console({ langue });
+      jouer(c, ['ssh royaume', 'yes', 'cd Colline/EcoleDesSignaux/SalleDExercice', 'mv crabe Seau', 'exit']);
+      const retour = jouer(c, ['ssh royaume']);
+      expect(retour).toContain('— ');
+      // Comme une nouvelle connexion : on repart de sa maison, le monde n'a pas bougé.
+      expect(c.invite()).toBe('vous@royaume:~$');
+      expect(jouer(c, ['ls Colline/EcoleDesSignaux/SalleDExercice/Seau'])).toBe('crabe');
+    });
+
     it('Tab complète les machines de ~/.ssh/config', () => {
       const c = new Console({ langue });
       expect(c.completer('ssh roy')).toBe('ssh royaume ');

@@ -10,6 +10,7 @@ import { RESEAU } from './reseau';
 import { GIT } from './git';
 import { PAGES } from './pages';
 import { SSH } from './ssh';
+import { COMPTES } from './comptes';
 
 export interface Contexte {
   args: string[];
@@ -29,6 +30,8 @@ export interface Commande {
   // Commandes d'exemple (leur explication : .exemple-N dans manuel.ftl).
   exemples?: string[];
   voir?: string[];
+  // Section du manuel : 1 (commandes), 8 (administration, ex. usermod).
+  section?: number;
   lancer: (c: Contexte) => string;
 }
 
@@ -39,6 +42,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...RESEAU,
   ...GIT,
   ...SSH,
+  ...COMPTES,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },

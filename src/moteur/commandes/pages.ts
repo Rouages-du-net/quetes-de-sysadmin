@@ -5,13 +5,15 @@
 
 import type { Commande } from './index';
 
-type Page = Pick<Commande, 'options' | 'exemples' | 'voir'>;
+type Page = Pick<Commande, 'options' | 'exemples' | 'voir' | 'section'>;
 
 export const PAGES: Record<string, Page> = {
   apropos: { voir: ['man', 'whatis'] },
   cat: { exemples: ['cat message.txt'], voir: ['less', 'head', 'tail', 'grep'] },
   cd: { exemples: ['cd Port', 'cd ..', 'cd ~', 'cd /'], voir: ['ls', 'pwd'] },
+  chgrp: { options: ['R'], exemples: ['chgrp equipe-web rapport.txt', 'sudo chgrp -R equipe-web /srv/equipe'], voir: ['chown', 'chmod', 'groups'] },
   chmod: { exemples: ['chmod o-w souvenirs', 'chmod 755 lieu'], voir: ['ls', 'sudo', 'whoami'] },
+  chown: { options: ['R'], exemples: ['sudo chown malo rapport.txt', 'sudo chown -R www-data:www-data /var/www'], voir: ['chgrp', 'chmod', 'id'] },
   cp: { options: ['r'], exemples: ['cp levain levain_2', 'cp ~/Marche/fromage .'], voir: ['mv', 'rm'] },
   curl: { voir: ['dig'] },
   df: { options: ['h'], voir: ['du'] },
@@ -19,7 +21,9 @@ export const PAGES: Record<string, Page> = {
   du: { options: ['h', 's'], voir: ['df', 'find'] },
   find: { voir: ['ls', 'grep', 'du'] },
   grep: { options: ['i', 'v', 'c'], exemples: ['grep Effaceur chronique.txt', 'grep -i effaceur *', 'grep "mot de passe" journal.txt'], voir: ['cat', 'find'] },
+  groups: { exemples: ['groups', 'groups malo'], voir: ['id', 'usermod'] },
   head: { options: ['n'], voir: ['tail', 'cat'] },
+  id: { exemples: ['id', 'id malo'], voir: ['groups', 'whoami', 'usermod'] },
   kill: { voir: ['ps'] },
   less: { voir: ['cat', 'head', 'tail'] },
   ls: { options: ['a', 'l', 'h'], exemples: ['ls', 'ls -a', 'ls -l ~/souvenirs'], voir: ['cd', 'pwd', 'chmod'] },
@@ -42,6 +46,7 @@ export const PAGES: Record<string, Page> = {
   traceroute: { voir: ['ping'] },
   uniq: { options: ['c'], exemples: ['sort visites | uniq -c | sort -n'], voir: ['sort'] },
   wc: { options: ['l', 'w', 'c'], exemples: ['grep erreur journal | wc -l'], voir: ['grep', 'sort'] },
+  usermod: { section: 8, options: ['a', 'G'], exemples: ['sudo usermod -aG adm malo', 'sudo usermod -G adm malo'], voir: ['id', 'groups', 'chgrp'] },
   whatis: { voir: ['man', 'apropos'] },
   whoami: { voir: ['sudo'] },
 };

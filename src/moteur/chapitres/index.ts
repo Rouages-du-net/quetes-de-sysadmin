@@ -6,6 +6,7 @@ import { eveil } from './eveil';
 import { bourg } from './bourg';
 import { racine } from './racine';
 import { datacenter } from './datacenter';
+import { deuxiemeJour } from './deuxieme-jour';
 import { paquet } from './paquet';
 import { temps } from './temps';
 import { archives } from './archives';
@@ -17,7 +18,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'datacenter',
-    chapitres: [datacenter],
+    chapitres: [datacenter, deuxiemeJour],
   },
   {
     id: 'paquet',

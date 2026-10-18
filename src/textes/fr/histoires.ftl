@@ -4,7 +4,7 @@
 histoire-effaceur = L’Effaceur
     .resume = Une créature efface tout dans le royaume. Se déplacer, créer, chercher, puis les permissions et sudo.
 histoire-datacenter = Le Datacenter
-    .resume = Premier jour de stage, un site en panne : les journaux, les tubes |, les processus.
+    .resume = Un site en panne, puis une nouvelle recrue : les journaux, les tubes |, les processus, les comptes et les groupes.
 histoire-paquet = Le Paquet perdu
     .resume = « Internet ne marche plus » : enquête de proche en proche avec ping, dig, traceroute et curl.
 histoire-temps = La Machine à remonter le temps

@@ -91,7 +91,9 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `grep` sans résultat | « (aucune ligne ne contient …) » | n'affiche rien |
 | `man` | affiche la page d'un coup, en quelques sections | ouvre une page plein écran (flèches, `/mot` pour chercher, `q` pour quitter), bien plus longue |
 | `ls -l` | type et droits, propriétaire, groupe (= propriétaire), taille, nom | ajoute le nombre de liens et la date |
-| permissions | propriétaire et « les autres » ; pas de groupes | le groupe a ses propres droits |
+| permissions | propriétaire, groupe, autres ; pas de bits spéciaux (setuid, setgid, sticky) ni d'ACL | aussi setgid sur les dossiers partagés, ACL (`setfacl`) |
+| `usermod -G` | prend effet tout de suite | les groupes d'une session sont lus à la connexion : il faut se reconnecter (le jeu le dit dans le texte) |
+| `chown`, `chgrp` | `-R` seulement | aussi `--reference`, `-h`… |
 | `chmod -w` (sans u/g/o) | agit sur tout le monde | tient compte du masque `umask` |
 | `rm` d'un fichier protégé en écriture | efface sans demander | demande confirmation |
 | `sudo` | redemande le mot de passe seulement au premier usage du chapitre | s'en souvient environ 15 minutes |
@@ -105,7 +107,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | journal nginx | format « combined » sans la page d'origine ni le navigateur | deux champs de plus en fin de ligne |
 | `ssh` | clé seulement (pas de mot de passe ni d'agent) ; une clé est acceptée si c'est la bonne machine ; pas de commande à distance ; message d'usage raccourci ; option inconnue : message des coreutils | mot de passe, agent, `authorized_keys` côté serveur, commande à distance |
 | `exit` | a sa page `man` | commande intégrée à bash : `help exit` |
-| session `ssh` | la machine d'une histoire repart du début du chapitre en cours à chaque connexion | la machine garde son état |
+| session `ssh` | la machine garde son état tant que la page reste ouverte ; un rechargement relance le chapitre en cours | la machine garde son état |
+| sections du manuel | 1 (commandes) et 8 (administration : `usermod`) | aussi 2 à 7 (appels système, fichiers de configuration…) |
 
 ## Histoire 1 : l'Effaceur
 
@@ -192,6 +195,29 @@ Awa, responsable d'exploitation, est en réunion ; ses notes guident.
 Pièges prévus : `kill` avant de bloquer (le service repart à 99 %), `tee`
 sans `-a` ou `>` qui écrase `bloques.conf` (une sauvegarde `.bak` existe).
 
+### Chapitre 2 — Deuxième jour (fait)
+
+Malo arrive en renfort : il doit lire les journaux de nginx sans `sudo`, et
+l'équipe web a besoin d'un dossier partagé fermé aux autres comptes. La
+machine a de vrais comptes et groupes (`/etc/passwd`, `/etc/group`), comme
+une Debian : les journaux appartiennent à `www-data`, groupe `adm`, en 640.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre pourquoi on lit les journaux sans `sudo` | `id`, `id malo`, `groups`, `ls -l /var/log/nginx` |
+| Donner la lecture des journaux à Malo | `sudo usermod -aG adm malo` |
+| Dossier d'équipe | `sudo chgrp equipe-web /srv/equipe` puis `sudo chmod 770 /srv/equipe` (ou `chown root:equipe-web`, `chmod g+w,o-rx`) |
+
+Objectifs vérifiés sur l'état : Malo lit les deux journaux et reste dans
+`equipe-web`, les journaux restent fermés aux autres, et l'équipe (et elle
+seule) entre, lit et écrit dans `/srv/equipe`.
+
+Pièges prévus : `usermod -G` sans `-a` (Malo perd `equipe-web`),
+`chmod o+r` sur les journaux (adresses IP lisibles par tous : données
+personnelles), `chmod 777` sur le partage, `chgrp` sans être propriétaire.
+Débrief : moindre privilège, `-aG`, setgid pour aller plus loin, liens vers
+`usermod(8)`, `chmod(1)` et les groupes système de Debian.
+
 ## Histoire 3 : Le Paquet perdu (faite)
 
 « Internet ne marche plus » au café associatif. Le carnet de Kofi donne la
@@ -232,7 +258,7 @@ copie n'est pas une sauvegarde.
 
 - L'Effaceur, chapitre 4 : les sauvegardes (`rsync`, `cron`) pour que plus
   rien ne se perde.
-- Le Datacenter, chapitre 2 : les certificats TLS et `openssl`, en lien avec
+- Le Datacenter, chapitre 3 : les certificats TLS et `openssl`, en lien avec
   « Le cadenas » du module 1.
 - Le Paquet perdu, chapitre 2 : le réseau local (`ip a`, adresses privées,
   NAT), en lien avec « La box ».

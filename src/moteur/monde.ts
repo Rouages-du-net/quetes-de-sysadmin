@@ -23,9 +23,25 @@ export type Fichier = {
   // Contenu d'une archive tar : chemins relatifs → copies des fichiers.
   archive?: { fichiers: Record<string, Fichier>; compresse: boolean };
 } & Droits;
-// Propriétaire et permissions Unix (rwx pour le propriétaire, le groupe,
-// les autres). Par défaut : « vous », rw-r--r-- (fichier), rwxr-xr-x (lieu).
-export type Droits = { proprio?: string; mode?: string };
+// Propriétaire, groupe et permissions Unix (rwx pour le propriétaire, le
+// groupe, les autres). Par défaut : « vous », le groupe qui porte le nom du
+// propriétaire, rw-r--r-- (fichier), rwxr-xr-x (lieu).
+export type Droits = { proprio?: string; groupe?: string; mode?: string };
+
+// Les comptes d'une machine, comme /etc/passwd et /etc/group : chaque
+// utilisateur·rice a un groupe principal et peut être membre d'autres
+// groupes (groupes secondaires).
+export interface Comptes {
+  utilisateurs: Record<string, { uid: number; groupe: string; maison?: string; shell?: string }>;
+  groupes: Record<string, { gid: number; membres: string[] }>;
+}
+
+// Les comptes de toutes les machines qui n'en déclarent pas : root, et
+// « vous », membre du groupe sudo (comme le premier compte d'une Debian).
+export const comptesParDefaut = (): Comptes => ({
+  utilisateurs: { root: { uid: 0, groupe: 'root', maison: '/root' }, vous: { uid: 1000, groupe: 'vous' } },
+  groupes: { root: { gid: 0, membres: [] }, sudo: { gid: 27, membres: ['vous'] }, vous: { gid: 1000, membres: [] } },
+});
 export type Dossier = {
   type: 'dossier';
   enfants: Record<string, Noeud>;
@@ -64,6 +80,8 @@ export interface Chapitre {
   apresCommande?: (jeu: Jeu) => string | void;
   // Mot de passe de « vous » pour sudo (absent : sudo pas encore appris).
   motDePasse?: string;
+  // Comptes et groupes de la machine (par défaut : comptesParDefaut).
+  comptes?: () => Comptes;
   // État propre à l'histoire (processus, réseau, dépôts git…), recréé à
   // chaque partie. Les commandes spécialisées le lisent et le modifient.
   etat?: (t: Traduire) => Record<string, unknown>;
@@ -105,4 +123,25 @@ export const d = (enfants: Record<string, Noeud>, bloque?: Dossier['bloque'], dr
   enfants,
   bloque,
   ...droits,
+});
+
+// /etc/passwd et /etc/group, tenus à jour à partir des comptes de la
+// machine (usermod les modifie) : à poser dans le /etc d'un monde.
+export const fichiersComptes = (): Record<string, Fichier> => ({
+  passwd: f(
+    (jeu) =>
+      Object.entries(jeu.comptes.utilisateurs)
+        .map(([nom, u]) =>
+          [nom, 'x', u.uid, jeu.comptes.groupes[u.groupe]?.gid ?? u.uid, '', u.maison ?? `/home/${nom}`, u.shell ?? '/bin/bash'].join(':'),
+        )
+        .join('\n'),
+    { lignes: true, proprio: 'root' },
+  ),
+  group: f(
+    (jeu) =>
+      Object.entries(jeu.comptes.groupes)
+        .map(([nom, g]) => `${nom}:x:${g.gid}:${g.membres.join(',')}`)
+        .join('\n'),
+    { lignes: true, proprio: 'root' },
+  ),
 });
