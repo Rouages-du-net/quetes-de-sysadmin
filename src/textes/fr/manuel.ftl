@@ -121,8 +121,12 @@ man-ssh = se connecte à une autre machine, de façon chiffrée (Secure Shell). 
 man-sudo = exécute une commande en tant que root, l’administrateur qui a tous les droits (superuser do). Demande TON mot de passe, pas celui de root.
     .synopsis = sudo commande
     .exemple-1 = lire un fichier réservé à root
-man-systemctl = gère les services, ces programmes qui tournent en permanence (serveur web…). « reload » leur fait relire leur configuration. Seul root peut les démarrer ou les arrêter : sudo systemctl reload nginx
-    .synopsis = systemctl status|start|stop|restart|reload service
+man-systemctl = gère les services, ces programmes qui tournent en permanence (serveur web…), à travers systemd. status montre l'état d'un service et ses derniers messages ; start, stop, restart le démarrent, l'arrêtent ou le relancent ; reload lui fait relire sa configuration. enable le fait démarrer avec la machine, disable non : start ne vaut que jusqu'au prochain redémarrage. --failed liste les services en échec. Seul root peut changer l'état d'un service.
+    .synopsis = systemctl [status|start|stop|restart|reload|enable|disable|is-active|is-enabled] service ; systemctl --failed ; systemctl reboot
+    .exemple-1 = l'état de nginx et ses derniers messages
+    .exemple-2 = les services en échec (le premier réflexe après un redémarrage)
+    .exemple-3 = relancer nginx
+    .exemple-4 = démarrer nginx maintenant ET à chaque démarrage de la machine
 man-tail = affiche la fin d’un fichier (les 10 dernières lignes, ou N). Pratique pour les journaux, où le plus récent est à la fin.
     .synopsis = tail [-n N] [fichier]
     .option-n = nombre de lignes à afficher (10 par défaut) : tail -n 3 fichier.
@@ -185,6 +189,22 @@ man-usermod = modifie un compte (user modify), notamment ses groupes. -G donne l
     .option-G = la liste des groupes secondaires, séparés par des virgules.
     .exemple-1 = ajouter malo au groupe adm, sans toucher à ses autres groupes
     .exemple-2 = attention : malo n'est plus que dans adm (ses autres groupes secondaires sont retirés)
+
+man-journalctl = lit le journal de systemd, où les services écrivent leurs messages (et leurs erreurs). -u ne garde qu'un service, -n les N dernières lignes, -b le démarrage en cours, -p err les erreurs. -x ajoute des explications et -e va à la fin : journalctl -xeu nginx est la formule classique quand un service refuse de démarrer. Il faut être root, ou dans le groupe adm ou systemd-journal, pour tout lire.
+    .synopsis = journalctl [-u service] [-n N] [-b] [-p priorité] [-x] [-e]
+    .option-u = seulement les messages de ce service (unit).
+    .option-n = seulement les N dernières lignes.
+    .option-b = seulement depuis le dernier démarrage de la machine (boot).
+    .option-p = seulement cette priorité et les plus graves : err, warning, info…
+    .option-x = ajoute des explications aux messages connus.
+    .option-e = va directement à la fin du journal.
+    .exemple-1 = les messages de nginx
+    .exemple-2 = la formule quand un service ne démarre pas
+    .exemple-3 = les erreurs depuis le dernier démarrage
+    .exemple-4 = les 20 derniers messages
+man-reboot = redémarre la machine. Les services activés (systemctl enable) repartent tout seuls ; les autres restent arrêtés. Sur une connexion ssh, la session est coupée : il faut se reconnecter. Réservé à root.
+    .synopsis = reboot
+    .exemple-1 = redémarrer la machine
 
 ## Mise en page du manuel et messages de man-db et des coreutils
 

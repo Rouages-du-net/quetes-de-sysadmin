@@ -145,6 +145,12 @@ export class Console {
     if (sh.sortie) {
       sh.sortie = false;
       morceaux.push(this.distant ? this.deconnecter() : this.t('poste-exit'));
+    } else if (sh.redemarrage && this.distant) {
+      // La machine redémarre : le serveur coupe la connexion.
+      sh.redemarrage = false;
+      const { domaine } = this.distant.machine;
+      this.distant = null;
+      morceaux.push(`Connection to ${domaine} closed by remote host.\nConnection to ${domaine} closed.`);
     } else if (sh.demandeConnexion) {
       const nom = sh.demandeConnexion;
       sh.demandeConnexion = null;

@@ -7,9 +7,10 @@
 // champs (page d'origine et navigateur). Toutes les adresses IP sont
 // réservées à la documentation (RFC 5737).
 
-import { d, f, type Chapitre } from '../monde';
+import { d, f, type Chapitre, type Comptes } from '../monde';
 import type { Processus } from '../commandes/systeme';
 import type { Traduire } from '../../textes';
+import { nouveauSystemd } from '../systemd';
 
 const M = '/home/vous';
 const ROBOT = '198.51.100.77';
@@ -46,6 +47,30 @@ export const JOURNAL_NGINX = JOURNAL.texte;
 export const ERREURS_503 = JOURNAL.erreurs503;
 export const REQUETES_ROBOT = JOURNAL.requetesRobot;
 
+// Les comptes de la machine datacenter (chapitres 2 et 3), comme une Debian :
+// www-data fait tourner le site, adm lit les journaux.
+export const comptesDatacenter = (): Comptes => ({
+  utilisateurs: {
+    root: { uid: 0, groupe: 'root', maison: '/root' },
+    'www-data': { uid: 33, groupe: 'www-data', maison: '/var/www', shell: '/usr/sbin/nologin' },
+    nobody: { uid: 65534, groupe: 'nogroup', maison: '/nonexistent', shell: '/usr/sbin/nologin' },
+    vous: { uid: 1000, groupe: 'vous' },
+    awa: { uid: 1001, groupe: 'awa' },
+    malo: { uid: 1002, groupe: 'malo' },
+  },
+  groupes: {
+    root: { gid: 0, membres: [] },
+    adm: { gid: 4, membres: ['vous'] },
+    sudo: { gid: 27, membres: ['vous', 'awa'] },
+    'www-data': { gid: 33, membres: [] },
+    nogroup: { gid: 65534, membres: [] },
+    vous: { gid: 1000, membres: [] },
+    awa: { gid: 1001, membres: [] },
+    malo: { gid: 1002, membres: [] },
+    'equipe-web': { gid: 1003, membres: ['vous', 'awa', 'malo'] },
+  },
+});
+
 const bloquesInitial = (t: Traduire) => `# ${t('premier-jour-bloques-commentaire')}
 deny 203.0.113.5;
 deny 192.0.2.99;`;
@@ -70,10 +95,19 @@ export const datacenter: Chapitre = {
       { pid: 4242, utilisateur: 'www-data', cpu: 99.3, mem: 38.5, commande: 'php-fpm: pool catalogue' },
       { pid: 5120, utilisateur: 'vous', cpu: 0, mem: 0.1, commande: '-bash' },
     ] satisfies Processus[],
-    services: {
-      nginx: { description: 'A high performance web server and a reverse proxy server', actif: true },
-      catalogue: { description: t('premier-jour-service-catalogue'), actif: true },
-    },
+    systemd: nouveauSystemd('datacenter', Date.UTC(2026, 9, 13, 8, 0, 0), Date.UTC(2026, 9, 13, 21, 5, 0), {
+      nginx: {
+        description: 'A high performance web server and a reverse proxy server',
+        active: true,
+        executable: 'nginx',
+        processus: [
+          { pid: 612, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx' },
+          { pid: 613, utilisateur: 'www-data', cpu: 4.8, mem: 0.6, commande: 'nginx: worker process' },
+        ],
+      },
+      // Ses processus sont gérés par l'histoire (surKill).
+      catalogue: { description: t('premier-jour-service-catalogue'), active: true, executable: 'php-fpm' },
+    }),
     // Configuration que nginx a réellement chargée (il ne relit le fichier
     // qu'au reload ou au restart).
     confChargee: bloquesInitial(t),

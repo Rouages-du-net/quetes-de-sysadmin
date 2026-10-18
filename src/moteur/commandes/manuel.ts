@@ -78,7 +78,7 @@ export function apropos(mot: string, noms: string[], t: Traduire): string[] {
  * siennes. Renvoie le message d'erreur des coreutils, ou null.
  */
 export function optionInvalide(nom: string, c: Commande, args: string[], t: Traduire): string | null {
-  if (!c.options) return null;
+  if (!c.options || c.propresOptions) return null;
   for (const a of args) {
     if (!a.startsWith('-') || a === '-' || a.startsWith('--') || /^-\d+$/.test(a)) continue;
     for (const lettre of a.slice(1)) if (!c.options.includes(lettre)) return t('manuel-option-invalide', { commande: nom, lettre });

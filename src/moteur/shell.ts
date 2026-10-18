@@ -48,6 +48,7 @@ export interface Jeu {
   // Demande d'ouvrir une session sur une autre machine (ssh) ; la console
   // (console.ts) s'en charge après la ligne en cours.
   demandeConnexion: string | null;
+  redemarrage: boolean;
 }
 
 export class Shell implements Jeu {
@@ -67,6 +68,8 @@ export class Shell implements Jeu {
   question: { invite: string; repondre: (reponse: string) => string } | null = null;
   // exit tapé : la console ferme la session (voir console.ts).
   sortie = false;
+  // La machine vient de redémarrer (reboot) : la console coupe la session.
+  redemarrage = false;
   demandeConnexion: string | null = null;
   comptes: Comptes;
   // Sortie d'erreur et remarques de la ligne en cours.

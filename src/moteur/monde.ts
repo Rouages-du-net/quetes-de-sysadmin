@@ -98,7 +98,9 @@ export interface Histoire {
 // le code ; on recolle les lignes d'un même paragraphe pour que le terminal
 // les fasse passer à la ligne selon la largeur de l'écran. On garde tels
 // quels les lignes indentées et les tableaux (alignés par des doubles espaces).
-const brut = (l: string) => l === '' || l.startsWith(' ') || l.startsWith('- ') || l.includes('  ');
+// Un titre en capitales (« CE QUI S'EST PASSÉ ») reste aussi sur sa ligne.
+const titre = (l: string) => /\p{Lu}/u.test(l) && l === l.toUpperCase();
+const brut = (l: string) => l === '' || l.startsWith(' ') || l.startsWith('- ') || l.includes('  ') || titre(l);
 export const nettoyer = (t: string) =>
   t
     .replace(/^\n+|\s+$/g, '')

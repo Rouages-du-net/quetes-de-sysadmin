@@ -1,7 +1,7 @@
-// Commandes système : processus (ps, kill) et services (systemctl).
-// Les processus et services sont simulés dans l'état de l'histoire :
+// Commandes système : processus (ps, kill). Les services (systemctl,
+// journalctl) sont dans systemd.ts. Les processus sont simulés dans l'état de
+// l'histoire :
 //   etat.processus : liste de { pid, utilisateur, cpu, mem, commande }
-//   etat.services  : { nom: { description, actif } }
 //   etat.surKill(jeu, processus), etat.surSystemctl(jeu, action, nom) :
 //   réactions propres à l'histoire, qui renvoient un message éventuel.
 
@@ -48,23 +48,4 @@ export const SYSTEME: Record<string, Commande> = {
     },
   },
 
-  systemctl: {
-    lancer: ({ args, jeu }) => {
-      const [action, brut] = args;
-      const services: Record<string, { description: string; actif: boolean }> = jeu.etat.services ?? {};
-      const nom = brut?.replace(/\.service$/, '');
-      if (!action || !nom) return jeu.erreur(jeu.t('systemctl-usage'));
-      const s = services[nom];
-      if (!s) return jeu.erreur(`Unit ${nom}.service could not be found.`);
-      if (action === 'status')
-        return `● ${nom}.service - ${s.description}\n     Active: ${s.actif ? 'active (running)' : 'failed'}`;
-      if (!['start', 'stop', 'restart', 'reload'].includes(action)) return jeu.erreur(jeu.t('systemctl-action-inconnue', { action }));
-      // Sans être root, systemctl demanderait un mot de passe ; ici, on
-      // renvoie vers sudo.
-      if (jeu.qui !== 'root') return jeu.erreur(jeu.t('systemctl-acces-refuse', { action, service: nom }));
-      if (action === 'stop') s.actif = false;
-      else s.actif = true;
-      return jeu.etat.surSystemctl?.(jeu, action, nom) ?? '';
-    },
-  },
 };
