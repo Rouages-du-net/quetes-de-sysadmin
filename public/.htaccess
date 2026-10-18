@@ -23,15 +23,16 @@ ErrorDocument 404 /404.html
 </IfModule>
 
 <IfModule mod_headers.c>
-  # Cache : fichiers versionnés d'Astro = 1 an ; fichier à intégrer (nom
-  # fixe) = 1 heure ; HTML = toujours revalider
+  # Cache : fichiers versionnés d'Astro = 1 an ; HTML et fichier à intégrer
+  # (son nom ne change pas d'une version à l'autre) = toujours revalider
   <If "%{REQUEST_URI} =~ m#^/_astro/#">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </If>
+  # Le fichier d'intégration est chargé par d'autres sites : un script
+  # « module » venu d'une autre origine exige l'en-tête CORS.
   <If "%{REQUEST_URI} =~ m#^/integration/#">
-    Header set Cache-Control "public, max-age=3600"
-    # Un <script type="module"> chargé depuis un autre site exige CORS.
     Header set Access-Control-Allow-Origin "*"
+    Header set Cache-Control "no-cache"
   </If>
   <FilesMatch "\.html$">
     Header set Cache-Control "no-cache"

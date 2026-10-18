@@ -15,6 +15,12 @@ Pour ne dépendre d'aucun serveur extérieur, copie le fichier
 `dist/integration/quetes-de-sysadmin.js` (après `npm run build`) sur ton site
 et change l'adresse du script.
 
+Le serveur de sysadmin.rouages.net envoie l'en-tête
+`Access-Control-Allow-Origin: *` pour ce fichier (voir `public/.htaccess`) :
+c'est obligatoire pour qu'un script « module » soit chargé depuis un autre
+site. Si tu héberges toi-même le fichier sur un autre domaine que ta page,
+configure le même en-tête.
+
 ## Attributs
 
 | Attribut | Valeurs | Effet |
