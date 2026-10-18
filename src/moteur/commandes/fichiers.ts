@@ -16,6 +16,9 @@ function ligneLongue(jeu: Shell, nom: string, n: Noeud, humain: boolean): string
   const octets = n.type === 'dossier' ? 4096 : tailleDe(n, jeu);
   const taille = humain ? lisible(octets, jeu.t.langue) : String(octets);
   const suffixe = n.type === 'dossier' && nom !== '.' && nom !== '..' ? '/' : '';
+  // Un lien symbolique : « l », droits rwxrwxrwx, taille = longueur du chemin visé.
+  if (n.type === 'fichier' && n.lien !== undefined)
+    return `lrwxrwxrwx ${proprio.padEnd(8)} ${groupe.padEnd(8)} ${String(n.lien.length).padStart(6)} ${nom} -> ${n.lien}`;
   return `${n.type === 'dossier' ? 'd' : '-'}${modeDe(n)} ${proprio.padEnd(8)} ${groupe.padEnd(8)} ${taille.padStart(6)} ${nom}${suffixe}`;
 }
 
@@ -45,7 +48,9 @@ export const FICHIERS: Record<string, Commande> = {
     lancer: ({ args, jeu, dernier }) => {
       const { lettres, reste } = options(args);
       const cible = reste[0] ?? '.';
-      const n = jeu.trouver(cible);
+      // ls -l d'un lien montre le lien lui-même ; sans -l, ls entre dans le lieu visé.
+      const lien = jeu.trouver(cible, false);
+      const n = lettres.has('l') && lien?.type === 'fichier' && lien.lien !== undefined ? lien : jeu.trouver(cible);
       if (!n) return jeu.erreur(jeu.t('ls-acces-introuvable', { cible }));
       const raison = jeu.blocage(cible);
       if (raison) return jeu.erreur(raison);
@@ -165,7 +170,8 @@ export const FICHIERS: Record<string, Commande> = {
     lancer: ({ args, jeu }) => {
       if (!args.length) return jeu.erreur(jeu.t('rm-usage'));
       for (const cible of args.filter((a) => !a.startsWith('-'))) {
-        const n = jeu.trouver(cible);
+        // rm efface le lien lui-même, jamais ce qu'il vise.
+        const n = jeu.trouver(cible, false);
         if (!n) jeu.erreur(jeu.t('rm-introuvable', { cible }));
         else if (n.type === 'dossier') jeu.erreur(jeu.t('rm-dossier', { cible }));
         else if (n.protege?.rm) jeu.erreur(n.protege.rm);
@@ -176,6 +182,39 @@ export const FICHIERS: Record<string, Commande> = {
         else jeu.effacer(cible);
       }
       return '';
+    },
+  },
+
+  // ln : lien symbolique (-s) ou physique. Comme coreutils : si la
+  // destination est un lieu, le lien y prend le nom de la cible ; le chemin
+  // visé est enregistré tel quel (relatif au lieu du lien, pas au lieu courant).
+  ln: {
+    lancer: ({ args, jeu }) => {
+      const { lettres, reste } = options(args);
+      if (!reste.length) return jeu.erreur(jeu.t('ln-operande-manquant'));
+      const [cible, dest = '.'] = reste;
+      const lieu = jeu.trouver(dest);
+      const chemin = lieu?.type === 'dossier' ? `${jeu.resoudre(dest)}/${cible.replace(/\/$/, '').split('/').at(-1)}` : jeu.resoudre(dest);
+      const affiche = lieu?.type === 'dossier' ? chemin : dest;
+      const symbolique = lettres.has('s');
+      const quoi = symbolique ? 'ln-impossible-symbolique' : 'ln-impossible-physique';
+      if (jeu.trouver(chemin, false)) {
+        if (!lettres.has('f')) return jeu.erreur(jeu.t(quoi, { cible: affiche, raison: jeu.t('ln-existe') }));
+        if (!jeu.ecritDans(chemin)) return jeu.erreur(jeu.t(quoi, { cible: affiche, raison: jeu.t('ln-permission') }));
+        jeu.effacer(chemin);
+      }
+      if (!symbolique) {
+        const source = jeu.trouver(cible);
+        if (!source) return jeu.erreur(jeu.t('ln-acces-impossible', { cible }));
+        if (source.type === 'dossier') return jeu.erreur(jeu.t('ln-physique-dossier', { cible }));
+      }
+      if (jeu.trouver(chemin + '/..')?.type !== 'dossier') return jeu.erreur(jeu.t(quoi, { cible: affiche, raison: jeu.t('ln-introuvable') }));
+      if (!jeu.ecritDans(chemin)) return jeu.erreur(jeu.t(quoi, { cible: affiche, raison: jeu.t('ln-permission') }));
+      // Un lien physique est un deuxième nom pour le même fichier : le même nœud.
+      const noeud: Noeud = symbolique ? { type: 'fichier', contenu: '', lien: cible, proprio: jeu.qui } : jeu.trouver(cible)!;
+      const parent = jeu.trouver(chemin + '/..');
+      if (parent?.type === 'dossier') parent.enfants[jeu.nom(chemin)] = noeud;
+      return lettres.has('v') ? `'${affiche}' -> '${cible}'` : '';
     },
   },
 

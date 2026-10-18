@@ -538,6 +538,66 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('Les Lettres du quartier, chapitre 4 — La colocation (nginx)', () => {
+      // nano : remplace du texte dans un fichier et enregistre.
+      const modifier = (s: Shell, fichier: string, avant: string | RegExp, apres: string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(s.edition!.texte.replace(avant, apres));
+        s.quitterEdition();
+      };
+
+      it('solution, avec les fausses pistes : lien relatif, nom en double, 502, barre finale', () => {
+        const { s, tout } = jouer('colocation', [
+          'curl http://cafe.example',
+          'cd /etc/nginx',
+          'sudo cp sites-available/lettres sites-available/cafe',
+          'fourmis-2026',
+          'sudo ln -s sites-available/cafe sites-enabled/',
+          'sudo nginx -t',
+          'sudo rm sites-enabled/cafe',
+          'sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/',
+          'ls -l sites-enabled',
+        ]);
+        expect(tout).toContain('open() "/etc/nginx/sites-enabled/cafe" failed (2: No such file or directory)');
+        expect(tout).toContain('cafe -> /etc/nginx/sites-available/cafe');
+        contient(tout, 'le site des Lettres qui répond');
+        contient(tout, 'le lien est cassé');
+        modifier(s, '/etc/nginx/sites-available/cafe', /default_server/g, '');
+        const conflit = s.executer('sudo nginx -t') ?? '';
+        expect(conflit).toContain('nginx: [warn] conflicting server name "lettres.example" on 0.0.0.0:80, ignored');
+        contient(conflit, 'deux sites répondent au même nom');
+        modifier(s, '/etc/nginx/sites-available/cafe', /lettres/g, 'cafe');
+        s.executer('sudo systemctl reload nginx');
+        expect(s.executer('curl -H "Host: cafe.example" http://127.0.0.1')).toContain('Le café associatif');
+        modifier(s, '/etc/nginx/sites-available/lettres', '    location / {', '    location /agenda/ {\n        proxy_pass http://127.0.0.1:3000;\n    }\n\n    location / {');
+        const suite = ['sudo nginx -t', 'sudo systemctl reload nginx', 'curl -I http://lettres.example/agenda/', 'sudo tail -1 /var/log/nginx/error.log', 'sudo systemctl enable --now agenda', 'curl http://lettres.example/agenda/']
+          .map((l) => s.executer(l) ?? '')
+          .join('\n');
+        expect(suite).toContain('HTTP/1.1 502 Bad Gateway');
+        expect(suite).toContain('connect() failed (111: Connection refused) while connecting to upstream');
+        expect(suite).toContain('Cannot GET /agenda/');
+        contient(suite, 'la barre finale');
+        expect(s.termine).toBe(false);
+        modifier(s, '/etc/nginx/sites-available/lettres', 'proxy_pass http://127.0.0.1:3000;', 'proxy_pass http://127.0.0.1:3000/;');
+        s.executer('sudo systemctl reload nginx');
+        expect(s.executer('curl http://lettres.example/agenda/ateliers')).toContain('Les ateliers');
+        expect(s.termine).toBe(true);
+      });
+
+      it('autre solution : un nouveau fichier écrit à la main, location exacte du préfixe, agenda démarré puis activé', () => {
+        const { s } = jouer('colocation', ['sudo systemctl start agenda', 'fourmis-2026']);
+        s.executer('sudo nano /etc/nginx/sites-available/cafe');
+        s.enregistrerEdition('server {\n    listen 80;\n    server_name cafe.example;\n    root /var/www/cafe;\n}');
+        s.quitterEdition();
+        s.executer('sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/cafe');
+        modifier(s, '/etc/nginx/sites-available/lettres', '    location / {', '    location /agenda/ {\n        proxy_pass http://localhost:3000/;\n    }\n    location / {');
+        s.executer('sudo systemctl reload nginx');
+        expect(s.termine).toBe(false);
+        s.executer('sudo systemctl enable agenda');
+        expect(s.termine).toBe(true);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

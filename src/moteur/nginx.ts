@@ -55,6 +55,10 @@ const DIRECTIVES: Record<string, Regle> = {
   try_files: r(2, 99, ['server', 'location']),
   return: r(1, 2, ['server', 'location']),
   allow: r(1, 1, HTTP),
+  alias: r(1, 1, ['location']),
+  proxy_pass: r(1, 1, ['location']),
+  proxy_set_header: r(2, 2, HTTP),
+  proxy_http_version: r(1, 1, HTTP),
   deny: r(1, 1, HTTP),
 };
 
@@ -64,6 +68,17 @@ interface Directive {
   fichier: string;
   ligne: number;
   enfants?: Directive[];
+}
+
+// Un bloc location : le préfixe (ou le chemin exact, avec =) et ce qu'on y fait.
+export interface Location {
+  exact: boolean;
+  chemin: string;
+  racine?: string;
+  alias?: string;
+  index?: string[];
+  proxy?: string;
+  retour?: string[];
 }
 
 export interface Serveur {
@@ -78,10 +93,15 @@ export interface Serveur {
   // renouveler le fichier ne change rien tant que nginx n'a pas rechargé.
   ssl: string[];
   certificat: string | null;
+  locations: Location[];
+  // return au niveau du serveur (ex. redirection vers HTTPS).
+  retour?: string[];
 }
 
 export interface Configuration {
   serveurs: Serveur[];
+  // Les avertissements de nginx -t ([warn]) : la configuration reste valable.
+  avertissements: string[];
 }
 
 class ErreurConf extends Error {}
@@ -107,6 +127,11 @@ function fichiersInclus(jeu: Jeu, motif: string, fichier: string, ligne: number)
     if (!n || n.type !== 'fichier') echec(`open() "${chemin}" failed (2: No such file or directory)`, fichier, ligne);
     return [chemin];
   }
+  // Un lien cassé dans sites-enabled/ fait échouer nginx -t.
+  const verifier = (chemin: string) => {
+    if (!jeu.trouver(chemin)) echec(`open() "${chemin}" failed (2: No such file or directory)`, fichier, ligne);
+    return chemin;
+  };
   const dossier = chemin.slice(0, chemin.lastIndexOf('/')) || '/';
   const n = jeu.trouver(dossier);
   if (!n || n.type !== 'dossier') return [];
@@ -114,7 +139,7 @@ function fichiersInclus(jeu: Jeu, motif: string, fichier: string, ligne: number)
   return Object.keys(n.enfants)
     .filter((nom) => re.test(nom) && n.enfants[nom].type === 'fichier')
     .sort()
-    .map((nom) => `${dossier}/${nom}`);
+    .map((nom) => verifier(`${dossier}/${nom}`));
 }
 
 // Lit un fichier et ses include ; renvoie ses directives (dans le bloc `contexte`).
@@ -201,6 +226,8 @@ function construire(jeu: Jeu, lus: string[] = []): Configuration {
   const http = racine.find((d) => d.nom === 'http')?.enfants ?? [];
   const valeurs = (liste: Directive[], nom: string) => liste.filter((d) => d.nom === nom).flatMap((d) => d.args);
   const parDefautVus: Record<string, true> = {};
+  const nomsVus = new Set<string>();
+  const avertissements: string[] = [];
   const serveurs = http
     .filter((d) => d.nom === 'server')
     .map((s): Serveur => {
@@ -219,18 +246,44 @@ function construire(jeu: Jeu, lus: string[] = []): Configuration {
         }
       }
       const certificat = ssl.length ? chargerCertificat(jeu, enfants, http, s) : null;
+      // Un même nom sur la même adresse : le premier serveur lu le garde.
+      const noms: string[] = [];
+      for (const nom of valeurs(enfants, 'server_name').map((n) => n.toLowerCase())) {
+        const conflits = (ecoute.length ? ecoute : ['0.0.0.0:80']).filter((a) => nomsVus.has(`${nom} ${a}`));
+        for (const a of conflits) avertissements.push(`conflicting server name "${nom}" on ${a}, ignored`);
+        if (!conflits.length) noms.push(nom);
+        for (const a of ecoute.length ? ecoute : ['0.0.0.0:80']) nomsVus.add(`${nom} ${a}`);
+      }
+      const locations = enfants
+        .filter((d) => d.nom === 'location')
+        .map((l): Location => {
+          const exact = l.args[0] === '=';
+          const dedans = l.enfants ?? [];
+          const une = (nom: string) => dedans.find((d) => d.nom === nom)?.args;
+          return {
+            exact,
+            chemin: l.args.at(-1)!,
+            racine: une('root')?.[0],
+            alias: une('alias')?.[0],
+            index: une('index'),
+            proxy: une('proxy_pass')?.[0],
+            retour: une('return'),
+          };
+        });
       return {
         ssl,
         certificat,
+        locations,
+        retour: enfants.find((d) => d.nom === 'return')?.args,
         ecoute: ecoute.length ? ecoute : ['0.0.0.0:80'],
         parDefaut,
-        noms: valeurs(enfants, 'server_name'),
+        noms,
         racine: valeurs(enfants, 'root')[0] ?? valeurs(http, 'root')[0] ?? '/usr/share/nginx/html',
         index: valeurs(enfants, 'index').length ? valeurs(enfants, 'index') : valeurs(http, 'index').length ? valeurs(http, 'index') : ['index.html'],
         refus: [...valeurs(http, 'deny'), ...valeurs(enfants, 'deny')],
       };
     });
-  return { serveurs };
+  return { serveurs, avertissements };
 }
 
 /** Vérifie la configuration : null si elle est bonne, sinon le message [emerg]. */
@@ -274,7 +327,7 @@ export interface Reponse {
   certificat?: string;
 }
 
-const RAISONS: Record<number, string> = { 200: 'OK', 403: 'Forbidden', 404: 'Not Found' };
+const RAISONS: Record<number, string> = { 200: 'OK', 301: 'Moved Permanently', 302: 'Found', 403: 'Forbidden', 404: 'Not Found', 502: 'Bad Gateway' };
 const page = (code: number) =>
   `<html>\n<head><title>${code} ${RAISONS[code]}</title></head>\n<body>\n<center><h1>${code} ${RAISONS[code]}</h1></center>\n<hr><center>nginx/${VERSION}</center>\n</body>\n</html>`;
 const JOURS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -285,12 +338,44 @@ const dateHttp = (ms: number) => {
   return `${JOURS[d.getUTCDay()]}, ${String(d.getUTCDate()).padStart(2, '0')} ${MOIS[d.getUTCMonth()]} ${d.getUTCFullYear()} ${d.toISOString().slice(11, 19)} GMT`;
 };
 
+// Les programmes derrière nginx (proxy_pass) : etat.applis, par adresse
+// « 127.0.0.1:3000 ». Une appli répond tant que son service systemd tourne.
+export interface Appli {
+  service: string;
+  // Les pages qu'elle sert, par chemin ; ailleurs, la page 404 d'Express.
+  pages: Record<string, string>;
+}
+
+const PAGE_EXPRESS = (chemin: string) =>
+  `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET ${chemin}</pre>\n</body>\n</html>`;
+
+// Une ligne de /var/log/nginx/error.log (si le fichier existe).
+function journalErreur(jeu: Jeu, niveau: string, message: string) {
+  if (!jeu.etat.nginxTrace) return;
+  const n = jeu.trouver('/var/log/nginx/error.log');
+  if (n?.type !== 'fichier' || typeof n.contenu !== 'string') return;
+  const numero = (jeu.etat.nginxConnexions = (jeu.etat.nginxConnexions ?? 0) + 1);
+  const ligne = `${heureNginx(systemd(jeu)?.horloge ?? 0)} [${niveau}] 2412#2412: *${numero} ${message}`;
+  n.contenu = n.contenu ? `${n.contenu}\n${ligne}` : ligne;
+}
+
+/** Le bloc location qui traite ce chemin : = exact d'abord, puis le plus long préfixe. */
+export function choisirLocation(serveur: Serveur, chemin: string): Location | null {
+  const exact = serveur.locations.find((l) => l.exact && l.chemin === chemin);
+  if (exact) return exact;
+  return serveur.locations.filter((l) => !l.exact && chemin.startsWith(l.chemin)).sort((a, b) => b.chemin.length - a.chemin.length)[0] ?? null;
+}
+
 /**
  * Une requête HTTP (port 80) ou HTTPS (443) vers cette machine : null si
  * personne n'écoute. Le serveur est choisi par son nom (en-tête Host, ou SNI
- * en HTTPS), sinon c'est celui par défaut du port, sinon le premier.
+ * en HTTPS), sinon c'est celui par défaut du port, sinon le premier ; puis
+ * le bloc location, qui sert un fichier, renvoie (return) ou passe la
+ * requête à une appli (proxy_pass).
  */
-export function requete(jeu: Jeu, hote: string, chemin: string, port = 80): Reponse | null {
+export function requete(jeu: Jeu, hote: string, chemin: string, port = 80, trace = true): Reponse | null {
+  // Les vérifications du jeu (objectifs) interrogent nginx sans laisser de trace au journal.
+  jeu.etat.nginxTrace = trace;
   const sd = systemd(jeu);
   const config: Configuration | null = jeu.etat.nginx?.charge ?? null;
   if (!config || sd?.services.nginx?.etat !== 'active') return null;
@@ -300,29 +385,81 @@ export function requete(jeu: Jeu, hote: string, chemin: string, port = 80): Repo
   if (!serveur) return null;
   // Un port en HTTPS ne répond pas en clair (et inversement) : on ne simule que le bon cas.
   if (serveur.ssl.includes(a) !== (port === 443)) return null;
-  const reponse = (code: number, corps: string): Reponse => ({
+  const reponse = (code: number, corps: string, plus: string[] = []): Reponse => ({
     code,
     corps,
     certificat: port === 443 ? (serveur.certificat ?? undefined) : undefined,
     entetes: [
-      `HTTP/1.1 ${code} ${RAISONS[code]}`,
+      `HTTP/1.1 ${code} ${RAISONS[code] ?? ''}`.trimEnd(),
       `Server: nginx/${VERSION}`,
       `Date: ${dateHttp(sd!.horloge)}`,
       'Content-Type: text/html',
       `Content-Length: ${new TextEncoder().encode(corps).length}`,
       'Connection: keep-alive',
+      ...plus,
     ],
   });
-  const base = serveur.racine.replace(/\/$/, '');
-  const demande = jeu.trouver(base + (chemin || '/'));
+  const variables = (texte: string) =>
+    texte
+      .replaceAll('$request_uri', chemin)
+      .replaceAll('$host', hote.toLowerCase())
+      .replaceAll('$scheme', port === 443 ? 'https' : 'http')
+      .replaceAll('$server_name', serveur.noms[0] ?? '');
+  // return code [adresse ou texte] : 301/302 avec Location, sinon le texte.
+  const retourner = ([code, quoi = '']: string[]) => {
+    const n = Number(code);
+    if (n >= 300 && n < 400) return reponse(n, page(n), [`Location: ${variables(quoi)}`]);
+    return reponse(n, variables(quoi));
+  };
+  if (serveur.retour) return retourner(serveur.retour);
+  const loc = choisirLocation(serveur, chemin);
+  if (loc?.retour) return retourner(loc.retour);
+  if (loc?.proxy) {
+    const m = /^https?:\/\/([^/]+)(\/.*)?$/.exec(loc.proxy);
+    const adresse = (m?.[1] ?? '').replace(/^localhost(?=:|$)/, '127.0.0.1');
+    // Avec une partie chemin dans proxy_pass, elle remplace le préfixe de la location.
+    const amont = m?.[2] !== undefined ? m[2] + chemin.slice(loc.chemin.length) : chemin;
+    const appli: Appli | undefined = jeu.etat.applis?.[adresse.includes(':') ? adresse : `${adresse}:80`];
+    if (!appli || sd!.services[appli.service]?.etat !== 'active') {
+      journalErreur(
+        jeu,
+        'error',
+        `connect() failed (111: Connection refused) while connecting to upstream, client: 127.0.0.1, server: ${serveur.noms[0] ?? '_'}, request: "GET ${chemin} HTTP/1.1", upstream: "http://${adresse}${amont}", host: "${hote}"`,
+      );
+      return reponse(502, page(502));
+    }
+    const corps = appli.pages[amont];
+    return corps === undefined ? reponse(404, PAGE_EXPRESS(amont)) : reponse(200, corps);
+  }
+  // Un fichier : root + chemin, ou alias à la place du préfixe de la location.
+  const sansRequete = chemin.split('?')[0] || '/';
+  const cible = loc?.alias
+    ? loc.alias.replace(/\/$/, '') + '/' + sansRequete.slice(loc.chemin.length).replace(/^\//, '')
+    : (loc?.racine ?? serveur.racine).replace(/\/$/, '') + sansRequete;
+  const index = loc?.index ?? serveur.index;
+  const demande = jeu.trouver(cible);
   let fichier = demande;
   if (demande?.type === 'dossier') {
-    const nom = serveur.index.find((i) => demande.enfants[i]?.type === 'fichier');
+    const nom = index.find((i) => demande.enfants[i] && jeu.trouver(`${cible.replace(/\/$/, '')}/${i}`)?.type === 'fichier');
     // Un lieu sans page d'index : nginx refuse d'en montrer la liste.
-    if (!nom) return reponse(403, page(403));
-    fichier = demande.enfants[nom];
+    if (!nom) {
+      journalErreur(
+        jeu,
+        'error',
+        `directory index of "${cible.replace(/\/?$/, '/')}" is forbidden, client: 127.0.0.1, server: ${serveur.noms[0] ?? '_'}, request: "GET ${chemin} HTTP/1.1", host: "${hote}"`,
+      );
+      return reponse(403, page(403));
+    }
+    fichier = jeu.trouver(`${cible.replace(/\/$/, '')}/${nom}`);
   }
-  if (!fichier || fichier.type !== 'fichier') return reponse(404, page(404));
+  if (!fichier || fichier.type !== 'fichier') {
+    journalErreur(
+      jeu,
+      'error',
+      `open() "${cible}" failed (2: No such file or directory), client: 127.0.0.1, server: ${serveur.noms[0] ?? '_'}, request: "GET ${chemin} HTTP/1.1", host: "${hote}"`,
+    );
+    return reponse(404, page(404));
+  }
   // Les processus de travail de nginx tournent sous le compte www-data.
   if (!jeu.peut(fichier, 'r', 'www-data')) return reponse(403, page(403));
   const corps = typeof fichier.contenu === 'function' ? fichier.contenu(jeu) : fichier.contenu;

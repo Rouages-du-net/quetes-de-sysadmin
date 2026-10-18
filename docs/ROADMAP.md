@@ -161,10 +161,14 @@ demandent plusieurs.
 
 ## Phase 4 — Servir des sites
 
-- [ ] **Serveur web** : **Nginx** (et Apache pour comparer), **hôtes virtuels** (plusieurs
-      sites sur une même machine, comme dans le module « De l'Entrée à la
-      page » de rouages.net), `nginx -t` avant de recharger
-- [ ] **Reverse proxy** devant une application, en-têtes, HTTP → HTTPS
+- [x] **Serveur web** : **Nginx**, **hôtes virtuels** (plusieurs sites sur une
+      même machine), `sites-available` et `ln -s`, `nginx -t` avant de
+      recharger ; quête « La colocation » (Les Lettres du quartier, chapitre 4)
+- [ ] Apache, pour comparer
+- [x] **Reverse proxy** devant une application (`proxy_pass`, barre finale,
+      502 et `error.log`) ; `return 301` simulé
+- [ ] En-têtes transmis à l'appli (`proxy_set_header`, `X-Forwarded-For`),
+      HTTP → HTTPS dans une quête
 - [ ] **DNS** : enregistrements A, AAAA, CNAME, MX, TXT, TTL, propagation ;
       quête « le site ne marche que chez moi »
 - [ ] **Journaux d'accès** : trouver qui fait tomber le site (`awk`, `sort`,

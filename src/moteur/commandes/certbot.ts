@@ -173,7 +173,7 @@ const jeton = (graine: string) => btoa(graine.padEnd(32, '-')).replace(/[+/=]/g,
  * les erreurs au format de certbot (vide : tout est bon). `effets` : sinon,
  * on ne fait que vérifier (pas de fichier déposé, rien d'écrit).
  */
-export function defis(jeu: Shell, r: Renouvellement, noms: string[], essai: number): string[] {
+export function defis(jeu: Shell, r: Renouvellement, noms: string[], essai: number, trace = true): string[] {
   const erreurs: string[] = [];
   // Le module nginx de certbot sert lui-même le défi, quel que soit le dossier du site.
   if (r.params.authenticator === 'nginx') return jeu.trouver('/usr/lib/python3/dist-packages/certbot_nginx') ? [] : ['plugin'];
@@ -195,7 +195,7 @@ export function defis(jeu: Shell, r: Renouvellement, noms: string[], essai: numb
       if (!jeu.existe(lieuDefi)) jeu.placer('certbot', lieuDefi, { type: 'dossier', enfants: {}, proprio: 'root' });
     }
     jeu.placer('certbot', dossier + chemin, { type: 'fichier', contenu: `${t}.cle-du-compte`, proprio: 'root', lignes: true });
-    const reponse = requete(jeu, nom, chemin, 80);
+    const reponse = requete(jeu, nom, chemin, 80, trace);
     jeu.effacer(dossier + chemin);
     jeu.qui = avant;
     if (!reponse) erreurs.push(`  Domain: ${nom}\n  Type:   connection\n  Detail: 192.0.2.11: Fetching http://${nom}${chemin}: Connection refused`);
@@ -211,7 +211,7 @@ export function renouvellementPossible(jeu: Shell): boolean {
   if (!nom) return false;
   const r = lireRenouvellement(jeu.lire(fichiers(nom).conf) ?? '');
   const c = lire(jeu.lire(fichiers(nom).complet));
-  return !!c && defis(jeu, r, c.noms, 0).length === 0;
+  return !!c && defis(jeu, r, c.noms, 0, false).length === 0;
 }
 
 // Ce qui relance nginx dans une commande ou un script.
@@ -601,6 +601,6 @@ export const CERTBOT: Record<string, Commande> = {
 
 // Pour les chapitres : le certificat présenté par nginx pour ce nom est-il bon maintenant ?
 export const certificatServiBon = (jeu: Shell, nom: string) => {
-  const r = requete(jeu, nom, '/', 443);
+  const r = requete(jeu, nom, '/', 443, false);
   return !!r?.certificat && verifierCertificat(jeu, r.certificat, nom) === null;
 };

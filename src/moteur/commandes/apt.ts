@@ -384,7 +384,7 @@ export const APT: Record<string, Commande> = {
         return jeu.erreur(sortie.join('\n'));
       }
       jeu.etat.nginxTeste = true;
-      sortie.push(`nginx: the configuration file ${CONF} syntax is ok`);
+      sortie.push(...(res.config?.avertissements ?? []).map((a) => `nginx: [warn] ${a}`), `nginx: the configuration file ${CONF} syntax is ok`);
       if (jeu.qui !== 'root') {
         const h = heureNginx(systemd(jeu)?.horloge ?? 0);
         sortie.push(

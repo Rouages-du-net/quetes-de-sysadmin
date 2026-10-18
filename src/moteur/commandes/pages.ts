@@ -35,6 +35,7 @@ export const PAGES: Record<string, Page> = {
   journalctl: { options: ['u', 'n', 'b', 'p', 'x', 'e'], exemples: ['journalctl -u nginx', 'journalctl -xeu nginx', 'journalctl -b -p err', 'journalctl -n 20'], voir: ['systemctl'] },
   kill: { voir: ['ps'] },
   less: { voir: ['cat', 'head', 'tail'] },
+  ln: { options: ['s', 'f', 'v'], exemples: ['sudo ln -s /etc/nginx/sites-available/site /etc/nginx/sites-enabled/', 'ls -l /etc/nginx/sites-enabled'], voir: ['ls', 'rm', 'cp'] },
   ls: { options: ['a', 'l', 'h'], exemples: ['ls', 'ls -a', 'ls -l ~/souvenirs'], voir: ['cd', 'pwd', 'chmod'] },
   man: { options: ['k'], exemples: ['man ls', 'man -k copie', 'ls --help'], voir: ['apropos', 'whatis'] },
   mkdir: { exemples: ['mkdir Classe'], voir: ['touch', 'cd'] },

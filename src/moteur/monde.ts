@@ -24,6 +24,9 @@ export type Fichier = {
   // `tronquee` : l'archive a été coupée en cours d'écriture ; seuls ses
   // `tronquee` premiers fichiers sont lisibles.
   archive?: { fichiers: Record<string, Fichier>; compresse: boolean; tronquee?: number };
+  // Lien symbolique (ln -s) : le chemin visé, tel qu'il a été écrit (relatif
+  // au lieu du lien, ou absolu). On le suit pour lire, écrire, entrer.
+  lien?: string;
 } & Droits;
 // Propriétaire, groupe et permissions Unix (rwx pour le propriétaire, le
 // groupe, les autres). Par défaut : « vous », le groupe qui porte le nom du
