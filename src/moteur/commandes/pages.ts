@@ -79,7 +79,7 @@ export const PAGES: Record<string, Page> = {
   lsblk: { options: ['f'], exemples: ['lsblk', 'lsblk -f'], voir: ['mount', 'df'] },
   mount: { section: 8, exemples: ['mount', 'sudo mount -o ro /dev/sdb1 /mnt/cle', 'sudo umount /mnt/cle'], voir: ['umount', 'lsblk', 'df'] },
   umount: { section: 8, exemples: ['sudo umount /mnt/cle'], voir: ['mount', 'lsblk'] },
-  ls: { options: ['a', 'l', 'h', 'n'], exemples: ['ls', 'ls -a', 'ls -l ~/souvenirs'], voir: ['cd', 'pwd', 'chmod'] },
+  ls: { options: ['a', 'l', 'h', 'n', 'i'], exemples: ['ls', 'ls -a', 'ls -l ~/souvenirs'], voir: ['cd', 'pwd', 'chmod'] },
   man: { options: ['k'], exemples: ['man ls', 'man -k copie', 'ls --help'], voir: ['apropos', 'whatis'] },
   mkdir: { options: ['p'], exemples: ['mkdir Classe', 'mkdir -p /srv/site/releases/1'], voir: ['touch', 'cd'] },
   mv: { exemples: ['mv crabe Seau', 'mv brouillon.txt lettre.txt', 'mv brouillon.txt ~/Port/lettre.txt'], voir: ['cp', 'rm'] },
@@ -97,6 +97,10 @@ export const PAGES: Record<string, Page> = {
   ps: { voir: ['kill', 'systemctl'] },
   pwd: { voir: ['cd'] },
   reboot: { section: 8, exemples: ['sudo reboot'], voir: ['systemctl'] },
+  rsnapshot: {
+    exemples: ['sudo rsnapshot configtest', 'sudo rsnapshot -t daily', 'sudo rsnapshot daily', 'sudo rsnapshot du', '30 3 * * * /usr/bin/rsnapshot daily'],
+    voir: ['rsync', 'crontab', 'ln', 'du'],
+  },
   rsync: { options: ['a', 'r', 'v', 'n'], exemples: ['rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'rsync -avn --delete ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'rsync -a /mnt/sauvegarde/souvenirs/lettre.txt ~/souvenirs/'], voir: ['cp', 'crontab', 'tar'] },
   rndc: { section: 8, exemples: ['sudo rndc reload cafe.example', 'sudo rndc status'], voir: ['named-checkzone', 'dig', 'journalctl'] },
   restic: {

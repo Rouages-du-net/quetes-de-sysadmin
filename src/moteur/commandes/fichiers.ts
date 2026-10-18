@@ -6,6 +6,15 @@ import type { Shell } from '../shell';
 import { appliquerMode, contenu, joker, lisible, options, tailleDe } from '../outils';
 import type { Commande, Contexte } from './index';
 
+// Le numéro d'inode d'un fichier (ls -i) : un par nœud, donné à la première
+// demande. Deux noms pour le même nœud (lien physique) ont le même numéro.
+const INODES = new WeakMap<Noeud, number>();
+let prochainInode = 1_311_201;
+export const inode = (n: Noeud) => {
+  if (!INODES.has(n)) INODES.set(n, prochainInode++);
+  return INODES.get(n)!;
+};
+
 const modeDe = (n: Noeud) => n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--');
 
 // Une ligne de « ls -l ». Écart volontaire : on omet le nombre de liens et
@@ -51,13 +60,17 @@ function lister({ args, jeu, dernier }: Contexte): string {
   if (!jeu.traverse(cible)) return jeu.erreur(jeu.t('ls-acces-permission', { cible }));
   // -n est un -l qui montre les numéros.
   const long = lettres.has('l') || lettres.has('n');
-  if (n.type === 'fichier') return long ? ligneLongue(jeu, cible, n, lettres.has('h'), lettres.has('n')) : cible;
+  // -i : le numéro d'inode devant chaque nom.
+  const ino = (e: Noeud, texte: string) => (lettres.has('i') ? `${String(inode(e)).padStart(7)} ${texte}` : texte);
+  if (n.type === 'fichier') return ino(n, long ? ligneLongue(jeu, cible, n, lettres.has('h'), lettres.has('n')) : cible);
   if (!jeu.peut(n, 'r')) return jeu.erreur(jeu.t('ls-ouvrir-permission', { cible }));
   const entrees: [string, Noeud][] = Object.entries(n.enfants)
     .filter(([nom]) => lettres.has('a') || !nom.startsWith('.'))
     .sort(([a], [b]) => a.localeCompare(b, 'fr'));
   if (lettres.has('a')) entrees.unshift(['.', n], ['..', jeu.trouver(cible + '/..') ?? n]);
-  if (long) return entrees.map(([nom, e]) => ligneLongue(jeu, nom, e, lettres.has('h'), lettres.has('n'))).join('\n');
+  if (long) return entrees.map(([nom, e]) => ino(e, ligneLongue(jeu, nom, e, lettres.has('h'), lettres.has('n')))).join('\n');
+  if (lettres.has('i'))
+    return entrees.map(([nom, e]) => ino(e, e.type === 'dossier' && nom !== '.' && nom !== '..' ? nom + '/' : nom)).join(dernier ? '    ' : '\n');
   // Comme le vrai ls : en colonnes à l'écran, un nom par ligne dans un
   // tube ou un fichier (et sans le / ajouté aux lieux).
   if (!dernier) return entrees.map(([nom]) => nom).join('\n');
@@ -346,8 +359,14 @@ export const FICHIERS: Record<string, Commande> = {
       const { lettres, reste } = options(args);
       const fmt = (o: number) => (lettres.has('h') ? lisible(o, jeu.t.langue) : String(Math.ceil(o / 1024)));
       const lignes: string[] = [];
+      // Comme du : un fichier qui a plusieurs noms (liens physiques) n'est compté qu'une fois.
+      const vus = new Set<Noeud>();
       const parcourir = (chemin: string, e: Noeud): number => {
-        if (e.type === 'fichier') return tailleDe(e, jeu);
+        if (e.type === 'fichier') {
+          if (vus.has(e)) return 0;
+          vus.add(e);
+          return tailleDe(e, jeu);
+        }
         let total = 0;
         for (const [k, enfant] of Object.entries(e.enfants)) total += parcourir(`${chemin.replace(/\/$/, '')}/${k}`, enfant);
         if (!lettres.has('s')) lignes.push(`${fmt(total)}\t${chemin}`);

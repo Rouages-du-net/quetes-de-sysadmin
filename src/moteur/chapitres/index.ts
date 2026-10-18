@@ -31,6 +31,7 @@ import { bleuVert } from './bleu-vert';
 import { canari } from './canari';
 import { migration } from './migration';
 import { rancon } from './rancon';
+import { instantanesChapitre } from './instantanes';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -67,7 +68,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'ludotheque',
-    chapitres: [rancon],
+    chapitres: [rancon, instantanesChapitre],
   },
 ];
 

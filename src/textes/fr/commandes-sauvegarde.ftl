@@ -17,3 +17,10 @@ restic-usage =
       restic [command]
     (Ici : restic -r dépôt --password-file fichier snapshots|ls|find|diff|dump|restore|backup|forget|prune|check|stats ; voir man restic)
 restic-init = (Ici, le dépôt existe déjà : on ne crée pas de nouveau dépôt. Voir man restic.)
+
+## rsnapshot
+
+rsnapshot-usage =
+    rsnapshot 1.4.5
+    Usage: rsnapshot [-vtxqVD] [-c cfgfile] [command] [args]
+    Type "man rsnapshot" for more information.

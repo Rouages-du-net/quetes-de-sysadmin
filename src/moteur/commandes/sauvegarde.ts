@@ -200,6 +200,7 @@ export const SAUVEGARDE: Record<string, Commande> = {
       if (action === '-e') {
         // Comme le vrai crontab -e : une copie dans /tmp, ouverte dans l'éditeur,
         // vérifiée et installée à la fermeture.
+        const compte = jeu.qui;
         const texte = crontabs[jeu.qui] ?? MODELE;
         if (!jeu.existe(TEMP)) jeu.placer('crontab', TEMP, { type: 'dossier', enfants: {}, proprio: jeu.qui, mode: 'rwx------' });
         const fichier = `${TEMP}/crontab`;
@@ -209,10 +210,17 @@ export const SAUVEGARDE: Record<string, Commande> = {
           texte: texte.endsWith('\n') ? texte : texte + '\n',
           root: jeu.qui === 'root',
           message: jeu.t('nano-lignes-lues', { lignes: texte.split('\n').length - (texte.endsWith('\n') ? 1 : 0) }),
+          // La crontab est installée pour le compte qui l'a ouverte (root avec sudo), à la fermeture de l'éditeur.
           apres: () => {
-            const nouveau = (jeu.lire(fichier) ?? '').replace(/\n$/, '');
-            if (nouveau === texte.replace(/\n$/, '')) return 'crontab: no changes made to crontab';
-            return installer(jeu, nouveau, fichier);
+            const qui = jeu.qui;
+            jeu.qui = compte;
+            try {
+              const nouveau = (jeu.lire(fichier) ?? '').replace(/\n$/, '');
+              if (nouveau === texte.replace(/\n$/, '')) return 'crontab: no changes made to crontab';
+              return installer(jeu, nouveau, fichier);
+            } finally {
+              jeu.qui = qui;
+            }
           },
         };
         // Écart : l'éditeur est toujours nano (pas de select-editor).

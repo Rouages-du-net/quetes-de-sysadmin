@@ -294,6 +294,7 @@ export const rancon: Chapitre = {
         ),
         berenice: lieu({}, { proprio: 'berenice', mode: 'rwx------' }),
       }),
+      tmp: lieu({}, { proprio: 'root', mode: 'rwxrwxrwt' }),
       srv: lieu({ partage: lieu(partage, { proprio: 'root', groupe: 'ludo', mode: 'rwxrwxr-x' }) }),
       mnt: lieu({
         // Le partage du NAS, monté en permanence : tout le monde peut y écrire.

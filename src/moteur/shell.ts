@@ -198,7 +198,8 @@ export class Shell implements Jeu {
     const proprio = n.proprio ?? 'vous';
     const triplet =
       proprio === utilisateur ? mode.slice(0, 3) : this.groupesDe(utilisateur).includes(n.groupe ?? proprio) ? mode.slice(3, 6) : mode.slice(6, 9);
-    return triplet.includes(droit);
+    // s et t (setuid, setgid, sticky) en dernière position valent aussi x.
+    return triplet.includes(droit) || (droit === 'x' && /[st]$/.test(triplet));
   }
 
   // Droit de traverser (x) chaque lieu qui mène à ce chemin (sans le dernier).
@@ -554,7 +555,9 @@ export class Shell implements Jeu {
   // Lance une commande. `dernier` : sa sortie s'affiche à l'écran (sinon elle
   // part dans un tube ou un fichier).
   private lancer(args: string[], entree: string | null, root: boolean, dernier: boolean): string {
-    const [cmd, ...reste] = args;
+    const [brut, ...reste] = args;
+    // /usr/bin/rsnapshot, /bin/ls… : le chemin complet d'une commande du jeu.
+    const cmd = brut && /^\/(usr\/)?s?bin\/[\w.-]+$/.test(brut) && COMMANDES[brut.split('/').at(-1)!] ? brut.split('/').at(-1)! : brut;
     if (!cmd) return '';
     if (root && !this.connues().includes('sudo')) return this.erreur(this.t('sudo-pas-encore'));
     // Vrai comportement : cd est intégré au shell, ce n'est pas un programme.

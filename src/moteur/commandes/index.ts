@@ -28,6 +28,7 @@ import { NC } from './nc';
 import { DIFF } from './diff';
 import { SCRIPTS } from './scripts';
 import { DISQUES } from './disques';
+import { RSNAPSHOT } from './rsnapshot';
 
 export interface Contexte {
   args: string[];
@@ -79,6 +80,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...DIFF,
   ...SCRIPTS,
   ...DISQUES,
+  ...RSNAPSHOT,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },

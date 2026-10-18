@@ -127,20 +127,25 @@ export interface Execution {
  * maison. Renvoie ce qui a tourné, avec ce que cron aurait envoyé par courrier.
  */
 export function passer(jeu: Jeu & { executerTache(ligne: string): string; qui: string }, debut: number, fin: number): Execution[] {
-  const executions: Execution[] = [];
   const crontabs: Record<string, string> = jeu.etat.crontabs ?? {};
-  for (const [compte, texte] of Object.entries(crontabs)) {
-    for (const t of analyser(texte, '').taches) {
-      let tourne = false;
-      for (let ms = debut; ms < fin && !tourne; ms += 60_000) tourne = tourneA(t, ms);
-      if (!tourne) continue;
-      const avant = jeu.qui;
-      jeu.qui = compte;
-      try {
-        executions.push({ commande: t.commande, sortie: jeu.executerTache(t.commande) });
-      } finally {
-        jeu.qui = avant;
-      }
+  // Les tâches du créneau, dans l'ordre de leur heure (comme le vrai cron).
+  const prevues: { compte: string; commande: string; ms: number }[] = [];
+  for (const [compte, texte] of Object.entries(crontabs))
+    for (const t of analyser(texte, '').taches)
+      for (let ms = debut; ms < fin; ms += 60_000)
+        if (tourneA(t, ms)) {
+          prevues.push({ compte, commande: t.commande, ms });
+          break;
+        }
+  prevues.sort((a, b) => a.ms - b.ms);
+  const executions: Execution[] = [];
+  for (const p of prevues) {
+    const avant = jeu.qui;
+    jeu.qui = p.compte;
+    try {
+      executions.push({ commande: p.commande, sortie: jeu.executerTache(p.commande) });
+    } finally {
+      jeu.qui = avant;
     }
   }
   return executions;

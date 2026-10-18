@@ -1263,6 +1263,65 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('La Ludothèque, chapitre 2 — Les instantanés (rsnapshot, liens physiques, cron)', () => {
+      const editer = (s: Shell, commande: string, change: (texte: string) => string) => {
+        s.executer(commande);
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const REGLAGES = (t: string) =>
+        t
+          .replace('snapshot_root\t/var/cache/rsnapshot/', 'snapshot_root\t/mnt/instantanes/')
+          .replace('retain\talpha\t6\nretain\tbeta\t7\nretain\tgamma\t4', 'retain\tdaily\t7\nretain\tweekly\t4')
+          .replace('backup\t/home/\t\tlocalhost/\nbackup\t/etc/\t\tlocalhost/\nbackup\t/usr/local/\tlocalhost/', 'backup\t/srv/partage/\tlocalhost/');
+      const CRON = (t: string) => `${t}0 3 * * 1 /usr/bin/rsnapshot weekly\n30 3 * * * /usr/bin/rsnapshot daily\n`;
+      const D = '/mnt/instantanes';
+
+      it("solution : la configuration (tabulations), configtest, cron de root, puis l'inventaire de la veille", () => {
+        const { s } = jouer('instantanes', ['sudo rsnapshot configtest', 'ludo-2027']);
+        editer(s, 'sudo nano /etc/rsnapshot.conf', REGLAGES);
+        expect(s.executer('sudo rsnapshot configtest')).toBe('Syntax OK');
+        expect(s.executer('sudo rsnapshot -t daily')).toContain(
+          `/usr/bin/rsync -a --delete --numeric-ids --relative --delete-excluded /srv/partage/ ${D}/daily.0/localhost/`,
+        );
+        const semaines = editer(s, 'sudo crontab -e', CRON);
+        contient(semaines, 'Deux semaines passent');
+        contient(semaines, "Hier soir, j'ai remplacé l'inventaire");
+        expect(s.executer(`ls ${D}`)).toBe('daily.0/    daily.1/    daily.2/    daily.3/    daily.4/    daily.5/    daily.6/    weekly.0/');
+        const du = s.executer('sudo rsnapshot du') ?? '';
+        expect(du).toMatch(/^46M\t\/mnt\/instantanes\/daily\.0\/$/m);
+        expect(du).toMatch(/^\d+K?\t\/mnt\/instantanes\/daily\.1\/$/m);
+        const inodes =
+          s.executer(`ls -i ${D}/daily.0/localhost/srv/partage/regles/scans-regles.pdf ${D}/daily.6/localhost/srv/partage/regles/scans-regles.pdf`) ??
+          '';
+        const [a, b] = inodes.split('\n\n').map((l) => l.trim().split(' ')[0]);
+        expect(a).toBe(b);
+        expect(s.executer(`diff ${D}/daily.0/localhost/srv/partage/inventaire.csv ${D}/daily.1/localhost/srv/partage/inventaire.csv`)).toContain(
+          '> jeu offert n°13;1;neuf',
+        );
+        expect(s.termine).toBe(false);
+        contient(
+          s.executer(`sudo cp ${D}/daily.1/localhost/srv/partage/inventaire.csv /srv/partage/`) ?? '',
+          'Tu as terminé le chapitre 2 de La Ludothèque',
+        );
+        expect(s.termine).toBe(true);
+      });
+
+      it("fausses pistes : des espaces au lieu de tabulations, la crontab d'un compte ordinaire, la version de cette nuit", () => {
+        const { s } = jouer('instantanes', ['sudo id', 'ludo-2027']);
+        editer(s, 'sudo nano /etc/rsnapshot.conf', (t) => REGLAGES(t).replace('snapshot_root\t/mnt/instantanes/', 'snapshot_root /mnt/instantanes/'));
+        const erreur = s.executer('sudo rsnapshot configtest') ?? '';
+        expect(erreur).toContain('ERROR: snapshot_root /mnt/instantanes/ - Unknown config directive');
+        expect(erreur).toContain("ERROR: sure you don't have spaces where only tabs should be.");
+        contient(erreur, 'jamais par des espaces');
+        editer(s, 'sudo nano /etc/rsnapshot.conf', (t) => t.replace('snapshot_root /mnt/instantanes/', 'snapshot_root\t/mnt/instantanes/'));
+        const mails = editer(s, 'crontab -e', CRON);
+        contient(mails, "n'a pas les droits de root");
+        expect(s.executer(`ls ${D}`)).toBe('');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {
