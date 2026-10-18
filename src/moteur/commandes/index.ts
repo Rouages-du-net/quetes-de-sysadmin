@@ -20,6 +20,7 @@ import { FAIL2BAN } from './fail2ban';
 import { SAUVEGARDE } from './sauvegarde';
 import { APT } from './apt';
 import { CERTBOT } from './certbot';
+import { RESTIC } from './restic';
 
 export interface Contexte {
   args: string[];
@@ -63,6 +64,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...SAUVEGARDE,
   ...APT,
   ...CERTBOT,
+  ...RESTIC,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },

@@ -126,6 +126,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `openssl` | `x509` (`-dates`, `-subject`, `-issuer`, `-ext`, `-checkend`) et `s_client -connect` (rend la main tout de suite) ; le contenu des PEM est propre au jeu | des centaines de sous-commandes ; vrai X.509 ; `s_client` attend une entrée |
 | `curl https://` | vérifie dates et noms du certificat présenté (erreur 60), `-k` pour passer outre | vérifie aussi la chaîne de confiance complète, OCSP… |
 | horloge | heure de Paris : CET l'hiver, CEST l'été | fuseau de la machine |
+| `restic` | `-r` et `--password-file` obligatoires (pas de variables d'environnement) ; `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check`, `stats` ; pas d'`init` ; un « pack » par sauvegarde ; fichiers du dépôt illisibles mais pas binaires ; pas de barres de progression | tout cela, et `mount`, `copy`, `key`, `tag`, dépôts distants (sftp, S3, rest-server) |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -387,7 +388,7 @@ fait un commit. `git log`, `git show HEAD`, `git diff HEAD~1 roman.txt`,
 pour enregistrer la version réparée (sans effacer l'histoire). Ensuite,
 mettre ses poèmes à l'abri : `git init`, `git add .`, `git commit -m`.
 
-## Histoire 5 : Les Archives (faite)
+## Histoire 5 : Les Archives (faite, deux chapitres)
 
 Le serveur de la bibliothèque du quartier s'éteint à minuit ; Rosa n'a
 qu'une clé USB de 64 Mo. `du -sh` et `df -h` montrent que le fonds (174 Mo)
@@ -396,6 +397,38 @@ périphérique »). `find fonds -name "*.tmp"` trouve 120 Mo de fichiers
 temporaires, effacés avec `-delete`. L'archive compressée (`tar -czf`)
 fait alors 48 Mo ; `tar -tzf` la vérifie. Morale d'archiviste : une seule
 copie n'est pas une sauvegarde.
+
+### Chapitre 2 — Les versions (fait)
+
+Depuis janvier, le fonds vit sur un nouveau serveur, sauvegardé chaque nuit
+avec restic sur le disque que la mairie prête (`/mnt/mairie`, presque
+plein). Il y a quatre nuits, un script de « correction automatique » a
+abîmé la transcription du journal de Marie ; chaque sauvegarde a gardé la
+version abîmée. Trente instantanés, du 7 janvier au 5 février.
+
+| Étape | Commande apprise |
+|---|---|
+| Ouvrir le dépôt | `restic -r … --password-file … snapshots` (ou le mot de passe tapé) |
+| Trouver quand c'est arrivé | `restic find --long journal_de_marie.txt` (la date change le 2 février), `restic diff A B`, `restic dump ID fichier` |
+| Restaurer | `restic restore ID --target /tmp/restauration --include …` puis `cp` (le chemin complet est recréé), ou `restic dump … > fichier` |
+| Faire de la place | `restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --dry-run`, puis sans `--dry-run`, puis `restic prune` (ou `--prune`) ; `df -h /mnt/mairie` |
+| Vérifier | `restic check` |
+| Protéger le mot de passe | `chmod 600 ~/.config/restic/mot-de-passe` |
+
+Objectif vérifié sur l'état : le journal est revenu à l'identique, un
+instantané contient encore la bonne version, le disque a retrouvé de la
+place, le dépôt a été vérifié depuis sa dernière modification, et le
+fichier du mot de passe n'est plus lisible par les autres comptes.
+
+Pièges prévus : `restic` sans `-r`, un mauvais mot de passe, la restauration
+qui recrée le chemin complet sous `--target`, `forget` sans `prune` (la
+place ne revient pas), une politique trop sévère avant d'avoir restauré
+(plus aucun instantané ne contient la bonne version). Autres solutions
+acceptées : `dump` redirigé, `forget --prune` d'un coup, une nouvelle
+sauvegarde après restauration puis une politique plus courte. Débrief :
+versions plutôt que miroir, politique de rétention, forget n'est pas prune,
+check et restaurations d'essai, chiffrement et garde du mot de passe ;
+liens vers la documentation de restic.
 
 ## Histoire 6 : Les Lettres du quartier (en cours)
 

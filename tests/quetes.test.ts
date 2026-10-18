@@ -482,6 +482,62 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('Les Archives, chapitre 2 — Les versions (restic)', () => {
+      const R = 'restic -r /mnt/mairie/restic-bibliotheque --password-file ~/.config/restic/mot-de-passe';
+      // Les identifiants des instantanés, du plus ancien au plus récent.
+      const instantanes = (s: Shell) => [...(s.executer(`${R} snapshots`) ?? '').matchAll(/^([0-9a-f]{8}) {2}/gm)].map((m) => m[1]);
+
+      it('solution : find, restore, forget, prune, check, chmod', () => {
+        const { s, tout } = jouer('versions', ['df -h /mnt/mairie', `${R} find --long journal_de_marie.txt`]);
+        expect(tout).toContain('2027-02-02 02:00:13 /home/vous/fonds/manuscrits/journal_de_marie.txt');
+        const ids = instantanes(s);
+        expect(ids).toHaveLength(30);
+        const bon = ids[25];
+        const suite = [
+          `${R} diff ${bon} ${ids[26]}`,
+          `${R} restore ${bon} --target /tmp/restauration --include /home/vous/fonds/manuscrits/journal_de_marie.txt`,
+          'cp /tmp/restauration/home/vous/fonds/manuscrits/journal_de_marie.txt ~/fonds/manuscrits/',
+          `${R} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --dry-run`,
+          // Fausse piste : forget seul ne rend pas la place.
+          `${R} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12`,
+          `${R} prune`,
+          'chmod 600 ~/.config/restic/mot-de-passe',
+          `${R} check`,
+        ]
+          .map((l) => s.executer(l) ?? '')
+          .join('\n');
+        expect(suite).toContain('M    /home/vous/fonds/manuscrits/journal_de_marie.txt');
+        expect(suite).toContain('Would have removed the snapshots above (dry run).');
+        expect(suite).toContain('remove 21 snapshots:');
+        expect(suite).toContain('no errors were found');
+        contient(suite, 'pas à sa place');
+        contient(suite, 'mais df -h /mnt/mairie ne');
+        contient(suite, 'Le disque respire');
+        expect(s.termine).toBe(true);
+      });
+
+      it('autre solution : le mot de passe tapé, dump, forget --prune, puis une sauvegarde', () => {
+        const { s, tout } = jouer('versions', ['chmod go-rwx ~/.config/restic/mot-de-passe', 'restic -r /mnt/mairie/restic-bibliotheque snapshots', 'mauvais']);
+        expect(tout).toContain('Fatal: wrong password or no key found');
+        contient(tout, 'Mauvais mot de passe');
+        const ids = instantanes(s);
+        for (const l of [
+          `${R} dump ${ids[20]} /home/vous/fonds/manuscrits/journal_de_marie.txt > ~/fonds/manuscrits/journal_de_marie.txt`,
+          `${R} backup ~/fonds`,
+          `${R} forget --keep-last 2 --prune`,
+          `${R} check`,
+        ])
+          s.executer(l);
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausse piste : forget trop sévère avant de restaurer', () => {
+        const { s, tout } = jouer('versions', [`${R} forget --keep-last 3 --prune`, `${R} check`, 'chmod 600 ~/.config/restic/mot-de-passe']);
+        contient(tout, 'Plus aucun instantané ne contient la bonne version');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

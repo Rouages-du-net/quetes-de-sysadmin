@@ -200,8 +200,9 @@ demandent plusieurs.
       avec `cron` ; quête « La Sauvegarde » (Effaceur, chapitre 4)
 - [ ] **rsnapshot** (instantanés par liens physiques, rotation horaire,
       quotidienne, hebdomadaire)
-- [ ] **restic** (chiffrement, déduplication, `snapshots`, `restore`,
-      `forget --prune`, `check`)
+- [x] **restic** (chiffrement, déduplication, `snapshots`, `find`, `diff`,
+      `dump`, `restore`, `forget --prune`, `check`) ; quête « Les versions »
+      (Les Archives, chapitre 2)
 - [ ] Sauvegarder une base (`mysqldump`, `pg_dump`) plutôt que ses fichiers
 - [x] **Restauration de service** : quête « Le grand incendie » (Datacenter,
       chapitre 4) : repartir d'une machine vide avec les sauvegardes et le

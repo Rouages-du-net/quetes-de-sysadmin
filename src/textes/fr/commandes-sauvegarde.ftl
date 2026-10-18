@@ -9,3 +9,11 @@ crontab-usage =
     usage: crontab [-u user] [-l | -r | -e] [file]
     (Pour modifier tes tâches planifiées : crontab -e ; voir man crontab)
 crontab-reessayer = (La crontab n'est pas installée. Relance crontab -e pour corriger : le manuel, man crontab, détaille les cinq champs de l'heure.)
+
+## restic
+
+restic-usage =
+    Usage:
+      restic [command]
+    (Ici : restic -r dépôt --password-file fichier snapshots|ls|find|diff|dump|restore|backup|forget|prune|check|stats ; voir man restic)
+restic-init = (Ici, le dépôt existe déjà : on ne crée pas de nouveau dépôt. Voir man restic.)

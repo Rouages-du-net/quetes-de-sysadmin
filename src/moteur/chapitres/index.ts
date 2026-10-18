@@ -14,6 +14,7 @@ import { certificat } from './certificat';
 import { paquet } from './paquet';
 import { temps } from './temps';
 import { archives } from './archives';
+import { versions } from './versions';
 import { porte } from './porte';
 import { pareFeu } from './pare-feu';
 import { sentinelle } from './sentinelle';
@@ -37,7 +38,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'archives',
-    chapitres: [archives],
+    chapitres: [archives, versions],
   },
   {
     id: 'lettres',

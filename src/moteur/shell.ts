@@ -266,6 +266,13 @@ export class Shell implements Jeu {
     return '';
   }
 
+  /** Les erreurs écrites jusqu'ici (et on les efface) : pour une réponse à une question. */
+  recupererErreurs(): string[] {
+    const e = this.erreurs;
+    this.erreurs = [];
+    return e;
+  }
+
   invite(): string {
     if (this.attente) return this.t('sudo-invite', { utilisateur: 'vous' });
     if (this.question) return this.question.invite;
