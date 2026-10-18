@@ -101,3 +101,7 @@ sudo-compte-inconnu = sudo: unknown user { $compte }
 # { $programme } : le chemin du programme, ex. /usr/bin/rm
 liste-arguments-trop-longue = bash: { $programme }: Liste d'arguments trop longue
 sudo-liste-arguments-trop-longue = sudo: impossible d'exécuter { $programme }: Liste d'arguments trop longue
+date-option-argument =
+    date: l'option requiert un argument -- 's'
+    Saisissez « date --help » pour plus d'informations.
+date-reglage-refuse = date: impossible de régler la date: Opération non permise

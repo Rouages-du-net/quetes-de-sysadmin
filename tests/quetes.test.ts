@@ -1546,6 +1546,69 @@ for (const langue of LANGUES)
       });
     });
 
+    describe("L'Astreinte, chapitre 4 — L'horloge (timedatectl, NTP, fuseau, cron)", () => {
+      const corrigerNtp = (s: Shell) => {
+        s.executer('sudo nano /etc/systemd/timesyncd.conf');
+        s.enregistrerEdition(s.edition!.texte.replace('NTP=ntp.ancien-hebergeur.example', 'NTP=ntp.hebergeur.example'));
+        return s.quitterEdition();
+      };
+
+      it('solution : timedatectl, set-timezone, set-ntp, le bon serveur NTP, cron redémarré', () => {
+        const { s, tout } = jouer('horloge', [
+          'date',
+          'timedatectl',
+          'cat mail_hebergeur.txt',
+          'sudo timedatectl set-timezone Europe/Paris',
+          'antenne-2027',
+          'sudo timedatectl set-ntp true',
+        ]);
+        expect(tout).toMatch(/lun\. 30 août 2027 07:02:\d\d UTC/);
+        expect(tout).toContain('Time zone: Etc/UTC (UTC, +0000)');
+        expect(tout).toContain('System clock synchronized: no');
+        contient(tout, "C'est vrai de beaucoup de services");
+        contient(tout, 'le serveur NTP qu');
+        expect(s.executer('sudo journalctl -u systemd-timesyncd')).toContain(
+          'Timed out waiting for reply from 198.51.100.7:123 (ntp.ancien-hebergeur.example).',
+        );
+        corrigerNtp(s);
+        contient(s.executer('sudo systemctl restart systemd-timesyncd') ?? '', "l'horloge est synchronisée");
+        const etat = s.executer('timedatectl')!;
+        expect(etat).toMatch(/Local time: lun\. 2027-08-30 09:12:\d\d CEST/);
+        expect(etat).toContain('Time zone: Europe/Paris (CEST, +0200)');
+        expect(etat).toContain('System clock synchronized: yes');
+        expect(s.executer('timedatectl timesync-status')).toContain('Server: 192.0.2.123 (ntp.hebergeur.example)');
+        expect(s.termine).toBe(false);
+        contient(s.executer('sudo systemctl restart cron') ?? '', "Tu as terminé le chapitre 4 de L'Astreinte");
+        expect(s.termine).toBe(true);
+      });
+
+      it("autre solution : le serveur NTP d'abord, puis systemctl enable --now, le fuseau et cron", () => {
+        const { s } = jouer('horloge', ['sudo timedatectl', 'antenne-2027']);
+        corrigerNtp(s);
+        s.executer('sudo systemctl enable --now systemd-timesyncd');
+        s.executer('sudo timedatectl set-timezone Europe/Paris');
+        s.executer('sudo systemctl restart cron');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : date -s à la main, un fuseau mal écrit, set-time avec NTP actif, démarrer sans activer', () => {
+        const { s, tout } = jouer('horloge', ['sudo date -s "2027-08-30 09:12:00"', 'antenne-2027', 'sudo timedatectl set-timezone Europe/Pariss']);
+        contient(tout, 'pour l');
+        expect(tout).toContain("Failed to set time zone: Invalid or not installed time zone 'Europe/Pariss'");
+        expect(s.executer('date -s 09:00')).toContain('impossible de régler la date');
+        corrigerNtp(s);
+        contient(s.executer('sudo systemctl start systemd-timesyncd') ?? '', 'pas activé');
+        expect(s.executer('sudo timedatectl set-time "2027-08-30 09:00:00"')).toContain(
+          'Failed to set time: Automatic time synchronization is enabled',
+        );
+        s.executer('sudo timedatectl set-timezone Europe/Paris');
+        s.executer('sudo systemctl restart cron');
+        expect(s.termine).toBe(false);
+        s.executer('sudo timedatectl set-ntp true');
+        expect(s.termine).toBe(true);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

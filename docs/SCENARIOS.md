@@ -151,6 +151,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `find` | `-name`, `-type`, `-mtime`, `-maxdepth`, `-delete`, `-print` ; l'âge se compte sur l'horloge de la machine simulée | `-exec`, `-newer`, `-size`, `-user`, les opérateurs (`-o`, `!`) |
 | « Liste d'arguments trop longue » | un programme (pas `cd`, `echo`, `pwd`, `test`, `printf`) refuse plus de 2 Mio d'arguments (ARG_MAX) | la limite compte aussi l'environnement ; `xargs` |
 | sorties géantes | l'écran ne garde que les 2 000 dernières lignes d'une sortie (avec une mention) | l'historique du terminal |
+| heure | chaque machine a un fuseau et un décalage d'horloge (`etat.heure`) ; `date` (`-s`), `timedatectl` (`status`, `show`, `list-timezones`, `set-timezone`, `set-ntp`, `set-time`, `timesync-status`) ; timesyncd essaie ses serveurs (`NTP=`, sinon `FallbackNTP=`) et se synchronise d'un coup à son démarrage ; le journal suit l'heure de la machine ; les fuseaux viennent d'`Intl` | ajustement progressif de l'horloge, RTC séparée, `hwclock`, chrony |
 | zombies | `ps -ef` montre le parent ; aucun signal n'agit sur un zombie ; ils disparaissent quand leur parent s'arrête | `wait()`, `SIGCHLD`, adoption par un sous-reaper |
 | `sudo -u`, `crontab -u`, `usermod -L` | `sudo -u compte` sans autre option ; `crontab -u` réservé à root ; `usermod -L/-U` marque le compte sans montrer `/etc/shadow` | toutes les options |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
@@ -1008,6 +1009,27 @@ de 80 % des inodes sont occupés. Pièges prévus : `rm *`, la crontab de
 `vous` (pas le droit d'effacer les fichiers de `radio` : courrier de cron),
 une tâche qui efface tout (le rapport du mois est perdu), un horaire qui ne
 tombe pas la nuit.
+
+### Chapitre 4 — L'horloge (fait)
+
+Lundi, 9 h 12 : la matinale (6 h – 9 h) ne s'est enregistrée qu'à partir
+de 8 h 09. Le serveur, migré ce week-end sur une image standard, vit à
+l'heure UTC (cron lance l'enregistrement à 6 h UTC, 8 h à Paris) et son
+horloge retarde de neuf minutes : timesyncd est arrêté, et sa configuration
+vise le serveur NTP de l'ancien hébergeur.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `date` (UTC), `timedatectl` (fuseau, `synchronized: no`, `NTP service: inactive`), `sudo crontab -u radio -l`, le journal de l'enregistrement |
+| Le fuseau | `timedatectl list-timezones`, `sudo timedatectl set-timezone Europe/Paris` |
+| NTP | `sudo timedatectl set-ntp true` ; `journalctl -u systemd-timesyncd` (pas de réponse) ; `NTP=ntp.hebergeur.example` dans `/etc/systemd/timesyncd.conf`, `systemctl restart systemd-timesyncd`, `timedatectl timesync-status` |
+| cron | `sudo systemctl restart cron` (il lit le fuseau au démarrage) |
+
+Objectif vérifié sur l'état : fuseau Europe/Paris, horloge synchronisée
+par timesyncd, activé au démarrage, cron redémarré après le changement de
+fuseau. Pièges prévus : `date -s` à la main (l'horloge redérive), un fuseau
+mal écrit, `set-time` avec NTP actif, timesyncd démarré sans être activé,
+cron pas redémarré.
 
 ## Idées pour la suite
 

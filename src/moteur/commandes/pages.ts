@@ -45,7 +45,11 @@ export const PAGES: Record<string, Page> = {
     exemples: ['diff ancien.txt nouveau.txt', 'diff -u ancien.txt nouveau.txt', 'diff -r ~/site /var/www/site'],
     voir: ['git', 'grep'],
   },
-  date: { exemples: ['date', 'date +%Y%m%d%H%M%S', 'date +%F'], voir: ['sh'] },
+  date: { exemples: ['date', 'date +%Y%m%d%H%M%S', 'date +%F', 'date +%T%z'], voir: ['sh', 'timedatectl'] },
+  timedatectl: {
+    exemples: ['timedatectl', 'timedatectl list-timezones | grep Europe', 'sudo timedatectl set-timezone Europe/Paris', 'sudo timedatectl set-ntp true', 'timedatectl timesync-status'],
+    voir: ['date', 'systemctl', 'journalctl', 'crontab'],
+  },
   dig: { exemples: ['dig cafe.example', 'dig @ns1.lettres.example cafe.example', 'dig cafe.example NS +short', 'dig cafe.example SOA +short'], voir: ['host', 'ping', 'curl', 'named-checkzone'] },
   docker: {
     exemples: [
