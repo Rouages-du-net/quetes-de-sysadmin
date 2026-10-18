@@ -6,7 +6,9 @@
 // de demander. Les messages reprennent ceux de man-db et des coreutils.
 
 import type { Traduire } from '../../textes';
-import type { Commande } from './index';
+import { COMMANDES, type Commande } from './index';
+
+const section = (nom: string) => COMMANDES[nom]?.section ?? 1;
 
 function textes(nom: string, t: Traduire) {
   const synopsis = t.existe(`man-${nom}.synopsis`) ? t(`man-${nom}.synopsis`) : '';
@@ -25,14 +27,14 @@ const retrait = (texte: string, n = 7) =>
     .join('\n');
 
 export function ligneWhatis(nom: string, t: Traduire): string {
-  return `${`${nom} (1)`.padEnd(21)}- ${resume(t(`man-${nom}`))}`;
+  return `${`${nom} (${section(nom)})`.padEnd(21)}- ${resume(t(`man-${nom}`))}`;
 }
 
 const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 export function pageMan(nom: string, c: Commande, t: Traduire): string {
   const { synopsis, description, options, exemples } = textes(nom, t);
-  const titre = `${nom.toUpperCase()}(1)`;
+  const titre = `${nom.toUpperCase()}(${section(nom)})`;
   const milieu = t('manuel-entete');
   const blanc = Math.max(2, Math.floor((60 - titre.length * 2 - milieu.length) / 2));
   // Comme une vraie page : le titre de section, puis son texte en retrait.
@@ -44,7 +46,7 @@ export function pageMan(nom: string, c: Commande, t: Traduire): string {
     sections.push([t('manuel-section-options'), opts.map(([o, d]) => retrait(`-${o}`) + '\n' + retrait(majuscule(d), 14)).join('\n\n')]);
   const ex = exemples(nom, c);
   if (ex.length) sections.push([t('manuel-section-exemples'), ex.map(([cmd, d]) => retrait(cmd) + '\n' + retrait(majuscule(d), 14)).join('\n\n')]);
-  if (c.voir?.length) sections.push([t('manuel-section-voir-aussi'), retrait(c.voir.map((v) => `${v}(1)`).join(', '))]);
+  if (c.voir?.length) sections.push([t('manuel-section-voir-aussi'), retrait(c.voir.map((v) => `${v}(${section(v)})`).join(', '))]);
   return [`${titre}${' '.repeat(blanc)}${milieu}${' '.repeat(blanc)}${titre}`, ...sections.map(([s, x]) => `${s}\n${x}`)].join('\n\n');
 }
 

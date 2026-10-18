@@ -27,6 +27,9 @@ export class Console {
   termines: string[];
   poste: Shell;
   distant: { machine: Machine; histoire: Histoire; shell: Shell } | null = null;
+  // Les machines gardent leur état tant que la partie est ouverte : se
+  // reconnecter retrouve le chapitre là où on l'a laissé.
+  private sessions = new Map<string, Shell>();
 
   constructor(private options: OptionsConsole = {}) {
     this.t = traducteur(options.langue);
@@ -80,19 +83,37 @@ export class Console {
     return h.chapitres.find((c) => !this.termines.includes(c.id)) ?? h.chapitres.at(-1)!;
   }
 
-  /** Ouvre une session sur une machine ; renvoie la bannière et le début du chapitre. */
+  /**
+   * Ouvre une session sur une machine ; renvoie la bannière et le début du
+   * chapitre. Sans chapitre imposé, reprend la session laissée sur cette
+   * machine si elle est toujours sur le chapitre en cours.
+   */
   connecter(nom: string, chapitre?: Chapitre): string {
     const machine = MACHINES.find((m) => m.nom === nom)!;
     const histoire = HISTOIRES.find((h) => h.id === machine.histoire)!;
     const c = chapitre ?? this.chapitreCourant(histoire);
-    this.distant = { machine, histoire, shell: new Shell(c, this.t.langue, machine.nom) };
-    return [`Linux ${machine.nom} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.nom}-motd`), this.ouvrirChapitre(c)].join('\n\n');
+    const banniere = [`Linux ${machine.nom} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.nom}-motd`)];
+    const ancienne = this.sessions.get(nom);
+    if (!chapitre && ancienne && (ancienne.chapitre === c || !ancienne.termine)) {
+      // Comme une nouvelle connexion : on repart de sa maison.
+      ancienne.cwd = ancienne.maison;
+      this.distant = { machine, histoire, shell: ancienne };
+      return [...banniere, this.titre(histoire, ancienne.chapitre)].join('\n\n');
+    }
+    this.distant = { machine, histoire, shell: this.nouvelleSession(machine, c) };
+    return [...banniere, this.ouvrirChapitre(c)].join('\n\n');
   }
 
   /** (Re)commence un chapitre sur la machine où l'on est. */
   ouvrir(chapitre: Chapitre): string {
-    this.distant!.shell = new Shell(chapitre, this.t.langue, this.distant!.machine.nom);
+    this.distant!.shell = this.nouvelleSession(this.distant!.machine, chapitre);
     return this.ouvrirChapitre(chapitre);
+  }
+
+  private nouvelleSession(machine: Machine, chapitre: Chapitre): Shell {
+    const s = new Shell(chapitre, this.t.langue, machine.nom);
+    this.sessions.set(machine.nom, s);
+    return s;
   }
 
   private ouvrirChapitre(c: Chapitre): string {

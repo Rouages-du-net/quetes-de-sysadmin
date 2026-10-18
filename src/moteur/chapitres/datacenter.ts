@@ -42,6 +42,7 @@ function journal(): { texte: string; erreurs503: number; requetesRobot: number }
 }
 
 const JOURNAL = journal();
+export const JOURNAL_NGINX = JOURNAL.texte;
 export const ERREURS_503 = JOURNAL.erreurs503;
 export const REQUETES_ROBOT = JOURNAL.requetesRobot;
 

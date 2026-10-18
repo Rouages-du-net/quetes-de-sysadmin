@@ -161,6 +161,31 @@ man-whatis = affiche en une ligne à quoi sert une commande.
 man-whoami = affiche sous quel nom d’utilisateur tu agis (who am I).
     .synopsis = whoami
 
+man-chgrp = change le groupe d'un fichier ou d'un dossier (change group). Le propriétaire peut choisir un groupe dont il est membre ; root peut choisir n'importe quel groupe. -R agit aussi sur tout le contenu d'un dossier.
+    .synopsis = chgrp [-R] groupe fichier...
+    .option-R = agit sur le dossier et sur tout ce qu'il contient (récursif).
+    .exemple-1 = donner le fichier au groupe equipe-web
+    .exemple-2 = un dossier entier, avec son contenu
+man-chown = change le propriétaire d'un fichier (change owner), et son groupe avec propriétaire:groupe. Seul root peut le faire. -R agit aussi sur tout le contenu d'un dossier.
+    .synopsis = chown [-R] propriétaire[:groupe] fichier...
+    .option-R = agit sur le dossier et sur tout ce qu'il contient (récursif).
+    .exemple-1 = donner un fichier à malo
+    .exemple-2 = propriétaire et groupe d'un coup, sur tout un dossier
+man-groups = affiche les groupes dont fait partie un compte : son groupe principal, puis ses groupes secondaires.
+    .synopsis = groups [utilisateur...]
+    .exemple-1 = mes groupes
+    .exemple-2 = les groupes de malo
+man-id = affiche l'identité d'un compte : son numéro (uid), son groupe principal (gid) et tous ses groupes. Les droits d'un fichier se décident avec ces informations.
+    .synopsis = id [utilisateur]
+    .exemple-1 = qui suis-je, et dans quels groupes ?
+    .exemple-2 = l'identité de malo
+man-usermod = modifie un compte (user modify), notamment ses groupes. -G donne la liste des groupes secondaires, séparés par des virgules : elle REMPLACE les groupes actuels. Avec -a (append), les groupes sont AJOUTÉS. Réservé à root.
+    .synopsis = usermod [-a] -G groupe[,groupe...] utilisateur
+    .option-a = ajoute les groupes de -G au lieu de remplacer les groupes actuels (append).
+    .option-G = la liste des groupes secondaires, séparés par des virgules.
+    .exemple-1 = ajouter malo au groupe adm, sans toucher à ses autres groupes
+    .exemple-2 = attention : malo n'est plus que dans adm (ses autres groupes secondaires sont retirés)
+
 ## Mise en page du manuel et messages de man-db et des coreutils
 
 # En-tête de chaque page, entre « LS(1) » et « LS(1) »

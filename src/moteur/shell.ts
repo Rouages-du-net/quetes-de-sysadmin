@@ -9,7 +9,7 @@
 // peut être redirigée dans un fichier (> écrase, >> ajoute). Les messages
 // d'erreur ne passent pas dans les tubes (sortie d'erreur séparée).
 
-import { nettoyer, type Chapitre, type Dossier, type Noeud } from './monde';
+import { comptesParDefaut, nettoyer, type Chapitre, type Comptes, type Dossier, type Noeud } from './monde';
 import { COMMANDES, type Commande } from './commandes';
 import { aide, apropos, ligneWhatis, optionInvalide, pageMan } from './commandes/manuel';
 import { traducteur, typographie, type Langue, type Traduire } from '../textes';
@@ -35,6 +35,9 @@ export interface Jeu {
   compter(lieu: string, prefixe: string): number;
   effacer(chemin: string): void;
   peut(n: Noeud, droit: 'r' | 'w' | 'x', utilisateur?: string): boolean;
+  // Comptes et groupes de la machine ; groupes d'un compte (principal d'abord).
+  comptes: Comptes;
+  groupesDe(utilisateur: string): string[];
   // Les textes dans la langue du jeu (voir src/textes/).
   t: Traduire;
   // Nom de la machine (invite « vous@nom »).
@@ -65,6 +68,7 @@ export class Shell implements Jeu {
   // exit tapé : la console ferme la session (voir console.ts).
   sortie = false;
   demandeConnexion: string | null = null;
+  comptes: Comptes;
   // Sortie d'erreur et remarques de la ligne en cours.
   private erreurs: string[] = [];
 
@@ -80,6 +84,7 @@ export class Shell implements Jeu {
     this.maison = chapitre.maison;
     this.cwd = chapitre.maison;
     this.etat = chapitre.etat?.(this.t) ?? {};
+    this.comptes = chapitre.comptes?.() ?? comptesParDefaut();
   }
 
   // ——— Chemins et fichiers ———
@@ -132,13 +137,25 @@ export class Shell implements Jeu {
 
   // ——— Permissions ———
 
-  // Permissions Unix simplifiées : on ne gère pas les groupes (tu n'es dans
-  // le groupe de personne), seulement le propriétaire et « les autres ».
-  // root a tous les droits.
+  // Groupe principal, puis groupes secondaires (par numéro), comme id(1).
+  groupesDe(utilisateur: string): string[] {
+    const principal = this.comptes.utilisateurs[utilisateur]?.groupe ?? utilisateur;
+    const autres = Object.entries(this.comptes.groupes)
+      .filter(([nom, g]) => nom !== principal && g.membres.includes(utilisateur))
+      .sort(([, a], [, b]) => a.gid - b.gid)
+      .map(([nom]) => nom);
+    return [principal, ...autres];
+  }
+
+  // Permissions Unix : le propriétaire n'a que les droits du propriétaire,
+  // un membre du groupe que ceux du groupe, les autres ceux des autres
+  // (même si le groupe ou les autres ont plus). root a tous les droits.
   peut(n: Noeud, droit: 'r' | 'w' | 'x', utilisateur = this.qui): boolean {
     if (utilisateur === 'root') return true;
     const mode = n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--');
-    const triplet = (n.proprio ?? 'vous') === utilisateur ? mode.slice(0, 3) : mode.slice(6, 9);
+    const proprio = n.proprio ?? 'vous';
+    const triplet =
+      proprio === utilisateur ? mode.slice(0, 3) : this.groupesDe(utilisateur).includes(n.groupe ?? proprio) ? mode.slice(3, 6) : mode.slice(6, 9);
     return triplet.includes(droit);
   }
 
