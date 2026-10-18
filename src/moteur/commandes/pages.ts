@@ -34,6 +34,21 @@ export const PAGES: Record<string, Page> = {
   curl: { options: ['I', 'k'], voir: ['dig', 'nginx', 'openssl'] },
   df: { options: ['h'], voir: ['du'] },
   dig: { exemples: ['dig cafe.example', 'dig @ns1.lettres.example cafe.example', 'dig cafe.example NS +short', 'dig cafe.example SOA +short'], voir: ['host', 'ping', 'curl', 'named-checkzone'] },
+  docker: {
+    exemples: [
+      'sudo docker ps -a',
+      'sudo docker logs outiltheque',
+      'sudo docker exec outiltheque ls /var/lib/outiltheque',
+      'sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde',
+      'sudo docker run -d --name appli -p 8080:8080 -v donnees:/var/lib/appli --restart unless-stopped image:1.0',
+      "sudo docker inspect -f '{{json .Mounts}}' appli",
+    ],
+    voir: ['docker-compose', 'systemctl', 'curl'],
+  },
+  'docker-compose': {
+    exemples: ['sudo docker compose up -d', 'sudo docker compose ps', 'sudo docker compose logs appli', 'sudo docker compose config', 'sudo docker compose down'],
+    voir: ['docker'],
+  },
   du: { options: ['h', 's'], voir: ['df', 'find'] },
   'fail2ban-client': { exemples: ['sudo fail2ban-client status', 'sudo fail2ban-client status sshd', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client -t', 'sudo fail2ban-client reload'], voir: ['jail.conf', 'journalctl', 'ufw'] },
   'jail.conf': { section: 5, exemples: ['sudo nano /etc/fail2ban/jail.local', 'sudo fail2ban-client get sshd bantime'], voir: ['fail2ban-client', 'nano'] },
@@ -55,6 +70,7 @@ export const PAGES: Record<string, Page> = {
   'named-checkzone': { section: 8, exemples: ['named-checkzone cafe.example /etc/bind/zones/db.cafe.example'], voir: ['rndc', 'dig', 'named-checkconf'] },
   'named-checkconf': { section: 8, exemples: ['sudo named-checkconf'], voir: ['named-checkzone', 'rndc'] },
   nano: { exemples: ['nano notes.txt', 'sudo nano /etc/nginx/bloques.conf'], voir: ['cat', 'sudo'] },
+  nc: { exemples: ['nc -zv fabrique 22', 'nc -zv fabrique 5430-5435'], voir: ['ss', 'ufw', 'ssh'] },
   nginx: { options: ['t', 'T', 'v'], exemples: ['sudo nginx -t', 'sudo nginx -T | less', 'nginx -v'], voir: ['systemctl', 'journalctl', 'curl', 'apt'] },
   openssl: {
     exemples: ['openssl x509 -in /etc/letsencrypt/live/site.example/cert.pem -noout -dates', 'openssl s_client -connect site.example:443 | openssl x509 -noout -dates', 'openssl x509 -in cert.pem -noout -checkend 1296000'],

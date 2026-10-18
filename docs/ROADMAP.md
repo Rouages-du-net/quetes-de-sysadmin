@@ -178,14 +178,17 @@ demandent plusieurs.
 
 ## Phase 5 — Conteneurs
 
-- [ ] **Docker** : image, conteneur, `docker run/ps/logs/exec`, ports, volumes
-      (et ce qu'on perd sans volume)
-- [ ] **Docker Compose** : plusieurs services (web, base, cache), réseau
-      interne, variables d'environnement, redémarrage
-- [ ] Mettre à jour une image sans perdre les données ; nettoyer le disque
-      (`docker system df`, `prune`)
-- [ ] Sécurité : ne pas exposer la base, ne pas tourner en root, `ufw` et
-      Docker (les règles contournées : un piège classique)
+- [x] **Docker** : image, conteneur, `docker run/ps/logs/exec/cp`, ports,
+      volumes (et ce qu'on perd sans volume), `--restart` ; quête « La mise
+      à jour » (La Fabrique, chapitre 1)
+- [x] **Docker Compose** : plusieurs services (appli, base), réseau
+      interne (le nom du service), variables et `.env`, volumes, redémarrage ;
+      quête « La composition » (La Fabrique, chapitre 2)
+- [x] Mettre à jour une image sans perdre les données (« La mise à jour »)
+- [x] Nettoyer le disque (`docker system df`, `prune`) ; « Le trou dans le pare-feu »
+- [x] Sécurité : ne pas exposer la base, `ufw` et Docker (les ports publiés
+      contournent ufw) ; « Le trou dans le pare-feu » (La Fabrique, chapitre 3)
+- [ ] Ne pas tourner en root dans le conteneur
 
 ## Phase 6 — Déployer
 

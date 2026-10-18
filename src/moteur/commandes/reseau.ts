@@ -16,7 +16,8 @@
 
 import type { Shell } from '../shell';
 import type { Commande } from './index';
-import { requete } from '../nginx';
+import { requete, type Reponse } from '../nginx';
+import { requeteDocker } from '../docker';
 import { digDns } from './bind';
 import { couvre, lire } from '../tls';
 import { systemd, versUtc } from '../systemd';
@@ -27,6 +28,17 @@ const AIDE_SSL = `More details here: https://curl.se/docs/sslcerts.html
 curl failed to verify the legitimacy of the server and therefore could not
 establish a secure connection to it. To learn more about this situation and
 how to fix it, please visit the webpage mentioned above.`;
+
+// La réponse d'une appli dans un conteneur, avec ses en-têtes.
+function reponseAppli(jeu: Shell, r: { code: number; corps: string }): Reponse {
+  const raisons: Record<number, string> = { 200: 'OK', 404: 'Not Found', 500: 'Internal Server Error' };
+  const date = new Date(versUtc(systemd(jeu)?.horloge ?? 0)).toUTCString();
+  return {
+    code: r.code,
+    corps: r.corps,
+    entetes: [`HTTP/1.1 ${r.code} ${raisons[r.code] ?? ''}`.trimEnd(), 'Content-Type: text/html; charset=utf-8', `Content-Length: ${new TextEncoder().encode(r.corps).length}`, `Date: ${date}`],
+  };
+}
 
 /** Le problème du certificat présenté, au format de curl ; null s'il est bon. */
 export function verifierCertificat(jeu: Shell, contenu: string | null, hote: string): string | null {
@@ -191,14 +203,24 @@ export const RESEAU: Record<string, Commande> = {
       const hote = m[2];
       // Une machine avec nginx : la requête part vers elle-même (localhost,
       // son nom, son adresse), et nginx répond selon sa configuration chargée.
-      if (jeu.etat.nginx) {
-        const locaux = [...LOCAL_DE_BASE, ...(jeu.etat.nginx.noms ?? [])];
+      if (jeu.etat.nginx || jeu.etat.docker) {
+        const conteneurs: string[] = (jeu.etat.docker?.conteneurs ?? []).map((c: { ip: string }) => c.ip);
+        const locaux = [...LOCAL_DE_BASE, ...(jeu.etat.nginx?.noms ?? jeu.etat.docker?.noms ?? []), ...conteneurs];
         const blocs: string[] = [];
         let [schema, cible, port, chemin, nom] = [m[1] ?? 'http', hote, Number(m[3] ?? (m[1] === 'https' ? 443 : 80)), m[4] || '/', hoteDemande ?? hote];
         // -L suit les redirections (au plus 5 ici).
         for (let saut = 0; saut < 6; saut++) {
           if (!locaux.includes(cible.toLowerCase())) return jeu.erreur(`curl: (6) Could not resolve host: ${cible}`);
-          const r = port === 80 || port === 443 ? requete(jeu, nom, chemin, port) : null;
+          // Un port publié par un conteneur (docker run -p) : c'est lui qui répond.
+          const viaDocker = requeteDocker(jeu, cible.toLowerCase() === 'localhost' ? '127.0.0.1' : cible, port, chemin);
+          const r =
+            viaDocker !== undefined
+              ? viaDocker && viaDocker.code !== 0 && reponseAppli(jeu, viaDocker)
+              : jeu.etat.nginx && (port === 80 || port === 443)
+                ? requete(jeu, nom, chemin, port)
+                : null;
+          // Un service qui ne parle pas HTTP (une base de données) : réponse vide.
+          if (viaDocker?.code === 0) return jeu.erreur('curl: (52) Empty reply from server');
           if (!r) return jeu.erreur(`curl: (7) Failed to connect to ${cible} port ${port} after 0 ms: Couldn't connect to server`);
           // HTTPS : curl vérifie le certificat présenté (dates, nom), sauf avec -k.
           const insecure = args.some((a) => a === '-k' || a === '--insecure');

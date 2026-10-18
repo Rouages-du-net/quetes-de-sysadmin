@@ -6,6 +6,7 @@
 // comme connexion établie. Sortie en anglais (iproute2 n'est pas traduit).
 
 import { MACHINES, POSTE } from '../machines';
+import { ecoutesDocker } from '../docker';
 import type { Commande } from './index';
 
 export interface Ecoute {
@@ -16,7 +17,7 @@ export interface Ecoute {
   pid: number;
 }
 
-const NOMS: Record<number, string> = { 22: 'ssh', 80: 'http', 443: 'https', 3306: 'mysql', 53: 'domain' };
+const NOMS: Record<number, string> = { 22: 'ssh', 80: 'http', 443: 'https', 3306: 'mysql', 53: 'domain', 5432: 'postgresql', 8080: 'http-alt', 8081: 'tproxy' };
 
 export const SS: Record<string, Commande> = {
   ss: {
@@ -28,7 +29,8 @@ export const SS: Record<string, Commande> = {
       const etablies = !lettres.has('l') || lettres.has('a');
       const port = (p: number) => (lettres.has('n') ? String(p) : (NOMS[p] ?? String(p)));
       const lignes: string[][] = [['State', 'Recv-Q', 'Send-Q', 'Local Address:Port', 'Peer Address:Port', 'Process']];
-      const ecoute: Ecoute[] = jeu.etat.ecoute ?? [];
+      // Les sockets du chapitre, et celles de docker-proxy pour les ports publiés.
+      const ecoute: Ecoute[] = [...(jeu.etat.ecoute ?? []), ...ecoutesDocker(jeu)];
       if (enEcoute)
         for (const e of ecoute.filter((s) => (s.proto === 'tcp' ? tcp : udp)))
           lignes.push([

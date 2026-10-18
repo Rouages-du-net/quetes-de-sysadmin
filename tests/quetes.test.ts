@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/moteur/shell';
+import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
 
@@ -686,6 +687,154 @@ for (const langue of LANGUES)
         modifier(s, SITE, (t) => t.replace('    root /var/www/lettres;', '    limit_req zone=lettres burst=20 nodelay;\n    root /var/www/lettres;'));
         s.executer('sudo systemctl reload nginx');
         expect(s.termine).toBe(true);
+      });
+    });
+
+    describe('La Fabrique, chapitre 1 — La mise à jour (docker)', () => {
+      it('solution : copier la base, volume, nouveau conteneur, --restart, et ça tient après un redémarrage', () => {
+        const { s, tout } = jouer('mise-a-jour', [
+          'docker ps',
+          'sudo docker ps -a',
+          'fablab-2027',
+          "sudo docker inspect -f '{{json .Mounts}}' outiltheque",
+          'sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde',
+          // Fausse piste : l'ancien conteneur occupe encore le port 8080.
+          'sudo docker run -d --name outiltheque-15 -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque registre.example/outiltheque:1.5',
+          'sudo docker stop outiltheque',
+          'sudo docker start outiltheque-15',
+          'sudo docker cp sauvegarde/. outiltheque-15:/var/lib/outiltheque',
+          'sudo docker restart outiltheque-15',
+          'sudo docker logs -n 3 outiltheque-15',
+          'curl http://localhost:8080',
+        ]);
+        expect(tout).toContain('permission denied while trying to connect to the Docker daemon socket');
+        expect(tout).toContain('Bind for 0.0.0.0:8080 failed: port is already allocated.');
+        expect(tout).toContain('Migrating database schema 3 -> 4');
+        expect(tout).toContain('37 prêts en cours');
+        contient(tout, 'la couche du conteneur');
+        contient(tout, 'une base toute neuve et vide');
+        expect(s.termine).toBe(false);
+        s.executer('sudo docker update --restart unless-stopped outiltheque-15');
+        expect(s.termine).toBe(true);
+        s.executer('sudo reboot');
+        expect(s.executer('curl http://localhost:8080')).toContain('outiltheque 1.5');
+      });
+
+      it('autre solution : un dossier de la machine (bind mount), --restart always, l’ancien supprimé', () => {
+        const { s } = jouer('mise-a-jour', [
+          'sudo mkdir /srv/outiltheque',
+          'fablab-2027',
+          'sudo docker cp outiltheque:/var/lib/outiltheque/outiltheque.db /srv/outiltheque/',
+          'sudo docker rm -f outiltheque',
+          'sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v /srv/outiltheque:/var/lib/outiltheque registre.example/outiltheque:1.5',
+        ]);
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausse piste : supprimer le conteneur avant de copier sa base', () => {
+        const { s, tout } = jouer('mise-a-jour', ['sudo docker rm outiltheque', 'fablab-2027', 'sudo docker rm -f outiltheque']);
+        expect(tout).toContain('container is running: stop the container before removing or force remove');
+        contient(tout, 'Les 37 prêts ont disparu');
+        s.executer('sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v outiltheque:/var/lib/outiltheque registre.example/outiltheque:1.5');
+        expect(s.termine).toBe(false);
+      });
+    });
+
+    describe('La Fabrique, chapitre 2 — La composition (docker compose)', () => {
+      const modifier = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        s.quitterEdition();
+      };
+      // Le fichier corrigé : nom du service, variable, volume, redémarrage, sans version:.
+      const corriger = (t: string) =>
+        t
+          .replace('version: "3.8"\n\n', '')
+          .replace('@localhost:', '@db:')
+          .replaceAll('atelier2027', '${POSTGRES_PASSWORD}')
+          .replace('    depends_on:', '    restart: unless-stopped\n    depends_on:')
+          .replace('      - POSTGRES_DB=reservations', '      - POSTGRES_DB=reservations\n    volumes:\n      - donnees:/var/lib/postgresql/data\n    restart: unless-stopped\n\nvolumes:\n  donnees:');
+
+      it('solution, avec la fausse piste localhost', () => {
+        const { s, tout } = jouer('composition', ['cd /srv/reservations', 'sudo docker compose up -d', 'fablab-2027', 'sudo docker compose logs appli', 'curl http://localhost:8081']);
+        expect(tout).toContain('the attribute `version` is obsolete');
+        expect(tout).toContain('Error: connect ECONNREFUSED 127.0.0.1:5432');
+        expect(tout).toContain("curl: (7) Failed to connect to localhost port 8081");
+        contient(tout, 'dans un conteneur, localhost désigne le conteneur');
+        modifier(s, '/srv/reservations/compose.yaml', corriger);
+        const config = s.executer('sudo docker compose config') ?? '';
+        expect(config).toContain('The "POSTGRES_PASSWORD" variable is not set.');
+        s.executer('echo POSTGRES_PASSWORD=atelier2027 | sudo tee .env');
+        s.executer('sudo docker compose up -d');
+        expect(s.executer('curl http://localhost:8081')).toContain('base de données connectée');
+        expect(s.termine).toBe(false);
+        s.executer('sudo chmod 600 .env');
+        expect(s.termine).toBe(true);
+        s.executer('sudo reboot');
+        expect(s.executer('curl http://localhost:8081')).toContain('Réserver une machine');
+      });
+
+      it('fausse piste : changer POSTGRES_PASSWORD après la création de la base, puis down -v', () => {
+        const { s } = jouer('composition', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
+        modifier(s, '/srv/reservations/compose.yaml', (t) => corriger(t).replaceAll('${POSTGRES_PASSWORD}', 'atelier2027'));
+        s.executer('sudo docker compose up -d');
+        expect(s.executer('curl http://localhost:8081')).toContain('base de données connectée');
+        // Le mot de passe passe dans .env… mais un autre que celui de la base existante.
+        modifier(s, '/srv/reservations/compose.yaml', (t) => t.replaceAll('atelier2027', '${POSTGRES_PASSWORD}'));
+        s.executer('echo POSTGRES_PASSWORD=nouveau-secret | sudo tee .env');
+        s.executer('sudo chmod 600 .env');
+        const echec = s.executer('sudo docker compose up -d') ?? '';
+        expect(s.executer('sudo docker compose logs appli')).toContain('password authentication failed for user "fablab"');
+        contient(echec, 'password authentication failed');
+        expect(s.termine).toBe(false);
+        const refait = ['sudo docker compose down -v', 'sudo docker compose up -d'].map((l) => s.executer(l) ?? '').join('\n');
+        contient(refait, 'les volumes du projet sont effacés');
+        expect(s.termine).toBe(true);
+      });
+    });
+
+    describe('La Fabrique, chapitre 3 — Le trou dans le pare-feu (docker et ufw)', () => {
+      const AVANT = ['eveil', 'bourg', 'racine', 'mise-a-jour', 'composition'];
+      const modifier = (s: Shell, change: (texte: string) => string) => {
+        s.executer('sudo nano /srv/reservations/compose.yaml');
+        s.enregistrerEdition(change(s.edition!.texte));
+        s.quitterEdition();
+      };
+
+      it('solution, testée depuis le poste : ufw ne suffit pas, port lié à 127.0.0.1, ménage', () => {
+        const c = new Console({ langue, termines: AVANT });
+        const jouerC = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+        expect(jouerC(['nc -zv fabrique 5432'])).toContain('Connection to fabrique (192.0.2.15) 5432 port [tcp/postgresql] succeeded!');
+        const dedans = jouerC(['ssh fabrique', 'yes', 'sudo ss -tlnp', 'fablab-2027', 'sudo ufw deny 5432', 'df -h /']);
+        expect(dedans).toContain('0.0.0.0:5432');
+        expect(dedans).toMatch(/9\d% \//);
+        contient(dedans, 'contourne ufw');
+        contient(dedans, 'ne change rien');
+        expect(jouerC(['exit', 'nc -zv fabrique 5432'])).toContain('succeeded!');
+        jouerC(['ssh fabrique', 'cd /srv/reservations']);
+        modifier(c.shell, (t) => t.replace('      - "5432:5432"', '      - "127.0.0.1:5432:5432"'));
+        jouerC(['sudo docker compose up -d', 'sudo docker image prune -a', 'y']);
+        expect(c.termines).toContain('contournement');
+        const dehors = jouerC(['exit', 'nc -zv fabrique 5432']);
+        expect(dehors).toContain('timed out');
+      });
+
+      it('autre solution : plus de port pour la base, docker system prune -a -f', () => {
+        const { s } = jouer('contournement', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
+        modifier(s, (t) => t.replace('    # Pour pgAdmin, depuis mon portable (Yasmine)\n    ports:\n      - "5432:5432"\n', ''));
+        s.executer('sudo docker compose up -d');
+        const menage = s.executer('sudo docker system prune -a -f') ?? '';
+        expect(menage).toContain('Deleted Containers:');
+        expect(menage).toContain('untagged: registre.example/ia-locale:latest');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausse piste : docker volume prune -a emporte le wiki', () => {
+        const { s, tout } = jouer('contournement', ['sudo docker volume prune', 'fablab-2027', 'y', 'sudo docker volume ls', 'sudo docker volume prune -a', 'y']);
+        expect(tout).toContain('WARNING! This will remove anonymous local volumes not used by at least one container.');
+        expect(tout).toContain('Deleted Volumes:\nwiki-ancien');
+        contient(tout, 'Le volume wiki-ancien a disparu');
+        expect(s.termine).toBe(false);
       });
     });
 

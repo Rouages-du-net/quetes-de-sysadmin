@@ -4,12 +4,14 @@
 histoire-effaceur = L’Effaceur
     .resume = Une créature efface tout dans le royaume. Se déplacer, créer, chercher, les permissions et sudo, puis les sauvegardes.
 histoire-datacenter = Le Datacenter
-    .resume = Un site en panne, une nouvelle recrue, une nuit de redémarrage : journaux, tubes |, processus, comptes et groupes, services systemd.
+    .resume = Un site en panne, une nouvelle recrue, une nuit de redémarrage, un incendie, un certificat expiré : journaux, tubes |, comptes et groupes, systemd, apt, nginx, sauvegardes, TLS.
 histoire-paquet = Le Paquet perdu
     .resume = « Internet ne marche plus » : enquête de proche en proche avec ping, dig, traceroute et curl.
 histoire-temps = La Machine à remonter le temps
     .resume = Le manuscrit d’Inès est abîmé : voyager dans ses versions avec git.
 histoire-archives = Les Archives
-    .resume = Sauver le fonds d’une bibliothèque sur une petite clé : du, df, find, tar.
+    .resume = Sauver le fonds d’une bibliothèque sur une petite clé, puis retrouver la bonne version d’un manuscrit : du, df, find, tar, restic.
 histoire-lettres = Les Lettres du quartier
-    .resume = Un serveur tout neuf, déjà attaqué : durcir SSH sans s'enfermer dehors.
+    .resume = Un serveur tout neuf, déjà attaqué : durcir SSH, le pare-feu, fail2ban ; puis héberger deux sites, le DNS, et tenir le soir du concert.
+histoire-fabrique = La Fabrique
+    .resume = Le fablab du quartier passe aux conteneurs : docker, volumes, docker compose, et le pare-feu que Docker contourne.

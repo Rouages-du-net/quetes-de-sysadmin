@@ -7,8 +7,9 @@
 import { Shell } from './shell';
 import { HISTOIRES } from './chapitres';
 import { f, type Chapitre, type Histoire } from './monde';
-import { MACHINES, type Machine } from './machines';
+import { MACHINES, POSTE, type Machine } from './machines';
 import { fichiersCle, poste } from './poste';
+import { etatPort, type EtatPort } from './ports';
 import { traducteur, type Langue, type Traduire } from '../textes';
 
 export interface OptionsConsole {
@@ -49,6 +50,8 @@ export class Console {
     s.etat.pareFeuDistant = (nom: string) => this.sessions.get(nom)?.etat.ufw ?? null;
     // … et les adresses que son fail2ban a bannies.
     s.etat.bannisDistant = (nom: string): string[] => this.sessions.get(nom)?.etat.fail2ban?.bannis ?? [];
+    // … et l'état d'un de ses ports, vu d'ici (nc -zv machine port).
+    s.etat.portDistant = (nom: string, port: number): EtatPort => etatPort(this.sessionDe(nom), port, false, POSTE.adresse);
     // … et sa clé d'hôte, qui change quand la machine a été réinstallée.
     s.etat.cleDistante = (nom: string): string => this.chapitreDeConnexion(nom).cleHote ?? '';
     if (hotesConnus) s.placer('ssh', '~/.ssh/known_hosts', f(hotesConnus, { lignes: true }));
@@ -95,6 +98,17 @@ export class Console {
     return h.chapitres.find((c) => !this.termines.includes(c.id)) ?? h.chapitres.at(-1)!;
   }
 
+  // La session d'une machine : celle qui existe, sinon une neuve, sur le
+  // chapitre que trouverait une connexion (pour tester ses ports de loin).
+  private sessionDe(nom: string): Shell {
+    const ancienne = this.sessions.get(nom);
+    const chapitre = this.chapitreDeConnexion(nom);
+    if (ancienne?.chapitre === chapitre) return ancienne;
+    const s = this.nouvelleSession(MACHINES.find((m) => m.nom === nom)!, chapitre);
+    s.etat.preparee = true;
+    return s;
+  }
+
   // Le chapitre que trouvera une connexion à cette machine (voir connecter).
   private chapitreDeConnexion(nom: string): Chapitre {
     const machine = MACHINES.find((m) => m.nom === nom)!;
@@ -114,6 +128,13 @@ export class Console {
     const c = chapitre ?? this.chapitreCourant(histoire);
     const banniere = [`Linux ${machine.nom} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.nom}-motd`)];
     const ancienne = this.sessions.get(nom);
+    // Une session créée de loin (un port testé avec nc) : la première vraie
+    // connexion ouvre le chapitre, avec son texte d'accueil.
+    if (!chapitre && ancienne?.etat.preparee && ancienne.chapitre === c) {
+      delete ancienne.etat.preparee;
+      this.distant = { machine, histoire, shell: ancienne };
+      return [...banniere, this.ouvrirChapitre(c)].join('\n\n');
+    }
     if (!chapitre && ancienne && (ancienne.chapitre === c || !ancienne.termine)) {
       // Comme une nouvelle connexion : on repart de sa maison. Se reconnecter
       // peut être un objectif (ex. vérifier qu'on ne s'est pas enfermé dehors).

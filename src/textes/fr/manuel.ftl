@@ -68,6 +68,21 @@ man-dig = pose une question au DNS : « quelle est l’adresse IP de ce nom ? »
     .exemple-2 = la même question, posée directement à un serveur qui fait autorité
     .exemple-3 = les serveurs DNS d'une zone
     .exemple-4 = le SOA : son numéro de série change à chaque modification
+man-docker = lance des applications dans des conteneurs : chacune avec ses fichiers, isolée du reste de la machine, à partir d'une image (une application prête à l'emploi, qu'on télécharge avec pull). docker run crée et démarre un conteneur : -d en arrière-plan, --name pour le nommer, -p machine:conteneur publie un port, -v nom:/chemin y monte un volume (ou -v /dossier:/chemin un dossier de la machine), -e VARIABLE=valeur, --restart unless-stopped pour qu'il reparte avec la machine. Attention : ce qu'un conteneur écrit ailleurs que dans un volume vit dans sa propre couche, et disparaît avec lui (docker rm) ; mettre à jour une application, c'est supprimer le conteneur et en créer un neuf avec la nouvelle image. docker ps (-a) liste les conteneurs, logs montre leur journal, exec lance une commande dedans, cp copie des fichiers entre la machine et un conteneur. Il faut être root (ou dans le groupe docker, qui revient au même).
+    .synopsis = docker run [-d] [--name nom] [-p port:port] [-v volume:/chemin] [-e VAR=valeur] [--restart politique] image ; docker ps [-a] ; docker logs conteneur ; docker exec conteneur commande ; docker cp source destination ; docker stop|start|rm conteneur ; docker pull image ; docker images ; docker volume ls|create|rm ; docker inspect conteneur
+    .exemple-1 = les conteneurs, même arrêtés
+    .exemple-2 = le journal d'un conteneur
+    .exemple-3 = ce qu'il y a dans un dossier du conteneur
+    .exemple-4 = copier un dossier du conteneur vers la machine
+    .exemple-5 = un conteneur en arrière-plan, son port publié, ses données dans un volume, et qui repart avec la machine
+    .exemple-6 = les volumes d'un conteneur
+man-docker-compose = lance plusieurs conteneurs qui vont ensemble (une appli et sa base, par exemple), décrits dans le fichier compose.yaml du dossier courant : sous services:, un bloc par service, avec image:, ports:, volumes:, environment:, depends_on: (démarrer d'abord) et restart:. Compose crée un réseau pour le projet : chaque service y est joignable par son nom (db, appli). Les volumes nommés se déclarent sous volumes: en bas du fichier. ${"{"}VARIABLE{"}"} est remplacée par la valeur du fichier .env du dossier (pratique pour garder les secrets hors du fichier). On tape docker compose (avec une espace) : c'est une sous-commande de docker.
+    .synopsis = docker compose up [-d] ; docker compose down [-v] ; docker compose ps ; docker compose logs [service] ; docker compose config ; docker compose restart [service] ; docker compose exec service commande
+    .exemple-1 = créer et démarrer (ou recréer) les services, en arrière-plan
+    .exemple-2 = l'état des services
+    .exemple-3 = le journal d'un service
+    .exemple-4 = le fichier tel que Compose le comprend, variables remplacées
+    .exemple-5 = tout arrêter et supprimer (avec -v, les volumes aussi : leurs données sont perdues)
 man-du = mesure la place occupée (disk usage), lieu par lieu. -s donne seulement le total, -h écrit en K, M, G. Ex. : du -sh *
     .synopsis = du [-s] [-h] [lieu...]
     .option-h = tailles lisibles : K, M, G.
@@ -134,6 +149,10 @@ man-mv = déplace un fichier dans un lieu (move), ou le renomme si la destinatio
     .exemple-1 = déplacer crabe dans le lieu Seau
     .exemple-2 = renommer
     .exemple-3 = déplacer et renommer d’un coup
+man-nc = netcat, le couteau suisse du réseau. Ici, pour tester si un port TCP d'une machine répond, comme le ferait n'importe qui sur internet : -z teste sans rien envoyer, -v dit le résultat. « succeeded » : le port est ouvert ; « Connection refused » : personne n'écoute (ou le pare-feu refuse) ; « timed out » : le pare-feu jette les paquets. Tester depuis une AUTRE machine montre ce que voit le monde ; depuis la machine elle-même, le pare-feu n'intervient pas.
+    .synopsis = nc -zv machine port[-port]
+    .exemple-1 = le port 22 (SSH) de la machine fabrique répond-il ?
+    .exemple-2 = les ports de 5430 à 5435
 man-nginx = le serveur web (et proxy). Ce n'est pas lui qu'on lance à la main : systemd s'en occupe (systemctl start, reload nginx). Sa configuration part de /etc/nginx/nginx.conf, qui inclut les sites de /etc/nginx/sites-enabled/ : un bloc server par site, avec listen (le port ; default_server pour le site qui répond quand aucun nom ne correspond, un seul par port), server_name (les noms du site), root (le lieu des pages) et index (la page d'accueil). Chaque directive finit par un point-virgule. Avant tout rechargement : sudo nginx -t, qui donne le fichier et la ligne de l'erreur. Plusieurs sites sur une machine (hôtes virtuels) : un bloc server par site, chacun avec son server_name. Dans un bloc location (le préfixe d'un chemin), proxy_pass passe la visite à un autre programme (reverse proxy) : avec une adresse qui finit par une barre (http://127.0.0.1:3000/), le préfixe de la location est remplacé par /, sinon le chemin est transmis tel quel. return 301 https://$host$request_uri; renvoie ailleurs. Les erreurs de service vont dans /var/log/nginx/error.log. Limiter le débit : limit_req_zone $binary_remote_addr zone=nom:10m rate=2r/s; (dans le bloc http, une clé par adresse, 2 requêtes par seconde) puis limit_req zone=nom burst=10 nodelay; là où on veut limiter : au-delà du débit, une rafale de 10 requêtes est encore servie ; au-delà, refus (503, ou le code de limit_req_status, par exemple 429). deny adresse; refuse une adresse (403).
     .synopsis = nginx -t ; nginx -T ; nginx -v
     .option-t = vérifie la configuration (test) et s'arrête.
