@@ -124,7 +124,10 @@ racine-evenement-protege =
     recule. Sous Linux, effacer un fichier, c'est modifier le lieu qui le
     contient : sans le droit d'écrire dans ce lieu, impossible d'y effacer.
 
-    Tu as sauvé { $sauves } souvenir(s) sur { $total }. Mais l'Effaceur continue ailleurs, dans
+    Tu as sauvé { $sauves ->
+        [one] { $sauves } souvenir
+       *[other] { $sauves } souvenirs
+    } sur { $total }. Mais l'Effaceur continue ailleurs, dans
     tout le royaume. D'où vient son ordre ? Les démons écrivent ce qu'ils font
     dans un journal :
 
@@ -141,7 +144,10 @@ racine-evenement-corrige =
     faisait deux cibles, dont le royaume entier. Il n'était pas méchant : il
     faisait exactement ce qu'on lui avait écrit.
 
-    Tu as sauvé { $sauves } souvenir(s) sur { $total }.{ $perte ->
+    Tu as sauvé { $sauves ->
+        [one] { $sauves } souvenir
+       *[other] { $sauves } souvenirs
+    } sur { $total }.{ $perte ->
         [oui] {" "}Ceux qui sont partis ne reviendront pas : il n'y a pas de corbeille… à moins d'avoir fait des sauvegardes. Mais ça, c'est une autre histoire.
        *[non] {""}
     }
