@@ -1,17 +1,29 @@
 // Vérification dans Chromium : la page autonome et le jeu intégré dans une
 // autre page, à 1000 et 375 px de large, sans erreur console ni débordement,
-// sans ressource tierce. À lancer après « npm run build » :
-//   npx vite preview --port 4340 &   puis   npm run test:navigateur
+// sans ressource tierce, avec la politique de sécurité (CSP) de public/.htaccess.
+// À lancer après « npm run build » :
+//   npm run preview &   puis   npm run test:navigateur
 // Variable CHROMIUM : chemin du navigateur (par défaut celui de l'environnement
-// de développement, /opt/pw-browsers/chromium).
+// de développement, /opt/pw-browsers/chromium, sinon celui de Playwright).
 
+import { existsSync, readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 
 const BASE = process.env.BASE ?? 'http://localhost:4340';
+const CHROMIUM = process.env.CHROMIUM ?? '/opt/pw-browsers/chromium';
 const navigateur = await chromium.launch({
-  executablePath: process.env.CHROMIUM ?? '/opt/pw-browsers/chromium',
+  executablePath: existsSync(CHROMIUM) ? CHROMIUM : undefined,
   args: ['--headless=new'],
 });
+
+// Le serveur de prévisualisation ne lit pas .htaccess : on ajoute nous-mêmes
+// l'en-tête CSP qu'Apache enverra, pour qu'une violation fasse échouer le test.
+const CSP = readFileSync('public/.htaccess', 'utf8').match(/Content-Security-Policy "([^"]+)"/)[1];
+const avecCsp = (page) =>
+  page.route(`${BASE}/**`, async (route) => {
+    const reponse = await route.fetch();
+    await route.fulfill({ response: reponse, headers: { ...reponse.headers(), 'content-security-policy': CSP } });
+  });
 let echecs = 0;
 const verifier = (cond, msg) => {
   console.log(`${cond ? '✓' : '✗'} ${msg}`);
@@ -25,6 +37,7 @@ for (const largeur of [1000, 375]) {
   page.on('pageerror', (e) => erreurs.push(e.message));
   page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
   page.on('request', (r) => !r.url().startsWith(BASE) && !r.url().startsWith('data:') && externes.push(r.url()));
+  await avecCsp(page);
   await page.goto(`${BASE}/`);
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -52,6 +65,14 @@ for (const largeur of [1000, 375]) {
   verifier(erreurs.length === 0, `${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
   verifier(externes.length === 0, `${largeur} px : aucune ressource tierce ${externes.join(' ')}`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/jeu-${largeur}.png`, fullPage: true });
+  await page.close();
+}
+
+// Page introuvable
+{
+  const page = await navigateur.newPage();
+  await page.goto(`${BASE}/n-existe-pas/`);
+  verifier((await page.locator('h1').textContent()).includes('404'), '404 : page « introuvable » servie');
   await page.close();
 }
 
