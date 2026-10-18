@@ -1322,6 +1322,57 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('La Ludothèque, chapitre 3 — La base (pg_dump, restauration de test, pg_restore -t)', () => {
+      const PG = 'sudo -u postgres';
+      const DUMP = '/var/backups/postgresql/ludo.dump';
+      const compter = (s: Shell, base: string, table: string) => s.executer(`${PG} psql -d ${base} -c "SELECT count(*) FROM ${table};"`) ?? '';
+
+      it('solution : pg_dump -Fc sous postgres, restauration dans ludo_test, la table prets remise, crontab de postgres', () => {
+        const { s, tout } = jouer('base', [
+          'psql -l',
+          `${PG} psql -l`,
+          'ludo-2027',
+          `${PG} psql -d ludo -c "\\dt"`,
+          `${PG} pg_dump -Fc -f ${DUMP} ludo`,
+          `${PG} createdb ludo_test`,
+          `${PG} pg_restore -d ludo_test ${DUMP}`,
+        ]);
+        expect(tout).toContain('FATAL:  role "vous" does not exist');
+        expect(tout).toContain(' public | prets   | table | ludo');
+        contient(tout, 'sudo -u postgres (man sudo)');
+        contient(tout, 'la sauvegarde se restaure');
+        // La commande suivante : l'incident.
+        const test = compter(s, 'ludo_test', 'prets');
+        expect(test).toContain('  1873 ');
+        contient(test, 'Un bénévole a cliqué');
+        expect(compter(s, 'ludo', 'prets')).toMatch(/^\s+0 $/m);
+        contient(s.executer(`${PG} pg_restore -d ludo --data-only -t prets ${DUMP}`) ?? '', 'sont revenus');
+        expect(compter(s, 'ludo', 'jeux')).toContain('   412 ');
+        expect(s.termine).toBe(false);
+        s.executer('sudo crontab -u postgres -e');
+        s.enregistrerEdition(`${s.edition!.texte}15 2 * * * pg_dump -Fc -f ${DUMP} ludo\n`);
+        contient(s.quitterEdition(), 'Tu as terminé le chapitre 3 de La Ludothèque');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : la redirection, restaurer par-dessus ludo, réinjecter dans une table pleine, cron de root', () => {
+        const { s, tout } = jouer('base', [
+          'sudo -u postgres pg_dump ludo > /var/backups/postgresql/ludo.sql',
+          'ludo-2027',
+          `${PG} pg_dump -Fc -f ${DUMP} ludo`,
+          `${PG} pg_restore -d ludo ${DUMP}`,
+        ]);
+        expect(tout).toContain('/var/backups/postgresql/ludo.sql : Permission non accordée');
+        expect(tout).toContain('pg_restore: error: could not execute query: ERROR:  relation "jeux" already exists');
+        contient(tout, 'Restaurer par-dessus la vraie base');
+        expect(compter(s, 'ludo', 'prets')).toContain('  1873 ');
+        s.executer('sudo crontab -e');
+        s.enregistrerEdition(`${s.edition!.texte}15 2 * * * pg_dump -Fc -f ${DUMP} ludo\n`);
+        contient(s.quitterEdition(), "root, qui n'est pas un");
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

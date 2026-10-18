@@ -93,3 +93,6 @@ umount-usage =
      umount <source> | <directory> [options]
 # { $commande } : la commande ; { $cible } : le chemin
 erreur-lecture-seule = { $commande }: { $cible }: Système de fichiers accessible en lecture seulement
+
+# sudo -u avec un compte qui n'existe pas ; { $compte } : le nom donné
+sudo-compte-inconnu = sudo: unknown user { $compte }

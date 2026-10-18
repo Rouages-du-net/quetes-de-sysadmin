@@ -24,3 +24,10 @@ rsnapshot-usage =
     rsnapshot 1.4.5
     Usage: rsnapshot [-vtxqVD] [-c cfgfile] [command] [args]
     Type "man rsnapshot" for more information.
+
+## PostgreSQL (psql, pg_restore)
+
+psql-interactif = (Dans ce jeu, psql ne s'ouvre pas en mode interactif : donner la requête avec -c "…", ou un fichier avec -f. Voir man psql.)
+pg-restore-entree =
+    pg_restore: error: one of -d/--dbname and -f/--file must be specified
+    Try "pg_restore --help" for more information.

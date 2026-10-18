@@ -72,6 +72,8 @@ export class Shell implements Jeu {
   termine = false;
   qui = 'vous';
   derniere: Jeu['derniere'] = { ligne: '', commandes: [], sortie: '', erreurs: [], redirection: null };
+  // Le compte sous lequel sudo lance la commande en cours (sudo -u).
+  private comme = 'root';
   // sudo : mot de passe déjà donné ? ligne en attente du mot de passe ?
   private authentifie = false;
   private sermonFait = false;
@@ -513,12 +515,24 @@ export class Shell implements Jeu {
       // Comme le shell : les jokers ne sont pas développés entre guillemets.
       let args = segment.flatMap((m) => (m.cite ? [m.texte] : this.developper(m.texte)));
       let root = false;
+      // sudo -u compte : agir sous ce compte plutôt que root.
+      let comme = 'root';
       if (args[0] === 'sudo') {
         args = args.slice(1);
         root = true;
+        if (args[0] === '-u') {
+          comme = args[1] ?? '';
+          args = args.slice(2);
+          if (!this.comptes.utilisateurs[comme]) {
+            this.erreur(this.t('sudo-compte-inconnu', { compte: comme }));
+            entree = '';
+            return;
+          }
+        }
       }
       commandes.push(args);
       const dernier = i === segments.length - 1 && !redirection;
+      this.comme = comme;
       entree = this.lancer(args, entree, root, dernier);
     });
     let sortie: string = entree ?? '';
@@ -571,7 +585,7 @@ export class Shell implements Jeu {
       if (n.type === 'dossier') return this.erreur(this.t('script-dossier', { commande: cmd }));
       if (!this.traverse(cmd) || !this.peut(n, 'x') || !this.peut(n, 'r')) return this.erreur(this.t('script-permission', { commande: cmd }));
       const avant = this.qui;
-      if (root) this.qui = 'root';
+      if (root) this.qui = this.comme;
       try {
         return lancerScript(this, cmd, reste);
       } finally {
@@ -587,7 +601,7 @@ export class Shell implements Jeu {
     const invalide = optionInvalide(cmd, commande, reste, this.t);
     if (invalide) return this.erreur(invalide);
     const avant = this.qui;
-    if (root) this.qui = 'root';
+    if (root) this.qui = this.comme;
     try {
       return commande.lancer({ args: reste, entree, jeu: this, dernier });
     } finally {
