@@ -31,8 +31,10 @@ for (const langue of LANGUES)
       expect(c.distant?.shell.chapitre.id).toBe('eveil');
       expect(jouer(c, ['exit'])).toBe('logout\nConnection to royaume.example closed.');
       expect(c.invite()).toBe('vous@poste:~$');
-      // Deuxième fois : la machine est connue, pas de question.
-      expect(jouer(c, ['ssh royaume'])).not.toContain('authenticity');
+      // Deuxième fois : la machine est connue, pas de question ; le chapitre reprend, avec où relire ses consignes.
+      const reprise = jouer(c, ['ssh royaume']);
+      expect(reprise).not.toContain('authenticity');
+      expect(reprise).toContain('cat bienvenue.txt');
       expect(c.invite()).toBe('vous@royaume:~$');
     });
 
