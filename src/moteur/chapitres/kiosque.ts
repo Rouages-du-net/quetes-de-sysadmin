@@ -13,7 +13,7 @@ import { d, f, type Droits, type Noeud } from '../monde';
 import type { Jeu } from '../shell';
 import type { DefinitionService } from '../systemd';
 import { requete, type Appli, type Configuration } from '../nginx';
-import { systemd } from '../systemd';
+import { journaliser, systemd } from '../systemd';
 import { lireEnv } from '../compose';
 
 export const KIOSQUE = '/srv/kiosque';
@@ -35,7 +35,13 @@ export const VERSIONS: Record<string, VersionKiosque> = {
   // La recherche dans les archives plante : /health n'en sait rien.
   '1.6.0': { requiert: ['KIOSQUE_SMTP'], panne: ['/archives'], schema: 3 },
   '1.6.1': { requiert: ['KIOSQUE_SMTP'], schema: 3 },
+  // Migre la base au démarrage (schéma 4 : la colonne courriel devient email).
+  '2.0.0': { requiert: ['KIOSQUE_SMTP_URL'], schema: 4 },
+  '2.0.1': { requiert: ['KIOSQUE_SMTP_URL'], schema: 4 },
 };
+
+// La base du Kiosque : le schéma où elle en est (les migrations ne font qu'avancer).
+export const base = (j: Jeu): { schema: number } => (j.etat.kiosqueBase ??= { schema: 3 });
 
 export interface Instance {
   version: string;
@@ -70,10 +76,27 @@ export function serviceKiosque(couleur: string, pid: number, etat: 'active' | 'i
           ],
     // Au démarrage, le processus charge son code et sa configuration.
     charger: (j) => {
-      instances(j)[couleur] = { version: versionDuLien(j, couleur)!, config: lireEnv(j.lire(ENV)) };
+      const version = versionDuLien(j, couleur)!;
+      instances(j)[couleur] = { version, config: lireEnv(j.lire(ENV)) };
+      const sd = systemd(j);
+      if (!sd) return;
+      const ecrire = (message: string) => journaliser(sd, `kiosque-${couleur}.service`, 'node', pid, message, 6, false);
+      ecrire(`Kiosque ${version} starting (NODE_ENV=production)`);
+      // Une version plus récente migre la base, comme les outils de migration
+      // des frameworks : la base ne revient pas en arrière d'elle-même.
+      const b = base(j);
+      if (VERSIONS[version].schema > b.schema) {
+        for (let n = b.schema + 1; n <= VERSIONS[version].schema; n++) ecrire(`Running migration 00${n}_${MIGRATIONS[n] ?? 'update'}... done`);
+        ecrire(`Database schema is now at version ${VERSIONS[version].schema}`);
+        b.schema = VERSIONS[version].schema;
+      }
+      ecrire(`Listening on http://127.0.0.1:${PORTS[couleur]}`);
     },
   };
 }
+
+// Les migrations du Kiosque, par numéro de schéma.
+const MIGRATIONS: Record<number, string> = { 4: 'rename_abonnes_courriel_to_email' };
 
 const json = (code: number, objet: unknown) => ({ code, corps: JSON.stringify(objet), type: 'application/json; charset=utf-8' });
 
@@ -86,11 +109,15 @@ export function appliKiosque(couleur: string): Appli {
       const ici = instances(j)[couleur];
       const v = VERSIONS[ici.version];
       const manque = v.requiert.filter((k) => !ici.config[k]);
+      // Une base migrée plus loin que ce que la version connaît : elle ne sait plus la lire.
+      const tropRecente = base(j).schema > v.schema;
       if (chemin === '/health')
-        return manque.length
-          ? json(503, { status: 'error', version: ici.version, error: `${manque[0]} is not set` })
-          : json(200, { status: 'ok', version: ici.version });
-      if (manque.length || v.panne?.includes(chemin)) return { code: 500, corps: 'Internal Server Error' };
+        return tropRecente
+          ? json(503, { status: 'error', version: ici.version, error: `database schema ${base(j).schema} is newer than supported (${v.schema})` })
+          : manque.length
+            ? json(503, { status: 'error', version: ici.version, error: `${manque[0]} is not set` })
+            : json(200, { status: 'ok', version: ici.version });
+      if (tropRecente || manque.length || v.panne?.includes(chemin)) return { code: 500, corps: 'Internal Server Error' };
       if (chemin === '/' || chemin === '') return { code: 200, corps: j.t('kiosque-accueil', { version: ici.version }) };
       if (chemin === '/archives') return { code: 200, corps: j.t('kiosque-archives', { version: ici.version }) };
       return {

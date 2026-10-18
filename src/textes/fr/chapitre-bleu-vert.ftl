@@ -91,7 +91,8 @@ bleu-vert-evenement-fin =
     l'ancienne version attend, allumée, au cas où. Samia : « Si ça tourne
     mal, on rebascule en une commande. »
 
-    Bravo ! Tu as terminé le chapitre 3 de La Gazette.
+    Bravo ! Tu as terminé le chapitre 3 de La Gazette. (La suite t'attend :
+    ssh gazette.)
 
     CE QUI S'EST PASSÉ
     Deux emplacements, bleu et vert : l'un sert le public, l'autre reçoit

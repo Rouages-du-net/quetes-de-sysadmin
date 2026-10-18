@@ -124,7 +124,8 @@ retour-arriere-evenement-fin =
     casser le site. Et si une version passe les tests mais nous déplaît, on
     sait revenir en arrière en une seconde. »
 
-    Bravo ! Tu as terminé le chapitre 2 de La Gazette.
+    Bravo ! Tu as terminé le chapitre 2 de La Gazette. (La suite t'attend :
+    ssh gazette.)
 
     CE QUI S'EST PASSÉ
     Chaque publication va dans son propre dossier ; le lien current

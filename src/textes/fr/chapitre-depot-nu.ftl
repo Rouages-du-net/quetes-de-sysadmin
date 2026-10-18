@@ -138,7 +138,8 @@ depot-nu-evenement-fin =
     « Plus personne n'écrase le travail des autres. Et si une publication
     tourne mal, l'historique est là. »
 
-    Bravo ! Tu as terminé le chapitre 1 de La Gazette.
+    Bravo ! Tu as terminé le chapitre 1 de La Gazette. (La suite t'attend :
+    ssh gazette.)
 
     CE QUI S'EST PASSÉ
     Le site vivait dans un dossier modifié à la main : impossible de savoir

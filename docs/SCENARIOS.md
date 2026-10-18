@@ -102,7 +102,11 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `traceroute` | s'arrête 3 sauts après le dernier qui répond | continue jusqu'à 30 sauts |
 | `ps aux` | utilisateur, PID, %CPU, %MEM, commande | ajoute VSZ, RSS, TTY, STAT, START, TIME |
 | `tar` | taille calculée (texte compressé au tiers, médias à 98 %) ; s'il n'y a pas la place, rien n'est écrit | vraie compression ; une archive partielle peut rester |
-| `git` | une seule branche (`main`), fichiers à la racine du dépôt seulement, identifiants calculés par le jeu, `commit` exige `-m` | branches, sous-dossiers, SHA-1/SHA-256, éditeur de texte |
+| `git` | une seule branche (`main`), fichiers à la racine du dépôt seulement, identifiants calculés par le jeu, `commit` exige `-m` ; distants par chemin seulement (dépôts nus de la machine) ; `push` et `pull` en avance rapide seulement (pas de fusion) ; crochets `pre-receive` et `post-receive` ; chiffres de `push` indicatifs | branches, sous-dossiers, SHA-1/SHA-256, éditeur de texte, distants par SSH ou HTTPS, fusions, tous les crochets |
+| scripts (`sh`, crochets) | `/bin/sh` réduit (`script.ts`) : une commande par ligne, `#`, `set -e`, `exit`, variables, `$(…)`, `read`, `&&`, `\|\|`, `[ … ]` ; pas de `if`, `for`, `while`, `case` ni de fonctions ; une commande réussit si elle n'a écrit aucune erreur | le langage complet |
+| `diff` | format normal, `-u` (trois lignes de contexte), `-r`, `-q` ; l'heure de l'en-tête `-u` est l'heure de la machine | toutes les options |
+| `date`, `test`, `readlink` | `date` sans option ou `+FORMAT` (directives courantes) ; `test` (et `[ … ]` dans un script) : `-e -f -d -L -s -r -w -x -n -z`, `=`, `!=`, comparaisons numériques ; `readlink [-f]` | `date -d`, `-u`… ; `test` complet ; `realpath` |
+| Le Kiosque (La Gazette) | une appli Node.js simulée : version lue au démarrage via un lien, `/health` en JSON, configuration dans un fichier `.env`, migration de schéma au démarrage (jamais en arrière) ; une heure de visites simulée à chaque rechargement de nginx dans « Le canari » | une vraie appli et sa base PostgreSQL |
 | journal nginx | format « combined » sans la page d'origine ni le navigateur | deux champs de plus en fin de ligne |
 | `ssh` | clé seulement (pas de mot de passe ni d'agent) ; une clé est acceptée si c'est la bonne machine ; pas de commande à distance ; message d'usage raccourci ; option inconnue : message des coreutils | mot de passe, agent, `authorized_keys` côté serveur, commande à distance |
 | `exit` | a sa page `man` | commande intégrée à bash : `help exit` |
@@ -118,7 +122,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `rsync` | copie locale seulement (pas de `user@machine:`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | aussi à distance par SSH, compare taille et date |
 | `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
 | `apt` | `update`, `install [-y]`, `list --installed` ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » | tout le catalogue Debian, `upgrade`, `remove`, `search`, `show`… ; dpkg garde l'état du paquet |
-| `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe ou `=` (pas d'expressions régulières), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ; `try_files` lu mais pas appliqué | toutes les directives et modules |
+| `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe ou `=` (pas d'expressions régulières), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
 | `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse) | tout le réseau |
 | `tar` | `-C` ; une archive coupée s'arrête à la coupure (messages proches de GNU tar) ; root garde propriétaires et droits | aussi `--strip-components`, `-p`, archives multi-volumes… |
 | `ssh-keygen` | `-R`, `-F`, `-l -f` seulement ; ne crée pas de clés | crée et convertit des clés, signe des certificats… |
@@ -127,8 +131,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `curl https://` | vérifie dates et noms du certificat présenté (erreur 60), `-k` pour passer outre | vérifie aussi la chaîne de confiance complète, OCSP… |
 | horloge | heure de Paris : CET l'hiver, CEST l'été | fuseau de la machine |
 | `restic` | `-r` et `--password-file` obligatoires (pas de variables d'environnement) ; `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check`, `stats` ; pas d'`init` ; un « pack » par sauvegarde ; fichiers du dépôt illisibles mais pas binaires ; pas de barres de progression | tout cela, et `mount`, `copy`, `key`, `tag`, dépôts distants (sftp, S3, rest-server) |
-| liens symboliques | `ln -s`, suivis pour lire, écrire et entrer ; `ls -l` les montre ; pas de `readlink` | aussi `readlink`, `realpath`, `find -L`… |
-| `curl` | `-I`, `-k`, `-L`, `-H "Host: …"` ; ne joint que la machine où l'on est | toutes les options, tout le réseau |
+| liens symboliques | `ln -s` (`-f`, `-n`), suivis pour lire, écrire et entrer ; `ls -l` les montre ; `readlink` | aussi `realpath`, `find -L`… |
+| `curl` | `-I`, `-i`, `-k`, `-L`, `-H "Host: …"` ; ne joint que la machine où l'on est (nginx, une appli sur son port, un conteneur) | toutes les options, tout le réseau |
 | DNS (BIND) | zones A, AAAA, CNAME, MX, NS, TXT, SOA ; un primaire (`named`), un secondaire qui recopie quand le serial augmente (tout de suite), un résolveur public avec cache ; `dig` (`@serveur`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (accolades et fichiers), `rndc reload`/`status` ; pas de section AUTHORITY, de DNSSEC ni de zones inverses | tout cela |
 | `awk` | programme entre apostrophes : motifs, `BEGIN`/`END`, champs, tableaux, `printf`, fonctions courantes, `-F`, `-v` ; pas de `getline`, de redirection dans `print`, de fonctions définies ni de `?:` | le langage complet (mawk sur Debian) |
 | trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
@@ -761,6 +765,102 @@ l'uid partagé avec la machine (sans userns-remap), `USER`/`--user`/`user:`,
 des numéros plutôt que des noms, `chown -R` plutôt que `chmod 777`,
 `--cap-drop ALL`, `no-new-privileges`, `--read-only`, ni `--privileged` ni
 socket Docker monté, mode rootless ; liens vers la documentation de Docker.
+
+## Histoire 8 : La Gazette (cinq chapitres)
+
+Le journal en ligne du quartier (machine `gazette`, 192.0.2.16) apprend à
+déployer : Samia (rédactrice en chef) et Théo (stagiaire). Phase 6 de la
+feuille de route.
+
+### Chapitre 1 — Le dépôt nu (fait)
+
+Le site est servi par nginx depuis `/var/www/gazette`, où chacun·e copiait
+ses fichiers à la main. Le code est suivi par git dans `~/gazette`.
+
+| Étape | Commande apprise |
+|---|---|
+| Voir ce qui a dérivé | `diff -r ~/gazette /var/www/gazette` (la correction de Théo n'existe que sur le serveur) |
+| Le dépôt du serveur | `sudo git init --bare /srv/git/gazette.git`, `sudo chown -R vous: …` |
+| Le crochet | `hooks/post-receive` : `git --work-tree=/var/www/gazette checkout -f main`, `chmod +x` |
+| Publier | `git remote add prod /srv/git/gazette.git`, `git commit -am`, `git push prod main` |
+
+Objectif vérifié sur l'état : le site est exactement le dernier commit du
+dépôt du serveur, extrait par son crochet, avec l'article, la correction de
+Théo, puis la date de l'agenda corrigée (demandée une fois le site en ligne).
+Pièges prévus : dépôt créé avec sudo (« droits insuffisants »), pas de
+crochet, crochet non exécutable (l'astuce de git), `checkout` sans `-f`
+(fichiers non suivis), correction de Théo écrasée par le déploiement,
+correction faite directement sur le serveur. Débrief : une seule source,
+dépôt nu, crochets, `--shared=group` ; liens vers le livre de git et
+githooks.
+
+### Chapitre 2 — Le retour arrière (fait)
+
+Chaque push est publié dans `/srv/gazette/releases/<date>`, et le lien
+`/srv/gazette/current` (servi par nginx) désigne la version en ligne. La
+mise en page de Théo, sans `index.html`, donne un 403.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `curl -I`, `ls -l /srv/gazette`, `readlink`, `ls releases/*` |
+| Revenir en arrière | `ln -sfn releases/20270514101502 current` |
+| Le garde-fou | dans le crochet, `cd` dans la nouvelle version puis `sh tests.sh` AVANT `ln -sfn` (avec `set -e`) |
+| Publier la réparation | `git pull prod main`, `mv accueil.html index.html`, `git add .`, `git commit`, `git push` |
+
+Objectif vérifié sur l'état : la nouvelle mise en page est en ligne,
+publiée par le crochet après ses tests, et un nouveau push cassé de Théo
+(simulé dès que le crochet lance les tests) n'a pas été mis en ligne.
+Pièges prévus : `ln -sf` sans `-n` (le lien est créé dans la version
+cassée), tests après la bascule, tests lancés depuis le dépôt (tout est
+refusé), `push` refusé tant qu'on n'a pas récupéré les commits de Théo.
+
+### Chapitre 3 — Bleu et vert (fait)
+
+Le Kiosque (abonnements à la lettre, Node.js) tourne sur l'emplacement bleu
+(port 3001) derrière nginx ; l'emplacement vert (3002) est libre.
+
+| Étape | Commande apprise |
+|---|---|
+| La nouvelle version à côté | `ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert`, `sudo systemctl start kiosque-vert` |
+| Vérifier sa santé | `curl -s localhost:3002/health` (503), `cat …/NOTES.txt`, la variable dans `/etc/kiosque/kiosque.env`, `systemctl restart` |
+| Basculer | `proxy_pass http://127.0.0.1:3002/;`, `sudo nginx -t`, `sudo systemctl reload nginx` |
+
+Objectif vérifié sur l'état : nginx (configuration chargée) envoie
+`/kiosque/` vers une instance 1.5.0 en bonne santé, et l'autre instance
+tourne toujours. Pièges prévus : changer le lien sans redémarrer, basculer
+avant `/health`, oublier le `reload`, arrêter bleu tout de suite.
+
+### Chapitre 4 — Le canari (fait)
+
+La 1.6.0 passe `/health` mais plante sur `/archives`. Vert sert la 1.5.0.
+
+| Étape | Commande apprise |
+|---|---|
+| Le canari | `upstream kiosque { server 127.0.0.1:3002 weight=9; server 127.0.0.1:3001 weight=1; }`, `proxy_pass http://kiosque/;`, reload |
+| Regarder | `awk '{print $9}' access.log \| sort \| uniq -c`, `grep " 500 "`, `curl localhost:3001/archives` |
+| Arrêter, recommencer | `down`, reload ; la 1.6.1 publiée ; nouveau canari ; puis tout vers bleu |
+
+Objectif vérifié sur l'état : tout `/kiosque/` va à la 1.6.1 en bonne
+santé, après un canari de la 1.6.1 sans erreur, vert toujours allumé.
+Pièges prévus : tout basculer d'un coup sur la 1.6.0 (toutes les visites
+d'archives en 500), un « canari » à 50 %.
+
+### Chapitre 5 — La migration (fait)
+
+Théo a mis la 2.0.0 sur vert et basculé nginx ; au démarrage, elle a migré
+la base (schéma 3 → 4). Elle ne marche pas (variable renommée), et bleu
+(1.6.1) ne sait plus lire la base.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `curl localhost:3002/health`, `curl localhost:3001/health`, `sudo journalctl -u kiosque-vert` (la migration), les notes de version |
+| Réparer en avant | `KIOSQUE_SMTP_URL=…` dans `kiosque.env`, `systemctl restart kiosque-vert` |
+| Refaire le filet | `ln -sfn …/2.0.0 /srv/kiosque/bleu`, `systemctl restart kiosque-bleu` |
+
+Objectif vérifié sur l'état : nginx sert une instance 2.x en bonne santé, et
+l'autre instance tourne aussi en 2.x en bonne santé. Piège prévu : revenir
+sur bleu (1.6.1), qui répond 500. Débrief : sauvegarder avant une
+migration (`pg_dump`), étendre puis contracter, réparer en avant.
 
 ## Idées pour la suite
 

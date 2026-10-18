@@ -76,7 +76,8 @@ canari-evenement-fin =
     réserve. Samia : « Le premier essai n'a gêné qu'une visite sur dix,
     pendant une heure. Sans canari, on l'aurait servi à tout le monde. »
 
-    Bravo ! Tu as terminé le chapitre 4 de La Gazette.
+    Bravo ! Tu as terminé le chapitre 4 de La Gazette. (La suite t'attend :
+    ssh gazette.)
 
     CE QUI S'EST PASSÉ
     La 1.6.0 répondait bien sur /health, mais plantait sur une page

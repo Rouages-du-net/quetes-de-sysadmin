@@ -194,14 +194,19 @@ demandent plusieurs.
 
 ## Phase 6 — Déployer
 
-- [ ] **Déploiement par git** : dépôt nu sur le serveur, crochet
-      `post-receive`, ou `git pull` dans un dossier de publication
-- [ ] **Intégration continue** (simulée) : tests qui bloquent un déploiement
-- [ ] **Bleu/vert** : deux versions côte à côte, bascule du proxy, retour
-      arrière instantané
-- [ ] **Canari** et vérifications de santé (`/health`)
-- [ ] **Migrations de base de données** qui empêchent le retour arrière
-- [ ] **Retour arrière** (`rollback`) après un déploiement raté
+- [x] **Déploiement par git** : dépôt nu sur le serveur, crochet
+      `post-receive` ; « Le dépôt nu » (La Gazette, chapitre 1)
+- [x] **Intégration continue** (simulée) : tests qui bloquent un déploiement
+      (`tests.sh` lancé par le crochet avant la bascule) ; « Le retour arrière »
+      (La Gazette, chapitre 2)
+- [x] **Bleu/vert** : deux versions côte à côte, bascule du proxy, retour
+      arrière instantané ; « Bleu et vert » (La Gazette, chapitre 3)
+- [x] **Canari** et vérifications de santé (`/health`) : `upstream` et
+      `weight`, les 500 dans `access.log` ; « Le canari » (La Gazette, chapitre 4)
+- [x] **Migrations de base de données** qui empêchent le retour arrière ;
+      « La migration » (La Gazette, chapitre 5)
+- [x] **Retour arrière** (`rollback`) après un déploiement raté : `ln -sfn`
+      vers la version d'avant (chapitre 2), rebascule du proxy (chapitres 3 et 4)
 
 ## Phase 7 — Sauvegarder et restaurer
 

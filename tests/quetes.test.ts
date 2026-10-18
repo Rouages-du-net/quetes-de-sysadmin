@@ -1158,6 +1158,44 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('La Gazette, chapitre 5 — La migration (réparer en avant)', () => {
+      const editer = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const SMTP_URL = (t: string) => `${t}\nKIOSQUE_SMTP_URL=smtp://smtp.gazette.example:587`;
+
+      it('solution : le journal raconte la migration, la variable renommée, puis bleu en 2.0.0', () => {
+        const { s, tout } = jouer('migration', [
+          'curl -s localhost:3002/health',
+          'curl -s localhost:3001/health',
+          'sudo journalctl -u kiosque-vert',
+          'gazette-2027',
+        ]);
+        expect(tout).toContain('"error":"KIOSQUE_SMTP_URL is not set"');
+        expect(tout).toContain('"error":"database schema 4 is newer than supported (3)"');
+        expect(tout).toContain('Running migration 004_rename_abonnes_courriel_to_email... done');
+        contient(tout, 'il reste à réparer en avant');
+        editer(s, '/etc/kiosque/kiosque.env', SMTP_URL);
+        contient(s.executer('sudo systemctl restart kiosque-vert') ?? '', 'Le Kiosque répond de nouveau');
+        expect(s.termine).toBe(false);
+        s.executer('ln -sfn /srv/kiosque/versions/2.0.0 /srv/kiosque/bleu');
+        contient(s.executer('sudo systemctl restart kiosque-bleu') ?? '', 'Tu as terminé le chapitre 5 de La Gazette');
+        expect(s.executer('curl -s localhost:3001/health')).toBe('{"status":"ok","version":"2.0.0"}');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausse piste : revenir sur bleu (1.6.1) ne répare rien, la base a changé', () => {
+        const { s } = jouer('migration', ['sudo id', 'gazette-2027']);
+        const retour = editer(s, '/etc/nginx/sites-available/gazette', (t) => t.replace('127.0.0.1:3002/', '127.0.0.1:3001/'));
+        const recharge = (s.executer('sudo systemctl reload nginx') ?? '') + retour;
+        contient(recharge, 'la base a été migrée sous ses pieds');
+        expect(s.executer('curl -s http://gazette.example/kiosque/')).toBe('Internal Server Error');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {
