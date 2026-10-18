@@ -72,7 +72,8 @@ contournement-evenement-fin =
     disque a de la place, et le wiki attend toujours dans son volume.
     Rania refait son test : « Plus rien sur le 5432. Bien joué ! »
 
-    Bravo ! Tu as terminé le chapitre 3 de La Fabrique.
+    Bravo ! Tu as terminé le chapitre 3 de La Fabrique. (La suite t'attend :
+    ssh fabrique, pour la galerie photo du fablab.)
 
     CE QUI S'EST PASSÉ
     « ports: - "5432:5432" » publie le port sur toutes les adresses de la

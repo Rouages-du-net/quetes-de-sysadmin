@@ -75,11 +75,16 @@ export const COMPTES: Record<string, Commande> = {
       const { lettres, reste } = options(args);
       const [proprio, ...cibles] = reste;
       if (!proprio || !cibles.length) return jeu.erreur(jeu.t('chown-usage'));
-      const [nom, groupe] = proprio.split(':');
-      if (nom && !jeu.comptes.utilisateurs[nom]) return jeu.erreur(jeu.t('chown-utilisateur-incorrect', { proprio }));
-      if (groupe && !jeu.comptes.groupes[groupe]) return jeu.erreur(jeu.t('chown-groupe-incorrect', { proprio }));
+      // Un numéro (uid, gid) est accepté même sans compte qui le porte : ls -l l'affiche alors tel quel.
+      const parUid = (x: string) => Object.entries(jeu.comptes.utilisateurs).find(([, u]) => String(u.uid) === x)?.[0] ?? x;
+      const parGid = (x: string) => Object.entries(jeu.comptes.groupes).find(([, g]) => String(g.gid) === x)?.[0] ?? x;
+      const [brutNom, brutGroupe] = proprio.split(':');
+      const nom = brutNom && /^\d+$/.test(brutNom) ? parUid(brutNom) : brutNom;
+      const groupe = brutGroupe && /^\d+$/.test(brutGroupe) ? parGid(brutGroupe) : brutGroupe;
+      if (nom && !/^\d+$/.test(nom) && !jeu.comptes.utilisateurs[nom]) return jeu.erreur(jeu.t('chown-utilisateur-incorrect', { proprio }));
+      if (groupe && !/^\d+$/.test(groupe) && !jeu.comptes.groupes[groupe]) return jeu.erreur(jeu.t('chown-groupe-incorrect', { proprio }));
       // « chown malo: f » : le groupe principal de malo.
-      const nouveauGroupe = groupe || (proprio.endsWith(':') && nom ? jeu.comptes.utilisateurs[nom].groupe : undefined);
+      const nouveauGroupe = groupe || (proprio.endsWith(':') && nom ? (jeu.comptes.utilisateurs[nom]?.groupe ?? nom) : undefined);
       return changer(jeu, 'chown', cibles, lettres.has('R'), () => jeu.qui === 'root', (n) => {
         if (nom) n.proprio = nom;
         if (nouveauGroupe) n.groupe = nouveauGroupe;

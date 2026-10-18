@@ -13,6 +13,7 @@
 // décrits par elle), pas de réseau entre conteneurs dans ce fichier
 // (voir docker compose), une seule plateforme.
 
+import type { Noeud } from './monde';
 import type { Jeu } from './shell';
 import { journaliser, systemd, versUtc } from './systemd';
 
@@ -26,6 +27,10 @@ export interface Image {
   appli: string;
   port: number;
   commande: string;
+  // USER de l'image (vide : root), et les comptes de son /etc/passwd (nom → uid,
+  // le groupe principal porte le même numéro).
+  utilisateur?: string;
+  comptes?: Record<string, number>;
 }
 
 export interface Montage {
@@ -60,6 +65,11 @@ export interface Conteneur {
   ip: string;
   // Arrêté à la main (docker stop) : unless-stopped ne le relance pas.
   arreteALaMain?: boolean;
+  // --user (vide : celui de l'image), --read-only, --cap-drop, --security-opt.
+  utilisateur?: string;
+  lectureSeule?: boolean;
+  capDrop?: string[];
+  securite?: string[];
 }
 
 export interface EtatDocker {
@@ -95,6 +105,74 @@ export function trouverConteneur(d: EtatDocker, cle: string): Conteneur | null {
   return d.conteneurs.find((c) => c.nom === cle) ?? d.conteneurs.find((c) => cle.length >= 3 && c.id.startsWith(cle)) ?? null;
 }
 
+// ——— L'utilisateur d'un conteneur ———
+// Sans --user ni USER dans l'image, le processus tourne en root (uid 0). Sans
+// espace de noms utilisateur (userns-remap, désactivé par défaut), l'uid du
+// conteneur est le MÊME uid sur la machine : root dedans, c'est root sur les
+// fichiers montés ; l'uid 1000 dedans, c'est le compte 1000 de la machine.
+// https://docs.docker.com/reference/cli/docker/container/run/#user,
+// https://docs.docker.com/engine/security/userns-remap/
+
+export interface Identite {
+  uid: number;
+  gid: number;
+  // Les noms dans le /etc/passwd de l'image (null : inconnus).
+  nom: string | null;
+  groupe: string | null;
+}
+
+export const imageDu = (jeu: Jeu, c: Conteneur): Image | undefined => Object.values(docker(jeu)!.images).find((i) => nomImage(i) === c.image);
+
+/** Les comptes du /etc/passwd d'une image (ceux de son appli, et root). */
+export const comptesImage = (image: Image | undefined): Record<string, number> => ({
+  root: 0,
+  ...(image ? (APPLIS[image.appli]?.comptes ?? {}) : {}),
+  ...(image?.comptes ?? {}),
+});
+/** L'utilisateur par défaut d'une image (USER du Dockerfile ; root s'il n'y en a pas). */
+export const utilisateurImage = (image: Image | undefined) => image?.utilisateur || (image && APPLIS[image.appli]?.utilisateur) || 'root';
+
+/** L'identité du processus : --user, sinon USER de l'image, sinon root ; ou l'erreur de runc. */
+export function identite(image: Image | undefined, c: Conteneur, demande?: string): Identite | { erreur: string } {
+  const comptes = comptesImage(image);
+  const nomDe = (n: number) => Object.entries(comptes).find(([, x]) => x === n)?.[0] ?? null;
+  const [u, g] = (demande || c.utilisateur || utilisateurImage(image)).split(':');
+  let uid: number;
+  if (/^\d+$/.test(u)) uid = Number(u);
+  else if (u in comptes) uid = comptes[u];
+  else return { erreur: `unable to find user ${u}: no matching entries in passwd file` };
+  // Sans groupe : celui du compte dans l'image ; un uid inconnu de l'image prend le groupe 0.
+  let gid = nomDe(uid) === null ? 0 : uid;
+  if (g !== undefined) {
+    if (/^\d+$/.test(g)) gid = Number(g);
+    else if (g in comptes) gid = comptes[g];
+    else return { erreur: `unable to find group ${g}: no matching entries in group file` };
+  }
+  return { uid, gid, nom: nomDe(uid), groupe: nomDe(gid) };
+}
+
+/** Le nom, sur la machine, du compte qui porte cet uid (sinon le numéro). */
+export const compteMachine = (jeu: Jeu, uid: number) => Object.entries(jeu.comptes.utilisateurs).find(([, u]) => u.uid === uid)?.[0] ?? String(uid);
+export const groupeMachine = (jeu: Jeu, gid: number) => Object.entries(jeu.comptes.groupes).find(([, g]) => g.gid === gid)?.[0] ?? String(gid);
+
+/** Les droits d'un uid et d'un gid sur un fichier de la machine (comme le noyau : par numéro). */
+export function accesNumerique(jeu: Jeu, n: Noeud, droit: 'r' | 'w' | 'x', uid: number, gid: number): boolean {
+  if (uid === 0) return true;
+  const mode = n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--');
+  const proprio = n.proprio ?? 'vous';
+  const groupe = n.groupe ?? proprio;
+  const numUid = jeu.comptes.utilisateurs[proprio]?.uid ?? (/^\d+$/.test(proprio) ? Number(proprio) : -1);
+  const numGid = jeu.comptes.groupes[groupe]?.gid ?? (/^\d+$/.test(groupe) ? Number(groupe) : -1);
+  const triplet = numUid === uid ? mode.slice(0, 3) : numGid === gid ? mode.slice(3, 6) : mode.slice(6, 9);
+  return triplet.includes(droit);
+}
+
+// L'identité d'un conteneur qui tourne (root si elle n'a pas pu être lue).
+function qui(jeu: Jeu, c: Conteneur): Identite {
+  const id = identite(imageDu(jeu, c), c);
+  return 'erreur' in id ? { uid: 0, gid: 0, nom: 'root', groupe: 'root' } : id;
+}
+
 // ——— Fichiers d'un conteneur ———
 
 // Le montage qui contient ce chemin (le plus long), et le chemin relatif.
@@ -114,22 +192,67 @@ export function lireDans(jeu: Jeu, c: Conteneur, chemin: string): string | null 
   return c.couche[chemin] ?? null;
 }
 
-/** Écrit un fichier vu depuis le conteneur ; renvoie une erreur si le montage est en lecture seule. */
+/**
+ * Écrit un fichier vu depuis le conteneur ; renvoie une erreur si le montage
+ * est en lecture seule, ou si l'utilisateur du conteneur n'a pas le droit
+ * d'écrire dans le dossier monté (il est soumis aux droits de la machine).
+ */
 export function ecrireDans(jeu: Jeu, c: Conteneur, chemin: string, contenu: string): string | null {
   const d = docker(jeu)!;
   const trouve = montage(c, chemin);
-  if (trouve?.m.lectureSeule) return 'read-only file system';
+  if (trouve?.m.lectureSeule || (!trouve && c.lectureSeule)) return 'read-only file system';
   if (trouve?.m.type === 'volume') (d.volumes[trouve.m.source] ??= { cree: horloge(jeu), donnees: {} }).donnees[trouve.relatif] = contenu;
   else if (trouve?.m.type === 'bind') {
-    const n = jeu.trouver(`${trouve.m.source.replace(/\/$/, '')}/${trouve.relatif}`);
-    if (n?.type === 'fichier') n.contenu = contenu;
-    else {
-      const parent = jeu.trouver(trouve.m.source);
-      if (parent?.type === 'dossier' && !trouve.relatif.includes('/'))
-        parent.enfants[trouve.relatif] = { type: 'fichier', contenu, lignes: true, proprio: 'root' };
+    const id = qui(jeu, c);
+    const lieu = `${trouve.m.source.replace(/\/$/, '')}/${trouve.relatif}`;
+    const n = jeu.trouver(lieu);
+    if (n?.type === 'fichier') {
+      if (!accesNumerique(jeu, n, 'w', id.uid, id.gid)) return 'permission denied';
+      n.contenu = contenu;
+    } else {
+      const parent = jeu.trouver(lieu.replace(/\/[^/]+$/, ''));
+      if (parent?.type !== 'dossier') return 'no such file or directory';
+      if (!accesNumerique(jeu, parent, 'w', id.uid, id.gid) || !accesNumerique(jeu, parent, 'x', id.uid, id.gid)) return 'permission denied';
+      // Le fichier créé appartient, sur la machine, à l'uid du conteneur.
+      parent.enfants[lieu.split('/').at(-1)!] = {
+        type: 'fichier',
+        contenu,
+        lignes: true,
+        proprio: compteMachine(jeu, id.uid),
+        groupe: groupeMachine(jeu, id.gid),
+      };
     }
   } else c.couche[chemin] = contenu;
   return null;
+}
+
+/** Crée un dossier vu depuis le conteneur (mkdir) ; mêmes règles qu'ecrireDans. */
+export function creerDossierDans(jeu: Jeu, c: Conteneur, chemin: string): string | null {
+  const trouve = montage(c, chemin);
+  if (trouve?.m.type !== 'bind') return null;
+  const lieu = `${trouve.m.source.replace(/\/$/, '')}/${trouve.relatif}`;
+  if (jeu.trouver(lieu)?.type === 'dossier') return null;
+  if (trouve.m.lectureSeule) return 'read-only file system';
+  const parent = jeu.trouver(lieu.replace(/\/[^/]+$/, ''));
+  const id = qui(jeu, c);
+  if (parent?.type !== 'dossier') return 'no such file or directory';
+  if (!accesNumerique(jeu, parent, 'w', id.uid, id.gid)) return 'permission denied';
+  parent.enfants[lieu.split('/').at(-1)!] = { type: 'dossier', enfants: {}, proprio: compteMachine(jeu, id.uid), groupe: groupeMachine(jeu, id.gid) };
+  return null;
+}
+
+/** Le fichier de la machine derrière un chemin du conteneur (dossier monté), s'il y en a un. */
+export function noeudDans(jeu: Jeu, c: Conteneur, chemin: string): Noeud | null {
+  const trouve = montage(c, chemin);
+  if (trouve?.m.type !== 'bind') return null;
+  return jeu.trouver(`${trouve.m.source.replace(/\/$/, '')}/${trouve.relatif}`.replace(/\/$/, '')) ?? null;
+}
+
+/** L'utilisateur du conteneur peut-il faire cela sur ce chemin (dossier monté) ? */
+export function peutDans(jeu: Jeu, c: Conteneur, chemin: string, droit: 'r' | 'w' | 'x'): boolean {
+  const n = noeudDans(jeu, c, chemin);
+  const id = qui(jeu, c);
+  return !n || accesNumerique(jeu, n, droit, id.uid, id.gid);
 }
 
 /** Les fichiers visibles sous un lieu du conteneur (chemins absolus). */
@@ -156,6 +279,9 @@ export interface Appli {
   repondre(jeu: Jeu, c: Conteneur, chemin: string): { code: number; corps: string };
   // Les fichiers de l'image (ce que contient un conteneur neuf).
   fichiers?: (image: Image) => Record<string, string>;
+  // USER de l'image (absent : root) et les comptes de son /etc/passwd.
+  utilisateur?: string;
+  comptes?: Record<string, number>;
 }
 
 // Les applications des images, déclarées par les chapitres.
@@ -166,10 +292,20 @@ export function journal(jeu: Jeu, c: Conteneur, texte: string) {
   c.journal.push({ temps: horloge(jeu), texte });
 }
 
-/** Démarre un conteneur : son appli prépare ses fichiers et écrit son journal. */
-export function lancer(jeu: Jeu, c: Conteneur): void {
+/**
+ * Démarre un conteneur : son appli prépare ses fichiers et écrit son journal.
+ * Renvoie l'erreur de runc si le processus n'a pas pu être créé (utilisateur
+ * inconnu de l'image) : le conteneur reste alors « Created ».
+ */
+export function lancer(jeu: Jeu, c: Conteneur): string | null {
   const d = docker(jeu)!;
   const image = Object.values(d.images).find((i) => nomImage(i) === c.image)!;
+  const id = identite(image, c);
+  if ('erreur' in id) {
+    c.etat = c.etat === 'running' ? 'exited' : c.etat;
+    if (c.etat === 'exited') c.code = 127;
+    return `failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: ${id.erreur}: unknown`;
+  }
   c.etat = 'running';
   c.debut = horloge(jeu);
   c.arreteALaMain = false;
@@ -179,6 +315,22 @@ export function lancer(jeu: Jeu, c: Conteneur): void {
     c.code = code;
     c.fin = horloge(jeu);
   }
+  return null;
+}
+
+/**
+ * Docker relance de lui-même un conteneur tombé en erreur, avec une attente
+ * qui double à chaque échec, si sa politique --restart le permet (always,
+ * unless-stopped, on-failure) : appelé après chaque commande par les
+ * chapitres qui en ont besoin (une tentative par commande).
+ */
+export function relancerEnBoucle(jeu: Jeu) {
+  const d = docker(jeu);
+  const service = systemd(jeu)?.services.docker;
+  if (!d || (service && service.etat !== 'active')) return;
+  for (const c of d.conteneurs)
+    if (c.etat === 'exited' && c.code !== 0 && !c.arreteALaMain && ['always', 'unless-stopped', 'on-failure'].includes(c.redemarrage.split(':')[0]))
+      lancer(jeu, c);
 }
 
 export function stopper(jeu: Jeu, c: Conteneur, aLaMain = true) {
@@ -294,6 +446,24 @@ export function ecoutesDocker(jeu: Jeu): { proto: 'tcp'; adresse: string; port: 
 export function publieAuMonde(jeu: Jeu, port: number): boolean {
   const d = docker(jeu);
   return !!d?.conteneurs.some((c) => c.etat === 'running' && c.ports.some((p) => p.hote === port && p.ip === '0.0.0.0'));
+}
+
+/**
+ * Les processus des conteneurs, vus de la machine (ps aux) : ils y sont des
+ * processus comme les autres, au nom du compte qui porte leur uid.
+ */
+export function processusDocker(jeu: Jeu): { pid: number; utilisateur: string; cpu: number; mem: number; commande: string }[] {
+  const d = docker(jeu);
+  if (!d) return [];
+  return d.conteneurs
+    .filter((c) => c.etat === 'running')
+    .map((c, i) => ({
+      pid: 3400 + i * 37,
+      utilisateur: compteMachine(jeu, qui(jeu, c).uid),
+      cpu: 0.3,
+      mem: 1.8,
+      commande: imageDu(jeu, c)?.commande ?? '',
+    }));
 }
 
 /** La place prise par Docker sur le disque (images, conteneurs, volumes), en octets. */

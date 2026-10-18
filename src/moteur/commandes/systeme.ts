@@ -6,6 +6,7 @@
 //   réactions propres à l'histoire, qui renvoient un message éventuel.
 
 import type { Commande } from './index';
+import { processusDocker } from '../docker';
 
 export interface Processus {
   pid: number;
@@ -19,7 +20,7 @@ export const SYSTEME: Record<string, Commande> = {
   ps: {
     lancer: ({ args, jeu }) => {
       const tous = args.some((a) => /a/.test(a));
-      const liste: Processus[] = (jeu.etat.processus ?? [])
+      const liste: Processus[] = [...(jeu.etat.processus ?? []), ...processusDocker(jeu)]
         .filter((p: Processus) => tous || p.utilisateur === 'vous')
         .sort((a: Processus, b: Processus) => a.pid - b.pid);
       const ligne = (p: Processus) =>

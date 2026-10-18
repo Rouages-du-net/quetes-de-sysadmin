@@ -51,6 +51,9 @@ function prets(outils: string[], personnes: string[]): Base['prets'] {
 
 // L'appli de l'image : elle lit et écrit sa base à chaque démarrage et requête.
 APPLIS.outiltheque = {
+  // L'image crée son propre compte et s'en sert (USER outil dans son Dockerfile).
+  utilisateur: 'outil',
+  comptes: { outil: 1000 },
   demarrer: (jeu, c, image) => {
     const ecrire = (texte: string) => c.journal.push({ temps: systemd(jeu)?.horloge ?? 0, texte });
     const version = image.tag;
