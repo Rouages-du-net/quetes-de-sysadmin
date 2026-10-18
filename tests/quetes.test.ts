@@ -127,7 +127,12 @@ for (const langue of LANGUES)
       };
 
       it('solution : rsync, crontab, la nuit, la restauration', () => {
-        const { s, tout } = jouer('sauvegarde', ['cat mot_de_maelle.txt', 'rsync souvenirs /mnt/sauvegarde', 'rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'crontab -l']);
+        const { s, tout } = jouer('sauvegarde', [
+          'cat mot_de_maelle.txt',
+          'rsync souvenirs /mnt/sauvegarde',
+          'rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/',
+          'crontab -l',
+        ]);
         expect(tout).toContain('skipping directory souvenirs');
         expect(tout).toContain('sending incremental file list');
         expect(tout).toContain('no crontab for vous');
@@ -249,7 +254,7 @@ for (const langue of LANGUES)
           'systemctl --failed',
         ]);
         contient(tout, '× catalogue.service');
-        contient(tout, "Loaded: loaded (/usr/lib/systemd/system/nginx.service; disabled; preset: enabled)");
+        contient(tout, 'Loaded: loaded (/usr/lib/systemd/system/nginx.service; disabled; preset: enabled)');
         contient(tout, 'failed to open error_log (/var/log/catalogue/error.log): Permission denied (13)');
         contient(tout, 'Failed to start nginx.service: Access denied');
         contient(tout, 'Job for catalogue.service failed because the control process exited with error code.');
@@ -280,6 +285,87 @@ for (const langue of LANGUES)
           'systemctl --failed',
         ]);
         expect(s.termine).toBe(false);
+      });
+
+      it('Le Datacenter, chapitre 4 — Le grand incendie', () => {
+        const { s, tout } = jouer('incendie', [
+          'cat /mnt/sauvegarde/PRA.txt',
+          // Fausse piste : une machine neuve ne connaît encore aucun paquet.
+          'sudo apt install nginx',
+          'bienvenue-2026',
+          'sudo apt update',
+          'sudo apt install nginx',
+          'y',
+          'curl http://localhost',
+          // Fausse piste : l'archive de cette nuit a été coupée par le feu.
+          'tar -tzf /mnt/sauvegarde/mediatheque-2026-10-23.tar.gz',
+          'tar -tzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
+          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /',
+          // Fausse piste : deux sites « default_server » sur le port 80.
+          'sudo nginx -t',
+          'sudo systemctl reload nginx',
+          'sudo rm /etc/nginx/sites-enabled/default',
+          'sudo nginx -t',
+          'sudo systemctl reload nginx',
+          'curl http://mediatheque.example',
+        ]);
+        expect(tout).toContain('Error: Unable to locate package nginx');
+        expect(tout).toContain('Welcome to nginx!');
+        expect(tout).toContain('a duplicate default server for 0.0.0.0:80 in /etc/nginx/sites-enabled/mediatheque:2');
+        expect(tout).toContain('Job for nginx.service failed');
+        expect(tout).toContain('test is successful');
+        contient(tout, 'Une machine neuve ne connaît encore aucun paquet');
+        contient(tout, 'Fin de fichier inattendue');
+        contient(tout, 'le feu a pris');
+        contient(tout, 'tant que la nouvelle configuration est refusée');
+        contient(tout, 'Vacances de la Toussaint');
+        expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter, chapitre 4 — restaurer d’abord, installer ensuite, garder le site Debian', () => {
+        const { s, tout } = jouer('incendie', [
+          'cd /',
+          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
+          'bienvenue-2026',
+          'sudo apt update',
+          // nginx ne démarre pas : deux serveurs par défaut.
+          'sudo apt install -y nginx',
+          'systemctl is-active nginx',
+        ]);
+        expect(tout).toContain('dpkg: error processing package nginx (--configure):');
+        expect(tout).toContain('failed');
+        expect(s.termine).toBe(false);
+        // Autre solution : la médiathèque n'est plus le site par défaut ; on la joint par son nom.
+        const conf = '/etc/nginx/sites-enabled/mediatheque';
+        s.executer(`sudo nano ${conf}`);
+        s.enregistrerEdition(s.edition!.texte.replaceAll(' default_server', ''));
+        s.quitterEdition();
+        s.executer('sudo nginx -t');
+        s.executer('sudo systemctl start nginx');
+        expect(s.executer('curl localhost')).toContain('Welcome to nginx!');
+        expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter, chapitre 4 — fausses pistes : extraire dans ~, l’archive coupée, celle de mercredi', () => {
+        const { s, tout } = jouer('incendie', [
+          'sudo apt update',
+          'bienvenue-2026',
+          'sudo apt install -y nginx',
+          'sudo rm /etc/nginx/sites-enabled/default',
+          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
+          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-23.tar.gz -C /',
+          'sudo systemctl reload nginx',
+          'curl -I mediatheque.example',
+          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-21.tar.gz -C /',
+          'sudo systemctl reload nginx',
+        ]);
+        contient(tout, 'extraite là où tu étais');
+        // L'archive coupée rend la configuration, mais aucune page : 404.
+        expect(tout).toContain('HTTP/1.1 404 Not Found');
+        contient(tout, 'avec la page de mercredi');
+        expect(s.termine).toBe(false);
+        s.executer('sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /');
+        expect(s.termine).toBe(true);
       });
 
       it('Le Paquet perdu', () => {

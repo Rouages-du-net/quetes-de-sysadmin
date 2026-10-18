@@ -16,6 +16,7 @@
 
 import type { Shell } from '../shell';
 import type { Commande } from './index';
+import { requete } from '../nginx';
 
 interface Reseau {
   machines: Record<string, { ping: boolean; ms: number }>;
@@ -24,6 +25,9 @@ interface Reseau {
   routes: Record<string, { ip: string; nom?: string; ms: number }[]>;
   web: Record<string, { entetes: string[]; corps: string }>;
 }
+
+// Les noms sous lesquels une machine avec nginx se joint elle-même : etat.nginx.noms.
+const LOCAL_DE_BASE = ['localhost', '127.0.0.1'];
 
 const estIp = (s: string) => /^\d{1,3}(\.\d{1,3}){3}$/.test(s);
 const ms = (v: number) => v.toFixed(3);
@@ -143,14 +147,24 @@ export const RESEAU: Record<string, Commande> = {
     lancer: ({ args, jeu }) => {
       const entetes = args.includes('-I') || args.includes('--head');
       const url = args.find((a) => !a.startsWith('-'));
-      if (!url) return jeu.erreur('curl: try \'curl --help\' for more information');
+      if (!url) return jeu.erreur("curl: try 'curl --help' for more information");
       const m = /^(?:(https?):\/\/)?([^/:]+)(.*)$/.exec(url);
       if (!m) return jeu.erreur(`curl: (3) URL rejected: Malformed input to a URL function`);
       const hote = m[2];
+      // Une machine avec nginx : la requête part vers elle-même (localhost,
+      // son nom, son adresse), et nginx répond selon sa configuration chargée.
+      if (jeu.etat.nginx) {
+        if (![...LOCAL_DE_BASE, ...(jeu.etat.nginx.noms ?? [])].includes(hote.toLowerCase()))
+          return jeu.erreur(`curl: (6) Could not resolve host: ${hote}`);
+        const r = requete(jeu, hote, m[3] || '/');
+        if (!r) return jeu.erreur(`curl: (7) Failed to connect to ${hote} port 80 after 0 ms: Couldn't connect to server`);
+        return entetes ? r.entetes.join('\n') : r.corps;
+      }
       const res = resoudreNom(jeu, hote);
       if ('erreur' in res) return jeu.erreur(`curl: (6) Could not resolve host: ${hote}`);
       const site = (jeu.etat.reseau as Reseau).web[hote];
-      if (!site) return jeu.erreur(`curl: (7) Failed to connect to ${hote} port ${m[1] === 'http' ? 80 : 443} after 3002 ms: Couldn't connect to server`);
+      if (!site)
+        return jeu.erreur(`curl: (7) Failed to connect to ${hote} port ${m[1] === 'http' ? 80 : 443} after 3002 ms: Couldn't connect to server`);
       return entetes ? site.entetes.join('\n') : site.corps;
     },
   },

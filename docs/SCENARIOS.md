@@ -117,6 +117,11 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | fail2ban | une seule prison (`sshd`) ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
 | `rsync` | copie locale seulement (pas de `user@machine:`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | aussi à distance par SSH, compare taille et date |
 | `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
+| `apt` | `update`, `install [-y]`, `list --installed` ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » | tout le catalogue Debian, `upgrade`, `remove`, `search`, `show`… ; dpkg garde l'état du paquet |
+| `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server`, les pages par `root` et `index` (pas de `location`, de HTTPS ni de proxy) ; `sites-enabled` contient des copies | toutes les directives et modules ; sur Debian, `sites-enabled` contient des liens symboliques |
+| `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse) | tout le réseau |
+| `tar` | `-C` ; une archive coupée s'arrête à la coupure (messages proches de GNU tar) ; root garde propriétaires et droits | aussi `--strip-components`, `-p`, archives multi-volumes… |
+| `ssh-keygen` | `-R`, `-F`, `-l -f` seulement ; ne crée pas de clés | crée et convertit des clés, signe des certificats… |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -214,7 +219,7 @@ acceptée : `@daily`, copie du dossier entier, restauration avec `cp`.
 Débrief : barre finale, `-n`, planifier, tester la restauration, règle
 3-2-1 et versions ; liens vers `rsync(1)` et `crontab(5)`.
 
-## Histoire 2 : Le Datacenter (faite)
+## Histoire 2 : Le Datacenter (faite, quatre chapitres)
 
 Premier jour de stage : le site de la médiathèque répond par des erreurs 503.
 Awa, responsable d'exploitation, est en réunion ; ses notes guident.
@@ -281,6 +286,41 @@ suivant), `chmod 777` sur le dossier des journaux, `systemctl` sans `sudo`.
 Débrief : `--failed` après chaque redémarrage, `journalctl -xeu`, start
 n'est pas enable, le dossier d'un service appartient à son compte, liens
 vers `systemctl` et `journalctl` (freedesktop.org).
+
+### Chapitre 4 — Le grand incendie (fait)
+
+Cette nuit, le datacenter de l'hébergeur a brûlé (clin d'œil à l'incendie
+d'OVHcloud à Strasbourg, en mars 2021). L'hébergeur livre une machine neuve,
+même nom et même adresse, mais vide, et avec une **nouvelle clé d'hôte SSH**.
+Les sauvegardes de chaque nuit étaient dans un autre datacenter : elles sont
+montées sur `/mnt/sauvegarde`, avec le plan de reprise d'Awa (`PRA.txt`).
+
+| Étape | Commande apprise |
+|---|---|
+| Se reconnecter | `ssh datacenter` refuse (« REMOTE HOST IDENTIFICATION HAS CHANGED! ») ; comparer l'empreinte annoncée, `ssh-keygen -R datacenter.example` (le nom écrit dans `known_hosts`), puis `yes` |
+| Installer le serveur web | `sudo apt update`, puis `sudo apt install nginx` (qui le démarre et l'active) ; `curl http://localhost` |
+| Vérifier la sauvegarde | `tar -tzf` : l'archive de cette nuit est coupée (« Fin de fichier inattendue ») ; `ls -l` montre sa taille |
+| Restaurer | `sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /` |
+| Recharger sans casser | `sudo nginx -t` (« a duplicate default server »), retirer `sites-enabled/default`, `sudo nginx -t`, `sudo systemctl reload nginx` |
+| Tester | `curl http://mediatheque.example` |
+
+Objectif vérifié sur l'état : nginx tourne, démarre avec la machine, et sert
+pour `mediatheque.example` la page de la dernière sauvegarde intacte (celle
+du 22).
+
+Pièges prévus : `apt install` avant `apt update` (« Unable to locate
+package »), `apt` sans `sudo` (verrou de dpkg), l'archive coupée (extraite,
+elle rend la configuration sans les pages : 404), une extraction dans `~`
+(sans `-C /`), la sauvegarde de mercredi (plus ancienne que nécessaire), les
+deux `default_server` (le rechargement est refusé, l'ancienne configuration
+reste), `ssh-keygen -R datacenter` (le nom court n'est pas dans
+`known_hosts`). Autres solutions acceptées : restaurer avant d'installer
+(nginx ne démarre pas à l'installation, puis `systemctl start`), garder le
+site de Debian et enlever `default_server` de la médiathèque, `cd /` puis
+`tar -xzf` sans `-C`. Débrief : 3-2-1 avec une copie loin, plan de reprise
+écrit et essayé, relire ses sauvegardes, perte acceptée (une journée),
+clé d'hôte, `nginx -t` ; liens vers apt(8), la documentation de nginx, GNU
+tar et ssh-keygen.
 
 ## Histoire 3 : Le Paquet perdu (faite)
 
@@ -416,9 +456,7 @@ explique pourquoi c'est une mauvaise idée). Autre solution acceptée :
 
 ## Idées pour la suite
 
-- L'Effaceur, chapitre 4 : les sauvegardes (`rsync`, `cron`) pour que plus
-  rien ne se perde.
-- Le Datacenter, chapitre 4 : les certificats TLS et `openssl`, en lien avec
+- Le Datacenter, chapitre 5 : les certificats TLS et `openssl`, en lien avec
   « Le cadenas » du module 1.
 - Le Paquet perdu, chapitre 2 : le réseau local (`ip a`, adresses privées,
   NAT), en lien avec « La box ».

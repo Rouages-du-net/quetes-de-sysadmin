@@ -44,11 +44,17 @@ function base64(graine: string, longueur: number): string {
   return s;
 }
 
-/** Empreinte de la clé d'hôte, comme ssh l'affiche : SHA256:… (43 caractères). */
-export const empreinte = (m: Machine) => `SHA256:${base64('hote-' + m.nom, 43)}`;
+// Une machine réinstallée a une nouvelle clé d'hôte : `generation` vient du
+// chapitre joué (Chapitre.cleHote), vide pour la clé d'origine.
 
 /** Clé publique d'hôte (ligne de known_hosts, sans le nom). */
-export const cleHote = (m: Machine) => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-hote-' + m.nom, 43)}`;
+export const cleHote = (m: Machine, generation = '') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-hote-' + m.nom + generation, 43)}`;
+
+/** Empreinte d'une clé publique, comme ssh l'affiche : SHA256:… (43 caractères). */
+export const empreinteDeCle = (cle: string) => `SHA256:${base64('empreinte-' + cle.split(' ').slice(0, 2).join(' '), 43)}`;
+
+/** Empreinte de la clé d'hôte d'une machine. */
+export const empreinte = (m: Machine, generation = '') => empreinteDeCle(cleHote(m, generation));
 
 /** La clé privée qui ouvre une session sur la machine. */
 export const clePrivee = (m: Machine) =>

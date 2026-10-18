@@ -70,7 +70,8 @@ redemarrage-evenement-fin =
     tournent, et tu l'as vérifié. Awa : « C'est exactement ça, le métier :
     pas seulement réparer, mais s'assurer que ça tiendra. »
 
-    Bravo ! Tu as terminé le chapitre 3 du Datacenter.
+    Bravo ! Tu as terminé le chapitre 3 du Datacenter. (Un dernier chapitre
+    t'attend : Le grand incendie. Reviens plus tard avec ssh datacenter.)
 
     CE QUI S'EST PASSÉ
     Le redémarrage de la nuit a révélé deux problèmes cachés depuis

@@ -155,8 +155,7 @@ export const FICHIERS: Record<string, Commande> = {
       const raison = jeu.blocage(source) ?? jeu.blocage(cible + '/..');
       if (raison) return jeu.erreur(raison);
       if (jeu.resoudre(source) === cible) return jeu.erreur(jeu.t('cp-meme-fichier', { source, destination: dest }));
-      if (!jeu.traverse(source) || !jeu.peut(n, 'r'))
-        return jeu.erreur(jeu.t('cp-lecture-permission', { cible: source }));
+      if (!jeu.traverse(source) || !jeu.peut(n, 'r')) return jeu.erreur(jeu.t('cp-lecture-permission', { cible: source }));
       const erreur = jeu.placer('cp', cible, copier(n, jeu.qui));
       return erreur ? jeu.erreur(erreur) : '';
     },
@@ -291,9 +290,7 @@ export const FICHIERS: Record<string, Commande> = {
       const { lettres, reste } = options(args);
       const fmt = (o: number) => (lettres.has('h') ? lisible(o, jeu.t.langue) : String(Math.ceil(o / 1024)));
       const montages: { chemin: string; capacite: number; nom: string }[] = jeu.etat.montages ?? [];
-      const choisis = reste.length
-        ? reste.map((r) => jeu.montage(jeu.resoudre(r))).filter(Boolean)
-        : montages;
+      const choisis = reste.length ? reste.map((r) => jeu.montage(jeu.resoudre(r))).filter(Boolean) : montages;
       const lignes = [jeu.t('df-entete')];
       for (const m of choisis as typeof montages) {
         const lieu = jeu.trouver(m.chemin);
@@ -309,7 +306,15 @@ export const FICHIERS: Record<string, Commande> = {
 
   tar: {
     lancer: ({ args, jeu }) => {
-      const { lettres, reste } = options(args);
+      // -C lieu (ou --directory=lieu) : se placer dans ce lieu avant d'extraire.
+      let lieuC = '';
+      const sansC: string[] = [];
+      for (let i = 0; i < args.length; i++) {
+        if (args[i] === '-C') lieuC = args[++i] ?? '';
+        else if (args[i].startsWith('--directory=')) lieuC = args[i].slice('--directory='.length);
+        else sansC.push(args[i]);
+      }
+      const { lettres, reste } = options(sansC);
       if (!lettres.has('f') || !reste.length) return jeu.erreur(jeu.t('tar-usage'));
       const [nomArchive, ...sources] = reste;
       if (lettres.has('c')) {
@@ -343,22 +348,44 @@ export const FICHIERS: Record<string, Commande> = {
       const n = jeu.trouver(nomArchive);
       if (!n) return jeu.erreur(jeu.t('tar-open-impossible', { cible: nomArchive }));
       if (n.type !== 'fichier' || !n.archive) return jeu.erreur(jeu.t('tar-pas-une-archive', { cible: nomArchive }));
-      if (lettres.has('t')) return Object.keys(n.archive.fichiers).join('\n');
+      // Une archive coupée (disque plein, machine éteinte pendant l'écriture) :
+      // tar lit ce qui précède la coupure, puis s'arrête sur une erreur.
+      const { tronquee } = n.archive;
+      const entrees = Object.entries(n.archive.fichiers).slice(0, tronquee);
+      const coupure = () => {
+        jeu.etat.archiveTronquee = jeu.resoudre(nomArchive);
+        jeu.erreur(jeu.t('tar-tronquee'));
+      };
+      if (lettres.has('t')) {
+        const liste = entrees.map(([chemin]) => chemin).join('\n');
+        if (tronquee === undefined) return liste;
+        // La liste, puis l'erreur à l'endroit de la coupure.
+        jeu.etat.archiveTronquee = jeu.resoudre(nomArchive);
+        return jeu.erreur([liste, jeu.t('tar-tronquee')].filter(Boolean).join('\n'));
+      }
       if (lettres.has('x')) {
-        for (const [chemin, f] of Object.entries(n.archive.fichiers)) {
+        const base = lieuC || '.';
+        if (lieuC) {
+          const l = jeu.trouver(lieuC);
+          if (!l || l.type !== 'dossier') return jeu.erreur(jeu.t('tar-lieu-introuvable', { cible: lieuC }));
+        }
+        const dans = (chemin: string) => `${base.replace(/\/$/, '')}/${chemin}`;
+        for (const [chemin, f] of entrees) {
           const parties = chemin.split('/');
-          let lieu = '.';
+          let lieu = '';
           for (const p of parties.slice(0, -1)) {
-            lieu = `${lieu}/${p}`;
-            if (!jeu.existe(lieu)) jeu.placer('tar', lieu, { type: 'dossier', enfants: {}, proprio: jeu.qui });
+            lieu = lieu ? `${lieu}/${p}` : p;
+            if (!jeu.existe(dans(lieu))) jeu.placer('tar', dans(lieu), { type: 'dossier', enfants: {}, proprio: jeu.qui });
           }
-          const erreur = jeu.placer('tar', chemin, { ...f, proprio: jeu.qui });
+          // root garde le propriétaire et les droits enregistrés dans l'archive ;
+          // les autres deviennent propriétaires de ce qu'ils extraient.
+          const erreur = jeu.placer('tar', dans(chemin), jeu.qui === 'root' ? { ...f } : { ...f, proprio: jeu.qui, groupe: undefined });
           if (erreur) jeu.erreur(erreur);
         }
+        if (tronquee !== undefined) coupure();
         return '';
       }
       return jeu.erreur(jeu.t('tar-option-manquante'));
     },
   },
 };
-

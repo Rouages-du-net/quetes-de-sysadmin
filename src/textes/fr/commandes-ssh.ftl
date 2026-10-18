@@ -7,3 +7,8 @@ ssh-enferme = (Ta clé est bonne, mais la configuration de sshd sur { $machine }
 ssh-pare-feu = (Le pare-feu de { $machine } bloque le port de SSH : tu t'es enfermé·e dehors. La session que tu avais n'est plus là pour corriger. Ici, le menu du jeu sert de console de secours de l'hébergeur : ouvre l'histoire depuis le menu, autorise SSH dans ufw, puis reviens tester avec ssh { $machine }.)
 # { $machine } : le nom de la machine ; { $adresse } : l'adresse du poste
 ssh-banni = (fail2ban, sur { $machine }, a banni l'adresse de ton poste ({ $adresse }) : tu t'es enfermé·e dehors. Ici, le menu du jeu sert de console de secours de l'hébergeur : ouvre l'histoire depuis le menu, débannis ton adresse, ajoute-la à ignoreip, puis reviens tester avec ssh { $machine }.)
+
+# ssh refuse une clé d'hôte qui a changé. { $empreinte } : l'empreinte annoncée.
+ssh-cle-changee = (La machine { $machine } ne présente plus la même clé qu'avant. C'est normal si elle vient d'être réinstallée ; sinon, quelqu'un se fait peut-être passer pour elle. Ne retire jamais l'ancienne clé sans vérifier : l'hébergeur a annoncé par courriel l'empreinte de la nouvelle clé, { $empreinte }. Si c'est bien celle affichée plus haut, retire l'ancienne clé de known_hosts (la commande est écrite juste au-dessus ; man ssh-keygen), puis reconnecte-toi.)
+# ssh-keygen sans option : le jeu ne crée pas de clés.
+ssh-keygen-generer = ssh-keygen : ici, on ne crée pas de nouvelle clé (le jeu donne les clés dont tu as besoin). Essaie ssh-keygen -R, -F ou -l (man ssh-keygen).

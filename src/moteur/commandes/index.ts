@@ -18,6 +18,7 @@ import { UFW } from './ufw';
 import { SS } from './ss';
 import { FAIL2BAN } from './fail2ban';
 import { SAUVEGARDE } from './sauvegarde';
+import { APT } from './apt';
 
 export interface Contexte {
   args: string[];
@@ -59,6 +60,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...SS,
   ...FAIL2BAN,
   ...SAUVEGARDE,
+  ...APT,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },
