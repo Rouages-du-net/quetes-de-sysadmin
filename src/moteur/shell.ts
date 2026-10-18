@@ -102,6 +102,7 @@ export class Shell implements Jeu {
     this.cwd = chapitre.maison;
     this.etat = chapitre.etat?.(this.t) ?? {};
     this.comptes = chapitre.comptes?.() ?? comptesParDefaut();
+    chapitre.initialiser?.(this);
   }
 
   // ——— Chemins et fichiers ———
@@ -399,6 +400,11 @@ export class Shell implements Jeu {
     return this.t('sudo-trois-echecs');
   }
 
+  /** Vérifie les événements de l'histoire hors d'une commande (ex. à la reconnexion). */
+  evenements(): string {
+    return this.conclure('', false);
+  }
+
   private conclure(sortie: string, compte: boolean): string {
     const suite = compte ? this.chapitre.apresCommande?.(this) : undefined;
     return [sortie, suite ? this.prose(suite) : '', ...this.verifierEvenements()].filter(Boolean).join('\n\n');
@@ -480,7 +486,8 @@ export class Shell implements Jeu {
     if (root && cmd === 'cd') return this.erreur(this.t('sudo-cd'));
     if (cmd === 'help' || cmd === 'aide') return this.t('aide-commandes', { commandes: this.connues().join(', ') });
     if (cmd === 'man' || cmd === 'apropos' || cmd === 'whatis') return this.consulter(cmd, reste);
-    const commande: Commande | undefined = COMMANDES[cmd];
+    // Une page de manuel de fichier (section 5, ex. sshd_config) n'est pas une commande.
+    const commande: Commande | undefined = COMMANDES[cmd]?.section === 5 ? undefined : COMMANDES[cmd];
     if (!this.connues().includes(cmd) || !commande)
       return this.erreur(this.t(commande || cmd === 'sudo' ? 'commande-pas-encore' : 'commande-introuvable', { commande: cmd }));
     // Les réflexes d'auto-dépannage : --help et les options inconnues.

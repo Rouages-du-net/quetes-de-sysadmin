@@ -9,9 +9,9 @@ chapitre-redemarrage = La nuit du redémarrage
 ## Fichiers
 
 redemarrage-courriel-awa =
-    De : Awa (responsable d'exploitation)
-    À : toi
-    Objet : Le site est tombé cette nuit
+    De :     Awa (responsable d'exploitation)
+    À :      toi
+    Objet :  Le site est tombé cette nuit
 
     Cette nuit à 3 h 12, le serveur a redémarré tout seul : les mises à jour
     automatiques avaient installé un nouveau noyau. Depuis, le site de la

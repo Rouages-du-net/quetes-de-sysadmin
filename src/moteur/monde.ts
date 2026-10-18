@@ -82,6 +82,9 @@ export interface Chapitre {
   motDePasse?: string;
   // Comptes et groupes de la machine (par défaut : comptesParDefaut).
   comptes?: () => Comptes;
+  // Appelé une fois le monde et l'état créés (ex. charger la configuration
+  // d'un service à partir des fichiers du monde).
+  initialiser?: (jeu: Jeu) => void;
   // État propre à l'histoire (processus, réseau, dépôts git…), recréé à
   // chaque partie. Les commandes spécialisées le lisent et le modifient.
   etat?: (t: Traduire) => Record<string, unknown>;
@@ -100,7 +103,9 @@ export interface Histoire {
 // quels les lignes indentées et les tableaux (alignés par des doubles espaces).
 // Un titre en capitales (« CE QUI S'EST PASSÉ ») reste aussi sur sa ligne.
 const titre = (l: string) => /\p{Lu}/u.test(l) && l === l.toUpperCase();
-const brut = (l: string) => l === '' || l.startsWith(' ') || l.startsWith('- ') || l.includes('  ') || titre(l);
+// Une liste numérotée (« 1. », « 2) ») garde un élément par ligne.
+const numero = (l: string) => /^\d+[.)] /.test(l);
+const brut = (l: string) => l === '' || l.startsWith(' ') || l.startsWith('- ') || l.includes('  ') || titre(l) || numero(l);
 export const nettoyer = (t: string) =>
   t
     .replace(/^\n+|\s+$/g, '')

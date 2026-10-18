@@ -104,7 +104,7 @@ demandent plusieurs.
 - [x] **Éditeur de fichiers** façon `nano` (`^O`, `^X`, boutons sur
       mobile), droits vérifiés à l'enregistrement, objectifs des quêtes mis
       à jour ; solution alternative au chapitre 1 du Datacenter
-- [ ] Vérification de syntaxe par service (`nginx -t`, `sshd -t`)
+- [ ] Vérification de syntaxe par service : `sshd -t` fait, `nginx -t` à venir
 - [ ] **Manuel intégré** : pages `man` complètes générées depuis la
       définition de chaque commande, `--help`, `man -k`, `apropos`, `whatis` ;
       option inconnue → vrai message d'erreur (repris du travail fait dans
@@ -120,8 +120,11 @@ demandent plusieurs.
       première connexion), clés et leurs permissions, `-i`, `-p`, `exit`
 - [ ] **Rebonds** : hôte bastion, `ssh -J` / `ProxyJump`, redirection de ports
       (`-L`, `-R`) pour atteindre un service interne
-- [ ] **Durcissement SSH** : `PermitRootLogin no`, `PasswordAuthentication
-      no`, port, `AllowUsers` ; quête « ne pas s'enfermer dehors »
+- [x] **Durcissement SSH** : `PermitRootLogin no`, `PasswordAuthentication
+      no`, `AllowUsers`, `sshd -t`, `sshd -T`, `Include` de Debian ; quête
+      « Fermer la porte » (Les Lettres du quartier), où l'on peut s'enfermer
+      dehors (le menu sert de console de secours)
+- [ ] Changer le port SSH (et le pare-feu qui va avec, phase 3)
 - [ ] **Transferts** : **`scp`**, `sftp`, `rsync` (options `-a`, `--delete`,
       `--dry-run`), et pourquoi FTP en clair est à proscrire ; **FTPS** pour
       les hébergeurs mutualisés qui l'imposent (le cas de rouages.net !)

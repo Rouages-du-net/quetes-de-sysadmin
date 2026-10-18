@@ -11,3 +11,5 @@ histoire-temps = La Machine à remonter le temps
     .resume = Le manuscrit d’Inès est abîmé : voyager dans ses versions avec git.
 histoire-archives = Les Archives
     .resume = Sauver le fonds d’une bibliothèque sur une petite clé : du, df, find, tar.
+histoire-lettres = Les Lettres du quartier
+    .resume = Un serveur tout neuf, déjà attaqué : durcir SSH sans s'enfermer dehors.

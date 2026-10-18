@@ -211,6 +211,18 @@ man-nano = un éditeur de texte simple, dans le terminal. On tape directement da
     .exemple-1 = écrire des notes (le fichier est créé s'il n'existe pas)
     .exemple-2 = modifier un fichier de configuration de root
 
+man-sshd = le serveur SSH : c'est lui qui accepte (ou refuse) les connexions ssh. On ne le lance pas à la main : systemd s'en occupe (service ssh). Mais deux options servent tous les jours, avec sudo : -t vérifie la configuration et ne dit rien si elle est correcte ; -T affiche la configuration complète telle que sshd l'appliquerait, une fois tous les fichiers lus. Après une modification : sudo sshd -t, puis sudo systemctl reload ssh.
+    .synopsis = sshd [-t | -T] [-f fichier]
+    .option-t = vérifie la configuration (test) : ne dit rien si tout va bien, sinon donne le fichier et la ligne de l'erreur.
+    .option-T = affiche la configuration effective, valeur par valeur (en minuscules).
+    .option-f = lit ce fichier au lieu de /etc/ssh/sshd_config.
+    .exemple-1 = vérifier la configuration avant de recharger le service
+    .exemple-2 = voir la valeur vraiment appliquée de PasswordAuthentication
+man-sshd_config = le fichier de configuration du serveur SSH : une option par ligne, « MotClé valeur ». Les lignes qui commencent par # sont des commentaires (souvent la valeur par défaut). Attention : pour chaque mot-clé, c'est la PREMIÈRE valeur lue qui compte, et la ligne Include lit d'autres fichiers à l'endroit où elle se trouve (sur Debian, /etc/ssh/sshd_config.d/*.conf, tout en haut). Options utiles : PermitRootLogin no (pas de connexion directe en root), PasswordAuthentication no (clés seulement), PubkeyAuthentication yes, AllowUsers (les seuls comptes admis). Les changements ne s'appliquent qu'après sudo systemctl reload ssh.
+    .synopsis = /etc/ssh/sshd_config
+    .exemple-1 = modifier la configuration
+    .exemple-2 = les fichiers inclus, qui passent AVANT la suite du fichier principal
+
 ## Mise en page du manuel et messages de man-db et des coreutils
 
 # En-tête de chaque page, entre « LS(1) » et « LS(1) »

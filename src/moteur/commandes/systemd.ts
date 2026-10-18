@@ -3,7 +3,7 @@
 // ils restent en anglais, comme ceux du vrai systemctl.
 
 import type { Shell } from '../shell';
-import { arreter, dateComplete, demarrer, duree, journaliser, ligneJournal, redemarrer, systemd, type Systemd } from '../systemd';
+import { arreter, dateComplete, demarrer, duree, ligneJournal, recharger, redemarrer, systemd, type Systemd } from '../systemd';
 import type { Commande } from './index';
 
 const LEGENDE = [
@@ -106,7 +106,10 @@ export const SYSTEMD: Record<string, Commande> = {
             else s.etat = 'inactive';
           } else if (action === 'reload') {
             if (s.etat !== 'active') jeu.erreur(`${nom}.service is not active, cannot reload.`);
-            else journaliser(sd, `${nom}.service`, 'systemd', 1, `Reloaded ${nom}.service - ${s.description}.`);
+            else if (!recharger(jeu, sd, nom))
+              jeu.erreur(
+                `Job for ${nom}.service failed because the control process exited with error code.\nSee "systemctl status ${nom}.service" and "journalctl -xeu ${nom}.service" for details.`,
+              );
           } else {
             if (action === 'restart' && s.etat === 'active') arreter(jeu, sd, nom);
             if (s.etat !== 'active' && !demarrer(jeu, sd, nom)) echec();
