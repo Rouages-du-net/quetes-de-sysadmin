@@ -1,20 +1,22 @@
 // Le manuel : pages « man » au format habituel (NOM, SYNOPSIS, DESCRIPTION,
 // OPTIONS, EXEMPLES, VOIR AUSSI), « commande --help », « man -k » (apropos)
-// et « whatis ». Les pages sont fabriquées à partir de la définition de
-// chaque commande (champ manuel, et options, exemples, voir s'ils existent),
-// pour apprendre le bon réflexe : chercher dans le manuel avant de demander.
-// Les messages reprennent ceux de man-db et des coreutils en français.
+// et « whatis ». Les pages sont fabriquées à partir du texte de chaque
+// commande (man-<commande> dans manuel.ftl) et de sa partie technique
+// (pages.ts), pour apprendre le bon réflexe : chercher dans le manuel avant
+// de demander. Les messages reprennent ceux de man-db et des coreutils.
 
+import type { Traduire } from '../../textes';
 import type { Commande } from './index';
 
-// « ls [-a] [lieu] — liste ce qu'il y a ici. » → synopsis et description.
-function decouper(c: Commande): { synopsis: string; description: string } {
-  const i = c.manuel.indexOf(' — ');
-  return i < 0 ? { synopsis: '', description: c.manuel } : { synopsis: c.manuel.slice(0, i), description: c.manuel.slice(i + 3) };
+function textes(nom: string, t: Traduire) {
+  const synopsis = t.existe(`man-${nom}.synopsis`) ? t(`man-${nom}.synopsis`) : '';
+  const options = (nom: string, c: Commande): [string, string][] => (c.options ?? []).map((o) => [o, t(`man-${nom}.option-${o}`)]);
+  const exemples = (nom: string, c: Commande): [string, string][] => (c.exemples ?? []).map((e, i) => [e, t(`man-${nom}.exemple-${i + 1}`)]);
+  return { synopsis, description: t(`man-${nom}`), options, exemples };
 }
 
 // La première phrase, sans point final, pour la ligne NOM et whatis.
-const resume = (texte: string) => texte.split(/(?<=\.)\s|\n/)[0].replace(/\.$/, '');
+const resume = (texte: string) => texte.split(/(?<=\.)\s|(?<=。)|\n/)[0].replace(/[.。]$/, '');
 
 const retrait = (texte: string, n = 7) =>
   texte
@@ -22,55 +24,62 @@ const retrait = (texte: string, n = 7) =>
     .map((l) => (l ? ' '.repeat(n) + l : l))
     .join('\n');
 
-export function ligneWhatis(nom: string, c: Commande): string {
-  return `${`${nom} (1)`.padEnd(21)}- ${resume(decouper(c).description)}`;
+export function ligneWhatis(nom: string, t: Traduire): string {
+  return `${`${nom} (1)`.padEnd(21)}- ${resume(t(`man-${nom}`))}`;
 }
 
 const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
-export function pageMan(nom: string, c: Commande): string {
-  const { synopsis, description } = decouper(c);
+export function pageMan(nom: string, c: Commande, t: Traduire): string {
+  const { synopsis, description, options, exemples } = textes(nom, t);
   const titre = `${nom.toUpperCase()}(1)`;
-  const milieu = 'Manuel du jeu';
+  const milieu = t('manuel-entete');
   const blanc = Math.max(2, Math.floor((60 - titre.length * 2 - milieu.length) / 2));
   // Comme une vraie page : le titre de section, puis son texte en retrait.
-  const sections: [string, string][] = [['NOM', retrait(`${nom} - ${resume(description)}`)]];
-  if (synopsis) sections.push(['SYNOPSIS', retrait(synopsis)]);
-  sections.push(['DESCRIPTION', retrait(majuscule(description))]);
-  if (c.options && Object.keys(c.options).length)
-    sections.push(['OPTIONS', Object.entries(c.options).map(([o, d]) => retrait(`-${o}`) + '\n' + retrait(majuscule(d), 14)).join('\n\n')]);
-  if (c.exemples?.length) sections.push(['EXEMPLES', c.exemples.map(([cmd, d]) => retrait(cmd) + '\n' + retrait(majuscule(d), 14)).join('\n\n')]);
-  if (c.voir?.length) sections.push(['VOIR AUSSI', retrait(c.voir.map((v) => `${v}(1)`).join(', '))]);
-  return [`${titre}${' '.repeat(blanc)}${milieu}${' '.repeat(blanc)}${titre}`, ...sections.map(([t, x]) => `${t}\n${x}`)].join('\n\n');
+  const sections: [string, string][] = [[t('manuel-section-nom'), retrait(`${nom} - ${resume(description)}`)]];
+  if (synopsis) sections.push([t('manuel-section-synopsis'), retrait(synopsis)]);
+  sections.push([t('manuel-section-description'), retrait(majuscule(description))]);
+  const opts = options(nom, c);
+  if (opts.length)
+    sections.push([t('manuel-section-options'), opts.map(([o, d]) => retrait(`-${o}`) + '\n' + retrait(majuscule(d), 14)).join('\n\n')]);
+  const ex = exemples(nom, c);
+  if (ex.length) sections.push([t('manuel-section-exemples'), ex.map(([cmd, d]) => retrait(cmd) + '\n' + retrait(majuscule(d), 14)).join('\n\n')]);
+  if (c.voir?.length) sections.push([t('manuel-section-voir-aussi'), retrait(c.voir.map((v) => `${v}(1)`).join(', '))]);
+  return [`${titre}${' '.repeat(blanc)}${milieu}${' '.repeat(blanc)}${titre}`, ...sections.map(([s, x]) => `${s}\n${x}`)].join('\n\n');
 }
 
-export function aide(nom: string, c: Commande): string {
-  const { synopsis, description } = decouper(c);
-  const lignes = [`Utilisation : ${synopsis || nom}`, majuscule(resume(description)) + '.'];
-  if (c.options && Object.keys(c.options).length) {
+export function aide(nom: string, c: Commande, t: Traduire): string {
+  const { synopsis, description, options } = textes(nom, t);
+  const lignes = [t('manuel-utilisation', { synopsis: synopsis || nom }), majuscule(resume(description)) + '.'];
+  const opts = options(nom, c);
+  if (opts.length) {
     lignes.push('');
-    for (const [o, d] of Object.entries(c.options)) lignes.push(`  -${o.padEnd(5)} ${d}`);
+    for (const [o, d] of opts) lignes.push(`  -${o.padEnd(5)} ${d}`);
   }
-  lignes.push('', `Manuel complet : man ${nom}`);
+  lignes.push('', t('manuel-complet', { commande: nom }));
   return lignes.join('\n');
 }
 
-/** man -k / apropos : les commandes dont le nom ou le manuel contient le mot. */
-export function apropos(mot: string, commandes: [string, Commande][]): string[] {
+/** man -k / apropos : les commandes dont le nom, le synopsis ou la description contient le mot. */
+export function apropos(mot: string, noms: string[], t: Traduire): string[] {
   const m = mot.toLowerCase();
-  return commandes.filter(([nom, c]) => nom.includes(m) || c.manuel.toLowerCase().includes(m)).map(([nom, c]) => ligneWhatis(nom, c));
+  return noms
+    .filter((nom) => {
+      const { synopsis, description } = textes(nom, t);
+      return nom.includes(m) || `${synopsis} — ${description}`.toLowerCase().includes(m);
+    })
+    .map((nom) => ligneWhatis(nom, t));
 }
 
 /**
  * Vérifie les options courtes (-a, -la…) d'une commande qui déclare les
  * siennes. Renvoie le message d'erreur des coreutils, ou null.
  */
-export function optionInvalide(nom: string, c: Commande, args: string[]): string | null {
+export function optionInvalide(nom: string, c: Commande, args: string[], t: Traduire): string | null {
   if (!c.options) return null;
   for (const a of args) {
     if (!a.startsWith('-') || a === '-' || a.startsWith('--') || /^-\d+$/.test(a)) continue;
-    for (const lettre of a.slice(1))
-      if (!(lettre in c.options)) return `${nom} : option invalide -- '${lettre}'\nSaisissez « ${nom} --help » pour plus d'informations.`;
+    for (const lettre of a.slice(1)) if (!c.options.includes(lettre)) return t('manuel-option-invalide', { commande: nom, lettre });
   }
   return null;
 }

@@ -3,8 +3,10 @@
 
 import type { Fichier } from './monde';
 import type { Jeu } from './shell';
+import { typographie } from '../textes';
 
-export const contenu = (n: Fichier, jeu: Jeu) => (typeof n.contenu === 'function' ? n.contenu(jeu) : n.contenu);
+export const contenu = (n: Fichier, jeu: Jeu) =>
+  typeof n.contenu === 'function' ? n.contenu(jeu) : n.prose && !n.lignes ? typographie(n.contenu, jeu.t.langue) : n.contenu;
 export const tailleDe = (n: Fichier, jeu: Jeu) => n.taille ?? new TextEncoder().encode(contenu(n, jeu)).length;
 
 // Motif de jokers (*, ?) → expression régulière.
@@ -86,8 +88,9 @@ export function appliquerMode(actuel: string, droits: string): string | null {
   return bits.join('');
 }
 
-// Taille lisible : 1536 → « 1,5K », comme du -h ou ls -lh (en base 1024).
-export function lisible(octets: number): string {
+// Taille lisible : 1536 → « 1,5K », comme du -h ou ls -lh (en base 1024),
+// avec le séparateur décimal de la langue.
+export function lisible(octets: number, langue = 'fr'): string {
   const unites = ['', 'K', 'M', 'G'];
   let v = octets;
   let u = 0;
@@ -95,7 +98,8 @@ export function lisible(octets: number): string {
     v /= 1024;
     u++;
   }
-  const texte = u === 0 ? String(v) : v < 10 ? v.toFixed(1).replace('.', ',') : String(Math.round(v));
+  const decimal = new Intl.NumberFormat(langue, { minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false });
+  const texte = u === 0 ? String(v) : v < 10 ? decimal.format(v) : String(Math.round(v));
   return texte + unites[u];
 }
 

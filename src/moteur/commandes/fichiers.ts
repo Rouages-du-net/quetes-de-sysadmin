@@ -33,18 +33,14 @@ const copier = (n: Noeud, proprio: string): Noeud =>
 
 export const FICHIERS: Record<string, Commande> = {
   pwd: {
-    manuel: 'pwd — affiche le chemin complet du lieu où tu es (print working directory).',
     lancer: ({ jeu }) => jeu.cwd,
   },
 
   whoami: {
-    manuel: 'whoami — affiche sous quel nom d’utilisateur tu agis (who am I).',
     lancer: ({ jeu }) => jeu.qui,
   },
 
   ls: {
-    manuel:
-      'ls [-a] [-l] [-h] [lieu] — liste le contenu d’un lieu (list). -a montre aussi les fichiers cachés, dont le nom commence par un point. -l (long) montre les permissions, le propriétaire et la taille ; -h écrit les tailles en K, M, G.',
     lancer: ({ args, jeu, dernier }) => {
       const { lettres, reste } = options(args);
       const cible = reste[0] ?? '.';
@@ -68,8 +64,6 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   cd: {
-    manuel:
-      'cd lieu — change de lieu (change directory). « cd .. » remonte d’un cran, « cd ~ » ou « cd » seul ramène à la maison, « cd / » à la racine.',
     lancer: ({ args, jeu }) => {
       const cible = args[0] ?? '~';
       const n = jeu.trouver(cible);
@@ -84,8 +78,6 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   cat: {
-    manuel:
-      'cat fichier... — affiche le contenu de fichiers (concatenate : il peut en coller plusieurs bout à bout). Sans fichier, recopie ce qui arrive par un tube.',
     lancer: ({ args, entree, jeu }) => {
       if (!args.length) return entree ?? jeu.erreur('Usage : cat fichier');
       return args
@@ -102,13 +94,10 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   echo: {
-    manuel: 'echo texte — affiche le texte. Très utile avec > pour écrire dans un fichier : echo "bonjour" > note.txt',
     lancer: ({ args }) => args.join(' '),
   },
 
   tee: {
-    manuel:
-      'tee [-a] fichier — recopie ce qui arrive par un tube à la fois à l’écran et dans un fichier (comme un raccord en T). -a ajoute à la fin au lieu d’écraser. Avec sudo, c’est root qui écrit le fichier.',
     lancer: ({ args, entree, jeu }) => {
       const { lettres, reste } = options(args);
       const texte = entree ?? '';
@@ -133,7 +122,6 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   mv: {
-    manuel: 'mv source destination — déplace un fichier dans un lieu (move), ou le renomme si la destination est un nouveau nom.',
     lancer: ({ args, jeu }) => {
       const [source, dest] = args;
       if (!source || !dest) return jeu.erreur('Usage : mv source destination');
@@ -155,7 +143,6 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   cp: {
-    manuel: 'cp [-r] source destination — copie un fichier (copy). L’original reste en place. -r copie un lieu entier avec tout son contenu.',
     lancer: ({ args, jeu }) => {
       const { lettres, reste } = options(args);
       const [source, dest] = reste;
@@ -175,7 +162,6 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   rm: {
-    manuel: 'rm fichier — efface un fichier (remove). Attention : sous Linux, il n’y a pas de corbeille, c’est définitif.',
     lancer: ({ args, jeu }) => {
       if (!args.length) return jeu.erreur('Usage : rm fichier');
       for (const cible of args.filter((a) => !a.startsWith('-'))) {
@@ -195,7 +181,6 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   touch: {
-    manuel: 'touch fichier — crée un fichier vide (ou met à jour sa date s’il existe déjà).',
     lancer: ({ args, jeu }) => {
       if (!args.length) return jeu.erreur('Usage : touch fichier');
       for (const cible of args) {
@@ -208,7 +193,6 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   mkdir: {
-    manuel: 'mkdir lieu — crée un nouveau lieu, c’est-à-dire un dossier (make directory).',
     lancer: ({ args, jeu }) => {
       if (!args.length) return jeu.erreur('Usage : mkdir lieu');
       for (const cible of args) {
@@ -223,8 +207,6 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   chmod: {
-    manuel:
-      'chmod droits fichier — change les permissions (change mode). Ex. : chmod o-w lieu retire aux autres (o) le droit d’écrire (w) ; chmod 755 lieu donne rwx au propriétaire, r-x aux autres. Seul le propriétaire (ou root) peut le faire.',
     lancer: ({ args, jeu }) => {
       const [droits, ...cibles] = args;
       if (!droits || !cibles.length) return jeu.erreur('Usage : chmod droits fichier (ex. : chmod o-w souvenirs, chmod 755 souvenirs)');
@@ -245,8 +227,6 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   find: {
-    manuel:
-      'find [lieu] [-name motif] [-type f|d] [-delete] — cherche des fichiers dans un lieu et tous ses sous-lieux. Ex. : find . -name "*.pdf" ; -type f ne garde que les fichiers, -type d que les dossiers ; -delete efface ce qui est trouvé (prudence !).',
     lancer: ({ args, jeu }) => {
       const depart = args[0] && !args[0].startsWith('-') ? args[0] : '.';
       const crit = args[0] && !args[0].startsWith('-') ? args.slice(1) : args;
@@ -283,8 +263,6 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   du: {
-    manuel:
-      'du [-s] [-h] [lieu...] — mesure la place occupée (disk usage), lieu par lieu. -s donne seulement le total, -h écrit en K, M, G. Ex. : du -sh *',
     lancer: ({ args, jeu }) => {
       const { lettres, reste } = options(args);
       const fmt = (o: number) => (lettres.has('h') ? lisible(o) : String(Math.ceil(o / 1024)));
@@ -310,7 +288,6 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   df: {
-    manuel: 'df [-h] [lieu] — place libre sur les supports (disk free) : disque, clé USB… -h écrit en K, M, G.',
     lancer: ({ args, jeu }) => {
       const { lettres, reste } = options(args);
       const fmt = (o: number) => (lettres.has('h') ? lisible(o) : String(Math.ceil(o / 1024)));
@@ -332,8 +309,6 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   tar: {
-    manuel:
-      'tar -c|-t|-x [-z] -f archive [lieux...] — archive (tape archive) : -c crée une archive avec des fichiers et des lieux, -t liste son contenu, -x l’extrait ; -z compresse (gzip) ; -f donne le nom de l’archive. Ex. : tar -czf sauvegarde.tar.gz dossier',
     lancer: ({ args, jeu }) => {
       const { lettres, reste } = options(args);
       if (!lettres.has('f') || !reste.length) return jeu.erreur('Usage : tar -czf archive.tar.gz lieu  |  tar -tzf archive.tar.gz  |  tar -xzf archive.tar.gz');

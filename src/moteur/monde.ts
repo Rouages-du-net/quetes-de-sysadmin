@@ -3,6 +3,7 @@
 // Chaque chapitre (voir chapitres/) construit son propre monde.
 
 import type { Jeu } from './shell';
+import type { Traduire } from '../textes';
 
 export type Fichier = {
   type: 'fichier';
@@ -14,6 +15,9 @@ export type Fichier = {
   // Fichier « ligne par ligne » (journal, liste, configuration) : chaque
   // ligne compte (pour grep notamment), on ne recolle pas les paragraphes.
   lignes?: boolean;
+  // Texte écrit (histoire, dialogue) : reçoit la typographie de la langue à
+  // l'affichage (voir typographie() dans src/textes/).
+  prose?: boolean;
   // Taille simulée en octets (images, vidéos…), sinon celle du texte.
   taille?: number;
   // Contenu d'une archive tar : chemins relatifs → copies des fichiers.
@@ -40,18 +44,19 @@ export interface Evenement {
   message: string | ((jeu: Jeu) => string);
 }
 
+// Les textes d'un chapitre sont dans src/textes/<langue>/<histoire>.ftl :
+// son titre (chapitre-<id>, avec l'attribut .resume) et tout ce qu'il
+// affiche, sous des identifiants qui commencent par le sien.
 export interface Chapitre {
   id: string;
   numero: number;
-  titre: string;
-  resume: string;
   // Commandes connues dans ce chapitre (les autres sont « pas encore apprises »).
   commandes: string[];
   // Le dossier « maison » (~), où l'on commence.
   maison: string;
   // Fichier de la maison affiché au début du chapitre.
   accueil: string;
-  creerMonde: () => Dossier;
+  creerMonde: (t: Traduire) => Dossier;
   evenements: Evenement[];
   // Le chapitre est réussi quand cet événement s'est produit.
   final: string;
@@ -65,10 +70,9 @@ export interface Chapitre {
 }
 
 // Une histoire : une suite de chapitres. Les histoires sont indépendantes.
+// Titre et résumé : histoire-<id> dans src/textes/<langue>/histoires.ftl.
 export interface Histoire {
   id: string;
-  titre: string;
-  resume: string;
   chapitres: Chapitre[];
 }
 
@@ -87,15 +91,12 @@ export const nettoyer = (t: string) =>
       else lignes.push(l);
       return lignes;
     }, [])
-    .join('\n')
-    // Typographie française : espaces insécables avant : ; ! ? » et après «,
-    // pour qu'un signe ne se retrouve jamais seul en début de ligne.
-    .replace(/« /g, '«\u00a0')
-    .replace(/ ([:;!?»])/g, '\u00a0$1');
+    .join('\n');
 
 export const f = (contenu: Fichier['contenu'], options: Omit<Fichier, 'type' | 'contenu'> = {}): Fichier => ({
   type: 'fichier',
   contenu: typeof contenu !== 'string' ? contenu : options.lignes ? contenu.replace(/^\n+|\s+$/g, '') : nettoyer(contenu),
+  prose: typeof contenu === 'string' && !options.lignes,
   ...options,
 });
 

@@ -45,8 +45,6 @@ function resoudreNom(jeu: Shell, nom: string, serveur?: string): { ip: string } 
 
 export const RESEAU: Record<string, Commande> = {
   ping: {
-    manuel:
-      'ping [-c N] machine — envoie de petits messages (ICMP « echo ») à une machine et mesure le temps de l’aller-retour. Ici, 4 envois par défaut (sous Linux, ping continue jusqu’à Ctrl+C). Attention : beaucoup de serveurs ne répondent pas au ping, sans être en panne pour autant.',
     lancer: ({ args, jeu }) => {
       let n = 4;
       const reste: string[] = [];
@@ -85,8 +83,6 @@ export const RESEAU: Record<string, Commande> = {
   },
 
   dig: {
-    manuel:
-      'dig [@serveur] nom [+short] — pose une question au DNS : « quelle est l’adresse IP de ce nom ? » (domain information groper). @serveur choisit le serveur DNS à interroger ; +short ne garde que la réponse.',
     lancer: ({ args, jeu }) => {
       const serveur = args.find((a) => a.startsWith('@'))?.slice(1);
       const court = args.includes('+short');
@@ -118,8 +114,6 @@ export const RESEAU: Record<string, Commande> = {
   },
 
   traceroute: {
-    manuel:
-      'traceroute machine — montre le chemin des paquets, routeur par routeur (« saut » par « saut »), avec le temps de réponse de chacun. « * * * » : ce saut n’a pas répondu.',
     lancer: ({ args, jeu }) => {
       const hote = args.find((a) => !a.startsWith('-'));
       if (!hote) return jeu.erreur('Usage : traceroute machine');
@@ -146,8 +140,6 @@ export const RESEAU: Record<string, Commande> = {
   },
 
   curl: {
-    manuel:
-      'curl [-I] adresse — va chercher une page web, comme un navigateur mais sans l’afficher joliment. -I ne demande que l’en-tête de la réponse (le code d’état, par exemple 200 = OK).',
     lancer: ({ args, jeu }) => {
       const entetes = args.includes('-I') || args.includes('--head');
       const url = args.find((a) => !a.startsWith('-'));

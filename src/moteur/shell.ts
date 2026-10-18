@@ -12,6 +12,7 @@
 import { nettoyer, type Chapitre, type Dossier, type Noeud } from './monde';
 import { COMMANDES, type Commande } from './commandes';
 import { aide, apropos, ligneWhatis, optionInvalide, pageMan } from './commandes/manuel';
+import { traducteur, typographie, type Langue, type Traduire } from '../textes';
 
 export { decouper, appliquerMode } from './outils';
 import { contenu, decouper, joker, tailleDe, type Mot } from './outils';
@@ -34,15 +35,9 @@ export interface Jeu {
   compter(lieu: string, prefixe: string): number;
   effacer(chemin: string): void;
   peut(n: Noeud, droit: 'r' | 'w' | 'x', utilisateur?: string): boolean;
+  // Les textes dans la langue du jeu (voir src/textes/).
+  t: Traduire;
 }
-
-// Message que sudo affiche la première fois qu'on l'utilise (traduit).
-const SERMON = `Nous espérons que vous avez reçu les instructions habituelles de l'administrateur système local. Cela se résume généralement à ces trois choses :
-
-    #1) Respectez la vie privée des autres.
-    #2) Réfléchissez avant de taper.
-    #3) De grands pouvoirs confèrent de grandes responsabilités.`;
-
 
 export class Shell implements Jeu {
   racine: Dossier;
@@ -60,8 +55,14 @@ export class Shell implements Jeu {
   // Sortie d'erreur et remarques de la ligne en cours.
   private erreurs: string[] = [];
 
-  constructor(public chapitre: Chapitre) {
-    this.racine = chapitre.creerMonde();
+  t: Traduire;
+
+  constructor(
+    public chapitre: Chapitre,
+    langue?: Langue,
+  ) {
+    this.t = traducteur(langue);
+    this.racine = chapitre.creerMonde(this.t);
     this.maison = chapitre.maison;
     this.cwd = chapitre.maison;
     this.etat = chapitre.etat?.() ?? {};
@@ -160,26 +161,29 @@ export class Shell implements Jeu {
   // cas de problème, écrit l'erreur et renvoie null.
   lirePour(cmd: string, cible: string): string | null {
     const n = this.trouver(cible);
-    if (!n) return this.erreur(`${cmd} : ${cible} : aucun fichier ou dossier de ce nom`), null;
-    if (n.type === 'dossier') return this.erreur(`${cmd} : ${cible} : est un dossier`), null;
+    const v = { commande: cmd, cible };
+    if (!n) return this.erreur(this.t('erreur-introuvable', v)), null;
+    if (n.type === 'dossier') return this.erreur(this.t('erreur-est-un-dossier', v)), null;
     const raison = this.blocage(cible);
     if (raison) return this.erreur(raison), null;
-    if (!this.traverse(cible) || !this.peut(n, 'r')) return this.erreur(`${cmd} : ${cible} : Permission non accordée`), null;
-    if (n.archive) return this.erreur(`${cmd} : ${cible} : fichier binaire (une archive : pour voir ce qu'elle contient, tar -tf ${cible})`), null;
+    if (!this.traverse(cible) || !this.peut(n, 'r')) return this.erreur(this.t('erreur-permission', v)), null;
+    if (n.archive) return this.erreur(this.t('erreur-binaire', v)), null;
     return contenu(n, this);
   }
 
   // Place un nœud dans un lieu (création, copie, déplacement), en vérifiant
   // les droits et la place disponible sur le support. Renvoie une erreur.
+  // Pour une redirection (cmd = « bash »), le refus a la forme courte de bash.
   placer(cmd: string, chemin: string, n: Noeud): string | null {
+    const v = { commande: cmd, cible: chemin };
     const parent = this.trouver(chemin + '/..');
-    if (parent?.type !== 'dossier') return `${cmd} : ${chemin} : aucun fichier ou dossier de ce nom`;
+    if (parent?.type !== 'dossier') return this.t('erreur-introuvable', v);
     const raison = this.blocage(chemin + '/..');
     if (raison) return raison;
-    if (!this.ecritDans(chemin)) return `${cmd} : impossible de créer '${chemin}' : Permission non accordée`;
+    if (!this.ecritDans(chemin)) return this.t(cmd === 'bash' ? 'redirection-permission' : 'erreur-creation-permission', v);
     const nom = this.nom(chemin);
     const ancien = parent.enfants[nom];
-    if (this.placeManquante(this.resoudre(chemin), n, ancien)) return `${cmd} : erreur d'écriture : Aucun espace disponible sur le périphérique`;
+    if (this.placeManquante(this.resoudre(chemin), n, ancien)) return this.t('erreur-espace', v);
     parent.enfants[nom] = n;
     return null;
   }
@@ -212,7 +216,7 @@ export class Shell implements Jeu {
   }
 
   invite(): string {
-    if (this.attente) return '[sudo] Mot de passe de vous :';
+    if (this.attente) return this.t('sudo-invite', { utilisateur: 'vous' });
     const ici =
       this.cwd === this.maison ? '~' : this.cwd.startsWith(this.maison + '/') ? '~' + this.cwd.slice(this.maison.length) : this.cwd;
     return `vous@sysadmin:${ici}$`;
@@ -267,32 +271,29 @@ export class Shell implements Jeu {
     return [...this.chapitre.commandes, 'man', 'apropos', 'whatis', 'clear', 'aide'];
   }
 
-  manuel(cmd: string): string | null {
-    return this.connues().includes(cmd) ? (COMMANDES[cmd]?.manuel ?? null) : null;
-  }
 
   // man, apropos, whatis : le manuel couvre toutes les commandes du jeu,
   // même celles qu'on n'a pas encore dans ce chapitre (comme sur un vrai
   // système, où le manuel décrit aussi ce qu'on n'a pas le droit de lancer).
   private consulter(cmd: string, reste: string[]): string {
     const toutes = Object.entries(COMMANDES).filter(([n]) => n !== 'aide').sort(([a], [b]) => a.localeCompare(b));
-    const pasEncore = (n: string) => (this.connues().includes(n) ? '' : '\n\n(Tu n’as pas encore cette commande dans ce chapitre.)');
+    const pasEncore = (n: string) => (this.connues().includes(n) ? '' : '\n\n' + this.t('manuel-pas-encore'));
     if (cmd === 'apropos' || (cmd === 'man' && reste[0] === '-k')) {
       const mot = cmd === 'apropos' ? reste[0] : reste[1];
-      if (!mot) return this.erreur(`${cmd === 'apropos' ? 'apropos' : 'man -k'} : que faut-il chercher ?`);
-      const lignes = apropos(mot, toutes);
-      return lignes.length ? lignes.join('\n') : this.erreur(`${mot} : rien d'approprié.`);
+      if (!mot) return this.erreur(this.t('manuel-quoi-chercher', { commande: cmd === 'apropos' ? 'apropos' : 'man -k' }));
+      const lignes = apropos(mot, toutes.map(([n]) => n), this.t);
+      return lignes.length ? lignes.join('\n') : this.erreur(this.t('manuel-rien', { mot }));
     }
     if (!reste.length)
-      return this.erreur(cmd === 'man' ? 'Quelle page de manuel voulez-vous ?\nPar exemple, essayez « man man ».' : 'whatis : que faut-il chercher ?');
+      return this.erreur(cmd === 'man' ? this.t('manuel-quelle-page') : this.t('manuel-quoi-chercher', { commande: 'whatis' }));
     const sorties: string[] = [];
     for (const nom of reste) {
       const c = COMMANDES[nom];
       if (!c || nom === 'aide') {
-        this.erreur(cmd === 'man' ? `Il n'y a pas de page de manuel pour ${nom}.` : `${nom} : rien d'approprié.`);
+        this.erreur(cmd === 'man' ? this.t('manuel-pas-de-page', { commande: nom }) : this.t('manuel-rien', { mot: nom }));
         continue;
       }
-      sorties.push(cmd === 'man' ? pageMan(nom, c) + pasEncore(nom) : ligneWhatis(nom, c));
+      sorties.push(cmd === 'man' ? pageMan(nom, c, this.t) + pasEncore(nom) : ligneWhatis(nom, this.t));
     }
     return sorties.join(cmd === 'man' ? '\n\n' : '\n');
   }
@@ -310,7 +311,7 @@ export class Shell implements Jeu {
     const avecSudo = mots.some((m, i) => !m.cite && m.texte === 'sudo' && (i === 0 || mots[i - 1].op === '|'));
     if (avecSudo && this.connues().includes('sudo') && !this.authentifie) {
       this.attente = { ligne, essais: 0 };
-      const sermon = this.sermonFait ? '' : SERMON;
+      const sermon = this.sermonFait ? '' : this.t('sudo-sermon');
       this.sermonFait = true;
       return sermon;
     }
@@ -325,14 +326,19 @@ export class Shell implements Jeu {
       return this.conclure(this.tube(attente.ligne, decouper(attente.ligne)), true);
     }
     attente.essais++;
-    if (attente.essais < 3) return 'Désolé, essayez de nouveau.';
+    if (attente.essais < 3) return this.t('sudo-mauvais-mot-de-passe');
     this.attente = null;
-    return 'sudo : 3 saisies de mots de passe incorrectes';
+    return this.t('sudo-trois-echecs');
   }
 
   private conclure(sortie: string, compte: boolean): string {
     const suite = compte ? this.chapitre.apresCommande?.(this) : undefined;
-    return [sortie, suite ? nettoyer(suite) : '', ...this.verifierEvenements()].filter(Boolean).join('\n\n');
+    return [sortie, suite ? this.prose(suite) : '', ...this.verifierEvenements()].filter(Boolean).join('\n\n');
+  }
+
+  // Un texte de l'histoire (événement, remarque) : paragraphes et typographie.
+  private prose(texte: string): string {
+    return typographie(nettoyer(texte), this.t.langue);
   }
 
   // Une ligne complète : commandes reliées par des tubes, redirection finale.
@@ -345,12 +351,12 @@ export class Shell implements Jeu {
       if (m.op === '|') segments.push([]);
       else if (m.op === '>' || m.op === '>>') {
         const cible = mots[i + 1];
-        if (!cible || cible.op) return 'erreur de syntaxe : il manque un nom de fichier après ' + m.op;
+        if (!cible || cible.op) return this.t('syntaxe-redirection', { operateur: m.op });
         redirection = { fichier: cible.texte, ajout: m.op === '>>' };
         i++;
       } else segments.at(-1)!.push(m);
     }
-    if (segments.some((s) => !s.length)) return 'erreur de syntaxe près du symbole « | »';
+    if (segments.some((s) => !s.length)) return this.t('syntaxe-tube');
 
     let entree: string | null = null;
     const commandes: string[][] = [];
@@ -375,10 +381,7 @@ export class Shell implements Jeu {
       const erreur = this.rediriger(redirection.fichier, sortie, redirection.ajout);
       if (erreur) {
         this.erreur(erreur);
-        if (/(^|\|)\s*sudo\s/.test(ligne))
-          this.erreur(
-            '(La redirection > est faite par ton propre shell, pas par sudo. Astuce : envoie le texte dans « sudo tee -a fichier », qui écrit en tant que root.)',
-          );
+        if (/(^|\|)\s*sudo\s/.test(ligne)) this.erreur(this.t('redirection-sudo'));
       }
       sortie = '';
     }
@@ -387,17 +390,16 @@ export class Shell implements Jeu {
 
   private rediriger(fichier: string, texte: string, ajout: boolean): string | null {
     const n = this.trouver(fichier);
-    if (n?.type === 'dossier') return `${fichier} : est un dossier`;
+    if (n?.type === 'dossier') return this.t('redirection-est-un-dossier', { cible: fichier });
     if (n) {
-      if (!this.traverse(fichier) || !this.peut(n, 'w')) return `${fichier} : Permission non accordée`;
+      if (!this.traverse(fichier) || !this.peut(n, 'w')) return this.t('redirection-permission', { cible: fichier });
       const avant = contenu(n, this);
       n.contenu = ajout && avant ? `${avant}\n${texte}` : texte;
       n.lignes = true;
       delete n.taille;
       return null;
     }
-    const erreur = this.placer('bash', fichier, { type: 'fichier', contenu: texte, proprio: this.qui, lignes: true });
-    return erreur ? erreur.replace(/^bash : impossible de créer '[^']*' : /, `${fichier} : `) : null;
+    return this.placer('bash', fichier, { type: 'fichier', contenu: texte, proprio: this.qui, lignes: true });
   }
 
   // Lance une commande. `dernier` : sa sortie s'affiche à l'écran (sinon elle
@@ -405,25 +407,17 @@ export class Shell implements Jeu {
   private lancer(args: string[], entree: string | null, root: boolean, dernier: boolean): string {
     const [cmd, ...reste] = args;
     if (!cmd) return '';
-    if (root && !this.connues().includes('sudo')) return this.erreur(`sudo : tu n’as pas encore cette commande dans ce chapitre.`);
+    if (root && !this.connues().includes('sudo')) return this.erreur(this.t('sudo-pas-encore'));
     // Vrai comportement : cd est intégré au shell, ce n'est pas un programme.
-    if (root && cmd === 'cd')
-      return this.erreur(
-        'sudo : cd : commande introuvable\n(cd fait partie du shell lui-même, sudo ne peut pas le lancer. Avec sudo, on regarde et on agit à distance : sudo ls lieu, sudo cat fichier…)',
-      );
-    if (cmd === 'help' || cmd === 'aide')
-      return `Commandes connues : ${this.connues().join(', ')}.\nPour en savoir plus : « man commande » (le manuel complet), « commande --help » (un résumé), « man -k mot » (trouver une commande par mot-clé).`;
+    if (root && cmd === 'cd') return this.erreur(this.t('sudo-cd'));
+    if (cmd === 'help' || cmd === 'aide') return this.t('aide-commandes', { commandes: this.connues().join(', ') });
     if (cmd === 'man' || cmd === 'apropos' || cmd === 'whatis') return this.consulter(cmd, reste);
     const commande: Commande | undefined = COMMANDES[cmd];
     if (!this.connues().includes(cmd) || !commande)
-      return this.erreur(
-        commande || cmd === 'sudo'
-          ? `${cmd} : tu n’as pas encore cette commande dans ce chapitre. Tape « aide » pour la liste.`
-          : `${cmd} : commande introuvable. Tape « aide » pour la liste.`,
-      );
+      return this.erreur(this.t(commande || cmd === 'sudo' ? 'commande-pas-encore' : 'commande-introuvable', { commande: cmd }));
     // Les réflexes d'auto-dépannage : --help et les options inconnues.
-    if (reste.includes('--help')) return aide(cmd, commande);
-    const invalide = optionInvalide(cmd, commande, reste);
+    if (reste.includes('--help')) return aide(cmd, commande, this.t);
+    const invalide = optionInvalide(cmd, commande, reste, this.t);
     if (invalide) return this.erreur(invalide);
     const avant = this.qui;
     if (root) this.qui = 'root';
@@ -440,7 +434,7 @@ export class Shell implements Jeu {
       if (this.drapeaux.has(e.id) || !e.condition(this)) continue;
       this.drapeaux.add(e.id);
       e.action?.(this);
-      messages.push(nettoyer(typeof e.message === 'function' ? e.message(this) : e.message));
+      messages.push(this.prose(typeof e.message === 'function' ? e.message(this) : e.message));
       if (e.id === this.chapitre.final) this.termine = true;
     }
     return messages;

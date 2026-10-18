@@ -17,8 +17,6 @@ export interface Processus {
 
 export const SYSTEME: Record<string, Commande> = {
   ps: {
-    manuel:
-      'ps [aux] — liste les processus, c’est-à-dire les programmes en cours d’exécution (process status). Sans option : les tiens ; « ps aux » : ceux de tout le monde, avec la part de processeur (%CPU) et de mémoire (%MEM).',
     lancer: ({ args, jeu }) => {
       const tous = args.some((a) => /a/.test(a));
       const liste: Processus[] = (jeu.etat.processus ?? [])
@@ -31,8 +29,6 @@ export const SYSTEME: Record<string, Commande> = {
   },
 
   kill: {
-    manuel:
-      'kill PID — demande à un processus de s’arrêter (il reçoit un signal). PID est son numéro, donné par ps. kill -9 PID force l’arrêt. On ne peut arrêter que ses propres processus (ou tous, en root).',
     lancer: ({ args, jeu }) => {
       const pids = args.filter((a) => !a.startsWith('-'));
       if (!pids.length) return jeu.erreur('Usage : kill PID (le numéro du processus, donné par ps)');
@@ -53,8 +49,6 @@ export const SYSTEME: Record<string, Commande> = {
   },
 
   systemctl: {
-    manuel:
-      'systemctl status|start|stop|restart|reload service — gère les services, ces programmes qui tournent en permanence (serveur web…). « reload » leur fait relire leur configuration. Seul root peut les démarrer ou les arrêter : sudo systemctl reload nginx',
     lancer: ({ args, jeu }) => {
       const [action, brut] = args;
       const services: Record<string, { description: string; actif: boolean }> = jeu.etat.services ?? {};

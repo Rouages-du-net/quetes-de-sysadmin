@@ -325,16 +325,6 @@ const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
 
 export const GIT: Record<string, Commande> = {
   git: {
-    manuel: `git commande — garde l'historique d'un dossier (un « dépôt »). Les principales commandes :
-  git init                    transforme le lieu en dépôt
-  git status                  ce qui a changé depuis le dernier commit
-  git add fichier (ou .)      prépare un fichier pour le prochain commit
-  git commit -m "message"     enregistre une photo de tous les fichiers préparés
-  git log [--oneline]         l'historique des commits
-  git diff [ID] [fichier]     les différences (- avant, + après)
-  git show [ID]               un commit et ses changements
-  git restore --source=ID f   remet le fichier f tel qu'il était dans le commit ID
-Un commit se désigne par le début de son identifiant (au moins 4 caractères), ou par HEAD (le dernier), HEAD~1 (l'avant-dernier)…`,
     lancer: ({ args, jeu }) => {
       const [sous, ...reste] = args;
       if (!sous) return jeu.erreur('usage : git <commande> [<args>]\n(voir man git)');
