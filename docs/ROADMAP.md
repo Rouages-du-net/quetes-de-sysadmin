@@ -133,16 +133,19 @@ demandent plusieurs.
 
 ## Phase 3 — Sécuriser le serveur
 
-- [ ] **Pare-feu** : `ufw` (défaut « tout refuser en entrée », ouvrir 22,
-      80, 443, limiter SSH), puis un aperçu de `nftables` en dessous
+- [x] **Pare-feu** : `ufw` (politique par défaut, `allow`, `deny`, `reject`,
+      `limit`, `delete`, profils d'applications, numéros), et `ssh` qui
+      s'arrête au pare-feu (timeout) ; quête « Le pare-feu » (Les Lettres du
+      quartier, chapitre 2)
+- [ ] Un aperçu de `nftables` sous `ufw`
 - [ ] **fail2ban** : lire `auth.log`, voir les tentatives de force brute,
       configurer une prison, débannir une adresse légitime
 - [ ] **Mises à jour** : `apt update/upgrade`, mises à jour automatiques de
       sécurité, redémarrage nécessaire, noyau
 - [ ] **Comptes** : supprimer un compte inutile, désactiver un compte d'ancien
       collègue, mots de passe et clés à révoquer
-- [ ] **Surface d'attaque** : `ss -tlnp`, services qui écoutent sur
-      `0.0.0.0` au lieu de `127.0.0.1`, base de données exposée
+- [x] **Surface d'attaque** : `ss -tlnp`, un service qui écoute sur
+      `0.0.0.0` au lieu de `127.0.0.1` (la base de données exposée)
 - [ ] **Certificats TLS** : Let's Encrypt (`certbot`), renouvellement
       automatique, quête « le certificat a expiré cette nuit »
 - [ ] **Secrets** : fichier `.env` publié par erreur, rotation d'une clé

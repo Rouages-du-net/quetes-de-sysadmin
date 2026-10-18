@@ -40,4 +40,4 @@ machine-datacenter-motd = Datacenter — serveur web de la médiathèque. Toute 
 machine-fourmiliere-motd = La Fourmilière — l'ordinateur du café associatif. « Merci de venir nous aider ! » (Kofi)
 machine-manuscrit-motd = Manuscrit — l'ordinateur d'Inès. Ne pas toucher au roman sans sauvegarde !
 machine-bibliotheque-motd = Bibliothèque du quartier — ce serveur sera éteint ce soir à minuit.
-machine-lettres-motd = Les Lettres du quartier — serveur installé hier par l'hébergeur. Configuration par défaut : à sécuriser !
+machine-lettres-motd = Les Lettres du quartier — le serveur de l'association. Merci de prendre soin de lui !
