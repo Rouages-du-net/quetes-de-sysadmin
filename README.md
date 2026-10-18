@@ -22,21 +22,23 @@ un système entièrement simulé : rien ne sort du navigateur.
 
 ```bash
 npm install
-npm run dev                # http://localhost:5173
+npm run dev                # http://localhost:4321
 npm test                   # rejoue toutes les quêtes (Vitest)
 npm run build              # dist/ : le site, et dist/integration/ : le fichier à intégrer
-npx vite preview --port 4340 &
-npm run test:navigateur    # vérifie le jeu dans Chromium (1000 et 375 px, intégration)
+npm run preview &          # http://localhost:4340
+npm run test:navigateur    # vérifie le jeu dans Chromium (1000 et 375 px, CSP, intégration)
 ```
 
 | Dossier | Contenu |
 |---|---|
+| `src/pages/`, `src/layouts/` | les pages du site (Astro) |
+| `public/.htaccess` | configuration Apache : HTTPS, cache, sécurité, CORS |
 | `src/moteur/` | le shell simulé, les commandes, le manuel, les histoires et leurs chapitres |
 | `src/interface/` | l'interface du jeu (terminal, choix des histoires, progression) et ses styles |
 | `src/element.ts` | l'élément `<quetes-de-sysadmin>` à intégrer |
 | `src/textes/` | les textes de l'interface, par langue |
 | `tests/` | parties rejouées (`quetes.test.ts`) et vérifications dans le navigateur |
-| `docs/` | [scénarios](docs/SCENARIOS.md), [intégration](docs/INTEGRER.md), [feuille de route](docs/ROADMAP.md) |
+| `docs/` | [scénarios](docs/SCENARIOS.md), [intégration](docs/INTEGRER.md), [déploiement](docs/DEPLOIEMENT.md), [feuille de route](docs/ROADMAP.md) |
 
 ## D'où vient ce jeu
 

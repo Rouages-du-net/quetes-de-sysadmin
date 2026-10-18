@@ -1,0 +1,48 @@
+---
+// Gabarit commun des pages du site. Les textes des pages vivent dans les
+// pages elles-mêmes (une page par langue quand les traductions viendront).
+import '../styles/site.css';
+
+interface Props {
+  titre: string;
+  description: string;
+  langue?: string;
+}
+const { titre, description, langue = 'fr' } = Astro.props;
+const canonique = new URL(Astro.url.pathname, Astro.site);
+---
+<!doctype html>
+<html lang={langue}>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{titre}</title>
+  <meta name="description" content={description} />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="canonical" href={canonique} />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <header>
+    <p class="nom"><a href="/">Quêtes de Sysadmin</a></p>
+  </header>
+  <main>
+    <slot />
+  </main>
+  <footer>
+    <p>
+      Inspiré de <a href="https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html" hreflang="en">Terminus</a>,
+      créé au MIT par Shawn Conrad et Michele Pratusevich : l'idée d'apprendre les commandes en se
+      déplaçant de dossier en dossier vient de là ; les lieux, les énigmes et les textes sont les nôtres.
+      Les commandes répondent souvent en anglais, comme sur un vrai système ; les adresses et les noms
+      de domaine utilisés sont réservés aux exemples (RFC 5737, RFC 6761).
+    </p>
+    <p>
+      Code sous licence <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/LICENSE">GPL v3</a>,
+      textes sous <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.fr">CC BY-SA 4.0</a>.
+      <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin">Code source</a> ·
+      un projet de <a href="https://rouages.net">Les rouages du net</a>. Sans pisteur ni publicité.
+    </p>
+  </footer>
+</body>
+</html>

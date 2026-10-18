@@ -51,16 +51,22 @@ garde cette mention et le lien vers l'original.
       `docs/INTEGRER.md`
 - [ ] **Extraire les textes** des histoires, des commandes et du manuel vers
       `src/textes/` (aujourd'hui en dur dans `src/moteur/`), pour préparer les
-      traductions
+      traductions, dans un **format standard** que les plateformes de
+      traduction libres (Weblate, Pontoon) savent ouvrir : Fluent (`.ftl`)
+      pressenti, à confirmer
 - [x] Nom, mention « inspiré de Terminus (MIT) », README, CLAUDE.md
       (consignes de l'agent dédié)
 - [x] Licences : GPL v3 (code), CC BY-SA 4.0 (textes)
 - [ ] Charte de contribution (format d'une quête, tests, relecture)
-- [x] Pile : Vite et TypeScript, sans framework ; tests Vitest (chaque
-      chapitre rejoué) et vérification Playwright (`tests/navigateur.mjs`)
+- [x] Pile : site **Astro** (pages statiques), jeu en TypeScript sans
+      framework (élément `<quetes-de-sysadmin>`, construit aussi seul par
+      Vite pour l'intégration) ; tests Vitest (chaque chapitre rejoué) et
+      vérification Playwright (`tests/navigateur.mjs`, aussi en CI)
 - [x] Déploiement statique sur **sysadmin.rouages.net** : workflow
-      `.github/workflows/deploy.yml` (FTPS depuis `main`) ; secrets à
-      renseigner dans le dépôt
+      `.github/workflows/deploy.yml` (FTPS depuis `main`, vérification du site
+      en ligne), `.htaccess` (HTTPS, cache, CSP, CORS), page 404 ; mode
+      d'emploi `docs/DEPLOIEMENT.md`
+- [ ] Créer le sous-domaine sur cPanel et renseigner les secrets FTP
 - [ ] Rediriger l'ancienne page `rouages.net/jeux/terminus/` vers
       sysadmin.rouages.net (ou y intégrer l'élément)
 - [x] Réécrire les chapitres 1 et 2 dans un univers propre (fait dans
@@ -73,6 +79,11 @@ garde cette mention et le lien vers l'original.
 Aujourd'hui, le moteur simule **une** machine. Les quêtes d'administration en
 demandent plusieurs.
 
+- [ ] **Un seul monde** (proposition) : chaque histoire devient une machine
+      du même réseau simulé, et l'on passe de l'une à l'autre avec `ssh`
+      (`ssh paquet.example`) une fois la première histoire finie. Le menu des
+      histoires reste disponible (accessibilité, enseignant·es, intégration
+      avec l'attribut `histoire`) ; une seule progression.
 - [ ] **Plusieurs hôtes** : chacun son système de fichiers, ses comptes, ses
       services, ses ports ; invite `utilisateur@hôte:~$`
 - [ ] **Réseau simulé** : adresses, ports ouverts, résolution de noms

@@ -1,0 +1,34 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base
+  titre="Quêtes de Sysadmin"
+  description="Apprendre l'administration système Linux en jouant, dans le navigateur, avec de vraies commandes : se déplacer, chercher, les permissions, les journaux, le réseau, git, les archives."
+>
+  <h1>Quêtes de Sysadmin</h1>
+  <p class="intro">
+    Des aventures où l'on agit avec de <strong>vraies commandes Linux</strong>. Chaque lieu est
+    un dossier, chaque objet un fichier. Cinq histoires indépendantes : commence par
+    l'Effaceur si tu n'as jamais ouvert un terminal.
+  </p>
+  <p class="intro">
+    Bloqué·e ? Fais comme les pros : <code>man commande</code> ouvre le manuel,
+    <code>commande --help</code> en donne un résumé, et <code>man -k mot</code> cherche la
+    commande qui fait ce que tu veux.
+  </p>
+  <noscript><p class="avertissement">Ce jeu a besoin de JavaScript pour simuler un terminal dans ton navigateur.</p></noscript>
+
+  <quetes-de-sysadmin></quetes-de-sysadmin>
+
+  <section aria-labelledby="integrer">
+    <h2 id="integrer">Mettre le jeu sur ton site</h2>
+    <p>Le jeu est libre et s'intègre dans n'importe quelle page avec deux lignes :</p>
+    <pre><code>{`<script type="module" src="https://sysadmin.rouages.net/integration/quetes-de-sysadmin.js"></script>
+<quetes-de-sysadmin></quetes-de-sysadmin>`}</code></pre>
+    <p>Mode d'emploi complet : <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/docs/INTEGRER.md">docs/INTEGRER.md</a>.</p>
+  </section>
+</Base>
+
+<script>
+  import '../element';
+</script>
