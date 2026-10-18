@@ -7,6 +7,7 @@
 import { Console } from '../moteur/console';
 import { HISTOIRES } from '../moteur/chapitres';
 import { machineDeHistoire } from '../moteur/machines';
+import { editeur } from './editeur';
 import { traducteur, typographie, type Langue } from '../textes';
 
 export interface Options {
@@ -177,7 +178,31 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     else afficher(resultat);
     saisie.value = '';
     apres();
+    ouvrirEditeur();
   });
+
+  // nano : l'éditeur prend la place de la ligne de commande jusqu'à ^X.
+  const ouvrirEditeur = () => {
+    const edition = terminalJeu.edition;
+    if (!edition) return;
+    form.hidden = true;
+    terminal.append(
+      editeur({
+        t,
+        chemin: edition.chemin,
+        texte: edition.texte,
+        message: edition.message,
+        enregistrer: (texte) => terminalJeu.enregistrer(texte),
+        fermer: () => {
+          afficher(terminalJeu.quitterEdition());
+          form.hidden = false;
+          apres();
+          saisie.focus();
+        },
+      }),
+    );
+    terminal.scrollTop = terminal.scrollHeight;
+  };
 
   saisie.addEventListener('keydown', (e) => {
     if (terminalJeu.shell.attente || terminalJeu.shell.question) return;
@@ -195,7 +220,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   });
 
   terminal.addEventListener('click', () => {
-    if (!window.getSelection()?.toString()) saisie.focus();
+    if (!form.hidden && !window.getSelection()?.toString()) saisie.focus();
   });
   boutonPoste.addEventListener('click', () => {
     allerPoste();

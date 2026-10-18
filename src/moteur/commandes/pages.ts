@@ -32,6 +32,7 @@ export const PAGES: Record<string, Page> = {
   mkdir: { exemples: ['mkdir Classe'], voir: ['touch', 'cd'] },
   mv: { exemples: ['mv crabe Seau', 'mv brouillon.txt lettre.txt', 'mv brouillon.txt ~/Port/lettre.txt'], voir: ['cp', 'rm'] },
   exit: { voir: ['ssh'] },
+  nano: { exemples: ['nano notes.txt', 'sudo nano /etc/nginx/bloques.conf'], voir: ['cat', 'sudo'] },
   ping: { voir: ['traceroute', 'dig'] },
   ps: { voir: ['kill', 'systemctl'] },
   pwd: { voir: ['cd'] },

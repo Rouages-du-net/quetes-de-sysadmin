@@ -111,6 +111,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | systemd | services seuls (pas de cibles, de dépendances, de timers ni de fichiers d'unité modifiables) ; l'horloge avance d'une seconde par action ; `journalctl -f` non simulé | unités de tous types, `daemon-reload`, `journalctl -f` |
 | `systemctl` sans être root | « Access denied », il faut `sudo` | demande le mot de passe (polkit) |
 | `sudo` après `reboot` | se souvient encore du mot de passe | le redemande |
+| `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
 ## Histoire 1 : l'Effaceur
 

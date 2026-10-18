@@ -101,8 +101,10 @@ demandent plusieurs.
       machine (`/etc/passwd`, `/etc/group`), `id`, `groups`, `usermod -aG`,
       `chgrp`, `chown` ; quête « Deuxième jour » (Datacenter, chapitre 2)
 - [ ] `sudoers`, `umask`, bit setgid des dossiers partagés
-- [ ] **Éditeur de fichiers** minimal (façon `nano`) pour modifier des
-      fichiers de configuration, avec vérification de syntaxe par service
+- [x] **Éditeur de fichiers** façon `nano` (`^O`, `^X`, boutons sur
+      mobile), droits vérifiés à l'enregistrement, objectifs des quêtes mis
+      à jour ; solution alternative au chapitre 1 du Datacenter
+- [ ] Vérification de syntaxe par service (`nginx -t`, `sshd -t`)
 - [ ] **Manuel intégré** : pages `man` complètes générées depuis la
       définition de chaque commande, `--help`, `man -k`, `apropos`, `whatis` ;
       option inconnue → vrai message d'erreur (repris du travail fait dans

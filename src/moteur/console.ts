@@ -156,12 +156,37 @@ export class Console {
       sh.demandeConnexion = null;
       morceaux.push(this.connecter(nom));
     }
-    if (!dejaFini && sh.termine && sh !== this.poste) {
-      const ouvertes = HISTOIRES.filter((h) => this.ouverte(h.id)).map((h) => h.id);
-      if (!this.termines.includes(sh.chapitre.id)) this.termines.push(sh.chapitre.id);
-      morceaux.push(this.donnerCles(ouvertes));
-    }
+    morceaux.push(this.noterFin(sh, dejaFini));
+    if (sh.edition) this.finiAvantEdition = sh.termine;
     return morceaux.filter(Boolean).join('\n\n');
+  }
+
+  // Un chapitre vient de se terminer : progression, et clés éventuelles.
+  private noterFin(sh: Shell, dejaFini: boolean): string {
+    if (dejaFini || !sh.termine || sh === this.poste) return '';
+    const ouvertes = HISTOIRES.filter((h) => this.ouverte(h.id)).map((h) => h.id);
+    if (!this.termines.includes(sh.chapitre.id)) this.termines.push(sh.chapitre.id);
+    return this.donnerCles(ouvertes);
+  }
+
+  // ——— Éditeur (nano), sur la machine où l'on est ———
+
+  private finiAvantEdition = false;
+
+  get edition() {
+    return this.shell.edition;
+  }
+
+  /** ^O : écrit le fichier ; renvoie le message de nano, et si c'est écrit. */
+  enregistrer(texte: string): { message: string; ecrit: boolean } {
+    const message = this.shell.enregistrerEdition(texte);
+    return { message, ecrit: this.shell.edition?.texte === texte };
+  }
+
+  /** ^X : ferme l'éditeur ; renvoie les messages de l'histoire déclenchés. */
+  quitterEdition(): string {
+    const sh = this.shell;
+    return [sh.quitterEdition(), this.noterFin(sh, this.finiAvantEdition)].filter(Boolean).join('\n\n');
   }
 }
 

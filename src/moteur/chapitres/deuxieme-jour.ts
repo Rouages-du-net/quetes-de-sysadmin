@@ -33,7 +33,7 @@ const partage = (j: Jeu) => j.trouver(PARTAGE)!;
 export const deuxiemeJour: Chapitre = {
   id: 'deuxieme-jour',
   numero: 2,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'groups', 'whoami', 'usermod', 'chgrp', 'chown', 'chmod', 'touch', 'sudo'],
+  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'groups', 'whoami', 'usermod', 'chgrp', 'chown', 'chmod', 'touch', 'nano', 'sudo'],
   maison: M,
   accueil: 'courriel_awa.txt',
   final: 'fin',

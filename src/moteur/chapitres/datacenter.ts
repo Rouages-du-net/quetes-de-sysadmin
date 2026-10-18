@@ -80,7 +80,7 @@ const catalogueStable = (): Processus => ({ pid: 4243, utilisateur: 'www-data', 
 export const datacenter: Chapitre = {
   id: 'premier-jour',
   numero: 1,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'wc', 'grep', 'cut', 'sort', 'uniq', 'echo', 'tee', 'cp', 'mv', 'rm', 'ps', 'kill', 'systemctl', 'sudo', 'whoami'],
+  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'wc', 'grep', 'cut', 'sort', 'uniq', 'echo', 'tee', 'cp', 'mv', 'rm', 'ps', 'kill', 'systemctl', 'nano', 'sudo', 'whoami'],
   maison: M,
   accueil: 'courriel_awa.txt',
   final: 'rapport',

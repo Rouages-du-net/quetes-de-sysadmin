@@ -36,7 +36,7 @@ export function poste(cles: Machine[]): Chapitre {
   return {
     id: 'poste',
     numero: 0,
-    commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'chmod', 'ssh'],
+    commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'chmod', 'nano', 'ssh'],
     maison: MAISON,
     accueil: 'bienvenue.txt',
     final: '',

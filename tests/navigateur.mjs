@@ -74,6 +74,25 @@ for (const largeur of [1000, 375]) {
   verifier((await jeu.locator('.sortie').textContent()).includes('Connection to royaume.example closed.'), `${largeur} px : exit ramène au poste`);
   await tape('ssh royaume');
   verifier((await jeu.locator('.invite').textContent()) === 'vous@royaume:~$', `${largeur} px : hôte connu gardé, pas de nouvelle question`);
+  // nano : clavier (Ctrl+O, Ctrl+X) en grand écran, boutons sur mobile.
+  await tape('exit');
+  await tape('nano notes.txt');
+  const nano = jeu.locator('.nano');
+  verifier(await nano.isVisible(), `${largeur} px : nano s’ouvre`);
+  verifier(await jeu.locator('form').isHidden(), `${largeur} px : la ligne de commande laisse la place à nano`);
+  await jeu.locator('.nano-texte').fill('Bonjour depuis nano\n');
+  if (largeur > 500) await jeu.locator('.nano-texte').press('Control+o');
+  else await jeu.locator('.nano-touche', { hasText: '^O' }).click();
+  verifier((await jeu.locator('.nano-etat').textContent()) === '[ 1 ligne écrite ]', `${largeur} px : ^O écrit le fichier`);
+  await jeu.locator('.nano-texte').fill('Bonjour depuis nano\nencore\n');
+  if (largeur > 500) await jeu.locator('.nano-texte').press('Control+x');
+  else await jeu.locator('.nano-touche', { hasText: '^X' }).click();
+  verifier((await jeu.locator('.nano-etat').textContent()).includes('Sauver le tampon modifié'), `${largeur} px : ^X demande s’il faut enregistrer`);
+  if (largeur > 500) await page.keyboard.press('o');
+  else await jeu.locator('.nano-touche', { hasText: 'Oui' }).click();
+  verifier(!(await nano.isVisible()) && (await saisie.isVisible()), `${largeur} px : nano se ferme`);
+  await tape('cat notes.txt');
+  verifier((await jeu.locator('.sortie').textContent()).includes('Bonjour depuis nano\nencore'), `${largeur} px : le fichier est bien écrit`);
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${largeur} px : pas de défilement horizontal`);
   verifier(erreurs.length === 0, `${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
   verifier(externes.length === 0, `${largeur} px : aucune ressource tierce ${externes.join(' ')}`);
