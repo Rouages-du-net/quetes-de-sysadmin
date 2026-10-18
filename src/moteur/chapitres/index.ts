@@ -18,6 +18,9 @@ import { versions } from './versions';
 import { porte } from './porte';
 import { pareFeu } from './pare-feu';
 import { sentinelle } from './sentinelle';
+import { colocation } from './colocation';
+import { chezMoi } from './chez-moi';
+import { concert } from './concert';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -42,7 +45,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'lettres',
-    chapitres: [porte, pareFeu, sentinelle],
+    chapitres: [porte, pareFeu, sentinelle, colocation, chezMoi, concert],
   },
 ];
 

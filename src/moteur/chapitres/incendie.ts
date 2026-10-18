@@ -83,7 +83,7 @@ const sauvegarde = (t: Traduire, version: number, taille: number, tronquee?: num
   f('', { proprio: 'root', taille, archive: { fichiers: contenuArchive(t, version), compresse: true, tronquee } });
 
 const sd = (j: Jeu) => systemd(j)!;
-const page = (j: Jeu) => requete(j, SITE, '/');
+const page = (j: Jeu) => requete(j, SITE, '/', 80, false);
 const sert = (j: Jeu, version: number) => {
   const r = page(j);
   return r?.code === 200 && r.corps === accueil(j.t, version);

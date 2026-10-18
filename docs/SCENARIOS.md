@@ -118,7 +118,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `rsync` | copie locale seulement (pas de `user@machine:`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | aussi à distance par SSH, compare taille et date |
 | `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
 | `apt` | `update`, `install [-y]`, `list --installed` ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » | tout le catalogue Debian, `upgrade`, `remove`, `search`, `show`… ; dpkg garde l'état du paquet |
-| `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server`, les pages par `root` et `index` (pas de `location`, de HTTPS ni de proxy) ; `sites-enabled` contient des copies | toutes les directives et modules ; sur Debian, `sites-enabled` contient des liens symboliques |
+| `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe ou `=` (pas d'expressions régulières), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ; `try_files` lu mais pas appliqué | toutes les directives et modules |
 | `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse) | tout le réseau |
 | `tar` | `-C` ; une archive coupée s'arrête à la coupure (messages proches de GNU tar) ; root garde propriétaires et droits | aussi `--strip-components`, `-p`, archives multi-volumes… |
 | `ssh-keygen` | `-R`, `-F`, `-l -f` seulement ; ne crée pas de clés | crée et convertit des clés, signe des certificats… |
@@ -127,6 +127,11 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `curl https://` | vérifie dates et noms du certificat présenté (erreur 60), `-k` pour passer outre | vérifie aussi la chaîne de confiance complète, OCSP… |
 | horloge | heure de Paris : CET l'hiver, CEST l'été | fuseau de la machine |
 | `restic` | `-r` et `--password-file` obligatoires (pas de variables d'environnement) ; `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check`, `stats` ; pas d'`init` ; un « pack » par sauvegarde ; fichiers du dépôt illisibles mais pas binaires ; pas de barres de progression | tout cela, et `mount`, `copy`, `key`, `tag`, dépôts distants (sftp, S3, rest-server) |
+| liens symboliques | `ln -s`, suivis pour lire, écrire et entrer ; `ls -l` les montre ; pas de `readlink` | aussi `readlink`, `realpath`, `find -L`… |
+| `curl` | `-I`, `-k`, `-L`, `-H "Host: …"` ; ne joint que la machine où l'on est | toutes les options, tout le réseau |
+| DNS (BIND) | zones A, AAAA, CNAME, MX, NS, TXT, SOA ; un primaire (`named`), un secondaire qui recopie quand le serial augmente (tout de suite), un résolveur public avec cache ; `dig` (`@serveur`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (accolades et fichiers), `rndc reload`/`status` ; pas de section AUTHORITY, de DNSSEC ni de zones inverses | tout cela |
+| `awk` | programme entre apostrophes : motifs, `BEGIN`/`END`, champs, tableaux, `printf`, fonctions courantes, `-F`, `-v` ; pas de `getline`, de redirection dans `print`, de fonctions définies ni de `?:` | le langage complet (mawk sur Debian) |
+| trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -430,7 +435,7 @@ versions plutôt que miroir, politique de rétention, forget n'est pas prune,
 check et restaurations d'essai, chiffrement et garde du mot de passe ;
 liens vers la documentation de restic.
 
-## Histoire 6 : Les Lettres du quartier (en cours)
+## Histoire 6 : Les Lettres du quartier (en cours, six chapitres)
 
 L'association de Kofi (vue dans Le Paquet perdu) loue un petit serveur pour
 son site, `lettres.example` (machine `lettres`, même adresse que dans Le
@@ -525,6 +530,98 @@ recharger, oublier que Rania reste bannie (un bannissement survit au
 rechargement), modifier `jail.conf` (ça marche, mais un avertissement
 explique pourquoi c'est une mauvaise idée). Autre solution acceptée :
 `jail.d/*.local`, `bantime = -1`, `ignoreip` en CIDR.
+
+### Chapitre 4 — La colocation (fait)
+
+Le café associatif (celui du Paquet perdu) emménage sur le serveur des
+Lettres : deux sites sur une machine. Et l'agenda des ateliers de Rania, un
+petit programme Node.js qui n'écoute que sur `127.0.0.1:3000`, doit
+s'afficher sous `http://lettres.example/agenda/`.
+
+| Étape | Commande apprise |
+|---|---|
+| Voir comment un site est activé | `ls -l /etc/nginx/sites-enabled` (un lien symbolique) |
+| Créer le site du café | `sudo cp sites-available/lettres sites-available/cafe`, `sudo nano …` (server_name, root, sans default_server) |
+| L'activer | `sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/` |
+| Tester avant le DNS | `curl -H "Host: cafe.example" http://127.0.0.1` |
+| Publier l'agenda | `location /agenda/ { proxy_pass http://127.0.0.1:3000/; }`, `sudo nginx -t`, `sudo systemctl reload nginx` |
+| Comprendre un 502 | `sudo tail /var/log/nginx/error.log`, `sudo systemctl enable --now agenda` |
+
+Objectif vérifié sur l'état : nginx sert la page du café pour
+`cafe.example`, celle des Lettres pour `lettres.example`, l'agenda sous
+`/agenda/` et `/agenda/semaine`, et le service `agenda` démarrera avec la
+machine.
+
+Pièges prévus : `ln -s` avec un chemin relatif lu depuis le mauvais lieu
+(lien cassé, `nginx -t` échoue), le fichier copié qui garde
+`default_server` (« duplicate default server ») ou `server_name`
+(« conflicting server name », le café montre les Lettres), l'agenda arrêté
+(502, `connect() failed` dans error.log), `proxy_pass` sans barre finale
+(« Cannot GET /agenda/ »), `start` sans `enable`. Autres solutions
+acceptées : un fichier écrit de zéro, `localhost` dans `proxy_pass`, une
+copie au lieu d'un lien dans `sites-enabled`. Débrief : sites-available et
+sites-enabled, default_server et server_name, tester avec `Host`, barre
+finale de proxy_pass, 502 et error.log, appli derrière un proxy sur
+127.0.0.1 ; liens vers la documentation de nginx.
+
+### Chapitre 5 — Ça marche chez moi (fait)
+
+Kofi a « fait pointer » cafe.example vers le serveur… dans le `/etc/hosts`
+de son propre ordinateur. Chez lui, le site du café marche ; ailleurs, le
+nom mène à l'ancien hébergeur, et `www.cafe.example` n'existe pas. Le
+serveur des Lettres fait autorité pour la zone (BIND, `named`) ; le registre
+en garde une copie (`ns2.registre.example`). Le DNS simulé est dans
+`src/moteur/dns.ts`.
+
+| Étape | Commande apprise |
+|---|---|
+| Voir ce que voient les autres | `dig cafe.example` (résolveur public, ancienne adresse, TTL qui décroît) |
+| Interroger les serveurs qui font autorité | `dig @localhost cafe.example`, `dig @ns2.registre.example cafe.example SOA +short` |
+| Corriger la zone | `sudo nano /etc/bind/zones/db.cafe.example` : l'adresse, `www IN CNAME cafe.example.`, le serial |
+| Vérifier, recharger | `named-checkzone cafe.example …`, `sudo rndc reload`, `journalctl -u named` |
+
+Objectif vérifié sur l'état : les deux serveurs qui font autorité répondent
+la nouvelle adresse pour `cafe.example` et `www.cafe.example`, le MX est
+toujours là, la zone des Lettres n'a pas bougé.
+
+Pièges prévus : `/etc/hosts` « maison », le résolveur qui garde l'ancienne
+réponse en cache (TTL de 24 heures), une adresse mal tapée (`bad dotted
+quad`, la zone reste l'ancienne), le serial oublié (« zone serial
+unchanged », ns2 garde l'ancienne zone), le point final oublié
+(`cafe.example.cafe.example.`), `rndc` sans `sudo`. Autres solutions
+acceptées : un enregistrement A pour `www`, `systemctl reload named`.
+Débrief : tester comme les autres, serveurs faisant autorité contre
+résolveur, serial, `named-checkzone`, point final, baisser le TTL avant un
+déménagement ; liens vers la documentation de BIND et la RFC 1034.
+
+### Chapitre 6 — Le soir du concert (fait)
+
+Soir de concert au café : l'agenda (une appli qui sert une vingtaine de
+pages par seconde) ne répond plus, les visiteur·ses reçoivent des 504. Un
+robot aspire l'agenda depuis trois adresses, 24 requêtes par seconde. Après
+chaque rechargement de nginx, le jeu fait passer une minute de trafic, qui
+s'écrit dans `access.log`.
+
+| Étape | Commande apprise |
+|---|---|
+| Lire les codes de réponse | `awk '{print $9}' access.log \| sort \| uniq -c` |
+| Trouver qui demande | `awk '{print $1}' … \| sort \| uniq -c \| sort -n`, `awk '$9 == 504 {print $1}' …` |
+| Limiter le débit | `limit_req_zone $binary_remote_addr zone=agenda:10m rate=2r/s;` puis `limit_req zone=agenda burst=10 nodelay;` (et `limit_req_status 429;`) |
+| Vérifier | `sudo nginx -t`, `sudo systemctl reload nginx`, la minute suivante dans `access.log` et `error.log` |
+
+Objectif vérifié sur l'état : pendant la dernière minute simulée, toutes les
+requêtes des visiteur·ses ont été servies, et la limitation de débit a
+refusé au moins 60 % des requêtes du robot.
+
+Pièges prévus : `limit_req` sans `limit_req_zone` (« zero size shared
+memory zone »), une limite sans rafale (une page et ses quatre fichiers
+d'un coup : les vraies personnes sont refusées), une limite trop large ou
+mal placée (le robot passe encore), `deny` des adresses du robot (marche ce
+soir, mais pas une règle durable). Autres solutions acceptées : la zone dans
+`conf.d/`, la limite sur tout le site, un débit de 1 requête par seconde.
+Débrief : lire les journaux avant d'agir, limiter par adresse là où c'est
+coûteux, rafale et `nodelay`, 429, `deny` contre règle durable ; liens vers
+`limit_req`, le format des journaux et awk (POSIX).
 
 ## Idées pour la suite
 

@@ -161,14 +161,20 @@ demandent plusieurs.
 
 ## Phase 4 — Servir des sites
 
-- [ ] **Serveur web** : **Nginx** (et Apache pour comparer), **hôtes virtuels** (plusieurs
-      sites sur une même machine, comme dans le module « De l'Entrée à la
-      page » de rouages.net), `nginx -t` avant de recharger
-- [ ] **Reverse proxy** devant une application, en-têtes, HTTP → HTTPS
-- [ ] **DNS** : enregistrements A, AAAA, CNAME, MX, TXT, TTL, propagation ;
-      quête « le site ne marche que chez moi »
-- [ ] **Journaux d'accès** : trouver qui fait tomber le site (`awk`, `sort`,
-      `uniq -c`), limiter le débit
+- [x] **Serveur web** : **Nginx**, **hôtes virtuels** (plusieurs sites sur une
+      même machine), `sites-available` et `ln -s`, `nginx -t` avant de
+      recharger ; quête « La colocation » (Les Lettres du quartier, chapitre 4)
+- [ ] Apache, pour comparer
+- [x] **Reverse proxy** devant une application (`proxy_pass`, barre finale,
+      502 et `error.log`) ; `return 301` simulé
+- [ ] En-têtes transmis à l'appli (`proxy_set_header`, `X-Forwarded-For`),
+      HTTP → HTTPS dans une quête
+- [x] **DNS** : enregistrements A, AAAA, CNAME, MX, TXT, TTL et caches (la
+      « propagation »), zone BIND, serial, secondaire ; quête « Ça marche
+      chez moi » (Les Lettres du quartier, chapitre 5)
+- [x] **Journaux d'accès** : trouver qui fait tomber le site (`awk`, `sort`,
+      `uniq -c`), limiter le débit (`limit_req`, rafale, 429) ; quête « Le
+      soir du concert » (Les Lettres du quartier, chapitre 6)
 
 ## Phase 5 — Conteneurs
 

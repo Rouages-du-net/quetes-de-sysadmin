@@ -27,6 +27,17 @@ cp-repertoire = cp : -r non spécifié ; omission du répertoire '{ $cible }'
 cp-meme-fichier = cp : '{ $source }' et '{ $destination }' sont le même fichier
 cp-lecture-permission = cp : impossible d'ouvrir '{ $cible }' en lecture : Permission non accordée
 rm-usage = Usage : rm fichier
+# ln (messages de coreutils en français)
+ln-operande-manquant =
+    ln: opérande de fichier manquant
+    Saisissez « ln --help » pour plus d'informations.
+ln-impossible-symbolique = ln: impossible de créer le lien symbolique '{ $cible }': { $raison }
+ln-impossible-physique = ln: impossible de créer le lien physique '{ $cible }': { $raison }
+ln-existe = Le fichier existe
+ln-permission = Permission non accordée
+ln-introuvable = Aucun fichier ou dossier de ce nom
+ln-acces-impossible = ln: impossible d'accéder à '{ $cible }': Aucun fichier ou dossier de ce nom
+ln-physique-dossier = ln: { $cible } : les liens physiques ne sont pas permis pour un répertoire
 rm-introuvable = rm : impossible de supprimer '{ $cible }' : aucun fichier ou dossier de ce nom
 rm-dossier = rm : impossible de supprimer '{ $cible }' : est un dossier (il faudrait rm -r, et c’est dangereux : on ne l’utilise pas ici)
 rm-permission = rm : impossible de supprimer '{ $cible }' : Permission non accordée

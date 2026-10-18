@@ -29,7 +29,7 @@ export interface Jeu {
   // La dernière ligne exécutée (pour les événements) : commandes du tube,
   // sortie produite (avant redirection), fichier de redirection.
   derniere: { ligne: string; commandes: string[][]; sortie: string; erreurs: string[]; redirection: string | null };
-  trouver(chemin: string): Noeud | null;
+  trouver(chemin: string, dernier?: boolean): Noeud | null;
   existe(chemin: string): boolean;
   lire(chemin: string): string | null;
   compter(lieu: string, prefixe: string): number;
@@ -122,13 +122,34 @@ export class Shell implements Jeu {
     return '/' + pile.join('/');
   }
 
-  trouver(chemin: string): Noeud | null {
+  // Suit les liens symboliques (comme stat) ; `dernier: false` s'arrête sur
+  // un lien en fin de chemin (comme lstat : ls -l, rm, ln).
+  trouver(chemin: string, dernier = true, profondeur = 0): Noeud | null {
     let n: Noeud = this.racine;
-    for (const p of this.resoudre(chemin).split('/').filter(Boolean)) {
+    const parties = this.resoudre(chemin).split('/').filter(Boolean);
+    for (let i = 0; i < parties.length; i++) {
+      const p = parties[i];
       if (n.type !== 'dossier' || !Object.hasOwn(n.enfants, p)) return null;
       n = n.enfants[p];
+      const fin = i === parties.length - 1;
+      if (n.type === 'fichier' && n.lien !== undefined && (!fin || dernier)) {
+        // Trop de liens en chaîne : ELOOP, comme le noyau.
+        if (profondeur > 8) return null;
+        const ici = '/' + parties.slice(0, i).join('/');
+        const cible = n.lien.startsWith('/') ? n.lien : `${ici}/${n.lien}`;
+        return this.trouver([cible, ...parties.slice(i + 1)].join('/'), dernier, profondeur + 1);
+      }
     }
     return n;
+  }
+
+  /** Le chemin absolu atteint en suivant un lien symbolique (ou le chemin lui-même). */
+  cheminReel(chemin: string): string {
+    const absolu = this.resoudre(chemin);
+    const n = this.trouver(absolu, false);
+    if (n?.type !== 'fichier' || n.lien === undefined) return absolu;
+    const ici = absolu.slice(0, absolu.lastIndexOf('/')) || '/';
+    return this.resoudre(n.lien.startsWith('/') ? n.lien : `${ici}/${n.lien}`);
   }
 
   existe(chemin: string): boolean {
@@ -234,6 +255,8 @@ export class Shell implements Jeu {
     if (!this.ecritDans(chemin)) return this.t(cmd === 'bash' ? 'redirection-permission' : 'erreur-creation-permission', v);
     const nom = this.nom(chemin);
     const ancien = parent.enfants[nom];
+    // Écrire dans un lien, c'est écrire dans le fichier qu'il vise.
+    if (ancien?.type === 'fichier' && ancien.lien !== undefined && n.type === 'fichier' && n.lien === undefined) return this.placer(cmd, this.cheminReel(chemin), n);
     if (this.placeManquante(this.resoudre(chemin), n, ancien)) return this.t('erreur-espace', v);
     parent.enfants[nom] = n;
     return null;

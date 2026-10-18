@@ -10,6 +10,16 @@ type Page = Pick<Commande, 'options' | 'exemples' | 'voir' | 'section'>;
 export const PAGES: Record<string, Page> = {
   apropos: { voir: ['man', 'whatis'] },
   apt: { exemples: ['sudo apt update', 'sudo apt install nginx', 'apt list --installed'], voir: ['systemctl', 'nginx'] },
+  awk: {
+    exemples: [
+      "awk '{print $1}' access.log",
+      "awk '$9 == 502' access.log",
+      "awk '{c[$9]++} END {for (k in c) print c[k], k}' access.log",
+      "awk '{s += $10} END {print s}' access.log",
+      "awk -F: '{print $1}' /etc/passwd",
+    ],
+    voir: ['grep', 'cut', 'sort', 'uniq'],
+  },
   cat: { exemples: ['cat message.txt'], voir: ['less', 'head', 'tail', 'grep'] },
   certbot: {
     exemples: ['sudo certbot certificates', 'sudo certbot renew --dry-run', 'sudo certbot renew --webroot -w /var/www/site', 'sudo certbot renew --deploy-hook "systemctl reload nginx"', 'sudo certbot reconfigure --cert-name site.example --deploy-hook "systemctl reload nginx"'],
@@ -23,7 +33,7 @@ export const PAGES: Record<string, Page> = {
   crontab: { exemples: ['crontab -e', 'crontab -l', '15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/'], voir: ['rsync', 'nano', 'systemctl'] },
   curl: { options: ['I', 'k'], voir: ['dig', 'nginx', 'openssl'] },
   df: { options: ['h'], voir: ['du'] },
-  dig: { voir: ['ping', 'curl'] },
+  dig: { exemples: ['dig cafe.example', 'dig @ns1.lettres.example cafe.example', 'dig cafe.example NS +short', 'dig cafe.example SOA +short'], voir: ['host', 'ping', 'curl', 'named-checkzone'] },
   du: { options: ['h', 's'], voir: ['df', 'find'] },
   'fail2ban-client': { exemples: ['sudo fail2ban-client status', 'sudo fail2ban-client status sshd', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client -t', 'sudo fail2ban-client reload'], voir: ['jail.conf', 'journalctl', 'ufw'] },
   'jail.conf': { section: 5, exemples: ['sudo nano /etc/fail2ban/jail.local', 'sudo fail2ban-client get sshd bantime'], voir: ['fail2ban-client', 'nano'] },
@@ -31,15 +41,19 @@ export const PAGES: Record<string, Page> = {
   grep: { options: ['i', 'v', 'c'], exemples: ['grep Effaceur chronique.txt', 'grep -i effaceur *', 'grep "mot de passe" journal.txt'], voir: ['cat', 'find'] },
   groups: { exemples: ['groups', 'groups malo'], voir: ['id', 'usermod'] },
   head: { options: ['n'], voir: ['tail', 'cat'] },
+  host: { exemples: ['host cafe.example', 'host cafe.example ns2.registre.example'], voir: ['dig'] },
   id: { exemples: ['id', 'id malo'], voir: ['groups', 'whoami', 'usermod'] },
   journalctl: { options: ['u', 'n', 'b', 'p', 'x', 'e'], exemples: ['journalctl -u nginx', 'journalctl -xeu nginx', 'journalctl -b -p err', 'journalctl -n 20'], voir: ['systemctl'] },
   kill: { voir: ['ps'] },
   less: { voir: ['cat', 'head', 'tail'] },
+  ln: { options: ['s', 'f', 'v'], exemples: ['sudo ln -s /etc/nginx/sites-available/site /etc/nginx/sites-enabled/', 'ls -l /etc/nginx/sites-enabled'], voir: ['ls', 'rm', 'cp'] },
   ls: { options: ['a', 'l', 'h'], exemples: ['ls', 'ls -a', 'ls -l ~/souvenirs'], voir: ['cd', 'pwd', 'chmod'] },
   man: { options: ['k'], exemples: ['man ls', 'man -k copie', 'ls --help'], voir: ['apropos', 'whatis'] },
   mkdir: { exemples: ['mkdir Classe'], voir: ['touch', 'cd'] },
   mv: { exemples: ['mv crabe Seau', 'mv brouillon.txt lettre.txt', 'mv brouillon.txt ~/Port/lettre.txt'], voir: ['cp', 'rm'] },
   exit: { voir: ['ssh'] },
+  'named-checkzone': { section: 8, exemples: ['named-checkzone cafe.example /etc/bind/zones/db.cafe.example'], voir: ['rndc', 'dig', 'named-checkconf'] },
+  'named-checkconf': { section: 8, exemples: ['sudo named-checkconf'], voir: ['named-checkzone', 'rndc'] },
   nano: { exemples: ['nano notes.txt', 'sudo nano /etc/nginx/bloques.conf'], voir: ['cat', 'sudo'] },
   nginx: { options: ['t', 'T', 'v'], exemples: ['sudo nginx -t', 'sudo nginx -T | less', 'nginx -v'], voir: ['systemctl', 'journalctl', 'curl', 'apt'] },
   openssl: {
@@ -51,6 +65,7 @@ export const PAGES: Record<string, Page> = {
   pwd: { voir: ['cd'] },
   reboot: { section: 8, exemples: ['sudo reboot'], voir: ['systemctl'] },
   rsync: { options: ['a', 'r', 'v', 'n'], exemples: ['rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'rsync -avn --delete ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'rsync -a /mnt/sauvegarde/souvenirs/lettre.txt ~/souvenirs/'], voir: ['cp', 'crontab', 'tar'] },
+  rndc: { section: 8, exemples: ['sudo rndc reload cafe.example', 'sudo rndc status'], voir: ['named-checkzone', 'dig', 'journalctl'] },
   restic: {
     exemples: [
       'restic -r /mnt/mairie/depot --password-file ~/.config/restic/mot-de-passe snapshots',

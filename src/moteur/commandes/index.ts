@@ -21,6 +21,8 @@ import { SAUVEGARDE } from './sauvegarde';
 import { APT } from './apt';
 import { CERTBOT } from './certbot';
 import { RESTIC } from './restic';
+import { BIND } from './bind';
+import { AWK } from './awk';
 
 export interface Contexte {
   args: string[];
@@ -65,6 +67,8 @@ export const COMMANDES: Record<string, Commande> = {
   ...APT,
   ...CERTBOT,
   ...RESTIC,
+  ...BIND,
+  ...AWK,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },

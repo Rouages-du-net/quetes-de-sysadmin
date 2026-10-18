@@ -538,6 +538,157 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('Les Lettres du quartier, chapitre 4 — La colocation (nginx)', () => {
+      // nano : remplace du texte dans un fichier et enregistre.
+      const modifier = (s: Shell, fichier: string, avant: string | RegExp, apres: string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(s.edition!.texte.replace(avant, apres));
+        s.quitterEdition();
+      };
+
+      it('solution, avec les fausses pistes : lien relatif, nom en double, 502, barre finale', () => {
+        const { s, tout } = jouer('colocation', [
+          'curl http://cafe.example',
+          'cd /etc/nginx',
+          'sudo cp sites-available/lettres sites-available/cafe',
+          'fourmis-2026',
+          'sudo ln -s sites-available/cafe sites-enabled/',
+          'sudo nginx -t',
+          'sudo rm sites-enabled/cafe',
+          'sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/',
+          'ls -l sites-enabled',
+        ]);
+        expect(tout).toContain('open() "/etc/nginx/sites-enabled/cafe" failed (2: No such file or directory)');
+        expect(tout).toContain('cafe -> /etc/nginx/sites-available/cafe');
+        contient(tout, 'le site des Lettres qui répond');
+        contient(tout, 'le lien est cassé');
+        modifier(s, '/etc/nginx/sites-available/cafe', /default_server/g, '');
+        const conflit = s.executer('sudo nginx -t') ?? '';
+        expect(conflit).toContain('nginx: [warn] conflicting server name "lettres.example" on 0.0.0.0:80, ignored');
+        contient(conflit, 'deux sites répondent au même nom');
+        modifier(s, '/etc/nginx/sites-available/cafe', /lettres/g, 'cafe');
+        s.executer('sudo systemctl reload nginx');
+        expect(s.executer('curl -H "Host: cafe.example" http://127.0.0.1')).toContain('Le café associatif');
+        modifier(s, '/etc/nginx/sites-available/lettres', '    location / {', '    location /agenda/ {\n        proxy_pass http://127.0.0.1:3000;\n    }\n\n    location / {');
+        const suite = ['sudo nginx -t', 'sudo systemctl reload nginx', 'curl -I http://lettres.example/agenda/', 'sudo tail -1 /var/log/nginx/error.log', 'sudo systemctl enable --now agenda', 'curl http://lettres.example/agenda/']
+          .map((l) => s.executer(l) ?? '')
+          .join('\n');
+        expect(suite).toContain('HTTP/1.1 502 Bad Gateway');
+        expect(suite).toContain('connect() failed (111: Connection refused) while connecting to upstream');
+        expect(suite).toContain('Cannot GET /agenda/');
+        contient(suite, 'la barre finale');
+        expect(s.termine).toBe(false);
+        modifier(s, '/etc/nginx/sites-available/lettres', 'proxy_pass http://127.0.0.1:3000;', 'proxy_pass http://127.0.0.1:3000/;');
+        s.executer('sudo systemctl reload nginx');
+        expect(s.executer('curl http://lettres.example/agenda/ateliers')).toContain('Les ateliers');
+        expect(s.termine).toBe(true);
+      });
+
+      it('autre solution : un nouveau fichier écrit à la main, location exacte du préfixe, agenda démarré puis activé', () => {
+        const { s } = jouer('colocation', ['sudo systemctl start agenda', 'fourmis-2026']);
+        s.executer('sudo nano /etc/nginx/sites-available/cafe');
+        s.enregistrerEdition('server {\n    listen 80;\n    server_name cafe.example;\n    root /var/www/cafe;\n}');
+        s.quitterEdition();
+        s.executer('sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/cafe');
+        modifier(s, '/etc/nginx/sites-available/lettres', '    location / {', '    location /agenda/ {\n        proxy_pass http://localhost:3000/;\n    }\n    location / {');
+        s.executer('sudo systemctl reload nginx');
+        expect(s.termine).toBe(false);
+        s.executer('sudo systemctl enable agenda');
+        expect(s.termine).toBe(true);
+      });
+    });
+
+    describe('Les Lettres du quartier, chapitre 5 — Ça marche chez moi (DNS)', () => {
+      const ZONE = '/etc/bind/zones/db.cafe.example';
+      const modifier = (s: Shell, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${ZONE}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        s.quitterEdition();
+      };
+
+      it('solution, avec les fausses pistes : serial oublié, point final oublié, zone fausse', () => {
+        const { s, tout } = jouer('chez-moi', ['dig cafe.example', 'dig @localhost cafe.example +short', 'dig www.cafe.example', 'sudo rndc status', 'fourmis-2026']);
+        expect(tout).toContain('198.51.100.80');
+        expect(tout).toContain('status: NXDOMAIN');
+        expect(tout).toContain('server is up and running');
+        // Une adresse mal tapée : named garde l'ancienne zone.
+        modifier(s, (t) => t.replace('198.51.100.80', '203.0.113.310'));
+        const fausse = ['named-checkzone cafe.example ' + ZONE, 'sudo rndc reload cafe.example'].map((l) => s.executer(l) ?? '').join('\n');
+        expect(fausse).toContain("near '203.0.113.310': bad dotted quad");
+        expect(fausse).toContain("rndc: 'reload' failed: failure");
+        contient(fausse, 'named refuse la zone');
+        // Le bon contenu, mais ni serial ni point final.
+        modifier(s, (t) => t.replace('203.0.113.310', '203.0.113.10') + '\nwww     IN CNAME cafe.example');
+        const demi = ['sudo rndc reload cafe.example', 'journalctl -u named', 'dig @localhost www.cafe.example', 'dig @ns2.registre.example cafe.example +short', 'dig cafe.example']
+          .map((l) => s.executer(l) ?? '')
+          .join('\n');
+        expect(demi).toContain('zone serial (2026091501) unchanged. zone may fail to transfer to secondaries.');
+        expect(demi).toContain('cafe.example.cafe.example.');
+        contient(demi, 'son numéro de série');
+        contient(demi, 'sans point final');
+        contient(demi, 'les caches');
+        expect(s.termine).toBe(false);
+        modifier(s, (t) => t.replace('2026091501', '2027032001').replace('CNAME cafe.example', 'CNAME cafe.example.'));
+        s.executer('named-checkzone cafe.example ' + ZONE);
+        expect(s.executer('sudo rndc reload')).toContain('server reload successful');
+        expect(s.termine).toBe(true);
+        expect(s.executer('dig @ns2.registre.example www.cafe.example +short')).toBe('cafe.example.\n203.0.113.10');
+      });
+
+      it('autre solution : un enregistrement A pour www, et systemctl reload named', () => {
+        const { s } = jouer('chez-moi', ['sudo id', 'fourmis-2026']);
+        modifier(s, (t) => t.replace('2026091501', '2026091502').replaceAll('198.51.100.80', '203.0.113.10') + '\nwww 300 IN A 203.0.113.10');
+        s.executer('sudo systemctl reload named');
+        expect(s.termine).toBe(true);
+      });
+    });
+
+    describe('Les Lettres du quartier, chapitre 6 — Le soir du concert (awk, limit_req)', () => {
+      const SITE = '/etc/nginx/sites-available/lettres';
+      const modifier = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        s.quitterEdition();
+      };
+
+      it('solution, avec les fausses pistes : zone inconnue, limite sans rafale', () => {
+        const { s, tout } = jouer('concert', [
+          "sudo awk '{print $9}' /var/log/nginx/access.log | sort | uniq -c",
+          'fourmis-2026',
+          "sudo awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -n",
+        ]);
+        expect(tout).toMatch(/\d+ 504/);
+        contient(tout, 'robot qui aspire le site');
+        // limit_req sans limit_req_zone : nginx -t refuse.
+        modifier(s, SITE, (t) => t.replace('proxy_pass http://127.0.0.1:3000/;', 'limit_req zone=agenda;\n        proxy_pass http://127.0.0.1:3000/;'));
+        expect(s.executer('sudo nginx -t')).toContain('zero size shared memory zone "agenda"');
+        modifier(s, SITE, (t) => 'limit_req_zone $binary_remote_addr zone=agenda:10m rate=2r/s;\n\n' + t);
+        const sansRafale = s.executer('sudo systemctl reload nginx') ?? '';
+        contient(sansRafale, 'La limite refuse aussi des vraies personnes');
+        expect(s.termine).toBe(false);
+        modifier(s, SITE, (t) => t.replace('limit_req zone=agenda;', 'limit_req zone=agenda burst=10 nodelay;\n        limit_req_status 429;'));
+        s.executer('sudo systemctl reload nginx');
+        expect(s.termine).toBe(true);
+        expect(s.executer("sudo awk '$9 == 429' /var/log/nginx/access.log | wc -l")).toMatch(/^\d{3,}$/);
+      });
+
+      it('fausse piste : bloquer les adresses du robot ne suffit pas à Kofi', () => {
+        const { s } = jouer('concert', ['sudo id', 'fourmis-2026']);
+        modifier(s, SITE, (t) => t.replace('    location /agenda/ {', '    deny 198.51.100.0/24;\n\n    location /agenda/ {'));
+        const sortie = s.executer('sudo systemctl reload nginx') ?? '';
+        contient(sortie, 'ces robots changent');
+        expect(s.termine).toBe(false);
+      });
+
+      it('autre solution : la zone dans conf.d, la limite sur tout le site, 1 requête par seconde', () => {
+        const { s } = jouer('concert', ['sudo id', 'fourmis-2026']);
+        s.executer('echo "limit_req_zone $binary_remote_addr zone=lettres:10m rate=1r/s;" | sudo tee /etc/nginx/conf.d/limites.conf');
+        modifier(s, SITE, (t) => t.replace('    root /var/www/lettres;', '    limit_req zone=lettres burst=20 nodelay;\n    root /var/www/lettres;'));
+        s.executer('sudo systemctl reload nginx');
+        expect(s.termine).toBe(true);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

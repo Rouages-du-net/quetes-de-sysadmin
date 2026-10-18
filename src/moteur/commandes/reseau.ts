@@ -17,6 +17,7 @@
 import type { Shell } from '../shell';
 import type { Commande } from './index';
 import { requete } from '../nginx';
+import { digDns } from './bind';
 import { couvre, lire } from '../tls';
 import { systemd, versUtc } from '../systemd';
 
@@ -107,7 +108,10 @@ export const RESEAU: Record<string, Commande> = {
   },
 
   dig: {
+    propresOptions: true,
     lancer: ({ args, jeu }) => {
+      // Une machine avec un vrai DNS simulé (zones, serveurs, cache) : bind.ts.
+      if (jeu.etat.dns) return digDns(args, jeu);
       const serveur = args.find((a) => a.startsWith('@'))?.slice(1);
       const court = args.includes('+short');
       const nom = args.find((a) => !a.startsWith('@') && !a.startsWith('+'));
@@ -167,24 +171,50 @@ export const RESEAU: Record<string, Commande> = {
     // curl a beaucoup d'options (-s, -L, -v…) : on ignore celles qu'on ne simule pas.
     propresOptions: true,
     lancer: ({ args, jeu }) => {
+      // Les options qui prennent une valeur ; -H « Host: nom » choisit le site demandé.
+      const AVEC_VALEUR = ['-H', '--header', '-o', '--output', '-X', '--request', '-d', '--data', '-A', '--user-agent', '-u', '--user', '-w', '--write-out', '-e', '--referer'];
+      let hoteDemande: string | null = null;
+      const positionnels: string[] = [];
+      for (let i = 0; i < args.length; i++) {
+        if (AVEC_VALEUR.includes(args[i])) {
+          const valeur = args[++i] ?? '';
+          const h = /^host:\s*(\S+)/i.exec(valeur);
+          if ((args[i - 1] === '-H' || args[i - 1] === '--header') && h) hoteDemande = h[1];
+        } else if (!args[i].startsWith('-')) positionnels.push(args[i]);
+      }
       const entetes = args.includes('-I') || args.includes('--head');
-      const url = args.find((a) => !a.startsWith('-'));
+      const suivre = args.includes('-L') || args.includes('--location');
+      const url = positionnels[0];
       if (!url) return jeu.erreur("curl: try 'curl --help' for more information");
-      const m = /^(?:(https?):\/\/)?([^/:]+)(.*)$/.exec(url);
+      const m = /^(?:(https?):\/\/)?([^/:]+)(?::(\d+))?(.*)$/.exec(url);
       if (!m) return jeu.erreur(`curl: (3) URL rejected: Malformed input to a URL function`);
       const hote = m[2];
       // Une machine avec nginx : la requête part vers elle-même (localhost,
       // son nom, son adresse), et nginx répond selon sa configuration chargée.
       if (jeu.etat.nginx) {
-        if (![...LOCAL_DE_BASE, ...(jeu.etat.nginx.noms ?? [])].includes(hote.toLowerCase()))
-          return jeu.erreur(`curl: (6) Could not resolve host: ${hote}`);
-        const port = m[1] === 'https' ? 443 : 80;
-        const r = requete(jeu, hote, m[3] || '/', port);
-        if (!r) return jeu.erreur(`curl: (7) Failed to connect to ${hote} port ${port} after 0 ms: Couldn't connect to server`);
-        // HTTPS : curl vérifie le certificat présenté (dates, nom), sauf avec -k.
-        const probleme = port === 443 && !args.some((a) => a === '-k' || a === '--insecure') ? verifierCertificat(jeu, r.certificat ?? null, hote) : null;
-        if (probleme) return jeu.erreur(`curl: (60) ${probleme}\n${AIDE_SSL}`);
-        return entetes ? r.entetes.join('\n') : r.corps;
+        const locaux = [...LOCAL_DE_BASE, ...(jeu.etat.nginx.noms ?? [])];
+        const blocs: string[] = [];
+        let [schema, cible, port, chemin, nom] = [m[1] ?? 'http', hote, Number(m[3] ?? (m[1] === 'https' ? 443 : 80)), m[4] || '/', hoteDemande ?? hote];
+        // -L suit les redirections (au plus 5 ici).
+        for (let saut = 0; saut < 6; saut++) {
+          if (!locaux.includes(cible.toLowerCase())) return jeu.erreur(`curl: (6) Could not resolve host: ${cible}`);
+          const r = port === 80 || port === 443 ? requete(jeu, nom, chemin, port) : null;
+          if (!r) return jeu.erreur(`curl: (7) Failed to connect to ${cible} port ${port} after 0 ms: Couldn't connect to server`);
+          // HTTPS : curl vérifie le certificat présenté (dates, nom), sauf avec -k.
+          const insecure = args.some((a) => a === '-k' || a === '--insecure');
+          const probleme = schema === 'https' && !insecure ? verifierCertificat(jeu, r.certificat ?? null, cible) : null;
+          if (probleme) return jeu.erreur(`curl: (60) ${probleme}\n${AIDE_SSL}`);
+          const ailleurs = r.entetes.find((e) => e.startsWith('Location: '))?.slice(10);
+          if (!suivre || !ailleurs || r.code < 300 || r.code >= 400) {
+            blocs.push(entetes ? r.entetes.join('\n') : r.corps);
+            return blocs.join('\n\n');
+          }
+          if (entetes) blocs.push(r.entetes.join('\n'));
+          const suite = /^(https?):\/\/([^/:]+)(?::(\d+))?(.*)$/.exec(ailleurs);
+          if (!suite) return jeu.erreur(`curl: (3) URL rejected: Malformed input to a URL function`);
+          [schema, cible, port, chemin, nom] = [suite[1], suite[2], Number(suite[3] ?? (suite[1] === 'https' ? 443 : 80)), suite[4] || '/', suite[2]];
+        }
+        return jeu.erreur('curl: (47) Maximum (5) redirects followed');
       }
       const res = resoudreNom(jeu, hote);
       if ('erreur' in res) return jeu.erreur(`curl: (6) Could not resolve host: ${hote}`);
