@@ -37,6 +37,9 @@ export const PAGES: Record<string, Page> = {
   crontab: { exemples: ['crontab -e', 'crontab -l', '15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'sudo crontab -u malo -l'], voir: ['rsync', 'nano', 'systemctl'] },
   curl: { options: ['I', 'i', 'k'], voir: ['dig', 'nginx', 'openssl'] },
   df: { options: ['h'], voir: ['du'] },
+  dmesg: { section: 1, options: ['T'], exemples: ['sudo dmesg', 'sudo dmesg -T', 'sudo dmesg | grep -i "out of memory"'], voir: ['journalctl', 'free', 'top'] },
+  free: { options: ['h', 'm', 'b', 'k', 'g'], exemples: ['free -h'], voir: ['top', 'ps', 'df'] },
+  top: { exemples: ['top -o %MEM', 'top -b -n 1'], voir: ['ps', 'free', 'kill'] },
   diff: {
     options: ['u', 'r', 'q'],
     exemples: ['diff ancien.txt nouveau.txt', 'diff -u ancien.txt nouveau.txt', 'diff -r ~/site /var/www/site'],
@@ -70,8 +73,8 @@ export const PAGES: Record<string, Page> = {
   head: { options: ['n'], voir: ['tail', 'cat'] },
   host: { exemples: ['host cafe.example', 'host cafe.example ns2.registre.example'], voir: ['dig'] },
   id: { exemples: ['id', 'id malo'], voir: ['groups', 'whoami', 'usermod'] },
-  journalctl: { options: ['u', 'n', 'b', 'p', 'x', 'e'], exemples: ['journalctl -u nginx', 'journalctl -xeu nginx', 'journalctl -b -p err', 'journalctl -n 20'], voir: ['systemctl'] },
-  kill: { voir: ['ps'] },
+  journalctl: { options: ['u', 'n', 'b', 'k', 'p', 'x', 'e'], exemples: ['journalctl -u nginx', 'journalctl -xeu nginx', 'journalctl -b -p err', 'journalctl -n 20'], voir: ['systemctl', 'dmesg'] },
+  kill: { voir: ['ps', 'top'] },
   less: { voir: ['cat', 'head', 'tail'] },
   ln: {
     options: ['s', 'f', 'n', 'v'],
@@ -105,7 +108,7 @@ export const PAGES: Record<string, Page> = {
   createdb: { exemples: ['sudo -u postgres createdb ludo_test'], voir: ['dropdb', 'psql'] },
   dropdb: { exemples: ['sudo -u postgres dropdb ludo_test'], voir: ['createdb', 'psql'] },
   ping: { voir: ['traceroute', 'dig'] },
-  ps: { voir: ['kill', 'systemctl'] },
+  ps: { voir: ['kill', 'top', 'systemctl'] },
   pwd: { voir: ['cd'] },
   reboot: { section: 8, exemples: ['sudo reboot'], voir: ['systemctl'] },
   rsnapshot: {
@@ -137,7 +140,7 @@ export const PAGES: Record<string, Page> = {
   sshd: { section: 8, options: ['t', 'T', 'f'], exemples: ['sudo sshd -t', 'sudo sshd -T | grep -i password'], voir: ['sshd_config', 'ssh', 'systemctl'] },
   sshd_config: { exemples: ['sudo nano /etc/ssh/sshd_config', 'ls /etc/ssh/sshd_config.d'], voir: ['sshd', 'ssh', 'nano'] },
   sudo: { exemples: ['sudo cat /etc/sudoers', 'sudo -u postgres psql -l'], voir: ['whoami', 'chmod'] },
-  systemctl: { exemples: ['systemctl status nginx', 'systemctl --failed', 'sudo systemctl restart nginx', 'sudo systemctl enable --now nginx'], voir: ['journalctl', 'ps', 'sudo', 'reboot'] },
+  systemctl: { exemples: ['systemctl status nginx', 'systemctl --failed', 'sudo systemctl restart nginx', 'sudo systemctl enable --now nginx', 'sudo systemctl edit radio-playlist', 'sudo systemctl set-property radio-playlist MemoryMax=512M'], voir: ['journalctl', 'ps', 'sudo', 'reboot', 'top'] },
   test: { exemples: ['test -f index.html', '[ -d /srv/site/releases ]', 'test -f index.html || exit 1'], voir: ['sh', 'grep'] },
   truncate: { exemples: ['sudo truncate -s 0 /var/log/radio/flux.log'], voir: ['rm', 'logrotate', 'lsof'] },
   tail: { options: ['n'], exemples: ['tail -n 5 /var/log/syslog'], voir: ['head', 'cat'] },

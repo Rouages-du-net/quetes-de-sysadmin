@@ -144,6 +144,10 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | disques (`lsblk`, `mount`, `umount`) | périphériques décrits par le chapitre ; `mount` sans argument, `-o ro` ; un support en lecture seule refuse toute création (le contenu d'un fichier existant reste modifiable par une redirection) ; pas de `/etc/fstab` | toutes les options, `fstab`, systèmes de fichiers réels |
 | `rsnapshot` | `configtest`, `-t`, `-v`, `du`, la rotation des niveaux (`cp -al` puis `rsync`) ; une partie des directives ; messages proches de rsnapshot 1.4 | `backup_script`, `link_dest`, `sync_first`, sauvegardes distantes |
 | PostgreSQL | rôles et authentification « peer » ; `psql -c/-f/-l` avec un SQL réduit (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `\l`, `\dt`, `\d`) ; `pg_dump` (texte, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb` ; une archive `-Fc` ne contient qu'une référence gardée par le jeu ; une seule clé primaire par table | tout PostgreSQL, psql interactif, WAL et restauration à un instant donné |
+| `lsof`, `truncate`, `logrotate` | `lsof` ne connaît que les fichiers ouverts décrits par le chapitre (`+L1`, `-p`, `-u`, un fichier) ; `logrotate` : une partie des directives, `-d`, `-f`, `-v`, sorties abrégées | toutes les options, tous les fichiers ouverts du système |
+| mémoire (`free`, `top`, `dmesg`) | la mémoire de chaque processus est décrite par le chapitre ; pas de swap, le cache ne se libère pas (`available` = `free`) ; l'OOM killer tue le plus gros processus (sans `oom_score_adj`) ; `top` affiche un instantané et rend la main (`-b`, `-n`, `-o`, `-c`) ; `dmesg` (`-T`) réservé à root | swap, récupération du cache, score de l'OOM killer, `top` interactif, `htop` |
+| surcharges systemd | `systemctl edit`, `set-property` (seulement `MemoryMax=`), `daemon-reload` ; dans les surcharges, seuls `MemoryMax=` et `Restart=` de `[Service]` comptent ; un service relancé par `Restart=` repart aussitôt | toutes les directives, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
+| zombies | `ps -ef` montre le parent ; aucun signal n'agit sur un zombie ; ils disparaissent quand leur parent s'arrête | `wait()`, `SIGCHLD`, adoption par un sous-reaper |
 | `sudo -u`, `crontab -u`, `usermod -L` | `sudo -u compte` sans autre option ; `crontab -u` réservé à root ; `usermod -L/-U` marque le compte sans montrer `/etc/shadow` | toutes les options |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
@@ -931,6 +935,53 @@ sous `postgres`, une archive existe, une base de test a les mêmes nombres
 de lignes, et les prêts sont revenus. Pièges prévus : la redirection `>`
 avec `sudo -u`, restaurer par-dessus la base en service, réinjecter dans
 une table pleine (doublons), `pg_dump` dans la crontab de root.
+
+## Histoire 10 : L'Astreinte (en cours)
+
+Des nuits d'astreinte pour Radio Quartier (machine `radio`, 192.0.2.18),
+avec Zoé, bénévole technique. Les pannes classiques, une par nuit, puis la
+supervision qui prévient avant que ça casse. Phase 7 de la feuille de route.
+
+### Chapitre 1 — Le disque plein (fait)
+
+2 h 47 : l'enregistrement de nuit échoue, « No space left on device ». Le
+relais du flux (`radio-flux`) écrit son journal en mode debug depuis trois
+jours (16 Go).
+
+| Étape | Commande apprise |
+|---|---|
+| Trouver | `df -h`, `sudo du -sh /var/log/*`, `tail` (des lignes DEBUG) |
+| Le piège | `rm` d'un fichier encore ouvert : `df` reste plein, `sudo lsof +L1` montre `(deleted)` |
+| Vider | `sudo truncate -s 0 /var/log/radio/flux.log` (ou redémarrer le relais) |
+| Corriger | `loglevel = info` dans `/etc/radio/flux.conf`, `systemctl restart radio-flux` |
+| Éviter | `/etc/logrotate.d/radio` (`rotate`, `daily`, `copytruncate` ou `postrotate … systemctl reload`), `logrotate -d` |
+
+Objectif vérifié sur l'état : le disque est sous 80 %, aucun fichier effacé
+n'est encore tenu ouvert, le relais tourne sans debug, et une configuration
+logrotate valable couvre son journal et sait le faire rouvrir. Pièges
+prévus : `rm` d'un fichier ouvert, une rotation qui renomme sans faire
+rouvrir (le relais écrit dans `flux.log.1`), une directive mal écrite.
+
+### Chapitre 2 — La mémoire (fait)
+
+4 h 31 : le direct ne diffuse plus que du silence. La playlist de la nuit
+(`radio-playlist`, un programme Node) a été tuée par l'OOM killer : elle
+garde en mémoire chaque morceau décodé (une fuite). Et des processus
+zombies (`<defunct>`) résistent à `kill -9`.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `systemctl status` (`Result: oom-kill`), `sudo dmesg -T` ou `journalctl -k` (`Out of memory: Killed process`), `free -h` |
+| Voir la fuite | relancer, puis `top -o %MEM` d'une commande à l'autre ; le noyau frappe à nouveau |
+| Contenir | `sudo systemctl edit radio-playlist` : `[Service]`, `MemoryMax=600M`, `Restart=on-failure` (ou `systemctl set-property … MemoryMax=`, une surcharge écrite à la main et `daemon-reload`) |
+| Les zombies | `ps -ef` (le parent, PPID 2305), `kill` n'y peut rien, `sudo systemctl restart radio-podcast` |
+
+Objectif vérifié sur l'état : la playlist tourne avec une limite de mémoire
+entre 256 Mo et 1 Go et une relance automatique, plus aucun zombie, le
+relais actif. Pièges prévus : `kill -9` sur un zombie, relancer sans limite
+(l'OOM killer revient), une limite sans `Restart=` (la playlist reste
+arrêtée), une limite trop basse (tuée au démarrage) ou trop haute, une
+surcharge écrite à la main sans `daemon-reload`.
 
 ## Idées pour la suite
 

@@ -61,6 +61,8 @@ export interface Edition {
   message: string;
   // À la fermeture (ex. crontab -e vérifie et installe) : message à afficher.
   apres?: () => string;
+  // La fermeture change l'état (ex. systemctl edit) : elle compte comme une commande, même sans message.
+  conclure?: boolean;
 }
 
 export class Shell implements Jeu {
@@ -645,9 +647,10 @@ export class Shell implements Jeu {
   /** Ferme l'éditeur ; renvoie les messages de l'histoire en attente. */
   quitterEdition(): string {
     const apres = this.edition?.apres?.() ?? '';
+    const conclure = this.edition?.conclure;
     this.edition = null;
     // Ce que la fermeture a changé (ex. une crontab installée) compte comme une commande.
-    const suite = apres ? this.conclure('', true) : '';
+    const suite = apres || conclure ? this.conclure('', true) : '';
     const messages = [apres, ...this.enAttente, suite].filter(Boolean).join('\n\n');
     this.enAttente = [];
     return messages;

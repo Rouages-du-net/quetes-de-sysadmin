@@ -1423,6 +1423,72 @@ for (const langue of LANGUES)
       });
     });
 
+    describe("L'Astreinte, chapitre 2 — La mémoire (OOM killer, MemoryMax=, Restart=, zombies)", () => {
+      it('solution : dmesg, top, systemctl edit (MemoryMax=, Restart=), le parent des zombies redémarré', () => {
+        const { s, tout } = jouer('memoire', [
+          'systemctl status radio-playlist',
+          'sudo dmesg -T',
+          'antenne-2027',
+          'free -h',
+          'ps -ef',
+          'sudo systemctl edit radio-playlist',
+        ]);
+        expect(tout).toContain('Active: failed (Result: oom-kill)');
+        expect(tout).toContain('[Sun Aug 22 04:12:30 2027] Out of memory: Killed process 2601 (node)');
+        expect(tout).toMatch(/^Mem: +2\.0Gi +\d+Mi/m);
+        expect(tout).toMatch(/radio +2411 +2305 .*\[convertir\] <defunct>/);
+        contient(tout, "l'OOM killer");
+        s.enregistrerEdition(`[Service]\nMemoryMax=600M\nRestart=on-failure\n${s.edition!.texte}`);
+        s.quitterEdition();
+        expect(s.lire('/etc/systemd/system/radio-playlist.service.d/override.conf')).toBe('[Service]\nMemoryMax=600M\nRestart=on-failure');
+        s.executer('sudo systemctl start radio-playlist');
+        expect(s.executer('systemctl status radio-playlist')).toMatch(/Memory: \d+\.\dM \(max: 600\.0M/);
+        // La fuite atteint la limite : systemd tue la playlist et la relance, la machine ne sent rien.
+        let sorties = '';
+        for (let i = 0; i < 8; i++) sorties += s.executer('top -b -n 1 -o %MEM');
+        contient(sorties, 'systemd l');
+        expect(s.executer('sudo dmesg')).toContain('Memory cgroup out of memory: Killed process');
+        expect(s.executer('systemctl status radio-playlist')).toContain('restart counter is at 1');
+        expect(s.termine).toBe(false);
+        contient(s.executer('sudo systemctl restart radio-podcast') ?? '', "Tu as terminé le chapitre 2 de L'Astreinte");
+        expect(s.executer('ps aux')).not.toContain('<defunct>');
+        expect(s.termine).toBe(true);
+      });
+
+      it('autre solution : systemctl set-property, puis Restart= écrit à la main et daemon-reload', () => {
+        const { s } = jouer('memoire', ['sudo systemctl set-property radio-playlist MemoryMax=512M', 'antenne-2027']);
+        expect(s.lire('/etc/systemd/system.control/radio-playlist.service.d/50-MemoryMax.conf')).toContain('MemoryMax=536870912');
+        expect(s.executer('sudo systemctl set-property radio-playlist Restart=on-failure')).toContain('Cannot set property Restart');
+        s.executer('sudo mkdir -p /etc/systemd/system/radio-playlist.service.d');
+        s.executer('sudo nano /etc/systemd/system/radio-playlist.service.d/restart.conf');
+        s.enregistrerEdition('[Service]\nRestart=on-failure\n');
+        s.quitterEdition();
+        expect(s.executer('sudo systemctl start radio-playlist')).toContain("Run 'systemctl daemon-reload' to reload units.");
+        s.executer('sudo systemctl restart radio-podcast');
+        expect(s.termine).toBe(false);
+        s.executer('sudo systemctl daemon-reload');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : kill -9 sur un zombie, relancer sans limite, une limite sans relance', () => {
+        const { s, tout } = jouer('memoire', ['sudo kill -9 2411', 'antenne-2027', 'ps aux', 'sudo systemctl start radio-playlist']);
+        expect(tout).toContain('[convertir] <defunct>');
+        contient(tout, 'kill ne fait rien à un zombie');
+        let sorties = '';
+        for (let i = 0; i < 16; i++) sorties += s.executer('free -m');
+        contient(sorties, 'Et voilà');
+        expect(s.executer('sudo dmesg')).toContain('node invoked oom-killer');
+        contient(s.executer('sudo systemctl set-property radio-playlist MemoryMax=100M') ?? '', 'Cette limite est trop basse');
+        s.executer('sudo systemctl set-property radio-playlist MemoryMax=400M');
+        s.executer('sudo systemctl start radio-playlist');
+        sorties = '';
+        for (let i = 0; i < 5; i++) sorties += s.executer('free -m');
+        contient(sorties, 'elle est restée arrêtée');
+        expect(s.executer('systemctl is-active radio-playlist')).toBe('failed');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

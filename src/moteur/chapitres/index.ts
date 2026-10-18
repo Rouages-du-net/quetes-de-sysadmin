@@ -34,6 +34,7 @@ import { rancon } from './rancon';
 import { instantanesChapitre } from './instantanes';
 import { base } from './base';
 import { disquePlein } from './disque-plein';
+import { memoireChapitre } from './memoire';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -74,7 +75,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'astreinte',
-    chapitres: [disquePlein],
+    chapitres: [disquePlein, memoireChapitre],
   },
 ];
 
