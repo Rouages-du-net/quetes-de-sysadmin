@@ -63,7 +63,7 @@ journal dit quelle vérification échoue.
   ressource tierce ; le test dans le navigateur échoue si on le fait.
 - **Fichier à intégrer** : `/integration/quetes-de-sysadmin.js` est servi
   avec `Access-Control-Allow-Origin: *`, indispensable pour qu'un autre site
-  le charge en `<script type="module">`, et mis en cache une heure (son nom ne
-  change pas d'une version à l'autre).
+  le charge en `<script type="module">`, et revalidé à chaque visite (son nom
+  ne change pas d'une version à l'autre).
 - **Retour arrière** : revenir sur le commit fautif (`git revert`) et pousser
   sur `main` ; le workflow renvoie l'ancienne version.
