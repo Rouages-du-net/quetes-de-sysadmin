@@ -82,7 +82,7 @@ const logsOuverts = (j: Jeu) => j.peut(j.trouver(LOGS)!, 'w', 'nobody');
 export const redemarrage: Chapitre = {
   id: 'redemarrage',
   numero: 3,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'ps', 'systemctl', 'journalctl', 'chown', 'chmod', 'sudo', 'reboot', 'whoami'],
+  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'ps', 'systemctl', 'journalctl', 'chown', 'chmod', 'nano', 'sudo', 'reboot', 'whoami'],
   maison: M,
   accueil: 'courriel_awa.txt',
   final: 'fin',

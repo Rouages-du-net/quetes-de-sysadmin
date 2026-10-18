@@ -49,6 +49,15 @@ export interface Jeu {
   // (console.ts) s'en charge après la ligne en cours.
   demandeConnexion: string | null;
   redemarrage: boolean;
+  edition: Edition | null;
+}
+
+export interface Edition {
+  chemin: string;
+  texte: string;
+  root: boolean;
+  // Message de la ligne d'état à l'ouverture (« Nouveau fichier »…).
+  message: string;
 }
 
 export class Shell implements Jeu {
@@ -70,6 +79,11 @@ export class Shell implements Jeu {
   sortie = false;
   // La machine vient de redémarrer (reboot) : la console coupe la session.
   redemarrage = false;
+  // Fichier ouvert dans l'éditeur (nano) : l'interface l'affiche à la place
+  // de la ligne de commande. `root` : ouvert avec sudo.
+  edition: Edition | null = null;
+  // Messages de l'histoire déclenchés pendant l'édition, affichés à la sortie.
+  private enAttente: string[] = [];
   demandeConnexion: string | null = null;
   comptes: Comptes;
   // Sortie d'erreur et remarques de la ligne en cours.
@@ -480,6 +494,47 @@ export class Shell implements Jeu {
     } finally {
       this.qui = avant;
     }
+  }
+
+  // ——— Éditeur (nano) ———
+
+  /**
+   * Écrit le texte de l'éditeur dans le fichier, avec les droits de celui ou
+   * celle qui l'a ouvert (root sous sudo) ; renvoie le message de nano.
+   * Les événements de l'histoire sont vérifiés, et leurs messages gardés pour
+   * la fermeture de l'éditeur.
+   */
+  enregistrerEdition(texte: string): string {
+    const e = this.edition!;
+    const avant = this.qui;
+    if (e.root) this.qui = 'root';
+    try {
+      const n = this.trouver(e.chemin);
+      const lignes = texte === '' ? 0 : texte.replace(/\n$/, '').split('\n').length;
+      if (n?.type === 'fichier') {
+        if (!this.traverse(e.chemin) || !this.peut(n, 'w')) return this.t('nano-erreur-ecriture', { chemin: e.chemin });
+        n.contenu = texte.replace(/\n$/, '');
+        n.lignes = true;
+        delete n.taille;
+      } else {
+        const erreur = this.placer('nano', e.chemin, { type: 'fichier', contenu: texte.replace(/\n$/, ''), proprio: this.qui, lignes: true });
+        if (erreur) return this.t(this.trouver(e.chemin + '/..') ? 'nano-erreur-ecriture' : 'nano-erreur-dossier', { chemin: e.chemin });
+      }
+      e.texte = texte;
+      const suite = this.conclure('', true);
+      if (suite) this.enAttente.push(suite);
+      return this.t('nano-lignes-ecrites', { lignes });
+    } finally {
+      this.qui = avant;
+    }
+  }
+
+  /** Ferme l'éditeur ; renvoie les messages de l'histoire en attente. */
+  quitterEdition(): string {
+    this.edition = null;
+    const messages = this.enAttente.join('\n\n');
+    this.enAttente = [];
+    return messages;
   }
 
   private verifierEvenements(): string[] {

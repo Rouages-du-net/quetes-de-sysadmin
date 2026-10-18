@@ -130,3 +130,25 @@
 @media (prefers-reduced-motion: reduce) {
   .qds * { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* L'éditeur nano, dans le terminal. */
+.qds .nano { display: flex; flex-direction: column; gap: 0.25rem; }
+.qds .nano-titre {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 1ch;
+  background: var(--_terminal-texte); color: var(--_terminal-fond); padding: 0 1ch;
+}
+.qds .nano-chemin { overflow-wrap: anywhere; }
+.qds .nano-texte {
+  width: 100%; min-height: 16rem; resize: vertical; box-sizing: border-box;
+  background: transparent; color: inherit; font: inherit; border: 1px dashed color-mix(in oklab, var(--_terminal-texte) 40%, transparent);
+  padding: 0.25rem; caret-color: var(--_terminal-texte);
+}
+.qds .nano-texte:focus-visible { outline: 2px solid var(--_terminal-invite); outline-offset: 1px; }
+.qds .nano-etat { min-height: 1.5em; text-align: center; color: var(--_terminal-invite); }
+.qds .nano-aide { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
+.qds .nano-touche {
+  font: inherit; color: inherit; background: none; border: 1px solid transparent; border-radius: 0.25rem;
+  padding: 0.1rem 0.3rem; cursor: pointer;
+}
+.qds .nano-touche:focus-visible { outline: 2px solid var(--_terminal-invite); }
+.qds .nano-touche kbd { font: inherit; background: var(--_terminal-texte); color: var(--_terminal-fond); padding: 0 0.2ch; }

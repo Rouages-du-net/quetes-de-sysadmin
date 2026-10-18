@@ -206,6 +206,11 @@ man-reboot = redémarre la machine. Les services activés (systemctl enable) rep
     .synopsis = reboot
     .exemple-1 = redémarrer la machine
 
+man-nano = un éditeur de texte simple, dans le terminal. On tape directement dans le fichier ; les raccourcis sont en bas de l'écran, ^ voulant dire Ctrl : ^O (Ctrl+O) écrit le fichier, ^X (Ctrl+X) quitte en proposant d'enregistrer les modifications. Pour modifier un fichier de root, on ouvre nano avec sudo. (Dans le jeu, sur mobile, les raccourcis sont aussi des boutons.)
+    .synopsis = nano fichier
+    .exemple-1 = écrire des notes (le fichier est créé s'il n'existe pas)
+    .exemple-2 = modifier un fichier de configuration de root
+
 ## Mise en page du manuel et messages de man-db et des coreutils
 
 # En-tête de chaque page, entre « LS(1) » et « LS(1) »

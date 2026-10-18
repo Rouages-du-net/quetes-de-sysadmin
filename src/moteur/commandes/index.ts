@@ -12,6 +12,7 @@ import { PAGES } from './pages';
 import { SSH } from './ssh';
 import { COMPTES } from './comptes';
 import { SYSTEMD } from './systemd';
+import { EDITEUR } from './editeur';
 
 export interface Contexte {
   args: string[];
@@ -47,6 +48,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...SSH,
   ...COMPTES,
   ...SYSTEMD,
+  ...EDITEUR,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },

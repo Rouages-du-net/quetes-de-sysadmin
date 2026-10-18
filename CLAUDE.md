@@ -25,7 +25,8 @@ rouages.net.
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;
   on part du poste et on se connecte en `ssh` à la machine de chaque
   histoire (`commandes/ssh.ts`).
-- `src/interface/` : interface (`jeu.ts`, fonction `monter()`) et styles
+- `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
+  dans `editeur.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).
 - `src/element.ts` : l'élément `<quetes-de-sysadmin>` (Shadow DOM).
 - `src/textes/<langue>/*.ftl` : tous les textes (Fluent), chargés par
