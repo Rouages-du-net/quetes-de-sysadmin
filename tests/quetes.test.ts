@@ -739,6 +739,59 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('La Fabrique, chapitre 2 — La composition (docker compose)', () => {
+      const modifier = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        s.quitterEdition();
+      };
+      // Le fichier corrigé : nom du service, variable, volume, redémarrage, sans version:.
+      const corriger = (t: string) =>
+        t
+          .replace('version: "3.8"\n\n', '')
+          .replace('@localhost:', '@db:')
+          .replaceAll('atelier2027', '${POSTGRES_PASSWORD}')
+          .replace('    depends_on:', '    restart: unless-stopped\n    depends_on:')
+          .replace('      - POSTGRES_DB=reservations', '      - POSTGRES_DB=reservations\n    volumes:\n      - donnees:/var/lib/postgresql/data\n    restart: unless-stopped\n\nvolumes:\n  donnees:');
+
+      it('solution, avec la fausse piste localhost', () => {
+        const { s, tout } = jouer('composition', ['cd /srv/reservations', 'sudo docker compose up -d', 'fablab-2027', 'sudo docker compose logs appli', 'curl http://localhost:8081']);
+        expect(tout).toContain('the attribute `version` is obsolete');
+        expect(tout).toContain('Error: connect ECONNREFUSED 127.0.0.1:5432');
+        expect(tout).toContain("curl: (7) Failed to connect to localhost port 8081");
+        contient(tout, 'dans un conteneur, localhost désigne le conteneur');
+        modifier(s, '/srv/reservations/compose.yaml', corriger);
+        const config = s.executer('sudo docker compose config') ?? '';
+        expect(config).toContain('The "POSTGRES_PASSWORD" variable is not set.');
+        s.executer('echo POSTGRES_PASSWORD=atelier2027 | sudo tee .env');
+        s.executer('sudo docker compose up -d');
+        expect(s.executer('curl http://localhost:8081')).toContain('base de données connectée');
+        expect(s.termine).toBe(false);
+        s.executer('sudo chmod 600 .env');
+        expect(s.termine).toBe(true);
+        s.executer('sudo reboot');
+        expect(s.executer('curl http://localhost:8081')).toContain('Réserver une machine');
+      });
+
+      it('fausse piste : changer POSTGRES_PASSWORD après la création de la base, puis down -v', () => {
+        const { s } = jouer('composition', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
+        modifier(s, '/srv/reservations/compose.yaml', (t) => corriger(t).replaceAll('${POSTGRES_PASSWORD}', 'atelier2027'));
+        s.executer('sudo docker compose up -d');
+        expect(s.executer('curl http://localhost:8081')).toContain('base de données connectée');
+        // Le mot de passe passe dans .env… mais un autre que celui de la base existante.
+        modifier(s, '/srv/reservations/compose.yaml', (t) => t.replaceAll('atelier2027', '${POSTGRES_PASSWORD}'));
+        s.executer('echo POSTGRES_PASSWORD=nouveau-secret | sudo tee .env');
+        s.executer('sudo chmod 600 .env');
+        const echec = s.executer('sudo docker compose up -d') ?? '';
+        expect(s.executer('sudo docker compose logs appli')).toContain('password authentication failed for user "fablab"');
+        contient(echec, 'password authentication failed');
+        expect(s.termine).toBe(false);
+        const refait = ['sudo docker compose down -v', 'sudo docker compose up -d'].map((l) => s.executer(l) ?? '').join('\n');
+        contient(refait, 'les volumes du projet sont effacés');
+        expect(s.termine).toBe(true);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

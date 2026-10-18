@@ -91,7 +91,8 @@ mise-a-jour-evenement-fin =
     après une coupure. Yasmine : « Et la prochaine mise à jour, ce sera
     juste : nouveau conteneur, même volume ! »
 
-    Bravo ! Tu as terminé le chapitre 1 de La Fabrique.
+    Bravo ! Tu as terminé le chapitre 1 de La Fabrique. (La suite t'attend :
+    La composition.)
 
     CE QUI S'EST PASSÉ
     L'outilthèque avait été lancée sans volume : sa base vivait dans la

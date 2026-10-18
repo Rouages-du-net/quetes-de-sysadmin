@@ -43,7 +43,11 @@ export const PAGES: Record<string, Page> = {
       'sudo docker run -d --name appli -p 8080:8080 -v donnees:/var/lib/appli --restart unless-stopped image:1.0',
       "sudo docker inspect -f '{{json .Mounts}}' appli",
     ],
-    voir: ['systemctl', 'curl'],
+    voir: ['docker-compose', 'systemctl', 'curl'],
+  },
+  'docker-compose': {
+    exemples: ['sudo docker compose up -d', 'sudo docker compose ps', 'sudo docker compose logs appli', 'sudo docker compose config', 'sudo docker compose down'],
+    voir: ['docker'],
   },
   du: { options: ['h', 's'], voir: ['df', 'find'] },
   'fail2ban-client': { exemples: ['sudo fail2ban-client status', 'sudo fail2ban-client status sshd', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client -t', 'sudo fail2ban-client reload'], voir: ['jail.conf', 'journalctl', 'ufw'] },

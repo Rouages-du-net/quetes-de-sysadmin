@@ -133,6 +133,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `awk` | programme entre apostrophes : motifs, `BEGIN`/`END`, champs, tableaux, `printf`, fonctions courantes, `-F`, `-v` ; pas de `getline`, de redirection dans `print`, de fonctions définies ni de `?:` | le langage complet (mawk sur Debian) |
 | trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
 | Docker | images d'un registre simulé, conteneurs (couche, volumes, dossiers montés, ports, `--restart`), `run`, `ps`, `images`, `pull`, `logs` (`-n`, `-t`), `exec` (`ls`, `cat`, `env`, `id`, `whoami`), `cp`, `stop`, `start`, `restart`, `rm`, `port`, `update --restart`, `inspect` (`-f '{{.Champ}}'`), `volume` ; sans `-d`, `run` rend la main ; pas de réseau entre conteneurs hors Compose, pas de `build` | tout Docker |
+| Docker Compose | `compose.yaml` en YAML réduit (correspondances, listes, chaînes, `[a, b]`) ; clés `image`, `ports`, `volumes`, `environment`, `env_file`, `depends_on`, `restart` ; `up` (recrée ce qui a changé), `down` (`-v`), `ps`, `logs`, `config`, `restart`, `stop`, `start`, `exec`, `pull` ; un service qui échoue au démarrage est relancé une fois s'il a une politique `restart` | toute la spécification Compose, `build`, `healthcheck`, profils |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -662,6 +663,37 @@ dans le volume avant de lancer, `docker update --restart`, `always`.
 Débrief : `inspect` avant de toucher, volumes, `docker cp`, remplacer sans
 supprimer trop tôt, `--restart`, le groupe docker vaut root ; liens vers
 la documentation de Docker.
+
+### Chapitre 2 — La composition (fait)
+
+Le fablab veut un site de réservation des machines : l'appli
+`reservations` et sa base PostgreSQL, décrites dans un `compose.yaml` copié
+d'un tutoriel (`/srv/reservations`). Compose est simulé dans
+`src/moteur/compose.ts` (YAML réduit, variables de `.env`, réseau du projet
+où chaque service est joignable par son nom, volumes nommés).
+
+| Étape | Commande apprise |
+|---|---|
+| Lancer, regarder | `sudo docker compose up -d`, `docker compose ps`, `docker compose logs appli`, `curl http://localhost:8081` |
+| Joindre la base | `DATABASE_URL=postgres://…@db:5432/…` (le nom du service, pas `localhost`) |
+| Garder les données | `volumes: - donnees:/var/lib/postgresql/data` et `volumes: donnees:` en bas du fichier |
+| Sortir le secret | `${POSTGRES_PASSWORD}` dans `compose.yaml`, la valeur dans `.env`, `chmod 600 .env` ; `docker compose config` |
+| Que ça tienne | `restart: unless-stopped` sur chaque service, puis `docker compose up -d` |
+
+Objectif vérifié sur l'état : les conteneurs correspondent au fichier et à
+`.env` actuels, l'appli est connectée à la base, la base garde ses données
+dans un volume, le mot de passe n'est plus dans `compose.yaml` mais dans un
+`.env` lisible par root seulement, et les deux services ont une politique de
+redémarrage.
+
+Pièges prévus : `localhost` dans un conteneur (`ECONNREFUSED 127.0.0.1:5432`),
+`version:` obsolète (avertissement), variable absente de `.env` (PostgreSQL
+refuse de s'initialiser sans mot de passe), mot de passe changé après la
+création de la base (`password authentication failed` : `POSTGRES_PASSWORD`
+ne sert qu'à l'initialisation ; `down -v` efface les volumes), `.env`
+lisible par tous, l'oubli de `restart`. Débrief : nom des services, volume
+nommé, secrets dans `.env`, `config`, `down -v`, `restart` ; liens vers la
+documentation de Compose et l'image PostgreSQL.
 
 ## Idées pour la suite
 

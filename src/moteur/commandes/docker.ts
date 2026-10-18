@@ -27,6 +27,7 @@ import {
   type Port,
 } from '../docker';
 import { systemd } from '../systemd';
+import { conteneursDuProjet, ErreurYaml, lireProjet, monter, type Projet } from '../compose';
 import type { Commande } from './index';
 
 const SOCKET = 'permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock';
@@ -63,6 +64,9 @@ const ports = (c: Conteneur) =>
 
 function statut(c: Conteneur, maintenant: number): string {
   if (c.etat === 'running') return `Up ${duree(maintenant - c.debut)}`;
+  // Un conteneur qui s'arrête en erreur et que sa politique relance sans fin.
+  if (c.etat === 'exited' && c.code !== 0 && ['always', 'unless-stopped', 'on-failure'].includes(c.redemarrage.split(':')[0]))
+    return `Restarting (${c.code}) ${duree(Math.min(maintenant - c.fin, 9000))} ago`;
   if (c.etat === 'exited') return `Exited (${c.code}) ${duree(maintenant - c.fin)} ago`;
   return 'Created';
 }
@@ -390,6 +394,153 @@ function exec(d: EtatDocker, jeu: Shell, args: string[]): string {
   );
 }
 
+// ——— docker compose ———
+
+function compose(d: EtatDocker, jeu: Shell, args: string[]): string {
+  const sorties: string[] = [];
+  let dossier = jeu.cwd;
+  const reste: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '-f' || args[i] === '--file') dossier = jeu.resoudre(args[++i] ?? '.').replace(/\/[^/]+$/, '');
+    else if (args[i] === '--project-directory') dossier = jeu.resoudre(args[++i] ?? '.');
+    else reste.push(args[i]);
+  }
+  const [action, ...options] = reste;
+  if (!action) return jeu.erreur(jeu.t('compose-usage'));
+  let projet: Projet;
+  try {
+    projet = lireProjet(jeu, dossier);
+  } catch (e) {
+    if (e instanceof ErreurYaml) return jeu.erreur(e.message);
+    throw e;
+  }
+  const avertir = () => projet.avertissements.map((a) => `WARN[0000] ${a}`);
+  const conteneurs = () => conteneursDuProjet(d, projet.nom);
+  const service = (nom?: string) => conteneurs().find((c) => c.service === nom);
+  switch (action) {
+    case 'config':
+      return [...avertir(), afficherProjet(projet)].join('\n');
+    case 'up': {
+      const detache = options.some((o) => o === '-d' || o === '--detach');
+      const { lignes, erreur } = monter(jeu, projet, (image) => !!d.images[complet(image)] || tirer(d, image) !== null);
+      jeu.etat.composeUp = (jeu.etat.composeUp ?? 0) + 1;
+      const tete = [...avertir(), `[+] Running ${lignes.length}/${lignes.length}`, ...lignes];
+      if (erreur) return jeu.erreur([...tete, erreur].join('\n'));
+      if (detache) return tete.join('\n');
+      const journaux = conteneurs().flatMap((c) => c.journal.map((l) => `${c.service.padEnd(6)} | ${l.texte}`));
+      return [
+        ...tete,
+        `Attaching to ${conteneurs()
+          .map((c) => c.nom)
+          .join(', ')}`,
+        ...journaux,
+        jeu.t('docker-attache'),
+      ].join('\n');
+    }
+    case 'down': {
+      const volumes = options.some((o) => o === '-v' || o === '--volumes');
+      const lignes: string[] = [];
+      for (const c of [...conteneurs()].reverse()) {
+        stopper(jeu, c);
+        d.conteneurs = d.conteneurs.filter((x) => x !== c);
+        lignes.push(` ✔ Container ${c.nom}  Removed`);
+      }
+      // down -v efface aussi les volumes du projet : leurs données sont perdues.
+      if (volumes)
+        for (const v of projet.volumes) {
+          const nom = `${projet.nom}_${v}`;
+          if (d.volumes[nom]) {
+            delete d.volumes[nom];
+            lignes.push(` ✔ Volume ${nom}  Removed`);
+            jeu.etat.composeVolumesEffaces = true;
+          }
+        }
+      const reseaux: Record<string, true> = jeu.etat.dockerReseaux ?? {};
+      if (reseaux[`${projet.nom}_default`]) {
+        delete reseaux[`${projet.nom}_default`];
+        lignes.push(` ✔ Network ${projet.nom}_default  Removed`);
+      }
+      return [...avertir(), `[+] Running ${lignes.length}/${lignes.length}`, ...lignes].join('\n');
+    }
+    case 'ps': {
+      const maintenant = horloge(jeu);
+      // Sans -a : ceux qui tournent, et ceux que leur politique relance en boucle.
+      const enBoucle = (c: Conteneur) => c.code !== 0 && ['always', 'unless-stopped', 'on-failure'].includes(c.redemarrage.split(':')[0]);
+      const liste = conteneurs().filter((c) => options.includes('-a') || options.includes('--all') || c.etat === 'running' || enBoucle(c));
+      return [
+        ...avertir(),
+        tableau(
+          ['NAME', 'IMAGE', 'COMMAND', 'SERVICE', 'CREATED', 'STATUS', 'PORTS'],
+          liste.map((c) => {
+            const commande = imageDe(d, c)?.commande ?? '';
+            return [
+              c.nom,
+              c.image,
+              `"${commande.length > 20 ? commande.slice(0, 19) + '…' : commande}"`,
+              c.service,
+              `${duree(maintenant - c.cree)} ago`,
+              statut(c, maintenant),
+              c.etat === 'running' ? ports(c) : '',
+            ];
+          }),
+        ),
+      ].join('\n');
+    }
+    case 'logs': {
+      const nom = options.find((o, i) => !o.startsWith('-') && !['-n', '--tail'].includes(options[i - 1]));
+      const liste = nom ? conteneurs().filter((c) => c.service === nom) : conteneurs();
+      if (nom && !liste.length) return jeu.erreur(`no such service: ${nom}`);
+      const largeur = Math.max(...liste.map((c) => c.nom.length));
+      return liste.flatMap((c) => c.journal.map((l) => `${c.nom.padEnd(largeur)}  | ${l.texte}`)).join('\n');
+    }
+    case 'restart':
+    case 'stop':
+    case 'start': {
+      const noms = options.filter((o) => !o.startsWith('-'));
+      const liste = noms.length ? conteneurs().filter((c) => noms.includes(c.service)) : conteneurs();
+      for (const c of liste) {
+        if (action !== 'start') stopper(jeu, c);
+        if (action !== 'stop') lancer(jeu, c);
+      }
+      const verbe = { restart: 'Started', stop: 'Stopped', start: 'Started' }[action];
+      return [
+        ...avertir(),
+        `[+] ${action === 'stop' ? 'Stopping' : 'Restarting'} ${liste.length}/${liste.length}`,
+        ...liste.map((c) => ` ✔ Container ${c.nom}  ${verbe}`),
+      ].join('\n');
+    }
+    case 'exec': {
+      const [nom, ...commande] = options.filter((o) => !/^-[it]+$/.test(o));
+      const c = service(nom);
+      if (!c) return jeu.erreur(`service "${nom ?? ''}" is not running`);
+      return exec(d, jeu, [c.nom, ...commande]);
+    }
+    case 'pull':
+      for (const s of projet.services) (sorties.push(` ✔ ${s.nom} Pulled`), tirer(d, s.image));
+      return [...avertir(), `[+] Pulling ${projet.services.length}/${projet.services.length}`, ...sorties].join('\n');
+    default:
+      return jeu.erreur(`unknown docker command: "compose ${action}"`);
+  }
+}
+
+// docker compose config : le projet tel que Compose l'a compris (variables remplacées).
+function afficherProjet(p: Projet): string {
+  const lignes = [`name: ${p.nom}`, 'services:'];
+  for (const s of p.services) {
+    lignes.push(`  ${s.nom}:`);
+    if (s.dependances.length)
+      lignes.push('    depends_on:', ...s.dependances.map((d) => `      ${d}:\n        condition: service_started\n        required: true`));
+    if (Object.keys(s.env).length) lignes.push('    environment:', ...Object.entries(s.env).map(([k, v]) => `      ${k}: ${v === '' ? '""' : v}`));
+    lignes.push(`    image: ${s.image}`, '    networks:', '      default: null');
+    if (s.ports.length) lignes.push('    ports:', ...s.ports.map((x) => `      - ${x}`));
+    if (s.redemarrage !== 'no') lignes.push(`    restart: ${s.redemarrage}`);
+    if (s.volumes.length) lignes.push('    volumes:', ...s.volumes.map((v) => `      - ${v}`));
+  }
+  lignes.push('networks:', '  default:', `    name: ${p.nom}_default`);
+  if (p.volumes.length) lignes.push('volumes:', ...p.volumes.flatMap((v) => [`  ${v}:`, `    name: ${p.nom}_${v}`]));
+  return lignes.join('\n');
+}
+
 // --format '{{.State.Status}}' : un chemin dans l'objet JSON.
 function formatGo(objet: unknown, modele: string): string {
   return modele.replace(/\{\{\s*(json\s+)?\.([\w.]*)\s*\}\}/g, (_, json: string | undefined, chemin: string) => {
@@ -427,6 +578,11 @@ function inspecter(jeu: Shell, c: Conteneur) {
 const AIDE = (jeu: Shell) => jeu.erreur(jeu.t('docker-usage'));
 
 export const DOCKER: Record<string, Commande> = {
+  // Le paquet docker-compose de Debian : la même chose que docker compose.
+  'docker-compose': {
+    propresOptions: true,
+    lancer: (contexte) => DOCKER.docker.lancer({ ...contexte, args: ['compose', ...contexte.args] }),
+  },
   docker: {
     propresOptions: true,
     lancer: ({ args, jeu }) => {
@@ -584,6 +740,8 @@ export const DOCKER: Record<string, Commande> = {
           }
           return jeu.erreur(jeu.t('docker-volume-usage'));
         }
+        case 'compose':
+          return compose(d, jeu, reste);
         case undefined:
           return AIDE(jeu);
         default:

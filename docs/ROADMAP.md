@@ -181,8 +181,9 @@ demandent plusieurs.
 - [x] **Docker** : image, conteneur, `docker run/ps/logs/exec/cp`, ports,
       volumes (et ce qu'on perd sans volume), `--restart` ; quête « La mise
       à jour » (La Fabrique, chapitre 1)
-- [ ] **Docker Compose** : plusieurs services (web, base, cache), réseau
-      interne, variables d'environnement, redémarrage
+- [x] **Docker Compose** : plusieurs services (appli, base), réseau
+      interne (le nom du service), variables et `.env`, volumes, redémarrage ;
+      quête « La composition » (La Fabrique, chapitre 2)
 - [x] Mettre à jour une image sans perdre les données (« La mise à jour »)
 - [ ] Nettoyer le disque (`docker system df`, `prune`)
 - [ ] Sécurité : ne pas exposer la base, ne pas tourner en root, `ufw` et

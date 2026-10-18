@@ -40,6 +40,7 @@ rouages.net.
 - `src/moteur/docker.ts` : Docker d'une machine (images, conteneurs, couche,
   volumes, ports publiés, `--restart`) ; les applis des images sont
   déclarées par les chapitres (`APPLIS`) ; la commande dans `commandes/docker.ts`.
+  Docker Compose (`compose.yaml`, `.env`, réseau du projet) dans `src/moteur/compose.ts`.
 - `commandes/restic.ts` : dépôts restic (instantanés, déduplication,
   politiques de `forget`, `prune`), rangés dans `etat.restic`.
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;

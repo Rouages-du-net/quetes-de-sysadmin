@@ -215,10 +215,12 @@ export const RESEAU: Record<string, Commande> = {
           const viaDocker = requeteDocker(jeu, cible.toLowerCase() === 'localhost' ? '127.0.0.1' : cible, port, chemin);
           const r =
             viaDocker !== undefined
-              ? viaDocker && reponseAppli(jeu, viaDocker)
+              ? viaDocker && viaDocker.code !== 0 && reponseAppli(jeu, viaDocker)
               : jeu.etat.nginx && (port === 80 || port === 443)
                 ? requete(jeu, nom, chemin, port)
                 : null;
+          // Un service qui ne parle pas HTTP (une base de données) : réponse vide.
+          if (viaDocker?.code === 0) return jeu.erreur('curl: (52) Empty reply from server');
           if (!r) return jeu.erreur(`curl: (7) Failed to connect to ${cible} port ${port} after 0 ms: Couldn't connect to server`);
           // HTTPS : curl vérifie le certificat présenté (dates, nom), sauf avec -k.
           const insecure = args.some((a) => a === '-k' || a === '--insecure');

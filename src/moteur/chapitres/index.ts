@@ -22,6 +22,7 @@ import { colocation } from './colocation';
 import { chezMoi } from './chez-moi';
 import { concert } from './concert';
 import { miseAJour } from './mise-a-jour';
+import { composition } from './composition';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -50,7 +51,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'fabrique',
-    chapitres: [miseAJour],
+    chapitres: [miseAJour, composition],
   },
 ];
 
