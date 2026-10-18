@@ -11,7 +11,7 @@
 
 import type { Jeu } from './shell';
 import { joker } from './outils';
-import { systemd, versUtc } from './systemd';
+import { heureEte, systemd, versUtc } from './systemd';
 import { lire as lireCertificat } from './tls';
 
 export const VERSION = '1.26.3';
@@ -59,6 +59,9 @@ const DIRECTIVES: Record<string, Regle> = {
   proxy_pass: r(1, 1, ['location']),
   proxy_set_header: r(2, 2, HTTP),
   proxy_http_version: r(1, 1, HTTP),
+  limit_req_zone: r(3, 4, ['http']),
+  limit_req: r(1, 3, HTTP),
+  limit_req_status: r(1, 1, HTTP),
   deny: r(1, 1, HTTP),
 };
 
@@ -79,6 +82,23 @@ export interface Location {
   index?: string[];
   proxy?: string;
   retour?: string[];
+  limite?: Limite;
+  refus: string[];
+  limiteStatut?: number;
+}
+
+// limit_req : la zone (clé et débit) et la rafale tolérée.
+export interface Limite {
+  zone: string;
+  rafale: number;
+  sansDelai: boolean;
+}
+
+export interface ZoneLimite {
+  // La clé : $binary_remote_addr (une par adresse), ou autre chose.
+  cle: string;
+  // Requêtes par seconde.
+  debit: number;
 }
 
 export interface Serveur {
@@ -96,12 +116,15 @@ export interface Serveur {
   locations: Location[];
   // return au niveau du serveur (ex. redirection vers HTTPS).
   retour?: string[];
+  limite?: Limite;
+  limiteStatut?: number;
 }
 
 export interface Configuration {
   serveurs: Serveur[];
   // Les avertissements de nginx -t ([warn]) : la configuration reste valable.
   avertissements: string[];
+  zones: Record<string, ZoneLimite>;
 }
 
 class ErreurConf extends Error {}
@@ -216,6 +239,36 @@ function chargerCertificat(jeu: Jeu, enfants: Directive[], http: Directive[], se
   return contenu;
 }
 
+// limit_req_zone $binary_remote_addr zone=nom:10m rate=2r/s;
+function lireZones(http: Directive[]): Record<string, ZoneLimite> {
+  const zones: Record<string, ZoneLimite> = {};
+  for (const d of http.filter((x) => x.nom === 'limit_req_zone')) {
+    const [cle, ...params] = d.args;
+    const zone = params.find((p) => p.startsWith('zone='))?.slice(5);
+    const debit = params.find((p) => p.startsWith('rate='))?.slice(5);
+    const inconnu = params.find((p) => !p.startsWith('zone=') && !p.startsWith('rate=') && p !== 'sync');
+    if (inconnu) echec(`invalid parameter "${inconnu}"`, d.fichier, d.ligne);
+    if (!zone || !/^[\w-]+:\d+[km]?$/i.test(zone)) echec(`no zone in "limit_req_zone" directive`, d.fichier, d.ligne);
+    const m = /^(\d+)r\/([sm])$/.exec(debit ?? '');
+    if (!m) echec(`invalid rate "${debit ?? ''}"`, d.fichier, d.ligne);
+    zones[zone!.split(':')[0]] = { cle, debit: Number(m![1]) / (m![2] === 'm' ? 60 : 1) };
+  }
+  return zones;
+}
+
+// limit_req zone=nom [burst=N] [nodelay] : la zone doit exister.
+function lireLimite(d: Directive, zones: Record<string, ZoneLimite>): Limite {
+  const zone = d.args.find((a) => a.startsWith('zone='))?.slice(5);
+  const rafale = d.args.find((a) => a.startsWith('burst='))?.slice(6);
+  const inconnu = d.args.find((a) => !a.startsWith('zone=') && !a.startsWith('burst=') && a !== 'nodelay' && !a.startsWith('delay='));
+  if (inconnu) echec(`invalid parameter "${inconnu}"`, d.fichier, d.ligne);
+  if (!zone) echec(`no shared memory zone specified`, d.fichier, d.ligne);
+  if (rafale !== undefined && !/^\d+$/.test(rafale)) echec(`invalid burst value "${rafale}"`, d.fichier, d.ligne);
+  // Une zone jamais déclarée : nginx -t le dit sans fichier ni ligne.
+  if (!zones[zone!]) throw new ErreurConf(`zero size shared memory zone "${zone}"`);
+  return { zone: zone!, rafale: Number(rafale ?? 0), sansDelai: d.args.includes('nodelay') };
+}
+
 // « 80 », « [::]:80 », « 192.0.2.11:80 » → adresse:port.
 const adresse = (valeur: string) => (/^\d+$/.test(valeur) ? `0.0.0.0:${valeur}` : valeur.includes(':') ? valeur : `${valeur}:80`);
 
@@ -225,6 +278,7 @@ function construire(jeu: Jeu, lus: string[] = []): Configuration {
   const racine = analyser(jeu, CONF, 'main', lus);
   const http = racine.find((d) => d.nom === 'http')?.enfants ?? [];
   const valeurs = (liste: Directive[], nom: string) => liste.filter((d) => d.nom === nom).flatMap((d) => d.args);
+  const zones = lireZones(http);
   const parDefautVus: Record<string, true> = {};
   const nomsVus = new Set<string>();
   const avertissements: string[] = [];
@@ -260,7 +314,11 @@ function construire(jeu: Jeu, lus: string[] = []): Configuration {
           const exact = l.args[0] === '=';
           const dedans = l.enfants ?? [];
           const une = (nom: string) => dedans.find((d) => d.nom === nom)?.args;
+          const limite = dedans.find((d) => d.nom === 'limit_req');
           return {
+            limite: limite ? lireLimite(limite, zones) : undefined,
+            refus: valeurs(dedans, 'deny'),
+            limiteStatut: une('limit_req_status') ? Number(une('limit_req_status')![0]) : undefined,
             exact,
             chemin: l.args.at(-1)!,
             racine: une('root')?.[0],
@@ -270,7 +328,11 @@ function construire(jeu: Jeu, lus: string[] = []): Configuration {
             retour: une('return'),
           };
         });
+      const limite = enfants.find((d) => d.nom === 'limit_req') ?? http.find((d) => d.nom === 'limit_req');
+      const statut = valeurs(enfants, 'limit_req_status')[0] ?? valeurs(http, 'limit_req_status')[0];
       return {
+        limite: limite ? lireLimite(limite, zones) : undefined,
+        limiteStatut: statut ? Number(statut) : undefined,
         ssl,
         certificat,
         locations,
@@ -283,7 +345,7 @@ function construire(jeu: Jeu, lus: string[] = []): Configuration {
         refus: [...valeurs(http, 'deny'), ...valeurs(enfants, 'deny')],
       };
     });
-  return { serveurs, avertissements };
+  return { serveurs, avertissements, zones };
 }
 
 /** Vérifie la configuration : null si elle est bonne, sinon le message [emerg]. */
@@ -327,7 +389,17 @@ export interface Reponse {
   certificat?: string;
 }
 
-const RAISONS: Record<number, string> = { 200: 'OK', 301: 'Moved Permanently', 302: 'Found', 403: 'Forbidden', 404: 'Not Found', 502: 'Bad Gateway' };
+const RAISONS: Record<number, string> = {
+  200: 'OK',
+  301: 'Moved Permanently',
+  302: 'Found',
+  403: 'Forbidden',
+  404: 'Not Found',
+  429: 'Too Many Requests',
+  502: 'Bad Gateway',
+  503: 'Service Temporarily Unavailable',
+  504: 'Gateway Time-out',
+};
 const page = (code: number) =>
   `<html>\n<head><title>${code} ${RAISONS[code]}</title></head>\n<body>\n<center><h1>${code} ${RAISONS[code]}</h1></center>\n<hr><center>nginx/${VERSION}</center>\n</body>\n</html>`;
 const JOURS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -344,6 +416,8 @@ export interface Appli {
   service: string;
   // Les pages qu'elle sert, par chemin ; ailleurs, la page 404 d'Express.
   pages: Record<string, string>;
+  // Requêtes par seconde qu'elle sait servir (sans limite si absent).
+  capacite?: number;
 }
 
 const PAGE_EXPRESS = (chemin: string) =>
@@ -373,9 +447,48 @@ export function choisirLocation(serveur: Serveur, chemin: string): Location | nu
  * le bloc location, qui sert un fichier, renvoie (return) ou passe la
  * requête à une appli (proxy_pass).
  */
-export function requete(jeu: Jeu, hote: string, chemin: string, port = 80, trace = true): Reponse | null {
+export function requete(jeu: Jeu, hote: string, chemin: string, port = 80, trace = true, client?: Client): Reponse | null {
   // Les vérifications du jeu (objectifs) interrogent nginx sans laisser de trace au journal.
   jeu.etat.nginxTrace = trace;
+  const qui = client ?? { adresse: '127.0.0.1', temps: systemd(jeu)?.horloge ?? 0, agent: 'curl/8.14.1' };
+  const r = traiter(jeu, hote, chemin, port, qui);
+  if (r && trace) journalAcces(jeu, qui, chemin, r);
+  return r;
+}
+
+// Qui fait la requête : son adresse, l'heure (locale, en millisecondes), son navigateur.
+export interface Client {
+  adresse: string;
+  temps: number;
+  agent: string;
+}
+
+// « 27/Mar/2027:20:00:01 +0100 », comme $time_local.
+function heureLocale(ms: number): string {
+  const d = new Date(ms);
+  return `${String(d.getUTCDate()).padStart(2, '0')}/${MOIS[d.getUTCMonth()]}/${d.getUTCFullYear()}:${d.toISOString().slice(11, 19)} ${heureEte(ms) ? '+0200' : '+0100'}`;
+}
+
+// Une ligne de /var/log/nginx/access.log (format combined), si le chapitre le demande.
+function journalAcces(jeu: Jeu, c: Client, chemin: string, r: Reponse) {
+  if (!jeu.etat.nginx?.journalAcces) return;
+  const n = jeu.trouver('/var/log/nginx/access.log');
+  if (n?.type !== 'fichier' || typeof n.contenu !== 'string') return;
+  const ligne = `${c.adresse} - - [${heureLocale(c.temps)}] "GET ${chemin} HTTP/1.1" ${r.code} ${new TextEncoder().encode(r.corps).length} "-" "${c.agent}"`;
+  n.contenu = n.contenu ? `${n.contenu}\n${ligne}` : ligne;
+}
+
+// Une adresse couverte par une règle deny (adresse, plage CIDR ou all).
+function couvert(regle: string, adresse: string): boolean {
+  if (regle === 'all') return true;
+  const [base, bits = '32'] = regle.split('/');
+  const nombre = (ip: string) => ip.split('.').reduce((t, o) => t * 256 + Number(o), 0);
+  if (!/^\d+\.\d+\.\d+\.\d+$/.test(base) || !/^\d+\.\d+\.\d+\.\d+$/.test(adresse)) return regle === adresse;
+  const masque = Number(bits) === 0 ? 0 : 2 ** 32 - 2 ** (32 - Number(bits));
+  return (nombre(base) & masque) >>> 0 === (nombre(adresse) & masque) >>> 0;
+}
+
+function traiter(jeu: Jeu, hote: string, chemin: string, port: number, client: Client): Reponse | null {
   const sd = systemd(jeu);
   const config: Configuration | null = jeu.etat.nginx?.charge ?? null;
   if (!config || sd?.services.nginx?.etat !== 'active') return null;
@@ -411,8 +524,30 @@ export function requete(jeu: Jeu, hote: string, chemin: string, port = 80, trace
     if (n >= 300 && n < 400) return reponse(n, page(n), [`Location: ${variables(quoi)}`]);
     return reponse(n, variables(quoi));
   };
+  const loc = choisirLocation(serveur, chemin.split('?')[0]);
+  const contexte = `client: ${client.adresse}, server: ${serveur.noms[0] ?? '_'}, request: "GET ${chemin} HTTP/1.1", host: "${hote}"`;
+  // deny : 403 (http, puis server, puis location).
+  if ([...serveur.refus, ...(loc?.refus ?? [])].some((r) => couvert(r, client.adresse))) {
+    journalErreur(jeu, 'error', `access forbidden by rule, ${contexte}`);
+    return reponse(403, page(403));
+  }
+  // limit_req : un seau qui fuit au débit de la zone ; au-delà de la rafale, refus.
+  const limite = loc?.limite ?? serveur.limite;
+  if (limite) {
+    const zone = config.zones[limite.zone];
+    const cle = zone.cle === '$binary_remote_addr' || zone.cle === '$remote_addr' ? client.adresse : zone.cle;
+    const seaux: Record<string, { exces: number; dernier: number }> = (jeu.etat.nginxSeaux ??= {});
+    const seau = seaux[`${limite.zone}|${cle}`];
+    const exces = seau ? Math.max(0, seau.exces - (zone.debit * (client.temps - seau.dernier)) / 1000 + 1) : 0;
+    if (exces > limite.rafale) {
+      journalErreur(jeu, 'error', `limiting requests, excess: ${exces.toFixed(3)} by zone "${limite.zone}", ${contexte}`);
+      const statut = loc?.limiteStatut ?? serveur.limiteStatut ?? 503;
+      return reponse(statut, page(statut));
+    }
+    // Les vérifications du jeu ne remplissent pas le seau.
+    if (jeu.etat.nginxTrace) seaux[`${limite.zone}|${cle}`] = { exces, dernier: client.temps };
+  }
   if (serveur.retour) return retourner(serveur.retour);
-  const loc = choisirLocation(serveur, chemin);
   if (loc?.retour) return retourner(loc.retour);
   if (loc?.proxy) {
     const m = /^https?:\/\/([^/]+)(\/.*)?$/.exec(loc.proxy);
@@ -428,7 +563,21 @@ export function requete(jeu: Jeu, hote: string, chemin: string, port = 80, trace
       );
       return reponse(502, page(502));
     }
-    const corps = appli.pages[amont];
+    // Une appli a une capacité : au-delà, elle ne répond plus à temps (504).
+    if (appli.capacite) {
+      const charge: Record<string, number> = (jeu.etat.appliCharge ??= {});
+      const seconde = `${adresse}|${Math.floor(client.temps / 1000)}`;
+      if (jeu.etat.nginxTrace) charge[seconde] = (charge[seconde] ?? 0) + 1;
+      if ((charge[seconde] ?? 0) > appli.capacite) {
+        journalErreur(
+          jeu,
+          'error',
+          `upstream timed out (110: Connection timed out) while reading response header from upstream, ${contexte}, upstream: "http://${adresse}${amont}"`,
+        );
+        return reponse(504, page(504));
+      }
+    }
+    const corps = appli.pages[amont.split('?')[0]];
     return corps === undefined ? reponse(404, PAGE_EXPRESS(amont)) : reponse(200, corps);
   }
   // Un fichier : root + chemin, ou alias à la place du préfixe de la location.

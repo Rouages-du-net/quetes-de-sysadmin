@@ -83,7 +83,8 @@ chez-moi-evenement-fin =
     quand leur cache expirera. Kofi retire la ligne de son /etc/hosts :
     « Pour voir ce que voient les autres ! »
 
-    Bravo ! Tu as terminé le chapitre 5 des Lettres du quartier.
+    Bravo ! Tu as terminé le chapitre 5 des Lettres du quartier. (La suite
+    t'attend : Le soir du concert.)
 
     CE QUI S'EST PASSÉ
     /etc/hosts ne vaut que pour la machine où il se trouve : chez Kofi, le

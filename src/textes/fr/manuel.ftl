@@ -26,6 +26,13 @@ man-openssl = la boîte à outils de la cryptographie (TLS, certificats, clés).
     .exemple-1 = les dates de validité d'un certificat
     .exemple-2 = le certificat que présente vraiment le serveur, et ses dates
     .exemple-3 = expire-t-il dans les quinze jours (1 296 000 secondes) ?
+man-awk = un petit langage pour lire des lignes découpées en champs. Chaque ligne est coupée aux espaces : $1 est le premier champ, $2 le deuxième, $NF le dernier, $0 la ligne entière ; NR est le numéro de la ligne. Un programme est une suite de « motif {"{"} action {"}"} » : l'action s'applique aux lignes où le motif est vrai (sans motif : toutes ; sans action : la ligne est affichée). BEGIN s'exécute avant la première ligne, END après la dernière. Les tableaux comptent très bien : c[$1]++ puis, dans END, for (k in c) print c[k], k. Mettre le programme entre apostrophes, pour que le shell ne touche pas aux $.
+    .synopsis = awk [-F séparateur] [-v variable=valeur] 'programme' [fichier...]
+    .exemple-1 = le premier champ de chaque ligne (l'adresse, dans un journal web)
+    .exemple-2 = les lignes dont le 9e champ (le code HTTP) vaut 502
+    .exemple-3 = compter les codes HTTP
+    .exemple-4 = additionner le 10e champ (les octets envoyés)
+    .exemple-5 = avec un autre séparateur (les comptes de /etc/passwd)
 man-cat = affiche le contenu de fichiers (concatenate : il peut en coller plusieurs bout à bout). Sans fichier, recopie ce qui arrive par un tube.
     .synopsis = cat fichier...
     .exemple-1 = afficher un fichier
@@ -127,7 +134,7 @@ man-mv = déplace un fichier dans un lieu (move), ou le renomme si la destinatio
     .exemple-1 = déplacer crabe dans le lieu Seau
     .exemple-2 = renommer
     .exemple-3 = déplacer et renommer d’un coup
-man-nginx = le serveur web (et proxy). Ce n'est pas lui qu'on lance à la main : systemd s'en occupe (systemctl start, reload nginx). Sa configuration part de /etc/nginx/nginx.conf, qui inclut les sites de /etc/nginx/sites-enabled/ : un bloc server par site, avec listen (le port ; default_server pour le site qui répond quand aucun nom ne correspond, un seul par port), server_name (les noms du site), root (le lieu des pages) et index (la page d'accueil). Chaque directive finit par un point-virgule. Avant tout rechargement : sudo nginx -t, qui donne le fichier et la ligne de l'erreur. Plusieurs sites sur une machine (hôtes virtuels) : un bloc server par site, chacun avec son server_name. Dans un bloc location (le préfixe d'un chemin), proxy_pass passe la visite à un autre programme (reverse proxy) : avec une adresse qui finit par une barre (http://127.0.0.1:3000/), le préfixe de la location est remplacé par /, sinon le chemin est transmis tel quel. return 301 https://$host$request_uri; renvoie ailleurs. Les erreurs de service vont dans /var/log/nginx/error.log.
+man-nginx = le serveur web (et proxy). Ce n'est pas lui qu'on lance à la main : systemd s'en occupe (systemctl start, reload nginx). Sa configuration part de /etc/nginx/nginx.conf, qui inclut les sites de /etc/nginx/sites-enabled/ : un bloc server par site, avec listen (le port ; default_server pour le site qui répond quand aucun nom ne correspond, un seul par port), server_name (les noms du site), root (le lieu des pages) et index (la page d'accueil). Chaque directive finit par un point-virgule. Avant tout rechargement : sudo nginx -t, qui donne le fichier et la ligne de l'erreur. Plusieurs sites sur une machine (hôtes virtuels) : un bloc server par site, chacun avec son server_name. Dans un bloc location (le préfixe d'un chemin), proxy_pass passe la visite à un autre programme (reverse proxy) : avec une adresse qui finit par une barre (http://127.0.0.1:3000/), le préfixe de la location est remplacé par /, sinon le chemin est transmis tel quel. return 301 https://$host$request_uri; renvoie ailleurs. Les erreurs de service vont dans /var/log/nginx/error.log. Limiter le débit : limit_req_zone $binary_remote_addr zone=nom:10m rate=2r/s; (dans le bloc http, une clé par adresse, 2 requêtes par seconde) puis limit_req zone=nom burst=10 nodelay; là où on veut limiter : au-delà du débit, une rafale de 10 requêtes est encore servie ; au-delà, refus (503, ou le code de limit_req_status, par exemple 429). deny adresse; refuse une adresse (403).
     .synopsis = nginx -t ; nginx -T ; nginx -v
     .option-t = vérifie la configuration (test) et s'arrête.
     .option-T = vérifie, puis affiche toute la configuration lue, fichier par fichier.

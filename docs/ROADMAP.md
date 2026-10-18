@@ -172,8 +172,9 @@ demandent plusieurs.
 - [x] **DNS** : enregistrements A, AAAA, CNAME, MX, TXT, TTL et caches (la
       « propagation »), zone BIND, serial, secondaire ; quête « Ça marche
       chez moi » (Les Lettres du quartier, chapitre 5)
-- [ ] **Journaux d'accès** : trouver qui fait tomber le site (`awk`, `sort`,
-      `uniq -c`), limiter le débit
+- [x] **Journaux d'accès** : trouver qui fait tomber le site (`awk`, `sort`,
+      `uniq -c`), limiter le débit (`limit_req`, rafale, 429) ; quête « Le
+      soir du concert » (Les Lettres du quartier, chapitre 6)
 
 ## Phase 5 — Conteneurs
 

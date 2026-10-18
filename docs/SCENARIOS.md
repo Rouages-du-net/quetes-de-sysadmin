@@ -130,6 +130,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | liens symboliques | `ln -s`, suivis pour lire, écrire et entrer ; `ls -l` les montre ; pas de `readlink` | aussi `readlink`, `realpath`, `find -L`… |
 | `curl` | `-I`, `-k`, `-L`, `-H "Host: …"` ; ne joint que la machine où l'on est | toutes les options, tout le réseau |
 | DNS (BIND) | zones A, AAAA, CNAME, MX, NS, TXT, SOA ; un primaire (`named`), un secondaire qui recopie quand le serial augmente (tout de suite), un résolveur public avec cache ; `dig` (`@serveur`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (accolades et fichiers), `rndc reload`/`status` ; pas de section AUTHORITY, de DNSSEC ni de zones inverses | tout cela |
+| `awk` | programme entre apostrophes : motifs, `BEGIN`/`END`, champs, tableaux, `printf`, fonctions courantes, `-F`, `-v` ; pas de `getline`, de redirection dans `print`, de fonctions définies ni de `?:` | le langage complet (mawk sur Debian) |
+| trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -433,7 +435,7 @@ versions plutôt que miroir, politique de rétention, forget n'est pas prune,
 check et restaurations d'essai, chiffrement et garde du mot de passe ;
 liens vers la documentation de restic.
 
-## Histoire 6 : Les Lettres du quartier (en cours, cinq chapitres)
+## Histoire 6 : Les Lettres du quartier (en cours, six chapitres)
 
 L'association de Kofi (vue dans Le Paquet perdu) loue un petit serveur pour
 son site, `lettres.example` (machine `lettres`, même adresse que dans Le
@@ -591,6 +593,35 @@ acceptées : un enregistrement A pour `www`, `systemctl reload named`.
 Débrief : tester comme les autres, serveurs faisant autorité contre
 résolveur, serial, `named-checkzone`, point final, baisser le TTL avant un
 déménagement ; liens vers la documentation de BIND et la RFC 1034.
+
+### Chapitre 6 — Le soir du concert (fait)
+
+Soir de concert au café : l'agenda (une appli qui sert une vingtaine de
+pages par seconde) ne répond plus, les visiteur·ses reçoivent des 504. Un
+robot aspire l'agenda depuis trois adresses, 24 requêtes par seconde. Après
+chaque rechargement de nginx, le jeu fait passer une minute de trafic, qui
+s'écrit dans `access.log`.
+
+| Étape | Commande apprise |
+|---|---|
+| Lire les codes de réponse | `awk '{print $9}' access.log \| sort \| uniq -c` |
+| Trouver qui demande | `awk '{print $1}' … \| sort \| uniq -c \| sort -n`, `awk '$9 == 504 {print $1}' …` |
+| Limiter le débit | `limit_req_zone $binary_remote_addr zone=agenda:10m rate=2r/s;` puis `limit_req zone=agenda burst=10 nodelay;` (et `limit_req_status 429;`) |
+| Vérifier | `sudo nginx -t`, `sudo systemctl reload nginx`, la minute suivante dans `access.log` et `error.log` |
+
+Objectif vérifié sur l'état : pendant la dernière minute simulée, toutes les
+requêtes des visiteur·ses ont été servies, et la limitation de débit a
+refusé au moins 60 % des requêtes du robot.
+
+Pièges prévus : `limit_req` sans `limit_req_zone` (« zero size shared
+memory zone »), une limite sans rafale (une page et ses quatre fichiers
+d'un coup : les vraies personnes sont refusées), une limite trop large ou
+mal placée (le robot passe encore), `deny` des adresses du robot (marche ce
+soir, mais pas une règle durable). Autres solutions acceptées : la zone dans
+`conf.d/`, la limite sur tout le site, un débit de 1 requête par seconde.
+Débrief : lire les journaux avant d'agir, limiter par adresse là où c'est
+coûteux, rafale et `nodelay`, 429, `deny` contre règle durable ; liens vers
+`limit_req`, le format des journaux et awk (POSIX).
 
 ## Idées pour la suite
 

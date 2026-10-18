@@ -643,6 +643,52 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('Les Lettres du quartier, chapitre 6 — Le soir du concert (awk, limit_req)', () => {
+      const SITE = '/etc/nginx/sites-available/lettres';
+      const modifier = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        s.quitterEdition();
+      };
+
+      it('solution, avec les fausses pistes : zone inconnue, limite sans rafale', () => {
+        const { s, tout } = jouer('concert', [
+          "sudo awk '{print $9}' /var/log/nginx/access.log | sort | uniq -c",
+          'fourmis-2026',
+          "sudo awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -n",
+        ]);
+        expect(tout).toMatch(/\d+ 504/);
+        contient(tout, 'robot qui aspire le site');
+        // limit_req sans limit_req_zone : nginx -t refuse.
+        modifier(s, SITE, (t) => t.replace('proxy_pass http://127.0.0.1:3000/;', 'limit_req zone=agenda;\n        proxy_pass http://127.0.0.1:3000/;'));
+        expect(s.executer('sudo nginx -t')).toContain('zero size shared memory zone "agenda"');
+        modifier(s, SITE, (t) => 'limit_req_zone $binary_remote_addr zone=agenda:10m rate=2r/s;\n\n' + t);
+        const sansRafale = s.executer('sudo systemctl reload nginx') ?? '';
+        contient(sansRafale, 'La limite refuse aussi des vraies personnes');
+        expect(s.termine).toBe(false);
+        modifier(s, SITE, (t) => t.replace('limit_req zone=agenda;', 'limit_req zone=agenda burst=10 nodelay;\n        limit_req_status 429;'));
+        s.executer('sudo systemctl reload nginx');
+        expect(s.termine).toBe(true);
+        expect(s.executer("sudo awk '$9 == 429' /var/log/nginx/access.log | wc -l")).toMatch(/^\d{3,}$/);
+      });
+
+      it('fausse piste : bloquer les adresses du robot ne suffit pas à Kofi', () => {
+        const { s } = jouer('concert', ['sudo id', 'fourmis-2026']);
+        modifier(s, SITE, (t) => t.replace('    location /agenda/ {', '    deny 198.51.100.0/24;\n\n    location /agenda/ {'));
+        const sortie = s.executer('sudo systemctl reload nginx') ?? '';
+        contient(sortie, 'ces robots changent');
+        expect(s.termine).toBe(false);
+      });
+
+      it('autre solution : la zone dans conf.d, la limite sur tout le site, 1 requête par seconde', () => {
+        const { s } = jouer('concert', ['sudo id', 'fourmis-2026']);
+        s.executer('echo "limit_req_zone $binary_remote_addr zone=lettres:10m rate=1r/s;" | sudo tee /etc/nginx/conf.d/limites.conf');
+        modifier(s, SITE, (t) => t.replace('    root /var/www/lettres;', '    limit_req zone=lettres burst=20 nodelay;\n    root /var/www/lettres;'));
+        s.executer('sudo systemctl reload nginx');
+        expect(s.termine).toBe(true);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

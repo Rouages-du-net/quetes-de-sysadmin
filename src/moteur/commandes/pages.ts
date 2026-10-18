@@ -10,6 +10,16 @@ type Page = Pick<Commande, 'options' | 'exemples' | 'voir' | 'section'>;
 export const PAGES: Record<string, Page> = {
   apropos: { voir: ['man', 'whatis'] },
   apt: { exemples: ['sudo apt update', 'sudo apt install nginx', 'apt list --installed'], voir: ['systemctl', 'nginx'] },
+  awk: {
+    exemples: [
+      "awk '{print $1}' access.log",
+      "awk '$9 == 502' access.log",
+      "awk '{c[$9]++} END {for (k in c) print c[k], k}' access.log",
+      "awk '{s += $10} END {print s}' access.log",
+      "awk -F: '{print $1}' /etc/passwd",
+    ],
+    voir: ['grep', 'cut', 'sort', 'uniq'],
+  },
   cat: { exemples: ['cat message.txt'], voir: ['less', 'head', 'tail', 'grep'] },
   certbot: {
     exemples: ['sudo certbot certificates', 'sudo certbot renew --dry-run', 'sudo certbot renew --webroot -w /var/www/site', 'sudo certbot renew --deploy-hook "systemctl reload nginx"', 'sudo certbot reconfigure --cert-name site.example --deploy-hook "systemctl reload nginx"'],

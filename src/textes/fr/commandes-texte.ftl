@@ -8,3 +8,7 @@ grep-usage = Usage : grep motif fichier (ex. : grep poivre livre.txt)
 grep-rien = (aucune ligne ne contient « { $motif } »)
 cut-champs = cut : il faut préciser les champs avec -f (ex. : cut -d " " -f 1)
 cut-separateur = cut : le séparateur doit être un seul caractère
+
+awk-usage =
+    usage: awk [-F value] [-v var=value] [--] 'program text' [file ...]
+    (Exemple : awk '{"{"}print $1{"}"}' access.log ; voir man awk)
