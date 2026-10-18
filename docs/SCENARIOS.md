@@ -141,6 +141,10 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | Docker et le pare-feu | un port publié sur 0.0.0.0 répond de l'extérieur quelles que soient les règles ufw (comme les règles iptables de Docker) ; `nc -zv` depuis une autre machine ; `system df`, `image prune` (`-a`), `container prune`, `volume prune` (`-a`), `system prune` (`-a`, `--volumes`), `rmi` | chaîne DOCKER-USER, ufw-docker, `iptables -L` |
 | Utilisateur d'un conteneur | `--user`/`-u` et `user:` (nom de l'image ou `uid[:gid]`, un uid inconnu de l'image prend le gid 0), `docker exec -u` ; l'uid du conteneur est celui de la machine (pas de userns-remap) : droits Unix appliqués par numéro sur les dossiers montés, fichiers créés au nom de cet uid, processus visibles dans `ps aux` ; `--read-only` empêche d'écrire hors des volumes ; `--cap-drop` et `--security-opt` sont gardés (et montrés par `inspect`) sans autre effet ; un conteneur tombé est relancé à chaque commande (pas d'attente qui double) | userns-remap, mode rootless, capacités réelles, seccomp, AppArmor, droits sur les volumes nommés |
 | `nc` | `-z`, `-v`, une plage de ports ; sans `-z`, rend la main | netcat complet (écouter, envoyer, proxy) |
+| disques (`lsblk`, `mount`, `umount`) | périphériques décrits par le chapitre ; `mount` sans argument, `-o ro` ; un support en lecture seule refuse toute création (le contenu d'un fichier existant reste modifiable par une redirection) ; pas de `/etc/fstab` | toutes les options, `fstab`, systèmes de fichiers réels |
+| `rsnapshot` | `configtest`, `-t`, `-v`, `du`, la rotation des niveaux (`cp -al` puis `rsync`) ; une partie des directives ; messages proches de rsnapshot 1.4 | `backup_script`, `link_dest`, `sync_first`, sauvegardes distantes |
+| PostgreSQL | rôles et authentification « peer » ; `psql -c/-f/-l` avec un SQL réduit (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `\l`, `\dt`, `\d`) ; `pg_dump` (texte, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb` ; une archive `-Fc` ne contient qu'une référence gardée par le jeu ; une seule clé primaire par table | tout PostgreSQL, psql interactif, WAL et restauration à un instant donné |
+| `sudo -u`, `crontab -u`, `usermod -L` | `sudo -u compte` sans autre option ; `crontab -u` réservé à root ; `usermod -L/-U` marque le compte sans montrer `/etc/shadow` | toutes les options |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
 | `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
 
@@ -861,6 +865,72 @@ Objectif vérifié sur l'état : nginx sert une instance 2.x en bonne santé, et
 l'autre instance tourne aussi en 2.x en bonne santé. Piège prévu : revenir
 sur bleu (1.6.1), qui répond 500. Débrief : sauvegarder avant une
 migration (`pg_dump`), étendre puis contracter, réparer en avant.
+
+## Histoire 9 : La Ludothèque (trois chapitres)
+
+Le serveur de la ludothèque du quartier (machine `ludotheque`, 192.0.2.17) :
+Bérénice (présidente) et Malo (bénévole). Phase 7 de la feuille de route.
+
+### Chapitre 1 — La rançon (fait)
+
+Lundi matin, le partage (`/srv/partage`) est chiffré (`.locked`) ; une
+demande de rançon traîne dans chaque dossier. Le mot de passe du compte
+`accueil` a été deviné ; un programme tourne encore sous ce compte, et sa
+crontab le relance. La copie nocturne du NAS (`rsync --delete`) est chiffrée
+aussi.
+
+| Étape | Commande apprise |
+|---|---|
+| Mesurer | `find /srv/partage -name "*.locked" \| wc -l`, `cat LISEZ-MOI…` (on ne paie pas) |
+| Arrêter l'attaque | `ps aux`, `sudo kill 3141`, `sudo crontab -u accueil -l/-r`, `sudo usermod -L accueil`, `journalctl -u ssh` |
+| Trouver une sauvegarde | `ls /mnt/nas/partage` (chiffrée), `lsblk -f` (le disque `SAUVEGARDE`) |
+| Restaurer | `sudo mount -o ro /dev/sdb1 /mnt/cle`, `restic snapshots`, `restic restore latest --target /`, `find … -delete`, `sudo umount /mnt/cle` |
+
+Objectif vérifié sur l'état : le chiffreur est arrêté et ne revient plus,
+le compte est verrouillé, les six fichiers sont restaurés, plus aucun
+`.locked` ni demande de rançon, et le disque est démonté. Pièges prévus :
+restaurer avant d'arrêter le chiffreur (les fichiers sont rechiffrés),
+oublier la crontab (il revient), brancher la sauvegarde pendant l'attaque,
+démonter depuis le point de montage (« target is busy »).
+
+### Chapitre 2 — Les instantanés (fait)
+
+Régler rsnapshot (configuration de Debian) pour `/srv/partage/` vers le
+second disque, 7 quotidiens et 4 hebdomadaires, et le lancer avec cron. Le
+jeu fait passer deux semaines ; le dernier soir, Bérénice écrase
+l'inventaire par une vieille copie.
+
+| Étape | Commande apprise |
+|---|---|
+| Régler | `/etc/rsnapshot.conf` (tabulations), `rsnapshot configtest`, `rsnapshot -t daily` |
+| Planifier | `sudo crontab -e` : `0 3 * * 1 … weekly`, `30 3 * * * … daily` |
+| Constater | `ls /mnt/instantanes`, `rsnapshot du`, `ls -i` (même inode), `diff` |
+| Restaurer | `cp …/daily.1/localhost/srv/partage/inventaire.csv /srv/partage/` |
+
+Objectif vérifié sur l'état : 7 instantanés quotidiens et un hebdomadaire
+sur `/mnt/instantanes`, et l'inventaire revenu à sa version de
+l'avant-veille. Pièges prévus : des espaces au lieu de tabulations, la
+crontab d'un compte ordinaire (le courrier de cron le dit), le dernier
+instantané (pris après l'erreur).
+
+### Chapitre 3 — La base (fait)
+
+Les prêts vivent dans une base PostgreSQL ; Malo copie ses fichiers avec
+rsnapshot pendant qu'elle tourne.
+
+| Étape | Commande apprise |
+|---|---|
+| Se connecter | `psql -l` (rôle inconnu), `sudo -u postgres psql -d ludo -c "\dt"` |
+| Sauvegarder | `sudo -u postgres pg_dump -Fc -f /var/backups/postgresql/ludo.dump ludo` |
+| Tester | `createdb ludo_test`, `pg_restore -d ludo_test …`, `SELECT count(*)` |
+| Réparer | la table `prets` vidée : `pg_restore -d ludo --data-only -t prets …` |
+| Planifier | `sudo crontab -u postgres -e` |
+
+Objectif vérifié sur l'état : une tâche cron fait le `pg_dump` de `ludo`
+sous `postgres`, une archive existe, une base de test a les mêmes nombres
+de lignes, et les prêts sont revenus. Pièges prévus : la redirection `>`
+avec `sudo -u`, restaurer par-dessus la base en service, réinjecter dans
+une table pleine (doublons), `pg_dump` dans la crontab de root.
 
 ## Idées pour la suite
 

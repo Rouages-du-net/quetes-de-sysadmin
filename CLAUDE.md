@@ -49,6 +49,9 @@ rouages.net.
 - `chapitres/kiosque.ts` : l'appli des chapitres de déploiement de La
   Gazette (bleu/vert, `/health`, migration, visites simulées) ; nginx sait
   répartir entre plusieurs serveurs (`upstream`).
+- `commandes/disques.ts` (`lsblk`, `mount`, `umount`, `etat.peripheriques`),
+  `commandes/rsnapshot.ts`, `src/moteur/postgres.ts` et `commandes/postgres.ts`
+  (`psql`, `pg_dump`, `pg_restore`, `createdb`, `dropdb`).
 - `commandes/restic.ts` : dépôts restic (instantanés, déduplication,
   politiques de `forget`, `prune`), rangés dans `etat.restic`.
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;

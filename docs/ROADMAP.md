@@ -214,19 +214,21 @@ demandent plusieurs.
       une sauvegarde (débrief de « La Sauvegarde »)
 - [x] **rsync** : `-a`, `-v`, `-n`, `--delete`, la barre finale ; planifié
       avec `cron` ; quête « La Sauvegarde » (Effaceur, chapitre 4)
-- [ ] **rsnapshot** (instantanés par liens physiques, rotation horaire,
-      quotidienne, hebdomadaire)
+- [x] **rsnapshot** (instantanés par liens physiques, rotation quotidienne et
+      hebdomadaire, cron) ; « Les instantanés » (La Ludothèque, chapitre 2)
 - [x] **restic** (chiffrement, déduplication, `snapshots`, `find`, `diff`,
       `dump`, `restore`, `forget --prune`, `check`) ; quête « Les versions »
       (Les Archives, chapitre 2)
-- [ ] Sauvegarder une base (`mysqldump`, `pg_dump`) plutôt que ses fichiers
+- [x] Sauvegarder une base (`pg_dump`, `pg_restore`) plutôt que ses fichiers,
+      restauration de test ; « La base » (La Ludothèque, chapitre 3)
 - [x] **Restauration de service** : quête « Le grand incendie » (Datacenter,
       chapitre 4) : repartir d'une machine vide avec les sauvegardes et le
       plan de reprise ; archive coupée à vérifier avec `tar -tzf`, `apt`,
       `nginx -t`, clé d'hôte SSH qui change (`ssh-keygen -R`)
 - [x] **Exercice de restauration** : un souvenir effacé à restaurer depuis
       la sauvegarde (« La Sauvegarde »)
-- [ ] Rançongiciel et sauvegardes hors ligne
+- [x] Rançongiciel et sauvegardes hors ligne (`mount -o ro`, restic) ;
+      « La rançon » (La Ludothèque, chapitre 1)
 - [ ] Charge et ressources : `top`/`htop`, `free`, `df`, `du`, `iostat`
 - [ ] Pannes classiques : disque plein, mémoire épuisée (OOM), processus
       zombie, fuite de journaux, horloge décalée (NTP), inodes épuisés
