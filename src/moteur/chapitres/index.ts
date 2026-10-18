@@ -25,6 +25,7 @@ import { miseAJour } from './mise-a-jour';
 import { composition } from './composition';
 import { contournement } from './contournement';
 import { pleinsPouvoirs } from './pleins-pouvoirs';
+import { depotNu } from './depot-nu';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -54,6 +55,10 @@ export const HISTOIRES: Histoire[] = [
   {
     id: 'fabrique',
     chapitres: [miseAJour, composition, contournement, pleinsPouvoirs],
+  },
+  {
+    id: 'gazette',
+    chapitres: [depotNu],
   },
 ];
 

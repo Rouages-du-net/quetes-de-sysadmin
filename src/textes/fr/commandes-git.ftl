@@ -21,6 +21,105 @@ git-restore-sans-chemin = fatal: vous devez spécifier un ou plusieurs chemins �
 git-reference-invalide = fatal: référence invalide : { $revision }
 git-restore-inconnu = error: la spécification de chemin '{ $fichier }' ne correspond à aucun fichier connu de git
 
+git-pas-d-arbre = fatal: cette opération doit être effectuée dans un arbre de travail
+# { $option } : l'option inconnue
+git-option-inconnue =
+    unknown option: { $option }
+    usage: git [--version] [--help] [--git-dir=<chemin>] [--work-tree=<chemin>] <commande> [<args>]
+
+## Dépôts nus, distants, push et pull (https://git-scm.com/book/fr/v2/Git-sur-le-serveur-Mise-en-place-du-serveur)
+
+git-init-existant-nu = Dépôt Git existant réinitialisé dans { $chemin }/
+git-init-vide-nu = Dépôt Git vide initialisé dans { $chemin }/
+git-init-impossible = fatal: impossible de créer le répertoire '{ $chemin }' : Permission non accordée
+git-work-tree-introuvable = fatal: impossible de se déplacer dans '{ $chemin }'
+# { $fichiers } : un fichier par ligne, précédé d'une tabulation
+git-checkout-non-suivis =
+    error: Les fichiers suivants non suivis de la copie de travail seraient écrasés par l'extraction :
+    { $fichiers }
+    Veuillez renommer ou déplacer ces fichiers avant de basculer de branche.
+    Abandon
+git-checkout-modifications-locales =
+    error: Vos modifications locales aux fichiers suivants seraient écrasées par l'extraction :
+    { $fichiers }
+    Veuillez valider ou remiser vos modifications avant de basculer de branche.
+    Abandon
+git-rm-usage = fatal: Aucune spécification de chemin fournie. Que faut-il supprimer ?
+git-clone-usage = fatal: Vous devez spécifier un dépôt à cloner.
+# { $depot } : le chemin ou le nom du dépôt distant
+git-distant-introuvable =
+    fatal: '{ $depot }' ne semble pas être un dépôt git
+    fatal: Impossible de lire le dépôt distant.
+
+    Veuillez vérifier que vous avez les droits d'accès
+    et que le dépôt existe.
+git-clone-existe = fatal: le chemin de destination '{ $chemin }' existe déjà et n'est pas un répertoire vide.
+git-clone-dans = Clonage dans '{ $chemin }'...
+git-fait = fait.
+git-clone-vide = warning: Vous semblez avoir cloné un dépôt vide.
+git-remote-usage =
+    usage: git remote [-v | --verbose]
+       ou : git remote add <nom> <url>
+       ou : git remote remove <nom>
+       ou : git remote set-url <nom> <nouvelle-url>
+# { $nom } : le nom du dépôt distant (origin, prod…)
+git-remote-existe = error: le distant { $nom } existe déjà.
+git-remote-inconnu = error: Pas de serveur remote : '{ $nom }'
+git-push-sans-destination =
+    fatal: Pas de destination pour pousser.
+    Spécifiez une URL depuis la ligne de commande ou configurez un dépôt distant en utilisant
+
+        git remote add <nom> <url>
+
+    puis poussez en utilisant le dépôt distant
+
+        git push <nom>
+git-vers = Vers { $depot }
+git-push-impossible = error: impossible de pousser des références vers '{ $depot }'
+# { $ref } : la branche demandée
+git-refspec-inconnue = error: le spécificateur de référence source { $ref } ne correspond à aucune référence
+git-tout-a-jour = Tout est à jour
+git-push-rejete-astuce =
+    astuce: Les mises à jour ont été rejetées car la branche distante contient du travail que
+    astuce: vous n'avez pas en local. Ceci est généralement causé par un autre dépôt poussé
+    astuce: vers la même référence. Vous pourriez intégrer d'abord les changements distants
+    astuce: (par exemple 'git pull ...') avant de pousser à nouveau.
+# { $objets }, { $octets } : des nombres, déjà écrits
+git-push-progression =
+    Énumération des objets: { $objets }, fait.
+    Décompte des objets: 100% ({ $objets }/{ $objets }), fait.
+    Compression par delta en utilisant jusqu'à 2 fils d'exécution
+    Compression des objets: 100% ({ $objets }/{ $objets }), fait.
+    Écriture des objets: 100% ({ $objets }/{ $objets }), { $octets } octets | { $octets }.00 Kio/s, fait.
+    Total { $objets } (delta 0), réutilisés 0 (delta 0), réutilisés du pack 0
+git-push-droits =
+    error: droits insuffisants pour ajouter un objet à la base de données ./objects du dépôt
+    fatal: échec d'écriture de l'objet
+    error: unpack-objects a quitté anormalement
+git-push-branche-extraite =
+    remote: error: refus de mettre à jour la branche extraite : refs/heads/main
+    remote: error: Par défaut, la mise à jour de la branche actuelle dans un dépôt non-nu
+    remote: error: est refusée, car cela rendrait l'index et l'arbre de travail incohérents
+    remote: error: avec ce que vous avez poussé, et nécessiterait 'git reset --hard' pour
+    remote: error: retrouver un arbre de travail cohérent avec HEAD.
+# { $crochet } : le chemin du crochet
+git-crochet-ignore =
+    astuce: Le crochet '{ $crochet }' a été ignoré parce qu'il n'est pas marqué comme exécutable.
+    astuce: Vous pouvez désactiver cet avertissement avec `git config advice.ignoredHook false`.
+# { $distant } : le nom du dépôt distant
+git-push-suivi = la branche 'main' est paramétrée pour suivre '{ $distant }/main'.
+git-pull-sans-distant =
+    Il n'y a pas d'information de suivi pour la branche actuelle.
+    Veuillez spécifier une branche avec laquelle fusionner :
+
+        git pull <distant> <branche>
+git-depuis = Depuis { $depot }
+git-deja-a-jour = Déjà à jour.
+git-pull-diverge = fatal: Pas possible d'avancer rapidement, abandon.
+# { $avant }, { $apres } : des identifiants de commit (7 caractères)
+git-mise-a-jour = Mise à jour { $avant }..{ $apres }
+git-avance-rapide = Avance rapide
+
 ## git status (les libellés des fichiers sont alignés sur la même colonne)
 
 git-status-branche = Sur la branche main
@@ -74,7 +173,8 @@ git-commit-sans-message =
     (le vrai git ouvrirait un éditeur de texte)
 git-checkout-usage =
     Dans ce jeu, git checkout sert à restaurer un fichier : git checkout ID -- fichier
-    (on préfère aujourd’hui : git restore --source=ID fichier)
+    (on préfère aujourd’hui : git restore --source=ID fichier),
+    ou à extraire les fichiers d'un dépôt dans un lieu : git --work-tree=lieu checkout -f main
 git-usage =
     usage : git <commande> [<args>]
     (voir man git)

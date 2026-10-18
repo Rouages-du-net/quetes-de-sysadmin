@@ -27,6 +27,7 @@ export const MACHINES: Machine[] = [
   // dans Le Paquet perdu.
   machine('lettres', '203.0.113.10', 'lettres'),
   machine('fabrique', '192.0.2.15', 'fabrique'),
+  machine('gazette', '192.0.2.16', 'gazette'),
 ];
 
 export const machineDeHistoire = (histoire: string) => MACHINES.find((m) => m.histoire === histoire);

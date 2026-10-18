@@ -916,6 +916,75 @@ for (const langue of LANGUES)
       });
     });
 
+    describe('La Gazette, chapitre 1 — Le dépôt nu (déployer par git)', () => {
+      const editer = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        s.quitterEdition();
+      };
+      const CROCHET = '#!/bin/sh\ngit --work-tree=/var/www/gazette checkout -f main\necho "Site publié"';
+
+      it("solution : la dérive d'abord, un dépôt nu à soi, un crochet exécutable, puis chaque correction par git push", () => {
+        const { s, tout } = jouer('depot-nu', ['diff -r gazette /var/www/gazette', 'sudo git init --bare /srv/git/gazette.git', 'gazette-2027']);
+        expect(tout).toContain('Seulement dans gazette : fete-des-voisins.html');
+        expect(tout).toContain('> <h1>La Gazette du quartier</h1>');
+        contient(tout, 'Voilà la correction de Théo');
+        expect(tout).toContain('Dépôt Git vide initialisé dans /srv/git/gazette.git/');
+        s.executer('sudo chown -R vous:vous /srv/git/gazette.git');
+        editer(s, '/srv/git/gazette.git/hooks/post-receive', () => CROCHET);
+        s.executer('chmod +x /srv/git/gazette.git/hooks/post-receive');
+        s.executer('cd ~/gazette');
+        editer(s, 'index.html', (t) => t.replaceAll('Gazzette', 'Gazette'));
+        expect(s.executer('git commit -am "Titre : Gazette, sans faute"')).toContain('2 insertions(+), 2 suppressions(-)');
+        s.executer('git remote add prod /srv/git/gazette.git');
+        const push = s.executer('git push prod main') ?? '';
+        expect(push).toContain('remote: Site publié');
+        expect(push).toContain(' * [new branch]      main -> main');
+        contient(push, 'Mon article est en ligne');
+        expect(s.termine).toBe(false);
+        editer(s, 'agenda.html', (t) => t.replace('2027-06-21', '2027-06-12').replace('>21 ', '>12 '));
+        s.executer('git commit -am "Agenda : le vide-grenier est le 12 juin"');
+        const fin = s.executer('git push prod') ?? '';
+        expect(fin).toMatch(/ {3}[0-9a-f]{7}\.\.[0-9a-f]{7} {2}main -> main/);
+        contient(fin, 'Tu as terminé le chapitre 1 de La Gazette');
+        expect(s.executer('curl -s http://gazette.example/agenda.html')).toContain('datetime="2027-06-12"');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : dépôt à root, crochet non exécutable, checkout sans -f, correction de Théo perdue, retouche sur le serveur', () => {
+        const { s } = jouer('depot-nu', [
+          'sudo git init --bare /srv/git/gazette.git',
+          'gazette-2027',
+          'cd ~/gazette',
+          'git remote add prod /srv/git/gazette.git',
+        ]);
+        const root = s.executer('git push prod main') ?? '';
+        expect(root).toContain('error: droits insuffisants pour ajouter un objet');
+        expect(root).toContain(' ! [remote rejected] main -> main (unpacker error)');
+        contient(root, 'il appartient à root');
+        s.executer('sudo chown -R vous: /srv/git/gazette.git');
+        contient(s.executer('git push prod main') ?? '', 'rien ne les extrait');
+        editer(s, '/srv/git/gazette.git/hooks/post-receive', () => '#!/bin/sh\ngit --work-tree=/var/www/gazette checkout main');
+        s.executer('git rm style.css');
+        s.executer('git commit -m "Sans style"');
+        contient(s.executer('git push prod main') ?? '', "il n'est pas exécutable");
+        s.executer('chmod +x /srv/git/gazette.git/hooks/post-receive');
+        s.executer('git restore --source=HEAD~1 style.css');
+        s.executer('git add style.css');
+        s.executer('git commit -m "Le style revient"');
+        const sansF = s.executer('git push prod main') ?? '';
+        expect(sansF).toContain("remote: error: Les fichiers suivants non suivis de la copie de travail seraient écrasés par l'extraction :");
+        contient(sansF, 'Avec -f (force)');
+        editer(s, '/srv/git/gazette.git/hooks/post-receive', (t) => t.replace('checkout main', 'checkout -f main'));
+        editer(s, 'agenda.html', (t) => t.replace('8 h', '9 h'));
+        s.executer('git commit -am "Ouverture à 9 h"');
+        contient(s.executer('git push prod main') ?? '', 'La correction de Théo a disparu');
+        // Corriger l'agenda sur le serveur, sans git : refusé.
+        s.executer('echo \'<time datetime="2027-06-12">\' > /var/www/gazette/agenda.html');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

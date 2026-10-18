@@ -447,6 +447,25 @@ export class Shell implements Jeu {
     }
   }
 
+  /**
+   * Lance une ligne pour un script (script.ts : crochet de git, script de
+   * déploiement), depuis ce lieu, sans toucher à la ligne en cours : renvoie
+   * ce qu'elle a écrit, si elle a réussi (aucune erreur) et le lieu où le
+   * script se trouve ensuite (cd).
+   */
+  sousCommande(ligne: string, cwd: string): { sortie: string; ok: boolean; cwd: string } {
+    const avant = { cwd: this.cwd, erreurs: this.erreurs, derniere: this.derniere };
+    this.cwd = cwd;
+    try {
+      const sortie = this.tube(ligne, decouper(ligne));
+      return { sortie, ok: this.erreurs.length === 0, cwd: this.cwd };
+    } finally {
+      this.cwd = avant.cwd;
+      this.erreurs = avant.erreurs;
+      this.derniere = avant.derniere;
+    }
+  }
+
   /** Vérifie les événements de l'histoire hors d'une commande (ex. à la reconnexion). */
   evenements(): string {
     return this.conclure('', false);

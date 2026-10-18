@@ -42,3 +42,4 @@ machine-manuscrit-motd = Manuscrit — l'ordinateur d'Inès. Ne pas toucher au r
 machine-bibliotheque-motd = Bibliothèque du quartier — ce serveur sera éteint ce soir à minuit.
 machine-lettres-motd = Les Lettres du quartier — le serveur de l'association. Merci de prendre soin de lui !
 machine-fabrique-motd = La Fabrique — le serveur du fablab. Ici, on répare, on prête, on bidouille.
+machine-gazette-motd = La Gazette du quartier — le serveur du journal. On publie avec git push, pas à la main.

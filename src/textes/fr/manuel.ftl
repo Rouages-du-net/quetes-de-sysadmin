@@ -87,6 +87,14 @@ man-docker-compose = lance plusieurs conteneurs qui vont ensemble (une appli et 
     .exemple-3 = le journal d'un service
     .exemple-4 = le fichier tel que Compose le comprend, variables remplacées
     .exemple-5 = tout arrêter et supprimer (avec -v, les volumes aussi : leurs données sont perdues)
+man-diff = compare deux fichiers ligne à ligne, et montre ce qu'il faut changer pour passer du premier au second. En format normal, « 3c3 » veut dire : la ligne 3 du premier devient la ligne 3 du second (c pour change, d pour delete, a pour add) ; les lignes qui commencent par < viennent du premier fichier, celles par > du second. -u donne le format unifié, celui de git diff : - pour ce qui part, + pour ce qui arrive, avec trois lignes autour. Avec deux lieux, diff compare les fichiers de même nom, et -r descend dans les sous-lieux. Rien n'est affiché si les fichiers sont identiques.
+    .synopsis = diff [-u] [-r] [-q] fichier1 fichier2
+    .option-u = format unifié (unified) : - et +, avec trois lignes de contexte.
+    .option-r = compare aussi les sous-lieux, récursivement.
+    .option-q = dit seulement si les fichiers diffèrent (quiet).
+    .exemple-1 = ce qui change entre deux fichiers
+    .exemple-2 = la même chose, au format de git diff
+    .exemple-3 = tout ce qui diffère entre deux lieux
 man-du = mesure la place occupée (disk usage), lieu par lieu. -s donne seulement le total, -h écrit en K, M, G. Ex. : du -sh *
     .synopsis = du [-s] [-h] [lieu...]
     .option-h = tailles lisibles : K, M, G.
@@ -103,12 +111,21 @@ man-git =
       git status                  ce qui a changé depuis le dernier commit
       git add fichier (ou .)      prépare un fichier pour le prochain commit
       git commit -m "message"     enregistre une photo de tous les fichiers préparés
+      git commit -am "message"    la même chose, en préparant d'abord tous les fichiers suivis modifiés
+      git rm fichier              efface un fichier et le retire du suivi
       git log [--oneline]         l'historique des commits
       git diff [ID] [fichier]     les différences (- avant, + après)
       git show [ID]               un commit et ses changements
       git restore --source=ID f   remet le fichier f tel qu'il était dans le commit ID
+    Pour travailler à plusieurs, ou publier, on envoie ses commits vers un autre dépôt (un « distant ») :
+      git init --bare lieu.git    crée un dépôt nu (sans copie de travail), comme sur un serveur
+      git clone lieu.git          copie un dépôt (son distant s'appelle origin)
+      git remote add nom lieu     déclare un distant ; git remote -v les liste
+      git push nom main           envoie ses commits au distant
+      git pull nom main           récupère ceux du distant
+    Un dépôt nu peut réagir à un push : ses crochets (hooks/pre-receive, hooks/post-receive) sont des scripts lancés à chaque réception, s'ils sont exécutables (chmod +x). pre-receive peut refuser le push (code de retour non nul). Pour déployer, post-receive extrait les fichiers dans un lieu : git --work-tree=lieu checkout -f main.
     Un commit se désigne par le début de son identifiant (au moins 4 caractères), ou par HEAD (le dernier), HEAD~1 (l'avant-dernier)…
-    .synopsis = git commande
+    .synopsis = git [--git-dir=dépôt] [--work-tree=lieu] commande
 man-grep = affiche les lignes qui contiennent le motif. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes. Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu.
     .synopsis = grep [-i] [-v] [-c] motif [fichier...]
     .option-i = ignore la différence entre majuscules et minuscules.

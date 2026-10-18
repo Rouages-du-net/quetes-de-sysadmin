@@ -53,3 +53,8 @@ manuel-quelle-page =
     Quelle page de manuel voulez-vous ?
     Par exemple, essayez « man man ».
 manuel-pas-de-page = Il n'y a pas de page de manuel pour { $commande }.
+
+## Scripts (/bin/sh) : crochets de git, scripts de déploiement (src/moteur/script.ts)
+
+# { $script } : le nom du script ; { $numero } : la ligne ; { $mot } : le mot du shell
+script-non-simule = { $script }: { $numero }: « { $mot } » : cette construction du shell n'est pas simulée dans ce jeu (ni if, ni for, ni while). Écrire une commande par ligne, avec && ou || pour les enchaîner.

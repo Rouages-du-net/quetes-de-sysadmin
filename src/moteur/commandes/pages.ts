@@ -37,6 +37,11 @@ export const PAGES: Record<string, Page> = {
   crontab: { exemples: ['crontab -e', 'crontab -l', '15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/'], voir: ['rsync', 'nano', 'systemctl'] },
   curl: { options: ['I', 'k'], voir: ['dig', 'nginx', 'openssl'] },
   df: { options: ['h'], voir: ['du'] },
+  diff: {
+    options: ['u', 'r', 'q'],
+    exemples: ['diff ancien.txt nouveau.txt', 'diff -u ancien.txt nouveau.txt', 'diff -r ~/site /var/www/site'],
+    voir: ['git', 'grep'],
+  },
   dig: { exemples: ['dig cafe.example', 'dig @ns1.lettres.example cafe.example', 'dig cafe.example NS +short', 'dig cafe.example SOA +short'], voir: ['host', 'ping', 'curl', 'named-checkzone'] },
   docker: {
     exemples: [

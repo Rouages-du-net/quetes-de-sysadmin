@@ -15,3 +15,5 @@ histoire-lettres = Les Lettres du quartier
     .resume = Un serveur tout neuf, déjà attaqué : durcir SSH, le pare-feu, fail2ban ; puis héberger deux sites, le DNS, et tenir le soir du concert.
 histoire-fabrique = La Fabrique
     .resume = Le fablab du quartier passe aux conteneurs : docker, volumes, docker compose, le pare-feu que Docker contourne, et des conteneurs qui ne tournent plus en root.
+histoire-gazette = La Gazette
+    .resume = Le journal en ligne du quartier apprend à déployer : git push, crochets, et revenir en arrière quand ça casse.
