@@ -26,4 +26,4 @@ histoire-maison = La Maison des associations
 histoire-cooperative = La Coopérative
     .resume = L'épicerie coopérative du quartier : les comptes de celles et ceux qui arrivent et qui partent, les droits partagés, sudo bien réglé.
 histoire-ruche = La Ruche
-    .resume = Le réseau d'un tiers-lieu : des VLAN pour séparer bureaux, invité·es et équipements, le DHCP, le NAT et un pare-feu entre les zones, un VPN.
+    .resume = Le réseau d'un tiers-lieu : des VLAN pour séparer bureaux, invité·es et équipements, le DHCP, le NAT et un pare-feu entre les zones, un VPN, une DMZ pour le site, un second site, un annuaire et un Wi-Fi d'entreprise.

@@ -293,3 +293,53 @@ export function mondeRuche(o: {
     racine,
   );
 }
+
+// Le pare-feu à la fin des zones, avec une chaîne input fermée par défaut.
+export const NFTABLES_ZONES = `#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+	chain input {
+		type filter hook input priority filter; policy drop;
+		ct state established,related accept
+		iif "lo" accept
+		# ssh, from the admin network only
+		ip saddr 192.0.2.0/24 tcp dport 22 accept
+		# DNS and DHCP for the VLANs
+		iifname "eth1*" udp dport { 53, 67 } accept
+		icmp type echo-request accept
+	}
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		ct state established,related accept
+		iifname "eth1.10" accept
+		iifname "eth1.20" oifname "eth0" accept
+	}
+	chain output {
+		type filter hook output priority filter; policy accept;
+	}
+}
+
+table ip nat {
+	chain postrouting {
+		type nat hook postrouting priority srcnat;
+		oifname "eth0" masquerade
+	}
+}`;
+
+/** Au début : le réseau, les réglages du noyau et le pare-feu du chapitre « Les zones ». */
+export function initialiserPareFeu(j: Jeu) {
+  initialiserRuche(j);
+  appliquerSysctl(j, SYSCTL_DEFAUTS);
+  j.etat.nft = lireConf(j, { tables: [] }).ruleset ?? { tables: [] };
+}
+
+// Le réglage du routage, écrit dans le chapitre « Les zones ».
+export const SYSCTL_ROUTEUR = { '90-routeur.conf': f('net.ipv4.ip_forward = 1', { lignes: true, proprio: 'root' }) };
+
+// Le pare-feu à la fin du « télétravail » : WireGuard entre (UDP 51820) et va vers les bureaux.
+export const NFTABLES_TELETRAVAIL = NFTABLES_ZONES.replace(
+  'icmp type echo-request accept',
+  'icmp type echo-request accept\n\t\t# WireGuard\n\t\tudp dport 51820 accept',
+).replace('iifname "eth1.20" oifname "eth0" accept', 'iifname "eth1.20" oifname "eth0" accept\n\t\tiifname "wg0" oifname "eth1.10" accept');

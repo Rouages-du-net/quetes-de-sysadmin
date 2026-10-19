@@ -252,6 +252,21 @@ export function demonter(l: Lan, s: Strophe) {
 export function demarrerReseau(j: Jeu) {
   const l = lan(j);
   if (!l) return;
+  // L'état d'ifupdown (/run/network/ifstate) : ce qui a été monté.
+  j.etat.ifstate = remonter(j, l);
+}
+
+/** Le réseau local tel qu'il serait au prochain démarrage (une copie, montée d'après le fichier). */
+export function reseauAuDemarrage(j: Jeu): Lan | null {
+  const l = lan(j);
+  if (!l) return null;
+  const copie = structuredClone(l);
+  for (const [nom, i] of Object.entries(copie.interfaces)) if (i.wireguard) delete copie.interfaces[nom];
+  remonter(j, copie);
+  return copie;
+}
+
+function remonter(j: Jeu, l: Lan): string[] {
   for (const [nom, i] of Object.entries(l.interfaces)) {
     // Les interfaces WireGuard ne sont pas dans ce fichier : wg-quick les gère.
     if (i.wireguard) continue;
@@ -263,8 +278,7 @@ export function demarrerReseau(j: Jeu) {
   const montees: string[] = [];
   for (const s of [...Object.values(strophes).filter((x) => !x.vlan), ...Object.values(strophes).filter((x) => x.vlan)])
     if (s.auto && !monter(j, l, s)) montees.push(s.nom);
-  // L'état d'ifupdown (/run/network/ifstate) : ce qui a été monté.
-  j.etat.ifstate = montees;
+  return montees;
 }
 
 // ——— Joindre une adresse ———

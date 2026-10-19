@@ -89,8 +89,7 @@ vpn-evenement-fin =
     reviendra au prochain redémarrage. Malik : « Le neveu de la trésorière
     est un peu vexé. »
 
-    Bravo ! Tu as terminé le chapitre « Le télétravail », et l'histoire de
-    La Ruche.
+    Bravo ! Tu as terminé le chapitre « Le télétravail ».
 
     CE QUI S'EST PASSÉ
     WireGuard relie deux machines par des clés, comme ssh : chacune a une

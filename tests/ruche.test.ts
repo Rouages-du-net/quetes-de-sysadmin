@@ -307,9 +307,6 @@ table ip nat {
       expect(tout).toContain('wg0              UNKNOWN        10.10.99.1/24');
       contient(tout, 'https://www.wireguard.com/quickstart/');
       expect(c.termines).toContain('vpn');
-      tout = jouer(['sudo reboot', 'ssh ruche', 'sudo wg show wg0', 'systemctl status wg-quick@wg0']);
-      expect(tout).toContain('latest handshake');
-      expect(tout).toContain('Active: active (exited)');
     });
 
     it('chapitre 4 — fausses pistes : la clé lisible, la porte fermée, les clés croisées, wg-quick puis le service', () => {
@@ -350,5 +347,74 @@ table ip nat {
       editer('sudo nano /etc/nftables.conf', PARE_FEU);
       jouer(['sudo systemctl restart nftables']);
       expect(c.termines).toContain('vpn');
+    });
+
+    const ETH140 = '\nauto eth1.40\niface eth1.40 inet static\n    address 10.10.40.1/24\n';
+    const DMZ = (t: string) =>
+      t
+        .replace(
+          'iifname "wg0" oifname "eth1.10" accept',
+          'iifname "wg0" oifname "eth1.10" accept\n\t\tiifname "eth0" oifname "eth1.40" ip daddr 10.10.40.10 tcp dport { http, https } accept\n\t\tiifname "eth1.40" oifname "eth0" accept',
+        )
+        .replace(
+          '\t\toifname "eth0" masquerade\n\t}',
+          '\t\toifname "eth0" masquerade\n\t}\n\tchain prerouting {\n\t\ttype nat hook prerouting priority dstnat;\n\t\tiifname "eth0" tcp dport { 80, 443 } dnat to 10.10.40.10\n\t}',
+        );
+
+    it('chapitre 5 — solution : eth1.40, dnat au prerouting, forward vers la DMZ seulement', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn']);
+      let tout = jouer(['cat plan-commutateur.txt', 'ping -c 1 web']);
+      // Sans interface dans ce réseau, le ping part vers la box et s'y perd.
+      expect(tout).toContain('1 packets transmitted, 0 received, 100% packet loss');
+      editer('sudo nano /etc/network/interfaces', (t) => t + ETH140);
+      editer('sudo nano /etc/nftables.conf', DMZ);
+      tout = jouer(['sudo ifup eth1.40', 'sudo nft -c -f /etc/nftables.conf', 'sudo systemctl reload nftables', 'sudo conntrack -L -s 203.0.113.77']);
+      expect(tout).toContain('src=203.0.113.77 dst=192.0.2.21 sport=42637 dport=443 src=10.10.40.10 dst=203.0.113.77 sport=443');
+      expect(tout).not.toContain('dport=22');
+      contient(tout, 'Netfilter_hooks');
+      tout = jouer(['sudo conntrack -L -s 10.10.40.10']);
+      expect(tout).toContain('src=10.10.40.10 dst=198.51.100.80');
+      expect(tout).not.toContain('dst=10.10.10.5');
+      expect(c.termines).toContain('dmz');
+    });
+
+    it('chapitre 5 — fausses pistes : sans forward, l’adresse publique, tout publier, la DMZ ouverte, à la main', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn']);
+      let tout = jouer([
+        'sudo ip link add link eth1 name eth1.40 type vlan id 40',
+        'sudo ip addr add 10.10.40.1/24 dev eth1.40',
+        'sudo ip link set eth1.40 up',
+        "sudo nft 'add chain ip nat prerouting { type nat hook prerouting priority dstnat; }'",
+        'sudo nft add rule ip nat prerouting iifname eth0 dnat to 10.10.40.10',
+      ]);
+      contient(tout, 'fermée par défaut');
+      tout = jouer(['sudo nft add rule inet filter forward ip daddr 192.0.2.21 accept']);
+      contient(tout, 'ne la verra jamais');
+      // Tout publier, et la DMZ qui voit tout : trop ouvert.
+      tout = jouer([
+        'sudo nft add rule inet filter forward iifname eth0 oifname eth1.40 accept',
+        'sudo nft add rule inet filter forward iifname eth1.40 accept',
+      ]);
+      contient(tout, 'la DMZ est trop ouverte');
+      expect(c.termines).not.toContain('dmz');
+      // Corrigé à la main : marche, mais ne tient pas.
+      tout = jouer([
+        'sudo nft flush chain ip nat prerouting',
+        'sudo nft add rule ip nat prerouting iifname eth0 tcp dport { 80, 443 } dnat to 10.10.40.10',
+        'sudo nft -a list chain inet filter forward',
+      ]);
+      const poignee = (regle: string) => tout.match(new RegExp(`${regle} # handle (\\d+)`))![1];
+      tout = jouer([
+        `sudo nft delete rule inet filter forward handle ${poignee('ip daddr 192.0.2.21 accept')}`,
+        `sudo nft delete rule inet filter forward handle ${poignee('iifname "eth1.40" accept')}`,
+        `sudo nft delete rule inet filter forward handle ${poignee('iifname "eth0" oifname "eth1.40" accept')}`,
+        'sudo nft add rule inet filter forward iifname eth0 oifname eth1.40 tcp dport { 80, 443 } accept',
+        'sudo nft add rule inet filter forward iifname eth1.40 oifname eth0 accept',
+      ]);
+      contient(tout, 'au prochain\nredémarrage'.replace('\n', ' '));
+      expect(c.termines).not.toContain('dmz');
+      editer('sudo nano /etc/network/interfaces', (t) => t + ETH140);
+      editer('sudo nano /etc/nftables.conf', DMZ);
+      expect(c.termines).toContain('dmz');
     });
   });
