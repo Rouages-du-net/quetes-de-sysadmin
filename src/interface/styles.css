@@ -140,6 +140,8 @@
   .qds .histoires button { grid-template-columns: 1fr; }
   .qds .histoires .etat { grid-row: auto; grid-column: auto; align-self: start; }
   .qds .resume { display: none; }
+  /* Les tabulations (nft list ruleset, nftables.conf) prennent moins de place sur un écran étroit. */
+  .qds .sortie pre, .qds .nano-texte { tab-size: 2; }
 }
 @media (prefers-reduced-motion: reduce) {
   .qds * { scroll-behavior: auto !important; transition: none !important; }

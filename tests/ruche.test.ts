@@ -46,7 +46,8 @@ for (const langue of LANGUES)
 
     it('chapitre 1 — solution : /etc/network/interfaces, ifup -a', () => {
       const { c, jouer, editer } = partie();
-      let tout = jouer(['ip -br a', 'ping -c 1 10.10.10.5']);
+      let tout = jouer(['ip -br a', 'ping -c 1 10.10.10.5', 'man interfaces']);
+      expect(tout).toContain('INTERFACES(5)');
       expect(tout).toContain('eth1             UP             192.168.1.1/24');
       expect(tout).toContain('1 packets transmitted, 0 received, 100% packet loss');
       editer('sudo nano /etc/network/interfaces', (t) => t + VLANS);
@@ -139,5 +140,129 @@ for (const langue of LANGUES)
       tout = jouer(['sudo systemctl restart dnsmasq']);
       contient(tout, 'pas 10.10.30.10');
       expect(c.termines).not.toContain('dhcp');
+    });
+
+    const NFTABLES = `#!/usr/sbin/nft -f
+
+flush ruleset
+
+define BUREAUX = "eth1.10"
+
+table inet filter {
+	chain input {
+		type filter hook input priority filter; policy accept;
+	}
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		ct state established,related accept
+		iifname $BUREAUX counter accept
+		iifname "eth1.20" oifname "eth0" accept
+		log prefix "forward refuse: " counter
+	}
+}
+
+table ip nat {
+	chain postrouting {
+		type nat hook postrouting priority srcnat;
+		oifname "eth0" masquerade
+	}
+}
+`;
+
+    it('chapitre 3 — solution : /etc/sysctl.d, /etc/nftables.conf, systemctl enable --now', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp']);
+      let tout = jouer(['cat notes-de-sacha.txt', 'sysctl net.ipv4.ip_forward', 'sudo conntrack -L', 'man sysctl.d']);
+      expect(tout).toContain('SYSCTL.D(5)');
+      expect(tout).toContain('net.ipv4.ip_forward = 0');
+      expect(tout).toContain('1 flow entries have been shown.');
+      editer('sudo nano /etc/sysctl.d/90-routeur.conf', () => 'net.ipv4.ip_forward = 1\n');
+      tout = jouer(['sudo sysctl --system']);
+      expect(tout).toContain('* Applying /etc/sysctl.d/90-routeur.conf ...');
+      expect(tout).toContain('net.ipv4.ip_forward = 1');
+      editer('sudo nano /etc/nftables.conf', () => NFTABLES);
+      tout = jouer([
+        'sudo nft -c -f /etc/nftables.conf',
+        'sudo systemctl enable --now nftables',
+        'sudo nft list ruleset',
+        'sudo conntrack -L',
+        'journalctl -k',
+      ]);
+      expect(tout).toContain('iifname "eth1.10" counter packets 3 bytes 180 accept');
+      expect(tout).toContain('dst=198.51.100.80 sport=51735 dport=443 src=198.51.100.80 dst=192.0.2.21');
+      expect(tout).toContain('forward refuse: IN=eth1.20 OUT=eth1.10');
+      expect(tout).not.toContain('dst=203.0.113.50');
+      contient(tout, 'https://wiki.nftables.org/wiki-nftables/index.php/Performing_Network_Address_Translation_(NAT)');
+      expect(c.termines).toContain('zones');
+      // Après un redémarrage, tout revient tout seul.
+      tout = jouer(['sudo reboot', 'ssh ruche', 'sysctl net.ipv4.ip_forward', 'sudo conntrack -L -s 10.10.20.197']);
+      expect(tout).toContain('net.ipv4.ip_forward = 1');
+      expect(tout).toContain('dst=198.51.100.80 sport=47099 dport=443 src=198.51.100.80 dst=192.0.2.21');
+      expect(tout).not.toContain('dport=445');
+    });
+
+    it('chapitre 3 — autre solution : à la main d’abord, le redémarrage, puis les fichiers (adresses et ensembles)', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp']);
+      let tout = jouer([
+        'echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward',
+        'sudo nft add table ip nat',
+        "sudo nft 'add chain ip nat postrouting { type nat hook postrouting priority srcnat; }'",
+        'sudo nft add rule ip nat postrouting oifname "eth0" masquerade',
+        "sudo nft 'add chain inet filter forward { type filter hook forward priority 0; policy drop; }'",
+      ]);
+      contient(tout, 'y compris là où il ne faut pas');
+      expect(tout).toContain('Error: Could not process rule: No such file or directory');
+      tout = jouer([
+        'sudo nft add table inet filter',
+        "sudo nft 'add chain inet filter forward { type filter hook forward priority 0; policy drop; }'",
+        'sudo nft add rule inet filter forward ip saddr 10.10.10.0/24 accept',
+        'sudo nft add rule inet filter forward ip saddr 10.10.20.0/24 ip daddr != 10.0.0.0/8 accept',
+      ]);
+      contient(tout, 'pas les réponses');
+      tout = jouer([
+        'sudo nft -a list chain inet filter forward',
+        'sudo nft insert rule inet filter forward ct state { established, related } accept',
+      ]);
+      expect(tout).toContain('ip saddr 10.10.20.0/24 ip daddr != 10.0.0.0/8 accept # handle 3');
+      contient(tout, 'si le routeur');
+      expect(c.termines).not.toContain('zones');
+      tout = jouer(['sudo reboot', 'ssh ruche', 'cat /proc/sys/net/ipv4/ip_forward', 'sudo nft list ruleset']);
+      expect(tout).toMatch(/cat courriel_malik.txt\n0\n/);
+      expect(tout).not.toContain('masquerade');
+      editer('sudo nano /etc/sysctl.conf', (t) => t.replace('#net.ipv4.ip_forward=1', 'net.ipv4.ip_forward=1'));
+      editer('sudo nano /etc/nftables.conf', () =>
+        NFTABLES.replace('iifname $BUREAUX counter accept', 'ip saddr 10.10.10.0/24 accept').replace(
+          'iifname "eth1.20" oifname "eth0" accept',
+          'iifname { "eth1.20" } ip daddr != { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } tcp dport { http, https } accept',
+        ),
+      );
+      jouer(['sudo sysctl -p', 'sudo systemctl enable nftables', 'sudo systemctl start nftables']);
+      expect(c.termines).toContain('zones');
+    });
+
+    it('chapitre 3 — fausses pistes : sans sudo, une faute, ssh fermé, la caméra qui sort', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp']);
+      let tout = jouer([
+        'nft list ruleset',
+        'sysctl -w net.ipv4.ip_forward=1',
+        'sysctl net.ipv4.ip_forwrd',
+        'echo 1 > /proc/sys/net/ipv4/ip_forward',
+      ]);
+      expect(tout).toContain('netlink: Error: cache initialization failed: Operation not permitted');
+      expect(tout).toContain('sysctl: permission denied on key "net.ipv4.ip_forward"');
+      expect(tout).toContain('sysctl: cannot stat /proc/sys/net/ipv4/ip_forwrd: No such file or directory');
+      editer('sudo nano /etc/nftables.conf', () => NFTABLES.replace('oifname "eth0" accept', 'oifnam "eth0" accept'));
+      tout = jouer(['sudo nft -c -f /etc/nftables.conf', 'sudo systemctl start nftables']);
+      expect(tout).toContain('/etc/nftables.conf:15:21-26: Error: syntax error, unexpected string');
+      expect(tout).toContain('Job for nftables.service failed');
+      // L'entrée fermée : plus de nouvelle connexion ssh.
+      editer('sudo nano /etc/nftables.conf', () => NFTABLES.replace('priority filter; policy accept;', 'priority filter; policy drop;'));
+      tout = jouer(['sudo sysctl -w net.ipv4.ip_forward=1', 'sudo nft -f /etc/nftables.conf']);
+      contient(tout, 'ne tient qu');
+      expect(c.termines).not.toContain('zones');
+      // NAT pour tout le monde, sans filtrer : la caméra sort.
+      editer('sudo nano /etc/nftables.conf', () => NFTABLES.replace('policy drop;\n\t\tct state', 'policy accept;\n\t\tct state'));
+      tout = jouer(['sudo nft -f /etc/nftables.conf', 'sudo conntrack -L -d 203.0.113.50']);
+      expect(tout).toContain('src=10.10.30.11 dst=203.0.113.50');
+      expect(c.termines).not.toContain('zones');
     });
   });

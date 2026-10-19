@@ -262,9 +262,12 @@ demandent plusieurs.
       `/etc/network/interfaces` ; « Les VLAN » (La Ruche, chapitre 1)
 - [ ] Boucles réseau et tempêtes de diffusion, et le protocole qui les évite
       (Spanning Tree)
-- [ ] DHCP (dnsmasq, une plage par VLAN, réservations ; « Le DHCP », La
-      Ruche, chapitre 2) fait ; reste NAT, routage entre VLAN, pare-feu entre
-      zones (DMZ)
+- [x] DHCP : dnsmasq, une plage par VLAN, réservations ; « Le DHCP » (La
+      Ruche, chapitre 2)
+- [x] Routage, NAT et pare-feu entre zones : `sysctl`, nftables
+      (`forward`, `masquerade`, `ct state`), `conntrack` ; « Les zones » (La
+      Ruche, chapitre 3)
+- [ ] Une DMZ (un serveur public derrière le routeur, `dnat`)
 - [ ] VPN (WireGuard) pour le télétravail et entre sites
 - [ ] Wi-Fi d'entreprise (réseau invité isolé)
 - [ ] Annuaire et authentification centralisée (aperçu)

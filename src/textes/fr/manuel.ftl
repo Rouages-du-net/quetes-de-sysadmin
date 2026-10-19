@@ -552,6 +552,41 @@ man-dnsmasq = un petit serveur DHCP (et DNS) pour un réseau local. Il lit /etc/
     .exemple-2 = la relire (redémarrer le service)
     .exemple-3 = les adresses données
     .exemple-4 = le journal des échanges
+man-nft = règle le pare-feu du noyau (nftables). Les règles vivent dans des tables (famille ip, ip6, ou inet pour les deux) ; une table contient des chaînes ; une chaîne « de base » s'accroche à une étape du trajet des paquets (hook input : vers la machine elle-même ; forward : à travers elle, d'un réseau à l'autre ; output : depuis elle ; postrouting : juste avant de sortir) et a une politique (policy accept ou drop) pour ce qu'aucune règle n'a tranché. Une règle se lit de gauche à droite : des conditions (iifname "eth1.10" : entré par cette interface ; oifname : sortira par celle-là ; ip saddr, ip daddr : adresses, ou réseaux 10.10.20.0/24 ; tcp dport 443 ; ct state established,related : une réponse à un échange déjà permis), puis des actions (counter compte, log écrit au journal du noyau, accept, drop, reject, jump vers une autre chaîne). Le NAT se fait dans une chaîne de type nat : masquerade (au hook postrouting) remplace l'adresse source par celle de l'interface de sortie. Un ensemble s'écrit entre accolades : iifname « {"{"} "eth1.10", "eth1.20" {"}"} ». nft -f lit un fichier entier et l'applique d'un coup (rien ne change s'il y a une erreur) ; sur Debian, /etc/nftables.conf est chargé au démarrage par le service nftables s'il est activé (systemctl enable nftables). Ce qu'on tape avec nft add ne dure que jusqu'au redémarrage. Réservé à root.
+    .synopsis = nft [-c] [-a] -f fichier ; nft [-a] list ruleset|tables|table famille nom|chain famille table chaîne ; nft add|insert|delete … ; nft flush ruleset
+    .option-f = lit les commandes dans ce fichier (file), et les applique toutes ensemble.
+    .option-c = vérifie seulement, sans rien appliquer (check).
+    .option-a = affiche le numéro (handle) de chaque règle, pour la supprimer.
+    .exemple-1 = les règles chargées en ce moment, avec leurs compteurs
+    .exemple-2 = vérifier le fichier sans le charger
+    .exemple-3 = charger le fichier (comme systemctl restart nftables)
+    .exemple-4 = ajouter une règle à la fin d'une chaîne (jusqu'au redémarrage)
+    .exemple-5 = les règles d'une chaîne, avec leurs numéros
+    .exemple-6 = supprimer la règle numéro 7
+man-sysctl = lit et change les réglages du noyau, rangés dans /proc/sys (net.ipv4.ip_forward est le fichier /proc/sys/net/ipv4/ip_forward). net.ipv4.ip_forward = 1 permet à la machine de transmettre des paquets d'un réseau à l'autre (de router) ; à 0, elle ne garde que ceux qui lui sont adressés. -w change une valeur tout de suite, mais le noyau oublie tout au redémarrage : pour qu'un réglage dure, on l'écrit dans un fichier de /etc/sysctl.d (man sysctl.d), que systemd-sysctl applique au démarrage ; sysctl --system les applique sans attendre. Changer une valeur est réservé à root.
+    .synopsis = sysctl [-n] clé... ; sysctl -w clé=valeur ; sysctl -p [fichier] ; sysctl --system ; sysctl -a
+    .option-w = change la valeur (write).
+    .option-p = applique les réglages d'un fichier (/etc/sysctl.conf par défaut).
+    .option-a = affiche tous les réglages (all).
+    .option-n = affiche seulement la valeur, sans le nom.
+    .exemple-1 = le routage est-il activé ?
+    .exemple-2 = l'activer tout de suite (jusqu'au redémarrage)
+    .exemple-3 = appliquer tous les fichiers de réglages, comme au démarrage
+    .exemple-4 = la même valeur, lue dans /proc/sys
+man-sysctl_d = les réglages du noyau appliqués au démarrage : des fichiers .conf dans /etc/sysctl.d (puis /etc/sysctl.conf), lus dans l'ordre de leur nom, une ligne « clé = valeur » par réglage (net.ipv4.ip_forward = 1). Les lignes qui commencent par # ou ; sont des commentaires. Le dernier fichier qui donne une valeur l'emporte. sysctl --system les applique sans redémarrer.
+    .synopsis = /etc/sysctl.d/*.conf ; /etc/sysctl.conf
+    .exemple-1 = les fichiers de réglages
+    .exemple-2 = écrire le sien
+man-conntrack = montre la table du suivi de connexion du noyau (connection tracking) : chaque échange qui traverse la machine, avec l'aller (src=… dst=…) et la réponse attendue. [UNREPLIED] : aucune réponse n'est revenue ; [ASSURED] : l'échange est établi dans les deux sens. Si la réponse est attendue vers une autre adresse que l'adresse de départ, c'est qu'une traduction d'adresse (NAT) a eu lieu. Un échange bloqué par le pare-feu n'y apparaît pas. Réservé à root.
+    .synopsis = conntrack -L [-p proto] [-s adresse] [-d adresse] ; conntrack -C
+    .option-L = liste les échanges suivis (list).
+    .option-C = compte les échanges suivis (count).
+    .option-p = seulement ce protocole (tcp, udp).
+    .option-s = seulement les échanges partis de cette adresse (source).
+    .option-d = seulement les échanges vers cette adresse (destination).
+    .exemple-1 = tous les échanges en cours
+    .exemple-2 = ceux d'un appareil
+    .exemple-3 = combien il y en a
 man-id = affiche l'identité d'un compte : son numéro (uid), son groupe principal (gid) et tous ses groupes. Les droits d'un fichier se décident avec ces informations.
     .synopsis = id [utilisateur]
     .exemple-1 = qui suis-je, et dans quels groupes ?

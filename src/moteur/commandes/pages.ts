@@ -118,6 +118,32 @@ export const PAGES: Record<string, Page> = {
     exemples: ['sudo dnsmasq --test', 'sudo systemctl restart dnsmasq', 'cat /var/lib/misc/dnsmasq.leases', 'journalctl -u dnsmasq'],
     voir: ['ip', 'systemctl', 'journalctl'],
   },
+  nft: {
+    section: 8,
+    options: ['f', 'c', 'a'],
+    exemples: [
+      'sudo nft list ruleset',
+      'sudo nft -c -f /etc/nftables.conf',
+      'sudo nft -f /etc/nftables.conf',
+      'sudo nft add rule inet filter forward iifname "eth1.10" accept',
+      'sudo nft -a list chain inet filter forward',
+      'sudo nft delete rule inet filter forward handle 7',
+    ],
+    voir: ['sysctl', 'conntrack', 'systemctl', 'journalctl'],
+  },
+  sysctl: {
+    section: 8,
+    options: ['w', 'p', 'a', 'n'],
+    exemples: ['sysctl net.ipv4.ip_forward', 'sudo sysctl -w net.ipv4.ip_forward=1', 'sudo sysctl --system', 'cat /proc/sys/net/ipv4/ip_forward'],
+    voir: ['sysctl.d', 'nft'],
+  },
+  'sysctl.d': { section: 5, exemples: ['ls /etc/sysctl.d', 'sudo nano /etc/sysctl.d/90-routeur.conf'], voir: ['sysctl'] },
+  conntrack: {
+    section: 8,
+    options: ['L', 'C', 'p', 's', 'd'],
+    exemples: ['sudo conntrack -L', 'sudo conntrack -L -s 10.10.20.150', 'sudo conntrack -C'],
+    voir: ['nft'],
+  },
   id: { exemples: ['id', 'id malo'], voir: ['groups', 'whoami', 'usermod'] },
   journalctl: {
     options: ['u', 'n', 'b', 'k', 'p', 'x', 'e'],

@@ -14,6 +14,7 @@ import { COMPTES } from './comptes';
 import { SUDOERS_COMMANDES, sudoListe } from './sudoers';
 import { TMUX } from './tmux';
 import { LAN } from './lan';
+import { NFTABLES } from './nftables';
 import { SYSTEMD } from './systemd';
 import { EDITEUR } from './editeur';
 import { SSHD } from './sshd';
@@ -78,6 +79,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...SUDOERS_COMMANDES,
   ...TMUX,
   ...LAN,
+  ...NFTABLES,
   ...SYSTEMD,
   ...EDITEUR,
   ...SSHD,

@@ -131,6 +131,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `apt` | `update`, `install [-y]`, `list --installed`, `list --upgradable`, `upgrade` et `full-upgrade` (les mises à jour décrites par le chapitre) ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » ; une mise à jour coupée laisse ses paquets dépaquetés (`dpkg --configure -a`) ; `/var/run/reboot-required` pour un noyau ou la libc | tout le catalogue Debian, `remove`, `search`, `show`, `apt-get`… ; dpkg garde l'état de chaque paquet |
 | réseau local (`ip`, `ifup`, `ifdown`) | IPv4 seulement ; `ip addr`, `ip link`, `ip route` (show, add, del, set, `-br`, `-d`), interfaces VLAN 802.1Q ; `/etc/network/interfaces` lu comme ifupdown (`auto`, `iface … inet static`, `manual`, `loopback`, `address`, `netmask`, `gateway`, `vlan-raw-device`, `source`) ; le commutateur et ses ports sont décrits par le chapitre ; pas d'ARP visible, de MTU, de bonding ni de systemd-networkd | tout iproute2, ifupdown2, NetworkManager, systemd-networkd |
 | `dnsmasq` | DHCP seulement (les options DNS sont acceptées et ignorées) ; `interface` (avec `*`), `except-interface`, `dhcp-range`, `dhcp-host`, `dhcp-option` ; les appareils demandent une adresse à chaque démarrage du service ; l'adresse est tirée de l'adresse MAC ; pas de renouvellement de bail | DNS, TFTP, PXE, DHCPv6, renouvellement |
+| `nft` (nftables) | IPv4 ; tables `ip`, `inet` (`ip6` lu, sans effet) ; chaînes de base `filter` et `nat` (hooks, priorités, politique), chaînes ordinaires (`jump`, `goto`) ; conditions `iifname`, `oifname`, `ip saddr`, `ip daddr`, `ip protocol`, `meta l4proto`, `tcp`/`udp` `dport`/`sport` (services connus du jeu), `ct state`, négation `!=`, ensembles anonymes ; actions `counter`, `log`, `accept`, `drop`, `reject`, `masquerade`, `snat`, `dnat` (lu, sans effet) ; `define`, `include` ; `-f`, `-c`, `-a` ; `add`, `insert`, `delete`, `flush`, `list` ; le trafic est celui des appareils décrits par le chapitre, et les compteurs comptent un passage de chaque échange ; messages d'erreur proches de nft ; la chaîne `input` ne coupe pas la session ssh du jeu | ensembles nommés, maps, `limit`, `quota`, IPv6, `bridge`, `netdev`, `nft monitor`, les règles sur le contenu des paquets |
+| `sysctl`, `conntrack` | `sysctl` : lire, `-w`, `clé=valeur`, `-p`, `--system`, `-a`, `-n` sur quelques clés (`/proc/sys` est un vrai dossier du jeu) ; `/etc/sysctl.d/*.conf` puis `/etc/sysctl.conf` au démarrage ; `conntrack -L` (`-p`, `-s`, `-d`), `-C`, `-F` : les échanges du moment, dont la session ssh | toutes les clés du noyau ; `conntrack -E`, `-D`, états UDP et ICMP détaillés |
 | `ping` sur un réseau local | un appareil répond s'il est dans le VLAN de l'interface dont le réseau contient son adresse ; une adresse privée envoyée à la box se perd ; un nom d'appareil est reconnu sans DNS | ARP, DNS local, `/etc/hosts` |
 | `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, une fenêtre par session ; pas de raccourcis clavier (`tmux detach` pour Ctrl+b d) ; attach rejoue les dernières lignes ; le nom de la session s'affiche devant l'invite (la barre d'état) ; `uname -r/-a` ; `dpkg --configure -a` | fenêtres, volets, raccourcis, `screen` ; toutes les options de dpkg |
 | `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe, `=`, `^~`, ou expression régulière (`~`, `~*`, syntaxe de JavaScript plutôt que PCRE), choisie dans l'ordre de nginx ; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
@@ -1328,4 +1330,32 @@ le réseau de son VLAN, l'imprimante la sienne, et dnsmasq n'écoute pas
 `eth0`. Pièges prévus : garder `interface=eth1` (n'écoute pas `eth1.10`),
 aucune restriction (dnsmasq entend la box : « DHCP pirate »), une option
 mal écrite (`bad option`), l'imprimante sans réservation.
+
+### Chapitre 3 — Les zones (fait)
+
+Les adresses sont là, mais rien ne sort : le routeur ne transmet pas les
+paquets, et personne ne traduit les adresses privées. Sacha, l'ancien
+bénévole, l'avait fait à la main (`notes-de-sacha.txt`) ; tout est parti au
+redémarrage. Malik veut aussi des zones : les bureaux vont partout, les
+invité·es seulement sur internet, les équipements nulle part (mais le NAS
+enregistre les caméras).
+
+| Étape | Commande apprise |
+|---|---|
+| Voir | `sysctl net.ipv4.ip_forward`, `nft list ruleset`, `conntrack -L` (`[UNREPLIED]`, l'adresse traduite), `journalctl -k` (`log prefix`) |
+| Router, traduire | `sysctl -w`, une chaîne `type nat hook postrouting` avec `oifname "eth0" masquerade` |
+| Filtrer | chaîne `forward` en `policy drop`, `ct state established,related accept`, puis `iifname`/`oifname` (ou `ip saddr`/`ip daddr`, ensembles `{ … }`) zone par zone |
+| Faire durer | `/etc/sysctl.d/*.conf` (ou `/etc/sysctl.conf`), `sysctl --system`, `/etc/nftables.conf`, `nft -c -f`, `systemctl enable --now nftables` |
+
+Objectif vérifié sur l'état : le trafic simulé des appareils (internet
+depuis les bureaux et le wifi, l'impression, l'enregistrement des caméras ;
+le téléphone d'un visiteur vers le NAS et une caméra, la caméra vers son
+fabricant) passe ou est bloqué comme prévu, maintenant et avec ce que le
+routeur chargerait au démarrage, sans refuser une nouvelle connexion ssh
+depuis le poste d'administration. Pièges prévus : router sans traduire
+(les réponses ne reviennent pas), traduire sans filtrer (la caméra sort, le
+visiteur voit le NAS), `policy drop` sans `ct state` (les réponses sont
+jetées), la chaîne `input` qui ferme ssh, une faute dans le fichier
+(`syntax error`, le service ne démarre pas), tout à la main (perdu au
+`reboot`), `nft` et `sysctl -w` sans sudo.
 

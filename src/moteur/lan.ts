@@ -15,6 +15,7 @@
 // commutateur est décrit par le chapitre (ports déjà configurés).
 
 import type { Jeu } from './shell';
+import type { Flux } from './nftables';
 
 export interface Interface {
   nom: string;
@@ -46,6 +47,8 @@ export interface Lan {
   appareils: Appareil[];
   // Un numéro par interface, dans l'ordre de création (ip a).
   ordre: string[];
+  // Le trafic que les appareils essaient à travers le routeur (voir nftables.ts).
+  flux?: Flux[];
 }
 
 export const INTERFACES = '/etc/network/interfaces';
@@ -262,6 +265,11 @@ export function demarrerReseau(j: Jeu) {
 /** L'interface (en service) dont le réseau contient cette adresse. */
 export function interfacePour(l: Lan, ip: string): Interface | null {
   return Object.values(l.interfaces).find((i) => enService(l, i) && i.adresses.some((a) => dans(ip, reseauDe(a)))) ?? null;
+}
+
+/** L'interface du routeur (en service, avec une adresse) qui reçoit ce VLAN. */
+export function interfaceDuVlan(l: Lan, vlan: number): Interface | null {
+  return Object.values(l.interfaces).find((i) => enService(l, i) && i.adresses.length && vlanDe(l, i) === vlan) ?? null;
 }
 
 /** Une adresse privée (RFC 1918) ? */
