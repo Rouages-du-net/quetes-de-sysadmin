@@ -166,7 +166,13 @@ export function redemarrer(jeu: Jeu, sd: Systemd) {
   sd.horloge += 90_000;
   sd.demarrage++;
   jeu.etat.processus = (jeu.etat.processus as Processus[] | undefined)?.filter((p) => p.pid === 1) ?? [];
-  journaliser(sd, '', 'kernel', 0, `Linux version 6.12.0-quetes (${sd.hote})`);
+  // Le noyau installé devient celui qui tourne ; /run (tmpfs) repart vide, avec reboot-required.
+  const noyau = jeu.etat.noyau as { courant: string; installe: string } | undefined;
+  if (noyau) noyau.courant = noyau.installe;
+  for (const f of ['/var/run/reboot-required', '/var/run/reboot-required.pkgs']) if (jeu.existe(f)) jeu.effacer(f);
+  // Les sessions tmux meurent avec la machine.
+  if (jeu.etat.tmux) jeu.etat.tmux = {};
+  journaliser(sd, '', 'kernel', 0, `Linux version ${noyau?.courant ?? '6.12.0-quetes'} (${sd.hote})`);
   for (const [nom, s] of Object.entries(sd.services)) {
     s.etat = 'inactive';
     s.depuis = sd.horloge;

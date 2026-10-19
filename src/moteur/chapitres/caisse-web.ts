@@ -255,6 +255,7 @@ export function mondeCaisse(o: { env: string; envMode?: string; accesLog: string
           undefined,
           racine,
         ),
+        run: d({}, undefined, racine),
       },
       undefined,
       racine,

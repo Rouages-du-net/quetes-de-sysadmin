@@ -12,6 +12,7 @@ import { PAGES } from './pages';
 import { SSH } from './ssh';
 import { COMPTES } from './comptes';
 import { SUDOERS_COMMANDES, sudoListe } from './sudoers';
+import { TMUX } from './tmux';
 import { SYSTEMD } from './systemd';
 import { EDITEUR } from './editeur';
 import { SSHD } from './sshd';
@@ -74,6 +75,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...SSH,
   ...COMPTES,
   ...SUDOERS_COMMANDES,
+  ...TMUX,
   ...SYSTEMD,
   ...EDITEUR,
   ...SSHD,

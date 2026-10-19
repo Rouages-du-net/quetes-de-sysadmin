@@ -4,9 +4,16 @@
 // n'a pas lancé `apt update` (« Unable to locate package »). Installer un
 // service le démarre et l'active aussitôt, comme le font les paquets Debian.
 // L'état est dans etat.apt :
-//   { listes: liste téléchargée ?, installes: { paquet: version } }
+//   { listes: liste téléchargée ?, installes: { paquet: version },
+//     mises: { paquet: nouvelle version } (les mises à jour en attente),
+//     interrompu: [paquets dépaquetés mais pas configurés] }
+// apt upgrade (et full-upgrade) installe les mises à jour ; si la connexion
+// tombe pendant ce temps (etat.coupureReseau, sauf dans tmux), dpkg est
+// interrompu : il faut dpkg --configure -a. Un nouveau noyau ou une nouvelle
+// libc écrit /var/run/reboot-required (comme update-notifier-common) ; le
+// noyau ne change qu'au redémarrage (etat.noyau, uname -r).
 // Écarts : un petit catalogue, des versions et des tailles indicatives ;
-// seulement update, install, list --installed ; aucun vrai téléchargement.
+// seulement update, install, upgrade, full-upgrade, list ; aucun vrai téléchargement.
 
 import { d, f, type Dossier } from '../monde';
 import type { Shell } from '../shell';
@@ -113,7 +120,7 @@ function poser(jeu: Shell, chemin: string, arbre: Dossier) {
   }
 }
 
-const PAQUETS: Record<string, Paquet> = {
+export const PAQUETS: Record<string, Paquet> = {
   'nginx-common': {
     version: `${VERSION}-3`,
     architecture: 'all',
@@ -220,6 +227,120 @@ const LECTURE = ['Reading package lists... Done', 'Building dependency tree... D
 interface EtatApt {
   listes: boolean;
   installes: Record<string, string>;
+  // Les mises à jour en attente : paquet → nouvelle version ; un nouveau paquet (le noyau) à installer avec elles.
+  mises?: Record<string, string>;
+  nouveaux?: Record<string, string>;
+  // Paquets dépaquetés mais pas configurés (dpkg interrompu).
+  interrompu?: string[];
+  enAttente?: Record<string, string>;
+}
+
+// Le noyau installé et celui qui tourne (uname -r).
+export interface Noyau {
+  courant: string;
+  installe: string;
+}
+
+// Les paquets dont la mise à jour demande un redémarrage (comme update-notifier-common).
+const REDEMARRAGE = /^(linux-image|libc6$|libssl|systemd$|dbus$)/;
+
+/** Les mises à jour à appliquer (une fois la liste téléchargée). */
+const misesDisponibles = (e: EtatApt) => (e.listes ? Object.entries(e.mises ?? {}).filter(([n, v]) => e.installes[n] && e.installes[n] !== v) : []);
+
+const ERREUR_INTERROMPU = "Error: dpkg was interrupted, you must manually run 'dpkg --configure -a' to correct the problem.";
+
+// La fin de dpkg : configurer chaque paquet, les déclencheurs, et noter s'il faut redémarrer.
+function configurer(jeu: Shell, e: EtatApt, paquets: [string, string][]): string[] {
+  const lignes: string[] = [];
+  for (const [n, v] of paquets) {
+    lignes.push(`Setting up ${n} (${v}) ...`);
+    e.installes[n] = v;
+    if (n.startsWith('linux-image-6')) {
+      const version = n.replace(/^linux-image-/, '');
+      lignes.push(`I: /vmlinuz is now a symlink to boot/vmlinuz-${version}`, `I: /initrd.img is now a symlink to boot/initrd.img-${version}`);
+      const noyau = jeu.etat.noyau as Noyau | undefined;
+      if (noyau) noyau.installe = version;
+      lignes.push(`update-initramfs: Generating /boot/initrd.img-${version}`);
+    }
+  }
+  e.interrompu = (e.interrompu ?? []).filter((n) => !paquets.some(([p]) => p === n));
+  lignes.push('Processing triggers for man-db (2.13.1-1) ...', 'Processing triggers for libc-bin (2.41-12+deb13u1) ...');
+  const aRedemarrer = paquets.map(([n]) => n).filter((n) => REDEMARRAGE.test(n));
+  if (aRedemarrer.length) {
+    const avant = (jeu.lire('/var/run/reboot-required.pkgs') ?? '').split('\n').filter(Boolean);
+    const liste = [...new Set([...avant, ...aRedemarrer])].join('\n');
+    for (const [fichier, contenu] of [
+      ['/var/run/reboot-required', '*** System restart required ***'],
+      ['/var/run/reboot-required.pkgs', liste],
+    ]) {
+      const n = jeu.trouver(fichier);
+      if (n?.type === 'fichier') n.contenu = contenu;
+      else jeu.placer('dpkg', fichier, { type: 'fichier', contenu, lignes: true, proprio: 'root' });
+    }
+  }
+  return lignes;
+}
+
+function mettreAJour(jeu: Shell, oui: boolean): string {
+  const e = etat(jeu);
+  if (e.interrompu?.length) return jeu.erreur(ERREUR_INTERROMPU, 100);
+  const mises = misesDisponibles(e);
+  const nouveaux = Object.entries(e.nouveaux ?? {}).filter(
+    ([n]) => !e.installes[n] && mises.some(([m]) => m === 'linux-image-amd64' && n.startsWith('linux-image-')),
+  );
+  const sortie = [...LECTURE, 'Calculating upgrade... Done'];
+  if (!mises.length) return [...sortie, 'Summary:', '  Upgrading: 0, Installing: 0, Removing: 0, Not Upgrading: 0'].join('\n');
+  sortie.push(
+    'Upgrading:',
+    `  ${mises.map(([n]) => n).join('  ')}`,
+    '',
+    ...(nouveaux.length ? ['Installing dependencies:', `  ${nouveaux.map(([n]) => n).join('  ')}`, ''] : []),
+    'Summary:',
+    `  Upgrading: ${mises.length}, Installing: ${nouveaux.length}, Removing: 0, Not Upgrading: 0`,
+    '  Download size: 118 MB',
+    '  Space needed: 109 MB / 18.2 GB available',
+  );
+  const tous = [...nouveaux, ...mises];
+  const suite = () => {
+    const lignes: string[] = [];
+    tous.forEach(([n, v], i) =>
+      lignes.push(`Get:${i + 1} http://security.debian.org/debian-security trixie-security/main amd64 ${n} amd64 ${v} [${ko(1000 + i * 731)}]`),
+    );
+    lignes.push('Fetched 118 MB in 9s (13.1 MB/s)', '(Reading database ... 28412 files and directories currently installed.)');
+    for (const [n, v] of tous)
+      lignes.push(
+        `Preparing to unpack .../${n}_${v.replace(/^\d+:/, '')}_amd64.deb ...`,
+        e.installes[n] ? `Unpacking ${n} (${v}) over (${e.installes[n]}) ...` : `Unpacking ${n} (${v}) ...`,
+      );
+    // La connexion tombe pendant la configuration : sans tmux, dpkg meurt avec la session.
+    if (jeu.etat.coupureReseau && !jeu.tmux) {
+      jeu.etat.coupureReseau = false;
+      e.interrompu = tous.map(([n]) => n);
+      // Ce qui est dépaqueté attend sa nouvelle version : on la garde en mémoire pour dpkg --configure -a.
+      e.enAttente = Object.fromEntries(tous);
+      jeu.coupure = true;
+      lignes.push(`Setting up ${tous[0][0]} (${tous[0][1]}) ...`);
+      return lignes.join('\n');
+    }
+    if (jeu.etat.coupureReseau) {
+      jeu.etat.coupureReseau = false;
+      jeu.coupure = true;
+    }
+    lignes.push(...configurer(jeu, e, tous));
+    return lignes.join('\n');
+  };
+  if (oui) return [...sortie, '', suite()].join('\n');
+  jeu.demander('Continue? [Y/n] ', (reponse) => {
+    if (reponse !== '' && !/^y(es)?$/i.test(reponse)) return 'Abort.';
+    const avant = jeu.qui;
+    jeu.qui = 'root';
+    try {
+      return suite();
+    } finally {
+      jeu.qui = avant;
+    }
+  });
+  return [...sortie, ''].join('\n');
 }
 
 const etat = (jeu: Shell): EtatApt =>
@@ -231,6 +352,7 @@ const verrou = (jeu: Shell, fichier: string, quoi: string) =>
 
 function installer(jeu: Shell, noms: string[], oui: boolean): string {
   const e = etat(jeu);
+  if (e.interrompu?.length) return jeu.erreur(ERREUR_INTERROMPU, 100);
   const inconnus = noms.filter((n) => !e.listes || !PAQUETS[n]);
   if (inconnus.length) {
     jeu.etat.aptIntrouvable = true;
@@ -337,11 +459,14 @@ export const APT: Record<string, Commande> = {
       if (action === 'update') {
         if (jeu.qui !== 'root') return verrou(jeu, '/var/lib/apt/lists/lock', 'Unable to lock directory /var/lib/apt/lists/');
         e.listes = true;
+        const n = misesDisponibles(e).length;
         return [
           ...SOURCES.map((s, i) => `Get:${i + 1} ${s}`),
           'Fetched 16.4 MB in 2s (8,210 kB/s)',
           ...LECTURE.slice(0, 2),
-          'All packages are up to date.',
+          n
+            ? `${n} package${n > 1 ? 's' : ''} can be upgraded. Run 'apt list --upgradable' to see ${n > 1 ? 'them' : 'it'}.`
+            : 'All packages are up to date.',
         ].join('\n');
       }
       if (action === 'install') {
@@ -350,14 +475,36 @@ export const APT: Record<string, Commande> = {
           return verrou(jeu, '/var/lib/dpkg/lock-frontend', 'Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), are you root?');
         return installer(jeu, paquets, oui);
       }
+      if (action === 'upgrade' || action === 'full-upgrade') {
+        if (jeu.qui !== 'root')
+          return verrou(jeu, '/var/lib/dpkg/lock-frontend', 'Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), are you root?');
+        return mettreAJour(jeu, oui);
+      }
+      if (action === 'list' && args.includes('--upgradable')) {
+        const nouvelles = misesDisponibles(e).map(([n, v]) => `${n}/trixie-security ${v} amd64 [upgradable from: ${e.installes[n]}]`);
+        return ['Listing... Done', ...nouvelles.sort()].join('\n');
+      }
       if (action === 'list') {
         if (!args.includes('--installed')) return jeu.erreur(jeu.t('apt-list'));
         const lignes = Object.entries(e.installes)
           .sort()
-          .map(([n, v]) => `${n}/trixie,now ${v} ${PAQUETS[n].architecture} [installed]`);
+          .map(([n, v]) => `${n}/trixie,now ${v} ${PAQUETS[n]?.architecture ?? 'amd64'} [installed]`);
         return ['Listing... Done', ...lignes].join('\n');
       }
       return jeu.erreur(`Error: Invalid operation ${action}`);
+    },
+  },
+  // dpkg --configure -a : finir la configuration des paquets dépaquetés (après une interruption).
+  dpkg: {
+    section: 1,
+    propresOptions: true,
+    lancer: ({ args, jeu }) => {
+      if (!(args.includes('--configure') && args.includes('-a'))) return jeu.erreur(jeu.t('dpkg-usage'), 2);
+      if (jeu.qui !== 'root') return jeu.erreur('dpkg: error: requested operation requires superuser privilege', 2);
+      const e = etat(jeu);
+      const attente = (e.interrompu ?? []).map((n) => [n, e.enAttente?.[n] ?? e.installes[n]] as [string, string]);
+      if (!attente.length) return '';
+      return configurer(jeu, e, attente).join('\n');
     },
   },
   // nginx : le serveur web. Ici, on s'en sert pour vérifier la configuration

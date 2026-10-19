@@ -113,6 +113,10 @@ export class Shell implements Jeu {
   statut: number | null = null;
   // Le masque des droits des fichiers créés (umask), propre à cette session.
   masque = '0022';
+  // La session tmux où l'on tape (null : hors de tmux) ; les sessions vivent dans etat.tmux.
+  tmux: string | null = null;
+  // La connexion vient de tomber (le réseau a coupé) : la console ramène au poste.
+  coupure = false;
 
   t: Traduire;
 
@@ -368,7 +372,8 @@ export class Shell implements Jeu {
     if (this.question) return this.question.invite;
     const ici =
       this.cwd === this.maison ? '~' : this.cwd.startsWith(this.maison + '/') ? '~' + this.cwd.slice(this.maison.length) : this.cwd;
-    return `vous@${this.hote}:${ici}$`;
+    // Dans tmux, la barre d'état montre le nom de la session : on le met devant l'invite.
+    return `${this.tmux ? `[${this.tmux}] ` : ''}vous@${this.hote}:${ici}$`;
   }
 
   demander(invite: string, repondre: (reponse: string) => string, secret = false): void {
@@ -514,6 +519,12 @@ export class Shell implements Jeu {
     if (mots.length === 1 && mots[0].texte === 'clear' && !mots[0].cite) return null;
     // exit est intégré au shell : la console ferme la session.
     if (mots[0].texte === 'exit' && !mots[0].cite && mots.length <= 2) {
+      // Dans tmux, exit ferme le shell de la session (et la session avec), pas la connexion.
+      if (this.tmux) {
+        delete (this.etat.tmux as Record<string, unknown>)[this.tmux];
+        this.tmux = null;
+        return '[exited]';
+      }
       this.sortie = true;
       return '';
     }

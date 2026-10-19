@@ -136,8 +136,8 @@ demandent plusieurs.
       `-n`) et pourquoi FTP en clair est à proscrire faits (« Les
       transferts ») ; reste `sftp`, et **FTPS** pour les hébergeurs
       mutualisés qui l'imposent (le cas de rouages.net !)
-- [ ] `tmux` ou `screen` : garder une session vivante quand la connexion
-      tombe
+- [x] `tmux` : garder une session vivante quand la connexion tombe ;
+      « Les mises à jour » (La Coopérative, chapitre 5)
 
 ## Phase 3 — Sécuriser le serveur
 
@@ -152,9 +152,10 @@ demandent plusieurs.
       sentinelle » (Les Lettres du quartier, chapitre 3), où l'on peut se
       bannir soi-même
 - [ ] La prison `recidive`, d'autres prisons (nginx)
-- [ ] **Mises à jour** : `apt update/upgrade` (`apt update` et `install`
-      déjà là, « Le grand incendie »), mises à jour automatiques de
-      sécurité, redémarrage nécessaire, noyau
+- [ ] **Mises à jour** : `apt update`, `list --upgradable`, `upgrade`,
+      `dpkg --configure -a`, `/var/run/reboot-required`, `uname -r`, noyau
+      (« Les mises à jour », La Coopérative, chapitre 5) ; reste les mises à
+      jour automatiques (`unattended-upgrades`)
 - [x] **Comptes** : supprimer un compte (`userdel`), désactiver le compte
       d'un ancien collègue (`usermod -e`, `chage -E`), clés à révoquer (y
       compris dans un compte partagé), `gpasswd -d`, `who`, `pkill -u` ;

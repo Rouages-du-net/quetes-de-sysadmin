@@ -12,6 +12,7 @@ un système entièrement simulé : rien ne sort du navigateur.
 > (ligne de commande, permissions et sudo, journaux et processus, comptes et
 > groupes, services systemd, réseau, git, archives, clés SSH, rebonds et
 > tunnels, scp, comptes et sudoers, secrets et X-Forwarded-For,
+> mises à jour et tmux,
 > durcissement SSH, pare-feu,
 > fail2ban, sauvegardes avec rsync, cron et restic, nginx, TLS, DNS, Docker et
 > Compose, déploiement par git, bleu/vert, canari, migrations, rançongiciel,

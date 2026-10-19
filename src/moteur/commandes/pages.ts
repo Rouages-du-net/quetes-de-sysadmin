@@ -9,7 +9,21 @@ type Page = Pick<Commande, 'options' | 'exemples' | 'voir' | 'section'>;
 
 export const PAGES: Record<string, Page> = {
   apropos: { voir: ['man', 'whatis'] },
-  apt: { exemples: ['sudo apt update', 'sudo apt install nginx', 'apt list --installed'], voir: ['systemctl', 'nginx'] },
+  apt: {
+    section: 8,
+    exemples: [
+      'sudo apt update',
+      'sudo apt install nginx',
+      'apt list --installed',
+      'apt list --upgradable',
+      'sudo apt upgrade',
+      'cat /var/run/reboot-required.pkgs',
+    ],
+    voir: ['dpkg', 'systemctl', 'nginx', 'tmux'],
+  },
+  dpkg: { exemples: ['sudo dpkg --configure -a'], voir: ['apt'] },
+  tmux: { exemples: ['tmux new -s maj', 'tmux detach', 'tmux ls', 'tmux attach -t maj', 'tmux kill-session -t maj'], voir: ['ssh', 'apt'] },
+  uname: { options: ['r', 'a'], exemples: ['uname -r', 'uname -a'], voir: ['apt', 'reboot'] },
   awk: {
     exemples: [
       "awk '{print $1}' access.log",
