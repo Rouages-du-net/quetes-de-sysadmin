@@ -23,3 +23,5 @@ histoire-astreinte = L'Astreinte
     .resume = Des nuits d'astreinte pour Radio Quartier : disque plein, mémoire, inodes, horloge… puis la supervision qui prévient avant que ça casse.
 histoire-maison = La Maison des associations
     .resume = Une passerelle et un réseau interne derrière elle : ses propres clés SSH, ssh -J, les tunnels, scp et rsync entre machines.
+histoire-cooperative = La Coopérative
+    .resume = L'épicerie coopérative du quartier : les comptes de celles et ceux qui arrivent et qui partent, les droits partagés, sudo bien réglé.

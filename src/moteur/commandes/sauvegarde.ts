@@ -198,6 +198,9 @@ export const SAUVEGARDE: Record<string, Commande> = {
     propresOptions: true,
     lancer: ({ args, jeu }) => {
       const crontabs: Record<string, string> = (jeu.etat.crontabs ??= {});
+      // -u compte, où qu'il soit (crontab -l -u marc) : on le ramène devant.
+      const iu = args.indexOf('-u');
+      if (iu > 0) args = ['-u', args[iu + 1], ...args.filter((_, k) => k !== iu && k !== iu + 1)];
       // -u compte : la crontab d'un autre compte (root seulement).
       if (args[0] === '-u') {
         if (jeu.qui !== 'root') return jeu.erreur('crontab: must be privileged to use -u');

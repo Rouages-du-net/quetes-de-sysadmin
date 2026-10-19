@@ -91,10 +91,14 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `grep` sans résultat | « (aucune ligne ne contient …) » | n'affiche rien |
 | `man` | affiche la page d'un coup, en quelques sections | ouvre une page plein écran (flèches, `/mot` pour chercher, `q` pour quitter), bien plus longue |
 | `ls -l` | type et droits, propriétaire, groupe (= propriétaire), taille, nom | ajoute le nombre de liens et la date |
-| permissions | propriétaire, groupe, autres ; pas de bits spéciaux (setuid, setgid, sticky) ni d'ACL | aussi setgid sur les dossiers partagés, ACL (`setfacl`) |
+| permissions | propriétaire, groupe, autres ; bits spéciaux affichés (`s`, `t`) ; le setgid d'un dossier passe son groupe (et le setgid) à ce qu'on y crée ; `chmod` à 4 chiffres ; pas de setuid ni de sticky appliqués, ni d'ACL ; un fichier déplacé dans un dossier setgid sans groupe à lui en prend aussi le groupe | setuid, sticky appliqués, ACL (`setfacl`), `mv` garde le groupe |
 | `usermod -G` | prend effet tout de suite | les groupes d'une session sont lus à la connexion : il faut se reconnecter (le jeu le dit dans le texte) |
 | `chown`, `chgrp` | `-R` seulement | aussi `--reference`, `-h`… |
 | `chmod -w` (sans u/g/o) | agit sur tout le monde | tient compte du masque `umask` |
+| `umask` | commande avec sa page `man` ; vaut pour la session ; le masque des autres comptes se lit dans `/etc/profile`, `/etc/profile.d/*.sh`, `~/.bashrc`, `~/.profile` (la dernière ligne `umask` l'emporte) | commande intégrée à bash (`help umask`) ; `pam_umask`, `login.defs` |
+| comptes (`usermod`, `userdel`, `gpasswd`, `chage`) | `usermod -L/-U/-e/-s/-G` ; `userdel [-r] [-f]` (refus si un processus du compte tourne) ; `gpasswd -a/-d` ; `chage -l/-E` (dates au format AAAA-MM-JJ) ; pas de `/etc/shadow` lisible ; messages de la traduction française de shadow-utils | toutes les options, `passwd`, `deluser`, `/etc/shadow` |
+| `sudo`, `sudoers`, `visudo` | `/etc/sudoers` et `@includedir` (fichiers sans point ni `~`), règles `qui machines=(compte) [NOPASSWD:] commandes`, `Cmnd_Alias`, jokers ; `sudo -l [-U compte]` ; `visudo [-c] [-f fichier]` vérifie à la fermeture de l'éditeur et demande « Et maintenant ? » ; une erreur dans la politique bloque sudo ; seul « vous » lance des commandes avec sudo (les autres comptes : `sudo -l -U`) ; pas d'alias d'utilisateurs ni de machines, pas de `!` | toute la grammaire de sudoers, plugins, `sudoedit` |
+| `who`, `pkill`, `which` | sessions décrites par le chapitre (une session vit tant que son `sshd` tourne) ; `pkill [-u compte] [motif]` ; `which` déduit le chemin (`/usr/bin`, ou `/usr/sbin` pour la section 8) | `w`, `loginctl`, toutes les options de procps ; `which` lit le PATH |
 | `rm` d'un fichier protégé en écriture | efface sans demander | demande confirmation |
 | `sudo` | redemande le mot de passe seulement au premier usage du chapitre | s'en souvient environ 15 minutes |
 | `cat` d'une archive | message d'erreur | affiche des octets illisibles |
@@ -111,7 +115,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `ssh` | deux modèles : sur la plupart des machines, une clé est acceptée si c'est celle que le jeu a donnée pour cette machine ; sur `maison` et son réseau interne (`acces.ts`), le vrai fonctionnement : `authorized_keys` d'en face, phrase de passe, mot de passe si sshd l'accepte (trois essais), `-J`/`ProxyJump` (le nom suivant est résolu par la machine du saut), `-L` avec `-f -N` (un processus à arrêter avec `kill`), commande à distance, `-G` (extrait) ; pas d'agent, de `-R`, de `-D` ni de certificats ; une seule clé d'hôte (ed25519) ; message d'usage raccourci | tout cela, agent, `ForwardAgent`, redirections distantes et dynamiques |
 | `exit` | a sa page `man` | commande intégrée à bash : `help exit` |
 | session `ssh` | la machine garde son état tant que la page reste ouverte ; un rechargement relance le chapitre en cours | la machine garde son état |
-| sections du manuel | 1 (commandes), 5 (fichiers de configuration : `sshd_config`, `ssh_config`) et 8 (administration : `usermod`, `reboot`) | aussi 2, 3, 4, 6 et 7 (appels système, bibliothèques…) |
+| sections du manuel | 1 (commandes), 5 (fichiers de configuration : `sshd_config`, `ssh_config`, `sudoers`) et 8 (administration : `usermod`, `reboot`) | aussi 2, 3, 4, 6 et 7 (appels système, bibliothèques…) |
 | systemd | services seuls (pas de cibles, de dépendances, de timers ni de fichiers d'unité modifiables) ; l'horloge avance d'une seconde par action ; `journalctl -f` non simulé | unités de tous types, `daemon-reload`, `journalctl -f` |
 | `systemctl` sans être root | « Access denied », il faut `sudo` | demande le mot de passe (polkit) |
 | `sudo` après `reboot` | se souvient encore du mot de passe | le redemande |
@@ -1178,4 +1182,46 @@ fichier du dossier partagé identique sur archives, sans dossier copié en
 trop. Pièges prévus : la barre oblique finale oubliée (un dossier
 `partage/partage`), `--delete` sans essai à blanc. Le débrief parle de FTP
 et telnet, qui font passer les mots de passe en clair.
+
+## Histoire 12 : La Coopérative (quatre chapitres prévus)
+
+L'épicerie coopérative du quartier (machine `cooperative`, 192.0.2.20) :
+la caisse (un service), l'équipe caisse (Lina, Karim), un compte de
+déploiement partagé (`deploy`). Awa, la coordinatrice, confie le serveur à
+la joueuse ou au joueur quand Marc, qui le tenait, s'en va. Les trous de
+la feuille de route : comptes, sudoers, droits partagés ; puis (à venir)
+un secret exposé par nginx, `X-Forwarded-For`, `apt upgrade` et tmux.
+
+### Chapitre 1 — Le départ (fait)
+
+| Étape | Commande apprise |
+|---|---|
+| Voir | `who`, `ps -u marc`, `sudo crontab -l -u marc`, `/home/deploy/.ssh/authorized_keys` |
+| Fermer | `usermod -e 1` (ou `chage -E 0`, `usermod -s /usr/sbin/nologin`, `userdel`) ; `usermod -L` seul ne suffit pas |
+| Retirer | sa ligne dans `authorized_keys` de `deploy`, `gpasswd -d marc sudo`, `pkill -u marc` |
+| Garder | le script de sauvegarde hors de `/home/marc`, dans la crontab de root (ou `/etc/cron.d`) |
+
+Objectif vérifié sur l'état : marc ne peut plus entrer (compte expiré,
+sans shell ou supprimé, ou mot de passe verrouillé et plus de clé), sa clé
+n'est plus dans `deploy` (les deux autres y sont), plus de sudo ni de
+processus, et la sauvegarde tourne sous root ou deploy. Pièges prévus :
+`usermod -L` seul (la clé passe), vider tout `authorized_keys` de deploy,
+`userdel -r` avant d'avoir repris le script (la sauvegarde d'hier le
+contient), la tâche dans sa propre crontab.
+
+### Chapitre 2 — Les droits partagés (fait)
+
+| Étape | Commande apprise |
+|---|---|
+| Le dossier | `chgrp -R caisse`, `chmod -R g+w`, `chmod g+s` (ou `2775`), `ls -ld` |
+| Le masque | `umask`, `umask 002` dans `~/.profile` de Lina et Karim (ou `/etc/profile.d`) |
+| sudo | `which systemctl`, `sudo visudo -f /etc/sudoers.d/caisse` : `%caisse ALL=(root) /usr/bin/systemctl restart caisse`, `sudo -l -U lina`, `visudo -c` |
+
+Objectif vérifié sur l'état : le dossier (groupe caisse, écriture du
+groupe, setgid), les fichiers existants, le masque des deux comptes, et ce
+que la politique de sudo permet (relancer la caisse) et refuse (un shell,
+arrêter ssh), sans erreur. Pièges prévus : une commande sans chemin
+(visudo refuse et demande « Et maintenant ? »), un fichier `caisse.conf`
+(ignoré), une règle `ALL`, `systemctl` sans arguments, une faute écrite
+avec nano (sudo refuse tout).
 

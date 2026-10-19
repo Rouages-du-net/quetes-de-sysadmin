@@ -40,6 +40,7 @@ export const MACHINES: Machine[] = [
   machine('radio', '192.0.2.18', 'astreinte'),
   // La Maison des associations : une passerelle, devant son réseau interne.
   machine('maison', '192.0.2.19', 'maison', true),
+  machine('cooperative', '192.0.2.20', 'cooperative'),
 ];
 
 export const machineDeHistoire = (histoire: string) => MACHINES.find((m) => m.histoire === histoire);

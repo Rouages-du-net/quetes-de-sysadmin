@@ -125,9 +125,11 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
       lignes = lignes.slice(-MAX_LIGNES);
       sortie.appendChild(el('p', { class: 'coupure' }, t('sortie-coupee', { lignes: coupees })));
     }
+    // Une ligne soulignée par ^~~~ (sudo, compilateurs) : la ligne et son soulignement ne se replient pas.
+    const souligne = (i: number) => /^\s*\^~*\s*$/.test(lignes[i] ?? '');
     lignes.forEach((ligne, i) => {
       const fin = i < lignes.length - 1 ? '\n' : '';
-      if (enColonnes(ligne)) pre.append(el('span', { class: 'colonnes' }, ligne + fin));
+      if (enColonnes(ligne) || souligne(i) || souligne(i + 1)) pre.append(el('span', { class: 'colonnes' }, ligne + fin));
       else pre.append(ligne + fin);
     });
     if (classe) pre.className = classe;
