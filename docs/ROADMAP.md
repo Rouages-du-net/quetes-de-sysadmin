@@ -268,7 +268,9 @@ demandent plusieurs.
       (`forward`, `masquerade`, `ct state`), `conntrack` ; « Les zones » (La
       Ruche, chapitre 3)
 - [ ] Une DMZ (un serveur public derrière le routeur, `dnat`)
-- [ ] VPN (WireGuard) pour le télétravail et entre sites
+- [x] VPN WireGuard pour le télétravail : clés, `wg0.conf`, `wg-quick`,
+      pare-feu ; « Le télétravail » (La Ruche, chapitre 4)
+- [ ] VPN entre deux sites
 - [ ] Wi-Fi d'entreprise (réseau invité isolé)
 - [ ] Annuaire et authentification centralisée (aperçu)
 

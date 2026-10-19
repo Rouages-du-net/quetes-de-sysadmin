@@ -100,6 +100,10 @@ rouages.net.
   tables, chaînes, règles lues comme `nft`, trajet d'un paquet, NAT, trafic
   des appareils `Lan.flux`) ; `nft`, `sysctl` (`/proc/sys` est un dossier du
   monde) et `conntrack` dans `commandes/nftables.ts`.
+- `src/moteur/wireguard.ts` : WireGuard d'un routeur (`etat.wg` : clés,
+  `wg0.conf` lu comme wg-quick, pairs distants `Lan.distants` et leur
+  poignée de main) ; `wg`, `wg-quick` et le service `wg-quick@NOM` dans
+  `commandes/wireguard.ts`.
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
   dans `editeur.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).

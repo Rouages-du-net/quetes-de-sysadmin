@@ -44,7 +44,7 @@ const internet = (r: Resultat) => estIp(r.flux.vers);
 const conforme = (rs: Resultat[]) => rs.every((r) => (permis(r) ? r.etat === 'ok' : r.etat === 'bloque'));
 
 // ssh depuis le poste d'administration vers le routeur (chaîne input), pour une nouvelle connexion.
-const sshOuvert = (r: Ruleset) =>
+export const sshOuvert = (r: Ruleset) =>
   traverser(r, 'input', 'filter', {
     iif: 'eth0',
     oif: '',

@@ -133,6 +133,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `dnsmasq` | DHCP seulement (les options DNS sont acceptées et ignorées) ; `interface` (avec `*`), `except-interface`, `dhcp-range`, `dhcp-host`, `dhcp-option` ; les appareils demandent une adresse à chaque démarrage du service ; l'adresse est tirée de l'adresse MAC ; pas de renouvellement de bail | DNS, TFTP, PXE, DHCPv6, renouvellement |
 | `nft` (nftables) | IPv4 ; tables `ip`, `inet` (`ip6` lu, sans effet) ; chaînes de base `filter` et `nat` (hooks, priorités, politique), chaînes ordinaires (`jump`, `goto`) ; conditions `iifname`, `oifname`, `ip saddr`, `ip daddr`, `ip protocol`, `meta l4proto`, `tcp`/`udp` `dport`/`sport` (services connus du jeu), `ct state`, négation `!=`, ensembles anonymes ; actions `counter`, `log`, `accept`, `drop`, `reject`, `masquerade`, `snat`, `dnat` (lu, sans effet) ; `define`, `include` ; `-f`, `-c`, `-a` ; `add`, `insert`, `delete`, `flush`, `list` ; le trafic est celui des appareils décrits par le chapitre, et les compteurs comptent un passage de chaque échange ; messages d'erreur proches de nft ; la chaîne `input` ne coupe pas la session ssh du jeu | ensembles nommés, maps, `limit`, `quota`, IPv6, `bridge`, `netdev`, `nft monitor`, les règles sur le contenu des paquets |
 | `sysctl`, `conntrack` | `sysctl` : lire, `-w`, `clé=valeur`, `-p`, `--system`, `-a`, `-n` sur quelques clés (`/proc/sys` est un vrai dossier du jeu) ; `/etc/sysctl.d/*.conf` puis `/etc/sysctl.conf` au démarrage ; `conntrack -L` (`-p`, `-s`, `-d`), `-C`, `-F` : les échanges du moment, dont la session ssh | toutes les clés du noyau ; `conntrack -E`, `-D`, états UDP et ICMP détaillés |
+| `wg`, `wg-quick` (WireGuard) | `genkey`, `genpsk`, `pubkey`, `show`, `showconf` ; `wg-quick up`, `down`, `strip` ; le service `wg-quick@wg0` ; la clé publique n'est pas calculée par Curve25519 (une empreinte qui en tient lieu, au bon format) ; les pairs sont décrits par le chapitre (le portable de Malik) ; pas de `wg set`, `PostUp`, `PresharedKey` vérifiée, IPv6, ni de tout le trafic par le tunnel côté routeur ; `wg-quick` sans sudo refuse au lieu de relancer sudo | Curve25519, `wg set`, `syncconf`, `PostUp`/`PostDown`, IPv6, `wg-quick save` |
 | `ping` sur un réseau local | un appareil répond s'il est dans le VLAN de l'interface dont le réseau contient son adresse ; une adresse privée envoyée à la box se perd ; un nom d'appareil est reconnu sans DNS | ARP, DNS local, `/etc/hosts` |
 | `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, une fenêtre par session ; pas de raccourcis clavier (`tmux detach` pour Ctrl+b d) ; attach rejoue les dernières lignes ; le nom de la session s'affiche devant l'invite (la barre d'état) ; `uname -r/-a` ; `dpkg --configure -a` | fenêtres, volets, raccourcis, `screen` ; toutes les options de dpkg |
 | `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe, `=`, `^~`, ou expression régulière (`~`, `~*`, syntaxe de JavaScript plutôt que PCRE), choisie dans l'ordre de nginx ; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
@@ -1289,7 +1290,7 @@ activée au démarrage. Pièges prévus : `apt upgrade` avant `apt update`
 tout), oublier de redémarrer (l'ancien noyau tourne), la caisse jamais
 activée (elle ne repart pas), tmux imbriqué.
 
-## Histoire 13 : La Ruche (phase 9, en cours)
+## Histoire 13 : La Ruche (phase 9)
 
 Un tiers-lieu (des bureaux d'associations, un café avec un wifi pour les
 invité·es, une imprimante et des caméras). Son routeur est une Debian
@@ -1358,4 +1359,29 @@ visiteur voit le NAS), `policy drop` sans `ct state` (les réponses sont
 jetées), la chaîne `input` qui ferme ssh, une faute dans le fichier
 (`syntax error`, le service ne démarre pas), tout à la main (perdu au
 `reboot`), `nft` et `sysctl -w` sans sudo.
+
+### Chapitre 4 — Le télétravail (fait)
+
+Malik veut ouvrir le NAS depuis chez lui ; on lui propose « d'ouvrir le port
+445 sur la box ». À la place : un VPN WireGuard sur le routeur. Le portable
+de Malik a déjà ses clés (sa clé publique est dans le courriel) ; son
+fichier `portable-malik.conf` attend la partie `[Peer]` (le routeur). Le
+pare-feu des zones est en place, avec une chaîne `input` fermée par défaut.
+
+| Étape | Commande apprise |
+|---|---|
+| Les clés | `umask 077`, `wg genkey \| tee privatekey \| wg pubkey > publickey` |
+| Le routeur | `/etc/wireguard/wg0.conf` : `[Interface]` (`Address`, `ListenPort`, `PrivateKey`), `[Peer]` (`PublicKey`, `AllowedIPs = 10.10.99.2/32`) ; `wg-quick up wg0`, `wg show` (`latest handshake`) |
+| Le portable | `PublicKey` du routeur, `Endpoint = ruche.example:51820`, `AllowedIPs = 10.10.10.0/24` |
+| Le pare-feu | `udp dport 51820 accept` (input), `iifname "wg0" oifname "eth1.10" accept` (forward), dans `/etc/nftables.conf` |
+| Faire durer | `systemctl enable --now wg-quick@wg0` |
+
+Objectif vérifié sur l'état : le portable fait sa poignée de main et joint le
+NAS, maintenant et au prochain démarrage (service activé, fichiers), ssh
+reste ouvert au poste d'administration, et aucune copie de la clé privée du
+routeur n'est lisible par les autres comptes. Pièges prévus : `wg genkey >
+privatekey` sans `umask` (l'avertissement de wg, puis la clé lisible par
+tous), la chaîne `input` qui jette l'UDP, la clé privée donnée à la place de
+la clé publique, `wg-quick up` puis le service (« already exists »), une
+règle tapée à la main et perdue au redémarrage, `wg show` sans sudo.
 

@@ -16,6 +16,7 @@ const nomAffiche = (i: Interface) => (i.vlan ? `${i.nom}@${i.vlan.parent}` : i.n
 
 function etatLien(l: Lan, i: Interface): { drapeaux: string; etat: string } {
   if (i.nom === 'lo') return { drapeaux: '<LOOPBACK,UP,LOWER_UP>', etat: 'UNKNOWN' };
+  if (i.wireguard) return { drapeaux: i.up ? '<POINTOPOINT,NOARP,UP,LOWER_UP>' : '<POINTOPOINT,NOARP>', etat: i.up ? 'UNKNOWN' : 'DOWN' };
   if (!i.up) return { drapeaux: '<BROADCAST,MULTICAST>', etat: 'DOWN' };
   if (!enService(l, i)) return { drapeaux: '<NO-CARRIER,BROADCAST,MULTICAST,UP>', etat: 'LOWERLAYERDOWN' };
   return { drapeaux: '<BROADCAST,MULTICAST,UP,LOWER_UP>', etat: 'UP' };
@@ -26,8 +27,12 @@ function lignesLien(l: Lan, i: Interface, details: boolean): string[] {
   const { drapeaux, etat } = etatLien(l, i);
   const lo = i.nom === 'lo';
   const lignes = [
-    `${n}: ${nomAffiche(i)}: ${drapeaux} mtu ${lo ? 65536 : 1500} qdisc ${lo || i.vlan ? 'noqueue' : 'fq_codel'} state ${etat} mode DEFAULT group default qlen 1000`,
-    lo ? '    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00' : `    link/ether ${i.mac} brd ff:ff:ff:ff:ff:ff`,
+    `${n}: ${nomAffiche(i)}: ${drapeaux} mtu ${lo ? 65536 : i.wireguard ? 1420 : 1500} qdisc ${lo || i.vlan || i.wireguard ? 'noqueue' : 'fq_codel'} state ${etat} mode DEFAULT group default qlen 1000`,
+    lo
+      ? '    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00'
+      : i.wireguard
+        ? '    link/none '
+        : `    link/ether ${i.mac} brd ff:ff:ff:ff:ff:ff`,
   ];
   if (details && i.vlan) lignes.push(`    vlan protocol 802.1Q id ${i.vlan.id} <REORDER_HDR>`);
   return lignes;
@@ -40,7 +45,7 @@ function lignesAdresses(l: Lan, i: Interface): string[] {
     ...reste,
     ...i.adresses.flatMap((a) => {
       const c = cidr(a)!;
-      const brd = i.nom === 'lo' ? '' : ` brd ${versIp(c.diffusion)}`;
+      const brd = i.nom === 'lo' || i.wireguard ? '' : ` brd ${versIp(c.diffusion)}`;
       return [`    inet ${a}${brd} scope ${i.nom === 'lo' ? 'host' : 'global'} ${i.nom}`, '       valid_lft forever preferred_lft forever'];
     }),
   ];
@@ -120,7 +125,9 @@ function ip(jeu: Shell, args: string[]): string {
       if (dev && !interfaceDe(dev)) return introuvable(dev);
       return liste(dev)
         .flatMap((i) =>
-          brief ? [bref(l, i, `${i.nom === 'lo' ? '00:00:00:00:00:00' : i.mac} ${etatLien(l, i).drapeaux}`)] : lignesLien(l, i, details),
+          brief
+            ? [bref(l, i, `${i.nom === 'lo' ? '00:00:00:00:00:00' : i.wireguard ? '' : i.mac} ${etatLien(l, i).drapeaux}`.trim())]
+            : lignesLien(l, i, details),
         )
         .join('\n');
     }

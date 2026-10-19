@@ -176,6 +176,11 @@ export function redemarrer(jeu: Jeu, sd: Systemd) {
   // Les sessions tmux meurent avec la machine ; les règles du pare-feu aussi (nftables.service les recharge s'il est activé).
   if (jeu.etat.tmux) jeu.etat.tmux = {};
   if (jeu.etat.nft) jeu.etat.nft = { tables: [] };
+  // Les interfaces WireGuard aussi (wg-quick@wg0 les remonte s'il est activé).
+  if (jeu.etat.wg) {
+    for (const nom of Object.keys(jeu.etat.wg)) delete jeu.etat.lan?.interfaces[nom];
+    jeu.etat.wg = {};
+  }
   journaliser(sd, '', 'kernel', 0, `Linux version ${noyau?.courant ?? '6.12.0-quetes'} (${sd.hote})`);
   for (const [nom, s] of Object.entries(sd.services)) {
     s.etat = 'inactive';

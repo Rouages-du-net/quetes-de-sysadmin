@@ -21,7 +21,8 @@ import { requeteDocker } from '../docker';
 import { digDns } from './bind';
 import { couvre, lire } from '../tls';
 import { systemd, versUtc } from '../systemd';
-import { adresseDe, joindre, lan } from '../lan';
+import { adresseDe, interfacePour, joindre, lan } from '../lan';
+import { pingTunnel } from './wireguard';
 
 // Ce que curl ajoute quand la vérification du certificat échoue (curl 8).
 const AIDE_SSL = `More details here: https://curl.se/docs/sslcerts.html
@@ -91,7 +92,20 @@ function pingLan(jeu: Shell, hote: string, n: number): string {
   if (r.quoi === 'pas-de-route') return jeu.erreur('ping: connect: Network is unreachable', 2);
   const lignes = [`PING ${hote} (${ip}) 56(84) bytes of data.`];
   const temps: number[] = [];
+  // Par un tunnel WireGuard : il faut un pair pour cette adresse, et que la poignée de main ait eu lieu.
+  const tunnel = interfacePour(l, ip)?.wireguard ? pingTunnel(jeu, ip) : null;
   for (let i = 1; i <= n; i++) {
+    if (tunnel === 'sans-pair') {
+      lignes.push('ping: sendmsg: Required key not available');
+      continue;
+    }
+    if (tunnel === 'perdu') continue;
+    if (tunnel === 'ok') {
+      const t = 23.1 + ((i * 37) % 11) / 10;
+      temps.push(t);
+      lignes.push(`64 bytes from ${ip}: icmp_seq=${i} ttl=64 time=${t.toFixed(1)} ms`);
+      continue;
+    }
     if (r.quoi === 'injoignable') {
       if (i <= 3) lignes.push(`From ${r.source} icmp_seq=${i} Destination Host Unreachable`);
       continue;
@@ -105,7 +119,7 @@ function pingLan(jeu: Shell, hote: string, n: number): string {
   lignes.push(
     '',
     `--- ${hote} ping statistics ---`,
-    `${n} packets transmitted, ${recus} received, ${r.quoi === 'injoignable' ? `+${Math.min(n, 3)} errors, ` : ''}${Math.round((100 * (n - recus)) / n)}% packet loss, time ${(n - 1) * 1001 + 3}ms`,
+    `${n} packets transmitted, ${recus} received, ${r.quoi === 'injoignable' && !tunnel ? `+${Math.min(n, 3)} errors, ` : ''}${Math.round((100 * (n - recus)) / n)}% packet loss, time ${(n - 1) * 1001 + 3}ms`,
   );
   if (recus) {
     const moy = temps.reduce((a, b) => a + b, 0) / recus;
