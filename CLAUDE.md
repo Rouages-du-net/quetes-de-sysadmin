@@ -96,6 +96,10 @@ rouages.net.
   lu comme ifupdown) ; `ip`, `ifup`, `ifdown`, `dnsmasq --test` dans
   `commandes/lan.ts` ; le DHCP (`dnsmasq.ts` : configuration, baux, journal) ;
   `ping` passe par ce modèle quand la machine en a un.
+- `src/moteur/nftables.ts` : le pare-feu nftables d'un routeur (`etat.nft` :
+  tables, chaînes, règles lues comme `nft`, trajet d'un paquet, NAT, trafic
+  des appareils `Lan.flux`) ; `nft`, `sysctl` (`/proc/sys` est un dossier du
+  monde) et `conntrack` dans `commandes/nftables.ts`.
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
   dans `editeur.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).

@@ -249,4 +249,6 @@ export const LAN: Record<string, Commande> = {
   ip: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => ip(jeu, args) },
   ifup: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => ifupdown(jeu, args, true) },
   ifdown: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => ifupdown(jeu, args, false) },
+  // La page de manuel du fichier (man 5 interfaces).
+  interfaces: { section: 5, lancer: () => '' },
 };

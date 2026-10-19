@@ -10,6 +10,8 @@ import type { Jeu } from '../shell';
 import { creer, demarrerReseau, type Appareil, type Lan } from '../lan';
 import { demarrerDnsmasq, lireDnsmasq } from '../dnsmasq';
 import { nouveauSystemd, type DefinitionService } from '../systemd';
+import { journaliserTrafic, lireConf } from '../nftables';
+import { appliquerSysctl } from '../commandes/nftables';
 
 export const M = '/home/vous';
 export const MOT_DE_PASSE = 'abeille-2027';
@@ -70,6 +72,90 @@ iface eth1 inet static
 export const INTERFACES_VLAN = `${INTERFACES_A_PLAT.replace('# LAN: one flat network for everyone\nauto eth1\niface eth1 inet static\n    address 192.168.1.1/24', '# LAN: the trunk to the switch (VLANs 10, 20, 30)\nauto eth1\niface eth1 inet manual')}
 ${VLANS.map((v) => `\n# VLAN ${v.id}: ${v.nom}\nauto eth1.${v.id}\niface eth1.${v.id} inet static\n    address ${v.routeur}`).join('\n')}`;
 
+/** dnsmasq une fois le chapitre « Le DHCP » fini : une plage par VLAN, l'imprimante réservée. */
+export const DNSMASQ_VLAN = `# The DHCP server of the LAN: one range per VLAN
+interface=eth1.10,eth1.20,eth1.30
+dhcp-range=10.10.10.100,10.10.10.200,12h
+dhcp-range=10.10.20.100,10.10.20.250,2h
+dhcp-range=10.10.30.100,10.10.30.200,24h
+dhcp-host=00:00:5e:00:53:30,imprimante,10.10.30.10`;
+
+// /etc/nftables.conf, tel que l'installe le paquet Debian : tout est permis.
+export const NFTABLES_DEBIAN = `#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+	chain input {
+		type filter hook input priority filter;
+	}
+	chain forward {
+		type filter hook forward priority filter;
+	}
+	chain output {
+		type filter hook output priority filter;
+	}
+}`;
+
+// /etc/sysctl.conf de Debian (abrégé) : le transfert de paquets y est commenté.
+const SYSCTL_CONF = `#
+# /etc/sysctl.conf - Configuration file for setting system variables
+# See /etc/sysctl.d/ for additional system variables.
+# See sysctl.conf (5) for information.
+#
+
+#kernel.domainname = example.com
+
+# Uncomment the following to stop low-level messages on console
+#kernel.printk = 3 4 1 3
+
+###################################################################
+# Functions previously found in netbase
+#
+
+# Uncomment the next two lines to enable Spoof protection (reverse-path filter)
+# Turn on Source Address Verification in all interfaces to
+# prevent some spoofing attacks
+#net.ipv4.conf.default.rp_filter=1
+#net.ipv4.conf.all.rp_filter=1
+
+# Uncomment the next line to enable TCP/IP SYN cookies
+# See http://lwn.net/Articles/277146/
+# Note: This may impact IPv6 TCP sessions too
+#net.ipv4.tcp_syncookies=1
+
+# Uncomment the next line to enable packet forwarding for IPv4
+#net.ipv4.ip_forward=1
+
+# Uncomment the next line to enable packet forwarding for IPv6
+#  Enabling this option disables Stateless Address Autoconfiguration
+#  based on Router Advertisements for this host
+#net.ipv6.conf.all.forwarding=1`;
+
+// Les réglages du noyau que le jeu connaît (/proc/sys), à leur valeur au démarrage.
+export const SYSCTL_DEFAUTS: Record<string, string> = {
+  'kernel.hostname': 'ruche',
+  'net.ipv4.conf.all.forwarding': '0',
+  'net.ipv4.conf.all.rp_filter': '2',
+  'net.ipv4.conf.default.rp_filter': '2',
+  'net.ipv4.ip_forward': '0',
+  'net.ipv4.tcp_syncookies': '1',
+  'net.ipv6.conf.all.forwarding': '0',
+  'vm.swappiness': '60',
+};
+
+// /proc/sys en arborescence (net/ipv4/ip_forward…).
+function procSys(): Dossier {
+  const racineSys: Dossier = d({}, undefined, racine);
+  for (const [cle, v] of Object.entries(SYSCTL_DEFAUTS)) {
+    const morceaux = cle.split('.');
+    let dossier = racineSys;
+    for (const m of morceaux.slice(0, -1)) dossier = (dossier.enfants[m] ??= d({}, undefined, racine)) as Dossier;
+    dossier.enfants[morceaux.at(-1)!] = f(v, { proprio: 'root', mode: 'rw-r--r--' });
+  }
+  return racineSys;
+}
+
 /** L'état du réseau local de départ (reconstruit depuis /etc/network/interfaces au démarrage). */
 export function nouveauLan(imprimanteEnDhcp: boolean): Lan {
   const l: Lan = {
@@ -87,10 +173,25 @@ export function nouveauLan(imprimanteEnDhcp: boolean): Lan {
 const racine = { proprio: 'root' };
 const fichier = (contenu: string, proprio = 'root') => f(contenu, { lignes: true, proprio });
 
-/** Les services : networking (ifup -a), ssh, et dnsmasq (le DHCP). */
+/** Les services : networking (ifup -a), systemd-sysctl, ssh, dnsmasq (le DHCP) et nftables (désactivé, comme sur Debian). */
 export function systemdRuche(services: Record<string, DefinitionService> = {}) {
   return nouveauSystemd('ruche', MAINTENANT - 40 * 86_400_000, MAINTENANT, {
-    networking: { description: 'Raise network interfaces', active: true, executable: 'ifup', processus: [], charger: (j) => demarrerReseau(j) },
+    networking: {
+      description: 'Raise network interfaces',
+      active: true,
+      resteActif: true,
+      executable: 'ifup',
+      processus: [],
+      charger: (j) => demarrerReseau(j),
+    },
+    'systemd-sysctl': {
+      description: 'Apply Kernel Variables',
+      active: true,
+      executable: 'systemd-sysctl',
+      resteActif: true,
+      processus: [],
+      charger: (j) => appliquerSysctl(j, SYSCTL_DEFAUTS),
+    },
     ssh: {
       description: 'OpenBSD Secure Shell server',
       active: true,
@@ -117,6 +218,28 @@ export function systemdRuche(services: Record<string, DefinitionService> = {}) {
       verifierAuRechargement: true,
       charger: (j) => demarrerDnsmasq(j),
     },
+    // ExecStart et ExecReload : nft -f /etc/nftables.conf ; ExecStop : nft flush ruleset.
+    nftables: {
+      description: 'nftables',
+      active: false,
+      etat: 'inactive',
+      executable: 'nft',
+      resteActif: true,
+      processus: [],
+      verifier: (j) => {
+        const { erreur } = lireConf(j);
+        return erreur ? erreur.split('\n') : null;
+      },
+      verifierAuRechargement: true,
+      charger: (j) => {
+        const { ruleset } = lireConf(j);
+        if (ruleset) j.etat.nft = ruleset;
+        journaliserTrafic(j);
+      },
+      arret: (j) => {
+        j.etat.nft = { tables: [] };
+      },
+    },
     ...services,
   });
 }
@@ -127,8 +250,14 @@ export function initialiserRuche(j: Jeu) {
   demarrerDnsmasq(j);
 }
 
-/** Le monde commun : /etc (comptes, réseau, dnsmasq), la maison de vous, /var/lib/misc. */
-export function mondeRuche(o: { interfaces: string; dnsmasq: string; maison: Record<string, Noeud> }): Dossier {
+/** Le monde commun : /etc (comptes, réseau, dnsmasq, nftables, sysctl), la maison de vous, /var/lib/misc, /proc/sys. */
+export function mondeRuche(o: {
+  interfaces: string;
+  dnsmasq: string;
+  maison: Record<string, Noeud>;
+  nftables?: string;
+  sysctl?: Record<string, Noeud>;
+}): Dossier {
   return d(
     {
       etc: d(
@@ -138,6 +267,13 @@ export function mondeRuche(o: { interfaces: string; dnsmasq: string; maison: Rec
           network: d({ interfaces: fichier(o.interfaces), 'interfaces.d': d({}, undefined, racine) }, undefined, racine),
           'dnsmasq.conf': fichier('# Configuration file for dnsmasq.\n#\n# See /etc/dnsmasq.d for the local configuration.'),
           'dnsmasq.d': d({ ruche: fichier(o.dnsmasq) }, undefined, racine),
+          'nftables.conf': f(o.nftables ?? NFTABLES_DEBIAN, { lignes: true, proprio: 'root', mode: 'rwxr-xr-x' }),
+          'sysctl.conf': fichier(SYSCTL_CONF),
+          'sysctl.d': d(
+            { 'README.sysctl': fichier('Files in /etc/sysctl.d/ are read by systemd-sysctl and by sysctl --system.\nSee sysctl.d(5).'), ...o.sysctl },
+            undefined,
+            racine,
+          ),
         },
         undefined,
         racine,
@@ -149,6 +285,7 @@ export function mondeRuche(o: { interfaces: string; dnsmasq: string; maison: Rec
         racine,
       ),
       tmp: d({}, undefined, { proprio: 'root', mode: 'rwxrwxrwt' }),
+      proc: d({ sys: procSys() }, undefined, racine),
     },
     undefined,
     racine,

@@ -31,6 +31,9 @@ export interface Service {
   // Type=oneshot : le service fait son travail puis s'arrête (ex. certbot,
   // lancé par un timer) ; il ne reste pas « active (running) ».
   ponctuel?: boolean;
+  // Type=oneshot avec RemainAfterExit=yes (networking, nftables) : le travail
+  // fait, il reste « active (exited) », sans processus.
+  resteActif?: boolean;
   // À l'arrêt du service (ex. timesyncd : l'horloge n'est plus suivie).
   arret?: (jeu: Jeu) => void;
   // Comment il s'est arrêté en échec (exit-code, oom-kill…).
@@ -170,8 +173,9 @@ export function redemarrer(jeu: Jeu, sd: Systemd) {
   const noyau = jeu.etat.noyau as { courant: string; installe: string } | undefined;
   if (noyau) noyau.courant = noyau.installe;
   for (const f of ['/var/run/reboot-required', '/var/run/reboot-required.pkgs']) if (jeu.existe(f)) jeu.effacer(f);
-  // Les sessions tmux meurent avec la machine.
+  // Les sessions tmux meurent avec la machine ; les règles du pare-feu aussi (nftables.service les recharge s'il est activé).
   if (jeu.etat.tmux) jeu.etat.tmux = {};
+  if (jeu.etat.nft) jeu.etat.nft = { tables: [] };
   journaliser(sd, '', 'kernel', 0, `Linux version ${noyau?.courant ?? '6.12.0-quetes'} (${sd.hote})`);
   for (const [nom, s] of Object.entries(sd.services)) {
     s.etat = 'inactive';

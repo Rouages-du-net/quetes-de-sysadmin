@@ -12,7 +12,7 @@
 // les baux ne se renouvellent pas, une adresse est tirée de l'adresse MAC.
 
 import type { Jeu } from './shell';
-import { dans, enService, estIp, lan, reseauDe, versIp, versNombre, vlanDe, type Lan } from './lan';
+import { dans, estIp, interfaceDuVlan, lan, reseauDe, versIp, versNombre } from './lan';
 import { journaliser, systemd } from './systemd';
 
 export const CONF = '/etc/dnsmasq.conf';
@@ -172,11 +172,6 @@ export function demarrerDnsmasq(j: Jeu) {
   }
   const n = j.trouver(BAUX);
   if (n?.type === 'fichier') n.contenu = baux.join('\n');
-}
-
-// L'interface du routeur (en service, avec une adresse) qui reçoit ce VLAN.
-function interfaceDuVlan(l: Lan, vlan: number) {
-  return Object.values(l.interfaces).find((i) => enService(l, i) && i.adresses.length && vlanDe(l, i) === vlan) ?? null;
 }
 
 // dnsmasq répond-il sur cette interface ?

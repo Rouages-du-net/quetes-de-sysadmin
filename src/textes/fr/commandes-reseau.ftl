@@ -14,3 +14,10 @@ ip-usage =
     Usage: ip [ OPTIONS ] OBJECT {"{"} COMMAND | help {"}"}
     where  OBJECT := {"{"} address | link | route {"}"}
            OPTIONS := {"{"} -br[ief] | -d[etails] {"}"}
+
+sysctl-usage =
+    Usage:
+     sysctl [options] [variable[=value] ...]
+    Use --help for more information.
+# conntrack -E attend des événements sans fin : le jeu ne le simule pas.
+conntrack-evenements = conntrack -E attend sans fin les nouveaux échanges : le jeu ne le simule pas. conntrack -L montre ceux du moment.

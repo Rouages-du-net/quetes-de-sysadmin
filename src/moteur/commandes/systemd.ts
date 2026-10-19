@@ -25,7 +25,7 @@ function statut(jeu: Shell, sd: Systemd, nom: string): string {
   const langue = jeu.t.langue;
   const depuis = `since ${dateComplete(s.depuis, langue, sd)}; ${duree(sd.horloge - s.depuis)} ago`;
   const actif =
-    s.etat === 'active' ? `active (running) ${depuis}` : s.etat === 'failed' ? `failed (Result: ${s.resultat ?? 'exit-code'}) ${depuis}` : `inactive (dead)`;
+    s.etat === 'active' ? `active (${s.resteActif ? 'exited' : 'running'}) ${depuis}` : s.etat === 'failed' ? `failed (Result: ${s.resultat ?? 'exit-code'}) ${depuis}` : `inactive (dead)`;
   const lignes = [
     // × (\u00d7) : le symbole d'échec de systemd.
     `${s.etat === 'failed' ? '\u00d7' : s.etat === 'active' ? '●' : '○'} ${unite} - ${s.description}`,
