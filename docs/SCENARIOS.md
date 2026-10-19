@@ -129,6 +129,9 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | machines internes | derrière `maison`, `wiki` et `archives` existent dès qu'on s'y connecte ; on y entre par ssh depuis `maison`, ou avec `-J` depuis le poste (`exit` ramène alors au poste) ; un programme absent répond `command not found` | un vrai réseau, routé |
 | `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
 | `apt` | `update`, `install [-y]`, `list --installed`, `list --upgradable`, `upgrade` et `full-upgrade` (les mises à jour décrites par le chapitre) ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » ; une mise à jour coupée laisse ses paquets dépaquetés (`dpkg --configure -a`) ; `/var/run/reboot-required` pour un noyau ou la libc | tout le catalogue Debian, `remove`, `search`, `show`, `apt-get`… ; dpkg garde l'état de chaque paquet |
+| réseau local (`ip`, `ifup`, `ifdown`) | IPv4 seulement ; `ip addr`, `ip link`, `ip route` (show, add, del, set, `-br`, `-d`), interfaces VLAN 802.1Q ; `/etc/network/interfaces` lu comme ifupdown (`auto`, `iface … inet static`, `manual`, `loopback`, `address`, `netmask`, `gateway`, `vlan-raw-device`, `source`) ; le commutateur et ses ports sont décrits par le chapitre ; pas d'ARP visible, de MTU, de bonding ni de systemd-networkd | tout iproute2, ifupdown2, NetworkManager, systemd-networkd |
+| `dnsmasq` | DHCP seulement (les options DNS sont acceptées et ignorées) ; `interface` (avec `*`), `except-interface`, `dhcp-range`, `dhcp-host`, `dhcp-option` ; les appareils demandent une adresse à chaque démarrage du service ; l'adresse est tirée de l'adresse MAC ; pas de renouvellement de bail | DNS, TFTP, PXE, DHCPv6, renouvellement |
+| `ping` sur un réseau local | un appareil répond s'il est dans le VLAN de l'interface dont le réseau contient son adresse ; une adresse privée envoyée à la box se perd ; un nom d'appareil est reconnu sans DNS | ARP, DNS local, `/etc/hosts` |
 | `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, une fenêtre par session ; pas de raccourcis clavier (`tmux detach` pour Ctrl+b d) ; attach rejoue les dernières lignes ; le nom de la session s'affiche devant l'invite (la barre d'état) ; `uname -r/-a` ; `dpkg --configure -a` | fenêtres, volets, raccourcis, `screen` ; toutes les options de dpkg |
 | `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe, `=`, `^~`, ou expression régulière (`~`, `~*`, syntaxe de JavaScript plutôt que PCRE), choisie dans l'ordre de nginx ; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
 | `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse), ou un tunnel `ssh -L` ouvert sur le poste | tout le réseau |
@@ -1283,4 +1286,46 @@ activée au démarrage. Pièges prévus : `apt upgrade` avant `apt update`
 (rien à faire), la mise à jour hors de tmux (dpkg interrompu, apt refuse
 tout), oublier de redémarrer (l'ancien noyau tourne), la caisse jamais
 activée (elle ne repart pas), tmux imbriqué.
+
+## Histoire 13 : La Ruche (phase 9, en cours)
+
+Un tiers-lieu (des bureaux d'associations, un café avec un wifi pour les
+invité·es, une imprimante et des caméras). Son routeur est une Debian
+(machine `ruche`, 192.0.2.21) : `eth0` vers la box du fournisseur, `eth1`
+vers le commutateur. Malik, le régisseur ; l'électricien a découpé le
+réseau en VLAN sur le commutateur. Phase 9 de la feuille de route.
+
+### Chapitre 1 — Les VLAN (fait)
+
+Le commutateur a trois VLAN (10 bureaux, 20 invité·es, 30 équipements),
+port 1 en trunk 802.1Q vers le routeur ; le routeur parle encore à plat.
+
+| Étape | Commande apprise |
+|---|---|
+| Voir | `ip -br a`, `ip route`, `ping`, `plan-commutateur.txt` |
+| Essayer | `ip link add link eth1 name eth1.10 type vlan id 10`, `ip addr add`, `ip link set … up`, `ip -d link show` |
+| Faire durer | `/etc/network/interfaces` (`auto eth1.10`, `iface eth1.10 inet static`, `address`), `ifup -a` |
+
+Objectif vérifié sur l'état : pour chaque VLAN, une interface montée sur
+`eth1` avec le bon numéro et l'adresse `.1` de son réseau, et la même
+chose dans `/etc/network/interfaces`. Pièges prévus : un mauvais numéro de
+VLAN (`Destination Host Unreachable`), seulement `ip` (ne tient pas au
+redémarrage), un masque faux dans le fichier, `ip` sans sudo.
+
+### Chapitre 2 — Le DHCP (fait)
+
+dnsmasq sert encore l'ancien réseau à plat ; la nouvelle imprimante ne
+sait que demander son adresse en DHCP, mais doit garder `10.10.30.10`.
+
+| Étape | Commande apprise |
+|---|---|
+| Voir | `journalctl -u dnsmasq`, `/var/lib/misc/dnsmasq.leases` |
+| Configurer | `/etc/dnsmasq.d/ruche` : `interface=eth1.10,…` (ou `eth1*`), une `dhcp-range` par VLAN, `dhcp-host=MAC,imprimante,10.10.30.10` |
+| Appliquer | `dnsmasq --test`, `systemctl restart dnsmasq`, `ping imprimante` |
+
+Objectif vérifié sur l'état : chaque appareil en DHCP a une adresse dans
+le réseau de son VLAN, l'imprimante la sienne, et dnsmasq n'écoute pas
+`eth0`. Pièges prévus : garder `interface=eth1` (n'écoute pas `eth1.10`),
+aucune restriction (dnsmasq entend la box : « DHCP pirate »), une option
+mal écrite (`bad option`), l'imprimante sans réservation.
 

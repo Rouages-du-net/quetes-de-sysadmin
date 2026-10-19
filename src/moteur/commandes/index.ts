@@ -13,6 +13,7 @@ import { SSH } from './ssh';
 import { COMPTES } from './comptes';
 import { SUDOERS_COMMANDES, sudoListe } from './sudoers';
 import { TMUX } from './tmux';
+import { LAN } from './lan';
 import { SYSTEMD } from './systemd';
 import { EDITEUR } from './editeur';
 import { SSHD } from './sshd';
@@ -76,6 +77,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...COMPTES,
   ...SUDOERS_COMMANDES,
   ...TMUX,
+  ...LAN,
   ...SYSTEMD,
   ...EDITEUR,
   ...SSHD,

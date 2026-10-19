@@ -41,6 +41,7 @@ export const MACHINES: Machine[] = [
   // La Maison des associations : une passerelle, devant son réseau interne.
   machine('maison', '192.0.2.19', 'maison', true),
   machine('cooperative', '192.0.2.20', 'cooperative'),
+  machine('ruche', '192.0.2.21', 'ruche'),
 ];
 
 export const machineDeHistoire = (histoire: string) => MACHINES.find((m) => m.histoire === histoire);

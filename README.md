@@ -8,11 +8,11 @@ On y apprend la ligne de commande Linux, puis à se connecter à des serveurs,
 quand tout casse. Chaque quête est un incident ou une mission réaliste, dans
 un système entièrement simulé : rien ne sort du navigateur.
 
-> **État** : douze histoires jouables, reliées par `ssh` depuis son poste
+> **État** : treize histoires jouables, reliées par `ssh` depuis son poste
 > (ligne de commande, permissions et sudo, journaux et processus, comptes et
 > groupes, services systemd, réseau, git, archives, clés SSH, rebonds et
 > tunnels, scp, comptes et sudoers, secrets et X-Forwarded-For,
-> mises à jour et tmux,
+> mises à jour et tmux, VLAN et DHCP,
 > durcissement SSH, pare-feu,
 > fail2ban, sauvegardes avec rsync, cron et restic, nginx, TLS, DNS, Docker et
 > Compose, déploiement par git, bleu/vert, canari, migrations, rançongiciel,
