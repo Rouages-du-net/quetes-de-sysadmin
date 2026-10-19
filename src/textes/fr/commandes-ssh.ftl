@@ -17,3 +17,38 @@ ssh-keygen-type = ssh-keygen : le jeu ne fabrique que des clés ed25519 (le type
 ssh-sans-arriere-plan = (ssh -N garde la connexion ouverte sans rendre la main : dans un vrai terminal, il faudrait un deuxième terminal pour s'en servir. Ajoute -f pour le passer en arrière-plan, comme ssh -f -N -L …)
 scp-local = scp : aucune machine d'en face (écris machine:chemin) ; pour copier sur la même machine, cp suffit.
 scp-deux-distants = scp : le jeu ne copie qu'entre la machine où tu es et une autre (pas d'une machine distante à une autre).
+sftp-usage =
+    usage: sftp [-46AaCfNpqrv] [-B buffer_size] [-b batchfile] [-c cipher]
+              {"["}-D sftp_server_command] [-F ssh_config] [-i identity_file]
+              {"["}-J destination] [-l limit] [-o ssh_option] [-P port]
+              {"["}-R num_requests] [-S program] [-s subsystem | sftp_server]
+              destination
+# L'aide de sftp (la sortie de « help »), en anglais comme l'outil.
+sftp-aide =
+    Available commands:
+    bye                                Quit sftp
+    cd path                            Change remote directory to 'path'
+    exit                               Quit sftp
+    get [-R] remote [local]            Download file
+    help                               Display this help text
+    lcd path                           Change local directory to 'path'
+    lls [ls-options [path]]            Display local directory listing
+    lpwd                               Print local working directory
+    ls [-l] [path]                     Display remote directory listing
+    mkdir path                         Create remote directory
+    put [-R] local [remote]            Upload file
+    pwd                                Display remote working directory
+    quit                               Quit sftp
+    rename oldpath newpath             Rename remote file
+    rm path                            Delete remote file
+    rmdir path                         Remove remote directory
+    ?                                  Synonym for help
+# L'aide de lftp (la sortie de « help »), en anglais comme l'outil.
+lftp-aide =
+    bye [<code>]                        cd <rdir>
+    get [OPTS] <rfile>                  lcd <ldir>
+    lpwd                                ls [<args>]
+    mirror [OPTS] [remote [local]]      mkdir [OPTS] <dirs>
+    open [OPTS] <site>                  put [OPTS] <lfile>
+    pwd [-p]                            rm [-r] [-f] <files>
+    set [OPT] [<var> [<val>]]           user <user|URL> [<pass>]

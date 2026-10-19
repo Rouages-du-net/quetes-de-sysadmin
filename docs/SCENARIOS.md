@@ -125,7 +125,9 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `ss` | sockets décrites par le chapitre, et la session ssh en cours | toutes les sockets du système |
 | fail2ban | une seule prison (`sshd`) ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
 | `rsync` | `-a`, `-v`, `-n`, `--delete` ; local, ou à distance par ssh (`machine:chemin`, dans un sens ou dans l'autre, avec les mêmes clés et rebonds que `ssh`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | compare taille et date, toutes les options, démon rsync |
-| `scp`, `ssh-copy-id` | `scp` : `-r`, `-P`, `-J`, `-i`, une copie dans un sens ou dans l'autre (pas entre deux machines distantes), ligne de progression immédiate ; `ssh-copy-id` : `-i`, `-p`, `-J`, la clé `~/.ssh/id*.pub` la plus récente par défaut | `scp` entre deux machines distantes (`-3`), SFTP ; `ssh-copy-id -f`, `-n` |
+| `scp`, `ssh-copy-id` | `scp` : `-r`, `-P`, `-J`, `-i`, une copie dans un sens ou dans l'autre (pas entre deux machines distantes), ligne de progression immédiate ; `ssh-copy-id` : `-i`, `-p`, `-J`, la clé `~/.ssh/id*.pub` la plus récente par défaut | `scp` entre deux machines distantes (`-3`) ; `ssh-copy-id -f`, `-n` |
+| `sftp` | session interactive (`sftp>`) par les mêmes sauts et clés que `ssh` ; `ls`, `cd`, `pwd`, `lcd`, `lls`, `lpwd`, `get [-r]`, `put [-r]`, `mkdir`, `rm`, `rmdir`, `rename`, `help`, `bye` ; un dossier qui existe déjà reçoit le contenu | `-b` (fichier de commandes), `reget`/`reput`, jokers, `chmod`, `df` |
+| `lftp` et l'hébergement mutualisé | FTP (Pure-FTPd) qui refuse le clair (FTPS explicite, AUTH TLS) ; certificat vérifié contre le nom demandé (`ssl:verify-certificate`) ; `-u`, `-e`, `-c`, `open`, `user`, `set`, `ls`, `cd`, `pwd`, `lcd`, `lpwd`, `mirror` (`-R`, `--delete`, `--dry-run`, `-v`), `put`, `get`, `mkdir`, `rm`, `cat` ; la connexion se fait à la première commande distante ; l'hébergement est décrit par l'histoire | SFTP et HTTP par lftp, `~/.lftprc`, `~/.netrc`, files d'attente, tâches de fond, jokers |
 | machines internes | derrière `maison`, `wiki` et `archives` existent dès qu'on s'y connecte ; on y entre par ssh depuis `maison`, ou avec `-J` depuis le poste (`exit` ramène alors au poste) ; un programme absent répond `command not found` | un vrai réseau, routé |
 | `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
 | `apt` | `update`, `install [-y]`, `list --installed`, `list --upgradable`, `upgrade` et `full-upgrade` (les mises à jour décrites par le chapitre) ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » ; une mise à jour coupée laisse ses paquets dépaquetés (`dpkg --configure -a`) ; `/var/run/reboot-required` pour un noyau ou la libc | tout le catalogue Debian, `remove`, `search`, `show`, `apt-get`… ; dpkg garde l'état de chaque paquet |
@@ -1114,7 +1116,7 @@ textes). Zoé relit à chaque enregistrement et dit ce qui manque.
    (le moteur se compile avec esbuild pour Node), puis dans Chromium à 1000
    et 375 px.
 
-## Histoire 11 : La Maison des associations (quatre chapitres)
+## Histoire 11 : La Maison des associations (cinq chapitres)
 
 La Maison des associations du quartier (machine `maison`, 192.0.2.19) :
 une passerelle, seule visible depuis internet, et derrière elle un réseau
@@ -1192,6 +1194,28 @@ fichier du dossier partagé identique sur archives, sans dossier copié en
 trop. Pièges prévus : la barre oblique finale oubliée (un dossier
 `partage/partage`), `--delete` sans essai à blanc. Le débrief parle de FTP
 et telnet, qui font passer les mots de passe en clair.
+
+### Chapitre 5 — L'hébergeur (fait)
+
+Le nouveau site de la Maison est prêt sur le wiki (`/srv/wiki/site`) ; il est
+publié chez un hébergeur mutualisé qui ne propose que FTP, et refuse
+désormais le FTP en clair. Gaspard publiait avec FileZilla, sans chiffrement,
+sur `ftp.maison.example` (un nom qui pointe chez l'hébergeur, mais que son
+certificat ne couvre pas).
+
+| Étape | Commande apprise |
+|---|---|
+| Rapatrier | depuis le poste, `sftp wiki` : `cd /srv/wiki`, `ls`, `get -r site`, `lls`, `bye` |
+| Se connecter | `lftp -u maisonasso ftp.hebergeur.example` (le mot de passe demandé, FTPS par défaut) |
+| Publier | `mirror -R --delete --dry-run site public_html`, puis sans `--dry-run` |
+
+Objectif vérifié sur l'état : `public_html` contient exactement le site du
+wiki, et le dernier envoi est passé chiffré, certificat vérifié. Pièges
+prévus : le FTP en clair (`421 Sorry, cleartext sessions…`), le nom de
+Gaspard (`certificate common name doesn't match`), la vérification coupée
+(`ssl:verify-certificate no`), `mirror` sans `-R` (l'ancien site rapatrié
+sur le poste), `mirror -R site` sans cible (un dossier `site` à côté de
+`public_html`), sans `--delete` (les tarifs 2025 restent en ligne).
 
 ## Histoire 12 : La Coopérative (cinq chapitres)
 

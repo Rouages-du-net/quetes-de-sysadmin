@@ -76,7 +76,10 @@ rouages.net.
   machines internes d'une histoire, `Chapitre.hotes`) : `~/.ssh/config`,
   `ProxyJump`, `known_hosts`, `authorized_keys`, phrase de passe, mot de
   passe ; `ssh-copy-id` et `scp` dans `commandes/transferts.ts`, `rsync`
-  distant dans `commandes/sauvegarde.ts`. La console garde une pile de
+  distant dans `commandes/sauvegarde.ts`. `sftp` (session interactive) dans
+  `commandes/sftp.ts` ; un hébergement mutualisé en FTPS
+  (`src/moteur/hebergeur.ts`, déclaré par l'histoire) et `lftp` dans
+  `commandes/lftp.ts`. La console garde une pile de
   sessions internes (`interieur`) ; `Chapitre.surveillePoste` fait vérifier
   les événements après les commandes tapées sur le poste.
 - `src/moteur/sudoers.ts` : la politique de sudo (`/etc/sudoers`,

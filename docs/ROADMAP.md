@@ -136,10 +136,11 @@ demandent plusieurs.
       « Fermer la porte » (Les Lettres du quartier), où l'on peut s'enfermer
       dehors (le menu sert de console de secours)
 - [ ] Changer le port SSH (et le pare-feu qui va avec, phase 3)
-- [ ] **Transferts** : **`scp`**, `rsync` à distance (`-a`, `--delete`,
-      `-n`) et pourquoi FTP en clair est à proscrire faits (« Les
-      transferts ») ; reste `sftp`, et **FTPS** pour les hébergeurs
-      mutualisés qui l'imposent (le cas de rouages.net !)
+- [x] **Transferts** : **`scp`**, `rsync` à distance (`-a`, `--delete`,
+      `-n`) et pourquoi FTP en clair est à proscrire (« Les transferts ») ;
+      `sftp`, et **FTPS** avec `lftp` pour les hébergeurs mutualisés qui
+      l'imposent, le cas de rouages.net (« L'hébergeur », La Maison des
+      associations, chapitre 5)
 - [x] `tmux` : garder une session vivante quand la connexion tombe ;
       « Les mises à jour » (La Coopérative, chapitre 5)
 

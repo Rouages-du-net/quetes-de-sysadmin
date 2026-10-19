@@ -225,4 +225,56 @@ for (const langue of LANGUES)
       expect(tout).toContain('deleting partage/comptes-rendus/');
       expect(c.termines).toContain('transferts');
     });
+
+    const LFTP = 'lftp -u maisonasso ftp.hebergeur.example';
+    const MDP_FTP = 'Kp7-hebergement-2028';
+
+    it('chapitre 5 — solution : sftp depuis le wiki, puis lftp en FTPS, mirror -R --delete', () => {
+      const { c, jouer } = equipe(['cles', 'rebond', 'tunnel', 'transferts']);
+      let tout = jouer(['ssh maison', 'cat courriel_hebergeur.txt', 'exit']);
+      expect(tout).toContain('Serveur : ftp.hebergeur.example');
+      tout = jouer(['sftp wiki', 'pwd', 'cd /srv/wiki', 'ls', 'get -r site', 'lls', 'bye', 'ls site']);
+      expect(tout).toContain('Connected to wiki.');
+      expect(tout).toContain('Remote working directory: /home/vous');
+      expect(tout).toContain('Fetching /srv/wiki/site/ to site');
+      expect(tout).toContain('adhesion.html');
+      tout = jouer([
+        LFTP,
+        MDP_FTP,
+        'ls',
+        'mirror -R --delete --dry-run site public_html',
+        'mirror -R --delete site public_html',
+        'ls public_html',
+        'bye',
+      ]);
+      expect(tout).toContain('tarifs-2025.html');
+      expect(tout).toContain('rm /public_html/tarifs-2025.html');
+      expect(tout).toContain('Removed: 1 file, 0 directories, 0 symlinks');
+      contient(tout, 'https://lftp.yar.ru/lftp-man.html');
+      expect(c.termines).toContain('hebergeur');
+    });
+
+    it('chapitre 5 — fausses pistes : en clair, le nom de Gaspard, sans vérification, à l’envers, sans cible, sans --delete', () => {
+      const { c, jouer } = equipe(['cles', 'rebond', 'tunnel', 'transferts']);
+      jouer(['ssh maison', 'exit']);
+      let tout = jouer(['lftp -u maisonasso -e "set ftp:ssl-allow no; ls" ftp.maison.example', MDP_FTP]);
+      expect(tout).toContain('ls: Login failed: 421 Sorry, cleartext sessions and weak ciphers are not accepted on this server.');
+      contient(tout, 'plus de FTP en clair');
+      tout = jouer(['set ftp:ssl-allow yes', 'ls']);
+      expect(tout).toContain(
+        "ls: Fatal error: Certificate verification: certificate common name doesn't match requested host name ‘ftp.maison.example’",
+      );
+      contient(tout, 'le nom que son\ncertificat porte'.replace('\n', ' '));
+      tout = jouer(['set ssl:verify-certificate no', 'ls public_html', 'mirror public_html site']);
+      expect(tout).toContain('tarifs-2025.html');
+      contient(tout, 'la vérification du certificat est coupée');
+      contient(tout, 'mirror sans -R');
+      tout = jouer(['bye', 'rm site/tarifs-2025.html', 'sftp wiki', 'get -r /srv/wiki/site', 'bye', LFTP, MDP_FTP, 'mirror -R site']);
+      contient(tout, 'pas dans public_html');
+      tout = jouer(['rm -r site', 'mirror -R site public_html']);
+      contient(tout, '--delete');
+      expect(c.termines).not.toContain('hebergeur');
+      jouer(['mirror -R --delete site public_html', 'bye']);
+      expect(c.termines).toContain('hebergeur');
+    });
   });

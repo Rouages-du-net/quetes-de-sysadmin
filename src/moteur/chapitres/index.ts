@@ -43,6 +43,7 @@ import { cles } from './cles';
 import { rebond } from './rebond';
 import { tunnel } from './tunnel';
 import { transferts } from './transferts';
+import { hebergeur } from './hebergeur';
 import { depart } from './depart';
 import { droits } from './droits';
 import { secret } from './secret';
@@ -100,7 +101,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'maison',
-    chapitres: [cles, rebond, tunnel, transferts],
+    chapitres: [cles, rebond, tunnel, transferts, hebergeur],
   },
   {
     id: 'cooperative',

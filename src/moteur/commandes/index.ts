@@ -18,6 +18,8 @@ import { NFTABLES } from './nftables';
 import { WIREGUARD } from './wireguard';
 import { LDAP } from './ldap';
 import { RADIUS } from './radius';
+import { SFTP } from './sftp';
+import { LFTP } from './lftp';
 import { SYSTEMD } from './systemd';
 import { EDITEUR } from './editeur';
 import { SSHD } from './sshd';
@@ -86,6 +88,8 @@ export const COMMANDES: Record<string, Commande> = {
   ...WIREGUARD,
   ...LDAP,
   ...RADIUS,
+  ...SFTP,
+  ...LFTP,
   ...SYSTEMD,
   ...EDITEUR,
   ...SSHD,

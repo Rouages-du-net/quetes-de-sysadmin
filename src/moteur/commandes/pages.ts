@@ -208,6 +208,17 @@ export const PAGES: Record<string, Page> = {
     voir: ['radtest', 'ldapsearch', 'systemctl'],
   },
   radtest: { exemples: ['radtest sami "son mot de passe" localhost 0 testing123'], voir: ['freeradius'] },
+  sftp: { options: ['P', 'J', 'i'], exemples: ['sftp wiki', 'get -r /srv/wiki/site', 'put rapport.pdf', 'lls', 'bye'], voir: ['scp', 'ssh', 'lftp'] },
+  lftp: {
+    options: ['u', 'e', 'c'],
+    exemples: [
+      'lftp -u maisonasso ftp.hebergeur.example',
+      'mirror -R --dry-run site public_html',
+      'mirror -R --delete site public_html',
+      'lftp -u maisonasso -e "mirror -R --delete site public_html; bye" ftp.hebergeur.example',
+    ],
+    voir: ['sftp', 'scp', 'rsync'],
+  },
   id: { exemples: ['id', 'id malo'], voir: ['groups', 'whoami', 'usermod'] },
   journalctl: {
     options: ['u', 'n', 'b', 'k', 'p', 'x', 'e'],
