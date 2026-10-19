@@ -212,3 +212,89 @@ for (const langue of LANGUES)
       if (fr) expect(tout).toContain('YOU SHOULD NOT MODIFY THIS');
     });
   });
+
+// Les Lettres du quartier, « Le port » : déplacer SSH sur 2222 sans s'enfermer dehors.
+const LETTRES = ['fermer-la-porte', 'pare-feu', 'sentinelle', 'colocation', 'chez-moi', 'concert'];
+
+for (const langue of LANGUES)
+  describe(`Le port — ${langue}`, () => {
+    const fr = langue === LANGUE_DE_REFERENCE;
+    const partie = () => {
+      const c = new Console({ langue, termines: [...EFFACEUR, ...LETTRES] });
+      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+      const ecrire = (fichier: string, changer: (texte: string) => string, sudo = true) => {
+        c.executer(`${sudo ? 'sudo ' : ''}nano ${fichier}`);
+        if (c.shell.attente) c.executer('fourmis-2026');
+        c.enregistrer(changer(c.edition!.texte));
+        return c.quitterEdition();
+      };
+      jouer(['ssh lettres', 'yes']);
+      expect(c.distant?.shell.chapitre.id).toBe('port');
+      return { c, jouer, ecrire };
+    };
+    const portDuPoste = (t: string) =>
+      t.replace('Host lettres\n    HostName lettres.example', 'Host lettres\n    HostName lettres.example\n    Port 2222');
+
+    it('solution : les deux ports, tester, fermer le 22, la prison sshd', () => {
+      const { c, jouer, ecrire } = partie();
+      let tout = jouer(['journalctl -u ssh -n 4', 'sudo ufw status', 'fourmis-2026', 'sudo nft list ruleset']);
+      expect(tout).toContain('Invalid user');
+      expect(tout).toContain('meta l4proto tcp tcp dport 22 counter packets 0 bytes 0 accept');
+      expect(tout).toContain('tcp dport { 22 } ip saddr @addr-set-sshd reject');
+      tout += ecrire('/etc/ssh/sshd_config', (t) => t.replace('#Port 22', 'Port 22\nPort 2222'));
+      tout += jouer(['sudo sshd -t', 'sudo ufw allow 2222/tcp', 'sudo systemctl reload ssh', 'sudo ss -tlnp']);
+      expect(tout).toContain('0.0.0.0:2222');
+      if (fr) expect(tout).toContain('les deux ports');
+      tout += jouer(['exit']);
+      tout += ecrire('~/.ssh/config', portDuPoste, false);
+      tout += jouer(['ssh lettres']);
+      expect(tout).toContain("The authenticity of host '[lettres.example]:2222 ([203.0.113.10]:2222)' can't be established.");
+      expect(tout).toContain('This host key is known by the following other names/addresses:');
+      tout += jouer(['yes', 'ss -tn']);
+      expect(tout).toContain("Warning: Permanently added '[lettres.example]:2222' (ED25519) to the list of known hosts.");
+      expect(tout).toContain('203.0.113.10:2222');
+      tout += ecrire('/etc/ssh/sshd_config', (t) => t.replace('Port 22\n', ''));
+      tout += jouer(['sudo systemctl reload ssh', 'sudo ufw delete allow OpenSSH']);
+      if (fr) expect(tout).toContain('bannit toujours sur le port');
+      expect(c.termines).not.toContain('port');
+      tout += ecrire('/etc/fail2ban/jail.local', (t) => `${t}\n\n[sshd]\nport = 2222\n`);
+      tout += jouer(['sudo systemctl reload fail2ban']);
+      if (fr) expect(tout).toContain('https://man.openbsd.org/sshd_config#Port');
+      expect(c.termines).toContain('port');
+      expect(jouer(['sudo nft list ruleset'])).toContain('tcp dport { 2222 } ip saddr @addr-set-sshd');
+      // Le 22 est bien fermé, vu du poste.
+      expect(jouer(['exit', 'ssh -p 22 lettres'])).toContain('port 22: Connection refused');
+    });
+
+    it('fausses pistes : fermer le 22 trop tôt, port = 2222 dans [DEFAULT]', () => {
+      const { c, jouer, ecrire } = partie();
+      let tout = ecrire('/etc/ssh/sshd_config', (t) => t.replace('#Port 22', 'Port 2222'));
+      tout += jouer(['sudo systemctl reload ssh', 'fourmis-2026']);
+      if (fr) expect(tout).toContain('ATTENTION');
+      tout = jouer(['exit', 'ssh lettres', 'ssh -p 2222 lettres']);
+      expect(tout).toContain('ssh: connect to host lettres.example port 22: Connection refused');
+      if (fr) expect(tout).toContain('écoute maintenant sur 2222');
+      expect(tout).toContain('port 2222: Connection timed out');
+      // La console de secours : ouvrir 2222 dans ufw.
+      c.connecter('lettres');
+      jouer(['sudo ufw allow 2222/tcp', 'fourmis-2026', 'sudo ufw delete allow OpenSSH']);
+      tout = ecrire('/etc/fail2ban/jail.local', (t) => t.replace('[DEFAULT]', '[DEFAULT]\nport = 2222'));
+      tout += jouer(['sudo systemctl reload fail2ban']);
+      if (fr) expect(tout).toContain('quel que soit le fichier');
+      jouer(['exit']);
+      ecrire('~/.ssh/config', portDuPoste, false);
+      jouer(['ssh lettres', 'yes']);
+      expect(c.termines).not.toContain('port');
+      ecrire('/etc/fail2ban/jail.local', (t) => t.replace('port = 2222', '') + '\n[sshd]\nport = ssh,2222\n');
+      jouer(['sudo fail2ban-client reload', 'fourmis-2026']);
+      expect(c.termines).toContain('port');
+    });
+
+    it('nft ne fait que regarder sous ufw', () => {
+      const { jouer } = partie();
+      const tout = jouer(['nft list ruleset', 'sudo nft list tables', 'fourmis-2026', 'sudo nft add rule ip filter INPUT tcp dport 2222 accept']);
+      expect(tout).toContain('Operation not permitted');
+      expect(tout).toContain('table ip filter\ntable inet f2b-table');
+      if (fr) expect(tout).toContain('ufw et fail2ban qui écrivent');
+    });
+  });

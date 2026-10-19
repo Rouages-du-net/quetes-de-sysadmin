@@ -41,10 +41,11 @@ export const SS: Record<string, Commande> = {
             `${e.adresse.includes(':') ? '[::]' : '0.0.0.0'}:*`,
             lettres.has('p') && jeu.qui === 'root' ? `users:(("${e.processus}",pid=${e.pid},fd=3))` : '',
           ]);
-      // La session ssh en cours, depuis le poste.
+      // La session ssh en cours, depuis le poste (sur le port par lequel on est entré).
       const ici = MACHINES.find((m) => m.nom === jeu.hote);
-      if (etablies && tcp && ici && ecoute.some((e) => e.port === 22))
-        lignes.push(['ESTAB', '0', '0', `${ici.adresse}:${port(22)}`, `${POSTE.adresse}:51234`, lettres.has('p') && jeu.qui === 'root' ? 'users:(("sshd",pid=2741,fd=4))' : '']);
+      const portSession: number = jeu.etat.portSession ?? 22;
+      if (etablies && tcp && ici && ecoute.some((e) => e.processus === 'sshd'))
+        lignes.push(['ESTAB', '0', '0', `${ici.adresse}:${port(portSession)}`, `${POSTE.adresse}:51234`, lettres.has('p') && jeu.qui === 'root' ? 'users:(("sshd",pid=2741,fd=4))' : '']);
       const largeurs = [0, 1, 2, 3, 4].map((i) => Math.max(...lignes.map((l) => l[i].length)));
       return lignes
         .map((l) => [l[0].padEnd(largeurs[0]), l[1].padEnd(largeurs[1]), l[2].padEnd(largeurs[2]), l[3].padStart(largeurs[3]), l[4].padEnd(largeurs[4]), l[5]].join(' ').trimEnd())

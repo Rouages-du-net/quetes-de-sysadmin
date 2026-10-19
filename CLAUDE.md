@@ -26,8 +26,9 @@ rouages.net.
   `sshd_config` comme OpenSSH, configuration appliquée au reload).
 - `src/moteur/parefeu.ts` : le pare-feu d'une machine (règles ufw ; `ssh`
   s'y heurte).
-- `src/moteur/fail2ban.ts` : fail2ban d'une machine (configuration, bannissements ;
-  `ssh` s'y heurte).
+- `src/moteur/fail2ban.ts` : fail2ban d'une machine (configuration, bannissements,
+  `port` de la prison ; `ssh` s'y heurte). `src/moteur/apercu-nft.ts` : ce que
+  `nft list ruleset` montre sous ufw et fail2ban.
 - `src/moteur/cron.ts` : crontabs (analyse comme cron) et nuit simulée.
 - `src/moteur/nginx.ts` : nginx d'une machine (configuration lue et vérifiée
   comme `nginx -t`, appliquée au reload ; `curl` s'y adresse) ; `apt` et la

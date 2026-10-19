@@ -20,7 +20,7 @@ const RANIA = '198.51.100.40';
 const ROBOTS = ['203.0.113.66', '198.51.100.23'];
 
 // L'en-tête et l'essentiel du jail.conf livré avec fail2ban.
-const JAIL_CONF = `#
+export const JAIL_CONF = `#
 # WARNING: heavily refactored in 0.9.0 release.  Please review and
 #          customize settings for your setup.
 #

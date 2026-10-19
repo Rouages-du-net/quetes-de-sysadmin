@@ -10,6 +10,7 @@ import { f, type Chapitre, type Histoire } from './monde';
 import { MACHINES, POSTE, type Machine } from './machines';
 import { fichiersCle, poste } from './poste';
 import { etatPort, type EtatPort } from './ports';
+import { bloquePort, type EtatFail2ban } from './fail2ban';
 import { noterTmux } from './commandes/tmux';
 import { traducteur, type Langue, type Traduire } from '../textes';
 
@@ -55,8 +56,11 @@ export class Console {
     s.etat.sshdDistant = (nom: string) => this.sessions.get(nom)?.etat.sshd?.charge ?? null;
     // … et son pare-feu (ufw), qui peut bloquer la connexion avant même sshd.
     s.etat.pareFeuDistant = (nom: string) => this.sessions.get(nom)?.etat.ufw ?? null;
-    // … et les adresses que son fail2ban a bannies.
-    s.etat.bannisDistant = (nom: string): string[] => this.sessions.get(nom)?.etat.fail2ban?.bannis ?? [];
+    // … et les adresses que son fail2ban a bannies (pour ce port, s'il est donné : la prison ne bloque que les siens).
+    s.etat.bannisDistant = (nom: string, port?: number): string[] => {
+      const f2b: EtatFail2ban | undefined = this.sessions.get(nom)?.etat.fail2ban;
+      return f2b && (port === undefined || bloquePort(f2b.charge, port)) ? f2b.bannis : [];
+    };
     // … et l'état d'un de ses ports, vu d'ici (nc -zv machine port).
     s.etat.portDistant = (nom: string, port: number): EtatPort => etatPort(this.sessionDe(nom), port, false, POSTE.adresse);
     // … et sa clé d'hôte, qui change quand la machine a été réinstallée.
@@ -151,7 +155,7 @@ export class Console {
    * chapitre. Sans chapitre imposé, reprend la session laissée sur cette
    * machine si elle est toujours sur le chapitre en cours.
    */
-  connecter(nom: string, chapitre?: Chapitre, rebond = false): string {
+  connecter(nom: string, chapitre?: Chapitre, rebond = false, port = 22): string {
     this.interieur = [];
     const machine = MACHINES.find((m) => m.nom === nom)!;
     const histoire = HISTOIRES.find((h) => h.id === machine.histoire)!;
@@ -164,6 +168,7 @@ export class Console {
     // connexion ouvre le chapitre, avec son texte d'accueil.
     if (!chapitre && ancienne?.etat.preparee && ancienne.chapitre === c) {
       delete ancienne.etat.preparee;
+      ancienne.etat.portSession = port;
       this.distant = { machine, histoire, shell: ancienne };
       return [...(rebond ? [] : banniere), this.ouvrirChapitre(c)].join('\n\n');
     }
@@ -172,6 +177,8 @@ export class Console {
       // peut être un objectif (ex. vérifier qu'on ne s'est pas enfermé dehors).
       ancienne.cwd = ancienne.maison;
       ancienne.etat.connexions = (ancienne.etat.connexions ?? 1) + 1;
+      // Le port de la connexion (ss la montre ; la session survit à un changement de port de sshd).
+      ancienne.etat.portSession = port;
       this.distant = { machine, histoire, shell: ancienne };
       const dejaFini = ancienne.termine;
       const suite = ancienne.evenements();
@@ -182,6 +189,7 @@ export class Console {
       return [...entete, suite, this.noterFin(ancienne, dejaFini)].filter(Boolean).join('\n\n');
     }
     this.distant = { machine, histoire, shell: this.nouvelleSession(machine, c) };
+    this.distant.shell.etat.portSession = port;
     return [...(rebond ? [] : banniere), this.ouvrirChapitre(c)].join('\n\n');
   }
 
@@ -273,7 +281,7 @@ export class Console {
     } else if (sh.demandeConnexion) {
       const nom = sh.demandeConnexion;
       sh.demandeConnexion = null;
-      morceaux.push(this.connecter(nom));
+      morceaux.push(this.connecter(nom, undefined, false, sh.etat.portConnexion ?? 22));
     } else if (sh.demandeSession) {
       const d = sh.demandeSession;
       sh.demandeSession = null;

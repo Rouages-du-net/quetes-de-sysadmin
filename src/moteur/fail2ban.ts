@@ -2,12 +2,16 @@
 // (https://manpages.debian.org/bookworm/fail2ban/jail.conf.5.en.html) :
 //   - fichiers lus dans l'ordre jail.conf, jail.d/*.conf, jail.local,
 //     jail.d/*.local : une valeur lue plus tard REMPLACE la précédente ;
-//   - dans un fichier, [sshd] l'emporte sur [DEFAULT] ;
+//   - [sshd] l'emporte sur [DEFAULT], quel que soit le fichier : un port mis
+//     dans le [DEFAULT] de jail.local ne remplace pas le « port = ssh » du
+//     [sshd] de jail.conf ;
 //   - durées : 600, 10m, 1h, 1d, 1w ; -1 = pour toujours.
 // Les échecs viennent du journal du service ssh ; une adresse est bannie
 // quand elle atteint maxretry échecs, sauf si ignoreip la couvre. Les
 // bannissements survivent à un rechargement (comme avec la base de données
 // de fail2ban) : seul unbanip les lève.
+// L'action bloque les ports de la prison (port = ssh, 2222, http,https,
+// 1000:2000) : une adresse bannie peut encore joindre les autres ports.
 // Écarts : une seule prison (sshd), findtime non appliqué (tous les échecs
 // du journal comptent), filtre réduit à « Failed password », « Invalid user »
 // et « Failed publickey ».
@@ -24,7 +28,29 @@ export interface Prison {
   findtime: number;
   maxretry: number;
   ignoreip: string[];
+  // Les ports bloqués pour une adresse bannie (vide : tous).
+  ports: number[];
 }
+
+const NOMS_DE_PORTS: Record<string, number> = { ssh: 22, http: 80, https: 443, ftp: 21, smtp: 25, imap: 143, imaps: 993 };
+
+/** « ssh,2222 » → [22, 2222] ; « 0:65535 » → [] (tous) ; null si un nom est inconnu. */
+export function lirePorts(valeur: string): number[] | null {
+  const ports: number[] = [];
+  for (const mot of valeur.split(/[\s,]+/).filter(Boolean)) {
+    const plage = /^(\d+):(\d+)$/.exec(mot);
+    if (plage) {
+      if (Number(plage[1]) === 0 && Number(plage[2]) >= 65535) return [];
+      for (let p = Number(plage[1]); p <= Number(plage[2]) && ports.length < 1024; p++) ports.push(p);
+    } else if (/^\d+$/.test(mot)) ports.push(Number(mot));
+    else if (NOMS_DE_PORTS[mot] !== undefined) ports.push(NOMS_DE_PORTS[mot]);
+    else return null;
+  }
+  return ports;
+}
+
+/** La prison bloque-t-elle ce port pour les adresses bannies ? */
+export const bloquePort = (p: Prison | null | undefined, port: number) => !p || !p.ports.length || p.ports.includes(port);
 
 export interface EtatFail2ban {
   charge: Prison | null;
@@ -68,7 +94,8 @@ const fichiers = (jeu: Jeu): string[] => {
 
 /** La prison sshd telle que fail2ban la chargerait, ou les erreurs (comme fail2ban-client -t). */
 export function lireConfig(jeu: Jeu): { prison: Prison | null; erreurs: string[] } {
-  const valeurs: Record<string, string> = {};
+  const defauts: Record<string, string> = {};
+  const sshd: Record<string, string> = {};
   for (const fichier of fichiers(jeu)) {
     const sections: Record<string, Record<string, string>> = {};
     let section: string | null = null;
@@ -91,8 +118,10 @@ export function lireConfig(jeu: Jeu): { prison: Prison | null; erreurs: string[]
         };
       if (CLES.includes(m[1].toLowerCase())) sections[section][m[1].toLowerCase()] = m[2].trim();
     }
-    Object.assign(valeurs, sections.DEFAULT ?? {}, sections.sshd ?? {});
+    Object.assign(defauts, sections.DEFAULT ?? {});
+    Object.assign(sshd, sections.sshd ?? {});
   }
+  const valeurs = { ...defauts, ...sshd };
   const erreurs: string[] = [];
   const temps = (cle: string, defaut: string) => {
     const s = secondes(valeurs[cle] ?? defaut);
@@ -101,12 +130,15 @@ export function lireConfig(jeu: Jeu): { prison: Prison | null; erreurs: string[]
   };
   const maxretry = Number(valeurs.maxretry ?? '5');
   if (!Number.isInteger(maxretry) || maxretry < 1) erreurs.push(`ERROR  Failed during configuration: Wrong value for 'maxretry' in 'sshd': '${valeurs.maxretry}'`);
+  const ports = lirePorts(valeurs.port ?? '0:65535');
+  if (ports === null) erreurs.push(`ERROR  Failed during configuration: Wrong value for 'port' in 'sshd': '${valeurs.port}'`);
   const prison: Prison = {
     enabled: /^(true|yes|1|on)$/i.test(valeurs.enabled ?? 'false'),
     bantime: temps('bantime', '10m'),
     findtime: temps('findtime', '10m'),
     maxretry,
     ignoreip: ['127.0.0.1/8', '::1', ...(valeurs.ignoreip ?? '').split(/[\s,]+/).filter(Boolean)],
+    ports: ports ?? [],
   };
   return erreurs.length ? { prison: null, erreurs } : { prison, erreurs };
 }

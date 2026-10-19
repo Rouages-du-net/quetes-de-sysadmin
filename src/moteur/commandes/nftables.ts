@@ -10,6 +10,7 @@ import type { Jeu, Shell } from '../shell';
 import type { Noeud } from '../monde';
 import { afficher, avecCompteurs, ErreurNft, executerNft, formaterErreur, journaliserTrafic, nft, resultats } from '../nftables';
 import { lan } from '../lan';
+import { apercuSeulement, tablesApercu } from '../apercu-nft';
 import { POSTE } from '../machines';
 import type { Commande } from './index';
 import { aide } from './manuel';
@@ -37,6 +38,7 @@ function nftCommande(jeu: Shell, args: string[]): string {
   const poignees = options.includes('a') || options.includes('--handle');
   if (fichier === null && !reste.length) return jeu.erreur('Error: no command specified', 1);
   if (jeu.qui !== 'root') return jeu.erreur(NON_PERMIS_NFT, 1);
+  if (apercuSeulement(jeu)) return apercu(jeu, fichier === null ? reste : []);
   let texte: string;
   let nomFichier: string | null = null;
   if (fichier !== null) {
@@ -58,6 +60,21 @@ function nftCommande(jeu: Shell, args: string[]): string {
     const source = (e as { fichier?: string }).fichier;
     return jeu.erreur(formaterErreur(e, nomFichier, source ? (jeu.lire(source) ?? texte) : texte), 1);
   }
+}
+
+// Sur une machine où ufw et fail2ban tiennent le pare-feu : lire leurs tables, sans y toucher.
+function apercu(jeu: Shell, mots: string[]): string {
+  const tables = tablesApercu(jeu);
+  const [verbe, objet, famille, nom] = mots;
+  if (verbe === 'list' && objet === 'ruleset' && mots.length === 2) return [...tables.values()].map((t) => t.join('\n')).join('\n');
+  if (verbe === 'list' && objet === 'tables' && mots.length === 2) return [...tables.keys()].map((k) => `table ${k}`).join('\n');
+  if (verbe === 'list' && objet === 'table' && mots.length === 4) {
+    const t = tables.get(`${famille} ${nom}`);
+    return t
+      ? t.join('\n')
+      : jeu.erreur(`Error: No such file or directory\nlist table ${famille} ${nom}\n${' '.repeat(12 + famille.length)}${'^'.repeat(nom.length)}`, 1);
+  }
+  return jeu.erreur(jeu.t('nft-apercu-ufw'), 1);
 }
 
 // ——— sysctl ———

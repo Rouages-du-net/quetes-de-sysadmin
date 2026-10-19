@@ -40,3 +40,6 @@ radtest-usage = Usage: radtest [OPTIONS] user passwd radius-server[:port] nas-po
 freeradius-usage = Usage: freeradius [-d <raddb>] [-n <name>] [-C] [-X] [-v]
 # Après freeradius -X : le vrai serveur reste au premier plan jusqu'à Ctrl+C.
 freeradius-x-fin = (Le serveur attendrait d'autres demandes jusqu'à Ctrl+C ; le jeu l'arrête ici. Pour qu'il serve vraiment : systemctl start freeradius.)
+
+# nft sur une machine tenue par ufw et fail2ban : le jeu n'en montre qu'un aperçu.
+nft-apercu-ufw = (Sur cette machine, ce sont ufw et fail2ban qui écrivent les règles du pare-feu : ici, nft sert à les regarder (sudo nft list ruleset, list tables, list table ip filter). Pour les changer, passe par ufw et fail2ban : une règle ajoutée à la main serait écrasée au prochain rechargement.)

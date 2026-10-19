@@ -88,7 +88,7 @@ export const PAGES: Record<string, Page> = {
   },
   du: { options: ['h', 's', 'd'], exemples: ['sudo du -sh /var/log/*', 'sudo du --inodes -d 1 /srv', 'sudo du --inodes -s /srv/radio/*'], voir: ['df', 'find'] },
   'fail2ban-client': { exemples: ['sudo fail2ban-client status', 'sudo fail2ban-client status sshd', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client -t', 'sudo fail2ban-client reload'], voir: ['jail.conf', 'journalctl', 'ufw'] },
-  'jail.conf': { section: 5, exemples: ['sudo nano /etc/fail2ban/jail.local', 'sudo fail2ban-client get sshd bantime'], voir: ['fail2ban-client', 'nano'] },
+  'jail.conf': { section: 5, exemples: ['sudo nano /etc/fail2ban/jail.local', 'sudo fail2ban-client get sshd bantime', 'sudo nft list table inet f2b-table'], voir: ['fail2ban-client', 'nano', 'nft'] },
   find: {
     exemples: ['find . -name "*.txt"', 'find /srv/radio/stats -type f -mtime +30', 'find /srv/radio/stats -type f -mtime +30 -delete'],
     voir: ['ls', 'grep', 'du', 'rm', 'crontab'],
@@ -129,7 +129,7 @@ export const PAGES: Record<string, Page> = {
       'sudo nft -a list chain inet filter forward',
       'sudo nft delete rule inet filter forward handle 7',
     ],
-    voir: ['sysctl', 'conntrack', 'systemctl', 'journalctl'],
+    voir: ['sysctl', 'conntrack', 'systemctl', 'journalctl', 'ufw'],
   },
   sysctl: {
     section: 8,

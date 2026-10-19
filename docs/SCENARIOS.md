@@ -122,8 +122,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `sudo` après `reboot` | se souvient encore du mot de passe | le redemande |
 | `sshd` | une partie des mots-clés ; toutes les erreurs listées d'un coup ; le mot de passe n'est demandé que sur les machines au vrai ssh (`maison`) ; pas de `StrictModes` (droits de `~/.ssh` non vérifiés) ni d'options dans `authorized_keys` | s'arrête à la première erreur ; propose le mot de passe partout ; refuse un `authorized_keys` modifiable par d'autres |
 | `ufw` | règles IPv4 et IPv6 confondues (lignes « (v6) » pour la forme) ; pas de règles sortantes, de routage, de journalisation, d'`insert` ni de `reset` ; messages proches de la traduction française d'ufw | tout cela |
-| `ss` | sockets décrites par le chapitre, et la session ssh en cours | toutes les sockets du système |
-| fail2ban | une seule prison (`sshd`) ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
+| `ss` | sockets décrites par le chapitre, et la session ssh en cours (sur le port par lequel on est entré) | toutes les sockets du système |
+| fail2ban | une seule prison (`sshd`), dont le `port` borne le bannissement ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
 | `rsync` | `-a`, `-v`, `-n`, `--delete` ; local, ou à distance par ssh (`machine:chemin`, dans un sens ou dans l'autre, avec les mêmes clés et rebonds que `ssh`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | compare taille et date, toutes les options, démon rsync |
 | `scp`, `ssh-copy-id` | `scp` : `-r`, `-P`, `-J`, `-i`, une copie dans un sens ou dans l'autre (pas entre deux machines distantes), ligne de progression immédiate ; `ssh-copy-id` : `-i`, `-p`, `-J`, la clé `~/.ssh/id*.pub` la plus récente par défaut | `scp` entre deux machines distantes (`-3`) ; `ssh-copy-id -f`, `-n` |
 | `sftp` | session interactive (`sftp>`) par les mêmes sauts et clés que `ssh` ; `ls`, `cd`, `pwd`, `lcd`, `lls`, `lpwd`, `get [-r]`, `put [-r]`, `mkdir`, `rm`, `rmdir`, `rename`, `help`, `bye` ; un dossier qui existe déjà reçoit le contenu | `-b` (fichier de commandes), `reget`/`reput`, jokers, `chmod`, `df` |
@@ -134,6 +134,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | réseau local (`ip`, `ifup`, `ifdown`) | IPv4 seulement ; `ip addr`, `ip link`, `ip route` (show, add, del, set, `-br`, `-d`), interfaces VLAN 802.1Q ; `/etc/network/interfaces` lu comme ifupdown (`auto`, `iface … inet static`, `manual`, `loopback`, `address`, `netmask`, `gateway`, `vlan-raw-device`, `source`) ; le commutateur et ses ports sont décrits par le chapitre ; pas d'ARP visible, de MTU, de bonding ni de systemd-networkd | tout iproute2, ifupdown2, NetworkManager, systemd-networkd |
 | `dnsmasq` | DHCP seulement (les options DNS sont acceptées et ignorées) ; `interface` (avec `*`), `except-interface`, `dhcp-range`, `dhcp-host`, `dhcp-option` ; les appareils demandent une adresse à chaque démarrage du service ; l'adresse est tirée de l'adresse MAC ; pas de renouvellement de bail | DNS, TFTP, PXE, DHCPv6, renouvellement |
 | `nft` (nftables) | IPv4 ; tables `ip`, `inet` (`ip6` lu, sans effet) ; chaînes de base `filter` et `nat` (hooks, priorités, politique), chaînes ordinaires (`jump`, `goto`) ; conditions `iifname`, `oifname`, `ip saddr`, `ip daddr`, `ip protocol`, `meta l4proto`, `tcp`/`udp` `dport`/`sport` (services connus du jeu), `ct state`, négation `!=`, ensembles anonymes ; actions `counter`, `log`, `accept`, `drop`, `reject`, `masquerade`, `snat` (au `postrouting`), `dnat` (au `prerouting`, vers une adresse et un port) ; `define`, `include` ; `-f`, `-c`, `-a` ; `add`, `insert`, `delete`, `flush`, `list` ; le trafic est celui des appareils décrits par le chapitre (et de visiteurs d'internet), et les compteurs comptent un passage de chaque échange ; messages d'erreur proches de nft ; la chaîne `input` ne coupe pas la session ssh du jeu | ensembles nommés, maps, `limit`, `quota`, IPv6, `bridge`, `netdev`, `nft monitor`, les règles sur le contenu des paquets |
+| `nft` sous ufw et fail2ban | sur les machines sans règles nftables écrites à la main : `list ruleset`, `list tables`, `list table`, en lecture seule ; table `ip filter` (chaînes `INPUT`, `OUTPUT`, `ufw-before-input`, `ufw-user-input`, `ufw-after-input`), table `inet f2b-table` de l'action nftables de fail2ban ; compteurs à zéro ; un profil à plusieurs ports en un ensemble `{ 80, 443 }` | la table `ip6 filter`, les chaînes de journalisation et de routage de ufw, les vrais compteurs ; on pourrait y écrire (et ufw l'écraserait) |
 | `sysctl`, `conntrack` | `sysctl` : lire, `-w`, `clé=valeur`, `-p`, `--system`, `-a`, `-n` sur quelques clés (`/proc/sys` est un vrai dossier du jeu) ; `/etc/sysctl.d/*.conf` puis `/etc/sysctl.conf` au démarrage ; `conntrack -L` (`-p`, `-s`, `-d`), `-C`, `-F` : les échanges du moment, dont la session ssh | toutes les clés du noyau ; `conntrack -E`, `-D`, états UDP et ICMP détaillés |
 | `wg`, `wg-quick` (WireGuard) | `genkey`, `genpsk`, `pubkey`, `show`, `showconf` ; `wg-quick up`, `down`, `strip` ; le service `wg-quick@wg0` ; la clé publique n'est pas calculée par Curve25519 (une empreinte qui en tient lieu, au bon format) ; les pairs sont décrits par le chapitre (le portable de Malik, le routeur d'un autre site et son réseau) ; `wg-quick` ajoute une route par `AllowedIPs` hors du réseau de l'interface ; un pair derrière une box (NAT) n'est joignable qu'avec `PersistentKeepalive` (sans délai simulé) ; pas de `wg set`, `PostUp`, `PresharedKey` vérifiée, IPv6, ni de tout le trafic par le tunnel côté routeur ; `wg-quick` sans sudo refuse au lieu de relancer sudo | Curve25519, `wg set`, `syncconf`, `PostUp`/`PostDown`, IPv6, `wg-quick save` |
 | OpenLDAP (`ldapsearch`, `ldapadd`, `ldapmodify`, `ldapdelete`, `ldappasswd`, `ldapwhoami`, `slappasswd`, `slapcat`) | un annuaire par machine (`etat.ldap`), un schéma réduit (core, cosine, inetorgperson, nis : les classes courantes, leurs attributs obligatoires) ; LDIF (`changetype`, `add`/`replace`/`delete`, `-`, lignes repliées), filtres `&`, `\|`, `!`, `=`, `*` ; `-x`, `-D`, `-W`, `-w`, `-H`, `-Y EXTERNAL` (root par `ldapi:///`, comme sur Debian), `-b`, `-s`, `-LLL`, `-f`, `-c` ; droits de Debian (lecture anonyme sauf `userPassword`, écriture par l'administrateur ou root) ; `{SSHA}` au bon format, mais pas un vrai SHA-1 ; les commandes ne lisent pas le clavier (un fichier ou un tube) | `cn=config`, réplication, index, `memberOf`, base64 (`::`), TLS, SASL autre qu'EXTERNAL, toute la syntaxe des filtres (`>=`, `~=`) |
@@ -479,7 +480,7 @@ versions plutôt que miroir, politique de rétention, forget n'est pas prune,
 check et restaurations d'essai, chiffrement et garde du mot de passe ;
 liens vers la documentation de restic.
 
-## Histoire 6 : Les Lettres du quartier (en cours, six chapitres)
+## Histoire 6 : Les Lettres du quartier (en cours, sept chapitres)
 
 L'association de Kofi (vue dans Le Paquet perdu) loue un petit serveur pour
 son site, `lettres.example` (machine `lettres`, même adresse que dans Le
@@ -550,7 +551,7 @@ fail2ban tourne avec les réglages de Debian (prison `sshd`, bannissement de
 fin de leur bannissement, et Rania, la webmestre, bannie après cinq erreurs
 de nom d'utilisateur. Le fail2ban simulé (`src/moteur/fail2ban.ts`) lit la
 configuration dans l'ordre `jail.conf`, `jail.d/*.conf`, `jail.local`,
-`jail.d/*.local` (le dernier lu l'emporte, `[sshd]` sur `[DEFAULT]`), compte
+`jail.d/*.local` (le dernier lu l'emporte ; `[sshd]` sur `[DEFAULT]`, quel que soit le fichier), compte
 les échecs dans le journal de SSH et bannit à `maxretry`, sauf `ignoreip`.
 La commande `ssh` du poste se heurte aux bannissements (`Connection
 refused`).
@@ -666,6 +667,36 @@ soir, mais pas une règle durable). Autres solutions acceptées : la zone dans
 Débrief : lire les journaux avant d'agir, limiter par adresse là où c'est
 coûteux, rafale et `nodelay`, 429, `deny` contre règle durable ; liens vers
 `limit_req`, le format des journaux et awk (POSIX).
+
+### Chapitre 7 — Le port (fait)
+
+Le journal de SSH déborde de robots, tous sur le port 22. Rania propose de
+déplacer SSH sur le port 2222 : ça ne protège de rien, mais le journal
+redeviendra lisible. Trois portes à ouvrir avant d'en fermer une (sshd,
+ufw, le `~/.ssh/config` du poste), et une sentinelle à prévenir.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `journalctl -u ssh`, `sudo ufw status`, `sudo nft list ruleset` (les règles que ufw et fail2ban écrivent) |
+| Écouter sur les deux ports | `Port 22` et `Port 2222` dans `sshd_config`, `sudo sshd -t`, `sudo ufw allow 2222/tcp`, `sudo systemctl reload ssh`, `sudo ss -tlnp` |
+| Tester depuis le poste | `Port 2222` dans `~/.ssh/config` (ou `ssh -p 2222`) ; la clé d'hôte est notée `[lettres.example]:2222` dans `known_hosts` |
+| Fermer l'ancienne porte | retirer `Port 22`, `sudo ufw delete allow OpenSSH` |
+| La sentinelle | `[sshd]` puis `port = 2222` dans `jail.local`, `sudo systemctl reload fail2ban`, `sudo nft list table inet f2b-table` |
+
+Objectif vérifié sur l'état : sshd n'écoute que sur 2222 ; ufw laisse passer
+2222 et plus 22 ; la prison sshd bloque le port 2222 ; le poste est connecté
+par le port 2222 grâce à son `~/.ssh/config`.
+
+Pièges prévus : retirer le port 22 avant d'ouvrir 2222 dans ufw (alerte ;
+la connexion suivante attend, le menu sert de console de secours), oublier
+le poste (« Connection refused » sur 22, avec un rappel du port), un
+`port = 2222` dans le `[DEFAULT]` de `jail.local`, que le `port = ssh` du
+`[sshd]` de `jail.conf` continue d'emporter. Autres solutions acceptées :
+`ssh -p 2222` pour tester, `port = ssh,2222`, `ufw limit 2222/tcp`.
+Débrief : un port n'est pas une protection, ouvrir avant de fermer, tout ce
+qui parle du port suit, ufw et fail2ban écrivent des règles nftables,
+`ssh.socket` sur Ubuntu ; liens vers `sshd_config(5)`, `ssh_config(5)`,
+`jail.conf(5)` et ufw.
 
 ## Histoire 7 : La Fabrique (quatre chapitres)
 

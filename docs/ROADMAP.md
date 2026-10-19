@@ -135,7 +135,9 @@ demandent plusieurs.
       no`, `AllowUsers`, `sshd -t`, `sshd -T`, `Include` de Debian ; quête
       « Fermer la porte » (Les Lettres du quartier), où l'on peut s'enfermer
       dehors (le menu sert de console de secours)
-- [ ] Changer le port SSH (et le pare-feu qui va avec, phase 3)
+- [x] **Changer le port SSH** : deux `Port`, ufw, `~/.ssh/config`, `known_hosts`
+      en `[nom]:port`, le `port` de la prison fail2ban (« Le port », Les
+      Lettres du quartier, chapitre 7)
 - [x] **Transferts** : **`scp`**, `rsync` à distance (`-a`, `--delete`,
       `-n`) et pourquoi FTP en clair est à proscrire (« Les transferts ») ;
       `sftp`, et **FTPS** avec `lftp` pour les hébergeurs mutualisés qui
@@ -150,7 +152,8 @@ demandent plusieurs.
       `limit`, `delete`, profils d'applications, numéros), et `ssh` qui
       s'arrête au pare-feu (timeout) ; quête « Le pare-feu » (Les Lettres du
       quartier, chapitre 2)
-- [ ] Un aperçu de `nftables` sous `ufw`
+- [x] Un aperçu de `nftables` sous `ufw` : `nft list ruleset` montre les
+      chaînes `ufw-*` et la table de fail2ban (« Le port »)
 - [x] **fail2ban** : lire `fail2ban.log` et le journal de SSH, `jail.local`
       (jamais `jail.conf`), `bantime`, `maxretry`, `ignoreip` (CIDR),
       `fail2ban-client status`, `unbanip`, `-t`, `reload` ; quête « La
