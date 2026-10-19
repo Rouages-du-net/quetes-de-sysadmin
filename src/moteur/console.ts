@@ -10,6 +10,7 @@ import { f, type Chapitre, type Histoire } from './monde';
 import { MACHINES, POSTE, type Machine } from './machines';
 import { fichiersCle, poste } from './poste';
 import { etatPort, type EtatPort } from './ports';
+import { noterTmux } from './commandes/tmux';
 import { traducteur, type Langue, type Traduire } from '../textes';
 
 export interface OptionsConsole {
@@ -155,8 +156,10 @@ export class Console {
     const machine = MACHINES.find((m) => m.nom === nom)!;
     const histoire = HISTOIRES.find((h) => h.id === machine.histoire)!;
     const c = chapitre ?? this.chapitreCourant(histoire);
-    const banniere = [`Linux ${machine.nom} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.nom}-motd`)];
     const ancienne = this.sessions.get(nom);
+    // La bannière donne le noyau qui tourne (celui de la session, s'il en a un).
+    const noyau = (ancienne?.etat.noyau as { courant: string } | undefined)?.courant ?? '6.12.0-quetes';
+    const banniere = [`Linux ${machine.nom} ${noyau} #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.nom}-motd`)];
     // Une session créée de loin (un port testé avec nc) : la première vraie
     // connexion ouvre le chapitre, avec son texte d'accueil.
     if (!chapitre && ancienne?.etat.preparee && ancienne.chapitre === c) {
@@ -244,10 +247,21 @@ export class Console {
   executer(ligne: string): string | null {
     const sh = this.shell;
     const dejaFini = sh.termine;
+    // Dans tmux, ce qui s'affiche reste dans la session (pour tmux attach).
+    const tmuxAvant = sh.tmux;
+    const invite = sh.invite();
     const sortie = sh.executer(ligne);
     if (sortie === null) return null;
+    if (tmuxAvant && sh.tmux === tmuxAvant) noterTmux(sh, tmuxAvant, [`${invite.trimEnd()} ${ligne}`, sortie].filter(Boolean).join('\n'));
     const morceaux = [sortie];
-    if (sh.sortie) {
+    if (sh.coupure && this.distant) {
+      // Le réseau a coupé : la connexion tombe (ce qui tourne dans tmux, lui, continue).
+      sh.coupure = false;
+      sh.tmux = null;
+      this.interieur = [];
+      this.distant = null;
+      morceaux.push('client_loop: send disconnect: Broken pipe');
+    } else if (sh.sortie) {
       sh.sortie = false;
       morceaux.push(this.interieur.length ? this.quitterInterieur() : this.distant ? this.deconnecter() : this.t('poste-exit'));
     } else if (sh.redemarrage && this.distant) {

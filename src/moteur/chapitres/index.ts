@@ -47,6 +47,7 @@ import { depart } from './depart';
 import { droits } from './droits';
 import { secret } from './secret';
 import { proxy } from './proxy';
+import { misesAJour } from './mises-a-jour';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -95,7 +96,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'cooperative',
-    chapitres: [depart, droits, secret, proxy],
+    chapitres: [depart, droits, secret, proxy, misesAJour],
   },
 ];
 

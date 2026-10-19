@@ -87,6 +87,10 @@ rouages.net.
   (Express simulé : `.env` lu au démarrage, `trust proxy`, verrous par
   adresse) ; nginx transmet `proxy_set_header` à l'appli (`Demande`), et
   `grep` lit des expressions régulières (`versRegexBasique`).
+- `commandes/tmux.ts` : sessions tmux d'une machine (`etat.tmux`, `Shell.tmux` ;
+  la console y recopie ce qui s'affiche) et `uname` ; `apt upgrade` et
+  `dpkg --configure -a` dans `commandes/apt.ts` (`etat.apt.mises`,
+  `etat.noyau`, `etat.coupureReseau` : la connexion tombe, `Shell.coupure`).
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
   dans `editeur.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).

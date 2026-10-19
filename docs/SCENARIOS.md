@@ -128,7 +128,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `scp`, `ssh-copy-id` | `scp` : `-r`, `-P`, `-J`, `-i`, une copie dans un sens ou dans l'autre (pas entre deux machines distantes), ligne de progression immédiate ; `ssh-copy-id` : `-i`, `-p`, `-J`, la clé `~/.ssh/id*.pub` la plus récente par défaut | `scp` entre deux machines distantes (`-3`), SFTP ; `ssh-copy-id -f`, `-n` |
 | machines internes | derrière `maison`, `wiki` et `archives` existent dès qu'on s'y connecte ; on y entre par ssh depuis `maison`, ou avec `-J` depuis le poste (`exit` ramène alors au poste) ; un programme absent répond `command not found` | un vrai réseau, routé |
 | `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
-| `apt` | `update`, `install [-y]`, `list --installed` ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » | tout le catalogue Debian, `upgrade`, `remove`, `search`, `show`… ; dpkg garde l'état du paquet |
+| `apt` | `update`, `install [-y]`, `list --installed`, `list --upgradable`, `upgrade` et `full-upgrade` (les mises à jour décrites par le chapitre) ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » ; une mise à jour coupée laisse ses paquets dépaquetés (`dpkg --configure -a`) ; `/var/run/reboot-required` pour un noyau ou la libc | tout le catalogue Debian, `remove`, `search`, `show`, `apt-get`… ; dpkg garde l'état de chaque paquet |
+| `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, une fenêtre par session ; pas de raccourcis clavier (`tmux detach` pour Ctrl+b d) ; attach rejoue les dernières lignes ; le nom de la session s'affiche devant l'invite (la barre d'état) ; `uname -r/-a` ; `dpkg --configure -a` | fenêtres, volets, raccourcis, `screen` ; toutes les options de dpkg |
 | `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe, `=`, `^~`, ou expression régulière (`~`, `~*`, syntaxe de JavaScript plutôt que PCRE), choisie dans l'ordre de nginx ; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
 | `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse), ou un tunnel `ssh -L` ouvert sur le poste | tout le réseau |
 | `tar` | `-C` ; une archive coupée s'arrête à la coupure (messages proches de GNU tar) ; root garde propriétaires et droits | aussi `--strip-components`, `-p`, archives multi-volumes… |
@@ -1184,14 +1185,14 @@ trop. Pièges prévus : la barre oblique finale oubliée (un dossier
 `partage/partage`), `--delete` sans essai à blanc. Le débrief parle de FTP
 et telnet, qui font passer les mots de passe en clair.
 
-## Histoire 12 : La Coopérative (cinq chapitres prévus)
+## Histoire 12 : La Coopérative (cinq chapitres)
 
 L'épicerie coopérative du quartier (machine `cooperative`, 192.0.2.20) :
 la caisse (un service), l'équipe caisse (Lina, Karim), un compte de
 déploiement partagé (`deploy`). Awa, la coordinatrice, confie le serveur à
 la joueuse ou au joueur quand Marc, qui le tenait, s'en va. Les trous de
 la feuille de route : comptes, sudoers, droits partagés, un secret exposé
-par nginx, `X-Forwarded-For` ; puis (à venir) `apt upgrade` et tmux.
+par nginx, `X-Forwarded-For`, `apt upgrade` et tmux.
 
 ### Chapitre 1 — Le départ (fait)
 
@@ -1263,4 +1264,23 @@ du robot qui est verrouillée. Pièges prévus : rien côté nginx (tout le
 monde reste en 127.0.0.1), `TRUST_PROXY=true` (le robot change d'adresse à
 volonté), `$http_x_forwarded_for` (nginx transmet l'en-tête du client sans
 le compléter).
+
+### Chapitre 5 — Les mises à jour (fait)
+
+Des mois sans mise à jour ; avant l'ouverture, le wifi de la coopérative
+coupe une fois, au milieu de la mise à jour.
+
+| Étape | Commande apprise |
+|---|---|
+| Voir | `uname -r`, `sudo apt update`, `apt list --upgradable` |
+| Mettre à jour | `tmux new -s maj`, `sudo apt upgrade` ; après la coupure : `tmux ls`, `tmux attach -t maj` (sans tmux : `sudo dpkg --configure -a`) |
+| Redémarrer | `cat /var/run/reboot-required.pkgs`, `sudo reboot`, `uname -r` |
+| Vérifier | `systemctl --failed`, `systemctl status caisse`, `sudo systemctl enable --now caisse` |
+
+Objectif vérifié sur l'état : plus de mise à jour en attente, dpkg
+propre, le nouveau noyau tourne, nginx et la caisse actifs, la caisse
+activée au démarrage. Pièges prévus : `apt upgrade` avant `apt update`
+(rien à faire), la mise à jour hors de tmux (dpkg interrompu, apt refuse
+tout), oublier de redémarrer (l'ancien noyau tourne), la caisse jamais
+activée (elle ne repart pas), tmux imbriqué.
 

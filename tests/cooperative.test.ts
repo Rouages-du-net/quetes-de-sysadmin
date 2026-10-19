@@ -237,4 +237,61 @@ for (const langue of LANGUES)
       expect(tout).toContain('login failed for admin from 10.');
       expect(c.termines).not.toContain('proxy');
     });
+
+    const AVANT_MAJ = ['depart', 'droits', 'secret', 'proxy'];
+
+    it('chapitre 5 — solution : apt update, upgrade dans tmux, la coupure, attach, reboot, enable', () => {
+      const { c, jouer } = partie(AVANT_MAJ);
+      let tout = jouer(['uname -r', 'sudo apt upgrade']);
+      expect(tout).toContain('6.12.38+deb13-amd64');
+      expect(tout).toContain('Upgrading: 0, Installing: 0');
+      tout = jouer(['sudo apt update', 'apt list --upgradable']);
+      expect(tout).toContain("5 packages can be upgraded. Run 'apt list --upgradable' to see them.");
+      expect(tout).toContain('linux-image-amd64/trixie-security 6.12.48-1 amd64 [upgradable from: 6.12.38-1]');
+      jouer(['tmux new -s maj']);
+      expect(c.invite()).toBe('[maj] vous@cooperative:~$');
+      tout = jouer(['sudo apt upgrade', 'y']);
+      expect(tout).toContain('client_loop: send disconnect: Broken pipe');
+      expect(c.invite()).toBe('vous@poste:~$');
+      tout = jouer(['ssh cooperative', 'tmux ls', 'tmux attach -t maj']);
+      contient(tout, 'la mise à jour tournait dans tmux');
+      expect(tout).toContain('maj: 1 windows');
+      expect(tout).toContain('Setting up linux-image-amd64 (6.12.48-1) ...');
+      tout = jouer(['cat /var/run/reboot-required.pkgs', 'tmux detach', 'sudo reboot']);
+      expect(tout).toContain('linux-image-6.12.48+deb13-amd64');
+      expect(tout).toContain('[detached (from session maj)]');
+      contient(tout, 'la caisse ne répond plus');
+      tout = jouer(['ssh cooperative', 'uname -r', 'systemctl --failed', 'sudo systemctl enable --now caisse']);
+      expect(tout).toContain('Linux cooperative 6.12.48+deb13-amd64');
+      contient(tout, 'https://man.openbsd.org/tmux');
+      expect(c.termines).toContain('mises-a-jour');
+    });
+
+    it('chapitre 5 — autre solution : sans tmux, dpkg --configure -a, et la caisse activée avant de redémarrer', () => {
+      const { c, jouer } = partie(AVANT_MAJ);
+      let tout = jouer(['sudo apt update', 'sudo apt upgrade -y']);
+      expect(tout).toContain('client_loop: send disconnect: Broken pipe');
+      tout = jouer(['ssh cooperative', 'sudo apt upgrade -y', 'sudo apt install curl']);
+      contient(tout, 'dpkg --configure -a');
+      expect(tout).toContain("Error: dpkg was interrupted, you must manually run 'dpkg --configure -a' to correct the problem.");
+      tout = jouer(['sudo dpkg --configure -a', 'sudo apt upgrade']);
+      expect(tout).toContain('Setting up libc6 (2.41-12+deb13u1) ...');
+      expect(tout).toContain('Upgrading: 0, Installing: 0');
+      jouer(['sudo systemctl enable caisse', 'sudo systemctl reboot', 'ssh cooperative']);
+      expect(c.termines).toContain('mises-a-jour');
+    });
+
+    it('chapitre 5 — fausses pistes : pas de redémarrage, tmux imbriqué, une session inconnue', () => {
+      const { c, jouer } = partie(AVANT_MAJ);
+      let tout = jouer(['tmux attach', 'tmux new -s maj', 'tmux new -s autre', 'tmux attach -t inconnue']);
+      expect(tout).toContain('no server running on /tmp/tmux-1000/default');
+      expect(tout).toContain('sessions should be nested with care, unset $TMUX to force');
+      tout = jouer(['exit']);
+      expect(tout).toContain('[exited]');
+      expect(c.invite()).toBe('vous@cooperative:~$');
+      jouer(['tmux new -s maj', 'sudo apt update', 'sudo apt upgrade -y', 'ssh cooperative', 'sudo systemctl enable caisse']);
+      tout = jouer(['uname -r']);
+      expect(tout).toContain('6.12.38+deb13-amd64');
+      expect(c.termines).not.toContain('mises-a-jour');
+    });
   });
