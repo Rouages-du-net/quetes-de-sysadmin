@@ -357,7 +357,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     saisie.focus();
   });
   // Le carnet s'emporte : un fichier Markdown, ou le presse-papiers.
-  const markdown = () => enMarkdown(carnet, t);
+  const markdown = () => enMarkdown(carnet, t, termines);
   exporter.addEventListener('click', () => {
     const lien = el('a', { href: URL.createObjectURL(new Blob([markdown()], { type: 'text/markdown' })), download: t('carnet-fichier') });
     lien.click();

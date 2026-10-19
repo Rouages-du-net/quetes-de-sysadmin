@@ -7,6 +7,7 @@ import type { Shell } from './shell';
 import type { Traduire } from '../textes';
 import { COMMANDES } from './commandes';
 import { page, resume } from './commandes/manuel';
+import { HISTOIRES } from './chapitres';
 
 export interface EntreeCarnet {
   // La première ligne où la commande a servi, et le chapitre (identifiant ; vide sur le poste).
@@ -36,14 +37,28 @@ export function noter(carnet: Carnet, sh: Shell): string[] {
 /** La ligne du carnet : ce que fait la commande, en une phrase (comme whatis). */
 export const description = (nom: string, t: Traduire) => resume(t(page(nom)));
 
-/** Le carnet en Markdown, trié par nom. */
-export function enMarkdown(carnet: Carnet, t: Traduire): string {
+/** La progression : pour chaque histoire commencée, les chapitres terminés. */
+export function progression(termines: string[], t: Traduire): string[] {
+  const lignes = HISTOIRES.flatMap((h) => {
+    const faits = h.chapitres.filter((c) => termines.includes(c.id));
+    if (!faits.length) return [];
+    return [
+      `- ${t('carnet-progression-histoire', { histoire: t(`histoire-${h.id}`), faits: faits.length, total: h.chapitres.length })}`,
+      ...faits.map((c) => `  - ${t('chapitre-numero', { numero: c.numero })} : ${t(`chapitre-${c.id}`)}`),
+    ];
+  });
+  return [`## ${t('carnet-progression')}`, '', ...(lignes.length ? lignes : [t('carnet-progression-vide')]), ''];
+}
+
+/** Le carnet en Markdown : la progression (si elle est donnée), puis les commandes, triées par nom. */
+export function enMarkdown(carnet: Carnet, t: Traduire, termines?: string[]): string {
   const noms = Object.keys(carnet).sort((a, b) => a.localeCompare(b));
   return [
     `# ${t('carnet-titre')}`,
     '',
     t('carnet-markdown-intro', { nombre: noms.length }),
     '',
+    ...(termines ? progression(termines, t) : []),
     ...noms.flatMap((nom) => {
       const e = carnet[nom];
       return [

@@ -127,6 +127,8 @@ rouages.net.
   `src/moteur/rouages.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).
 - `src/element.ts` : l'élément `<quetes-de-sysadmin>` (Shadow DOM).
+- `src/pages/enseignants.astro` : les fiches des quêtes, calculées par
+  `src/moteur/fiches.ts` (commandes découvertes, prérequis, durée).
 - `src/textes/<langue>/*.ftl` : tous les textes (Fluent), chargés par
   `src/textes/index.ts` (`traducteur()`, `typographie()`).
 - `tests/quetes.test.ts` : chaque chapitre rejoué ; `tests/navigateur.mjs` :

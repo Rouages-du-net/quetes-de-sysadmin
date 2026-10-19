@@ -106,6 +106,13 @@ for (const largeur of [1000, 375]) {
   verifier(erreurs.length === 0, `${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
   verifier(externes.length === 0, `${largeur} px : aucune ressource tierce ${externes.join(' ')}`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/jeu-${largeur}.png`, fullPage: true });
+  // Les fiches pour les enseignant·es : une page statique, générée à la construction.
+  await page.goto(`${BASE}/enseignants/`);
+  verifier((await page.locator('.fiche').count()) > 50, `${largeur} px : les fiches des enseignant·es sont là`);
+  verifier((await page.locator('#c-goulot').textContent()).includes('iostat'), `${largeur} px : une fiche donne ses commandes nouvelles`);
+  verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${largeur} px : fiches sans défilement horizontal`);
+  verifier(erreurs.length === 0, `${largeur} px : fiches sans erreur console ${erreurs.join(' ')}`);
+  if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/enseignants-${largeur}.png` });
   await page.close();
 }
 

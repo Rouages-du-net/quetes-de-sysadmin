@@ -53,6 +53,13 @@ carnet-markdown-intro = { $nombre ->
     [one] Une commande apprise en jouant à Quêtes de Sysadmin.
    *[other] { $nombre } commandes apprises en jouant à Quêtes de Sysadmin.
 }
+carnet-progression = Progression
+carnet-progression-vide = Aucun chapitre terminé pour l'instant.
+# { $histoire } : le titre de l'histoire ; { $faits } et { $total } : chapitres terminés et en tout
+carnet-progression-histoire = { $histoire } : { $faits ->
+    [one] { $faits } chapitre terminé
+   *[other] { $faits } chapitres terminés
+} sur { $total }
 # { $chapitre } : le titre du chapitre où la commande a servi la première fois
 carnet-decouverte = Découverte dans « { $chapitre } ».
 # { $commande } : la commande qui ouvre le manuel (man ls)
