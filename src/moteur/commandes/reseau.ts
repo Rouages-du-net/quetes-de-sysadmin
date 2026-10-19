@@ -205,7 +205,7 @@ export const RESEAU: Record<string, Commande> = {
       const hote = m[2];
       // Une machine avec nginx : la requête part vers elle-même (localhost,
       // son nom, son adresse), et nginx répond selon sa configuration chargée.
-      if (jeu.etat.nginx || jeu.etat.docker) {
+      if (jeu.etat.nginx || jeu.etat.docker || jeu.etat.applis) {
         const conteneurs: string[] = (jeu.etat.docker?.conteneurs ?? []).map((c: { ip: string }) => c.ip);
         const locaux = [...LOCAL_DE_BASE, ...(jeu.etat.nginx?.noms ?? jeu.etat.docker?.noms ?? []), ...conteneurs];
         const blocs: string[] = [];

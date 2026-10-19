@@ -11,7 +11,8 @@
 // Une affectation devant une commande (GIT_WORK_TREE=… git …) ne vaut que
 // pour git, qui la lit comme l'option correspondante.
 // Écarts : pas de if, for, while, case ni de fonctions (une erreur le dit),
-// et le code de retour d'une commande vaut 0 si elle n'a écrit aucune erreur.
+// et le code de retour d'une commande vaut 0 si elle n'a écrit aucune erreur
+// (sauf si elle donne le sien, comme les plugins de supervision ou grep).
 
 import type { Shell } from './shell';
 
@@ -152,7 +153,7 @@ export function executerScript(jeu: Shell, texte: string, options: OptionsScript
     const r = jeu.sousCommande(ligne, cwd);
     cwd = r.cwd;
     if (r.sortie) sorties.push(r.sortie);
-    return r.ok ? 0 : 1;
+    return r.code;
   };
 
   // Les lignes, recollées après un « \ » final.

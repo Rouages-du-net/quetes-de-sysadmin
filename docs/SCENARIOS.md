@@ -152,6 +152,10 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | « Liste d'arguments trop longue » | un programme (pas `cd`, `echo`, `pwd`, `test`, `printf`) refuse plus de 2 Mio d'arguments (ARG_MAX) | la limite compte aussi l'environnement ; `xargs` |
 | sorties géantes | l'écran ne garde que les 2 000 dernières lignes d'une sortie (avec une mention) | l'historique du terminal |
 | heure | chaque machine a un fuseau et un décalage d'horloge (`etat.heure`) ; `date` (`-s`), `timedatectl` (`status`, `show`, `list-timezones`, `set-timezone`, `set-ntp`, `set-time`, `timesync-status`) ; timesyncd essaie ses serveurs (`NTP=`, sinon `FallbackNTP=`) et se synchronise d'un coup à son démarrage ; le journal suit l'heure de la machine ; les fuseaux viennent d'`Intl` | ajustement progressif de l'horloge, RTC séparée, `hwclock`, chrony |
+| supervision | `check_disk` (`-w`, `-c`, `-W`, `-K`, `-p`), `check_http` (`-H`, `-I`, `-p`, `-u`, machine locale seulement), `check_procs` (`-C`, `-w`, `-c`) ; codes de retour 0 à 3 ; pas de page `man` réelle (les plugins répondent à `--help`) | tous les plugins et leurs options, `check_curl` |
+| `mail`, `last` | `mail` : `-s`, `-E`, livraison locale dans `/var/mail` après `/etc/aliases`, liste de la boîte sans mode interactif ; `last` : connexions décrites par le chapitre, `-n` | le courrier qui quitte la machine (MTA), `mail` interactif, `lastb`, `who` |
+| timers systemd | unités écrites à la main dans `/etc/systemd/system` (`.service` : `Type=`, `ExecStart=`, `User=` ; `.timer` : `OnCalendar=` avec jour de la semaine, `*-*-*` et `H:M[:S]`, `OnBootSec=`, `OnActiveSec=`, `OnUnitActiveSec=`, `Unit=`), à la minute près ; `list-timers`, `systemd-analyze calendar` ; cron envoie par courrier ce qu'écrit une tâche | `Persistent=`, `RandomizedDelaySec=`, `AccuracySec=`, dépendances entre unités |
+| codes de retour | une commande rend 1 si elle a écrit une erreur, sauf si elle donne le sien (plugins, `grep`) ; dans un tube, celui de la dernière commande | tous les codes des vrais outils |
 | zombies | `ps -ef` montre le parent ; aucun signal n'agit sur un zombie ; ils disparaissent quand leur parent s'arrête | `wait()`, `SIGCHLD`, adoption par un sous-reaper |
 | `sudo -u`, `crontab -u`, `usermod -L` | `sudo -u compte` sans autre option ; `crontab -u` réservé à root ; `usermod -L/-U` marque le compte sans montrer `/etc/shadow` | toutes les options |
 | s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
@@ -941,7 +945,7 @@ de lignes, et les prêts sont revenus. Pièges prévus : la redirection `>`
 avec `sudo -u`, restaurer par-dessus la base en service, réinjecter dans
 une table pleine (doublons), `pg_dump` dans la crontab de root.
 
-## Histoire 10 : L'Astreinte (en cours)
+## Histoire 10 : L'Astreinte (six chapitres)
 
 Des nuits d'astreinte pour Radio Quartier (machine `radio`, 192.0.2.18),
 avec Zoé, bénévole technique. Les pannes classiques, une par nuit, puis la
@@ -1030,6 +1034,50 @@ par timesyncd, activé au démarrage, cron redémarré après le changement de
 fuseau. Pièges prévus : `date -s` à la main (l'horloge redérive), un fuseau
 mal écrit, `set-time` avec NTP actif, timesyncd démarré sans être activé,
 cron pas redémarré.
+
+### Chapitre 5 — La sonde (fait)
+
+Après quatre nuits à réparer après coup, Zoé veut être prévenue avant que
+ça casse. Sa sonde (`/usr/local/bin/sonde`) lance des plugins de
+supervision et envoie par courrier ce qui n'est pas OK ; elle ne regarde
+que le disque système, et rien ne la lance. Puis Zoé organise un exercice :
+la nuit suivante, deux pannes (le relais qui tombe à 1 h 10, un import qui
+épuise les inodes de `/srv/radio` à partir de 1 h 40).
+
+| Étape | Commande apprise |
+|---|---|
+| Les plugins | `/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio`, `check_http -H localhost -p 8000 -u /direct`, `check_procs -C flux -c 1:` (hors du PATH) |
+| L'alerte | `… \| grep -v " OK" \| mail -E -s Alerte-radio root`, `/etc/aliases`, `/var/mail/zoe` |
+| Planifier | `sonde.service` (`Type=oneshot`) et `sonde.timer` (`OnCalendar=*:0/5`, `WantedBy=timers.target`), `systemd-analyze calendar`, `systemctl daemon-reload`, `enable --now`, `list-timers` (ou une ligne de crontab) |
+| Vérifier | la nuit d'exercice, `journalctl -u sonde` |
+
+Objectif vérifié sur l'état, après la nuit simulée (qui se rejoue à chaque
+changement de la sonde ou de sa planification) : le relais tombé a donné
+une alerte en moins de 15 minutes, les inodes avant d'être épuisés, et
+aucune alerte n'est partie quand tout allait bien. Pièges prévus : les
+plugins appelés sans leur chemin, `OnUnitActiveSec=` seul (ne part
+jamais), un timer modifié sans `daemon-reload`, un seuil trop serré
+(fausses alertes), une sonde qui ne regarde pas les inodes ni le direct.
+
+### Chapitre 6 — Le post-mortem (fait)
+
+Dimanche nuit, Théo était d'astreinte : le direct a coupé 45 minutes. Ses
+notes sont approximatives ; les faits sont dans les journaux. La mise à
+jour automatique (unattended-upgrades, needrestart) a relancé le relais à
+2 h 13, qui n'a pas pu repartir : une option inconnue attendait dans
+`flux.conf` depuis le 20 août, jamais appliquée.
+
+| Étape | Commande apprise |
+|---|---|
+| Les faits | `journalctl --since "2027-09-12 02:00" --until "…"`, `last`, `/var/log/apt/history.log`, `/var/log/unattended-upgrades/`, `/var/mail/theo` |
+| L'origine | `journalctl \| grep flux.conf` (la commande `sudo nano` du 20 août) |
+| Écrire | `nano postmortem.md` : résumé, chronologie, impact, causes, ce qui a marché, actions |
+
+Objectif vérifié sur l'état du fichier : plus de « (à compléter) », la
+chronologie avec 2 h 13, 2 h 15 et 2 h 58, l'impact (45 minutes), le
+déclencheur et la cause (`flux.conf`, depuis le 20 août), au moins deux
+actions, et aucun mot qui cherche un coupable (liste dans le fichier de
+textes). Zoé relit à chaque enregistrement et dit ce qui manque.
 
 ## Idées pour la suite
 

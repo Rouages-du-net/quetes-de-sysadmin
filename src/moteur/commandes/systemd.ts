@@ -3,9 +3,11 @@
 // ils restent en anglais, comme ceux du vrai systemctl.
 
 import type { Shell } from '../shell';
-import { arreter, dateComplete, demarrer, duree, ligneJournal, recharger, redemarrer, systemd, type Systemd } from '../systemd';
+import { arreter, dateComplete, demarrer, duree, journaliser, ligneJournal, recharger, redemarrer, systemd, type Systemd } from '../systemd';
 import type { Commande } from './index';
 import { lireTaille } from '../memoire';
+import { chargerUnites, lireCalendrier, prochainCalendrier, prochainDeclenchement, timerDe } from '../minuteries';
+import { versUtc } from '../systemd';
 
 const LEGENDE = [
   '',
@@ -27,7 +29,7 @@ function statut(jeu: Shell, sd: Systemd, nom: string): string {
   const lignes = [
     // × (\u00d7) : le symbole d'échec de systemd.
     `${s.etat === 'failed' ? '\u00d7' : s.etat === 'active' ? '●' : '○'} ${unite} - ${s.description}`,
-    `     Loaded: loaded (/usr/lib/systemd/system/${unite}; ${s.active ? 'enabled' : 'disabled'}; preset: enabled)`,
+    `     Loaded: loaded (${s.fichier ?? `/usr/lib/systemd/system/${unite}`}; ${s.active ? 'enabled' : 'disabled'}; preset: enabled)`,
     ...(s.surcharges?.length
       ? s.surcharges.flatMap((chemin, i) => {
           const lieu = chemin.replace(/\/[^/]+$/, '');
@@ -37,6 +39,7 @@ function statut(jeu: Shell, sd: Systemd, nom: string): string {
         })
       : []),
     `     Active: ${actif}`,
+    ...(timerDe(sd, nom) ? [`TriggeredBy: ● ${timerDe(sd, nom)}.timer`] : []),
   ];
   if (s.etat === 'active' && s.processus[0]) lignes.push(`   Main PID: ${s.processus[0].pid} (${s.executable})`);
   // La mémoire du service (et sa limite, MemoryMax=), si la machine la suit.
@@ -72,7 +75,9 @@ const cheminsSurcharges = (jeu: Shell, nom: string) =>
     return lieu?.type === 'dossier' ? Object.keys(lieu.enfants).filter((f) => f.endsWith('.conf')).sort().map((f) => `${base}/${nom}.service.d/${f}`) : [];
   });
 // Ce que disent les surcharges sur le disque (pour voir si elles ont changé depuis la dernière lecture).
-const empreinte = (jeu: Shell, nom: string) => cheminsSurcharges(jeu, nom).map((c) => `${c}\n${jeu.lire(c) ?? ''}`).join('\n');
+// Le fichier d'unité écrit à la main (s'il y en a un) et ses surcharges, tels qu'ils sont sur le disque.
+const empreinte = (jeu: Shell, nom: string) =>
+  [`/etc/systemd/system/${nom}.service`, ...cheminsSurcharges(jeu, nom)].map((c) => `${c}\n${jeu.lire(c) ?? ''}`).join('\n');
 export function chargerSurcharges(jeu: Shell, sd: Systemd) {
   for (const [nom, s] of Object.entries(sd.services)) {
     const chemins = cheminsSurcharges(jeu, nom);
@@ -92,6 +97,141 @@ export function chargerSurcharges(jeu: Shell, sd: Systemd) {
         if (m[1] === 'Restart') s.redemarrage = m[2];
       }
     }
+  }
+}
+
+/** Un moment pour journalctl --since/--until (heure de la machine, lue comme UTC) ; null si illisible. */
+function lireMoment(sd: Systemd, texte: string): number | null {
+  const maintenant = sd.horloge + (sd.ecart ?? 0);
+  const jour = Math.floor(maintenant / 86_400_000) * 86_400_000;
+  if (texte === 'now') return maintenant;
+  if (texte === 'today') return jour;
+  if (texte === 'yesterday') return jour - 86_400_000;
+  if (texte === 'tomorrow') return jour + 86_400_000;
+  const relatif = /^-(\d+)\s*(s|min|m|h|d)$/.exec(texte.trim());
+  if (relatif) return maintenant - Number(relatif[1]) * { s: 1000, min: 60_000, m: 60_000, h: 3_600_000, d: 86_400_000 }[relatif[2] as 's']!;
+  const m = /^(?:(\d{4})-(\d{2})-(\d{2}))?\s*(?:(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/.exec(texte.trim());
+  if (!m || (!m[1] && !m[4])) return null;
+  const base = m[1] ? Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : jour;
+  return base + (m[4] ? (Number(m[4]) * 3600 + Number(m[5]) * 60 + Number(m[6] ?? 0)) * 1000 : 0);
+}
+
+/** daemon-reload : les unités écrites à la main, puis les surcharges. */
+function relire(jeu: Shell, sd: Systemd) {
+  chargerUnites(jeu, sd);
+  chargerSurcharges(jeu, sd);
+}
+
+const dateOuTiret = (jeu: Shell, sd: Systemd, ms: number | null | undefined) => (ms ? dateComplete(ms, jeu.t.langue, sd) : '-');
+
+function listeTimers(jeu: Shell, sd: Systemd, tous: boolean): string {
+  const timers = Object.entries(sd.minuteries ?? {}).filter(([, m]) => tous || m.etat === 'active');
+  const lignes = timers
+    .map(([nom, m]) => ({ nom, m, prochain: prochainDeclenchement(sd, m, sd.horloge) }))
+    .sort((a, b) => (a.prochain ?? Infinity) - (b.prochain ?? Infinity))
+    .map(({ nom, m, prochain }) => [
+      dateOuTiret(jeu, sd, prochain),
+      prochain ? `${duree(prochain - sd.horloge)} left` : '-',
+      dateOuTiret(jeu, sd, m.dernier),
+      m.dernier ? `${duree(sd.horloge - m.dernier)} ago` : '-',
+      `${nom}.timer`,
+      `${m.unite}.service`,
+    ]);
+  const entete = ['NEXT', 'LEFT', 'LAST', 'PASSED', 'UNIT', 'ACTIVATES'];
+  const largeurs = entete.map((e, i) => Math.max(e.length, ...lignes.map((l) => l[i].length)));
+  // Deux espaces entre les colonnes : le tableau reste d'un seul tenant à l'écran.
+  const aligner = (l: string[]) => l.map((c, i) => (i === l.length - 1 ? c : c.padEnd(largeurs[i]))).join('  ');
+  return [
+    aligner(entete),
+    ...lignes.map(aligner),
+    '',
+    `${lignes.length} timers listed.`,
+    ...(tous ? [] : ['Pass --all to see loaded but inactive timers, too.']),
+  ].join('\n');
+}
+
+// systemctl start, stop, enable, status… d'un timer.
+function actionTimer(jeu: Shell, sd: Systemd, action: string, nom: string, maintenant: boolean): string {
+  if (!sd.minuteries?.[nom] && jeu.existe(`/etc/systemd/system/${nom}.timer`)) relire(jeu, sd);
+  const m = sd.minuteries?.[nom];
+  const unite = `${nom}.timer`;
+  if (!m) return jeu.erreur(action === 'status' || action.startsWith('is-') ? `Unit ${unite} could not be found.` : `Failed to ${action} ${unite}: Unit ${unite} not found.`);
+  if (action === 'status') {
+    const prochain = prochainDeclenchement(sd, m, sd.horloge);
+    const service = sd.services[m.unite];
+    return [
+      `${m.etat === 'active' ? '●' : '○'} ${unite} - ${m.description}`,
+      `     Loaded: loaded (${m.fichier}; ${m.active ? 'enabled' : 'disabled'}; preset: enabled)`,
+      `     Active: ${m.etat === 'active' ? `active (waiting) since ${dateComplete(m.depuis, jeu.t.langue, sd)}; ${duree(sd.horloge - m.depuis)} ago` : 'inactive (dead)'}`,
+      ...(m.etat === 'active' ? [`    Trigger: ${prochain ? `${dateComplete(prochain, jeu.t.langue, sd)}; ${duree(prochain - sd.horloge)} left` : 'n/a'}`] : []),
+      `   Triggers: ${service?.etat === 'failed' ? '\u00d7' : '●'} ${m.unite}.service`,
+      ...sd.journal
+        .filter((e) => e.unite === unite)
+        .slice(-5)
+        .map((e) => ligneJournal(e, sd, jeu.t.langue))
+        .reduce<string[]>((l, x, i) => (i === 0 ? ['', x] : [...l, x]), []),
+    ].join('\n');
+  }
+  if (action === 'is-active') return m.etat;
+  if (action === 'is-enabled') return m.active ? 'enabled' : 'disabled';
+  if (jeu.qui !== 'root') return refuse(jeu, action, unite);
+  const demarrerTimer = (): boolean => {
+    if (m.etat === 'active') return true;
+    if (!m.calendrier.length && m.apresDemarrage === undefined && m.apresActivation === undefined && m.apresDerniere === undefined) {
+      journaliser(sd, unite, 'systemd', 1, `${unite}: Timer unit lacks value setting. Refusing.`, 3);
+      jeu.erreur(`Failed to start ${unite}: Unit ${unite} has a bad unit file setting.\nSee system logs and 'systemctl status ${unite}' for details.`);
+      return false;
+    }
+    if (!sd.services[m.unite] && !(jeu.existe(`/etc/systemd/system/${m.unite}.service`) && (relire(jeu, sd), sd.services[m.unite]))) {
+      journaliser(sd, unite, 'systemd', 1, `${unite}: Refusing to start, unit ${m.unite}.service to trigger not loaded.`, 3);
+      jeu.erreur(`Failed to start ${unite}: Unit ${m.unite}.service not found.`);
+      return false;
+    }
+    m.etat = 'active';
+    m.depuis = sd.horloge;
+    journaliser(sd, unite, 'systemd', 1, `Started ${unite} - ${m.description}.`);
+    return true;
+  };
+  const arreterTimer = () => {
+    if (m.etat !== 'active') return;
+    m.etat = 'inactive';
+    m.depuis = sd.horloge;
+    journaliser(sd, unite, 'systemd', 1, `${unite}: Deactivated successfully.`);
+    journaliser(sd, unite, 'systemd', 1, `Stopped ${unite} - ${m.description}.`, 6, false);
+  };
+  const lien = `/etc/systemd/system/timers.target.wants/${unite}`;
+  switch (action) {
+    case 'start':
+      demarrerTimer();
+      return '';
+    case 'stop':
+      arreterTimer();
+      return '';
+    case 'restart':
+      arreterTimer();
+      demarrerTimer();
+      return '';
+    case 'enable': {
+      // Sans section [Install] (WantedBy=timers.target), rien à activer.
+      if (!/^\s*WantedBy\s*=/m.test(jeu.lire(m.fichier) ?? 'WantedBy=timers.target'))
+        return [
+          'The unit files have no installation config (WantedBy=, RequiredBy=, UpheldBy=,',
+          'Also=, or Alias= settings in the [Install] section, and DefaultInstance= for',
+          'template units). This means they are not meant to be enabled or disabled using systemctl.',
+        ].join('\n');
+      const sortie = m.active ? '' : `Created symlink ${lien} → ${m.fichier}.`;
+      m.active = true;
+      if (maintenant) demarrerTimer();
+      return sortie;
+    }
+    case 'disable': {
+      const sortie = m.active ? `Removed "${lien}".` : '';
+      m.active = false;
+      if (maintenant) arreterTimer();
+      return sortie;
+    }
+    default:
+      return jeu.erreur(`Failed to ${action} ${unite}: Operation not supported`);
   }
 }
 
@@ -135,6 +275,38 @@ function editerSurcharge(jeu: Shell, sd: Systemd, nom: string): string {
 const refuse = (jeu: Shell, action: string, nom: string) => jeu.erreur(jeu.t('systemctl-acces-refuse', { action, service: nom }));
 
 export const SYSTEMD: Record<string, Commande> = {
+  // systemd-analyze calendar : tester une expression OnCalendar= avant de l'écrire dans un timer.
+  'systemd-analyze': {
+    propresOptions: true,
+    lancer: ({ args, jeu }) => {
+      const sd = systemd(jeu);
+      const [verbe, ...expressions] = args.filter((a) => !a.startsWith('--'));
+      if (verbe !== 'calendar') return jeu.erreur(verbe ? `Unknown command verb '${verbe}'.` : 'Too few arguments.');
+      if (!expressions.length) return jeu.erreur('Too few arguments.');
+      const blocs: string[] = [];
+      for (const texte of expressions) {
+        const c = lireCalendrier(texte);
+        if (!c) {
+          jeu.erreur(`Failed to parse calendar specification '${texte}': Invalid argument`);
+          continue;
+        }
+        const maintenant = sd?.horloge ?? Date.UTC(2027, 0, 1);
+        const prochain = prochainCalendrier(c, maintenant);
+        const utc = prochain ? new Date(versUtc(prochain)).toISOString() : '';
+        const jour = prochain ? new Intl.DateTimeFormat(jeu.t.langue, { timeZone: 'UTC', weekday: 'short' }).format(new Date(versUtc(prochain))) : '';
+        blocs.push(
+          [
+            `  Original form: ${texte}`,
+            `Normalized form: ${c.normal}`,
+            `    Next elapse: ${prochain ? dateComplete(prochain, jeu.t.langue, sd) : 'never'}`,
+            ...(prochain ? [`       (in UTC): ${jour} ${utc.slice(0, 10)} ${utc.slice(11, 19)} UTC`, `       From now: ${duree(prochain - maintenant)} left`] : []),
+          ].join('\n'),
+        );
+      }
+      return blocs.join('\n\n');
+    },
+  },
+
   systemctl: {
     lancer: ({ args, jeu }) => {
       const sd = systemd(jeu);
@@ -144,7 +316,7 @@ export const SYSTEMD: Record<string, Commande> = {
       if (inconnue) return jeu.erreur(`systemctl: invalid option -- '${inconnue[1]}'`);
       const mots = args.filter((a) => !a.startsWith('--') || a === '--failed');
       const [action = 'list-units', ...noms] = mots;
-      const VERBES = ['status', 'start', 'stop', 'restart', 'reload', 'enable', 'disable', 'is-active', 'is-enabled', 'list-units', 'reboot', '--failed', 'edit', 'daemon-reload', 'set-property'];
+      const VERBES = ['status', 'start', 'stop', 'restart', 'reload', 'enable', 'disable', 'is-active', 'is-enabled', 'list-units', 'reboot', '--failed', 'edit', 'daemon-reload', 'set-property', 'list-timers'];
       if (!VERBES.includes(action)) return jeu.erreur(`Unknown command verb '${action}'.`);
       // Consulter l'état des services après un redémarrage : c'est vérifier.
       const consulter = () => (sd.verifieApresDemarrage = true);
@@ -152,9 +324,10 @@ export const SYSTEMD: Record<string, Commande> = {
       if (action === 'list-units') return consulter(), liste(sd, false);
       if (action === 'daemon-reload') {
         if (jeu.qui !== 'root') return refuse(jeu, 'daemon-reload', 'systemd');
-        chargerSurcharges(jeu, sd);
+        relire(jeu, sd);
         return '';
       }
+      if (action === 'list-timers') return listeTimers(jeu, sd, args.includes('--all'));
       // set-property : la limite s'applique tout de suite, et reste (un fichier dans system.control).
       if (action === 'set-property') {
         const nom = nomUnite(noms[0] ?? '');
@@ -195,7 +368,14 @@ export const SYSTEMD: Record<string, Commande> = {
       if (!noms.length) return jeu.erreur(action === 'status' ? jeu.t('systemctl-usage') : `Too few arguments.`);
       const sorties: string[] = [];
       for (const brut of noms) {
+        if (brut.endsWith('.timer')) {
+          const r = actionTimer(jeu, sd, action, brut.slice(0, -6), maintenant);
+          if (r) sorties.push(r);
+          continue;
+        }
         const nom = nomUnite(brut);
+        // Une unité écrite à la main et jamais chargée : systemd la lit à la demande.
+        if (!sd.services[nom] && jeu.existe(`/etc/systemd/system/${nom}.service`)) relire(jeu, sd);
         const s = sd.services[nom];
         if (!s) {
           if (action === 'status' || action.startsWith('is-')) jeu.erreur(`Unit ${nom}.service could not be found.`);
@@ -259,11 +439,21 @@ export const SYSTEMD: Record<string, Commande> = {
       let priorite = 7;
       let demarrageSeul = false;
       let noyauSeul = false;
+      let depuis: number | null = null;
+      let jusque: number | null = null;
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
         if (a.startsWith('--')) {
           if (a.startsWith('--unit=')) unite = a.slice(7);
           else if (a === '--no-pager' || a === '--pager-end') continue;
+          // --since / --until : une date (« 2027-09-12 02:00 »), une heure (aujourd'hui), today, yesterday.
+          else if (/^--(since|until)(=|$)/.test(a)) {
+            const valeur = a.includes('=') ? a.slice(a.indexOf('=') + 1) : args[++i];
+            const ms = valeur === undefined ? null : lireMoment(sd, valeur);
+            if (ms === null) return jeu.erreur(`Failed to parse timestamp: ${valeur ?? ''}`);
+            if (a.startsWith('--since')) depuis = ms;
+            else jusque = ms;
+          }
           else return jeu.erreur(`journalctl: unrecognized option '${a}'`);
           continue;
         }
@@ -299,8 +489,16 @@ export const SYSTEMD: Record<string, Commande> = {
           '-- No entries --',
         ].join('\n');
       const u = unite && (unite.endsWith('.service') ? unite : `${unite}.service`);
+      // Les dates se lisent à l'heure de la machine (celle que le journal affiche).
+      const affiche = (e: { temps: number }) => e.temps + (sd.ecart ?? 0);
       let entrees = sd.journal.filter(
-        (e) => (!u || e.unite === u) && (!noyauSeul || e.ident === 'kernel') && e.priorite <= priorite && (!demarrageSeul || e.demarrage === sd.demarrage),
+        (e) =>
+          (!u || e.unite === u) &&
+          (!noyauSeul || e.ident === 'kernel') &&
+          e.priorite <= priorite &&
+          (!demarrageSeul || e.demarrage === sd.demarrage) &&
+          (depuis === null || affiche(e) >= depuis) &&
+          (jusque === null || affiche(e) <= jusque),
       );
       if (nombre !== null) entrees = entrees.slice(-nombre);
       if (!entrees.length) return '-- No entries --';

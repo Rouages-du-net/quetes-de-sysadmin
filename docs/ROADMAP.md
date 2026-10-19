@@ -97,7 +97,9 @@ demandent plusieurs.
 - [ ] Dépendances entre services, timers, fichiers d'unité modifiables
 - [x] **Temps simulé** : horloge de systemd, tâches planifiées (`cron` :
       une nuit simulée lance les tâches qui y tombent)
-- [ ] Timers systemd, journaux qui défilent, attaques « pendant » la quête
+- [ ] Timers systemd (faits : unités écrites à la main, `OnCalendar=`,
+      `list-timers`, « La sonde »), journaux qui défilent, attaques
+      « pendant » la quête
 - [x] **Utilisateur·rices et groupes** : vrais droits de groupe, comptes par
       machine (`/etc/passwd`, `/etc/group`), `id`, `groups`, `usermod -aG`,
       `chgrp`, `chown` ; quête « Deuxième jour » (Datacenter, chapitre 2)
@@ -237,8 +239,12 @@ demandent plusieurs.
       (« L'horloge », NTP et `timedatectl`) faits
 - [x] Rotation des journaux (`logrotate`) ; « Le disque plein »
       (L'Astreinte, chapitre 1)
-- [ ] Supervision et alertes (sonde HTTP, seuils) ; astreinte simulée
-- [ ] **Post-mortem sans reproche** : rédiger ce qui s'est passé
+- [x] Supervision et alertes (plugins `check_disk`, `check_http`,
+      `check_procs`, `mail`, seuils, exercice de panne) ; « La sonde »
+      (L'Astreinte, chapitre 5)
+- [x] **Post-mortem sans reproche** : rédiger ce qui s'est passé
+      (`journalctl --since/--until`, `last`) ; « Le post-mortem »
+      (L'Astreinte, chapitre 6)
 
 ## Phase 9 — Le réseau d'entreprise
 

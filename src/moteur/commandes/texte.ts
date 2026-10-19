@@ -69,6 +69,8 @@ export const TEXTE: Record<string, Commande> = {
       // ici, on le précise (seulement à l'écran, jamais dans un tube).
       // -q : rien à l'écran ; seul compte le code de retour (échec si rien trouvé).
       if (lettres.has('q')) return sorties.length ? '' : c.jeu.erreur('');
+      // Comme grep : code 1 quand rien ne correspond (utile dans un script).
+      c.jeu.statut = sorties.length ? 0 : 1;
       if (!sorties.length && c.dernier && ts.length) c.jeu.erreur(c.jeu.t('grep-rien', { motif }));
       return sorties.join('\n');
     },

@@ -62,6 +62,11 @@ rouages.net.
   (date `mtime` des fichiers) ; la limite ARG_MAX dans `shell.ts`.
   L'heure d'une machine (fuseau, horloge qui dérive, NTP) dans
   `src/moteur/heure.ts`, `timedatectl` dans `commandes/heure.ts`.
+  Unités écrites à la main et timers systemd, et le temps qui passe minute
+  par minute (`passerTemps`, timers et cron) dans `src/moteur/minuteries.ts` ;
+  supervision (`check_disk`, `check_http`, `check_procs`, hors du PATH),
+  `mail` et `last` dans `commandes/supervision.ts`. Une commande peut donner
+  son code de retour (`jeu.statut`).
 - `commandes/restic.ts` : dépôts restic (instantanés, déduplication,
   politiques de `forget`, `prune`), rangés dans `etat.restic`.
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;

@@ -37,6 +37,8 @@ import { disquePlein } from './disque-plein';
 import { memoireChapitre } from './memoire';
 import { inodes } from './inodes';
 import { horloge } from './horloge';
+import { sonde } from './sonde';
+import { postMortem } from './post-mortem';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -77,7 +79,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'astreinte',
-    chapitres: [disquePlein, memoireChapitre, inodes, horloge],
+    chapitres: [disquePlein, memoireChapitre, inodes, horloge, sonde, postMortem],
   },
 ];
 
