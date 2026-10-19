@@ -48,6 +48,8 @@ import { droits } from './droits';
 import { secret } from './secret';
 import { proxy } from './proxy';
 import { misesAJour } from './mises-a-jour';
+import { vlan } from './vlan';
+import { dhcp } from './dhcp';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -97,6 +99,10 @@ export const HISTOIRES: Histoire[] = [
   {
     id: 'cooperative',
     chapitres: [depart, droits, secret, proxy, misesAJour],
+  },
+  {
+    id: 'ruche',
+    chapitres: [vlan, dhcp],
   },
 ];
 

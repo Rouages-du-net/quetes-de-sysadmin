@@ -257,11 +257,14 @@ demandent plusieurs.
 
 ## Phase 9 — Le réseau d'entreprise
 
-- [ ] Commutateurs et **VLAN** : séparer postes, serveurs, invité·es et
-      téléphonie ; ports d'accès et ports « trunk » (802.1Q)
+- [x] Commutateurs et **VLAN** : séparer bureaux, invité·es et
+      équipements ; port « trunk » (802.1Q) vers le routeur, `ip link`,
+      `/etc/network/interfaces` ; « Les VLAN » (La Ruche, chapitre 1)
 - [ ] Boucles réseau et tempêtes de diffusion, et le protocole qui les évite
       (Spanning Tree)
-- [ ] DHCP, NAT, routage entre VLAN, pare-feu entre zones (DMZ)
+- [ ] DHCP (dnsmasq, une plage par VLAN, réservations ; « Le DHCP », La
+      Ruche, chapitre 2) fait ; reste NAT, routage entre VLAN, pare-feu entre
+      zones (DMZ)
 - [ ] VPN (WireGuard) pour le télétravail et entre sites
 - [ ] Wi-Fi d'entreprise (réseau invité isolé)
 - [ ] Annuaire et authentification centralisée (aperçu)

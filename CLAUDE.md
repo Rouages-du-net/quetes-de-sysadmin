@@ -91,6 +91,11 @@ rouages.net.
   la console y recopie ce qui s'affiche) et `uname` ; `apt upgrade` et
   `dpkg --configure -a` dans `commandes/apt.ts` (`etat.apt.mises`,
   `etat.noyau`, `etat.coupureReseau` : la connexion tombe, `Shell.coupure`).
+- `src/moteur/lan.ts` : le réseau local d'un routeur (`etat.lan` : interfaces,
+  VLAN 802.1Q sur un trunk, appareils du commutateur, `/etc/network/interfaces`
+  lu comme ifupdown) ; `ip`, `ifup`, `ifdown`, `dnsmasq --test` dans
+  `commandes/lan.ts` ; le DHCP (`dnsmasq.ts` : configuration, baux, journal) ;
+  `ping` passe par ce modèle quand la machine en a un.
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
   dans `editeur.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).

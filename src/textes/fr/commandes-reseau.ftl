@@ -10,3 +10,7 @@ traceroute-plus-personne = (… et ainsi de suite jusqu’à 30 : plus personne 
 host-usage = Usage: host [-t type] nom [serveur]
 named-checkzone-usage = usage: named-checkzone [-djqvD] [-c class] [-o output] zonename filename
 rndc-usage = (Ici : rndc reload [zone], rndc status ; voir man rndc)
+ip-usage =
+    Usage: ip [ OPTIONS ] OBJECT {"{"} COMMAND | help {"}"}
+    where  OBJECT := {"{"} address | link | route {"}"}
+           OPTIONS := {"{"} -br[ief] | -d[etails] {"}"}

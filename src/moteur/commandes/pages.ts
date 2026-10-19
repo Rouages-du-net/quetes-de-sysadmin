@@ -97,6 +97,27 @@ export const PAGES: Record<string, Page> = {
   groups: { exemples: ['groups', 'groups malo'], voir: ['id', 'usermod'] },
   head: { options: ['n'], voir: ['tail', 'cat'] },
   host: { exemples: ['host cafe.example', 'host cafe.example ns2.registre.example'], voir: ['dig'] },
+  ip: {
+    section: 8,
+    exemples: [
+      'ip a',
+      'ip -br a',
+      'ip -d link show eth1.10',
+      'sudo ip link add link eth1 name eth1.10 type vlan id 10',
+      'sudo ip addr add 10.10.10.1/24 dev eth1.10',
+      'sudo ip link set eth1.10 up',
+      'ip route',
+    ],
+    voir: ['interfaces', 'ifup', 'ping'],
+  },
+  ifup: { section: 8, exemples: ['sudo ifup -a', 'sudo ifup eth1.10'], voir: ['ifdown', 'interfaces', 'ip'] },
+  ifdown: { section: 8, exemples: ['sudo ifdown eth1.10'], voir: ['ifup', 'interfaces'] },
+  interfaces: { section: 5, exemples: ['cat /etc/network/interfaces', 'sudo nano /etc/network/interfaces'], voir: ['ifup', 'ip'] },
+  dnsmasq: {
+    section: 8,
+    exemples: ['sudo dnsmasq --test', 'sudo systemctl restart dnsmasq', 'cat /var/lib/misc/dnsmasq.leases', 'journalctl -u dnsmasq'],
+    voir: ['ip', 'systemctl', 'journalctl'],
+  },
   id: { exemples: ['id', 'id malo'], voir: ['groups', 'whoami', 'usermod'] },
   journalctl: {
     options: ['u', 'n', 'b', 'k', 'p', 'x', 'e'],

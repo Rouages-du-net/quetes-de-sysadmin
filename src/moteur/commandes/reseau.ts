@@ -21,6 +21,7 @@ import { requeteDocker } from '../docker';
 import { digDns } from './bind';
 import { couvre, lire } from '../tls';
 import { systemd, versUtc } from '../systemd';
+import { adresseDe, joindre, lan } from '../lan';
 
 // Ce que curl ajoute quand la vérification du certificat échoue (curl 8).
 const AIDE_SSL = `More details here: https://curl.se/docs/sslcerts.html
@@ -80,6 +81,40 @@ function resoudreNom(jeu: Shell, nom: string, serveur?: string): { ip: string } 
   return ip ? { ip } : { erreur: 'inconnu', serveurs };
 }
 
+// ping sur le réseau local : un appareil répond, ou l'interface du routeur dit qu'il est injoignable.
+function pingLan(jeu: Shell, hote: string, n: number): string {
+  const l = lan(jeu)!;
+  // Sans DNS local : une adresse, ou un nom d'appareil connu par le jeu (/etc/hosts n'est pas simulé ici).
+  const ip = estIp(hote) ? hote : l.appareils.find((a) => a.nom === hote) ? adresseDe(l.appareils.find((a) => a.nom === hote)!) : undefined;
+  if (!ip) return jeu.erreur(`ping: ${hote}: Name or service not known`, 2);
+  const r = joindre(l, ip);
+  if (r.quoi === 'pas-de-route') return jeu.erreur('ping: connect: Network is unreachable', 2);
+  const lignes = [`PING ${hote} (${ip}) 56(84) bytes of data.`];
+  const temps: number[] = [];
+  for (let i = 1; i <= n; i++) {
+    if (r.quoi === 'injoignable') {
+      if (i <= 3) lignes.push(`From ${r.source} icmp_seq=${i} Destination Host Unreachable`);
+      continue;
+    }
+    if (r.quoi === 'perdu') continue;
+    const t = r.quoi === 'local' ? 0.03 : r.quoi === 'appareil' ? 0.4 + ((i * 37) % 11) / 40 : 11.2 + ((i * 37) % 11) / 10;
+    temps.push(t);
+    lignes.push(`64 bytes from ${ip}: icmp_seq=${i} ttl=${r.quoi === 'internet' ? 57 : 64} time=${t.toFixed(t < 10 ? 2 : 1)} ms`);
+  }
+  const recus = temps.length;
+  lignes.push(
+    '',
+    `--- ${hote} ping statistics ---`,
+    `${n} packets transmitted, ${recus} received, ${r.quoi === 'injoignable' ? `+${Math.min(n, 3)} errors, ` : ''}${Math.round((100 * (n - recus)) / n)}% packet loss, time ${(n - 1) * 1001 + 3}ms`,
+  );
+  if (recus) {
+    const moy = temps.reduce((a, b) => a + b, 0) / recus;
+    lignes.push(`rtt min/avg/max/mdev = ${ms(Math.min(...temps))}/${ms(moy)}/${ms(Math.max(...temps))}/0.080 ms`);
+  }
+  jeu.statut = recus ? 0 : 1;
+  return lignes.join('\n');
+}
+
 export const RESEAU: Record<string, Commande> = {
   ping: {
     lancer: ({ args, jeu }) => {
@@ -91,6 +126,8 @@ export const RESEAU: Record<string, Commande> = {
       }
       const hote = reste[0];
       if (!hote) return jeu.erreur('ping: usage error: Destination address required');
+      // Une machine qui sert de routeur à un réseau local (lan.ts).
+      if (lan(jeu)) return pingLan(jeu, hote, n);
       const res = resoudreNom(jeu, hote);
       if ('erreur' in res)
         return jeu.erreur(`ping: ${hote}: ${res.erreur === 'delai' ? 'Temporary failure in name resolution' : 'Name or service not known'}`);
