@@ -77,7 +77,7 @@ export const ANNEXE: Distant = {
 };
 const IMPRIMANTE_ANNEXE = '10.20.10.20';
 
-const WG0 = `[Interface]
+export const WG0 = `[Interface]
 Address = 10.10.99.1/24
 ListenPort = 51820
 PrivateKey = ${CLE_ROUTEUR}
@@ -87,13 +87,21 @@ PrivateKey = ${CLE_ROUTEUR}
 PublicKey = ${PUBLIQUE_MALIK}
 AllowedIPs = 10.10.99.2/32`;
 
-const PORTABLE_MALIK = `[Interface]
+export const PORTABLE_MALIK = `[Interface]
 Address = 10.10.99.2/32
 
 [Peer]
 PublicKey = ${PUBLIQUE_ROUTEUR}
 Endpoint = ruche.example:51820
 AllowedIPs = 10.10.10.0/24`;
+
+/** wg0.conf à la fin de « L'Annexe » : Malik et le routeur de l'Annexe. */
+export const WG0_ANNEXE = `${WG0}
+
+# Annexe
+[Peer]
+PublicKey = ${PUBLIQUE_ANNEXE}
+AllowedIPs = 10.10.99.3/32, 10.20.10.0/24`;
 
 type O = { interfaces?: Record<string, InterfaceWg>; ruleset?: ReturnType<typeof nft>; transfert?: boolean };
 const publicDe = (j: Jeu) => publicDu(j as Shell);

@@ -154,6 +154,47 @@ export const PAGES: Record<string, Page> = {
     exemples: ['sudo wg-quick up wg0', 'sudo wg-quick down wg0', 'sudo systemctl enable --now wg-quick@wg0'],
     voir: ['wg', 'systemctl'],
   },
+  ldapsearch: {
+    options: ['x', 'L', 'b', 's', 'D', 'W', 'w', 'H', 'Y'],
+    exemples: [
+      'ldapsearch -x -LLL uid=malik',
+      'ldapsearch -x -LLL "(memberUid=camille)" dn',
+      'ldapsearch -x -LLL -b ou=people,dc=laruche,dc=example "(objectClass=posixAccount)" uid uidNumber',
+      'sudo ldapsearch -Q -LLL -Y EXTERNAL -H ldapi:/// uid=sami',
+    ],
+    voir: ['ldapadd', 'ldapmodify', 'ldif'],
+  },
+  ldapadd: {
+    options: ['x', 'D', 'W', 'w', 'f', 'H', 'Y', 'c'],
+    exemples: ['ldapadd -x -D cn=admin,dc=laruche,dc=example -W -f sami.ldif', 'sudo ldapadd -Y EXTERNAL -H ldapi:/// -f sami.ldif'],
+    voir: ['ldapmodify', 'ldif', 'slappasswd'],
+  },
+  ldapmodify: {
+    options: ['x', 'D', 'W', 'w', 'f', 'H', 'Y', 'a', 'c'],
+    exemples: ['ldapmodify -x -D cn=admin,dc=laruche,dc=example -W -f groupes.ldif'],
+    voir: ['ldapadd', 'ldapdelete', 'ldif'],
+  },
+  ldapdelete: {
+    options: ['x', 'D', 'W', 'w', 'H', 'Y'],
+    exemples: ['ldapdelete -x -D cn=admin,dc=laruche,dc=example -W uid=camille,ou=people,dc=laruche,dc=example'],
+    voir: ['ldapmodify', 'ldapsearch'],
+  },
+  ldappasswd: {
+    options: ['x', 'D', 'W', 'w', 'S', 's'],
+    exemples: [
+      'ldappasswd -x -D cn=admin,dc=laruche,dc=example -W -S uid=sami,ou=people,dc=laruche,dc=example',
+      'ldappasswd -x -D uid=sami,ou=people,dc=laruche,dc=example -W -S',
+    ],
+    voir: ['slappasswd', 'ldapwhoami'],
+  },
+  ldapwhoami: {
+    options: ['x', 'D', 'W', 'w'],
+    exemples: ['ldapwhoami -x -D uid=sami,ou=people,dc=laruche,dc=example -W'],
+    voir: ['ldappasswd', 'ldapsearch'],
+  },
+  slappasswd: { section: 8, options: ['s'], exemples: ['slappasswd', 'slappasswd -s "un mot de passe"'], voir: ['ldappasswd', 'ldif'] },
+  slapcat: { section: 8, exemples: ['sudo slapcat', 'sudo slapcat > annuaire.ldif'], voir: ['ldapsearch', 'ldif'] },
+  ldif: { section: 5, exemples: ['cat modele-ines.ldif'], voir: ['ldapadd', 'ldapmodify'] },
   id: { exemples: ['id', 'id malo'], voir: ['groups', 'whoami', 'usermod'] },
   journalctl: {
     options: ['u', 'n', 'b', 'k', 'p', 'x', 'e'],

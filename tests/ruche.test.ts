@@ -467,4 +467,84 @@ table ip nat {
       editer('nano annexe-wg0.conf', (t) => t + '\nPersistentKeepalive = 25\n');
       expect(c.termines).toContain('annexe');
     });
+
+    const B = 'dc=laruche,dc=example';
+    const ADMIN = `-x -D cn=admin,${B} -w rayon-de-miel`;
+    const SAMI = (motDePasse: string, numero = '10004') =>
+      `dn: uid=sami,ou=people,${B}\nobjectClass: inetOrgPerson\nobjectClass: posixAccount\nuid: sami\ncn: Sami Lemaire\nsn: Lemaire\ngivenName: Sami\nuidNumber: ${numero}\ngidNumber: 10000\nhomeDirectory: /home/sami\nloginShell: /bin/bash\nuserPassword: ${motDePasse}\n`;
+    const GROUPES = `dn: cn=bureaux,ou=groups,${B}\nchangetype: modify\ndelete: memberUid\nmemberUid: camille\n-\nadd: memberUid\nmemberUid: sami\n\ndn: cn=equipe,ou=groups,${B}\nchangetype: modify\ndelete: memberUid\nmemberUid: camille\n`;
+
+    it('chapitre 7 — solution : ldapdelete, un LDIF avec slappasswd, les groupes', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe']);
+      let tout = jouer([
+        'cat modele-ines.ldif',
+        'ldapsearch -x -LLL "(memberUid=camille)" dn',
+        'ldapsearch -x -LLL "(objectClass=posixAccount)" uidNumber',
+      ]);
+      expect(tout).toContain('dn: cn=bureaux,ou=groups,dc=laruche,dc=example');
+      expect(tout).toContain('uidNumber: 10003');
+      expect(tout).not.toContain('userPassword: {SSHA}');
+      tout = jouer([`ldapdelete ${ADMIN} uid=camille,ou=people,${B}`, 'slappasswd -s choisi-par-sami']);
+      const empreinte = tout.match(/\{SSHA\}\S+/)![0];
+      expect(empreinte).toHaveLength(38);
+      editer('nano sami.ldif', () => SAMI(empreinte));
+      editer('nano groupes.ldif', () => GROUPES);
+      tout = jouer([
+        `ldapadd ${ADMIN} -f sami.ldif`,
+        `ldapmodify ${ADMIN} -f groupes.ldif`,
+        `ldapwhoami -x -D uid=sami,ou=people,${B} -w choisi-par-sami`,
+      ]);
+      expect(tout).toContain(`adding new entry "uid=sami,ou=people,${B}"`);
+      expect(tout).toContain(`modifying entry "cn=bureaux,ou=groups,${B}"`);
+      expect(tout).toContain(`dn:uid=sami,ou=people,${B}`);
+      contient(tout, 'https://www.openldap.org/doc/admin26/dbtools.html');
+      expect(c.termines).toContain('annuaire');
+    });
+
+    it('chapitre 7 — autre solution : en root par ldapi, ldappasswd qui demande le mot de passe', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe']);
+      const EXT = '-Q -Y EXTERNAL -H ldapi:///';
+      editer('nano sami.ldif', () => SAMI('provisoire').replace('userPassword: provisoire\n', ''));
+      editer('nano groupes.ldif', () => GROUPES);
+      let tout = jouer([
+        `sudo ldapdelete ${EXT} uid=camille,ou=people,${B}`,
+        `sudo ldapadd ${EXT} -f sami.ldif`,
+        `sudo ldapmodify ${EXT} -f groupes.ldif`,
+      ]);
+      expect(c.termines).not.toContain('annuaire');
+      tout = jouer([`ldappasswd -x -D cn=admin,${B} -W -S uid=sami,ou=people,${B}`]);
+      for (const r of ['nouveau-sami', 'nouveau-sami', 'rayon-de-miel']) tout += c.executer(r) ?? '';
+      tout += jouer([`sudo ldapsearch ${EXT} -LLL uid=sami userPassword`]);
+      expect(tout).toMatch(/userPassword: \{SSHA\}/);
+      expect(c.termines).toContain('annuaire');
+    });
+
+    it('chapitre 7 — fausses pistes : anonyme, un attribut manquant, en clair, le même numéro, le groupe oublié, slapd arrêté', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe']);
+      let tout = jouer([`ldapdelete -x uid=camille,ou=people,${B}`, `ldapdelete -x -D cn=admin,${B} -w faux uid=camille,ou=people,${B}`]);
+      expect(tout).toContain('ldap_delete: Strong(er) authentication required (8)');
+      expect(tout).toContain('ldap_bind: Invalid credentials (49)');
+      tout = jouer([`ldapdelete ${ADMIN} uid=camille,ou=people,${B}`]);
+      contient(tout, 'pas son nom dans les groupes');
+      editer('nano sami.ldif', () => SAMI('en-clair', '10002').replace('sn: Lemaire\n', ''));
+      tout = jouer([`ldapadd ${ADMIN} -f sami.ldif`]);
+      expect(tout).toContain("ldap_add: Object class violation (65)\n\tadditional info: object class 'inetOrgPerson' requires attribute 'sn'");
+      editer('nano sami.ldif', () => SAMI('en-clair', '10002'));
+      tout = jouer([`ldapadd ${ADMIN} -f sami.ldif`]);
+      contient(tout, 'EN CLAIR');
+      contient(tout, 'le même uidNumber');
+      contient(tout, 'pas dans le groupe');
+      tout = jouer(['sudo systemctl stop slapd', 'ldapsearch -x uid=sami']);
+      expect(tout).toContain("ldap_sasl_bind(SIMPLE): Can't contact LDAP server (-1)");
+      contient(tout, 'slapd ne tourne plus');
+      editer('nano groupes.ldif', () => GROUPES);
+      editer('nano numero.ldif', () => `dn: uid=sami,ou=people,${B}\nchangetype: modify\nreplace: uidNumber\nuidNumber: 10004\n`);
+      jouer([
+        'sudo systemctl start slapd',
+        `ldapmodify ${ADMIN} -f groupes.ldif`,
+        `ldapmodify ${ADMIN} -f numero.ldif`,
+        `ldappasswd ${ADMIN} -s sami-choisit uid=sami,ou=people,${B}`,
+      ]);
+      expect(c.termines).toContain('annuaire');
+    });
   });

@@ -34,3 +34,5 @@ wg-usage =
 wg-quick-usage = Usage: wg-quick [ up | down | save | strip ] [ CONFIG_FILE | INTERFACE ]
 # wg set, setconf… : changer une interface en marche n'est pas simulé.
 wg-set-non-simule = Le jeu ne simule pas les changements d'une interface en marche : modifie /etc/wireguard/wg0.conf, puis wg-quick down wg0 et wg-quick up wg0 (ou systemctl restart wg-quick@wg0).
+# { $commande } : ldapadd, ldapmodify ou ldapdelete, sans fichier ni entrée
+ldap-rien-a-faire = { $commande } attend ses changements dans un fichier LDIF (-f fichier) ou par un tube (cat fichier.ldif | { $commande } …) : le jeu ne lit pas le clavier.

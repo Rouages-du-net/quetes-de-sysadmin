@@ -104,6 +104,10 @@ rouages.net.
   `wg0.conf` lu comme wg-quick, pairs distants `Lan.distants` et leur
   poignée de main) ; `wg`, `wg-quick` et le service `wg-quick@NOM` dans
   `commandes/wireguard.ts`.
+- `src/moteur/ldap.ts` : un annuaire OpenLDAP (`etat.ldap` : entrées, LDIF,
+  schéma réduit, filtres, `{SSHA}`) ; `ldapsearch`, `ldapadd`, `ldapmodify`,
+  `ldapdelete`, `ldappasswd`, `ldapwhoami`, `slappasswd`, `slapcat` dans
+  `commandes/ldap.ts`.
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
   dans `editeur.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).

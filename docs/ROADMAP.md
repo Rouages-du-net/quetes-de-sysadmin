@@ -273,8 +273,8 @@ demandent plusieurs.
 - [x] VPN entre deux sites : un pair de plus sur `wg0`, `AllowedIPs` comme
       table de routage, `PersistentKeepalive` derrière une box ; « L'Annexe »
       (La Ruche, chapitre 6)
-- [ ] Annuaire : OpenLDAP pour les comptes de l'équipe (La Ruche,
-      chapitre 7)
+- [x] Annuaire : OpenLDAP pour les comptes de l'équipe (`ldapsearch`,
+      LDIF, `ldapmodify`, `slappasswd`) ; « L'annuaire » (La Ruche, chapitre 7)
 - [ ] Wi-Fi d'entreprise : 802.1X avec FreeRADIUS, qui vérifie les comptes
       dans l'annuaire et place chacun dans son VLAN (La Ruche, chapitre 8)
 
