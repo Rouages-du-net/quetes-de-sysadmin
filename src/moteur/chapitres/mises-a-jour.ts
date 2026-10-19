@@ -25,7 +25,7 @@ const ANCIEN_NOYAU = '6.12.38+deb13-amd64';
 const NOUVEAU_NOYAU = '6.12.48+deb13-amd64';
 
 // Le site, tel qu'il est après « Le secret » et « Le proxy ».
-const SITE = `server {
+export const SITE = `server {
     listen 80 default_server;
     listen [::]:80 default_server;
 

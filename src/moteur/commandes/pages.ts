@@ -22,6 +22,22 @@ export const PAGES: Record<string, Page> = {
     voir: ['dpkg', 'systemctl', 'nginx', 'tmux'],
   },
   dpkg: { exemples: ['sudo dpkg --configure -a'], voir: ['apt'] },
+  'unattended-upgrade': {
+    section: 8,
+    options: ['d', 'v', 'h'],
+    exemples: ['sudo unattended-upgrade --dry-run --debug', 'sudo unattended-upgrade -v', 'cat /var/log/unattended-upgrades/unattended-upgrades.log'],
+    voir: ['apt.conf', 'apt-config', 'apt', 'systemctl'],
+  },
+  'apt-config': {
+    section: 8,
+    exemples: ['apt-config dump', 'apt-config dump APT::Periodic', 'apt-config dump Unattended-Upgrade'],
+    voir: ['apt.conf', 'unattended-upgrade'],
+  },
+  'apt.conf': {
+    section: 5,
+    exemples: ['ls /etc/apt/apt.conf.d', 'sudo nano /etc/apt/apt.conf.d/20auto-upgrades', 'apt-config dump APT::Periodic'],
+    voir: ['apt-config', 'unattended-upgrade', 'apt'],
+  },
   tmux: { exemples: ['tmux new -s maj', 'tmux detach', 'tmux ls', 'tmux attach -t maj', 'tmux kill-session -t maj'], voir: ['ssh', 'apt'] },
   uname: { options: ['r', 'a'], exemples: ['uname -r', 'uname -a'], voir: ['apt', 'reboot'] },
   awk: {

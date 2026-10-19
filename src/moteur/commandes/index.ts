@@ -28,6 +28,7 @@ import { SS } from './ss';
 import { FAIL2BAN } from './fail2ban';
 import { SAUVEGARDE } from './sauvegarde';
 import { APT } from './apt';
+import { UNATTENDED } from './unattended';
 import { CERTBOT } from './certbot';
 import { RESTIC } from './restic';
 import { BIND } from './bind';
@@ -98,6 +99,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...FAIL2BAN,
   ...SAUVEGARDE,
   ...APT,
+  ...UNATTENDED,
   ...CERTBOT,
   ...RESTIC,
   ...BIND,

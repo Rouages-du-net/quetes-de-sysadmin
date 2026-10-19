@@ -95,7 +95,9 @@ rouages.net.
 - `commandes/tmux.ts` : sessions tmux d'une machine (`etat.tmux`, `Shell.tmux` ;
   la console y recopie ce qui s'affiche) et `uname` ; `apt upgrade` et
   `dpkg --configure -a` dans `commandes/apt.ts` (`etat.apt.mises`,
-  `etat.noyau`, `etat.coupureReseau` : la connexion tombe, `Shell.coupure`).
+  `etat.noyau`, `etat.coupureReseau` : la connexion tombe, `Shell.coupure`) ;
+  `unattended-upgrade` et `apt-config` dans `commandes/unattended.ts`, la
+  configuration d'apt (`apt.conf.d`) dans `src/moteur/aptconf.ts`.
 - `src/moteur/lan.ts` : le réseau local d'un routeur (`etat.lan` : interfaces,
   VLAN 802.1Q sur un trunk, appareils du commutateur, `/etc/network/interfaces`
   lu comme ifupdown) ; `ip`, `ifup`, `ifdown`, `dnsmasq --test` dans

@@ -130,6 +130,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `lftp` et l'hébergement mutualisé | FTP (Pure-FTPd) qui refuse le clair (FTPS explicite, AUTH TLS) ; certificat vérifié contre le nom demandé (`ssl:verify-certificate`) ; `-u`, `-e`, `-c`, `open`, `user`, `set`, `ls`, `cd`, `pwd`, `lcd`, `lpwd`, `mirror` (`-R`, `--delete`, `--dry-run`, `-v`), `put`, `get`, `mkdir`, `rm`, `cat` ; la connexion se fait à la première commande distante ; l'hébergement est décrit par l'histoire | SFTP et HTTP par lftp, `~/.lftprc`, `~/.netrc`, files d'attente, tâches de fond, jokers |
 | machines internes | derrière `maison`, `wiki` et `archives` existent dès qu'on s'y connecte ; on y entre par ssh depuis `maison`, ou avec `-J` depuis le poste (`exit` ramène alors au poste) ; un programme absent répond `command not found` | un vrai réseau, routé |
 | `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
+| `unattended-upgrade`, `apt-config` | `--dry-run`, `-d`, `-v` ; `Origins-Pattern` (clés `o`, `n`, `l`, `a`, `site`, jokers), `Package-Blacklist`, `Mail`, `MailReport`, `Automatic-Reboot`, `Automatic-Reboot-Time` ; `apt-daily-upgrade.service` ne lance la passe que si `APT::Periodic::Unattended-Upgrade` le demande ; `apt.conf.d` lu comme apt (dernière valeur, listes qui s'allongent, `;` obligatoire) ; `apt-config dump [préfixe]` ; origines des paquets décrites par le chapitre ; le redémarrage programmé n'est pas joué | autoremove, `MinimalSteps`, batterie, `#include`/`#clear`, sortie complète de `--debug`, `apt-cache policy` |
 | `apt` | `update`, `install [-y]`, `list --installed`, `list --upgradable`, `upgrade` et `full-upgrade` (les mises à jour décrites par le chapitre) ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » ; une mise à jour coupée laisse ses paquets dépaquetés (`dpkg --configure -a`) ; `/var/run/reboot-required` pour un noyau ou la libc | tout le catalogue Debian, `remove`, `search`, `show`, `apt-get`… ; dpkg garde l'état de chaque paquet |
 | réseau local (`ip`, `ifup`, `ifdown`) | IPv4 seulement ; `ip addr`, `ip link`, `ip route` (show, add, del, set, `-br`, `-d`), interfaces VLAN 802.1Q ; `/etc/network/interfaces` lu comme ifupdown (`auto`, `iface … inet static`, `manual`, `loopback`, `address`, `netmask`, `gateway`, `vlan-raw-device`, `source`) ; le commutateur et ses ports sont décrits par le chapitre ; pas d'ARP visible, de MTU, de bonding ni de systemd-networkd | tout iproute2, ifupdown2, NetworkManager, systemd-networkd |
 | `dnsmasq` | DHCP seulement (les options DNS sont acceptées et ignorées) ; `interface` (avec `*`), `except-interface`, `dhcp-range`, `dhcp-host`, `dhcp-option` ; les appareils demandent une adresse à chaque démarrage du service ; l'adresse est tirée de l'adresse MAC ; pas de renouvellement de bail | DNS, TFTP, PXE, DHCPv6, renouvellement |
@@ -1275,7 +1276,7 @@ Gaspard (`certificate common name doesn't match`), la vérification coupée
 sur le poste), `mirror -R site` sans cible (un dossier `site` à côté de
 `public_html`), sans `--delete` (les tarifs 2025 restent en ligne).
 
-## Histoire 12 : La Coopérative (cinq chapitres)
+## Histoire 12 : La Coopérative (six chapitres)
 
 L'épicerie coopérative du quartier (machine `cooperative`, 192.0.2.20) :
 la caisse (un service), l'équipe caisse (Lina, Karim), un compte de
@@ -1373,6 +1374,34 @@ activée au démarrage. Pièges prévus : `apt upgrade` avant `apt update`
 (rien à faire), la mise à jour hors de tmux (dpkg interrompu, apt refuse
 tout), oublier de redémarrer (l'ancien noyau tourne), la caisse jamais
 activée (elle ne repart pas), tmux imbriqué.
+
+### Chapitre 6 — Les mises à jour automatiques (fait)
+
+De nouvelles failles, déjà. Marc avait installé `unattended-upgrades` sans
+jamais l'activer (`20auto-upgrades` à « 0 ») ; Awa veut les mises à jour de
+sécurité chaque jour, un rapport à root, un redémarrage seulement quand la
+coopérative est fermée (7 h – 20 h), et surtout pas `nodejs` (Marc a ajouté
+le dépôt de la version 22 ; la caisse exige la 20).
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `ls /var/log/unattended-upgrades`, `systemctl list-timers`, `apt-config dump APT::Periodic`, `sudo systemctl start apt-daily-upgrade` (qui ne fait rien) |
+| Activer | `APT::Periodic::Update-Package-Lists "1";` et `APT::Periodic::Unattended-Upgrade "1";` dans `20auto-upgrades` |
+| Régler | `Unattended-Upgrade::Mail "root";`, `Automatic-Reboot "true";`, `Automatic-Reboot-Time "02:00";` dans `50unattended-upgrades` |
+| Essayer, puis prouver | `sudo unattended-upgrade --dry-run --debug` (nodejs : origine non permise), `sudo systemctl start apt-daily-upgrade`, `/var/log/unattended-upgrades/unattended-upgrades.log` |
+
+Objectif vérifié sur l'état : les deux tâches activées, une passe lancée par
+le service a installé les mises à jour de sécurité, `nodejs` est resté en
+20, le rapport par courrier et le redémarrage automatique la nuit sont
+réglés, la caisse tourne. Pièges prévus : un `;` oublié (« E: Syntax
+error », apt refuse tout), `origin=*` (nodejs passe en 22 : la caisse ne
+redémarrerait plus ; recommencer le chapitre), `Automatic-Reboot` sans heure
+(redémarrage immédiat en pleine journée), le service lancé avant d'activer.
+Autres solutions acceptées : un fichier à soi (`52cooperative`), `nodejs`
+dans `Package-Blacklist`, une autre heure de nuit, un autre destinataire.
+Débrief : 20auto-upgrades (quand) et 50unattended-upgrades (quoi), dépôts
+tiers à la main, rapport et redémarrage programmé ; liens vers le wiki
+Debian, `unattended-upgrade(8)` et `apt.conf(5)`.
 
 ## Histoire 13 : La Ruche (phase 9)
 

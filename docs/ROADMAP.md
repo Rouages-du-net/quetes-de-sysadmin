@@ -161,10 +161,12 @@ demandent plusieurs.
       bannir soi-même
 - [x] La prison `recidive` et la prison `nginx-limit-req`, activées dans
       leur section (« La récidive », Les Lettres du quartier, chapitre 8)
-- [ ] **Mises à jour** : `apt update`, `list --upgradable`, `upgrade`,
+- [x] **Mises à jour** : `apt update`, `list --upgradable`, `upgrade`,
       `dpkg --configure -a`, `/var/run/reboot-required`, `uname -r`, noyau
-      (« Les mises à jour », La Coopérative, chapitre 5) ; reste les mises à
-      jour automatiques (`unattended-upgrades`)
+      (« Les mises à jour », La Coopérative, chapitre 5) ; mises à jour
+      automatiques (`unattended-upgrades` : `20auto-upgrades`,
+      `Origins-Pattern`, `Mail`, `Automatic-Reboot-Time`, `apt-config`,
+      « Les mises à jour automatiques », chapitre 6)
 - [x] **Comptes** : supprimer un compte (`userdel`), désactiver le compte
       d'un ancien collègue (`usermod -e`, `chage -E`), clés à révoquer (y
       compris dans un compte partagé), `gpasswd -d`, `who`, `pkill -u` ;
