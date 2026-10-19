@@ -3,7 +3,7 @@
 
 import type { Fichier, Noeud } from '../monde';
 import type { Shell } from '../shell';
-import { appliquerMode, contenu, joker, lisible, options, tailleDe } from '../outils';
+import { appliquerMode, comparerNoms, contenu, joker, lisible, options, tailleDe } from '../outils';
 import { placeFantome } from '../ouverts';
 import type { Commande, Contexte } from './index';
 
@@ -67,7 +67,7 @@ function lister({ args, jeu, dernier }: Contexte): string {
   if (!jeu.peut(n, 'r')) return jeu.erreur(jeu.t('ls-ouvrir-permission', { cible }));
   const entrees: [string, Noeud][] = Object.entries(n.enfants)
     .filter(([nom]) => lettres.has('a') || !nom.startsWith('.'))
-    .sort(([a], [b]) => a.localeCompare(b, 'fr'));
+    .sort(([a], [b]) => comparerNoms(a, b));
   if (lettres.has('a')) entrees.unshift(['.', n], ['..', jeu.trouver(cible + '/..') ?? n]);
   if (long) return entrees.map(([nom, e]) => ino(e, ligneLongue(jeu, nom, e, lettres.has('h'), lettres.has('n')))).join('\n');
   if (lettres.has('i'))
@@ -75,7 +75,20 @@ function lister({ args, jeu, dernier }: Contexte): string {
   // Comme le vrai ls : en colonnes à l'écran, un nom par ligne dans un
   // tube ou un fichier (et sans le / ajouté aux lieux).
   if (!dernier) return entrees.map(([nom]) => nom).join('\n');
-  return entrees.map(([nom, e]) => (e.type === 'dossier' && nom !== '.' && nom !== '..' ? nom + '/' : nom)).join('    ');
+  const noms = entrees.map(([nom, e]) => (e.type === 'dossier' && nom !== '.' && nom !== '..' ? nom + '/' : nom));
+  const ligne = noms.join('    ');
+  if (ligne.length <= 1000) return ligne;
+  // Beaucoup de noms : des colonnes alignées dans 80 caractères, remplies de haut en bas, comme ls dans un terminal.
+  const largeur = Math.max(...noms.map((n) => n.length)) + 2;
+  const colonnes = Math.max(1, Math.floor(80 / largeur));
+  const rangs = Math.ceil(noms.length / colonnes);
+  const lignes: string[] = [];
+  for (let r = 0; r < rangs; r++) {
+    const cases: string[] = [];
+    for (let c = 0; c < colonnes && r + c * rangs < noms.length; c++) cases.push(noms[r + c * rangs].padEnd(largeur));
+    lignes.push(cases.join('').trimEnd());
+  }
+  return lignes.join('\n');
 }
 
 export const FICHIERS: Record<string, Commande> = {
@@ -326,24 +339,43 @@ export const FICHIERS: Record<string, Commande> = {
       let nom: RegExp | null = null;
       let type: string | null = null;
       let effacer = false;
+      // -mtime +N : modifié il y a plus de N jours (l'âge en jours entiers, comme find) ; -N : moins ; N : exactement.
+      let age: { signe: string; jours: number } | null = null;
+      let profondeur = Infinity;
       for (let i = 0; i < crit.length; i++) {
         if (crit[i] === '-name') nom = joker(crit[++i] ?? '');
         else if (crit[i] === '-type') type = crit[++i] ?? null;
         else if (crit[i] === '-delete') effacer = true;
-        else return jeu.erreur(jeu.t('find-predicat-inconnu', { predicat: crit[i] }));
+        else if (crit[i] === '-print') continue;
+        else if (crit[i] === '-maxdepth') {
+          const v = crit[++i] ?? '';
+          if (!/^\d+$/.test(v)) return jeu.erreur(jeu.t('find-argument-numerique', { predicat: '-maxdepth', valeur: v }));
+          profondeur = Number(v);
+        } else if (crit[i] === '-mtime') {
+          const v = crit[++i] ?? '';
+          const m = /^([+-]?)(\d+)$/.exec(v);
+          if (!m) return jeu.erreur(jeu.t('find-argument-numerique', { predicat: '-mtime', valeur: v }));
+          age = { signe: m[1], jours: Number(m[2]) };
+        } else return jeu.erreur(jeu.t('find-predicat-inconnu', { predicat: crit[i] }));
       }
+      const maintenant: number = jeu.etat.systemd?.horloge ?? 0;
+      const ageOk = (e: Noeud) => {
+        if (!age) return true;
+        const jours = e.type === 'fichier' && e.mtime !== undefined ? Math.floor((maintenant - e.mtime) / 86_400_000) : 0;
+        return age.signe === '+' ? jours > age.jours : age.signe === '-' ? jours < age.jours : jours === age.jours;
+      };
       const n = jeu.trouver(depart);
       if (!n) return jeu.erreur(jeu.t('find-introuvable', { cible: depart }));
       const trouves: string[] = [];
-      const parcourir = (chemin: string, e: Noeud) => {
-        const garde = (!nom || nom.test(chemin.split('/').pop()!)) && (!type || (type === 'd') === (e.type === 'dossier'));
+      const parcourir = (chemin: string, e: Noeud, niveau: number) => {
+        const garde = (!nom || nom.test(chemin.split('/').pop()!)) && (!type || (type === 'd') === (e.type === 'dossier')) && ageOk(e);
         if (garde) trouves.push(chemin);
-        if (e.type !== 'dossier') return;
+        if (e.type !== 'dossier' || niveau >= profondeur) return;
         if (!jeu.peut(e, 'r') || !jeu.peut(e, 'x')) return void jeu.erreur(jeu.t('find-permission', { cible: chemin }));
-        for (const [k, enfant] of Object.entries(e.enfants).sort(([a], [b]) => a.localeCompare(b, 'fr')))
-          parcourir(`${chemin.replace(/\/$/, '')}/${k}`, enfant);
+        for (const [k, enfant] of Object.entries(e.enfants).sort(([a], [b]) => comparerNoms(a, b)))
+          parcourir(`${chemin.replace(/\/$/, '')}/${k}`, enfant, niveau + 1);
       };
-      parcourir(depart, n);
+      parcourir(depart, n, 0);
       if (!effacer) return trouves.join('\n');
       for (const chemin of trouves.reverse()) {
         const e = jeu.trouver(chemin)!;
@@ -357,20 +389,31 @@ export const FICHIERS: Record<string, Commande> = {
 
   du: {
     lancer: ({ args, jeu }) => {
-      const { lettres, reste } = options(args);
-      const fmt = (o: number) => (lettres.has('h') ? lisible(o, jeu.t.langue) : String(Math.ceil(o / 1024)));
+      // --inodes : compter les fichiers (et lieux) au lieu des octets ; -d N (--max-depth=N) : n'afficher que N niveaux.
+      const inodes = args.includes('--inodes');
+      let profondeur = Infinity;
+      const brut: string[] = [];
+      for (let i = 0; i < args.length; i++) {
+        if (args[i] === '--inodes') continue;
+        if (args[i] === '-d') profondeur = Number(args[++i]);
+        else if (args[i].startsWith('--max-depth=')) profondeur = Number(args[i].slice(12));
+        else brut.push(args[i]);
+      }
+      if (Number.isNaN(profondeur)) return jeu.erreur(jeu.t('du-profondeur'));
+      const { lettres, reste } = options(brut);
+      const fmt = (o: number) => (inodes ? String(o) : lettres.has('h') ? lisible(o, jeu.t.langue) : String(Math.ceil(o / 1024)));
       const lignes: string[] = [];
       // Comme du : un fichier qui a plusieurs noms (liens physiques) n'est compté qu'une fois.
       const vus = new Set<Noeud>();
-      const parcourir = (chemin: string, e: Noeud): number => {
+      const parcourir = (chemin: string, e: Noeud, niveau = 0): number => {
         if (e.type === 'fichier') {
           if (vus.has(e)) return 0;
           vus.add(e);
-          return tailleDe(e, jeu);
+          return inodes ? 1 : tailleDe(e, jeu);
         }
-        let total = 0;
-        for (const [k, enfant] of Object.entries(e.enfants)) total += parcourir(`${chemin.replace(/\/$/, '')}/${k}`, enfant);
-        if (!lettres.has('s')) lignes.push(`${fmt(total)}\t${chemin}`);
+        let total = inodes ? 1 : 0;
+        for (const [k, enfant] of Object.entries(e.enfants)) total += parcourir(`${chemin.replace(/\/$/, '')}/${k}`, enfant, niveau + 1);
+        if (!lettres.has('s') && niveau <= profondeur) lignes.push(`${fmt(total)}\t${chemin}`);
         return total;
       };
       for (const cible of reste.length ? reste : ['.']) {
@@ -390,13 +433,31 @@ export const FICHIERS: Record<string, Commande> = {
     lancer: ({ args, jeu }) => {
       const { lettres, reste } = options(args);
       const fmt = (o: number) => (lettres.has('h') ? lisible(o, jeu.t.langue) : String(Math.ceil(o / 1024)));
-      const montages: { chemin: string; capacite: number; nom: string }[] = jeu.etat.montages ?? [];
-      const choisis = reste.length ? reste.map((r) => jeu.montage(jeu.resoudre(r))).filter(Boolean) : montages;
+      const montages: { chemin: string; capacite: number; nom: string; inodes?: number; inodesBase?: number }[] = jeu.etat.montages ?? [];
+      const choisis = (reste.length ? reste.map((r) => jeu.montage(jeu.resoudre(r))).filter(Boolean) : montages) as typeof montages;
+      // -i : les inodes (un par fichier ou lieu) au lieu des octets.
+      if (lettres.has('i')) {
+        // -h avec -i : 64K plutôt que 65536, comme GNU df -ih.
+        const n = (v: number) => (lettres.has('h') ? lisible(v, jeu.t.langue) : String(v));
+        const lignesI = [jeu.t('df-entete-inodes')];
+        for (const m of choisis) {
+          const total = m.inodes ?? Math.round(m.capacite / 16384);
+          const pris = Math.min(total, jeu.inodesUtilises(m));
+          const pct = Math.ceil((100 * pris) / total);
+          lignesI.push(
+            `${(m.nom ?? m.chemin).padEnd(18)} ${n(total).padStart(7)} ${n(pris).padStart(7)} ${n(total - pris).padStart(7)} ${String(pct).padStart(4)}% ${m.chemin}`,
+          );
+        }
+        return lignesI.join('\n');
+      }
       const lignes = [jeu.t('df-entete')];
-      for (const m of choisis as typeof montages) {
+      for (const m of choisis) {
         const lieu = jeu.trouver(m.chemin);
         // Les fichiers effacés mais encore ouverts par un processus occupent toujours leur place.
-        const utilise = Math.min(m.capacite, (lieu ? jeu.taille(lieu) : 0) + placeFantome(jeu, m.chemin));
+        // Sans compter les autres supports montés dedans (/srv/radio n'est pas sur /).
+        const dedans = montages.filter((x) => x.chemin !== m.chemin && (m.chemin === '/' || x.chemin.startsWith(m.chemin + '/')));
+        const autres = dedans.reduce((t, x) => t + ((n) => (n ? jeu.taille(n) : 0))(jeu.trouver(x.chemin)), 0);
+        const utilise = Math.min(m.capacite, (lieu ? jeu.taille(lieu) : 0) - autres + placeFantome(jeu, m.chemin));
         const pct = Math.round((100 * utilise) / m.capacite);
         lignes.push(
           `${(m.nom ?? m.chemin).padEnd(18)} ${fmt(m.capacite).padStart(6)} ${fmt(utilise).padStart(7)} ${fmt(Math.max(0, m.capacite - utilise)).padStart(6)} ${String(pct).padStart(3)}% ${m.chemin}`,

@@ -32,6 +32,7 @@ import { RSNAPSHOT } from './rsnapshot';
 import { POSTGRES } from './postgres';
 import { JOURNAUX } from './journaux';
 import { MEMOIRE } from './memoire';
+import { HEURE } from './heure';
 
 export interface Contexte {
   args: string[];
@@ -87,6 +88,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...POSTGRES,
   ...JOURNAUX,
   ...MEMOIRE,
+  ...HEURE,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },

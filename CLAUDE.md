@@ -57,7 +57,11 @@ rouages.net.
   `logrotate`) ; `src/moteur/memoire.ts` (mémoire des processus, OOM killer,
   `MemoryMax=`) et `commandes/memoire.ts` (`free`, `top`, `dmesg`) ; les
   surcharges systemd (`systemctl edit`, `set-property`, `daemon-reload`)
-  dans `commandes/systemd.ts`.
+  dans `commandes/systemd.ts`. Inodes : un support de `etat.montages` peut
+  déclarer `inodes` (et `inodesBase`) ; `df -i`, `du --inodes`, `find -mtime`
+  (date `mtime` des fichiers) ; la limite ARG_MAX dans `shell.ts`.
+  L'heure d'une machine (fuseau, horloge qui dérive, NTP) dans
+  `src/moteur/heure.ts`, `timedatectl` dans `commandes/heure.ts`.
 - `commandes/restic.ts` : dépôts restic (instantanés, déduplication,
   politiques de `forget`, `prune`), rangés dans `etat.restic`.
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;

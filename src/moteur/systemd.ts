@@ -31,6 +31,8 @@ export interface Service {
   // Type=oneshot : le service fait son travail puis s'arrête (ex. certbot,
   // lancé par un timer) ; il ne reste pas « active (running) ».
   ponctuel?: boolean;
+  // À l'arrêt du service (ex. timesyncd : l'horloge n'est plus suivie).
+  arret?: (jeu: Jeu) => void;
   // Comment il s'est arrêté en échec (exit-code, oom-kill…).
   resultat?: string;
   // Les réglages des fichiers de surcharge (systemctl edit) : MemoryMax=, Restart=.
@@ -63,6 +65,10 @@ export interface Systemd {
   // Un service a été démarré à la main depuis le dernier démarrage : ce qui
   // tourne ne prouve plus que la machine repart toute seule.
   demarreALaMain?: boolean;
+  // L'heure affichée par la machine (son fuseau, son horloge qui dérive) :
+  // l'écart avec la vraie heure, et l'abréviation du fuseau (voir heure.ts).
+  ecart?: number;
+  zone?: string;
 }
 
 export const systemd = (jeu: Jeu): Systemd | undefined => jeu.etat.systemd;
@@ -125,6 +131,7 @@ export function arreter(jeu: Jeu, sd: Systemd, nom: string) {
   s.etat = 'inactive';
   s.depuis = sd.horloge;
   retirerProcessus(jeu, s);
+  s.arret?.(jeu);
 }
 
 /** Redémarrage de la machine : seuls les services activés (enable) repartent. */
@@ -173,9 +180,11 @@ export function heureEte(local: number): boolean {
 export const versUtc = (local: number) => local - (heureEte(local) ? 2 : 1) * 3600_000;
 
 /** « mar. 2026-10-13 20:00:01 CEST », comme systemctl status. */
-export function dateComplete(ms: number, langue: string): string {
-  const { weekday } = parties(ms, langue, { weekday: 'short' });
-  return `${weekday} ${new Date(ms).toISOString().slice(0, 10)} ${heure(ms)} ${heureEte(ms) ? 'CEST' : 'CET'}`;
+export function dateComplete(ms: number, langue: string, sd?: Systemd): string {
+  const zone = sd?.zone ?? (heureEte(ms) ? 'CEST' : 'CET');
+  const affiche = ms + (sd?.ecart ?? 0);
+  const { weekday } = parties(affiche, langue, { weekday: 'short' });
+  return `${weekday} ${new Date(affiche).toISOString().slice(0, 10)} ${heure(affiche)} ${zone}`;
 }
 
 /** « 1h 2min », « 3min 12s », « 5s », comme systemd. */
@@ -190,7 +199,7 @@ export function duree(ms: number): string {
 }
 
 export const ligneJournal = (e: Entree, sd: Systemd, langue: string) =>
-  `${dateJournal(e.temps, langue)} ${sd.hote} ${e.ident}${e.pid ? `[${e.pid}]` : ''}: ${e.message}`;
+  `${dateJournal(e.temps + (sd.ecart ?? 0), langue)} ${sd.hote} ${e.ident}${e.pid ? `[${e.pid}]` : ''}: ${e.message}`;
 
 export type DefinitionService = Omit<Service, 'depuis' | 'etat' | 'processus'> & { etat?: Service['etat']; processus?: Processus[] };
 

@@ -105,6 +105,9 @@ export function lisible(octets: number, langue = 'fr'): string {
 
 // Options courtes groupées : « -czf » → c, z, f. Renvoie les lettres et les
 // arguments qui ne sont pas des options.
+// Tri des noms comme ls en français (un seul Collator : bien plus rapide que localeCompare sur des milliers de noms).
+export const comparerNoms = new Intl.Collator('fr').compare;
+
 export function options(args: string[]): { lettres: Set<string>; reste: string[] } {
   const lettres = new Set<string>();
   const reste: string[] = [];

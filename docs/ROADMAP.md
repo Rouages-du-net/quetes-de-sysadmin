@@ -231,9 +231,10 @@ demandent plusieurs.
       « La rançon » (La Ludothèque, chapitre 1)
 - [ ] Charge et ressources : `top`, `free`, `df`, `du` faits (L'Astreinte,
       chapitres 1 et 2) ; reste `iostat`
-- [ ] Pannes classiques : disque plein et fuite de journaux (« Le disque
-      plein »), mémoire épuisée (OOM) et processus zombies (« La mémoire »)
-      faits ; restent horloge décalée (NTP) et inodes épuisés
+- [x] Pannes classiques : disque plein et fuite de journaux (« Le disque
+      plein »), mémoire épuisée (OOM) et processus zombies (« La mémoire »),
+      inodes épuisés (« Les inodes »), horloge décalée et fuseau
+      (« L'horloge », NTP et `timedatectl`) faits
 - [x] Rotation des journaux (`logrotate`) ; « Le disque plein »
       (L'Astreinte, chapitre 1)
 - [ ] Supervision et alertes (sonde HTTP, seuils) ; astreinte simulée

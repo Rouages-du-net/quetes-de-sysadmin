@@ -7,6 +7,7 @@
 import type { Shell } from '../shell';
 import { executerScript } from '../script';
 import { heureEte, systemd } from '../systemd';
+import { heure, heureMachine, reglerHorloge } from '../heure';
 import { contenu } from '../outils';
 import type { Commande } from './index';
 
@@ -89,7 +90,8 @@ const tester = ({ args, jeu }: { args: string[]; jeu: Shell }) => {
 };
 
 // date +FORMAT : les directives courantes de strftime.
-function formater(ms: number, format: string, langue: string): string {
+// `zone` : le fuseau de la machine, s'il n'est pas celui de Paris (voir ../heure.ts).
+export function formater(ms: number, format: string, langue: string, zone?: { abrev: string; z: string; utc: number }): string {
   const d = new Date(ms);
   const deux = (n: number) => String(n).padStart(2, '0');
   const ete = heureEte(ms);
@@ -105,9 +107,9 @@ function formater(ms: number, format: string, langue: string): string {
     S: () => deux(d.getUTCSeconds()),
     F: () => `${d.getUTCFullYear()}-${deux(d.getUTCMonth() + 1)}-${deux(d.getUTCDate())}`,
     T: () => `${deux(d.getUTCHours())}:${deux(d.getUTCMinutes())}:${deux(d.getUTCSeconds())}`,
-    s: () => String(Math.floor((ms - (ete ? 7200_000 : 3600_000)) / 1000)),
-    Z: () => (ete ? 'CEST' : 'CET'),
-    z: () => (ete ? '+0200' : '+0100'),
+    s: () => String(Math.floor((zone ? zone.utc : ms - (ete ? 7200_000 : 3600_000)) / 1000)),
+    Z: () => zone?.abrev ?? (ete ? 'CEST' : 'CET'),
+    z: () => zone?.z ?? (ete ? '+0200' : '+0100'),
     a: () => nom({ weekday: 'short' }),
     A: () => nom({ weekday: 'long' }),
     b: () => nom({ month: 'short' }),
@@ -115,6 +117,17 @@ function formater(ms: number, format: string, langue: string): string {
     '%': () => '%',
   };
   return format.replace(/%(.)/g, (tout, c: string) => directives[c]?.() ?? tout);
+}
+
+/** « 2027-08-30 09:12[:00] » ou « 09:12[:00] » (aujourd'hui) → heure murale (lue comme UTC) ; null si illisible. */
+export function lireDate(jeu: Shell, texte: string): number | null {
+  const m = /^(?:(\d{4})-(\d{2})-(\d{2})\s+)?(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(texte.trim());
+  if (!m) return null;
+  const aujourdhui = new Date(heure(jeu) ? heureMachine(jeu).mur : (systemd(jeu)?.horloge ?? 0));
+  const [an, mois, jour] = m[1]
+    ? [Number(m[1]), Number(m[2]) - 1, Number(m[3])]
+    : [aujourdhui.getUTCFullYear(), aujourdhui.getUTCMonth(), aujourdhui.getUTCDate()];
+  return Date.UTC(an, mois, jour, Number(m[4]), Number(m[5]), Number(m[6] ?? 0));
 }
 
 export const SCRIPTS: Record<string, Commande> = {
@@ -138,12 +151,25 @@ export const SCRIPTS: Record<string, Commande> = {
   date: {
     propresOptions: true,
     lancer: ({ args, jeu }) => {
-      const ms = systemd(jeu)?.horloge ?? Date.UTC(2027, 0, 1);
+      // -s « 2027-08-30 09:12 » (ou --set=…) : régler l'horloge, réservé à root.
+      const i = args.findIndex((a) => a === '-s' || a.startsWith('--set='));
+      if (i >= 0) {
+        const texte = args[i] === '-s' ? args[i + 1] : args[i].slice(6);
+        if (texte === undefined) return jeu.erreur(jeu.t('date-option-argument'));
+        const mur = lireDate(jeu, texte);
+        if (mur === null) return jeu.erreur(jeu.t('date-invalide', { argument: texte }));
+        if (jeu.qui !== 'root') {
+          jeu.erreur(jeu.t('date-reglage-refuse'));
+        } else if (heure(jeu)) reglerHorloge(jeu, mur);
+        return formater(mur, jeu.t('date-format'), jeu.t.langue, heure(jeu) ? heureMachine(jeu) : undefined);
+      }
+      const machine = heure(jeu) ? heureMachine(jeu) : null;
+      const ms = machine?.mur ?? systemd(jeu)?.horloge ?? Date.UTC(2027, 0, 1);
       const format = args.find((a) => a.startsWith('+'));
       const inconnue = args.find((a) => !a.startsWith('+'));
       if (inconnue) return jeu.erreur(jeu.t('date-invalide', { argument: inconnue }));
       // Sans format : comme date en français (LANG=fr_FR.UTF-8).
-      return formater(ms, format ? format.slice(1) : jeu.t('date-format'), jeu.t.langue);
+      return formater(ms, format ? format.slice(1) : jeu.t('date-format'), jeu.t.langue, machine ?? undefined);
     },
   },
   readlink: {

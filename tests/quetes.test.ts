@@ -1489,6 +1489,126 @@ for (const langue of LANGUES)
       });
     });
 
+    describe("L'Astreinte, chapitre 3 — Les inodes (df -i, du --inodes, find -mtime -delete, cron)", () => {
+      const crontab = (s: Shell, commande: string, ligne: string) => {
+        s.executer(commande);
+        s.enregistrerEdition(`${s.edition!.texte}${ligne}\n`);
+        return s.quitterEdition();
+      };
+
+      it('solution : df -i, du --inodes, find -mtime +30 -delete, puis une tâche cron', { timeout: 30_000 }, () => {
+        const { s, tout } = jouer('inodes', [
+          'df -h',
+          'sudo df -i',
+          'antenne-2027',
+          'sudo du --inodes -d 1 /srv/radio',
+          'sudo find /srv/radio/stats -type f -mtime +30 | wc -l',
+          'sudo find /srv/radio/stats -type f -mtime +30 -delete',
+          'df -ih /srv/radio',
+        ]);
+        expect(tout).toMatch(/\/dev\/vdb1 +1,0G +223M +801M +22% \/srv\/radio/);
+        expect(tout).toMatch(/\/dev\/vdb1 +65536 +65536 +0 +100% \/srv\/radio/);
+        expect(tout).toMatch(/^65519\t\/srv\/radio\/stats$/m);
+        contient(tout, "l'enregistrement de nuit a repris");
+        expect(s.trouver('/srv/radio/emissions/nuit-2027-08-29.ogg')).toBeTruthy();
+        expect(s.termine).toBe(false);
+        const nuit = crontab(s, 'sudo crontab -e', '15 4 * * * find /srv/radio/stats -type f -mtime +30 -delete');
+        contient(nuit, 'Une journée et une nuit passent');
+        contient(nuit, 'le plus ancien a 30 jours');
+        contient(nuit, "Tu as terminé le chapitre 3 de L'Astreinte");
+        expect(s.termine).toBe(true);
+      });
+
+      it('autre solution : la tâche cron du compte radio fait aussi le grand ménage', { timeout: 30_000 }, () => {
+        const { s } = jouer('inodes', ['sudo df -i /srv/radio', 'antenne-2027']);
+        const nuit = crontab(s, 'sudo crontab -u radio -e', '0 3 * * * find /srv/radio/stats -name "ecoute-*" -mtime +45 -delete');
+        contient(nuit, 'Une journée et une nuit passent');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : rm *, une crontab sans les droits, une tâche qui efface tout', { timeout: 30_000 }, () => {
+        const { s, tout } = jouer('inodes', ['sudo touch /srv/radio/essai', 'antenne-2027', 'cd /srv/radio/stats', 'sudo rm *']);
+        expect(tout).toContain('Aucun espace disponible sur le périphérique');
+        expect(tout).toContain("sudo: impossible d'exécuter /usr/bin/rm: Liste d'arguments trop longue");
+        contient(tout, 'le shell remplace * par tous les noms du lieu');
+        // La crontab de « vous » : pas le droit d'effacer les fichiers du compte radio.
+        const nuit = crontab(s, 'crontab -e', '15 4 * * * find /srv/radio/stats -type f -mtime +30 -delete');
+        contient(nuit, 'Courrier de cron');
+        expect(nuit).toContain('Permission non accordée');
+        contient(nuit, 'la tâche n');
+        expect(s.termine).toBe(false);
+        // Une tâche qui efface tout, sans regarder l'âge.
+        contient(
+          crontab(s, 'sudo crontab -e', '15 4 * * * find /srv/radio/stats -type f -delete'),
+          'des statistiques de moins de 30 jours ont disparu',
+        );
+        expect(s.termine).toBe(false);
+      });
+    });
+
+    describe("L'Astreinte, chapitre 4 — L'horloge (timedatectl, NTP, fuseau, cron)", () => {
+      const corrigerNtp = (s: Shell) => {
+        s.executer('sudo nano /etc/systemd/timesyncd.conf');
+        s.enregistrerEdition(s.edition!.texte.replace('NTP=ntp.ancien-hebergeur.example', 'NTP=ntp.hebergeur.example'));
+        return s.quitterEdition();
+      };
+
+      it('solution : timedatectl, set-timezone, set-ntp, le bon serveur NTP, cron redémarré', () => {
+        const { s, tout } = jouer('horloge', [
+          'date',
+          'timedatectl',
+          'cat mail_hebergeur.txt',
+          'sudo timedatectl set-timezone Europe/Paris',
+          'antenne-2027',
+          'sudo timedatectl set-ntp true',
+        ]);
+        expect(tout).toMatch(/lun\. 30 août 2027 07:02:\d\d UTC/);
+        expect(tout).toContain('Time zone: Etc/UTC (UTC, +0000)');
+        expect(tout).toContain('System clock synchronized: no');
+        contient(tout, "C'est vrai de beaucoup de services");
+        contient(tout, 'le serveur NTP qu');
+        expect(s.executer('sudo journalctl -u systemd-timesyncd')).toContain(
+          'Timed out waiting for reply from 198.51.100.7:123 (ntp.ancien-hebergeur.example).',
+        );
+        corrigerNtp(s);
+        contient(s.executer('sudo systemctl restart systemd-timesyncd') ?? '', "l'horloge est synchronisée");
+        const etat = s.executer('timedatectl')!;
+        expect(etat).toMatch(/Local time: lun\. 2027-08-30 09:12:\d\d CEST/);
+        expect(etat).toContain('Time zone: Europe/Paris (CEST, +0200)');
+        expect(etat).toContain('System clock synchronized: yes');
+        expect(s.executer('timedatectl timesync-status')).toContain('Server: 192.0.2.123 (ntp.hebergeur.example)');
+        expect(s.termine).toBe(false);
+        contient(s.executer('sudo systemctl restart cron') ?? '', "Tu as terminé le chapitre 4 de L'Astreinte");
+        expect(s.termine).toBe(true);
+      });
+
+      it("autre solution : le serveur NTP d'abord, puis systemctl enable --now, le fuseau et cron", () => {
+        const { s } = jouer('horloge', ['sudo timedatectl', 'antenne-2027']);
+        corrigerNtp(s);
+        s.executer('sudo systemctl enable --now systemd-timesyncd');
+        s.executer('sudo timedatectl set-timezone Europe/Paris');
+        s.executer('sudo systemctl restart cron');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : date -s à la main, un fuseau mal écrit, set-time avec NTP actif, démarrer sans activer', () => {
+        const { s, tout } = jouer('horloge', ['sudo date -s "2027-08-30 09:12:00"', 'antenne-2027', 'sudo timedatectl set-timezone Europe/Pariss']);
+        contient(tout, 'pour l');
+        expect(tout).toContain("Failed to set time zone: Invalid or not installed time zone 'Europe/Pariss'");
+        expect(s.executer('date -s 09:00')).toContain('impossible de régler la date');
+        corrigerNtp(s);
+        contient(s.executer('sudo systemctl start systemd-timesyncd') ?? '', 'pas activé');
+        expect(s.executer('sudo timedatectl set-time "2027-08-30 09:00:00"')).toContain(
+          'Failed to set time: Automatic time synchronization is enabled',
+        );
+        s.executer('sudo timedatectl set-timezone Europe/Paris');
+        s.executer('sudo systemctl restart cron');
+        expect(s.termine).toBe(false);
+        s.executer('sudo timedatectl set-ntp true');
+        expect(s.termine).toBe(true);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

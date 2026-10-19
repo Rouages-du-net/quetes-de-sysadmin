@@ -35,6 +35,8 @@ import { instantanesChapitre } from './instantanes';
 import { base } from './base';
 import { disquePlein } from './disque-plein';
 import { memoireChapitre } from './memoire';
+import { inodes } from './inodes';
+import { horloge } from './horloge';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -75,7 +77,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'astreinte',
-    chapitres: [disquePlein, memoireChapitre],
+    chapitres: [disquePlein, memoireChapitre, inodes, horloge],
   },
 ];
 
