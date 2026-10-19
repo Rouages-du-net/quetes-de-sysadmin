@@ -39,6 +39,10 @@ import { inodes } from './inodes';
 import { horloge } from './horloge';
 import { sonde } from './sonde';
 import { postMortem } from './post-mortem';
+import { cles } from './cles';
+import { rebond } from './rebond';
+import { tunnel } from './tunnel';
+import { transferts } from './transferts';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -80,6 +84,10 @@ export const HISTOIRES: Histoire[] = [
   {
     id: 'astreinte',
     chapitres: [disquePlein, memoireChapitre, inodes, horloge, sonde, postMortem],
+  },
+  {
+    id: 'maison',
+    chapitres: [cles, rebond, tunnel, transferts],
   },
 ];
 

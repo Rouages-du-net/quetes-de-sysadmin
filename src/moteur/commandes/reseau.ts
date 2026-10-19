@@ -203,6 +203,21 @@ export const RESEAU: Record<string, Commande> = {
       const m = /^(?:(https?):\/\/)?([^/:]+)(?::(\d+))?(.*)$/.exec(url);
       if (!m) return jeu.erreur(`curl: (3) URL rejected: Malformed input to a URL function`);
       const hote = m[2];
+      // Un tunnel ssh (ssh -L) : le port local mène à un service vu depuis une autre machine.
+      const tunnel = LOCAL_DE_BASE.includes(hote.toLowerCase())
+        ? ((jeu.etat.tunnels ?? []) as { port: number; shell: Shell; portDistant: number; pid: number; boucle: boolean }[]).find(
+            (t) => t.port === Number(m[3] ?? 80) && ((jeu.etat.processus ?? []) as { pid: number }[]).some((p) => p.pid === t.pid),
+          )
+        : undefined;
+      if (tunnel) {
+        const cible = tunnel.shell;
+        const chemin = m[4] || '/';
+        const appli = tunnel.boucle ? requeteAppli(cible, tunnel.portDistant, chemin) : null;
+        const r = appli ? reponseAppli(cible, appli) : cible.etat.nginx && tunnel.portDistant === 80 ? requete(cible, 'localhost', chemin, 80) : null;
+        // Personne n'écoute en face : ssh le signale (sur le terminal où il tourne), curl ne reçoit rien.
+        if (!r) return jeu.erreur(`channel 2: open failed: connect failed: Connection refused\ncurl: (52) Empty reply from server`);
+        return entetes ? r.entetes.join('\n') : avecEntetes ? `${r.entetes.join('\n')}\n\n${r.corps}` : r.corps;
+      }
       // Une machine avec nginx : la requête part vers elle-même (localhost,
       // son nom, son adresse), et nginx répond selon sa configuration chargée.
       if (jeu.etat.nginx || jeu.etat.docker || jeu.etat.applis) {
@@ -244,6 +259,13 @@ export const RESEAU: Record<string, Commande> = {
         }
         return jeu.erreur('curl: (47) Maximum (5) redirects followed');
       }
+      // Une machine sans réseau simulé (le poste) : personne ne répond, sauf par un tunnel.
+      if (!jeu.etat.reseau)
+        return jeu.erreur(
+          LOCAL_DE_BASE.includes(hote.toLowerCase())
+            ? `curl: (7) Failed to connect to ${hote} port ${m[3] ?? 80} after 0 ms: Couldn't connect to server`
+            : `curl: (6) Could not resolve host: ${hote}`,
+        );
       const res = resoudreNom(jeu, hote);
       if ('erreur' in res) return jeu.erreur(`curl: (6) Could not resolve host: ${hote}`);
       const site = (jeu.etat.reseau as Reseau).web[hote];

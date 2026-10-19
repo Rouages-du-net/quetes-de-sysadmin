@@ -108,24 +108,26 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `date`, `test`, `readlink` | `date` sans option ou `+FORMAT` (directives courantes) ; `test` (et `[ … ]` dans un script) : `-e -f -d -L -s -r -w -x -n -z`, `=`, `!=`, comparaisons numériques ; `readlink [-f]` | `date -d`, `-u`… ; `test` complet ; `realpath` |
 | Le Kiosque (La Gazette) | une appli Node.js simulée : version lue au démarrage via un lien, `/health` en JSON, configuration dans un fichier `.env`, migration de schéma au démarrage (jamais en arrière) ; une heure de visites simulée à chaque rechargement de nginx dans « Le canari » | une vraie appli et sa base PostgreSQL |
 | journal nginx | format « combined » sans la page d'origine ni le navigateur | deux champs de plus en fin de ligne |
-| `ssh` | clé seulement (pas de mot de passe ni d'agent) ; une clé est acceptée si c'est la bonne machine ; pas de commande à distance ; message d'usage raccourci ; option inconnue : message des coreutils | mot de passe, agent, `authorized_keys` côté serveur, commande à distance |
+| `ssh` | deux modèles : sur la plupart des machines, une clé est acceptée si c'est celle que le jeu a donnée pour cette machine ; sur `maison` et son réseau interne (`acces.ts`), le vrai fonctionnement : `authorized_keys` d'en face, phrase de passe, mot de passe si sshd l'accepte (trois essais), `-J`/`ProxyJump` (le nom suivant est résolu par la machine du saut), `-L` avec `-f -N` (un processus à arrêter avec `kill`), commande à distance, `-G` (extrait) ; pas d'agent, de `-R`, de `-D` ni de certificats ; une seule clé d'hôte (ed25519) ; message d'usage raccourci | tout cela, agent, `ForwardAgent`, redirections distantes et dynamiques |
 | `exit` | a sa page `man` | commande intégrée à bash : `help exit` |
 | session `ssh` | la machine garde son état tant que la page reste ouverte ; un rechargement relance le chapitre en cours | la machine garde son état |
-| sections du manuel | 1 (commandes) et 8 (administration : `usermod`, `reboot`) | aussi 2 à 7 (appels système, fichiers de configuration…) |
+| sections du manuel | 1 (commandes), 5 (fichiers de configuration : `sshd_config`, `ssh_config`) et 8 (administration : `usermod`, `reboot`) | aussi 2, 3, 4, 6 et 7 (appels système, bibliothèques…) |
 | systemd | services seuls (pas de cibles, de dépendances, de timers ni de fichiers d'unité modifiables) ; l'horloge avance d'une seconde par action ; `journalctl -f` non simulé | unités de tous types, `daemon-reload`, `journalctl -f` |
 | `systemctl` sans être root | « Access denied », il faut `sudo` | demande le mot de passe (polkit) |
 | `sudo` après `reboot` | se souvient encore du mot de passe | le redemande |
-| `sshd` | une partie des mots-clés ; toutes les erreurs listées d'un coup ; pas de mot de passe demandé quand `PasswordAuthentication yes` (le refus annonce `publickey,password`) | s'arrête à la première erreur ; propose le mot de passe |
+| `sshd` | une partie des mots-clés ; toutes les erreurs listées d'un coup ; le mot de passe n'est demandé que sur les machines au vrai ssh (`maison`) ; pas de `StrictModes` (droits de `~/.ssh` non vérifiés) ni d'options dans `authorized_keys` | s'arrête à la première erreur ; propose le mot de passe partout ; refuse un `authorized_keys` modifiable par d'autres |
 | `ufw` | règles IPv4 et IPv6 confondues (lignes « (v6) » pour la forme) ; pas de règles sortantes, de routage, de journalisation, d'`insert` ni de `reset` ; messages proches de la traduction française d'ufw | tout cela |
 | `ss` | sockets décrites par le chapitre, et la session ssh en cours | toutes les sockets du système |
 | fail2ban | une seule prison (`sshd`) ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
-| `rsync` | copie locale seulement (pas de `user@machine:`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | aussi à distance par SSH, compare taille et date |
+| `rsync` | `-a`, `-v`, `-n`, `--delete` ; local, ou à distance par ssh (`machine:chemin`, dans un sens ou dans l'autre, avec les mêmes clés et rebonds que `ssh`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | compare taille et date, toutes les options, démon rsync |
+| `scp`, `ssh-copy-id` | `scp` : `-r`, `-P`, `-J`, `-i`, une copie dans un sens ou dans l'autre (pas entre deux machines distantes), ligne de progression immédiate ; `ssh-copy-id` : `-i`, `-p`, `-J`, la clé `~/.ssh/id*.pub` la plus récente par défaut | `scp` entre deux machines distantes (`-3`), SFTP ; `ssh-copy-id -f`, `-n` |
+| machines internes | derrière `maison`, `wiki` et `archives` existent dès qu'on s'y connecte ; on y entre par ssh depuis `maison`, ou avec `-J` depuis le poste (`exit` ramène alors au poste) ; un programme absent répond `command not found` | un vrai réseau, routé |
 | `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
 | `apt` | `update`, `install [-y]`, `list --installed` ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » | tout le catalogue Debian, `upgrade`, `remove`, `search`, `show`… ; dpkg garde l'état du paquet |
 | `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe ou `=` (pas d'expressions régulières), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
-| `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse) | tout le réseau |
+| `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse), ou un tunnel `ssh -L` ouvert sur le poste | tout le réseau |
 | `tar` | `-C` ; une archive coupée s'arrête à la coupure (messages proches de GNU tar) ; root garde propriétaires et droits | aussi `--strip-components`, `-p`, archives multi-volumes… |
-| `ssh-keygen` | `-R`, `-F`, `-l -f` seulement ; ne crée pas de clés | crée et convertit des clés, signe des certificats… |
+| `ssh-keygen` | `-R`, `-F`, `-l -f` ; crée des clés ed25519 seulement (`-t`, `-C`, `-N`, `-f`), fausses mais de la bonne forme, avec leur image aléatoire | tous les types de clés, conversion, certificats… |
 | `certbot` | un seul certificat, celui du chapitre ; `certificates`, `renew`, `certonly`, `reconfigure` ; autorité simulée (le défi HTTP-01 passe par le nginx simulé) ; les fichiers de `live/` sont réécrits (pas de liens vers `archive/`) ; le module nginx ne modifie pas la configuration | plusieurs certificats, vraie autorité ACME, liens symboliques, défis DNS |
 | `openssl` | `x509` (`-dates`, `-subject`, `-issuer`, `-ext`, `-checkend`) et `s_client -connect` (rend la main tout de suite) ; le contenu des PEM est propre au jeu | des centaines de sous-commandes ; vrai X.509 ; `s_client` attend une entrée |
 | `curl https://` | vérifie dates et noms du certificat présenté (erreur 60), `-k` pour passer outre | vérifie aussi la chaîne de confiance complète, OCSP… |
@@ -1097,3 +1099,83 @@ textes). Zoé relit à chaque enregistrement et dit ce qui manque.
 3. Vérifier qu'on peut le finir : une partie complète jouée par un script
    (le moteur se compile avec esbuild pour Node), puis dans Chromium à 1000
    et 375 px.
+
+## Histoire 11 : La Maison des associations (quatre chapitres)
+
+La Maison des associations du quartier (machine `maison`, 192.0.2.19) :
+une passerelle, seule visible depuis internet, et derrière elle un réseau
+interne (`wiki`, 10.20.0.11, et `archives`, 10.20.0.12). Yasmine, la
+coordinatrice, confie l'informatique à la joueuse ou au joueur ; Gaspard,
+l'ancien bénévole, a déménagé. Ici, ssh fonctionne pour de vrai (`acces.ts`) :
+pas de clé donnée par le jeu. Phase 2 de la feuille de route.
+
+### Chapitre 1 — Les clés (fait)
+
+Un compte tout neuf, avec un mot de passe provisoire (`lilas-2027`).
+
+| Étape | Commande apprise |
+|---|---|
+| Créer sa paire | `ssh-keygen` (sur le poste), phrase de passe facultative |
+| La poser | `ssh-copy-id maison` (mot de passe une dernière fois), ou `~/.ssh/authorized_keys` à la main |
+| Fermer | `PasswordAuthentication no` dans `sshd_config` (ou un fichier de `sshd_config.d`), `sshd -t`, `systemctl reload ssh` |
+| Vérifier | `exit`, `ssh maison` : entrée par la clé |
+
+Objectif vérifié sur l'état : sshd applique `PasswordAuthentication no`,
+une clé à soi est autorisée, et une connexion par clé a eu lieu après ce
+chargement. Pièges prévus : `ssh-copy-id` avant `ssh-keygen` (il pose la
+clé du royaume, la plus récente de `~/.ssh`, que ssh ne proposera pas),
+fermer la porte avant d'avoir posé sa clé (le menu sert de console de
+secours).
+
+### Chapitre 2 — Le rebond (fait)
+
+Le wiki n'est joignable que depuis la passerelle ; Gaspard y laissait sa
+clé privée.
+
+| Étape | Commande apprise |
+|---|---|
+| Rebondir | `ssh -J maison wiki` (la clé d'hôte du wiki est vérifiée depuis le poste) |
+| Le raccourci | `Host wiki`, `HostName wiki`, `ProxyJump maison` dans `~/.ssh/config` du poste ; `ssh -G wiki` |
+| Où suis-je ? | `hostname`, l'invite |
+
+Objectif vérifié sur l'état : une connexion par clé au wiki, un bloc
+`Host` du poste qui y mène par maison (vérifié comme ssh le lirait), et
+aucune clé privée sur maison. Pièges prévus : `ssh wiki` depuis le poste
+(nom inconnu), depuis maison (« Permission denied »), une clé privée
+recopiée sur maison (`scp`).
+
+### Chapitre 3 — Le tunnel (fait)
+
+La page d'administration du wiki n'écoute que sur 127.0.0.1:8080 du wiki,
+qui n'a ni navigateur ni curl ; trois inscriptions attendent.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `ss -tln`, `systemctl status wiki-admin` (sur le wiki) |
+| Le tunnel | `ssh -f -N -L 8080:localhost:8080 wiki` |
+| Agir | `curl localhost:8080/admin`, `/admin/valider/samir`, `/admin/valider/lea` |
+| Refermer | `ps`, `kill` |
+
+Objectif vérifié sur l'état : Samir et Léa validé·es, le compte
+publicitaire non, plus aucun tunnel ouvert sur le poste. Pièges prévus :
+`-L 8080:localhost:8080 maison` (localhost vu de maison),
+`-L 8080:wiki:8080 maison` (le service n'écoute pas sur l'adresse du wiki),
+`-N` sans `-f`, valider la publicité (on peut la refuser ensuite).
+
+### Chapitre 4 — Les transferts (fait)
+
+Avant l'assemblée générale : le rapport d'activité à rapatrier, la
+sauvegarde du dossier partagé à refaire.
+
+| Étape | Commande apprise |
+|---|---|
+| Rapatrier | `scp wiki:/srv/wiki/exports/rapport-2027.pdf .` (depuis le poste, par le raccourci) |
+| Sauvegarder | depuis maison, avec la clé dédiée `id_sauvegarde` : `rsync -avn /srv/partage/ archives:/srv/sauvegardes/partage/`, puis sans `-n` |
+| Réparer | `rsync -av --delete …` (après un essai `-n`) |
+
+Objectif vérifié sur l'état : le rapport intact sur le poste, chaque
+fichier du dossier partagé identique sur archives, sans dossier copié en
+trop. Pièges prévus : la barre oblique finale oubliée (un dossier
+`partage/partage`), `--delete` sans essai à blanc. Le débrief parle de FTP
+et telnet, qui font passer les mots de passe en clair.
+

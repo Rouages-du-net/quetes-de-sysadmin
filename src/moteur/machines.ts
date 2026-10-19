@@ -11,9 +11,17 @@ export interface Machine {
   adresse: string;
   // Histoire jouée sur cette machine (absent pour le poste).
   histoire?: string;
+  // Le jeu ne donne pas de clé : on crée la sienne (ssh-keygen, ssh-copy-id).
+  sansCle?: boolean;
 }
 
-const machine = (nom: string, adresse: string, histoire?: string): Machine => ({ nom, domaine: `${nom}.example`, adresse, histoire });
+const machine = (nom: string, adresse: string, histoire?: string, sansCle = false): Machine => ({
+  nom,
+  domaine: `${nom}.example`,
+  adresse,
+  histoire,
+  ...(sansCle ? { sansCle } : {}),
+});
 
 export const POSTE = machine('poste', '192.0.2.2');
 
@@ -30,13 +38,15 @@ export const MACHINES: Machine[] = [
   machine('gazette', '192.0.2.16', 'gazette'),
   machine('ludotheque', '192.0.2.17', 'ludotheque'),
   machine('radio', '192.0.2.18', 'astreinte'),
+  // La Maison des associations : une passerelle, devant son réseau interne.
+  machine('maison', '192.0.2.19', 'maison', true),
 ];
 
 export const machineDeHistoire = (histoire: string) => MACHINES.find((m) => m.histoire === histoire);
 export const machineParAdresse = (adresse: string) => [POSTE, ...MACHINES].find((m) => m.adresse === adresse);
 
 // Suite de caractères base64 tirée d'un nom (FNV-1a), toujours la même.
-function base64(graine: string, longueur: number): string {
+export function base64(graine: string, longueur: number): string {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   let h = 0x811c9dc5;
   let s = '';
@@ -54,8 +64,15 @@ function base64(graine: string, longueur: number): string {
 /** Clé publique d'hôte (ligne de known_hosts, sans le nom). */
 export const cleHote = (m: Machine, generation = '') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-hote-' + m.nom + generation, 43)}`;
 
+/** Un texte de toute longueur résumé en 8 chiffres hexadécimaux (FNV-1a) : base64 ne lit que le début de sa graine. */
+export function condense(texte: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < texte.length; i++) h = Math.imul(h ^ texte.charCodeAt(i), 0x01000193) >>> 0;
+  return h.toString(16).padStart(8, '0');
+}
+
 /** Empreinte d'une clé publique, comme ssh l'affiche : SHA256:… (43 caractères). */
-export const empreinteDeCle = (cle: string) => `SHA256:${base64('empreinte-' + cle.split(' ').slice(0, 2).join(' '), 43)}`;
+export const empreinteDeCle = (cle: string) => `SHA256:${base64(condense(cle.split(' ').slice(0, 2).join(' ')) + '-empreinte', 43)}`;
 
 /** Empreinte de la clé d'hôte d'une machine. */
 export const empreinte = (m: Machine, generation = '') => empreinteDeCle(cleHote(m, generation));

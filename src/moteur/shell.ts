@@ -85,7 +85,14 @@ export class Shell implements Jeu {
   private sermonFait = false;
   attente: { ligne: string; essais: number } | null = null;
   // Question en cours (ssh : « Are you sure you want to continue connecting? »).
-  question: { invite: string; repondre: (reponse: string) => string } | null = null;
+  // secret : la réponse ne s'affiche pas (un mot de passe demandé par ssh).
+  question: { invite: string; repondre: (reponse: string) => string; secret?: boolean } | null = null;
+  // Une session à ouvrir sur une autre machine (ssh -J, ssh depuis une
+  // machine vers son réseau interne), traitée par la console.
+  demandeSession: { shell: Shell; domaine: string; via?: string; adresse: string } | null = null;
+  // La machine principale de l'histoire, pour une machine interne.
+  parent: Shell | null = null;
+  private internes = new Map<string, Shell>();
   // exit tapé : la console ferme la session (voir console.ts).
   sortie = false;
   // La machine vient de redémarrer (reboot) : la console coupe la session.
@@ -350,8 +357,50 @@ export class Shell implements Jeu {
     return `vous@${this.hote}:${ici}$`;
   }
 
-  demander(invite: string, repondre: (reponse: string) => string): void {
-    this.question = { invite, repondre };
+  demander(invite: string, repondre: (reponse: string) => string, secret = false): void {
+    this.question = { invite, repondre, secret };
+  }
+
+  /** La saisie en cours ne doit pas s'afficher (mot de passe de sudo ou de ssh). */
+  saisieMasquee(): boolean {
+    return this.attente !== null || !!this.question?.secret;
+  }
+
+  /** La machine principale de l'histoire (elle-même, ou celle dont dépend une machine interne). */
+  get principal(): Shell {
+    return this.parent ? this.parent.principal : this;
+  }
+
+  /** Une machine du réseau interne de l'histoire, créée à la première connexion. */
+  interne(nom: string): Shell | null {
+    const p = this.principal;
+    const def = p.chapitre.hotes?.[nom];
+    if (!def) return null;
+    const deja = p.internes.get(nom);
+    if (deja) return deja;
+    const chapitre: Chapitre = {
+      id: `${p.chapitre.id}:${nom}`,
+      numero: p.chapitre.numero,
+      commandes: def.commandes ?? p.chapitre.commandes,
+      maison: '/home/vous',
+      accueil: '',
+      final: '',
+      evenements: [],
+      motDePasse: p.chapitre.motDePasse,
+      creerMonde: def.creerMonde,
+      comptes: def.comptes,
+      etat: def.etat,
+      initialiser: def.initialiser,
+    };
+    const s = new Shell(chapitre, this.t.langue, nom);
+    s.parent = p;
+    p.internes.set(nom, s);
+    return s;
+  }
+
+  /** Les machines internes de l'histoire : nom, adresse, domaine. */
+  internes_(): { nom: string; adresse: string; domaine: string }[] {
+    return Object.entries(this.principal.chapitre.hotes ?? {}).map(([nom, h]) => ({ nom, adresse: h.adresse, domaine: h.domaine }));
   }
 
   // Développe * et ? comme le fait le shell, avant la commande. Les fichiers
@@ -640,6 +689,12 @@ export class Shell implements Jeu {
     }
     // Une page de manuel de fichier (section 5, ex. sshd_config) n'est pas une commande.
     const commande: Commande | undefined = COMMANDES[cmd]?.section === 5 ? undefined : COMMANDES[cmd];
+    // Sur une machine interne d'une histoire, un programme absent l'est vraiment (bash, code 127).
+    if (this.parent && !this.connues().includes(cmd)) {
+      const sortie = this.erreur(`-bash: ${cmd}: command not found`);
+      this.statut = 127;
+      return sortie;
+    }
     if (!this.connues().includes(cmd) || !commande)
       return this.erreur(this.t(commande || cmd === 'sudo' ? 'commande-pas-encore' : 'commande-introuvable', { commande: cmd }));
     // Un programme reçoit ses arguments dans une zone limitée (ARG_MAX, 2 Mio

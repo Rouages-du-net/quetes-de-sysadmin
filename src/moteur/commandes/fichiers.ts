@@ -100,6 +100,16 @@ export const FICHIERS: Record<string, Commande> = {
     lancer: ({ jeu }) => jeu.qui,
   },
 
+  // hostname : le nom de la machine ; -f, le nom complet (celui que /etc/hosts donne en premier).
+  hostname: {
+    lancer: ({ args, jeu }) => {
+      const nom = jeu.lire('/etc/hostname')?.trim() || jeu.hote;
+      if (!args.includes('-f')) return nom;
+      const ligne = (jeu.lire('/etc/hosts') ?? '').split('\n').find((l) => l.replace(/#.*/, '').trim().split(/\s+/).slice(1).includes(nom));
+      return ligne?.trim().split(/\s+/)[1] ?? nom;
+    },
+  },
+
   ls: {
     lancer: (c) => {
       const { reste } = options(c.args);

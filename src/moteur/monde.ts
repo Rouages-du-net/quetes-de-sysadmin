@@ -58,6 +58,20 @@ export type Dossier = {
 } & Droits;
 export type Noeud = Fichier | Dossier;
 
+// Une machine du réseau interne d'une histoire : son monde, ses comptes,
+// son état ; ses événements sont ceux du chapitre (vérifiés sur la
+// machine principale).
+export interface HoteInterne {
+  adresse: string;
+  domaine: string;
+  creerMonde: (t: Traduire) => Dossier;
+  comptes?: () => Comptes;
+  etat?: (t: Traduire) => Record<string, unknown>;
+  initialiser?: (jeu: Jeu) => void;
+  // Commandes connues (par défaut, celles du chapitre).
+  commandes?: string[];
+}
+
 // Un événement de l'histoire : quand `condition` devient vraie (vérifiée
 // après chaque commande), `action` modifie le monde et `message` s'affiche.
 // Chaque événement ne se produit qu'une fois.
@@ -99,6 +113,15 @@ export interface Chapitre {
   // La machine a été réinstallée pour ce chapitre : nouvelle clé d'hôte SSH
   // (voir machines.ts), que le known_hosts du poste ne connaît pas encore.
   cleHote?: string;
+  // Les machines du réseau interne de l'histoire (derrière la machine
+  // principale), qu'on joint en ssh depuis elle (ou avec ssh -J).
+  hotes?: Record<string, HoteInterne>;
+  // Les clés publiques du poste sont recopiées sur les machines de l'histoire
+  // à chaque connexion (une coordinatrice qui tient les clés à jour).
+  clesDuJoueur?: boolean;
+  // Les événements se vérifient aussi après les commandes tapées sur le
+  // poste (le chapitre regarde ce qu'on y fait : ~/.ssh/config, tunnels…).
+  surveillePoste?: boolean;
 }
 
 // Une histoire : une suite de chapitres. Les histoires sont indépendantes.

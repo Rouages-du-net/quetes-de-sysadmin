@@ -118,20 +118,22 @@ demandent plusieurs.
 
 ## Phase 2 — Se connecter et se déplacer
 
-- [ ] **SSH** : `ssh`, clés (`ssh-keygen`, `ssh-copy-id`), `~/.ssh/config`,
-      empreinte de l'hôte (`known_hosts`), refus de mot de passe. Déjà là :
-      `ssh` avec `~/.ssh/config`, `/etc/hosts`, `known_hosts` (question de la
-      première connexion), clés et leurs permissions, `-i`, `-p`, `exit`
-- [ ] **Rebonds** : hôte bastion, `ssh -J` / `ProxyJump`, redirection de ports
-      (`-L`, `-R`) pour atteindre un service interne
+- [x] **SSH** : `ssh`, clés (`ssh-keygen`, `ssh-copy-id`, `authorized_keys`,
+      phrase de passe), `~/.ssh/config`, empreinte de l'hôte (`known_hosts`),
+      mot de passe puis refus du mot de passe ; « Les clés » (La Maison des
+      associations, chapitre 1)
+- [x] **Rebonds** : hôte bastion, `ssh -J` / `ProxyJump` (« Le rebond »),
+      redirection de port locale `-L` avec `-f -N` (« Le tunnel ») ; reste
+      `-R` et `-D`
 - [x] **Durcissement SSH** : `PermitRootLogin no`, `PasswordAuthentication
       no`, `AllowUsers`, `sshd -t`, `sshd -T`, `Include` de Debian ; quête
       « Fermer la porte » (Les Lettres du quartier), où l'on peut s'enfermer
       dehors (le menu sert de console de secours)
 - [ ] Changer le port SSH (et le pare-feu qui va avec, phase 3)
-- [ ] **Transferts** : **`scp`**, `sftp`, `rsync` (options `-a`, `--delete`,
-      `--dry-run`), et pourquoi FTP en clair est à proscrire ; **FTPS** pour
-      les hébergeurs mutualisés qui l'imposent (le cas de rouages.net !)
+- [ ] **Transferts** : **`scp`**, `rsync` à distance (`-a`, `--delete`,
+      `-n`) et pourquoi FTP en clair est à proscrire faits (« Les
+      transferts ») ; reste `sftp`, et **FTPS** pour les hébergeurs
+      mutualisés qui l'imposent (le cas de rouages.net !)
 - [ ] `tmux` ou `screen` : garder une session vivante quand la connexion
       tombe
 

@@ -20,7 +20,13 @@ const config = (commentaire: string) =>
   [
     ...commentaire.split('\n').map((l) => `# ${l}`),
     '',
-    ...MACHINES.flatMap((m) => [`Host ${m.nom}`, `    HostName ${m.domaine}`, '    User vous', `    IdentityFile ~/.ssh/id_${m.nom}`, '']),
+    ...MACHINES.flatMap((m) => [
+      `Host ${m.nom}`,
+      `    HostName ${m.domaine}`,
+      '    User vous',
+      ...(m.sansCle ? [] : [`    IdentityFile ~/.ssh/id_${m.nom}`]),
+      '',
+    ]),
   ]
     .join('\n')
     .trim();
@@ -36,7 +42,26 @@ export function poste(cles: Machine[]): Chapitre {
   return {
     id: 'poste',
     numero: 0,
-    commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'chmod', 'nano', 'ssh', 'ssh-keygen', 'nc'],
+    commandes: [
+      'ls',
+      'cd',
+      'pwd',
+      'cat',
+      'less',
+      'chmod',
+      'mkdir',
+      'cp',
+      'nano',
+      'ssh',
+      'ssh-keygen',
+      'ssh-copy-id',
+      'scp',
+      'rsync',
+      'curl',
+      'ps',
+      'kill',
+      'nc',
+    ],
     maison: MAISON,
     accueil: 'bienvenue.txt',
     final: '',

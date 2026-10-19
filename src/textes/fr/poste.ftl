@@ -45,6 +45,7 @@ machine-fabrique-motd = La Fabrique — le serveur du fablab. Ici, on répare, o
 machine-gazette-motd = La Gazette du quartier — le serveur du journal. On publie avec git push, pas à la main.
 machine-ludotheque-motd = La Ludothèque du quartier — le serveur des bénévoles. On joue, on prête, on range les pions.
 machine-radio-motd = Radio Quartier — le serveur de l'antenne. Astreinte : un œil sur le flux, l'autre sur les journaux.
+machine-maison-motd = Maison des associations — la passerelle. Derrière elle : le wiki et les archives.
 
 # En se reconnectant à une machine dont le chapitre est en cours.
 # { $fichier } : le fichier d'accueil du chapitre (ex. bienvenue.txt)

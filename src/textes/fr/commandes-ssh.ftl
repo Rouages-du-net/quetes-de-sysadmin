@@ -12,3 +12,8 @@ ssh-banni = (fail2ban, sur { $machine }, a banni l'adresse de ton poste ({ $adre
 ssh-cle-changee = (La machine { $machine } ne présente plus la même clé qu'avant. C'est normal si elle vient d'être réinstallée ; sinon, quelqu'un se fait peut-être passer pour elle. Ne retire jamais l'ancienne clé sans vérifier : l'hébergeur a annoncé par courriel l'empreinte de la nouvelle clé, { $empreinte }. Si c'est bien celle affichée plus haut, retire l'ancienne clé de known_hosts (la commande est écrite juste au-dessus ; man ssh-keygen), puis reconnecte-toi.)
 # ssh-keygen sans option : le jeu ne crée pas de clés.
 ssh-keygen-generer = ssh-keygen : ici, on ne crée pas de nouvelle clé (le jeu donne les clés dont tu as besoin). Essaie ssh-keygen -R, -F ou -l (man ssh-keygen).
+# { $type } : le type de clé demandé
+ssh-keygen-type = ssh-keygen : le jeu ne fabrique que des clés ed25519 (le type recommandé aujourd'hui) ; « { $type } » n'est pas simulé.
+ssh-sans-arriere-plan = (ssh -N garde la connexion ouverte sans rendre la main : dans un vrai terminal, il faudrait un deuxième terminal pour s'en servir. Ajoute -f pour le passer en arrière-plan, comme ssh -f -N -L …)
+scp-local = scp : aucune machine d'en face (écris machine:chemin) ; pour copier sur la même machine, cp suffit.
+scp-deux-distants = scp : le jeu ne copie qu'entre la machine où tu es et une autre (pas d'une machine distante à une autre).
