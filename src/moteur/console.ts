@@ -10,7 +10,7 @@ import { f, type Chapitre, type Histoire } from './monde';
 import { MACHINES, POSTE, type Machine } from './machines';
 import { fichiersCle, poste } from './poste';
 import { etatPort, type EtatPort } from './ports';
-import { bloquePort, type EtatFail2ban } from './fail2ban';
+import { bannisPour, type EtatFail2ban } from './fail2ban';
 import { noterTmux } from './commandes/tmux';
 import { traducteur, type Langue, type Traduire } from '../textes';
 
@@ -53,13 +53,15 @@ export class Console {
     const cles = MACHINES.filter((m) => this.ouverte(m.histoire!) && !m.sansCle);
     const s = new Shell(poste(cles), this.t.langue, 'poste');
     // ssh demande au serveur d'en face sa configuration appliquée (sshd).
-    s.etat.sshdDistant = (nom: string) => this.sessions.get(nom)?.etat.sshd?.charge ?? null;
+    // (celui du chapitre qu'ouvrirait la connexion : un chapitre peut commencer avec SSH sur un autre port).
+    s.etat.sshdDistant = (nom: string) => this.sessionDe(nom).etat.sshd?.charge ?? null;
     // … et son pare-feu (ufw), qui peut bloquer la connexion avant même sshd.
     s.etat.pareFeuDistant = (nom: string) => this.sessions.get(nom)?.etat.ufw ?? null;
     // … et les adresses que son fail2ban a bannies (pour ce port, s'il est donné : la prison ne bloque que les siens).
     s.etat.bannisDistant = (nom: string, port?: number): string[] => {
       const f2b: EtatFail2ban | undefined = this.sessions.get(nom)?.etat.fail2ban;
-      return f2b && (port === undefined || bloquePort(f2b.charge, port)) ? f2b.bannis : [];
+      if (!f2b) return [];
+      return port === undefined ? f2b.bannis : bannisPour(f2b, port);
     };
     // … et l'état d'un de ses ports, vu d'ici (nc -zv machine port).
     s.etat.portDistant = (nom: string, port: number): EtatPort => etatPort(this.sessionDe(nom), port, false, POSTE.adresse);

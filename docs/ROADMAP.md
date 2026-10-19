@@ -159,7 +159,8 @@ demandent plusieurs.
       `fail2ban-client status`, `unbanip`, `-t`, `reload` ; quête « La
       sentinelle » (Les Lettres du quartier, chapitre 3), où l'on peut se
       bannir soi-même
-- [ ] La prison `recidive`, d'autres prisons (nginx)
+- [x] La prison `recidive` et la prison `nginx-limit-req`, activées dans
+      leur section (« La récidive », Les Lettres du quartier, chapitre 8)
 - [ ] **Mises à jour** : `apt update`, `list --upgradable`, `upgrade`,
       `dpkg --configure -a`, `/var/run/reboot-required`, `uname -r`, noyau
       (« Les mises à jour », La Coopérative, chapitre 5) ; reste les mises à

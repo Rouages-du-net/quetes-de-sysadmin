@@ -13,7 +13,7 @@
 
 import type { Jeu } from './shell';
 import type { PareFeu, Regle } from './parefeu';
-import type { EtatFail2ban } from './fail2ban';
+import { actives, bannisDe, type EtatFail2ban } from './fail2ban';
 import { systemd } from './systemd';
 
 const COMPTEUR = 'counter packets 0 bytes 0';
@@ -75,19 +75,20 @@ function tableUfw(pf: PareFeu): string[] {
 }
 
 function tableFail2ban(f2b: EtatFail2ban): string[] {
-  const p = f2b.charge;
-  const ports = p?.ports.length ? `tcp dport { ${p.ports.join(', ')} } ` : 'meta l4proto { tcp } ';
+  const prisons = actives(f2b);
+  const ensembles = prisons.flatMap((p) => {
+    const bannis = bannisDe(f2b, p.nom);
+    return [`\tset addr-set-${p.nom} {`, '\t\ttype ipv4_addr', ...(bannis.length ? [`\t\telements = { ${bannis.join(', ')} }`] : []), '\t}', ''];
+  });
+  // Une règle par prison : ses ports (ou tous, pour banaction_allports), puis les adresses de son ensemble.
+  const regles = prisons.map(
+    (p) =>
+      `${p.ports.length ? `tcp dport { ${p.ports.join(', ')} } ` : 'meta l4proto { tcp } '}ip saddr @addr-set-${p.nom} reject with icmp port-unreachable`,
+  );
   return [
     'table inet f2b-table {',
-    '\tset addr-set-sshd {',
-    '\t\ttype ipv4_addr',
-    ...(f2b.bannis.length ? [`\t\telements = { ${f2b.bannis.join(', ')} }`] : []),
-    '\t}',
-    '',
-    ...chaine('f2b-chain', [
-      'type filter hook input priority filter - 1; policy accept;',
-      `${ports}ip saddr @addr-set-sshd reject with icmp port-unreachable`,
-    ]),
+    ...ensembles,
+    ...chaine('f2b-chain', ['type filter hook input priority filter - 1; policy accept;', ...regles]),
     '}',
   ];
 }
@@ -99,7 +100,7 @@ export function tablesApercu(jeu: Jeu): Map<string, string[]> {
   if (pf?.actif) tables.set('ip filter', tableUfw(pf));
   const f2b = jeu.etat.fail2ban as EtatFail2ban | undefined;
   const service = systemd(jeu)?.services.fail2ban;
-  if (f2b?.charge?.enabled && (!service || service.etat === 'active')) tables.set('inet f2b-table', tableFail2ban(f2b));
+  if (f2b && actives(f2b).length && (!service || service.etat === 'active')) tables.set('inet f2b-table', tableFail2ban(f2b));
   return tables;
 }
 

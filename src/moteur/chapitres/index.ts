@@ -22,6 +22,7 @@ import { colocation } from './colocation';
 import { chezMoi } from './chez-moi';
 import { concert } from './concert';
 import { port } from './port';
+import { recidive } from './recidive';
 import { miseAJour } from './mise-a-jour';
 import { composition } from './composition';
 import { contournement } from './contournement';
@@ -82,7 +83,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'lettres',
-    chapitres: [porte, pareFeu, sentinelle, colocation, chezMoi, concert, port],
+    chapitres: [porte, pareFeu, sentinelle, colocation, chezMoi, concert, port, recidive],
   },
   {
     id: 'fabrique',

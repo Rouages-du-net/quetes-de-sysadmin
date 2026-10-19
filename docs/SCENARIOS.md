@@ -123,7 +123,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `sshd` | une partie des mots-clés ; toutes les erreurs listées d'un coup ; le mot de passe n'est demandé que sur les machines au vrai ssh (`maison`) ; pas de `StrictModes` (droits de `~/.ssh` non vérifiés) ni d'options dans `authorized_keys` | s'arrête à la première erreur ; propose le mot de passe partout ; refuse un `authorized_keys` modifiable par d'autres |
 | `ufw` | règles IPv4 et IPv6 confondues (lignes « (v6) » pour la forme) ; pas de règles sortantes, de routage, de journalisation, d'`insert` ni de `reset` ; messages proches de la traduction française d'ufw | tout cela |
 | `ss` | sockets décrites par le chapitre, et la session ssh en cours (sur le port par lequel on est entré) | toutes les sockets du système |
-| fail2ban | une seule prison (`sshd`), dont le `port` borne le bannissement ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
+| fail2ban | prisons `sshd`, `nginx-limit-req` et `recidive` (les autres se chargent, sans filtre ; une prison active sans journal empêche le démarrage) ; le `port` d'une prison borne le bannissement ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
 | `rsync` | `-a`, `-v`, `-n`, `--delete` ; local, ou à distance par ssh (`machine:chemin`, dans un sens ou dans l'autre, avec les mêmes clés et rebonds que `ssh`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | compare taille et date, toutes les options, démon rsync |
 | `scp`, `ssh-copy-id` | `scp` : `-r`, `-P`, `-J`, `-i`, une copie dans un sens ou dans l'autre (pas entre deux machines distantes), ligne de progression immédiate ; `ssh-copy-id` : `-i`, `-p`, `-J`, la clé `~/.ssh/id*.pub` la plus récente par défaut | `scp` entre deux machines distantes (`-3`) ; `ssh-copy-id -f`, `-n` |
 | `sftp` | session interactive (`sftp>`) par les mêmes sauts et clés que `ssh` ; `ls`, `cd`, `pwd`, `lcd`, `lls`, `lpwd`, `get [-r]`, `put [-r]`, `mkdir`, `rm`, `rmdir`, `rename`, `help`, `bye` ; un dossier qui existe déjà reçoit le contenu | `-b` (fichier de commandes), `reget`/`reput`, jokers, `chmod`, `df` |
@@ -480,7 +480,7 @@ versions plutôt que miroir, politique de rétention, forget n'est pas prune,
 check et restaurations d'essai, chiffrement et garde du mot de passe ;
 liens vers la documentation de restic.
 
-## Histoire 6 : Les Lettres du quartier (en cours, sept chapitres)
+## Histoire 6 : Les Lettres du quartier (huit chapitres)
 
 L'association de Kofi (vue dans Le Paquet perdu) loue un petit serveur pour
 son site, `lettres.example` (machine `lettres`, même adresse que dans Le
@@ -697,6 +697,33 @@ Débrief : un port n'est pas une protection, ouvrir avant de fermer, tout ce
 qui parle du port suit, ufw et fail2ban écrivent des règles nftables,
 `ssh.socket` sur Ubuntu ; liens vers `sshd_config(5)`, `ssh_config(5)`,
 `jail.conf(5)` et ufw.
+
+### Chapitre 8 — La récidive (fait)
+
+Depuis le changement de port, les mêmes adresses sont bannies une heure,
+débannies, rebannies, encore et encore ; et le robot de l'agenda, que nginx
+limite depuis le soir du concert, insiste (« limiting requests » dans
+`error.log`). `jail.conf` a des prisons toutes prêtes, désactivées.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `grep -c "Ban 203.0.113.66" /var/log/fail2ban.log`, `grep -c "limiting requests" /var/log/nginx/error.log`, `grep "^\[" /etc/fail2ban/jail.conf` |
+| Activer les prisons | `[recidive]` et `[nginx-limit-req]` avec `enabled = true` dans `jail.local` (ou `jail.d/*.local`) |
+| Vérifier | `sudo fail2ban-client -t`, `sudo systemctl reload fail2ban`, `sudo fail2ban-client status`, `status recidive`, `status nginx-limit-req`, `sudo nft list table inet f2b-table` |
+
+Objectif vérifié sur l'état : `recidive` et `nginx-limit-req` chargées, les
+deux récidivistes bannis par `recidive` (sur tous les ports), les trois
+adresses du robot par `nginx-limit-req`, Rania et les visiteur·ses épargné·es,
+`recidive` plus longue que `sshd`, l'état d'une prison consulté.
+
+Pièges prévus : `enabled = true` dans `[DEFAULT]` (toutes les prisons de
+`jail.conf`, dont apache et postfix : « Have not found any log file », le
+service ne recharge pas), une `recidive` qui ne bannit pas plus longtemps
+que `sshd`, Rania sortie d'`ignoreip` (la prison nginx la bannit ; `unban`).
+Autres solutions acceptées : `jail.d/*.local`, `bantime = -1`, un autre
+`maxretry`. Débrief : journal, filtre, action ; activer dans sa section ;
+`dbpurgeage` ; `bantime.increment` ; liens vers `jail.conf(5)`, le
+`jail.conf` de fail2ban et `limit_req`.
 
 ## Histoire 7 : La Fabrique (quatre chapitres)
 

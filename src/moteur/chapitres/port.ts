@@ -73,12 +73,12 @@ Subsystem	sftp	/usr/lib/openssh/sftp-server
 const DURCISSEMENT = 'PermitRootLogin no\nPasswordAuthentication no';
 
 // Le fichier de Debian 12 (paquet fail2ban) et le jail.local de « La sentinelle ».
-const DEFAULTS_DEBIAN = `[DEFAULT]
+export const DEFAULTS_DEBIAN = `[DEFAULT]
 banaction = nftables
 banaction_allports = nftables[type=allports]
-backend = systemd
 
 [sshd]
+backend = systemd
 enabled = true`;
 const JAIL_LOCAL = `[DEFAULT]
 bantime  = 1h
