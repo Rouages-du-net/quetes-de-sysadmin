@@ -40,6 +40,10 @@ export interface Service {
   redemarrage?: string;
   surcharges?: string[];
   empreinteSurcharges?: string;
+  // Une unité écrite à la main (/etc/systemd/system/NOM.service) : son fichier,
+  // et ce qu'elle lance (ExecStart=) ; renvoie le code de retour.
+  fichier?: string;
+  executer?: (jeu: Jeu) => number;
 }
 
 export interface Entree {
@@ -69,6 +73,8 @@ export interface Systemd {
   // l'écart avec la vraie heure, et l'abréviation du fuseau (voir heure.ts).
   ecart?: number;
   zone?: string;
+  // Les timers (NOM.timer), voir minuteries.ts.
+  minuteries?: Record<string, import('./minuteries').Minuterie>;
 }
 
 export const systemd = (jeu: Jeu): Systemd | undefined => jeu.etat.systemd;
@@ -99,6 +105,24 @@ export function demarrer(jeu: Jeu, sd: Systemd, nom: string, auDemarrage = false
     return false;
   }
   if (s.ponctuel) {
+    // Un service écrit à la main : son programme tourne, et son code de retour décide.
+    const code = s.executer?.(jeu) ?? 0;
+    if (code !== 0) {
+      journaliser(
+        sd,
+        unite,
+        'systemd',
+        1,
+        `${unite}: Main process exited, code=exited, status=${code}/${code === 1 ? 'FAILURE' : 'INVALIDARGUMENT'}`,
+        4,
+      );
+      journaliser(sd, unite, 'systemd', 1, `${unite}: Failed with result 'exit-code'.`, 4, false);
+      journaliser(sd, unite, 'systemd', 1, `Failed to start ${unite} - ${s.description}.`, 3, false);
+      s.etat = 'failed';
+      s.resultat = 'exit-code';
+      s.depuis = sd.horloge;
+      return false;
+    }
     journaliser(sd, unite, 'systemd', 1, `${unite}: Deactivated successfully.`);
     journaliser(sd, unite, 'systemd', 1, `Finished ${unite} - ${s.description}.`, 6, false);
     s.etat = 'inactive';

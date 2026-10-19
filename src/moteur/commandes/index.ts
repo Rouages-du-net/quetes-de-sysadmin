@@ -33,6 +33,7 @@ import { POSTGRES } from './postgres';
 import { JOURNAUX } from './journaux';
 import { MEMOIRE } from './memoire';
 import { HEURE } from './heure';
+import { SUPERVISION } from './supervision';
 
 export interface Contexte {
   args: string[];
@@ -56,6 +57,9 @@ export interface Commande {
   propresOptions?: boolean;
   // Section du manuel : 1 (commandes), 8 (administration, ex. usermod).
   section?: number;
+  // Une commande hors du PATH (un plugin de supervision) : on ne la lance que
+  // par son chemin complet, dans ce dossier.
+  dossier?: string;
   lancer: (c: Contexte) => string;
 }
 
@@ -89,6 +93,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...JOURNAUX,
   ...MEMOIRE,
   ...HEURE,
+  ...SUPERVISION,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: () => '' },

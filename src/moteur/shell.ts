@@ -99,6 +99,10 @@ export class Shell implements Jeu {
   comptes: Comptes;
   // Sortie d'erreur et remarques de la ligne en cours.
   private erreurs: string[] = [];
+  // Le code de retour de la dernière commande, quand elle le donne elle-même
+  // (un plugin de supervision : 0 OK, 1 WARNING, 2 CRITICAL) ; sinon, il
+  // vaut 1 si elle a écrit une erreur, 0 sinon.
+  statut: number | null = null;
 
   t: Traduire;
 
@@ -495,12 +499,13 @@ export class Shell implements Jeu {
    * ce qu'elle a écrit, si elle a réussi (aucune erreur) et le lieu où le
    * script se trouve ensuite (cd).
    */
-  sousCommande(ligne: string, cwd: string): { sortie: string; ok: boolean; cwd: string } {
+  sousCommande(ligne: string, cwd: string): { sortie: string; ok: boolean; code: number; cwd: string } {
     const avant = { cwd: this.cwd, erreurs: this.erreurs, derniere: this.derniere };
     this.cwd = cwd;
     try {
       const sortie = this.tube(ligne, decouper(ligne));
-      return { sortie, ok: this.erreurs.length === 0, cwd: this.cwd };
+      const code = this.statut ?? (this.erreurs.length ? 1 : 0);
+      return { sortie, ok: code === 0, code, cwd: this.cwd };
     } finally {
       this.cwd = avant.cwd;
       this.erreurs = avant.erreurs;
@@ -526,6 +531,7 @@ export class Shell implements Jeu {
   // Une ligne complète : commandes reliées par des tubes, redirection finale.
   private tube(ligne: string, mots: Mot[]): string {
     this.erreurs = [];
+    this.statut = null;
     const segments: Mot[][] = [[]];
     let redirection: { fichier: string; ajout: boolean } | null = null;
     for (let i = 0; i < mots.length; i++) {
@@ -600,9 +606,18 @@ export class Shell implements Jeu {
   // Lance une commande. `dernier` : sa sortie s'affiche à l'écran (sinon elle
   // part dans un tube ou un fichier).
   private lancer(args: string[], entree: string | null, root: boolean, dernier: boolean): string {
+    // Dans un tube, c'est le code de la dernière commande qui compte.
+    this.statut = null;
     const [brut, ...reste] = args;
-    // /usr/bin/rsnapshot, /bin/ls… : le chemin complet d'une commande du jeu.
-    const cmd = brut && /^\/(usr\/)?s?bin\/[\w.-]+$/.test(brut) && COMMANDES[brut.split('/').at(-1)!] ? brut.split('/').at(-1)! : brut;
+    // /usr/bin/rsnapshot, /bin/ls… : le chemin complet d'une commande du jeu
+    // (et /usr/lib/nagios/plugins/check_disk pour celles qui sont hors du PATH).
+    const nomSeul = brut?.split('/').at(-1) ?? '';
+    const horsPath = COMMANDES[nomSeul]?.dossier;
+    const cmd =
+      brut && ((/^\/(usr\/)?s?bin\/[\w.-]+$/.test(brut) && COMMANDES[nomSeul] && !horsPath) || (horsPath && brut === `${horsPath}/${nomSeul}`))
+        ? nomSeul
+        : brut;
+    if (cmd && COMMANDES[cmd]?.dossier && cmd === brut) return this.erreur(this.t('commande-introuvable', { commande: cmd }));
     if (!cmd) return '';
     if (root && !this.connues().includes('sudo')) return this.erreur(this.t('sudo-pas-encore'));
     // Vrai comportement : cd est intégré au shell, ce n'est pas un programme.

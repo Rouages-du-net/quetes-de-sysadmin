@@ -1609,6 +1609,145 @@ for (const langue of LANGUES)
       });
     });
 
+    describe("L'Astreinte, chapitre 5 — La sonde (plugins de supervision, mail, timer systemd)", () => {
+      const ecrire = (s: Shell, fichier: string, change: (texte: string) => string) => {
+        s.executer(`sudo nano ${fichier}`);
+        s.enregistrerEdition(change(s.edition!.texte));
+        return s.quitterEdition();
+      };
+      const CONTROLES =
+        '\n$P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERTE\n$P/check_http -H localhost -p 8000 -u /direct | grep -v " OK" | $ALERTE\n';
+      const SERVICE = '[Unit]\nDescription=Sonde de Radio Quartier\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/sonde\n';
+      const TIMER = (declencheur: string) =>
+        `[Unit]\nDescription=Sonde toutes les 5 minutes\n\n[Timer]\n${declencheur}\n\n[Install]\nWantedBy=timers.target\n`;
+
+      it('solution : les plugins, la sonde complétée, un timer systemd, et la nuit d exercice', { timeout: 30_000 }, () => {
+        const { s, tout } = jouer('sonde', [
+          'check_disk -w 20% -c 10% -p /',
+          '/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio',
+          '/usr/lib/nagios/plugins/check_http -H localhost -p 8000 -u /direct',
+          "systemd-analyze calendar '*:0/5'",
+        ]);
+        expect(tout).toContain('check_disk : commande introuvable');
+        contient(tout, 'ne sont pas dans le PATH');
+        expect(tout).toContain('DISK OK - free space: /srv/radio 122 MB (47% inode=99%);');
+        expect(tout).toContain('HTTP OK: HTTP/1.1 200 OK');
+        expect(tout).toContain('Normalized form: *-*-* *:00/5:00');
+        s.executer('sudo true');
+        s.executer('antenne-2027');
+        ecrire(s, '/usr/local/bin/sonde', (t) => t + CONTROLES);
+        ecrire(s, '/etc/systemd/system/sonde.service', () => SERVICE);
+        ecrire(s, '/etc/systemd/system/sonde.timer', () => TIMER('OnCalendar=*:0/5'));
+        s.executer('sudo systemctl daemon-reload');
+        const nuit = s.executer('sudo systemctl enable --now sonde.timer')!;
+        expect(nuit).toContain('Created symlink /etc/systemd/system/timers.target.wants/sonde.timer → /etc/systemd/system/sonde.timer.');
+        contient(nuit, 'Zoé lance l');
+        contient(nuit, 'Le direct a été muet 10 minutes');
+        contient(nuit, 'bien avant la fin des inodes');
+        contient(nuit, "Tu as terminé le chapitre 5 de L'Astreinte");
+        expect(s.executer('systemctl list-timers')).toMatch(/sonde\.timer +sonde\.service/);
+        expect(s.executer('sudo cat /var/mail/zoe')).toContain('HTTP CRITICAL - Unable to open TCP socket');
+        expect(s.termine).toBe(true);
+      });
+
+      it('autre solution : une ligne de crontab, check_procs pour le relais', { timeout: 30_000 }, () => {
+        const { s } = jouer('sonde', ['sudo true', 'antenne-2027']);
+        ecrire(
+          s,
+          '/usr/local/bin/sonde',
+          (t) =>
+            t.replace('$P/check_disk -w 20% -c 10% -p /', '$P/check_disk -w 20% -c 10% -W 20% -K 10% -p / -p /srv/radio') +
+            '\n$P/check_procs -C flux -c 1: | grep -v " OK" | $ALERTE\n',
+        );
+        s.executer('sudo crontab -e');
+        s.enregistrerEdition(`${s.edition!.texte}*/5 * * * * /usr/local/bin/sonde\n`);
+        contient(s.quitterEdition(), "Tu as terminé le chapitre 5 de L'Astreinte");
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : la sonde de départ, OnUnitActiveSec seul, des seuils trop serrés', { timeout: 60_000 }, () => {
+        const { s } = jouer('sonde', ['sudo true', 'antenne-2027']);
+        ecrire(s, '/etc/systemd/system/sonde.service', () => SERVICE);
+        ecrire(s, '/etc/systemd/system/sonde.timer', () => TIMER('OnUnitActiveSec=5min'));
+        let nuit = s.executer('sudo systemctl enable --now sonde.timer')!;
+        contient(nuit, 'Rien n');
+        contient(nuit, 'OnUnitActiveSec= seul ne part jamais');
+        ecrire(s, '/etc/systemd/system/sonde.timer', () => TIMER('OnCalendar=*:0/5'));
+        nuit = s.executer('sudo systemctl daemon-reload')!;
+        contient(nuit, 'et personne n');
+        contient(nuit, 'plus un inode libre');
+        nuit = ecrire(s, '/usr/local/bin/sonde', (t) => t.replace('-w 20% -c 10% -p /', '-w 60% -c 10% -p /') + CONTROLES);
+        contient(nuit, 'alors que tout allait bien');
+        expect(s.termine).toBe(false);
+      });
+    });
+
+    describe("L'Astreinte, chapitre 6 — Le post-mortem (journalctl --since, last, sans reproche)", () => {
+      const POSTMORTEM = [
+        '# Post-mortem : coupure du direct, nuit du 11 au 12 septembre 2027',
+        '',
+        '## Résumé',
+        'Le direct a coupé dans la nuit de dimanche, puis Théo l a relancé.',
+        '',
+        '## Chronologie',
+        '- 02:13 : la mise à jour automatique relance le relais, qui ne repart pas.',
+        '- 02:15 : première alerte de la sonde.',
+        '- 02:41 : Théo se connecte.',
+        '- 02:58 : le relais repart.',
+        '',
+        '## Impact',
+        '45 minutes de silence sur le direct.',
+        '',
+        '## Causes',
+        'unattended-upgrades (needrestart) a relancé le relais ; une option inconnue (bitrate_max) attendait dans flux.conf depuis le 20 août.',
+        '',
+        '## Ce qui a bien marché',
+        'La sonde a prévenu en 2 minutes.',
+        '',
+        '## Actions',
+        '- Vérifier la configuration avant chaque redémarrage (ExecStartPre=).',
+        '- Relancer le relais après chaque modification.',
+      ].join('\n');
+
+      it('solution : les journaux de la nuit, puis le post-mortem complet', () => {
+        const { s, tout } = jouer('post-mortem', [
+          'cat notes_theo.txt',
+          'last',
+          'sudo journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30"',
+          'antenne-2027',
+          'sudo cat /var/log/unattended-upgrades/unattended-upgrades-dpkg.log',
+          'sudo journalctl | grep flux.conf',
+        ]);
+        contient(tout, 'des pistes, pas des faits');
+        expect(tout).toMatch(/theo +pts\/0 +203\.0\.113\.45 +Sun Sep 12 02:41 - 03:05  \(00:24\)/);
+        expect(tout).toContain("sept. 12 02:13:06 radio flux[24410]: /etc/radio/flux.conf:7: unknown option 'bitrate_max'");
+        expect(tout).not.toContain(
+          'août 20 21:20:41 radio sudo[7790]:      zoe : TTY=pts/1 ; PWD=/home/zoe ; USER=root ; COMMAND=/usr/bin/nano /etc/radio/flux.conf\nsept. 12 02:12',
+        );
+        expect(tout).toContain(' systemctl restart radio-flux.service');
+        contient(tout, 'trois semaines');
+        s.executer('nano postmortem.md');
+        s.enregistrerEdition(POSTMORTEM);
+        contient(s.quitterEdition(), 'Tu as terminé L');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : les heures des notes de Théo, un coupable, une seule action', () => {
+        const { s } = jouer('post-mortem', []);
+        s.executer('nano postmortem.md');
+        s.enregistrerEdition(
+          POSTMORTEM.replace('02:13', '02:20')
+            .replace('Causes\n', 'Causes\nC est la faute de Zoé. ')
+            .replace('- Relancer le relais après chaque modification.', ''),
+        );
+        const relu = s.quitterEdition();
+        contient(relu, 'faute');
+        contient(relu, 'heure de la coupure');
+        contient(relu, 'Au moins deux actions');
+        expect(s.termine).toBe(false);
+      });
+    });
+
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
       const s = new Shell(chapitre('eveil'), langue);
       it('man affiche une vraie page', () => {

@@ -201,6 +201,11 @@ man-head = affiche le début d’un fichier (les 10 premières lignes, ou N).
     .option-n = nombre de lignes à afficher (10 par défaut) : head -n 3 fichier.
 man-kill = demande à un processus de s’arrêter (il reçoit un signal). PID est son numéro, donné par ps. kill -9 PID force l’arrêt. On ne peut arrêter que ses propres processus (ou tous, en root). Un zombie (<defunct>) ne réagit à aucun signal : il est déjà mort, seul son parent peut le récupérer.
     .synopsis = kill PID
+man-last = liste les dernières connexions à la machine (d'après /var/log/wtmp) : qui, depuis quelle adresse, quand, et combien de temps (still logged in : encore connecté·e). Avec un nom de compte, seulement ses connexions ; -n N, seulement les N dernières. Utile pour reconstituer une nuit d'incident : qui est intervenu, et à quelle heure.
+    .synopsis = last [-n N] [compte…]
+    .option-n = seulement les N connexions les plus récentes.
+    .exemple-1 = toutes les connexions récentes
+    .exemple-2 = celles d'un compte
 man-less = affiche un fichier page par page. Ici, les fichiers sont courts : less fait comme cat.
     .synopsis = less fichier
 man-ln = crée un lien (link). Avec -s, un lien symbolique : un petit fichier qui contient le chemin d'un autre, et que les commandes suivent pour lire, écrire ou entrer (ls -l le montre avec une flèche ->). Si la destination est un lieu, le lien y prend le nom de la cible. Attention : un chemin relatif est lu depuis le lieu du lien, pas depuis là où l'on est ; dans le doute, donner un chemin absolu. Effacer le lien (rm) n'efface pas le fichier visé. Sans -s, un lien physique : un deuxième nom pour le même fichier. Pour remplacer un lien qui vise un lieu (un lien « current » vers la version en ligne), il faut -f et -n : sans -n, ln entre dans le lieu visé et y crée le nouveau lien. Remplacer un lien est instantané : c'est ainsi qu'on bascule d'une version à l'autre, et qu'on revient en arrière.
@@ -222,6 +227,11 @@ man-ls = liste le contenu d’un lieu (list). -a montre aussi les fichiers cach�
     .exemple-1 = ce qu’il y a ici
     .exemple-2 = tout, même ce qui est caché
     .exemple-3 = les permissions du lieu souvenirs
+man-mail = envoie un courrier (mailx) : le texte arrive par un tube (echo … | mail -s sujet destinataire). -s donne le sujet ; -E n'envoie rien si le texte est vide (pratique derrière une commande qui ne dit rien quand tout va bien). Sur un serveur, le courrier local va dans /var/mail/compte ; /etc/aliases peut le renvoyer ailleurs (root: zoe). Sans destinataire, mail liste les courriers reçus.
+    .synopsis = mail [-E] [-s sujet] destinataire… ; mail
+    .exemple-1 = envoyer une ligne à zoe
+    .exemple-2 = n'envoyer que si la commande a écrit quelque chose
+    .exemple-3 = lire sa boîte
 man-man = affiche le manuel d’une commande (manual). C’est le premier réflexe quand on ne sait plus comment marche une commande : sa syntaxe, ses options, des exemples. Sur un vrai Linux, la page s’ouvre en plein écran : on la parcourt avec les flèches, on cherche avec /mot et on la quitte avec q.
     .synopsis = man [-k mot] commande
     .option-k = cherche un mot dans le résumé de toutes les commandes (comme apropos), pour trouver la commande qui fait ce qu’on veut.
@@ -328,7 +338,7 @@ man-sudo = exécute une commande en tant que root, l’administrateur qui a tous
     .synopsis = sudo [-u compte] commande
     .exemple-1 = lire un fichier réservé à root
     .exemple-2 = lister les bases de données, en tant que postgres
-man-systemctl = gère les services, ces programmes qui tournent en permanence (serveur web…), à travers systemd. status montre l'état d'un service et ses derniers messages ; start, stop, restart le démarrent, l'arrêtent ou le relancent ; reload lui fait relire sa configuration. enable le fait démarrer avec la machine, disable non : start ne vaut que jusqu'au prochain redémarrage. --failed liste les services en échec. Seul root peut changer l'état d'un service. Pour modifier un service sans toucher au fichier livré (dans /usr/lib/systemd/system), on écrit une surcharge (drop-in) : edit l'ouvre dans l'éditeur (/etc/systemd/system/service.service.d/override.conf), avec la section {"["}Service] et les seules lignes à changer, par exemple MemoryMax=512M (la mémoire au-delà de laquelle systemd tue le service) ou Restart=on-failure (le relancer s'il meurt en échec). Après avoir écrit une surcharge à la main, daemon-reload la fait relire. set-property change une propriété tout de suite et la garde : systemctl set-property service MemoryMax=512M.
+man-systemctl = gère les services, ces programmes qui tournent en permanence (serveur web…), à travers systemd. status montre l'état d'un service et ses derniers messages ; start, stop, restart le démarrent, l'arrêtent ou le relancent ; reload lui fait relire sa configuration. enable le fait démarrer avec la machine, disable non : start ne vaut que jusqu'au prochain redémarrage. --failed liste les services en échec. Seul root peut changer l'état d'un service. list-timers liste les timers (les tâches planifiées de systemd) et leur prochain déclenchement. Pour modifier un service sans toucher au fichier livré (dans /usr/lib/systemd/system), on écrit une surcharge (drop-in) : edit l'ouvre dans l'éditeur (/etc/systemd/system/service.service.d/override.conf), avec la section {"["}Service] et les seules lignes à changer, par exemple MemoryMax=512M (la mémoire au-delà de laquelle systemd tue le service) ou Restart=on-failure (le relancer s'il meurt en échec). Après avoir écrit une surcharge à la main, daemon-reload la fait relire. set-property change une propriété tout de suite et la garde : systemctl set-property service MemoryMax=512M.
     .synopsis = systemctl [status|start|stop|restart|reload|enable|disable|is-active|is-enabled|edit] service ; systemctl set-property service propriété=valeur ; systemctl daemon-reload ; systemctl --failed ; systemctl reboot
     .exemple-1 = l'état de nginx et ses derniers messages
     .exemple-2 = les services en échec (le premier réflexe après un redémarrage)
@@ -336,6 +346,15 @@ man-systemctl = gère les services, ces programmes qui tournent en permanence (s
     .exemple-4 = démarrer nginx maintenant ET à chaque démarrage de la machine
     .exemple-5 = écrire une surcharge pour un service (ex. MemoryMax=, Restart=)
     .exemple-6 = limiter tout de suite la mémoire d'un service
+man-systemd-analyze = des outils pour systemd ; ici, calendar teste une expression OnCalendar= (celle d'un timer) : sa forme normale, et quand elle se déclenchera la prochaine fois. Format : jour de la semaine (facultatif), date (*-*-* : tous les jours), heure H:M:S. *:0/5 toutes les 5 minutes ; *-*-* 03:30:00 chaque jour à 3 h 30 ; Mon..Fri 08:00 en semaine ; hourly, daily, weekly. Pour vérifier un timer avant de l'activer.
+    .synopsis = systemd-analyze calendar EXPRESSION…
+    .exemple-1 = toutes les 5 minutes
+    .exemple-2 = chaque jour à 3 h 30
+man-systemd_timer = un timer systemd (NOM.timer, dans /etc/systemd/system) lance un service (NOM.service, souvent Type=oneshot) à heure fixe ou à intervalle : l'équivalent moderne d'une ligne de crontab, avec le journal en plus (journalctl -u NOM). Dans la section {"["}Timer] : OnCalendar= une heure (*:0/5 toutes les 5 minutes, daily…, à tester avec systemd-analyze calendar), ou OnBootSec= (après le démarrage) avec OnUnitActiveSec= (après le dernier lancement : seul, il ne part jamais, le service n'ayant encore jamais tourné). Dans {"["}Install], WantedBy=timers.target, pour pouvoir l'activer. Puis : systemctl daemon-reload, systemctl enable --now NOM.timer, et systemctl list-timers pour vérifier.
+    .synopsis = /etc/systemd/system/NOM.timer et NOM.service
+    .exemple-1 = écrire le timer
+    .exemple-2 = l'activer et le démarrer
+    .exemple-3 = la liste des timers, avec leur prochain déclenchement
 man-tail = affiche la fin d’un fichier (les 10 dernières lignes, ou N). Pratique pour les journaux, où le plus récent est à la fin.
     .synopsis = tail [-n N] [fichier]
     .option-n = nombre de lignes à afficher (10 par défaut) : tail -n 3 fichier.
@@ -402,6 +421,16 @@ man-whatis = affiche en une ligne à quoi sert une commande.
 man-whoami = affiche sous quel nom d’utilisateur tu agis (who am I).
     .synopsis = whoami
 
+man-check_disk = plugin de supervision (monitoring-plugins, le format de Nagios et d'Icinga) : la place libre d'un support. Il écrit une ligne (DISK OK, WARNING ou CRITICAL, puis les mesures après « | ») et rend un code : 0 OK, 1 WARNING, 2 CRITICAL, 3 UNKNOWN. -w 20% : alerte quand il reste moins de 20 % de libre ; -c 10% : critique sous 10 %. -W et -K font de même pour les inodes libres (sans eux, les inodes ne sont pas surveillés). -p choisit le support (on peut en donner plusieurs). Sur Debian, les plugins sont dans /usr/lib/nagios/plugins, hors du PATH : on les lance par leur chemin complet.
+    .synopsis = /usr/lib/nagios/plugins/check_disk -w LIBRE% -c LIBRE% [-W LIBRE% -K LIBRE%] -p lieu [-p lieu…]
+    .exemple-1 = le disque système : alerte sous 20 % de libre, critique sous 10 %
+    .exemple-2 = le volume des données, inodes compris
+man-check_http = plugin de supervision : un site ou un service web répond-il ? -H la machine (ou -I son adresse), -p le port, -u le chemin. HTTP OK pour une réponse 2xx ou 3xx, WARNING pour 4xx, CRITICAL pour 5xx ou si personne ne répond (Connection refused). Codes de retour : 0, 1, 2, 3 (UNKNOWN), comme tous les plugins.
+    .synopsis = /usr/lib/nagios/plugins/check_http -H machine [-p port] [-u chemin]
+    .exemple-1 = le direct de la radio répond-il ?
+man-check_procs = plugin de supervision : compte les processus (ceux d'une commande avec -C) et alerte hors d'une plage : -c 1: veut au moins 1 processus (critique sinon), -w :10 au plus 10, -c 1:1 exactement 1. Codes de retour : 0, 1, 2, 3, comme tous les plugins.
+    .synopsis = /usr/lib/nagios/plugins/check_procs [-C commande] [-w PLAGE] [-c PLAGE]
+    .exemple-1 = le relais du flux tourne-t-il ?
 man-chgrp = change le groupe d'un fichier ou d'un dossier (change group). Le propriétaire peut choisir un groupe dont il est membre ; root peut choisir n'importe quel groupe. -R agit aussi sur tout le contenu d'un dossier.
     .synopsis = chgrp [-R] groupe fichier...
     .option-R = agit sur le dossier et sur tout ce qu'il contient (récursif).
@@ -435,8 +464,8 @@ man-usermod = modifie un compte (user modify), notamment ses groupes. -G donne l
     .exemple-2 = attention : malo n'est plus que dans adm (ses autres groupes secondaires sont retirés)
     .exemple-3 = verrouiller le compte de malo
 
-man-journalctl = lit le journal de systemd, où les services écrivent leurs messages (et leurs erreurs). -u ne garde qu'un service, -n les N dernières lignes, -b le démarrage en cours, -p err les erreurs, -k les messages du noyau (comme dmesg). -x ajoute des explications et -e va à la fin : journalctl -xeu nginx est la formule classique quand un service refuse de démarrer. Il faut être root, ou dans le groupe adm ou systemd-journal, pour tout lire.
-    .synopsis = journalctl [-u service] [-n N] [-b] [-k] [-p priorité] [-x] [-e]
+man-journalctl = lit le journal de systemd, où les services écrivent leurs messages (et leurs erreurs). -u ne garde qu'un service, -n les N dernières lignes, -b le démarrage en cours, -p err les erreurs, -k les messages du noyau (comme dmesg). --since et --until gardent une période (« 2027-09-12 02:00 », today, yesterday, -1h). -x ajoute des explications et -e va à la fin : journalctl -xeu nginx est la formule classique quand un service refuse de démarrer. Il faut être root, ou dans le groupe adm ou systemd-journal, pour tout lire.
+    .synopsis = journalctl [-u service] [-n N] [-b] [-k] [-p priorité] [--since DATE] [--until DATE] [-x] [-e]
     .option-k = seulement les messages du noyau, depuis le démarrage (kernel).
     .option-u = seulement les messages de ce service (unit).
     .option-n = seulement les N dernières lignes.
@@ -448,6 +477,7 @@ man-journalctl = lit le journal de systemd, où les services écrivent leurs mes
     .exemple-2 = la formule quand un service ne démarre pas
     .exemple-3 = les erreurs depuis le dernier démarrage
     .exemple-4 = les 20 derniers messages
+    .exemple-5 = tout ce qui s'est passé entre 2 h et 3 h 30, une nuit précise
 man-reboot = redémarre la machine. Les services activés (systemctl enable) repartent tout seuls ; les autres restent arrêtés. Sur une connexion ssh, la session est coupée : il faut se reconnecter. Réservé à root.
     .synopsis = reboot
     .exemple-1 = redémarrer la machine

@@ -13,7 +13,8 @@ un système entièrement simulé : rien ne sort du navigateur.
 > groupes, services systemd, réseau, git, archives, durcissement SSH, pare-feu,
 > fail2ban, sauvegardes avec rsync, cron et restic, nginx, TLS, DNS, Docker et
 > Compose, déploiement par git, bleu/vert, canari, migrations, rançongiciel,
-> rsnapshot, pg_dump, disque plein et logrotate, mémoire et OOM killer, inodes, heure et NTP), avec
+> rsnapshot, pg_dump, disque plein et logrotate, mémoire et OOM killer,
+> inodes, heure et NTP, supervision, timers systemd, post-mortem), avec
 > un manuel intégré et un éditeur `nano`. La suite est dans la
 > [feuille de route](docs/ROADMAP.md).
 
