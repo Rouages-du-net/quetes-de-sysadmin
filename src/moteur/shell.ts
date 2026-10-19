@@ -113,6 +113,8 @@ export class Shell implements Jeu {
   statut: number | null = null;
   // Le masque des droits des fichiers créés (umask), propre à cette session.
   masque = '0022';
+  // Le fichier où part la sortie de la commande en cours (> fichier), s'il y en a un : wg genkey le regarde.
+  sortieVers: string | null = null;
   // La session tmux où l'on tape (null : hors de tmux) ; les sessions vivent dans etat.tmux.
   tmux: string | null = null;
   // La connexion vient de tomber (le réseau a coupé) : la console ramène au poste.
@@ -659,7 +661,9 @@ export class Shell implements Jeu {
       commandes.push(args);
       const dernier = i === segments.length - 1 && !redirection;
       this.comme = comme;
+      this.sortieVers = i === segments.length - 1 && redirection ? this.resoudre(redirection.fichier) : null;
       entree = this.lancer(args, entree, root, dernier);
+      this.sortieVers = null;
     });
     let sortie: string = entree ?? '';
     this.derniere = { ligne, commandes, sortie, erreurs: this.erreurs, redirection: redirection ? this.resoudre(redirection.fichier) : null };

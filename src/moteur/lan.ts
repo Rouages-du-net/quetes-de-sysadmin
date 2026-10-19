@@ -16,6 +16,7 @@
 
 import type { Jeu } from './shell';
 import type { Flux } from './nftables';
+import type { Distant } from './wireguard';
 
 export interface Interface {
   nom: string;
@@ -24,6 +25,8 @@ export interface Interface {
   adresses: string[];
   mac: string;
   vlan?: { parent: string; id: number };
+  // Une interface WireGuard (wg0), montée par wg-quick (voir wireguard.ts).
+  wireguard?: boolean;
 }
 
 export interface Appareil {
@@ -49,6 +52,8 @@ export interface Lan {
   ordre: string[];
   // Le trafic que les appareils essaient à travers le routeur (voir nftables.ts).
   flux?: Flux[];
+  // Les appareils qui se connectent depuis internet par WireGuard (voir wireguard.ts).
+  distants?: Distant[];
 }
 
 export const INTERFACES = '/etc/network/interfaces';
@@ -248,6 +253,8 @@ export function demarrerReseau(j: Jeu) {
   const l = lan(j);
   if (!l) return;
   for (const [nom, i] of Object.entries(l.interfaces)) {
+    // Les interfaces WireGuard ne sont pas dans ce fichier : wg-quick les gère.
+    if (i.wireguard) continue;
     if (i.vlan) delete l.interfaces[nom];
     else Object.assign(i, { up: nom === 'lo', adresses: nom === 'lo' ? ['127.0.0.1/8'] : [] });
   }

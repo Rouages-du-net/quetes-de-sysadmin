@@ -144,6 +144,16 @@ export const PAGES: Record<string, Page> = {
     exemples: ['sudo conntrack -L', 'sudo conntrack -L -s 10.10.20.150', 'sudo conntrack -C'],
     voir: ['nft'],
   },
+  wg: {
+    section: 8,
+    exemples: ['umask 077', 'wg genkey | tee privatekey | wg pubkey > publickey', 'cat publickey', 'sudo wg show'],
+    voir: ['wg-quick', 'nft', 'ip'],
+  },
+  'wg-quick': {
+    section: 8,
+    exemples: ['sudo wg-quick up wg0', 'sudo wg-quick down wg0', 'sudo systemctl enable --now wg-quick@wg0'],
+    voir: ['wg', 'systemctl'],
+  },
   id: { exemples: ['id', 'id malo'], voir: ['groups', 'whoami', 'usermod'] },
   journalctl: {
     options: ['u', 'n', 'b', 'k', 'p', 'x', 'e'],

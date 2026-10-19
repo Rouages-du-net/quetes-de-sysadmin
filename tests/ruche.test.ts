@@ -265,4 +265,90 @@ table ip nat {
       expect(tout).toContain('src=10.10.30.11 dst=203.0.113.50');
       expect(c.termines).not.toContain('zones');
     });
+
+    const PEER_MALIK = (cle: string) => `\n[Peer]\nPublicKey = ${cle}\nAllowedIPs = 10.10.99.2/32\n`;
+    const WG0 = (cle: string) => `[Interface]\nAddress = 10.10.99.1/24\nListenPort = 51820\nPrivateKey = ${cle}\n`;
+    const clesDe = (c: Console) => ({
+      malik: c.shell.lire('/home/vous/courriel_malik.txt')!.match(/[A-Za-z0-9+/]{43}=/)![0],
+      privee: () => c.shell.lire('/home/vous/privatekey')!.trim(),
+      publique: () => c.shell.lire('/home/vous/publickey')!.trim(),
+    });
+    const PORTABLE =
+      (pub: string, endpoint = 'ruche.example:51820') =>
+      (t: string) =>
+        t
+          .replace('PublicKey =', `PublicKey = ${pub}`)
+          .replace('Endpoint =', `Endpoint = ${endpoint}`)
+          .replace('AllowedIPs =', 'AllowedIPs = 10.10.10.0/24');
+    const PARE_FEU = (t: string) =>
+      t
+        .replace('icmp type echo-request accept', 'icmp type echo-request accept\n\t\tudp dport 51820 accept')
+        .replace('iifname "eth1.20" oifname "eth0" accept', 'iifname "eth1.20" oifname "eth0" accept\n\t\tiifname "wg0" oifname "eth1.10" accept');
+
+    it('chapitre 4 — solution : umask 077, wg0.conf, le portable, le pare-feu, wg-quick@wg0', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones']);
+      const k = clesDe(c);
+      let tout = jouer(['cat portable-malik.conf', 'umask 077', 'wg genkey | tee privatekey | wg pubkey > publickey', 'ls -l']);
+      expect(tout).toContain('-rw------- vous     vous         44 privatekey');
+      editer('sudo nano /etc/wireguard/wg0.conf', () => WG0(k.privee()) + PEER_MALIK(k.malik));
+      editer('nano portable-malik.conf', PORTABLE(k.publique()));
+      editer('sudo nano /etc/nftables.conf', PARE_FEU);
+      tout = jouer([
+        'sudo nft -c -f /etc/nftables.conf',
+        'sudo systemctl reload nftables',
+        'sudo systemctl enable --now wg-quick@wg0',
+        'sudo wg show',
+        'ping -c 1 10.10.99.2',
+      ]);
+      expect(tout).toContain('latest handshake: 7 seconds ago');
+      expect(tout).toContain('endpoint: 198.51.100.23:41414');
+      expect(tout).toContain('64 bytes from 10.10.99.2');
+      tout += jouer(['ip -br a']);
+      expect(tout).toContain('wg0              UNKNOWN        10.10.99.1/24');
+      contient(tout, 'https://www.wireguard.com/quickstart/');
+      expect(c.termines).toContain('vpn');
+      tout = jouer(['sudo reboot', 'ssh ruche', 'sudo wg show wg0', 'systemctl status wg-quick@wg0']);
+      expect(tout).toContain('latest handshake');
+      expect(tout).toContain('Active: active (exited)');
+    });
+
+    it('chapitre 4 — fausses pistes : la clé lisible, la porte fermée, les clés croisées, wg-quick puis le service', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones']);
+      const k = clesDe(c);
+      let tout = jouer(['wg genkey > privatekey', 'wg pubkey < privatekey', 'sudo wg show', 'wg show']);
+      expect(tout).toContain('Warning: writing to world accessible file.');
+      expect(tout).toContain('Unable to access interface: Operation not permitted');
+      jouer(['cat privatekey | wg pubkey > publickey']);
+      tout = editer('sudo nano /etc/wireguard/wg0.conf', () => WG0(k.privee()) + PEER_MALIK(k.malik));
+      contient(tout, 'comptes de la machine peuvent le lire');
+      // Les clés croisées : la clé PRIVÉE du routeur donnée au portable.
+      editer('nano portable-malik.conf', PORTABLE(k.privee()));
+      tout = jouer(['sudo wg-quick up wg0']);
+      expect(tout).toContain('[#] ip link set mtu 1420 up dev wg0');
+      // Porte fermée d'abord : la chaîne input jette l'UDP.
+      contient(tout, 'la chaîne input les jette');
+      jouer(['sudo nft add rule inet filter input udp dport 51820 accept']);
+      tout = jouer(['sudo wg show wg0']);
+      expect(tout).not.toContain('latest handshake');
+      editer(
+        'nano portable-malik.conf',
+        () =>
+          '[Interface]\nAddress = 10.10.99.2/32\n\n[Peer]\n' +
+          `PublicKey = ${k.publique()}\nEndpoint = 192.0.2.21:51820\nAllowedIPs = 10.10.10.5/32\n`,
+      );
+      tout = jouer(['sudo wg show wg0', 'sudo systemctl enable wg-quick@wg0', 'sudo systemctl start wg-quick@wg0', 'journalctl -u wg-quick@wg0']);
+      expect(tout).toContain('latest handshake');
+      expect(tout).toContain("wg-quick: `wg0' already exists");
+      jouer(['sudo nft add rule inet filter forward iifname wg0 accept', 'chmod 600 privatekey']);
+      // Tout marche… jusqu'au redémarrage : le pare-feu n'est pas dans le fichier.
+      expect(c.termines).not.toContain('vpn');
+      tout = jouer(['sudo wg-quick down wg0', 'sudo systemctl start wg-quick@wg0', 'sudo reboot', 'ssh ruche', 'sudo wg show wg0']);
+      expect(tout).toContain('[#] ip link delete dev wg0');
+      // wg0 est revenu (le service), mais pas la règle tapée à la main : plus de poignée de main.
+      expect(tout).toContain('peer: ');
+      expect(tout).not.toContain('latest handshake');
+      editer('sudo nano /etc/nftables.conf', PARE_FEU);
+      jouer(['sudo systemctl restart nftables']);
+      expect(c.termines).toContain('vpn');
+    });
   });

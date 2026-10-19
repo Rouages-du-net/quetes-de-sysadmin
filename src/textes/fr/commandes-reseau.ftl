@@ -21,3 +21,16 @@ sysctl-usage =
     Use --help for more information.
 # conntrack -E attend des événements sans fin : le jeu ne le simule pas.
 conntrack-evenements = conntrack -E attend sans fin les nouveaux échanges : le jeu ne le simule pas. conntrack -L montre ceux du moment.
+wg-usage =
+    Usage: wg <cmd> [<args>]
+
+    Available subcommands:
+      show: Shows the current configuration and device information
+      showconf: Shows the current configuration of a given WireGuard interface, for use with `setconf'
+      genkey: Generates a new private key and writes it to stdout
+      genpsk: Generates a new preshared key and writes it to stdout
+      pubkey: Reads a private key from stdin and writes a public key to stdout
+    You may pass `--help' to any of these subcommands to view usage.
+wg-quick-usage = Usage: wg-quick [ up | down | save | strip ] [ CONFIG_FILE | INTERFACE ]
+# wg set, setconf… : changer une interface en marche n'est pas simulé.
+wg-set-non-simule = Le jeu ne simule pas les changements d'une interface en marche : modifie /etc/wireguard/wg0.conf, puis wg-quick down wg0 et wg-quick up wg0 (ou systemctl restart wg-quick@wg0).

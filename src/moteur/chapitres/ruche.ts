@@ -257,6 +257,7 @@ export function mondeRuche(o: {
   maison: Record<string, Noeud>;
   nftables?: string;
   sysctl?: Record<string, Noeud>;
+  etc?: Record<string, Noeud>;
 }): Dossier {
   return d(
     {
@@ -269,6 +270,7 @@ export function mondeRuche(o: {
           'dnsmasq.d': d({ ruche: fichier(o.dnsmasq) }, undefined, racine),
           'nftables.conf': f(o.nftables ?? NFTABLES_DEBIAN, { lignes: true, proprio: 'root', mode: 'rwxr-xr-x' }),
           'sysctl.conf': fichier(SYSCTL_CONF),
+          ...o.etc,
           'sysctl.d': d(
             { 'README.sysctl': fichier('Files in /etc/sysctl.d/ are read by systemd-sysctl and by sysctl --system.\nSee sysctl.d(5).'), ...o.sysctl },
             undefined,
