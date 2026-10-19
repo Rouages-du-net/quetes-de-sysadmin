@@ -383,7 +383,8 @@ export const SYSTEMD: Record<string, Commande> = {
           continue;
         }
         // Une surcharge écrite à la main n'est lue qu'après daemon-reload : systemctl le rappelle.
-        if (empreinte(jeu, nom) !== (s.empreinteSurcharges ?? ''))
+        // (Jamais relue : l'état de départ, sans fichier d'unité ni surcharge.)
+        if (empreinte(jeu, nom) !== (s.empreinteSurcharges ?? `/etc/systemd/system/${nom}.service\n`))
           sorties.push(`Warning: The unit file, source configuration file or drop-ins of ${nom}.service changed on disk. Run 'systemctl daemon-reload' to reload units.`);
         if (action === 'status') {
           consulter();

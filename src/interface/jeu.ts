@@ -79,18 +79,26 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
-  let sauve: { termines?: string[]; histoire?: string | null; connus?: string } = {};
+  let sauve: {
+    termines?: string[];
+    histoire?: string | null;
+    connus?: string;
+    ssh?: { fichiers: Record<string, string>; phrases?: Record<string, string> };
+  } = {};
   try {
     sauve = JSON.parse(localStorage.getItem(CLE) ?? '{}');
   } catch {}
-  const terminalJeu = new Console({ langue: t.langue, termines: sauve.termines, hotesConnus: sauve.connus });
+  const terminalJeu = new Console({ langue: t.langue, termines: sauve.termines, hotesConnus: sauve.connus, ssh: sauve.ssh });
   const termines = terminalJeu.termines;
   // Histoire et chapitre en cours (-1 : sur le poste).
   const histoire = () => (terminalJeu.distant ? HISTOIRES.indexOf(terminalJeu.distant.histoire) : -1);
   const courant = () => (terminalJeu.distant ? terminalJeu.distant.histoire.chapitres.indexOf(terminalJeu.distant.shell.chapitre) : -1);
   const sauver = () => {
     try {
-      localStorage.setItem(CLE, JSON.stringify({ termines, histoire: terminalJeu.distant?.histoire.id ?? null, connus: terminalJeu.hotesConnus() }));
+      localStorage.setItem(
+        CLE,
+        JSON.stringify({ termines, histoire: terminalJeu.distant?.histoire.id ?? null, connus: terminalJeu.hotesConnus(), ssh: terminalJeu.ssh() }),
+      );
     } catch {}
   };
   const ouvert = (h: number, c: number) => c === 0 || termines.includes(chapitres(h)[c - 1].id);
@@ -128,7 +136,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
 
   const majInvite = () => {
     invite.textContent = terminalJeu.invite();
-    saisie.type = terminalJeu.shell.attente ? 'password' : 'text';
+    saisie.type = terminalJeu.shell.saisieMasquee() ? 'password' : 'text';
   };
 
   const majNav = () => {
@@ -193,7 +201,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     e.preventDefault();
     const ligne = saisie.value;
     // Un mot de passe ne s'affiche pas et ne va pas dans l'historique.
-    const secret = terminalJeu.shell.attente !== null;
+    const secret = terminalJeu.shell.saisieMasquee();
     const reponse = secret || terminalJeu.shell.question !== null;
     afficher(secret ? (invite.textContent ?? '') : `${invite.textContent} ${ligne}`, 'cmd');
     if (ligne.trim() && !reponse) historique.push(ligne);

@@ -72,6 +72,13 @@ rouages.net.
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;
   on part du poste et on se connecte en `ssh` à la machine de chaque
   histoire (`commandes/ssh.ts`).
+- `src/moteur/acces.ts` : le « vrai » ssh (machines à `etat.sshReel` et
+  machines internes d'une histoire, `Chapitre.hotes`) : `~/.ssh/config`,
+  `ProxyJump`, `known_hosts`, `authorized_keys`, phrase de passe, mot de
+  passe ; `ssh-copy-id` et `scp` dans `commandes/transferts.ts`, `rsync`
+  distant dans `commandes/sauvegarde.ts`. La console garde une pile de
+  sessions internes (`interieur`) ; `Chapitre.surveillePoste` fait vérifier
+  les événements après les commandes tapées sur le poste.
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
   dans `editeur.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).

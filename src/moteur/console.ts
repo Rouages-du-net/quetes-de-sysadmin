@@ -18,6 +18,8 @@ export interface OptionsConsole {
   termines?: string[];
   /** Contenu sauvegardé de ~/.ssh/known_hosts. */
   hotesConnus?: string;
+  /** Les fichiers de ~/.ssh créés par la joueuse ou le joueur (clés, config), et les phrases de passe. */
+  ssh?: { fichiers: Record<string, string>; phrases?: Record<string, string> };
 }
 
 // L'histoire à finir pour recevoir les autres clés.
@@ -31,6 +33,10 @@ export class Console {
   termines: string[];
   poste: Shell;
   distant: { machine: Machine; histoire: Histoire; shell: Shell } | null = null;
+  // Les sessions ouvertes depuis la machine de l'histoire, vers son réseau
+  // interne (la dernière est celle où l'on tape) ; `retour` : ouverte avec
+  // ssh -J depuis le poste, exit ramène directement au poste.
+  interieur: { shell: Shell; domaine: string; retour: boolean }[] = [];
   // Les machines gardent leur état tant que la partie est ouverte : se
   // reconnecter retrouve le chapitre là où on l'a laissé.
   private sessions = new Map<string, Shell>();
@@ -42,7 +48,7 @@ export class Console {
   }
 
   private nouveauPoste(hotesConnus = this.options.hotesConnus): Shell {
-    const cles = MACHINES.filter((m) => this.ouverte(m.histoire!));
+    const cles = MACHINES.filter((m) => this.ouverte(m.histoire!) && !m.sansCle);
     const s = new Shell(poste(cles), this.t.langue, 'poste');
     // ssh demande au serveur d'en face sa configuration appliquée (sshd).
     s.etat.sshdDistant = (nom: string) => this.sessions.get(nom)?.etat.sshd?.charge ?? null;
@@ -54,8 +60,30 @@ export class Console {
     s.etat.portDistant = (nom: string, port: number): EtatPort => etatPort(this.sessionDe(nom), port, false, POSTE.adresse);
     // … et sa clé d'hôte, qui change quand la machine a été réinstallée.
     s.etat.cleDistante = (nom: string): string => this.chapitreDeConnexion(nom).cleHote ?? '';
+    // … et la session elle-même (ssh -J, scp, ssh-copy-id, sur les machines qui gèrent leurs clés).
+    s.etat.sessionDistante = (nom: string): Shell => this.sessionDe(nom);
     if (hotesConnus) s.placer('ssh', '~/.ssh/known_hosts', f(hotesConnus, { lignes: true }));
+    // Les clés créées et la config modifiée, gardées d'une visite à l'autre.
+    for (const [nom, contenu] of Object.entries(this.options.ssh?.fichiers ?? {})) {
+      const ancien = s.trouver(`~/.ssh/${nom}`);
+      const prive = /^id_/.test(nom) && !nom.endsWith('.pub');
+      if (ancien?.type === 'fichier') ancien.contenu = contenu;
+      else s.placer('ssh', `~/.ssh/${nom}`, f(contenu, { lignes: true, mode: prive ? 'rw-------' : 'rw-r--r--' }));
+    }
+    if (this.options.ssh?.phrases) s.etat.phrasesDePasse = { ...this.options.ssh.phrases };
     return s;
+  }
+
+  /** Ce qu'il faut garder de ~/.ssh du poste : ce que la joueuse ou le joueur a créé ou modifié. */
+  ssh(): { fichiers: Record<string, string>; phrases?: Record<string, string> } {
+    const dossier = this.poste.trouver('~/.ssh');
+    const donnees = new Set(MACHINES.filter((m) => !m.sansCle).flatMap((m) => [`id_${m.nom}`, `id_${m.nom}.pub`]));
+    const fichiers: Record<string, string> = {};
+    if (dossier?.type === 'dossier')
+      for (const nom of Object.keys(dossier.enfants))
+        if (nom !== 'known_hosts' && !donnees.has(nom) && dossier.enfants[nom].type === 'fichier')
+          fichiers[nom] = this.poste.lire(`~/.ssh/${nom}`) ?? '';
+    return { fichiers, phrases: this.poste.etat.phrasesDePasse };
   }
 
   /** Remet le poste à neuf, en gardant les hôtes connus. */
@@ -75,7 +103,7 @@ export class Console {
   }
 
   get shell(): Shell {
-    return this.distant?.shell ?? this.poste;
+    return this.interieur.at(-1)?.shell ?? this.distant?.shell ?? this.poste;
   }
 
   invite(): string {
@@ -122,7 +150,8 @@ export class Console {
    * chapitre. Sans chapitre imposé, reprend la session laissée sur cette
    * machine si elle est toujours sur le chapitre en cours.
    */
-  connecter(nom: string, chapitre?: Chapitre): string {
+  connecter(nom: string, chapitre?: Chapitre, rebond = false): string {
+    this.interieur = [];
     const machine = MACHINES.find((m) => m.nom === nom)!;
     const histoire = HISTOIRES.find((h) => h.id === machine.histoire)!;
     const c = chapitre ?? this.chapitreCourant(histoire);
@@ -133,7 +162,7 @@ export class Console {
     if (!chapitre && ancienne?.etat.preparee && ancienne.chapitre === c) {
       delete ancienne.etat.preparee;
       this.distant = { machine, histoire, shell: ancienne };
-      return [...banniere, this.ouvrirChapitre(c)].join('\n\n');
+      return [...(rebond ? [] : banniere), this.ouvrirChapitre(c)].join('\n\n');
     }
     if (!chapitre && ancienne && (ancienne.chapitre === c || !ancienne.termine)) {
       // Comme une nouvelle connexion : on repart de sa maison. Se reconnecter
@@ -145,20 +174,25 @@ export class Console {
       const suite = ancienne.evenements();
       // Un chapitre en cours : rappeler où relire ses consignes.
       const rappel = ancienne.termine ? '' : this.t('reprise-chapitre', { fichier: ancienne.chapitre.accueil });
-      return [...banniere, this.titre(histoire, ancienne.chapitre), rappel, suite, this.noterFin(ancienne, dejaFini)].filter(Boolean).join('\n\n');
+      // Un simple rebond (ssh -J) n'ouvre pas de session sur la passerelle : ni bannière ni rappel.
+      const entete = rebond ? [] : [...banniere, this.titre(histoire, ancienne.chapitre), rappel];
+      return [...entete, suite, this.noterFin(ancienne, dejaFini)].filter(Boolean).join('\n\n');
     }
     this.distant = { machine, histoire, shell: this.nouvelleSession(machine, c) };
-    return [...banniere, this.ouvrirChapitre(c)].join('\n\n');
+    return [...(rebond ? [] : banniere), this.ouvrirChapitre(c)].join('\n\n');
   }
 
   /** (Re)commence un chapitre sur la machine où l'on est. */
   ouvrir(chapitre: Chapitre): string {
+    this.interieur = [];
     this.distant!.shell = this.nouvelleSession(this.distant!.machine, chapitre);
     return this.ouvrirChapitre(chapitre);
   }
 
   private nouvelleSession(machine: Machine, chapitre: Chapitre): Shell {
     const s = new Shell(chapitre, this.t.langue, machine.nom);
+    // Le chapitre peut regarder le poste (sa config ssh, ce qu'on y a copié).
+    s.etat.poste = () => this.poste;
     this.sessions.set(machine.nom, s);
     return s;
   }
@@ -170,12 +204,36 @@ export class Console {
   deconnecter(): string {
     const { machine } = this.distant!;
     this.distant = null;
+    this.interieur = [];
     return `logout\nConnection to ${machine.domaine} closed.`;
+  }
+
+  // exit sur une machine interne : on revient d'un cran (ou au poste, après ssh -J).
+  private quitterInterieur(): string {
+    const e = this.interieur.pop()!;
+    const message = `logout\nConnection to ${e.domaine} closed.`;
+    if (e.retour) {
+      this.interieur = [];
+      this.distant = null;
+    }
+    return message;
+  }
+
+  // Une session sur une machine interne (ssh depuis la machine de l'histoire, ou ssh -J depuis le poste).
+  private ouvrirInterieur(d: { shell: Shell; domaine: string; via?: string }): string {
+    const morceaux: string[] = [];
+    const depuisPoste = !this.distant || !!d.via;
+    // ssh -J depuis le poste : la machine de l'histoire s'ouvre (son chapitre commence s'il le faut).
+    if (d.via && this.distant?.machine.nom !== d.via) morceaux.push(this.connecter(d.via, undefined, true));
+    d.shell.cwd = d.shell.maison;
+    this.interieur.push({ shell: d.shell, domaine: d.domaine, retour: depuisPoste && !!d.via });
+    morceaux.push(`Linux ${d.shell.hote} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`);
+    return morceaux.join('\n\n');
   }
 
   // Les clés des histoires qui viennent de s'ouvrir, posées dans ~/.ssh du poste.
   private donnerCles(avant: string[]): string {
-    const nouvelles = MACHINES.filter((m) => this.ouverte(m.histoire!) && !avant.includes(m.histoire!));
+    const nouvelles = MACHINES.filter((m) => this.ouverte(m.histoire!) && !avant.includes(m.histoire!) && !m.sansCle);
     if (!nouvelles.length) return '';
     const ssh = this.poste.trouver('~/.ssh');
     if (ssh?.type === 'dossier') for (const m of nouvelles) Object.assign(ssh.enfants, fichiersCle(m));
@@ -191,7 +249,7 @@ export class Console {
     const morceaux = [sortie];
     if (sh.sortie) {
       sh.sortie = false;
-      morceaux.push(this.distant ? this.deconnecter() : this.t('poste-exit'));
+      morceaux.push(this.interieur.length ? this.quitterInterieur() : this.distant ? this.deconnecter() : this.t('poste-exit'));
     } else if (sh.redemarrage && this.distant) {
       // La machine redémarre : le serveur coupe la connexion.
       sh.redemarrage = false;
@@ -202,9 +260,27 @@ export class Console {
       const nom = sh.demandeConnexion;
       sh.demandeConnexion = null;
       morceaux.push(this.connecter(nom));
+    } else if (sh.demandeSession) {
+      const d = sh.demandeSession;
+      sh.demandeSession = null;
+      morceaux.push(this.ouvrirInterieur(d));
+    }
+    // Sur une machine interne : les événements du chapitre se vérifient sur la machine de l'histoire.
+    const principal = sh.parent ? sh.principal : null;
+    if (principal) {
+      const avant = principal.termine;
+      morceaux.push(principal.evenements(), this.noterFin(principal, avant));
     }
     morceaux.push(this.noterFin(sh, dejaFini));
+    if (sh === this.poste) morceaux.push(this.surveillerPoste());
     if (sh.edition) this.finiAvantEdition = sh.termine;
+    return morceaux.filter(Boolean).join('\n\n');
+  }
+
+  // Après une commande sur le poste : les chapitres qui le regardent vérifient leurs événements.
+  private surveillerPoste(): string {
+    const morceaux: string[] = [];
+    for (const s of this.sessions.values()) if (s.chapitre.surveillePoste && !s.termine) morceaux.push(s.evenements(), this.noterFin(s, false));
     return morceaux.filter(Boolean).join('\n\n');
   }
 
@@ -233,6 +309,12 @@ export class Console {
   /** ^X : ferme l'éditeur ; renvoie les messages de l'histoire déclenchés. */
   quitterEdition(): string {
     const sh = this.shell;
-    return [sh.quitterEdition(), this.noterFin(sh, this.finiAvantEdition)].filter(Boolean).join('\n\n');
+    const principal = sh.parent ? sh.principal : null;
+    const avant = principal?.termine ?? false;
+    const morceaux = [sh.quitterEdition(), this.noterFin(sh, this.finiAvantEdition)];
+    // Un fichier écrit sur une machine interne peut finir le chapitre.
+    if (principal) morceaux.push(principal.evenements(), this.noterFin(principal, avant));
+    if (sh === this.poste) morceaux.push(this.surveillerPoste());
+    return morceaux.filter(Boolean).join('\n\n');
   }
 }

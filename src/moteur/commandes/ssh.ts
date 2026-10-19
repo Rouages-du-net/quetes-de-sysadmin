@@ -16,36 +16,19 @@
 
 import type { Fichier } from '../monde';
 import type { Shell } from '../shell';
-import { joker } from '../outils';
-import { cleHote, clePrivee, empreinte, empreinteDeCle, machineParAdresse, POSTE, type Machine } from '../machines';
+import { cleHote, clePrivee, condense, empreinte, empreinteDeCle, machineParAdresse, POSTE, type Machine } from '../machines';
 import { autorise, methodes } from '../sshd';
+import { CLES_PAR_DEFAUT, configuration, franchir, genererCle, preparer } from '../acces';
 import { verdict, type PareFeu } from '../parefeu';
 import type { Commande } from './index';
 
 const USAGE = 'usage: ssh [-i identity_file] [-p port] destination [command [argument ...]]';
-const CLES_PAR_DEFAUT = ['~/.ssh/id_ed25519', '~/.ssh/id_ecdsa', '~/.ssh/id_rsa'];
 
 interface Destination {
   utilisateur: string;
   hote: string;
   port: string;
   identites: string[];
-}
-
-// Les blocs « Host » de ~/.ssh/config qui s'appliquent : la première valeur
-// trouvée l'emporte (ssh_config(5)).
-function configuration(jeu: Shell, alias: string) {
-  const options: Record<string, string[]> = {};
-  let actif = false;
-  for (const brute of (jeu.lire('~/.ssh/config') ?? '').split('\n')) {
-    const ligne = brute.trim();
-    if (!ligne || ligne.startsWith('#')) continue;
-    const [cle, ...reste] = ligne.split(/\s+/);
-    const valeur = reste.join(' ');
-    if (cle.toLowerCase() === 'host') actif = reste.some((motif) => joker(motif).test(alias));
-    else if (actif) (options[cle.toLowerCase()] ??= []).push(valeur);
-  }
-  return options;
 }
 
 function resoudre(jeu: Shell, hote: string): string | null {
@@ -148,22 +131,227 @@ function cleChangee(jeu: Shell, d: Destination, m: Machine, ligne: number): stri
   ].join('\n');
 }
 
+// La machine d'histoire visée gère-t-elle ses clés (authorized_keys, mot de passe) ? Ou faut-il rebondir ?
+function vraiSsh(jeu: Shell, cible: string): boolean {
+  const alias = cible.includes('@') ? cible.split('@', 2)[1] : cible;
+  // Un rebond demandé par ~/.ssh/config (ProxyJump).
+  const saut = configuration(jeu, alias).proxyjump?.[0];
+  if (saut && saut !== 'none') return true;
+  const adresse = resoudre(jeu, (configuration(jeu, alias).hostname?.[0] ?? alias).toLowerCase());
+  const m = adresse ? machineParAdresse(adresse) : undefined;
+  return !!m && m !== POSTE && !!(jeu.etat.sessionDistante?.(m.nom) as Shell | undefined)?.etat.sshReel;
+}
+
+interface OptionsSsh {
+  identites: string[];
+  port: string;
+  saut?: string;
+  tunnels: string[];
+  sansSession: boolean;
+  arrierePlan: boolean;
+}
+
+/** -L [adresse:]port:hôte:port → le tunnel ; null si la forme est fausse. */
+function lireTunnel(texte: string): { port: number; hote: string; portDistant: number } | null {
+  const m = /^(?:[^:]+:)?(\d+):([^:]+):(\d+)$/.exec(texte);
+  return m ? { port: Number(m[1]), hote: m[2], portDistant: Number(m[3]) } : null;
+}
+
+function sshComplet(jeu: Shell, cible: string, commande: string[], o: OptionsSsh): string {
+  for (const t of o.tunnels) if (!lireTunnel(t)) return jeu.erreur(`Bad local forwarding specification '${t}'`);
+  const sauts = preparer(jeu, cible, { identites: o.identites, port: o.port, saut: o.saut });
+  if (typeof sauts === 'string') return jeu.erreur(sauts);
+  const dernier = sauts.at(-1)!;
+  return franchir(jeu, sauts, () => {
+    // Les tunnels : un port de cette machine mène à un service vu depuis la machine d'en face.
+    for (const t of o.tunnels.map(lireTunnel)) {
+      const vers = t!.hote === 'localhost' || t!.hote === '127.0.0.1' ? dernier.shell : null;
+      const adresse = vers ? null : resoudre(dernier.shell, t!.hote);
+      const interne = adresse ? dernier.shell.internes_().find((h) => h.adresse === adresse) : null;
+      const shell = vers ?? (interne ? dernier.shell.interne(interne.nom) : null);
+      if (!shell) continue;
+      // Le tunnel vit tant que ce processus ssh tourne (kill le ferme).
+      const pid = 4100 + (jeu.etat.tunnels?.length ?? 0) * 7;
+      // En passant par une autre adresse que localhost, un service qui n'écoute que sur 127.0.0.1 reste injoignable.
+      (jeu.etat.tunnels ??= []).push({ port: t!.port, shell, portDistant: t!.portDistant, machine: dernier.machine.nom, pid, boucle: !!vers });
+      (jeu.etat.processus ??= []).push({
+        pid,
+        utilisateur: jeu.qui,
+        cpu: 0,
+        mem: 0.1,
+        commande:
+          `ssh ${['-f', '-N'].filter((x) => (x === '-f' ? o.arrierePlan : o.sansSession)).join(' ')} -L ${o.tunnels.join(' -L ')} ${cible}`.replace(
+            /\s+/g,
+            ' ',
+          ),
+      });
+    }
+    // Une commande à distance : elle tourne sous le compte d'en face, sa sortie revient ici.
+    if (commande.length) {
+      const avant = dernier.shell.qui;
+      dernier.shell.qui = dernier.utilisateur;
+      try {
+        const r = dernier.shell.sousCommande(commande.join(' '), dernier.shell.maison);
+        jeu.statut = r.code;
+        return r.sortie;
+      } finally {
+        dernier.shell.qui = avant;
+      }
+    }
+    if (o.sansSession) return o.arrierePlan ? '' : jeu.t('ssh-sans-arriere-plan');
+    if (sauts.length === 1 && dernier.histoire) jeu.demandeConnexion = dernier.histoire;
+    else jeu.demandeSession = { shell: dernier.shell, domaine: dernier.machine.domaine, adresse: dernier.machine.adresse, via: sauts[0].histoire };
+    return '';
+  });
+}
+
+// ssh -G : les options qui s'appliqueraient (un extrait, dans l'ordre d'OpenSSH), sans se connecter.
+function configurationEffective(jeu: Shell, cible: string, o: { identites: string[]; port: string; saut?: string }): string {
+  const [utilisateur, alias] = cible.includes('@') ? cible.split('@', 2) : [null, cible];
+  const c = configuration(jeu, alias);
+  const saut = o.saut ?? c.proxyjump?.[0];
+  const identites = [...o.identites, ...(c.identityfile ?? [])];
+  return [
+    `host ${alias}`,
+    `user ${utilisateur ?? c.user?.[0] ?? jeu.qui}`,
+    `hostname ${(c.hostname?.[0] ?? alias).toLowerCase()}`,
+    `port ${o.port || c.port?.[0] || '22'}`,
+    ...(saut ? [`proxyjump ${saut}`] : []),
+    ...(identites.length ? identites : CLES_PAR_DEFAUT).map((i) => `identityfile ${i}`),
+  ].join('\n');
+}
+
+// L'image de la clé (randomart), comme ssh-keygen : l'« évêque ivre » part
+// du centre d'un plateau de 17 × 9 et se déplace en diagonale selon chaque
+// paire de bits de l'empreinte ; plus une case est visitée, plus son
+// caractère est dense. S : le départ, E : l'arrivée.
+function randomart(emp: string): string[] {
+  const [L, H] = [17, 9];
+  const visites = Array.from({ length: H }, () => Array<number>(L).fill(0));
+  let [x, y] = [8, 4];
+  // Les 32 octets de l'empreinte (tirés d'elle, toujours les mêmes).
+  for (let o = 0; o < 32; o++)
+    for (let b = parseInt(condense(emp + o).slice(0, 2), 16), k = 0; k < 4; k++, b >>= 2) {
+      x = Math.max(0, Math.min(L - 1, x + (b & 1 ? 1 : -1)));
+      y = Math.max(0, Math.min(H - 1, y + (b & 2 ? 1 : -1)));
+      visites[y][x]++;
+    }
+  const symboles = ' .o+=*BOX@%&#/^';
+  return visites.map(
+    (ligne, j) =>
+      `|${ligne.map((n, i) => (i === 8 && j === 4 ? 'S' : i === x && j === y ? 'E' : symboles[Math.min(n, symboles.length - 1)])).join('')}|`,
+  );
+}
+
+// ssh-keygen sans -R/-F/-l : une nouvelle paire de clés (ed25519), comme
+// ssh-keygen -t ed25519 [-C commentaire] [-N phrase] [-f fichier]. Les
+// questions (fichier, phrase de passe) ne sont posées que pour ce qui manque.
+function generer(jeu: Shell, args: string[]): string {
+  const valeur = (o: string) => (args.includes(o) ? args[args.indexOf(o) + 1] : undefined);
+  const type = valeur('-t') ?? 'ed25519';
+  if (type !== 'ed25519') return jeu.erreur(jeu.t('ssh-keygen-type', { type }));
+  const commentaire = valeur('-C') ?? `${jeu.qui}@${jeu.hote}`;
+  const parDefaut = `${jeu.resoudre('~')}/.ssh/id_ed25519`;
+  const lignes = ['Generating public/private ed25519 key pair.'];
+  const ecrire = (fichier: string, phrase: string): string => {
+    const chemin = jeu.resoudre(fichier.replace(/^~/, jeu.maison));
+    const dossier = chemin.replace(/\/[^/]+$/, '');
+    if (!jeu.existe(dossier)) {
+      if (dossier !== `${jeu.resoudre('~')}/.ssh`) return `Saving key "${chemin}" failed: No such file or directory`;
+      jeu.placer('ssh-keygen', dossier, { type: 'dossier', enfants: {}, proprio: jeu.qui, mode: 'rwx------' });
+      lignes.push(`Created directory '${dossier}'.`);
+    }
+    const n = (jeu.etat.clesGenerees = ((jeu.etat.clesGenerees as number | undefined) ?? 0) + 1);
+    const cle = genererCle(`${jeu.hote}:${jeu.qui}:${chemin}:${n}`, commentaire);
+    for (const [c, contenu, mode] of [
+      [chemin, cle.prive, 'rw-------'],
+      [`${chemin}.pub`, cle.publique, 'rw-r--r--'],
+    ] as const) {
+      const ancien = jeu.trouver(c);
+      if (ancien?.type === 'fichier') Object.assign(ancien, { contenu, mode, lignes: true, taille: undefined });
+      else {
+        const e = jeu.placer('ssh-keygen', c, { type: 'fichier', contenu, lignes: true, proprio: jeu.qui, mode });
+        if (e) return `Saving key "${chemin}" failed: Permission denied`;
+      }
+    }
+    if (phrase) (jeu.etat.phrasesDePasse ??= {})[chemin] = phrase;
+    else if (jeu.etat.phrasesDePasse) delete jeu.etat.phrasesDePasse[chemin];
+    const emp = empreinteDeCle(cle.publique);
+    const art = randomart(emp);
+    return [
+      ...lignes,
+      `Your identification has been saved in ${chemin}`,
+      `Your public key has been saved in ${chemin}.pub`,
+      'The key fingerprint is:',
+      `${emp} ${commentaire}`,
+      "The key's randomart image is:",
+      '+--[ED25519 256]--+',
+      ...art,
+      '+----[SHA256]-----+',
+    ].join('\n');
+  };
+  // La phrase de passe (deux fois), sauf si -N la donne.
+  const phrase = (fichier: string): string => {
+    const donnee = valeur('-N');
+    if (donnee !== undefined) return ecrire(fichier, donnee);
+    jeu.demander(
+      'Enter passphrase (empty for no passphrase):',
+      (premiere) => {
+        jeu.demander(
+          'Enter same passphrase again:',
+          (seconde) => (seconde === premiere ? ecrire(fichier, premiere) : 'Passphrases do not match.  Try again.'),
+          true,
+        );
+        return '';
+      },
+      true,
+    );
+    return '';
+  };
+  // Le fichier : -f, sinon la question ; s'il existe, on demande avant d'écraser.
+  const fichier = (chemin: string): string => {
+    if (!jeu.existe(chemin)) return phrase(chemin);
+    jeu.demander(`${jeu.resoudre(chemin)} already exists.\nOverwrite (y/n)?`, (r) => (r.trim().toLowerCase().startsWith('y') ? phrase(chemin) : ''));
+    return '';
+  };
+  const f = valeur('-f');
+  if (f) return [lignes.shift(), fichier(f)].filter(Boolean).join('\n');
+  jeu.demander(`Enter file in which to save the key (${parDefaut}):`, (r) => fichier(r.trim() || parDefaut));
+  return lignes.shift()!;
+}
+
 export const SSH: Record<string, Commande> = {
   ssh: {
     lancer: ({ args, jeu }) => {
       const identites: string[] = [];
       let port = '';
+      let saut: string | undefined;
+      const tunnels: string[] = [];
+      let sansSession = false;
+      let arrierePlan = false;
       const reste: string[] = [];
       for (let i = 0; i < args.length; i++) {
-        if (args[i] === '-i' || args[i] === '-p') {
+        if (['-i', '-p', '-J', '-L'].includes(args[i])) {
           const valeur = args[++i];
           if (valeur === undefined) return jeu.erreur(`option requires an argument -- ${args[i - 1].slice(1)}\n${USAGE}`);
           if (args[i - 1] === '-i') identites.push(valeur);
-          else port = valeur;
-        } else reste.push(args[i]);
+          else if (args[i - 1] === '-p') port = valeur;
+          else if (args[i - 1] === '-J') saut = valeur;
+          else tunnels.push(valeur);
+        } else if (args[i] === '-G') {
+          continue;
+        } else if (/^-[Nf]+$/.test(args[i])) {
+          if (args[i].includes('N')) sansSession = true;
+          if (args[i].includes('f')) arrierePlan = true;
+        } else if (reste.length === 0 && /^-./.test(args[i])) return jeu.erreur(`unknown option -- ${args[i].slice(1)}\n${USAGE}`);
+        else reste.push(args[i]);
       }
       const [cible, ...commande] = reste;
       if (!cible) return jeu.erreur(USAGE);
+      if (args.includes('-G')) return configurationEffective(jeu, cible, { identites, port, saut });
+      // Le « vrai » ssh (acces.ts) : rebonds, tunnels, réseau interne, machines où l'on gère ses clés.
+      if (jeu.hote !== 'poste' || saut || tunnels.length || sansSession || vraiSsh(jeu, cible))
+        return sshComplet(jeu, cible, commande, { identites, port, saut, tunnels, sansSession, arrierePlan });
       const [utilisateurDonne, alias] = cible.includes('@') ? cible.split('@', 2) : [null, cible];
       const config = configuration(jeu, alias);
       const d: Destination = {
@@ -218,13 +406,15 @@ export const SSH: Record<string, Commande> = {
   'ssh-keygen': {
     propresOptions: true,
     lancer: ({ args, jeu }) => {
-      const usage = 'usage: ssh-keygen [-l] [-f file] [-F hostname] [-R hostname]';
+      const usage = 'usage: ssh-keygen [-t ed25519] [-C comment] [-N passphrase] [-f file] ; ssh-keygen [-l] [-f file] [-F hostname] [-R hostname]';
       let fichier = '~/.ssh/known_hosts';
       let action: 'R' | 'F' | 'l' | null = null;
       let hote = '';
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
-        if (a === '-f' || a === '-R' || a === '-F') {
+        if (a === '-t' || a === '-C' || a === '-N' || a === '-b') {
+          if (args[++i] === undefined) return jeu.erreur(`ssh-keygen: option requires an argument -- ${a.slice(1)}\n${usage}`);
+        } else if (a === '-f' || a === '-R' || a === '-F') {
           const valeur = args[++i];
           if (valeur === undefined) return jeu.erreur(`ssh-keygen: option requires an argument -- ${a.slice(1)}\n${usage}`);
           if (a === '-f') fichier = valeur;
@@ -233,7 +423,7 @@ export const SSH: Record<string, Commande> = {
         else if (a.startsWith('-')) return jeu.erreur(`ssh-keygen: illegal option -- ${a.slice(1, 2)}\n${usage}`);
         else return jeu.erreur(usage);
       }
-      if (!action) return jeu.erreur(jeu.t('ssh-keygen-generer'));
+      if (!action) return generer(jeu, args);
       const chemin = jeu.resoudre(fichier);
       const n = jeu.trouver(fichier);
       if (!n || n.type !== 'fichier') return jeu.erreur(`${chemin}: No such file or directory`);

@@ -9,6 +9,8 @@ import type { Fichier, Noeud } from '../monde';
 import type { Shell } from '../shell';
 import { contenu, tailleDe } from '../outils';
 import { analyser, MODELE } from '../cron';
+import { franchir, preparer } from '../acces';
+import { cheminDistant } from './transferts';
 import type { Commande } from './index';
 
 const VERSION = '[sender=3.2.7]';
@@ -45,7 +47,36 @@ function rsync(jeu: Shell, args: string[]): string {
     } else chemins.push(a);
   }
   if (chemins.length < 2) return jeu.erreur(jeu.t('rsync-usage'));
-  const dest = chemins.pop()!;
+  const destBrute = chemins.pop()!;
+  // Une machine d'en face (« machine:chemin ») : rsync passe par ssh.
+  const versDistant = cheminDistant(destBrute);
+  const depuisDistant = chemins.map(cheminDistant);
+  const autre = versDistant ?? depuisDistant.find(Boolean);
+  if (!autre) return transferer(jeu, jeu, jeu, o, chemins, destBrute);
+  if (versDistant && depuisDistant.some(Boolean)) return jeu.erreur('The source and destination cannot both be remote.\nrsync error: syntax or usage error (code 1) at main.c(1415) [Receiver=3.2.7]');
+  const sauts = preparer(jeu, autre.cible, { programme: 'ssh' });
+  if (typeof sauts === 'string') return jeu.erreur(`${sauts}\nrsync: connection unexpectedly closed (0 bytes received so far) [sender]\nrsync error: unexplained error (code 255) at io.c(232) [sender=3.2.7]`);
+  const d = sauts.at(-1)!;
+  return franchir(jeu, sauts, () => {
+    const avant = d.shell.qui;
+    const cwd = d.shell.cwd;
+    d.shell.qui = d.utilisateur;
+    d.shell.cwd = d.shell.maison;
+    try {
+      const sortie = versDistant
+        ? transferer(jeu, jeu, d.shell, o, chemins, versDistant.chemin || '.')
+        : transferer(jeu, d.shell, jeu, o, depuisDistant.map((x) => x!.chemin || '.'), destBrute);
+      // Une réponse à une question (mot de passe) : les erreurs s'affichent avec la sortie.
+      return [...jeu.recupererErreurs(), sortie].filter(Boolean).join('\n');
+    } finally {
+      d.shell.qui = avant;
+      d.shell.cwd = cwd;
+    }
+  });
+}
+
+/** La copie elle-même, de la machine `src` vers la machine `dst` ; les erreurs vont à `jeu` (où rsync tourne). */
+function transferer(jeu: Shell, src: Shell, dst: Shell, o: Options, chemins: string[], dest: string): string {
   const lignes: string[] = [];
   const erreurs: string[] = [];
   let total = 0;
@@ -54,26 +85,26 @@ function rsync(jeu: Shell, args: string[]): string {
 
   // Crée un dossier dans la destination (sauf en essai) ; null si impossible.
   const creerDossier = (chemin: string, modele: Noeud): boolean => {
-    const n = jeu.trouver(chemin);
+    const n = dst.trouver(chemin);
     if (n?.type === 'dossier') return true;
     if (o.essai) return true;
-    const erreur = jeu.placer('rsync', chemin, { type: 'dossier', enfants: {}, proprio: jeu.qui, mode: o.archive ? modele.mode : undefined });
-    if (erreur) erreurs.push(`rsync: [Receiver] mkdir "${jeu.resoudre(chemin)}" failed: ${erreur.includes('ucun espace') ? 'No space left on device (28)' : jeu.trouver(chemin + '/..') ? 'Permission denied (13)' : 'No such file or directory (2)'}`);
+    const erreur = dst.placer('rsync', chemin, { type: 'dossier', enfants: {}, proprio: dst.qui, mode: o.archive ? modele.mode : undefined });
+    if (erreur) erreurs.push(`rsync: [Receiver] mkdir "${dst.resoudre(chemin)}" failed: ${erreur.includes('ucun espace') ? 'No space left on device (28)' : dst.trouver(chemin + '/..') ? 'Permission denied (13)' : 'No such file or directory (2)'}`);
     return !erreur;
   };
 
   const copierFichier = (source: Fichier, chemin: string, relatif: string, cheminSource: string) => {
-    total += tailleDe(source, jeu);
-    if (!jeu.peut(source, 'r')) return void erreurs.push(`rsync: [sender] send_files failed to open "${jeu.resoudre(cheminSource)}": Permission denied (13)`);
-    const texte = contenu(source, jeu);
-    const ancien = jeu.trouver(chemin);
-    if (ancien?.type === 'fichier' && contenu(ancien, jeu) === texte) return;
+    total += tailleDe(source, src);
+    if (!src.peut(source, 'r')) return void erreurs.push(`rsync: [sender] send_files failed to open "${src.resoudre(cheminSource)}": Permission denied (13)`);
+    const texte = contenu(source, src);
+    const ancien = dst.trouver(chemin);
+    if (ancien?.type === 'fichier' && contenu(ancien, dst) === texte) return;
     lignes.push(relatif);
     fichiers++;
-    envoye += tailleDe(source, jeu);
+    envoye += tailleDe(source, src);
     if (o.essai) return;
     if (ancien?.type === 'fichier') {
-      if (!jeu.peut(ancien, 'w')) return void erreurs.push(`rsync: [Receiver] mkstemp "${jeu.resoudre(chemin)}" failed: Permission denied (13)`);
+      if (!dst.peut(ancien, 'w')) return void erreurs.push(`rsync: [Receiver] mkstemp "${dst.resoudre(chemin)}" failed: Permission denied (13)`);
       ancien.contenu = texte;
       ancien.lignes = source.lignes;
       ancien.prose = source.prose;
@@ -81,21 +112,26 @@ function rsync(jeu: Shell, args: string[]): string {
       if (o.archive) ancien.mode = source.mode;
       return;
     }
-    const copie: Fichier = { ...source, contenu: texte, proprio: jeu.qui, groupe: undefined, mode: o.archive ? source.mode : undefined, lu: undefined, protege: undefined };
-    const erreur = jeu.placer('rsync', chemin, copie);
-    if (erreur) erreurs.push(`rsync: [Receiver] mkstemp "${jeu.resoudre(chemin)}" failed: Permission denied (13)`);
+    const copie: Fichier = { ...source, contenu: texte, proprio: dst.qui, groupe: undefined, mode: o.archive ? source.mode : undefined, lu: undefined, protege: undefined };
+    const erreur = dst.placer('rsync', chemin, copie);
+    if (erreur) erreurs.push(`rsync: [Receiver] mkstemp "${dst.resoudre(chemin)}" failed: Permission denied (13)`);
   };
 
   // Copie récursive d'un dossier source vers un dossier destination.
   const copierDossier = (source: Noeud & { type: 'dossier' }, cheminSource: string, chemin: string, relatif: string) => {
-    const existait = jeu.trouver(chemin)?.type === 'dossier';
+    const existait = dst.trouver(chemin)?.type === 'dossier';
     if (!creerDossier(chemin, source)) return;
     if (!existait) lignes.push(relatif || './');
-    const cible = jeu.trouver(chemin);
+    const cible = dst.trouver(chemin);
     if (o.effacer && cible?.type === 'dossier')
       for (const nom of Object.keys(cible.enfants).sort())
         if (!(nom in source.enfants)) {
-          lignes.push(`deleting ${relatif}${nom}${cible.enfants[nom].type === 'dossier' ? '/' : ''}`);
+          // Comme rsync : le contenu d'un dossier effacé d'abord, du plus profond au plus haut.
+          const effaces = (n: Noeud, rel: string): string[] =>
+            n.type === 'dossier'
+              ? [...Object.keys(n.enfants).sort().reverse().flatMap((e) => effaces(n.enfants[e], `${rel}/${e}`)), `deleting ${rel}/`]
+              : [`deleting ${rel}`];
+          lignes.push(...effaces(cible.enfants[nom], `${relatif}${nom}`));
           if (!o.essai) delete cible.enfants[nom];
         }
     for (const [nom, e] of Object.entries(source.enfants).sort(([a], [b]) => a.localeCompare(b))) {
@@ -104,29 +140,29 @@ function rsync(jeu: Shell, args: string[]): string {
     }
   };
 
-  for (const src of chemins) {
-    const n = jeu.trouver(src);
-    if (!n || !jeu.traverse(src)) {
-      erreurs.push(`rsync: [sender] link_stat "${jeu.resoudre(src)}" failed: ${n ? 'Permission denied (13)' : 'No such file or directory (2)'}`);
+  for (const chemin of chemins) {
+    const n = src.trouver(chemin);
+    if (!n || !src.traverse(chemin)) {
+      erreurs.push(`rsync: [sender] link_stat "${src.resoudre(chemin)}" failed: ${n ? 'Permission denied (13)' : 'No such file or directory (2)'}`);
       continue;
     }
-    const nom = jeu.nom(src);
+    const nom = src.nom(chemin);
     if (n.type === 'dossier') {
       if (!o.recursif) {
         lignes.push(`skipping directory ${nom}`);
         continue;
       }
       // « src/ » : le contenu ; « src » : le dossier lui-même, dans dest.
-      if (src.endsWith('/')) copierDossier(n, src.replace(/\/+$/, ''), dest.replace(/\/+$/, ''), '');
+      if (chemin.endsWith('/')) copierDossier(n, chemin.replace(/\/+$/, ''), dest.replace(/\/+$/, ''), '');
       else {
         if (!creerDossier(dest, n)) continue;
-        copierDossier(n, src, `${dest.replace(/\/+$/, '')}/${nom}`, `${nom}/`);
+        copierDossier(n, chemin, `${dest.replace(/\/+$/, '')}/${nom}`, `${nom}/`);
       }
     } else {
-      const d = jeu.trouver(dest);
-      const chemin = d?.type === 'dossier' || dest.endsWith('/') ? `${dest.replace(/\/+$/, '')}/${nom}` : dest;
+      const d = dst.trouver(dest);
+      const cible = d?.type === 'dossier' || dest.endsWith('/') ? `${dest.replace(/\/+$/, '')}/${nom}` : dest;
       if (dest.endsWith('/') && !creerDossier(dest, n)) continue;
-      copierFichier(n, chemin, nom, src);
+      copierFichier(n, cible, nom, chemin);
     }
   }
   for (const e of erreurs) jeu.erreur(e);

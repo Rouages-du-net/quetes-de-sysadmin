@@ -129,7 +129,12 @@ export const PAGES: Record<string, Page> = {
     exemples: ['sudo rsnapshot configtest', 'sudo rsnapshot -t daily', 'sudo rsnapshot daily', 'sudo rsnapshot du', '30 3 * * * /usr/bin/rsnapshot daily'],
     voir: ['rsync', 'crontab', 'ln', 'du'],
   },
-  rsync: { options: ['a', 'r', 'v', 'n'], exemples: ['rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'rsync -avn --delete ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'rsync -a /mnt/sauvegarde/souvenirs/lettre.txt ~/souvenirs/'], voir: ['cp', 'crontab', 'tar'] },
+  rsync: {
+    options: ['a', 'r', 'v', 'n'],
+    exemples: ['rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'rsync -avn --delete ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'rsync -a /mnt/sauvegarde/souvenirs/lettre.txt ~/souvenirs/', 'rsync -av --delete site/ wiki:/srv/site/'],
+    voir: ['cp', 'scp', 'crontab', 'tar'],
+  },
+  scp: { exemples: ['scp rapport.txt maison:', 'scp wiki:/var/backups/wiki.tar.gz .', 'scp -r -J maison site/ vous@wiki:/srv/'], voir: ['ssh', 'rsync', 'cp'] },
   rndc: { section: 8, exemples: ['sudo rndc reload cafe.example', 'sudo rndc status'], voir: ['named-checkzone', 'dig', 'journalctl'] },
   restic: {
     exemples: [
@@ -148,11 +153,20 @@ export const PAGES: Record<string, Page> = {
   sh: { exemples: ['sh tests.sh', './deployer.sh', 'chmod +x deployer.sh'], voir: ['bash', 'test', 'chmod'] },
   bash: { exemples: ['bash tests.sh'], voir: ['sh'] },
   sort: { options: ['n', 'r'], exemples: ['sort -n tailles.txt'], voir: ['uniq', 'wc'] },
-  ssh: { options: ['i', 'p'], exemples: ['ssh royaume', 'ssh -i ~/.ssh/id_royaume vous@royaume.example', 'cat ~/.ssh/config'], voir: ['exit', 'chmod', 'ssh-keygen'] },
-  'ssh-keygen': { exemples: ['ssh-keygen -R datacenter.example', 'ssh-keygen -F datacenter.example', 'ssh-keygen -l -f ~/.ssh/known_hosts'], voir: ['ssh'] },
+  ssh: {
+    options: ['i', 'p', 'J', 'L', 'N', 'f', 'G'],
+    exemples: ['ssh royaume', 'ssh -i ~/.ssh/id_royaume vous@royaume.example', 'cat ~/.ssh/config', 'ssh -J maison wiki', 'ssh -f -N -L 8080:localhost:8080 wiki', 'ssh wiki uptime'],
+    voir: ['exit', 'chmod', 'ssh_config', 'ssh-keygen', 'ssh-copy-id', 'scp'],
+  },
+  'ssh-copy-id': { exemples: ['ssh-copy-id maison', 'ssh-copy-id -i ~/.ssh/id_ed25519.pub vous@maison.example'], voir: ['ssh', 'ssh-keygen', 'sshd_config'] },
+  'ssh-keygen': {
+    exemples: ['ssh-keygen -R datacenter.example', 'ssh-keygen -F datacenter.example', 'ssh-keygen -l -f ~/.ssh/known_hosts', 'ssh-keygen -t ed25519 -C vous@poste'],
+    voir: ['ssh', 'ssh-copy-id'],
+  },
   ss: { section: 8, options: ['t', 'u', 'l', 'a', 'n', 'p'], exemples: ['sudo ss -tlnp', 'ss -t'], voir: ['ufw', 'ps', 'systemctl'] },
   sshd: { section: 8, options: ['t', 'T', 'f'], exemples: ['sudo sshd -t', 'sudo sshd -T | grep -i password'], voir: ['sshd_config', 'ssh', 'systemctl'] },
-  sshd_config: { exemples: ['sudo nano /etc/ssh/sshd_config', 'ls /etc/ssh/sshd_config.d'], voir: ['sshd', 'ssh', 'nano'] },
+  sshd_config: { section: 5, exemples: ['sudo nano /etc/ssh/sshd_config', 'ls /etc/ssh/sshd_config.d'], voir: ['sshd', 'ssh', 'nano'] },
+  ssh_config: { section: 5, exemples: ['nano ~/.ssh/config', 'ssh -G wiki'], voir: ['ssh', 'sshd_config'] },
   sudo: { exemples: ['sudo cat /etc/sudoers', 'sudo -u postgres psql -l'], voir: ['whoami', 'chmod'] },
   systemctl: { exemples: ['systemctl status nginx', 'systemctl --failed', 'sudo systemctl restart nginx', 'sudo systemctl enable --now nginx', 'sudo systemctl edit radio-playlist', 'sudo systemctl set-property radio-playlist MemoryMax=512M'], voir: ['journalctl', 'ps', 'sudo', 'reboot', 'top'] },
   test: { exemples: ['test -f index.html', '[ -d /srv/site/releases ]', 'test -f index.html || exit 1'], voir: ['sh', 'grep'] },
@@ -170,4 +184,5 @@ export const PAGES: Record<string, Page> = {
   usermod: { section: 8, options: ['a', 'G', 'L', 'U'], exemples: ['sudo usermod -aG adm malo', 'sudo usermod -G adm malo', 'sudo usermod -L malo'], voir: ['id', 'groups', 'chgrp'] },
   whatis: { voir: ['man', 'apropos'] },
   whoami: { voir: ['sudo'] },
+  hostname: { options: ['f'], exemples: ['hostname', 'hostname -f'], voir: ['whoami', 'ssh'] },
 };
