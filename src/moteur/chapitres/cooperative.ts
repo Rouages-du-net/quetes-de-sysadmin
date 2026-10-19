@@ -116,6 +116,8 @@ export function mondeCooperative(o: {
   plus?: Record<string, Noeud>;
   // Après « Le départ » : plus de clé de Marc dans deploy.
   sansMarc?: boolean;
+  // Les programmes installés dans /usr/sbin (ex. nginx).
+  sbin?: Record<string, Noeud>;
 }): Dossier {
   return d(
     {
@@ -153,7 +155,11 @@ export function mondeCooperative(o: {
         racine,
       ),
       tmp: d({}, undefined, { proprio: 'root', mode: 'rwxrwxrwt' }),
-      usr: d({ local: d({ bin: d({}, undefined, racine), sbin: d({}, undefined, racine) }, undefined, racine) }, undefined, racine),
+      usr: d(
+        { local: d({ bin: d({}, undefined, racine), sbin: d({}, undefined, racine) }, undefined, racine), sbin: d(o.sbin ?? {}, undefined, racine) },
+        undefined,
+        racine,
+      ),
       ...(o.plus ?? {}),
     },
     undefined,

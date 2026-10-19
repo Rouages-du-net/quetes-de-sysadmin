@@ -57,11 +57,21 @@ export const TEXTE: Record<string, Commande> = {
       const [motif, ...fichiers] = reste;
       if (motif === undefined) return c.jeu.erreur(c.jeu.t('grep-usage'));
       const casse = lettres.has('i');
+      // Le motif : une expression régulière basique (BRE), étendue avec -E, du texte brut avec -F.
+      let re: RegExp | null = null;
+      if (!lettres.has('F'))
+        try {
+          re = new RegExp(lettres.has('E') ? motif : versRegexBasique(motif), casse ? 'i' : '');
+        } catch {
+          c.jeu.statut = 2;
+          return c.jeu.erreur(/\[/.test(motif) && !/\]/.test(motif) ? 'grep: Unmatched [, [^, [:, [., or [=' : 'grep: Invalid regular expression');
+        }
       const cherche = casse ? motif.toLowerCase() : motif;
+      const correspond = (l: string) => (re ? re.test(l) : (casse ? l.toLowerCase() : l).includes(cherche));
       const ts = textes('grep', c, fichiers);
       const sorties: string[] = [];
       for (const { nom, texte } of ts) {
-        const garde = lignesDe(texte).filter((l) => (casse ? l.toLowerCase() : l).includes(cherche) !== lettres.has('v'));
+        const garde = lignesDe(texte).filter((l) => correspond(l) !== lettres.has('v'));
         if (lettres.has('c')) sorties.push(ts.length > 1 ? `${nom}:${garde.length}` : String(garde.length));
         else sorties.push(...garde.map((l) => (ts.length > 1 ? `${nom}:${l}` : l)));
       }
@@ -151,3 +161,23 @@ export const TEXTE: Record<string, Commande> = {
   },
 };
 
+// Une expression régulière basique (BRE, comme grep sans -E) en expression JavaScript :
+// + ? | ( ) { } sont des caractères ordinaires, et spéciaux précédés de \ ;
+// les crochets [...] sont recopiés tels quels.
+export function versRegexBasique(motif: string): string {
+  let res = '';
+  for (let i = 0; i < motif.length; i++) {
+    const c = motif[i];
+    if (c === '\\' && i + 1 < motif.length) {
+      const s = motif[++i];
+      res += '+?|(){}'.includes(s) ? s : `\\${s}`;
+    } else if ('+?|(){}'.includes(c)) res += `\\${c}`;
+    else if (c === '[') {
+      const fin = motif.indexOf(']', i + (motif[i + 1] === ']' ? 2 : motif[i + 1] === '^' && motif[i + 2] === ']' ? 3 : 1));
+      if (fin < 0) return motif.slice(0, i) + '[';
+      res += motif.slice(i, fin + 1);
+      i = fin;
+    } else res += c;
+  }
+  return res;
+}

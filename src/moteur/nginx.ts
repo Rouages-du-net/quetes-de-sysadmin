@@ -6,8 +6,13 @@
 // (ligne de commande), https://nginx.org/en/docs/http/ngx_http_core_module.html
 // (listen, server_name, root, index) et https://nginx.org/en/docs/http/request_processing.html
 // (choix du serveur : le nom demandé, sinon le serveur par défaut du port).
-// Écarts : une partie des directives seulement, pas de location ni de
-// redirection (root et index suffisent), ports en HTTP seulement.
+// Le choix du bloc location suit https://nginx.org/en/docs/http/ngx_http_core_module.html#location :
+// = exact, puis le plus long préfixe (qui l'emporte s'il porte ^~), puis les
+// expressions régulières (~, ~* sans casse) dans l'ordre, sinon ce préfixe.
+// proxy_set_header (https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header) :
+// hérité du niveau du dessus seulement si le niveau n'en a aucun ; par défaut,
+// Host $proxy_host et Connection close ; les autres en-têtes du client passent.
+// Écarts : une partie des directives seulement.
 
 import type { Jeu } from './shell';
 import { joker } from './outils';
@@ -78,10 +83,16 @@ interface Directive {
   enfants?: Directive[];
 }
 
-// Un bloc location : le préfixe (ou le chemin exact, avec =) et ce qu'on y fait.
+// Un bloc location : le préfixe (ou le chemin exact, avec =, ou une
+// expression régulière, avec ~ ou ~*) et ce qu'on y fait.
 export interface Location {
   exact: boolean;
   chemin: string;
+  regex?: RegExp;
+  // ^~ : ce préfixe, s'il est le plus long, passe avant les expressions régulières.
+  prioritaire?: boolean;
+  // proxy_set_header : [en-tête, valeur avec ses variables].
+  entetes: [string, string][];
   racine?: string;
   alias?: string;
   index?: string[];
@@ -319,10 +330,26 @@ function construire(jeu: Jeu, lus: string[] = []): Configuration {
         if (!conflits.length) noms.push(nom);
         for (const a of ecoute.length ? ecoute : ['0.0.0.0:80']) nomsVus.add(`${nom} ${a}`);
       }
+      const entetesDe = (ds: Directive[]) => ds.filter((d) => d.nom === 'proxy_set_header').map((d) => [d.args[0], d.args[1]] as [string, string]);
+      const entetesServeur = entetesDe(enfants).length ? entetesDe(enfants) : entetesDe(http);
       const locations = enfants
         .filter((d) => d.nom === 'location')
         .map((l): Location => {
-          const exact = l.args[0] === '=';
+          const modificateur = l.args.length === 2 ? l.args[0] : null;
+          if (modificateur && !['=', '~', '~*', '^~'].includes(modificateur))
+            echec(`invalid location modifier "${modificateur}"`, l.fichier, l.ligne);
+          const exact = modificateur === '=';
+          let regex: RegExp | undefined;
+          if (modificateur === '~' || modificateur === '~*')
+            try {
+              regex = new RegExp(l.args[1], modificateur === '~*' ? 'i' : '');
+            } catch (e) {
+              echec(
+                `pcre2_compile() failed: ${(e as Error).message.replace(/^Invalid regular expression: /, '')} in "${l.args[1]}"`,
+                l.fichier,
+                l.ligne,
+              );
+            }
           const dedans = l.enfants ?? [];
           const une = (nom: string) => dedans.find((d) => d.nom === nom)?.args;
           const limite = dedans.find((d) => d.nom === 'limit_req');
@@ -331,6 +358,9 @@ function construire(jeu: Jeu, lus: string[] = []): Configuration {
             refus: valeurs(dedans, 'deny'),
             limiteStatut: une('limit_req_status') ? Number(une('limit_req_status')![0]) : undefined,
             exact,
+            regex,
+            prioritaire: modificateur === '^~',
+            entetes: entetesDe(dedans).length ? entetesDe(dedans) : entetesServeur,
             chemin: l.args.at(-1)!,
             racine: une('root')?.[0],
             alias: une('alias')?.[0],
@@ -479,26 +509,42 @@ export interface Appli {
   // Les pages qu'elle sert, par chemin ; ailleurs, la page 404 d'Express.
   pages: Record<string, string>;
   // Ou une appli qui calcule sa réponse (version, configuration, santé…).
-  repondre?: (jeu: Jeu, chemin: string) => { code: number; corps: string; type?: string };
+  repondre?: (jeu: Jeu, chemin: string, demande: Demande) => { code: number; corps: string; type?: string };
   // Requêtes par seconde qu'elle sait servir (sans limite si absent).
   capacite?: number;
+}
+
+// Ce que l'appli voit d'une requête : les en-têtes reçus (noms en minuscules) et l'adresse de la connexion.
+export interface Demande {
+  entetes: Record<string, string>;
+  adresse: string;
 }
 
 const PAGE_EXPRESS = (chemin: string) =>
   `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET ${chemin}</pre>\n</body>\n</html>`;
 
 /** Ce que répond une appli (sans passer par nginx). */
-export function repondreAppli(jeu: Jeu, appli: Appli, chemin: string): { code: number; corps: string; type?: string } {
-  if (appli.repondre) return appli.repondre(jeu, chemin.split('?')[0]);
+export function repondreAppli(
+  jeu: Jeu,
+  appli: Appli,
+  chemin: string,
+  demande: Demande = { entetes: {}, adresse: '127.0.0.1' },
+): { code: number; corps: string; type?: string } {
+  if (appli.repondre) return appli.repondre(jeu, chemin.split('?')[0], demande);
   const corps = appli.pages[chemin.split('?')[0]];
   return corps === undefined ? { code: 404, corps: PAGE_EXPRESS(chemin) } : { code: 200, corps };
 }
 
 /** Une appli jointe directement sur son port (curl http://127.0.0.1:3001/) : null si personne n'écoute. */
-export function requeteAppli(jeu: Jeu, port: number, chemin: string): { code: number; corps: string; type?: string } | null {
+export function requeteAppli(
+  jeu: Jeu,
+  port: number,
+  chemin: string,
+  entetes: Record<string, string> = {},
+): { code: number; corps: string; type?: string } | null {
   const appli: Appli | undefined = jeu.etat.applis?.[`127.0.0.1:${port}`];
   if (!appli || systemd(jeu)?.services[appli.service]?.etat !== 'active') return null;
-  return repondreAppli(jeu, appli, chemin);
+  return repondreAppli(jeu, appli, chemin, { entetes, adresse: '127.0.0.1' });
 }
 
 // Une ligne de /var/log/nginx/error.log (si le fichier existe).
@@ -511,11 +557,14 @@ function journalErreur(jeu: Jeu, niveau: string, message: string) {
   n.contenu = n.contenu ? `${n.contenu}\n${ligne}` : ligne;
 }
 
-/** Le bloc location qui traite ce chemin : = exact d'abord, puis le plus long préfixe. */
+/** Le bloc location qui traite ce chemin, comme nginx : = exact, le plus long préfixe (^~ s'arrête là), les expressions régulières dans l'ordre, sinon ce préfixe. */
 export function choisirLocation(serveur: Serveur, chemin: string): Location | null {
   const exact = serveur.locations.find((l) => l.exact && l.chemin === chemin);
   if (exact) return exact;
-  return serveur.locations.filter((l) => !l.exact && chemin.startsWith(l.chemin)).sort((a, b) => b.chemin.length - a.chemin.length)[0] ?? null;
+  const prefixe =
+    serveur.locations.filter((l) => !l.exact && !l.regex && chemin.startsWith(l.chemin)).sort((a, b) => b.chemin.length - a.chemin.length)[0] ?? null;
+  if (prefixe?.prioritaire) return prefixe;
+  return serveur.locations.find((l) => l.regex?.test(chemin)) ?? prefixe;
 }
 
 /**
@@ -534,11 +583,14 @@ export function requete(jeu: Jeu, hote: string, chemin: string, port = 80, trace
   return r;
 }
 
-// Qui fait la requête : son adresse, l'heure (locale, en millisecondes), son navigateur.
+// Qui fait la requête : son adresse, l'heure (locale, en millisecondes), son
+// navigateur ; la méthode (GET par défaut) et les en-têtes qu'il envoie (noms en minuscules).
 export interface Client {
   adresse: string;
   temps: number;
   agent: string;
+  methode?: string;
+  entetes?: Record<string, string>;
 }
 
 // « 27/Mar/2027:20:00:01 +0100 », comme $time_local.
@@ -552,7 +604,7 @@ function journalAcces(jeu: Jeu, c: Client, chemin: string, r: Reponse) {
   if (!jeu.etat.nginx?.journalAcces) return;
   const n = jeu.trouver('/var/log/nginx/access.log');
   if (n?.type !== 'fichier' || typeof n.contenu !== 'string') return;
-  const ligne = `${c.adresse} - - [${heureLocale(c.temps)}] "GET ${chemin} HTTP/1.1" ${r.code} ${new TextEncoder().encode(r.corps).length} "-" "${c.agent}"`;
+  const ligne = `${c.adresse} - - [${heureLocale(c.temps)}] "${c.methode ?? 'GET'} ${chemin} HTTP/1.1" ${r.code} ${new TextEncoder().encode(r.corps).length} "-" "${c.agent}"`;
   n.contenu = n.contenu ? `${n.contenu}\n${ligne}` : ligne;
 }
 
@@ -682,7 +734,22 @@ function traiter(jeu: Jeu, hote: string, chemin: string, port: number, client: C
         return reponse(504, page(504));
       }
     }
-    const r = repondreAppli(jeu, appli, amont);
+    // Les en-têtes que l'appli reçoit : ceux du client, Host et Connection par défaut, puis proxy_set_header.
+    const recus: Record<string, string> = { ...(client.entetes ?? {}), host: hoteAmont, connection: 'close' };
+    const xff = client.entetes?.['x-forwarded-for'];
+    for (const [nom, valeur] of loc.entetes) {
+      const v = valeur
+        .replaceAll('$proxy_add_x_forwarded_for', xff ? `${xff}, ${client.adresse}` : client.adresse)
+        .replaceAll('$remote_addr', client.adresse)
+        .replaceAll('$proxy_host', hoteAmont)
+        .replaceAll('$http_host', hote)
+        // $http_nom : l'en-tête « nom » envoyé par le client (tirets écrits _), vide s'il n'en a pas envoyé.
+        .replace(/\$http_([a-z0-9_]+)/g, (_, n: string) => client.entetes?.[n.replace(/_/g, '-')] ?? '');
+      // Une valeur vide : l'en-tête n'est pas envoyé.
+      if (variables(v) === '') delete recus[nom.toLowerCase()];
+      else recus[nom.toLowerCase()] = variables(v);
+    }
+    const r = repondreAppli(jeu, appli, amont, { entetes: recus, adresse: '127.0.0.1' });
     return reponse(r.code, r.corps);
   }
   // Un fichier : root + chemin, ou alias à la place du préfixe de la location.

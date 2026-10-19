@@ -147,4 +147,94 @@ for (const langue of LANGUES)
       expect(tout).toContain("sudo: aucune source sudoers valide n'a été trouvée");
       expect(c.termines).not.toContain('droits');
     });
+
+    const SITE = '/etc/nginx/sites-available/cooperative';
+    const AVANT_SECRET = ['depart', 'droits'];
+    const nouvelleCle = (t: string) => t.replace(/PAIEMENT_CLE=.*/, 'PAIEMENT_CLE=pk_live_coop_9d27be05c4a1');
+
+    it('chapitre 3 — solution : le journal, location ~ /\\., deny, la nouvelle clé', () => {
+      const { c, jouer, editer } = partie(AVANT_SECRET);
+      let tout = jouer(['curl http://cooperative.example/.env', "sudo grep '\\.env' /var/log/nginx/access.log"]);
+      expect(tout).toContain('PAIEMENT_CLE=pk_live_coop_4f9a2c71e8b3');
+      expect(tout).toContain('203.0.113.77 - - [19/Oct/2027:03:12:40 +0200] "GET /.env HTTP/1.1" 200');
+      editer(`sudo nano ${SITE}`, (t) =>
+        t.replace('    location /caisse/', '    deny 203.0.113.77;\n\n    location ~ /\\. {\n        deny all;\n    }\n\n    location /caisse/'),
+      );
+      tout = jouer(['sudo nginx -t', 'sudo systemctl reload nginx', 'curl -I http://cooperative.example/.git/config']);
+      expect(tout).toContain('HTTP/1.1 403 Forbidden');
+      contient(tout, 'Les fichiers cachés ne sortent plus');
+      tout = editer('sudo nano /srv/caisse/app/.env', nouvelleCle);
+      contient(tout, "l'appli ne lit son .env qu'au démarrage");
+      expect(c.termines).not.toContain('secret');
+      tout = jouer(['sudo systemctl restart caisse', 'curl http://127.0.0.1:3000/health']);
+      expect(tout).toContain('"paiement":"ok"');
+      contient(tout, 'https://nginx.org/en/docs/http/ngx_http_core_module.html#location');
+      expect(c.termines).toContain('secret');
+    });
+
+    it('chapitre 3 — autre solution : des droits que www-data ne peut pas lire', () => {
+      const { c, jouer, editer } = partie(AVANT_SECRET);
+      jouer(['sudo chmod 600 /srv/caisse/app/.env', 'sudo chmod -R o-rwx /srv/caisse/app/.git']);
+      editer(`sudo nano ${SITE}`, (t) => t.replace('    index index.html;', '    index index.html;\n    deny 203.0.113.77;'));
+      editer('sudo nano /srv/caisse/app/.env', nouvelleCle);
+      jouer(['sudo systemctl reload nginx', 'sudo systemctl restart caisse']);
+      expect(c.termines).toContain('secret');
+    });
+
+    it('chapitre 3 — fausses pistes : seulement /.env, deny all pour tout le site', () => {
+      const { c, jouer, editer } = partie(AVANT_SECRET);
+      editer(`sudo nano ${SITE}`, (t) =>
+        t.replace('    location /caisse/', '    location = /.env {\n        return 404;\n    }\n\n    location /caisse/'),
+      );
+      let tout = jouer(['sudo systemctl reload nginx']);
+      contient(tout, '/.git/config, si');
+      editer(`sudo nano ${SITE}`, (t) => t.replace('    index index.html;', '    index index.html;\n    deny all;'));
+      tout = jouer(['sudo systemctl reload nginx']);
+      contient(tout, 'ne répond plus normalement');
+      expect(c.termines).not.toContain('secret');
+    });
+
+    const AVANT_PROXY = ['depart', 'droits', 'secret'];
+    const avecEntete = (entete: string) => (t: string) =>
+      t.replace('proxy_pass http://127.0.0.1:3000/;', `proxy_pass http://127.0.0.1:3000/;\n        proxy_set_header ${entete};`);
+    const confiance = (valeur: string) => (t: string) => t.replace(/TRUST_PROXY=.*/, `TRUST_PROXY=${valeur}`);
+
+    it('chapitre 4 — solution : X-Forwarded-For dans nginx, TRUST_PROXY=loopback', () => {
+      const { c, jouer, editer } = partie(AVANT_PROXY);
+      let tout = jouer(['sudo tail -3 /var/log/caisse/app.log', "sudo grep 'POST /caisse' /var/log/nginx/access.log"]);
+      expect(tout).toContain('locked 127.0.0.1 for 15 minutes');
+      expect(tout).toContain('198.51.100.66');
+      tout = jouer(['sudo systemctl restart caisse']);
+      contient(tout, 'Lina avec');
+      editer(`sudo nano ${SITE}`, avecEntete('X-Forwarded-For $proxy_add_x_forwarded_for'));
+      editer('sudo nano /srv/caisse/app/.env', confiance('loopback'));
+      tout = jouer(['sudo nginx -t', 'sudo systemctl reload nginx', 'sudo systemctl restart caisse', 'sudo tail -2 /var/log/caisse/app.log']);
+      expect(tout).toContain('login ok for lina from 192.0.2.44');
+      contient(tout, 'https://expressjs.com/en/guide/behind-proxies.html');
+      expect(c.termines).toContain('proxy');
+    });
+
+    it('chapitre 4 — autre solution : $remote_addr, et la seule adresse de nginx', () => {
+      const { c, jouer, editer } = partie(AVANT_PROXY);
+      editer(`sudo nano ${SITE}`, avecEntete('X-Forwarded-For $remote_addr'));
+      editer('sudo nano /srv/caisse/app/.env', confiance('127.0.0.1'));
+      jouer(['sudo systemctl reload nginx', 'sudo systemctl restart caisse']);
+      expect(c.termines).toContain('proxy');
+    });
+
+    it('chapitre 4 — fausses pistes : TRUST_PROXY=true, ou l’en-tête du client transmis tel quel', () => {
+      const { c, jouer, editer } = partie(AVANT_PROXY);
+      editer(`sudo nano ${SITE}`, avecEntete('X-Forwarded-For $proxy_add_x_forwarded_for'));
+      editer('sudo nano /srv/caisse/app/.env', confiance('true'));
+      let tout = jouer(['sudo systemctl reload nginx', 'sudo systemctl restart caisse', 'sudo tail -2 /var/log/caisse/app.log']);
+      expect(tout).toContain('login failed for admin from 10.');
+      contient(tout, 'le robot (198.51.100.66) n');
+      expect(c.termines).not.toContain('proxy');
+      // loopback, mais nginx ne fait que transmettre ce que le client a écrit.
+      editer(`sudo nano ${SITE}`, (t) => t.replace('$proxy_add_x_forwarded_for', '$http_x_forwarded_for'));
+      editer('sudo nano /srv/caisse/app/.env', confiance('loopback'));
+      tout = jouer(['sudo systemctl reload nginx', 'sudo systemctl restart caisse', 'sudo tail -2 /var/log/caisse/app.log']);
+      expect(tout).toContain('login failed for admin from 10.');
+      expect(c.termines).not.toContain('proxy');
+    });
   });

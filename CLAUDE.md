@@ -83,6 +83,10 @@ rouages.net.
   `@includedir`, règles) ; `visudo` et `sudo -l` dans `commandes/sudoers.ts` ;
   `userdel`, `gpasswd`, `chage` dans `commandes/comptes.ts` ; `umask` (masque
   de la session, `Shell.masque`) et setgid appliqués à la création (`placer`).
+- `chapitres/caisse-web.ts` : le site et l'appli de caisse de La Coopérative
+  (Express simulé : `.env` lu au démarrage, `trust proxy`, verrous par
+  adresse) ; nginx transmet `proxy_set_header` à l'appli (`Demande`), et
+  `grep` lit des expressions régulières (`versRegexBasique`).
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
   dans `editeur.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).

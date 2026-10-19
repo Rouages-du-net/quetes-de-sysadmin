@@ -89,6 +89,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `mv` | ne déplace que des objets (fichiers) | déplace aussi les dossiers |
 | `rm -r`, `cp -r` | refusés | effacent / copient des dossiers entiers |
 | `grep` sans résultat | « (aucune ligne ne contient …) » | n'affiche rien |
+| `grep` | expressions régulières basiques (par défaut), étendues (`-E`) ou texte brut (`-F`), traduites en expressions JavaScript ; pas de classes `[[:alpha:]]` ni de références arrière `\1` | POSIX complet |
 | `man` | affiche la page d'un coup, en quelques sections | ouvre une page plein écran (flèches, `/mot` pour chercher, `q` pour quitter), bien plus longue |
 | `ls -l` | type et droits, propriétaire, groupe (= propriétaire), taille, nom | ajoute le nombre de liens et la date |
 | permissions | propriétaire, groupe, autres ; bits spéciaux affichés (`s`, `t`) ; le setgid d'un dossier passe son groupe (et le setgid) à ce qu'on y crée ; `chmod` à 4 chiffres ; pas de setuid ni de sticky appliqués, ni d'ACL ; un fichier déplacé dans un dossier setgid sans groupe à lui en prend aussi le groupe | setuid, sticky appliqués, ACL (`setfacl`), `mv` garde le groupe |
@@ -128,7 +129,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | machines internes | derrière `maison`, `wiki` et `archives` existent dès qu'on s'y connecte ; on y entre par ssh depuis `maison`, ou avec `-J` depuis le poste (`exit` ramène alors au poste) ; un programme absent répond `command not found` | un vrai réseau, routé |
 | `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
 | `apt` | `update`, `install [-y]`, `list --installed` ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » | tout le catalogue Debian, `upgrade`, `remove`, `search`, `show`… ; dpkg garde l'état du paquet |
-| `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe ou `=` (pas d'expressions régulières), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
+| `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe, `=`, `^~`, ou expression régulière (`~`, `~*`, syntaxe de JavaScript plutôt que PCRE), choisie dans l'ordre de nginx ; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
 | `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse), ou un tunnel `ssh -L` ouvert sur le poste | tout le réseau |
 | `tar` | `-C` ; une archive coupée s'arrête à la coupure (messages proches de GNU tar) ; root garde propriétaires et droits | aussi `--strip-components`, `-p`, archives multi-volumes… |
 | `ssh-keygen` | `-R`, `-F`, `-l -f` ; crée des clés ed25519 seulement (`-t`, `-C`, `-N`, `-f`), fausses mais de la bonne forme, avec leur image aléatoire | tous les types de clés, conversion, certificats… |
@@ -138,7 +139,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | horloge | heure de Paris : CET l'hiver, CEST l'été | fuseau de la machine |
 | `restic` | `-r` et `--password-file` obligatoires (pas de variables d'environnement) ; `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check`, `stats` ; pas d'`init` ; un « pack » par sauvegarde ; fichiers du dépôt illisibles mais pas binaires ; pas de barres de progression | tout cela, et `mount`, `copy`, `key`, `tag`, dépôts distants (sftp, S3, rest-server) |
 | liens symboliques | `ln -s` (`-f`, `-n`), suivis pour lire, écrire et entrer ; `ls -l` les montre ; `readlink` | aussi `realpath`, `find -L`… |
-| `curl` | `-I`, `-i`, `-k`, `-L`, `-H "Host: …"` ; ne joint que la machine où l'on est (nginx, une appli sur son port, un conteneur) | toutes les options, tout le réseau |
+| `curl` | `-I`, `-i`, `-k`, `-L`, `-H` (Host, ou un en-tête transmis), `-X`, `-d` (seulement la méthode) ; ne joint que la machine où l'on est (nginx, une appli sur son port, un conteneur) | toutes les options, tout le réseau |
 | DNS (BIND) | zones A, AAAA, CNAME, MX, NS, TXT, SOA ; un primaire (`named`), un secondaire qui recopie quand le serial augmente (tout de suite), un résolveur public avec cache ; `dig` (`@serveur`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (accolades et fichiers), `rndc reload`/`status` ; pas de section AUTHORITY, de DNSSEC ni de zones inverses | tout cela |
 | `awk` | programme entre apostrophes : motifs, `BEGIN`/`END`, champs, tableaux, `printf`, fonctions courantes, `-F`, `-v` ; pas de `getline`, de redirection dans `print`, de fonctions définies ni de `?:` | le langage complet (mawk sur Debian) |
 | trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
@@ -1183,14 +1184,14 @@ trop. Pièges prévus : la barre oblique finale oubliée (un dossier
 `partage/partage`), `--delete` sans essai à blanc. Le débrief parle de FTP
 et telnet, qui font passer les mots de passe en clair.
 
-## Histoire 12 : La Coopérative (quatre chapitres prévus)
+## Histoire 12 : La Coopérative (cinq chapitres prévus)
 
 L'épicerie coopérative du quartier (machine `cooperative`, 192.0.2.20) :
 la caisse (un service), l'équipe caisse (Lina, Karim), un compte de
 déploiement partagé (`deploy`). Awa, la coordinatrice, confie le serveur à
 la joueuse ou au joueur quand Marc, qui le tenait, s'en va. Les trous de
-la feuille de route : comptes, sudoers, droits partagés ; puis (à venir)
-un secret exposé par nginx, `X-Forwarded-For`, `apt upgrade` et tmux.
+la feuille de route : comptes, sudoers, droits partagés, un secret exposé
+par nginx, `X-Forwarded-For` ; puis (à venir) `apt upgrade` et tmux.
 
 ### Chapitre 1 — Le départ (fait)
 
@@ -1224,4 +1225,42 @@ arrêter ssh), sans erreur. Pièges prévus : une commande sans chemin
 (visudo refuse et demande « Et maintenant ? »), un fichier `caisse.conf`
 (ignoré), une règle `ALL`, `systemctl` sans arguments, une faute écrite
 avec nano (sudo refuse tout).
+
+### Chapitre 3 — Le secret (fait)
+
+La clé de paiement traîne sur internet : le site est servi depuis le
+dossier de l'appli (`root /srv/caisse/app`), avec son `.env` et son `.git`.
+
+| Étape | Commande apprise |
+|---|---|
+| Constater | `curl http://cooperative.example/.env`, `sudo grep '\.env' /var/log/nginx/access.log` |
+| Fermer | `location ~ /\. { deny all; }` (ou des droits que www-data ne peut pas lire), `nginx -t`, `reload` |
+| Bloquer | `deny 203.0.113.77;` |
+| Changer la clé | `.env`, puis `systemctl restart caisse` (l'appli ne relit son `.env` qu'au démarrage), `curl 127.0.0.1:3000/health` |
+
+Objectif vérifié par des requêtes au nginx simulé : `/.env` et
+`/.git/config` ne sont plus servis, `/` et `/caisse/` répondent, l'adresse
+fautive reçoit 403, et l'appli a chargé la nouvelle clé. Pièges prévus :
+bloquer seulement `/.env` (le jeton de `.git/config` sort encore), un
+`deny all` qui ferme tout le site, la clé écrite sans relancer l'appli.
+
+### Chapitre 4 — Le proxy (fait)
+
+Plus personne ne peut se connecter à la caisse : un robot essaie des mots
+de passe, et l'appli (Express), qui voit tout le monde en 127.0.0.1
+derrière nginx, a verrouillé tout le monde.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | comparer `/var/log/caisse/app.log` (127.0.0.1) et `access.log` (198.51.100.66) |
+| nginx | `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` (ou `$remote_addr`) |
+| L'appli | `TRUST_PROXY=loopback` dans `.env` (ou l'adresse de nginx), `systemctl restart caisse` |
+
+À chaque rechargement de nginx ou démarrage de l'appli, le jeu rejoue cinq
+minutes de trafic (le robot, avec un faux `X-Forwarded-For` à chaque essai,
+puis Lina). Objectif vérifié sur ce trafic : Lina entre, et c'est l'adresse
+du robot qui est verrouillée. Pièges prévus : rien côté nginx (tout le
+monde reste en 127.0.0.1), `TRUST_PROXY=true` (le robot change d'adresse à
+volonté), `$http_x_forwarded_for` (nginx transmet l'en-tête du client sans
+le compléter).
 
