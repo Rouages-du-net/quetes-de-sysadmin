@@ -56,7 +56,8 @@ garde cette mention et le lien vers l'original.
 - [x] Nom, mention « inspiré de Terminus (MIT) », README, CLAUDE.md
       (consignes de l'agent dédié)
 - [x] Licences : GPL v3 (code), CC BY-SA 4.0 (textes)
-- [ ] Charte de contribution (format d'une quête, tests, relecture)
+- [x] Charte de contribution (format d'une quête, tests, relecture) :
+      `docs/CONTRIBUER.md`
 - [x] Pile : site **Astro** (pages statiques), jeu en TypeScript sans
       framework (élément `<quetes-de-sysadmin>`, construit aussi seul par
       Vite pour l'intégration) ; tests Vitest (chaque chapitre rejoué) et
@@ -88,9 +89,11 @@ demandent plusieurs.
       invite `utilisateur@hôte:~$` (`console.ts`, `machines.ts`, `poste.ts`)
 - [x] Comptes propres à chaque machine ; l'état d'une machine est gardé
       entre deux connexions ssh (tant que la page est ouverte)
-- [ ] Services et ports propres à chaque machine
-- [ ] **Réseau simulé** : adresses, ports ouverts, résolution de noms
+- [x] Services et ports propres à chaque machine (`ss`, `nc`, services
+      systemd et leurs sockets décrits par chaque chapitre)
+- [x] **Réseau simulé** : adresses, ports ouverts, résolution de noms
       (`/etc/hosts`, DNS), routes, latence ; ce qu'un pare-feu laisse passer
+      (ufw, nftables), réseau local d'un routeur (VLAN, DHCP, NAT, VPN)
 - [x] **Services** (`systemd` simulé, `src/moteur/systemd.ts`) : état,
       démarrage, échec, activation au démarrage, `systemctl`, `journalctl`,
       `reboot` ; quête « La nuit du redémarrage » (Datacenter, chapitre 3)
@@ -111,12 +114,13 @@ demandent plusieurs.
       à jour ; solution alternative au chapitre 1 du Datacenter
 - [x] Vérification de syntaxe par service : `sshd -t`, `nginx -t` (et
       `nginx -T`), rechargement refusé si la configuration est fausse
-- [ ] **Manuel intégré** : pages `man` complètes générées depuis la
+- [x] **Manuel intégré** : pages `man` complètes générées depuis la
       définition de chaque commande, `--help`, `man -k`, `apropos`, `whatis` ;
       option inconnue → vrai message d'erreur (repris du travail fait dans
       rouages.net)
-- [ ] **Vérificateur d'objectifs** : prédicats sur l'état (« le port 22
-      n'accepte plus les mots de passe », « le site répond en HTTPS »…)
+- [x] **Vérificateur d'objectifs** : prédicats sur l'état (« le port 22
+      n'accepte plus les mots de passe », « le site répond en HTTPS »…) :
+      les événements de chaque chapitre
 
 ## Phase 2 — Se connecter et se déplacer
 
