@@ -57,3 +57,27 @@ carnet-markdown-intro = { $nombre ->
 carnet-decouverte = Découverte dans « { $chapitre } ».
 # { $commande } : la commande qui ouvre le manuel (man ls)
 carnet-manuel = Pour aller plus loin : { $commande }
+
+## Liens vers Les rouages du net (après un chapitre)
+
+rouages-intro = Pour comprendre ce qui se passe sous le capot, sur Les rouages du net :
+rouages-lien-entree-nom = « De l'Entrée à la page » : le nom devient une adresse (DNS)
+rouages-lien-entree-box = « De l'Entrée à la page » : ta box et ton réseau local
+rouages-lien-entree-liaison = « De l'Entrée à la page » : ouvrir la liaison (TCP, ports)
+rouages-lien-entree-cadenas = « De l'Entrée à la page » : le cadenas (TLS, certificats)
+rouages-lien-entree-voyage = « De l'Entrée à la page » : le voyage des paquets
+rouages-lien-entree-serveur = « De l'Entrée à la page » : le serveur répond
+rouages-lien-ordinateur-binaire = « Comment marche un ordinateur » : tout est nombre
+rouages-lien-ordinateur-memoire = « Comment marche un ordinateur » : la mémoire
+rouages-lien-glossaire-ttl = Glossaire : TTL
+rouages-lien-glossaire-port = Glossaire : port
+rouages-lien-glossaire-nat = Glossaire : NAT
+rouages-lien-glossaire-routeur = Glossaire : routeur
+rouages-lien-glossaire-commutateur = Glossaire : commutateur
+rouages-lien-glossaire-hebergeur = Glossaire : hébergeur
+rouages-lien-glossaire-chiffrement = Glossaire : chiffrement
+rouages-lien-glossaire-autorite-certification = Glossaire : autorité de certification
+rouages-lien-glossaire-code-http = Glossaire : code HTTP
+rouages-lien-glossaire-requete = Glossaire : requête
+rouages-lien-glossaire-datacenter = Glossaire : datacenter
+rouages-lien-glossaire-octet = Glossaire : octet

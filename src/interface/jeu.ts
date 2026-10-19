@@ -8,6 +8,7 @@ import { Console } from '../moteur/console';
 import { HISTOIRES } from '../moteur/chapitres';
 import { machineDeHistoire } from '../moteur/machines';
 import { description, enMarkdown, noter, type Carnet } from '../moteur/carnet';
+import { liensRouages } from '../moteur/rouages';
 import { editeur } from './editeur';
 import { traducteur, typographie, type Langue } from '../textes';
 
@@ -70,6 +71,9 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const terminal = el('div', { class: 'terminal' }, sortie, form);
   const suivant = el('button', { type: 'button', class: 'bouton principal' }, t('bouton-suivant'));
   const fin = el('div', { class: 'fin', hidden: '' }, suivant);
+  // Après un chapitre : la page de Les rouages du net qui explique son concept.
+  const listeRouages = el('ul', {});
+  const pourComprendre = el('aside', { class: 'pour-comprendre', hidden: '' }, el('p', {}, typo(t('rouages-intro'))), listeRouages);
   // Le carnet du sysadmin : les commandes déjà lancées, avec leur ligne du manuel.
   const carnetCompte = el('span', { class: 'compte' });
   const carnetListe = el('dl', {});
@@ -93,7 +97,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit-lien-projet')), ' · ',
     el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-lien-original')));
 
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, terminal, fin, panneauCarnet, astuces, credit);
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, terminal, fin, pourComprendre, panneauCarnet, astuces, credit);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -194,6 +198,11 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     // « Chapitre suivant » : après un chapitre fini, s'il en reste un.
     const h = histoire();
     fin.hidden = !(h >= 0 && terminalJeu.distant!.shell.termine && courant() < chapitres(h).length - 1);
+    const liens = h >= 0 && terminalJeu.distant!.shell.termine ? liensRouages(terminalJeu.distant!.shell.chapitre.id) : [];
+    pourComprendre.hidden = liens.length === 0;
+    listeRouages.replaceChildren(
+      ...liens.map((l) => el('li', {}, el('a', { href: l.adresse, hreflang: 'fr', target: '_blank', rel: 'noopener' }, typo(t(`rouages-lien-${l.id}`))))),
+    );
   };
 
   const majCarnet = () => {

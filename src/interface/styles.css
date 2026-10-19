@@ -131,6 +131,10 @@
   color: var(--_fond);
   cursor: pointer;
 }
+/* Après un chapitre : les pages de Les rouages du net qui expliquent son concept. */
+.qds .pour-comprendre { margin-top: 1rem; padding: 0.5rem 0.75rem; border-left: 3px solid var(--_accent); background: var(--_carte); }
+.qds .pour-comprendre p { margin: 0 0 0.25rem; }
+.qds .pour-comprendre ul { margin: 0; padding-left: 1.25rem; }
 /* Le carnet du sysadmin : un panneau replié sous le terminal. */
 .qds .carnet { margin-top: 1rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_carte); padding: 0.5rem 0.75rem; }
 .qds .carnet summary { cursor: pointer; font-weight: 600; }

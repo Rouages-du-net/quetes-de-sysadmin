@@ -324,8 +324,9 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
   `nftables`, `rsnapshot` ou `restic`) et leurs compromis.
 - **Défis de la communauté** : format de quête documenté pour que d'autres
   en écrivent.
-- **Lien avec rouages.net** : chaque quête renvoie au module qui explique le
-  concept (DNS, TLS, hôtes virtuels…), et inversement.
+- [x] **Lien avec rouages.net** : après un chapitre, les étapes des modules
+  ou les mots du glossaire qui expliquent son concept (DNS, TLS, NAT…),
+  `src/moteur/rouages.ts`. Reste le sens inverse, à faire sur rouages.net.
 - **Pour les enseignant·es** : fiches par quête (objectifs, prérequis, durée),
   progression exportable sans compte.
 
