@@ -30,3 +30,30 @@ saisie-etiquette = Commande
 credit = Quêtes de Sysadmin, jeu libre (GPL v3, textes CC BY-SA 4.0), inspiré de Terminus, créé au MIT par Shawn Conrad et Michele Pratusevich.
 credit-lien-projet = Le projet
 credit-lien-original = Terminus (en anglais)
+
+## Le carnet du sysadmin
+
+carnet-titre = Le carnet du sysadmin
+# { $nombre } : le nombre de commandes notées
+carnet-compte = { $nombre ->
+    [0] (vide)
+    [one] ({ $nombre } commande)
+   *[other] ({ $nombre } commandes)
+}
+carnet-aide = Chaque commande que tu lances pour la première fois s'ajoute ici, avec ce qu'elle fait et la ligne que tu as tapée. Ton aide-mémoire, à emporter.
+carnet-vide = Rien encore : lance une commande (ls, par exemple), elle viendra s'inscrire ici.
+carnet-exporter = Télécharger (Markdown)
+carnet-copier = Copier
+carnet-copie = Copié dans le presse-papiers.
+carnet-copie-impossible = Ce navigateur refuse l'accès au presse-papiers : utilise plutôt le téléchargement.
+# Le nom du fichier téléchargé : sans espace ni caractère difficile.
+carnet-fichier = carnet-du-sysadmin.md
+# En tête du fichier Markdown. { $nombre } : le nombre de commandes
+carnet-markdown-intro = { $nombre ->
+    [one] Une commande apprise en jouant à Quêtes de Sysadmin.
+   *[other] { $nombre } commandes apprises en jouant à Quêtes de Sysadmin.
+}
+# { $chapitre } : le titre du chapitre où la commande a servi la première fois
+carnet-decouverte = Découverte dans « { $chapitre } ».
+# { $commande } : la commande qui ouvre le manuel (man ls)
+carnet-manuel = Pour aller plus loin : { $commande }

@@ -122,7 +122,8 @@ rouages.net.
   démarrage, `clients.conf`, module ldap, fichier `users`, demandes des
   bornes et VLAN) ; `freeradius` et `radtest` dans `commandes/radius.ts`.
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
-  dans `editeur.ts`) et styles
+  dans `editeur.ts`, le carnet du sysadmin dont la logique est dans
+  `src/moteur/carnet.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).
 - `src/element.ts` : l'élément `<quetes-de-sysadmin>` (Shadow DOM).
 - `src/textes/<langue>/*.ftl` : tous les textes (Fluent), chargés par

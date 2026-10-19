@@ -316,8 +316,9 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
-- **Le carnet du sysadmin** : chaque commande découverte s'ajoute à un aide-mémoire
-  personnel, exportable.
+- [x] **Le carnet du sysadmin** : chaque commande découverte s'ajoute à un
+  aide-mémoire personnel (sa ligne du manuel, la première ligne tapée, le
+  chapitre), gardé dans le navigateur, exportable en Markdown.
 - **Mode « examen »** : une machine en panne, sans indices, avec un chrono.
 - **Quêtes à plusieurs bonnes réponses** : comparer deux solutions (`ufw` ou
   `nftables`, `rsnapshot` ou `restic`) et leurs compromis.
