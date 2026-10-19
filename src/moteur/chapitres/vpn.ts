@@ -44,7 +44,7 @@ const CLE_MALIK = 'yAnz5TF+lXXJte14tji3zlMNq+hd2rYUIgJBgB3fBmk=';
 export const PUBLIQUE_MALIK = publique(CLE_MALIK)!;
 const PORTABLE = `${M}/portable-malik.conf`;
 
-const MALIK: Distant = { nom: 'portable-malik', adresse: '198.51.100.23', cle: PUBLIQUE_MALIK, conf: PORTABLE, vers: '10.10.10.5', port: 445 };
+export const MALIK: Distant = { nom: 'portable-malik', adresse: '198.51.100.23', cle: PUBLIQUE_MALIK, conf: PORTABLE, vers: '10.10.10.5', port: 445 };
 
 const publicDe = (j: Jeu) => publicDu(j as Shell);
 const maintenant = (j: Jeu) => etatTunnel(j, MALIK, publicDe(j));

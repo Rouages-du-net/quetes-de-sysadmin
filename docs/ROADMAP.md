@@ -270,7 +270,9 @@ demandent plusieurs.
       chapitre 5)
 - [x] VPN WireGuard pour le télétravail : clés, `wg0.conf`, `wg-quick`,
       pare-feu ; « Le télétravail » (La Ruche, chapitre 4)
-- [ ] VPN entre deux sites (La Ruche, chapitre 6)
+- [x] VPN entre deux sites : un pair de plus sur `wg0`, `AllowedIPs` comme
+      table de routage, `PersistentKeepalive` derrière une box ; « L'Annexe »
+      (La Ruche, chapitre 6)
 - [ ] Annuaire : OpenLDAP pour les comptes de l'équipe (La Ruche,
       chapitre 7)
 - [ ] Wi-Fi d'entreprise : 802.1X avec FreeRADIUS, qui vérifie les comptes

@@ -38,6 +38,7 @@ function montrer(jeu: Shell, nom: string, i: InterfaceWg): string[] {
       lignes.push('  latest handshake: 7 seconds ago');
       lignes.push(e!.etat === 'ok' ? '  transfer: 48.62 KiB received, 312.07 KiB sent' : '  transfer: 2.18 KiB received, 1.02 KiB sent');
     }
+    if (p.keepalive) lignes.push(`  persistent keepalive: every ${p.keepalive} seconds`);
   }
   return lignes;
 }
@@ -180,8 +181,11 @@ export function pingTunnel(jeu: Shell, ip: string): 'sans-pair' | 'perdu' | 'ok'
     if (!p) continue;
     const d = lan(jeu)?.distants?.find((x) => x.cle === p.cle);
     const e = d && etatTunnel(jeu, d, publicDu(jeu));
-    const client = d && lireConfWg(jeu.lire(d.conf) ?? '').adresses[0]?.split('/')[0];
-    return e && e.nom === nom && serre(e.etat) && client === ip ? 'ok' : 'perdu';
+    if (!d || !e || e.nom !== nom || !serre(e.etat)) return 'perdu';
+    const client = lireConfWg(jeu.lire(d.conf) ?? '');
+    if (client.adresses[0]?.split('/')[0] === ip) return 'ok';
+    // Un appareil du site derrière ce pair : seulement si le passage reste ouvert dans sa box.
+    return d.reseau && dans(ip, d.reseau) && (!d.derriereNat || client.pairs[0]?.keepalive) ? 'ok' : 'perdu';
   }
   return 'sans-pair';
 }

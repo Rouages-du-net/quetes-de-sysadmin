@@ -417,4 +417,54 @@ table ip nat {
       editer('sudo nano /etc/nftables.conf', DMZ);
       expect(c.termines).toContain('dmz');
     });
+
+    const cleAnnexe = (c: Console) => c.shell.lire('/home/vous/courriel_sami.txt')!.match(/[A-Za-z0-9+/]{43}=/)![0];
+    const PAIR_ANNEXE =
+      (cle: string, autorisees = '10.10.99.3/32, 10.20.10.0/24') =>
+      (t: string) =>
+        t + `\n\n# Annexe\n[Peer]\nPublicKey = ${cle}\nAllowedIPs = ${autorisees}\n`;
+    const CONF_ANNEXE =
+      (pub: string, autorisees = '10.10.10.0/24', keepalive = true) =>
+      (t: string) =>
+        t
+          .replace('PublicKey =', `PublicKey = ${pub}`)
+          .replace('Endpoint =', 'Endpoint = ruche.example:51820')
+          .replace('AllowedIPs =', `AllowedIPs = ${autorisees}${keepalive ? '\nPersistentKeepalive = 25' : ''}`);
+
+    it('chapitre 6 — solution : un pair pour le site, ses AllowedIPs, PersistentKeepalive', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz']);
+      let tout = jouer(['sudo wg show']);
+      const pub = tout.match(/public key: (\S+)/)![1];
+      editer('sudo nano /etc/wireguard/wg0.conf', PAIR_ANNEXE(cleAnnexe(c)));
+      editer('nano annexe-wg0.conf', CONF_ANNEXE(pub));
+      tout = jouer(['sudo systemctl restart wg-quick@wg0', 'ip route', 'sudo wg show', 'ping -c 1 10.20.10.20']);
+      expect(tout).toContain('10.20.10.0/24 dev wg0 scope link');
+      expect(tout).toContain('allowed ips: 10.10.99.3/32, 10.20.10.0/24');
+      expect(tout).toContain('64 bytes from 10.20.10.20');
+      contient(tout, 'https://www.wireguard.com/#cryptokey-routing');
+      expect(c.termines).toContain('annexe');
+    });
+
+    it('chapitre 6 — fausses pistes : pas relu, l’adresse seule, l’Annexe qui s’endort, tout ouvert', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz']);
+      const pub = jouer(['sudo wg show']).match(/public key: (\S+)/)![1];
+      let tout = editer('sudo nano /etc/wireguard/wg0.conf', PAIR_ANNEXE(cleAnnexe(c), '10.10.99.3/32'));
+      contient(tout, 'ne relit pas le fichier');
+      editer('nano annexe-wg0.conf', CONF_ANNEXE(pub, '10.10.10.0/24', false));
+      tout = jouer(['sudo systemctl restart wg-quick@wg0']);
+      contient(tout, 'tout\nson réseau'.replace('\n', ' '));
+      editer('sudo nano /etc/wireguard/wg0.conf', (t) => t.replace('AllowedIPs = 10.10.99.3/32', 'AllowedIPs = 10.10.99.3/32, 10.20.10.0/24'));
+      tout = jouer(['sudo wg-quick up wg0', 'sudo wg-quick down wg0', 'sudo wg-quick up wg0', 'ping -c 1 10.20.10.20']);
+      expect(tout).toContain("wg-quick: `wg0' already exists");
+      expect(tout).toContain('1 packets transmitted, 0 received, 100% packet loss');
+      contient(tout, 'PersistentKeepalive');
+      // Tout ouvert : tout La Ruche dans le tunnel côté Annexe, et forward qui laisse tout passer depuis wg0.
+      editer('nano annexe-wg0.conf', (t) => t.replace('AllowedIPs = 10.10.10.0/24', 'AllowedIPs = 10.10.0.0/16'));
+      tout = jouer(['sudo nft add rule inet filter forward iifname wg0 accept']);
+      contient(tout, 'les caméras de La Ruche');
+      expect(c.termines).not.toContain('annexe');
+      jouer(['sudo systemctl restart nftables']);
+      editer('nano annexe-wg0.conf', (t) => t + '\nPersistentKeepalive = 25\n');
+      expect(c.termines).toContain('annexe');
+    });
   });

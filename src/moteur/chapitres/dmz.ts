@@ -33,7 +33,7 @@ import {
   mondeRuche,
   MOT_DE_PASSE,
   NFTABLES_TELETRAVAIL,
-  nouveauLan,
+  lanAvecDmz,
   SYSCTL_ROUTEUR,
   systemdRuche,
 } from './ruche';
@@ -111,9 +111,7 @@ export const dmz: Chapitre = {
     const sd = systemdRuche();
     sd.services.nftables.active = true;
     sd.services.nftables.etat = 'active';
-    const l = nouveauLan(true);
-    l.vlans.push(40);
-    l.appareils.push({ nom: 'web', mac: '00:00:5e:00:53:40', vlan: 40, fixe: '10.10.40.10' });
+    const l = lanAvecDmz();
     return { lan: { ...l, flux: FLUX_DMZ.map(({ permis: _, ...x }) => x) }, systemd: sd, nft: { tables: [] } };
   },
   initialiser: initialiserPareFeu,
