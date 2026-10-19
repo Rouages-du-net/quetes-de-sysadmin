@@ -11,6 +11,7 @@ import { GIT } from './git';
 import { PAGES } from './pages';
 import { SSH } from './ssh';
 import { COMPTES } from './comptes';
+import { SUDOERS_COMMANDES, sudoListe } from './sudoers';
 import { SYSTEMD } from './systemd';
 import { EDITEUR } from './editeur';
 import { SSHD } from './sshd';
@@ -72,6 +73,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...GIT,
   ...SSH,
   ...COMPTES,
+  ...SUDOERS_COMMANDES,
   ...SYSTEMD,
   ...EDITEUR,
   ...SSHD,
@@ -98,7 +100,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...TRANSFERTS,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
-  sudo: { lancer: () => '' },
+  sudo: { lancer: ({ args, jeu }) => (/^-l+$/.test(args[0] ?? '') ? sudoListe(jeu, args) : '') },
   clear: { lancer: () => '' },
   man: { lancer: () => '' },
   apropos: { lancer: () => '' },

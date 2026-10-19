@@ -1,4 +1,4 @@
-// Commandes système : processus (ps, kill). Les services (systemctl,
+// Commandes système : processus (ps, kill, pkill) et sessions (who). Les services (systemctl,
 // journalctl) sont dans systemd.ts. Les processus sont simulés dans l'état de
 // l'histoire :
 //   etat.processus : liste de { pid, utilisateur, cpu, mem, commande }
@@ -22,9 +22,12 @@ export interface Processus {
 export const SYSTEME: Record<string, Commande> = {
   ps: {
     lancer: ({ args, jeu }) => {
-      const tous = args.some((a) => /[ae]/.test(a));
+      const tous = args.some((a) => /^-?\w*[ae]/.test(a) && !/^-\w*u$/.test(a));
+      // -u compte[,compte] : seulement les processus de ces comptes.
+      const iu = args.findIndex((a) => /^-\w*u$/.test(a));
+      const comptes = iu >= 0 ? (args[iu + 1] ?? '').split(',') : null;
       const liste: Processus[] = [...(jeu.etat.processus ?? []), ...processusDocker(jeu)]
-        .filter((p: Processus) => tous || p.utilisateur === 'vous')
+        .filter((p: Processus) => (comptes ? comptes.includes(p.utilisateur) : tous || p.utilisateur === jeu.qui || p.utilisateur === 'vous'))
         .sort((a: Processus, b: Processus) => a.pid - b.pid);
       // -f (ps -ef) : le format complet, avec le parent (PPID).
       if (args.some((a) => /^-\w*f/.test(a))) {
@@ -60,4 +63,51 @@ export const SYSTEME: Record<string, Commande> = {
     },
   },
 
+  // pkill : arrête les processus choisis par nom (motif dans le nom du programme) ou par compte (-u).
+  // Code de retour 1 si aucun processus ne correspond (procps).
+  pkill: {
+    lancer: ({ args, jeu }) => {
+      const iu = args.indexOf('-u');
+      const comptes = iu >= 0 ? (args[iu + 1] ?? '').split(',') : null;
+      const motif = args.filter((a, k) => !a.startsWith('-') && (iu < 0 || k !== iu + 1))[0];
+      if (!motif && !comptes) return jeu.erreur(jeu.t('pkill-usage'), 2);
+      let re: RegExp | null = null;
+      try {
+        re = motif ? new RegExp(motif) : null;
+      } catch {
+        return jeu.erreur(`pkill: invalid regular expression: ${motif}`, 2);
+      }
+      const liste: Processus[] = jeu.etat.processus ?? [];
+      // Le nom du programme : le premier mot de la commande, sans son chemin (comme /proc/pid/comm).
+      const nom = (p: Processus) => p.commande.split(/[\s:]/)[0].split('/').at(-1)!.replace(/^-/, '');
+      const choisis = liste.filter((p) => (!comptes || comptes.includes(p.utilisateur)) && (!re || re.test(nom(p))) && !p.zombie);
+      if (!choisis.length) {
+        jeu.statut = 1;
+        return '';
+      }
+      const messages: string[] = [];
+      for (const p of choisis) {
+        if (jeu.qui !== 'root' && p.utilisateur !== jeu.qui) {
+          jeu.erreur(`pkill: killing pid ${p.pid} failed: Operation not permitted`);
+          continue;
+        }
+        jeu.etat.processus = (jeu.etat.processus as Processus[]).filter((q) => q !== p);
+        const m = jeu.etat.surKill?.(jeu, p);
+        if (m) messages.push(m);
+      }
+      return messages.join('\n');
+    },
+  },
+
+  // who : les sessions ouvertes (une session vit tant que son processus sshd tourne).
+  who: {
+    lancer: ({ jeu }) => {
+      const sessions: { utilisateur: string; tty: string; depuis: string; de: string; pid?: number }[] = jeu.etat.sessions ?? [];
+      const vivants = ((jeu.etat.processus ?? []) as Processus[]).map((p) => p.pid);
+      return sessions
+        .filter((x) => x.pid === undefined || vivants.includes(x.pid))
+        .map((x) => `${x.utilisateur.padEnd(8)} ${x.tty.padEnd(12)} ${x.depuis} (${x.de})`)
+        .join('\n');
+    },
+  },
 };

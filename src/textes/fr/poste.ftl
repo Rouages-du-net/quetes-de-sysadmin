@@ -46,6 +46,7 @@ machine-gazette-motd = La Gazette du quartier — le serveur du journal. On publ
 machine-ludotheque-motd = La Ludothèque du quartier — le serveur des bénévoles. On joue, on prête, on range les pions.
 machine-radio-motd = Radio Quartier — le serveur de l'antenne. Astreinte : un œil sur le flux, l'autre sur les journaux.
 machine-maison-motd = Maison des associations — la passerelle. Derrière elle : le wiki et les archives.
+machine-cooperative-motd = L'épicerie coopérative du quartier — le serveur de la caisse. Ici, on partage tout, sauf les mots de passe.
 
 # En se reconnectant à une machine dont le chapitre est en cours.
 # { $fichier } : le fichier d'accueil du chapitre (ex. bienvenue.txt)

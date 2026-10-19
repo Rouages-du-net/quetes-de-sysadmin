@@ -33,3 +33,6 @@ logrotate-usage =
     This may be freely redistributed under the terms of the GNU General Public License
 
     Usage: logrotate [-dfv?] [-d|--debug] [-f|--force] [-v|--verbose] <configfile>
+pkill-usage =
+    pkill: no matching criteria specified
+    Try `pkill --help' for more information.

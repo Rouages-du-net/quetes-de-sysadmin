@@ -79,6 +79,10 @@ rouages.net.
   distant dans `commandes/sauvegarde.ts`. La console garde une pile de
   sessions internes (`interieur`) ; `Chapitre.surveillePoste` fait vérifier
   les événements après les commandes tapées sur le poste.
+- `src/moteur/sudoers.ts` : la politique de sudo (`/etc/sudoers`,
+  `@includedir`, règles) ; `visudo` et `sudo -l` dans `commandes/sudoers.ts` ;
+  `userdel`, `gpasswd`, `chage` dans `commandes/comptes.ts` ; `umask` (masque
+  de la session, `Shell.masque`) et setgid appliqués à la création (`placer`).
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
   dans `editeur.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).

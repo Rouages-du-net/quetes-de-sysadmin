@@ -60,32 +60,70 @@ export function decouper(ligne: string): Mot[] {
   return mots;
 }
 
-// « 755 » ou « u+x », « o-w », « go=r », « +x »… → nouveau mode rwxrwxrwx.
+// « 755 », « 2775 » ou « u+x », « o-w », « go=r », « g+s », « +t »… → nouveau
+// mode rwxrwxrwx, où les bits spéciaux prennent la place du x, comme ls -l :
+// s/S (setuid, setgid : x présent ou non), t/T (sticky).
 // Écart volontaire : sans u/g/o/a, on agit sur tout le monde (a) sans
 // tenir compte du masque (umask).
 export function appliquerMode(actuel: string, droits: string): string | null {
-  if (/^[0-7]{3}$/.test(droits))
-    return [...droits]
-      .map((c) => {
-        const v = Number(c);
-        return (v & 4 ? 'r' : '-') + (v & 2 ? 'w' : '-') + (v & 1 ? 'x' : '-');
-      })
-      .join('');
-  const bits = [...actuel];
-  for (const clause of droits.split(',')) {
-    const m = /^([ugoa]*)([+\-=])([rwx]*)$/.exec(clause);
-    if (!m) return null;
-    const qui = (m[1] || 'a').replace('a', 'ugo');
-    for (const [i, c] of ['u', 'g', 'o'].entries()) {
-      if (!qui.includes(c)) continue;
-      ['r', 'w', 'x'].forEach((d, j) => {
-        const k = i * 3 + j;
-        if (m[2] === '=') bits[k] = m[3].includes(d) ? d : '-';
-        else if (m[3].includes(d)) bits[k] = m[2] === '+' ? d : '-';
-      });
+  // Les droits rwx d'un côté, les bits spéciaux de l'autre.
+  const bits = [...actuel].map((c, i) => (i % 3 === 2 ? (/[xst]/.test(c) ? 'x' : '-') : c));
+  const speciaux = { u: /[sS]/.test(actuel[2] ?? ''), g: /[sS]/.test(actuel[5] ?? ''), t: /[tT]/.test(actuel[8] ?? '') };
+  if (/^[0-7]{3,4}$/.test(droits)) {
+    const chiffres = droits.padStart(4, '0');
+    const special = Number(chiffres[0]);
+    [...chiffres.slice(1)].forEach((c, i) => {
+      const v = Number(c);
+      bits[i * 3] = v & 4 ? 'r' : '-';
+      bits[i * 3 + 1] = v & 2 ? 'w' : '-';
+      bits[i * 3 + 2] = v & 1 ? 'x' : '-';
+    });
+    // Comme GNU chmod : 3 chiffres ne retirent pas le setgid d'un dossier, 4 chiffres fixent tout.
+    if (droits.length === 4) Object.assign(speciaux, { u: !!(special & 4), g: !!(special & 2), t: !!(special & 1) });
+  } else
+    for (const clause of droits.split(',')) {
+      const m = /^([ugoa]*)([+\-=])([rwxst]*)$/.exec(clause);
+      if (!m) return null;
+      const qui = (m[1] || 'a').replace('a', 'ugo');
+      for (const [i, c] of ['u', 'g', 'o'].entries()) {
+        if (!qui.includes(c)) continue;
+        ['r', 'w', 'x'].forEach((d, j) => {
+          const k = i * 3 + j;
+          if (m[2] === '=') bits[k] = m[3].includes(d) ? d : '-';
+          else if (m[3].includes(d)) bits[k] = m[2] === '+' ? d : '-';
+        });
+      }
+      const mettre = (cle: 'u' | 'g' | 't', concerne: boolean, demande: boolean) => {
+        if (!concerne) return;
+        if (m[2] === '=') speciaux[cle] = demande;
+        else if (demande) speciaux[cle] = m[2] === '+';
+      };
+      mettre('u', qui.includes('u'), m[3].includes('s'));
+      mettre('g', qui.includes('g'), m[3].includes('s'));
+      mettre('t', !m[1] || m[1].includes('a') || m[1].includes('o'), m[3].includes('t'));
     }
-  }
+  const avec = (k: number, actif: boolean, petit: string) => {
+    if (actif) bits[k] = bits[k] === 'x' ? petit : petit.toUpperCase();
+  };
+  avec(2, speciaux.u, 's');
+  avec(5, speciaux.g, 's');
+  avec(8, speciaux.t, 't');
   return bits.join('');
+}
+
+/** Le mode octal (« 2775 », « 644 ») d'un mode rwxrwxrwx. */
+export function octal(mode: string): string {
+  const chiffre = (i: number) => (mode[i] === 'r' ? 4 : 0) + (mode[i + 1] === 'w' ? 2 : 0) + (/[xst]/.test(mode[i + 2]) ? 1 : 0);
+  const special = (/[sS]/.test(mode[2]) ? 4 : 0) + (/[sS]/.test(mode[5]) ? 2 : 0) + (/[tT]/.test(mode[8]) ? 1 : 0);
+  return `${special || ''}${chiffre(0)}${chiffre(3)}${chiffre(6)}`;
+}
+
+/** Le mode d'un nouveau fichier (base 666) ou dossier (base 777), moins le masque (umask, ex. « 0022 »). */
+export function modeAvecMasque(dossier: boolean, masque: string): string {
+  const m = parseInt(masque, 8);
+  const base = dossier ? 0o777 : 0o666;
+  const v = base & ~m;
+  return [6, 3, 0].map((d) => ((v >> d) & 4 ? 'r' : '-') + ((v >> d) & 2 ? 'w' : '-') + ((v >> d) & 1 ? 'x' : '-')).join('');
 }
 
 // Taille lisible : 1536 → « 1,5K », comme du -h ou ls -lh (en base 1024),

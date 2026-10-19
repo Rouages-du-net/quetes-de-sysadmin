@@ -40,7 +40,8 @@ export type Droits = { proprio?: string; groupe?: string; mode?: string };
 // utilisateur·rice a un groupe principal et peut être membre d'autres
 // groupes (groupes secondaires).
 export interface Comptes {
-  utilisateurs: Record<string, { uid: number; groupe: string; maison?: string; shell?: string }>;
+  // expire : fin de validité du compte (AAAA-MM-JJ, usermod -e, chage -E).
+  utilisateurs: Record<string, { uid: number; groupe: string; maison?: string; shell?: string; expire?: string }>;
   groupes: Record<string, { gid: number; membres: string[] }>;
 }
 

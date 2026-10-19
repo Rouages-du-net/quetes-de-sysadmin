@@ -3,9 +3,12 @@
 
 import type { Fichier, Noeud } from '../monde';
 import type { Shell } from '../shell';
-import { appliquerMode, comparerNoms, contenu, joker, lisible, options, tailleDe } from '../outils';
+import { appliquerMode, comparerNoms, contenu, joker, lisible, modeAvecMasque, options, tailleDe } from '../outils';
 import { placeFantome } from '../ouverts';
-import type { Commande, Contexte } from './index';
+import { COMMANDES, type Commande, type Contexte } from './index';
+
+// Les commandes intégrées au shell : which ne les trouve pas.
+const INTEGREES = ['cd', 'exit', 'umask', 'echo', 'pwd', 'help', 'aide', 'test'];
 
 // Le numéro d'inode d'un fichier (ls -i) : un par nœud, donné à la première
 // demande. Deux noms pour le même nœud (lien physique) ont le même numéro.
@@ -63,7 +66,8 @@ function lister({ args, jeu, dernier }: Contexte): string {
   const long = lettres.has('l') || lettres.has('n');
   // -i : le numéro d'inode devant chaque nom.
   const ino = (e: Noeud, texte: string) => (lettres.has('i') ? `${String(inode(e)).padStart(7)} ${texte}` : texte);
-  if (n.type === 'fichier') return ino(n, long ? ligneLongue(jeu, cible, n, lettres.has('h'), lettres.has('n')) : cible);
+  // -d : le lieu lui-même, pas son contenu.
+  if (n.type === 'fichier' || lettres.has('d')) return ino(n, long ? ligneLongue(jeu, cible, n, lettres.has('h'), lettres.has('n')) : cible);
   if (!jeu.peut(n, 'r')) return jeu.erreur(jeu.t('ls-ouvrir-permission', { cible }));
   const entrees: [string, Noeud][] = Object.entries(n.enfants)
     .filter(([nom]) => lettres.has('a') || !nom.startsWith('.'))
@@ -98,6 +102,37 @@ export const FICHIERS: Record<string, Commande> = {
 
   whoami: {
     lancer: ({ jeu }) => jeu.qui,
+  },
+
+  // umask : le masque des droits des fichiers créés (commande intégrée à bash).
+  // Sans argument, l'affiche (-S : sous forme symbolique) ; sinon, le change pour cette session.
+  umask: {
+    lancer: ({ args, jeu }) => {
+      const valeur = args.find((a) => !a.startsWith('-'));
+      if (valeur) {
+        if (!/^[0-7]{1,4}$/.test(valeur)) return jeu.erreur(`-bash: umask: ${valeur}: octal number out of range`);
+        jeu.masque = valeur.padStart(4, '0');
+        return '';
+      }
+      if (!args.includes('-S')) return jeu.masque;
+      const permis = modeAvecMasque(true, jeu.masque);
+      return ['u', 'g', 'o'].map((q, i) => `${q}=${permis.slice(i * 3, i * 3 + 3).replace(/-/g, '')}`).join(',');
+    },
+  },
+
+  // which : le chemin complet d'une commande (le premier trouvé dans le PATH) ;
+  // rien, et le code 1, pour une commande intégrée au shell ou inconnue.
+  which: {
+    lancer: ({ args, jeu }) => {
+      const noms = args.filter((a) => !a.startsWith('-'));
+      const trouves = noms.map((n) => {
+        const c = COMMANDES[n];
+        if (!c || c.dossier || c.section === 5 || INTEGREES.includes(n)) return null;
+        return `${c.section === 8 ? '/usr/sbin' : '/usr/bin'}/${n}`;
+      });
+      if (trouves.some((x) => x === null)) jeu.statut = 1;
+      return trouves.filter(Boolean).join('\n');
+    },
   },
 
   // hostname : le nom de la machine ; -f, le nom complet (celui que /etc/hosts donne en premier).

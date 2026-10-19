@@ -103,7 +103,9 @@ demandent plusieurs.
 - [x] **Utilisateur·rices et groupes** : vrais droits de groupe, comptes par
       machine (`/etc/passwd`, `/etc/group`), `id`, `groups`, `usermod -aG`,
       `chgrp`, `chown` ; quête « Deuxième jour » (Datacenter, chapitre 2)
-- [ ] `sudoers`, `umask`, bit setgid des dossiers partagés
+- [x] `sudoers` (`visudo`, `sudo -l -U`, `/etc/sudoers.d`), `umask`, bit
+      setgid des dossiers partagés ; « Les droits partagés » (La
+      Coopérative, chapitre 2)
 - [x] **Éditeur de fichiers** façon `nano` (`^O`, `^X`, boutons sur
       mobile), droits vérifiés à l'enregistrement, objectifs des quêtes mis
       à jour ; solution alternative au chapitre 1 du Datacenter
@@ -153,8 +155,10 @@ demandent plusieurs.
 - [ ] **Mises à jour** : `apt update/upgrade` (`apt update` et `install`
       déjà là, « Le grand incendie »), mises à jour automatiques de
       sécurité, redémarrage nécessaire, noyau
-- [ ] **Comptes** : supprimer un compte inutile, désactiver un compte d'ancien
-      collègue, mots de passe et clés à révoquer
+- [x] **Comptes** : supprimer un compte (`userdel`), désactiver le compte
+      d'un ancien collègue (`usermod -e`, `chage -E`), clés à révoquer (y
+      compris dans un compte partagé), `gpasswd -d`, `who`, `pkill -u` ;
+      « Le départ » (La Coopérative, chapitre 1)
 - [x] **Surface d'attaque** : `ss -tlnp`, un service qui écoute sur
       `0.0.0.0` au lieu de `127.0.0.1` (la base de données exposée)
 - [x] **Certificats TLS** : Let's Encrypt (`certbot`), défi HTTP-01,

@@ -15,8 +15,9 @@ import { aide, apropos, ligneWhatis, optionInvalide, pageMan } from './commandes
 import { traducteur, typographie, type Langue, type Traduire } from '../textes';
 
 export { decouper, appliquerMode } from './outils';
-import { comparerNoms, contenu, decouper, joker, tailleDe, type Mot } from './outils';
+import { appliquerMode, comparerNoms, contenu, decouper, joker, modeAvecMasque, tailleDe, type Mot } from './outils';
 import { lancerScript } from './commandes/scripts';
+import { lire as lireSudoers, SUDOERS } from './sudoers';
 
 // La place des arguments d'un programme (getconf ARG_MAX), et les commandes intégrées au shell, qui n'y sont pas soumises.
 const ARG_MAX = 2_097_152;
@@ -110,6 +111,8 @@ export class Shell implements Jeu {
   // (un plugin de supervision : 0 OK, 1 WARNING, 2 CRITICAL) ; sinon, il
   // vaut 1 si elle a écrit une erreur, 0 sinon.
   statut: number | null = null;
+  // Le masque des droits des fichiers créés (umask), propre à cette session.
+  masque = '0022';
 
   t: Traduire;
 
@@ -286,6 +289,15 @@ export class Shell implements Jeu {
     // Écrire dans un lien, c'est écrire dans le fichier qu'il vise.
     if (ancien?.type === 'fichier' && ancien.lien !== undefined && n.type === 'fichier' && n.lien === undefined) return this.placer(cmd, this.cheminReel(chemin), n);
     if (this.placeManquante(this.resoudre(chemin), n, ancien)) return this.t('erreur-espace', v);
+    if (!ancien) {
+      // Un nouveau fichier prend les droits permis par le masque (umask) ;
+      // dans un dossier setgid, il prend le groupe du dossier (et un dossier, le setgid).
+      if (n.mode === undefined && this.masque !== '0022') n.mode = modeAvecMasque(n.type === 'dossier', this.masque);
+      if (/[sS]/.test(parent.mode?.[5] ?? '') && n.groupe === undefined) {
+        n.groupe = parent.groupe ?? parent.proprio ?? 'vous';
+        if (n.type === 'dossier') n.mode = appliquerMode(n.mode ?? modeAvecMasque(true, this.masque), 'g+s')!;
+      }
+    }
     parent.enfants[nom] = n;
     return null;
   }
@@ -337,8 +349,10 @@ export class Shell implements Jeu {
 
   // ——— Sorties ———
 
-  erreur(message: string): '' {
+  erreur(message: string, code?: number): '' {
     this.erreurs.push(message);
+    // Le code de retour du vrai outil (ex. userdel : 6 pour un compte inconnu), sinon 1.
+    if (code !== undefined) this.statut = code;
     return '';
   }
 
@@ -505,6 +519,19 @@ export class Shell implements Jeu {
     }
     // sudo demande le mot de passe avant de lancer quoi que ce soit.
     const avecSudo = mots.some((m, i) => !m.cite && m.texte === 'sudo' && (i === 0 || mots[i - 1].op === '|'));
+    // Une erreur dans la politique de sudo (un fichier de /etc/sudoers.d écrit sans visudo) : sudo refuse tout.
+    if (avecSudo && this.connues().includes('sudo') && this.existe(SUDOERS)) {
+      const { erreur } = lireSudoers(this);
+      if (erreur) {
+        this.statut = 1;
+        return [
+          `${erreur.fichier}:${erreur.ligne}:${erreur.colonne}: ${this.t(erreur.cle)}`,
+          erreur.texte,
+          `${' '.repeat(erreur.colonne - 1)}^${'~'.repeat(erreur.longueur - 1)}`,
+          this.t('sudo-sources-invalides'),
+        ].join('\n');
+      }
+    }
     if (avecSudo && this.connues().includes('sudo') && !this.authentifie) {
       this.attente = { ligne, essais: 0 };
       const sermon = this.sermonFait ? '' : this.t('sudo-sermon');
@@ -603,7 +630,9 @@ export class Shell implements Jeu {
       let root = false;
       // sudo -u compte : agir sous ce compte plutôt que root.
       let comme = 'root';
-      if (args[0] === 'sudo') {
+      // sudo -l : c'est sudo lui-même qui répond (la liste des commandes permises).
+      if (args[0] === 'sudo' && /^-l+$/.test(args[1] ?? '')) args = ['sudo', ...args.slice(1)];
+      else if (args[0] === 'sudo') {
         args = args.slice(1);
         root = true;
         if (args[0] === '-u') {
