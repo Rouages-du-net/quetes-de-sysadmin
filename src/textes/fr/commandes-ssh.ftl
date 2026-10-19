@@ -5,6 +5,8 @@ ssh-commande-distante = (Le jeu ne lance pas de commande à distance : connecte-
 ssh-enferme = (Ta clé est bonne, mais la configuration de sshd sur { $machine } refuse ton compte : tu t'es enfermé·e dehors. Sur un vrai serveur, il faudrait passer par la console de secours de l'hébergeur. Ici, le menu du jeu en tient lieu : ouvre l'histoire depuis le menu, corrige /etc/ssh/sshd_config, recharge ssh, puis reviens tester avec exit et ssh { $machine }.)
 # { $machine } : le nom de la machine
 ssh-pare-feu = (Le pare-feu de { $machine } bloque le port de SSH : tu t'es enfermé·e dehors. La session que tu avais n'est plus là pour corriger. Ici, le menu du jeu sert de console de secours de l'hébergeur : ouvre l'histoire depuis le menu, autorise SSH dans ufw, puis reviens tester avec ssh { $machine }.)
+# { $machine } : la machine ; { $port } : le port demandé ; { $ports } : ceux où sshd écoute
+ssh-autre-port = (Personne n'écoute sur le port { $port } de { $machine } : son serveur SSH écoute maintenant sur { $ports }. Pour s'y connecter : ssh -p, ou Port dans ~/.ssh/config (man ssh_config).)
 # { $machine } : le nom de la machine ; { $adresse } : l'adresse du poste
 ssh-banni = (fail2ban, sur { $machine }, a banni l'adresse de ton poste ({ $adresse }) : tu t'es enfermé·e dehors. Ici, le menu du jeu sert de console de secours de l'hébergeur : ouvre l'histoire depuis le menu, débannis ton adresse, ajoute-la à ignoreip, puis reviens tester avec ssh { $machine }.)
 
@@ -17,3 +19,38 @@ ssh-keygen-type = ssh-keygen : le jeu ne fabrique que des clés ed25519 (le type
 ssh-sans-arriere-plan = (ssh -N garde la connexion ouverte sans rendre la main : dans un vrai terminal, il faudrait un deuxième terminal pour s'en servir. Ajoute -f pour le passer en arrière-plan, comme ssh -f -N -L …)
 scp-local = scp : aucune machine d'en face (écris machine:chemin) ; pour copier sur la même machine, cp suffit.
 scp-deux-distants = scp : le jeu ne copie qu'entre la machine où tu es et une autre (pas d'une machine distante à une autre).
+sftp-usage =
+    usage: sftp [-46AaCfNpqrv] [-B buffer_size] [-b batchfile] [-c cipher]
+              {"["}-D sftp_server_command] [-F ssh_config] [-i identity_file]
+              {"["}-J destination] [-l limit] [-o ssh_option] [-P port]
+              {"["}-R num_requests] [-S program] [-s subsystem | sftp_server]
+              destination
+# L'aide de sftp (la sortie de « help »), en anglais comme l'outil.
+sftp-aide =
+    Available commands:
+    bye                                Quit sftp
+    cd path                            Change remote directory to 'path'
+    exit                               Quit sftp
+    get [-R] remote [local]            Download file
+    help                               Display this help text
+    lcd path                           Change local directory to 'path'
+    lls [ls-options [path]]            Display local directory listing
+    lpwd                               Print local working directory
+    ls [-l] [path]                     Display remote directory listing
+    mkdir path                         Create remote directory
+    put [-R] local [remote]            Upload file
+    pwd                                Display remote working directory
+    quit                               Quit sftp
+    rename oldpath newpath             Rename remote file
+    rm path                            Delete remote file
+    rmdir path                         Remove remote directory
+    ?                                  Synonym for help
+# L'aide de lftp (la sortie de « help »), en anglais comme l'outil.
+lftp-aide =
+    bye [<code>]                        cd <rdir>
+    get [OPTS] <rfile>                  lcd <ldir>
+    lpwd                                ls [<args>]
+    mirror [OPTS] [remote [local]]      mkdir [OPTS] <dirs>
+    open [OPTS] <site>                  put [OPTS] <lfile>
+    pwd [-p]                            rm [-r] [-f] <files>
+    set [OPT] [<var> [<val>]]           user <user|URL> [<pass>]

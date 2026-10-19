@@ -26,8 +26,10 @@ rouages.net.
   `sshd_config` comme OpenSSH, configuration appliquée au reload).
 - `src/moteur/parefeu.ts` : le pare-feu d'une machine (règles ufw ; `ssh`
   s'y heurte).
-- `src/moteur/fail2ban.ts` : fail2ban d'une machine (configuration, bannissements ;
-  `ssh` s'y heurte).
+- `src/moteur/fail2ban.ts` : fail2ban d'une machine (configuration, prisons sshd,
+  nginx-limit-req et recidive, bannissements,
+  `port` de la prison ; `ssh` s'y heurte). `src/moteur/apercu-nft.ts` : ce que
+  `nft list ruleset` montre sous ufw et fail2ban.
 - `src/moteur/cron.ts` : crontabs (analyse comme cron) et nuit simulée.
 - `src/moteur/nginx.ts` : nginx d'une machine (configuration lue et vérifiée
   comme `nginx -t`, appliquée au reload ; `curl` s'y adresse) ; `apt` et la
@@ -57,7 +59,10 @@ rouages.net.
   `logrotate`) ; `src/moteur/memoire.ts` (mémoire des processus, OOM killer,
   `MemoryMax=`) et `commandes/memoire.ts` (`free`, `top`, `dmesg`) ; les
   surcharges systemd (`systemctl edit`, `set-property`, `daemon-reload`)
-  dans `commandes/systemd.ts`. Inodes : un support de `etat.montages` peut
+  dans `commandes/systemd.ts`. Les entrées-sorties disque (`etat.io` :
+  demandes, ordonnanceur, `IO*BandwidthMax=`, classes d'ionice) dans
+  `src/moteur/entrees-sorties.ts`, `iostat`, `pidstat`, `ionice` dans
+  `commandes/iostat.ts`. Inodes : un support de `etat.montages` peut
   déclarer `inodes` (et `inodesBase`) ; `df -i`, `du --inodes`, `find -mtime`
   (date `mtime` des fichiers) ; la limite ARG_MAX dans `shell.ts`.
   L'heure d'une machine (fuseau, horloge qui dérive, NTP) dans
@@ -76,7 +81,10 @@ rouages.net.
   machines internes d'une histoire, `Chapitre.hotes`) : `~/.ssh/config`,
   `ProxyJump`, `known_hosts`, `authorized_keys`, phrase de passe, mot de
   passe ; `ssh-copy-id` et `scp` dans `commandes/transferts.ts`, `rsync`
-  distant dans `commandes/sauvegarde.ts`. La console garde une pile de
+  distant dans `commandes/sauvegarde.ts`. `sftp` (session interactive) dans
+  `commandes/sftp.ts` ; un hébergement mutualisé en FTPS
+  (`src/moteur/hebergeur.ts`, déclaré par l'histoire) et `lftp` dans
+  `commandes/lftp.ts`. La console garde une pile de
   sessions internes (`interieur`) ; `Chapitre.surveillePoste` fait vérifier
   les événements après les commandes tapées sur le poste.
 - `src/moteur/sudoers.ts` : la politique de sudo (`/etc/sudoers`,
@@ -90,7 +98,9 @@ rouages.net.
 - `commandes/tmux.ts` : sessions tmux d'une machine (`etat.tmux`, `Shell.tmux` ;
   la console y recopie ce qui s'affiche) et `uname` ; `apt upgrade` et
   `dpkg --configure -a` dans `commandes/apt.ts` (`etat.apt.mises`,
-  `etat.noyau`, `etat.coupureReseau` : la connexion tombe, `Shell.coupure`).
+  `etat.noyau`, `etat.coupureReseau` : la connexion tombe, `Shell.coupure`) ;
+  `unattended-upgrade` et `apt-config` dans `commandes/unattended.ts`, la
+  configuration d'apt (`apt.conf.d`) dans `src/moteur/aptconf.ts`.
 - `src/moteur/lan.ts` : le réseau local d'un routeur (`etat.lan` : interfaces,
   VLAN 802.1Q sur un trunk, appareils du commutateur, `/etc/network/interfaces`
   lu comme ifupdown) ; `ip`, `ifup`, `ifdown`, `dnsmasq --test` dans

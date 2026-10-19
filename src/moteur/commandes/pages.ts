@@ -22,6 +22,33 @@ export const PAGES: Record<string, Page> = {
     voir: ['dpkg', 'systemctl', 'nginx', 'tmux'],
   },
   dpkg: { exemples: ['sudo dpkg --configure -a'], voir: ['apt'] },
+  iostat: {
+    options: ['c', 'd', 'x', 'k', 'm', 'y', 'z', 'h'],
+    exemples: ['iostat', 'iostat -x 1 3', 'iostat -dm'],
+    voir: ['pidstat', 'top', 'ionice'],
+  },
+  pidstat: { options: ['d', 'u', 'h'], exemples: ['pidstat -d', 'pidstat -d 1 5'], voir: ['iostat', 'top', 'ps'] },
+  ionice: {
+    options: ['c', 'n', 'p', 'h'],
+    exemples: ['ionice -p 2190', 'sudo ionice -c 3 -p 2190', 'cat /sys/block/vda/queue/scheduler'],
+    voir: ['iostat', 'systemctl'],
+  },
+  'unattended-upgrade': {
+    section: 8,
+    options: ['d', 'v', 'h'],
+    exemples: ['sudo unattended-upgrade --dry-run --debug', 'sudo unattended-upgrade -v', 'cat /var/log/unattended-upgrades/unattended-upgrades.log'],
+    voir: ['apt.conf', 'apt-config', 'apt', 'systemctl'],
+  },
+  'apt-config': {
+    section: 8,
+    exemples: ['apt-config dump', 'apt-config dump APT::Periodic', 'apt-config dump Unattended-Upgrade'],
+    voir: ['apt.conf', 'unattended-upgrade'],
+  },
+  'apt.conf': {
+    section: 5,
+    exemples: ['ls /etc/apt/apt.conf.d', 'sudo nano /etc/apt/apt.conf.d/20auto-upgrades', 'apt-config dump APT::Periodic'],
+    voir: ['apt-config', 'unattended-upgrade', 'apt'],
+  },
   tmux: { exemples: ['tmux new -s maj', 'tmux detach', 'tmux ls', 'tmux attach -t maj', 'tmux kill-session -t maj'], voir: ['ssh', 'apt'] },
   uname: { options: ['r', 'a'], exemples: ['uname -r', 'uname -a'], voir: ['apt', 'reboot'] },
   awk: {
@@ -87,8 +114,8 @@ export const PAGES: Record<string, Page> = {
     voir: ['docker'],
   },
   du: { options: ['h', 's', 'd'], exemples: ['sudo du -sh /var/log/*', 'sudo du --inodes -d 1 /srv', 'sudo du --inodes -s /srv/radio/*'], voir: ['df', 'find'] },
-  'fail2ban-client': { exemples: ['sudo fail2ban-client status', 'sudo fail2ban-client status sshd', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client -t', 'sudo fail2ban-client reload'], voir: ['jail.conf', 'journalctl', 'ufw'] },
-  'jail.conf': { section: 5, exemples: ['sudo nano /etc/fail2ban/jail.local', 'sudo fail2ban-client get sshd bantime'], voir: ['fail2ban-client', 'nano'] },
+  'fail2ban-client': { exemples: ['sudo fail2ban-client status', 'sudo fail2ban-client status sshd', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client unban 198.51.100.40', 'sudo fail2ban-client get recidive bantime', 'sudo fail2ban-client -t', 'sudo fail2ban-client reload'], voir: ['jail.conf', 'journalctl', 'ufw'] },
+  'jail.conf': { section: 5, exemples: ['sudo nano /etc/fail2ban/jail.local', 'sudo fail2ban-client get sshd bantime', 'sudo nft list table inet f2b-table'], voir: ['fail2ban-client', 'nano', 'nft'] },
   find: {
     exemples: ['find . -name "*.txt"', 'find /srv/radio/stats -type f -mtime +30', 'find /srv/radio/stats -type f -mtime +30 -delete'],
     voir: ['ls', 'grep', 'du', 'rm', 'crontab'],
@@ -129,7 +156,7 @@ export const PAGES: Record<string, Page> = {
       'sudo nft -a list chain inet filter forward',
       'sudo nft delete rule inet filter forward handle 7',
     ],
-    voir: ['sysctl', 'conntrack', 'systemctl', 'journalctl'],
+    voir: ['sysctl', 'conntrack', 'systemctl', 'journalctl', 'ufw'],
   },
   sysctl: {
     section: 8,
@@ -208,6 +235,17 @@ export const PAGES: Record<string, Page> = {
     voir: ['radtest', 'ldapsearch', 'systemctl'],
   },
   radtest: { exemples: ['radtest sami "son mot de passe" localhost 0 testing123'], voir: ['freeradius'] },
+  sftp: { options: ['P', 'J', 'i'], exemples: ['sftp wiki', 'get -r /srv/wiki/site', 'put rapport.pdf', 'lls', 'bye'], voir: ['scp', 'ssh', 'lftp'] },
+  lftp: {
+    options: ['u', 'e', 'c'],
+    exemples: [
+      'lftp -u maisonasso ftp.hebergeur.example',
+      'mirror -R --dry-run site public_html',
+      'mirror -R --delete site public_html',
+      'lftp -u maisonasso -e "mirror -R --delete site public_html; bye" ftp.hebergeur.example',
+    ],
+    voir: ['sftp', 'scp', 'rsync'],
+  },
   id: { exemples: ['id', 'id malo'], voir: ['groups', 'whoami', 'usermod'] },
   journalctl: {
     options: ['u', 'n', 'b', 'k', 'p', 'x', 'e'],

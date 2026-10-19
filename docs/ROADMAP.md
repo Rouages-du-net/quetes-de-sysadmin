@@ -56,7 +56,8 @@ garde cette mention et le lien vers l'original.
 - [x] Nom, mention « inspiré de Terminus (MIT) », README, CLAUDE.md
       (consignes de l'agent dédié)
 - [x] Licences : GPL v3 (code), CC BY-SA 4.0 (textes)
-- [ ] Charte de contribution (format d'une quête, tests, relecture)
+- [x] Charte de contribution (format d'une quête, tests, relecture) :
+      `docs/CONTRIBUER.md`
 - [x] Pile : site **Astro** (pages statiques), jeu en TypeScript sans
       framework (élément `<quetes-de-sysadmin>`, construit aussi seul par
       Vite pour l'intégration) ; tests Vitest (chaque chapitre rejoué) et
@@ -88,9 +89,11 @@ demandent plusieurs.
       invite `utilisateur@hôte:~$` (`console.ts`, `machines.ts`, `poste.ts`)
 - [x] Comptes propres à chaque machine ; l'état d'une machine est gardé
       entre deux connexions ssh (tant que la page est ouverte)
-- [ ] Services et ports propres à chaque machine
-- [ ] **Réseau simulé** : adresses, ports ouverts, résolution de noms
+- [x] Services et ports propres à chaque machine (`ss`, `nc`, services
+      systemd et leurs sockets décrits par chaque chapitre)
+- [x] **Réseau simulé** : adresses, ports ouverts, résolution de noms
       (`/etc/hosts`, DNS), routes, latence ; ce qu'un pare-feu laisse passer
+      (ufw, nftables), réseau local d'un routeur (VLAN, DHCP, NAT, VPN)
 - [x] **Services** (`systemd` simulé, `src/moteur/systemd.ts`) : état,
       démarrage, échec, activation au démarrage, `systemctl`, `journalctl`,
       `reboot` ; quête « La nuit du redémarrage » (Datacenter, chapitre 3)
@@ -111,12 +114,13 @@ demandent plusieurs.
       à jour ; solution alternative au chapitre 1 du Datacenter
 - [x] Vérification de syntaxe par service : `sshd -t`, `nginx -t` (et
       `nginx -T`), rechargement refusé si la configuration est fausse
-- [ ] **Manuel intégré** : pages `man` complètes générées depuis la
+- [x] **Manuel intégré** : pages `man` complètes générées depuis la
       définition de chaque commande, `--help`, `man -k`, `apropos`, `whatis` ;
       option inconnue → vrai message d'erreur (repris du travail fait dans
       rouages.net)
-- [ ] **Vérificateur d'objectifs** : prédicats sur l'état (« le port 22
-      n'accepte plus les mots de passe », « le site répond en HTTPS »…)
+- [x] **Vérificateur d'objectifs** : prédicats sur l'état (« le port 22
+      n'accepte plus les mots de passe », « le site répond en HTTPS »…) :
+      les événements de chaque chapitre
 
 ## Phase 2 — Se connecter et se déplacer
 
@@ -131,11 +135,14 @@ demandent plusieurs.
       no`, `AllowUsers`, `sshd -t`, `sshd -T`, `Include` de Debian ; quête
       « Fermer la porte » (Les Lettres du quartier), où l'on peut s'enfermer
       dehors (le menu sert de console de secours)
-- [ ] Changer le port SSH (et le pare-feu qui va avec, phase 3)
-- [ ] **Transferts** : **`scp`**, `rsync` à distance (`-a`, `--delete`,
-      `-n`) et pourquoi FTP en clair est à proscrire faits (« Les
-      transferts ») ; reste `sftp`, et **FTPS** pour les hébergeurs
-      mutualisés qui l'imposent (le cas de rouages.net !)
+- [x] **Changer le port SSH** : deux `Port`, ufw, `~/.ssh/config`, `known_hosts`
+      en `[nom]:port`, le `port` de la prison fail2ban (« Le port », Les
+      Lettres du quartier, chapitre 7)
+- [x] **Transferts** : **`scp`**, `rsync` à distance (`-a`, `--delete`,
+      `-n`) et pourquoi FTP en clair est à proscrire (« Les transferts ») ;
+      `sftp`, et **FTPS** avec `lftp` pour les hébergeurs mutualisés qui
+      l'imposent, le cas de rouages.net (« L'hébergeur », La Maison des
+      associations, chapitre 5)
 - [x] `tmux` : garder une session vivante quand la connexion tombe ;
       « Les mises à jour » (La Coopérative, chapitre 5)
 
@@ -145,17 +152,21 @@ demandent plusieurs.
       `limit`, `delete`, profils d'applications, numéros), et `ssh` qui
       s'arrête au pare-feu (timeout) ; quête « Le pare-feu » (Les Lettres du
       quartier, chapitre 2)
-- [ ] Un aperçu de `nftables` sous `ufw`
+- [x] Un aperçu de `nftables` sous `ufw` : `nft list ruleset` montre les
+      chaînes `ufw-*` et la table de fail2ban (« Le port »)
 - [x] **fail2ban** : lire `fail2ban.log` et le journal de SSH, `jail.local`
       (jamais `jail.conf`), `bantime`, `maxretry`, `ignoreip` (CIDR),
       `fail2ban-client status`, `unbanip`, `-t`, `reload` ; quête « La
       sentinelle » (Les Lettres du quartier, chapitre 3), où l'on peut se
       bannir soi-même
-- [ ] La prison `recidive`, d'autres prisons (nginx)
-- [ ] **Mises à jour** : `apt update`, `list --upgradable`, `upgrade`,
+- [x] La prison `recidive` et la prison `nginx-limit-req`, activées dans
+      leur section (« La récidive », Les Lettres du quartier, chapitre 8)
+- [x] **Mises à jour** : `apt update`, `list --upgradable`, `upgrade`,
       `dpkg --configure -a`, `/var/run/reboot-required`, `uname -r`, noyau
-      (« Les mises à jour », La Coopérative, chapitre 5) ; reste les mises à
-      jour automatiques (`unattended-upgrades`)
+      (« Les mises à jour », La Coopérative, chapitre 5) ; mises à jour
+      automatiques (`unattended-upgrades` : `20auto-upgrades`,
+      `Origins-Pattern`, `Mail`, `Automatic-Reboot-Time`, `apt-config`,
+      « Les mises à jour automatiques », chapitre 6)
 - [x] **Comptes** : supprimer un compte (`userdel`), désactiver le compte
       d'un ancien collègue (`usermod -e`, `chage -E`), clés à révoquer (y
       compris dans un compte partagé), `gpasswd -d`, `who`, `pkill -u` ;
@@ -240,8 +251,9 @@ demandent plusieurs.
       la sauvegarde (« La Sauvegarde »)
 - [x] Rançongiciel et sauvegardes hors ligne (`mount -o ro`, restic) ;
       « La rançon » (La Ludothèque, chapitre 1)
-- [ ] Charge et ressources : `top`, `free`, `df`, `du` faits (L'Astreinte,
-      chapitres 1 et 2) ; reste `iostat`
+- [x] Charge et ressources : `top`, `free`, `df`, `du` faits (L'Astreinte,
+      chapitres 1 et 2) ; `iostat`, `pidstat -d`, `ionice` et la limite de débit
+      de systemd (`IOWriteBandwidthMax=`) : « Le goulot » (chapitre 7)
 - [x] Pannes classiques : disque plein et fuite de journaux (« Le disque
       plein »), mémoire épuisée (OOM) et processus zombies (« La mémoire »),
       inodes épuisés (« Les inodes »), horloge décalée et fuseau

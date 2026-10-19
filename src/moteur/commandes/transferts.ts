@@ -91,7 +91,7 @@ const distant = (texte: string) =>
   /^[^/.][^/]*:/.test(texte) ? { cible: texte.slice(0, texte.indexOf(':')), chemin: texte.slice(texte.indexOf(':') + 1) } : null;
 
 /** Copier `chemin` de la machine `src` vers `dest` sur `dst` (récursif avec -r) ; renvoie les lignes de scp. */
-function copier(src: Shell, dst: Shell, chemin: string, dest: string, recursif: boolean, erreurs: string[]): string[] {
+export function copier(src: Shell, dst: Shell, chemin: string, dest: string, recursif: boolean, erreurs: string[]): string[] {
   const n = src.trouver(chemin);
   const absolu = src.resoudre(chemin);
   if (!n) {

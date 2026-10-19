@@ -122,16 +122,20 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `sudo` après `reboot` | se souvient encore du mot de passe | le redemande |
 | `sshd` | une partie des mots-clés ; toutes les erreurs listées d'un coup ; le mot de passe n'est demandé que sur les machines au vrai ssh (`maison`) ; pas de `StrictModes` (droits de `~/.ssh` non vérifiés) ni d'options dans `authorized_keys` | s'arrête à la première erreur ; propose le mot de passe partout ; refuse un `authorized_keys` modifiable par d'autres |
 | `ufw` | règles IPv4 et IPv6 confondues (lignes « (v6) » pour la forme) ; pas de règles sortantes, de routage, de journalisation, d'`insert` ni de `reset` ; messages proches de la traduction française d'ufw | tout cela |
-| `ss` | sockets décrites par le chapitre, et la session ssh en cours | toutes les sockets du système |
-| fail2ban | une seule prison (`sshd`) ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
+| `ss` | sockets décrites par le chapitre, et la session ssh en cours (sur le port par lequel on est entré) | toutes les sockets du système |
+| fail2ban | prisons `sshd`, `nginx-limit-req` et `recidive` (les autres se chargent, sans filtre ; une prison active sans journal empêche le démarrage) ; le `port` d'une prison borne le bannissement ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
 | `rsync` | `-a`, `-v`, `-n`, `--delete` ; local, ou à distance par ssh (`machine:chemin`, dans un sens ou dans l'autre, avec les mêmes clés et rebonds que `ssh`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | compare taille et date, toutes les options, démon rsync |
-| `scp`, `ssh-copy-id` | `scp` : `-r`, `-P`, `-J`, `-i`, une copie dans un sens ou dans l'autre (pas entre deux machines distantes), ligne de progression immédiate ; `ssh-copy-id` : `-i`, `-p`, `-J`, la clé `~/.ssh/id*.pub` la plus récente par défaut | `scp` entre deux machines distantes (`-3`), SFTP ; `ssh-copy-id -f`, `-n` |
+| `scp`, `ssh-copy-id` | `scp` : `-r`, `-P`, `-J`, `-i`, une copie dans un sens ou dans l'autre (pas entre deux machines distantes), ligne de progression immédiate ; `ssh-copy-id` : `-i`, `-p`, `-J`, la clé `~/.ssh/id*.pub` la plus récente par défaut | `scp` entre deux machines distantes (`-3`) ; `ssh-copy-id -f`, `-n` |
+| `sftp` | session interactive (`sftp>`) par les mêmes sauts et clés que `ssh` ; `ls`, `cd`, `pwd`, `lcd`, `lls`, `lpwd`, `get [-r]`, `put [-r]`, `mkdir`, `rm`, `rmdir`, `rename`, `help`, `bye` ; un dossier qui existe déjà reçoit le contenu | `-b` (fichier de commandes), `reget`/`reput`, jokers, `chmod`, `df` |
+| `lftp` et l'hébergement mutualisé | FTP (Pure-FTPd) qui refuse le clair (FTPS explicite, AUTH TLS) ; certificat vérifié contre le nom demandé (`ssl:verify-certificate`) ; `-u`, `-e`, `-c`, `open`, `user`, `set`, `ls`, `cd`, `pwd`, `lcd`, `lpwd`, `mirror` (`-R`, `--delete`, `--dry-run`, `-v`), `put`, `get`, `mkdir`, `rm`, `cat` ; la connexion se fait à la première commande distante ; l'hébergement est décrit par l'histoire | SFTP et HTTP par lftp, `~/.lftprc`, `~/.netrc`, files d'attente, tâches de fond, jokers |
 | machines internes | derrière `maison`, `wiki` et `archives` existent dès qu'on s'y connecte ; on y entre par ssh depuis `maison`, ou avec `-J` depuis le poste (`exit` ramène alors au poste) ; un programme absent répond `command not found` | un vrai réseau, routé |
 | `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
+| `unattended-upgrade`, `apt-config` | `--dry-run`, `-d`, `-v` ; `Origins-Pattern` (clés `o`, `n`, `l`, `a`, `site`, jokers), `Package-Blacklist`, `Mail`, `MailReport`, `Automatic-Reboot`, `Automatic-Reboot-Time` ; `apt-daily-upgrade.service` ne lance la passe que si `APT::Periodic::Unattended-Upgrade` le demande ; `apt.conf.d` lu comme apt (dernière valeur, listes qui s'allongent, `;` obligatoire) ; `apt-config dump [préfixe]` ; origines des paquets décrites par le chapitre ; le redémarrage programmé n'est pas joué | autoremove, `MinimalSteps`, batterie, `#include`/`#clear`, sortie complète de `--debug`, `apt-cache policy` |
 | `apt` | `update`, `install [-y]`, `list --installed`, `list --upgradable`, `upgrade` et `full-upgrade` (les mises à jour décrites par le chapitre) ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » ; une mise à jour coupée laisse ses paquets dépaquetés (`dpkg --configure -a`) ; `/var/run/reboot-required` pour un noyau ou la libc | tout le catalogue Debian, `remove`, `search`, `show`, `apt-get`… ; dpkg garde l'état de chaque paquet |
 | réseau local (`ip`, `ifup`, `ifdown`) | IPv4 seulement ; `ip addr`, `ip link`, `ip route` (show, add, del, set, `-br`, `-d`), interfaces VLAN 802.1Q ; `/etc/network/interfaces` lu comme ifupdown (`auto`, `iface … inet static`, `manual`, `loopback`, `address`, `netmask`, `gateway`, `vlan-raw-device`, `source`) ; le commutateur et ses ports sont décrits par le chapitre ; pas d'ARP visible, de MTU, de bonding ni de systemd-networkd | tout iproute2, ifupdown2, NetworkManager, systemd-networkd |
 | `dnsmasq` | DHCP seulement (les options DNS sont acceptées et ignorées) ; `interface` (avec `*`), `except-interface`, `dhcp-range`, `dhcp-host`, `dhcp-option` ; les appareils demandent une adresse à chaque démarrage du service ; l'adresse est tirée de l'adresse MAC ; pas de renouvellement de bail | DNS, TFTP, PXE, DHCPv6, renouvellement |
 | `nft` (nftables) | IPv4 ; tables `ip`, `inet` (`ip6` lu, sans effet) ; chaînes de base `filter` et `nat` (hooks, priorités, politique), chaînes ordinaires (`jump`, `goto`) ; conditions `iifname`, `oifname`, `ip saddr`, `ip daddr`, `ip protocol`, `meta l4proto`, `tcp`/`udp` `dport`/`sport` (services connus du jeu), `ct state`, négation `!=`, ensembles anonymes ; actions `counter`, `log`, `accept`, `drop`, `reject`, `masquerade`, `snat` (au `postrouting`), `dnat` (au `prerouting`, vers une adresse et un port) ; `define`, `include` ; `-f`, `-c`, `-a` ; `add`, `insert`, `delete`, `flush`, `list` ; le trafic est celui des appareils décrits par le chapitre (et de visiteurs d'internet), et les compteurs comptent un passage de chaque échange ; messages d'erreur proches de nft ; la chaîne `input` ne coupe pas la session ssh du jeu | ensembles nommés, maps, `limit`, `quota`, IPv6, `bridge`, `netdev`, `nft monitor`, les règles sur le contenu des paquets |
+| `nft` sous ufw et fail2ban | sur les machines sans règles nftables écrites à la main : `list ruleset`, `list tables`, `list table`, en lecture seule ; table `ip filter` (chaînes `INPUT`, `OUTPUT`, `ufw-before-input`, `ufw-user-input`, `ufw-after-input`), table `inet f2b-table` de l'action nftables de fail2ban ; compteurs à zéro ; un profil à plusieurs ports en un ensemble `{ 80, 443 }` | la table `ip6 filter`, les chaînes de journalisation et de routage de ufw, les vrais compteurs ; on pourrait y écrire (et ufw l'écraserait) |
 | `sysctl`, `conntrack` | `sysctl` : lire, `-w`, `clé=valeur`, `-p`, `--system`, `-a`, `-n` sur quelques clés (`/proc/sys` est un vrai dossier du jeu) ; `/etc/sysctl.d/*.conf` puis `/etc/sysctl.conf` au démarrage ; `conntrack -L` (`-p`, `-s`, `-d`), `-C`, `-F` : les échanges du moment, dont la session ssh | toutes les clés du noyau ; `conntrack -E`, `-D`, états UDP et ICMP détaillés |
 | `wg`, `wg-quick` (WireGuard) | `genkey`, `genpsk`, `pubkey`, `show`, `showconf` ; `wg-quick up`, `down`, `strip` ; le service `wg-quick@wg0` ; la clé publique n'est pas calculée par Curve25519 (une empreinte qui en tient lieu, au bon format) ; les pairs sont décrits par le chapitre (le portable de Malik, le routeur d'un autre site et son réseau) ; `wg-quick` ajoute une route par `AllowedIPs` hors du réseau de l'interface ; un pair derrière une box (NAT) n'est joignable qu'avec `PersistentKeepalive` (sans délai simulé) ; pas de `wg set`, `PostUp`, `PresharedKey` vérifiée, IPv6, ni de tout le trafic par le tunnel côté routeur ; `wg-quick` sans sudo refuse au lieu de relancer sudo | Curve25519, `wg set`, `syncconf`, `PostUp`/`PostDown`, IPv6, `wg-quick save` |
 | OpenLDAP (`ldapsearch`, `ldapadd`, `ldapmodify`, `ldapdelete`, `ldappasswd`, `ldapwhoami`, `slappasswd`, `slapcat`) | un annuaire par machine (`etat.ldap`), un schéma réduit (core, cosine, inetorgperson, nis : les classes courantes, leurs attributs obligatoires) ; LDIF (`changetype`, `add`/`replace`/`delete`, `-`, lignes repliées), filtres `&`, `\|`, `!`, `=`, `*` ; `-x`, `-D`, `-W`, `-w`, `-H`, `-Y EXTERNAL` (root par `ldapi:///`, comme sur Debian), `-b`, `-s`, `-LLL`, `-f`, `-c` ; droits de Debian (lecture anonyme sauf `userPassword`, écriture par l'administrateur ou root) ; `{SSHA}` au bon format, mais pas un vrai SHA-1 ; les commandes ne lisent pas le clavier (un fichier ou un tube) | `cn=config`, réplication, index, `memberOf`, base64 (`::`), TLS, SASL autre qu'EXTERNAL, toute la syntaxe des filtres (`>=`, `~=`) |
@@ -162,7 +166,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | PostgreSQL | rôles et authentification « peer » ; `psql -c/-f/-l` avec un SQL réduit (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `\l`, `\dt`, `\d`) ; `pg_dump` (texte, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb` ; une archive `-Fc` ne contient qu'une référence gardée par le jeu ; une seule clé primaire par table | tout PostgreSQL, psql interactif, WAL et restauration à un instant donné |
 | `lsof`, `truncate`, `logrotate` | `lsof` ne connaît que les fichiers ouverts décrits par le chapitre (`+L1`, `-p`, `-u`, un fichier) ; `logrotate` : une partie des directives, `-d`, `-f`, `-v`, sorties abrégées | toutes les options, tous les fichiers ouverts du système |
 | mémoire (`free`, `top`, `dmesg`) | la mémoire de chaque processus est décrite par le chapitre ; pas de swap, le cache ne se libère pas (`available` = `free`) ; l'OOM killer tue le plus gros processus (sans `oom_score_adj`) ; `top` affiche un instantané et rend la main (`-b`, `-n`, `-o`, `-c`) ; `dmesg` (`-T`) réservé à root | swap, récupération du cache, score de l'OOM killer, `top` interactif, `htop` |
-| surcharges systemd | `systemctl edit`, `set-property` (seulement `MemoryMax=`), `daemon-reload` ; dans les surcharges, seuls `MemoryMax=` et `Restart=` de `[Service]` comptent ; un service relancé par `Restart=` repart aussitôt | toutes les directives, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
+| `iostat`, `pidstat`, `ionice` | `iostat` `-c`, `-d`, `-x`, `-k`, `-m`, `-y`, intervalle et nombre ; `pidstat -d`, `-u` ; `ionice -p`, `-c`, `-n` ; un disque, un modèle de file d'attente simplifié (l'attente grimpe au-delà de 60 % de la capacité) ; les priorités d'ionice ne comptent qu'avec `mq-deadline` ou `bfq` ; tous les rapports donnent l'instant | plusieurs disques, partitions (`-p`), `iotop`, `ionice` d'une commande à lancer, `blkio` de cgroup v1 |
+| surcharges systemd | `systemctl edit`, `set-property` (`MemoryMax=`, `IOReadBandwidthMax=`, `IOWriteBandwidthMax=`), `daemon-reload` ; dans les surcharges, seuls `MemoryMax=`, `IO*BandwidthMax=` et `Restart=` de `[Service]` comptent ; un service relancé par `Restart=` repart aussitôt | toutes les directives, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
 | inodes | `df -i`, `du --inodes` : un inode par fichier ou lieu ; un support peut déclarer son nombre d'inodes (et ceux pris par le système) ; plus d'inode libre, plus de création | blocs réservés, `tune2fs`, inodes des liens symboliques et des fichiers spéciaux |
 | `find` | `-name`, `-type`, `-mtime`, `-maxdepth`, `-delete`, `-print` ; l'âge se compte sur l'horloge de la machine simulée | `-exec`, `-newer`, `-size`, `-user`, les opérateurs (`-o`, `!`) |
 | « Liste d'arguments trop longue » | un programme (pas `cd`, `echo`, `pwd`, `test`, `printf`) refuse plus de 2 Mio d'arguments (ARG_MAX) | la limite compte aussi l'environnement ; `xargs` |
@@ -477,7 +482,7 @@ versions plutôt que miroir, politique de rétention, forget n'est pas prune,
 check et restaurations d'essai, chiffrement et garde du mot de passe ;
 liens vers la documentation de restic.
 
-## Histoire 6 : Les Lettres du quartier (en cours, six chapitres)
+## Histoire 6 : Les Lettres du quartier (huit chapitres)
 
 L'association de Kofi (vue dans Le Paquet perdu) loue un petit serveur pour
 son site, `lettres.example` (machine `lettres`, même adresse que dans Le
@@ -548,7 +553,7 @@ fail2ban tourne avec les réglages de Debian (prison `sshd`, bannissement de
 fin de leur bannissement, et Rania, la webmestre, bannie après cinq erreurs
 de nom d'utilisateur. Le fail2ban simulé (`src/moteur/fail2ban.ts`) lit la
 configuration dans l'ordre `jail.conf`, `jail.d/*.conf`, `jail.local`,
-`jail.d/*.local` (le dernier lu l'emporte, `[sshd]` sur `[DEFAULT]`), compte
+`jail.d/*.local` (le dernier lu l'emporte ; `[sshd]` sur `[DEFAULT]`, quel que soit le fichier), compte
 les échecs dans le journal de SSH et bannit à `maxretry`, sauf `ignoreip`.
 La commande `ssh` du poste se heurte aux bannissements (`Connection
 refused`).
@@ -664,6 +669,63 @@ soir, mais pas une règle durable). Autres solutions acceptées : la zone dans
 Débrief : lire les journaux avant d'agir, limiter par adresse là où c'est
 coûteux, rafale et `nodelay`, 429, `deny` contre règle durable ; liens vers
 `limit_req`, le format des journaux et awk (POSIX).
+
+### Chapitre 7 — Le port (fait)
+
+Le journal de SSH déborde de robots, tous sur le port 22. Rania propose de
+déplacer SSH sur le port 2222 : ça ne protège de rien, mais le journal
+redeviendra lisible. Trois portes à ouvrir avant d'en fermer une (sshd,
+ufw, le `~/.ssh/config` du poste), et une sentinelle à prévenir.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `journalctl -u ssh`, `sudo ufw status`, `sudo nft list ruleset` (les règles que ufw et fail2ban écrivent) |
+| Écouter sur les deux ports | `Port 22` et `Port 2222` dans `sshd_config`, `sudo sshd -t`, `sudo ufw allow 2222/tcp`, `sudo systemctl reload ssh`, `sudo ss -tlnp` |
+| Tester depuis le poste | `Port 2222` dans `~/.ssh/config` (ou `ssh -p 2222`) ; la clé d'hôte est notée `[lettres.example]:2222` dans `known_hosts` |
+| Fermer l'ancienne porte | retirer `Port 22`, `sudo ufw delete allow OpenSSH` |
+| La sentinelle | `[sshd]` puis `port = 2222` dans `jail.local`, `sudo systemctl reload fail2ban`, `sudo nft list table inet f2b-table` |
+
+Objectif vérifié sur l'état : sshd n'écoute que sur 2222 ; ufw laisse passer
+2222 et plus 22 ; la prison sshd bloque le port 2222 ; le poste est connecté
+par le port 2222 grâce à son `~/.ssh/config`.
+
+Pièges prévus : retirer le port 22 avant d'ouvrir 2222 dans ufw (alerte ;
+la connexion suivante attend, le menu sert de console de secours), oublier
+le poste (« Connection refused » sur 22, avec un rappel du port), un
+`port = 2222` dans le `[DEFAULT]` de `jail.local`, que le `port = ssh` du
+`[sshd]` de `jail.conf` continue d'emporter. Autres solutions acceptées :
+`ssh -p 2222` pour tester, `port = ssh,2222`, `ufw limit 2222/tcp`.
+Débrief : un port n'est pas une protection, ouvrir avant de fermer, tout ce
+qui parle du port suit, ufw et fail2ban écrivent des règles nftables,
+`ssh.socket` sur Ubuntu ; liens vers `sshd_config(5)`, `ssh_config(5)`,
+`jail.conf(5)` et ufw.
+
+### Chapitre 8 — La récidive (fait)
+
+Depuis le changement de port, les mêmes adresses sont bannies une heure,
+débannies, rebannies, encore et encore ; et le robot de l'agenda, que nginx
+limite depuis le soir du concert, insiste (« limiting requests » dans
+`error.log`). `jail.conf` a des prisons toutes prêtes, désactivées.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `grep -c "Ban 203.0.113.66" /var/log/fail2ban.log`, `grep -c "limiting requests" /var/log/nginx/error.log`, `grep "^\[" /etc/fail2ban/jail.conf` |
+| Activer les prisons | `[recidive]` et `[nginx-limit-req]` avec `enabled = true` dans `jail.local` (ou `jail.d/*.local`) |
+| Vérifier | `sudo fail2ban-client -t`, `sudo systemctl reload fail2ban`, `sudo fail2ban-client status`, `status recidive`, `status nginx-limit-req`, `sudo nft list table inet f2b-table` |
+
+Objectif vérifié sur l'état : `recidive` et `nginx-limit-req` chargées, les
+deux récidivistes bannis par `recidive` (sur tous les ports), les trois
+adresses du robot par `nginx-limit-req`, Rania et les visiteur·ses épargné·es,
+`recidive` plus longue que `sshd`, l'état d'une prison consulté.
+
+Pièges prévus : `enabled = true` dans `[DEFAULT]` (toutes les prisons de
+`jail.conf`, dont apache et postfix : « Have not found any log file », le
+service ne recharge pas), une `recidive` qui ne bannit pas plus longtemps
+que `sshd`, Rania sortie d'`ignoreip` (la prison nginx la bannit ; `unban`).
+Autres solutions acceptées : `jail.d/*.local`, `bantime = -1`, un autre
+`maxretry`. Débrief : journal, filtre, action ; activer dans sa section ;
+`dbpurgeage` ; `bantime.increment` ; liens vers `jail.conf(5)`, le
+`jail.conf` de fail2ban et `limit_req`.
 
 ## Histoire 7 : La Fabrique (quatre chapitres)
 
@@ -961,7 +1023,7 @@ de lignes, et les prêts sont revenus. Pièges prévus : la redirection `>`
 avec `sudo -u`, restaurer par-dessus la base en service, réinjecter dans
 une table pleine (doublons), `pg_dump` dans la crontab de root.
 
-## Histoire 10 : L'Astreinte (six chapitres)
+## Histoire 10 : L'Astreinte (sept chapitres)
 
 Des nuits d'astreinte pour Radio Quartier (machine `radio`, 192.0.2.18),
 avec Zoé, bénévole technique. Les pannes classiques, une par nuit, puis la
@@ -1114,7 +1176,32 @@ textes). Zoé relit à chaque enregistrement et dit ce qui manque.
    (le moteur se compile avec esbuild pour Node), puis dans Chromium à 1000
    et 375 px.
 
-## Histoire 11 : La Maison des associations (quatre chapitres)
+### Chapitre 7 — Le goulot (fait)
+
+Chaque jour à 16 h, le direct a des trous d'une demi-seconde. La machine
+paraît surchargée, mais le processeur ne fait rien : l'archivage du jour (un
+`rsync` lancé par un timer) sature le disque, et les lectures du relais font
+la queue. Il ne faut pas arrêter l'archivage : les émissions du jour doivent
+être archivées.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `top` (`wa`, la charge), `iostat -x` (`%util`, `r_await`), `sudo pidstat -d` (qui), `journalctl -u radio-flux` |
+| Le faux remède | `sudo ionice -c 3 -p 2190` (rien ne change), `cat /sys/block/vda/queue/scheduler` (`[none]`) |
+| Limiter | `sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M"` (ou `systemctl edit` et `daemon-reload`) |
+| Vérifier | `iostat -x` (l'attente retombe), `journalctl -u radio-flux` |
+
+Objectif vérifié sur l'état : le relais du direct est servi à temps,
+l'archivage tourne toujours, et sa limite (enregistrée dans `/etc`) vise le
+bon disque, sans descendre sous 5 Mio/s. Pièges prévus : `ionice` sous
+l'ordonnanceur `none`, arrêter l'archivage, une limite sur `/dev/sda`, une
+limite trop basse. Autres solutions acceptées : `IOReadBandwidthMax=`, un
+chemin (`/srv`) au lieu du disque, `systemctl edit`. Débrief : iowait et
+charge, `iostat -x`, `pidstat -d`, io.max contre ionice, `set-property`
+contre `edit` ; liens vers `iostat(1)`, `systemd.resource-control(5)` et le
+contrôleur io de cgroup v2.
+
+## Histoire 11 : La Maison des associations (cinq chapitres)
 
 La Maison des associations du quartier (machine `maison`, 192.0.2.19) :
 une passerelle, seule visible depuis internet, et derrière elle un réseau
@@ -1193,7 +1280,29 @@ trop. Pièges prévus : la barre oblique finale oubliée (un dossier
 `partage/partage`), `--delete` sans essai à blanc. Le débrief parle de FTP
 et telnet, qui font passer les mots de passe en clair.
 
-## Histoire 12 : La Coopérative (cinq chapitres)
+### Chapitre 5 — L'hébergeur (fait)
+
+Le nouveau site de la Maison est prêt sur le wiki (`/srv/wiki/site`) ; il est
+publié chez un hébergeur mutualisé qui ne propose que FTP, et refuse
+désormais le FTP en clair. Gaspard publiait avec FileZilla, sans chiffrement,
+sur `ftp.maison.example` (un nom qui pointe chez l'hébergeur, mais que son
+certificat ne couvre pas).
+
+| Étape | Commande apprise |
+|---|---|
+| Rapatrier | depuis le poste, `sftp wiki` : `cd /srv/wiki`, `ls`, `get -r site`, `lls`, `bye` |
+| Se connecter | `lftp -u maisonasso ftp.hebergeur.example` (le mot de passe demandé, FTPS par défaut) |
+| Publier | `mirror -R --delete --dry-run site public_html`, puis sans `--dry-run` |
+
+Objectif vérifié sur l'état : `public_html` contient exactement le site du
+wiki, et le dernier envoi est passé chiffré, certificat vérifié. Pièges
+prévus : le FTP en clair (`421 Sorry, cleartext sessions…`), le nom de
+Gaspard (`certificate common name doesn't match`), la vérification coupée
+(`ssl:verify-certificate no`), `mirror` sans `-R` (l'ancien site rapatrié
+sur le poste), `mirror -R site` sans cible (un dossier `site` à côté de
+`public_html`), sans `--delete` (les tarifs 2025 restent en ligne).
+
+## Histoire 12 : La Coopérative (six chapitres)
 
 L'épicerie coopérative du quartier (machine `cooperative`, 192.0.2.20) :
 la caisse (un service), l'équipe caisse (Lina, Karim), un compte de
@@ -1291,6 +1400,34 @@ activée au démarrage. Pièges prévus : `apt upgrade` avant `apt update`
 (rien à faire), la mise à jour hors de tmux (dpkg interrompu, apt refuse
 tout), oublier de redémarrer (l'ancien noyau tourne), la caisse jamais
 activée (elle ne repart pas), tmux imbriqué.
+
+### Chapitre 6 — Les mises à jour automatiques (fait)
+
+De nouvelles failles, déjà. Marc avait installé `unattended-upgrades` sans
+jamais l'activer (`20auto-upgrades` à « 0 ») ; Awa veut les mises à jour de
+sécurité chaque jour, un rapport à root, un redémarrage seulement quand la
+coopérative est fermée (7 h – 20 h), et surtout pas `nodejs` (Marc a ajouté
+le dépôt de la version 22 ; la caisse exige la 20).
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `ls /var/log/unattended-upgrades`, `systemctl list-timers`, `apt-config dump APT::Periodic`, `sudo systemctl start apt-daily-upgrade` (qui ne fait rien) |
+| Activer | `APT::Periodic::Update-Package-Lists "1";` et `APT::Periodic::Unattended-Upgrade "1";` dans `20auto-upgrades` |
+| Régler | `Unattended-Upgrade::Mail "root";`, `Automatic-Reboot "true";`, `Automatic-Reboot-Time "02:00";` dans `50unattended-upgrades` |
+| Essayer, puis prouver | `sudo unattended-upgrade --dry-run --debug` (nodejs : origine non permise), `sudo systemctl start apt-daily-upgrade`, `/var/log/unattended-upgrades/unattended-upgrades.log` |
+
+Objectif vérifié sur l'état : les deux tâches activées, une passe lancée par
+le service a installé les mises à jour de sécurité, `nodejs` est resté en
+20, le rapport par courrier et le redémarrage automatique la nuit sont
+réglés, la caisse tourne. Pièges prévus : un `;` oublié (« E: Syntax
+error », apt refuse tout), `origin=*` (nodejs passe en 22 : la caisse ne
+redémarrerait plus ; recommencer le chapitre), `Automatic-Reboot` sans heure
+(redémarrage immédiat en pleine journée), le service lancé avant d'activer.
+Autres solutions acceptées : un fichier à soi (`52cooperative`), `nodejs`
+dans `Package-Blacklist`, une autre heure de nuit, un autre destinataire.
+Débrief : 20auto-upgrades (quand) et 50unattended-upgrades (quoi), dépôts
+tiers à la main, rapport et redémarrage programmé ; liens vers le wiki
+Debian, `unattended-upgrade(8)` et `apt.conf(5)`.
 
 ## Histoire 13 : La Ruche (phase 9)
 

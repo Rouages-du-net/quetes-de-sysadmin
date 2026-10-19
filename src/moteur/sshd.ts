@@ -3,7 +3,9 @@
 //   - mots-clés insensibles à la casse, commentaires « # » ;
 //   - Include, avec jokers, lu à l'endroit où il apparaît ;
 //   - pour chaque mot-clé, la PREMIÈRE valeur lue l'emporte : un fichier de
-//     sshd_config.d inclus en tête (comme sur Debian) gagne sur la suite.
+//     sshd_config.d inclus en tête (comme sur Debian) gagne sur la suite ;
+//   - sauf Port, qui peut être répété : sshd écoute sur chacun (les ports
+//     sont gardés séparés par des espaces dans valeurs.port).
 // La configuration appliquée est celle chargée au dernier démarrage ou
 // rechargement du service ssh (etat.sshd.charge), pas celle du fichier.
 
@@ -94,6 +96,12 @@ export function lireConfig(jeu: Jeu, chemin = CONFIG): ConfigSshd {
         erreurs.push(valeur ? `${fichier} line ${i + 1}: unsupported option "${valeur}".` : `${fichier} line ${i + 1}: missing argument.`);
         return;
       }
+      if (cle === 'port') {
+        const n = Number(valeur);
+        if (!/^\d+$/.test(valeur) || n < 1 || n > 65535) erreurs.push(`${fichier} line ${i + 1}: Badly formatted port number.`);
+        else if (!valeurs.port?.split(' ').includes(valeur)) valeurs.port = valeurs.port ? `${valeurs.port} ${valeur}` : valeur;
+        return;
+      }
       if (!(cle in valeurs)) valeurs[cle] = permises ? valeur.toLowerCase() : valeur;
     });
   };
@@ -106,7 +114,7 @@ export function lireConfig(jeu: Jeu, chemin = CONFIG): ConfigSshd {
 export const afficherConfig = (c: ConfigSshd) =>
   Object.entries(c.valeurs)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([k, v]) => `${k} ${v}`)
+    .flatMap(([k, v]) => (k === 'port' ? v.split(' ').map((p) => `port ${p}`) : [`${k} ${v}`]))
     .join('\n');
 
 /** La configuration appliquée laisse-t-elle entrer ce compte avec sa clé ? */
@@ -123,3 +131,6 @@ export function autorise(valeurs: Record<string, string>, utilisateur: string): 
 /** Les méthodes que ssh annonce en cas de refus : « publickey » ou « publickey,password ». */
 export const methodes = (valeurs: Record<string, string>) =>
   [valeurs.pubkeyauthentication !== 'no' && 'publickey', valeurs.passwordauthentication === 'yes' && 'password'].filter(Boolean).join(',');
+
+/** Les ports sur lesquels sshd écoute avec cette configuration. */
+export const portsSshd = (valeurs: Record<string, string> | null | undefined): number[] => (valeurs?.port ?? '22').split(' ').map(Number);

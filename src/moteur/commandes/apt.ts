@@ -224,12 +224,24 @@ const SOURCES = [
 const ko = (n: number) => `${n.toLocaleString('en-US')} kB`;
 const LECTURE = ['Reading package lists... Done', 'Building dependency tree... Done', 'Reading state information... Done'];
 
-interface EtatApt {
+/** D'où vient une mise à jour (champs du fichier Release, comme apt-cache policy les montre). */
+export interface Origine {
+  o: string;
+  n: string;
+  l: string;
+  site: string;
+}
+// Par défaut : les mises à jour de sécurité de Debian.
+export const SECURITE: Origine = { o: 'Debian', n: 'trixie-security', l: 'Debian-Security', site: 'security.debian.org' };
+
+export interface EtatApt {
   listes: boolean;
   installes: Record<string, string>;
   // Les mises à jour en attente : paquet → nouvelle version ; un nouveau paquet (le noyau) à installer avec elles.
   mises?: Record<string, string>;
   nouveaux?: Record<string, string>;
+  // L'origine de chaque mise à jour (sinon SECURITE).
+  origines?: Record<string, Origine>;
   // Paquets dépaquetés mais pas configurés (dpkg interrompu).
   interrompu?: string[];
   enAttente?: Record<string, string>;
@@ -245,12 +257,13 @@ export interface Noyau {
 const REDEMARRAGE = /^(linux-image|libc6$|libssl|systemd$|dbus$)/;
 
 /** Les mises à jour à appliquer (une fois la liste téléchargée). */
-const misesDisponibles = (e: EtatApt) => (e.listes ? Object.entries(e.mises ?? {}).filter(([n, v]) => e.installes[n] && e.installes[n] !== v) : []);
+export const misesDisponibles = (e: EtatApt) =>
+  e.listes ? Object.entries(e.mises ?? {}).filter(([n, v]) => e.installes[n] && e.installes[n] !== v) : [];
 
 const ERREUR_INTERROMPU = "Error: dpkg was interrupted, you must manually run 'dpkg --configure -a' to correct the problem.";
 
 // La fin de dpkg : configurer chaque paquet, les déclencheurs, et noter s'il faut redémarrer.
-function configurer(jeu: Shell, e: EtatApt, paquets: [string, string][]): string[] {
+export function configurer(jeu: Shell, e: EtatApt, paquets: [string, string][]): string[] {
   const lignes: string[] = [];
   for (const [n, v] of paquets) {
     lignes.push(`Setting up ${n} (${v}) ...`);
@@ -343,7 +356,7 @@ function mettreAJour(jeu: Shell, oui: boolean): string {
   return [...sortie, ''].join('\n');
 }
 
-const etat = (jeu: Shell): EtatApt =>
+export const etat = (jeu: Shell): EtatApt =>
   (jeu.etat.apt ??= { listes: false, installes: Object.fromEntries(INSTALLES_DE_BASE.map((p) => [p, PAQUETS[p].version])) });
 
 // Seul root peut toucher à la base des paquets : apt s'arrête au verrou.
@@ -481,7 +494,9 @@ export const APT: Record<string, Commande> = {
         return mettreAJour(jeu, oui);
       }
       if (action === 'list' && args.includes('--upgradable')) {
-        const nouvelles = misesDisponibles(e).map(([n, v]) => `${n}/trixie-security ${v} amd64 [upgradable from: ${e.installes[n]}]`);
+        const nouvelles = misesDisponibles(e).map(
+          ([n, v]) => `${n}/${(e.origines?.[n] ?? SECURITE).n} ${v} amd64 [upgradable from: ${e.installes[n]}]`,
+        );
         return ['Listing... Done', ...nouvelles.sort()].join('\n');
       }
       if (action === 'list') {

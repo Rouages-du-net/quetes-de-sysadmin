@@ -18,6 +18,8 @@ import { NFTABLES } from './nftables';
 import { WIREGUARD } from './wireguard';
 import { LDAP } from './ldap';
 import { RADIUS } from './radius';
+import { SFTP } from './sftp';
+import { LFTP } from './lftp';
 import { SYSTEMD } from './systemd';
 import { EDITEUR } from './editeur';
 import { SSHD } from './sshd';
@@ -26,6 +28,8 @@ import { SS } from './ss';
 import { FAIL2BAN } from './fail2ban';
 import { SAUVEGARDE } from './sauvegarde';
 import { APT } from './apt';
+import { IOSTAT } from './iostat';
+import { UNATTENDED } from './unattended';
 import { CERTBOT } from './certbot';
 import { RESTIC } from './restic';
 import { BIND } from './bind';
@@ -86,6 +90,8 @@ export const COMMANDES: Record<string, Commande> = {
   ...WIREGUARD,
   ...LDAP,
   ...RADIUS,
+  ...SFTP,
+  ...LFTP,
   ...SYSTEMD,
   ...EDITEUR,
   ...SSHD,
@@ -94,6 +100,8 @@ export const COMMANDES: Record<string, Commande> = {
   ...FAIL2BAN,
   ...SAUVEGARDE,
   ...APT,
+  ...IOSTAT,
+  ...UNATTENDED,
   ...CERTBOT,
   ...RESTIC,
   ...BIND,

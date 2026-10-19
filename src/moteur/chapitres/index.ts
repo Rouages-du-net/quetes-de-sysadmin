@@ -21,6 +21,8 @@ import { sentinelle } from './sentinelle';
 import { colocation } from './colocation';
 import { chezMoi } from './chez-moi';
 import { concert } from './concert';
+import { port } from './port';
+import { recidive } from './recidive';
 import { miseAJour } from './mise-a-jour';
 import { composition } from './composition';
 import { contournement } from './contournement';
@@ -39,15 +41,18 @@ import { inodes } from './inodes';
 import { horloge } from './horloge';
 import { sonde } from './sonde';
 import { postMortem } from './post-mortem';
+import { goulot } from './goulot';
 import { cles } from './cles';
 import { rebond } from './rebond';
 import { tunnel } from './tunnel';
 import { transferts } from './transferts';
+import { hebergeur } from './hebergeur';
 import { depart } from './depart';
 import { droits } from './droits';
 import { secret } from './secret';
 import { proxy } from './proxy';
 import { misesAJour } from './mises-a-jour';
+import { automatiques } from './automatiques';
 import { vlan } from './vlan';
 import { dhcp } from './dhcp';
 import { zones } from './zones';
@@ -80,7 +85,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'lettres',
-    chapitres: [porte, pareFeu, sentinelle, colocation, chezMoi, concert],
+    chapitres: [porte, pareFeu, sentinelle, colocation, chezMoi, concert, port, recidive],
   },
   {
     id: 'fabrique',
@@ -96,15 +101,15 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'astreinte',
-    chapitres: [disquePlein, memoireChapitre, inodes, horloge, sonde, postMortem],
+    chapitres: [disquePlein, memoireChapitre, inodes, horloge, sonde, postMortem, goulot],
   },
   {
     id: 'maison',
-    chapitres: [cles, rebond, tunnel, transferts],
+    chapitres: [cles, rebond, tunnel, transferts, hebergeur],
   },
   {
     id: 'cooperative',
-    chapitres: [depart, droits, secret, proxy, misesAJour],
+    chapitres: [depart, droits, secret, proxy, misesAJour, automatiques],
   },
   {
     id: 'ruche',

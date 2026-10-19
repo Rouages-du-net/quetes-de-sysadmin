@@ -294,4 +294,79 @@ for (const langue of LANGUES)
       expect(tout).toContain('6.12.38+deb13-amd64');
       expect(c.termines).not.toContain('mises-a-jour');
     });
+
+    // Chapitre 6 : les mises à jour automatiques.
+    const AVANT_AUTO = ['depart', 'droits', 'secret', 'proxy', 'mises-a-jour'];
+    const REGLAGES = (t: string) =>
+      t
+        .replace('//Unattended-Upgrade::Mail "";', 'Unattended-Upgrade::Mail "root";')
+        .replace('//Unattended-Upgrade::Automatic-Reboot "false";', 'Unattended-Upgrade::Automatic-Reboot "true";')
+        .replace('//Unattended-Upgrade::Automatic-Reboot-Time "02:00";', 'Unattended-Upgrade::Automatic-Reboot-Time "02:00";');
+
+    it('chapitre 6 — solution : 20auto-upgrades, rapport, redémarrage la nuit, essai, puis le service', () => {
+      const { c, jouer, editer } = partie(AVANT_AUTO);
+      expect(c.distant?.shell.chapitre.id).toBe('automatiques');
+      let tout = jouer([
+        'ls /var/log/unattended-upgrades',
+        'systemctl list-timers',
+        'apt-config dump APT::Periodic',
+        'sudo systemctl start apt-daily-upgrade',
+      ]);
+      expect(tout).toContain("'/var/log/unattended-upgrades'");
+      expect(tout).toContain('apt-daily-upgrade.timer');
+      expect(tout).toContain('APT::Periodic::Unattended-Upgrade "0";');
+      contient(tout, "n'a rien fait");
+      editer('sudo nano /etc/apt/apt.conf.d/20auto-upgrades', (t) => t.replace(/"0"/g, '"1"'));
+      editer('sudo nano /etc/apt/apt.conf.d/50unattended-upgrades', REGLAGES);
+      tout = jouer(['sudo unattended-upgrade --dry-run --debug']);
+      expect(tout).toContain('Packages that will be upgraded: libssl3t64 linux-image-6.12.57+deb13-amd64 linux-image-amd64 openssl tzdata');
+      expect(tout).toContain("Checking: nodejs ([<Origin component:'main' archive:'nodistro' origin:'Node Source'");
+      expect(c.termines).not.toContain('automatiques');
+      tout = jouer(['sudo systemctl start apt-daily-upgrade', 'cat /var/log/unattended-upgrades/unattended-upgrades.log']);
+      expect(tout).toContain('Found /var/run/reboot-required, rebooting');
+      contient(tout, 'https://wiki.debian.org/UnattendedUpgrades');
+      expect(c.termines).toContain('automatiques');
+    });
+
+    it('chapitre 6 — une autre solution : un fichier à soi, nodejs sur liste noire', () => {
+      const { c, jouer, editer } = partie(AVANT_AUTO);
+      editer(
+        'sudo nano /etc/apt/apt.conf.d/52cooperative',
+        () =>
+          'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\nUnattended-Upgrade::Origins-Pattern { "origin=*"; };\nUnattended-Upgrade::Package-Blacklist { "nodejs"; };\nUnattended-Upgrade::Mail "lina";\nUnattended-Upgrade::Automatic-Reboot "true";\nUnattended-Upgrade::Automatic-Reboot-Time "21:30";\n',
+      );
+      jouer(['sudo systemctl start apt-daily-upgrade']);
+      expect(c.termines).toContain('automatiques');
+    });
+
+    it('chapitre 6 — fausses pistes : point-virgule oublié, origin=*, redémarrage immédiat', () => {
+      const { c, jouer, editer } = partie(AVANT_AUTO);
+      let tout = editer(
+        'sudo nano /etc/apt/apt.conf.d/20auto-upgrades',
+        () => 'APT::Periodic::Update-Package-Lists "1"\nAPT::Periodic::Unattended-Upgrade "1";\n',
+      );
+      tout += jouer(['apt-config dump']);
+      expect(tout).toContain('E: Syntax error /etc/apt/apt.conf.d/20auto-upgrades:1: Extra junk after value');
+      contient(tout, 'oublié en fin de ligne');
+      editer(
+        'sudo nano /etc/apt/apt.conf.d/20auto-upgrades',
+        () => 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\n',
+      );
+      editer('sudo nano /etc/apt/apt.conf.d/50unattended-upgrades', (t) =>
+        t
+          .replace('Unattended-Upgrade::Origins-Pattern {', 'Unattended-Upgrade::Origins-Pattern {\n        "origin=*";')
+          .replace('//Unattended-Upgrade::Automatic-Reboot "false";', 'Unattended-Upgrade::Automatic-Reboot "true";'),
+      );
+      tout = jouer(['sudo unattended-upgrade -v']);
+      expect(tout).toContain('nodejs');
+      // Redémarrage immédiat : la connexion tombe.
+      expect(tout).toContain('closed by remote host');
+      expect(c.distant).toBeNull();
+      tout += jouer(['ssh cooperative']);
+      contient(tout, 'en plein après-midi');
+      contient(tout, 'nodejs vient de passer en version 22');
+      expect(tout).not.toContain('Bravo');
+      expect(jouer(['systemctl status caisse'])).toContain('failed');
+      expect(c.termines).not.toContain('automatiques');
+    });
   });

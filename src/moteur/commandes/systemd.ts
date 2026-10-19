@@ -64,7 +64,8 @@ function liste(sd: Systemd, echecsSeulement: boolean): string {
 
 // Les fichiers de surcharge (/etc/systemd/system/NOM.service.d/*.conf, et
 // ceux de systemctl set-property dans /etc/systemd/system.control) :
-// MemoryMax= et Restart= de la section [Service], relus par daemon-reload
+// MemoryMax=, IOReadBandwidthMax=, IOWriteBandwidthMax= et Restart= de la
+// section [Service], relus par daemon-reload
 // (systemctl edit et set-property le font tout seuls). D'après
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
 // (« drop-in »). Écart : les autres clés sont ignorées.
@@ -85,6 +86,8 @@ export function chargerSurcharges(jeu: Shell, sd: Systemd) {
     s.surcharges = chemins.length ? chemins : undefined;
     s.memoireMax = undefined;
     s.redemarrage = undefined;
+    s.ioLecture = undefined;
+    s.ioEcriture = undefined;
     // Le dernier fichier lu l'emporte (comme systemd : les noms sont triés, /etc/systemd/system après system.control ici).
     for (const chemin of chemins) {
       let section = '';
@@ -95,9 +98,19 @@ export function chargerSurcharges(jeu: Shell, sd: Systemd) {
         if (!m || section !== '[Service]') continue;
         if (m[1] === 'MemoryMax') s.memoireMax = lireTaille(m[2]) ?? undefined;
         if (m[1] === 'Restart') s.redemarrage = m[2];
+        const io = /^IO(Read|Write)BandwidthMax$/.exec(m[1]);
+        const limite = io ? lireLimiteIO(m[2]) : null;
+        if (io && limite) s[io[1] === 'Read' ? 'ioLecture' : 'ioEcriture'] = limite;
       }
     }
   }
+}
+
+/** « /dev/vda 20M » (IOWriteBandwidthMax=) → le disque et des octets par seconde ; null si illisible. */
+function lireLimiteIO(texte: string): { appareil: string; octets: number } | null {
+  const [appareil, debit, ...reste] = texte.trim().split(/\s+/);
+  const octets = debit ? lireTaille(debit) : null;
+  return appareil?.startsWith('/') && octets !== null && !reste.length ? { appareil, octets } : null;
 }
 
 /** Un moment pour journalctl --since/--until (heure de la machine, lue comme UTC) ; null si illisible. */
@@ -338,13 +351,16 @@ export const SYSTEMD: Record<string, Commande> = {
         for (const p of proprietes) {
           const m = /^(\w+)=(.*)$/.exec(p);
           if (!m) return jeu.erreur(`Failed to set unit properties on ${nom}.service: Not assignment: ${p}`);
-          if (m[1] !== 'MemoryMax') return jeu.erreur(`Failed to set unit properties on ${nom}.service: Cannot set property ${m[1]}, or unknown property.`);
-          if (m[2] !== 'infinity' && lireTaille(m[2]) === null) return jeu.erreur(`Failed to parse MemoryMax= value: ${m[2]}`);
+          const io = /^IO(Read|Write)BandwidthMax$/.test(m[1]);
+          if (m[1] !== 'MemoryMax' && !io) return jeu.erreur(`Failed to set unit properties on ${nom}.service: Cannot set property ${m[1]}, or unknown property.`);
+          if (io && !lireLimiteIO(m[2])) return jeu.erreur(`Failed to parse ${m[1]}= value: ${m[2]}`);
+          if (!io && m[2] !== 'infinity' && lireTaille(m[2]) === null) return jeu.erreur(`Failed to parse MemoryMax= value: ${m[2]}`);
           const lieu = `/etc/systemd/system.control/${nom}.service.d`;
           for (const chemin of ['/etc/systemd', '/etc/systemd/system.control', lieu])
             if (!jeu.existe(chemin)) jeu.placer('systemctl', chemin, { type: 'dossier', enfants: {}, proprio: 'root' });
-          const fichier = `${lieu}/50-MemoryMax.conf`;
-          const contenu = `# This is a drop-in unit file extension, created via "systemctl set-property"\n# or an equivalent operation. Do not edit.\n[Service]\nMemoryMax=${m[2] === 'infinity' ? 'infinity' : lireTaille(m[2])}`;
+          const fichier = `${lieu}/50-${m[1]}.conf`;
+          const valeur = io ? `${lireLimiteIO(m[2])!.appareil} ${lireLimiteIO(m[2])!.octets}` : m[2] === 'infinity' ? 'infinity' : lireTaille(m[2]);
+          const contenu = `# This is a drop-in unit file extension, created via "systemctl set-property"\n# or an equivalent operation. Do not edit.\n[Service]\n${m[1]}=${valeur}`;
           const n = jeu.trouver(fichier);
           if (n?.type === 'fichier') n.contenu = contenu;
           else jeu.placer('systemctl', fichier, { type: 'fichier', contenu, lignes: true, proprio: 'root' });

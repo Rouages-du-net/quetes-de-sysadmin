@@ -36,3 +36,6 @@ logrotate-usage =
 pkill-usage =
     pkill: no matching criteria specified
     Try `pkill --help' for more information.
+
+# ionice suivi d'une commande : le jeu ne sait régler que des processus déjà lancés.
+ionice-commande = ionice : ici, seulement pour un processus qui tourne déjà (ionice -p PID, ou ionice -c 3 -p PID). Voir man ionice.

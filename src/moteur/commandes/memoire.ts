@@ -8,6 +8,7 @@
 // main) ; pas de swap ; la colonne available vaut free (le cache ne se
 // libère pas dans le jeu).
 
+import { etatDisque, io } from '../entrees-sorties';
 import type { Shell } from '../shell';
 import type { Processus } from './systeme';
 import { memoire, processus, tailleFree, utilisee } from '../memoire';
@@ -79,10 +80,14 @@ function top(jeu: Shell, args: string[]): string {
   const jours = Math.floor(uptime / 86_400_000);
   const h = Math.floor((uptime % 86_400_000) / 3_600_000);
   const min = String(Math.floor((uptime % 3_600_000) / 60_000)).padStart(2, '0');
+  // Le disque (s'il est suivi) : l'attente des entrées-sorties (wa) et la charge.
+  const disque = io(jeu) ? etatDisque(jeu) : null;
+  const wa = disque ? Math.min(95.7, disque.iowait) : 0.2;
+  const charge = disque ? [disque.charge, disque.charge * 0.85, disque.charge * 0.6].map((x) => x.toFixed(2)).join(', ') : '0.42, 0.38, 0.35';
   return [
-    `top - ${heure(sd.horloge)} up ${jours ? `${jours} days, ` : ''}${String(h).padStart(2)}:${min},  1 user,  load average: 0.42, 0.38, 0.35`,
+    `top - ${heure(sd.horloge)} up ${jours ? `${jours} days, ` : ''}${String(h).padStart(2)}:${min},  1 user,  load average: ${charge}`,
     `Tasks: ${String(liste.length).padStart(3)} total,   1 running, ${String(liste.length - 1 - zombies).padStart(3)} sleeping,   0 stopped, ${String(zombies).padStart(3)} zombie`,
-    '%Cpu(s):  3.1 us,  1.0 sy,  0.0 ni, 95.6 id,  0.2 wa,  0.0 hi,  0.1 si,  0.0 st',
+    `%Cpu(s):  3.1 us,  1.0 sy,  0.0 ni, ${(100 - 4.2 - wa).toFixed(1).padStart(4)} id, ${wa.toFixed(1).padStart(4)} wa,  0.0 hi,  0.1 si,  0.0 st`,
     `MiB Mem : ${enMio(c.total)} total, ${enMio(c.free)} free, ${enMio(c.used)} used, ${enMio(c.cache)} buff/cache`,
     `MiB Swap:      0.0 total,      0.0 free,      0.0 used. ${String(disponible.toFixed(1)).padStart(8)} avail Mem`,
     '',
