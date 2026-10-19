@@ -59,7 +59,10 @@ rouages.net.
   `logrotate`) ; `src/moteur/memoire.ts` (mémoire des processus, OOM killer,
   `MemoryMax=`) et `commandes/memoire.ts` (`free`, `top`, `dmesg`) ; les
   surcharges systemd (`systemctl edit`, `set-property`, `daemon-reload`)
-  dans `commandes/systemd.ts`. Inodes : un support de `etat.montages` peut
+  dans `commandes/systemd.ts`. Les entrées-sorties disque (`etat.io` :
+  demandes, ordonnanceur, `IO*BandwidthMax=`, classes d'ionice) dans
+  `src/moteur/entrees-sorties.ts`, `iostat`, `pidstat`, `ionice` dans
+  `commandes/iostat.ts`. Inodes : un support de `etat.montages` peut
   déclarer `inodes` (et `inodesBase`) ; `df -i`, `du --inodes`, `find -mtime`
   (date `mtime` des fichiers) ; la limite ARG_MAX dans `shell.ts`.
   L'heure d'une machine (fuseau, horloge qui dérive, NTP) dans

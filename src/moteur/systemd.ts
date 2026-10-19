@@ -41,6 +41,9 @@ export interface Service {
   // Les réglages des fichiers de surcharge (systemctl edit) : MemoryMax=, Restart=.
   memoireMax?: number;
   redemarrage?: string;
+  // IOReadBandwidthMax= et IOWriteBandwidthMax= (le disque visé, en octets par seconde).
+  ioLecture?: { appareil: string; octets: number };
+  ioEcriture?: { appareil: string; octets: number };
   surcharges?: string[];
   empreinteSurcharges?: string;
   // Une unité écrite à la main (/etc/systemd/system/NOM.service) : son fichier,

@@ -1682,6 +1682,65 @@ for (const langue of LANGUES)
       });
     });
 
+    describe("L'Astreinte, chapitre 7 — Le goulot (iowait, iostat, pidstat, IOWriteBandwidthMax=)", () => {
+      it('solution : top, iostat, pidstat, puis une limite de débit avec set-property', () => {
+        const { s, tout } = jouer('goulot', [
+          'top',
+          'iostat -x',
+          'sudo pidstat -d',
+          'antenne-2027',
+          'journalctl -u radio-flux -n 3',
+          'sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M"',
+          'iostat -x',
+        ]);
+        expect(tout).toMatch(/\d+\.\d wa/);
+        expect(tout).toContain('Device            r/s     rkB/s');
+        expect(tout).toContain('rsync');
+        expect(tout).toContain('read stall');
+        contient(tout, 'iowait');
+        expect(s.lire('/etc/systemd/system.control/radio-archives.service.d/50-IOWriteBandwidthMax.conf')).toContain(
+          'IOWriteBandwidthMax=/dev/vda 20971520',
+        );
+        contient(tout, 'https://docs.kernel.org/admin-guide/cgroup-v2.html#io');
+        expect(s.termine).toBe(true);
+      });
+
+      it('une autre solution : systemctl edit, IOReadBandwidthMax= sur un chemin, daemon-reload', () => {
+        const { s } = jouer('goulot', ['sudo systemctl edit radio-archives', 'antenne-2027']);
+        s.enregistrerEdition(`[Service]\nIOReadBandwidthMax=/srv 30M\n${s.edition!.texte}`);
+        s.quitterEdition();
+        s.executer('sudo systemctl daemon-reload');
+        s.executer('iostat');
+        expect(s.termine).toBe(true);
+      });
+
+      it('fausses pistes : ionice (ordonnanceur none), arrêter l’archivage, le mauvais disque, trop bas', () => {
+        const { s, tout } = jouer('goulot', [
+          'pidstat -d',
+          'ionice -p 2190',
+          'sudo ionice -c 3 -p 2190',
+          'antenne-2027',
+          'ionice -p 2190',
+          'iostat -x',
+          'cat /sys/block/vda/queue/scheduler',
+          'sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/sda 20M"',
+          'sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 1M"',
+          'sudo systemctl stop radio-archives',
+        ]);
+        expect(tout).toContain('best-effort: prio 4');
+        expect(tout).toContain('idle');
+        expect(tout).toContain('[none] mq-deadline');
+        contient(tout, 'sans priorité');
+        contient(tout, 'un disque qui n');
+        contient(tout, "n'aura pas fini");
+        contient(tout, 'ne seront pas archivées');
+        expect(s.termine).toBe(false);
+        s.executer('sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 25M"');
+        s.executer('sudo systemctl start radio-archives');
+        expect(s.termine).toBe(true);
+      });
+    });
+
     describe("L'Astreinte, chapitre 6 — Le post-mortem (journalctl --since, last, sans reproche)", () => {
       const POSTMORTEM = [
         '# Post-mortem : coupure du direct, nuit du 11 au 12 septembre 2027',

@@ -22,6 +22,17 @@ export const PAGES: Record<string, Page> = {
     voir: ['dpkg', 'systemctl', 'nginx', 'tmux'],
   },
   dpkg: { exemples: ['sudo dpkg --configure -a'], voir: ['apt'] },
+  iostat: {
+    options: ['c', 'd', 'x', 'k', 'm', 'y', 'z', 'h'],
+    exemples: ['iostat', 'iostat -x 1 3', 'iostat -dm'],
+    voir: ['pidstat', 'top', 'ionice'],
+  },
+  pidstat: { options: ['d', 'u', 'h'], exemples: ['pidstat -d', 'pidstat -d 1 5'], voir: ['iostat', 'top', 'ps'] },
+  ionice: {
+    options: ['c', 'n', 'p', 'h'],
+    exemples: ['ionice -p 2190', 'sudo ionice -c 3 -p 2190', 'cat /sys/block/vda/queue/scheduler'],
+    voir: ['iostat', 'systemctl'],
+  },
   'unattended-upgrade': {
     section: 8,
     options: ['d', 'v', 'h'],

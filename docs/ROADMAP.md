@@ -251,8 +251,9 @@ demandent plusieurs.
       la sauvegarde (« La Sauvegarde »)
 - [x] Rançongiciel et sauvegardes hors ligne (`mount -o ro`, restic) ;
       « La rançon » (La Ludothèque, chapitre 1)
-- [ ] Charge et ressources : `top`, `free`, `df`, `du` faits (L'Astreinte,
-      chapitres 1 et 2) ; reste `iostat`
+- [x] Charge et ressources : `top`, `free`, `df`, `du` faits (L'Astreinte,
+      chapitres 1 et 2) ; `iostat`, `pidstat -d`, `ionice` et la limite de débit
+      de systemd (`IOWriteBandwidthMax=`) : « Le goulot » (chapitre 7)
 - [x] Pannes classiques : disque plein et fuite de journaux (« Le disque
       plein »), mémoire épuisée (OOM) et processus zombies (« La mémoire »),
       inodes épuisés (« Les inodes »), horloge décalée et fuseau

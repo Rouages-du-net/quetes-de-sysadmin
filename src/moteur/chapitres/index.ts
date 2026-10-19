@@ -41,6 +41,7 @@ import { inodes } from './inodes';
 import { horloge } from './horloge';
 import { sonde } from './sonde';
 import { postMortem } from './post-mortem';
+import { goulot } from './goulot';
 import { cles } from './cles';
 import { rebond } from './rebond';
 import { tunnel } from './tunnel';
@@ -100,7 +101,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'astreinte',
-    chapitres: [disquePlein, memoireChapitre, inodes, horloge, sonde, postMortem],
+    chapitres: [disquePlein, memoireChapitre, inodes, horloge, sonde, postMortem, goulot],
   },
   {
     id: 'maison',

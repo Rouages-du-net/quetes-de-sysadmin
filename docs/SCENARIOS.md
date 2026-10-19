@@ -166,7 +166,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | PostgreSQL | rôles et authentification « peer » ; `psql -c/-f/-l` avec un SQL réduit (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `\l`, `\dt`, `\d`) ; `pg_dump` (texte, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb` ; une archive `-Fc` ne contient qu'une référence gardée par le jeu ; une seule clé primaire par table | tout PostgreSQL, psql interactif, WAL et restauration à un instant donné |
 | `lsof`, `truncate`, `logrotate` | `lsof` ne connaît que les fichiers ouverts décrits par le chapitre (`+L1`, `-p`, `-u`, un fichier) ; `logrotate` : une partie des directives, `-d`, `-f`, `-v`, sorties abrégées | toutes les options, tous les fichiers ouverts du système |
 | mémoire (`free`, `top`, `dmesg`) | la mémoire de chaque processus est décrite par le chapitre ; pas de swap, le cache ne se libère pas (`available` = `free`) ; l'OOM killer tue le plus gros processus (sans `oom_score_adj`) ; `top` affiche un instantané et rend la main (`-b`, `-n`, `-o`, `-c`) ; `dmesg` (`-T`) réservé à root | swap, récupération du cache, score de l'OOM killer, `top` interactif, `htop` |
-| surcharges systemd | `systemctl edit`, `set-property` (seulement `MemoryMax=`), `daemon-reload` ; dans les surcharges, seuls `MemoryMax=` et `Restart=` de `[Service]` comptent ; un service relancé par `Restart=` repart aussitôt | toutes les directives, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
+| `iostat`, `pidstat`, `ionice` | `iostat` `-c`, `-d`, `-x`, `-k`, `-m`, `-y`, intervalle et nombre ; `pidstat -d`, `-u` ; `ionice -p`, `-c`, `-n` ; un disque, un modèle de file d'attente simplifié (l'attente grimpe au-delà de 60 % de la capacité) ; les priorités d'ionice ne comptent qu'avec `mq-deadline` ou `bfq` ; tous les rapports donnent l'instant | plusieurs disques, partitions (`-p`), `iotop`, `ionice` d'une commande à lancer, `blkio` de cgroup v1 |
+| surcharges systemd | `systemctl edit`, `set-property` (`MemoryMax=`, `IOReadBandwidthMax=`, `IOWriteBandwidthMax=`), `daemon-reload` ; dans les surcharges, seuls `MemoryMax=`, `IO*BandwidthMax=` et `Restart=` de `[Service]` comptent ; un service relancé par `Restart=` repart aussitôt | toutes les directives, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
 | inodes | `df -i`, `du --inodes` : un inode par fichier ou lieu ; un support peut déclarer son nombre d'inodes (et ceux pris par le système) ; plus d'inode libre, plus de création | blocs réservés, `tune2fs`, inodes des liens symboliques et des fichiers spéciaux |
 | `find` | `-name`, `-type`, `-mtime`, `-maxdepth`, `-delete`, `-print` ; l'âge se compte sur l'horloge de la machine simulée | `-exec`, `-newer`, `-size`, `-user`, les opérateurs (`-o`, `!`) |
 | « Liste d'arguments trop longue » | un programme (pas `cd`, `echo`, `pwd`, `test`, `printf`) refuse plus de 2 Mio d'arguments (ARG_MAX) | la limite compte aussi l'environnement ; `xargs` |
@@ -1022,7 +1023,7 @@ de lignes, et les prêts sont revenus. Pièges prévus : la redirection `>`
 avec `sudo -u`, restaurer par-dessus la base en service, réinjecter dans
 une table pleine (doublons), `pg_dump` dans la crontab de root.
 
-## Histoire 10 : L'Astreinte (six chapitres)
+## Histoire 10 : L'Astreinte (sept chapitres)
 
 Des nuits d'astreinte pour Radio Quartier (machine `radio`, 192.0.2.18),
 avec Zoé, bénévole technique. Les pannes classiques, une par nuit, puis la
@@ -1174,6 +1175,31 @@ textes). Zoé relit à chaque enregistrement et dit ce qui manque.
 3. Vérifier qu'on peut le finir : une partie complète jouée par un script
    (le moteur se compile avec esbuild pour Node), puis dans Chromium à 1000
    et 375 px.
+
+### Chapitre 7 — Le goulot (fait)
+
+Chaque jour à 16 h, le direct a des trous d'une demi-seconde. La machine
+paraît surchargée, mais le processeur ne fait rien : l'archivage du jour (un
+`rsync` lancé par un timer) sature le disque, et les lectures du relais font
+la queue. Il ne faut pas arrêter l'archivage : les émissions du jour doivent
+être archivées.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre | `top` (`wa`, la charge), `iostat -x` (`%util`, `r_await`), `sudo pidstat -d` (qui), `journalctl -u radio-flux` |
+| Le faux remède | `sudo ionice -c 3 -p 2190` (rien ne change), `cat /sys/block/vda/queue/scheduler` (`[none]`) |
+| Limiter | `sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M"` (ou `systemctl edit` et `daemon-reload`) |
+| Vérifier | `iostat -x` (l'attente retombe), `journalctl -u radio-flux` |
+
+Objectif vérifié sur l'état : le relais du direct est servi à temps,
+l'archivage tourne toujours, et sa limite (enregistrée dans `/etc`) vise le
+bon disque, sans descendre sous 5 Mio/s. Pièges prévus : `ionice` sous
+l'ordonnanceur `none`, arrêter l'archivage, une limite sur `/dev/sda`, une
+limite trop basse. Autres solutions acceptées : `IOReadBandwidthMax=`, un
+chemin (`/srv`) au lieu du disque, `systemctl edit`. Débrief : iowait et
+charge, `iostat -x`, `pidstat -d`, io.max contre ionice, `set-property`
+contre `edit` ; liens vers `iostat(1)`, `systemd.resource-control(5)` et le
+contrôleur io de cgroup v2.
 
 ## Histoire 11 : La Maison des associations (cinq chapitres)
 
