@@ -195,15 +195,19 @@ man-git =
     Un dépôt nu peut réagir à un push : ses crochets (hooks/pre-receive, hooks/post-receive) sont des scripts lancés à chaque réception, s'ils sont exécutables (chmod +x). pre-receive peut refuser le push (code de retour non nul). Pour déployer, post-receive extrait les fichiers dans un lieu : git --work-tree=lieu checkout -f main.
     Un commit se désigne par le début de son identifiant (au moins 4 caractères), ou par HEAD (le dernier), HEAD~1 (l'avant-dernier)…
     .synopsis = git [--git-dir=dépôt] [--work-tree=lieu] commande
-man-grep = affiche les lignes qui contiennent le motif. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu.
-    .synopsis = grep [-i] [-v] [-c] [-q] motif [fichier...]
+man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu.
+    .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] motif [fichier...]
     .option-i = ignore la différence entre majuscules et minuscules.
     .option-v = inverse la recherche : garde les lignes qui ne contiennent PAS le motif.
     .option-c = compte les lignes trouvées au lieu de les afficher.
     .option-q = silencieux (quiet) : n'affiche rien, réussit si le motif est trouvé, échoue sinon.
+    .option-E = expressions régulières étendues : + ? | ( ) ont leur sens spécial.
+    .option-F = cherche le motif tel quel, sans expression régulière (fixed strings).
     .exemple-1 = les lignes qui parlent de l’Effaceur
     .exemple-2 = dans tous les fichiers d’ici, majuscule ou pas
     .exemple-3 = un motif avec des espaces, entre guillemets
+    .exemple-4 = les lignes qui contiennent « .env » (le point protégé)
+    .exemple-5 = les requêtes GET ou POST vers la caisse
 man-head = affiche le début d’un fichier (les 10 premières lignes, ou N).
     .synopsis = head [-n N] [fichier]
     .option-n = nombre de lignes à afficher (10 par défaut) : head -n 3 fichier.

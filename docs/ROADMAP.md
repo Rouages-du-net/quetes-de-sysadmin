@@ -165,7 +165,9 @@ demandent plusieurs.
       renouvellement automatique, deploy hook, `openssl x509` et `s_client`,
       `curl https://` ; quête « Le certificat a expiré » (Datacenter,
       chapitre 5)
-- [ ] **Secrets** : fichier `.env` publié par erreur, rotation d'une clé
+- [x] **Secrets** : fichier `.env` (et `.git`) publié par erreur, le journal
+      d'accès, `location ~ /\.`, `deny`, rotation d'une clé ; « Le secret »
+      (La Coopérative, chapitre 3)
 
 ## Phase 4 — Servir des sites
 
@@ -175,8 +177,8 @@ demandent plusieurs.
 - [ ] Apache, pour comparer
 - [x] **Reverse proxy** devant une application (`proxy_pass`, barre finale,
       502 et `error.log`) ; `return 301` simulé
-- [ ] En-têtes transmis à l'appli (`proxy_set_header`, `X-Forwarded-For`),
-      HTTP → HTTPS dans une quête
+- [x] En-têtes transmis à l'appli (`proxy_set_header`, `X-Forwarded-For`,
+      `trust proxy` d'Express) ; « Le proxy » (La Coopérative, chapitre 4)
 - [x] **DNS** : enregistrements A, AAAA, CNAME, MX, TXT, TTL et caches (la
       « propagation »), zone BIND, serial, secondaire ; quête « Ça marche
       chez moi » (Les Lettres du quartier, chapitre 5)

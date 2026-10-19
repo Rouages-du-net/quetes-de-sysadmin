@@ -186,12 +186,22 @@ export const RESEAU: Record<string, Commande> = {
       // Les options qui prennent une valeur ; -H « Host: nom » choisit le site demandé.
       const AVEC_VALEUR = ['-H', '--header', '-o', '--output', '-X', '--request', '-d', '--data', '-A', '--user-agent', '-u', '--user', '-w', '--write-out', '-e', '--referer'];
       let hoteDemande: string | null = null;
+      // Les autres en-têtes donnés avec -H (noms en minuscules), transmis à nginx.
+      const enTetes: Record<string, string> = {};
+      // -X, ou -d (POST) : la méthode, qu'on retrouve dans le journal de nginx.
+      let methode: string | undefined;
       const positionnels: string[] = [];
       for (let i = 0; i < args.length; i++) {
         if (AVEC_VALEUR.includes(args[i])) {
           const valeur = args[++i] ?? '';
           const h = /^host:\s*(\S+)/i.exec(valeur);
           if ((args[i - 1] === '-H' || args[i - 1] === '--header') && h) hoteDemande = h[1];
+          else if (args[i - 1] === '-X' || args[i - 1] === '--request') methode = valeur.toUpperCase();
+          else if ((args[i - 1] === '-d' || args[i - 1] === '--data') && !methode) methode = 'POST';
+          else if (args[i - 1] === '-H' || args[i - 1] === '--header') {
+            const e = /^([\w-]+):\s*(.*)$/.exec(valeur);
+            if (e) enTetes[e[1].toLowerCase()] = e[2];
+          }
         } else if (!args[i].startsWith('-')) positionnels.push(args[i]);
       }
       const entetes = args.includes('-I') || args.includes('--head');
@@ -238,7 +248,7 @@ export const RESEAU: Record<string, Commande> = {
               : viaAppli
                 ? reponseAppli(jeu, viaAppli)
                 : jeu.etat.nginx && (port === 80 || port === 443)
-                  ? requete(jeu, nom, chemin, port)
+                  ? requete(jeu, nom, chemin, port, true, Object.keys(enTetes).length || methode ? { adresse: '127.0.0.1', temps: systemd(jeu)?.horloge ?? 0, agent: 'curl/8.14.1', entetes: enTetes, methode } : undefined)
                   : null;
           // Un service qui ne parle pas HTTP (une base de données) : réponse vide.
           if (viaDocker?.code === 0) return jeu.erreur('curl: (52) Empty reply from server');

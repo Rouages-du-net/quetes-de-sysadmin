@@ -132,7 +132,7 @@ export function appliKiosque(couleur: string): Appli {
 export function sante(j: Jeu, couleur: string): { status: string; version: string } | null {
   const appli = appliKiosque(couleur);
   if (j.etat.systemd?.services[appli.service]?.etat !== 'active' || !instances(j)[couleur]) return null;
-  return JSON.parse(appli.repondre!(j, '/health').corps);
+  return JSON.parse(appli.repondre!(j, '/health', { entetes: {}, adresse: '127.0.0.1' }).corps);
 }
 
 /** Les fichiers d'une version (/srv/kiosque/versions/1.5.0). */

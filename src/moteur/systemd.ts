@@ -130,9 +130,10 @@ export function demarrer(jeu: Jeu, sd: Systemd, nom: string, auDemarrage = false
     return true;
   }
   journaliser(sd, unite, 'systemd', 1, `Started ${unite} - ${s.description}.`);
-  s.charger?.(jeu);
+  // Le service tourne déjà quand il applique sa configuration (il peut recevoir des requêtes).
   s.etat = 'active';
   s.resultat = undefined;
+  s.charger?.(jeu);
   s.depuis = sd.horloge;
   const liste: Processus[] = (jeu.etat.processus ??= []);
   for (const p of s.processus) if (!liste.some((q) => q.pid === p.pid)) liste.push({ ...p });

@@ -79,7 +79,7 @@ export const PAGES: Record<string, Page> = {
     exemples: ['find . -name "*.txt"', 'find /srv/radio/stats -type f -mtime +30', 'find /srv/radio/stats -type f -mtime +30 -delete'],
     voir: ['ls', 'grep', 'du', 'rm', 'crontab'],
   },
-  grep: { options: ['i', 'v', 'c', 'q'], exemples: ['grep Effaceur chronique.txt', 'grep -i effaceur *', 'grep "mot de passe" journal.txt'], voir: ['cat', 'find'] },
+  grep: { options: ['i', 'v', 'c', 'q', 'E', 'F'], exemples: ['grep Effaceur chronique.txt', 'grep -i effaceur *', 'grep "mot de passe" journal.txt', "grep '\\.env' access.log", "grep -E '(GET|POST) /caisse' access.log"], voir: ['cat', 'find'] },
   groups: { exemples: ['groups', 'groups malo'], voir: ['id', 'usermod'] },
   head: { options: ['n'], voir: ['tail', 'cat'] },
   host: { exemples: ['host cafe.example', 'host cafe.example ns2.registre.example'], voir: ['dig'] },
