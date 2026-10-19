@@ -108,6 +108,9 @@ rouages.net.
   schéma réduit, filtres, `{SSHA}`) ; `ldapsearch`, `ldapadd`, `ldapmodify`,
   `ldapdelete`, `ldappasswd`, `ldapwhoami`, `slappasswd`, `slapcat` dans
   `commandes/ldap.ts`.
+- `src/moteur/radius.ts` : FreeRADIUS (`etat.radius` : configuration lue au
+  démarrage, `clients.conf`, module ldap, fichier `users`, demandes des
+  bornes et VLAN) ; `freeradius` et `radtest` dans `commandes/radius.ts`.
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
   dans `editeur.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).

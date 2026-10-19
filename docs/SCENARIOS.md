@@ -135,6 +135,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `sysctl`, `conntrack` | `sysctl` : lire, `-w`, `clé=valeur`, `-p`, `--system`, `-a`, `-n` sur quelques clés (`/proc/sys` est un vrai dossier du jeu) ; `/etc/sysctl.d/*.conf` puis `/etc/sysctl.conf` au démarrage ; `conntrack -L` (`-p`, `-s`, `-d`), `-C`, `-F` : les échanges du moment, dont la session ssh | toutes les clés du noyau ; `conntrack -E`, `-D`, états UDP et ICMP détaillés |
 | `wg`, `wg-quick` (WireGuard) | `genkey`, `genpsk`, `pubkey`, `show`, `showconf` ; `wg-quick up`, `down`, `strip` ; le service `wg-quick@wg0` ; la clé publique n'est pas calculée par Curve25519 (une empreinte qui en tient lieu, au bon format) ; les pairs sont décrits par le chapitre (le portable de Malik, le routeur d'un autre site et son réseau) ; `wg-quick` ajoute une route par `AllowedIPs` hors du réseau de l'interface ; un pair derrière une box (NAT) n'est joignable qu'avec `PersistentKeepalive` (sans délai simulé) ; pas de `wg set`, `PostUp`, `PresharedKey` vérifiée, IPv6, ni de tout le trafic par le tunnel côté routeur ; `wg-quick` sans sudo refuse au lieu de relancer sudo | Curve25519, `wg set`, `syncconf`, `PostUp`/`PostDown`, IPv6, `wg-quick save` |
 | OpenLDAP (`ldapsearch`, `ldapadd`, `ldapmodify`, `ldapdelete`, `ldappasswd`, `ldapwhoami`, `slappasswd`, `slapcat`) | un annuaire par machine (`etat.ldap`), un schéma réduit (core, cosine, inetorgperson, nis : les classes courantes, leurs attributs obligatoires) ; LDIF (`changetype`, `add`/`replace`/`delete`, `-`, lignes repliées), filtres `&`, `\|`, `!`, `=`, `*` ; `-x`, `-D`, `-W`, `-w`, `-H`, `-Y EXTERNAL` (root par `ldapi:///`, comme sur Debian), `-b`, `-s`, `-LLL`, `-f`, `-c` ; droits de Debian (lecture anonyme sauf `userPassword`, écriture par l'administrateur ou root) ; `{SSHA}` au bon format, mais pas un vrai SHA-1 ; les commandes ne lisent pas le clavier (un fichier ou un tube) | `cn=config`, réplication, index, `memberOf`, base64 (`::`), TLS, SASL autre qu'EXTERNAL, toute la syntaxe des filtres (`>=`, `~=`) |
+| FreeRADIUS (`freeradius`, `radtest`) | `clients.conf` (adresse ou réseau, secret), le module `ldap` activé par un lien dans `mods-enabled` (`server`, `identity`, `password`, `base_dn`, `user`, `group` et `membership_filter`), le fichier `users` (`DEFAULT`, `Ldap-Group`, `Auth-Type := Reject`, réponses, `Fall-Through`) ; configuration lue au démarrage ; `-XC`, `-X` (service arrêté, demandes de la borne racontées en abrégé) ; les bornes parlent PAP (comme EAP-TTLS/PAP), pas d'EAP simulé ; une syntaxe de configuration simplifiée | EAP (PEAP, TLS), accounting, `sites-available`, `unlang`, SQL, tous les modules |
 | `ping` sur un réseau local | un appareil répond s'il est dans le VLAN de l'interface dont le réseau contient son adresse ; une adresse privée envoyée à la box se perd ; un nom d'appareil est reconnu sans DNS | ARP, DNS local, `/etc/hosts` |
 | `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, une fenêtre par session ; pas de raccourcis clavier (`tmux detach` pour Ctrl+b d) ; attach rejoue les dernières lignes ; le nom de la session s'affiche devant l'invite (la barre d'état) ; `uname -r/-a` ; `dpkg --configure -a` | fenêtres, volets, raccourcis, `screen` ; toutes les options de dpkg |
 | `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe, `=`, `^~`, ou expression régulière (`~`, `~*`, syntaxe de JavaScript plutôt que PCRE), choisie dans l'ordre de nginx ; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
@@ -1455,4 +1456,28 @@ mauvais mot de passe (`Invalid credentials`), un attribut obligatoire oublié
 (`Object class violation`), un mot de passe en clair (le modèle de Sacha en
 avait un), un `uidNumber` déjà pris, Camille encore dans les groupes après
 `ldapdelete`, Sami hors du groupe, `slapd` arrêté.
+
+### Chapitre 8 — Le Wi-Fi des bureaux (fait)
+
+Fini le mot de passe Wi-Fi commun sur un post-it : une borne WPA2-Entreprise
+(802.1X, sur le VLAN 30) demande au serveur RADIUS du routeur (FreeRADIUS) si
+chaque personne peut entrer, d'après l'annuaire, et dans quel VLAN.
+
+| Étape | Commande apprise |
+|---|---|
+| Laisser parler la borne | `iifname "eth1.30" udp dport 1812 accept` (chaîne `input`, dans le fichier) |
+| Déclarer la borne | `clients.conf` : `client bornes { ipaddr = 10.10.30.0/24  secret = … }` |
+| L'annuaire | `ln -s ../mods-available/ldap mods-enabled/ldap` ; `base_dn`, `identity`, `password`, `membership_filter` (memberUid) |
+| Le VLAN | `mods-config/files/authorize` : `DEFAULT Ldap-Group == "bureaux"` → `Tunnel-Private-Group-Id = 10`, puis `DEFAULT` → 20 |
+| Vérifier | `freeradius -XC`, `systemctl restart freeradius`, `radtest`, `journalctl -u freeradius`, `freeradius -X` (service arrêté) |
+
+Objectif vérifié sur l'état : les demandes simulées de la borne (Malik, Inès,
+Sami → VLAN 10 ; Léo → VLAN 20 ; Camille, supprimée de l'annuaire → refus)
+reçoivent la bonne réponse, maintenant et au prochain démarrage. Pièges
+prévus : la chaîne `input` fermée, la configuration modifiée sans
+redémarrer, un mauvais secret partagé, le module `ldap` pas activé, le
+module en anonyme (pas de `userPassword`), `memberOf` absent (les groupes
+`posixGroup`), l'entrée pour tout le monde avant celle du groupe, une faute
+de syntaxe (`Expecting section start brace`), `freeradius -X` avec le
+service lancé (`Address already in use`).
 

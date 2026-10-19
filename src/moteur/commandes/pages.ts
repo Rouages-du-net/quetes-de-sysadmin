@@ -195,6 +195,19 @@ export const PAGES: Record<string, Page> = {
   slappasswd: { section: 8, options: ['s'], exemples: ['slappasswd', 'slappasswd -s "un mot de passe"'], voir: ['ldappasswd', 'ldif'] },
   slapcat: { section: 8, exemples: ['sudo slapcat', 'sudo slapcat > annuaire.ldif'], voir: ['ldapsearch', 'ldif'] },
   ldif: { section: 5, exemples: ['cat modele-ines.ldif'], voir: ['ldapadd', 'ldapmodify'] },
+  freeradius: {
+    section: 8,
+    options: ['X', 'C'],
+    exemples: [
+      'sudo freeradius -XC',
+      'sudo systemctl stop freeradius',
+      'sudo freeradius -X',
+      'sudo systemctl restart freeradius',
+      'journalctl -u freeradius',
+    ],
+    voir: ['radtest', 'ldapsearch', 'systemctl'],
+  },
+  radtest: { exemples: ['radtest sami "son mot de passe" localhost 0 testing123'], voir: ['freeradius'] },
   id: { exemples: ['id', 'id malo'], voir: ['groups', 'whoami', 'usermod'] },
   journalctl: {
     options: ['u', 'n', 'b', 'k', 'p', 'x', 'e'],

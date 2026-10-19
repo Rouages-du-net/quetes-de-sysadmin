@@ -55,6 +55,7 @@ import { vpn } from './vpn';
 import { dmz } from './dmz';
 import { annexe } from './annexe';
 import { annuaireChapitre } from './annuaire';
+import { wifi } from './wifi';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -107,7 +108,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'ruche',
-    chapitres: [vlan, dhcp, zones, vpn, dmz, annexe, annuaireChapitre],
+    chapitres: [vlan, dhcp, zones, vpn, dmz, annexe, annuaireChapitre, wifi],
   },
 ];
 

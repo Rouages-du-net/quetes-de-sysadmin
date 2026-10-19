@@ -275,8 +275,9 @@ demandent plusieurs.
       (La Ruche, chapitre 6)
 - [x] Annuaire : OpenLDAP pour les comptes de l'équipe (`ldapsearch`,
       LDIF, `ldapmodify`, `slappasswd`) ; « L'annuaire » (La Ruche, chapitre 7)
-- [ ] Wi-Fi d'entreprise : 802.1X avec FreeRADIUS, qui vérifie les comptes
-      dans l'annuaire et place chacun dans son VLAN (La Ruche, chapitre 8)
+- [x] Wi-Fi d'entreprise : 802.1X avec FreeRADIUS, qui vérifie les comptes
+      dans l'annuaire et place chacun dans son VLAN ; « Le Wi-Fi des bureaux »
+      (La Ruche, chapitre 8)
 
 Écarté : les boucles réseau et Spanning Tree (trop bas niveau pour ce jeu,
 qui travaille sur les machines plutôt que sur les commutateurs).
