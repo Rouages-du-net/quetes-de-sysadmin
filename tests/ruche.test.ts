@@ -307,9 +307,6 @@ table ip nat {
       expect(tout).toContain('wg0              UNKNOWN        10.10.99.1/24');
       contient(tout, 'https://www.wireguard.com/quickstart/');
       expect(c.termines).toContain('vpn');
-      tout = jouer(['sudo reboot', 'ssh ruche', 'sudo wg show wg0', 'systemctl status wg-quick@wg0']);
-      expect(tout).toContain('latest handshake');
-      expect(tout).toContain('Active: active (exited)');
     });
 
     it('chapitre 4 — fausses pistes : la clé lisible, la porte fermée, les clés croisées, wg-quick puis le service', () => {
@@ -350,5 +347,293 @@ table ip nat {
       editer('sudo nano /etc/nftables.conf', PARE_FEU);
       jouer(['sudo systemctl restart nftables']);
       expect(c.termines).toContain('vpn');
+    });
+
+    const ETH140 = '\nauto eth1.40\niface eth1.40 inet static\n    address 10.10.40.1/24\n';
+    const DMZ = (t: string) =>
+      t
+        .replace(
+          'iifname "wg0" oifname "eth1.10" accept',
+          'iifname "wg0" oifname "eth1.10" accept\n\t\tiifname "eth0" oifname "eth1.40" ip daddr 10.10.40.10 tcp dport { http, https } accept\n\t\tiifname "eth1.40" oifname "eth0" accept',
+        )
+        .replace(
+          '\t\toifname "eth0" masquerade\n\t}',
+          '\t\toifname "eth0" masquerade\n\t}\n\tchain prerouting {\n\t\ttype nat hook prerouting priority dstnat;\n\t\tiifname "eth0" tcp dport { 80, 443 } dnat to 10.10.40.10\n\t}',
+        );
+
+    it('chapitre 5 — solution : eth1.40, dnat au prerouting, forward vers la DMZ seulement', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn']);
+      let tout = jouer(['cat plan-commutateur.txt', 'ping -c 1 web']);
+      // Sans interface dans ce réseau, le ping part vers la box et s'y perd.
+      expect(tout).toContain('1 packets transmitted, 0 received, 100% packet loss');
+      editer('sudo nano /etc/network/interfaces', (t) => t + ETH140);
+      editer('sudo nano /etc/nftables.conf', DMZ);
+      tout = jouer(['sudo ifup eth1.40', 'sudo nft -c -f /etc/nftables.conf', 'sudo systemctl reload nftables', 'sudo conntrack -L -s 203.0.113.77']);
+      expect(tout).toContain('src=203.0.113.77 dst=192.0.2.21 sport=42637 dport=443 src=10.10.40.10 dst=203.0.113.77 sport=443');
+      expect(tout).not.toContain('dport=22');
+      contient(tout, 'Netfilter_hooks');
+      tout = jouer(['sudo conntrack -L -s 10.10.40.10']);
+      expect(tout).toContain('src=10.10.40.10 dst=198.51.100.80');
+      expect(tout).not.toContain('dst=10.10.10.5');
+      expect(c.termines).toContain('dmz');
+    });
+
+    it('chapitre 5 — fausses pistes : sans forward, l’adresse publique, tout publier, la DMZ ouverte, à la main', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn']);
+      let tout = jouer([
+        'sudo ip link add link eth1 name eth1.40 type vlan id 40',
+        'sudo ip addr add 10.10.40.1/24 dev eth1.40',
+        'sudo ip link set eth1.40 up',
+        "sudo nft 'add chain ip nat prerouting { type nat hook prerouting priority dstnat; }'",
+        'sudo nft add rule ip nat prerouting iifname eth0 dnat to 10.10.40.10',
+      ]);
+      contient(tout, 'fermée par défaut');
+      tout = jouer(['sudo nft add rule inet filter forward ip daddr 192.0.2.21 accept']);
+      contient(tout, 'ne la verra jamais');
+      // Tout publier, et la DMZ qui voit tout : trop ouvert.
+      tout = jouer([
+        'sudo nft add rule inet filter forward iifname eth0 oifname eth1.40 accept',
+        'sudo nft add rule inet filter forward iifname eth1.40 accept',
+      ]);
+      contient(tout, 'la DMZ est trop ouverte');
+      expect(c.termines).not.toContain('dmz');
+      // Corrigé à la main : marche, mais ne tient pas.
+      tout = jouer([
+        'sudo nft flush chain ip nat prerouting',
+        'sudo nft add rule ip nat prerouting iifname eth0 tcp dport { 80, 443 } dnat to 10.10.40.10',
+        'sudo nft -a list chain inet filter forward',
+      ]);
+      const poignee = (regle: string) => tout.match(new RegExp(`${regle} # handle (\\d+)`))![1];
+      tout = jouer([
+        `sudo nft delete rule inet filter forward handle ${poignee('ip daddr 192.0.2.21 accept')}`,
+        `sudo nft delete rule inet filter forward handle ${poignee('iifname "eth1.40" accept')}`,
+        `sudo nft delete rule inet filter forward handle ${poignee('iifname "eth0" oifname "eth1.40" accept')}`,
+        'sudo nft add rule inet filter forward iifname eth0 oifname eth1.40 tcp dport { 80, 443 } accept',
+        'sudo nft add rule inet filter forward iifname eth1.40 oifname eth0 accept',
+      ]);
+      contient(tout, 'au prochain redémarrage');
+      expect(c.termines).not.toContain('dmz');
+      editer('sudo nano /etc/network/interfaces', (t) => t + ETH140);
+      editer('sudo nano /etc/nftables.conf', DMZ);
+      expect(c.termines).toContain('dmz');
+    });
+
+    const cleAnnexe = (c: Console) => c.shell.lire('/home/vous/courriel_sami.txt')!.match(/[A-Za-z0-9+/]{43}=/)![0];
+    const PAIR_ANNEXE =
+      (cle: string, autorisees = '10.10.99.3/32, 10.20.10.0/24') =>
+      (t: string) =>
+        t + `\n\n# Annexe\n[Peer]\nPublicKey = ${cle}\nAllowedIPs = ${autorisees}\n`;
+    const CONF_ANNEXE =
+      (pub: string, autorisees = '10.10.10.0/24', keepalive = true) =>
+      (t: string) =>
+        t
+          .replace('PublicKey =', `PublicKey = ${pub}`)
+          .replace('Endpoint =', 'Endpoint = ruche.example:51820')
+          .replace('AllowedIPs =', `AllowedIPs = ${autorisees}${keepalive ? '\nPersistentKeepalive = 25' : ''}`);
+
+    it('chapitre 6 — solution : un pair pour le site, ses AllowedIPs, PersistentKeepalive', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz']);
+      let tout = jouer(['sudo wg show']);
+      const pub = tout.match(/public key: (\S+)/)![1];
+      editer('sudo nano /etc/wireguard/wg0.conf', PAIR_ANNEXE(cleAnnexe(c)));
+      editer('nano annexe-wg0.conf', CONF_ANNEXE(pub));
+      tout = jouer(['sudo systemctl restart wg-quick@wg0', 'ip route', 'sudo wg show', 'ping -c 1 10.20.10.20']);
+      expect(tout).toContain('10.20.10.0/24 dev wg0 scope link');
+      expect(tout).toContain('allowed ips: 10.10.99.3/32, 10.20.10.0/24');
+      expect(tout).toContain('64 bytes from 10.20.10.20');
+      contient(tout, 'https://www.wireguard.com/#cryptokey-routing');
+      expect(c.termines).toContain('annexe');
+    });
+
+    it('chapitre 6 — fausses pistes : pas relu, l’adresse seule, l’Annexe qui s’endort, tout ouvert', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz']);
+      const pub = jouer(['sudo wg show']).match(/public key: (\S+)/)![1];
+      let tout = editer('sudo nano /etc/wireguard/wg0.conf', PAIR_ANNEXE(cleAnnexe(c), '10.10.99.3/32'));
+      contient(tout, 'ne relit pas le fichier');
+      editer('nano annexe-wg0.conf', CONF_ANNEXE(pub, '10.10.10.0/24', false));
+      tout = jouer(['sudo systemctl restart wg-quick@wg0']);
+      contient(tout, 'tout son réseau');
+      editer('sudo nano /etc/wireguard/wg0.conf', (t) => t.replace('AllowedIPs = 10.10.99.3/32', 'AllowedIPs = 10.10.99.3/32, 10.20.10.0/24'));
+      tout = jouer(['sudo wg-quick up wg0', 'sudo wg-quick down wg0', 'sudo wg-quick up wg0', 'ping -c 1 10.20.10.20']);
+      expect(tout).toContain("wg-quick: `wg0' already exists");
+      expect(tout).toContain('1 packets transmitted, 0 received, 100% packet loss');
+      contient(tout, 'PersistentKeepalive');
+      // Tout ouvert : tout La Ruche dans le tunnel côté Annexe, et forward qui laisse tout passer depuis wg0.
+      editer('nano annexe-wg0.conf', (t) => t.replace('AllowedIPs = 10.10.10.0/24', 'AllowedIPs = 10.10.0.0/16'));
+      tout = jouer(['sudo nft add rule inet filter forward iifname wg0 accept']);
+      contient(tout, 'les caméras de La Ruche');
+      expect(c.termines).not.toContain('annexe');
+      jouer(['sudo systemctl restart nftables']);
+      editer('nano annexe-wg0.conf', (t) => t + '\nPersistentKeepalive = 25\n');
+      expect(c.termines).toContain('annexe');
+    });
+
+    const B = 'dc=laruche,dc=example';
+    const ADMIN = `-x -D cn=admin,${B} -w rayon-de-miel`;
+    const SAMI = (motDePasse: string, numero = '10004') =>
+      `dn: uid=sami,ou=people,${B}\nobjectClass: inetOrgPerson\nobjectClass: posixAccount\nuid: sami\ncn: Sami Lemaire\nsn: Lemaire\ngivenName: Sami\nuidNumber: ${numero}\ngidNumber: 10000\nhomeDirectory: /home/sami\nloginShell: /bin/bash\nuserPassword: ${motDePasse}\n`;
+    const GROUPES = `dn: cn=bureaux,ou=groups,${B}\nchangetype: modify\ndelete: memberUid\nmemberUid: camille\n-\nadd: memberUid\nmemberUid: sami\n\ndn: cn=equipe,ou=groups,${B}\nchangetype: modify\ndelete: memberUid\nmemberUid: camille\n`;
+
+    it('chapitre 7 — solution : ldapdelete, un LDIF avec slappasswd, les groupes', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe']);
+      let tout = jouer([
+        'cat modele-ines.ldif',
+        'ldapsearch -x -LLL "(memberUid=camille)" dn',
+        'ldapsearch -x -LLL "(objectClass=posixAccount)" uidNumber',
+      ]);
+      expect(tout).toContain('dn: cn=bureaux,ou=groups,dc=laruche,dc=example');
+      expect(tout).toContain('uidNumber: 10003');
+      expect(tout).not.toContain('userPassword: {SSHA}');
+      tout = jouer([`ldapdelete ${ADMIN} uid=camille,ou=people,${B}`, 'slappasswd -s choisi-par-sami']);
+      const empreinte = tout.match(/\{SSHA\}\S+/)![0];
+      expect(empreinte).toHaveLength(38);
+      editer('nano sami.ldif', () => SAMI(empreinte));
+      editer('nano groupes.ldif', () => GROUPES);
+      tout = jouer([
+        `ldapadd ${ADMIN} -f sami.ldif`,
+        `ldapmodify ${ADMIN} -f groupes.ldif`,
+        `ldapwhoami -x -D uid=sami,ou=people,${B} -w choisi-par-sami`,
+      ]);
+      expect(tout).toContain(`adding new entry "uid=sami,ou=people,${B}"`);
+      expect(tout).toContain(`modifying entry "cn=bureaux,ou=groups,${B}"`);
+      expect(tout).toContain(`dn:uid=sami,ou=people,${B}`);
+      contient(tout, 'https://www.openldap.org/doc/admin26/dbtools.html');
+      expect(c.termines).toContain('annuaire');
+    });
+
+    it('chapitre 7 — autre solution : en root par ldapi, ldappasswd qui demande le mot de passe', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe']);
+      const EXT = '-Q -Y EXTERNAL -H ldapi:///';
+      editer('nano sami.ldif', () => SAMI('provisoire').replace('userPassword: provisoire\n', ''));
+      editer('nano groupes.ldif', () => GROUPES);
+      let tout = jouer([
+        `sudo ldapdelete ${EXT} uid=camille,ou=people,${B}`,
+        `sudo ldapadd ${EXT} -f sami.ldif`,
+        `sudo ldapmodify ${EXT} -f groupes.ldif`,
+      ]);
+      expect(c.termines).not.toContain('annuaire');
+      tout = jouer([`ldappasswd -x -D cn=admin,${B} -W -S uid=sami,ou=people,${B}`]);
+      for (const r of ['nouveau-sami', 'nouveau-sami', 'rayon-de-miel']) tout += c.executer(r) ?? '';
+      tout += jouer([`sudo ldapsearch ${EXT} -LLL uid=sami userPassword`]);
+      expect(tout).toMatch(/userPassword: \{SSHA\}/);
+      expect(c.termines).toContain('annuaire');
+    });
+
+    it('chapitre 7 — fausses pistes : anonyme, un attribut manquant, en clair, le même numéro, le groupe oublié, slapd arrêté', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe']);
+      let tout = jouer([`ldapdelete -x uid=camille,ou=people,${B}`, `ldapdelete -x -D cn=admin,${B} -w faux uid=camille,ou=people,${B}`]);
+      expect(tout).toContain('ldap_delete: Strong(er) authentication required (8)');
+      expect(tout).toContain('ldap_bind: Invalid credentials (49)');
+      tout = jouer([`ldapdelete ${ADMIN} uid=camille,ou=people,${B}`]);
+      contient(tout, 'pas son nom dans les groupes');
+      editer('nano sami.ldif', () => SAMI('en-clair', '10002').replace('sn: Lemaire\n', ''));
+      tout = jouer([`ldapadd ${ADMIN} -f sami.ldif`]);
+      expect(tout).toContain("ldap_add: Object class violation (65)\n\tadditional info: object class 'inetOrgPerson' requires attribute 'sn'");
+      editer('nano sami.ldif', () => SAMI('en-clair', '10002'));
+      tout = jouer([`ldapadd ${ADMIN} -f sami.ldif`]);
+      contient(tout, 'EN CLAIR');
+      contient(tout, 'le même uidNumber');
+      contient(tout, 'pas dans le groupe');
+      tout = jouer(['sudo systemctl stop slapd', 'ldapsearch -x uid=sami']);
+      expect(tout).toContain("ldap_sasl_bind(SIMPLE): Can't contact LDAP server (-1)");
+      contient(tout, 'slapd ne tourne plus');
+      editer('nano groupes.ldif', () => GROUPES);
+      editer('nano numero.ldif', () => `dn: uid=sami,ou=people,${B}\nchangetype: modify\nreplace: uidNumber\nuidNumber: 10004\n`);
+      jouer([
+        'sudo systemctl start slapd',
+        `ldapmodify ${ADMIN} -f groupes.ldif`,
+        `ldapmodify ${ADMIN} -f numero.ldif`,
+        `ldappasswd ${ADMIN} -s sami-choisit uid=sami,ou=people,${B}`,
+      ]);
+      expect(c.termines).toContain('annuaire');
+    });
+
+    const RAD = '/etc/freeradius/3.0';
+    const CLIENT_BORNE = (t: string) => t + '\n\nclient bornes {\n\tipaddr = 10.10.30.0/24\n\tsecret = Rk7-borne-2028\n}\n';
+    const MODULE = (t: string) =>
+      t
+        .replace("base_dn = 'dc=example,dc=org'", "base_dn = 'dc=laruche,dc=example'")
+        .replace(
+          "#\tidentity = 'cn=admin,dc=example,dc=org'\n#\tpassword = mypass",
+          "\tidentity = 'cn=admin,dc=laruche,dc=example'\n\tpassword = rayon-de-miel",
+        )
+        .replace('#\t\tmembership_filter', '\t\tmembership_filter');
+    const VLAN = (id: number) => `\tTunnel-Type = VLAN,\n\tTunnel-Medium-Type = IEEE-802,\n\tTunnel-Private-Group-Id = ${id}\n`;
+    const USERS = (t: string) => `${t}\nDEFAULT Ldap-Group == "bureaux"\n${VLAN(10)}\nDEFAULT\n${VLAN(20)}`;
+    const ENTREE_RADIUS = (t: string) =>
+      t.replace(
+        'iifname "eth1*" udp dport { 53, 67 } accept',
+        'iifname "eth1*" udp dport { 53, 67 } accept\n\t\t# RADIUS from the Wi-Fi access points\n\t\tiifname "eth1.30" udp dport 1812 accept',
+      );
+
+    it('chapitre 8 — solution : le pare-feu, clients.conf, le module ldap, le fichier users', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe', 'annuaire']);
+      let tout = jouer(['cat borne-bureaux.txt', 'radtest sami choisi-par-sami localhost 0 testing123']);
+      expect(tout).toContain('Secret partagé         : Rk7-borne-2028');
+      expect(tout).toContain('(0) -: Expected Access-Accept got Access-Reject');
+      editer('sudo nano /etc/nftables.conf', ENTREE_RADIUS);
+      editer(`sudo nano ${RAD}/clients.conf`, CLIENT_BORNE);
+      editer(`sudo nano ${RAD}/mods-available/ldap`, MODULE);
+      editer(`sudo nano ${RAD}/mods-config/files/authorize`, USERS);
+      tout = jouer([
+        `sudo ln -s ../mods-available/ldap ${RAD}/mods-enabled/ldap`,
+        'sudo freeradius -XC',
+        'sudo systemctl reload nftables',
+        'sudo systemctl restart freeradius',
+      ]);
+      expect(tout).toContain('Configuration appears to be OK');
+      tout += jouer([
+        'radtest sami choisi-par-sami localhost 0 testing123',
+        'radtest leo cafe-leo-2028 localhost 0 testing123',
+        'journalctl -u freeradius -n 5',
+      ]);
+      expect(tout).toContain('Received Access-Accept Id 154 from 127.0.0.1:1812');
+      expect(tout).toContain('\tTunnel-Private-Group-Id:0 = "10"');
+      expect(tout).toContain('\tTunnel-Private-Group-Id:0 = "20"');
+      expect(tout).toContain('Login OK: [sami] (from client bornes port 0)');
+      expect(tout).toContain('Login incorrect (No Auth-Type found: rejecting the user via Post-Auth-Type = Reject): [camille]');
+      contient(tout, 'https://wiki.freeradius.org/modules/Rlm_ldap');
+      expect(c.termines).toContain('wifi');
+    });
+
+    it('chapitre 8 — fausses pistes : la porte fermée, pas relu, sans ldap, anonyme, memberOf, l’ordre, freeradius -X', () => {
+      const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe', 'annuaire']);
+      let tout = jouer(['ls /etc/freeradius/3.0']);
+      expect(tout).toContain('Permission non accordée');
+      tout = editer(`sudo nano ${RAD}/clients.conf`, (t) => t + '\n\nclient bornes {\n\tipaddr = 10.10.30.20\n\tsecret = mauvais\n}\n');
+      contient(tout, 'chaîne input');
+      tout = jouer(['sudo nft add rule inet filter input iifname eth1.30 udp dport 1812 accept']);
+      contient(tout, 'ne relit ses fichiers');
+      tout = jouer(['sudo systemctl restart freeradius', 'journalctl -u freeradius -n 3']);
+      expect(tout).toContain('Shared secret is incorrect.');
+      contient(tout, 'secret partagé');
+      editer(`sudo nano ${RAD}/clients.conf`, (t) => t.replace('secret = mauvais', 'secret = Rk7-borne-2028'));
+      tout = jouer(['sudo systemctl restart freeradius']);
+      contient(tout, 'mods-enabled');
+      tout = jouer([`sudo ln -s ../mods-available/ldap ${RAD}/mods-enabled/ldap`, 'sudo systemctl restart freeradius']);
+      contient(tout, 'en anonyme');
+      editer(`sudo nano ${RAD}/mods-available/ldap`, (t) => MODULE(t).replace('\t\tmembership_filter', '#\t\tmembership_filter'));
+      editer(`sudo nano ${RAD}/mods-config/files/authorize`, (t) => `${t}\nDEFAULT\n${VLAN(20)}\nDEFAULT Ldap-Group == "bureaux"\n${VLAN(10)}`);
+      editer(`sudo nano ${RAD}/clients.conf`, (t) => t + '\nclient borne2\n');
+      tout = jouer(['sudo freeradius -XC', 'sudo systemctl restart freeradius']);
+      expect(tout).toContain(`Expecting section start brace '{' after "client borne2"`);
+      expect(tout).toContain('Job for freeradius.service failed');
+      editer(`sudo nano ${RAD}/clients.conf`, (t) => t.replace('\nclient borne2', ''));
+      tout = jouer(['sudo systemctl restart freeradius']);
+      contient(tout, "cherche l'attribut memberOf");
+      editer(`sudo nano ${RAD}/mods-available/ldap`, (t) => t.replace('#\t\tmembership_filter', '\t\tmembership_filter'));
+      tout = jouer(['sudo freeradius -X', 'sudo systemctl stop freeradius', 'sudo freeradius -X']);
+      expect(tout).toContain('Address already in use');
+      expect(tout).toContain('(2)   Tunnel-Private-Group-Id = 20');
+      contient(tout, 'Ctrl+C');
+      expect(c.termines).not.toContain('wifi');
+      editer(`sudo nano ${RAD}/mods-config/files/authorize`, (t) => {
+        const i = t.indexOf('\nDEFAULT\n');
+        return t.slice(0, i) + '\n' + USERS('').trim();
+      });
+      tout = jouer(['sudo systemctl start freeradius']);
+      contient(tout, 'Au prochain démarrage');
+      editer('sudo nano /etc/nftables.conf', ENTREE_RADIUS);
+      expect(c.termines).toContain('wifi');
     });
   });

@@ -64,6 +64,7 @@ function routes(l: Lan): string[] {
     if (!i || nom === 'lo' || !i.up) continue;
     for (const a of i.adresses)
       lignes.push(`${reseauDe(a)} dev ${nom} proto kernel scope link src ${a.split('/')[0]}${enService(l, i) ? '' : ' linkdown'}`);
+    for (const r of i.routes ?? []) lignes.push(`${r} dev ${nom} scope link`);
   }
   return lignes;
 }

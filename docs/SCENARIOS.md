@@ -131,9 +131,11 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `apt` | `update`, `install [-y]`, `list --installed`, `list --upgradable`, `upgrade` et `full-upgrade` (les mises à jour décrites par le chapitre) ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » ; une mise à jour coupée laisse ses paquets dépaquetés (`dpkg --configure -a`) ; `/var/run/reboot-required` pour un noyau ou la libc | tout le catalogue Debian, `remove`, `search`, `show`, `apt-get`… ; dpkg garde l'état de chaque paquet |
 | réseau local (`ip`, `ifup`, `ifdown`) | IPv4 seulement ; `ip addr`, `ip link`, `ip route` (show, add, del, set, `-br`, `-d`), interfaces VLAN 802.1Q ; `/etc/network/interfaces` lu comme ifupdown (`auto`, `iface … inet static`, `manual`, `loopback`, `address`, `netmask`, `gateway`, `vlan-raw-device`, `source`) ; le commutateur et ses ports sont décrits par le chapitre ; pas d'ARP visible, de MTU, de bonding ni de systemd-networkd | tout iproute2, ifupdown2, NetworkManager, systemd-networkd |
 | `dnsmasq` | DHCP seulement (les options DNS sont acceptées et ignorées) ; `interface` (avec `*`), `except-interface`, `dhcp-range`, `dhcp-host`, `dhcp-option` ; les appareils demandent une adresse à chaque démarrage du service ; l'adresse est tirée de l'adresse MAC ; pas de renouvellement de bail | DNS, TFTP, PXE, DHCPv6, renouvellement |
-| `nft` (nftables) | IPv4 ; tables `ip`, `inet` (`ip6` lu, sans effet) ; chaînes de base `filter` et `nat` (hooks, priorités, politique), chaînes ordinaires (`jump`, `goto`) ; conditions `iifname`, `oifname`, `ip saddr`, `ip daddr`, `ip protocol`, `meta l4proto`, `tcp`/`udp` `dport`/`sport` (services connus du jeu), `ct state`, négation `!=`, ensembles anonymes ; actions `counter`, `log`, `accept`, `drop`, `reject`, `masquerade`, `snat`, `dnat` (lu, sans effet) ; `define`, `include` ; `-f`, `-c`, `-a` ; `add`, `insert`, `delete`, `flush`, `list` ; le trafic est celui des appareils décrits par le chapitre, et les compteurs comptent un passage de chaque échange ; messages d'erreur proches de nft ; la chaîne `input` ne coupe pas la session ssh du jeu | ensembles nommés, maps, `limit`, `quota`, IPv6, `bridge`, `netdev`, `nft monitor`, les règles sur le contenu des paquets |
+| `nft` (nftables) | IPv4 ; tables `ip`, `inet` (`ip6` lu, sans effet) ; chaînes de base `filter` et `nat` (hooks, priorités, politique), chaînes ordinaires (`jump`, `goto`) ; conditions `iifname`, `oifname`, `ip saddr`, `ip daddr`, `ip protocol`, `meta l4proto`, `tcp`/`udp` `dport`/`sport` (services connus du jeu), `ct state`, négation `!=`, ensembles anonymes ; actions `counter`, `log`, `accept`, `drop`, `reject`, `masquerade`, `snat` (au `postrouting`), `dnat` (au `prerouting`, vers une adresse et un port) ; `define`, `include` ; `-f`, `-c`, `-a` ; `add`, `insert`, `delete`, `flush`, `list` ; le trafic est celui des appareils décrits par le chapitre (et de visiteurs d'internet), et les compteurs comptent un passage de chaque échange ; messages d'erreur proches de nft ; la chaîne `input` ne coupe pas la session ssh du jeu | ensembles nommés, maps, `limit`, `quota`, IPv6, `bridge`, `netdev`, `nft monitor`, les règles sur le contenu des paquets |
 | `sysctl`, `conntrack` | `sysctl` : lire, `-w`, `clé=valeur`, `-p`, `--system`, `-a`, `-n` sur quelques clés (`/proc/sys` est un vrai dossier du jeu) ; `/etc/sysctl.d/*.conf` puis `/etc/sysctl.conf` au démarrage ; `conntrack -L` (`-p`, `-s`, `-d`), `-C`, `-F` : les échanges du moment, dont la session ssh | toutes les clés du noyau ; `conntrack -E`, `-D`, états UDP et ICMP détaillés |
-| `wg`, `wg-quick` (WireGuard) | `genkey`, `genpsk`, `pubkey`, `show`, `showconf` ; `wg-quick up`, `down`, `strip` ; le service `wg-quick@wg0` ; la clé publique n'est pas calculée par Curve25519 (une empreinte qui en tient lieu, au bon format) ; les pairs sont décrits par le chapitre (le portable de Malik) ; pas de `wg set`, `PostUp`, `PresharedKey` vérifiée, IPv6, ni de tout le trafic par le tunnel côté routeur ; `wg-quick` sans sudo refuse au lieu de relancer sudo | Curve25519, `wg set`, `syncconf`, `PostUp`/`PostDown`, IPv6, `wg-quick save` |
+| `wg`, `wg-quick` (WireGuard) | `genkey`, `genpsk`, `pubkey`, `show`, `showconf` ; `wg-quick up`, `down`, `strip` ; le service `wg-quick@wg0` ; la clé publique n'est pas calculée par Curve25519 (une empreinte qui en tient lieu, au bon format) ; les pairs sont décrits par le chapitre (le portable de Malik, le routeur d'un autre site et son réseau) ; `wg-quick` ajoute une route par `AllowedIPs` hors du réseau de l'interface ; un pair derrière une box (NAT) n'est joignable qu'avec `PersistentKeepalive` (sans délai simulé) ; pas de `wg set`, `PostUp`, `PresharedKey` vérifiée, IPv6, ni de tout le trafic par le tunnel côté routeur ; `wg-quick` sans sudo refuse au lieu de relancer sudo | Curve25519, `wg set`, `syncconf`, `PostUp`/`PostDown`, IPv6, `wg-quick save` |
+| OpenLDAP (`ldapsearch`, `ldapadd`, `ldapmodify`, `ldapdelete`, `ldappasswd`, `ldapwhoami`, `slappasswd`, `slapcat`) | un annuaire par machine (`etat.ldap`), un schéma réduit (core, cosine, inetorgperson, nis : les classes courantes, leurs attributs obligatoires) ; LDIF (`changetype`, `add`/`replace`/`delete`, `-`, lignes repliées), filtres `&`, `\|`, `!`, `=`, `*` ; `-x`, `-D`, `-W`, `-w`, `-H`, `-Y EXTERNAL` (root par `ldapi:///`, comme sur Debian), `-b`, `-s`, `-LLL`, `-f`, `-c` ; droits de Debian (lecture anonyme sauf `userPassword`, écriture par l'administrateur ou root) ; `{SSHA}` au bon format, mais pas un vrai SHA-1 ; les commandes ne lisent pas le clavier (un fichier ou un tube) | `cn=config`, réplication, index, `memberOf`, base64 (`::`), TLS, SASL autre qu'EXTERNAL, toute la syntaxe des filtres (`>=`, `~=`) |
+| FreeRADIUS (`freeradius`, `radtest`) | `clients.conf` (adresse ou réseau, secret), le module `ldap` activé par un lien dans `mods-enabled` (`server`, `identity`, `password`, `base_dn`, `user`, `group` et `membership_filter`), le fichier `users` (`DEFAULT`, `Ldap-Group`, `Auth-Type := Reject`, réponses, `Fall-Through`) ; configuration lue au démarrage ; `-XC`, `-X` (service arrêté, demandes de la borne racontées en abrégé) ; les bornes parlent PAP (comme EAP-TTLS/PAP), pas d'EAP simulé ; une syntaxe de configuration simplifiée | EAP (PEAP, TLS), accounting, `sites-available`, `unlang`, SQL, tous les modules |
 | `ping` sur un réseau local | un appareil répond s'il est dans le VLAN de l'interface dont le réseau contient son adresse ; une adresse privée envoyée à la box se perd ; un nom d'appareil est reconnu sans DNS | ARP, DNS local, `/etc/hosts` |
 | `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, une fenêtre par session ; pas de raccourcis clavier (`tmux detach` pour Ctrl+b d) ; attach rejoue les dernières lignes ; le nom de la session s'affiche devant l'invite (la barre d'état) ; `uname -r/-a` ; `dpkg --configure -a` | fenêtres, volets, raccourcis, `screen` ; toutes les options de dpkg |
 | `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe, `=`, `^~`, ou expression régulière (`~`, `~*`, syntaxe de JavaScript plutôt que PCRE), choisie dans l'ordre de nginx ; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
@@ -1384,4 +1386,98 @@ privatekey` sans `umask` (l'avertissement de wg, puis la clé lisible par
 tous), la chaîne `input` qui jette l'UDP, la clé privée donnée à la place de
 la clé publique, `wg-quick up` puis le service (« already exists »), une
 règle tapée à la main et perdue au redémarrage, `wg show` sans sudo.
+
+### Chapitre 5 — La DMZ (fait)
+
+Le site de réservation des salles tourne maintenant sur place, sur un petit
+serveur (`web`, 10.10.40.10) que l'électricien a mis dans un nouveau VLAN 40,
+la DMZ. Inès, bénévole, voudrait que les ports 80 et 443 de l'adresse
+publique y mènent ; Malik veut que le serveur, s'il est piraté, ne voie rien
+d'autre.
+
+| Étape | Commande apprise |
+|---|---|
+| Le VLAN | `eth1.40` dans `/etc/network/interfaces`, `ifup eth1.40`, `ping web` |
+| Publier | une chaîne `type nat hook prerouting priority dstnat`, `iifname "eth0" tcp dport { 80, 443 } dnat to 10.10.40.10` |
+| Laisser passer | `forward` : `iifname "eth0" oifname "eth1.40" tcp dport { 80, 443 } accept` (l'adresse après traduction), `iifname "eth1.40" oifname "eth0" accept` (les mises à jour) |
+| Vérifier | `conntrack -L -s 203.0.113.77` (la réponse vient de 10.10.40.10), `/etc/nftables.conf`, `systemctl reload nftables` |
+
+Objectif vérifié sur l'état : le trafic simulé (un visiteur d'internet vers
+les ports 80, 443 et 22 de l'adresse publique, le serveur vers ses mises à
+jour, le NAS et l'imprimante, les bureaux vers le serveur, et les zones du
+chapitre 3) passe ou est bloqué comme prévu, maintenant et au prochain
+démarrage, ssh restant ouvert au poste d'administration. Pièges prévus :
+`dnat` sans règle `forward`, une règle `forward` qui attend l'adresse
+publique (elle ne la voit jamais), tout publier (`dnat` sans port : ssh du
+serveur visible d'internet), la DMZ qui peut ouvrir vers l'intérieur, tout à
+la main (perdu au redémarrage).
+
+### Chapitre 6 — L'Annexe (fait)
+
+La Ruche ouvre un second lieu, l'Annexe (réseau 10.20.10.0/24, routeur
+derrière la box de son fournisseur). Sami, bénévole là-bas, a créé ses clés
+et préparé `annexe-wg0.conf` ; le routeur de l'Annexe devient un pair de plus
+sur le `wg0` du télétravail.
+
+| Étape | Commande apprise |
+|---|---|
+| Le routeur | un `[Peer]` de plus dans `wg0.conf` : `AllowedIPs = 10.10.99.3/32, 10.20.10.0/24` ; `systemctl restart wg-quick@wg0` ; `ip route` (la route de wg-quick) |
+| L'Annexe | `PublicKey` du routeur (`wg show`), `Endpoint`, `AllowedIPs = 10.10.10.0/24`, `PersistentKeepalive = 25` |
+| Vérifier | `wg show` (deux pairs), `ping 10.20.10.20` |
+
+Objectif vérifié sur l'état : un poste de l'Annexe joint le NAS, un poste
+des bureaux imprime à l'Annexe, l'Annexe ne joint pas les caméras, Malik
+joint toujours le NAS, maintenant et au prochain démarrage. Pièges prévus :
+le fichier modifié sans relancer `wg0`, l'adresse du tunnel seule dans
+`AllowedIPs` (les paquets du réseau de l'Annexe sont jetés), le réseau des
+bureaux absent côté Annexe, pas de `PersistentKeepalive` (l'Annexe
+s'endort derrière sa box), tout ouvrir depuis le tunnel (l'Annexe voit les
+caméras), `wg-quick up` sur une interface déjà montée.
+
+### Chapitre 7 — L'annuaire (fait)
+
+Les comptes de l'équipe sont dans un annuaire OpenLDAP installé par Sacha sur
+le routeur (`dc=laruche,dc=example`). Avant le Wi-Fi des bureaux, qui
+s'appuiera dessus, il faut le remettre à jour : Camille est partie, Sami
+(l'Annexe) arrive.
+
+| Étape | Commande apprise |
+|---|---|
+| Lire | `ldapsearch -x -LLL uid=camille`, `"(memberUid=camille)" dn`, `"(objectClass=posixAccount)" uidNumber` |
+| Retirer | `ldapdelete -x -D cn=admin,… -W uid=camille,…`, puis `ldapmodify` (`delete: memberUid`) dans chaque groupe |
+| Ajouter | un LDIF d'après `modele-ines.ldif` (`inetOrgPerson`, `posixAccount`, un `uidNumber` libre), `slappasswd` pour l'empreinte, `ldapadd` ; ou `sudo … -Y EXTERNAL -H ldapi:///` |
+| Vérifier | `ldappasswd -S`, `ldapwhoami -x -D uid=sami,… -W`, `ldapsearch -x -LLL cn=bureaux` |
+
+Objectif vérifié sur l'état de l'annuaire : plus aucune trace de Camille
+(entrée et `memberUid`), Sami existe (classes, mot de passe en empreinte,
+`uidNumber` unique) et est dans le groupe `bureaux`, `slapd` tourne. Pièges
+prévus : écrire en anonyme (`Strong(er) authentication required`), un
+mauvais mot de passe (`Invalid credentials`), un attribut obligatoire oublié
+(`Object class violation`), un mot de passe en clair (le modèle de Sacha en
+avait un), un `uidNumber` déjà pris, Camille encore dans les groupes après
+`ldapdelete`, Sami hors du groupe, `slapd` arrêté.
+
+### Chapitre 8 — Le Wi-Fi des bureaux (fait)
+
+Fini le mot de passe Wi-Fi commun sur un post-it : une borne WPA2-Entreprise
+(802.1X, sur le VLAN 30) demande au serveur RADIUS du routeur (FreeRADIUS) si
+chaque personne peut entrer, d'après l'annuaire, et dans quel VLAN.
+
+| Étape | Commande apprise |
+|---|---|
+| Laisser parler la borne | `iifname "eth1.30" udp dport 1812 accept` (chaîne `input`, dans le fichier) |
+| Déclarer la borne | `clients.conf` : `client bornes { ipaddr = 10.10.30.0/24  secret = … }` |
+| L'annuaire | `ln -s ../mods-available/ldap mods-enabled/ldap` ; `base_dn`, `identity`, `password`, `membership_filter` (memberUid) |
+| Le VLAN | `mods-config/files/authorize` : `DEFAULT Ldap-Group == "bureaux"` → `Tunnel-Private-Group-Id = 10`, puis `DEFAULT` → 20 |
+| Vérifier | `freeradius -XC`, `systemctl restart freeradius`, `radtest`, `journalctl -u freeradius`, `freeradius -X` (service arrêté) |
+
+Objectif vérifié sur l'état : les demandes simulées de la borne (Malik, Inès,
+Sami → VLAN 10 ; Léo → VLAN 20 ; Camille, supprimée de l'annuaire → refus)
+reçoivent la bonne réponse, maintenant et au prochain démarrage. Pièges
+prévus : la chaîne `input` fermée, la configuration modifiée sans
+redémarrer, un mauvais secret partagé, le module `ldap` pas activé, le
+module en anonyme (pas de `userPassword`), `memberOf` absent (les groupes
+`posixGroup`), l'entrée pour tout le monde avant celle du groupe, une faute
+de syntaxe (`Expecting section start brace`), `freeradius -X` avec le
+service lancé (`Address already in use`).
 

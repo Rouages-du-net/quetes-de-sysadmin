@@ -733,7 +733,12 @@ export function traverser(
 
 // ——— Le trafic du réseau local ———
 
-/** Un échange qu'un appareil du réseau local essaie : vers un autre appareil (son nom) ou une adresse d'internet. */
+/**
+ * Un échange qu'un appareil essaie à travers le routeur : depuis un appareil
+ * du réseau local (son nom) ou depuis internet (une adresse publique), vers
+ * un appareil (son nom) ou une adresse (d'internet, ou celle du routeur, que
+ * la traduction de destination, dnat, renvoie vers un appareil).
+ */
 export interface Flux {
   de: string;
   vers: string;
@@ -745,9 +750,12 @@ export interface Resultat {
   flux: Flux;
   // ok : échange établi ; sans-reponse : la question passe, la réponse ne revient pas ; bloque : jeté au passage ; impossible : pas d'adresse, pas de route.
   etat: 'ok' | 'sans-reponse' | 'bloque' | 'impossible';
+  // Le premier paquet, tel qu'il arrive au routeur (avant toute traduction).
   aller?: Paquet;
   // L'adresse source après traduction (masquerade, snat), si elle change.
   traduite?: string;
+  // La destination après traduction (dnat), si elle change : adresse, et port.
+  destination?: { adresse: string; port: number };
   logs: { prefixe: string; paquet: Paquet }[];
 }
 
@@ -765,57 +773,75 @@ const portSource = (nom: string, port: number) => {
 /** Ce que devient un flux à travers le routeur, avec ce ruleset et ce réglage d'ip_forward. */
 export function essayer(l: Lan, r: Ruleset, transfert: boolean, f: Flux, compter = false): Resultat {
   const res = (etat: Resultat['etat'], o: Partial<Resultat> = {}): Resultat => ({ flux: f, etat, logs: [], ...o });
-  const source = l.appareils.find((a) => a.nom === f.de);
-  const saddr = source && adresseDe(source);
-  const iif = source && interfaceDuVlan(l, source.vlan);
-  if (!source || !saddr || !iif || !iif.adresses.some((a) => dans(saddr, reseauDe(a)))) return res('impossible');
+  const gw = l.passerelle && l.interfaces[l.passerelle.dev] && enService(l, l.interfaces[l.passerelle.dev]) ? l.interfaces[l.passerelle.dev] : null;
+  // La source : un appareil du réseau local, ou une adresse d'internet (qui arrive par la passerelle).
+  const externe = estIp(f.de) && !prive(f.de);
+  const source = externe ? null : l.appareils.find((a) => a.nom === f.de);
+  const saddr = externe ? f.de : source && adresseDe(source);
+  const iif = externe ? gw : source && interfaceDuVlan(l, source.vlan);
+  if (!saddr || !iif || (!externe && !iif.adresses.some((a) => dans(saddr, reseauDe(a))))) return res('impossible');
   const cible = l.appareils.find((a) => a.nom === f.vers);
   const daddr = cible ? adresseDe(cible) : f.vers;
   if (!daddr) return res('impossible');
-  const interne = interfacePour(l, daddr);
-  const gw = l.passerelle && l.interfaces[l.passerelle.dev] && enService(l, l.interfaces[l.passerelle.dev]) ? l.interfaces[l.passerelle.dev] : null;
-  const oif = interne ?? (prive(daddr) ? null : gw);
-  if (!oif) return res('impossible');
   const aller: Paquet = {
     iif: iif.nom,
-    oif: oif.nom,
+    oif: '',
     saddr,
     daddr,
     proto: f.proto,
-    sport: portSource(source.nom, f.port),
+    sport: portSource(source?.nom ?? f.de, f.port),
     dport: f.port,
     ct: 'new',
     taille: 60,
   };
   const logs: Resultat['logs'] = [];
-  if (!transfert) return res('bloque', { aller, logs });
-  const avant = traverser(r, 'forward', 'filter', aller, compter);
-  logs.push(...avant.logs.map((prefixe) => ({ prefixe, paquet: aller })));
-  if (!avant.passe) return res('bloque', { aller, logs });
-  // La traduction d'adresse : postrouting, chaînes de type nat (premier paquet seulement).
-  const nat = traverser(r, 'postrouting', 'nat', aller, compter);
-  logs.push(...nat.logs.map((prefixe) => ({ prefixe, paquet: aller })));
-  if (!nat.passe) return res('bloque', { aller, logs });
+  const noter = (t: { logs: string[] }, p: Paquet) => logs.push(...t.logs.map((prefixe) => ({ prefixe, paquet: p })));
+  // La traduction de destination : prerouting, chaînes de type nat (premier paquet seulement).
+  const pre = traverser(r, 'prerouting', 'nat', aller, compter);
+  noter(pre, aller);
+  if (!pre.passe) return res('bloque', { aller, logs });
+  let destination: Resultat['destination'];
+  if (pre.nat?.quoi === 'dnat') {
+    const [adresse, port] = pre.nat.vers!.split(':');
+    destination = { adresse, port: port ? Number(port) : f.port };
+  }
+  const dest = destination?.adresse ?? daddr;
+  const dport = destination?.port ?? f.port;
+  // Pour le routeur lui-même (sans traduction) : la chaîne input, que ces échanges ne regardent pas.
+  if (Object.values(l.interfaces).some((i) => i.adresses.some((a) => a.split('/')[0] === dest))) return res('bloque', { aller, destination, logs });
+  const interne = interfacePour(l, dest);
+  const oif = interne ?? (prive(dest) ? null : gw);
+  if (!oif) return res('impossible', { aller, destination });
+  const traverse: Paquet = { ...aller, oif: oif.nom, daddr: dest, dport };
+  if (!transfert) return res('bloque', { aller, destination, logs });
+  const avant = traverser(r, 'forward', 'filter', traverse, compter);
+  noter(avant, traverse);
+  if (!avant.passe) return res('bloque', { aller, destination, logs });
+  // La traduction de source : postrouting, chaînes de type nat (premier paquet seulement).
+  const nat = traverser(r, 'postrouting', 'nat', traverse, compter);
+  noter(nat, traverse);
+  if (!nat.passe) return res('bloque', { aller, destination, logs });
   const traduite =
     nat.nat?.quoi === 'masquerade' ? oif.adresses[0]?.split('/')[0] : nat.nat?.quoi === 'snat' ? nat.nat.vers!.split(':')[0] : undefined;
   const vue = traduite ?? saddr;
   // La réponse : d'un appareil du réseau local s'il existe ; d'internet seulement vers une adresse publique.
-  const repond = cible ? joindre(l, daddr).quoi === 'appareil' : !prive(vue);
-  if (!repond) return res('sans-reponse', { aller, traduite, logs });
+  const appareil = l.appareils.find((a) => adresseDe(a) === dest);
+  const repond = appareil ? joindre(l, dest).quoi === 'appareil' : interne ? false : !prive(vue);
+  if (!repond) return res('sans-reponse', { aller, traduite, destination, logs });
   const retour: Paquet = {
-    ...aller,
+    ...traverse,
     iif: oif.nom,
     oif: iif.nom,
-    saddr: daddr,
+    saddr: dest,
     daddr: saddr,
-    sport: aller.dport,
+    sport: dport,
     dport: aller.sport,
     ct: 'established',
     taille: 1500,
   };
   const r2 = traverser(r, 'forward', 'filter', retour, compter);
-  logs.push(...r2.logs.map((prefixe) => ({ prefixe, paquet: retour })));
-  return res(r2.passe ? 'ok' : 'sans-reponse', { aller, traduite, logs });
+  noter(r2, retour);
+  return res(r2.passe ? 'ok' : 'sans-reponse', { aller, traduite, destination, logs });
 }
 
 /** Les flux du réseau local, maintenant (ruleset chargé, ip_forward du noyau). */

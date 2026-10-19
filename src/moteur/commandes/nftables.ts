@@ -234,14 +234,16 @@ function conntrack(jeu: Shell, args: string[]): string {
     ...(ssh.daddr ? [{ ...ssh, repondu: true, vue: ssh.saddr, ok: true }] : []),
     ...resultats(jeu)
       .filter((r) => r.aller && (r.etat === 'ok' || r.etat === 'sans-reponse'))
-      .map((r) => ({ ...r.aller!, repondu: r.etat === 'ok', vue: r.traduite ?? r.aller!.saddr, ok: r.etat === 'ok' })),
+      .map((r) => ({ ...r.aller!, repondu: r.etat === 'ok', vue: r.traduite ?? r.aller!.saddr, ok: r.etat === 'ok', reel: r.destination })),
   ].filter((e) => (!proto || e.proto === proto) && (!source || e.saddr === source) && (!destination || e.daddr === destination));
   for (const e of entrees) {
     const numero = e.proto === 'tcp' ? 6 : 17;
     const etat = e.proto === 'tcp' ? (e.ok ? ' ESTABLISHED' : ' SYN_SENT') : '';
     const delai = e.proto === 'tcp' ? (e.ok ? 431999 : 119) : e.ok ? 119 : 29;
     const aller = `src=${e.saddr} dst=${e.daddr} sport=${e.sport} dport=${e.dport}`;
-    const retour = `src=${e.daddr} dst=${e.vue} sport=${e.dport} dport=${e.sport}`;
+    // La réponse vient de la vraie destination (après dnat), vers l'adresse vue (après masquerade).
+    const reel = 'reel' in e && e.reel ? e.reel : { adresse: e.daddr, port: e.dport };
+    const retour = `src=${reel.adresse} dst=${e.vue} sport=${reel.port} dport=${e.sport}`;
     lignes.push(
       `${e.proto.padEnd(8)} ${numero} ${delai}${etat} ${aller} ${e.ok ? '' : '[UNREPLIED] '}${retour} ${e.ok ? '[ASSURED] ' : ''}mark=0 use=1`,
     );

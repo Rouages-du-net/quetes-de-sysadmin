@@ -293,3 +293,77 @@ export function mondeRuche(o: {
     racine,
   );
 }
+
+// Le pare-feu à la fin des zones, avec une chaîne input fermée par défaut.
+export const NFTABLES_ZONES = `#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+	chain input {
+		type filter hook input priority filter; policy drop;
+		ct state established,related accept
+		iif "lo" accept
+		# ssh, from the admin network only
+		ip saddr 192.0.2.0/24 tcp dport 22 accept
+		# DNS and DHCP for the VLANs
+		iifname "eth1*" udp dport { 53, 67 } accept
+		icmp type echo-request accept
+	}
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		ct state established,related accept
+		iifname "eth1.10" accept
+		iifname "eth1.20" oifname "eth0" accept
+	}
+	chain output {
+		type filter hook output priority filter; policy accept;
+	}
+}
+
+table ip nat {
+	chain postrouting {
+		type nat hook postrouting priority srcnat;
+		oifname "eth0" masquerade
+	}
+}`;
+
+/** Au début : le réseau, les réglages du noyau et le pare-feu du chapitre « Les zones ». */
+export function initialiserPareFeu(j: Jeu) {
+  initialiserRuche(j);
+  appliquerSysctl(j, SYSCTL_DEFAUTS);
+  j.etat.nft = lireConf(j, { tables: [] }).ruleset ?? { tables: [] };
+}
+
+// Le réglage du routage, écrit dans le chapitre « Les zones ».
+export const SYSCTL_ROUTEUR = { '90-routeur.conf': f('net.ipv4.ip_forward = 1', { lignes: true, proprio: 'root' }) };
+
+// Le pare-feu à la fin du « télétravail » : WireGuard entre (UDP 51820) et va vers les bureaux.
+export const NFTABLES_TELETRAVAIL = NFTABLES_ZONES.replace(
+  'icmp type echo-request accept',
+  'icmp type echo-request accept\n\t\t# WireGuard\n\t\tudp dport 51820 accept',
+).replace('iifname "eth1.20" oifname "eth0" accept', 'iifname "eth1.20" oifname "eth0" accept\n\t\tiifname "wg0" oifname "eth1.10" accept');
+
+/** Le réseau à la fin de « La DMZ » : eth1.40 dans le fichier, et le pare-feu qui publie le site. */
+export const INTERFACES_DMZ = `${INTERFACES_VLAN}
+
+# VLAN 40: dmz (the public web server)
+auto eth1.40
+iface eth1.40 inet static
+    address 10.10.40.1/24`;
+
+export const NFTABLES_DMZ = NFTABLES_TELETRAVAIL.replace(
+  'iifname "wg0" oifname "eth1.10" accept',
+  'iifname "wg0" oifname "eth1.10" accept\n\t\t# the DMZ: the site from the internet, the server to the internet only\n\t\tiifname "eth0" oifname "eth1.40" ip daddr 10.10.40.10 tcp dport { 80, 443 } accept\n\t\tiifname "eth1.40" oifname "eth0" accept',
+).replace(
+  '\t\toifname "eth0" masquerade\n\t}',
+  '\t\toifname "eth0" masquerade\n\t}\n\tchain prerouting {\n\t\ttype nat hook prerouting priority dstnat;\n\t\tiifname "eth0" tcp dport { 80, 443 } dnat to 10.10.40.10\n\t}',
+);
+
+/** Le réseau local avec la DMZ (VLAN 40, le serveur web). */
+export function lanAvecDmz(): Lan {
+  const l = nouveauLan(true);
+  l.vlans.push(40);
+  l.appareils.push({ nom: 'web', mac: '00:00:5e:00:53:40', vlan: 40, fixe: '10.10.40.10' });
+  return l;
+}

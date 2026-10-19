@@ -18,8 +18,8 @@
 
 import { d, f, type Chapitre, type Dossier, type Noeud } from '../monde';
 import type { Jeu } from '../shell';
-import { auDemarrage, lireConf, nft } from '../nftables';
-import { appliquerSysctl, sysctlAuDemarrage } from '../commandes/nftables';
+import { auDemarrage, nft } from '../nftables';
+import { sysctlAuDemarrage } from '../commandes/nftables';
 import { publicDu, serviceWg } from '../commandes/wireguard';
 import { confDe, etatTunnel, lireConfWg, publique, wg, type Distant, type EtatTunnel } from '../wireguard';
 import { systemd } from '../systemd';
@@ -28,13 +28,14 @@ import { FLUX, sshOuvert } from './zones';
 import {
   comptesRuche,
   DNSMASQ_VLAN,
-  initialiserRuche,
   INTERFACES_VLAN,
   M,
   mondeRuche,
   MOT_DE_PASSE,
+  initialiserPareFeu,
+  NFTABLES_ZONES,
   nouveauLan,
-  SYSCTL_DEFAUTS,
+  SYSCTL_ROUTEUR,
   systemdRuche,
 } from './ruche';
 
@@ -43,48 +44,7 @@ const CLE_MALIK = 'yAnz5TF+lXXJte14tji3zlMNq+hd2rYUIgJBgB3fBmk=';
 export const PUBLIQUE_MALIK = publique(CLE_MALIK)!;
 const PORTABLE = `${M}/portable-malik.conf`;
 
-const MALIK: Distant = { nom: 'portable-malik', adresse: '198.51.100.23', cle: PUBLIQUE_MALIK, conf: PORTABLE, vers: '10.10.10.5', port: 445 };
-
-// Le pare-feu à la fin des zones, avec une chaîne input fermée par défaut.
-const NFTABLES_ZONES = `#!/usr/sbin/nft -f
-
-flush ruleset
-
-table inet filter {
-	chain input {
-		type filter hook input priority filter; policy drop;
-		ct state established,related accept
-		iif "lo" accept
-		# ssh, from the admin network only
-		ip saddr 192.0.2.0/24 tcp dport 22 accept
-		# DNS and DHCP for the VLANs
-		iifname "eth1*" udp dport { 53, 67 } accept
-		icmp type echo-request accept
-	}
-	chain forward {
-		type filter hook forward priority filter; policy drop;
-		ct state established,related accept
-		iifname "eth1.10" accept
-		iifname "eth1.20" oifname "eth0" accept
-	}
-	chain output {
-		type filter hook output priority filter; policy accept;
-	}
-}
-
-table ip nat {
-	chain postrouting {
-		type nat hook postrouting priority srcnat;
-		oifname "eth0" masquerade
-	}
-}`;
-
-/** Au début : le réseau, les réglages du noyau et le pare-feu du chapitre « Les zones ». */
-function initialiser(j: Jeu) {
-  initialiserRuche(j);
-  appliquerSysctl(j, SYSCTL_DEFAUTS);
-  j.etat.nft = lireConf(j, { tables: [] }).ruleset ?? { tables: [] };
-}
+export const MALIK: Distant = { nom: 'portable-malik', adresse: '198.51.100.23', cle: PUBLIQUE_MALIK, conf: PORTABLE, vers: '10.10.10.5', port: 445 };
 
 const publicDe = (j: Jeu) => publicDu(j as Shell);
 const maintenant = (j: Jeu) => etatTunnel(j, MALIK, publicDe(j));
@@ -181,13 +141,13 @@ export const vpn: Chapitre = {
     sd.services.nftables.etat = 'active';
     return { lan: { ...nouveauLan(true), flux: FLUX.map(({ permis: _, ...x }) => x), distants: [MALIK] }, systemd: sd, nft: { tables: [] }, wg: {} };
   },
-  initialiser,
+  initialiser: initialiserPareFeu,
   creerMonde: (t) =>
     mondeRuche({
       interfaces: INTERFACES_VLAN,
       dnsmasq: DNSMASQ_VLAN,
       nftables: NFTABLES_ZONES,
-      sysctl: { '90-routeur.conf': f('net.ipv4.ip_forward = 1', { lignes: true, proprio: 'root' }) },
+      sysctl: SYSCTL_ROUTEUR,
       etc: { wireguard: d({}, undefined, { proprio: 'root', mode: 'rwx------' }) },
       maison: {
         'courriel_malik.txt': f(t('vpn-courriel-malik', { cle: PUBLIQUE_MALIK })),

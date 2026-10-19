@@ -260,19 +260,27 @@ demandent plusieurs.
 - [x] Commutateurs et **VLAN** : séparer bureaux, invité·es et
       équipements ; port « trunk » (802.1Q) vers le routeur, `ip link`,
       `/etc/network/interfaces` ; « Les VLAN » (La Ruche, chapitre 1)
-- [ ] Boucles réseau et tempêtes de diffusion, et le protocole qui les évite
-      (Spanning Tree)
 - [x] DHCP : dnsmasq, une plage par VLAN, réservations ; « Le DHCP » (La
       Ruche, chapitre 2)
 - [x] Routage, NAT et pare-feu entre zones : `sysctl`, nftables
       (`forward`, `masquerade`, `ct state`), `conntrack` ; « Les zones » (La
       Ruche, chapitre 3)
-- [ ] Une DMZ (un serveur public derrière le routeur, `dnat`)
+- [x] Une DMZ : un serveur public dans un VLAN à part, `dnat` au
+      `prerouting`, la DMZ isolée du réseau interne ; « La DMZ » (La Ruche,
+      chapitre 5)
 - [x] VPN WireGuard pour le télétravail : clés, `wg0.conf`, `wg-quick`,
       pare-feu ; « Le télétravail » (La Ruche, chapitre 4)
-- [ ] VPN entre deux sites
-- [ ] Wi-Fi d'entreprise (réseau invité isolé)
-- [ ] Annuaire et authentification centralisée (aperçu)
+- [x] VPN entre deux sites : un pair de plus sur `wg0`, `AllowedIPs` comme
+      table de routage, `PersistentKeepalive` derrière une box ; « L'Annexe »
+      (La Ruche, chapitre 6)
+- [x] Annuaire : OpenLDAP pour les comptes de l'équipe (`ldapsearch`,
+      LDIF, `ldapmodify`, `slappasswd`) ; « L'annuaire » (La Ruche, chapitre 7)
+- [x] Wi-Fi d'entreprise : 802.1X avec FreeRADIUS, qui vérifie les comptes
+      dans l'annuaire et place chacun dans son VLAN ; « Le Wi-Fi des bureaux »
+      (La Ruche, chapitre 8)
+
+Écarté : les boucles réseau et Spanning Tree (trop bas niveau pour ce jeu,
+qui travaille sur les machines plutôt que sur les commutateurs).
 
 ---
 

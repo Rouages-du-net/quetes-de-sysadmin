@@ -16,6 +16,8 @@ import { TMUX } from './tmux';
 import { LAN } from './lan';
 import { NFTABLES } from './nftables';
 import { WIREGUARD } from './wireguard';
+import { LDAP } from './ldap';
+import { RADIUS } from './radius';
 import { SYSTEMD } from './systemd';
 import { EDITEUR } from './editeur';
 import { SSHD } from './sshd';
@@ -82,6 +84,8 @@ export const COMMANDES: Record<string, Commande> = {
   ...LAN,
   ...NFTABLES,
   ...WIREGUARD,
+  ...LDAP,
+  ...RADIUS,
   ...SYSTEMD,
   ...EDITEUR,
   ...SSHD,

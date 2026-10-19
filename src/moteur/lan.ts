@@ -27,6 +27,8 @@ export interface Interface {
   vlan?: { parent: string; id: number };
   // Une interface WireGuard (wg0), montée par wg-quick (voir wireguard.ts).
   wireguard?: boolean;
+  // Les réseaux joints par cette interface en plus du sien (les routes que wg-quick ajoute).
+  routes?: string[];
 }
 
 export interface Appareil {
@@ -252,6 +254,21 @@ export function demonter(l: Lan, s: Strophe) {
 export function demarrerReseau(j: Jeu) {
   const l = lan(j);
   if (!l) return;
+  // L'état d'ifupdown (/run/network/ifstate) : ce qui a été monté.
+  j.etat.ifstate = remonter(j, l);
+}
+
+/** Le réseau local tel qu'il serait au prochain démarrage (une copie, montée d'après le fichier). */
+export function reseauAuDemarrage(j: Jeu): Lan | null {
+  const l = lan(j);
+  if (!l) return null;
+  const copie = structuredClone(l);
+  for (const [nom, i] of Object.entries(copie.interfaces)) if (i.wireguard) delete copie.interfaces[nom];
+  remonter(j, copie);
+  return copie;
+}
+
+function remonter(j: Jeu, l: Lan): string[] {
   for (const [nom, i] of Object.entries(l.interfaces)) {
     // Les interfaces WireGuard ne sont pas dans ce fichier : wg-quick les gère.
     if (i.wireguard) continue;
@@ -263,15 +280,18 @@ export function demarrerReseau(j: Jeu) {
   const montees: string[] = [];
   for (const s of [...Object.values(strophes).filter((x) => !x.vlan), ...Object.values(strophes).filter((x) => x.vlan)])
     if (s.auto && !monter(j, l, s)) montees.push(s.nom);
-  // L'état d'ifupdown (/run/network/ifstate) : ce qui a été monté.
-  j.etat.ifstate = montees;
+  return montees;
 }
 
 // ——— Joindre une adresse ———
 
 /** L'interface (en service) dont le réseau contient cette adresse. */
 export function interfacePour(l: Lan, ip: string): Interface | null {
-  return Object.values(l.interfaces).find((i) => enService(l, i) && i.adresses.some((a) => dans(ip, reseauDe(a)))) ?? null;
+  return (
+    Object.values(l.interfaces).find((i) => enService(l, i) && i.adresses.some((a) => dans(ip, reseauDe(a)))) ??
+    Object.values(l.interfaces).find((i) => enService(l, i) && i.routes?.some((r) => dans(ip, r))) ??
+    null
+  );
 }
 
 /** L'interface du routeur (en service, avec une adresse) qui reçoit ce VLAN. */
@@ -298,7 +318,7 @@ export function joindre(
   if (ip.startsWith('127.') || Object.values(l.interfaces).some((i) => i.adresses.some((a) => a.split('/')[0] === ip))) return { quoi: 'local' };
   const i = interfacePour(l, ip);
   if (i) {
-    const source = i.adresses.find((a) => dans(ip, reseauDe(a)))!.split('/')[0];
+    const source = (i.adresses.find((a) => dans(ip, reseauDe(a))) ?? i.adresses[0] ?? '').split('/')[0];
     const vlan = vlanDe(l, i);
     const ok = vlan !== null && l.vlans.concat(1).includes(vlan) && l.appareils.some((a) => a.vlan === vlan && adresseDe(a) === ip);
     return ok ? { quoi: 'appareil', source } : { quoi: 'injoignable', source };
