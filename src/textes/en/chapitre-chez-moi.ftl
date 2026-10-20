@@ -84,7 +84,7 @@ chez-moi-evenement-fin =
     "So I see what everyone else sees!"
 
     Well done! You have finished chapter 5 of The Neighbourhood Letters.
-    (What comes next: The night of the concert.)
+    (What comes next: Concert night.)
 
     WHAT HAPPENED
     /etc/hosts only applies to the machine it is on: on Kofi's computer,

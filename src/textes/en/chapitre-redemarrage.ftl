@@ -1,4 +1,4 @@
-### Story "Le Datacenter", chapter "The night of the reboot":
+### Story "The Data Centre", chapter "The night of the reboot":
 ### systemd services. The server rebooted last night and the website
 ### went down. Commands, service names, paths and messages
 ### from systemd or php-fpm (in English) are never translated.

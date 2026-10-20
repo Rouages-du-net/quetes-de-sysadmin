@@ -1,4 +1,4 @@
-### Story "La Ruche", chapter "The Annex": linking two sites with
+### Story "The Hive", chapter "The Annex": linking two sites with
 ### WireGuard. Commands, wg-quick keywords, addresses and paths are
 ### never translated.
 

@@ -1,4 +1,4 @@
-### Story "Les Lettres du quartier", chapter 8 "Repeat offenders":
+### Story "The Neighbourhood Letters", chapter 8 "Repeat offenders":
 ### more fail2ban jails (recidive, nginx-limit-req). Commands,
 ### paths, jail names and log lines are never translated.
 

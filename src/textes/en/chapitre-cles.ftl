@@ -1,4 +1,4 @@
-### Story "La Maison des associations", chapter "The keys": create your
+### Story "The Community Centre", chapter "The keys": create your
 ### key pair, put it on the server, then refuse passwords.
 ### sshd_config keywords, commands, paths and OpenSSH messages
 ### (in English) are never translated.

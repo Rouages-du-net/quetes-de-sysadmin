@@ -1,4 +1,4 @@
-### Story "Les Lettres du quartier", chapter 4 "Sharing a home":
+### Story "The Neighbourhood Letters", chapter 4 "Sharing a home":
 ### virtual hosts and reverse proxy with nginx. Commands, paths,
 ### directives and nginx messages are never translated. The site pages
 ### (colocation-site-*, colocation-agenda-*) are translated.

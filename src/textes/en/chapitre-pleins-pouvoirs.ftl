@@ -1,4 +1,4 @@
-### Story "La Fabrique", chapter 4 "Full powers": don't run a
+### Story "The Workshop", chapter 4 "Full powers": don't run a
 ### container as root. Commands, paths, options and messages of
 ### docker, chown, ls and ps are never translated.
 
