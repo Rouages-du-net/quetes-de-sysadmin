@@ -80,7 +80,11 @@ nom-effaceur-conf-corrige = eraser.conf.fixed
 
 Un bon nom se tape sans effort sur un clavier de ta langue : lettres sans
 accent, chiffres, `.`, `-` ou `_`, aucune espace (`tests/noms.test.ts` le
-vérifie). Dans un même dossier, deux noms doivent rester différents, et
+vérifie). Un nom s'applique à tous les chapitres qui traduisent leurs noms :
+la liste de tous les renommages est gardée dans `tests/noms/renommes.<langue>.txt`,
+et le test échoue au moindre renommage nouveau. S'il est voulu, relire la
+différence et mettre la liste à jour (`npx vitest run -u tests/noms.test.ts`).
+Dans un même dossier, deux noms doivent rester différents, et
 mieux vaut qu'ils se distinguent dès les premières lettres, pour la
 complétion par Tab. Les textes de l'histoire emploient ensuite ces noms
 tels quels, sans glose : « mv crab Bucket ».

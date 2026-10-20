@@ -1,0 +1,300 @@
+eveil
+  /Cabane → /Hut
+  /Cabane/bienvenue.txt → /Hut/welcome.txt
+  /Cabane/message.txt → /Hut/message.txt
+  /Cabane/Plage → /Hut/Beach
+  /Cabane/Plage/panneau.txt → /Hut/Beach/sign.txt
+  /Cabane/Plage/ravaudeuse.txt → /Hut/Beach/mender.txt
+  /Cabane/Plage/coquillage → /Hut/Beach/seashell
+  /Cabane/Colline → /Hut/Hill
+  /Cabane/Colline/vent.txt → /Hut/Hill/wind.txt
+  /Cabane/Colline/EcoleDesSignaux → /Hut/Hill/SignalSchool
+  /Cabane/Colline/EcoleDesSignaux/directrice.txt → /Hut/Hill/SignalSchool/headteacher.txt
+  /Cabane/Colline/EcoleDesSignaux/SalleDExercice → /Hut/Hill/SignalSchool/PracticeRoom
+  /Cabane/Colline/EcoleDesSignaux/SalleDExercice/consigne.txt → /Hut/Hill/SignalSchool/PracticeRoom/exercise.txt
+  /Cabane/Colline/EcoleDesSignaux/SalleDExercice/crabe → /Hut/Hill/SignalSchool/PracticeRoom/crab
+  /Cabane/Colline/EcoleDesSignaux/SalleDExercice/Seau → /Hut/Hill/SignalSchool/PracticeRoom/Bucket
+  /Cabane/Colline/EcoleDesSignaux/Cours → /Hut/Hill/SignalSchool/Lessons
+  /Cabane/Colline/EcoleDesSignaux/Cours/cours_1_manuel.txt → /Hut/Hill/SignalSchool/Lessons/lesson_1_manual.txt
+  /Cabane/Colline/EcoleDesSignaux/Cours/cours_2_chemins.txt → /Hut/Hill/SignalSchool/Lessons/lesson_2_paths.txt
+  /Cabane/Colline/EcoleDesSignaux/Cours/cours_3_caches.txt → /Hut/Hill/SignalSchool/Lessons/lesson_3_hidden.txt
+  /Cabane/Colline/EcoleDesSignaux/Cours/.note_secrete → /Hut/Hill/SignalSchool/Lessons/.secret_note
+  /Cabane/Colline/EcoleDesSignaux/Cours/cours_4_renommer.txt → /Hut/Hill/SignalSchool/Lessons/lesson_4_rename.txt
+  /Cabane/Colline/EcoleDesSignaux/Bibliotheque → /Hut/Hill/SignalSchool/Library
+  /Cabane/Colline/EcoleDesSignaux/Bibliotheque/livre_des_commandes.txt → /Hut/Hill/SignalSchool/Library/book_of_commands.txt
+  /Cabane/Port → /Hut/Harbour
+  /Cabane/Port/capitaine.txt → /Hut/Harbour/captain.txt
+  /Cabane/Port/Hangar → /Hut/Harbour/Boathouse
+  /Cabane/Port/Hangar/inventaire.txt → /Hut/Harbour/Boathouse/inventory.txt
+  /Cabane/Port/Remise → /Hut/Harbour/Storeroom
+  /Cabane/Port/Remise/etiquette.txt → /Hut/Harbour/Storeroom/label.txt
+  /Cabane/Port/Remise/.ampoule_de_secours → /Hut/Harbour/Storeroom/.spare_bulb
+  /Cabane/Jetee → /Hut/Pier
+  /Cabane/Jetee/filet → /Hut/Pier/net
+  /Cabane/Jetee/indice.txt → /Hut/Pier/clue.txt
+  /Cabane/Jetee/Phare → /Hut/Pier/Lighthouse
+  /Cabane/Jetee/Phare/gardienne.txt → /Hut/Pier/Lighthouse/keeper.txt
+  /Cabane/Jetee/Phare/Escalier → /Hut/Pier/Lighthouse/Stairs
+  /Cabane/Jetee/Phare/Escalier/marches.txt → /Hut/Pier/Lighthouse/Stairs/steps.txt
+  /Cabane/Jetee/Phare/Escalier/Lanterne → /Hut/Pier/Lighthouse/Stairs/Lantern
+  /Cabane/Jetee/Phare/Escalier/Lanterne/lanterne.txt → /Hut/Pier/Lighthouse/Stairs/Lantern/lantern.txt
+
+bourg
+  /Quai → /Quay
+  /Quai/crieur.txt → /Quay/crier.txt
+  /Quai/parchemin_des_sorts.txt → /Quay/scroll_of_spells.txt
+  /Quai/Marche → /Quay/Market
+  /Quai/Marche/marchande.txt → /Quay/Market/stallholder.txt
+  /Quai/Marche/pomme → /Quay/Market/apple
+  /Quai/Marche/pomme_2 → /Quay/Market/apple_2
+  /Quai/Marche/fromage → /Quay/Market/cheese
+  /Quai/Boulangerie → /Quay/Bakery
+  /Quai/Boulangerie/boulanger.txt → /Quay/Bakery/baker.txt
+  /Quai/Boulangerie/levain → /Quay/Bakery/sourdough
+  /Quai/Atelier → /Quay/Workshop
+  /Quai/Atelier/artisane.txt → /Quay/Workshop/maker.txt
+  /Quai/Ecole → /Quay/School
+  /Quai/Ecole/institutrice.txt → /Quay/School/teacher.txt
+  /Quai/Mairie → /Quay/TownHall
+  /Quai/Mairie/greffiere.txt → /Quay/TownHall/clerk.txt
+  /Quai/Mairie/avis_bal.txt → /Quay/TownHall/notice_dance.txt
+  /Quai/Mairie/avis_chat.txt → /Quay/TownHall/notice_cat.txt
+  /Quai/Mairie/avis_egouts.txt → /Quay/TownHall/notice_sewers.txt
+  /Quai/Mairie/avis_marche.txt → /Quay/TownHall/notice_market.txt
+  /Quai/Mairie/avis_horloge.txt → /Quay/TownHall/notice_clock.txt
+  /Quai/Mairie/.paillasson → /Quay/TownHall/.doormat
+  /Quai/Mairie/Archives → /Quay/TownHall/Archives
+  /Quai/Mairie/Archives/archiviste.txt → /Quay/TownHall/Archives/archivist.txt
+  /Quai/Mairie/Archives/chronique.txt → /Quay/TownHall/Archives/chronicle.txt
+  /Quai/Ruelle → /Quay/Alley
+  /Quai/Ruelle/barricade → /Quay/Alley/barricade
+  /Quai/Ruelle/Cour → /Quay/Alley/Yard
+  /Quai/Ruelle/Cour/mur.txt → /Quay/Alley/Yard/wall.txt
+  /Quai/Ruelle/Cour/Egout → /Quay/Alley/Yard/Sewer
+  /Quai/Ruelle/Cour/Egout/rats.txt → /Quay/Alley/Yard/Sewer/rats.txt
+  /Quai/Ruelle/Cour/Egout/Galerie → /Quay/Alley/Yard/Sewer/Tunnel
+  /Quai/Ruelle/Cour/Egout/Galerie/nour.txt → /Quay/Alley/Yard/Sewer/Tunnel/nour.txt
+
+racine
+  /home/vous/arrivee.txt → /home/vous/arrival.txt
+  /home/vous/manuel_admin.txt → /home/vous/admin_manual.txt
+  /home/vous/effaceur.conf.corrige → /home/vous/eraser.conf.fixed
+  /home/vous/souvenirs → /home/vous/memories
+  /home/vous/souvenirs/ecole → /home/vous/memories/school
+  /home/vous/souvenirs/premier_programme → /home/vous/memories/first_program
+  /home/vous/souvenirs/jardin → /home/vous/memories/garden
+  /home/vous/souvenirs/chanson → /home/vous/memories/song
+  /home/vous/souvenirs/voyage → /home/vous/memories/journey
+  /home/vous/souvenirs/amie → /home/vous/memories/friend
+  /home/vous/souvenirs/bibliotheque → /home/vous/memories/library
+  /home/vous/souvenirs/premier_serveur → /home/vous/memories/first_server
+  /home/nour/journal_intime.txt → /home/nour/diary.txt
+  /etc/effaceur.conf → /etc/eraser.conf
+  /var/log/effaceur.log → /var/log/eraser.log
+
+sauvegarde
+  /home/vous/mot_de_maelle.txt → /home/vous/note_from_maelle.txt
+  /home/vous/souvenirs → /home/vous/memories
+  /home/vous/souvenirs/premiere-lettre.txt → /home/vous/memories/first-letter.txt
+  /home/vous/souvenirs/phare.txt → /home/vous/memories/lighthouse.txt
+  /home/vous/souvenirs/bourg.txt → /home/vous/memories/village.txt
+  /home/vous/souvenirs/nour.txt → /home/vous/memories/nour.txt
+  /home/vous/souvenirs/effaceur.txt → /home/vous/memories/eraser.txt
+  /mnt/sauvegarde → /mnt/backup
+
+premier-jour
+  /home/vous/courriel_awa.txt → /home/vous/email_awa.txt
+
+deuxieme-jour
+  /home/vous/courriel_awa.txt → /home/vous/email_awa.txt
+
+redemarrage
+  /home/vous/courriel_awa.txt → /home/vous/email_awa.txt
+
+incendie
+  /home/vous/courriel_awa.txt → /home/vous/email_awa.txt
+  /mnt/sauvegarde → /mnt/backup
+  /mnt/sauvegarde/PRA.txt → /mnt/backup/DRP.txt
+  /mnt/sauvegarde/mediatheque-2026-10-21.tar.gz → /mnt/backup/mediatheque-2026-10-21.tar.gz
+  /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz → /mnt/backup/mediatheque-2026-10-22.tar.gz
+  /mnt/sauvegarde/mediatheque-2026-10-23.tar.gz → /mnt/backup/mediatheque-2026-10-23.tar.gz
+
+certificat
+  /home/vous/courriel_awa.txt → /home/vous/email_awa.txt
+  /home/vous/message_de_lea.txt → /home/vous/message_from_lea.txt
+
+paquet-perdu
+  /home/vous/note_de_kofi.txt → /home/vous/note_from_kofi.txt
+  /home/vous/carnet.txt → /home/vous/notebook.txt
+
+manuscrit
+  /home/vous/message_d_ines.txt → /home/vous/message_from_ines.txt
+  /home/vous/poemes/mer.txt → /home/vous/poemes/sea.txt
+  /home/vous/poemes/phare.txt → /home/vous/poemes/lighthouse.txt
+  /home/vous/aide_git.txt → /home/vous/help_git.txt
+
+archives
+  /home/vous/lettre_de_rosa.txt → /home/vous/letter_from_rosa.txt
+
+versions
+  /home/vous/mot_de_rosa.txt → /home/vous/note_from_rosa.txt
+
+fermer-la-porte
+  /home/vous/courriel_kofi.txt → /home/vous/email_kofi.txt
+
+pare-feu
+  /home/vous/courriel_kofi.txt → /home/vous/email_kofi.txt
+
+sentinelle
+  /home/vous/courriel_kofi.txt → /home/vous/email_kofi.txt
+
+colocation
+  /home/vous/courriel_kofi.txt → /home/vous/email_kofi.txt
+  /home/vous/note_de_rania.txt → /home/vous/note_from_rania.txt
+  /opt/agenda/LISEZMOI.txt → /opt/agenda/README.txt
+
+chez-moi
+  /home/vous/courriel_kofi.txt → /home/vous/email_kofi.txt
+  /home/vous/aide_dns.txt → /home/vous/help_dns.txt
+
+concert
+  /home/vous/message_de_kofi.txt → /home/vous/message_from_kofi.txt
+  /home/vous/aide_journaux.txt → /home/vous/help_logs.txt
+
+port
+  /home/vous/courriel_kofi.txt → /home/vous/email_kofi.txt
+
+recidive
+  /home/vous/courriel_rania.txt → /home/vous/email_rania.txt
+
+mise-a-jour
+  /home/vous/message_de_yasmine.txt → /home/vous/message_from_yasmine.txt
+
+composition
+  /home/vous/message_de_yasmine.txt → /home/vous/message_from_yasmine.txt
+  /home/vous/aide_compose.txt → /home/vous/help_compose.txt
+
+contournement
+  /home/vous/message_de_rania.txt → /home/vous/message_from_rania.txt
+  /home/vous/mot_de_yasmine.txt → /home/vous/note_from_yasmine.txt
+
+pleins-pouvoirs
+  /home/vous/message_de_yasmine.txt → /home/vous/message_from_yasmine.txt
+  /home/vous/mot_de_rania.txt → /home/vous/note_from_rania.txt
+  /srv/galerie/LISEZMOI.txt → /srv/galerie/README.txt
+
+depot-nu
+  /home/vous/message_de_samia.txt → /home/vous/message_from_samia.txt
+  /home/vous/mot_de_theo.txt → /home/vous/note_from_theo.txt
+
+retour-arriere
+  /home/vous/message_de_samia.txt → /home/vous/message_from_samia.txt
+
+bleu-vert
+  /home/vous/message_de_samia.txt → /home/vous/message_from_samia.txt
+
+canari
+  /home/vous/message_de_samia.txt → /home/vous/message_from_samia.txt
+
+migration
+  /home/vous/message_de_samia.txt → /home/vous/message_from_samia.txt
+  /home/vous/mot_de_theo.txt → /home/vous/note_from_theo.txt
+
+rancon
+  /home/vous/message_de_berenice.txt → /home/vous/message_from_berenice.txt
+
+instantanes
+  /home/vous/message_de_berenice.txt → /home/vous/message_from_berenice.txt
+
+base
+  /home/vous/message_de_berenice.txt → /home/vous/message_from_berenice.txt
+  /home/vous/mot_de_malo.txt → /home/vous/note_from_malo.txt
+
+disque-plein
+  /home/vous/message_de_zoe.txt → /home/vous/message_from_zoe.txt
+
+memoire
+  /home/vous/message_de_zoe.txt → /home/vous/message_from_zoe.txt
+
+inodes
+  /home/vous/message_de_zoe.txt → /home/vous/message_from_zoe.txt
+  /srv/radio/stats/LISEZMOI.txt → /srv/radio/stats/README.txt
+
+horloge
+  /home/vous/message_de_zoe.txt → /home/vous/message_from_zoe.txt
+  /home/vous/mail_hebergeur.txt → /home/vous/mail_hosting.txt
+
+sonde
+  /home/vous/message_de_zoe.txt → /home/vous/message_from_zoe.txt
+  /srv/radio/podcasts/LISEZMOI.txt → /srv/radio/podcasts/README.txt
+
+post-mortem
+  /home/vous/message_de_zoe.txt → /home/vous/message_from_zoe.txt
+
+goulot
+  /home/vous/message_de_zoe.txt → /home/vous/message_from_zoe.txt
+
+cles
+  /home/vous/courriel_yasmine.txt → /home/vous/email_yasmine.txt
+
+rebond
+  /home/vous/courriel_yasmine.txt → /home/vous/email_yasmine.txt
+
+tunnel
+  /home/vous/courriel_yasmine.txt → /home/vous/email_yasmine.txt
+
+transferts
+  /home/vous/courriel_yasmine.txt → /home/vous/email_yasmine.txt
+
+hebergeur
+  /home/vous/courriel_yasmine.txt → /home/vous/email_yasmine.txt
+  /home/vous/courriel_hebergeur.txt → /home/vous/email_hosting.txt
+
+depart
+  /home/vous/courriel_awa.txt → /home/vous/email_awa.txt
+
+droits
+  /home/vous/courriel_awa.txt → /home/vous/email_awa.txt
+
+secret
+  /home/vous/courriel_awa.txt → /home/vous/email_awa.txt
+
+proxy
+  /home/vous/courriel_awa.txt → /home/vous/email_awa.txt
+
+mises-a-jour
+  /home/vous/courriel_awa.txt → /home/vous/email_awa.txt
+
+automatiques
+  /home/vous/courriel_awa.txt → /home/vous/email_awa.txt
+
+vlan
+  /home/vous/courriel_malik.txt → /home/vous/email_malik.txt
+  /home/vous/plan-commutateur.txt → /home/vous/switch-plan.txt
+
+dhcp
+  /home/vous/courriel_malik.txt → /home/vous/email_malik.txt
+
+zones
+  /home/vous/courriel_malik.txt → /home/vous/email_malik.txt
+  /home/vous/notes-de-sacha.txt → /home/vous/notes-from-sacha.txt
+
+vpn
+  /home/vous/courriel_malik.txt → /home/vous/email_malik.txt
+
+dmz
+  /home/vous/courriel_ines.txt → /home/vous/email_ines.txt
+  /home/vous/plan-commutateur.txt → /home/vous/switch-plan.txt
+
+annexe
+  /home/vous/courriel_sami.txt → /home/vous/email_sami.txt
+
+annuaire
+  /home/vous/courriel_malik.txt → /home/vous/email_malik.txt
+
+wifi
+  /home/vous/courriel_malik.txt → /home/vous/email_malik.txt
+  /home/vous/borne-bureaux.txt → /home/vous/ap-offices.txt
+
+poste
+  /home/vous/bienvenue.txt → /home/vous/welcome.txt
