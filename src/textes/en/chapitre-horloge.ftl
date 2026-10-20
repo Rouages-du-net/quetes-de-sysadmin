@@ -17,7 +17,7 @@ horloge-message-de-zoe =
     -l), and it hasn't changed.
 
     What has changed: the hosting provider migrated the server to a new
-    machine this weekend (their email is in mail_hebergeur.txt). And
+    machine this weekend (their email is in mail_hosting.txt). And
     yet, the recording log does say "06:00"…"
 horloge-mail-hebergeur =
     From: support@hebergeur.example

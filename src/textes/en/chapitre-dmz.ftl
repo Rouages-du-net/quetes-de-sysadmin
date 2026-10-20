@@ -19,7 +19,7 @@ dmz-courriel-ines =
 
     The electrician plugged it into port 21 of the switch, in a new
     VLAN 40: the "DMZ", he said. His plan is in
-    plan-commutateur.txt.
+    switch-plan.txt.
 
     For people to find it, whatever arrives at the router's public
     address (192.0.2.21), ports 80 and 443, should go to the server. And

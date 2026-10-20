@@ -306,9 +306,11 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 - [x] Sorties des commandes simulées selon `LANG`, comme les vrais outils (en anglais : les messages d'origine, comme avec `LANG=C`)
 - [x] Noms de lieux et d'objets traduits et faciles à taper (`noms.ftl`,
       L'Effaceur et le poste) ; complétion testée dans chaque langue
-- [ ] Noms des fichiers des autres histoires (courriels, notes : encore en
-      français) ; nom de l'utilisateur·rice (`vous`) et de la machine dans
-      l'invite
+- [x] Noms des documents des autres histoires (courriels, messages, notes
+      d'aide, `LISEZMOI.txt`… : `noms: true` partout) ; les données des
+      serveurs (fonds des Archives, partage de la Ludothèque, comptes rendus
+      de la Maison des associations, sites, bases) restent en français
+- [ ] Nom de l'utilisateur·rice (`vous`) et de la machine dans l'invite
 - [ ] Recollage des paragraphes et typographie selon la langue (le chinois et
       le coréen ne séparent pas les lignes par une espace)
 - [ ] Plateforme de traduction (Weblate hébergé, gratuit pour les projets

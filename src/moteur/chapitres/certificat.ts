@@ -241,6 +241,7 @@ export const certificat: Chapitre = {
   ],
   maison: M,
   accueil: 'courriel_awa.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'bienvenue-2026',
   // La machine reconstruite après l'incendie : même clé d'hôte qu'au chapitre 4.

@@ -4,7 +4,8 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
-import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
+import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { dansLaLangue } from './noms';
 
 const EFFACEUR = HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id);
 const MDP = 'abeille-2027';
@@ -26,6 +27,8 @@ iface eth1.30 inet static
 for (const langue of LANGUES)
   describe(`La Ruche — ${langue}`, () => {
     const fr = langue === LANGUE_DE_REFERENCE;
+    // Une ligne écrite avec les noms français, dans la langue de la partie.
+    const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     const contient = (tout: string, texte: string) => fr && expect(tout).toContain(texte);
     const partie = (termines: string[] = []) => {
       const c = new Console({ langue, termines: [...EFFACEUR, ...termines] });
@@ -171,7 +174,7 @@ table ip nat {
 
     it('chapitre 3 — solution : /etc/sysctl.d, /etc/nftables.conf, systemctl enable --now', () => {
       const { c, jouer, editer } = partie(['vlan', 'dhcp']);
-      let tout = jouer(['cat notes-de-sacha.txt', 'sysctl net.ipv4.ip_forward', 'sudo conntrack -L', 'man sysctl.d']);
+      let tout = jouer([L('cat notes-de-sacha.txt'), 'sysctl net.ipv4.ip_forward', 'sudo conntrack -L', 'man sysctl.d']);
       expect(tout).toContain('SYSCTL.D(5)');
       expect(tout).toContain('net.ipv4.ip_forward = 0');
       expect(tout).toContain('1 flow entries have been shown.');
@@ -226,7 +229,7 @@ table ip nat {
       contient(tout, 'si le routeur');
       expect(c.termines).not.toContain('zones');
       tout = jouer(['sudo reboot', 'ssh ruche', 'cat /proc/sys/net/ipv4/ip_forward', 'sudo nft list ruleset']);
-      expect(tout).toMatch(/cat courriel_malik.txt\n0\n/);
+      expect(tout).toContain(`cat ${L('courriel_malik.txt')}\n0\n`);
       expect(tout).not.toContain('masquerade');
       editer('sudo nano /etc/sysctl.conf', (t) => t.replace('#net.ipv4.ip_forward=1', 'net.ipv4.ip_forward=1'));
       editer('sudo nano /etc/nftables.conf', () =>
@@ -269,7 +272,7 @@ table ip nat {
     const PEER_MALIK = (cle: string) => `\n[Peer]\nPublicKey = ${cle}\nAllowedIPs = 10.10.99.2/32\n`;
     const WG0 = (cle: string) => `[Interface]\nAddress = 10.10.99.1/24\nListenPort = 51820\nPrivateKey = ${cle}\n`;
     const clesDe = (c: Console) => ({
-      malik: c.shell.lire('/home/vous/courriel_malik.txt')!.match(/[A-Za-z0-9+/]{43}=/)![0],
+      malik: c.shell.lire(L('/home/vous/courriel_malik.txt'))!.match(/[A-Za-z0-9+/]{43}=/)![0],
       privee: () => c.shell.lire('/home/vous/privatekey')!.trim(),
       publique: () => c.shell.lire('/home/vous/publickey')!.trim(),
     });
@@ -363,7 +366,7 @@ table ip nat {
 
     it('chapitre 5 — solution : eth1.40, dnat au prerouting, forward vers la DMZ seulement', () => {
       const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn']);
-      let tout = jouer(['cat plan-commutateur.txt', 'ping -c 1 web']);
+      let tout = jouer([L('cat plan-commutateur.txt'), 'ping -c 1 web']);
       // Sans interface dans ce réseau, le ping part vers la box et s'y perd.
       expect(tout).toContain('1 packets transmitted, 0 received, 100% packet loss');
       editer('sudo nano /etc/network/interfaces', (t) => t + ETH140);
@@ -418,7 +421,7 @@ table ip nat {
       expect(c.termines).toContain('dmz');
     });
 
-    const cleAnnexe = (c: Console) => c.shell.lire('/home/vous/courriel_sami.txt')!.match(/[A-Za-z0-9+/]{43}=/)![0];
+    const cleAnnexe = (c: Console) => c.shell.lire(L('/home/vous/courriel_sami.txt'))!.match(/[A-Za-z0-9+/]{43}=/)![0];
     const PAIR_ANNEXE =
       (cle: string, autorisees = '10.10.99.3/32, 10.20.10.0/24') =>
       (t: string) =>
@@ -568,7 +571,7 @@ table ip nat {
 
     it('chapitre 8 — solution : le pare-feu, clients.conf, le module ldap, le fichier users', () => {
       const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe', 'annuaire']);
-      let tout = jouer(['cat borne-bureaux.txt', 'radtest sami choisi-par-sami localhost 0 testing123']);
+      let tout = jouer([L('cat borne-bureaux.txt'), 'radtest sami choisi-par-sami localhost 0 testing123']);
       if (fr) expect(tout).toContain('Secret partagé         : Rk7-borne-2028');
       expect(tout).toContain('(0) -: Expected Access-Accept got Access-Reject');
       editer('sudo nano /etc/nftables.conf', ENTREE_RADIUS);

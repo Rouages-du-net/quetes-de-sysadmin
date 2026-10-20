@@ -15,7 +15,7 @@ zones-courriel-malik =
     Everyone has their address, thanks! But nothing gets out to the
     internet: not the offices, not the café's wifi. Sacha, the volunteer
     who looked after the network before you, says he had "set everything
-    up by hand"; his notes are in notes-de-sacha.txt. The router rebooted
+    up by hand"; his notes are in notes-from-sacha.txt. The router rebooted
     on Saturday, during the power cut.
 
     And while we're at it, what we really wanted with the VLANs:

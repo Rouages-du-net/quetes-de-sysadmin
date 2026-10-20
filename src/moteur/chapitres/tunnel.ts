@@ -61,6 +61,7 @@ export const tunnel: Chapitre = {
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname', 'ssh'],
   maison: M,
   accueil: 'courriel_yasmine.txt',
+  noms: true,
   final: 'fin',
   motDePasse: MOT_DE_PASSE,
   comptes: comptesMaison,

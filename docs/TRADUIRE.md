@@ -86,8 +86,16 @@ complétion par Tab. Les textes de l'histoire emploient ensuite ces noms
 tels quels, sans glose : « mv crab Bucket ».
 
 Seules les histoires dont le chapitre déclare `noms: true` traduisent leurs
-noms (pour l'instant : L'Effaceur et le poste). Dans les autres, les noms
-restent en français, et une traduction peut les expliquer au passage.
+noms : c'est le cas de toutes. L'Effaceur et le poste traduisent tous leurs
+lieux et objets ; les autres histoires traduisent les documents qu'on lit
+dans sa maison (courriels, messages, mots, notes d'aide, `LISEZMOI.txt`,
+plan de reprise…). Les données de leurs serveurs gardent leur nom
+français, comme sur un serveur tenu par une équipe française : dossiers et
+sites, bases, fichiers suivis par git, restic, rsnapshot ou rsync, ou
+écrits par le jeu en cours de partie (le fonds des Archives, le partage de
+la Ludothèque, les comptes rendus de la Maison des associations). Un tel
+nom ne se traduit que si tout ce qui le désigne suit (instantanés,
+dépôts, configuration, machines internes, qui ne sont pas renommées).
 
 Les commandes des exemples du manuel sont dans le code (`pages.ts`). Quand
 l'une d'elles contient des mots (`grep "mot de passe" journal.txt`), une
@@ -108,7 +116,7 @@ noms de jeux de la base…) se traduisent par ce que le joueur ou la joueuse
 | Code | Langue | État |
 |---|---|---|
 | `fr` | français | langue de référence |
-| `en` | anglais | complet (textes, manuel, messages des outils comme avec `LANG=C`, noms des lieux et des objets de L'Effaceur et du poste) ; noms des fichiers des autres histoires encore en français |
+| `en` | anglais | complet (textes, manuel, messages des outils comme avec `LANG=C`, noms des lieux et des objets de L'Effaceur et du poste, documents des autres histoires) ; données des serveurs des histoires en français |
 
 ## Ajouter une langue
 

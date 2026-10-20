@@ -4,7 +4,7 @@
 rsync-usage =
     usage: rsync [OPTION]... SRC [SRC]... DEST
     rsync error: syntax or usage error (code 1) at main.c(1795) [client=3.2.7]
-    (Example: rsync -av ~/dossier/ /mnt/sauvegarde/dossier/; see man rsync)
+    (Example: rsync -av ~/folder/ /mnt/backup/folder/; see man rsync)
 crontab-usage =
     usage: crontab [-u user] [-l | -r | -e] [file]
     (To edit your scheduled tasks: crontab -e; see man crontab)

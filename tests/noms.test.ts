@@ -5,9 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/moteur/shell';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { poste } from '../src/moteur/poste';
-import { nom, type Dossier } from '../src/moteur/monde';
+import { nom, traduireNoms, type Dossier } from '../src/moteur/monde';
 import { LANGUES, traducteur } from '../src/textes';
 
+const autres = LANGUES.map((l) => traducteur(l));
 const traduits = [...HISTOIRES.flatMap((h) => h.chapitres), poste([])].filter((c) => c.noms);
 
 // Tous les noms d'un monde, avec leur chemin.
@@ -22,10 +23,17 @@ for (const langue of LANGUES)
       expect(traduits.length).toBeGreaterThanOrEqual(5);
       for (const c of traduits) {
         const s = new Shell(c, langue);
-        const chemins = parcourir(s.racine);
-        // Deux noms français devenus pareils écraseraient un lieu.
-        expect(chemins.length, c.id).toBe(parcourir(c.creerMonde(t)).length);
-        for (const ch of chemins) expect(ch.split('/').at(-1), `${c.id} : ${ch}`).toMatch(/^[A-Za-z0-9._-]+$/);
+        // Le monde tel que le chapitre le crée, avant ce qu'y ajoute son
+        // initialiser (un dépôt restic…) : deux noms français devenus
+        // pareils y écraseraient un lieu.
+        const francais = parcourir(c.creerMonde(t));
+        expect(parcourir(traduireNoms(t, c.creerMonde(t))).length, c.id).toBe(francais.length);
+        // Les noms qu'une langue traduit (les noms du système, lost+found
+        // compris, restent tels quels).
+        for (const ch of francais) {
+          const n = ch.split('/').at(-1)!;
+          if (autres.some((u) => nom(u, n) !== n)) expect(nom(t, n), `${c.id} : ${ch}`).toMatch(/^[A-Za-z0-9._-]+$/);
+        }
         expect(s.trouver(s.maison)?.type, c.id).toBe('dossier');
         expect(s.existe(`${s.maison}/${s.accueil}`), c.id).toBe(true);
       }

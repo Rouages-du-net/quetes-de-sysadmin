@@ -44,6 +44,7 @@ export const archives: Chapitre = {
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'du', 'df', 'find', 'tar', 'cp', 'mv', 'rm', 'mkdir'],
   maison: M,
   accueil: 'lettre_de_rosa.txt',
+  noms: true,
   final: 'sauve',
   etat: () => ({
     montages: [

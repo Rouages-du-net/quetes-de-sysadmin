@@ -167,6 +167,7 @@ export const rancon: Chapitre = {
   ],
   maison: M,
   accueil: 'message_de_berenice.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'ludo-2027',
   comptes,

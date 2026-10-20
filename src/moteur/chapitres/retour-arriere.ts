@@ -149,6 +149,7 @@ export const retourArriere: Chapitre = {
   ],
   maison: M,
   accueil: 'message_de_samia.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'gazette-2027',
   comptes: comptesGazette,

@@ -52,6 +52,7 @@ export const pareFeu: Chapitre = {
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'ss', 'ufw'],
   maison: M,
   accueil: 'courriel_kofi.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'fourmis-2026',
   comptes: () => {

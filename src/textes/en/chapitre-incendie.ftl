@@ -24,8 +24,8 @@ incendie-courriel-awa =
     password (bienvenue-2026). Nothing else: no nginx, no website.
 
     Luckily, our backups go every night to another data centre, in
-    another city. The provider mounted them on /mnt/sauvegarde. My
-    recovery plan is there too: PRA.txt.
+    another city. The provider mounted them on /mnt/backup. My
+    recovery plan is there too: DRP.txt.
 
     I'm on site with the firefighters. Get the media library's website
     back online, and tell me what we lost.
@@ -39,7 +39,7 @@ incendie-pra =
       /etc/nginx/bloques.conf                  the blocked addresses
       /var/www/mediatheque/                    the pages
 
-    One archive per night: /mnt/sauvegarde/mediatheque-YYYY-MM-DD.tar.gz
+    One archive per night: /mnt/backup/mediatheque-YYYY-MM-DD.tar.gz
 
     Paths are stored in it from the root, without the leading /.
 

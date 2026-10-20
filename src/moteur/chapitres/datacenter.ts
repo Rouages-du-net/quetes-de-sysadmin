@@ -83,6 +83,7 @@ export const datacenter: Chapitre = {
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'wc', 'grep', 'cut', 'sort', 'uniq', 'echo', 'tee', 'cp', 'mv', 'rm', 'ps', 'kill', 'systemctl', 'nano', 'sudo', 'whoami'],
   maison: M,
   accueil: 'courriel_awa.txt',
+  noms: true,
   final: 'rapport',
   motDePasse: 'bienvenue-2026',
   // t : les textes dans la langue du jeu (français tant que le shell ne le

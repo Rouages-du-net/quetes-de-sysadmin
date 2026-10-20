@@ -115,3 +115,61 @@ nom-phare-txt = phare.txt
 nom-bourg-txt = bourg.txt
 nom-effaceur-txt = effaceur.txt
 nom-fete-du-phare-txt = fete-du-phare.txt
+
+## Le Datacenter (et La Coopérative, où Awa écrit aussi) ; le disque /mnt/sauvegarde de l'incendie prend le nom de « sauvegarde » (La Sauvegarde, plus haut)
+nom-courriel_awa-txt = courriel_awa.txt
+nom-message_de_lea-txt = message_de_lea.txt
+nom-PRA-txt = PRA.txt
+
+## Le Paquet perdu
+nom-note_de_kofi-txt = note_de_kofi.txt
+nom-carnet-txt = carnet.txt
+
+## La Machine à remonter le temps (poemes/phare.txt prend le nom de La Sauvegarde, plus haut)
+nom-message_d_ines-txt = message_d_ines.txt
+nom-aide_git-txt = aide_git.txt
+nom-mer-txt = mer.txt
+
+## Les Archives
+nom-lettre_de_rosa-txt = lettre_de_rosa.txt
+nom-mot_de_rosa-txt = mot_de_rosa.txt
+
+## Les Lettres du quartier (LISEZMOI.txt sert aussi dans La Fabrique et L'Astreinte)
+nom-courriel_kofi-txt = courriel_kofi.txt
+nom-note_de_rania-txt = note_de_rania.txt
+nom-LISEZMOI-txt = LISEZMOI.txt
+nom-aide_dns-txt = aide_dns.txt
+nom-message_de_kofi-txt = message_de_kofi.txt
+nom-aide_journaux-txt = aide_journaux.txt
+nom-courriel_rania-txt = courriel_rania.txt
+
+## La Fabrique
+nom-message_de_yasmine-txt = message_de_yasmine.txt
+nom-aide_compose-txt = aide_compose.txt
+nom-message_de_rania-txt = message_de_rania.txt
+nom-mot_de_yasmine-txt = mot_de_yasmine.txt
+nom-mot_de_rania-txt = mot_de_rania.txt
+
+## La Gazette
+nom-message_de_samia-txt = message_de_samia.txt
+nom-mot_de_theo-txt = mot_de_theo.txt
+
+## La Ludothèque
+nom-message_de_berenice-txt = message_de_berenice.txt
+nom-mot_de_malo-txt = mot_de_malo.txt
+
+## L'Astreinte
+nom-message_de_zoe-txt = message_de_zoe.txt
+nom-mail_hebergeur-txt = mail_hebergeur.txt
+
+## La Maison des associations
+nom-courriel_yasmine-txt = courriel_yasmine.txt
+nom-courriel_hebergeur-txt = courriel_hebergeur.txt
+
+## La Ruche
+nom-courriel_malik-txt = courriel_malik.txt
+nom-plan-commutateur-txt = plan-commutateur.txt
+nom-notes-de-sacha-txt = notes-de-sacha.txt
+nom-courriel_ines-txt = courriel_ines.txt
+nom-courriel_sami-txt = courriel_sami.txt
+nom-borne-bureaux-txt = borne-bureaux.txt

@@ -85,6 +85,7 @@ export const redemarrage: Chapitre = {
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'ps', 'systemctl', 'journalctl', 'chown', 'chmod', 'nano', 'sudo', 'reboot', 'whoami'],
   maison: M,
   accueil: 'courriel_awa.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'bienvenue-2026',
   comptes: () => {

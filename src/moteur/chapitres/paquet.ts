@@ -28,6 +28,7 @@ export const paquet: Chapitre = {
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'cp', 'ping', 'dig', 'traceroute', 'curl', 'sudo', 'grep'],
   maison: M,
   accueil: 'note_de_kofi.txt',
+  noms: true,
   final: 'curl',
   motDePasse: 'fourmiliere',
   // t : les textes dans la langue du jeu (français tant que le shell ne le

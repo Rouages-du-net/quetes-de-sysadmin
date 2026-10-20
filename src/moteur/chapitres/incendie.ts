@@ -13,7 +13,7 @@
 // https://nginx.org/en/docs/switches.html, https://nginx.org/en/docs/http/request_processing.html,
 // https://www.gnu.org/software/tar/manual/, https://man.openbsd.org/ssh-keygen
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Fichier } from '../monde';
+import { chemin, d, f, fichiersComptes, type Chapitre, type Comptes, type Fichier } from '../monde';
 import type { Jeu } from '../shell';
 import type { Traduire } from '../../textes';
 import { nouveauSystemd, systemd } from '../systemd';
@@ -122,6 +122,7 @@ export const incendie: Chapitre = {
   ],
   maison: M,
   accueil: 'courriel_awa.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'bienvenue-2026',
   // Une machine neuve : la clé d'hôte n'est plus celle que le poste connaît.
@@ -197,7 +198,7 @@ export const incendie: Chapitre = {
     },
     {
       id: 'tronquee',
-      condition: (j) => j.etat.archiveTronquee === archive(ARCHIVES[2]),
+      condition: (j) => j.etat.archiveTronquee === chemin(j.t, archive(ARCHIVES[2])),
       message: (j) => j.t('incendie-evenement-tronquee'),
     },
     {

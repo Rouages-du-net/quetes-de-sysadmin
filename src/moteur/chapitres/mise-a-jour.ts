@@ -201,6 +201,7 @@ export const miseAJour: Chapitre = {
   ],
   maison: M,
   accueil: 'message_de_yasmine.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'fablab-2027',
   comptes,

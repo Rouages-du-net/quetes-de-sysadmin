@@ -93,6 +93,7 @@ export const secret: Chapitre = {
   ],
   maison: M,
   accueil: 'courriel_awa.txt',
+  noms: true,
   final: 'fin',
   motDePasse: MOT_DE_PASSE,
   comptes: () => comptesCooperative(false),

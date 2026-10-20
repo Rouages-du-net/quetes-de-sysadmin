@@ -113,3 +113,61 @@ nom-phare-txt = lighthouse.txt
 nom-bourg-txt = village.txt
 nom-effaceur-txt = eraser.txt
 nom-fete-du-phare-txt = lighthouse-festival.txt
+
+## Le Datacenter (et La Coopérative, où Awa écrit aussi) ; le disque /mnt/sauvegarde de l'incendie prend le nom de « sauvegarde » (La Sauvegarde, plus haut)
+nom-courriel_awa-txt = email_awa.txt
+nom-message_de_lea-txt = message_from_lea.txt
+nom-PRA-txt = DRP.txt
+
+## Le Paquet perdu
+nom-note_de_kofi-txt = note_from_kofi.txt
+nom-carnet-txt = notebook.txt
+
+## La Machine à remonter le temps (poemes/phare.txt prend le nom de La Sauvegarde, plus haut)
+nom-message_d_ines-txt = message_from_ines.txt
+nom-aide_git-txt = help_git.txt
+nom-mer-txt = sea.txt
+
+## Les Archives
+nom-lettre_de_rosa-txt = letter_from_rosa.txt
+nom-mot_de_rosa-txt = note_from_rosa.txt
+
+## Les Lettres du quartier (LISEZMOI.txt sert aussi dans La Fabrique et L'Astreinte)
+nom-courriel_kofi-txt = email_kofi.txt
+nom-note_de_rania-txt = note_from_rania.txt
+nom-LISEZMOI-txt = README.txt
+nom-aide_dns-txt = help_dns.txt
+nom-message_de_kofi-txt = message_from_kofi.txt
+nom-aide_journaux-txt = help_logs.txt
+nom-courriel_rania-txt = email_rania.txt
+
+## La Fabrique
+nom-message_de_yasmine-txt = message_from_yasmine.txt
+nom-aide_compose-txt = help_compose.txt
+nom-message_de_rania-txt = message_from_rania.txt
+nom-mot_de_yasmine-txt = note_from_yasmine.txt
+nom-mot_de_rania-txt = note_from_rania.txt
+
+## La Gazette
+nom-message_de_samia-txt = message_from_samia.txt
+nom-mot_de_theo-txt = note_from_theo.txt
+
+## La Ludothèque
+nom-message_de_berenice-txt = message_from_berenice.txt
+nom-mot_de_malo-txt = note_from_malo.txt
+
+## L'Astreinte
+nom-message_de_zoe-txt = message_from_zoe.txt
+nom-mail_hebergeur-txt = mail_hosting.txt
+
+## La Maison des associations
+nom-courriel_yasmine-txt = email_yasmine.txt
+nom-courriel_hebergeur-txt = email_hosting.txt
+
+## La Ruche
+nom-courriel_malik-txt = email_malik.txt
+nom-plan-commutateur-txt = switch-plan.txt
+nom-notes-de-sacha-txt = notes-from-sacha.txt
+nom-courriel_ines-txt = email_ines.txt
+nom-courriel_sami-txt = email_sami.txt
+nom-borne-bureaux-txt = ap-offices.txt

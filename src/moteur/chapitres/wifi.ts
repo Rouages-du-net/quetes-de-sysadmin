@@ -257,6 +257,7 @@ export const wifi: Chapitre = {
   ],
   maison: M,
   accueil: 'courriel_malik.txt',
+  noms: true,
   final: 'fin',
   motDePasse: MOT_DE_PASSE,
   comptes: () => {

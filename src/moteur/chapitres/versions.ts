@@ -108,6 +108,7 @@ export const versions: Chapitre = {
   ],
   maison: M,
   accueil: 'mot_de_rosa.txt',
+  noms: true,
   final: 'fin',
   comptes: () => ({
     utilisateurs: { root: { uid: 0, groupe: 'root', maison: '/root' }, vous: { uid: 1000, groupe: 'vous' }, rosa: { uid: 1001, groupe: 'rosa' } },

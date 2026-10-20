@@ -146,6 +146,7 @@ export const concert: Chapitre = {
   ],
   maison: M,
   accueil: 'message_de_kofi.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'fourmis-2026',
   comptes,

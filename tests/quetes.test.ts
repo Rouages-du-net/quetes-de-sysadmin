@@ -368,7 +368,7 @@ for (const langue of LANGUES)
         expect(tout).toContain('HTTP/1.1 404 Not Found');
         contient(tout, 'avec la page de mercredi');
         expect(s.termine).toBe(false);
-        s.executer('sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /');
+        s.executer(L('sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /'));
         expect(s.termine).toBe(true);
       });
 

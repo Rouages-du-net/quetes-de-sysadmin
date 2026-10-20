@@ -24,7 +24,7 @@ composition-message-de-yasmine =
     bookings must not disappear if the containers are recreated.
     The app must answer on http://localhost:8081.
 
-    For sudo: fablab-2027. My notes: aide_compose.txt."
+    For sudo: fablab-2027. My notes: help_compose.txt."
 composition-aide-compose =
     YASMINE'S NOTES — DOCKER COMPOSE
 

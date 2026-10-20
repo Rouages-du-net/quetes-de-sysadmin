@@ -148,6 +148,7 @@ export const port: Chapitre = {
   ],
   maison: M,
   accueil: 'courriel_kofi.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'fourmis-2026',
   surveillePoste: true,
