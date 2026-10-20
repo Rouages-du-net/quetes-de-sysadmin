@@ -19,7 +19,7 @@ hebergeur-courriel-yasmine =
     all the 2025 price page has to go, those prices are out of date.
 
     Gaspard used to handle it, with FileZilla; his notes are in
-    notes-gaspard.txt. But the web host wrote to us (courriel_hebergeur.txt):
+    notes-gaspard.txt. But the web host wrote to us (email_hosting.txt):
     since 1 March, no more plain FTP.
 
     His credentials, which the web host sent me again:
@@ -108,7 +108,7 @@ hebergeur-evenement-certificat =
     issued for *.hebergeur.example, and you asked for ftp.maison.example.
     That's the error Gaspard got. You don't fix it by turning off
     verification, but by asking for the server under the name its
-    certificate carries (courriel_hebergeur.txt).
+    certificate carries (email_hosting.txt).
 hebergeur-evenement-sans-verification =
     Careful: certificate verification is turned off
     (ssl:verify-certificate). The connection is encrypted… but with

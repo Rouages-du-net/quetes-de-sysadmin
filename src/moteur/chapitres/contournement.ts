@@ -194,6 +194,7 @@ export const contournement: Chapitre = {
   ],
   maison: M,
   accueil: 'message_de_rania.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'fablab-2027',
   comptes,

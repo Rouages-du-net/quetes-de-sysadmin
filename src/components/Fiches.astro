@@ -1,0 +1,115 @@
+---
+// Les fiches pour les enseignant·es, dans une langue : une par chapitre
+// (objectif, ce qu'il faut avoir fait avant, commandes découvertes, durée
+// indicative), tirées des histoires elles-mêmes à la construction du site.
+// Les textes des histoires viennent de src/textes/<langue>/ ; ceux de la page,
+// d'ici (une page par langue, comme le reste du site).
+import { HISTOIRES } from '../moteur/chapitres';
+import { fiches } from '../moteur/fiches';
+import { traducteur, typographie } from '../textes';
+
+interface Props {
+  langue: 'fr' | 'en';
+}
+const { langue } = Astro.props;
+const t = traducteur(langue);
+const typo = (texte: string) => typographie(texte, langue);
+const toutes = fiches();
+const total = toutes.reduce((s, f) => s + f.duree, 0);
+const heures = (minutes: number) =>
+  langue === 'en'
+    ? minutes < 60
+      ? `${minutes} min`
+      : `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${String(minutes % 60).padStart(2, '0')} min` : ''}`
+    : minutes < 60
+      ? `${minutes} min`
+      : `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${String(minutes % 60).padStart(2, '0')}` : ''}`;
+const fr = langue === 'fr';
+---
+<h1>{fr ? 'Pour les enseignant·es' : 'For teachers'}</h1>
+{fr ? (
+  <p class="intro">
+    Chaque chapitre est une petite mission sur un serveur simulé, avec de vraies commandes. Le jeu
+    vérifie le <strong>résultat</strong> sur l'état du système, pas la commande exacte : plusieurs
+    solutions correctes passent, et chaque chapitre se termine par un débrief (ce qui s'est passé,
+    la bonne pratique, la documentation officielle).
+  </p>
+) : (
+  <p class="intro">
+    Each chapter is a small mission on a simulated server, with real commands. The game checks the
+    <strong>result</strong> on the state of the system, not the exact command: several correct
+    solutions pass, and each chapter ends with a debrief (what happened, the good practice, the
+    official documentation).
+  </p>
+)}
+<p class="intro">
+  {fr
+    ? `${HISTOIRES.length} histoires, ${toutes.length} chapitres, environ ${heures(total)} en tout. Les durées sont indicatives (une dizaine de minutes pour s'installer, puis quelques minutes par étape vérifiée) : un groupe débutant prendra plus de temps.`
+    : `${HISTOIRES.length} stories, ${toutes.length} chapters, about ${heures(total)} in all. Durations are only a guide (ten minutes or so to settle in, then a few minutes per checked step): a beginner group will take longer.`}
+</p>
+
+<section aria-labelledby="organiser">
+  <h2 id="organiser">{fr ? 'Organiser une séance' : 'Running a session'}</h2>
+  {fr ? (
+    <ul class="intro">
+      <li><strong>Sans compte, sans installation</strong> : la progression reste dans le navigateur de chaque élève. Rien n'est envoyé nulle part.</li>
+      <li><strong>L'Effaceur d'abord</strong> : il apprend à se déplacer et donne les clés SSH des autres histoires. Pour ouvrir directement une autre histoire (un TP ciblé), intégrez le jeu avec son attribut <code>histoire</code> (voir chaque histoire ci-dessous).</li>
+      <li><strong>Rendre son travail</strong> : sous le terminal, le « carnet du sysadmin » se télécharge en Markdown. Il contient la progression (chapitres terminés) et les commandes utilisées, avec la première ligne tapée.</li>
+      <li><strong>En évaluation</strong> : le mode examen recommence un chapitre sans aucun indice, avec un chrono.</li>
+      <li><strong>Bloqué·e ?</strong> Le jeu renvoie vers <code>man</code>, <code>--help</code> et <code>man -k</code> plutôt que de donner la réponse : c'est le réflexe à faire prendre.</li>
+    </ul>
+  ) : (
+    <ul class="intro">
+      <li><strong>No account, nothing to install</strong>: progress stays in each student's browser. Nothing is sent anywhere.</li>
+      <li><strong>The Eraser first</strong>: it teaches how to move around and gives the SSH keys to the other stories. To open another story directly (a focused lab), embed the game with its <code>histoire</code> attribute (see each story below), and <code>langue="en"</code>.</li>
+      <li><strong>Handing in work</strong>: under the terminal, the "sysadmin notebook" downloads as Markdown. It contains the progress (finished chapters) and the commands used, with the first line typed.</li>
+      <li><strong>For assessment</strong>: exam mode restarts a chapter with no hints at all, and a timer.</li>
+      <li><strong>Stuck?</strong> The game points to <code>man</code>, <code>--help</code> and <code>man -k</code> rather than giving the answer: that is the habit to build.</li>
+    </ul>
+  )}
+</section>
+
+{HISTOIRES.map((h) => {
+  const liste = toutes.filter((f) => f.histoire === h);
+  const duree = heures(liste.reduce((s, f) => s + f.duree, 0));
+  return (
+    <section class="fiche-histoire" aria-labelledby={`h-${h.id}`}>
+      <h2 id={`h-${h.id}`}>{t(`histoire-${h.id}`)}</h2>
+      <p>{typo(t(`histoire-${h.id}.resume`))}</p>
+      <p class="discret">
+        {fr
+          ? `${liste.length} ${liste.length > 1 ? 'chapitres' : 'chapitre'}, environ ${duree}.`
+          : `${liste.length} ${liste.length > 1 ? 'chapters' : 'chapter'}, about ${duree}.`}
+        {h.id !== 'effaceur' && (fr ? " Demande les clés données à la fin de l'Effaceur, sauf en ouverture directe :" : ' Needs the keys given at the end of The Eraser, unless opened directly:')}
+      </p>
+      {h.id !== 'effaceur' && <pre><code>{`<quetes-de-sysadmin histoire="${h.id}"${fr ? '' : ' langue="en"'}></quetes-de-sysadmin>`}</code></pre>}
+      <ol class="fiches">
+        {liste.map((f) => (
+          <li class="fiche" id={`c-${f.chapitre.id}`}>
+            <h3>{t('chapitre-numero', { numero: f.chapitre.numero })}{fr ? ' : ' : ': '}{t(`chapitre-${f.chapitre.id}`)}</h3>
+            <dl>
+              <dt>{fr ? 'Objectif' : 'Goal'}</dt>
+              <dd>{typo(t(`chapitre-${f.chapitre.id}.resume`))}</dd>
+              <dt>{fr ? 'Avant' : 'Before'}</dt>
+              <dd>
+                {f.avant
+                  ? fr ? `« ${t(`chapitre-${f.avant.id}`)} »` : `"${t(`chapitre-${f.avant.id}`)}"`
+                  : h.id === 'effaceur'
+                    ? fr ? 'Rien : on part de zéro.' : 'Nothing: you start from scratch.'
+                    : fr ? "L'Effaceur (ou une ouverture directe)." : 'The Eraser (or a direct opening).'}
+              </dd>
+              <dt>{fr ? 'Commandes découvertes' : 'New commands'}</dt>
+              <dd>
+                {f.nouvelles.length
+                  ? f.nouvelles.map((c, i) => <>{i > 0 && ', '}<code>{c}</code></>)
+                  : fr ? "Aucune nouvelle : on réutilise ce qu'on connaît." : 'None: you reuse what you know.'}
+              </dd>
+              <dt>{fr ? 'Durée indicative' : 'Approximate time'}</dt>
+              <dd>{heures(f.duree)}</dd>
+            </dl>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+})}

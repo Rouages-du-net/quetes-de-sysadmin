@@ -53,6 +53,7 @@ export const cles: Chapitre = {
   ],
   maison: M,
   accueil: 'courriel_yasmine.txt',
+  noms: true,
   final: 'fin',
   motDePasse: MOT_DE_PASSE,
   comptes: comptesMaison,

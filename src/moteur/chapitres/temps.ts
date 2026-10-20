@@ -2,7 +2,7 @@
 // d'un texte et revenir en arrière. Inès, romancière, a abîmé son manuscrit ;
 // heureusement, il est suivi par git. Ses poèmes, eux, ne le sont pas.
 
-import { d, f, type Chapitre } from '../monde';
+import { d, f, nom, type Chapitre } from '../monde';
 import type { Traduire } from '../../textes';
 import { nouveauCommit, type Commit, type Depot } from '../commandes/git';
 
@@ -42,6 +42,7 @@ export const temps: Chapitre = {
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'git'],
   maison: M,
   accueil: 'message_d_ines.txt',
+  noms: true,
   final: 'fin',
   etat: (t) => ({
     git: { [ROMAN]: historique(t) },
@@ -57,7 +58,7 @@ export const temps: Chapitre = {
             '.git': d({ HEAD: f('ref: refs/heads/main', { lignes: true }) }),
             'roman.txt': f(versions(t).v4, { lignes: true }),
           }),
-          poemes: d(Object.fromEntries(POEMES_INES.map((nom) => [nom, f(t(`manuscrit-poeme-${nom.replace('.txt', '')}`), { lignes: true })]))),
+          poemes: d(Object.fromEntries(POEMES_INES.map((poeme) => [poeme, f(t(`manuscrit-poeme-${poeme.replace('.txt', '')}`), { lignes: true })]))),
           'aide_git.txt': f(t('manuscrit-aide-git')),
         }),
       }),
@@ -87,7 +88,7 @@ export const temps: Chapitre = {
       condition: (j) => {
         const depot: Depot | undefined = j.etat.git?.[POEMES];
         const c = depot?.commits.at(-1);
-        return !!c && POEMES_INES.every((nom) => nom in c.fichiers);
+        return !!c && POEMES_INES.every((poeme) => nom(j.t, poeme) in c.fichiers);
       },
       message: (j) => j.t('manuscrit-evenement-poemes'),
     },

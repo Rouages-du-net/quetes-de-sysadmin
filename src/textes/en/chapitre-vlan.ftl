@@ -15,7 +15,7 @@ vlan-courriel-malik =
     The electrician came by this weekend: he "split the network into VLANs"
     on the switch, so that the guest Wi-Fi can no longer see our
     computers, the printer or the cameras. His plan is in
-    plan-commutateur.txt.
+    switch-plan.txt.
 
     Since then, nothing works: even the office NAS doesn't answer any more!
     He told me: "it's up to the router to follow, you need to create the

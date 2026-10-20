@@ -26,7 +26,7 @@ chez-moi-courriel-kofi =
     that is authoritative for the cafe.example zone (BIND, the named
     service). The registry keeps a copy of it, on ns2.registre.example.
 
-    Can you take a look? Rania left some help in aide_dns.txt. For
+    Can you take a look? Rania left some help in help_dns.txt. For
     sudo: fourmis-2026
 chez-moi-aide-dns =
     DNS HELP — BY RANIA

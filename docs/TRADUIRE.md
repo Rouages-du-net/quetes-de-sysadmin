@@ -65,11 +65,37 @@ Pièges du format :
   traduction officielle de cet outil dans ta langue, quand elle existe :
   c'est ce que verrait un·e administrateur·rice avec `LANG` dans ta langue.
 
-Pour l'instant, les **noms des lieux et des objets** (`Phare`, `crabe`) sont
-encore dans le code : leur traduction, avec des noms faciles à taper dans
-chaque langue, est prévue (voir la feuille de route, phase 10). En attendant,
-une traduction garde ces noms tels quels (on les tape) et peut les expliquer
-au passage : « the Seau (bucket) ».
+### Les noms des lieux et des objets
+
+Les dossiers et les fichiers qu'on tape (`Phare`, `crabe`,
+`.ampoule_de_secours`, `souvenirs`) se traduisent dans `noms.ftl`. Le nom
+français sert d'identifiant : `nom-<nom>`, où le point initial devient
+`point-` et les autres points des tirets.
+
+```ftl
+nom-Phare = Lighthouse
+nom-point-ampoule_de_secours = .spare_bulb
+nom-effaceur-conf-corrige = eraser.conf.fixed
+```
+
+Un bon nom se tape sans effort sur un clavier de ta langue : lettres sans
+accent, chiffres, `.`, `-` ou `_`, aucune espace (`tests/noms.test.ts` le
+vérifie). Dans un même dossier, deux noms doivent rester différents, et
+mieux vaut qu'ils se distinguent dès les premières lettres, pour la
+complétion par Tab. Les textes de l'histoire emploient ensuite ces noms
+tels quels, sans glose : « mv crab Bucket ».
+
+Seules les histoires dont le chapitre déclare `noms: true` traduisent leurs
+noms : c'est le cas de toutes. L'Effaceur et le poste traduisent tous leurs
+lieux et objets ; les autres histoires traduisent les documents qu'on lit
+dans sa maison (courriels, messages, mots, notes d'aide, `LISEZMOI.txt`,
+plan de reprise…). Les données de leurs serveurs gardent leur nom
+français, comme sur un serveur tenu par une équipe française : dossiers et
+sites, bases, fichiers suivis par git, restic, rsnapshot ou rsync, ou
+écrits par le jeu en cours de partie (le fonds des Archives, le partage de
+la Ludothèque, les comptes rendus de la Maison des associations). Un tel
+nom ne se traduit que si tout ce qui le désigne suit (instantanés,
+dépôts, configuration, machines internes, qui ne sont pas renommées).
 
 Les commandes des exemples du manuel sont dans le code (`pages.ts`). Quand
 l'une d'elles contient des mots (`grep "mot de passe" journal.txt`), une
@@ -90,7 +116,7 @@ noms de jeux de la base…) se traduisent par ce que le joueur ou la joueuse
 | Code | Langue | État |
 |---|---|---|
 | `fr` | français | langue de référence |
-| `en` | anglais | complet (textes, manuel, messages des outils comme avec `LANG=C`) ; noms des lieux et fichiers encore en français |
+| `en` | anglais | complet (textes, manuel, messages des outils comme avec `LANG=C`, noms des lieux et des objets de L'Effaceur et du poste, documents des autres histoires) ; données des serveurs des histoires en français |
 
 ## Ajouter une langue
 
@@ -117,3 +143,9 @@ qui permettent de traduire sans toucher à Git.
 - Une phrase entière par message, jamais de phrase assemblée par morceaux.
 - `tests/textes.test.ts` échoue si du texte français reste dans
   `src/moteur/` ou `src/interface/`.
+- Un chapitre aux noms traduits (`noms: true`) est écrit avec les noms
+  français ; le monde est renommé à la création. Tout chemin du code passe
+  alors par `chemin(j.t, '/Cabane/Jetee/filet')`, et un nom seul par
+  `nom(j.t, 'levain')` (voir `src/moteur/monde.ts`). Dans les tests, les
+  commandes s'écrivent aussi en français et passent par `dansLaLangue()`
+  (`tests/noms.ts`).

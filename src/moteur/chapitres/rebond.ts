@@ -56,6 +56,7 @@ export const rebond: Chapitre = {
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname', 'chmod', 'rm', 'nano', 'ssh'],
   maison: M,
   accueil: 'courriel_yasmine.txt',
+  noms: true,
   final: 'fin',
   motDePasse: MOT_DE_PASSE,
   comptes: comptesMaison,

@@ -91,6 +91,7 @@ export const hebergeur: Chapitre = {
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'id', 'whoami', 'hostname', 'ssh', 'scp', 'sftp', 'lftp'],
   maison: M,
   accueil: 'courriel_yasmine.txt',
+  noms: true,
   final: 'fin',
   motDePasse: MOT_DE_PASSE,
   comptes: comptesMaison,

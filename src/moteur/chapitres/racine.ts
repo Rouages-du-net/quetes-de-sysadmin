@@ -2,7 +2,8 @@
 // Ici, l'arborescence ressemble enfin à un vrai Linux : /home, /etc,
 // /var/log, /root. Fin de l'histoire de l'Effaceur.
 
-import { d, f, type Chapitre } from '../monde';
+import { chemin, d, f, nom, type Chapitre } from '../monde';
+import type { Jeu } from '../shell';
 
 const M = '/home/vous';
 const SOUVENIRS = `${M}/souvenirs`;
@@ -10,12 +11,15 @@ const CONF = '/etc/effaceur.conf';
 const TOTAL = 8;
 
 const souvenir = (texte: string) => f(texte);
+// La ligne corrigée de la configuration, dans la langue : « cible = /Royaume/Corbeille ».
+const cibleCorrigee = (j: Jeu) => `${nom(j.t, 'cible')} = ${chemin(j.t, '/Royaume/Corbeille')}`;
 
 export const racine: Chapitre = {
   id: 'racine',
   numero: 3,
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv', 'grep', 'rm', 'touch', 'cp', 'mkdir', 'chmod', 'whoami', 'sudo'],
   maison: M,
+  noms: true,
   accueil: 'arrivee.txt',
   final: 'corrige',
   motDePasse: 'tournesol',
@@ -114,8 +118,8 @@ export const racine: Chapitre = {
   // L'Effaceur avance : à chaque commande, il efface un souvenir, tant que
   // les autres utilisateurs ont le droit d'écrire dans le lieu.
   apresCommande: (j) => {
-    if (!j.drapeaux.has('alerte') || j.drapeaux.has('corrige') || !j.existe(CONF)) return;
-    const lieu = j.trouver(SOUVENIRS);
+    if (!j.drapeaux.has('alerte') || j.drapeaux.has('corrige') || !j.existe(chemin(j.t, CONF))) return;
+    const lieu = j.trouver(chemin(j.t, SOUVENIRS));
     if (lieu?.type !== 'dossier' || !j.peut(lieu, 'w', 'effaceur') || !j.peut(lieu, 'x', 'effaceur')) return;
     const nom = Object.keys(lieu.enfants).sort()[0];
     if (!nom) return;
@@ -131,24 +135,24 @@ export const racine: Chapitre = {
     {
       id: 'protege',
       condition: (j) => {
-        const lieu = j.trouver(SOUVENIRS);
+        const lieu = j.trouver(chemin(j.t, SOUVENIRS));
         return j.drapeaux.has('alerte') && !j.drapeaux.has('corrige') && lieu?.type === 'dossier' && !(j.peut(lieu, 'w', 'effaceur') && j.peut(lieu, 'x', 'effaceur'));
       },
-      message: (j) => j.t('racine-evenement-protege', { sauves: j.compter(SOUVENIRS, ''), total: TOTAL }),
+      message: (j) => j.t('racine-evenement-protege', { sauves: j.compter(chemin(j.t, SOUVENIRS), ''), total: TOTAL }),
     },
     {
       id: 'conf-effacee',
-      condition: (j) => !j.existe(CONF),
+      condition: (j) => !j.existe(chemin(j.t, CONF)),
       message: (j) => j.t('racine-evenement-conf-effacee'),
     },
     {
       id: 'corrige',
       condition: (j) => {
-        const conf = j.trouver(CONF);
-        return conf?.type === 'fichier' && typeof conf.contenu === 'string' && conf.contenu.includes('cible = /Royaume/Corbeille');
+        const conf = j.trouver(chemin(j.t, CONF));
+        return conf?.type === 'fichier' && typeof conf.contenu === 'string' && conf.contenu.includes(cibleCorrigee(j));
       },
       message: (j) => {
-        const sauves = j.compter(SOUVENIRS, '');
+        const sauves = j.compter(chemin(j.t, SOUVENIRS), '');
         return j.t('racine-evenement-corrige', { sauves, total: TOTAL, perte: sauves < TOTAL ? 'oui' : 'non' });
       },
     },

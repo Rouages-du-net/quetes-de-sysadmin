@@ -1,6 +1,7 @@
 ### Story "The Eraser", chapter 4 "The Backup": rsync and cron.
-### Commands, paths, file names and the output of rsync and cron
-### (in English) are not translated.
+### Commands, system paths and the output of rsync and cron are not
+### translated; place and file names (memories, /mnt/backup,
+### note_from_maelle.txt…) come from noms.ftl.
 
 chapitre-sauvegarde = The Backup
     .resume = Never again: back up with rsync, every night with cron, and know how to restore.
@@ -8,45 +9,45 @@ chapitre-sauvegarde = The Backup
 ## Files
 
 sauvegarde-mot-de-maelle =
-    A note from Maëlle, the keeper of the Phare:
+    A note from Maëlle, the keeper of the Lighthouse:
 
     "Since the Eraser stopped, the kingdom has got its memories back
-    (they're in ~/souvenirs). But I'm still afraid: what if something
+    (they're in ~/memories). But I'm still afraid: what if something
     erased them again?
 
-    Someone plugged in a backup disk for me, mounted on /mnt/sauvegarde.
+    Someone plugged in a backup disk for me, mounted on /mnt/backup.
     Could you:
 
-    1. copy the memories to /mnt/sauvegarde/souvenirs;
+    1. copy the memories to /mnt/backup/memories;
     2. make sure this copy is redone ALL BY ITSELF, every night;
     3. and show me that we know how to get them back, the day we need to?
 
     I was told about rsync and cron. You'll find everything in man rsync
     and man crontab."
 sauvegarde-souvenir-premiere-lettre =
-    The first letter that reached the Port after the light came back. It
-    begins: "Dear Maëlle, we saw the Phare from out at sea…"
+    The first letter that reached the Harbour after the light came back. It
+    begins: "Dear Maëlle, we saw the Lighthouse from out at sea…"
 sauvegarde-souvenir-phare =
-    The evening the Phare was lit again: a beam sweeping the sea, and
+    The evening the Lighthouse was lit again: a beam sweeping the sea, and
     Captain Ana hoisting the sail.
 sauvegarde-souvenir-bourg =
-    The Bourg celebrating: the sourdough saved, the clock running again,
+    The Village celebrating: the sourdough saved, the clock running again,
     the school found again.
 sauvegarde-souvenir-nour =
-    Nour, found in the Galerie, laughing as she eats cheese.
+    Nour, found in the Tunnel, laughing as she eats cheese.
 sauvegarde-souvenir-effaceur =
-    The Eraser finally emptying the Corbeille, as on the first day, and
+    The Eraser finally emptying the Bin, as on the first day, and
     nothing else.
 sauvegarde-souvenir-fete-du-phare =
-    The Phare festival, today: the whole kingdom on the Jetée, and paper
-    lanterns all the way up to the Lanterne.
+    The Lighthouse festival, today: the whole kingdom on the Pier, and
+    paper lanterns all the way up to the Lantern.
 
 ## The night (cron)
 
 # { $fichier }: the memory that arrived during the day
 sauvegarde-nuit-debut =
     Evening falls on the kingdom. During the day, a new memory
-    arrived: ~/souvenirs/{ $fichier }.
+    arrived: ~/memories/{ $fichier }.
 
     The night goes by. Between midnight and 6 am, cron wakes up and runs
     what your crontab asks of it…
@@ -58,7 +59,7 @@ sauvegarde-nuit-ok =
     without you typing anything. That's an automatic backup.
 sauvegarde-matin =
     But Maëlle arrives, distraught: "I wanted to tidy up… and I deleted
-    ~/souvenirs/{ $fichier }!" On Linux, rm doesn't go through a trash
+    ~/memories/{ $fichier }!" On Linux, rm doesn't go through a trash
     can. Luckily, you have a backup. Restore this memory.
 sauvegarde-nuit-rien =
     In the morning, nothing has changed: none of your crontab's jobs fell
@@ -79,12 +80,12 @@ sauvegarde-nuit-echec =
 
 # { $sauvegarde }: the backup directory
 sauvegarde-evenement-imbrique =
-    Look closely: you now have { $sauvegarde }/souvenirs, a souvenirs
-    directory INSIDE the souvenirs directory. For rsync, the source's
-    trailing slash matters: "souvenirs/" means "the contents of
-    souvenirs", "souvenirs" means "the directory itself". This extra
+    Look closely: you now have { $sauvegarde }/memories, a memories
+    directory INSIDE the memories directory. For rsync, the source's
+    trailing slash matters: "memories/" means "the contents of
+    memories", "memories" means "the directory itself". This extra
     directory doesn't get in the way, but aim right from now on: rsync -a
-    ~/souvenirs/ followed by the destination.
+    ~/memories/ followed by the destination.
 sauvegarde-evenement-copie =
     The memories are copied to the backup disk. But a backup you have to
     remember to do by hand always ends up forgotten. Ask cron to redo it

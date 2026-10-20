@@ -84,6 +84,7 @@ export const porte: Chapitre = {
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'chmod', 'nano', 'sudo', 'systemctl', 'journalctl', 'sshd'],
   maison: M,
   accueil: 'courriel_kofi.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'fourmis-2026',
   comptes: () => {

@@ -19,7 +19,7 @@ paquet-perdu-note-de-kofi =
     I've already restarted the router. Nothing. Can you take a look? The
     password for this computer, if you need it: fourmiliere
 
-    There's a notebook next to the screen:  cat carnet.txt  "
+    There's a notebook next to the screen:  cat notebook.txt  "
 paquet-perdu-carnet =
     TROUBLESHOOTING NOTEBOOK — find where the packet gets lost
 

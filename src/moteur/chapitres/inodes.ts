@@ -199,6 +199,7 @@ export const inodes: Chapitre = {
   ],
   maison: M,
   accueil: 'message_de_zoe.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'antenne-2027',
   comptes,

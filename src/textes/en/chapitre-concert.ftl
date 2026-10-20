@@ -17,7 +17,7 @@ concert-message-de-kofi =
 
     Could you look in the nginx logs at who is asking for what, and make
     sure the real visitors get through? Rania left a guide
-    (aide_journaux.txt). And no quick hack that only works tonight: a rule
+    (help_logs.txt). And no quick hack that only works tonight: a rule
     that holds up."
 concert-aide-journaux =
     LOG GUIDE — BY RANIA

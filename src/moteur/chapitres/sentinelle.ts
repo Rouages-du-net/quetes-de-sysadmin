@@ -105,6 +105,7 @@ export const sentinelle: Chapitre = {
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'fail2ban-client'],
   maison: M,
   accueil: 'courriel_kofi.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'fourmis-2026',
   comptes: () => {

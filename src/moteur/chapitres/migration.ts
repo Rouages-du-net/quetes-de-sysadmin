@@ -92,6 +92,7 @@ export const migration: Chapitre = {
   ],
   maison: M,
   accueil: 'message_de_samia.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'gazette-2027',
   comptes,

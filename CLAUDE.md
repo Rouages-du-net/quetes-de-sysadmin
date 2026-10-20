@@ -127,10 +127,13 @@ rouages.net.
   `src/moteur/rouages.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).
 - `src/element.ts` : l'élément `<quetes-de-sysadmin>` (Shadow DOM).
-- `src/pages/enseignants.astro` : les fiches des quêtes, calculées par
+- `src/pages/enseignants.astro` et `src/pages/en/teachers.astro` : les
+  fiches des quêtes (composant `src/components/Fiches.astro`), calculées par
   `src/moteur/fiches.ts` (commandes découvertes, prérequis, durée).
 - `src/textes/<langue>/*.ftl` : tous les textes (Fluent), chargés par
-  `src/textes/index.ts` (`traducteur()`, `typographie()`).
+  `src/textes/index.ts` (`traducteur()`, `typographie()`) ; `noms.ftl` : les
+  noms des lieux et des objets des chapitres à `noms: true` (dans le code,
+  `chemin()` et `nom()` de `monde.ts` ; dans les tests, `dansLaLangue()`).
 - `tests/quetes.test.ts` : chaque chapitre rejoué ; `tests/navigateur.mjs` :
   Chromium, 1000 et 375 px, CSP de `.htaccess` appliquée, page 404,
   intégration dans une autre page.

@@ -4,7 +4,8 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
-import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
+import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { dansLaLangue } from './noms';
 
 const EFFACEUR = HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id);
 const CONFIG = '/etc/ssh/sshd_config';
@@ -12,6 +13,8 @@ const CONFIG = '/etc/ssh/sshd_config';
 for (const langue of LANGUES)
   describe(`La Maison des associations — ${langue}`, () => {
     const fr = langue === LANGUE_DE_REFERENCE;
+    // Une ligne écrite avec les noms français, dans la langue de la partie.
+    const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     const contient = (tout: string, texte: string) => fr && expect(tout).toContain(texte);
     const partie = (termines: string[] = []) => {
       const c = new Console({ langue, termines: [...EFFACEUR, ...termines] });
@@ -231,7 +234,7 @@ for (const langue of LANGUES)
 
     it('chapitre 5 — solution : sftp depuis le wiki, puis lftp en FTPS, mirror -R --delete', () => {
       const { c, jouer } = equipe(['cles', 'rebond', 'tunnel', 'transferts']);
-      let tout = jouer(['ssh maison', 'cat courriel_hebergeur.txt', 'exit']);
+      let tout = jouer(['ssh maison', L('cat courriel_hebergeur.txt'), 'exit']);
       if (fr) expect(tout).toContain('Serveur : ftp.hebergeur.example');
       tout = jouer(['sftp wiki', 'pwd', 'cd /srv/wiki', 'ls', 'get -r site', 'lls', 'bye', 'ls site']);
       expect(tout).toContain('Connected to wiki.');

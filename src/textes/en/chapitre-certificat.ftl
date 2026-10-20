@@ -14,7 +14,7 @@ certificat-courriel-awa =
 
     Léa, at the media library's front desk, tells me the website has been
     showing a security warning since this morning (her message is in
-    ~/message_de_lea.txt). The HTTPS certificate must have expired.
+    ~/message_from_lea.txt). The HTTPS certificate must have expired.
 
     I don't get it: certbot is supposed to renew it on its own, it tries
     twice a day. And since 2025, Let's Encrypt no longer sends an email

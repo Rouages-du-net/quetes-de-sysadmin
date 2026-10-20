@@ -1,7 +1,8 @@
 // Chapitre 2 — Le Bourg : grep, rm, touch, cp, mkdir. Notre propre histoire
 // et nos propres énigmes, dans la suite de L'Île du Phare.
 
-import { d, f, type Chapitre } from '../monde';
+import { chemin, d, f, nom, type Chapitre } from '../monde';
+import type { Jeu } from '../shell';
 
 const M = '/Quai';
 const BOULANGERIE = `${M}/Boulangerie`;
@@ -11,6 +12,9 @@ const COUR = `${RUELLE}/Cour`;
 const EGOUT = `${COUR}/Egout`;
 const CLASSE = `${M}/Ecole/Classe`;
 
+// Les engrenages de l'Atelier (engrenage, engrenage_2…), sous leur nom dans la langue.
+const engrenages = (j: Jeu) => j.compter(chemin(j.t, ATELIER), nom(j.t, 'engrenage'));
+
 // Un avis : une phrase par ligne (grep les lit ligne par ligne).
 const affiche = (texte: string) => f(texte, { lignes: true });
 
@@ -19,6 +23,7 @@ export const bourg: Chapitre = {
   numero: 2,
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv', 'grep', 'rm', 'touch', 'cp', 'mkdir'],
   maison: M,
+  noms: true,
   accueil: 'crieur.txt',
   final: 'nour',
   creerMonde: (t) =>
@@ -86,38 +91,38 @@ export const bourg: Chapitre = {
                           },
                         }),
                       },
-                      (jeu) => (jeu.existe(`${EGOUT}/rats.txt`) ? jeu.t('bourg-galerie-bloque') : null),
+                      (jeu) => (jeu.existe(chemin(jeu.t, `${EGOUT}/rats.txt`)) ? jeu.t('bourg-galerie-bloque') : null),
                     ),
                   },
                 ),
               },
-              (jeu) => (jeu.existe(`${RUELLE}/barricade`) ? jeu.t('bourg-cour-bloque') : null),
+              (jeu) => (jeu.existe(chemin(jeu.t, `${RUELLE}/barricade`)) ? jeu.t('bourg-cour-bloque') : null),
             ),
           },
           (jeu) =>
-            jeu.compter(ATELIER, 'engrenage') >= 5 ? null : jeu.t('bourg-ruelle-bloque'),
+            engrenages(jeu) >= 5 ? null : jeu.t('bourg-ruelle-bloque'),
         ),
       }),
     }),
   evenements: [
     {
       id: 'levain',
-      condition: (j) => j.compter(BOULANGERIE, 'levain') >= 3,
+      condition: (j) => j.compter(chemin(j.t, BOULANGERIE), nom(j.t, 'levain')) >= 3,
       message: (j) => j.t('bourg-evenement-levain'),
     },
     {
       id: 'engrenage',
-      condition: (j) => j.compter(ATELIER, 'engrenage') >= 1,
+      condition: (j) => engrenages(j) >= 1,
       message: (j) => j.t('bourg-evenement-engrenage'),
     },
     {
       id: 'engrenages',
-      condition: (j) => j.compter(ATELIER, 'engrenage') >= 5,
+      condition: (j) => engrenages(j) >= 5,
       message: (j) => j.t('bourg-evenement-engrenages'),
     },
     {
       id: 'classe',
-      condition: (j) => j.trouver(CLASSE)?.type === 'dossier',
+      condition: (j) => j.trouver(chemin(j.t, CLASSE))?.type === 'dossier',
       message: (j) =>
         j.drapeaux.has('nour-lue')
           ? j.t('bourg-evenement-classe')
@@ -125,26 +130,26 @@ export const bourg: Chapitre = {
     },
     {
       id: 'barricade',
-      condition: (j) => !j.existe(`${RUELLE}/barricade`),
+      condition: (j) => !j.existe(chemin(j.t, `${RUELLE}/barricade`)),
       message: (j) => j.t('bourg-evenement-barricade'),
     },
     {
       id: 'rats',
-      condition: (j) => j.existe(`${EGOUT}/fromage`),
+      condition: (j) => j.existe(chemin(j.t, `${EGOUT}/fromage`)),
       action: (j) => {
-        j.effacer(`${EGOUT}/rats.txt`);
-        j.effacer(`${EGOUT}/fromage`);
+        j.effacer(chemin(j.t, `${EGOUT}/rats.txt`));
+        j.effacer(chemin(j.t, `${EGOUT}/fromage`));
       },
       message: (j) => j.t('bourg-evenement-rats'),
     },
     {
       id: 'nour-sans-classe',
-      condition: (j) => j.drapeaux.has('nour-lue') && j.trouver(CLASSE)?.type !== 'dossier',
+      condition: (j) => j.drapeaux.has('nour-lue') && j.trouver(chemin(j.t, CLASSE))?.type !== 'dossier',
       message: (j) => j.t('bourg-evenement-nour-sans-classe'),
     },
     {
       id: 'nour',
-      condition: (j) => j.drapeaux.has('nour-lue') && j.trouver(CLASSE)?.type === 'dossier',
+      condition: (j) => j.drapeaux.has('nour-lue') && j.trouver(chemin(j.t, CLASSE))?.type === 'dossier',
       message: (j) => j.t('bourg-evenement-nour'),
     },
   ],

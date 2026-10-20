@@ -17,7 +17,7 @@ wifi-courriel-malik =
     "enterprise" access point (WPA2-Enterprise, 802.1X): everyone connects with
     their own directory account, and the access point puts the person in the
     VLAN the RADIUS server tells it. Its settings are in
-    borne-bureaux.txt.
+    ap-offices.txt.
 
     The RADIUS server is FreeRADIUS, already installed on the router
     (/etc/freeradius/3.0, man freeradius). What we want:

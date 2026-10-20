@@ -206,6 +206,7 @@ export const recidive: Chapitre = {
   ],
   maison: M,
   accueil: 'courriel_rania.txt',
+  noms: true,
   final: 'fin',
   motDePasse: 'fourmis-2026',
   comptes: () => {

@@ -86,10 +86,23 @@ export function apropos(mot: string, noms: string[], t: Traduire): string[] {
  * Vérifie les options courtes (-a, -la…) d'une commande qui déclare les
  * siennes. Renvoie le message d'erreur des coreutils, ou null.
  */
+/** Les options longues connues, réécrites en options courtes (--all → -a), comme les lit la commande. */
+export const raccourcir = (c: Commande, args: string[]): string[] => {
+  const fin = args.indexOf('--');
+  return args.map((a, i) => (c.longues && a.startsWith('--') && !a.includes('=') && (fin < 0 || i < fin) && c.longues[a.slice(2)] ? `-${c.longues[a.slice(2)]}` : a));
+};
+
 export function optionInvalide(nom: string, c: Commande, args: string[], t: Traduire): string | null {
   if (!c.options || c.propresOptions) return null;
   for (const a of args) {
-    if (!a.startsWith('-') || a === '-' || a.startsWith('--') || /^-\d+$/.test(a)) continue;
+    // Après « -- », plus aucune option.
+    if (a === '--') break;
+    if (a.startsWith('--')) {
+      const longue = a.slice(2).split('=')[0];
+      if (c.longues && longue in c.longues) continue;
+      return t('manuel-option-longue-inconnue', { commande: nom, option: a.split('=')[0] });
+    }
+    if (!a.startsWith('-') || a === '-' || /^-\d+$/.test(a)) continue;
     for (const lettre of a.slice(1)) if (!c.options.includes(lettre)) return t('manuel-option-invalide', { commande: nom, lettre });
   }
   return null;

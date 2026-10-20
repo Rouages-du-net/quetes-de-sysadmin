@@ -9,9 +9,9 @@
 // peut être redirigée dans un fichier (> écrase, >> ajoute). Les messages
 // d'erreur ne passent pas dans les tubes (sortie d'erreur séparée).
 
-import { comptesParDefaut, nettoyer, type Chapitre, type Comptes, type Dossier, type Noeud } from './monde';
+import { chemin, comptesParDefaut, nettoyer, nom, traduireNoms, type Chapitre, type Comptes, type Dossier, type Noeud } from './monde';
 import { COMMANDES, type Commande } from './commandes';
-import { aide, apropos, ligneWhatis, optionInvalide, pageMan } from './commandes/manuel';
+import { aide, apropos, ligneWhatis, optionInvalide, pageMan, raccourcir } from './commandes/manuel';
 import { traducteur, typographie, type Langue, type Traduire } from '../textes';
 
 export { decouper, appliquerMode } from './outils';
@@ -130,12 +130,17 @@ export class Shell implements Jeu {
     public hote = 'sysadmin',
   ) {
     this.t = traducteur(langue);
-    this.racine = chapitre.creerMonde(this.t);
-    this.maison = chapitre.maison;
-    this.cwd = chapitre.maison;
+    this.racine = chapitre.noms ? traduireNoms(this.t, chapitre.creerMonde(this.t)) : chapitre.creerMonde(this.t);
+    this.maison = chapitre.noms ? chemin(this.t, chapitre.maison) : chapitre.maison;
+    this.cwd = this.maison;
     this.etat = chapitre.etat?.(this.t) ?? {};
     this.comptes = chapitre.comptes?.() ?? comptesParDefaut();
     chapitre.initialiser?.(this);
+  }
+
+  /** Le fichier d'accueil du chapitre, sous son nom dans la langue. */
+  get accueil(): string {
+    return this.chapitre.noms ? nom(this.t, this.chapitre.accueil) : this.chapitre.accueil;
   }
 
   // ——— Chemins et fichiers ———
@@ -754,10 +759,12 @@ export class Shell implements Jeu {
     if (reste.includes('--help')) return aide(cmd, commande, this.t);
     const invalide = optionInvalide(cmd, commande, reste, this.t);
     if (invalide) return this.erreur(invalide);
+    // --all → -a : la commande ne lit que ses options courtes.
+    const options = commande.propresOptions ? reste : raccourcir(commande, reste);
     const avant = this.qui;
     if (root) this.qui = this.comme;
     try {
-      return commande.lancer({ args: reste, entree, jeu: this, dernier });
+      return commande.lancer({ args: options, entree, jeu: this, dernier });
     } finally {
       this.qui = avant;
     }

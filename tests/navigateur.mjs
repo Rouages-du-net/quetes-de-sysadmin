@@ -143,6 +143,14 @@ for (const largeur of [1000, 375]) {
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `en ${largeur} px : pas de défilement horizontal`);
   verifier(erreurs.length === 0, `en ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/en-${largeur}.png` });
+  // The teachers' page in English.
+  await page.locator('a[href="/en/teachers/"]').click();
+  await page.waitForURL(/\/en\/teachers\//);
+  verifier((await page.locator('h1').textContent()).includes('For teachers'), `en ${largeur} px : la page des enseignant·es en anglais`);
+  verifier((await page.locator('#c-goulot dt').first().textContent()) === 'Goal', `en ${largeur} px : fiches en anglais`);
+  verifier((await page.locator('.langue a').getAttribute('href')) === '/enseignants/', `en ${largeur} px : lien vers les fiches en français`);
+  verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `en ${largeur} px : fiches sans défilement horizontal`);
+  verifier(erreurs.length === 0, `en ${largeur} px : fiches sans erreur console ${erreurs.join(' ')}`);
   await page.close();
 }
 

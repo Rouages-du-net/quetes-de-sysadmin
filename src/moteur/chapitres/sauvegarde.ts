@@ -11,7 +11,7 @@
 // Sources : https://download.samba.org/pub/rsync/rsync.1,
 // https://manpages.debian.org/bookworm/cron/crontab.5.en.html
 
-import { d, f, type Chapitre } from '../monde';
+import { chemin, d, f, nom, type Chapitre } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { analyser, passer, tourneA } from '../cron';
 
@@ -26,7 +26,7 @@ const NUIT = [Date.UTC(2026, 9, 24, 0, 0), Date.UTC(2026, 9, 24, 6, 0)];
 
 const originaux = (j: Jeu): Record<string, string> => j.etat.originaux;
 // La sauvegarde contient-elle ces souvenirs, à l'identique ?
-const sauve = (j: Jeu, noms: string[]) => noms.every((n) => j.lire(`${SAUVEGARDE}/${n}`) === originaux(j)[n]);
+const sauve = (j: Jeu, noms: string[]) => noms.every((n) => j.lire(chemin(j.t, `${SAUVEGARDE}/${n}`)) === originaux(j)[n]);
 const tachesDeNuit = (j: Jeu) =>
   analyser(j.etat.crontabs?.vous ?? '', '').taches.filter((t) => {
     for (let ms = Date.UTC(2026, 9, 25, 0, 0); ms < Date.UTC(2026, 9, 26, 0, 0); ms += 60_000) if (tourneA(t, ms)) return /\brsync\b/.test(t.commande);
@@ -38,11 +38,12 @@ export const sauvegarde: Chapitre = {
   numero: 4,
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'mkdir', 'cp', 'mv', 'rm', 'nano', 'rsync', 'crontab'],
   maison: M,
+  noms: true,
   accueil: 'mot_de_maelle.txt',
   final: 'fin',
   etat: () => ({ crontabs: {}, versionCrontab: 0, versionNuit: 0, originaux: {} }),
   initialiser: (j) => {
-    for (const n of FICHIERS) j.etat.originaux[n] = j.lire(`${SOUVENIRS}/${n}`);
+    for (const n of FICHIERS) j.etat.originaux[n] = j.lire(chemin(j.t, `${SOUVENIRS}/${n}`));
   },
   creerMonde: (t) =>
     d({
@@ -67,10 +68,10 @@ export const sauvegarde: Chapitre = {
     if (!j.drapeaux.has('jour')) {
       // Le souvenir du jour, arrivé avant la nuit : la tâche doit l'emporter.
       j.drapeaux.add('jour');
-      const n = j.trouver(SOUVENIRS);
-      if (n?.type === 'dossier') n.enfants[NOUVEAU] = f(j.t('sauvegarde-souvenir-fete-du-phare'));
-      j.etat.originaux[NOUVEAU] = j.lire(`${SOUVENIRS}/${NOUVEAU}`);
-      morceaux.push(j.t('sauvegarde-nuit-debut', { fichier: NOUVEAU }));
+      const n = j.trouver(chemin(j.t, SOUVENIRS));
+      if (n?.type === 'dossier') n.enfants[nom(j.t, NOUVEAU)] = f(j.t('sauvegarde-souvenir-fete-du-phare'));
+      j.etat.originaux[NOUVEAU] = j.lire(chemin(j.t, `${SOUVENIRS}/${NOUVEAU}`));
+      morceaux.push(j.t('sauvegarde-nuit-debut', { fichier: nom(j.t, NOUVEAU) }));
     } else morceaux.push(j.t('sauvegarde-nuit-encore'));
     const executions = passer(j as Shell, NUIT[0], NUIT[1]);
     const courrier = executions
@@ -80,8 +81,8 @@ export const sauvegarde: Chapitre = {
     if (sauve(j, [...FICHIERS, NOUVEAU])) {
       j.drapeaux.add('nuit-ok');
       // Au matin, l'erreur humaine.
-      j.effacer(`${SOUVENIRS}/${EFFACE}`);
-      morceaux.push(j.t('sauvegarde-nuit-ok', { fichier: NOUVEAU }), j.t('sauvegarde-matin', { fichier: EFFACE }));
+      j.effacer(chemin(j.t, `${SOUVENIRS}/${EFFACE}`));
+      morceaux.push(j.t('sauvegarde-nuit-ok', { fichier: nom(j.t, NOUVEAU) }), j.t('sauvegarde-matin', { fichier: nom(j.t, EFFACE) }));
     } else if (!executions.length) morceaux.push(j.t('sauvegarde-nuit-rien'));
     else morceaux.push(courrier ? j.t('sauvegarde-nuit-courrier', { courrier }) : j.t('sauvegarde-nuit-echec'));
     return morceaux.join('\n\n');
@@ -89,8 +90,8 @@ export const sauvegarde: Chapitre = {
   evenements: [
     {
       id: 'imbrique',
-      condition: (j) => j.existe(`${SAUVEGARDE}/souvenirs`),
-      message: (j) => j.t('sauvegarde-evenement-imbrique', { sauvegarde: SAUVEGARDE }),
+      condition: (j) => j.existe(chemin(j.t, `${SAUVEGARDE}/souvenirs`)),
+      message: (j) => j.t('sauvegarde-evenement-imbrique', { sauvegarde: chemin(j.t, SAUVEGARDE) }),
     },
     {
       id: 'copie',
@@ -99,12 +100,12 @@ export const sauvegarde: Chapitre = {
     },
     {
       id: 'perdu',
-      condition: (j) => j.drapeaux.has('nuit-ok') && !j.existe(`${SAUVEGARDE}/${EFFACE}`) && !j.existe(`${SOUVENIRS}/${EFFACE}`),
-      message: (j) => j.t('sauvegarde-evenement-perdu', { fichier: EFFACE }),
+      condition: (j) => j.drapeaux.has('nuit-ok') && !j.existe(chemin(j.t, `${SAUVEGARDE}/${EFFACE}`)) && !j.existe(chemin(j.t, `${SOUVENIRS}/${EFFACE}`)),
+      message: (j) => j.t('sauvegarde-evenement-perdu', { fichier: nom(j.t, EFFACE) }),
     },
     {
       id: 'fin',
-      condition: (j) => j.drapeaux.has('nuit-ok') && j.lire(`${SOUVENIRS}/${EFFACE}`) === originaux(j)[EFFACE] && tachesDeNuit(j).length > 0,
+      condition: (j) => j.drapeaux.has('nuit-ok') && j.lire(chemin(j.t, `${SOUVENIRS}/${EFFACE}`)) === originaux(j)[EFFACE] && tachesDeNuit(j).length > 0,
       message: (j) => j.t('sauvegarde-evenement-fin'),
     },
   ],
