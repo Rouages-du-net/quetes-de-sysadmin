@@ -44,7 +44,7 @@ sonde-script =
     # TODO: run it every 5 minutes (cron? a systemd timer?)
 sonde-podcasts-lisezmoi =
     Podcast thumbnails: the automatic import drops them into
-    vignettes/ (one image per episode).
+    thumbnails/ (one image per episode).
 
 ## The drill night
 

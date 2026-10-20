@@ -11,7 +11,7 @@ chapitre-rancon = The ransom
 rancon-message-de-berenice =
     A message from Bérénice, chair of the game library:
 
-    "Disaster! This morning, not a single file on the share (/srv/partage)
+    "Disaster! This morning, not a single file on the share (/srv/share)
     will open: they all end in .locked, and a message is demanding
     money. We won't pay.
 

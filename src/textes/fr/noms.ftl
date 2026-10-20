@@ -179,3 +179,80 @@ nom-notes-de-sacha-txt = notes-de-sacha.txt
 nom-courriel_ines-txt = courriel_ines.txt
 nom-courriel_sami-txt = courriel_sami.txt
 nom-borne-bureaux-txt = borne-bureaux.txt
+
+### Les données des serveurs des histoires : dossiers et fichiers suivis par
+### restic, rsnapshot, rsync ou git. Le code les désigne par chemin() et nom(),
+### jusque dans les instantanés, les scripts et les crontabs.
+
+## Les Archives : le fonds (sauvegardé par restic dans Les versions), la clé USB et le disque de la mairie (la clé sert aussi dans La Ludothèque)
+nom-fonds = fonds
+nom-lisezmoi-txt = lisezmoi.txt
+nom-manuscrits = manuscrits
+nom-journal_de_marie-txt = journal_de_marie.txt
+nom-lettres_1914-txt = lettres_1914.txt
+nom-recettes_du_quartier-txt = recettes_du_quartier.txt
+nom-cartes = cartes
+nom-plan_1890-png = plan_1890.png
+nom-plan_1954-png = plan_1954.png
+nom-rendu-tmp = rendu.tmp
+nom-presse = presse
+nom-enregistrements = enregistrements
+nom-chants_du_marche-ogg = chants_du_marche.ogg
+nom-entretien_fatou-ogg = entretien_fatou.ogg
+nom-brut-tmp = brut.tmp
+nom-numerisations = numerisations
+nom-registre_1-png = registre_1.png
+nom-registre_2-png = registre_2.png
+nom-registre_3-png = registre_3.png
+nom-brut_registre_1-tiff = brut_registre_1.tiff
+nom-brut_registre_2-tiff = brut_registre_2.tiff
+nom-brut_registre_3-tiff = brut_registre_3.tiff
+nom-cle = cle
+nom-mairie = mairie
+nom-restic-bibliotheque = restic-bibliotheque
+nom-mot-de-passe = mot-de-passe
+
+## La Machine à remonter le temps : le roman suivi par git, les poèmes
+nom-roman = roman
+nom-roman-txt = roman.txt
+nom-poemes = poemes
+
+## Le Datacenter : le dossier de l'équipe
+nom-equipe = equipe
+
+## La Coopérative : les relevés de caisse, la sauvegarde de Marc (/srv/sauvegardes sert aussi dans La Maison des associations)
+nom-releves = releves
+nom-sauvegardes = sauvegardes
+nom-sauvegarde-caisse-sh = sauvegarde-caisse.sh
+
+## La Ludothèque : le partage (et sa copie sur le NAS, sauvegardé par restic et rsnapshot), le chiffreur, sa demande de rançon ; /srv/partage sert aussi dans La Maison des associations
+nom-partage = partage
+nom-inventaire-csv = inventaire.csv
+nom-planning-benevoles-txt = planning-benevoles.txt
+nom-affiche-fete-du-jeu-txt = affiche-fete-du-jeu.txt
+nom-regles = regles
+nom-jeu-de-l-oie-txt = jeu-de-l-oie.txt
+nom-petits-chevaux-txt = petits-chevaux.txt
+nom-dames-txt = dames.txt
+nom-scans-regles-pdf = scans-regles.pdf
+nom-LISEZ-MOI-POUR-RECUPERER-txt = LISEZ-MOI-POUR-RECUPERER.txt
+nom-point-maj = .maj
+nom-maj-systeme = maj-systeme
+nom-depot = depot
+nom-instantanes = instantanes
+
+## La Maison des associations : le partage (sauvegardé par rsync sur archives) et le wiki
+nom-comptes-rendus = comptes-rendus
+nom-ag-2026-txt = ag-2026.txt
+nom-ca-2027-09-txt = ca-2027-09.txt
+nom-affiches = affiches
+nom-fete-des-voisins-pdf = fete-des-voisins.pdf
+nom-planning-salles-txt = planning-salles.txt
+nom-accueil-md = accueil.md
+nom-rapport-2027-pdf = rapport-2027.pdf
+
+## L'Astreinte : les données de la radio (enregistrements sert aussi dans Les Archives ; vignette : les images que crée l'import des podcasts)
+nom-direct = direct
+nom-emissions = emissions
+nom-vignettes = vignettes
+nom-vignette = vignette

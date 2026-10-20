@@ -14,7 +14,7 @@ droits-courriel-awa =
 
     Two problems with the till team (Lina and Karim, group caisse):
 
-    1. The daily statements are in /srv/caisse/releves. Lina can't
+    1. The daily statements are in /srv/caisse/statements. Lina can't
        correct Karim's, and vice versa. And yet they are both in the
        caisse group! Look at ls -l. Everything they create there, today
        and tomorrow, must belong to the caisse group and be writable by

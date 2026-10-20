@@ -18,8 +18,9 @@
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html#IOReadBandwidthMax=device%20bytes,
 // https://docs.kernel.org/admin-guide/cgroup-v2.html#io
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../monde';
+import { chemin, d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../monde';
 import type { Jeu } from '../shell';
+import type { Traduire } from '../../textes';
 import { journaliser, nouveauSystemd, systemd, type Service } from '../systemd';
 import { etatDisque, io, prioritesActives, servieATemps, visePartition, type EtatIO } from '../entrees-sorties';
 import type { Processus } from '../commandes/systeme';
@@ -27,6 +28,10 @@ import type { Processus } from '../commandes/systeme';
 const M = '/home/vous';
 const Mo = 1024 * 1024;
 const ARCHIVES = 2190;
+// La copie du jour (rsync), dans la langue : /srv/radio/recordings/… en anglais.
+const copie = (t: Traduire) => `rsync -a ${chemin(t, '/srv/radio/enregistrements')}/ /srv/archives/2027-09-20/`;
+// Le relais lit le direct ici.
+const tampon = (t: Traduire) => chemin(t, '/srv/radio/direct/buffer.ts');
 const FLUX = 1730;
 // Lundi 20 septembre 2027, 16 h 14 : l'émission de l'après-midi est en direct.
 const MAINTENANT = Date.UTC(2027, 8, 20, 16, 14, 0);
@@ -90,7 +95,7 @@ export const goulot: Chapitre = {
   final: 'fin',
   motDePasse: 'antenne-2027',
   comptes,
-  etat: () => ({
+  etat: (t) => ({
     systemd: (() => {
       const s = nouveauSystemd('radio', Date.UTC(2027, 8, 14, 7, 2, 0), MAINTENANT, {
         ssh: {
@@ -109,7 +114,7 @@ export const goulot: Chapitre = {
           description: "Radio Quartier: archive the day's recordings",
           active: false,
           executable: 'rsync',
-          processus: [proc(ARCHIVES, 'root', 'rsync -a /srv/radio/enregistrements/ /srv/archives/2027-09-20/', 6.1)],
+          processus: [proc(ARCHIVES, 'root', copie(t), 6.1)],
         },
       });
       s.minuteries = {
@@ -131,7 +136,7 @@ export const goulot: Chapitre = {
       proc(312, 'root', '[jbd2/vda1-8]'),
       proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups'),
       proc(FLUX, 'radio', '/usr/local/bin/flux --config /etc/radio/flux.conf', 3.2),
-      proc(ARCHIVES, 'root', 'rsync -a /srv/radio/enregistrements/ /srv/archives/2027-09-20/', 6.1),
+      proc(ARCHIVES, 'root', copie(t), 6.1),
     ],
     memoire: { total: 2048 * Mo, noyau: 380 * Mo, rss: { 1: 12 * Mo, 312: 0, 598: 8 * Mo, [FLUX]: 180 * Mo, [ARCHIVES]: 40 * Mo } },
     io: {
@@ -160,7 +165,7 @@ export const goulot: Chapitre = {
         'radio-flux.service',
         'flux',
         FLUX,
-        `relay: read stall on /srv/radio/direct/buffer.ts: waited ${610 + ((i * 97) % 300)} ms, listeners hear a gap`,
+        `relay: read stall on ${tampon(j.t)}: waited ${610 + ((i * 97) % 300)} ms, listeners hear a gap`,
         4,
         false,
       );
@@ -177,7 +182,7 @@ export const goulot: Chapitre = {
         'radio-flux.service',
         'flux',
         FLUX,
-        `relay: read stall on /srv/radio/direct/buffer.ts: waited ${Math.round(etatDisque(j).attente)} ms, listeners hear a gap`,
+        `relay: read stall on ${tampon(j.t)}: waited ${Math.round(etatDisque(j).attente)} ms, listeners hear a gap`,
         4,
         false,
       );
@@ -199,7 +204,7 @@ export const goulot: Chapitre = {
                 '[Unit]\nDescription=Radio Quartier stream relay\nAfter=network.target\n\n[Service]\nUser=radio\nExecStart=/usr/local/bin/flux --config /etc/radio/flux.conf\n\n[Install]\nWantedBy=multi-user.target',
               ),
               'radio-archives.service': fichier(
-                "[Unit]\nDescription=Radio Quartier: archive the day's recordings\n\n[Service]\nType=oneshot\nExecStart=/bin/sh -c 'rsync -a /srv/radio/enregistrements/ /srv/archives/$(date +%%F)/'",
+                `[Unit]\nDescription=Radio Quartier: archive the day's recordings\n\n[Service]\nType=oneshot\nExecStart=/bin/sh -c 'rsync -a ${chemin(t, '/srv/radio/enregistrements')}/ /srv/archives/$(date +%%F)/'`,
               ),
               'radio-archives.timer': fichier(
                 "[Unit]\nDescription=Archive the day's recordings\n\n[Timer]\nOnCalendar=*-*-* 16:00\n\n[Install]\nWantedBy=timers.target",

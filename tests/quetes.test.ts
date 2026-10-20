@@ -489,7 +489,7 @@ for (const langue of LANGUES)
     describe('Les Archives, chapitre 2 — Les versions (restic)', () => {
       const R = 'restic -r /mnt/mairie/restic-bibliotheque --password-file ~/.config/restic/mot-de-passe';
       // Les identifiants des instantanés, du plus ancien au plus récent.
-      const instantanes = (s: Shell) => [...(s.executer(`${R} snapshots`) ?? '').matchAll(/^([0-9a-f]{8}) {2}/gm)].map((m) => m[1]);
+      const instantanes = (s: Shell) => [...(s.executer(L(`${R} snapshots`)) ?? '').matchAll(/^([0-9a-f]{8}) {2}/gm)].map((m) => m[1]);
 
       it('solution : find, restore, forget, prune, check, chmod', () => {
         const { s, tout } = jouer('versions', ['df -h /mnt/mairie', `${R} find --long journal_de_marie.txt`]);
@@ -1223,8 +1223,8 @@ for (const langue of LANGUES)
           MDP,
         ]);
         expect(tout).toMatch(/^6$/m);
-        expect(tout).toContain('accueil      3141  97.3   1.4 /home/accueil/.cache/.maj/maj-systeme --silencieux');
-        expect(tout).toContain('*/10 * * * * /home/accueil/.cache/.maj/maj-systeme --silencieux');
+        expect(tout).toContain(L('accueil      3141  97.3   1.4 /home/accueil/.cache/.maj/maj-systeme --silencieux'));
+        expect(tout).toContain(L('*/10 * * * * /home/accueil/.cache/.maj/maj-systeme --silencieux'));
         expect(tout).toContain('Accepted password for accueil from 203.0.113.66');
         expect(tout).toContain('SAUVEGARDE');
         if (reference) expect(tout).toContain('touch: /mnt/cle/essai: Système de fichiers accessible en lecture seulement');
@@ -1238,10 +1238,10 @@ for (const langue of LANGUES)
           'sudo find /srv/partage -name LISEZ-MOI-POUR-RECUPERER.txt -delete',
           'sudo umount /mnt/cle',
         ]
-          .map((l) => s.executer(l))
+          .map((l) => s.executer(L(l)))
           .join('\n');
         contient(fin, 'Tu as terminé le chapitre 1 de La Ludothèque');
-        if (reference) expect(s.executer('cat /srv/partage/regles/dames.txt')).toContain('devient une dame');
+        if (reference) expect(s.executer(L('cat /srv/partage/regles/dames.txt'))).toContain('devient une dame');
         expect(s.termine).toBe(true);
       });
 
@@ -1255,13 +1255,13 @@ for (const langue of LANGUES)
         ]);
         contient(tout, 'le disque de sauvegarde est branché alors que le chiffreur tourne encore');
         contient(tout, "Des fichiers restaurés viennent d'être chiffrés à leur tour");
-        expect(tout).not.toMatch(/inventaire\.csv(?!\.locked)/);
+        expect(tout).not.toMatch(new RegExp(`${L('inventaire.csv').replace('.', '\\.')}(?!\\.locked)`));
         // Arrêté, mais sa crontab le relance.
-        const retour = ['sudo kill 3141', 'ls', 'ls', 'ls'].map((l) => s.executer(l)).join('\n');
+        const retour = ['sudo kill 3141', 'ls', 'ls', 'ls'].map((l) => s.executer(L(l))).join('\n');
         contient(retour, 'Le chiffreur est revenu');
-        expect(s.executer('ps aux')).toContain('maj-systeme');
-        s.executer('cd /mnt/cle');
-        expect(s.executer('sudo umount /mnt/cle')).toBe('umount: /mnt/cle: target is busy.');
+        expect(s.executer('ps aux')).toContain(L('maj-systeme'));
+        s.executer(L('cd /mnt/cle'));
+        expect(s.executer(L('sudo umount /mnt/cle'))).toBe(L('umount: /mnt/cle: target is busy.'));
         expect(s.termine).toBe(false);
       });
     });
@@ -1274,37 +1274,39 @@ for (const langue of LANGUES)
       };
       const REGLAGES = (t: string) =>
         t
-          .replace('snapshot_root\t/var/cache/rsnapshot/', 'snapshot_root\t/mnt/instantanes/')
+          .replace('snapshot_root\t/var/cache/rsnapshot/', L('snapshot_root\t/mnt/instantanes/'))
           .replace('retain\talpha\t6\nretain\tbeta\t7\nretain\tgamma\t4', 'retain\tdaily\t7\nretain\tweekly\t4')
-          .replace('backup\t/home/\t\tlocalhost/\nbackup\t/etc/\t\tlocalhost/\nbackup\t/usr/local/\tlocalhost/', 'backup\t/srv/partage/\tlocalhost/');
+          .replace('backup\t/home/\t\tlocalhost/\nbackup\t/etc/\t\tlocalhost/\nbackup\t/usr/local/\tlocalhost/', L('backup\t/srv/partage/\tlocalhost/'));
       const CRON = (t: string) => `${t}0 3 * * 1 /usr/bin/rsnapshot weekly\n30 3 * * * /usr/bin/rsnapshot daily\n`;
-      const D = '/mnt/instantanes';
+      const D = L('/mnt/instantanes');
+      // Le partage, dans la langue (/srv/share en anglais).
+      const P = L('/srv/partage');
 
       it("solution : la configuration (tabulations), configtest, cron de root, puis l'inventaire de la veille", () => {
         const { s } = jouer('instantanes', ['sudo rsnapshot configtest', 'ludo-2027']);
         editer(s, 'sudo nano /etc/rsnapshot.conf', REGLAGES);
         expect(s.executer('sudo rsnapshot configtest')).toBe('Syntax OK');
         expect(s.executer('sudo rsnapshot -t daily')).toContain(
-          `/usr/bin/rsync -a --delete --numeric-ids --relative --delete-excluded /srv/partage/ ${D}/daily.0/localhost/`,
+          `/usr/bin/rsync -a --delete --numeric-ids --relative --delete-excluded ${P}/ ${D}/daily.0/localhost/`,
         );
         const semaines = editer(s, 'sudo crontab -e', CRON);
         contient(semaines, 'Deux semaines passent');
         contient(semaines, "Hier soir, j'ai remplacé l'inventaire");
         expect(s.executer(`ls ${D}`)).toBe('daily.0/    daily.1/    daily.2/    daily.3/    daily.4/    daily.5/    daily.6/    weekly.0/');
         const du = s.executer('sudo rsnapshot du') ?? '';
-        expect(du).toMatch(/^46M\t\/mnt\/instantanes\/daily\.0\/$/m);
-        expect(du).toMatch(/^\d+K?\t\/mnt\/instantanes\/daily\.1\/$/m);
+        expect(du).toMatch(new RegExp(`^46M\t${D}/daily\\.0/$`, 'm'));
+        expect(du).toMatch(new RegExp(`^\\d+K?\t${D}/daily\\.1/$`, 'm'));
         const inodes =
-          s.executer(`ls -i ${D}/daily.0/localhost/srv/partage/regles/scans-regles.pdf ${D}/daily.6/localhost/srv/partage/regles/scans-regles.pdf`) ??
+          s.executer(L(`ls -i ${D}/daily.0/localhost/srv/partage/regles/scans-regles.pdf ${D}/daily.6/localhost/srv/partage/regles/scans-regles.pdf`)) ??
           '';
         const [a, b] = inodes.split('\n\n').map((l) => l.trim().split(' ')[0]);
         expect(a).toBe(b);
-        if (reference) expect(s.executer(`diff ${D}/daily.0/localhost/srv/partage/inventaire.csv ${D}/daily.1/localhost/srv/partage/inventaire.csv`)).toContain(
+        if (reference) expect(s.executer(L(`diff ${D}/daily.0/localhost/srv/partage/inventaire.csv ${D}/daily.1/localhost/srv/partage/inventaire.csv`))).toContain(
           '> jeu offert n°13;1;neuf',
         );
         expect(s.termine).toBe(false);
         contient(
-          s.executer(`sudo cp ${D}/daily.1/localhost/srv/partage/inventaire.csv /srv/partage/`) ?? '',
+          s.executer(L(`sudo cp ${D}/daily.1/localhost/srv/partage/inventaire.csv /srv/partage/`)) ?? '',
           'Tu as terminé le chapitre 2 de La Ludothèque',
         );
         expect(s.termine).toBe(true);
@@ -1312,12 +1314,12 @@ for (const langue of LANGUES)
 
       it("fausses pistes : des espaces au lieu de tabulations, la crontab d'un compte ordinaire, la version de cette nuit", () => {
         const { s } = jouer('instantanes', ['sudo id', 'ludo-2027']);
-        editer(s, 'sudo nano /etc/rsnapshot.conf', (t) => REGLAGES(t).replace('snapshot_root\t/mnt/instantanes/', 'snapshot_root /mnt/instantanes/'));
+        editer(s, 'sudo nano /etc/rsnapshot.conf', (t) => REGLAGES(t).replace(L('snapshot_root\t/mnt/instantanes/'), L('snapshot_root /mnt/instantanes/')));
         const erreur = s.executer('sudo rsnapshot configtest') ?? '';
-        expect(erreur).toContain('ERROR: snapshot_root /mnt/instantanes/ - Unknown config directive');
+        expect(erreur).toContain(L('ERROR: snapshot_root /mnt/instantanes/ - Unknown config directive'));
         expect(erreur).toContain("ERROR: sure you don't have spaces where only tabs should be.");
         contient(erreur, 'jamais par des espaces');
-        editer(s, 'sudo nano /etc/rsnapshot.conf', (t) => t.replace('snapshot_root /mnt/instantanes/', 'snapshot_root\t/mnt/instantanes/'));
+        editer(s, 'sudo nano /etc/rsnapshot.conf', (t) => t.replace(L('snapshot_root /mnt/instantanes/'), L('snapshot_root\t/mnt/instantanes/')));
         const mails = editer(s, 'crontab -e', CRON);
         contient(mails, "n'a pas les droits de root");
         expect(s.executer(`ls ${D}`)).toBe('');
@@ -1513,7 +1515,7 @@ for (const langue of LANGUES)
         expect(tout).toMatch(/\/dev\/vdb1 +65536 +65536 +0 +100% \/srv\/radio/);
         expect(tout).toMatch(/^65519\t\/srv\/radio\/stats$/m);
         contient(tout, "l'enregistrement de nuit a repris");
-        expect(s.trouver('/srv/radio/emissions/nuit-2027-08-29.ogg')).toBeTruthy();
+        expect(s.trouver(L('/srv/radio/emissions/nuit-2027-08-29.ogg'))).toBeTruthy();
         expect(s.termine).toBe(false);
         const nuit = crontab(s, 'sudo crontab -e', '15 4 * * * find /srv/radio/stats -type f -mtime +30 -delete');
         contient(nuit, 'Une journée et une nuit passent');
@@ -1628,13 +1630,13 @@ for (const langue of LANGUES)
         const { s, tout } = jouer('sonde', [
           'check_disk -w 20% -c 10% -p /',
           '/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio',
-          '/usr/lib/nagios/plugins/check_http -H localhost -p 8000 -u /direct',
           "systemd-analyze calendar '*:0/5'",
         ]);
+        // Une adresse web (/direct), pas un chemin du monde : tapée telle quelle dans chaque langue.
+        expect(s.executer('/usr/lib/nagios/plugins/check_http -H localhost -p 8000 -u /direct')).toContain('HTTP OK: HTTP/1.1 200 OK');
         if (reference) expect(tout).toContain('check_disk : commande introuvable');
         contient(tout, 'ne sont pas dans le PATH');
         expect(tout).toContain('DISK OK - free space: /srv/radio 122 MB (47% inode=99%);');
-        expect(tout).toContain('HTTP OK: HTTP/1.1 200 OK');
         expect(tout).toContain('Normalized form: *-*-* *:00/5:00');
         s.executer('sudo true');
         s.executer('antenne-2027');

@@ -20,7 +20,7 @@
 // https://man7.org/linux/man-pages/man2/umask.2.html,
 // https://www.gnu.org/software/coreutils/manual/html_node/Directory-Setuid-and-Setgid.html
 
-import { d, f, type Chapitre, type Noeud } from '../monde';
+import { chemin, d, f, type Chapitre, type Noeud } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { nouveauSystemd } from '../systemd';
 import { fichiersInclus, lire, permis } from '../sudoers';
@@ -103,11 +103,11 @@ export function masqueDe(j: Jeu, compte: string): number {
 }
 
 const dossierOk = (j: Jeu) => {
-  const n = j.trouver(RELEVES);
+  const n = j.trouver(chemin(j.t, RELEVES));
   return n?.type === 'dossier' && (n.groupe ?? n.proprio) === 'caisse' && n.mode?.[4] === 'w' && n.mode?.[5] === 's';
 };
 const fichiersOk = (j: Jeu) => {
-  const n = j.trouver(RELEVES);
+  const n = j.trouver(chemin(j.t, RELEVES));
   if (n?.type !== 'dossier') return false;
   const tous = (x: Noeud): Noeud[] => (x.type === 'dossier' ? Object.values(x.enfants).flatMap(tous) : [x]);
   return tous(n).every((x) => (x.groupe ?? x.proprio) === 'caisse' && (x.mode ?? 'rw-r--r--')[4] === 'w');
@@ -228,7 +228,7 @@ export const droits: Chapitre = {
     { id: 'trop-large', condition: tropLarge, message: (j) => j.t('droits-evenement-trop-large') },
     { id: 'systemctl-entier', condition: (j) => systemctlEntier(j) && !tropLarge(j), message: (j) => j.t('droits-evenement-systemctl-entier') },
     { id: 'sudo', condition: sudoOk, message: (j) => j.t('droits-evenement-sudo') },
-    { id: 'dossier', condition: dossierOk, message: (j) => j.t('droits-evenement-dossier', { dossier: RELEVES }) },
+    { id: 'dossier', condition: dossierOk, message: (j) => j.t('droits-evenement-dossier', { dossier: chemin(j.t, RELEVES) }) },
     { id: 'masque', condition: masqueOk, message: (j) => j.t('droits-evenement-masque') },
     { id: 'fin', condition: (j) => dossierOk(j) && fichiersOk(j) && masqueOk(j) && sudoOk(j), message: (j) => j.t('droits-evenement-fin') },
   ],

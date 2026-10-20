@@ -13,7 +13,7 @@
 // https://www.gnu.org/software/findutils/manual/html_mono/find.html (-mtime, -delete),
 // https://man7.org/linux/man-pages/man2/execve.2.html (E2BIG, ARG_MAX)
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Dossier, type Droits, type Fichier } from '../monde';
+import { chemin, d, f, fichiersComptes, type Chapitre, type Comptes, type Dossier, type Droits, type Fichier } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { journaliser, nouveauSystemd, systemd } from '../systemd';
 import { passer } from '../cron';
@@ -28,6 +28,8 @@ const MAINTENANT = Date.UTC(2027, 7, 29, 3, 20, 0);
 // Les statistiques commencent le 1er mars : un fichier par écoute, environ 360 par jour.
 const DEBUT = Date.UTC(2027, 2, 1, 0, 0, 0);
 const ENREGISTREMENT = '/srv/radio/emissions/nuit-2027-08-29.ogg';
+// L'enregistrement de cette nuit, dans la langue (/srv/radio/shows/… en anglais).
+const enregistrement = (j: Jeu) => chemin(j.t, ENREGISTREMENT);
 
 const comptes = (): Comptes => ({
   utilisateurs: {
@@ -254,7 +256,7 @@ export const inodes: Chapitre = {
     s.horloge = MAINTENANT - 40 * 60_000;
     journaliser(s, 'radio-flux.service', 'flux', 1730, `stats: cannot create ${STATS}/${nomStat(s.horloge, 99_001)}: No space left on device`, 3);
     s.horloge = MAINTENANT - 20 * 60_000;
-    journaliser(s, 'radio-flux.service', 'flux', 1730, `record: cannot create ${ENREGISTREMENT}: No space left on device`, 3);
+    journaliser(s, 'radio-flux.service', 'flux', 1730, `record: cannot create ${enregistrement(j)}: No space left on device`, 3);
     journaliser(
       s,
       'radio-flux.service',
@@ -273,10 +275,10 @@ export const inodes: Chapitre = {
     if (!noterEcoute(j, s.horloge))
       journaliser(s, 'radio-flux.service', 'flux', 1730, `stats: cannot create ${STATS}/...: No space left on device`, 3, false);
     if (
-      !j.trouver(ENREGISTREMENT) &&
-      ecrireCommeRadio(j, ENREGISTREMENT, { type: 'fichier', contenu: '', taille: 48_000_000, proprio: 'radio', mtime: s.horloge })
+      !j.trouver(enregistrement(j)) &&
+      ecrireCommeRadio(j, enregistrement(j), { type: 'fichier', contenu: '', taille: 48_000_000, proprio: 'radio', mtime: s.horloge })
     )
-      journaliser(s, 'radio-flux.service', 'flux', 1730, `record: writing ${ENREGISTREMENT}`, 6, false);
+      journaliser(s, 'radio-flux.service', 'flux', 1730, `record: writing ${enregistrement(j)}`, 6, false);
     if (j.etat.nuitReussie || !cronStats(j) || j.etat.empreinteNuit === empreinteCron(j)) return;
     j.etat.empreinteNuit = empreinteCron(j);
     return nuit(j);
@@ -332,7 +334,7 @@ export const inodes: Chapitre = {
     },
     { id: 'trop-long', condition: (j) => (j.etat.argumentsTropLongs ?? 0) > 0, message: (j) => j.t('inodes-evenement-trop-long') },
     { id: 'recentes-perdues', condition: (j) => !recentesIntactes(j), message: (j) => j.t('inodes-evenement-recentes-perdues') },
-    { id: 'repart', condition: (j) => !!j.trouver(ENREGISTREMENT), message: (j) => j.t('inodes-evenement-repart', { pourcent: pourcentInodes(j) }) },
+    { id: 'repart', condition: (j) => !!j.trouver(enregistrement(j)), message: (j) => j.t('inodes-evenement-repart', { pourcent: pourcentInodes(j) }) },
     {
       id: 'fin',
       condition: (j) => !!j.etat.nuitReussie && recentesIntactes(j) && pourcentInodes(j) < 80,

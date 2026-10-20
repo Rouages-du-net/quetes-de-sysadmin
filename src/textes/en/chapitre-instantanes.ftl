@@ -16,8 +16,8 @@ instantanes-message-de-berenice =
     shipped by Debian (/etc/rsnapshot.conf).
 
     What we need:
-      - back up /srv/partage/;
-      - on the server's second disk, mounted on /mnt/instantanes
+      - back up /srv/share/;
+      - on the server's second disk, mounted on /mnt/snapshots
         (not on the system disk!);
       - keep 7 daily snapshots and 4 weekly ones;
       - have it run on its own, every night and every week.
@@ -37,7 +37,7 @@ instantanes-inventaire-ancien =
 instantanes-deux-semaines =
     Two weeks go by. Every day, Bérénice adds the donated games to the
     inventory; every night, cron runs what is scheduled. Look at what is
-    now in /mnt/instantanes (and at cron's mail:
+    now in /mnt/snapshots (and at cron's mail:
     { $mails ->
         [0] no message, everything went well)
         [one] one message; "nothing to copy" is normal for the first days,
@@ -52,7 +52,7 @@ instantanes-evenement-espaces =
 instantanes-evenement-meme-disque =
     The snapshots are stored on the system disk, next to the data: if
     that disk fails, everything goes with it. Malo wanted the second
-    disk, /mnt/instantanes (snapshot_root).
+    disk, /mnt/snapshots (snapshot_root).
 # { $exemple }: the beginning of an email from cron
 instantanes-evenement-mails =
     cron sent mail: its jobs wrote errors. For

@@ -93,15 +93,23 @@ Seules les histoires dont le chapitre déclare `noms: true` traduisent leurs
 noms : c'est le cas de toutes. L'Effaceur et le poste traduisent tous leurs
 lieux et objets ; les autres histoires traduisent les documents qu'on lit
 dans sa maison (courriels, messages, mots, notes d'aide, `LISEZMOI.txt`,
-plan de reprise…). Les données de leurs serveurs gardent leur nom
-français, comme sur un serveur tenu par une équipe française : dossiers et
-sites, bases, fichiers suivis par git, restic, rsnapshot ou rsync, ou
-écrits par le jeu en cours de partie (le fonds des Archives, le partage de
-la Ludothèque, les comptes rendus de la Maison des associations). Un tel
-nom ne se traduit que si tout ce qui le désigne suit (instantanés,
-dépôts, configuration). Les machines internes d'une histoire (le wiki et
-les archives de la Maison des associations) sont renommées comme sa
-machine principale.
+plan de reprise…) et les données de leurs serveurs : le fonds des Archives
+(`fonds` → `collection`) et le disque de la mairie, le roman d'Inès, le
+partage de la Ludothèque et de la Maison des associations (`partage` →
+`share`), les sauvegardes, les relevés de la Coopérative, les dossiers de
+la radio… Ces noms vivent aussi dans ce qui garde une copie ou une trace
+des fichiers : instantanés restic et rsnapshot, copies rsync, fichiers
+suivis par git, scripts, crontabs, journaux, processus. Le code les écrit
+donc dans la langue au moment où il les crée ou les compare (`chemin()`,
+`nom()`, voir plus bas), et les textes anglais emploient les noms
+anglais. Restent tels quels les noms techniques que d'autres réglages
+désignent : sites et adresses servis par HTTP (`/var/www/…`, `/direct`),
+bases, images et projets Docker (le nom du dossier d'un projet Compose
+nomme ses conteneurs), unités systemd, programmes et scripts du `PATH`
+(`enregistrer`, `sonde`, `convertir.py`), et les noms propres (les
+émissions `matinale-…` et `nuit-…` de la radio). Les machines internes
+d'une histoire (le wiki et les archives de la Maison des associations)
+sont renommées comme sa machine principale.
 
 Deux comptes se traduisent aussi, dans `noms.ftl` : celui du joueur ou de
 la joueuse (`nom-vous = you` : invite `you@royaume:~$`, `/home/you`,
@@ -133,7 +141,7 @@ noms de jeux de la base…) se traduisent par ce que le joueur ou la joueuse
 | Code | Langue | État |
 |---|---|---|
 | `fr` | français | langue de référence |
-| `en` | anglais | complet (textes, manuel, messages des outils comme avec `LANG=C`, noms des lieux et des objets de L'Effaceur et du poste, documents des autres histoires, comptes `you` et `eraser`) ; données des serveurs des histoires en français |
+| `en` | anglais | complet (textes, manuel, messages des outils comme avec `LANG=C`, noms des lieux et des objets de L'Effaceur et du poste, documents et données des serveurs des autres histoires, comptes `you` et `eraser`) |
 
 ## Ajouter une langue
 
@@ -166,6 +174,12 @@ qui permettent de traduire sans toucher à Git.
   `nom(j.t, 'levain')` (voir `src/moteur/monde.ts`). Dans les tests, les
   commandes s'écrivent aussi en français et passent par `dansLaLangue()`
   (`tests/noms.ts`).
+  Ce que le jeu fabrique à partir d'un chemin (instantanés, crontab,
+  script, ligne de journal, commande d'un processus, contenu d'une unité)
+  prend lui aussi le chemin dans la langue : `chemin(t, '/srv/partage')`
+  dans `etat(t)` ou `creerMonde(t)`, `chemin(j.t, …)` dans les événements.
+  Une adresse web qui ressemble à un nom traduit (`-u /direct`) se tape
+  dans les tests sans `L()`.
 - Le compte du joueur ou de la joueuse s'écrit `jeu.joueur` (`vous`, `you`…),
   ou `joueur(t)` avant que le jeu existe (l'état d'un chapitre) ; jamais
   `'vous'` en dur. Les chapitres déclarent leurs comptes (`comptes()`) et

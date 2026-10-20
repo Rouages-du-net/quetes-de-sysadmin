@@ -26,7 +26,7 @@ inodes-conf-flux =
     logfile = /var/log/radio/flux.log
     loglevel = info
     # Show recordings
-    record_dir = /srv/radio/emissions
+    record_dir = /srv/radio/shows
     # Statistics: one file per listen (monthly report for the town hall)
     stats_dir = /srv/radio/stats
 inodes-stats-lisezmoi =

@@ -114,6 +114,7 @@ deuxieme-jour
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
   /home/vous/notes_awa.txt → /home/you/notes_awa.txt
+  /srv/equipe → /srv/team
 
 redemarrage
   /home/vous → /home/you
@@ -142,38 +143,39 @@ paquet-perdu
 manuscrit
   /home/vous → /home/you
   /home/vous/message_d_ines.txt → /home/you/message_from_ines.txt
-  /home/vous/roman → /home/you/roman
-  /home/vous/roman/.git → /home/you/roman/.git
-  /home/vous/roman/.git/HEAD → /home/you/roman/.git/HEAD
-  /home/vous/roman/roman.txt → /home/you/roman/roman.txt
-  /home/vous/poemes → /home/you/poemes
-  /home/vous/poemes/mer.txt → /home/you/poemes/sea.txt
-  /home/vous/poemes/phare.txt → /home/you/poemes/lighthouse.txt
-  /home/vous/poemes/zohra.txt → /home/you/poemes/zohra.txt
+  /home/vous/roman → /home/you/novel
+  /home/vous/roman/.git → /home/you/novel/.git
+  /home/vous/roman/.git/HEAD → /home/you/novel/.git/HEAD
+  /home/vous/roman/roman.txt → /home/you/novel/novel.txt
+  /home/vous/poemes → /home/you/poems
+  /home/vous/poemes/mer.txt → /home/you/poems/sea.txt
+  /home/vous/poemes/phare.txt → /home/you/poems/lighthouse.txt
+  /home/vous/poemes/zohra.txt → /home/you/poems/zohra.txt
   /home/vous/aide_git.txt → /home/you/help_git.txt
 
 archives
   /home/vous → /home/you
   /home/vous/lettre_de_rosa.txt → /home/you/letter_from_rosa.txt
   /home/vous/notes_rosa.txt → /home/you/notes_rosa.txt
-  /home/vous/fonds → /home/you/fonds
-  /home/vous/fonds/lisezmoi.txt → /home/you/fonds/lisezmoi.txt
-  /home/vous/fonds/manuscrits → /home/you/fonds/manuscrits
-  /home/vous/fonds/manuscrits/journal_de_marie.txt → /home/you/fonds/manuscrits/journal_de_marie.txt
-  /home/vous/fonds/manuscrits/lettres_1914.txt → /home/you/fonds/manuscrits/lettres_1914.txt
-  /home/vous/fonds/manuscrits/recettes_du_quartier.txt → /home/you/fonds/manuscrits/recettes_du_quartier.txt
-  /home/vous/fonds/cartes → /home/you/fonds/cartes
-  /home/vous/fonds/cartes/plan_1890.png → /home/you/fonds/cartes/plan_1890.png
-  /home/vous/fonds/cartes/plan_1954.png → /home/you/fonds/cartes/plan_1954.png
-  /home/vous/fonds/cartes/rendu.tmp → /home/you/fonds/cartes/rendu.tmp
-  /home/vous/fonds/presse → /home/you/fonds/presse
-  /home/vous/fonds/presse/gazette_1936.pdf → /home/you/fonds/presse/gazette_1936.pdf
-  /home/vous/fonds/presse/gazette_1968.pdf → /home/you/fonds/presse/gazette_1968.pdf
-  /home/vous/fonds/presse/export.tmp → /home/you/fonds/presse/export.tmp
-  /home/vous/fonds/enregistrements → /home/you/fonds/enregistrements
-  /home/vous/fonds/enregistrements/chants_du_marche.ogg → /home/you/fonds/enregistrements/chants_du_marche.ogg
-  /home/vous/fonds/enregistrements/entretien_fatou.ogg → /home/you/fonds/enregistrements/entretien_fatou.ogg
-  /home/vous/fonds/enregistrements/brut.tmp → /home/you/fonds/enregistrements/brut.tmp
+  /home/vous/fonds → /home/you/collection
+  /home/vous/fonds/lisezmoi.txt → /home/you/collection/readme.txt
+  /home/vous/fonds/manuscrits → /home/you/collection/manuscripts
+  /home/vous/fonds/manuscrits/journal_de_marie.txt → /home/you/collection/manuscripts/marie_diary.txt
+  /home/vous/fonds/manuscrits/lettres_1914.txt → /home/you/collection/manuscripts/letters_1914.txt
+  /home/vous/fonds/manuscrits/recettes_du_quartier.txt → /home/you/collection/manuscripts/neighbourhood_recipes.txt
+  /home/vous/fonds/cartes → /home/you/collection/maps
+  /home/vous/fonds/cartes/plan_1890.png → /home/you/collection/maps/map_1890.png
+  /home/vous/fonds/cartes/plan_1954.png → /home/you/collection/maps/map_1954.png
+  /home/vous/fonds/cartes/rendu.tmp → /home/you/collection/maps/render.tmp
+  /home/vous/fonds/presse → /home/you/collection/press
+  /home/vous/fonds/presse/gazette_1936.pdf → /home/you/collection/press/gazette_1936.pdf
+  /home/vous/fonds/presse/gazette_1968.pdf → /home/you/collection/press/gazette_1968.pdf
+  /home/vous/fonds/presse/export.tmp → /home/you/collection/press/export.tmp
+  /home/vous/fonds/enregistrements → /home/you/collection/recordings
+  /home/vous/fonds/enregistrements/chants_du_marche.ogg → /home/you/collection/recordings/market_songs.ogg
+  /home/vous/fonds/enregistrements/entretien_fatou.ogg → /home/you/collection/recordings/interview_fatou.ogg
+  /home/vous/fonds/enregistrements/brut.tmp → /home/you/collection/recordings/raw.tmp
+  /media/cle → /media/usb
 
 versions
   /home/vous → /home/you
@@ -181,26 +183,28 @@ versions
   /home/vous/notes_restic.txt → /home/you/notes_restic.txt
   /home/vous/.config → /home/you/.config
   /home/vous/.config/restic → /home/you/.config/restic
-  /home/vous/.config/restic/mot-de-passe → /home/you/.config/restic/mot-de-passe
-  /home/vous/fonds → /home/you/fonds
-  /home/vous/fonds/lisezmoi.txt → /home/you/fonds/lisezmoi.txt
-  /home/vous/fonds/manuscrits → /home/you/fonds/manuscrits
-  /home/vous/fonds/manuscrits/journal_de_marie.txt → /home/you/fonds/manuscrits/journal_de_marie.txt
-  /home/vous/fonds/manuscrits/lettres_1914.txt → /home/you/fonds/manuscrits/lettres_1914.txt
-  /home/vous/fonds/manuscrits/recettes_du_quartier.txt → /home/you/fonds/manuscrits/recettes_du_quartier.txt
-  /home/vous/fonds/cartes → /home/you/fonds/cartes
-  /home/vous/fonds/cartes/plan_1890.png → /home/you/fonds/cartes/plan_1890.png
-  /home/vous/fonds/cartes/plan_1954.png → /home/you/fonds/cartes/plan_1954.png
-  /home/vous/fonds/presse → /home/you/fonds/presse
-  /home/vous/fonds/presse/gazette_1936.pdf → /home/you/fonds/presse/gazette_1936.pdf
-  /home/vous/fonds/presse/gazette_1968.pdf → /home/you/fonds/presse/gazette_1968.pdf
-  /home/vous/fonds/enregistrements → /home/you/fonds/enregistrements
-  /home/vous/fonds/enregistrements/chants_du_marche.ogg → /home/you/fonds/enregistrements/chants_du_marche.ogg
-  /home/vous/fonds/enregistrements/entretien_fatou.ogg → /home/you/fonds/enregistrements/entretien_fatou.ogg
-  /home/vous/fonds/numerisations → /home/you/fonds/numerisations
-  /home/vous/fonds/numerisations/registre_1.png → /home/you/fonds/numerisations/registre_1.png
-  /home/vous/fonds/numerisations/registre_2.png → /home/you/fonds/numerisations/registre_2.png
-  /home/vous/fonds/numerisations/registre_3.png → /home/you/fonds/numerisations/registre_3.png
+  /home/vous/.config/restic/mot-de-passe → /home/you/.config/restic/password
+  /home/vous/fonds → /home/you/collection
+  /home/vous/fonds/lisezmoi.txt → /home/you/collection/readme.txt
+  /home/vous/fonds/manuscrits → /home/you/collection/manuscripts
+  /home/vous/fonds/manuscrits/journal_de_marie.txt → /home/you/collection/manuscripts/marie_diary.txt
+  /home/vous/fonds/manuscrits/lettres_1914.txt → /home/you/collection/manuscripts/letters_1914.txt
+  /home/vous/fonds/manuscrits/recettes_du_quartier.txt → /home/you/collection/manuscripts/neighbourhood_recipes.txt
+  /home/vous/fonds/cartes → /home/you/collection/maps
+  /home/vous/fonds/cartes/plan_1890.png → /home/you/collection/maps/map_1890.png
+  /home/vous/fonds/cartes/plan_1954.png → /home/you/collection/maps/map_1954.png
+  /home/vous/fonds/presse → /home/you/collection/press
+  /home/vous/fonds/presse/gazette_1936.pdf → /home/you/collection/press/gazette_1936.pdf
+  /home/vous/fonds/presse/gazette_1968.pdf → /home/you/collection/press/gazette_1968.pdf
+  /home/vous/fonds/enregistrements → /home/you/collection/recordings
+  /home/vous/fonds/enregistrements/chants_du_marche.ogg → /home/you/collection/recordings/market_songs.ogg
+  /home/vous/fonds/enregistrements/entretien_fatou.ogg → /home/you/collection/recordings/interview_fatou.ogg
+  /home/vous/fonds/numerisations → /home/you/collection/scans
+  /home/vous/fonds/numerisations/registre_1.png → /home/you/collection/scans/register_1.png
+  /home/vous/fonds/numerisations/registre_2.png → /home/you/collection/scans/register_2.png
+  /home/vous/fonds/numerisations/registre_3.png → /home/you/collection/scans/register_3.png
+  /mnt/mairie → /mnt/townhall
+  /mnt/mairie/restic-bibliotheque → /mnt/townhall/restic-library
 
 fermer-la-porte
   /home/vous → /home/you
@@ -302,10 +306,33 @@ migration
 rancon
   /home/vous → /home/you
   /home/vous/message_de_berenice.txt → /home/you/message_from_berenice.txt
+  /home/accueil/.cache/.maj → /home/accueil/.cache/.upd
+  /home/accueil/.cache/.maj/maj-systeme → /home/accueil/.cache/.upd/system-update
+  /srv/partage → /srv/share
+  /srv/partage/inventaire.csv → /srv/share/inventory.csv
+  /srv/partage/planning-benevoles.txt → /srv/share/volunteer-rota.txt
+  /srv/partage/affiche-fete-du-jeu.txt → /srv/share/games-day-poster.txt
+  /srv/partage/regles → /srv/share/rules
+  /srv/partage/regles/jeu-de-l-oie.txt → /srv/share/rules/goose-game.txt
+  /srv/partage/regles/petits-chevaux.txt → /srv/share/rules/ludo.txt
+  /srv/partage/regles/dames.txt → /srv/share/rules/draughts.txt
+  /mnt/nas/partage → /mnt/nas/share
+  /mnt/cle → /mnt/usb
 
 instantanes
   /home/vous → /home/you
   /home/vous/message_de_berenice.txt → /home/you/message_from_berenice.txt
+  /srv/partage → /srv/share
+  /srv/partage/inventaire.csv → /srv/share/inventory.csv
+  /srv/partage/planning-benevoles.txt → /srv/share/volunteer-rota.txt
+  /srv/partage/affiche-fete-du-jeu.txt → /srv/share/games-day-poster.txt
+  /srv/partage/regles → /srv/share/rules
+  /srv/partage/regles/jeu-de-l-oie.txt → /srv/share/rules/goose-game.txt
+  /srv/partage/regles/petits-chevaux.txt → /srv/share/rules/ludo.txt
+  /srv/partage/regles/dames.txt → /srv/share/rules/draughts.txt
+  /srv/partage/regles/scans-regles.pdf → /srv/share/rules/rules-scans.pdf
+  /mnt/instantanes → /mnt/snapshots
+  /mnt/cle → /mnt/usb
 
 base
   /home/vous → /home/you
@@ -315,6 +342,8 @@ base
 disque-plein
   /home/vous → /home/you
   /home/vous/message_de_zoe.txt → /home/you/message_from_zoe.txt
+  /srv/radio/emissions → /srv/radio/shows
+  /srv/radio/emissions/matinale-2027-08-14.ogg → /srv/radio/shows/matinale-2027-08-14.ogg
 
 memoire
   /home/vous → /home/you
@@ -323,6 +352,10 @@ memoire
 inodes
   /home/vous → /home/you
   /home/vous/message_de_zoe.txt → /home/you/message_from_zoe.txt
+  /srv/radio/emissions → /srv/radio/shows
+  /srv/radio/emissions/matinale-2027-08-27.ogg → /srv/radio/shows/matinale-2027-08-27.ogg
+  /srv/radio/emissions/matinale-2027-08-28.ogg → /srv/radio/shows/matinale-2027-08-28.ogg
+  /srv/radio/emissions/nuit-2027-08-28.ogg → /srv/radio/shows/nuit-2027-08-28.ogg
   /srv/radio/stats/LISEZMOI.txt → /srv/radio/stats/README.txt
 
 horloge
@@ -333,6 +366,10 @@ horloge
 sonde
   /home/vous → /home/you
   /home/vous/message_de_zoe.txt → /home/you/message_from_zoe.txt
+  /srv/radio/emissions → /srv/radio/shows
+  /srv/radio/emissions/matinale-2027-09-06.ogg → /srv/radio/shows/matinale-2027-09-06.ogg
+  /srv/radio/emissions/nuit-2027-09-06.ogg → /srv/radio/shows/nuit-2027-09-06.ogg
+  /srv/radio/podcasts/vignettes → /srv/radio/podcasts/thumbnails
   /srv/radio/podcasts/LISEZMOI.txt → /srv/radio/podcasts/README.txt
 
 post-mortem
@@ -344,6 +381,8 @@ post-mortem
 goulot
   /home/vous → /home/you
   /home/vous/message_de_zoe.txt → /home/you/message_from_zoe.txt
+  /srv/radio/enregistrements → /srv/radio/recordings
+  /srv/radio/direct → /srv/radio/live
 
 cles
   /home/vous → /home/you
@@ -366,6 +405,7 @@ rebond:wiki
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/note_gaspard.txt → /home/you/note_gaspard.txt
+  /srv/wiki/pages/accueil.md → /srv/wiki/pages/home.md
 
 rebond:archives
   /home/vous → /home/you
@@ -392,15 +432,27 @@ transferts
   /home/vous/.ssh/config → /home/you/.ssh/config
   /home/vous/.ssh/id_sauvegarde → /home/you/.ssh/id_sauvegarde
   /home/vous/.ssh/id_sauvegarde.pub → /home/you/.ssh/id_sauvegarde.pub
+  /srv/partage → /srv/share
+  /srv/partage/comptes-rendus → /srv/share/minutes
+  /srv/partage/comptes-rendus/ag-2026.txt → /srv/share/minutes/agm-2026.txt
+  /srv/partage/comptes-rendus/ca-2027-09.txt → /srv/share/minutes/board-2027-09.txt
+  /srv/partage/affiches → /srv/share/posters
+  /srv/partage/affiches/fete-des-voisins.pdf → /srv/share/posters/street-party.pdf
+  /srv/partage/planning-salles.txt → /srv/share/room-bookings.txt
 
 transferts:wiki
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
+  /srv/wiki/exports/rapport-2027.pdf → /srv/wiki/exports/report-2027.pdf
 
 transferts:archives
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
+  /srv/sauvegardes → /srv/backups
+  /srv/sauvegardes/partage → /srv/backups/share
+  /srv/sauvegardes/partage/comptes-rendus → /srv/backups/share/minutes
+  /srv/sauvegardes/partage/comptes-rendus/ag-2026.txt → /srv/backups/share/minutes/agm-2026.txt
 
 hebergeur
   /home/vous → /home/you
@@ -416,10 +468,20 @@ hebergeur:wiki
 depart
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
+  /home/marc/bin/sauvegarde-caisse.sh → /home/marc/bin/till-backup.sh
+  /srv/sauvegardes → /srv/backups
+  /srv/sauvegardes/2027-10-18 → /srv/backups/2027-10-18
+  /srv/sauvegardes/2027-10-18/home → /srv/backups/2027-10-18/home
+  /srv/sauvegardes/2027-10-18/home/marc → /srv/backups/2027-10-18/home/marc
+  /srv/sauvegardes/2027-10-18/home/marc/bin → /srv/backups/2027-10-18/home/marc/bin
+  /srv/sauvegardes/2027-10-18/home/marc/bin/sauvegarde-caisse.sh → /srv/backups/2027-10-18/home/marc/bin/till-backup.sh
 
 droits
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
+  /srv/caisse/releves → /srv/caisse/statements
+  /srv/caisse/releves/2027-10-17.txt → /srv/caisse/statements/2027-10-17.txt
+  /srv/caisse/releves/2027-10-18.txt → /srv/caisse/statements/2027-10-18.txt
 
 secret
   /home/vous → /home/you

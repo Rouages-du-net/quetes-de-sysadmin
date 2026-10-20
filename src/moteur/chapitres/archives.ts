@@ -2,7 +2,7 @@
 // sur une petite clé USB, avec du, df, find et tar. Les tailles des images,
 // sons et PDF sont simulées (champ `taille`).
 
-import { chemin, d, f, type Chapitre, type Fichier } from '../monde';
+import { chemin, d, f, nom, type Chapitre, type Fichier } from '../monde';
 import type { Jeu } from '../shell';
 
 const M = '/home/vous';
@@ -28,13 +28,13 @@ const PRECIEUX = [
 ];
 
 // Une archive tar sur la clé qui contient tous les fichiers précieux.
-function archiveComplete(j: Pick<Jeu, 'trouver' | 'joueur'>): Fichier | null {
-  const cle = j.trouver(CLE);
+function archiveComplete(j: Pick<Jeu, 'trouver' | 'joueur' | 't'>): Fichier | null {
+  const cle = j.trouver(chemin(j.t, CLE));
   if (cle?.type !== 'dossier') return null;
   for (const n of Object.values(cle.enfants) as Fichier[]) {
     if (n.type !== 'fichier' || !n.archive) continue;
     const chemins = Object.keys(n.archive.fichiers).map((c) => c.replace(new RegExp(`^(\\./|~/|home/${j.joueur}/)`), ''));
-    if (PRECIEUX.every((p) => chemins.some((c) => c === p || c.endsWith('/' + p)))) return n;
+    if (PRECIEUX.map((p) => chemin(j.t, p)).every((p) => chemins.some((c) => c === p || c.endsWith('/' + p)))) return n;
   }
   return null;
 }
@@ -47,9 +47,9 @@ export const archives: Chapitre = {
   accueil: 'lettre_de_rosa.txt',
   noms: true,
   final: 'sauve',
-  etat: () => ({
+  etat: (t) => ({
     montages: [
-      { chemin: CLE, capacite: 64 * Mo, nom: '/dev/sdb1' },
+      { chemin: chemin(t, CLE), capacite: 64 * Mo, nom: '/dev/sdb1' },
       { chemin: '/', capacite: 20 * 1024 * Mo, nom: '/dev/sda1' },
     ],
   }),
@@ -99,7 +99,7 @@ export const archives: Chapitre = {
     },
     {
       id: 'tmp',
-      condition: (j) => j.derniere.commandes[0]?.[0] === 'find' && j.derniere.sortie.includes('brut.tmp'),
+      condition: (j) => j.derniere.commandes[0]?.[0] === 'find' && j.derniere.sortie.includes(nom(j.t, 'brut.tmp')),
       message: (j) => j.t('archives-evenement-tmp'),
     },
     {

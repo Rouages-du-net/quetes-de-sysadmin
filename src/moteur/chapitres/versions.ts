@@ -36,9 +36,10 @@ const texte = (contenu: string, modifie: number): Version => ({ contenu, taille:
 const media = (description: string, mo: number, modifie: number): Version => ({ contenu: description, taille: Math.round(mo * Mo), modifie });
 
 // Le fonds tel qu'il était un jour donné (jour de janvier ; 32 = 1er février…),
-// rangé sous `base` : le fonds dans la langue (/home/you/fonds) pour les
-// instantanés, le nom français pour créer le monde (renommé ensuite).
-function fonds(t: Traduire, jour: number, base = chemin(t, FONDS)): Record<string, Version> {
+// avec les noms français : le monde est créé ainsi (puis renommé), et les
+// instantanés prennent les chemins dans la langue (fondsTraduit).
+function fonds(t: Traduire, jour: number): Record<string, Version> {
+  const base = FONDS;
   const avant = Date.UTC(2026, 11, 14, 16, 2, 0);
   const v: Record<string, Version> = {
     [`${base}/lisezmoi.txt`]: texte(t('archives-lisezmoi'), avant),
@@ -64,17 +65,20 @@ function fonds(t: Traduire, jour: number, base = chemin(t, FONDS)): Record<strin
   return v;
 }
 
+// Le fonds d'un jour, rangé sous ses chemins dans la langue (/home/you/collection…).
+const fondsTraduit = (t: Traduire, jour: number) => Object.fromEntries(Object.entries(fonds(t, jour)).map(([c, v]) => [chemin(t, c), v]));
+
 // Trente nuits de sauvegardes, du 7 janvier au 5 février.
 function depotInitial(t: Traduire): Depot {
   const depot: Depot = { id: hex('depot-bibliotheque'), motDePasse: MOT_DE_PASSE, instantanes: [], packs: [], verifie: true, aElaguer: false };
   for (let jour = 7; jour <= 36; jour++)
-    ajouterInstantane(depot, { id: hex(`instantane-${jour}`), temps: nuit(jour), hote: 'bibliotheque', chemins: [chemin(t, FONDS)], fichiers: fonds(t, jour) });
+    ajouterInstantane(depot, { id: hex(`instantane-${jour}`), temps: nuit(jour), hote: 'bibliotheque', chemins: [chemin(t, FONDS)], fichiers: fondsTraduit(t, jour) });
   depot.verifie = true;
   return depot;
 }
 
 const shell = (j: Jeu) => j as Shell;
-const depot = (j: Jeu): Depot => j.etat.restic[DEPOT];
+const depot = (j: Jeu): Depot => j.etat.restic[chemin(j.t, DEPOT)];
 const restaure = (j: Jeu) => j.lire(chemin(j.t, JOURNAL)) === j.t('versions-journal');
 // Le fichier du mot de passe : lisible par les autres comptes de la machine ?
 const mdpOuvert = (j: Jeu) => {
@@ -117,18 +121,18 @@ export const versions: Chapitre = {
     groupes: { root: { gid: 0, membres: [] }, vous: { gid: 1000, membres: [] }, rosa: { gid: 1001, membres: [] } },
   }),
   etat: (t) => ({
-    restic: { [DEPOT]: depotInitial(t) },
+    restic: { [chemin(t, DEPOT)]: depotInitial(t) },
     // L'heure des prochaines sauvegardes à la main : samedi 6 février, 9 h 40.
     resticHorloge: Date.UTC(2027, 1, 6, 9, 40, 0),
     montages: [
-      { chemin: '/mnt/mairie', capacite: CAPACITE, nom: 'mairie.example:/partage/sauvegardes' },
+      { chemin: chemin(t, '/mnt/mairie'), capacite: CAPACITE, nom: `mairie.example:${chemin(t, '/partage/sauvegardes')}` },
       { chemin: '/', capacite: 20 * 1024 * Mo, nom: '/dev/sda1' },
     ],
   }),
   // Les fichiers du dépôt sur le disque, d'après son contenu.
-  initialiser: (j) => ecrireDepot(shell(j), DEPOT, depot(j)),
+  initialiser: (j) => ecrireDepot(shell(j), chemin(j.t, DEPOT), depot(j)),
   creerMonde: (t) => {
-    const actuel = fonds(t, 37, FONDS);
+    const actuel = fonds(t, 37);
     const lieux: Record<string, Record<string, Fichier>> = {};
     for (const [chemin, v] of Object.entries(actuel)) {
       const relatif = chemin.slice(FONDS.length + 1).split('/');

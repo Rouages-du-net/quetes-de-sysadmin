@@ -199,33 +199,33 @@ for (const langue of LANGUES)
       expect(c.termines).not.toContain('tunnel');
     });
 
-    const RAPPORT = 'scp wiki:/srv/wiki/exports/rapport-2027.pdf .';
-    const SAUVER = 'rsync -av /srv/partage/ archives:/srv/sauvegardes/partage/';
+    const RAPPORT = L('scp wiki:/srv/wiki/exports/rapport-2027.pdf .');
+    const SAUVER = L('rsync -av /srv/partage/ archives:/srv/sauvegardes/partage/');
 
     it('chapitre 4 — solution : scp vers le poste, rsync de maison vers archives', () => {
       const { c, jouer } = equipe(['cles', 'rebond', 'tunnel']);
       let tout = jouer([RAPPORT, 'ls']);
-      expect(tout).toContain('rapport-2027.pdf');
+      expect(tout).toContain(L('rapport-2027.pdf'));
       contient(tout, 'Le rapport d');
       jouer(['ssh maison']);
       tout = jouer([SAUVER.replace('-av', '-avn'), 'yes']);
       expect(tout).toContain('(DRY RUN)');
       tout = jouer([SAUVER]);
-      expect(tout).toContain('comptes-rendus/ca-2027-09.txt');
-      expect(tout).not.toContain('comptes-rendus/ag-2026.txt');
+      expect(tout).toContain(L('comptes-rendus/ca-2027-09.txt'));
+      expect(tout).not.toContain(L('comptes-rendus/ag-2026.txt'));
       contient(tout, 'https://download.samba.org/pub/rsync/rsync.1');
       expect(c.termines).toContain('transferts');
     });
 
     it('chapitre 4 — fausse piste : la barre oblique oubliée, réparée avec --delete', () => {
       const { c, jouer } = equipe(['cles', 'rebond', 'tunnel']);
-      let tout = jouer(['ssh maison', 'rsync -av /srv/partage archives:/srv/sauvegardes/partage', 'yes']);
-      expect(tout).toContain('partage/planning-salles.txt');
+      let tout = jouer(['ssh maison', L('rsync -av /srv/partage archives:/srv/sauvegardes/partage'), 'yes']);
+      expect(tout).toContain(L('partage/planning-salles.txt'));
       contient(tout, 'barre oblique finale');
       tout = jouer([SAUVER, 'exit', RAPPORT]);
       expect(c.termines).not.toContain('transferts');
       tout = jouer(['ssh maison', SAUVER.replace('-av', '-av --delete')]);
-      expect(tout).toContain('deleting partage/comptes-rendus/');
+      expect(tout).toContain(L('deleting partage/comptes-rendus/'));
       expect(c.termines).toContain('transferts');
     });
 

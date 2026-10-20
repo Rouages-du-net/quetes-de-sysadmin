@@ -18,9 +18,9 @@ for (const langue of LANGUES)
     const contient = (tout: string, texte: string) => fr && expect(tout).toContain(texte);
     const partie = (termines: string[] = []) => {
       const c = new Console({ langue, termines: [...EFFACEUR, ...termines] });
-      // Une ligne, avec le mot de passe de sudo s'il est demandé.
+      // Une ligne (écrite avec les noms français), avec le mot de passe de sudo s'il est demandé.
       const une = (l: string) => {
-        let sortie = c.executer(l) ?? '';
+        let sortie = c.executer(L(l)) ?? '';
         if (c.shell.attente) sortie += '\n' + (c.executer(MDP) ?? '');
         return sortie;
       };
@@ -38,7 +38,7 @@ for (const langue of LANGUES)
       const { c, jouer, editer } = partie();
       let tout = jouer(['who', 'ps -u marc', 'sudo crontab -l -u marc', 'sudo cat /home/deploy/.ssh/authorized_keys']);
       expect(tout).toContain('marc     pts/1');
-      expect(tout).toContain('30 2 * * * /home/marc/bin/sauvegarde-caisse.sh');
+      expect(tout).toContain(L('30 2 * * * /home/marc/bin/sauvegarde-caisse.sh'));
       expect(tout).toContain('marc@portable');
       tout = jouer(['sudo usermod -L marc']);
       contient(tout, 'usermod -L n');
@@ -56,7 +56,7 @@ for (const langue of LANGUES)
       contient(tout, 'Marc ne peut plus entrer');
       expect(c.termines).not.toContain('depart');
       jouer(['sudo cp /home/marc/bin/sauvegarde-caisse.sh /usr/local/bin/']);
-      tout = editer('sudo crontab -e', (t) => t + '30 2 * * * /usr/local/bin/sauvegarde-caisse.sh\n');
+      tout = editer('sudo crontab -e', (t) => t + L('30 2 * * * /usr/local/bin/sauvegarde-caisse.sh\n'));
       contient(tout, 'https://man7.org/linux/man-pages/man8/usermod.8.html');
       expect(c.termines).toContain('depart');
     });
@@ -64,7 +64,7 @@ for (const langue of LANGUES)
     it('chapitre 1 — autre solution : /etc/cron.d, puis userdel -r', () => {
       const { c, jouer, editer } = partie();
       jouer(['sudo mkdir -p /opt/coop', 'sudo cp /home/marc/bin/sauvegarde-caisse.sh /opt/coop/']);
-      editer('sudo nano /etc/cron.d/sauvegarde-caisse', () => '30 2 * * * root /opt/coop/sauvegarde-caisse.sh\n');
+      editer('sudo nano /etc/cron.d/sauvegarde-caisse', () => L('30 2 * * * root /opt/coop/sauvegarde-caisse.sh\n'));
       editer('sudo nano /home/deploy/.ssh/authorized_keys', (t) =>
         t
           .split('\n')
@@ -84,12 +84,12 @@ for (const langue of LANGUES)
       jouer(['sudo pkill -u marc']);
       tout = jouer(['sudo userdel -r marc']);
       contient(tout, 'Le dossier de Marc a disparu');
-      jouer([L('sudo cp /srv/sauvegardes/2027-10-18/home/marc/bin/sauvegarde-caisse.sh /home/vous/')]);
+      jouer(['sudo cp /srv/sauvegardes/2027-10-18/home/marc/bin/sauvegarde-caisse.sh /home/vous/']);
       tout = editer('crontab -e', (t) => t + L('30 2 * * * /home/vous/sauvegarde-caisse.sh\n'));
       contient(tout, 'TA crontab');
       expect(c.termines).not.toContain('depart');
-      jouer([L('sudo cp /home/vous/sauvegarde-caisse.sh /usr/local/bin/')]);
-      editer('sudo crontab -e', (t) => t + '30 2 * * * /usr/local/bin/sauvegarde-caisse.sh\n');
+      jouer(['sudo cp /home/vous/sauvegarde-caisse.sh /usr/local/bin/']);
+      editer('sudo crontab -e', (t) => t + L('30 2 * * * /usr/local/bin/sauvegarde-caisse.sh\n'));
       // deploy est toujours vide : la CI et Lina sont bloquées.
       expect(c.termines).not.toContain('depart');
     });

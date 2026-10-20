@@ -7,7 +7,7 @@
 // chmod o+r ouvre les journaux (adresses IP : données personnelles) à tous.
 // Les objectifs sont vérifiés sur l'état du système, pas sur la commande.
 
-import { d, f, fichiersComptes, type Chapitre, type Fichier } from '../monde';
+import { chemin, d, f, fichiersComptes, type Chapitre, type Fichier } from '../monde';
 import type { Jeu } from '../shell';
 import { comptesDatacenter, JOURNAL_NGINX } from './datacenter';
 
@@ -28,7 +28,7 @@ const malo = {
   lit: (j: Jeu) => fichiers(j).every((n) => j.peut(n, 'r', 'malo')) && j.groupesDe('malo').includes('equipe-web'),
 };
 const journauxOuverts = (j: Jeu) => fichiers(j).some((n) => j.peut(n, 'r', 'nobody'));
-const partage = (j: Jeu) => j.trouver(PARTAGE)!;
+const partage = (j: Jeu) => j.trouver(chemin(j.t, PARTAGE))!;
 
 export const deuxiemeJour: Chapitre = {
   id: 'deuxieme-jour',
@@ -92,7 +92,7 @@ export const deuxiemeJour: Chapitre = {
     {
       id: 'partage-ouvert',
       condition: (j) => j.peut(partage(j), 'w', 'nobody'),
-      message: (j) => j.t('deuxieme-jour-evenement-partage-ouvert', { partage: PARTAGE }),
+      message: (j) => j.t('deuxieme-jour-evenement-partage-ouvert', { partage: chemin(j.t, PARTAGE) }),
     },
     {
       id: 'partage',
@@ -101,7 +101,7 @@ export const deuxiemeJour: Chapitre = {
         const equipe = [j.joueur, 'awa', 'malo'].every((u) => j.peut(n, 'w', u) && j.peut(n, 'x', u));
         return equipe && !j.peut(n, 'r', 'www-data') && !j.peut(n, 'w', 'www-data');
       },
-      message: (j) => j.t('deuxieme-jour-evenement-partage', { partage: PARTAGE }),
+      message: (j) => j.t('deuxieme-jour-evenement-partage', { partage: chemin(j.t, PARTAGE) }),
     },
     {
       id: 'fin',
