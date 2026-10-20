@@ -20,7 +20,7 @@ for (const langue of LANGUES)
 
     it('première connexion : empreinte, yes, bannière, chapitre, exit', () => {
       const c = new Console({ langue });
-      expect(c.invite()).toBe('vous@poste:~$');
+      expect(c.invite()).toBe(L('vous@poste:~$'));
       const question = jouer(c, ['ssh royaume']);
       expect(question).toContain("The authenticity of host 'royaume.example (192.0.2.10)' can't be established.");
       expect(question).toMatch(/ED25519 key fingerprint is SHA256:[A-Za-z0-9+/]{43}\./);
@@ -30,21 +30,21 @@ for (const langue of LANGUES)
       const connexion = jouer(c, ['yes']);
       expect(connexion).toContain("Warning: Permanently added 'royaume.example' (ED25519) to the list of known hosts.");
       expect(connexion).toContain('Linux royaume');
-      expect(c.invite()).toBe('vous@royaume:~$');
+      expect(c.invite()).toBe(L('vous@royaume:~$'));
       expect(c.distant?.shell.chapitre.id).toBe('eveil');
       expect(jouer(c, ['exit'])).toBe('logout\nConnection to royaume.example closed.');
-      expect(c.invite()).toBe('vous@poste:~$');
+      expect(c.invite()).toBe(L('vous@poste:~$'));
       // Deuxième fois : la machine est connue, pas de question ; le chapitre reprend, avec où relire ses consignes.
       const reprise = jouer(c, ['ssh royaume']);
       expect(reprise).not.toContain('authenticity');
       expect(reprise).toContain(L('cat bienvenue.txt'));
-      expect(c.invite()).toBe('vous@royaume:~$');
+      expect(c.invite()).toBe(L('vous@royaume:~$'));
     });
 
     it('no : la vérification de la clé d’hôte échoue', () => {
       const c = new Console({ langue });
       expect(jouer(c, ['ssh royaume', 'no'])).toContain('Host key verification failed.');
-      expect(c.invite()).toBe('vous@poste:~$');
+      expect(c.invite()).toBe(L('vous@poste:~$'));
     });
 
     it('fausses pistes : nom inconnu, mauvais port, mauvais utilisateur, poste lui-même', () => {
@@ -59,7 +59,7 @@ for (const langue of LANGUES)
     it('sans la clé : Permission denied, puis la clé gagnée en finissant l’Effaceur', () => {
       const c = new Console({ langue });
       expect(c.ouverte('datacenter')).toBe(false);
-      expect(jouer(c, ['ssh datacenter', 'yes'])).toContain('vous@datacenter.example: Permission denied (publickey).');
+      expect(jouer(c, ['ssh datacenter', 'yes'])).toContain(L('vous@datacenter.example: Permission denied (publickey).'));
       const fin = new Console({ langue, termines: EFFACEUR.slice(0, 2) });
       fin.connecter('royaume');
       expect(fin.distant?.shell.chapitre.id).toBe('racine');
@@ -68,7 +68,7 @@ for (const langue of LANGUES)
       expect(derniere).toContain('~/.ssh/id_datacenter');
       expect(jouer(fin, ['exit', 'ls -a ~/.ssh'])).toContain('id_bibliotheque');
       jouer(fin, ['ssh datacenter', 'yes']);
-      expect(fin.invite()).toBe('vous@datacenter:~$');
+      expect(fin.invite()).toBe(L('vous@datacenter:~$'));
       expect(fin.distant?.histoire.id).toBe('datacenter');
     });
 
@@ -76,16 +76,16 @@ for (const langue of LANGUES)
       const c = new Console({ langue });
       const sortie = jouer(c, ['chmod 644 ~/.ssh/id_royaume', 'ssh royaume', 'yes']);
       expect(sortie).toContain('WARNING: UNPROTECTED PRIVATE KEY FILE!');
-      expect(sortie).toContain("Permissions 0644 for '/home/vous/.ssh/id_royaume' are too open.");
-      expect(sortie).toContain('vous@royaume.example: Permission denied (publickey).');
+      expect(sortie).toContain(L("Permissions 0644 for '/home/vous/.ssh/id_royaume' are too open."));
+      expect(sortie).toContain(L('vous@royaume.example: Permission denied (publickey).'));
       jouer(c, ['chmod 600 ~/.ssh/id_royaume', 'ssh royaume']);
-      expect(c.invite()).toBe('vous@royaume:~$');
+      expect(c.invite()).toBe(L('vous@royaume:~$'));
     });
 
     it('-i : une clé copiée ailleurs marche aussi', () => {
       const c = new Console({ langue, hotesConnus: '' });
       jouer(c, ['ssh -i ~/.ssh/id_royaume vous@192.0.2.10', 'yes']);
-      expect(c.invite()).toBe('vous@royaume:~$');
+      expect(c.invite()).toBe(L('vous@royaume:~$'));
     });
 
     it('hôtes connus gardés d’une partie à l’autre', () => {
@@ -101,7 +101,7 @@ for (const langue of LANGUES)
       const retour = jouer(c, ['ssh royaume']);
       expect(retour).toContain('— ');
       // Comme une nouvelle connexion : on repart de sa maison, le monde n'a pas bougé.
-      expect(c.invite()).toBe('vous@royaume:~$');
+      expect(c.invite()).toBe(L('vous@royaume:~$'));
       expect(jouer(c, ['ls Colline/EcoleDesSignaux/SalleDExercice/Seau'])).toBe(L('crabe'));
     });
 
@@ -114,7 +114,7 @@ for (const langue of LANGUES)
       expect(c.distant?.shell.chapitre.id).toBe('redemarrage');
       const coupure = jouer(c, ['sudo reboot', 'bienvenue-2026']);
       expect(coupure).toContain('Connection to datacenter.example closed by remote host.');
-      expect(c.invite()).toBe('vous@poste:~$');
+      expect(c.invite()).toBe(L('vous@poste:~$'));
       jouer(c, ['ssh datacenter']);
       expect(jouer(c, ['journalctl -b -u catalogue -n 1'])).toContain('Failed to start catalogue.service');
     });
@@ -129,14 +129,14 @@ for (const langue of LANGUES)
       c.poste.placer('test', '~/.ssh/known_hosts', { type: 'fichier', contenu: ancienne, lignes: true });
       const refus = jouer(c, ['ssh datacenter']);
       expect(refus).toContain('WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!');
-      expect(refus).toContain("ssh-keygen -f '/home/vous/.ssh/known_hosts' -R 'datacenter.example'");
+      expect(refus).toContain(L("ssh-keygen -f '/home/vous/.ssh/known_hosts' -R 'datacenter.example'"));
       expect(refus).toContain('Host key verification failed.');
-      expect(c.invite()).toBe('vous@poste:~$');
+      expect(c.invite()).toBe(L('vous@poste:~$'));
       // Le nom court n'est pas celui écrit dans known_hosts.
       expect(jouer(c, ['ssh-keygen -R datacenter'])).toContain('Host datacenter not found');
       expect(jouer(c, ['ssh-keygen -F datacenter.example'])).toContain('# Host datacenter.example found: line 1');
       const retire = jouer(c, ['ssh-keygen -R datacenter.example']);
-      expect(retire).toContain('/home/vous/.ssh/known_hosts updated.');
+      expect(retire).toContain(L('/home/vous/.ssh/known_hosts updated.'));
       expect(c.poste.lire('~/.ssh/known_hosts.old')).toBe(ancienne);
       const question = jouer(c, ['ssh datacenter']);
       expect(question).toContain(`ED25519 key fingerprint is ${empreinte(machineDeHistoire('datacenter')!, '-apres-incendie')}.`);
@@ -145,7 +145,7 @@ for (const langue of LANGUES)
       // Se reconnecter ne pose plus de question : la nouvelle clé est connue.
       jouer(c, ['exit']);
       expect(jouer(c, ['ssh datacenter'])).not.toContain('WARNING');
-      expect(c.invite()).toBe('vous@datacenter:~$');
+      expect(c.invite()).toBe(L('vous@datacenter:~$'));
       expect(jouer(c, ['exit', 'ssh-keygen -l -f ~/.ssh/known_hosts'])).toContain(
         `${empreinte(machineDeHistoire('datacenter')!, '-apres-incendie')} datacenter.example (ED25519)`,
       );

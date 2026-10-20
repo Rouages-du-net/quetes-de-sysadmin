@@ -83,9 +83,9 @@ const LOG = [
   .map(([h, m]) => `2026-10-22 ${h},412 fail2ban.actions        [701]: NOTICE  [sshd] ${m}`)
   .join('\n');
 
-// Les échecs de connexion de la nuit et de la matinée, dans le journal de ssh.
-const ECHECS: [string, string][] = [
-  ...[51234, 51240, 51251].map((p): [string, string] => [POSTE.adresse, `Failed publickey for vous from ${POSTE.adresse} port ${p} ssh2`]),
+// Les échecs de connexion de la nuit et de la matinée, dans le journal de ssh (les vôtres sous le nom de votre compte).
+const ECHECS = (joueur: string): [string, string][] => [
+  ...[51234, 51240, 51251].map((p): [string, string] => [POSTE.adresse, `Failed publickey for ${joueur} from ${POSTE.adresse} port ${p} ssh2`]),
   ...['oracle', 'git', 'admin', 'test', 'oracle', 'pi', 'git'].map((u, i): [string, string] => ['203.0.113.66', `Invalid user ${u} from 203.0.113.66 port ${40100 + i}`]),
   ...['admin', 'user', 'admin', 'ftp', 'guest', 'admin'].map((u, i): [string, string] => ['198.51.100.23', `Invalid user ${u} from 198.51.100.23 port ${33800 + i}`]),
   ...[50211, 50214, 50219, 50223, 50230].map((p): [string, string] => [RANIA, `Invalid user ranja from ${RANIA} port ${p}`]),
@@ -141,7 +141,7 @@ export const sentinelle: Chapitre = {
   initialiser: (j) => {
     f2b(j).charge = lireConfig(j).prison;
     const sd = systemd(j)!;
-    ECHECS.forEach(([, message], i) => journaliser(sd, 'ssh.service', 'sshd', 1900 + i * 4, message, 6, true));
+    ECHECS(j.joueur).forEach(([, message], i) => journaliser(sd, 'ssh.service', 'sshd', 1900 + i * 4, message, 6, true));
     sd.horloge = Date.UTC(2026, 9, 22, 9, 40, 0);
   },
   creerMonde: (t) => {

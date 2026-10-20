@@ -2,7 +2,7 @@
 ### usermod (shadow-utils), with their LANG=C messages. { $utilisateur } and
 ### { $groupe } are technical identifiers, not to be translated.
 
-# Output of id: { $uid }, { $gid } and { $groupes } look like "1000(vous)"
+# Output of id: { $uid }, { $gid } and { $groupes } look like "1000(you)"
 id-ligne = uid={ $uid } gid={ $gid } groups={ $groupes }
 id-inexistant = id: '{ $utilisateur }': no such user
 groups-inexistant = groups: '{ $utilisateur }': no such user

@@ -10,7 +10,7 @@ chapitre-manuscrit = The Time Machine
 # Author of the commits (git log): name and address, in git's format
 manuscrit-autrice = Inès Haddad <ines@example.org>
 
-## Inès's novel (roman.txt), chapter by chapter
+## Inès's novel (novel.txt), chapter by chapter
 
 manuscrit-roman-chapitre-1 =
     CHAPTER 1 — THE DEPARTURE
@@ -45,7 +45,7 @@ manuscrit-commit-2 = Chapter 2: the crossing
 manuscrit-commit-3 = Chapter 3: the lighthouse
 manuscrit-commit-4 = Morning backup
 
-## The poems (poemes directory)
+## The poems (poems directory)
 
 manuscrit-poeme-mer =
     The sea stitches up
@@ -69,28 +69,28 @@ manuscrit-message-d-ines =
     novel was open… and I saved without looking. Chapter 3 is now
     nothing but a mush of letters. And worse: I made a commit right after!
 
-    Luckily, my roman directory is tracked by git, a time machine
+    Luckily, my novel directory is tracked by git, a time machine
     for files: each "commit" is a snapshot of all the
     files, with a message and a date. Can you help me get my
     chapter back? Start by taking a look:
 
-      cd roman
-      cat roman.txt
+      cd novel
+      cat novel.txt
       git log
 
-    And while you're at it… my poems, in the poemes directory, aren't tracked
+    And while you're at it… my poems, in the poems directory, aren't tracked
     by anything at all. If my cat does it again, I lose everything."
 manuscrit-aide-git =
     GIT CHEAT SHEET (see also:  man git)
 
       git log --oneline          the history, one commit per line (most recent at the top)
       git show ID                what a commit changed
-      git diff ID roman.txt      the differences between this commit and the current file
+      git diff ID novel.txt      the differences between this commit and the current file
                                  (- : the line before, + : the line now)
-      git restore --source=ID roman.txt
-                                 puts roman.txt back as it was in this commit
+      git restore --source=ID novel.txt
+                                 puts novel.txt back as it was in this commit
       git status                 what has changed since the last commit
-      git add roman.txt          stages the file for the next commit
+      git add novel.txt          stages the file for the next commit
       git commit -m "message"    takes the snapshot, with a message
 
     A commit is referred to by the start of its identifier (7 characters are enough),
@@ -111,14 +111,14 @@ manuscrit-evenement-restaure =
     commit still contains the mush. Look at git status , then save
     the repaired version:
 
-      git add roman.txt
+      git add novel.txt
       git commit -m "Restore chapter 3 (thanks, cat)"
 manuscrit-evenement-sauve =
     Commit saved. Notice: nothing was erased from history. The cat's
     commit is still there (git log); we simply added a new,
     repaired snapshot on top. With git, you almost never lose anything.
 
-    There are still Inès's poems: turn the poemes directory into a repository
+    There are still Inès's poems: turn the poems directory into a repository
     (git init), then take a first snapshot of all the poems.
 manuscrit-evenement-poemes = The three poems are now in a commit: even if the cat comes back, they're safe in the history.
 manuscrit-evenement-fin =

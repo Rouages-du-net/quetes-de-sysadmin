@@ -36,7 +36,7 @@ depart-notes-marc =
     - The till runs as a service (caisse.service), under the caisse account.
     - Releases: through the deploy account (keys in
       /home/deploy/.ssh/authorized_keys: the CI, Lina and me).
-    - Backup: my script ~/bin/sauvegarde-caisse.sh, every night at
+    - Backup: my script ~/bin/till-backup.sh, every night at
       2:30 am, in my crontab. Should be redone properly some day…
 
 ## Events
@@ -58,7 +58,7 @@ depart-evenement-script-perdu =
     deleted account).
 
     Luckily, yesterday's backup contains /home: look in
-    /srv/sauvegardes (as root). Next time: first look at what
+    /srv/backups (as root). Next time: first look at what
     an account runs, then delete it.
 depart-evenement-tache-personnelle =
     The backup is in YOUR crontab. It runs… until the day you, too,

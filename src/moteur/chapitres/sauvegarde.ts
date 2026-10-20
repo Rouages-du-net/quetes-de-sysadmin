@@ -28,7 +28,7 @@ const originaux = (j: Jeu): Record<string, string> => j.etat.originaux;
 // La sauvegarde contient-elle ces souvenirs, à l'identique ?
 const sauve = (j: Jeu, noms: string[]) => noms.every((n) => j.lire(chemin(j.t, `${SAUVEGARDE}/${n}`)) === originaux(j)[n]);
 const tachesDeNuit = (j: Jeu) =>
-  analyser(j.etat.crontabs?.vous ?? '', '').taches.filter((t) => {
+  analyser(j.etat.crontabs?.[j.joueur] ?? '', '').taches.filter((t) => {
     for (let ms = Date.UTC(2026, 9, 25, 0, 0); ms < Date.UTC(2026, 9, 26, 0, 0); ms += 60_000) if (tourneA(t, ms)) return /\brsync\b/.test(t.commande);
     return false;
   });
@@ -62,7 +62,7 @@ export const sauvegarde: Chapitre = {
     }),
   // Dès que la crontab change, la nuit passe : cron lance ce qui tombe entre minuit et 6 h.
   apresCommande: (j) => {
-    if ((j.etat.versionCrontab ?? 0) === j.etat.versionNuit || !j.etat.crontabs?.vous || j.drapeaux.has('nuit-ok')) return;
+    if ((j.etat.versionCrontab ?? 0) === j.etat.versionNuit || !j.etat.crontabs?.[j.joueur] || j.drapeaux.has('nuit-ok')) return;
     j.etat.versionNuit = j.etat.versionCrontab;
     const morceaux: string[] = [];
     if (!j.drapeaux.has('jour')) {

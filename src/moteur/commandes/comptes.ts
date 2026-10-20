@@ -67,7 +67,7 @@ export const COMPTES: Record<string, Commande> = {
       const [groupe, ...cibles] = reste;
       if (!groupe || !cibles.length) return jeu.erreur(jeu.t('chgrp-usage'));
       if (!jeu.comptes.groupes[groupe]) return jeu.erreur(jeu.t('chgrp-groupe-incorrect', { groupe }));
-      const autorise = (n: Noeud) => jeu.qui === 'root' || ((n.proprio ?? 'vous') === jeu.qui && jeu.groupesDe(jeu.qui).includes(groupe));
+      const autorise = (n: Noeud) => jeu.qui === 'root' || ((n.proprio ?? jeu.joueur) === jeu.qui && jeu.groupesDe(jeu.qui).includes(groupe));
       return changer(jeu, 'chgrp', cibles, lettres.has('R'), autorise, (n) => (n.groupe = groupe));
     },
   },

@@ -10,7 +10,7 @@
 // privée dans ~/.ssh de maison.
 // Sources : https://man.openbsd.org/ssh#J, https://man.openbsd.org/ssh_config#ProxyJump
 
-import { d, f, type Chapitre, type Dossier } from '../monde';
+import { chemin, d, f, type Chapitre, type Dossier } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { configuration, resoudreNom } from '../acces';
 import { chargerSshd, comptesMaison, connexionsPar, dossierSsh, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE } from './maison';
@@ -45,9 +45,9 @@ const raccourci = (j: Jeu) => {
 
 // Une clé privée laissée dans ~/.ssh de maison.
 const clePriveeSurMaison = (j: Jeu) => {
-  const ssh = j.trouver(`${M}/.ssh`) as Dossier | null;
+  const ssh = j.trouver(chemin(j.t, `${M}/.ssh`)) as Dossier | null;
   if (ssh?.type !== 'dossier') return false;
-  return Object.keys(ssh.enfants).some((n) => (j.lire(`${M}/.ssh/${n}`) ?? '').includes('PRIVATE KEY'));
+  return Object.keys(ssh.enfants).some((n) => (j.lire(`${chemin(j.t, M)}/.ssh/${n}`) ?? '').includes('PRIVATE KEY'));
 };
 
 export const rebond: Chapitre = {

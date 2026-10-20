@@ -5,7 +5,7 @@
 
 import type { Shell } from '../shell';
 import { dans, lan } from '../lan';
-import { confDe, demonterWg, etatTunnel, genererCle, lireConfWg, monterWg, publique, wg, type Distant, type InterfaceWg } from '../wireguard';
+import { confDe, confDistant, demonterWg, etatTunnel, genererCle, lireConfWg, monterWg, publique, wg, type Distant, type InterfaceWg } from '../wireguard';
 import { systemd } from '../systemd';
 import { modeAvecMasque } from '../outils';
 import type { Commande } from './index';
@@ -182,7 +182,7 @@ export function pingTunnel(jeu: Shell, ip: string): 'sans-pair' | 'perdu' | 'ok'
     const d = lan(jeu)?.distants?.find((x) => x.cle === p.cle);
     const e = d && etatTunnel(jeu, d, publicDu(jeu));
     if (!d || !e || e.nom !== nom || !serre(e.etat)) return 'perdu';
-    const client = lireConfWg(jeu.lire(d.conf) ?? '');
+    const client = confDistant(jeu, d);
     if (client.adresses[0]?.split('/')[0] === ip) return 'ok';
     // Un appareil du site derrière ce pair : seulement si le passage reste ouvert dans sa box.
     return d.reseau && dans(ip, d.reseau) && (!d.derriereNat || client.pairs[0]?.keepalive) ? 'ok' : 'perdu';

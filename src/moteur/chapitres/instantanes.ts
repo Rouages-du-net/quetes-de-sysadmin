@@ -12,7 +12,7 @@
 // Sources : https://rsnapshot.org/rsnapshot/docs/docs.html,
 // https://manpages.debian.org/bookworm/rsnapshot/rsnapshot.1.en.html
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits, type Noeud } from '../monde';
+import { chemin, d, f, fichiersComptes, type Chapitre, type Comptes, type Droits, type Noeud } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { nouveauSystemd, systemd } from '../systemd';
 import { passer } from '../cron';
@@ -57,15 +57,16 @@ const instantanes = (j: Jeu, niveau: string) => {
 };
 const sauvesBien = (j: Jeu) => {
   const { conf: c, erreurs } = conf(j);
-  if (erreurs.length || c.niveaux.length < 2 || !c.racine.startsWith(`${DISQUE}/`)) return false;
+  const partage = chemin(j.t, PARTAGE);
+  if (erreurs.length || c.niveaux.length < 2 || !c.racine.startsWith(`${chemin(j.t, DISQUE)}/`)) return false;
   const [petit, grand] = c.niveaux;
   const tous = [...instantanes(j, petit.nom), ...instantanes(j, grand.nom)];
-  const b = c.sauvegardes.find((x) => x.source === `${PARTAGE}/`);
+  const b = c.sauvegardes.find((x) => x.source === `${partage}/`);
   return (
     !!b &&
     instantanes(j, petit.nom).length >= 7 &&
     instantanes(j, grand.nom).length >= 1 &&
-    tous.every((nom) => j.trouver(`${c.racine}${nom}/${b.destination}${PARTAGE}/inventaire.csv`)?.type === 'fichier')
+    tous.every((nom) => j.trouver(`${c.racine}${nom}/${b.destination}${chemin(j.t, INVENTAIRE)}`)?.type === 'fichier')
   );
 };
 const crontabsRsnapshot = (j: Jeu) =>
@@ -83,7 +84,7 @@ function deuxSemaines(j: Jeu): string[] {
     // Le quatorzième soir, une vieille copie de l'inventaire écrase la bonne.
     jeu.placer(
       'cp',
-      INVENTAIRE,
+      chemin(j.t, INVENTAIRE),
       f(n === 14 ? j.t('instantanes-inventaire-ancien') : inventaire(j.t, n), {
         lignes: true,
         proprio: 'berenice',
@@ -167,7 +168,7 @@ export const instantanesChapitre: Chapitre = {
     const jeu = j as Shell;
     const avant = jeu.qui;
     jeu.qui = 'root';
-    jeu.sousCommande(`mount /dev/sdc1 ${DISQUE}`, '/');
+    jeu.sousCommande(`mount /dev/sdc1 ${chemin(j.t, DISQUE)}`, '/');
     jeu.qui = avant;
   },
   // Une fois rsnapshot programmé avec une configuration valable, deux semaines passent.
@@ -224,7 +225,7 @@ export const instantanesChapitre: Chapitre = {
     },
     {
       id: 'meme-disque',
-      condition: (j) => !!j.etat.semainesPassees && !conf(j).conf.racine.startsWith(`${DISQUE}/`),
+      condition: (j) => !!j.etat.semainesPassees && !conf(j).conf.racine.startsWith(`${chemin(j.t, DISQUE)}/`),
       message: (j) => j.t('instantanes-evenement-meme-disque'),
     },
     {
@@ -252,10 +253,10 @@ export const instantanesChapitre: Chapitre = {
       id: 'mauvaise-version',
       condition: (j) =>
         sauvesBien(j) &&
-        j.lire(INVENTAIRE) === j.t('instantanes-inventaire-ancien') &&
+        j.lire(chemin(j.t, INVENTAIRE)) === j.t('instantanes-inventaire-ancien') &&
         j.derniere.commandes.some((c) => ['cp', 'rsync'].includes(c[0])),
       message: (j) => j.t('instantanes-evenement-mauvaise-version'),
     },
-    { id: 'fin', condition: (j) => sauvesBien(j) && j.lire(INVENTAIRE) === inventaire(j.t, 13), message: (j) => j.t('instantanes-evenement-fin') },
+    { id: 'fin', condition: (j) => sauvesBien(j) && j.lire(chemin(j.t, INVENTAIRE)) === inventaire(j.t, 13), message: (j) => j.t('instantanes-evenement-fin') },
   ],
 };

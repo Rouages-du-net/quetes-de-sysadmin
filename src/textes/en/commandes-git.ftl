@@ -167,7 +167,7 @@ git-commit-suppressions =
 
 git-add-rien =
     Nothing specified, nothing added.
-    (for example: git add roman.txt, or git add . for everything)
+    (for example: git add novel.txt, or git add . for everything)
 git-commit-sans-message =
     Write the message with -m, in quotes: git commit -m "What I changed"
     (the real git would open a text editor)

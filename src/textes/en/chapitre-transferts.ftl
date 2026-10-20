@@ -16,13 +16,13 @@ transferts-courriel-yasmine =
     The general meeting is on Saturday! Two things before that:
 
     1. The annual report is on the wiki:
-       /srv/wiki/exports/rapport-2027.pdf. Could you fetch it onto YOUR
+       /srv/wiki/exports/report-2027.pdf. Could you fetch it onto YOUR
        workstation? I'll print it from your place. (man scp; the shortcut
        you wrote for the wiki works for scp too.)
 
-    2. The backup of the shared directory (/srv/partage, here on maison) hasn't
+    2. The backup of the shared directory (/srv/share, here on maison) hasn't
        been done since last year. It goes on archives, in
-       /srv/sauvegardes/partage: the same files, in the same places.
+       /srv/backups/share: the same files, in the same places.
        Gaspard used rsync, from maison: it only copies what has
        changed (man rsync). He even created a key just for that,
        ~/.ssh/id_sauvegarde (look at ~/.ssh/config, here).
@@ -57,14 +57,14 @@ transferts-evenement-rapport =
 # { $dossier }: the extra directory that was created
 transferts-evenement-imbrique =
     Look on archives: there is now a directory { $dossier }. Without
-    a trailing slash, rsync copied the DIRECTORY partage into the
+    a trailing slash, rsync copied the DIRECTORY share into the
     backup, instead of its CONTENTS.
 
-    Start again with /srv/partage/. And to remove the extra directory,
+    Start again with /srv/share/. And to remove the extra directory,
     rsync can delete on the other side what doesn't exist at the source: the
     --delete option (man rsync). Powerful, so do a dry run first, with -n.
 transferts-evenement-sauvegarde =
-    The backup on archives is up to date: every file from /srv/partage is
+    The backup on archives is up to date: every file from /srv/share is
     there, in the same place. Run the same command again: rsync has nothing
     left to copy.
 transferts-evenement-fin =
@@ -81,7 +81,7 @@ transferts-evenement-fin =
 
     GOOD PRACTICE
     - The trailing slash on the source matters, with rsync:
-      /srv/partage/ copies the contents, /srv/partage copies the directory.
+      /srv/share/ copies the contents, /srv/share copies the directory.
     - Always do a dry run first (rsync -n, or --dry-run), especially
       with --delete, which deletes on the other side what no longer exists at the source.
     - A dedicated key for each automated task (id_sauvegarde), not

@@ -80,7 +80,11 @@ nom-effaceur-conf-corrige = eraser.conf.fixed
 
 Un bon nom se tape sans effort sur un clavier de ta langue : lettres sans
 accent, chiffres, `.`, `-` ou `_`, aucune espace (`tests/noms.test.ts` le
-vérifie). Dans un même dossier, deux noms doivent rester différents, et
+vérifie). Un nom s'applique à tous les chapitres qui traduisent leurs noms :
+la liste de tous les renommages est gardée dans `tests/noms/renommes.<langue>.txt`,
+et le test échoue au moindre renommage nouveau. S'il est voulu, relire la
+différence et mettre la liste à jour (`npx vitest run -u tests/noms.test.ts`).
+Dans un même dossier, deux noms doivent rester différents, et
 mieux vaut qu'ils se distinguent dès les premières lettres, pour la
 complétion par Tab. Les textes de l'histoire emploient ensuite ces noms
 tels quels, sans glose : « mv crab Bucket ».
@@ -89,13 +93,34 @@ Seules les histoires dont le chapitre déclare `noms: true` traduisent leurs
 noms : c'est le cas de toutes. L'Effaceur et le poste traduisent tous leurs
 lieux et objets ; les autres histoires traduisent les documents qu'on lit
 dans sa maison (courriels, messages, mots, notes d'aide, `LISEZMOI.txt`,
-plan de reprise…). Les données de leurs serveurs gardent leur nom
-français, comme sur un serveur tenu par une équipe française : dossiers et
-sites, bases, fichiers suivis par git, restic, rsnapshot ou rsync, ou
-écrits par le jeu en cours de partie (le fonds des Archives, le partage de
-la Ludothèque, les comptes rendus de la Maison des associations). Un tel
-nom ne se traduit que si tout ce qui le désigne suit (instantanés,
-dépôts, configuration, machines internes, qui ne sont pas renommées).
+plan de reprise…) et les données de leurs serveurs : le fonds des Archives
+(`fonds` → `collection`) et le disque de la mairie, le roman d'Inès, le
+partage de la Ludothèque et de la Maison des associations (`partage` →
+`share`), les sauvegardes, les relevés de la Coopérative, les dossiers de
+la radio… Ces noms vivent aussi dans ce qui garde une copie ou une trace
+des fichiers : instantanés restic et rsnapshot, copies rsync, fichiers
+suivis par git, scripts, crontabs, journaux, processus. Le code les écrit
+donc dans la langue au moment où il les crée ou les compare (`chemin()`,
+`nom()`, voir plus bas), et les textes anglais emploient les noms
+anglais. Restent tels quels les noms techniques que d'autres réglages
+désignent : sites et adresses servis par HTTP (`/var/www/…`, `/direct`),
+bases, images et projets Docker (le nom du dossier d'un projet Compose
+nomme ses conteneurs), unités systemd, programmes et scripts du `PATH`
+(`enregistrer`, `sonde`, `convertir.py`), et les noms propres (les
+émissions `matinale-…` et `nuit-…` de la radio). Les machines internes
+d'une histoire (le wiki et les archives de la Maison des associations)
+sont renommées comme sa machine principale.
+
+Deux comptes se traduisent aussi, dans `noms.ftl` : celui du joueur ou de
+la joueuse (`nom-vous = you` : invite `you@royaume:~$`, `/home/you`,
+propriétaire des fichiers, `whoami`, `User you` du `~/.ssh/config` du
+poste, auteur des commits…) et l'utilisateur système de l'Effaceur
+(`nom-effaceur = eraser`). Un nom de compte Unix : minuscules, sans accent
+ni espace. Les autres comptes (`root`, `www-data`, les personnages : `malo`,
+`yasmine`…) et les noms des machines (`royaume`, `datacenter`…) restent
+tels quels. Dans les fichiers que décrivent les textes (sudoers,
+configurations, journaux), écrire le nom du compte dans la langue
+(`you    ALL=(ALL:ALL) ALL`).
 
 Les commandes des exemples du manuel sont dans le code (`pages.ts`). Quand
 l'une d'elles contient des mots (`grep "mot de passe" journal.txt`), une
@@ -116,7 +141,7 @@ noms de jeux de la base…) se traduisent par ce que le joueur ou la joueuse
 | Code | Langue | État |
 |---|---|---|
 | `fr` | français | langue de référence |
-| `en` | anglais | complet (textes, manuel, messages des outils comme avec `LANG=C`, noms des lieux et des objets de L'Effaceur et du poste, documents des autres histoires) ; données des serveurs des histoires en français |
+| `en` | anglais | complet (textes, manuel, messages des outils comme avec `LANG=C`, noms des lieux et des objets de L'Effaceur et du poste, documents et données des serveurs des autres histoires, comptes `you` et `eraser`) |
 
 ## Ajouter une langue
 
@@ -149,3 +174,14 @@ qui permettent de traduire sans toucher à Git.
   `nom(j.t, 'levain')` (voir `src/moteur/monde.ts`). Dans les tests, les
   commandes s'écrivent aussi en français et passent par `dansLaLangue()`
   (`tests/noms.ts`).
+  Ce que le jeu fabrique à partir d'un chemin (instantanés, crontab,
+  script, ligne de journal, commande d'un processus, contenu d'une unité)
+  prend lui aussi le chemin dans la langue : `chemin(t, '/srv/partage')`
+  dans `etat(t)` ou `creerMonde(t)`, `chemin(j.t, …)` dans les événements.
+  Une adresse web qui ressemble à un nom traduit (`-u /direct`) se tape
+  dans les tests sans `L()`.
+- Le compte du joueur ou de la joueuse s'écrit `jeu.joueur` (`vous`, `you`…),
+  ou `joueur(t)` avant que le jeu existe (l'état d'un chapitre) ; jamais
+  `'vous'` en dur. Les chapitres déclarent leurs comptes (`comptes()`) et
+  leurs propriétaires (`proprio: 'vous'`) en français : ils sont renommés à
+  la création, comme les lieux (`traduireComptes`, `traduireNoms`).

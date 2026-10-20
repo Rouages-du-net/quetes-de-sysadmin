@@ -33,7 +33,7 @@ disque-plein-flux-log =
     2027-08-15 02:46:58.113 DEBUG relay: packet 98412332 from source 127.0.0.1:41022 (4096 bytes)
     2027-08-15 02:46:58.114 DEBUG relay: sent 4096 bytes to 12 listeners
     2027-08-15 02:46:58.114 DEBUG relay: packet 98412333 from source 127.0.0.1:41022 (4096 bytes)
-    2027-08-15 02:46:58.115 ERROR record: cannot write /srv/radio/emissions/nuit-2027-08-15.ogg: No space left on device
+    2027-08-15 02:46:58.115 ERROR record: cannot write /srv/radio/shows/nuit-2027-08-15.ogg: No space left on device
 disque-plein-syslog =
     Aug 15 02:40:01 radio CRON[24117]: (radio) CMD (/usr/local/bin/enregistrer nuit)
     Aug 15 02:40:03 radio enregistrer[24118]: write failed: No space left on device

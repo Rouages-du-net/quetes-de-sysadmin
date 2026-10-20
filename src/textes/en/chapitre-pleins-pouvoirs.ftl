@@ -84,9 +84,9 @@ pleins-pouvoirs-evenement-eacces =
     it will come back as soon as it can write.
 pleins-pouvoirs-evenement-uid-1000 =
     The gallery runs under uid 1000… and on this machine, uid 1000
-    is you (vous)! In ls -l, its files belong to you: the kernel
+    is you (your account, you)! In ls -l, its files belong to you: the kernel
     only sees numbers, and each /etc/passwd gives them its own name (node
-    in the image, vous on the machine). Yasmine (uid 1001), however, still
+    in the image, you on the machine). Yasmine (uid 1001), however, still
     can't write to the photos directory.
 pleins-pouvoirs-evenement-ouvert-a-tous =
     A directory writable by everyone (chmod 777, o+w): it "works",

@@ -11,7 +11,7 @@ poste-bienvenue =
       ssh royaume
 
     The first time, ssh will ask whether you trust this machine: answer
-    yes. Once you are connected, the prompt changes (vous@royaume). To
+    yes. Once you are connected, the prompt changes (you@royaume). To
     come back here:
 
       exit
@@ -24,7 +24,7 @@ poste-bienvenue =
 # Comment at the top of ~/.ssh/config (each line becomes a "#" comment)
 poste-config-commentaire =
     The machines you know. "ssh royaume" connects to royaume.example
-    as the user vous with the key ~/.ssh/id_royaume.
+    as the user you with the key ~/.ssh/id_royaume.
     Manual: man ssh
 poste-exit = (You are on your own workstation: exit would close your terminal. To connect to a machine: ssh name, for example ssh royaume.)
 # { $cles }: the list of new keys, separated by commas

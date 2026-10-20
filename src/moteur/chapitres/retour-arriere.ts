@@ -13,7 +13,7 @@
 // https://www.gnu.org/software/coreutils/manual/html_node/ln-invocation.html,
 // https://nginx.org/en/docs/http/ngx_http_core_module.html#root
 
-import { d, f, fichiersComptes, type Chapitre, type Droits, type Noeud } from '../monde';
+import { chemin, d, f, fichiersComptes, joueur, type Chapitre, type Droits, type Noeud } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { nouveauSystemd } from '../systemd';
 import { chargerNginx, requete, verifierNginx } from '../nginx';
@@ -37,11 +37,11 @@ const GAZETTE = 'gazette.example';
 // Samia, puis la nouvelle mise en page de Théo (accueil.html au lieu d'index.html).
 function commits(t: Jeu['t']): Commit[] {
   const [c1, c2] = historique(t);
-  const c3 = nouveauCommit(c2, t('retour-arriere-commit-3'), 'vous <vous@gazette.example>', 'Mon May 10 09:31:00 2027 +0200', {
+  const c3 = nouveauCommit(c2, t('retour-arriere-commit-3'), `${joueur(t)} <${joueur(t)}@gazette.example>`, 'Mon May 10 09:31:00 2027 +0200', {
     ...c2.fichiers,
     'index.html': t('retour-arriere-site-index'),
   });
-  const c4 = nouveauCommit(c3, t('retour-arriere-commit-4'), 'vous <vous@gazette.example>', 'Mon May 10 09:40:00 2027 +0200', {
+  const c4 = nouveauCommit(c3, t('retour-arriere-commit-4'), `${joueur(t)} <${joueur(t)}@gazette.example>`, 'Mon May 10 09:40:00 2027 +0200', {
     ...c3.fichiers,
     'agenda.html': agenda(t, 12),
   });
@@ -180,9 +180,9 @@ export const retourArriere: Chapitre = {
       git: {
         [DEPOT]: { commits: tous, index: {}, nu: true },
         // Ta copie s'est arrêtée aux tests de Samia : la mise en page de Théo est sur le serveur.
-        [LOCAL]: { commits: tous.slice(0, 5), index: { ...tous[4].fichiers }, distants: { prod: DEPOT } },
+        [chemin(t, LOCAL)]: { commits: tous.slice(0, 5), index: { ...tous[4].fichiers }, distants: { prod: DEPOT } },
       },
-      auteur: 'vous <vous@gazette.example>',
+      auteur: `${joueur(t)} <${joueur(t)}@gazette.example>`,
       date: 'Mon May 17 21:10:00 2027 +0200',
     };
   },

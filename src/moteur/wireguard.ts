@@ -17,6 +17,7 @@
 // PresharedKey vérifiée, de PostUp exécuté, de routage de tout le trafic
 // (0.0.0.0/0) côté routeur ni d'IPv6.
 
+import { chemin } from './monde';
 import type { Jeu } from './shell';
 import { cidr, creer, dans, estIp, lan, reseauDe, supprimer } from './lan';
 import { nft, routage, traverser, type Ruleset } from './nftables';
@@ -229,7 +230,8 @@ export interface Distant {
   adresse: string;
   // Sa clé publique (sa clé privée ne quitte jamais l'appareil).
   cle: string;
-  // Son fichier de configuration, que le chapitre fait compléter.
+  // Son fichier de configuration, que le chapitre fait compléter (chemin
+  // écrit avec les noms français, comme ceux des chapitres : voir chemin()).
   conf: string;
   // Ce qu'il essaie de joindre à travers le tunnel.
   vers: string;
@@ -272,13 +274,16 @@ interface Poignee {
 }
 
 /** La poignée de main entre le pair et le routeur : ce qu'il faut pour qu'ils se reconnaissent. */
+/** La configuration d'un pair distant, lue dans son fichier (sous son nom dans la langue). */
+export const confDistant = (j: Jeu, d: Distant): ConfWg => lireConfWg(j.lire(chemin(j.t, d.conf)) ?? '');
+
 function poignee(j: Jeu, d: Distant, o: Options): Poignee | { etat: EtatTunnel; nom?: string } {
   const interfaces = o.interfaces ?? wg(j);
   const ruleset = o.ruleset ?? nft(j);
   const transfert = o.transfert ?? routage(j);
   const entrees = Object.entries(interfaces);
   if (!entrees.length) return { etat: 'eteint' };
-  const client = lireConfWg(j.lire(d.conf) ?? '');
+  const client = confDistant(j, d);
   const pairRouteur = client.pairs[0];
   const adresseClient = client.adresses[0]?.split('/')[0];
   if (client.erreurs.length || !pairRouteur?.endpoint || !adresseClient) return { etat: 'conf' };

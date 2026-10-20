@@ -22,7 +22,7 @@ cles-courriel-yasmine =
     from the internet. Behind it are the associations' wiki and the
     archives server (you'll discover them soon).
 
-    I've created an account for you (vous) with a temporary password:
+    I've created an account for you (user name: you) with a temporary password:
     { $motdepasse }. That's how you get in, for now. Gaspard used to say
     that a password on a server open to the internet is a door left
     ajar. So before anything else:

@@ -10,7 +10,7 @@
 // Sources : https://man.openbsd.org/ssh-keygen, https://man.openbsd.org/sshd_config,
 // https://manpages.debian.org/bookworm/openssh-client/ssh-copy-id.1.en.html
 
-import { f, type Chapitre } from '../monde';
+import { chemin, f, type Chapitre } from '../monde';
 import type { Jeu } from '../shell';
 import { autorise, CONFIG, lireConfig } from '../sshd';
 import { clePublique, MACHINES } from '../machines';
@@ -18,7 +18,7 @@ import { chargerSshd, comptesMaison, connexionsPar, etatMaison, hoteInterne, M, 
 
 // Les clés autorisées pour vous sur maison (lignes « ssh-… »).
 const autorisees = (j: Jeu) =>
-  (j.lire(`${M}/.ssh/authorized_keys`) ?? '')
+  (j.lire(chemin(j.t, `${M}/.ssh/authorized_keys`)) ?? '')
     .split('\n')
     .map((l) => l.trim())
     .filter((l) => l.startsWith('ssh-'))
@@ -27,7 +27,7 @@ const autorisees = (j: Jeu) =>
 const DONNEES = MACHINES.map((m) => clePublique(m).split(' ').slice(0, 2).join(' '));
 const clesDeVous = (j: Jeu) => autorisees(j).filter((c) => !DONNEES.includes(c));
 const sansMotDePasse = (j: Jeu) => sshd(j).charge.passwordauthentication === 'no';
-const ferme = (j: Jeu) => sansMotDePasse(j) && clesDeVous(j).length > 0 && autorise(sshd(j).charge, 'vous');
+const ferme = (j: Jeu) => sansMotDePasse(j) && clesDeVous(j).length > 0 && autorise(sshd(j).charge, j.joueur);
 
 export const cles: Chapitre = {
   id: 'cles',

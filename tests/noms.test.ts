@@ -39,6 +39,27 @@ for (const langue of LANGUES)
       }
     });
 
+    // Le garde-fou des collisions : un nom ajouté à noms.ftl renomme ce
+    // nom dans tous les chapitres à noms: true, y compris là où personne ne
+    // l'attendait (un /srv/sauvegarde d'une autre histoire). La liste de
+    // tous les renommages est gardée dans tests/noms/ : un renommage
+    // nouveau fait échouer ce test ; s'il est voulu, relire le fichier
+    // produit et le mettre à jour avec « npx vitest run -u tests/noms.test.ts ».
+    it.runIf(langue !== 'fr')('les renommages sont ceux attendus (tests/noms/)', async () => {
+      // Les machines internes d'une histoire sont renommées comme sa machine principale.
+      const mondes = traduits.flatMap((c) => [
+        { id: c.id, creerMonde: c.creerMonde },
+        ...Object.entries(c.hotes ?? {}).map(([h, def]) => ({ id: `${c.id}:${h}`, creerMonde: def.creerMonde })),
+      ]);
+      const lignes = mondes.flatMap((c) => {
+        const renommes = parcourir(c.creerMonde(t))
+          .filter((ch) => ch.split('/').some((m) => m && nom(t, m) !== m))
+          .map((ch) => `  ${ch} → ${ch.split('/').map((m) => (m ? nom(t, m) : m)).join('/')}`);
+        return renommes.length ? [`${c.id}`, ...renommes, ''] : [];
+      });
+      await expect(lignes.join('\n')).toMatchFileSnapshot(`./noms/renommes.${langue}.txt`);
+    });
+
     it('Tab complète les noms traduits', () => {
       const s = new Shell(HISTOIRES[0].chapitres[0], langue);
       const colline = nom(t, 'Colline');

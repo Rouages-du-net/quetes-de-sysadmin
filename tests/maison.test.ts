@@ -31,15 +31,15 @@ for (const langue of LANGUES)
     it('chapitre 1 — solution : ssh-keygen, ssh-copy-id, puis plus de mots de passe', () => {
       const { c, jouer, modifier } = partie();
       let tout = jouer(['ssh maison', 'yes']);
-      expect(c.invite()).toBe("vous@maison.example's password:");
+      expect(c.invite()).toBe(L("vous@maison.example's password:"));
       tout += jouer(['lilas-2027']);
       contient(tout, 'Bienvenue dans l');
-      expect(c.invite()).toBe('vous@maison:~$');
+      expect(c.invite()).toBe(L('vous@maison:~$'));
       tout += jouer(['exit', 'ssh-keygen', '', '', '', 'ssh-copy-id maison', 'lilas-2027']);
-      expect(tout).toContain('Your public key has been saved in /home/vous/.ssh/id_ed25519.pub');
+      expect(tout).toContain(L('Your public key has been saved in /home/vous/.ssh/id_ed25519.pub'));
       expect(tout).toContain('Number of key(s) added: 1');
       tout += jouer(['ssh maison']);
-      expect(c.invite()).toBe('vous@maison:~$');
+      expect(c.invite()).toBe(L('vous@maison:~$'));
       contient(tout, 'Entré·e par ta clé, sans mot de passe');
       tout += modifier(CONFIG, (t) => t.replace('#PasswordAuthentication yes', 'PasswordAuthentication no'));
       tout += jouer(['sudo sshd -t', 'sudo systemctl reload ssh']);
@@ -52,16 +52,16 @@ for (const langue of LANGUES)
 
     it('chapitre 1 — autre solution : la clé publique recopiée à la main, avec une phrase de passe', () => {
       const { c, jouer, modifier } = partie();
-      jouer(['ssh-keygen -t ed25519 -C vous@poste', '', 'une longue phrase', 'une longue phrase']);
+      jouer([L('ssh-keygen -t ed25519 -C vous@poste'), '', 'une longue phrase', 'une longue phrase']);
       const publique = c.poste.lire('~/.ssh/id_ed25519.pub')!;
       jouer(['ssh maison', 'yes', 'lilas-2027', 'mkdir .ssh']);
       c.executer('nano .ssh/authorized_keys');
       c.enregistrer(publique + '\n');
       c.quitterEdition();
       jouer(['chmod 600 .ssh/authorized_keys', 'exit', 'ssh maison']);
-      expect(c.invite()).toBe("Enter passphrase for key '/home/vous/.ssh/id_ed25519':");
+      expect(c.invite()).toBe(L("Enter passphrase for key '/home/vous/.ssh/id_ed25519':"));
       jouer(['une longue phrase']);
-      expect(c.invite()).toBe('vous@maison:~$');
+      expect(c.invite()).toBe(L('vous@maison:~$'));
       modifier('/etc/ssh/sshd_config.d/00-cles.conf', () => 'PasswordAuthentication no\n');
       jouer(['sudo systemctl restart ssh', 'exit', 'ssh maison', 'une longue phrase']);
       expect(c.termines).toContain('cles');
@@ -71,16 +71,16 @@ for (const langue of LANGUES)
       const { c, jouer, modifier } = partie();
       // Sans clé à soi, ssh-copy-id prend la plus récente de ~/.ssh : celle du royaume.
       let tout = jouer(['ssh-copy-id maison', 'yes', 'lilas-2027', 'ssh maison']);
-      expect(tout).toContain('Source of key(s) to be installed: "/home/vous/.ssh/id_royaume.pub"');
-      expect(c.invite()).toBe("vous@maison.example's password:");
+      expect(tout).toContain(L('Source of key(s) to be installed: "/home/vous/.ssh/id_royaume.pub"'));
+      expect(c.invite()).toBe(L("vous@maison.example's password:"));
       tout = jouer(['lilas-2027']);
       contient(tout, "jeu t'a donnée pour une autre machine");
       tout = modifier(CONFIG, (t) => t.replace('#PasswordAuthentication yes', 'PasswordAuthentication no'));
       tout += jouer(['sudo systemctl reload ssh']);
       contient(tout, 'aucune clé n');
       tout = jouer(['exit', 'ssh maison']);
-      expect(tout).toContain('vous@maison.example: Permission denied (publickey).');
-      expect(c.invite()).toBe('vous@poste:~$');
+      expect(tout).toContain(L('vous@maison.example: Permission denied (publickey).'));
+      expect(c.invite()).toBe(L('vous@poste:~$'));
       // Le menu : la console de secours de l'hébergeur.
       c.connecter('maison');
       modifier(CONFIG, (t) => t.replace('PasswordAuthentication no', 'PasswordAuthentication yes'));
@@ -94,7 +94,7 @@ for (const langue of LANGUES)
       p.jouer(['ssh-keygen -N "" -f ~/.ssh/id_ed25519']);
       return p;
     };
-    const CONFIG_WIKI = '\nHost wiki\n    HostName wiki\n    User vous\n    ProxyJump maison\n';
+    const CONFIG_WIKI = L('\nHost wiki\n    HostName wiki\n    User vous\n    ProxyJump maison\n');
     const ecrirePoste = (c: Console, fichier: string, ajouter: string) => {
       c.executer(`nano ${fichier}`);
       c.enregistrer(c.edition!.texte + ajouter);
@@ -105,10 +105,10 @@ for (const langue of LANGUES)
       const { c, jouer } = avecCle(['cles']);
       let tout = jouer(['ssh -J maison wiki', 'yes', 'yes']);
       contient(tout, 'Le wiki');
-      expect(c.invite()).toBe('vous@wiki:~$');
+      expect(c.invite()).toBe(L('vous@wiki:~$'));
       contient(tout, 'Te voilà sur le wiki');
       tout += jouer(['hostname', 'cat note_gaspard.txt', 'exit']);
-      expect(c.invite()).toBe('vous@poste:~$');
+      expect(c.invite()).toBe(L('vous@poste:~$'));
       // Le chapitre regarde le poste : le raccourci écrit suffit (déjà venu·e au wiki).
       tout = ecrirePoste(c, '~/.ssh/config', CONFIG_WIKI);
       contient(tout, 'https://man.openbsd.org/ssh_config#ProxyJump');
@@ -116,11 +116,11 @@ for (const langue of LANGUES)
       tout = jouer(['ssh -G wiki']);
       expect(tout).toContain('proxyjump maison');
       tout = jouer(['ssh wiki']);
-      expect(c.invite()).toBe('vous@wiki:~$');
+      expect(c.invite()).toBe(L('vous@wiki:~$'));
       // Un rebond n'affiche pas la bannière de la passerelle.
       expect(tout).not.toContain('Linux maison');
       tout = jouer(['exit']);
-      expect(c.invite()).toBe('vous@poste:~$');
+      expect(c.invite()).toBe(L('vous@poste:~$'));
     });
 
     it('chapitre 2 — fausses pistes : ssh wiki depuis le poste, depuis maison, la clé privée recopiée', () => {
@@ -128,18 +128,18 @@ for (const langue of LANGUES)
       let tout = jouer(['ssh wiki']);
       expect(tout).toContain('ssh: Could not resolve hostname wiki: Name or service not known');
       tout = jouer(['ssh maison', 'yes', 'ssh wiki', 'yes']);
-      expect(tout).toContain('vous@wiki: Permission denied (publickey).');
-      expect(c.invite()).toBe('vous@maison:~$');
+      expect(tout).toContain(L('vous@wiki: Permission denied (publickey).'));
+      expect(c.invite()).toBe(L('vous@maison:~$'));
       tout = jouer(['exit', 'scp ~/.ssh/id_ed25519 maison:.ssh/']);
       contient(tout, 'il y a une clé privée dans ~/.ssh sur maison');
       jouer(['ssh maison']);
       // Avec la clé privée recopiée, le second ssh passe… mais le chapitre ne se termine pas.
       jouer(['chmod 600 .ssh/id_ed25519', 'ssh wiki']);
-      expect(c.invite()).toBe('vous@wiki:~$');
+      expect(c.invite()).toBe(L('vous@wiki:~$'));
       jouer(['exit', 'exit']);
       ecrirePoste(c, '~/.ssh/config', CONFIG_WIKI);
       jouer(['ssh wiki', 'yes']);
-      expect(c.invite()).toBe('vous@wiki:~$');
+      expect(c.invite()).toBe(L('vous@wiki:~$'));
       expect(c.termines).not.toContain('rebond');
       jouer(['exit', 'ssh maison', 'rm .ssh/id_ed25519', 'exit', 'ssh wiki']);
       expect(c.termines).toContain('rebond');
@@ -199,33 +199,33 @@ for (const langue of LANGUES)
       expect(c.termines).not.toContain('tunnel');
     });
 
-    const RAPPORT = 'scp wiki:/srv/wiki/exports/rapport-2027.pdf .';
-    const SAUVER = 'rsync -av /srv/partage/ archives:/srv/sauvegardes/partage/';
+    const RAPPORT = L('scp wiki:/srv/wiki/exports/rapport-2027.pdf .');
+    const SAUVER = L('rsync -av /srv/partage/ archives:/srv/sauvegardes/partage/');
 
     it('chapitre 4 — solution : scp vers le poste, rsync de maison vers archives', () => {
       const { c, jouer } = equipe(['cles', 'rebond', 'tunnel']);
       let tout = jouer([RAPPORT, 'ls']);
-      expect(tout).toContain('rapport-2027.pdf');
+      expect(tout).toContain(L('rapport-2027.pdf'));
       contient(tout, 'Le rapport d');
       jouer(['ssh maison']);
       tout = jouer([SAUVER.replace('-av', '-avn'), 'yes']);
       expect(tout).toContain('(DRY RUN)');
       tout = jouer([SAUVER]);
-      expect(tout).toContain('comptes-rendus/ca-2027-09.txt');
-      expect(tout).not.toContain('comptes-rendus/ag-2026.txt');
+      expect(tout).toContain(L('comptes-rendus/ca-2027-09.txt'));
+      expect(tout).not.toContain(L('comptes-rendus/ag-2026.txt'));
       contient(tout, 'https://download.samba.org/pub/rsync/rsync.1');
       expect(c.termines).toContain('transferts');
     });
 
     it('chapitre 4 — fausse piste : la barre oblique oubliée, réparée avec --delete', () => {
       const { c, jouer } = equipe(['cles', 'rebond', 'tunnel']);
-      let tout = jouer(['ssh maison', 'rsync -av /srv/partage archives:/srv/sauvegardes/partage', 'yes']);
-      expect(tout).toContain('partage/planning-salles.txt');
+      let tout = jouer(['ssh maison', L('rsync -av /srv/partage archives:/srv/sauvegardes/partage'), 'yes']);
+      expect(tout).toContain(L('partage/planning-salles.txt'));
       contient(tout, 'barre oblique finale');
       tout = jouer([SAUVER, 'exit', RAPPORT]);
       expect(c.termines).not.toContain('transferts');
       tout = jouer(['ssh maison', SAUVER.replace('-av', '-av --delete')]);
-      expect(tout).toContain('deleting partage/comptes-rendus/');
+      expect(tout).toContain(L('deleting partage/comptes-rendus/'));
       expect(c.termines).toContain('transferts');
     });
 
@@ -238,7 +238,7 @@ for (const langue of LANGUES)
       if (fr) expect(tout).toContain('Serveur : ftp.hebergeur.example');
       tout = jouer(['sftp wiki', 'pwd', 'cd /srv/wiki', 'ls', 'get -r site', 'lls', 'bye', 'ls site']);
       expect(tout).toContain('Connected to wiki.');
-      expect(tout).toContain('Remote working directory: /home/vous');
+      expect(tout).toContain(L('Remote working directory: /home/vous'));
       expect(tout).toContain('Fetching /srv/wiki/site/ to site');
       expect(tout).toContain('adhesion.html');
       tout = jouer([

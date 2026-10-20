@@ -104,7 +104,7 @@ export const SUDOERS_COMMANDES: Record<string, Commande> = {
 /** sudo -l [-U compte] : les commandes permises (la politique de /etc/sudoers). */
 export function sudoListe(jeu: Shell, args: string[]): string {
   const i = args.indexOf('-U');
-  const compte = i >= 0 ? (args[i + 1] ?? '') : 'vous';
+  const compte = i >= 0 ? (args[i + 1] ?? '') : jeu.joueur;
   if (i >= 0 && !jeu.comptes.utilisateurs[compte]) return jeu.erreur(jeu.t('sudo-compte-inconnu', { compte }), 1);
   const hote = jeu.lire('/etc/hostname')?.trim() || jeu.hote;
   // Une machine sans /etc/sudoers décrit par le chapitre : celui de Debian (le groupe sudo a tous les droits).

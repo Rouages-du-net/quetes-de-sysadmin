@@ -150,7 +150,7 @@ function echec(origine: Shell, texte: string): string {
 }
 
 const motDePasseDe = (s: Shell, compte: string): string | undefined =>
-  (s.etat.motsDePasse as Record<string, string> | undefined)?.[compte] ?? (compte === 'vous' ? s.chapitre.motDePasse : undefined);
+  (s.etat.motsDePasse as Record<string, string> | undefined)?.[compte] ?? (compte === s.joueur ? s.chapitre.motDePasse : undefined);
 
 // Les clés publiques autorisées pour ce compte, sur la machine d'en face.
 function clesAutorisees(s: Shell, compte: string): string[] {
@@ -168,7 +168,7 @@ function noter(s: Saut, comment: 'cle' | 'motDePasse') {
   connexions[comment]++;
 }
 
-// Les clés publiques du poste, ajoutées à ~/.ssh/authorized_keys de « vous » en face (si elles n'y sont pas).
+// Les clés publiques du poste, ajoutées à ~/.ssh/authorized_keys du joueur en face (si elles n'y sont pas).
 function recopierCles(poste: Shell, s: Shell) {
   const dossier = poste.trouver('~/.ssh');
   if (dossier?.type !== 'dossier') return;
@@ -176,14 +176,15 @@ function recopierCles(poste: Shell, s: Shell) {
     .filter((n) => n.endsWith('.pub'))
     .map((n) => (poste.lire(`~/.ssh/${n}`) ?? '').trim())
     .filter((c) => c.startsWith('ssh-'));
-  const chemin = '/home/vous/.ssh/authorized_keys';
-  const deja = clesAutorisees(s, 'vous');
+  const maison = s.comptes.utilisateurs[s.joueur]?.maison ?? `/home/${s.joueur}`;
+  const chemin = `${maison}/.ssh/authorized_keys`;
+  const deja = clesAutorisees(s, s.joueur);
   const nouvelles = cles.filter((c) => !deja.includes(c.split(/\s+/).slice(0, 2).join(' ')));
   if (!nouvelles.length) return;
   const n = s.trouver(chemin);
   if (n?.type === 'fichier') n.contenu = [s.lire(chemin), ...nouvelles].filter(Boolean).join('\n');
-  else if (s.trouver('/home/vous/.ssh')?.type === 'dossier')
-    s.placer('ssh', chemin, { type: 'fichier', contenu: nouvelles.join('\n'), lignes: true, proprio: 'vous', mode: 'rw-------' });
+  else if (s.trouver(`${maison}/.ssh`)?.type === 'dossier')
+    s.placer('ssh', chemin, { type: 'fichier', contenu: nouvelles.join('\n'), lignes: true, proprio: s.joueur, mode: 'rw-------' });
 }
 
 const octal = (mode: string) =>

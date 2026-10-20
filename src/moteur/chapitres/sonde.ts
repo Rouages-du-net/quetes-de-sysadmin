@@ -13,7 +13,7 @@
 // Sources : https://www.monitoring-plugins.org/doc/guidelines.html,
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Dossier, type Droits } from '../monde';
+import { chemin, d, f, fichiersComptes, nom, type Chapitre, type Comptes, type Dossier, type Droits } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { demarrer, journaliser, nouveauSystemd, systemd } from '../systemd';
 import { passerTemps } from '../minuteries';
@@ -87,7 +87,7 @@ function nuit(j: Jeu): string {
   const minuit = (Math.floor(debut / 86_400_000) + 1) * 86_400_000;
   const fin = minuit + 6 * 60 * MINUTE;
   const dejaRecues = alertesPourZoe(j).length;
-  const lieu = () => j.trouver(VIGNETTES) as Dossier | null;
+  const lieu = () => j.trouver(chemin(j.t, VIGNETTES)) as Dossier | null;
   // Les fenêtres où une alerte est attendue : [début, réparation + 15 min].
   const relaisTombe = minuit + PANNE_RELAIS * MINUTE;
   const importDebut = minuit + PANNE_INODES * MINUTE;
@@ -132,10 +132,10 @@ function nuit(j: Jeu): string {
       const combien = Math.min(PAR_MINUTE, libres);
       if (v)
         for (let k = 0; k < combien; k++)
-          v.enfants[`vignette-${String(++numero).padStart(5, '0')}.jpg`] = { type: 'fichier', contenu: '', taille: 0, proprio: 'radio' };
+          v.enfants[`${nom(j.t, 'vignette')}-${String(++numero).padStart(5, '0')}.jpg`] = { type: 'fichier', contenu: '', taille: 0, proprio: 'radio' };
       if (libres <= PAR_MINUTE) {
         inodesPleins = t;
-        journaliser(s, 'radio-flux.service', 'flux', 1730, `record: cannot create /srv/radio/emissions/nuit.ogg: No space left on device`, 3, false);
+        journaliser(s, 'radio-flux.service', 'flux', 1730, `record: cannot create ${chemin(j.t, '/srv/radio/emissions')}/nuit.ogg: No space left on device`, 3, false);
       }
     }
     // Zoé arrête l'import et efface les vignettes en trop, 10 minutes après l'alerte.

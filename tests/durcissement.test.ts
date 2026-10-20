@@ -4,7 +4,8 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
-import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
+import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { dansLaLangue } from './noms';
 
 const EFFACEUR = HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id);
 const CONFIG = '/etc/ssh/sshd_config';
@@ -12,6 +13,8 @@ const CONFIG = '/etc/ssh/sshd_config';
 for (const langue of LANGUES)
   describe(`Langue : ${langue}`, () => {
     const fr = langue === LANGUE_DE_REFERENCE;
+    // Le compte du joueur dans la langue (vous@poste, you@poste), comme les noms des lieux.
+    const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     const contient = (tout: string, texte: string) => fr && expect(tout).toContain(texte);
     const partie = () => {
       const c = new Console({ langue, termines: EFFACEUR });
@@ -68,12 +71,12 @@ for (const langue of LANGUES)
       const recharge = jouer(['sudo systemctl reload ssh']);
       contient(alerte + recharge, 'une nouvelle connexion de ton compte serait refusée');
       const dehors = jouer(['exit', 'ssh lettres']);
-      expect(dehors).toContain('vous@lettres.example: Permission denied (publickey).');
+      expect(dehors).toContain(L('vous@lettres.example: Permission denied (publickey).'));
       contient(dehors, 'tu t’es enfermé·e dehors'.replace('’', "'"));
-      expect(c.invite()).toBe('vous@poste:~$');
+      expect(c.invite()).toBe(L('vous@poste:~$'));
       // Le menu : comme la console de secours de l'hébergeur.
       c.connecter('lettres');
-      modifier('/etc/ssh/sshd_config.d/00-durcissement.conf', (t) => t.replace('AllowUsers kofi', 'AllowUsers vous'));
+      modifier('/etc/ssh/sshd_config.d/00-durcissement.conf', (t) => t.replace('AllowUsers kofi', L('AllowUsers vous')));
       jouer(['sudo systemctl reload ssh', 'exit', 'ssh lettres']);
       expect(c.termines).toContain('fermer-la-porte');
     });
@@ -91,6 +94,8 @@ for (const langue of LANGUES)
 for (const langue of LANGUES)
   describe(`Le pare-feu — ${langue}`, () => {
     const fr = langue === LANGUE_DE_REFERENCE;
+    // Le compte du joueur dans la langue (vous@poste, you@poste), comme les noms des lieux.
+    const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     const partie = () => {
       const c = new Console({ langue, termines: [...EFFACEUR, 'fermer-la-porte'] });
       const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
@@ -125,7 +130,7 @@ for (const langue of LANGUES)
       jouer(['sudo ufw allow http', 'fourmis-2026', 'sudo ufw allow https', 'sudo ufw enable', 'o']);
       const dehors = jouer(['exit', 'ssh lettres']);
       expect(dehors).toContain('ssh: connect to host lettres.example port 22: Connection timed out');
-      expect(c.invite()).toBe('vous@poste:~$');
+      expect(c.invite()).toBe(L('vous@poste:~$'));
       c.connecter('lettres');
       jouer(['sudo ufw allow OpenSSH', 'exit', 'ssh lettres']);
       expect(c.termines).toContain('pare-feu');

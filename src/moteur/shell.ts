@@ -9,7 +9,7 @@
 // peut être redirigée dans un fichier (> écrase, >> ajoute). Les messages
 // d'erreur ne passent pas dans les tubes (sortie d'erreur séparée).
 
-import { chemin, comptesParDefaut, nettoyer, nom, traduireNoms, type Chapitre, type Comptes, type Dossier, type Noeud } from './monde';
+import { chemin, comptesParDefaut, joueur, nettoyer, nom, traduireComptes, traduireNoms, type Chapitre, type Comptes, type Dossier, type Noeud } from './monde';
 import { COMMANDES, type Commande } from './commandes';
 import { aide, apropos, ligneWhatis, optionInvalide, pageMan, raccourcir } from './commandes/manuel';
 import { traducteur, typographie, type Langue, type Traduire } from '../textes';
@@ -30,8 +30,11 @@ export interface Jeu {
   drapeaux: Set<string>;
   maison: string;
   etat: Record<string, any>;
-  // Utilisateur qui agit pour la commande en cours : « vous », ou « root » sous sudo.
+  // Utilisateur qui agit pour la commande en cours : le joueur, ou « root » sous sudo.
   qui: string;
+  // Le compte du joueur ou de la joueuse, dans la langue (« vous », « you » :
+  // voir joueur() dans monde.ts). Le code compare et écrit ce nom-là, jamais 'vous'.
+  joueur: string;
   // La dernière ligne exécutée (pour les événements) : commandes du tube,
   // sortie produite (avant redirection), fichier de redirection.
   derniere: { ligne: string; commandes: string[][]; sortie: string; erreurs: string[]; redirection: string | null };
@@ -46,7 +49,7 @@ export interface Jeu {
   groupesDe(utilisateur: string): string[];
   // Les textes dans la langue du jeu (voir src/textes/).
   t: Traduire;
-  // Nom de la machine (invite « vous@nom »).
+  // Nom de la machine (invite « joueur@nom »).
   hote: string;
   // Pose une question (ex. « yes/no » de ssh) : la ligne suivante est la
   // réponse, passée à `repondre`, dont le texte s'affiche.
@@ -79,7 +82,7 @@ export class Shell implements Jeu {
   termine = false;
   // Mode examen : les étapes sont vérifiées, mais seul le message final (le débrief) s'affiche.
   examen = false;
-  qui = 'vous';
+  qui: string;
   derniere: Jeu['derniere'] = { ligne: '', commandes: [], sortie: '', erreurs: [], redirection: null };
   // Le compte sous lequel sudo lance la commande en cours (sudo -u).
   private comme = 'root';
@@ -134,8 +137,15 @@ export class Shell implements Jeu {
     this.maison = chapitre.noms ? chemin(this.t, chapitre.maison) : chapitre.maison;
     this.cwd = this.maison;
     this.etat = chapitre.etat?.(this.t) ?? {};
-    this.comptes = chapitre.comptes?.() ?? comptesParDefaut();
+    const comptes = chapitre.comptes?.() ?? comptesParDefaut();
+    this.comptes = chapitre.noms ? traduireComptes(this.t, comptes) : comptes;
+    this.qui = this.joueur;
     chapitre.initialiser?.(this);
+  }
+
+  /** Le compte du joueur ou de la joueuse, sous son nom dans la langue (vous, you…). */
+  get joueur(): string {
+    return this.chapitre.noms ? joueur(this.t) : 'vous';
   }
 
   /** Le fichier d'accueil du chapitre, sous son nom dans la langue. */
@@ -230,7 +240,7 @@ export class Shell implements Jeu {
   peut(n: Noeud, droit: 'r' | 'w' | 'x', utilisateur = this.qui): boolean {
     if (utilisateur === 'root') return true;
     const mode = n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--');
-    const proprio = n.proprio ?? 'vous';
+    const proprio = n.proprio ?? this.joueur;
     const triplet =
       proprio === utilisateur ? mode.slice(0, 3) : this.groupesDe(utilisateur).includes(n.groupe ?? proprio) ? mode.slice(3, 6) : mode.slice(6, 9);
     // s et t (setuid, setgid, sticky) en dernière position valent aussi x.
@@ -307,7 +317,7 @@ export class Shell implements Jeu {
       // dans un dossier setgid, il prend le groupe du dossier (et un dossier, le setgid).
       if (n.mode === undefined && this.masque !== '0022') n.mode = modeAvecMasque(n.type === 'dossier', this.masque);
       if (/[sS]/.test(parent.mode?.[5] ?? '') && n.groupe === undefined) {
-        n.groupe = parent.groupe ?? parent.proprio ?? 'vous';
+        n.groupe = parent.groupe ?? parent.proprio ?? this.joueur;
         if (n.type === 'dossier') n.mode = appliquerMode(n.mode ?? modeAvecMasque(true, this.masque), 'g+s')!;
       }
     }
@@ -377,12 +387,12 @@ export class Shell implements Jeu {
   }
 
   invite(): string {
-    if (this.attente) return this.t('sudo-invite', { utilisateur: 'vous' });
+    if (this.attente) return this.t('sudo-invite', { utilisateur: this.joueur });
     if (this.question) return this.question.invite;
     const ici =
       this.cwd === this.maison ? '~' : this.cwd.startsWith(this.maison + '/') ? '~' + this.cwd.slice(this.maison.length) : this.cwd;
     // Dans tmux, la barre d'état montre le nom de la session : on le met devant l'invite.
-    return `${this.tmux ? `[${this.tmux}] ` : ''}vous@${this.hote}:${ici}$`;
+    return `${this.tmux ? `[${this.tmux}] ` : ''}${this.joueur}@${this.hote}:${ici}$`;
   }
 
   demander(invite: string, repondre: (reponse: string) => string, secret = false): void {
@@ -411,6 +421,8 @@ export class Shell implements Jeu {
       numero: p.chapitre.numero,
       commandes: def.commandes ?? p.chapitre.commandes,
       maison: '/home/vous',
+      // Renommée comme la machine principale (le compte vous, /home/vous…).
+      noms: p.chapitre.noms,
       accueil: '',
       final: '',
       evenements: [],

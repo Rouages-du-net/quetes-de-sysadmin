@@ -57,7 +57,7 @@ horloge-script-enregistrer =
     # enregistrer SHOW DURATION: records the live stream for DURATION minutes.
     # The time in the log is the machine's time (date).
     echo "$(date '+%F %T') $1: start ($2 min)" >> /var/log/radio/enregistrer.log
-    exec /usr/local/bin/flux-record --mount /direct --minutes "$2" --out "/srv/radio/emissions/$1-$(date +%F).ogg"
+    exec /usr/local/bin/flux-record --mount /direct --minutes "$2" --out "/srv/radio/shows/$1-$(date +%F).ogg"
 horloge-journal-enregistrer =
     2027-08-26 06:00:01 matinale: start (180 min)
     2027-08-26 23:00:01 nuit: start (240 min)

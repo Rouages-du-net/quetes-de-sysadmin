@@ -311,7 +311,7 @@ const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
     const avant = parent?.fichiers ?? {};
     const { fichiers, plus, moins } = compte(avant, ici.depot.index);
     if (!fichiers) return jeu.erreur(jeu.t('git-rien-a-valider'));
-    const c = nouveauCommit(parent, message, jeu.etat.auteur ?? 'vous <vous@example.org>', jeu.etat.date ?? 'Tue Oct 13 21:04:00 2026 +0200', ici.depot.index);
+    const c = nouveauCommit(parent, message, jeu.etat.auteur ?? `${jeu.joueur} <${jeu.joueur}@example.org>`, jeu.etat.date ?? 'Tue Oct 13 21:04:00 2026 +0200', ici.depot.index);
     ici.depot.commits.push(c);
     // Comme git : on ne mentionne pas les insertions ou suppressions nulles.
     const bilan = [

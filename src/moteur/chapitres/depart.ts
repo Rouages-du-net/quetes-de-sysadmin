@@ -20,20 +20,26 @@
 // https://man7.org/linux/man-pages/man8/userdel.8.html,
 // https://man7.org/linux/man-pages/man1/chage.1.html
 
-import { d, f, type Chapitre } from '../monde';
+import { chemin, d, f, joueur, nom, type Chapitre } from '../monde';
+import type { Traduire } from '../../textes';
 import type { Jeu, Shell } from '../shell';
 import { analyser } from '../cron';
 import { AUJOURDHUI, CLES, comptesCooperative, M, mondeCooperative, MOT_DE_PASSE } from './cooperative';
 
-const SCRIPT = `#!/bin/sh
+// Le script de Marc, avec le dossier des sauvegardes dans la langue (/srv/backups…).
+const script = (t: Traduire) => {
+  const sauvegardes = chemin(t, '/srv/sauvegardes');
+  return `#!/bin/sh
 # Nightly backup of the till and homes (Marc, 2024)
 set -e
 JOUR=$(date +%F)
-mkdir -p /srv/sauvegardes/$JOUR
-tar -czf /srv/sauvegardes/$JOUR/caisse.tar.gz /srv/caisse
-tar -czf /srv/sauvegardes/$JOUR/home.tar.gz /home`;
-const CRONTAB_MARC = `# m h  dom mon dow   command
-30 2 * * * /home/marc/bin/sauvegarde-caisse.sh`;
+mkdir -p ${sauvegardes}/$JOUR
+tar -czf ${sauvegardes}/$JOUR/caisse.tar.gz /srv/caisse
+tar -czf ${sauvegardes}/$JOUR/home.tar.gz /home`;
+};
+const SCRIPT = 'sauvegarde-caisse.sh';
+const crontabMarc = (t: Traduire) => `# m h  dom mon dow   command
+30 2 * * * /home/marc/bin/${nom(t, SCRIPT)}`;
 const DEPLOY = '/home/deploy/.ssh/authorized_keys';
 const fichier = (contenu: string, proprio: string, mode?: string) => f(contenu, { lignes: true, proprio, ...(mode ? { mode } : {}) });
 const sh = (j: Jeu) => j as Shell;
@@ -85,7 +91,7 @@ const sauvegardeConfiee = (j: Jeu, comptes = ['root', 'deploy']) =>
   taches(j).some(({ compte, commande }) => {
     const chemin = commande.split(/\s+/).find((m) => m.startsWith('/'));
     if (!chemin || chemin.startsWith('/home/marc/') || !comptes.includes(compte) || !j.comptes.utilisateurs[compte]) return false;
-    return (j.lire(chemin) ?? '').trim() === SCRIPT.trim();
+    return (j.lire(chemin) ?? '').trim() === script(j.t).trim();
   });
 
 const ferme = (j: Jeu) => !parSonCompte(j) && !parDeploy(j) && !sudoPourMarc(j) && !processusDeMarc(j);
@@ -129,19 +135,19 @@ export const depart: Chapitre = {
   final: 'fin',
   motDePasse: MOT_DE_PASSE,
   comptes: () => comptesCooperative(),
-  etat: () => ({
-    crontabs: { marc: CRONTAB_MARC },
+  etat: (t) => ({
+    crontabs: { marc: crontabMarc(t) },
     processus: [
       { pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 731, utilisateur: 'caisse', cpu: 1.2, mem: 3.4, commande: '/usr/bin/node /srv/caisse/app/server.js' },
       { pid: 2741, utilisateur: 'marc', cpu: 0, mem: 0.1, commande: 'sshd: marc@pts/1' },
       { pid: 2745, utilisateur: 'marc', cpu: 0, mem: 0.1, commande: '-bash', ppid: 2741 },
       { pid: 2790, utilisateur: 'marc', cpu: 0.1, mem: 0.1, commande: 'tail -f /var/log/caisse/app.log', ppid: 2745 },
-      { pid: 3102, utilisateur: 'vous', cpu: 0, mem: 0.1, commande: '-bash' },
+      { pid: 3102, utilisateur: joueur(t), cpu: 0, mem: 0.1, commande: '-bash' },
     ],
     sessions: [
       { utilisateur: 'marc', tty: 'pts/1', depuis: '2027-10-19 08:12', de: '198.51.100.40', pid: 2741 },
-      { utilisateur: 'vous', tty: 'pts/0', depuis: '2027-10-19 09:28', de: '192.0.2.2' },
+      { utilisateur: joueur(t), tty: 'pts/0', depuis: '2027-10-19 09:28', de: '192.0.2.2' },
     ],
   }),
   creerMonde: (t) =>
@@ -151,7 +157,7 @@ export const depart: Chapitre = {
         marc: d(
           {
             '.ssh': d({ authorized_keys: fichier(CLES.marc, 'marc', 'rw-------') }, undefined, { proprio: 'marc', mode: 'rwx------' }),
-            bin: d({ 'sauvegarde-caisse.sh': fichier(SCRIPT, 'marc', 'rwxr-xr-x') }, undefined, { proprio: 'marc' }),
+            bin: d({ [SCRIPT]: fichier(script(t), 'marc', 'rwxr-xr-x') }, undefined, { proprio: 'marc' }),
             'notes.txt': fichier(t('depart-notes-marc'), 'marc'),
           },
           undefined,
@@ -165,7 +171,7 @@ export const depart: Chapitre = {
             // La sauvegarde de la nuit dernière (elle contient /home : le script de Marc y est).
             sauvegardes: d(
               {
-                '2027-10-18': d({ home: d({ marc: d({ bin: d({ 'sauvegarde-caisse.sh': fichier(SCRIPT, 'root', 'rwxr-xr-x') }) }) }) }, undefined, {
+                '2027-10-18': d({ home: d({ marc: d({ bin: d({ [SCRIPT]: fichier(script(t), 'root', 'rwxr-xr-x') }) }) }) }, undefined, {
                   proprio: 'root',
                 }),
               },
@@ -192,7 +198,7 @@ export const depart: Chapitre = {
     },
     {
       id: 'tache-personnelle',
-      condition: (j) => sauvegardeConfiee(j, ['vous']) && !sauvegardeConfiee(j),
+      condition: (j) => sauvegardeConfiee(j, [j.joueur]) && !sauvegardeConfiee(j),
       message: (j) => j.t('depart-evenement-tache-personnelle'),
     },
     { id: 'sauvegarde', condition: (j) => sauvegardeConfiee(j), message: (j) => j.t('depart-evenement-sauvegarde') },

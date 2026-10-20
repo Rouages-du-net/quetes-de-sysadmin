@@ -14,7 +14,7 @@
 // https://restic.readthedocs.io/en/stable/050_restore.html,
 // https://man7.org/linux/man-pages/man8/mount.8.html
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Dossier, type Droits, type Noeud } from '../monde';
+import { chemin, d, f, fichiersComptes, nom, type Chapitre, type Comptes, type Dossier, type Droits, type Noeud } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { journaliser, nouveauSystemd, systemd } from '../systemd';
 import type { Processus } from '../commandes/systeme';
@@ -25,6 +25,8 @@ const M = '/home/vous';
 const PARTAGE = '/srv/partage';
 const NAS = '/mnt/nas';
 const CLE = '/mnt/cle';
+// Le dépôt restic du disque USB.
+const DEPOT = `${CLE}/depot`;
 const USB = '/dev/sdb1';
 const CHIFFREUR = '/home/accueil/.cache/.maj/maj-systeme';
 const NOTE = 'LISEZ-MOI-POUR-RECUPERER.txt';
@@ -72,21 +74,21 @@ function depotUsb(t: Jeu['t']): Depot {
     const fichiers: Record<string, Version> = {};
     for (const [rel, id] of Object.entries(FICHIERS)) {
       const texte = t(id);
-      fichiers[`${PARTAGE}/${rel}`] = { contenu: texte, taille: new TextEncoder().encode(texte).length, modifie: temps - 86_400_000 };
+      fichiers[chemin(t, `${PARTAGE}/${rel}`)] = { contenu: texte, taille: new TextEncoder().encode(texte).length, modifie: temps - 86_400_000 };
     }
-    ajouterInstantane(depot, { id: hex(`instantane-ludo-${i}`), temps, hote: 'ludotheque', chemins: [PARTAGE], fichiers });
+    ajouterInstantane(depot, { id: hex(`instantane-ludo-${i}`), temps, hote: 'ludotheque', chemins: [chemin(t, PARTAGE)], fichiers });
   });
   depot.verifie = true;
   return depot;
 }
 
 // Le contenu attendu de chaque fichier restauré.
-const attendus = (j: Jeu) => Object.fromEntries(Object.entries(FICHIERS).map(([rel, id]) => [`${PARTAGE}/${rel}`, j.t(id)]));
+const attendus = (j: Jeu) => Object.fromEntries(Object.entries(FICHIERS).map(([rel, id]) => [chemin(j.t, `${PARTAGE}/${rel}`), j.t(id)]));
 
 const sd = (j: Jeu) => systemd(j)!;
 const processus = (j: Jeu): Processus[] => j.etat.processus ?? [];
-const chiffreurActif = (j: Jeu) => processus(j).some((p) => p.commande.startsWith(CHIFFREUR));
-const persistance = (j: Jeu) => (j.etat.crontabs?.accueil ?? '').includes('maj-systeme');
+const chiffreurActif = (j: Jeu) => processus(j).some((p) => p.commande.startsWith(chemin(j.t, CHIFFREUR)));
+const persistance = (j: Jeu) => (j.etat.crontabs?.accueil ?? '').includes(nom(j.t, 'maj-systeme'));
 const verrouille = (j: Jeu) => (j.etat.comptesVerrouilles ?? []).includes('accueil');
 const cleMontee = (j: Jeu) => (j.etat.montages ?? []).some((m: { nom: string }) => m.nom === USB);
 
@@ -96,7 +98,7 @@ function tous(j: Jeu, lieu: string): string[] {
   if (n?.type !== 'dossier') return [];
   return Object.entries(n.enfants).flatMap(([nom, e]) => (e.type === 'dossier' ? tous(j, `${lieu}/${nom}`) : [`${lieu}/${nom}`]));
 }
-const restes = (j: Jeu) => tous(j, PARTAGE).filter((c) => c.endsWith('.locked') || c.endsWith(`/${NOTE}`));
+const restes = (j: Jeu) => tous(j, chemin(j.t, PARTAGE)).filter((c) => c.endsWith('.locked') || c.endsWith(`/${nom(j.t, NOTE)}`));
 const restaures = (j: Jeu) => Object.entries(attendus(j)).filter(([c, texte]) => j.lire(c) === texte).length;
 const toutRestaure = (j: Jeu) => restaures(j) === Object.keys(FICHIERS).length;
 
@@ -108,10 +110,11 @@ const toutRestaure = (j: Jeu) => restaures(j) === Object.keys(FICHIERS).length;
 function chiffrer(j: Jeu, lieu: string): number {
   const n = j.trouver(lieu);
   if (n?.type !== 'dossier' || !j.peut(n, 'w', 'accueil')) return 0;
+  const note = nom(j.t, NOTE);
   let touches = 0;
   for (const [nom, e] of Object.entries(n.enfants)) {
     if (e.type === 'dossier') touches += chiffrer(j, `${lieu}/${nom}`);
-    else if (!nom.endsWith('.locked') && nom !== NOTE && e.lien === undefined) {
+    else if (!nom.endsWith('.locked') && nom !== note && e.lien === undefined) {
       delete n.enfants[nom];
       n.enfants[`${nom}.locked`] = {
         type: 'fichier',
@@ -124,7 +127,7 @@ function chiffrer(j: Jeu, lieu: string): number {
       touches++;
     }
   }
-  if (touches && !n.enfants[NOTE]) n.enfants[NOTE] = { type: 'fichier', contenu: j.t('rancon-note'), proprio: 'accueil', groupe: 'ludo' };
+  if (touches && !n.enfants[note]) n.enfants[note] = { type: 'fichier', contenu: j.t('rancon-note'), proprio: 'accueil', groupe: 'ludo' };
   return touches;
 }
 
@@ -172,7 +175,7 @@ export const rancon: Chapitre = {
   motDePasse: 'ludo-2027',
   comptes,
   etat: (t) => {
-    const arbre = d({ depot: d({}, undefined, { proprio: 'root' }) }, undefined, { proprio: 'root', mode: 'rwxr-xr-x' });
+    const arbre = d({ [nom(t, 'depot')]: d({}, undefined, { proprio: 'root' }) }, undefined, { proprio: 'root', mode: 'rwxr-xr-x' });
     const usb: Peripherique = {
       disque: '/dev/sdb',
       majmin: [8, 17],
@@ -197,35 +200,35 @@ export const rancon: Chapitre = {
         { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
         { pid: 611, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
         { pid: 640, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' },
-        { pid: 3141, utilisateur: 'accueil', cpu: 97.3, mem: 1.4, commande: `${CHIFFREUR} --silencieux` },
+        { pid: 3141, utilisateur: 'accueil', cpu: 97.3, mem: 1.4, commande: `${chemin(t, CHIFFREUR)} --silencieux` },
       ],
       crontabs: {
-        root: `# ${t('rancon-crontab-root')}\n30 2 * * * rsync -a --delete ${PARTAGE}/ ${NAS}/partage/`,
-        accueil: `*/10 * * * * ${CHIFFREUR} --silencieux\n@reboot ${CHIFFREUR} --silencieux`,
+        root: `# ${t('rancon-crontab-root')}\n30 2 * * * rsync -a --delete ${chemin(t, PARTAGE)}/ ${chemin(t, `${NAS}/partage`)}/`,
+        accueil: `*/10 * * * * ${chemin(t, CHIFFREUR)} --silencieux\n@reboot ${chemin(t, CHIFFREUR)} --silencieux`,
       },
       montages: [
         { chemin: '/', capacite: 40 * Go, nom: '/dev/vda1', systeme: 'ext4' },
         {
           chemin: NAS,
           capacite: 2000 * Go,
-          nom: '//nas.ludotheque.example/sauvegardes',
+          nom: `//nas.ludotheque.example${chemin(t, '/sauvegardes')}`,
           systeme: 'cifs',
           options: 'relatime,vers=3.1.1,uid=0,file_mode=0777,dir_mode=0777',
         },
       ],
       peripheriques: { [USB]: usb },
-      restic: { [`${CLE}/depot`]: depotUsb(t) },
+      restic: { [chemin(t, DEPOT)]: depotUsb(t) },
       resticHorloge: Date.UTC(2027, 5, 21, 9, 0, 0),
     };
   },
   initialiser: (j) => {
     const jeu = j as Shell;
     // Les fichiers du dépôt restic, sur le disque USB (monté le temps de les écrire).
-    const lieu = j.trouver(CLE) as Dossier;
+    const lieu = j.trouver(chemin(j.t, CLE)) as Dossier;
     const arbre = (j.etat.peripheriques[USB] as Peripherique).arbre;
     const cache = lieu.enfants;
     lieu.enfants = arbre.enfants;
-    ecrireDepot(jeu, `${CLE}/depot`, j.etat.restic[`${CLE}/depot`]);
+    ecrireDepot(jeu, chemin(j.t, DEPOT), j.etat.restic[chemin(j.t, DEPOT)]);
     lieu.enfants = cache;
     // La nuit : connexion réussie sur accueil après des essais, puis le chiffrement.
     const s = sd(j);
@@ -235,28 +238,28 @@ export const rancon: Chapitre = {
       journaliser(s, 'ssh.service', 'sshd', 4100 + n, `Failed password for accueil from 203.0.113.66 port ${51200 + n * 7} ssh2`, 6);
     journaliser(s, 'ssh.service', 'sshd', 4104, 'Accepted password for accueil from 203.0.113.66 port 51240 ssh2');
     s.horloge = Date.UTC(2027, 5, 21, 3, 14, 0);
-    journaliser(s, 'cron.service', 'CRON', 3140, `(accueil) CMD (${CHIFFREUR} --silencieux)`);
+    journaliser(s, 'cron.service', 'CRON', 3140, `(accueil) CMD (${chemin(j.t, CHIFFREUR)} --silencieux)`);
     s.horloge = maintenant;
     // Ce que le chiffreur a déjà fait, et ce que rsync a recopié cette nuit sur le NAS.
-    chiffrer(j, PARTAGE);
-    const nas = j.trouver(`${NAS}/partage`);
-    const partage = j.trouver(PARTAGE);
+    chiffrer(j, chemin(j.t, PARTAGE));
+    const nas = j.trouver(chemin(j.t, `${NAS}/partage`));
+    const partage = j.trouver(chemin(j.t, PARTAGE));
     if (nas?.type === 'dossier' && partage?.type === 'dossier') nas.enfants = structuredClone(partage.enfants);
   },
   // Tant qu'il tourne, le chiffreur repasse ; tant que sa crontab existe, il revient.
   apresCommande: (j) => {
     const messages: string[] = [];
     if (chiffreurActif(j)) {
-      const touches = chiffrer(j, PARTAGE);
+      const touches = chiffrer(j, chemin(j.t, PARTAGE));
       if (touches) j.etat.rechiffres = (j.etat.rechiffres ?? 0) + touches;
     } else if (persistance(j)) {
       j.etat.attente = (j.etat.attente ?? 0) + 1;
       if (j.etat.attente >= 4) {
         j.etat.attente = 0;
         const pid = 3141 + (j.etat.retours = (j.etat.retours ?? 0) + 1) * 7;
-        processus(j).push({ pid, utilisateur: 'accueil', cpu: 97.3, mem: 1.4, commande: `${CHIFFREUR} --silencieux` });
-        journaliser(sd(j), 'cron.service', 'CRON', pid - 1, `(accueil) CMD (${CHIFFREUR} --silencieux)`);
-        chiffrer(j, PARTAGE);
+        processus(j).push({ pid, utilisateur: 'accueil', cpu: 97.3, mem: 1.4, commande: `${chemin(j.t, CHIFFREUR)} --silencieux` });
+        journaliser(sd(j), 'cron.service', 'CRON', pid - 1, `(accueil) CMD (${chemin(j.t, CHIFFREUR)} --silencieux)`);
+        chiffrer(j, chemin(j.t, PARTAGE));
         messages.push(j.t('rancon-retour'));
       }
     }
@@ -312,7 +315,7 @@ export const rancon: Chapitre = {
     },
     {
       id: 'chiffreur-vu',
-      condition: (j) => j.derniere.sortie.includes('maj-systeme') && j.derniere.commandes.some((c) => c[0] === 'ps') && chiffreurActif(j),
+      condition: (j) => j.derniere.sortie.includes(nom(j.t, 'maj-systeme')) && j.derniere.commandes.some((c) => c[0] === 'ps') && chiffreurActif(j),
       message: (j) => j.t('rancon-evenement-chiffreur-vu'),
     },
     {

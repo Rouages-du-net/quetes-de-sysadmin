@@ -13,7 +13,7 @@
 // 20 août), au moins deux actions, ce qui a marché, et sans reproche.
 // Source : https://sre.google/sre-book/postmortem-culture/
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../monde';
+import { chemin, d, f, fichiersComptes, joueur, type Chapitre, type Comptes, type Droits } from '../monde';
 import type { Jeu } from '../shell';
 import { journaliser, nouveauSystemd, systemd } from '../systemd';
 
@@ -74,7 +74,7 @@ const contientUn = (texte: string, liste: string[]) => liste.some((m) => texte.t
 
 /** Ce qui manque encore au post-mortem (identifiants de messages), vide s'il est complet. */
 export function manques(j: Jeu): string[] {
-  const texte = j.lire(FICHIER) ?? '';
+  const texte = j.lire(chemin(j.t, FICHIER)) ?? '';
   const s = sections(j, texte);
   const plein = (n: string) => (s[n] ?? '').trim().length > 0;
   const m: string[] = [];
@@ -92,7 +92,7 @@ export function manques(j: Jeu): string[] {
 
 // Un mot qui cherche un coupable, dans les sections (pas dans l'en-tête du modèle).
 const reproche = (j: Jeu) => {
-  const texte = Object.values(sections(j, j.lire(FICHIER) ?? ''))
+  const texte = Object.values(sections(j, j.lire(chemin(j.t, FICHIER)) ?? ''))
     .join('\n')
     .toLowerCase();
   return mots(j, 'post-mortem-mots-reproche').find((mot) => texte.includes(mot));
@@ -131,7 +131,7 @@ export const postMortem: Chapitre = {
   final: 'fin',
   motDePasse: 'antenne-2027',
   comptes,
-  etat: () => ({
+  etat: (t) => ({
     systemd: nouveauSystemd('radio', Date.UTC(2027, 7, 1, 6, 0, 0), MAINTENANT, {
       ssh: {
         description: 'OpenBSD Secure Shell server',
@@ -168,9 +168,9 @@ export const postMortem: Chapitre = {
     ],
     connexionsPassees: [
       { compte: 'zoe', tty: 'pts/1', depuis: '198.51.100.80', debut: Date.UTC(2027, 7, 20, 21, 16), fin: Date.UTC(2027, 7, 20, 21, 54) },
-      { compte: 'vous', tty: 'pts/0', depuis: '198.51.100.23', debut: Date.UTC(2027, 8, 6, 18, 25), fin: Date.UTC(2027, 8, 6, 19, 40) },
+      { compte: joueur(t), tty: 'pts/0', depuis: '198.51.100.23', debut: Date.UTC(2027, 8, 6, 18, 25), fin: Date.UTC(2027, 8, 6, 19, 40) },
       { compte: 'theo', tty: 'pts/0', depuis: '203.0.113.45', debut: NUIT(2, 41), fin: NUIT(3, 5) },
-      { compte: 'vous', tty: 'pts/0', depuis: '198.51.100.23', debut: MAINTENANT - 60_000, fin: null },
+      { compte: joueur(t), tty: 'pts/0', depuis: '198.51.100.23', debut: MAINTENANT - 60_000, fin: null },
     ],
   }),
   // La nuit du 11 au 12 septembre, telle que le journal l'a gardée.
@@ -225,16 +225,16 @@ export const postMortem: Chapitre = {
     ligne(NUIT(2, 58, 3), flux, 'systemd', 1, 'Starting radio-flux.service - Radio Quartier stream relay...');
     ligne(NUIT(2, 58, 4), flux, 'systemd', 1, 'Started radio-flux.service - Radio Quartier stream relay.');
     ligne(NUIT(3, 5, 40), 'ssh.service', 'sshd', 25102, 'Disconnected from user theo 203.0.113.45 port 52114');
-    ligne(MAINTENANT - 60_000, 'ssh.service', 'sshd', 26011, 'Accepted publickey for vous from 198.51.100.23 port 40388 ssh2');
+    ligne(MAINTENANT - 60_000, 'ssh.service', 'sshd', 26011, `Accepted publickey for ${j.joueur} from 198.51.100.23 port 40388 ssh2`);
     s.services['radio-flux'].depuis = NUIT(2, 58, 4);
     s.horloge = maintenant;
     const boite = j.trouver('/var/mail/theo');
     if (boite?.type === 'fichier') boite.contenu = alertes.join('\n');
-    j.etat.postMortemLu = j.lire(FICHIER);
+    j.etat.postMortemLu = j.lire(chemin(j.t, FICHIER));
   },
   // Après chaque enregistrement du post-mortem, Zoé le relit.
   apresCommande: (j) => {
-    const texte = j.lire(FICHIER);
+    const texte = j.lire(chemin(j.t, FICHIER));
     if (texte === j.etat.postMortemLu || j.etat.postMortemFini) return;
     j.etat.postMortemLu = texte;
     const mot = reproche(j);

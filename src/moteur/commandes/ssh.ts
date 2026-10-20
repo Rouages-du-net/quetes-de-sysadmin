@@ -71,7 +71,7 @@ function authentifier(jeu: Shell, d: Destination, m: Machine): string {
       );
       continue;
     }
-    if (d.utilisateur === 'vous' && (n as Fichier).contenu === clePrivee(m)) {
+    if (d.utilisateur === jeu.joueur && (n as Fichier).contenu === clePrivee(m)) {
       acceptee = true;
       break;
     }
@@ -84,7 +84,7 @@ function authentifier(jeu: Shell, d: Destination, m: Machine): string {
     jeu.etat.portConnexion = Number(d.port);
   } else sortie.push(`${d.utilisateur}@${d.hote}: Permission denied (${config ? methodes(config) : 'publickey'}).`);
   // La bonne clé, mais un serveur qui refuse le compte : on s'est enfermé dehors.
-  if (refuse && d.utilisateur === 'vous') sortie.push(jeu.t('ssh-enferme', { machine: m.nom }));
+  if (refuse && d.utilisateur === jeu.joueur) sortie.push(jeu.t('ssh-enferme', { machine: m.nom }));
   return sortie.join('\n');
 }
 

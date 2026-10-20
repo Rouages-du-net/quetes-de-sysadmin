@@ -34,7 +34,7 @@ base-noms-de-jeux = snakes and ladders,ludo,draughts,mikado,dominoes,animal memo
 
 base-evenement-role =
     PostgreSQL doesn't know you: through the local socket, you connect under
-    the name of your account ("peer" authentication), and neither vous nor
+    the name of your account ("peer" authentication), and neither "you" nor
     root is a role in this database. The postgres account, however, has all
     the rights: sudo -u postgres (man sudo).
 base-evenement-sur-la-vraie =

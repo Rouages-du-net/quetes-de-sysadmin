@@ -12,8 +12,8 @@ versions-mot-de-rosa =
 
     "Since January, the collection has lived on this new server, and I back
     it up every night with restic to the disk the town hall lends us
-    (/mnt/mairie). The backups are encrypted: the town hall staff can't
-    read our archives. The password is in ~/.config/restic/mot-de-passe
+    (/mnt/townhall). The backups are encrypted: the town hall staff can't
+    read our archives. The password is in ~/.config/restic/password
     (and on paper, in the safe).
 
     Disaster: this morning, the transcription of Marie's diary is full of
@@ -22,7 +22,7 @@ versions-mot-de-rosa =
     version…
 
     Two other worries: the town hall says our disk is almost full
-    (df -h /mnt/mairie), and I'm no longer sure our repository is in good
+    (df -h /mnt/townhall), and I'm no longer sure our repository is in good
     shape.
 
     Could you:
@@ -35,7 +35,7 @@ versions-notes-restic =
     ROSA'S NOTES — RESTIC
 
     Every command needs the repository and the password:
-      restic -r /mnt/mairie/restic-bibliotheque --password-file ~/.config/restic/mot-de-passe COMMAND
+      restic -r /mnt/townhall/restic-library --password-file ~/.config/restic/password COMMAND
 
     The commands I've already used:
       snapshots      the list of backups (snapshots)
@@ -87,7 +87,7 @@ versions-evenement-mauvais-mot-de-passe =
 versions-evenement-ailleurs =
     The right version of the diary is back… but not in its place: restic
     recreates the full path under the directory given to --target. You
-    still have to put it back in ~/fonds/manuscrits/.
+    still have to put it back in ~/collection/manuscripts/.
 versions-evenement-restaure =
     Marie's diary is back, word for word. That's the whole point of
     having versions: a mirror copy (rsync --delete) would have copied the
@@ -102,13 +102,13 @@ versions-evenement-perdu =
     chapter from the menu. Before deleting, forget --dry-run shows what
     would go.
 versions-evenement-oublie-sans-prune =
-    forget removed snapshots from the list… but df -h /mnt/mairie doesn't
+    forget removed snapshots from the list… but df -h /mnt/townhall doesn't
     budge: forget only deletes the "labels". The data only goes away
     with prune (or forget --prune).
 versions-evenement-place =
     The disk can breathe: prune deleted the data that no remaining
     snapshot uses (mostly the raw scans from January). df -h
-    /mnt/mairie shows it.
+    /mnt/townhall shows it.
 versions-evenement-fin =
     Rosa reads Marie's diary again: "The market burned down last night",
     as in the original notebook. The town hall's disk has room, the

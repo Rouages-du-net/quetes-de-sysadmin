@@ -4,7 +4,8 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
-import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
+import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { dansLaLangue } from './noms';
 
 const EFFACEUR = HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id);
 const MDP = 'radis-2027';
@@ -12,12 +13,14 @@ const MDP = 'radis-2027';
 for (const langue of LANGUES)
   describe(`La Coopérative — ${langue}`, () => {
     const fr = langue === LANGUE_DE_REFERENCE;
+    // Le compte du joueur dans la langue (vous@poste, you@poste), comme les noms des lieux.
+    const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     const contient = (tout: string, texte: string) => fr && expect(tout).toContain(texte);
     const partie = (termines: string[] = []) => {
       const c = new Console({ langue, termines: [...EFFACEUR, ...termines] });
-      // Une ligne, avec le mot de passe de sudo s'il est demandé.
+      // Une ligne (écrite avec les noms français), avec le mot de passe de sudo s'il est demandé.
       const une = (l: string) => {
-        let sortie = c.executer(l) ?? '';
+        let sortie = c.executer(L(l)) ?? '';
         if (c.shell.attente) sortie += '\n' + (c.executer(MDP) ?? '');
         return sortie;
       };
@@ -35,7 +38,7 @@ for (const langue of LANGUES)
       const { c, jouer, editer } = partie();
       let tout = jouer(['who', 'ps -u marc', 'sudo crontab -l -u marc', 'sudo cat /home/deploy/.ssh/authorized_keys']);
       expect(tout).toContain('marc     pts/1');
-      expect(tout).toContain('30 2 * * * /home/marc/bin/sauvegarde-caisse.sh');
+      expect(tout).toContain(L('30 2 * * * /home/marc/bin/sauvegarde-caisse.sh'));
       expect(tout).toContain('marc@portable');
       tout = jouer(['sudo usermod -L marc']);
       contient(tout, 'usermod -L n');
@@ -53,7 +56,7 @@ for (const langue of LANGUES)
       contient(tout, 'Marc ne peut plus entrer');
       expect(c.termines).not.toContain('depart');
       jouer(['sudo cp /home/marc/bin/sauvegarde-caisse.sh /usr/local/bin/']);
-      tout = editer('sudo crontab -e', (t) => t + '30 2 * * * /usr/local/bin/sauvegarde-caisse.sh\n');
+      tout = editer('sudo crontab -e', (t) => t + L('30 2 * * * /usr/local/bin/sauvegarde-caisse.sh\n'));
       contient(tout, 'https://man7.org/linux/man-pages/man8/usermod.8.html');
       expect(c.termines).toContain('depart');
     });
@@ -61,7 +64,7 @@ for (const langue of LANGUES)
     it('chapitre 1 — autre solution : /etc/cron.d, puis userdel -r', () => {
       const { c, jouer, editer } = partie();
       jouer(['sudo mkdir -p /opt/coop', 'sudo cp /home/marc/bin/sauvegarde-caisse.sh /opt/coop/']);
-      editer('sudo nano /etc/cron.d/sauvegarde-caisse', () => '30 2 * * * root /opt/coop/sauvegarde-caisse.sh\n');
+      editer('sudo nano /etc/cron.d/sauvegarde-caisse', () => L('30 2 * * * root /opt/coop/sauvegarde-caisse.sh\n'));
       editer('sudo nano /home/deploy/.ssh/authorized_keys', (t) =>
         t
           .split('\n')
@@ -82,11 +85,11 @@ for (const langue of LANGUES)
       tout = jouer(['sudo userdel -r marc']);
       contient(tout, 'Le dossier de Marc a disparu');
       jouer(['sudo cp /srv/sauvegardes/2027-10-18/home/marc/bin/sauvegarde-caisse.sh /home/vous/']);
-      tout = editer('crontab -e', (t) => t + '30 2 * * * /home/vous/sauvegarde-caisse.sh\n');
+      tout = editer('crontab -e', (t) => t + L('30 2 * * * /home/vous/sauvegarde-caisse.sh\n'));
       contient(tout, 'TA crontab');
       expect(c.termines).not.toContain('depart');
       jouer(['sudo cp /home/vous/sauvegarde-caisse.sh /usr/local/bin/']);
-      editer('sudo crontab -e', (t) => t + '30 2 * * * /usr/local/bin/sauvegarde-caisse.sh\n');
+      editer('sudo crontab -e', (t) => t + L('30 2 * * * /usr/local/bin/sauvegarde-caisse.sh\n'));
       // deploy est toujours vide : la CI et Lina sont bloquées.
       expect(c.termines).not.toContain('depart');
     });
@@ -249,10 +252,10 @@ for (const langue of LANGUES)
       expect(tout).toContain("5 packages can be upgraded. Run 'apt list --upgradable' to see them.");
       expect(tout).toContain('linux-image-amd64/trixie-security 6.12.48-1 amd64 [upgradable from: 6.12.38-1]');
       jouer(['tmux new -s maj']);
-      expect(c.invite()).toBe('[maj] vous@cooperative:~$');
+      expect(c.invite()).toBe(L('[maj] vous@cooperative:~$'));
       tout = jouer(['sudo apt upgrade', 'y']);
       expect(tout).toContain('client_loop: send disconnect: Broken pipe');
-      expect(c.invite()).toBe('vous@poste:~$');
+      expect(c.invite()).toBe(L('vous@poste:~$'));
       tout = jouer(['ssh cooperative', 'tmux ls', 'tmux attach -t maj']);
       contient(tout, 'la mise à jour tournait dans tmux');
       expect(tout).toContain('maj: 1 windows');
@@ -288,7 +291,7 @@ for (const langue of LANGUES)
       expect(tout).toContain('sessions should be nested with care, unset $TMUX to force');
       tout = jouer(['exit']);
       expect(tout).toContain('[exited]');
-      expect(c.invite()).toBe('vous@cooperative:~$');
+      expect(c.invite()).toBe(L('vous@cooperative:~$'));
       jouer(['tmux new -s maj', 'sudo apt update', 'sudo apt upgrade -y', 'ssh cooperative', 'sudo systemctl enable caisse']);
       tout = jouer(['uname -r']);
       expect(tout).toContain('6.12.38+deb13-amd64');

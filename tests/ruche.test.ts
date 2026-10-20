@@ -273,8 +273,8 @@ table ip nat {
     const WG0 = (cle: string) => `[Interface]\nAddress = 10.10.99.1/24\nListenPort = 51820\nPrivateKey = ${cle}\n`;
     const clesDe = (c: Console) => ({
       malik: c.shell.lire(L('/home/vous/courriel_malik.txt'))!.match(/[A-Za-z0-9+/]{43}=/)![0],
-      privee: () => c.shell.lire('/home/vous/privatekey')!.trim(),
-      publique: () => c.shell.lire('/home/vous/publickey')!.trim(),
+      privee: () => c.shell.lire(L('/home/vous/privatekey'))!.trim(),
+      publique: () => c.shell.lire(L('/home/vous/publickey'))!.trim(),
     });
     const PORTABLE =
       (pub: string, endpoint = 'ruche.example:51820') =>
@@ -292,7 +292,8 @@ table ip nat {
       const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones']);
       const k = clesDe(c);
       let tout = jouer(['cat portable-malik.conf', 'umask 077', 'wg genkey | tee privatekey | wg pubkey > publickey', 'ls -l']);
-      expect(tout).toContain('-rw------- vous     vous         44 privatekey');
+      const moi = L('vous');
+      expect(tout).toContain(`-rw------- ${moi.padEnd(8)} ${moi.padEnd(8)} ${'44'.padStart(6)} privatekey`);
       editer('sudo nano /etc/wireguard/wg0.conf', () => WG0(k.privee()) + PEER_MALIK(k.malik));
       editer('nano portable-malik.conf', PORTABLE(k.publique()));
       editer('sudo nano /etc/nftables.conf', PARE_FEU);

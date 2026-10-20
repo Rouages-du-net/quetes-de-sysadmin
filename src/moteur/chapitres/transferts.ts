@@ -11,7 +11,7 @@
 // sans le dossier copié en trop (rsync --delete le retire).
 // Sources : https://man.openbsd.org/scp, https://download.samba.org/pub/rsync/rsync.1
 
-import { d, f, type Chapitre, type Dossier, type Noeud } from '../monde';
+import { chemin, d, f, nom, type Chapitre, type Dossier, type Noeud } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { genererCle } from '../acces';
 import { chargerSshd, comptesMaison, dossierSsh, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE } from './maison';
@@ -63,13 +63,15 @@ const rapportSurLePoste = (j: Jeu) => {
   const p = poste(j);
   if (!p) return false;
   const tous = fichiers(p, p.resoudre('~'));
-  return Object.entries(tous).some(([chemin, contenu]) => chemin.split('/').at(-1) === RAPPORT && contenu === PDF);
+  return Object.entries(tous).some(([c, contenu]) => c.split('/').at(-1) === nom(j.t, RAPPORT) && contenu === PDF);
 };
 
 const sauvegardeAJour = (j: Jeu) => {
-  const copie = fichiers(archives(j), SAUVEGARDE);
-  return Object.entries(fichiers(j, PARTAGE)).every(([chemin, contenu]) => copie[chemin] === contenu);
+  const copie = fichiers(archives(j), chemin(j.t, SAUVEGARDE));
+  return Object.entries(fichiers(j, chemin(j.t, PARTAGE))).every(([c, contenu]) => copie[c] === contenu);
 };
+// La copie en trop : /srv/sauvegardes/partage/partage (dans la langue).
+const imbrique = (j: Jeu) => chemin(j.t, `${SAUVEGARDE}/partage`);
 
 export const transferts: Chapitre = {
   id: 'transferts',
@@ -150,17 +152,17 @@ export const transferts: Chapitre = {
     { id: 'rapport', condition: rapportSurLePoste, message: (j) => j.t('transferts-evenement-rapport') },
     {
       id: 'imbrique',
-      condition: (j) => archives(j).existe(`${SAUVEGARDE}/partage`),
-      message: (j) => j.t('transferts-evenement-imbrique', { dossier: `${SAUVEGARDE}/partage` }),
+      condition: (j) => archives(j).existe(imbrique(j)),
+      message: (j) => j.t('transferts-evenement-imbrique', { dossier: imbrique(j) }),
     },
     {
       id: 'sauvegarde',
-      condition: (j) => sauvegardeAJour(j) && !archives(j).existe(`${SAUVEGARDE}/partage`),
+      condition: (j) => sauvegardeAJour(j) && !archives(j).existe(imbrique(j)),
       message: (j) => j.t('transferts-evenement-sauvegarde'),
     },
     {
       id: 'fin',
-      condition: (j) => rapportSurLePoste(j) && sauvegardeAJour(j) && !archives(j).existe(`${SAUVEGARDE}/partage`),
+      condition: (j) => rapportSurLePoste(j) && sauvegardeAJour(j) && !archives(j).existe(imbrique(j)),
       message: (j) => j.t('transferts-evenement-fin'),
     },
   ],

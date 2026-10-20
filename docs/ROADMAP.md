@@ -307,10 +307,21 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 - [x] Noms de lieux et d'objets traduits et faciles à taper (`noms.ftl`,
       L'Effaceur et le poste) ; complétion testée dans chaque langue
 - [x] Noms des documents des autres histoires (courriels, messages, notes
-      d'aide, `LISEZMOI.txt`… : `noms: true` partout) ; les données des
-      serveurs (fonds des Archives, partage de la Ludothèque, comptes rendus
-      de la Maison des associations, sites, bases) restent en français
-- [ ] Nom de l'utilisateur·rice (`vous`) et de la machine dans l'invite
+      d'aide, `LISEZMOI.txt`… : `noms: true` partout)
+- [x] Noms des données des serveurs, jusque dans ce qui les garde en mémoire
+      (instantanés restic et rsnapshot, copies rsync, fichiers suivis par
+      git, scripts, crontabs, journaux) : fonds des Archives et disque de
+      la mairie, roman et poèmes d'Inès, partage et rançongiciel de la
+      Ludothèque, partage, sauvegardes et wiki de la Maison des
+      associations, relevés et sauvegardes de la Coopérative, dossier de
+      l'équipe du Datacenter, dossiers de la radio de L'Astreinte ; restent
+      tels quels les noms techniques (sites et adresses servis par HTTP,
+      bases, images et projets Docker, unités systemd, programmes et
+      scripts du PATH) et les noms propres (émissions de la radio)
+- [x] Nom du compte du joueur ou de la joueuse (`vous`, en anglais `you` :
+      invite, `/home`, propriétaires, journaux…) et de l'utilisateur de
+      l'Effaceur (`effaceur`, `eraser`) ; les noms des machines (`royaume`,
+      `datacenter`…) restent ceux des hôtes
 - [ ] Recollage des paragraphes et typographie selon la langue (le chinois et
       le coréen ne séparent pas les lignes par une espace)
 - [ ] Plateforme de traduction (Weblate hébergé, gratuit pour les projets
