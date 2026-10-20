@@ -28,3 +28,17 @@ quetes-de-sysadmin { margin: 1.5rem 0 3rem; }
 a { color: var(--accent); }
 footer { margin-top: 3rem; padding-bottom: 2rem; border-top: 1px solid var(--bord); color: var(--discret); font-size: 0.9rem; }
 .avertissement { padding: 1rem; border: 1px solid var(--bord); border-radius: 0.5rem; }
+
+/* Les fiches pour les enseignant·es. */
+.discret { color: var(--discret); }
+.fiche-histoire { margin-top: 2.5rem; }
+.fiches { padding-left: 0; list-style: none; display: grid; gap: 1rem; }
+.fiche { border: 1px solid var(--bord); border-radius: 0.5rem; padding: 0.75rem 1rem; }
+.fiche h3 { margin: 0 0 0.5rem; font-size: 1.05rem; }
+.fiche dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; margin: 0; }
+.fiche dt { font-weight: 600; color: var(--discret); }
+.fiche dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 40rem) {
+  .fiche dl { grid-template-columns: 1fr; }
+  .fiche dd { margin-bottom: 0.5rem; }
+}

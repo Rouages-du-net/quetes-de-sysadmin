@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { HISTOIRES } from '../moteur/chapitres';
 ---
 <Base
   titre="Quêtes de Sysadmin"
@@ -8,7 +9,7 @@ import Base from '../layouts/Base.astro';
   <h1>Quêtes de Sysadmin</h1>
   <p class="intro">
     Des aventures où l'on agit avec de <strong>vraies commandes Linux</strong>. Chaque lieu est
-    un dossier, chaque objet un fichier. Dix histoires indépendantes : commence par
+    un dossier, chaque objet un fichier. {HISTOIRES.length} histoires indépendantes : commence par
     l'Effaceur si tu n'as jamais ouvert un terminal.
   </p>
   <p class="intro">
@@ -26,6 +27,11 @@ import Base from '../layouts/Base.astro';
     <pre><code>{`<script type="module" src="https://sysadmin.rouages.net/integration/quetes-de-sysadmin.js"></script>
 <quetes-de-sysadmin></quetes-de-sysadmin>`}</code></pre>
     <p>Mode d'emploi complet : <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/docs/INTEGRER.md">docs/INTEGRER.md</a>.</p>
+  </section>
+
+  <section aria-labelledby="enseigner">
+    <h2 id="enseigner">Pour les enseignant·es</h2>
+    <p>Objectifs, prérequis, commandes découvertes et durée de chaque chapitre : <a href="/enseignants/">les fiches des quêtes</a>.</p>
   </section>
 </Base>
 

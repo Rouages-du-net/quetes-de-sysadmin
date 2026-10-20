@@ -7,6 +7,8 @@
 import { Console } from '../moteur/console';
 import { HISTOIRES } from '../moteur/chapitres';
 import { machineDeHistoire } from '../moteur/machines';
+import { description, enMarkdown, noter, type Carnet } from '../moteur/carnet';
+import { liensRouages } from '../moteur/rouages';
 import { editeur } from './editeur';
 import { traducteur, typographie, type Langue } from '../textes';
 
@@ -69,13 +71,33 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const terminal = el('div', { class: 'terminal' }, sortie, form);
   const suivant = el('button', { type: 'button', class: 'bouton principal' }, t('bouton-suivant'));
   const fin = el('div', { class: 'fin', hidden: '' }, suivant);
+  // Après un chapitre : la page de Les rouages du net qui explique son concept.
+  const listeRouages = el('ul', {});
+  const pourComprendre = el('aside', { class: 'pour-comprendre', hidden: '' }, el('p', {}, typo(t('rouages-intro'))), listeRouages);
+  // Le carnet du sysadmin : les commandes déjà lancées, avec leur ligne du manuel.
+  const carnetCompte = el('span', { class: 'compte' });
+  const carnetListe = el('dl', {});
+  const carnetVide = el('p', {}, typo(t('carnet-vide')));
+  const exporter = el('button', { type: 'button', class: 'lien' }, t('carnet-exporter'));
+  const copierCarnet = el('button', { type: 'button', class: 'lien' }, t('carnet-copier'));
+  const carnetEtat = el('span', { class: 'carnet-etat', role: 'status' });
+  const carnetActions = el('p', { class: 'carnet-actions' }, exporter, ' · ', copierCarnet, ' ', carnetEtat);
+  const panneauCarnet = el(
+    'details',
+    { class: 'carnet' },
+    el('summary', {}, t('carnet-titre'), ' ', carnetCompte),
+    el('p', { class: 'carnet-aide' }, typo(t('carnet-aide'))),
+    carnetVide,
+    carnetListe,
+    carnetActions,
+  );
   const recommencer = el('button', { type: 'button', class: 'lien' }, t('bouton-recommencer'));
   const astuces = el('p', { class: 'astuces' }, typo(t('astuces')), ' ', recommencer);
   const credit = el('p', { class: 'credit' }, typo(t('credit')), ' ',
     el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit-lien-projet')), ' · ',
     el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-lien-original')));
 
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, terminal, fin, astuces, credit);
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, terminal, fin, pourComprendre, panneauCarnet, astuces, credit);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -84,12 +106,14 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     histoire?: string | null;
     connus?: string;
     ssh?: { fichiers: Record<string, string>; phrases?: Record<string, string> };
+    carnet?: Carnet;
   } = {};
   try {
     sauve = JSON.parse(localStorage.getItem(CLE) ?? '{}');
   } catch {}
   const terminalJeu = new Console({ langue: t.langue, termines: sauve.termines, hotesConnus: sauve.connus, ssh: sauve.ssh });
   const termines = terminalJeu.termines;
+  const carnet: Carnet = sauve.carnet && typeof sauve.carnet === 'object' ? sauve.carnet : {};
   // Histoire et chapitre en cours (-1 : sur le poste).
   const histoire = () => (terminalJeu.distant ? HISTOIRES.indexOf(terminalJeu.distant.histoire) : -1);
   const courant = () => (terminalJeu.distant ? terminalJeu.distant.histoire.chapitres.indexOf(terminalJeu.distant.shell.chapitre) : -1);
@@ -97,7 +121,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     try {
       localStorage.setItem(
         CLE,
-        JSON.stringify({ termines, histoire: terminalJeu.distant?.histoire.id ?? null, connus: terminalJeu.hotesConnus(), ssh: terminalJeu.ssh() }),
+        JSON.stringify({ termines, histoire: terminalJeu.distant?.histoire.id ?? null, connus: terminalJeu.hotesConnus(), ssh: terminalJeu.ssh(), carnet }),
       );
     } catch {}
   };
@@ -174,9 +198,28 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     // « Chapitre suivant » : après un chapitre fini, s'il en reste un.
     const h = histoire();
     fin.hidden = !(h >= 0 && terminalJeu.distant!.shell.termine && courant() < chapitres(h).length - 1);
+    const liens = h >= 0 && terminalJeu.distant!.shell.termine ? liensRouages(terminalJeu.distant!.shell.chapitre.id) : [];
+    pourComprendre.hidden = liens.length === 0;
+    listeRouages.replaceChildren(
+      ...liens.map((l) => el('li', {}, el('a', { href: l.adresse, hreflang: 'fr', target: '_blank', rel: 'noopener' }, typo(t(`rouages-lien-${l.id}`))))),
+    );
+  };
+
+  const majCarnet = () => {
+    const noms = Object.keys(carnet).sort((a, b) => a.localeCompare(b));
+    carnetCompte.textContent = t('carnet-compte', { nombre: noms.length });
+    carnetVide.hidden = noms.length > 0;
+    carnetActions.hidden = noms.length === 0;
+    carnetListe.replaceChildren(
+      ...noms.flatMap((nom) => [
+        el('dt', {}, el('code', {}, nom)),
+        el('dd', {}, typo(description(nom, t)), ' ', el('code', { class: 'exemple' }, carnet[nom].ligne)),
+      ]),
+    );
   };
 
   const apres = () => {
+    majCarnet();
     majInvite();
     majNav();
     sauver();
@@ -208,7 +251,10 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     afficher(secret ? (invite.textContent ?? '') : `${invite.textContent} ${ligne}`, 'cmd');
     if (ligne.trim() && !reponse) historique.push(ligne);
     position = historique.length;
+    const shell = terminalJeu.shell;
     const resultat = terminalJeu.executer(ligne);
+    // Une réponse à une question (un mot de passe…) n'est pas une commande pour le carnet.
+    if (!reponse) noter(carnet, shell);
     if (resultat === null) sortie.replaceChildren();
     else afficher(resultat);
     saisie.value = '';
@@ -309,6 +355,19 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   suivant.addEventListener('click', () => {
     demarrer(histoire(), courant() + 1);
     saisie.focus();
+  });
+  // Le carnet s'emporte : un fichier Markdown, ou le presse-papiers.
+  const markdown = () => enMarkdown(carnet, t, termines);
+  exporter.addEventListener('click', () => {
+    const lien = el('a', { href: URL.createObjectURL(new Blob([markdown()], { type: 'text/markdown' })), download: t('carnet-fichier') });
+    lien.click();
+    setTimeout(() => URL.revokeObjectURL(lien.href), 1000);
+  });
+  copierCarnet.addEventListener('click', () => {
+    navigator.clipboard
+      ?.writeText(markdown())
+      .then(() => (carnetEtat.textContent = t('carnet-copie')))
+      .catch(() => (carnetEtat.textContent = t('carnet-copie-impossible')));
   });
   recommencer.addEventListener('click', () => {
     if (histoire() === -1) allerPoste();

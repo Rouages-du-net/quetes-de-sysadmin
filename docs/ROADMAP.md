@@ -316,17 +316,21 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
-- **Le carnet du sysadmin** : chaque commande découverte s'ajoute à un aide-mémoire
-  personnel, exportable.
+- [x] **Le carnet du sysadmin** : chaque commande découverte s'ajoute à un
+  aide-mémoire personnel (sa ligne du manuel, la première ligne tapée, le
+  chapitre), gardé dans le navigateur, exportable en Markdown.
 - **Mode « examen »** : une machine en panne, sans indices, avec un chrono.
 - **Quêtes à plusieurs bonnes réponses** : comparer deux solutions (`ufw` ou
   `nftables`, `rsnapshot` ou `restic`) et leurs compromis.
-- **Défis de la communauté** : format de quête documenté pour que d'autres
-  en écrivent.
-- **Lien avec rouages.net** : chaque quête renvoie au module qui explique le
-  concept (DNS, TLS, hôtes virtuels…), et inversement.
-- **Pour les enseignant·es** : fiches par quête (objectifs, prérequis, durée),
-  progression exportable sans compte.
+- [x] **Défis de la communauté** : format de quête documenté pour que d'autres
+  en écrivent (`docs/CONTRIBUER.md`).
+- [x] **Lien avec rouages.net** : après un chapitre, les étapes des modules
+  ou les mots du glossaire qui expliquent son concept (DNS, TLS, NAT…),
+  `src/moteur/rouages.ts`. Reste le sens inverse, à faire sur rouages.net.
+- [x] **Pour les enseignant·es** : fiches par quête (objectif, prérequis,
+  commandes découvertes, durée indicative) sur `/enseignants/`, générées à la
+  construction (`src/moteur/fiches.ts`) ; progression exportable sans compte,
+  en tête du carnet téléchargé.
 
 ---
 

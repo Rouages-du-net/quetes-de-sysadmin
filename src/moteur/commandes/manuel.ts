@@ -10,7 +10,7 @@ import { COMMANDES, type Commande } from './index';
 
 // Identifiant Fluent de la page : le point est réservé aux attributs
 // (« jail.conf » → man-jail_conf).
-const page = (nom: string) => `man-${nom.replace(/\./g, '_')}`;
+export const page = (nom: string) => `man-${nom.replace(/\./g, '_')}`;
 
 const section = (nom: string) => COMMANDES[nom]?.section ?? 1;
 
@@ -22,7 +22,7 @@ function textes(nom: string, t: Traduire) {
 }
 
 // La première phrase, sans point final, pour la ligne NOM et whatis.
-const resume = (texte: string) => texte.split(/(?<=\.)\s|(?<=。)|\n/)[0].replace(/[.。]$/, '');
+export const resume = (texte: string) => texte.split(/(?<=\.)\s|(?<=。)|\n/)[0].replace(/[.。]$/, '');
 
 const retrait = (texte: string, n = 7) =>
   texte

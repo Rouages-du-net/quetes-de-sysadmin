@@ -93,10 +93,26 @@ for (const largeur of [1000, 375]) {
   verifier(!(await nano.isVisible()) && (await saisie.isVisible()), `${largeur} px : nano se ferme`);
   await tape('cat notes.txt');
   verifier((await jeu.locator('.sortie').textContent()).includes('Bonjour depuis nano\nencore'), `${largeur} px : le fichier est bien écrit`);
+  // Le carnet du sysadmin : les commandes lancées, avec leur ligne du manuel ; il survit au rechargement.
+  const carnet = jeu.locator('details.carnet');
+  await carnet.locator('summary').click();
+  verifier((await carnet.locator('dt').allTextContents()).includes('nano'), `${largeur} px : nano est entré au carnet`);
+  verifier((await carnet.locator('summary').textContent()).match(/\(\d+ commandes\)/), `${largeur} px : le carnet compte ses commandes`);
+  const [telechargement] = await Promise.all([page.waitForEvent('download'), carnet.locator('.carnet-actions button').first().click()]);
+  verifier(telechargement.suggestedFilename() === 'carnet-du-sysadmin.md', `${largeur} px : le carnet se télécharge en Markdown`);
+  await page.reload();
+  verifier((await jeu.locator('details.carnet dt').allTextContents()).includes('nano'), `${largeur} px : le carnet est gardé dans le navigateur`);
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${largeur} px : pas de défilement horizontal`);
   verifier(erreurs.length === 0, `${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
   verifier(externes.length === 0, `${largeur} px : aucune ressource tierce ${externes.join(' ')}`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/jeu-${largeur}.png`, fullPage: true });
+  // Les fiches pour les enseignant·es : une page statique, générée à la construction.
+  await page.goto(`${BASE}/enseignants/`);
+  verifier((await page.locator('.fiche').count()) > 50, `${largeur} px : les fiches des enseignant·es sont là`);
+  verifier((await page.locator('#c-goulot').textContent()).includes('iostat'), `${largeur} px : une fiche donne ses commandes nouvelles`);
+  verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${largeur} px : fiches sans défilement horizontal`);
+  verifier(erreurs.length === 0, `${largeur} px : fiches sans erreur console ${erreurs.join(' ')}`);
+  if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/enseignants-${largeur}.png` });
   await page.close();
 }
 
