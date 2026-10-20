@@ -96,7 +96,7 @@ export class Console {
   /** Remet le poste à neuf, en gardant les hôtes connus. */
   reinitialiserPoste(): string {
     this.poste = this.nouveauPoste(this.hotesConnus());
-    return this.poste.executer(`cat ${this.poste.chapitre.accueil}`) ?? '';
+    return this.poste.executer(`cat ${this.poste.accueil}`) ?? '';
   }
 
   /** Une histoire est ouverte si l'on a sa clé : la première, puis toutes une fois celle-ci finie. */
@@ -185,7 +185,7 @@ export class Console {
       const dejaFini = ancienne.termine;
       const suite = ancienne.evenements();
       // Un chapitre en cours : rappeler où relire ses consignes.
-      const rappel = ancienne.termine ? '' : this.t('reprise-chapitre', { fichier: ancienne.chapitre.accueil });
+      const rappel = ancienne.termine ? '' : this.t('reprise-chapitre', { fichier: ancienne.accueil });
       // Un simple rebond (ssh -J) n'ouvre pas de session sur la passerelle : ni bannière ni rappel.
       const entete = rebond ? [] : [...banniere, this.titre(histoire, ancienne.chapitre), rappel];
       return [...entete, suite, this.noterFin(ancienne, dejaFini)].filter(Boolean).join('\n\n');
@@ -222,7 +222,7 @@ export class Console {
   }
 
   private ouvrirChapitre(c: Chapitre): string {
-    return [this.titre(this.distant!.histoire, c), this.distant!.shell.executer(`cat ${c.accueil}`) ?? ''].join('\n\n');
+    return [this.titre(this.distant!.histoire, c), this.distant!.shell.executer(`cat ${this.distant!.shell.accueil}`) ?? ''].join('\n\n');
   }
 
   deconnecter(): string {

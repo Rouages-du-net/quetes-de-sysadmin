@@ -7,13 +7,16 @@ import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/moteur/shell';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
-import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
+import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { dansLaLangue } from './noms';
 
 const chapitre = (id: string) => HISTOIRES.flatMap((h) => h.chapitres).find((c) => c.id === id)!;
 
 for (const langue of LANGUES)
   describe(`Langue : ${langue}`, () => {
     const reference = langue === LANGUE_DE_REFERENCE;
+    // Une ligne écrite avec les noms français, dans la langue de la partie.
+    const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     // Un texte attendu, vérifié seulement dans la langue de référence.
     const contient = (tout: string, texte: string) => {
       if (reference) expect(tout).toContain(texte);
@@ -21,7 +24,7 @@ for (const langue of LANGUES)
 
     function jouer(id: string, commandes: string[]) {
       const s = new Shell(chapitre(id), langue);
-      const sorties = ['cat ' + chapitre(id).accueil, ...commandes].map((c) => s.executer(c) ?? '');
+      const sorties = ['cat ' + s.accueil, ...commandes].map((c) => s.executer(chapitre(id).noms ? L(c) : c) ?? '');
       return { s, sorties, tout: sorties.join('\n') };
     }
 
@@ -134,39 +137,39 @@ for (const langue of LANGUES)
           'rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/',
           'crontab -l',
         ]);
-        expect(tout).toContain('skipping directory souvenirs');
+        expect(tout).toContain(L('skipping directory souvenirs'));
         expect(tout).toContain('sending incremental file list');
         expect(tout).toContain('no crontab for vous');
         contient(tout, 'Demande à cron de la refaire chaque nuit');
-        const erreur = crontab(s, (t) => t + '15 25 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n');
+        const erreur = crontab(s, (t) => t + L('15 25 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n'));
         expect(erreur).toContain('"/tmp/crontab.Zx81Ab/crontab":24: bad hour');
         expect(erreur).toContain("errors in crontab file, can't install.");
-        const nuit = crontab(s, (t) => t + '15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n');
+        const nuit = crontab(s, (t) => t + L('15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n'));
         expect(nuit).toContain('crontab: installing new crontab');
         contient(nuit, 'fete-du-phare.txt y est, sans que tu aies rien tapé');
-        expect(s.existe('/mnt/sauvegarde/souvenirs/fete-du-phare.txt')).toBe(true);
-        expect(s.existe('/home/vous/souvenirs/premiere-lettre.txt')).toBe(false);
-        s.executer('rsync -av /mnt/sauvegarde/souvenirs/premiere-lettre.txt ~/souvenirs/');
+        expect(s.existe(L('/mnt/sauvegarde/souvenirs/fete-du-phare.txt'))).toBe(true);
+        expect(s.existe(L('/home/vous/souvenirs/premiere-lettre.txt'))).toBe(false);
+        s.executer(L('rsync -av /mnt/sauvegarde/souvenirs/premiere-lettre.txt ~/souvenirs/'));
         expect(s.termine).toBe(true);
       });
 
       it('une autre solution : @daily, copie dans un dossier, restauration avec cp', () => {
         const s = new Shell(chapitre('sauvegarde'), langue);
-        crontab(s, (t) => t + '@daily rsync -a souvenirs /mnt/sauvegarde/\n');
+        crontab(s, (t) => t + L('@daily rsync -a souvenirs /mnt/sauvegarde/\n'));
         expect(s.drapeaux.has('nuit-ok')).toBe(true);
-        s.executer('cp /mnt/sauvegarde/souvenirs/premiere-lettre.txt souvenirs/');
+        s.executer(L('cp /mnt/sauvegarde/souvenirs/premiere-lettre.txt souvenirs/'));
         expect(s.termine).toBe(true);
       });
 
       it('fausses pistes : une tâche qui ne tourne pas la nuit, une tâche fausse, --delete après l’effacement', () => {
         const s = new Shell(chapitre('sauvegarde'), langue);
-        const rien = crontab(s, (t) => t + '0 12 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n');
+        const rien = crontab(s, (t) => t + L('0 12 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n'));
         contient(rien, 'aucune tâche de ta crontab ne tombait cette nuit');
-        const courrier = crontab(s, (t) => t.replace('0 12', '0 2').replace('~/souvenirs/', '~/souvenir/'));
-        expect(courrier).toContain('rsync: [sender] link_stat "/home/vous/souvenir" failed: No such file or directory (2)');
-        crontab(s, (t) => t.replace('~/souvenir/', '~/souvenirs/'));
+        const courrier = crontab(s, (t) => t.replace('0 12', '0 2').replace(L('~/souvenirs/'), L('~/souvenirs/').replace(/s\/$/, '/')));
+        expect(courrier).toContain(`rsync: [sender] link_stat "${L('/home/vous/souvenirs').replace(/s$/, '')}" failed: No such file or directory (2)`);
+        crontab(s, (t) => t.replace(L('~/souvenirs/').replace(/s\/$/, '/'), L('~/souvenirs/')));
         expect(s.drapeaux.has('nuit-ok')).toBe(true);
-        const perdu = s.executer('rsync -a --delete ~/souvenirs/ /mnt/sauvegarde/souvenirs/')!;
+        const perdu = s.executer(L('rsync -a --delete ~/souvenirs/ /mnt/sauvegarde/souvenirs/'))!;
         contient(perdu, 'de la sauvegarde aussi');
         expect(s.termine).toBe(false);
       });

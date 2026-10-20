@@ -93,6 +93,10 @@ export interface Chapitre {
   commandes: string[];
   // Le dossier « maison » (~), où l'on commence.
   maison: string;
+  // Les noms des lieux et des objets se traduisent (voir nom() et chemin()) :
+  // le monde est créé avec les noms français, puis chacun est remplacé par
+  // celui de la langue. Les chemins des événements passent alors par chemin().
+  noms?: boolean;
   // Fichier de la maison affiché au début du chapitre.
   accueil: string;
   creerMonde: (t: Traduire) => Dossier;
@@ -159,6 +163,27 @@ export const f = (contenu: Fichier['contenu'], options: Omit<Fichier, 'type' | '
   prose: typeof contenu === 'string' && !options.lignes,
   ...options,
 });
+
+// Les noms des lieux et des objets d'une histoire (les dossiers et les
+// fichiers qu'on tape) : le nom français sert d'identifiant, chaque langue
+// donne le sien dans src/textes/<langue>/noms.ftl, sous nom-<nom> (le point
+// initial devient « point- », les autres points des tirets). Un nom absent
+// reste tel quel (home, etc, les noms des vrais outils).
+const cleDuNom = (francais: string) => `nom-${francais.replace(/^\./, 'point-').replace(/\./g, '-')}`;
+export const nom = (t: Traduire, francais: string) => (t.existe(cleDuNom(francais)) ? t(cleDuNom(francais)) : francais);
+/** Un chemin du monde, traduit nom par nom : /Cabane/Jetee/filet → /Hut/Pier/net. */
+export const chemin = (t: Traduire, francais: string) =>
+  francais
+    .split('/')
+    .map((m) => (m ? nom(t, m) : m))
+    .join('/');
+/** Le monde dans la langue : chaque dossier et chaque fichier prend son nom traduit. */
+export function traduireNoms(t: Traduire, dossier: Dossier): Dossier {
+  dossier.enfants = Object.fromEntries(
+    Object.entries(dossier.enfants).map(([n, e]) => [nom(t, n), e.type === 'dossier' ? traduireNoms(t, e) : e]),
+  );
+  return dossier;
+}
 
 export const d = (enfants: Record<string, Noeud>, bloque?: Dossier['bloque'], droits: Droits = {}): Dossier => ({
   type: 'dossier',

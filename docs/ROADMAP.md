@@ -304,9 +304,11 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 - [x] Anglais (`src/textes/en/`, page `/en/`, chaque quête rejouée en anglais)
 - [ ] Allemand, espagnol, mandarin, coréen, puis d'autres langues
 - [x] Sorties des commandes simulées selon `LANG`, comme les vrais outils (en anglais : les messages d'origine, comme avec `LANG=C`)
-- [ ] Noms de lieux et d'objets traduits et faciles à taper (encore dans le
-      code) ; complétion testée ; nom de l'utilisateur·rice (`vous`) et de
-      la machine dans l'invite
+- [x] Noms de lieux et d'objets traduits et faciles à taper (`noms.ftl`,
+      L'Effaceur et le poste) ; complétion testée dans chaque langue
+- [ ] Noms des fichiers des autres histoires (courriels, notes : encore en
+      français) ; nom de l'utilisateur·rice (`vous`) et de la machine dans
+      l'invite
 - [ ] Recollage des paragraphes et typographie selon la langue (le chinois et
       le coréen ne séparent pas les lignes par une espace)
 - [ ] Plateforme de traduction (Weblate hébergé, gratuit pour les projets

@@ -6,14 +6,17 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { cleHote, empreinte, machineDeHistoire } from '../src/moteur/machines';
-import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
+import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { dansLaLangue } from './noms';
 
 // Les trois chapitres qui donnent les clés (le quatrième, ajouté ensuite, ne compte pas).
 const EFFACEUR = ['eveil', 'bourg', 'racine'];
 
 for (const langue of LANGUES)
   describe(`Langue : ${langue}`, () => {
-    const jouer = (c: Console, lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+    // Les lignes s'écrivent avec les noms français (voir noms.ts).
+    const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
+    const jouer = (c: Console, lignes: string[]) => lignes.map((l) => c.executer(L(l)) ?? '').join('\n');
 
     it('première connexion : empreinte, yes, bannière, chapitre, exit', () => {
       const c = new Console({ langue });
@@ -34,7 +37,7 @@ for (const langue of LANGUES)
       // Deuxième fois : la machine est connue, pas de question ; le chapitre reprend, avec où relire ses consignes.
       const reprise = jouer(c, ['ssh royaume']);
       expect(reprise).not.toContain('authenticity');
-      expect(reprise).toContain('cat bienvenue.txt');
+      expect(reprise).toContain(L('cat bienvenue.txt'));
       expect(c.invite()).toBe('vous@royaume:~$');
     });
 
@@ -99,7 +102,7 @@ for (const langue of LANGUES)
       expect(retour).toContain('— ');
       // Comme une nouvelle connexion : on repart de sa maison, le monde n'a pas bougé.
       expect(c.invite()).toBe('vous@royaume:~$');
-      expect(jouer(c, ['ls Colline/EcoleDesSignaux/SalleDExercice/Seau'])).toBe('crabe');
+      expect(jouer(c, ['ls Colline/EcoleDesSignaux/SalleDExercice/Seau'])).toBe(L('crabe'));
     });
 
     it('reboot coupe la session ssh ; la machine a redémarré quand on revient', () => {

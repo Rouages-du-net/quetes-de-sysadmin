@@ -67,6 +67,7 @@ export function poste(cles: Machine[]): Chapitre {
       'nc',
     ],
     maison: MAISON,
+    noms: true,
     accueil: 'bienvenue.txt',
     final: '',
     evenements: [],

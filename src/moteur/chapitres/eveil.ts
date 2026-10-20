@@ -3,7 +3,7 @@
 // énigmes ; l'idée d'apprendre les commandes en se déplaçant de lieu en lieu
 // vient de Terminus (MIT).
 
-import { d, f, type Chapitre } from '../monde';
+import { chemin, d, f, type Chapitre } from '../monde';
 
 const M = '/Cabane';
 const LANTERNE = `${M}/Jetee/Phare/Escalier/Lanterne`;
@@ -13,6 +13,7 @@ export const eveil: Chapitre = {
   numero: 1,
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv'],
   maison: M,
+  noms: true,
   accueil: 'bienvenue.txt',
   final: 'lumiere',
   creerMonde: (t) =>
@@ -70,7 +71,7 @@ export const eveil: Chapitre = {
               }),
             },
             (jeu) =>
-              jeu.existe(`${M}/Jetee/filet`) ? jeu.t('eveil-phare-bloque') : null,
+              jeu.existe(chemin(jeu.t, `${M}/Jetee/filet`)) ? jeu.t('eveil-phare-bloque') : null,
           ),
         }),
       }),
@@ -78,22 +79,22 @@ export const eveil: Chapitre = {
   evenements: [
     {
       id: 'crabe',
-      condition: (j) => j.existe(`${M}/Colline/EcoleDesSignaux/SalleDExercice/Seau/crabe`),
+      condition: (j) => j.existe(chemin(j.t, `${M}/Colline/EcoleDesSignaux/SalleDExercice/Seau/crabe`)),
       message: (j) => j.t('eveil-evenement-crabe'),
     },
     {
       id: 'filet',
-      condition: (j) => !j.existe(`${M}/Jetee/filet`),
+      condition: (j) => !j.existe(chemin(j.t, `${M}/Jetee/filet`)),
       message: (j) => j.t('eveil-evenement-filet'),
     },
     {
       id: 'mauvais-nom',
-      condition: (j) => j.existe(`${LANTERNE}/.ampoule_de_secours`),
+      condition: (j) => j.existe(chemin(j.t, `${LANTERNE}/.ampoule_de_secours`)),
       message: (j) => j.t('eveil-evenement-mauvais-nom'),
     },
     {
       id: 'lumiere',
-      condition: (j) => j.existe(`${LANTERNE}/ampoule`),
+      condition: (j) => j.existe(chemin(j.t, `${LANTERNE}/ampoule`)),
       message: (j) => j.t('eveil-evenement-lumiere'),
     },
   ],
