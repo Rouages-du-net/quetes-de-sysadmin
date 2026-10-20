@@ -920,3 +920,7 @@ manuel-complet = Full manual: man { $commande }
 manuel-option-invalide =
     { $commande }: invalid option -- '{ $lettre }'
     Try '{ $commande } --help' for more information.
+# An unknown long option (--frobnicate), as getopt prints it in coreutils. { $option }: the option typed
+manuel-option-longue-inconnue =
+    { $commande }: unrecognized option '{ $option }'
+    Try '{ $commande } --help' for more information.

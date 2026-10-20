@@ -62,6 +62,10 @@ export interface Commande {
   // Options courtes acceptées. Si présent, une option inconnue donne le
   // vrai message d'erreur, qui renvoie vers --help.
   options?: string[];
+  // Options longues de GNU que le jeu comprend : leur équivalent court (« all » → « a »),
+  // ou '' pour une option longue lue telle quelle (--max-depth=1). Les autres :
+  // « unrecognized option '--x' », comme les vrais outils.
+  longues?: Record<string, string>;
   // Commandes d'exemple (leur explication : .exemple-N dans manuel.ftl).
   exemples?: string[];
   voir?: string[];

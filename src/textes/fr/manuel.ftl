@@ -913,3 +913,7 @@ manuel-complet = Manuel complet : man { $commande }
 manuel-option-invalide =
     { $commande } : option invalide -- '{ $lettre }'
     Saisissez « { $commande } --help » pour plus d'informations.
+# Une option longue inconnue (--frobnicate), comme getopt dans les coreutils. { $option } : l'option tapée
+manuel-option-longue-inconnue =
+    { $commande } : option non reconnue « { $option } »
+    Saisissez « { $commande } --help » pour plus d'informations.
