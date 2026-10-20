@@ -224,7 +224,7 @@ export const base: Chapitre = {
     });
   },
   evenements: [
-    { id: 'role', condition: (j) => /role "(vous|root)" does not exist/.test(sortie(j)), message: (j) => j.t('base-evenement-role') },
+    { id: 'role', condition: (j) => new RegExp(`role "(${j.joueur}|root)" does not exist`).test(sortie(j)), message: (j) => j.t('base-evenement-role') },
     {
       id: 'sur-la-vraie',
       condition: (j) =>

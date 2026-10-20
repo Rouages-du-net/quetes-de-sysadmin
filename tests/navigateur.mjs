@@ -135,6 +135,7 @@ for (const largeur of [1000, 375]) {
   const jeu = page.locator('quetes-de-sysadmin');
   verifier((await page.locator('html').getAttribute('lang')) === 'en', `en ${largeur} px : la page est en anglais`);
   verifier((await jeu.locator('.sortie').textContent()).includes('Welcome to your workstation'), `en ${largeur} px : le jeu parle anglais`);
+  verifier((await jeu.locator('.invite').textContent()) === 'you@poste:~$', `en ${largeur} px : le compte du joueur s’appelle you`);
   const saisie = jeu.locator('form input');
   await saisie.fill('ls -y');
   await saisie.press('Enter');

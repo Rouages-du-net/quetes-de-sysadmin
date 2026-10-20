@@ -310,7 +310,10 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
       d'aide, `LISEZMOI.txt`… : `noms: true` partout) ; les données des
       serveurs (fonds des Archives, partage de la Ludothèque, comptes rendus
       de la Maison des associations, sites, bases) restent en français
-- [ ] Nom de l'utilisateur·rice (`vous`) et de la machine dans l'invite
+- [x] Nom du compte du joueur ou de la joueuse (`vous`, en anglais `you` :
+      invite, `/home`, propriétaires, journaux…) et de l'utilisateur de
+      l'Effaceur (`effaceur`, `eraser`) ; les noms des machines (`royaume`,
+      `datacenter`…) restent ceux des hôtes
 - [ ] Recollage des paragraphes et typographie selon la langue (le chinois et
       le coréen ne séparent pas les lignes par une espace)
 - [ ] Plateforme de traduction (Weblate hébergé, gratuit pour les projets

@@ -65,7 +65,7 @@ rebond-evenement-au-wiki =
     key stayed on your workstation: maison only relayed a
     tunnel encrypted end to end between your workstation and the wiki.
 
-    (Look at your prompt: vous@wiki. hostname confirms it.)
+    (Look at your prompt: you@wiki. hostname confirms it.)
 
     One thing left, the shortcut: on your workstation, a block in ~/.ssh/config so that a
     simple "ssh wiki" is enough (man ssh_config, ProxyJump).

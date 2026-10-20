@@ -139,7 +139,7 @@ for (const langue of LANGUES)
         ]);
         expect(tout).toContain(L('skipping directory souvenirs'));
         expect(tout).toContain('sending incremental file list');
-        expect(tout).toContain('no crontab for vous');
+        expect(tout).toContain(L('no crontab for vous'));
         contient(tout, 'Demande à cron de la refaire chaque nuit');
         const erreur = crontab(s, (t) => t + L('15 25 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n'));
         expect(erreur).toContain('"/tmp/crontab.Zx81Ab/crontab":24: bad hour');
@@ -166,7 +166,7 @@ for (const langue of LANGUES)
         const rien = crontab(s, (t) => t + L('0 12 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n'));
         contient(rien, 'aucune tâche de ta crontab ne tombait cette nuit');
         const courrier = crontab(s, (t) => t.replace('0 12', '0 2').replace(L('~/souvenirs/'), L('~/souvenirs/').replace(/s\/$/, '/')));
-        expect(courrier).toContain(`rsync: [sender] link_stat "${L('/home/vous/souvenirs').replace(/s$/, '')}" failed: No such file or directory (2)`);
+        expect(courrier).toContain(L(`rsync: [sender] link_stat "${L('/home/vous/souvenirs').replace(/s$/, '')}" failed: No such file or directory (2)`));
         crontab(s, (t) => t.replace(L('~/souvenirs/').replace(/s\/$/, '/'), L('~/souvenirs/')));
         expect(s.drapeaux.has('nuit-ok')).toBe(true);
         const perdu = s.executer(L('rsync -a --delete ~/souvenirs/ /mnt/sauvegarde/souvenirs/'))!;
@@ -493,7 +493,7 @@ for (const langue of LANGUES)
 
       it('solution : find, restore, forget, prune, check, chmod', () => {
         const { s, tout } = jouer('versions', ['df -h /mnt/mairie', `${R} find --long journal_de_marie.txt`]);
-        expect(tout).toContain('2027-02-02 02:00:13 /home/vous/fonds/manuscrits/journal_de_marie.txt');
+        expect(tout).toContain(L('2027-02-02 02:00:13 /home/vous/fonds/manuscrits/journal_de_marie.txt'));
         const ids = instantanes(s);
         expect(ids).toHaveLength(30);
         const bon = ids[25];
@@ -508,9 +508,9 @@ for (const langue of LANGUES)
           'chmod 600 ~/.config/restic/mot-de-passe',
           `${R} check`,
         ]
-          .map((l) => s.executer(l) ?? '')
+          .map((l) => s.executer(L(l)) ?? '')
           .join('\n');
-        expect(suite).toContain('M    /home/vous/fonds/manuscrits/journal_de_marie.txt');
+        expect(suite).toContain(L('M    /home/vous/fonds/manuscrits/journal_de_marie.txt'));
         expect(suite).toContain('Would have removed the snapshots above (dry run).');
         expect(suite).toContain('remove 21 snapshots:');
         expect(suite).toContain('no errors were found');
@@ -531,7 +531,7 @@ for (const langue of LANGUES)
           `${R} forget --keep-last 2 --prune`,
           `${R} check`,
         ])
-          s.executer(l);
+          s.executer(L(l));
         expect(s.termine).toBe(true);
       });
 
@@ -891,7 +891,7 @@ for (const langue of LANGUES)
           'ls -l /srv/galerie',
         ]);
         expect(tout).toContain('node');
-        expect(tout).toMatch(/drwxr-xr-x vous +vous +4096 photos/);
+        expect(tout).toMatch(new RegExp(`drwxr-xr-x ${L('vous')} +${L('vous')} +4096 photos`));
         contient(tout, "l'uid 1000, c'est toi");
         expect(s.termine).toBe(false);
         s.executer('sudo chgrp -R yasmine /srv/galerie/photos');
@@ -933,7 +933,7 @@ for (const langue of LANGUES)
         if (reference) expect(tout).toContain('> <h1>La Gazette du quartier</h1>');
         contient(tout, 'Voilà la correction de Théo');
         if (reference) expect(tout).toContain('Dépôt Git vide initialisé dans /srv/git/gazette.git/');
-        s.executer('sudo chown -R vous:vous /srv/git/gazette.git');
+        s.executer(L('sudo chown -R vous:vous /srv/git/gazette.git'));
         editer(s, '/srv/git/gazette.git/hooks/post-receive', () => CROCHET);
         s.executer('chmod +x /srv/git/gazette.git/hooks/post-receive');
         s.executer('cd ~/gazette');
@@ -965,7 +965,7 @@ for (const langue of LANGUES)
         if (reference) expect(root).toContain('error: droits insuffisants pour ajouter un objet');
         expect(root).toContain(' ! [remote rejected] main -> main (unpacker error)');
         contient(root, 'il appartient à root');
-        s.executer('sudo chown -R vous: /srv/git/gazette.git');
+        s.executer(L('sudo chown -R vous: /srv/git/gazette.git'));
         contient(s.executer('git push prod main') ?? '', 'rien ne les extrait');
         editer(s, '/srv/git/gazette.git/hooks/post-receive', () => '#!/bin/sh\ngit --work-tree=/var/www/gazette checkout main');
         s.executer('git rm style.css');
@@ -1340,7 +1340,7 @@ for (const langue of LANGUES)
           `${PG} createdb ludo_test`,
           `${PG} pg_restore -d ludo_test ${DUMP}`,
         ]);
-        expect(tout).toContain('FATAL:  role "vous" does not exist');
+        expect(tout).toContain(L('FATAL:  role "vous" does not exist'));
         expect(tout).toContain(' public | prets   | table | ludo');
         contient(tout, 'sudo -u postgres (man sudo)');
         contient(tout, 'la sauvegarde se restaure');
@@ -1851,7 +1851,7 @@ for (const langue of LANGUES)
         expect(s.executer('ls -z')).toBe("ls : option invalide -- 'z'\nSaisissez « ls --help » pour plus d'informations.");
       });
       it('messages de man-db', () => {
-        expect(s.executer('man')).toContain('Quelle page de manuel voulez-vous ?');
+        expect(s.executer('man')).toContain(L('Quelle page de manuel voulez-vous ?'));
         expect(s.executer('man xyz')).toBe("Il n'y a pas de page de manuel pour xyz.");
       });
       it('chaque commande du jeu a une page', () => {

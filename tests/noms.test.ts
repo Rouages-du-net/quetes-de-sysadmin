@@ -46,7 +46,12 @@ for (const langue of LANGUES)
     // nouveau fait échouer ce test ; s'il est voulu, relire le fichier
     // produit et le mettre à jour avec « npx vitest run -u tests/noms.test.ts ».
     it.runIf(langue !== 'fr')('les renommages sont ceux attendus (tests/noms/)', async () => {
-      const lignes = traduits.flatMap((c) => {
+      // Les machines internes d'une histoire sont renommées comme sa machine principale.
+      const mondes = traduits.flatMap((c) => [
+        { id: c.id, creerMonde: c.creerMonde },
+        ...Object.entries(c.hotes ?? {}).map(([h, def]) => ({ id: `${c.id}:${h}`, creerMonde: def.creerMonde })),
+      ]);
+      const lignes = mondes.flatMap((c) => {
         const renommes = parcourir(c.creerMonde(t))
           .filter((ch) => ch.split('/').some((m) => m && nom(t, m) !== m))
           .map((ch) => `  ${ch} → ${ch.split('/').map((m) => (m ? nom(t, m) : m)).join('/')}`);

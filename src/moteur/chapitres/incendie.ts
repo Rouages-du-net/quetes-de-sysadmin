@@ -203,7 +203,7 @@ export const incendie: Chapitre = {
     },
     {
       id: 'mauvais-lieu',
-      condition: (j) => j.existe(`${M}/etc`) || j.existe(`${M}/var`),
+      condition: (j) => j.existe(chemin(j.t, `${M}/etc`)) || j.existe(chemin(j.t, `${M}/var`)),
       message: (j) => j.t('incendie-evenement-mauvais-lieu'),
     },
     {

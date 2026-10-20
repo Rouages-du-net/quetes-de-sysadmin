@@ -7,7 +7,7 @@
 // champs (page d'origine et navigateur). Toutes les adresses IP sont
 // réservées à la documentation (RFC 5737).
 
-import { d, f, type Chapitre, type Comptes } from '../monde';
+import { chemin, d, f, joueur, type Chapitre, type Comptes } from '../monde';
 import type { Processus } from '../commandes/systeme';
 import type { Traduire } from '../../textes';
 import { nouveauSystemd } from '../systemd';
@@ -94,7 +94,7 @@ export const datacenter: Chapitre = {
       { pid: 612, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx' },
       { pid: 613, utilisateur: 'www-data', cpu: 4.8, mem: 0.6, commande: 'nginx: worker process' },
       { pid: 4242, utilisateur: 'www-data', cpu: 99.3, mem: 38.5, commande: 'php-fpm: pool catalogue' },
-      { pid: 5120, utilisateur: 'vous', cpu: 0, mem: 0.1, commande: '-bash' },
+      { pid: 5120, utilisateur: joueur(t), cpu: 0, mem: 0.1, commande: '-bash' },
     ] satisfies Processus[],
     systemd: nouveauSystemd('datacenter', Date.UTC(2026, 9, 13, 8, 0, 0), Date.UTC(2026, 9, 13, 21, 5, 0), {
       nginx: {
@@ -224,7 +224,7 @@ export const datacenter: Chapitre = {
     {
       id: 'rapport',
       condition: (j) => {
-        const r = j.lire(`${M}/rapport.txt`) ?? '';
+        const r = j.lire(chemin(j.t, `${M}/rapport.txt`)) ?? '';
         return j.drapeaux.has('repare') && r.includes(String(ERREURS_503)) && r.includes(ROBOT);
       },
       message: (j) => j.t('premier-jour-evenement-rapport', { erreurs: String(ERREURS_503) }),

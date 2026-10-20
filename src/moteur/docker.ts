@@ -159,7 +159,7 @@ export const groupeMachine = (jeu: Jeu, gid: number) => Object.entries(jeu.compt
 export function accesNumerique(jeu: Jeu, n: Noeud, droit: 'r' | 'w' | 'x', uid: number, gid: number): boolean {
   if (uid === 0) return true;
   const mode = n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--');
-  const proprio = n.proprio ?? 'vous';
+  const proprio = n.proprio ?? jeu.joueur;
   const groupe = n.groupe ?? proprio;
   const numUid = jeu.comptes.utilisateurs[proprio]?.uid ?? (/^\d+$/.test(proprio) ? Number(proprio) : -1);
   const numGid = jeu.comptes.groupes[groupe]?.gid ?? (/^\d+$/.test(groupe) ? Number(groupe) : -1);

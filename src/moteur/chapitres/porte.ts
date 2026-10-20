@@ -9,7 +9,7 @@
 // l'ancienne configuration), un AllowUsers qui oublie son propre compte.
 // Sources : https://man.openbsd.org/sshd_config, https://man.openbsd.org/sshd
 
-import { d, f, fichiersComptes, type Chapitre, comptesParDefaut } from '../monde';
+import { comptesParDefaut, d, f, fichiersComptes, joueur, type Chapitre } from '../monde';
 import type { Jeu } from '../shell';
 import { clePublique, machineDeHistoire } from '../machines';
 import { journaliser, nouveauSystemd, systemd } from '../systemd';
@@ -157,7 +157,7 @@ export const porte: Chapitre = {
           {
             vous: d({
               'courriel_kofi.txt': f(t('porte-courriel-kofi')),
-              '.ssh': d({ authorized_keys: f(clePublique(lettres), { lignes: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
+              '.ssh': d({ authorized_keys: f(clePublique(lettres, joueur(t)), { lignes: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
             }),
           },
           undefined,
@@ -176,7 +176,7 @@ export const porte: Chapitre = {
     },
     {
       id: 'enferme',
-      condition: (j) => !autorise(config(j).charge, 'vous'),
+      condition: (j) => !autorise(config(j).charge, j.joueur),
       message: (j) => j.t('porte-evenement-enferme'),
     },
     {
@@ -189,7 +189,7 @@ export const porte: Chapitre = {
     },
     {
       id: 'fermee',
-      condition: (j) => fermee(config(j).charge) && autorise(config(j).charge, 'vous'),
+      condition: (j) => fermee(config(j).charge) && autorise(config(j).charge, j.joueur),
       message: (j) => j.t('porte-evenement-fermee'),
     },
     {
@@ -197,7 +197,7 @@ export const porte: Chapitre = {
       condition: (j) =>
         j.drapeaux.has('fermee') &&
         fermee(config(j).charge) &&
-        autorise(config(j).charge, 'vous') &&
+        autorise(config(j).charge, j.joueur) &&
         (j.etat.connexions ?? 1) > config(j).connexionsAuChargement,
       message: (j) => j.t('porte-evenement-fin'),
     },

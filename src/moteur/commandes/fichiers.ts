@@ -25,7 +25,7 @@ const modeDe = (n: Noeud) => n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw
 // la date.
 function ligneLongue(jeu: Shell, nom: string, n: Noeud, humain: boolean, numerique = false): string {
   // -n : les numéros (uid, gid) au lieu des noms.
-  const nomProprio = n.proprio ?? 'vous';
+  const nomProprio = n.proprio ?? jeu.joueur;
   const nomGroupe = n.groupe ?? nomProprio;
   const proprio = numerique ? String(jeu.comptes.utilisateurs[nomProprio]?.uid ?? nomProprio) : nomProprio;
   const groupe = numerique ? String(jeu.comptes.groupes[nomGroupe]?.gid ?? nomGroupe) : nomGroupe;
@@ -369,7 +369,7 @@ export const FICHIERS: Record<string, Commande> = {
         const n = jeu.trouver(cible);
         if (!n) jeu.erreur(jeu.t('chmod-acces-introuvable', { cible }));
         else if (!jeu.traverse(cible)) jeu.erreur(jeu.t('chmod-acces-permission', { cible }));
-        else if (jeu.qui !== 'root' && (n.proprio ?? 'vous') !== jeu.qui) jeu.erreur(jeu.t('chmod-non-permise', { cible }));
+        else if (jeu.qui !== 'root' && (n.proprio ?? jeu.joueur) !== jeu.qui) jeu.erreur(jeu.t('chmod-non-permise', { cible }));
         else if (!appliquerMode(modeDe(n), droits)) jeu.erreur(jeu.t('chmod-mode-incorrect', { droits }));
         else appliquer(n);
       }

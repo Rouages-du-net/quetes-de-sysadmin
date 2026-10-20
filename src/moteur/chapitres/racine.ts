@@ -2,13 +2,15 @@
 // Ici, l'arborescence ressemble enfin à un vrai Linux : /home, /etc,
 // /var/log, /root. Fin de l'histoire de l'Effaceur.
 
-import { chemin, d, f, nom, type Chapitre } from '../monde';
+import { chemin, compte, d, f, nom, type Chapitre } from '../monde';
 import type { Jeu } from '../shell';
 
 const M = '/home/vous';
 const SOUVENIRS = `${M}/souvenirs`;
 const CONF = '/etc/effaceur.conf';
 const TOTAL = 8;
+// L'utilisateur système de l'Effaceur, sous son nom dans la langue (effaceur, eraser…).
+const effaceur = (j: Jeu) => compte(j.t, 'effaceur');
 
 const souvenir = (texte: string) => f(texte);
 // La ligne corrigée de la configuration, dans la langue : « cible = /Royaume/Corbeille ».
@@ -120,7 +122,7 @@ export const racine: Chapitre = {
   apresCommande: (j) => {
     if (!j.drapeaux.has('alerte') || j.drapeaux.has('corrige') || !j.existe(chemin(j.t, CONF))) return;
     const lieu = j.trouver(chemin(j.t, SOUVENIRS));
-    if (lieu?.type !== 'dossier' || !j.peut(lieu, 'w', 'effaceur') || !j.peut(lieu, 'x', 'effaceur')) return;
+    if (lieu?.type !== 'dossier' || !j.peut(lieu, 'w', effaceur(j)) || !j.peut(lieu, 'x', effaceur(j))) return;
     const nom = Object.keys(lieu.enfants).sort()[0];
     if (!nom) return;
     delete lieu.enfants[nom];
@@ -136,7 +138,7 @@ export const racine: Chapitre = {
       id: 'protege',
       condition: (j) => {
         const lieu = j.trouver(chemin(j.t, SOUVENIRS));
-        return j.drapeaux.has('alerte') && !j.drapeaux.has('corrige') && lieu?.type === 'dossier' && !(j.peut(lieu, 'w', 'effaceur') && j.peut(lieu, 'x', 'effaceur'));
+        return j.drapeaux.has('alerte') && !j.drapeaux.has('corrige') && lieu?.type === 'dossier' && !(j.peut(lieu, 'w', effaceur(j)) && j.peut(lieu, 'x', effaceur(j)));
       },
       message: (j) => j.t('racine-evenement-protege', { sauves: j.compter(chemin(j.t, SOUVENIRS), ''), total: TOTAL }),
     },

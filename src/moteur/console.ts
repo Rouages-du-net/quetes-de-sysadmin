@@ -260,7 +260,7 @@ export class Console {
     const nouvelles = MACHINES.filter((m) => this.ouverte(m.histoire!) && !avant.includes(m.histoire!) && !m.sansCle);
     if (!nouvelles.length) return '';
     const ssh = this.poste.trouver('~/.ssh');
-    if (ssh?.type === 'dossier') for (const m of nouvelles) Object.assign(ssh.enfants, fichiersCle(m));
+    if (ssh?.type === 'dossier') for (const m of nouvelles) Object.assign(ssh.enfants, fichiersCle(this.t, m));
     return this.t('poste-cles-recues', { cles: nouvelles.map((m) => `~/.ssh/id_${m.nom}`).join(', ') });
   }
 

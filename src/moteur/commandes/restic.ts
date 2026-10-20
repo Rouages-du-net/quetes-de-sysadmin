@@ -293,7 +293,7 @@ function lancer(c: Contexte, action: string, args: string[]): string {
     );
     return [
       ENTETE(depot),
-      `snapshot ${court(s.id)} of [${s.chemins.join(' ')}] at ${date(s.temps)} by vous@${s.hote}${filtre.length ? ` filtered by [${filtre.join(' ')}]` : ''}:`,
+      `snapshot ${court(s.id)} of [${s.chemins.join(' ')}] at ${date(s.temps)} by ${jeu.joueur}@${s.hote}${filtre.length ? ` filtered by [${filtre.join(' ')}]` : ''}:`,
       ...lignes,
     ].join('\n');
   }
@@ -394,7 +394,7 @@ function lancer(c: Contexte, action: string, args: string[]): string {
     if (erreurs.length) return jeu.erreur(erreurs.join('\n'));
     return [
       ENTETE(depot),
-      `restoring snapshot ${court(s.id)} of [${s.chemins.join(' ')}] at ${date(s.temps)} by vous@${s.hote} to ${cible}`,
+      `restoring snapshot ${court(s.id)} of [${s.chemins.join(' ')}] at ${date(s.temps)} by ${jeu.joueur}@${s.hote} to ${cible}`,
       `Summary: Restored ${choisis.length} files/dirs (${taille(octets)}) in 0:00`,
     ].join('\n');
   }

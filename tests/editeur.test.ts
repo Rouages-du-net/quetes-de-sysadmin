@@ -5,18 +5,21 @@ import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/moteur/shell';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
-import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
+import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { dansLaLangue } from './noms';
 
 const chapitre = (id: string) => HISTOIRES.flatMap((h) => h.chapitres).find((c) => c.id === id)!;
 
 for (const langue of LANGUES)
   describe(`Langue : ${langue}`, () => {
     const fr = langue === LANGUE_DE_REFERENCE;
+    // Le compte du joueur dans la langue (vous@poste, you@poste), comme les noms des lieux.
+    const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
 
     it('nouveau fichier : ouvrir, écrire, quitter, relire', () => {
       const c = new Console({ langue });
       c.executer('nano notes.txt');
-      expect(c.edition?.chemin).toBe('/home/vous/notes.txt');
+      expect(c.edition?.chemin).toBe(L('/home/vous/notes.txt'));
       if (fr) expect(c.edition?.message).toBe('[ Nouveau fichier ]');
       const { message, ecrit } = c.enregistrer('ligne 1\nligne 2\n');
       expect(ecrit).toBe(true);

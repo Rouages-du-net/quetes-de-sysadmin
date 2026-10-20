@@ -11,7 +11,7 @@
 // Sources : https://git-scm.com/book/fr/v2/Git-sur-le-serveur-Mise-en-place-du-serveur,
 // https://git-scm.com/docs/githooks#post-receive, https://git-scm.com/docs/git#Documentation/git.txt---work-treeltpathgt
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../monde';
+import { chemin, d, f, fichiersComptes, joueur, type Chapitre, type Comptes, type Droits } from '../monde';
 import type { Jeu } from '../shell';
 import { nouveauSystemd } from '../systemd';
 import { chargerNginx, requete, verifierNginx } from '../nginx';
@@ -159,8 +159,8 @@ export const depotNu: Chapitre = {
       },
     }),
     nginx: { charge: null, noms: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'] },
-    git: { [LOCAL]: { commits: historique(t), index: historique(t).at(-1)!.fichiers } },
-    auteur: 'vous <vous@gazette.example>',
+    git: { [chemin(t, LOCAL)]: { commits: historique(t), index: historique(t).at(-1)!.fichiers } },
+    auteur: `${joueur(t)} <${joueur(t)}@gazette.example>`,
     date: 'Mon May 10 09:20:00 2027 +0200',
   }),
   initialiser: (j) => chargerNginx(j),

@@ -7,6 +7,7 @@
 
 import type { Traduire } from '../../textes';
 import { COMMANDES, type Commande } from './index';
+import { joueur } from '../monde';
 
 // Identifiant Fluent de la page : le point est réservé aux attributs
 // (« jail.conf » → man-jail_conf).
@@ -21,7 +22,8 @@ function textes(nom: string, t: Traduire) {
   const exemples = (nom: string, c: Commande): [string, string][] =>
     (c.exemples ?? []).map((e, i) => {
       const propre = `${page(nom)}.commande-${i + 1}`;
-      return [t.existe(propre) ? t(propre) : e, t(`${page(nom)}.exemple-${i + 1}`)];
+      // Le compte du joueur (vous@wiki, /home/vous) prend son nom dans la langue (you@wiki).
+      return [t.existe(propre) ? t(propre) : e.replace(/\bvous\b/g, joueur(t)), t(`${page(nom)}.exemple-${i + 1}`)];
     });
   return { synopsis, description: t(page(nom)), options, exemples };
 }

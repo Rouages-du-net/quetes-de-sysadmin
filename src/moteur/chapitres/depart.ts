@@ -20,7 +20,7 @@
 // https://man7.org/linux/man-pages/man8/userdel.8.html,
 // https://man7.org/linux/man-pages/man1/chage.1.html
 
-import { d, f, type Chapitre } from '../monde';
+import { d, f, joueur, type Chapitre } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { analyser } from '../cron';
 import { AUJOURDHUI, CLES, comptesCooperative, M, mondeCooperative, MOT_DE_PASSE } from './cooperative';
@@ -129,7 +129,7 @@ export const depart: Chapitre = {
   final: 'fin',
   motDePasse: MOT_DE_PASSE,
   comptes: () => comptesCooperative(),
-  etat: () => ({
+  etat: (t) => ({
     crontabs: { marc: CRONTAB_MARC },
     processus: [
       { pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
@@ -137,11 +137,11 @@ export const depart: Chapitre = {
       { pid: 2741, utilisateur: 'marc', cpu: 0, mem: 0.1, commande: 'sshd: marc@pts/1' },
       { pid: 2745, utilisateur: 'marc', cpu: 0, mem: 0.1, commande: '-bash', ppid: 2741 },
       { pid: 2790, utilisateur: 'marc', cpu: 0.1, mem: 0.1, commande: 'tail -f /var/log/caisse/app.log', ppid: 2745 },
-      { pid: 3102, utilisateur: 'vous', cpu: 0, mem: 0.1, commande: '-bash' },
+      { pid: 3102, utilisateur: joueur(t), cpu: 0, mem: 0.1, commande: '-bash' },
     ],
     sessions: [
       { utilisateur: 'marc', tty: 'pts/1', depuis: '2027-10-19 08:12', de: '198.51.100.40', pid: 2741 },
-      { utilisateur: 'vous', tty: 'pts/0', depuis: '2027-10-19 09:28', de: '192.0.2.2' },
+      { utilisateur: joueur(t), tty: 'pts/0', depuis: '2027-10-19 09:28', de: '192.0.2.2' },
     ],
   }),
   creerMonde: (t) =>
@@ -192,7 +192,7 @@ export const depart: Chapitre = {
     },
     {
       id: 'tache-personnelle',
-      condition: (j) => sauvegardeConfiee(j, ['vous']) && !sauvegardeConfiee(j),
+      condition: (j) => sauvegardeConfiee(j, [j.joueur]) && !sauvegardeConfiee(j),
       message: (j) => j.t('depart-evenement-tache-personnelle'),
     },
     { id: 'sauvegarde', condition: (j) => sauvegardeConfiee(j), message: (j) => j.t('depart-evenement-sauvegarde') },

@@ -15,7 +15,7 @@ porte-courriel-kofi =
 
     Thanks to you, the Lettres du quartier website works again! So the
     association has rented a small server just for it. The hosting company
-    installed it last night and created an account for you (vous), with
+    installed it last night and created an account for you (user name: you), with
     your SSH key: that's how you just got in.
 
     But a friend told me a new server gets attacked within the hour.

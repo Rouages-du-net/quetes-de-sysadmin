@@ -2,14 +2,14 @@
 ### ls -l, chmod, whoami, sudo. The tree is that of a real Linux
 ### (/home, /etc, /var/log, /root): those system paths are not
 ### translated. The other place and file names (memories, eraser.conf,
-### /Kingdom/Bin…) come from noms.ftl. The user "vous" and the daemon's
-### user "effaceur" are identifiers of the code and stay as they are.
+### /Kingdom/Bin…), and the account names (you, and the daemon's user
+### "eraser"), come from noms.ftl.
 
 chapitre-racine = The Root
     .resume = Permissions and administration: ls -l, chmod, whoami, sudo.
 racine-arrivee =
     You whizz down the slide and land… in a room that feels
-    familiar. On the door, a plate: /home/vous.
+    familiar. On the door, a plate: /home/you.
 
     Your home. The real one. At the very bottom of the kingdom, at the Root ("/"), places
     finally have their real Linux names: /home for the users'
@@ -23,7 +23,7 @@ racine-manuel-admin =
     Every object and every place has an OWNER and PERMISSIONS.
     To see them:  ls -l
 
-      d rwx r-x r-x   vous  vous  4096  memories/
+      d rwx r-x r-x   you   you   4096  memories/
       │  │   │   │     └─ owner
       │  │   │   └─ others: r-x
       │  │   └─ the group: r-x
@@ -55,7 +55,7 @@ racine-journal =
     Year 101: I'm writing the Eraser, a little daemon that will empty the Bin.
     Year 102: wrote the Eraser's configuration in /etc. No time to proofread it.
     Year 102: my password changes. I'm writing it down here (very bad idea!): tournesol
-    Year 102: Started the Eraser. It runs as its own user, "effaceur".
+    Year 102: Started the Eraser. It runs as its own user, "eraser".
     Year 103: disaster. The Bakery's sourdough disappears. Then the gears.
     Year 103: I found the mistake in the configuration. I prepared a fixed version, here, in my home.
     Year 103: it must be installed with sudo before the Eraser reaches me.
@@ -78,16 +78,16 @@ racine-journal-intime-root =
     (#1: respect the privacy of others.)
 # Faulty configuration: keep the line "target = /Kingdom /Bin" (with the space).
 racine-effaceur-conf =
-    # The Eraser's configuration — written by: vous (year 102)
+    # The Eraser's configuration — written by: you (year 102)
     # On every pass, the daemon deletes everything found in the target.
     target = /Kingdom /Bin
 racine-sudoers =
     # Who is allowed to use sudo, and for what.
     root    ALL=(ALL:ALL) ALL
-    vous    ALL=(ALL:ALL) ALL   # vous: administrator of the kingdom
+    you     ALL=(ALL:ALL) ALL   # you: administrator of the kingdom
 # Daemon log: one entry per line (read with grep).
 racine-effaceur-log =
-    {"["}year 102] starting the eraser daemon (user: effaceur)
+    {"["}year 102] starting the eraser daemon (user: eraser)
     {"["}year 102] reading /etc/eraser.conf
     {"["}year 102] target = /Kingdom /Bin
     {"["}year 102] 2 targets found: "/Kingdom" and "/Bin"
@@ -96,7 +96,7 @@ racine-effaceur-log =
     {"["}year 103] deleting /Kingdom/Village/Bakery/sourdough_5
     {"["}year 103] deleting /Kingdom/Village/Workshop/gear_12
     {"["}year 104] deleting /Kingdom/Island/Lighthouse/bulb
-    {"["}year 131] new target reachable: /home/vous/memories (permissions: rwxrwxrwx)
+    {"["}year 131] new target reachable: /home/you/memories (permissions: rwxrwxrwx)
 racine-notes-root =
     If you're reading this, you are root (or you used sudo).
 
@@ -109,7 +109,7 @@ racine-evenement-alerte =
 
     Look at the permissions:  ls -l
     The memories place is rwxrwxrwx: everyone, including the user
-    "effaceur", is allowed to write in it, and so to delete in it. Take that
+    "eraser", is allowed to write in it, and so to delete in it. Take that
     right away from others (o), quick:
 
       chmod o-w memories

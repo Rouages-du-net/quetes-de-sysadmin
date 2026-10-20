@@ -98,7 +98,7 @@ export const deuxiemeJour: Chapitre = {
       id: 'partage',
       condition: (j) => {
         const n = partage(j);
-        const equipe = ['vous', 'awa', 'malo'].every((u) => j.peut(n, 'w', u) && j.peut(n, 'x', u));
+        const equipe = [j.joueur, 'awa', 'malo'].every((u) => j.peut(n, 'w', u) && j.peut(n, 'x', u));
         return equipe && !j.peut(n, 'r', 'www-data') && !j.peut(n, 'w', 'www-data');
       },
       message: (j) => j.t('deuxieme-jour-evenement-partage', { partage: PARTAGE }),

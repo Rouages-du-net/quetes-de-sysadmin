@@ -177,13 +177,40 @@ export const chemin = (t: Traduire, francais: string) =>
     .split('/')
     .map((m) => (m ? nom(t, m) : m))
     .join('/');
-/** Le monde dans la langue : chaque dossier et chaque fichier prend son nom traduit. */
+
+// Les comptes qui se traduisent : celui du joueur ou de la joueuse
+// (« vous », you en anglais) et l'utilisateur système de l'Effaceur. Les
+// autres comptes (root, www-data, les personnages : malo, yasmine…) gardent
+// leur nom. Comme les lieux, les chapitres sont écrits avec le nom
+// français ; le monde (propriétaires, /home/vous) et les comptes sont
+// renommés à la création, et le code désigne le compte du joueur par
+// `jeu.joueur` (ou `joueur(t)` avant que le jeu existe).
+const COMPTES_TRADUITS = ['vous', 'effaceur'];
+export const compte = (t: Traduire, francais: string) => (COMPTES_TRADUITS.includes(francais) ? nom(t, francais) : francais);
+/** Le compte du joueur ou de la joueuse dans la langue : vous, you… */
+export const joueur = (t: Traduire) => compte(t, 'vous');
+
+/** Le monde dans la langue : chaque dossier et chaque fichier prend son nom traduit, ses propriétaires aussi. */
 export function traduireNoms(t: Traduire, dossier: Dossier): Dossier {
+  const droits = (n: Noeud) => {
+    if (n.proprio) n.proprio = compte(t, n.proprio);
+    if (n.groupe) n.groupe = compte(t, n.groupe);
+    return n;
+  };
+  droits(dossier);
   dossier.enfants = Object.fromEntries(
-    Object.entries(dossier.enfants).map(([n, e]) => [nom(t, n), e.type === 'dossier' ? traduireNoms(t, e) : e]),
+    Object.entries(dossier.enfants).map(([n, e]) => [nom(t, n), e.type === 'dossier' ? traduireNoms(t, e) : droits(e)]),
   );
   return dossier;
 }
+
+/** Les comptes dans la langue : noms des utilisateurs et des groupes, membres, maisons. */
+export const traduireComptes = (t: Traduire, c: Comptes): Comptes => ({
+  utilisateurs: Object.fromEntries(
+    Object.entries(c.utilisateurs).map(([n, u]) => [compte(t, n), { ...u, groupe: compte(t, u.groupe), ...(u.maison ? { maison: chemin(t, u.maison) } : {}) }]),
+  ),
+  groupes: Object.fromEntries(Object.entries(c.groupes).map(([n, g]) => [compte(t, n), { ...g, membres: g.membres.map((m) => compte(t, m)) }])),
+});
 
 export const d = (enfants: Record<string, Noeud>, bloque?: Dossier['bloque'], droits: Droits = {}): Dossier => ({
   type: 'dossier',

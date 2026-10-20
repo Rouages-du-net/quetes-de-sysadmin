@@ -5,6 +5,12 @@
 ### à taper et à compléter avec Tab ; deux noms d'un même dossier restent
 ### différents dès leurs premières lettres autant que possible.
 
+## Les comptes : celui du joueur ou de la joueuse (invite vous@royaume,
+## /home/vous, propriétaire des fichiers) et l'utilisateur système de
+## l'Effaceur. Un nom de compte Unix : minuscules, sans accent ni espace.
+nom-vous = vous
+nom-effaceur = effaceur
+
 ## Le poste, et l'Île du Phare (L'Effaceur, chapitre 1)
 nom-bienvenue-txt = bienvenue.txt
 nom-message-txt = message.txt

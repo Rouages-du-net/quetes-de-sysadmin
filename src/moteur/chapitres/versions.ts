@@ -14,7 +14,7 @@
 // https://restic.readthedocs.io/en/stable/050_restore.html,
 // https://restic.readthedocs.io/en/stable/060_forget.html
 
-import { d, f, type Chapitre, type Fichier } from '../monde';
+import { chemin, d, f, type Chapitre, type Fichier } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import type { Traduire } from '../../textes';
 import { ajouterInstantane, ecrireDepot, hex, tailleDepot, type Depot, type Version } from '../commandes/restic';
@@ -35,30 +35,32 @@ const CORRECTION = Date.UTC(2027, 1, 2, 2, 0, 13);
 const texte = (contenu: string, modifie: number): Version => ({ contenu, taille: new TextEncoder().encode(contenu).length, modifie });
 const media = (description: string, mo: number, modifie: number): Version => ({ contenu: description, taille: Math.round(mo * Mo), modifie });
 
-// Le fonds tel qu'il était un jour donné (jour de janvier ; 32 = 1er février…).
-function fonds(t: Traduire, jour: number): Record<string, Version> {
+// Le fonds tel qu'il était un jour donné (jour de janvier ; 32 = 1er février…),
+// rangé sous `base` : le fonds dans la langue (/home/you/fonds) pour les
+// instantanés, le nom français pour créer le monde (renommé ensuite).
+function fonds(t: Traduire, jour: number, base = chemin(t, FONDS)): Record<string, Version> {
   const avant = Date.UTC(2026, 11, 14, 16, 2, 0);
   const v: Record<string, Version> = {
-    [`${FONDS}/lisezmoi.txt`]: texte(t('archives-lisezmoi'), avant),
-    [JOURNAL]: jour >= 33 ? texte(t('versions-journal-abime'), CORRECTION) : texte(t('versions-journal'), avant),
-    [`${FONDS}/manuscrits/lettres_1914.txt`]: texte(t('archives-lettres-1914'), avant),
-    [`${FONDS}/manuscrits/recettes_du_quartier.txt`]:
+    [`${base}/lisezmoi.txt`]: texte(t('archives-lisezmoi'), avant),
+    [`${base}/manuscrits/journal_de_marie.txt`]: jour >= 33 ? texte(t('versions-journal-abime'), CORRECTION) : texte(t('versions-journal'), avant),
+    [`${base}/manuscrits/lettres_1914.txt`]: texte(t('archives-lettres-1914'), avant),
+    [`${base}/manuscrits/recettes_du_quartier.txt`]:
       jour >= 20
         ? texte(`${t('archives-recettes-du-quartier')}\n${t('versions-recette-ajoutee')}`, Date.UTC(2027, 0, 20, 11, 15, 0))
         : texte(t('archives-recettes-du-quartier'), avant),
-    [`${FONDS}/cartes/plan_1890.png`]: media(t('archives-image-png'), 6, avant),
-    [`${FONDS}/cartes/plan_1954.png`]: media(t('archives-image-png'), 5, avant),
-    [`${FONDS}/presse/gazette_1936.pdf`]: media(t('archives-document-pdf'), 4, avant),
-    [`${FONDS}/presse/gazette_1968.pdf`]: media(t('archives-document-pdf'), 4.5, avant),
-    [`${FONDS}/enregistrements/chants_du_marche.ogg`]: media(t('archives-son-ogg'), 12, avant),
-    [`${FONDS}/enregistrements/entretien_fatou.ogg`]: media(t('archives-son-ogg'), 15, avant),
+    [`${base}/cartes/plan_1890.png`]: media(t('archives-image-png'), 6, avant),
+    [`${base}/cartes/plan_1954.png`]: media(t('archives-image-png'), 5, avant),
+    [`${base}/presse/gazette_1936.pdf`]: media(t('archives-document-pdf'), 4, avant),
+    [`${base}/presse/gazette_1968.pdf`]: media(t('archives-document-pdf'), 4.5, avant),
+    [`${base}/enregistrements/chants_du_marche.ogg`]: media(t('archives-son-ogg'), 12, avant),
+    [`${base}/enregistrements/entretien_fatou.ogg`]: media(t('archives-son-ogg'), 15, avant),
   };
   // Du 8 au 14 janvier, les numérisations brutes (énormes) attendaient d'être traitées.
   if (jour >= 8 && jour <= 14)
     for (const n of [1, 2, 3])
-      v[`${FONDS}/numerisations/brut_registre_${n}.tiff`] = media(t('versions-image-tiff'), 540, Date.UTC(2027, 0, 8, 10, n, 0));
+      v[`${base}/numerisations/brut_registre_${n}.tiff`] = media(t('versions-image-tiff'), 540, Date.UTC(2027, 0, 8, 10, n, 0));
   if (jour >= 15)
-    for (const n of [1, 2, 3]) v[`${FONDS}/numerisations/registre_${n}.png`] = media(t('archives-image-png'), 3, Date.UTC(2027, 0, 15, 9, n, 0));
+    for (const n of [1, 2, 3]) v[`${base}/numerisations/registre_${n}.png`] = media(t('archives-image-png'), 3, Date.UTC(2027, 0, 15, 9, n, 0));
   return v;
 }
 
@@ -66,20 +68,20 @@ function fonds(t: Traduire, jour: number): Record<string, Version> {
 function depotInitial(t: Traduire): Depot {
   const depot: Depot = { id: hex('depot-bibliotheque'), motDePasse: MOT_DE_PASSE, instantanes: [], packs: [], verifie: true, aElaguer: false };
   for (let jour = 7; jour <= 36; jour++)
-    ajouterInstantane(depot, { id: hex(`instantane-${jour}`), temps: nuit(jour), hote: 'bibliotheque', chemins: [FONDS], fichiers: fonds(t, jour) });
+    ajouterInstantane(depot, { id: hex(`instantane-${jour}`), temps: nuit(jour), hote: 'bibliotheque', chemins: [chemin(t, FONDS)], fichiers: fonds(t, jour) });
   depot.verifie = true;
   return depot;
 }
 
 const shell = (j: Jeu) => j as Shell;
 const depot = (j: Jeu): Depot => j.etat.restic[DEPOT];
-const restaure = (j: Jeu) => j.lire(JOURNAL) === j.t('versions-journal');
+const restaure = (j: Jeu) => j.lire(chemin(j.t, JOURNAL)) === j.t('versions-journal');
 // Le fichier du mot de passe : lisible par les autres comptes de la machine ?
 const mdpOuvert = (j: Jeu) => {
-  const n = j.trouver(MDP);
+  const n = j.trouver(chemin(j.t, MDP));
   return !!n && j.peut(n, 'r', 'rosa');
 };
-const bonneVersionGardee = (j: Jeu) => depot(j).instantanes.some((s) => s.fichiers[JOURNAL]?.contenu === j.t('versions-journal'));
+const bonneVersionGardee = (j: Jeu) => depot(j).instantanes.some((s) => s.fichiers[chemin(j.t, JOURNAL)]?.contenu === j.t('versions-journal'));
 const libre = (j: Jeu) => tailleDepot(depot(j)) < CAPACITE * 0.6;
 
 export const versions: Chapitre = {
@@ -126,7 +128,7 @@ export const versions: Chapitre = {
   // Les fichiers du dépôt sur le disque, d'après son contenu.
   initialiser: (j) => ecrireDepot(shell(j), DEPOT, depot(j)),
   creerMonde: (t) => {
-    const actuel = fonds(t, 37);
+    const actuel = fonds(t, 37, FONDS);
     const lieux: Record<string, Record<string, Fichier>> = {};
     for (const [chemin, v] of Object.entries(actuel)) {
       const relatif = chemin.slice(FONDS.length + 1).split('/');
@@ -153,7 +155,7 @@ export const versions: Chapitre = {
     {
       id: 'mot-de-passe',
       condition: (j) => !!j.etat.resticFichierMdp && mdpOuvert(j),
-      message: (j) => j.t('versions-evenement-mot-de-passe', { fichier: MDP }),
+      message: (j) => j.t('versions-evenement-mot-de-passe', { fichier: chemin(j.t, MDP) }),
     },
     {
       id: 'mauvais-mot-de-passe',
@@ -196,11 +198,12 @@ export const versions: Chapitre = {
 // Une copie de la bonne version restaurée sous un autre lieu (restic recrée le chemin complet).
 function trouverRestaurationAilleurs(j: Jeu): boolean {
   const bon = j.t('versions-journal');
+  const journal = chemin(j.t, JOURNAL);
   const chercher = (chemin: string, profondeur: number): boolean => {
     const n = j.trouver(chemin);
     if (!n || profondeur > 9) return false;
-    if (n.type === 'fichier') return chemin !== JOURNAL && j.lire(chemin) === bon;
+    if (n.type === 'fichier') return chemin !== journal && j.lire(chemin) === bon;
     return Object.keys(n.enfants).some((nom) => chercher(`${chemin === '/' ? '' : chemin}/${nom}`, profondeur + 1));
   };
-  return chercher('/tmp', 0) || chercher(M, 0);
+  return chercher('/tmp', 0) || chercher(chemin(j.t, M), 0);
 }

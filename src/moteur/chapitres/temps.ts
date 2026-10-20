@@ -2,7 +2,7 @@
 // d'un texte et revenir en arrière. Inès, romancière, a abîmé son manuscrit ;
 // heureusement, il est suivi par git. Ses poèmes, eux, ne le sont pas.
 
-import { d, f, nom, type Chapitre } from '../monde';
+import { chemin, d, f, nom, type Chapitre } from '../monde';
 import type { Traduire } from '../../textes';
 import { nouveauCommit, type Commit, type Depot } from '../commandes/git';
 
@@ -45,7 +45,7 @@ export const temps: Chapitre = {
   noms: true,
   final: 'fin',
   etat: (t) => ({
-    git: { [ROMAN]: historique(t) },
+    git: { [chemin(t, ROMAN)]: historique(t) },
     auteur: t('manuscrit-autrice'),
     date: 'Tue Oct 13 10:30:00 2026 +0200',
   }),
@@ -72,13 +72,13 @@ export const temps: Chapitre = {
     },
     {
       id: 'restaure',
-      condition: (j) => j.lire(`${ROMAN}/roman.txt`) === versions(j.t).v3,
+      condition: (j) => j.lire(chemin(j.t, `${ROMAN}/roman.txt`)) === versions(j.t).v3,
       message: (j) => j.t('manuscrit-evenement-restaure'),
     },
     {
       id: 'sauve',
       condition: (j) => {
-        const depot: Depot = j.etat.git[ROMAN];
+        const depot: Depot = j.etat.git[chemin(j.t, ROMAN)];
         return depot.commits.length > 4 && depot.commits.at(-1)!.fichiers['roman.txt'] === versions(j.t).v3;
       },
       message: (j) => j.t('manuscrit-evenement-sauve'),
@@ -86,7 +86,7 @@ export const temps: Chapitre = {
     {
       id: 'poemes',
       condition: (j) => {
-        const depot: Depot | undefined = j.etat.git?.[POEMES];
+        const depot: Depot | undefined = j.etat.git?.[chemin(j.t, POEMES)];
         const c = depot?.commits.at(-1);
         return !!c && POEMES_INES.every((poeme) => nom(j.t, poeme) in c.fichiers);
       },

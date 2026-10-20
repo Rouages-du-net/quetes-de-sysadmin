@@ -99,7 +99,20 @@ sites, bases, fichiers suivis par git, restic, rsnapshot ou rsync, ou
 écrits par le jeu en cours de partie (le fonds des Archives, le partage de
 la Ludothèque, les comptes rendus de la Maison des associations). Un tel
 nom ne se traduit que si tout ce qui le désigne suit (instantanés,
-dépôts, configuration, machines internes, qui ne sont pas renommées).
+dépôts, configuration). Les machines internes d'une histoire (le wiki et
+les archives de la Maison des associations) sont renommées comme sa
+machine principale.
+
+Deux comptes se traduisent aussi, dans `noms.ftl` : celui du joueur ou de
+la joueuse (`nom-vous = you` : invite `you@royaume:~$`, `/home/you`,
+propriétaire des fichiers, `whoami`, `User you` du `~/.ssh/config` du
+poste, auteur des commits…) et l'utilisateur système de l'Effaceur
+(`nom-effaceur = eraser`). Un nom de compte Unix : minuscules, sans accent
+ni espace. Les autres comptes (`root`, `www-data`, les personnages : `malo`,
+`yasmine`…) et les noms des machines (`royaume`, `datacenter`…) restent
+tels quels. Dans les fichiers que décrivent les textes (sudoers,
+configurations, journaux), écrire le nom du compte dans la langue
+(`you    ALL=(ALL:ALL) ALL`).
 
 Les commandes des exemples du manuel sont dans le code (`pages.ts`). Quand
 l'une d'elles contient des mots (`grep "mot de passe" journal.txt`), une
@@ -120,7 +133,7 @@ noms de jeux de la base…) se traduisent par ce que le joueur ou la joueuse
 | Code | Langue | État |
 |---|---|---|
 | `fr` | français | langue de référence |
-| `en` | anglais | complet (textes, manuel, messages des outils comme avec `LANG=C`, noms des lieux et des objets de L'Effaceur et du poste, documents des autres histoires) ; données des serveurs des histoires en français |
+| `en` | anglais | complet (textes, manuel, messages des outils comme avec `LANG=C`, noms des lieux et des objets de L'Effaceur et du poste, documents des autres histoires, comptes `you` et `eraser`) ; données des serveurs des histoires en français |
 
 ## Ajouter une langue
 
@@ -153,3 +166,8 @@ qui permettent de traduire sans toucher à Git.
   `nom(j.t, 'levain')` (voir `src/moteur/monde.ts`). Dans les tests, les
   commandes s'écrivent aussi en français et passent par `dansLaLangue()`
   (`tests/noms.ts`).
+- Le compte du joueur ou de la joueuse s'écrit `jeu.joueur` (`vous`, `you`…),
+  ou `joueur(t)` avant que le jeu existe (l'état d'un chapitre) ; jamais
+  `'vous'` en dur. Les chapitres déclarent leurs comptes (`comptes()`) et
+  leurs propriétaires (`proprio: 'vous'`) en français : ils sont renommés à
+  la création, comme les lieux (`traduireComptes`, `traduireNoms`).

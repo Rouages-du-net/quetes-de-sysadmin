@@ -3,7 +3,8 @@
 // à finir : il n'a pas d'événement final. Les clés SSH de ~/.ssh dépendent
 // de la progression (voir console.ts).
 
-import { d, f, type Chapitre } from './monde';
+import { d, f, joueur, type Chapitre } from './monde';
+import type { Traduire } from '../textes';
 import { clePrivee, clePublique, MACHINES, POSTE, type Machine } from './machines';
 
 const MAISON = '/home/vous';
@@ -16,14 +17,14 @@ const hosts = () =>
     ...MACHINES.map((m) => `${m.adresse}\t${m.domaine} ${m.nom}`),
   ].join('\n');
 
-const config = (commentaire: string) =>
+const config = (t: Traduire) =>
   [
-    ...commentaire.split('\n').map((l) => `# ${l}`),
+    ...t('poste-config-commentaire').split('\n').map((l) => `# ${l}`),
     '',
     ...MACHINES.flatMap((m) => [
       `Host ${m.nom}`,
       `    HostName ${m.domaine}`,
-      '    User vous',
+      `    User ${joueur(t)}`,
       ...(m.sansCle ? [] : [`    IdentityFile ~/.ssh/id_${m.nom}`]),
       '',
     ]),
@@ -32,9 +33,9 @@ const config = (commentaire: string) =>
     .trim();
 
 /** Les fichiers d'une clé SSH : privée (lisible par soi seul) et publique. */
-export const fichiersCle = (m: Machine) => ({
+export const fichiersCle = (t: Traduire, m: Machine) => ({
   [`id_${m.nom}`]: f(clePrivee(m), { lignes: true, mode: 'rw-------' }),
-  [`id_${m.nom}.pub`]: f(clePublique(m), { lignes: true }),
+  [`id_${m.nom}.pub`]: f(clePublique(m, joueur(t)), { lignes: true }),
 });
 
 /** Le poste, avec les clés des machines déjà ouvertes. */
@@ -78,7 +79,7 @@ export function poste(cles: Machine[]): Chapitre {
           vous: d({
             'bienvenue.txt': f(t('poste-bienvenue')),
             '.ssh': d(
-              { config: f(config(t('poste-config-commentaire')), { lignes: true }), ...Object.assign({}, ...cles.map(fichiersCle)) },
+              { config: f(config(t), { lignes: true }), ...Object.assign({}, ...cles.map((m) => fichiersCle(t, m))) },
               undefined,
               { mode: 'rwx------' },
             ),

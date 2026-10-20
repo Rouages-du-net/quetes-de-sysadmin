@@ -89,5 +89,5 @@ export const clePrivee = (m: Machine) =>
     '-----END OPENSSH PRIVATE KEY-----',
   ].join('\n');
 
-/** La clé publique correspondante (~/.ssh/id_<machine>.pub). */
-export const clePublique = (m: Machine) => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-publique-' + m.nom, 43)} vous@poste`;
+/** La clé publique correspondante (~/.ssh/id_<machine>.pub), commentée du compte qui l'a créée sur le poste (vous, you…). */
+export const clePublique = (m: Machine, compte = 'vous') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-publique-' + m.nom, 43)} ${compte}@poste`;

@@ -27,7 +27,7 @@ export const SYSTEME: Record<string, Commande> = {
       const iu = args.findIndex((a) => /^-\w*u$/.test(a));
       const comptes = iu >= 0 ? (args[iu + 1] ?? '').split(',') : null;
       const liste: Processus[] = [...(jeu.etat.processus ?? []), ...processusDocker(jeu)]
-        .filter((p: Processus) => (comptes ? comptes.includes(p.utilisateur) : tous || p.utilisateur === jeu.qui || p.utilisateur === 'vous'))
+        .filter((p: Processus) => (comptes ? comptes.includes(p.utilisateur) : tous || p.utilisateur === jeu.qui || p.utilisateur === jeu.joueur))
         .sort((a: Processus, b: Processus) => a.pid - b.pid);
       // -f (ps -ef) : le format complet, avec le parent (PPID).
       if (args.some((a) => /^-\w*f/.test(a))) {

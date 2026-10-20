@@ -3,6 +3,12 @@
 ### code. Each language gives its own: no accents, no spaces, easy to type
 ### and to complete with Tab.
 
+## Accounts: the player's (prompt you@royaume, /home/you, owner of the
+## files) and the Eraser's system user. A Unix account name: lowercase, no
+## accents, no spaces.
+nom-vous = you
+nom-effaceur = eraser
+
 ## Le poste, et l'Île du Phare (L'Effaceur, chapitre 1)
 nom-bienvenue-txt = welcome.txt
 nom-message-txt = message.txt

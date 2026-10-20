@@ -120,7 +120,7 @@ const relancent = (j: Jeu) => politiqueValide(j) && EQUIPE.every((c) => permis(s
 const tropLarge = (j: Jeu) => politiqueValide(j) && EQUIPE.some((c) => permis(sh(j), c, '/usr/bin/bash') || permis(sh(j), c, '/usr/bin/su'));
 const systemctlEntier = (j: Jeu) =>
   politiqueValide(j) && EQUIPE.some((c) => permis(sh(j), c, '/usr/bin/systemctl stop ssh') || permis(sh(j), c, '/usr/bin/systemctl restart ssh'));
-const sudoOk = (j: Jeu) => relancent(j) && !tropLarge(j) && !systemctlEntier(j) && permis(sh(j), 'vous', '/usr/bin/bash');
+const sudoOk = (j: Jeu) => relancent(j) && !tropLarge(j) && !systemctlEntier(j) && permis(sh(j), j.joueur, '/usr/bin/bash');
 
 // Un fichier de /etc/sudoers.d qui parle de la caisse, mais que sudo ne lit pas (un point, ou ~ à la fin).
 const fichierIgnore = (j: Jeu) => {

@@ -428,7 +428,7 @@ function exec(d: EtatDocker, jeu: Shell, args: string[]): string {
       .map((n) => {
         const chemin = `${lieu.replace(/\/$/, '')}/${n}`;
         const hote = noeudDans(jeu, c, chemin);
-        const uid = hote ? (jeu.comptes.utilisateurs[hote.proprio ?? 'vous']?.uid ?? Number(hote.proprio)) : (comptes[parDefaut] ?? 0);
+        const uid = hote ? (jeu.comptes.utilisateurs[hote.proprio ?? jeu.joueur]?.uid ?? Number(hote.proprio)) : (comptes[parDefaut] ?? 0);
         const proprio = Number.isNaN(uid) ? 'root' : nomDans(uid);
         const dossier = hote?.type === 'dossier';
         const mode = hote?.mode ?? (dossier ? 'rwxr-xr-x' : 'rw-r--r--');
