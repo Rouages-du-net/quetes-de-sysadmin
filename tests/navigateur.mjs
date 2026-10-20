@@ -124,6 +124,28 @@ for (const largeur of [1000, 375]) {
   await page.close();
 }
 
+// La page en anglais : le jeu en anglais, le lien vers la page française.
+for (const largeur of [1000, 375]) {
+  const page = await navigateur.newPage({ viewport: { width: largeur, height: 900 } });
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
+  await avecCsp(page);
+  await page.goto(`${BASE}/en/`);
+  const jeu = page.locator('quetes-de-sysadmin');
+  verifier((await page.locator('html').getAttribute('lang')) === 'en', `en ${largeur} px : la page est en anglais`);
+  verifier((await jeu.locator('.sortie').textContent()).includes('Welcome to your workstation'), `en ${largeur} px : le jeu parle anglais`);
+  const saisie = jeu.locator('form input');
+  await saisie.fill('ls -y');
+  await saisie.press('Enter');
+  verifier((await jeu.locator('.sortie').textContent()).includes("Try 'ls --help' for more information."), `en ${largeur} px : les messages des commandes sont ceux de LANG=C`);
+  verifier((await page.locator('.langue a').getAttribute('href')) === '/', `en ${largeur} px : lien vers la page française`);
+  verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `en ${largeur} px : pas de défilement horizontal`);
+  verifier(erreurs.length === 0, `en ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
+  if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/en-${largeur}.png` });
+  await page.close();
+}
+
 // Page introuvable
 {
   const page = await navigateur.newPage();

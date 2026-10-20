@@ -67,7 +67,30 @@ Pièges du format :
 
 Pour l'instant, les **noms des lieux et des objets** (`Phare`, `crabe`) sont
 encore dans le code : leur traduction, avec des noms faciles à taper dans
-chaque langue, est prévue (voir la feuille de route, phase 10).
+chaque langue, est prévue (voir la feuille de route, phase 10). En attendant,
+une traduction garde ces noms tels quels (on les tape) et peut les expliquer
+au passage : « the Seau (bucket) ».
+
+Les commandes des exemples du manuel sont dans le code (`pages.ts`). Quand
+l'une d'elles contient des mots (`grep "mot de passe" journal.txt`), une
+langue peut la remplacer par un attribut `.commande-N` de la page :
+
+```ftl
+man-grep = prints the lines that contain the pattern…
+    .exemple-3 = search for several words: quotes keep the spaces
+    .commande-3 = grep "my password" journal.txt
+```
+
+Les messages que le jeu **vérifie** (titres et mots-clés du post-mortem,
+noms de jeux de la base…) se traduisent par ce que le joueur ou la joueuse
+écrirait dans sa langue : lire le commentaire au-dessus du message.
+
+## Les langues disponibles
+
+| Code | Langue | État |
+|---|---|---|
+| `fr` | français | langue de référence |
+| `en` | anglais | complet (textes, manuel, messages des outils comme avec `LANG=C`) ; noms des lieux et fichiers encore en français |
 
 ## Ajouter une langue
 

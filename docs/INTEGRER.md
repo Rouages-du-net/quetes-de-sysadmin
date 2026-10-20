@@ -28,7 +28,7 @@ configure le même en-tête.
 | `histoire` | `effaceur`, `datacenter`, `paquet`, `temps`, `archives` | histoire ouverte au départ, directement sur sa machine, même sans sa clé SSH (sans l'attribut, on part du poste, ou de l'histoire en cours) |
 | `cle` | texte | clé de sauvegarde dans `localStorage` (par défaut `quetes-de-sysadmin`) ; à changer pour séparer plusieurs jeux sur un même site |
 | `theme` | `clair`, `sombre` | force un thème (par défaut, celui du système) |
-| `langue` | `fr` | langue de l'interface (d'autres langues viendront, voir la feuille de route) |
+| `langue` | `fr` | langue du jeu : `fr` ou `en` (d'autres viendront, voir la feuille de route) |
 
 Exemple : un cours sur le réseau qui ouvre directement « Le Paquet perdu » :
 

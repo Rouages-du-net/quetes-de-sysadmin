@@ -569,7 +569,7 @@ table ip nat {
     it('chapitre 8 — solution : le pare-feu, clients.conf, le module ldap, le fichier users', () => {
       const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe', 'annuaire']);
       let tout = jouer(['cat borne-bureaux.txt', 'radtest sami choisi-par-sami localhost 0 testing123']);
-      expect(tout).toContain('Secret partagé         : Rk7-borne-2028');
+      if (fr) expect(tout).toContain('Secret partagé         : Rk7-borne-2028');
       expect(tout).toContain('(0) -: Expected Access-Accept got Access-Reject');
       editer('sudo nano /etc/nftables.conf', ENTREE_RADIUS);
       editer(`sudo nano ${RAD}/clients.conf`, CLIENT_BORNE);
@@ -599,7 +599,7 @@ table ip nat {
     it('chapitre 8 — fausses pistes : la porte fermée, pas relu, sans ldap, anonyme, memberOf, l’ordre, freeradius -X', () => {
       const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe', 'annuaire']);
       let tout = jouer(['ls /etc/freeradius/3.0']);
-      expect(tout).toContain('Permission non accordée');
+      if (fr) expect(tout).toContain('Permission non accordée');
       tout = editer(`sudo nano ${RAD}/clients.conf`, (t) => t + '\n\nclient bornes {\n\tipaddr = 10.10.30.20\n\tsecret = mauvais\n}\n');
       contient(tout, 'chaîne input');
       tout = jouer(['sudo nft add rule inet filter input iifname eth1.30 udp dport 1812 accept']);

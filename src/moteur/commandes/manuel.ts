@@ -17,7 +17,12 @@ const section = (nom: string) => COMMANDES[nom]?.section ?? 1;
 function textes(nom: string, t: Traduire) {
   const synopsis = t.existe(`${page(nom)}.synopsis`) ? t(`${page(nom)}.synopsis`) : '';
   const options = (nom: string, c: Commande): [string, string][] => (c.options ?? []).map((o) => [o, t(`${page(nom)}.option-${o}`)]);
-  const exemples = (nom: string, c: Commande): [string, string][] => (c.exemples ?? []).map((e, i) => [e, t(`${page(nom)}.exemple-${i + 1}`)]);
+  // Une langue peut adapter la commande d'un exemple qui contient des mots (.commande-N) : grep "my password".
+  const exemples = (nom: string, c: Commande): [string, string][] =>
+    (c.exemples ?? []).map((e, i) => {
+      const propre = `${page(nom)}.commande-${i + 1}`;
+      return [t.existe(propre) ? t(propre) : e, t(`${page(nom)}.exemple-${i + 1}`)];
+    });
   return { synopsis, description: t(page(nom)), options, exemples };
 }
 
