@@ -42,7 +42,7 @@ for (const largeur of [1000, 375]) {
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   const jeu = page.locator('quetes-de-sysadmin');
-  const saisie = jeu.locator('input');
+  const saisie = jeu.locator('form input');
   const tape = async (c) => {
     await saisie.fill(c);
     await saisie.press('Enter');
@@ -102,6 +102,14 @@ for (const largeur of [1000, 375]) {
   verifier(telechargement.suggestedFilename() === 'carnet-du-sysadmin.md', `${largeur} px : le carnet se télécharge en Markdown`);
   await page.reload();
   verifier((await jeu.locator('details.carnet dt').allTextContents()).includes('nano'), `${largeur} px : le carnet est gardé dans le navigateur`);
+  // Le mode examen : la case recommence le chapitre en cours, le chrono démarre.
+  await tape('ssh royaume');
+  await jeu.locator('.examen input').check();
+  verifier((await jeu.locator('.sortie').textContent()).includes('Mode examen'), `${largeur} px : le mode examen s’annonce`);
+  await page.waitForTimeout(1100);
+  verifier(/⏱ 00:0\d/.test(await jeu.locator('.chrono').textContent()), `${largeur} px : le chrono tourne`);
+  await jeu.locator('.examen input').uncheck();
+  verifier((await jeu.locator('.chrono').textContent()) === '', `${largeur} px : sans examen, plus de chrono`);
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${largeur} px : pas de défilement horizontal`);
   verifier(erreurs.length === 0, `${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
   verifier(externes.length === 0, `${largeur} px : aucune ressource tierce ${externes.join(' ')}`);

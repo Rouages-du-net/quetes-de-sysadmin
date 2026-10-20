@@ -202,8 +202,19 @@ export class Console {
     return this.ouvrirChapitre(chapitre);
   }
 
+  // Mode examen : pas d'indice dans les chapitres (les sessions ouvertes le suivent aussi).
+  private _examen = false;
+  get examen(): boolean {
+    return this._examen;
+  }
+  set examen(oui: boolean) {
+    this._examen = oui;
+    for (const s of this.sessions.values()) s.examen = oui;
+  }
+
   private nouvelleSession(machine: Machine, chapitre: Chapitre): Shell {
     const s = new Shell(chapitre, this.t.langue, machine.nom);
+    s.examen = this.examen;
     // Le chapitre peut regarder le poste (sa config ssh, ce qu'on y a copié).
     s.etat.poste = () => this.poste;
     this.sessions.set(machine.nom, s);

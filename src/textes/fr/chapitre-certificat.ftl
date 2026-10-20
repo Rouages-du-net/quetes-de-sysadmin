@@ -133,6 +133,14 @@ certificat-evenement-fin =
     - Toujours vérifier comme un visiteur : curl https://…, ou openssl
       s_client.
 
+    UNE AUTRE VOIE
+    D'autres clients ACME : acme.sh (un script shell, sans dépendance) ou
+    lego ; ou un serveur web qui s'en charge seul (Caddy obtient et
+    renouvelle ses certificats sans configuration). Et le défi DNS-01 (un
+    enregistrement TXT) au lieu de HTTP-01 : le seul qui donne un
+    certificat joker (*.exemple), mais il faut pouvoir écrire dans sa zone
+    DNS.
+
     LA DOCUMENTATION
     - certbot : https://eff-certbot.readthedocs.io/en/stable/using.html
     - Les défis de Let's Encrypt : https://letsencrypt.org/docs/challenge-types/

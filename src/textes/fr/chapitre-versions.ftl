@@ -133,6 +133,13 @@ versions-evenement-fin =
     - Chiffrer les sauvegardes qui dorment chez d'autres, et garder le mot
       de passe (fichier en 600, et une copie hors de la machine).
 
+    UNE AUTRE VOIE
+    rsnapshot (« Les instantanés », La Ludothèque) : chaque instantané est
+    un simple dossier qu'on lit avec ls et qu'on recopie avec cp, sans
+    outil pour restaurer ; mais pas de chiffrement, et une déduplication
+    par fichier entier seulement. restic : chiffré, dédupliqué par
+    morceaux, et un dépôt qui peut vivre ailleurs (sftp, stockage objet).
+
     LA DOCUMENTATION
     - Travailler avec un dépôt : https://restic.readthedocs.io/en/stable/045_working_with_repos.html
     - Restaurer : https://restic.readthedocs.io/en/stable/050_restore.html

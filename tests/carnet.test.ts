@@ -83,3 +83,29 @@ describe('Les fiches pour les enseignant·es', () => {
     expect(toutes.every((f) => f.duree >= 15 && f.duree % 5 === 0)).toBe(true);
   });
 });
+
+describe('Le mode examen', () => {
+  it("sans indice, mais l'étape finale et son débrief s'affichent", () => {
+    const c = new Console({ langue: 'fr', termines: ['eveil', 'bourg', 'racine', 'sauvegarde'] });
+    c.examen = true;
+    const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+    // La Porte, avec la configuration de sshd : la faute de frappe ne donne plus d'indice.
+    let tout = jouer(['ssh lettres', 'yes']);
+    c.executer('sudo nano /etc/ssh/sshd_config');
+    c.executer('fourmis-2026');
+    c.enregistrer(c.edition!.texte.replace('PermitRootLogin yes', 'PermitRootLogin non'));
+    tout += c.quitterEdition();
+    tout += jouer(['sudo sshd -t']);
+    expect(tout).toContain('unsupported option "non"');
+    expect(tout).not.toContain('Il y a une erreur dans la configuration de SSH');
+    c.executer('sudo nano /etc/ssh/sshd_config.d/00-durcissement.conf');
+    c.enregistrer('PermitRootLogin no\nPasswordAuthentication no\n');
+    c.quitterEdition();
+    c.executer('sudo nano /etc/ssh/sshd_config');
+    c.enregistrer(c.edition!.texte.replace('PermitRootLogin non', 'PermitRootLogin no'));
+    c.quitterEdition();
+    tout = jouer(['sudo systemctl reload ssh', 'exit', 'ssh lettres']);
+    expect(tout).toContain('https://man.openbsd.org/sshd_config');
+    expect(c.termines).toContain('fermer-la-porte');
+  });
+});

@@ -110,6 +110,14 @@ vpn-evenement-fin =
     - systemctl enable wg-quick@wg0, pour que le tunnel revienne au
       démarrage.
 
+    UNE AUTRE VOIE
+    OpenVPN : plus ancien et très répandu, fondé sur TLS et des
+    certificats, capable de passer par TCP 443 ; plus lourd à configurer.
+    Un tunnel SSH (ssh -L, La Maison des associations) suffit pour un
+    service ponctuel, pas pour tout un réseau. Tailscale, ou Headscale
+    qu'on héberge soi-même, construisent un maillage WireGuard et
+    distribuent les clés.
+
     LA DOCUMENTATION
     - Démarrage rapide : https://www.wireguard.com/quickstart/
     - wg : https://man7.org/linux/man-pages/man8/wg.8.html

@@ -174,6 +174,12 @@ colocation-evenement-fin =
     - Une appli derrière un proxy écoute sur 127.0.0.1, jamais sur toutes
       les adresses.
 
+    UNE AUTRE VOIE
+    Apache fait la même chose (VirtualHost, a2ensite) ; Caddy aussi, avec
+    HTTPS automatique. Devant des conteneurs, Traefik découvre les applis
+    tout seul. nginx reste le plus répandu devant une appli, et sa
+    configuration se relit facilement.
+
     LA DOCUMENTATION
     - Comment nginx choisit un site : https://nginx.org/en/docs/http/request_processing.html
     - server_name : https://nginx.org/en/docs/http/server_names.html

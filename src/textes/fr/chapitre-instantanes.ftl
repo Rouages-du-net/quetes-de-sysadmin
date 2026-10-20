@@ -107,6 +107,14 @@ instantanes-evenement-fin =
     - Lire le courrier de cron : c'est là qu'arrivent les erreurs.
     - S'exercer à restaurer un fichier, avant d'en avoir besoin.
 
+    UNE AUTRE VOIE
+    restic (« Les versions », Les Archives) ou borg : déduplication (un
+    fichier modifié ne recopie que ses morceaux), chiffrement, dépôt
+    distant (sftp, stockage objet) ; mais on restaure avec l'outil (restic
+    restore), pas avec cp. rsnapshot : de simples dossiers qu'on lit avec
+    ls, mais ni chiffrement ni déduplication fine, et il faut un système
+    de fichiers qui gère les liens physiques.
+
     LA DOCUMENTATION
     - rsnapshot : https://rsnapshot.org/rsnapshot/docs/docs.html
     - rsnapshot(1) : https://manpages.debian.org/bookworm/rsnapshot/rsnapshot.1.en.html

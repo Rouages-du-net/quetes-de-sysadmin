@@ -115,6 +115,13 @@ composition-evenement-fin =
     - restart: unless-stopped sur chaque service.
     - L'attribut version: est obsolète : on le retire.
 
+    UNE AUTRE VOIE
+    Podman, sans démon, sait lancer les mêmes fichiers compose ; ses
+    quadlets décrivent les conteneurs comme des unités systemd.
+    Kubernetes, pour beaucoup de machines, au prix de bien plus de
+    complexité. Pour une appli et sa base sur un serveur, docker compose
+    reste le plus simple.
+
     LA DOCUMENTATION
     - Le réseau de Compose : https://docs.docker.com/compose/how-tos/networking/
     - Les variables de Compose : https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/

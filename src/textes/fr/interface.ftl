@@ -88,3 +88,13 @@ rouages-lien-glossaire-code-http = Glossaire : code HTTP
 rouages-lien-glossaire-requete = Glossaire : requête
 rouages-lien-glossaire-datacenter = Glossaire : datacenter
 rouages-lien-glossaire-octet = Glossaire : octet
+
+## Le mode examen
+
+examen-case = Mode examen : sans indice, avec un chrono (le chapitre recommence)
+# { $temps } : le temps écoulé, en minutes:secondes
+examen-chrono = ⏱ { $temps }
+examen-debut = Mode examen : aucun indice ne s'affichera, le chrono tourne. Ta mission est dans le message d'accueil (relis-le avec cat). Le débrief viendra à la fin. Pour repartir de zéro, machine et chrono : « Recommencer ce chapitre », sous le terminal.
+# { $temps } : le temps de cette partie ; { $record } : le meilleur temps de ce navigateur
+examen-fini = Examen réussi en { $temps }. Ton meilleur temps sur ce chapitre : { $record }.
+examen-fini-record = Examen réussi en { $temps } : c'est ton meilleur temps sur ce chapitre.

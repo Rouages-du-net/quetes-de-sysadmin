@@ -109,7 +109,7 @@
 .qds .sortie .cmd { color: color-mix(in oklab, var(--_terminal-texte) 75%, var(--_terminal-fond)); }
 .qds form { display: flex; flex-wrap: wrap; gap: 0 0.5ch; margin: 0; }
 .qds .invite { color: var(--_terminal-invite); overflow-wrap: anywhere; }
-.qds input {
+.qds form input {
   flex: 1;
   min-width: 12ch;
   background: transparent;
@@ -131,6 +131,12 @@
   color: var(--_fond);
   cursor: pointer;
 }
+/* Le mode examen : une case au-dessus du terminal, et le chrono. */
+.qds .examen { margin: 0.75rem 0 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; }
+.qds .examen label { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
+.qds .examen input { accent-color: var(--_accent); width: 1.1rem; height: 1.1rem; margin: 0.2rem 0 0; flex: none; }
+.qds .chrono { font-family: var(--_police-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--_accent); }
+.qds .sortie pre.examen-resultat { font-weight: 600; color: var(--_terminal-invite); }
 /* Après un chapitre : les pages de Les rouages du net qui expliquent son concept. */
 .qds .pour-comprendre { margin-top: 1rem; padding: 0.5rem 0.75rem; border-left: 3px solid var(--_accent); background: var(--_carte); }
 .qds .pour-comprendre p { margin: 0 0 0.25rem; }

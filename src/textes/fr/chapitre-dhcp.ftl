@@ -63,5 +63,11 @@ dhcp-evenement-fin =
     - dnsmasq --test avant de redémarrer ; le journal et le fichier des baux
       pour vérifier.
 
+    UNE AUTRE VOIE
+    Kea, le serveur DHCP de l'ISC, qui remplace isc-dhcp-server (en fin de
+    vie depuis fin 2022) : bases de données, haute disponibilité, API,
+    mais plus lourd à installer. dnsmasq fait DHCP et cache DNS en un seul
+    petit programme : idéal pour un petit réseau.
+
     LA DOCUMENTATION
     - dnsmasq : https://dnsmasq.org/docs/dnsmasq-man.html

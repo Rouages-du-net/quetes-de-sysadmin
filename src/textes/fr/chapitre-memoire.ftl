@@ -116,6 +116,13 @@ memoire-evenement-fin =
     - Un zombie ne se tue pas : on s'occupe de son parent (et on signale le
       bogue).
 
+    UNE AUTRE VOIE
+    Réparer la fuite reste la vraie solution : la limite ne fait que
+    contenir. Autres réglages de systemd : MemoryHigh= freine le service
+    (le noyau lui reprend de la mémoire) avant d'en arriver à le tuer ;
+    OOMScoreAdjust= dit au noyau qui sacrifier en premier ; systemd-oomd
+    arrête un service avant que toute la machine n'étouffe.
+
     LA DOCUMENTATION
     - MemoryMax= : https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html
     - Restart= : https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html
