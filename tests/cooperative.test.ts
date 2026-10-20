@@ -144,7 +144,7 @@ for (const langue of LANGUES)
       tout = editer('sudo nano /etc/sudoers.d/caisse', () => '%caisse ALL=(root) systemctl restart caisse\n');
       contient(tout, 'sudo est cassé');
       tout = jouer(['sudo ls']);
-      expect(tout).toContain("sudo: aucune source sudoers valide n'a été trouvée");
+      if (fr) expect(tout).toContain("sudo: aucune source sudoers valide n'a été trouvée");
       expect(c.termines).not.toContain('droits');
     });
 

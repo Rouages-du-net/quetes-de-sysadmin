@@ -301,8 +301,9 @@ qui travaille sur les machines plutôt que sur les commutateurs).
 Une fois le jeu terminé en français (l'architecture le prépare dès la
 phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
-- [ ] Anglais, allemand, espagnol, mandarin, coréen, puis d'autres langues
-- [ ] Sorties des commandes simulées selon `LANG`, comme les vrais outils
+- [x] Anglais (`src/textes/en/`, page `/en/`, chaque quête rejouée en anglais)
+- [ ] Allemand, espagnol, mandarin, coréen, puis d'autres langues
+- [x] Sorties des commandes simulées selon `LANG`, comme les vrais outils (en anglais : les messages d'origine, comme avec `LANG=C`)
 - [ ] Noms de lieux et d'objets traduits et faciles à taper (encore dans le
       code) ; complétion testée ; nom de l'utilisateur·rice (`vous`) et de
       la machine dans l'invite

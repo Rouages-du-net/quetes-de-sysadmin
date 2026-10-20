@@ -255,7 +255,7 @@ export const certificat: Chapitre = {
       { pid: 801, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
       { pid: 802, utilisateur: 'www-data', cpu: 0.2, mem: 0.6, commande: 'nginx: worker process' },
     ],
-    apt: { listes: true, installes: VERSIONS },
+    apt: { listes: true, installes: { ...VERSIONS } },
     nginx: { charge: null, noms: ['datacenter', 'datacenter.example', ...NOMS, '192.0.2.11'] },
   }),
   // nginx tourne depuis le démarrage : il a chargé le certificat d'octobre.

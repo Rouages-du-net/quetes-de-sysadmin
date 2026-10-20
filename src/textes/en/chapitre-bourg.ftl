@@ -1,7 +1,7 @@
 ### The Eraser, chapter 2 — The Village. Search, create, copy, delete:
 ### grep, touch, cp, mkdir, rm. The Town Hall notices are read line by
 ### line by grep: keep one sentence per line. The creature keeps its name,
-### "the Effaceur", because the player types "grep Effaceur".
+### "the Eraser" (the hints suggest "grep Eraser").
 
 chapitre-bourg = The Village
     .resume = Search, create, copy, delete: grep, touch, cp, mkdir, rm.
@@ -9,7 +9,7 @@ bourg-crieur =
     Captain Ana's boat drops you off on the quay of a village. A town
     crier is waving his bell.
 
-    "Hear ye! The Effaceur has come through the Village! The bakery has no
+    "Hear ye! The Eraser has come through the Village! The bakery has no
     more sourdough starter, the clock has stopped, the school has no classroom,
     and little Nour has disappeared! Who will help us?"
 
@@ -30,20 +30,20 @@ bourg-parchemin-des-sorts =
     The people of the Village need you: the Boulangerie, the Atelier, the Ecole,
     the Mairie… Start wherever you like.
 bourg-marchande =
-    "Nothing left to sell, the Effaceur took everything! Well, almost: look
+    "Nothing left to sell, the Eraser took everything! Well, almost: look
     at my stalls."
 
     She lowers her voice: "A word of advice. Before deleting anything with
     rm, think hard. There is no recycle bin on Linux. That's how the
-    Effaceur works: rm, rm, rm, without ever looking back."
+    Eraser works: rm, rm, rm, without ever looking back."
 bourg-pomme = A slightly wrinkled apple.
 bourg-pomme-2 = Another apple, just as wrinkled.
-bourg-fromage = A wheel of very smelly cheese. "The only product the Effaceur wouldn't touch," says the market trader.
+bourg-fromage = A wheel of very smelly cheese. "The only product the Eraser wouldn't touch," says the market trader.
 bourg-fromage-protege-rm = "Don't touch my last cheese!" protests the market trader.
 bourg-boulanger =
     The baker stares at his empty kneading trough.
 
-    "The Effaceur took everything. I only have one sourdough starter left, and
+    "The Eraser took everything. I only have one sourdough starter left, and
     I need three for the three morning batches. Ah, if only I had
     three!"
 
@@ -53,7 +53,7 @@ bourg-levain-protege-rm = "Not my last starter!" shouts the baker.
 bourg-artisane =
     The craftswoman rummages through her empty drawers.
 
-    "Ah, help! The Effaceur erased all my gears, and without them,
+    "Ah, help! The Eraser erased all my gears, and without them,
     the Village clock no longer turns. Do you know how to make an object? It only
     takes one command:
 
@@ -64,21 +64,21 @@ bourg-artisane =
 bourg-institutrice =
     The teacher is holding class… in the playground, for lack of a room.
 
-    "The Effaceur erased our Classe! A classroom is a place.
+    "The Eraser erased our Classe! A classroom is a place.
     Do you know how to build one?"
 
     (mkdir Name creates a place.)
 bourg-greffiere =
     The clerk is buried under posters.
 
-    "Every resident has put up a notice since the Effaceur came through. One
+    "Every resident has put up a notice since the Eraser came through. One
     of them says where it went, but which one? I don't have time to
     read them all. Neither do you.
 
     Use grep: it searches for a word in files and prints the lines
     that contain it. The star * means "all the files here":
 
-      grep Effaceur *
+      grep Eraser *
 bourg-avis-bal =
     NOTICE: Saturday's dance is going ahead.
     Bring paper lanterns.
@@ -87,7 +87,7 @@ bourg-avis-chat =
     Reward: one cheese.
 bourg-avis-egouts =
     NOTICE FROM THE SEWER WORKERS
-    We saw the Effaceur go down into the Egout, at the far end of the Cour off the Ruelle.
+    We saw the Eraser go down into the Egout, at the far end of the Cour off the Ruelle.
     Little Nour followed it. The rats let nobody through.
     The key to the Archives is under the Mairie's doormat (a hidden object, of course).
 bourg-avis-marche =
@@ -102,10 +102,10 @@ bourg-archiviste =
     An archivist is working by candlelight.
 
     "You found the key! So you know how to use grep. I've been studying
-    the Effaceur for years. It's all in the chronicle, but it's
+    the Eraser for years. It's all in the chronicle, but it's
     long. Look for the lines that talk about it:
 
-      grep Effaceur chronique.txt
+      grep Eraser chronique.txt
 
     And if you're not sure whether it has a capital letter, add -i:
 
@@ -115,14 +115,14 @@ bourg-chronique =
 
     Year 1: the Village is founded by the sea.
     Year 12: the quay is built, with stone from the island.
-    Year 40: the Effaceur is created at the Root to empty the Recycle Bin.
+    Year 40: the Eraser is created at the Root to empty the Recycle Bin.
     Year 41: a great batch of bread for the sourdough festival.
     Year 77: the clockmaker's house is extended.
-    Year 102: the Effaceur now obeys only one order: erase everything.
+    Year 102: the Eraser now obeys only one order: erase everything.
     Year 103: it is said that only the person who started it can stop it.
     Year 104: the apple fair is cancelled (it's raining).
     Year 130: the island's lighthouse is lit to guide the boats.
-    Year 131: the Effaceur lives at the Root, at the very bottom, beneath the Village sewers.
+    Year 131: the Eraser lives at the Root, at the very bottom, beneath the Village sewers.
 bourg-archives-bloque = The door of the Archives is locked. The posters at the Mairie may tell you more.
 bourg-barricade = A barricade of planks, barrels and broken chairs, put up in a hurry. Far too heavy to be moved.
 bourg-barricade-protege-mv = You pull with all your might… nothing. The barricade is too heavy for mv. But you know a more radical spell.
@@ -140,7 +140,7 @@ bourg-rats =
 bourg-nour =
     Nour is sitting at the edge of a big Toboggan that plunges into the dark.
 
-    "Thank you for coming! I followed the Effaceur all the way here. It slid down
+    "Thank you for coming! I followed the Eraser all the way here. It slid down
     this Toboggan, towards the Root, muttering: "erase, erase, the order
     of the root…" Then the rats blocked my way."
 bourg-galerie-bloque = "Squeak!" The rats block the Galerie.
@@ -155,7 +155,7 @@ bourg-evenement-barricade =
     Poof! The barricade disappears. The Cour is accessible.
     (No recycle bin: it will never come back.)
 bourg-evenement-rats = The rats pounce on the cheese and carry it off into a hole. The Galerie is clear.
-bourg-evenement-nour-sans-classe = "I'd like to go back," says Nour, "but the Effaceur erased my Classe. Can you rebuild it, at the Ecole?" (mkdir)
+bourg-evenement-nour-sans-classe = "I'd like to go back," says Nour, "but the Eraser erased my Classe. Can you rebuild it, at the Ecole?" (mkdir)
 bourg-evenement-nour =
     Nour runs to join her brand-new Classe.
 
@@ -164,5 +164,5 @@ bourg-evenement-nour =
     You now know how to search (grep), create (touch, mkdir), copy (cp) and
     delete (rm) — carefully, since there is no recycle bin.
 
-    The Effaceur is hiding at the Root, at the bottom of the Toboggan: chapter 3
+    The Eraser is hiding at the Root, at the bottom of the Toboggan: chapter 3
     awaits you.
