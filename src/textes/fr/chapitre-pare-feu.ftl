@@ -73,6 +73,14 @@ pare-feu-evenement-fin =
     - Le pare-feu n'excuse pas une mauvaise configuration : une base de
       données locale doit aussi n'écouter que sur 127.0.0.1 (bind-address).
 
+    UNE AUTRE VOIE
+    nftables directement, comme dans La Ruche : plus de lignes à écrire,
+    mais tout le pare-feu sous les yeux, dans un seul fichier
+    (/etc/nftables.conf). ufw écrit ces règles pour toi (sudo nft list
+    ruleset les montre). firewalld (Fedora, RHEL) raisonne par zones. ufw
+    pour un serveur simple ; nftables pour un routeur, du NAT ou des
+    règles fines.
+
     LA DOCUMENTATION
     - ufw : https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html
     - ss : https://man7.org/linux/man-pages/man8/ss.8.html

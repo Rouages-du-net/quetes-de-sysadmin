@@ -83,6 +83,13 @@ vlan-evenement-fin =
     - Le VLAN natif d'un trunk : vide, ou au moins pas celui des
       équipements sensibles.
 
+    UNE AUTRE VOIE
+    systemd-networkd (fichiers .netdev et .network) ou NetworkManager
+    (nmcli) décrivent les mêmes VLAN autrement. Debian garde ifupdown sur
+    les serveurs ; Ubuntu passe par netplan, qui écrit la configuration de
+    systemd-networkd. Le principe ne change pas : une interface par VLAN,
+    sur la carte reliée au trunk.
+
     LA DOCUMENTATION
     - interfaces (Debian) : https://manpages.debian.org/trixie/ifupdown/interfaces.5.en.html
     - VLAN dans interfaces : https://manpages.debian.org/trixie/vlan/vlan-interfaces.5.en.html

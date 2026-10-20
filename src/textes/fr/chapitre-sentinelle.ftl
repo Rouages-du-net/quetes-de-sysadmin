@@ -80,6 +80,14 @@ sentinelle-evenement-fin =
     - fail2ban ne remplace pas les clés SSH : il réduit le bruit et la
       charge, la vraie protection reste PasswordAuthentication no.
 
+    UNE AUTRE VOIE
+    ufw limit 22/tcp refuse une adresse qui ouvre au moins 6 connexions en
+    30 secondes, sans lire aucun journal : simple, mais aveugle (il ne
+    voit pas les échecs de connexion, et freine aussi un·e collègue
+    pressé·e). fail2ban lit les échecs eux-mêmes. Mieux encore : les clés
+    seulement (PasswordAuthentication no), qui rendent la force brute
+    inutile.
+
     LA DOCUMENTATION
     - jail.conf : https://manpages.debian.org/bookworm/fail2ban/jail.conf.5.en.html
     - fail2ban-client : https://manpages.debian.org/bookworm/fail2ban/fail2ban-client.1.en.html

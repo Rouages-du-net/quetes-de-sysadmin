@@ -81,6 +81,13 @@ annuaire-evenement-fin =
     - Un uidNumber unique par compte ; et une sauvegarde régulière
       (sudo slapcat > sauvegarde.ldif).
 
+    UNE AUTRE VOIE
+    FreeIPA (LDAP, Kerberos, certificats et règles sudo au même endroit),
+    ou Samba en contrôleur de domaine Active Directory quand il y a des
+    postes Windows. Pour la connexion unique des applis web (OIDC, SAML),
+    Keycloak se branche sur l'annuaire. OpenLDAP seul : léger et standard,
+    mais on écrit tout soi-même.
+
     LA DOCUMENTATION
     - OpenLDAP (outils, LDIF) : https://www.openldap.org/doc/admin26/dbtools.html
     - ldapmodify : https://manpages.debian.org/trixie/ldap-utils/ldapmodify.1.en.html

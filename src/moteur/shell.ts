@@ -77,6 +77,8 @@ export class Shell implements Jeu {
   drapeaux = new Set<string>();
   etat: Record<string, any>;
   termine = false;
+  // Mode examen : les étapes sont vérifiées, mais seul le message final (le débrief) s'affiche.
+  examen = false;
   qui = 'vous';
   derniere: Jeu['derniere'] = { ligne: '', commandes: [], sortie: '', erreurs: [], redirection: null };
   // Le compte sous lequel sudo lance la commande en cours (sudo -u).
@@ -812,7 +814,7 @@ export class Shell implements Jeu {
       if (this.drapeaux.has(e.id) || !e.condition(this)) continue;
       this.drapeaux.add(e.id);
       e.action?.(this);
-      messages.push(this.prose(typeof e.message === 'function' ? e.message(this) : e.message));
+      if (!this.examen || e.id === this.chapitre.final) messages.push(this.prose(typeof e.message === 'function' ? e.message(this) : e.message));
       if (e.id === this.chapitre.final) this.termine = true;
     }
     return messages;

@@ -64,13 +64,18 @@ pas au redémarrage, le mot de passe stocké en clair.
 
 ### Le débrief
 
-Le message final a toujours trois parties :
+Le message final a toujours trois parties, et une quatrième quand un autre
+outil répond au même besoin :
 
 ```
 CE QUI S'EST PASSÉ
 LA BONNE PRATIQUE
+UNE AUTRE VOIE        (facultatif : l'autre outil, et le compromis)
 LA DOCUMENTATION
 ```
+
+En mode examen, c'est le seul message du chapitre qui s'affiche : il doit se
+comprendre sans les indices qui l'ont précédé.
 
 La documentation : des liens vers la documentation **officielle** de l'outil
 (pages de manuel, site du projet, RFC).

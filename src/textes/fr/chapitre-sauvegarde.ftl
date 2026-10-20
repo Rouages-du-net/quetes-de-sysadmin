@@ -116,6 +116,13 @@ sauvegarde-evenement-fin =
       et plusieurs versions, car un miroir (--delete) recopie aussi les
       erreurs.
 
+    UNE AUTRE VOIE
+    Un timer systemd au lieu de cron : le résultat dans journalctl, une
+    exécution manquée rattrapée au démarrage (Persistent=true). Et rsync
+    tient un miroir : un fichier effacé ou abîmé le sera aussi à la passe
+    suivante. Pour garder plusieurs jours, rsnapshot ou restic (Les
+    Archives, La Ludothèque).
+
     LA DOCUMENTATION
     - rsync : https://download.samba.org/pub/rsync/rsync.1
     - crontab : https://manpages.debian.org/bookworm/cron/crontab.5.en.html

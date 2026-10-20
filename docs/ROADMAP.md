@@ -319,9 +319,14 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 - [x] **Le carnet du sysadmin** : chaque commande découverte s'ajoute à un
   aide-mémoire personnel (sa ligne du manuel, la première ligne tapée, le
   chapitre), gardé dans le navigateur, exportable en Markdown.
-- **Mode « examen »** : une machine en panne, sans indices, avec un chrono.
-- **Quêtes à plusieurs bonnes réponses** : comparer deux solutions (`ufw` ou
-  `nftables`, `rsnapshot` ou `restic`) et leurs compromis.
+- [x] **Mode « examen »** : une case au-dessus du terminal ; le chapitre
+  recommence sur une machine neuve, sans aucun indice (seul le débrief
+  s'affiche), avec un chrono et le meilleur temps gardé dans le navigateur.
+  Reste possible : des pannes tirées au hasard, propres à l'examen.
+- [x] **Quêtes à plusieurs bonnes réponses** : « UNE AUTRE VOIE » dans le
+  débrief de quinze chapitres (`ufw` ou `nftables`, `rsnapshot` ou `restic`,
+  fail2ban ou `ufw limit`, certbot ou acme.sh et DNS-01…). Reste possible :
+  des chapitres qu'on fait des deux façons.
 - [x] **Défis de la communauté** : format de quête documenté pour que d'autres
   en écrivent (`docs/CONTRIBUER.md`).
 - [x] **Lien avec rouages.net** : après un chapitre, les étapes des modules

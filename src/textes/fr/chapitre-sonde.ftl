@@ -133,6 +133,13 @@ sonde-evenement-fin =
       surprise. Les outils complets (Icinga, Zabbix, Prometheus…)
       reprennent les mêmes idées.
 
+    UNE AUTRE VOIE
+    Une supervision centrale : Icinga ou Nagios (qui utilisent ces mêmes
+    plugins check_*), Prometheus et ses alertes, Uptime Kuma pour
+    surveiller des sites, Monit qui relance aussi les services. Un script
+    et un timer suffisent pour une petite machine ; au-delà, un outil
+    central voit toutes les machines et garde l'historique.
+
     LA DOCUMENTATION
     - les plugins et leurs codes de retour : https://www.monitoring-plugins.org/doc/guidelines.html
     - check_disk : https://www.monitoring-plugins.org/doc/man/check_disk.html

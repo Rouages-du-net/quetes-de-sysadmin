@@ -110,6 +110,13 @@ bleu-vert-evenement-fin =
       ses preuves : le retour arrière, c'est rebasculer le proxy.
     - Bleu et vert alternent : la prochaine version ira sur bleu.
 
+    UNE AUTRE VOIE
+    Le canari (chapitre suivant) n'envoie qu'une petite part des visites à
+    la nouvelle version, pour la juger sur du vrai trafic ; le déploiement
+    progressif (rolling) remplace les serveurs un à un. Bleu-vert :
+    bascule instantanée et retour arrière immédiat, au prix de deux fois
+    les ressources pendant la bascule.
+
     LA DOCUMENTATION
     - Le déploiement bleu/vert : https://martinfowler.com/bliki/BlueGreenDeployment.html
     - proxy_pass : https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass

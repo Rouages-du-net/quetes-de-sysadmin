@@ -60,6 +60,10 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
           el('span', { class: 'etat' })))))),
   );
 
+  // Le mode examen : pas d'indice, un chrono ; la case recommence le chapitre en cours.
+  const caseExamen = el('input', { type: 'checkbox' }) as HTMLInputElement;
+  const chrono = el('span', { class: 'chrono', role: 'timer' });
+  const barreExamen = el('p', { class: 'examen' }, el('label', {}, caseExamen, el('span', {}, t('examen-case'))), chrono);
   const sortie = el('div', { class: 'sortie', role: 'log', 'aria-live': 'polite' });
   const id = `qds-saisie-${Math.random().toString(36).slice(2, 8)}`;
   const invite = el('label', { class: 'invite', for: id });
@@ -97,7 +101,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit-lien-projet')), ' · ',
     el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-lien-original')));
 
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, terminal, fin, pourComprendre, panneauCarnet, astuces, credit);
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, terminal, fin, pourComprendre, panneauCarnet, astuces, credit);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -107,6 +111,9 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     connus?: string;
     ssh?: { fichiers: Record<string, string>; phrases?: Record<string, string> };
     carnet?: Carnet;
+    examen?: boolean;
+    // Meilleurs temps en mode examen, par chapitre (ms).
+    records?: Record<string, number>;
   } = {};
   try {
     sauve = JSON.parse(localStorage.getItem(CLE) ?? '{}');
@@ -114,6 +121,11 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const terminalJeu = new Console({ langue: t.langue, termines: sauve.termines, hotesConnus: sauve.connus, ssh: sauve.ssh });
   const termines = terminalJeu.termines;
   const carnet: Carnet = sauve.carnet && typeof sauve.carnet === 'object' ? sauve.carnet : {};
+  const records: Record<string, number> = sauve.records && typeof sauve.records === 'object' ? sauve.records : {};
+  terminalJeu.examen = sauve.examen === true;
+  caseExamen.checked = terminalJeu.examen;
+  // Le début du chapitre en cours, en mode examen (null : pas de chrono).
+  let debutExamen: number | null = null;
   // Histoire et chapitre en cours (-1 : sur le poste).
   const histoire = () => (terminalJeu.distant ? HISTOIRES.indexOf(terminalJeu.distant.histoire) : -1);
   const courant = () => (terminalJeu.distant ? terminalJeu.distant.histoire.chapitres.indexOf(terminalJeu.distant.shell.chapitre) : -1);
@@ -121,7 +133,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     try {
       localStorage.setItem(
         CLE,
-        JSON.stringify({ termines, histoire: terminalJeu.distant?.histoire.id ?? null, connus: terminalJeu.hotesConnus(), ssh: terminalJeu.ssh(), carnet }),
+        JSON.stringify({ termines, histoire: terminalJeu.distant?.histoire.id ?? null, connus: terminalJeu.hotesConnus(), ssh: terminalJeu.ssh(), carnet, examen: terminalJeu.examen, records }),
       );
     } catch {}
   };
@@ -218,7 +230,31 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     );
   };
 
+  // mm:ss (ou h:mm:ss) : des chiffres, comme un chronomètre.
+  const minutes = (ms: number) => {
+    const s = Math.floor(ms / 1000);
+    const h = Math.floor(s / 3600);
+    const mmss = `${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    return h ? `${h}:${mmss}` : mmss;
+  };
+  const majChrono = () => {
+    chrono.textContent = debutExamen === null ? '' : t('examen-chrono', { temps: minutes(Date.now() - debutExamen) });
+  };
+  setInterval(() => debutExamen !== null && majChrono(), 1000);
+  // Fin du chapitre en mode examen : le temps, et le record de ce navigateur.
+  const finExamen = () => {
+    if (debutExamen === null || !terminalJeu.distant?.shell.termine) return;
+    const id = terminalJeu.distant.shell.chapitre.id;
+    const temps = Date.now() - debutExamen;
+    const ancien = records[id];
+    if (ancien === undefined || temps < ancien) records[id] = temps;
+    afficher(t(ancien === undefined || temps < ancien ? 'examen-fini-record' : 'examen-fini', { temps: minutes(temps), record: minutes(records[id]) }), 'examen-resultat');
+    debutExamen = null;
+    majChrono();
+  };
+
   const apres = () => {
+    finExamen();
     majCarnet();
     majInvite();
     majNav();
@@ -228,6 +264,8 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
 
   // Les raccourcis du menu : un écran neuf, directement sur la bonne machine.
   const allerPoste = () => {
+    debutExamen = null;
+    majChrono();
     sortie.replaceChildren();
     if (terminalJeu.distant) terminalJeu.deconnecter();
     afficher(`— ${t('poste-titre')} —`);
@@ -239,6 +277,10 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     const chapitre = c === undefined ? undefined : chapitres(h)[c];
     if (terminalJeu.distant?.histoire === HISTOIRES[h] && chapitre) afficher(terminalJeu.ouvrir(chapitre));
     else afficher(terminalJeu.connecter(machineDeHistoire(HISTOIRES[h].id)!.nom, chapitre));
+    // En mode examen, un chapitre qui (re)commence lance le chrono ; un chapitre déjà fini, non.
+    debutExamen = terminalJeu.examen && !terminalJeu.distant?.shell.termine ? Date.now() : null;
+    if (debutExamen !== null) afficher(t('examen-debut'), 'examen-resultat');
+    majChrono();
     apres();
   };
 
@@ -368,6 +410,12 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
       ?.writeText(markdown())
       .then(() => (carnetEtat.textContent = t('carnet-copie')))
       .catch(() => (carnetEtat.textContent = t('carnet-copie-impossible')));
+  });
+  caseExamen.addEventListener('change', () => {
+    terminalJeu.examen = caseExamen.checked;
+    // Le chapitre en cours recommence : en examen, sur une machine neuve et chrono à zéro.
+    if (histoire() >= 0) demarrer(histoire(), courant());
+    else apres();
   });
   recommencer.addEventListener('click', () => {
     if (histoire() === -1) allerPoste();
