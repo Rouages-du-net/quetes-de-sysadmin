@@ -47,7 +47,7 @@ mkdir-existe = mkdir: cannot create directory '{ $cible }': File exists
 
 ## chmod
 
-chmod-usage = Usage: chmod mode file (e.g. chmod o-w souvenirs, chmod 755 souvenirs)
+chmod-usage = Usage: chmod mode file (e.g. chmod o-w memories, chmod 755 memories)
 chmod-acces-introuvable = chmod: cannot access '{ $cible }': No such file or directory
 chmod-acces-permission = chmod: cannot access '{ $cible }': Permission denied
 chmod-non-permise = chmod: changing permissions of '{ $cible }': Operation not permitted

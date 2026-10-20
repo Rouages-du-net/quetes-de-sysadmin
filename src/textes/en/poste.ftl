@@ -50,5 +50,5 @@ machine-cooperative-motd = The neighbourhood food co-op — the till's server. H
 machine-ruche-motd = The Hive — the community space's router. eth0: the ISP box; eth1: the switch.
 
 # When reconnecting to a machine whose chapter is in progress.
-# { $fichier }: the chapter's welcome file (e.g. bienvenue.txt)
+# { $fichier }: the chapter's welcome file (e.g. welcome.txt)
 reprise-chapitre = You are resuming this chapter where you left it. To read again what awaits you:   cat { $fichier }

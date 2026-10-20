@@ -1,19 +1,20 @@
 ### The Eraser, chapter 2 — The Village. Search, create, copy, delete:
 ### grep, touch, cp, mkdir, rm. The Town Hall notices are read line by
 ### line by grep: keep one sentence per line. The creature keeps its name,
-### "the Eraser" (the hints suggest "grep Eraser").
+### "the Eraser" (the hints suggest "grep Eraser"). Place and file names
+### (Quay, Bakery, sourdough, gear…) come from noms.ftl.
 
 chapitre-bourg = The Village
     .resume = Search, create, copy, delete: grep, touch, cp, mkdir, rm.
 bourg-crieur =
-    Captain Ana's boat drops you off on the quay of a village. A town
+    Captain Ana's boat drops you off on the Quay of a village. A town
     crier is waving his bell.
 
     "Hear ye! The Eraser has come through the Village! The bakery has no
     more sourdough starter, the clock has stopped, the school has no classroom,
     and little Nour has disappeared! Who will help us?"
 
-    He hands you a scroll:  cat parchemin_des_sorts.txt
+    He hands you a scroll:  cat scroll_of_spells.txt
 bourg-parchemin-des-sorts =
     THE SCROLL OF SPELLS — five new commands
 
@@ -27,8 +28,8 @@ bourg-parchemin-des-sorts =
     "grep --help" a summary. Forgotten which command copies?
     "man -k copy" searches all the manuals.
 
-    The people of the Village need you: the Boulangerie, the Atelier, the Ecole,
-    the Mairie… Start wherever you like.
+    The people of the Village need you: the Bakery, the Workshop, the
+    School, the TownHall… Start wherever you like.
 bourg-marchande =
     "Nothing left to sell, the Eraser took everything! Well, almost: look
     at my stalls."
@@ -47,7 +48,7 @@ bourg-boulanger =
     I need three for the three morning batches. Ah, if only I had
     three!"
 
-    (cp levain levain_2 creates a copy of the starter.)
+    (cp sourdough sourdough_2 creates a copy of the starter.)
 bourg-levain = A jar of sourdough starter, gently bubbling. It's alive, it feeds… and it can be copied.
 bourg-levain-protege-rm = "Not my last starter!" shouts the baker.
 bourg-artisane =
@@ -57,14 +58,14 @@ bourg-artisane =
     the Village clock no longer turns. Do you know how to make an object? It only
     takes one command:
 
-      touch engrenage
+      touch gear
 
     Then I'd need five in all. Making things takes a long time… copying
     is quick."
 bourg-institutrice =
     The teacher is holding class… in the playground, for lack of a room.
 
-    "The Eraser erased our Classe! A classroom is a place.
+    "The Eraser erased our Classroom! A classroom is a place.
     Do you know how to build one?"
 
     (mkdir Name creates a place.)
@@ -87,15 +88,15 @@ bourg-avis-chat =
     Reward: one cheese.
 bourg-avis-egouts =
     NOTICE FROM THE SEWER WORKERS
-    We saw the Eraser go down into the Egout, at the far end of the Cour off the Ruelle.
+    We saw the Eraser go down into the Sewer, at the far end of the Yard off the Alley.
     Little Nour followed it. The rats let nobody through.
-    The key to the Archives is under the Mairie's doormat (a hidden object, of course).
+    The key to the Archives is under the TownHall's doormat (a hidden object, of course).
 bourg-avis-marche =
     MARKET: open on Thursdays.
     Cheeses, apples, and that's about it.
 bourg-avis-horloge =
     NOTICE: the clock has stopped.
-    As long as it isn't turning, the gate of the Ruelle stays closed.
+    As long as it isn't turning, the gate of the Alley stays closed.
 bourg-paillasson = Under the doormat, a small key. You take it.
 bourg-paillasson-lu = The door of the Archives is open.
 bourg-archiviste =
@@ -105,11 +106,11 @@ bourg-archiviste =
     the Eraser for years. It's all in the chronicle, but it's
     long. Look for the lines that talk about it:
 
-      grep Eraser chronique.txt
+      grep Eraser chronicle.txt
 
     And if you're not sure whether it has a capital letter, add -i:
 
-      grep -i effaceur chronique.txt
+      grep -i eraser chronicle.txt
 bourg-chronique =
     CHRONICLE OF THE KINGDOM
 
@@ -123,46 +124,46 @@ bourg-chronique =
     Year 104: the apple fair is cancelled (it's raining).
     Year 130: the island's lighthouse is lit to guide the boats.
     Year 131: the Eraser lives at the Root, at the very bottom, beneath the Village sewers.
-bourg-archives-bloque = The door of the Archives is locked. The posters at the Mairie may tell you more.
+bourg-archives-bloque = The door of the Archives is locked. The posters at the TownHall may tell you more.
 bourg-barricade = A barricade of planks, barrels and broken chairs, put up in a hurry. Far too heavy to be moved.
 bourg-barricade-protege-mv = You pull with all your might… nothing. The barricade is too heavy for mv. But you know a more radical spell.
-bourg-mur = A paved courtyard. At the far end, a half-open manhole cover: the Egout.
+bourg-mur = A paved courtyard. At the far end, a half-open manhole cover: the Sewer.
 bourg-rats =
     An army of rats is blocking the way.
 
     "Squeak! Nobody gets through without paying. We want CHEESE, here,
     right now!"
 
-    There is a cheese at the Marche. To copy one here without going back,
+    There is a cheese at the Market. To copy one here without going back,
     give its full path and . (the place where you are) as the destination:
 
-      cp ~/Marche/fromage .
+      cp ~/Market/cheese .
 bourg-nour =
-    Nour is sitting at the edge of a big Toboggan that plunges into the dark.
+    Nour is sitting at the edge of a big slide that plunges into the dark.
 
     "Thank you for coming! I followed the Eraser all the way here. It slid down
-    this Toboggan, towards the Root, muttering: "erase, erase, the order
+    this slide, towards the Root, muttering: "erase, erase, the order
     of the root…" Then the rats blocked my way."
-bourg-galerie-bloque = "Squeak!" The rats block the Galerie.
-bourg-cour-bloque = A barricade blocks the entrance to the Cour.
-bourg-ruelle-bloque = The gate of the Ruelle is closed. It opens at a set time… but the Village clock has stopped.
+bourg-galerie-bloque = "Squeak!" The rats block the Tunnel.
+bourg-cour-bloque = A barricade blocks the entrance to the Yard.
+bourg-ruelle-bloque = The gate of the Alley is closed. It opens at a set time… but the Village clock has stopped.
 bourg-evenement-levain = "Three starters!" The baker can't believe it. "A copy is a new object, identical to the original. Thank you!"
 bourg-evenement-engrenage = "A gear! Perfect. Only four more… with cp, it'll be quick."
-bourg-evenement-engrenages = Tick, tock… The Village clock starts turning again! At the first stroke of noon, the gate of the Ruelle creaks open.
-bourg-evenement-classe = A Classe rises at the Ecole. The children rush into it.
-bourg-evenement-classe-sans-nour = A Classe rises at the Ecole. The children rush into it. "Only one pupil is missing," sighs the teacher: "Nour."
+bourg-evenement-engrenages = Tick, tock… The Village clock starts turning again! At the first stroke of noon, the gate of the Alley creaks open.
+bourg-evenement-classe = A Classroom rises at the School. The children rush into it.
+bourg-evenement-classe-sans-nour = A Classroom rises at the School. The children rush into it. "Only one pupil is missing," sighs the teacher: "Nour."
 bourg-evenement-barricade =
-    Poof! The barricade disappears. The Cour is accessible.
+    Poof! The barricade disappears. The Yard is accessible.
     (No recycle bin: it will never come back.)
-bourg-evenement-rats = The rats pounce on the cheese and carry it off into a hole. The Galerie is clear.
-bourg-evenement-nour-sans-classe = "I'd like to go back," says Nour, "but the Eraser erased my Classe. Can you rebuild it, at the Ecole?" (mkdir)
+bourg-evenement-rats = The rats pounce on the cheese and carry it off into a hole. The Tunnel is clear.
+bourg-evenement-nour-sans-classe = "I'd like to go back," says Nour, "but the Eraser erased my Classroom. Can you rebuild it, at the School?" (mkdir)
 bourg-evenement-nour =
-    Nour runs to join her brand-new Classe.
+    Nour runs to join her brand-new Classroom.
 
     Well done! You have finished chapter 2.
 
     You now know how to search (grep), create (touch, mkdir), copy (cp) and
     delete (rm) — carefully, since there is no recycle bin.
 
-    The Eraser is hiding at the Root, at the bottom of the Toboggan: chapter 3
+    The Eraser is hiding at the Root, at the bottom of the slide: chapter 3
     awaits you.
