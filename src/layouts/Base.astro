@@ -7,8 +7,12 @@ interface Props {
   titre: string;
   description: string;
   langue?: string;
+  // La même page dans une autre langue (lien en haut de page).
+  autre?: { href: string; langue: string; nom: string };
 }
-const { titre, description, langue = 'fr' } = Astro.props;
+const { titre, description, langue = 'fr', autre } = Astro.props;
+const en = langue === 'en';
+const accueil = en ? '/en/' : '/';
 const canonique = new URL(Astro.url.pathname, Astro.site);
 ---
 <!doctype html>
@@ -21,15 +25,34 @@ const canonique = new URL(Astro.url.pathname, Astro.site);
   <meta name="color-scheme" content="light dark" />
   <link rel="canonical" href={canonique} />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  {autre && <link rel="alternate" hreflang={autre.langue} href={new URL(autre.href, Astro.site)} />}
 </head>
 <body>
   <header>
-    <p class="nom"><a href="/">Quêtes de Sysadmin</a></p>
+    <p class="nom"><a href={accueil}>Quêtes de Sysadmin</a></p>
+    {autre && <p class="langue"><a href={autre.href} hreflang={autre.langue} lang={autre.langue}>{autre.nom}</a></p>}
   </header>
   <main>
     <slot />
   </main>
   <footer>
+    {en ? (
+      <>
+        <p>
+          Inspired by <a href="https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html">Terminus</a>,
+          created at MIT by Shawn Conrad and Michele Pratusevich: the idea of learning commands by moving
+          from directory to directory comes from there; the places, puzzles and texts are our own. The
+          addresses and domain names used are reserved for examples (RFC 5737, RFC 6761).
+        </p>
+        <p>
+          Code under the <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/LICENSE">GPL v3</a>,
+          texts under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+          <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin">Source code</a> ·
+          a project by <a href="https://rouages.net" hreflang="fr">Les rouages du net</a>. No trackers, no ads.
+        </p>
+      </>
+    ) : (
+    <>
     <p>
       Inspiré de <a href="https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html" hreflang="en">Terminus</a>,
       créé au MIT par Shawn Conrad et Michele Pratusevich : l'idée d'apprendre les commandes en se
@@ -43,6 +66,8 @@ const canonique = new URL(Astro.url.pathname, Astro.site);
       <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin">Code source</a> ·
       un projet de <a href="https://rouages.net">Les rouages du net</a>. Sans pisteur ni publicité.
     </p>
+    </>
+    )}
   </footer>
 </body>
 </html>

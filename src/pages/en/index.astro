@@ -1,0 +1,41 @@
+---
+import Base from '../../layouts/Base.astro';
+import { HISTOIRES } from '../../moteur/chapitres';
+---
+<Base
+  titre="Sysadmin Quests"
+  langue="en"
+  autre={{ href: '/', langue: 'fr', nom: 'Français' }}
+  description="Learn Linux system administration by playing, in your browser, with real commands: moving around, searching, permissions, logs, networking, git, backups."
+>
+  <h1>Sysadmin Quests</h1>
+  <p class="intro">
+    Adventures where you act with <strong>real Linux commands</strong>. Every place is a
+    directory, every object a file. {HISTOIRES.length} independent stories: start with The Eraser
+    if you have never opened a terminal.
+  </p>
+  <p class="intro">
+    Stuck? Do as the pros do: <code>man command</code> opens the manual,
+    <code>command --help</code> gives a summary, and <code>man -k word</code> finds the command
+    that does what you want.
+  </p>
+  <p class="intro">
+    The English translation is in progress: some stories still show their texts in French,
+    and the files and places of the game world keep their French names for now.
+  </p>
+  <noscript><p class="avertissement">This game needs JavaScript to simulate a terminal in your browser.</p></noscript>
+
+  <quetes-de-sysadmin langue="en"></quetes-de-sysadmin>
+
+  <section aria-labelledby="embed">
+    <h2 id="embed">Put the game on your site</h2>
+    <p>The game is free software and fits in any page with two lines:</p>
+    <pre><code>{`<script type="module" src="https://sysadmin.rouages.net/integration/quetes-de-sysadmin.js"></script>
+<quetes-de-sysadmin langue="en"></quetes-de-sysadmin>`}</code></pre>
+    <p>Full instructions (in French): <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/docs/INTEGRER.md" hreflang="fr">docs/INTEGRER.md</a>.</p>
+  </section>
+</Base>
+
+<script>
+  import '../../element';
+</script>
