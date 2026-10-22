@@ -453,9 +453,10 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     fenetreCarte.showModal();
     fenetreCarte.querySelector('.ici')?.scrollIntoView({ block: 'center' });
   });
-  // La fenêtre fermée (bouton ou Échap), on reprend la ligne de commande.
+  // La fenêtre fermée (bouton ou Échap), on reprend la ligne de commande :
+  // après que le navigateur a rendu le focus au bouton qui l'avait ouverte.
   fermerCarte.addEventListener('click', () => fenetreCarte.close());
-  fenetreCarte.addEventListener('close', () => saisie.focus());
+  fenetreCarte.addEventListener('close', () => setTimeout(() => saisie.focus()));
   recommencer.addEventListener('click', () => {
     if (histoire() === -1) allerPoste();
     else demarrer(histoire(), courant());

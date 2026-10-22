@@ -112,7 +112,16 @@ for (const largeur of [1000, 375]) {
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/carte-${largeur}.png` });
   await page.keyboard.press('Escape');
   verifier(!(await fenetre.evaluate((d) => d.open)), `${largeur} px : Échap ferme la carte`);
-  verifier(await saisie.evaluate((i) => i.getRootNode().activeElement === i), `${largeur} px : la saisie reprend après la carte`);
+  // Le navigateur rend d'abord le focus au bouton, puis le jeu à la saisie : on attend jusqu'à une seconde.
+  const reprise = await saisie.evaluate(
+    (i) =>
+      new Promise((ok) => {
+        const fin = Date.now() + 1000;
+        const voir = () => (i.getRootNode().activeElement === i ? ok(true) : Date.now() > fin ? ok(false) : setTimeout(voir, 20));
+        voir();
+      }),
+  );
+  verifier(reprise, `${largeur} px : la saisie reprend après la carte`);
   // Le mode examen : la case recommence le chapitre en cours, le chrono démarre.
   await tape('ssh royaume');
   await jeu.locator('.examen input').check();
