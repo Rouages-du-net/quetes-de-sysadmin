@@ -9,6 +9,7 @@ import { HISTOIRES } from '../moteur/chapitres';
 import { machineDeHistoire } from '../moteur/machines';
 import { description, enMarkdown, noter, type Carnet } from '../moteur/carnet';
 import { liensRouages } from '../moteur/rouages';
+import { carte, type Lieu } from '../moteur/carte';
 import { editeur } from './editeur';
 import { traducteur, typographie, type Langue } from '../textes';
 
@@ -63,7 +64,22 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // Le mode examen : pas d'indice, un chrono ; la case recommence le chapitre en cours.
   const caseExamen = el('input', { type: 'checkbox' }) as HTMLInputElement;
   const chrono = el('span', { class: 'chrono', role: 'timer' });
-  const barreExamen = el('p', { class: 'examen' }, el('label', {}, caseExamen, el('span', {}, t('examen-case'))), chrono);
+  // La carte : un bouton à côté du terminal ouvre, dans une fenêtre, les lieux
+  // connus de la machine où l'on est (voir carte.ts).
+  const boutonCarte = el('button', { type: 'button', class: 'bouton-carte', 'aria-haspopup': 'dialog' }, t('carte-bouton'));
+  const barreExamen = el('p', { class: 'examen' }, el('label', {}, caseExamen, el('span', {}, t('examen-case'))), chrono, boutonCarte);
+  const idCarte = `qds-carte-${Math.random().toString(36).slice(2, 8)}`;
+  const carteTitre = el('h2', { id: idCarte });
+  const carteArbre = el('div', { class: 'carte-arbre' });
+  const fermerCarte = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  const fenetreCarte = el(
+    'dialog',
+    { class: 'fenetre-carte', 'aria-labelledby': idCarte },
+    carteTitre,
+    el('p', { class: 'carte-legende' }, typo(t('carte-legende'))),
+    carteArbre,
+    el('p', { class: 'carte-actions' }, fermerCarte),
+  ) as HTMLDialogElement;
   const sortie = el('div', { class: 'sortie', role: 'log', 'aria-live': 'polite' });
   const id = `qds-saisie-${Math.random().toString(36).slice(2, 8)}`;
   const invite = el('label', { class: 'invite', for: id });
@@ -101,7 +117,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit-lien-projet')), ' · ',
     el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-lien-original')));
 
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, terminal, fin, pourComprendre, panneauCarnet, astuces, credit);
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, terminal, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -417,6 +433,30 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     if (histoire() >= 0) demarrer(histoire(), courant());
     else apres();
   });
+  // Un lieu de la carte : son nom, ses repères en toutes lettres (lus aussi
+  // par les lecteurs d'écran), puis les lieux qu'il contient.
+  const dessinerLieu = (l: Lieu): HTMLElement => {
+    const reperes = [l.maison && t('carte-maison'), l.ferme && t('carte-ferme'), !l.visite && t('carte-apercu')].filter(Boolean).join(', ');
+    return el(
+      'li',
+      { class: [l.visite ? 'visite' : 'apercu', l.ici ? 'ici' : ''].join(' ').trim(), ...(l.ici ? { 'aria-current': 'location' } : {}) },
+      el('span', { class: 'nom' }, l.nom === '/' ? '/' : `${l.nom}/`),
+      ...(reperes ? [' ', el('span', { class: 'reperes' }, `(${reperes})`)] : []),
+      ...(l.ici ? [' ', el('strong', { class: 'vous-etes-ici' }, t('carte-ici'))] : []),
+      ...(l.enfants.length ? [el('ul', {}, ...l.enfants.map(dessinerLieu))] : []),
+    );
+  };
+  boutonCarte.addEventListener('click', () => {
+    const sh = terminalJeu.shell;
+    carteTitre.textContent = t('carte-titre', { machine: sh.hote });
+    carteArbre.replaceChildren(el('ul', { class: 'arbre' }, dessinerLieu(carte(sh))));
+    fenetreCarte.showModal();
+    fenetreCarte.querySelector('.ici')?.scrollIntoView({ block: 'center' });
+  });
+  // La fenêtre fermée (bouton ou Échap), on reprend la ligne de commande :
+  // après que le navigateur a rendu le focus au bouton qui l'avait ouverte.
+  fermerCarte.addEventListener('click', () => fenetreCarte.close());
+  fenetreCarte.addEventListener('close', () => setTimeout(() => saisie.focus()));
   recommencer.addEventListener('click', () => {
     if (histoire() === -1) allerPoste();
     else demarrer(histoire(), courant());

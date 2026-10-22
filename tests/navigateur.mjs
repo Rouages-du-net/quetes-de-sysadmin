@@ -102,6 +102,26 @@ for (const largeur of [1000, 375]) {
   verifier(telechargement.suggestedFilename() === 'carnet-du-sysadmin.md', `${largeur} px : le carnet se télécharge en Markdown`);
   await page.reload();
   verifier((await jeu.locator('details.carnet dt').allTextContents()).includes('nano'), `${largeur} px : le carnet est gardé dans le navigateur`);
+  // La carte : un bouton ouvre la fenêtre, avec l'endroit où l'on est ; Échap la ferme.
+  await jeu.locator('.bouton-carte').click();
+  const fenetre = jeu.locator('dialog.fenetre-carte');
+  verifier(await fenetre.evaluate((d) => d.open), `${largeur} px : la carte s’ouvre`);
+  verifier((await fenetre.locator('[aria-current="location"]').count()) === 1 && (await fenetre.textContent()).includes('tu es ici'), `${largeur} px : la carte montre où l’on est`);
+  const boite = await fenetre.boundingBox();
+  verifier(boite.x >= 0 && boite.x + boite.width <= largeur, `${largeur} px : la carte tient dans l’écran`);
+  if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/carte-${largeur}.png` });
+  await page.keyboard.press('Escape');
+  verifier(!(await fenetre.evaluate((d) => d.open)), `${largeur} px : Échap ferme la carte`);
+  // Le navigateur rend d'abord le focus au bouton, puis le jeu à la saisie : on attend jusqu'à une seconde.
+  const reprise = await saisie.evaluate(
+    (i) =>
+      new Promise((ok) => {
+        const fin = Date.now() + 1000;
+        const voir = () => (i.getRootNode().activeElement === i ? ok(true) : Date.now() > fin ? ok(false) : setTimeout(voir, 20));
+        voir();
+      }),
+  );
+  verifier(reprise, `${largeur} px : la saisie reprend après la carte`);
   // Le mode examen : la case recommence le chapitre en cours, le chrono démarre.
   await tape('ssh royaume');
   await jeu.locator('.examen input').check();

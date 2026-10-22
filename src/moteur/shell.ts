@@ -124,6 +124,8 @@ export class Shell implements Jeu {
   tmux: string | null = null;
   // La connexion vient de tomber (le réseau a coupé) : la console ramène au poste.
   coupure = false;
+  // Les lieux où l'on est entré (cd), pour la carte (voir carte.ts).
+  visites = new Set<string>();
 
   t: Traduire;
 
@@ -136,6 +138,7 @@ export class Shell implements Jeu {
     this.racine = chapitre.noms ? traduireNoms(this.t, chapitre.creerMonde(this.t)) : chapitre.creerMonde(this.t);
     this.maison = chapitre.noms ? chemin(this.t, chapitre.maison) : chapitre.maison;
     this.cwd = this.maison;
+    this.visites.add(this.maison);
     this.etat = chapitre.etat?.(this.t) ?? {};
     const comptes = chapitre.comptes?.() ?? comptesParDefaut();
     this.comptes = chapitre.noms ? traduireComptes(this.t, comptes) : comptes;

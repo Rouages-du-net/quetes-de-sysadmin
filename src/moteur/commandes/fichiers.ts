@@ -169,6 +169,7 @@ export const FICHIERS: Record<string, Commande> = {
       if (raison) return jeu.erreur(raison);
       if (!jeu.traverse(cible) || !jeu.peut(n, 'x')) return jeu.erreur(jeu.t('erreur-permission', { commande: 'cd', cible }));
       jeu.cwd = jeu.resoudre(cible);
+      jeu.visites.add(jeu.cwd);
       return '';
     },
   },

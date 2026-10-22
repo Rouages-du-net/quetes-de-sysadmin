@@ -98,3 +98,15 @@ examen-debut = Mode examen : aucun indice ne s'affichera, le chrono tourne. Ta m
 # { $temps } : le temps de cette partie ; { $record } : le meilleur temps de ce navigateur
 examen-fini = Examen réussi en { $temps }. Ton meilleur temps sur ce chapitre : { $record }.
 examen-fini-record = Examen réussi en { $temps } : c'est ton meilleur temps sur ce chapitre.
+
+## La carte (un bouton à côté du terminal ; voir src/moteur/carte.ts)
+
+carte-bouton = Carte
+# { $machine } : le nom de la machine où l'on est (royaume, poste…).
+carte-titre = Carte de { $machine }
+carte-legende = Les lieux (dossiers) que tu connais sur cette machine : ceux où tu es entré·e, et en italique ceux que tu as seulement aperçus. Les fichiers n'y sont pas : pour eux, ls.
+carte-ici = ← tu es ici
+carte-maison = ta maison, ~
+carte-ferme = fermé pour l'instant
+carte-apercu = pas encore visité
+carte-fermer = Fermer

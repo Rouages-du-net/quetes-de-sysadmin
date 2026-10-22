@@ -98,3 +98,15 @@ examen-debut = Exam mode: no hints will be shown, the timer is running. Your mis
 # { $temps }: the time of this game; { $record }: the best time in this browser
 examen-fini = Exam passed in { $temps }. Your best time on this chapter: { $record }.
 examen-fini-record = Exam passed in { $temps }: that's your best time on this chapter.
+
+## The map (a button next to the terminal; see src/moteur/carte.ts)
+
+carte-bouton = Map
+# { $machine }: the name of the machine you are on (royaume, poste…).
+carte-titre = Map of { $machine }
+carte-legende = The places (directories) you know on this machine: the ones you have entered, and in italics the ones you have only glimpsed. Files are not shown: for those, use ls.
+carte-ici = ← you are here
+carte-maison = your home, ~
+carte-ferme = locked for now
+carte-apercu = not visited yet
+carte-fermer = Close
