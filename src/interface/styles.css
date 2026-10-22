@@ -135,6 +135,22 @@
 .qds .examen { margin: 0.75rem 0 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; }
 .qds .examen label { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
 .qds .examen input { accent-color: var(--_accent); width: 1.1rem; height: 1.1rem; margin: 0.2rem 0 0; flex: none; }
+/* La carte : le bouton au bout de la barre, la fenêtre et l'arbre des lieux. */
+.qds .bouton-carte { margin-left: auto; font: inherit; font-size: 0.9rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }
+.qds .bouton-carte:hover, .qds .bouton-carte:focus-visible { border-color: var(--_accent); }
+.qds .fenetre-carte { width: min(36rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
+.qds .fenetre-carte::backdrop { background: rgb(0 0 0 / 0.5); }
+.qds .fenetre-carte h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.qds .carte-legende { margin: 0 0 0.75rem; font-size: 0.85rem; color: var(--_discret); }
+.qds .carte-arbre { font-family: var(--_police-mono); font-size: 0.9rem; overflow-wrap: anywhere; }
+.qds .carte-arbre ul { list-style: none; margin: 0; padding-left: 1.1rem; border-left: 1px dotted var(--_bord); }
+.qds .carte-arbre ul.arbre { padding-left: 0; border-left: 0; }
+.qds .carte-arbre li { margin: 0.1rem 0; }
+.qds .carte-arbre .apercu > .nom { color: var(--_discret); font-style: italic; }
+.qds .carte-arbre .reperes { color: var(--_discret); font-size: 0.85em; }
+.qds .carte-arbre .ici > .nom { font-weight: 700; color: var(--_accent); }
+.qds .carte-arbre .vous-etes-ici { color: var(--_accent); }
+.qds .carte-actions { margin: 0.75rem 0 0; text-align: right; }
 .qds .chrono { font-family: var(--_police-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--_accent); }
 .qds .sortie pre.examen-resultat { font-weight: 600; color: var(--_terminal-invite); }
 /* Après un chapitre : les pages de Les rouages du net qui expliquent son concept. */

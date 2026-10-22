@@ -332,6 +332,10 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [x] **La carte** : un bouton au-dessus du terminal ouvre, dans une
+  fenêtre, l'arbre des lieux connus de la machine où l'on est (lieux
+  visités, lieux aperçus en italique, maison, lieux fermés), avec « tu es
+  ici ». Rien n'est dévoilé au-delà de ce qu'on a vu ; pas de fichiers.
 - [x] **Le carnet du sysadmin** : chaque commande découverte s'ajoute à un
   aide-mémoire personnel (sa ligne du manuel, la première ligne tapée, le
   chapitre), gardé dans le navigateur, exportable en Markdown.
