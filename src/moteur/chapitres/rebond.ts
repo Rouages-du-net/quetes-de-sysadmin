@@ -13,7 +13,7 @@
 import { chemin, d, f, type Chapitre, type Dossier } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { configuration, resoudreNom } from '../acces';
-import { chargerSshd, comptesMaison, connexionsPar, dossierSsh, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE } from './maison';
+import { chargerSshd, comptesMaison, connexionsPar, dossierSsh, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE, planMaison } from './maison';
 
 const WIKI = '10.20.0.11';
 const COMMANDES_INTERNES = ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname'];
@@ -53,6 +53,7 @@ const clePriveeSurMaison = (j: Jeu) => {
 export const rebond: Chapitre = {
   id: 'rebond',
   numero: 2,
+  plan: planMaison(),
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname', 'chmod', 'rm', 'nano', 'ssh'],
   maison: M,
   accueil: 'courriel_yasmine.txt',

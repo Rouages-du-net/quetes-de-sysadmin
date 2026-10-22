@@ -54,6 +54,7 @@ import {
   lanAvecDmz,
   SYSCTL_ROUTEUR,
   systemdRuche,
+  planRuche,
 } from './ruche';
 
 // La clé privée du routeur de La Ruche (créée au chapitre « Le télétravail »), et celle du routeur de l'Annexe (elle ne quitte pas l'Annexe).
@@ -149,6 +150,7 @@ const poigneeRatee = (e: EtatTunnel) => ['conf', 'adresse', 'filtre', 'cle-route
 export const annexe: Chapitre = {
   id: 'annexe',
   numero: 6,
+  plan: planRuche({ teletravail: true, dmz: true, annexe: true }),
   commandes: [
     'ls',
     'cd',

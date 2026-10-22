@@ -144,6 +144,33 @@ for (const largeur of [1000, 375]) {
   await page.close();
 }
 
+// Le plan du réseau : dans La Ruche, l'onglet « Réseau » de la carte montre le
+// schéma (avec « tu es ici » sur le routeur) et sa version en liste.
+for (const largeur of [1000, 375]) {
+  const page = await navigateur.newPage({ viewport: { width: largeur, height: 900 } });
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
+  await avecCsp(page);
+  await page.addInitScript(() =>
+    localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ termines: ['eveil', 'bourg', 'racine', 'sauvegarde'], histoire: 'ruche' })),
+  );
+  await page.goto(`${BASE}/`);
+  const jeu = page.locator('quetes-de-sysadmin');
+  await jeu.locator('.bouton-carte').click();
+  const reseau = jeu.locator('[role="tab"]', { hasText: 'Réseau' });
+  verifier(await reseau.isVisible(), `réseau ${largeur} px : l’onglet Réseau est là`);
+  await reseau.click();
+  const schema = jeu.locator('.plan-schema svg');
+  verifier((await schema.count()) === 1 && (await jeu.locator('.plan-schema .ici').textContent()).includes('ruche'), `réseau ${largeur} px : le schéma, avec le routeur où l’on est`);
+  await jeu.locator('.plan-texte').evaluate((d) => (d.open = true));
+  verifier((await jeu.locator('.plan-texte [aria-current="location"]').textContent()).includes('tu es ici'), `réseau ${largeur} px : la version en liste`);
+  verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `réseau ${largeur} px : pas de défilement horizontal de la page`);
+  if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/reseau-${largeur}.png` });
+  verifier(erreurs.length === 0, `réseau ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
+  await page.close();
+}
+
 // La page en anglais : le jeu en anglais, le lien vers la page française.
 for (const largeur of [1000, 375]) {
   const page = await navigateur.newPage({ viewport: { width: largeur, height: 900 } });

@@ -4,6 +4,7 @@
 
 import type { Jeu } from './shell';
 import type { Traduire } from '../textes';
+import type { ElementPlan } from './plan';
 
 export type Fichier = {
   type: 'fichier';
@@ -93,6 +94,8 @@ export interface Chapitre {
   commandes: string[];
   // Le dossier « maison » (~), où l'on commence.
   maison: string;
+  // Le plan du réseau de l'histoire à ce chapitre (le réseau prévu, voir plan.ts).
+  plan?: (t: Traduire) => ElementPlan;
   // Les noms des lieux et des objets se traduisent (voir nom() et chemin()) :
   // le monde est créé avec les noms français, puis chacun est remplacé par
   // celui de la langue. Les chemins des événements passent alors par chemin().

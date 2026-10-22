@@ -17,7 +17,7 @@
 import { d, f, type Chapitre, type Dossier } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { fichiersDe, hebergement, HEBERGEMENTS, noeud } from '../hebergeur';
-import { chargerSshd, comptesMaison, dossierSsh, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE } from './maison';
+import { chargerSshd, comptesMaison, dossierSsh, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE, planMaison } from './maison';
 
 export const COMPTE = 'maisonasso';
 export const MOT_DE_PASSE_FTP = 'Kp7-hebergement-2028';
@@ -88,6 +88,7 @@ const refus = (j: Jeu, quoi: 'clair' | 'certificat') => !!(poste(j)?.etat.refusF
 export const hebergeur: Chapitre = {
   id: 'hebergeur',
   numero: 5,
+  plan: planMaison({ hebergeur: true }),
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'id', 'whoami', 'hostname', 'ssh', 'scp', 'sftp', 'lftp'],
   maison: M,
   accueil: 'courriel_yasmine.txt',

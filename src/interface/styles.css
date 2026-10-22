@@ -150,6 +150,29 @@
 .qds .carte-arbre .reperes { color: var(--_discret); font-size: 0.85em; }
 .qds .carte-arbre .ici > .nom { font-weight: 700; color: var(--_accent); }
 .qds .carte-arbre .vous-etes-ici { color: var(--_accent); }
+.qds .carte-onglets { display: flex; gap: 0.25rem; margin: 0 0 0.75rem; border-bottom: 1px solid var(--_bord); }
+.qds .carte-onglets[hidden] { display: none; }
+.qds .carte-onglets [role='tab'] { font: inherit; font-size: 0.95rem; padding: 0.35rem 0.9rem; border: 1px solid transparent; border-bottom: 0; border-radius: 0.4rem 0.4rem 0 0; background: none; color: var(--_discret); cursor: pointer; margin-bottom: -1px; }
+.qds .carte-onglets [role='tab'][aria-selected='true'] { color: var(--_texte); font-weight: 600; border-color: var(--_bord); background: var(--_fond); }
+/* Le plan du réseau : le schéma défile dans sa boîte s'il est plus large que l'écran. */
+.qds .fenetre-carte:has([role='tabpanel']:not([hidden]) .plan-schema) { width: min(62rem, calc(100vw - 2rem)); }
+.qds .plan-schema { overflow-x: auto; margin: 0 0 0.75rem; }
+.qds .plan-schema svg { display: block; font-family: var(--_police); }
+.qds .plan-schema .lien { fill: none; stroke: var(--_discret); stroke-width: 1.5; }
+.qds .plan-schema .lien.tunnel { stroke-dasharray: 3 4; stroke: var(--_accent); }
+.qds .plan-schema rect { fill: var(--_carte); stroke: var(--_bord); stroke-width: 1.5; }
+.qds .plan-schema .reseau rect { fill: var(--_fond); stroke: var(--_discret); stroke-dasharray: 6 3; }
+.qds .plan-schema .internet rect { fill: var(--_fond); stroke: var(--_discret); }
+.qds .plan-schema .pas-visite rect { stroke-dasharray: 2 3; }
+.qds .plan-schema .ici rect { stroke: var(--_accent); stroke-width: 3; }
+.qds .plan-schema text { fill: var(--_texte); font-size: 13px; }
+.qds .plan-schema .nom { font-weight: 600; }
+.qds .plan-schema .pas-visite .nom { font-style: italic; }
+.qds .plan-schema .adresse { font-family: var(--_police-mono); font-size: 12px; }
+.qds .plan-schema .note { fill: var(--_discret); font-size: 11px; }
+.qds .plan-schema .repere-ici { fill: var(--_accent); font-size: 12px; font-weight: 700; }
+.qds .plan-texte summary { cursor: pointer; font-size: 0.9rem; }
+.qds .plan-texte .carte-arbre { margin-top: 0.5rem; }
 .qds .carte-actions { margin: 0.75rem 0 0; text-align: right; }
 .qds .chrono { font-family: var(--_police-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--_accent); }
 .qds .sortie pre.examen-resultat { font-weight: 600; color: var(--_terminal-invite); }

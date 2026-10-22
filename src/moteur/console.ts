@@ -42,6 +42,8 @@ export class Console {
   // Les machines gardent leur état tant que la partie est ouverte : se
   // reconnecter retrouve le chapitre là où on l'a laissé.
   private sessions = new Map<string, Shell>();
+  // Les machines où l'on s'est connecté·e pendant cette partie (le plan du réseau les marque).
+  visitees = new Set<string>(['poste']);
 
   constructor(private options: OptionsConsole = {}) {
     this.t = traducteur(options.langue);
@@ -214,6 +216,7 @@ export class Console {
 
   private nouvelleSession(machine: Machine, chapitre: Chapitre): Shell {
     const s = new Shell(chapitre, this.t.langue, machine.nom);
+    this.visitees.add(machine.nom);
     s.examen = this.examen;
     // Le chapitre peut regarder le poste (sa config ssh, ce qu'on y a copié).
     s.etat.poste = () => this.poste;
@@ -251,6 +254,7 @@ export class Console {
     if (d.via && this.distant?.machine.nom !== d.via) morceaux.push(this.connecter(d.via, undefined, true));
     d.shell.cwd = d.shell.maison;
     this.interieur.push({ shell: d.shell, domaine: d.domaine, retour: depuisPoste && !!d.via });
+    this.visitees.add(d.shell.hote);
     morceaux.push(`Linux ${d.shell.hote} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`);
     return morceaux.join('\n\n');
   }

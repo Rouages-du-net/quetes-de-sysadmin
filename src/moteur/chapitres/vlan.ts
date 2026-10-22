@@ -16,7 +16,7 @@
 import { f, type Chapitre } from '../monde';
 import type { Jeu } from '../shell';
 import { enService, lan, lireInterfaces, vlanDe } from '../lan';
-import { comptesRuche, initialiserRuche, INTERFACES_A_PLAT, M, mondeRuche, MOT_DE_PASSE, nouveauLan, systemdRuche, VLANS } from './ruche';
+import { comptesRuche, initialiserRuche, INTERFACES_A_PLAT, M, mondeRuche, MOT_DE_PASSE, nouveauLan, systemdRuche, VLANS, planRuche } from './ruche';
 
 const DNSMASQ_A_PLAT = `# The DHCP server of the LAN
 interface=eth1
@@ -43,6 +43,7 @@ const tousEcrits = (j: Jeu) => VLANS.every((v) => ecrit(j, v));
 export const vlan: Chapitre = {
   id: 'vlan',
   numero: 1,
+  plan: planRuche(),
   commandes: [
     'ls',
     'cd',

@@ -110,3 +110,29 @@ carte-maison = ta maison, ~
 carte-ferme = fermé pour l'instant
 carte-apercu = pas encore visité
 carte-fermer = Fermer
+
+## Le plan du réseau (onglet « Réseau » de la carte ; voir src/moteur/plan.ts)
+
+carte-onglet-lieux = Lieux
+carte-onglet-reseau = Réseau
+plan-legende = Le réseau tel que l'équipe l'a prévu, comme sur le schéma affiché au mur : ce qui devrait être, pas forcément ce qui est. Pour le vérifier : ip a, ip route, ping, wg show… Les liens en pointillés passent par un tunnel WireGuard.
+plan-version-texte = Le plan en liste
+plan-internet = Internet
+plan-ton-poste = ton poste
+plan-ici = tu es ici
+plan-visite = déjà connecté·e
+plan-pas-visite = pas encore connecté·e
+plan-tunnel = par le tunnel WireGuard
+plan-dhcp = DHCP
+plan-reseau-interne = réseau interne
+plan-note-passerelle = passerelle
+plan-note-wiki = wiki
+plan-note-archives = sauvegardes
+plan-note-hebergeur = hébergeur du site
+plan-note-routeur = routeur
+# { $id } : le numéro du VLAN ; { $nom } : son nom dans la configuration (bureaux, invites…).
+plan-vlan = VLAN { $id } · { $nom }
+plan-note-teletravail = télétravail
+plan-annexe = routeur de l'Annexe
+plan-note-annexe = second site
+plan-reseau-annexe = réseau de l'Annexe

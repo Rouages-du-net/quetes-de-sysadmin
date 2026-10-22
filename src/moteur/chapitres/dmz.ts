@@ -36,6 +36,7 @@ import {
   lanAvecDmz,
   SYSCTL_ROUTEUR,
   systemdRuche,
+  planRuche,
 } from './ruche';
 
 export const PUBLIQUE = '192.0.2.21';
@@ -77,6 +78,7 @@ const attendLaPublique = (j: Jeu) =>
 export const dmz: Chapitre = {
   id: 'dmz',
   numero: 5,
+  plan: planRuche({ teletravail: true, dmz: true }),
   commandes: [
     'ls',
     'cd',

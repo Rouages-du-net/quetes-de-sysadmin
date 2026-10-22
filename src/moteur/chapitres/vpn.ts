@@ -37,6 +37,7 @@ import {
   nouveauLan,
   SYSCTL_ROUTEUR,
   systemdRuche,
+  planRuche,
 } from './ruche';
 
 // La clé privée du portable de Malik (l'exemple de la documentation de WireGuard) : elle ne quitte jamais le portable.
@@ -99,6 +100,7 @@ const fini = (j: Jeu) => maintenant(j).etat === 'ok' && auRedemarrage(j) === 'ok
 export const vpn: Chapitre = {
   id: 'vpn',
   numero: 4,
+  plan: planRuche({ teletravail: true }),
   commandes: [
     'ls',
     'cd',

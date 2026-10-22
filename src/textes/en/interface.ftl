@@ -110,3 +110,29 @@ carte-maison = your home, ~
 carte-ferme = locked for now
 carte-apercu = not visited yet
 carte-fermer = Close
+
+## The network plan ("Network" tab of the map; see src/moteur/plan.ts)
+
+carte-onglet-lieux = Places
+carte-onglet-reseau = Network
+plan-legende = The network as the team planned it, like the diagram on the wall: what should be, not necessarily what is. To check: ip a, ip route, ping, wg show… Dotted links go through a WireGuard tunnel.
+plan-version-texte = The plan as a list
+plan-internet = Internet
+plan-ton-poste = your workstation
+plan-ici = you are here
+plan-visite = already connected
+plan-pas-visite = not connected yet
+plan-tunnel = through the WireGuard tunnel
+plan-dhcp = DHCP
+plan-reseau-interne = internal network
+plan-note-passerelle = gateway
+plan-note-wiki = wiki
+plan-note-archives = backups
+plan-note-hebergeur = website host
+plan-note-routeur = router
+# { $id }: the VLAN number; { $nom }: its name in the configuration (bureaux, invites…).
+plan-vlan = VLAN { $id } · { $nom }
+plan-note-teletravail = remote work
+plan-annexe = Annexe router
+plan-note-annexe = second site
+plan-reseau-annexe = Annexe network

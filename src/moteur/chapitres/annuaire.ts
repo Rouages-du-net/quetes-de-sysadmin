@@ -37,6 +37,7 @@ import {
   NFTABLES_DMZ,
   SYSCTL_ROUTEUR,
   systemdRuche,
+  planRuche,
 } from './ruche';
 
 export const BASE = 'dc=laruche,dc=example';
@@ -159,6 +160,7 @@ export const serviceSlapd = () => ({
 export const annuaireChapitre: Chapitre = {
   id: 'annuaire',
   numero: 7,
+  plan: planRuche({ teletravail: true, dmz: true, annexe: true, annuaire: true }),
   commandes: [
     'ls',
     'cd',
