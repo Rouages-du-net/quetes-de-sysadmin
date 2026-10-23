@@ -26,6 +26,11 @@ sortie-coupee =
        *[other] (… { $lignes } lines above, not shown)
     }
 poste-titre = Your workstation
+## The story menu: two views
+vue-titre = How to show the stories
+vue-reseau = Network map
+vue-baies = Racks
+vue-internet = Internet
 saisie-etiquette = Command
 credit = Quêtes de Sysadmin, a free game (GPL v3, texts CC BY-SA 4.0), inspired by Terminus, created at MIT by Shawn Conrad and Michele Pratusevich.
 credit-lien-projet = The project

@@ -103,6 +103,91 @@
 .qds .histoires button[data-verrouillee] .titre { font-weight: 600; color: var(--_discret); }
 .qds .histoires button[data-verrouillee] .etat { color: var(--_discret); font-weight: 400; }
 .qds .histoires button[data-verrouillee] .resume { display: none; }
+/* Le choix de la vue du menu : la carte du réseau ou les baies. */
+.qds .choix-vue { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 0.75rem; }
+.qds .histoires .bouton-vue { display: inline-block; width: auto; height: auto; font: inherit; font-size: 0.85rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 999px; background: var(--_fond); color: var(--_discret); cursor: pointer; }
+.qds .histoires .bouton-vue[aria-pressed='true'] { border-color: var(--_accent); color: var(--_texte); box-shadow: inset 0 0 0 1px var(--_accent); }
+.qds .hote { display: none; font-family: var(--_police-mono); font-size: 0.75rem; color: var(--_discret); overflow-wrap: anywhere; }
+.qds .noeud-internet { display: none; }
+
+/* La carte du réseau : le poste en haut, internet dessous, et un câble (un
+   bus) d'où part une branche vers chaque machine. Le câble d'une machine
+   est en pointillés tant qu'elle est verrouillée, ambre quand on y joue,
+   vert quand l'histoire est finie. Sur un écran large, les machines se
+   rangent de part et d'autre du câble ; sur un écran étroit, à sa droite. */
+.qds .histoires[data-vue='reseau'] { --_cable: 2px; --_branche: 1.5rem; }
+.qds .histoires[data-vue='reseau'] ol { position: relative; grid-template-columns: 1fr; gap: 0.6rem; padding-left: calc(var(--_branche) + 0.5rem); }
+.qds .histoires[data-vue='reseau'] ol::before {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  top: 1.25rem;
+  bottom: 1.25rem;
+  border-left: var(--_cable) solid var(--_bord);
+}
+.qds .histoires[data-vue='reseau'] li { position: relative; }
+.qds .histoires[data-vue='reseau'] li::before {
+  content: '';
+  position: absolute;
+  top: 1.25rem;
+  left: calc(-1 * var(--_branche));
+  width: var(--_branche);
+  border-top: var(--_cable) solid var(--_bord);
+}
+.qds .histoires[data-vue='reseau'] .resume { display: none; }
+.qds .histoires[data-vue='reseau'] .hote { display: block; grid-column: 1 / -1; }
+.qds .histoires[data-vue='reseau'] .noeud-internet { display: block; }
+.qds .noeud-internet span {
+  display: inline-block;
+  font-family: var(--_police-mono);
+  font-size: 0.8rem;
+  padding: 0.2rem 0.9rem;
+  border: 1px dashed var(--_discret);
+  border-radius: 999px;
+  color: var(--_discret);
+  background: var(--_fond);
+}
+.qds .histoires[data-vue='reseau'] .noeud-internet::before { top: 50%; }
+.qds .histoires[data-vue='reseau'] li[data-etat='verrouillee']::before { border-top-style: dashed; }
+.qds .histoires[data-vue='reseau'] li[data-etat='en-cours']::before { border-top-color: var(--_ambre); }
+.qds .histoires[data-vue='reseau'] li[data-etat='terminee']::before { border-top-color: var(--_accent); box-shadow: 0 0 0.35rem color-mix(in oklab, var(--_accent) 60%, transparent); }
+.qds .histoires[data-vue='reseau'] li[data-etat='terminee'] button { border-left-color: var(--_accent); }
+.qds .histoires[data-vue='reseau'] li[data-etat='en-cours'] button { border-left-color: var(--_ambre); }
+/* Un paquet file sur la branche de la machine où l'on joue. */
+.qds .histoires[data-vue='reseau'] li:has(> button[aria-current='true'])::after {
+  content: '';
+  position: absolute;
+  top: calc(1.25rem - 0.2rem);
+  left: calc(-1 * var(--_branche));
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--_accent);
+  animation: qds-paquet 2.2s ease-in-out infinite;
+}
+@keyframes qds-paquet { 0% { transform: translateX(0); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(calc(var(--_branche) - 0.45rem)); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .qds .histoires[data-vue='reseau'] li::after { animation: none; display: none; } }
+@media (min-width: 46rem) {
+  /* Deux colonnes, le câble au milieu : la poste et internet le surmontent. */
+  .qds .histoires[data-vue='reseau'] ol { grid-template-columns: 1fr 1fr; column-gap: calc(2 * var(--_branche)); padding-left: 0; }
+  .qds .histoires[data-vue='reseau'] ol::before { left: calc(50% - var(--_cable) / 2); top: 3rem; }
+  .qds .histoires[data-vue='reseau'] .noeud-poste, .qds .histoires[data-vue='reseau'] .noeud-internet { grid-column: 1 / -1; justify-self: center; text-align: center; }
+  .qds .histoires[data-vue='reseau'] .noeud-poste button { width: auto; min-width: 16rem; }
+  .qds .histoires[data-vue='reseau'] .noeud-poste::before, .qds .histoires[data-vue='reseau'] .noeud-internet::before {
+    left: 50%;
+    top: 100%;
+    width: 0;
+    height: 0.6rem;
+    border-top: none;
+    border-left: var(--_cable) solid var(--_bord);
+  }
+  .qds .histoires[data-vue='reseau'] .noeud-poste::after { display: none; }
+  .qds .histoires[data-vue='reseau'] li[data-cote='droite']::before, .qds .histoires[data-vue='reseau'] li[data-cote='droite']::after { left: calc(-1 * var(--_branche)); }
+  .qds .histoires[data-vue='reseau'] li[data-cote='gauche']::before { left: 100%; }
+  .qds .histoires[data-vue='reseau'] li[data-cote='gauche']::after { left: 100%; animation-direction: reverse; }
+  .qds .histoires[data-vue='reseau'] li[data-cote='gauche'] { text-align: left; }
+}
+
 .qds button[aria-current='true'] { border-color: var(--_accent); border-left-width: 3px; box-shadow: inset 0 0 0 1px var(--_accent); }
 .qds button:focus-visible, .qds a:focus-visible { outline: 3px solid var(--_accent); outline-offset: 2px; }
 .qds .num { font-size: 0.8rem; color: var(--_discret); }
