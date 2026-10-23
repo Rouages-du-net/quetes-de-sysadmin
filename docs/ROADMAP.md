@@ -358,8 +358,9 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
   alias de Debian), `diff --color`, `systemctl status` et `--failed` ; à
   l'écran seulement, jamais dans un tube ni un fichier (sauf
   `--color=always`) ; les événements lisent la sortie sans les codes, et
-  chaque chapitre est rejoué avec les couleurs. Reste à faire : `ip -c`,
-  `journalctl` (priorités), `git diff`.
+  chaque chapitre est rejoué avec les couleurs. Aussi : `ip -c`, les
+  priorités de `journalctl` (et l'extrait de `systemctl status`), `git`
+  (`diff`, `log`, `show`, `status`, `--no-color`).
 - [x] **Carte du réseau en menu** : le poste, internet, puis une machine par
   histoire (nom et adresse), branchée sur un même câble ; sa branche est en
   pointillés tant qu'elle est verrouillée, ambre quand on y joue, verte quand

@@ -81,3 +81,44 @@ describe('Couleurs de systemctl et de diff', () => {
     expect(s.executer('diff --color -u a.txt b.txt')).toContain(`${ESC}[36m@@ -1 +1 @@${ESC}[0m`);
   });
 });
+
+describe('Couleurs de journalctl, ip -c et git', () => {
+  it('journalctl : les erreurs en rouge gras, à l’écran seulement', () => {
+    const s = shell('redemarrage');
+    s.executer('sudo -l');
+    s.executer('bienvenue-2026');
+    const journal = s.executer('sudo journalctl -u catalogue')!;
+    expect(journal).toContain(`${ESC}[1;31m`);
+    expect(sansCouleurs(journal)).toContain('ERROR: FPM initialization failed');
+    expect(s.executer('sudo journalctl -u catalogue | grep -c FPM')).toBe('1');
+    expect(s.executer('sudo journalctl -u catalogue | head -n 3')).not.toContain(ESC);
+  });
+
+  it('ip -c : nom en cyan, UP en vert, MAC en jaune, IPv4 en magenta ; sans -c, rien', () => {
+    const s = shell('vlan');
+    const a = s.executer('ip -c a')!;
+    expect(a).toContain(`2: ${ESC}[36meth0${ESC}[0m:`);
+    expect(a).toContain(`state ${ESC}[32mUP${ESC}[0m`);
+    expect(a).toContain(`link/ether ${ESC}[33m`);
+    expect(a).toContain(`inet ${ESC}[35m192.0.2.21/24${ESC}[0m`);
+    expect(s.executer('ip a')).not.toContain(ESC);
+    expect(s.executer('ip -br -color=never a')).not.toContain(ESC);
+    // -c (always) : même dans un tube, comme iproute2.
+    expect(s.executer('ip -c -br a | grep eth0')).toContain(`${ESC}[36m`);
+  });
+
+  it('git : diff en rouge et vert, status (non suivi en rouge), --no-color', () => {
+    const s = shell('depot-nu');
+    s.executer('cd gazette');
+    s.executer('echo nouveau > essai.txt');
+    expect(s.executer('git status')).toContain(`\t${ESC}[31messai.txt${ESC}[0m`);
+    expect(s.executer('git status --no-color')).not.toContain(ESC);
+    s.executer('echo ajout >> style.css');
+    const d = s.executer('git diff')!;
+    expect(d).toContain(`${ESC}[32m+ajout${ESC}[0m`);
+    expect(d).toContain(`${ESC}[1mdiff --git`);
+    expect(s.executer('git diff | cat')).not.toContain(ESC);
+    // git log : les commits en jaune.
+    expect(s.executer('git log --oneline')).toMatch(new RegExp(`^${ESC}\\[33m[0-9a-f]{7}${ESC}\\[0m `));
+  });
+});

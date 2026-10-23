@@ -259,6 +259,7 @@ man-git =
       git push nom main           envoie ses commits au distant
       git pull nom main           récupère ceux du distant
     Un dépôt nu peut réagir à un push : ses crochets (hooks/pre-receive, hooks/post-receive) sont des scripts lancés à chaque réception, s'ils sont exécutables (chmod +x). pre-receive peut refuser le push (code de retour non nul). Pour déployer, post-receive extrait les fichiers dans un lieu : git --work-tree=lieu checkout -f main.
+    À l'écran, status, diff, log et show sont en couleur (color.ui=auto) : ce qui part en rouge, ce qui arrive en vert ; --no-color les coupe.
     Un commit se désigne par le début de son identifiant (au moins 4 caractères), ou par HEAD (le dernier), HEAD~1 (l'avant-dernier)…
     .synopsis = git [--git-dir=dépôt] [--work-tree=lieu] commande
 man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu. À l'écran, ce qui correspond est surligné en rouge (--color=auto, comme l'alias de Debian) ; --color=never le coupe.
@@ -573,8 +574,8 @@ man-host = la version courte de dig : les adresses et le courrier d'un nom, en p
     .synopsis = host nom [serveur]
     .exemple-1 = les adresses d'un nom
     .exemple-2 = la même question à un autre serveur
-man-ip = montre et change la configuration réseau (iproute2) : les interfaces (ip link), leurs adresses (ip addr, ou ip a), les routes (ip route). -br donne une ligne par interface ; -d ajoute les détails (pour un VLAN : son numéro 802.1Q). ip link add link eth1 name eth1.10 type vlan id 10 crée l'interface du VLAN 10 sur eth1 ; ip addr add lui donne une adresse ; ip link set … up la monte. Ces changements prennent effet tout de suite, mais disparaissent au redémarrage : pour qu'ils durent, on les écrit dans /etc/network/interfaces (man interfaces). Changer la configuration est réservé à root.
-    .synopsis = ip [-br] [-d] addr|link|route [show|add|del|set] …
+man-ip = montre et change la configuration réseau (iproute2) : les interfaces (ip link), leurs adresses (ip addr, ou ip a), les routes (ip route). -br donne une ligne par interface ; -d ajoute les détails (pour un VLAN : son numéro 802.1Q). ip link add link eth1 name eth1.10 type vlan id 10 crée l'interface du VLAN 10 sur eth1 ; ip addr add lui donne une adresse ; ip link set … up la monte. Ces changements prennent effet tout de suite, mais disparaissent au redémarrage : pour qu'ils durent, on les écrit dans /etc/network/interfaces (man interfaces). Changer la configuration est réservé à root. -c (color) met des couleurs : noms des interfaces en cyan, état UP en vert et DOWN en rouge, adresses en magenta.
+    .synopsis = ip [-br] [-d] [-c] addr|link|route [show|add|del|set] …
     .exemple-1 = les interfaces et leurs adresses
     .exemple-2 = la même chose, une ligne par interface
     .exemple-3 = les détails d'une interface (le numéro de VLAN)
