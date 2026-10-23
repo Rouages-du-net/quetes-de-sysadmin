@@ -332,6 +332,12 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [x] **Succès et grades** : 17 succès vérifiés sur ce qui s'est vraiment
+  passé (ls -a, un tube, une redirection, une restauration, le mode examen…),
+  dont 3 clins d'œil cachés (xyzzy, le sandwich de xkcd 149, sl) ; un grade,
+  de Stagiaire à SRE, selon les chapitres terminés, aussi dans le carnet.
+- [x] **Mission, barre de touches mobile, Ctrl-R et Ctrl-C** ; **style
+  « salle des machines »** propre au site.
 - [x] **Emporter sa progression** (salles de TP) : « Ma progression » donne
   un code court à recopier (les chapitres terminés, somme de contrôle contre
   les fautes de frappe, ordre des chapitres figé : `tests/progression/ordre.txt`)

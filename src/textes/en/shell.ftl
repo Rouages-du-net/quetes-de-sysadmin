@@ -105,3 +105,20 @@ date-option-argument =
     date: option requires an argument -- 's'
     Try 'date --help' for more information.
 date-reglage-refuse = date: cannot set date: Operation not permitted
+
+## Easter eggs (see OEUFS in src/moteur/shell.ts)
+
+oeuf-xyzzy = Nothing happens.
+oeuf-sandwich-refus = What? Make it yourself.
+oeuf-sandwich = Okay.
+oeuf-sl =
+          ====        ________                ___________
+      _D _|  |_______/        \__I_I_____===__|_________|
+       |(_)---  |   H\________/ |   |        =|___ ___|
+       /     |  |   H  |  |     |   |         ||_| |_||
+      |      |  |   H  |__--------------------| (___) |
+      | ________|___H__/__|_____/(__)~\_______|       |
+      |/ |   |-----------I_____I (__) (__)  D |=======|__
+    __/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__
+     |/-=|___|=    ||    ||    ||    |_____/~\___/
+      \_/      \O=====O=====O=====O_/      \_/

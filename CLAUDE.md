@@ -129,7 +129,9 @@ rouages.net.
   réseau, déclaré par chaque chapitre dans `Chapitre.plan`, voir
   `src/moteur/plan.ts` ; « Ma progression », le code court et le fichier
   de sauvegarde, dans `src/moteur/progression.ts` : un chapitre ajouté va
-  à la fin d'`ORDRE_DU_CODE` et de `tests/progression/ordre.txt`) et styles
+  à la fin d'`ORDRE_DU_CODE` et de `tests/progression/ordre.txt` ; les
+  succès et le grade dans `src/moteur/succes.ts`, les clins d'œil dans
+  `OEUFS` de `shell.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).
 - `src/element.ts` : l'élément `<quetes-de-sysadmin>` (Shadow DOM).
 - `src/pages/enseignants.astro` et `src/pages/en/teachers.astro` : les

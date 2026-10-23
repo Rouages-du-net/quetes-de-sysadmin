@@ -183,3 +183,58 @@ touche-haut = Previous command
 touche-bas = Next command
 # What bash shows during Ctrl-R (readline).
 recherche-historique = (reverse-i-search)`{ $motif }': { $commande }
+
+## Achievements and ranks (see src/moteur/succes.ts)
+
+succes-titre = Achievements
+# { $obtenus } of { $total }: the count shown on the link.
+succes-bouton = Achievements ({ $obtenus }/{ $total })
+# Announced in the terminal when an achievement is earned.
+succes-obtenu = 🏆 Achievement: { $nom }
+succes-grade = Your rank: { $grade }.
+succes-grade-suivant = Next rank, { $grade }, at { $chapitres } finished chapters.
+succes-le = ({ $date })
+succes-cache = Hidden achievement
+    .description = A nod to terminal culture. Up to you to find it.
+carnet-grade = Rank: { $grade }.
+grade-stagiaire = Intern
+grade-apprenti = Apprentice sysadmin
+grade-junior = Junior admin
+grade-admin = System administrator
+grade-confirme = Experienced admin
+grade-senior = Senior admin
+grade-sre = SRE (site reliability engineer)
+succes-premiere-commande = First step
+    .description = Run a first command.
+succes-manuel = Read the manual
+    .description = Open the manual (man or apropos): the pros' first reflex.
+succes-cache-ls = What is hidden
+    .description = Show the hidden files (ls -a).
+succes-tube = First pipe
+    .description = Join two commands with a pipe (|).
+succes-redirection = Into the file
+    .description = Send a command's output into a file (> or >>).
+succes-premier-chapitre = First chapter
+    .description = Finish a chapter.
+succes-effaceur = The Eraser stopped
+    .description = Finish the Eraser's story.
+succes-restauration = Restore tested
+    .description = Restore a backup for real: a backup you have never restored is not a backup.
+succes-reseau = The whole Hive
+    .description = Finish The Hive: VLANs, DHCP, firewall, VPN, directory and Wi-Fi.
+succes-trois-histoires = Three stories
+    .description = Finish three stories.
+succes-toutes-histoires = The grand tour
+    .description = Finish every story.
+succes-cinquante-commandes = Toolbox
+    .description = Have 50 commands in your notebook.
+succes-examen = Exam passed
+    .description = Finish a chapter in exam mode.
+succes-examen-eclair = Lightning
+    .description = Finish a chapter in exam mode in under 5 minutes.
+succes-xyzzy = Magic word
+    .description = The password of Colossal Cave Adventure (1976), one of the first text adventure games.
+succes-sandwich = With the rights
+    .description = With sudo, you get everything, even a sandwich (xkcd 149).
+succes-sl = Locomotive
+    .description = sl instead of ls: the most famous typo, punished by a train.

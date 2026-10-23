@@ -5,12 +5,14 @@
 // fantôme d'un composant), sans rien supposer de la page qui l'accueille.
 
 import { Console } from '../moteur/console';
+import type { Shell } from '../moteur/shell';
 import { HISTOIRES } from '../moteur/chapitres';
 import { machineDeHistoire } from '../moteur/machines';
 import { description, enMarkdown, noter, type Carnet } from '../moteur/carnet';
 import { liensRouages } from '../moteur/rouages';
 import { carte, type Lieu } from '../moteur/carte';
 import { disposer, reperes as reperesPlan, type ElementPlan } from '../moteur/plan';
+import { grade, GRADES, nouveauxSucces, SUCCES } from '../moteur/succes';
 import { codeDeProgression, fichierDeSauvegarde, lireCode, lireFichier, nettoyerNom, type Sauvegarde } from '../moteur/progression';
 import { editeur } from './editeur';
 import { traducteur, typographie, type Langue } from '../textes';
@@ -193,7 +195,21 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // Ma progression : un nom pour le carnet, et de quoi continuer sur une autre
   // machine (le code court, ou le fichier ; voir progression.ts).
   const boutonProgression = el('button', { type: 'button', class: 'lien', 'aria-haspopup': 'dialog' }, t('progression-bouton'));
-  const astuces = el('p', { class: 'astuces' }, typo(t('astuces')), ' ', recommencer, ' · ', boutonProgression);
+  // Les succès et le grade : une fenêtre (voir succes.ts).
+  const boutonSucces = el('button', { type: 'button', class: 'lien', 'aria-haspopup': 'dialog' });
+  const astuces = el('p', { class: 'astuces' }, typo(t('astuces')), ' ', recommencer, ' · ', boutonProgression, ' · ', boutonSucces);
+  const idSucces = `qds-succes-${Math.random().toString(36).slice(2, 8)}`;
+  const succesGrade = el('p', { class: 'succes-grade' });
+  const succesListe = el('ul', { class: 'succes-liste' });
+  const fermerSucces = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  const fenetreSucces = el(
+    'dialog',
+    { class: 'fenetre-succes', 'aria-labelledby': idSucces },
+    el('h2', { id: idSucces }, t('succes-titre')),
+    succesGrade,
+    succesListe,
+    el('p', { class: 'carte-actions' }, fermerSucces),
+  ) as HTMLDialogElement;
   const idProgression = `qds-progression-${Math.random().toString(36).slice(2, 8)}`;
   const champNom = el('input', { type: 'text', id: `${idProgression}-nom`, maxlength: '60', autocomplete: 'name', spellcheck: 'false' }) as HTMLInputElement;
   const codeActuel = el('code', { class: 'code-progression' });
@@ -227,7 +243,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit-lien-projet')), ' · ',
     el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-lien-original')));
 
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, terminal, barreTouches, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission);
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, terminal, barreTouches, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -241,6 +257,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const carnet: Carnet = sauve.carnet && typeof sauve.carnet === 'object' ? sauve.carnet : {};
   const records: Record<string, number> = sauve.records && typeof sauve.records === 'object' ? sauve.records : {};
   let nomJoueur = typeof sauve.nom === 'string' ? nettoyerNom(sauve.nom) : '';
+  const succes: Record<string, string> = sauve.succes && typeof sauve.succes === 'object' ? { ...sauve.succes } : {};
   terminalJeu.examen = sauve.examen === true;
   caseExamen.checked = terminalJeu.examen;
   // Le début du chapitre en cours, en mode examen (null : pas de chrono).
@@ -257,6 +274,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     examen: terminalJeu.examen,
     records,
     ...(nomJoueur ? { nom: nomJoueur } : {}),
+    succes,
   });
   const sauver = () => {
     try {
@@ -385,8 +403,20 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     majChrono();
   };
 
-  const apres = () => {
+  // Les succès obtenus par la dernière ligne (sh : sa session ; null : hors d'une ligne).
+  const verifierSucces = (sh: Shell | null) => {
+    for (const id of nouveauxSucces({ sh, termines, carnet, records }, succes)) {
+      succes[id] = new Date().toISOString();
+      afficher(t('succes-obtenu', { nom: t(`succes-${id}`) }), 'succes');
+    }
+    majSucces();
+  };
+  const majSucces = () => {
+    boutonSucces.textContent = t('succes-bouton', { obtenus: Object.keys(succes).length, total: SUCCES.length });
+  };
+  const apres = (sh: Shell | null = null) => {
     finExamen();
+    verifierSucces(sh);
     majCarnet();
     majInvite();
     majNav();
@@ -429,10 +459,11 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     const resultat = terminalJeu.executer(ligne);
     // Une réponse à une question (un mot de passe…) n'est pas une commande pour le carnet.
     if (!reponse) noter(carnet, shell);
+    const ligneDe = reponse ? null : shell;
     if (resultat === null) sortie.replaceChildren();
     else afficher(resultat);
     saisie.value = '';
-    apres();
+    apres(ligneDe);
     ouvrirEditeur();
   });
 
@@ -739,6 +770,33 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   });
   fermerMission.addEventListener('click', () => fenetreMission.close());
   fenetreMission.addEventListener('close', () => setTimeout(() => saisie.focus()));
+  // ——— Les succès et le grade ———
+  boutonSucces.addEventListener('click', () => {
+    const actuel = grade(termines);
+    const suivant = GRADES.find((g) => g.chapitres > termines.length);
+    succesGrade.replaceChildren(
+      el('strong', {}, t('succes-grade', { grade: t(`grade-${actuel}`) })),
+      ...(actuel === 'sre' ? [] : [' ', t('succes-grade-suivant', { grade: t(`grade-${suivant?.id ?? 'sre'}`), chapitres: suivant?.chapitres ?? termines.length })]),
+    );
+    const date = (iso: string) => new Intl.DateTimeFormat(t.langue, { dateStyle: 'medium' }).format(new Date(iso));
+    succesListe.replaceChildren(
+      ...SUCCES.map((x) => {
+        const obtenu = succes[x.id];
+        const visible = obtenu || !x.cache;
+        return el(
+          'li',
+          { class: obtenu ? 'obtenu' : 'a-obtenir' },
+          el('span', { class: 'succes-nom' }, `${obtenu ? '🏆' : '·'} ${visible ? t(`succes-${x.id}`) : t('succes-cache')}`),
+          ' ',
+          el('span', { class: 'succes-description' }, visible ? typo(t(`succes-${x.id}.description`)) : typo(t('succes-cache.description'))),
+          ...(obtenu ? [' ', el('span', { class: 'succes-date' }, t('succes-le', { date: date(obtenu) }))] : []),
+        );
+      }),
+    );
+    fenetreSucces.showModal();
+  });
+  fermerSucces.addEventListener('click', () => fenetreSucces.close());
+  fenetreSucces.addEventListener('close', () => setTimeout(() => saisie.focus()));
   // ——— Ma progression ———
   // Une sauvegarde reprise (code ou fichier) : on l'écrit, puis le jeu repart d'elle.
   const reprendre = (s: Sauvegarde) => {

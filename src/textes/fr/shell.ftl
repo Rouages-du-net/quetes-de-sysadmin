@@ -105,3 +105,20 @@ date-option-argument =
     date: l'option requiert un argument -- 's'
     Saisissez « date --help » pour plus d'informations.
 date-reglage-refuse = date: impossible de régler la date: Opération non permise
+
+## Clins d'œil (voir OEUFS dans src/moteur/shell.ts) : en anglais, comme leurs originaux
+
+oeuf-xyzzy = Nothing happens.
+oeuf-sandwich-refus = What? Make it yourself.
+oeuf-sandwich = Okay.
+oeuf-sl =
+          ====        ________                ___________
+      _D _|  |_______/        \__I_I_____===__|_________|
+       |(_)---  |   H\________/ |   |        =|___ ___|
+       /     |  |   H  |  |     |   |         ||_| |_||
+      |      |  |   H  |__--------------------| (___) |
+      | ________|___H__/__|_____/(__)~\_______|       |
+      |/ |   |-----------I_____I (__) (__)  D |=======|__
+    __/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__
+     |/-=|___|=    ||    ||    ||    |_____/~\___/
+      \_/      \O=====O=====O=====O_/      \_/
