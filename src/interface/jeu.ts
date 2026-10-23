@@ -74,6 +74,17 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // La carte : un bouton à côté du terminal ouvre, dans une fenêtre, les lieux
   // connus de la machine où l'on est (voir carte.ts).
   const boutonCarte = el('button', { type: 'button', class: 'bouton-carte', 'aria-haspopup': 'dialog' }, t('carte-bouton'));
+  // L'affichage du terminal : thème, taille du texte, plein écran (réglages de ce navigateur).
+  const THEMES = ['phosphore', 'ambre', 'contraste', 'papier'];
+  const choixTheme = el(
+    'select',
+    { 'aria-label': t('affichage-theme') },
+    ...THEMES.map((x) => el('option', { value: x }, t(`affichage-theme-${x}`))),
+  ) as HTMLSelectElement;
+  const plusPetit = el('button', { type: 'button', class: 'bouton-reglage', 'aria-label': t('affichage-plus-petit') }, 'A−');
+  const plusGrand = el('button', { type: 'button', class: 'bouton-reglage', 'aria-label': t('affichage-plus-grand') }, 'A+');
+  const boutonFocus = el('button', { type: 'button', class: 'bouton-reglage', 'aria-pressed': 'false' }, t('affichage-focus'));
+  const reglages = el('span', { class: 'reglages' }, choixTheme, plusPetit, plusGrand, boutonFocus);
   // La mission : l'objectif du chapitre, ses consignes, et ce qui s'est déjà passé.
   const boutonMission = el('button', { type: 'button', class: 'bouton-mission', 'aria-haspopup': 'dialog' }, t('mission-bouton'));
   const barreExamen = el(
@@ -81,7 +92,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     { class: 'examen' },
     el('label', {}, caseExamen, el('span', {}, t('examen-case'))),
     chrono,
-    el('span', { class: 'outils' }, boutonMission, boutonCarte),
+    el('span', { class: 'outils' }, boutonMission, boutonCarte, reglages),
   );
   const idMission = `qds-mission-${Math.random().toString(36).slice(2, 8)}`;
   const missionTitre = el('h2', { id: idMission });
@@ -162,6 +173,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const trouvee = el('p', { class: 'recherche', 'aria-live': 'polite' });
   const form = el('form', { autocomplete: 'off' }, invite, saisie, trouvee);
   const terminal = el('div', { class: 'terminal' }, sortie, form);
+  const quitterFocus = el('button', { type: 'button', class: 'quitter-focus' }, t('affichage-quitter-focus'));
   // Les touches qui manquent aux claviers des téléphones (affichées sur les écrans tactiles).
   const TOUCHES: [string, string][] = [
     ['Tab', 'Tab'],
@@ -258,7 +270,9 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit-lien-projet')), ' · ',
     el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-lien-original')));
 
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, terminal, barreTouches, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces);
+  // Le terminal et sa barre de touches : ensemble en plein écran.
+  const ecran = el('div', { class: 'ecran' }, quitterFocus, terminal, barreTouches);
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, ecran, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -472,12 +486,15 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     position = historique.length;
     const shell = terminalJeu.shell;
     const finiAvant = shell.termine;
+    const hoteAvant = shell.hote;
     const resultat = terminalJeu.executer(ligne);
     // Une réponse à une question (un mot de passe…) n'est pas une commande pour le carnet.
     if (!reponse) noter(carnet, shell);
     const ligneDe = reponse ? null : shell;
     if (resultat === null) sortie.replaceChildren();
     else afficher(resultat);
+    // Les mises en scène : la connexion à une autre machine, le redémarrage.
+    if (terminalJeu.shell.hote !== hoteAvant) mettreEnScene(shell.derniere.commandes.some((c) => c.includes('reboot')) ? 'reboot' : 'connexion');
     // Le débrief dit combien d'indices on a demandés pour ce chapitre.
     if (!finiAvant && shell.termine && shell.indicesDemandes.size) afficher(t('indice-debrief', { nombre: shell.indicesDemandes.size }), 'succes');
     saisie.value = '';
@@ -816,6 +833,59 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     texteIndice.lastElementChild?.scrollIntoView({ block: 'nearest' });
   });
   fenetreMission.addEventListener('close', () => setTimeout(() => saisie.focus()));
+  // ——— L'affichage du terminal ———
+  // Un réglage de ce navigateur seulement (pas de la progression).
+  const CLE_AFFICHAGE = `${CLE}-affichage`;
+  const TAILLES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
+  let affichage = { theme: 'phosphore', taille: 2 };
+  try {
+    affichage = { ...affichage, ...JSON.parse(localStorage.getItem(CLE_AFFICHAGE) ?? '{}') };
+  } catch {}
+  const appliquerAffichage = () => {
+    if (!THEMES.includes(affichage.theme)) affichage.theme = 'phosphore';
+    affichage.taille = Math.max(0, Math.min(TAILLES.length - 1, Math.round(affichage.taille) || 0));
+    terminal.dataset.theme = affichage.theme;
+    terminal.style.setProperty('--qds-taille-terminal', `${TAILLES[affichage.taille]}rem`);
+    choixTheme.value = affichage.theme;
+    plusPetit.disabled = affichage.taille === 0;
+    plusGrand.disabled = affichage.taille === TAILLES.length - 1;
+    try {
+      localStorage.setItem(CLE_AFFICHAGE, JSON.stringify(affichage));
+    } catch {}
+  };
+  choixTheme.addEventListener('change', () => {
+    affichage.theme = choixTheme.value;
+    appliquerAffichage();
+  });
+  plusPetit.addEventListener('click', () => {
+    affichage.taille--;
+    appliquerAffichage();
+  });
+  plusGrand.addEventListener('click', () => {
+    affichage.taille++;
+    appliquerAffichage();
+  });
+  // Le plein écran : le terminal (et sa barre de touches) prend toute la fenêtre ; Échap en sort.
+  const basculerFocus = (actif: boolean) => {
+    ecran.classList.toggle('focus', actif);
+    boutonFocus.setAttribute('aria-pressed', String(actif));
+    saisie.focus();
+  };
+  boutonFocus.addEventListener('click', () => basculerFocus(!ecran.classList.contains('focus')));
+  quitterFocus.addEventListener('click', () => basculerFocus(false));
+  ecran.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && ecran.classList.contains('focus') && !recherche) basculerFocus(false);
+  });
+  appliquerAffichage();
+  // Les mises en scène (sauf si le système demande moins d'animations) : une
+  // connexion qui s'établit, un écran qui s'éteint au redémarrage.
+  const mettreEnScene = (quoi: 'connexion' | 'reboot') => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    terminal.classList.remove('scene-connexion', 'scene-reboot');
+    void terminal.offsetWidth;
+    terminal.classList.add(`scene-${quoi}`);
+  };
+  terminal.addEventListener('animationend', () => terminal.classList.remove('scene-connexion', 'scene-reboot'));
   // ——— Les succès et le grade ———
   boutonSucces.addEventListener('click', () => {
     const actuel = grade(termines);

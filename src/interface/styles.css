@@ -113,7 +113,7 @@
 .qds .terminal {
   background: var(--_terminal-fond);
   color: var(--_terminal-texte);
-  font: 0.95rem/1.5 var(--_police-mono);
+  font: var(--qds-taille-terminal, 0.95rem)/1.5 var(--_police-mono);
   border: 1px solid color-mix(in oklab, var(--_accent) 35%, var(--_bord));
   border-radius: 0.4rem;
   box-shadow: 0 0 0 1px rgb(0 0 0 / 0.2), 0 0.75rem 2rem rgb(0 0 0 / 0.25);
@@ -156,13 +156,15 @@
 .qds .examen label { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
 .qds .examen input { accent-color: var(--_accent); width: 1.1rem; height: 1.1rem; margin: 0.2rem 0 0; flex: none; }
 /* La carte : le bouton au bout de la barre, la fenêtre et l'arbre des lieux. */
-.qds .outils { margin-left: auto; display: flex; gap: 0.5rem; }
+.qds .outils { margin-left: auto; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; }
 .qds .bouton-carte,
 .qds .bouton-mission,
-.qds .bouton-indice { font: inherit; font-size: 0.9rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }
+.qds .bouton-indice,
+.qds .bouton-reglage { font: inherit; font-size: 0.9rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }
 .qds .bouton-carte:hover, .qds .bouton-carte:focus-visible,
 .qds .bouton-mission:hover, .qds .bouton-mission:focus-visible,
-.qds .bouton-indice:hover, .qds .bouton-indice:focus-visible { border-color: var(--_accent); }
+.qds .bouton-indice:hover, .qds .bouton-indice:focus-visible,
+.qds .bouton-reglage:hover, .qds .bouton-reglage:focus-visible { border-color: var(--_accent); }
 .qds .fenetre-carte,
 .qds .fenetre-progression,
 .qds .fenetre-mission,
@@ -242,6 +244,24 @@
 .qds .aide { margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed var(--_bord); }
 .qds .indice-boutons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .qds .indice-texte p { margin: 0.5rem 0; }
+/* L'affichage : thème du terminal, taille, plein écran. */
+.qds .reglages { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+.qds .reglages select { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.3rem; border: 1px solid var(--_bord); border-radius: 0.35rem; background: var(--_carte); color: var(--_texte); }
+.qds .reglages button:disabled { opacity: 0.5; cursor: default; }
+.qds .reglages [aria-pressed='true'] { border-color: var(--_accent); color: var(--_accent); }
+.qds .terminal[data-theme='ambre'] { --_terminal-fond: #140e04; --_terminal-texte: #ffcf87; --_terminal-invite: #ffe7b3; }
+.qds .terminal[data-theme='contraste'] { --_terminal-fond: #000000; --_terminal-texte: #ffffff; --_terminal-invite: #ffff3d; }
+.qds .terminal[data-theme='papier'] { --_terminal-fond: #fbfaf4; --_terminal-texte: #1b1f1b; --_terminal-invite: #0f6b37; }
+.qds .quitter-focus { display: none; }
+.qds .ecran.focus { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem; background: var(--_fond); }
+.qds .ecran.focus .terminal { flex: 1; max-height: none; min-height: 0; }
+.qds .ecran.focus .quitter-focus { display: block; align-self: flex-end; font: inherit; font-size: 0.85rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 0.35rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }
+/* Les mises en scène : une connexion qui s'établit (balayage), un redémarrage (écran éteint). */
+.qds .terminal.scene-connexion { animation: qds-connexion 0.6s ease-out; }
+@keyframes qds-connexion { from { box-shadow: inset 0 0 0 100vmax color-mix(in oklab, var(--_accent) 18%, transparent); } }
+.qds .terminal.scene-reboot { animation: qds-reboot 1.4s steps(1) both; }
+@keyframes qds-reboot { 0%, 70% { filter: brightness(0); } 100% { filter: none; } }
+@media (prefers-reduced-motion: reduce) { .qds .terminal.scene-connexion, .qds .terminal.scene-reboot { animation: none; } }
 .qds .carte-actions { margin: 0.75rem 0 0; text-align: right; }
 .qds .chrono { font-family: var(--_police-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--_accent); }
 .qds .sortie pre.examen-resultat { font-weight: 600; color: var(--_terminal-invite); }

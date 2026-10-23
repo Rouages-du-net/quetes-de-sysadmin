@@ -280,3 +280,15 @@ classe-col-grade = Grade
 classe-col-succes = Succès
 classe-col-examen = Meilleur examen
 classe-col-date = Sauvegarde
+
+## L'affichage du terminal
+
+affichage-theme = Thème du terminal
+affichage-theme-phosphore = Phosphore
+affichage-theme-ambre = Ambre
+affichage-theme-contraste = Contraste élevé
+affichage-theme-papier = Papier
+affichage-plus-petit = Texte plus petit
+affichage-plus-grand = Texte plus grand
+affichage-focus = Plein écran
+affichage-quitter-focus = Quitter le plein écran (Échap)
