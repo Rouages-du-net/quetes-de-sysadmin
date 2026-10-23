@@ -43,6 +43,7 @@ import {
   NFTABLES_DMZ,
   SYSCTL_ROUTEUR,
   systemdRuche,
+  planRuche,
 } from './ruche';
 
 const BORNE = '10.10.30.20';
@@ -231,6 +232,7 @@ const dossier = (enfants: Parameters<typeof d>[0]) => d(enfants, undefined, { pr
 export const wifi: Chapitre = {
   id: 'wifi',
   numero: 8,
+  plan: planRuche({ teletravail: true, dmz: true, annexe: true, annuaire: true, wifi: true }),
   commandes: [
     'ls',
     'cd',

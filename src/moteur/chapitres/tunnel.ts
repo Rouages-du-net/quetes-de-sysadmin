@@ -15,7 +15,7 @@ import { f, type Chapitre } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import type { Appli } from '../nginx';
 import { nouveauSystemd } from '../systemd';
-import { chargerSshd, comptesMaison, dossierSsh, etatMaison, hoteInterne, M, MAINTENANT, mondeMaison, MOT_DE_PASSE } from './maison';
+import { chargerSshd, comptesMaison, dossierSsh, etatMaison, hoteInterne, M, MAINTENANT, mondeMaison, MOT_DE_PASSE, planMaison } from './maison';
 
 type Inscription = 'attente' | 'validee' | 'refusee';
 const VALIDER = ['samir', 'lea'];
@@ -58,6 +58,7 @@ const publiciteValidee = (j: Jeu) => inscriptions(wiki(j))[PUBLICITE] === 'valid
 export const tunnel: Chapitre = {
   id: 'tunnel',
   numero: 3,
+  plan: planMaison(),
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname', 'ssh'],
   maison: M,
   accueil: 'courriel_yasmine.txt',

@@ -125,7 +125,9 @@ rouages.net.
   dans `editeur.ts`, le carnet du sysadmin dont la logique est dans
   `src/moteur/carnet.ts`, les liens vers rouages.net après un chapitre dans
   `src/moteur/rouages.ts`, la carte des lieux connus dont la logique est
-  dans `src/moteur/carte.ts`) et styles
+  dans `src/moteur/carte.ts`, et son onglet « Réseau » : le plan prévu du
+  réseau, déclaré par chaque chapitre dans `Chapitre.plan`, voir
+  `src/moteur/plan.ts`) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).
 - `src/element.ts` : l'élément `<quetes-de-sysadmin>` (Shadow DOM).
 - `src/pages/enseignants.astro` et `src/pages/en/teachers.astro` : les

@@ -336,6 +336,12 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
   fenêtre, l'arbre des lieux connus de la machine où l'on est (lieux
   visités, lieux aperçus en italique, maison, lieux fermés), avec « tu es
   ici ». Rien n'est dévoilé au-delà de ce qu'on a vu ; pas de fichiers.
+- [x] **Le plan du réseau** : dans les histoires à plusieurs machines (La
+  Maison des associations, La Ruche), un onglet « Réseau » de la carte
+  montre le réseau prévu (le schéma affiché au mur : routeur, VLAN,
+  machines internes, tunnels WireGuard), en SVG et en liste, avec « tu es
+  ici » et les machines où l'on s'est déjà connecté·e. C'est le plan, pas
+  l'état : le vérifier reste le travail des vraies commandes.
 - [x] **Le carnet du sysadmin** : chaque commande découverte s'ajoute à un
   aide-mémoire personnel (sa ligne du manuel, la première ligne tapée, le
   chapitre), gardé dans le navigateur, exportable en Markdown.

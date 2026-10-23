@@ -14,7 +14,7 @@ import { chemin, f, type Chapitre } from '../monde';
 import type { Jeu } from '../shell';
 import { autorise, CONFIG, lireConfig } from '../sshd';
 import { clePublique, MACHINES } from '../machines';
-import { chargerSshd, comptesMaison, connexionsPar, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE, sshd } from './maison';
+import { chargerSshd, comptesMaison, connexionsPar, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE, sshd, planMaison } from './maison';
 
 // Les clés autorisées pour vous sur maison (lignes « ssh-… »).
 const autorisees = (j: Jeu) =>
@@ -32,6 +32,7 @@ const ferme = (j: Jeu) => sansMotDePasse(j) && clesDeVous(j).length > 0 && autor
 export const cles: Chapitre = {
   id: 'cles',
   numero: 1,
+  plan: planMaison(),
   commandes: [
     'ls',
     'cd',

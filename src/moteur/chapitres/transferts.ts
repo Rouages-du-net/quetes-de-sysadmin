@@ -14,7 +14,7 @@
 import { chemin, d, f, nom, type Chapitre, type Dossier, type Noeud } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { genererCle } from '../acces';
-import { chargerSshd, comptesMaison, dossierSsh, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE } from './maison';
+import { chargerSshd, comptesMaison, dossierSsh, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE, planMaison } from './maison';
 
 const RAPPORT = 'rapport-2027.pdf';
 const PARTAGE = '/srv/partage';
@@ -76,6 +76,7 @@ const imbrique = (j: Jeu) => chemin(j.t, `${SAUVEGARDE}/partage`);
 export const transferts: Chapitre = {
   id: 'transferts',
   numero: 4,
+  plan: planMaison(),
   commandes: [
     'ls',
     'cd',

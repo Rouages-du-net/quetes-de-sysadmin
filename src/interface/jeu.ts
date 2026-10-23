@@ -10,6 +10,7 @@ import { machineDeHistoire } from '../moteur/machines';
 import { description, enMarkdown, noter, type Carnet } from '../moteur/carnet';
 import { liensRouages } from '../moteur/rouages';
 import { carte, type Lieu } from '../moteur/carte';
+import { disposer, reperes as reperesPlan, type ElementPlan } from '../moteur/plan';
 import { editeur } from './editeur';
 import { traducteur, typographie, type Langue } from '../textes';
 
@@ -72,12 +73,35 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const carteTitre = el('h2', { id: idCarte });
   const carteArbre = el('div', { class: 'carte-arbre' });
   const fermerCarte = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  // Deux onglets quand l'histoire a un réseau : les lieux de la machine, et le plan du réseau (voir plan.ts).
+  const onglet = (suffixe: string, texte: string) =>
+    el('button', { type: 'button', role: 'tab', id: `${idCarte}-onglet-${suffixe}`, 'aria-controls': `${idCarte}-${suffixe}` }, texte);
+  const ongletLieux = onglet('lieux', t('carte-onglet-lieux'));
+  const ongletReseau = onglet('reseau', t('carte-onglet-reseau'));
+  const onglets = el('div', { role: 'tablist', class: 'carte-onglets' }, ongletLieux, ongletReseau);
+  const panneauLieux = el(
+    'div',
+    { role: 'tabpanel', id: `${idCarte}-lieux`, 'aria-labelledby': ongletLieux.id },
+    el('p', { class: 'carte-legende' }, typo(t('carte-legende'))),
+    carteArbre,
+  );
+  const planSchema = el('div', { class: 'plan-schema' });
+  const planListe = el('div', { class: 'carte-arbre' });
+  const planTexte = el('details', { class: 'plan-texte' }, el('summary', {}, t('plan-version-texte')), planListe);
+  const panneauReseau = el(
+    'div',
+    { role: 'tabpanel', id: `${idCarte}-reseau`, 'aria-labelledby': ongletReseau.id },
+    el('p', { class: 'carte-legende' }, typo(t('plan-legende'))),
+    planSchema,
+    planTexte,
+  );
   const fenetreCarte = el(
     'dialog',
     { class: 'fenetre-carte', 'aria-labelledby': idCarte },
     carteTitre,
-    el('p', { class: 'carte-legende' }, typo(t('carte-legende'))),
-    carteArbre,
+    onglets,
+    panneauLieux,
+    panneauReseau,
     el('p', { class: 'carte-actions' }, fermerCarte),
   ) as HTMLDialogElement;
   const sortie = el('div', { class: 'sortie', role: 'log', 'aria-live': 'polite' });
@@ -446,10 +470,99 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
       ...(l.enfants.length ? [el('ul', {}, ...l.enfants.map(dessinerLieu))] : []),
     );
   };
+  // Le plan du réseau : un schéma (arbre couché, une colonne par niveau) et la même chose en liste.
+  const SVG = 'http://www.w3.org/2000/svg';
+  const svg = (nom: string, attrs: Record<string, string>, ...enfants: (Node | string)[]) => {
+    const e = document.createElementNS(SVG, nom);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    e.append(...enfants);
+    return e;
+  };
+  const LARGEUR = 176;
+  const HAUTEUR = 54;
+  const ECART_X = 36;
+  const ECART_Y = 22;
+  const classesPlan = (e: ElementPlan, ici: string, visitees: Set<string>) => {
+    const r = reperesPlan(e, ici, visitees);
+    return [e.role, r.ici ? 'ici' : '', e.hote && !r.visite ? 'pas-visite' : ''].filter(Boolean).join(' ');
+  };
+  const dessinerPlan = (racine: ElementPlan, ici: string, visitees: Set<string>) => {
+    const { places, colonnes, lignes } = disposer(racine);
+    const x = (c: number) => 2 + c * (LARGEUR + ECART_X);
+    const y = (l: number) => ECART_Y + l * (HAUTEUR + ECART_Y);
+    const largeur = x(colonnes) - ECART_X + 2;
+    const hauteur = y(lignes);
+    const liens = places
+      .filter((p) => p.parent)
+      .map((p) => {
+        const de = p.parent!;
+        const milieu = x(de.colonne) + LARGEUR + ECART_X / 2;
+        return svg('path', {
+          class: p.element.tunnel ? 'lien tunnel' : 'lien',
+          d: `M${x(de.colonne) + LARGEUR} ${y(de.ligne) + HAUTEUR / 2} H${milieu} V${y(p.ligne) + HAUTEUR / 2} H${x(p.colonne)}`,
+        });
+      });
+    const boites = places.map((p) => {
+      const e = p.element;
+      const bx = x(p.colonne);
+      const by = y(p.ligne);
+      return svg(
+        'g',
+        { class: `boite ${classesPlan(e, ici, visitees)}` },
+        svg('rect', { x: String(bx), y: String(by), width: String(LARGEUR), height: String(HAUTEUR), rx: e.role === 'internet' ? '27' : '6' }),
+        // Un nom seul (Internet) se centre dans sa boîte.
+        svg('text', { x: String(bx + 10), y: String(by + (e.adresse || e.note ? 19 : HAUTEUR / 2 + 5)), class: 'nom' }, e.nom),
+        ...(e.adresse ? [svg('text', { x: String(bx + 10), y: String(by + 34), class: 'adresse' }, e.adresse)] : []),
+        ...(e.note ? [svg('text', { x: String(bx + 10), y: String(by + 48), class: 'note' }, e.note)] : []),
+        ...(reperesPlan(e, ici, visitees).ici ? [svg('text', { x: String(bx), y: String(by - 6), class: 'repere-ici' }, `▼ ${t('plan-ici')}`)] : []),
+      );
+    });
+    return svg('svg', { viewBox: `0 0 ${largeur} ${hauteur}`, width: String(largeur), height: String(hauteur), 'aria-hidden': 'true', focusable: 'false' }, ...liens, ...boites);
+  };
+  const dessinerElement = (e: ElementPlan, ici: string, visitees: Set<string>): HTMLElement => {
+    const r = reperesPlan(e, ici, visitees);
+    const notes = [e.note, e.tunnel && t('plan-tunnel'), e.hote && (r.visite ? t('plan-visite') : t('plan-pas-visite'))].filter(Boolean).join(', ');
+    return el(
+      'li',
+      { class: classesPlan(e, ici, visitees), ...(r.ici ? { 'aria-current': 'location' } : {}) },
+      el('span', { class: 'nom' }, e.nom),
+      ...(e.adresse ? [' ', el('code', {}, e.adresse)] : []),
+      ...(notes ? [' ', el('span', { class: 'reperes' }, `(${notes})`)] : []),
+      ...(r.ici ? [' ', el('strong', { class: 'vous-etes-ici' }, `← ${t('plan-ici')}`)] : []),
+      ...(e.enfants?.length ? [el('ul', {}, ...e.enfants.map((x) => dessinerElement(x, ici, visitees)))] : []),
+    );
+  };
+  const choisirOnglet = (reseau: boolean) => {
+    ongletLieux.setAttribute('aria-selected', String(!reseau));
+    ongletReseau.setAttribute('aria-selected', String(reseau));
+    ongletLieux.tabIndex = reseau ? -1 : 0;
+    ongletReseau.tabIndex = reseau ? 0 : -1;
+    panneauLieux.hidden = reseau;
+    panneauReseau.hidden = !reseau;
+  };
+  ongletLieux.addEventListener('click', () => choisirOnglet(false));
+  ongletReseau.addEventListener('click', () => choisirOnglet(true));
+  // Les flèches passent d'un onglet à l'autre (comme dans toute liste d'onglets).
+  onglets.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const reseau = ongletLieux.getAttribute('aria-selected') === 'true';
+    choisirOnglet(reseau);
+    (reseau ? ongletReseau : ongletLieux).focus();
+    e.preventDefault();
+  });
   boutonCarte.addEventListener('click', () => {
     const sh = terminalJeu.shell;
     carteTitre.textContent = t('carte-titre', { machine: sh.hote });
     carteArbre.replaceChildren(el('ul', { class: 'arbre' }, dessinerLieu(carte(sh))));
+    const plan = terminalJeu.distant?.shell.chapitre.plan?.(t);
+    onglets.hidden = !plan;
+    if (plan) {
+      planSchema.replaceChildren(dessinerPlan(plan, sh.hote, terminalJeu.visitees));
+      planListe.replaceChildren(el('ul', { class: 'arbre' }, dessinerElement(plan, sh.hote, terminalJeu.visitees)));
+      // Sur un petit écran, le schéma défile dans sa boîte : la liste s'ouvre d'office.
+      planTexte.open = matchMedia('(max-width: 40rem)').matches;
+    }
+    choisirOnglet(false);
     fenetreCarte.showModal();
     fenetreCarte.querySelector('.ici')?.scrollIntoView({ block: 'center' });
   });

@@ -16,7 +16,7 @@ import { f, type Chapitre } from '../monde';
 import type { Jeu } from '../shell';
 import { dans, lan } from '../lan';
 import { repondSur } from '../dnsmasq';
-import { comptesRuche, initialiserRuche, INTERFACES_VLAN, M, mondeRuche, MOT_DE_PASSE, nouveauLan, systemdRuche, VLANS } from './ruche';
+import { comptesRuche, initialiserRuche, INTERFACES_VLAN, M, mondeRuche, MOT_DE_PASSE, nouveauLan, systemdRuche, VLANS, planRuche } from './ruche';
 
 const DNSMASQ_A_PLAT = `# The DHCP server of the LAN
 interface=eth1
@@ -31,6 +31,7 @@ const bienServi = (j: Jeu) =>
 export const dhcp: Chapitre = {
   id: 'dhcp',
   numero: 2,
+  plan: planRuche(),
   commandes: [
     'ls',
     'cd',

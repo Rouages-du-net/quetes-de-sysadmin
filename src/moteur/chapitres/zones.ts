@@ -25,7 +25,7 @@ import { auDemarrage, essayer, nft, resultats, routage, traverser, type Flux, ty
 import { sysctlAuDemarrage } from '../commandes/nftables';
 import { systemd } from '../systemd';
 import { POSTE } from '../machines';
-import { comptesRuche, DNSMASQ_VLAN, initialiserRuche, INTERFACES_VLAN, M, mondeRuche, MOT_DE_PASSE, nouveauLan, systemdRuche } from './ruche';
+import { comptesRuche, DNSMASQ_VLAN, initialiserRuche, INTERFACES_VLAN, M, mondeRuche, MOT_DE_PASSE, nouveauLan, systemdRuche, planRuche } from './ruche';
 
 // Le trafic des appareils, et ce qui doit passer.
 export const FLUX: (Flux & { permis: boolean })[] = [
@@ -70,6 +70,7 @@ const auRedemarrage = (j: Jeu) => {
 export const zones: Chapitre = {
   id: 'zones',
   numero: 3,
+  plan: planRuche(),
   commandes: [
     'ls',
     'cd',

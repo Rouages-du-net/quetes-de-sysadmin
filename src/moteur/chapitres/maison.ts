@@ -11,6 +11,7 @@ import type { Jeu } from '../shell';
 import type { Traduire } from '../../textes';
 import { nouveauSystemd, systemd, type DefinitionService } from '../systemd';
 import { lireConfig } from '../sshd';
+import { internet, type ElementPlan } from '../plan';
 
 export const M = '/home/vous';
 export const MOT_DE_PASSE = 'lilas-2027';
@@ -188,3 +189,30 @@ export function hoteInterne(
 }
 
 export const sd = (j: Jeu) => systemd(j)!;
+
+/** Le plan du réseau de la Maison : la passerelle, et derrière elle le wiki et les archives ; l'hébergeur du site, sur internet. */
+export const planMaison =
+  (o: { hebergeur?: boolean } = {}) =>
+  (t: Traduire): ElementPlan =>
+    internet(
+      t,
+      {
+        role: 'routeur',
+        nom: 'maison',
+        adresse: '192.0.2.19',
+        note: t('plan-note-passerelle'),
+        hote: 'maison',
+        enfants: [
+          {
+            role: 'reseau',
+            nom: t('plan-reseau-interne'),
+            adresse: '10.20.0.0/24',
+            enfants: [
+              { role: 'serveur', nom: 'wiki', adresse: '10.20.0.11', note: t('plan-note-wiki'), hote: 'wiki' },
+              { role: 'serveur', nom: 'archives', adresse: '10.20.0.12', note: t('plan-note-archives'), hote: 'archives' },
+            ],
+          },
+        ],
+      },
+      ...(o.hebergeur ? [{ role: 'serveur' as const, nom: 'ftp.hebergeur.example', adresse: '203.0.113.80', note: t('plan-note-hebergeur') }] : []),
+    );

@@ -12,6 +12,8 @@ import { demarrerDnsmasq, lireDnsmasq } from '../dnsmasq';
 import { nouveauSystemd, type DefinitionService } from '../systemd';
 import { journaliserTrafic, lireConf } from '../nftables';
 import { appliquerSysctl } from '../commandes/nftables';
+import { internet, type ElementPlan } from '../plan';
+import type { Traduire } from '../../textes';
 
 export const M = '/home/vous';
 export const MOT_DE_PASSE = 'abeille-2027';
@@ -367,3 +369,63 @@ export function lanAvecDmz(): Lan {
   l.appareils.push({ nom: 'web', mac: '00:00:5e:00:53:40', vlan: 40, fixe: '10.10.40.10' });
   return l;
 }
+
+/**
+ * Le plan du réseau de La Ruche, tel que l'équipe l'a prévu (celui du
+ * plan-commutateur.txt) : le routeur, ses VLAN et leurs appareils ; puis, au
+ * fil des chapitres, le télétravail, la DMZ, l'Annexe, l'annuaire, la borne Wi-Fi.
+ */
+export const planRuche =
+  (o: { teletravail?: boolean; dmz?: boolean; annexe?: boolean; annuaire?: boolean; wifi?: boolean } = {}) =>
+  (t: Traduire): ElementPlan => {
+    // Les rôles du routeur : des étiquettes, séparées comme sur un schéma.
+    const liste = (mots: string[]) => mots.join(' · ');
+    const vlans = [...VLANS, ...(o.dmz ? [{ id: 40, nom: 'dmz', reseau: '10.10.40.0/24' }] : [])];
+    const tous = [
+      ...appareils(false),
+      ...(o.dmz ? [{ nom: 'web', vlan: 40, fixe: '10.10.40.10' }] : []),
+      ...(o.wifi ? [{ nom: 'borne-wifi', vlan: 30, fixe: '10.10.30.20' }] : []),
+    ];
+    return internet(t, {
+      role: 'routeur',
+      nom: 'ruche',
+      adresse: '192.0.2.21',
+      note: liste([t('plan-note-routeur'), 'DHCP', ...(o.annuaire || o.wifi ? ['LDAP'] : []), ...(o.wifi ? ['RADIUS'] : [])]),
+      hote: 'ruche',
+      enfants: [
+        ...vlans.map((v) => ({
+          role: 'reseau' as const,
+          nom: t('plan-vlan', { id: String(v.id), nom: v.nom }),
+          adresse: v.reseau,
+          enfants: tous
+            .filter((a) => a.vlan === v.id)
+            .map((a) => ({ role: (a.nom === 'nas' || a.nom === 'web' ? 'serveur' : 'appareil') as ElementPlan['role'], nom: a.nom, adresse: a.fixe ?? t('plan-dhcp') })),
+        })),
+        ...(o.teletravail
+          ? [{ role: 'poste' as const, nom: 'portable-malik', adresse: '198.51.100.23', note: t('plan-note-teletravail'), tunnel: true }]
+          : []),
+        ...(o.annexe
+          ? [
+              {
+                role: 'routeur' as const,
+                nom: t('plan-annexe'),
+                adresse: '203.0.113.60',
+                note: t('plan-note-annexe'),
+                tunnel: true,
+                enfants: [
+                  {
+                    role: 'reseau' as const,
+                    nom: t('plan-reseau-annexe'),
+                    adresse: '10.20.10.0/24',
+                    enfants: [
+                      { role: 'appareil' as const, nom: 'poste-annexe', adresse: '10.20.10.15' },
+                      { role: 'appareil' as const, nom: 'imprimante-annexe', adresse: '10.20.10.20' },
+                    ],
+                  },
+                ],
+              },
+            ]
+          : []),
+      ],
+    });
+  };

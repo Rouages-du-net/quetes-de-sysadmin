@@ -6,13 +6,13 @@
 
 import { Shell } from './shell';
 import { HISTOIRES } from './chapitres';
-import { f, type Chapitre, type Histoire } from './monde';
+import { f, joueur, type Chapitre, type Histoire } from './monde';
 import { MACHINES, POSTE, type Machine } from './machines';
-import { fichiersCle, poste } from './poste';
+import { config as configSsh, fichiersCle, poste } from './poste';
 import { etatPort, type EtatPort } from './ports';
 import { bannisPour, type EtatFail2ban } from './fail2ban';
 import { noterTmux } from './commandes/tmux';
-import { traducteur, type Langue, type Traduire } from '../textes';
+import { LANGUES, traducteur, type Langue, type Traduire } from '../textes';
 
 export interface OptionsConsole {
   langue?: Langue;
@@ -42,6 +42,8 @@ export class Console {
   // Les machines gardent leur état tant que la partie est ouverte : se
   // reconnecter retrouve le chapitre là où on l'a laissé.
   private sessions = new Map<string, Shell>();
+  // Les machines où l'on s'est connecté·e pendant cette partie (le plan du réseau les marque).
+  visitees = new Set<string>(['poste']);
 
   constructor(private options: OptionsConsole = {}) {
     this.t = traducteur(options.langue);
@@ -71,7 +73,19 @@ export class Console {
     s.etat.sessionDistante = (nom: string): Shell => this.sessionDe(nom);
     if (hotesConnus) s.placer('ssh', '~/.ssh/known_hosts', f(hotesConnus, { lignes: true }));
     // Les clés créées et la config modifiée, gardées d'une visite à l'autre.
-    for (const [nom, contenu] of Object.entries(this.options.ssh?.fichiers ?? {})) {
+    // La sauvegarde sert à toutes les langues : une config restée celle du jeu
+    // (dans n'importe quelle langue) laisse la place à celle de la partie, et
+    // une config modifiée se connecte avec le compte de la langue (User vous → you).
+    const dejaDonnees = LANGUES.map((l) => configSsh(traducteur(l)));
+    const comptes = LANGUES.map((l) => joueur(traducteur(l)));
+    for (const [nom, sauve] of Object.entries(this.options.ssh?.fichiers ?? {})) {
+      if (nom === 'config' && dejaDonnees.includes(sauve.trim())) continue;
+      const contenu =
+        nom === 'config'
+          ? sauve.replace(/^(\s*User\s+)(\S+)(\s*)$/gim, (ligne, debut: string, compte: string, fin: string) =>
+              comptes.includes(compte) ? `${debut}${joueur(this.t)}${fin}` : ligne,
+            )
+          : sauve;
       const ancien = s.trouver(`~/.ssh/${nom}`);
       const prive = /^id_/.test(nom) && !nom.endsWith('.pub');
       if (ancien?.type === 'fichier') ancien.contenu = contenu;
@@ -90,6 +104,8 @@ export class Console {
       for (const nom of Object.keys(dossier.enfants))
         if (nom !== 'known_hosts' && !donnees.has(nom) && dossier.enfants[nom].type === 'fichier')
           fichiers[nom] = this.poste.lire(`~/.ssh/${nom}`) ?? '';
+    // La config que le jeu a donnée, pas modifiée : rien à garder.
+    if (fichiers.config?.trim() === configSsh(this.t)) delete fichiers.config;
     return { fichiers, phrases: this.poste.etat.phrasesDePasse };
   }
 
@@ -214,6 +230,7 @@ export class Console {
 
   private nouvelleSession(machine: Machine, chapitre: Chapitre): Shell {
     const s = new Shell(chapitre, this.t.langue, machine.nom);
+    this.visitees.add(machine.nom);
     s.examen = this.examen;
     // Le chapitre peut regarder le poste (sa config ssh, ce qu'on y a copié).
     s.etat.poste = () => this.poste;
@@ -251,6 +268,7 @@ export class Console {
     if (d.via && this.distant?.machine.nom !== d.via) morceaux.push(this.connecter(d.via, undefined, true));
     d.shell.cwd = d.shell.maison;
     this.interieur.push({ shell: d.shell, domaine: d.domaine, retour: depuisPoste && !!d.via });
+    this.visitees.add(d.shell.hote);
     morceaux.push(`Linux ${d.shell.hote} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`);
     return morceaux.join('\n\n');
   }
