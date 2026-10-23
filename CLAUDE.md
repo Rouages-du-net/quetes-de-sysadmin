@@ -74,7 +74,9 @@ rouages.net.
   son code de retour (`jeu.statut`).
 - `commandes/restic.ts` : dépôts restic (instantanés, déduplication,
   politiques de `forget`, `prune`), rangés dans `etat.restic`.
-- `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;
+- `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé (et
+  l'instantané de secours, `Console.restaurer` : le moteur reste déterministe,
+  sans `Date.now` ni `Math.random`) ;
   on part du poste et on se connecte en `ssh` à la machine de chaque
   histoire (`commandes/ssh.ts`).
 - `src/moteur/acces.ts` : le « vrai » ssh (machines à `etat.sshReel` et

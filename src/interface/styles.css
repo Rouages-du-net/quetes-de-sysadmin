@@ -245,10 +245,12 @@
 .qds .bouton-carte,
 .qds .bouton-mission,
 .qds .bouton-indice,
+.qds .bouton-secours,
 .qds .bouton-reglage { font: inherit; font-size: 0.9rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }
 .qds .bouton-carte:hover, .qds .bouton-carte:focus-visible,
 .qds .bouton-mission:hover, .qds .bouton-mission:focus-visible,
 .qds .bouton-indice:hover, .qds .bouton-indice:focus-visible,
+.qds .bouton-secours:hover:not(:disabled), .qds .bouton-secours:focus-visible,
 .qds .bouton-reglage:hover, .qds .bouton-reglage:focus-visible { border-color: var(--_accent); }
 .qds .fenetre-carte,
 .qds .fenetre-progression,
@@ -507,3 +509,6 @@
   .qds .bilan-tableau tbody th { background: var(--_carte); }
   .qds .bilan-tableau td::before { content: attr(data-titre); display: block; font-size: 0.8rem; font-weight: 700; color: var(--_discret); }
 }
+
+/* L'instantané de secours : des boutons grisés quand ce n'est pas possible. */
+.qds .bouton-secours:disabled { cursor: default; color: var(--_discret); border-style: dashed; }

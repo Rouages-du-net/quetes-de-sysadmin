@@ -145,6 +145,19 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     el('p', { class: 'indice-boutons' }, ...NIVEAUX.map((n) => boutonsIndice[n])),
     texteIndice,
   );
+  // L'instantané de secours (voir Console.restaurer) : comme celui d'une machine virtuelle.
+  const prendreInstantane = el('button', { type: 'button', class: 'bouton-secours' }, t('secours-prendre'));
+  const revenirInstantane = el('button', { type: 'button', class: 'bouton-secours' }, t('secours-revenir'));
+  const annulerSaisie = el('button', { type: 'button', class: 'bouton-secours' }, t('secours-annuler'));
+  const etatSecours = el('p', { class: 'carte-legende secours-etat', role: 'status' });
+  const secours = el(
+    'section',
+    { class: 'secours' },
+    el('h3', {}, t('secours-titre')),
+    el('p', { class: 'carte-legende' }, typo(t('secours-intro'))),
+    el('p', { class: 'indice-boutons' }, prendreInstantane, revenirInstantane, annulerSaisie),
+    etatSecours,
+  );
   const fenetreMission = el(
     'dialog',
     { class: 'fenetre-mission', 'aria-labelledby': idMission },
@@ -156,6 +169,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     missionVide,
     missionJournal,
     aide,
+    secours,
     el('p', { class: 'carte-actions' }, fermerMission),
   ) as HTMLDialogElement;
   const idCarte = `qds-carte-${Math.random().toString(36).slice(2, 8)}`;
@@ -944,9 +958,54 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     missionVide.hidden = journal.length > 0;
     missionJournal.replaceChildren(...journal.map((m) => el('li', {}, el('pre', { class: 'mission-texte' }, m))));
     majAide();
+    majSecours();
     fenetreMission.showModal();
   });
   fermerMission.addEventListener('click', () => fenetreMission.close());
+  // L'instantané pris : sa série (l'ouverture du chapitre) et le nombre de saisies rejouées.
+  let instantane: { serie: number; pas: number } | null = null;
+  const majSecours = () => {
+    const sh = terminalJeu.distant?.shell;
+    secours.hidden = !sh;
+    if (!sh) return;
+    const pas = terminalJeu.pas;
+    if (instantane && instantane.serie !== terminalJeu.serie) instantane = null;
+    const possible = pas !== null && !terminalJeu.examen;
+    prendreInstantane.disabled = !possible;
+    revenirInstantane.disabled = !possible || !instantane || instantane.pas > pas!;
+    annulerSaisie.disabled = !possible || pas === 0;
+    etatSecours.textContent = terminalJeu.examen
+      ? t('secours-examen')
+      : pas === null
+        ? t('secours-impossible')
+        : instantane
+          ? t('secours-pris', { pas: instantane.pas })
+          : t('secours-aucun');
+  };
+  prendreInstantane.addEventListener('click', () => {
+    const pas = terminalJeu.pas;
+    if (pas === null) return;
+    instantane = { serie: terminalJeu.serie, pas };
+    majSecours();
+  });
+  // Revenir en arrière : la machine du chapitre est rejouée jusqu'à ce point ; le temps du bilan continue.
+  const restaurer = (pas: number) => {
+    const ancienne = terminalJeu.distant?.shell;
+    if (!ancienne || !terminalJeu.restaurer(pas)) return;
+    const nouvelle = terminalJeu.distant!.shell;
+    if (debuts.has(ancienne)) debuts.set(nouvelle, debuts.get(ancienne)!);
+    if (enCours.has(ancienne)) enCours.add(nouvelle);
+    if (bilanFait.has(ancienne) && nouvelle.termine) bilanFait.add(nouvelle);
+    fenetreMission.close();
+    sortie.replaceChildren();
+    afficher(t('secours-restaure', { pas }), 'succes');
+    apres();
+  };
+  revenirInstantane.addEventListener('click', () => instantane && restaurer(instantane.pas));
+  annulerSaisie.addEventListener('click', () => {
+    const pas = terminalJeu.pas;
+    if (pas) restaurer(pas - 1);
+  });
   // L'aide du chapitre en cours : les niveaux déjà ouverts pour cette étape restent visibles.
   const majAide = () => {
     const sh = terminalJeu.distant?.shell;

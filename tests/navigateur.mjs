@@ -398,8 +398,20 @@ for (const largeur of [1000, 375]) {
   await bouton('solution').click();
   verifier((await mission.locator('.indice-texte').textContent()).includes('mv crabe Seau'), 'indices : presque la réponse, pour l’étape en cours');
   await page.keyboard.press('Escape');
-  for (const l of ['mv Jetee/filet Port/Hangar', 'mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule']) await taper(l);
-  verifier((await jeu.locator('.sortie .bilan').textContent()).includes('3 indices'), 'indices : le bilan les compte');
+  // L'instantané de secours : pris après le filet, puis l'ampoule mal rangée, et on revient.
+  await taper('mv Jetee/filet Port/Hangar');
+  await jeu.locator('.bouton-mission').click();
+  await mission.locator('.bouton-secours', { hasText: 'Prendre un instantané' }).click();
+  verifier((await mission.locator('.secours-etat').textContent()).includes('après une saisie'), 'instantané : pris');
+  await page.keyboard.press('Escape');
+  await taper('mv Port/Remise/.ampoule_de_secours Port/Hangar');
+  await jeu.locator('.bouton-mission').click();
+  await mission.locator('.bouton-secours', { hasText: 'Revenir' }).click();
+  verifier(!(await mission.evaluate((d) => d.open)) && (await jeu.locator('.sortie').textContent()).includes('Machine remise comme après la première saisie'), 'instantané : la machine est remise');
+  await taper('ls -a Port/Remise');
+  verifier((await jeu.locator('.sortie').textContent()).split('ls -a Port/Remise')[1]?.includes('.ampoule_de_secours'), 'instantané : l’ampoule est revenue à sa place');
+  await taper('mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule');
+  verifier((await jeu.locator('.sortie .bilan').textContent()).includes('3 indices'), 'indices : le bilan les compte (même après un instantané)');
   // En mode examen : pas d'aide.
   await jeu.locator('.examen input').check();
   await jeu.locator('.bouton-mission').click();

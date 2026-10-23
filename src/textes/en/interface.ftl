@@ -279,6 +279,26 @@ bilan-encourager = { $indices ->
         [0] No hints: well done. Replay it in exam mode to beat your time?
        *[other] Next time, with fewer hints?
     }
+## The restore point (Mission panel; see Console.restaurer)
+secours-titre = Restore point
+secours-intro = Like a virtual machine snapshot before a risky operation: take one, try your move, and come back to it if things go wrong. The chapter is replayed up to that point, without losing anything else.
+secours-prendre = Take a snapshot
+secours-revenir = Go back to the snapshot
+secours-annuler = Undo the last input
+secours-aucun = No snapshot yet in this chapter.
+# { $pas }: the number of inputs (commands, answers, nano saves) since the chapter started
+secours-pris = { $pas ->
+        [0] Snapshot taken at the start of the chapter.
+        [one] Snapshot taken after one input.
+       *[other] Snapshot taken after { $pas } inputs.
+    }
+secours-impossible = No snapshot possible here: the chapter was resumed or you went through your workstation. "Restart this chapter" starts from scratch.
+secours-examen = No snapshots in exam mode.
+secours-restaure = { $pas ->
+        [0] ↺ Machine put back as at the start of the chapter.
+        [one] ↺ Machine put back as after the chapter's first input.
+       *[other] ↺ Machine put back as after { $pas } inputs of the chapter.
+    }
 succes-sans-indice = No safety net
     .description = Finish a chapter without asking for a hint.
 

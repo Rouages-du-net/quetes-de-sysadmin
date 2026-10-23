@@ -279,6 +279,26 @@ bilan-encourager = { $indices ->
         [0] Sans indice : bravo. Rejoue-le en mode examen pour battre ton temps ?
        *[other] La prochaine fois, avec moins d'indices ?
     }
+## L'instantané de secours (panneau Mission ; voir Console.restaurer)
+secours-titre = Instantané de secours
+secours-intro = Comme l'instantané d'une machine virtuelle avant une opération risquée : prends-en un, tente ta manœuvre, et reviens-y si ça tourne mal. Le chapitre est rejoué jusqu'à ce point, sans rien perdre d'autre.
+secours-prendre = Prendre un instantané
+secours-revenir = Revenir à l'instantané
+secours-annuler = Annuler la dernière saisie
+secours-aucun = Pas encore d'instantané dans ce chapitre.
+# { $pas } : le nombre de saisies (commandes, réponses, enregistrements de nano) depuis le début du chapitre
+secours-pris = { $pas ->
+        [0] Instantané pris au début du chapitre.
+        [one] Instantané pris après une saisie.
+       *[other] Instantané pris après { $pas } saisies.
+    }
+secours-impossible = Pas d'instantané possible ici : le chapitre a été repris ou on est passé par le poste. « Recommencer ce chapitre » repart de zéro.
+secours-examen = Pas d'instantané en mode examen.
+secours-restaure = { $pas ->
+        [0] ↺ Machine remise comme au début du chapitre.
+        [one] ↺ Machine remise comme après la première saisie du chapitre.
+       *[other] ↺ Machine remise comme après { $pas } saisies du chapitre.
+    }
 succes-sans-indice = Sans filet
     .description = Terminer un chapitre sans demander d'indice.
 
