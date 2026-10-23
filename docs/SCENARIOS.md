@@ -1702,3 +1702,56 @@ rappelle ce que le jeu ne simule pas : changer le mot de passe de la base
 (le `.env` était lisible cette nuit-là), garder une copie des journaux,
 prévenir qui de droit.
 
+
+### Plan validé, à écrire : la mission d'audit (côté auditrice)
+
+Le plan décidé avec le porteur du projet avant l'histoire 14 : on y joue
+**l'audit lui-même**, du mandat signé à la contre-visite. Il complète
+l'histoire 14, qui fait jouer **l'audité** (lire le rapport, corriger,
+remonter une trace). Tout reste défensif : on n'exploite rien, on constate,
+on rapporte, on fait corriger et on vérifie.
+
+- **Cadre** : une association confie à la joueuse ou au joueur l'audit de
+  **son propre réseau**, par une lettre de mission signée qui fixe le
+  périmètre (des machines en `.internal`, le site public en `.example`) et
+  ce qui est permis. Machines fictives, adresses de documentation.
+- **Chapitre 1 — Le périmètre** : lire la lettre de mission ; inventorier
+  les machines du périmètre avec `nmap` (ports ouverts, versions des
+  services : `nmap -sV`, `-p`, `-oN` pour garder la trace). Une machine
+  intéressante est **hors périmètre** : la bonne réponse est de ne pas y
+  toucher et de le noter (fausse piste qui compte dans le débrief).
+- **Chapitre 2 — Les constats** : relever, sans rien exploiter, les
+  problèmes d'exposition : un service qui ne devrait répondre qu'en interne,
+  une version périmée, une copie de sauvegarde oubliée dans le dossier du
+  site, une page d'administration joignable de l'extérieur. On les confirme
+  par des requêtes inoffensives (`curl -I`, le code HTTP), jamais en
+  téléchargeant les données.
+- **Chapitre 3 — Le rapport** : écrire le rapport dans `nano` (constat,
+  gravité, recommandation) ; il est vérifié sur ce qui a vraiment été
+  constaté (un constat inventé ou un oubli se voit).
+- **Chapitre 4 — La correction et la contre-visite** : appliquer les
+  correctifs (pare-feu, configuration nginx, fichier retiré, mise à jour),
+  puis relancer `nmap` et les requêtes pour montrer que les problèmes ont
+  disparu.
+- **Débrief** : l'éthique de l'audit (autorisation écrite, rester dans le
+  périmètre, rapporter sans exploiter) ; liens vers la documentation
+  officielle de nmap (https://nmap.org/book/man.html) et les guides de
+  l'ANSSI.
+- **Outils nouveaux** : `nmap` (avec sa page `man`, `--help`, les vraies
+  sorties), simulé sur le réseau de l'histoire seulement : une adresse hors
+  du réseau simulé ne répond jamais.
+
+**Avec l'histoire 14** : les deux se complètent plutôt qu'elles ne se
+répètent. L'histoire 14 apprend à **réagir à un audit** (corriger, puis
+enquêter) avec des outils déjà vus ailleurs ; ce plan apprend **la méthode
+de l'audit** (périmètre, inventaire, preuve sans exploitation, rapport,
+vérification) et un outil nouveau, `nmap`. Proposition : une seule
+histoire, la boulangerie de Nadia, en cinq chapitres :
+1. *Le périmètre* (nouveau) : le balayage, fait par la joueuse ou le
+   joueur avec `nmap`, remplace le fichier `balayage-audit.txt` déjà fourni ;
+2. *Le rapport*, 3. *L'exposition*, 4. *Les traces* : les trois chapitres
+   actuels, inchangés ;
+5. *La contre-visite* (nouveau) : `nmap` et les requêtes à nouveau, et le
+   rapport de clôture écrit dans `nano`.
+Les « constats » du plan (chapitre 2) se fondent dans le premier chapitre et
+dans les chapitres actuels, qui partent déjà d'un rapport.
