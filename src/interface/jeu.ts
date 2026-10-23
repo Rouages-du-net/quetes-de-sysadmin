@@ -15,6 +15,7 @@ import { disposer, reperes as reperesPlan, type ElementPlan } from '../moteur/pl
 import { grade, GRADES, nouveauxSucces, SUCCES } from '../moteur/succes';
 import { indice, NIVEAUX, type Niveau } from '../moteur/indices';
 import { codeDeProgression, fichierDeSauvegarde, lireCode, lireFichier, nettoyerNom, type Sauvegarde } from '../moteur/progression';
+import { colorer, type Jeton } from '../moteur/coloration';
 import { editeur } from './editeur';
 import { traducteur, typographie, type Langue } from '../textes';
 
@@ -43,6 +44,13 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const titreHistoire = (h: number) => t(`histoire-${HISTOIRES[h].id}`);
   const CLE = options.cle ?? 'quetes-de-sysadmin';
   const chapitres = (h: number) => HISTOIRES[h].chapitres;
+  // L'affichage (thème, taille, vue du menu, couleurs) : un réglage de ce navigateur seulement.
+  const CLE_AFFICHAGE = `${CLE}-affichage`;
+  const TAILLES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
+  let affichage = { theme: 'phosphore', taille: 2, vue: 'reseau', couleurs: true };
+  try {
+    affichage = { ...affichage, ...JSON.parse(localStorage.getItem(CLE_AFFICHAGE) ?? '{}') };
+  } catch {}
 
   // ——— Construction ———
   // Le nom et l'adresse de la machine, montrés sur la carte du réseau (des identifiants techniques, jamais traduits).
@@ -104,7 +112,8 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const plusPetit = el('button', { type: 'button', class: 'bouton-reglage', 'aria-label': t('affichage-plus-petit') }, 'A−');
   const plusGrand = el('button', { type: 'button', class: 'bouton-reglage', 'aria-label': t('affichage-plus-grand') }, 'A+');
   const boutonFocus = el('button', { type: 'button', class: 'bouton-reglage', 'aria-pressed': 'false' }, t('affichage-focus'));
-  const reglages = el('span', { class: 'reglages' }, choixTheme, plusPetit, plusGrand, boutonFocus);
+  const boutonCouleurs = el('button', { type: 'button', class: 'bouton-reglage', 'aria-pressed': 'true' }, t('affichage-couleurs'));
+  const reglages = el('span', { class: 'reglages' }, choixTheme, plusPetit, plusGrand, boutonCouleurs, boutonFocus);
   // La mission : l'objectif du chapitre, ses consignes, et ce qui s'est déjà passé.
   const boutonMission = el('button', { type: 'button', class: 'bouton-mission', 'aria-haspopup': 'dialog' }, t('mission-bouton'));
   const barreExamen = el(
@@ -191,7 +200,12 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   }) as HTMLInputElement;
   // Ctrl-R : la recherche dans l'historique, comme bash ; la commande trouvée s'affiche sous la ligne.
   const trouvee = el('p', { class: 'recherche', 'aria-live': 'polite' });
-  const form = el('form', { autocomplete: 'off' }, invite, saisie, trouvee);
+  // La coloration de la ligne (voir coloration.ts) : une copie colorée du
+  // texte, dessinée exactement sous le champ, qui reste un champ ordinaire
+  // (clavier, complétion, lecteurs d'écran) au texte rendu transparent.
+  const coloration = el('div', { class: 'coloration', 'aria-hidden': 'true' });
+  const champ = el('span', { class: 'champ' }, coloration, saisie);
+  const form = el('form', { autocomplete: 'off' }, invite, champ, trouvee);
   const terminal = el('div', { class: 'terminal' }, sortie, form);
   const quitterFocus = el('button', { type: 'button', class: 'quitter-focus' }, t('affichage-quitter-focus'));
   // Les touches qui manquent aux claviers des téléphones (affichées sur les écrans tactiles).
@@ -365,9 +379,32 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     sortie.appendChild(pre);
   };
 
+  // Ctrl-R : null hors recherche ; sinon ce que contenait la ligne avant, et la commande trouvée.
+  let recherche: { avant: string; trouvee: string } | null = null;
   const majInvite = () => {
     invite.textContent = terminalJeu.invite();
     saisie.type = terminalJeu.shell.saisieMasquee() ? 'password' : 'text';
+    colorerSaisie();
+  };
+
+  // Les jetons colorés d'une ligne ; rien pour une réponse à une question
+  // (yes/no, mot de passe, sftp>) ni quand la coloration est coupée.
+  const jetons = (ligne: string): Jeton[] | null => {
+    const sh = terminalJeu.shell;
+    if (!affichage.couleurs || sh.saisieMasquee() || sh.question || sh.attente) return null;
+    return colorer(sh, ligne);
+  };
+  const enSpans = (js: Jeton[]) => js.map((j) => (j.genre === 'texte' ? j.texte : el('span', { class: `c-${j.genre}` }, j.texte)));
+  const colorerSaisie = () => {
+    const js = recherche ? null : jetons(saisie.value);
+    champ.classList.toggle('colore', js !== null);
+    coloration.replaceChildren(...(js ? enSpans(js) : []));
+    coloration.scrollLeft = saisie.scrollLeft;
+  };
+  // La commande recopiée au-dessus de sa sortie, colorée comme pendant la frappe.
+  const afficherCommande = (ligne: string, js: Jeton[] | null) => {
+    if (!js) return afficher(`${invite.textContent} ${ligne}`, 'cmd');
+    sortie.appendChild(el('pre', { class: 'cmd' }, `${invite.textContent} `, ...enSpans(js)));
   };
 
   const majNav = () => {
@@ -503,7 +540,8 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     // Un mot de passe ne s'affiche pas et ne va pas dans l'historique.
     const secret = terminalJeu.shell.saisieMasquee();
     const reponse = secret || terminalJeu.shell.question !== null;
-    afficher(secret ? (invite.textContent ?? '') : `${invite.textContent} ${ligne}`, 'cmd');
+    if (secret) afficher(invite.textContent ?? '', 'cmd');
+    else afficherCommande(ligne, reponse ? null : jetons(ligne));
     if (ligne.trim() && !reponse) historique.push(ligne);
     position = historique.length;
     const shell = terminalJeu.shell;
@@ -547,8 +585,6 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     terminal.scrollTop = terminal.scrollHeight;
   };
 
-  // Ctrl-R : null hors recherche ; sinon ce que contenait la ligne avant, et la commande trouvée.
-  let recherche: { avant: string; trouvee: string } | null = null;
   const chercher = (plusVieille = false) => {
     if (!recherche) return;
     const depuis = plusVieille ? historique.lastIndexOf(recherche.trouvee) - 1 : historique.length - 1;
@@ -567,7 +603,13 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     recherche = null;
     trouvee.textContent = '';
   };
-  saisie.addEventListener('input', () => chercher());
+  saisie.addEventListener('input', () => {
+    chercher();
+    colorerSaisie();
+  });
+  // Après une touche (Tab, ↑, Ctrl-R…), la ligne a pu changer ; le champ a pu défiler.
+  saisie.addEventListener('keydown', () => setTimeout(colorerSaisie));
+  for (const evenement of ['scroll', 'select', 'keyup', 'click']) saisie.addEventListener(evenement, () => (coloration.scrollLeft = saisie.scrollLeft));
   saisie.addEventListener('keydown', (e) => {
     if (terminalJeu.shell.attente || terminalJeu.shell.question) return;
     if (e.ctrlKey && e.key.toLowerCase() === 'r') {
@@ -634,6 +676,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     const fin = cible.selectionEnd ?? debut;
     cible.setRangeText(texte, debut, fin, 'end');
     cible.focus();
+    colorerSaisie();
   };
   terminal.addEventListener('contextmenu', (e) => {
     if (!e.shiftKey) coller(e);
@@ -857,12 +900,6 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   fenetreMission.addEventListener('close', () => setTimeout(() => saisie.focus()));
   // ——— L'affichage du terminal ———
   // Un réglage de ce navigateur seulement (pas de la progression).
-  const CLE_AFFICHAGE = `${CLE}-affichage`;
-  const TAILLES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
-  let affichage = { theme: 'phosphore', taille: 2, vue: 'reseau' };
-  try {
-    affichage = { ...affichage, ...JSON.parse(localStorage.getItem(CLE_AFFICHAGE) ?? '{}') };
-  } catch {}
   const appliquerAffichage = () => {
     if (!THEMES.includes(affichage.theme)) affichage.theme = 'phosphore';
     affichage.taille = Math.max(0, Math.min(TAILLES.length - 1, Math.round(affichage.taille) || 0));
@@ -871,6 +908,9 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     choixTheme.value = affichage.theme;
     if (!(VUES as readonly string[]).includes(affichage.vue)) affichage.vue = 'reseau';
     navHistoires.dataset.vue = affichage.vue;
+    affichage.couleurs = affichage.couleurs !== false;
+    boutonCouleurs.setAttribute('aria-pressed', String(affichage.couleurs));
+    colorerSaisie();
     VUES.forEach((v) => boutonsVue[v].setAttribute('aria-pressed', String(v === affichage.vue)));
     plusPetit.disabled = affichage.taille === 0;
     plusGrand.disabled = affichage.taille === TAILLES.length - 1;
@@ -886,6 +926,10 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   );
   choixTheme.addEventListener('change', () => {
     affichage.theme = choixTheme.value;
+    appliquerAffichage();
+  });
+  boutonCouleurs.addEventListener('click', () => {
+    affichage.couleurs = !affichage.couleurs;
     appliquerAffichage();
   });
   plusPetit.addEventListener('click', () => {

@@ -332,6 +332,16 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [x] **Coloration de la ligne de commande**, comme fish ou
+  zsh-syntax-highlighting : la commande en vert si le shell du jeu la
+  lancerait, en rouge (et soulignée d'une vague) sinon, les options, les
+  chaînes, les jokers qui trouvent quelque chose, les tubes et redirections,
+  les chemins qui existent soulignés ; la commande reste colorée au-dessus de
+  sa sortie. Rien pour une réponse (yes/no, mot de passe, `sftp>`). Contraste
+  AA dans les quatre thèmes ; bouton « Couleurs » pour la couper.
+- [ ] **Couleurs des sorties**, comme les vrais outils : `ls --color=auto`
+  (l'alias de Debian), `grep --color=auto`, `diff --color`, `ip -c`,
+  `systemctl status`.
 - [x] **Carte du réseau en menu** : le poste, internet, puis une machine par
   histoire (nom et adresse), branchée sur un même câble ; sa branche est en
   pointillés tant qu'elle est verrouillée, ambre quand on y joue, verte quand
