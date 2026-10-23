@@ -71,7 +71,34 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // La carte : un bouton à côté du terminal ouvre, dans une fenêtre, les lieux
   // connus de la machine où l'on est (voir carte.ts).
   const boutonCarte = el('button', { type: 'button', class: 'bouton-carte', 'aria-haspopup': 'dialog' }, t('carte-bouton'));
-  const barreExamen = el('p', { class: 'examen' }, el('label', {}, caseExamen, el('span', {}, t('examen-case'))), chrono, boutonCarte);
+  // La mission : l'objectif du chapitre, ses consignes, et ce qui s'est déjà passé.
+  const boutonMission = el('button', { type: 'button', class: 'bouton-mission', 'aria-haspopup': 'dialog' }, t('mission-bouton'));
+  const barreExamen = el(
+    'p',
+    { class: 'examen' },
+    el('label', {}, caseExamen, el('span', {}, t('examen-case'))),
+    chrono,
+    el('span', { class: 'outils' }, boutonMission, boutonCarte),
+  );
+  const idMission = `qds-mission-${Math.random().toString(36).slice(2, 8)}`;
+  const missionTitre = el('h2', { id: idMission });
+  const missionObjectif = el('p', { class: 'carte-legende' });
+  const missionConsignes = el('pre', { class: 'mission-texte' });
+  const missionJournal = el('ol', { class: 'mission-journal' });
+  const missionVide = el('p', { class: 'carte-legende' }, typo(t('mission-rien')));
+  const fermerMission = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  const fenetreMission = el(
+    'dialog',
+    { class: 'fenetre-mission', 'aria-labelledby': idMission },
+    missionTitre,
+    missionObjectif,
+    el('h3', {}, t('mission-consignes')),
+    missionConsignes,
+    el('h3', {}, t('mission-journal')),
+    missionVide,
+    missionJournal,
+    el('p', { class: 'carte-actions' }, fermerMission),
+  ) as HTMLDialogElement;
   const idCarte = `qds-carte-${Math.random().toString(36).slice(2, 8)}`;
   const carteTitre = el('h2', { id: idCarte });
   const carteArbre = el('div', { class: 'carte-arbre' });
@@ -114,8 +141,31 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     id, type: 'text', spellcheck: 'false', autocapitalize: 'off', autocorrect: 'off', autocomplete: 'off',
     'aria-label': t('saisie-etiquette'),
   }) as HTMLInputElement;
-  const form = el('form', { autocomplete: 'off' }, invite, saisie);
+  // Ctrl-R : la recherche dans l'historique, comme bash ; la commande trouvée s'affiche sous la ligne.
+  const trouvee = el('p', { class: 'recherche', 'aria-live': 'polite' });
+  const form = el('form', { autocomplete: 'off' }, invite, saisie, trouvee);
   const terminal = el('div', { class: 'terminal' }, sortie, form);
+  // Les touches qui manquent aux claviers des téléphones (affichées sur les écrans tactiles).
+  const TOUCHES: [string, string][] = [
+    ['Tab', 'Tab'],
+    ['↑', 'ArrowUp'],
+    ['↓', 'ArrowDown'],
+    ['Ctrl-C', 'ctrl-c'],
+    ['|', '|'],
+    ['~', '~'],
+    ['/', '/'],
+    ['-', '-'],
+    ['.', '.'],
+    ['*', '*'],
+    ['>', '>'],
+  ];
+  const barreTouches = el(
+    'div',
+    { class: 'touches', role: 'toolbar', 'aria-label': t('touches-titre') },
+    ...TOUCHES.map(([texte, touche]) =>
+      el('button', { type: 'button', 'data-touche': touche, ...(touche.startsWith('Arrow') ? { 'aria-label': t(`touche-${touche === 'ArrowUp' ? 'haut' : 'bas'}`) } : {}) }, texte),
+    ),
+  );
   const suivant = el('button', { type: 'button', class: 'bouton principal' }, t('bouton-suivant'));
   const fin = el('div', { class: 'fin', hidden: '' }, suivant);
   // Après un chapitre : la page de Les rouages du net qui explique son concept.
@@ -177,7 +227,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit-lien-projet')), ' · ',
     el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-lien-original')));
 
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, terminal, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression);
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, terminal, barreTouches, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -409,8 +459,56 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     terminal.scrollTop = terminal.scrollHeight;
   };
 
+  // Ctrl-R : null hors recherche ; sinon ce que contenait la ligne avant, et la commande trouvée.
+  let recherche: { avant: string; trouvee: string } | null = null;
+  const chercher = (plusVieille = false) => {
+    if (!recherche) return;
+    const depuis = plusVieille ? historique.lastIndexOf(recherche.trouvee) - 1 : historique.length - 1;
+    let trouve = '';
+    for (let i = depuis; i >= 0; i--)
+      if (historique[i].includes(saisie.value)) {
+        trouve = historique[i];
+        break;
+      }
+    if (trouve || !plusVieille) recherche.trouvee = trouve;
+    trouvee.textContent = t('recherche-historique', { motif: saisie.value, commande: recherche.trouvee });
+  };
+  const finirRecherche = (garder: boolean) => {
+    if (!recherche) return;
+    saisie.value = garder ? recherche.trouvee || saisie.value : recherche.avant;
+    recherche = null;
+    trouvee.textContent = '';
+  };
+  saisie.addEventListener('input', () => chercher());
   saisie.addEventListener('keydown', (e) => {
     if (terminalJeu.shell.attente || terminalJeu.shell.question) return;
+    if (e.ctrlKey && e.key.toLowerCase() === 'r') {
+      e.preventDefault();
+      if (recherche) chercher(true);
+      else {
+        recherche = { avant: saisie.value, trouvee: '' };
+        saisie.value = '';
+        chercher();
+      }
+      return;
+    }
+    if (recherche) {
+      if (e.key === 'Escape' || (e.ctrlKey && e.key.toLowerCase() === 'g')) {
+        e.preventDefault();
+        finirRecherche(false);
+        return;
+      }
+      if (e.key === 'Enter' || e.key.startsWith('Arrow') || e.key === 'Tab') finirRecherche(true);
+      if (e.key === 'Enter') return;
+    }
+    // Ctrl-C sans rien de sélectionné : la ligne est abandonnée, comme dans bash.
+    if (e.ctrlKey && e.key.toLowerCase() === 'c' && saisie.selectionStart === saisie.selectionEnd) {
+      e.preventDefault();
+      afficher(`${invite.textContent} ${saisie.value}^C`, 'cmd');
+      saisie.value = '';
+      position = historique.length;
+      return;
+    }
     if (e.key === 'Tab') {
       e.preventDefault();
       saisie.value = terminalJeu.completer(saisie.value);
@@ -612,6 +710,35 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // après que le navigateur a rendu le focus au bouton qui l'avait ouverte.
   fermerCarte.addEventListener('click', () => fenetreCarte.close());
   fenetreCarte.addEventListener('close', () => setTimeout(() => saisie.focus()));
+  // La barre de touches : chaque bouton agit sur la ligne sans lui prendre le
+  // focus (le clavier du téléphone reste ouvert).
+  barreTouches.addEventListener('pointerdown', (e) => {
+    if ((e.target as HTMLElement).closest('button')) e.preventDefault();
+  });
+  barreTouches.addEventListener('click', (e) => {
+    const touche = (e.target as HTMLElement).closest('button')?.dataset.touche;
+    if (!touche || form.hidden) return;
+    if (touche.length === 1) saisie.setRangeText(touche, saisie.selectionStart ?? saisie.value.length, saisie.selectionEnd ?? saisie.value.length, 'end');
+    else {
+      const [ctrl, key] = touche === 'ctrl-c' ? [true, 'c'] : [false, touche];
+      saisie.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey: ctrl, bubbles: true, cancelable: true }));
+    }
+    saisie.focus();
+  });
+  // La mission du chapitre en cours.
+  boutonMission.addEventListener('click', () => {
+    const sh = terminalJeu.distant?.shell;
+    const c = sh?.chapitre;
+    missionTitre.textContent = c ? t('mission-titre', { chapitre: t('chapitre-numero', { numero: c.numero }), titre: t(`chapitre-${c.id}`) }) : t('poste-titre');
+    missionObjectif.textContent = c ? typo(t(`chapitre-${c.id}.resume`)) : '';
+    missionConsignes.textContent = (sh ?? terminalJeu.poste).lire(`${(sh ?? terminalJeu.poste).maison}/${(sh ?? terminalJeu.poste).accueil}`) ?? '';
+    const journal = sh?.journal ?? [];
+    missionVide.hidden = journal.length > 0;
+    missionJournal.replaceChildren(...journal.map((m) => el('li', {}, el('pre', { class: 'mission-texte' }, m))));
+    fenetreMission.showModal();
+  });
+  fermerMission.addEventListener('click', () => fenetreMission.close());
+  fenetreMission.addEventListener('close', () => setTimeout(() => saisie.focus()));
   // ——— Ma progression ———
   // Une sauvegarde reprise (code ou fichier) : on l'écrit, puis le jeu repart d'elle.
   const reprendre = (s: Sauvegarde) => {

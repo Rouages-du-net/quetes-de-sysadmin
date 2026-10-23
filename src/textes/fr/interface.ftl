@@ -169,3 +169,17 @@ progression-code-trop-recent = Ce code vient d'une version plus récente du jeu 
 progression-fichier-illisible = Ce fichier n'est pas une sauvegarde lisible (JSON).
 progression-fichier-autre = Ce fichier n'est pas une sauvegarde de Quêtes de Sysadmin.
 progression-fichier-trop-recent = Cette sauvegarde vient d'une version plus récente du jeu : recharge la page.
+
+## La mission, la barre de touches, Ctrl-R
+
+mission-bouton = Mission
+# { $chapitre } : « Chapitre 2 » ; { $titre } : son titre.
+mission-titre = { $chapitre } : { $titre }
+mission-consignes = Les consignes
+mission-journal = Ce qui s'est passé
+mission-rien = Rien encore : l'histoire avance à mesure que tu agis.
+touches-titre = Touches du terminal
+touche-haut = Commande précédente
+touche-bas = Commande suivante
+# Ce qu'affiche bash pendant Ctrl-R (en anglais, comme readline).
+recherche-historique = (reverse-i-search)`{ $motif }': { $commande }

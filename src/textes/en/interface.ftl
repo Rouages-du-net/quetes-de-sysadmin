@@ -169,3 +169,17 @@ progression-code-trop-recent = This code comes from a newer version of the game:
 progression-fichier-illisible = This file is not a readable save (JSON).
 progression-fichier-autre = This file is not a Sysadmin Quests save.
 progression-fichier-trop-recent = This save comes from a newer version of the game: reload the page.
+
+## The mission, the key bar, Ctrl-R
+
+mission-bouton = Mission
+# { $chapitre }: "Chapter 2"; { $titre }: its title.
+mission-titre = { $chapitre }: { $titre }
+mission-consignes = The instructions
+mission-journal = What has happened
+mission-rien = Nothing yet: the story moves on as you act.
+touches-titre = Terminal keys
+touche-haut = Previous command
+touche-bas = Next command
+# What bash shows during Ctrl-R (readline).
+recherche-historique = (reverse-i-search)`{ $motif }': { $commande }

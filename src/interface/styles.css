@@ -156,14 +156,20 @@
 .qds .examen label { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
 .qds .examen input { accent-color: var(--_accent); width: 1.1rem; height: 1.1rem; margin: 0.2rem 0 0; flex: none; }
 /* La carte : le bouton au bout de la barre, la fenêtre et l'arbre des lieux. */
-.qds .bouton-carte { margin-left: auto; font: inherit; font-size: 0.9rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }
-.qds .bouton-carte:hover, .qds .bouton-carte:focus-visible { border-color: var(--_accent); }
+.qds .outils { margin-left: auto; display: flex; gap: 0.5rem; }
+.qds .bouton-carte,
+.qds .bouton-mission { font: inherit; font-size: 0.9rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }
+.qds .bouton-carte:hover, .qds .bouton-carte:focus-visible,
+.qds .bouton-mission:hover, .qds .bouton-mission:focus-visible { border-color: var(--_accent); }
 .qds .fenetre-carte,
-.qds .fenetre-progression { width: min(36rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
+.qds .fenetre-progression,
+.qds .fenetre-mission { width: min(36rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
 .qds .fenetre-carte::backdrop,
-.qds .fenetre-progression::backdrop { background: rgb(0 0 0 / 0.5); }
+.qds .fenetre-progression::backdrop,
+.qds .fenetre-mission::backdrop { background: rgb(0 0 0 / 0.5); }
 .qds .fenetre-carte h2,
-.qds .fenetre-progression h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.qds .fenetre-progression h2,
+.qds .fenetre-mission h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
 .qds .carte-legende { margin: 0 0 0.75rem; font-size: 0.85rem; color: var(--_discret); }
 .qds .carte-arbre { font-family: var(--_police-mono); font-size: 0.9rem; overflow-wrap: anywhere; }
 .qds .carte-arbre ul { list-style: none; margin: 0; padding-left: 1.1rem; border-left: 1px dotted var(--_bord); }
@@ -197,12 +203,26 @@
 .qds .plan-texte summary { cursor: pointer; font-size: 0.9rem; }
 .qds .plan-texte .carte-arbre { margin-top: 0.5rem; }
 /* Ma progression : le nom, le code à recopier, le fichier. */
-.qds .fenetre-progression h3 { margin: 1rem 0 0.25rem; font-size: 1rem; }
+.qds .fenetre-progression h3,
+.qds .fenetre-mission h3 { margin: 1rem 0 0.25rem; font-size: 1rem; }
 .qds .fenetre-progression input[type='text'] { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid var(--_bord); border-radius: 0.3rem; background: var(--_carte); color: var(--_texte); max-width: 100%; }
 .qds .fenetre-progression input[type='file'] { font: inherit; font-size: 0.9rem; max-width: 100%; }
 .qds .code-progression { font-family: var(--_police-mono); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.05em; overflow-wrap: anywhere; }
 .qds .progression-saisie { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .qds .progression-etat { min-height: 1.5em; color: var(--_accent); font-weight: 600; }
+/* La mission : consignes et messages de l'histoire, relus. */
+.qds .mission-texte { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: 0.85rem/1.5 var(--_police-mono); background: var(--_carte); border: 1px solid var(--_bord); border-radius: 0.3rem; padding: 0.5rem 0.75rem; max-height: 20rem; overflow-y: auto; }
+.qds .mission-journal { padding-left: 1.5rem; margin: 0; }
+/* Ctrl-R : la commande trouvée, sous la ligne. */
+.qds .recherche { flex-basis: 100%; margin: 0.25rem 0 0; color: var(--_terminal-invite); font-size: 0.85rem; }
+.qds .recherche:empty { display: none; }
+/* La barre de touches : seulement sur les écrans tactiles. */
+.qds .touches { display: none; }
+@media (pointer: coarse) {
+  .qds .touches { display: flex; gap: 0.35rem; overflow-x: auto; padding: 0.5rem 0 0.25rem; scrollbar-width: none; }
+  .qds .touches button { flex: none; min-width: 2.75rem; min-height: 2.75rem; padding: 0 0.6rem; font: 600 0.95rem var(--_police-mono); color: var(--_texte); background: var(--_carte); border: 1px solid var(--_bord); border-radius: 0.35rem; }
+  .qds .touches button:active { border-color: var(--_accent); color: var(--_accent); }
+}
 .qds .carte-actions { margin: 0.75rem 0 0; text-align: right; }
 .qds .chrono { font-family: var(--_police-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--_accent); }
 .qds .sortie pre.examen-resultat { font-weight: 600; color: var(--_terminal-invite); }
