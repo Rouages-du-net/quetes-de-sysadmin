@@ -9,8 +9,12 @@ import { clePrivee, clePublique, MACHINES, POSTE, type Machine } from './machine
 
 const MAISON = '/home/vous';
 
-const hosts = () =>
+// Le /etc/hosts du poste ; en tête, pourquoi ces noms en .internal et
+// .example (ils ne mènent jamais chez quelqu'un de réel).
+const hosts = (t: Traduire) =>
   [
+    ...t('poste-hosts-commentaire').split('\n').map((l) => `# ${l}`),
+    '',
     '127.0.0.1\tlocalhost',
     `127.0.1.1\t${POSTE.domaine} ${POSTE.nom}`,
     '',
@@ -75,7 +79,7 @@ export function poste(cles: Machine[]): Chapitre {
     evenements: [],
     creerMonde: (t) =>
       d({
-        etc: d({ hosts: f(hosts(), { lignes: true, proprio: 'root' }) }),
+        etc: d({ hosts: f(hosts(t), { lignes: true, proprio: 'root' }) }),
         home: d({
           vous: d({
             'bienvenue.txt': f(t('poste-bienvenue')),

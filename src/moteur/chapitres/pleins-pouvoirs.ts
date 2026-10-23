@@ -252,7 +252,7 @@ export const pleinsPouvoirs: Chapitre = {
         { pid: 702, utilisateur: 'root', cpu: 0.4, mem: 2.1, commande: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
       ],
       montages: [{ chemin: '/', capacite: 20_000_000_000, nom: '/dev/vda1' }],
-      docker: { ...etatDocker(), noms: ['fabrique', 'fabrique.example', '192.0.2.15'] },
+      docker: { ...etatDocker(), noms: ['fabrique', 'fabrique.internal', '192.0.2.15'] },
     };
   },
   initialiser: (j) => {

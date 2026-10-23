@@ -56,9 +56,9 @@ Subsystem	sftp	/usr/lib/openssh/sftp-server
 `.trim();
 
 export const HOSTS = `127.0.0.1\tlocalhost
-192.0.2.19\tmaison.example maison
-10.20.0.11\twiki.maison.example wiki
-10.20.0.12\tarchives.maison.example archives`;
+192.0.2.19\tmaison.internal maison
+10.20.0.11\twiki.maison.internal wiki
+10.20.0.12\tarchives.maison.internal archives`;
 
 export interface EtatSshd {
   charge: Record<string, string>;
@@ -166,7 +166,7 @@ export function hoteInterne(
 ): HoteInterne {
   return {
     adresse,
-    domaine: `${nom}.maison.example`,
+    domaine: `${nom}.maison.internal`,
     comptes: comptesInternes,
     commandes: o.commandes,
     etat: o.etat,

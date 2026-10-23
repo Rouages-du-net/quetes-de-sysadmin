@@ -54,8 +54,12 @@ messages, manuel, interface) sont dans `src/textes/fr/*.ftl` (voir
   navigateur (`localStorage`, clé `quetes-de-sysadmin`, réglable par l’attribut `cle`), chapitre par chapitre.
 - **Des exemples sans danger** : adresses IP privées (RFC 1918), de
   collecte d'opérateur (RFC 6598) ou réservées à la documentation (RFC 5737),
-  noms de domaine en `.example` (RFC 6761). Seule exception : 9.9.9.9, le
-  vrai résolveur DNS public de Quad9.
+  noms en `.internal` pour les machines et les réseaux internes (réservé
+  par l'ICANN aux réseaux privés en 2024) et en `.example` pour ce qui est
+  public : sites, zones DNS, courriels (RFC 6761). Un nom inventé
+  (`cooperative.fr`) pourrait appartenir à quelqu'un : le jeu apprendrait à
+  viser une vraie machine. Le `/etc/hosts` du poste l'explique aux joueur·ses.
+  Seule exception : 9.9.9.9, le vrai résolveur DNS public de Quad9.
 - **Sorties authentiques** : `ping`, `dig`, `traceroute`, `curl`, `ps`,
   `systemctl` répondent en anglais, comme sur un vrai système ; `git` et
   les messages d'erreur de base (« Permission non accordée ») en français,
@@ -355,7 +359,7 @@ montées sur `/mnt/sauvegarde`, avec le plan de reprise d'Awa (`PRA.txt`).
 
 | Étape | Commande apprise |
 |---|---|
-| Se reconnecter | `ssh datacenter` refuse (« REMOTE HOST IDENTIFICATION HAS CHANGED! ») ; comparer l'empreinte annoncée, `ssh-keygen -R datacenter.example` (le nom écrit dans `known_hosts`), puis `yes` |
+| Se reconnecter | `ssh datacenter` refuse (« REMOTE HOST IDENTIFICATION HAS CHANGED! ») ; comparer l'empreinte annoncée, `ssh-keygen -R datacenter.internal` (le nom écrit dans `known_hosts`), puis `yes` |
 | Installer le serveur web | `sudo apt update`, puis `sudo apt install nginx` (qui le démarre et l'active) ; `curl http://localhost` |
 | Vérifier la sauvegarde | `tar -tzf` : l'archive de cette nuit est coupée (« Fin de fichier inattendue ») ; `ls -l` montre sa taille |
 | Restaurer | `sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /` |

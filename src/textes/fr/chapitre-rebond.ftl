@@ -14,7 +14,7 @@ rebond-courriel-yasmine =
     Objet :  Le wiki
 
     Bravo pour la passerelle ! Prochaine étape : le wiki des associations.
-    C'est la machine « wiki » (wiki.maison.example, 10.20.0.11), sur notre
+    C'est la machine « wiki » (wiki.maison.internal, 10.20.0.11), sur notre
     réseau interne : on ne peut pas la joindre depuis internet, seulement
     depuis maison. Regarde /etc/hosts ici : ce sont les noms que maison
     connaît.

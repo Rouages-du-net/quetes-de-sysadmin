@@ -231,7 +231,7 @@ export const contournement: Chapitre = {
         { proto: 'tcp', adresse: '[::]', port: 22, processus: 'sshd', pid: 610 },
       ],
       montages: [{ chemin: '/', capacite: DISQUE, nom: '/dev/vda1' }],
-      docker: { ...etatDocker(), noms: ['fabrique', 'fabrique.example', '192.0.2.15'] },
+      docker: { ...etatDocker(), noms: ['fabrique', 'fabrique.internal', '192.0.2.15'] },
     };
   },
   // Les conteneurs du fablab, tels qu'ils tournent depuis le dernier démarrage.

@@ -31,7 +31,7 @@ for (const langue of LANGUES)
     it('chapitre 1 — solution : ssh-keygen, ssh-copy-id, puis plus de mots de passe', () => {
       const { c, jouer, modifier } = partie();
       let tout = jouer(['ssh maison', 'yes']);
-      expect(c.invite()).toBe(L("vous@maison.example's password:"));
+      expect(c.invite()).toBe(L("vous@maison.internal's password:"));
       tout += jouer(['lilas-2027']);
       contient(tout, 'Bienvenue dans l');
       expect(c.invite()).toBe(L('vous@maison:~$'));
@@ -72,14 +72,14 @@ for (const langue of LANGUES)
       // Sans clé à soi, ssh-copy-id prend la plus récente de ~/.ssh : celle du royaume.
       let tout = jouer(['ssh-copy-id maison', 'yes', 'lilas-2027', 'ssh maison']);
       expect(tout).toContain(L('Source of key(s) to be installed: "/home/vous/.ssh/id_royaume.pub"'));
-      expect(c.invite()).toBe(L("vous@maison.example's password:"));
+      expect(c.invite()).toBe(L("vous@maison.internal's password:"));
       tout = jouer(['lilas-2027']);
       contient(tout, "jeu t'a donnée pour une autre machine");
       tout = modifier(CONFIG, (t) => t.replace('#PasswordAuthentication yes', 'PasswordAuthentication no'));
       tout += jouer(['sudo systemctl reload ssh']);
       contient(tout, 'aucune clé n');
       tout = jouer(['exit', 'ssh maison']);
-      expect(tout).toContain(L('vous@maison.example: Permission denied (publickey).'));
+      expect(tout).toContain(L('vous@maison.internal: Permission denied (publickey).'));
       expect(c.invite()).toBe(L('vous@poste:~$'));
       // Le menu : la console de secours de l'hébergeur.
       c.connecter('maison');

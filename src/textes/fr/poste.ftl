@@ -23,9 +23,16 @@ poste-bienvenue =
       ls -a ~/.ssh
 # Commentaire en tête de ~/.ssh/config (chaque ligne devient un commentaire « # »)
 poste-config-commentaire =
-    Les machines que tu connais. « ssh royaume » se connecte à royaume.example
+    Les machines que tu connais. « ssh royaume » se connecte à royaume.internal
     avec l'utilisateur vous et la clé ~/.ssh/id_royaume.
     Manuel : man ssh
+# Commentaire en tête de /etc/hosts du poste (chaque ligne devient un commentaire « # »)
+poste-hosts-commentaire =
+    Les machines de ce jeu sont fictives.
+    Les noms en .internal sont réservés aux réseaux privés (ICANN, 2024) ;
+    ceux en .example, aux exemples (RFC 6761). Les adresses 192.0.2.x,
+    198.51.100.x et 203.0.113.x sont réservées à la documentation (RFC 5737).
+    Aucun de ces noms ni de ces adresses ne mène chez quelqu'un de réel.
 poste-exit = (Tu es sur ton propre poste : exit fermerait ton terminal. Pour te connecter à une machine : ssh nom, par exemple ssh royaume.)
 # { $cles } : la liste des nouvelles clés, séparées par des virgules
 poste-cles-recues =

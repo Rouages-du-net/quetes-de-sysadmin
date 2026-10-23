@@ -211,7 +211,7 @@ export const rancon: Chapitre = {
         {
           chemin: NAS,
           capacite: 2000 * Go,
-          nom: `//nas.ludotheque.example${chemin(t, '/sauvegardes')}`,
+          nom: `//nas.ludotheque.internal${chemin(t, '/sauvegardes')}`,
           systeme: 'cifs',
           options: 'relatime,vers=3.1.1,uid=0,file_mode=0777,dir_mode=0777',
         },

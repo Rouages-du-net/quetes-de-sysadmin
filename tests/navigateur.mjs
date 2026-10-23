@@ -71,7 +71,7 @@ for (const largeur of [1000, 375]) {
   await page.reload();
   verifier((await jeu.locator('.sortie').textContent()).includes('chapitre 2'), `${largeur} px : reprise après rechargement`);
   await tape('exit');
-  verifier((await jeu.locator('.sortie').textContent()).includes('Connection to royaume.example closed.'), `${largeur} px : exit ramène au poste`);
+  verifier((await jeu.locator('.sortie').textContent()).includes('Connection to royaume.internal closed.'), `${largeur} px : exit ramène au poste`);
   await tape('ssh royaume');
   verifier((await jeu.locator('.invite').textContent()) === 'vous@royaume:~$', `${largeur} px : hôte connu gardé, pas de nouvelle question`);
   // nano : clavier (Ctrl+O, Ctrl+X) en grand écran, boutons sur mobile.
@@ -446,7 +446,7 @@ for (const largeur of [1000, 375]) {
   const terminal = jeu.locator('.terminal');
   // Le menu : la carte du réseau d'abord, une branche par machine.
   const menu = jeu.locator('nav.histoires');
-  verifier((await menu.getAttribute('data-vue')) === 'reseau' && (await jeu.locator('.hote', { hasText: 'royaume.example 192.0.2.10' }).isVisible()), `affichage ${largeur} px : la carte du réseau sert de menu`);
+  verifier((await menu.getAttribute('data-vue')) === 'reseau' && (await jeu.locator('.hote', { hasText: 'royaume.internal 192.0.2.10' }).isVisible()), `affichage ${largeur} px : la carte du réseau sert de menu`);
   await jeu.locator('.choix-vue button', { hasText: 'Baies' }).click();
   verifier((await menu.getAttribute('data-vue')) === 'baies' && !(await jeu.locator('.hote').first().isVisible()), `affichage ${largeur} px : la vue en baies`);
   await jeu.locator('.choix-vue button', { hasText: 'Carte du réseau' }).click();
