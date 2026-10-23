@@ -433,6 +433,40 @@ for (const largeur of [1000, 375]) {
   await page.close();
 }
 
+// L'affichage : thème du terminal, taille, plein écran, gardés dans le
+// navigateur ; la mise en scène d'une connexion.
+for (const largeur of [1000, 375]) {
+  const page = await navigateur.newPage({ viewport: { width: largeur, height: 800 } });
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
+  await avecCsp(page);
+  await page.goto(`${BASE}/`);
+  const jeu = page.locator('quetes-de-sysadmin');
+  const terminal = jeu.locator('.terminal');
+  await jeu.locator('.reglages select').selectOption('ambre');
+  const taille = () => terminal.evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+  const avant = await taille();
+  await jeu.locator('.reglages button', { hasText: 'A+' }).click();
+  verifier((await terminal.getAttribute('data-theme')) === 'ambre' && (await taille()) > avant, `affichage ${largeur} px : thème et taille`);
+  await jeu.locator('form input').fill('ssh royaume');
+  await jeu.locator('form input').press('Enter');
+  await jeu.locator('form input').fill('yes');
+  await jeu.locator('form input').press('Enter');
+  verifier(await terminal.evaluate((e) => e.classList.contains('scene-connexion')), `affichage ${largeur} px : la connexion est mise en scène`);
+  await jeu.locator('.reglages button', { hasText: 'Plein écran' }).click();
+  const boite = await terminal.boundingBox();
+  verifier(boite.width > largeur - 40 && boite.height > 600, `affichage ${largeur} px : plein écran`);
+  await jeu.locator('form input').press('Escape');
+  verifier(!(await jeu.locator('.ecran').evaluate((e) => e.classList.contains('focus'))), `affichage ${largeur} px : Échap quitte le plein écran`);
+  await page.reload();
+  verifier((await jeu.locator('.terminal').getAttribute('data-theme')) === 'ambre', `affichage ${largeur} px : le réglage est gardé`);
+  verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `affichage ${largeur} px : pas de défilement horizontal`);
+  if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/affichage-${largeur}.png` });
+  verifier(erreurs.length === 0, `affichage ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
+  await page.close();
+}
+
 // Page introuvable
 {
   const page = await navigateur.newPage();

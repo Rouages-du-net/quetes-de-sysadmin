@@ -332,6 +332,10 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [x] **Affichage du terminal** : quatre thèmes (phosphore, ambre, contraste
+  élevé, papier), taille du texte, plein écran (Échap en sort), gardés dans le
+  navigateur ; mises en scène d'une connexion et d'un redémarrage (coupées si
+  le système demande moins d'animations).
 - [x] **Tableau de classe** pour les enseignant·es : on y glisse les fichiers
   de sauvegarde des élèves (ou on colle leurs codes) ; chapitres, grade,
   succès, meilleur examen, avancée par histoire ; export CSV (sans formule
