@@ -55,6 +55,7 @@ machine-radio-motd = Radio Quartier — le serveur de l'antenne. Astreinte : un 
 machine-maison-motd = Maison des associations — la passerelle. Derrière elle : le wiki et les archives.
 machine-cooperative-motd = L'épicerie coopérative du quartier — le serveur de la caisse. Ici, on partage tout, sauf les mots de passe.
 machine-ruche-motd = La Ruche — le routeur du tiers-lieu. eth0 : la box ; eth1 : le commutateur.
+machine-fournil-motd = Le Fournil — le serveur de la boulangerie : le site, l'appli de commandes, sa base. Un audit est passé par là.
 
 # En se reconnectant à une machine dont le chapitre est en cours.
 # { $fichier } : le fichier d'accueil du chapitre (ex. bienvenue.txt)

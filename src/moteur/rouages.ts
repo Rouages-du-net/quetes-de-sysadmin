@@ -55,6 +55,8 @@ export const LIENS_ROUAGES: Record<string, string[]> = {
   vpn: ['glossaire-chiffrement', 'glossaire-routeur'],
   dmz: ['glossaire-nat'],
   annexe: ['glossaire-routeur'],
+  exposition: ['glossaire-port'],
+  traces: ['glossaire-chiffrement'],
 };
 
 /** Les liens d'un chapitre : adresse complète et identifiant (pour son texte). */

@@ -27,3 +27,5 @@ histoire-cooperative = The Co-op
     .resume = The neighbourhood food co-op: accounts for the people who arrive and leave, shared permissions, a well-tuned sudo, the till's website and its updates, by hand and then automatic.
 histoire-ruche = The Hive
     .resume = The network of a community space: VLANs to separate offices, guests and equipment, DHCP, NAT and a firewall between zones, a VPN, a DMZ for the website, a second site, a directory and enterprise Wi-Fi.
+histoire-audit = The Audit
+    .resume = The bakery's insurer wants an audit: fix an auditor's findings (SSH, accounts, sudo, secrets), close what is exposed on the network, then trace a login nobody expected.

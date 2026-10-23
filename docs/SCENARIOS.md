@@ -145,6 +145,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `wg`, `wg-quick` (WireGuard) | `genkey`, `genpsk`, `pubkey`, `show`, `showconf` ; `wg-quick up`, `down`, `strip` ; le service `wg-quick@wg0` ; la clé publique n'est pas calculée par Curve25519 (une empreinte qui en tient lieu, au bon format) ; les pairs sont décrits par le chapitre (le portable de Malik, le routeur d'un autre site et son réseau) ; `wg-quick` ajoute une route par `AllowedIPs` hors du réseau de l'interface ; un pair derrière une box (NAT) n'est joignable qu'avec `PersistentKeepalive` (sans délai simulé) ; pas de `wg set`, `PostUp`, `PresharedKey` vérifiée, IPv6, ni de tout le trafic par le tunnel côté routeur ; `wg-quick` sans sudo refuse au lieu de relancer sudo | Curve25519, `wg set`, `syncconf`, `PostUp`/`PostDown`, IPv6, `wg-quick save` |
 | OpenLDAP (`ldapsearch`, `ldapadd`, `ldapmodify`, `ldapdelete`, `ldappasswd`, `ldapwhoami`, `slappasswd`, `slapcat`) | un annuaire par machine (`etat.ldap`), un schéma réduit (core, cosine, inetorgperson, nis : les classes courantes, leurs attributs obligatoires) ; LDIF (`changetype`, `add`/`replace`/`delete`, `-`, lignes repliées), filtres `&`, `\|`, `!`, `=`, `*` ; `-x`, `-D`, `-W`, `-w`, `-H`, `-Y EXTERNAL` (root par `ldapi:///`, comme sur Debian), `-b`, `-s`, `-LLL`, `-f`, `-c` ; droits de Debian (lecture anonyme sauf `userPassword`, écriture par l'administrateur ou root) ; `{SSHA}` au bon format, mais pas un vrai SHA-1 ; les commandes ne lisent pas le clavier (un fichier ou un tube) | `cn=config`, réplication, index, `memberOf`, base64 (`::`), TLS, SASL autre qu'EXTERNAL, toute la syntaxe des filtres (`>=`, `~=`) |
 | FreeRADIUS (`freeradius`, `radtest`) | `clients.conf` (adresse ou réseau, secret), le module `ldap` activé par un lien dans `mods-enabled` (`server`, `identity`, `password`, `base_dn`, `user`, `group` et `membership_filter`), le fichier `users` (`DEFAULT`, `Ldap-Group`, `Auth-Type := Reject`, réponses, `Fall-Through`) ; configuration lue au démarrage ; `-XC`, `-X` (service arrêté, demandes de la borne racontées en abrégé) ; les bornes parlent PAP (comme EAP-TTLS/PAP), pas d'EAP simulé ; une syntaxe de configuration simplifiée | EAP (PEAP, TLS), accounting, `sites-available`, `unlang`, SQL, tous les modules |
+| Redis (service `redis-server`, `/etc/redis/redis.conf`) | seul le `bind` est lu, au démarrage et au redémarrage du service (`*`, `0.0.0.0`, ou la boucle locale `127.0.0.1`/`::1` ; sans `bind`, toutes les interfaces) pour décider d'où le port 6379 répond ; pas de `redis-cli`, de `requirepass` ni de `protected-mode` simulés ; PostgreSQL n'a pas de `listen_addresses` (son port se ferme avec ufw) | tout `redis.conf`, `redis-cli`, ACL, `CONFIG SET`, `listen_addresses` de `postgresql.conf` |
 | `ping` sur un réseau local | un appareil répond s'il est dans le VLAN de l'interface dont le réseau contient son adresse ; une adresse privée envoyée à la box se perd ; un nom d'appareil est reconnu sans DNS | ARP, DNS local, `/etc/hosts` |
 | `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, une fenêtre par session ; pas de raccourcis clavier (`tmux detach` pour Ctrl+b d) ; attach rejoue les dernières lignes ; le nom de la session s'affiche devant l'invite (la barre d'état) ; `uname -r/-a` ; `dpkg --configure -a` | fenêtres, volets, raccourcis, `screen` ; toutes les options de dpkg |
 | `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe, `=`, `^~`, ou expression régulière (`~`, `~*`, syntaxe de JavaScript plutôt que PCRE), choisie dans l'ordre de nginx ; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
@@ -1622,4 +1623,82 @@ module en anonyme (pas de `userPassword`), `memberOf` absent (les groupes
 `posixGroup`), l'entrée pour tout le monde avant celle du groupe, une faute
 de syntaxe (`Expecting section start brace`), `freeradius -X` avec le
 service lancé (`Address already in use`).
+
+## Histoire 14 : L'Audit (trois chapitres)
+
+La boulangerie de Nadia prend ses commandes en ligne ; son assureur veut un
+audit de sécurité avant de renouveler le contrat. Salomé, auditrice
+indépendante, passe le serveur (machine `fournil`, 192.0.2.22 : nginx,
+l'appli de commandes sous le compte `commandes`, PostgreSQL, Redis) au crible
+et remet son rapport en trois parties, une par chapitre. L'histoire de
+clôture : elle réunit ce que les autres apprennent séparément (SSH, comptes,
+sudo, droits, pare-feu, journaux, cron) et demande de **vérifier** autant que
+de corriger. Les trois chapitres sont défensifs : on lit un rapport, on
+répare, on remonte une trace. Phase 11 de la feuille de route.
+
+### Chapitre 1 — Le rapport (fait)
+
+Quatre constats d'hygiène : C1 root peut entrer en SSH, C2 un compte oublié
+(Lucas, stagiaire parti, encore dans sudo), C3 sudo sans mot de passe pour le
+compte d'administration (`90-cloud-init-users`), C4 `/srv/commandes/.env`
+(mot de passe de la base) lisible par tous.
+
+| Étape | Commande apprise |
+|---|---|
+| C1 | `sudo nano /etc/ssh/sshd_config` (`PermitRootLogin no`), `sudo sshd -t`, `sudo systemctl reload ssh`, `sudo sshd -T` |
+| C2 | `sudo userdel lucas`, ou `sudo usermod -L -e 1 lucas` + `sudo gpasswd -d lucas sudo` ; `id`, `sudo chage -l` |
+| C3 | `sudo -l` (la règle `NOPASSWD`), `sudo visudo -f /etc/sudoers.d/90-cloud-init-users` (ou `sudo rm`) |
+| C4 | `ls -l`, `sudo chmod 600 /srv/commandes/.env` (ou 640 avec le groupe `commandes`) |
+
+Objectif vérifié sur l'état : root refusé par la configuration que sshd a
+chargée, sans enfermer le compte du joueur ; Lucas supprimé (ou verrouillé,
+expiré ET hors de sudo) ; plus de règle `NOPASSWD` pour le compte du joueur,
+sudo fonctionnant encore ; le fichier fermé aux autres comptes mais lisible
+par l'appli. Pièges prévus : fichier modifié sans recharger sshd (« sans
+effet »), un nouveau `sshd_config` qui enferme le compte, un compte verrouillé
+mais encore dans sudo, un fichier de sudoers faux, un secret fermé à l'appli
+(`chown root`).
+
+### Chapitre 2 — L'exposition (fait)
+
+Le balayage de ports de Salomé (`balayage-audit.txt`) trouve PostgreSQL (5432)
+et Redis (6379) joignables depuis internet ; ufw est installé mais éteint ;
+Redis n'a pas de mot de passe et écoute partout (`bind * -::*`).
+
+| Étape | Commande apprise |
+|---|---|
+| Voir | `sudo ss -tlnp` (`0.0.0.0` partout, `127.0.0.1` seulement) |
+| Filtrer | `sudo ufw allow OpenSSH`, `sudo ufw allow "Nginx Full"`, puis `sudo ufw enable` |
+| Fermer à la source | `bind 127.0.0.1 -::1` dans `/etc/redis/redis.conf`, `sudo systemctl restart redis-server` |
+| Vérifier | `ss -tln`, `ufw status verbose`, une nouvelle connexion `ssh fournil` |
+
+Objectif vérifié sur l'état : pare-feu actif (entrant refusé par défaut), SSH
+du poste, 80 et 443 joignables depuis internet, 5432 et 6379 fermés, Redis
+actif et à l'écoute seulement sur `127.0.0.1`, une nouvelle connexion ssh
+réussie depuis l'activation. Pièges prévus : activer ufw avant d'autoriser
+SSH, couper le site, une règle trop large sur la base ou Redis, arrêter Redis
+(l'appli en a besoin), modifier `redis.conf` sans redémarrer (le programme ne
+relit pas sa configuration tout seul).
+
+### Chapitre 3 — Les traces (fait)
+
+Dans le journal de ssh, une connexion du compte de Nadia dans la nuit du 13
+mars à 3 h 12, depuis 203.0.113.99 ; Nadia dormait. Son `authorized_keys`
+porte deux clés : l'autre se fait passer pour une clé de Nadia
+(`nadia@portable`) ; seule l'empreinte la trahit.
+
+| Étape | Commande apprise |
+|---|---|
+| Retrouver | `journalctl -u ssh \| grep Accepted`, `last nadia` |
+| Identifier | `sudo ssh-keygen -l -f /home/nadia/.ssh/authorized_keys`, à comparer à l'empreinte du journal |
+| Révoquer | retirer cette ligne (et elle seule) de `authorized_keys` |
+| Chercher la persistance | `sudo crontab -u nadia -l`, puis `sudo crontab -u nadia -e` (retirer `curl … \| sh`, garder `sauvegarde.sh`) |
+
+Objectif vérifié sur l'état : la clé intruse retirée et celle de Nadia
+gardée ; la tâche de l'intrus retirée et la sauvegarde gardée. Pièges
+prévus : se fier au commentaire de la clé, effacer tout `authorized_keys`
+(Nadia dehors), `crontab -r` (la sauvegarde disparaît aussi). Le débrief
+rappelle ce que le jeu ne simule pas : changer le mot de passe de la base
+(le `.env` était lisible cette nuit-là), garder une copie des journaux,
+prévenir qui de droit.
 
