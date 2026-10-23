@@ -295,5 +295,6 @@ affichage-theme-contraste = Contraste élevé
 affichage-theme-papier = Papier
 affichage-plus-petit = Texte plus petit
 affichage-plus-grand = Texte plus grand
+affichage-couleurs = Couleurs
 affichage-focus = Plein écran
 affichage-quitter-focus = Quitter le plein écran (Échap)

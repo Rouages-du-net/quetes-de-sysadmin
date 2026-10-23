@@ -456,12 +456,45 @@ for (const largeur of [1000, 375]) {
   const avant = await taille();
   await jeu.locator('.reglages button', { hasText: 'A+' }).click();
   verifier((await terminal.getAttribute('data-theme')) === 'ambre' && (await taille()) > avant, `affichage ${largeur} px : thème et taille`);
+  // La coloration de la ligne : la faute de frappe se voit avant Entrée ; la copie colorée est sous le champ.
+  await jeu.locator('form input').pressSequentially('lss');
+  verifier((await jeu.locator('.coloration .c-inconnue').textContent()) === 'lss', `affichage ${largeur} px : une commande inconnue est colorée`);
+  await jeu.locator('form input').fill('');
+  await jeu.locator('form input').pressSequentially('ls -a');
+  const [champ, copie] = await Promise.all([jeu.locator('form input').boundingBox(), jeu.locator('.coloration').boundingBox()]);
+  verifier(
+    (await jeu.locator('.coloration .c-commande').textContent()) === 'ls' && (await jeu.locator('.coloration .c-option').textContent()) === '-a' && Math.abs(champ.x - copie.x) < 1 && Math.abs(champ.y - copie.y) < 1,
+    `affichage ${largeur} px : commande et option colorées, sous le champ`,
+  );
+  // Les espaces entre les mots colorés restent (la copie a la largeur du texte du champ).
+  await jeu.locator('form input').pressSequentially(' | cat');
+  const largeurs = await jeu.locator('.champ').evaluate((c) => {
+    const i = c.querySelector('input');
+    const mesure = document.createElement('span');
+    mesure.style.cssText = 'position:absolute;white-space:pre;font:inherit;visibility:hidden';
+    mesure.textContent = i.value;
+    c.append(mesure);
+    const r = document.createRange();
+    r.selectNodeContents(c.querySelector('.coloration'));
+    const l = [mesure.getBoundingClientRect().width, r.getBoundingClientRect().width];
+    mesure.remove();
+    return l;
+  });
+  verifier(Math.abs(largeurs[0] - largeurs[1]) < 2, `affichage ${largeur} px : la copie colorée garde les espaces (${largeurs})`);
+  await jeu.locator('form input').press('Enter');
+  verifier((await jeu.locator('.sortie .cmd .c-commande').last().textContent()) === 'cat', `affichage ${largeur} px : la commande reste colorée au-dessus de sa sortie`);
   await jeu.locator('form input').fill('ssh royaume');
   await jeu.locator('form input').press('Enter');
+  await jeu.locator('form input').pressSequentially('yes');
+  verifier(!(await jeu.locator('.champ').evaluate((e) => e.classList.contains('colore'))), `affichage ${largeur} px : une réponse (yes/no) n'est pas colorée`);
   await jeu.locator('form input').fill('yes');
   await jeu.locator('form input').press('Enter');
   verifier(await terminal.evaluate((e) => e.classList.contains('scene-connexion')), `affichage ${largeur} px : la connexion est mise en scène`);
   verifier((await jeu.locator('li:has(> button[data-histoire="0"])').getAttribute('data-etat')) === 'en-cours', `affichage ${largeur} px : la machine où l'on joue s'allume sur la carte`);
+  await jeu.locator('.reglages button', { hasText: 'Couleurs' }).click();
+  await jeu.locator('form input').pressSequentially('ls');
+  verifier(!(await jeu.locator('.champ').evaluate((e) => e.classList.contains('colore'))) && (await jeu.locator('form input').evaluate((e) => getComputedStyle(e).color)) !== 'rgba(0, 0, 0, 0)', `affichage ${largeur} px : la coloration se coupe`);
+  await jeu.locator('form input').fill('');
   await jeu.locator('.reglages button', { hasText: 'Plein écran' }).click();
   const boite = await terminal.boundingBox();
   verifier(boite.width > largeur - 40 && boite.height > 600, `affichage ${largeur} px : plein écran`);

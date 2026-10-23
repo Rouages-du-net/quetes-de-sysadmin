@@ -406,3 +406,43 @@
 }
 .qds .nano-touche:focus-visible { outline: 2px solid var(--_terminal-invite); }
 .qds .nano-touche kbd { font: inherit; background: var(--_terminal-texte); color: var(--_terminal-fond); padding: 0 0.2ch; }
+
+/* La coloration de la ligne de commande (voir src/moteur/coloration.ts) :
+   la copie colorée est dessinée sous le champ, dont le texte devient
+   transparent (le curseur reste visible). Les couleurs ont un contraste AA
+   au moins sur le fond de chaque thème ; une commande inconnue est aussi
+   soulignée d'une vague, un chemin existant d'un trait : la couleur n'est
+   jamais le seul signe. */
+.qds .terminal {
+  --_c-commande: #5fe08a;
+  --_c-inconnue: #ff7a6b;
+  --_c-option: #7cc7ff;
+  --_c-chaine: #ffd479;
+  --_c-operateur: #d7a6ff;
+  --_c-joker: #7fe3e3;
+}
+.qds .terminal[data-theme='ambre'] { --_c-commande: #9be07a; --_c-inconnue: #ff8a70; --_c-option: #8fd0ff; --_c-chaine: #ffe7b3; --_c-operateur: #e0b3ff; --_c-joker: #8fe3d6; }
+.qds .terminal[data-theme='contraste'] { --_c-commande: #3dff7a; --_c-inconnue: #ff7070; --_c-option: #70d0ff; --_c-chaine: #ffe066; --_c-operateur: #e6b3ff; --_c-joker: #66ffff; }
+.qds .terminal[data-theme='papier'] { --_c-commande: #0f6b37; --_c-inconnue: #b3261e; --_c-option: #0b57a4; --_c-chaine: #7a4d00; --_c-operateur: #6b2fa3; --_c-joker: #00657a; }
+.qds .champ { position: relative; flex: 1; min-width: 12ch; display: flex; }
+.qds .champ input { flex: 1; min-width: 0; padding: 0; margin: 0; letter-spacing: normal; line-height: inherit; height: 1.5em; }
+.qds .coloration {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  white-space: pre;
+  pointer-events: none;
+  display: none;
+  line-height: inherit;
+}
+/* En bloc, pas en flex : dans une boîte flex, les espaces entre deux mots colorés disparaîtraient. */
+.qds .champ.colore .coloration { display: block; }
+.qds .champ.colore input { color: transparent; }
+.qds .champ.colore input::selection { color: var(--_terminal-texte); }
+.qds .c-commande { color: var(--_c-commande); }
+.qds .c-inconnue { color: var(--_c-inconnue); text-decoration: underline wavy; text-underline-offset: 0.2em; }
+.qds .c-option { color: var(--_c-option); }
+.qds .c-chaine { color: var(--_c-chaine); }
+.qds .c-operateur { color: var(--_c-operateur); font-weight: 700; }
+.qds .c-joker { color: var(--_c-joker); }
+.qds .c-chemin { text-decoration: underline; text-underline-offset: 0.2em; }
