@@ -122,3 +122,12 @@ oeuf-sl =
     __/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__
      |/-=|___|=    ||    ||    ||    |_____/~\___/
       \_/      \O=====O=====O=====O_/      \_/
+
+# --color=QUAND inconnu (ls, grep, diff), comme coreutils en français.
+couleur-argument-invalide =
+    { $commande } : argument « { $valeur } » incorrect pour « --color »
+    Les arguments valables sont :
+      - « always », « yes », « force »
+      - « never », « no », « none »
+      - « auto », « tty », « if-tty »
+    Saisissez « { $commande } --help » pour plus d'informations.

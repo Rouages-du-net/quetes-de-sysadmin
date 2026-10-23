@@ -207,8 +207,8 @@ man-docker-compose = lance plusieurs conteneurs qui vont ensemble (une appli et 
     .exemple-3 = le journal d'un service
     .exemple-4 = le fichier tel que Compose le comprend, variables remplacées
     .exemple-5 = tout arrêter et supprimer (avec -v, les volumes aussi : leurs données sont perdues)
-man-diff = compare deux fichiers ligne à ligne, et montre ce qu'il faut changer pour passer du premier au second. En format normal, « 3c3 » veut dire : la ligne 3 du premier devient la ligne 3 du second (c pour change, d pour delete, a pour add) ; les lignes qui commencent par < viennent du premier fichier, celles par > du second. -u donne le format unifié, celui de git diff : - pour ce qui part, + pour ce qui arrive, avec trois lignes autour. Avec deux lieux, diff compare les fichiers de même nom, et -r descend dans les sous-lieux. Rien n'est affiché si les fichiers sont identiques.
-    .synopsis = diff [-u] [-r] [-q] fichier1 fichier2
+man-diff = compare deux fichiers ligne à ligne, et montre ce qu'il faut changer pour passer du premier au second. En format normal, « 3c3 » veut dire : la ligne 3 du premier devient la ligne 3 du second (c pour change, d pour delete, a pour add) ; les lignes qui commencent par < viennent du premier fichier, celles par > du second. -u donne le format unifié, celui de git diff : - pour ce qui part, + pour ce qui arrive, avec trois lignes autour. Avec deux lieux, diff compare les fichiers de même nom, et -r descend dans les sous-lieux. Rien n'est affiché si les fichiers sont identiques. --color colore ce qui part en rouge et ce qui arrive en vert (à l'écran seulement ; --color=always même dans un tube).
+    .synopsis = diff [-u] [-r] [-q] [--color[=QUAND]] fichier1 fichier2
     .option-u = format unifié (unified) : - et +, avec trois lignes de contexte.
     .option-r = compare aussi les sous-lieux, récursivement.
     .option-q = dit seulement si les fichiers diffèrent (quiet).
@@ -261,8 +261,8 @@ man-git =
     Un dépôt nu peut réagir à un push : ses crochets (hooks/pre-receive, hooks/post-receive) sont des scripts lancés à chaque réception, s'ils sont exécutables (chmod +x). pre-receive peut refuser le push (code de retour non nul). Pour déployer, post-receive extrait les fichiers dans un lieu : git --work-tree=lieu checkout -f main.
     Un commit se désigne par le début de son identifiant (au moins 4 caractères), ou par HEAD (le dernier), HEAD~1 (l'avant-dernier)…
     .synopsis = git [--git-dir=dépôt] [--work-tree=lieu] commande
-man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu.
-    .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] motif [fichier...]
+man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu. À l'écran, ce qui correspond est surligné en rouge (--color=auto, comme l'alias de Debian) ; --color=never le coupe.
+    .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] [--color[=QUAND]] motif [fichier...]
     .option-i = ignore la différence entre majuscules et minuscules.
     .option-v = inverse la recherche : garde les lignes qui ne contiennent PAS le motif.
     .option-c = compte les lignes trouvées au lieu de les afficher.
@@ -295,8 +295,8 @@ man-ln = crée un lien (link). Avec -s, un lien symbolique : un petit fichier qu
     .exemple-1 = activer un site nginx, à la façon de Debian
     .exemple-2 = voir les liens et ce qu'ils visent
     .exemple-3 = basculer le lien current vers une autre version, d'un coup
-man-ls = liste le contenu d’un lieu (list). -a montre aussi les fichiers cachés, dont le nom commence par un point. -l (long) montre les permissions, le propriétaire et la taille ; -h écrit les tailles en K, M, G ; -n montre les numéros (uid, gid) au lieu des noms.
-    .synopsis = ls [-a] [-l] [-d] [-h] [-n] [lieu]
+man-ls = liste le contenu d’un lieu (list). -a montre aussi les fichiers cachés, dont le nom commence par un point. -l (long) montre les permissions, le propriétaire et la taille ; -h écrit les tailles en K, M, G ; -n montre les numéros (uid, gid) au lieu des noms. À l'écran, les noms sont en couleur (--color=auto, comme l'alias du ~/.bashrc de Debian) : les lieux en bleu, les liens en cyan, les programmes en vert ; --color=never coupe les couleurs, --color=always les garde même dans un tube.
+    .synopsis = ls [-a] [-l] [-d] [-h] [-n] [--color[=QUAND]] [lieu]
     .option-a = montre tout (all), y compris les fichiers cachés, dont le nom commence par un point, et les lieux . et ..
     .option-l = format long : type, permissions, propriétaire, groupe, taille et nom, une entrée par ligne.
     .option-h = avec -l, écrit les tailles de façon lisible (human-readable) : 1,2K, 34M, 5G.

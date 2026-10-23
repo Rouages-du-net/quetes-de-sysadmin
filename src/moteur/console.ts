@@ -31,6 +31,8 @@ const PREMIERE = 'effaceur';
 const CHAPITRE_DES_CLES = 'racine';
 
 export class Console {
+  // L'écran montre les couleurs des sorties (réglage de l'interface) ; voir couleurs.ts.
+  couleurs = false;
   t: Traduire;
   termines: string[];
   poste: Shell;
@@ -285,6 +287,7 @@ export class Console {
   /** Exécute une ligne ; renvoie le texte à afficher, ou null pour « clear ». */
   executer(ligne: string): string | null {
     const sh = this.shell;
+    sh.couleurs = this.couleurs;
     const dejaFini = sh.termine;
     // Dans tmux, ce qui s'affiche reste dans la session (pour tmux attach).
     const tmuxAvant = sh.tmux;

@@ -9,6 +9,7 @@ import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
 import { dansLaLangue } from './noms';
+import { sansCouleurs } from '../src/moteur/couleurs';
 
 const chapitre = (id: string) => HISTOIRES.flatMap((h) => h.chapitres).find((c) => c.id === id)!;
 
@@ -24,6 +25,15 @@ for (const langue of LANGUES)
 
     function jouer(id: string, commandes: string[]) {
       const s = new Shell(chapitre(id), langue);
+      // Dans la langue de référence, la partie se joue avec les couleurs, comme
+      // dans l'interface : les événements doivent les ignorer (voir couleurs.ts).
+      // Les sorties comparées ici sont lues sans les couleurs.
+      s.couleurs = reference;
+      const executer = s.executer.bind(s);
+      s.executer = (ligne: string) => {
+        const sortie = executer(ligne);
+        return sortie === null ? null : sansCouleurs(sortie);
+      };
       const sorties = ['cat ' + s.accueil, ...commandes].map((c) => s.executer(chapitre(id).noms ? L(c) : c) ?? '');
       return { s, sorties, tout: sorties.join('\n') };
     }

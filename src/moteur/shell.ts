@@ -11,6 +11,7 @@
 
 import { chemin, comptesParDefaut, joueur, nettoyer, nom, traduireComptes, traduireNoms, type Chapitre, type Comptes, type Dossier, type Noeud } from './monde';
 import { COMMANDES, type Commande } from './commandes';
+import { sansCouleurs } from './couleurs';
 import { aide, apropos, ligneWhatis, optionInvalide, pageMan, raccourcir } from './commandes/manuel';
 import { traducteur, typographie, type Langue, type Traduire } from '../textes';
 
@@ -92,6 +93,9 @@ export class Shell implements Jeu {
   termine = false;
   // Mode examen : les étapes sont vérifiées, mais seul le message final (le débrief) s'affiche.
   examen = false;
+  // Le terminal montre les couleurs (l'interface, si le réglage est allumé) :
+  // ls, grep… colorent alors ce qui va à l'écran (voir couleurs.ts).
+  couleurs = false;
   qui: string;
   derniere: Jeu['derniere'] = { ligne: '', commandes: [], sortie: '', erreurs: [], redirection: null };
   // Le compte sous lequel sudo lance la commande en cours (sudo -u).
@@ -710,7 +714,8 @@ export class Shell implements Jeu {
       this.sortieVers = null;
     });
     let sortie: string = entree ?? '';
-    this.derniere = { ligne, commandes, sortie, erreurs: this.erreurs, redirection: redirection ? this.resoudre(redirection.fichier) : null };
+    // Les événements lisent la sortie telle qu'on la lit, sans les codes de couleur.
+    this.derniere = { ligne, commandes, sortie: sansCouleurs(sortie), erreurs: this.erreurs, redirection: redirection ? this.resoudre(redirection.fichier) : null };
 
     if (redirection) {
       // La redirection est faite par TON shell, avant sudo : même avec sudo

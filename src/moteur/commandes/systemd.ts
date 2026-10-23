@@ -5,6 +5,7 @@
 import type { Shell } from '../shell';
 import { arreter, dateComplete, demarrer, duree, journaliser, ligneJournal, recharger, redemarrer, systemd, type Systemd } from '../systemd';
 import type { Commande } from './index';
+import { colorer, sgr } from '../couleurs';
 import { lireTaille } from '../memoire';
 import { chargerUnites, lireCalendrier, prochainCalendrier, prochainDeclenchement, timerDe } from '../minuteries';
 import { versUtc } from '../systemd';
@@ -19,16 +20,24 @@ const LEGENDE = [
 const sousEtat = (etat: string) => (etat === 'active' ? 'running' : etat === 'failed' ? 'failed' : 'dead');
 const nomUnite = (brut: string) => brut.replace(/\.service$/, '');
 
-function statut(jeu: Shell, sd: Systemd, nom: string): string {
+// Comme systemctl sur un terminal : le point vert d'un service actif, la croix rouge d'un échec.
+type Peindre = (code: string, texte: string) => string;
+const brut: Peindre = (_code, texte) => texte;
+
+function statut(jeu: Shell, sd: Systemd, nom: string, peindre: Peindre = brut): string {
   const s = sd.services[nom];
   const unite = `${nom}.service`;
   const langue = jeu.t.langue;
   const depuis = `since ${dateComplete(s.depuis, langue, sd)}; ${duree(sd.horloge - s.depuis)} ago`;
   const actif =
-    s.etat === 'active' ? `active (${s.resteActif ? 'exited' : 'running'}) ${depuis}` : s.etat === 'failed' ? `failed (Result: ${s.resultat ?? 'exit-code'}) ${depuis}` : `inactive (dead)`;
+    s.etat === 'active'
+      ? `${peindre('0;1;32', `active (${s.resteActif ? 'exited' : 'running'})`)} ${depuis}`
+      : s.etat === 'failed'
+        ? `${peindre('0;1;31', 'failed')} (Result: ${s.resultat ?? 'exit-code'}) ${depuis}`
+        : `inactive (dead)`;
   const lignes = [
     // × (\u00d7) : le symbole d'échec de systemd.
-    `${s.etat === 'failed' ? '\u00d7' : s.etat === 'active' ? '●' : '○'} ${unite} - ${s.description}`,
+    `${s.etat === 'failed' ? peindre('0;1;31', '\u00d7') : s.etat === 'active' ? peindre('0;1;32', '●') : '○'} ${unite} - ${s.description}`,
     `     Loaded: loaded (${s.fichier ?? `/usr/lib/systemd/system/${unite}`}; ${s.active ? 'enabled' : 'disabled'}; preset: enabled)`,
     ...(s.surcharges?.length
       ? s.surcharges.flatMap((chemin, i) => {
@@ -53,12 +62,16 @@ function statut(jeu: Shell, sd: Systemd, nom: string): string {
   return lignes.join('\n');
 }
 
-function liste(sd: Systemd, echecsSeulement: boolean): string {
+function liste(sd: Systemd, echecsSeulement: boolean, peindre: Peindre = brut): string {
   const unites = Object.entries(sd.services).filter(([, s]) => (echecsSeulement ? s.etat === 'failed' : s.etat !== 'inactive'));
   const largeur = Math.max(4, ...unites.map(([n]) => n.length + 8));
   const lignes = [`  ${'UNIT'.padEnd(largeur)} LOAD   ACTIVE   SUB     DESCRIPTION`];
   for (const [nom, s] of unites)
-    lignes.push(`${s.etat === 'failed' ? '●' : ' '} ${`${nom}.service`.padEnd(largeur)} loaded ${s.etat.padEnd(8)} ${sousEtat(s.etat).padEnd(7)} ${s.description}`);
+    lignes.push(
+      s.etat === 'failed'
+        ? `${peindre('0;1;31', '●')} ${peindre('0;1;39', `${nom}.service`.padEnd(largeur))} loaded ${peindre('0;1;31', s.etat.padEnd(8))} ${peindre('0;1;31', sousEtat(s.etat).padEnd(7))} ${s.description}`
+        : `  ${`${nom}.service`.padEnd(largeur)} loaded ${s.etat.padEnd(8)} ${sousEtat(s.etat).padEnd(7)} ${s.description}`,
+    );
   return [...lignes, ...LEGENDE, '', `${unites.length} loaded units listed.`].join('\n');
 }
 
@@ -321,7 +334,10 @@ export const SYSTEMD: Record<string, Commande> = {
   },
 
   systemctl: {
-    lancer: ({ args, jeu }) => {
+    lancer: (c) => {
+      const { args, jeu } = c;
+      // Sur un terminal, systemctl colore (pas dans un tube ni un fichier).
+      const peindre: Peindre = colorer(c, 'auto') ? sgr : brut;
       const sd = systemd(jeu);
       if (!sd) return jeu.erreur('System has not been booted with systemd as init system (PID 1). Can\'t operate.');
       const maintenant = args.includes('--now');
@@ -333,8 +349,8 @@ export const SYSTEMD: Record<string, Commande> = {
       if (!VERBES.includes(action)) return jeu.erreur(`Unknown command verb '${action}'.`);
       // Consulter l'état des services après un redémarrage : c'est vérifier.
       const consulter = () => (sd.verifieApresDemarrage = true);
-      if (action === '--failed' || (action === 'list-units' && args.includes('--failed'))) return consulter(), liste(sd, true);
-      if (action === 'list-units') return consulter(), liste(sd, false);
+      if (action === '--failed' || (action === 'list-units' && args.includes('--failed'))) return consulter(), liste(sd, true, peindre);
+      if (action === 'list-units') return consulter(), liste(sd, false, peindre);
       if (action === 'daemon-reload') {
         if (jeu.qui !== 'root') return refuse(jeu, 'daemon-reload', 'systemd');
         relire(jeu, sd);
@@ -404,7 +420,7 @@ export const SYSTEMD: Record<string, Commande> = {
           sorties.push(`Warning: The unit file, source configuration file or drop-ins of ${nom}.service changed on disk. Run 'systemctl daemon-reload' to reload units.`);
         if (action === 'status') {
           consulter();
-          sorties.push(statut(jeu, sd, nom));
+          sorties.push(statut(jeu, sd, nom, peindre));
         } else if (action === 'is-active') {
           consulter();
           sorties.push(s.etat);

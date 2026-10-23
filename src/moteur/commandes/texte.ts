@@ -3,6 +3,7 @@
 // petits outils qui font une seule chose, et qu'on enchaîne.
 
 import { options } from '../outils';
+import { colorer, lireCouleur, messageCouleurInvalide, sgr } from '../couleurs';
 import type { Commande, Contexte } from './index';
 
 // Les lignes à traiter : celles des fichiers donnés, sinon l'entrée du tube.
@@ -52,7 +53,12 @@ export const TEXTE: Record<string, Commande> = {
   },
 
   grep: {
-    lancer: (c) => {
+    lancer: (brut) => {
+      // --color : comme l'alias « grep --color=auto » du ~/.bashrc de Debian.
+      const couleur = lireCouleur(brut.args, 'auto', 'auto');
+      if (couleur.invalide !== undefined) return brut.jeu.erreur(messageCouleurInvalide(brut, 'grep', couleur.invalide));
+      const c = { ...brut, args: couleur.args };
+      const enCouleur = colorer(c, couleur.quand);
       const { lettres, reste } = options(c.args);
       const [motif, ...fichiers] = reste;
       if (motif === undefined) return c.jeu.erreur(c.jeu.t('grep-usage'));
@@ -69,11 +75,27 @@ export const TEXTE: Record<string, Commande> = {
       const cherche = casse ? motif.toLowerCase() : motif;
       const correspond = (l: string) => (re ? re.test(l) : (casse ? l.toLowerCase() : l).includes(cherche));
       const ts = textes('grep', c, fichiers);
+      // En couleur (GREP_COLORS par défaut) : ce qui correspond en rouge gras, le nom du fichier en magenta, le « : » en cyan.
+      const global = re ? new RegExp(re.source, re.flags + 'g') : null;
+      const surligner = (l: string) => {
+        if (!enCouleur || lettres.has('v')) return l;
+        if (global) return l.replace(global, (m) => sgr('01;31', m));
+        if (!cherche) return l;
+        let sortie = '';
+        let i = 0;
+        const dans = casse ? l.toLowerCase() : l;
+        for (let k = dans.indexOf(cherche); k >= 0; k = dans.indexOf(cherche, i)) {
+          sortie += l.slice(i, k) + sgr('01;31', l.slice(k, k + cherche.length));
+          i = k + cherche.length;
+        }
+        return sortie + l.slice(i);
+      };
+      const prefixe = (nom: string) => (enCouleur ? `${sgr('35', nom)}${sgr('36', ':')}` : `${nom}:`);
       const sorties: string[] = [];
       for (const { nom, texte } of ts) {
         const garde = lignesDe(texte).filter((l) => correspond(l) !== lettres.has('v'));
-        if (lettres.has('c')) sorties.push(ts.length > 1 ? `${nom}:${garde.length}` : String(garde.length));
-        else sorties.push(...garde.map((l) => (ts.length > 1 ? `${nom}:${l}` : l)));
+        if (lettres.has('c')) sorties.push(ts.length > 1 ? `${prefixe(nom)}${garde.length}` : String(garde.length));
+        else sorties.push(...garde.map((l) => (ts.length > 1 ? `${prefixe(nom)}${surligner(l)}` : surligner(l))));
       }
       // Écart volontaire : le vrai grep ne dit rien quand il ne trouve rien ;
       // ici, on le précise (seulement à l'écran, jamais dans un tube).
