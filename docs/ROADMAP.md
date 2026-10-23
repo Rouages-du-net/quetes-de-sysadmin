@@ -332,6 +332,11 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [x] **Emporter sa progression** (salles de TP) : « Ma progression » donne
+  un code court à recopier (les chapitres terminés, somme de contrôle contre
+  les fautes de frappe, ordre des chapitres figé : `tests/progression/ordre.txt`)
+  ou un fichier JSON avec toute la sauvegarde ; un nom facultatif s'inscrit
+  en tête du carnet. Sans serveur ni chiffrement : ce n'est pas une preuve.
 - [x] **La carte** : un bouton au-dessus du terminal ouvre, dans une
   fenêtre, l'arbre des lieux connus de la machine où l'on est (lieux
   visités, lieux aperçus en italique, maison, lieux fermés), avec « tu es

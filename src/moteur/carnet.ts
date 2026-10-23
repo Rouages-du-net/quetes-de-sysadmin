@@ -50,11 +50,11 @@ export function progression(termines: string[], t: Traduire): string[] {
   return [`## ${t('carnet-progression')}`, '', ...(lignes.length ? lignes : [t('carnet-progression-vide')]), ''];
 }
 
-/** Le carnet en Markdown : la progression (si elle est donnée), puis les commandes, triées par nom. */
-export function enMarkdown(carnet: Carnet, t: Traduire, termines?: string[]): string {
+/** Le carnet en Markdown : son titre (au nom de la joueuse ou du joueur, s'il est donné), la progression (si elle est donnée), puis les commandes, triées par nom. */
+export function enMarkdown(carnet: Carnet, t: Traduire, termines?: string[], nomJoueur = ''): string {
   const noms = Object.keys(carnet).sort((a, b) => a.localeCompare(b));
   return [
-    `# ${t('carnet-titre')}`,
+    `# ${nomJoueur ? t('carnet-titre-de', { nom: nomJoueur }) : t('carnet-titre')}`,
     '',
     t('carnet-markdown-intro', { nombre: noms.length }),
     '',

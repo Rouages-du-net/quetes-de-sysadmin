@@ -11,6 +11,7 @@ import { description, enMarkdown, noter, type Carnet } from '../moteur/carnet';
 import { liensRouages } from '../moteur/rouages';
 import { carte, type Lieu } from '../moteur/carte';
 import { disposer, reperes as reperesPlan, type ElementPlan } from '../moteur/plan';
+import { codeDeProgression, fichierDeSauvegarde, lireCode, lireFichier, nettoyerNom, type Sauvegarde } from '../moteur/progression';
 import { editeur } from './editeur';
 import { traducteur, typographie, type Langue } from '../textes';
 
@@ -120,6 +121,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const pourComprendre = el('aside', { class: 'pour-comprendre', hidden: '' }, el('p', {}, typo(t('rouages-intro'))), listeRouages);
   // Le carnet du sysadmin : les commandes déjà lancées, avec leur ligne du manuel.
   const carnetCompte = el('span', { class: 'compte' });
+  const carnetTitre = el('span', {});
   const carnetListe = el('dl', {});
   const carnetVide = el('p', {}, typo(t('carnet-vide')));
   const exporter = el('button', { type: 'button', class: 'lien' }, t('carnet-exporter'));
@@ -129,32 +131,56 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const panneauCarnet = el(
     'details',
     { class: 'carnet' },
-    el('summary', {}, t('carnet-titre'), ' ', carnetCompte),
+    el('summary', {}, carnetTitre, ' ', carnetCompte),
     el('p', { class: 'carnet-aide' }, typo(t('carnet-aide'))),
     carnetVide,
     carnetListe,
     carnetActions,
   );
   const recommencer = el('button', { type: 'button', class: 'lien' }, t('bouton-recommencer'));
-  const astuces = el('p', { class: 'astuces' }, typo(t('astuces')), ' ', recommencer);
+  // Ma progression : un nom pour le carnet, et de quoi continuer sur une autre
+  // machine (le code court, ou le fichier ; voir progression.ts).
+  const boutonProgression = el('button', { type: 'button', class: 'lien', 'aria-haspopup': 'dialog' }, t('progression-bouton'));
+  const astuces = el('p', { class: 'astuces' }, typo(t('astuces')), ' ', recommencer, ' · ', boutonProgression);
+  const idProgression = `qds-progression-${Math.random().toString(36).slice(2, 8)}`;
+  const champNom = el('input', { type: 'text', id: `${idProgression}-nom`, maxlength: '60', autocomplete: 'name', spellcheck: 'false' }) as HTMLInputElement;
+  const codeActuel = el('code', { class: 'code-progression' });
+  const copierCode = el('button', { type: 'button', class: 'lien' }, t('progression-copier'));
+  const champCode = el('input', { type: 'text', id: `${idProgression}-code`, autocomplete: 'off', spellcheck: 'false', autocapitalize: 'characters', placeholder: 'QDS-…' }) as HTMLInputElement;
+  const reprendreCode = el('button', { type: 'button', class: 'bouton' }, t('progression-reprendre'));
+  const telecharger = el('button', { type: 'button', class: 'bouton' }, t('progression-telecharger'));
+  const champFichier = el('input', { type: 'file', id: `${idProgression}-fichier`, accept: '.json,application/json' }) as HTMLInputElement;
+  const etatProgression = el('p', { class: 'progression-etat', role: 'status' });
+  const fermerProgression = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  const fenetreProgression = el(
+    'dialog',
+    { class: 'fenetre-progression', 'aria-labelledby': idProgression },
+    el('h2', { id: idProgression }, t('progression-titre')),
+    el('p', { class: 'carte-legende' }, typo(t('progression-intro'))),
+    el('h3', {}, el('label', { for: champNom.id }, t('progression-nom'))),
+    el('p', {}, champNom),
+    el('p', { class: 'carte-legende' }, typo(t('progression-nom-aide'))),
+    el('h3', {}, t('progression-code-titre')),
+    el('p', { class: 'carte-legende' }, typo(t('progression-code-aide'))),
+    el('p', {}, codeActuel, ' ', copierCode),
+    el('p', { class: 'progression-saisie' }, el('label', { for: champCode.id }, t('progression-code-saisie')), ' ', champCode, ' ', reprendreCode),
+    el('h3', {}, t('progression-fichier-titre')),
+    el('p', { class: 'carte-legende' }, typo(t('progression-fichier-aide'))),
+    el('p', {}, telecharger),
+    el('p', { class: 'progression-saisie' }, el('label', { for: champFichier.id }, t('progression-fichier-saisie')), ' ', champFichier),
+    etatProgression,
+    el('p', { class: 'carte-actions' }, fermerProgression),
+  ) as HTMLDialogElement;
   const credit = el('p', { class: 'credit' }, typo(t('credit')), ' ',
     el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit-lien-projet')), ' · ',
     el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-lien-original')));
 
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, terminal, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte);
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, terminal, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
-  let sauve: {
-    termines?: string[];
-    histoire?: string | null;
-    connus?: string;
-    ssh?: { fichiers: Record<string, string>; phrases?: Record<string, string> };
-    carnet?: Carnet;
-    examen?: boolean;
-    // Meilleurs temps en mode examen, par chapitre (ms).
-    records?: Record<string, number>;
-  } = {};
+  // Meilleurs temps en mode examen (records, en ms) ; nom mis en tête du carnet (voir progression.ts).
+  let sauve: Sauvegarde = {};
   try {
     sauve = JSON.parse(localStorage.getItem(CLE) ?? '{}');
   } catch {}
@@ -162,6 +188,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const termines = terminalJeu.termines;
   const carnet: Carnet = sauve.carnet && typeof sauve.carnet === 'object' ? sauve.carnet : {};
   const records: Record<string, number> = sauve.records && typeof sauve.records === 'object' ? sauve.records : {};
+  let nomJoueur = typeof sauve.nom === 'string' ? nettoyerNom(sauve.nom) : '';
   terminalJeu.examen = sauve.examen === true;
   caseExamen.checked = terminalJeu.examen;
   // Le début du chapitre en cours, en mode examen (null : pas de chrono).
@@ -169,12 +196,19 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // Histoire et chapitre en cours (-1 : sur le poste).
   const histoire = () => (terminalJeu.distant ? HISTOIRES.indexOf(terminalJeu.distant.histoire) : -1);
   const courant = () => (terminalJeu.distant ? terminalJeu.distant.histoire.chapitres.indexOf(terminalJeu.distant.shell.chapitre) : -1);
+  const etatSauvegarde = (): Sauvegarde => ({
+    termines,
+    histoire: terminalJeu.distant?.histoire.id ?? null,
+    connus: terminalJeu.hotesConnus(),
+    ssh: terminalJeu.ssh(),
+    carnet,
+    examen: terminalJeu.examen,
+    records,
+    ...(nomJoueur ? { nom: nomJoueur } : {}),
+  });
   const sauver = () => {
     try {
-      localStorage.setItem(
-        CLE,
-        JSON.stringify({ termines, histoire: terminalJeu.distant?.histoire.id ?? null, connus: terminalJeu.hotesConnus(), ssh: terminalJeu.ssh(), carnet, examen: terminalJeu.examen, records }),
-      );
+      localStorage.setItem(CLE, JSON.stringify(etatSauvegarde()));
     } catch {}
   };
   const ouvert = (h: number, c: number) => c === 0 || termines.includes(chapitres(h)[c - 1].id);
@@ -259,6 +293,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
 
   const majCarnet = () => {
     const noms = Object.keys(carnet).sort((a, b) => a.localeCompare(b));
+    carnetTitre.textContent = nomJoueur ? t('carnet-titre-de', { nom: nomJoueur }) : t('carnet-titre');
     carnetCompte.textContent = t('carnet-compte', { nombre: noms.length });
     carnetVide.hidden = noms.length > 0;
     carnetActions.hidden = noms.length === 0;
@@ -280,7 +315,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const majChrono = () => {
     chrono.textContent = debutExamen === null ? '' : t('examen-chrono', { temps: minutes(Date.now() - debutExamen) });
   };
-  setInterval(() => debutExamen !== null && majChrono(), 1000);
+  const minuterie = setInterval(() => debutExamen !== null && majChrono(), 1000);
   // Fin du chapitre en mode examen : le temps, et le record de ce navigateur.
   const finExamen = () => {
     if (debutExamen === null || !terminalJeu.distant?.shell.termine) return;
@@ -439,7 +474,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     saisie.focus();
   });
   // Le carnet s'emporte : un fichier Markdown, ou le presse-papiers.
-  const markdown = () => enMarkdown(carnet, t, termines);
+  const markdown = () => enMarkdown(carnet, t, termines, nomJoueur);
   exporter.addEventListener('click', () => {
     const lien = el('a', { href: URL.createObjectURL(new Blob([markdown()], { type: 'text/markdown' })), download: t('carnet-fichier') });
     lien.click();
@@ -570,6 +605,81 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // après que le navigateur a rendu le focus au bouton qui l'avait ouverte.
   fermerCarte.addEventListener('click', () => fenetreCarte.close());
   fenetreCarte.addEventListener('close', () => setTimeout(() => saisie.focus()));
+  // ——— Ma progression ———
+  // Une sauvegarde reprise (code ou fichier) : on l'écrit, puis le jeu repart d'elle.
+  const reprendre = (s: Sauvegarde) => {
+    try {
+      localStorage.setItem(CLE, JSON.stringify(s));
+    } catch {}
+    fenetreProgression.close();
+    clearInterval(minuterie);
+    racine.replaceChildren();
+    monter(racine, options);
+  };
+  const majProgression = () => {
+    champNom.value = nomJoueur;
+    codeActuel.textContent = codeDeProgression(termines);
+    etatProgression.textContent = '';
+  };
+  boutonProgression.addEventListener('click', () => {
+    majProgression();
+    fenetreProgression.showModal();
+  });
+  fermerProgression.addEventListener('click', () => fenetreProgression.close());
+  fenetreProgression.addEventListener('close', () => setTimeout(() => saisie.focus()));
+  champNom.addEventListener('change', () => {
+    nomJoueur = nettoyerNom(champNom.value);
+    champNom.value = nomJoueur;
+    majCarnet();
+    sauver();
+  });
+  copierCode.addEventListener('click', () => {
+    navigator.clipboard
+      ?.writeText(codeActuel.textContent ?? '')
+      .then(() => (etatProgression.textContent = t('carnet-copie')))
+      .catch(() => (etatProgression.textContent = t('carnet-copie-impossible')));
+  });
+  // Le code ne donne que des chapitres terminés : on les ajoute, sans rien perdre d'ici.
+  const essayerCode = () => {
+    const lu = lireCode(champCode.value);
+    if ('erreur' in lu) {
+      etatProgression.textContent = t(`progression-${lu.erreur}`);
+      champCode.focus();
+      return;
+    }
+    const nouveaux = lu.termines.filter((id) => !termines.includes(id));
+    if (!nouveaux.length) {
+      etatProgression.textContent = t('progression-rien-de-neuf');
+      return;
+    }
+    reprendre({ ...etatSauvegarde(), termines: [...termines, ...nouveaux] });
+  };
+  reprendreCode.addEventListener('click', essayerCode);
+  champCode.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') essayerCode();
+  });
+  telecharger.addEventListener('click', () => {
+    const lien = el('a', {
+      href: URL.createObjectURL(new Blob([fichierDeSauvegarde(etatSauvegarde(), new Date())], { type: 'application/json' })),
+      download: t('progression-nom-fichier'),
+    });
+    lien.click();
+    setTimeout(() => URL.revokeObjectURL(lien.href), 1000);
+    etatProgression.textContent = t('progression-telechargee');
+  });
+  // Le fichier remplace tout ce qui est gardé ici : on demande d'abord.
+  champFichier.addEventListener('change', async () => {
+    const fichier = champFichier.files?.[0];
+    if (!fichier) return;
+    const lu = lireFichier(await fichier.text());
+    champFichier.value = '';
+    if ('erreur' in lu) {
+      etatProgression.textContent = t(`progression-${lu.erreur}`);
+      return;
+    }
+    if (!confirm(t('progression-confirmer', { nombre: lu.sauvegarde.termines?.length ?? 0 }))) return;
+    reprendre(lu.sauvegarde);
+  });
   recommencer.addEventListener('click', () => {
     if (histoire() === -1) allerPoste();
     else demarrer(histoire(), courant());

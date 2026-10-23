@@ -221,6 +221,70 @@ for (const largeur of [1000, 375]) {
   await page.close();
 }
 
+// Ma progression : le nom en tête du carnet, le code court recopié sur une
+// autre machine (un autre navigateur), le fichier qui remporte tout.
+for (const largeur of [1000, 375]) {
+  const ici = await navigateur.newContext({ viewport: { width: largeur, height: 900 } });
+  const page = await ici.newPage();
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
+  await avecCsp(page);
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('quetes-de-sysadmin'))
+      localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ termines: ['eveil', 'bourg', 'racine', 'sauvegarde', 'cles'], carnet: { ls: { ligne: 'ls -a', chapitre: 'eveil' } } }));
+  });
+  await page.goto(`${BASE}/`);
+  let jeu = page.locator('quetes-de-sysadmin');
+  await jeu.locator('button', { hasText: 'Ma progression' }).click();
+  const fenetre = jeu.locator('dialog.fenetre-progression');
+  verifier(await fenetre.evaluate((d) => d.open), `progression ${largeur} px : la fenêtre s’ouvre`);
+  const code = await fenetre.locator('.code-progression').textContent();
+  verifier(/^QDS(-[0-9A-Z]{1,4})+$/.test(code), `progression ${largeur} px : le code ${code}`);
+  await fenetre.locator('input[type="text"]').first().fill('Lina');
+  await fenetre.locator('input[type="text"]').first().press('Tab');
+  const boite = await fenetre.boundingBox();
+  verifier(boite.x >= 0 && boite.x + boite.width <= largeur, `progression ${largeur} px : la fenêtre tient dans l’écran`);
+  if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/progression-${largeur}.png` });
+  const [telechargement] = await Promise.all([page.waitForEvent('download'), fenetre.locator('button', { hasText: 'Télécharger ma sauvegarde' }).click()]);
+  const fichier = await telechargement.path();
+  await page.keyboard.press('Escape');
+  verifier((await jeu.locator('.carnet summary').textContent()).includes('Le carnet de Lina'), `progression ${largeur} px : le nom en tête du carnet`);
+
+  // Une autre machine : un navigateur neuf.
+  const ailleurs = await navigateur.newContext({ viewport: { width: largeur, height: 900 } });
+  const autre = await ailleurs.newPage();
+  await avecCsp(autre);
+  await autre.goto(`${BASE}/`);
+  jeu = autre.locator('quetes-de-sysadmin');
+  await jeu.locator('button', { hasText: 'Ma progression' }).click();
+  const saisieCode = jeu.locator('dialog.fenetre-progression input[type="text"]').nth(1);
+  const reprendreCode = jeu.locator('dialog.fenetre-progression button', { hasText: 'Reprendre' });
+  // D'abord une faute de frappe : refusée, rien ne change.
+  await saisieCode.fill(code.slice(0, -1) + (code.endsWith('A') ? 'B' : 'A'));
+  await reprendreCode.click();
+  verifier((await jeu.locator('.progression-etat').textContent()).length > 0 && (await autre.evaluate(() => localStorage.getItem('quetes-de-sysadmin'))) !== null, `progression ${largeur} px : un code faux est refusé, avec un message`);
+  // Puis le bon code, recopié en minuscules avec un O pour un 0 : le jeu repart avec ces chapitres.
+  await saisieCode.fill(code.toLowerCase().replace(/0/g, 'o'));
+  await reprendreCode.click();
+  await autre.waitForFunction(() => !document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('dialog.fenetre-progression')?.open);
+  const histoires = await autre.evaluate(() => JSON.parse(localStorage.getItem('quetes-de-sysadmin')).termines);
+  verifier(['eveil', 'bourg', 'racine', 'sauvegarde', 'cles'].every((id) => histoires.includes(id)), `progression ${largeur} px : le code reprend les chapitres terminés`);
+  // Le fichier, dans un troisième navigateur : tout revient, nom et carnet compris.
+  const troisieme = await (await navigateur.newContext({ viewport: { width: largeur, height: 900 } })).newPage();
+  await avecCsp(troisieme);
+  troisieme.on('dialog', (d) => d.accept());
+  await troisieme.goto(`${BASE}/`);
+  jeu = troisieme.locator('quetes-de-sysadmin');
+  await jeu.locator('button', { hasText: 'Ma progression' }).click();
+  await jeu.locator('dialog.fenetre-progression input[type="file"]').setInputFiles(fichier);
+  await troisieme.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.carnet summary')?.textContent?.includes('Lina'));
+  verifier((await jeu.locator('.carnet summary').textContent()).includes('Le carnet de Lina'), `progression ${largeur} px : le fichier reprend tout, nom et carnet compris`);
+  verifier(erreurs.length === 0, `progression ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
+  await ici.close();
+  await ailleurs.close();
+}
+
 // Page introuvable
 {
   const page = await navigateur.newPage();

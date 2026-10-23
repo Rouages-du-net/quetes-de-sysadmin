@@ -136,3 +136,36 @@ plan-note-teletravail = remote work
 plan-annexe = Annexe router
 plan-note-annexe = second site
 plan-reseau-annexe = Annexe network
+
+## My progress (see src/moteur/progression.ts)
+
+# The notebook's title when a name is given.
+carnet-titre-de = { $nom }'s notebook
+progression-bouton = My progress
+progression-titre = My progress
+progression-intro = Your progress stays in this browser. To carry on on another machine (another lab room, at home), take it with you with the code or the file. Nothing is sent anywhere.
+progression-nom = Your name (optional)
+progression-nom-aide = It goes at the top of your notebook ("…'s notebook") and in your saves.
+progression-code-titre = The code, to copy down
+progression-code-aide = It holds the finished chapters, nothing else: not the notebook, not the keys you created. Write it down, then type it on the other machine.
+progression-copier = Copy
+progression-code-saisie = Resume with a code:
+progression-reprendre = Resume
+progression-fichier-titre = The file, to take everything
+progression-fichier-aide = Chapters, notebook, keys you created, ssh config, exam mode records. Keep it on a USB stick or send it to yourself.
+progression-telecharger = Download my save
+progression-fichier-saisie = Resume from a file:
+progression-nom-fichier = quetes-de-sysadmin.json
+progression-telechargee = Save downloaded.
+# { $nombre }: the finished chapters in the file.
+progression-confirmer = Resume this save ({ $nombre ->
+        [one] { $nombre } finished chapter
+       *[other] { $nombre } finished chapters
+    })? It will replace everything kept in this browser.
+progression-rien-de-neuf = This code adds no chapter to the ones you have already finished here.
+progression-code-illisible = This is not a progress code: it starts with QDS, followed by groups of letters and digits.
+progression-code-faute = This code has a typo: check it, character by character.
+progression-code-trop-recent = This code comes from a newer version of the game: reload the page.
+progression-fichier-illisible = This file is not a readable save (JSON).
+progression-fichier-autre = This file is not a Sysadmin Quests save.
+progression-fichier-trop-recent = This save comes from a newer version of the game: reload the page.
