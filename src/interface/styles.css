@@ -158,9 +158,11 @@
 /* La carte : le bouton au bout de la barre, la fenêtre et l'arbre des lieux. */
 .qds .outils { margin-left: auto; display: flex; gap: 0.5rem; }
 .qds .bouton-carte,
-.qds .bouton-mission { font: inherit; font-size: 0.9rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }
+.qds .bouton-mission,
+.qds .bouton-indice { font: inherit; font-size: 0.9rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }
 .qds .bouton-carte:hover, .qds .bouton-carte:focus-visible,
-.qds .bouton-mission:hover, .qds .bouton-mission:focus-visible { border-color: var(--_accent); }
+.qds .bouton-mission:hover, .qds .bouton-mission:focus-visible,
+.qds .bouton-indice:hover, .qds .bouton-indice:focus-visible { border-color: var(--_accent); }
 .qds .fenetre-carte,
 .qds .fenetre-progression,
 .qds .fenetre-mission,
@@ -236,6 +238,10 @@
 .qds .succes-description { display: block; }
 .qds .a-obtenir .succes-nom { color: var(--_discret); }
 .qds .sortie pre.succes { color: var(--_terminal-invite); font-weight: 700; }
+/* Besoin d'aide ? Les niveaux d'indice dans la mission. */
+.qds .aide { margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed var(--_bord); }
+.qds .indice-boutons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.qds .indice-texte p { margin: 0.5rem 0; }
 .qds .carte-actions { margin: 0.75rem 0 0; text-align: right; }
 .qds .chrono { font-family: var(--_police-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--_accent); }
 .qds .sortie pre.examen-resultat { font-weight: 600; color: var(--_terminal-invite); }

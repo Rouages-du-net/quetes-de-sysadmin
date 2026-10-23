@@ -106,6 +106,9 @@ export interface Chapitre {
   evenements: Evenement[];
   // Le chapitre est réussi quand cet événement s'est produit.
   final: string;
+  // L'ordre des étapes dans le jeu, pour les indices (voir indices.ts), quand
+  // il diffère de celui des événements.
+  etapes?: string[];
   // Appelé après chaque commande (ex. l'Effaceur qui avance) ; renvoie un message.
   apresCommande?: (jeu: Jeu) => string | void;
   // Mot de passe de « vous » pour sudo (absent : sudo pas encore appris).

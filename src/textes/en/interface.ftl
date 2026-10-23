@@ -238,3 +238,20 @@ succes-sandwich = With the rights
     .description = With sudo, you get everything, even a sandwich (xkcd 149).
 succes-sl = Locomotive
     .description = sl instead of ls: the most famous typo, punished by a train.
+
+## Graded hints (see src/moteur/indices.ts; the hints themselves: indices-<story>.ftl)
+
+indice-titre = Need help?
+indice-intro = Three levels, to open one after the other: the manual first, like at work. The debrief will say how many you asked for.
+indice-bouton-manuel = The manual
+indice-bouton-piste = A lead
+indice-bouton-solution = Almost the answer
+# { $pages }: "man mv, man cp".
+indice-manuel = Pages to read: { $pages }. Also search with man -k and a keyword.
+indice-plus-rien = No more hints for this chapter: reread the instructions and what has happened.
+indice-debrief = { $nombre ->
+        [one] One hint asked for this chapter. Next time, without?
+       *[other] { $nombre } hints asked for this chapter. Next time, with fewer?
+    }
+succes-sans-indice = No safety net
+    .description = Finish a chapter without asking for a hint.

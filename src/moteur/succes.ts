@@ -40,6 +40,7 @@ export const SUCCES: Succes[] = [
   { id: 'trois-histoires', obtenu: (c) => histoiresFinies(c.termines).length >= 3 },
   { id: 'toutes-histoires', obtenu: (c) => histoiresFinies(c.termines).length === HISTOIRES.length },
   { id: 'cinquante-commandes', obtenu: (c) => Object.keys(c.carnet).length >= 50 },
+  { id: 'sans-indice', obtenu: (c) => !!c.sh?.termine && c.sh.chapitre.id !== 'poste' && c.sh.indicesDemandes.size === 0 },
   { id: 'examen', obtenu: (c) => Object.keys(c.records).length > 0 },
   { id: 'examen-eclair', obtenu: (c) => Object.values(c.records).some((ms) => ms < 5 * 60_000) },
   // Les clins d'œil : une ligne bien précise (voir OEUFS dans shell.ts).

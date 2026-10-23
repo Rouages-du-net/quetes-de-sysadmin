@@ -332,6 +332,10 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [x] **Indices gradués**, dans la Mission : le manuel d'abord, puis une
+  piste, puis presque la réponse, pour la première étape pas encore franchie
+  (`indices-<histoire>.ftl`) ; le débrief compte les indices demandés ; rien
+  en mode examen ; un succès « Sans filet » pour un chapitre sans indice.
 - [x] **Succès et grades** : 17 succès vérifiés sur ce qui s'est vraiment
   passé (ls -a, un tube, une redirection, une restauration, le mode examen…),
   dont 3 clins d'œil cachés (xyzzy, le sandwich de xkcd 149, sl) ; un grade,

@@ -1,0 +1,59 @@
+### Graded hints for The Community Centre (see src/moteur/indices.ts): one
+### message per step, indice-<chapter>-<event>, with .piste (a lead, without
+### the exact command) and .solution (almost the answer). Each hint says
+### where to type: on your workstation, on maison (the gateway) or on an
+### internal machine (wiki).
+
+## Chapter 1 — The keys
+
+indice-cles-copiee =
+    .piste = A key pair is created on YOUR workstation, never on the server (man ssh-keygen). Then its public half goes into ~/.ssh/authorized_keys on maison (man ssh-copy-id).
+    .solution = On your workstation: ssh-keygen (Enter to accept the path, passphrase of your choice), then ssh-copy-id maison (temporary password: lilas-2027).
+indice-cles-par-cle =
+    .piste = Your public key is in place: log in again, ssh should no longer ask for the account's password.
+    .solution = If you are on maison: exit; then, on your workstation: ssh maison
+indice-cles-fermee =
+    .piste = On maison, the SSH server decides whether to accept passwords: look for PasswordAuthentication in /etc/ssh/sshd_config (man sshd_config). Check the syntax before reloading.
+    .solution = On maison: sudo nano /etc/ssh/sshd_config, the line #PasswordAuthentication yes becomes PasswordAuthentication no; then sudo sshd -t and sudo systemctl reload ssh.
+indice-cles-fin =
+    .piste = Before you leave, check that you can still get in, with the key, now that passwords are refused.
+    .solution = On maison: exit; then, on your workstation: ssh maison
+
+## Chapter 2 — The Jump
+
+indice-rebond-au-wiki =
+    .piste = The wiki can only be reached from maison, but your private key must stay on your workstation: ssh can jump through a machine (man ssh, option -J).
+    .solution = On your workstation: ssh -J maison wiki (answer yes for each of the two machines).
+indice-rebond-raccourci =
+    .piste = For a simple "ssh wiki" to be enough, write the route once and for all in ~/.ssh/config, on your workstation (man ssh_config, Host and ProxyJump).
+    .solution = On your workstation: nano ~/.ssh/config, and add a Host wiki block with, below it, HostName wiki, User you and ProxyJump maison.
+indice-rebond-fin =
+    .piste = The shortcut and the jump are enough: no private key should stay on the gateway.
+    .solution = On your workstation: ssh wiki. If you had copied your private key onto maison, delete it there: rm ~/.ssh/id_ed25519
+
+## Chapter 3 — The tunnel
+
+indice-tunnel-validees =
+    .piste = The admin page only listens on 127.0.0.1:8080 OF THE WIKI: an ssh tunnel carries a port of your workstation all the way there (man ssh, -L, and -f -N so it stays open). Then curl, from your workstation, reads the page and its addresses.
+    .solution = On your workstation: ssh -f -N -L 8080:localhost:8080 wiki (or with -J maison), curl localhost:8080/admin, then curl localhost:8080/admin/valider/samir and curl localhost:8080/admin/valider/lea (not promo-casino).
+indice-tunnel-fin =
+    .piste = The tunnel is still running in the background on your workstation: find its process, then stop it.
+    .solution = On your workstation: ps (the ssh -f -N -L… line), then kill followed by its PID.
+
+## Chapter 4 — Transfers
+
+indice-transferts-rapport =
+    .piste = scp copies a file between machines, like cp, with the remote path prefixed by the machine's name; the wiki shortcut in ~/.ssh/config works for it too (man scp).
+    .solution = On your workstation: scp wiki:/srv/wiki/exports/report-2027.pdf .
+indice-transferts-sauvegarde =
+    .piste = The backup is done from maison to archives, with rsync (man rsync). Mind the trailing slash on the source: with it, rsync copies the CONTENT of the directory. Try a dry run first, with -n.
+    .solution = On maison: rsync -av /srv/share/ archives:/srv/backups/share/ (add --delete if an extra share directory has appeared on the other side).
+indice-transferts-fin =
+    .piste = You need both: the report, intact, on your workstation, and on archives a backup identical to /srv/share, with no nested directory.
+    .solution = On your workstation: scp wiki:/srv/wiki/exports/report-2027.pdf . ; on maison: rsync -av --delete /srv/share/ archives:/srv/backups/share/
+
+## Chapter 5 — The web host
+
+indice-hebergeur-fin =
+    .piste = First bring /srv/wiki/site back to your workstation, over SSH (man sftp, get -r). Then publish it with lftp under the name the host's certificate covers (email_hosting.txt, on maison), into public_html: mirror -R sends to the hosting, --delete removes what is no longer in the site (man lftp).
+    .solution = On your workstation: sftp wiki, get -r /srv/wiki/site, bye; then lftp -u maisonasso ftp.hebergeur.example (password in email_yasmine.txt, on maison), mirror -R --delete site public_html, bye.

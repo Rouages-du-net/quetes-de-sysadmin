@@ -362,6 +362,42 @@ for (const largeur of [1000, 375]) {
   await page.close();
 }
 
+// Les indices gradués : le manuel, puis une piste, puis presque la réponse ;
+// le débrief les compte ; rien en mode examen.
+{
+  const page = await navigateur.newPage({ viewport: { width: 1000, height: 900 } });
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
+  await avecCsp(page);
+  await page.goto(`${BASE}/`);
+  const jeu = page.locator('quetes-de-sysadmin');
+  const taper = async (l) => {
+    await jeu.locator('form input').fill(l);
+    await jeu.locator('form input').press('Enter');
+  };
+  for (const l of ['ssh royaume', 'yes']) await taper(l);
+  const mission = jeu.locator('dialog.fenetre-mission');
+  await jeu.locator('.bouton-mission').click();
+  const bouton = (n) => mission.locator(`[data-niveau="${n}"]`);
+  verifier((await bouton('manuel').isVisible()) && !(await bouton('piste').isVisible()), 'indices : le manuel d’abord');
+  await bouton('manuel').click();
+  verifier((await mission.locator('.indice-texte').textContent()).includes('man mv'), 'indices : les pages du manuel');
+  await bouton('piste').click();
+  await bouton('solution').click();
+  verifier((await mission.locator('.indice-texte').textContent()).includes('mv crabe Seau'), 'indices : presque la réponse, pour l’étape en cours');
+  await page.keyboard.press('Escape');
+  for (const l of ['mv Jetee/filet Port/Hangar', 'mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule']) await taper(l);
+  verifier((await jeu.locator('.sortie').textContent()).includes('3 indices demandés pour ce chapitre'), 'indices : le débrief les compte');
+  // En mode examen : pas d'aide.
+  await jeu.locator('.examen input').check();
+  await jeu.locator('.bouton-mission').click();
+  verifier(!(await mission.locator('.aide').isVisible()), 'indices : rien en mode examen');
+  await page.keyboard.press('Escape');
+  verifier(erreurs.length === 0, `indices : aucune erreur console ${erreurs.join(' ')}`);
+  await page.close();
+}
+
 // Page introuvable
 {
   const page = await navigateur.newPage();

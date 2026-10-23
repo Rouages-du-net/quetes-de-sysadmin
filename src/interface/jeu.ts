@@ -13,6 +13,7 @@ import { liensRouages } from '../moteur/rouages';
 import { carte, type Lieu } from '../moteur/carte';
 import { disposer, reperes as reperesPlan, type ElementPlan } from '../moteur/plan';
 import { grade, GRADES, nouveauxSucces, SUCCES } from '../moteur/succes';
+import { indice, NIVEAUX, type Niveau } from '../moteur/indices';
 import { codeDeProgression, fichierDeSauvegarde, lireCode, lireFichier, nettoyerNom, type Sauvegarde } from '../moteur/progression';
 import { editeur } from './editeur';
 import { traducteur, typographie, type Langue } from '../textes';
@@ -89,6 +90,19 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const missionJournal = el('ol', { class: 'mission-journal' });
   const missionVide = el('p', { class: 'carte-legende' }, typo(t('mission-rien')));
   const fermerMission = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  // Besoin d'aide ? Trois niveaux, l'un après l'autre (voir indices.ts) ; rien en mode examen.
+  const boutonsIndice = Object.fromEntries(
+    NIVEAUX.map((n) => [n, el('button', { type: 'button', class: 'bouton-indice', 'data-niveau': n }, t(`indice-bouton-${n}`))]),
+  ) as Record<Niveau, HTMLButtonElement>;
+  const texteIndice = el('div', { class: 'indice-texte', 'aria-live': 'polite' });
+  const aide = el(
+    'section',
+    { class: 'aide' },
+    el('h3', {}, t('indice-titre')),
+    el('p', { class: 'carte-legende' }, typo(t('indice-intro'))),
+    el('p', { class: 'indice-boutons' }, ...NIVEAUX.map((n) => boutonsIndice[n])),
+    texteIndice,
+  );
   const fenetreMission = el(
     'dialog',
     { class: 'fenetre-mission', 'aria-labelledby': idMission },
@@ -99,6 +113,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     el('h3', {}, t('mission-journal')),
     missionVide,
     missionJournal,
+    aide,
     el('p', { class: 'carte-actions' }, fermerMission),
   ) as HTMLDialogElement;
   const idCarte = `qds-carte-${Math.random().toString(36).slice(2, 8)}`;
@@ -456,12 +471,15 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     if (ligne.trim() && !reponse) historique.push(ligne);
     position = historique.length;
     const shell = terminalJeu.shell;
+    const finiAvant = shell.termine;
     const resultat = terminalJeu.executer(ligne);
     // Une réponse à une question (un mot de passe…) n'est pas une commande pour le carnet.
     if (!reponse) noter(carnet, shell);
     const ligneDe = reponse ? null : shell;
     if (resultat === null) sortie.replaceChildren();
     else afficher(resultat);
+    // Le débrief dit combien d'indices on a demandés pour ce chapitre.
+    if (!finiAvant && shell.termine && shell.indicesDemandes.size) afficher(t('indice-debrief', { nombre: shell.indicesDemandes.size }), 'succes');
     saisie.value = '';
     apres(ligneDe);
     ouvrirEditeur();
@@ -766,9 +784,37 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     const journal = sh?.journal ?? [];
     missionVide.hidden = journal.length > 0;
     missionJournal.replaceChildren(...journal.map((m) => el('li', {}, el('pre', { class: 'mission-texte' }, m))));
+    majAide();
     fenetreMission.showModal();
   });
   fermerMission.addEventListener('click', () => fenetreMission.close());
+  // L'aide du chapitre en cours : les niveaux déjà ouverts pour cette étape restent visibles.
+  const majAide = () => {
+    const sh = terminalJeu.distant?.shell;
+    aide.hidden = !sh || terminalJeu.examen || sh.termine;
+    if (aide.hidden || !sh) return;
+    const i = indice(sh);
+    const ouverts = NIVEAUX.filter((n) => sh.indicesDemandes.has(`${i.etape ?? ''}:${n}`) || (n === 'manuel' && sh.indicesDemandes.has(`:${n}`)));
+    const blocs: HTMLElement[] = [];
+    if (ouverts.includes('manuel')) blocs.push(el('p', {}, t('indice-manuel', { pages: i.manuel.map((c) => `man ${c}`).join(', ') })));
+    if (ouverts.includes('piste') && i.piste) blocs.push(el('p', {}, typo(i.piste)));
+    if (ouverts.includes('solution') && i.solution) blocs.push(el('pre', { class: 'mission-texte' }, i.solution));
+    if (!i.etape && ouverts.length < 3) blocs.push(el('p', { class: 'carte-legende' }, typo(t('indice-plus-rien'))));
+    texteIndice.replaceChildren(...blocs);
+    // Un niveau à la fois : le suivant s'ouvre quand le précédent a été lu.
+    NIVEAUX.forEach((n, k) => {
+      const b = boutonsIndice[n];
+      b.hidden = ouverts.includes(n) || (k > 0 && !ouverts.includes(NIVEAUX[k - 1])) || (n !== 'manuel' && !i.etape);
+    });
+  };
+  aide.addEventListener('click', (e) => {
+    const n = (e.target as HTMLElement).closest('button')?.dataset.niveau as Niveau | undefined;
+    const sh = terminalJeu.distant?.shell;
+    if (!n || !sh) return;
+    sh.indicesDemandes.add(`${n === 'manuel' ? '' : (indice(sh).etape ?? '')}:${n}`);
+    majAide();
+    texteIndice.lastElementChild?.scrollIntoView({ block: 'nearest' });
+  });
   fenetreMission.addEventListener('close', () => setTimeout(() => saisie.focus()));
   // ——— Les succès et le grade ———
   boutonSucces.addEventListener('click', () => {
