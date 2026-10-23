@@ -8,6 +8,7 @@ import type { Traduire } from '../textes';
 import { COMMANDES } from './commandes';
 import { page, resume } from './commandes/manuel';
 import { HISTOIRES } from './chapitres';
+import { grade } from './succes';
 
 export interface EntreeCarnet {
   // La première ligne où la commande a servi, et le chapitre (identifiant ; vide sur le poste).
@@ -58,6 +59,7 @@ export function enMarkdown(carnet: Carnet, t: Traduire, termines?: string[], nom
     '',
     t('carnet-markdown-intro', { nombre: noms.length }),
     '',
+    ...(termines ? [t('carnet-grade', { grade: t(`grade-${grade(termines)}`) }), ''] : []),
     ...(termines ? progression(termines, t) : []),
     ...noms.flatMap((nom) => {
       const e = carnet[nom];

@@ -24,6 +24,16 @@ const ARG_MAX = 2_097_152;
 const INTEGRES = ['cd', 'echo', 'pwd', 'test', 'printf'];
 
 // Ce que le jeu (les chapitres et les commandes) peut consulter ou modifier.
+// Les clins d'œil : xyzzy (le mot magique de Colossal Cave Adventure), le
+// sandwich de xkcd 149 (https://xkcd.com/149/), et sl, la locomotive qui punit
+// ceux qui tapent sl au lieu de ls (le paquet Debian sl).
+const OEUFS: Record<string, { texte: string; succes: string }> = {
+  xyzzy: { texte: 'oeuf-xyzzy', succes: 'xyzzy' },
+  'make me a sandwich': { texte: 'oeuf-sandwich-refus', succes: '' },
+  'sudo make me a sandwich': { texte: 'oeuf-sandwich', succes: 'sandwich' },
+  sl: { texte: 'oeuf-sl', succes: 'sl' },
+};
+
 export interface Jeu {
   racine: Dossier;
   cwd: string;
@@ -128,6 +138,8 @@ export class Shell implements Jeu {
   visites = new Set<string>();
   // Les messages de l'histoire déjà affichés dans ce chapitre (le panneau « Mission » les relit).
   journal: string[] = [];
+  // Les clins d'œil trouvés dans cette session (voir OEUFS et succes.ts).
+  oeufs = new Set<string>();
 
   t: Traduire;
 
@@ -542,6 +554,12 @@ export class Shell implements Jeu {
     }
     const mots = decouper(ligne);
     if (!mots.length) return '';
+    // Quelques clins d'œil de la culture du terminal : une réponse, et un succès caché.
+    const oeuf = OEUFS[ligne.trim().replace(/\s+/g, ' ')];
+    if (oeuf) {
+      if (oeuf.succes) this.oeufs.add(oeuf.succes);
+      return this.t(oeuf.texte);
+    }
     if (mots.length === 1 && mots[0].texte === 'clear' && !mots[0].cite) return null;
     // exit est intégré au shell : la console ferme la session.
     if (mots[0].texte === 'exit' && !mots[0].cite && mots.length <= 2) {

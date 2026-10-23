@@ -335,6 +335,33 @@ for (const largeur of [1000, 375]) {
   await telephone.close();
 }
 
+// Les succès : annoncés dans le terminal, comptés sur le lien, listés avec le grade.
+{
+  const page = await navigateur.newPage({ viewport: { width: 1000, height: 900 } });
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
+  await avecCsp(page);
+  await page.goto(`${BASE}/`);
+  const jeu = page.locator('quetes-de-sysadmin');
+  for (const l of ['ls -a ~/.ssh', 'xyzzy']) {
+    await jeu.locator('form input').fill(l);
+    await jeu.locator('form input').press('Enter');
+  }
+  const sortie = await jeu.locator('.sortie').textContent();
+  verifier(sortie.includes('Succès : Ce qui est caché') && sortie.includes('Succès : Mot magique'), 'succès : annoncés dans le terminal');
+  const lien = jeu.locator('.astuces button', { hasText: 'Succès' });
+  verifier(/Succès \(\d+\/\d+\)/.test(await lien.textContent()), `succès : le compte sur le lien (${await lien.textContent()})`);
+  await lien.click();
+  const fenetre = jeu.locator('dialog.fenetre-succes');
+  verifier((await fenetre.locator('.succes-grade').textContent()).includes('Stagiaire'), 'succès : le grade');
+  verifier((await fenetre.locator('.obtenu').count()) === 3 && (await fenetre.textContent()).includes('Succès caché'), 'succès : obtenus et cachés dans la liste');
+  if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/succes-1000.png` });
+  await page.keyboard.press('Escape');
+  verifier(erreurs.length === 0, `succès : aucune erreur console ${erreurs.join(' ')}`);
+  await page.close();
+}
+
 // Page introuvable
 {
   const page = await navigateur.newPage();

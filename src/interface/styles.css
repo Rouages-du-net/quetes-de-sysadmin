@@ -163,13 +163,16 @@
 .qds .bouton-mission:hover, .qds .bouton-mission:focus-visible { border-color: var(--_accent); }
 .qds .fenetre-carte,
 .qds .fenetre-progression,
-.qds .fenetre-mission { width: min(36rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
+.qds .fenetre-mission,
+.qds .fenetre-succes { width: min(36rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
 .qds .fenetre-carte::backdrop,
 .qds .fenetre-progression::backdrop,
-.qds .fenetre-mission::backdrop { background: rgb(0 0 0 / 0.5); }
+.qds .fenetre-mission::backdrop,
+.qds .fenetre-succes::backdrop { background: rgb(0 0 0 / 0.5); }
 .qds .fenetre-carte h2,
 .qds .fenetre-progression h2,
-.qds .fenetre-mission h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.qds .fenetre-mission h2,
+.qds .fenetre-succes h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
 .qds .carte-legende { margin: 0 0 0.75rem; font-size: 0.85rem; color: var(--_discret); }
 .qds .carte-arbre { font-family: var(--_police-mono); font-size: 0.9rem; overflow-wrap: anywhere; }
 .qds .carte-arbre ul { list-style: none; margin: 0; padding-left: 1.1rem; border-left: 1px dotted var(--_bord); }
@@ -223,6 +226,16 @@
   .qds .touches button { flex: none; min-width: 2.75rem; min-height: 2.75rem; padding: 0 0.6rem; font: 600 0.95rem var(--_police-mono); color: var(--_texte); background: var(--_carte); border: 1px solid var(--_bord); border-radius: 0.35rem; }
   .qds .touches button:active { border-color: var(--_accent); color: var(--_accent); }
 }
+/* Les succès : obtenus en clair, les autres en discret ; l'annonce dans le terminal. */
+.qds .succes-grade { margin: 0 0 0.75rem; }
+.qds .succes-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.qds .succes-liste li { padding: 0.4rem 0.6rem; border: 1px solid var(--_bord); border-radius: 0.3rem; }
+.qds .succes-liste .obtenu { border-color: var(--_accent); }
+.qds .succes-nom { font-weight: 700; font-family: var(--_police-mono); }
+.qds .succes-description, .qds .succes-date { color: var(--_discret); font-size: 0.9rem; }
+.qds .succes-description { display: block; }
+.qds .a-obtenir .succes-nom { color: var(--_discret); }
+.qds .sortie pre.succes { color: var(--_terminal-invite); font-weight: 700; }
 .qds .carte-actions { margin: 0.75rem 0 0; text-align: right; }
 .qds .chrono { font-family: var(--_police-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--_accent); }
 .qds .sortie pre.examen-resultat { font-weight: 600; color: var(--_terminal-invite); }

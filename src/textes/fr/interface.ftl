@@ -183,3 +183,58 @@ touche-haut = Commande précédente
 touche-bas = Commande suivante
 # Ce qu'affiche bash pendant Ctrl-R (en anglais, comme readline).
 recherche-historique = (reverse-i-search)`{ $motif }': { $commande }
+
+## Succès et grades (voir src/moteur/succes.ts)
+
+succes-titre = Succès
+# { $obtenus } sur { $total } : le compte affiché sur le lien.
+succes-bouton = Succès ({ $obtenus }/{ $total })
+# Annoncé dans le terminal quand un succès est obtenu.
+succes-obtenu = 🏆 Succès : { $nom }
+succes-grade = Ton grade : { $grade }.
+succes-grade-suivant = Prochain grade, { $grade }, à { $chapitres } chapitres terminés.
+succes-le = (le { $date })
+succes-cache = Succès caché
+    .description = Un clin d'œil à la culture du terminal. À toi de le trouver.
+carnet-grade = Grade : { $grade }.
+grade-stagiaire = Stagiaire
+grade-apprenti = Apprenti·e sysadmin
+grade-junior = Admin junior
+grade-admin = Admin système
+grade-confirme = Admin confirmé·e
+grade-senior = Admin senior
+grade-sre = SRE (ingénieur·e fiabilité)
+succes-premiere-commande = Premier pas
+    .description = Lancer une première commande.
+succes-manuel = Lire le manuel
+    .description = Ouvrir le manuel (man ou apropos) : le premier réflexe des pros.
+succes-cache-ls = Ce qui est caché
+    .description = Montrer les fichiers cachés (ls -a).
+succes-tube = Premier tube
+    .description = Relier deux commandes par un tube (|).
+succes-redirection = Dans le fichier
+    .description = Envoyer la sortie d'une commande dans un fichier (> ou >>).
+succes-premier-chapitre = Premier chapitre
+    .description = Terminer un chapitre.
+succes-effaceur = L'Effaceur arrêté
+    .description = Terminer l'histoire de l'Effaceur.
+succes-restauration = Restauration testée
+    .description = Restaurer une sauvegarde pour de vrai : une sauvegarde qu'on n'a jamais restaurée n'en est pas une.
+succes-reseau = Toute la Ruche
+    .description = Terminer La Ruche : VLAN, DHCP, pare-feu, VPN, annuaire et Wi-Fi.
+succes-trois-histoires = Trois histoires
+    .description = Terminer trois histoires.
+succes-toutes-histoires = Le grand tour
+    .description = Terminer toutes les histoires.
+succes-cinquante-commandes = Boîte à outils
+    .description = Avoir 50 commandes dans son carnet.
+succes-examen = Examen passé
+    .description = Terminer un chapitre en mode examen.
+succes-examen-eclair = Éclair
+    .description = Terminer un chapitre en mode examen en moins de 5 minutes.
+succes-xyzzy = Mot magique
+    .description = Le mot de passe de la Colossal Cave Adventure (1976), l'un des premiers jeux d'aventure en texte.
+succes-sandwich = Avec les droits
+    .description = Avec sudo, on obtient tout, même un sandwich (xkcd 149).
+succes-sl = Locomotive
+    .description = sl au lieu de ls : la faute de frappe la plus célèbre, punie par un train.

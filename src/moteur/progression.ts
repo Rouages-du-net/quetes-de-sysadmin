@@ -7,6 +7,7 @@
 // Ni l'un ni l'autre n'est une preuve : ils se recopient et se modifient.
 
 import { HISTOIRES } from './chapitres';
+import { SUCCES } from './succes';
 
 // L'ordre des chapitres dans le code court. On n'y fait qu'ajouter, à la
 // fin : un code donné hier doit rester valable demain (tests/progression.test.ts).
@@ -128,6 +129,8 @@ export interface Sauvegarde {
   records?: Record<string, number>;
   // Le nom (facultatif) mis en tête du carnet : « Carnet de … ».
   nom?: string;
+  // Les succès obtenus (voir succes.ts) : identifiant → date (ISO).
+  succes?: Record<string, string>;
 }
 
 const FORMAT = 'quetes-de-sysadmin';
@@ -176,6 +179,9 @@ export function lireFichier(texte: string): { sauvegarde: Sauvegarde } | { erreu
       examen: s.examen === true,
       ...(records ? { records } : {}),
       ...(chaine(s.nom) && s.nom.trim() ? { nom: nettoyerNom(s.nom) } : {}),
+      ...(dictionnaire(s.succes)
+        ? { succes: Object.fromEntries(Object.entries(s.succes).filter(([id, date]) => SUCCES.some((x) => x.id === id) && chaine(date))) as Record<string, string> }
+        : {}),
     },
   };
 }
