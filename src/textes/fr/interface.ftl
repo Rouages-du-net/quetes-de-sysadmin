@@ -136,3 +136,36 @@ plan-note-teletravail = télétravail
 plan-annexe = routeur de l'Annexe
 plan-note-annexe = second site
 plan-reseau-annexe = réseau de l'Annexe
+
+## Ma progression (voir src/moteur/progression.ts)
+
+# Le titre du carnet quand on a donné son nom.
+carnet-titre-de = Le carnet de { $nom }
+progression-bouton = Ma progression
+progression-titre = Ma progression
+progression-intro = Ta progression reste dans ce navigateur. Pour continuer sur une autre machine (une autre salle de TP, chez toi), emporte-la avec le code ou le fichier. Rien n'est envoyé nulle part.
+progression-nom = Ton nom (facultatif)
+progression-nom-aide = Il s'inscrit en tête de ton carnet (« Le carnet de… ») et dans tes sauvegardes.
+progression-code-titre = Le code, à recopier
+progression-code-aide = Il contient les chapitres terminés, rien d'autre : ni le carnet, ni les clés que tu as créées. Note-le, puis tape-le sur l'autre machine.
+progression-copier = Copier
+progression-code-saisie = Reprendre avec un code :
+progression-reprendre = Reprendre
+progression-fichier-titre = Le fichier, pour tout emporter
+progression-fichier-aide = Chapitres, carnet, clés créées, config ssh, records du mode examen. Garde-le sur une clé USB ou envoie-le-toi.
+progression-telecharger = Télécharger ma sauvegarde
+progression-fichier-saisie = Reprendre avec un fichier :
+progression-nom-fichier = quetes-de-sysadmin.json
+progression-telechargee = Sauvegarde téléchargée.
+# { $nombre } : les chapitres terminés dans le fichier.
+progression-confirmer = Reprendre cette sauvegarde ({ $nombre ->
+        [one] { $nombre } chapitre terminé
+       *[other] { $nombre } chapitres terminés
+    }) ? Elle remplacera tout ce qui est gardé dans ce navigateur.
+progression-rien-de-neuf = Ce code n'ajoute aucun chapitre à ceux que tu as déjà terminés ici.
+progression-code-illisible = Ce n'est pas un code de progression : il commence par QDS, suivi de groupes de lettres et de chiffres.
+progression-code-faute = Ce code contient une faute de frappe : vérifie-le, caractère par caractère.
+progression-code-trop-recent = Ce code vient d'une version plus récente du jeu : recharge la page.
+progression-fichier-illisible = Ce fichier n'est pas une sauvegarde lisible (JSON).
+progression-fichier-autre = Ce fichier n'est pas une sauvegarde de Quêtes de Sysadmin.
+progression-fichier-trop-recent = Cette sauvegarde vient d'une version plus récente du jeu : recharge la page.
