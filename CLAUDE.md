@@ -139,6 +139,9 @@ rouages.net.
 - `src/pages/enseignants.astro` et `src/pages/en/teachers.astro` : les
   fiches des quêtes (composant `src/components/Fiches.astro`), calculées par
   `src/moteur/fiches.ts` (commandes découvertes, prérequis, durée).
+  Le tableau de classe (`/enseignants/classe/`, `/en/teachers/class/`,
+  composant `Classe.astro`, `src/interface/classe.ts`, logique dans
+  `src/moteur/classe.ts`) lit les sauvegardes des élèves dans le navigateur.
 - `src/textes/<langue>/*.ftl` : tous les textes (Fluent), chargés par
   `src/textes/index.ts` (`traducteur()`, `typographie()`) ; `noms.ftl` : les
   noms des lieux et des objets des chapitres à `noms: true` (dans le code,

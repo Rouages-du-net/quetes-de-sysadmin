@@ -255,3 +255,28 @@ indice-debrief = { $nombre ->
     }
 succes-sans-indice = No safety net
     .description = Finish a chapter without asking for a hint.
+
+## The class table (teachers' page; see src/moteur/classe.ts)
+
+classe-fichiers = The students' save files:
+classe-glisser = Or drop them here, several at once.
+classe-codes = Or their codes, one per line, after the name:
+classe-codes-exemple = Lina QDS-047G-0000-000M-G
+classe-codes-ajouter = Add the codes
+classe-exporter = Download the table (CSV)
+classe-vider = Clear the table
+classe-nom-fichier = class-table.csv
+classe-tableau = The class
+classe-compte = { $nombre ->
+        [0] No student yet.
+        [one] One student.
+       *[other] { $nombre } students.
+    }
+# { $source }: the file or line; { $raison }: what is wrong.
+classe-erreur = { $source }: { $raison }
+classe-col-eleve = Student
+classe-col-chapitres = Chapters
+classe-col-grade = Rank
+classe-col-succes = Achievements
+classe-col-examen = Best exam
+classe-col-date = Saved

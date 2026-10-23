@@ -332,6 +332,10 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [x] **Tableau de classe** pour les enseignant·es : on y glisse les fichiers
+  de sauvegarde des élèves (ou on colle leurs codes) ; chapitres, grade,
+  succès, meilleur examen, avancée par histoire ; export CSV (sans formule
+  injectable) ; tout reste dans le navigateur.
 - [x] **Indices gradués**, dans la Mission : le manuel d'abord, puis une
   piste, puis presque la réponse, pour la première étape pas encore franchie
   (`indices-<histoire>.ftl`) ; le débrief compte les indices demandés ; rien

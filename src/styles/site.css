@@ -111,3 +111,21 @@ footer { margin-top: 3rem; padding-top: 0.5rem; padding-bottom: 2rem; border-top
   .fiche dl { grid-template-columns: 1fr; }
   .fiche dd { margin-bottom: 0.5rem; }
 }
+
+/* Le tableau de classe : la zone où glisser les fichiers, puis le tableau,
+   qui défile dans sa boîte s'il est plus large que l'écran. */
+.classe-zone { padding: 1rem; border: 2px dashed var(--bord); border-radius: 0.4rem; background: var(--fond-2); }
+.classe-zone.survol { border-color: var(--phosphore); }
+.classe-zone p { margin: 0.25rem 0; }
+#classe textarea { box-sizing: border-box; width: 100%; max-width: 40rem; font: 0.9rem var(--mono); background: var(--carte); color: var(--texte); border: 1px solid var(--bord); border-radius: 0.3rem; padding: 0.5rem; }
+#classe button { font: inherit; padding: 0.35rem 0.9rem; border-radius: 0.35rem; border: 1px solid var(--phosphore); background: var(--carte); color: var(--texte); cursor: pointer; }
+#classe button:hover { color: var(--phosphore); }
+.classe-etat { color: var(--discret); }
+.classe-erreur { display: block; color: var(--alerte); }
+.classe-tableau { overflow-x: auto; margin: 1rem 0; }
+.classe-tableau table { border-collapse: collapse; font-size: 0.9rem; min-width: 100%; }
+.classe-tableau caption { text-align: left; font-family: var(--mono); font-weight: 700; padding: 0.25rem 0; }
+.classe-tableau th, .classe-tableau td { border: 1px solid var(--bord); padding: 0.3rem 0.5rem; white-space: nowrap; text-align: left; }
+.classe-tableau thead th { background: var(--fond-2); font-family: var(--mono); font-size: 0.8rem; }
+.classe-tableau td.fini { color: var(--phosphore); font-weight: 700; }
+

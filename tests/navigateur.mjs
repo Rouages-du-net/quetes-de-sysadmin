@@ -398,6 +398,41 @@ for (const largeur of [1000, 375]) {
   await page.close();
 }
 
+// Le tableau de classe : deux fichiers d'élèves et un code, lus dans le
+// navigateur ; le CSV téléchargé neutralise un nom piégé.
+for (const largeur of [1000, 375]) {
+  const page = await navigateur.newPage({ viewport: { width: largeur, height: 900 } });
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
+  await avecCsp(page);
+  await page.goto(`${BASE}/enseignants/`);
+  await page.locator('a[href="/enseignants/classe/"]').click();
+  await page.waitForURL(/\/enseignants\/classe\//);
+  const fichier = (nom, sauvegarde) => ({
+    name: nom,
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ format: 'quetes-de-sysadmin', version: 1, date: '2027-01-15T10:00:00Z', sauvegarde })),
+  });
+  await page.locator('#classe input[type="file"]').setInputFiles([
+    fichier('lina.json', { termines: ['eveil', 'bourg', 'racine', 'sauvegarde', 'cles'], nom: 'Lina', succes: { tube: 'x' }, records: { eveil: 61000 } }),
+    fichier('piege.json', { termines: ['eveil'], nom: '=1+1' }),
+  ]);
+  await page.locator('#classe textarea').fill('Nour QDS-041H-R');
+  await page.locator('#classe button', { hasText: 'Ajouter les codes' }).click();
+  await page.waitForFunction(() => document.querySelectorAll('#classe tbody tr').length >= 3);
+  const lignes = await page.locator('#classe tbody tr').count();
+  verifier(lignes === 3, `classe ${largeur} px : une ligne par élève (${lignes})`);
+  verifier((await page.locator('#classe tbody').textContent()).includes('Lina') && (await page.locator('#classe tbody').textContent()).includes('Admin junior'), `classe ${largeur} px : chapitres et grade`);
+  const [telechargement] = await Promise.all([page.waitForEvent('download'), page.locator('#classe button', { hasText: 'CSV' }).click()]);
+  const csv = readFileSync(await telechargement.path(), 'utf8');
+  verifier(csv.includes("'=1+1") && csv.includes('Lina;5/'), `classe ${largeur} px : le CSV, sans formule`);
+  verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `classe ${largeur} px : pas de défilement horizontal de la page`);
+  if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/classe-${largeur}.png` });
+  verifier(erreurs.length === 0, `classe ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
+  await page.close();
+}
+
 // Page introuvable
 {
   const page = await navigateur.newPage();
