@@ -30,9 +30,22 @@ const PREMIERE = 'effaceur';
 // chapitres ajoutés ensuite ne doivent pas reprendre les clés déjà données).
 const CHAPITRE_DES_CLES = 'racine';
 
+type Saisie = { ligne: string } | { enregistrer: string } | { quitter: true };
+
 export class Console {
   // L'écran montre les couleurs des sorties (réglage de l'interface) ; voir couleurs.ts.
   couleurs = false;
+
+  // L'instantané de secours : ce qu'on a saisi depuis l'ouverture du chapitre
+  // (commandes, réponses, enregistrements de nano). Le moteur est
+  // déterministe : rouvrir le chapitre et rejouer les n premières saisies
+  // redonne exactement la machine d'alors. null : plus rejouable (on est
+  // revenu au poste, ou on a repris une session laissée plus tôt). `serie`
+  // change à chaque ouverture de chapitre (pas à une restauration) : un
+  // instantané n'est valable que dans sa série.
+  private saisies: Saisie[] | null = null;
+  serie = 0;
+  private enRestauration = false;
   t: Traduire;
   termines: string[];
   poste: Shell;
@@ -201,6 +214,8 @@ export class Console {
       ancienne.etat.portSession = port;
       this.distant = { machine, histoire, shell: ancienne };
       const dejaFini = ancienne.termine;
+      // Une session reprise : on ne sait plus ce qui y a été tapé, l'instantané n'est plus possible.
+      this.saisies = null;
       const suite = ancienne.evenements();
       // Un chapitre en cours : rappeler où relire ses consignes.
       const rappel = ancienne.termine ? '' : this.t('reprise-chapitre', { fichier: ancienne.accueil });
@@ -241,6 +256,8 @@ export class Console {
   }
 
   private ouvrirChapitre(c: Chapitre): string {
+    this.saisies = [];
+    if (!this.enRestauration) this.serie++;
     return [this.titre(this.distant!.histoire, c), this.distant!.shell.executer(`cat ${this.distant!.shell.accueil}`) ?? ''].join('\n\n');
   }
 
@@ -288,11 +305,21 @@ export class Console {
   executer(ligne: string): string | null {
     const sh = this.shell;
     sh.couleurs = this.couleurs;
+    // Une saisie sur la machine du chapitre (ou ses machines internes) se rejoue ; une saisie sur le poste, non.
+    if (this.distant) this.saisies?.push({ ligne });
+    else this.saisies = null;
     const dejaFini = sh.termine;
     // Dans tmux, ce qui s'affiche reste dans la session (pour tmux attach).
     const tmuxAvant = sh.tmux;
     const invite = sh.invite();
+    const avant = { tapees: sh.commandesTapees, erreurs: sh.commandesEnErreur };
     const sortie = sh.executer(ligne);
+    // Sur une machine interne, les commandes comptent pour le bilan du chapitre (voir bilan.ts).
+    if (sh.parent) {
+      sh.principal.commandesTapees += sh.commandesTapees - avant.tapees;
+      sh.principal.commandesEnErreur += sh.commandesEnErreur - avant.erreurs;
+      sh.principal.ligneCommande = sh.ligneCommande;
+    }
     if (sortie === null) return null;
     if (tmuxAvant && sh.tmux === tmuxAvant) noterTmux(sh, tmuxAvant, [`${invite.trimEnd()} ${ligne}`, sortie].filter(Boolean).join('\n'));
     const morceaux = [sortie];
@@ -330,13 +357,19 @@ export class Console {
     morceaux.push(this.noterFin(sh, dejaFini));
     if (sh === this.poste) morceaux.push(this.surveillerPoste());
     if (sh.edition) this.finiAvantEdition = sh.termine;
+    if (!this.distant) this.saisies = null;
     return morceaux.filter(Boolean).join('\n\n');
   }
 
   // Après une commande sur le poste : les chapitres qui le regardent vérifient leurs événements.
   private surveillerPoste(): string {
     const morceaux: string[] = [];
-    for (const s of this.sessions.values()) if (s.chapitre.surveillePoste && !s.termine) morceaux.push(s.evenements(), this.noterFin(s, false));
+    for (const s of this.sessions.values())
+      if (s.chapitre.surveillePoste && !s.termine) {
+        // Une étape franchie depuis le poste : le bilan note la commande tapée sur le poste.
+        s.ligneCommande = this.poste.ligneCommande;
+        morceaux.push(s.evenements(), this.noterFin(s, false));
+      }
     return morceaux.filter(Boolean).join('\n\n');
   }
 
@@ -346,6 +379,37 @@ export class Console {
     const ouvertes = HISTOIRES.filter((h) => this.ouverte(h.id)).map((h) => h.id);
     if (!this.termines.includes(sh.chapitre.id)) this.termines.push(sh.chapitre.id);
     return this.donnerCles(ouvertes);
+  }
+
+  // ——— L'instantané de secours ———
+
+  /** Le nombre de saisies rejouables depuis l'ouverture du chapitre ; null : pas d'instantané possible. */
+  get pas(): number | null {
+    return this.distant ? (this.saisies?.length ?? null) : null;
+  }
+
+  /**
+   * Rouvre le chapitre en cours et rejoue ses n premières saisies, sans rien
+   * afficher : la machine revient exactement à cet instant. Les indices déjà
+   * demandés restent comptés. Renvoie false si ce n'est pas possible.
+   */
+  restaurer(n: number): boolean {
+    const avant = this.saisies;
+    if (!this.distant || !avant || n < 0 || n > avant.length) return false;
+    const ancienne = this.distant.shell;
+    this.enRestauration = true;
+    try {
+      this.ouvrir(ancienne.chapitre);
+      for (const s of avant.slice(0, n)) {
+        if ('ligne' in s) this.executer(s.ligne);
+        else if ('enregistrer' in s) this.enregistrer(s.enregistrer);
+        else this.quitterEdition();
+      }
+    } finally {
+      this.enRestauration = false;
+    }
+    for (const i of ancienne.indicesDemandes) this.distant?.shell.indicesDemandes.add(i);
+    return true;
   }
 
   // ——— Éditeur (nano), sur la machine où l'on est ———
@@ -358,12 +422,16 @@ export class Console {
 
   /** ^O : écrit le fichier ; renvoie le message de nano, et si c'est écrit. */
   enregistrer(texte: string): { message: string; ecrit: boolean } {
+    if (this.distant) this.saisies?.push({ enregistrer: texte });
+    else this.saisies = null;
     const message = this.shell.enregistrerEdition(texte);
     return { message, ecrit: this.shell.edition?.texte === texte };
   }
 
   /** ^X : ferme l'éditeur ; renvoie les messages de l'histoire déclenchés. */
   quitterEdition(): string {
+    if (this.distant) this.saisies?.push({ quitter: true });
+    else this.saisies = null;
     const sh = this.shell;
     const principal = sh.parent ? sh.principal : null;
     const avant = principal?.termine ?? false;

@@ -24,6 +24,7 @@ import { contenu } from '../outils';
 import { executerScript } from '../script';
 import { systemd } from '../systemd';
 import type { Commande } from './index';
+import { colorer, lireCouleur, sgr } from '../couleurs';
 
 export interface Commit {
   id: string;
@@ -45,7 +46,34 @@ export interface Depot {
 }
 
 // Les options générales (git --git-dir=… --work-tree=… -C lieu commande).
-let generales: { gitDir?: string; workTree?: string } = {};
+let generales: { gitDir?: string; workTree?: string; couleur?: boolean } = {};
+
+// Les couleurs de git (color.ui=auto, par défaut depuis git 1.8.4) : à l'écran
+// seulement ; --color / --no-color sur la sous-commande. Couleurs par défaut
+// de git : en-têtes du diff en gras, @@ en cyan, lignes retirées en rouge,
+// ajoutées en vert, commits en jaune ; dans status, l'index en vert, le
+// reste en rouge. Voir https://git-scm.com/docs/git-config#Documentation/git-config.txt-colordiffltslotgt
+const peindre = (code: string, texte: string) => (generales.couleur ? sgr(code, texte) : texte);
+function colorerDiff(texte: string): string {
+  return texte
+    .split('\n')
+    .map((l) =>
+      /^(diff --git|index |--- |\+\+\+ )/.test(l)
+        ? peindre('1', l)
+        : l.startsWith('@@')
+          ? peindre('36', l)
+          : l.startsWith('-')
+            ? peindre('31', l)
+            : l.startsWith('+')
+              ? peindre('32', l)
+              : /^commit [0-9a-f]{40}/.test(l)
+                ? peindre('33', l)
+                : /^[0-9a-f]{7} /.test(l)
+                  ? peindre('33', l.slice(0, 7)) + l.slice(7)
+                  : l,
+    )
+    .join('\n');
+}
 
 // Empreinte déterministe (FNV-1a), étirée sur 40 chiffres hexadécimaux.
 export function empreinte(texte: string): string {
@@ -236,17 +264,17 @@ const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
     const indexes: string[] = [];
     const nonIndexes: string[] = [];
     const nonSuivis: string[] = [];
-    const ligne = (etat: string, fichier: string) => '\t' + jeu.t(`git-status-${etat}`, { fichier });
+    const ligne = (etat: string, fichier: string, code: string) => '\t' + peindre(code, jeu.t(`git-status-${etat}`, { fichier }));
     for (const nom of Object.keys({ ...head, ...depot.index }).sort()) {
-      if (!(nom in depot.index)) indexes.push(ligne('supprime', nom));
-      else if (!(nom in head)) indexes.push(ligne('nouveau', nom));
-      else if (head[nom] !== depot.index[nom]) indexes.push(ligne('modifie', nom));
+      if (!(nom in depot.index)) indexes.push(ligne('supprime', nom, '32'));
+      else if (!(nom in head)) indexes.push(ligne('nouveau', nom, '32'));
+      else if (head[nom] !== depot.index[nom]) indexes.push(ligne('modifie', nom, '32'));
     }
     for (const nom of Object.keys(depot.index).sort()) {
-      if (!(nom in w)) nonIndexes.push(ligne('supprime', nom));
-      else if (w[nom] !== depot.index[nom]) nonIndexes.push(ligne('modifie', nom));
+      if (!(nom in w)) nonIndexes.push(ligne('supprime', nom, '31'));
+      else if (w[nom] !== depot.index[nom]) nonIndexes.push(ligne('modifie', nom, '31'));
     }
-    for (const nom of Object.keys(w).sort()) if (!(nom in depot.index)) nonSuivis.push(`\t${nom}`);
+    for (const nom of Object.keys(w).sort()) if (!(nom in depot.index)) nonSuivis.push(`\t${peindre('31', nom)}`);
     const blocs = [jeu.t('git-status-branche')];
     if (!depot.commits.length) blocs.push('\n' + jeu.t('git-status-aucun-commit'));
     if (indexes.length) blocs.push('\n' + jeu.t('git-status-indexes') + '\n' + indexes.join('\n'));
@@ -651,7 +679,8 @@ const SOUS: Record<string, (jeu: Shell, args: string[]) => string> = {
 export const GIT: Record<string, Commande> = {
   git: {
     propresOptions: true,
-    lancer: ({ args, jeu }) => {
+    lancer: (c) => {
+      const { args, jeu } = c;
       // Les options générales, avant la sous-commande.
       const precedent = generales;
       generales = { ...generales };
@@ -666,12 +695,17 @@ export const GIT: Record<string, Commande> = {
         else if (a === '--help') return jeu.t('git-usage');
         else return jeu.erreur(jeu.t('git-option-inconnue', { option: a }));
       }
-      const [sous, ...reste] = args.slice(i);
+      const [sous, ...brut] = args.slice(i);
+      // --color[=QUAND] et --no-color, sur la sous-commande ; par défaut, à l'écran seulement.
+      const couleur = lireCouleur(brut.filter((a) => a !== '--no-color'), brut.includes('--no-color') ? 'never' : 'auto');
+      const reste = couleur.args;
+      generales.couleur = colorer(c, couleur.quand);
       try {
         if (!sous) return jeu.erreur(jeu.t('git-usage'));
         const f = SOUS[sous];
         if (!f) return jeu.erreur(jeu.t('git-sous-commande-inconnue', { commande: sous, commandes: Object.keys(SOUS).join(', ') }));
-        return f(jeu, reste);
+        const sortie = f(jeu, reste);
+        return ['diff', 'show', 'log'].includes(sous) ? colorerDiff(sortie) : sortie;
       } finally {
         generales = precedent;
       }

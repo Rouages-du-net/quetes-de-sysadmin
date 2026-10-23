@@ -58,7 +58,7 @@ function statut(jeu: Shell, sd: Systemd, nom: string, peindre: Peindre = brut): 
     lignes.push(`     Memory: ${mo(rss)}${s.memoireMax ? ` (max: ${mo(s.memoireMax)} available: ${mo(Math.max(0, s.memoireMax - rss))})` : ''}`);
   }
   const journal = sd.journal.filter((e) => e.unite === unite && e.demarrage === sd.demarrage).slice(-10);
-  if (journal.length) lignes.push('', ...journal.map((e) => ligneJournal(e, sd, langue)));
+  if (journal.length) lignes.push('', ...journal.map((e) => ligneJournal(e, sd, langue, peindre !== brut)));
   return lignes.join('\n');
 }
 
@@ -464,7 +464,10 @@ export const SYSTEMD: Record<string, Commande> = {
   journalctl: {
     // -n20, -xeu nginx : journalctl lit ses options lui-même.
     propresOptions: true,
-    lancer: ({ args, jeu }) => {
+    lancer: (c) => {
+      const { args, jeu } = c;
+      // Sur un terminal, les messages graves sont mis en valeur (pas dans un tube).
+      const couleur = colorer(c, 'auto');
       const sd = systemd(jeu);
       if (!sd) return '-- No entries --';
       let unite: string | null = null;
@@ -538,7 +541,7 @@ export const SYSTEMD: Record<string, Commande> = {
       const lignes: string[] = [];
       entrees.forEach((e, i) => {
         if (i > 0 && e.demarrage !== entrees[i - 1].demarrage) lignes.push(`-- Boot ${String(e.demarrage).padStart(2, '0')}f3c1e9a7d54b2c8e06a1d9f4b7c2e5 --`);
-        lignes.push(ligneJournal(e, sd, jeu.t.langue));
+        lignes.push(ligneJournal(e, sd, jeu.t.langue, couleur));
       });
       return lignes.join('\n');
     },

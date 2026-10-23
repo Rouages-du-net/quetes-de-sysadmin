@@ -14,6 +14,8 @@ import { carte, type Lieu } from '../moteur/carte';
 import { disposer, reperes as reperesPlan, type ElementPlan } from '../moteur/plan';
 import { grade, GRADES, nouveauxSucces, SUCCES } from '../moteur/succes';
 import { indice, NIVEAUX, type Niveau } from '../moteur/indices';
+import { bilan } from '../moteur/bilan';
+import { etapesParcours, PARCOURS } from '../moteur/parcours';
 import { codeDeProgression, fichierDeSauvegarde, lireCode, lireFichier, nettoyerNom, type Sauvegarde } from '../moteur/progression';
 import { colorer, type Jeton } from '../moteur/coloration';
 import { morceaux, sansCouleurs } from '../moteur/couleurs';
@@ -48,7 +50,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // L'affichage (thème, taille, vue du menu, couleurs) : un réglage de ce navigateur seulement.
   const CLE_AFFICHAGE = `${CLE}-affichage`;
   const TAILLES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
-  let affichage = { theme: 'phosphore', taille: 2, vue: 'reseau', couleurs: true };
+  let affichage = { theme: 'phosphore', taille: 2, vue: 'reseau', couleurs: true, parcours: PARCOURS[0].id };
   try {
     affichage = { ...affichage, ...JSON.parse(localStorage.getItem(CLE_AFFICHAGE) ?? '{}') };
   } catch {}
@@ -72,7 +74,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // qu'on avance) et les baies (les mêmes boutons, en grille, avec leur
   // résumé). Ce sont les mêmes boutons dans la même liste : seule la mise en
   // page change, et les lecteurs d'écran lisent la même chose.
-  const VUES = ['reseau', 'baies'] as const;
+  const VUES = ['reseau', 'baies', 'parcours'] as const;
   const boutonsVue = Object.fromEntries(
     VUES.map((v) => [v, el('button', { type: 'button', class: 'bouton-vue', 'aria-pressed': 'false', 'data-vue': v }, t(`vue-${v}`))]),
   ) as Record<(typeof VUES)[number], HTMLButtonElement>;
@@ -85,7 +87,25 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     el('li', { class: 'noeud-internet', 'aria-hidden': 'true' }, el('span', {}, t('vue-internet'))),
     ...boutonsHistoires.map((b, i) => el('li', { class: 'noeud', 'data-cote': i % 2 ? 'droite' : 'gauche' }, b)),
   );
-  const navHistoires = el('nav', { class: 'histoires', 'aria-label': t('histoires-titre') }, choixVue, listeHistoires, aideCle);
+  // La vue « Parcours » : un thème, et ses chapitres pris dans plusieurs histoires (voir parcours.ts).
+  const idParcours = `qds-parcours-${Math.random().toString(36).slice(2, 8)}`;
+  const choixParcours = el(
+    'select',
+    { id: idParcours },
+    ...PARCOURS.map((p) => el('option', { value: p.id }, t(`parcours-${p.id}`))),
+  ) as HTMLSelectElement;
+  const parcoursDescription = el('p', { class: 'parcours-description' });
+  const parcoursAvancee = el('p', { class: 'parcours-avancee' });
+  const listeParcours = el('ol', { class: 'parcours-liste' });
+  const blocParcours = el(
+    'div',
+    { class: 'parcours', hidden: '' },
+    el('p', { class: 'parcours-choix' }, el('label', { for: idParcours }, t('parcours-choix')), ' ', choixParcours),
+    parcoursDescription,
+    parcoursAvancee,
+    listeParcours,
+  );
+  const navHistoires = el('nav', { class: 'histoires', 'aria-label': t('histoires-titre') }, choixVue, listeHistoires, blocParcours, aideCle);
 
   const navsChapitres = HISTOIRES.map((h, i) =>
     el('nav', { class: 'chapitres', 'aria-label': t('chapitres-titre', { histoire: titreHistoire(i) }), 'data-chapitres': String(i) },
@@ -144,6 +164,19 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     el('p', { class: 'indice-boutons' }, ...NIVEAUX.map((n) => boutonsIndice[n])),
     texteIndice,
   );
+  // L'instantané de secours (voir Console.restaurer) : comme celui d'une machine virtuelle.
+  const prendreInstantane = el('button', { type: 'button', class: 'bouton-secours' }, t('secours-prendre'));
+  const revenirInstantane = el('button', { type: 'button', class: 'bouton-secours' }, t('secours-revenir'));
+  const annulerSaisie = el('button', { type: 'button', class: 'bouton-secours' }, t('secours-annuler'));
+  const etatSecours = el('p', { class: 'carte-legende secours-etat', role: 'status' });
+  const secours = el(
+    'section',
+    { class: 'secours' },
+    el('h3', {}, t('secours-titre')),
+    el('p', { class: 'carte-legende' }, typo(t('secours-intro'))),
+    el('p', { class: 'indice-boutons' }, prendreInstantane, revenirInstantane, annulerSaisie),
+    etatSecours,
+  );
   const fenetreMission = el(
     'dialog',
     { class: 'fenetre-mission', 'aria-labelledby': idMission },
@@ -155,6 +188,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     missionVide,
     missionJournal,
     aide,
+    secours,
     el('p', { class: 'carte-actions' }, fermerMission),
   ) as HTMLDialogElement;
   const idCarte = `qds-carte-${Math.random().toString(36).slice(2, 8)}`;
@@ -272,6 +306,23 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     succesListe,
     el('p', { class: 'carte-actions' }, fermerSucces),
   ) as HTMLDialogElement;
+  // Le bilan de fin de chapitre : le détail, étape par étape (voir bilan.ts).
+  const idBilan = `qds-bilan-${Math.random().toString(36).slice(2, 8)}`;
+  const bilanTitre = el('h2', { id: idBilan });
+  const bilanResume = el('p', { class: 'carte-legende' });
+  const bilanTableau = el('div', { class: 'bilan-tableau', tabindex: '0', role: 'region', 'aria-labelledby': idBilan });
+  const bilanEncourager = el('p', { class: 'carte-legende' });
+  const fermerBilan = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  const fenetreBilan = el(
+    'dialog',
+    { class: 'fenetre-bilan', 'aria-labelledby': idBilan },
+    bilanTitre,
+    bilanResume,
+    el('p', { class: 'carte-legende' }, typo(t('bilan-intro'))),
+    bilanTableau,
+    bilanEncourager,
+    el('p', { class: 'carte-actions' }, fermerBilan),
+  ) as HTMLDialogElement;
   const idProgression = `qds-progression-${Math.random().toString(36).slice(2, 8)}`;
   const champNom = el('input', { type: 'text', id: `${idProgression}-nom`, maxlength: '60', autocomplete: 'name', spellcheck: 'false' }) as HTMLInputElement;
   const codeActuel = el('code', { class: 'code-progression' });
@@ -307,7 +358,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
 
   // Le terminal et sa barre de touches : ensemble en plein écran.
   const ecran = el('div', { class: 'ecran' }, quitterFocus, terminal, barreTouches);
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, ecran, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces);
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, ecran, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces, fenetreBilan);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -417,6 +468,40 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     sortie.appendChild(el('pre', { class: 'cmd' }, `${invite.textContent} `, ...enSpans(js)));
   };
 
+  // Le parcours choisi : chaque chapitre, son histoire, son état ; le prochain à faire est mis en avant.
+  const majParcours = () => {
+    const p = PARCOURS.find((x) => x.id === affichage.parcours) ?? PARCOURS[0];
+    const { etapes, prochain } = etapesParcours(p, termines, (id) => accessible(HISTOIRES.findIndex((x) => x.id === id)));
+    const faits = etapes.filter((e) => e.etat === 'fait').length;
+    parcoursDescription.textContent = typo(t(`parcours-${p.id}.description`));
+    parcoursAvancee.textContent = faits === etapes.length ? t('parcours-fini') : t('parcours-avancee', { faits, total: etapes.length });
+    listeParcours.replaceChildren(
+      ...etapes.map((e, i) => {
+        const etat =
+          e.etat === 'fait'
+            ? t('parcours-fait')
+            : e.etat === 'sans-cle'
+              ? t('parcours-sans-cle')
+              : e.etat === 'verrouille'
+                ? t('parcours-verrouille', { chapitre: t(`chapitre-${e.avant}`) })
+                : i === prochain
+                  ? t('parcours-prochain')
+                  : t('parcours-ouvert');
+        const b = el(
+          'button',
+          { type: 'button', 'data-h': String(e.h), 'data-c': String(e.c), 'data-etat': e.etat },
+          el('span', { class: 'titre' }, t(`chapitre-${e.chapitre}`)),
+          el('span', { class: 'resume' }, t('parcours-dans', { histoire: titreHistoire(e.h) })),
+          el('span', { class: 'etat' }, etat),
+        );
+        b.disabled = e.etat === 'verrouille' || e.etat === 'sans-cle';
+        b.toggleAttribute('data-prochain', i === prochain);
+        b.setAttribute('aria-current', String(e.h === histoire() && e.c === courant()));
+        return el('li', {}, b);
+      }),
+    );
+  };
+
   const majNav = () => {
     boutonPoste.setAttribute('aria-current', String(histoire() === -1));
     boutonsHistoires.forEach((b, h) => {
@@ -441,7 +526,8 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
             ? t('etat-chapitres-faits', { faits, total })
             : '';
     });
-    aideCle.hidden = boutonsHistoires.every((b) => !b.disabled);
+    aideCle.hidden = boutonsHistoires.every((b) => !b.disabled) || affichage.vue === 'parcours';
+    majParcours();
     navsChapitres.forEach((nav, h) => {
       nav.hidden = h !== histoire() || chapitres(h).length < 2;
       nav.querySelectorAll<HTMLButtonElement>('[data-chapitre]').forEach((b, c) => {
@@ -512,7 +598,59 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const majSucces = () => {
     boutonSucces.textContent = t('succes-bouton', { obtenus: Object.keys(succes).length, total: SUCCES.length });
   };
+  // Le bilan : le temps passé se compte depuis la première fois qu'on voit le chapitre en cours.
+  const debuts = new WeakMap<Shell, number>();
+  const enCours = new WeakSet<Shell>();
+  const bilanFait = new WeakSet<Shell>();
+  const resumeBilan = (sh: Shell) => {
+    const b = bilan(sh);
+    return t('bilan-resume', { temps: minutes(Date.now() - (debuts.get(sh) ?? Date.now())), commandes: b.commandes, erreurs: b.erreurs, indices: b.indices });
+  };
+  const ouvrirBilan = (sh: Shell, resume: string) => {
+    const b = bilan(sh);
+    bilanTitre.textContent = t('bilan-titre', { chapitre: t(`chapitre-${sh.chapitre.id}`) });
+    bilanResume.textContent = resume;
+    bilanEncourager.textContent = t('bilan-encourager', { indices: b.indices });
+    bilanTableau.replaceChildren(
+      el(
+        'table',
+        {},
+        el('thead', {}, el('tr', {}, ...['bilan-col-etape', 'bilan-col-toi', 'bilan-col-reference'].map((k) => el('th', { scope: 'col' }, t(k))))),
+        el(
+          'tbody',
+          {},
+          ...b.etapes.map((e, i) =>
+            el(
+              'tr',
+              {},
+              el('th', { scope: 'row' }, String(i + 1)),
+              el('td', { 'data-titre': t('bilan-col-toi') }, e.ligne === null ? el('span', { class: 'bilan-autrement' }, t('bilan-autrement')) : el('code', {}, e.ligne)),
+              el('td', { 'data-titre': t('bilan-col-reference') }, typo(e.solution)),
+            ),
+          ),
+        ),
+      ),
+    );
+    fenetreBilan.showModal();
+  };
+  const noterBilan = () => {
+    const sh = terminalJeu.distant?.shell;
+    if (!sh) return;
+    if (!debuts.has(sh)) debuts.set(sh, Date.now());
+    if (!sh.termine) enCours.add(sh);
+    // Un chapitre qu'on a vu en cours et qui vient de finir : son bilan, une fois.
+    if (!sh.termine || !enCours.has(sh) || bilanFait.has(sh)) return;
+    bilanFait.add(sh);
+    const resume = resumeBilan(sh);
+    const detail = el('button', { type: 'button', class: 'lien bouton-bilan', 'aria-haspopup': 'dialog' }, t('bilan-bouton'));
+    detail.addEventListener('click', () => ouvrirBilan(sh, resume));
+    sortie.appendChild(el('p', { class: 'bilan' }, resume, ' ', detail));
+  };
+  fermerBilan.addEventListener('click', () => fenetreBilan.close());
+  fenetreBilan.addEventListener('close', () => setTimeout(() => saisie.focus()));
+
   const apres = (sh: Shell | null = null) => {
+    noterBilan();
     finExamen();
     verifierSucces(sh);
     majCarnet();
@@ -555,7 +693,6 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     if (ligne.trim() && !reponse) historique.push(ligne);
     position = historique.length;
     const shell = terminalJeu.shell;
-    const finiAvant = shell.termine;
     const hoteAvant = shell.hote;
     const resultat = terminalJeu.executer(ligne);
     // Une réponse à une question (un mot de passe…) n'est pas une commande pour le carnet.
@@ -565,8 +702,6 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     else afficher(resultat);
     // Les mises en scène : la connexion à une autre machine, le redémarrage.
     if (terminalJeu.shell.hote !== hoteAvant) mettreEnScene(shell.derniere.commandes.some((c) => c.includes('reboot')) ? 'reboot' : 'connexion');
-    // Le débrief dit combien d'indices on a demandés pour ce chapitre.
-    if (!finiAvant && shell.termine && shell.indicesDemandes.size) afficher(t('indice-debrief', { nombre: shell.indicesDemandes.size }), 'succes');
     saisie.value = '';
     apres(ligneDe);
     ouvrirEditeur();
@@ -696,6 +831,16 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   });
   terminal.addEventListener('click', () => {
     if (!form.hidden && !selection()) saisie.focus();
+  });
+  listeParcours.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-h]');
+    if (!b || b.disabled) return;
+    demarrer(Number(b.dataset.h), Number(b.dataset.c));
+    saisie.focus();
+  });
+  choixParcours.addEventListener('change', () => {
+    affichage.parcours = choixParcours.value;
+    appliquerAffichage();
   });
   boutonPoste.addEventListener('click', () => {
     allerPoste();
@@ -877,9 +1022,54 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     missionVide.hidden = journal.length > 0;
     missionJournal.replaceChildren(...journal.map((m) => el('li', {}, el('pre', { class: 'mission-texte' }, m))));
     majAide();
+    majSecours();
     fenetreMission.showModal();
   });
   fermerMission.addEventListener('click', () => fenetreMission.close());
+  // L'instantané pris : sa série (l'ouverture du chapitre) et le nombre de saisies rejouées.
+  let instantane: { serie: number; pas: number } | null = null;
+  const majSecours = () => {
+    const sh = terminalJeu.distant?.shell;
+    secours.hidden = !sh;
+    if (!sh) return;
+    const pas = terminalJeu.pas;
+    if (instantane && instantane.serie !== terminalJeu.serie) instantane = null;
+    const possible = pas !== null && !terminalJeu.examen;
+    prendreInstantane.disabled = !possible;
+    revenirInstantane.disabled = !possible || !instantane || instantane.pas > pas!;
+    annulerSaisie.disabled = !possible || pas === 0;
+    etatSecours.textContent = terminalJeu.examen
+      ? t('secours-examen')
+      : pas === null
+        ? t('secours-impossible')
+        : instantane
+          ? t('secours-pris', { pas: instantane.pas })
+          : t('secours-aucun');
+  };
+  prendreInstantane.addEventListener('click', () => {
+    const pas = terminalJeu.pas;
+    if (pas === null) return;
+    instantane = { serie: terminalJeu.serie, pas };
+    majSecours();
+  });
+  // Revenir en arrière : la machine du chapitre est rejouée jusqu'à ce point ; le temps du bilan continue.
+  const restaurer = (pas: number) => {
+    const ancienne = terminalJeu.distant?.shell;
+    if (!ancienne || !terminalJeu.restaurer(pas)) return;
+    const nouvelle = terminalJeu.distant!.shell;
+    if (debuts.has(ancienne)) debuts.set(nouvelle, debuts.get(ancienne)!);
+    if (enCours.has(ancienne)) enCours.add(nouvelle);
+    if (bilanFait.has(ancienne) && nouvelle.termine) bilanFait.add(nouvelle);
+    fenetreMission.close();
+    sortie.replaceChildren();
+    afficher(t('secours-restaure', { pas }), 'succes');
+    apres();
+  };
+  revenirInstantane.addEventListener('click', () => instantane && restaurer(instantane.pas));
+  annulerSaisie.addEventListener('click', () => {
+    const pas = terminalJeu.pas;
+    if (pas) restaurer(pas - 1);
+  });
   // L'aide du chapitre en cours : les niveaux déjà ouverts pour cette étape restent visibles.
   const majAide = () => {
     const sh = terminalJeu.distant?.shell;
@@ -918,6 +1108,11 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     choixTheme.value = affichage.theme;
     if (!(VUES as readonly string[]).includes(affichage.vue)) affichage.vue = 'reseau';
     navHistoires.dataset.vue = affichage.vue;
+    listeHistoires.hidden = affichage.vue === 'parcours';
+    blocParcours.hidden = affichage.vue !== 'parcours';
+    if (!PARCOURS.some((p) => p.id === affichage.parcours)) affichage.parcours = PARCOURS[0].id;
+    choixParcours.value = affichage.parcours;
+    majNav();
     affichage.couleurs = affichage.couleurs !== false;
     terminalJeu.couleurs = affichage.couleurs;
     boutonCouleurs.setAttribute('aria-pressed', String(affichage.couleurs));

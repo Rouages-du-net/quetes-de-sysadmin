@@ -74,7 +74,9 @@ rouages.net.
   son code de retour (`jeu.statut`).
 - `commandes/restic.ts` : dépôts restic (instantanés, déduplication,
   politiques de `forget`, `prune`), rangés dans `etat.restic`.
-- `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé ;
+- `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé (et
+  l'instantané de secours, `Console.restaurer` : le moteur reste déterministe,
+  sans `Date.now` ni `Math.random`) ;
   on part du poste et on se connecte en `ssh` à la machine de chaque
   histoire (`commandes/ssh.ts`).
 - `src/moteur/acces.ts` : le « vrai » ssh (machines à `etat.sshReel` et
@@ -139,7 +141,9 @@ rouages.net.
   `OEUFS` de `shell.ts` ; la coloration de la ligne de commande dans `src/moteur/coloration.ts` (elle suit le
   shell du jeu : `decouper()`, `connues()`), les couleurs des sorties (séquences ANSI,
   `Shell.couleurs`, `--color`) dans `src/moteur/couleurs.ts` : une condition
-  d'événement lit `derniere.sortie`, déjà sans couleurs ; les indices gradués dans `src/moteur/indices.ts`,
+  d'événement lit `derniere.sortie`, déjà sans couleurs ; les parcours thématiques dans `src/moteur/parcours.ts` (un chapitre ajouté
+  va dans au moins un parcours, `tests/parcours.test.ts` le vérifie), le bilan de fin de chapitre dans `src/moteur/bilan.ts` (`Shell.franchies`,
+  `commandesTapees`), les indices gradués dans `src/moteur/indices.ts`,
   leurs textes dans `src/textes/<langue>/indices-<histoire>.ftl` : chaque
   nouveau chapitre en a, `tests/indices.test.ts` le vérifie) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).

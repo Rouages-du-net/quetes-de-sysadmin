@@ -66,6 +66,17 @@ for (const largeur of [1000, 375]) {
   await saisie.fill('mv .ampoule_de_secours ~/Jetee/Phare/Escalier/Lanterne/ampoule');
   await saisie.press('Enter');
   verifier(await jeu.locator('.fin').isVisible(), `${largeur} px : fin du chapitre 1, bouton « Chapitre suivant »`);
+  // Le bilan : une ligne dans le terminal, le détail dans une fenêtre.
+  verifier(/Bilan : \d+:\d\d · \d+ commandes/.test(await jeu.locator('.sortie .bilan').textContent()), `${largeur} px : le bilan du chapitre s’affiche`);
+  await jeu.locator('.bouton-bilan').click();
+  const fenetreBilan = jeu.locator('dialog.fenetre-bilan');
+  verifier(
+    (await fenetreBilan.evaluate((d) => d.open)) && (await fenetreBilan.locator('tbody code', { hasText: 'mv .ampoule_de_secours' }).count()) === 1,
+    `${largeur} px : le détail du bilan montre la commande de l’étape`,
+  );
+  const boiteBilan = await fenetreBilan.boundingBox();
+  verifier(boiteBilan.x >= 0 && boiteBilan.x + boiteBilan.width <= largeur, `${largeur} px : la fenêtre du bilan tient dans l’écran`);
+  await page.keyboard.press('Escape');
   await jeu.locator('.fin button').click();
   verifier((await jeu.locator('.sortie').textContent()).includes('chapitre 2'), `${largeur} px : chapitre 2 ouvert`);
   await page.reload();
@@ -387,8 +398,20 @@ for (const largeur of [1000, 375]) {
   await bouton('solution').click();
   verifier((await mission.locator('.indice-texte').textContent()).includes('mv crabe Seau'), 'indices : presque la réponse, pour l’étape en cours');
   await page.keyboard.press('Escape');
-  for (const l of ['mv Jetee/filet Port/Hangar', 'mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule']) await taper(l);
-  verifier((await jeu.locator('.sortie').textContent()).includes('3 indices demandés pour ce chapitre'), 'indices : le débrief les compte');
+  // L'instantané de secours : pris après le filet, puis l'ampoule mal rangée, et on revient.
+  await taper('mv Jetee/filet Port/Hangar');
+  await jeu.locator('.bouton-mission').click();
+  await mission.locator('.bouton-secours', { hasText: 'Prendre un instantané' }).click();
+  verifier((await mission.locator('.secours-etat').textContent()).includes('après une saisie'), 'instantané : pris');
+  await page.keyboard.press('Escape');
+  await taper('mv Port/Remise/.ampoule_de_secours Port/Hangar');
+  await jeu.locator('.bouton-mission').click();
+  await mission.locator('.bouton-secours', { hasText: 'Revenir' }).click();
+  verifier(!(await mission.evaluate((d) => d.open)) && (await jeu.locator('.sortie').textContent()).includes('Machine remise comme après la première saisie'), 'instantané : la machine est remise');
+  await taper('ls -a Port/Remise');
+  verifier((await jeu.locator('.sortie').textContent()).split('ls -a Port/Remise')[1]?.includes('.ampoule_de_secours'), 'instantané : l’ampoule est revenue à sa place');
+  await taper('mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule');
+  verifier((await jeu.locator('.sortie .bilan').textContent()).includes('3 indices'), 'indices : le bilan les compte (même après un instantané)');
   // En mode examen : pas d'aide.
   await jeu.locator('.examen input').check();
   await jeu.locator('.bouton-mission').click();
@@ -510,6 +533,33 @@ for (const largeur of [1000, 375]) {
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `affichage ${largeur} px : pas de défilement horizontal`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/affichage-${largeur}.png` });
   verifier(erreurs.length === 0, `affichage ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
+  await page.close();
+}
+
+// Les parcours : une troisième vue du menu ; un thème, ses chapitres, le prochain à faire.
+for (const largeur of [1000, 375]) {
+  const page = await navigateur.newPage({ viewport: { width: largeur, height: 900 } });
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
+  await avecCsp(page);
+  await page.goto(`${BASE}/`);
+  await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ termines: ['eveil', 'bourg', 'racine', 'sauvegarde', 'fermer-la-porte'] })));
+  await page.reload();
+  const jeu = page.locator('quetes-de-sysadmin');
+  await jeu.locator('.choix-vue button', { hasText: 'Parcours' }).click();
+  await jeu.locator('.parcours select').selectOption('securite');
+  const cartes = jeu.locator('.parcours-liste button');
+  verifier((await cartes.count()) === 11 && (await jeu.locator('.parcours-avancee').textContent()).includes('1 sur 11'), `parcours ${largeur} px : le parcours et son avancée`);
+  const prochain = jeu.locator('.parcours-liste button[data-prochain]');
+  verifier((await prochain.textContent()).includes('Le pare-feu') && (await jeu.locator('.parcours-liste button[data-etat="verrouille"]').first().textContent()).includes('D\'abord'), `parcours ${largeur} px : le prochain, et ce qui attend`);
+  await prochain.click();
+  verifier((await jeu.locator('.invite').textContent()).startsWith('vous@lettres'), `parcours ${largeur} px : le prochain chapitre s’ouvre`);
+  await page.reload();
+  verifier((await jeu.locator('nav.histoires').getAttribute('data-vue')) === 'parcours' && (await jeu.locator('.parcours select').inputValue()) === 'securite', `parcours ${largeur} px : la vue et le parcours sont gardés`);
+  verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `parcours ${largeur} px : pas de défilement horizontal`);
+  verifier(erreurs.length === 0, `parcours ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
+  await page.evaluate(() => localStorage.clear());
   await page.close();
 }
 

@@ -146,6 +146,14 @@ export class Shell implements Jeu {
   oeufs = new Set<string>();
   // Les indices demandés dans ce chapitre (« étape:niveau », voir indices.ts) : le débrief les compte.
   indicesDemandes = new Set<string>();
+  // Pour le bilan de fin de chapitre (voir bilan.ts) : les commandes tapées,
+  // celles qui ont échoué, et la ligne qui a franchi chaque étape. Une
+  // réponse à une question (yes, mot de passe) n'est pas une commande : une
+  // étape franchie par une réponse est notée avec la commande qui l'a posée.
+  commandesTapees = 0;
+  commandesEnErreur = 0;
+  franchies: Record<string, string> = {};
+  ligneCommande = '';
 
   t: Traduire;
 
@@ -560,6 +568,8 @@ export class Shell implements Jeu {
     }
     const mots = decouper(ligne);
     if (!mots.length) return '';
+    this.commandesTapees++;
+    this.ligneCommande = ligne.trim();
     // Quelques clins d'œil de la culture du terminal : une réponse, et un succès caché.
     const oeuf = OEUFS[ligne.trim().replace(/\s+/g, ' ')];
     if (oeuf) {
@@ -599,7 +609,13 @@ export class Shell implements Jeu {
       this.sermonFait = true;
       return sermon;
     }
-    return this.conclure(this.tube(ligne, mots), true);
+    return this.conclure(this.compterLigne(this.tube(ligne, mots)), true);
+  }
+
+  // Une ligne finie en erreur (un message d'erreur, ou un code de retour non nul) compte pour le bilan.
+  private compterLigne(sortie: string): string {
+    if (this.erreurs.length || (this.statut ?? 0) !== 0) this.commandesEnErreur++;
+    return sortie;
   }
 
   private motDePasse(saisie: string): string {
@@ -607,7 +623,7 @@ export class Shell implements Jeu {
     if (saisie === this.chapitre.motDePasse) {
       this.attente = null;
       this.authentifie = true;
-      return this.conclure(this.tube(attente.ligne, decouper(attente.ligne)), true);
+      return this.conclure(this.compterLigne(this.tube(attente.ligne, decouper(attente.ligne))), true);
     }
     attente.essais++;
     if (attente.essais < 3) return this.t('sudo-mauvais-mot-de-passe');
@@ -862,6 +878,7 @@ export class Shell implements Jeu {
     for (const e of this.chapitre.evenements) {
       if (this.drapeaux.has(e.id) || !e.condition(this)) continue;
       this.drapeaux.add(e.id);
+      this.franchies[e.id] = this.ligneCommande;
       e.action?.(this);
       if (!this.examen || e.id === this.chapitre.final) {
         messages.push(this.prose(typeof e.message === 'function' ? e.message(this) : e.message));

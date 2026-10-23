@@ -254,10 +254,81 @@ indice-bouton-solution = Almost the answer
 # { $pages }: "man mv, man cp".
 indice-manuel = Pages to read: { $pages }. Also search with man -k and a keyword.
 indice-plus-rien = No more hints for this chapter: reread the instructions and what has happened.
-indice-debrief = { $nombre ->
-        [one] One hint asked for this chapter. Next time, without?
-       *[other] { $nombre } hints asked for this chapter. Next time, with fewer?
+## The end-of-chapter summary (see src/moteur/bilan.ts)
+# { $temps }: "6:12"; { $commandes }, { $erreurs }, { $indices }: numbers
+bilan-resume = Summary: { $temps } · { $commandes ->
+        [one] one command
+       *[other] { $commandes } commands
+    }{ $erreurs ->
+        [0] {""}
+       *[other] {" "}({ $erreurs } with an error)
+    } · { $indices ->
+        [0] no hints
+        [one] one hint
+       *[other] { $indices } hints
     }
+bilan-bouton = See the details
+# { $chapitre }: the chapter's title
+bilan-titre = Summary: { $chapitre }
+bilan-intro = Your command next to the reference solution, step by step. The game checks the state of the machine, not the command you typed: another way of doing it is just as right if it reaches the same result.
+bilan-col-etape = Step
+bilan-col-toi = Your command
+bilan-col-reference = The reference solution
+bilan-autrement = (reached another way)
+bilan-encourager = { $indices ->
+        [0] No hints: well done. Replay it in exam mode to beat your time?
+       *[other] Next time, with fewer hints?
+    }
+## The restore point (Mission panel; see Console.restaurer)
+secours-titre = Restore point
+secours-intro = Like a virtual machine snapshot before a risky operation: take one, try your move, and come back to it if things go wrong. The chapter is replayed up to that point, without losing anything else.
+secours-prendre = Take a snapshot
+secours-revenir = Go back to the snapshot
+secours-annuler = Undo the last input
+secours-aucun = No snapshot yet in this chapter.
+# { $pas }: the number of inputs (commands, answers, nano saves) since the chapter started
+secours-pris = { $pas ->
+        [0] Snapshot taken at the start of the chapter.
+        [one] Snapshot taken after one input.
+       *[other] Snapshot taken after { $pas } inputs.
+    }
+secours-impossible = No snapshot possible here: the chapter was resumed or you went through your workstation. "Restart this chapter" starts from scratch.
+secours-examen = No snapshots in exam mode.
+secours-restaure = { $pas ->
+        [0] ↺ Machine put back as at the start of the chapter.
+        [one] ↺ Machine put back as after the chapter's first input.
+       *[other] ↺ Machine put back as after { $pas } inputs of the chapter.
+    }
+## Themed paths ("Paths" menu; see src/moteur/parcours.ts)
+vue-parcours = Paths
+parcours-choix = Choose a path
+parcours-debuter = First steps
+    .description = Moving around, reading, searching, tidying up, then the network, git and archives: for anyone who has never opened a terminal.
+parcours-securite = Protecting a server
+    .description = SSH, firewall, fail2ban, accounts and permissions, secrets, updates: closing the doors and keeping the house in order.
+parcours-web = Serving the web
+    .description = nginx, logs, emergency backups, certificates, shared sites, traffic and proxies.
+parcours-reseau = Networks
+    .description = DNS, SSH jumps and tunnels, VLANs, DHCP, nftables firewall, WireGuard VPN and DMZ.
+parcours-sauvegardes = Backing up and restoring
+    .description = rsync, archives, restic, rsnapshot, PostgreSQL databases, transfers: and always, checking you know how to restore.
+parcours-deploiement = Containers and deployment
+    .description = git, Docker and Compose, bare repositories and hooks, rollback, blue/green, canary and migration.
+parcours-production = Troubleshooting in production
+    .description = A service that won't restart, a full disk, memory, inodes, time, monitoring and the post-mortem.
+parcours-identites = Accounts and identities
+    .description = Groups, a colleague leaving, shared permissions, SSH keys, LDAP directory and enterprise Wi-Fi.
+# { $faits } / { $total }: numbers
+parcours-avancee = { $faits } of { $total } chapters done
+parcours-fini = ✓ Path complete
+# { $histoire }: the story's title
+parcours-dans = in "{ $histoire }"
+parcours-fait = ✓ Done
+parcours-ouvert = To do
+parcours-prochain = ▶ Next
+# { $chapitre }: the title of the chapter to finish first
+parcours-verrouille = 🔒 First: { $chapitre }
+parcours-sans-cle = 🔒 Story locked
 succes-sans-indice = No safety net
     .description = Finish a chapter without asking for a hint.
 

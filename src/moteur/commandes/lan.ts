@@ -7,7 +7,8 @@
 import type { Shell } from '../shell';
 import { cidr, creer, demonter, enService, lan, lireInterfaces, monter, reseauDe, supprimer, versIp, type Interface, type Lan } from '../lan';
 import { lireDnsmasq } from '../dnsmasq';
-import type { Commande } from './index';
+import type { Commande, Contexte } from './index';
+import { colorer, sgr, type Quand } from '../couleurs';
 
 const NON_PERMIS = 'RTNETLINK answers: Operation not permitted';
 
@@ -67,6 +68,42 @@ function routes(l: Lan): string[] {
     for (const r of i.routes ?? []) lignes.push(`${r} dev ${nom} scope link`);
   }
   return lignes;
+}
+
+// ip -c[olor][=always|auto|never] : sans valeur, toujours (comme iproute2).
+// Couleurs d'iproute2 : nom d'interface en cyan, état UP en vert et DOWN en
+// rouge, adresse MAC en jaune, IPv4 en magenta, IPv6 en bleu.
+// D'après https://man7.org/linux/man-pages/man8/ip.8.html (-color).
+function ipEnCouleur(c: Contexte): string {
+  let quand: Quand = 'never';
+  const args: string[] = [];
+  for (const a of c.args) {
+    const m = /^--?c(?:o(?:l(?:o(?:r)?)?)?)?(?:=(always|auto|never))?$/.exec(a);
+    if (m) quand = (m[1] as Quand | undefined) ?? 'always';
+    else args.push(a);
+  }
+  const sortie = ip(c.jeu, args);
+  return colorer(c, quand) ? colorerIp(sortie) : sortie;
+}
+
+const ETATS: Record<string, string> = { UP: '32', DOWN: '31', LOWERLAYERDOWN: '31' };
+export function colorerIp(texte: string): string {
+  const etat = (e: string) => sgr(ETATS[e] ?? '', e);
+  return texte
+    .split('\n')
+    .map((l) => {
+      // ip -br : nom, état, adresses.
+      const bref = /^(\S+)(\s+)(UP|DOWN|UNKNOWN|LOWERLAYERDOWN)(\s*)(.*)$/.exec(l);
+      if (bref && !/^\d+:/.test(l))
+        return sgr('36', bref[1]) + bref[2] + etat(bref[3]) + bref[4] + bref[5].replace(/[0-9a-f:.]+\/\d+/g, (a) => sgr(a.includes(':') ? '34' : '35', a));
+      return l
+        .replace(/^(\d+: )([^:@ ]+)/, (_, n, nom) => n + sgr('36', nom))
+        .replace(/ state (\S+)/, (_, e) => ` state ${etat(e)}`)
+        .replace(/(link\/ether )(\S+)/, (_, a, mac) => a + sgr('33', mac))
+        .replace(/^(\s+inet )(\S+)/, (_, a, adr) => a + sgr('35', adr))
+        .replace(/^(\s+inet6 )(\S+)/, (_, a, adr) => a + sgr('34', adr));
+    })
+    .join('\n');
 }
 
 // La valeur qui suit un mot-clé (dev eth0, name eth1.10…).
@@ -254,7 +291,7 @@ export const LAN: Record<string, Commande> = {
       );
     },
   },
-  ip: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => ip(jeu, args) },
+  ip: { section: 8, propresOptions: true, lancer: (c) => ipEnCouleur(c) },
   ifup: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => ifupdown(jeu, args, true) },
   ifdown: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => ifupdown(jeu, args, false) },
   // La page de manuel du fichier (man 5 interfaces).

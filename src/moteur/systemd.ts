@@ -6,6 +6,7 @@
 // Écarts : pas de cibles ni de dépendances entre unités, un seul processus
 // principal par service, horloge qui avance d'une seconde par action.
 
+import { sgr } from './couleurs';
 import type { Jeu } from './shell';
 import type { Processus } from './commandes/systeme';
 
@@ -241,8 +242,13 @@ export function duree(ms: number): string {
   return `${s}s`;
 }
 
-export const ligneJournal = (e: Entree, sd: Systemd, langue: string) =>
-  `${dateJournal(e.temps + (sd.ecart ?? 0), langue)} ${sd.hote} ${e.ident}${e.pid ? `[${e.pid}]` : ''}: ${e.message}`;
+// Sur un terminal, journalctl met en valeur le message selon sa priorité :
+// erreur et plus grave en rouge gras, avertissement en jaune gras, notice
+// en gras (couleurs de systemd, voir journalctl(1) et SYSTEMD_COLORS).
+const COULEUR_PRIORITE = (p: number) => (p <= 3 ? '1;31' : p === 4 ? '1;33' : p === 5 ? '1' : '');
+
+export const ligneJournal = (e: Entree, sd: Systemd, langue: string, couleur = false) =>
+  `${dateJournal(e.temps + (sd.ecart ?? 0), langue)} ${sd.hote} ${e.ident}${e.pid ? `[${e.pid}]` : ''}: ${couleur ? sgr(COULEUR_PRIORITE(e.priorite), e.message) : e.message}`;
 
 export type DefinitionService = Omit<Service, 'depuis' | 'etat' | 'processus'> & { etat?: Service['etat']; processus?: Processus[] };
 

@@ -342,6 +342,20 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [x] **Bilan de fin de chapitre** (`src/moteur/bilan.ts`) : temps passé,
+  commandes tapées (et en erreur), indices ; le détail compare, étape par
+  étape, la commande qui l'a franchie à la solution de référence (celle des
+  indices), en rappelant qu'une autre façon de faire est tout aussi juste.
+- [x] **Instantané de secours** (panneau Mission, `Console.restaurer`) :
+  prendre un instantané, y revenir, annuler la dernière saisie. Le moteur
+  est déterministe : rouvrir le chapitre et rejouer les saisies (commandes,
+  réponses, enregistrements de nano) redonne la machine d'alors. Pas
+  d'instantané en mode examen, ni quand on est passé par le poste.
+- [x] **Parcours thématiques** (`src/moteur/parcours.ts`, troisième vue du
+  menu) : premiers pas, sécurité, web, réseaux, sauvegardes, conteneurs et
+  déploiement, production, comptes et identités ; chaque chapitre est dans
+  au moins un parcours ; le prochain à faire est mis en avant, ce qui
+  attend dit quel chapitre finir d'abord.
 - [x] **Coloration de la ligne de commande**, comme fish ou
   zsh-syntax-highlighting : la commande en vert si le shell du jeu la
   lancerait, en rouge (et soulignée d'une vague) sinon, les options, les
@@ -354,8 +368,9 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
   alias de Debian), `diff --color`, `systemctl status` et `--failed` ; à
   l'écran seulement, jamais dans un tube ni un fichier (sauf
   `--color=always`) ; les événements lisent la sortie sans les codes, et
-  chaque chapitre est rejoué avec les couleurs. Reste à faire : `ip -c`,
-  `journalctl` (priorités), `git diff`.
+  chaque chapitre est rejoué avec les couleurs. Aussi : `ip -c`, les
+  priorités de `journalctl` (et l'extrait de `systemctl status`), `git`
+  (`diff`, `log`, `show`, `status`, `--no-color`).
 - [x] **Carte du réseau en menu** : le poste, internet, puis une machine par
   histoire (nom et adresse), branchée sur un même câble ; sa branche est en
   pointillés tant qu'elle est verrouillée, ambre quand on y joue, verte quand
