@@ -294,6 +294,16 @@ demandent plusieurs.
 Écarté : les boucles réseau et Spanning Tree (trop bas niveau pour ce jeu,
 qui travaille sur les machines plutôt que sur les commutateurs).
 
+## Phase 11 — L'audit (histoire de clôture)
+
+- [x] **L'Audit** (histoire 14, machine `fournil`) : un rapport d'audit en
+      trois parties, qui réunit ce que les autres histoires enseignent
+      séparément. « Le rapport » (SSH sans root, un compte oublié, sudo sans
+      mot de passe, un secret lisible), « L'exposition » (balayage de ports,
+      `ufw`, Redis en local) et « Les traces » (journal de ssh, `last`,
+      empreintes de clés, `authorized_keys`, une tâche `cron` laissée par
+      l'intrus).
+
 ---
 
 ## Phase 10 — Traductions

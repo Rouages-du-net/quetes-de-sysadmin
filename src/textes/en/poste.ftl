@@ -55,6 +55,7 @@ machine-radio-motd = Radio Quartier — the station's server. On call: one eye o
 machine-maison-motd = Community Centre — the gateway. Behind it: the wiki and the archives.
 machine-cooperative-motd = The neighbourhood food co-op — the till's server. Here, we share everything except passwords.
 machine-ruche-motd = The Hive — the community space's router. eth0: the ISP box; eth1: the switch.
+machine-fournil-motd = The Bakery — the bakery's server: the website, the orders app and its database. An audit has been through here.
 
 # When reconnecting to a machine whose chapter is in progress.
 # { $fichier }: the chapter's welcome file (e.g. welcome.txt)

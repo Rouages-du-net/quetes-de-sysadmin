@@ -254,3 +254,9 @@ nom-direct = live
 nom-emissions = shows
 nom-vignettes = thumbnails
 nom-vignette = thumbnail
+
+## The Audit (the Bakery's server)
+nom-courriel_nadia-txt = email_nadia.txt
+nom-rapport-audit-txt = audit_report.txt
+nom-courriel_salome-txt = email_salome.txt
+nom-balayage-audit-txt = audit_scan.txt

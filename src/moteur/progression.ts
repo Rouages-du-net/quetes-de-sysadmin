@@ -25,6 +25,7 @@ export const ORDRE_DU_CODE = [
   'cles', 'rebond', 'tunnel', 'transferts', 'hebergeur',
   'depart', 'droits', 'secret', 'proxy', 'mises-a-jour', 'automatiques',
   'vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe', 'annuaire', 'wifi',
+  'rapport', 'exposition', 'traces',
 ];
 
 // Base32 de Crockford : pas de I, L, O ni U, qu'on confondrait en recopiant.

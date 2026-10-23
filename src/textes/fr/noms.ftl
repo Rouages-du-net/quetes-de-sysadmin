@@ -256,3 +256,9 @@ nom-direct = direct
 nom-emissions = emissions
 nom-vignettes = vignettes
 nom-vignette = vignette
+
+## L'Audit (le serveur du Fournil)
+nom-courriel_nadia-txt = courriel_nadia.txt
+nom-rapport-audit-txt = rapport-audit.txt
+nom-courriel_salome-txt = courriel_salome.txt
+nom-balayage-audit-txt = balayage-audit.txt

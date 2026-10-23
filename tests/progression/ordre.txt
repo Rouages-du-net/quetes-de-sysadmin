@@ -57,3 +57,6 @@ dmz
 annexe
 annuaire
 wifi
+rapport
+exposition
+traces

@@ -121,6 +121,11 @@ rouages.net.
 - `src/moteur/radius.ts` : FreeRADIUS (`etat.radius` : configuration lue au
   démarrage, `clients.conf`, module ldap, fichier `users`, demandes des
   bornes et VLAN) ; `freeradius` et `radtest` dans `commandes/radius.ts`.
+- `chapitres/audit.ts` : ce que les chapitres de « L'Audit » ont en commun
+  (le serveur du Fournil : comptes, `sshd_config`, sudoers, `mondeFournil`) ;
+  `rapport.ts`, `exposition.ts` (le `bind` de Redis lu au redémarrage, par le
+  service) et `traces.ts` (journal de ssh et `last` écrits par
+  `initialiser`, empreintes de clés, crontab de Nadia).
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
   dans `editeur.ts`, le carnet du sysadmin dont la logique est dans
   `src/moteur/carnet.ts`, les liens vers rouages.net après un chapitre dans
