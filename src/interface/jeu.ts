@@ -7,7 +7,7 @@
 import { Console } from '../moteur/console';
 import type { Shell } from '../moteur/shell';
 import { HISTOIRES } from '../moteur/chapitres';
-import { machineDeHistoire } from '../moteur/machines';
+import { machineDeHistoire, POSTE } from '../moteur/machines';
 import { description, enMarkdown, noter, type Carnet } from '../moteur/carnet';
 import { liensRouages } from '../moteur/rouages';
 import { carte, type Lieu } from '../moteur/carte';
@@ -45,18 +45,38 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const chapitres = (h: number) => HISTOIRES[h].chapitres;
 
   // ——— Construction ———
+  // Le nom et l'adresse de la machine, montrés sur la carte du réseau (des identifiants techniques, jamais traduits).
+  const hote = (m: { domaine: string; adresse: string } | undefined) => el('span', { class: 'hote' }, m ? `${m.domaine} ${m.adresse}` : '');
   const boutonsHistoires = HISTOIRES.map((h, i) =>
     el('button', { type: 'button', 'data-histoire': String(i) },
       el('span', { class: 'titre' }, titreHistoire(i)),
+      hote(machineDeHistoire(h.id)),
       el('span', { class: 'resume' }, typo(t(`histoire-${h.id}.resume`))),
       el('span', { class: 'etat' }),
       // Une diode par chapitre, comme sur une baie de serveur (l'état en toutes lettres est dans .etat).
       el('span', { class: 'diodes', 'aria-hidden': 'true' }, ...h.chapitres.map(() => el('span', { class: 'diode' })))),
   );
-  const boutonPoste = el('button', { type: 'button', 'data-poste': '' }, el('span', { class: 'titre' }, t('poste-titre')));
+  const boutonPoste = el('button', { type: 'button', 'data-poste': '' }, el('span', { class: 'titre' }, t('poste-titre')), hote(POSTE));
   const aideCle = el('p', { class: 'cle-aide' }, typo(t('cle-aide')));
-  const navHistoires = el('nav', { class: 'histoires', 'aria-label': t('histoires-titre') },
-    el('ol', {}, el('li', {}, boutonPoste), ...boutonsHistoires.map((b) => el('li', {}, b))), aideCle);
+  // Deux vues du menu : la carte du réseau (le poste, internet, puis une
+  // machine par histoire, branchée sur le même câble, qui s'allume à mesure
+  // qu'on avance) et les baies (les mêmes boutons, en grille, avec leur
+  // résumé). Ce sont les mêmes boutons dans la même liste : seule la mise en
+  // page change, et les lecteurs d'écran lisent la même chose.
+  const VUES = ['reseau', 'baies'] as const;
+  const boutonsVue = Object.fromEntries(
+    VUES.map((v) => [v, el('button', { type: 'button', class: 'bouton-vue', 'aria-pressed': 'false', 'data-vue': v }, t(`vue-${v}`))]),
+  ) as Record<(typeof VUES)[number], HTMLButtonElement>;
+  const choixVue = el('p', { class: 'choix-vue', role: 'group', 'aria-label': t('vue-titre') }, ...VUES.map((v) => boutonsVue[v]));
+  const listeHistoires = el(
+    'ol',
+    {},
+    el('li', { class: 'noeud-poste' }, boutonPoste),
+    // Internet, entre le poste et les machines : un repère, pas un bouton.
+    el('li', { class: 'noeud-internet', 'aria-hidden': 'true' }, el('span', {}, t('vue-internet'))),
+    ...boutonsHistoires.map((b, i) => el('li', { class: 'noeud', 'data-cote': i % 2 ? 'droite' : 'gauche' }, b)),
+  );
+  const navHistoires = el('nav', { class: 'histoires', 'aria-label': t('histoires-titre') }, choixVue, listeHistoires, aideCle);
 
   const navsChapitres = HISTOIRES.map((h, i) =>
     el('nav', { class: 'chapitres', 'aria-label': t('chapitres-titre', { histoire: titreHistoire(i) }), 'data-chapitres': String(i) },
@@ -364,6 +384,8 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
         d.classList.toggle('en-cours', accessible(h) && c === prochain);
       });
       const total = chapitres(h).length;
+      // L'état de la machine sur la carte : son câble et son cadre s'allument.
+      b.parentElement!.dataset.etat = !accessible(h) ? 'verrouillee' : faits === chapitres(h).length ? 'terminee' : faits > 0 || h === histoire() ? 'en-cours' : 'ouverte';
       b.querySelector('.etat')!.textContent = !accessible(h)
         ? t('etat-cle-manquante')
         : faits === total
@@ -837,7 +859,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // Un réglage de ce navigateur seulement (pas de la progression).
   const CLE_AFFICHAGE = `${CLE}-affichage`;
   const TAILLES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
-  let affichage = { theme: 'phosphore', taille: 2 };
+  let affichage = { theme: 'phosphore', taille: 2, vue: 'reseau' };
   try {
     affichage = { ...affichage, ...JSON.parse(localStorage.getItem(CLE_AFFICHAGE) ?? '{}') };
   } catch {}
@@ -847,12 +869,21 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     terminal.dataset.theme = affichage.theme;
     terminal.style.setProperty('--qds-taille-terminal', `${TAILLES[affichage.taille]}rem`);
     choixTheme.value = affichage.theme;
+    if (!(VUES as readonly string[]).includes(affichage.vue)) affichage.vue = 'reseau';
+    navHistoires.dataset.vue = affichage.vue;
+    VUES.forEach((v) => boutonsVue[v].setAttribute('aria-pressed', String(v === affichage.vue)));
     plusPetit.disabled = affichage.taille === 0;
     plusGrand.disabled = affichage.taille === TAILLES.length - 1;
     try {
       localStorage.setItem(CLE_AFFICHAGE, JSON.stringify(affichage));
     } catch {}
   };
+  VUES.forEach((v) =>
+    boutonsVue[v].addEventListener('click', () => {
+      affichage.vue = v;
+      appliquerAffichage();
+    }),
+  );
   choixTheme.addEventListener('change', () => {
     affichage.theme = choixTheme.value;
     appliquerAffichage();

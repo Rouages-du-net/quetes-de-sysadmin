@@ -444,6 +444,13 @@ for (const largeur of [1000, 375]) {
   await page.goto(`${BASE}/`);
   const jeu = page.locator('quetes-de-sysadmin');
   const terminal = jeu.locator('.terminal');
+  // Le menu : la carte du réseau d'abord, une branche par machine.
+  const menu = jeu.locator('nav.histoires');
+  verifier((await menu.getAttribute('data-vue')) === 'reseau' && (await jeu.locator('.hote', { hasText: 'royaume.example 192.0.2.10' }).isVisible()), `affichage ${largeur} px : la carte du réseau sert de menu`);
+  await jeu.locator('.choix-vue button', { hasText: 'Baies' }).click();
+  verifier((await menu.getAttribute('data-vue')) === 'baies' && !(await jeu.locator('.hote').first().isVisible()), `affichage ${largeur} px : la vue en baies`);
+  await jeu.locator('.choix-vue button', { hasText: 'Carte du réseau' }).click();
+  await jeu.locator('.choix-vue button', { hasText: 'Baies' }).click();
   await jeu.locator('.reglages select').selectOption('ambre');
   const taille = () => terminal.evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
   const avant = await taille();
@@ -454,13 +461,14 @@ for (const largeur of [1000, 375]) {
   await jeu.locator('form input').fill('yes');
   await jeu.locator('form input').press('Enter');
   verifier(await terminal.evaluate((e) => e.classList.contains('scene-connexion')), `affichage ${largeur} px : la connexion est mise en scène`);
+  verifier((await jeu.locator('li:has(> button[data-histoire="0"])').getAttribute('data-etat')) === 'en-cours', `affichage ${largeur} px : la machine où l'on joue s'allume sur la carte`);
   await jeu.locator('.reglages button', { hasText: 'Plein écran' }).click();
   const boite = await terminal.boundingBox();
   verifier(boite.width > largeur - 40 && boite.height > 600, `affichage ${largeur} px : plein écran`);
   await jeu.locator('form input').press('Escape');
   verifier(!(await jeu.locator('.ecran').evaluate((e) => e.classList.contains('focus'))), `affichage ${largeur} px : Échap quitte le plein écran`);
   await page.reload();
-  verifier((await jeu.locator('.terminal').getAttribute('data-theme')) === 'ambre', `affichage ${largeur} px : le réglage est gardé`);
+  verifier((await jeu.locator('.terminal').getAttribute('data-theme')) === 'ambre' && (await menu.getAttribute('data-vue')) === 'baies', `affichage ${largeur} px : les réglages sont gardés`);
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `affichage ${largeur} px : pas de défilement horizontal`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/affichage-${largeur}.png` });
   verifier(erreurs.length === 0, `affichage ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);

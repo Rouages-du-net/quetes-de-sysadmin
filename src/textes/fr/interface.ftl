@@ -26,6 +26,11 @@ sortie-coupee =
        *[other] (… { $lignes } lignes plus haut, non affichées)
     }
 poste-titre = Ton poste
+## Le menu des histoires : deux vues
+vue-titre = Présentation des histoires
+vue-reseau = Carte du réseau
+vue-baies = Baies
+vue-internet = Internet
 saisie-etiquette = Commande
 credit = Quêtes de Sysadmin, jeu libre (GPL v3, textes CC BY-SA 4.0), inspiré de Terminus, créé au MIT par Shawn Conrad et Michele Pratusevich.
 credit-lien-projet = Le projet

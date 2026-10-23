@@ -332,6 +332,12 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [x] **Carte du réseau en menu** : le poste, internet, puis une machine par
+  histoire (nom et adresse), branchée sur un même câble ; sa branche est en
+  pointillés tant qu'elle est verrouillée, ambre quand on y joue, verte quand
+  l'histoire est finie, et un paquet y file (coupé si le système demande moins
+  d'animations). La vue « Baies » (les mêmes boutons, avec leur résumé) reste
+  au choix ; le choix est gardé dans le navigateur.
 - [x] **Affichage du terminal** : quatre thèmes (phosphore, ambre, contraste
   élevé, papier), taille du texte, plein écran (Échap en sort), gardés dans le
   navigateur ; mises en scène d'une connexion et d'un redémarrage (coupées si
