@@ -332,6 +332,10 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [x] **Bilan de fin de chapitre** (`src/moteur/bilan.ts`) : temps passé,
+  commandes tapées (et en erreur), indices ; le détail compare, étape par
+  étape, la commande qui l'a franchie à la solution de référence (celle des
+  indices), en rappelant qu'une autre façon de faire est tout aussi juste.
 - [x] **Coloration de la ligne de commande**, comme fish ou
   zsh-syntax-highlighting : la commande en vert si le shell du jeu la
   lancerait, en rouge (et soulignée d'une vague) sinon, les options, les

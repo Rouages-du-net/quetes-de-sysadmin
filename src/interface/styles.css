@@ -483,3 +483,27 @@
 .qds .a-41 { background: var(--_a-fond-41); color: #ffffff; }
 .qds .a-42 { background: var(--_a-fond-42); }
 .qds .a-41.a-37 { color: #ffffff; }
+
+/* Le bilan de fin de chapitre (voir src/moteur/bilan.ts) : une ligne dans
+   le terminal, et le détail dans une fenêtre (le tableau défile de côté sur
+   un petit écran). */
+.qds .sortie .bilan { margin: 0 0 0.5rem; color: var(--_terminal-invite); font-weight: 700; }
+.qds .sortie .bilan .lien { color: inherit; font-weight: 400; }
+.qds .fenetre-bilan { width: min(44rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
+.qds .fenetre-bilan::backdrop { background: rgb(0 0 0 / 0.5); }
+.qds .fenetre-bilan h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.qds .bilan-tableau { overflow-x: auto; margin: 0.75rem 0; }
+.qds .bilan-tableau table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+.qds .bilan-tableau th, .qds .bilan-tableau td { border: 1px solid var(--_bord); padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; }
+.qds .bilan-tableau thead th { background: var(--_carte); }
+.qds .bilan-tableau code { font-family: var(--_police-mono); overflow-wrap: anywhere; }
+.qds .bilan-autrement { color: var(--_discret); font-style: italic; }
+/* Sur un écran étroit, une carte par étape : chaque case dit ce qu'elle contient. */
+@media (max-width: 40rem) {
+  .qds .bilan-tableau table, .qds .bilan-tableau tbody, .qds .bilan-tableau tr, .qds .bilan-tableau th, .qds .bilan-tableau td { display: block; width: auto; }
+  .qds .bilan-tableau thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .qds .bilan-tableau tr { border: 1px solid var(--_bord); border-radius: 0.35rem; margin-bottom: 0.5rem; }
+  .qds .bilan-tableau th, .qds .bilan-tableau td { border: none; }
+  .qds .bilan-tableau tbody th { background: var(--_carte); }
+  .qds .bilan-tableau td::before { content: attr(data-titre); display: block; font-size: 0.8rem; font-weight: 700; color: var(--_discret); }
+}

@@ -292,7 +292,14 @@ export class Console {
     // Dans tmux, ce qui s'affiche reste dans la session (pour tmux attach).
     const tmuxAvant = sh.tmux;
     const invite = sh.invite();
+    const avant = { tapees: sh.commandesTapees, erreurs: sh.commandesEnErreur };
     const sortie = sh.executer(ligne);
+    // Sur une machine interne, les commandes comptent pour le bilan du chapitre (voir bilan.ts).
+    if (sh.parent) {
+      sh.principal.commandesTapees += sh.commandesTapees - avant.tapees;
+      sh.principal.commandesEnErreur += sh.commandesEnErreur - avant.erreurs;
+      sh.principal.ligneCommande = sh.ligneCommande;
+    }
     if (sortie === null) return null;
     if (tmuxAvant && sh.tmux === tmuxAvant) noterTmux(sh, tmuxAvant, [`${invite.trimEnd()} ${ligne}`, sortie].filter(Boolean).join('\n'));
     const morceaux = [sortie];
@@ -336,7 +343,12 @@ export class Console {
   // Après une commande sur le poste : les chapitres qui le regardent vérifient leurs événements.
   private surveillerPoste(): string {
     const morceaux: string[] = [];
-    for (const s of this.sessions.values()) if (s.chapitre.surveillePoste && !s.termine) morceaux.push(s.evenements(), this.noterFin(s, false));
+    for (const s of this.sessions.values())
+      if (s.chapitre.surveillePoste && !s.termine) {
+        // Une étape franchie depuis le poste : le bilan note la commande tapée sur le poste.
+        s.ligneCommande = this.poste.ligneCommande;
+        morceaux.push(s.evenements(), this.noterFin(s, false));
+      }
     return morceaux.filter(Boolean).join('\n\n');
   }
 

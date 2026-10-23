@@ -14,6 +14,7 @@ import { carte, type Lieu } from '../moteur/carte';
 import { disposer, reperes as reperesPlan, type ElementPlan } from '../moteur/plan';
 import { grade, GRADES, nouveauxSucces, SUCCES } from '../moteur/succes';
 import { indice, NIVEAUX, type Niveau } from '../moteur/indices';
+import { bilan } from '../moteur/bilan';
 import { codeDeProgression, fichierDeSauvegarde, lireCode, lireFichier, nettoyerNom, type Sauvegarde } from '../moteur/progression';
 import { colorer, type Jeton } from '../moteur/coloration';
 import { morceaux, sansCouleurs } from '../moteur/couleurs';
@@ -272,6 +273,23 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     succesListe,
     el('p', { class: 'carte-actions' }, fermerSucces),
   ) as HTMLDialogElement;
+  // Le bilan de fin de chapitre : le détail, étape par étape (voir bilan.ts).
+  const idBilan = `qds-bilan-${Math.random().toString(36).slice(2, 8)}`;
+  const bilanTitre = el('h2', { id: idBilan });
+  const bilanResume = el('p', { class: 'carte-legende' });
+  const bilanTableau = el('div', { class: 'bilan-tableau', tabindex: '0', role: 'region', 'aria-labelledby': idBilan });
+  const bilanEncourager = el('p', { class: 'carte-legende' });
+  const fermerBilan = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  const fenetreBilan = el(
+    'dialog',
+    { class: 'fenetre-bilan', 'aria-labelledby': idBilan },
+    bilanTitre,
+    bilanResume,
+    el('p', { class: 'carte-legende' }, typo(t('bilan-intro'))),
+    bilanTableau,
+    bilanEncourager,
+    el('p', { class: 'carte-actions' }, fermerBilan),
+  ) as HTMLDialogElement;
   const idProgression = `qds-progression-${Math.random().toString(36).slice(2, 8)}`;
   const champNom = el('input', { type: 'text', id: `${idProgression}-nom`, maxlength: '60', autocomplete: 'name', spellcheck: 'false' }) as HTMLInputElement;
   const codeActuel = el('code', { class: 'code-progression' });
@@ -307,7 +325,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
 
   // Le terminal et sa barre de touches : ensemble en plein écran.
   const ecran = el('div', { class: 'ecran' }, quitterFocus, terminal, barreTouches);
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, ecran, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces);
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, ecran, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces, fenetreBilan);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -512,7 +530,59 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const majSucces = () => {
     boutonSucces.textContent = t('succes-bouton', { obtenus: Object.keys(succes).length, total: SUCCES.length });
   };
+  // Le bilan : le temps passé se compte depuis la première fois qu'on voit le chapitre en cours.
+  const debuts = new WeakMap<Shell, number>();
+  const enCours = new WeakSet<Shell>();
+  const bilanFait = new WeakSet<Shell>();
+  const resumeBilan = (sh: Shell) => {
+    const b = bilan(sh);
+    return t('bilan-resume', { temps: minutes(Date.now() - (debuts.get(sh) ?? Date.now())), commandes: b.commandes, erreurs: b.erreurs, indices: b.indices });
+  };
+  const ouvrirBilan = (sh: Shell, resume: string) => {
+    const b = bilan(sh);
+    bilanTitre.textContent = t('bilan-titre', { chapitre: t(`chapitre-${sh.chapitre.id}`) });
+    bilanResume.textContent = resume;
+    bilanEncourager.textContent = t('bilan-encourager', { indices: b.indices });
+    bilanTableau.replaceChildren(
+      el(
+        'table',
+        {},
+        el('thead', {}, el('tr', {}, ...['bilan-col-etape', 'bilan-col-toi', 'bilan-col-reference'].map((k) => el('th', { scope: 'col' }, t(k))))),
+        el(
+          'tbody',
+          {},
+          ...b.etapes.map((e, i) =>
+            el(
+              'tr',
+              {},
+              el('th', { scope: 'row' }, String(i + 1)),
+              el('td', { 'data-titre': t('bilan-col-toi') }, e.ligne === null ? el('span', { class: 'bilan-autrement' }, t('bilan-autrement')) : el('code', {}, e.ligne)),
+              el('td', { 'data-titre': t('bilan-col-reference') }, typo(e.solution)),
+            ),
+          ),
+        ),
+      ),
+    );
+    fenetreBilan.showModal();
+  };
+  const noterBilan = () => {
+    const sh = terminalJeu.distant?.shell;
+    if (!sh) return;
+    if (!debuts.has(sh)) debuts.set(sh, Date.now());
+    if (!sh.termine) enCours.add(sh);
+    // Un chapitre qu'on a vu en cours et qui vient de finir : son bilan, une fois.
+    if (!sh.termine || !enCours.has(sh) || bilanFait.has(sh)) return;
+    bilanFait.add(sh);
+    const resume = resumeBilan(sh);
+    const detail = el('button', { type: 'button', class: 'lien bouton-bilan', 'aria-haspopup': 'dialog' }, t('bilan-bouton'));
+    detail.addEventListener('click', () => ouvrirBilan(sh, resume));
+    sortie.appendChild(el('p', { class: 'bilan' }, resume, ' ', detail));
+  };
+  fermerBilan.addEventListener('click', () => fenetreBilan.close());
+  fenetreBilan.addEventListener('close', () => setTimeout(() => saisie.focus()));
+
   const apres = (sh: Shell | null = null) => {
+    noterBilan();
     finExamen();
     verifierSucces(sh);
     majCarnet();
@@ -555,7 +625,6 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     if (ligne.trim() && !reponse) historique.push(ligne);
     position = historique.length;
     const shell = terminalJeu.shell;
-    const finiAvant = shell.termine;
     const hoteAvant = shell.hote;
     const resultat = terminalJeu.executer(ligne);
     // Une réponse à une question (un mot de passe…) n'est pas une commande pour le carnet.
@@ -565,8 +634,6 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     else afficher(resultat);
     // Les mises en scène : la connexion à une autre machine, le redémarrage.
     if (terminalJeu.shell.hote !== hoteAvant) mettreEnScene(shell.derniere.commandes.some((c) => c.includes('reboot')) ? 'reboot' : 'connexion');
-    // Le débrief dit combien d'indices on a demandés pour ce chapitre.
-    if (!finiAvant && shell.termine && shell.indicesDemandes.size) afficher(t('indice-debrief', { nombre: shell.indicesDemandes.size }), 'succes');
     saisie.value = '';
     apres(ligneDe);
     ouvrirEditeur();

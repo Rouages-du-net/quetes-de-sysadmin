@@ -254,9 +254,30 @@ indice-bouton-solution = Presque la réponse
 # { $pages } : « man mv, man cp ».
 indice-manuel = Les pages à lire : { $pages }. Cherche aussi avec man -k et un mot-clé.
 indice-plus-rien = Plus d'indice pour ce chapitre : relis les consignes et ce qui s'est passé.
-indice-debrief = { $nombre ->
-        [one] Un indice demandé pour ce chapitre. La prochaine fois, sans ?
-       *[other] { $nombre } indices demandés pour ce chapitre. La prochaine fois, avec moins ?
+## Le bilan de fin de chapitre (voir src/moteur/bilan.ts)
+# { $temps } : « 6:12 » ; { $commandes }, { $erreurs }, { $indices } : des nombres
+bilan-resume = Bilan : { $temps } · { $commandes ->
+        [one] une commande
+       *[other] { $commandes } commandes
+    }{ $erreurs ->
+        [0] {""}
+       *[other] {" "}(dont { $erreurs } en erreur)
+    } · { $indices ->
+        [0] aucun indice
+        [one] un indice
+       *[other] { $indices } indices
+    }
+bilan-bouton = Voir le détail
+# { $chapitre } : le titre du chapitre
+bilan-titre = Bilan : { $chapitre }
+bilan-intro = Ta commande à côté de la solution de référence, étape par étape. Le jeu vérifie l'état de la machine, pas la commande tapée : une autre façon de faire est tout aussi juste si elle arrive au même résultat.
+bilan-col-etape = Étape
+bilan-col-toi = Ta commande
+bilan-col-reference = La solution de référence
+bilan-autrement = (passée autrement)
+bilan-encourager = { $indices ->
+        [0] Sans indice : bravo. Rejoue-le en mode examen pour battre ton temps ?
+       *[other] La prochaine fois, avec moins d'indices ?
     }
 succes-sans-indice = Sans filet
     .description = Terminer un chapitre sans demander d'indice.

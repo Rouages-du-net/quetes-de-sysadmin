@@ -254,9 +254,30 @@ indice-bouton-solution = Almost the answer
 # { $pages }: "man mv, man cp".
 indice-manuel = Pages to read: { $pages }. Also search with man -k and a keyword.
 indice-plus-rien = No more hints for this chapter: reread the instructions and what has happened.
-indice-debrief = { $nombre ->
-        [one] One hint asked for this chapter. Next time, without?
-       *[other] { $nombre } hints asked for this chapter. Next time, with fewer?
+## The end-of-chapter summary (see src/moteur/bilan.ts)
+# { $temps }: "6:12"; { $commandes }, { $erreurs }, { $indices }: numbers
+bilan-resume = Summary: { $temps } · { $commandes ->
+        [one] one command
+       *[other] { $commandes } commands
+    }{ $erreurs ->
+        [0] {""}
+       *[other] {" "}({ $erreurs } with an error)
+    } · { $indices ->
+        [0] no hints
+        [one] one hint
+       *[other] { $indices } hints
+    }
+bilan-bouton = See the details
+# { $chapitre }: the chapter's title
+bilan-titre = Summary: { $chapitre }
+bilan-intro = Your command next to the reference solution, step by step. The game checks the state of the machine, not the command you typed: another way of doing it is just as right if it reaches the same result.
+bilan-col-etape = Step
+bilan-col-toi = Your command
+bilan-col-reference = The reference solution
+bilan-autrement = (reached another way)
+bilan-encourager = { $indices ->
+        [0] No hints: well done. Replay it in exam mode to beat your time?
+       *[other] Next time, with fewer hints?
     }
 succes-sans-indice = No safety net
     .description = Finish a chapter without asking for a hint.

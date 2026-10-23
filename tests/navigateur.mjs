@@ -66,6 +66,17 @@ for (const largeur of [1000, 375]) {
   await saisie.fill('mv .ampoule_de_secours ~/Jetee/Phare/Escalier/Lanterne/ampoule');
   await saisie.press('Enter');
   verifier(await jeu.locator('.fin').isVisible(), `${largeur} px : fin du chapitre 1, bouton « Chapitre suivant »`);
+  // Le bilan : une ligne dans le terminal, le détail dans une fenêtre.
+  verifier(/Bilan : \d+:\d\d · \d+ commandes/.test(await jeu.locator('.sortie .bilan').textContent()), `${largeur} px : le bilan du chapitre s’affiche`);
+  await jeu.locator('.bouton-bilan').click();
+  const fenetreBilan = jeu.locator('dialog.fenetre-bilan');
+  verifier(
+    (await fenetreBilan.evaluate((d) => d.open)) && (await fenetreBilan.locator('tbody code', { hasText: 'mv .ampoule_de_secours' }).count()) === 1,
+    `${largeur} px : le détail du bilan montre la commande de l’étape`,
+  );
+  const boiteBilan = await fenetreBilan.boundingBox();
+  verifier(boiteBilan.x >= 0 && boiteBilan.x + boiteBilan.width <= largeur, `${largeur} px : la fenêtre du bilan tient dans l’écran`);
+  await page.keyboard.press('Escape');
   await jeu.locator('.fin button').click();
   verifier((await jeu.locator('.sortie').textContent()).includes('chapitre 2'), `${largeur} px : chapitre 2 ouvert`);
   await page.reload();
@@ -388,7 +399,7 @@ for (const largeur of [1000, 375]) {
   verifier((await mission.locator('.indice-texte').textContent()).includes('mv crabe Seau'), 'indices : presque la réponse, pour l’étape en cours');
   await page.keyboard.press('Escape');
   for (const l of ['mv Jetee/filet Port/Hangar', 'mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule']) await taper(l);
-  verifier((await jeu.locator('.sortie').textContent()).includes('3 indices demandés pour ce chapitre'), 'indices : le débrief les compte');
+  verifier((await jeu.locator('.sortie .bilan').textContent()).includes('3 indices'), 'indices : le bilan les compte');
   // En mode examen : pas d'aide.
   await jeu.locator('.examen input').check();
   await jeu.locator('.bouton-mission').click();
