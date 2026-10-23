@@ -329,6 +329,44 @@ parcours-prochain = ▶ Le prochain
 # { $chapitre } : le titre du chapitre à finir d'abord
 parcours-verrouille = 🔒 D'abord : { $chapitre }
 parcours-sans-cle = 🔒 Histoire verrouillée
+## L'astreinte et l'incident du jour (voir src/moteur/astreinte.ts)
+astreinte-bouton = 🚨 Incident du jour
+# { $chapitre } : titre du chapitre ; { $histoire } : titre de l'histoire
+astreinte-aujourdhui = Aujourd'hui : « { $chapitre } » ({ $histoire })
+astreinte-verrouille = 🔒 L'astreinte s'ouvre quand tu termines La Racine (L'Effaceur, chapitre 3).
+# { $pourcent } : budget restant
+astreinte-deja = Fait aujourd'hui : { $pourcent } % du budget gardé.
+# { $date } : la date du jour, écrite en toutes lettres
+astreinte-titre = Astreinte du { $date }
+astreinte-intro = Le téléphone d'astreinte sonne : un incident à régler. Le même pour tout le monde aujourd'hui ; demain, un autre.
+astreinte-regles = Tu as un budget d'erreur de 30 minutes, comme l'objectif de disponibilité (SLA) d'un service : il fond avec le temps, chaque indice en coûte 3 minutes, chaque commande en erreur 20 secondes. Pas de mode examen ; l'instantané de secours reste permis (le temps, lui, ne revient pas).
+astreinte-prendre = Prendre l'astreinte
+astreinte-annuler = Pas maintenant
+astreinte-debut = 🚨 Astreinte : le budget d'erreur commence à fondre.
+# { $temps } : « 24:10 » ; { $pourcent } : un nombre
+astreinte-jauge = Budget : { $temps } ({ $pourcent } %)
+astreinte-epuise = Budget épuisé : SLA dépassé. Termine quand même, l'incident doit être réglé.
+astreinte-abandon = L'astreinte est abandonnée : tu as quitté l'incident.
+astreinte-fin-titre = Fin d'astreinte
+astreinte-fin-intro = L'incident est réglé. Voici ta carte de score, à partager (rien n'est envoyé : tu la copies où tu veux).
+astreinte-copier = Copier la carte
+astreinte-copiee = Carte copiée.
+# La carte de score, comme une grille de mots partagée.
+# { $date } (AAAA-MM-JJ), { $chapitre }, { $jauge } (cinq cases), { $pourcent }, { $temps }, { $indices }, { $erreurs }, { $adresse }
+astreinte-carte =
+    Quêtes de Sysadmin · astreinte du { $date }
+    « { $chapitre } » réglé en { $temps }
+    { $jauge } { $pourcent } % du budget
+    { $indices ->
+        [0] sans indice
+        [one] un indice
+       *[other] { $indices } indices
+    } · { $erreurs ->
+        [0] aucune erreur
+        [one] une erreur
+       *[other] { $erreurs } erreurs
+    }
+    { $adresse }
 succes-sans-indice = Sans filet
     .description = Terminer un chapitre sans demander d'indice.
 

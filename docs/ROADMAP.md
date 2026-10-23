@@ -342,6 +342,13 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [x] **Astreinte et incident du jour** (`src/moteur/astreinte.ts`) : chaque
+  jour, un chapitre tiré de la date (le même pour tout le monde, sans
+  serveur) parmi ceux des parcours qui parlent de pannes, ouvert après La
+  Racine ; un budget d'erreur de 30 minutes qui fond avec le temps (−3 min
+  par indice, −20 s par commande en erreur) ; à la fin, une carte de score
+  en texte à copier (jauge en cinq cases) ; le meilleur résultat du jour
+  est gardé dans le navigateur.
 - [ ] **L'Audit, côté auditrice** : le plan validé est dans
   `docs/SCENARIOS.md` (« Plan validé, à écrire : la mission d'audit ») ;
   proposition : deux chapitres de plus pour l'histoire 14 (*Le périmètre*
