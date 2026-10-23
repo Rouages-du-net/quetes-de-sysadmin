@@ -12,4 +12,7 @@ export default defineConfig({
   compressHTML: false,
   // Apache sert /page/index.html pour /page/
   build: { format: 'directory' },
+  // Aucun fichier intégré en data: (Vite le fait sous 4 Ko, pour les petits
+  // morceaux de la police) : la CSP n'autorise que les fichiers du site.
+  vite: { build: { assetsInlineLimit: 0 } },
 });

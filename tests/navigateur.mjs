@@ -285,6 +285,56 @@ for (const largeur of [1000, 375]) {
   await ailleurs.close();
 }
 
+// La mission, Ctrl-R et Ctrl-C (bureau), puis la barre de touches (téléphone).
+{
+  const page = await navigateur.newPage({ viewport: { width: 1000, height: 900 } });
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
+  await avecCsp(page);
+  await page.goto(`${BASE}/`);
+  const jeu = page.locator('quetes-de-sysadmin');
+  const saisie = jeu.locator('form input');
+  for (const l of ['ssh royaume', 'yes', 'cat message.txt', 'cd Jetee', 'mv filet ~/Port/Hangar', 'cd ~']) {
+    await saisie.fill(l);
+    await saisie.press('Enter');
+  }
+  verifier(!(await jeu.locator('.touches').isVisible()), 'bureau : pas de barre de touches');
+  // Ctrl-R : chercher « Jet », Entrée relance « cd Jetee ».
+  await saisie.press('Control+r');
+  await saisie.pressSequentially('Jet');
+  verifier((await jeu.locator('.recherche').textContent()).includes('cd Jetee'), 'Ctrl-R trouve la commande dans l’historique');
+  await saisie.press('Enter');
+  verifier((await jeu.locator('.invite').textContent()).includes('Jetee'), 'Ctrl-R puis Entrée la relance');
+  // Ctrl-C : la ligne est abandonnée.
+  await saisie.fill('rm -r tout');
+  await saisie.press('Control+c');
+  verifier((await saisie.inputValue()) === '' && (await jeu.locator('.sortie').textContent()).includes('rm -r tout^C'), 'Ctrl-C abandonne la ligne');
+  // La mission : objectif, consignes, et le filet déplacé dans « ce qui s'est passé ».
+  await jeu.locator('.bouton-mission').click();
+  const mission = jeu.locator('dialog.fenetre-mission');
+  verifier((await mission.locator('h2').textContent()).includes('Chapitre 1'), 'la mission donne le chapitre');
+  verifier((await mission.locator('.mission-journal li').count()) >= 1, 'la mission relit ce qui s’est passé');
+  await page.keyboard.press('Escape');
+  verifier(erreurs.length === 0, `mission : aucune erreur console ${erreurs.join(' ')}`);
+  await page.close();
+
+  const telephone = await navigateur.newContext({ viewport: { width: 375, height: 800 }, isMobile: true, hasTouch: true });
+  const mobile = await telephone.newPage();
+  await avecCsp(mobile);
+  await mobile.goto(`${BASE}/`);
+  const jeuMobile = mobile.locator('quetes-de-sysadmin');
+  verifier(await jeuMobile.locator('.touches').isVisible(), 'téléphone : la barre de touches est là');
+  const ligne = jeuMobile.locator('form input');
+  await ligne.fill('ls -a ~/.s');
+  await jeuMobile.locator('.touches button[data-touche="Tab"]').tap();
+  verifier((await ligne.inputValue()) === 'ls -a ~/.ssh/', 'téléphone : Tab complète');
+  await jeuMobile.locator('.touches button[data-touche="|"]').tap();
+  verifier((await ligne.inputValue()).endsWith('|'), 'téléphone : | s’insère dans la ligne');
+  verifier(!(await mobile.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'téléphone : pas de défilement horizontal');
+  await telephone.close();
+}
+
 // Page introuvable
 {
   const page = await navigateur.newPage();

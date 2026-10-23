@@ -126,6 +126,8 @@ export class Shell implements Jeu {
   coupure = false;
   // Les lieux où l'on est entré (cd), pour la carte (voir carte.ts).
   visites = new Set<string>();
+  // Les messages de l'histoire déjà affichés dans ce chapitre (le panneau « Mission » les relit).
+  journal: string[] = [];
 
   t: Traduire;
 
@@ -836,7 +838,10 @@ export class Shell implements Jeu {
       if (this.drapeaux.has(e.id) || !e.condition(this)) continue;
       this.drapeaux.add(e.id);
       e.action?.(this);
-      if (!this.examen || e.id === this.chapitre.final) messages.push(this.prose(typeof e.message === 'function' ? e.message(this) : e.message));
+      if (!this.examen || e.id === this.chapitre.final) {
+        messages.push(this.prose(typeof e.message === 'function' ? e.message(this) : e.message));
+        this.journal.push(messages.at(-1)!);
+      }
       if (e.id === this.chapitre.final) this.termine = true;
     }
     return messages;

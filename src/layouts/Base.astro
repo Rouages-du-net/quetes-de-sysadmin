@@ -1,6 +1,9 @@
 ---
 // Gabarit commun des pages du site. Les textes des pages vivent dans les
 // pages elles-mêmes (une page par langue quand les traductions viendront).
+// La police des titres et du terminal, servie par le site (JetBrains Mono, licence OFL).
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/700.css';
 import '../styles/site.css';
 
 interface Props {
@@ -22,14 +25,16 @@ const canonique = new URL(Astro.url.pathname, Astro.site);
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{titre}</title>
   <meta name="description" content={description} />
-  <meta name="color-scheme" content="light dark" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#0e1319" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#eef2ee" media="(prefers-color-scheme: light)" />
   <link rel="canonical" href={canonique} />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   {autre && <link rel="alternate" hreflang={autre.langue} href={new URL(autre.href, Astro.site)} />}
 </head>
 <body>
   <header>
-    <p class="nom"><a href={accueil}>Quêtes de Sysadmin</a></p>
+    <p class="nom"><a href={accueil}><span class="invite" aria-hidden="true">~$ </span>{en ? 'Sysadmin Quests' : 'Quêtes de Sysadmin'}<span class="curseur" aria-hidden="true"></span></a></p>
     {autre && <p class="langue"><a href={autre.href} hreflang={autre.langue} lang={autre.langue}>{autre.nom}</a></p>}
   </header>
   <main>

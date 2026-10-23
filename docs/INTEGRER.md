@@ -40,11 +40,15 @@ Exemple : un cours sur le réseau qui ouvre directement « Le Paquet perdu » :
 
 Le jeu vit dans une racine fantôme (Shadow DOM) : ses styles ne débordent pas
 sur la page, et ceux de la page ne le cassent pas. Pour l'accorder à ton site,
-redéfinis ces variables CSS sur l'élément :
+redéfinis ces variables CSS sur l'élément. Sans elles, le jeu prend son
+thème « salle des machines » : lumière de console (vert phosphore, voyants
+ambre) sur fond anthracite si le système est en sombre, « salle blanche » en
+clair.
 
 ```css
 quetes-de-sysadmin {
   --qds-accent: #0b6e4f;
+  --qds-ambre: #8a4f00;
   --qds-fond: #ffffff;
   --qds-carte: #f5f5f5;
   --qds-texte: #111111;
@@ -58,7 +62,9 @@ quetes-de-sysadmin {
 }
 ```
 
-Garde un contraste suffisant (WCAG AA) entre le texte et le fond.
+`--qds-accent` colore les liens, les boutons et les diodes des chapitres
+finis ; `--qds-ambre`, la diode du prochain chapitre à faire. Garde un
+contraste suffisant (WCAG AA) entre le texte et le fond.
 
 ## Licence et crédit
 
