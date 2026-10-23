@@ -141,7 +141,8 @@ rouages.net.
   `OEUFS` de `shell.ts` ; la coloration de la ligne de commande dans `src/moteur/coloration.ts` (elle suit le
   shell du jeu : `decouper()`, `connues()`), les couleurs des sorties (séquences ANSI,
   `Shell.couleurs`, `--color`) dans `src/moteur/couleurs.ts` : une condition
-  d'événement lit `derniere.sortie`, déjà sans couleurs ; les parcours thématiques dans `src/moteur/parcours.ts` (un chapitre ajouté
+  d'événement lit `derniere.sortie`, déjà sans couleurs ; l'astreinte et l'incident du jour dans `src/moteur/astreinte.ts` (tiré
+  de la date par l'interface ; le moteur ne lit pas l'heure), les parcours thématiques dans `src/moteur/parcours.ts` (un chapitre ajouté
   va dans au moins un parcours, `tests/parcours.test.ts` le vérifie), le bilan de fin de chapitre dans `src/moteur/bilan.ts` (`Shell.franchies`,
   `commandesTapees`), les indices gradués dans `src/moteur/indices.ts`,
   leurs textes dans `src/textes/<langue>/indices-<histoire>.ftl` : chaque
