@@ -299,6 +299,36 @@ secours-restaure = { $pas ->
         [one] ↺ Machine remise comme après la première saisie du chapitre.
        *[other] ↺ Machine remise comme après { $pas } saisies du chapitre.
     }
+## Les parcours thématiques (menu « Parcours » ; voir src/moteur/parcours.ts)
+vue-parcours = Parcours
+parcours-choix = Choisir un parcours
+parcours-debuter = Premiers pas
+    .description = Se déplacer, lire, chercher, ranger, puis le réseau, git et les archives : pour qui n'a jamais ouvert un terminal.
+parcours-securite = Protéger un serveur
+    .description = SSH, pare-feu, fail2ban, comptes et droits, secrets, mises à jour : fermer les portes et garder la maison en ordre.
+parcours-web = Servir le web
+    .description = nginx, journaux, sauvegardes d'urgence, certificats, sites partagés, trafic et proxy.
+parcours-reseau = Les réseaux
+    .description = DNS, rebonds et tunnels SSH, VLAN, DHCP, pare-feu nftables, VPN WireGuard et DMZ.
+parcours-sauvegardes = Sauvegarder et restaurer
+    .description = rsync, archives, restic, rsnapshot, bases PostgreSQL, transferts : et toujours, vérifier qu'on sait restaurer.
+parcours-deploiement = Conteneurs et déploiement
+    .description = git, Docker et Compose, dépôts nus et crochets, retour arrière, bleu/vert, canari et migration.
+parcours-production = Diagnostiquer en production
+    .description = Un service qui ne redémarre pas, un disque plein, la mémoire, les inodes, l'heure, la supervision et le post-mortem.
+parcours-identites = Comptes et identités
+    .description = Groupes, départ d'un collègue, droits partagés, clés SSH, annuaire LDAP et Wi-Fi d'entreprise.
+# { $faits } / { $total } : des nombres
+parcours-avancee = { $faits } sur { $total } chapitres faits
+parcours-fini = ✓ Parcours terminé
+# { $histoire } : le titre de l'histoire
+parcours-dans = dans « { $histoire } »
+parcours-fait = ✓ Terminé
+parcours-ouvert = À faire
+parcours-prochain = ▶ Le prochain
+# { $chapitre } : le titre du chapitre à finir d'abord
+parcours-verrouille = 🔒 D'abord : { $chapitre }
+parcours-sans-cle = 🔒 Histoire verrouillée
 succes-sans-indice = Sans filet
     .description = Terminer un chapitre sans demander d'indice.
 

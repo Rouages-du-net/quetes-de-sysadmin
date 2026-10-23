@@ -299,6 +299,36 @@ secours-restaure = { $pas ->
         [one] ↺ Machine put back as after the chapter's first input.
        *[other] ↺ Machine put back as after { $pas } inputs of the chapter.
     }
+## Themed paths ("Paths" menu; see src/moteur/parcours.ts)
+vue-parcours = Paths
+parcours-choix = Choose a path
+parcours-debuter = First steps
+    .description = Moving around, reading, searching, tidying up, then the network, git and archives: for anyone who has never opened a terminal.
+parcours-securite = Protecting a server
+    .description = SSH, firewall, fail2ban, accounts and permissions, secrets, updates: closing the doors and keeping the house in order.
+parcours-web = Serving the web
+    .description = nginx, logs, emergency backups, certificates, shared sites, traffic and proxies.
+parcours-reseau = Networks
+    .description = DNS, SSH jumps and tunnels, VLANs, DHCP, nftables firewall, WireGuard VPN and DMZ.
+parcours-sauvegardes = Backing up and restoring
+    .description = rsync, archives, restic, rsnapshot, PostgreSQL databases, transfers: and always, checking you know how to restore.
+parcours-deploiement = Containers and deployment
+    .description = git, Docker and Compose, bare repositories and hooks, rollback, blue/green, canary and migration.
+parcours-production = Troubleshooting in production
+    .description = A service that won't restart, a full disk, memory, inodes, time, monitoring and the post-mortem.
+parcours-identites = Accounts and identities
+    .description = Groups, a colleague leaving, shared permissions, SSH keys, LDAP directory and enterprise Wi-Fi.
+# { $faits } / { $total }: numbers
+parcours-avancee = { $faits } of { $total } chapters done
+parcours-fini = ✓ Path complete
+# { $histoire }: the story's title
+parcours-dans = in "{ $histoire }"
+parcours-fait = ✓ Done
+parcours-ouvert = To do
+parcours-prochain = ▶ Next
+# { $chapitre }: the title of the chapter to finish first
+parcours-verrouille = 🔒 First: { $chapitre }
+parcours-sans-cle = 🔒 Story locked
 succes-sans-indice = No safety net
     .description = Finish a chapter without asking for a hint.
 

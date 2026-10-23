@@ -15,6 +15,7 @@ import { disposer, reperes as reperesPlan, type ElementPlan } from '../moteur/pl
 import { grade, GRADES, nouveauxSucces, SUCCES } from '../moteur/succes';
 import { indice, NIVEAUX, type Niveau } from '../moteur/indices';
 import { bilan } from '../moteur/bilan';
+import { etapesParcours, PARCOURS } from '../moteur/parcours';
 import { codeDeProgression, fichierDeSauvegarde, lireCode, lireFichier, nettoyerNom, type Sauvegarde } from '../moteur/progression';
 import { colorer, type Jeton } from '../moteur/coloration';
 import { morceaux, sansCouleurs } from '../moteur/couleurs';
@@ -49,7 +50,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // L'affichage (thème, taille, vue du menu, couleurs) : un réglage de ce navigateur seulement.
   const CLE_AFFICHAGE = `${CLE}-affichage`;
   const TAILLES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
-  let affichage = { theme: 'phosphore', taille: 2, vue: 'reseau', couleurs: true };
+  let affichage = { theme: 'phosphore', taille: 2, vue: 'reseau', couleurs: true, parcours: PARCOURS[0].id };
   try {
     affichage = { ...affichage, ...JSON.parse(localStorage.getItem(CLE_AFFICHAGE) ?? '{}') };
   } catch {}
@@ -73,7 +74,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // qu'on avance) et les baies (les mêmes boutons, en grille, avec leur
   // résumé). Ce sont les mêmes boutons dans la même liste : seule la mise en
   // page change, et les lecteurs d'écran lisent la même chose.
-  const VUES = ['reseau', 'baies'] as const;
+  const VUES = ['reseau', 'baies', 'parcours'] as const;
   const boutonsVue = Object.fromEntries(
     VUES.map((v) => [v, el('button', { type: 'button', class: 'bouton-vue', 'aria-pressed': 'false', 'data-vue': v }, t(`vue-${v}`))]),
   ) as Record<(typeof VUES)[number], HTMLButtonElement>;
@@ -86,7 +87,25 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     el('li', { class: 'noeud-internet', 'aria-hidden': 'true' }, el('span', {}, t('vue-internet'))),
     ...boutonsHistoires.map((b, i) => el('li', { class: 'noeud', 'data-cote': i % 2 ? 'droite' : 'gauche' }, b)),
   );
-  const navHistoires = el('nav', { class: 'histoires', 'aria-label': t('histoires-titre') }, choixVue, listeHistoires, aideCle);
+  // La vue « Parcours » : un thème, et ses chapitres pris dans plusieurs histoires (voir parcours.ts).
+  const idParcours = `qds-parcours-${Math.random().toString(36).slice(2, 8)}`;
+  const choixParcours = el(
+    'select',
+    { id: idParcours },
+    ...PARCOURS.map((p) => el('option', { value: p.id }, t(`parcours-${p.id}`))),
+  ) as HTMLSelectElement;
+  const parcoursDescription = el('p', { class: 'parcours-description' });
+  const parcoursAvancee = el('p', { class: 'parcours-avancee' });
+  const listeParcours = el('ol', { class: 'parcours-liste' });
+  const blocParcours = el(
+    'div',
+    { class: 'parcours', hidden: '' },
+    el('p', { class: 'parcours-choix' }, el('label', { for: idParcours }, t('parcours-choix')), ' ', choixParcours),
+    parcoursDescription,
+    parcoursAvancee,
+    listeParcours,
+  );
+  const navHistoires = el('nav', { class: 'histoires', 'aria-label': t('histoires-titre') }, choixVue, listeHistoires, blocParcours, aideCle);
 
   const navsChapitres = HISTOIRES.map((h, i) =>
     el('nav', { class: 'chapitres', 'aria-label': t('chapitres-titre', { histoire: titreHistoire(i) }), 'data-chapitres': String(i) },
@@ -449,6 +468,40 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     sortie.appendChild(el('pre', { class: 'cmd' }, `${invite.textContent} `, ...enSpans(js)));
   };
 
+  // Le parcours choisi : chaque chapitre, son histoire, son état ; le prochain à faire est mis en avant.
+  const majParcours = () => {
+    const p = PARCOURS.find((x) => x.id === affichage.parcours) ?? PARCOURS[0];
+    const { etapes, prochain } = etapesParcours(p, termines, (id) => accessible(HISTOIRES.findIndex((x) => x.id === id)));
+    const faits = etapes.filter((e) => e.etat === 'fait').length;
+    parcoursDescription.textContent = typo(t(`parcours-${p.id}.description`));
+    parcoursAvancee.textContent = faits === etapes.length ? t('parcours-fini') : t('parcours-avancee', { faits, total: etapes.length });
+    listeParcours.replaceChildren(
+      ...etapes.map((e, i) => {
+        const etat =
+          e.etat === 'fait'
+            ? t('parcours-fait')
+            : e.etat === 'sans-cle'
+              ? t('parcours-sans-cle')
+              : e.etat === 'verrouille'
+                ? t('parcours-verrouille', { chapitre: t(`chapitre-${e.avant}`) })
+                : i === prochain
+                  ? t('parcours-prochain')
+                  : t('parcours-ouvert');
+        const b = el(
+          'button',
+          { type: 'button', 'data-h': String(e.h), 'data-c': String(e.c), 'data-etat': e.etat },
+          el('span', { class: 'titre' }, t(`chapitre-${e.chapitre}`)),
+          el('span', { class: 'resume' }, t('parcours-dans', { histoire: titreHistoire(e.h) })),
+          el('span', { class: 'etat' }, etat),
+        );
+        b.disabled = e.etat === 'verrouille' || e.etat === 'sans-cle';
+        b.toggleAttribute('data-prochain', i === prochain);
+        b.setAttribute('aria-current', String(e.h === histoire() && e.c === courant()));
+        return el('li', {}, b);
+      }),
+    );
+  };
+
   const majNav = () => {
     boutonPoste.setAttribute('aria-current', String(histoire() === -1));
     boutonsHistoires.forEach((b, h) => {
@@ -473,7 +526,8 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
             ? t('etat-chapitres-faits', { faits, total })
             : '';
     });
-    aideCle.hidden = boutonsHistoires.every((b) => !b.disabled);
+    aideCle.hidden = boutonsHistoires.every((b) => !b.disabled) || affichage.vue === 'parcours';
+    majParcours();
     navsChapitres.forEach((nav, h) => {
       nav.hidden = h !== histoire() || chapitres(h).length < 2;
       nav.querySelectorAll<HTMLButtonElement>('[data-chapitre]').forEach((b, c) => {
@@ -778,6 +832,16 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   terminal.addEventListener('click', () => {
     if (!form.hidden && !selection()) saisie.focus();
   });
+  listeParcours.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-h]');
+    if (!b || b.disabled) return;
+    demarrer(Number(b.dataset.h), Number(b.dataset.c));
+    saisie.focus();
+  });
+  choixParcours.addEventListener('change', () => {
+    affichage.parcours = choixParcours.value;
+    appliquerAffichage();
+  });
   boutonPoste.addEventListener('click', () => {
     allerPoste();
     saisie.focus();
@@ -1044,6 +1108,11 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     choixTheme.value = affichage.theme;
     if (!(VUES as readonly string[]).includes(affichage.vue)) affichage.vue = 'reseau';
     navHistoires.dataset.vue = affichage.vue;
+    listeHistoires.hidden = affichage.vue === 'parcours';
+    blocParcours.hidden = affichage.vue !== 'parcours';
+    if (!PARCOURS.some((p) => p.id === affichage.parcours)) affichage.parcours = PARCOURS[0].id;
+    choixParcours.value = affichage.parcours;
+    majNav();
     affichage.couleurs = affichage.couleurs !== false;
     terminalJeu.couleurs = affichage.couleurs;
     boutonCouleurs.setAttribute('aria-pressed', String(affichage.couleurs));

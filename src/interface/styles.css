@@ -512,3 +512,14 @@
 
 /* L'instantané de secours : des boutons grisés quand ce n'est pas possible. */
 .qds .bouton-secours:disabled { cursor: default; color: var(--_discret); border-style: dashed; }
+
+/* La vue « Parcours » : un thème, ses chapitres (les mêmes cartes que les baies). */
+.qds .parcours-choix { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin: 0 0 0.5rem; }
+.qds .parcours-choix select { font: inherit; padding: 0.25rem 0.5rem; border: 1px solid var(--_bord); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); max-width: 100%; }
+.qds .parcours-description { margin: 0 0 0.25rem; color: var(--_discret); }
+.qds .parcours-avancee { margin: 0 0 0.75rem; font-weight: 700; color: var(--_accent); }
+.qds .parcours .resume { display: block; }
+.qds .parcours button[data-etat='fait'] { border-left-color: var(--_accent); }
+.qds .parcours button[data-prochain] { border-left-color: var(--_ambre); box-shadow: inset 0 0 0 1px var(--_ambre); }
+.qds .parcours button[data-prochain] .etat { color: var(--_ambre); }
+.qds .parcours button:disabled .etat { color: var(--_discret); font-weight: 400; }

@@ -536,6 +536,33 @@ for (const largeur of [1000, 375]) {
   await page.close();
 }
 
+// Les parcours : une troisième vue du menu ; un thème, ses chapitres, le prochain à faire.
+for (const largeur of [1000, 375]) {
+  const page = await navigateur.newPage({ viewport: { width: largeur, height: 900 } });
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
+  await avecCsp(page);
+  await page.goto(`${BASE}/`);
+  await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ termines: ['eveil', 'bourg', 'racine', 'sauvegarde', 'fermer-la-porte'] })));
+  await page.reload();
+  const jeu = page.locator('quetes-de-sysadmin');
+  await jeu.locator('.choix-vue button', { hasText: 'Parcours' }).click();
+  await jeu.locator('.parcours select').selectOption('securite');
+  const cartes = jeu.locator('.parcours-liste button');
+  verifier((await cartes.count()) === 11 && (await jeu.locator('.parcours-avancee').textContent()).includes('1 sur 11'), `parcours ${largeur} px : le parcours et son avancée`);
+  const prochain = jeu.locator('.parcours-liste button[data-prochain]');
+  verifier((await prochain.textContent()).includes('Le pare-feu') && (await jeu.locator('.parcours-liste button[data-etat="verrouille"]').first().textContent()).includes('D\'abord'), `parcours ${largeur} px : le prochain, et ce qui attend`);
+  await prochain.click();
+  verifier((await jeu.locator('.invite').textContent()).startsWith('vous@lettres'), `parcours ${largeur} px : le prochain chapitre s’ouvre`);
+  await page.reload();
+  verifier((await jeu.locator('nav.histoires').getAttribute('data-vue')) === 'parcours' && (await jeu.locator('.parcours select').inputValue()) === 'securite', `parcours ${largeur} px : la vue et le parcours sont gardés`);
+  verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `parcours ${largeur} px : pas de défilement horizontal`);
+  verifier(erreurs.length === 0, `parcours ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
+  await page.evaluate(() => localStorage.clear());
+  await page.close();
+}
+
 // Page introuvable
 {
   const page = await navigateur.newPage();
