@@ -22,6 +22,7 @@
     "vitest": "^5.0.5"
   },
   "dependencies": {
-    "@fluent/bundle": "^0.19.1"
+    "@fluent/bundle": "^0.19.1",
+    "@fontsource/jetbrains-mono": "^5.2.8"
   }
 }

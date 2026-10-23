@@ -46,7 +46,9 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     el('button', { type: 'button', 'data-histoire': String(i) },
       el('span', { class: 'titre' }, titreHistoire(i)),
       el('span', { class: 'resume' }, typo(t(`histoire-${h.id}.resume`))),
-      el('span', { class: 'etat' })),
+      el('span', { class: 'etat' }),
+      // Une diode par chapitre, comme sur une baie de serveur (l'état en toutes lettres est dans .etat).
+      el('span', { class: 'diodes', 'aria-hidden': 'true' }, ...h.chapitres.map(() => el('span', { class: 'diode' })))),
   );
   const boutonPoste = el('button', { type: 'button', 'data-poste': '' }, el('span', { class: 'titre' }, t('poste-titre')));
   const aideCle = el('p', { class: 'cle-aide' }, typo(t('cle-aide')));
@@ -259,6 +261,11 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
       // Les histoires sans leur clé sont grisées : on avance de l'une à l'autre.
       b.toggleAttribute('data-verrouillee', !accessible(h));
       const faits = chapitres(h).filter((c) => termines.includes(c.id)).length;
+      const prochain = chapitres(h).findIndex((c) => !termines.includes(c.id));
+      b.querySelectorAll('.diode').forEach((d, c) => {
+        d.classList.toggle('allumee', termines.includes(chapitres(h)[c].id));
+        d.classList.toggle('en-cours', accessible(h) && c === prochain);
+      });
       const total = chapitres(h).length;
       b.querySelector('.etat')!.textContent = !accessible(h)
         ? t('etat-cle-manquante')
