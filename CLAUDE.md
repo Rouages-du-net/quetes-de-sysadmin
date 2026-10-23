@@ -132,7 +132,9 @@ rouages.net.
   à la fin d'`ORDRE_DU_CODE` et de `tests/progression/ordre.txt` ; les
   succès et le grade dans `src/moteur/succes.ts`, les clins d'œil dans
   `OEUFS` de `shell.ts` ; la coloration de la ligne de commande dans `src/moteur/coloration.ts` (elle suit le
-  shell du jeu : `decouper()`, `connues()`) ; les indices gradués dans `src/moteur/indices.ts`,
+  shell du jeu : `decouper()`, `connues()`), les couleurs des sorties (séquences ANSI,
+  `Shell.couleurs`, `--color`) dans `src/moteur/couleurs.ts` : une condition
+  d'événement lit `derniere.sortie`, déjà sans couleurs ; les indices gradués dans `src/moteur/indices.ts`,
   leurs textes dans `src/textes/<langue>/indices-<histoire>.ftl` : chaque
   nouveau chapitre en a, `tests/indices.test.ts` le vérifie) et styles
   (`styles.css`, tout sous `.qds`, couleurs en variables `--qds-*`).

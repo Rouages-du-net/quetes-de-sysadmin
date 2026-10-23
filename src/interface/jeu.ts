@@ -16,6 +16,7 @@ import { grade, GRADES, nouveauxSucces, SUCCES } from '../moteur/succes';
 import { indice, NIVEAUX, type Niveau } from '../moteur/indices';
 import { codeDeProgression, fichierDeSauvegarde, lireCode, lireFichier, nettoyerNom, type Sauvegarde } from '../moteur/progression';
 import { colorer, type Jeton } from '../moteur/coloration';
+import { morceaux, sansCouleurs } from '../moteur/couleurs';
 import { editeur } from './editeur';
 import { traducteur, typographie, type Langue } from '../textes';
 
@@ -370,10 +371,19 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     }
     // Une ligne soulignée par ^~~~ (sudo, compilateurs) : la ligne et son soulignement ne se replient pas.
     const souligne = (i: number) => /^\s*\^~*\s*$/.test(lignes[i] ?? '');
+    // Les couleurs des outils (séquences ANSI, voir couleurs.ts) deviennent des spans.
+    const enCouleurs = (ligne: string): (Node | string)[] =>
+      ligne.includes('\x1b')
+        ? morceaux(ligne).map((m) => {
+            const classes = [m.gras ? 'a-gras' : '', m.avant !== null ? `a-${m.avant}` : '', m.fond !== null ? `a-${m.fond}` : ''].filter(Boolean);
+            return classes.length ? el('span', { class: classes.join(' ') }, m.texte) : m.texte;
+          })
+        : [ligne];
     lignes.forEach((ligne, i) => {
       const fin = i < lignes.length - 1 ? '\n' : '';
-      if (enColonnes(ligne) || souligne(i) || souligne(i + 1)) pre.append(el('span', { class: 'colonnes' }, ligne + fin));
-      else pre.append(ligne + fin);
+      const visible = sansCouleurs(ligne);
+      if (enColonnes(visible) || /^\s*\^~*\s*$/.test(visible) || souligne(i + 1)) pre.append(el('span', { class: 'colonnes' }, ...enCouleurs(ligne), fin));
+      else pre.append(...enCouleurs(ligne), fin);
     });
     if (classe) pre.className = classe;
     sortie.appendChild(pre);
@@ -909,6 +919,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     if (!(VUES as readonly string[]).includes(affichage.vue)) affichage.vue = 'reseau';
     navHistoires.dataset.vue = affichage.vue;
     affichage.couleurs = affichage.couleurs !== false;
+    terminalJeu.couleurs = affichage.couleurs;
     boutonCouleurs.setAttribute('aria-pressed', String(affichage.couleurs));
     colorerSaisie();
     VUES.forEach((v) => boutonsVue[v].setAttribute('aria-pressed', String(v === affichage.vue)));

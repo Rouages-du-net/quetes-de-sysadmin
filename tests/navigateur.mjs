@@ -482,7 +482,11 @@ for (const largeur of [1000, 375]) {
   });
   verifier(Math.abs(largeurs[0] - largeurs[1]) < 2, `affichage ${largeur} px : la copie colorée garde les espaces (${largeurs})`);
   await jeu.locator('form input').press('Enter');
-  verifier((await jeu.locator('.sortie .cmd .c-commande').last().textContent()) === 'cat', `affichage ${largeur} px : la commande reste colorée au-dessus de sa sortie`);
+  // ls colore les lieux à l'écran (.ssh), et garde le / ; dans le tube vers cat, rien.
+  await jeu.locator('form input').fill('ls -a');
+  await jeu.locator('form input').press('Enter');
+  verifier((await jeu.locator('.sortie pre:not(.cmd)').last().locator('.a-34', { hasText: '.ssh' }).count()) === 1 && (await jeu.locator('.sortie pre:not(.cmd)').last().textContent()).includes('.ssh/'), `affichage ${largeur} px : ls colore les lieux`);
+  verifier((await jeu.locator('.sortie .cmd .c-commande').nth(-2).textContent()) === 'cat', `affichage ${largeur} px : la commande reste colorée au-dessus de sa sortie`);
   await jeu.locator('form input').fill('ssh royaume');
   await jeu.locator('form input').press('Enter');
   await jeu.locator('form input').pressSequentially('yes');
@@ -492,9 +496,10 @@ for (const largeur of [1000, 375]) {
   verifier(await terminal.evaluate((e) => e.classList.contains('scene-connexion')), `affichage ${largeur} px : la connexion est mise en scène`);
   verifier((await jeu.locator('li:has(> button[data-histoire="0"])').getAttribute('data-etat')) === 'en-cours', `affichage ${largeur} px : la machine où l'on joue s'allume sur la carte`);
   await jeu.locator('.reglages button', { hasText: 'Couleurs' }).click();
-  await jeu.locator('form input').pressSequentially('ls');
+  await jeu.locator('form input').pressSequentially('ls -a');
   verifier(!(await jeu.locator('.champ').evaluate((e) => e.classList.contains('colore'))) && (await jeu.locator('form input').evaluate((e) => getComputedStyle(e).color)) !== 'rgba(0, 0, 0, 0)', `affichage ${largeur} px : la coloration se coupe`);
-  await jeu.locator('form input').fill('');
+  await jeu.locator('form input').press('Enter');
+  verifier((await jeu.locator('.sortie pre:not(.cmd)').last().locator('[class^="a-"]').count()) === 0, `affichage ${largeur} px : les sorties aussi, sans couleur`);
   await jeu.locator('.reglages button', { hasText: 'Plein écran' }).click();
   const boite = await terminal.boundingBox();
   verifier(boite.width > largeur - 40 && boite.height > 600, `affichage ${largeur} px : plein écran`);

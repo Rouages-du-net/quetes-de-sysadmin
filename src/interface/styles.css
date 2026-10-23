@@ -446,3 +446,40 @@
 .qds .c-operateur { color: var(--_c-operateur); font-weight: 700; }
 .qds .c-joker { color: var(--_c-joker); }
 .qds .c-chemin { text-decoration: underline; text-underline-offset: 0.2em; }
+
+/* Les couleurs des sorties (ls, grep, diff --color, systemctl), lues dans
+   les séquences ANSI (voir src/moteur/couleurs.ts). Contraste AA au moins
+   sur le fond de chaque thème. */
+.qds .terminal {
+  --_a-31: #ff7a6b;
+  --_a-32: #5fe08a;
+  --_a-33: #ffd479;
+  --_a-34: #7cb4ff;
+  --_a-35: #e59cff;
+  --_a-36: #66d9e8;
+  --_a-37: #e8edf2;
+  --_a-fond-41: #b3261e;
+  --_a-fond-42: #5fe08a;
+}
+.qds .terminal[data-theme='papier'] {
+  --_a-31: #b3261e;
+  --_a-32: #0f6b37;
+  --_a-33: #7a4d00;
+  --_a-34: #0b57a4;
+  --_a-35: #8a2f8f;
+  --_a-36: #00657a;
+  --_a-37: #3c4248;
+  --_a-fond-42: #0f6b37;
+}
+.qds .a-gras { font-weight: 700; }
+.qds .a-30 { color: var(--_terminal-fond); }
+.qds .a-31 { color: var(--_a-31); }
+.qds .a-32 { color: var(--_a-32); }
+.qds .a-33 { color: var(--_a-33); }
+.qds .a-34 { color: var(--_a-34); }
+.qds .a-35 { color: var(--_a-35); }
+.qds .a-36 { color: var(--_a-36); }
+.qds .a-37 { color: var(--_a-37); }
+.qds .a-41 { background: var(--_a-fond-41); color: #ffffff; }
+.qds .a-42 { background: var(--_a-fond-42); }
+.qds .a-41.a-37 { color: #ffffff; }

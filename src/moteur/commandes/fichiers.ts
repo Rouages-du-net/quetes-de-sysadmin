@@ -5,6 +5,7 @@ import type { Fichier, Noeud } from '../monde';
 import type { Shell } from '../shell';
 import { appliquerMode, comparerNoms, contenu, joker, lisible, modeAvecMasque, options, tailleDe } from '../outils';
 import { placeFantome } from '../ouverts';
+import { colorer, couleurLs, largeurVisible, lireCouleur, messageCouleurInvalide, sgr } from '../couleurs';
 import { COMMANDES, type Commande, type Contexte } from './index';
 
 // Les commandes intégrées au shell : which ne les trouve pas.
@@ -23,7 +24,12 @@ const modeDe = (n: Noeud) => n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw
 
 // Une ligne de « ls -l ». Écart volontaire : on omet le nombre de liens et
 // la date.
-function ligneLongue(jeu: Shell, nom: string, n: Noeud, humain: boolean, numerique = false): string {
+// Le nom d'une entrée de ls, en couleur si ls colore (voir couleurs.ts).
+type Peindre = (nom: string, n: Noeud) => string;
+const sansPeinture: Peindre = (nom) => nom;
+const peinture = (actif: boolean): Peindre => (actif ? (nom, n) => sgr(couleurLs(nom, n.type, n.type === 'fichier' && n.lien !== undefined, modeDe(n)), nom) : sansPeinture);
+
+function ligneLongue(jeu: Shell, nom: string, n: Noeud, humain: boolean, numerique = false, peindre: Peindre = sansPeinture): string {
   // -n : les numéros (uid, gid) au lieu des noms.
   const nomProprio = n.proprio ?? jeu.joueur;
   const nomGroupe = n.groupe ?? nomProprio;
@@ -34,8 +40,8 @@ function ligneLongue(jeu: Shell, nom: string, n: Noeud, humain: boolean, numeriq
   const suffixe = n.type === 'dossier' && nom !== '.' && nom !== '..' ? '/' : '';
   // Un lien symbolique : « l », droits rwxrwxrwx, taille = longueur du chemin visé.
   if (n.type === 'fichier' && n.lien !== undefined)
-    return `lrwxrwxrwx ${proprio.padEnd(8)} ${groupe.padEnd(8)} ${String(n.lien.length).padStart(6)} ${nom} -> ${n.lien}`;
-  return `${n.type === 'dossier' ? 'd' : '-'}${modeDe(n)} ${proprio.padEnd(8)} ${groupe.padEnd(8)} ${taille.padStart(6)} ${nom}${suffixe}`;
+    return `lrwxrwxrwx ${proprio.padEnd(8)} ${groupe.padEnd(8)} ${String(n.lien.length).padStart(6)} ${peindre(nom, n)} -> ${n.lien}`;
+  return `${n.type === 'dossier' ? 'd' : '-'}${modeDe(n)} ${proprio.padEnd(8)} ${groupe.padEnd(8)} ${taille.padStart(6)} ${peindre(nom, n)}${suffixe}`;
 }
 
 // Source → (lieu de destination, nom final), comme mv et cp sous Linux :
@@ -52,7 +58,7 @@ const copier = (n: Noeud, proprio: string): Noeud =>
     : { type: 'dossier', proprio, mode: n.mode, enfants: Object.fromEntries(Object.entries(n.enfants).map(([k, e]) => [k, copier(e, proprio)])) };
 
 // ls d'un seul lieu (ou fichier).
-function lister({ args, jeu, dernier }: Contexte): string {
+function lister({ args, jeu, dernier }: Contexte, peindre: Peindre = sansPeinture): string {
   const { lettres, reste } = options(args);
   const cible = reste[0] ?? '.';
   // ls -l d'un lien montre le lien lui-même ; sans -l, ls entre dans le lieu visé.
@@ -67,29 +73,33 @@ function lister({ args, jeu, dernier }: Contexte): string {
   // -i : le numéro d'inode devant chaque nom.
   const ino = (e: Noeud, texte: string) => (lettres.has('i') ? `${String(inode(e)).padStart(7)} ${texte}` : texte);
   // -d : le lieu lui-même, pas son contenu.
-  if (n.type === 'fichier' || lettres.has('d')) return ino(n, long ? ligneLongue(jeu, cible, n, lettres.has('h'), lettres.has('n')) : cible);
+  if (n.type === 'fichier' || lettres.has('d')) return ino(n, long ? ligneLongue(jeu, cible, n, lettres.has('h'), lettres.has('n'), peindre) : peindre(cible, n));
   if (!jeu.peut(n, 'r')) return jeu.erreur(jeu.t('ls-ouvrir-permission', { cible }));
   const entrees: [string, Noeud][] = Object.entries(n.enfants)
     .filter(([nom]) => lettres.has('a') || !nom.startsWith('.'))
     .sort(([a], [b]) => comparerNoms(a, b));
   if (lettres.has('a')) entrees.unshift(['.', n], ['..', jeu.trouver(cible + '/..') ?? n]);
-  if (long) return entrees.map(([nom, e]) => ino(e, ligneLongue(jeu, nom, e, lettres.has('h'), lettres.has('n')))).join('\n');
-  if (lettres.has('i'))
-    return entrees.map(([nom, e]) => ino(e, e.type === 'dossier' && nom !== '.' && nom !== '..' ? nom + '/' : nom)).join(dernier ? '    ' : '\n');
+  if (long) return entrees.map(([nom, e]) => ino(e, ligneLongue(jeu, nom, e, lettres.has('h'), lettres.has('n'), peindre))).join('\n');
+  // Le / ajouté aux lieux reste hors de la couleur (comme ls -F) : la couleur n'est jamais le seul signe.
+  const affiche = (nom: string, e: Noeud) => peindre(nom, e) + (e.type === 'dossier' && nom !== '.' && nom !== '..' ? '/' : '');
+  if (lettres.has('i')) return entrees.map(([nom, e]) => ino(e, dernier ? affiche(nom, e) : peindre(nom, e))).join(dernier ? '    ' : '\n');
   // Comme le vrai ls : en colonnes à l'écran, un nom par ligne dans un
   // tube ou un fichier (et sans le / ajouté aux lieux).
-  if (!dernier) return entrees.map(([nom]) => nom).join('\n');
-  const noms = entrees.map(([nom, e]) => (e.type === 'dossier' && nom !== '.' && nom !== '..' ? nom + '/' : nom));
+  if (!dernier) return entrees.map(([nom, e]) => peindre(nom, e)).join('\n');
+  const noms = entrees.map(([nom, e]) => affiche(nom, e));
   const ligne = noms.join('    ');
-  if (ligne.length <= 1000) return ligne;
+  if (largeurVisible(ligne) <= 1000) return ligne;
   // Beaucoup de noms : des colonnes alignées dans 80 caractères, remplies de haut en bas, comme ls dans un terminal.
-  const largeur = Math.max(...noms.map((n) => n.length)) + 2;
+  const largeur = Math.max(...noms.map((n) => largeurVisible(n))) + 2;
   const colonnes = Math.max(1, Math.floor(80 / largeur));
   const rangs = Math.ceil(noms.length / colonnes);
   const lignes: string[] = [];
   for (let r = 0; r < rangs; r++) {
     const cases: string[] = [];
-    for (let c = 0; c < colonnes && r + c * rangs < noms.length; c++) cases.push(noms[r + c * rangs].padEnd(largeur));
+    for (let c = 0; c < colonnes && r + c * rangs < noms.length; c++) {
+      const nom = noms[r + c * rangs];
+      cases.push(nom + ' '.repeat(largeur - largeurVisible(nom)));
+    }
     lignes.push(cases.join('').trimEnd());
   }
   return lignes.join('\n');
@@ -146,15 +156,21 @@ export const FICHIERS: Record<string, Commande> = {
   },
 
   ls: {
-    lancer: (c) => {
+    lancer: (brut) => {
+      // --color : comme l'alias « ls --color=auto » du ~/.bashrc de Debian, ls colore à l'écran par défaut.
+      const { quand, args, invalide } = lireCouleur(brut.args, 'auto');
+      if (invalide !== undefined) return brut.jeu.erreur(messageCouleurInvalide(brut, 'ls', invalide));
+      const c = { ...brut, args };
+      const peindre = peinture(colorer(c, quand));
+      const lister_ = (ctx: Contexte) => lister(ctx, peindre);
       const { reste } = options(c.args);
-      if (reste.length <= 1) return lister(c);
+      if (reste.length <= 1) return lister_(c);
       // Plusieurs cibles : les fichiers d'abord, puis un bloc par lieu, avec son nom (comme ls).
       const lettres = c.args.filter((a) => a.startsWith('-'));
       const fichiers = reste.filter((r) => c.jeu.trouver(r)?.type !== 'dossier');
       const lieux = reste.filter((r) => c.jeu.trouver(r)?.type === 'dossier');
-      const blocs = fichiers.map((f) => lister({ ...c, args: [...lettres, f] })).filter(Boolean);
-      for (const l of lieux) blocs.push(`${l}:\n${lister({ ...c, args: [...lettres, l] })}`);
+      const blocs = fichiers.map((f) => lister_({ ...c, args: [...lettres, f] })).filter(Boolean);
+      for (const l of lieux) blocs.push(`${l}:\n${lister_({ ...c, args: [...lettres, l] })}`);
       return blocs.join('\n\n');
     },
   },

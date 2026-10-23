@@ -213,8 +213,8 @@ man-docker-compose = runs several containers that go together (an app and its da
     .exemple-3 = a service's log
     .exemple-4 = the file as Compose understands it, variables replaced
     .exemple-5 = stop and delete everything (with -v, the volumes too: their data is lost)
-man-diff = compares two files line by line, and shows what to change to go from the first to the second. In normal format, "3c3" means: line 3 of the first becomes line 3 of the second (c for change, d for delete, a for add); lines starting with < come from the first file, those with > from the second. -u gives the unified format, the one of git diff: - for what goes, + for what comes, with three lines around. With two places, diff compares the files with the same name, and -r goes down into sub-places. Nothing is printed if the files are identical.
-    .synopsis = diff [-u] [-r] [-q] file1 file2
+man-diff = compares two files line by line, and shows what to change to go from the first to the second. In normal format, "3c3" means: line 3 of the first becomes line 3 of the second (c for change, d for delete, a for add); lines starting with < come from the first file, those with > from the second. -u gives the unified format, the one of git diff: - for what goes, + for what comes, with three lines around. With two places, diff compares the files with the same name, and -r goes down into sub-places. Nothing is printed if the files are identical. --color shows what goes in red and what comes in green (on screen only; --color=always even in a pipe).
+    .synopsis = diff [-u] [-r] [-q] [--color[=WHEN]] file1 file2
     .option-u = unified format (unified): - and +, with three lines of context.
     .option-r = also compares sub-places, recursively.
     .option-q = only says whether the files differ (quiet).
@@ -267,8 +267,8 @@ man-git =
     A bare repository can react to a push: its hooks (hooks/pre-receive, hooks/post-receive) are scripts run on each reception, if they are executable (chmod +x). pre-receive can refuse the push (non-zero exit code). To deploy, post-receive checks the files out into a place: git --work-tree=place checkout -f main.
     A commit is designated by the start of its identifier (at least 4 characters), or by HEAD (the latest), HEAD~1 (the one before)…
     .synopsis = git [--git-dir=repository] [--work-tree=place] command
-man-grep = prints the lines that contain the pattern. The pattern is a regular expression: . means "any character", ^ the start of the line, $ the end, [abc] one character among a, b, c, and * "as many times as you like" whatever precedes it; to search for an actual dot, write \. (in single quotes). -E also allows + ? | and parentheses (extended expressions), -F searches for the text as is. -i ignores case, -v keeps the lines that do NOT contain it, -c counts the lines, -q prints nothing (only the exit code matters: success if the pattern is found, useful in a script). Without a file, searches what comes in through a pipe. "grep word *" searches all the files in the place.
-    .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] pattern [file...]
+man-grep = prints the lines that contain the pattern. The pattern is a regular expression: . means "any character", ^ the start of the line, $ the end, [abc] one character among a, b, c, and * "as many times as you like" whatever precedes it; to search for an actual dot, write \. (in single quotes). -E also allows + ? | and parentheses (extended expressions), -F searches for the text as is. -i ignores case, -v keeps the lines that do NOT contain it, -c counts the lines, -q prints nothing (only the exit code matters: success if the pattern is found, useful in a script). Without a file, searches what comes in through a pipe. "grep word *" searches all the files in the place. On screen, what matches is highlighted in red (--color=auto, like Debian's alias); --color=never turns it off.
+    .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] [--color[=WHEN]] pattern [file...]
     .option-i = ignores the difference between uppercase and lowercase.
     .option-v = inverts the search: keeps the lines that do NOT contain the pattern.
     .option-c = counts the matching lines instead of printing them.
@@ -304,8 +304,8 @@ man-ln = creates a link (link). With -s, a symbolic link: a small file that hold
     .exemple-1 = enable an nginx site, the Debian way
     .exemple-2 = see the links and what they point to
     .exemple-3 = switch the current link to another version, in one go
-man-ls = lists the content of a place (list). -a also shows hidden files, whose name starts with a dot. -l (long) shows the permissions, the owner and the size; -h writes sizes in K, M, G; -n shows the numbers (uid, gid) instead of the names.
-    .synopsis = ls [-a] [-l] [-d] [-h] [-n] [place]
+man-ls = lists the content of a place (list). -a also shows hidden files, whose name starts with a dot. -l (long) shows the permissions, the owner and the size; -h writes sizes in K, M, G; -n shows the numbers (uid, gid) instead of the names. On screen, names are in colour (--color=auto, like the alias in Debian's ~/.bashrc): places in blue, links in cyan, programs in green; --color=never turns colours off, --color=always keeps them even in a pipe.
+    .synopsis = ls [-a] [-l] [-d] [-h] [-n] [--color[=WHEN]] [place]
     .option-a = shows everything (all), including hidden files, whose name starts with a dot, and the places . and ..
     .option-l = long format: type, permissions, owner, group, size and name, one entry per line.
     .option-h = with -l, writes sizes in a readable way (human-readable): 1.2K, 34M, 5G.

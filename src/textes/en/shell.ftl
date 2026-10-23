@@ -122,3 +122,12 @@ oeuf-sl =
     __/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__
      |/-=|___|=    ||    ||    ||    |_____/~\___/
       \_/      \O=====O=====O=====O_/      \_/
+
+# Unknown --color=WHEN (ls, grep, diff), as coreutils says it.
+couleur-argument-invalide =
+    { $commande }: invalid argument ‘{ $valeur }’ for ‘--color’
+    Valid arguments are:
+      - ‘always’, ‘yes’, ‘force’
+      - ‘never’, ‘no’, ‘none’
+      - ‘auto’, ‘tty’, ‘if-tty’
+    Try '{ $commande } --help' for more information.
