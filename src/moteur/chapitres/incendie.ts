@@ -151,7 +151,7 @@ export const incendie: Chapitre = {
         { pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       ],
       // curl joint la machine elle-même sous ces noms (nginx.ts).
-      nginx: { charge: null, noms: ['datacenter', 'datacenter.example', SITE, `www.${SITE}`, '192.0.2.11'] },
+      nginx: { charge: null, noms: ['datacenter', 'datacenter.internal', SITE, `www.${SITE}`, '192.0.2.11'] },
     };
   },
   creerMonde: (t) => {

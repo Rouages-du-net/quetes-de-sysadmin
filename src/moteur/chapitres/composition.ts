@@ -256,7 +256,7 @@ export const composition: Chapitre = {
         charger: (j) => demarrerDocker(j),
       },
     }),
-    docker: { ...etatDocker(), noms: ['fabrique', 'fabrique.example', '192.0.2.15'] },
+    docker: { ...etatDocker(), noms: ['fabrique', 'fabrique.internal', '192.0.2.15'] },
   }),
   creerMonde: (t) => {
     const racine = { proprio: 'root' };

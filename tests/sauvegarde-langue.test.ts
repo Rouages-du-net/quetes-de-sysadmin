@@ -23,7 +23,7 @@ describe('Sauvegarde reprise dans une autre langue', () => {
 
   it('une config modifiée garde ses ajouts, et se connecte avec le compte de la langue', () => {
     const fr = new Console({ langue: 'fr' });
-    fr.poste.placer('nano', '~/.ssh/config', { type: 'fichier', contenu: `${config(traducteur('fr'))}\n\nHost wiki\n    HostName wiki.maison.example\n    User vous\n    User gaspard\n    ProxyJump maison` });
+    fr.poste.placer('nano', '~/.ssh/config', { type: 'fichier', contenu: `${config(traducteur('fr'))}\n\nHost wiki\n    HostName wiki.maison.internal\n    User vous\n    User gaspard\n    ProxyJump maison` });
     const sauve = fr.ssh();
     expect(sauve.fichiers.config).toContain('ProxyJump maison');
     const en = new Console({ langue: 'en', ssh: sauve, hotesConnus: fr.hotesConnus() });

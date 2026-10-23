@@ -257,7 +257,7 @@ export const certificat: Chapitre = {
       { pid: 802, utilisateur: 'www-data', cpu: 0.2, mem: 0.6, commande: 'nginx: worker process' },
     ],
     apt: { listes: true, installes: { ...VERSIONS } },
-    nginx: { charge: null, noms: ['datacenter', 'datacenter.example', ...NOMS, '192.0.2.11'] },
+    nginx: { charge: null, noms: ['datacenter', 'datacenter.internal', ...NOMS, '192.0.2.11'] },
   }),
   // nginx tourne depuis le démarrage : il a chargé le certificat d'octobre.
   initialiser: (j) => chargerNginx(j),

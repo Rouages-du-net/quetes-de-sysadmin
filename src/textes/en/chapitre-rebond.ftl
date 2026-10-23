@@ -14,7 +14,7 @@ rebond-courriel-yasmine =
     Subject:  The wiki
 
     Well done with the gateway! Next step: the associations' wiki.
-    It's the "wiki" machine (wiki.maison.example, 10.20.0.11), on our
+    It's the "wiki" machine (wiki.maison.internal, 10.20.0.11), on our
     internal network: it can't be reached from the internet, only
     from maison. Look at /etc/hosts here: those are the names maison
     knows.

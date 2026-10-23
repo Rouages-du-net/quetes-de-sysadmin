@@ -23,9 +23,16 @@ poste-bienvenue =
       ls -a ~/.ssh
 # Comment at the top of ~/.ssh/config (each line becomes a "#" comment)
 poste-config-commentaire =
-    The machines you know. "ssh royaume" connects to royaume.example
+    The machines you know. "ssh royaume" connects to royaume.internal
     as the user you with the key ~/.ssh/id_royaume.
     Manual: man ssh
+# Comment at the top of the workstation's /etc/hosts (each line becomes a "#" comment)
+poste-hosts-commentaire =
+    The machines in this game are fictional.
+    Names ending in .internal are reserved for private networks (ICANN, 2024);
+    names ending in .example, for examples (RFC 6761). The addresses 192.0.2.x,
+    198.51.100.x and 203.0.113.x are reserved for documentation (RFC 5737).
+    None of these names or addresses leads to anyone real.
 poste-exit = (You are on your own workstation: exit would close your terminal. To connect to a machine: ssh name, for example ssh royaume.)
 # { $cles }: the list of new keys, separated by commas
 poste-cles-recues =

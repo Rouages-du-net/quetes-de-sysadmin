@@ -17,7 +17,7 @@ export interface Machine {
 
 const machine = (nom: string, adresse: string, histoire?: string, sansCle = false): Machine => ({
   nom,
-  domaine: `${nom}.example`,
+  domaine: `${nom}.internal`,
   adresse,
   histoire,
   ...(sansCle ? { sansCle } : {}),

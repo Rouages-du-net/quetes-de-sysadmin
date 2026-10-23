@@ -210,7 +210,9 @@ répond en anglais.
 - **Chaque quête finit par un débrief** : ce qui s'est passé, la bonne
   pratique, un lien vers la documentation officielle de l'outil.
 - **Exemples sans danger** : adresses de documentation (RFC 5737, RFC 3849),
-  domaines `.example` (RFC 6761). Les quêtes de sécurité restent défensives :
+  noms en `.internal` pour les machines et réseaux internes (ICANN, 2024),
+  `.example` pour ce qui est public : sites, DNS, courriels (RFC 6761) ;
+  jamais un nom inventé qui pourrait exister. Les quêtes de sécurité restent défensives :
   on protège, on détecte, on répare.
 - **Crédit** : garder la mention « inspiré de Terminus, créé au MIT par Shawn
   Conrad et Michele Pratusevich » et le lien vers l'original. Ne pas reprendre

@@ -322,12 +322,12 @@ export const PAGES: Record<string, Page> = {
   sort: { longues: { 'numeric-sort': 'n', 'reverse': 'r' }, options: ['n', 'r'], exemples: ['sort -n tailles.txt'], voir: ['uniq', 'wc'] },
   ssh: {
     options: ['i', 'p', 'J', 'L', 'N', 'f', 'G'],
-    exemples: ['ssh royaume', 'ssh -i ~/.ssh/id_royaume vous@royaume.example', 'cat ~/.ssh/config', 'ssh -J maison wiki', 'ssh -f -N -L 8080:localhost:8080 wiki', 'ssh wiki uptime'],
+    exemples: ['ssh royaume', 'ssh -i ~/.ssh/id_royaume vous@royaume.internal', 'cat ~/.ssh/config', 'ssh -J maison wiki', 'ssh -f -N -L 8080:localhost:8080 wiki', 'ssh wiki uptime'],
     voir: ['exit', 'chmod', 'ssh_config', 'ssh-keygen', 'ssh-copy-id', 'scp'],
   },
-  'ssh-copy-id': { exemples: ['ssh-copy-id maison', 'ssh-copy-id -i ~/.ssh/id_ed25519.pub vous@maison.example'], voir: ['ssh', 'ssh-keygen', 'sshd_config'] },
+  'ssh-copy-id': { exemples: ['ssh-copy-id maison', 'ssh-copy-id -i ~/.ssh/id_ed25519.pub vous@maison.internal'], voir: ['ssh', 'ssh-keygen', 'sshd_config'] },
   'ssh-keygen': {
-    exemples: ['ssh-keygen -R datacenter.example', 'ssh-keygen -F datacenter.example', 'ssh-keygen -l -f ~/.ssh/known_hosts', 'ssh-keygen -t ed25519 -C vous@poste'],
+    exemples: ['ssh-keygen -R datacenter.internal', 'ssh-keygen -F datacenter.internal', 'ssh-keygen -l -f ~/.ssh/known_hosts', 'ssh-keygen -t ed25519 -C vous@poste'],
     voir: ['ssh', 'ssh-copy-id'],
   },
   ss: { longues: { 'tcp': 't', 'udp': 'u', 'listening': 'l', 'all': 'a', 'numeric': 'n', 'processes': 'p' }, section: 8, options: ['t', 'u', 'l', 'a', 'n', 'p'], exemples: ['sudo ss -tlnp', 'ss -t'], voir: ['ufw', 'ps', 'systemctl'] },

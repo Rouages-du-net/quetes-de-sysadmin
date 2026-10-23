@@ -46,7 +46,7 @@ for (const langue of LANGUES)
       tout += modifier('/etc/ssh/sshd_config.d/50-cloud-init.conf', () => 'PasswordAuthentication no\n');
       tout += jouer(['sudo systemctl reload ssh', 'journalctl -u ssh -n 3', 'exit', 'ssh root@lettres']);
       expect(tout).toContain('[preauth]');
-      expect(tout).toContain('root@lettres.example: Permission denied (publickey).');
+      expect(tout).toContain('root@lettres.internal: Permission denied (publickey).');
       expect(c.termines).not.toContain('fermer-la-porte');
       tout += jouer(['ssh lettres']);
       contient(tout, 'https://man.openbsd.org/sshd_config');
@@ -71,7 +71,7 @@ for (const langue of LANGUES)
       const recharge = jouer(['sudo systemctl reload ssh']);
       contient(alerte + recharge, 'une nouvelle connexion de ton compte serait refusée');
       const dehors = jouer(['exit', 'ssh lettres']);
-      expect(dehors).toContain(L('vous@lettres.example: Permission denied (publickey).'));
+      expect(dehors).toContain(L('vous@lettres.internal: Permission denied (publickey).'));
       contient(dehors, 'tu t’es enfermé·e dehors'.replace('’', "'"));
       expect(c.invite()).toBe(L('vous@poste:~$'));
       // Le menu : comme la console de secours de l'hébergeur.
@@ -129,7 +129,7 @@ for (const langue of LANGUES)
       const { c, jouer } = partie();
       jouer(['sudo ufw allow http', 'fourmis-2026', 'sudo ufw allow https', 'sudo ufw enable', 'o']);
       const dehors = jouer(['exit', 'ssh lettres']);
-      expect(dehors).toContain('ssh: connect to host lettres.example port 22: Connection timed out');
+      expect(dehors).toContain('ssh: connect to host lettres.internal port 22: Connection timed out');
       expect(c.invite()).toBe(L('vous@poste:~$'));
       c.connecter('lettres');
       jouer(['sudo ufw allow OpenSSH', 'exit', 'ssh lettres']);
@@ -193,7 +193,7 @@ for (const langue of LANGUES)
       const alerte = ecrire('/etc/fail2ban/jail.local', '[DEFAULT]\nmaxretry = 3\n') + jouer(['sudo systemctl reload fail2ban']);
       if (fr) expect(alerte).toContain("l'adresse de ton propre");
       const dehors = jouer(['exit', 'ssh lettres']);
-      expect(dehors).toContain('ssh: connect to host lettres.example port 22: Connection refused');
+      expect(dehors).toContain('ssh: connect to host lettres.internal port 22: Connection refused');
       c.connecter('lettres');
       ecrire('/etc/fail2ban/jail.local', BON);
       jouer([
@@ -238,7 +238,7 @@ for (const langue of LANGUES)
       return { c, jouer, ecrire };
     };
     const portDuPoste = (t: string) =>
-      t.replace('Host lettres\n    HostName lettres.example', 'Host lettres\n    HostName lettres.example\n    Port 2222');
+      t.replace('Host lettres\n    HostName lettres.internal', 'Host lettres\n    HostName lettres.internal\n    Port 2222');
 
     it('solution : les deux ports, tester, fermer le 22, la prison sshd', () => {
       const { c, jouer, ecrire } = partie();
@@ -253,10 +253,10 @@ for (const langue of LANGUES)
       tout += jouer(['exit']);
       tout += ecrire('~/.ssh/config', portDuPoste, false);
       tout += jouer(['ssh lettres']);
-      expect(tout).toContain("The authenticity of host '[lettres.example]:2222 ([203.0.113.10]:2222)' can't be established.");
+      expect(tout).toContain("The authenticity of host '[lettres.internal]:2222 ([203.0.113.10]:2222)' can't be established.");
       expect(tout).toContain('This host key is known by the following other names/addresses:');
       tout += jouer(['yes', 'ss -tn']);
-      expect(tout).toContain("Warning: Permanently added '[lettres.example]:2222' (ED25519) to the list of known hosts.");
+      expect(tout).toContain("Warning: Permanently added '[lettres.internal]:2222' (ED25519) to the list of known hosts.");
       expect(tout).toContain('203.0.113.10:2222');
       tout += ecrire('/etc/ssh/sshd_config', (t) => t.replace('Port 22\n', ''));
       tout += jouer(['sudo systemctl reload ssh', 'sudo ufw delete allow OpenSSH']);
@@ -277,7 +277,7 @@ for (const langue of LANGUES)
       tout += jouer(['sudo systemctl reload ssh', 'fourmis-2026']);
       if (fr) expect(tout).toContain('ATTENTION');
       tout = jouer(['exit', 'ssh lettres', 'ssh -p 2222 lettres']);
-      expect(tout).toContain('ssh: connect to host lettres.example port 22: Connection refused');
+      expect(tout).toContain('ssh: connect to host lettres.internal port 22: Connection refused');
       if (fr) expect(tout).toContain('écoute maintenant sur 2222');
       expect(tout).toContain('port 2222: Connection timed out');
       // La console de secours : ouvrir 2222 dans ufw.

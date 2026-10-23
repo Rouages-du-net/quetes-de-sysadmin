@@ -235,7 +235,7 @@ export const miseAJour: Chapitre = {
       { pid: 702, utilisateur: 'root', cpu: 0.4, mem: 2.1, commande: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
       { pid: 1188, utilisateur: '1000', cpu: 0.8, mem: 3.4, commande: '/usr/local/bin/outiltheque serve' },
     ],
-    docker: { ...etatDocker(t), noms: ['fabrique', 'fabrique.example', '192.0.2.15'] },
+    docker: { ...etatDocker(t), noms: ['fabrique', 'fabrique.internal', '192.0.2.15'] },
   }),
   creerMonde: (t) => {
     const racine = { proprio: 'root' };

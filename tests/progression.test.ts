@@ -57,7 +57,7 @@ describe('Le fichier', () => {
   const sauvegarde = {
     termines: ['eveil', 'bourg'],
     histoire: 'effaceur',
-    connus: 'royaume.example ssh-ed25519 AAAA',
+    connus: 'royaume.internal ssh-ed25519 AAAA',
     ssh: { fichiers: { config: 'Host wiki\n    ProxyJump maison' } },
     carnet: { ls: { ligne: 'ls -a', chapitre: 'eveil' } },
     examen: false,

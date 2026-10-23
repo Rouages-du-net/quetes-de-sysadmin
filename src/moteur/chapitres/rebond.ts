@@ -38,7 +38,7 @@ const raccourci = (j: Jeu) => {
   return alias(p).some((a) => {
     const c = configuration(p, a);
     const saut = c.proxyjump?.[0]?.split(',').at(-1)?.split('@').at(-1);
-    if (!saut || !['maison', 'maison.example', '192.0.2.19'].includes(saut)) return false;
+    if (!saut || !['maison', 'maison.internal', '192.0.2.19'].includes(saut)) return false;
     return resoudreNom(j as Shell, (c.hostname?.[0] ?? a).toLowerCase()) === WIKI;
   });
 };
