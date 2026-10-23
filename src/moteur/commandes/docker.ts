@@ -924,7 +924,7 @@ function executer(d: EtatDocker, jeu: Shell, args: string[]): string {
     case 'inspect': {
       const i = reste.findIndex((a) => a === '-f' || a === '--format');
       const modele = i >= 0 ? reste[i + 1] : reste.find((a) => a.startsWith('--format='))?.slice(9);
-      const noms = reste.filter((a, k) => !a.startsWith('-') && k !== i + 1);
+      const noms = reste.filter((a, k) => !a.startsWith('-') && (i < 0 || k !== i + 1));
       const objets = noms.map((n) => {
         const c = trouverConteneur(d, n);
         if (c) return inspecter(jeu, c);

@@ -170,6 +170,8 @@ export const droits: Chapitre = {
   accueil: 'courriel_awa.txt',
   noms: true,
   final: 'fin',
+  // Dans l'ordre du courriel d'Awa : le dossier, le masque, puis sudo.
+  etapes: ['dossier', 'masque', 'sudo', 'fin'],
   motDePasse: MOT_DE_PASSE,
   comptes: () => comptesCooperative(false),
   etat: () => ({

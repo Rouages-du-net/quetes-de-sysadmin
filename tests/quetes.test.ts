@@ -694,6 +694,12 @@ for (const langue of LANGUES)
     });
 
     describe('La Fabrique, chapitre 1 — La mise à jour (docker)', () => {
+      it('docker inspect sans -f donne le JSON du conteneur (pas [])', () => {
+        const { sorties } = jouer('mise-a-jour', ['sudo docker inspect outiltheque', 'fablab-2027']);
+        expect(sorties.at(-1)).toContain('"Mounts"');
+        expect(sorties.at(-1)).toContain('outiltheque');
+      });
+
       it('solution : copier la base, volume, nouveau conteneur, --restart, et ça tient après un redémarrage', () => {
         const { s, tout } = jouer('mise-a-jour', [
           'docker ps',
