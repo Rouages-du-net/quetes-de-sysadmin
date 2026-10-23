@@ -16,7 +16,7 @@ export const PARCOURS: Parcours[] = [
   { id: 'debuter', chapitres: ['eveil', 'bourg', 'racine', 'sauvegarde', 'paquet-perdu', 'manuscrit', 'archives'] },
   {
     id: 'securite',
-    chapitres: ['fermer-la-porte', 'pare-feu', 'sentinelle', 'port', 'recidive', 'cles', 'depart', 'droits', 'secret', 'mises-a-jour', 'automatiques'],
+    chapitres: ['fermer-la-porte', 'pare-feu', 'sentinelle', 'port', 'recidive', 'cles', 'depart', 'droits', 'secret', 'mises-a-jour', 'automatiques', 'rapport', 'exposition', 'traces'],
   },
   {
     id: 'web',
