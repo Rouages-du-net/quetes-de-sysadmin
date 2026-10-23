@@ -255,3 +255,28 @@ indice-debrief = { $nombre ->
     }
 succes-sans-indice = Sans filet
     .description = Terminer un chapitre sans demander d'indice.
+
+## Le tableau de classe (page des enseignant·es ; voir src/moteur/classe.ts)
+
+classe-fichiers = Les fichiers de sauvegarde des élèves :
+classe-glisser = Ou glisse-les ici, plusieurs à la fois.
+classe-codes = Ou leurs codes, un par ligne, précédés du nom :
+classe-codes-exemple = Lina QDS-047G-0000-000M-G
+classe-codes-ajouter = Ajouter les codes
+classe-exporter = Télécharger le tableau (CSV)
+classe-vider = Vider le tableau
+classe-nom-fichier = tableau-de-classe.csv
+classe-tableau = La classe
+classe-compte = { $nombre ->
+        [0] Aucun élève pour l'instant.
+        [one] Un élève.
+       *[other] { $nombre } élèves.
+    }
+# { $source } : le fichier ou la ligne ; { $raison } : ce qui ne va pas.
+classe-erreur = { $source } : { $raison }
+classe-col-eleve = Élève
+classe-col-chapitres = Chapitres
+classe-col-grade = Grade
+classe-col-succes = Succès
+classe-col-examen = Meilleur examen
+classe-col-date = Sauvegarde
