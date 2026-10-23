@@ -140,6 +140,8 @@ export class Shell implements Jeu {
   journal: string[] = [];
   // Les clins d'œil trouvés dans cette session (voir OEUFS et succes.ts).
   oeufs = new Set<string>();
+  // Les indices demandés dans ce chapitre (« étape:niveau », voir indices.ts) : le débrief les compte.
+  indicesDemandes = new Set<string>();
 
   t: Traduire;
 

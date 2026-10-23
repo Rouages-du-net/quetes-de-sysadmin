@@ -238,3 +238,20 @@ succes-sandwich = Avec les droits
     .description = Avec sudo, on obtient tout, même un sandwich (xkcd 149).
 succes-sl = Locomotive
     .description = sl au lieu de ls : la faute de frappe la plus célèbre, punie par un train.
+
+## Indices gradués (voir src/moteur/indices.ts ; les indices eux-mêmes : indices-<histoire>.ftl)
+
+indice-titre = Besoin d'aide ?
+indice-intro = Trois niveaux, à ouvrir l'un après l'autre : le manuel d'abord, comme au travail. Le débrief dira combien tu en as demandé.
+indice-bouton-manuel = Le manuel
+indice-bouton-piste = Une piste
+indice-bouton-solution = Presque la réponse
+# { $pages } : « man mv, man cp ».
+indice-manuel = Les pages à lire : { $pages }. Cherche aussi avec man -k et un mot-clé.
+indice-plus-rien = Plus d'indice pour ce chapitre : relis les consignes et ce qui s'est passé.
+indice-debrief = { $nombre ->
+        [one] Un indice demandé pour ce chapitre. La prochaine fois, sans ?
+       *[other] { $nombre } indices demandés pour ce chapitre. La prochaine fois, avec moins ?
+    }
+succes-sans-indice = Sans filet
+    .description = Terminer un chapitre sans demander d'indice.

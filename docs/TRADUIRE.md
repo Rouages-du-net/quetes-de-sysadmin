@@ -132,6 +132,11 @@ man-grep = prints the lines that contain the pattern…
     .commande-3 = grep "my password" journal.txt
 ```
 
+Les **indices** (`indices-<histoire>.ftl`) ont un message par étape, sans
+valeur, avec deux attributs : `.piste` (une direction, sans la commande) et
+`.solution` (la commande, presque la réponse). Ils emploient les noms de
+`noms.ftl` de ta langue.
+
 Les messages que le jeu **vérifie** (titres et mots-clés du post-mortem,
 noms de jeux de la base…) se traduisent par ce que le joueur ou la joueuse
 écrirait dans sa langue : lire le commentaire au-dessus du message.

@@ -26,6 +26,8 @@ export const bourg: Chapitre = {
   noms: true,
   accueil: 'crieur.txt',
   final: 'nour',
+  // Dans le jeu : le levain, les engrenages, la barricade, les rats, puis Nour et sa Classe.
+  etapes: ['levain', 'engrenage', 'engrenages', 'barricade', 'rats', 'nour-sans-classe', 'classe', 'nour'],
   creerMonde: (t) =>
     d({
       Quai: d({
