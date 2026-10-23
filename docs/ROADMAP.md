@@ -342,6 +342,10 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [ ] **L'Audit, côté auditrice** : le plan validé est dans
+  `docs/SCENARIOS.md` (« Plan validé, à écrire : la mission d'audit ») ;
+  proposition : deux chapitres de plus pour l'histoire 14 (*Le périmètre*
+  avec `nmap` en tête, *La contre-visite* à la fin).
 - [x] **Bilan de fin de chapitre** (`src/moteur/bilan.ts`) : temps passé,
   commandes tapées (et en erreur), indices ; le détail compare, étape par
   étape, la commande qui l'a franchie à la solution de référence (celle des
