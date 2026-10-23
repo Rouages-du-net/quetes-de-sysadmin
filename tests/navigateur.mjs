@@ -202,6 +202,25 @@ for (const largeur of [1000, 375]) {
   await page.close();
 }
 
+// Une partie commencée en français et reprise en anglais (la même sauvegarde) :
+// ssh royaume se connecte avec le compte anglais (you), pas avec « vous ».
+{
+  const page = await navigateur.newPage();
+  await avecCsp(page);
+  await page.goto(`${BASE}/`);
+  const jeuFr = page.locator('quetes-de-sysadmin');
+  await jeuFr.locator('form input').fill('ls');
+  await jeuFr.locator('form input').press('Enter');
+  await page.goto(`${BASE}/en/`);
+  const jeu = page.locator('quetes-de-sysadmin');
+  for (const l of ['ssh royaume', 'yes']) {
+    await jeu.locator('form input').fill(l);
+    await jeu.locator('form input').press('Enter');
+  }
+  verifier((await jeu.locator('.invite').textContent()) === 'you@royaume:~$', 'reprise en anglais d’une partie française : ssh royaume se connecte');
+  await page.close();
+}
+
 // Page introuvable
 {
   const page = await navigateur.newPage();

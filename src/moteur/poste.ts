@@ -17,7 +17,8 @@ const hosts = () =>
     ...MACHINES.map((m) => `${m.adresse}\t${m.domaine} ${m.nom}`),
   ].join('\n');
 
-const config = (t: Traduire) =>
+/** Le ~/.ssh/config que le jeu donne au poste, dans une langue. */
+export const config = (t: Traduire) =>
   [
     ...t('poste-config-commentaire').split('\n').map((l) => `# ${l}`),
     '',
