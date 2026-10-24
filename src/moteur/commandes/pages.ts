@@ -235,6 +235,16 @@ export const PAGES: Record<string, Page> = {
     ],
     voir: ['radtest', 'ldapsearch', 'systemctl'],
   },
+  nmap: {
+    options: ['sV', 'sn', 'Pn', 'n', 'F', 'p', 'oN'],
+    exemples: ['nmap fournil.internal', 'nmap -sV -oN inventaire.txt fournil.internal', 'nmap -p 22,80,443 fournil.internal', 'nmap -sn 192.0.2.22', 'nmap -p- 192.0.2.22'],
+    voir: ['ss', 'nc', 'curl', 'ufw'],
+  },
+  lynis: {
+    section: 8,
+    exemples: ['sudo lynis audit system', 'sudo grep suggestion /var/log/lynis-report.dat', 'sudo grep hardening_index /var/log/lynis-report.dat', 'lynis show version'],
+    voir: ['nmap', 'ss', 'sshd_config', 'apt'],
+  },
   radtest: { exemples: ['radtest sami "son mot de passe" localhost 0 testing123'], voir: ['freeradius'] },
   sftp: { options: ['P', 'J', 'i'], exemples: ['sftp wiki', 'get -r /srv/wiki/site', 'put rapport.pdf', 'lls', 'bye'], voir: ['scp', 'ssh', 'lftp'] },
   lftp: {

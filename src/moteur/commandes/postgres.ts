@@ -5,8 +5,9 @@
 // https://www.postgresql.org/docs/16/app-pgrestore.html et
 // https://www.postgresql.org/docs/16/app-psql.html.
 // Écarts : SQL réduit à SELECT count(*), SELECT … [WHERE col = v] [ORDER BY]
-// [LIMIT], DELETE [WHERE col = v], TRUNCATE, DROP TABLE, et aux méta-commandes
-// \l, \dt, \d ; psql sans -c ni -f ne s'ouvre pas en mode interactif.
+// [LIMIT], DELETE [WHERE col = v], TRUNCATE, DROP TABLE, ALTER ROLE … PASSWORD
+// (le mot de passe d'un rôle, par le compte postgres), et aux méta-commandes
+// \l, \dt, \d, \du ; psql sans -c ni -f ne s'ouvre pas en mode interactif.
 
 import type { Shell } from '../shell';
 import { connexion, copie, dumpSql, lireDumpSql, postgres, tableau, type Table } from '../postgres';
@@ -71,6 +72,20 @@ function sql(jeu: Shell, base: string, requete: string): string {
       t.colonnes.map((c, i) => [c, i === 0 ? 'integer' : 'text']),
       `Table "public.${d[1]}"`,
     );
+  }
+  // Les rôles : \du, et ALTER ROLE … PASSWORD (le mot de passe d'un compte de la base).
+  if (/^\\du\+?$/.test(r))
+    return tableau(
+      ['Role name', 'Attributes'],
+      [...pg.roles].sort().map((n) => [n, n === 'postgres' ? 'Superuser, Create role, Create DB, Replication, Bypass RLS' : '']),
+      'List of roles',
+    );
+  const alter = /^ALTER\s+(?:USER|ROLE)\s+"?(\w+)"?\s+(?:WITH\s+)?(?:ENCRYPTED\s+)?PASSWORD\s+'([^']*)'$/i.exec(r);
+  if (alter) {
+    if (jeu.qui !== 'postgres') return jeu.erreur('ERROR:  permission denied to alter role\nDETAIL:  Only roles with the CREATEROLE attribute may alter roles.');
+    if (!pg.roles.includes(alter[1])) return jeu.erreur(`ERROR:  role "${alter[1]}" does not exist`);
+    (pg.motsDePasse ??= {})[alter[1]] = alter[2];
+    return 'ALTER ROLE';
   }
   // WHERE col = valeur (une seule condition).
   const filtrer = (t: Table, ou?: string): string[][] | string => {

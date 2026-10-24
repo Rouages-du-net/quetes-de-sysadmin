@@ -296,13 +296,15 @@ qui travaille sur les machines plutôt que sur les commutateurs).
 
 ## Phase 11 — L'audit (histoire de clôture)
 
-- [x] **L'Audit** (histoire 14, machine `fournil`) : un rapport d'audit en
-      trois parties, qui réunit ce que les autres histoires enseignent
-      séparément. « Le rapport » (SSH sans root, un compte oublié, sudo sans
+- [x] **L'Audit** (histoire 14, machine `fournil`) : une mission d'audit en
+      cinq chapitres, qui réunit ce que les autres histoires enseignent
+      séparément. « Le périmètre » (lettre de mission, `nmap`, rester dans le
+      périmètre), « Le rapport » (SSH sans root, un compte oublié, sudo sans
       mot de passe, un secret lisible), « L'exposition » (balayage de ports,
-      `ufw`, Redis en local) et « Les traces » (journal de ssh, `last`,
+      `ufw`, Redis en local), « Les traces » (journal de ssh, `last`,
       empreintes de clés, `authorized_keys`, une tâche `cron` laissée par
-      l'intrus).
+      l'intrus, le mot de passe de la base changé de bout en bout) et « La
+      contre-visite » (`nmap`, `lynis`, mises à jour, rapport de clôture).
 
 ---
 
@@ -342,10 +344,6 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
-- [ ] **L'Audit, côté auditrice** : le plan validé est dans
-  `docs/SCENARIOS.md` (« Plan validé, à écrire : la mission d'audit ») ;
-  proposition : deux chapitres de plus pour l'histoire 14 (*Le périmètre*
-  avec `nmap` en tête, *La contre-visite* à la fin).
 - [x] **Bilan de fin de chapitre** (`src/moteur/bilan.ts`) : temps passé,
   commandes tapées (et en erreur), indices ; le détail compare, étape par
   étape, la commande qui l'a franchie à la solution de référence (celle des

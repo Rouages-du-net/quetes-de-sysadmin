@@ -12,6 +12,9 @@ import { journaliser, systemd, type DefinitionService } from '../systemd';
 import { lireConfig } from '../sshd';
 import type { Jeu } from '../shell';
 import type { Traduire } from '../../textes';
+import type { EtatScan, HoteScan, ServiceScan } from '../scan';
+import type { Ecoute } from '../commandes/ss';
+import { INSTALLES_DE_BASE, PAQUETS, type EtatApt } from '../commandes/apt';
 import { SUDOERS } from './cooperative';
 
 export const M = '/home/vous';
@@ -174,4 +177,70 @@ export function mondeFournil(
     undefined,
     racine,
   );
+}
+
+
+// ——— Le réseau vu par nmap, et les paquets ———
+
+export const PERIMETRE = ['192.0.2.22'];
+export const VOISIN = { nom: 'voisin.internal', adresse: '192.0.2.24' };
+// Le nom d'un paquet installé, tel que le service le dit à nmap : « Debian 7 » puis « Debian 7+deb13u1 ».
+const revision = (j: Jeu) => ((j.etat.apt as EtatApt | undefined)?.installes['openssh-server'] ?? '1:10.0p1-7').split('-').slice(1).join('-');
+
+const SERVICES: ServiceScan[] = [
+  { port: 22, service: 'ssh', produit: (j) => `OpenSSH 10.0p1 Debian ${revision(j)} (protocol 2.0)` },
+  { port: 80, service: 'http', produit: 'nginx 1.26.3' },
+  { port: 443, service: 'http', ssl: true, produit: 'nginx 1.26.3' },
+  { port: 3000, service: 'http', produit: 'Node.js Express framework' },
+  { port: 5432, service: 'postgresql', produit: 'PostgreSQL DB 17.0 - 17.2' },
+  { port: 6379, service: 'redis', produit: 'Redis key-value store 8.0.2' },
+];
+
+/** Ce que nmap peut sonder : le Fournil (son état suit la machine) et le serveur du voisin, hors périmètre. */
+export const scanFournil = (): EtatScan => {
+  const fournil: HoteScan = { adresse: '192.0.2.22', noms: ['fournil.internal', 'fournil.example', 'fournil'], local: true, services: SERVICES, latence: 0.011 };
+  const voisin: HoteScan = {
+    adresse: VOISIN.adresse,
+    noms: [VOISIN.nom],
+    latence: 0.014,
+    services: [
+      { port: 22, service: 'ssh', produit: 'OpenSSH 9.2p1 Debian 2+deb12u3 (protocol 2.0)' },
+      { port: 80, service: 'http', produit: 'Apache httpd 2.4.62 ((Debian))' },
+      { port: 3306, service: 'mysql', produit: 'MariaDB 10.11.6' },
+    ],
+  };
+  return { hotes: [fournil, voisin], perimetre: [...PERIMETRE] };
+};
+
+/** Les sockets en écoute au départ : tout est ouvert, sauf l'appli de commandes (en local). */
+export const ecouteFournil = (redisLocal = false): Ecoute[] => [
+  { proto: 'tcp', adresse: '0.0.0.0', port: 22, processus: 'sshd', pid: 612 },
+  { proto: 'tcp', adresse: '0.0.0.0', port: 80, processus: 'nginx', pid: 701 },
+  { proto: 'tcp', adresse: '0.0.0.0', port: 443, processus: 'nginx', pid: 701 },
+  { proto: 'tcp', adresse: '0.0.0.0', port: 5432, processus: 'postgres', pid: 744 },
+  { proto: 'tcp', adresse: redisLocal ? '127.0.0.1' : '0.0.0.0', port: 6379, processus: 'redis-server', pid: 760 },
+  { proto: 'tcp', adresse: '127.0.0.1', port: 3000, processus: 'node', pid: 731 },
+];
+
+/** L'état d'apt : la liste est à jour ; `mises` : les mises à jour de sécurité en attente. */
+export const aptFournil = (enAttente: boolean): EtatApt => ({
+  listes: true,
+  installes: { ...Object.fromEntries(INSTALLES_DE_BASE.map((p) => [p, PAQUETS[p].version])), nginx: '1.26.3-3+deb13u1', openssl: '3.5.1-1' },
+  mises: enAttente ? { 'openssh-server': '1:10.0p1-7+deb13u1', openssl: '3.5.4-1~deb13u1' } : {},
+});
+
+/** Un document Markdown rédigé par le joueur, section par section (titres « ## », lus dans la langue du jeu : <prefixe>-<nom>). */
+export function sectionsMd(j: Jeu, texte: string, prefixe: string, noms: string[]): Record<string, string> {
+  const titres = Object.fromEntries(noms.map((n) => [j.t(`${prefixe}-${n}`).toLowerCase(), n]));
+  const r: Record<string, string> = {};
+  let courante = '';
+  for (const ligne of texte.split('\n')) {
+    const titre = /^##\s+(.*)$/.exec(ligne);
+    if (titre) {
+      courante = titres[titre[1].trim().toLowerCase()] ?? '';
+      continue;
+    }
+    if (courante) r[courante] = `${r[courante] ?? ''}${ligne}\n`;
+  }
+  return r;
 }

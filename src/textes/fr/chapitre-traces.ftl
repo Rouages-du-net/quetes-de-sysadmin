@@ -33,6 +33,10 @@ traces-courriel-salome =
     3. Que tu cherches ce que la personne a pu laisser derrière elle, et
        que tu nettoies. Les tâches planifiées de Nadia sont un endroit
        classique : mais attention à ne pas effacer sa vraie sauvegarde.
+    4. Que tu regardes ce qu'elle a pu LIRE : l'historique des commandes de
+       Nadia (.bash_history) dit ce qui a été tapé pendant la session. Un
+       secret lu est un secret à changer, pour de vrai : le nouveau doit
+       marcher partout, et l'appli de commandes ne doit pas tomber.
 
     Note : un commentaire dans une clé (« nadia@portable ») ne prouve rien,
     n'importe qui peut écrire ce qu'il veut. Compare les empreintes.
@@ -77,6 +81,37 @@ traces-evenement-cron-decouvert =
     ce que le serveur fait à distance, même sans clé.
 
     Retire cette ligne, et seulement elle.
+traces-evenement-secret-vu =
+    Voilà ce que la personne a tapé pendant ses trois minutes : elle a lu
+    /srv/commandes/.env. À l'époque, ce fichier était lisible par tout le
+    monde (« Le rapport ») : le mot de passe de la base de données est
+    compromis, même si la clé et la tâche sont retirées. Fermer la porte ne
+    change pas une clé qui a déjà été copiée.
+
+    Il faut changer ce mot de passe, des deux côtés : dans PostgreSQL (man
+    psql ; ALTER ROLE ... PASSWORD, depuis le compte postgres) ET dans le
+    fichier .env, puis relancer l'appli. Choisis un mot de passe long (douze
+    caractères au moins) et différent de l'ancien.
+traces-evenement-mot-de-passe-faible =
+    Le mot de passe de la base a changé, mais il est trop court : douze
+    caractères au moins, et mieux vaut une phrase de passe qu'un mot. Un
+    secret qui se devine se remplace aussi mal que celui qu'on a perdu.
+traces-evenement-a-redemarrer =
+    La base et .env ont le même nouveau mot de passe, mais l'appli tourne
+    encore avec l'ancien : elle lit .env quand elle démarre, pas quand le
+    fichier change. Relance-la (systemctl restart commandes) puis regarde
+    qu'elle reste active (systemctl status commandes).
+traces-evenement-appli-tombee =
+    L'appli de commandes est arrêtée : au démarrage, elle a lu dans .env un
+    mot de passe que la base n'accepte pas (journalctl -u commandes : « password
+    authentication failed »). Les deux côtés doivent dire la même chose : le
+    mot de passe du rôle commandes dans PostgreSQL, et celui de DATABASE_URL
+    dans .env. Corrige celui qui diffère, puis relance l'appli.
+traces-evenement-mot-de-passe =
+    Le mot de passe de la base est changé de bout en bout : le rôle dans
+    PostgreSQL, le fichier .env (toujours fermé aux autres comptes), et
+    l'appli relancée qui s'y connecte. L'ancien, que l'intrus a lu,
+    n'ouvre plus rien.
 traces-evenement-sauvegarde-perdue =
     La sauvegarde de Nadia (sauvegarde.sh, à 4 h) n'est plus planifiée :
     crontab -r efface TOUTE la crontab. Remets sa ligne :
@@ -85,8 +120,8 @@ traces-evenement-sauvegarde-perdue =
 traces-evenement-cron-nettoye =
     Plus de balise, et la vraie sauvegarde de Nadia est toujours là.
 traces-evenement-fin =
-    La clé de l'intrus est retirée, sa tâche aussi, et Nadia peut toujours
-    entrer et sauvegarder. Salomé : « Mon rapport est complet. Je repasserai
+    La clé de l'intrus est retirée, sa tâche aussi, le mot de passe qu'il a lu
+    est remplacé partout, et Nadia peut toujours entrer et sauvegarder. Salomé : « Mon rapport est complet. Je repasserai
     dans six mois pour voir si tout tient. »
 
     Bravo ! Tu as terminé le chapitre « Les traces », et l'histoire
@@ -110,9 +145,20 @@ traces-evenement-fin =
       /etc/cron.d), timers et services systemd, ~/.bashrc, authorized_keys.
     - Considérer comme compromis tout secret lisible pendant l'intrusion : le
       fichier .env des commandes était lisible par tous cette nuit-là (« Le
-      rapport »). Il faut changer le mot de passe de la base, hors du jeu,
-      et en informer qui de droit (assureur, et la CNIL si des données
-      personnelles étaient concernées).
+      rapport »). On le change des deux côtés (la base ET le fichier), on
+      relance l'appli, on vérifie qu'elle tient. Un mot de passe tapé dans
+      « psql -c "ALTER ROLE ... PASSWORD '...'" » reste dans l'historique du
+      shell : la méta-commande \password de psql l'évite (elle le demande sans
+      l'afficher).
+    - Prévenir qui de droit : l'assureur, et, si des données personnelles
+      étaient concernées, l'autorité de protection des données de son pays,
+      souvent sous un délai court (72 heures en Europe, d'après le RGPD).
+      Par exemple : la CNIL (France), la BfDI et les autorités des Länder
+      (Allemagne), l'AEPD (Espagne), l'ICO (Royaume-Uni), l'APD-GBA
+      (Belgique), la CNPD (Luxembourg), le PFPDT (Suisse), le Commissariat à
+      la protection de la vie privée (Canada), la FTC et les autorités des
+      États (États-Unis). La liste des autorités européennes est tenue par
+      le Comité européen de la protection des données (edpb.europa.eu).
 
     UNE AUTRE VOIE
     Pour être averti·e plus tôt : fail2ban surveille les échecs, pas les
@@ -126,3 +172,5 @@ traces-evenement-fin =
     - sshd (authorized_keys) : https://man.openbsd.org/sshd#AUTHORIZED_KEYS_FILE_FORMAT
     - crontab : https://man7.org/linux/man-pages/man5/crontab.5.html
     - last : https://man7.org/linux/man-pages/man1/last.1.html
+    - ALTER ROLE : https://www.postgresql.org/docs/current/sql-alterrole.html
+    - Notification d'une violation de données (RGPD, article 33) : https://gdpr-info.eu/art-33-gdpr/

@@ -60,3 +60,5 @@ wifi
 rapport
 exposition
 traces
+perimetre
+contre-visite

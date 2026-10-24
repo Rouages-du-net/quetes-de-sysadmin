@@ -948,3 +948,24 @@ manuel-option-invalide =
 manuel-option-longue-inconnue =
     { $commande }: unrecognized option '{ $option }'
     Try '{ $commande } --help' for more information.
+
+man-nmap = the network explorer: it sends packets to a machine (or a whole range of addresses) and says, for each TCP port, whether it is open (a program answers), closed (the machine answers "nobody here") or filtered (a firewall drops the packet: no answer at all). The ports are "seen from the internet": that is what an attacker, or an auditor, sees. -sV also asks the version of the service that answers (useful to spot outdated software); -p chooses the ports (-p 22,80; -p 1-1024; -p- for all of them); -sn only says which machines answer; -Pn ignores a missing answer to ping; -oN keeps the result in a file (evidence to attach to the report); -F looks only at the most common ports; -n does not look up names. Use nmap only on what is in your letter of engagement: probing a machine you have no right to probe is a fault, sometimes a crime. 127.0.0.1 is the machine itself, seen from the inside (the firewall does not apply there).
+    .synopsis = nmap [options] target...  (a name, an address, a network 192.0.2.0/29, a range 192.0.2.20-25)
+    .option-sV = the version of the service listening on each open port.
+    .option-sn = only say which machines answer, without scanning the ports.
+    .option-Pn = do not first test whether the machine answers (it may hide its answer to ping).
+    .option-n = do not look up the names of machines.
+    .option-F = only the most common ports (100) instead of the usual 1000.
+    .option-p = the ports to examine: 22,80 or 1-1024; -p- for all 65535.
+    .option-oN = write the result, as you read it, into the given file.
+    .exemple-1 = the open ports of a machine
+    .exemple-2 = with versions, keeping the trace in a file
+    .exemple-3 = only SSH, http and https
+    .exemple-4 = does this machine answer?
+    .exemple-5 = all ports, not just the most common ones
+man-lynis = the security audit tool for a server. "lynis audit system" examines the machine it runs on (with sudo: it reads what only root can see) and sorts its remarks into warnings (to fix first) and suggestions (leads, of uneven seriousness), each with its test identifier (SSH-7408, PKGS-7392…) and an address that explains it. At the end, the hardening index sums everything up out of 100: it is for comparing before and after, not for chasing 100 at any price. Lynis changes nothing: it is up to you to decide, suggestion by suggestion, what is worth the effort. The details of each audit are kept in /var/log/lynis-report.dat (hardening_index=, warning[]=, suggestion[]=), which you read with grep.
+    .synopsis = lynis audit system ; lynis show version
+    .exemple-1 = the full audit of the machine
+    .exemple-2 = only the suggestions of the last audit
+    .exemple-3 = the hardening index of the last audit
+    .exemple-4 = lynis's version

@@ -57,6 +57,8 @@ export const LIENS_ROUAGES: Record<string, string[]> = {
   annexe: ['glossaire-routeur'],
   exposition: ['glossaire-port'],
   traces: ['glossaire-chiffrement'],
+  perimetre: ['glossaire-port'],
+  'contre-visite': ['glossaire-port'],
 };
 
 /** Les liens d'un chapitre : adresse complète et identifiant (pour son texte). */

@@ -33,6 +33,8 @@ const MOTS_CLES: Record<string, string[] | null> = {
   denyusers: null,
   allowgroups: null,
   maxauthtries: null,
+  allowtcpforwarding: null,
+  allowagentforwarding: null,
   logingracetime: null,
   clientaliveinterval: null,
   acceptenv: null,

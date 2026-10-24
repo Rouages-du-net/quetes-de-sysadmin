@@ -541,6 +541,14 @@ wifi
   /home/vous/borne-bureaux.txt → /home/you/ap-offices.txt
   /home/vous/portable-malik.conf → /home/you/portable-malik.conf
 
+perimetre
+  /home/vous → /home/you
+  /home/vous/courriel_salome.txt → /home/you/email_salome.txt
+  /home/vous/lettre-de-mission.txt → /home/you/engagement_letter.txt
+  /home/vous/notes-audit.md → /home/you/audit_notes.md
+  /home/vous/.ssh → /home/you/.ssh
+  /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
+
 rapport
   /home/vous → /home/you
   /home/vous/courriel_nadia.txt → /home/you/email_nadia.txt
@@ -558,6 +566,13 @@ exposition
 traces
   /home/vous → /home/you
   /home/vous/courriel_salome.txt → /home/you/email_salome.txt
+  /home/vous/.ssh → /home/you/.ssh
+  /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
+
+contre-visite
+  /home/vous → /home/you
+  /home/vous/courriel_salome.txt → /home/you/email_salome.txt
+  /home/vous/rapport-cloture.md → /home/you/closing_report.md
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
