@@ -272,6 +272,9 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     ...TOUCHES.map(([texte, touche]) =>
       el('button', { type: 'button', 'data-touche': touche, ...(touche.startsWith('Arrow') ? { 'aria-label': t(`touche-${touche === 'ArrowUp' ? 'haut' : 'bas'}`) } : {}) }, texte),
     ),
+    // Pendant nano : ses raccourcis, qu'un téléphone ne sait pas taper (pas de touche Ctrl).
+    el('button', { type: 'button', class: 'pour-nano', 'data-touche': 'ctrl-o' }, `^O ${t('nano-ecrire')}`),
+    el('button', { type: 'button', class: 'pour-nano', 'data-touche': 'ctrl-x' }, `^X ${t('nano-quitter')}`),
   );
   const suivant = el('button', { type: 'button', class: 'bouton principal' }, t('bouton-suivant'));
   const fin = el('div', { class: 'fin', hidden: '' }, suivant);
@@ -772,6 +775,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     const edition = terminalJeu.edition;
     if (!edition) return;
     form.hidden = true;
+    barreTouches.dataset.mode = 'nano';
     terminal.append(
       editeur({
         t,
@@ -782,6 +786,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
         fermer: () => {
           afficher(terminalJeu.quitterEdition());
           form.hidden = false;
+          delete barreTouches.dataset.mode;
           apres();
           saisie.focus();
         },
@@ -1194,7 +1199,13 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   });
   barreTouches.addEventListener('click', (e) => {
     const touche = (e.target as HTMLElement).closest('button')?.dataset.touche;
-    if (!touche || form.hidden) return;
+    if (!touche) return;
+    // Dans nano, ^O, ^X et ^C vont à l'éditeur, comme tapés au clavier.
+    const zone = terminal.querySelector<HTMLTextAreaElement>('.nano-texte');
+    if (form.hidden) {
+      if (zone && touche.startsWith('ctrl-')) zone.dispatchEvent(new KeyboardEvent('keydown', { key: touche.slice(5), ctrlKey: true, bubbles: true, cancelable: true }));
+      return;
+    }
     if (touche.length === 1) {
       // Comme une frappe : le clavier du téléphone (et sa saisie en cours) le voit passer,
       // et la ligne colorée est redessinée tout de suite (événement input).

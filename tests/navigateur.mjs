@@ -371,6 +371,24 @@ for (const largeur of [1000, 375]) {
     }, type);
   verifier(!(await annule('touch')), 'téléphone : l’appui long sélectionne le texte (menu du téléphone)');
   verifier(await annule('mouse'), 'souris : le clic droit colle');
+  // nano sans touche Ctrl : la barre donne ^O et ^X, toujours à l'écran.
+  await ligne.fill('nano notes.txt');
+  await ligne.press('Enter');
+  const barreNano = jeuMobile.locator('.touches button[data-touche="ctrl-x"]');
+  verifier((await barreNano.isVisible()) && !(await jeuMobile.locator('.touches button[data-touche="Tab"]').isVisible()), 'téléphone : dans nano, la barre donne ^O et ^X');
+  const boite = await barreNano.boundingBox();
+  verifier(boite !== null && boite.y + boite.height <= 800, 'téléphone : ^X est à l’écran');
+  await jeuMobile.locator('.nano-texte').fill('Bonjour du téléphone\n');
+  await jeuMobile.locator('.touches button[data-touche="ctrl-o"]').tap();
+  verifier((await jeuMobile.locator('.nano-etat').textContent()).includes('1 ligne'), 'téléphone : ^O de la barre écrit le fichier');
+  await jeuMobile.locator('.nano-texte').fill('Bonjour du téléphone\nencore\n');
+  await barreNano.tap();
+  verifier(await jeuMobile.locator('.nano-touche', { hasText: 'Oui' }).isVisible(), 'téléphone : ^X demande s’il faut enregistrer');
+  await jeuMobile.locator('.nano-touche', { hasText: 'Oui' }).tap();
+  verifier(
+    !(await jeuMobile.locator('.nano').count()) && (await jeuMobile.locator('.touches button[data-touche="Tab"]').isVisible()) && !(await barreNano.isVisible()),
+    'téléphone : nano fermé, la barre revient',
+  );
   await telephone.close();
 }
 

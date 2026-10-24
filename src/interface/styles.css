@@ -327,6 +327,9 @@
   .qds .touches { display: flex; gap: 0.35rem; overflow-x: auto; padding: 0.5rem 0 0.25rem; scrollbar-width: none; }
   .qds .touches button { flex: none; min-width: 2.75rem; min-height: 2.75rem; padding: 0 0.6rem; font: 600 0.95rem var(--_police-mono); color: var(--_texte); background: var(--_carte); border: 1px solid var(--_bord); border-radius: 0.35rem; }
   .qds .touches button:active { border-color: var(--_accent); color: var(--_accent); }
+  /* Pendant nano, la barre ne garde que ses raccourcis (et Ctrl-C). */
+  .qds .touches:not([data-mode='nano']) .pour-nano,
+  .qds .touches[data-mode='nano'] button:not(.pour-nano):not([data-touche='ctrl-c']) { display: none; }
 }
 /* Les succès : obtenus en clair, les autres en discret ; l'annonce dans le terminal. */
 .qds .succes-grade { margin: 0 0 0.75rem; }
@@ -406,7 +409,7 @@
 }
 .qds .nano-chemin { overflow-wrap: anywhere; }
 .qds .nano-texte {
-  width: 100%; min-height: 16rem; resize: vertical; box-sizing: border-box;
+  width: 100%; min-height: min(16rem, 40vh); resize: vertical; box-sizing: border-box;
   background: transparent; color: inherit; font: inherit; border: 1px dashed color-mix(in oklab, var(--_terminal-texte) 40%, transparent);
   padding: 0.25rem; caret-color: var(--_terminal-texte);
 }
