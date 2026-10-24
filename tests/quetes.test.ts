@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/moteur/shell';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
+import { prerequis } from '../src/moteur/deverrouillage';
 import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
 import { dansLaLangue } from './noms';
 import { sansCouleurs } from '../src/moteur/couleurs';
@@ -813,7 +814,7 @@ for (const langue of LANGUES)
     });
 
     describe('La Fabrique, chapitre 3 — Le trou dans le pare-feu (docker et ufw)', () => {
-      const AVANT = ['eveil', 'bourg', 'racine', 'mise-a-jour', 'composition'];
+      const AVANT = [...prerequis('fabrique'), 'mise-a-jour', 'composition'];
       const modifier = (s: Shell, change: (texte: string) => string) => {
         s.executer('sudo nano /srv/reservations/compose.yaml');
         s.enregistrerEdition(change(s.edition!.texte));

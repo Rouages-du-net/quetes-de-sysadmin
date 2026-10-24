@@ -2,6 +2,7 @@
 // du manuel, la première ligne tapée, et l'export en Markdown.
 
 import { describe, expect, it } from 'vitest';
+import { prerequis } from '../src/moteur/deverrouillage';
 import { Console } from '../src/moteur/console';
 import { enMarkdown, noter, description, type Carnet } from '../src/moteur/carnet';
 import { traducteur, LANGUES } from '../src/textes';
@@ -86,7 +87,7 @@ describe('Les fiches pour les enseignant·es', () => {
 
 describe('Le mode examen', () => {
   it("sans indice, mais l'étape finale et son débrief s'affichent", () => {
-    const c = new Console({ langue: 'fr', termines: ['eveil', 'bourg', 'racine', 'sauvegarde'] });
+    const c = new Console({ langue: 'fr', termines: ['eveil', 'bourg', 'racine', 'sauvegarde', ...prerequis('lettres')] });
     c.examen = true;
     const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
     // La Porte, avec la configuration de sshd : la faute de frappe ne donne plus d'indice.

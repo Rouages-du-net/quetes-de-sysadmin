@@ -44,10 +44,26 @@ messages, manuel, interface) sont dans `src/textes/fr/*.ftl` (voir
   (`vous@poste`) ; chaque histoire tourne sur une machine du réseau
   (`royaume`, `datacenter`, `fourmiliere`, `manuscrit`, `bibliotheque`), que
   l'on rejoint avec `ssh` et que l'on quitte avec `exit`. Le poste n'a au
-  départ que la clé du royaume : finir l'Effaceur donne les clés des quatre
-  autres machines, qui se jouent ensuite dans l'ordre que l'on veut. Le menu
-  reste un raccourci (accessibilité, enseignant·es) ; l'attribut `histoire`
-  ouvre directement une histoire, même sans sa clé.
+  départ que la clé du royaume. Les autres histoires s'ouvrent **par
+  vagues** (`deverrouillage.ts`) : chacune déclare dans `chapitres/index.ts`
+  (`apres`) les chapitres à finir avant d'en recevoir la clé, ce qu'elle
+  suppose déjà su. Le menu montre sous une histoire verrouillée ce qui
+  manque ; l'astreinte ne tire son incident que parmi les histoires ouvertes.
+  Le menu reste un raccourci (accessibilité, enseignant·es) ; l'attribut
+  `histoire` ouvre directement une histoire, même sans sa clé.
+
+  | Histoire | s'ouvre après |
+  |---|---|
+  | L'Effaceur | (d'emblée) |
+  | Le Datacenter, Le Paquet perdu, La Machine à remonter le temps, Les Archives | « La Racine » (L'Effaceur) |
+  | La Fabrique, L'Astreinte | « La nuit du redémarrage » (Le Datacenter) |
+  | Les Lettres du quartier | « La nuit du redémarrage », « Le Paquet perdu » |
+  | La Gazette | « La Machine à remonter le temps », « La nuit du redémarrage » |
+  | La Ludothèque | « Les versions » (Les Archives) |
+  | La Maison des associations | « Fermer la porte » (Les Lettres) |
+  | La Coopérative | « La colocation » (Les Lettres), « Deuxième jour » (Le Datacenter) |
+  | La Ruche | « Le pare-feu » (Les Lettres), « Le rebond » (La Maison) |
+  | L'Audit | « La sentinelle » (Les Lettres), « Les droits partagés » (La Coopérative) |
 - **Histoires et chapitres** : cinq histoires ; dans une
   histoire, chaque chapitre a son monde, ses commandes et sa fin, et s'ouvre
   quand le précédent est terminé. La progression est gardée dans le

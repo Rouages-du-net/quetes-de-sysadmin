@@ -140,6 +140,10 @@ export interface Chapitre {
 export interface Histoire {
   id: string;
   chapitres: Chapitre[];
+  // Les chapitres (d'autres histoires) à finir avant d'en recevoir la clé :
+  // les histoires s'ouvrent peu à peu (voir deverrouillage.ts). Sans : la
+  // première histoire, ouverte d'emblée.
+  apres?: string[];
 }
 
 // Les textes sont écrits avec des retours à la ligne pour être lisibles dans

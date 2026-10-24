@@ -81,8 +81,8 @@ demandent plusieurs.
 
 - [x] **Un seul monde** : chaque histoire devient une machine
       du même réseau simulé, et l'on passe de l'une à l'autre avec `ssh`
-      (`ssh fourmiliere`). Finir l'Effaceur donne les clés des autres
-      machines, à jouer ensuite dans l'ordre voulu. Le menu des
+      (`ssh fourmiliere`). Finir l'Effaceur donne les clés des premières
+      machines ; les autres s'ouvrent par vagues (`apres`, `deverrouillage.ts`). Le menu des
       histoires reste disponible (accessibilité, enseignant·es, intégration
       avec l'attribut `histoire`) ; une seule progression.
 - [x] **Plusieurs hôtes** : chacun son système de fichiers et son nom,

@@ -74,6 +74,9 @@ rouages.net.
   son code de retour (`jeu.statut`).
 - `commandes/restic.ts` : dépôts restic (instantanés, déduplication,
   politiques de `forget`, `prune`), rangés dans `etat.restic`.
+- `src/moteur/deverrouillage.ts` : les histoires s'ouvrent par vagues ; une
+  histoire ajoutée déclare dans `chapitres/index.ts` (`apres`) les chapitres
+  à finir avant d'en recevoir la clé (`prerequis()` pour les tests).
 - `src/moteur/console.ts`, `machines.ts`, `poste.ts` : le réseau simulé (et
   l'instantané de secours, `Console.restaurer` : le moteur reste déterministe,
   sans `Date.now` ni `Math.random`) ;

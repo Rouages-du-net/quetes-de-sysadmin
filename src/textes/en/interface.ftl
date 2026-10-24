@@ -15,7 +15,11 @@ etat-chapitres-faits =
 etat-chapitre-termine = ✓ Completed
 etat-verrouille = 🔒 Finish the previous chapter
 etat-cle-manquante = 🔒 Locked
-cle-aide = 🔑 The greyed-out stories open once you finish The Root (The Eraser, chapter 3): you then receive the key to their machines.
+# { $chapitres }: the titles of the chapters still to finish (formatted list)
+etat-cle-apres = 🔒 After { $chapitres }
+# { $titre }: a chapter title, in the list above
+etat-cle-chapitre = “{ $titre }”
+cle-aide = 🔑 The greyed-out stories open little by little: each one shows under its name the chapters to finish before you receive its key. The first ones open after The Root (The Eraser, chapter 3).
 bouton-suivant = Next chapter →
 bouton-recommencer = Restart this chapter
 astuces = Tips: Tab completes names, ↑ recalls commands, "aide" lists the ones you know, "man command" opens the manual, "exit" takes you back to your workstation. As in most Linux terminals, selecting text copies it and right-clicking pastes it. Your progress is saved in this browser.

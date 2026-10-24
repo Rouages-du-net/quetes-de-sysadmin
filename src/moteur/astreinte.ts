@@ -33,9 +33,14 @@ function condense(texte: string): number {
   return h;
 }
 
-/** Le chapitre de l'incident du jour, pour une date AAAA-MM-JJ. */
-export function incidentDuJour(date: string): string {
-  return INCIDENTS[condense(`incident-${date}`) % INCIDENTS.length];
+/**
+ * Le chapitre de l'incident du jour, pour une date AAAA-MM-JJ, parmi ceux
+ * des histoires déjà ouvertes (les histoires s'ouvrent peu à peu) ; null
+ * s'il n'y en a encore aucun.
+ */
+export function incidentDuJour(date: string, ouverte: (histoire: string) => boolean = () => true): string | null {
+  const possibles = INCIDENTS.filter((id) => ouverte(HISTOIRES[placeDe(id).h].id));
+  return possibles.length ? possibles[condense(`incident-${date}`) % possibles.length] : null;
 }
 
 /** Où trouver ce chapitre : son histoire et son rang (pour l'ouvrir). */

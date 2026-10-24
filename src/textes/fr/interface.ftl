@@ -15,7 +15,11 @@ etat-chapitres-faits =
 etat-chapitre-termine = ✓ Terminé
 etat-verrouille = 🔒 Termine le chapitre précédent
 etat-cle-manquante = 🔒 Verrouillée
-cle-aide = 🔑 Les histoires grisées s'ouvrent quand tu termines La Racine (L'Effaceur, chapitre 3) : tu reçois alors la clé de leurs machines.
+# { $chapitres } : les titres des chapitres qui restent à finir (liste mise en forme)
+etat-cle-apres = 🔒 Après { $chapitres }
+# { $titre } : le titre d'un chapitre, dans la liste ci-dessus
+etat-cle-chapitre = « { $titre } »
+cle-aide = 🔑 Les histoires grisées s'ouvrent peu à peu : chacune dit sous son nom les chapitres à finir avant d'en recevoir la clé. Les premières s'ouvrent après La Racine (L'Effaceur, chapitre 3).
 bouton-suivant = Chapitre suivant →
 bouton-recommencer = Recommencer ce chapitre
 astuces = Astuces : Tab complète les noms, ↑ rappelle les commandes, « aide » liste celles que tu connais, « man commande » ouvre le manuel, « exit » ramène à ton poste. Comme dans la plupart des terminaux Linux, sélectionner du texte le copie et le clic droit le colle. Ta progression est gardée dans ce navigateur.
