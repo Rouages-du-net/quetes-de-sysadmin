@@ -35,8 +35,10 @@ bourg-marchande =
     at my stalls."
 
     She lowers her voice: "A word of advice. Before deleting anything with
-    rm, think hard. There is no recycle bin on Linux. That's how the
-    Eraser works: rm, rm, rm, without ever looking back."
+    rm, think hard. rm puts nothing in a bin: what it deletes is gone for
+    good. Our Bin, in the Kingdom, is just a folder where everyone drops
+    what they want to throw away; the Eraser is the one who empties it, with
+    rm, rm, rm, without ever looking back."
 bourg-pomme = A slightly wrinkled apple.
 bourg-pomme-2 = Another apple, just as wrinkled.
 bourg-fromage = A wheel of very smelly cheese. "The only product the Eraser wouldn't touch," says the market trader.
@@ -154,7 +156,7 @@ bourg-evenement-classe = A Classroom rises at the School. The children rush into
 bourg-evenement-classe-sans-nour = A Classroom rises at the School. The children rush into it. "Only one pupil is missing," sighs the teacher: "Nour."
 bourg-evenement-barricade =
     Poof! The barricade disappears. The Yard is accessible.
-    (No recycle bin: it will never come back.)
+    (rm goes through no bin: it will never come back.)
 bourg-evenement-rats = The rats pounce on the cheese and carry it off into a hole. The Tunnel is clear.
 bourg-evenement-nour-sans-classe = "I'd like to go back," says Nour, "but the Eraser erased my Classroom. Can you rebuild it, at the School?" (mkdir)
 bourg-evenement-nour =
@@ -163,7 +165,7 @@ bourg-evenement-nour =
     Well done! You have finished chapter 2.
 
     You now know how to search (grep), create (touch, mkdir), copy (cp) and
-    delete (rm) — carefully, since there is no recycle bin.
+    delete (rm) — carefully, since rm goes through no bin.
 
     The Eraser is hiding at the Root, at the bottom of the slide: chapter 3
     awaits you.

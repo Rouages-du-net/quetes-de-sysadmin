@@ -150,7 +150,7 @@ function echec(origine: Shell, texte: string): string {
 }
 
 const motDePasseDe = (s: Shell, compte: string): string | undefined =>
-  (s.etat.motsDePasse as Record<string, string> | undefined)?.[compte] ?? (compte === s.joueur ? s.chapitre.motDePasse : undefined);
+  (s.etat.motsDePasse as Record<string, string> | undefined)?.[compte] ?? (compte === s.joueur ? s.motDePasseDuJoueur() : undefined);
 
 // Les clés publiques autorisées pour ce compte, sur la machine d'en face.
 function clesAutorisees(s: Shell, compte: string): string[] {

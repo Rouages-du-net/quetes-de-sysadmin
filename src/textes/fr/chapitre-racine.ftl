@@ -48,7 +48,7 @@ racine-journal =
 
     An 98 : on me confie l'administration du royaume. Grande responsabilité.
     An 99 : installé l'horloge du Bourg. Les engrenages tournent bien.
-    An 100 : la Corbeille déborde. Il faudrait un programme pour la vider.
+    An 100 : la Corbeille déborde. Ce n'est qu'un dossier où chacun dépose ce qu'il veut jeter : il faudrait un programme pour la vider pour de bon.
     An 101 : j'écris l'Effaceur, un petit démon qui videra la Corbeille.
     An 102 : écrit la configuration de l'Effaceur dans /etc. Pas eu le temps de relire.
     An 102 : mon mot de passe change. Je le note ici (très mauvaise idée !) : tournesol
@@ -148,7 +148,7 @@ racine-evenement-corrige =
         [one] { $sauves } souvenir
        *[other] { $sauves } souvenirs
     } sur { $total }.{ $perte ->
-        [oui] {" "}Ceux qui sont partis ne reviendront pas : il n'y a pas de corbeille… à moins d'avoir fait des sauvegardes. Mais ça, c'est une autre histoire.
+        [oui] {" "}Ceux qui sont partis ne reviendront pas : rm ne passe par aucune corbeille… à moins d'avoir fait des sauvegardes. Mais ça, c'est une autre histoire.
        *[non] {""}
     }
 

@@ -1309,7 +1309,7 @@ for (const langue of LANGUES)
         const semaines = editer(s, 'sudo crontab -e', CRON);
         contient(semaines, 'Deux semaines passent');
         contient(semaines, "Hier soir, j'ai remplacé l'inventaire");
-        expect(s.executer(`ls ${D}`)).toBe('daily.0/    daily.1/    daily.2/    daily.3/    daily.4/    daily.5/    daily.6/    weekly.0/');
+        expect(s.executer(`ls ${D}`)).toBe('daily.0/  daily.1/  daily.2/  daily.3/  daily.4/  daily.5/  daily.6/  weekly.0/');
         const du = s.executer('sudo rsnapshot du') ?? '';
         expect(du).toMatch(new RegExp(`^46M\t${D}/daily\\.0/$`, 'm'));
         expect(du).toMatch(new RegExp(`^\\d+K?\t${D}/daily\\.1/$`, 'm'));

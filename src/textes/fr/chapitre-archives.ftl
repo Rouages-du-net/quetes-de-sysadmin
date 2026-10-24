@@ -68,7 +68,7 @@ archives-evenement-tmp =
 
     (Relis bien avant Entrée : sans le -name, find effacerait TOUT le fonds.)
 archives-evenement-perte =
-    Aïe : un fichier précieux du fonds a disparu, et il n'y a pas de corbeille…
+    Aïe : un fichier précieux du fonds a disparu, et find -delete, comme rm, ne passe par aucune corbeille…
     Dans la vraie vie, c'est pour cela qu'on fait des sauvegardes AVANT de faire
     le ménage. Ici, tu peux recommencer le chapitre (lien sous le terminal).
 archives-evenement-menage =

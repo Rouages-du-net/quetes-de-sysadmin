@@ -22,7 +22,7 @@ etat-cle-chapitre = “{ $titre }”
 cle-aide = 🔑 The greyed-out stories open little by little: each one shows under its name the chapters to finish before you receive its key. The first ones open after The Root (The Eraser, chapter 3).
 bouton-suivant = Next chapter →
 bouton-recommencer = Restart this chapter
-astuces = Tips: Tab completes names, ↑ recalls commands, "aide" lists the ones you know, "man command" opens the manual, "exit" takes you back to your workstation. As in most Linux terminals, selecting text copies it and right-clicking pastes it. Your progress is saved in this browser.
+astuces = Tips: Tab completes names, ↑ recalls commands, "help" lists the ones you know, "man command" opens the manual, "exit" takes you back to your workstation. As in most Linux terminals, selecting text copies it and right-clicking pastes it. Your progress is saved in this browser.
 # { $lignes }: number of lines not shown
 sortie-coupee =
     { $lignes ->

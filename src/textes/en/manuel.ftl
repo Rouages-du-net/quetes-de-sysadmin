@@ -6,7 +6,7 @@
 ### See src/moteur/commandes/manuel.ts.
 
 man-aide = lists the commands you know.
-    .synopsis = aide
+    .synopsis = help
 man-apropos = searches for a word in the summary of every command. Same as man -k.
     .synopsis = apropos word
 man-apt = installs and updates software on Debian, as packages downloaded from the project's repositories. apt update downloads the list of available packages: on a brand-new server it is empty, and apt finds nothing until you have run it; it also tells you how many updates are waiting. apt install installs a package and the ones it needs; a package that provides a service (nginx…) starts and enables it right away. apt list --upgradable shows the updates, apt upgrade installs them (full-upgrade may also remove some packages). A new kernel, or a new libc, only takes effect after a reboot: /var/run/reboot-required says so, and /var/run/reboot-required.pkgs says why. An interrupted upgrade (a dropped connection) leaves dpkg half done: you need dpkg --configure -a. On a shaky connection, run it inside tmux. Reserved for root.
@@ -235,12 +235,13 @@ man-awk = a small language for reading lines split into fields. Each line is cut
 man-cat = prints the content of files (concatenate: it can join several end to end). Without a file, copies whatever comes in through a pipe.
     .synopsis = cat file...
     .exemple-1 = print a file
-man-cd = changes place (change directory). "cd .." goes up one level, "cd ~" or plain "cd" takes you back home, "cd /" to the root.
+man-cd = changes place (change directory). "cd .." goes up one level, "cd ~" or plain "cd" takes you back home, "cd /" to the root, "cd -" to the previous place.
     .synopsis = cd place
     .exemple-1 = enter the place Port
     .exemple-2 = go up one level
     .exemple-3 = go back home
     .exemple-4 = go to the root
+    .exemple-5 = go back to the previous place (and print it)
 man-chmod = changes permissions (change mode). E.g.: chmod o-w place takes away from others (o) the right to write (w); chmod 755 place gives rwx to the owner, r-x to others. Only the owner (or root) can do it. -R also acts on the whole content of a directory. g+s sets the setgid bit on a directory (an s instead of the group's x in ls -l): what is created inside gets the directory's group, not that of the person creating it; in octal, it is the leading 2 (2775). +t (sticky, the leading 1): in a shared directory, everyone can only delete their own files.
     .synopsis = chmod [-R] mode file
     .option-R = acts on the directory and on everything it contains (recursive).
@@ -500,7 +501,7 @@ man-rndc = controls the running DNS server named (BIND). rndc reload rereads the
     .synopsis = rndc reload [zone] ; rndc status
     .exemple-1 = reload a zone after editing it (and increasing its serial)
     .exemple-2 = the server's status
-man-rm = deletes a file (remove). Beware: on Linux, there is no trash bin, it's permanent.
+man-rm = deletes a file (remove). Beware: rm goes through no bin, it's permanent. (The trash of graphical desktops, ~/.local/share/Trash, is just a folder: a file goes there with gio trash, never with rm.)
     .synopsis = rm file
     .exemple-1 = delete a file, forever
 man-rsnapshot = keeps snapshots of one or more directories: the full state of the moment, at regular intervals. Files that haven't changed from one snapshot to the next are not copied again but linked (hard links: the same file under two names, see ls -i); each snapshot looks complete, but only the changes take up space. Everything is set in /etc/rsnapshot.conf, with TABS between the items (never spaces): snapshot_root (where to store the snapshots, with a trailing slash), retain name count (a level, from most frequent to rarest, and how many to keep: retain daily 7, then retain weekly 4), backup source destination (backup /srv/share/ localhost/). rsnapshot configtest checks the file. rsnapshot daily rotates the daily level: daily.0 is the most recent, the oldest is deleted; a rarer level (weekly) takes over the oldest daily. -t shows what would be done, without doing anything. rsnapshot du measures the real space used. You run it with cron: the rarest level a little before the most frequent.

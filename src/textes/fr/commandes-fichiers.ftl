@@ -12,6 +12,8 @@ ls-ouvrir-permission = ls : impossible d'ouvrir le répertoire '{ $cible }' : Pe
 ## cd
 
 cd-pas-un-dossier = cd : { $cible } : n’est pas un dossier (c’est un objet : essaie cat)
+# cd - sans dossier d'avant (bash : « OLDPWD non défini »).
+cd-ancien-absent = cd : OLDPWD non défini
 
 ## cat, mv, cp, rm, touch, mkdir
 

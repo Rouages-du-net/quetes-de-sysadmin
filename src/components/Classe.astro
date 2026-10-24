@@ -33,7 +33,7 @@ const fr = langue === 'fr';
 <div id="classe" data-langue={langue}></div>
 <script>
   import { monterClasse } from '../interface/classe';
-  import type { Langue } from '../textes';
+  import { langueDuJeu } from '../textes';
   const racine = document.getElementById('classe');
-  if (racine) monterClasse(racine, (racine.dataset.langue ?? 'fr') as Langue);
+  if (racine) monterClasse(racine, langueDuJeu(racine.dataset.langue));
 </script>

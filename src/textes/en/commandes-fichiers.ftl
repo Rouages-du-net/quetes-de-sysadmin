@@ -12,6 +12,8 @@ ls-ouvrir-permission = ls: cannot open directory '{ $cible }': Permission denied
 ## cd
 
 cd-pas-un-dossier = cd: { $cible }: Not a directory (it's an object: try cat)
+# cd - with no previous directory (bash: "OLDPWD not set").
+cd-ancien-absent = cd: OLDPWD not set
 
 ## cat, mv, cp, rm, touch, mkdir
 

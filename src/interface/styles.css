@@ -209,7 +209,18 @@
   cursor: text;
 }
 .qds .sortie pre { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: inherit; overflow-x: auto; }
+/* Un tableau trop large pour l'écran défile de côté : une ombre sur le bord
+   montre qu'il en reste à voir (elle disparaît une fois au bout). */
+.qds .sortie pre {
+  background:
+    linear-gradient(to right, var(--_terminal-fond) 40%, transparent) left / 1.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--_terminal-fond) 40%, transparent) right / 1.5rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, color-mix(in oklab, var(--_terminal-texte) 45%, transparent), transparent) left / 0.6rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--_terminal-texte) 45%, transparent), transparent) right / 0.6rem 100% no-repeat scroll;
+}
 .qds .sortie .colonnes { white-space: pre; word-break: normal; }
+/* Pour mesurer la largeur d'un caractère (la largeur du terminal en colonnes). */
+.qds .sortie .mesure { position: absolute; visibility: hidden; pointer-events: none; white-space: pre; }
 .qds .sortie .coupure { margin: 0; font-style: italic; color: var(--_terminal-invite); }
 .qds .sortie .cmd { color: color-mix(in oklab, var(--_terminal-texte) 75%, var(--_terminal-fond)); }
 .qds form { display: flex; flex-wrap: wrap; gap: 0 0.5ch; margin: 0; }
@@ -316,6 +327,9 @@
   .qds .touches { display: flex; gap: 0.35rem; overflow-x: auto; padding: 0.5rem 0 0.25rem; scrollbar-width: none; }
   .qds .touches button { flex: none; min-width: 2.75rem; min-height: 2.75rem; padding: 0 0.6rem; font: 600 0.95rem var(--_police-mono); color: var(--_texte); background: var(--_carte); border: 1px solid var(--_bord); border-radius: 0.35rem; }
   .qds .touches button:active { border-color: var(--_accent); color: var(--_accent); }
+  /* Pendant nano, la barre ne garde que ses raccourcis (et Ctrl-C). */
+  .qds .touches:not([data-mode='nano']) .pour-nano,
+  .qds .touches[data-mode='nano'] button:not(.pour-nano):not([data-touche='ctrl-c']) { display: none; }
 }
 /* Les succès : obtenus en clair, les autres en discret ; l'annonce dans le terminal. */
 .qds .succes-grade { margin: 0 0 0.75rem; }
@@ -395,7 +409,7 @@
 }
 .qds .nano-chemin { overflow-wrap: anywhere; }
 .qds .nano-texte {
-  width: 100%; min-height: 16rem; resize: vertical; box-sizing: border-box;
+  width: 100%; min-height: min(16rem, 40vh); resize: vertical; box-sizing: border-box;
   background: transparent; color: inherit; font: inherit; border: 1px dashed color-mix(in oklab, var(--_terminal-texte) 40%, transparent);
   padding: 0.25rem; caret-color: var(--_terminal-texte);
 }

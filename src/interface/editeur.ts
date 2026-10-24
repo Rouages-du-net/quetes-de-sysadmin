@@ -74,6 +74,8 @@ export function editeur(o: OptionsEditeur): HTMLElement {
     question.hidden = !oui;
     etat.textContent = oui ? t('nano-sauver') : '';
     (oui ? question.querySelector('button')! : zone).focus();
+    // Sur un petit écran, la question doit se voir.
+    if (oui) question.scrollIntoView?.({ block: 'nearest' });
   };
   const sortir = () => (zone.value === enregistre ? fermer() : demander(true));
 

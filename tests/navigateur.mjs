@@ -346,7 +346,49 @@ for (const largeur of [1000, 375]) {
   verifier((await ligne.inputValue()) === 'ls -a ~/.ssh/', 'téléphone : Tab complète');
   await jeuMobile.locator('.touches button[data-touche="|"]').tap();
   verifier((await ligne.inputValue()).endsWith('|'), 'téléphone : | s’insère dans la ligne');
+  verifier((await jeuMobile.locator('.coloration').textContent()).endsWith('|'), 'téléphone : le caractère de la barre se voit tout de suite');
+  // _ est dans bien des noms (id_royaume, authorized_keys) et loin sur les claviers des téléphones.
+  await jeuMobile.locator('.touches button[data-touche="_"]').tap();
+  verifier((await ligne.inputValue()).endsWith('|_'), 'téléphone : la barre a la touche _');
+  // Double Tab : les possibilités, rangées en colonnes dans la largeur du téléphone.
+  await ligne.fill('ls ~/.ssh/');
+  await jeuMobile.locator('.touches button[data-touche="Tab"]').tap();
+  await jeuMobile.locator('.touches button[data-touche="Tab"]').tap();
+  verifier((await jeuMobile.locator('.sortie .suggestions').count()) === 1, 'téléphone : le double Tab montre les possibilités');
+  await ligne.fill('ls -a /etc');
+  await ligne.press('Enter');
+  verifier(
+    await jeuMobile.locator('.sortie').evaluate((s) => [...s.querySelectorAll('pre')].every((p) => p.scrollWidth <= p.clientWidth + 1)),
+    'téléphone : ls tient dans la largeur, sans défilement caché',
+  );
   verifier(!(await mobile.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'téléphone : pas de défilement horizontal');
+  // L'appui long (contextmenu au doigt) garde la sélection et le menu du téléphone ;
+  // à la souris, le clic droit colle, comme dans un terminal Linux.
+  const annule = (type) =>
+    jeuMobile.locator('.sortie').evaluate((s, type) => {
+      s.dispatchEvent(new PointerEvent('pointerdown', { pointerType: type, bubbles: true, composed: true }));
+      return !s.dispatchEvent(new PointerEvent('contextmenu', { pointerType: type, bubbles: true, cancelable: true, composed: true }));
+    }, type);
+  verifier(!(await annule('touch')), 'téléphone : l’appui long sélectionne le texte (menu du téléphone)');
+  verifier(await annule('mouse'), 'souris : le clic droit colle');
+  // nano sans touche Ctrl : la barre donne ^O et ^X, toujours à l'écran.
+  await ligne.fill('nano notes.txt');
+  await ligne.press('Enter');
+  const barreNano = jeuMobile.locator('.touches button[data-touche="ctrl-x"]');
+  verifier((await barreNano.isVisible()) && !(await jeuMobile.locator('.touches button[data-touche="Tab"]').isVisible()), 'téléphone : dans nano, la barre donne ^O et ^X');
+  const boite = await barreNano.boundingBox();
+  verifier(boite !== null && boite.y + boite.height <= 800, 'téléphone : ^X est à l’écran');
+  await jeuMobile.locator('.nano-texte').fill('Bonjour du téléphone\n');
+  await jeuMobile.locator('.touches button[data-touche="ctrl-o"]').tap();
+  verifier((await jeuMobile.locator('.nano-etat').textContent()).includes('1 ligne'), 'téléphone : ^O de la barre écrit le fichier');
+  await jeuMobile.locator('.nano-texte').fill('Bonjour du téléphone\nencore\n');
+  await barreNano.tap();
+  verifier(await jeuMobile.locator('.nano-touche', { hasText: 'Oui' }).isVisible(), 'téléphone : ^X demande s’il faut enregistrer');
+  await jeuMobile.locator('.nano-touche', { hasText: 'Oui' }).tap();
+  verifier(
+    !(await jeuMobile.locator('.nano').count()) && (await jeuMobile.locator('.touches button[data-touche="Tab"]').isVisible()) && !(await barreNano.isVisible()),
+    'téléphone : nano fermé, la barre revient',
+  );
   await telephone.close();
 }
 
@@ -627,7 +669,8 @@ await page.route(`${BASE}/autre-site.html`, (r) => r.fulfill({ contentType: 'tex
   <script type="module" src="${BASE}/integration/quetes-de-sysadmin.js"></script></body></html>` }));
 await page.goto(`${BASE}/autre-site.html`);
 await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.sortie pre'));
-verifier((await page.locator('quetes-de-sysadmin .sortie').textContent()).includes('Le Paquet perdu'), 'intégration : l’histoire demandée s’ouvre');
+// Sans attribut langue, le jeu prend la langue de la page (ici lang="en").
+verifier((await page.locator('quetes-de-sysadmin .sortie').textContent()).includes('The Lost Packet'), 'intégration : l’histoire demandée s’ouvre, dans la langue de la page');
 verifier((await page.evaluate(() => getComputedStyle(document.querySelector('h1')).fontFamily)).includes('serif'), 'intégration : les styles de la page ne sont pas touchés');
 await page.addStyleTag({ content: 'quetes-de-sysadmin { --qds-accent: rgb(1, 2, 3); }' });
 verifier(

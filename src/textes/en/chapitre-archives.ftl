@@ -68,8 +68,8 @@ archives-evenement-tmp =
 
     (Read it again before Enter: without the -name, find would delete the WHOLE collection.)
 archives-evenement-perte =
-    Ouch: a precious file from the collection has disappeared, and there is no
-    recycle bin… In real life, that's why you make backups BEFORE cleaning
+    Ouch: a precious file from the collection has disappeared, and
+    find -delete, like rm, goes through no bin… In real life, that's why you make backups BEFORE cleaning
     up. Here, you can restart the chapter (link below the terminal).
 archives-evenement-menage =
     The cleanup is done. Check with du -sh collection, then create the compressed
