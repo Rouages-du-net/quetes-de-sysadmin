@@ -114,10 +114,13 @@ perimetre-evenement-balayage =
     An auditor's question: among these open services, which ones have a
     reason to be reachable by anyone? Keep the trace in a file (the -oN
     option): a finding without proof is only an opinion.
-# { $adresse }: the address of the out-of-scope machine
+# { $adresses }: the addresses probed outside the letter of engagement; { $voisin }: "oui" if the neighbour's server is one of them
 perimetre-evenement-hors-perimetre =
     WARNING: you have just probed an address that is not in your letter of
-    engagement ({ $adresse }, the neighbour's server). Here nothing happened;
+    engagement ({ $adresses }{ $voisin ->
+        [oui] , including the neighbour's server
+       *[non] {""}
+    }). Here nothing happened;
     for real, it is a professional fault, and depending on the country an
     offence: the client's authorisation does not cover other people's
     equipment. The right answer to a machine that looks "interesting": leave

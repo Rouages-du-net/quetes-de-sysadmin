@@ -29,6 +29,8 @@ const MODELE_NOTES = 'perimetre-notes-modele';
 const balayages = (j: Jeu): Balayage[] => j.etat.scans ?? [];
 const sonde = (b: Balayage) => b.adresses.includes('192.0.2.22') || b.adresses.includes('127.0.0.1');
 const horsPerimetre = (j: Jeu) => balayages(j).some((b) => b.horsPerimetre.length > 0);
+// Les adresses sondées hors de la lettre de mission, et si le voisin en fait partie.
+const adressesHors = (j: Jeu) => [...new Set(balayages(j).flatMap((b) => b.horsPerimetre))];
 
 // Les fichiers de la maison : le texte de chacun (la trace nmap peut avoir n'importe quel nom).
 const textes = (j: Jeu): string[] => {
@@ -118,7 +120,7 @@ export const perimetre: Chapitre = {
     {
       id: 'hors-perimetre',
       condition: horsPerimetre,
-      message: (j) => j.t('perimetre-evenement-hors-perimetre', { adresse: VOISIN.adresse }),
+      message: (j) => j.t('perimetre-evenement-hors-perimetre', { adresses: adressesHors(j).join(', '), voisin: adressesHors(j).includes(VOISIN.adresse) ? 'oui' : 'non' }),
     },
     { id: 'trace', condition: traceOk, message: (j) => j.t('perimetre-evenement-trace') },
     {

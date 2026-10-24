@@ -32,7 +32,7 @@ import { autorise, lireConfig } from '../sshd';
 import { misesDisponibles, type EtatApt } from '../commandes/apt';
 import { constats, indice as indiceDe } from '../lynis';
 import type { Balayage } from '../scan';
-import { aptFournil, chargerSshd, sectionsMd, comptesFournil, ecouteFournil, fichier, M, MAINTENANT, MOT_DE_PASSE, mondeFournil, scanFournil, serviceSsh, sshd } from './audit';
+import { aptFournil, chargerSshd, sectionsMd, comptesFournil, ecouteFournil, fichier, M, MAINTENANT, MOT_DE_PASSE, mondeFournil, scanFournil, serviceSsh, sshd, VOISIN } from './audit';
 
 const RAPPORT = `${M}/rapport-cloture.md`;
 const CIBLE = 70;
@@ -62,6 +62,7 @@ const balayages = (j: Jeu): Balayage[] => j.etat.scans ?? [];
 const enPerimetre = (b: Balayage) => b.versions && b.horsPerimetre.length === 0 && b.adresses.includes('192.0.2.22');
 const dernierBalayage = (j: Jeu) => balayages(j).filter(enPerimetre).at(-1);
 const horsPerimetre = (j: Jeu) => balayages(j).some((b) => b.horsPerimetre.length > 0);
+const adressesHors = (j: Jeu) => [...new Set(balayages(j).flatMap((b) => b.horsPerimetre))];
 const trois = (b: Balayage | undefined) => !!b && JSON.stringify(b.ouverts['192.0.2.22']) === JSON.stringify([22, 80, 443]);
 const sshAJour = (b: Balayage | undefined) => !!b && (b.produits['192.0.2.22'] ?? []).some((p) => /^OpenSSH.*\+deb13u1/.test(p));
 
@@ -167,7 +168,7 @@ export const contreVisite: Chapitre = {
     {
       id: 'hors-perimetre',
       condition: horsPerimetre,
-      message: (j) => j.t('contre-visite-evenement-hors-perimetre'),
+      message: (j) => j.t('contre-visite-evenement-hors-perimetre', { adresses: adressesHors(j).join(', '), voisin: adressesHors(j).includes(VOISIN.adresse) ? 'oui' : 'non' }),
     },
     {
       id: 'balayage',
