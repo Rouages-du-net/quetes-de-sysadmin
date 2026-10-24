@@ -66,12 +66,12 @@ garde cette mention et le lien vers l'original.
       `.github/workflows/deploy.yml` (FTPS depuis `main`, vérification du site
       en ligne), `.htaccess` (HTTPS, cache, CSP, CORS), page 404 ; mode
       d'emploi `docs/DEPLOIEMENT.md`
-- [ ] Créer le sous-domaine sur cPanel et renseigner les secrets FTP
-- [ ] Rediriger l'ancienne page `rouages.net/jeux/terminus/` vers
+- [x] Créer le sous-domaine sur cPanel et renseigner les secrets FTP
+- [x] Rediriger l'ancienne page `rouages.net/jeux/terminus/` vers
       sysadmin.rouages.net (ou y intégrer l'élément)
 - [x] Réécrire les chapitres 1 et 2 dans un univers propre (fait dans
       rouages.net le 17 octobre 2026 : « L'Île du Phare » et « Le Bourg »)
-- [ ] Progression : les joueur·ses de rouages.net (clé `rouages-terminus`,
+- [x] Progression : les joueur·ses de rouages.net (clé `rouages-terminus`,
       autre domaine) repartent de zéro ; l'annoncer sur l'ancienne page
 
 ## Phase 1 — Un moteur de « machines » simulées
