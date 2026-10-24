@@ -6,7 +6,7 @@
 ### See src/moteur/commandes/manuel.ts.
 
 man-aide = lists the commands you know.
-    .synopsis = aide
+    .synopsis = help
 man-apropos = searches for a word in the summary of every command. Same as man -k.
     .synopsis = apropos word
 man-apt = installs and updates software on Debian, as packages downloaded from the project's repositories. apt update downloads the list of available packages: on a brand-new server it is empty, and apt finds nothing until you have run it; it also tells you how many updates are waiting. apt install installs a package and the ones it needs; a package that provides a service (nginx…) starts and enables it right away. apt list --upgradable shows the updates, apt upgrade installs them (full-upgrade may also remove some packages). A new kernel, or a new libc, only takes effect after a reboot: /var/run/reboot-required says so, and /var/run/reboot-required.pkgs says why. An interrupted upgrade (a dropped connection) leaves dpkg half done: you need dpkg --configure -a. On a shaky connection, run it inside tmux. Reserved for root.

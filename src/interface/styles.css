@@ -209,7 +209,18 @@
   cursor: text;
 }
 .qds .sortie pre { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: inherit; overflow-x: auto; }
+/* Un tableau trop large pour l'écran défile de côté : une ombre sur le bord
+   montre qu'il en reste à voir (elle disparaît une fois au bout). */
+.qds .sortie pre {
+  background:
+    linear-gradient(to right, var(--_terminal-fond) 40%, transparent) left / 1.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--_terminal-fond) 40%, transparent) right / 1.5rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, color-mix(in oklab, var(--_terminal-texte) 45%, transparent), transparent) left / 0.6rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--_terminal-texte) 45%, transparent), transparent) right / 0.6rem 100% no-repeat scroll;
+}
 .qds .sortie .colonnes { white-space: pre; word-break: normal; }
+/* Pour mesurer la largeur d'un caractère (la largeur du terminal en colonnes). */
+.qds .sortie .mesure { position: absolute; visibility: hidden; pointer-events: none; white-space: pre; }
 .qds .sortie .coupure { margin: 0; font-style: italic; color: var(--_terminal-invite); }
 .qds .sortie .cmd { color: color-mix(in oklab, var(--_terminal-texte) 75%, var(--_terminal-fond)); }
 .qds form { display: flex; flex-wrap: wrap; gap: 0 0.5ch; margin: 0; }

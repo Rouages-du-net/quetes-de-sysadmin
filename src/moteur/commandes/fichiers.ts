@@ -86,23 +86,33 @@ function lister({ args, jeu, dernier }: Contexte, peindre: Peindre = sansPeintur
   // Comme le vrai ls : en colonnes à l'écran, un nom par ligne dans un
   // tube ou un fichier (et sans le / ajouté aux lieux).
   if (!dernier) return entrees.map(([nom, e]) => peindre(nom, e)).join('\n');
-  const noms = entrees.map(([nom, e]) => affiche(nom, e));
-  const ligne = noms.join('    ');
-  if (largeurVisible(ligne) <= 1000) return ligne;
-  // Beaucoup de noms : des colonnes alignées dans 80 caractères, remplies de haut en bas, comme ls dans un terminal.
-  const largeur = Math.max(...noms.map((n) => largeurVisible(n))) + 2;
-  const colonnes = Math.max(1, Math.floor(80 / largeur));
-  const rangs = Math.ceil(noms.length / colonnes);
-  const lignes: string[] = [];
-  for (let r = 0; r < rangs; r++) {
-    const cases: string[] = [];
-    for (let c = 0; c < colonnes && r + c * rangs < noms.length; c++) {
-      const nom = noms[r + c * rangs];
-      cases.push(nom + ' '.repeat(largeur - largeurVisible(nom)));
+  return enColonnes(entrees.map(([nom, e]) => affiche(nom, e)), jeu.colonnes);
+}
+
+/**
+ * Comme ls de GNU dans un terminal : le plus de colonnes possible dans la
+ * largeur de l'écran ($COLUMNS), remplies de haut en bas, chaque colonne
+ * aussi large que son plus long nom, plus deux espaces.
+ */
+export function enColonnes(noms: string[], largeurEcran: number): string {
+  const tailles = noms.map((n) => largeurVisible(n));
+  for (let essai = noms.length; essai >= 1; essai--) {
+    const rangs = Math.ceil(noms.length / essai);
+    const colonnes = Math.ceil(noms.length / rangs);
+    const largeurs = Array.from({ length: colonnes }, (_, c) => Math.max(...tailles.slice(c * rangs, (c + 1) * rangs)) + (c < colonnes - 1 ? 2 : 0));
+    if (colonnes > 1 && largeurs.reduce((a, b) => a + b, 0) > largeurEcran) continue;
+    const lignes: string[] = [];
+    for (let r = 0; r < rangs; r++) {
+      let ligne = '';
+      for (let c = 0; c < colonnes && r + c * rangs < noms.length; c++) {
+        const i = r + c * rangs;
+        ligne += noms[i] + ' '.repeat(Math.max(0, largeurs[c] - tailles[i]));
+      }
+      lignes.push(ligne.trimEnd());
     }
-    lignes.push(cases.join('').trimEnd());
+    return lignes.join('\n');
   }
-  return lignes.join('\n');
+  return noms.join('\n');
 }
 
 export const FICHIERS: Record<string, Commande> = {

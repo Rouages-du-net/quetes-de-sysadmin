@@ -37,9 +37,11 @@ syntaxe-tube = syntax error near unexpected token `|'
 redirection-est-un-dossier = { $cible }: Is a directory
 redirection-permission = { $cible }: Permission denied
 redirection-sudo = (The > redirection is done by your own shell, not by sudo. Tip: send the text into "sudo tee -a file", which writes as root.)
-commande-pas-encore = { $commande }: you don't have this command yet in this chapter. Type "aide" for the list.
-commande-introuvable = { $commande }: command not found. Type "aide" for the list.
+commande-pas-encore = { $commande }: you don't have this command yet in this chapter. Type "help" for the list.
+commande-introuvable = { $commande }: command not found. Type "help" for the list.
 # { $commandes }: list of commands, separated by commas
+# Le nom de la commande qui liste les autres, dans la langue (aide, help)
+commande-aide = help
 aide-commandes =
     Known commands: { $commandes }.
     To learn more: "man command" (the full manual), "command --help" (a summary), "man -k word" (find a command by keyword).

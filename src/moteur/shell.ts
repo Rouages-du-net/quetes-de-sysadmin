@@ -96,6 +96,8 @@ export class Shell implements Jeu {
   // Le terminal montre les couleurs (l'interface, si le réglage est allumé) :
   // ls, grep… colorent alors ce qui va à l'écran (voir couleurs.ts).
   couleurs = false;
+  // La largeur du terminal, en caractères ($COLUMNS) : ls range ses colonnes dedans.
+  colonnes = 80;
   qui: string;
   derniere: Jeu['derniere'] = { ligne: '', commandes: [], sortie: '', erreurs: [], redirection: null };
   // Le compte sous lequel sudo lance la commande en cours (sudo -u).
@@ -499,40 +501,53 @@ export class Shell implements Jeu {
   }
 
   // Complétion par Tab du dernier mot.
-  completer(ligne: string): string {
+  // Ce que Tab peut compléter au bout de la ligne : les candidats (tels
+  // qu'affichés au double Tab : les lieux avec un /), et ce qu'on y ajoute.
+  private candidats(ligne: string): { mots: string[]; base: string; noms: string[]; dossiers: Set<string> } | null {
     const mots = ligne.split(' ');
     const dernier = mots.pop() ?? '';
     const avant = mots.filter(Boolean);
-    if (avant.length === 0 || avant.at(-1) === 'sudo' || avant.at(-1) === '|') {
-      const cmds = this.connues().filter((c) => c.startsWith(dernier));
-      return cmds.length === 1 ? [...mots, cmds[0] + ' '].join(' ') : ligne;
-    }
+    if (avant.length === 0 || avant.at(-1) === 'sudo' || avant.at(-1) === '|')
+      return { mots, base: '', noms: [...new Set(this.connues())].filter((c) => c.startsWith(dernier)).sort(), dossiers: new Set() };
     // Comme bash-completion : après ssh, les machines de ~/.ssh/config.
     if (avant[0] === 'ssh' && !dernier.startsWith('-') && !dernier.includes('/') && avant.at(-1) !== '-i') {
-      const hotes = [...(this.lire('~/.ssh/config') ?? '').matchAll(/^Host\s+(\S+)/gm)].map((m) => m[1]).filter((h) => h.startsWith(dernier));
-      return hotes.length === 1 ? [...mots, hotes[0] + ' '].join(' ') : ligne;
+      const hotes = [...(this.lire('~/.ssh/config') ?? '').matchAll(/^Host\s+(\S+)/gm)].map((m) => m[1]).filter((h) => h.startsWith(dernier) && !/[*?]/.test(h));
+      return { mots, base: '', noms: hotes, dossiers: new Set() };
     }
     const i = dernier.lastIndexOf('/');
     const base = i >= 0 ? dernier.slice(0, i + 1) : '';
     const debut = dernier.slice(i + 1);
     const lieu = this.trouver(base || '.');
-    if (!lieu || lieu.type !== 'dossier') return ligne;
-    const choix = Object.keys(lieu.enfants).filter(
-      (n) => n.startsWith(debut) && (debut.startsWith('.') || !n.startsWith('.')),
-    );
-    if (choix.length === 0) return ligne;
-    if (choix.length > 1) {
+    if (!lieu || lieu.type !== 'dossier') return null;
+    const noms = Object.keys(lieu.enfants)
+      .filter((n) => n.startsWith(debut) && (debut.startsWith('.') || !n.startsWith('.')))
+      .sort();
+    return { mots, base, noms, dossiers: new Set(noms.filter((n) => lieu.enfants[n].type === 'dossier')) };
+  }
+
+  completer(ligne: string): string {
+    const c = this.candidats(ligne);
+    if (!c || c.noms.length === 0) return ligne;
+    if (c.noms.length > 1) {
       // Comme bash : on complète jusqu'au plus long début commun.
-      let commun = choix[0];
-      for (const c of choix) while (!c.startsWith(commun)) commun = commun.slice(0, -1);
-      return [...mots, base + commun].join(' ');
+      let commun = c.noms[0];
+      for (const n of c.noms) while (!n.startsWith(commun)) commun = commun.slice(0, -1);
+      return [...c.mots, c.base + commun].join(' ');
     }
-    const suffixe = lieu.enfants[choix[0]].type === 'dossier' ? '/' : ' ';
-    return [...mots, base + choix[0] + suffixe].join(' ');
+    const suffixe = c.dossiers.has(c.noms[0]) ? '/' : ' ';
+    return [...c.mots, c.base + c.noms[0] + suffixe].join(' ');
+  }
+
+  /** Les possibilités, quand Tab ne peut pas choisir (bash les montre au deuxième Tab) ; vide sinon. */
+  suggestions(ligne: string): string[] {
+    const c = this.candidats(ligne);
+    if (!c || c.noms.length < 2) return [];
+    return c.noms.map((n) => (c.dossiers.has(n) ? `${n}/` : n));
   }
 
   connues(): string[] {
-    return [...this.chapitre.commandes, 'man', 'apropos', 'whatis', 'clear', 'exit', 'aide'];
+    // La commande qui liste les autres a le nom de la langue (aide, help) ; les deux marchent.
+    return [...this.chapitre.commandes, 'man', 'apropos', 'whatis', 'clear', 'exit', this.t('commande-aide')];
   }
 
 

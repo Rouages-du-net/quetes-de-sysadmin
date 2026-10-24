@@ -346,6 +346,18 @@ for (const largeur of [1000, 375]) {
   verifier((await ligne.inputValue()) === 'ls -a ~/.ssh/', 'téléphone : Tab complète');
   await jeuMobile.locator('.touches button[data-touche="|"]').tap();
   verifier((await ligne.inputValue()).endsWith('|'), 'téléphone : | s’insère dans la ligne');
+  verifier((await jeuMobile.locator('.coloration').textContent()).endsWith('|'), 'téléphone : le caractère de la barre se voit tout de suite');
+  // Double Tab : les possibilités, rangées en colonnes dans la largeur du téléphone.
+  await ligne.fill('ls ~/.ssh/');
+  await jeuMobile.locator('.touches button[data-touche="Tab"]').tap();
+  await jeuMobile.locator('.touches button[data-touche="Tab"]').tap();
+  verifier((await jeuMobile.locator('.sortie .suggestions').count()) === 1, 'téléphone : le double Tab montre les possibilités');
+  await ligne.fill('ls -a /etc');
+  await ligne.press('Enter');
+  verifier(
+    await jeuMobile.locator('.sortie').evaluate((s) => [...s.querySelectorAll('pre')].every((p) => p.scrollWidth <= p.clientWidth + 1)),
+    'téléphone : ls tient dans la largeur, sans défilement caché',
+  );
   verifier(!(await mobile.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'téléphone : pas de défilement horizontal');
   await telephone.close();
 }

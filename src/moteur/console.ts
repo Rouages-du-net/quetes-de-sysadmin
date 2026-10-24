@@ -13,6 +13,7 @@ import { config as configSsh, fichiersCle, poste } from './poste';
 import { etatPort, type EtatPort } from './ports';
 import { bannisPour, type EtatFail2ban } from './fail2ban';
 import { noterTmux } from './commandes/tmux';
+import { enColonnes } from './commandes/fichiers';
 import { LANGUES, traducteur, type Langue, type Traduire } from '../textes';
 
 export interface OptionsConsole {
@@ -31,6 +32,8 @@ type Saisie = { ligne: string } | { enregistrer: string } | { quitter: true };
 export class Console {
   // L'écran montre les couleurs des sorties (réglage de l'interface) ; voir couleurs.ts.
   couleurs = false;
+  // La largeur de l'écran en caractères, mesurée par l'interface (ls s'y range).
+  colonnes = 80;
 
   // L'instantané de secours : ce qu'on a saisi depuis l'ouverture du chapitre
   // (commandes, réponses, enregistrements de nano). Le moteur est
@@ -145,6 +148,12 @@ export class Console {
 
   completer(ligne: string): string {
     return this.shell.completer(ligne);
+  }
+
+  /** Au deuxième Tab : les possibilités, rangées en colonnes comme le fait bash ('' s'il n'y en a pas). */
+  suggestions(ligne: string): string {
+    const noms = this.shell.suggestions(ligne);
+    return noms.length ? enColonnes(noms, this.colonnes) : '';
   }
 
   titre(h: Histoire, c: Chapitre): string {
@@ -302,6 +311,7 @@ export class Console {
   executer(ligne: string): string | null {
     const sh = this.shell;
     sh.couleurs = this.couleurs;
+    sh.colonnes = this.colonnes;
     // Une saisie sur la machine du chapitre (ou ses machines internes) se rejoue ; une saisie sur le poste, non.
     if (this.distant) this.saisies?.push({ ligne });
     else this.saisies = null;

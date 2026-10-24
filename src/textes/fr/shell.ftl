@@ -40,6 +40,8 @@ redirection-sudo = (La redirection > est faite par ton propre shell, pas par sud
 commande-pas-encore = { $commande } : tu n’as pas encore cette commande dans ce chapitre. Tape « aide » pour la liste.
 commande-introuvable = { $commande } : commande introuvable. Tape « aide » pour la liste.
 # { $commandes } : liste des commandes, séparées par des virgules
+# Le nom de la commande qui liste les autres, dans la langue (aide, help)
+commande-aide = aide
 aide-commandes =
     Commandes connues : { $commandes }.
     Pour en savoir plus : « man commande » (le manuel complet), « commande --help » (un résumé), « man -k mot » (trouver une commande par mot-clé).

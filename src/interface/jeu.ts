@@ -405,6 +405,16 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     sauve = JSON.parse(localStorage.getItem(CLE) ?? '{}');
   } catch {}
   const terminalJeu = new Console({ langue: t.langue, termines: sauve.termines, hotesConnus: sauve.connus, ssh: sauve.ssh });
+  // La largeur du terminal en caractères ($COLUMNS) : ls range ses colonnes dedans,
+  // pour qu'un écran de téléphone n'ait pas à défiler de côté.
+  const mesure = el('span', { class: 'mesure', 'aria-hidden': 'true' }, '0'.repeat(20));
+  sortie.appendChild(mesure);
+  const majColonnes = () => {
+    const caractere = mesure.getBoundingClientRect().width / 20;
+    const largeur = sortie.clientWidth - parseFloat(getComputedStyle(sortie).paddingLeft) - parseFloat(getComputedStyle(sortie).paddingRight);
+    if (caractere > 0 && largeur > 0) terminalJeu.colonnes = Math.max(20, Math.floor(largeur / caractere));
+  };
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(majColonnes).observe(sortie);
   const termines = terminalJeu.termines;
   const carnet: Carnet = sauve.carnet && typeof sauve.carnet === 'object' ? sauve.carnet : {};
   const records: Record<string, number> = sauve.records && typeof sauve.records === 'object' ? sauve.records : {};
@@ -438,6 +448,8 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const accessible = (h: number) => terminalJeu.ouverte(HISTOIRES[h].id) || HISTOIRES[h].id === options.histoire;
 
   const historique: string[] = [];
+  // La ligne après le dernier Tab (pour le double Tab de bash).
+  let tabPrecedent: string | null = null;
   let position = 0;
 
   // Les tableaux d'au moins trois colonnes (ls -l, ufw status, ss, ps…) ne
@@ -709,14 +721,14 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const allerPoste = () => {
     debutExamen = null;
     majChrono();
-    sortie.replaceChildren();
+    sortie.replaceChildren(mesure);
     if (terminalJeu.distant) terminalJeu.deconnecter();
     afficher(`— ${t('poste-titre')} —`);
     afficher(terminalJeu.reinitialiserPoste());
     apres();
   };
   const demarrer = (h: number, c?: number) => {
-    sortie.replaceChildren();
+    sortie.replaceChildren(mesure);
     const chapitre = c === undefined ? undefined : chapitres(h)[c];
     if (terminalJeu.distant?.histoire === HISTOIRES[h] && chapitre) afficher(terminalJeu.ouvrir(chapitre));
     else afficher(terminalJeu.connecter(machineDeHistoire(HISTOIRES[h].id)!.nom, chapitre));
@@ -739,11 +751,13 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     position = historique.length;
     const shell = terminalJeu.shell;
     const hoteAvant = shell.hote;
+    // La taille du texte a pu changer (A+, A−) : la largeur en caractères aussi.
+    majColonnes();
     const resultat = terminalJeu.executer(ligne);
     // Une réponse à une question (un mot de passe…) n'est pas une commande pour le carnet.
     if (!reponse) noter(carnet, shell);
     const ligneDe = reponse ? null : shell;
-    if (resultat === null) sortie.replaceChildren();
+    if (resultat === null) sortie.replaceChildren(mesure);
     else afficher(resultat);
     // Les mises en scène : la connexion à une autre machine, le redémarrage.
     if (terminalJeu.shell.hote !== hoteAvant) mettreEnScene(shell.derniere.commandes.some((c) => c.includes('reboot')) ? 'reboot' : 'connexion');
@@ -831,8 +845,22 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     }
     if (e.key === 'Tab') {
       e.preventDefault();
-      saisie.value = terminalJeu.completer(saisie.value);
-    } else if (e.key === 'ArrowUp' && position > 0) {
+      const avant = saisie.value;
+      saisie.value = terminalJeu.completer(avant);
+      // Comme bash : un deuxième Tab sans rien de plus à compléter montre les possibilités.
+      if (saisie.value === avant && tabPrecedent === avant) {
+        const liste = terminalJeu.suggestions(avant);
+        if (liste) {
+          afficher(`${invite.textContent} ${avant}`, 'cmd');
+          afficher(liste, 'suggestions');
+          terminal.scrollTop = terminal.scrollHeight;
+        }
+      }
+      tabPrecedent = saisie.value;
+      return;
+    }
+    tabPrecedent = null;
+    if (e.key === 'ArrowUp' && position > 0) {
       e.preventDefault();
       saisie.value = historique[--position];
     } else if (e.key === 'ArrowDown') {
@@ -1160,7 +1188,15 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   barreTouches.addEventListener('click', (e) => {
     const touche = (e.target as HTMLElement).closest('button')?.dataset.touche;
     if (!touche || form.hidden) return;
-    if (touche.length === 1) saisie.setRangeText(touche, saisie.selectionStart ?? saisie.value.length, saisie.selectionEnd ?? saisie.value.length, 'end');
+    if (touche.length === 1) {
+      // Comme une frappe : le clavier du téléphone (et sa saisie en cours) le voit passer,
+      // et la ligne colorée est redessinée tout de suite (événement input).
+      saisie.focus();
+      if (!document.execCommand?.('insertText', false, touche)) {
+        saisie.setRangeText(touche, saisie.selectionStart ?? saisie.value.length, saisie.selectionEnd ?? saisie.value.length, 'end');
+        saisie.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
     else {
       const [ctrl, key] = touche === 'ctrl-c' ? [true, 'c'] : [false, touche];
       saisie.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey: ctrl, bubbles: true, cancelable: true }));
@@ -1217,7 +1253,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     if (enCours.has(ancienne)) enCours.add(nouvelle);
     if (bilanFait.has(ancienne) && nouvelle.termine) bilanFait.add(nouvelle);
     fenetreMission.close();
-    sortie.replaceChildren();
+    sortie.replaceChildren(mesure);
     afficher(t('secours-restaure', { pas }), 'succes');
     apres();
   };
