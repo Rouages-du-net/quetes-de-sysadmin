@@ -350,6 +350,11 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [ ] **Une histoire offensive** : comprendre une attaque en la rejouant,
+  pas seulement en lire le résultat. Hors du périmètre habituel du jeu
+  (« Règles du jeu » dans `CLAUDE.md` : les quêtes de sécurité restent
+  défensives) ; un guide pour qui voudra la construire est dans
+  `docs/VERSION-OFFENSIVE.md`.
 - [x] **Astreinte et incident du jour** (`src/moteur/astreinte.ts`) : chaque
   jour, un chapitre tiré de la date (le même pour tout le monde, sans
   serveur) parmi ceux des parcours qui parlent de pannes, ouvert après La
