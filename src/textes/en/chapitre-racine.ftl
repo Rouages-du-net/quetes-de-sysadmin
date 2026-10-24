@@ -51,7 +51,7 @@ racine-journal =
 
     Year 98: I'm entrusted with administering the kingdom. A great responsibility.
     Year 99: installed the clock in the Village. The gears turn nicely.
-    Year 100: the Bin is overflowing. We need a program to empty it.
+    Year 100: the Bin is overflowing. It's just a folder where everyone drops what they want to throw away: we need a program to empty it for good.
     Year 101: I'm writing the Eraser, a little daemon that will empty the Bin.
     Year 102: wrote the Eraser's configuration in /etc. No time to proofread it.
     Year 102: my password changes. I'm writing it down here (very bad idea!): sunflower
@@ -151,7 +151,7 @@ racine-evenement-corrige =
         [one] { $sauves } memory
        *[other] { $sauves } memories
     } out of { $total }.{ $perte ->
-        [oui] {" "}The ones that are gone won't come back: there is no trash bin… unless you made backups. But that's another story.
+        [oui] {" "}The ones that are gone won't come back: rm goes through no bin… unless you made backups. But that's another story.
        *[non] {""}
     }
 

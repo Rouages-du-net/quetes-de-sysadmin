@@ -33,8 +33,10 @@ bourg-marchande =
     mes étals. »
 
     Elle baisse la voix : « Un conseil. Avant d'effacer quoi que ce soit avec
-    rm, réfléchis bien. Il n'y a pas de corbeille, sous Linux. C'est comme ça
-    que l'Effaceur travaille : rm, rm, rm, sans jamais se retourner. »
+    rm, réfléchis bien. rm ne met rien à la corbeille : ce qu'il efface
+    disparaît pour de bon. Notre Corbeille, au Royaume, n'est qu'un dossier
+    où chacun dépose ce qu'il veut jeter ; c'est l'Effaceur qui la vide, avec
+    rm, rm, rm, sans jamais se retourner. »
 bourg-pomme = Une pomme un peu fripée.
 bourg-pomme-2 = Une autre pomme, tout aussi fripée.
 bourg-fromage = Une meule de fromage qui sent très fort. « Le seul produit que l'Effaceur n'a pas voulu toucher », dit la marchande.
@@ -152,7 +154,7 @@ bourg-evenement-classe = Une Classe se dresse à l’École. Les enfants s’y p
 bourg-evenement-classe-sans-nour = Une Classe se dresse à l’École. Les enfants s’y précipitent. « Il ne manque qu’une élève », soupire l’institutrice : « Nour. »
 bourg-evenement-barricade =
     Pouf ! La barricade disparaît. La Cour est accessible.
-    (Pas de corbeille : elle ne reviendra jamais.)
+    (rm ne passe par aucune corbeille : elle ne reviendra jamais.)
 bourg-evenement-rats = Les rats se jettent sur le fromage et l’emportent dans un trou. La Galerie est libre.
 bourg-evenement-nour-sans-classe = « Je veux bien rentrer », dit Nour, « mais l’Effaceur a effacé ma Classe. Tu peux la reconstruire, à l’École ? » (mkdir)
 bourg-evenement-nour =
@@ -161,7 +163,7 @@ bourg-evenement-nour =
     Bravo ! Tu as terminé le chapitre 2.
 
     Tu sais maintenant chercher (grep), créer (touch, mkdir), copier (cp) et
-    effacer (rm) — avec prudence, puisqu'il n'y a pas de corbeille.
+    effacer (rm) — avec prudence, puisque rm ne passe par aucune corbeille.
 
     L'Effaceur se cache à la Racine, au bas du Toboggan : le chapitre 3
     t'attend.
