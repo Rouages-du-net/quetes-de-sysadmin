@@ -872,10 +872,16 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
 
   // Copier-coller comme dans la plupart des terminaux Linux : le texte
   // sélectionné est copié, le clic droit (ou celui du milieu) le colle.
-  // Maj + clic droit garde le menu du navigateur.
+  // Maj + clic droit garde le menu du navigateur. Au doigt (ou au stylet),
+  // l'appui long sélectionne le texte et ouvre le menu du téléphone : le jeu
+  // n'y touche pas (un appui long envoie lui aussi contextmenu).
+  let pointeur = 'mouse';
+  terminal.addEventListener('pointerdown', (e) => (pointeur = e.pointerType), { passive: true });
+  const souris = (e: MouseEvent) => ((e as PointerEvent).pointerType || pointeur) === 'mouse';
   const selection = () => ((racine as ShadowRoot & { getSelection?: () => Selection | null }).getSelection?.() ?? window.getSelection())?.toString() ?? '';
   let copie = '';
-  terminal.addEventListener('mouseup', () => {
+  terminal.addEventListener('mouseup', (e) => {
+    if (!souris(e)) return;
     const texte = selection();
     if (!texte) return;
     copie = texte;
@@ -897,7 +903,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     colorerSaisie();
   };
   terminal.addEventListener('contextmenu', (e) => {
-    if (!e.shiftKey) coller(e);
+    if (!e.shiftKey && souris(e)) coller(e);
   });
   terminal.addEventListener('auxclick', (e) => {
     if (e.button === 1) coller(e);

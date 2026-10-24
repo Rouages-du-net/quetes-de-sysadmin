@@ -359,6 +359,15 @@ for (const largeur of [1000, 375]) {
     'téléphone : ls tient dans la largeur, sans défilement caché',
   );
   verifier(!(await mobile.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'téléphone : pas de défilement horizontal');
+  // L'appui long (contextmenu au doigt) garde la sélection et le menu du téléphone ;
+  // à la souris, le clic droit colle, comme dans un terminal Linux.
+  const annule = (type) =>
+    jeuMobile.locator('.sortie').evaluate((s, type) => {
+      s.dispatchEvent(new PointerEvent('pointerdown', { pointerType: type, bubbles: true, composed: true }));
+      return !s.dispatchEvent(new PointerEvent('contextmenu', { pointerType: type, bubbles: true, cancelable: true, composed: true }));
+    }, type);
+  verifier(!(await annule('touch')), 'téléphone : l’appui long sélectionne le texte (menu du téléphone)');
+  verifier(await annule('mouse'), 'souris : le clic droit colle');
   await telephone.close();
 }
 
