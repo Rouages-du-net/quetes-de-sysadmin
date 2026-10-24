@@ -84,7 +84,8 @@ function existe(sh: Shell, nom: string): boolean {
     return !!n && n.type === 'fichier' && sh.peut(n, 'x');
   }
   if (COMMANDES[nom]?.section === 5) return false;
-  return sh.connues().includes(nom);
+  // help est intégré au shell (comme aide) : il répond toujours.
+  return nom === 'help' || sh.connues().includes(nom);
 }
 
 /** Un argument qui désigne un fichier ou un dossier existant (comme le soulignement de zsh). */

@@ -15,9 +15,16 @@ export const COUT_INDICE_MS = 3 * 60 * 1000;
 export const COUT_ERREUR_MS = 20 * 1000;
 
 // Les incidents possibles : les chapitres des parcours qui parlent de pannes,
-// sans ceux des premiers pas (il faut déjà savoir se servir du terminal).
+// sans ceux des premiers pas (il faut déjà savoir se servir du terminal), ni
+// ceux qui s'appuient sur le poste tel que les chapitres précédents l'ont
+// laissé (clés, ~/.ssh/config : surveillePoste, clesDuJoueur) : ouverts
+// directement, ils pourraient être impossibles à finir.
 const THEMES = ['production', 'web', 'securite', 'reseau', 'sauvegardes', 'deploiement'];
-export const INCIDENTS: string[] = [...new Set(PARCOURS.filter((p) => THEMES.includes(p.id)).flatMap((p) => p.chapitres))];
+const autonome = (id: string) => {
+  const c = HISTOIRES.flatMap((h) => h.chapitres).find((x) => x.id === id)!;
+  return !c.surveillePoste && !c.clesDuJoueur;
+};
+export const INCIDENTS: string[] = [...new Set(PARCOURS.filter((p) => THEMES.includes(p.id)).flatMap((p) => p.chapitres))].filter(autonome);
 
 // FNV-1a : un nombre stable tiré d'un texte.
 function condense(texte: string): number {

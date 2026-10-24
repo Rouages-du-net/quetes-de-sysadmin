@@ -338,7 +338,7 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
       libres) branchée sur `src/textes/`
 - [ ] Terminal simulé compatible avec les caractères larges (CJK)
 - [ ] Relecture par des locuteur·rices natif·ves, glossaire technique par langue
-- [ ] Quêtes rejouées automatiquement dans chaque langue
+- [x] Quêtes rejouées automatiquement dans chaque langue (`tests/quetes.test.ts`)
 
 ## Idées en plus
 

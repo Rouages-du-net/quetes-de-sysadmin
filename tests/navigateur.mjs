@@ -563,14 +563,14 @@ for (const largeur of [1000, 375]) {
   await page.close();
 }
 
-// L'astreinte : l'incident du jour (date fixée : le 18 février 2027, « Premier jour »),
+// L'astreinte : l'incident du jour (date fixée : le 18 janvier 2027, « Premier jour »),
 // le budget qui fond, la carte de score à la fin, le résultat gardé.
 for (const largeur of [1000, 375]) {
   const page = await navigateur.newPage({ viewport: { width: largeur, height: 900 } });
   const erreurs = [];
   page.on('pageerror', (e) => erreurs.push(e.message));
   page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
-  await page.clock.install({ time: new Date('2027-02-18T10:00:00') });
+  await page.clock.install({ time: new Date('2027-01-18T10:00:00') });
   await avecCsp(page);
   await page.goto(`${BASE}/`);
   await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ termines: ['eveil', 'bourg', 'racine', 'sauvegarde'] })));
@@ -579,10 +579,10 @@ for (const largeur of [1000, 375]) {
   verifier((await jeu.locator('.incident-texte').textContent()).includes('Premier jour'), `astreinte ${largeur} px : l’incident du jour est annoncé`);
   await jeu.locator('.bouton-incident').click();
   const fenetre = jeu.locator('dialog.fenetre-astreinte').first();
-  verifier((await fenetre.evaluate((d) => d.open)) && (await fenetre.textContent()).includes('18 février 2027'), `astreinte ${largeur} px : la fenêtre de l’astreinte`);
+  verifier((await fenetre.evaluate((d) => d.open)) && (await fenetre.textContent()).includes('18 janvier 2027'), `astreinte ${largeur} px : la fenêtre de l’astreinte`);
   await fenetre.locator('button', { hasText: 'Prendre l' }).click();
   verifier((await jeu.locator('.invite').textContent()).startsWith('vous@datacenter'), `astreinte ${largeur} px : l’incident s’ouvre`);
-  verifier((await jeu.locator('.jauge-astreinte').textContent()).includes('30:00 (100 %)'), `astreinte ${largeur} px : le budget est plein`);
+  verifier((await jeu.locator('.jauge-astreinte').textContent()).includes('30:00 (100 %)') && (await jeu.locator('.bouton-incident').isDisabled()), `astreinte ${largeur} px : le budget est plein, pas de seconde astreinte`);
   await page.clock.runFor(60_000);
   verifier((await jeu.locator('.jauge-astreinte').textContent()).includes('29:00'), `astreinte ${largeur} px : le budget fond avec le temps`);
   const L = '/var/log/nginx/access.log';
@@ -593,7 +593,7 @@ for (const largeur of [1000, 375]) {
   const fin = jeu.locator('dialog.fenetre-astreinte').last();
   verifier(await fin.evaluate((d) => d.open), `astreinte ${largeur} px : la carte de score s’ouvre à la fin`);
   const carte = await fin.locator('.carte-score').textContent();
-  verifier(carte.includes('astreinte du 2027-02-18') && carte.includes('« Premier jour »') && /[🟩🟨⬜]{5} \d+ % du budget/.test(carte) && carte.includes('une erreur'), `astreinte ${largeur} px : la carte de score`);
+  verifier(carte.includes('astreinte du 2027-01-18') && carte.includes('« Premier jour »') && /[🟩🟨⬜]{5} \d+ % du budget/.test(carte) && carte.includes('une erreur'), `astreinte ${largeur} px : la carte de score`);
   const boite = await fin.boundingBox();
   verifier(boite.x >= 0 && boite.x + boite.width <= largeur, `astreinte ${largeur} px : la fenêtre tient dans l’écran`);
   await page.keyboard.press('Escape');
