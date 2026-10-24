@@ -20,7 +20,7 @@ describe('Coloration de la ligne de commande', () => {
     const s = sh();
     expect(genres(s, 'ls')).toEqual([['ls', 'commande']]);
     expect(genres(s, 'lss')).toEqual([['lss', 'inconnue']]);
-    // nmap n'existe pas dans le jeu ; echo existe, mais pas encore dans ce chapitre : le shell refuserait.
+    // nmap et echo existent dans le jeu, mais pas encore dans ce chapitre : le shell refuserait.
     expect(genres(s, 'nmap')[0][1]).toBe('inconnue');
     expect(genres(s, 'echo x')[0][1]).toBe('inconnue');
     expect(genres(s, '/bin/ls')).toEqual([['/bin/ls', 'commande']]);

@@ -5,6 +5,7 @@
 
 import { balayer, VERSION_NMAP, type Options } from '../scan';
 import type { Commande } from './index';
+import { aide } from './manuel';
 
 const INVALIDE = (o: string) => `nmap: invalid option -- '${o}'\nSee the output of nmap -h for a summary of options.`;
 
@@ -27,6 +28,8 @@ export const NMAP: Record<string, Commande> = {
   nmap: {
     propresOptions: true,
     lancer: ({ args, jeu }) => {
+      // -h : le résumé des options, comme --help.
+      if (args.includes('-h')) return aide('nmap', NMAP.nmap, jeu.t);
       if (args.includes('-V') || args.includes('--version'))
         return `Nmap version ${VERSION_NMAP} ( https://nmap.org )\nPlatform: x86_64-pc-linux-gnu\nCompiled with: liblua-5.4.7 openssl-3.5.1 libssh2-1.11.1 libz-1.3.1 libpcre2-10.45 libpcap-1.10.5 nmap-libdnet-1.12 ipv6\nCompiled without:\nAvailable nsock engines: epoll poll select`;
       const o: Options = { versions: false, ping: false, sansPing: false, nombres: false, ouvertsSeulement: false, ports: null };
