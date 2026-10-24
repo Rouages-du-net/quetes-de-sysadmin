@@ -133,7 +133,11 @@ export const contreVisite: Chapitre = {
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },
     }),
   }),
-  initialiser: (j) => chargerSshd(j),
+  initialiser: (j) => {
+    chargerSshd(j);
+    // Salomé ne relit que ce qui a changé : l'état de départ compte comme déjà lu.
+    j.etat.rapportLu = lireRapport(j);
+  },
   creerMonde: (t) =>
     mondeFournil(t, {
       sansLucas: true,

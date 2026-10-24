@@ -78,7 +78,11 @@ export const perimetre: Chapitre = {
     },
     systemd: nouveauSystemd('fournil', MAINTENANT - 5 * 86_400_000, MAINTENANT, { ssh: serviceSsh() }),
   }),
-  initialiser: (j) => chargerSshd(j),
+  initialiser: (j) => {
+    chargerSshd(j);
+    // Salomé ne relit que ce qui a changé : le modèle de départ compte comme déjà lu.
+    j.etat.notesLues = lireNotes(j);
+  },
   creerMonde: (t) =>
     mondeFournil(t, {
       maison: {

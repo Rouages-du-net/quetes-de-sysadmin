@@ -33,6 +33,17 @@ for (const langue of LANGUES)
       return { c, jouer, editer };
     };
 
+    it('Salomé ne relit qu’après un enregistrement, pas à la première commande ; nmap -h donne l’aide', () => {
+      const t = traducteur(langue);
+      const { jouer } = partie();
+      const tout = jouer(['ls', 'nmap -h']);
+      expect(tout).not.toContain(t('perimetre-relecture'));
+      expect(tout).not.toContain('invalid option');
+      contient(tout, 'Utilisation : nmap');
+      const contre = partie(['perimetre', 'rapport', 'exposition', 'traces']);
+      expect(contre.jouer(['ls'])).not.toContain(t('contre-visite-relecture'));
+    });
+
     it('chapitre 2 — solution : root fermé, Lucas supprimé, sudo avec mot de passe, secret en 600', () => {
       const { c, jouer, editer } = partie(['perimetre']);
       let tout = jouer(['cat rapport-audit.txt', 'sudo -l', 'ls -l /srv/commandes']);
