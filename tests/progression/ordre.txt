@@ -64,3 +64,4 @@ perimetre
 contre-visite
 fatigue
 disque-neuf
+agrandir

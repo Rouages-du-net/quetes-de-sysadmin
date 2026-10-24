@@ -92,6 +92,11 @@ sfdisk-interactif =
     sfdisk : le mode interactif n'existe pas dans ce jeu. Donne-lui un script
     sur son entrée standard : par exemple la table d'un autre disque,
     sfdisk -d /dev/sda | sudo sfdisk /dev/sdb (voir man sfdisk).
+# mdadm --create d'un autre niveau que RAID 1 (écart du jeu)
+# { $niveau } : le niveau demandé
+mdadm-niveau = mdadm : dans ce jeu, seul le RAID 1 (--level=1) est simulé, pas « { $niveau } ».
+update-initramfs-usage =
+    Usage: update-initramfs {"{"} -c | -d | -u {"}"} [-k version] [-v] [-b directory]
 umount-usage =
     Usage:
      umount [-hV]

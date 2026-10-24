@@ -194,6 +194,112 @@ for (const langue of LANGUES)
       expect(jouer(['man -k RAID'])).toContain('mdadm (8)');
     });
 
+    it('chapitre 3 — solution : une grappe des disques neufs, pvcreate, vgextend, lvextend puis resize2fs, mdadm.conf, initramfs', () => {
+      const { s, jouer, st } = partie('agrandir');
+      let tout = jouer(['cat message_d_odile.txt', 'df -h /srv', 'sudo vgs', 'lsblk']);
+      expect(tout).toMatch(/\/dev\/mapper\/labo-photos.* 97% \/srv/);
+      expect(tout).toMatch(/labo +1 +1 +0 wz--n- <1\.79t +0\n/);
+      expect(tout).toMatch(/^sdc +8:32 +0 3\.6T +0 disk$/m);
+      contient(tout, 'un volume logique LVM');
+      tout = jouer(['sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 /dev/sdc /dev/sdd']);
+      expect(tout).toContain('may not be suitable as a boot device');
+      tout = jouer(['y', 'cat /proc/mdstat']);
+      expect(tout).toContain('mdadm: array /dev/md2 started.');
+      expect(tout).toMatch(/md2 : active raid1 sdd\[1\] sdc\[0\]\n +\d+ blocks super 1\.2 \[2\/2\] \[UU\]\n +\[=*>\.*\] +resync = /);
+      tout = jouer(['sudo pvcreate /dev/md2', 'sudo vgextend labo /dev/md2', 'sudo lvextend -l +100%FREE /dev/labo/photos', 'df -h /srv']);
+      expect(tout).toContain('Physical volume "/dev/md2" successfully created.');
+      expect(tout).toContain('Volume group "labo" successfully extended');
+      expect(tout).toMatch(/Size of logical volume labo\/photos changed from <1\.79 TiB \(\d+ extents\) to <5\.43 TiB/);
+      expect(tout).toMatch(/ 97% \/srv/);
+      contient(tout, 'df ne voit rien');
+      tout = jouer(['sudo resize2fs /dev/mapper/labo-photos', 'df -h /srv']);
+      expect(tout).toContain('on-line resizing required');
+      expect(tout).toMatch(/ 32% \/srv/);
+      expect(s.termine).toBe(false);
+      tout = jouer(['sudo mdadm --detail --brief /dev/md2 | sudo tee -a /etc/mdadm/mdadm.conf']);
+      expect(tout).toMatch(/^ARRAY \/dev\/md2 metadata=1\.2 name=labo:2 UUID=[0-9a-f:]{35}$/m);
+      expect(s.termine).toBe(false);
+      tout = jouer(['sudo update-initramfs -u']);
+      expect(tout).toContain('update-initramfs: Generating /boot/initrd.img-6.12.48+deb13-amd64');
+      contient(tout, 'Tu as terminé le chapitre 3 du Labo');
+      expect(Object.keys(st().lvm!.pvs).sort()).toEqual(['md1', 'md2']);
+      expect(s.termine).toBe(true);
+    });
+
+    it('chapitre 3 — autre solution : --run, vgextend sans pvcreate, lvextend -r -L, mdadm.conf écrit avec nano', () => {
+      const { s, jouer } = partie('agrandir');
+      let tout = jouer(['sudo mdadm -C /dev/md2 -l1 -n2 --run /dev/sdc /dev/sdd', 'sudo vgextend labo /dev/md2', 'sudo lvextend -r -L +2T /dev/labo/photos']);
+      expect(tout).toContain('Physical volume "/dev/md2" successfully created.');
+      expect(tout).toContain('File system ext4 found on labo/photos mounted at /srv.');
+      expect(tout).toContain('Extended file system ext4 on labo/photos.');
+      tout = jouer(['sudo mdadm --detail --brief /dev/md2']);
+      const ligne = /ARRAY .*/.exec(tout)![0];
+      s.executer('sudo nano /etc/mdadm/mdadm.conf');
+      s.enregistrerEdition(s.edition!.texte + '\n' + ligne + '\n');
+      s.quitterEdition();
+      jouer(['sudo update-initramfs -u']);
+      expect(s.termine).toBe(true);
+    });
+
+    it('chapitre 3 — fausse piste : un disque seul dans le groupe, réparé par une grappe dégradée et pvmove', () => {
+      const { s, jouer, st } = partie('agrandir');
+      // sdc donné tel quel à LVM, et le volume agrandi dessus : plus de redondance.
+      let tout = jouer(['sudo vgextend labo /dev/sdc', 'sudo lvextend -r -L +500G /dev/labo/photos']);
+      expect(tout).toContain('Volume group "labo" successfully extended');
+      contient(tout, 'tel quel, sans');
+      // Il ne peut ni entrer dans une grappe, ni quitter le groupe tant qu'il porte des données.
+      tout = jouer(['sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 /dev/sdc /dev/sdd', 'sudo vgreduce labo /dev/sdc', 'sudo pvmove /dev/sdc']);
+      expect(tout).toContain('mdadm: cannot open /dev/sdc: Device or resource busy');
+      expect(tout).toContain('Physical volume "/dev/sdc" still in use');
+      expect(tout).toMatch(/Insufficient free space: \d+ extents needed, but only 0 available/);
+      // Une grappe dégradée sur sdd, les données déménagées, sdc libéré puis ajouté à la grappe.
+      tout = jouer([
+        'sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 --run /dev/sdd missing',
+        'sudo vgextend labo /dev/md2',
+        'sudo pvmove /dev/sdc /dev/md2',
+        'sudo vgreduce labo /dev/sdc',
+        'sudo pvremove /dev/sdc',
+        'sudo mdadm /dev/md2 --add /dev/sdc',
+        'cat /proc/mdstat',
+      ]);
+      expect(tout).toContain('/dev/sdc: Moved: 100.00%');
+      expect(tout).toContain('Removed "/dev/sdc" from volume group "labo"');
+      expect(tout).toContain('Labels on physical volume "/dev/sdc" successfully wiped.');
+      expect(tout).toContain('mdadm: added /dev/sdc');
+      expect(tout).toMatch(/md2 : active raid1 sdc\[\d\] sdd\[0\]/);
+      // 500 Go ne suffisent pas pour le concours : le reste de la place.
+      expect(s.termine).toBe(false);
+      jouer(['sudo lvextend -r -l +100%FREE /dev/labo/photos', 'sudo mdadm --detail --brief /dev/md2 | sudo tee -a /etc/mdadm/mdadm.conf', 'sudo update-initramfs -u']);
+      expect(Object.keys(st().lvm!.pvs).sort()).toEqual(['md1', 'md2']);
+      expect(s.termine).toBe(true);
+    });
+
+    it('chapitre 3 — fausses pistes : lvextend sans le système de fichiers, les doublons de --scan, l’initramfs refait trop tôt', () => {
+      const { s, jouer } = partie('agrandir');
+      jouer(['sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 --run /dev/sdc /dev/sdd', 'sudo vgextend labo /dev/md2', 'sudo lvextend -l +100%FREE /dev/labo/photos']);
+      let tout = jouer(['sudo lvextend -l +100%FREE /dev/labo/photos', 'sudo update-initramfs -u', 'sudo resize2fs /dev/labo/photos', 'sudo resize2fs /dev/labo/photos']);
+      expect(tout).toMatch(/New size \(\d+ extents\) matches existing size/);
+      expect(tout).toMatch(/The filesystem is already \d+ \(4k\) blocks long\.  Nothing to do!/);
+      tout = jouer(['sudo mdadm --detail --scan | sudo tee -a /etc/mdadm/mdadm.conf']);
+      contient(tout, 'décrit maintenant une grappe deux fois');
+      expect(s.termine).toBe(false);
+      // Une ligne par grappe, puis l'initramfs à refaire (celui d'avant ne connaît pas md2).
+      s.executer('sudo nano /etc/mdadm/mdadm.conf');
+      const vues = new Set<string>();
+      const garder = (l: string) => {
+        if (!l.startsWith('ARRAY')) return true;
+        const uuid = /UUID=([0-9a-f:]+)/.exec(l)![1];
+        if (vues.has(uuid)) return false;
+        vues.add(uuid);
+        return true;
+      };
+      s.enregistrerEdition(s.edition!.texte.split('\n').filter(garder).join('\n'));
+      s.quitterEdition();
+      expect(s.termine).toBe(false);
+      jouer(['sudo update-initramfs -u']);
+      expect(s.termine).toBe(true);
+    });
+
     it('l’histoire s’ouvre après « Le disque plein », et se joue depuis le poste', () => {
       const avant = prerequis('labo');
       expect(avant).toContain('disque-plein');

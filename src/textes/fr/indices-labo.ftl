@@ -44,3 +44,27 @@ indice-disque-neuf-grub =
 indice-disque-neuf-fin =
     .piste = Il faut tout à la fois : sdb découpé comme sda, les deux grappes complètes et à jour, et GRUB sur sdb.
     .solution = lsblk, cat /proc/mdstat ([UU] partout), sudo grub-install /dev/sdb si ce n'est pas fait.
+
+## Chapitre 3 — La place qui manque
+
+indice-agrandir-plein =
+    .piste = Regarde l'occupation des systèmes de fichiers (man df) : lequel est plein, et sur quel périphérique ?
+    .solution = df -h : /srv, sur /dev/mapper/labo-photos, est plein à 97 %.
+indice-agrandir-lvm =
+    .piste = /srv est un volume logique LVM : regarde ses trois étages, volumes physiques, groupes et volumes logiques (man pvs, man vgs, man lvs).
+    .solution = sudo vgs (VFree à 0), sudo pvs (md1 seul), sudo lvs ; puis lsblk : sdc et sdd sont neufs.
+indice-agrandir-grappe =
+    .piste = Avant de donner les disques neufs à LVM, fais-en une grappe RAID 1, pour garder deux copies (man mdadm, la création d'une grappe).
+    .solution = sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 /dev/sdc /dev/sdd, puis y pour confirmer.
+indice-agrandir-etendu =
+    .piste = La grappe neuve doit devenir un volume physique, puis entrer dans le groupe labo (man pvcreate, man vgextend).
+    .solution = sudo pvcreate /dev/md2, puis sudo vgextend labo /dev/md2 (sudo vgs : VFree a grandi).
+indice-agrandir-agrandi =
+    .piste = Agrandis le volume logique des photos, puis le système de fichiers qu'il porte (man lvextend, man resize2fs).
+    .solution = sudo lvextend -r -l +100%FREE /dev/labo/photos (ou lvextend sans -r, puis sudo resize2fs /dev/labo/photos) ; df -h /srv pour vérifier.
+indice-agrandir-conf =
+    .piste = La nouvelle grappe doit être déclarée dans /etc/mdadm/mdadm.conf, une seule fois : mdadm sait écrire sa ligne ARRAY (man mdadm). Attention, ce fichier appartient à root.
+    .solution = sudo mdadm --detail --brief /dev/md2 | sudo tee -a /etc/mdadm/mdadm.conf
+indice-agrandir-fin =
+    .piste = Le démarrage lit une copie de mdadm.conf, rangée dans l'initramfs : refais-le (man update-initramfs). Il faut aussi au moins 1,5 To libres sur /srv, et aucun disque seul dans le groupe.
+    .solution = sudo update-initramfs -u

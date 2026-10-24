@@ -313,8 +313,9 @@ qui travaille sur les machines plutôt que sur les commutateurs).
       (smartd, `smartctl`, `/proc/mdstat`, `mdadm --fail/--remove`, le
       numéro de série) et « Le disque neuf » (`sfdisk -d | sfdisk`,
       `mdadm --add`, la reconstruction, `grub-install`)
-- [ ] Le Labo, chapitre 3 : une nouvelle grappe et LVM (`mdadm --create`,
-      `pvcreate`, `vgextend`, `lvextend -r`, `resize2fs`)
+- [x] Le Labo, chapitre 3 : « La place qui manque » (`mdadm --create`,
+      `pvcreate`, `vgextend`, `lvextend -r`, `resize2fs`, `mdadm.conf`,
+      `update-initramfs`)
 - [ ] Le Labo, chapitre 4 : `/etc/fstab` par UUID, `nofail`, le mode secours
 - [ ] Journaux qui défilent et attaques pendant une quête (défensif)
 - [ ] Histoire : le courrier qui arrive en spam (SPF, DKIM, DMARC, Postfix)

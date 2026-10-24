@@ -11,6 +11,7 @@ import type { Jeu, Shell } from '../shell';
 import type { Traduire } from '../../textes';
 import { nouveauSystemd, type DefinitionService } from '../systemd';
 import { dossierDev, majDev, mdstat, stockage, type Disque, type Partition, type Smart, type Stockage } from '../stockage';
+import { allouer, etenduesPv, tailleLv, type VolumeLogique } from '../lvm';
 import { tempsQuiPasse } from '../commandes/stockage';
 
 export const M = '/home/vous';
@@ -18,11 +19,16 @@ export const MOT_DE_PASSE = 'argentique-2027';
 // Samedi 13 novembre 2027, 7 h 42.
 export const MAINTENANT = Date.UTC(2027, 10, 13, 7, 42, 0);
 const DEMARRAGE = Date.UTC(2027, 9, 2, 4, 11, 0);
+// Le chapitre 3 : samedi 15 janvier 2028, 10 h ; le serveur a redémarré pour brancher les disques.
+export const MAINTENANT_PLACE = Date.UTC(2028, 0, 15, 10, 0, 0);
+const DEMARRAGE_PLACE = Date.UTC(2028, 0, 15, 6, 40, 0);
 const SECTEURS = 3_907_029_168;
 
 // Les numéros de série : celui du disque qui fatigue, de l'autre, et du neuf.
-export const SERIES = { sda: 'LB7K2A0F31C4', sdb: 'LB7K2A0F58E9', neuf: 'LB7K2B1D07A2' };
+export const SERIES = { sda: 'LB7K2A0F31C4', sdb: 'LB7K2A0F58E9', neuf: 'LB7K2B1D07A2', sdc: 'LB4K2C0E19F3', sdd: 'LB4K2C0E2A47' };
 export const MODELE = 'LB2000-7K2';
+const MODELE_4T = 'LB4000-7K2';
+const SECTEURS_4T = 7_814_037_168;
 
 export const comptesLabo = (): Comptes => ({
   utilisateurs: {
@@ -60,24 +66,37 @@ const disque = (rang: number, serie: string, smart: Smart, table: string | null,
   rang,
 });
 
+export type Moment = 'fatigue' | 'neuf' | 'place';
+
 /**
  * Le stockage du serveur au début d'un chapitre : 'fatigue' (sdb s'abîme,
- * tout est encore en RAID) ou 'neuf' (sdb vient d'être remplacé par un
- * disque vierge, les grappes tournent sur sda seul).
+ * tout est encore en RAID), 'neuf' (sdb vient d'être remplacé par un disque
+ * vierge, les grappes tournent sur sda seul) ou 'place' (tout est réparé, et
+ * l'hébergeur a branché deux disques neufs de 4 To, sdc et sdd). Les photos
+ * sont dans un volume logique (LVM) posé sur md1, comme l'installateur de
+ * Debian le propose (« RAID puis LVM »).
  */
-export function stockageLabo(moment: 'fatigue' | 'neuf'): Stockage {
+export function stockageLabo(moment: Moment): Stockage {
   const neuf = moment === 'neuf';
   const sdb = neuf
     ? disque(1, SERIES.neuf, smartSain(3), null, [])
+    : moment === 'place'
+      ? disque(1, SERIES.neuf, smartSain(412), '6A1B3C5D-7E9F-4012-8A3B-C4D5E6F70812', partitions('1A3B'))
     : disque(1, SERIES.sdb, { heures: 28_509, temperature: 37, realloues: 1208, enAttente: 8, illisibles: 8, crc: 0, erreursAta: 37 }, '6A1B3C5D-7E9F-4012-8A3B-C4D5E6F70812', partitions('2B4C'));
   const membres = (n: number) => [
     { part: `sda${n}`, numero: 0, role: 0, etat: 'actif' as const },
     ...(neuf ? [] : [{ part: `sdb${n}`, numero: 1, role: 1, etat: 'actif' as const }]),
   ];
-  return {
+  const st: Stockage = {
     disques: {
       sda: disque(0, SERIES.sda, smartSain(28_512), '6A1B3C5D-7E9F-4012-8A3B-C4D5E6F70812', partitions('1A3B')),
       sdb,
+      ...(moment === 'place'
+        ? {
+            sdc: { ...disque(2, SERIES.sdc, smartSain(2), null, []), modele: MODELE_4T, secteurs: SECTEURS_4T },
+            sdd: { ...disque(3, SERIES.sdd, smartSain(2), null, []), modele: MODELE_4T, secteurs: SECTEURS_4T },
+          }
+        : {}),
     },
     grappes: {
       md0: { niveau: 'raid1', voulus: 2, blocs: 33_520_640, uuid: '5d1e0a3c-7b2f-4e91-a6c8-3f0d9b1e2c47', nom: 'labo:0', membres: membres(2), evenements: neuf ? 4182 : 4171, creation: Date.UTC(2024, 2, 6, 10, 12, 31), rang: 0 },
@@ -85,6 +104,12 @@ export function stockageLabo(moment: 'fatigue' | 'neuf'): Stockage {
     },
     grub: neuf ? ['sda'] : ['sda', 'sdb'],
   };
+  // Le volume des photos prend tout le groupe labo (un seul PV : md1).
+  const photos: VolumeLogique = { segments: [], fs: 0, point: '/srv', mineur: 0 };
+  st.lvm = { pvs: { md1: { vg: 'labo', uuid: 'q3Xk7v-Lb2N-9fRt-Wm4P-cH8s-Jd5Y-a1ZeQo' } }, vgs: { labo: { uuid: 'Hn4w2B-pT6e-Rk9M-sL3v-Qa7X-dF1c-Zg8Y0u', lvs: { photos } } } };
+  allouer(st, photos, etenduesPv(st, 'md1'), ['md1']);
+  photos.fs = tailleLv(photos);
+  return st;
 }
 
 export const st = (j: Jeu) => stockage(j)!;
@@ -118,19 +143,30 @@ const services = (): Record<string, DefinitionService> => ({
 });
 
 /** L'état de la machine au début d'un chapitre (systemd, stockage, montages). */
-export const etatLabo = (moment: 'fatigue' | 'neuf') => ({
-  systemd: nouveauSystemd('labo', DEMARRAGE, MAINTENANT, services()),
-  stockage: stockageLabo(moment),
-  montages: [
-    { chemin: '/', capacite: 33_000_000_000, nom: '/dev/md0', systeme: 'ext4' },
-    { chemin: '/srv', capacite: 1_889_000_000_000, nom: '/dev/md1', systeme: 'ext4' },
-  ],
-});
+export const etatLabo = (moment: Moment) => {
+  const stockage = stockageLabo(moment);
+  return {
+    systemd: nouveauSystemd('labo', moment === 'place' ? DEMARRAGE_PLACE : DEMARRAGE, moment === 'place' ? MAINTENANT_PLACE : MAINTENANT, services()),
+    stockage,
+    montages: [
+      { chemin: '/', capacite: 33_000_000_000, nom: '/dev/md0', systeme: 'ext4' },
+      { chemin: '/srv', capacite: stockage.lvm!.vgs.labo.lvs.photos.fs, nom: '/dev/mapper/labo-photos', systeme: 'ext4' },
+    ],
+  };
+};
 
 /** Les messages du noyau : les erreurs de lecture de sdb (chapitre 1), ou son remplacement (chapitre 2). */
-export function noyauLabo(j: Jeu, moment: 'fatigue' | 'neuf'): void {
+export function noyauLabo(j: Jeu, moment: Moment): void {
+  const debut = moment === 'place' ? DEMARRAGE_PLACE : DEMARRAGE;
+  const disquesNeufs = (['sdc', 'sdd'] as const).flatMap((d, i): [number, string][] => [
+    [debut + 3000 + i * 10, `ata${i + 3}.00: ATA-11: LB4000-7K2, LB07, max UDMA/133`],
+    [debut + 3100 + i * 10, `sd ${i + 2}:0:0:0: [${d}] 7814037168 512-byte logical blocks: (4.00 TB/3.64 TiB)`],
+    [debut + 3200 + i * 10, `sd ${i + 2}:0:0:0: [${d}] Attached SCSI disk`],
+  ]);
   const lignes: [number, string][] =
-    moment === 'fatigue'
+    moment === 'place'
+      ? disquesNeufs
+      : moment === 'fatigue'
       ? [
           [Date.UTC(2027, 10, 11, 3, 12, 40), 'ata2.00: exception Emask 0x0 SAct 0x40000 SErr 0x0 action 0x0'],
           [Date.UTC(2027, 10, 11, 3, 12, 40), 'ata2.00: irq_stat 0x40000008'],
@@ -161,9 +197,9 @@ export function noyauLabo(j: Jeu, moment: 'fatigue' | 'neuf'): void {
           [Date.UTC(2027, 10, 14, 7, 6, 52), 'sd 1:0:0:0: [sdb] Attached SCSI disk'],
         ];
   j.etat.noyau = [
-    { temps: DEMARRAGE, texte: 'Linux version 6.12.48+deb13-amd64 (debian-kernel@lists.debian.org)' },
-    { temps: DEMARRAGE + 2000, texte: 'md/raid1:md0: active with 2 out of 2 mirrors' },
-    { temps: DEMARRAGE + 2100, texte: 'md/raid1:md1: active with 2 out of 2 mirrors' },
+    { temps: debut, texte: 'Linux version 6.12.48+deb13-amd64 (debian-kernel@lists.debian.org)' },
+    { temps: debut + 2000, texte: 'md/raid1:md0: active with 2 out of 2 mirrors' },
+    { temps: debut + 2100, texte: 'md/raid1:md1: active with 2 out of 2 mirrors' },
     ...lignes.map(([temps, texte]) => ({ temps, texte })),
   ];
 }
@@ -204,7 +240,7 @@ export const boiteSmartd = () =>
   ].join('\n');
 
 /** Le monde de la machine : le système, les photos, et ce que le chapitre ajoute dans la maison et ailleurs. */
-export function mondeLabo(t: Traduire, maison: Record<string, ReturnType<typeof f>>, plus: { mail?: string } = {}): Dossier {
+export function mondeLabo(t: Traduire, maison: Record<string, ReturnType<typeof f>>, plus: { mail?: string; hiver?: boolean } = {}): Dossier {
   const racine: Droits = { proprio: 'root' };
   const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
   const fichier = (texte: string, droits: Droits = racine) => f(texte, { lignes: true, ...droits });
@@ -252,7 +288,14 @@ export function mondeLabo(t: Traduire, maison: Record<string, ReturnType<typeof 
         {
           '2025': lieu({ 'expo-printemps': lieu({ 'tirages.tar': photo(48_000_000_000) }, { proprio: 'www-data' }) }, { proprio: 'www-data' }),
           '2026': lieu({ 'sortie-port': lieu({ 'raw.tar': photo(212_000_000_000) }, { proprio: 'www-data' }) }, { proprio: 'www-data' }),
-          '2027': lieu({ 'concours-nuit': lieu({ 'raw.tar': photo(391_000_000_000) }, { proprio: 'www-data' }) }, { proprio: 'www-data' }),
+          '2027': lieu(
+            {
+              'concours-nuit': lieu({ 'raw.tar': photo(391_000_000_000) }, { proprio: 'www-data' }),
+              // Chapitre 3 : les archives de l'automne, versées d'un coup.
+              ...(plus.hiver ? { 'archives-automne': lieu({ 'raw.tar': photo(1_259_000_000_000) }, { proprio: 'www-data' }) } : {}),
+            },
+            { proprio: 'www-data' },
+          ),
         },
         { proprio: 'www-data', groupe: 'www-data' },
       ),

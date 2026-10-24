@@ -58,7 +58,8 @@ disque-neuf-evenement-fin =
     Odile: "So if a disk fails again, we lose nothing, and the server still
     restarts? Great."
 
-    Well done! You finished chapter 2 of The Lab.
+    Well done! You finished chapter 2 of The Lab. (What comes next is
+    waiting for you: ssh labo.)
 
     WHAT HAPPENED
     The new disk was blank. You copied sda's partition table (sfdisk -d,

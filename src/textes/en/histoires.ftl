@@ -30,4 +30,4 @@ histoire-ruche = The Hive
 histoire-audit = The Audit
     .resume = The bakery's insurer wants an audit: read the letter of engagement and take an inventory with nmap without leaving the scope, fix an auditor's findings (SSH, accounts, sudo, secrets), close what is exposed on the network, trace an unexpected login, then prove with nmap and Lynis that everything holds.
 histoire-labo = The Lab
-    .resume = The photo club's server: a disk wearing out, what SMART really says, software RAID, replacing a disk without losing anything and without picking the wrong disk.
+    .resume = The photo club's server: a disk wearing out, what SMART really says, software RAID, replacing a disk without losing anything or picking the wrong disk, then growing the space with LVM.

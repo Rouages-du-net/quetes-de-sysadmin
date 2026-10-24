@@ -190,6 +190,9 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `mdadm` | RAID 1 seulement : `--detail` (`-D`), `--detail --scan`, mode « manage » (`--fail`, `--remove` dont `failed`, `--add`, `--re-add`, plusieurs à la suite) ; refus du vrai noyau (retirer un membre actif, marquer défectueux le dernier membre à jour, une partition déjà prise) ; reconstruction une grappe à la fois, une demi-heure par commande ; le disque entier dans une grappe efface sa table | `--create`, `--assemble`, `--grow`, `--examine`, `--zero-superblock`, `--monitor`, autres niveaux de RAID, bitmap réel (`--re-add` se rattrape plus vite) |
 | `sfdisk` | tables GPT : `-l`, `-d`, écriture d'un script lu sur l'entrée standard (celui de `-d`) ; refuse un disque en service ; recopie les identifiants du script, comme le vrai | mode interactif (un message l'explique), `--force`, `--no-reread`, tables MBR, scripts écrits à la main au-delà de `start=`, `size=`, `type=`, `uuid=` |
 | `grub-install` | `grub-install /dev/DISQUE` en mode BIOS sur table GPT : il faut la partition « BIOS boot » ; refuse une partition | UEFI, `--target`, `--boot-directory`, `update-grub` |
+| `mdadm --create` | RAID 1 seulement (`--level`, `--raid-devices`, `--run`, `missing`), sur disques ou partitions libres ; la vraie question « Continue creating array? » ; la synchronisation initiale avance avec les commandes | autres niveaux, `--chunk`, `--bitmap`, `--name`, `--homehost` |
+| LVM (`pvs`, `vgs`, `lvs`, `pvcreate`, `pvremove`, `vgextend`, `vgreduce`, `pvmove`, `lvextend`) | étendues de 4 Mio, segments par PV ; `lvextend -L`/`-l` (`+`, `%FREE`, `%VG`), `-r` (sortie de lvm2 2.03) ; refus réels (disque partitionné, membre d'une grappe, PV encore utilisé, place insuffisante) ; colonnes par défaut seulement | `lvcreate`, `lvreduce`, `lvremove`, instantanés, volumes fins, `-o`, `--units`, `pvdisplay`… |
+| `resize2fs`, `update-initramfs` | `resize2fs` agrandit l'ext4 d'un LV à sa taille (à chaud) ; `update-initramfs -u` garde une copie de `mdadm.conf` | rétrécir, une taille donnée, autres systèmes de fichiers ; le contenu réel de l'initramfs |
 | `rsnapshot` | `configtest`, `-t`, `-v`, `du`, la rotation des niveaux (`cp -al` puis `rsync`) ; une partie des directives ; messages proches de rsnapshot 1.4 | `backup_script`, `link_dest`, `sync_first`, sauvegardes distantes |
 | PostgreSQL | rôles et authentification « peer » ; `psql -c/-f/-l` avec un SQL réduit (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `ALTER ROLE … PASSWORD` par le compte `postgres`, `\l`, `\dt`, `\d`, `\du`) ; le mot de passe d'un rôle n'est lu que par l'appli d'un chapitre (« Les traces ») ; `pg_dump` (texte, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb` ; une archive `-Fc` ne contient qu'une référence gardée par le jeu ; une seule clé primaire par table | tout PostgreSQL, psql interactif, WAL et restauration à un instant donné |
 | `lsof`, `truncate`, `logrotate` | `lsof` ne connaît que les fichiers ouverts décrits par le chapitre (`+L1`, `-p`, `-u`, un fichier) ; `logrotate` : une partie des directives, `-d`, `-f`, `-v`, sorties abrégées | toutes les options, tous les fichiers ouverts du système |
@@ -1185,7 +1188,7 @@ déclencheur et la cause (`flux.conf`, depuis le 20 août), au moins deux
 actions, et aucun mot qui cherche un coupable (liste dans le fichier de
 textes). Zoé relit à chaque enregistrement et dit ce qui manque.
 
-## Histoire 15 : Le Labo (deux chapitres, deux autres prévus)
+## Histoire 15 : Le Labo (trois chapitres, un quatrième prévu)
 
 Le serveur du Labo, le club photo du quartier (machine `labo`), loué chez un
 hébergeur : deux disques de 2 To en RAID 1 logiciel. `md0` porte le système
@@ -1229,14 +1232,29 @@ inversé (`sfdisk` refuse d'écrire sur `sda`, en service) ; le disque entier
 dans une grappe (sa table est écrasée) ; GRUB sur une partition, ou sur un
 disque sans partition « BIOS boot ».
 
-### Chapitre 3 — La place qui manque (prévu)
+Depuis le chapitre 1, les photos sont dans un volume logique LVM
+(`labo/photos`, monté sur `/srv`) posé sur `md1`, comme l'installateur de
+Debian le propose (« RAID puis LVM ») ; `lvm.ts` décrit LVM.
 
-Les photos de la saison remplissent `md1`. L'hébergeur ajoute deux disques :
-une nouvelle grappe (`mdadm --create`), LVM par-dessus (`pvcreate`,
-`vgextend`, `lvextend -r` ou `lvextend` puis `resize2fs`), sans casser la
-redondance (pas de disque seul dans le groupe de volumes : `vgreduce`,
-`pvmove` pour réparer). Fausse piste : `lvextend` sans agrandir le système
-de fichiers (`df` ne bouge pas).
+### Chapitre 3 — La place qui manque (fait)
+
+`/srv` est plein à 97 % et le concours d'hiver demande 1,5 To ; le groupe
+`labo` n'a plus de place. L'hébergeur a branché deux disques neufs de 4 To.
+
+| Étape | Commandes |
+|---|---|
+| Comprendre | `df -h`, `sudo vgs`, `sudo pvs`, `sudo lvs`, `lsblk` |
+| Une grappe des disques neufs | `sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 /dev/sdc /dev/sdd` (puis `y`) |
+| La donner à LVM | `sudo pvcreate /dev/md2`, `sudo vgextend labo /dev/md2` |
+| Agrandir | `sudo lvextend -r -l +100%FREE /dev/labo/photos` (ou `lvextend` puis `resize2fs`) |
+| Le démarrage | `sudo mdadm --detail --brief /dev/md2 \| sudo tee -a /etc/mdadm/mdadm.conf`, `sudo update-initramfs -u` |
+
+Fausses pistes : un disque seul dans le groupe (on répare avec une grappe
+dégradée `… /dev/sdd missing`, `pvmove`, `vgreduce`, `pvremove`, puis
+`mdadm --add`) ; `lvextend` sans le système de fichiers (`df` ne bouge pas) ;
+`sudo … >> mdadm.conf` (la redirection n'est pas faite par root) ;
+`mdadm --detail --scan` ajouté en entier (md0 et md1 en double) ;
+l'initramfs refait avant la dernière modification de `mdadm.conf`.
 
 ### Chapitre 4 — Le redémarrage qui coince (prévu)
 
