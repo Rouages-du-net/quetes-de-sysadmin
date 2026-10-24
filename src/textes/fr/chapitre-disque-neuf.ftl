@@ -60,7 +60,8 @@ disque-neuf-evenement-fin =
     Odile : « Donc si un disque lâche encore, on ne perd rien, et le serveur
     redémarre quand même ? Génial. »
 
-    Bravo ! Tu as terminé le chapitre 2 du Labo.
+    Bravo ! Tu as terminé le chapitre 2 du Labo. (La suite t'attend :
+    ssh labo.)
 
     CE QUI S'EST PASSÉ
     Le disque neuf était vierge. Tu as recopié la table de partitions de

@@ -49,6 +49,7 @@ import { HEURE } from './heure';
 import { SUPERVISION } from './supervision';
 import { TRANSFERTS } from './transferts';
 import { STOCKAGE } from './stockage';
+import { LVM } from './lvm';
 
 export interface Contexte {
   args: string[];
@@ -121,6 +122,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...SCRIPTS,
   ...DISQUES,
   ...STOCKAGE,
+  ...LVM,
   ...RSNAPSHOT,
   ...POSTGRES,
   ...JOURNAUX,

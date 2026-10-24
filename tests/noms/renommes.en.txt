@@ -587,6 +587,10 @@ disque-neuf
   /home/vous/message_d_odile.txt → /home/you/message_from_odile.txt
   /home/vous/procedure_hebergeur.txt → /home/you/host_procedure.txt
 
+agrandir
+  /home/vous → /home/you
+  /home/vous/message_d_odile.txt → /home/you/message_from_odile.txt
+
 poste
   /home/vous → /home/you
   /home/vous/bienvenue.txt → /home/you/welcome.txt

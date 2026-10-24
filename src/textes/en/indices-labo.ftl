@@ -44,3 +44,27 @@ indice-disque-neuf-grub =
 indice-disque-neuf-fin =
     .piste = You need everything at once: sdb split like sda, both arrays complete and up to date, and GRUB on sdb.
     .solution = lsblk, cat /proc/mdstat ([UU] everywhere), sudo grub-install /dev/sdb if not done yet.
+
+## Chapter 3 — Running out of room
+
+indice-agrandir-plein =
+    .piste = Look at how full the file systems are (man df): which one is full, and on which device?
+    .solution = df -h: /srv, on /dev/mapper/labo-photos, is 97% full.
+indice-agrandir-lvm =
+    .piste = /srv is an LVM logical volume: look at its three layers, physical volumes, groups and logical volumes (man pvs, man vgs, man lvs).
+    .solution = sudo vgs (VFree at 0), sudo pvs (md1 alone), sudo lvs; then lsblk: sdc and sdd are new.
+indice-agrandir-grappe =
+    .piste = Before giving the new disks to LVM, make a RAID 1 array of them, to keep two copies (man mdadm, creating an array).
+    .solution = sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 /dev/sdc /dev/sdd, then y to confirm.
+indice-agrandir-etendu =
+    .piste = The new array must become a physical volume, then join the labo group (man pvcreate, man vgextend).
+    .solution = sudo pvcreate /dev/md2, then sudo vgextend labo /dev/md2 (sudo vgs: VFree has grown).
+indice-agrandir-agrandi =
+    .piste = Grow the photos logical volume, then the file system it carries (man lvextend, man resize2fs).
+    .solution = sudo lvextend -r -l +100%FREE /dev/labo/photos (or lvextend without -r, then sudo resize2fs /dev/labo/photos); df -h /srv to check.
+indice-agrandir-conf =
+    .piste = The new array must be declared in /etc/mdadm/mdadm.conf, only once: mdadm can write its ARRAY line (man mdadm). Careful, the file belongs to root.
+    .solution = sudo mdadm --detail --brief /dev/md2 | sudo tee -a /etc/mdadm/mdadm.conf
+indice-agrandir-fin =
+    .piste = The boot reads a copy of mdadm.conf, kept in the initramfs: rebuild it (man update-initramfs). You also need at least 1.5 TB free on /srv, and no lone disk in the group.
+    .solution = sudo update-initramfs -u

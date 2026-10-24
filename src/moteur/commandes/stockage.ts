@@ -14,6 +14,7 @@ import type { Shell } from '../shell';
 import type { Commande } from './index';
 import { aide } from './manuel';
 import { systemd } from '../systemd';
+import { tailleDe, tailleLv } from '../lvm';
 import {
   actifs,
   avancer,
@@ -213,6 +214,7 @@ function detail(jeu: Shell, st: Stockage, nom: string): string {
   const etats = ['clean'];
   if (degradee(g)) etats.push('degraded');
   if (recons.length) etats.push(enCours ? 'recovering' : 'resyncing (DELAYED)');
+  if (g.synchro !== undefined) etats.push(enCours ? 'resyncing' : 'resyncing (DELAYED)');
   const defectueux = g.membres.filter((m) => m.etat === 'defectueux');
   const rangees: string[] = [];
   for (let r = 0; r < g.voulus; r++) {
@@ -244,6 +246,7 @@ function detail(jeu: Shell, st: Stockage, nom: string): string {
     `Consistency Policy : ${g.bitmap ? 'bitmap' : 'resync'}`,
     '',
     ...(recons.length && enCours ? [`    Rebuild Status : ${Math.floor((recons[0].copie ?? 0) * 100)}% complete`, ''] : []),
+    ...(g.synchro !== undefined && enCours ? [`     Resync Status : ${Math.floor(g.synchro * 100)}% complete`, ''] : []),
     `              Name : ${g.nom}  (local to host ${systemd(jeu)?.hote ?? jeu.hote})`,
     `              UUID : ${g.uuid}`,
     `            Events : ${g.evenements}`,
@@ -253,7 +256,7 @@ function detail(jeu: Shell, st: Stockage, nom: string): string {
   ].join('\n');
 }
 
-const uuidMdadm = (uuid: string) => uuid.replace(/-/g, '').replace(/(.{8})(?=.)/g, '$1:');
+export const uuidMdadm = (uuid: string) => uuid.replace(/-/g, '').replace(/(.{8})(?=.)/g, '$1:');
 
 function gerer(jeu: Shell, st: Stockage, nom: string, ops: [string, string[]][]): string {
   const g = st.grappes[nom];
@@ -301,7 +304,7 @@ function gerer(jeu: Shell, st: Stockage, nom: string, ops: [string, string[]][])
           jeu.erreur(`mdadm: Cannot find ${cible}: No such file or directory`);
           continue;
         }
-        if (grappeDe(st, part) || (disque && disqueOccupe(st, part)) || (p && grappeDe(st, p.disque))) {
+        if (grappeDe(st, part) || st.lvm?.pvs[part] || (disque && disqueOccupe(st, part)) || (p && grappeDe(st, p.disque))) {
           jeu.erreur(`mdadm: Cannot open ${cible}: Device or resource busy`);
           continue;
         }
@@ -356,6 +359,7 @@ function mdadm(jeu: Shell, args: string[]): string {
   if (!args.length) return jeu.erreur('Usage: mdadm --help\n  for help', 2);
   if (args.includes('--help') || args.includes('-h')) return aide('mdadm', STOCKAGE.mdadm, jeu.t);
   const st = stockage(jeu);
+  if (args[0] === '--create' || args[0] === '-C') return creer(jeu, st, args.slice(1));
   const detailMode = args.includes('--detail') || args.includes('-D');
   if (detailMode) {
     if (args.includes('--scan') || args.includes('-s')) {
@@ -367,6 +371,8 @@ function mdadm(jeu: Shell, args: string[]): string {
     }
     const cibles = args.filter((a) => !a.startsWith('-'));
     if (!cibles.length) return jeu.erreur('mdadm: No devices given.', 1);
+    // --brief : une ligne ARRAY par grappe, celle de mdadm.conf.
+    const bref = args.includes('--brief') || args.includes('-b');
     const sorties: string[] = [];
     for (const c of cibles) {
       if (jeu.qui !== 'root') {
@@ -378,7 +384,8 @@ function mdadm(jeu: Shell, args: string[]): string {
         jeu.erreur(partitionDe(st ?? { disques: {}, grappes: {}, grub: [] }, c) || /^\/dev\/sd[a-z]$/.test(c) ? `mdadm: ${c} does not appear to be an md device` : `mdadm: cannot open ${c}: No such file or directory`, 1);
         continue;
       }
-      sorties.push(detail(jeu, st!, n));
+      const g = st!.grappes[n];
+      sorties.push(bref ? `ARRAY /dev/${n} metadata=1.2 name=${g.nom} UUID=${uuidMdadm(g.uuid)}` : detail(jeu, st!, n));
     }
     return sorties.join('\n');
   }
@@ -400,6 +407,103 @@ function mdadm(jeu: Shell, args: string[]): string {
   if (!ops.length || ops.some(([, c]) => !c.length)) return jeu.erreur('mdadm: no devices given for ' + cible, 2);
   return gerer(jeu, st!, n, ops);
 }
+
+// mdadm --create : une grappe RAID 1 neuve, sur des disques ou des partitions libres.
+function creer(jeu: Shell, st: Stockage | null, args: string[]): string {
+  let niveau = '';
+  let nombre = 0;
+  let sansQuestion = false;
+  const positionnels: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    const valeur = (court: string, long: string) => (a === court || a === long ? args[++i] : a.startsWith(`${long}=`) ? a.slice(long.length + 1) : a.startsWith(court) && a.length > court.length ? a.slice(court.length) : null);
+    const l = valeur('-l', '--level');
+    const n = valeur('-n', '--raid-devices');
+    if (l !== null) niveau = l ?? '';
+    else if (n !== null) nombre = Number(n);
+    else if (a === '--run' || a === '-R') sansQuestion = true;
+    else if (a.startsWith('--metadata=') || a.startsWith('-e')) continue;
+    else if (a.startsWith('-')) return jeu.erreur(`mdadm: unrecognised option ${a}\nUsage: mdadm --help\n  for help`, 2);
+    else positionnels.push(a);
+  }
+  const [md, ...membres] = positionnels;
+  if (!md) return jeu.erreur('mdadm: an md device must be given in this mode', 2);
+  if (jeu.qui !== 'root') return jeu.erreur('mdadm: must be super-user to perform this action', 1);
+  const nom = sansDev(md).replace(/^md\//, 'md');
+  if (!st || !/^md\d+$/.test(nom)) return jeu.erreur(`mdadm: ${md} is an invalid name for an md device.  Try /dev/md/${nom.replace(/\D/g, '') || '0'}`, 1);
+  if (st.grappes[nom]) return jeu.erreur(`mdadm: ${md} is already in use.`, 1);
+  if (!niveau) return jeu.erreur('mdadm: a RAID level is needed to create an array.', 2);
+  if (!['1', 'raid1', 'mirror'].includes(niveau)) return jeu.erreur(jeu.t('mdadm-niveau', { niveau }), 2);
+  if (!nombre) return jeu.erreur('mdadm: no raid-devices specified.', 2);
+  if (membres.length > nombre) return jeu.erreur(`mdadm: You have listed more devices (${membres.length}) than are in the array(${nombre})!`, 2);
+  if (membres.length < nombre) return jeu.erreur("mdadm: You haven't given enough devices (real or missing) to create this array", 2);
+  const avertissements: string[] = [];
+  // « missing » : une place laissée vide (la grappe naît dégradée, on la complétera avec --add).
+  const presents = membres.filter((m) => m !== 'missing');
+  if (!presents.length) return jeu.erreur('mdadm: at least one device must be given', 2);
+  for (const m of presents) {
+    const n = sansDev(m);
+    const disque = st.disques[n];
+    const p = partitionDe(st, n);
+    if (!m.startsWith('/dev/') || (!disque && !p)) return jeu.erreur(`mdadm: cannot open ${m}: No such file or directory`, 1);
+    if (grappeDe(st, n) || st.lvm?.pvs[n] || (disque && disqueOccupe(st, n)) || (p && (grappeDe(st, p.disque) || st.lvm?.pvs[p.disque])))
+      return jeu.erreur(`mdadm: cannot open ${m}: Device or resource busy`, 1);
+    if (disque?.table) avertissements.push(`mdadm: partition table exists on ${m} but will be lost or\n       meaningless after creating array`);
+  }
+  const tailles = presents.map((m) => {
+    const n = sansDev(m);
+    return st.disques[n] ? st.disques[n].secteurs : partitionDe(st, n)!.p.secteurs;
+  });
+  const faire = () => {
+    // La taille utile : celle du plus petit membre, moins la place du superbloc (128 Mio en tête).
+    const blocs = Math.floor((Math.min(...tailles) * SECTEUR - 134_217_728) / 1024 / 64) * 64;
+    const rang = Number(nom.slice(2));
+    for (const m of presents) {
+      const d = st.disques[sansDev(m)];
+      if (d) {
+        d.partitions = [];
+        d.table = null;
+      }
+    }
+    st.grappes[nom] = {
+      niveau: 'raid1',
+      voulus: nombre,
+      blocs,
+      uuid: (() => {
+        const h = [1, 2, 3, 4].map((k) => condenser(`${nom}-${membres.join()}-${k}`)).join('');
+        return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+      })(),
+      nom: `${systemd(jeu)?.hote ?? jeu.hote}:${rang}`,
+      membres: membres.flatMap((m, i) => (m === 'missing' ? [] : [{ part: sansDev(m), numero: i, role: i, etat: 'actif' as const }])),
+      evenements: 0,
+      creation: maintenant(jeu),
+      bitmap: blocs * 1024 > 100e9,
+      // Une grappe complète synchronise ses membres ; une grappe dégradée n'a rien à synchroniser.
+      ...(presents.length === nombre && nombre > 1 ? { synchro: 0 } : {}),
+      rang,
+    };
+    majDev(jeu);
+    return 'mdadm: Defaulting to version 1.2 metadata\nmdadm: array ' + md + ' started.';
+  };
+  const note = [
+    ...avertissements,
+    'mdadm: Note: this array has metadata at the start and',
+    '    may not be suitable as a boot device.  If you plan to',
+    "    store '/boot' on this device please ensure that",
+    '    your boot-loader understands md/v1.x metadata, or use',
+    '    --metadata=0.90',
+  ].join('\n');
+  if (sansQuestion) return `${note}\n${faire()}`;
+  jeu.demander('Continue creating array? ', (reponse) => (/^y(es)?$/i.test(reponse) ? faire() : jeu.erreur('mdadm: create aborted.', 1)));
+  return note;
+}
+
+// Huit chiffres hexadécimaux tirés d'un texte (FNV-1a) : un UUID qui ne change jamais.
+const condenser = (texte: string) => {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < texte.length; i++) h = Math.imul(h ^ texte.charCodeAt(i), 0x01000193) >>> 0;
+  return h.toString(16).padStart(8, '0');
+};
 
 // ——— sfdisk ———
 
@@ -587,7 +691,7 @@ function grubInstall(jeu: Shell, args: string[]): string {
 interface LigneLsblk {
   nom: string;
   prefixe: string;
-  type: 'disk' | 'part' | 'raid1';
+  type: 'disk' | 'part' | 'raid1' | 'lvm';
   octets: number;
   majmin: [number, number];
   point: string;
@@ -602,54 +706,45 @@ export function lsblkStockage(jeu: Shell, st: Stockage, args: string[]): string 
   const point = (n: string) => montages.find((m) => m.nom === `/dev/${n}`)?.chemin ?? '';
   const sansEnfants = args.some((a) => /^-\w*d/.test(a) || a === '--nodeps');
   const lignes: LigneLsblk[] = [];
-  const grappeLigne = (n: string, g: Grappe, prefixe: string): LigneLsblk => ({
-    nom: n,
-    prefixe,
-    type: 'raid1',
-    octets: g.blocs * 1024,
-    majmin: majmin(st, n),
-    point: point(n),
-    modele: '',
-    serie: '',
-    fstype: montages.find((m) => m.nom === `/dev/${n}`)?.systeme ?? 'ext4',
-    uuid: '',
-  });
-  const disques = Object.entries(st.disques).sort(([, a], [, b]) => a.rang - b.rang);
-  for (const [n, d] of disques) {
-    const tenue = grappeDe(st, n);
-    lignes.push({
+  const pvs = st.lvm?.pvs ?? {};
+  // Les volumes logiques qui ont un morceau sur ce PV (vg-lv).
+  const lvsSur = (pv: string) =>
+    Object.entries(st.lvm?.vgs ?? {}).flatMap(([vg, g]) => Object.entries(g.lvs).filter(([, lv]) => lv.segments.some((x) => x.pv === pv)).map(([n]) => `${vg}-${n}`));
+  // Ce qui est posé sur un périphérique : sa grappe, ses volumes logiques, ou ses partitions.
+  const enfants = (n: string): string[] => {
+    const g = grappeDe(st, n);
+    if (g) return [g[0]];
+    if (pvs[n]) return lvsSur(n);
+    return st.disques[n]?.partitions.map((p) => `${n}${p.numero}`) ?? [];
+  };
+  const ligneDe = (n: string, prefixe: string): LigneLsblk => {
+    const fs = grappeDe(st, n) ? ['linux_raid_member', grappeDe(st, n)![1].uuid] : pvs[n] ? ['LVM2_member', pvs[n].uuid] : null;
+    const d = st.disques[n];
+    const g = st.grappes[n];
+    const lv = /^([\w.+]+)-([\w.+]+)$/.exec(n);
+    const vol = lv && !d && !g ? st.lvm?.vgs[lv[1]]?.lvs[lv[2]] : undefined;
+    const monte = montages.find((m) => m.nom === (vol ? `/dev/mapper/${n}` : `/dev/${n}`));
+    return {
       nom: n,
-      prefixe: '',
-      type: 'disk',
-      octets: d.secteurs * SECTEUR,
-      majmin: majmin(st, n),
-      point: '',
-      modele: d.modele,
-      serie: d.serie,
-      fstype: tenue ? 'linux_raid_member' : '',
-      uuid: tenue ? tenue[1].uuid : '',
-    });
-    if (sansEnfants) continue;
-    if (tenue) lignes.push(grappeLigne(tenue[0], tenue[1], '└─'));
-    d.partitions.forEach((p, i) => {
-      const derniere = i === d.partitions.length - 1;
-      const part = `${n}${p.numero}`;
-      const g = grappeDe(st, part);
-      lignes.push({
-        nom: part,
-        prefixe: derniere ? '└─' : '├─',
-        type: 'part',
-        octets: p.secteurs * SECTEUR,
-        majmin: majmin(st, part),
-        point: '',
-        modele: '',
-        serie: '',
-        fstype: g ? 'linux_raid_member' : '',
-        uuid: g ? g[1].uuid : '',
-      });
-      if (g) lignes.push(grappeLigne(g[0], g[1], `${derniere ? '  ' : '│ '}└─`));
-    });
-  }
+      prefixe,
+      type: d ? 'disk' : g ? 'raid1' : vol ? 'lvm' : 'part',
+      octets: vol ? tailleLv(vol) : (tailleDe(st, n) ?? 0),
+      majmin: vol ? [253, vol.mineur] : majmin(st, n),
+      point: monte?.chemin ?? '',
+      modele: d?.modele ?? '',
+      serie: d?.serie ?? '',
+      fstype: fs ? fs[0] : vol || monte ? (monte?.systeme ?? 'ext4') : '',
+      uuid: fs ? fs[1] : '',
+    };
+  };
+  const poser = (n: string, avant: string, derniere: boolean, racine: boolean) => {
+    lignes.push(ligneDe(n, racine ? '' : `${avant}${derniere ? '└─' : '├─'}`));
+    if (sansEnfants) return;
+    const suite = racine ? '' : `${avant}${derniere ? '  ' : '│ '}`;
+    const liste = enfants(n);
+    liste.forEach((e, i) => poser(e, suite, i === liste.length - 1, false));
+  };
+  for (const [n] of Object.entries(st.disques).sort(([, a], [, b]) => a.rang - b.rang)) poser(n, '', true, true);
   // Les colonnes : -o liste, -f les systèmes de fichiers, sinon celles par défaut.
   const iO = args.findIndex((a) => a === '-o' || a === '--output');
   const demandees = iO >= 0 ? (args[iO + 1] ?? '').toUpperCase().split(',').filter(Boolean) : args.some((a) => /^-\w*f/.test(a)) ? ['NAME', 'FSTYPE', 'UUID', 'MOUNTPOINTS'] : ['NAME', 'MAJ:MIN', 'RM', 'SIZE', 'RO', 'TYPE', 'MOUNTPOINTS'];

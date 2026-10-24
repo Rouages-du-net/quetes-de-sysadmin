@@ -76,8 +76,11 @@ rouages.net.
   disques et SMART, partitions GPT, grappes RAID 1, `/proc/mdstat`, la
   reconstruction qui avance avant chaque commande, `Chapitre.avantCommande`) ;
   `smartctl`, `mdadm`, `sfdisk`, `grub-install` et `lsblk` sur ce modèle dans
-  `commandes/stockage.ts` ; `chapitres/labo.ts` : ce que les chapitres du
-  Labo ont en commun.
+  `commandes/stockage.ts` (dont `mdadm --create`) ; LVM (`stockage.lvm` : PV,
+  VG, LV en segments, taille du système de fichiers) dans `src/moteur/lvm.ts`,
+  `pvs`, `vgs`, `lvs`, `pvcreate`, `pvremove`, `vgextend`, `vgreduce`,
+  `pvmove`, `lvextend`, `resize2fs`, `update-initramfs` dans `commandes/lvm.ts` ;
+  `chapitres/labo.ts` : ce que les chapitres du Labo ont en commun.
 - `commandes/restic.ts` : dépôts restic (instantanés, déduplication,
   politiques de `forget`, `prune`), rangés dans `etat.restic`.
 - `src/moteur/deverrouillage.ts` : les histoires s'ouvrent par vagues ; une

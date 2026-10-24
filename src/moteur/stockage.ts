@@ -21,6 +21,7 @@
 
 import type { Jeu } from './shell';
 import type { Dossier } from './monde';
+import type { Lvm } from './lvm';
 
 export const SECTEUR = 512;
 
@@ -97,6 +98,8 @@ export interface Grappe {
   creation: number;
   // Les grosses grappes ont un bitmap d'écriture (ligne bitmap: de /proc/mdstat).
   bitmap?: boolean;
+  // Une grappe toute neuve synchronise ses membres (resync) : la part déjà faite.
+  synchro?: number;
   rang: number;
 }
 
@@ -105,6 +108,8 @@ export interface Stockage {
   grappes: Record<string, Grappe>;
   // Les disques où GRUB est installé (dans leur zone de démarrage).
   grub: string[];
+  // LVM par-dessus (voir lvm.ts).
+  lvm?: Lvm;
 }
 
 // Débit de reconstruction (Kio/s), et temps simulé à chaque commande.
@@ -128,7 +133,7 @@ export const grappeDe = (st: Stockage, part: string): [string, Grappe] | null =>
 
 /** Une partition est-elle tenue par une grappe ou un montage ? (sfdisk refuse de toucher son disque.) */
 export const disqueOccupe = (st: Stockage, disque: string) =>
-  st.disques[disque]?.partitions.some((p) => grappeDe(st, `${disque}${p.numero}`) !== null) ?? false;
+  [disque, ...(st.disques[disque]?.partitions.map((p) => `${disque}${p.numero}`) ?? [])].some((n) => grappeDe(st, n) !== null || !!st.lvm?.pvs[n]);
 
 export const majmin = (st: Stockage, nom: string): [number, number] => {
   const p = /^(sd[a-z])(\d*)$/.exec(nom);
@@ -146,7 +151,7 @@ export const saine = (g: Grappe) => actifs(g).length === g.voulus && g.membres.e
 export function reconstruitEnCeMoment(st: Stockage): string | null {
   return Object.keys(st.grappes)
     .sort((a, b) => st.grappes[a].rang - st.grappes[b].rang)
-    .find((n) => enReconstruction(st.grappes[n]).length > 0) ?? null;
+    .find((n) => enReconstruction(st.grappes[n]).length > 0 || st.grappes[n].synchro !== undefined) ?? null;
 }
 
 /** Le temps passe (une commande) : la reconstruction avance. */
@@ -157,6 +162,18 @@ export function avancer(st: Stockage, secondes = SECONDES_PAR_COMMANDE): void {
     const nom = reconstruitEnCeMoment(st);
     if (!nom) return;
     const g = st.grappes[nom];
+    // Une grappe neuve : la synchronisation de ses membres.
+    if (g.synchro !== undefined) {
+      const faits = g.synchro * g.blocs;
+      if (faits + VITESSE * reste < g.blocs) {
+        g.synchro = (faits + VITESSE * reste) / g.blocs;
+        return;
+      }
+      reste -= Math.ceil((g.blocs - faits) / VITESSE);
+      delete g.synchro;
+      g.evenements += 1;
+      continue;
+    }
     const m = enReconstruction(g)[0];
     const total = m.rapide ? Math.min(g.blocs, 2_000_000) : g.blocs;
     const faits = (m.copie ?? 0) * total;
@@ -214,6 +231,14 @@ export function mdstat(st: Stockage): string {
         `      ${barre(copie)}  recovery = ${(Math.floor(copie * 1000) / 10).toFixed(1).padStart(4)}% (${faits}/${total}) finish=${minutes.toFixed(1)}min speed=${VITESSE}K/sec`,
       );
     } else if (r) lignes.push('      \tresync=DELAYED');
+    if (g.synchro !== undefined) {
+      if (nom === enCours) {
+        const faits = Math.floor(g.synchro * g.blocs);
+        lignes.push(
+          `      ${barre(g.synchro)}  resync = ${(Math.floor(g.synchro * 1000) / 10).toFixed(1).padStart(4)}% (${faits}/${g.blocs}) finish=${((g.blocs - faits) / VITESSE / 60).toFixed(1)}min speed=${VITESSE}K/sec`,
+        );
+      } else lignes.push('      \tresync=DELAYED');
+    }
     if (g.bitmap) lignes.push('      bitmap: 0/15 pages [0KB], 65536KB chunk');
     lignes.push('');
   }
