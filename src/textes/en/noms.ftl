@@ -260,3 +260,6 @@ nom-courriel_nadia-txt = email_nadia.txt
 nom-rapport-audit-txt = audit_report.txt
 nom-courriel_salome-txt = email_salome.txt
 nom-balayage-audit-txt = audit_scan.txt
+nom-lettre-de-mission-txt = engagement_letter.txt
+nom-notes-audit-md = audit_notes.md
+nom-rapport-cloture-md = closing_report.md

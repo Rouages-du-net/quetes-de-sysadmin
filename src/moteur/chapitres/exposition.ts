@@ -89,7 +89,7 @@ const confLocale = (j: Jeu) => redisLocal(j.lire(REDIS_CONF) ?? '');
 
 export const exposition: Chapitre = {
   id: 'exposition',
-  numero: 2,
+  numero: 3,
   commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'ps', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'ss', 'ufw'],
   maison: M,
   accueil: 'courriel_salome.txt',

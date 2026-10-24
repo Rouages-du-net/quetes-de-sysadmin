@@ -28,6 +28,8 @@ export interface EtatPostgres {
   bases: Record<string, Base>;
   // Les rôles (comptes de la base) ; postgres est superutilisateur.
   roles: string[];
+  // Le mot de passe des rôles qui se connectent par le réseau (ALTER ROLE … PASSWORD) : role → mot de passe.
+  motsDePasse?: Record<string, string>;
   // Les archives au format custom, par identifiant (écrit dans le fichier).
   archives: Record<string, { base: string; tables: Record<string, Table>; temps: number }>;
 }

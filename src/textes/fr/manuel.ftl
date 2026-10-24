@@ -918,3 +918,24 @@ manuel-option-invalide =
 manuel-option-longue-inconnue =
     { $commande } : option non reconnue « { $option } »
     Saisissez « { $commande } --help » pour plus d'informations.
+
+man-nmap = l'explorateur de réseau : il envoie des paquets à une machine (ou à toute une plage d'adresses) et dit, pour chaque port TCP, s'il est ouvert (un programme répond), fermé (la machine répond « personne ici ») ou filtré (un pare-feu jette le paquet : aucune réponse). Les ports sont « vus d'internet » : c'est ce que voit un attaquant, ou une auditrice. -sV demande aussi la version du service qui répond (utile pour repérer un logiciel périmé) ; -p choisit les ports (-p 22,80 ; -p 1-1024 ; -p- pour tous) ; -sn ne fait que dire quelles machines répondent ; -Pn ne tient pas compte de l'absence de réponse au ping ; -oN garde le résultat dans un fichier (une preuve à joindre au rapport) ; -F ne regarde que les ports les plus courants ; -n ne cherche pas les noms. N'utilise nmap que sur ce qui est dans ta lettre de mission : sonder une machine qu'on n'a pas le droit de sonder est une faute, parfois une infraction. 127.0.0.1 désigne la machine elle-même, vue de l'intérieur (le pare-feu ne s'y applique pas).
+    .synopsis = nmap [options] cible...  (un nom, une adresse, un réseau 192.0.2.0/29, une plage 192.0.2.20-25)
+    .option-sV = la version du service qui écoute sur chaque port ouvert.
+    .option-sn = seulement dire quelles machines répondent, sans balayer les ports.
+    .option-Pn = ne pas tester d'abord si la machine répond (elle peut cacher sa réponse au ping).
+    .option-n = ne pas chercher le nom des machines.
+    .option-F = seulement les ports les plus courants (100) au lieu des 1000 habituels.
+    .option-p = les ports à examiner : 22,80 ou 1-1024 ; -p- pour les 65535.
+    .option-oN = écrire le résultat, tel qu'on le lit, dans le fichier donné.
+    .exemple-1 = les ports ouverts d'une machine
+    .exemple-2 = avec les versions, en gardant la trace dans un fichier
+    .exemple-3 = seulement SSH, http et https
+    .exemple-4 = cette machine répond-elle ?
+    .exemple-5 = tous les ports, pas seulement les plus courants
+man-lynis = l'outil d'audit de sécurité d'un serveur. « lynis audit system » examine la machine où il est lancé (avec sudo : il lit ce que seul root voit) et range ses remarques en avertissements (Warnings : à corriger d'abord) et suggestions (Suggestions : des pistes, de gravité inégale), chacune avec son identifiant de test (SSH-7408, PKGS-7392…) et une adresse qui l'explique. À la fin, l'indice de durcissement (Hardening index) résume l'ensemble sur 100 : il sert à comparer avant et après, pas à viser 100 à tout prix. Lynis ne change rien : c'est à toi de décider, suggestion par suggestion, ce qui vaut l'effort. Le détail de chaque audit est gardé dans /var/log/lynis-report.dat (hardening_index=, warning[]=, suggestion[]=), qui se lit avec grep.
+    .synopsis = lynis audit system ; lynis show version
+    .exemple-1 = l'audit complet de la machine
+    .exemple-2 = seulement les suggestions du dernier audit
+    .exemple-3 = l'indice de durcissement du dernier audit
+    .exemple-4 = la version de lynis
