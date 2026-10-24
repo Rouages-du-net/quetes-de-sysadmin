@@ -582,6 +582,8 @@ for (const largeur of [1000, 375]) {
   await page.reload();
   const jeu = page.locator('quetes-de-sysadmin');
   verifier((await jeu.locator('.incident-texte').textContent()).includes('Premier jour'), `astreinte ${largeur} px : l’incident du jour est annoncé`);
+  // L'horloge arrêtée : le temps n'avance que par runFor (sinon, une seconde peut passer avant la lecture de la jauge).
+  await page.clock.pauseAt(new Date('2027-01-14T10:00:10'));
   await jeu.locator('.bouton-incident').click();
   const fenetre = jeu.locator('dialog.fenetre-astreinte').first();
   verifier((await fenetre.evaluate((d) => d.open)) && (await fenetre.textContent()).includes('14 janvier 2027'), `astreinte ${largeur} px : la fenêtre de l’astreinte`);
