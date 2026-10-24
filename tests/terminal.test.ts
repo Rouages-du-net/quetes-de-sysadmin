@@ -73,6 +73,19 @@ describe('Le terminal', () => {
     expect(s.executer('pwd')).toBe(`${maison}/Port`);
   });
 
+  it('le mot de passe noté dans le journal se traduit avec les noms (tournesol → sunflower)', () => {
+    const en = new Shell(chapitre('racine'), 'en');
+    expect(en.executer('cat journal.txt')).toContain('sunflower');
+    expect(en.executer('cat journal.txt')).not.toContain('tournesol');
+    en.executer('sudo ls /root');
+    expect(en.executer('tournesol')).toContain('Sorry, try again.');
+    expect(en.executer('sunflower')).not.toContain('Sorry');
+    expect(en.executer('sudo ls /root')).not.toContain('password');
+    const fr = new Shell(chapitre('racine'), 'fr');
+    fr.executer('sudo ls /root');
+    expect(fr.executer('tournesol')).not.toContain('Désolé');
+  });
+
   it('l’anglais est la langue par défaut et de repli', () => {
     expect(langueDuJeu()).toBe('en');
     expect(langueDuJeu('')).toBe('en');

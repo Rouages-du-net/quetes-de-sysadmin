@@ -54,7 +54,7 @@ racine-journal =
     Year 100: the Bin is overflowing. We need a program to empty it.
     Year 101: I'm writing the Eraser, a little daemon that will empty the Bin.
     Year 102: wrote the Eraser's configuration in /etc. No time to proofread it.
-    Year 102: my password changes. I'm writing it down here (very bad idea!): tournesol
+    Year 102: my password changes. I'm writing it down here (very bad idea!): sunflower
     Year 102: Started the Eraser. It runs as its own user, "eraser".
     Year 103: disaster. The Bakery's sourdough disappears. Then the gears.
     Year 103: I found the mistake in the configuration. I prepared a fixed version, here, in my home.

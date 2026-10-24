@@ -647,9 +647,15 @@ export class Shell implements Jeu {
     return sortie;
   }
 
+  /** Le mot de passe du joueur ou de la joueuse, traduit avec les noms du chapitre (tournesol → sunflower). */
+  motDePasseDuJoueur(): string | undefined {
+    const m = this.chapitre.motDePasse;
+    return m && this.chapitre.noms ? nom(this.t, m) : m;
+  }
+
   private motDePasse(saisie: string): string {
     const attente = this.attente!;
-    if (saisie === this.chapitre.motDePasse) {
+    if (saisie === this.motDePasseDuJoueur()) {
       this.attente = null;
       this.authentifie = true;
       this.chapitre.avantCommande?.(this);

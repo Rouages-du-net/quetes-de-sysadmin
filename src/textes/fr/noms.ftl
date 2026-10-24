@@ -98,6 +98,8 @@ nom-journal-txt = journal.txt
 nom-effaceur-conf = effaceur.conf
 nom-effaceur-conf-corrige = effaceur.conf.corrige
 nom-effaceur-log = effaceur.log
+# Le mot de passe noté dans le journal (sudo le demande).
+nom-tournesol = tournesol
 nom-cible = cible
 nom-Royaume = Royaume
 nom-Corbeille = Corbeille
