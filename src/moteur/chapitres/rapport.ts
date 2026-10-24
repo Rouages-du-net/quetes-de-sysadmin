@@ -64,7 +64,7 @@ const secretOk = (j: Jeu) => fermeAuxAutres(j) && lisibleParAppli(j);
 
 export const rapport: Chapitre = {
   id: 'rapport',
-  numero: 1,
+  numero: 2,
   commandes: [
     'ls',
     'cd',

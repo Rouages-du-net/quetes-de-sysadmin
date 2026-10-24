@@ -28,4 +28,4 @@ histoire-cooperative = La Coopérative
 histoire-ruche = La Ruche
     .resume = Le réseau d'un tiers-lieu : des VLAN pour séparer bureaux, invité·es et équipements, le DHCP, le NAT et un pare-feu entre les zones, un VPN, une DMZ pour le site, un second site, un annuaire et un Wi-Fi d'entreprise.
 histoire-audit = L'Audit
-    .resume = L'assureur de la boulangerie veut un audit : corriger les constats d'une auditrice (SSH, comptes, sudo, secrets), fermer ce qui est exposé sur le réseau, puis remonter la trace d'une connexion qu'on n'attendait pas.
+    .resume = L'assureur de la boulangerie veut un audit : lire la lettre de mission et faire l'inventaire avec nmap sans sortir du périmètre, corriger les constats d'une auditrice (SSH, comptes, sudo, secrets), fermer ce qui est exposé sur le réseau, remonter la trace d'une connexion inattendue, puis prouver avec nmap et Lynis que tout tient.

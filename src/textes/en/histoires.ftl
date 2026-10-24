@@ -28,4 +28,4 @@ histoire-cooperative = The Co-op
 histoire-ruche = The Hive
     .resume = The network of a community space: VLANs to separate offices, guests and equipment, DHCP, NAT and a firewall between zones, a VPN, a DMZ for the website, a second site, a directory and enterprise Wi-Fi.
 histoire-audit = The Audit
-    .resume = The bakery's insurer wants an audit: fix an auditor's findings (SSH, accounts, sudo, secrets), close what is exposed on the network, then trace a login nobody expected.
+    .resume = The bakery's insurer wants an audit: read the letter of engagement and take an inventory with nmap without leaving the scope, fix an auditor's findings (SSH, accounts, sudo, secrets), close what is exposed on the network, trace an unexpected login, then prove with nmap and Lynis that everything holds.

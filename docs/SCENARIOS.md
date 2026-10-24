@@ -146,6 +146,8 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | OpenLDAP (`ldapsearch`, `ldapadd`, `ldapmodify`, `ldapdelete`, `ldappasswd`, `ldapwhoami`, `slappasswd`, `slapcat`) | un annuaire par machine (`etat.ldap`), un schéma réduit (core, cosine, inetorgperson, nis : les classes courantes, leurs attributs obligatoires) ; LDIF (`changetype`, `add`/`replace`/`delete`, `-`, lignes repliées), filtres `&`, `\|`, `!`, `=`, `*` ; `-x`, `-D`, `-W`, `-w`, `-H`, `-Y EXTERNAL` (root par `ldapi:///`, comme sur Debian), `-b`, `-s`, `-LLL`, `-f`, `-c` ; droits de Debian (lecture anonyme sauf `userPassword`, écriture par l'administrateur ou root) ; `{SSHA}` au bon format, mais pas un vrai SHA-1 ; les commandes ne lisent pas le clavier (un fichier ou un tube) | `cn=config`, réplication, index, `memberOf`, base64 (`::`), TLS, SASL autre qu'EXTERNAL, toute la syntaxe des filtres (`>=`, `~=`) |
 | FreeRADIUS (`freeradius`, `radtest`) | `clients.conf` (adresse ou réseau, secret), le module `ldap` activé par un lien dans `mods-enabled` (`server`, `identity`, `password`, `base_dn`, `user`, `group` et `membership_filter`), le fichier `users` (`DEFAULT`, `Ldap-Group`, `Auth-Type := Reject`, réponses, `Fall-Through`) ; configuration lue au démarrage ; `-XC`, `-X` (service arrêté, demandes de la borne racontées en abrégé) ; les bornes parlent PAP (comme EAP-TTLS/PAP), pas d'EAP simulé ; une syntaxe de configuration simplifiée | EAP (PEAP, TLS), accounting, `sites-available`, `unlang`, SQL, tous les modules |
 | Redis (service `redis-server`, `/etc/redis/redis.conf`) | seul le `bind` est lu, au démarrage et au redémarrage du service (`*`, `0.0.0.0`, ou la boucle locale `127.0.0.1`/`::1` ; sans `bind`, toutes les interfaces) pour décider d'où le port 6379 répond ; pas de `redis-cli`, de `requirepass` ni de `protected-mode` simulés ; PostgreSQL n'a pas de `listen_addresses` (son port se ferme avec ufw) | tout `redis.conf`, `redis-cli`, ACL, `CONFIG SET`, `listen_addresses` de `postgresql.conf` |
+| nmap | TCP seulement ; `-sV`, `-sT`, `-sS` (root), `-sn`, `-Pn`, `-n`, `-F`, `-p`, `-oN` ; les cibles sont un nom, une adresse, un réseau (`/16` à `/32`) ou une plage `192.0.2.20-25` ; tout est vu d'internet (127.0.0.1 : de l'intérieur, sans pare-feu) ; seules les machines du chapitre répondent, une adresse hors du réseau simulé ne répond jamais ; les 1000 ports courants se réduisent aux services déclarés ; la durée est calculée, sans attente | `-sU`, `-O`, `-A`, scripts NSE, `-oX`/`-oG`, la synchronisation des paquets, les vrais ports de tous les services |
+| Lynis (`lynis audit system`) | une soixantaine de lignes au lieu de 300 ; lit `sshd_config`, les mises à jour apt en attente, `UMASK` de `/etc/login.defs`, `/etc/issue` et ufw ; l'indice se calcule par pénalités fixes (pas par la pondération de Lynis) ; `/var/log/lynis-report.dat` est écrit (`hardening_index=`, `warning[]=`, `suggestion[]=`) ; seulement `audit system`, `show version` ; sans root, l'audit est refusé (Lynis tournerait en mode restreint) | les 200 tests, les profils, `show details`, `--pentest`, les modules de conformité |
 | `ping` sur un réseau local | un appareil répond s'il est dans le VLAN de l'interface dont le réseau contient son adresse ; une adresse privée envoyée à la box se perd ; un nom d'appareil est reconnu sans DNS | ARP, DNS local, `/etc/hosts` |
 | `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, une fenêtre par session ; pas de raccourcis clavier (`tmux detach` pour Ctrl+b d) ; attach rejoue les dernières lignes ; le nom de la session s'affiche devant l'invite (la barre d'état) ; `uname -r/-a` ; `dpkg --configure -a` | fenêtres, volets, raccourcis, `screen` ; toutes les options de dpkg |
 | `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe, `=`, `^~`, ou expression régulière (`~`, `~*`, syntaxe de JavaScript plutôt que PCRE), choisie dans l'ordre de nginx ; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
@@ -169,7 +171,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `nc` | `-z`, `-v`, une plage de ports ; sans `-z`, rend la main | netcat complet (écouter, envoyer, proxy) |
 | disques (`lsblk`, `mount`, `umount`) | périphériques décrits par le chapitre ; `mount` sans argument, `-o ro` ; un support en lecture seule refuse toute création (le contenu d'un fichier existant reste modifiable par une redirection) ; pas de `/etc/fstab` | toutes les options, `fstab`, systèmes de fichiers réels |
 | `rsnapshot` | `configtest`, `-t`, `-v`, `du`, la rotation des niveaux (`cp -al` puis `rsync`) ; une partie des directives ; messages proches de rsnapshot 1.4 | `backup_script`, `link_dest`, `sync_first`, sauvegardes distantes |
-| PostgreSQL | rôles et authentification « peer » ; `psql -c/-f/-l` avec un SQL réduit (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `\l`, `\dt`, `\d`) ; `pg_dump` (texte, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb` ; une archive `-Fc` ne contient qu'une référence gardée par le jeu ; une seule clé primaire par table | tout PostgreSQL, psql interactif, WAL et restauration à un instant donné |
+| PostgreSQL | rôles et authentification « peer » ; `psql -c/-f/-l` avec un SQL réduit (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `ALTER ROLE … PASSWORD` par le compte `postgres`, `\l`, `\dt`, `\d`, `\du`) ; le mot de passe d'un rôle n'est lu que par l'appli d'un chapitre (« Les traces ») ; `pg_dump` (texte, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb` ; une archive `-Fc` ne contient qu'une référence gardée par le jeu ; une seule clé primaire par table | tout PostgreSQL, psql interactif, WAL et restauration à un instant donné |
 | `lsof`, `truncate`, `logrotate` | `lsof` ne connaît que les fichiers ouverts décrits par le chapitre (`+L1`, `-p`, `-u`, un fichier) ; `logrotate` : une partie des directives, `-d`, `-f`, `-v`, sorties abrégées | toutes les options, tous les fichiers ouverts du système |
 | mémoire (`free`, `top`, `dmesg`) | la mémoire de chaque processus est décrite par le chapitre ; pas de swap, le cache ne se libère pas (`available` = `free`) ; l'OOM killer tue le plus gros processus (sans `oom_score_adj`) ; `top` affiche un instantané et rend la main (`-b`, `-n`, `-o`, `-c`) ; `dmesg` (`-T`) réservé à root | swap, récupération du cache, score de l'OOM killer, `top` interactif, `htop` |
 | `iostat`, `pidstat`, `ionice` | `iostat` `-c`, `-d`, `-x`, `-k`, `-m`, `-y`, intervalle et nombre ; `pidstat -d`, `-u` ; `ionice -p`, `-c`, `-n` ; un disque, un modèle de file d'attente simplifié (l'attente grimpe au-delà de 60 % de la capacité) ; les priorités d'ionice ne comptent qu'avec `mq-deadline` ou `bfq` ; tous les rapports donnent l'instant | plusieurs disques, partitions (`-p`), `iotop`, `ionice` d'une commande à lancer, `blkio` de cgroup v1 |
@@ -1624,7 +1626,7 @@ module en anonyme (pas de `userPassword`), `memberOf` absent (les groupes
 de syntaxe (`Expecting section start brace`), `freeradius -X` avec le
 service lancé (`Address already in use`).
 
-## Histoire 14 : L'Audit (trois chapitres)
+## Histoire 14 : L'Audit (cinq chapitres)
 
 La boulangerie de Nadia prend ses commandes en ligne ; son assureur veut un
 audit de sécurité avant de renouveler le contrat. Salomé, auditrice
@@ -1636,7 +1638,7 @@ sudo, droits, pare-feu, journaux, cron) et demande de **vérifier** autant que
 de corriger. Les trois chapitres sont défensifs : on lit un rapport, on
 répare, on remonte une trace. Phase 11 de la feuille de route.
 
-### Chapitre 1 — Le rapport (fait)
+### Chapitre 2 — Le rapport (fait)
 
 Quatre constats d'hygiène : C1 root peut entrer en SSH, C2 un compte oublié
 (Lucas, stagiaire parti, encore dans sudo), C3 sudo sans mot de passe pour le
@@ -1659,7 +1661,7 @@ effet »), un nouveau `sshd_config` qui enferme le compte, un compte verrouillé
 mais encore dans sudo, un fichier de sudoers faux, un secret fermé à l'appli
 (`chown root`).
 
-### Chapitre 2 — L'exposition (fait)
+### Chapitre 3 — L'exposition (fait)
 
 Le balayage de ports de Salomé (`balayage-audit.txt`) trouve PostgreSQL (5432)
 et Redis (6379) joignables depuis internet ; ufw est installé mais éteint ;
@@ -1680,7 +1682,7 @@ SSH, couper le site, une règle trop large sur la base ou Redis, arrêter Redis
 (l'appli en a besoin), modifier `redis.conf` sans redémarrer (le programme ne
 relit pas sa configuration tout seul).
 
-### Chapitre 3 — Les traces (fait)
+### Chapitre 4 — Les traces (fait)
 
 Dans le journal de ssh, une connexion du compte de Nadia dans la nuit du 13
 mars à 3 h 12, depuis 203.0.113.99 ; Nadia dormait. Son `authorized_keys`
@@ -1693,17 +1695,68 @@ porte deux clés : l'autre se fait passer pour une clé de Nadia
 | Identifier | `sudo ssh-keygen -l -f /home/nadia/.ssh/authorized_keys`, à comparer à l'empreinte du journal |
 | Révoquer | retirer cette ligne (et elle seule) de `authorized_keys` |
 | Chercher la persistance | `sudo crontab -u nadia -l`, puis `sudo crontab -u nadia -e` (retirer `curl … \| sh`, garder `sauvegarde.sh`) |
+| Ce qu'il a lu | `sudo cat /home/nadia/.bash_history` : l'intrus a lu `/srv/commandes/.env` (lisible par tous avant « Le rapport ») |
+| Changer le secret | `sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD '…'"`, le même mot de passe dans `DATABASE_URL` de `.env`, `sudo systemctl restart commandes` |
 
 Objectif vérifié sur l'état : la clé intruse retirée et celle de Nadia
-gardée ; la tâche de l'intrus retirée et la sauvegarde gardée. Pièges
-prévus : se fier au commentaire de la clé, effacer tout `authorized_keys`
-(Nadia dehors), `crontab -r` (la sauvegarde disparaît aussi). Le débrief
-rappelle ce que le jeu ne simule pas : changer le mot de passe de la base
-(le `.env` était lisible cette nuit-là), garder une copie des journaux,
-prévenir qui de droit.
+gardée ; la tâche de l'intrus retirée et la sauvegarde gardée ; un nouveau
+mot de passe de base d'au moins douze caractères, le même dans PostgreSQL et
+dans `.env`, et l'appli relancée avec lui. Pièges prévus : se fier au
+commentaire de la clé, effacer tout `authorized_keys` (Nadia dehors),
+`crontab -r` (la sauvegarde disparaît aussi), un mot de passe trop court, ne
+le changer que d'un côté (l'appli ne repart plus : « password authentication
+failed »), oublier de relancer l'appli. Le débrief rappelle ce que le jeu ne
+simule pas : garder une copie des journaux, prévenir qui de droit (les
+autorités de protection des données de plusieurs pays sont citées).
 
 
-### Plan validé, à écrire : la mission d'audit (côté auditrice)
+### Chapitre 1 — Le périmètre (fait)
+
+Salomé fait faire l'inventaire avant de commencer : on lit la lettre de
+mission (le périmètre est UN serveur, `fournil.internal`, 192.0.2.22), on
+balaie avec `nmap` et on rédige ses notes. Le serveur du voisin (la
+pizzeria, 192.0.2.24, qui partage la box) paraît « intéressant » — une base
+ouverte : il est **hors périmètre**.
+
+| Étape | Commande apprise |
+|---|---|
+| Le cadre | `cat lettre-de-mission.txt` |
+| L'inventaire | `nmap -sV fournil.internal` (les ports ouverts et les versions) |
+| La preuve | `nmap -sV -oN inventaire.txt fournil.internal` |
+| Les notes | `nano notes-audit.md` : périmètre, ce qu'on a trouvé (5432 et 6379), hors périmètre |
+
+Objectif vérifié sur l'état : une trace `nmap -sV` du Fournil gardée dans un
+fichier, des notes complétées qui nomment la base de données (5432), Redis
+(6379) et la machine hors périmètre (Salomé relit à chaque enregistrement).
+Piège prévu : balayer tout le réseau (`192.0.2.16/28`) sonde le voisin ; le
+jeu l'accepte et le débrief le raconte (`{ $faute }`) : rien ne bloque, tout
+se dit. Débrief : l'éthique de l'audit (autorisation écrite, périmètre exact,
+constater sans exploiter).
+
+### Chapitre 5 — La contre-visite (fait)
+
+Les correctifs des chapitres 2 à 4 sont en place (pare-feu actif, Redis en
+local, root fermé). Salomé revient vérifier : on le montre, on ne le dit pas.
+
+| Étape | Commande apprise |
+|---|---|
+| Revoir | `nmap -sV fournil.internal` : plus que 22, 80 et 443 ; mais la version d'OpenSSH est celle d'avant la mise à jour |
+| Auditer | `sudo lynis audit system` : un avertissement (`PKGS-7392`, paquets vulnérables) et des suggestions ; `sudo grep suggestion /var/log/lynis-report.dat` |
+| Corriger | `sudo apt update`, `sudo apt upgrade` ; `sshd_config` (`X11Forwarding`, `MaxAuthTries`, `AllowTcpForwarding`, `AllowAgentForwarding`), `UMASK` de `/etc/login.defs`, bannière `/etc/issue` ; `sudo sshd -t`, `sudo systemctl reload ssh` |
+| Prouver | relancer `lynis` et `nmap -sV` (la version d'OpenSSH a changé) |
+| Rapporter | `nano rapport-cloture.md` : résumé, constats corrigés, preuves (l'indice exact), reste à faire (un identifiant Lynis encore ouvert) |
+
+Objectif vérifié sur l'état : plus aucun avertissement et un indice de
+durcissement d'au moins 70 (réel, recalculé sur la machine), la configuration
+de ssh appliquée, un dernier balayage qui ne voit que 22, 80 et 443 avec la
+version d'OpenSSH à jour, un dernier audit Lynis qui reflète la machine, et un
+rapport complet. Lynis donne aussi des suggestions qu'on ne corrige pas
+(intégrité des fichiers, antimalware, journaux distants, `auditd`) : on les met
+au rapport avec leur identifiant. Pièges prévus : la configuration modifiée
+sans recharger sshd (Lynis lit le fichier, pas le service), un rapport sans
+l'indice du dernier audit, un balayage hors périmètre.
+
+### Le plan de départ : la mission d'audit (côté auditrice, réalisé)
 
 Le plan décidé avec le porteur du projet avant l'histoire 14 : on y joue
 **l'audit lui-même**, du mandat signé à la contre-visite. Il complète

@@ -3,7 +3,7 @@
 ### exact command) and .solution (almost the answer: the command, with what
 ### it does). The names of places are those in noms.ftl.
 
-## Chapter 1 — The report
+## Chapter 2 — The report
 
 indice-rapport-ssh =
     .piste = Finding C1: an option in /etc/ssh/sshd_config (man sshd_config). After changing it, sshd must reread its configuration: check it first (man sshd), then have the service reload.
@@ -18,7 +18,7 @@ indice-rapport-secret =
     .piste = Finding C4: ls -l shows who can read /srv/commandes/.env (man chmod). Close it to the other accounts, but not to its owner: the app is what reads it.
     .solution = sudo chmod 600 /srv/commandes/.env (or 640 if the commandes group must read it), then ls -l to check the owner is still commandes.
 
-## Chapter 2 — The exposure
+## Chapter 3 — The exposure
 
 indice-exposition-ecoute =
     .piste = Before closing doors, look at which programs listen on which ports, on the server itself (man ss). Salomé's scan is in audit_scan.txt.
@@ -33,7 +33,7 @@ indice-exposition-fin =
     .piste = The firewall filters and Redis is local; prove SSH still gets through, with a new connection from your workstation.
     .solution = exit, then ssh fournil.
 
-## Chapter 3 — The traces
+## Chapter 4 — The traces
 
 indice-traces-trouve =
     .piste = The ssh service's journal keeps successful logins, with the address and the key's fingerprint; last sums up who logged in, when and from where (man journalctl, man last).
@@ -50,3 +50,48 @@ indice-traces-cron-decouvert =
 indice-traces-cron-nettoye =
     .piste = Remove the intruder's line from Nadia's crontab without erasing her backup: crontab -r erases everything, crontab -e lets you choose.
     .solution = sudo crontab -u nadia -e: delete the line containing curl … | sh, keep the sauvegarde.sh one.
+indice-traces-secret-vu =
+    .piste = Nadia's command history (.bash_history, readable only by her) says what was typed during the night's session. To read it in her place, you need sudo.
+    .solution = sudo cat /home/nadia/.bash_history: the person read /srv/commandes/.env, so the database password is compromised.
+indice-traces-mot-de-passe =
+    .piste = A database password is changed on both sides: in PostgreSQL (psql, ALTER ROLE, from the postgres account: man psql) AND in DATABASE_URL of the .env file; the app rereads .env only when it restarts. At least twelve characters.
+    .solution = sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD 'a-long-passphrase'", then sudo nano /srv/commandes/.env (the same password in DATABASE_URL), then sudo systemctl restart commandes and systemctl status commandes.
+
+## Chapter 1 — The scope
+
+indice-perimetre-lettre =
+    .piste = Before scanning anything: the letter of engagement is in your folder. It says what you may probe, and what you may not touch.
+    .solution = cat engagement_letter.txt: the scope is ONE machine, fournil.internal (192.0.2.22). The neighbour (192.0.2.24) is not in it.
+indice-perimetre-balayage =
+    .piste = nmap scans a machine's ports (man nmap): give it the exact address or name of the machine in the scope, and ask for the service versions too.
+    .solution = nmap -sV fournil.internal (not 192.0.2.0/24: that would probe the neighbour too).
+indice-perimetre-trace =
+    .piste = Proof is kept: nmap can write its result, as you read it, into a file (man nmap, the -oN option).
+    .solution = nmap -sV -oN inventory.txt fournil.internal
+indice-perimetre-fin =
+    .piste = Complete audit_notes.md with nano: what you found (the database and Redis ports have no business on the internet) and what you spotted without touching it (the neighbour's server).
+    .solution = nano audit_notes.md: under "What I found", quote 5432 (PostgreSQL) and 6379 (Redis); under "Out of scope", quote voisin.internal (192.0.2.24), out of scope, not probed.
+
+## Chapter 5 — The follow-up visit
+
+indice-contre-visite-balayage =
+    .piste = Redo the inventory like on day one, with versions, on the server and only on it (man nmap).
+    .solution = nmap -sV fournil.internal
+indice-contre-visite-lynis =
+    .piste = Lynis audits the machine it runs on; it needs root to read everything (man lynis). It fixes nothing.
+    .solution = sudo lynis audit system
+indice-contre-visite-mise-a-jour =
+    .piste = Lynis's warning (PKGS-7392) is about vulnerable packages: apt knows what is waiting (man apt).
+    .solution = sudo apt update, sudo apt upgrade (apt list --upgradable shows what is waiting).
+indice-contre-visite-durci =
+    .piste = Among the suggestions, the ones worth the effort: SSH (sshd_config, man sshd_config), the UMASK in /etc/login.defs, the banner /etc/issue. You need an index of at least 70, with no warning, and the SSH configuration applied.
+    .solution = sudo grep suggestion /var/log/lynis-report.dat. For example: X11Forwarding no and MaxAuthTries 3 in /etc/ssh/sshd_config (then sudo sshd -t, sudo systemctl reload ssh), UMASK 027 in /etc/login.defs, a legal notice in /etc/issue.
+indice-contre-visite-preuve-lynis =
+    .piste = A fix that is not proven is only an intention: run Lynis again so that it reflects the current state.
+    .solution = sudo lynis audit system
+indice-contre-visite-nmap-propre =
+    .piste = Redo the scan with versions, now that the updates are done: the SSH version shown has changed.
+    .solution = nmap -sV fournil.internal
+indice-contre-visite-fin =
+    .piste = Complete closing_report.md with nano: a summary, the findings fixed (parts 1 to 4), the evidence (the exact index of your last Lynis run and the ports seen), and what remains with a Lynis identifier that is still open.
+    .solution = nano closing_report.md: under "Evidence", the last audit's index and ports 22, 80, 443; under "Still to do", for example FINT-4350 (file integrity) or LOGG-2154 (remote logs).

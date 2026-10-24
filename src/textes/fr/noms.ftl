@@ -262,3 +262,6 @@ nom-courriel_nadia-txt = courriel_nadia.txt
 nom-rapport-audit-txt = rapport-audit.txt
 nom-courriel_salome-txt = courriel_salome.txt
 nom-balayage-audit-txt = balayage-audit.txt
+nom-lettre-de-mission-txt = lettre-de-mission.txt
+nom-notes-audit-md = notes-audit.md
+nom-rapport-cloture-md = rapport-cloture.md

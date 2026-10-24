@@ -64,6 +64,8 @@ import { wifi } from './wifi';
 import { rapport } from './rapport';
 import { exposition } from './exposition';
 import { traces } from './traces';
+import { perimetre } from './perimetre';
+import { contreVisite } from './contre-visite';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -120,7 +122,7 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'audit',
-    chapitres: [rapport, exposition, traces],
+    chapitres: [perimetre, rapport, exposition, traces, contreVisite],
   },
 ];
 
