@@ -962,6 +962,8 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     const { h, c } = placeDe(chapitre);
     demarrer(h, c);
     astreinte = { date, chapitre, debut: Date.now(), sh: terminalJeu.distant?.shell ?? null, epuise: false };
+    // Pendant l'astreinte, pas de seconde astreinte : le bouton revient à la fin (ou à l'abandon).
+    boutonIncident.disabled = true;
     afficher(t('astreinte-debut'), 'succes');
     majAstreinte();
     saisie.focus();

@@ -10,6 +10,10 @@ describe('Astreinte', () => {
   it('l’incident du jour : un chapitre existant, toujours le même pour une date, et qui change d’un jour à l’autre', () => {
     expect(INCIDENTS.every((id) => TOUS.includes(id))).toBe(true);
     expect(INCIDENTS).not.toContain('eveil');
+    // Pas de chapitre qui dépend de ce que les précédents ont laissé sur le poste.
+    const chapitre = (id: string) => HISTOIRES.flatMap((h) => h.chapitres).find((c) => c.id === id)!;
+    expect(INCIDENTS.filter((id) => chapitre(id).surveillePoste || chapitre(id).clesDuJoueur)).toEqual([]);
+    expect(INCIDENTS).not.toContain('rebond');
     expect(incidentDuJour('2026-10-24')).toBe(incidentDuJour('2026-10-24'));
     const mois = Array.from({ length: 31 }, (_, i) => incidentDuJour(`2026-10-${String(i + 1).padStart(2, '0')}`));
     expect(new Set(mois).size).toBeGreaterThan(10);

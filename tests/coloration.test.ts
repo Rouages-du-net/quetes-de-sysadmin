@@ -24,6 +24,7 @@ describe('Coloration de la ligne de commande', () => {
     expect(genres(s, 'nmap')[0][1]).toBe('inconnue');
     expect(genres(s, 'echo x')[0][1]).toBe('inconnue');
     expect(genres(s, '/bin/ls')).toEqual([['/bin/ls', 'commande']]);
+    expect(genres(s, 'help')).toEqual([['help', 'commande']]);
   });
 
   it('options, chaînes, jokers, opérateurs, chemins existants', () => {
