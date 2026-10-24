@@ -57,6 +57,22 @@ describe('Le terminal', () => {
     expect(en.recupererErreurs().join('')).toContain('Type "help" for the list.');
   });
 
+  it('cd - : retour au dossier d’avant, comme bash', () => {
+    let s = new Shell(chapitre('eveil'), 'en');
+    s.executer('cd -');
+    expect(s.recupererErreurs().join('')).toContain('cd: OLDPWD not set');
+    const fr = new Shell(chapitre('eveil'), 'fr');
+    fr.executer('cd -');
+    expect(fr.recupererErreurs().join('')).toContain('OLDPWD non défini');
+    s = fr;
+    const maison = s.cwd;
+    s.executer('cd Port');
+    expect(s.executer('cd -')).toBe(maison);
+    expect(s.cwd).toBe(maison);
+    expect(s.executer('cd -')).toBe(`${maison}/Port`);
+    expect(s.executer('pwd')).toBe(`${maison}/Port`);
+  });
+
   it('l’anglais est la langue par défaut et de repli', () => {
     expect(langueDuJeu()).toBe('en');
     expect(langueDuJeu('')).toBe('en');

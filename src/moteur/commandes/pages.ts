@@ -67,7 +67,7 @@ export const PAGES: Record<string, Page> = {
     exemples: ['sudo certbot certificates', 'sudo certbot renew --dry-run', 'sudo certbot renew --webroot -w /var/www/site', 'sudo certbot renew --deploy-hook "systemctl reload nginx"', 'sudo certbot reconfigure --cert-name site.example --deploy-hook "systemctl reload nginx"'],
     voir: ['openssl', 'nginx', 'curl', 'journalctl'],
   },
-  cd: { exemples: ['cd Port', 'cd ..', 'cd ~', 'cd /'], voir: ['ls', 'pwd'] },
+  cd: { exemples: ['cd Port', 'cd ..', 'cd ~', 'cd /', 'cd -'], voir: ['ls', 'pwd'] },
   chgrp: { longues: { 'recursive': 'R' }, options: ['R'], exemples: ['chgrp equipe-web rapport.txt', 'sudo chgrp -R equipe-web /srv/equipe'], voir: ['chown', 'chmod', 'groups'] },
   chmod: { options: ['R'], exemples: ['chmod o-w souvenirs', 'chmod 755 lieu', 'sudo chmod -R g+w /srv/equipe', 'sudo chmod g+s /srv/equipe'], voir: ['ls', 'sudo', 'whoami', 'umask'] },
   chage: { longues: { 'list': 'l', 'expiredate': 'E' }, options: ['l', 'E'], exemples: ['sudo chage -l marc', 'sudo chage -E 0 marc', 'sudo chage -E -1 marc'], voir: ['usermod', 'userdel'] },

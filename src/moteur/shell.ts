@@ -87,6 +87,8 @@ export interface Edition {
 export class Shell implements Jeu {
   racine: Dossier;
   cwd: string;
+  /** Le dossier d'avant ($OLDPWD), pour cd -. */
+  ancien: string | null = null;
   maison: string;
   drapeaux = new Set<string>();
   etat: Record<string, any>;

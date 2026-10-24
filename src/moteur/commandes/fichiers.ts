@@ -187,6 +187,16 @@ export const FICHIERS: Record<string, Commande> = {
 
   cd: {
     lancer: ({ args, jeu }) => {
+      // cd - : retour au dossier d'avant ($OLDPWD), que bash affiche.
+      if (args[0] === '-') {
+        if (jeu.ancien === null) return jeu.erreur(jeu.t('cd-ancien-absent'));
+        const ancien = jeu.ancien;
+        if (jeu.trouver(ancien)?.type !== 'dossier') return jeu.erreur(jeu.t('erreur-introuvable', { commande: 'cd', cible: ancien }));
+        jeu.ancien = jeu.cwd;
+        jeu.cwd = ancien;
+        jeu.visites.add(ancien);
+        return ancien;
+      }
       const cible = args[0] ?? '~';
       const n = jeu.trouver(cible);
       if (!n) return jeu.erreur(jeu.t('erreur-introuvable', { commande: 'cd', cible }));
@@ -194,6 +204,7 @@ export const FICHIERS: Record<string, Commande> = {
       const raison = jeu.blocage(cible);
       if (raison) return jeu.erreur(raison);
       if (!jeu.traverse(cible) || !jeu.peut(n, 'x')) return jeu.erreur(jeu.t('erreur-permission', { commande: 'cd', cible }));
+      jeu.ancien = jeu.cwd;
       jeu.cwd = jeu.resoudre(cible);
       jeu.visites.add(jeu.cwd);
       return '';
