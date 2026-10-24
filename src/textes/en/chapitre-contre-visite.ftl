@@ -86,8 +86,11 @@ contre-visite-evenement-enferme =
     account would be refused. Your session stays open: fix it BEFORE you
     disconnect.
 contre-visite-evenement-hors-perimetre =
-    You probed an address outside the letter of engagement. Even for a follow-up
-    visit, you stay in the scope: the neighbour's server is still not ours.
+    You probed an address outside the letter of engagement ({ $adresses }). Even
+    for a follow-up visit, you stay in the scope: { $voisin ->
+        [oui] the neighbour's server is still not ours.
+       *[non] what is not listed in it is not ours.
+    }
 # { $ancienne }: "oui" if the SSH version shown is not up to date
 contre-visite-evenement-balayage =
     That is what the internet sees now. Compare with day one: ports 5432

@@ -88,8 +88,11 @@ contre-visite-evenement-enferme =
     connexion de ton compte serait refusée. Ta session reste ouverte : corrige
     AVANT de te déconnecter.
 contre-visite-evenement-hors-perimetre =
-    Tu as sondé une adresse hors de la lettre de mission. Même pour une contre-visite,
-    on reste dans le périmètre : le serveur du voisin n'est toujours pas à nous.
+    Tu as sondé une adresse hors de la lettre de mission ({ $adresses }). Même pour
+    une contre-visite, on reste dans le périmètre : { $voisin ->
+        [oui] le serveur du voisin n'est toujours pas à nous.
+       *[non] ce qui n'y figure pas n'est pas à nous.
+    }
 # { $ancienne } : « oui » si la version de SSH affichée n'est pas à jour
 contre-visite-evenement-balayage =
     Voilà ce que voit internet maintenant. Compare avec le premier jour : les

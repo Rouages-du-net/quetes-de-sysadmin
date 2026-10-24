@@ -40,6 +40,11 @@ for (const langue of LANGUES)
       expect(tout).not.toContain(t('perimetre-relecture'));
       expect(tout).not.toContain('invalid option');
       contient(tout, 'Utilisation : nmap');
+      // Une adresse hors de la lettre, mais pas celle du voisin : le message dit laquelle, sans parler du voisin.
+      const ailleurs = partie().jouer(['nmap 203.0.113.5']);
+      expect(ailleurs).toContain('203.0.113.5');
+      contient(ailleurs, 'pas dans ta lettre');
+      if (fr) expect(ailleurs).not.toContain('voisin');
       const contre = partie(['perimetre', 'rapport', 'exposition', 'traces']);
       expect(contre.jouer(['ls'])).not.toContain(t('contre-visite-relecture'));
     });

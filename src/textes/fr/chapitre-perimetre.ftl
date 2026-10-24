@@ -114,10 +114,13 @@ perimetre-evenement-balayage =
     Une question d'auditrice : parmi ces services ouverts, lesquels ont une
     raison d'être joignables par n'importe qui ? Garde la trace dans un
     fichier (l'option -oN) : un constat sans preuve n'est qu'une opinion.
-# { $adresse } : l'adresse de la machine hors périmètre
+# { $adresses } : les adresses sondées hors de la lettre de mission ; { $voisin } : « oui » si le serveur du voisin en fait partie
 perimetre-evenement-hors-perimetre =
     ATTENTION : tu viens de sonder une adresse qui n'est pas dans ta lettre
-    de mission ({ $adresse }, le serveur du voisin). Ici, il ne s'est rien
+    de mission ({ $adresses }{ $voisin ->
+        [oui] , dont le serveur du voisin
+       *[non] {""}
+    }). Ici, il ne s'est rien
     passé ; pour de vrai, c'est une faute professionnelle, et selon le
     pays une infraction : l'autorisation du client ne couvre pas le matériel
     d'autrui. La bonne réponse, face à une machine qui paraît « intéressante » :
