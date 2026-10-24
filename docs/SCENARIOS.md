@@ -1922,3 +1922,154 @@ histoire, la boulangerie de Nadia, en cinq chapitres :
    rapport de clôture écrit dans `nano`.
 Les « constats » du plan (chapitre 2) se fondent dans le premier chapitre et
 dans les chapitres actuels, qui partent déjà d'un rapport.
+
+## Histoire 15 : La Veille (plan, à écrire)
+
+Six mois après « L'Audit » (histoire 14, « Je repasserai dans six mois : la
+sécurité, ça se revérifie »), Salomé revient au Fournil — non plus pour
+auditer, mais pour transmettre une habitude : la veille de sécurité,
+hebdomadaire, qu'on tient seul·e une fois qu'elle n'est plus là. Chaque
+chapitre correspond à un geste réel de sysadmin : lire un bulletin, trier,
+corriger sans casser, prouver, puis automatiser ce qui peut l'être. Tout
+reste défensif : aucune CVE réelle n'est citée (des identifiants fictifs,
+`CVE-2099-NNNNN`, de la forme des vrais), rien n'est exploité, seule une
+preuve de version ou de configuration est vérifiée.
+
+Machine : celle du Fournil, retrouvée telle que « La contre-visite » l'a
+laissée (root fermé, pare-feu actif, Redis en local, indice Lynis ≥ 70).
+Techniquement une nouvelle entrée du réseau simulé (adresse à choisir,
+`192.0.2.23` est libre) : le nom peut rester `fournil` dans les dialogues,
+Salomé et Nadia reprennent leurs rôles. Aucun outil nouveau n'est
+nécessaire : tout s'appuie sur ce que le jeu sait déjà faire (`apt`, `nmap`,
+`lynis`, `ss`, `journalctl`, `systemctl`, `mail`, `crontab`/timers,
+`unattended-upgrade`) — la veille, dans la vraie vie, est surtout une
+discipline de lecture et de décision, pas un nouvel outil.
+
+### Chapitre 1 — Le bulletin (à écrire)
+
+Un fichier hebdomadaire (comme une liste de diffusion d'avis de sécurité :
+Debian Security Advisories, oss-security…) liste plusieurs CVE fictives,
+chacune avec son paquet, la plage de versions touchées, la version
+corrigée et un résumé. Avant de s'inquiéter, il faut vérifier que chaque
+ligne concerne vraiment CE serveur : un paquet qui n'est pas installé, ou
+déjà à jour, n'est pas une alerte.
+
+| Étape | Commande apprise |
+|---|---|
+| Lire | `cat bulletin-securite.txt` (ou `less`) |
+| Vérifier l'installation | `dpkg -l`, `apt list --installed` |
+| Comparer les versions | `apt-cache policy <paquet>` (ou relire `dpkg -l`) face à la plage du bulletin |
+| Trier | `nano veille.md` : pour chaque CVE, « concerne ce serveur » ou non, et pourquoi |
+
+Objectif vérifié sur l'état : le tri écrit dans `veille.md` correspond à la
+réalité du serveur (les CVE sur des paquets absents ou déjà à la version
+corrigée sont écartées, les autres retenues). Pièges prévus : une CVE sur un
+nom de paquet proche mais différent (ex. `nginx-common` contre `nginx`),
+une CVE déjà corrigée par une mise à jour précédente, une CVE retenue sans
+vérifier qu'elle s'applique (fausse alerte qui fait perdre du temps plus
+tard).
+
+### Chapitre 2 — La priorité (à écrire)
+
+Deux ou trois CVE retenues, avec un score CVSS et une description (une
+exécution de code à distance sans authentification sur un service public,
+une élévation de privilèges locale qui suppose déjà un accès shell, un
+déni de service sur un service qui n'écoute qu'en local). Le score seul ne
+suffit pas : il faut croiser avec l'exposition, déjà apprise dans « Le
+périmètre » et « L'exposition ».
+
+| Étape | Commande apprise |
+|---|---|
+| Revoir l'exposition | `nmap -sV fournil.internal` (ce qui répond depuis internet), `sudo ss -tlnp` (ce qui écoute, même en local) |
+| Comparer | le score CVSS de chaque CVE, et si le service est joignable de l'extérieur ou non |
+| Décider | `nano veille.md` : un ordre de traitement, justifié |
+
+Objectif vérifié sur l'état : l'ordre choisi fait passer un service exposé
+avant un service interne, même si son score CVSS est plus bas qu'une CVE
+locale ; la justification écrite cite l'exposition, pas seulement le
+chiffre. Piège prévu : classer uniquement par score CVSS décroissant
+(oublier l'exposition) ; une CVE locale la plus haute en score traitée
+avant une CVE distante sans authentification moins bien notée.
+
+### Chapitre 3 — Le correctif (à écrire)
+
+Pour chaque CVE retenue : une mise à jour existe (le cas courant), ou pas
+encore (le bulletin documente une parade en attendant, par exemple
+restreindre une fonctionnalité ou un port). Corriger sans casser : une
+mise à jour mal préparée peut couper un service qui doit continuer à
+tourner (le site du Fournil, l'appli de commandes).
+
+| Étape | Commande apprise |
+|---|---|
+| Corriger ce qui a un correctif | `sudo apt update`, `sudo apt upgrade <paquet>` (ou `apt upgrade` complet) |
+| Contourner ce qui n'en a pas encore | la parade du bulletin (ex. `ufw`, une directive de configuration à retirer) |
+| Vérifier que ça tourne encore | `systemctl status`, `curl -I` sur le site, `journalctl -u <service> -n 20` |
+
+Objectif vérifié sur l'état : les paquets concernés sont à la version
+corrigée (ou la parade documentée est en place), et tous les services qui
+doivent tourner tournent encore (le site répond, l'appli de commandes est
+active). Pièges prévus : une mise à jour qui s'arrête en cours (dpkg
+interrompu, comme dans « Les mises à jour ») sans que personne ne la
+termine, une parade appliquée au mauvais service, un service qu'on croit
+avoir corrigé mais qu'on n'a pas vérifié.
+
+### Chapitre 4 — Sans preuve, pas de certitude (à écrire)
+
+Un correctif qui n'est pas prouvé n'est qu'une intention (la leçon de « La
+contre-visite », reprise). On revérifie de l'extérieur, et on regarde dans
+les journaux si quelqu'un avait déjà essayé d'exploiter la faille avant
+qu'elle soit corrigée.
+
+| Étape | Commande apprise |
+|---|---|
+| Prouver | `nmap -sV fournil.internal` (la version affichée a changé) |
+| Mesurer | `sudo lynis audit system` (l'indice de durcissement) |
+| Chercher des traces | `journalctl --since …`, `grep` dans les journaux du service concerné |
+| Conclure | `nano veille.md` : chaque CVE retenue a sa ligne « corrigée, prouvée » |
+
+Objectif vérifié sur l'état : chaque CVE retenue au chapitre 1 a une preuve
+(version affichée, ou configuration vérifiée) dans `veille.md`, et une
+recherche de tentative antérieure dans les journaux (trouvée ou non, mais
+cherchée). Piège prévu : une CVE « corrigée » sans nouvelle preuve derrière
+(on recopie l'ancien balayage), une trace d'exploitation dans les journaux
+ignorée faute de l'avoir cherchée.
+
+### Chapitre 5 — Mettre en veille (à écrire)
+
+Une vérification ponctuelle ne suffit pas : la veille est une habitude.
+Dernier chapitre, mettre en place ce qui peut tourner seul, sans remplacer
+la décision humaine.
+
+| Étape | Commande apprise |
+|---|---|
+| Planifier | un timer systemd (ou une tâche `cron`) qui lance `apt update && apt list --upgradable` chaque semaine |
+| Être prévenu·e | le résultat envoyé par `mail` (comme les alertes de supervision de « La sonde ») |
+| Automatiser ce qui est sûr | `unattended-upgrades` pour les mises à jour de sécurité (repris de « Les mises à jour automatiques »), sans tout faire tout seul |
+
+Objectif vérifié sur l'état : un timer (ou une tâche cron) actif et
+persistant qui vérifie les mises à jour chaque semaine, un courrier envoyé
+à chaque exécution, et `unattended-upgrades` configuré pour les mises à
+jour de sécurité seulement (pas pour tout, qui casserait sans prévenir).
+Piège prévu : un timer qui ne survit pas au redémarrage (non activé),
+`unattended-upgrades` réglé pour tout mettre à jour sans distinction.
+
+### Débrief de l'histoire
+
+Ce qui s'est passé : une veille régulière transforme une alerte en
+routine plutôt qu'en urgence. La bonne pratique : trier par exposition
+autant que par gravité, corriger puis prouver, chercher les traces d'une
+exploitation déjà tentée, et automatiser ce qui peut l'être sans perdre la
+décision humaine. Documentation : Debian Security
+(https://www.debian.org/security/), le glossaire CVE
+(https://www.cve.org/), le calculateur CVSS
+(https://www.first.org/cvss/calculator/4-0), `unattended-upgrades`
+(https://wiki.debian.org/UnattendedUpgrades), `systemd.timer`
+(https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html).
+
+### Ce qui reste volontairement hors de ce plan
+
+Comprendre une faille pour mieux la corriger n'exige pas de l'exploiter
+dans le jeu. Une version plus offensive (une machine d'audit façon Kali,
+des outils de reconnaissance plus poussés) resterait une histoire à part,
+avec ses propres garde-fous, à concevoir séparément si le projet le
+décide ; ce plan n'en fait pas partie.
