@@ -4,10 +4,12 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
+import { prerequis } from '../src/moteur/deverrouillage';
 import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
 import { dansLaLangue } from './noms';
 
-const EFFACEUR = HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id);
+// L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
+const EFFACEUR = [...new Set([...HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id), ...prerequis('ruche')])];
 const MDP = 'abeille-2027';
 const VLANS = `
 auto eth1.10

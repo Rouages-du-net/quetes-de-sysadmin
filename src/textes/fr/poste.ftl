@@ -39,6 +39,9 @@ poste-cles-recues =
     🔑 Le royaume te remercie : de nouvelles clés SSH t'attendent sur ton poste
     ({ $cles }). Reviens-y (exit), regarde ~/.ssh/config, et connecte-toi à la
     machine de ton choix.
+poste-cles-recues-suite =
+    🔑 Nouvelle étape franchie : d'autres histoires s'ouvrent, leurs clés
+    t'attendent sur ton poste ({ $cles }).
 
 ## Messages d'accueil des machines (motd), affichés à la connexion
 

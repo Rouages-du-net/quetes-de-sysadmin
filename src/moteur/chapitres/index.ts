@@ -67,6 +67,8 @@ import { traces } from './traces';
 import { perimetre } from './perimetre';
 import { contreVisite } from './contre-visite';
 
+// Les histoires s'ouvrent peu à peu : chacune dit, dans `apres`, les chapitres
+// à finir avant d'en recevoir la clé (voir deverrouillage.ts et docs/SCENARIOS.md).
 export const HISTOIRES: Histoire[] = [
   {
     id: 'effaceur',
@@ -74,54 +76,67 @@ export const HISTOIRES: Histoire[] = [
   },
   {
     id: 'datacenter',
+    apres: ['racine'],
     chapitres: [datacenter, deuxiemeJour, redemarrage, incendie, certificat],
   },
   {
     id: 'paquet',
+    apres: ['racine'],
     chapitres: [paquet],
   },
   {
     id: 'temps',
+    apres: ['racine'],
     chapitres: [temps],
   },
   {
     id: 'archives',
+    apres: ['racine'],
     chapitres: [archives, versions],
   },
   {
     id: 'lettres',
+    apres: ['redemarrage', 'paquet-perdu'],
     chapitres: [porte, pareFeu, sentinelle, colocation, chezMoi, concert, port, recidive],
   },
   {
     id: 'fabrique',
+    apres: ['redemarrage'],
     chapitres: [miseAJour, composition, contournement, pleinsPouvoirs],
   },
   {
     id: 'gazette',
+    apres: ['manuscrit', 'redemarrage'],
     chapitres: [depotNu, retourArriere, bleuVert, canari, migration],
   },
   {
     id: 'ludotheque',
+    apres: ['versions'],
     chapitres: [rancon, instantanesChapitre, base],
   },
   {
     id: 'astreinte',
+    apres: ['redemarrage'],
     chapitres: [disquePlein, memoireChapitre, inodes, horloge, sonde, postMortem, goulot],
   },
   {
     id: 'maison',
+    apres: ['fermer-la-porte'],
     chapitres: [cles, rebond, tunnel, transferts, hebergeur],
   },
   {
     id: 'cooperative',
+    apres: ['colocation', 'deuxieme-jour'],
     chapitres: [depart, droits, secret, proxy, misesAJour, automatiques],
   },
   {
     id: 'ruche',
+    apres: ['pare-feu', 'rebond'],
     chapitres: [vlan, dhcp, zones, vpn, dmz, annexe, annuaireChapitre, wifi],
   },
   {
     id: 'audit',
+    apres: ['sentinelle', 'droits'],
     chapitres: [perimetre, rapport, exposition, traces, contreVisite],
   },
 ];

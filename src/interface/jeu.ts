@@ -16,6 +16,7 @@ import { grade, GRADES, nouveauxSucces, SUCCES } from '../moteur/succes';
 import { indice, NIVEAUX, type Niveau } from '../moteur/indices';
 import { bilan } from '../moteur/bilan';
 import { etapesParcours, PARCOURS } from '../moteur/parcours';
+import { manquants } from '../moteur/deverrouillage';
 import { budgetRestant, incidentDuJour, jauge, placeDe, pourcent } from '../moteur/astreinte';
 import { codeDeProgression, fichierDeSauvegarde, lireCode, lireFichier, nettoyerNom, type Sauvegarde } from '../moteur/progression';
 import { colorer, type Jeton } from '../moteur/coloration';
@@ -554,8 +555,12 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
       const total = chapitres(h).length;
       // L'état de la machine sur la carte : son câble et son cadre s'allument.
       b.parentElement!.dataset.etat = !accessible(h) ? 'verrouillee' : faits === chapitres(h).length ? 'terminee' : faits > 0 || h === histoire() ? 'en-cours' : 'ouverte';
+      // Verrouillée : les chapitres qui manquent encore pour en recevoir la clé.
+      const reste = manquants(HISTOIRES[h].id, termines);
       b.querySelector('.etat')!.textContent = !accessible(h)
-        ? t('etat-cle-manquante')
+        ? reste.length
+          ? t('etat-cle-apres', { chapitres: new Intl.ListFormat(t.langue, { type: 'conjunction' }).format(reste.map((c) => t('etat-cle-chapitre', { titre: t(`chapitre-${c}`) }))) })
+          : t('etat-cle-manquante')
         : faits === total
           ? t('etat-histoire-terminee')
           : total > 1
@@ -932,20 +937,21 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   };
   const dateLongue = (iso: string) => new Intl.DateTimeFormat(t.langue, { dateStyle: 'long' }).format(new Date(`${iso}T12:00:00`));
   let astreinte: { date: string; chapitre: string; debut: number; sh: Shell | null; epuise: boolean } | null = null;
+  // L'incident du jour est tiré parmi les histoires déjà ouvertes (null : aucune encore).
+  const incident = (date = aujourdhui()) => incidentDuJour(date, (h) => terminalJeu.ouverte(h));
   const majIncident = () => {
-    const id = incidentDuJour(aujourdhui());
-    const { h } = placeDe(id);
-    const ouverte = termines.includes('racine');
-    boutonIncident.disabled = !ouverte || astreinte !== null;
+    const id = incident();
+    boutonIncident.disabled = !id || astreinte !== null;
     const fait = resultats[aujourdhui()];
-    texteIncident.textContent = !ouverte
+    texteIncident.textContent = !id
       ? t('astreinte-verrouille')
       : fait
         ? t('astreinte-deja', { pourcent: pourcent(fait.restant) })
-        : t('astreinte-aujourdhui', { chapitre: t(`chapitre-${id}`), histoire: titreHistoire(h) });
+        : t('astreinte-aujourdhui', { chapitre: t(`chapitre-${id}`), histoire: titreHistoire(placeDe(id).h) });
   };
   boutonIncident.addEventListener('click', () => {
-    const id = incidentDuJour(aujourdhui());
+    const id = incident();
+    if (!id) return;
     astreinteTitre.textContent = t('astreinte-titre', { date: dateLongue(aujourdhui()) });
     astreinteChapitre.textContent = t('astreinte-aujourdhui', { chapitre: t(`chapitre-${id}`), histoire: titreHistoire(placeDe(id).h) });
     fenetreAstreinte.showModal();
@@ -955,7 +961,8 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   prendreAstreinte.addEventListener('click', () => {
     fenetreAstreinte.close();
     const date = aujourdhui();
-    const chapitre = incidentDuJour(date);
+    const chapitre = incident(date);
+    if (!chapitre) return;
     // D'astreinte, les indices sont permis (ils coûtent) : pas de mode examen.
     caseExamen.checked = false;
     terminalJeu.examen = false;

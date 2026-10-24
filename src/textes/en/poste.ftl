@@ -39,6 +39,9 @@ poste-cles-recues =
     🔑 The kingdom thanks you: new SSH keys are waiting for you on your
     workstation ({ $cles }). Go back there (exit), look at ~/.ssh/config, and
     connect to the machine of your choice.
+poste-cles-recues-suite =
+    🔑 Another milestone: more stories open up, their keys are waiting on
+    your workstation ({ $cles }).
 
 ## Welcome messages of the machines (motd), shown on login
 

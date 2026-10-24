@@ -6,6 +6,7 @@
 
 import { Shell } from './shell';
 import { HISTOIRES } from './chapitres';
+import { ouverte, PREMIERE } from './deverrouillage';
 import { f, joueur, type Chapitre, type Histoire } from './monde';
 import { MACHINES, POSTE, type Machine } from './machines';
 import { config as configSsh, fichiersCle, poste } from './poste';
@@ -24,11 +25,6 @@ export interface OptionsConsole {
   ssh?: { fichiers: Record<string, string>; phrases?: Record<string, string> };
 }
 
-// L'histoire à finir pour recevoir les autres clés.
-const PREMIERE = 'effaceur';
-// Le chapitre qui donne les clés : la fin de l'histoire d'origine (les
-// chapitres ajoutés ensuite ne doivent pas reprendre les clés déjà données).
-const CHAPITRE_DES_CLES = 'racine';
 
 type Saisie = { ligne: string } | { enregistrer: string } | { quitter: true };
 
@@ -130,10 +126,9 @@ export class Console {
     return this.poste.executer(`cat ${this.poste.accueil}`) ?? '';
   }
 
-  /** Une histoire est ouverte si l'on a sa clé : la première, puis toutes une fois celle-ci finie. */
+  /** Une histoire est ouverte si l'on a sa clé : la première d'emblée, les autres peu à peu (deverrouillage.ts). */
   ouverte(histoire: string): boolean {
-    if (histoire === PREMIERE) return true;
-    return this.termines.includes(CHAPITRE_DES_CLES);
+    return ouverte(histoire, this.termines);
   }
 
   hotesConnus(): string {
@@ -298,7 +293,9 @@ export class Console {
     if (!nouvelles.length) return '';
     const ssh = this.poste.trouver('~/.ssh');
     if (ssh?.type === 'dossier') for (const m of nouvelles) Object.assign(ssh.enfants, fichiersCle(this.t, m));
-    return this.t('poste-cles-recues', { cles: nouvelles.map((m) => `~/.ssh/id_${m.nom}`).join(', ') });
+    // La première vague (après La Racine) explique où trouver les clés ; les suivantes les annoncent.
+    const premiere = !avant.some((h) => h !== PREMIERE);
+    return this.t(premiere ? 'poste-cles-recues' : 'poste-cles-recues-suite', { cles: nouvelles.map((m) => `~/.ssh/id_${m.nom}`).join(', ') });
   }
 
   /** Exécute une ligne ; renvoie le texte à afficher, ou null pour « clear ». */

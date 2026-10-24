@@ -25,6 +25,12 @@ const heures = (minutes: number) =>
       ? `${minutes} min`
       : `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${String(minutes % 60).padStart(2, '0')}` : ''}`;
 const fr = langue === 'fr';
+// Les chapitres à finir avant d'ouvrir une histoire, avec le titre de leur histoire.
+const histoireDe = (c: string) => HISTOIRES.find((h) => h.chapitres.some((x) => x.id === c))!;
+const apres = (ids: string[]) =>
+  new Intl.ListFormat(langue, { type: 'conjunction' }).format(
+    ids.map((c) => (fr ? `« ${t(`chapitre-${c}`)} » (${t(`histoire-${histoireDe(c).id}`)})` : `"${t(`chapitre-${c}`)}" (${t(`histoire-${histoireDe(c).id}`)})`)),
+  );
 ---
 <h1>{fr ? 'Pour les enseignant·es' : 'For teachers'}</h1>
 {fr ? (
@@ -84,7 +90,7 @@ const fr = langue === 'fr';
         {fr
           ? `${liste.length} ${liste.length > 1 ? 'chapitres' : 'chapitre'}, environ ${duree}.`
           : `${liste.length} ${liste.length > 1 ? 'chapters' : 'chapter'}, about ${duree}.`}
-        {h.id !== 'effaceur' && (fr ? " Demande les clés données à la fin de l'Effaceur, sauf en ouverture directe :" : ' Needs the keys given at the end of The Eraser, unless opened directly:')}
+        {h.apres && (fr ? ` S'ouvre dans le jeu après ${apres(h.apres)}, sauf en ouverture directe :` : ` Opens in the game after ${apres(h.apres)}, unless opened directly:`)}
       </p>
       {h.id !== 'effaceur' && <pre><code>{`<quetes-de-sysadmin histoire="${h.id}"${fr ? '' : ' langue="en"'}></quetes-de-sysadmin>`}</code></pre>}
       <ol class="fiches">
@@ -100,7 +106,7 @@ const fr = langue === 'fr';
                   ? fr ? `« ${t(`chapitre-${f.avant.id}`)} »` : `"${t(`chapitre-${f.avant.id}`)}"`
                   : h.id === 'effaceur'
                     ? fr ? 'Rien : on part de zéro.' : 'Nothing: you start from scratch.'
-                    : fr ? "L'Effaceur (ou une ouverture directe)." : 'The Eraser (or a direct opening).'}
+                    : fr ? `${apres(h.apres ?? [])} (ou une ouverture directe).` : `${apres(h.apres ?? [])} (or a direct opening).`}
               </dd>
               <dt>{fr ? 'Commandes découvertes' : 'New commands'}</dt>
               <dd>

@@ -17,7 +17,7 @@ describe('Astreinte', () => {
     expect(incidentDuJour('2026-10-24')).toBe(incidentDuJour('2026-10-24'));
     const mois = Array.from({ length: 31 }, (_, i) => incidentDuJour(`2026-10-${String(i + 1).padStart(2, '0')}`));
     expect(new Set(mois).size).toBeGreaterThan(10);
-    const { h, c } = placeDe(incidentDuJour('2026-10-24'));
+    const { h, c } = placeDe(incidentDuJour('2026-10-24')!);
     expect(HISTOIRES[h].chapitres[c].id).toBe(incidentDuJour('2026-10-24'));
   });
 
