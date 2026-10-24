@@ -24,7 +24,7 @@ for (const langue of LANGUES)
       // nano : remplacer du texte dans un fichier, puis ^O et ^X.
       const modifier = (fichier: string, changer: (texte: string) => string) => {
         c.executer(`sudo nano ${fichier}`);
-        if (c.shell.attente) c.executer('fourmis-2026');
+        if (c.shell.attente) c.executer(machinesDansLaLangue(c.t, 'fourmis-2026'));
         c.enregistrer(changer(c.edition!.texte));
         return c.quitterEdition();
       };
@@ -59,7 +59,7 @@ for (const langue of LANGUES)
       const { c, jouer, modifier } = partie();
       jouer(['ssh lettres', 'yes']);
       c.executer('sudo nano /etc/ssh/sshd_config.d/00-durcissement.conf');
-      c.executer('fourmis-2026');
+      c.executer(machinesDansLaLangue(c.t, 'fourmis-2026'));
       c.enregistrer('PermitRootLogin no\nPasswordAuthentication no\n');
       c.quitterEdition();
       jouer(['sudo systemctl restart ssh', 'exit', 'ssh lettres']);
@@ -158,7 +158,7 @@ for (const langue of LANGUES)
       const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
       const ecrire = (fichier: string, texte: string) => {
         c.executer(`sudo nano ${fichier}`);
-        if (c.shell.attente) c.executer('fourmis-2026');
+        if (c.shell.attente) c.executer(machinesDansLaLangue(c.t, 'fourmis-2026'));
         c.enregistrer(texte);
         return c.quitterEdition();
       };
@@ -231,7 +231,7 @@ for (const langue of LANGUES)
       const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
       const ecrire = (fichier: string, changer: (texte: string) => string, sudo = true) => {
         c.executer(`${sudo ? 'sudo ' : ''}nano ${fichier}`);
-        if (c.shell.attente) c.executer('fourmis-2026');
+        if (c.shell.attente) c.executer(machinesDansLaLangue(c.t, 'fourmis-2026'));
         c.enregistrer(changer(c.edition!.texte));
         return c.quitterEdition();
       };
@@ -316,7 +316,7 @@ for (const langue of LANGUES)
       const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
       const ecrire = (fichier: string, changer: (texte: string) => string) => {
         c.executer(`sudo nano ${fichier}`);
-        if (c.shell.attente) c.executer('fourmis-2026');
+        if (c.shell.attente) c.executer(machinesDansLaLangue(c.t, 'fourmis-2026'));
         c.enregistrer(changer(c.edition!.texte));
         return c.quitterEdition();
       };

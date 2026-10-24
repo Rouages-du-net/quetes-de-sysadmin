@@ -4,7 +4,7 @@
 ### (in English) are never translated.
 
 chapitre-cles = The keys
-    .resume = Your account has a temporary password (lilas-2027): ssh-keygen, ssh-copy-id, then no more passwords at all.
+    .resume = Your account has a temporary password (lilac-2027): ssh-keygen, ssh-copy-id, then no more passwords at all.
 
 ## Files
 

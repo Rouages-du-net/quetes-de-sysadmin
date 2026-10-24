@@ -15,7 +15,7 @@ indice-composition-connectee =
     .solution = In compose.yaml (sudo nano), replace @localhost: with @db: in DATABASE_URL, then sudo docker compose up -d and curl http://localhost:8081
 indice-composition-fin =
     .piste = Now make the setup solid: a named volume for /var/lib/postgresql/data, the password moved out of compose.yaml into .env (readable by root only), and restart: on each service. docker compose config shows what Compose understands.
-    .solution = In compose.yaml: ${"{"}POSTGRES_PASSWORD{"}"} instead of the password (twice), volumes: - donnees:/var/lib/postgresql/data and volumes: donnees: at the bottom, restart: unless-stopped on both services; then echo POSTGRES_PASSWORD=atelier2027 | sudo tee .env ; sudo chmod 600 .env ; sudo docker compose up -d
+    .solution = In compose.yaml: ${"{"}POSTGRES_PASSWORD{"}"} instead of the password (twice), volumes: - donnees:/var/lib/postgresql/data and volumes: donnees: at the bottom, restart: unless-stopped on both services; then echo POSTGRES_PASSWORD=workshop2027 | sudo tee .env ; sudo chmod 600 .env ; sudo docker compose up -d
 
 ## Chapter 3 — The hole in the firewall
 

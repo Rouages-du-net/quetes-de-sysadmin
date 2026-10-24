@@ -26,7 +26,7 @@ secret-courriel-awa =
     (/var/log/nginx/access.log), and shut the door. If you find out who took
     it, block them too (man nginx… and the documentation of deny).
 
-    For sudo: radis-2027
+    For sudo: radish-2027
 
 ## Events
 

@@ -23,7 +23,7 @@ rapport-courriel-nadia =
     the findings one by one without taking the online orders down? We have
     a crowd at the counter every morning, and the site must not go down.
 
-    For sudo, your password is: farine-2028
+    For sudo, your password is: flour-2028
     And please check each fix: Salomé will come back to verify.
 
 rapport-rapport-audit =

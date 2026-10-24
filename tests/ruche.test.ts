@@ -36,7 +36,7 @@ for (const langue of LANGUES)
       const c = new Console({ langue, termines: [...EFFACEUR, ...termines] });
       const une = (l: string) => {
         let sortie = c.executer(machinesDansLaLangue(c.t, l)) ?? '';
-        if (c.shell.attente) sortie += '\n' + (c.executer(MDP) ?? '');
+        if (c.shell.attente) sortie += '\n' + (c.executer(machinesDansLaLangue(c.t, MDP)) ?? '');
         return sortie;
       };
       const jouer = (lignes: string[]) => lignes.map(une).join('\n');

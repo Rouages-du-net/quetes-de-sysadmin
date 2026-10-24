@@ -30,7 +30,7 @@ annuaire-courriel-malik =
     machine, sudo … -Y EXTERNAL -H ldapi:/// (no password).
     It's all in man ldapsearch, man ldapadd, man ldapmodify.
 
-    For sudo: abeille-2027
+    For sudo: bee-2027
 
 ## Events
 

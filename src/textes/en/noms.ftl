@@ -96,8 +96,6 @@ nom-journal-txt = journal.txt
 nom-effaceur-conf = eraser.conf
 nom-effaceur-conf-corrige = eraser.conf.fixed
 nom-effaceur-log = eraser.log
-# The password written down in the journal (sudo asks for it).
-nom-tournesol = sunflower
 nom-cible = target
 nom-Royaume = Kingdom
 nom-Corbeille = Bin

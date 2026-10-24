@@ -40,7 +40,7 @@ traces-courriel-salome =
     write whatever they want. Compare the fingerprints.
 
     Salomé
-    (For sudo, your password is still: farine-2028)
+    (For sudo, your password is still: flour-2028)
 
 ## Events
 

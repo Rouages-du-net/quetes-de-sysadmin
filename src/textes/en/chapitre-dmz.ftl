@@ -33,7 +33,7 @@ dmz-courriel-ines =
     To watch visits go by: sudo conntrack -L. The rest: man nft
     (dnat), man interfaces.
 
-    For sudo: abeille-2027
+    For sudo: bee-2027
 
 dmz-plan-commutateur =
     SWITCH PLAN — La Ruche (electrician, updated January 2028)

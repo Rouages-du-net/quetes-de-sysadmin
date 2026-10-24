@@ -772,7 +772,7 @@ for (const langue of LANGUES)
         t
           .replace('version: "3.8"\n\n', '')
           .replace('@localhost:', '@db:')
-          .replaceAll('atelier2027', '${POSTGRES_PASSWORD}')
+          .replaceAll(L('atelier2027'), '${POSTGRES_PASSWORD}')
           .replace('    depends_on:', '    restart: unless-stopped\n    depends_on:')
           .replace('      - POSTGRES_DB=reservations', '      - POSTGRES_DB=reservations\n    volumes:\n      - donnees:/var/lib/postgresql/data\n    restart: unless-stopped\n\nvolumes:\n  donnees:');
 
@@ -785,7 +785,7 @@ for (const langue of LANGUES)
         modifier(s, '/srv/reservations/compose.yaml', corriger);
         const config = s.executer('sudo docker compose config') ?? '';
         expect(config).toContain('The "POSTGRES_PASSWORD" variable is not set.');
-        s.executer('echo POSTGRES_PASSWORD=atelier2027 | sudo tee .env');
+        s.executer(L('echo POSTGRES_PASSWORD=atelier2027 | sudo tee .env'));
         s.executer('sudo docker compose up -d');
         if (reference) expect(s.executer('curl http://localhost:8081')).toContain('base de données connectée');
         expect(s.termine).toBe(false);
@@ -797,11 +797,11 @@ for (const langue of LANGUES)
 
       it('fausse piste : changer POSTGRES_PASSWORD après la création de la base, puis down -v', () => {
         const { s } = jouer('composition', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
-        modifier(s, '/srv/reservations/compose.yaml', (t) => corriger(t).replaceAll('${POSTGRES_PASSWORD}', 'atelier2027'));
+        modifier(s, '/srv/reservations/compose.yaml', (t) => corriger(t).replaceAll('${POSTGRES_PASSWORD}', L('atelier2027')));
         s.executer('sudo docker compose up -d');
         if (reference) expect(s.executer('curl http://localhost:8081')).toContain('base de données connectée');
         // Le mot de passe passe dans .env… mais un autre que celui de la base existante.
-        modifier(s, '/srv/reservations/compose.yaml', (t) => t.replaceAll('atelier2027', '${POSTGRES_PASSWORD}'));
+        modifier(s, '/srv/reservations/compose.yaml', (t) => t.replaceAll(L('atelier2027'), '${POSTGRES_PASSWORD}'));
         s.executer('echo POSTGRES_PASSWORD=nouveau-secret | sudo tee .env');
         s.executer('sudo chmod 600 .env');
         const echec = s.executer('sudo docker compose up -d') ?? '';
@@ -1657,7 +1657,7 @@ for (const langue of LANGUES)
         expect(tout).toContain('DISK OK - free space: /srv/radio 122 MB (47% inode=99%);');
         expect(tout).toContain('Normalized form: *-*-* *:00/5:00');
         s.executer('sudo true');
-        s.executer('antenne-2027');
+        s.executer(machinesDansLaLangue(s.t, 'antenne-2027'));
         ecrire(s, '/usr/local/bin/sonde', (t) => t + CONTROLES);
         ecrire(s, '/etc/systemd/system/sonde.service', () => SERVICE);
         ecrire(s, '/etc/systemd/system/sonde.timer', () => TIMER('OnCalendar=*:0/5'));

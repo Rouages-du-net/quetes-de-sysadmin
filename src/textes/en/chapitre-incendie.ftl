@@ -21,7 +21,7 @@ incendie-courriel-awa =
     This morning the provider delivered a brand new machine: a perfectly
     clean Debian, with the same name and the same IP address (they moved
     it to the new machine). Your account is there, with your usual
-    password (bienvenue-2026). Nothing else: no nginx, no website.
+    password (welcome-2026). Nothing else: no nginx, no website.
 
     Luckily, our backups go every night to another data centre, in
     another city. The provider mounted them on /mnt/backup. My

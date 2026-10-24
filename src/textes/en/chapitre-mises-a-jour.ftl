@@ -25,7 +25,7 @@ mises-a-jour-courriel-awa =
     If your connection drops in the middle of the update… Gaspard, from
     the Community Centre, told me to mention tmux to you.
 
-    For sudo: radis-2027
+    For sudo: radish-2027
 
 ## Events
 

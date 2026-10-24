@@ -23,7 +23,7 @@ for (const langue of LANGUES)
       // Une ligne (écrite avec les noms français), avec le mot de passe de sudo s'il est demandé.
       const une = (l: string) => {
         let sortie = c.executer(L(l)) ?? '';
-        if (c.shell.attente) sortie += '\n' + (c.executer(MDP) ?? '');
+        if (c.shell.attente) sortie += '\n' + (c.executer(machinesDansLaLangue(c.t, MDP)) ?? '');
         return sortie;
       };
       const jouer = (lignes: string[]) => lignes.map(une).join('\n');

@@ -13,7 +13,7 @@
 // https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/,
 // https://hub.docker.com/_/postgres (POSTGRES_PASSWORD, initialisation)
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../monde';
+import { motDePasse, d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../monde';
 import type { Jeu } from '../shell';
 import { nouveauSystemd, systemd } from '../systemd';
 import { APPLIS, demarrerDocker, docker, ecrireDans, identifiant, lireDans, nomImage, type Conteneur, type EtatDocker, type Image } from '../docker';
@@ -266,7 +266,7 @@ export const composition: Chapitre = {
       home: lieu({
         vous: d({ 'message_de_yasmine.txt': f(t('composition-message-de-yasmine')), 'aide_compose.txt': f(t('composition-aide-compose')) }),
       }),
-      srv: lieu({ reservations: lieu({ 'compose.yaml': f(COMPOSE, { lignes: true, proprio: 'root' }) }) }),
+      srv: lieu({ reservations: lieu({ 'compose.yaml': f(COMPOSE.replaceAll('atelier2027', motDePasse(t, 'atelier2027')), { lignes: true, proprio: 'root' }) }) }),
     });
   },
   evenements: [

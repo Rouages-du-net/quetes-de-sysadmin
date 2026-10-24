@@ -9,7 +9,7 @@
 // peut être redirigée dans un fichier (> écrase, >> ajoute). Les messages
 // d'erreur ne passent pas dans les tubes (sortie d'erreur séparée).
 
-import { chemin, comptesParDefaut, joueur, nettoyer, nom, traduireComptes, traduireNoms, type Chapitre, type Comptes, type Dossier, type Noeud } from './monde';
+import { chemin, comptesParDefaut, joueur, motDePasse, nettoyer, nom, traduireComptes, traduireNoms, type Chapitre, type Comptes, type Dossier, type Noeud } from './monde';
 import { COMMANDES, type Commande } from './commandes';
 import { sansCouleurs } from './couleurs';
 import { aide, apropos, ligneWhatis, optionInvalide, pageMan, raccourcir } from './commandes/manuel';
@@ -687,10 +687,10 @@ export class Shell implements Jeu {
     return sortie;
   }
 
-  /** Le mot de passe du joueur ou de la joueuse, traduit avec les noms du chapitre (tournesol → sunflower). */
+  /** Le mot de passe du joueur ou de la joueuse, dans la langue (tournesol → sunflower, voir mots-de-passe.ftl). */
   motDePasseDuJoueur(): string | undefined {
     const m = this.chapitre.motDePasse;
-    return m && this.chapitre.noms ? nom(this.t, m) : m;
+    return m && motDePasse(this.t, m);
   }
 
   private motDePasse(saisie: string): string {

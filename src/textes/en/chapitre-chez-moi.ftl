@@ -27,7 +27,7 @@ chez-moi-courriel-kofi =
     service). The registry keeps a copy of it, on ns2.registre.example.
 
     Can you take a look? Rania left some help in help_dns.txt. For
-    sudo: fourmis-2026
+    sudo: ants-2026
 chez-moi-aide-dns =
     DNS HELP — BY RANIA
 

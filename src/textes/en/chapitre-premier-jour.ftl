@@ -30,7 +30,7 @@ premier-jour-courriel-awa =
     3. Get the site working again, then write me a short report in
        ~/rapport.txt: the number of 503 errors and the culprit's address.
 
-    Your temporary password (for sudo): bienvenue-2026
+    Your temporary password (for sudo): welcome-2026
     Change it soon, and don't write it down anywhere!
 
     My notes are in ~/notes_awa.txt.

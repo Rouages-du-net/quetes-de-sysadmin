@@ -34,7 +34,7 @@ perimetre-courriel-salome =
     our mandate.
 
     Salomé
-    (For sudo, your password is: farine-2028)
+    (For sudo, your password is: flour-2028)
 
 perimetre-lettre-de-mission =
     LETTER OF ENGAGEMENT

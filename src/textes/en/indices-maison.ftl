@@ -8,7 +8,7 @@
 
 indice-cles-copiee =
     .piste = A key pair is created on YOUR workstation, never on the server (man ssh-keygen). Then its public half goes into ~/.ssh/authorized_keys on community (man ssh-copy-id).
-    .solution = On your workstation: ssh-keygen (Enter to accept the path, passphrase of your choice), then ssh-copy-id community (temporary password: lilas-2027).
+    .solution = On your workstation: ssh-keygen (Enter to accept the path, passphrase of your choice), then ssh-copy-id community (temporary password: lilac-2027).
 indice-cles-par-cle =
     .piste = Your public key is in place: log in again, ssh should no longer ask for the account's password.
     .solution = If you are on community: exit; then, on your workstation: ssh community

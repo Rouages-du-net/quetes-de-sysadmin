@@ -14,7 +14,7 @@
 // https://restic.readthedocs.io/en/stable/050_restore.html,
 // https://restic.readthedocs.io/en/stable/060_forget.html
 
-import { chemin, d, f, type Chapitre, type Fichier } from '../monde';
+import { motDePasse, chemin, d, f, type Chapitre, type Fichier } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import type { Traduire } from '../../textes';
 import { ajouterInstantane, ecrireDepot, hex, tailleDepot, type Depot, type Version } from '../commandes/restic';
@@ -70,7 +70,7 @@ const fondsTraduit = (t: Traduire, jour: number) => Object.fromEntries(Object.en
 
 // Trente nuits de sauvegardes, du 7 janvier au 5 février.
 function depotInitial(t: Traduire): Depot {
-  const depot: Depot = { id: hex('depot-bibliotheque'), motDePasse: MOT_DE_PASSE, instantanes: [], packs: [], verifie: true, aElaguer: false };
+  const depot: Depot = { id: hex('depot-bibliotheque'), motDePasse: motDePasse(t, MOT_DE_PASSE), instantanes: [], packs: [], verifie: true, aElaguer: false };
   for (let jour = 7; jour <= 36; jour++)
     ajouterInstantane(depot, { id: hex(`instantane-${jour}`), temps: nuit(jour), hote: 'bibliotheque', chemins: [chemin(t, FONDS)], fichiers: fondsTraduit(t, jour) });
   depot.verifie = true;
@@ -146,7 +146,7 @@ export const versions: Chapitre = {
         vous: d({
           'mot_de_rosa.txt': f(t('versions-mot-de-rosa')),
           'notes_restic.txt': f(t('versions-notes-restic')),
-          '.config': d({ restic: d({ 'mot-de-passe': f(MOT_DE_PASSE, { lignes: true }) }) }),
+          '.config': d({ restic: d({ 'mot-de-passe': f(motDePasse(t, MOT_DE_PASSE), { lignes: true }) }) }),
           fonds: d({ ...racineFonds, ...Object.fromEntries(Object.entries(sousLieux).map(([nom, enfants]) => [nom, d(enfants)])) }),
         }),
         rosa: d({}, undefined, { proprio: 'rosa', mode: 'rwx------' }),

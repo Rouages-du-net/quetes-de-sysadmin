@@ -6,8 +6,10 @@
 // (royaume → kingdom, voir machines.ftl) se traduisent là où ce sont des noms
 // d'hôte : après ssh et ses cousins, après @, dans royaume.internal, id_royaume,
 // royaume:chemin (scp), ~/.ssh/config (Host, HostName, ProxyJump) et la
-// bannière « Linux royaume ».
-import { nom } from '../src/moteur/monde';
+// bannière « Linux royaume ». Les mots de passe des histoires aussi
+// (farine-2028 → flour-2028, voir mots-de-passe.ftl), partout où ils sont un mot entier.
+import { readFileSync } from 'node:fs';
+import { motDePasse, nom } from '../src/moteur/monde';
 import { MACHINES, nomMachine, POSTE } from '../src/moteur/machines';
 import type { Traduire } from '../src/textes';
 
@@ -15,8 +17,11 @@ const IDS = [POSTE, ...MACHINES].map((m) => m.nom).join('|');
 const HOTE = new RegExp(`(?<=@|\\bid_|^Linux |^\\s*(?:Host|HostName|ProxyJump)\\s+|-J )(${IDS})(?![\\w-])|(?<![\\w./-])(${IDS})(?=\\.internal\\b|:[~/\\w])`, 'gim');
 const RESEAU = /^\s*(?:sudo\s+)?(?:ssh|ssh-copy-id|sftp|scp|rsync|nc|ping|nmap|host|dig|curl)\b/;
 
+const MOTS_DE_PASSE = [...readFileSync(new URL('../src/textes/fr/mots-de-passe.ftl', import.meta.url), 'utf8').matchAll(/^mdp-(\S+) =/gm)].map((m) => m[1]);
+const MDP = new RegExp(`(?<![\\w-])(${MOTS_DE_PASSE.join('|')})(?![\\w-])`, 'g');
+
 export const machinesDansLaLangue = (t: Traduire, ligne: string) => {
-  const traduite = ligne.replace(HOTE, (m) => nomMachine(t, m));
+  const traduite = ligne.replace(HOTE, (m) => nomMachine(t, m)).replace(MDP, (m) => motDePasse(t, m));
   return RESEAU.test(traduite) ? traduite.replace(new RegExp(`(?<![\\w./-])(${IDS})(?![\\w./-])`, 'g'), (m) => nomMachine(t, m)) : traduite;
 };
 

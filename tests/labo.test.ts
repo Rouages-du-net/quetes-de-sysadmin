@@ -29,7 +29,7 @@ for (const langue of LANGUES)
       const s = new Shell(chapitre(id), langue);
       const une = (l: string) => {
         let sortie = s.executer(L(l)) ?? '';
-        if (s.attente) sortie += '\n' + (s.executer(MDP) ?? '');
+        if (s.attente) sortie += '\n' + (s.executer(machinesDansLaLangue(s.t, MDP)) ?? '');
         const erreurs = s.recupererErreurs();
         return [sortie, ...erreurs].filter(Boolean).join('\n');
       };

@@ -34,7 +34,7 @@ zones-courriel-malik =
     To see who talks to whom through the router: sudo conntrack -L.
     The rest: man nft, man sysctl.
 
-    For sudo: abeille-2027
+    For sudo: bee-2027
 
 zones-notes-sacha =
     SACHA'S NOTES (La Ruche's network)

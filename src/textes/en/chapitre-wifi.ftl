@@ -28,7 +28,7 @@ wifi-courriel-malik =
     To test without the access point: radtest (man radtest). And the
     server's log: journalctl -u freeradius.
 
-    For sudo: abeille-2027
+    For sudo: bee-2027
 
 # { $secret }: the access point's shared secret; { $adresse }: its address
 wifi-borne =

@@ -2,6 +2,7 @@
 // (--color=auto), jamais dans un tube ni un fichier, sauf --color=always ;
 // les événements lisent la sortie sans les codes.
 import { describe, expect, it } from 'vitest';
+import { machinesDansLaLangue } from './noms';
 import { Shell } from '../src/moteur/shell';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { morceaux, sansCouleurs } from '../src/moteur/couleurs';
@@ -86,7 +87,7 @@ describe('Couleurs de journalctl, ip -c et git', () => {
   it('journalctl : les erreurs en rouge gras, à l’écran seulement', () => {
     const s = shell('redemarrage');
     s.executer('sudo -l');
-    s.executer('bienvenue-2026');
+    s.executer(machinesDansLaLangue(s.t, 'bienvenue-2026'));
     const journal = s.executer('sudo journalctl -u catalogue')!;
     expect(journal).toContain(`${ESC}[1;31m`);
     expect(sansCouleurs(journal)).toContain('ERROR: FPM initialization failed');

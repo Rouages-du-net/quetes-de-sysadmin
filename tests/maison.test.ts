@@ -21,7 +21,7 @@ for (const langue of LANGUES)
       const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
       const modifier = (fichier: string, changer: (texte: string) => string, mdp = 'lilas-2027') => {
         c.executer(`sudo nano ${fichier}`);
-        if (c.shell.attente) c.executer(mdp);
+        if (c.shell.attente) c.executer(machinesDansLaLangue(c.t, mdp));
         c.enregistrer(changer(c.edition!.texte));
         return c.quitterEdition();
       };

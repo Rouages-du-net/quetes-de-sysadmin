@@ -45,7 +45,7 @@ fatigue-message-d-odile =
     procedure is in host_procedure.txt. Write the request in ~/ticket.txt,
     I'll send it from our customer account.
 
-    For sudo: argentique-2027."
+    For sudo: film-2027."
 
 ## Events
 
