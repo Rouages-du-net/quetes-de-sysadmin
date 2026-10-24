@@ -428,7 +428,9 @@ export class Shell implements Jeu {
     const ici =
       this.cwd === this.maison ? '~' : this.cwd.startsWith(this.maison + '/') ? '~' + this.cwd.slice(this.maison.length) : this.cwd;
     // Dans tmux, la barre d'état montre le nom de la session : on le met devant l'invite.
-    return `${this.tmux ? `[${this.tmux}] ` : ''}${this.joueur}@${this.hote}:${ici}$`;
+    // root (la console de secours d'un chapitre) a son invite à lui, avec #, comme bash.
+    const root = this.qui === 'root';
+    return `${this.tmux ? `[${this.tmux}] ` : ''}${root ? 'root' : this.joueur}@${this.hote}:${ici}${root ? '#' : '$'}`;
   }
 
   demander(invite: string, repondre: (reponse: string) => string, secret = false): void {
@@ -590,6 +592,9 @@ export class Shell implements Jeu {
         this.tmux = null;
         return '[exited]';
       }
+      // Le shell du mode secours : exit reprend le démarrage (voir fstab.ts).
+      const secours = this.etat.continuerDemarrage as ((j: Shell) => string) | undefined;
+      if (this.etat.secours && secours) return this.conclure(secours(this), true);
       this.sortie = true;
       return '';
     }

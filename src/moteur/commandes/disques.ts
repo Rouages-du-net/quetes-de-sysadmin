@@ -8,13 +8,16 @@
 // Monter, c'est faire apparaître l'arbre du périphérique au point de montage
 // (ce qu'il y avait dans le dossier est caché, pas effacé) ; démonter le
 // détache. Monté en lecture seule (-o ro), rien ne peut y être écrit.
-// Écarts : pas de /etc/fstab, ni d'options autres que ro/rw ; un seul type
+// Sur une machine au stockage décrit, mount lit /etc/fstab (voir fstab.ts) : mount -a,
+// mount point_de_montage, sources UUID= et LABEL=.
+// Écarts : pas d'options autres que ro/rw ; un seul type
 // de système de fichiers par périphérique.
 
 import type { Dossier, Noeud } from '../monde';
 import type { Shell } from '../shell';
 import type { Commande } from './index';
 import { stockage } from '../stockage';
+import { lireFstab, resoudreSource, systemeDe } from '../fstab';
 import { lsblkStockage } from './stockage';
 
 export interface Peripherique {
@@ -140,6 +143,74 @@ function lsblk(jeu: Shell, args: string[]): string {
   return lignes.join('\n');
 }
 
+const DMESG = '\n       dmesg(1) may have more information after failed mount system call.';
+
+// Sur une machine au stockage décrit (stockage.ts), un système de fichiers qu'on peut monter.
+function periphStockage(jeu: Shell, source: string): (Peripherique & { nom: string }) | null {
+  const st = stockage(jeu);
+  if (!st) return null;
+  const dev = resoudreSource(st, source);
+  const fs = dev ? systemeDe(st, dev) : null;
+  if (!dev || !fs?.arbre) return null;
+  return { nom: dev, disque: dev, majmin: [8, 0], amovible: false, taille: fs.octets ?? 0, systeme: fs.type, etiquette: fs.label, uuid: fs.uuid, arbre: fs.arbre };
+}
+
+// mount -a : tout ce que décrit /etc/fstab (sauf noauto), et qui n'est pas déjà monté.
+function monterTout(jeu: Shell): string {
+  if (jeu.qui !== 'root') return jeu.erreur('mount: only root can use "--all" option');
+  const texte = jeu.lire('/etc/fstab') ?? '';
+  const { entrees, erreurs } = lireFstab(texte);
+  for (const n of erreurs) jeu.erreur(`mount: /etc/fstab: parse error at line ${n} -- ignored`);
+  const st = stockage(jeu);
+  for (const e of entrees) {
+    if (e.type === 'swap' || e.options.includes('noauto') || montages(jeu).some((m) => m.chemin === e.cible)) continue;
+    const dev = st ? resoudreSource(st, e.source) : null;
+    if (!dev || !st || !systemeDe(st, dev)) {
+      // nofail : un support absent n'est pas une erreur.
+      if (!e.options.includes('nofail')) jeu.erreur(`mount: ${e.cible}: special device ${e.source} does not exist.${DMESG}`, 32);
+      continue;
+    }
+    if (montages(jeu).some((m) => m.nom === dev)) continue;
+    const r = brancher(jeu, e.source, e.cible, e.options.join(','));
+    if (r) jeu.erreur(r, 32);
+  }
+  // util-linux prévient quand fstab a changé depuis que systemd l'a lue.
+  if (jeu.etat.fstabLue !== undefined && jeu.etat.fstabLue !== texte)
+    jeu.erreur("mount: (hint) your fstab has been modified, but systemd still uses\n       the old version; use 'systemctl daemon-reload' to reload.");
+  return '';
+}
+
+/** Monte une source sur un point (renvoie le message d'erreur de mount, ou ''). */
+function brancher(jeu: Shell, source: string, point: string, options: string): string {
+  const absolu = jeu.resoudre(point);
+  const p = peripheriques(jeu)[source] ? { ...peripheriques(jeu)[source], nom: source } : periphStockage(jeu, source);
+  if (!p) return `mount: ${absolu}: special device ${source} does not exist.${DMESG}`;
+  const lieu = jeu.trouver(absolu);
+  if (lieu?.type !== 'dossier') return `mount: ${absolu}: mount point does not exist.${DMESG}`;
+  const deja = montages(jeu).find((m) => m.nom === p.nom);
+  if (deja) return `mount: ${absolu}: ${p.nom} already mounted on ${deja.chemin}.${DMESG}`;
+  const lectureSeule = options.split(',').includes('ro');
+  const cache = { enfants: lieu.enfants, proprio: lieu.proprio, groupe: lieu.groupe, mode: lieu.mode };
+  lieu.enfants = p.arbre.enfants;
+  lieu.proprio = p.arbre.proprio;
+  lieu.groupe = p.arbre.groupe;
+  lieu.mode = p.arbre.mode;
+  montages(jeu).push({ chemin: absolu, capacite: p.taille, nom: p.nom, systeme: p.systeme, lectureSeule, cache });
+  return '';
+}
+
+/** Au démarrage : monte ce que décrit fstab et qui peut l'être (le reste a été vérifié avant). */
+export function monterAuDemarrage(jeu: Shell): void {
+  const avant = jeu.qui;
+  jeu.qui = 'root';
+  try {
+    monterTout(jeu);
+    jeu.recupererErreurs();
+  } finally {
+    jeu.qui = avant;
+  }
+}
+
 function monter(jeu: Shell, args: string[]): string {
   if (!args.length)
     return montages(jeu)
@@ -151,13 +222,27 @@ function monter(jeu: Shell, args: string[]): string {
     if (args[i] === '-o') options = args[++i] ?? '';
     else if (args[i] === '-t') i++;
     else if (args[i].startsWith('-o')) options = args[i].slice(2);
+    else if (args[i] === '-a' || args[i] === '--all') return monterTout(jeu);
     else if (!args[i].startsWith('-')) positionnels.push(args[i]);
+  }
+  // Un seul argument : le point de montage (ou la source) d'une ligne de fstab.
+  if (positionnels.length === 1) {
+    const seul = positionnels[0];
+    const e = lireFstab(jeu.lire('/etc/fstab') ?? '').entrees.find((x) => x.cible === jeu.resoudre(seul) || x.source === seul);
+    if (!e) return jeu.erreur(`mount: ${seul}: can't find in /etc/fstab.`);
+    positionnels.push(e.cible);
+    positionnels[0] = e.source;
+    options ||= e.options.join(',');
   }
   const [source, point] = positionnels;
   if (!source || !point) return jeu.erreur(jeu.t('mount-usage'));
   const absolu = jeu.resoudre(point);
   if (jeu.qui !== 'root')
     return jeu.erreur(`mount: ${absolu}: must be superuser to use mount.\n       dmesg(1) may have more information after failed mount system call.`);
+  if (!peripheriques(jeu)[source] && stockage(jeu)) {
+    const r = brancher(jeu, source, point, options);
+    return r ? jeu.erreur(r, 32) : '';
+  }
   const p = peripheriques(jeu)[source];
   if (!p)
     return jeu.erreur(
@@ -194,6 +279,8 @@ function demonter(jeu: Shell, args: string[]): string {
   const lieu = jeu.trouver(m.chemin) as Dossier;
   const p = peripheriques(jeu)[m.nom];
   if (p) p.arbre.enfants = lieu.enfants;
+  const fs = stockage(jeu) ? systemeDe(stockage(jeu)!, m.nom) : null;
+  if (fs?.arbre) fs.arbre.enfants = lieu.enfants;
   Object.assign(lieu, { enfants: m.cache.enfants, proprio: m.cache.proprio, groupe: m.cache.groupe, mode: m.cache.mode });
   jeu.etat.montages = montages(jeu).filter((x) => x !== m);
   return '';

@@ -330,6 +330,10 @@ export class Console {
     } else if (sh.sortie) {
       sh.sortie = false;
       morceaux.push(this.interieur.length ? this.quitterInterieur() : this.distant ? this.deconnecter() : this.t('poste-exit'));
+    } else if (sh.redemarrage && sh.etat.consoleHebergeur) {
+      // La console de l'hébergeur (l'écran du serveur) ne coupe pas : on voit le démarrage.
+      sh.redemarrage = false;
+      if (sh.etat.secours && sh.etat.banniereSecours) morceaux.push(sh.etat.banniereSecours as string);
     } else if (sh.redemarrage && this.distant) {
       // La machine redémarre : le serveur coupe la connexion.
       sh.redemarrage = false;

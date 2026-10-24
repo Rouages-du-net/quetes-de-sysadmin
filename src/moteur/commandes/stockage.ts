@@ -15,6 +15,7 @@ import type { Commande } from './index';
 import { aide } from './manuel';
 import { systemd } from '../systemd';
 import { tailleDe, tailleLv } from '../lvm';
+import { systemeDe } from '../fstab';
 import {
   actifs,
   avancer,
@@ -699,6 +700,8 @@ interface LigneLsblk {
   serie: string;
   fstype: string;
   uuid: string;
+  label?: string;
+  amovible?: boolean;
 }
 
 export function lsblkStockage(jeu: Shell, st: Stockage, args: string[]): string {
@@ -718,7 +721,8 @@ export function lsblkStockage(jeu: Shell, st: Stockage, args: string[]): string 
     return st.disques[n]?.partitions.map((p) => `${n}${p.numero}`) ?? [];
   };
   const ligneDe = (n: string, prefixe: string): LigneLsblk => {
-    const fs = grappeDe(st, n) ? ['linux_raid_member', grappeDe(st, n)![1].uuid] : pvs[n] ? ['LVM2_member', pvs[n].uuid] : null;
+    const sysf = systemeDe(st, `/dev/${n}`) ?? systemeDe(st, `/dev/mapper/${n}`);
+    const fs = grappeDe(st, n) ? ['linux_raid_member', grappeDe(st, n)![1].uuid] : pvs[n] ? ['LVM2_member', pvs[n].uuid] : sysf ? [sysf.type, sysf.uuid] : null;
     const d = st.disques[n];
     const g = st.grappes[n];
     const lv = /^([\w.+]+)-([\w.+]+)$/.exec(n);
@@ -735,6 +739,8 @@ export function lsblkStockage(jeu: Shell, st: Stockage, args: string[]): string 
       serie: d?.serie ?? '',
       fstype: fs ? fs[0] : vol || monte ? (monte?.systeme ?? 'ext4') : '',
       uuid: fs ? fs[1] : '',
+      label: sysf?.label ?? (grappeDe(st, n) ? grappeDe(st, n)![1].nom : ''),
+      amovible: !!st.disques[n.replace(/\d+$/, '')]?.amovible,
     };
   };
   const poser = (n: string, avant: string, derniere: boolean, racine: boolean) => {
@@ -747,11 +753,11 @@ export function lsblkStockage(jeu: Shell, st: Stockage, args: string[]): string 
   for (const [n] of Object.entries(st.disques).sort(([, a], [, b]) => a.rang - b.rang)) poser(n, '', true, true);
   // Les colonnes : -o liste, -f les systèmes de fichiers, sinon celles par défaut.
   const iO = args.findIndex((a) => a === '-o' || a === '--output');
-  const demandees = iO >= 0 ? (args[iO + 1] ?? '').toUpperCase().split(',').filter(Boolean) : args.some((a) => /^-\w*f/.test(a)) ? ['NAME', 'FSTYPE', 'UUID', 'MOUNTPOINTS'] : ['NAME', 'MAJ:MIN', 'RM', 'SIZE', 'RO', 'TYPE', 'MOUNTPOINTS'];
+  const demandees = iO >= 0 ? (args[iO + 1] ?? '').toUpperCase().split(',').filter(Boolean) : args.some((a) => /^-\w*f/.test(a)) ? ['NAME', 'FSTYPE', 'LABEL', 'UUID', 'MOUNTPOINTS'] : ['NAME', 'MAJ:MIN', 'RM', 'SIZE', 'RO', 'TYPE', 'MOUNTPOINTS'];
   const colonnes: Record<string, { droite?: boolean; valeur: (l: LigneLsblk) => string }> = {
     NAME: { valeur: (l) => l.prefixe + l.nom },
     'MAJ:MIN': { valeur: (l) => `${String(l.majmin[0]).padStart(3)}:${String(l.majmin[1]).padEnd(3)}` },
-    RM: { droite: true, valeur: () => '0' },
+    RM: { droite: true, valeur: (l) => (l.amovible ? '1' : '0') },
     SIZE: { droite: true, valeur: (l) => tailleCourte(l.octets) },
     RO: { droite: true, valeur: () => '0' },
     TYPE: { valeur: (l) => l.type },
@@ -761,6 +767,7 @@ export function lsblkStockage(jeu: Shell, st: Stockage, args: string[]): string 
     SERIAL: { valeur: (l) => l.serie },
     FSTYPE: { valeur: (l) => l.fstype },
     UUID: { valeur: (l) => l.uuid },
+    LABEL: { valeur: (l) => l.label ?? '' },
   };
   const inconnue = demandees.find((c) => !colonnes[c]);
   if (inconnue) return jeu.erreur(`lsblk: unknown column: ${inconnue}`, 1);

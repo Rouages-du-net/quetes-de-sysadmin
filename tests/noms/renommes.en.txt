@@ -591,6 +591,10 @@ agrandir
   /home/vous → /home/you
   /home/vous/message_d_odile.txt → /home/you/message_from_odile.txt
 
+secours
+  /home/vous → /home/you
+  /root/message_d_odile.txt → /root/message_from_odile.txt
+
 poste
   /home/vous → /home/you
   /home/vous/bienvenue.txt → /home/you/welcome.txt

@@ -307,6 +307,9 @@ export const PAGES: Record<string, Page> = {
     exemples: ['sudo lvextend -L +500G /dev/labo/photos', 'sudo lvextend -r -l +100%FREE /dev/labo/photos'],
     voir: ['lvs', 'vgs', 'resize2fs', 'df'],
   },
+  fstab: { section: 5, exemples: ['cat /etc/fstab', 'findmnt --verify', 'sudo mount -a'], voir: ['mount', 'findmnt', 'blkid'] },
+  blkid: { section: 8, options: ['U', 'L'], exemples: ['blkid', 'blkid /dev/sde1', 'blkid -L SCANS'], voir: ['lsblk', 'findmnt', 'mount'] },
+  findmnt: { section: 8, exemples: ['findmnt', 'findmnt /srv', 'findmnt --verify'], voir: ['mount', 'blkid', 'systemctl'] },
   resize2fs: { section: 8, exemples: ['sudo resize2fs /dev/labo/photos', 'df -h /srv'], voir: ['lvextend', 'df'] },
   'update-initramfs': { section: 8, options: ['u'], exemples: ['sudo update-initramfs -u'], voir: ['mdadm'] },
   sfdisk: {
@@ -316,7 +319,7 @@ export const PAGES: Record<string, Page> = {
     voir: ['lsblk', 'mdadm', 'grub-install'],
   },
   'grub-install': { section: 8, exemples: ['sudo grub-install /dev/sdb'], voir: ['sfdisk', 'mdadm', 'lsblk'] },
-  mount: { section: 8, exemples: ['mount', 'sudo mount -o ro /dev/sdb1 /mnt/cle', 'sudo umount /mnt/cle'], voir: ['umount', 'lsblk', 'df'] },
+  mount: { section: 8, exemples: ['mount', 'sudo mount -o ro /dev/sdb1 /mnt/cle', 'sudo umount /mnt/cle', 'sudo mount -a'], voir: ['umount', 'lsblk', 'df', 'findmnt', 'blkid'] },
   umount: { section: 8, exemples: ['sudo umount /mnt/cle'], voir: ['mount', 'lsblk'] },
   lsof: { section: 8, exemples: ['sudo lsof +L1', 'sudo lsof /var/log/radio/flux.log', 'sudo lsof -p 1730'], voir: ['df', 'du', 'ps'] },
   ls: { longues: { 'color': '', 'all': 'a', 'human-readable': 'h', 'numeric-uid-gid': 'n', 'inode': 'i', 'directory': 'd' }, options: ['a', 'l', 'h', 'n', 'i', 'd'], exemples: ['ls', 'ls -a', 'ls -l ~/souvenirs', 'ls -ld /srv/caisse'], voir: ['cd', 'pwd', 'chmod'] },

@@ -345,7 +345,7 @@ export const SYSTEMD: Record<string, Commande> = {
       if (inconnue) return jeu.erreur(`systemctl: invalid option -- '${inconnue[1]}'`);
       const mots = args.filter((a) => !a.startsWith('--') || a === '--failed');
       const [action = 'list-units', ...noms] = mots;
-      const VERBES = ['status', 'start', 'stop', 'restart', 'reload', 'enable', 'disable', 'is-active', 'is-enabled', 'list-units', 'reboot', '--failed', 'edit', 'daemon-reload', 'set-property', 'list-timers'];
+      const VERBES = ['status', 'start', 'stop', 'restart', 'reload', 'enable', 'disable', 'is-active', 'is-enabled', 'list-units', 'reboot', '--failed', 'edit', 'daemon-reload', 'set-property', 'list-timers', 'default'];
       if (!VERBES.includes(action)) return jeu.erreur(`Unknown command verb '${action}'.`);
       // Consulter l'état des services après un redémarrage : c'est vérifier.
       const consulter = () => (sd.verifieApresDemarrage = true);
@@ -354,7 +354,15 @@ export const SYSTEMD: Record<string, Commande> = {
       if (action === 'daemon-reload') {
         if (jeu.qui !== 'root') return refuse(jeu, 'daemon-reload', 'systemd');
         relire(jeu, sd);
+        // systemd relit aussi /etc/fstab (ses unités .mount en sont tirées).
+        if (jeu.etat.fstabLue !== undefined) jeu.etat.fstabLue = jeu.lire('/etc/fstab') ?? '';
         return '';
+      }
+      // default : quitter le mode secours, reprendre le démarrage normal (multi-user.target).
+      if (action === 'default') {
+        if (jeu.qui !== 'root') return refuse(jeu, 'default', 'system');
+        const continuer = jeu.etat.continuerDemarrage as ((j: Shell) => string) | undefined;
+        return continuer ? continuer(jeu) : '';
       }
       if (action === 'list-timers') return listeTimers(jeu, sd, args.includes('--all'));
       // set-property : la limite s'applique tout de suite, et reste (un fichier dans system.control).

@@ -50,6 +50,7 @@ import { SUPERVISION } from './supervision';
 import { TRANSFERTS } from './transferts';
 import { STOCKAGE } from './stockage';
 import { LVM } from './lvm';
+import { FSTAB } from './fstab';
 
 export interface Contexte {
   args: string[];
@@ -123,6 +124,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...DISQUES,
   ...STOCKAGE,
   ...LVM,
+  ...FSTAB,
   ...RSNAPSHOT,
   ...POSTGRES,
   ...JOURNAUX,

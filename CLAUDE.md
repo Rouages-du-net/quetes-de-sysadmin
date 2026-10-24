@@ -80,6 +80,10 @@ rouages.net.
   VG, LV en segments, taille du système de fichiers) dans `src/moteur/lvm.ts`,
   `pvs`, `vgs`, `lvs`, `pvcreate`, `pvremove`, `vgextend`, `vgreduce`,
   `pvmove`, `lvextend`, `resize2fs`, `update-initramfs` dans `commandes/lvm.ts` ;
+  `/etc/fstab` (lecture, sources `UUID=`/`LABEL=`, démarrage et mode secours :
+  `etat.demarrerMontages`, `etat.continuerDemarrage` appelés par `reboot`,
+  `systemctl default` et `exit`) dans `src/moteur/fstab.ts`, `mount -a` dans
+  `commandes/disques.ts`, `blkid` et `findmnt` dans `commandes/fstab.ts` ;
   `chapitres/labo.ts` : ce que les chapitres du Labo ont en commun.
 - `commandes/restic.ts` : dépôts restic (instantanés, déduplication,
   politiques de `forget`, `prune`), rangés dans `etat.restic`.

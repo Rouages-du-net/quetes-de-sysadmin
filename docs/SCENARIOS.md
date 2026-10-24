@@ -192,6 +192,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `grub-install` | `grub-install /dev/DISQUE` en mode BIOS sur table GPT : il faut la partition « BIOS boot » ; refuse une partition | UEFI, `--target`, `--boot-directory`, `update-grub` |
 | `mdadm --create` | RAID 1 seulement (`--level`, `--raid-devices`, `--run`, `missing`), sur disques ou partitions libres ; la vraie question « Continue creating array? » ; la synchronisation initiale avance avec les commandes | autres niveaux, `--chunk`, `--bitmap`, `--name`, `--homehost` |
 | LVM (`pvs`, `vgs`, `lvs`, `pvcreate`, `pvremove`, `vgextend`, `vgreduce`, `pvmove`, `lvextend`) | étendues de 4 Mio, segments par PV ; `lvextend -L`/`-l` (`+`, `%FREE`, `%VG`), `-r` (sortie de lvm2 2.03) ; refus réels (disque partitionné, membre d'une grappe, PV encore utilisé, place insuffisante) ; colonnes par défaut seulement | `lvcreate`, `lvreduce`, `lvremove`, instantanés, volumes fins, `-o`, `--units`, `pvdisplay`… |
+| fstab, mode secours (`mount -a`, `blkid`, `findmnt`, `systemctl default`) | fstab lu comme mount et systemd (`UUID=`, `LABEL=`, `/dev/…`, `/dev/disk/by-*`, `nofail`, `noauto`) ; au démarrage, une source manquante sans `nofail` arrête la machine en mode secours (journal de systemd fidèle, attente de 90 s jouée d'un coup) ; `systemctl default`/`exit` reprennent avec la fstab lue au dernier `daemon-reload` ; l'indice de `mount -a` quand fstab a changé ; `findmnt --verify` (sources, types, points de montage) ; `blkid` (`-U`, `-L`) | swap, montages réseau, `x-systemd.*`, `fsck`, unités `.mount` écrites à la main, `findmnt` sur /proc et /sys |
 | `resize2fs`, `update-initramfs` | `resize2fs` agrandit l'ext4 d'un LV à sa taille (à chaud) ; `update-initramfs -u` garde une copie de `mdadm.conf` | rétrécir, une taille donnée, autres systèmes de fichiers ; le contenu réel de l'initramfs |
 | `rsnapshot` | `configtest`, `-t`, `-v`, `du`, la rotation des niveaux (`cp -al` puis `rsync`) ; une partie des directives ; messages proches de rsnapshot 1.4 | `backup_script`, `link_dest`, `sync_first`, sauvegardes distantes |
 | PostgreSQL | rôles et authentification « peer » ; `psql -c/-f/-l` avec un SQL réduit (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `ALTER ROLE … PASSWORD` par le compte `postgres`, `\l`, `\dt`, `\d`, `\du`) ; le mot de passe d'un rôle n'est lu que par l'appli d'un chapitre (« Les traces ») ; `pg_dump` (texte, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb` ; une archive `-Fc` ne contient qu'une référence gardée par le jeu ; une seule clé primaire par table | tout PostgreSQL, psql interactif, WAL et restauration à un instant donné |
@@ -1188,7 +1189,7 @@ déclencheur et la cause (`flux.conf`, depuis le 20 août), au moins deux
 actions, et aucun mot qui cherche un coupable (liste dans le fichier de
 textes). Zoé relit à chaque enregistrement et dit ce qui manque.
 
-## Histoire 15 : Le Labo (trois chapitres, un quatrième prévu)
+## Histoire 15 : Le Labo (quatre chapitres)
 
 Le serveur du Labo, le club photo du quartier (machine `labo`), loué chez un
 hébergeur : deux disques de 2 To en RAID 1 logiciel. `md0` porte le système
@@ -1256,13 +1257,27 @@ dégradée `… /dev/sdd missing`, `pvmove`, `vgreduce`, `pvremove`, puis
 `mdadm --detail --scan` ajouté en entier (md0 et md1 en double) ;
 l'initramfs refait avant la dernière modification de `mdadm.conf`.
 
-### Chapitre 4 — Le redémarrage qui coince (prévu)
+### Chapitre 4 — Le redémarrage qui coince (fait)
 
-Un disque USB de scans ajouté dans `/etc/fstab` par son nom (`/dev/sdc1`),
-sans `nofail` : avec les nouveaux disques, il s'appelle maintenant `sde`, et
-le serveur démarre en mode secours. Console de l'hébergeur, `journalctl -xb`,
-`systemctl --failed`, `lsblk -f` / `blkid`, `fstab` par `UUID=` avec
-`nofail`, `findmnt --verify`, `mount -a`, `systemctl default`.
+Après un redémarrage (un nouveau noyau), le serveur s'est arrêté en mode
+secours. Théo avait ajouté le disque USB des numérisations dans `fstab` par
+son nom, `/dev/sdc1` ; depuis le chapitre 3, `sdc` est un des disques de
+4 To, et le disque USB s'appelle `sde`. On joue en root sur la console de
+l'hébergeur (`fstab.ts` : lecture de fstab, démarrage, mode secours).
+
+| Étape | Commandes |
+|---|---|
+| Lire le journal | `journalctl -xb` (« Timed out waiting for device … /dev/sdc1 ») |
+| Trouver le disque | `lsblk -f`, `blkid` (`sde1`, étiquette `SCANS`, son UUID) |
+| Corriger | `nano /etc/fstab` : `UUID=…  /srv/scans  ext4  defaults,nofail  0  2` |
+| Vérifier | `findmnt --verify`, `systemctl daemon-reload`, `mount -a` |
+| Reprendre | `systemctl default` (ou `exit`, ou `reboot`) |
+
+Fausses pistes : reprendre le démarrage sans rien corriger (retour en mode
+secours) ; `/dev/sde1` (juste aujourd'hui, fragile demain) ; l'UUID sans
+`nofail` ; reprendre sans `daemon-reload` (systemd garde l'ancienne fstab) ;
+effacer la ligne (le serveur démarre, mais plus de scans) ; une ligne
+illisible.
 
 ## Idées pour la suite
 
