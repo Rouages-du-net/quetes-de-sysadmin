@@ -329,6 +329,44 @@ parcours-prochain = ▶ Next
 # { $chapitre }: the title of the chapter to finish first
 parcours-verrouille = 🔒 First: { $chapitre }
 parcours-sans-cle = 🔒 Story locked
+## On-call and the incident of the day (see src/moteur/astreinte.ts)
+astreinte-bouton = 🚨 Incident of the day
+# { $chapitre }: chapter title; { $histoire }: story title
+astreinte-aujourdhui = Today: "{ $chapitre }" ({ $histoire })
+astreinte-verrouille = 🔒 On-call opens once you finish The Root (The Eraser, chapter 3).
+# { $pourcent }: budget left
+astreinte-deja = Done today: { $pourcent }% of the budget kept.
+# { $date }: today's date, spelled out
+astreinte-titre = On call, { $date }
+astreinte-intro = The on-call phone rings: an incident to fix. The same one for everyone today; tomorrow, another.
+astreinte-regles = You have an error budget of 30 minutes, like a service's availability objective (SLA): it melts with time, each hint costs 3 minutes, each command that fails 20 seconds. No exam mode; the restore point is still allowed (time, though, does not come back).
+astreinte-prendre = Take the call
+astreinte-annuler = Not now
+astreinte-debut = 🚨 On call: the error budget starts melting.
+# { $temps }: "24:10"; { $pourcent }: a number
+astreinte-jauge = Budget: { $temps } ({ $pourcent }%)
+astreinte-epuise = Budget spent: SLA breached. Finish anyway, the incident must be fixed.
+astreinte-abandon = On-call abandoned: you left the incident.
+astreinte-fin-titre = End of on-call
+astreinte-fin-intro = The incident is fixed. Here is your score card, to share (nothing is sent: you copy it wherever you like).
+astreinte-copier = Copy the card
+astreinte-copiee = Card copied.
+# The score card, like a shared word grid.
+# { $date } (YYYY-MM-DD), { $chapitre }, { $jauge } (five squares), { $pourcent }, { $temps }, { $indices }, { $erreurs }, { $adresse }
+astreinte-carte =
+    Quêtes de Sysadmin · on call, { $date }
+    "{ $chapitre }" fixed in { $temps }
+    { $jauge } { $pourcent }% of the budget
+    { $indices ->
+        [0] no hints
+        [one] one hint
+       *[other] { $indices } hints
+    } · { $erreurs ->
+        [0] no errors
+        [one] one error
+       *[other] { $erreurs } errors
+    }
+    { $adresse }
 succes-sans-indice = No safety net
     .description = Finish a chapter without asking for a hint.
 

@@ -16,6 +16,7 @@ import { grade, GRADES, nouveauxSucces, SUCCES } from '../moteur/succes';
 import { indice, NIVEAUX, type Niveau } from '../moteur/indices';
 import { bilan } from '../moteur/bilan';
 import { etapesParcours, PARCOURS } from '../moteur/parcours';
+import { budgetRestant, incidentDuJour, jauge, placeDe, pourcent } from '../moteur/astreinte';
 import { codeDeProgression, fichierDeSauvegarde, lireCode, lireFichier, nettoyerNom, type Sauvegarde } from '../moteur/progression';
 import { colorer, type Jeton } from '../moteur/coloration';
 import { morceaux, sansCouleurs } from '../moteur/couleurs';
@@ -105,7 +106,11 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     parcoursAvancee,
     listeParcours,
   );
-  const navHistoires = el('nav', { class: 'histoires', 'aria-label': t('histoires-titre') }, choixVue, listeHistoires, blocParcours, aideCle);
+  // L'incident du jour (voir astreinte.ts) : le même chapitre pour tout le monde, à rejouer d'astreinte.
+  const boutonIncident = el('button', { type: 'button', class: 'bouton-incident', 'aria-haspopup': 'dialog' }, t('astreinte-bouton'));
+  const texteIncident = el('span', { class: 'incident-texte' });
+  const blocIncident = el('p', { class: 'incident' }, boutonIncident, ' ', texteIncident);
+  const navHistoires = el('nav', { class: 'histoires', 'aria-label': t('histoires-titre') }, choixVue, blocIncident, listeHistoires, blocParcours, aideCle);
 
   const navsChapitres = HISTOIRES.map((h, i) =>
     el('nav', { class: 'chapitres', 'aria-label': t('chapitres-titre', { histoire: titreHistoire(i) }), 'data-chapitres': String(i) },
@@ -137,11 +142,13 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const reglages = el('span', { class: 'reglages' }, choixTheme, plusPetit, plusGrand, boutonCouleurs, boutonFocus);
   // La mission : l'objectif du chapitre, ses consignes, et ce qui s'est déjà passé.
   const boutonMission = el('button', { type: 'button', class: 'bouton-mission', 'aria-haspopup': 'dialog' }, t('mission-bouton'));
+  const jaugeAstreinte = el('span', { class: 'jauge-astreinte', role: 'timer', hidden: '' });
   const barreExamen = el(
     'p',
     { class: 'examen' },
     el('label', {}, caseExamen, el('span', {}, t('examen-case'))),
     chrono,
+    jaugeAstreinte,
     el('span', { class: 'outils' }, boutonMission, boutonCarte, reglages),
   );
   const idMission = `qds-mission-${Math.random().toString(36).slice(2, 8)}`;
@@ -306,6 +313,35 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     succesListe,
     el('p', { class: 'carte-actions' }, fermerSucces),
   ) as HTMLDialogElement;
+  // L'astreinte : la fenêtre qui la propose, et celle de la carte de score à la fin.
+  const idAstreinte = `qds-astreinte-${Math.random().toString(36).slice(2, 8)}`;
+  const astreinteTitre = el('h2', { id: idAstreinte });
+  const astreinteChapitre = el('p', { class: 'astreinte-chapitre' });
+  const prendreAstreinte = el('button', { type: 'button', class: 'bouton' }, t('astreinte-prendre'));
+  const annulerAstreinte = el('button', { type: 'button', class: 'bouton bouton-second' }, t('astreinte-annuler'));
+  const fenetreAstreinte = el(
+    'dialog',
+    { class: 'fenetre-astreinte', 'aria-labelledby': idAstreinte },
+    astreinteTitre,
+    el('p', { class: 'carte-legende' }, typo(t('astreinte-intro'))),
+    astreinteChapitre,
+    el('p', { class: 'carte-legende' }, typo(t('astreinte-regles'))),
+    el('p', { class: 'carte-actions' }, annulerAstreinte, ' ', prendreAstreinte),
+  ) as HTMLDialogElement;
+  const idFinAstreinte = `qds-fin-astreinte-${Math.random().toString(36).slice(2, 8)}`;
+  const carteScore = el('pre', { class: 'carte-score' });
+  const copierCarte = el('button', { type: 'button', class: 'bouton' }, t('astreinte-copier'));
+  const etatCarte = el('p', { class: 'carte-legende', role: 'status' });
+  const fermerFinAstreinte = el('button', { type: 'button', class: 'bouton bouton-second' }, t('carte-fermer'));
+  const fenetreFinAstreinte = el(
+    'dialog',
+    { class: 'fenetre-astreinte', 'aria-labelledby': idFinAstreinte },
+    el('h2', { id: idFinAstreinte }, t('astreinte-fin-titre')),
+    el('p', { class: 'carte-legende' }, typo(t('astreinte-fin-intro'))),
+    carteScore,
+    etatCarte,
+    el('p', { class: 'carte-actions' }, fermerFinAstreinte, ' ', copierCarte),
+  ) as HTMLDialogElement;
   // Le bilan de fin de chapitre : le détail, étape par étape (voir bilan.ts).
   const idBilan = `qds-bilan-${Math.random().toString(36).slice(2, 8)}`;
   const bilanTitre = el('h2', { id: idBilan });
@@ -358,7 +394,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
 
   // Le terminal et sa barre de touches : ensemble en plein écran.
   const ecran = el('div', { class: 'ecran' }, quitterFocus, terminal, barreTouches);
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, ecran, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces, fenetreBilan);
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, ecran, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces, fenetreBilan, fenetreAstreinte, fenetreFinAstreinte);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -574,7 +610,10 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const majChrono = () => {
     chrono.textContent = debutExamen === null ? '' : t('examen-chrono', { temps: minutes(Date.now() - debutExamen) });
   };
-  const minuterie = setInterval(() => debutExamen !== null && majChrono(), 1000);
+  const minuterie = setInterval(() => {
+    if (debutExamen !== null) majChrono();
+    if (astreinte) majAstreinte();
+  }, 1000);
   // Fin du chapitre en mode examen : le temps, et le record de ce navigateur.
   const finExamen = () => {
     if (debutExamen === null || !terminalJeu.distant?.shell.termine) return;
@@ -651,6 +690,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
 
   const apres = (sh: Shell | null = null) => {
     noterBilan();
+    majAstreinte();
     finExamen();
     verifierSucces(sh);
     majCarnet();
@@ -877,6 +917,113 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
       .then(() => (carnetEtat.textContent = t('carnet-copie')))
       .catch(() => (carnetEtat.textContent = t('carnet-copie-impossible')));
   });
+  // ——— L'astreinte ———
+  // Les résultats des jours passés, dans ce navigateur (le meilleur de chaque jour).
+  const CLE_ASTREINTE = `${CLE}-astreinte`;
+  type Resultat = { chapitre: string; restant: number; temps: number; indices: number; erreurs: number };
+  let resultats: Record<string, Resultat> = {};
+  try {
+    resultats = JSON.parse(localStorage.getItem(CLE_ASTREINTE) ?? '{}') ?? {};
+  } catch {}
+  // La date du jour (AAAA-MM-JJ, heure locale) : la même partout le même jour.
+  const aujourdhui = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const dateLongue = (iso: string) => new Intl.DateTimeFormat(t.langue, { dateStyle: 'long' }).format(new Date(`${iso}T12:00:00`));
+  let astreinte: { date: string; chapitre: string; debut: number; sh: Shell | null; epuise: boolean } | null = null;
+  const majIncident = () => {
+    const id = incidentDuJour(aujourdhui());
+    const { h } = placeDe(id);
+    const ouverte = termines.includes('racine');
+    boutonIncident.disabled = !ouverte || astreinte !== null;
+    const fait = resultats[aujourdhui()];
+    texteIncident.textContent = !ouverte
+      ? t('astreinte-verrouille')
+      : fait
+        ? t('astreinte-deja', { pourcent: pourcent(fait.restant) })
+        : t('astreinte-aujourdhui', { chapitre: t(`chapitre-${id}`), histoire: titreHistoire(h) });
+  };
+  boutonIncident.addEventListener('click', () => {
+    const id = incidentDuJour(aujourdhui());
+    astreinteTitre.textContent = t('astreinte-titre', { date: dateLongue(aujourdhui()) });
+    astreinteChapitre.textContent = t('astreinte-aujourdhui', { chapitre: t(`chapitre-${id}`), histoire: titreHistoire(placeDe(id).h) });
+    fenetreAstreinte.showModal();
+  });
+  annulerAstreinte.addEventListener('click', () => fenetreAstreinte.close());
+  fenetreAstreinte.addEventListener('close', () => setTimeout(() => saisie.focus()));
+  prendreAstreinte.addEventListener('click', () => {
+    fenetreAstreinte.close();
+    const date = aujourdhui();
+    const chapitre = incidentDuJour(date);
+    // D'astreinte, les indices sont permis (ils coûtent) : pas de mode examen.
+    caseExamen.checked = false;
+    terminalJeu.examen = false;
+    const { h, c } = placeDe(chapitre);
+    demarrer(h, c);
+    astreinte = { date, chapitre, debut: Date.now(), sh: terminalJeu.distant?.shell ?? null, epuise: false };
+    afficher(t('astreinte-debut'), 'succes');
+    majAstreinte();
+    saisie.focus();
+  });
+  // À chaque seconde et après chaque commande : la jauge, l'abandon, la fin.
+  const majAstreinte = () => {
+    if (!astreinte) {
+      jaugeAstreinte.hidden = true;
+      majIncident();
+      return;
+    }
+    const ici = terminalJeu.distant?.shell;
+    // Un autre chapitre ouvert : l'astreinte est abandonnée (passer par le poste, non).
+    if (ici && ici.chapitre.id !== astreinte.chapitre) {
+      astreinte = null;
+      afficher(t('astreinte-abandon'));
+      return majAstreinte();
+    }
+    if (ici) astreinte.sh = ici;
+    const sh = astreinte.sh;
+    if (!sh) return;
+    const ecoule = Date.now() - astreinte.debut;
+    const restant = budgetRestant(ecoule, sh.indicesDemandes.size, sh.commandesEnErreur);
+    jaugeAstreinte.hidden = false;
+    jaugeAstreinte.textContent = t('astreinte-jauge', { temps: minutes(restant), pourcent: pourcent(restant) });
+    jaugeAstreinte.classList.toggle('bas', restant < 5 * 60 * 1000);
+    if (restant === 0 && !astreinte.epuise) {
+      astreinte.epuise = true;
+      afficher(t('astreinte-epuise'), 'examen-resultat');
+    }
+    if (!sh.termine) return;
+    // L'incident est réglé : le résultat (le meilleur du jour est gardé), puis la carte de score.
+    const r: Resultat = { chapitre: astreinte.chapitre, restant, temps: ecoule, indices: sh.indicesDemandes.size, erreurs: sh.commandesEnErreur };
+    const avant = resultats[astreinte.date];
+    if (!avant || r.restant > avant.restant) resultats[astreinte.date] = r;
+    try {
+      localStorage.setItem(CLE_ASTREINTE, JSON.stringify(resultats));
+    } catch {}
+    carteScore.textContent = t('astreinte-carte', {
+      date: astreinte.date,
+      chapitre: t(`chapitre-${r.chapitre}`),
+      temps: minutes(r.temps),
+      jauge: jauge(r.restant),
+      pourcent: pourcent(r.restant),
+      indices: r.indices,
+      erreurs: r.erreurs,
+      adresse: 'https://sysadmin.rouages.net',
+    });
+    etatCarte.textContent = '';
+    astreinte = null;
+    majAstreinte();
+    fenetreFinAstreinte.showModal();
+  };
+  copierCarte.addEventListener('click', () => {
+    navigator.clipboard
+      ?.writeText(carteScore.textContent ?? '')
+      .then(() => (etatCarte.textContent = t('astreinte-copiee')))
+      .catch(() => {});
+  });
+  fermerFinAstreinte.addEventListener('click', () => fenetreFinAstreinte.close());
+  fenetreFinAstreinte.addEventListener('close', () => setTimeout(() => saisie.focus()));
+
   caseExamen.addEventListener('change', () => {
     terminalJeu.examen = caseExamen.checked;
     // Le chapitre en cours recommence : en examen, sur une machine neuve et chrono à zéro.

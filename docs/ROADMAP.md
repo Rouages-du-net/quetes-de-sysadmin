@@ -344,6 +344,13 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [x] **Astreinte et incident du jour** (`src/moteur/astreinte.ts`) : chaque
+  jour, un chapitre tiré de la date (le même pour tout le monde, sans
+  serveur) parmi ceux des parcours qui parlent de pannes, ouvert après La
+  Racine ; un budget d'erreur de 30 minutes qui fond avec le temps (−3 min
+  par indice, −20 s par commande en erreur) ; à la fin, une carte de score
+  en texte à copier (jauge en cinq cases) ; le meilleur résultat du jour
+  est gardé dans le navigateur.
 - [x] **Bilan de fin de chapitre** (`src/moteur/bilan.ts`) : temps passé,
   commandes tapées (et en erreur), indices ; le détail compare, étape par
   étape, la commande qui l'a franchie à la solution de référence (celle des
