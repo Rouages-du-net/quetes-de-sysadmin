@@ -18,7 +18,7 @@ cles-courriel-yasmine =
     who looked after it for ten years, has moved to Lyon; he can still be
     reached, but he can't come by anymore.
 
-    The "maison" machine is our gateway: it's the only one visible
+    The "community" machine is our gateway: it's the only one visible
     from the internet. Behind it are the associations' wiki and the
     archives server (you'll discover them soon).
 
@@ -28,7 +28,7 @@ cles-courriel-yasmine =
     ajar. So before anything else:
 
     1. Create your own SSH key pair, on YOUR computer (man ssh-keygen).
-    2. Put your public key on maison (man ssh-copy-id), then reconnect:
+    2. Put your public key on community (man ssh-copy-id), then reconnect:
        ssh must no longer ask you for a password.
     3. Only then, make the SSH server refuse passwords
        (/etc/ssh/sshd_config, man sshd_config), and check that you can
@@ -56,15 +56,15 @@ cles-evenement-cle-du-jeu =
     A key arrived in ~/.ssh/authorized_keys… but it's a key the
     game gave you for another machine (look at the end of the line, and
     ls -lt ~/.ssh on your computer). Without -i, ssh-copy-id takes the most
-    recent public key in ~/.ssh; and ssh won't offer it to maison.
+    recent public key in ~/.ssh; and ssh won't offer it to community.
 
     First create your own pair (ssh-keygen), then run ssh-copy-id again.
 cles-evenement-copiee =
-    Your public key is in ~/.ssh/authorized_keys on maison. Look at the
+    Your public key is in ~/.ssh/authorized_keys on community. Look at the
     file (cat): a line "ssh-ed25519 AAAA…", the public half of
     your pair. The private half has never left your computer.
 
-    Reconnect (exit, then ssh maison): this time, no password.
+    Reconnect (exit, then ssh community): this time, no password.
 cles-evenement-par-cle =
     You got in with your key, no password! The server sent you a challenge
     that only your private key could sign.
@@ -75,7 +75,7 @@ cles-evenement-par-cle =
     systemctl reload ssh.
 cles-evenement-fermee =
     sshd now accepts only keys. Before closing this session, test:
-    exit, then ssh maison. (On a real server, you keep the session open
+    exit, then ssh community. (On a real server, you keep the session open
     and test in a second terminal.)
 cles-evenement-fin =
     In with your key, and passwords are refused: the gateway is

@@ -5,12 +5,13 @@
 // mdadm, sfdisk, lsblk et /proc/mdstat, et leurs messages d'erreur.
 
 import { describe, expect, it } from 'vitest';
+import { nomMachine } from '../src/moteur/machines';
 import { Shell } from '../src/moteur/shell';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
 import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
-import { dansLaLangue } from './noms';
+import { dansLaLangue, machinesDansLaLangue } from './noms';
 import { SERIES } from '../src/moteur/chapitres/labo';
 import { stockage } from '../src/moteur/stockage';
 
@@ -39,7 +40,7 @@ for (const langue of LANGUES)
     it('chapitre 1 — solution : courriers, mdstat, SMART des deux disques, sdb sorti de md0 et md1, ticket', () => {
       const { s, jouer, st } = partie('fatigue');
       let tout = jouer(['cat message_d_odile.txt', 'mail', 'cat /var/mail/vous', 'cat /proc/mdstat']);
-      expect(tout).toContain('SMART error (CurrentPendingSector) detected on host: labo');
+      expect(tout).toContain(`SMART error (CurrentPendingSector) detected on host: ${nomMachine(traducteur(langue), 'labo')}`);
       expect(tout).toContain('md0 : active raid1 sdb2[1] sda2[0]');
       expect(tout).toContain('[2/2] [UU]');
       contient(tout, 'smartd et le noyau parlent du même disque');
@@ -393,8 +394,8 @@ for (const langue of LANGUES)
       expect(avant).toContain('disque-plein');
       const c = new Console({ langue, termines: avant });
       expect(c.ouverte('labo')).toBe(true);
-      const tout = [c.executer('ssh labo'), c.executer('yes')].join('\n');
-      expect(tout).toContain('labo.internal');
+      const tout = [c.executer(machinesDansLaLangue(traducteur(langue), 'ssh labo')), c.executer('yes')].join('\n');
+      expect(tout).toContain(machinesDansLaLangue(traducteur(langue), 'labo.internal'));
       expect(c.distant?.shell.chapitre.id).toBe('fatigue');
       expect(new Console({ langue, termines: avant.filter((x) => x !== 'disque-plein') }).ouverte('labo')).toBe(false);
     });

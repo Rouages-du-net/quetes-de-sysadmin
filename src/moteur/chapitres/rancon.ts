@@ -15,6 +15,7 @@
 // https://man7.org/linux/man-pages/man8/mount.8.html
 
 import { chemin, d, f, fichiersComptes, nom, type Chapitre, type Comptes, type Dossier, type Droits, type Noeud } from '../monde';
+import { nomMachine } from '../machines';
 import type { Jeu, Shell } from '../shell';
 import { journaliser, nouveauSystemd, systemd } from '../systemd';
 import type { Processus } from '../commandes/systeme';
@@ -211,7 +212,7 @@ export const rancon: Chapitre = {
         {
           chemin: NAS,
           capacite: 2000 * Go,
-          nom: `//nas.ludotheque.internal${chemin(t, '/sauvegardes')}`,
+          nom: `//nas.${nomMachine(t, 'ludotheque')}.internal${chemin(t, '/sauvegardes')}`,
           systeme: 'cifs',
           options: 'relatime,vers=3.1.1,uid=0,file_mode=0777,dir_mode=0777',
         },

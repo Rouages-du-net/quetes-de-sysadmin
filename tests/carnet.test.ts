@@ -2,6 +2,7 @@
 // du manuel, la première ligne tapée, et l'export en Markdown.
 
 import { describe, expect, it } from 'vitest';
+import { machinesDansLaLangue } from './noms';
 import { prerequis } from '../src/moteur/deverrouillage';
 import { Console } from '../src/moteur/console';
 import { enMarkdown, noter, description, type Carnet } from '../src/moteur/carnet';
@@ -17,7 +18,7 @@ for (const langue of LANGUES)
       const carnet: Carnet = {};
       const jouer = (ligne: string) => {
         const sh = c.shell;
-        const sortie = c.executer(ligne);
+        const sortie = c.executer(machinesDansLaLangue(c.t, ligne));
         noter(carnet, sh);
         return sortie;
       };
@@ -89,7 +90,7 @@ describe('Le mode examen', () => {
   it("sans indice, mais l'étape finale et son débrief s'affichent", () => {
     const c = new Console({ langue: 'fr', termines: ['eveil', 'bourg', 'racine', 'sauvegarde', ...prerequis('lettres')] });
     c.examen = true;
-    const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+    const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
     // La Porte, avec la configuration de sshd : la faute de frappe ne donne plus d'indice.
     let tout = jouer(['ssh lettres', 'yes']);
     c.executer('sudo nano /etc/ssh/sshd_config');

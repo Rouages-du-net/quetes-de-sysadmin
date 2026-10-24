@@ -4,7 +4,10 @@
 // la forme des vraies (ed25519), et ne changent jamais : le jeu reste
 // déterministe.
 
+import type { Traduire } from '../textes';
+
 export interface Machine {
+  // L'identifiant de la machine (en français) ; le nom qu'on tape dépend de la langue (nomMachine).
   nom: string;
   // Nom complet, résolu par /etc/hosts du poste.
   domaine: string;
@@ -45,6 +48,36 @@ export const MACHINES: Machine[] = [
   machine('fournil', '192.0.2.22', 'audit'),
   machine('labo', '192.0.2.23', 'labo'),
 ];
+
+/** Le nom d'une machine dans la langue (machines.ftl : royaume → kingdom) ; une machine sans traduction garde le sien. */
+export const nomMachine = (t: Traduire, id: string) => (t.existe(`machine-${id}`) ? t(`machine-${id}`) : id);
+/** Son nom complet (royaume.internal → kingdom.internal). */
+export const domaineMachine = (t: Traduire, m: Machine) => `${nomMachine(t, m.nom)}.internal`;
+
+/** Un nom d'hôte dans la langue : royaume → kingdom, royaume.internal → kingdom.internal, wiki.maison.internal → wiki.community.internal. */
+export function hoteDansLaLangue(t: Traduire, n: string): string {
+  const id = (x: string) => [POSTE, ...MACHINES].some((m) => m.nom === x);
+  if (id(n)) return nomMachine(t, n);
+  return n.replace(/(?<=^|\.)([a-z0-9-]+)(?=\.internal$)/, (x) => (id(x) ? nomMachine(t, x) : x));
+}
+
+/**
+ * Les noms de machines d'un texte sauvegardé (known_hosts, ~/.ssh/config)
+ * passés dans la langue de la partie : une sauvegarde faite en français
+ * (royaume, royaume.internal, id_royaume) sert aussi en anglais (kingdom…).
+ */
+export function traduireHotes(texte: string, t: Traduire, autres: Traduire[]): string {
+  let r = texte;
+  for (const m of [POSTE, ...MACHINES]) {
+    const voulu = nomMachine(t, m.nom);
+    for (const a of autres) {
+      const ancien = nomMachine(a, m.nom);
+      if (ancien === voulu) continue;
+      r = r.replace(new RegExp(`(?:(?<![\\w.-])|(?<=id_))${ancien}(?![\\w-])|(?<=\\.)${ancien}(?=\\.internal\\b)`, 'g'), voulu);
+    }
+  }
+  return r;
+}
 
 export const machineDeHistoire = (histoire: string) => MACHINES.find((m) => m.histoire === histoire);
 export const machineParAdresse = (adresse: string) => [POSTE, ...MACHINES].find((m) => m.adresse === adresse);
@@ -91,5 +124,5 @@ export const clePrivee = (m: Machine) =>
     '-----END OPENSSH PRIVATE KEY-----',
   ].join('\n');
 
-/** La clé publique correspondante (~/.ssh/id_<machine>.pub), commentée du compte qui l'a créée sur le poste (vous, you…). */
-export const clePublique = (m: Machine, compte = 'vous') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-publique-' + m.nom, 43)} ${compte}@poste`;
+/** La clé publique correspondante (~/.ssh/id_<machine>.pub), commentée du compte qui l'a créée sur le poste (vous@poste, you@desk…). */
+export const clePublique = (m: Machine, compte = 'vous', poste = 'poste') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-publique-' + m.nom, 43)} ${compte}@${poste}`;

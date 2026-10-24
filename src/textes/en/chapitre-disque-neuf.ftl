@@ -59,7 +59,7 @@ disque-neuf-evenement-fin =
     restarts? Great."
 
     Well done! You finished chapter 2 of The Lab. (What comes next is
-    waiting for you: ssh labo.)
+    waiting for you: ssh lab.)
 
     WHAT HAPPENED
     The new disk was blank. You copied sda's partition table (sfdisk -d,

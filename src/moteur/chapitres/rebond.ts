@@ -11,6 +11,7 @@
 // Sources : https://man.openbsd.org/ssh#J, https://man.openbsd.org/ssh_config#ProxyJump
 
 import { chemin, d, f, type Chapitre, type Dossier } from '../monde';
+import { hoteDansLaLangue } from '../machines';
 import type { Jeu, Shell } from '../shell';
 import { configuration, resoudreNom } from '../acces';
 import { chargerSshd, comptesMaison, connexionsPar, dossierSsh, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE, planMaison } from './maison';
@@ -38,7 +39,7 @@ const raccourci = (j: Jeu) => {
   return alias(p).some((a) => {
     const c = configuration(p, a);
     const saut = c.proxyjump?.[0]?.split(',').at(-1)?.split('@').at(-1);
-    if (!saut || !['maison', 'maison.internal', '192.0.2.19'].includes(saut)) return false;
+    if (!saut || !['maison', 'maison.internal', '192.0.2.19'].map((n) => hoteDansLaLangue(j.t, n)).includes(saut)) return false;
     return resoudreNom(j as Shell, (c.hostname?.[0] ?? a).toLowerCase()) === WIKI;
   });
 };

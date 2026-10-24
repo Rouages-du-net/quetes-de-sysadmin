@@ -135,7 +135,8 @@ export function fichiersSysctl(jeu: Jeu): string[] {
 export function appliquerSysctl(jeu: Jeu, defauts: Record<string, string>) {
   for (const [cle, v] of Object.entries(defauts)) {
     const n = jeu.trouver(chemin(cle));
-    if (n?.type === 'fichier') n.contenu = v;
+    // Le nom de la machine, dans la langue (ruche → hive).
+    if (n?.type === 'fichier') n.contenu = cle === 'kernel.hostname' ? jeu.nomHote : v;
   }
   const qui = jeu.qui;
   jeu.qui = 'root';

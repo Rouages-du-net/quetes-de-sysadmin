@@ -20,10 +20,10 @@ transferts-courriel-yasmine =
        workstation? I'll print it from your place. (man scp; the shortcut
        you wrote for the wiki works for scp too.)
 
-    2. The backup of the shared directory (/srv/share, here on maison) hasn't
+    2. The backup of the shared directory (/srv/share, here on community) hasn't
        been done since last year. It goes on archives, in
        /srv/backups/share: the same files, in the same places.
-       Gaspard used rsync, from maison: it only copies what has
+       Gaspard used rsync, from community: it only copies what has
        changed (man rsync). He even created a key just for that,
        ~/.ssh/id_sauvegarde (look at ~/.ssh/config, here).
 
@@ -52,7 +52,7 @@ transferts-planning =
 ## Events
 
 transferts-evenement-rapport =
-    The annual report is on your workstation: scp went through maison (the
+    The annual report is on your workstation: scp went through community (the
     ProxyJump of your shortcut), just like ssh.
 # { $dossier }: the extra directory that was created
 transferts-evenement-imbrique =

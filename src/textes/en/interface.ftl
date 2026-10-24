@@ -111,7 +111,7 @@ examen-fini-record = Exam passed in { $temps }: that's your best time on this ch
 ## The map (a button next to the terminal; see src/moteur/carte.ts)
 
 carte-bouton = Map
-# { $machine }: the name of the machine you are on (royaume, poste…).
+# { $machine }: the name of the machine you are on (kingdom, desk…).
 carte-titre = Map of { $machine }
 carte-legende = The places (directories) you know on this machine: the ones you have entered, and in italics the ones you have only glimpsed. Files are not shown: for those, use ls.
 carte-ici = ← you are here

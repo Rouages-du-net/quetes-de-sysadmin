@@ -51,7 +51,7 @@ pare-feu-evenement-filtre =
     sudo ufw status verbose.
 
     Last step, as with SSH: check that you can still get in.
-    exit, then ssh lettres.
+    exit, then ssh letters.
 pare-feu-evenement-fin =
     New connection successful: the firewall lets SSH through. Yasmine
     runs her scan again: 22, 80 and 443 open, 3306 filtered. Kofi: "She

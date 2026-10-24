@@ -7,7 +7,7 @@
 
 import { d, f, fichiersComptes, joueur, type Comptes, type Dossier, type Noeud } from '../monde';
 import { genererCle } from '../acces';
-import { clePublique, machineDeHistoire } from '../machines';
+import { clePublique, machineDeHistoire, nomMachine } from '../machines';
 import { journaliser, systemd, type DefinitionService } from '../systemd';
 import { lireConfig } from '../sshd';
 import type { Jeu } from '../shell';
@@ -162,7 +162,7 @@ export function mondeFournil(
         {
           vous: d({
             ...o.maison,
-            '.ssh': d({ authorized_keys: f(clePublique(fournil, joueur(t)), { lignes: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
+            '.ssh': d({ authorized_keys: f(clePublique(fournil, joueur(t), nomMachine(t, 'poste')), { lignes: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
           }),
           nadia: d({}, undefined, { proprio: 'nadia', mode: 'rwx------' }),
           ...(o.sansLucas ? {} : { lucas: d({}, undefined, { proprio: 'lucas', mode: 'rwx------' }) }),

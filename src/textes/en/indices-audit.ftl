@@ -31,7 +31,7 @@ indice-exposition-redis-local =
     .solution = sudo nano /etc/redis/redis.conf: bind 127.0.0.1 -::1 (instead of bind * -::*). Then sudo systemctl restart redis-server, and sudo ss -tlnp to check.
 indice-exposition-fin =
     .piste = The firewall filters and Redis is local; prove SSH still gets through, with a new connection from your workstation.
-    .solution = exit, then ssh fournil.
+    .solution = exit, then ssh bakery.
 
 ## Chapter 4 — The traces
 
@@ -61,13 +61,13 @@ indice-traces-mot-de-passe =
 
 indice-perimetre-lettre =
     .piste = Before scanning anything: the letter of engagement is in your folder. It says what you may probe, and what you may not touch.
-    .solution = cat engagement_letter.txt: the scope is ONE machine, fournil.internal (192.0.2.22). The neighbour (192.0.2.24) is not in it.
+    .solution = cat engagement_letter.txt: the scope is ONE machine, bakery.internal (192.0.2.22). The neighbour (192.0.2.24) is not in it.
 indice-perimetre-balayage =
     .piste = nmap scans a machine's ports (man nmap): give it the exact address or name of the machine in the scope, and ask for the service versions too.
-    .solution = nmap -sV fournil.internal (not 192.0.2.0/24: that would probe the neighbour too).
+    .solution = nmap -sV bakery.internal (not 192.0.2.0/24: that would probe the neighbour too).
 indice-perimetre-trace =
     .piste = Proof is kept: nmap can write its result, as you read it, into a file (man nmap, the -oN option).
-    .solution = nmap -sV -oN inventory.txt fournil.internal
+    .solution = nmap -sV -oN inventory.txt bakery.internal
 indice-perimetre-fin =
     .piste = Complete audit_notes.md with nano: what you found (the database and Redis ports have no business on the internet) and what you spotted without touching it (the neighbour's server).
     .solution = nano audit_notes.md: under "What I found", quote 5432 (PostgreSQL) and 6379 (Redis); under "Out of scope", quote voisin.internal (192.0.2.24), out of scope, not probed.
@@ -76,7 +76,7 @@ indice-perimetre-fin =
 
 indice-contre-visite-balayage =
     .piste = Redo the inventory like on day one, with versions, on the server and only on it (man nmap).
-    .solution = nmap -sV fournil.internal
+    .solution = nmap -sV bakery.internal
 indice-contre-visite-lynis =
     .piste = Lynis audits the machine it runs on; it needs root to read everything (man lynis). It fixes nothing.
     .solution = sudo lynis audit system
@@ -91,7 +91,7 @@ indice-contre-visite-preuve-lynis =
     .solution = sudo lynis audit system
 indice-contre-visite-nmap-propre =
     .piste = Redo the scan with versions, now that the updates are done: the SSH version shown has changed.
-    .solution = nmap -sV fournil.internal
+    .solution = nmap -sV bakery.internal
 indice-contre-visite-fin =
     .piste = Complete closing_report.md with nano: a summary, the findings fixed (parts 1 to 4), the evidence (the exact index of your last Lynis run and the ports seen), and what remains with a Lynis identifier that is still open.
     .solution = nano closing_report.md: under "Evidence", the last audit's index and ports 22, 80, 443; under "Still to do", for example FINT-4350 (file integrity) or LOGG-2154 (remote logs).

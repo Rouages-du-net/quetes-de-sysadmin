@@ -46,7 +46,7 @@ perimetre-lettre-de-mission =
     Subject: external security audit of the online ordering service.
 
     Authorised scope:
-      - the server fournil.internal (192.0.2.22), which also carries the
+      - the server bakery.internal (192.0.2.22), which also carries the
         public website fournil.example.
 
     Out of scope (not to be probed, even if technically possible):
@@ -100,7 +100,7 @@ perimetre-manque-hors = You mention the neighbour's server: also say that it is 
 perimetre-evenement-lettre =
     The letter of engagement is the document that protects you as much as
     the client: it says where you may go. Remember two things: the scope
-    (ONE machine: fournil, 192.0.2.22) and the list of what is forbidden.
+    (ONE machine: bakery, 192.0.2.22) and the list of what is forbidden.
     Without written authorisation, a port scan is at best frowned upon, at
     worst an offence.
 

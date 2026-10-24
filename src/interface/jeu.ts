@@ -7,7 +7,7 @@
 import { Console } from '../moteur/console';
 import type { Shell } from '../moteur/shell';
 import { HISTOIRES } from '../moteur/chapitres';
-import { machineDeHistoire, POSTE } from '../moteur/machines';
+import { domaineMachine, machineDeHistoire, POSTE, type Machine } from '../moteur/machines';
 import { description, enMarkdown, noter, type Carnet } from '../moteur/carnet';
 import { liensRouages } from '../moteur/rouages';
 import { carte, type Lieu } from '../moteur/carte';
@@ -59,7 +59,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
 
   // ——— Construction ———
   // Le nom et l'adresse de la machine, montrés sur la carte du réseau (des identifiants techniques, jamais traduits).
-  const hote = (m: { domaine: string; adresse: string } | undefined) => el('span', { class: 'hote' }, m ? `${m.domaine} ${m.adresse}` : '');
+  const hote = (m: Machine | undefined) => el('span', { class: 'hote' }, m ? `${domaineMachine(t, m)} ${m.adresse}` : '');
   const boutonsHistoires = HISTOIRES.map((h, i) =>
     el('button', { type: 'button', 'data-histoire': String(i) },
       el('span', { class: 'titre' }, titreHistoire(i)),

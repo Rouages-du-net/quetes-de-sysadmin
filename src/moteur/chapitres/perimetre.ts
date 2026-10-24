@@ -21,6 +21,7 @@ import type { Jeu, Shell } from '../shell';
 import { nouveauSystemd } from '../systemd';
 import type { Balayage } from '../scan';
 import { PAQUETS, INSTALLES_DE_BASE } from '../commandes/apt';
+import { nomMachine } from '../machines';
 import { chargerSshd, comptesFournil, sectionsMd, ecouteFournil, fichier, M, MAINTENANT, MOT_DE_PASSE, mondeFournil, scanFournil, serviceSsh, VOISIN } from './audit';
 
 const NOTES = `${M}/notes-audit.md`;
@@ -40,7 +41,7 @@ const textes = (j: Jeu): string[] => {
     .filter(([, n]) => n.type === 'fichier')
     .map(([nom]) => j.lire(`${(j as Shell).maison}/${nom}`) ?? '');
 };
-const traceOk = (j: Jeu) => textes(j).some((t) => /^# Nmap .* as: nmap .*-sV/m.test(t) && /Nmap scan report for fournil/.test(t) && /5432\/tcp/.test(t) && /6379\/tcp/.test(t));
+const traceOk = (j: Jeu) => textes(j).some((t) => /^# Nmap .* as: nmap .*-sV/m.test(t) && t.includes(`Nmap scan report for ${nomMachine(j.t, 'fournil')}`) && /5432\/tcp/.test(t) && /6379\/tcp/.test(t));
 
 const lireNotes = (j: Jeu) => j.lire(chemin(j.t, NOTES));
 const mots = (j: Jeu, cle: string) => j.t(cle).split(',').map((m) => m.trim().toLowerCase());

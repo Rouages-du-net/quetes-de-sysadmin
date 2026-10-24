@@ -84,7 +84,7 @@ instantanes-evenement-fin =
     full!"
 
     Well done! You have finished chapter 2 of The Game Library. (The next
-    one awaits you: ssh ludotheque.)
+    one awaits you: ssh games.)
 
     WHAT HAPPENED
     Every night, rsnapshot rotated the daily snapshots: the old .0

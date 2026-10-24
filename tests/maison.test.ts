@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
-import { dansLaLangue } from './noms';
+import { dansLaLangue, machinesDansLaLangue } from './noms';
 
 const EFFACEUR = HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id);
 const CONFIG = '/etc/ssh/sshd_config';
@@ -18,7 +18,7 @@ for (const langue of LANGUES)
     const contient = (tout: string, texte: string) => fr && expect(tout).toContain(texte);
     const partie = (termines: string[] = []) => {
       const c = new Console({ langue, termines: [...EFFACEUR, ...termines] });
-      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
       const modifier = (fichier: string, changer: (texte: string) => string, mdp = 'lilas-2027') => {
         c.executer(`sudo nano ${fichier}`);
         if (c.shell.attente) c.executer(mdp);
@@ -114,7 +114,7 @@ for (const langue of LANGUES)
       contient(tout, 'https://man.openbsd.org/ssh_config#ProxyJump');
       expect(c.termines).toContain('rebond');
       tout = jouer(['ssh -G wiki']);
-      expect(tout).toContain('proxyjump maison');
+      expect(tout).toContain(machinesDansLaLangue(traducteur(langue), 'proxyjump maison'));
       tout = jouer(['ssh wiki']);
       expect(c.invite()).toBe(L('vous@wiki:~$'));
       // Un rebond n'affiche pas la bannière de la passerelle.

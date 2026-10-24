@@ -4,12 +4,13 @@
 // textes attendus, eux, sont vérifiés en français (langue de référence).
 
 import { describe, expect, it } from 'vitest';
+import { nomMachine } from '../src/moteur/machines';
 import { Shell } from '../src/moteur/shell';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
 import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
-import { dansLaLangue } from './noms';
+import { dansLaLangue, machinesDansLaLangue } from './noms';
 import { sansCouleurs } from '../src/moteur/couleurs';
 
 const chapitre = (id: string) => HISTOIRES.flatMap((h) => h.chapitres).find((c) => c.id === id)!;
@@ -823,8 +824,8 @@ for (const langue of LANGUES)
 
       it('solution, testée depuis le poste : ufw ne suffit pas, port lié à 127.0.0.1, ménage', () => {
         const c = new Console({ langue, termines: AVANT });
-        const jouerC = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
-        expect(jouerC(['nc -zv fabrique 5432'])).toContain('Connection to fabrique (192.0.2.15) 5432 port [tcp/postgresql] succeeded!');
+        const jouerC = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
+        expect(jouerC(['nc -zv fabrique 5432'])).toContain(`Connection to ${nomMachine(c.t, 'fabrique')} (192.0.2.15) 5432 port [tcp/postgresql] succeeded!`);
         const dedans = jouerC(['ssh fabrique', 'yes', 'sudo ss -tlnp', 'fablab-2027', 'sudo ufw deny 5432', 'df -h /']);
         expect(dedans).toContain('0.0.0.0:5432');
         expect(dedans).toMatch(/9\d% \//);

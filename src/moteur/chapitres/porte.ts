@@ -11,7 +11,7 @@
 
 import { comptesParDefaut, d, f, fichiersComptes, joueur, type Chapitre } from '../monde';
 import type { Jeu } from '../shell';
-import { clePublique, machineDeHistoire } from '../machines';
+import { clePublique, machineDeHistoire, nomMachine } from '../machines';
 import { journaliser, nouveauSystemd, systemd } from '../systemd';
 import { autorise, CONFIG, lireConfig } from '../sshd';
 
@@ -157,7 +157,7 @@ export const porte: Chapitre = {
           {
             vous: d({
               'courriel_kofi.txt': f(t('porte-courriel-kofi')),
-              '.ssh': d({ authorized_keys: f(clePublique(lettres, joueur(t)), { lignes: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
+              '.ssh': d({ authorized_keys: f(clePublique(lettres, joueur(t), nomMachine(t, 'poste')), { lignes: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
             }),
           },
           undefined,

@@ -5,7 +5,7 @@
 
 import { d, f, joueur, type Chapitre } from './monde';
 import type { Traduire } from '../textes';
-import { clePrivee, clePublique, MACHINES, POSTE, type Machine } from './machines';
+import { clePrivee, clePublique, domaineMachine, MACHINES, nomMachine, POSTE, type Machine } from './machines';
 
 const MAISON = '/home/vous';
 
@@ -16,9 +16,9 @@ const hosts = (t: Traduire) =>
     ...t('poste-hosts-commentaire').split('\n').map((l) => `# ${l}`),
     '',
     '127.0.0.1\tlocalhost',
-    `127.0.1.1\t${POSTE.domaine} ${POSTE.nom}`,
+    `127.0.1.1\t${domaineMachine(t, POSTE)} ${nomMachine(t, POSTE.nom)}`,
     '',
-    ...MACHINES.map((m) => `${m.adresse}\t${m.domaine} ${m.nom}`),
+    ...MACHINES.map((m) => `${m.adresse}\t${domaineMachine(t, m)} ${nomMachine(t, m.nom)}`),
   ].join('\n');
 
 /** Le ~/.ssh/config que le jeu donne au poste, dans une langue. */
@@ -27,20 +27,23 @@ export const config = (t: Traduire) =>
     ...t('poste-config-commentaire').split('\n').map((l) => `# ${l}`),
     '',
     ...MACHINES.flatMap((m) => [
-      `Host ${m.nom}`,
-      `    HostName ${m.domaine}`,
+      `Host ${nomMachine(t, m.nom)}`,
+      `    HostName ${domaineMachine(t, m)}`,
       `    User ${joueur(t)}`,
-      ...(m.sansCle ? [] : [`    IdentityFile ~/.ssh/id_${m.nom}`]),
+      ...(m.sansCle ? [] : [`    IdentityFile ~/.ssh/${cleDe(t, m)}`]),
       '',
     ]),
   ]
     .join('\n')
     .trim();
 
+/** Le nom du fichier de la clé d'une machine, dans la langue : id_royaume, id_kingdom. */
+export const cleDe = (t: Traduire, m: Machine) => `id_${nomMachine(t, m.nom)}`;
+
 /** Les fichiers d'une clé SSH : privée (lisible par soi seul) et publique. */
 export const fichiersCle = (t: Traduire, m: Machine) => ({
-  [`id_${m.nom}`]: f(clePrivee(m), { lignes: true, mode: 'rw-------' }),
-  [`id_${m.nom}.pub`]: f(clePublique(m, joueur(t)), { lignes: true }),
+  [cleDe(t, m)]: f(clePrivee(m), { lignes: true, mode: 'rw-------' }),
+  [`${cleDe(t, m)}.pub`]: f(clePublique(m, joueur(t), nomMachine(t, POSTE.nom)), { lignes: true }),
 });
 
 /** Le poste, avec les clés des machines déjà ouvertes. */

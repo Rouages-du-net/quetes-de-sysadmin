@@ -14,6 +14,7 @@ import { COMMANDES, type Commande } from './commandes';
 import { sansCouleurs } from './couleurs';
 import { aide, apropos, ligneWhatis, optionInvalide, pageMan, raccourcir } from './commandes/manuel';
 import { traducteur, typographie, type Langue, type Traduire } from '../textes';
+import { hoteDansLaLangue, nomMachine } from './machines';
 
 export { decouper, appliquerMode } from './outils';
 import { appliquerMode, comparerNoms, contenu, decouper, joker, modeAvecMasque, tailleDe, type Mot } from './outils';
@@ -62,6 +63,8 @@ export interface Jeu {
   t: Traduire;
   // Nom de la machine (invite « joueur@nom »).
   hote: string;
+  /** Le nom de la machine dans la langue (kingdom pour royaume). */
+  readonly nomHote: string;
   // Pose une question (ex. « yes/no » de ssh) : la ligne suivante est la
   // réponse, passée à `repondre`, dont le texte s'affiche.
   demander(invite: string, repondre: (reponse: string) => string): void;
@@ -161,6 +164,7 @@ export class Shell implements Jeu {
 
   t: Traduire;
 
+  // hote : l'identifiant de la machine (royaume) ; nomHote, son nom dans la langue (kingdom).
   constructor(
     public chapitre: Chapitre,
     langue?: Langue,
@@ -175,7 +179,38 @@ export class Shell implements Jeu {
     const comptes = chapitre.comptes?.() ?? comptesParDefaut();
     this.comptes = chapitre.noms ? traduireComptes(this.t, comptes) : comptes;
     this.qui = this.joueur;
+    this.nommerMachine();
     chapitre.initialiser?.(this);
+  }
+
+  // Les chapitres écrivent le nom de leur machine en français (/etc/hostname,
+  // journal, noms que nginx ou docker reconnaissent) ; il prend celui de la
+  // langue (royaume → kingdom, voir machines.ftl).
+  private nommerMachine(): void {
+    // /etc/hosts : chaque nom (aussi sur les machines internes : wiki.maison.internal).
+    const hosts = this.trouver('/etc/hosts');
+    if (hosts?.type === 'fichier' && typeof hosts.contenu === 'string')
+      hosts.contenu = hosts.contenu
+        .split('\n')
+        .map((l) => (l.trimStart().startsWith('#') ? l : l.replace(/[^\s]+/g, (n) => hoteDansLaLangue(this.t, n))))
+        .join('\n');
+    const id = this.hote;
+    const nom = this.nomHote;
+    const traduire = (n: string) => hoteDansLaLangue(this.t, n);
+    const scan = this.etat.scan as { hotes?: { noms: string[] }[] } | undefined;
+    for (const h of scan?.hotes ?? []) h.noms = h.noms.map(traduire);
+    if (nom === id) return;
+    const sd = this.etat.systemd as { hote: string; journal: { message: string }[] } | undefined;
+    if (sd?.hote === id) {
+      sd.hote = nom;
+      for (const e of sd.journal) e.message = e.message.replace(`(${id})`, `(${nom})`);
+    }
+    const fichier = this.trouver('/etc/hostname');
+    if (fichier?.type === 'fichier' && typeof fichier.contenu === 'string' && fichier.contenu.trim() === id) fichier.contenu = fichier.contenu.replace(id, nom);
+    for (const service of ['nginx', 'docker']) {
+      const e = this.etat[service] as { noms?: string[] } | undefined;
+      if (Array.isArray(e?.noms)) e.noms = e.noms.map(traduire);
+    }
   }
 
   /** Le compte du joueur ou de la joueuse, sous son nom dans la langue (vous, you…). */
@@ -434,7 +469,7 @@ export class Shell implements Jeu {
     // Dans tmux, la barre d'état montre le nom de la session : on le met devant l'invite.
     // root (la console de secours d'un chapitre) a son invite à lui, avec #, comme bash.
     const root = this.qui === 'root';
-    return `${this.tmux ? `[${this.tmux}] ` : ''}${root ? 'root' : this.joueur}@${this.hote}:${ici}${root ? '#' : '$'}`;
+    return `${this.tmux ? `[${this.tmux}] ` : ''}${root ? 'root' : this.joueur}@${this.nomHote}:${ici}${root ? '#' : '$'}`;
   }
 
   demander(invite: string, repondre: (reponse: string) => string, secret = false): void {
@@ -482,7 +517,7 @@ export class Shell implements Jeu {
 
   /** Les machines internes de l'histoire : nom, adresse, domaine. */
   internes_(): { nom: string; adresse: string; domaine: string }[] {
-    return Object.entries(this.principal.chapitre.hotes ?? {}).map(([nom, h]) => ({ nom, adresse: h.adresse, domaine: h.domaine }));
+    return Object.entries(this.principal.chapitre.hotes ?? {}).map(([nom, h]) => ({ nom, adresse: h.adresse, domaine: hoteDansLaLangue(this.t, h.domaine) }));
   }
 
   // Développe * et ? comme le fait le shell, avant la commande. Les fichiers
@@ -545,6 +580,11 @@ export class Shell implements Jeu {
     const c = this.candidats(ligne);
     if (!c || c.noms.length < 2) return [];
     return c.noms.map((n) => (c.dossiers.has(n) ? `${n}/` : n));
+  }
+
+  /** Le nom de la machine dans la langue : l'invite, hostname, les journaux. */
+  get nomHote(): string {
+    return nomMachine(this.t, this.hote);
   }
 
   connues(): string[] {

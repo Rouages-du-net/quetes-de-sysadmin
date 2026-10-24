@@ -108,7 +108,7 @@ rancon-evenement-fin =
     paid. Malo was right to unplug that disk every Sunday."
 
     Well done! You've finished chapter 1 of The Game Library. (The rest awaits you:
-    ssh ludotheque.)
+    ssh games.)
 
     WHAT HAPPENED
     The accueil account's password was guessed (journalctl: three

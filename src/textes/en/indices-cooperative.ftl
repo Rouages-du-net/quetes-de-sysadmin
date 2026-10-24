@@ -54,10 +54,10 @@ indice-proxy-fin =
 
 indice-mises-a-jour-a-jour =
     .piste = apt only knows about new versions once it has re-read the repositories (man apt: update first, then upgrade). The wifi will drop: a long operation goes in a session that outlives the connection (man tmux). If dpkg was interrupted, apt tells you what to run.
-    .solution = sudo apt update, then tmux new -s upd and sudo apt upgrade; if the connection drops: ssh cooperative and tmux attach -t upd (without tmux: sudo dpkg --configure -a, then sudo apt upgrade)
+    .solution = sudo apt update, then tmux new -s upd and sudo apt upgrade; if the connection drops: ssh coop and tmux attach -t upd (without tmux: sudo dpkg --configure -a, then sudo apt upgrade)
 indice-mises-a-jour-caisse-tombee =
     .piste = The packages are installed, but uname -r still gives the old kernel. A file in /var/run says why you need to reboot.
-    .solution = cat /var/run/reboot-required.pkgs, then sudo reboot (and ssh cooperative to come back)
+    .solution = cat /var/run/reboot-required.pkgs, then sudo reboot (and ssh coop to come back)
 indice-mises-a-jour-fin =
     .piste = After a reboot, only enabled services come back. Check the site and the till (systemctl --failed, systemctl status caisse: "disabled").
     .solution = sudo systemctl enable --now caisse (enabled at boot, and started right away)

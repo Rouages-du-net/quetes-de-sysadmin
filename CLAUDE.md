@@ -181,7 +181,10 @@ rouages.net.
 - `src/textes/<langue>/*.ftl` : tous les textes (Fluent), chargés par
   `src/textes/index.ts` (`traducteur()`, `typographie()`) ; `noms.ftl` : les
   noms des lieux et des objets des chapitres à `noms: true` (dans le code,
-  `chemin()` et `nom()` de `monde.ts` ; dans les tests, `dansLaLangue()`).
+  `chemin()` et `nom()` de `monde.ts` ; dans les tests, `dansLaLangue()`) ;
+  `machines.ftl` : les noms des machines (royaume → kingdom ; `nomMachine()`,
+  `hoteDansLaLangue()` de `machines.ts`, `Shell.nomHote` ; dans les tests,
+  `machinesDansLaLangue()`).
 - `tests/quetes.test.ts` : chaque chapitre rejoué ; `tests/navigateur.mjs` :
   Chromium, 1000 et 375 px, CSP de `.htaccess` appliquée, page 404,
   intégration dans une autre page.

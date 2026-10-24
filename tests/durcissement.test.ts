@@ -6,7 +6,7 @@ import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
 import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
-import { dansLaLangue } from './noms';
+import { dansLaLangue, machinesDansLaLangue } from './noms';
 
 // L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
 const EFFACEUR = [...new Set([...HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id), ...prerequis('lettres')])];
@@ -20,7 +20,7 @@ for (const langue of LANGUES)
     const contient = (tout: string, texte: string) => fr && expect(tout).toContain(texte);
     const partie = () => {
       const c = new Console({ langue, termines: EFFACEUR });
-      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
       // nano : remplacer du texte dans un fichier, puis ^O et ^X.
       const modifier = (fichier: string, changer: (texte: string) => string) => {
         c.executer(`sudo nano ${fichier}`);
@@ -48,7 +48,7 @@ for (const langue of LANGUES)
       tout += modifier('/etc/ssh/sshd_config.d/50-cloud-init.conf', () => 'PasswordAuthentication no\n');
       tout += jouer(['sudo systemctl reload ssh', 'journalctl -u ssh -n 3', 'exit', 'ssh root@lettres']);
       expect(tout).toContain('[preauth]');
-      expect(tout).toContain('root@lettres.internal: Permission denied (publickey).');
+      expect(tout).toContain(machinesDansLaLangue(traducteur(langue), 'root@lettres.internal: Permission denied (publickey).'));
       expect(c.termines).not.toContain('fermer-la-porte');
       tout += jouer(['ssh lettres']);
       contient(tout, 'https://man.openbsd.org/sshd_config');
@@ -100,7 +100,7 @@ for (const langue of LANGUES)
     const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     const partie = () => {
       const c = new Console({ langue, termines: [...EFFACEUR, 'fermer-la-porte'] });
-      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
       jouer(['ssh lettres', 'yes']);
       expect(c.distant?.shell.chapitre.id).toBe('pare-feu');
       return { c, jouer };
@@ -131,7 +131,7 @@ for (const langue of LANGUES)
       const { c, jouer } = partie();
       jouer(['sudo ufw allow http', 'fourmis-2026', 'sudo ufw allow https', 'sudo ufw enable', 'o']);
       const dehors = jouer(['exit', 'ssh lettres']);
-      expect(dehors).toContain('ssh: connect to host lettres.internal port 22: Connection timed out');
+      expect(dehors).toContain(machinesDansLaLangue(traducteur(langue), 'ssh: connect to host lettres.internal port 22: Connection timed out'));
       expect(c.invite()).toBe(L('vous@poste:~$'));
       c.connecter('lettres');
       jouer(['sudo ufw allow OpenSSH', 'exit', 'ssh lettres']);
@@ -155,7 +155,7 @@ for (const langue of LANGUES)
     const fr = langue === LANGUE_DE_REFERENCE;
     const partie = () => {
       const c = new Console({ langue, termines: [...EFFACEUR, 'fermer-la-porte', 'pare-feu'] });
-      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
       const ecrire = (fichier: string, texte: string) => {
         c.executer(`sudo nano ${fichier}`);
         if (c.shell.attente) c.executer('fourmis-2026');
@@ -195,7 +195,7 @@ for (const langue of LANGUES)
       const alerte = ecrire('/etc/fail2ban/jail.local', '[DEFAULT]\nmaxretry = 3\n') + jouer(['sudo systemctl reload fail2ban']);
       if (fr) expect(alerte).toContain("l'adresse de ton propre");
       const dehors = jouer(['exit', 'ssh lettres']);
-      expect(dehors).toContain('ssh: connect to host lettres.internal port 22: Connection refused');
+      expect(dehors).toContain(machinesDansLaLangue(traducteur(langue), 'ssh: connect to host lettres.internal port 22: Connection refused'));
       c.connecter('lettres');
       ecrire('/etc/fail2ban/jail.local', BON);
       jouer([
@@ -228,7 +228,7 @@ for (const langue of LANGUES)
     const fr = langue === LANGUE_DE_REFERENCE;
     const partie = () => {
       const c = new Console({ langue, termines: [...EFFACEUR, ...LETTRES] });
-      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
       const ecrire = (fichier: string, changer: (texte: string) => string, sudo = true) => {
         c.executer(`${sudo ? 'sudo ' : ''}nano ${fichier}`);
         if (c.shell.attente) c.executer('fourmis-2026');
@@ -239,8 +239,9 @@ for (const langue of LANGUES)
       expect(c.distant?.shell.chapitre.id).toBe('port');
       return { c, jouer, ecrire };
     };
+    const M = (x: string) => machinesDansLaLangue(traducteur(langue), x);
     const portDuPoste = (t: string) =>
-      t.replace('Host lettres\n    HostName lettres.internal', 'Host lettres\n    HostName lettres.internal\n    Port 2222');
+      t.replace(M('Host lettres\n    HostName lettres.internal'), M('Host lettres\n    HostName lettres.internal\n    Port 2222'));
 
     it('solution : les deux ports, tester, fermer le 22, la prison sshd', () => {
       const { c, jouer, ecrire } = partie();
@@ -255,10 +256,10 @@ for (const langue of LANGUES)
       tout += jouer(['exit']);
       tout += ecrire('~/.ssh/config', portDuPoste, false);
       tout += jouer(['ssh lettres']);
-      expect(tout).toContain("The authenticity of host '[lettres.internal]:2222 ([203.0.113.10]:2222)' can't be established.");
+      expect(tout).toContain(machinesDansLaLangue(traducteur(langue), "The authenticity of host '[lettres.internal]:2222 ([203.0.113.10]:2222)' can't be established."));
       expect(tout).toContain('This host key is known by the following other names/addresses:');
       tout += jouer(['yes', 'ss -tn']);
-      expect(tout).toContain("Warning: Permanently added '[lettres.internal]:2222' (ED25519) to the list of known hosts.");
+      expect(tout).toContain(M("Warning: Permanently added '[lettres.internal]:2222' (ED25519) to the list of known hosts."));
       expect(tout).toContain('203.0.113.10:2222');
       tout += ecrire('/etc/ssh/sshd_config', (t) => t.replace('Port 22\n', ''));
       tout += jouer(['sudo systemctl reload ssh', 'sudo ufw delete allow OpenSSH']);
@@ -279,7 +280,7 @@ for (const langue of LANGUES)
       tout += jouer(['sudo systemctl reload ssh', 'fourmis-2026']);
       if (fr) expect(tout).toContain('ATTENTION');
       tout = jouer(['exit', 'ssh lettres', 'ssh -p 2222 lettres']);
-      expect(tout).toContain('ssh: connect to host lettres.internal port 22: Connection refused');
+      expect(tout).toContain(machinesDansLaLangue(traducteur(langue), 'ssh: connect to host lettres.internal port 22: Connection refused'));
       if (fr) expect(tout).toContain('écoute maintenant sur 2222');
       expect(tout).toContain('port 2222: Connection timed out');
       // La console de secours : ouvrir 2222 dans ufw.
@@ -312,7 +313,7 @@ for (const langue of LANGUES)
     const fr = langue === LANGUE_DE_REFERENCE;
     const partie = () => {
       const c = new Console({ langue, termines: [...EFFACEUR, ...LETTRES, 'port'] });
-      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
+      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
       const ecrire = (fichier: string, changer: (texte: string) => string) => {
         c.executer(`sudo nano ${fichier}`);
         if (c.shell.attente) c.executer('fourmis-2026');

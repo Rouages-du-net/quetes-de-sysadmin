@@ -6,7 +6,7 @@ import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
 import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
-import { dansLaLangue } from './noms';
+import { dansLaLangue, machinesDansLaLangue } from './noms';
 
 // L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
 const EFFACEUR = [...new Set([...HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id), ...prerequis('cooperative')])];
@@ -267,7 +267,7 @@ for (const langue of LANGUES)
       expect(tout).toContain('[detached (from session maj)]');
       contient(tout, 'la caisse ne répond plus');
       tout = jouer(['ssh cooperative', 'uname -r', 'systemctl --failed', 'sudo systemctl enable --now caisse']);
-      expect(tout).toContain('Linux cooperative 6.12.48+deb13-amd64');
+      expect(tout).toContain(machinesDansLaLangue(traducteur(langue), 'Linux cooperative 6.12.48+deb13-amd64'));
       contient(tout, 'https://man.openbsd.org/tmux');
       expect(c.termines).toContain('mises-a-jour');
     });

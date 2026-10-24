@@ -17,7 +17,7 @@
 
 import type { Fichier } from '../monde';
 import type { Shell } from '../shell';
-import { cleHote, clePrivee, condense, empreinte, empreinteDeCle, machineParAdresse, POSTE, type Machine } from '../machines';
+import { cleHote, clePrivee, condense, empreinte, empreinteDeCle, machineParAdresse, nomMachine, POSTE, type Machine } from '../machines';
 import { autorise, methodes, portsSshd } from '../sshd';
 import { CLES_PAR_DEFAUT, configuration, franchir, genererCle, preparer } from '../acces';
 import { verdict, type PareFeu } from '../parefeu';
@@ -84,7 +84,7 @@ function authentifier(jeu: Shell, d: Destination, m: Machine): string {
     jeu.etat.portConnexion = Number(d.port);
   } else sortie.push(`${d.utilisateur}@${d.hote}: Permission denied (${config ? methodes(config) : 'publickey'}).`);
   // La bonne clé, mais un serveur qui refuse le compte : on s'est enfermé dehors.
-  if (refuse && d.utilisateur === jeu.joueur) sortie.push(jeu.t('ssh-enferme', { machine: m.nom }));
+  if (refuse && d.utilisateur === jeu.joueur) sortie.push(jeu.t('ssh-enferme', { machine: nomMachine(jeu.t, m.nom) }));
   return sortie.join('\n');
 }
 
@@ -132,7 +132,7 @@ function cleChangee(jeu: Shell, d: Destination, m: Machine, ligne: number): stri
     `  ssh-keygen -f '${fichier}' -R '${d.connu}'`,
     `Host key for ${d.connu} has changed and you have requested strict checking.`,
     'Host key verification failed.',
-    jeu.t('ssh-cle-changee', { machine: m.nom, empreinte: empreinte(m, generation(jeu, m)) }),
+    jeu.t('ssh-cle-changee', { machine: nomMachine(jeu.t, m.nom), empreinte: empreinte(m, generation(jeu, m)) }),
   ].join('\n');
 }
 
@@ -255,7 +255,7 @@ function generer(jeu: Shell, args: string[]): string {
   const valeur = (o: string) => (args.includes(o) ? args[args.indexOf(o) + 1] : undefined);
   const type = valeur('-t') ?? 'ed25519';
   if (type !== 'ed25519') return jeu.erreur(jeu.t('ssh-keygen-type', { type }));
-  const commentaire = valeur('-C') ?? `${jeu.qui}@${jeu.hote}`;
+  const commentaire = valeur('-C') ?? `${jeu.qui}@${jeu.nomHote}`;
   const parDefaut = `${jeu.resoudre('~')}/.ssh/id_ed25519`;
   const lignes = ['Generating public/private ed25519 key pair.'];
   const ecrire = (fichier: string, phrase: string): string => {
@@ -378,14 +378,14 @@ export const SSH: Record<string, Commande> = {
         return jeu.erreur(
           `ssh: connect to host ${d.hote} port ${d.port}: Connection refused` +
             // Un serveur qu'on a soi-même déplacé : rappeler où il écoute.
-            (ecoute.join() !== '22' ? `\n${jeu.t('ssh-autre-port', { machine: m.nom, port: d.port, ports: ecoute.join(', ') })}` : ''),
+            (ecoute.join() !== '22' ? `\n${jeu.t('ssh-autre-port', { machine: nomMachine(jeu.t, m.nom), port: d.port, ports: ecoute.join(', ') })}` : ''),
         );
       if (!m) return jeu.erreur(`ssh: connect to host ${d.hote} port ${d.port}: No route to host`);
       // fail2ban d'en face a banni le poste : sur Debian, l'action par défaut
       // rejette (REJECT) les paquets de l'adresse vers les ports de la prison.
       if ((jeu.etat.bannisDistant?.(m.nom, Number(d.port)) ?? []).includes(POSTE.adresse))
         return jeu.erreur(
-          `ssh: connect to host ${d.hote} port ${d.port}: Connection refused\n` + jeu.t('ssh-banni', { machine: m.nom, adresse: POSTE.adresse }),
+          `ssh: connect to host ${d.hote} port ${d.port}: Connection refused\n` + jeu.t('ssh-banni', { machine: nomMachine(jeu.t, m.nom), adresse: POSTE.adresse }),
         );
       // Le pare-feu d'en face : deny laisse attendre (timeout), reject refuse tout de suite.
       const pf: PareFeu | null = jeu.etat.pareFeuDistant?.(m.nom) ?? null;
@@ -393,7 +393,7 @@ export const SSH: Record<string, Commande> = {
       if (passe !== 'accepte')
         return jeu.erreur(
           `ssh: connect to host ${d.hote} port ${d.port}: ${passe === 'bloque' ? 'Connection timed out' : 'Connection refused'}\n` +
-            jeu.t('ssh-pare-feu', { machine: m.nom }),
+            jeu.t('ssh-pare-feu', { machine: nomMachine(jeu.t, m.nom) }),
         );
       const remarque = commande.length ? jeu.t('ssh-commande-distante') + '\n' : '';
       const lignes = (jeu.lire('~/.ssh/known_hosts') ?? '').split('\n');

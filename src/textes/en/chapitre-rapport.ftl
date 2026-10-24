@@ -29,7 +29,7 @@ rapport-courriel-nadia =
 rapport-rapport-audit =
     AUDIT REPORT — The Bakery (fournil.example)
     Auditor: Salomé, independent
-    Scope: the fournil server (192.0.2.22)
+    Scope: the bakery server (192.0.2.22)
     Method: review of accounts and configuration, port scan from the
     internet, reading the logs
 

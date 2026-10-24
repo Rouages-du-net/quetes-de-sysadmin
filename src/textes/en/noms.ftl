@@ -3,7 +3,7 @@
 ### code. Each language gives its own: no accents, no spaces, easy to type
 ### and to complete with Tab.
 
-## Accounts: the player's (prompt you@royaume, /home/you, owner of the
+## Accounts: the player's (prompt you@kingdom, /home/you, owner of the
 ## files) and the Eraser's system user. A Unix account name: lowercase, no
 ## accents, no spaces.
 nom-vous = you

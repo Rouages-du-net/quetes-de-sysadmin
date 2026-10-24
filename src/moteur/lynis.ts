@@ -100,7 +100,7 @@ export function audit(jeu: Jeu): { sortie: string; rapport: string; indice: numb
     '  Operating system version:  13',
     '  Kernel version:            6.12.48',
     '  Hardware platform:         x86_64',
-    `  Hostname:                  ${jeu.hote}`,
+    `  Hostname:                  ${jeu.nomHote}`,
     '  ---------------------------------------------------',
     '  Profiles:                  /etc/lynis/default.prf',
     `  Log file:                  ${JOURNAL}`,
@@ -223,7 +223,7 @@ export function audit(jeu: Jeu): { sortie: string; rapport: string; indice: numb
   ].join('\n');
   const rapport = [
     'report_version=1.0',
-    `hostname=${jeu.hote}`,
+    `hostname=${jeu.nomHote}`,
     `lynis_version=${VERSION_LYNIS}`,
     `hardening_index=${note}`,
     `tests_executed=${TESTS}`,

@@ -35,7 +35,7 @@ tunnel-note-gaspard =
 
     The wiki's admin interface runs here (service wiki-admin, port 8080).
     It only listens on 127.0.0.1: nobody can reach it from the
-    outside, not even from maison. To check:
+    outside, not even from community. To check:
 
       ss -tln
       systemctl status wiki-admin
@@ -91,7 +91,7 @@ tunnel-evenement-fin =
     - Keep admin interfaces on 127.0.0.1 and reach them through an ssh
       tunnel, rather than opening one more port in the firewall.
     - The name in -L is resolved by the machine at the other end: -L
-      8080:localhost:8080 maison leads to maison, not to the wiki.
+      8080:localhost:8080 community leads to community, not to the wiki.
     - -f -N: a tunnel without a session; remember to close it (ps,
       kill), or keep it in the foreground and stop it with Ctrl+C.
 

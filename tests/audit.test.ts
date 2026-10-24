@@ -7,7 +7,7 @@ import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
 import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
-import { dansLaLangue } from './noms';
+import { dansLaLangue, machinesDansLaLangue } from './noms';
 
 // L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
 const EFFACEUR = [...new Set([...HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id), ...prerequis('audit')])];
@@ -228,14 +228,14 @@ ${hors}`;
       let tout = jouer(['cat lettre-de-mission.txt']);
       contient(tout, 'LETTRE DE MISSION');
       tout = jouer(['nmap -sV -oN inventaire.txt fournil.internal']);
-      expect(tout).toContain('Nmap scan report for fournil.internal (192.0.2.22)');
+      expect(tout).toContain(machinesDansLaLangue(traducteur(langue), 'Nmap scan report for fournil.internal (192.0.2.22)'));
       expect(tout).toContain('Not shown: 995 closed tcp ports (reset)');
       expect(tout).toContain('5432/tcp open  postgresql PostgreSQL DB 17.0 - 17.2');
       expect(tout).toContain('443/tcp  open  ssl/http   nginx 1.26.3');
       expect(tout).toContain('Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel');
       expect(tout).toContain('Nmap done: 1 IP address (1 host up) scanned in');
       tout = jouer(['cat inventaire.txt']);
-      expect(tout).toMatch(/^# Nmap 7\.95 scan initiated .* as: nmap -sV -oN \S+ fournil\.internal/);
+      expect(tout).toMatch(new RegExp(`^# Nmap 7\\.95 scan initiated .* as: nmap -sV -oN \\S+ ${machinesDansLaLangue(traducteur(langue), 'fournil.internal')}`, 'm'));
       expect(tout).toMatch(/# Nmap done at .* -- 1 IP address \(1 host up\) scanned in/);
       expect(c.termines).not.toContain('perimetre');
       const relecture = editer('nano notes-audit.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*/, 'x'));
