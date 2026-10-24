@@ -263,3 +263,7 @@ nom-balayage-audit-txt = audit_scan.txt
 nom-lettre-de-mission-txt = engagement_letter.txt
 nom-notes-audit-md = audit_notes.md
 nom-rapport-cloture-md = closing_report.md
+
+## The Lab
+nom-message_d_odile-txt = message_from_odile.txt
+nom-procedure_hebergeur-txt = host_procedure.txt

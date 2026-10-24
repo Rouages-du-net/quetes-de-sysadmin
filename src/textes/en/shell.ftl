@@ -87,6 +87,11 @@ mount-usage =
      mount [options] [--source] <source> | [--target] <directory>
      mount [options] <source> <directory>
     (Here: mount, or sudo mount [-o ro] device mount_point; see man mount)
+# sfdisk without a script: the real sfdisk would open a dialogue (game difference)
+sfdisk-interactif =
+    sfdisk: interactive mode does not exist in this game. Give it a script
+    on its standard input: for example another disk's table,
+    sfdisk -d /dev/sda | sudo sfdisk /dev/sdb (see man sfdisk).
 umount-usage =
     Usage:
      umount [-hV]

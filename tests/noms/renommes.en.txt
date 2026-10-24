@@ -576,6 +576,17 @@ contre-visite
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
+fatigue
+  /home/vous → /home/you
+  /home/vous/message_d_odile.txt → /home/you/message_from_odile.txt
+  /home/vous/procedure_hebergeur.txt → /home/you/host_procedure.txt
+  /var/mail/vous → /var/mail/you
+
+disque-neuf
+  /home/vous → /home/you
+  /home/vous/message_d_odile.txt → /home/you/message_from_odile.txt
+  /home/vous/procedure_hebergeur.txt → /home/you/host_procedure.txt
+
 poste
   /home/vous → /home/you
   /home/vous/bienvenue.txt → /home/you/welcome.txt

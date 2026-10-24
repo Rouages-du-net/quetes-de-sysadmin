@@ -265,3 +265,7 @@ nom-balayage-audit-txt = balayage-audit.txt
 nom-lettre-de-mission-txt = lettre-de-mission.txt
 nom-notes-audit-md = notes-audit.md
 nom-rapport-cloture-md = rapport-cloture.md
+
+## Le Labo
+nom-message_d_odile-txt = message_d_odile.txt
+nom-procedure_hebergeur-txt = procedure_hebergeur.txt

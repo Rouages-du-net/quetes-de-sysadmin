@@ -43,6 +43,7 @@ export const MACHINES: Machine[] = [
   machine('cooperative', '192.0.2.20', 'cooperative'),
   machine('ruche', '192.0.2.21', 'ruche'),
   machine('fournil', '192.0.2.22', 'audit'),
+  machine('labo', '192.0.2.23', 'labo'),
 ];
 
 export const machineDeHistoire = (histoire: string) => MACHINES.find((m) => m.histoire === histoire);

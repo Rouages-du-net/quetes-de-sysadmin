@@ -66,6 +66,8 @@ import { exposition } from './exposition';
 import { traces } from './traces';
 import { perimetre } from './perimetre';
 import { contreVisite } from './contre-visite';
+import { fatigue } from './fatigue';
+import { disqueNeuf } from './disque-neuf';
 
 // Les histoires s'ouvrent peu à peu : chacune dit, dans `apres`, les chapitres
 // à finir avant d'en recevoir la clé (voir deverrouillage.ts et docs/SCENARIOS.md).
@@ -138,6 +140,11 @@ export const HISTOIRES: Histoire[] = [
     id: 'audit',
     apres: ['sentinelle', 'droits'],
     chapitres: [perimetre, rapport, exposition, traces, contreVisite],
+  },
+  {
+    id: 'labo',
+    apres: ['disque-plein'],
+    chapitres: [fatigue, disqueNeuf],
   },
 ];
 

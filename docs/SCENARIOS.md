@@ -185,7 +185,11 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | Docker et le pare-feu | un port publié sur 0.0.0.0 répond de l'extérieur quelles que soient les règles ufw (comme les règles iptables de Docker) ; `nc -zv` depuis une autre machine ; `system df`, `image prune` (`-a`), `container prune`, `volume prune` (`-a`), `system prune` (`-a`, `--volumes`), `rmi` | chaîne DOCKER-USER, ufw-docker, `iptables -L` |
 | Utilisateur d'un conteneur | `--user`/`-u` et `user:` (nom de l'image ou `uid[:gid]`, un uid inconnu de l'image prend le gid 0), `docker exec -u` ; l'uid du conteneur est celui de la machine (pas de userns-remap) : droits Unix appliqués par numéro sur les dossiers montés, fichiers créés au nom de cet uid, processus visibles dans `ps aux` ; `--read-only` empêche d'écrire hors des volumes ; `--cap-drop` et `--security-opt` sont gardés (et montrés par `inspect`) sans autre effet ; un conteneur tombé est relancé à chaque commande (pas d'attente qui double) | userns-remap, mode rootless, capacités réelles, seccomp, AppArmor, droits sur les volumes nommés |
 | `nc` | `-z`, `-v`, une plage de ports ; sans `-z`, rend la main | netcat complet (écouter, envoyer, proxy) |
-| disques (`lsblk`, `mount`, `umount`) | périphériques décrits par le chapitre ; `mount` sans argument, `-o ro` ; un support en lecture seule refuse toute création (le contenu d'un fichier existant reste modifiable par une redirection) ; pas de `/etc/fstab` | toutes les options, `fstab`, systèmes de fichiers réels |
+| disques (`lsblk`, `mount`, `umount`) | périphériques décrits par le chapitre ; `mount` sans argument, `-o ro` ; un support en lecture seule refuse toute création (le contenu d'un fichier existant reste modifiable par une redirection) ; pas de `/etc/fstab` ; sur une machine au stockage décrit (`stockage.ts`, Le Labo), `lsblk` montre disques, partitions et grappes RAID, avec `-d` et `-o` (NAME, MAJ:MIN, RM, SIZE, RO, TYPE, MOUNTPOINT(S), MODEL, SERIAL, FSTYPE, UUID) | toutes les options, `fstab`, systèmes de fichiers réels ; RM et RO toujours à 0 |
+| `smartctl` | `-a`, `-x`, `-H`, `-i`, `-A`, `-l error`, `-l selftest`, `-t short/long` (le test est noté tout de suite, sans attendre) ; attributs d'un disque ATA, valeurs déduites des comptes du chapitre ; code de retour en masque (64, 128) | NVMe, SCSI, `-d`, `-s`, `-X`, la base de disques, tous les attributs |
+| `mdadm` | RAID 1 seulement : `--detail` (`-D`), `--detail --scan`, mode « manage » (`--fail`, `--remove` dont `failed`, `--add`, `--re-add`, plusieurs à la suite) ; refus du vrai noyau (retirer un membre actif, marquer défectueux le dernier membre à jour, une partition déjà prise) ; reconstruction une grappe à la fois, une demi-heure par commande ; le disque entier dans une grappe efface sa table | `--create`, `--assemble`, `--grow`, `--examine`, `--zero-superblock`, `--monitor`, autres niveaux de RAID, bitmap réel (`--re-add` se rattrape plus vite) |
+| `sfdisk` | tables GPT : `-l`, `-d`, écriture d'un script lu sur l'entrée standard (celui de `-d`) ; refuse un disque en service ; recopie les identifiants du script, comme le vrai | mode interactif (un message l'explique), `--force`, `--no-reread`, tables MBR, scripts écrits à la main au-delà de `start=`, `size=`, `type=`, `uuid=` |
+| `grub-install` | `grub-install /dev/DISQUE` en mode BIOS sur table GPT : il faut la partition « BIOS boot » ; refuse une partition | UEFI, `--target`, `--boot-directory`, `update-grub` |
 | `rsnapshot` | `configtest`, `-t`, `-v`, `du`, la rotation des niveaux (`cp -al` puis `rsync`) ; une partie des directives ; messages proches de rsnapshot 1.4 | `backup_script`, `link_dest`, `sync_first`, sauvegardes distantes |
 | PostgreSQL | rôles et authentification « peer » ; `psql -c/-f/-l` avec un SQL réduit (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `ALTER ROLE … PASSWORD` par le compte `postgres`, `\l`, `\dt`, `\d`, `\du`) ; le mot de passe d'un rôle n'est lu que par l'appli d'un chapitre (« Les traces ») ; `pg_dump` (texte, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb` ; une archive `-Fc` ne contient qu'une référence gardée par le jeu ; une seule clé primaire par table | tout PostgreSQL, psql interactif, WAL et restauration à un instant donné |
 | `lsof`, `truncate`, `logrotate` | `lsof` ne connaît que les fichiers ouverts décrits par le chapitre (`+L1`, `-p`, `-u`, un fichier) ; `logrotate` : une partie des directives, `-d`, `-f`, `-v`, sorties abrégées | toutes les options, tous les fichiers ouverts du système |
@@ -1180,6 +1184,67 @@ chronologie avec 2 h 13, 2 h 15 et 2 h 58, l'impact (45 minutes), le
 déclencheur et la cause (`flux.conf`, depuis le 20 août), au moins deux
 actions, et aucun mot qui cherche un coupable (liste dans le fichier de
 textes). Zoé relit à chaque enregistrement et dit ce qui manque.
+
+## Histoire 15 : Le Labo (deux chapitres, deux autres prévus)
+
+Le serveur du Labo, le club photo du quartier (machine `labo`), loué chez un
+hébergeur : deux disques de 2 To en RAID 1 logiciel. `md0` porte le système
+(`/`), `md1` les photos des membres (`/srv`). Odile, la présidente, n'est
+pas technicienne ; l'hébergeur change un disque sur demande (un ticket avec
+le numéro de série), mais le RAID est l'affaire du client. Le stockage est
+décrit par `stockage.ts` (disques, SMART, partitions GPT, grappes) ; les
+commandes dans `commandes/stockage.ts`. L'histoire s'ouvre après « Le
+disque plein » (L'Astreinte).
+
+### Chapitre 1 — Le disque qui fatigue (fait)
+
+smartd écrit depuis deux jours que `sdb` a des secteurs illisibles, et le
+noyau a relu des blocs sur l'autre miroir. SMART dit pourtant « PASSED ».
+
+| Étape | Commandes |
+|---|---|
+| Lire l'alerte | `mail`, `cat /var/mail/vous`, `sudo dmesg` |
+| Voir le RAID | `cat /proc/mdstat`, `sudo mdadm --detail /dev/md0` |
+| Juger le disque | `sudo smartctl -a /dev/sdb`, puis `/dev/sda` pour comparer |
+| Sortir `sdb` | `sudo mdadm --manage /dev/md0 --fail /dev/sdb2 --remove /dev/sdb2`, puis `md1` et `sdb3` |
+| Le ticket | `smartctl -i` ou `lsblk -o NAME,SERIAL`, puis `~/ticket.txt` avec le numéro de `sdb` |
+
+Fausses pistes : `--remove` sans `--fail` (« Device or resource busy ») ;
+sortir un membre de `sda`, le disque sain (on le remet avec `--re-add`) ;
+une seule grappe sur deux ; un ticket qui donne le numéro de `sda`.
+
+### Chapitre 2 — Le disque neuf (fait)
+
+Le disque a été remplacé, vierge ; les grappes tournent sur `sda` seul.
+
+| Étape | Commandes |
+|---|---|
+| Voir le disque neuf | `lsblk`, `cat /proc/mdstat` (`[U_]`) |
+| Recopier la table | `sudo sfdisk -d /dev/sda \| sudo sfdisk /dev/sdb` |
+| Reconstruire | `sudo mdadm --manage /dev/md0 --add /dev/sdb2`, puis `md1` et `sdb3` ; `cat /proc/mdstat` jusqu'à `[UU]` |
+| Démarrer sur l'un ou l'autre | `sudo grub-install /dev/sdb` |
+
+Fausses pistes : ajouter une partition qui n'existe pas encore ; le sens
+inversé (`sfdisk` refuse d'écrire sur `sda`, en service) ; le disque entier
+dans une grappe (sa table est écrasée) ; GRUB sur une partition, ou sur un
+disque sans partition « BIOS boot ».
+
+### Chapitre 3 — La place qui manque (prévu)
+
+Les photos de la saison remplissent `md1`. L'hébergeur ajoute deux disques :
+une nouvelle grappe (`mdadm --create`), LVM par-dessus (`pvcreate`,
+`vgextend`, `lvextend -r` ou `lvextend` puis `resize2fs`), sans casser la
+redondance (pas de disque seul dans le groupe de volumes : `vgreduce`,
+`pvmove` pour réparer). Fausse piste : `lvextend` sans agrandir le système
+de fichiers (`df` ne bouge pas).
+
+### Chapitre 4 — Le redémarrage qui coince (prévu)
+
+Un disque USB de scans ajouté dans `/etc/fstab` par son nom (`/dev/sdc1`),
+sans `nofail` : avec les nouveaux disques, il s'appelle maintenant `sde`, et
+le serveur démarre en mode secours. Console de l'hébergeur, `journalctl -xb`,
+`systemctl --failed`, `lsblk -f` / `blkid`, `fstab` par `UUID=` avec
+`nofail`, `findmnt --verify`, `mount -a`, `systemctl default`.
 
 ## Idées pour la suite
 
