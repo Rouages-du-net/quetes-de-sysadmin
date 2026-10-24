@@ -22,6 +22,7 @@
 import type { Jeu } from './shell';
 import type { Dossier } from './monde';
 import type { Lvm } from './lvm';
+import type { SystemeFichiers } from './fstab';
 
 export const SECTEUR = 512;
 
@@ -68,6 +69,8 @@ export interface Disque {
   smart: Smart;
   // Le rang du disque (sda : 0, sdb : 1…), pour ses numéros MAJ:MIN.
   rang: number;
+  // Un disque amovible (USB) : RM = 1 dans lsblk.
+  amovible?: boolean;
 }
 
 // spare : un membre de rechange, qui prendra la place d'un défectueux.
@@ -110,6 +113,8 @@ export interface Stockage {
   grub: string[];
   // LVM par-dessus (voir lvm.ts).
   lvm?: Lvm;
+  // Les systèmes de fichiers, par périphérique (/dev/md0…), voir fstab.ts.
+  fs?: Record<string, SystemeFichiers>;
 }
 
 // Débit de reconstruction (Kio/s), et temps simulé à chaque commande.

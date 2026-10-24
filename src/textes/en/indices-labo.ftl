@@ -68,3 +68,21 @@ indice-agrandir-conf =
 indice-agrandir-fin =
     .piste = The boot reads a copy of mdadm.conf, kept in the initramfs: rebuild it (man update-initramfs). You also need at least 1.5 TB free on /srv, and no lone disk in the group.
     .solution = sudo update-initramfs -u
+
+## Chapter 4 — The stuck reboot
+
+indice-secours-journal =
+    .piste = The emergency mode message says where to look: this boot's journal, with its explanations (man journalctl).
+    .solution = journalctl -xb (or journalctl -b -p err): "Timed out waiting for device /dev/sdc1".
+indice-secours-disques =
+    .piste = Who is sdc today, and where did the USB disk go? Look at the disks with their file systems, labels and UUIDs (man lsblk, man blkid).
+    .solution = lsblk -f (or blkid): sdc is in md2; the USB disk is sde, its partition sde1 carries the SCANS label and a UUID.
+indice-secours-corrige =
+    .piste = In /etc/fstab, the scans line must refer to the disk by what doesn't change, and not block the boot if it is missing (man fstab: UUID=, nofail).
+    .solution = nano /etc/fstab: UUID=c27a9e41-5b3d-4f8a-a1e6-9d0b2c4f7e13  /srv/scans  ext4  defaults,nofail  0  2 (the UUID from blkid), then findmnt --verify.
+indice-secours-monte =
+    .piste = Try fstab without rebooting: mount can mount everything the file describes (man mount). And systemd must reread the file (man systemctl).
+    .solution = systemctl daemon-reload, then mount -a, then df -h /srv/scans.
+indice-secours-fin =
+    .piste = What's left is leaving emergency mode: resume the normal boot, as the console message says (man systemctl).
+    .solution = systemctl default (or exit, or reboot)

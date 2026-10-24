@@ -186,6 +186,18 @@ export function redemarrer(jeu: Jeu, sd: Systemd) {
     jeu.etat.wg = {};
   }
   journaliser(sd, '', 'kernel', 0, `Linux version ${noyau?.courant ?? '6.12.0-quetes'} (${sd.hote})`);
+  // Une machine qui monte ses disques selon /etc/fstab (voir fstab.ts) : si ce n'est
+  // pas possible, elle s'arrête en mode secours, sans lancer ses services.
+  const montages = jeu.etat.demarrerMontages as ((j: Jeu) => boolean) | undefined;
+  if (montages && !montages(jeu)) {
+    for (const s of Object.values(sd.services)) {
+      s.etat = 'inactive';
+      s.depuis = sd.horloge;
+    }
+    sd.verifieApresDemarrage = false;
+    sd.demarreALaMain = false;
+    return;
+  }
   for (const [nom, s] of Object.entries(sd.services)) {
     s.etat = 'inactive';
     s.depuis = sd.horloge;

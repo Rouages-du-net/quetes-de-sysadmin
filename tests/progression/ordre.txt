@@ -65,3 +65,4 @@ contre-visite
 fatigue
 disque-neuf
 agrandir
+secours

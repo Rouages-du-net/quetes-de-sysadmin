@@ -73,7 +73,8 @@ agrandir-evenement-conf =
 agrandir-evenement-fin =
     Odile : « 3,6 To de plus ? Le concours peut venir ! »
 
-    Bravo ! Tu as terminé le chapitre 3 du Labo.
+    Bravo ! Tu as terminé le chapitre 3 du Labo. (La suite t'attend :
+    ssh labo.)
 
     CE QUI S'EST PASSÉ
     Le volume des photos (LVM, sur la grappe md1) était plein. Tu as fait

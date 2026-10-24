@@ -300,6 +300,94 @@ for (const langue of LANGUES)
       expect(s.termine).toBe(true);
     });
 
+    // Chapitre 4 : on corrige /etc/fstab avec nano (en root, sur la console de l'hébergeur).
+    const LIGNE_THEO = '/dev/sdc1  /srv/scans  ext4  defaults  0  2';
+    const corriger = (s: Shell, nouvelle: string | null) => {
+      s.executer('nano /etc/fstab');
+      const texte = s.edition!.texte;
+      const sortie = s.enregistrerEdition(nouvelle === null ? texte.replace(LIGNE_THEO + '\n', '').replace(LIGNE_THEO, '') : texte.replace(LIGNE_THEO, nouvelle));
+      return sortie + '\n' + s.quitterEdition();
+    };
+    const PAR_UUID = 'UUID=c27a9e41-5b3d-4f8a-a1e6-9d0b2c4f7e13  /srv/scans  ext4  defaults,nofail  0  2';
+
+    it('chapitre 4 — solution : le journal, lsblk -f, fstab par UUID avec nofail, findmnt --verify, daemon-reload, mount -a, systemctl default', () => {
+      const { s, jouer } = partie('secours');
+      expect(s.qui).toBe('root');
+      let tout = jouer(['cat message_d_odile.txt', 'journalctl -xb -p err', 'lsblk -f', 'findmnt --verify', 'mount -a']);
+      expect(tout).toContain('You are in emergency mode.');
+      expect(tout).toContain('Timed out waiting for device dev-sdc1.device - /dev/sdc1.');
+      expect(tout).toContain('Dependency failed for local-fs.target - Local File Systems.');
+      expect(tout).toMatch(/└─sde1 +ext4 +SCANS +c27a9e41-5b3d-4f8a-a1e6-9d0b2c4f7e13/);
+      expect(tout).toContain('[E] unreachable source: /dev/sdc1: No such file or directory');
+      expect(tout).toContain('mount: /srv/scans: special device /dev/sdc1 does not exist.');
+      contient(tout, 'systemd a attendu /dev/sdc1');
+      contient(tout, 'entré dans md2');
+      tout = corriger(s, PAR_UUID);
+      contient(tout, 'fstab est juste');
+      tout = jouer(['findmnt --verify', 'systemctl daemon-reload', 'mount -a', 'findmnt /srv/scans']);
+      expect(tout).toContain('Success, no errors or warnings detected');
+      expect(tout).toMatch(/\/srv\/scans \/dev\/sde1 +ext4/);
+      expect(s.termine).toBe(false);
+      tout = jouer(['systemctl default', 'systemctl is-active nginx']);
+      contient(tout, 'Tu as terminé le chapitre 4');
+      expect(tout).toContain('active');
+      expect(s.termine).toBe(true);
+    });
+
+    it('chapitre 4 — autre solution : LABEL=, puis reboot (systemd relit fstab au démarrage)', () => {
+      const { s, jouer } = partie('secours');
+      corriger(s, 'LABEL=SCANS /srv/scans ext4 nofail 0 2');
+      jouer(['blkid -L SCANS', 'reboot']);
+      expect(s.etat.secours).toBe(false);
+      expect(s.termine).toBe(true);
+    });
+
+    it('chapitre 4 — fausses pistes : reprendre trop tôt, /dev/sde1, sans nofail, sans daemon-reload, la ligne effacée', () => {
+      const { s, jouer } = partie('secours');
+      // Reprendre le démarrage sans rien corriger : retour en mode secours.
+      let tout = jouer(['exit']);
+      expect(tout).toContain('You are in emergency mode.');
+      contient(tout, 'corriger fstab');
+      expect(s.etat.secours).toBe(true);
+      // La ligne effacée : le serveur démarrerait, mais sans les scans.
+      tout = corriger(s, null);
+      contient(tout, 'ne seraient plus jamais montés');
+      s.executer('nano /etc/fstab');
+      s.enregistrerEdition(s.edition!.texte + '\n' + LIGNE_THEO + '\n');
+      s.quitterEdition();
+      // /dev/sde1 : juste aujourd'hui, fragile demain.
+      tout = corriger(s, '/dev/sde1  /srv/scans  ext4  defaults  0  2');
+      contient(tout, 'prochain disque ajouté');
+      // Le bon UUID, sans nofail.
+      s.executer('nano /etc/fstab');
+      s.enregistrerEdition(s.edition!.texte.replace('/dev/sde1  /srv/scans  ext4  defaults  0  2', 'UUID=c27a9e41-5b3d-4f8a-a1e6-9d0b2c4f7e13  /srv/scans  ext4  defaults  0  2'));
+      tout = s.quitterEdition();
+      contient(tout, 'nofail');
+      // Avec nofail, mais systemd n'a pas relu fstab : systemctl default rechute.
+      s.executer('nano /etc/fstab');
+      s.enregistrerEdition(s.edition!.texte.replace('ext4  defaults  0  2', 'ext4  defaults,nofail  0  2'));
+      s.quitterEdition();
+      tout = jouer(['systemctl default']);
+      expect(tout).toContain('You are in emergency mode.');
+      contient(tout, 'ancienne version');
+      // Une ligne illisible est signalée par mount -a.
+      tout = jouer(['systemctl daemon-reload', 'mount -a', 'systemctl default']);
+      expect(s.termine).toBe(true);
+    });
+
+    it('chapitre 4 — les messages : blkid, findmnt, mount (une ligne illisible, une source inconnue)', () => {
+      const { s, jouer } = partie('secours');
+      s.executer('nano /etc/fstab');
+      s.enregistrerEdition(s.edition!.texte + '\n/dev/sdz9 /mnt\n');
+      contient(s.quitterEdition(), 'une ligne illisible');
+      const tout = jouer(['mount -a', 'findmnt --verify', 'blkid /dev/sdz9', 'blkid -U c27a9e41-5b3d-4f8a-a1e6-9d0b2c4f7e13', 'mount /srv/scans', 'mount /nulle-part']);
+      expect(tout).toMatch(/mount: \/etc\/fstab: parse error at line \d+ -- ignored/);
+      expect(tout).toMatch(/1 parse error, 1 error, 0 warnings/);
+      expect(tout).toContain('/dev/sde1');
+      expect(tout).toContain("mount: /nulle-part: can't find in /etc/fstab.");
+      for (const c of ['blkid', 'findmnt', 'fstab']) expect(s.executer(`man ${c}`)).toMatch(new RegExp(`${c.toUpperCase()}\\([58]\\)`));
+    });
+
     it('l’histoire s’ouvre après « Le disque plein », et se joue depuis le poste', () => {
       const avant = prerequis('labo');
       expect(avant).toContain('disque-plein');

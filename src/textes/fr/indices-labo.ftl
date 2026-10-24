@@ -68,3 +68,21 @@ indice-agrandir-conf =
 indice-agrandir-fin =
     .piste = Le démarrage lit une copie de mdadm.conf, rangée dans l'initramfs : refais-le (man update-initramfs). Il faut aussi au moins 1,5 To libres sur /srv, et aucun disque seul dans le groupe.
     .solution = sudo update-initramfs -u
+
+## Chapitre 4 — Le redémarrage qui coince
+
+indice-secours-journal =
+    .piste = Le message du mode secours dit où regarder : le journal de ce démarrage, avec ses explications (man journalctl).
+    .solution = journalctl -xb (ou journalctl -b -p err) : « Timed out waiting for device /dev/sdc1 ».
+indice-secours-disques =
+    .piste = Qui est sdc aujourd'hui, et où est passé le disque USB ? Regarde les disques avec leurs systèmes de fichiers, leurs étiquettes et leurs UUID (man lsblk, man blkid).
+    .solution = lsblk -f (ou blkid) : sdc est dans md2 ; le disque USB est sde, sa partition sde1 porte l'étiquette SCANS et un UUID.
+indice-secours-corrige =
+    .piste = Dans /etc/fstab, la ligne des scans doit désigner le disque par ce qui ne change pas, et ne pas bloquer le démarrage s'il manque (man fstab : UUID=, nofail).
+    .solution = nano /etc/fstab : UUID=c27a9e41-5b3d-4f8a-a1e6-9d0b2c4f7e13  /srv/scans  ext4  defaults,nofail  0  2 (l'UUID de blkid), puis findmnt --verify.
+indice-secours-monte =
+    .piste = Essaie fstab sans redémarrer : mount sait monter tout ce que le fichier décrit (man mount). Et systemd doit relire le fichier (man systemctl).
+    .solution = systemctl daemon-reload, puis mount -a, puis df -h /srv/scans.
+indice-secours-fin =
+    .piste = Il reste à sortir du mode secours : reprendre le démarrage normal, comme le dit le message de la console (man systemctl).
+    .solution = systemctl default (ou exit, ou reboot)

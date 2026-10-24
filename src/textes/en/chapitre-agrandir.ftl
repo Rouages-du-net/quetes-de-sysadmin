@@ -71,7 +71,8 @@ agrandir-evenement-conf =
 agrandir-evenement-fin =
     Odile: "3.6 TB more? Bring on the contest!"
 
-    Well done! You finished chapter 3 of The Lab.
+    Well done! You finished chapter 3 of The Lab. (What comes next is
+    waiting for you: ssh labo.)
 
     WHAT HAPPENED
     The photos volume (LVM, on the md1 array) was full. You made a RAID 1
