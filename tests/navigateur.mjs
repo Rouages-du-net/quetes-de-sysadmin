@@ -347,6 +347,9 @@ for (const largeur of [1000, 375]) {
   await jeuMobile.locator('.touches button[data-touche="|"]').tap();
   verifier((await ligne.inputValue()).endsWith('|'), 'téléphone : | s’insère dans la ligne');
   verifier((await jeuMobile.locator('.coloration').textContent()).endsWith('|'), 'téléphone : le caractère de la barre se voit tout de suite');
+  // _ est dans bien des noms (id_royaume, authorized_keys) et loin sur les claviers des téléphones.
+  await jeuMobile.locator('.touches button[data-touche="_"]').tap();
+  verifier((await ligne.inputValue()).endsWith('|_'), 'téléphone : la barre a la touche _');
   // Double Tab : les possibilités, rangées en colonnes dans la largeur du téléphone.
   await ligne.fill('ls ~/.ssh/');
   await jeuMobile.locator('.touches button[data-touche="Tab"]').tap();

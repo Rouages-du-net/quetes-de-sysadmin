@@ -261,6 +261,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     ['~', '~'],
     ['/', '/'],
     ['-', '-'],
+    ['_', '_'],
     ['.', '.'],
     ['*', '*'],
     ['>', '>'],
