@@ -56,6 +56,7 @@ machine-maison-motd = Maison des associations — la passerelle. Derrière elle 
 machine-cooperative-motd = L'épicerie coopérative du quartier — le serveur de la caisse. Ici, on partage tout, sauf les mots de passe.
 machine-ruche-motd = La Ruche — le routeur du tiers-lieu. eth0 : la box ; eth1 : le commutateur.
 machine-fournil-motd = Le Fournil — le serveur de la boulangerie : le site, l'appli de commandes, sa base. Un audit est passé par là.
+machine-petrin-motd = Le Fournil — nouveau serveur (migration), six mois après l'audit. La veille de sécurité, maintenant sans Salomé.
 
 # En se reconnectant à une machine dont le chapitre est en cours.
 # { $fichier } : le fichier d'accueil du chapitre (ex. bienvenue.txt)

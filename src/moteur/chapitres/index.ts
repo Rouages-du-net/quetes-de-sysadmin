@@ -66,6 +66,11 @@ import { exposition } from './exposition';
 import { traces } from './traces';
 import { perimetre } from './perimetre';
 import { contreVisite } from './contre-visite';
+import { bulletin } from './bulletin';
+import { priorite } from './priorite';
+import { correctif } from './correctif';
+import { preuve } from './preuve';
+import { routine } from './routine';
 
 export const HISTOIRES: Histoire[] = [
   {
@@ -123,6 +128,10 @@ export const HISTOIRES: Histoire[] = [
   {
     id: 'audit',
     chapitres: [perimetre, rapport, exposition, traces, contreVisite],
+  },
+  {
+    id: 'veille',
+    chapitres: [bulletin, priorite, correctif, preuve, routine],
   },
 ];
 

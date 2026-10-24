@@ -135,6 +135,13 @@ rouages.net.
   l'histoire (`etat.scan` : machines, services, périmètre ; `etat.scans`
   garde chaque balayage) ; `src/moteur/lynis.ts` et `commandes/lynis.ts` :
   Lynis (constats lus sur l'état de la machine, `/var/log/lynis-report.dat`).
+- `chapitres/veille.ts` : ce que les chapitres de « La Veille » ont en commun
+  (le serveur `petrin`, six mois après « L'Audit » : comptes, `mondeVeille`,
+  les CVE fictives `CVE-2099-NNNNN` du bulletin) ; `bulletin.ts`,
+  `priorite.ts`, `correctif.ts`, `preuve.ts` (une tentative antérieure dans
+  le journal d'accès de nginx) et `routine.ts` (`unattended-upgrades`
+  restreint à la sécurité via `src/moteur/aptconf.ts`, un timer ou une tâche
+  cron écrits à la main, `src/moteur/minuteries.ts`).
 - `src/interface/` : interface (`jeu.ts`, fonction `monter()`, éditeur `nano`
   dans `editeur.ts`, le carnet du sysadmin dont la logique est dans
   `src/moteur/carnet.ts`, les liens vers rouages.net après un chapitre dans

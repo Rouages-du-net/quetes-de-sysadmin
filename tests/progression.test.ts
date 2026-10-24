@@ -27,9 +27,9 @@ describe('Le code court', () => {
       expect(code).toMatch(/^QDS(-[0-9A-HJKMNP-TV-Z]{1,4})+$/);
       expect(lireCode(code)).toEqual({ termines: ORDRE_DU_CODE.filter((id) => termines.includes(id)) });
     }
-    // Court au début, une vingtaine de caractères à la fin.
+    // Court au début, une petite trentaine de caractères à la fin.
     expect(codeDeProgression(['eveil']).length).toBeLessThanOrEqual(12);
-    expect(codeDeProgression(TOUS).length).toBeLessThanOrEqual(24);
+    expect(codeDeProgression(TOUS).length).toBeLessThanOrEqual(26);
   });
 
   it('se recopie sans souci : minuscules, espaces, O pour 0, I ou L pour 1', () => {

@@ -265,3 +265,8 @@ nom-balayage-audit-txt = balayage-audit.txt
 nom-lettre-de-mission-txt = lettre-de-mission.txt
 nom-notes-audit-md = notes-audit.md
 nom-rapport-cloture-md = rapport-cloture.md
+
+## La Veille (le serveur petrin, six mois après l'audit)
+nom-bulletin-securite-txt = bulletin-securite.txt
+nom-veille-md = veille.md
+nom-priorite-md = priorite.md

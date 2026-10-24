@@ -29,3 +29,5 @@ histoire-ruche = The Hive
     .resume = The network of a community space: VLANs to separate offices, guests and equipment, DHCP, NAT and a firewall between zones, a VPN, a DMZ for the website, a second site, a directory and enterprise Wi-Fi.
 histoire-audit = The Audit
     .resume = The bakery's insurer wants an audit: read the letter of engagement and take an inventory with nmap without leaving the scope, fix an auditor's findings (SSH, accounts, sudo, secrets), close what is exposed on the network, trace an unexpected login, then prove with nmap and Lynis that everything holds.
+histoire-veille = The Watch
+    .resume = Six months after the audit, the bakery has migrated to a new server: building the habit of a security watch, sorting a bulletin of CVEs, fixing what matters, proving it holds, then automating what can be automated.

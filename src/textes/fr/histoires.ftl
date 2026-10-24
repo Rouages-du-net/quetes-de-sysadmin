@@ -29,3 +29,5 @@ histoire-ruche = La Ruche
     .resume = Le réseau d'un tiers-lieu : des VLAN pour séparer bureaux, invité·es et équipements, le DHCP, le NAT et un pare-feu entre les zones, un VPN, une DMZ pour le site, un second site, un annuaire et un Wi-Fi d'entreprise.
 histoire-audit = L'Audit
     .resume = L'assureur de la boulangerie veut un audit : lire la lettre de mission et faire l'inventaire avec nmap sans sortir du périmètre, corriger les constats d'une auditrice (SSH, comptes, sudo, secrets), fermer ce qui est exposé sur le réseau, remonter la trace d'une connexion inattendue, puis prouver avec nmap et Lynis que tout tient.
+histoire-veille = La Veille
+    .resume = Six mois après l'audit, la boulangerie a migré sur un nouveau serveur : prendre l'habitude de la veille de sécurité, trier un bulletin de CVE, corriger ce qui compte, prouver que ça tient, puis automatiser ce qui peut l'être.

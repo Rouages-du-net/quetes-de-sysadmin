@@ -263,3 +263,8 @@ nom-balayage-audit-txt = audit_scan.txt
 nom-lettre-de-mission-txt = engagement_letter.txt
 nom-notes-audit-md = audit_notes.md
 nom-rapport-cloture-md = closing_report.md
+
+## The Watch (the petrin server, six months after the audit)
+nom-bulletin-securite-txt = security_bulletin.txt
+nom-veille-md = watch.md
+nom-priorite-md = priority.md

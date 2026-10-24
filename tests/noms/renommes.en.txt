@@ -576,6 +576,39 @@ contre-visite
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
+bulletin
+  /home/vous → /home/you
+  /home/vous/courriel_salome.txt → /home/you/email_salome.txt
+  /home/vous/bulletin-securite.txt → /home/you/security_bulletin.txt
+  /home/vous/veille.md → /home/you/watch.md
+  /home/vous/.ssh → /home/you/.ssh
+  /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
+
+priorite
+  /home/vous → /home/you
+  /home/vous/courriel_salome.txt → /home/you/email_salome.txt
+  /home/vous/priorite.md → /home/you/priority.md
+  /home/vous/.ssh → /home/you/.ssh
+  /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
+
+correctif
+  /home/vous → /home/you
+  /home/vous/courriel_salome.txt → /home/you/email_salome.txt
+  /home/vous/.ssh → /home/you/.ssh
+  /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
+
+preuve
+  /home/vous → /home/you
+  /home/vous/courriel_salome.txt → /home/you/email_salome.txt
+  /home/vous/.ssh → /home/you/.ssh
+  /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
+
+routine
+  /home/vous → /home/you
+  /home/vous/courriel_salome.txt → /home/you/email_salome.txt
+  /home/vous/.ssh → /home/you/.ssh
+  /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
+
 poste
   /home/vous → /home/you
   /home/vous/bienvenue.txt → /home/you/welcome.txt
