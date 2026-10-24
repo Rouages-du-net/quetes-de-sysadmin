@@ -47,6 +47,9 @@ export const MACHINES: Machine[] = [
   machine('ruche', '192.0.2.21', 'ruche'),
   machine('fournil', '192.0.2.22', 'audit'),
   machine('labo', '192.0.2.23', 'labo'),
+  // Le Fournil, six mois plus tard (histoire 16) : un nouveau serveur
+  // (migration pendant la croissance de l'activité), mêmes personnages.
+  machine('petrin', '192.0.2.24', 'veille'),
 ];
 
 /** Le nom d'une machine dans la langue (machines.ftl : royaume → kingdom) ; une machine sans traduction garde le sien. */

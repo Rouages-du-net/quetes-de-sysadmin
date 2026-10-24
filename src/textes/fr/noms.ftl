@@ -269,3 +269,8 @@ nom-rapport-cloture-md = rapport-cloture.md
 ## Le Labo
 nom-message_d_odile-txt = message_d_odile.txt
 nom-procedure_hebergeur-txt = procedure_hebergeur.txt
+
+## La Veille (le serveur petrin, six mois après l'audit)
+nom-bulletin-securite-txt = bulletin-securite.txt
+nom-veille-md = veille.md
+nom-priorite-md = priorite.md

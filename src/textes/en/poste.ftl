@@ -60,6 +60,7 @@ machine-cooperative-motd = The neighbourhood food co-op — the till's server. H
 machine-ruche-motd = The Hive — the community space's router. eth0: the ISP box; eth1: the switch.
 machine-fournil-motd = The Bakery — the bakery's server: the website, the orders app and its database. An audit has been through here.
 machine-labo-motd = The Lab — the photo club's server: the gallery and the members' archives. Two disks in RAID 1.
+machine-petrin-motd = The Bakery — new server (migration), six months after the audit. The security watch, now without Salomé.
 
 # When reconnecting to a machine whose chapter is in progress.
 # { $fichier }: the chapter's welcome file (e.g. welcome.txt)

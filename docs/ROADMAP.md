@@ -305,12 +305,12 @@ qui travaille sur les machines plutôt que sur les commutateurs).
       empreintes de clés, `authorized_keys`, une tâche `cron` laissée par
       l'intrus, le mot de passe de la base changé de bout en bout) et « La
       contre-visite » (`nmap`, `lynis`, mises à jour, rapport de clôture).
-- [ ] **La Veille** (histoire 15, plan dans `docs/SCENARIOS.md`) : six mois
-      après « L'Audit », la veille de sécurité hebdomadaire — lire un
-      bulletin de CVE fictives, trier par exposition autant que par
-      gravité, corriger sans casser, prouver, puis automatiser ce qui peut
-      l'être (`unattended-upgrades`, un timer). Aucun outil nouveau, aucune
-      exploitation.
+- [x] **La Veille** (histoire 16, machine `petrin`) : six mois après
+      « L'Audit », la veille de sécurité hebdomadaire — lire un bulletin de
+      CVE fictives, trier par exposition autant que par gravité, corriger
+      sans casser, prouver, puis automatiser ce qui peut l'être
+      (`unattended-upgrades` restreint à la sécurité, un timer ou une
+      tâche cron). Aucun outil nouveau, aucune exploitation.
 
 ## Phase 12 — Le matériel, et les histoires suivantes
 

@@ -596,7 +596,7 @@ for (const largeur of [1000, 375]) {
   await jeu.locator('.choix-vue button', { hasText: 'Parcours' }).click();
   await jeu.locator('.parcours select').selectOption('securite');
   const cartes = jeu.locator('.parcours-liste button');
-  verifier((await cartes.count()) === 16 && (await jeu.locator('.parcours-avancee').textContent()).includes('1 sur 16'), `parcours ${largeur} px : le parcours et son avancée`);
+  verifier((await cartes.count()) === 21 && (await jeu.locator('.parcours-avancee').textContent()).includes('1 sur 21'), `parcours ${largeur} px : le parcours et son avancée`);
   const prochain = jeu.locator('.parcours-liste button[data-prochain]');
   verifier((await prochain.textContent()).includes('Le pare-feu') && (await jeu.locator('.parcours-liste button[data-etat="verrouille"]').first().textContent()).includes('D\'abord'), `parcours ${largeur} px : le prochain, et ce qui attend`);
   await prochain.click();

@@ -70,6 +70,11 @@ import { fatigue } from './fatigue';
 import { disqueNeuf } from './disque-neuf';
 import { agrandir } from './agrandir';
 import { secours } from './secours';
+import { bulletin } from './bulletin';
+import { priorite } from './priorite';
+import { correctif } from './correctif';
+import { preuve } from './preuve';
+import { routine } from './routine';
 
 // Les histoires s'ouvrent peu à peu : chacune dit, dans `apres`, les chapitres
 // à finir avant d'en recevoir la clé (voir deverrouillage.ts et docs/SCENARIOS.md).
@@ -147,6 +152,11 @@ export const HISTOIRES: Histoire[] = [
     id: 'labo',
     apres: ['disque-plein'],
     chapitres: [fatigue, disqueNeuf, agrandir, secours],
+  },
+  {
+    id: 'veille',
+    apres: ['contre-visite'],
+    chapitres: [bulletin, priorite, correctif, preuve, routine],
   },
 ];
 
