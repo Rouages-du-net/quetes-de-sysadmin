@@ -10,7 +10,7 @@ indice-fermer-la-porte-fermee =
     .solution = sudo nano /etc/ssh/sshd_config: PermitRootLogin no; in /etc/ssh/sshd_config.d/50-cloud-init.conf: PasswordAuthentication no. Then sudo sshd -t and sudo systemctl reload ssh (sudo sshd -T shows the values in force).
 indice-fermer-la-porte-fin =
     .piste = The door is shut; now prove that you can still get in. A session that is already open proves nothing: you need a new one.
-    .solution = exit, then from your workstation: ssh lettres (and ssh root@lettres must be refused).
+    .solution = exit, then from your workstation: ssh letters (and ssh root@letters must be refused).
 
 ## Chapter 2 — The firewall
 
@@ -22,7 +22,7 @@ indice-pare-feu-filtre =
     .solution = sudo ufw allow OpenSSH, sudo ufw allow "Nginx Full", then sudo ufw enable (and sudo ufw status verbose to check).
 indice-pare-feu-fin =
     .piste = The firewall is filtering; prove that SSH still gets through, with a new connection from your workstation.
-    .solution = exit, then ssh lettres.
+    .solution = exit, then ssh letters.
 
 ## Chapter 3 — The sentinel
 
@@ -66,8 +66,8 @@ indice-port-deux-ports =
     .piste = Open the new door without closing the old one: sshd can listen on several ports (several Port lines, man sshd_config), and the firewall must let the new one through.
     .solution = In /etc/ssh/sshd_config: Port 22 and Port 2222; then sudo sshd -t, sudo ufw allow 2222/tcp and sudo systemctl reload ssh
 indice-port-essai =
-    .piste = Test the new door from your workstation. For ssh lettres to go there on its own, the workstation's ~/.ssh/config has a Port option (man ssh_config).
-    .solution = exit, then on the workstation: nano ~/.ssh/config, add Port 2222 under Host lettres, and ssh lettres (accept the server's key on that port: yes).
+    .piste = Test the new door from your workstation. For ssh letters to go there on its own, the workstation's ~/.ssh/config has a Port option (man ssh_config).
+    .solution = exit, then on the workstation: nano ~/.ssh/config, add Port 2222 under Host letters, and ssh letters (accept the server's key on that port: yes).
 indice-port-fin =
     .piste = The new door works: close the old one, in sshd and in ufw. Then fail2ban: its sshd jail still watches the "ssh" port (22). A port set in [DEFAULT] is not enough, it takes the jail's own section.
     .solution = Remove Port 22 from sshd_config, sudo systemctl reload ssh, sudo ufw delete allow OpenSSH; in /etc/fail2ban/jail.local, [sshd] port = 2222, then sudo systemctl reload fail2ban

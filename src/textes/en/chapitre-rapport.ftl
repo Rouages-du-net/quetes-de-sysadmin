@@ -23,13 +23,13 @@ rapport-courriel-nadia =
     the findings one by one without taking the online orders down? We have
     a crowd at the counter every morning, and the site must not go down.
 
-    For sudo, your password is: farine-2028
+    For sudo, your password is: flour-2028
     And please check each fix: Salomé will come back to verify.
 
 rapport-rapport-audit =
     AUDIT REPORT — The Bakery (fournil.example)
     Auditor: Salomé, independent
-    Scope: the fournil server (192.0.2.22)
+    Scope: the bakery server (192.0.2.22)
     Method: review of accounts and configuration, port scan from the
     internet, reading the logs
 

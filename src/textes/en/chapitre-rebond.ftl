@@ -14,14 +14,14 @@ rebond-courriel-yasmine =
     Subject:  The wiki
 
     Well done with the gateway! Next step: the associations' wiki.
-    It's the "wiki" machine (wiki.maison.internal, 10.20.0.11), on our
+    It's the "wiki" machine (wiki.community.internal, 10.20.0.11), on our
     internal network: it can't be reached from the internet, only
-    from maison. Look at /etc/hosts here: those are the names maison
+    from community. Look at /etc/hosts here: those are the names community
     knows.
 
-    Gaspard used to do it like this: ssh maison, then, once on maison,
+    Gaspard used to do it like this: ssh community, then, once on community,
     ssh wiki. But for the second ssh to work, he had copied his PRIVATE
-    key onto maison. I deleted it: if someone got into the
+    key onto community. I deleted it: if someone got into the
     gateway, they would walk away with the key to the whole network.
 
     Apparently ssh can "jump" through a machine, straight from
@@ -38,8 +38,8 @@ rebond-note-gaspard =
     The wiki runs here, in /srv/wiki. The pages are plain Markdown
     files; they are edited from the browser.
 
-    To get here: ssh maison, then ssh wiki. (I put my key in
-    ~/.ssh on maison, it's more convenient.)
+    To get here: ssh community, then ssh wiki. (I put my key in
+    ~/.ssh on community, it's more convenient.)
 
 rebond-wiki-accueil =
     # Associations' wiki
@@ -55,14 +55,14 @@ rebond-wiki-accueil =
 ## Events
 
 rebond-evenement-cle-privee =
-    WARNING: there is a private key in ~/.ssh on maison (a line
+    WARNING: there is a private key in ~/.ssh on community (a line
     "BEGIN OPENSSH PRIVATE KEY"). That's exactly what Yasmine wanted to
     avoid: the gateway is the most exposed machine on the network.
 
     Delete it (rm), and jump from your workstation instead: man ssh, option -J.
 rebond-evenement-au-wiki =
-    Here you are on the wiki! Your connection went through maison, but your private
-    key stayed on your workstation: maison only relayed a
+    Here you are on the wiki! Your connection went through community, but your private
+    key stayed on your workstation: community only relayed a
     tunnel encrypted end to end between your workstation and the wiki.
 
     (Look at your prompt: you@wiki. hostname confirms it.)
@@ -71,7 +71,7 @@ rebond-evenement-au-wiki =
     simple "ssh wiki" is enough (man ssh_config, ProxyJump).
 rebond-evenement-raccourci =
     The shortcut is in your workstation's ~/.ssh/config: ssh finds there the
-    way to the wiki, through maison. (To see what ssh makes of it:
+    way to the wiki, through community. (To see what ssh makes of it:
     ssh -G wiki.)
 rebond-evenement-fin =
     A simple "ssh wiki" from your workstation, and no private key on the

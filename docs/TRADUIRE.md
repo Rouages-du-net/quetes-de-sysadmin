@@ -23,6 +23,9 @@ langues, comme le builtin de bash ; chaque langue y ajoute son nom
 | `shell.ftl` | invite, sudo, tubes, messages d'erreur communs |
 | `manuel.ftl` | les pages `man` de chaque commande, et `--help` |
 | `commandes-*.ftl` | les messages des commandes (`ls`, `tar`, `git`…) |
+| `noms.ftl` | les noms des lieux, des objets et des comptes que l'on tape |
+| `machines.ftl` | les noms des machines du réseau (`royaume` → `kingdom`) |
+| `mots-de-passe.ftl` | les mots de passe que donnent les histoires (`farine-2028` → `flour-2028`) |
 
 ## Le format en bref
 
@@ -119,15 +122,33 @@ d'une histoire (le wiki et les archives de la Maison des associations)
 sont renommées comme sa machine principale.
 
 Deux comptes se traduisent aussi, dans `noms.ftl` : celui du joueur ou de
-la joueuse (`nom-vous = you` : invite `you@royaume:~$`, `/home/you`,
+la joueuse (`nom-vous = you` : invite `you@kingdom:~$`, `/home/you`,
 propriétaire des fichiers, `whoami`, `User you` du `~/.ssh/config` du
 poste, auteur des commits…) et l'utilisateur système de l'Effaceur
 (`nom-effaceur = eraser`). Un nom de compte Unix : minuscules, sans accent
 ni espace. Les autres comptes (`root`, `www-data`, les personnages : `malo`,
-`yasmine`…) et les noms des machines (`royaume`, `datacenter`…) restent
-tels quels. Dans les fichiers que décrivent les textes (sudoers,
-configurations, journaux), écrire le nom du compte dans la langue
+`yasmine`…) restent tels quels. Dans les fichiers que décrivent les textes
+(sudoers, configurations, journaux), écrire le nom du compte dans la langue
 (`you    ALL=(ALL:ALL) ALL`).
+
+Les **noms des machines** se traduisent dans `machines.ftl`
+(`machine-royaume = kingdom`, `machine-poste = desk`) : c'est le nom qu'on
+tape (`ssh kingdom`), celui de l'invite, de `/etc/hosts`, du `~/.ssh/config`
+et des clés du poste (`~/.ssh/id_kingdom`), de `/etc/hostname` et des
+journaux. Un nom d'hôte valide (RFC 1123) : minuscules, chiffres et tirets.
+Le moteur garde l'identifiant français (`nomMachine()` et `hoteDansLaLangue()`
+dans `src/moteur/machines.ts`) ; une sauvegarde faite dans une autre langue
+(`known_hosts`, `~/.ssh/config`) suit la langue de la partie. Dans les
+textes, écrire le nom de la langue (`ssh kingdom`, `kingdom.internal`) ;
+les sites publics (`lettres.example`) et les fichiers de configuration
+(`/etc/nginx/sites-available/lettres`) gardent le leur.
+
+Les **mots de passe** que donnent les histoires (sudo, ssh, dépôts restic,
+bases) se traduisent aussi, dans `mots-de-passe.ftl` (`mdp-farine-2028 =
+flour-2028`) : des mots de la langue, sans accent ni espace. Le code garde
+le mot de passe français (`motDePasse()` de `src/moteur/monde.ts`) ; les
+textes citent celui de la langue. `tests/machines.test.ts` vérifie qu'aucun
+texte traduit ne cite un nom de machine ou un mot de passe français.
 
 Les commandes des exemples du manuel sont dans le code (`pages.ts`). Quand
 l'une d'elles contient des mots (`grep "mot de passe" journal.txt`), une

@@ -6,7 +6,7 @@ import { Shell } from '../src/moteur/shell';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
-import { dansLaLangue } from './noms';
+import { dansLaLangue, machinesDansLaLangue } from './noms';
 
 const chapitre = (id: string) => HISTOIRES.flatMap((h) => h.chapitres).find((c) => c.id === id)!;
 
@@ -42,7 +42,7 @@ for (const langue of LANGUES)
       s.quitterEdition();
       expect(s.lire(BLOQUES)).not.toContain('198.51.100.77');
       s.executer(`sudo nano ${BLOQUES}`);
-      s.executer('bienvenue-2026');
+      s.executer(machinesDansLaLangue(s.t, 'bienvenue-2026'));
       expect(s.edition?.root).toBe(true);
       s.enregistrerEdition(s.edition!.texte + 'deny 198.51.100.77;\n');
       expect(s.drapeaux.has('regle')).toBe(true);
@@ -53,7 +53,7 @@ for (const langue of LANGUES)
     it('Datacenter, chapitre 1 : bloquer le robot avec nano est une solution correcte', () => {
       const s = new Shell(chapitre('premier-jour'), langue);
       s.executer('sudo nano /etc/nginx/bloques.conf');
-      s.executer('bienvenue-2026');
+      s.executer(machinesDansLaLangue(s.t, 'bienvenue-2026'));
       s.enregistrerEdition(s.edition!.texte + 'deny 198.51.100.77;\n');
       s.quitterEdition();
       for (const l of ['sudo systemctl reload nginx', 'ps aux', 'sudo kill 4242', 'grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt', 'echo "Coupable : 198.51.100.77" >> rapport.txt'])
@@ -78,7 +78,7 @@ for (const langue of LANGUES)
       const c = new Console({ langue, termines: ['eveil', 'bourg', 'racine'] });
       c.connecter('datacenter', dc.chapitres[0]);
       for (const l of ['sudo kill 4242', 'bienvenue-2026', 'echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/bloques.conf', 'sudo systemctl reload nginx', 'ps aux', 'sudo kill 4244', 'grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt'])
-        c.executer(l);
+        c.executer(machinesDansLaLangue(c.t, l));
       c.executer('nano rapport.txt');
       c.enregistrer(c.edition!.texte + 'Coupable : 198.51.100.77\n');
       c.quitterEdition();

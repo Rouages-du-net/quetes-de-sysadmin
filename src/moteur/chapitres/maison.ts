@@ -7,6 +7,7 @@
 // Sources : https://man.openbsd.org/sshd_config, https://man.openbsd.org/ssh
 
 import { d, f, fichiersComptes, type Comptes, type Dossier, type HoteInterne, type Noeud } from '../monde';
+import { nomMachine } from '../machines';
 import type { Jeu } from '../shell';
 import type { Traduire } from '../../textes';
 import { nouveauSystemd, systemd, type DefinitionService } from '../systemd';
@@ -198,7 +199,7 @@ export const planMaison =
       t,
       {
         role: 'routeur',
-        nom: 'maison',
+        nom: nomMachine(t, 'maison'),
         adresse: '192.0.2.19',
         note: t('plan-note-passerelle'),
         hote: 'maison',

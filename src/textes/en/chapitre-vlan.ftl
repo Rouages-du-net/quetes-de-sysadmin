@@ -25,7 +25,7 @@ vlan-courriel-malik =
     The previous contractor configured the network in /etc/network/interfaces
     (man interfaces). And to see what's happening right now: man ip.
 
-    For sudo: abeille-2027
+    For sudo: bee-2027
 
 vlan-plan-commutateur =
     SWITCH PLAN — The Hive (electrician, November 2027)

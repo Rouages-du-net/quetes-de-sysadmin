@@ -4,12 +4,15 @@
 // textes attendus, eux, sont vérifiés en français (langue de référence).
 
 import { describe, expect, it } from 'vitest';
+import { ERREURS_503 } from '../src/moteur/chapitres/datacenter';
+import { nomMachine } from '../src/moteur/machines';
 import { Shell } from '../src/moteur/shell';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
-import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
-import { dansLaLangue } from './noms';
+import { LANGUES, LANGUE_DE_REFERENCE, traducteur, typographie } from '../src/textes';
+import { nettoyer } from '../src/moteur/monde';
+import { dansLaLangue, machinesDansLaLangue } from './noms';
 import { sansCouleurs } from '../src/moteur/couleurs';
 
 const chapitre = (id: string) => HISTOIRES.flatMap((h) => h.chapitres).find((c) => c.id === id)!;
@@ -205,6 +208,28 @@ for (const langue of LANGUES)
           'echo "Coupable : 198.51.100.77" >> rapport.txt',
         ]);
         expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter — fausses pistes : tout lire, grep sans compter, les adresses sans les regrouper', () => {
+        const J = '/var/log/nginx/access.log';
+        const tr = traducteur(langue);
+        // Le texte tel que le jeu l'affiche (paragraphes recollés, typographie de la langue).
+        const t = (id: string, v?: Record<string, string>) => typographie(nettoyer(tr(id, v)), langue);
+        const { s, sorties } = jouer('premier-jour', [
+          `cat ${J}`,
+          `grep " 503 " ${J}`,
+          `grep " 503 " ${J} | wc -l`,
+          `cut -d " " -f 1 ${J}`,
+          `cut -d " " -f 1 ${J} | sort | uniq -c | sort -n | tail -3`,
+        ]);
+        // Chaque piste trop longue renvoie aux notes d'Awa, sans donner la commande ; la bonne passe ensuite.
+        expect(sorties[1]).toContain(t('premier-jour-evenement-tout-lire'));
+        expect(sorties[2]).toContain(t('premier-jour-evenement-grep-seul'));
+        expect(sorties[3]).toContain(t('premier-jour-evenement-compte', { erreurs: String(ERREURS_503) }).slice(0, 12));
+        expect(sorties[4]).toContain(t('premier-jour-evenement-adresses-seules'));
+        expect(s.drapeaux.has('robot')).toBe(true);
+        // Une fois le compte fait, relire le journal ne redit rien.
+        expect(s.executer(`cat ${J}`)).not.toContain(t('premier-jour-evenement-tout-lire'));
       });
 
       it('Le Datacenter, chapitre 2 — Deuxième jour', () => {
@@ -771,7 +796,7 @@ for (const langue of LANGUES)
         t
           .replace('version: "3.8"\n\n', '')
           .replace('@localhost:', '@db:')
-          .replaceAll('atelier2027', '${POSTGRES_PASSWORD}')
+          .replaceAll(L('atelier2027'), '${POSTGRES_PASSWORD}')
           .replace('    depends_on:', '    restart: unless-stopped\n    depends_on:')
           .replace('      - POSTGRES_DB=reservations', '      - POSTGRES_DB=reservations\n    volumes:\n      - donnees:/var/lib/postgresql/data\n    restart: unless-stopped\n\nvolumes:\n  donnees:');
 
@@ -784,7 +809,7 @@ for (const langue of LANGUES)
         modifier(s, '/srv/reservations/compose.yaml', corriger);
         const config = s.executer('sudo docker compose config') ?? '';
         expect(config).toContain('The "POSTGRES_PASSWORD" variable is not set.');
-        s.executer('echo POSTGRES_PASSWORD=atelier2027 | sudo tee .env');
+        s.executer(L('echo POSTGRES_PASSWORD=atelier2027 | sudo tee .env'));
         s.executer('sudo docker compose up -d');
         if (reference) expect(s.executer('curl http://localhost:8081')).toContain('base de données connectée');
         expect(s.termine).toBe(false);
@@ -796,11 +821,11 @@ for (const langue of LANGUES)
 
       it('fausse piste : changer POSTGRES_PASSWORD après la création de la base, puis down -v', () => {
         const { s } = jouer('composition', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
-        modifier(s, '/srv/reservations/compose.yaml', (t) => corriger(t).replaceAll('${POSTGRES_PASSWORD}', 'atelier2027'));
+        modifier(s, '/srv/reservations/compose.yaml', (t) => corriger(t).replaceAll('${POSTGRES_PASSWORD}', L('atelier2027')));
         s.executer('sudo docker compose up -d');
         if (reference) expect(s.executer('curl http://localhost:8081')).toContain('base de données connectée');
         // Le mot de passe passe dans .env… mais un autre que celui de la base existante.
-        modifier(s, '/srv/reservations/compose.yaml', (t) => t.replaceAll('atelier2027', '${POSTGRES_PASSWORD}'));
+        modifier(s, '/srv/reservations/compose.yaml', (t) => t.replaceAll(L('atelier2027'), '${POSTGRES_PASSWORD}'));
         s.executer('echo POSTGRES_PASSWORD=nouveau-secret | sudo tee .env');
         s.executer('sudo chmod 600 .env');
         const echec = s.executer('sudo docker compose up -d') ?? '';
@@ -823,8 +848,8 @@ for (const langue of LANGUES)
 
       it('solution, testée depuis le poste : ufw ne suffit pas, port lié à 127.0.0.1, ménage', () => {
         const c = new Console({ langue, termines: AVANT });
-        const jouerC = (lignes: string[]) => lignes.map((l) => c.executer(l) ?? '').join('\n');
-        expect(jouerC(['nc -zv fabrique 5432'])).toContain('Connection to fabrique (192.0.2.15) 5432 port [tcp/postgresql] succeeded!');
+        const jouerC = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
+        expect(jouerC(['nc -zv fabrique 5432'])).toContain(`Connection to ${nomMachine(c.t, 'fabrique')} (192.0.2.15) 5432 port [tcp/postgresql] succeeded!`);
         const dedans = jouerC(['ssh fabrique', 'yes', 'sudo ss -tlnp', 'fablab-2027', 'sudo ufw deny 5432', 'df -h /']);
         expect(dedans).toContain('0.0.0.0:5432');
         expect(dedans).toMatch(/9\d% \//);
@@ -1656,7 +1681,7 @@ for (const langue of LANGUES)
         expect(tout).toContain('DISK OK - free space: /srv/radio 122 MB (47% inode=99%);');
         expect(tout).toContain('Normalized form: *-*-* *:00/5:00');
         s.executer('sudo true');
-        s.executer('antenne-2027');
+        s.executer(machinesDansLaLangue(s.t, 'antenne-2027'));
         ecrire(s, '/usr/local/bin/sonde', (t) => t + CONTROLES);
         ecrire(s, '/etc/systemd/system/sonde.service', () => SERVICE);
         ecrire(s, '/etc/systemd/system/sonde.timer', () => TIMER('OnCalendar=*:0/5'));

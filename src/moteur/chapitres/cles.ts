@@ -10,7 +10,7 @@
 // Sources : https://man.openbsd.org/ssh-keygen, https://man.openbsd.org/sshd_config,
 // https://manpages.debian.org/bookworm/openssh-client/ssh-copy-id.1.en.html
 
-import { chemin, f, type Chapitre } from '../monde';
+import { motDePasse, chemin, f, type Chapitre } from '../monde';
 import type { Jeu } from '../shell';
 import { autorise, CONFIG, lireConfig } from '../sshd';
 import { clePublique, MACHINES } from '../machines';
@@ -62,7 +62,7 @@ export const cles: Chapitre = {
   initialiser: chargerSshd,
   hotes: { wiki: hoteInterne('wiki', '10.20.0.11'), archives: hoteInterne('archives', '10.20.0.12') },
   creerMonde: (t) =>
-    mondeMaison({ motsDePasse: null, maison: { 'courriel_yasmine.txt': f(t('cles-courriel-yasmine', { motdepasse: MOT_DE_PASSE })) } }),
+    mondeMaison({ motsDePasse: null, maison: { 'courriel_yasmine.txt': f(t('cles-courriel-yasmine', { motdepasse: motDePasse(t, MOT_DE_PASSE) })) } }),
   evenements: [
     { id: 'erreur', condition: (j) => lireConfig(j).erreurs.length > 0, message: (j) => j.t('cles-evenement-erreur', { config: CONFIG }) },
     { id: 'enferme', condition: (j) => sansMotDePasse(j) && !clesDeVous(j).length, message: (j) => j.t('cles-evenement-enferme') },

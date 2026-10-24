@@ -28,7 +28,7 @@ depart-courriel-awa =
        know there's the nightly backup of the till: it must
        keep running! (crontab -l -u marc, as root)
 
-    For sudo, your password is: radis-2027
+    For sudo, your password is: radish-2027
 
 depart-notes-marc =
     My notes (Marc)

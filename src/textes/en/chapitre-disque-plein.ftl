@@ -19,7 +19,7 @@ disque-plein-message-de-zoe =
     service) last week, to understand some dropouts. It needs to
     get going again, and it mustn't happen again.
 
-    For sudo: antenne-2027."
+    For sudo: antenna-2027."
 disque-plein-conf-flux =
     # Radio Quartier: stream relay (the radio-flux service)
     port = 8000

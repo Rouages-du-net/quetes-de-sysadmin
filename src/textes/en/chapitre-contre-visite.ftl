@@ -33,7 +33,7 @@ contre-visite-courriel-salome =
     4. Write the closing report in closing_report.md. I read it at every save.
 
     Salomé
-    (For sudo, your password is still: farine-2028)
+    (For sudo, your password is still: flour-2028)
 
 contre-visite-modele =
     # Closing report — Le Fournil

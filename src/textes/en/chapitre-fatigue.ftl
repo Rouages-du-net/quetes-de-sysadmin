@@ -21,11 +21,11 @@ labo-procedure-hebergeur =
     3. We step in within 24 hours. The new disk is delivered blank: it is
        up to you to partition it and rebuild your RAID.
 labo-syslog =
-    Nov 11 03:12:44 labo smartd[588]: Device: /dev/sdb [SAT], 8 Currently unreadable (pending) sectors
-    Nov 11 03:42:44 labo smartd[588]: Device: /dev/sdb [SAT], 8 Offline uncorrectable sectors
-    Nov 13 03:00:12 labo smartd[588]: Device: /dev/sdb [SAT], starting scheduled Short Self-Test.
-    Nov 13 03:02:44 labo smartd[588]: Device: /dev/sdb [SAT], previous self-test completed with error (read test element)
-    Nov 13 03:12:44 labo smartd[588]: Device: /dev/sdb [SAT], 8 Currently unreadable (pending) sectors
+    Nov 11 03:12:44 lab smartd[588]: Device: /dev/sdb [SAT], 8 Currently unreadable (pending) sectors
+    Nov 11 03:42:44 lab smartd[588]: Device: /dev/sdb [SAT], 8 Offline uncorrectable sectors
+    Nov 13 03:00:12 lab smartd[588]: Device: /dev/sdb [SAT], starting scheduled Short Self-Test.
+    Nov 13 03:02:44 lab smartd[588]: Device: /dev/sdb [SAT], previous self-test completed with error (read test element)
+    Nov 13 03:12:44 lab smartd[588]: Device: /dev/sdb [SAT], 8 Currently unreadable (pending) sectors
 
 ## Files
 
@@ -45,7 +45,7 @@ fatigue-message-d-odile =
     procedure is in host_procedure.txt. Write the request in ~/ticket.txt,
     I'll send it from our customer account.
 
-    For sudo: argentique-2027."
+    For sudo: film-2027."
 
 ## Events
 
@@ -97,7 +97,7 @@ fatigue-evenement-fin =
     Odile: "Sent! The host replies they'll swap the disk tonight."
 
     Well done! You finished chapter 1 of The Lab. (What comes next is
-    waiting for you: ssh labo.)
+    waiting for you: ssh lab.)
 
     WHAT HAPPENED
     The sdb disk was wearing out: unreadable sectors, which smartd had

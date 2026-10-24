@@ -7,6 +7,7 @@
 // carte l'affiche dans son onglet « Réseau » (voir src/interface/jeu.ts).
 
 import type { Traduire } from '../textes';
+import { nomMachine } from './machines';
 
 export type Role = 'internet' | 'poste' | 'routeur' | 'serveur' | 'appareil' | 'reseau';
 
@@ -29,7 +30,7 @@ export interface ElementPlan {
 export const internet = (t: Traduire, ...enfants: ElementPlan[]): ElementPlan => ({
   role: 'internet',
   nom: t('plan-internet'),
-  enfants: [{ role: 'poste', nom: 'poste', adresse: '192.0.2.2', note: t('plan-ton-poste'), hote: 'poste' }, ...enfants],
+  enfants: [{ role: 'poste', nom: nomMachine(t, 'poste'), adresse: '192.0.2.2', note: t('plan-ton-poste'), hote: 'poste' }, ...enfants],
 });
 
 export interface Repere {

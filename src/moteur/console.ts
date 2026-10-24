@@ -8,8 +8,8 @@ import { Shell } from './shell';
 import { HISTOIRES } from './chapitres';
 import { ouverte, PREMIERE } from './deverrouillage';
 import { f, joueur, type Chapitre, type Histoire } from './monde';
-import { MACHINES, POSTE, type Machine } from './machines';
-import { config as configSsh, fichiersCle, poste } from './poste';
+import { domaineMachine, MACHINES, nomMachine, POSTE, traduireHotes, type Machine } from './machines';
+import { cleDe, config as configSsh, fichiersCle, poste } from './poste';
 import { etatPort, type EtatPort } from './ports';
 import { bannisPour, type EtatFail2ban } from './fail2ban';
 import { noterTmux } from './commandes/tmux';
@@ -85,7 +85,9 @@ export class Console {
     s.etat.cleDistante = (nom: string): string => this.chapitreDeConnexion(nom).cleHote ?? '';
     // … et la session elle-même (ssh -J, scp, ssh-copy-id, sur les machines qui gèrent leurs clés).
     s.etat.sessionDistante = (nom: string): Shell => this.sessionDe(nom);
-    if (hotesConnus) s.placer('ssh', '~/.ssh/known_hosts', f(hotesConnus, { lignes: true }));
+    // Les noms des machines suivent la langue de la partie (royaume.internal → kingdom.internal).
+    const autres = LANGUES.filter((l) => l !== this.t.langue).map((l) => traducteur(l));
+    if (hotesConnus) s.placer('ssh', '~/.ssh/known_hosts', f(traduireHotes(hotesConnus, this.t, autres), { lignes: true }));
     // Les clés créées et la config modifiée, gardées d'une visite à l'autre.
     // La sauvegarde sert à toutes les langues : une config restée celle du jeu
     // (dans n'importe quelle langue) laisse la place à celle de la partie, et
@@ -96,7 +98,7 @@ export class Console {
       if (nom === 'config' && dejaDonnees.includes(sauve.trim())) continue;
       const contenu =
         nom === 'config'
-          ? sauve.replace(/^(\s*User\s+)(\S+)(\s*)$/gim, (ligne, debut: string, compte: string, fin: string) =>
+          ? traduireHotes(sauve, this.t, autres).replace(/^(\s*User\s+)(\S+)(\s*)$/gim, (ligne, debut: string, compte: string, fin: string) =>
               comptes.includes(compte) ? `${debut}${joueur(this.t)}${fin}` : ligne,
             )
           : sauve;
@@ -112,7 +114,7 @@ export class Console {
   /** Ce qu'il faut garder de ~/.ssh du poste : ce que la joueuse ou le joueur a créé ou modifié. */
   ssh(): { fichiers: Record<string, string>; phrases?: Record<string, string> } {
     const dossier = this.poste.trouver('~/.ssh');
-    const donnees = new Set(MACHINES.filter((m) => !m.sansCle).flatMap((m) => [`id_${m.nom}`, `id_${m.nom}.pub`]));
+    const donnees = new Set(MACHINES.filter((m) => !m.sansCle).flatMap((m) => [cleDe(this.t, m), `${cleDe(this.t, m)}.pub`]));
     const fichiers: Record<string, string> = {};
     if (dossier?.type === 'dossier')
       for (const nom of Object.keys(dossier.enfants))
@@ -200,7 +202,7 @@ export class Console {
     const ancienne = this.sessions.get(nom);
     // La bannière donne le noyau qui tourne (celui de la session, s'il en a un).
     const noyau = (ancienne?.etat.noyau as { courant: string } | undefined)?.courant ?? '6.12.0-quetes';
-    const banniere = [`Linux ${machine.nom} ${noyau} #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.nom}-motd`)];
+    const banniere = [`Linux ${nomMachine(this.t, machine.nom)} ${noyau} #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.nom}-motd`)];
     // Une session créée de loin (un port testé avec nc) : la première vraie
     // connexion ouvre le chapitre, avec son texte d'accueil.
     if (!chapitre && ancienne?.etat.preparee && ancienne.chapitre === c) {
@@ -269,7 +271,7 @@ export class Console {
     const { machine } = this.distant!;
     this.distant = null;
     this.interieur = [];
-    return `logout\nConnection to ${machine.domaine} closed.`;
+    return `logout\nConnection to ${domaineMachine(this.t, machine)} closed.`;
   }
 
   // exit sur une machine interne : on revient d'un cran (ou au poste, après ssh -J).
@@ -292,7 +294,7 @@ export class Console {
     d.shell.cwd = d.shell.maison;
     this.interieur.push({ shell: d.shell, domaine: d.domaine, retour: depuisPoste && !!d.via });
     this.visitees.add(d.shell.hote);
-    morceaux.push(`Linux ${d.shell.hote} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`);
+    morceaux.push(`Linux ${d.shell.nomHote} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`);
     return morceaux.join('\n\n');
   }
 
@@ -304,7 +306,7 @@ export class Console {
     if (ssh?.type === 'dossier') for (const m of nouvelles) Object.assign(ssh.enfants, fichiersCle(this.t, m));
     // La première vague (après La Racine) explique où trouver les clés ; les suivantes les annoncent.
     const premiere = !avant.some((h) => h !== PREMIERE);
-    return this.t(premiere ? 'poste-cles-recues' : 'poste-cles-recues-suite', { cles: nouvelles.map((m) => `~/.ssh/id_${m.nom}`).join(', ') });
+    return this.t(premiere ? 'poste-cles-recues' : 'poste-cles-recues-suite', { cles: nouvelles.map((m) => `~/.ssh/${cleDe(this.t, m)}`).join(', ') });
   }
 
   /** Exécute une ligne ; renvoie le texte à afficher, ou null pour « clear ». */

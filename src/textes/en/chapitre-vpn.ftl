@@ -32,7 +32,7 @@ vpn-courriel-malik =
     configurations go in /etc/wireguard). And don't forget the zone
     firewall: the input chain is closed by default.
 
-    For sudo: abeille-2027
+    For sudo: bee-2027
 
 vpn-portable-malik =
     # The WireGuard configuration of Malik's laptop. His private key stays

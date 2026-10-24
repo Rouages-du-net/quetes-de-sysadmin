@@ -19,7 +19,7 @@ rancon-message-de-berenice =
     makes a backup every Sunday on the USB disk in the drawer,
     which he unplugs afterwards (it's plugged into the server this morning, but
     not mounted). The password for that backup is in the safe:
-      pion-cavalier-tour-27
+      pawn-knight-rook-27
 
     I'll leave it to you. For sudo: ludo-2027."
 rancon-note =
@@ -108,7 +108,7 @@ rancon-evenement-fin =
     paid. Malo was right to unplug that disk every Sunday."
 
     Well done! You've finished chapter 1 of The Game Library. (The rest awaits you:
-    ssh ludotheque.)
+    ssh games.)
 
     WHAT HAPPENED
     The accueil account's password was guessed (journalctl: three

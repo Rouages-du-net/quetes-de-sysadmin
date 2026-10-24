@@ -6,7 +6,7 @@
 
 indice-rancon-restaure =
     .piste = First stop the attack: a program is still running (ps aux), and its account's crontab restarts it. Only then the offline backup: the USB disk from the drawer (lsblk -f), mounted read-only, holds a restic repository. The NAS copy is encrypted too.
-    .solution = sudo kill 3141 ; sudo crontab -u accueil -r ; sudo mount -o ro /dev/sdb1 /mnt/usb ; sudo restic -r /mnt/usb/repo restore latest --target / (password: pion-cavalier-tour-27)
+    .solution = sudo kill 3141 ; sudo crontab -u accueil -r ; sudo mount -o ro /dev/sdb1 /mnt/usb ; sudo restic -r /mnt/usb/repo restore latest --target / (password: pawn-knight-rook-27)
 indice-rancon-fin =
     .piste = The files are back. Now close the way in (the account whose password was guessed), throw away the .locked files and the ransom notes, and put the backup offline again (step out of /mnt/usb to unmount it).
     .solution = sudo usermod -L accueil ; sudo find /srv/share -name "*.locked" -delete ; sudo find /srv/share -name READ-ME-TO-RECOVER.txt -delete ; cd ; sudo umount /mnt/usb

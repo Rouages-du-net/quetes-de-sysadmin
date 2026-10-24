@@ -27,7 +27,7 @@ porte-courriel-kofi =
     3. And above all, check that YOU can still get in!
 
     The SSH server's configuration is in /etc/ssh/sshd_config
-    (man sshd_config). For sudo, your password is: fourmis-2026
+    (man sshd_config). For sudo, your password is: ants-2026
     (yes, you still need one for sudo, even without passwords for SSH).
 
 ## Events
@@ -62,7 +62,7 @@ porte-evenement-fermee =
 
     The most important thing remains: checking that YOU can still get in.
     On a real server, you keep this session open and open a second one
-    to test. Here: exit, then ssh lettres.
+    to test. Here: exit, then ssh letters.
 porte-evenement-fin =
     You got in with your key: the door is shut to the bots, but not to you.
     Kofi: "Thanks! I'll sleep better."

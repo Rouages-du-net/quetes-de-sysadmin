@@ -14,7 +14,7 @@
 // https://docs.docker.com/engine/network/#published-ports,
 // https://docs.docker.com/engine/manage-resources/pruning/
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../monde';
+import { motDePasse, d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../monde';
 import type { Jeu, Shell } from '../shell';
 import { nouveauSystemd, systemd } from '../systemd';
 import {
@@ -260,7 +260,7 @@ export const contournement: Chapitre = {
     // La base de réservations existe déjà dans son volume (mot de passe de .env).
     e.volumes.reservations_donnees.donnees = {
       PG_VERSION: '17',
-      'pg_hba_qds.json': JSON.stringify({ utilisateur: 'fablab', motDePasse: 'atelier2027', base: 'reservations' }),
+      'pg_hba_qds.json': JSON.stringify({ utilisateur: 'fablab', motDePasse: motDePasse(j.t, 'atelier2027'), base: 'reservations' }),
     };
     monter(shell(j), lireProjet(j, PROJET), () => true);
     majDisque(j);
@@ -277,7 +277,7 @@ export const contournement: Chapitre = {
       srv: lieu({
         reservations: lieu({
           'compose.yaml': f(COMPOSE, { lignes: true, proprio: 'root' }),
-          '.env': f('POSTGRES_PASSWORD=atelier2027', { lignes: true, proprio: 'root', mode: 'rw-------' }),
+          '.env': f(`POSTGRES_PASSWORD=${motDePasse(t, 'atelier2027')}`, { lignes: true, proprio: 'root', mode: 'rw-------' }),
         }),
       }),
       // Le système et ses journaux : la place qui n'est pas à Docker.

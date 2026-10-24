@@ -29,7 +29,7 @@ colocation-courriel-kofi =
     4. all of this to survive a reboot.
 
     Rania left her notes (note_from_rania.txt). For sudo, your
-    password is still the same: fourmis-2026
+    password is still the same: ants-2026
 colocation-note-de-rania =
     RANIA'S NOTES
 

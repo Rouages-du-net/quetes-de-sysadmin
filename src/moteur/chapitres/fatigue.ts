@@ -15,6 +15,7 @@
 import { chemin, f, nom, type Chapitre } from '../monde';
 import type { Jeu } from '../shell';
 import { actifs, grappeDe, majDev } from '../stockage';
+import { nomMachine } from '../machines';
 import { avantCommandeLabo, boiteSmartd, comptesLabo, etatLabo, M, MOT_DE_PASSE, mondeLabo, noyauLabo, SERIES, st } from './labo';
 
 const TICKET = `${M}/ticket.txt`;
@@ -72,7 +73,7 @@ export const fatigue: Chapitre = {
         'message_d_odile.txt': f(t('fatigue-message-d-odile')),
         'procedure_hebergeur.txt': f(t('labo-procedure-hebergeur'), { lignes: true }),
       },
-      { mail: boiteSmartd() },
+      { mail: boiteSmartd(nomMachine(t, 'labo')) },
     ),
   avantCommande: avantCommandeLabo,
   apresCommande: (j) => majDev(j),

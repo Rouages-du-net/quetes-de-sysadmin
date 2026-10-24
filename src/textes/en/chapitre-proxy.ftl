@@ -24,7 +24,7 @@ proxy-courriel-awa =
     in /srv/caisse/app/.env (and the Express guide, "behind proxies").
     On the nginx side: the documentation of proxy_set_header.
 
-    For sudo: radis-2027
+    For sudo: radish-2027
 
 ## Events
 

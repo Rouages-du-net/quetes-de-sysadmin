@@ -25,7 +25,7 @@ droits-courriel-awa =
        password… Give them the right to restart the till, and NOTHING else
        (man sudoers, man visudo; sudo -l -U lina to check).
 
-    For sudo, your password is still: radis-2027
+    For sudo, your password is still: radish-2027
 
 droits-releve-17 =
     Till statement — Sunday 17 October (Lina)

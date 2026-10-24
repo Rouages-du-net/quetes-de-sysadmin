@@ -33,7 +33,7 @@ annexe-courriel-sami =
     and I'll copy it over here. For your router's public key:
     sudo wg show.
 
-    For sudo: abeille-2027
+    For sudo: bee-2027
 
 annexe-conf =
     # The WireGuard configuration of the Annex router (Sami will copy it).

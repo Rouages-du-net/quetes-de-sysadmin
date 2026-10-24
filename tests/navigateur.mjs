@@ -197,7 +197,7 @@ for (const largeur of [1000, 375]) {
   const jeu = page.locator('quetes-de-sysadmin');
   verifier((await page.locator('html').getAttribute('lang')) === 'en', `en ${largeur} px : la page est en anglais`);
   verifier((await jeu.locator('.sortie').textContent()).includes('Welcome to your workstation'), `en ${largeur} px : le jeu parle anglais`);
-  verifier((await jeu.locator('.invite').textContent()) === 'you@poste:~$', `en ${largeur} px : le compte du joueur s’appelle you`);
+  verifier((await jeu.locator('.invite').textContent()) === 'you@desk:~$', `en ${largeur} px : le compte du joueur s’appelle you, le poste desk`);
   const saisie = jeu.locator('form input');
   await saisie.fill('ls -y');
   await saisie.press('Enter');
@@ -218,7 +218,7 @@ for (const largeur of [1000, 375]) {
 }
 
 // Une partie commencée en français et reprise en anglais (la même sauvegarde) :
-// ssh royaume se connecte avec le compte anglais (you), pas avec « vous ».
+// ssh kingdom (royaume, en anglais) se connecte avec le compte anglais (you), pas avec « vous ».
 {
   const page = await navigateur.newPage();
   await avecCsp(page);
@@ -228,11 +228,11 @@ for (const largeur of [1000, 375]) {
   await jeuFr.locator('form input').press('Enter');
   await page.goto(`${BASE}/en/`);
   const jeu = page.locator('quetes-de-sysadmin');
-  for (const l of ['ssh royaume', 'yes']) {
+  for (const l of ['ssh kingdom', 'yes']) {
     await jeu.locator('form input').fill(l);
     await jeu.locator('form input').press('Enter');
   }
-  verifier((await jeu.locator('.invite').textContent()) === 'you@royaume:~$', 'reprise en anglais d’une partie française : ssh royaume se connecte');
+  verifier((await jeu.locator('.invite').textContent()) === 'you@kingdom:~$', 'reprise en anglais d’une partie française : ssh kingdom se connecte');
   await page.close();
 }
 

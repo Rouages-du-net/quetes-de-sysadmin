@@ -3,7 +3,7 @@
 // https://manpages.debian.org/trixie/netcat-openbsd/nc.1.en.html
 // Écart : sans -z, nc rend la main au lieu d'attendre des données.
 
-import { machineParAdresse, MACHINES, POSTE } from '../machines';
+import { domaineMachine, machineParAdresse, MACHINES, POSTE } from '../machines';
 import { etatPort, type EtatPort } from '../ports';
 import type { Commande } from './index';
 
@@ -38,7 +38,7 @@ export const NC: Record<string, Commande> = {
         const [ip, ...noms] = ligne.replace(/#.*/, '').trim().split(/\s+/);
         if (!adresse && noms.includes(hote)) adresse = ip;
       }
-      const machine = adresse ? machineParAdresse(adresse) : MACHINES.find((m) => m.nom === jeu.hote || m.domaine === hote);
+      const machine = adresse ? machineParAdresse(adresse) : MACHINES.find((m) => m.nom === jeu.hote || domaineMachine(jeu.t, m) === hote);
       if (!adresse && machine?.nom === jeu.hote) adresse = machine.adresse;
       if (!adresse) return jeu.erreur(`nc: getaddrinfo for host "${hote}" port ${ports}: Name or service not known`);
       const [debut, fin = debut] = ports.split('-').map(Number);

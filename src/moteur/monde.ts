@@ -183,6 +183,8 @@ export const f = (contenu: Fichier['contenu'], options: Omit<Fichier, 'type' | '
 // initial devient « point- », les autres points des tirets). Un nom absent
 // reste tel quel (home, etc, les noms des vrais outils).
 const cleDuNom = (francais: string) => `nom-${francais.replace(/^\./, 'point-').replace(/\./g, '-')}`;
+/** Un mot de passe donné par une histoire, dans la langue (mots-de-passe.ftl : farine-2028 → flour-2028). */
+export const motDePasse = (t: Traduire, francais: string) => (t.existe(`mdp-${francais}`) ? t(`mdp-${francais}`) : francais);
 export const nom = (t: Traduire, francais: string) => (t.existe(cleDuNom(francais)) ? t(cleDuNom(francais)) : francais);
 /** Un chemin du monde, traduit nom par nom : /Cabane/Jetee/filet → /Hut/Pier/net. */
 export const chemin = (t: Traduire, francais: string) =>

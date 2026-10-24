@@ -30,10 +30,13 @@ premier-jour-courriel-awa =
     3. Remets le site en état, puis écris-moi un petit rapport dans
        ~/rapport.txt : le nombre d'erreurs 503 et l'adresse du coupable.
 
+    Le journal fait des centaines de lignes : ne les compte pas à la main !
+    Commence par lire mes notes, les commandes qu'il te faut y sont :
+
+      cat notes_awa.txt
+
     Ton mot de passe provisoire (pour sudo) : bienvenue-2026
     Change-le vite, et ne le note nulle part !
-
-    Mes notes sont dans ~/notes_awa.txt.
 premier-jour-notes-awa =
     NOTES D'AWA — LES COMMANDES DU QUOTIDIEN
 
@@ -78,6 +81,22 @@ premier-jour-relance-calme = systemd relance le service catalogue : nouveau proc
 premier-jour-relance-robot = systemd relance aussitôt le service catalogue : nouveau processus { $pid }… et le robot recommence. Il est déjà à 99 % !
 
 ## Événements ({ $robot } : adresse IP du robot ; { $bloques } : chemin de bloques.conf)
+
+# Coups de pouce, quand on part sur une piste trop longue (sans donner la commande).
+premier-jour-evenement-tout-lire =
+    Ça fait beaucoup de lignes ! Les compter à la main serait long, et on se
+    tromperait. Un sysadmin laisse la machine compter : Awa a noté dans
+    ~/notes_awa.txt un outil qui garde seulement les lignes qui t'intéressent,
+    et un autre qui compte les lignes.
+premier-jour-evenement-grep-seul =
+    Bien vu : grep n'a gardé que les lignes des erreurs 503. Mais ça en fait
+    encore beaucoup à compter. Et si la sortie de grep partait directement
+    dans une commande qui compte les lignes ? Regarde le tube | dans
+    ~/notes_awa.txt.
+premier-jour-evenement-adresses-seules =
+    Une adresse par ligne… impossible de voir laquelle revient le plus
+    souvent. Range-les pour que les mêmes se suivent, puis compte les
+    doublons : les notes d'Awa enchaînent quatre petites commandes pour ça.
 
 # { $erreurs } : nombre d'erreurs 503 dans le journal
 premier-jour-evenement-compte =

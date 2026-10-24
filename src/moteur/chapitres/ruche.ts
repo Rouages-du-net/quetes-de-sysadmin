@@ -6,6 +6,7 @@
 // routeur, lui, n'a pas suivi. Ce que les chapitres ont en commun.
 
 import { d, f, fichiersComptes, type Comptes, type Dossier, type Noeud } from '../monde';
+import { nomMachine } from '../machines';
 import type { Jeu } from '../shell';
 import { creer, demarrerReseau, type Appareil, type Lan } from '../lan';
 import { demarrerDnsmasq, lireDnsmasq } from '../dnsmasq';
@@ -388,7 +389,7 @@ export const planRuche =
     ];
     return internet(t, {
       role: 'routeur',
-      nom: 'ruche',
+      nom: nomMachine(t, 'ruche'),
       adresse: '192.0.2.21',
       note: liste([t('plan-note-routeur'), 'DHCP', ...(o.annuaire || o.wifi ? ['LDAP'] : []), ...(o.wifi ? ['RADIUS'] : [])]),
       hote: 'ruche',

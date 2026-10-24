@@ -6,7 +6,7 @@ import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
 import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
-import { dansLaLangue } from './noms';
+import { dansLaLangue, machinesDansLaLangue } from './noms';
 
 // L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
 const EFFACEUR = [...new Set([...HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id), ...prerequis('ruche')])];
@@ -35,8 +35,8 @@ for (const langue of LANGUES)
     const partie = (termines: string[] = []) => {
       const c = new Console({ langue, termines: [...EFFACEUR, ...termines] });
       const une = (l: string) => {
-        let sortie = c.executer(l) ?? '';
-        if (c.shell.attente) sortie += '\n' + (c.executer(MDP) ?? '');
+        let sortie = c.executer(machinesDansLaLangue(c.t, l)) ?? '';
+        if (c.shell.attente) sortie += '\n' + (c.executer(machinesDansLaLangue(c.t, MDP)) ?? '');
         return sortie;
       };
       const jouer = (lignes: string[]) => lignes.map(une).join('\n');

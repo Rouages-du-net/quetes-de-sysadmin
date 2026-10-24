@@ -14,7 +14,8 @@
 // https://restic.readthedocs.io/en/stable/050_restore.html,
 // https://man7.org/linux/man-pages/man8/mount.8.html
 
-import { chemin, d, f, fichiersComptes, nom, type Chapitre, type Comptes, type Dossier, type Droits, type Noeud } from '../monde';
+import { motDePasse, chemin, d, f, fichiersComptes, nom, type Chapitre, type Comptes, type Dossier, type Droits, type Noeud } from '../monde';
+import { nomMachine } from '../machines';
 import type { Jeu, Shell } from '../shell';
 import { journaliser, nouveauSystemd, systemd } from '../systemd';
 import type { Processus } from '../commandes/systeme';
@@ -68,7 +69,7 @@ const illisible = (graine: string) =>
 
 // La sauvegarde du dimanche 13 juin, sur le disque USB.
 function depotUsb(t: Jeu['t']): Depot {
-  const depot: Depot = { id: hex('depot-ludotheque'), motDePasse: MOT_DE_PASSE, instantanes: [], packs: [], verifie: true, aElaguer: false };
+  const depot: Depot = { id: hex('depot-ludotheque'), motDePasse: motDePasse(t, MOT_DE_PASSE), instantanes: [], packs: [], verifie: true, aElaguer: false };
   const dimanches = [Date.UTC(2027, 4, 30, 18, 0, 0), Date.UTC(2027, 5, 6, 18, 0, 0), Date.UTC(2027, 5, 13, 18, 0, 0)];
   dimanches.forEach((temps, i) => {
     const fichiers: Record<string, Version> = {};
@@ -211,7 +212,7 @@ export const rancon: Chapitre = {
         {
           chemin: NAS,
           capacite: 2000 * Go,
-          nom: `//nas.ludotheque.internal${chemin(t, '/sauvegardes')}`,
+          nom: `//nas.${nomMachine(t, 'ludotheque')}.internal${chemin(t, '/sauvegardes')}`,
           systeme: 'cifs',
           options: 'relatime,vers=3.1.1,uid=0,file_mode=0777,dir_mode=0777',
         },

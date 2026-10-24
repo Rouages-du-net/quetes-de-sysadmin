@@ -8,10 +8,10 @@ poste-bienvenue =
     you use ssh (Secure Shell), as people who administer servers do every
     day. Start with the kingdom:
 
-      ssh royaume
+      ssh kingdom
 
     The first time, ssh will ask whether you trust this machine: answer
-    yes. Once you are connected, the prompt changes (you@royaume). To
+    yes. Once you are connected, the prompt changes (you@kingdom). To
     come back here:
 
       exit
@@ -23,8 +23,8 @@ poste-bienvenue =
       ls -a ~/.ssh
 # Comment at the top of ~/.ssh/config (each line becomes a "#" comment)
 poste-config-commentaire =
-    The machines you know. "ssh royaume" connects to royaume.internal
-    as the user you with the key ~/.ssh/id_royaume.
+    The machines you know. "ssh kingdom" connects to kingdom.internal
+    as the user you with the key ~/.ssh/id_kingdom.
     Manual: man ssh
 # Comment at the top of the workstation's /etc/hosts (each line becomes a "#" comment)
 poste-hosts-commentaire =
@@ -33,7 +33,7 @@ poste-hosts-commentaire =
     names ending in .example, for examples (RFC 6761). The addresses 192.0.2.x,
     198.51.100.x and 203.0.113.x are reserved for documentation (RFC 5737).
     None of these names or addresses leads to anyone real.
-poste-exit = (You are on your own workstation: exit would close your terminal. To connect to a machine: ssh name, for example ssh royaume.)
+poste-exit = (You are on your own workstation: exit would close your terminal. To connect to a machine: ssh name, for example ssh kingdom.)
 # { $cles }: the list of new keys, separated by commas
 poste-cles-recues =
     🔑 The kingdom thanks you: new SSH keys are waiting for you on your

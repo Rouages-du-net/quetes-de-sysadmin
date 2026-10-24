@@ -16,7 +16,7 @@ contournement-message-de-rania =
     SSH, 8080 and 8081!
 
     Test it yourself from your workstation (exit to go back to it):
-      nc -zv fabrique 5432
+      nc -zv workshop 5432
 
     A database open on the internet is an open door for every bot that
     tries passwords…"
@@ -46,14 +46,14 @@ contournement-evenement-ss =
 contournement-evenement-ufw-inutile =
     A ufw rule for 5432 changes nothing: packets to a port published by
     Docker are redirected to the container before they reach ufw's rules.
-    Test from your workstation: nc -zv fabrique 5432. The solution is in
+    Test from your workstation: nc -zv workshop 5432. The solution is in
     compose.yaml: don't publish this port, or publish it only on
     127.0.0.1.
 contournement-evenement-ferme =
     Port 5432 no longer answers from outside, and the booking app still
     works: it reaches the database through the project network, without a
     published port. For pgAdmin, Yasmine will go through an SSH tunnel:
-    ssh -L 5432:127.0.0.1:5432 fabrique (with the port published on
+    ssh -L 5432:127.0.0.1:5432 workshop (with the port published on
     127.0.0.1 only), or docker compose exec db psql.
 # { $volumes }: the deleted volumes
 contournement-evenement-volume-perdu =
@@ -74,7 +74,7 @@ contournement-evenement-fin =
     done!"
 
     Well done! You have finished chapter 3 of The Workshop. (What comes
-    next: ssh fabrique, for the fablab's photo gallery.)
+    next: ssh workshop, for the fablab's photo gallery.)
 
     WHAT HAPPENED
     "ports: - "5432:5432"" publishes the port on every address of the

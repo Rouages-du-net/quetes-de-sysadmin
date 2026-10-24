@@ -26,7 +26,7 @@ dhcp-courriel-malik =
     The journal (journalctl -u dnsmasq) and the lease file
     (/var/lib/misc/dnsmasq.leases) tell who got what.
 
-    For sudo: abeille-2027
+    For sudo: bee-2027
 
 ## Events
 

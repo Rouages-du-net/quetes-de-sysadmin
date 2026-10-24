@@ -30,10 +30,13 @@ premier-jour-courriel-awa =
     3. Get the site working again, then write me a short report in
        ~/rapport.txt: the number of 503 errors and the culprit's address.
 
-    Your temporary password (for sudo): bienvenue-2026
-    Change it soon, and don't write it down anywhere!
+    The log has hundreds of lines: don't count them by hand! Start by
+    reading my notes, the commands you need are in there:
 
-    My notes are in ~/notes_awa.txt.
+      cat notes_awa.txt
+
+    Your temporary password (for sudo): welcome-2026
+    Change it soon, and don't write it down anywhere!
 premier-jour-notes-awa =
     AWA'S NOTES — EVERYDAY COMMANDS
 
@@ -78,6 +81,21 @@ premier-jour-relance-calme = systemd restarts the catalogue service: new process
 premier-jour-relance-robot = systemd immediately restarts the catalogue service: new process { $pid }… and the robot starts again. It's already at 99%!
 
 ## Events ({ $robot }: the robot's IP address; { $bloques }: path of bloques.conf)
+
+# Nudges, when the player heads down a path that is too long (without giving the command).
+premier-jour-evenement-tout-lire =
+    That's a lot of lines! Counting them by hand would take ages, and you
+    would make mistakes. A sysadmin lets the machine count: in
+    ~/notes_awa.txt, Awa noted a tool that keeps only the lines you care
+    about, and another one that counts lines.
+premier-jour-evenement-grep-seul =
+    Well spotted: grep kept only the lines with 503 errors. But that is still
+    a lot to count. What if grep's output went straight into a command that
+    counts lines? Look at the pipe | in ~/notes_awa.txt.
+premier-jour-evenement-adresses-seules =
+    One address per line… impossible to see which one comes up most often.
+    Sort them so that identical ones follow each other, then count the
+    duplicates: Awa's notes chain four small commands for that.
 
 # { $erreurs }: number of 503 errors in the log
 premier-jour-evenement-compte =

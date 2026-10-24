@@ -3,7 +3,7 @@
 ### code. Each language gives its own: no accents, no spaces, easy to type
 ### and to complete with Tab.
 
-## Accounts: the player's (prompt you@royaume, /home/you, owner of the
+## Accounts: the player's (prompt you@kingdom, /home/you, owner of the
 ## files) and the Eraser's system user. A Unix account name: lowercase, no
 ## accents, no spaces.
 nom-vous = you
@@ -96,8 +96,6 @@ nom-journal-txt = journal.txt
 nom-effaceur-conf = eraser.conf
 nom-effaceur-conf-corrige = eraser.conf.fixed
 nom-effaceur-log = eraser.log
-# The password written down in the journal (sudo asks for it).
-nom-tournesol = sunflower
 nom-cible = target
 nom-Royaume = Kingdom
 nom-Corbeille = Bin

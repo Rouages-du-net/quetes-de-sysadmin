@@ -20,7 +20,7 @@
 
 import { d, f, fichiersComptes, comptesParDefaut, type Chapitre } from '../monde';
 import type { Jeu, Shell } from '../shell';
-import { POSTE } from '../machines';
+import { nomMachine, POSTE } from '../machines';
 import { journaliser, nouveauSystemd, systemd } from '../systemd';
 import { lireConfig as lireSshd, portsSshd } from '../sshd';
 import { appliquer, bloquePort, lireConfig as lireFail2ban, type EtatFail2ban } from '../fail2ban';
@@ -119,7 +119,7 @@ const pareFeuAJour = (j: Jeu) => pf(j).actif && ouvert(j, NOUVEAU) && !ouvert(j,
 const sentinelle = (j: Jeu) => !!f2b(j).charge?.enabled && bloquePort(f2b(j).charge, NOUVEAU);
 const posteAJour = (j: Jeu) => {
   const p = poste(j);
-  return !!p && configuration(p, 'lettres').port?.[0] === String(NOUVEAU);
+  return !!p && configuration(p, nomMachine(j.t, 'lettres')).port?.[0] === String(NOUVEAU);
 };
 
 export const port: Chapitre = {
