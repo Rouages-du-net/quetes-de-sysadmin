@@ -4,14 +4,14 @@
 //   <quetes-de-sysadmin></quetes-de-sysadmin>
 //
 // Attributs facultatifs : histoire="datacenter" (histoire ouverte au départ),
-// cle="…" (clé de sauvegarde), theme="clair" | "sombre", langue="fr".
+// cle="…" (clé de sauvegarde), theme="clair" | "sombre", langue="fr" (sans
+// cet attribut : la langue de la page, lang, sinon l’anglais).
 // Le jeu vit dans une racine fantôme (Shadow DOM) : ses styles ne débordent
 // pas sur la page, et ceux de la page ne le cassent pas. Les couleurs se
 // règlent de l'extérieur avec les variables --qds-* (voir styles.css).
 
 import { monter } from './interface/jeu';
 import styles from './interface/styles.css?inline';
-import type { Langue } from './textes';
 
 export class QuetesDeSysadmin extends HTMLElement {
   connectedCallback() {
@@ -23,7 +23,8 @@ export class QuetesDeSysadmin extends HTMLElement {
     monter(racine, {
       histoire: this.getAttribute('histoire') ?? undefined,
       cle: this.getAttribute('cle') ?? undefined,
-      langue: (this.getAttribute('langue') as Langue | null) ?? undefined,
+      // L'attribut langue, sinon la langue de la page (lang), sinon l'anglais.
+      langue: this.getAttribute('langue') ?? this.closest('[lang]')?.getAttribute('lang') ?? undefined,
     });
   }
 }

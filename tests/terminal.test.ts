@@ -1,12 +1,14 @@
 // Le terminal : ce qui dépend de l'écran et de la langue. ls range ses
 // colonnes dans la largeur du terminal ($COLUMNS, mesurée par l'interface),
-// le double Tab montre les possibilités (comme bash), et la commande qui
-// liste les autres porte le nom de la langue (aide, help).
+// le double Tab montre les possibilités (comme bash), la commande qui
+// liste les autres porte le nom de la langue (aide, help), et l'anglais est
+// la langue par défaut et de repli.
 import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/moteur/shell';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { enColonnes } from '../src/moteur/commandes/fichiers';
+import { langueDuJeu, traducteur } from '../src/textes';
 
 const chapitre = (id: string) => HISTOIRES.flatMap((h) => h.chapitres).find((c) => c.id === id)!;
 
@@ -41,15 +43,29 @@ describe('Le terminal', () => {
     expect(c.suggestions('ss').length).toBeGreaterThan(0);
   });
 
-  it('la commande d’aide porte le nom de la langue, et l’autre nom marche aussi', () => {
+  it('la commande d’aide porte le nom de la langue, et help marche partout', () => {
     const fr = new Shell(chapitre('eveil'), 'fr');
     const en = new Shell(chapitre('eveil'), 'en');
     expect(fr.connues()).toContain('aide');
     expect(en.connues()).toContain('help');
     expect(en.connues()).not.toContain('aide');
     expect(en.executer('help')).toContain('Known commands');
-    expect(en.executer('aide')).toContain('Known commands');
+    expect(fr.executer('help')).toBe(fr.executer('aide'));
+    en.executer('aide');
+    expect(en.recupererErreurs().join('')).toContain('aide');
     en.executer('lss');
     expect(en.recupererErreurs().join('')).toContain('Type "help" for the list.');
+  });
+
+  it('l’anglais est la langue par défaut et de repli', () => {
+    expect(langueDuJeu()).toBe('en');
+    expect(langueDuJeu('')).toBe('en');
+    expect(langueDuJeu('fr')).toBe('fr');
+    expect(langueDuJeu('fr-CA')).toBe('fr');
+    expect(langueDuJeu('EN-gb')).toBe('en');
+    expect(langueDuJeu('xx')).toBe('en');
+    expect(traducteur().langue).toBe('en');
+    expect(traducteur('de').langue).toBe('en');
+    expect(new Console({}).t.langue).toBe('en');
   });
 });

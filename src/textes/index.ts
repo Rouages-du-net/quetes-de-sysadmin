@@ -1,8 +1,11 @@
 // Les textes du jeu, au format Fluent (https://projectfluent.org) : un
 // dossier par langue (src/textes/fr/, src/textes/en/…), plusieurs fichiers
 // .ftl par dossier (interface, manuel, commandes, une histoire par fichier).
-// Le français est la langue de référence : un texte absent d'une traduction
-// s'affiche en français. Le code n'utilise que des identifiants :
+// Le français est la langue de référence (les textes s'écrivent d'abord en
+// français) ; l'anglais est la langue par défaut et de repli : sans langue
+// demandée, ou dans une langue que le jeu ne connaît pas, le jeu parle
+// anglais, et un texte absent d'une traduction s'affiche en anglais (puis en
+// français s'il manque aussi). Le code n'utilise que des identifiants :
 //
 //   t('eveil-message')                       un message
 //   t('histoire-effaceur.resume')            un attribut
@@ -17,12 +20,13 @@ import { FluentBundle, FluentResource, type FluentVariable } from '@fluent/bundl
 const SOURCES = import.meta.glob('./*/*.ftl', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
 export const LANGUE_DE_REFERENCE = 'fr';
+export const LANGUE_PAR_DEFAUT = 'en';
 export const LANGUES = [...new Set(Object.keys(SOURCES).map((f) => f.split('/')[1]))].sort();
 export type Langue = string;
 export type Variables = Record<string, FluentVariable>;
 export type Traduire = ((id: string, variables?: Variables) => string) & {
   langue: Langue;
-  /** Vrai si le texte existe (dans la langue ou en français). */
+  /** Vrai si le texte existe (dans la langue ou dans une langue de repli). */
   existe: (id: string) => boolean;
 };
 
@@ -52,9 +56,17 @@ const TYPOGRAPHIE: Record<Langue, (texte: string) => string> = {
 };
 export const typographie = (texte: string, langue: Langue) => TYPOGRAPHIE[langue]?.(texte) ?? texte;
 
-export function traducteur(langue: Langue = LANGUE_DE_REFERENCE): Traduire {
-  const choisie = LANGUES.includes(langue) ? langue : LANGUE_DE_REFERENCE;
-  const ordre = [...new Set([choisie, LANGUE_DE_REFERENCE])].map(paquet);
+// La langue demandée (« fr », « en-GB »…) si le jeu la connaît, sinon l'anglais.
+// Les codes BCP 47 ne tiennent pas compte de la casse (zh-hans = zh-Hans).
+export function langueDuJeu(langue?: string | null): Langue {
+  const connue = (l: string) => LANGUES.find((x) => x.toLowerCase() === l.toLowerCase());
+  const l = langue?.trim() ?? '';
+  return (l && (connue(l) ?? connue(l.split('-')[0]))) || LANGUE_PAR_DEFAUT;
+}
+
+export function traducteur(langue?: Langue): Traduire {
+  const choisie = langueDuJeu(langue);
+  const ordre = [...new Set([choisie, LANGUE_PAR_DEFAUT, LANGUE_DE_REFERENCE])].map(paquet);
   const trouver = (id: string) => {
     const [nom, attribut] = id.split('.');
     for (const b of ordre) {

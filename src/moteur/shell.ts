@@ -546,7 +546,8 @@ export class Shell implements Jeu {
   }
 
   connues(): string[] {
-    // La commande qui liste les autres a le nom de la langue (aide, help) ; les deux marchent.
+    // La commande qui liste les autres a le nom de la langue (aide en français) ;
+    // help, comme le builtin de bash, marche dans toutes les langues.
     return [...this.chapitre.commandes, 'man', 'apropos', 'whatis', 'clear', 'exit', this.t('commande-aide')];
   }
 
@@ -807,7 +808,7 @@ export class Shell implements Jeu {
     if (root && !this.connues().includes('sudo')) return this.erreur(this.t('sudo-pas-encore'));
     // Vrai comportement : cd est intégré au shell, ce n'est pas un programme.
     if (root && cmd === 'cd') return this.erreur(this.t('sudo-cd'));
-    if (cmd === 'help' || cmd === 'aide') return this.t('aide-commandes', { commandes: this.connues().join(', ') });
+    if (cmd === 'help' || cmd === this.t('commande-aide')) return this.t('aide-commandes', { commandes: this.connues().join(', ') });
     if (cmd === 'man' || cmd === 'apropos' || cmd === 'whatis') return this.consulter(cmd, reste);
     // Un chemin (./deployer.sh, /srv/site/deployer.sh) : un script, s'il est exécutable.
     if (cmd.includes('/')) {

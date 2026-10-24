@@ -639,7 +639,8 @@ await page.route(`${BASE}/autre-site.html`, (r) => r.fulfill({ contentType: 'tex
   <script type="module" src="${BASE}/integration/quetes-de-sysadmin.js"></script></body></html>` }));
 await page.goto(`${BASE}/autre-site.html`);
 await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.sortie pre'));
-verifier((await page.locator('quetes-de-sysadmin .sortie').textContent()).includes('Le Paquet perdu'), 'intégration : l’histoire demandée s’ouvre');
+// Sans attribut langue, le jeu prend la langue de la page (ici lang="en").
+verifier((await page.locator('quetes-de-sysadmin .sortie').textContent()).includes('The Lost Packet'), 'intégration : l’histoire demandée s’ouvre, dans la langue de la page');
 verifier((await page.evaluate(() => getComputedStyle(document.querySelector('h1')).fontFamily)).includes('serif'), 'intégration : les styles de la page ne sont pas touchés');
 await page.addStyleTag({ content: 'quetes-de-sysadmin { --qds-accent: rgb(1, 2, 3); }' });
 verifier(

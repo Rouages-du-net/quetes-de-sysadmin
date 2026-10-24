@@ -258,7 +258,8 @@ maintenant :
 
 - **Aucun texte en dur dans le code** : histoires, dialogues, débriefs,
   messages du jeu et pages `man` vivent dans `src/textes/<langue>/*.ftl`
-  (format **Fluent**, le français est la langue de référence) ; le code
+  (format **Fluent**, le français est la langue de référence, l'anglais la
+  langue par défaut et de repli) ; le code
   n'utilise que des identifiants (voir `docs/TRADUIRE.md`).
 - **Pluriels, nombres et dates** via Fluent (sélecteurs, qui s'appuient sur
   `Intl`) ou `Intl` directement, jamais par concaténation. Un nombre
