@@ -4,12 +4,14 @@
 // textes attendus, eux, sont vérifiés en français (langue de référence).
 
 import { describe, expect, it } from 'vitest';
+import { ERREURS_503 } from '../src/moteur/chapitres/datacenter';
 import { nomMachine } from '../src/moteur/machines';
 import { Shell } from '../src/moteur/shell';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
-import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { LANGUES, LANGUE_DE_REFERENCE, traducteur, typographie } from '../src/textes';
+import { nettoyer } from '../src/moteur/monde';
 import { dansLaLangue, machinesDansLaLangue } from './noms';
 import { sansCouleurs } from '../src/moteur/couleurs';
 
@@ -206,6 +208,28 @@ for (const langue of LANGUES)
           'echo "Coupable : 198.51.100.77" >> rapport.txt',
         ]);
         expect(s.termine).toBe(true);
+      });
+
+      it('Le Datacenter — fausses pistes : tout lire, grep sans compter, les adresses sans les regrouper', () => {
+        const J = '/var/log/nginx/access.log';
+        const tr = traducteur(langue);
+        // Le texte tel que le jeu l'affiche (paragraphes recollés, typographie de la langue).
+        const t = (id: string, v?: Record<string, string>) => typographie(nettoyer(tr(id, v)), langue);
+        const { s, sorties } = jouer('premier-jour', [
+          `cat ${J}`,
+          `grep " 503 " ${J}`,
+          `grep " 503 " ${J} | wc -l`,
+          `cut -d " " -f 1 ${J}`,
+          `cut -d " " -f 1 ${J} | sort | uniq -c | sort -n | tail -3`,
+        ]);
+        // Chaque piste trop longue renvoie aux notes d'Awa, sans donner la commande ; la bonne passe ensuite.
+        expect(sorties[1]).toContain(t('premier-jour-evenement-tout-lire'));
+        expect(sorties[2]).toContain(t('premier-jour-evenement-grep-seul'));
+        expect(sorties[3]).toContain(t('premier-jour-evenement-compte', { erreurs: String(ERREURS_503) }).slice(0, 12));
+        expect(sorties[4]).toContain(t('premier-jour-evenement-adresses-seules'));
+        expect(s.drapeaux.has('robot')).toBe(true);
+        // Une fois le compte fait, relire le journal ne redit rien.
+        expect(s.executer(`cat ${J}`)).not.toContain(t('premier-jour-evenement-tout-lire'));
       });
 
       it('Le Datacenter, chapitre 2 — Deuxième jour', () => {

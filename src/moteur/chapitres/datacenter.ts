@@ -177,6 +177,32 @@ export const datacenter: Chapitre = {
       { proprio: 'root' },
     ),
   evenements: [
+    // Coups de pouce : une piste trop longue (tout lire, compter à la main) renvoie aux notes d'Awa.
+    {
+      id: 'tout-lire',
+      condition: (j) =>
+        !j.drapeaux.has('compte') &&
+        j.derniere.commandes.length === 1 &&
+        ['cat', 'less', 'more'].includes(j.derniere.commandes[0][0]) &&
+        j.derniere.commandes[0].some((a) => a.endsWith('access.log')),
+      message: (j) => j.t('premier-jour-evenement-tout-lire'),
+    },
+    {
+      id: 'grep-seul',
+      condition: (j) => {
+        const cmds = j.derniere.commandes.flat();
+        return !j.drapeaux.has('compte') && cmds.includes('grep') && !cmds.includes('wc') && j.derniere.sortie.split('\n').filter((l) => / 503 /.test(l)).length >= 20;
+      },
+      message: (j) => j.t('premier-jour-evenement-grep-seul'),
+    },
+    {
+      id: 'adresses-seules',
+      condition: (j) => {
+        const cmds = j.derniere.commandes.flat();
+        return !j.drapeaux.has('robot') && cmds.includes('cut') && !cmds.includes('uniq') && j.derniere.sortie.split('\n').length >= 20;
+      },
+      message: (j) => j.t('premier-jour-evenement-adresses-seules'),
+    },
     {
       id: 'compte',
       condition: (j) => {
