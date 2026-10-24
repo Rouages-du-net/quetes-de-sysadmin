@@ -14,6 +14,8 @@
 import type { Dossier, Noeud } from '../monde';
 import type { Shell } from '../shell';
 import type { Commande } from './index';
+import { stockage } from '../stockage';
+import { lsblkStockage } from './stockage';
 
 export interface Peripherique {
   // Le disque entier (/dev/sdb) et ses numéros (MAJ:MIN), amovible ou non.
@@ -55,6 +57,9 @@ function tailleLsblk(octets: number): string {
 }
 
 function lsblk(jeu: Shell, args: string[]): string {
+  // Une machine aux disques décrits (stockage.ts) : disques, partitions, RAID, colonnes au choix.
+  const st = stockage(jeu);
+  if (st) return lsblkStockage(jeu, st, args);
   const complet = args.includes('-f') || args.includes('--fs');
   // Le disque de la machine (vda) et ses partitions montées, puis les périphériques.
   type Ligne = {

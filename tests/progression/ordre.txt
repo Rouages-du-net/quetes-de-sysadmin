@@ -62,3 +62,5 @@ exposition
 traces
 perimetre
 contre-visite
+fatigue
+disque-neuf

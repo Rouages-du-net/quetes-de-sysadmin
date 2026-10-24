@@ -29,3 +29,5 @@ histoire-ruche = La Ruche
     .resume = Le réseau d'un tiers-lieu : des VLAN pour séparer bureaux, invité·es et équipements, le DHCP, le NAT et un pare-feu entre les zones, un VPN, une DMZ pour le site, un second site, un annuaire et un Wi-Fi d'entreprise.
 histoire-audit = L'Audit
     .resume = L'assureur de la boulangerie veut un audit : lire la lettre de mission et faire l'inventaire avec nmap sans sortir du périmètre, corriger les constats d'une auditrice (SSH, comptes, sudo, secrets), fermer ce qui est exposé sur le réseau, remonter la trace d'une connexion inattendue, puis prouver avec nmap et Lynis que tout tient.
+histoire-labo = Le Labo
+    .resume = Le serveur du club photo : un disque qui fatigue, ce que SMART dit vraiment, le RAID logiciel, remplacer un disque sans rien perdre et sans se tromper de disque.

@@ -397,7 +397,12 @@ export class Shell implements Jeu {
     // Plus d'inode libre : plus moyen de créer un fichier, même vide (« No space left on device »).
     if (m.inodes && !ancien && this.inodesUtilises(m) >= m.inodes) return true;
     const lieu = this.trouver(m.chemin);
-    const utilise = lieu ? this.taille(lieu) : 0;
+    // Sans les autres supports montés dedans (/srv n'est pas sur /), comme df.
+    const dedans = ((this.etat.montages ?? []) as { chemin: string }[]).filter(
+      (x) => x.chemin !== m.chemin && (m.chemin === '/' || x.chemin.startsWith(m.chemin + '/')),
+    );
+    const autres = dedans.reduce((t, x) => t + ((d) => (d ? this.taille(d) : 0))(this.trouver(x.chemin)), 0);
+    const utilise = (lieu ? this.taille(lieu) : 0) - autres;
     return utilise - (ancien ? this.taille(ancien) : 0) + this.taille(n) > m.capacite;
   }
 
@@ -609,6 +614,7 @@ export class Shell implements Jeu {
       this.sermonFait = true;
       return sermon;
     }
+    this.chapitre.avantCommande?.(this);
     return this.conclure(this.compterLigne(this.tube(ligne, mots)), true);
   }
 
@@ -623,6 +629,7 @@ export class Shell implements Jeu {
     if (saisie === this.chapitre.motDePasse) {
       this.attente = null;
       this.authentifie = true;
+      this.chapitre.avantCommande?.(this);
       return this.conclure(this.compterLigne(this.tube(attente.ligne, decouper(attente.ligne))), true);
     }
     attente.essais++;

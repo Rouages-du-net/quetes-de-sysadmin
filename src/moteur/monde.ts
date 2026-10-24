@@ -111,6 +111,9 @@ export interface Chapitre {
   etapes?: string[];
   // Appelé après chaque commande (ex. l'Effaceur qui avance) ; renvoie un message.
   apresCommande?: (jeu: Jeu) => string | void;
+  // Appelé juste avant de lancer chaque commande (ex. le temps qui passe : la
+  // commande voit déjà le monde tel qu'il est devenu depuis la précédente).
+  avantCommande?: (jeu: Jeu) => void;
   // Mot de passe de « vous » pour sudo (absent : sudo pas encore appris).
   motDePasse?: string;
   // Comptes et groupes de la machine (par défaut : comptesParDefaut).

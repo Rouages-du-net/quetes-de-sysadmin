@@ -72,6 +72,12 @@ rouages.net.
   supervision (`check_disk`, `check_http`, `check_procs`, hors du PATH),
   `mail` et `last` dans `commandes/supervision.ts`. Une commande peut donner
   son code de retour (`jeu.statut`).
+- `src/moteur/stockage.ts` : le stockage d'une machine (`etat.stockage` :
+  disques et SMART, partitions GPT, grappes RAID 1, `/proc/mdstat`, la
+  reconstruction qui avance avant chaque commande, `Chapitre.avantCommande`) ;
+  `smartctl`, `mdadm`, `sfdisk`, `grub-install` et `lsblk` sur ce modèle dans
+  `commandes/stockage.ts` ; `chapitres/labo.ts` : ce que les chapitres du
+  Labo ont en commun.
 - `commandes/restic.ts` : dépôts restic (instantanés, déduplication,
   politiques de `forget`, `prune`), rangés dans `etat.restic`.
 - `src/moteur/deverrouillage.ts` : les histoires s'ouvrent par vagues ; une

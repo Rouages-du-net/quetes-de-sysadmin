@@ -306,6 +306,22 @@ qui travaille sur les machines plutôt que sur les commutateurs).
       l'intrus, le mot de passe de la base changé de bout en bout) et « La
       contre-visite » (`nmap`, `lynis`, mises à jour, rapport de clôture).
 
+## Phase 12 — Le matériel, et les histoires suivantes
+
+- [x] Déverrouillage graduel des histoires (`deverrouillage.ts`, `apres`)
+- [x] **Le Labo** (histoire 15, machine `labo`) : « Le disque qui fatigue »
+      (smartd, `smartctl`, `/proc/mdstat`, `mdadm --fail/--remove`, le
+      numéro de série) et « Le disque neuf » (`sfdisk -d | sfdisk`,
+      `mdadm --add`, la reconstruction, `grub-install`)
+- [ ] Le Labo, chapitre 3 : une nouvelle grappe et LVM (`mdadm --create`,
+      `pvcreate`, `vgextend`, `lvextend -r`, `resize2fs`)
+- [ ] Le Labo, chapitre 4 : `/etc/fstab` par UUID, `nofail`, le mode secours
+- [ ] Journaux qui défilent et attaques pendant une quête (défensif)
+- [ ] Histoire : le courrier qui arrive en spam (SPF, DKIM, DMARC, Postfix)
+- [ ] Histoire : automatiser avec Ansible (inventaire, playbook,
+      idempotence, `--check`)
+- [ ] Caddy, plus tard, en court chapitre de comparaison (HTTPS automatique)
+
 ---
 
 ## Phase 10 — Traductions

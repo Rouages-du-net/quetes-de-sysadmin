@@ -48,6 +48,7 @@ import { MEMOIRE } from './memoire';
 import { HEURE } from './heure';
 import { SUPERVISION } from './supervision';
 import { TRANSFERTS } from './transferts';
+import { STOCKAGE } from './stockage';
 
 export interface Contexte {
   args: string[];
@@ -119,6 +120,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...DIFF,
   ...SCRIPTS,
   ...DISQUES,
+  ...STOCKAGE,
   ...RSNAPSHOT,
   ...POSTGRES,
   ...JOURNAUX,
