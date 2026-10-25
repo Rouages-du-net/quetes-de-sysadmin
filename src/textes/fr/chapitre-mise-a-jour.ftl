@@ -14,7 +14,7 @@ mise-a-jour-message-de-yasmine =
     note tout dans l'outilthèque, une petite appli web. Je l'ai installée
     il y a deux semaines avec Docker, en suivant le mode d'emploi :
 
-      docker run -d --name outiltheque -p 8080:8080 registre.example/outiltheque:1.4
+      docker run -d --name outiltheque -p 8080:8080 registry.example/outiltheque:1.4
 
     La version 1.5 vient de sortir (elle corrige un bug des dates de
     retour). Tu peux mettre à jour ? Surtout, ne perds pas les 37 prêts en

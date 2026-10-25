@@ -16,15 +16,15 @@ disque-plein-message-de-zoe =
     ce qui a pu le remplir, on n'a rien ajouté ces jours-ci.
 
     J'avais juste un peu bidouillé le relais du flux (le service
-    radio-flux) la semaine dernière, pour comprendre des coupures. Il
+    radio-stream) la semaine dernière, pour comprendre des coupures. Il
     faudrait que ça reparte, et que ça ne se reproduise pas.
 
     Pour sudo : antenne-2027. »
 disque-plein-conf-flux =
-    # Radio Quartier : relais du flux (le service radio-flux)
+    # Radio Quartier : relais du flux (le service radio-stream)
     port = 8000
     mount = /direct
-    logfile = /var/log/radio/flux.log
+    logfile = /var/log/radio/stream.log
     # debug : tout, à chaque paquet ; info : l'essentiel (Zoé, 12/08 : debug pour l'enquête)
     loglevel = debug
 disque-plein-flux-log =
@@ -35,8 +35,8 @@ disque-plein-flux-log =
     2027-08-15 02:46:58.114 DEBUG relay: packet 98412333 from source 127.0.0.1:41022 (4096 bytes)
     2027-08-15 02:46:58.115 ERROR record: cannot write /srv/radio/emissions/nuit-2027-08-15.ogg: No space left on device
 disque-plein-syslog =
-    Aug 15 02:40:01 radio CRON[24117]: (radio) CMD (/usr/local/bin/enregistrer nuit)
-    Aug 15 02:40:03 radio enregistrer[24118]: write failed: No space left on device
+    Aug 15 02:40:01 radio CRON[24117]: (radio) CMD (/usr/local/bin/record nuit)
+    Aug 15 02:40:03 radio record[24118]: write failed: No space left on device
 disque-plein-logrotate-conf =
     # see "man logrotate" for details
 
@@ -95,7 +95,7 @@ disque-plein-evenement-coupable =
 disque-plein-evenement-debug =
     Des lignes DEBUG, plusieurs par paquet du flux : le relais écrit tout
     ce qu'il fait, des centaines de fois par seconde. Le niveau de journal
-    est réglé dans sa configuration (/etc/radio/flux.conf) ; un programme
+    est réglé dans sa configuration (/etc/radio/stream.conf) ; un programme
     ne relit sa configuration qu'au démarrage, ou au rechargement.
 disque-plein-evenement-fantome =
     df dit toujours plein, mais du ne trouve plus le fichier : il a été
@@ -108,7 +108,7 @@ disque-plein-evenement-renomme =
     fichier, sous son nouveau nom (sudo lsof -p 1730) : un programme garde
     le fichier qu'il a ouvert, pas son nom. Pour logrotate, il faut soit
     copytruncate (copier puis vider), soit lui faire rouvrir son journal
-    (postrotate … systemctl reload radio-flux … endscript).
+    (postrotate … systemctl reload radio-stream … endscript).
 # { $pourcent } : l'occupation du disque
 disque-plein-evenement-respire =
     Le disque respire : { $pourcent } % occupés. L'enregistrement de nuit

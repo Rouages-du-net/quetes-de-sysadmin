@@ -66,7 +66,7 @@ annuaire-evenement-fin =
 
     WHAT HAPPENED
     An LDAP directory stores entries in a tree: each has a unique name
-    (its DN, uid=sami,ou=people,dc=laruche,dc=example), classes
+    (its DN, uid=sami,ou=people,dc=thehive,dc=example), classes
     (inetOrgPerson for a person, posixAccount for a Linux account) that
     require certain attributes, and values. You query it with ldapsearch
     and a filter; you change it with LDIF files (ldapadd, ldapmodify) or

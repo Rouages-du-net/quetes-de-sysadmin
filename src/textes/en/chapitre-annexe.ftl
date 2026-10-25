@@ -29,7 +29,7 @@ annexe-courriel-sami =
 
         { $cle }
 
-    I've prepared annexe-wg0.conf: fill in the Peer part (your router)
+    I've prepared annex-wg0.conf: fill in the Peer part (your router)
     and I'll copy it over here. For your router's public key:
     sudo wg show.
 
@@ -69,7 +69,7 @@ annexe-evenement-autorisees =
     network.
 annexe-evenement-route =
     Sami: "Still nothing to the NAS." On the Annex side, packets for
-    10.10.10.5 don't go into the tunnel: in annexe-wg0.conf,
+    10.10.10.5 don't go into the tunnel: in annex-wg0.conf,
     AllowedIPs says what must go in (and wg-quick turns it into routes).
 annexe-evenement-endormi =
     Sami: "The NAS works!" Malik: "And I can print at the Annex…

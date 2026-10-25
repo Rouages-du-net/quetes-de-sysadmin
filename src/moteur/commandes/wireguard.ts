@@ -12,10 +12,13 @@ import type { Commande } from './index';
 
 const PAS_ROOT = 'Unable to access interface: Operation not permitted';
 
+// Le nom public d'un routeur (en anglais dans toutes les langues, comme les sites publics).
+const NOMS_PUBLICS: Record<string, string> = { ruche: 'hive.example' };
+
 /** L'adresse publique du routeur (eth0) et ses noms, pour l'Endpoint des pairs. */
 export const publicDu = (jeu: Shell) => ({
   adressePublique: lan(jeu)?.interfaces.eth0?.adresses[0]?.split('/')[0] ?? '',
-  noms: [jeu.hote, `${jeu.hote}.example`],
+  noms: [jeu.hote, jeu.nomHote, NOMS_PUBLICS[jeu.hote] ?? `${jeu.hote}.example`],
 });
 
 // La poignée de main a-t-elle eu lieu (le routeur et le pair se sont reconnus) ?

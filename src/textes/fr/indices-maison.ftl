@@ -56,4 +56,4 @@ indice-transferts-fin =
 
 indice-hebergeur-fin =
     .piste = D'abord rapatrier /srv/wiki/site sur ton poste, par SSH (man sftp, get -r). Puis le publier avec lftp sur le nom que couvre le certificat de l'hébergeur (courriel_hebergeur.txt, sur maison), dans public_html : mirror -R envoie vers l'hébergement, --delete retire ce qui n'est plus au site (man lftp).
-    .solution = Sur ton poste : sftp wiki, get -r /srv/wiki/site, bye ; puis lftp -u maisonasso ftp.hebergeur.example (mot de passe dans courriel_yasmine.txt, sur maison), mirror -R --delete site public_html, bye.
+    .solution = Sur ton poste : sftp wiki, get -r /srv/wiki/site, bye ; puis lftp -u maisonasso ftp.hosting.example (mot de passe dans courriel_yasmine.txt, sur maison), mirror -R --delete site public_html, bye.

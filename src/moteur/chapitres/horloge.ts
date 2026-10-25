@@ -88,11 +88,11 @@ export const horloge: Chapitre = {
         executable: 'sshd',
         processus: [{ pid: 598, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
-      'radio-flux': {
+      'radio-stream': {
         description: 'Radio Quartier stream relay',
         active: true,
-        executable: 'flux',
-        processus: [{ pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/flux --config /etc/radio/flux.conf' }],
+        executable: 'stream',
+        processus: [{ pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/stream --config /etc/radio/stream.conf' }],
       },
       cron: {
         description: 'Regular background program processing daemon',
@@ -114,17 +114,17 @@ export const horloge: Chapitre = {
       { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
       { pid: 598, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 611, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' },
-      { pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/flux --config /etc/radio/flux.conf' },
+      { pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
     // La machine : en UTC, et son horloge retarde de 9 minutes.
     heure: {
       fuseau: 'Etc/UTC',
       decalage: -9 * 60_000 - 17_000,
       synchronise: false,
-      serveurs: { 'ntp.hebergeur.example': '192.0.2.123' },
+      serveurs: { 'ntp.hosting.example': '192.0.2.123' },
       // Les serveurs NTP publics sont filtrés par l'hébergeur ; l'ancien ne répond plus.
       muets: {
-        'ntp.ancien-hebergeur.example': '198.51.100.7',
+        'ntp.old-hosting.example': '198.51.100.7',
         '0.debian.pool.ntp.org': '203.0.113.10',
         '1.debian.pool.ntp.org': '203.0.113.11',
         '2.debian.pool.ntp.org': '203.0.113.12',
@@ -132,7 +132,7 @@ export const horloge: Chapitre = {
       },
     },
     crontabs: {
-      radio: '# m h  dom mon dow   command\n0 6 * * 1-5 /usr/local/bin/enregistrer matinale 180\n0 23 * * * /usr/local/bin/enregistrer nuit 240\n',
+      radio: '# m h  dom mon dow   command\n0 6 * * 1-5 /usr/local/bin/record matinale 180\n0 23 * * * /usr/local/bin/record nuit 240\n',
     },
   }),
   initialiser: (j) => majAffichage(j),
@@ -159,11 +159,11 @@ export const horloge: Chapitre = {
         zoe: lieu({}, { proprio: 'zoe', mode: 'rwx------' }),
       }),
       tmp: lieu({}, { proprio: 'root', mode: 'rwxrwxrwt' }),
-      usr: lieu({ local: lieu({ bin: lieu({ enregistrer: fichier(t('horloge-script-enregistrer'), { proprio: 'root', mode: 'rwxr-xr-x' }) }) }) }),
+      usr: lieu({ local: lieu({ bin: lieu({ record: fichier(t('horloge-script-enregistrer'), { proprio: 'root', mode: 'rwxr-xr-x' }) }) }) }),
       var: lieu({
         log: lieu({
           radio: lieu(
-            { 'enregistrer.log': f(t('horloge-journal-enregistrer'), { lignes: true, proprio: 'radio', groupe: 'adm', mode: 'rw-r-----' }) },
+            { 'record.log': f(t('horloge-journal-enregistrer'), { lignes: true, proprio: 'radio', groupe: 'adm', mode: 'rw-r-----' }) },
             { proprio: 'radio', groupe: 'adm', mode: 'rwxr-x---' },
           ),
         }),

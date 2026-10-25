@@ -17,11 +17,11 @@ proxy-courriel-awa =
 
     Karim pense qu'un robot essaie des mots de passe (la caisse verrouille une
     adresse après 5 échecs). Mais pourquoi nous ? Compare le journal de la
-    caisse (/var/log/caisse/app.log) et celui de nginx
+    caisse (/var/log/till/app.log) et celui de nginx
     (/var/log/nginx/access.log) : ils ne voient pas les mêmes adresses.
 
     L'appli est une appli Node (Express) : regarde son réglage TRUST_PROXY
-    dans /srv/caisse/app/.env (et le guide d'Express, « behind proxies »).
+    dans /srv/till/app/.env (et le guide d'Express, « behind proxies »).
     Côté nginx : la documentation de proxy_set_header.
 
     Pour sudo : radis-2027
@@ -38,7 +38,7 @@ proxy-evenement-tout-le-monde =
 proxy-evenement-usurpe =
     Lina peut entrer… mais le robot ({ $robot }) n'est jamais verrouillé : il
     écrit lui-même un faux X-Forwarded-For, différent à chaque essai, et la
-    caisse le croit. Regarde /var/log/caisse/app.log : 10.1.0.4, 10.2.7.5…
+    caisse le croit. Regarde /var/log/till/app.log : 10.1.0.4, 10.2.7.5…
 
     Une appli ne doit croire X-Forwarded-For que pour ce qu'y a ajouté SON
     proxy : TRUST_PROXY=true prend la première adresse de la liste (celle que

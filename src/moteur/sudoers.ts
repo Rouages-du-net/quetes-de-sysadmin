@@ -2,7 +2,7 @@
 // comme sudoers(5) (https://www.sudo.ws/docs/man/sudoers.man/) :
 //   - « @includedir /etc/sudoers.d » (ou l'ancienne forme #includedir) lit
 //     chaque fichier du dossier, dans l'ordre, SAUF ceux dont le nom contient
-//     un point ou finit par ~ (un « caisse.conf » est ignoré) ;
+//     un point ou finit par ~ (un « till.conf » est ignoré) ;
 //   - une règle : « qui machines = (comptes) [NOPASSWD:] commandes » ; qui :
 //     un compte, %groupe ou ALL ; une commande : ALL, ou un chemin complet
 //     (sans arguments : tous les arguments sont permis ; avec : ceux-là

@@ -27,29 +27,29 @@ indice-retour-arriere-fin =
 ## Chapter 3 — Blue and green
 
 indice-bleu-vert-fin =
-    .piste = Prepare vert (the /srv/kiosque/vert link, the kiosque-vert service), check its /health on port 3002 and read its release notes if it is unwell; only then point nginx's proxy_pass to vert. Bleu stays running.
-    .solution = ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert, sudo systemctl start kiosque-vert; add KIOSQUE_SMTP=smtp.gazette.example to /etc/kiosque/kiosque.env, sudo systemctl restart kiosque-vert, curl localhost:3002/health; then 3001 becomes 3002 in /etc/nginx/sites-available/gazette, sudo nginx -t, sudo systemctl reload nginx.
+    .piste = Prepare green (the /srv/kiosk/green link, the kiosk-green service), check its /health on port 3002 and read its release notes if it is unwell; only then point nginx's proxy_pass to green. Blue stays running.
+    .solution = ln -sfn /srv/kiosk/versions/1.5.0 /srv/kiosk/green, sudo systemctl start kiosk-green; add KIOSK_SMTP=smtp.gazette.example to /etc/kiosk/kiosk.env, sudo systemctl restart kiosk-green, curl localhost:3002/health; then 3001 becomes 3002 in /etc/nginx/sites-available/gazette, sudo nginx -t, sudo systemctl reload nginx.
 
 ## Chapter 4 — The canary
 
 indice-canari-canari-160 =
-    .piste = 1.6.0 goes on bleu (the link, then the service). To send it only one visit in ten, nginx shares the traffic between the servers of an upstream block, according to their weight (man nginx).
-    .solution = ln -sfn /srv/kiosque/versions/1.6.0 /srv/kiosque/bleu, sudo systemctl restart kiosque-bleu; in /etc/nginx/sites-available/gazette: upstream kiosque {"{"} server 127.0.0.1:3002 weight=9; server 127.0.0.1:3001 weight=1; {"}"} and proxy_pass http://kiosque/; then sudo nginx -t and sudo systemctl reload nginx.
+    .piste = 1.6.0 goes on blue (the link, then the service). To send it only one visit in ten, nginx shares the traffic between the servers of an upstream block, according to their weight (man nginx).
+    .solution = ln -sfn /srv/kiosk/versions/1.6.0 /srv/kiosk/blue, sudo systemctl restart kiosk-blue; in /etc/nginx/sites-available/gazette: upstream kiosk {"{"} server 127.0.0.1:3002 weight=9; server 127.0.0.1:3001 weight=1; {"}"} and proxy_pass http://kiosk/; then sudo nginx -t and sudo systemctl reload nginx.
 indice-canari-arrete =
     .piste = Look at the response codes in /var/log/nginx/access.log: which page answers 500? If it's the canary, cut its traffic (an upstream server can be marked down).
-    .solution = grep " 500 " /var/log/nginx/access.log (500s on /kiosque/archives), then server 127.0.0.1:3001 weight=1 down; in the upstream, sudo nginx -t, sudo systemctl reload nginx.
+    .solution = grep " 500 " /var/log/nginx/access.log (500s on /kiosk/archives), then server 127.0.0.1:3001 weight=1 down; in the upstream, sudo nginx -t, sudo systemctl reload nginx.
 indice-canari-canari-161 =
-    .piste = 1.6.1 has arrived in /srv/kiosque/versions/: start again, on bleu, with the same small canary, and look at the next batch of visits.
-    .solution = ln -sfn /srv/kiosque/versions/1.6.1 /srv/kiosque/bleu, sudo systemctl restart kiosque-bleu, remove down from the 3001 line, sudo nginx -t, sudo systemctl reload nginx.
+    .piste = 1.6.1 has arrived in /srv/kiosk/versions/: start again, on blue, with the same small canary, and look at the next batch of visits.
+    .solution = ln -sfn /srv/kiosk/versions/1.6.1 /srv/kiosk/blue, sudo systemctl restart kiosk-blue, remove down from the 3001 line, sudo nginx -t, sudo systemctl reload nginx.
 indice-canari-fin =
-    .piste = The canary is clean: all the traffic can go to bleu. Vert stays running, just in case.
+    .piste = The canary is clean: all the traffic can go to blue. Green stays running, just in case.
     .solution = In the upstream: server 127.0.0.1:3002 weight=9 down; (or proxy_pass http://127.0.0.1:3001/;), then sudo nginx -t and sudo systemctl reload nginx.
 
 ## Chapter 5 — The migration
 
 indice-migration-repare =
-    .piste = Query each instance's /health, then read the vert service's journal and the 2.0.0 notes (/srv/kiosque/versions/2.0.0/): the database was migrated, so you fix forward. A configuration variable has been renamed.
-    .solution = Add KIOSQUE_SMTP_URL=smtp://smtp.gazette.example:587 to /etc/kiosque/kiosque.env (sudo nano), then sudo systemctl restart kiosque-vert.
+    .piste = Query each instance's /health, then read the green service's journal and the 2.0.0 notes (/srv/kiosk/versions/2.0.0/): the database was migrated, so you fix forward. A configuration variable has been renamed.
+    .solution = Add KIOSK_SMTP_URL=smtp://smtp.gazette.example:587 to /etc/kiosk/kiosk.env (sudo nano), then sudo systemctl restart kiosk-green.
 indice-migration-fin =
-    .piste = Bleu runs a version that can no longer read the migrated database: to be a safety net again, it needs the same version as vert.
-    .solution = ln -sfn /srv/kiosque/versions/2.0.0 /srv/kiosque/bleu then sudo systemctl restart kiosque-bleu (curl localhost:3001/health answers ok).
+    .piste = Blue runs a version that can no longer read the migrated database: to be a safety net again, it needs the same version as green.
+    .solution = ln -sfn /srv/kiosk/versions/2.0.0 /srv/kiosk/blue then sudo systemctl restart kiosk-blue (curl localhost:3001/health answers ok).

@@ -25,7 +25,7 @@ post-mortem-notes-theo =
 
     Woken by the phone, I don't remember what time, around 2:30?
     The relay had gone down, around 2:20 I think. journalctl said an unknown
-    option in flux.conf, line 7 (bitrate_max). I commented it out,
+    option in stream.conf, line 7 (bitrate_max). I commented it out,
     restarted it, and it came back.
 
     What I don't understand: why did the relay restart in the middle of
@@ -53,10 +53,10 @@ post-mortem-modele =
     ## Actions
     (to be completed: one "-" line per action)
 post-mortem-conf-flux =
-    # Radio Quartier: stream relay (the radio-flux service)
+    # Radio Quartier: stream relay (the radio-stream service)
     port = 8000
     mount = /direct
-    logfile = /var/log/radio/flux.log
+    logfile = /var/log/radio/stream.log
     loglevel = info
     record_dir = /srv/radio/shows
     #bitrate_max = 192    # Théo, 12/09: unknown option, commented out
@@ -88,7 +88,7 @@ post-mortem-unattended-dpkg =
     Processing triggers for libc-bin (2.36-9+deb12u9) ...
 
     Restarting services...
-     systemctl restart radio-flux.service
+     systemctl restart radio-stream.service
     Log ended: 2027-09-12  02:13:04
 
 ## What the game checks in the post-mortem
@@ -116,7 +116,7 @@ post-mortem-manque-modele = There are still "(to be completed)" lines from the t
 post-mortem-manque-chronologie = The timeline must give, checked in the logs, the time of the outage, of the first alert and of the live broadcast's return (journalctl --since … --until …, the alert's mail).
 post-mortem-manque-impact = The impact: how many minutes of silence for the listeners?
 post-mortem-manque-cause = The causes: what restarted the relay in the middle of the night (apt's history, /var/log/unattended-upgrades), and the configuration error that stopped it from starting again.
-post-mortem-manque-origine = And how long had that error been waiting in flux.conf? The log keeps a record of commands run with sudo.
+post-mortem-manque-origine = And how long had that error been waiting in stream.conf? The log keeps a record of commands run with sudo.
 post-mortem-manque-actions = At least two actions, one per "-" line.
 post-mortem-manque-marche = The summary, and what went well (there are things!).
 
@@ -132,7 +132,7 @@ post-mortem-evenement-redemarrage =
     night's automatic update. What did it install, and what did it do
     next? (/var/log/apt/history.log, /var/log/unattended-upgrades)
 post-mortem-evenement-origine =
-    On 20 August, Zoé changed flux.conf… without restarting the relay,
+    On 20 August, Zoé changed stream.conf… without restarting the relay,
     which kept running with the old configuration. The error waited three
     weeks for the first restart. It's nobody's fault: nothing checked the
     configuration after a change.

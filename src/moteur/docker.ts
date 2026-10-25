@@ -97,7 +97,7 @@ export function identifiant(graine: string): string {
 }
 
 export const nomImage = (i: Image) => `${i.depot}:${i.tag}`;
-/** « registre.example/outiltheque » → « registre.example/outiltheque:latest ». */
+/** « registry.example/outiltheque » → « registry.example/outiltheque:latest ». */
 export const complet = (nom: string) => (/:[^/]+$/.test(nom) ? nom : `${nom}:latest`);
 
 /** Un conteneur par son nom ou le début de son identifiant. */

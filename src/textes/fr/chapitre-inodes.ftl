@@ -15,15 +15,15 @@ inodes-message-de-zoe =
     encore échoué : « No space left on device », comme la semaine dernière !
     Sauf que cette fois, df -h dit que le volume des données (/srv/radio)
     est presque vide. Et le relais n'arrive plus à noter les écoutes
-    (journalctl -u radio-flux).
+    (journalctl -u radio-stream).
 
     PS : les statistiques d'écoute servent au rapport mensuel pour la
     mairie. Il faut garder au moins les 30 derniers jours. »
 inodes-conf-flux =
-    # Radio Quartier : relais du flux (le service radio-flux)
+    # Radio Quartier : relais du flux (le service radio-stream)
     port = 8000
     mount = /direct
-    logfile = /var/log/radio/flux.log
+    logfile = /var/log/radio/stream.log
     loglevel = info
     # Enregistrement des émissions
     record_dir = /srv/radio/emissions

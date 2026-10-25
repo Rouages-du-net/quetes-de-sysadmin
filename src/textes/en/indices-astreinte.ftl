@@ -9,16 +9,16 @@ indice-disque-plein-plein =
     .solution = df -h (/ is at 100%)
 indice-disque-plein-coupable =
     .piste = What is taking up the space? du measures, directory by directory: start with the logs, in /var/log, then go down where it is heavy.
-    .solution = sudo du -sh /var/log/* (the password is in Zoé's message), then sudo du -sh /var/log/radio/*: flux.log weighs more than 15 GB.
+    .solution = sudo du -sh /var/log/* (the password is in Zoé's message), then sudo du -sh /var/log/radio/*: stream.log weighs more than 15 GB.
 indice-disque-plein-debug =
     .piste = Before deleting this huge log, look at what it contains: its last lines tell you why it grows so fast.
-    .solution = sudo tail /var/log/radio/flux.log (DEBUG lines for every packet)
+    .solution = sudo tail /var/log/radio/stream.log (DEBUG lines for every packet)
 indice-disque-plein-respire =
     .piste = The space must be given back, but rm is not enough: the relay holds the file open. Empty it without deleting it (man truncate), or restart the program that holds it.
-    .solution = sudo truncate -s 0 /var/log/radio/flux.log (then df -h to check; if you already deleted it: sudo systemctl restart radio-flux)
+    .solution = sudo truncate -s 0 /var/log/radio/stream.log (then df -h to check; if you already deleted it: sudo systemctl restart radio-stream)
 indice-disque-plein-fin =
-    .piste = So that it does not happen again: set the normal log level back in /etc/radio/flux.conf (the relay only rereads it when it starts), and hand the log over to logrotate, in /etc/logrotate.d, with a way to make it reopen the file (man logrotate).
-    .solution = sudo nano /etc/radio/flux.conf (loglevel = info), sudo systemctl restart radio-flux, then sudo nano /etc/logrotate.d/radio: /var/log/radio/*.log {"{"} daily, rotate 7, compress, missingok, copytruncate {"}"} (one directive per line; sudo logrotate -d /etc/logrotate.d/radio to check).
+    .piste = So that it does not happen again: set the normal log level back in /etc/radio/stream.conf (the relay only rereads it when it starts), and hand the log over to logrotate, in /etc/logrotate.d, with a way to make it reopen the file (man logrotate).
+    .solution = sudo nano /etc/radio/stream.conf (loglevel = info), sudo systemctl restart radio-stream, then sudo nano /etc/logrotate.d/radio: /var/log/radio/*.log {"{"} daily, rotate 7, compress, missingok, copytruncate {"}"} (one directive per line; sudo logrotate -d /etc/logrotate.d/radio to check).
 
 ## Chapter 2 — Memory
 
@@ -66,7 +66,7 @@ indice-horloge-retard =
     .solution = timedatectl (System clock synchronized: no, NTP service: inactive)
 indice-horloge-synchro =
     .piste = Synchronisation is systemd-timesyncd's job: it must be enabled, and given an NTP server that answers. The host's email says which one; the configuration is in /etc/systemd/timesyncd.conf (reread at start-up).
-    .solution = sudo nano /etc/systemd/timesyncd.conf (NTP=ntp.hebergeur.example), then sudo timedatectl set-ntp true (or sudo systemctl restart systemd-timesyncd if it is already running)
+    .solution = sudo nano /etc/systemd/timesyncd.conf (NTP=ntp.hosting.example), then sudo timedatectl set-ntp true (or sudo systemctl restart systemd-timesyncd if it is already running)
 indice-horloge-cron =
     .piste = The machine must live on Paris time. The time zone is set with timedatectl (man timedatectl: set-timezone, list-timezones).
     .solution = sudo timedatectl set-timezone Europe/Paris
@@ -77,8 +77,8 @@ indice-horloge-fin =
 ## Chapter 5 — The Probe
 
 indice-sonde-fin =
-    .piste = Zoé's probe (/usr/local/bin/sonde) has three TODOs: watch /srv/radio, space AND inodes (man check_disk: -W, -K), check that the live stream answers (man check_http, port 8000, /direct), and run it every 5 minutes (a systemd timer or cron). Thresholds that are too tight give alerts for nothing.
-    .solution = In sudo nano /usr/local/bin/sonde, add: $P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERTE and $P/check_http -H localhost -p 8000 -u /direct | grep -v " OK" | $ALERTE; then sudo crontab -e: */5 * * * * /usr/local/bin/sonde (or sonde.service + sonde.timer with OnCalendar=*:0/5, and sudo systemctl enable --now sonde.timer).
+    .piste = Zoé's probe (/usr/local/bin/probe) has three TODOs: watch /srv/radio, space AND inodes (man check_disk: -W, -K), check that the live stream answers (man check_http, port 8000, /direct), and run it every 5 minutes (a systemd timer or cron). Thresholds that are too tight give alerts for nothing.
+    .solution = In sudo nano /usr/local/bin/probe, add: $P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERTE and $P/check_http -H localhost -p 8000 -u /direct | grep -v " OK" | $ALERTE; then sudo crontab -e: */5 * * * * /usr/local/bin/probe (or probe.service + probe.timer with OnCalendar=*:0/5, and sudo systemctl enable --now probe.timer).
 
 ## Chapter 6 — The Post-Mortem
 
@@ -87,13 +87,13 @@ indice-post-mortem-notes =
     .solution = cat notes_theo.txt
 indice-post-mortem-redemarrage =
     .piste = The logs are accurate to the second. Read those of the night of 11 to 12 September, between 2:00 and 3:30 (man journalctl: --since, --until): what started just before the relay stopped?
-    .solution = sudo journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30" (apt-daily-upgrade, then Stopping radio-flux.service); then sudo cat /var/log/unattended-upgrades/unattended-upgrades-dpkg.log and last
+    .solution = sudo journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30" (apt-daily-upgrade, then Stopping radio-stream.service); then sudo cat /var/log/unattended-upgrades/unattended-upgrades-dpkg.log and last
 indice-post-mortem-origine =
-    .piste = The unknown option was waiting in flux.conf. Since when? The journal also keeps track of commands run with sudo: look for who opened that file, and when.
-    .solution = sudo journalctl | grep flux.conf (on 20 August, sudo nano /etc/radio/flux.conf, never restarted)
+    .piste = The unknown option was waiting in stream.conf. Since when? The journal also keeps track of commands run with sudo: look for who opened that file, and when.
+    .solution = sudo journalctl | grep stream.conf (on 20 August, sudo nano /etc/radio/stream.conf, never restarted)
 indice-post-mortem-fin =
     .piste = Complete postmortem.md (nano), keeping the template's "##" headings and leaving no "(to be completed": Summary; Timeline with the times from the logs (outage, first alert, stream back); Impact in minutes; Causes (the trigger, and since when the error had been waiting); What went well; Actions (at least two "-" lines). Blameless: no "at fault" or "to blame".
-    .solution = Timeline: 02:13 (the update restarts the relay), 02:15 (first alert), 02:58 (the relay is back); Impact: 45 minutes; Causes: unattended-upgrades (needrestart) restarted the relay, an unknown option (bitrate_max) had been waiting in flux.conf since 20 August; What went well: the probe alerted within 2 minutes; Actions: - check the configuration before every restart (ExecStartPre=) - restart the relay after every change.
+    .solution = Timeline: 02:13 (the update restarts the relay), 02:15 (first alert), 02:58 (the relay is back); Impact: 45 minutes; Causes: unattended-upgrades (needrestart) restarted the relay, an unknown option (bitrate_max) had been waiting in stream.conf since 20 August; What went well: the probe alerted within 2 minutes; Actions: - check the configuration before every restart (ExecStartPre=) - restart the relay after every change.
 
 ## Chapter 7 — The bottleneck
 

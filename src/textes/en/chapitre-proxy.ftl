@@ -17,11 +17,11 @@ proxy-courriel-awa =
 
     Karim thinks a bot is trying passwords (the till locks an address
     after 5 failures). But why us? Compare the till's log
-    (/var/log/caisse/app.log) and nginx's log
+    (/var/log/till/app.log) and nginx's log
     (/var/log/nginx/access.log): they don't see the same addresses.
 
     The app is a Node app (Express): look at its TRUST_PROXY setting
-    in /srv/caisse/app/.env (and the Express guide, "behind proxies").
+    in /srv/till/app/.env (and the Express guide, "behind proxies").
     On the nginx side: the documentation of proxy_set_header.
 
     For sudo: radish-2027
@@ -38,7 +38,7 @@ proxy-evenement-tout-le-monde =
 proxy-evenement-usurpe =
     Lina can get in… but the bot ({ $robot }) is never locked: it writes
     a fake X-Forwarded-For itself, different on each try, and the till
-    believes it. Look at /var/log/caisse/app.log: 10.1.0.4, 10.2.7.5…
+    believes it. Look at /var/log/till/app.log: 10.1.0.4, 10.2.7.5…
 
     An app should only believe X-Forwarded-For for what ITS proxy added
     to it: TRUST_PROXY=true takes the first address in the list (the one

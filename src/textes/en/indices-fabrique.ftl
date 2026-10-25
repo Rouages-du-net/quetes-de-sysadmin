@@ -6,7 +6,7 @@
 
 indice-mise-a-jour-fin =
     .piste = Where does the outiltheque keep its database? docker inspect (its "Mounts") tells you: in the container's layer, which goes with it. First put the database somewhere safe (docker cp), then create a fresh 1.5 container with a volume (-v) and a --restart policy (man docker).
-    .solution = sudo mkdir /srv/outiltheque ; sudo docker cp outiltheque:/var/lib/outiltheque/outiltheque.db /srv/outiltheque/ ; sudo docker rm -f outiltheque ; sudo docker run -d --name outiltheque --restart unless-stopped -p 8080:8080 -v /srv/outiltheque:/var/lib/outiltheque registre.example/outiltheque:1.5
+    .solution = sudo mkdir /srv/outiltheque ; sudo docker cp outiltheque:/var/lib/outiltheque/outiltheque.db /srv/outiltheque/ ; sudo docker rm -f outiltheque ; sudo docker run -d --name outiltheque --restart unless-stopped -p 8080:8080 -v /srv/outiltheque:/var/lib/outiltheque registry.example/outiltheque:1.5
 
 ## Chapter 2 — The Composition
 

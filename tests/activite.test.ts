@@ -97,7 +97,7 @@ for (const langue of LANGUES)
       expect(c.suit).toBe(true);
       expect(c.suivre(6)).toMatch(/^198\.51\.100\.77 .*"GET \/catalogue\/recherche\?q=\w+ HTTP\/1\.1" 503 197$/m);
       c.interrompre();
-      jouer(['echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/bloques.conf', 'bienvenue-2026', 'sudo systemctl reload nginx', 'tail -f /var/log/nginx/access.log']);
+      jouer(['echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf', 'bienvenue-2026', 'sudo systemctl reload nginx', 'tail -f /var/log/nginx/access.log']);
       const apres = c.suivre(10);
       expect(apres).toMatch(/^198\.51\.100\.77 .* 403 153$/m);
       expect(apres).not.toMatch(/^198\.51\.100\.77 .* 503 /m);

@@ -126,9 +126,9 @@ incendie
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
   /mnt/sauvegarde → /mnt/backup
   /mnt/sauvegarde/PRA.txt → /mnt/backup/DRP.txt
-  /mnt/sauvegarde/mediatheque-2026-10-21.tar.gz → /mnt/backup/mediatheque-2026-10-21.tar.gz
-  /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz → /mnt/backup/mediatheque-2026-10-22.tar.gz
-  /mnt/sauvegarde/mediatheque-2026-10-23.tar.gz → /mnt/backup/mediatheque-2026-10-23.tar.gz
+  /mnt/sauvegarde/medialibrary-2026-10-21.tar.gz → /mnt/backup/medialibrary-2026-10-21.tar.gz
+  /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz → /mnt/backup/medialibrary-2026-10-22.tar.gz
+  /mnt/sauvegarde/medialibrary-2026-10-23.tar.gz → /mnt/backup/medialibrary-2026-10-23.tar.gz
 
 certificat
   /home/vous → /home/you
@@ -479,9 +479,9 @@ depart
 droits
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
-  /srv/caisse/releves → /srv/caisse/statements
-  /srv/caisse/releves/2027-10-17.txt → /srv/caisse/statements/2027-10-17.txt
-  /srv/caisse/releves/2027-10-18.txt → /srv/caisse/statements/2027-10-18.txt
+  /srv/till/releves → /srv/till/statements
+  /srv/till/releves/2027-10-17.txt → /srv/till/statements/2027-10-17.txt
+  /srv/till/releves/2027-10-18.txt → /srv/till/statements/2027-10-18.txt
 
 secret
   /home/vous → /home/you
@@ -516,7 +516,7 @@ zones
 vpn
   /home/vous → /home/you
   /home/vous/courriel_malik.txt → /home/you/email_malik.txt
-  /home/vous/portable-malik.conf → /home/you/portable-malik.conf
+  /home/vous/malik-laptop.conf → /home/you/malik-laptop.conf
 
 dmz
   /home/vous → /home/you
@@ -526,20 +526,20 @@ dmz
 annexe
   /home/vous → /home/you
   /home/vous/courriel_sami.txt → /home/you/email_sami.txt
-  /home/vous/annexe-wg0.conf → /home/you/annexe-wg0.conf
-  /home/vous/portable-malik.conf → /home/you/portable-malik.conf
+  /home/vous/annex-wg0.conf → /home/you/annex-wg0.conf
+  /home/vous/malik-laptop.conf → /home/you/malik-laptop.conf
 
 annuaire
   /home/vous → /home/you
   /home/vous/courriel_malik.txt → /home/you/email_malik.txt
   /home/vous/modele-ines.ldif → /home/you/modele-ines.ldif
-  /home/vous/portable-malik.conf → /home/you/portable-malik.conf
+  /home/vous/malik-laptop.conf → /home/you/malik-laptop.conf
 
 wifi
   /home/vous → /home/you
   /home/vous/courriel_malik.txt → /home/you/email_malik.txt
   /home/vous/borne-bureaux.txt → /home/you/ap-offices.txt
-  /home/vous/portable-malik.conf → /home/you/portable-malik.conf
+  /home/vous/malik-laptop.conf → /home/you/malik-laptop.conf
 
 perimetre
   /home/vous → /home/you

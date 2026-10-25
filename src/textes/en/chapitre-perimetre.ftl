@@ -47,7 +47,7 @@ perimetre-lettre-de-mission =
 
     Authorised scope:
       - the server bakery.internal (192.0.2.22), which also carries the
-        public website fournil.example.
+        public website bakery.example.
 
     Out of scope (not to be probed, even if technically possible):
       - any other equipment, in particular that of neighbours who share the

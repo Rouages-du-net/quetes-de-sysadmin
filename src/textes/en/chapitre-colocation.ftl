@@ -19,12 +19,12 @@ colocation-courriel-kofi =
     I've already pointed the name cafe.example to our address.
 
     And Rania has finished the workshop calendar: a small program that should
-    show up under http://lettres.example/agenda/.
+    show up under http://letters.example/agenda/.
 
     So we need:
     1. http://cafe.example to show the café's site;
-    2. http://lettres.example to stay our site, of course;
-    3. http://lettres.example/agenda/ to show the calendar (and its pages,
+    2. http://letters.example to stay our site, of course;
+    3. http://letters.example/agenda/ to show the calendar (and its pages,
        like /agenda/semaine);
     4. all of this to survive a reboot.
 
@@ -148,7 +148,7 @@ colocation-evenement-agenda-sans-enable =
     The calendar answers. But it won't start with the machine: at the next
     reboot, 502 again. (man systemctl)
 colocation-evenement-fin =
-    cafe.example, lettres.example and the calendar all answer, each with its
+    cafe.example, letters.example and the calendar all answer, each with its
     own pages, from a single server. Kofi: "We're throwing a party for
     the café moving in. You're invited!"
 

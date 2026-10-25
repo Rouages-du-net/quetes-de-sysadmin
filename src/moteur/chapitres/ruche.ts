@@ -270,7 +270,7 @@ export function mondeRuche(o: {
           hostname: fichier('ruche'),
           network: d({ interfaces: fichier(o.interfaces), 'interfaces.d': d({}, undefined, racine) }, undefined, racine),
           'dnsmasq.conf': fichier('# Configuration file for dnsmasq.\n#\n# See /etc/dnsmasq.d for the local configuration.'),
-          'dnsmasq.d': d({ ruche: fichier(o.dnsmasq) }, undefined, racine),
+          'dnsmasq.d': d({ hive: fichier(o.dnsmasq) }, undefined, racine),
           'nftables.conf': f(o.nftables ?? NFTABLES_DEBIAN, { lignes: true, proprio: 'root', mode: 'rwxr-xr-x' }),
           'sysctl.conf': fichier(SYSCTL_CONF),
           ...o.etc,
@@ -339,7 +339,7 @@ export function initialiserPareFeu(j: Jeu) {
 }
 
 // Le réglage du routage, écrit dans le chapitre « Les zones ».
-export const SYSCTL_ROUTEUR = { '90-routeur.conf': f('net.ipv4.ip_forward = 1', { lignes: true, proprio: 'root' }) };
+export const SYSCTL_ROUTEUR = { '90-router.conf': f('net.ipv4.ip_forward = 1', { lignes: true, proprio: 'root' }) };
 
 // Le pare-feu à la fin du « télétravail » : WireGuard entre (UDP 51820) et va vers les bureaux.
 export const NFTABLES_TELETRAVAIL = NFTABLES_ZONES.replace(
@@ -403,7 +403,7 @@ export const planRuche =
             .map((a) => ({ role: (a.nom === 'nas' || a.nom === 'web' ? 'serveur' : 'appareil') as ElementPlan['role'], nom: a.nom, adresse: a.fixe ?? t('plan-dhcp') })),
         })),
         ...(o.teletravail
-          ? [{ role: 'poste' as const, nom: 'portable-malik', adresse: '198.51.100.23', note: t('plan-note-teletravail'), tunnel: true }]
+          ? [{ role: 'poste' as const, nom: 'malik-laptop', adresse: '198.51.100.23', note: t('plan-note-teletravail'), tunnel: true }]
           : []),
         ...(o.annexe
           ? [

@@ -27,7 +27,7 @@ rapport-courriel-nadia =
     And please check each fix: Salomé will come back to verify.
 
 rapport-rapport-audit =
-    AUDIT REPORT — The Bakery (fournil.example)
+    AUDIT REPORT — The Bakery (bakery.example)
     Auditor: Salomé, independent
     Scope: the bakery server (192.0.2.22)
     Method: review of accounts and configuration, port scan from the

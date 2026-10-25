@@ -33,7 +33,7 @@ depart-courriel-awa =
 depart-notes-marc =
     My notes (Marc)
 
-    - The till runs as a service (caisse.service), under the caisse account.
+    - The till runs as a service (till.service), under the till account.
     - Releases: through the deploy account (keys in
       /home/deploy/.ssh/authorized_keys: the CI, Lina and me).
     - Backup: my script ~/bin/till-backup.sh, every night at

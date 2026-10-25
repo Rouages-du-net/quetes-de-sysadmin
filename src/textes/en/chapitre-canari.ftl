@@ -11,7 +11,7 @@ chapitre-canari = The canary
 canari-message-de-samia =
     A message from Samia:
 
-    "Kiosque 1.6.0 is out (/srv/kiosque/versions/1.6.0), with a new
+    "Kiosk 1.6.0 is out (/srv/kiosk/versions/1.6.0), with a new
     search in the archives. Green still serves 1.5.0; the new version
     will go on blue, as agreed.
 
@@ -24,12 +24,12 @@ canari-message-de-samia =
 
     For sudo: gazette-2027."
 canari-notes-160 =
-    Kiosque 1.6.0 — release notes
+    Kiosk 1.6.0 — release notes
 
     New: search in previous newsletters (/archives).
     Nothing to change in the configuration.
 canari-notes-161 =
-    Kiosque 1.6.1 — release notes
+    Kiosk 1.6.1 — release notes
 
     Fix: the archives page (/archives) answered 500 when the search was
     empty. Thanks to the Gazette team for the report!
@@ -38,7 +38,7 @@ canari-notes-161 =
 
 # { $visites }: the number of simulated visits
 canari-une-heure =
-    An hour goes by: { $visites } visits to the Kiosque, through nginx.
+    An hour goes by: { $visites } visits to the Kiosk, through nginx.
     Everything is written in /var/log/nginx/access.log.
 # { $erreurs }: the number of visits that got an error
 canari-evenement-tout-d-un-coup =
@@ -56,7 +56,7 @@ canari-evenement-trop-gros =
     problem, a lot of people will see it. A canary is a small share
     (one visit in ten, or less): weight=1 against weight=9.
 canari-evenement-trouve =
-    500s on /kiosque/archives! They must come from blue: green has been
+    500s on /kiosk/archives! They must come from blue: green has been
     serving the same page for weeks. Try it directly on each instance
     (curl http://localhost:3001/archives, then 3002) to be sure.
     /health didn't check this page. Stop the canary: no more visits
@@ -64,14 +64,14 @@ canari-evenement-trouve =
 canari-evenement-arrete =
     Canary stopped: only one visit in ten saw the error, for one hour,
     instead of everyone. Samia passes the problem on to the
-    developers… who immediately release 1.6.1 (/srv/kiosque/versions/).
+    developers… who immediately release 1.6.1 (/srv/kiosk/versions/).
     Start again: blue, /health, canary, logs.
 canari-evenement-canari-161 =
     One hour of canary with 1.6.1: no errors in this batch of visits.
     The new version can take all the traffic. Keep green running, just
     in case.
 canari-evenement-fin =
-    The whole Kiosque goes through 1.6.1, without errors, and green waits
+    The whole Kiosk goes through 1.6.1, without errors, and green waits
     in reserve. Samia: "The first try only bothered one visit in ten,
     for one hour. Without a canary, we would have served it to everyone."
 

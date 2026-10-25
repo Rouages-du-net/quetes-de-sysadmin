@@ -123,7 +123,7 @@ const COMPOSE = `version: "3.8"
 
 services:
   appli:
-    image: registre.example/reservations:2.1
+    image: registry.example/reservations:2.1
     ports:
       - "8081:3000"
     environment:
@@ -151,7 +151,7 @@ const image = (depot: string, tag: string, appli: string, port: number, commande
 
 function etatDocker(): EtatDocker {
   const outil = image(
-    'registre.example/outiltheque',
+    'registry.example/outiltheque',
     '1.5',
     'outiltheque',
     8080,
@@ -160,7 +160,7 @@ function etatDocker(): EtatDocker {
     Date.UTC(2027, 3, 1, 9, 0, 0),
   );
   const reservations = image(
-    'registre.example/reservations',
+    'registry.example/reservations',
     '2.1',
     'reservations',
     3000,

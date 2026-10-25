@@ -26,7 +26,7 @@ post-mortem-notes-theo =
 
     Réveillé par le téléphone, je ne sais plus à quelle heure, vers 2 h 30 ?
     Le relais était tombé, vers 2 h 20 je crois. journalctl disait une option
-    inconnue dans flux.conf, ligne 7 (bitrate_max). Je l'ai commentée, j'ai
+    inconnue dans stream.conf, ligne 7 (bitrate_max). Je l'ai commentée, j'ai
     relancé, c'est reparti.
 
     Ce que je ne comprends pas : pourquoi le relais a redémarré en pleine
@@ -54,10 +54,10 @@ post-mortem-modele =
     ## Actions
     (à compléter : une ligne « - » par action)
 post-mortem-conf-flux =
-    # Radio Quartier : relais du flux (le service radio-flux)
+    # Radio Quartier : relais du flux (le service radio-stream)
     port = 8000
     mount = /direct
-    logfile = /var/log/radio/flux.log
+    logfile = /var/log/radio/stream.log
     loglevel = info
     record_dir = /srv/radio/emissions
     #bitrate_max = 192    # Théo, 12/09 : option inconnue, mise en commentaire
@@ -89,7 +89,7 @@ post-mortem-unattended-dpkg =
     Processing triggers for libc-bin (2.36-9+deb12u9) ...
 
     Restarting services...
-     systemctl restart radio-flux.service
+     systemctl restart radio-stream.service
     Log ended: 2027-09-12  02:13:04
 
 ## Ce que le jeu vérifie dans le post-mortem
@@ -116,7 +116,7 @@ post-mortem-manque-modele = Il reste des lignes « (à compléter) » du modèle
 post-mortem-manque-chronologie = La chronologie doit donner, vérifiées dans les journaux, l'heure de la coupure, celle de la première alerte et celle du retour du direct (journalctl --since … --until …, le courrier de l'alerte).
 post-mortem-manque-impact = L'impact : combien de minutes de silence pour les auditeur·rices ?
 post-mortem-manque-cause = Les causes : ce qui a relancé le relais en pleine nuit (l'historique d'apt, /var/log/unattended-upgrades), et l'erreur de configuration qui l'a empêché de repartir.
-post-mortem-manque-origine = Et depuis quand cette erreur attendait-elle dans flux.conf ? Le journal garde la trace des commandes lancées avec sudo.
+post-mortem-manque-origine = Et depuis quand cette erreur attendait-elle dans stream.conf ? Le journal garde la trace des commandes lancées avec sudo.
 post-mortem-manque-actions = Au moins deux actions, une par ligne « - ».
 post-mortem-manque-marche = Le résumé, et ce qui a bien marché (il y a des choses !).
 
@@ -132,7 +132,7 @@ post-mortem-evenement-redemarrage =
     mise à jour automatique de la nuit. Qu'a-t-elle installé, et qu'a-t-elle
     fait ensuite ? (/var/log/apt/history.log, /var/log/unattended-upgrades)
 post-mortem-evenement-origine =
-    Le 20 août, Zoé a modifié flux.conf… sans relancer le relais, qui a
+    Le 20 août, Zoé a modifié stream.conf… sans relancer le relais, qui a
     continué de tourner avec l'ancienne configuration. L'erreur a attendu
     trois semaines le premier redémarrage. Ce n'est la faute de personne :
     rien ne vérifiait la configuration après une modification.

@@ -7,7 +7,7 @@
 
 indice-mise-a-jour-fin =
     .piste = Où l'outilthèque range-t-elle sa base ? docker inspect (ses « Mounts ») le dit : dans la couche du conteneur, qui part avec lui. Mets d'abord la base à l'abri (docker cp), puis crée un conteneur neuf en 1.5 avec un volume (-v) et une politique --restart (man docker).
-    .solution = sudo mkdir /srv/outiltheque ; sudo docker cp outiltheque:/var/lib/outiltheque/outiltheque.db /srv/outiltheque/ ; sudo docker rm -f outiltheque ; sudo docker run -d --name outiltheque --restart unless-stopped -p 8080:8080 -v /srv/outiltheque:/var/lib/outiltheque registre.example/outiltheque:1.5
+    .solution = sudo mkdir /srv/outiltheque ; sudo docker cp outiltheque:/var/lib/outiltheque/outiltheque.db /srv/outiltheque/ ; sudo docker rm -f outiltheque ; sudo docker run -d --name outiltheque --restart unless-stopped -p 8080:8080 -v /srv/outiltheque:/var/lib/outiltheque registry.example/outiltheque:1.5
 
 ## Chapitre 2 — La composition
 

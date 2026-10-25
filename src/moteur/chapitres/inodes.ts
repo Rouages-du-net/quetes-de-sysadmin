@@ -109,7 +109,7 @@ function ecrireCommeRadio(j: Jeu, chemin: string, n: Fichier): boolean {
   const avant = jeu.qui;
   jeu.qui = 'radio';
   try {
-    return jeu.placer('flux', chemin, n) === null;
+    return jeu.placer('stream', chemin, n) === null;
   } finally {
     jeu.qui = avant;
   }
@@ -213,11 +213,11 @@ export const inodes: Chapitre = {
         executable: 'sshd',
         processus: [{ pid: 598, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
-      'radio-flux': {
+      'radio-stream': {
         description: 'Radio Quartier stream relay',
         active: true,
-        executable: 'flux',
-        processus: [{ pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/flux --config /etc/radio/flux.conf' }],
+        executable: 'stream',
+        processus: [{ pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/stream --config /etc/radio/stream.conf' }],
       },
       cron: {
         description: 'Regular background program processing daemon',
@@ -230,7 +230,7 @@ export const inodes: Chapitre = {
       { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
       { pid: 598, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 611, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' },
-      { pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/flux --config /etc/radio/flux.conf' },
+      { pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
     montages: [
       { chemin: '/', capacite: 20_000_000_000, nom: '/dev/vda1', systeme: 'ext4', inodes: 1_310_720, inodesBase: 61_204 },
@@ -254,13 +254,13 @@ export const inodes: Chapitre = {
     }
     // Ce soir, plus rien ne s'écrit sur le volume.
     s.horloge = MAINTENANT - 40 * 60_000;
-    journaliser(s, 'radio-flux.service', 'flux', 1730, `stats: cannot create ${STATS}/${nomStat(s.horloge, 99_001)}: No space left on device`, 3);
+    journaliser(s, 'radio-stream.service', 'stream', 1730, `stats: cannot create ${STATS}/${nomStat(s.horloge, 99_001)}: No space left on device`, 3);
     s.horloge = MAINTENANT - 20 * 60_000;
-    journaliser(s, 'radio-flux.service', 'flux', 1730, `record: cannot create ${enregistrement(j)}: No space left on device`, 3);
+    journaliser(s, 'radio-stream.service', 'stream', 1730, `record: cannot create ${enregistrement(j)}: No space left on device`, 3);
     journaliser(
       s,
-      'radio-flux.service',
-      'flux',
+      'radio-stream.service',
+      'stream',
       1730,
       `stats: cannot create ${STATS}/${nomStat(s.horloge, 99_002)}: No space left on device`,
       3,
@@ -273,12 +273,12 @@ export const inodes: Chapitre = {
     const s = sd(j);
     s.horloge += 30_000;
     if (!noterEcoute(j, s.horloge))
-      journaliser(s, 'radio-flux.service', 'flux', 1730, `stats: cannot create ${STATS}/...: No space left on device`, 3, false);
+      journaliser(s, 'radio-stream.service', 'stream', 1730, `stats: cannot create ${STATS}/...: No space left on device`, 3, false);
     if (
       !j.trouver(enregistrement(j)) &&
       ecrireCommeRadio(j, enregistrement(j), { type: 'fichier', contenu: '', taille: 48_000_000, proprio: 'radio', mtime: s.horloge })
     )
-      journaliser(s, 'radio-flux.service', 'flux', 1730, `record: writing ${enregistrement(j)}`, 6, false);
+      journaliser(s, 'radio-stream.service', 'stream', 1730, `record: writing ${enregistrement(j)}`, 6, false);
     if (j.etat.nuitReussie || !cronStats(j) || j.etat.empreinteNuit === empreinteCron(j)) return;
     j.etat.empreinteNuit = empreinteCron(j);
     return nuit(j);
@@ -289,7 +289,7 @@ export const inodes: Chapitre = {
     const fichier = (texte: string, droits: Droits = racine) => f(texte, { lignes: true, ...droits });
     const radio: Droits = { proprio: 'radio' };
     return lieu({
-      etc: lieu({ ...fichiersComptes(), hostname: fichier('radio'), radio: lieu({ 'flux.conf': fichier(t('inodes-conf-flux')) }) }),
+      etc: lieu({ ...fichiersComptes(), hostname: fichier('radio'), radio: lieu({ 'stream.conf': fichier(t('inodes-conf-flux')) }) }),
       home: lieu({ vous: d({ 'message_de_zoe.txt': f(t('inodes-message-de-zoe')) }), zoe: lieu({}, { proprio: 'zoe', mode: 'rwx------' }) }),
       srv: lieu({
         radio: lieu(
@@ -311,7 +311,7 @@ export const inodes: Chapitre = {
       tmp: lieu({}, { proprio: 'root', mode: 'rwxrwxrwt' }),
       usr: lieu({
         lib: f('', { proprio: 'root', taille: 3_200_000_000 }),
-        local: lieu({ bin: lieu({ flux: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 8_400_000 }) }) }),
+        local: lieu({ bin: lieu({ stream: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 8_400_000 }) }) }),
       }),
       var: lieu({ lib: lieu({ radio: lieu({}, radio) }) }),
     });

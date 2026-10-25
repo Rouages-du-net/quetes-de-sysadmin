@@ -13,7 +13,7 @@ goulot-message-de-zoe =
 
     « Ça recommence ! Tous les jours, vers 16 h, le direct a des trous :
     des silences d'une demi-seconde, plusieurs par minute. Les
-    auditeur·ices nous écrivent. Le relais (radio-flux) tourne, son
+    auditeur·ices nous écrivent. Le relais (radio-stream) tourne, son
     journal parle de « read stall ».
 
     J'ai regardé top : la machine a l'air surchargée, mais le processeur

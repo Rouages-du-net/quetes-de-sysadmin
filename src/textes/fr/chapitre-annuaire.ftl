@@ -66,7 +66,7 @@ annuaire-evenement-fin =
 
     CE QUI S'EST PASSÉ
     Un annuaire LDAP range des entrées en arbre : chacune a un nom unique
-    (son DN, uid=sami,ou=people,dc=laruche,dc=example), des classes
+    (son DN, uid=sami,ou=people,dc=thehive,dc=example), des classes
     (inetOrgPerson pour une personne, posixAccount pour un compte Linux)
     qui exigent certains attributs, et des valeurs. On l'interroge avec
     ldapsearch et un filtre ; on le modifie avec des fichiers LDIF

@@ -100,7 +100,7 @@ describe('Le mode examen', () => {
     tout += jouer(['sudo sshd -t']);
     expect(tout).toContain('unsupported option "non"');
     expect(tout).not.toContain('Il y a une erreur dans la configuration de SSH');
-    c.executer('sudo nano /etc/ssh/sshd_config.d/00-durcissement.conf');
+    c.executer('sudo nano /etc/ssh/sshd_config.d/00-hardening.conf');
     c.enregistrer('PermitRootLogin no\nPasswordAuthentication no\n');
     c.quitterEdition();
     c.executer('sudo nano /etc/ssh/sshd_config');

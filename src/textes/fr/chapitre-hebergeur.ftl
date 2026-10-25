@@ -32,7 +32,7 @@ hebergeur-courriel-yasmine =
     poste.
 
 hebergeur-courriel-hebergeur =
-    De :     Le support de l'hébergeur <support@hebergeur.example>
+    De :     Le support de l'hébergeur <support@hosting.example>
     Objet :  Fin du FTP non chiffré le 1er mars
 
     Bonjour,
@@ -41,8 +41,8 @@ hebergeur-courriel-hebergeur =
     connexions FTP non chiffrées. Utilisez FTPS (FTP explicite sur TLS,
     port 21) : la plupart des clients le font par défaut.
 
-    Serveur : ftp.hebergeur.example
-    Notre certificat est émis pour *.hebergeur.example : connectez-vous
+    Serveur : ftp.hosting.example
+    Notre certificat est émis pour *.hosting.example : connectez-vous
     sous ce nom pour qu'il soit reconnu. Ne désactivez jamais la
     vérification du certificat.
 
@@ -54,7 +54,7 @@ hebergeur-notes-gaspard =
     NOTES DE GASPARD — publier le site
 
     FileZilla :
-      hôte         : ftp.maison.example
+      hôte         : ftp.community.example
       port         : 21
       chiffrement  : « FTP simple (non sécurisé) »
                      (avec le chiffrement, j'avais une erreur de
@@ -105,7 +105,7 @@ hebergeur-evenement-clair =
     lui interdise.
 hebergeur-evenement-certificat =
     La connexion est chiffrée, mais lftp refuse le certificat : il est
-    émis pour *.hebergeur.example, et tu as demandé ftp.maison.example.
+    émis pour *.hosting.example, et tu as demandé ftp.community.example.
     C'est l'erreur qu'avait eue Gaspard. Elle ne se règle pas en coupant
     la vérification, mais en demandant le serveur sous le nom que son
     certificat porte (courriel_hebergeur.txt).

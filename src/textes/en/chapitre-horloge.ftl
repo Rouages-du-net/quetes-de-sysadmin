@@ -20,7 +20,7 @@ horloge-message-de-zoe =
     machine this weekend (their email is in mail_hosting.txt). And
     yet, the recording log does say "06:00"…"
 horloge-mail-hebergeur =
-    From: support@hebergeur.example
+    From: support@hosting.example
     Subject: Migration of your radio server completed
 
     Hello,
@@ -30,8 +30,8 @@ horloge-mail-hebergeur =
     configuration have been copied over.
 
     Reminder: from our network, access to public NTP servers is
-    filtered. Use our time server: ntp.hebergeur.example
-    (the old one, ntp.ancien-hebergeur.example, has been shut down).
+    filtered. Use our time server: ntp.hosting.example
+    (the old one, ntp.old-hosting.example, has been shut down).
 
     The support team
 horloge-timesyncd-conf =
@@ -47,17 +47,17 @@ horloge-timesyncd-conf =
     # See timesyncd.conf(5) for details.
 
     {"[Time]"}
-    NTP=ntp.ancien-hebergeur.example
+    NTP=ntp.old-hosting.example
     #FallbackNTP=0.debian.pool.ntp.org 1.debian.pool.ntp.org 2.debian.pool.ntp.org 3.debian.pool.ntp.org
     #RootDistanceMaxSec=5
     #PollIntervalMinSec=32
     #PollIntervalMaxSec=2048
 horloge-script-enregistrer =
     #!/bin/sh
-    # enregistrer SHOW DURATION: records the live stream for DURATION minutes.
+    # record SHOW DURATION: records the live stream for DURATION minutes.
     # The time in the log is the machine's time (date).
-    echo "$(date '+%F %T') $1: start ($2 min)" >> /var/log/radio/enregistrer.log
-    exec /usr/local/bin/flux-record --mount /direct --minutes "$2" --out "/srv/radio/shows/$1-$(date +%F).ogg"
+    echo "$(date '+%F %T') $1: start ($2 min)" >> /var/log/radio/record.log
+    exec /usr/local/bin/stream-record --mount /direct --minutes "$2" --out "/srv/radio/shows/$1-$(date +%F).ogg"
 horloge-journal-enregistrer =
     2027-08-26 06:00:01 matinale: start (180 min)
     2027-08-26 23:00:01 nuit: start (240 min)

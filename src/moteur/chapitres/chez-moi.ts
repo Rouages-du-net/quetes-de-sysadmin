@@ -41,7 +41,7 @@ const comptes = (): Comptes => ({
   },
 });
 
-const SOA = (serie: string) => `@       IN SOA  ns1.lettres.example. kofi.lettres.example. (
+const SOA = (serie: string) => `@       IN SOA  ns1.letters.example. kofi.letters.example. (
                 ${serie} ; serial
                 3600       ; refresh
                 900        ; retry
@@ -51,22 +51,22 @@ const SOA = (serie: string) => `@       IN SOA  ns1.lettres.example. kofi.lettre
 // La zone du café, telle qu'elle était chez l'ancien hébergeur.
 const ZONE_CAFE = `$TTL 86400
 ${SOA('2026091501')}
-        IN NS   ns1.lettres.example.
-        IN NS   ns2.registre.example.
+        IN NS   ns1.letters.example.
+        IN NS   ns2.registry.example.
         IN A    ${ANCIENNE}
-        IN MX   10 mail.lettres.example.
+        IN MX   10 mail.letters.example.
         IN TXT  "v=spf1 mx -all"`;
 
 // La zone des Lettres : un bon modèle.
 const ZONE_LETTRES = `$TTL 3600
 ${SOA('2026111002')}
-        IN NS   ns1.lettres.example.
-        IN NS   ns2.registre.example.
+        IN NS   ns1.letters.example.
+        IN NS   ns2.registry.example.
         IN A    ${NOUVELLE}
         IN MX   10 mail
 ns1     IN A    ${NOUVELLE}
 mail    IN A    ${NOUVELLE}
-www     IN CNAME lettres.example.`;
+www     IN CNAME letters.example.`;
 
 const NAMED_CONF = `// This is the primary configuration file for the BIND DNS server named.
 //
@@ -84,9 +84,9 @@ const NAMED_CONF_LOCAL = `//
 // Do any local configuration here
 //
 
-zone "lettres.example" {
+zone "letters.example" {
     type primary;
-    file "${ZONES}/db.lettres.example";
+    file "${ZONES}/db.letters.example";
     notify yes;
     also-notify { 192.0.2.53; };
 };
@@ -116,7 +116,7 @@ const adresse = (j: Jeu, serveur: 'primaire' | 'secondaire', nom: string) =>
 const bon = (j: Jeu, serveur: 'primaire' | 'secondaire') =>
   ['cafe.example', 'www.cafe.example'].every((n) => adresse(j, serveur, n).join() === NOUVELLE) &&
   interroger(j, serveur, 'cafe.example', 'MX', 0).reponses.some((r) => r.type === 'MX') &&
-  adresse(j, serveur, 'lettres.example').join() === NOUVELLE;
+  adresse(j, serveur, 'letters.example').join() === NOUVELLE;
 // Un nom de la zone écrit sans le point final dans les données.
 const pointOublie = (j: Jeu) =>
   (etat(j).primaire['cafe.example']?.rrs ?? []).some(
@@ -171,8 +171,8 @@ export const chezMoi: Chapitre = {
         },
       },
       serveurs: {
-        primaire: ['localhost', '127.0.0.1', 'lettres', 'lettres.example', 'ns1.lettres.example', NOUVELLE],
-        secondaire: ['ns2.registre.example', '192.0.2.53'],
+        primaire: ['localhost', '127.0.0.1', 'lettres', 'letters.example', 'ns1.letters.example', NOUVELLE],
+        secondaire: ['ns2.registry.example', '192.0.2.53'],
         resolveur: ['9.9.9.9', 'dns.quad9.net'],
       },
       charges: {},
@@ -232,7 +232,7 @@ export const chezMoi: Chapitre = {
               groupe: 'bind',
               mode: 'rw-r-----',
             }),
-            zones: lieu({ 'db.lettres.example': fichier(ZONE_LETTRES), 'db.cafe.example': fichier(ZONE_CAFE) }, { proprio: 'root', groupe: 'bind' }),
+            zones: lieu({ 'db.letters.example': fichier(ZONE_LETTRES), 'db.cafe.example': fichier(ZONE_CAFE) }, { proprio: 'root', groupe: 'bind' }),
           },
           { proprio: 'root', groupe: 'bind', mode: 'rwxr-sr-x' },
         ),

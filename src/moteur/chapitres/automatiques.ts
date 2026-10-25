@@ -14,7 +14,7 @@
 // Objectif vérifié sur l'état : les deux tâches activées, une passe
 // automatique a installé les mises à jour de sécurité, nodejs reste en 20,
 // un rapport est parti, le redémarrage automatique est réglé la nuit, la
-// caisse tourne.
+// till tourne.
 // Sources : https://wiki.debian.org/UnattendedUpgrades,
 // https://github.com/mvo5/unattended-upgrades/blob/master/data/50unattended-upgrades.Debian
 
@@ -138,7 +138,7 @@ const laNuit = (j: Jeu) => {
   return vrai(c[`${UU}::Automatic-Reboot`]) && !!m && (Number(m[1]) >= 20 || Number(m[1]) < 7) && Number(m[1]) < 24;
 };
 const rapport = (j: Jeu) => !!conf(j).valeurs[`${UU}::Mail`];
-const caisseOk = (j: Jeu) => systemd(j)!.services.caisse.etat === 'active';
+const caisseOk = (j: Jeu) => systemd(j)!.services.till.etat === 'active';
 
 export const automatiques: Chapitre = {
   id: 'automatiques',
@@ -175,10 +175,10 @@ export const automatiques: Chapitre = {
     const e = etatCaisse(envCaisse(CLE_NOUVELLE, 'loopback'));
     const s = systemdCaisse();
     // La caisse ne démarre qu'avec Node.js 20 (son package.json l'exige).
-    s.services.caisse.verifier = (j) =>
+    s.services.till.verifier = (j) =>
       /^20\./.test(apt(j).installes.nodejs ?? '')
         ? null
-        : [`caisse requires Node.js 20.x (found ${(apt(j).installes.nodejs ?? '').replace(/-.*/, '')})`, 'npm error engine Unsupported engine'];
+        : [`till requires Node.js 20.x (found ${(apt(j).installes.nodejs ?? '').replace(/-.*/, '')})`, 'npm error engine Unsupported engine'];
     for (const [nom, description] of [
       ['apt-daily', 'Daily apt download activities'],
       ['apt-daily-upgrade', 'Daily apt upgrade and clean activities'],

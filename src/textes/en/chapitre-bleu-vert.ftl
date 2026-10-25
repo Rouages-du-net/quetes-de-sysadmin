@@ -10,45 +10,45 @@ chapitre-bleu-vert = Blue and green
 bleu-vert-message-de-samia =
     A message from Samia:
 
-    "The Gazette now has its Kiosque: the app for subscribing to the
-    newsletter (curl http://gazette.example/kiosque/). It's
+    "The Gazette now has its Kiosk: the app for subscribing to the
+    newsletter (curl http://gazette.example/kiosk/). It's
     a Node.js program, behind nginx.
 
-    It can run as two copies, "bleu" (blue) and "vert" (green):
-      - bleu: the kiosque-bleu service, port 3001, the code in
-        /srv/kiosque/bleu (a link to a version in /srv/kiosque/versions/);
-      - vert: the kiosque-vert service, port 3002, /srv/kiosque/vert (stopped).
-    nginx sends /kiosque/ to one of the two
+    It can run as two copies, "blue" (blue) and "green" (green):
+      - blue: the kiosk-blue service, port 3001, the code in
+        /srv/kiosk/blue (a link to a version in /srv/kiosk/versions/);
+      - green: the kiosk-green service, port 3002, /srv/kiosk/green (stopped).
+    nginx sends /kiosk/ to one of the two
     (/etc/nginx/sites-available/gazette).
 
-    Bleu is running 1.4.2. We need to move to 1.5.0, already installed
-    in /srv/kiosque/versions/, without readers seeing the
+    Blue is running 1.4.2. We need to move to 1.5.0, already installed
+    in /srv/kiosk/versions/, without readers seeing the
     slightest interruption. Each version answers on /health when it's fine.
 
     And keep the old version running until we're sure about the
     new one. For sudo: gazette-2027."
-bleu-vert-conf-commentaire = The Kiosque (subscriptions): the slot that serves readers
+bleu-vert-conf-commentaire = The Kiosk (subscriptions): the slot that serves readers
 bleu-vert-notes-150 =
-    Kiosque 1.5.0 — release notes
+    Kiosk 1.5.0 — release notes
 
-    New: the newsletter is sent by the Kiosque itself.
+    New: the newsletter is sent by the Kiosk itself.
 
     TO DO BEFORE GOING LIVE: set the mail server
-    in the configuration (/etc/kiosque/kiosque.env), for example:
-      KIOSQUE_SMTP=smtp.gazette.example
+    in the configuration (/etc/kiosk/kiosk.env), for example:
+      KIOSK_SMTP=smtp.gazette.example
     Without it, /health answers 503 and sign-up fails.
 
-## The Kiosque (pages served; { $version }: the app's version)
+## The Kiosk (pages served; { $version }: the app's version)
 
 kiosque-accueil =
     <!DOCTYPE html>
     <html lang="en">
-    <head><meta charset="utf-8"><title>The Gazette's Kiosque</title></head>
+    <head><meta charset="utf-8"><title>The Gazette's Kiosk</title></head>
     <body>
-    <h1>The Kiosque</h1>
+    <h1>The Kiosk</h1>
     <p>Get the Gazette's newsletter every Monday.</p>
     <form method="post" action="inscription"><input name="courriel"><button>Subscribe</button></form>
-    <footer>Kiosque { $version }</footer>
+    <footer>Kiosk { $version }</footer>
     </body>
     </html>
 kiosque-archives =
@@ -58,7 +58,7 @@ kiosque-archives =
     <body>
     <h1>Previous newsletters</h1>
     <ul><li>Newsletter of 17 May</li><li>Newsletter of 10 May</li></ul>
-    <footer>Kiosque { $version }</footer>
+    <footer>Kiosk { $version }</footer>
     </body>
     </html>
 
@@ -68,22 +68,22 @@ bleu-vert-evenement-sante-ko =
     /health answers 503: the version is running, but it's not in a state to
     serve. A version that fails its health check never gets
     any traffic. What it's missing is probably written in its release
-    notes (/srv/kiosque/versions/1.5.0/).
+    notes (/srv/kiosk/versions/1.5.0/).
 bleu-vert-evenement-pas-redemarre =
     The link points to the new version, but the service still answers with
     the old one: a program reads its code (and its configuration) when it
     starts. It needs to be restarted (man systemctl).
 bleu-vert-evenement-trop-tot =
-    Ouch: readers are getting an error on /kiosque/. nginx is sending
+    Ouch: readers are getting an error on /kiosk/. nginx is sending
     traffic to an instance that isn't answering, or not correctly. The
     rollback is immediate: put the other slot back in
     proxy_pass, nginx -t, reload. Check /health BEFORE switching over.
 bleu-vert-evenement-pas-recharge =
-    The nginx file does point to vert (3002), but nginx is still serving
-    bleu: it only rereads its configuration on reload (nginx -t, then
+    The nginx file does point to green (3002), but nginx is still serving
+    blue: it only rereads its configuration on reload (nginx -t, then
     systemctl reload nginx).
 bleu-vert-evenement-plus-de-filet =
-    Bleu is stopped: if 1.5.0 shows a problem tonight, there will be
+    Blue is stopped: if 1.5.0 shows a problem tonight, there will be
     no instant rollback anymore. Keep the old version running
     for a while, until you're sure.
 bleu-vert-evenement-fin =

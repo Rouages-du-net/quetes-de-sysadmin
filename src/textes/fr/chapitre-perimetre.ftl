@@ -47,7 +47,7 @@ perimetre-lettre-de-mission =
 
     Périmètre autorisé :
       - le serveur fournil.internal (192.0.2.22), qui porte aussi le site
-        public fournil.example.
+        public bakery.example.
 
     Hors périmètre (à ne pas sonder, même si c'est techniquement possible) :
       - tout autre équipement, notamment ceux des voisins qui partagent la

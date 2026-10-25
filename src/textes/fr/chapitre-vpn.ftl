@@ -24,8 +24,8 @@ vpn-courriel-malik =
         { $cle }
 
     Dans le tunnel, mon portable aura l'adresse 10.10.99.2. L'appli me
-    demande la clé publique du routeur, son adresse (ruche.example, ou
-    192.0.2.21) et son port : complète portable-malik.conf, je le
+    demande la clé publique du routeur, son adresse (hive.example, ou
+    192.0.2.21) et son port : complète malik-laptop.conf, je le
     recopierai.
 
     WireGuard est installé sur le routeur (man wg, man wg-quick ; les
@@ -69,7 +69,7 @@ vpn-evenement-poignee =
     confirme : pas de « latest handshake » pour son pair. Pour se
     reconnaître, chacun doit avoir la clé PUBLIQUE de l'autre : celle de
     Malik dans le Peer de wg0.conf, celle du routeur dans
-    portable-malik.conf. Et l'Endpoint doit donner l'adresse du routeur et
+    malik-laptop.conf. Et l'Endpoint doit donner l'adresse du routeur et
     le port où il écoute (ListenPort).
 vpn-evenement-sans-nas =
     Malik : « Connecté ! … mais le NAS ne répond pas. » La poignée de main a

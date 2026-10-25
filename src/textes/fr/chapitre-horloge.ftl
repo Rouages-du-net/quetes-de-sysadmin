@@ -20,7 +20,7 @@ horloge-message-de-zoe =
     machine ce week-end (son mail est dans mail_hebergeur.txt). Pourtant,
     le journal de l'enregistrement dit bien « 06:00 »… »
 horloge-mail-hebergeur =
-    De : support@hebergeur.example
+    De : support@hosting.example
     Objet : Migration de votre serveur radio terminée
 
     Bonjour,
@@ -30,8 +30,8 @@ horloge-mail-hebergeur =
     configuration ont été recopiées.
 
     Rappel : depuis notre réseau, l'accès aux serveurs NTP publics est
-    filtré. Utilisez notre serveur de temps : ntp.hebergeur.example
-    (l'ancien, ntp.ancien-hebergeur.example, est arrêté).
+    filtré. Utilisez notre serveur de temps : ntp.hosting.example
+    (l'ancien, ntp.old-hosting.example, est arrêté).
 
     L'équipe support
 horloge-timesyncd-conf =
@@ -47,17 +47,17 @@ horloge-timesyncd-conf =
     # See timesyncd.conf(5) for details.
 
     {"[Time]"}
-    NTP=ntp.ancien-hebergeur.example
+    NTP=ntp.old-hosting.example
     #FallbackNTP=0.debian.pool.ntp.org 1.debian.pool.ntp.org 2.debian.pool.ntp.org 3.debian.pool.ntp.org
     #RootDistanceMaxSec=5
     #PollIntervalMinSec=32
     #PollIntervalMaxSec=2048
 horloge-script-enregistrer =
     #!/bin/sh
-    # enregistrer ÉMISSION DURÉE : enregistre le direct pendant DURÉE minutes.
+    # record ÉMISSION DURÉE : enregistre le direct pendant DURÉE minutes.
     # L'heure du journal est celle de la machine (date).
-    echo "$(date '+%F %T') $1 : début ($2 min)" >> /var/log/radio/enregistrer.log
-    exec /usr/local/bin/flux-record --mount /direct --minutes "$2" --out "/srv/radio/emissions/$1-$(date +%F).ogg"
+    echo "$(date '+%F %T') $1 : début ($2 min)" >> /var/log/radio/record.log
+    exec /usr/local/bin/stream-record --mount /direct --minutes "$2" --out "/srv/radio/emissions/$1-$(date +%F).ogg"
 horloge-journal-enregistrer =
     2027-08-26 06:00:01 matinale : début (180 min)
     2027-08-26 23:00:01 nuit : début (240 min)

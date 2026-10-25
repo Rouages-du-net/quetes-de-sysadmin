@@ -12,16 +12,16 @@ droits-courriel-awa =
     À :      toi
     Objet :  L'équipe caisse
 
-    Deux soucis avec l'équipe caisse (Lina et Karim, groupe caisse) :
+    Deux soucis avec l'équipe caisse (Lina et Karim, groupe till) :
 
-    1. Les relevés du jour sont dans /srv/caisse/releves. Lina ne peut pas
+    1. Les relevés du jour sont dans /srv/till/releves. Lina ne peut pas
        corriger ceux de Karim, et inversement. Pourtant, ils sont tous les
-       deux dans le groupe caisse ! Regarde ls -l. Il faut que tout ce qu'ils
-       y créent, aujourd'hui et demain, appartienne au groupe caisse et que
+       deux dans le groupe till ! Regarde ls -l. Il faut que tout ce qu'ils
+       y créent, aujourd'hui et demain, appartienne au groupe till et que
        le groupe puisse l'écrire (man chmod, man umask).
 
     2. Quand la caisse se fige, ils doivent appeler quelqu'un qui a sudo
-       pour lancer systemctl restart caisse. Marc leur donnait son mot de
+       pour lancer systemctl restart till. Marc leur donnait son mot de
        passe… Donne-leur le droit de relancer la caisse, et RIEN d'autre
        (man sudoers, man visudo ; sudo -l -U lina pour vérifier).
 
@@ -50,7 +50,7 @@ droits-evenement-fichier-ignore =
     Ta règle est dans { $fichier }… que sudo ne lit pas ! @includedir ignore
     les fichiers dont le nom contient un point ou finit par ~ (relis
     /etc/sudoers.d/README). Donne-lui un nom sans point, comme
-    /etc/sudoers.d/caisse.
+    /etc/sudoers.d/till.
 droits-evenement-trop-large =
     Attention : avec cette règle, Lina et Karim peuvent lancer un shell
     root (sudo bash), donc TOUT faire. Ce n'est pas ce qu'Awa demande :
@@ -65,15 +65,15 @@ droits-evenement-sudo =
     et rien d'autre.
 # { $dossier } : le dossier partagé
 droits-evenement-dossier =
-    { $dossier } appartient maintenant au groupe caisse, qui peut y écrire, et
+    { $dossier } appartient maintenant au groupe till, qui peut y écrire, et
     porte le bit setgid (le s de drwxrwsr-x) : tout ce qui y sera créé prendra
-    le groupe caisse. Reste ce qui y est déjà, et les droits que Lina et Karim
+    le groupe till. Reste ce qui y est déjà, et les droits que Lina et Karim
     donneront à leurs prochains fichiers (umask).
 droits-evenement-masque =
     Lina et Karim auront le masque 002 à leur prochaine connexion : leurs
     nouveaux fichiers seront rw-rw-r--, modifiables par le groupe.
 droits-evenement-fin =
-    Le lendemain : Lina enregistre son relevé (-rw-rw-r-- lina caisse),
+    Le lendemain : Lina enregistre son relevé (-rw-rw-r-- lina till),
     Karim corrige une virgule sans demander à personne, et quand la caisse se
     fige à midi, il la relance lui-même avec sudo. Awa : « Plus de mot de
     passe qui circule ! »

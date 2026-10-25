@@ -56,4 +56,4 @@ indice-transferts-fin =
 
 indice-hebergeur-fin =
     .piste = First bring /srv/wiki/site back to your workstation, over SSH (man sftp, get -r). Then publish it with lftp under the name the host's certificate covers (email_hosting.txt, on community), into public_html: mirror -R sends to the hosting, --delete removes what is no longer in the site (man lftp).
-    .solution = On your workstation: sftp wiki, get -r /srv/wiki/site, bye; then lftp -u maisonasso ftp.hebergeur.example (password in email_yasmine.txt, on community), mirror -R --delete site public_html, bye.
+    .solution = On your workstation: sftp wiki, get -r /srv/wiki/site, bye; then lftp -u maisonasso ftp.hosting.example (password in email_yasmine.txt, on community), mirror -R --delete site public_html, bye.

@@ -12,7 +12,7 @@ sonde-message-de-zoe =
     A message from Zoé (Monday, 6:20 pm):
 
     "Four nights, four outages, and each time we found out too late.
-    I've started a probe: /usr/local/bin/sonde. It runs
+    I've started a probe: /usr/local/bin/probe. It runs
     checks (the monitoring "plugins", the ones from Nagios or
     Icinga) and mails me everything that isn't OK. Root's
     mail comes to me (/etc/aliases), and from there to my

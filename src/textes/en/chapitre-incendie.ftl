@@ -34,12 +34,12 @@ incendie-pra =
     To follow if the server is lost: we start again from a new machine.
 
     Backed up every night at 12:30 am, in another data centre:
-      /etc/nginx/sites-available/mediatheque   the website, for nginx
-      /etc/nginx/sites-enabled/mediatheque     the same, enabled
-      /etc/nginx/bloques.conf                  the blocked addresses
-      /var/www/mediatheque/                    the pages
+      /etc/nginx/sites-available/medialibrary   the website, for nginx
+      /etc/nginx/sites-enabled/medialibrary     the same, enabled
+      /etc/nginx/blocked.conf                  the blocked addresses
+      /var/www/medialibrary/                    the pages
 
-    One archive per night: /mnt/backup/mediatheque-YYYY-MM-DD.tar.gz
+    One archive per night: /mnt/backup/medialibrary-YYYY-MM-DD.tar.gz
 
     Paths are stored in it from the root, without the leading /.
 
@@ -135,7 +135,7 @@ incendie-evenement-mercredi =
     are missing, which Awa added on Wednesday afternoon. This archive is
     not the most recent intact one.
 incendie-evenement-fin =
-    curl http://mediatheque.example answers: the media library is back
+    curl http://medialibrary.example answers: the media library is back
     online, on a machine that didn't exist last night.
 
     Awa: "Thanks. We lost Thursday's work: the announcement for next

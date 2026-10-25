@@ -13,7 +13,7 @@ paquet-perdu-note-de-kofi =
     A note from Kofi, volunteer at La Fourmilière, the community café:
 
     "Help! The internet isn't working anymore on the café's computer. The
-    Neighbourhood Letters website (lettres.example) won't open, and that's
+    Neighbourhood Letters website (letters.example) won't open, and that's
     where we publish the week's programme.
 
     I've already restarted the router. Nothing. Can you take a look? The
@@ -27,12 +27,12 @@ paquet-perdu-carnet =
 
       1. Does my router answer?         ping 192.168.1.1
       2. Does the internet answer?      ping 9.9.9.9   (a public DNS server)
-      3. Do names work?                 ping lettres.example
-                                        dig lettres.example
-      4. Which way do packets go?       traceroute lettres.example
-      5. Does the website answer?       curl -I https://lettres.example
+      3. Do names work?                 ping letters.example
+                                        dig letters.example
+      4. Which way do packets go?       traceroute letters.example
+      5. Does the website answer?       curl -I https://letters.example
 
-    DNS translates a name (lettres.example) into an IP address (numbers).
+    DNS translates a name (letters.example) into an IP address (numbers).
     The computer knows which DNS server to ask thanks to the file
     /etc/resolv.conf (the "nameserver" line).
 
@@ -59,29 +59,29 @@ paquet-perdu-evenement-box =
 paquet-perdu-evenement-internet =
     9.9.9.9 answers: packets do go out to the internet and come back.
     So "the internet" works! The problem is elsewhere. Try the site's name:
-    ping lettres.example
+    ping letters.example
 paquet-perdu-evenement-nom =
     "Temporary failure in name resolution": the computer can't translate
     the name into an IP address. That's the job of DNS. Ask it the
-    question directly: dig lettres.example
+    question directly: dig letters.example
 paquet-perdu-evenement-dns-muet =
     The DNS server 192.168.1.250 doesn't answer: "timed out". Where does this
     address come from? Look at cat /etc/resolv.conf
 
     And to check that the name really exists, ask another DNS server:
-    dig @9.9.9.9 lettres.example
+    dig @9.9.9.9 letters.example
 paquet-perdu-evenement-dns-autre =
-    With another DNS server, the answer comes back: lettres.example = { $ip }.
+    With another DNS server, the answer comes back: letters.example = { $ip }.
     The name exists; it's the computer's setting that is wrong: it asks
     192.168.1.250, the address of the OLD router, which no longer exists.
 
     The right setting is in /etc/resolv.conf.box. This file belongs to root:
     sudo cp /etc/resolv.conf.box /etc/resolv.conf
-paquet-perdu-evenement-dns-repare = DNS is fixed: the computer now asks the new router. Try again:  ping lettres.example
+paquet-perdu-evenement-dns-repare = DNS is fixed: the computer now asks the new router. Try again:  ping letters.example
 paquet-perdu-evenement-ping-perdu =
     The name is translated ({ $ip })… but 100% of the packets are lost!
     Is the website down? Or are the packets getting lost on the way?
-    Follow their trail:  traceroute lettres.example
+    Follow their trail:  traceroute letters.example
 paquet-perdu-evenement-route =
     Here is the packet's journey, hop by hop:
      1. your router;
@@ -92,7 +92,7 @@ paquet-perdu-evenement-route =
     provider's door. Many servers deliberately ignore ping and traceroute
     (their firewall filters them): this silence doesn't prove a failure.
 
-    The only real test is to ask for the page:  curl -I https://lettres.example
+    The only real test is to ask for the page:  curl -I https://letters.example
 paquet-perdu-evenement-curl =
     HTTP/2 200: the website answers perfectly! Kofi can publish the programme.
 

@@ -15,15 +15,15 @@ inodes-message-de-zoe =
     show failed again: "No space left on device", just like last week!
     Except this time, df -h says the data volume (/srv/radio) is almost
     empty. And the relay can no longer log the listens
-    (journalctl -u radio-flux).
+    (journalctl -u radio-stream).
 
     PS: the listening statistics are used for the monthly report to the
     town hall. We must keep at least the last 30 days."
 inodes-conf-flux =
-    # Radio Quartier: stream relay (the radio-flux service)
+    # Radio Quartier: stream relay (the radio-stream service)
     port = 8000
     mount = /direct
-    logfile = /var/log/radio/flux.log
+    logfile = /var/log/radio/stream.log
     loglevel = info
     # Show recordings
     record_dir = /srv/radio/shows

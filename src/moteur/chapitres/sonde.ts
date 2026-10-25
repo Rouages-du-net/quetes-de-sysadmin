@@ -1,6 +1,6 @@
 // Histoire « L'Astreinte » — chapitre « La sonde » : après quatre nuits à
 // réparer après coup, Zoé veut être prévenue avant que ça casse. Elle a
-// commencé une sonde (/usr/local/bin/sonde) qui lance des plugins de
+// commencé une sonde (/usr/local/bin/probe) qui lance des plugins de
 // supervision (monitoring-plugins : check_disk, check_http, check_procs) et
 // envoie par courrier tout ce qui n'est pas OK. À compléter (le volume des
 // données et ses inodes, le direct) et à planifier toutes les 5 minutes
@@ -52,7 +52,7 @@ const comptes = (): Comptes => ({
 
 const sd = (j: Jeu) => systemd(j)!;
 const shell = (j: Jeu) => j as Shell;
-const relais = (j: Jeu) => sd(j).services['radio-flux'];
+const relais = (j: Jeu) => sd(j).services['radio-stream'];
 const volume = (j: Jeu) => shell(j).montage(DONNEES)!;
 const heure = (ms: number) => new Date(ms).toISOString().slice(11, 16);
 // Les alertes que Zoé reçoit (directement, ou par l'alias de root).
@@ -72,7 +72,7 @@ function empreinte(j: Jeu): string {
   const services = Object.entries(sd(j).services)
     .filter(([, x]) => x.fichier)
     .map(([n, x]) => [n, x.fichier]);
-  return JSON.stringify([j.lire('/usr/local/bin/sonde'), j.etat.crontabs, timers, services]);
+  return JSON.stringify([j.lire('/usr/local/bin/probe'), j.etat.crontabs, timers, services]);
 }
 
 // Quelque chose est-il planifié (un timer actif, une ligne de crontab) ?
@@ -117,12 +117,12 @@ function nuit(j: Jeu): string {
       relais(j).resultat = 'signal';
       relais(j).depuis = t;
       j.etat.processus = (j.etat.processus ?? []).filter((p: { pid: number }) => p.pid !== 1730);
-      journaliser(s, 'radio-flux.service', 'systemd', 1, 'radio-flux.service: Main process exited, code=killed, status=11/SEGV', 4, false);
-      journaliser(s, 'radio-flux.service', 'systemd', 1, "radio-flux.service: Failed with result 'signal'.", 4, false);
+      journaliser(s, 'radio-stream.service', 'systemd', 1, 'radio-stream.service: Main process exited, code=killed, status=11/SEGV', 4, false);
+      journaliser(s, 'radio-stream.service', 'systemd', 1, "radio-stream.service: Failed with result 'signal'.", 4, false);
     }
     // Zoé relance le relais 10 minutes après l'alerte (ou à son réveil, à 6 h).
     if (relaisAlerte !== null && relaisRepare === null && t >= relaisAlerte + 10 * MINUTE) {
-      demarrer(j, s, 'radio-flux');
+      demarrer(j, s, 'radio-stream');
       relaisRepare = t;
     }
     // Panne 2 : l'import des vignettes crée des milliers de petits fichiers, jusqu'à ce que Zoé l'arrête.
@@ -135,7 +135,7 @@ function nuit(j: Jeu): string {
           v.enfants[`${nom(j.t, 'vignette')}-${String(++numero).padStart(5, '0')}.jpg`] = { type: 'fichier', contenu: '', taille: 0, proprio: 'radio' };
       if (libres <= PAR_MINUTE) {
         inodesPleins = t;
-        journaliser(s, 'radio-flux.service', 'flux', 1730, `record: cannot create ${chemin(j.t, '/srv/radio/emissions')}/nuit.ogg: No space left on device`, 3, false);
+        journaliser(s, 'radio-stream.service', 'stream', 1730, `record: cannot create ${chemin(j.t, '/srv/radio/emissions')}/nuit.ogg: No space left on device`, 3, false);
       }
     }
     // Zoé arrête l'import et efface les vignettes en trop, 10 minutes après l'alerte.
@@ -146,7 +146,7 @@ function nuit(j: Jeu): string {
     }
   });
   // Au matin, Zoé remet tout d'aplomb (et note ce qui s'est passé).
-  if (relais(j).etat !== 'active') demarrer(j, s, 'radio-flux');
+  if (relais(j).etat !== 'active') demarrer(j, s, 'radio-stream');
   const v = lieu();
   if (v) v.enfants = {};
   const r: string[] = [j.t('sonde-nuit', { lancements })];
@@ -227,11 +227,11 @@ export const sonde: Chapitre = {
           executable: 'sshd',
           processus: [{ pid: 598, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
         },
-        'radio-flux': {
+        'radio-stream': {
           description: 'Radio Quartier stream relay',
           active: true,
-          executable: 'flux',
-          processus: [{ pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/flux --config /etc/radio/flux.conf' }],
+          executable: 'stream',
+          processus: [{ pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/stream --config /etc/radio/stream.conf' }],
         },
         cron: {
           description: 'Regular background program processing daemon',
@@ -260,11 +260,11 @@ export const sonde: Chapitre = {
       { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
       { pid: 598, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 611, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' },
-      { pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/flux --config /etc/radio/flux.conf' },
+      { pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
     // Le relais sert le direct sur le port 8000.
-    applis: { '127.0.0.1:8000': { service: 'radio-flux', pages: { '/direct': 'OggS', '/': 'Radio Quartier relay' } } },
-    ecoute: [{ proto: 'tcp', adresse: '0.0.0.0', port: 8000, processus: 'flux', pid: 1730 }],
+    applis: { '127.0.0.1:8000': { service: 'radio-stream', pages: { '/direct': 'OggS', '/': 'Radio Quartier relay' } } },
+    ecoute: [{ proto: 'tcp', adresse: '0.0.0.0', port: 8000, processus: 'stream', pid: 1730 }],
     montages: [
       { chemin: '/', capacite: 20_000_000_000, nom: '/dev/vda1', systeme: 'ext4', inodes: 1_310_720, inodesBase: 61_204 },
       { chemin: DONNEES, capacite: 268_435_456, nom: '/dev/vdb1', systeme: 'ext4', inodes: INODES, inodesBase: 11 },
@@ -315,8 +315,8 @@ export const sonde: Chapitre = {
         }),
         local: lieu({
           bin: lieu({
-            sonde: fichier(t('sonde-script'), { proprio: 'root', mode: 'rwxr-xr-x' }),
-            flux: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 8_400_000 }),
+            probe: fichier(t('sonde-script'), { proprio: 'root', mode: 'rwxr-xr-x' }),
+            stream: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 8_400_000 }),
           }),
         }),
       }),

@@ -66,7 +66,7 @@ for (const langue of LANGUES)
     it('chapitre 1 — autre solution : /etc/cron.d, puis userdel -r', () => {
       const { c, jouer, editer } = partie();
       jouer(['sudo mkdir -p /opt/coop', 'sudo cp /home/marc/bin/sauvegarde-caisse.sh /opt/coop/']);
-      editer('sudo nano /etc/cron.d/sauvegarde-caisse', () => L('30 2 * * * root /opt/coop/sauvegarde-caisse.sh\n'));
+      editer('sudo nano /etc/cron.d/sauvegarde-till', () => L('30 2 * * * root /opt/coop/sauvegarde-caisse.sh\n'));
       editer('sudo nano /home/deploy/.ssh/authorized_keys', (t) =>
         t
           .split('\n')
@@ -97,39 +97,39 @@ for (const langue of LANGUES)
     });
 
     const DEPART = ['depart'];
-    const REGLE = '%caisse ALL=(root) /usr/bin/systemctl restart caisse\n';
+    const REGLE = '%till ALL=(root) /usr/bin/systemctl restart till\n';
     const dossierPartage = (jouer: (l: string[]) => string) =>
-      jouer(['sudo chgrp -R caisse /srv/caisse/releves', 'sudo chmod -R g+w /srv/caisse/releves', 'sudo chmod g+s /srv/caisse/releves']);
+      jouer(['sudo chgrp -R till /srv/till/releves', 'sudo chmod -R g+w /srv/till/releves', 'sudo chmod g+s /srv/till/releves']);
 
     it('chapitre 2 — solution : setgid, umask dans ~/.profile, visudo (avec une erreur corrigée)', () => {
       const { c, jouer, editer } = partie(DEPART);
-      let tout = jouer(['ls -l /srv/caisse/releves', 'groups lina karim']);
+      let tout = jouer(['ls -l /srv/till/releves', 'groups lina karim']);
       expect(tout).toContain('-rw-r--r-- lina     lina');
-      tout = dossierPartage(jouer) + jouer(['ls -ld /srv/caisse/releves']);
-      expect(tout).toContain('drwxrwsr-x root     caisse');
+      tout = dossierPartage(jouer) + jouer(['ls -ld /srv/till/releves']);
+      expect(tout).toContain('drwxrwsr-x root     till');
       for (const qui of ['lina', 'karim']) editer(`sudo nano /home/${qui}/.profile`, (t) => t.replace('#umask 022', 'umask 002'));
-      tout = jouer(['which systemctl', 'sudo visudo -f /etc/sudoers.d/caisse']);
+      tout = jouer(['which systemctl', 'sudo visudo -f /etc/sudoers.d/till']);
       expect(tout).toContain('/usr/bin/systemctl');
-      c.enregistrer('%caisse ALL=(root) systemctl restart caisse\n');
+      c.enregistrer('%till ALL=(root) systemctl restart till\n');
       tout = c.quitterEdition();
       contient(tout, 'nom de chemin totalement défini attendu');
       expect(c.termines).not.toContain('droits');
       jouer(['e']);
       c.enregistrer(REGLE);
       tout = c.quitterEdition() + jouer(['sudo -l -U lina']);
-      expect(tout).toContain('(root) /usr/bin/systemctl restart caisse');
+      expect(tout).toContain('(root) /usr/bin/systemctl restart till');
       contient(tout, 'https://www.sudo.ws/docs/man/sudoers.man/');
       expect(c.termines).toContain('droits');
     });
 
     it('chapitre 2 — autre solution : chmod 2775, /etc/profile.d, un alias de commande', () => {
       const { c, jouer, editer } = partie(DEPART);
-      jouer(['sudo chgrp -R caisse /srv/caisse/releves', 'sudo chmod 2775 /srv/caisse/releves']);
-      jouer(['sudo chmod g+w /srv/caisse/releves/2027-10-17.txt /srv/caisse/releves/2027-10-18.txt']);
+      jouer(['sudo chgrp -R till /srv/till/releves', 'sudo chmod 2775 /srv/till/releves']);
+      jouer(['sudo chmod g+w /srv/till/releves/2027-10-17.txt /srv/till/releves/2027-10-18.txt']);
       editer('sudo nano /etc/profile.d/umask-equipe.sh', () => 'umask 002\n');
       editer(
-        'sudo visudo -f /etc/sudoers.d/caisse',
-        () => 'Cmnd_Alias RELANCER_CAISSE = /usr/bin/systemctl restart caisse\n%caisse ALL=(root) RELANCER_CAISSE\n',
+        'sudo visudo -f /etc/sudoers.d/till',
+        () => 'Cmnd_Alias RELANCER_CAISSE = /usr/bin/systemctl restart till\n%till ALL=(root) RELANCER_CAISSE\n',
       );
       expect(c.termines).toContain('droits');
     });
@@ -138,40 +138,40 @@ for (const langue of LANGUES)
       const { c, jouer, editer } = partie(DEPART);
       dossierPartage(jouer);
       for (const qui of ['lina', 'karim']) editer(`sudo nano /home/${qui}/.profile`, (t) => t + '\numask 002\n');
-      let tout = editer('sudo visudo -f /etc/sudoers.d/caisse.conf', () => REGLE);
+      let tout = editer('sudo visudo -f /etc/sudoers.d/till.conf', () => REGLE);
       contient(tout, 'que sudo ne lit pas');
-      tout = editer('sudo visudo -f /etc/sudoers.d/caisse', () => '%caisse ALL=(ALL:ALL) ALL\n');
+      tout = editer('sudo visudo -f /etc/sudoers.d/till', () => '%till ALL=(ALL:ALL) ALL\n');
       contient(tout, 'sudo bash');
-      tout = editer('sudo visudo -f /etc/sudoers.d/caisse', () => '%caisse ALL=(root) /usr/bin/systemctl\n');
+      tout = editer('sudo visudo -f /etc/sudoers.d/till', () => '%till ALL=(root) /usr/bin/systemctl\n');
       contient(tout, 'arrêter ssh');
       expect(c.termines).not.toContain('droits');
       // nano au lieu de visudo : une faute, et sudo refuse tout.
-      tout = editer('sudo nano /etc/sudoers.d/caisse', () => '%caisse ALL=(root) systemctl restart caisse\n');
+      tout = editer('sudo nano /etc/sudoers.d/till', () => '%till ALL=(root) systemctl restart till\n');
       contient(tout, 'sudo est cassé');
       tout = jouer(['sudo ls']);
       if (fr) expect(tout).toContain("sudo: aucune source sudoers valide n'a été trouvée");
       expect(c.termines).not.toContain('droits');
     });
 
-    const SITE = '/etc/nginx/sites-available/cooperative';
+    const SITE = '/etc/nginx/sites-available/coop';
     const AVANT_SECRET = ['depart', 'droits'];
     const nouvelleCle = (t: string) => t.replace(/PAIEMENT_CLE=.*/, 'PAIEMENT_CLE=pk_live_coop_9d27be05c4a1');
 
     it('chapitre 3 — solution : le journal, location ~ /\\., deny, la nouvelle clé', () => {
       const { c, jouer, editer } = partie(AVANT_SECRET);
-      let tout = jouer(['curl http://cooperative.example/.env', "sudo grep '\\.env' /var/log/nginx/access.log"]);
+      let tout = jouer(['curl http://coop.example/.env', "sudo grep '\\.env' /var/log/nginx/access.log"]);
       expect(tout).toContain('PAIEMENT_CLE=pk_live_coop_4f9a2c71e8b3');
       expect(tout).toContain('203.0.113.77 - - [19/Oct/2027:03:12:40 +0200] "GET /.env HTTP/1.1" 200');
       editer(`sudo nano ${SITE}`, (t) =>
-        t.replace('    location /caisse/', '    deny 203.0.113.77;\n\n    location ~ /\\. {\n        deny all;\n    }\n\n    location /caisse/'),
+        t.replace('    location /till/', '    deny 203.0.113.77;\n\n    location ~ /\\. {\n        deny all;\n    }\n\n    location /till/'),
       );
-      tout = jouer(['sudo nginx -t', 'sudo systemctl reload nginx', 'curl -I http://cooperative.example/.git/config']);
+      tout = jouer(['sudo nginx -t', 'sudo systemctl reload nginx', 'curl -I http://coop.example/.git/config']);
       expect(tout).toContain('HTTP/1.1 403 Forbidden');
       contient(tout, 'Les fichiers cachés ne sortent plus');
-      tout = editer('sudo nano /srv/caisse/app/.env', nouvelleCle);
+      tout = editer('sudo nano /srv/till/app/.env', nouvelleCle);
       contient(tout, "l'appli ne lit son .env qu'au démarrage");
       expect(c.termines).not.toContain('secret');
-      tout = jouer(['sudo systemctl restart caisse', 'curl http://127.0.0.1:3000/health']);
+      tout = jouer(['sudo systemctl restart till', 'curl http://127.0.0.1:3000/health']);
       expect(tout).toContain('"paiement":"ok"');
       contient(tout, 'https://nginx.org/en/docs/http/ngx_http_core_module.html#location');
       expect(c.termines).toContain('secret');
@@ -179,17 +179,17 @@ for (const langue of LANGUES)
 
     it('chapitre 3 — autre solution : des droits que www-data ne peut pas lire', () => {
       const { c, jouer, editer } = partie(AVANT_SECRET);
-      jouer(['sudo chmod 600 /srv/caisse/app/.env', 'sudo chmod -R o-rwx /srv/caisse/app/.git']);
+      jouer(['sudo chmod 600 /srv/till/app/.env', 'sudo chmod -R o-rwx /srv/till/app/.git']);
       editer(`sudo nano ${SITE}`, (t) => t.replace('    index index.html;', '    index index.html;\n    deny 203.0.113.77;'));
-      editer('sudo nano /srv/caisse/app/.env', nouvelleCle);
-      jouer(['sudo systemctl reload nginx', 'sudo systemctl restart caisse']);
+      editer('sudo nano /srv/till/app/.env', nouvelleCle);
+      jouer(['sudo systemctl reload nginx', 'sudo systemctl restart till']);
       expect(c.termines).toContain('secret');
     });
 
     it('chapitre 3 — fausses pistes : seulement /.env, deny all pour tout le site', () => {
       const { c, jouer, editer } = partie(AVANT_SECRET);
       editer(`sudo nano ${SITE}`, (t) =>
-        t.replace('    location /caisse/', '    location = /.env {\n        return 404;\n    }\n\n    location /caisse/'),
+        t.replace('    location /till/', '    location = /.env {\n        return 404;\n    }\n\n    location /till/'),
       );
       let tout = jouer(['sudo systemctl reload nginx']);
       contient(tout, '/.git/config, si');
@@ -206,14 +206,14 @@ for (const langue of LANGUES)
 
     it('chapitre 4 — solution : X-Forwarded-For dans nginx, TRUST_PROXY=loopback', () => {
       const { c, jouer, editer } = partie(AVANT_PROXY);
-      let tout = jouer(['sudo tail -3 /var/log/caisse/app.log', "sudo grep 'POST /caisse' /var/log/nginx/access.log"]);
+      let tout = jouer(['sudo tail -3 /var/log/till/app.log', "sudo grep 'POST /till' /var/log/nginx/access.log"]);
       expect(tout).toContain('locked 127.0.0.1 for 15 minutes');
       expect(tout).toContain('198.51.100.66');
-      tout = jouer(['sudo systemctl restart caisse']);
+      tout = jouer(['sudo systemctl restart till']);
       contient(tout, 'Lina avec');
       editer(`sudo nano ${SITE}`, avecEntete('X-Forwarded-For $proxy_add_x_forwarded_for'));
-      editer('sudo nano /srv/caisse/app/.env', confiance('loopback'));
-      tout = jouer(['sudo nginx -t', 'sudo systemctl reload nginx', 'sudo systemctl restart caisse', 'sudo tail -2 /var/log/caisse/app.log']);
+      editer('sudo nano /srv/till/app/.env', confiance('loopback'));
+      tout = jouer(['sudo nginx -t', 'sudo systemctl reload nginx', 'sudo systemctl restart till', 'sudo tail -2 /var/log/till/app.log']);
       expect(tout).toContain('login ok for lina from 192.0.2.44');
       contient(tout, 'https://expressjs.com/en/guide/behind-proxies.html');
       expect(c.termines).toContain('proxy');
@@ -222,23 +222,23 @@ for (const langue of LANGUES)
     it('chapitre 4 — autre solution : $remote_addr, et la seule adresse de nginx', () => {
       const { c, jouer, editer } = partie(AVANT_PROXY);
       editer(`sudo nano ${SITE}`, avecEntete('X-Forwarded-For $remote_addr'));
-      editer('sudo nano /srv/caisse/app/.env', confiance('127.0.0.1'));
-      jouer(['sudo systemctl reload nginx', 'sudo systemctl restart caisse']);
+      editer('sudo nano /srv/till/app/.env', confiance('127.0.0.1'));
+      jouer(['sudo systemctl reload nginx', 'sudo systemctl restart till']);
       expect(c.termines).toContain('proxy');
     });
 
     it('chapitre 4 — fausses pistes : TRUST_PROXY=true, ou l’en-tête du client transmis tel quel', () => {
       const { c, jouer, editer } = partie(AVANT_PROXY);
       editer(`sudo nano ${SITE}`, avecEntete('X-Forwarded-For $proxy_add_x_forwarded_for'));
-      editer('sudo nano /srv/caisse/app/.env', confiance('true'));
-      let tout = jouer(['sudo systemctl reload nginx', 'sudo systemctl restart caisse', 'sudo tail -2 /var/log/caisse/app.log']);
+      editer('sudo nano /srv/till/app/.env', confiance('true'));
+      let tout = jouer(['sudo systemctl reload nginx', 'sudo systemctl restart till', 'sudo tail -2 /var/log/till/app.log']);
       expect(tout).toContain('login failed for admin from 10.');
       contient(tout, 'le robot (198.51.100.66) n');
       expect(c.termines).not.toContain('proxy');
       // loopback, mais nginx ne fait que transmettre ce que le client a écrit.
       editer(`sudo nano ${SITE}`, (t) => t.replace('$proxy_add_x_forwarded_for', '$http_x_forwarded_for'));
-      editer('sudo nano /srv/caisse/app/.env', confiance('loopback'));
-      tout = jouer(['sudo systemctl reload nginx', 'sudo systemctl restart caisse', 'sudo tail -2 /var/log/caisse/app.log']);
+      editer('sudo nano /srv/till/app/.env', confiance('loopback'));
+      tout = jouer(['sudo systemctl reload nginx', 'sudo systemctl restart till', 'sudo tail -2 /var/log/till/app.log']);
       expect(tout).toContain('login failed for admin from 10.');
       expect(c.termines).not.toContain('proxy');
     });
@@ -266,7 +266,7 @@ for (const langue of LANGUES)
       expect(tout).toContain('linux-image-6.12.48+deb13-amd64');
       expect(tout).toContain('[detached (from session maj)]');
       contient(tout, 'la caisse ne répond plus');
-      tout = jouer(['ssh cooperative', 'uname -r', 'systemctl --failed', 'sudo systemctl enable --now caisse']);
+      tout = jouer(['ssh cooperative', 'uname -r', 'systemctl --failed', 'sudo systemctl enable --now till']);
       expect(tout).toContain(machinesDansLaLangue(traducteur(langue), 'Linux cooperative 6.12.48+deb13-amd64'));
       contient(tout, 'https://man.openbsd.org/tmux');
       expect(c.termines).toContain('mises-a-jour');
@@ -282,7 +282,7 @@ for (const langue of LANGUES)
       tout = jouer(['sudo dpkg --configure -a', 'sudo apt upgrade']);
       expect(tout).toContain('Setting up libc6 (2.41-12+deb13u1) ...');
       expect(tout).toContain('Upgrading: 0, Installing: 0');
-      jouer(['sudo systemctl enable caisse', 'sudo systemctl reboot', 'ssh cooperative']);
+      jouer(['sudo systemctl enable till', 'sudo systemctl reboot', 'ssh cooperative']);
       expect(c.termines).toContain('mises-a-jour');
     });
 
@@ -294,7 +294,7 @@ for (const langue of LANGUES)
       tout = jouer(['exit']);
       expect(tout).toContain('[exited]');
       expect(c.invite()).toBe(L('vous@cooperative:~$'));
-      jouer(['tmux new -s maj', 'sudo apt update', 'sudo apt upgrade -y', 'ssh cooperative', 'sudo systemctl enable caisse']);
+      jouer(['tmux new -s maj', 'sudo apt update', 'sudo apt upgrade -y', 'ssh cooperative', 'sudo systemctl enable till']);
       tout = jouer(['uname -r']);
       expect(tout).toContain('6.12.38+deb13-amd64');
       expect(c.termines).not.toContain('mises-a-jour');
@@ -371,7 +371,7 @@ for (const langue of LANGUES)
       contient(tout, 'en plein après-midi');
       contient(tout, 'nodejs vient de passer en version 22');
       expect(tout).not.toContain('Bravo');
-      expect(jouer(['systemctl status caisse'])).toContain('failed');
+      expect(jouer(['systemctl status till'])).toContain('failed');
       expect(c.termines).not.toContain('automatiques');
     });
   });

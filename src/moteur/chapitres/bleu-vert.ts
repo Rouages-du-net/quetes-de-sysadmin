@@ -1,13 +1,13 @@
-// Histoire « La Gazette » — chapitre « Bleu et vert » : mettre à jour le
+// Histoire « La Gazette » — chapitre « Bleu et green » : mettre à jour le
 // Kiosque (l'appli des abonnements) sans coupure. La 1.4.2 tourne sur
-// l'emplacement bleu (port 3001), que nginx sert sous /kiosque/. On installe
-// la 1.5.0 sur l'emplacement vert (port 3002), on vérifie sa santé
+// l'emplacement blue (port 3001), que nginx sert sous /kiosk/. On installe
+// la 1.5.0 sur l'emplacement green (port 3002), on vérifie sa santé
 // (/health) : il lui manque une variable de configuration, que ses notes de
-// version annoncent. Une fois vert en bonne santé, nginx bascule vers lui
-// (proxy_pass, nginx -t, reload) ; bleu reste allumé pour un retour arrière
+// version annoncent. Une fois green en bonne santé, nginx bascule vers lui
+// (proxy_pass, nginx -t, reload) ; blue reste allumé pour un retour arrière
 // instantané.
 // Objectif vérifié sur l'état : nginx (configuration chargée) envoie
-// /kiosque/ vers une instance en 1.5.0 en bonne santé, et l'autre instance
+// /kiosk/ vers une instance en 1.5.0 en bonne santé, et l'autre instance
 // tourne toujours.
 // Sources : https://martinfowler.com/bliki/BlueGreenDeployment.html,
 // https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass,
@@ -27,8 +27,8 @@ const SITE = '/etc/nginx/sites-available/gazette';
 
 const comptes = (): Comptes => {
   const c = comptesGazette();
-  c.utilisateurs.kiosque = { uid: 997, groupe: 'kiosque', maison: KIOSQUE, shell: '/usr/sbin/nologin' };
-  c.groupes.kiosque = { gid: 997, membres: [] };
+  c.utilisateurs.kiosk = { uid: 997, groupe: 'kiosk', maison: KIOSQUE, shell: '/usr/sbin/nologin' };
+  c.groupes.kiosk = { gid: 997, membres: [] };
   return c;
 };
 
@@ -45,20 +45,20 @@ const conf = (t: Jeu['t']) => `server {
     }
 
     # ${t('bleu-vert-conf-commentaire')}
-    location /kiosque/ {
+    location /kiosk/ {
         proxy_pass http://127.0.0.1:3001/;
     }
 }`;
 
 const sd = (j: Jeu) => systemd(j)!;
-const actif = (j: Jeu, couleur: string) => sd(j).services[`kiosque-${couleur}`]?.etat === 'active';
-// La couleur vers laquelle nginx envoie /kiosque/ (configuration chargée).
+const actif = (j: Jeu, couleur: string) => sd(j).services[`kiosk-${couleur}`]?.etat === 'active';
+// La couleur vers laquelle nginx envoie /kiosk/ (configuration chargée).
 const servie = (j: Jeu): string | null => {
   const config: Configuration | null = j.etat.nginx?.charge ?? null;
-  const proxy = config?.serveurs.flatMap((s) => s.locations).find((l) => l.chemin === '/kiosque/')?.proxy ?? '';
+  const proxy = config?.serveurs.flatMap((s) => s.locations).find((l) => l.chemin === '/kiosk/')?.proxy ?? '';
   return Object.keys(PORTS).find((c) => proxy.includes(`:${PORTS[c]}`)) ?? null;
 };
-const lecteursOk = (j: Jeu) => requete(j, GAZETTE, '/kiosque/', 80, false)?.code === 200;
+const lecteursOk = (j: Jeu) => requete(j, GAZETTE, '/kiosk/', 80, false)?.code === 200;
 const sortie = (j: Jeu) => [j.derniere.sortie, ...j.derniere.erreurs].join('\n');
 
 export const bleuVert: Chapitre = {
@@ -120,37 +120,37 @@ export const bleuVert: Chapitre = {
         charger: chargerNginx,
         verifierAuRechargement: true,
       },
-      'kiosque-bleu': serviceKiosque('bleu', 1501),
-      'kiosque-vert': serviceKiosque('vert', 1502, 'inactive'),
+      'kiosk-blue': serviceKiosque('blue', 1501),
+      'kiosk-green': serviceKiosque('green', 1502, 'inactive'),
     }),
     processus: [
       { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
       { pid: 604, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 801, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
       { pid: 802, utilisateur: 'www-data', cpu: 0.1, mem: 0.6, commande: 'nginx: worker process' },
-      { pid: 1501, utilisateur: 'kiosque', cpu: 0.6, mem: 3.1, commande: `node ${KIOSQUE}/bleu/serveur.js` },
+      { pid: 1501, utilisateur: 'kiosk', cpu: 0.6, mem: 3.1, commande: `node ${KIOSQUE}/blue/serveur.js` },
     ],
     nginx: { charge: null, noms: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'] },
-    applis: { '127.0.0.1:3001': appliKiosque('bleu'), '127.0.0.1:3002': appliKiosque('vert') },
+    applis: { '127.0.0.1:3001': appliKiosque('blue'), '127.0.0.1:3002': appliKiosque('green') },
   }),
   initialiser: (j) => {
     chargerNginx(j);
-    // bleu tourne depuis le démarrage de la machine : sa version et sa configuration d'alors.
-    sd(j).services['kiosque-bleu'].charger!(j);
+    // blue tourne depuis le démarrage de la machine : sa version et sa configuration d'alors.
+    sd(j).services['kiosk-blue'].charger!(j);
   },
   creerMonde: (t) => {
     const racine: Droits = { proprio: 'root' };
     const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
     const fichier = (texte: string, droits: Droits = racine) => f(texte, { lignes: true, ...droits });
-    const kiosque: Droits = { proprio: 'kiosque', groupe: 'kiosque' };
+    const kiosk: Droits = { proprio: 'kiosk', groupe: 'kiosk' };
     return lieu({
       etc: lieu({
         ...fichiersComptes(),
         hostname: fichier('gazette'),
-        kiosque: lieu({
-          'kiosque.env': fichier('KIOSQUE_BASE=postgres://kiosque@localhost/kiosque\nKIOSQUE_LISTE=lettre@gazette.example', {
+        kiosk: lieu({
+          'kiosk.env': fichier('KIOSK_BASE=postgres://kiosk@localhost/kiosk\nKIOSK_LIST=lettre@gazette.example', {
             proprio: 'root',
-            groupe: 'kiosque',
+            groupe: 'kiosk',
             mode: 'rw-r-----',
           }),
         }),
@@ -163,7 +163,7 @@ export const bleuVert: Chapitre = {
           'sites-enabled': lieu({ gazette: f('', { proprio: 'root', lien: SITE }) }),
         }),
         systemd: lieu({
-          system: lieu({ 'kiosque-bleu.service': fichier(uniteKiosque('bleu')), 'kiosque-vert.service': fichier(uniteKiosque('vert')) }),
+          system: lieu({ 'kiosk-blue.service': fichier(uniteKiosque('blue')), 'kiosk-green.service': fichier(uniteKiosque('green')) }),
         }),
       }),
       home: lieu({
@@ -176,13 +176,13 @@ export const bleuVert: Chapitre = {
           releases: lieu({ '20270524090000': lieu({ 'index.html': fichier(t('retour-arriere-site-accueil'), { proprio: 'vous' }) }) }),
           current: f('', { proprio: 'vous', lien: '/srv/gazette/releases/20270524090000' }),
         }),
-        kiosque: lieu(
+        kiosk: lieu(
           {
-            versions: lieu({ '1.4.2': dossierVersion(t, '1.4.2'), '1.5.0': dossierVersion(t, '1.5.0', 'bleu-vert-notes-150') }, kiosque),
-            bleu: f('', { ...kiosque, lien: `${KIOSQUE}/versions/1.4.2` }),
-            vert: f('', { ...kiosque, lien: `${KIOSQUE}/versions/1.4.2` }),
+            versions: lieu({ '1.4.2': dossierVersion(t, '1.4.2'), '1.5.0': dossierVersion(t, '1.5.0', 'bleu-vert-notes-150') }, kiosk),
+            blue: f('', { ...kiosk, lien: `${KIOSQUE}/versions/1.4.2` }),
+            green: f('', { ...kiosk, lien: `${KIOSQUE}/versions/1.4.2` }),
           },
-          { ...kiosque, groupe: 'redaction', mode: 'rwxrwxr-x' },
+          { ...kiosk, groupe: 'redaction', mode: 'rwxrwxr-x' },
         ),
       }),
       usr: lieu({ sbin: lieu({ nginx: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 1_342_520 }) }) }),
@@ -208,24 +208,24 @@ export const bleuVert: Chapitre = {
     {
       id: 'pas-redemarre',
       condition: (j) =>
-        actif(j, 'vert') &&
-        !!instances(j).vert &&
-        versionDuLien(j, 'vert') !== instances(j).vert.version &&
-        sortie(j).includes(`"version":"${instances(j).vert.version}"`),
+        actif(j, 'green') &&
+        !!instances(j).green &&
+        versionDuLien(j, 'green') !== instances(j).green.version &&
+        sortie(j).includes(`"version":"${instances(j).green.version}"`),
       message: (j) => j.t('bleu-vert-evenement-pas-redemarre'),
     },
     { id: 'trop-tot', condition: (j) => !lecteursOk(j), message: (j) => j.t('bleu-vert-evenement-trop-tot') },
     {
       id: 'pas-recharge',
-      condition: (j) => (j.lire(SITE) ?? '').includes('127.0.0.1:3002') && servie(j) === 'bleu' && j.derniere.commandes.some((c) => c[0] === 'curl'),
+      condition: (j) => (j.lire(SITE) ?? '').includes('127.0.0.1:3002') && servie(j) === 'blue' && j.derniere.commandes.some((c) => c[0] === 'curl'),
       message: (j) => j.t('bleu-vert-evenement-pas-recharge'),
     },
-    { id: 'plus-de-filet', condition: (j) => servie(j) === 'vert' && !actif(j, 'bleu'), message: (j) => j.t('bleu-vert-evenement-plus-de-filet') },
+    { id: 'plus-de-filet', condition: (j) => servie(j) === 'green' && !actif(j, 'blue'), message: (j) => j.t('bleu-vert-evenement-plus-de-filet') },
     {
       id: 'fin',
       condition: (j) => {
         const c = servie(j);
-        const autre = c === 'bleu' ? 'vert' : 'bleu';
+        const autre = c === 'blue' ? 'green' : 'blue';
         const s = c ? sante(j, c) : null;
         return !!c && s?.status === 'ok' && s.version === '1.5.0' && lecteursOk(j) && actif(j, autre);
       },

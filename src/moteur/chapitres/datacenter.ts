@@ -16,7 +16,7 @@ import { nouveauSystemd } from '../systemd';
 
 const M = '/home/vous';
 const ROBOT = '198.51.100.77';
-const BLOQUES = '/etc/nginx/bloques.conf';
+const BLOQUES = '/etc/nginx/blocked.conf';
 
 // Journal d'accès déterministe : des visiteurs, puis un robot qui aspire le
 // catalogue et fait tomber le service (erreurs 503).
@@ -108,7 +108,7 @@ export const comptesDatacenter = (): Comptes => ({
     vous: { gid: 1000, membres: [] },
     awa: { gid: 1001, membres: [] },
     malo: { gid: 1002, membres: [] },
-    'equipe-web': { gid: 1003, membres: ['vous', 'awa', 'malo'] },
+    'web-team': { gid: 1003, membres: ['vous', 'awa', 'malo'] },
   },
 });
 
@@ -204,8 +204,8 @@ export const datacenter: Chapitre = {
           {
             nginx: d(
               {
-                'bloques.conf': f(bloquesInitial(t), { proprio: 'root', lignes: true }),
-                'bloques.conf.bak': f(bloquesInitial(t), { proprio: 'root', lignes: true }),
+                'blocked.conf': f(bloquesInitial(t), { proprio: 'root', lignes: true }),
+                'blocked.conf.bak': f(bloquesInitial(t), { proprio: 'root', lignes: true }),
               },
               undefined,
               { proprio: 'root' },

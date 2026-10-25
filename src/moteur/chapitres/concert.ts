@@ -21,7 +21,7 @@ import { chargerNginx, requete, verifierNginx, type Appli, type Client } from '.
 import { MIME, NGINX_CONF, SITE_PAR_DEFAUT } from '../commandes/apt';
 
 const M = '/home/vous';
-const LETTRES = 'lettres.example';
+const LETTRES = 'letters.example';
 const ROBOTS = ['198.51.100.23', '198.51.100.24', '198.51.100.25'];
 const HUMAINS = ['203.0.113.41', '203.0.113.57', '192.0.2.77', '203.0.113.83', '192.0.2.140', '203.0.113.201'];
 const NAVIGATEUR = 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0';
@@ -53,7 +53,7 @@ const CONF_LETTRES = `server {
     listen [::]:80 default_server;
     server_name ${LETTRES} www.${LETTRES};
 
-    root /var/www/lettres;
+    root /var/www/letters;
     index index.html;
 
     location /agenda/ {
@@ -235,14 +235,14 @@ export const concert: Chapitre = {
           'mime.types': fichier(MIME),
           'conf.d': lieu({}),
           'modules-enabled': lieu({}),
-          'sites-available': lieu({ default: fichier(SITE_PAR_DEFAUT), lettres: fichier(CONF_LETTRES) }),
-          'sites-enabled': lieu({ lettres: f('', { proprio: 'root', lien: '/etc/nginx/sites-available/lettres' }) }),
+          'sites-available': lieu({ default: fichier(SITE_PAR_DEFAUT), letters: fichier(CONF_LETTRES) }),
+          'sites-enabled': lieu({ letters: f('', { proprio: 'root', lien: '/etc/nginx/sites-available/letters' }) }),
         }),
       }),
       home: lieu({ vous: d({ 'message_de_kofi.txt': f(t('concert-message-de-kofi')), 'aide_journaux.txt': f(t('concert-aide-journaux')) }) }),
       usr: lieu({ sbin: lieu({ nginx: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 1_342_520 }) }) }),
       var: lieu({
-        www: lieu({ lettres: lieu({ 'index.html': fichier(t('colocation-site-lettres')) }) }),
+        www: lieu({ letters: lieu({ 'index.html': fichier(t('colocation-site-lettres')) }) }),
         log: lieu({
           nginx: lieu(
             {

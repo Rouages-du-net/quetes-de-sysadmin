@@ -320,13 +320,13 @@ Awa, responsable d'exploitation, est en réunion ; ses notes guident.
 | Compter les erreurs 503 | `grep " 503 " … \| wc -l` (tube) |
 | Trouver qui envoie autant de demandes | `cut -d " " -f 1 … \| sort \| uniq -c \| sort -n \| tail -3` |
 | Voir la surcharge | `ps aux` |
-| Bloquer le robot dans un fichier de root | `echo "deny …;" \| sudo tee -a /etc/nginx/bloques.conf` (et pourquoi `sudo echo … >>` échoue) |
+| Bloquer le robot dans un fichier de root | `echo "deny …;" \| sudo tee -a /etc/nginx/blocked.conf` (et pourquoi `sudo echo … >>` échoue) |
 | Faire relire la configuration | `sudo systemctl reload nginx` |
 | Relancer le service bloqué | `sudo kill PID` (systemd le relance) |
 | Écrire le rapport | `… > rapport.txt`, `echo … >> rapport.txt` |
 
 Pièges prévus : `kill` avant de bloquer (le service repart à 99 %), `tee`
-sans `-a` ou `>` qui écrase `bloques.conf` (une sauvegarde `.bak` existe).
+sans `-a` ou `>` qui écrase `blocked.conf` (une sauvegarde `.bak` existe).
 
 ### Chapitre 2 — Deuxième jour (fait)
 
@@ -339,13 +339,13 @@ une Debian : les journaux appartiennent à `www-data`, groupe `adm`, en 640.
 |---|---|
 | Comprendre pourquoi on lit les journaux sans `sudo` | `id`, `id malo`, `groups`, `ls -l /var/log/nginx` |
 | Donner la lecture des journaux à Malo | `sudo usermod -aG adm malo` |
-| Dossier d'équipe | `sudo chgrp equipe-web /srv/equipe` puis `sudo chmod 770 /srv/equipe` (ou `chown root:equipe-web`, `chmod g+w,o-rx`) |
+| Dossier d'équipe | `sudo chgrp web-team /srv/equipe` puis `sudo chmod 770 /srv/equipe` (ou `chown root:web-team`, `chmod g+w,o-rx`) |
 
 Objectifs vérifiés sur l'état : Malo lit les deux journaux et reste dans
-`equipe-web`, les journaux restent fermés aux autres, et l'équipe (et elle
+`web-team`, les journaux restent fermés aux autres, et l'équipe (et elle
 seule) entre, lit et écrit dans `/srv/equipe`.
 
-Pièges prévus : `usermod -G` sans `-a` (Malo perd `equipe-web`),
+Pièges prévus : `usermod -G` sans `-a` (Malo perd `web-team`),
 `chmod o+r` sur les journaux (adresses IP lisibles par tous : données
 personnelles), `chmod 777` sur le partage, `chgrp` sans être propriétaire.
 Débrief : moindre privilège, `-aG`, setgid pour aller plus loin, liens vers
@@ -390,12 +390,12 @@ montées sur `/mnt/sauvegarde`, avec le plan de reprise d'Awa (`PRA.txt`).
 | Se reconnecter | `ssh datacenter` refuse (« REMOTE HOST IDENTIFICATION HAS CHANGED! ») ; comparer l'empreinte annoncée, `ssh-keygen -R datacenter.internal` (le nom écrit dans `known_hosts`), puis `yes` |
 | Installer le serveur web | `sudo apt update`, puis `sudo apt install nginx` (qui le démarre et l'active) ; `curl http://localhost` |
 | Vérifier la sauvegarde | `tar -tzf` : l'archive de cette nuit est coupée (« Fin de fichier inattendue ») ; `ls -l` montre sa taille |
-| Restaurer | `sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /` |
+| Restaurer | `sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz -C /` |
 | Recharger sans casser | `sudo nginx -t` (« a duplicate default server »), retirer `sites-enabled/default`, `sudo nginx -t`, `sudo systemctl reload nginx` |
-| Tester | `curl http://mediatheque.example` |
+| Tester | `curl http://medialibrary.example` |
 
 Objectif vérifié sur l'état : nginx tourne, démarre avec la machine, et sert
-pour `mediatheque.example` la page de la dernière sauvegarde intacte (celle
+pour `medialibrary.example` la page de la dernière sauvegarde intacte (celle
 du 22).
 
 Pièges prévus : `apt install` avant `apt update` (« Unable to locate
@@ -423,12 +423,12 @@ juin 2025, Let's Encrypt n'envoie plus de courriel avant l'expiration.
 
 | Étape | Commande apprise |
 |---|---|
-| Voir comme un visiteur | `curl https://mediatheque.example` (erreur 60), `openssl s_client -connect … \| openssl x509 -noout -dates` |
+| Voir comme un visiteur | `curl https://medialibrary.example` (erreur 60), `openssl s_client -connect … \| openssl x509 -noout -dates` |
 | Le certificat sur le disque | `sudo certbot certificates`, `openssl x509 -in … -noout -dates -subject -ext subjectAltName` |
 | Pourquoi pas renouvelé | `systemctl --failed`, `journalctl -u certbot`, `sudo certbot renew --dry-run` (le défi en 404) |
-| Le bon dossier | `cat /etc/letsencrypt/renewal/mediatheque.example.conf` ; `sudo certbot renew --webroot -w /var/www/mediatheque` |
+| Le bon dossier | `cat /etc/letsencrypt/renewal/medialibrary.example.conf` ; `sudo certbot renew --webroot -w /var/www/medialibrary` |
 | Que nginx serve le nouveau | `sudo systemctl reload nginx` (nginx lit le certificat au chargement) |
-| Que ça tienne | `sudo certbot reconfigure --cert-name mediatheque.example --deploy-hook "systemctl reload nginx"` |
+| Que ça tienne | `sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx"` |
 
 Objectif vérifié sur l'état : nginx présente un certificat valide pour les
 deux noms du site, le prochain renouvellement automatique réussirait (le
@@ -457,13 +457,13 @@ page ».
 |---|---|
 | `ping 192.168.1.1` | le réseau local marche |
 | `ping 9.9.9.9` | internet marche |
-| `ping lettres.example` | « Temporary failure in name resolution » : le DNS |
-| `dig lettres.example`, `cat /etc/resolv.conf` | l'ordinateur interroge l'ancienne box, disparue |
-| `dig @9.9.9.9 lettres.example` | le nom existe bien |
+| `ping letters.example` | « Temporary failure in name resolution » : le DNS |
+| `dig letters.example`, `cat /etc/resolv.conf` | l'ordinateur interroge l'ancienne box, disparue |
+| `dig @9.9.9.9 letters.example` | le nom existe bien |
 | `sudo cp /etc/resolv.conf.box /etc/resolv.conf` | DNS réparé |
-| `ping lettres.example` | 100 % de pertes… |
-| `traceroute lettres.example` | box, opérateur, point d'échange, hébergeur, puis silence |
-| `curl -I https://lettres.example` | `HTTP/2 200` : le serveur ignorait juste le ping |
+| `ping letters.example` | 100 % de pertes… |
+| `traceroute letters.example` | box, opérateur, point d'échange, hébergeur, puis silence |
+| `curl -I https://letters.example` | `HTTP/2 200` : le serveur ignorait juste le ping |
 
 ## Histoire 4 : La Machine à remonter le temps (faite)
 
@@ -518,7 +518,7 @@ liens vers la documentation de restic.
 ## Histoire 6 : Les Lettres du quartier (huit chapitres)
 
 L'association de Kofi (vue dans Le Paquet perdu) loue un petit serveur pour
-son site, `lettres.example` (machine `lettres`, même adresse que dans Le
+son site, `letters.example` (machine `lettres`, même adresse que dans Le
 Paquet perdu). L'hébergeur l'a livré avec la configuration par défaut :
 connexion root et mots de passe acceptés.
 
@@ -616,19 +616,19 @@ explique pourquoi c'est une mauvaise idée). Autre solution acceptée :
 Le café associatif (celui du Paquet perdu) emménage sur le serveur des
 Lettres : deux sites sur une machine. Et l'agenda des ateliers de Rania, un
 petit programme Node.js qui n'écoute que sur `127.0.0.1:3000`, doit
-s'afficher sous `http://lettres.example/agenda/`.
+s'afficher sous `http://letters.example/agenda/`.
 
 | Étape | Commande apprise |
 |---|---|
 | Voir comment un site est activé | `ls -l /etc/nginx/sites-enabled` (un lien symbolique) |
-| Créer le site du café | `sudo cp sites-available/lettres sites-available/cafe`, `sudo nano …` (server_name, root, sans default_server) |
+| Créer le site du café | `sudo cp sites-available/letters sites-available/cafe`, `sudo nano …` (server_name, root, sans default_server) |
 | L'activer | `sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/` |
 | Tester avant le DNS | `curl -H "Host: cafe.example" http://127.0.0.1` |
 | Publier l'agenda | `location /agenda/ { proxy_pass http://127.0.0.1:3000/; }`, `sudo nginx -t`, `sudo systemctl reload nginx` |
 | Comprendre un 502 | `sudo tail /var/log/nginx/error.log`, `sudo systemctl enable --now agenda` |
 
 Objectif vérifié sur l'état : nginx sert la page du café pour
-`cafe.example`, celle des Lettres pour `lettres.example`, l'agenda sous
+`cafe.example`, celle des Lettres pour `letters.example`, l'agenda sous
 `/agenda/` et `/agenda/semaine`, et le service `agenda` démarrera avec la
 machine.
 
@@ -650,13 +650,13 @@ Kofi a « fait pointer » cafe.example vers le serveur… dans le `/etc/hosts`
 de son propre ordinateur. Chez lui, le site du café marche ; ailleurs, le
 nom mène à l'ancien hébergeur, et `www.cafe.example` n'existe pas. Le
 serveur des Lettres fait autorité pour la zone (BIND, `named`) ; le registre
-en garde une copie (`ns2.registre.example`). Le DNS simulé est dans
+en garde une copie (`ns2.registry.example`). Le DNS simulé est dans
 `src/moteur/dns.ts`.
 
 | Étape | Commande apprise |
 |---|---|
 | Voir ce que voient les autres | `dig cafe.example` (résolveur public, ancienne adresse, TTL qui décroît) |
-| Interroger les serveurs qui font autorité | `dig @localhost cafe.example`, `dig @ns2.registre.example cafe.example SOA +short` |
+| Interroger les serveurs qui font autorité | `dig @localhost cafe.example`, `dig @ns2.registry.example cafe.example SOA +short` |
 | Corriger la zone | `sudo nano /etc/bind/zones/db.cafe.example` : l'adresse, `www IN CNAME cafe.example.`, le serial |
 | Vérifier, recharger | `named-checkzone cafe.example …`, `sudo rndc reload`, `journalctl -u named` |
 
@@ -714,7 +714,7 @@ ufw, le `~/.ssh/config` du poste), et une sentinelle à prévenir.
 |---|---|
 | Comprendre | `journalctl -u ssh`, `sudo ufw status`, `sudo nft list ruleset` (les règles que ufw et fail2ban écrivent) |
 | Écouter sur les deux ports | `Port 22` et `Port 2222` dans `sshd_config`, `sudo sshd -t`, `sudo ufw allow 2222/tcp`, `sudo systemctl reload ssh`, `sudo ss -tlnp` |
-| Tester depuis le poste | `Port 2222` dans `~/.ssh/config` (ou `ssh -p 2222`) ; la clé d'hôte est notée `[lettres.example]:2222` dans `known_hosts` |
+| Tester depuis le poste | `Port 2222` dans `~/.ssh/config` (ou `ssh -p 2222`) ; la clé d'hôte est notée `[letters.example]:2222` dans `known_hosts` |
 | Fermer l'ancienne porte | retirer `Port 22`, `sudo ufw delete allow OpenSSH` |
 | La sentinelle | `[sshd]` puis `port = 2222` dans `jail.local`, `sudo systemctl reload fail2ban`, `sudo nft list table inet f2b-table` |
 
@@ -780,7 +780,7 @@ sortie, et il y a 37 prêts en cours à ne pas perdre.
 | Voir ce qui tourne | `sudo docker ps -a`, `docker logs`, `curl http://localhost:8080` (et `docker` sans `sudo` : le socket refuse) |
 | Savoir où sont les données | `sudo docker inspect -f '{{json .Mounts}}' outiltheque`, `docker exec outiltheque ls -l /var/lib/outiltheque` |
 | Mettre la base à l'abri | `sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde` |
-| Le nouveau conteneur | `docker stop outiltheque`, `docker run -d --name … -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque --restart unless-stopped registre.example/outiltheque:1.5` |
+| Le nouveau conteneur | `docker stop outiltheque`, `docker run -d --name … -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque --restart unless-stopped registry.example/outiltheque:1.5` |
 | Remettre la base | `docker cp sauvegarde/. conteneur:/var/lib/outiltheque`, `docker restart` (la base migre), `docker logs` |
 
 Objectif vérifié sur l'état : un conteneur de la version 1.5 tourne, publie
@@ -949,12 +949,12 @@ Le Kiosque (abonnements à la lettre, Node.js) tourne sur l'emplacement bleu
 
 | Étape | Commande apprise |
 |---|---|
-| La nouvelle version à côté | `ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert`, `sudo systemctl start kiosque-vert` |
-| Vérifier sa santé | `curl -s localhost:3002/health` (503), `cat …/NOTES.txt`, la variable dans `/etc/kiosque/kiosque.env`, `systemctl restart` |
+| La nouvelle version à côté | `ln -sfn /srv/kiosk/versions/1.5.0 /srv/kiosk/vert`, `sudo systemctl start kiosk-vert` |
+| Vérifier sa santé | `curl -s localhost:3002/health` (503), `cat …/NOTES.txt`, la variable dans `/etc/kiosk/kiosk.env`, `systemctl restart` |
 | Basculer | `proxy_pass http://127.0.0.1:3002/;`, `sudo nginx -t`, `sudo systemctl reload nginx` |
 
 Objectif vérifié sur l'état : nginx (configuration chargée) envoie
-`/kiosque/` vers une instance 1.5.0 en bonne santé, et l'autre instance
+`/kiosk/` vers une instance 1.5.0 en bonne santé, et l'autre instance
 tourne toujours. Pièges prévus : changer le lien sans redémarrer, basculer
 avant `/health`, oublier le `reload`, arrêter bleu tout de suite.
 
@@ -964,11 +964,11 @@ La 1.6.0 passe `/health` mais plante sur `/archives`. Vert sert la 1.5.0.
 
 | Étape | Commande apprise |
 |---|---|
-| Le canari | `upstream kiosque { server 127.0.0.1:3002 weight=9; server 127.0.0.1:3001 weight=1; }`, `proxy_pass http://kiosque/;`, reload |
+| Le canari | `upstream kiosk { server 127.0.0.1:3002 weight=9; server 127.0.0.1:3001 weight=1; }`, `proxy_pass http://kiosk/;`, reload |
 | Regarder | `awk '{print $9}' access.log \| sort \| uniq -c`, `grep " 500 "`, `curl localhost:3001/archives` |
 | Arrêter, recommencer | `down`, reload ; la 1.6.1 publiée ; nouveau canari ; puis tout vers bleu |
 
-Objectif vérifié sur l'état : tout `/kiosque/` va à la 1.6.1 en bonne
+Objectif vérifié sur l'état : tout `/kiosk/` va à la 1.6.1 en bonne
 santé, après un canari de la 1.6.1 sans erreur, vert toujours allumé.
 Pièges prévus : tout basculer d'un coup sur la 1.6.0 (toutes les visites
 d'archives en 500), un « canari » à 50 %.
@@ -981,9 +981,9 @@ la base (schéma 3 → 4). Elle ne marche pas (variable renommée), et bleu
 
 | Étape | Commande apprise |
 |---|---|
-| Comprendre | `curl localhost:3002/health`, `curl localhost:3001/health`, `sudo journalctl -u kiosque-vert` (la migration), les notes de version |
-| Réparer en avant | `KIOSQUE_SMTP_URL=…` dans `kiosque.env`, `systemctl restart kiosque-vert` |
-| Refaire le filet | `ln -sfn …/2.0.0 /srv/kiosque/bleu`, `systemctl restart kiosque-bleu` |
+| Comprendre | `curl localhost:3002/health`, `curl localhost:3001/health`, `sudo journalctl -u kiosk-vert` (la migration), les notes de version |
+| Réparer en avant | `KIOSK_SMTP_URL=…` dans `kiosk.env`, `systemctl restart kiosk-vert` |
+| Refaire le filet | `ln -sfn …/2.0.0 /srv/kiosk/bleu`, `systemctl restart kiosk-bleu` |
 
 Objectif vérifié sur l'état : nginx sert une instance 2.x en bonne santé, et
 l'autre instance tourne aussi en 2.x en bonne santé. Piège prévu : revenir
@@ -1065,22 +1065,22 @@ supervision qui prévient avant que ça casse. Phase 7 de la feuille de route.
 ### Chapitre 1 — Le disque plein (fait)
 
 2 h 47 : l'enregistrement de nuit échoue, « No space left on device ». Le
-relais du flux (`radio-flux`) écrit son journal en mode debug depuis trois
+relais du flux (`radio-stream`) écrit son journal en mode debug depuis trois
 jours (16 Go).
 
 | Étape | Commande apprise |
 |---|---|
 | Trouver | `df -h`, `sudo du -sh /var/log/*`, `tail` (des lignes DEBUG) |
 | Le piège | `rm` d'un fichier encore ouvert : `df` reste plein, `sudo lsof +L1` montre `(deleted)` |
-| Vider | `sudo truncate -s 0 /var/log/radio/flux.log` (ou redémarrer le relais) |
-| Corriger | `loglevel = info` dans `/etc/radio/flux.conf`, `systemctl restart radio-flux` |
+| Vider | `sudo truncate -s 0 /var/log/radio/stream.log` (ou redémarrer le relais) |
+| Corriger | `loglevel = info` dans `/etc/radio/stream.conf`, `systemctl restart radio-stream` |
 | Éviter | `/etc/logrotate.d/radio` (`rotate`, `daily`, `copytruncate` ou `postrotate … systemctl reload`), `logrotate -d` |
 
 Objectif vérifié sur l'état : le disque est sous 80 %, aucun fichier effacé
 n'est encore tenu ouvert, le relais tourne sans debug, et une configuration
 logrotate valable couvre son journal et sait le faire rouvrir. Pièges
 prévus : `rm` d'un fichier ouvert, une rotation qui renomme sans faire
-rouvrir (le relais écrit dans `flux.log.1`), une directive mal écrite.
+rouvrir (le relais écrit dans `stream.log.1`), une directive mal écrite.
 
 ### Chapitre 2 — La mémoire (fait)
 
@@ -1137,7 +1137,7 @@ vise le serveur NTP de l'ancien hébergeur.
 |---|---|
 | Comprendre | `date` (UTC), `timedatectl` (fuseau, `synchronized: no`, `NTP service: inactive`), `sudo crontab -u radio -l`, le journal de l'enregistrement |
 | Le fuseau | `timedatectl list-timezones`, `sudo timedatectl set-timezone Europe/Paris` |
-| NTP | `sudo timedatectl set-ntp true` ; `journalctl -u systemd-timesyncd` (pas de réponse) ; `NTP=ntp.hebergeur.example` dans `/etc/systemd/timesyncd.conf`, `systemctl restart systemd-timesyncd`, `timedatectl timesync-status` |
+| NTP | `sudo timedatectl set-ntp true` ; `journalctl -u systemd-timesyncd` (pas de réponse) ; `NTP=ntp.hosting.example` dans `/etc/systemd/timesyncd.conf`, `systemctl restart systemd-timesyncd`, `timedatectl timesync-status` |
 | cron | `sudo systemctl restart cron` (il lit le fuseau au démarrage) |
 
 Objectif vérifié sur l'état : fuseau Europe/Paris, horloge synchronisée
@@ -1149,7 +1149,7 @@ cron pas redémarré.
 ### Chapitre 5 — La sonde (fait)
 
 Après quatre nuits à réparer après coup, Zoé veut être prévenue avant que
-ça casse. Sa sonde (`/usr/local/bin/sonde`) lance des plugins de
+ça casse. Sa sonde (`/usr/local/bin/probe`) lance des plugins de
 supervision et envoie par courrier ce qui n'est pas OK ; elle ne regarde
 que le disque système, et rien ne la lance. Puis Zoé organise un exercice :
 la nuit suivante, deux pannes (le relais qui tombe à 1 h 10, un import qui
@@ -1159,7 +1159,7 @@ la nuit suivante, deux pannes (le relais qui tombe à 1 h 10, un import qui
 |---|---|
 | Les plugins | `/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio`, `check_http -H localhost -p 8000 -u /direct`, `check_procs -C flux -c 1:` (hors du PATH) |
 | L'alerte | `… \| grep -v " OK" \| mail -E -s Alerte-radio root`, `/etc/aliases`, `/var/mail/zoe` |
-| Planifier | `sonde.service` (`Type=oneshot`) et `sonde.timer` (`OnCalendar=*:0/5`, `WantedBy=timers.target`), `systemd-analyze calendar`, `systemctl daemon-reload`, `enable --now`, `list-timers` (ou une ligne de crontab) |
+| Planifier | `probe.service` (`Type=oneshot`) et `probe.timer` (`OnCalendar=*:0/5`, `WantedBy=timers.target`), `systemd-analyze calendar`, `systemctl daemon-reload`, `enable --now`, `list-timers` (ou une ligne de crontab) |
 | Vérifier | la nuit d'exercice, `journalctl -u sonde` |
 
 Objectif vérifié sur l'état, après la nuit simulée (qui se rejoue à chaque
@@ -1176,17 +1176,17 @@ Dimanche nuit, Théo était d'astreinte : le direct a coupé 45 minutes. Ses
 notes sont approximatives ; les faits sont dans les journaux. La mise à
 jour automatique (unattended-upgrades, needrestart) a relancé le relais à
 2 h 13, qui n'a pas pu repartir : une option inconnue attendait dans
-`flux.conf` depuis le 20 août, jamais appliquée.
+`stream.conf` depuis le 20 août, jamais appliquée.
 
 | Étape | Commande apprise |
 |---|---|
 | Les faits | `journalctl --since "2027-09-12 02:00" --until "…"`, `last`, `/var/log/apt/history.log`, `/var/log/unattended-upgrades/`, `/var/mail/theo` |
-| L'origine | `journalctl \| grep flux.conf` (la commande `sudo nano` du 20 août) |
+| L'origine | `journalctl \| grep stream.conf` (la commande `sudo nano` du 20 août) |
 | Écrire | `nano postmortem.md` : résumé, chronologie, impact, causes, ce qui a marché, actions |
 
 Objectif vérifié sur l'état du fichier : plus de « (à compléter) », la
 chronologie avec 2 h 13, 2 h 15 et 2 h 58, l'impact (45 minutes), le
-déclencheur et la cause (`flux.conf`, depuis le 20 août), au moins deux
+déclencheur et la cause (`stream.conf`, depuis le 20 août), au moins deux
 actions, et aucun mot qui cherche un coupable (liste dans le fichier de
 textes). Zoé relit à chaque enregistrement et dit ce qui manque.
 
@@ -1309,10 +1309,10 @@ la queue. Il ne faut pas arrêter l'archivage : les émissions du jour doivent
 
 | Étape | Commande apprise |
 |---|---|
-| Comprendre | `top` (`wa`, la charge), `iostat -x` (`%util`, `r_await`), `sudo pidstat -d` (qui), `journalctl -u radio-flux` |
+| Comprendre | `top` (`wa`, la charge), `iostat -x` (`%util`, `r_await`), `sudo pidstat -d` (qui), `journalctl -u radio-stream` |
 | Le faux remède | `sudo ionice -c 3 -p 2190` (rien ne change), `cat /sys/block/vda/queue/scheduler` (`[none]`) |
 | Limiter | `sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M"` (ou `systemctl edit` et `daemon-reload`) |
-| Vérifier | `iostat -x` (l'attente retombe), `journalctl -u radio-flux` |
+| Vérifier | `iostat -x` (l'attente retombe), `journalctl -u radio-stream` |
 
 Objectif vérifié sur l'état : le relais du direct est servi à temps,
 l'archivage tourne toujours, et sa limite (enregistrée dans `/etc`) vise le
@@ -1408,13 +1408,13 @@ et telnet, qui font passer les mots de passe en clair.
 Le nouveau site de la Maison est prêt sur le wiki (`/srv/wiki/site`) ; il est
 publié chez un hébergeur mutualisé qui ne propose que FTP, et refuse
 désormais le FTP en clair. Gaspard publiait avec FileZilla, sans chiffrement,
-sur `ftp.maison.example` (un nom qui pointe chez l'hébergeur, mais que son
+sur `ftp.community.example` (un nom qui pointe chez l'hébergeur, mais que son
 certificat ne couvre pas).
 
 | Étape | Commande apprise |
 |---|---|
 | Rapatrier | depuis le poste, `sftp wiki` : `cd /srv/wiki`, `ls`, `get -r site`, `lls`, `bye` |
-| Se connecter | `lftp -u maisonasso ftp.hebergeur.example` (le mot de passe demandé, FTPS par défaut) |
+| Se connecter | `lftp -u maisonasso ftp.hosting.example` (le mot de passe demandé, FTPS par défaut) |
 | Publier | `mirror -R --delete --dry-run site public_html`, puis sans `--dry-run` |
 
 Objectif vérifié sur l'état : `public_html` contient exactement le site du
@@ -1455,32 +1455,32 @@ contient), la tâche dans sa propre crontab.
 
 | Étape | Commande apprise |
 |---|---|
-| Le dossier | `chgrp -R caisse`, `chmod -R g+w`, `chmod g+s` (ou `2775`), `ls -ld` |
+| Le dossier | `chgrp -R till`, `chmod -R g+w`, `chmod g+s` (ou `2775`), `ls -ld` |
 | Le masque | `umask`, `umask 002` dans `~/.profile` de Lina et Karim (ou `/etc/profile.d`) |
-| sudo | `which systemctl`, `sudo visudo -f /etc/sudoers.d/caisse` : `%caisse ALL=(root) /usr/bin/systemctl restart caisse`, `sudo -l -U lina`, `visudo -c` |
+| sudo | `which systemctl`, `sudo visudo -f /etc/sudoers.d/till` : `%till ALL=(root) /usr/bin/systemctl restart till`, `sudo -l -U lina`, `visudo -c` |
 
-Objectif vérifié sur l'état : le dossier (groupe caisse, écriture du
+Objectif vérifié sur l'état : le dossier (groupe till, écriture du
 groupe, setgid), les fichiers existants, le masque des deux comptes, et ce
 que la politique de sudo permet (relancer la caisse) et refuse (un shell,
 arrêter ssh), sans erreur. Pièges prévus : une commande sans chemin
-(visudo refuse et demande « Et maintenant ? »), un fichier `caisse.conf`
+(visudo refuse et demande « Et maintenant ? »), un fichier `till.conf`
 (ignoré), une règle `ALL`, `systemctl` sans arguments, une faute écrite
 avec nano (sudo refuse tout).
 
 ### Chapitre 3 — Le secret (fait)
 
 La clé de paiement traîne sur internet : le site est servi depuis le
-dossier de l'appli (`root /srv/caisse/app`), avec son `.env` et son `.git`.
+dossier de l'appli (`root /srv/till/app`), avec son `.env` et son `.git`.
 
 | Étape | Commande apprise |
 |---|---|
-| Constater | `curl http://cooperative.example/.env`, `sudo grep '\.env' /var/log/nginx/access.log` |
+| Constater | `curl http://coop.example/.env`, `sudo grep '\.env' /var/log/nginx/access.log` |
 | Fermer | `location ~ /\. { deny all; }` (ou des droits que www-data ne peut pas lire), `nginx -t`, `reload` |
 | Bloquer | `deny 203.0.113.77;` |
-| Changer la clé | `.env`, puis `systemctl restart caisse` (l'appli ne relit son `.env` qu'au démarrage), `curl 127.0.0.1:3000/health` |
+| Changer la clé | `.env`, puis `systemctl restart till` (l'appli ne relit son `.env` qu'au démarrage), `curl 127.0.0.1:3000/health` |
 
 Objectif vérifié par des requêtes au nginx simulé : `/.env` et
-`/.git/config` ne sont plus servis, `/` et `/caisse/` répondent, l'adresse
+`/.git/config` ne sont plus servis, `/` et `/till/` répondent, l'adresse
 fautive reçoit 403, et l'appli a chargé la nouvelle clé. Pièges prévus :
 bloquer seulement `/.env` (le jeton de `.git/config` sort encore), un
 `deny all` qui ferme tout le site, la clé écrite sans relancer l'appli.
@@ -1493,9 +1493,9 @@ derrière nginx, a verrouillé tout le monde.
 
 | Étape | Commande apprise |
 |---|---|
-| Comprendre | comparer `/var/log/caisse/app.log` (127.0.0.1) et `access.log` (198.51.100.66) |
+| Comprendre | comparer `/var/log/till/app.log` (127.0.0.1) et `access.log` (198.51.100.66) |
 | nginx | `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` (ou `$remote_addr`) |
-| L'appli | `TRUST_PROXY=loopback` dans `.env` (ou l'adresse de nginx), `systemctl restart caisse` |
+| L'appli | `TRUST_PROXY=loopback` dans `.env` (ou l'adresse de nginx), `systemctl restart till` |
 
 À chaque rechargement de nginx ou démarrage de l'appli, le jeu rejoue cinq
 minutes de trafic (le robot, avec un faux `X-Forwarded-For` à chaque essai,
@@ -1515,7 +1515,7 @@ coupe une fois, au milieu de la mise à jour.
 | Voir | `uname -r`, `sudo apt update`, `apt list --upgradable` |
 | Mettre à jour | `tmux new -s maj`, `sudo apt upgrade` ; après la coupure : `tmux ls`, `tmux attach -t maj` (sans tmux : `sudo dpkg --configure -a`) |
 | Redémarrer | `cat /var/run/reboot-required.pkgs`, `sudo reboot`, `uname -r` |
-| Vérifier | `systemctl --failed`, `systemctl status caisse`, `sudo systemctl enable --now caisse` |
+| Vérifier | `systemctl --failed`, `systemctl status till`, `sudo systemctl enable --now till` |
 
 Objectif vérifié sur l'état : plus de mise à jour en attente, dpkg
 propre, le nouveau noyau tourne, nginx et la caisse actifs, la caisse
@@ -1585,7 +1585,7 @@ sait que demander son adresse en DHCP, mais doit garder `10.10.30.10`.
 | Étape | Commande apprise |
 |---|---|
 | Voir | `journalctl -u dnsmasq`, `/var/lib/misc/dnsmasq.leases` |
-| Configurer | `/etc/dnsmasq.d/ruche` : `interface=eth1.10,…` (ou `eth1*`), une `dhcp-range` par VLAN, `dhcp-host=MAC,imprimante,10.10.30.10` |
+| Configurer | `/etc/dnsmasq.d/hive` : `interface=eth1.10,…` (ou `eth1*`), une `dhcp-range` par VLAN, `dhcp-host=MAC,imprimante,10.10.30.10` |
 | Appliquer | `dnsmasq --test`, `systemctl restart dnsmasq`, `ping imprimante` |
 
 Objectif vérifié sur l'état : chaque appareil en DHCP a une adresse dans
@@ -1627,14 +1627,14 @@ jetées), la chaîne `input` qui ferme ssh, une faute dans le fichier
 Malik veut ouvrir le NAS depuis chez lui ; on lui propose « d'ouvrir le port
 445 sur la box ». À la place : un VPN WireGuard sur le routeur. Le portable
 de Malik a déjà ses clés (sa clé publique est dans le courriel) ; son
-fichier `portable-malik.conf` attend la partie `[Peer]` (le routeur). Le
+fichier `malik-laptop.conf` attend la partie `[Peer]` (le routeur). Le
 pare-feu des zones est en place, avec une chaîne `input` fermée par défaut.
 
 | Étape | Commande apprise |
 |---|---|
 | Les clés | `umask 077`, `wg genkey \| tee privatekey \| wg pubkey > publickey` |
 | Le routeur | `/etc/wireguard/wg0.conf` : `[Interface]` (`Address`, `ListenPort`, `PrivateKey`), `[Peer]` (`PublicKey`, `AllowedIPs = 10.10.99.2/32`) ; `wg-quick up wg0`, `wg show` (`latest handshake`) |
-| Le portable | `PublicKey` du routeur, `Endpoint = ruche.example:51820`, `AllowedIPs = 10.10.10.0/24` |
+| Le portable | `PublicKey` du routeur, `Endpoint = hive.example:51820`, `AllowedIPs = 10.10.10.0/24` |
 | Le pare-feu | `udp dport 51820 accept` (input), `iifname "wg0" oifname "eth1.10" accept` (forward), dans `/etc/nftables.conf` |
 | Faire durer | `systemctl enable --now wg-quick@wg0` |
 
@@ -1676,7 +1676,7 @@ la main (perdu au redémarrage).
 
 La Ruche ouvre un second lieu, l'Annexe (réseau 10.20.10.0/24, routeur
 derrière la box de son fournisseur). Sami, bénévole là-bas, a créé ses clés
-et préparé `annexe-wg0.conf` ; le routeur de l'Annexe devient un pair de plus
+et préparé `annex-wg0.conf` ; le routeur de l'Annexe devient un pair de plus
 sur le `wg0` du télétravail.
 
 | Étape | Commande apprise |
@@ -1697,7 +1697,7 @@ caméras), `wg-quick up` sur une interface déjà montée.
 ### Chapitre 7 — L'annuaire (fait)
 
 Les comptes de l'équipe sont dans un annuaire OpenLDAP installé par Sacha sur
-le routeur (`dc=laruche,dc=example`). Avant le Wi-Fi des bureaux, qui
+le routeur (`dc=thehive,dc=example`). Avant le Wi-Fi des bureaux, qui
 s'appuiera dessus, il faut le remettre à jour : Camille est partie, Sami
 (l'Annexe) arrive.
 

@@ -339,7 +339,7 @@ export const wifi: Chapitre = {
       maison: {
         'courriel_malik.txt': f(t('wifi-courriel-malik')),
         'borne-bureaux.txt': f(t('wifi-borne', { secret: SECRET_BORNE, adresse: BORNE }), { lignes: true }),
-        'portable-malik.conf': f(PORTABLE_MALIK, { lignes: true }),
+        'malik-laptop.conf': f(PORTABLE_MALIK, { lignes: true }),
       },
     }),
   evenements: [

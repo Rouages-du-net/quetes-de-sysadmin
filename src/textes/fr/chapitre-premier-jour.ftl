@@ -71,10 +71,10 @@ premier-jour-notes-awa =
     commande, avec sudo devant. Et history montre tout ce que tu as tapé.
 
     Le serveur web (nginx) bloque les adresses listées dans
-    /etc/nginx/bloques.conf, au format : deny ADRESSE;
+    /etc/nginx/blocked.conf, au format : deny ADRESSE;
     Ce fichier appartient à root. Après l'avoir modifié, il faut demander à
     nginx de le relire : sudo systemctl reload nginx
-# Commentaire en tête de /etc/nginx/bloques.conf (après « # »)
+# Commentaire en tête de /etc/nginx/blocked.conf (après « # »)
 premier-jour-bloques-commentaire = Adresses bloquées par nginx (une règle par ligne)
 # Description du service, affichée par « systemctl status catalogue »
 premier-jour-service-catalogue = Catalogue en ligne de la médiathèque (php-fpm)
@@ -84,7 +84,7 @@ premier-jour-service-catalogue = Catalogue en ligne de la médiathèque (php-fpm
 premier-jour-relance-calme = systemd relance le service catalogue : nouveau processus { $pid }. Le robot étant bloqué, il reste calme.
 premier-jour-relance-robot = systemd relance aussitôt le service catalogue : nouveau processus { $pid }… et le robot recommence. Il est déjà à 99 % !
 
-## Événements ({ $robot } : adresse IP du robot ; { $bloques } : chemin de bloques.conf)
+## Événements ({ $robot } : adresse IP du robot ; { $bloques } : chemin de blocked.conf)
 
 # Coups de pouce, quand on part sur une piste trop longue (sans donner la commande).
 premier-jour-evenement-tout-lire =
@@ -119,7 +119,7 @@ premier-jour-evenement-robot =
 premier-jour-evenement-surcharge =
     Le processus 4242 (php-fpm: pool catalogue) utilise 99 % du processeur.
     Tu pourrais l'arrêter avec kill… mais si le robot continue, il retombera
-    aussitôt. Bloque d'abord le robot dans /etc/nginx/bloques.conf.
+    aussitôt. Bloque d'abord le robot dans /etc/nginx/blocked.conf.
 
     Ce fichier appartient à root, et  sudo echo … >> fichier  ne marche pas :
     la redirection >> est faite par TON shell, pas par sudo. L'astuce
@@ -127,10 +127,10 @@ premier-jour-evenement-surcharge =
 
       echo "deny { $robot };" | sudo tee -a { $bloques }
 premier-jour-evenement-ecrase =
-    Oups ! Les anciennes règles de bloques.conf ont disparu : le fichier a été
+    Oups ! Les anciennes règles de blocked.conf ont disparu : le fichier a été
     ÉCRASÉ (> ou tee sans -a) au lieu d'être complété (>> ou tee -a). Pas de
     panique : une copie de sauvegarde existe. Restaure-la avec
-    sudo cp /etc/nginx/bloques.conf.bak { $bloques }, puis recommence avec -a.
+    sudo cp /etc/nginx/blocked.conf.bak { $bloques }, puis recommence avec -a.
 premier-jour-evenement-regle = La règle est écrite. Mais nginx ne relit pas son fichier tout seul : sudo systemctl reload nginx
 premier-jour-evenement-bloque =
     nginx a relu sa configuration : { $robot } reçoit maintenant « 403 Forbidden »

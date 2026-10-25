@@ -56,7 +56,7 @@ const comptes = (): Comptes => ({
 // Le compose.yaml de la fin du chapitre 2… plus le port de la base, ajouté par Yasmine.
 const COMPOSE = `services:
   appli:
-    image: registre.example/reservations:2.1
+    image: registry.example/reservations:2.1
     ports:
       - "8081:3000"
     environment:
@@ -94,14 +94,14 @@ const image = (depot: string, tag: string, appli: string, port: number, commande
 
 function etatDocker(): EtatDocker {
   const liste = [
-    image('registre.example/outiltheque', '1.4', 'outiltheque', 8080, '/usr/local/bin/outiltheque serve', 148_200_000, 140),
-    image('registre.example/outiltheque', '1.5', 'outiltheque', 8080, '/usr/local/bin/outiltheque serve', 151_600_000, 23),
-    image('registre.example/reservations', '2.0', 'reservations', 3000, 'docker-entrypoint.sh node serveur.js', 205_100_000, 40),
-    image('registre.example/reservations', '2.1', 'reservations', 3000, 'docker-entrypoint.sh node serveur.js', 212_400_000, 16),
+    image('registry.example/outiltheque', '1.4', 'outiltheque', 8080, '/usr/local/bin/outiltheque serve', 148_200_000, 140),
+    image('registry.example/outiltheque', '1.5', 'outiltheque', 8080, '/usr/local/bin/outiltheque serve', 151_600_000, 23),
+    image('registry.example/reservations', '2.0', 'reservations', 3000, 'docker-entrypoint.sh node serveur.js', 205_100_000, 40),
+    image('registry.example/reservations', '2.1', 'reservations', 3000, 'docker-entrypoint.sh node serveur.js', 212_400_000, 16),
     image('postgres', '16', 'postgres', 5432, 'docker-entrypoint.sh postgres', 431_700_000, 60),
     image('postgres', '17', 'postgres', 5432, 'docker-entrypoint.sh postgres', 438_900_000, 22),
     // L'essai d'un modèle d'IA en local, oublié là.
-    image('registre.example/ia-locale', 'latest', 'aucune', 8000, 'python -m serveur', 9_600_000_000, 31),
+    image('registry.example/ia-locale', 'latest', 'aucune', 8000, 'python -m serveur', 9_600_000_000, 31),
     image('node', '22', 'aucune', 0, 'docker-entrypoint.sh node', 1_120_000_000, 45),
     ...[0, 1, 2].map((k) => image('<none>', '<none>', 'aucune', 0, '', 410_000_000 + k * 7_000_000, 50 + k * 9)),
   ];
@@ -240,7 +240,7 @@ export const contournement: Chapitre = {
     const outil = conteneur(
       j,
       'outiltheque',
-      'registre.example/outiltheque:1.5',
+      'registry.example/outiltheque:1.5',
       [{ ip: '0.0.0.0', hote: 8080, conteneur: 8080 }],
       'outiltheque-donnees',
       'unless-stopped',
@@ -249,7 +249,7 @@ export const contournement: Chapitre = {
     const ancien = conteneur(
       j,
       'outiltheque-ancien',
-      'registre.example/outiltheque:1.4',
+      'registry.example/outiltheque:1.4',
       [{ ip: '0.0.0.0', hote: 8080, conteneur: 8080 }],
       null,
       'no',

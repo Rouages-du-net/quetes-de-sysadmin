@@ -42,7 +42,7 @@ pleins-pouvoirs-mot-de-rania =
       ps aux
     Puis le manuel : man docker et man docker-compose. »
 pleins-pouvoirs-lisezmoi =
-    Galerie 3.2 — LISEZMOI (fourni avec l'image registre.example/galerie)
+    Galerie 3.2 — LISEZMOI (fourni avec l'image registry.example/galerie)
 
     Les photos vivent dans /app/photos : montez-y un dossier ou un volume.
     Au démarrage, la galerie refait l'index de ses miniatures dans

@@ -681,7 +681,7 @@ for (const largeur of [1000, 375]) {
   await page.clock.runFor(60_000);
   verifier((await jeu.locator('.jauge-astreinte').textContent()).includes('29:00'), `astreinte ${largeur} px : le budget fond avec le temps`);
   const L = '/var/log/nginx/access.log';
-  for (const l of ['commande-inconnue', 'sudo kill 4242', 'bienvenue-2026', 'echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/bloques.conf', 'sudo systemctl reload nginx', 'sudo kill 4244', `grep " 503 " ${L} | wc -l > ~/rapport.txt`, 'echo "Coupable : 198.51.100.77" >> rapport.txt']) {
+  for (const l of ['commande-inconnue', 'sudo kill 4242', 'bienvenue-2026', 'echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf', 'sudo systemctl reload nginx', 'sudo kill 4244', `grep " 503 " ${L} | wc -l > ~/rapport.txt`, 'echo "Coupable : 198.51.100.77" >> rapport.txt']) {
     await jeu.locator('form input').fill(l);
     await jeu.locator('form input').press('Enter');
   }

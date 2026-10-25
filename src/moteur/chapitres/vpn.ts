@@ -5,7 +5,7 @@
 //     la clé privée lisible par tous (umask 077) ;
 //   - /etc/wireguard/wg0.conf : [Interface] (Address, ListenPort, PrivateKey)
 //     et un [Peer] pour le portable de Malik (sa clé publique, AllowedIPs) ;
-//   - compléter portable-malik.conf : la clé publique du routeur, Endpoint,
+//   - compléter malik-laptop.conf : la clé publique du routeur, Endpoint,
 //     AllowedIPs (le réseau des bureaux) ;
 //   - ouvrir le port UDP dans la chaîne input, et wg0 → bureaux dans forward ;
 //   - wg-quick up wg0, puis systemctl enable wg-quick@wg0.
@@ -43,9 +43,9 @@ import {
 // La clé privée du portable de Malik (l'exemple de la documentation de WireGuard) : elle ne quitte jamais le portable.
 const CLE_MALIK = 'yAnz5TF+lXXJte14tji3zlMNq+hd2rYUIgJBgB3fBmk=';
 export const PUBLIQUE_MALIK = publique(CLE_MALIK)!;
-const PORTABLE = `${M}/portable-malik.conf`;
+const PORTABLE = `${M}/malik-laptop.conf`;
 
-export const MALIK: Distant = { nom: 'portable-malik', adresse: '198.51.100.23', cle: PUBLIQUE_MALIK, conf: PORTABLE, vers: '10.10.10.5', port: 445 };
+export const MALIK: Distant = { nom: 'malik-laptop', adresse: '198.51.100.23', cle: PUBLIQUE_MALIK, conf: PORTABLE, vers: '10.10.10.5', port: 445 };
 
 const publicDe = (j: Jeu) => publicDu(j as Shell);
 const maintenant = (j: Jeu) => etatTunnel(j, MALIK, publicDe(j));
@@ -154,7 +154,7 @@ export const vpn: Chapitre = {
       etc: { wireguard: d({}, undefined, { proprio: 'root', mode: 'rwx------' }) },
       maison: {
         'courriel_malik.txt': f(t('vpn-courriel-malik', { cle: PUBLIQUE_MALIK })),
-        'portable-malik.conf': f(t('vpn-portable-malik'), { lignes: true }),
+        'malik-laptop.conf': f(t('vpn-portable-malik'), { lignes: true }),
       },
     }),
   evenements: [

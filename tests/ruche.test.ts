@@ -106,7 +106,7 @@ for (const langue of LANGUES)
       expect(c.termines).not.toContain('vlan');
     });
 
-    const RUCHE = '/etc/dnsmasq.d/ruche';
+    const RUCHE = '/etc/dnsmasq.d/hive';
     const PLAGES = 'dhcp-range=10.10.10.100,10.10.10.200,12h\ndhcp-range=10.10.20.100,10.10.20.250,2h\ndhcp-range=10.10.30.100,10.10.30.200,24h\n';
     const RESERVATION = 'dhcp-host=00:00:5e:00:53:30,imprimante,10.10.30.10\n';
 
@@ -180,9 +180,9 @@ table ip nat {
       expect(tout).toContain('SYSCTL.D(5)');
       expect(tout).toContain('net.ipv4.ip_forward = 0');
       expect(tout).toContain('1 flow entries have been shown.');
-      editer('sudo nano /etc/sysctl.d/90-routeur.conf', () => 'net.ipv4.ip_forward = 1\n');
+      editer('sudo nano /etc/sysctl.d/90-router.conf', () => 'net.ipv4.ip_forward = 1\n');
       tout = jouer(['sudo sysctl --system']);
-      expect(tout).toContain('* Applying /etc/sysctl.d/90-routeur.conf ...');
+      expect(tout).toContain('* Applying /etc/sysctl.d/90-router.conf ...');
       expect(tout).toContain('net.ipv4.ip_forward = 1');
       editer('sudo nano /etc/nftables.conf', () => NFTABLES);
       tout = jouer([
@@ -279,7 +279,7 @@ table ip nat {
       publique: () => c.shell.lire(L('/home/vous/publickey'))!.trim(),
     });
     const PORTABLE =
-      (pub: string, endpoint = 'ruche.example:51820') =>
+      (pub: string, endpoint = 'hive.example:51820') =>
       (t: string) =>
         t
           .replace('PublicKey =', `PublicKey = ${pub}`)
@@ -293,11 +293,11 @@ table ip nat {
     it('chapitre 4 — solution : umask 077, wg0.conf, le portable, le pare-feu, wg-quick@wg0', () => {
       const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones']);
       const k = clesDe(c);
-      let tout = jouer(['cat portable-malik.conf', 'umask 077', 'wg genkey | tee privatekey | wg pubkey > publickey', 'ls -l']);
+      let tout = jouer(['cat malik-laptop.conf', 'umask 077', 'wg genkey | tee privatekey | wg pubkey > publickey', 'ls -l']);
       const moi = L('vous');
       expect(tout).toContain(`-rw------- ${moi.padEnd(8)} ${moi.padEnd(8)} ${'44'.padStart(6)} privatekey`);
       editer('sudo nano /etc/wireguard/wg0.conf', () => WG0(k.privee()) + PEER_MALIK(k.malik));
-      editer('nano portable-malik.conf', PORTABLE(k.publique()));
+      editer('nano malik-laptop.conf', PORTABLE(k.publique()));
       editer('sudo nano /etc/nftables.conf', PARE_FEU);
       tout = jouer([
         'sudo nft -c -f /etc/nftables.conf',
@@ -325,7 +325,7 @@ table ip nat {
       tout = editer('sudo nano /etc/wireguard/wg0.conf', () => WG0(k.privee()) + PEER_MALIK(k.malik));
       contient(tout, 'comptes de la machine peuvent le lire');
       // Les clés croisées : la clé PRIVÉE du routeur donnée au portable.
-      editer('nano portable-malik.conf', PORTABLE(k.privee()));
+      editer('nano malik-laptop.conf', PORTABLE(k.privee()));
       tout = jouer(['sudo wg-quick up wg0']);
       expect(tout).toContain('[#] ip link set mtu 1420 up dev wg0');
       // Porte fermée d'abord : la chaîne input jette l'UDP.
@@ -334,7 +334,7 @@ table ip nat {
       tout = jouer(['sudo wg show wg0']);
       expect(tout).not.toContain('latest handshake');
       editer(
-        'nano portable-malik.conf',
+        'nano malik-laptop.conf',
         () =>
           '[Interface]\nAddress = 10.10.99.2/32\n\n[Peer]\n' +
           `PublicKey = ${k.publique()}\nEndpoint = 192.0.2.21:51820\nAllowedIPs = 10.10.10.5/32\n`,
@@ -434,7 +434,7 @@ table ip nat {
       (t: string) =>
         t
           .replace('PublicKey =', `PublicKey = ${pub}`)
-          .replace('Endpoint =', 'Endpoint = ruche.example:51820')
+          .replace('Endpoint =', 'Endpoint = hive.example:51820')
           .replace('AllowedIPs =', `AllowedIPs = ${autorisees}${keepalive ? '\nPersistentKeepalive = 25' : ''}`);
 
     it('chapitre 6 — solution : un pair pour le site, ses AllowedIPs, PersistentKeepalive', () => {
@@ -442,7 +442,7 @@ table ip nat {
       let tout = jouer(['sudo wg show']);
       const pub = tout.match(/public key: (\S+)/)![1];
       editer('sudo nano /etc/wireguard/wg0.conf', PAIR_ANNEXE(cleAnnexe(c)));
-      editer('nano annexe-wg0.conf', CONF_ANNEXE(pub));
+      editer('nano annex-wg0.conf', CONF_ANNEXE(pub));
       tout = jouer(['sudo systemctl restart wg-quick@wg0', 'ip route', 'sudo wg show', 'ping -c 1 10.20.10.20']);
       expect(tout).toContain('10.20.10.0/24 dev wg0 scope link');
       expect(tout).toContain('allowed ips: 10.10.99.3/32, 10.20.10.0/24');
@@ -456,7 +456,7 @@ table ip nat {
       const pub = jouer(['sudo wg show']).match(/public key: (\S+)/)![1];
       let tout = editer('sudo nano /etc/wireguard/wg0.conf', PAIR_ANNEXE(cleAnnexe(c), '10.10.99.3/32'));
       contient(tout, 'ne relit pas le fichier');
-      editer('nano annexe-wg0.conf', CONF_ANNEXE(pub, '10.10.10.0/24', false));
+      editer('nano annex-wg0.conf', CONF_ANNEXE(pub, '10.10.10.0/24', false));
       tout = jouer(['sudo systemctl restart wg-quick@wg0']);
       contient(tout, 'tout son réseau');
       editer('sudo nano /etc/wireguard/wg0.conf', (t) => t.replace('AllowedIPs = 10.10.99.3/32', 'AllowedIPs = 10.10.99.3/32, 10.20.10.0/24'));
@@ -465,16 +465,16 @@ table ip nat {
       expect(tout).toContain('1 packets transmitted, 0 received, 100% packet loss');
       contient(tout, 'PersistentKeepalive');
       // Tout ouvert : tout La Ruche dans le tunnel côté Annexe, et forward qui laisse tout passer depuis wg0.
-      editer('nano annexe-wg0.conf', (t) => t.replace('AllowedIPs = 10.10.10.0/24', 'AllowedIPs = 10.10.0.0/16'));
+      editer('nano annex-wg0.conf', (t) => t.replace('AllowedIPs = 10.10.10.0/24', 'AllowedIPs = 10.10.0.0/16'));
       tout = jouer(['sudo nft add rule inet filter forward iifname wg0 accept']);
       contient(tout, 'les caméras de La Ruche');
       expect(c.termines).not.toContain('annexe');
       jouer(['sudo systemctl restart nftables']);
-      editer('nano annexe-wg0.conf', (t) => t + '\nPersistentKeepalive = 25\n');
+      editer('nano annex-wg0.conf', (t) => t + '\nPersistentKeepalive = 25\n');
       expect(c.termines).toContain('annexe');
     });
 
-    const B = 'dc=laruche,dc=example';
+    const B = 'dc=thehive,dc=example';
     const ADMIN = `-x -D cn=admin,${B} -w rayon-de-miel`;
     const SAMI = (motDePasse: string, numero = '10004') =>
       `dn: uid=sami,ou=people,${B}\nobjectClass: inetOrgPerson\nobjectClass: posixAccount\nuid: sami\ncn: Sami Lemaire\nsn: Lemaire\ngivenName: Sami\nuidNumber: ${numero}\ngidNumber: 10000\nhomeDirectory: /home/sami\nloginShell: /bin/bash\nuserPassword: ${motDePasse}\n`;
@@ -487,7 +487,7 @@ table ip nat {
         'ldapsearch -x -LLL "(memberUid=camille)" dn',
         'ldapsearch -x -LLL "(objectClass=posixAccount)" uidNumber',
       ]);
-      expect(tout).toContain('dn: cn=bureaux,ou=groups,dc=laruche,dc=example');
+      expect(tout).toContain('dn: cn=bureaux,ou=groups,dc=thehive,dc=example');
       expect(tout).toContain('uidNumber: 10003');
       expect(tout).not.toContain('userPassword: {SSHA}');
       tout = jouer([`ldapdelete ${ADMIN} uid=camille,ou=people,${B}`, 'slappasswd -s choisi-par-sami']);
@@ -558,10 +558,10 @@ table ip nat {
     const CLIENT_BORNE = (t: string) => t + '\n\nclient bornes {\n\tipaddr = 10.10.30.0/24\n\tsecret = Rk7-borne-2028\n}\n';
     const MODULE = (t: string) =>
       t
-        .replace("base_dn = 'dc=example,dc=org'", "base_dn = 'dc=laruche,dc=example'")
+        .replace("base_dn = 'dc=example,dc=org'", "base_dn = 'dc=thehive,dc=example'")
         .replace(
           "#\tidentity = 'cn=admin,dc=example,dc=org'\n#\tpassword = mypass",
-          "\tidentity = 'cn=admin,dc=laruche,dc=example'\n\tpassword = rayon-de-miel",
+          "\tidentity = 'cn=admin,dc=thehive,dc=example'\n\tpassword = rayon-de-miel",
         )
         .replace('#\t\tmembership_filter', '\t\tmembership_filter');
     const VLAN = (id: number) => `\tTunnel-Type = VLAN,\n\tTunnel-Medium-Type = IEEE-802,\n\tTunnel-Private-Group-Id = ${id}\n`;

@@ -34,7 +34,7 @@ export const MACHINES: Machine[] = [
   machine('fourmiliere', '192.0.2.12', 'paquet'),
   machine('manuscrit', '192.0.2.13', 'temps'),
   machine('bibliotheque', '192.0.2.14', 'archives'),
-  // Le serveur des Lettres du quartier : la même adresse que lettres.example
+  // Le serveur des Lettres du quartier : la même adresse que letters.example
   // dans Le Paquet perdu.
   machine('lettres', '203.0.113.10', 'lettres'),
   machine('fabrique', '192.0.2.15', 'fabrique'),

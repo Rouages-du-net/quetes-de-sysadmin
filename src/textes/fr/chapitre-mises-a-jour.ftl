@@ -47,7 +47,7 @@ mises-a-jour-evenement-a-jour =
     /var/run/reboot-required.pkgs : il faut redémarrer (avant 10 h !).
 mises-a-jour-evenement-caisse-tombee =
     Le serveur a redémarré sur le nouveau noyau… mais la caisse ne répond plus.
-    systemctl status caisse : « disabled ». Marc la lançait à la main, son
+    systemctl status till : « disabled ». Marc la lançait à la main, son
     service n'a jamais été activé au démarrage (man systemctl : enable).
 mises-a-jour-evenement-fin =
     Les correctifs sont installés, le nouveau noyau tourne, et le site comme

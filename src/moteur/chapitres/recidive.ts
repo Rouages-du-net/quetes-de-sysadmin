@@ -145,7 +145,7 @@ const ERREURS = (() => {
       const heure = `2026/11/11 ${String(20 + (Math.floor(s / 60) % 4)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}:${String((i * 17) % 60).padStart(2, '0')}`;
       const exces = (10 + ((i * 37 + k * 11) % 900) / 1000).toFixed(3);
       lignes.push(
-        `${heure} [error] 702#702: *${n++} limiting requests, excess: ${exces} by zone "agenda", client: ${ip}, server: lettres.example, request: "GET /agenda/ HTTP/1.1", host: "lettres.example"`,
+        `${heure} [error] 702#702: *${n++} limiting requests, excess: ${exces} by zone "agenda", client: ${ip}, server: letters.example, request: "GET /agenda/ HTTP/1.1", host: "letters.example"`,
       );
     }
   });

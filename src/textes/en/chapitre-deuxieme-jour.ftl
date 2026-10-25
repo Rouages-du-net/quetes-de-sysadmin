@@ -1,7 +1,7 @@
 ### Story "The Data Centre", chapter "Second day": accounts and
 ### groups. Malo must read the nginx logs without sudo (adm group), and
 ### the web team needs a shared directory (/srv/team).
-### Account and group names (malo, adm, equipe-web), commands,
+### Account and group names (malo, adm, web-team), commands,
 ### paths and modes (640, 770) are not translated.
 
 chapitre-deuxieme-jour = Second day
@@ -23,7 +23,7 @@ deuxieme-jour-courriel-awa =
        without sudo… why? Compare  id  and  id malo , and look at
        the permissions with  ls -l /var/log/nginx
 
-    2. The web team (the equipe-web group) needs a shared directory,
+    2. The web team (the web-team group) needs a shared directory,
        /srv/team, where everyone can drop their reports. No other
        account on the machine must be able to read or write there,
        especially not www-data: the site runs under that account, and if
@@ -55,7 +55,7 @@ deuxieme-jour-notes-awa =
 ## Events
 
 deuxieme-jour-evenement-remplace =
-    Ouch: Malo is no longer in the equipe-web group!
+    Ouch: Malo is no longer in the web-team group!
 
     Without the -a option, usermod -G REPLACES the list of secondary groups
     instead of adding the new one to it. It's a classic trap, which has

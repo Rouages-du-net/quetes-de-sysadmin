@@ -2,7 +2,7 @@
 // virtuels et reverse proxy avec nginx. Le café associatif veut son site,
 // cafe.example, sur le serveur des Lettres ; et l'agenda des ateliers de
 // Rania (un petit programme Node.js qui écoute sur 127.0.0.1:3000) doit
-// être publié sous http://lettres.example/agenda/.
+// être publié sous http://letters.example/agenda/.
 // Commandes : cp, nano, ln -s (sites-available → sites-enabled, comme
 // Debian), nginx -t, systemctl reload, curl -H "Host: …", proxy_pass,
 // /var/log/nginx/error.log, systemctl enable --now.
@@ -20,7 +20,7 @@ import { chargerNginx, requete, verifierNginx, type Appli } from '../nginx';
 import { BIENVENUE, MIME, NGINX_CONF, SITE_PAR_DEFAUT } from '../commandes/apt';
 
 const M = '/home/vous';
-const LETTRES = 'lettres.example';
+const LETTRES = 'letters.example';
 const CAFE = 'cafe.example';
 
 const comptes = (): Comptes => ({
@@ -48,7 +48,7 @@ const CONF_LETTRES = `server {
     listen [::]:80 default_server;
     server_name ${LETTRES} www.${LETTRES};
 
-    root /var/www/lettres;
+    root /var/www/letters;
     index index.html;
 
     location / {
@@ -161,9 +161,9 @@ export const colocation: Chapitre = {
           'mime.types': fichier(MIME),
           'conf.d': lieu({}),
           'modules-enabled': lieu({}),
-          'sites-available': lieu({ default: fichier(SITE_PAR_DEFAUT), lettres: fichier(CONF_LETTRES) }),
+          'sites-available': lieu({ default: fichier(SITE_PAR_DEFAUT), letters: fichier(CONF_LETTRES) }),
           // Comme sur Debian : un site activé est un lien vers sites-available.
-          'sites-enabled': lieu({ lettres: f('', { proprio: 'root', lien: '/etc/nginx/sites-available/lettres' }) }),
+          'sites-enabled': lieu({ letters: f('', { proprio: 'root', lien: '/etc/nginx/sites-available/letters' }) }),
         }),
       }),
       home: lieu({
@@ -183,7 +183,7 @@ export const colocation: Chapitre = {
       var: lieu({
         www: lieu({
           html: lieu({ 'index.nginx-debian.html': fichier(BIENVENUE) }),
-          lettres: lieu({ 'index.html': fichier(t('colocation-site-lettres')) }),
+          letters: lieu({ 'index.html': fichier(t('colocation-site-lettres')) }),
           // Rania a déjà déposé les pages du café.
           cafe: lieu({ 'index.html': fichier(t('colocation-site-cafe'), { proprio: 'rania' }) }, { proprio: 'rania' }),
         }),

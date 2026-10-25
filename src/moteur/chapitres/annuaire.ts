@@ -40,7 +40,7 @@ import {
   planRuche,
 } from './ruche';
 
-export const BASE = 'dc=laruche,dc=example';
+export const BASE = 'dc=thehive,dc=example';
 export const ADMIN = `cn=admin,${BASE}`;
 export const MDP_ADMIN = 'rayon-de-miel';
 export const BUREAUX = `cn=bureaux,ou=groups,${BASE}`;
@@ -53,7 +53,7 @@ const personne = (uid: string, prenom: string, nom: string, numero: number, mdp:
     cn: [`${prenom} ${nom}`],
     sn: [nom],
     givenname: [prenom],
-    mail: [`${uid}@laruche.example`],
+    mail: [`${uid}@thehive.example`],
     uidnumber: [String(numero)],
     gidnumber: ['10000'],
     homedirectory: [`/home/${uid}`],
@@ -68,7 +68,7 @@ export function annuaireDeDepart(): Annuaire {
     base: BASE,
     admin: ADMIN,
     entrees: [
-      { dn: BASE, attrs: { objectclass: ['top', 'dcObject', 'organization'], o: ['La Ruche'], dc: ['laruche'] } },
+      { dn: BASE, attrs: { objectclass: ['top', 'dcObject', 'organization'], o: ['La Ruche'], dc: ['thehive'] } },
       { dn: `ou=people,${BASE}`, attrs: { objectclass: ['organizationalUnit'], ou: ['people'] } },
       { dn: `ou=groups,${BASE}`, attrs: { objectclass: ['organizationalUnit'], ou: ['groups'] } },
       personne('malik', 'Malik', 'Ferrand', 10001, 'ruche-malik-2027', 'Ab12Cd34'),
@@ -103,7 +103,7 @@ uid: ines
 cn: Ines Morel
 sn: Morel
 givenName: Ines
-mail: ines@laruche.example
+mail: ines@thehive.example
 uidNumber: 10002
 gidNumber: 10000
 homeDirectory: /home/ines
@@ -233,7 +233,7 @@ export const annuaireChapitre: Chapitre = {
       maison: {
         'courriel_malik.txt': f(t('annuaire-courriel-malik', { admin: ADMIN, motdepasse: MDP_ADMIN })),
         'modele-ines.ldif': f(MODELE_INES, { lignes: true }),
-        'portable-malik.conf': f(PORTABLE_MALIK, { lignes: true }),
+        'malik-laptop.conf': f(PORTABLE_MALIK, { lignes: true }),
       },
     }),
   evenements: [

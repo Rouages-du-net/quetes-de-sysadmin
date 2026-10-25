@@ -12,7 +12,7 @@ memoire-message-de-zoe =
     Un message de Zoé (4 h 25) :
 
     « Encore moi… Depuis 4 h 12, le direct ne diffuse plus que du silence.
-    Le relais tourne (systemctl status radio-flux), mais la playlist
+    Le relais tourne (systemctl status radio-stream), mais la playlist
     automatique de la nuit (le service radio-playlist) a l'air morte. Je
     n'ai rien touché, promis.
 

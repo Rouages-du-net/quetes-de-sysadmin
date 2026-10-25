@@ -12,7 +12,7 @@ goulot-message-de-zoe =
 
     "It's happening again! Every day, around 4 pm, the live stream has
     gaps: half-second silences, several per minute. Listeners are
-    writing to us. The relay (radio-flux) is running, its journal
+    writing to us. The relay (radio-stream) is running, its journal
     mentions "read stall".
 
     I looked at top: the machine seems overloaded, but the processor is

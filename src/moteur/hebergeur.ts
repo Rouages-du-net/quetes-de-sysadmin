@@ -1,7 +1,7 @@
 // Un hébergement mutualisé, sur internet : un serveur FTP (Pure-FTPd, comme
 // sur cPanel) qui n'accepte plus que les connexions chiffrées (FTPS
 // explicite : AUTH TLS sur le port 21), avec un certificat au nom de
-// l'hébergeur (*.hebergeur.example), un compte, et son dossier (public_html :
+// l'hébergeur (*.hosting.example), un compte, et son dossier (public_html :
 // le site publié). lftp s'y connecte (commandes/lftp.ts).
 // L'état d'un hébergement vit sur le poste (etat.hebergements), créé à la
 // première connexion depuis sa définition, que déclare l'histoire qui s'en
@@ -17,7 +17,7 @@ export interface DefHebergement {
   // Les noms qui mènent au serveur (le nom de l'hébergeur, et ceux des clients qui pointent dessus).
   noms: string[];
   adresse: string;
-  // Les noms couverts par son certificat (*.hebergeur.example).
+  // Les noms couverts par son certificat (*.hosting.example).
   certificat: string[];
   comptes: Record<string, string>;
   // Le dossier de chaque compte, au départ.

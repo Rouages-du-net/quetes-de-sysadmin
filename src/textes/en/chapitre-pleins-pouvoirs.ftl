@@ -42,7 +42,7 @@ pleins-pouvoirs-mot-de-rania =
       ps aux
     Then the manual: man docker and man docker-compose."
 pleins-pouvoirs-lisezmoi =
-    Galerie 3.2 — README (shipped with the image registre.example/galerie)
+    Galerie 3.2 — README (shipped with the image registry.example/galerie)
 
     The photos live in /app/photos: mount a directory or a volume there.
     At startup, the gallery rebuilds its thumbnail index in

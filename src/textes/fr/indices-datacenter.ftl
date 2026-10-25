@@ -15,8 +15,8 @@ indice-premier-jour-surcharge =
     .piste = Le site est lent : un processus doit dévorer le processeur. Une commande liste tous les processus de la machine, avec leur %CPU.
     .solution = ps aux (regarde la colonne %CPU : php-fpm: pool catalogue est à 99 %).
 indice-premier-jour-regle =
-    .piste = Bloque le robot dans /etc/nginx/bloques.conf, au format deny ADRESSE; sans effacer les règles déjà là. Le fichier appartient à root, et une redirection >> est faite par ton shell, pas par sudo : tee sait écrire à sa place.
-    .solution = echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/bloques.conf (-a ajoute à la fin au lieu d'écraser).
+    .piste = Bloque le robot dans /etc/nginx/blocked.conf, au format deny ADRESSE; sans effacer les règles déjà là. Le fichier appartient à root, et une redirection >> est faite par ton shell, pas par sudo : tee sait écrire à sa place.
+    .solution = echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf (-a ajoute à la fin au lieu d'écraser).
 indice-premier-jour-bloque =
     .piste = nginx ne relit pas son fichier tout seul : il faut le lui demander, par le gestionnaire de services.
     .solution = sudo systemctl reload nginx
@@ -33,11 +33,11 @@ indice-deuxieme-jour-malo-lit =
     .piste = ls -l /var/log/nginx montre à quel groupe appartiennent les journaux, et ce que ce groupe peut faire. Ajoute Malo à ce groupe, sans le retirer des siens (man usermod : attention à -G sans -a). Ne donne pas la lecture à tout le monde.
     .solution = sudo usermod -aG adm malo (-a ajoute le groupe, sans remplacer ses autres groupes ; vérifie avec groups malo).
 indice-deuxieme-jour-partage =
-    .piste = /srv/equipe appartient à root. Donne-le au groupe equipe-web, puis des droits pour le groupe et aucun pour les autres (man chgrp, man chmod). Pas de 777 !
-    .solution = sudo chgrp equipe-web /srv/equipe puis sudo chmod 770 /srv/equipe (le groupe lit, écrit, entre ; les autres rien).
+    .piste = /srv/equipe appartient à root. Donne-le au groupe web-team, puis des droits pour le groupe et aucun pour les autres (man chgrp, man chmod). Pas de 777 !
+    .solution = sudo chgrp web-team /srv/equipe puis sudo chmod 770 /srv/equipe (le groupe lit, écrit, entre ; les autres rien).
 indice-deuxieme-jour-fin =
-    .piste = Vérifie les deux missions : Malo lit les journaux (sans qu'ils soient ouverts à tous) et reste dans equipe-web ; le dossier partagé est fermé aux autres comptes.
-    .solution = groups malo doit montrer adm et equipe-web (sinon : sudo usermod -aG equipe-web malo) ; les journaux en 640 (sudo chmod 640 /var/log/nginx/access.log /var/log/nginx/error.log) ; /srv/equipe en 770.
+    .piste = Vérifie les deux missions : Malo lit les journaux (sans qu'ils soient ouverts à tous) et reste dans web-team ; le dossier partagé est fermé aux autres comptes.
+    .solution = groups malo doit montrer adm et web-team (sinon : sudo usermod -aG web-team malo) ; les journaux en 640 (sudo chmod 640 /var/log/nginx/access.log /var/log/nginx/error.log) ; /srv/equipe en 770.
 
 ## Chapitre 3 — La nuit du redémarrage
 
@@ -58,16 +58,16 @@ indice-incendie-nginx =
     .solution = sudo apt update, puis sudo apt install nginx (curl http://localhost montre la page de bienvenue).
 indice-incendie-fin =
     .piste = Suis le PRA (/mnt/sauvegarde/PRA.txt) : vérifie chaque archive en la listant (tar -t) avant de l'extraire, prends la plus récente qui se lit jusqu'au bout, extrais-la depuis la racine (man tar, -C). Puis nginx -t : deux sites ne peuvent pas être default_server sur le même port.
-    .solution = sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /, puis sudo rm /etc/nginx/sites-enabled/default, sudo nginx -t, sudo systemctl reload nginx, et curl http://mediatheque.example
+    .solution = sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz -C /, puis sudo rm /etc/nginx/sites-enabled/default, sudo nginx -t, sudo systemctl reload nginx, et curl http://medialibrary.example
 
 ## Chapitre 5 — Le certificat a expiré
 
 indice-certificat-expire =
     .piste = Commence par constater la panne : demande le site en HTTPS, ou demande à certbot l'état de ses certificats.
-    .solution = curl https://mediatheque.example (ou sudo certbot certificates : INVALID: EXPIRED).
+    .solution = curl https://medialibrary.example (ou sudo certbot certificates : INVALID: EXPIRED).
 indice-certificat-defi =
     .piste = Pourquoi le renouvellement automatique a-t-il échoué ? Rejoue-le sans rien casser : man certbot parle d'une répétition générale.
     .solution = sudo certbot renew --dry-run (et journalctl -u certbot pour le journal des nuits précédentes).
 indice-certificat-fin =
-    .piste = certbot dépose le défi dans le dossier de /etc/letsencrypt/renewal/mediatheque.example.conf, mais nginx sert le site depuis /var/www/mediatheque. Corrige le dossier, renouvelle pour de vrai, recharge nginx, et fais-le recharger tout seul après chaque renouvellement (cherche « hook » dans man certbot).
-    .solution = sudo certbot renew --webroot -w /var/www/mediatheque, puis sudo certbot reconfigure --cert-name mediatheque.example --deploy-hook "systemctl reload nginx", puis sudo systemctl reload nginx
+    .piste = certbot dépose le défi dans le dossier de /etc/letsencrypt/renewal/medialibrary.example.conf, mais nginx sert le site depuis /var/www/medialibrary. Corrige le dossier, renouvelle pour de vrai, recharge nginx, et fais-le recharger tout seul après chaque renouvellement (cherche « hook » dans man certbot).
+    .solution = sudo certbot renew --webroot -w /var/www/medialibrary, puis sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx", puis sudo systemctl reload nginx

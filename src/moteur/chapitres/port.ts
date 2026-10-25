@@ -251,7 +251,7 @@ export const port: Chapitre = {
             ssh: d(
               {
                 sshd_config: f(SSHD_CONFIG, { lignes: true, proprio: 'root' }),
-                'sshd_config.d': d({ '00-durcissement.conf': f(DURCISSEMENT, { lignes: true, proprio: 'root' }) }, undefined, racine),
+                'sshd_config.d': d({ '00-hardening.conf': f(DURCISSEMENT, { lignes: true, proprio: 'root' }) }, undefined, racine),
               },
               undefined,
               racine,

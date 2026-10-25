@@ -1,7 +1,7 @@
 ### Histoire « Le Datacenter », chapitre « Deuxième jour » : comptes et
 ### groupes. Malo doit lire les journaux nginx sans sudo (groupe adm), et
 ### l'équipe web a besoin d'un dossier partagé (/srv/equipe).
-### Les noms de comptes et de groupes (malo, adm, equipe-web), les commandes,
+### Les noms de comptes et de groupes (malo, adm, web-team), les commandes,
 ### les chemins et les modes (640, 770) ne se traduisent pas.
 
 chapitre-deuxieme-jour = Deuxième jour
@@ -23,7 +23,7 @@ deuxieme-jour-courriel-awa =
        les lis sans sudo… pourquoi ? Compare  id  et  id malo , et regarde
        les droits avec  ls -l /var/log/nginx
 
-    2. L'équipe web (le groupe equipe-web) a besoin d'un dossier partagé,
+    2. L'équipe web (le groupe web-team) a besoin d'un dossier partagé,
        /srv/equipe, où chacun·e peut déposer ses rapports. Aucun autre compte
        de la machine ne doit pouvoir y lire ou y écrire, surtout pas
        www-data : c'est sous ce compte que tourne le site, et si un jour il
@@ -55,7 +55,7 @@ deuxieme-jour-notes-awa =
 ## Événements
 
 deuxieme-jour-evenement-remplace =
-    Aïe : Malo n'est plus dans le groupe equipe-web !
+    Aïe : Malo n'est plus dans le groupe web-team !
 
     Sans l'option -a, usermod -G REMPLACE la liste des groupes secondaires
     au lieu d'y ajouter le nouveau. C'est un piège classique, qui a déjà

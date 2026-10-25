@@ -34,12 +34,12 @@ incendie-pra =
     À suivre si le serveur est perdu : on repart d'une machine neuve.
 
     Sauvegardé chaque nuit à 0 h 30, dans un autre datacenter :
-      /etc/nginx/sites-available/mediatheque   le site, pour nginx
-      /etc/nginx/sites-enabled/mediatheque     le même, activé
-      /etc/nginx/bloques.conf                  les adresses bloquées
-      /var/www/mediatheque/                    les pages
+      /etc/nginx/sites-available/medialibrary   le site, pour nginx
+      /etc/nginx/sites-enabled/medialibrary     le même, activé
+      /etc/nginx/blocked.conf                  les adresses bloquées
+      /var/www/medialibrary/                    les pages
 
-    Une archive par nuit : /mnt/sauvegarde/mediatheque-AAAA-MM-JJ.tar.gz
+    Une archive par nuit : /mnt/sauvegarde/medialibrary-AAAA-MM-JJ.tar.gz
 
     Les chemins y sont enregistrés depuis la racine, sans le / du début.
 
@@ -135,7 +135,7 @@ incendie-evenement-mercredi =
     vacances, qu'Awa a ajoutés mercredi après-midi. Cette archive n'est pas
     la plus récente qui soit intacte.
 incendie-evenement-fin =
-    curl http://mediatheque.example répond : la médiathèque est de nouveau en
+    curl http://medialibrary.example répond : la médiathèque est de nouveau en
     ligne, sur une machine qui n'existait pas hier soir.
 
     Awa : « Merci. On a perdu la journée de jeudi : l'annonce de la rencontre

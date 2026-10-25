@@ -28,7 +28,7 @@ rapport-courriel-nadia =
     Et merci de vérifier chaque correction : Salomé reviendra contrôler.
 
 rapport-rapport-audit =
-    RAPPORT D'AUDIT — Le Fournil (fournil.example)
+    RAPPORT D'AUDIT — Le Fournil (bakery.example)
     Auditrice : Salomé, indépendante
     Périmètre : le serveur fournil (192.0.2.22)
     Méthode : revue des comptes et de la configuration, balayage des ports

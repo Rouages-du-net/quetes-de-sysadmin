@@ -199,7 +199,7 @@ for (const langue of LANGUES)
           'kill 4242',
           'sudo kill 4242',
           'bienvenue-2026',
-          `echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/bloques.conf`,
+          `echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf`,
           'sudo systemctl reload nginx',
           'ps aux',
           'sudo kill 4244',
@@ -241,19 +241,19 @@ for (const langue of LANGUES)
           'sudo usermod -G adm malo',
           'bienvenue-2026',
           'groups malo',
-          'sudo usermod -aG equipe-web malo',
+          'sudo usermod -aG web-team malo',
           'sudo chmod o+r /var/log/nginx/access.log',
           'sudo chmod 640 /var/log/nginx/access.log',
-          'chgrp equipe-web /srv/equipe',
+          'chgrp web-team /srv/equipe',
           'sudo chmod 777 /srv/equipe',
-          'sudo chgrp equipe-web /srv/equipe',
+          'sudo chgrp web-team /srv/equipe',
           'sudo chmod 770 /srv/equipe',
         ]);
-        contient(tout, 'uid=1000(vous) gid=1000(vous) groupes=1000(vous),4(adm),27(sudo),1003(equipe-web)');
+        contient(tout, 'uid=1000(vous) gid=1000(vous) groupes=1000(vous),4(adm),27(sudo),1003(web-team)');
         contient(tout, '-rw-r----- www-data adm');
         contient(tout, 'usermod : Permission non accordée.');
         contient(tout, 'malo : malo adm');
-        contient(tout, 'Malo n’est plus dans le groupe equipe-web'.replace('’', "'"));
+        contient(tout, 'Malo n’est plus dans le groupe web-team'.replace('’', "'"));
         contient(tout, 'TOUS les comptes de la machine peuvent lire');
         contient(tout, "chgrp : modification du groupe de '/srv/equipe' : Opération non permise");
         contient(tout, 'n’importe quel compte'.replace('’', "'"));
@@ -265,7 +265,7 @@ for (const langue of LANGUES)
         const { s } = jouer('deuxieme-jour', [
           'sudo usermod -aG adm malo',
           'bienvenue-2026',
-          'sudo chown root:equipe-web /srv/equipe',
+          'sudo chown root:web-team /srv/equipe',
           'sudo chmod g+w,o-rx /srv/equipe',
         ]);
         expect(s.termine).toBe(true);
@@ -337,20 +337,20 @@ for (const langue of LANGUES)
           'y',
           'curl http://localhost',
           // Fausse piste : l'archive de cette nuit a été coupée par le feu.
-          'tar -tzf /mnt/sauvegarde/mediatheque-2026-10-23.tar.gz',
-          'tar -tzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
-          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /',
+          'tar -tzf /mnt/sauvegarde/medialibrary-2026-10-23.tar.gz',
+          'tar -tzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz',
+          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz -C /',
           // Fausse piste : deux sites « default_server » sur le port 80.
           'sudo nginx -t',
           'sudo systemctl reload nginx',
           'sudo rm /etc/nginx/sites-enabled/default',
           'sudo nginx -t',
           'sudo systemctl reload nginx',
-          'curl http://mediatheque.example',
+          'curl http://medialibrary.example',
         ]);
         expect(tout).toContain('Error: Unable to locate package nginx');
         expect(tout).toContain('Welcome to nginx!');
-        expect(tout).toContain('a duplicate default server for 0.0.0.0:80 in /etc/nginx/sites-enabled/mediatheque:2');
+        expect(tout).toContain('a duplicate default server for 0.0.0.0:80 in /etc/nginx/sites-enabled/medialibrary:2');
         expect(tout).toContain('Job for nginx.service failed');
         expect(tout).toContain('test is successful');
         contient(tout, 'Une machine neuve ne connaît encore aucun paquet');
@@ -364,7 +364,7 @@ for (const langue of LANGUES)
       it('Le Datacenter, chapitre 4 — restaurer d’abord, installer ensuite, garder le site Debian', () => {
         const { s, tout } = jouer('incendie', [
           'cd /',
-          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
+          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz',
           'bienvenue-2026',
           'sudo apt update',
           // nginx ne démarre pas : deux serveurs par défaut.
@@ -375,7 +375,7 @@ for (const langue of LANGUES)
         expect(tout).toContain('failed');
         expect(s.termine).toBe(false);
         // Autre solution : la médiathèque n'est plus le site par défaut ; on la joint par son nom.
-        const conf = '/etc/nginx/sites-enabled/mediatheque';
+        const conf = '/etc/nginx/sites-enabled/medialibrary';
         s.executer(`sudo nano ${conf}`);
         s.enregistrerEdition(s.edition!.texte.replaceAll(' default_server', ''));
         s.quitterEdition();
@@ -391,11 +391,11 @@ for (const langue of LANGUES)
           'bienvenue-2026',
           'sudo apt install -y nginx',
           'sudo rm /etc/nginx/sites-enabled/default',
-          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
-          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-23.tar.gz -C /',
+          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz',
+          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-23.tar.gz -C /',
           'sudo systemctl reload nginx',
-          'curl -I mediatheque.example',
-          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-21.tar.gz -C /',
+          'curl -I medialibrary.example',
+          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-21.tar.gz -C /',
           'sudo systemctl reload nginx',
         ]);
         contient(tout, 'extraite là où tu étais');
@@ -403,30 +403,30 @@ for (const langue of LANGUES)
         expect(tout).toContain('HTTP/1.1 404 Not Found');
         contient(tout, 'avec la page de mercredi');
         expect(s.termine).toBe(false);
-        s.executer(L('sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /'));
+        s.executer(L('sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz -C /'));
         expect(s.termine).toBe(true);
       });
 
       it('Le Datacenter, chapitre 5 — Le certificat a expiré', () => {
         const { s, tout } = jouer('certificat', [
-          'curl https://mediatheque.example',
+          'curl https://medialibrary.example',
           'journalctl -u certbot -n 8',
           'sudo certbot certificates',
           'bienvenue-2026',
           'sudo certbot renew --dry-run',
-          'sudo cat /etc/letsencrypt/renewal/mediatheque.example.conf',
+          'sudo cat /etc/letsencrypt/renewal/medialibrary.example.conf',
           // Fausse piste : --dry-run n'enregistre rien.
-          'sudo certbot renew --dry-run --webroot -w /var/www/mediatheque',
-          'sudo certbot renew --webroot -w /var/www/mediatheque',
+          'sudo certbot renew --dry-run --webroot -w /var/www/medialibrary',
+          'sudo certbot renew --webroot -w /var/www/medialibrary',
           // Fausse piste : renouvelé sur le disque, mais nginx sert encore l'ancien.
-          'curl https://mediatheque.example',
-          'sudo certbot reconfigure --cert-name mediatheque.example --deploy-hook "systemctl reload nginx"',
+          'curl https://medialibrary.example',
+          'sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx"',
           'sudo systemctl reload nginx',
-          'curl -I https://mediatheque.example',
+          'curl -I https://medialibrary.example',
         ]);
         expect(tout).toContain('curl: (60) SSL certificate problem: certificate has expired');
         expect(tout).toContain('(INVALID: EXPIRED)');
-        expect(tout).toContain('Invalid response from http://mediatheque.example/.well-known/acme-challenge/');
+        expect(tout).toContain('Invalid response from http://medialibrary.example/.well-known/acme-challenge/');
         expect(tout).toContain('Congratulations, all simulated renewals succeeded');
         expect(tout).toContain('Congratulations, all renewals succeeded');
         expect(tout).toContain('Dry run: skipping deploy hook command: systemctl reload nginx');
@@ -441,10 +441,10 @@ for (const langue of LANGUES)
         const { s, tout } = jouer('certificat', [
           'sudo certbot renew',
           'bienvenue-2026',
-          'sudo nano /etc/letsencrypt/renewal/mediatheque.example.conf',
+          'sudo nano /etc/letsencrypt/renewal/medialibrary.example.conf',
         ]);
         expect(tout).toContain('Some challenges have failed');
-        s.enregistrerEdition(s.edition!.texte.replaceAll('/var/www/html', '/var/www/mediatheque'));
+        s.enregistrerEdition(s.edition!.texte.replaceAll('/var/www/html', '/var/www/medialibrary'));
         s.quitterEdition();
         const suite = [
           'sudo certbot renew --dry-run',
@@ -465,7 +465,7 @@ for (const langue of LANGUES)
           'bienvenue-2026',
           'sudo apt install -y python3-certbot-nginx',
           'sudo certbot renew --nginx',
-          'openssl s_client -connect mediatheque.example:443 | openssl x509 -noout -enddate',
+          'openssl s_client -connect medialibrary.example:443 | openssl x509 -noout -enddate',
         ]);
         expect(tout).toContain('The requested nginx plugin does not appear to be installed');
         expect(tout).toContain('notAfter=Apr 21');
@@ -477,15 +477,15 @@ for (const langue of LANGUES)
           'cat carnet.txt',
           'ping 192.168.1.1',
           'ping 9.9.9.9',
-          'ping lettres.example',
-          'dig lettres.example',
+          'ping letters.example',
+          'dig letters.example',
           'cat /etc/resolv.conf',
-          'dig @9.9.9.9 lettres.example',
+          'dig @9.9.9.9 letters.example',
           'sudo cp /etc/resolv.conf.box /etc/resolv.conf',
           'fourmiliere',
-          'ping lettres.example',
-          'traceroute lettres.example',
-          'curl -I https://lettres.example',
+          'ping letters.example',
+          'traceroute letters.example',
+          'curl -I https://letters.example',
         ]);
         expect(s.termine).toBe(true);
       });
@@ -589,7 +589,7 @@ for (const langue of LANGUES)
         const { s, tout } = jouer('colocation', [
           'curl http://cafe.example',
           'cd /etc/nginx',
-          'sudo cp sites-available/lettres sites-available/cafe',
+          'sudo cp sites-available/letters sites-available/cafe',
           'fourmis-2026',
           'sudo ln -s sites-available/cafe sites-enabled/',
           'sudo nginx -t',
@@ -603,13 +603,13 @@ for (const langue of LANGUES)
         contient(tout, 'le lien est cassé');
         modifier(s, '/etc/nginx/sites-available/cafe', /default_server/g, '');
         const conflit = s.executer('sudo nginx -t') ?? '';
-        expect(conflit).toContain('nginx: [warn] conflicting server name "lettres.example" on 0.0.0.0:80, ignored');
+        expect(conflit).toContain('nginx: [warn] conflicting server name "letters.example" on 0.0.0.0:80, ignored');
         contient(conflit, 'deux sites répondent au même nom');
-        modifier(s, '/etc/nginx/sites-available/cafe', /lettres/g, 'cafe');
+        modifier(s, '/etc/nginx/sites-available/cafe', /lettres|letters/g, 'cafe');
         s.executer('sudo systemctl reload nginx');
         if (reference) expect(s.executer('curl -H "Host: cafe.example" http://127.0.0.1')).toContain('Le café associatif');
-        modifier(s, '/etc/nginx/sites-available/lettres', '    location / {', '    location /agenda/ {\n        proxy_pass http://127.0.0.1:3000;\n    }\n\n    location / {');
-        const suite = ['sudo nginx -t', 'sudo systemctl reload nginx', 'curl -I http://lettres.example/agenda/', 'sudo tail -1 /var/log/nginx/error.log', 'sudo systemctl enable --now agenda', 'curl http://lettres.example/agenda/']
+        modifier(s, '/etc/nginx/sites-available/letters', '    location / {', '    location /agenda/ {\n        proxy_pass http://127.0.0.1:3000;\n    }\n\n    location / {');
+        const suite = ['sudo nginx -t', 'sudo systemctl reload nginx', 'curl -I http://letters.example/agenda/', 'sudo tail -1 /var/log/nginx/error.log', 'sudo systemctl enable --now agenda', 'curl http://letters.example/agenda/']
           .map((l) => s.executer(l) ?? '')
           .join('\n');
         expect(suite).toContain('HTTP/1.1 502 Bad Gateway');
@@ -617,9 +617,9 @@ for (const langue of LANGUES)
         expect(suite).toContain('Cannot GET /agenda/');
         contient(suite, 'la barre finale');
         expect(s.termine).toBe(false);
-        modifier(s, '/etc/nginx/sites-available/lettres', 'proxy_pass http://127.0.0.1:3000;', 'proxy_pass http://127.0.0.1:3000/;');
+        modifier(s, '/etc/nginx/sites-available/letters', 'proxy_pass http://127.0.0.1:3000;', 'proxy_pass http://127.0.0.1:3000/;');
         s.executer('sudo systemctl reload nginx');
-        if (reference) expect(s.executer('curl http://lettres.example/agenda/ateliers')).toContain('Les ateliers');
+        if (reference) expect(s.executer('curl http://letters.example/agenda/ateliers')).toContain('Les ateliers');
         expect(s.termine).toBe(true);
       });
 
@@ -629,7 +629,7 @@ for (const langue of LANGUES)
         s.enregistrerEdition('server {\n    listen 80;\n    server_name cafe.example;\n    root /var/www/cafe;\n}');
         s.quitterEdition();
         s.executer('sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/cafe');
-        modifier(s, '/etc/nginx/sites-available/lettres', '    location / {', '    location /agenda/ {\n        proxy_pass http://localhost:3000/;\n    }\n    location / {');
+        modifier(s, '/etc/nginx/sites-available/letters', '    location / {', '    location /agenda/ {\n        proxy_pass http://localhost:3000/;\n    }\n    location / {');
         s.executer('sudo systemctl reload nginx');
         expect(s.termine).toBe(false);
         s.executer('sudo systemctl enable agenda');
@@ -658,7 +658,7 @@ for (const langue of LANGUES)
         contient(fausse, 'named refuse la zone');
         // Le bon contenu, mais ni serial ni point final.
         modifier(s, (t) => t.replace('203.0.113.310', '203.0.113.10') + '\nwww     IN CNAME cafe.example');
-        const demi = ['sudo rndc reload cafe.example', 'journalctl -u named', 'dig @localhost www.cafe.example', 'dig @ns2.registre.example cafe.example +short', 'dig cafe.example']
+        const demi = ['sudo rndc reload cafe.example', 'journalctl -u named', 'dig @localhost www.cafe.example', 'dig @ns2.registry.example cafe.example +short', 'dig cafe.example']
           .map((l) => s.executer(l) ?? '')
           .join('\n');
         expect(demi).toContain('zone serial (2026091501) unchanged. zone may fail to transfer to secondaries.');
@@ -671,7 +671,7 @@ for (const langue of LANGUES)
         s.executer('named-checkzone cafe.example ' + ZONE);
         expect(s.executer('sudo rndc reload')).toContain('server reload successful');
         expect(s.termine).toBe(true);
-        expect(s.executer('dig @ns2.registre.example www.cafe.example +short')).toBe('cafe.example.\n203.0.113.10');
+        expect(s.executer('dig @ns2.registry.example www.cafe.example +short')).toBe('cafe.example.\n203.0.113.10');
       });
 
       it('autre solution : un enregistrement A pour www, et systemctl reload named', () => {
@@ -683,7 +683,7 @@ for (const langue of LANGUES)
     });
 
     describe('Les Lettres du quartier, chapitre 6 — Le soir du concert (awk, limit_req)', () => {
-      const SITE = '/etc/nginx/sites-available/lettres';
+      const SITE = '/etc/nginx/sites-available/letters';
       const modifier = (s: Shell, fichier: string, change: (texte: string) => string) => {
         s.executer(`sudo nano ${fichier}`);
         s.enregistrerEdition(change(s.edition!.texte));
@@ -722,7 +722,7 @@ for (const langue of LANGUES)
       it('autre solution : la zone dans conf.d, la limite sur tout le site, 1 requête par seconde', () => {
         const { s } = jouer('concert', ['sudo id', 'fourmis-2026']);
         s.executer('echo "limit_req_zone $binary_remote_addr zone=lettres:10m rate=1r/s;" | sudo tee /etc/nginx/conf.d/limites.conf');
-        modifier(s, SITE, (t) => t.replace('    root /var/www/lettres;', '    limit_req zone=lettres burst=20 nodelay;\n    root /var/www/lettres;'));
+        modifier(s, SITE, (t) => t.replace('    root /var/www/letters;', '    limit_req zone=lettres burst=20 nodelay;\n    root /var/www/letters;'));
         s.executer('sudo systemctl reload nginx');
         expect(s.termine).toBe(true);
       });
@@ -743,7 +743,7 @@ for (const langue of LANGUES)
           "sudo docker inspect -f '{{json .Mounts}}' outiltheque",
           'sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde',
           // Fausse piste : l'ancien conteneur occupe encore le port 8080.
-          'sudo docker run -d --name outiltheque-15 -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque registre.example/outiltheque:1.5',
+          'sudo docker run -d --name outiltheque-15 -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque registry.example/outiltheque:1.5',
           'sudo docker stop outiltheque',
           'sudo docker start outiltheque-15',
           'sudo docker cp sauvegarde/. outiltheque-15:/var/lib/outiltheque',
@@ -770,7 +770,7 @@ for (const langue of LANGUES)
           'fablab-2027',
           'sudo docker cp outiltheque:/var/lib/outiltheque/outiltheque.db /srv/outiltheque/',
           'sudo docker rm -f outiltheque',
-          'sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v /srv/outiltheque:/var/lib/outiltheque registre.example/outiltheque:1.5',
+          'sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v /srv/outiltheque:/var/lib/outiltheque registry.example/outiltheque:1.5',
         ]);
         expect(s.termine).toBe(true);
       });
@@ -779,7 +779,7 @@ for (const langue of LANGUES)
         const { s, tout } = jouer('mise-a-jour', ['sudo docker rm outiltheque', 'fablab-2027', 'sudo docker rm -f outiltheque']);
         expect(tout).toContain('container is running: stop the container before removing or force remove');
         contient(tout, 'Les 37 prêts ont disparu');
-        s.executer('sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v outiltheque:/var/lib/outiltheque registre.example/outiltheque:1.5');
+        s.executer('sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v outiltheque:/var/lib/outiltheque registry.example/outiltheque:1.5');
         expect(s.termine).toBe(false);
       });
     });
@@ -869,7 +869,7 @@ for (const langue of LANGUES)
         s.executer('sudo docker compose up -d');
         const menage = s.executer('sudo docker system prune -a -f') ?? '';
         expect(menage).toContain('Deleted Containers:');
-        expect(menage).toContain('untagged: registre.example/ia-locale:latest');
+        expect(menage).toContain('untagged: registry.example/ia-locale:latest');
         expect(s.termine).toBe(true);
       });
 
@@ -926,7 +926,7 @@ for (const langue of LANGUES)
         const { s, tout } = jouer('pleins-pouvoirs', [
           'sudo docker rm -f galerie-galerie-1',
           'fablab-2027',
-          'sudo docker run -d --name galerie -u node -p 8082:3000 -v /srv/galerie/photos:/app/photos --restart unless-stopped registre.example/galerie:3.2',
+          'sudo docker run -d --name galerie -u node -p 8082:3000 -v /srv/galerie/photos:/app/photos --restart unless-stopped registry.example/galerie:3.2',
           'sudo chown -R 1000 /srv/galerie/photos',
           'sudo docker exec galerie whoami',
           'ls -l /srv/galerie',
@@ -1098,50 +1098,50 @@ for (const langue of LANGUES)
         return s.quitterEdition();
       };
       const VERS_VERT = (t: string) => t.replace('127.0.0.1:3001', '127.0.0.1:3002');
-      const SMTP = (t: string) => `${t}\nKIOSQUE_SMTP=smtp.gazette.example`;
+      const SMTP = (t: string) => `${t}\nKIOSK_SMTP=smtp.gazette.example`;
 
       it('solution : la 1.5.0 sur vert, /health, la configuration des notes, puis nginx bascule et bleu reste allumé', () => {
         const { s, tout } = jouer('bleu-vert', [
           'curl -s http://localhost:3001/health',
-          'ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert',
-          'sudo systemctl start kiosque-vert',
+          'ln -sfn /srv/kiosk/versions/1.5.0 /srv/kiosk/green',
+          'sudo systemctl start kiosk-green',
           'gazette-2027',
           'curl -s localhost:3002/health',
-          'cat /srv/kiosque/versions/1.5.0/NOTES.txt',
+          'cat /srv/kiosk/versions/1.5.0/NOTES.txt',
         ]);
         expect(tout).toContain('{"status":"ok","version":"1.4.2"}');
-        expect(tout).toContain('{"status":"error","version":"1.5.0","error":"KIOSQUE_SMTP is not set"}');
+        expect(tout).toContain('{"status":"error","version":"1.5.0","error":"KIOSK_SMTP is not set"}');
         contient(tout, '/health répond 503');
-        editer(s, '/etc/kiosque/kiosque.env', SMTP);
-        const sante = ['sudo systemctl restart kiosque-vert', 'curl -i localhost:3002/health'].map((l) => s.executer(l)).join('\n');
+        editer(s, '/etc/kiosk/kiosk.env', SMTP);
+        const sante = ['sudo systemctl restart kiosk-green', 'curl -i localhost:3002/health'].map((l) => s.executer(l)).join('\n');
         expect(sante).toContain('HTTP/1.1 200 OK');
         expect(sante).toContain('{"status":"ok","version":"1.5.0"}');
         editer(s, '/etc/nginx/sites-available/gazette', VERS_VERT);
         const fin = ['sudo nginx -t', 'sudo systemctl reload nginx'].map((l) => s.executer(l)).join('\n');
         expect(fin).toContain('test is successful');
         contient(fin, 'Tu as terminé le chapitre 3 de La Gazette');
-        expect(s.executer('curl -s http://gazette.example/kiosque/')).toContain('Kiosque 1.5.0');
+        expect(s.executer('curl -s http://gazette.example/kiosk/')).toContain(`${reference ? 'Kiosque' : 'Kiosk'} 1.5.0`);
         expect(s.termine).toBe(true);
       });
 
       it('fausses pistes : sans redémarrer, bascule avant /health, sans reload, puis bleu arrêté trop tôt', () => {
         const { s, tout } = jouer('bleu-vert', [
-          'sudo systemctl start kiosque-vert',
+          'sudo systemctl start kiosk-green',
           'gazette-2027',
-          'ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert',
+          'ln -sfn /srv/kiosk/versions/1.5.0 /srv/kiosk/green',
           'curl -s localhost:3002/health',
         ]);
         contient(tout, 'un programme lit son code');
-        s.executer('sudo systemctl restart kiosque-vert');
+        s.executer('sudo systemctl restart kiosk-green');
         editer(s, '/etc/nginx/sites-available/gazette', VERS_VERT);
-        contient(s.executer('curl -s http://gazette.example/kiosque/') ?? '', 'il ne relit sa configuration');
+        contient(s.executer('curl -s http://gazette.example/kiosk/') ?? '', 'il ne relit sa configuration');
         contient(s.executer('sudo systemctl reload nginx') ?? '', 'les lecteur·rices reçoivent une erreur');
-        expect(s.executer('curl -s http://gazette.example/kiosque/')).toBe('Internal Server Error');
-        editer(s, '/etc/kiosque/kiosque.env', SMTP);
-        s.executer('sudo systemctl restart kiosque-vert');
+        expect(s.executer('curl -s http://gazette.example/kiosk/')).toBe('Internal Server Error');
+        editer(s, '/etc/kiosk/kiosk.env', SMTP);
+        s.executer('sudo systemctl restart kiosk-green');
         expect(s.termine).toBe(true);
         // Une fois la bascule faite, arrêter bleu enlève le filet.
-        contient(s.executer('sudo systemctl stop kiosque-bleu') ?? '', 'plus de retour arrière instantané');
+        contient(s.executer('sudo systemctl stop kiosk-blue') ?? '', 'plus de retour arrière instantané');
       });
     });
 
@@ -1152,13 +1152,13 @@ for (const langue of LANGUES)
         return s.quitterEdition();
       };
       const CANARI = (t: string) =>
-        `upstream kiosque {\n    server 127.0.0.1:3002 weight=9;\n    server 127.0.0.1:3001 weight=1;\n}\n\n${t.replace('http://127.0.0.1:3002/', 'http://kiosque/')}`;
+        `upstream kiosk {\n    server 127.0.0.1:3002 weight=9;\n    server 127.0.0.1:3001 weight=1;\n}\n\n${t.replace('http://127.0.0.1:3002/', 'http://kiosk/')}`;
       const recharger = (s: Shell) => ['sudo nginx -t', 'sudo systemctl reload nginx'].map((l) => s.executer(l)).join('\n');
 
       it('solution : canari de la 1.6.0, les 500 dans access.log, arrêt, 1.6.1, canari propre, bascule', () => {
         const { s } = jouer('canari', [
-          'ln -sfn /srv/kiosque/versions/1.6.0 /srv/kiosque/bleu',
-          'sudo systemctl restart kiosque-bleu',
+          'ln -sfn /srv/kiosk/versions/1.6.0 /srv/kiosk/blue',
+          'sudo systemctl restart kiosk-blue',
           'gazette-2027',
         ]);
         expect(s.executer('curl -s localhost:3001/health')).toBe('{"status":"ok","version":"1.6.0"}');
@@ -1168,26 +1168,26 @@ for (const langue of LANGUES)
         contient(heure, 'Le canari est en place');
         expect(s.executer("awk '{print $9}' /var/log/nginx/access.log | sort | uniq -c")).toMatch(/\s+\d+ 500/);
         const erreurs = s.executer('grep " 500 " /var/log/nginx/access.log') ?? '';
-        expect(erreurs).toContain('"GET /kiosque/archives HTTP/1.1" 500');
-        contient(erreurs, 'Des 500 sur /kiosque/archives');
+        expect(erreurs).toContain('"GET /kiosk/archives HTTP/1.1" 500');
+        contient(erreurs, 'Des 500 sur /kiosk/archives');
         expect(s.executer('curl -s localhost:3001/archives')).toBe('Internal Server Error');
         site(s, (t) => t.replace('3001 weight=1;', '3001 weight=1 down;'));
         contient(recharger(s), 'Canari arrêté');
-        s.executer('ln -sfn /srv/kiosque/versions/1.6.1 /srv/kiosque/bleu');
-        s.executer('sudo systemctl restart kiosque-bleu');
+        s.executer('ln -sfn /srv/kiosk/versions/1.6.1 /srv/kiosk/blue');
+        s.executer('sudo systemctl restart kiosk-blue');
         site(s, (t) => t.replace(' down;', ';'));
         contient(recharger(s), 'aucune erreur dans ce lot');
         expect(s.termine).toBe(false);
         site(s, (t) => t.replace('3002 weight=9;', '3002 weight=9 down;'));
         contient(recharger(s), 'Tu as terminé le chapitre 4 de La Gazette');
-        expect(s.executer('curl -s http://gazette.example/kiosque/')).toContain('Kiosque 1.6.1');
+        expect(s.executer('curl -s http://gazette.example/kiosk/')).toContain(`${reference ? 'Kiosque' : 'Kiosk'} 1.6.1`);
         expect(s.termine).toBe(true);
       });
 
       it("fausses pistes : tout d'un coup sur la 1.6.0, puis un « canari » à 50 %", () => {
         const { s } = jouer('canari', [
-          'ln -sfn /srv/kiosque/versions/1.6.0 /srv/kiosque/bleu',
-          'sudo systemctl restart kiosque-bleu',
+          'ln -sfn /srv/kiosk/versions/1.6.0 /srv/kiosk/blue',
+          'sudo systemctl restart kiosk-blue',
           'gazette-2027',
         ]);
         site(s, (t) => t.replace('127.0.0.1:3002/', '127.0.0.1:3001/'));
@@ -1195,7 +1195,7 @@ for (const langue of LANGUES)
         site(
           s,
           (t) =>
-            `upstream kiosque {\n    server 127.0.0.1:3002;\n    server 127.0.0.1:3001;\n}\n\n${t.replace('http://127.0.0.1:3001/', 'http://kiosque/')}`,
+            `upstream kiosk {\n    server 127.0.0.1:3002;\n    server 127.0.0.1:3001;\n}\n\n${t.replace('http://127.0.0.1:3001/', 'http://kiosk/')}`,
         );
         contient(recharger(s), 'Une grosse part du trafic');
         expect(s.termine).toBe(false);
@@ -1208,24 +1208,24 @@ for (const langue of LANGUES)
         s.enregistrerEdition(change(s.edition!.texte));
         return s.quitterEdition();
       };
-      const SMTP_URL = (t: string) => `${t}\nKIOSQUE_SMTP_URL=smtp://smtp.gazette.example:587`;
+      const SMTP_URL = (t: string) => `${t}\nKIOSK_SMTP_URL=smtp://smtp.gazette.example:587`;
 
       it('solution : le journal raconte la migration, la variable renommée, puis bleu en 2.0.0', () => {
         const { s, tout } = jouer('migration', [
           'curl -s localhost:3002/health',
           'curl -s localhost:3001/health',
-          'sudo journalctl -u kiosque-vert',
+          'sudo journalctl -u kiosk-green',
           'gazette-2027',
         ]);
-        expect(tout).toContain('"error":"KIOSQUE_SMTP_URL is not set"');
+        expect(tout).toContain('"error":"KIOSK_SMTP_URL is not set"');
         expect(tout).toContain('"error":"database schema 4 is newer than supported (3)"');
         expect(tout).toContain('Running migration 004_rename_abonnes_courriel_to_email... done');
         contient(tout, 'il reste à réparer en avant');
-        editer(s, '/etc/kiosque/kiosque.env', SMTP_URL);
-        contient(s.executer('sudo systemctl restart kiosque-vert') ?? '', 'Le Kiosque répond de nouveau');
+        editer(s, '/etc/kiosk/kiosk.env', SMTP_URL);
+        contient(s.executer('sudo systemctl restart kiosk-green') ?? '', 'Le Kiosque répond de nouveau');
         expect(s.termine).toBe(false);
-        s.executer('ln -sfn /srv/kiosque/versions/2.0.0 /srv/kiosque/bleu');
-        contient(s.executer('sudo systemctl restart kiosque-bleu') ?? '', 'Tu as terminé le chapitre 5 de La Gazette');
+        s.executer('ln -sfn /srv/kiosk/versions/2.0.0 /srv/kiosk/blue');
+        contient(s.executer('sudo systemctl restart kiosk-blue') ?? '', 'Tu as terminé le chapitre 5 de La Gazette');
         expect(s.executer('curl -s localhost:3001/health')).toBe('{"status":"ok","version":"2.0.0"}');
         expect(s.termine).toBe(true);
       });
@@ -1235,7 +1235,7 @@ for (const langue of LANGUES)
         const retour = editer(s, '/etc/nginx/sites-available/gazette', (t) => t.replace('127.0.0.1:3002/', '127.0.0.1:3001/'));
         const recharge = (s.executer('sudo systemctl reload nginx') ?? '') + retour;
         contient(recharge, 'la base a été migrée sous ses pieds');
-        expect(s.executer('curl -s http://gazette.example/kiosque/')).toBe('Internal Server Error');
+        expect(s.executer('curl -s http://gazette.example/kiosk/')).toBe('Internal Server Error');
         expect(s.termine).toBe(false);
       });
     });
@@ -1433,16 +1433,16 @@ for (const langue of LANGUES)
           'df -h',
           'sudo du -sh /var/log/*',
           'antenne-2027',
-          'sudo tail -n 2 /var/log/radio/flux.log',
-          'sudo truncate -s 0 /var/log/radio/flux.log',
+          'sudo tail -n 2 /var/log/radio/stream.log',
+          'sudo truncate -s 0 /var/log/radio/stream.log',
           'df -h',
         ]);
         expect(tout).toMatch(/\/dev\/vda1 +19G +19G +0 100% \//);
         expect(tout).toMatch(/^15G\t\/var\/log\/radio$/m);
         expect(tout).toContain('DEBUG relay: packet');
         contient(tout, 'Le disque respire');
-        editer(s, '/etc/radio/flux.conf', (t) => t.replace('loglevel = debug', 'loglevel = info'));
-        s.executer('sudo systemctl restart radio-flux');
+        editer(s, '/etc/radio/stream.conf', (t) => t.replace('loglevel = debug', 'loglevel = info'));
+        s.executer('sudo systemctl restart radio-stream');
         expect(s.termine).toBe(false);
         contient(editer(s, '/etc/logrotate.d/radio', ROTATION('    copytruncate\n')), "Tu as terminé le chapitre 1 de L'Astreinte");
         expect(s.executer('sudo logrotate -d /etc/logrotate.d/radio')).toContain('rotating pattern: /var/log/radio/*.log');
@@ -1450,21 +1450,21 @@ for (const langue of LANGUES)
       });
 
       it("fausses pistes : rm d'un fichier ouvert, logrotate qui renomme sans faire rouvrir, une directive inconnue", () => {
-        const { s, tout } = jouer('disque-plein', ['sudo rm /var/log/radio/flux.log', 'antenne-2027', 'df -h', 'sudo lsof +L1']);
+        const { s, tout } = jouer('disque-plein', ['sudo rm /var/log/radio/stream.log', 'antenne-2027', 'df -h', 'sudo lsof +L1']);
         expect(tout).toContain('100% /');
-        expect(tout).toContain('/var/log/radio/flux.log (deleted)');
+        expect(tout).toContain('/var/log/radio/stream.log (deleted)');
         contient(tout, 'df dit toujours plein, mais du ne trouve plus le fichier');
-        s.executer('sudo systemctl restart radio-flux');
+        s.executer('sudo systemctl restart radio-stream');
         expect(s.executer('df -h')).not.toContain('100%');
-        editer(s, '/etc/radio/flux.conf', (t) => t.replace('loglevel = debug', 'loglevel = info'));
-        s.executer('sudo systemctl restart radio-flux');
+        editer(s, '/etc/radio/stream.conf', (t) => t.replace('loglevel = debug', 'loglevel = info'));
+        s.executer('sudo systemctl restart radio-stream');
         editer(s, '/etc/logrotate.d/radio', () => '/var/log/radio/*.log {\n    dayly\n    rotate 7\n}');
         expect(s.executer('sudo logrotate -d /etc/logrotate.d/radio')).toContain(
           "error: /etc/logrotate.d/radio:2 unknown option 'dayly' -- ignoring line",
         );
         editer(s, '/etc/logrotate.d/radio', ROTATION(''));
         contient(s.executer('sudo logrotate -f /etc/logrotate.d/radio') ?? '', "le relais écrit toujours dans l'ancien fichier");
-        expect(s.executer('sudo lsof -p 1730')).toContain('/var/log/radio/flux.log.1');
+        expect(s.executer('sudo lsof -p 1730')).toContain('/var/log/radio/stream.log.1');
         expect(s.termine).toBe(false);
       });
     });
@@ -1595,7 +1595,7 @@ for (const langue of LANGUES)
     describe("L'Astreinte, chapitre 4 — L'horloge (timedatectl, NTP, fuseau, cron)", () => {
       const corrigerNtp = (s: Shell) => {
         s.executer('sudo nano /etc/systemd/timesyncd.conf');
-        s.enregistrerEdition(s.edition!.texte.replace('NTP=ntp.ancien-hebergeur.example', 'NTP=ntp.hebergeur.example'));
+        s.enregistrerEdition(s.edition!.texte.replace('NTP=ntp.old-hosting.example', 'NTP=ntp.hosting.example'));
         return s.quitterEdition();
       };
 
@@ -1614,7 +1614,7 @@ for (const langue of LANGUES)
         contient(tout, "C'est vrai de beaucoup de services");
         contient(tout, 'le serveur NTP qu');
         expect(s.executer('sudo journalctl -u systemd-timesyncd')).toContain(
-          'Timed out waiting for reply from 198.51.100.7:123 (ntp.ancien-hebergeur.example).',
+          'Timed out waiting for reply from 198.51.100.7:123 (ntp.old-hosting.example).',
         );
         corrigerNtp(s);
         contient(s.executer('sudo systemctl restart systemd-timesyncd') ?? '', "l'horloge est synchronisée");
@@ -1622,7 +1622,7 @@ for (const langue of LANGUES)
         if (reference) expect(etat).toMatch(/Local time: lun\. 2027-08-30 09:12:\d\d CEST/);
         expect(etat).toContain('Time zone: Europe/Paris (CEST, +0200)');
         expect(etat).toContain('System clock synchronized: yes');
-        expect(s.executer('timedatectl timesync-status')).toContain('Server: 192.0.2.123 (ntp.hebergeur.example)');
+        expect(s.executer('timedatectl timesync-status')).toContain('Server: 192.0.2.123 (ntp.hosting.example)');
         expect(s.termine).toBe(false);
         contient(s.executer('sudo systemctl restart cron') ?? '', "Tu as terminé le chapitre 4 de L'Astreinte");
         expect(s.termine).toBe(true);
@@ -1663,7 +1663,7 @@ for (const langue of LANGUES)
       };
       const CONTROLES =
         '\n$P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERTE\n$P/check_http -H localhost -p 8000 -u /direct | grep -v " OK" | $ALERTE\n';
-      const SERVICE = '[Unit]\nDescription=Sonde de Radio Quartier\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/sonde\n';
+      const SERVICE = '[Unit]\nDescription=Sonde de Radio Quartier\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/probe\n';
       const TIMER = (declencheur: string) =>
         `[Unit]\nDescription=Sonde toutes les 5 minutes\n\n[Timer]\n${declencheur}\n\n[Install]\nWantedBy=timers.target\n`;
 
@@ -1681,17 +1681,17 @@ for (const langue of LANGUES)
         expect(tout).toContain('Normalized form: *-*-* *:00/5:00');
         s.executer('sudo true');
         s.executer(machinesDansLaLangue(s.t, 'antenne-2027'));
-        ecrire(s, '/usr/local/bin/sonde', (t) => t + CONTROLES);
-        ecrire(s, '/etc/systemd/system/sonde.service', () => SERVICE);
-        ecrire(s, '/etc/systemd/system/sonde.timer', () => TIMER('OnCalendar=*:0/5'));
+        ecrire(s, '/usr/local/bin/probe', (t) => t + CONTROLES);
+        ecrire(s, '/etc/systemd/system/probe.service', () => SERVICE);
+        ecrire(s, '/etc/systemd/system/probe.timer', () => TIMER('OnCalendar=*:0/5'));
         s.executer('sudo systemctl daemon-reload');
-        const nuit = s.executer('sudo systemctl enable --now sonde.timer')!;
-        expect(nuit).toContain('Created symlink /etc/systemd/system/timers.target.wants/sonde.timer → /etc/systemd/system/sonde.timer.');
+        const nuit = s.executer('sudo systemctl enable --now probe.timer')!;
+        expect(nuit).toContain('Created symlink /etc/systemd/system/timers.target.wants/probe.timer → /etc/systemd/system/probe.timer.');
         contient(nuit, 'Zoé lance l');
         contient(nuit, 'Le direct a été muet 10 minutes');
         contient(nuit, 'bien avant la fin des inodes');
         contient(nuit, "Tu as terminé le chapitre 5 de L'Astreinte");
-        expect(s.executer('systemctl list-timers')).toMatch(/sonde\.timer +sonde\.service/);
+        expect(s.executer('systemctl list-timers')).toMatch(/probe\.timer +probe\.service/);
         expect(s.executer('sudo cat /var/mail/zoe')).toContain('HTTP CRITICAL - Unable to open TCP socket');
         expect(s.termine).toBe(true);
       });
@@ -1700,29 +1700,29 @@ for (const langue of LANGUES)
         const { s } = jouer('sonde', ['sudo true', 'antenne-2027']);
         ecrire(
           s,
-          '/usr/local/bin/sonde',
+          '/usr/local/bin/probe',
           (t) =>
             t.replace('$P/check_disk -w 20% -c 10% -p /', '$P/check_disk -w 20% -c 10% -W 20% -K 10% -p / -p /srv/radio') +
-            '\n$P/check_procs -C flux -c 1: | grep -v " OK" | $ALERTE\n',
+            '\n$P/check_procs -C stream -c 1: | grep -v " OK" | $ALERTE\n',
         );
         s.executer('sudo crontab -e');
-        s.enregistrerEdition(`${s.edition!.texte}*/5 * * * * /usr/local/bin/sonde\n`);
+        s.enregistrerEdition(`${s.edition!.texte}*/5 * * * * /usr/local/bin/probe\n`);
         contient(s.quitterEdition(), "Tu as terminé le chapitre 5 de L'Astreinte");
         expect(s.termine).toBe(true);
       });
 
       it('fausses pistes : la sonde de départ, OnUnitActiveSec seul, des seuils trop serrés', { timeout: 60_000 }, () => {
         const { s } = jouer('sonde', ['sudo true', 'antenne-2027']);
-        ecrire(s, '/etc/systemd/system/sonde.service', () => SERVICE);
-        ecrire(s, '/etc/systemd/system/sonde.timer', () => TIMER('OnUnitActiveSec=5min'));
-        let nuit = s.executer('sudo systemctl enable --now sonde.timer')!;
+        ecrire(s, '/etc/systemd/system/probe.service', () => SERVICE);
+        ecrire(s, '/etc/systemd/system/probe.timer', () => TIMER('OnUnitActiveSec=5min'));
+        let nuit = s.executer('sudo systemctl enable --now probe.timer')!;
         contient(nuit, 'Rien n');
         contient(nuit, 'OnUnitActiveSec= seul ne part jamais');
-        ecrire(s, '/etc/systemd/system/sonde.timer', () => TIMER('OnCalendar=*:0/5'));
+        ecrire(s, '/etc/systemd/system/probe.timer', () => TIMER('OnCalendar=*:0/5'));
         nuit = s.executer('sudo systemctl daemon-reload')!;
         contient(nuit, 'et personne n');
         contient(nuit, 'plus un inode libre');
-        nuit = ecrire(s, '/usr/local/bin/sonde', (t) => t.replace('-w 20% -c 10% -p /', '-w 60% -c 10% -p /') + CONTROLES);
+        nuit = ecrire(s, '/usr/local/bin/probe', (t) => t.replace('-w 20% -c 10% -p /', '-w 60% -c 10% -p /') + CONTROLES);
         contient(nuit, 'alors que tout allait bien');
         expect(s.termine).toBe(false);
       });
@@ -1735,7 +1735,7 @@ for (const langue of LANGUES)
           'iostat -x',
           'sudo pidstat -d',
           'antenne-2027',
-          'journalctl -u radio-flux -n 3',
+          'journalctl -u radio-stream -n 3',
           'sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M"',
           'iostat -x',
         ]);
@@ -1804,7 +1804,7 @@ for (const langue of LANGUES)
         '45 minutes de silence sur le direct.',
         '',
         '## Causes',
-        'unattended-upgrades (needrestart) a relancé le relais ; une option inconnue (bitrate_max) attendait dans flux.conf depuis le 20 août.',
+        'unattended-upgrades (needrestart) a relancé le relais ; une option inconnue (bitrate_max) attendait dans stream.conf depuis le 20 août.',
         '',
         '## Ce qui a bien marché',
         'La sonde a prévenu en 2 minutes.',
@@ -1830,7 +1830,7 @@ for (const langue of LANGUES)
         '45 minutes of silence on the live stream.',
         '',
         '## Causes',
-        'unattended-upgrades (needrestart) restarted the relay; an unknown option (bitrate_max) had been waiting in flux.conf since 20 August.',
+        'unattended-upgrades (needrestart) restarted the relay; an unknown option (bitrate_max) had been waiting in stream.conf since 20 August.',
         '',
         '## What went well',
         'The probe alerted us within 2 minutes.',
@@ -1847,15 +1847,15 @@ for (const langue of LANGUES)
           'sudo journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30"',
           'antenne-2027',
           'sudo cat /var/log/unattended-upgrades/unattended-upgrades-dpkg.log',
-          'sudo journalctl | grep flux.conf',
+          'sudo journalctl | grep stream.conf',
         ]);
         contient(tout, 'des pistes, pas des faits');
         expect(tout).toMatch(/theo +pts\/0 +203\.0\.113\.45 +Sun Sep 12 02:41 - 03:05  \(00:24\)/);
-        if (reference) expect(tout).toContain("sept. 12 02:13:06 radio flux[24410]: /etc/radio/flux.conf:7: unknown option 'bitrate_max'");
+        if (reference) expect(tout).toContain("sept. 12 02:13:06 radio stream[24410]: /etc/radio/stream.conf:7: unknown option 'bitrate_max'");
         expect(tout).not.toContain(
-          'août 20 21:20:41 radio sudo[7790]:      zoe : TTY=pts/1 ; PWD=/home/zoe ; USER=root ; COMMAND=/usr/bin/nano /etc/radio/flux.conf\nsept. 12 02:12',
+          'août 20 21:20:41 radio sudo[7790]:      zoe : TTY=pts/1 ; PWD=/home/zoe ; USER=root ; COMMAND=/usr/bin/nano /etc/radio/stream.conf\nsept. 12 02:12',
         );
-        expect(tout).toContain(' systemctl restart radio-flux.service');
+        expect(tout).toContain(' systemctl restart radio-stream.service');
         contient(tout, 'trois semaines');
         s.executer('nano postmortem.md');
         s.enregistrerEdition(reference ? POSTMORTEM : POSTMORTEM_EN);

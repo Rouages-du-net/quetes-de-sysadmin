@@ -32,7 +32,7 @@ hebergeur-courriel-yasmine =
     workstation.
 
 hebergeur-courriel-hebergeur =
-    From:    Web host support <support@hebergeur.example>
+    From:    Web host support <support@hosting.example>
     Subject: End of unencrypted FTP on 1 March
 
     Hello,
@@ -41,8 +41,8 @@ hebergeur-courriel-hebergeur =
     FTP connections. Use FTPS (explicit FTP over TLS,
     port 21): most clients do this by default.
 
-    Server: ftp.hebergeur.example
-    Our certificate is issued for *.hebergeur.example: connect
+    Server: ftp.hosting.example
+    Our certificate is issued for *.hosting.example: connect
     using that name so that it is recognised. Never disable
     certificate verification.
 
@@ -54,7 +54,7 @@ hebergeur-notes-gaspard =
     GASPARD'S NOTES — publishing the site
 
     FileZilla:
-      host         : ftp.maison.example
+      host         : ftp.community.example
       port         : 21
       encryption   : "Only use plain FTP (insecure)"
                      (with encryption I got a certificate
@@ -105,7 +105,7 @@ hebergeur-evenement-clair =
     not to.
 hebergeur-evenement-certificat =
     The connection is encrypted, but lftp rejects the certificate: it is
-    issued for *.hebergeur.example, and you asked for ftp.maison.example.
+    issued for *.hosting.example, and you asked for ftp.community.example.
     That's the error Gaspard got. You don't fix it by turning off
     verification, but by asking for the server under the name its
     certificate carries (email_hosting.txt).
