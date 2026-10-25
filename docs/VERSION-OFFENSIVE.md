@@ -13,11 +13,10 @@ vous vous y mettrez, et éventuellement à le faire construire ensuite.
 ## 1. Une place, pas encore prise
 
 - **Un nom** : ni « Le Labo » (histoire 15, les disques), ni « La Veille »
-  (histoire 15 ou 16 selon l'ordre de fusion, le serveur `petrin`). Quelque
-  chose côté audit offensif — par exemple *Le Test d'intrusion*, *L'Autre
-  Côté*, *Red Team*. À vérifier au moment de vous y mettre :
-  `grep "^## Histoire" docs/SCENARIOS.md` donne la liste à jour et le
-  prochain numéro libre.
+  (histoire 16, le serveur `petrin`). Quelque chose côté audit offensif —
+  par exemple *Le Test d'intrusion*, *L'Autre Côté*, *Red Team*. À vérifier
+  au moment de vous y mettre : `grep "^## Histoire" docs/SCENARIOS.md`
+  donne la liste à jour et le prochain numéro libre.
 - **Une machine et une adresse**, dans `src/moteur/machines.ts` (voir les
   entrées existantes pour la forme).
 - **Un identifiant d'histoire** (`id`), utilisé dans `src/moteur/chapitres/index.ts`,

@@ -4,11 +4,12 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
+import { prerequis } from '../src/moteur/deverrouillage';
 import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
 import { dansLaLangue } from './noms';
 import { CVE } from '../src/moteur/chapitres/veille';
 
-const EFFACEUR = HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id);
+const EFFACEUR = [...new Set([...HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id), ...prerequis('veille')])];
 const MDP = 'levain-2028';
 
 for (const langue of LANGUES)
