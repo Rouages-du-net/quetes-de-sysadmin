@@ -141,6 +141,17 @@ for (const largeur of [1000, 375]) {
   verifier(/⏱ 00:0\d/.test(await jeu.locator('.chrono').textContent()), `${largeur} px : le chrono tourne`);
   await jeu.locator('.examen input').uncheck();
   verifier((await jeu.locator('.chrono').textContent()) === '', `${largeur} px : sans examen, plus de chrono`);
+  // Un chapitre en cours : le mode examen le ferait recommencer, on demande d'abord.
+  await tape('ls');
+  await jeu.locator('.examen input').click();
+  const confirmation = jeu.locator('dialog.fenetre-examen');
+  verifier((await confirmation.evaluate((d) => d.open)) && !(await jeu.locator('.examen input').isChecked()), `${largeur} px : le mode examen demande confirmation`);
+  await confirmation.locator('button', { hasText: 'Annuler' }).click();
+  verifier(!(await confirmation.evaluate((d) => d.open)) && !(await jeu.locator('.examen input').isChecked()) && (await jeu.locator('.chrono').textContent()) === '', `${largeur} px : annuler ne change rien`);
+  await jeu.locator('.examen input').click();
+  await confirmation.locator('button', { hasText: 'mode examen' }).click();
+  verifier((await jeu.locator('.examen input').isChecked()) && /⏱/.test(await jeu.locator('.chrono').textContent()), `${largeur} px : confirmé, le mode examen commence`);
+  await jeu.locator('.examen input').uncheck();
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${largeur} px : pas de défilement horizontal`);
   verifier(erreurs.length === 0, `${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
   verifier(externes.length === 0, `${largeur} px : aucune ressource tierce ${externes.join(' ')}`);
@@ -607,6 +618,41 @@ for (const largeur of [1000, 375]) {
   verifier(erreurs.length === 0, `parcours ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
   await page.evaluate(() => localStorage.clear());
   await page.close();
+}
+
+// Le Datacenter en direct : tail -f garde la main, les visites arrivent, Ctrl-C la rend
+// (le clavier sur un écran large, la barre de touches sur un téléphone).
+for (const largeur of [1000, 375]) {
+  const contexte = await navigateur.newContext({ viewport: { width: largeur, height: 900 }, ...(largeur < 500 ? { isMobile: true, hasTouch: true } : {}) });
+  const page = await contexte.newPage();
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
+  await avecCsp(page);
+  await page.goto(`${BASE}/`);
+  await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ termines: ['eveil', 'bourg', 'racine', 'sauvegarde'] })));
+  await page.reload();
+  const jeu = page.locator('quetes-de-sysadmin');
+  for (const l of ['ssh datacenter', 'yes', 'tail -f /var/log/nginx/access.log']) {
+    await jeu.locator('form input').fill(l);
+    await jeu.locator('form input').press('Enter');
+  }
+  const arret = jeu.locator('.arret-suivi');
+  verifier((await jeu.locator('form').isHidden()) && (await arret.isVisible()), `suivi ${largeur} px : tail -f garde la main, le bouton Ctrl-C est là`);
+  const avant = (await jeu.locator('.sortie').textContent()).split('198.51.100.77').length;
+  await page.waitForTimeout(2500);
+  verifier((await jeu.locator('.sortie').textContent()).split('198.51.100.77').length > avant, `suivi ${largeur} px : les visites du robot arrivent en direct`);
+  if (largeur < 500) {
+    verifier(!(await jeu.locator('.touches button[data-touche="Tab"]').isVisible()), `suivi ${largeur} px : la barre ne garde que Ctrl-C`);
+    await jeu.locator('.touches button[data-touche="ctrl-c"]').tap();
+  } else await arret.press('Control+c');
+  verifier((await jeu.locator('.sortie').textContent()).includes('^C') && (await jeu.locator('form input').isVisible()) && !(await arret.isVisible()), `suivi ${largeur} px : Ctrl-C rend la ligne de commande`);
+  const figee = (await jeu.locator('.sortie').textContent()).length;
+  await page.waitForTimeout(1500);
+  verifier((await jeu.locator('.sortie').textContent()).length === figee, `suivi ${largeur} px : après Ctrl-C, plus rien n’arrive`);
+  verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `suivi ${largeur} px : pas de défilement horizontal`);
+  verifier(erreurs.length === 0, `suivi ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
+  await contexte.close();
 }
 
 // L'astreinte : l'incident du jour, tiré parmi les histoires ouvertes après

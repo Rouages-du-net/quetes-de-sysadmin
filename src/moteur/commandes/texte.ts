@@ -113,7 +113,31 @@ export const TEXTE: Record<string, Commande> = {
   },
 
   tail: {
-    lancer: tete('tail'),
+    // -f (--follow, -F) : après la fin du fichier, tail attend ce qui s'y ajoute
+    // et l'affiche, jusqu'à Ctrl-C (Shell.suivi, voir activite.ts).
+    lancer: (c) => {
+      const suivre = c.args.some((a) => a === '-f' || a === '-F' || a === '--follow');
+      const args = c.args.filter((a) => a !== '-f' && a !== '-F' && a !== '--follow');
+      const sortie = tete('tail')({ ...c, args });
+      const { reste } = nombre(args, 10);
+      // Écart : dans un tube (tail -f journal | grep …), le jeu affiche une fois, sans suivre.
+      if (!suivre || !c.dernier || reste.length !== 1 || c.jeu.lirePour('tail', reste[0]) === null) return sortie;
+      const fichier = c.jeu.resoudre(reste[0]);
+      let vues = lignesDe(c.jeu.lire(fichier) ?? '').length;
+      c.jeu.suivi = {
+        lire: () => {
+          const lignes = lignesDe(c.jeu.lire(fichier) ?? '');
+          if (lignes.length < vues) {
+            vues = lignes.length;
+            return `tail: ${reste[0]}: file truncated`;
+          }
+          const nouvelles = lignes.slice(vues);
+          vues = lignes.length;
+          return nouvelles.join('\n');
+        },
+      };
+      return sortie;
+    },
   },
 
   wc: {

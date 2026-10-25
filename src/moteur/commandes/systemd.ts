@@ -485,10 +485,12 @@ export const SYSTEMD: Record<string, Commande> = {
       let noyauSeul = false;
       let depuis: number | null = null;
       let jusque: number | null = null;
+      let suivre = false;
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
         if (a.startsWith('--')) {
           if (a.startsWith('--unit=')) unite = a.slice(7);
+          else if (a === '--follow') suivre = true;
           else if (a === '--no-pager' || a === '--pager-end') continue;
           // --since / --until : une date (« 2027-09-12 02:00 »), une heure (aujourd'hui), today, yesterday.
           else if (/^--(since|until)(=|$)/.test(a)) {
@@ -519,7 +521,8 @@ export const SYSTEMD: Record<string, Commande> = {
             noyauSeul = true;
             demarrageSeul = true;
           }
-          else if (l === 'f') return jeu.erreur(jeu.t('journalctl-suivre'));
+          // -f : les dernières lignes, puis ce qui arrive, jusqu'à Ctrl-C (Shell.suivi).
+          else if (l === 'f') suivre = true;
           else if (l !== 'x' && l !== 'e' && l !== 'q') return jeu.erreur(`journalctl: invalid option -- '${l}'`);
         }
       }
@@ -535,16 +538,27 @@ export const SYSTEMD: Record<string, Commande> = {
       const u = unite && (unite.endsWith('.service') ? unite : `${unite}.service`);
       // Les dates se lisent à l'heure de la machine (celle que le journal affiche).
       const affiche = (e: { temps: number }) => e.temps + (sd.ecart ?? 0);
-      let entrees = sd.journal.filter(
-        (e) =>
-          (!u || e.unite === u) &&
-          (!noyauSeul || e.ident === 'kernel') &&
-          e.priorite <= priorite &&
-          (!demarrageSeul || e.demarrage === sd.demarrage) &&
-          (depuis === null || affiche(e) >= depuis) &&
-          (jusque === null || affiche(e) <= jusque),
-      );
+      const garde = (e: (typeof sd.journal)[number]) =>
+        (!u || e.unite === u) &&
+        (!noyauSeul || e.ident === 'kernel') &&
+        e.priorite <= priorite &&
+        (!demarrageSeul || e.demarrage === sd.demarrage) &&
+        (depuis === null || affiche(e) >= depuis) &&
+        (jusque === null || affiche(e) <= jusque);
+      let entrees = sd.journal.filter(garde);
+      // Comme le vrai journalctl, -f montre les 10 dernières lignes puis suit.
+      if (nombre === null && suivre) nombre = 10;
       if (nombre !== null) entrees = entrees.slice(-nombre);
+      if (suivre && c.dernier) {
+        let vues = sd.journal.length;
+        jeu.suivi = {
+          lire: () => {
+            const nouvelles = sd.journal.slice(vues).filter(garde);
+            vues = sd.journal.length;
+            return nouvelles.map((e) => ligneJournal(e, sd, jeu.t.langue, couleur)).join('\n');
+          },
+        };
+      }
       if (!entrees.length) return '-- No entries --';
       const lignes: string[] = [];
       entrees.forEach((e, i) => {

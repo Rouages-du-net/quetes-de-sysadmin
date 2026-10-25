@@ -42,6 +42,8 @@ function el<K extends keyof HTMLElementTagNameMap>(nom: K, attrs: Record<string,
 
 // Les lignes gardées à l'écran pour une seule sortie.
 const MAX_LIGNES = 2000;
+// Pendant un suivi (tail -f), les secondes qui passent sur la machine à chaque seconde réelle.
+const SUIVI_SECONDES = 3;
 
 export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) {
   const t = traducteur(options.langue);
@@ -249,7 +251,9 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   const coloration = el('div', { class: 'coloration', 'aria-hidden': 'true' });
   const champ = el('span', { class: 'champ' }, coloration, saisie);
   const form = el('form', { autocomplete: 'off' }, invite, champ, trouvee);
-  const terminal = el('div', { class: 'terminal' }, sortie, form);
+  // tail -f, journalctl -f : la commande garde la main jusqu'à Ctrl-C (ce bouton, le clavier ou la barre de touches).
+  const arretSuivi = el('button', { type: 'button', class: 'arret-suivi', hidden: '' }, el('kbd', {}, '^C'), ` ${t('suivi-arreter')}`);
+  const terminal = el('div', { class: 'terminal' }, sortie, form, arretSuivi);
   const quitterFocus = el('button', { type: 'button', class: 'quitter-focus' }, t('affichage-quitter-focus'));
   // Les touches qui manquent aux claviers des téléphones (affichées sur les écrans tactiles).
   const TOUCHES: [string, string][] = [
@@ -399,7 +403,20 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
 
   // Le terminal et sa barre de touches : ensemble en plein écran.
   const ecran = el('div', { class: 'ecran' }, quitterFocus, terminal, barreTouches);
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, ecran, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces, fenetreBilan, fenetreAstreinte, fenetreFinAstreinte);
+  // La confirmation du mode examen : il fait recommencer le chapitre en cours.
+  const idExamen = `qds-examen-${Math.random().toString(36).slice(2, 8)}`;
+  const examenTitre = el('h2', { id: idExamen });
+  const examenTexte = el('p', { class: 'carte-legende' });
+  const examenOui = el('button', { type: 'button', class: 'bouton' });
+  const examenNon = el('button', { type: 'button', class: 'bouton bouton-second' }, t('examen-annuler'));
+  const fenetreExamen = el(
+    'dialog',
+    { class: 'fenetre-examen', 'aria-labelledby': idExamen },
+    examenTitre,
+    examenTexte,
+    el('p', { class: 'carte-actions' }, examenNon, ' ', examenOui),
+  ) as HTMLDialogElement;
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, ecran, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces, fenetreBilan, fenetreAstreinte, fenetreFinAstreinte, fenetreExamen);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -723,6 +740,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
 
   // Les raccourcis du menu : un écran neuf, directement sur la bonne machine.
   const allerPoste = () => {
+    finSuivi();
     debutExamen = null;
     majChrono();
     sortie.replaceChildren(mesure);
@@ -732,6 +750,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     apres();
   };
   const demarrer = (h: number, c?: number) => {
+    finSuivi();
     sortie.replaceChildren(mesure);
     const chapitre = c === undefined ? undefined : chapitres(h)[c];
     if (terminalJeu.distant?.histoire === HISTOIRES[h] && chapitre) afficher(terminalJeu.ouvrir(chapitre));
@@ -768,6 +787,45 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     saisie.value = '';
     apres(ligneDe);
     ouvrirEditeur();
+    ouvrirSuivi();
+  });
+
+  // Un suivi (tail -f, journalctl -f) : l'écran fait passer le temps sur la
+  // machine (SUIVI_SECONDES par seconde réelle) et affiche ce qui arrive.
+  let minuterieSuivi: number | null = null;
+  const finSuivi = () => {
+    if (minuterieSuivi !== null) clearInterval(minuterieSuivi);
+    minuterieSuivi = null;
+    arretSuivi.hidden = true;
+    form.hidden = false;
+    if (barreTouches.dataset.mode === 'suivi') delete barreTouches.dataset.mode;
+  };
+  const arreterSuivi = () => {
+    if (minuterieSuivi === null) return;
+    finSuivi();
+    afficher(terminalJeu.interrompre());
+    apres();
+    saisie.focus();
+  };
+  const ouvrirSuivi = () => {
+    if (!terminalJeu.suit) return;
+    form.hidden = true;
+    barreTouches.dataset.mode = 'suivi';
+    arretSuivi.hidden = false;
+    arretSuivi.focus();
+    minuterieSuivi = window.setInterval(() => {
+      const nouveau = terminalJeu.suivre(SUIVI_SECONDES);
+      if (!nouveau) return;
+      afficher(nouveau, 'suivi');
+      apres();
+    }, 1000);
+  };
+  arretSuivi.addEventListener('click', arreterSuivi);
+  arretSuivi.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey && e.key.toLowerCase() === 'c') || e.key === 'Escape') {
+      e.preventDefault();
+      arreterSuivi();
+    }
   });
 
   // nano : l'éditeur prend la place de la ligne de commande jusqu'à ^X.
@@ -1073,12 +1131,34 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   fermerFinAstreinte.addEventListener('click', () => fenetreFinAstreinte.close());
   fenetreFinAstreinte.addEventListener('close', () => setTimeout(() => saisie.focus()));
 
-  caseExamen.addEventListener('change', () => {
-    terminalJeu.examen = caseExamen.checked;
+  const appliquerExamen = (oui: boolean) => {
+    caseExamen.checked = oui;
+    terminalJeu.examen = oui;
     // Le chapitre en cours recommence : en examen, sur une machine neuve et chrono à zéro.
     if (histoire() >= 0) demarrer(histoire(), courant());
     else apres();
+  };
+  let examenVoulu = false;
+  caseExamen.addEventListener('change', () => {
+    const voulu = caseExamen.checked;
+    const sh = terminalJeu.distant?.shell;
+    // Un chapitre commencé et pas fini : on demande avant de le faire recommencer.
+    const enCours = !!sh && !sh.termine && (terminalJeu.pas ?? 1) > 0;
+    if (!enCours) return appliquerExamen(voulu);
+    caseExamen.checked = !voulu;
+    examenVoulu = voulu;
+    examenTitre.textContent = t(voulu ? 'examen-confirmer-titre' : 'examen-quitter-titre');
+    examenTexte.textContent = typo(t(voulu ? 'examen-confirmer-texte' : 'examen-quitter-texte'));
+    examenOui.textContent = t(voulu ? 'examen-confirmer' : 'examen-quitter');
+    fenetreExamen.showModal();
+    examenNon.focus();
   });
+  examenOui.addEventListener('click', () => {
+    fenetreExamen.close();
+    appliquerExamen(examenVoulu);
+  });
+  examenNon.addEventListener('click', () => fenetreExamen.close());
+  fenetreExamen.addEventListener('close', () => setTimeout(() => saisie.focus()));
   // Un lieu de la carte : son nom, ses repères en toutes lettres (lus aussi
   // par les lecteurs d'écran), puis les lieux qu'il contient.
   const dessinerLieu = (l: Lieu): HTMLElement => {
@@ -1200,6 +1280,11 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   barreTouches.addEventListener('click', (e) => {
     const touche = (e.target as HTMLElement).closest('button')?.dataset.touche;
     if (!touche) return;
+    // Pendant un suivi (tail -f), Ctrl-C l'arrête.
+    if (minuterieSuivi !== null) {
+      if (touche === 'ctrl-c') arreterSuivi();
+      return;
+    }
     // Dans nano, ^O, ^X et ^C vont à l'éditeur, comme tapés au clavier.
     const zone = terminal.querySelector<HTMLTextAreaElement>('.nano-texte');
     if (form.hidden) {
@@ -1265,6 +1350,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // Revenir en arrière : la machine du chapitre est rejouée jusqu'à ce point ; le temps du bilan continue.
   const restaurer = (pas: number) => {
     const ancienne = terminalJeu.distant?.shell;
+    finSuivi();
     if (!ancienne || !terminalJeu.restaurer(pas)) return;
     const nouvelle = terminalJeu.distant!.shell;
     if (debuts.has(ancienne)) debuts.set(nouvelle, debuts.get(ancienne)!);
@@ -1274,6 +1360,8 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
     sortie.replaceChildren(mesure);
     afficher(t('secours-restaure', { pas }), 'succes');
     apres();
+    // Revenu au milieu d'un tail -f : il continue.
+    ouvrirSuivi();
   };
   revenirInstantane.addEventListener('click', () => instantane && restaurer(instantane.pas));
   annulerSaisie.addEventListener('click', () => {

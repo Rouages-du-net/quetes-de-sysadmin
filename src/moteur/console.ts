@@ -14,6 +14,7 @@ import { etatPort, type EtatPort } from './ports';
 import { bannisPour, type EtatFail2ban } from './fail2ban';
 import { noterTmux } from './commandes/tmux';
 import { enColonnes } from './commandes/fichiers';
+import { vivre } from './activite';
 import { LANGUES, traducteur, type Langue, type Traduire } from '../textes';
 
 export interface OptionsConsole {
@@ -27,7 +28,7 @@ export interface OptionsConsole {
 }
 
 
-type Saisie = { ligne: string } | { enregistrer: string } | { quitter: true };
+type Saisie = { ligne: string } | { enregistrer: string } | { quitter: true } | { suivre: number } | { interrompre: true };
 
 export class Console {
   // L'écran montre les couleurs des sorties (réglage de l'interface) ; voir couleurs.ts.
@@ -318,6 +319,8 @@ export class Console {
     if (this.distant) this.saisies?.push({ ligne });
     else this.saisies = null;
     const dejaFini = sh.termine;
+    // Une nouvelle commande : un suivi oublié (chapitre quitté pendant tail -f) est fini.
+    sh.suivi = null;
     // Dans tmux, ce qui s'affiche reste dans la session (pour tmux attach).
     const tmuxAvant = sh.tmux;
     const invite = sh.invite();
@@ -416,6 +419,8 @@ export class Console {
       for (const s of avant.slice(0, n)) {
         if ('ligne' in s) this.executer(s.ligne);
         else if ('enregistrer' in s) this.enregistrer(s.enregistrer);
+        else if ('suivre' in s) this.suivre(s.suivre);
+        else if ('interrompre' in s) this.interrompre();
         else this.quitterEdition();
       }
     } finally {
@@ -423,6 +428,33 @@ export class Console {
     }
     for (const i of ancienne.indicesDemandes) this.distant?.shell.indicesDemandes.add(i);
     return true;
+  }
+
+  // ——— Suivi (tail -f, journalctl -f) : la commande garde la main jusqu'à Ctrl-C ———
+
+  /** Vrai pendant un suivi : l'écran appelle suivre() à son rythme, Ctrl-C appelle interrompre(). */
+  get suit(): boolean {
+    return !!this.shell.suivi;
+  }
+
+  /** Fait passer quelques secondes sur la machine (son activité, voir activite.ts) ; renvoie ce qui s'est ajouté. */
+  suivre(secondes = 2): string {
+    const sh = this.shell;
+    if (!sh.suivi) return '';
+    if (this.distant) this.saisies?.push({ suivre: secondes });
+    else this.saisies = null;
+    vivre(sh.principal, secondes);
+    const avant = sh.principal.termine;
+    return [sh.suivi.lire(), sh.principal.evenements(), this.noterFin(sh.principal, avant)].filter(Boolean).join('\n\n');
+  }
+
+  /** Ctrl-C : arrête le suivi. */
+  interrompre(): string {
+    if (!this.shell.suivi) return '';
+    if (this.distant) this.saisies?.push({ interrompre: true });
+    else this.saisies = null;
+    this.shell.suivi = null;
+    return '^C';
   }
 
   // ——— Éditeur (nano), sur la machine où l'on est ———

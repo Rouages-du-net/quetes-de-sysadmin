@@ -13,7 +13,8 @@ import { d, f, fichiersComptes, comptesParDefaut, type Chapitre } from '../monde
 import type { Jeu } from '../shell';
 import { POSTE } from '../machines';
 import { journaliser, nouveauSystemd, systemd } from '../systemd';
-import { appliquer, couvre, DOSSIER, lireConfig, type EtatFail2ban } from '../fail2ban';
+import { appliquer, couvre, DOSSIER, lireConfig, noter, type EtatFail2ban } from '../fail2ban';
+import { instants } from '../activite';
 
 const M = '/home/vous';
 const RANIA = '198.51.100.40';
@@ -79,6 +80,7 @@ const LOG = [
   ['08:00:12', 'Unban 203.0.113.66'],
   ['08:05:40', 'Ban 198.51.100.23'],
   ['08:09:55', 'Ban 203.0.113.66'],
+  ['09:35:40', 'Unban 198.51.100.23'],
 ]
   .map(([h, m]) => `2026-10-22 ${h},412 fail2ban.actions        [701]: NOTICE  [sshd] ${m}`)
   .join('\n');
@@ -92,6 +94,61 @@ const ECHECS = (joueur: string): [string, string][] => [
 ];
 
 const f2b = (j: Jeu) => j.etat.fail2ban as EtatFail2ban;
+
+// Les robots ne s'arrêtent pas pendant qu'on joue : chacun retente sa chance
+// à son rythme, avec un nom au hasard de sa liste. Banni, il ne passe plus
+// (le pare-feu le rejette avant sshd) ; à la fin du bantime, fail2ban le
+// relâche et il recommence (« ils reviennent toutes les dix minutes »).
+const EN_DIRECT = [
+  { ip: ROBOTS[0], periode: 20, comptes: ['root', 'admin', 'oracle', 'postgres', 'ubuntu', 'git'] },
+  { ip: ROBOTS[1], periode: 12, comptes: ['admin', 'test', 'user', 'ftp', 'guest'] },
+];
+// Le bruit de fond d'internet : des scanners qui essaient un ou deux noms puis
+// passent à une autre cible (trop peu pour fail2ban). Adresses de documentation.
+const SCANNERS = ['203.0.113.', '192.0.2.', '198.51.100.'];
+const COMPTES_COURANTS = ['root', 'admin', 'pi', 'oracle', 'test', 'ubuntu', 'support', 'user'];
+const scanner = (n: number) => `${SCANNERS[n % 3]}${150 + ((n * 37) % 50)}`;
+// Depuis quand chaque robot est banni (pour le relâcher à la fin du bantime).
+const depuis = (j: Jeu): Record<string, number> => (j.etat.bannisDepuis ??= {}) as Record<string, number>;
+
+function relacher(j: Jeu, t: number) {
+  const etat = f2b(j);
+  const bantime = etat.charge?.bantime ?? 600;
+  for (const ip of ROBOTS) {
+    if (!etat.bannis.includes(ip)) continue;
+    const debut = (depuis(j)[ip] ??= t);
+    if (bantime < 0 || t - debut < bantime * 1000) continue;
+    etat.bannis.splice(etat.bannis.indexOf(ip), 1);
+    (etat.remis ??= {})[ip] = t;
+    delete depuis(j)[ip];
+    systemd(j)!.horloge = t;
+    noter(j, etat, `Unban ${ip}`);
+  }
+}
+
+function robotsEnDirect(j: Jeu, de: number, a: number) {
+  const sd = systemd(j)!;
+  const etat = f2b(j);
+  const veille = () => sd.services.fail2ban?.etat === 'active' && !!etat.charge?.enabled;
+  // Un scanner toutes les 9 s, deux essais chacun (le second 9 s après le premier).
+  const scanners = instants(de, a, 9).map((t) => {
+    const k = Math.floor(t / 9000);
+    const n = Math.floor(k / 2);
+    return { t, r: { ip: scanner(n), periode: 9, comptes: [COMPTES_COURANTS[(n + (k % 2)) % COMPTES_COURANTS.length]] } };
+  });
+  const essais = [...EN_DIRECT.flatMap((r) => instants(de, a, r.periode).map((t) => ({ t, r }))), ...scanners].sort((x, y) => x.t - y.t);
+  for (const { t, r } of essais) {
+    sd.horloge = t;
+    if (veille()) relacher(j, t);
+    if (etat.bannis.includes(r.ip)) continue;
+    const n = Math.floor(t / (r.periode * 1000));
+    journaliser(sd, 'ssh.service', 'sshd', 3100 + (n % 60), `Invalid user ${r.comptes[n % r.comptes.length]} from ${r.ip} port ${40000 + (n % 20000)}`, 6, false);
+    if (!veille()) continue;
+    appliquer(j, etat, r.ip);
+    for (const ip of ROBOTS) if (etat.bannis.includes(ip)) depuis(j)[ip] ??= t;
+  }
+  if (veille()) relacher(j, a);
+}
 const ignore = (j: Jeu, ip: string) => f2b(j).charge?.ignoreip.some((e) => couvre(e, ip)) ?? false;
 const reglee = (j: Jeu) => {
   const p = f2b(j).charge;
@@ -113,8 +170,10 @@ export const sentinelle: Chapitre = {
     c.groupes.adm = { gid: 4, membres: ['vous'] };
     return c;
   },
+  activite: { pas: 15, avancer: robotsEnDirect },
   etat: () => ({
-    fail2ban: { charge: null, bannis: [...ROBOTS.slice(0, 1), RANIA, ROBOTS[1]], totalBannis: 6, journal: [], chargements: 0, consulte: false } satisfies EtatFail2ban,
+    // Le second robot vient d'être relâché (09:35) : il recommence pendant qu'on joue, et fail2ban le rattrape.
+    fail2ban: { charge: null, bannis: [ROBOTS[0], RANIA], totalBannis: 6, journal: [], chargements: 0, consulte: false, remis: { [ROBOTS[1]]: Date.UTC(2026, 9, 22, 9, 35, 40) } } satisfies EtatFail2ban,
     systemd: nouveauSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 22, 6, 0, 0), {
       ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },

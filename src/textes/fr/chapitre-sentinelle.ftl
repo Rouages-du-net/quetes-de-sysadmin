@@ -20,7 +20,11 @@ sentinelle-courriel-kofi =
     adresse : 198.51.100.40.
 
     Yasmine a aussi remarqué que les robots reviennent toutes les dix
-    minutes : regarde /var/log/fail2ban.log.
+    minutes : regarde /var/log/fail2ban.log. Ils frappent encore à la porte
+    en ce moment ; pour les voir en direct (Ctrl-C pour arrêter) :
+
+      journalctl -fu ssh
+      tail -f /var/log/fail2ban.log
 
     Peux-tu :
 

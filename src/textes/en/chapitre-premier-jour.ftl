@@ -41,6 +41,7 @@ premier-jour-notes-awa =
     AWA'S NOTES — EVERYDAY COMMANDS
 
       head file           the beginning (10 lines)   tail file      the end
+      tail -f file        the end, then the new lines as they arrive, live (Ctrl-C to stop)
       wc -l file          counts the lines
       grep pattern file   the lines that contain the pattern
 
@@ -65,6 +66,9 @@ premier-jour-notes-awa =
     Writing to a file:
       command > file         OVERWRITES the file with the result
       command >> file        APPENDS the result at the end
+
+    Forgot sudo? No need to retype everything: sudo !! runs the last
+    command again, with sudo in front. And history shows everything you typed.
 
     The web server (nginx) blocks the addresses listed in
     /etc/nginx/bloques.conf, in the format: deny ADDRESS;

@@ -101,8 +101,10 @@ demandent plusieurs.
 - [x] **Temps simulé** : horloge de systemd, tâches planifiées (`cron` :
       une nuit simulée lance les tâches qui y tombent)
 - [ ] Timers systemd (faits : unités écrites à la main, `OnCalendar=`,
-      `list-timers`, « La sonde »), journaux qui défilent, attaques
-      « pendant » la quête
+      `list-timers`, « La sonde »)
+- [x] Journaux qui défilent et attaques « pendant » la quête : `tail -f`,
+      `journalctl -f` et Ctrl-C ; Premier jour (le robot en direct) et La
+      sentinelle (robots, scanners, fail2ban qui bannit et relâche)
 - [x] **Utilisateur·rices et groupes** : vrais droits de groupe, comptes par
       machine (`/etc/passwd`, `/etc/group`), `id`, `groups`, `usermod -aG`,
       `chgrp`, `chown` ; quête « Deuxième jour » (Datacenter, chapitre 2)
@@ -324,7 +326,7 @@ qui travaille sur les machines plutôt que sur les commutateurs).
       `update-initramfs`)
 - [x] Le Labo, chapitre 4 : « Le redémarrage qui coince » (`/etc/fstab` par
       UUID, `nofail`, le mode secours, `findmnt --verify`, `daemon-reload`)
-- [ ] Journaux qui défilent et attaques pendant une quête (défensif)
+- [x] Journaux qui défilent et attaques pendant une quête (défensif)
 - [ ] Histoire : le courrier qui arrive en spam (SPF, DKIM, DMARC, Postfix)
 - [ ] Histoire : automatiser avec Ansible (inventaire, playbook,
       idempotence, `--check`)

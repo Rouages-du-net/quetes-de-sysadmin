@@ -330,6 +330,8 @@
   /* Pendant nano, la barre ne garde que ses raccourcis (et Ctrl-C). */
   .qds .touches:not([data-mode='nano']) .pour-nano,
   .qds .touches[data-mode='nano'] button:not(.pour-nano):not([data-touche='ctrl-c']) { display: none; }
+  /* Pendant un suivi (tail -f), seulement Ctrl-C. */
+  .qds .touches[data-mode='suivi'] button:not([data-touche='ctrl-c']) { display: none; }
 }
 /* Les succès : obtenus en clair, les autres en discret ; l'annonce dans le terminal. */
 .qds .succes-grade { margin: 0 0 0.75rem; }
@@ -400,6 +402,15 @@
 @media (prefers-reduced-motion: reduce) {
   .qds * { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* tail -f, journalctl -f : les lignes qui arrivent se suivent sans espace ; le bouton qui fait Ctrl-C, à la place de la ligne de commande. */
+.qds .sortie pre.suivi { margin-top: -0.5rem; }
+.qds .arret-suivi {
+  font: inherit; color: var(--_terminal-invite); background: none; cursor: pointer;
+  border: 1px dashed color-mix(in oklab, var(--_terminal-texte) 40%, transparent); border-radius: 0.25rem; padding: 0.1rem 0.4rem;
+}
+.qds .arret-suivi:focus-visible { outline: 2px solid var(--_terminal-invite); outline-offset: 1px; }
+.qds .arret-suivi kbd { font: inherit; background: var(--_terminal-texte); color: var(--_terminal-fond); padding: 0 0.2ch; }
 
 /* L'éditeur nano, dans le terminal. */
 .qds .nano { display: flex; flex-direction: column; gap: 0.25rem; }
@@ -505,9 +516,9 @@
    un petit écran). */
 .qds .sortie .bilan { margin: 0 0 0.5rem; color: var(--_terminal-invite); font-weight: 700; }
 .qds .sortie .bilan .lien { color: inherit; font-weight: 400; }
-.qds .fenetre-bilan { width: min(44rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
-.qds .fenetre-bilan::backdrop { background: rgb(0 0 0 / 0.5); }
-.qds .fenetre-bilan h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.qds .fenetre-bilan, .qds .fenetre-examen { width: min(44rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
+.qds .fenetre-bilan::backdrop, .qds .fenetre-examen::backdrop { background: rgb(0 0 0 / 0.5); }
+.qds .fenetre-bilan h2, .qds .fenetre-examen h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
 .qds .bilan-tableau { overflow-x: auto; margin: 0.75rem 0; }
 .qds .bilan-tableau table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
 .qds .bilan-tableau th, .qds .bilan-tableau td { border: 1px solid var(--_bord); padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; }

@@ -103,6 +103,14 @@ rouages-lien-glossaire-octet = Glossaire : octet
 examen-case = Mode examen : sans indice, avec un chrono (le chapitre recommence)
 # { $temps } : le temps écoulé, en minutes:secondes
 examen-chrono = ⏱ { $temps }
+# La confirmation, quand un chapitre est en cours (le mode examen le fait recommencer).
+examen-confirmer-titre = Passer en mode examen ?
+examen-confirmer-texte = Le chapitre en cours va recommencer depuis le début, sur une machine neuve : ce que tu y as déjà fait sera perdu. Les chapitres terminés restent acquis.
+examen-confirmer = Recommencer en mode examen
+examen-quitter-titre = Quitter le mode examen ?
+examen-quitter-texte = Le chapitre en cours va recommencer depuis le début, avec les indices : ce que tu y as déjà fait sera perdu. Les chapitres terminés restent acquis.
+examen-quitter = Recommencer sans le mode examen
+examen-annuler = Annuler
 examen-debut = Mode examen : aucun indice ne s'affichera, le chrono tourne. Ta mission est dans le message d'accueil (relis-le avec cat). Le débrief viendra à la fin. Pour repartir de zéro, machine et chrono : « Recommencer ce chapitre », sous le terminal.
 # { $temps } : le temps de cette partie ; { $record } : le meilleur temps de ce navigateur
 examen-fini = Examen réussi en { $temps }. Ton meilleur temps sur ce chapitre : { $record }.
@@ -188,6 +196,8 @@ mission-consignes = Les consignes
 mission-journal = Ce qui s'est passé
 mission-rien = Rien encore : l'histoire avance à mesure que tu agis.
 touches-titre = Touches du terminal
+# Pendant tail -f ou journalctl -f : le bouton qui fait Ctrl-C.
+suivi-arreter = Arrêter (Ctrl-C)
 touche-haut = Commande précédente
 touche-bas = Commande suivante
 # Ce qu'affiche bash pendant Ctrl-R (en anglais, comme readline).

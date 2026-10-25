@@ -4,7 +4,6 @@
 // textes attendus, eux, sont vérifiés en français (langue de référence).
 
 import { describe, expect, it } from 'vitest';
-import { ERREURS_503 } from '../src/moteur/chapitres/datacenter';
 import { nomMachine } from '../src/moteur/machines';
 import { Shell } from '../src/moteur/shell';
 import { Console } from '../src/moteur/console';
@@ -225,7 +224,7 @@ for (const langue of LANGUES)
         // Chaque piste trop longue renvoie aux notes d'Awa, sans donner la commande ; la bonne passe ensuite.
         expect(sorties[1]).toContain(t('premier-jour-evenement-tout-lire'));
         expect(sorties[2]).toContain(t('premier-jour-evenement-grep-seul'));
-        expect(sorties[3]).toContain(t('premier-jour-evenement-compte', { erreurs: String(ERREURS_503) }).slice(0, 12));
+        expect(sorties[3]).toContain(t('premier-jour-evenement-compte', { erreurs: sorties[3].split('\n')[0] }).slice(0, 12));
         expect(sorties[4]).toContain(t('premier-jour-evenement-adresses-seules'));
         expect(s.drapeaux.has('robot')).toBe(true);
         // Une fois le compte fait, relire le journal ne redit rien.
