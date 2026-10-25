@@ -305,6 +305,12 @@ qui travaille sur les machines plutôt que sur les commutateurs).
       empreintes de clés, `authorized_keys`, une tâche `cron` laissée par
       l'intrus, le mot de passe de la base changé de bout en bout) et « La
       contre-visite » (`nmap`, `lynis`, mises à jour, rapport de clôture).
+- [x] **La Veille** (histoire 16, machine `petrin`) : six mois après
+      « L'Audit », la veille de sécurité hebdomadaire — lire un bulletin de
+      CVE fictives, trier par exposition autant que par gravité, corriger
+      sans casser, prouver, puis automatiser ce qui peut l'être
+      (`unattended-upgrades` restreint à la sécurité, un timer ou une
+      tâche cron). Aucun outil nouveau, aucune exploitation.
 
 ## Phase 12 — Le matériel, et les histoires suivantes
 
@@ -362,6 +368,11 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
 
 ## Idées en plus
 
+- [ ] **Une histoire offensive** : comprendre une attaque en la rejouant,
+  pas seulement en lire le résultat. Hors du périmètre habituel du jeu
+  (« Règles du jeu » dans `CLAUDE.md` : les quêtes de sécurité restent
+  défensives) ; un guide pour qui voudra la construire est dans
+  `docs/VERSION-OFFENSIVE.md`.
 - [x] **Astreinte et incident du jour** (`src/moteur/astreinte.ts`) : chaque
   jour, un chapitre tiré de la date (le même pour tout le monde, sans
   serveur) parmi ceux des parcours qui parlent de pannes, ouvert après La

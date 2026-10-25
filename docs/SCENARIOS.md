@@ -1922,3 +1922,136 @@ histoire, la boulangerie de Nadia, en cinq chapitres :
    rapport de clôture écrit dans `nano`.
 Les « constats » du plan (chapitre 2) se fondent dans le premier chapitre et
 dans les chapitres actuels, qui partent déjà d'un rapport.
+
+## Histoire 16 : La Veille (cinq chapitres)
+
+Six mois après « L'Audit » (histoire 14, « Je repasserai dans six mois : la
+sécurité, ça se revérifie »), Salomé revient — non plus pour auditer, mais
+pour transmettre une habitude : la veille de sécurité, hebdomadaire, qu'on
+tient seul·e une fois qu'elle n'est plus là. L'activité du Fournil a grandi :
+la machine (`petrin`, 192.0.2.23) est un nouveau serveur (migration),
+Salomé et Nadia reprennent leurs rôles. Chaque chapitre correspond à un
+geste réel de sysadmin : lire un bulletin, trier, corriger sans casser,
+prouver, puis automatiser ce qui peut l'être. Tout reste défensif : aucune
+CVE réelle n'est citée (des identifiants fictifs, `CVE-2099-NNNNN`, de la
+forme des vrais), rien n'est exploité, seule une preuve de version ou de
+configuration est vérifiée. Aucun outil nouveau : tout s'appuie sur ce que
+le jeu sait déjà faire (`apt`, `nmap`, `lynis`, `ss`, `curl`, `grep`,
+`systemctl`, `crontab`/timers, `unattended-upgrades`).
+
+### Chapitre 1 — Le bulletin (fait)
+
+Un fichier hebdomadaire (comme une liste de diffusion d'avis de sécurité :
+Debian Security Advisories, oss-security…) liste cinq CVE fictives, chacune
+avec son paquet, son score CVSS, la plage de versions touchées, la version
+corrigée et un résumé. Avant de s'inquiéter, il faut vérifier que chaque
+ligne concerne vraiment CE serveur : un paquet absent, ou déjà au-delà de
+la version corrigée, n'est pas une alerte.
+
+| Étape | Commande apprise |
+|---|---|
+| Lire | `cat bulletin-securite.txt` |
+| Vérifier l'installation et la version | `apt list --installed` |
+| Trier | `nano veille.md` : « Concerne ce serveur » ou « Sans objet », et pourquoi |
+
+Objectif vérifié sur l'état : `veille.md` classe nginx, rsync et
+openssh-server sous « Concerne ce serveur » (ce dernier déjà protégé par
+`KbdInteractiveAuthentication no`, sans rien demander de plus), et
+python3-certbot-nginx (absent) et curl (déjà à jour) sous « Sans objet ».
+Pièges prévus : classer certbot ou curl comme pertinentes, oublier nginx,
+rsync ou openssh-server.
+
+### Chapitre 2 — La priorité (fait)
+
+Deux CVE restent à traiter (nginx, rsync), avec un score CVSS et une
+exposition différente : nginx (80, 443) est joignable depuis internet ;
+rsync n'a aucun port en écoute (un outil en ligne de commande, pas un
+service). Le score seul ne suffit pas : il faut croiser avec l'exposition,
+déjà apprise dans « Le périmètre » et « L'exposition ».
+
+| Étape | Commande apprise |
+|---|---|
+| Revoir l'exposition | `ss -tlnp` ou `nmap -sV petrin.internal` |
+| Décider | `nano priorite.md` : un ordre de traitement, justifié ; et openssh-server (déjà protégée) |
+
+Objectif vérifié sur l'état : `priorite.md` classe nginx avant rsync (même
+si son score est plus bas), avec une justification qui cite l'exposition
+(pas seulement le score), et note qu'openssh-server n'a rien à faire ici.
+Piège prévu : classer uniquement par score CVSS décroissant (rsync avant
+nginx).
+
+### Chapitre 3 — Le correctif (fait)
+
+nginx et rsync ont chacune un correctif Debian déjà publié. `apt upgrade`
+installe toutes les mises à jour disponibles d'un coup (pas une par une),
+après avoir rafraîchi la liste des paquets.
+
+| Étape | Commande apprise |
+|---|---|
+| Rafraîchir | `sudo apt update` |
+| Corriger | `sudo apt upgrade` |
+| Vérifier que le site tient | `curl -I http://fournil.example/` |
+
+Objectif vérifié sur l'état : nginx et rsync à la version corrigée, et le
+site toujours servi (200). Piège prévu : `apt upgrade` sans `apt update`
+d'abord (« Upgrading: 0 »).
+
+### Chapitre 4 — Sans preuve, pas de certitude (fait)
+
+Un correctif qui n'est pas vérifié n'est qu'une intention (la leçon de
+« La contre-visite », reprise). On reprouve que les deux paquets sont à
+jour, et on regarde dans le journal d'accès de nginx si la faille HTTP/2
+avait déjà été tentée.
+
+| Étape | Commande apprise |
+|---|---|
+| Reprouver | `apt list --upgradable` (rien ne doit plus apparaître) |
+| Chercher une tentative | `grep "HTTP/2" /var/log/nginx/access.log` |
+| Vérifier que le site tient | `curl -I http://fournil.example/` |
+
+Objectif vérifié sur l'état : les deux paquets confirmés à jour, une
+tentative antérieure trouvée dans le journal d'accès (une requête HTTP/2
+vide, refusée par nginx, quelques jours avant le correctif), et le site
+toujours servi.
+
+### Chapitre 5 — Mettre en veille (fait)
+
+Une vérification ponctuelle ne suffit pas : la veille est une habitude.
+Deux choses à mettre en place, qui tournent seules sans remplacer la
+décision humaine : `unattended-upgrades` restreint aux mises à jour de
+**sécurité** seulement, et un rendez-vous hebdomadaire (un timer systemd ou
+une tâche `cron`) qui envoie par courrier la liste des paquets en attente.
+
+| Étape | Commande apprise |
+|---|---|
+| Activer | `/etc/apt/apt.conf.d/20auto-upgrades` : les deux tâches périodiques à `"1"` |
+| Restreindre à la sécurité | `/etc/apt/apt.conf.d/50unattended-upgrades` : ne garder que les lignes `label=Debian-Security`, régler `Unattended-Upgrade::Mail` |
+| Planifier | un timer systemd (`/etc/systemd/system/*.timer` et `*.service`, `systemctl enable --now`) ou une tâche `crontab -e`, qui envoie `apt list --upgradable` par `mail` |
+
+Objectif vérifié sur l'état : les deux tâches de `20auto-upgrades`
+activées, `50unattended-upgrades` limité aux mises à jour de sécurité avec
+un rapport par courrier, et un timer (ou une tâche cron) actif et
+persistant. Pièges prévus : activer sans restreindre à la sécurité (ou
+l'inverse), un rendez-vous qui ne survit pas à un redémarrage (hors de
+`/etc`).
+
+### Débrief de l'histoire
+
+Ce qui s'est passé : une veille régulière transforme une alerte en
+routine plutôt qu'en urgence. La bonne pratique : trier par exposition
+autant que par gravité, corriger puis prouver, chercher les traces d'une
+exploitation déjà tentée, et automatiser ce qui peut l'être sans perdre la
+décision humaine. Documentation : Debian Security
+(https://www.debian.org/security/), le glossaire CVE
+(https://www.cve.org/), le calculateur CVSS
+(https://www.first.org/cvss/calculator/4-0), `unattended-upgrades`
+(https://wiki.debian.org/UnattendedUpgrades), `systemd.timer`
+(https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html).
+
+### Ce qui reste volontairement hors de cette histoire
+
+Comprendre une faille pour mieux la corriger n'exige pas de l'exploiter
+dans le jeu. Une version plus offensive (une machine d'audit façon Kali,
+des outils de reconnaissance plus poussés) resterait une histoire à part,
+avec ses propres garde-fous, à concevoir séparément si le projet le
+décide.

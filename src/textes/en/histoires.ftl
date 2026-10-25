@@ -31,3 +31,5 @@ histoire-audit = The Audit
     .resume = The bakery's insurer wants an audit: read the letter of engagement and take an inventory with nmap without leaving the scope, fix an auditor's findings (SSH, accounts, sudo, secrets), close what is exposed on the network, trace an unexpected login, then prove with nmap and Lynis that everything holds.
 histoire-labo = The Lab
     .resume = The photo club's server: a disk wearing out, what SMART really says, software RAID, replacing a disk without losing anything or picking the wrong disk, growing the space with LVM, then getting out of emergency mode.
+histoire-veille = The Watch
+    .resume = Six months after the audit, the bakery has migrated to a new server: building the habit of a security watch, sorting a bulletin of CVEs, fixing what matters, proving it holds, then automating what can be automated.

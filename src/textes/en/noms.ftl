@@ -267,3 +267,8 @@ nom-rapport-cloture-md = closing_report.md
 ## The Lab
 nom-message_d_odile-txt = message_from_odile.txt
 nom-procedure_hebergeur-txt = host_procedure.txt
+
+## The Watch (the petrin server, six months after the audit)
+nom-bulletin-securite-txt = security_bulletin.txt
+nom-veille-md = watch.md
+nom-priorite-md = priority.md
