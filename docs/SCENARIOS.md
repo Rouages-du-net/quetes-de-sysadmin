@@ -339,13 +339,13 @@ une Debian : les journaux appartiennent à `www-data`, groupe `adm`, en 640.
 |---|---|
 | Comprendre pourquoi on lit les journaux sans `sudo` | `id`, `id malo`, `groups`, `ls -l /var/log/nginx` |
 | Donner la lecture des journaux à Malo | `sudo usermod -aG adm malo` |
-| Dossier d'équipe | `sudo chgrp equipe-web /srv/equipe` puis `sudo chmod 770 /srv/equipe` (ou `chown root:equipe-web`, `chmod g+w,o-rx`) |
+| Dossier d'équipe | `sudo chgrp web-team /srv/equipe` puis `sudo chmod 770 /srv/equipe` (ou `chown root:web-team`, `chmod g+w,o-rx`) |
 
 Objectifs vérifiés sur l'état : Malo lit les deux journaux et reste dans
-`equipe-web`, les journaux restent fermés aux autres, et l'équipe (et elle
+`web-team`, les journaux restent fermés aux autres, et l'équipe (et elle
 seule) entre, lit et écrit dans `/srv/equipe`.
 
-Pièges prévus : `usermod -G` sans `-a` (Malo perd `equipe-web`),
+Pièges prévus : `usermod -G` sans `-a` (Malo perd `web-team`),
 `chmod o+r` sur les journaux (adresses IP lisibles par tous : données
 personnelles), `chmod 777` sur le partage, `chgrp` sans être propriétaire.
 Débrief : moindre privilège, `-aG`, setgid pour aller plus loin, liens vers
@@ -1627,7 +1627,7 @@ jetées), la chaîne `input` qui ferme ssh, une faute dans le fichier
 Malik veut ouvrir le NAS depuis chez lui ; on lui propose « d'ouvrir le port
 445 sur la box ». À la place : un VPN WireGuard sur le routeur. Le portable
 de Malik a déjà ses clés (sa clé publique est dans le courriel) ; son
-fichier `portable-malik.conf` attend la partie `[Peer]` (le routeur). Le
+fichier `malik-laptop.conf` attend la partie `[Peer]` (le routeur). Le
 pare-feu des zones est en place, avec une chaîne `input` fermée par défaut.
 
 | Étape | Commande apprise |
@@ -1676,7 +1676,7 @@ la main (perdu au redémarrage).
 
 La Ruche ouvre un second lieu, l'Annexe (réseau 10.20.10.0/24, routeur
 derrière la box de son fournisseur). Sami, bénévole là-bas, a créé ses clés
-et préparé `annexe-wg0.conf` ; le routeur de l'Annexe devient un pair de plus
+et préparé `annex-wg0.conf` ; le routeur de l'Annexe devient un pair de plus
 sur le `wg0` du télétravail.
 
 | Étape | Commande apprise |

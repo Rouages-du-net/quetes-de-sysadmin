@@ -180,9 +180,9 @@ table ip nat {
       expect(tout).toContain('SYSCTL.D(5)');
       expect(tout).toContain('net.ipv4.ip_forward = 0');
       expect(tout).toContain('1 flow entries have been shown.');
-      editer('sudo nano /etc/sysctl.d/90-routeur.conf', () => 'net.ipv4.ip_forward = 1\n');
+      editer('sudo nano /etc/sysctl.d/90-router.conf', () => 'net.ipv4.ip_forward = 1\n');
       tout = jouer(['sudo sysctl --system']);
-      expect(tout).toContain('* Applying /etc/sysctl.d/90-routeur.conf ...');
+      expect(tout).toContain('* Applying /etc/sysctl.d/90-router.conf ...');
       expect(tout).toContain('net.ipv4.ip_forward = 1');
       editer('sudo nano /etc/nftables.conf', () => NFTABLES);
       tout = jouer([
@@ -293,11 +293,11 @@ table ip nat {
     it('chapitre 4 — solution : umask 077, wg0.conf, le portable, le pare-feu, wg-quick@wg0', () => {
       const { c, jouer, editer } = partie(['vlan', 'dhcp', 'zones']);
       const k = clesDe(c);
-      let tout = jouer(['cat portable-malik.conf', 'umask 077', 'wg genkey | tee privatekey | wg pubkey > publickey', 'ls -l']);
+      let tout = jouer(['cat malik-laptop.conf', 'umask 077', 'wg genkey | tee privatekey | wg pubkey > publickey', 'ls -l']);
       const moi = L('vous');
       expect(tout).toContain(`-rw------- ${moi.padEnd(8)} ${moi.padEnd(8)} ${'44'.padStart(6)} privatekey`);
       editer('sudo nano /etc/wireguard/wg0.conf', () => WG0(k.privee()) + PEER_MALIK(k.malik));
-      editer('nano portable-malik.conf', PORTABLE(k.publique()));
+      editer('nano malik-laptop.conf', PORTABLE(k.publique()));
       editer('sudo nano /etc/nftables.conf', PARE_FEU);
       tout = jouer([
         'sudo nft -c -f /etc/nftables.conf',
@@ -325,7 +325,7 @@ table ip nat {
       tout = editer('sudo nano /etc/wireguard/wg0.conf', () => WG0(k.privee()) + PEER_MALIK(k.malik));
       contient(tout, 'comptes de la machine peuvent le lire');
       // Les clés croisées : la clé PRIVÉE du routeur donnée au portable.
-      editer('nano portable-malik.conf', PORTABLE(k.privee()));
+      editer('nano malik-laptop.conf', PORTABLE(k.privee()));
       tout = jouer(['sudo wg-quick up wg0']);
       expect(tout).toContain('[#] ip link set mtu 1420 up dev wg0');
       // Porte fermée d'abord : la chaîne input jette l'UDP.
@@ -334,7 +334,7 @@ table ip nat {
       tout = jouer(['sudo wg show wg0']);
       expect(tout).not.toContain('latest handshake');
       editer(
-        'nano portable-malik.conf',
+        'nano malik-laptop.conf',
         () =>
           '[Interface]\nAddress = 10.10.99.2/32\n\n[Peer]\n' +
           `PublicKey = ${k.publique()}\nEndpoint = 192.0.2.21:51820\nAllowedIPs = 10.10.10.5/32\n`,
@@ -442,7 +442,7 @@ table ip nat {
       let tout = jouer(['sudo wg show']);
       const pub = tout.match(/public key: (\S+)/)![1];
       editer('sudo nano /etc/wireguard/wg0.conf', PAIR_ANNEXE(cleAnnexe(c)));
-      editer('nano annexe-wg0.conf', CONF_ANNEXE(pub));
+      editer('nano annex-wg0.conf', CONF_ANNEXE(pub));
       tout = jouer(['sudo systemctl restart wg-quick@wg0', 'ip route', 'sudo wg show', 'ping -c 1 10.20.10.20']);
       expect(tout).toContain('10.20.10.0/24 dev wg0 scope link');
       expect(tout).toContain('allowed ips: 10.10.99.3/32, 10.20.10.0/24');
@@ -456,7 +456,7 @@ table ip nat {
       const pub = jouer(['sudo wg show']).match(/public key: (\S+)/)![1];
       let tout = editer('sudo nano /etc/wireguard/wg0.conf', PAIR_ANNEXE(cleAnnexe(c), '10.10.99.3/32'));
       contient(tout, 'ne relit pas le fichier');
-      editer('nano annexe-wg0.conf', CONF_ANNEXE(pub, '10.10.10.0/24', false));
+      editer('nano annex-wg0.conf', CONF_ANNEXE(pub, '10.10.10.0/24', false));
       tout = jouer(['sudo systemctl restart wg-quick@wg0']);
       contient(tout, 'tout son réseau');
       editer('sudo nano /etc/wireguard/wg0.conf', (t) => t.replace('AllowedIPs = 10.10.99.3/32', 'AllowedIPs = 10.10.99.3/32, 10.20.10.0/24'));
@@ -465,12 +465,12 @@ table ip nat {
       expect(tout).toContain('1 packets transmitted, 0 received, 100% packet loss');
       contient(tout, 'PersistentKeepalive');
       // Tout ouvert : tout La Ruche dans le tunnel côté Annexe, et forward qui laisse tout passer depuis wg0.
-      editer('nano annexe-wg0.conf', (t) => t.replace('AllowedIPs = 10.10.10.0/24', 'AllowedIPs = 10.10.0.0/16'));
+      editer('nano annex-wg0.conf', (t) => t.replace('AllowedIPs = 10.10.10.0/24', 'AllowedIPs = 10.10.0.0/16'));
       tout = jouer(['sudo nft add rule inet filter forward iifname wg0 accept']);
       contient(tout, 'les caméras de La Ruche');
       expect(c.termines).not.toContain('annexe');
       jouer(['sudo systemctl restart nftables']);
-      editer('nano annexe-wg0.conf', (t) => t + '\nPersistentKeepalive = 25\n');
+      editer('nano annex-wg0.conf', (t) => t + '\nPersistentKeepalive = 25\n');
       expect(c.termines).toContain('annexe');
     });
 

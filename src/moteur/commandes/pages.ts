@@ -68,7 +68,7 @@ export const PAGES: Record<string, Page> = {
     voir: ['openssl', 'nginx', 'curl', 'journalctl'],
   },
   cd: { exemples: ['cd Port', 'cd ..', 'cd ~', 'cd /', 'cd -'], voir: ['ls', 'pwd'] },
-  chgrp: { longues: { 'recursive': 'R' }, options: ['R'], exemples: ['chgrp equipe-web rapport.txt', 'sudo chgrp -R equipe-web /srv/equipe'], voir: ['chown', 'chmod', 'groups'] },
+  chgrp: { longues: { 'recursive': 'R' }, options: ['R'], exemples: ['chgrp web-team rapport.txt', 'sudo chgrp -R web-team /srv/equipe'], voir: ['chown', 'chmod', 'groups'] },
   chmod: { options: ['R'], exemples: ['chmod o-w souvenirs', 'chmod 755 lieu', 'sudo chmod -R g+w /srv/equipe', 'sudo chmod g+s /srv/equipe'], voir: ['ls', 'sudo', 'whoami', 'umask'] },
   chage: { longues: { 'list': 'l', 'expiredate': 'E' }, options: ['l', 'E'], exemples: ['sudo chage -l marc', 'sudo chage -E 0 marc', 'sudo chage -E -1 marc'], voir: ['usermod', 'userdel'] },
   chown: { longues: { 'recursive': 'R' },
@@ -165,7 +165,7 @@ export const PAGES: Record<string, Page> = {
     exemples: ['sysctl net.ipv4.ip_forward', 'sudo sysctl -w net.ipv4.ip_forward=1', 'sudo sysctl --system', 'cat /proc/sys/net/ipv4/ip_forward'],
     voir: ['sysctl.d', 'nft'],
   },
-  'sysctl.d': { section: 5, exemples: ['ls /etc/sysctl.d', 'sudo nano /etc/sysctl.d/90-routeur.conf'], voir: ['sysctl'] },
+  'sysctl.d': { section: 5, exemples: ['ls /etc/sysctl.d', 'sudo nano /etc/sysctl.d/90-router.conf'], voir: ['sysctl'] },
   conntrack: {
     section: 8,
     options: ['L', 'C', 'p', 's', 'd'],

@@ -147,7 +147,7 @@ export const contreVisite: Chapitre = {
         'login.defs': fichier(LOGIN_DEFS),
         issue: fichier('Debian GNU/Linux 13 \\n \\l\n'),
       },
-      ssh: { 'sshd_config.d': d({ '00-durcissement.conf': fichier('PermitRootLogin no', 'root') }, undefined, { proprio: 'root' }) },
+      ssh: { 'sshd_config.d': d({ '00-hardening.conf': fichier('PermitRootLogin no', 'root') }, undefined, { proprio: 'root' }) },
       plus: { var: d({ log: d({}, undefined, { proprio: 'root' }) }, undefined, { proprio: 'root' }) },
     }),
   // Salomé relit le rapport de clôture après chaque enregistrement.

@@ -25,7 +25,7 @@ vpn-courriel-malik =
 
     In the tunnel, my laptop will have the address 10.10.99.2. The app
     asks me for the router's public key, its address (hive.example, or
-    192.0.2.21) and its port: fill in portable-malik.conf, I'll copy
+    192.0.2.21) and its port: fill in malik-laptop.conf, I'll copy
     it over.
 
     WireGuard is installed on the router (man wg, man wg-quick; the
@@ -68,7 +68,7 @@ vpn-evenement-poignee =
     Malik: "Still nothing: Handshake did not complete." sudo wg show
     confirms it: no "latest handshake" for his peer. To recognise each
     other, each side needs the other's PUBLIC key: Malik's in the Peer of
-    wg0.conf, the router's in portable-malik.conf. And the Endpoint must
+    wg0.conf, the router's in malik-laptop.conf. And the Endpoint must
     give the router's address and the port it listens on (ListenPort).
 vpn-evenement-sans-nas =
     Malik: "Connected! … but the NAS doesn't answer." The handshake

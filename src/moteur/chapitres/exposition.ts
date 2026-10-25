@@ -126,7 +126,7 @@ export const exposition: Chapitre = {
       sansLucas: true,
       maison: { 'courriel_salome.txt': f(t('exposition-courriel-salome')), 'balayage-audit.txt': f(BALAYAGE, { lignes: true }) },
       etc: { redis: d({ 'redis.conf': f(REDIS_CONFIG, { lignes: true, proprio: 'redis', groupe: 'redis', mode: 'rw-r-----' }) }, undefined, { proprio: 'root' }) },
-      ssh: { 'sshd_config.d': d({ '00-durcissement.conf': fichier('PermitRootLogin no', 'root') }, undefined, { proprio: 'root' }) },
+      ssh: { 'sshd_config.d': d({ '00-hardening.conf': fichier('PermitRootLogin no', 'root') }, undefined, { proprio: 'root' }) },
     }),
   evenements: [
     {

@@ -202,7 +202,7 @@ export const traces: Chapitre = {
           { proprio: 'root' },
         ),
       },
-      ssh: { 'sshd_config.d': d({ '00-durcissement.conf': fichier('PermitRootLogin no', 'root') }, undefined, { proprio: 'root' }) },
+      ssh: { 'sshd_config.d': d({ '00-hardening.conf': fichier('PermitRootLogin no', 'root') }, undefined, { proprio: 'root' }) },
       maisons: {
         nadia: d(
           {

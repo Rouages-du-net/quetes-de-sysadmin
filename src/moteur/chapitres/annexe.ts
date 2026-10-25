@@ -8,7 +8,7 @@
 //     réseau (pour WireGuard, ce sont les adresses d'où ce pair a le droit
 //     d'envoyer, et celles qu'on lui envoie : wg-quick en fait des routes) ;
 //   - relancer wg0 (wg-quick ne relit pas le fichier tout seul) ;
-//   - compléter annexe-wg0.conf : la clé publique du routeur, l'Endpoint,
+//   - compléter annex-wg0.conf : la clé publique du routeur, l'Endpoint,
 //     AllowedIPs = le réseau des bureaux, et PersistentKeepalive : derrière
 //     une box, le routeur de La Ruche ne peut pas joindre l'Annexe si elle ne
 //     garde pas le passage ouvert.
@@ -62,7 +62,7 @@ const CLE_ROUTEUR = '2H8lWIAEPk9kEtfgQW8ZQVaCUVKhwmA1PDgxbjXZqXk=';
 const CLE_ANNEXE = 'cDqmuXhcmm7LqTLk8TNfgPuG1GqnfxHaU2D7OWNw11U=';
 export const PUBLIQUE_ROUTEUR = publique(CLE_ROUTEUR)!;
 export const PUBLIQUE_ANNEXE = publique(CLE_ANNEXE)!;
-const CONF_ANNEXE = `${M}/annexe-wg0.conf`;
+const CONF_ANNEXE = `${M}/annex-wg0.conf`;
 
 // Le routeur de l'Annexe : un poste de là-bas (10.20.10.15) va au NAS.
 export const ANNEXE: Distant = {
@@ -208,8 +208,8 @@ export const annexe: Chapitre = {
       },
       maison: {
         'courriel_sami.txt': f(t('annexe-courriel-sami', { cle: PUBLIQUE_ANNEXE })),
-        'annexe-wg0.conf': f(t('annexe-conf'), { lignes: true }),
-        'portable-malik.conf': f(PORTABLE_MALIK, { lignes: true }),
+        'annex-wg0.conf': f(t('annexe-conf'), { lignes: true }),
+        'malik-laptop.conf': f(PORTABLE_MALIK, { lignes: true }),
       },
     }),
   evenements: [

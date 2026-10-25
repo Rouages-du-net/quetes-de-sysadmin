@@ -24,8 +24,8 @@ const journal = (texte: string): Fichier => f(texte, { lignes: true, proprio: 'w
 const fichiers = (j: Jeu) => [`${LOGS}/access.log`, `${LOGS}/error.log`].map((c) => j.trouver(c)!);
 
 const malo = {
-  // Malo lit les deux journaux, comme un membre d'adm, et toujours membre d'equipe-web.
-  lit: (j: Jeu) => fichiers(j).every((n) => j.peut(n, 'r', 'malo')) && j.groupesDe('malo').includes('equipe-web'),
+  // Malo lit les deux journaux, comme un membre d'adm, et toujours membre d'web-team.
+  lit: (j: Jeu) => fichiers(j).every((n) => j.peut(n, 'r', 'malo')) && j.groupesDe('malo').includes('web-team'),
 };
 const journauxOuverts = (j: Jeu) => fichiers(j).some((n) => j.peut(n, 'r', 'nobody'));
 const partage = (j: Jeu) => j.trouver(chemin(j.t, PARTAGE))!;
@@ -76,7 +76,7 @@ export const deuxiemeJour: Chapitre = {
   evenements: [
     {
       id: 'remplace',
-      condition: (j) => !j.groupesDe('malo').includes('equipe-web'),
+      condition: (j) => !j.groupesDe('malo').includes('web-team'),
       message: (j) => j.t('deuxieme-jour-evenement-remplace'),
     },
     {

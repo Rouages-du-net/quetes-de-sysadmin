@@ -33,11 +33,11 @@ indice-deuxieme-jour-malo-lit =
     .piste = ls -l /var/log/nginx montre à quel groupe appartiennent les journaux, et ce que ce groupe peut faire. Ajoute Malo à ce groupe, sans le retirer des siens (man usermod : attention à -G sans -a). Ne donne pas la lecture à tout le monde.
     .solution = sudo usermod -aG adm malo (-a ajoute le groupe, sans remplacer ses autres groupes ; vérifie avec groups malo).
 indice-deuxieme-jour-partage =
-    .piste = /srv/equipe appartient à root. Donne-le au groupe equipe-web, puis des droits pour le groupe et aucun pour les autres (man chgrp, man chmod). Pas de 777 !
-    .solution = sudo chgrp equipe-web /srv/equipe puis sudo chmod 770 /srv/equipe (le groupe lit, écrit, entre ; les autres rien).
+    .piste = /srv/equipe appartient à root. Donne-le au groupe web-team, puis des droits pour le groupe et aucun pour les autres (man chgrp, man chmod). Pas de 777 !
+    .solution = sudo chgrp web-team /srv/equipe puis sudo chmod 770 /srv/equipe (le groupe lit, écrit, entre ; les autres rien).
 indice-deuxieme-jour-fin =
-    .piste = Vérifie les deux missions : Malo lit les journaux (sans qu'ils soient ouverts à tous) et reste dans equipe-web ; le dossier partagé est fermé aux autres comptes.
-    .solution = groups malo doit montrer adm et equipe-web (sinon : sudo usermod -aG equipe-web malo) ; les journaux en 640 (sudo chmod 640 /var/log/nginx/access.log /var/log/nginx/error.log) ; /srv/equipe en 770.
+    .piste = Vérifie les deux missions : Malo lit les journaux (sans qu'ils soient ouverts à tous) et reste dans web-team ; le dossier partagé est fermé aux autres comptes.
+    .solution = groups malo doit montrer adm et web-team (sinon : sudo usermod -aG web-team malo) ; les journaux en 640 (sudo chmod 640 /var/log/nginx/access.log /var/log/nginx/error.log) ; /srv/equipe en 770.
 
 ## Chapitre 3 — La nuit du redémarrage
 

@@ -29,7 +29,7 @@ annexe-courriel-sami =
 
         { $cle }
 
-    J'ai préparé annexe-wg0.conf : complète la partie Peer (votre routeur)
+    J'ai préparé annex-wg0.conf : complète la partie Peer (votre routeur)
     et je la recopie chez nous. Pour la clé publique de votre routeur :
     sudo wg show.
 
@@ -69,7 +69,7 @@ annexe-evenement-autorisees =
     son réseau.
 annexe-evenement-route =
     Sami : « Toujours rien vers le NAS. » Côté Annexe, les paquets pour
-    10.10.10.5 ne partent pas dans le tunnel : dans annexe-wg0.conf,
+    10.10.10.5 ne partent pas dans le tunnel : dans annex-wg0.conf,
     AllowedIPs dit ce qui doit y entrer (et wg-quick en fait des routes).
 annexe-evenement-endormi =
     Sami : « Le NAS marche ! » Malik : « Et moi, j'imprime à l'Annexe…

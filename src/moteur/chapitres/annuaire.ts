@@ -233,7 +233,7 @@ export const annuaireChapitre: Chapitre = {
       maison: {
         'courriel_malik.txt': f(t('annuaire-courriel-malik', { admin: ADMIN, motdepasse: MDP_ADMIN })),
         'modele-ines.ldif': f(MODELE_INES, { lignes: true }),
-        'portable-malik.conf': f(PORTABLE_MALIK, { lignes: true }),
+        'malik-laptop.conf': f(PORTABLE_MALIK, { lignes: true }),
       },
     }),
   evenements: [

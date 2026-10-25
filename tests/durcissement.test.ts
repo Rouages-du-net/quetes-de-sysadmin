@@ -58,7 +58,7 @@ for (const langue of LANGUES)
     it('une autre solution : un fichier 00-… dans sshd_config.d, lu en premier', () => {
       const { c, jouer, modifier } = partie();
       jouer(['ssh lettres', 'yes']);
-      c.executer('sudo nano /etc/ssh/sshd_config.d/00-durcissement.conf');
+      c.executer('sudo nano /etc/ssh/sshd_config.d/00-hardening.conf');
       c.executer(machinesDansLaLangue(c.t, 'fourmis-2026'));
       c.enregistrer('PermitRootLogin no\nPasswordAuthentication no\n');
       c.quitterEdition();
@@ -69,7 +69,7 @@ for (const langue of LANGUES)
     it('s’enfermer dehors, puis la console de secours (le menu)', () => {
       const { c, jouer, modifier } = partie();
       jouer(['ssh lettres', 'yes']);
-      const alerte = modifier('/etc/ssh/sshd_config.d/00-durcissement.conf', () => 'PermitRootLogin no\nPasswordAuthentication no\nAllowUsers kofi\n');
+      const alerte = modifier('/etc/ssh/sshd_config.d/00-hardening.conf', () => 'PermitRootLogin no\nPasswordAuthentication no\nAllowUsers kofi\n');
       const recharge = jouer(['sudo systemctl reload ssh']);
       contient(alerte + recharge, 'une nouvelle connexion de ton compte serait refusée');
       const dehors = jouer(['exit', 'ssh lettres']);
@@ -78,7 +78,7 @@ for (const langue of LANGUES)
       expect(c.invite()).toBe(L('vous@poste:~$'));
       // Le menu : comme la console de secours de l'hébergeur.
       c.connecter('lettres');
-      modifier('/etc/ssh/sshd_config.d/00-durcissement.conf', (t) => t.replace('AllowUsers kofi', L('AllowUsers vous')));
+      modifier('/etc/ssh/sshd_config.d/00-hardening.conf', (t) => t.replace('AllowUsers kofi', L('AllowUsers vous')));
       jouer(['sudo systemctl reload ssh', 'exit', 'ssh lettres']);
       expect(c.termines).toContain('fermer-la-porte');
     });

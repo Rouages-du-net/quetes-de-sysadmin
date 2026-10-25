@@ -241,19 +241,19 @@ for (const langue of LANGUES)
           'sudo usermod -G adm malo',
           'bienvenue-2026',
           'groups malo',
-          'sudo usermod -aG equipe-web malo',
+          'sudo usermod -aG web-team malo',
           'sudo chmod o+r /var/log/nginx/access.log',
           'sudo chmod 640 /var/log/nginx/access.log',
-          'chgrp equipe-web /srv/equipe',
+          'chgrp web-team /srv/equipe',
           'sudo chmod 777 /srv/equipe',
-          'sudo chgrp equipe-web /srv/equipe',
+          'sudo chgrp web-team /srv/equipe',
           'sudo chmod 770 /srv/equipe',
         ]);
-        contient(tout, 'uid=1000(vous) gid=1000(vous) groupes=1000(vous),4(adm),27(sudo),1003(equipe-web)');
+        contient(tout, 'uid=1000(vous) gid=1000(vous) groupes=1000(vous),4(adm),27(sudo),1003(web-team)');
         contient(tout, '-rw-r----- www-data adm');
         contient(tout, 'usermod : Permission non accordée.');
         contient(tout, 'malo : malo adm');
-        contient(tout, 'Malo n’est plus dans le groupe equipe-web'.replace('’', "'"));
+        contient(tout, 'Malo n’est plus dans le groupe web-team'.replace('’', "'"));
         contient(tout, 'TOUS les comptes de la machine peuvent lire');
         contient(tout, "chgrp : modification du groupe de '/srv/equipe' : Opération non permise");
         contient(tout, 'n’importe quel compte'.replace('’', "'"));
@@ -265,7 +265,7 @@ for (const langue of LANGUES)
         const { s } = jouer('deuxieme-jour', [
           'sudo usermod -aG adm malo',
           'bienvenue-2026',
-          'sudo chown root:equipe-web /srv/equipe',
+          'sudo chown root:web-team /srv/equipe',
           'sudo chmod g+w,o-rx /srv/equipe',
         ]);
         expect(s.termine).toBe(true);

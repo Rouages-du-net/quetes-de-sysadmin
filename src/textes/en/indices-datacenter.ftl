@@ -32,11 +32,11 @@ indice-deuxieme-jour-malo-lit =
     .piste = ls -l /var/log/nginx shows which group owns the logs, and what that group may do. Add Malo to that group, without removing him from his own (man usermod: beware of -G without -a). Do not give read access to everyone.
     .solution = sudo usermod -aG adm malo (-a adds the group without replacing his other groups; check with groups malo).
 indice-deuxieme-jour-partage =
-    .piste = /srv/team belongs to root. Give it to the equipe-web group, then permissions for the group and none for others (man chgrp, man chmod). No 777!
-    .solution = sudo chgrp equipe-web /srv/team then sudo chmod 770 /srv/team (the group reads, writes, enters; others nothing).
+    .piste = /srv/team belongs to root. Give it to the web-team group, then permissions for the group and none for others (man chgrp, man chmod). No 777!
+    .solution = sudo chgrp web-team /srv/team then sudo chmod 770 /srv/team (the group reads, writes, enters; others nothing).
 indice-deuxieme-jour-fin =
-    .piste = Check both tasks: Malo reads the logs (without them being open to all) and stays in equipe-web; the shared directory is closed to other accounts.
-    .solution = groups malo must show adm and equipe-web (otherwise: sudo usermod -aG equipe-web malo); the logs in 640 (sudo chmod 640 /var/log/nginx/access.log /var/log/nginx/error.log); /srv/team in 770.
+    .piste = Check both tasks: Malo reads the logs (without them being open to all) and stays in web-team; the shared directory is closed to other accounts.
+    .solution = groups malo must show adm and web-team (otherwise: sudo usermod -aG web-team malo); the logs in 640 (sudo chmod 640 /var/log/nginx/access.log /var/log/nginx/error.log); /srv/team in 770.
 
 ## Chapter 3 — The night of the reboot
 

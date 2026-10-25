@@ -77,7 +77,7 @@ export const pareFeu: Chapitre = {
         etc: d(
           {
             ...fichiersComptes(),
-            ssh: d({ 'sshd_config.d': d({ '00-durcissement.conf': f('PermitRootLogin no\nPasswordAuthentication no', { lignes: true, proprio: 'root' }) }, undefined, racine) }, undefined, racine),
+            ssh: d({ 'sshd_config.d': d({ '00-hardening.conf': f('PermitRootLogin no\nPasswordAuthentication no', { lignes: true, proprio: 'root' }) }, undefined, racine) }, undefined, racine),
           },
           undefined,
           racine,

@@ -108,7 +108,7 @@ export const comptesDatacenter = (): Comptes => ({
     vous: { gid: 1000, membres: [] },
     awa: { gid: 1001, membres: [] },
     malo: { gid: 1002, membres: [] },
-    'equipe-web': { gid: 1003, membres: ['vous', 'awa', 'malo'] },
+    'web-team': { gid: 1003, membres: ['vous', 'awa', 'malo'] },
   },
 });
 
