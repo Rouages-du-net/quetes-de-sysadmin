@@ -9,7 +9,7 @@
 // jamais appliquée depuis.
 // Objectif vérifié sur l'état : le fichier ~/postmortem.md, complété (plus
 // de « à compléter »), avec les heures exactes (2 h 13, 2 h 15, 2 h 58),
-// l'impact (45 minutes), le déclencheur et la cause (flux.conf, depuis le
+// l'impact (45 minutes), le déclencheur et la cause (stream.conf, depuis le
 // 20 août), au moins deux actions, ce qui a marché, et sans reproche.
 // Source : https://sre.google/sre-book/postmortem-culture/
 
@@ -83,7 +83,7 @@ export function manques(j: Jeu): string[] {
   if (!heure(2, 13).test(chrono) || !heure(2, 15).test(chrono) || !heure(2, 58).test(chrono)) m.push('chronologie');
   if (!/\b45\b/.test(s.impact ?? '')) m.push('impact');
   const causes = s.causes ?? '';
-  if (!/flux\.conf|bitrate_max/i.test(causes) || !contientUn(causes, mots(j, 'post-mortem-mots-declencheur'))) m.push('cause');
+  if (!/stream\.conf|bitrate_max/i.test(causes) || !contientUn(causes, mots(j, 'post-mortem-mots-declencheur'))) m.push('cause');
   if (!contientUn(causes, mots(j, 'post-mortem-mots-origine'))) m.push('origine');
   if ((s.actions ?? '').split('\n').filter((l) => /^\s*[-*]\s+\S/.test(l)).length < 2) m.push('actions');
   if (!plein('marche') || !plein('resume')) m.push('marche');
@@ -139,11 +139,11 @@ export const postMortem: Chapitre = {
         executable: 'sshd',
         processus: [{ pid: 598, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
-      'radio-flux': {
+      'radio-stream': {
         description: 'Radio Quartier stream relay',
         active: true,
-        executable: 'flux',
-        processus: [{ pid: 25232, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/flux --config /etc/radio/flux.conf' }],
+        executable: 'stream',
+        processus: [{ pid: 25232, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/stream --config /etc/radio/stream.conf' }],
       },
       cron: {
         description: 'Regular background program processing daemon',
@@ -158,13 +158,13 @@ export const postMortem: Chapitre = {
         executable: 'unattended-upgrade',
         ponctuel: true,
       },
-      sonde: { description: 'Sonde de Radio Quartier', active: false, etat: 'inactive', executable: 'sonde', ponctuel: true },
+      probe: { description: 'Radio Quartier probe', active: false, etat: 'inactive', executable: 'probe', ponctuel: true },
     }),
     processus: [
       { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
       { pid: 598, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 611, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' },
-      { pid: 25232, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/flux --config /etc/radio/flux.conf' },
+      { pid: 25232, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
     connexionsPassees: [
       { compte: 'zoe', tty: 'pts/1', depuis: '198.51.100.80', debut: Date.UTC(2027, 7, 20, 21, 16), fin: Date.UTC(2027, 7, 20, 21, 54) },
@@ -181,7 +181,7 @@ export const postMortem: Chapitre = {
       s.horloge = ms;
       journaliser(s, unite, ident, pid, message, priorite, false);
     };
-    const flux = 'radio-flux.service';
+    const flux = 'radio-stream.service';
     const sudo = (ms: number, pid: number, compte: string, commande: string) =>
       ligne(
         ms,
@@ -192,7 +192,7 @@ export const postMortem: Chapitre = {
         5,
       );
     ligne(Date.UTC(2027, 7, 20, 21, 16, 2), 'ssh.service', 'sshd', 7712, 'Accepted publickey for zoe from 198.51.100.80 port 50122 ssh2');
-    sudo(Date.UTC(2027, 7, 20, 21, 20, 41), 7790, 'zoe', '/usr/bin/nano /etc/radio/flux.conf');
+    sudo(Date.UTC(2027, 7, 20, 21, 20, 41), 7790, 'zoe', '/usr/bin/nano /etc/radio/stream.conf');
     ligne(Date.UTC(2027, 7, 20, 21, 54, 10), 'ssh.service', 'sshd', 7712, 'Disconnected from user zoe 198.51.100.80 port 50122');
     ligne(
       NUIT(2, 12, 40),
@@ -201,32 +201,32 @@ export const postMortem: Chapitre = {
       1,
       'Starting apt-daily-upgrade.service - Daily apt upgrade and clean activities...',
     );
-    ligne(NUIT(2, 13, 5), flux, 'systemd', 1, 'Stopping radio-flux.service - Radio Quartier stream relay...');
-    ligne(NUIT(2, 13, 5), flux, 'systemd', 1, 'Stopped radio-flux.service - Radio Quartier stream relay.');
-    ligne(NUIT(2, 13, 5), flux, 'systemd', 1, 'Started radio-flux.service - Radio Quartier stream relay.');
-    ligne(NUIT(2, 13, 6), flux, 'flux', 24410, "/etc/radio/flux.conf:7: unknown option 'bitrate_max'", 3);
-    ligne(NUIT(2, 13, 6), flux, 'systemd', 1, 'radio-flux.service: Main process exited, code=exited, status=1/FAILURE', 4);
-    ligne(NUIT(2, 13, 6), flux, 'systemd', 1, "radio-flux.service: Failed with result 'exit-code'.", 4);
+    ligne(NUIT(2, 13, 5), flux, 'systemd', 1, 'Stopping radio-stream.service - Radio Quartier stream relay...');
+    ligne(NUIT(2, 13, 5), flux, 'systemd', 1, 'Stopped radio-stream.service - Radio Quartier stream relay.');
+    ligne(NUIT(2, 13, 5), flux, 'systemd', 1, 'Started radio-stream.service - Radio Quartier stream relay.');
+    ligne(NUIT(2, 13, 6), flux, 'stream', 24410, "/etc/radio/stream.conf:7: unknown option 'bitrate_max'", 3);
+    ligne(NUIT(2, 13, 6), flux, 'systemd', 1, 'radio-stream.service: Main process exited, code=exited, status=1/FAILURE', 4);
+    ligne(NUIT(2, 13, 6), flux, 'systemd', 1, "radio-stream.service: Failed with result 'exit-code'.", 4);
     ligne(NUIT(2, 13, 20), 'apt-daily-upgrade.service', 'systemd', 1, 'apt-daily-upgrade.service: Deactivated successfully.');
     ligne(NUIT(2, 13, 20), 'apt-daily-upgrade.service', 'systemd', 1, 'Finished apt-daily-upgrade.service - Daily apt upgrade and clean activities.');
     // La sonde du chapitre précédent, toutes les 5 minutes : elle alerte de 2 h 15 à 2 h 55.
     const alertes: string[] = [];
     for (let m = 15; m <= 55; m += 5) {
-      ligne(NUIT(2, m), 'sonde.service', 'systemd', 1, 'Starting sonde.service - Sonde de Radio Quartier...');
-      ligne(NUIT(2, m, 1), 'sonde.service', 'systemd', 1, 'Finished sonde.service - Sonde de Radio Quartier.');
+      ligne(NUIT(2, m), 'probe.service', 'systemd', 1, 'Starting probe.service - Sonde de Radio Quartier...');
+      ligne(NUIT(2, m, 1), 'probe.service', 'systemd', 1, 'Finished probe.service - Sonde de Radio Quartier.');
       alertes.push(
         `From root@radio Sun Sep 12 02:${String(m).padStart(2, '0')}:01 2027\nTo: root\nSubject: Alerte-radio\nFrom: root <root@radio>\n\nconnect to address localhost and port 8000: Connection refused\nHTTP CRITICAL - Unable to open TCP socket\n`,
       );
       if (m === 40) ligne(NUIT(2, 41, 12), 'ssh.service', 'sshd', 25102, 'Accepted publickey for theo from 203.0.113.45 port 52114 ssh2');
-      if (m === 40) sudo(NUIT(2, 44, 30), 25140, 'theo', '/usr/bin/journalctl -u radio-flux');
-      if (m === 50) sudo(NUIT(2, 52, 10), 25188, 'theo', '/usr/bin/nano /etc/radio/flux.conf');
+      if (m === 40) sudo(NUIT(2, 44, 30), 25140, 'theo', '/usr/bin/journalctl -u radio-stream');
+      if (m === 50) sudo(NUIT(2, 52, 10), 25188, 'theo', '/usr/bin/nano /etc/radio/stream.conf');
     }
-    sudo(NUIT(2, 58, 3), 25230, 'theo', '/usr/bin/systemctl restart radio-flux');
-    ligne(NUIT(2, 58, 3), flux, 'systemd', 1, 'Starting radio-flux.service - Radio Quartier stream relay...');
-    ligne(NUIT(2, 58, 4), flux, 'systemd', 1, 'Started radio-flux.service - Radio Quartier stream relay.');
+    sudo(NUIT(2, 58, 3), 25230, 'theo', '/usr/bin/systemctl restart radio-stream');
+    ligne(NUIT(2, 58, 3), flux, 'systemd', 1, 'Starting radio-stream.service - Radio Quartier stream relay...');
+    ligne(NUIT(2, 58, 4), flux, 'systemd', 1, 'Started radio-stream.service - Radio Quartier stream relay.');
     ligne(NUIT(3, 5, 40), 'ssh.service', 'sshd', 25102, 'Disconnected from user theo 203.0.113.45 port 52114');
     ligne(MAINTENANT - 60_000, 'ssh.service', 'sshd', 26011, `Accepted publickey for ${j.joueur} from 198.51.100.23 port 40388 ssh2`);
-    s.services['radio-flux'].depuis = NUIT(2, 58, 4);
+    s.services['radio-stream'].depuis = NUIT(2, 58, 4);
     s.horloge = maintenant;
     const boite = j.trouver('/var/mail/theo');
     if (boite?.type === 'fichier') boite.contenu = alertes.join('\n');
@@ -259,7 +259,7 @@ export const postMortem: Chapitre = {
         ...fichiersComptes(),
         hostname: fichier('radio'),
         aliases: fichier('# See man 5 aliases for format\npostmaster:    root\nroot: zoe, theo'),
-        radio: lieu({ 'flux.conf': fichier(t('post-mortem-conf-flux')) }),
+        radio: lieu({ 'stream.conf': fichier(t('post-mortem-conf-flux')) }),
         apt: lieu({ 'apt.conf.d': lieu({ '50unattended-upgrades': fichier(t('post-mortem-unattended-conf')) }) }),
       }),
       home: lieu({
@@ -292,12 +292,12 @@ export const postMortem: Chapitre = {
     },
     {
       id: 'redemarrage',
-      condition: (j) => /Stopping radio-flux\.service/.test(j.derniere.sortie) && /Starting apt-daily-upgrade/.test(j.derniere.sortie),
+      condition: (j) => /Stopping radio-stream\.service/.test(j.derniere.sortie) && /Starting apt-daily-upgrade/.test(j.derniere.sortie),
       message: (j) => j.t('post-mortem-evenement-redemarrage'),
     },
     {
       id: 'origine',
-      condition: (j) => /zoe : TTY=pts\/1 .*flux\.conf/.test(j.derniere.sortie),
+      condition: (j) => /zoe : TTY=pts\/1 .*stream\.conf/.test(j.derniere.sortie),
       message: (j) => j.t('post-mortem-evenement-origine'),
     },
     { id: 'fin', condition: (j) => !!j.etat.postMortemFini, message: (j) => j.t('post-mortem-evenement-fin') },

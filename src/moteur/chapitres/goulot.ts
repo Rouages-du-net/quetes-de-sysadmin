@@ -104,11 +104,11 @@ export const goulot: Chapitre = {
           executable: 'sshd',
           processus: [proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups')],
         },
-        'radio-flux': {
+        'radio-stream': {
           description: 'Radio Quartier stream relay',
           active: true,
-          executable: 'flux',
-          processus: [proc(FLUX, 'radio', '/usr/local/bin/flux --config /etc/radio/flux.conf', 3.2)],
+          executable: 'stream',
+          processus: [proc(FLUX, 'radio', '/usr/local/bin/stream --config /etc/radio/stream.conf', 3.2)],
         },
         'radio-archives': {
           description: "Radio Quartier: archive the day's recordings",
@@ -135,7 +135,7 @@ export const goulot: Chapitre = {
       proc(1, 'root', '/sbin/init'),
       proc(312, 'root', '[jbd2/vda1-8]'),
       proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups'),
-      proc(FLUX, 'radio', '/usr/local/bin/flux --config /etc/radio/flux.conf', 3.2),
+      proc(FLUX, 'radio', '/usr/local/bin/stream --config /etc/radio/stream.conf', 3.2),
       proc(ARCHIVES, 'root', copie(t), 6.1),
     ],
     memoire: { total: 2048 * Mo, noyau: 380 * Mo, rss: { 1: 12 * Mo, 312: 0, 598: 8 * Mo, [FLUX]: 180 * Mo, [ARCHIVES]: 40 * Mo } },
@@ -147,7 +147,7 @@ export const goulot: Chapitre = {
       classes: {},
       demandes: [
         { service: 'radio-archives', lecture: 70_000, ecriture: 70_000, copie: true },
-        { service: 'radio-flux', lecture: 2048, ecriture: 0, sensible: true },
+        { service: 'radio-stream', lecture: 2048, ecriture: 0, sensible: true },
         { pid: 312, lecture: 0, ecriture: 180 },
       ],
     } satisfies EtatIO,
@@ -162,8 +162,8 @@ export const goulot: Chapitre = {
       s.horloge = Date.UTC(2027, 8, 20, 16, 1 + i * 1.5, 7 * i);
       journaliser(
         s,
-        'radio-flux.service',
-        'flux',
+        'radio-stream.service',
+        'stream',
         FLUX,
         `relay: read stall on ${tampon(j.t)}: waited ${610 + ((i * 97) % 300)} ms, listeners hear a gap`,
         4,
@@ -179,8 +179,8 @@ export const goulot: Chapitre = {
     if (!servieATemps(j))
       journaliser(
         s,
-        'radio-flux.service',
-        'flux',
+        'radio-stream.service',
+        'stream',
         FLUX,
         `relay: read stall on ${tampon(j.t)}: waited ${Math.round(etatDisque(j).attente)} ms, listeners hear a gap`,
         4,
@@ -200,8 +200,8 @@ export const goulot: Chapitre = {
         lib: lieu({
           systemd: lieu({
             system: lieu({
-              'radio-flux.service': fichier(
-                '[Unit]\nDescription=Radio Quartier stream relay\nAfter=network.target\n\n[Service]\nUser=radio\nExecStart=/usr/local/bin/flux --config /etc/radio/flux.conf\n\n[Install]\nWantedBy=multi-user.target',
+              'radio-stream.service': fichier(
+                '[Unit]\nDescription=Radio Quartier stream relay\nAfter=network.target\n\n[Service]\nUser=radio\nExecStart=/usr/local/bin/stream --config /etc/radio/stream.conf\n\n[Install]\nWantedBy=multi-user.target',
               ),
               'radio-archives.service': fichier(
                 `[Unit]\nDescription=Radio Quartier: archive the day's recordings\n\n[Service]\nType=oneshot\nExecStart=/bin/sh -c 'rsync -a ${chemin(t, '/srv/radio/enregistrements')}/ /srv/archives/$(date +%%F)/'`,

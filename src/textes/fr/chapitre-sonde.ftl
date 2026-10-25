@@ -12,7 +12,7 @@ sonde-message-de-zoe =
     Un message de Zoé (lundi, 18 h 20) :
 
     « Quatre nuits, quatre pannes, et chaque fois on l'a su trop tard.
-    J'ai commencé une sonde : /usr/local/bin/sonde. Elle lance des
+    J'ai commencé une sonde : /usr/local/bin/probe. Elle lance des
     contrôles (les « plugins » de supervision, ceux de Nagios ou
     d'Icinga) et m'envoie par courrier tout ce qui n'est pas OK. Le
     courrier de root arrive chez moi (/etc/aliases), et de là sur mon

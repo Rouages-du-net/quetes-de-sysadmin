@@ -130,11 +130,11 @@ export const memoireChapitre: Chapitre = {
         executable: 'sshd',
         processus: [proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups')],
       },
-      'radio-flux': {
+      'radio-stream': {
         description: 'Radio Quartier stream relay',
         active: true,
-        executable: 'flux',
-        processus: [proc(1730, 'radio', '/usr/local/bin/flux --config /etc/radio/flux.conf', { cpu: 3.2 })],
+        executable: 'stream',
+        processus: [proc(1730, 'radio', '/usr/local/bin/stream --config /etc/radio/stream.conf', { cpu: 3.2 })],
       },
       'radio-playlist': { description: 'Radio Quartier night playlist', active: true, executable: 'node', charger: lancerPlaylist },
       'radio-podcast': { description: 'Radio Quartier podcast converter', active: true, executable: 'python3', charger: lancerPodcast },
@@ -149,7 +149,7 @@ export const memoireChapitre: Chapitre = {
       proc(1, 'root', '/sbin/init'),
       proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups'),
       proc(611, 'root', '/usr/sbin/cron -f'),
-      proc(1730, 'radio', '/usr/local/bin/flux --config /etc/radio/flux.conf', { cpu: 3.2 }),
+      proc(1730, 'radio', '/usr/local/bin/stream --config /etc/radio/stream.conf', { cpu: 3.2 }),
       ...ZOMBIES.map((pid) => proc(pid, 'radio', '[convertir] <defunct>', { ppid: PODCAST, zombie: true })),
     ],
     memoire: { total: 2048 * Mo, noyau: 380 * Mo, rss: { 1: 12 * Mo, 598: 8 * Mo, 611: 4 * Mo, 1730: 420 * Mo } },
@@ -179,7 +179,7 @@ export const memoireChapitre: Chapitre = {
     s.horloge = Date.UTC(2027, 7, 22, 4, 12, 30);
     memoire(j)!.rss[pid] = 1700 * Mo;
     verifierMemoire(j);
-    journaliser(s, 'radio-flux.service', 'flux', 1730, 'relay: source disconnected (playlist), streaming silence', 4);
+    journaliser(s, 'radio-stream.service', 'stream', 1730, 'relay: source disconnected (playlist), streaming silence', 4);
     s.horloge = Date.UTC(2027, 7, 22, 4, 31, 0);
     j.etat.oomTues = [];
   },
@@ -217,7 +217,7 @@ export const memoireChapitre: Chapitre = {
             system: lieu({
               'radio-playlist.service': unite('Radio Quartier night playlist', '/usr/bin/node /opt/playlist/server.js'),
               'radio-podcast.service': unite('Radio Quartier podcast converter', '/usr/bin/python3 /opt/podcast/convertir.py'),
-              'radio-flux.service': unite('Radio Quartier stream relay', '/usr/local/bin/flux --config /etc/radio/flux.conf'),
+              'radio-stream.service': unite('Radio Quartier stream relay', '/usr/local/bin/stream --config /etc/radio/stream.conf'),
             }),
           }),
         }),
@@ -256,7 +256,7 @@ export const memoireChapitre: Chapitre = {
     { id: 'sans-zombies', condition: (j) => zombies(j).length === 0, message: (j) => j.t('memoire-evenement-sans-zombies') },
     {
       id: 'fin',
-      condition: (j) => active(j) && limiteRaisonnable(j) && relance(j) && zombies(j).length === 0 && sd(j).services['radio-flux'].etat === 'active',
+      condition: (j) => active(j) && limiteRaisonnable(j) && relance(j) && zombies(j).length === 0 && sd(j).services['radio-stream'].etat === 'active',
       message: (j) => j.t('memoire-evenement-fin'),
     },
   ],

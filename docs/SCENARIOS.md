@@ -1065,22 +1065,22 @@ supervision qui prévient avant que ça casse. Phase 7 de la feuille de route.
 ### Chapitre 1 — Le disque plein (fait)
 
 2 h 47 : l'enregistrement de nuit échoue, « No space left on device ». Le
-relais du flux (`radio-flux`) écrit son journal en mode debug depuis trois
+relais du flux (`radio-stream`) écrit son journal en mode debug depuis trois
 jours (16 Go).
 
 | Étape | Commande apprise |
 |---|---|
 | Trouver | `df -h`, `sudo du -sh /var/log/*`, `tail` (des lignes DEBUG) |
 | Le piège | `rm` d'un fichier encore ouvert : `df` reste plein, `sudo lsof +L1` montre `(deleted)` |
-| Vider | `sudo truncate -s 0 /var/log/radio/flux.log` (ou redémarrer le relais) |
-| Corriger | `loglevel = info` dans `/etc/radio/flux.conf`, `systemctl restart radio-flux` |
+| Vider | `sudo truncate -s 0 /var/log/radio/stream.log` (ou redémarrer le relais) |
+| Corriger | `loglevel = info` dans `/etc/radio/stream.conf`, `systemctl restart radio-stream` |
 | Éviter | `/etc/logrotate.d/radio` (`rotate`, `daily`, `copytruncate` ou `postrotate … systemctl reload`), `logrotate -d` |
 
 Objectif vérifié sur l'état : le disque est sous 80 %, aucun fichier effacé
 n'est encore tenu ouvert, le relais tourne sans debug, et une configuration
 logrotate valable couvre son journal et sait le faire rouvrir. Pièges
 prévus : `rm` d'un fichier ouvert, une rotation qui renomme sans faire
-rouvrir (le relais écrit dans `flux.log.1`), une directive mal écrite.
+rouvrir (le relais écrit dans `stream.log.1`), une directive mal écrite.
 
 ### Chapitre 2 — La mémoire (fait)
 
@@ -1149,7 +1149,7 @@ cron pas redémarré.
 ### Chapitre 5 — La sonde (fait)
 
 Après quatre nuits à réparer après coup, Zoé veut être prévenue avant que
-ça casse. Sa sonde (`/usr/local/bin/sonde`) lance des plugins de
+ça casse. Sa sonde (`/usr/local/bin/probe`) lance des plugins de
 supervision et envoie par courrier ce qui n'est pas OK ; elle ne regarde
 que le disque système, et rien ne la lance. Puis Zoé organise un exercice :
 la nuit suivante, deux pannes (le relais qui tombe à 1 h 10, un import qui
@@ -1159,7 +1159,7 @@ la nuit suivante, deux pannes (le relais qui tombe à 1 h 10, un import qui
 |---|---|
 | Les plugins | `/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio`, `check_http -H localhost -p 8000 -u /direct`, `check_procs -C flux -c 1:` (hors du PATH) |
 | L'alerte | `… \| grep -v " OK" \| mail -E -s Alerte-radio root`, `/etc/aliases`, `/var/mail/zoe` |
-| Planifier | `sonde.service` (`Type=oneshot`) et `sonde.timer` (`OnCalendar=*:0/5`, `WantedBy=timers.target`), `systemd-analyze calendar`, `systemctl daemon-reload`, `enable --now`, `list-timers` (ou une ligne de crontab) |
+| Planifier | `probe.service` (`Type=oneshot`) et `probe.timer` (`OnCalendar=*:0/5`, `WantedBy=timers.target`), `systemd-analyze calendar`, `systemctl daemon-reload`, `enable --now`, `list-timers` (ou une ligne de crontab) |
 | Vérifier | la nuit d'exercice, `journalctl -u sonde` |
 
 Objectif vérifié sur l'état, après la nuit simulée (qui se rejoue à chaque
@@ -1176,17 +1176,17 @@ Dimanche nuit, Théo était d'astreinte : le direct a coupé 45 minutes. Ses
 notes sont approximatives ; les faits sont dans les journaux. La mise à
 jour automatique (unattended-upgrades, needrestart) a relancé le relais à
 2 h 13, qui n'a pas pu repartir : une option inconnue attendait dans
-`flux.conf` depuis le 20 août, jamais appliquée.
+`stream.conf` depuis le 20 août, jamais appliquée.
 
 | Étape | Commande apprise |
 |---|---|
 | Les faits | `journalctl --since "2027-09-12 02:00" --until "…"`, `last`, `/var/log/apt/history.log`, `/var/log/unattended-upgrades/`, `/var/mail/theo` |
-| L'origine | `journalctl \| grep flux.conf` (la commande `sudo nano` du 20 août) |
+| L'origine | `journalctl \| grep stream.conf` (la commande `sudo nano` du 20 août) |
 | Écrire | `nano postmortem.md` : résumé, chronologie, impact, causes, ce qui a marché, actions |
 
 Objectif vérifié sur l'état du fichier : plus de « (à compléter) », la
 chronologie avec 2 h 13, 2 h 15 et 2 h 58, l'impact (45 minutes), le
-déclencheur et la cause (`flux.conf`, depuis le 20 août), au moins deux
+déclencheur et la cause (`stream.conf`, depuis le 20 août), au moins deux
 actions, et aucun mot qui cherche un coupable (liste dans le fichier de
 textes). Zoé relit à chaque enregistrement et dit ce qui manque.
 
@@ -1309,10 +1309,10 @@ la queue. Il ne faut pas arrêter l'archivage : les émissions du jour doivent
 
 | Étape | Commande apprise |
 |---|---|
-| Comprendre | `top` (`wa`, la charge), `iostat -x` (`%util`, `r_await`), `sudo pidstat -d` (qui), `journalctl -u radio-flux` |
+| Comprendre | `top` (`wa`, la charge), `iostat -x` (`%util`, `r_await`), `sudo pidstat -d` (qui), `journalctl -u radio-stream` |
 | Le faux remède | `sudo ionice -c 3 -p 2190` (rien ne change), `cat /sys/block/vda/queue/scheduler` (`[none]`) |
 | Limiter | `sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M"` (ou `systemctl edit` et `daemon-reload`) |
-| Vérifier | `iostat -x` (l'attente retombe), `journalctl -u radio-flux` |
+| Vérifier | `iostat -x` (l'attente retombe), `journalctl -u radio-stream` |
 
 Objectif vérifié sur l'état : le relais du direct est servi à temps,
 l'archivage tourne toujours, et sa limite (enregistrée dans `/etc`) vise le

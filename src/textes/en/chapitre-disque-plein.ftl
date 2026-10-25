@@ -15,16 +15,16 @@ disque-plein-message-de-zoe =
     device". The server says its disk is full, but I can't see
     what could have filled it, we haven't added anything lately.
 
-    I just tinkered a bit with the stream relay (the radio-flux
+    I just tinkered a bit with the stream relay (the radio-stream
     service) last week, to understand some dropouts. It needs to
     get going again, and it mustn't happen again.
 
     For sudo: antenna-2027."
 disque-plein-conf-flux =
-    # Radio Quartier: stream relay (the radio-flux service)
+    # Radio Quartier: stream relay (the radio-stream service)
     port = 8000
     mount = /direct
-    logfile = /var/log/radio/flux.log
+    logfile = /var/log/radio/stream.log
     # debug: everything, on every packet; info: the essentials (Zoé, 12/08: debug for the investigation)
     loglevel = debug
 disque-plein-flux-log =
@@ -35,8 +35,8 @@ disque-plein-flux-log =
     2027-08-15 02:46:58.114 DEBUG relay: packet 98412333 from source 127.0.0.1:41022 (4096 bytes)
     2027-08-15 02:46:58.115 ERROR record: cannot write /srv/radio/shows/nuit-2027-08-15.ogg: No space left on device
 disque-plein-syslog =
-    Aug 15 02:40:01 radio CRON[24117]: (radio) CMD (/usr/local/bin/enregistrer nuit)
-    Aug 15 02:40:03 radio enregistrer[24118]: write failed: No space left on device
+    Aug 15 02:40:01 radio CRON[24117]: (radio) CMD (/usr/local/bin/record nuit)
+    Aug 15 02:40:03 radio record[24118]: write failed: No space left on device
 disque-plein-logrotate-conf =
     # see "man logrotate" for details
 
@@ -95,7 +95,7 @@ disque-plein-evenement-coupable =
 disque-plein-evenement-debug =
     DEBUG lines, several per stream packet: the relay writes down everything
     it does, hundreds of times per second. The log level is set in its
-    configuration (/etc/radio/flux.conf); a program only rereads its
+    configuration (/etc/radio/stream.conf); a program only rereads its
     configuration at startup, or on reload.
 disque-plein-evenement-fantome =
     df still says full, but du can no longer find the file: it was
@@ -108,7 +108,7 @@ disque-plein-evenement-renomme =
     file, under its new name (sudo lsof -p 1730): a program keeps
     the file it opened, not its name. For logrotate, you need either
     copytruncate (copy then empty), or to make it reopen its log
-    (postrotate … systemctl reload radio-flux … endscript).
+    (postrotate … systemctl reload radio-stream … endscript).
 # { $pourcent }: disk usage
 disque-plein-evenement-respire =
     The disk can breathe: { $pourcent }% used. The night recording

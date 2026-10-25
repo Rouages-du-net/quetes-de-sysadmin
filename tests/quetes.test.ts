@@ -1433,16 +1433,16 @@ for (const langue of LANGUES)
           'df -h',
           'sudo du -sh /var/log/*',
           'antenne-2027',
-          'sudo tail -n 2 /var/log/radio/flux.log',
-          'sudo truncate -s 0 /var/log/radio/flux.log',
+          'sudo tail -n 2 /var/log/radio/stream.log',
+          'sudo truncate -s 0 /var/log/radio/stream.log',
           'df -h',
         ]);
         expect(tout).toMatch(/\/dev\/vda1 +19G +19G +0 100% \//);
         expect(tout).toMatch(/^15G\t\/var\/log\/radio$/m);
         expect(tout).toContain('DEBUG relay: packet');
         contient(tout, 'Le disque respire');
-        editer(s, '/etc/radio/flux.conf', (t) => t.replace('loglevel = debug', 'loglevel = info'));
-        s.executer('sudo systemctl restart radio-flux');
+        editer(s, '/etc/radio/stream.conf', (t) => t.replace('loglevel = debug', 'loglevel = info'));
+        s.executer('sudo systemctl restart radio-stream');
         expect(s.termine).toBe(false);
         contient(editer(s, '/etc/logrotate.d/radio', ROTATION('    copytruncate\n')), "Tu as terminé le chapitre 1 de L'Astreinte");
         expect(s.executer('sudo logrotate -d /etc/logrotate.d/radio')).toContain('rotating pattern: /var/log/radio/*.log');
@@ -1450,21 +1450,21 @@ for (const langue of LANGUES)
       });
 
       it("fausses pistes : rm d'un fichier ouvert, logrotate qui renomme sans faire rouvrir, une directive inconnue", () => {
-        const { s, tout } = jouer('disque-plein', ['sudo rm /var/log/radio/flux.log', 'antenne-2027', 'df -h', 'sudo lsof +L1']);
+        const { s, tout } = jouer('disque-plein', ['sudo rm /var/log/radio/stream.log', 'antenne-2027', 'df -h', 'sudo lsof +L1']);
         expect(tout).toContain('100% /');
-        expect(tout).toContain('/var/log/radio/flux.log (deleted)');
+        expect(tout).toContain('/var/log/radio/stream.log (deleted)');
         contient(tout, 'df dit toujours plein, mais du ne trouve plus le fichier');
-        s.executer('sudo systemctl restart radio-flux');
+        s.executer('sudo systemctl restart radio-stream');
         expect(s.executer('df -h')).not.toContain('100%');
-        editer(s, '/etc/radio/flux.conf', (t) => t.replace('loglevel = debug', 'loglevel = info'));
-        s.executer('sudo systemctl restart radio-flux');
+        editer(s, '/etc/radio/stream.conf', (t) => t.replace('loglevel = debug', 'loglevel = info'));
+        s.executer('sudo systemctl restart radio-stream');
         editer(s, '/etc/logrotate.d/radio', () => '/var/log/radio/*.log {\n    dayly\n    rotate 7\n}');
         expect(s.executer('sudo logrotate -d /etc/logrotate.d/radio')).toContain(
           "error: /etc/logrotate.d/radio:2 unknown option 'dayly' -- ignoring line",
         );
         editer(s, '/etc/logrotate.d/radio', ROTATION(''));
         contient(s.executer('sudo logrotate -f /etc/logrotate.d/radio') ?? '', "le relais écrit toujours dans l'ancien fichier");
-        expect(s.executer('sudo lsof -p 1730')).toContain('/var/log/radio/flux.log.1');
+        expect(s.executer('sudo lsof -p 1730')).toContain('/var/log/radio/stream.log.1');
         expect(s.termine).toBe(false);
       });
     });
@@ -1663,7 +1663,7 @@ for (const langue of LANGUES)
       };
       const CONTROLES =
         '\n$P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERTE\n$P/check_http -H localhost -p 8000 -u /direct | grep -v " OK" | $ALERTE\n';
-      const SERVICE = '[Unit]\nDescription=Sonde de Radio Quartier\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/sonde\n';
+      const SERVICE = '[Unit]\nDescription=Sonde de Radio Quartier\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/probe\n';
       const TIMER = (declencheur: string) =>
         `[Unit]\nDescription=Sonde toutes les 5 minutes\n\n[Timer]\n${declencheur}\n\n[Install]\nWantedBy=timers.target\n`;
 
@@ -1681,17 +1681,17 @@ for (const langue of LANGUES)
         expect(tout).toContain('Normalized form: *-*-* *:00/5:00');
         s.executer('sudo true');
         s.executer(machinesDansLaLangue(s.t, 'antenne-2027'));
-        ecrire(s, '/usr/local/bin/sonde', (t) => t + CONTROLES);
-        ecrire(s, '/etc/systemd/system/sonde.service', () => SERVICE);
-        ecrire(s, '/etc/systemd/system/sonde.timer', () => TIMER('OnCalendar=*:0/5'));
+        ecrire(s, '/usr/local/bin/probe', (t) => t + CONTROLES);
+        ecrire(s, '/etc/systemd/system/probe.service', () => SERVICE);
+        ecrire(s, '/etc/systemd/system/probe.timer', () => TIMER('OnCalendar=*:0/5'));
         s.executer('sudo systemctl daemon-reload');
-        const nuit = s.executer('sudo systemctl enable --now sonde.timer')!;
-        expect(nuit).toContain('Created symlink /etc/systemd/system/timers.target.wants/sonde.timer → /etc/systemd/system/sonde.timer.');
+        const nuit = s.executer('sudo systemctl enable --now probe.timer')!;
+        expect(nuit).toContain('Created symlink /etc/systemd/system/timers.target.wants/probe.timer → /etc/systemd/system/probe.timer.');
         contient(nuit, 'Zoé lance l');
         contient(nuit, 'Le direct a été muet 10 minutes');
         contient(nuit, 'bien avant la fin des inodes');
         contient(nuit, "Tu as terminé le chapitre 5 de L'Astreinte");
-        expect(s.executer('systemctl list-timers')).toMatch(/sonde\.timer +sonde\.service/);
+        expect(s.executer('systemctl list-timers')).toMatch(/probe\.timer +probe\.service/);
         expect(s.executer('sudo cat /var/mail/zoe')).toContain('HTTP CRITICAL - Unable to open TCP socket');
         expect(s.termine).toBe(true);
       });
@@ -1700,29 +1700,29 @@ for (const langue of LANGUES)
         const { s } = jouer('sonde', ['sudo true', 'antenne-2027']);
         ecrire(
           s,
-          '/usr/local/bin/sonde',
+          '/usr/local/bin/probe',
           (t) =>
             t.replace('$P/check_disk -w 20% -c 10% -p /', '$P/check_disk -w 20% -c 10% -W 20% -K 10% -p / -p /srv/radio') +
-            '\n$P/check_procs -C flux -c 1: | grep -v " OK" | $ALERTE\n',
+            '\n$P/check_procs -C stream -c 1: | grep -v " OK" | $ALERTE\n',
         );
         s.executer('sudo crontab -e');
-        s.enregistrerEdition(`${s.edition!.texte}*/5 * * * * /usr/local/bin/sonde\n`);
+        s.enregistrerEdition(`${s.edition!.texte}*/5 * * * * /usr/local/bin/probe\n`);
         contient(s.quitterEdition(), "Tu as terminé le chapitre 5 de L'Astreinte");
         expect(s.termine).toBe(true);
       });
 
       it('fausses pistes : la sonde de départ, OnUnitActiveSec seul, des seuils trop serrés', { timeout: 60_000 }, () => {
         const { s } = jouer('sonde', ['sudo true', 'antenne-2027']);
-        ecrire(s, '/etc/systemd/system/sonde.service', () => SERVICE);
-        ecrire(s, '/etc/systemd/system/sonde.timer', () => TIMER('OnUnitActiveSec=5min'));
-        let nuit = s.executer('sudo systemctl enable --now sonde.timer')!;
+        ecrire(s, '/etc/systemd/system/probe.service', () => SERVICE);
+        ecrire(s, '/etc/systemd/system/probe.timer', () => TIMER('OnUnitActiveSec=5min'));
+        let nuit = s.executer('sudo systemctl enable --now probe.timer')!;
         contient(nuit, 'Rien n');
         contient(nuit, 'OnUnitActiveSec= seul ne part jamais');
-        ecrire(s, '/etc/systemd/system/sonde.timer', () => TIMER('OnCalendar=*:0/5'));
+        ecrire(s, '/etc/systemd/system/probe.timer', () => TIMER('OnCalendar=*:0/5'));
         nuit = s.executer('sudo systemctl daemon-reload')!;
         contient(nuit, 'et personne n');
         contient(nuit, 'plus un inode libre');
-        nuit = ecrire(s, '/usr/local/bin/sonde', (t) => t.replace('-w 20% -c 10% -p /', '-w 60% -c 10% -p /') + CONTROLES);
+        nuit = ecrire(s, '/usr/local/bin/probe', (t) => t.replace('-w 20% -c 10% -p /', '-w 60% -c 10% -p /') + CONTROLES);
         contient(nuit, 'alors que tout allait bien');
         expect(s.termine).toBe(false);
       });
@@ -1735,7 +1735,7 @@ for (const langue of LANGUES)
           'iostat -x',
           'sudo pidstat -d',
           'antenne-2027',
-          'journalctl -u radio-flux -n 3',
+          'journalctl -u radio-stream -n 3',
           'sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M"',
           'iostat -x',
         ]);
@@ -1804,7 +1804,7 @@ for (const langue of LANGUES)
         '45 minutes de silence sur le direct.',
         '',
         '## Causes',
-        'unattended-upgrades (needrestart) a relancé le relais ; une option inconnue (bitrate_max) attendait dans flux.conf depuis le 20 août.',
+        'unattended-upgrades (needrestart) a relancé le relais ; une option inconnue (bitrate_max) attendait dans stream.conf depuis le 20 août.',
         '',
         '## Ce qui a bien marché',
         'La sonde a prévenu en 2 minutes.',
@@ -1830,7 +1830,7 @@ for (const langue of LANGUES)
         '45 minutes of silence on the live stream.',
         '',
         '## Causes',
-        'unattended-upgrades (needrestart) restarted the relay; an unknown option (bitrate_max) had been waiting in flux.conf since 20 August.',
+        'unattended-upgrades (needrestart) restarted the relay; an unknown option (bitrate_max) had been waiting in stream.conf since 20 August.',
         '',
         '## What went well',
         'The probe alerted us within 2 minutes.',
@@ -1847,15 +1847,15 @@ for (const langue of LANGUES)
           'sudo journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30"',
           'antenne-2027',
           'sudo cat /var/log/unattended-upgrades/unattended-upgrades-dpkg.log',
-          'sudo journalctl | grep flux.conf',
+          'sudo journalctl | grep stream.conf',
         ]);
         contient(tout, 'des pistes, pas des faits');
         expect(tout).toMatch(/theo +pts\/0 +203\.0\.113\.45 +Sun Sep 12 02:41 - 03:05  \(00:24\)/);
-        if (reference) expect(tout).toContain("sept. 12 02:13:06 radio flux[24410]: /etc/radio/flux.conf:7: unknown option 'bitrate_max'");
+        if (reference) expect(tout).toContain("sept. 12 02:13:06 radio stream[24410]: /etc/radio/stream.conf:7: unknown option 'bitrate_max'");
         expect(tout).not.toContain(
-          'août 20 21:20:41 radio sudo[7790]:      zoe : TTY=pts/1 ; PWD=/home/zoe ; USER=root ; COMMAND=/usr/bin/nano /etc/radio/flux.conf\nsept. 12 02:12',
+          'août 20 21:20:41 radio sudo[7790]:      zoe : TTY=pts/1 ; PWD=/home/zoe ; USER=root ; COMMAND=/usr/bin/nano /etc/radio/stream.conf\nsept. 12 02:12',
         );
-        expect(tout).toContain(' systemctl restart radio-flux.service');
+        expect(tout).toContain(' systemctl restart radio-stream.service');
         contient(tout, 'trois semaines');
         s.executer('nano postmortem.md');
         s.enregistrerEdition(reference ? POSTMORTEM : POSTMORTEM_EN);

@@ -12,7 +12,7 @@ memoire-message-de-zoe =
     A message from Zoé (4:25 a.m.):
 
     "Me again… Since 4:12, the live stream has been broadcasting nothing
-    but silence. The relay is running (systemctl status radio-flux), but
+    but silence. The relay is running (systemctl status radio-stream), but
     the automatic night playlist (the radio-playlist service) seems dead.
     I didn't touch anything, I promise.
 

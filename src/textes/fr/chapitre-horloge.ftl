@@ -54,10 +54,10 @@ horloge-timesyncd-conf =
     #PollIntervalMaxSec=2048
 horloge-script-enregistrer =
     #!/bin/sh
-    # enregistrer ÉMISSION DURÉE : enregistre le direct pendant DURÉE minutes.
+    # record ÉMISSION DURÉE : enregistre le direct pendant DURÉE minutes.
     # L'heure du journal est celle de la machine (date).
-    echo "$(date '+%F %T') $1 : début ($2 min)" >> /var/log/radio/enregistrer.log
-    exec /usr/local/bin/flux-record --mount /direct --minutes "$2" --out "/srv/radio/emissions/$1-$(date +%F).ogg"
+    echo "$(date '+%F %T') $1 : début ($2 min)" >> /var/log/radio/record.log
+    exec /usr/local/bin/stream-record --mount /direct --minutes "$2" --out "/srv/radio/emissions/$1-$(date +%F).ogg"
 horloge-journal-enregistrer =
     2027-08-26 06:00:01 matinale : début (180 min)
     2027-08-26 23:00:01 nuit : début (240 min)
