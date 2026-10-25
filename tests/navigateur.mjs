@@ -141,6 +141,17 @@ for (const largeur of [1000, 375]) {
   verifier(/⏱ 00:0\d/.test(await jeu.locator('.chrono').textContent()), `${largeur} px : le chrono tourne`);
   await jeu.locator('.examen input').uncheck();
   verifier((await jeu.locator('.chrono').textContent()) === '', `${largeur} px : sans examen, plus de chrono`);
+  // Un chapitre en cours : le mode examen le ferait recommencer, on demande d'abord.
+  await tape('ls');
+  await jeu.locator('.examen input').click();
+  const confirmation = jeu.locator('dialog.fenetre-examen');
+  verifier((await confirmation.evaluate((d) => d.open)) && !(await jeu.locator('.examen input').isChecked()), `${largeur} px : le mode examen demande confirmation`);
+  await confirmation.locator('button', { hasText: 'Annuler' }).click();
+  verifier(!(await confirmation.evaluate((d) => d.open)) && !(await jeu.locator('.examen input').isChecked()) && (await jeu.locator('.chrono').textContent()) === '', `${largeur} px : annuler ne change rien`);
+  await jeu.locator('.examen input').click();
+  await confirmation.locator('button', { hasText: 'mode examen' }).click();
+  verifier((await jeu.locator('.examen input').isChecked()) && /⏱/.test(await jeu.locator('.chrono').textContent()), `${largeur} px : confirmé, le mode examen commence`);
+  await jeu.locator('.examen input').uncheck();
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${largeur} px : pas de défilement horizontal`);
   verifier(erreurs.length === 0, `${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
   verifier(externes.length === 0, `${largeur} px : aucune ressource tierce ${externes.join(' ')}`);

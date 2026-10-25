@@ -103,6 +103,14 @@ rouages-lien-glossaire-octet = Glossary: byte
 examen-case = Exam mode: no hints, with a timer (the chapter restarts)
 # { $temps }: the elapsed time, in minutes:seconds
 examen-chrono = ⏱ { $temps }
+# The confirmation, when a chapter is in progress (exam mode restarts it).
+examen-confirmer-titre = Switch to exam mode?
+examen-confirmer-texte = The current chapter will restart from the beginning, on a fresh machine: what you have already done in it will be lost. Finished chapters stay finished.
+examen-confirmer = Restart in exam mode
+examen-quitter-titre = Leave exam mode?
+examen-quitter-texte = The current chapter will restart from the beginning, with hints: what you have already done in it will be lost. Finished chapters stay finished.
+examen-quitter = Restart without exam mode
+examen-annuler = Cancel
 examen-debut = Exam mode: no hints will be shown, the timer is running. Your mission is in the welcome message (read it again with cat). The debrief will come at the end. To start from scratch, machine and timer: "Restart this chapter", below the terminal.
 # { $temps }: the time of this game; { $record }: the best time in this browser
 examen-fini = Exam passed in { $temps }. Your best time on this chapter: { $record }.

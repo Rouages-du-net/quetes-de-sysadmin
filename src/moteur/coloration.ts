@@ -84,6 +84,8 @@ function existe(sh: Shell, nom: string): boolean {
     return !!n && n.type === 'fichier' && sh.peut(n, 'x');
   }
   if (COMMANDES[nom]?.section === 5) return false;
+  // !!, !12, !cat : l'historique, que le shell développe avant de lancer la commande.
+  if (/^!(!|-?\d+|[A-Za-z_./])/.test(nom)) return true;
   // help est intégré au shell (comme aide) : il répond toujours.
   return nom === 'help' || sh.connues().includes(nom);
 }

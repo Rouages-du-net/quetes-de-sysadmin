@@ -86,6 +86,34 @@ describe('Le terminal', () => {
     expect(fr.executer('tournesol')).not.toContain('Désolé');
   });
 
+  it('history et !! : comme bash (sudo !!, !n, !-n, !début, event not found)', () => {
+    const s = new Shell(chapitre('racine'), 'fr');
+    s.executer('ls');
+    s.executer('cat /etc/effaceur.conf');
+    s.executer(' whoami');
+    s.executer('cat /etc/effaceur.conf');
+    // Les doublons qui se suivent et les lignes qui commencent par une espace ne sont pas gardés.
+    expect(s.executer('history')).toBe('    1  ls\n    2  cat /etc/effaceur.conf\n    3  history');
+    expect(s.executer('history 1')).toBe('    4  history 1');
+    // !! relance la dernière, et l'affiche d'abord.
+    expect((s.executer('!!') ?? '').split('\n')[0]).toBe('history 1');
+    expect((s.executer('!1') ?? '').split('\n')[0]).toBe('ls');
+    expect((s.executer('!ca') ?? '').split('\n')[0]).toBe('cat /etc/effaceur.conf');
+    expect((s.executer('!-2') ?? '').split('\n')[0]).toBe('ls');
+    expect(s.executer('!zut')).toBe('-bash: !zut: event not found');
+    // sudo !! : la commande oubliée relancée avec sudo (le mot de passe est demandé).
+    s.executer('ls /root');
+    s.executer('sudo !!');
+    expect(s.attente?.ligne).toBe('sudo ls /root');
+    s.executer('tournesol');
+    expect(s.historique.at(-1)).toBe('sudo ls /root');
+    // Entre apostrophes, ! reste un caractère.
+    s.executer("cat '!!'");
+    expect(s.recupererErreurs().join('')).toContain('cat : !! :');
+    s.executer('history -c');
+    expect(s.executer('history')).toBe('    1  history');
+  });
+
   it('l’anglais est la langue par défaut et de repli', () => {
     expect(langueDuJeu()).toBe('en');
     expect(langueDuJeu('')).toBe('en');

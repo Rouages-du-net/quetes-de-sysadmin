@@ -9,7 +9,7 @@ import { colorer, couleurLs, largeurVisible, lireCouleur, messageCouleurInvalide
 import { COMMANDES, type Commande, type Contexte } from './index';
 
 // Les commandes intégrées au shell : which ne les trouve pas.
-const INTEGREES = ['cd', 'exit', 'umask', 'echo', 'pwd', 'help', 'aide', 'test'];
+const INTEGREES = ['cd', 'exit', 'umask', 'echo', 'pwd', 'help', 'aide', 'test', 'history'];
 
 // Le numéro d'inode d'un fichier (ls -i) : un par nœud, donné à la première
 // demande. Deux noms pour le même nœud (lien physique) ont le même numéro.
@@ -126,6 +126,20 @@ export const FICHIERS: Record<string, Commande> = {
 
   // umask : le masque des droits des fichiers créés (commande intégrée à bash).
   // Sans argument, l'affiche (-S : sous forme symbolique) ; sinon, le change pour cette session.
+  // history, comme celui de bash : les commandes tapées sur cette machine, numérotées
+  // (!n les relance, !! la dernière : voir Shell.developperHistorique).
+  history: {
+    lancer: ({ args, jeu }) => {
+      if (args[0] === '-c') {
+        jeu.historique.length = 0;
+        return '';
+      }
+      if (args[0] !== undefined && !/^\d+$/.test(args[0])) return jeu.erreur(`-bash: history: ${args[0]}: numeric argument required`);
+      const lignes = jeu.historique.map((l, i) => `${String(i + 1).padStart(5)}  ${l}`);
+      return (args[0] === undefined ? lignes : lignes.slice(-Number(args[0]))).join('\n');
+    },
+  },
+
   umask: {
     lancer: ({ args, jeu }) => {
       const valeur = args.find((a) => !a.startsWith('-'));

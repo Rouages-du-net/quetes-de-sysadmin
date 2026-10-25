@@ -895,6 +895,15 @@ man-which = donne le chemin complet d'une commande : le premier fichier de ce no
 man-who = liste les sessions ouvertes sur la machine : qui, sur quel terminal (pts), depuis quand, et depuis quelle adresse. Une session dure tant que son processus sshd tourne.
     .synopsis = who
     .exemple-1 = qui est connecté en ce moment ?
+man-history = affiche l'historique : les commandes tapées sur cette machine, numérotées. Le shell sait les relancer sans les retaper : !! relance la dernière (sudo !! la relance avec sudo, quand on a oublié sudo), !12 la numéro 12, !-2 l'avant-dernière, !cat la dernière qui commence par cat. La ligne développée s'affiche avant de s'exécuter. Les flèches ↑ et ↓ et Ctrl-R parcourent le même historique. Une ligne qui commence par une espace n'y est pas gardée. Commande intégrée au shell (help history, sur un vrai Linux).
+    .synopsis = history [N] | history -c
+    .option-c = efface l'historique (clear).
+    .exemple-1 = toutes les commandes tapées, numérotées
+    .exemple-2 = les 5 dernières
+    .exemple-3 = retrouver une commande ssh tapée plus tôt
+    .exemple-4 = relancer la dernière commande
+    .exemple-5 = la relancer avec sudo (« Permission non accordée » ? sudo !!)
+    .exemple-6 = relancer la commande numéro 12
 man-umask = affiche ou change le masque (umask) de la session : les droits RETIRÉS aux fichiers et dossiers qu'on crée. Un fichier part de 666 (rw-rw-rw-), un dossier de 777, moins le masque : avec 022 (le défaut), un fichier est rw-r--r-- et le groupe ne peut pas l'écrire ; avec 002, il est rw-rw-r--. Le changement ne vaut que pour la session : pour le garder, on écrit umask 002 dans ~/.profile. Commande intégrée au shell (help umask, sur un vrai Linux).
     .synopsis = umask [-S] [masque]
     .option-S = affiche les droits permis, sous forme symbolique (u=rwx,g=rx,o=rx).

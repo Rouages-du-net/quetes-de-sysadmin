@@ -403,7 +403,20 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
 
   // Le terminal et sa barre de touches : ensemble en plein écran.
   const ecran = el('div', { class: 'ecran' }, quitterFocus, terminal, barreTouches);
-  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, ecran, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces, fenetreBilan, fenetreAstreinte, fenetreFinAstreinte);
+  // La confirmation du mode examen : il fait recommencer le chapitre en cours.
+  const idExamen = `qds-examen-${Math.random().toString(36).slice(2, 8)}`;
+  const examenTitre = el('h2', { id: idExamen });
+  const examenTexte = el('p', { class: 'carte-legende' });
+  const examenOui = el('button', { type: 'button', class: 'bouton' });
+  const examenNon = el('button', { type: 'button', class: 'bouton bouton-second' }, t('examen-annuler'));
+  const fenetreExamen = el(
+    'dialog',
+    { class: 'fenetre-examen', 'aria-labelledby': idExamen },
+    examenTitre,
+    examenTexte,
+    el('p', { class: 'carte-actions' }, examenNon, ' ', examenOui),
+  ) as HTMLDialogElement;
+  const jeu = el('div', { class: 'qds', lang: t.langue }, navHistoires, ...navsChapitres, barreExamen, ecran, fin, pourComprendre, panneauCarnet, astuces, credit, fenetreCarte, fenetreProgression, fenetreMission, fenetreSucces, fenetreBilan, fenetreAstreinte, fenetreFinAstreinte, fenetreExamen);
   racine.append(jeu);
 
   // ——— Progression gardée dans ce navigateur ———
@@ -1118,12 +1131,34 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   fermerFinAstreinte.addEventListener('click', () => fenetreFinAstreinte.close());
   fenetreFinAstreinte.addEventListener('close', () => setTimeout(() => saisie.focus()));
 
-  caseExamen.addEventListener('change', () => {
-    terminalJeu.examen = caseExamen.checked;
+  const appliquerExamen = (oui: boolean) => {
+    caseExamen.checked = oui;
+    terminalJeu.examen = oui;
     // Le chapitre en cours recommence : en examen, sur une machine neuve et chrono à zéro.
     if (histoire() >= 0) demarrer(histoire(), courant());
     else apres();
+  };
+  let examenVoulu = false;
+  caseExamen.addEventListener('change', () => {
+    const voulu = caseExamen.checked;
+    const sh = terminalJeu.distant?.shell;
+    // Un chapitre commencé et pas fini : on demande avant de le faire recommencer.
+    const enCours = !!sh && !sh.termine && (terminalJeu.pas ?? 1) > 0;
+    if (!enCours) return appliquerExamen(voulu);
+    caseExamen.checked = !voulu;
+    examenVoulu = voulu;
+    examenTitre.textContent = t(voulu ? 'examen-confirmer-titre' : 'examen-quitter-titre');
+    examenTexte.textContent = typo(t(voulu ? 'examen-confirmer-texte' : 'examen-quitter-texte'));
+    examenOui.textContent = t(voulu ? 'examen-confirmer' : 'examen-quitter');
+    fenetreExamen.showModal();
+    examenNon.focus();
   });
+  examenOui.addEventListener('click', () => {
+    fenetreExamen.close();
+    appliquerExamen(examenVoulu);
+  });
+  examenNon.addEventListener('click', () => fenetreExamen.close());
+  fenetreExamen.addEventListener('close', () => setTimeout(() => saisie.focus()));
   // Un lieu de la carte : son nom, ses repères en toutes lettres (lus aussi
   // par les lecteurs d'écran), puis les lieux qu'il contient.
   const dessinerLieu = (l: Lieu): HTMLElement => {

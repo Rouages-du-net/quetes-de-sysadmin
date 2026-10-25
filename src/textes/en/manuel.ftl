@@ -921,6 +921,15 @@ man-which = gives the full path of a command: the first file with that name in t
 man-who = lists the sessions open on the machine: who, on which terminal (pts), since when, and from which address. A session lasts as long as its sshd process is running.
     .synopsis = who
     .exemple-1 = who is logged in right now?
+man-history = displays the history: the commands typed on this machine, numbered. The shell can run them again without retyping: !! runs the last one again (sudo !! runs it again with sudo, when you forgot sudo), !12 command number 12, !-2 the one before last, !cat the last one starting with cat. The expanded line is shown before it runs. The ↑ and ↓ arrows and Ctrl-R go through the same history. A line starting with a space is not kept. A shell built-in (help history, on a real Linux).
+    .synopsis = history [N] | history -c
+    .option-c = clears the history.
+    .exemple-1 = all the commands typed, numbered
+    .exemple-2 = the last 5
+    .exemple-3 = find an ssh command typed earlier
+    .exemple-4 = run the last command again
+    .exemple-5 = run it again with sudo ("Permission denied"? sudo !!)
+    .exemple-6 = run command number 12 again
 man-umask = shows or changes the session's mask (umask): the permissions REMOVED from the files and directories you create. A file starts from 666 (rw-rw-rw-), a directory from 777, minus the mask: with 022 (the default), a file is rw-r--r-- and the group cannot write to it; with 002, it is rw-rw-r--. The change only applies to the session: to keep it, write umask 002 in ~/.profile. Shell builtin (help umask, on a real Linux).
     .synopsis = umask [-S] [mask]
     .option-S = shows the allowed permissions, in symbolic form (u=rwx,g=rx,o=rx).

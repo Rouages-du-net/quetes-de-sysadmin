@@ -67,6 +67,9 @@ premier-jour-notes-awa =
       commande > fichier     ÉCRASE le fichier avec le résultat
       commande >> fichier    AJOUTE le résultat à la fin
 
+    Oublié sudo ? Pas besoin de tout retaper : sudo !! relance la dernière
+    commande, avec sudo devant. Et history montre tout ce que tu as tapé.
+
     Le serveur web (nginx) bloque les adresses listées dans
     /etc/nginx/bloques.conf, au format : deny ADRESSE;
     Ce fichier appartient à root. Après l'avoir modifié, il faut demander à

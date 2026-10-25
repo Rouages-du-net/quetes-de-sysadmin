@@ -67,6 +67,9 @@ premier-jour-notes-awa =
       command > file         OVERWRITES the file with the result
       command >> file        APPENDS the result at the end
 
+    Forgot sudo? No need to retype everything: sudo !! runs the last
+    command again, with sudo in front. And history shows everything you typed.
+
     The web server (nginx) blocks the addresses listed in
     /etc/nginx/bloques.conf, in the format: deny ADDRESS;
     This file belongs to root. After changing it, you must ask

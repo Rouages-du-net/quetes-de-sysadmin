@@ -416,6 +416,7 @@ export const PAGES: Record<string, Page> = {
     voir: ['id', 'groups', 'chgrp', 'chage', 'userdel', 'gpasswd'],
   },
   userdel: { longues: { 'remove': 'r', 'force': 'f' }, section: 8, options: ['r', 'f'], exemples: ['sudo userdel marc', 'sudo userdel -r marc'], voir: ['usermod', 'gpasswd', 'crontab'] },
+  history: { options: ['c'], exemples: ['history', 'history 5', 'history | grep ssh', '!!', 'sudo !!', '!12'], voir: ['bash'] },
   umask: { options: ['S'], exemples: ['umask', 'umask -S', 'umask 002'], voir: ['chmod', 'ls'] },
   visudo: { longues: { 'check': 'c', 'file': 'f' }, section: 8, options: ['c', 'f'], exemples: ['sudo visudo', 'sudo visudo -f /etc/sudoers.d/caisse', 'sudo visudo -c'], voir: ['sudo', 'sudoers'] },
   who: { exemples: ['who'], voir: ['last', 'ps', 'pkill'] },

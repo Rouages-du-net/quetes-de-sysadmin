@@ -75,6 +75,7 @@ export interface Jeu {
   redemarrage: boolean;
   edition: Edition | null;
   suivi: { lire: () => string } | null;
+  historique: string[];
 }
 
 export interface Edition {
@@ -132,6 +133,8 @@ export class Shell implements Jeu {
   // Un suivi en cours (tail -f, journalctl -f) : lire() donne les lignes
   // arrivées depuis la dernière fois. Ctrl-C l'arrête (Console.interrompre).
   suivi: { lire: () => string } | null = null;
+  // Les commandes tapées sur cette machine (history, !!).
+  historique: string[] = [];
   // Messages de l'histoire déclenchés pendant l'édition, affichés à la sortie.
   private enAttente: string[] = [];
   demandeConnexion: string | null = null;
@@ -595,7 +598,7 @@ export class Shell implements Jeu {
   connues(): string[] {
     // La commande qui liste les autres a le nom de la langue (aide en français) ;
     // help, comme le builtin de bash, marche dans toutes les langues.
-    return [...this.chapitre.commandes, 'man', 'apropos', 'whatis', 'clear', 'exit', this.t('commande-aide')];
+    return [...this.chapitre.commandes, 'man', 'apropos', 'whatis', 'clear', 'exit', 'history', this.t('commande-aide')];
   }
 
 
@@ -636,6 +639,55 @@ export class Shell implements Jeu {
       this.question = null;
       return this.conclure(repondre(ligne.trim()), true);
     }
+    // L'historique, comme bash : !! (la dernière commande), !n, !-n, !début.
+    // La ligne développée s'affiche avant de s'exécuter, et c'est elle qui est gardée.
+    const developpee = this.developperHistorique(ligne);
+    if (developpee.erreur) {
+      this.commandesTapees++;
+      this.commandesEnErreur++;
+      this.statut = 1;
+      return developpee.erreur;
+    }
+    const echo = developpee.ligne !== ligne ? developpee.ligne : '';
+    ligne = developpee.ligne;
+    // Comme HISTCONTROL=ignoreboth (le ~/.bashrc de Debian) : ni les lignes qui commencent par une espace, ni les doublons qui se suivent.
+    if (ligne.trim() && !/^\s/.test(ligne) && this.historique.at(-1) !== ligne) this.historique.push(ligne);
+    if (!echo) return this.executerLigne(ligne);
+    const sortie = this.executerLigne(ligne);
+    return sortie === null ? null : [echo, sortie].filter(Boolean).join('\n');
+  }
+
+  // !! et ses cousins, hors des apostrophes.
+  private developperHistorique(ligne: string): { ligne: string; erreur?: string } {
+    if (!ligne.includes('!')) return { ligne };
+    let sortie = '';
+    let apostrophe = false;
+    for (let i = 0; i < ligne.length; i++) {
+      const c = ligne[i];
+      if (c === "'") apostrophe = !apostrophe;
+      if (c !== '!' || apostrophe) {
+        sortie += c;
+        continue;
+      }
+      const reste = ligne.slice(i + 1);
+      const m = /^(!|-?\d+|[A-Za-z_./][^\s;|&<>()]*)/.exec(reste);
+      if (!m) {
+        sortie += c;
+        continue;
+      }
+      const h = this.historique;
+      const motif = m[1];
+      const trouvee =
+        motif === '!' ? h.at(-1) : /^-?\d+$/.test(motif) ? (Number(motif) < 0 ? h.at(Number(motif)) : h[Number(motif) - 1]) : [...h].reverse().find((l) => l.startsWith(motif));
+      if (trouvee === undefined) return { ligne, erreur: `-bash: !${motif}: event not found` };
+      sortie += trouvee;
+      i += motif.length;
+    }
+    return { ligne: sortie };
+  }
+
+  // La ligne, une fois l'historique développé.
+  private executerLigne(ligne: string): string | null {
     const mots = decouper(ligne);
     if (!mots.length) return '';
     this.commandesTapees++;

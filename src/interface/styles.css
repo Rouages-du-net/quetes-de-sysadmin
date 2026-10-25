@@ -516,9 +516,9 @@
    un petit écran). */
 .qds .sortie .bilan { margin: 0 0 0.5rem; color: var(--_terminal-invite); font-weight: 700; }
 .qds .sortie .bilan .lien { color: inherit; font-weight: 400; }
-.qds .fenetre-bilan { width: min(44rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
-.qds .fenetre-bilan::backdrop { background: rgb(0 0 0 / 0.5); }
-.qds .fenetre-bilan h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.qds .fenetre-bilan, .qds .fenetre-examen { width: min(44rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
+.qds .fenetre-bilan::backdrop, .qds .fenetre-examen::backdrop { background: rgb(0 0 0 / 0.5); }
+.qds .fenetre-bilan h2, .qds .fenetre-examen h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
 .qds .bilan-tableau { overflow-x: auto; margin: 0.75rem 0; }
 .qds .bilan-tableau table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
 .qds .bilan-tableau th, .qds .bilan-tableau td { border: 1px solid var(--_bord); padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; }
