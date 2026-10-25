@@ -41,6 +41,7 @@ premier-jour-notes-awa =
     NOTES D'AWA — LES COMMANDES DU QUOTIDIEN
 
       head fichier        le début (10 lignes)       tail fichier   la fin
+      tail -f fichier     la fin, puis les lignes qui arrivent, en direct (Ctrl-C pour arrêter)
       wc -l fichier       compte les lignes
       grep motif fichier  les lignes qui contiennent le motif
 

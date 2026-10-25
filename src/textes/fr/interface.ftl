@@ -188,6 +188,8 @@ mission-consignes = Les consignes
 mission-journal = Ce qui s'est passé
 mission-rien = Rien encore : l'histoire avance à mesure que tu agis.
 touches-titre = Touches du terminal
+# Pendant tail -f ou journalctl -f : le bouton qui fait Ctrl-C.
+suivi-arreter = Arrêter (Ctrl-C)
 touche-haut = Commande précédente
 touche-bas = Commande suivante
 # Ce qu'affiche bash pendant Ctrl-R (en anglais, comme readline).

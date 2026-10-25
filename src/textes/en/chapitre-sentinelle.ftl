@@ -20,7 +20,11 @@ sentinelle-courriel-kofi =
     address: 198.51.100.40.
 
     Yasmine also noticed that the robots come back every ten
-    minutes: look at /var/log/fail2ban.log.
+    minutes: look at /var/log/fail2ban.log. They are knocking at the door
+    right now; to watch them live (Ctrl-C to stop):
+
+      journalctl -fu ssh
+      tail -f /var/log/fail2ban.log
 
     Could you:
 

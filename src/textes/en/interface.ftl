@@ -187,6 +187,8 @@ mission-titre = { $chapitre }: { $titre }
 mission-consignes = The instructions
 mission-journal = What has happened
 mission-rien = Nothing yet: the story moves on as you act.
+# During tail -f or journalctl -f: the button that does Ctrl-C.
+suivi-arreter = Stop (Ctrl-C)
 touches-titre = Terminal keys
 touche-haut = Previous command
 touche-bas = Next command

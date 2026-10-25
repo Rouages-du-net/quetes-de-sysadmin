@@ -330,6 +330,8 @@
   /* Pendant nano, la barre ne garde que ses raccourcis (et Ctrl-C). */
   .qds .touches:not([data-mode='nano']) .pour-nano,
   .qds .touches[data-mode='nano'] button:not(.pour-nano):not([data-touche='ctrl-c']) { display: none; }
+  /* Pendant un suivi (tail -f), seulement Ctrl-C. */
+  .qds .touches[data-mode='suivi'] button:not([data-touche='ctrl-c']) { display: none; }
 }
 /* Les succès : obtenus en clair, les autres en discret ; l'annonce dans le terminal. */
 .qds .succes-grade { margin: 0 0 0.75rem; }
@@ -400,6 +402,15 @@
 @media (prefers-reduced-motion: reduce) {
   .qds * { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* tail -f, journalctl -f : les lignes qui arrivent se suivent sans espace ; le bouton qui fait Ctrl-C, à la place de la ligne de commande. */
+.qds .sortie pre.suivi { margin-top: -0.5rem; }
+.qds .arret-suivi {
+  font: inherit; color: var(--_terminal-invite); background: none; cursor: pointer;
+  border: 1px dashed color-mix(in oklab, var(--_terminal-texte) 40%, transparent); border-radius: 0.25rem; padding: 0.1rem 0.4rem;
+}
+.qds .arret-suivi:focus-visible { outline: 2px solid var(--_terminal-invite); outline-offset: 1px; }
+.qds .arret-suivi kbd { font: inherit; background: var(--_terminal-texte); color: var(--_terminal-fond); padding: 0 0.2ch; }
 
 /* L'éditeur nano, dans le terminal. */
 .qds .nano { display: flex; flex-direction: column; gap: 0.25rem; }

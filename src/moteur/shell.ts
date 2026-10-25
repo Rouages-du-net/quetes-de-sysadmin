@@ -15,6 +15,7 @@ import { sansCouleurs } from './couleurs';
 import { aide, apropos, ligneWhatis, optionInvalide, pageMan, raccourcir } from './commandes/manuel';
 import { traducteur, typographie, type Langue, type Traduire } from '../textes';
 import { hoteDansLaLangue, nomMachine } from './machines';
+import { vivre } from './activite';
 
 export { decouper, appliquerMode } from './outils';
 import { appliquerMode, comparerNoms, contenu, decouper, joker, modeAvecMasque, tailleDe, type Mot } from './outils';
@@ -73,6 +74,7 @@ export interface Jeu {
   demandeConnexion: string | null;
   redemarrage: boolean;
   edition: Edition | null;
+  suivi: { lire: () => string } | null;
 }
 
 export interface Edition {
@@ -127,6 +129,9 @@ export class Shell implements Jeu {
   // Fichier ouvert dans l'éditeur (nano) : l'interface l'affiche à la place
   // de la ligne de commande. `root` : ouvert avec sudo.
   edition: Edition | null = null;
+  // Un suivi en cours (tail -f, journalctl -f) : lire() donne les lignes
+  // arrivées depuis la dernière fois. Ctrl-C l'arrête (Console.interrompre).
+  suivi: { lire: () => string } | null = null;
   // Messages de l'histoire déclenchés pendant l'édition, affichés à la sortie.
   private enAttente: string[] = [];
   demandeConnexion: string | null = null;
@@ -678,6 +683,7 @@ export class Shell implements Jeu {
       return sermon;
     }
     this.chapitre.avantCommande?.(this);
+    if (this.chapitre.activite) vivre(this, this.chapitre.activite.pas);
     return this.conclure(this.compterLigne(this.tube(ligne, mots)), true);
   }
 
@@ -699,6 +705,7 @@ export class Shell implements Jeu {
       this.attente = null;
       this.authentifie = true;
       this.chapitre.avantCommande?.(this);
+      if (this.chapitre.activite) vivre(this, this.chapitre.activite.pas);
       return this.conclure(this.compterLigne(this.tube(attente.ligne, decouper(attente.ligne))), true);
     }
     attente.essais++;

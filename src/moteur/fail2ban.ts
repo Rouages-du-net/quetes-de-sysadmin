@@ -73,6 +73,8 @@ export interface EtatFail2ban {
   chargements: number;
   // Vrai si l'on a consulté l'état de la prison depuis le dernier chargement.
   consulte: boolean;
+  // Quand une adresse a été débannie (fin du bantime) : seuls ses échecs suivants comptent.
+  remis?: Record<string, number>;
 }
 
 /** « 10m » → 600, « 1h » → 3600, « -1 » → -1 ; null si le format est faux. */
@@ -196,10 +198,11 @@ export function lireConfig(jeu: Jeu): { prison: Prison | null; prisons: Prison[]
 /** Les échecs de connexion par adresse, d'après le journal de ssh. */
 export function echecs(jeu: Jeu): Map<string, number> {
   const compte = new Map<string, number>();
+  const remis = (jeu.etat.fail2ban as EtatFail2ban | undefined)?.remis ?? {};
   for (const e of systemd(jeu)?.journal ?? []) {
     if (e.unite !== 'ssh.service') continue;
     const m = /(?:Failed password|Invalid user|Failed publickey) .*?from (\d+\.\d+\.\d+\.\d+)/.exec(e.message);
-    if (m) compte.set(m[1], (compte.get(m[1]) ?? 0) + 1);
+    if (m && e.temps > (remis[m[1]] ?? -Infinity)) compte.set(m[1], (compte.get(m[1]) ?? 0) + 1);
   }
   return compte;
 }
@@ -241,12 +244,17 @@ export function echecsDe(jeu: Jeu, p: Prison): Map<string, number> {
   return compte;
 }
 
-/** Applique les prisons chargées : bannit les adresses qui ont assez d'échecs (recidive en dernier). */
-export function appliquer(jeu: Jeu, f2b: EtatFail2ban) {
+/**
+ * Applique les prisons chargées : bannit les adresses qui ont assez d'échecs
+ * (recidive en dernier). `seulement` : l'adresse qui vient d'échouer — comme
+ * le vrai fail2ban, qui ne réagit qu'aux nouvelles lignes du journal.
+ */
+export function appliquer(jeu: Jeu, f2b: EtatFail2ban, seulement?: string) {
   const ordre = [...actives(f2b)].sort((a, b) => Number(a.nom === 'recidive') - Number(b.nom === 'recidive'));
   for (const p of ordre) {
     const bannis = bannisDe(f2b, p.nom);
     for (const [ip, n] of echecsDe(jeu, p)) {
+      if (seulement !== undefined && ip !== seulement) continue;
       if (n < p.maxretry || bannis.includes(ip)) continue;
       if (p.ignoreip.some((e) => couvre(e, ip))) continue;
       bannis.push(ip);

@@ -3,6 +3,7 @@
 // Chaque chapitre (voir chapitres/) construit son propre monde.
 
 import type { Jeu } from './shell';
+import type { Activite } from './activite';
 import type { Traduire } from '../textes';
 import type { ElementPlan } from './plan';
 
@@ -114,6 +115,8 @@ export interface Chapitre {
   // Appelé juste avant de lancer chaque commande (ex. le temps qui passe : la
   // commande voit déjà le monde tel qu'il est devenu depuis la précédente).
   avantCommande?: (jeu: Jeu) => void;
+  // La vie de la machine pendant qu'on joue (visiteurs, robots, attaques) : voir activite.ts.
+  activite?: Activite;
   // Mot de passe de « vous » pour sudo (absent : sudo pas encore appris).
   motDePasse?: string;
   // Comptes et groupes de la machine (par défaut : comptesParDefaut).

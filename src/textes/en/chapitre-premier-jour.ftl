@@ -41,6 +41,7 @@ premier-jour-notes-awa =
     AWA'S NOTES — EVERYDAY COMMANDS
 
       head file           the beginning (10 lines)   tail file      the end
+      tail -f file        the end, then the new lines as they arrive, live (Ctrl-C to stop)
       wc -l file          counts the lines
       grep pattern file   the lines that contain the pattern
 

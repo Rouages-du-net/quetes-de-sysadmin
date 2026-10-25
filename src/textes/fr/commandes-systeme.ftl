@@ -12,7 +12,6 @@ systemctl-acces-refuse =
     Failed to { $action } { $service }.service: Access denied
     (il faut être root : sudo systemctl { $action } { $service })
 journalctl-argument = journalctl : argument inattendu « { $argument } » (pour un service : journalctl -u { $argument })
-journalctl-suivre = (journalctl -f suit le journal en continu, jusqu'à Ctrl+C : le jeu ne le simule pas. Essaie journalctl -n 20.)
 reboot-refuse =
     Failed to reboot system: Access denied
     (il faut être root : sudo reboot)

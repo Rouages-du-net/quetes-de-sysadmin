@@ -172,7 +172,8 @@ for (const langue of LANGUES)
       const { c, jouer, ecrire } = partie();
       let tout = jouer(['cat /var/log/fail2ban.log', 'sudo fail2ban-client status sshd', 'fourmis-2026', 'sudo fail2ban-client set sshd unbanip 198.51.100.40']);
       expect(tout).toContain('Ban 198.51.100.40');
-      expect(tout).toContain('`- Banned IP list:\t203.0.113.66 198.51.100.40 198.51.100.23');
+      // Le second robot, relâché à 09:35, attaque encore : il n'est pas (encore) banni.
+      expect(tout).toContain('`- Banned IP list:\t203.0.113.66 198.51.100.40\n');
       tout += ecrire('/etc/fail2ban/jail.local', BON);
       tout += jouer(['sudo fail2ban-client -t', 'sudo systemctl reload fail2ban', 'sudo fail2ban-client get sshd bantime']);
       expect(tout).toContain('OK: configuration test is successful');

@@ -69,6 +69,9 @@ rouages.net.
   `src/moteur/heure.ts`, `timedatectl` dans `commandes/heure.ts`.
   Unités écrites à la main et timers systemd, et le temps qui passe minute
   par minute (`passerTemps`, timers et cron) dans `src/moteur/minuteries.ts` ;
+  la machine qui vit pendant qu'on joue (`Chapitre.activite`, `vivre()`) dans
+  `src/moteur/activite.ts`, le suivi `tail -f`/`journalctl -f` (`Shell.suivi`,
+  `Console.suivre()`, `interrompre()` pour Ctrl-C) ;
   supervision (`check_disk`, `check_http`, `check_procs`, hors du PATH),
   `mail` et `last` dans `commandes/supervision.ts`. Une commande peut donner
   son code de retour (`jeu.statut`).

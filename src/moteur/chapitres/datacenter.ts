@@ -8,6 +8,8 @@
 // réservées à la documentation (RFC 5737).
 
 import { chemin, d, f, joueur, type Chapitre, type Comptes } from '../monde';
+import type { Jeu } from '../shell';
+import { instants } from '../activite';
 import type { Processus } from '../commandes/systeme';
 import type { Traduire } from '../../textes';
 import { nouveauSystemd } from '../systemd';
@@ -18,9 +20,12 @@ const BLOQUES = '/etc/nginx/bloques.conf';
 
 // Journal d'accès déterministe : des visiteurs, puis un robot qui aspire le
 // catalogue et fait tomber le service (erreurs 503).
+const VISITEURS = ['192.0.2.14', '192.0.2.31', '192.0.2.58', '203.0.113.9', '203.0.113.42', '203.0.113.87', '192.0.2.120', '203.0.113.150'];
+const PAGES = ['/', '/agenda', '/catalogue', '/horaires', '/catalogue/livre/1984', '/expositions', '/contact', '/catalogue/livre/beloved'];
+
 function journal(): { texte: string; erreurs503: number; requetesRobot: number } {
-  const visiteurs = ['192.0.2.14', '192.0.2.31', '192.0.2.58', '203.0.113.9', '203.0.113.42', '203.0.113.87', '192.0.2.120', '203.0.113.150'];
-  const pages = ['/', '/agenda', '/catalogue', '/horaires', '/catalogue/livre/1984', '/expositions', '/contact', '/catalogue/livre/beloved'];
+  const visiteurs = VISITEURS;
+  const pages = PAGES;
   let graine = 42;
   const hasard = () => (graine = (graine * 1103515245 + 12345) % 2147483648) / 2147483648;
   const lignes: string[] = [];
@@ -46,6 +51,42 @@ const JOURNAL = journal();
 export const JOURNAL_NGINX = JOURNAL.texte;
 export const ERREURS_503 = JOURNAL.erreurs503;
 export const REQUETES_ROBOT = JOURNAL.requetesRobot;
+
+// Pendant qu'on enquête, le site vit (activite.ts) : le robot continue
+// d'aspirer le catalogue toutes les 2 s (503 tant que le service sature,
+// 403 une fois bloqué par nginx), des visiteurs passent toutes les 7 s. Le
+// journal grandit : tail -f /var/log/nginx/access.log le montre en direct.
+const DEBUT_DIRECT = Date.UTC(2026, 9, 13, 18, 42, 0);
+const enDirect = (j: Jeu): string[] => (j.etat.accesEnDirect ??= []) as string[];
+const ligneAcces = (t: number, ip: string, page: string, statut: number, taille: number) =>
+  `${ip} - - [13/Oct/2026:${new Date(t + 2 * 3_600_000).toISOString().slice(11, 19)} +0200] "GET ${page} HTTP/1.1" ${statut} ${taille}`;
+const surcharge = (j: Jeu) => (j.etat.processus as Processus[]).some((p) => p.cpu > 90);
+const bloque = (j: Jeu) => (j.etat.confChargee as string).includes(`deny ${ROBOT};`);
+
+function visites(j: Jeu, de: number, a: number) {
+  const robot = instants(de, a, 2).map((t) => ({ t, robot: true }));
+  const humains = instants(de, a, 7).map((t) => ({ t, robot: false }));
+  for (const { t, robot: estRobot } of [...robot, ...humains].sort((x, y) => x.t - y.t)) {
+    const n = Math.floor(t / 1000);
+    if (estRobot) {
+      const statut = bloque(j) ? 403 : surcharge(j) ? 503 : 200;
+      enDirect(j).push(ligneAcces(t, ROBOT, `/catalogue/recherche?q=${String.fromCharCode(97 + (n % 26))}${n % 1000}`, statut, statut === 403 ? 153 : statut === 503 ? 197 : 1200 + ((n * 7919) % 9000)));
+    } else {
+      const statut = surcharge(j) ? 503 : 200;
+      enDirect(j).push(ligneAcces(t, VISITEURS[n % VISITEURS.length], PAGES[(n * 3) % PAGES.length], statut, statut === 503 ? 197 : 1200 + ((n * 7919) % 9000)));
+    }
+  }
+}
+
+// Les erreurs 503 du journal, à cet instant.
+const erreurs503 = (j: Jeu) => (j.lire('/var/log/nginx/access.log') ?? '').split('\n').filter((l) => / 503 /.test(l)).length;
+// Le nombre que donne le rapport : une ligne qui commence par un nombre (la sortie de wc -l).
+const nombreDuRapport = (r: string) =>
+  r
+    .split('\n')
+    .map((l) => /^\s*(\d+)(?![\d.])/.exec(l)?.[1])
+    .filter((x): x is string => x !== undefined)
+    .map(Number);
 
 // Les comptes de la machine datacenter (chapitres 2 et 3), comme une Debian :
 // www-data fait tourner le site, adm lit les journaux.
@@ -86,6 +127,7 @@ export const datacenter: Chapitre = {
   noms: true,
   final: 'rapport',
   motDePasse: 'bienvenue-2026',
+  activite: { pas: 5, depart: () => DEBUT_DIRECT, avancer: visites },
   // t : les textes dans la langue du jeu (français tant que le shell ne le
   // transmet pas).
   etat: (t) => ({
@@ -145,7 +187,7 @@ export const datacenter: Chapitre = {
               {
                 nginx: d(
                   {
-                    'access.log': f(JOURNAL.texte, { proprio: 'root', lignes: true }),
+                    'access.log': f((j) => [JOURNAL.texte, ...enDirect(j)].join('\n'), { proprio: 'root', lignes: true }),
                   },
                   undefined,
                   { proprio: 'root' },
@@ -205,11 +247,12 @@ export const datacenter: Chapitre = {
     },
     {
       id: 'compte',
+      // Le journal grandit : le bon compte est celui du journal à cet instant.
       condition: (j) => {
         const cmds = j.derniere.commandes.flat();
-        return cmds.includes('grep') && j.derniere.sortie.trim().split(/\s+/)[0] === String(ERREURS_503);
+        return cmds.includes('grep') && j.derniere.sortie.trim().split(/\s+/)[0] === String(erreurs503(j));
       },
-      message: (j) => j.t('premier-jour-evenement-compte', { erreurs: String(ERREURS_503) }),
+      message: (j) => j.t('premier-jour-evenement-compte', { erreurs: String(erreurs503(j)) }),
     },
     {
       id: 'robot',
@@ -249,11 +292,16 @@ export const datacenter: Chapitre = {
     },
     {
       id: 'rapport',
+      // Un compte pris à un moment de l'enquête : entre le journal du début et celui de maintenant.
       condition: (j) => {
         const r = j.lire(chemin(j.t, `${M}/rapport.txt`)) ?? '';
-        return j.drapeaux.has('repare') && r.includes(String(ERREURS_503)) && r.includes(ROBOT);
+        return j.drapeaux.has('repare') && r.includes(ROBOT) && nombreDuRapport(r).some((n) => n >= ERREURS_503 && n <= erreurs503(j));
       },
-      message: (j) => j.t('premier-jour-evenement-rapport', { erreurs: String(ERREURS_503) }),
+      message: (j) => {
+        const r = j.lire(chemin(j.t, `${M}/rapport.txt`)) ?? '';
+        const n = nombreDuRapport(r).find((x) => x >= ERREURS_503 && x <= erreurs503(j)) ?? ERREURS_503;
+        return j.t('premier-jour-evenement-rapport', { erreurs: String(n) });
+      },
     },
   ],
 };
