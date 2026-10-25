@@ -949,12 +949,12 @@ Le Kiosque (abonnements à la lettre, Node.js) tourne sur l'emplacement bleu
 
 | Étape | Commande apprise |
 |---|---|
-| La nouvelle version à côté | `ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert`, `sudo systemctl start kiosque-vert` |
-| Vérifier sa santé | `curl -s localhost:3002/health` (503), `cat …/NOTES.txt`, la variable dans `/etc/kiosque/kiosque.env`, `systemctl restart` |
+| La nouvelle version à côté | `ln -sfn /srv/kiosk/versions/1.5.0 /srv/kiosk/vert`, `sudo systemctl start kiosk-vert` |
+| Vérifier sa santé | `curl -s localhost:3002/health` (503), `cat …/NOTES.txt`, la variable dans `/etc/kiosk/kiosk.env`, `systemctl restart` |
 | Basculer | `proxy_pass http://127.0.0.1:3002/;`, `sudo nginx -t`, `sudo systemctl reload nginx` |
 
 Objectif vérifié sur l'état : nginx (configuration chargée) envoie
-`/kiosque/` vers une instance 1.5.0 en bonne santé, et l'autre instance
+`/kiosk/` vers une instance 1.5.0 en bonne santé, et l'autre instance
 tourne toujours. Pièges prévus : changer le lien sans redémarrer, basculer
 avant `/health`, oublier le `reload`, arrêter bleu tout de suite.
 
@@ -964,11 +964,11 @@ La 1.6.0 passe `/health` mais plante sur `/archives`. Vert sert la 1.5.0.
 
 | Étape | Commande apprise |
 |---|---|
-| Le canari | `upstream kiosque { server 127.0.0.1:3002 weight=9; server 127.0.0.1:3001 weight=1; }`, `proxy_pass http://kiosque/;`, reload |
+| Le canari | `upstream kiosk { server 127.0.0.1:3002 weight=9; server 127.0.0.1:3001 weight=1; }`, `proxy_pass http://kiosk/;`, reload |
 | Regarder | `awk '{print $9}' access.log \| sort \| uniq -c`, `grep " 500 "`, `curl localhost:3001/archives` |
 | Arrêter, recommencer | `down`, reload ; la 1.6.1 publiée ; nouveau canari ; puis tout vers bleu |
 
-Objectif vérifié sur l'état : tout `/kiosque/` va à la 1.6.1 en bonne
+Objectif vérifié sur l'état : tout `/kiosk/` va à la 1.6.1 en bonne
 santé, après un canari de la 1.6.1 sans erreur, vert toujours allumé.
 Pièges prévus : tout basculer d'un coup sur la 1.6.0 (toutes les visites
 d'archives en 500), un « canari » à 50 %.
@@ -981,9 +981,9 @@ la base (schéma 3 → 4). Elle ne marche pas (variable renommée), et bleu
 
 | Étape | Commande apprise |
 |---|---|
-| Comprendre | `curl localhost:3002/health`, `curl localhost:3001/health`, `sudo journalctl -u kiosque-vert` (la migration), les notes de version |
-| Réparer en avant | `KIOSQUE_SMTP_URL=…` dans `kiosque.env`, `systemctl restart kiosque-vert` |
-| Refaire le filet | `ln -sfn …/2.0.0 /srv/kiosque/bleu`, `systemctl restart kiosque-bleu` |
+| Comprendre | `curl localhost:3002/health`, `curl localhost:3001/health`, `sudo journalctl -u kiosk-vert` (la migration), les notes de version |
+| Réparer en avant | `KIOSK_SMTP_URL=…` dans `kiosk.env`, `systemctl restart kiosk-vert` |
+| Refaire le filet | `ln -sfn …/2.0.0 /srv/kiosk/bleu`, `systemctl restart kiosk-bleu` |
 
 Objectif vérifié sur l'état : nginx sert une instance 2.x en bonne santé, et
 l'autre instance tourne aussi en 2.x en bonne santé. Piège prévu : revenir

@@ -1,13 +1,13 @@
 // Le Kiosque de la Gazette : l'appli Node.js des abonnements à la lettre
-// d'information, derrière nginx (location /kiosque/). Deux emplacements
-// tournent côte à côte, bleu (port 3001) et vert (port 3002), chacun avec
-// son service systemd ; /srv/kiosque/bleu et /srv/kiosque/vert sont des
-// liens vers une version de /srv/kiosque/versions/. Comme un vrai
+// d'information, derrière nginx (location /kiosk/). Deux emplacements
+// tournent côte à côte, blue (port 3001) et green (port 3002), chacun avec
+// son service systemd ; /srv/kiosk/blue et /srv/kiosk/green sont des
+// liens vers une version de /srv/kiosk/versions/. Comme un vrai
 // processus, une instance lit son code et sa configuration
-// (/etc/kiosque/kiosque.env) à son démarrage : changer le lien ou la
+// (/etc/kiosk/kiosk.env) à son démarrage : changer le lien ou la
 // configuration ne compte qu'après un redémarrage.
 // Chaque instance répond sur /health (200 ou 503, en JSON), comme le
-// recommandent les guides de déploiement (bleu/vert : https://martinfowler.com/bliki/BlueGreenDeployment.html).
+// recommandent les guides de déploiement (blue/green : https://martinfowler.com/bliki/BlueGreenDeployment.html).
 
 import { d, f, type Droits, type Noeud } from '../monde';
 import type { Jeu } from '../shell';
@@ -16,9 +16,9 @@ import { requete, type Appli, type Configuration } from '../nginx';
 import { journaliser, systemd } from '../systemd';
 import { lireEnv } from '../compose';
 
-export const KIOSQUE = '/srv/kiosque';
-export const ENV = '/etc/kiosque/kiosque.env';
-export const PORTS: Record<string, number> = { bleu: 3001, vert: 3002 };
+export const KIOSQUE = '/srv/kiosk';
+export const ENV = '/etc/kiosk/kiosk.env';
+export const PORTS: Record<string, number> = { blue: 3001, green: 3002 };
 
 export interface VersionKiosque {
   // Les variables de configuration sans lesquelles elle ne fonctionne pas.
@@ -31,13 +31,13 @@ export interface VersionKiosque {
 
 export const VERSIONS: Record<string, VersionKiosque> = {
   '1.4.2': { requiert: [], schema: 3 },
-  '1.5.0': { requiert: ['KIOSQUE_SMTP'], schema: 3 },
+  '1.5.0': { requiert: ['KIOSK_SMTP'], schema: 3 },
   // La recherche dans les archives plante : /health n'en sait rien.
-  '1.6.0': { requiert: ['KIOSQUE_SMTP'], panne: ['/archives'], schema: 3 },
-  '1.6.1': { requiert: ['KIOSQUE_SMTP'], schema: 3 },
+  '1.6.0': { requiert: ['KIOSK_SMTP'], panne: ['/archives'], schema: 3 },
+  '1.6.1': { requiert: ['KIOSK_SMTP'], schema: 3 },
   // Migre la base au démarrage (schéma 4 : la colonne courriel devient email).
-  '2.0.0': { requiert: ['KIOSQUE_SMTP_URL'], schema: 4 },
-  '2.0.1': { requiert: ['KIOSQUE_SMTP_URL'], schema: 4 },
+  '2.0.0': { requiert: ['KIOSK_SMTP_URL'], schema: 4 },
+  '2.0.1': { requiert: ['KIOSK_SMTP_URL'], schema: 4 },
 };
 
 // La base du Kiosque : le schéma où elle en est (les migrations ne font qu'avancer).
@@ -48,9 +48,9 @@ export interface Instance {
   config: Record<string, string>;
 }
 
-export const instances = (j: Jeu): Record<string, Instance> => (j.etat.kiosque ??= {});
+export const instances = (j: Jeu): Record<string, Instance> => (j.etat.kiosk ??= {});
 
-/** La version que vise le lien d'un emplacement (/srv/kiosque/vert → versions/1.5.0). */
+/** La version que vise le lien d'un emplacement (/srv/kiosk/green → versions/1.5.0). */
 export function versionDuLien(j: Jeu, couleur: string): string | null {
   const lien = (j.trouver(`${KIOSQUE}/${couleur}`, false) as { lien?: string } | null)?.lien;
   const nom = lien?.replace(/\/$/, '').split('/').at(-1);
@@ -64,7 +64,7 @@ export function serviceKiosque(couleur: string, pid: number, etat: 'active' | 'i
     etat,
     active: etat === 'active',
     executable: 'node',
-    processus: [{ pid, utilisateur: 'kiosque', cpu: 0.6, mem: 3.1, commande: `node ${KIOSQUE}/${couleur}/serveur.js` }],
+    processus: [{ pid, utilisateur: 'kiosk', cpu: 0.6, mem: 3.1, commande: `node ${KIOSQUE}/${couleur}/serveur.js` }],
     verifier: (j) =>
       versionDuLien(j, couleur)
         ? null
@@ -80,7 +80,7 @@ export function serviceKiosque(couleur: string, pid: number, etat: 'active' | 'i
       instances(j)[couleur] = { version, config: lireEnv(j.lire(ENV)) };
       const sd = systemd(j);
       if (!sd) return;
-      const ecrire = (message: string) => journaliser(sd, `kiosque-${couleur}.service`, 'node', pid, message, 6, false);
+      const ecrire = (message: string) => journaliser(sd, `kiosk-${couleur}.service`, 'node', pid, message, 6, false);
       ecrire(`Kiosque ${version} starting (NODE_ENV=production)`);
       // Une version plus récente migre la base, comme les outils de migration
       // des frameworks : la base ne revient pas en arrière d'elle-même.
@@ -103,7 +103,7 @@ const json = (code: number, objet: unknown) => ({ code, corps: JSON.stringify(ob
 /** L'appli d'un emplacement, telle que nginx et curl la joignent. */
 export function appliKiosque(couleur: string): Appli {
   return {
-    service: `kiosque-${couleur}`,
+    service: `kiosk-${couleur}`,
     pages: {},
     repondre: (j, chemin) => {
       const ici = instances(j)[couleur];
@@ -135,13 +135,13 @@ export function sante(j: Jeu, couleur: string): { status: string; version: strin
   return JSON.parse(appli.repondre!(j, '/health', { entetes: {}, adresse: '127.0.0.1' }).corps);
 }
 
-/** Les fichiers d'une version (/srv/kiosque/versions/1.5.0). */
+/** Les fichiers d'une version (/srv/kiosk/versions/1.5.0). */
 export function dossierVersion(t: Jeu['t'], version: string, notes?: string): Noeud {
-  const droits: Droits = { proprio: 'kiosque', groupe: 'kiosque' };
+  const droits: Droits = { proprio: 'kiosk', groupe: 'kiosk' };
   return d(
     {
       'serveur.js': f(`// Kiosque ${version}\nrequire('./app').listen(process.env.PORT);`, { lignes: true, ...droits }),
-      'package.json': f(JSON.stringify({ name: 'kiosque', version, main: 'serveur.js' }, null, 2), { lignes: true, ...droits }),
+      'package.json': f(JSON.stringify({ name: 'kiosk', version, main: 'serveur.js' }, null, 2), { lignes: true, ...droits }),
       ...(notes ? { 'NOTES.txt': f(t(notes), droits) } : {}),
     },
     undefined,
@@ -155,7 +155,7 @@ Description=Gazette kiosk (${couleur})
 After=network.target
 
 [Service]
-User=kiosque
+User=kiosk
 Environment=PORT=${PORTS[couleur]}
 EnvironmentFile=${ENV}
 ExecStart=/usr/bin/node ${KIOSQUE}/${couleur}/serveur.js
@@ -165,12 +165,12 @@ Restart=on-failure
 WantedBy=multi-user.target`;
 
 /**
- * La part du trafic de /kiosque/ que reçoit chaque emplacement, d'après la
+ * La part du trafic de /kiosk/ que reçoit chaque emplacement, d'après la
  * configuration chargée de nginx (proxy_pass direct, ou upstream et ses poids).
  */
 export function repartition(j: Jeu): Record<string, number> {
   const config: Configuration | null = j.etat.nginx?.charge ?? null;
-  const proxy = config?.serveurs.flatMap((s) => s.locations).find((l) => l.chemin === '/kiosque/')?.proxy ?? '';
+  const proxy = config?.serveurs.flatMap((s) => s.locations).find((l) => l.chemin === '/kiosk/')?.proxy ?? '';
   const hote = /^https?:\/\/([^/]+)/.exec(proxy)?.[1] ?? '';
   const couleur = (adresse: string) => Object.keys(PORTS).find((c) => adresse.endsWith(`:${PORTS[c]}`));
   const amont = config?.amonts?.[hote];
@@ -205,7 +205,7 @@ export function lecteurs(j: Jeu, nombre = 60): Lot {
   const sd = systemd(j)!;
   const lot: Lot = { total: 0, parVersion: {}, erreurs: 0 };
   for (let i = 0; i < nombre; i++) {
-    const chemin = i % 3 === 1 ? '/kiosque/archives' : '/kiosque/';
+    const chemin = i % 3 === 1 ? '/kiosk/archives' : '/kiosk/';
     const client = {
       adresse: `198.51.100.${((i * 37) % 240) + 10}`,
       temps: sd.horloge + i * 60_000,

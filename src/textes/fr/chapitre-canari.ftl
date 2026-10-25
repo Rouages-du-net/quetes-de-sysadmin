@@ -11,13 +11,13 @@ chapitre-canari = Le canari
 canari-message-de-samia =
     Un message de Samia :
 
-    « La 1.6.0 du Kiosque est sortie (/srv/kiosque/versions/1.6.0), avec
-    une nouvelle recherche dans les archives. Vert sert toujours la 1.5.0 ;
-    la nouvelle version ira sur bleu, comme convenu.
+    « La 1.6.0 du Kiosque est sortie (/srv/kiosk/versions/1.6.0), avec
+    une nouvelle recherche dans les archives. Green sert toujours la 1.5.0 ;
+    la nouvelle version ira sur blue, comme convenu.
 
     Mais cette version change beaucoup de choses, et /health ne vérifie
     pas tout. Alors cette fois, pas de bascule d'un coup : d'abord un
-    canari. Une visite sur dix pour bleu, le reste pour vert, et on
+    canari. Une visite sur dix pour blue, le reste pour green, et on
     regarde ce que reçoivent les lecteur·rices (/var/log/nginx/access.log)
     avant d'aller plus loin. man nginx explique comment répartir entre deux
     serveurs (upstream, weight).
@@ -45,10 +45,10 @@ canari-une-heure =
 canari-evenement-tout-d-un-coup =
     Tout le trafic est passé d'un coup à la 1.6.0… et { $erreurs } visites
     sur l'heure ont reçu une erreur 500 : tout le monde en profite. C'est
-    ce que le canari aurait évité. Reviens à vert (proxy_pass, nginx -t,
+    ce que le canari aurait évité. Reviens à green (proxy_pass, nginx -t,
     reload), puis essaie avec une petite part du trafic.
 canari-evenement-canari-160 =
-    Le canari est en place : bleu (1.6.0) reçoit une petite part des visites.
+    Le canari est en place : blue (1.6.0) reçoit une petite part des visites.
     Regarde maintenant ce que les lecteur·rices ont reçu : les codes de
     réponse sont dans access.log (le nombre après la requête : 200, 404,
     500…). grep ou awk aident à trier.
@@ -57,22 +57,22 @@ canari-evenement-trop-gros =
     problème, beaucoup de monde le verra. Un canari, c'est une petite part
     (une visite sur dix, ou moins) : weight=1 face à weight=9.
 canari-evenement-trouve =
-    Des 500 sur /kiosque/archives ! Ils viennent forcément de bleu : vert
+    Des 500 sur /kiosk/archives ! Ils viennent forcément de blue : green
     sert la même page depuis des semaines. Essaie-la directement sur chaque
     instance (curl http://localhost:3001/archives, puis 3002) pour en être
     sûr·e. /health ne vérifiait pas cette page. Arrête le canari : plus
-    aucune visite pour bleu (down, ou retirer le serveur).
+    aucune visite pour blue (down, ou retirer le serveur).
 canari-evenement-arrete =
     Canari arrêté : seule une visite sur dix a vu l'erreur, pendant une
     heure, au lieu de tout le monde. Samia transmet le problème aux
-    développeur·ses… qui publient aussitôt la 1.6.1 (/srv/kiosque/versions/).
-    On recommence : bleu, /health, canari, journaux.
+    développeur·ses… qui publient aussitôt la 1.6.1 (/srv/kiosk/versions/).
+    On recommence : blue, /health, canari, journaux.
 canari-evenement-canari-161 =
     Une heure de canari avec la 1.6.1 : aucune erreur dans ce lot de
-    visites. La nouvelle version peut recevoir tout le trafic. Garde vert
+    visites. La nouvelle version peut recevoir tout le trafic. Garde green
     allumé, au cas où.
 canari-evenement-fin =
-    Tout le Kiosque passe par la 1.6.1, sans erreur, et vert attend en
+    Tout le Kiosque passe par la 1.6.1, sans erreur, et green attend en
     réserve. Samia : « Le premier essai n'a gêné qu'une visite sur dix,
     pendant une heure. Sans canari, on l'aurait servi à tout le monde. »
 

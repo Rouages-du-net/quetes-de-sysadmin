@@ -1098,50 +1098,50 @@ for (const langue of LANGUES)
         return s.quitterEdition();
       };
       const VERS_VERT = (t: string) => t.replace('127.0.0.1:3001', '127.0.0.1:3002');
-      const SMTP = (t: string) => `${t}\nKIOSQUE_SMTP=smtp.gazette.example`;
+      const SMTP = (t: string) => `${t}\nKIOSK_SMTP=smtp.gazette.example`;
 
       it('solution : la 1.5.0 sur vert, /health, la configuration des notes, puis nginx bascule et bleu reste allumé', () => {
         const { s, tout } = jouer('bleu-vert', [
           'curl -s http://localhost:3001/health',
-          'ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert',
-          'sudo systemctl start kiosque-vert',
+          'ln -sfn /srv/kiosk/versions/1.5.0 /srv/kiosk/green',
+          'sudo systemctl start kiosk-green',
           'gazette-2027',
           'curl -s localhost:3002/health',
-          'cat /srv/kiosque/versions/1.5.0/NOTES.txt',
+          'cat /srv/kiosk/versions/1.5.0/NOTES.txt',
         ]);
         expect(tout).toContain('{"status":"ok","version":"1.4.2"}');
-        expect(tout).toContain('{"status":"error","version":"1.5.0","error":"KIOSQUE_SMTP is not set"}');
+        expect(tout).toContain('{"status":"error","version":"1.5.0","error":"KIOSK_SMTP is not set"}');
         contient(tout, '/health répond 503');
-        editer(s, '/etc/kiosque/kiosque.env', SMTP);
-        const sante = ['sudo systemctl restart kiosque-vert', 'curl -i localhost:3002/health'].map((l) => s.executer(l)).join('\n');
+        editer(s, '/etc/kiosk/kiosk.env', SMTP);
+        const sante = ['sudo systemctl restart kiosk-green', 'curl -i localhost:3002/health'].map((l) => s.executer(l)).join('\n');
         expect(sante).toContain('HTTP/1.1 200 OK');
         expect(sante).toContain('{"status":"ok","version":"1.5.0"}');
         editer(s, '/etc/nginx/sites-available/gazette', VERS_VERT);
         const fin = ['sudo nginx -t', 'sudo systemctl reload nginx'].map((l) => s.executer(l)).join('\n');
         expect(fin).toContain('test is successful');
         contient(fin, 'Tu as terminé le chapitre 3 de La Gazette');
-        expect(s.executer('curl -s http://gazette.example/kiosque/')).toContain('Kiosque 1.5.0');
+        expect(s.executer('curl -s http://gazette.example/kiosk/')).toContain(`${reference ? 'Kiosque' : 'Kiosk'} 1.5.0`);
         expect(s.termine).toBe(true);
       });
 
       it('fausses pistes : sans redémarrer, bascule avant /health, sans reload, puis bleu arrêté trop tôt', () => {
         const { s, tout } = jouer('bleu-vert', [
-          'sudo systemctl start kiosque-vert',
+          'sudo systemctl start kiosk-green',
           'gazette-2027',
-          'ln -sfn /srv/kiosque/versions/1.5.0 /srv/kiosque/vert',
+          'ln -sfn /srv/kiosk/versions/1.5.0 /srv/kiosk/green',
           'curl -s localhost:3002/health',
         ]);
         contient(tout, 'un programme lit son code');
-        s.executer('sudo systemctl restart kiosque-vert');
+        s.executer('sudo systemctl restart kiosk-green');
         editer(s, '/etc/nginx/sites-available/gazette', VERS_VERT);
-        contient(s.executer('curl -s http://gazette.example/kiosque/') ?? '', 'il ne relit sa configuration');
+        contient(s.executer('curl -s http://gazette.example/kiosk/') ?? '', 'il ne relit sa configuration');
         contient(s.executer('sudo systemctl reload nginx') ?? '', 'les lecteur·rices reçoivent une erreur');
-        expect(s.executer('curl -s http://gazette.example/kiosque/')).toBe('Internal Server Error');
-        editer(s, '/etc/kiosque/kiosque.env', SMTP);
-        s.executer('sudo systemctl restart kiosque-vert');
+        expect(s.executer('curl -s http://gazette.example/kiosk/')).toBe('Internal Server Error');
+        editer(s, '/etc/kiosk/kiosk.env', SMTP);
+        s.executer('sudo systemctl restart kiosk-green');
         expect(s.termine).toBe(true);
         // Une fois la bascule faite, arrêter bleu enlève le filet.
-        contient(s.executer('sudo systemctl stop kiosque-bleu') ?? '', 'plus de retour arrière instantané');
+        contient(s.executer('sudo systemctl stop kiosk-blue') ?? '', 'plus de retour arrière instantané');
       });
     });
 
@@ -1152,13 +1152,13 @@ for (const langue of LANGUES)
         return s.quitterEdition();
       };
       const CANARI = (t: string) =>
-        `upstream kiosque {\n    server 127.0.0.1:3002 weight=9;\n    server 127.0.0.1:3001 weight=1;\n}\n\n${t.replace('http://127.0.0.1:3002/', 'http://kiosque/')}`;
+        `upstream kiosk {\n    server 127.0.0.1:3002 weight=9;\n    server 127.0.0.1:3001 weight=1;\n}\n\n${t.replace('http://127.0.0.1:3002/', 'http://kiosk/')}`;
       const recharger = (s: Shell) => ['sudo nginx -t', 'sudo systemctl reload nginx'].map((l) => s.executer(l)).join('\n');
 
       it('solution : canari de la 1.6.0, les 500 dans access.log, arrêt, 1.6.1, canari propre, bascule', () => {
         const { s } = jouer('canari', [
-          'ln -sfn /srv/kiosque/versions/1.6.0 /srv/kiosque/bleu',
-          'sudo systemctl restart kiosque-bleu',
+          'ln -sfn /srv/kiosk/versions/1.6.0 /srv/kiosk/blue',
+          'sudo systemctl restart kiosk-blue',
           'gazette-2027',
         ]);
         expect(s.executer('curl -s localhost:3001/health')).toBe('{"status":"ok","version":"1.6.0"}');
@@ -1168,26 +1168,26 @@ for (const langue of LANGUES)
         contient(heure, 'Le canari est en place');
         expect(s.executer("awk '{print $9}' /var/log/nginx/access.log | sort | uniq -c")).toMatch(/\s+\d+ 500/);
         const erreurs = s.executer('grep " 500 " /var/log/nginx/access.log') ?? '';
-        expect(erreurs).toContain('"GET /kiosque/archives HTTP/1.1" 500');
-        contient(erreurs, 'Des 500 sur /kiosque/archives');
+        expect(erreurs).toContain('"GET /kiosk/archives HTTP/1.1" 500');
+        contient(erreurs, 'Des 500 sur /kiosk/archives');
         expect(s.executer('curl -s localhost:3001/archives')).toBe('Internal Server Error');
         site(s, (t) => t.replace('3001 weight=1;', '3001 weight=1 down;'));
         contient(recharger(s), 'Canari arrêté');
-        s.executer('ln -sfn /srv/kiosque/versions/1.6.1 /srv/kiosque/bleu');
-        s.executer('sudo systemctl restart kiosque-bleu');
+        s.executer('ln -sfn /srv/kiosk/versions/1.6.1 /srv/kiosk/blue');
+        s.executer('sudo systemctl restart kiosk-blue');
         site(s, (t) => t.replace(' down;', ';'));
         contient(recharger(s), 'aucune erreur dans ce lot');
         expect(s.termine).toBe(false);
         site(s, (t) => t.replace('3002 weight=9;', '3002 weight=9 down;'));
         contient(recharger(s), 'Tu as terminé le chapitre 4 de La Gazette');
-        expect(s.executer('curl -s http://gazette.example/kiosque/')).toContain('Kiosque 1.6.1');
+        expect(s.executer('curl -s http://gazette.example/kiosk/')).toContain(`${reference ? 'Kiosque' : 'Kiosk'} 1.6.1`);
         expect(s.termine).toBe(true);
       });
 
       it("fausses pistes : tout d'un coup sur la 1.6.0, puis un « canari » à 50 %", () => {
         const { s } = jouer('canari', [
-          'ln -sfn /srv/kiosque/versions/1.6.0 /srv/kiosque/bleu',
-          'sudo systemctl restart kiosque-bleu',
+          'ln -sfn /srv/kiosk/versions/1.6.0 /srv/kiosk/blue',
+          'sudo systemctl restart kiosk-blue',
           'gazette-2027',
         ]);
         site(s, (t) => t.replace('127.0.0.1:3002/', '127.0.0.1:3001/'));
@@ -1195,7 +1195,7 @@ for (const langue of LANGUES)
         site(
           s,
           (t) =>
-            `upstream kiosque {\n    server 127.0.0.1:3002;\n    server 127.0.0.1:3001;\n}\n\n${t.replace('http://127.0.0.1:3001/', 'http://kiosque/')}`,
+            `upstream kiosk {\n    server 127.0.0.1:3002;\n    server 127.0.0.1:3001;\n}\n\n${t.replace('http://127.0.0.1:3001/', 'http://kiosk/')}`,
         );
         contient(recharger(s), 'Une grosse part du trafic');
         expect(s.termine).toBe(false);
@@ -1208,24 +1208,24 @@ for (const langue of LANGUES)
         s.enregistrerEdition(change(s.edition!.texte));
         return s.quitterEdition();
       };
-      const SMTP_URL = (t: string) => `${t}\nKIOSQUE_SMTP_URL=smtp://smtp.gazette.example:587`;
+      const SMTP_URL = (t: string) => `${t}\nKIOSK_SMTP_URL=smtp://smtp.gazette.example:587`;
 
       it('solution : le journal raconte la migration, la variable renommée, puis bleu en 2.0.0', () => {
         const { s, tout } = jouer('migration', [
           'curl -s localhost:3002/health',
           'curl -s localhost:3001/health',
-          'sudo journalctl -u kiosque-vert',
+          'sudo journalctl -u kiosk-green',
           'gazette-2027',
         ]);
-        expect(tout).toContain('"error":"KIOSQUE_SMTP_URL is not set"');
+        expect(tout).toContain('"error":"KIOSK_SMTP_URL is not set"');
         expect(tout).toContain('"error":"database schema 4 is newer than supported (3)"');
         expect(tout).toContain('Running migration 004_rename_abonnes_courriel_to_email... done');
         contient(tout, 'il reste à réparer en avant');
-        editer(s, '/etc/kiosque/kiosque.env', SMTP_URL);
-        contient(s.executer('sudo systemctl restart kiosque-vert') ?? '', 'Le Kiosque répond de nouveau');
+        editer(s, '/etc/kiosk/kiosk.env', SMTP_URL);
+        contient(s.executer('sudo systemctl restart kiosk-green') ?? '', 'Le Kiosque répond de nouveau');
         expect(s.termine).toBe(false);
-        s.executer('ln -sfn /srv/kiosque/versions/2.0.0 /srv/kiosque/bleu');
-        contient(s.executer('sudo systemctl restart kiosque-bleu') ?? '', 'Tu as terminé le chapitre 5 de La Gazette');
+        s.executer('ln -sfn /srv/kiosk/versions/2.0.0 /srv/kiosk/blue');
+        contient(s.executer('sudo systemctl restart kiosk-blue') ?? '', 'Tu as terminé le chapitre 5 de La Gazette');
         expect(s.executer('curl -s localhost:3001/health')).toBe('{"status":"ok","version":"2.0.0"}');
         expect(s.termine).toBe(true);
       });
@@ -1235,7 +1235,7 @@ for (const langue of LANGUES)
         const retour = editer(s, '/etc/nginx/sites-available/gazette', (t) => t.replace('127.0.0.1:3002/', '127.0.0.1:3001/'));
         const recharge = (s.executer('sudo systemctl reload nginx') ?? '') + retour;
         contient(recharge, 'la base a été migrée sous ses pieds');
-        expect(s.executer('curl -s http://gazette.example/kiosque/')).toBe('Internal Server Error');
+        expect(s.executer('curl -s http://gazette.example/kiosk/')).toBe('Internal Server Error');
         expect(s.termine).toBe(false);
       });
     });

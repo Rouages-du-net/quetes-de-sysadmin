@@ -11,9 +11,9 @@ migration-message-de-samia =
     Un message de Samia, mardi 8 h 30 :
 
     « Le Kiosque répond une erreur depuis ce matin ! Théo a mis la 2.0.0
-    sur vert hier soir et a basculé nginx avant de partir (son mot est à
-    côté). Ce matin, il a voulu revenir sur bleu… et ça ne marche pas non
-    plus, alors il a tout remis sur vert.
+    sur green hier soir et a basculé nginx avant de partir (son mot est à
+    côté). Ce matin, il a voulu revenir sur blue… et ça ne marche pas non
+    plus, alors il a tout remis sur green.
 
     Il faut :
       - que le Kiosque fonctionne de nouveau ;
@@ -24,9 +24,9 @@ migration-message-de-samia =
 migration-mot-de-theo =
     Un mot de Théo :
 
-    « Désolé… J'ai lancé la 2.0.0 sur vert hier vers 23 h, /health n'était
+    « Désolé… J'ai lancé la 2.0.0 sur green hier vers 23 h, /health n'était
     pas content mais j'ai basculé quand même, il était tard. Ce matin, j'ai
-    essayé de remettre bleu (1.6.1) : erreur aussi. Je n'y comprends rien,
+    essayé de remettre blue (1.6.1) : erreur aussi. Je n'y comprends rien,
     la 1.6.1 marchait très bien avant-hier ! »
 migration-notes-200 =
     Kiosque 2.0.0 — notes de version
@@ -36,30 +36,30 @@ migration-notes-200 =
     Les versions 1.x ne savent pas lire une base migrée : faites une
     sauvegarde (pg_dump) avant de démarrer la 2.0.0.
 
-    Configuration : KIOSQUE_SMTP est remplacée par une adresse complète,
-      KIOSQUE_SMTP_URL=smtp://smtp.gazette.example:587
-    (dans /etc/kiosque/kiosque.env).
+    Configuration : KIOSK_SMTP est remplacée par une adresse complète,
+      KIOSK_SMTP_URL=smtp://smtp.gazette.example:587
+    (dans /etc/kiosk/kiosk.env).
 
 ## Événements
 
 migration-evenement-vert-malade =
-    Vert (2.0.0) n'est pas en bonne santé : une variable de configuration
-    lui manque. Ses notes de version (/srv/kiosque/versions/2.0.0/) disent
+    Green (2.0.0) n'est pas en bonne santé : une variable de configuration
+    lui manque. Ses notes de version (/srv/kiosk/versions/2.0.0/) disent
     sans doute ce qui a changé.
 migration-evenement-schema =
-    Bleu (1.6.1) ne sait plus lire la base : elle est au schéma 4, et la
+    Blue (1.6.1) ne sait plus lire la base : elle est au schéma 4, et la
     1.6.1 ne connaît que le 3. Qui l'a modifiée ? Le journal du service
-    vert le dit (journalctl -u kiosque-vert).
+    green le dit (journalctl -u kiosk-green).
 migration-evenement-migration-vue =
     Voilà : au démarrage, la 2.0.0 a migré la base (la colonne courriel
     renommée en email). Une migration ne revient pas en arrière toute
     seule : la 1.6.1 ne retrouvera plus sa colonne. Le retour arrière par
-    bleu est impossible ; il reste à réparer en avant : faire marcher la
+    blue est impossible ; il reste à réparer en avant : faire marcher la
     2.0.0.
 migration-evenement-retour-impossible =
-    nginx envoie le trafic à bleu (1.6.1)… qui répond 500 : la base a été
+    nginx envoie le trafic à blue (1.6.1)… qui répond 500 : la base a été
     migrée sous ses pieds. Changer de version de code ne suffit pas quand
-    les données ont changé de forme. Remets vert, et répare-le.
+    les données ont changé de forme. Remets green, et répare-le.
 migration-evenement-repare =
     Le Kiosque répond de nouveau, en 2.0.0. Mais l'autre emplacement
     tourne une version qui ne sait plus lire la base : ce n'est plus un
