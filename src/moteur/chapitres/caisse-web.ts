@@ -16,7 +16,7 @@ import { journaliser, nouveauSystemd, systemd, type DefinitionService } from '..
 import { MIME, NGINX_CONF } from '../commandes/apt';
 import { MAINTENANT } from './cooperative';
 
-export const SITE = '/etc/nginx/sites-available/cooperative';
+export const SITE = '/etc/nginx/sites-available/coop';
 export const APPLI = '/srv/caisse/app';
 export const ENV = `${APPLI}/.env`;
 export const DOMAINE = 'coop.example';
@@ -162,7 +162,7 @@ export function systemdCaisse(apresNginx?: (j: Jeu) => void, apresCaisse?: (j: J
 /** L'état du site : nginx (journal d'accès), l'appli et ses verrous. */
 export const etatCaisse = (env: string, plus: Record<string, unknown> = {}) => ({
   systemd: systemdCaisse(),
-  nginx: { charge: null, noms: ['cooperative', DOMAINE, `www.${DOMAINE}`, '192.0.2.20', 'localhost', '127.0.0.1'], journalAcces: true },
+  nginx: { charge: null, noms: ['coop', DOMAINE, `www.${DOMAINE}`, '192.0.2.20', 'localhost', '127.0.0.1'], journalAcces: true },
   applis: { '127.0.0.1:3000': APPLI_CAISSE },
   caisse: { charge: lireEnv(env), echecs: {}, bannis: [], connectes: [] } satisfies EtatCaisse,
   ...plus,
@@ -183,8 +183,8 @@ export function nginxCooperative(site: string): Record<string, Noeud> {
         'mime.types': fichier(MIME),
         'conf.d': d({}, undefined, racine),
         'modules-enabled': d({}, undefined, racine),
-        'sites-available': d({ cooperative: fichier(site) }, undefined, racine),
-        'sites-enabled': d({ cooperative: f('', { proprio: 'root', lien: SITE }) }, undefined, racine),
+        'sites-available': d({ coop: fichier(site) }, undefined, racine),
+        'sites-enabled': d({ coop: f('', { proprio: 'root', lien: SITE }) }, undefined, racine),
       },
       undefined,
       racine,

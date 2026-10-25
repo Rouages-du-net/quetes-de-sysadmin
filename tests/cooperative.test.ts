@@ -153,7 +153,7 @@ for (const langue of LANGUES)
       expect(c.termines).not.toContain('droits');
     });
 
-    const SITE = '/etc/nginx/sites-available/cooperative';
+    const SITE = '/etc/nginx/sites-available/coop';
     const AVANT_SECRET = ['depart', 'droits'];
     const nouvelleCle = (t: string) => t.replace(/PAIEMENT_CLE=.*/, 'PAIEMENT_CLE=pk_live_coop_9d27be05c4a1');
 

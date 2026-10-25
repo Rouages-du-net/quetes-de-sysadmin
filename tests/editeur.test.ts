@@ -34,7 +34,7 @@ for (const langue of LANGUES)
 
     it('fichier de root : protégé sans sudo, écrit avec sudo ; l’objectif de la quête suit', () => {
       const s = new Shell(chapitre('premier-jour'), langue);
-      const BLOQUES = '/etc/nginx/bloques.conf';
+      const BLOQUES = '/etc/nginx/blocked.conf';
       s.executer(`nano ${BLOQUES}`);
       if (fr) expect(s.edition?.message).toBe(`[ Le fichier « ${BLOQUES} » est protégé en écriture ]`);
       const ajout = s.edition!.texte + 'deny 198.51.100.77;\n';
@@ -52,7 +52,7 @@ for (const langue of LANGUES)
 
     it('Datacenter, chapitre 1 : bloquer le robot avec nano est une solution correcte', () => {
       const s = new Shell(chapitre('premier-jour'), langue);
-      s.executer('sudo nano /etc/nginx/bloques.conf');
+      s.executer('sudo nano /etc/nginx/blocked.conf');
       s.executer(machinesDansLaLangue(s.t, 'bienvenue-2026'));
       s.enregistrerEdition(s.edition!.texte + 'deny 198.51.100.77;\n');
       s.quitterEdition();
@@ -77,7 +77,7 @@ for (const langue of LANGUES)
       const dc = HISTOIRES.find((h) => h.id === 'datacenter')!;
       const c = new Console({ langue, termines: ['eveil', 'bourg', 'racine'] });
       c.connecter('datacenter', dc.chapitres[0]);
-      for (const l of ['sudo kill 4242', 'bienvenue-2026', 'echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/bloques.conf', 'sudo systemctl reload nginx', 'ps aux', 'sudo kill 4244', 'grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt'])
+      for (const l of ['sudo kill 4242', 'bienvenue-2026', 'echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf', 'sudo systemctl reload nginx', 'ps aux', 'sudo kill 4244', 'grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt'])
         c.executer(machinesDansLaLangue(c.t, l));
       c.executer('nano rapport.txt');
       c.enregistrer(c.edition!.texte + 'Coupable : 198.51.100.77\n');

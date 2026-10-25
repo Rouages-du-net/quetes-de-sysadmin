@@ -40,10 +40,10 @@ indice-sentinelle-fin =
 
 indice-colocation-cafe =
     .piste = On Debian, an nginx site = a file in /etc/nginx/sites-available, enabled by a symbolic link in sites-enabled (see note_from_rania.txt). The café's site has its own server_name and its root /var/www/cafe, without default_server.
-    .solution = sudo cp /etc/nginx/sites-available/lettres /etc/nginx/sites-available/cafe, replace lettres with cafe in it and remove default_server (sudo nano), then sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/, sudo nginx -t and sudo systemctl reload nginx
+    .solution = sudo cp /etc/nginx/sites-available/letters /etc/nginx/sites-available/cafe, replace letters with cafe in it and remove default_server (sudo nano), then sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/, sudo nginx -t and sudo systemctl reload nginx
 indice-colocation-fin =
     .piste = The calendar listens on 127.0.0.1:3000 and its pages start at /: nginx must pass /agenda/ to it, stripping that prefix (proxy_pass, and the trailing slash). And the agenda service must run, even after a reboot (man systemctl).
-    .solution = In /etc/nginx/sites-available/lettres: location /agenda/ {"{"} proxy_pass http://127.0.0.1:3000/; {"}"}; sudo nginx -t, sudo systemctl reload nginx, then sudo systemctl enable --now agenda
+    .solution = In /etc/nginx/sites-available/letters: location /agenda/ {"{"} proxy_pass http://127.0.0.1:3000/; {"}"}; sudo nginx -t, sudo systemctl reload nginx, then sudo systemctl enable --now agenda
 
 ## Chapter 5 — Works on my machine
 
@@ -58,7 +58,7 @@ indice-concert-robot =
     .solution = awk '{"{"}print $1{"}"}' /var/log/nginx/access.log | sort | uniq -c | sort -n (three addresses in 198.51.100.x dominate).
 indice-concert-fin =
     .piste = Blocking addresses will not last: limit the rate per address (limit_req_zone in the http context, limit_req in the calendar's location). A browser asks for a page and its four files at once: without a burst, real visitors are refused too.
-    .solution = At the top of /etc/nginx/sites-available/lettres: limit_req_zone $binary_remote_addr zone=agenda:10m rate=2r/s; and in location /agenda/: limit_req zone=agenda burst=10 nodelay; then sudo nginx -t and sudo systemctl reload nginx
+    .solution = At the top of /etc/nginx/sites-available/letters: limit_req_zone $binary_remote_addr zone=agenda:10m rate=2r/s; and in location /agenda/: limit_req zone=agenda burst=10 nodelay; then sudo nginx -t and sudo systemctl reload nginx
 
 ## Chapter 7 — The port
 

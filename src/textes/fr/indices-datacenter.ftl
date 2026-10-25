@@ -15,8 +15,8 @@ indice-premier-jour-surcharge =
     .piste = Le site est lent : un processus doit dévorer le processeur. Une commande liste tous les processus de la machine, avec leur %CPU.
     .solution = ps aux (regarde la colonne %CPU : php-fpm: pool catalogue est à 99 %).
 indice-premier-jour-regle =
-    .piste = Bloque le robot dans /etc/nginx/bloques.conf, au format deny ADRESSE; sans effacer les règles déjà là. Le fichier appartient à root, et une redirection >> est faite par ton shell, pas par sudo : tee sait écrire à sa place.
-    .solution = echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/bloques.conf (-a ajoute à la fin au lieu d'écraser).
+    .piste = Bloque le robot dans /etc/nginx/blocked.conf, au format deny ADRESSE; sans effacer les règles déjà là. Le fichier appartient à root, et une redirection >> est faite par ton shell, pas par sudo : tee sait écrire à sa place.
+    .solution = echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf (-a ajoute à la fin au lieu d'écraser).
 indice-premier-jour-bloque =
     .piste = nginx ne relit pas son fichier tout seul : il faut le lui demander, par le gestionnaire de services.
     .solution = sudo systemctl reload nginx
@@ -58,7 +58,7 @@ indice-incendie-nginx =
     .solution = sudo apt update, puis sudo apt install nginx (curl http://localhost montre la page de bienvenue).
 indice-incendie-fin =
     .piste = Suis le PRA (/mnt/sauvegarde/PRA.txt) : vérifie chaque archive en la listant (tar -t) avant de l'extraire, prends la plus récente qui se lit jusqu'au bout, extrais-la depuis la racine (man tar, -C). Puis nginx -t : deux sites ne peuvent pas être default_server sur le même port.
-    .solution = sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /, puis sudo rm /etc/nginx/sites-enabled/default, sudo nginx -t, sudo systemctl reload nginx, et curl http://medialibrary.example
+    .solution = sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz -C /, puis sudo rm /etc/nginx/sites-enabled/default, sudo nginx -t, sudo systemctl reload nginx, et curl http://medialibrary.example
 
 ## Chapitre 5 — Le certificat a expiré
 
@@ -69,5 +69,5 @@ indice-certificat-defi =
     .piste = Pourquoi le renouvellement automatique a-t-il échoué ? Rejoue-le sans rien casser : man certbot parle d'une répétition générale.
     .solution = sudo certbot renew --dry-run (et journalctl -u certbot pour le journal des nuits précédentes).
 indice-certificat-fin =
-    .piste = certbot dépose le défi dans le dossier de /etc/letsencrypt/renewal/medialibrary.example.conf, mais nginx sert le site depuis /var/www/mediatheque. Corrige le dossier, renouvelle pour de vrai, recharge nginx, et fais-le recharger tout seul après chaque renouvellement (cherche « hook » dans man certbot).
-    .solution = sudo certbot renew --webroot -w /var/www/mediatheque, puis sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx", puis sudo systemctl reload nginx
+    .piste = certbot dépose le défi dans le dossier de /etc/letsencrypt/renewal/medialibrary.example.conf, mais nginx sert le site depuis /var/www/medialibrary. Corrige le dossier, renouvelle pour de vrai, recharge nginx, et fais-le recharger tout seul après chaque renouvellement (cherche « hook » dans man certbot).
+    .solution = sudo certbot renew --webroot -w /var/www/medialibrary, puis sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx", puis sudo systemctl reload nginx

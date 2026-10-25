@@ -320,13 +320,13 @@ Awa, responsable d'exploitation, est en réunion ; ses notes guident.
 | Compter les erreurs 503 | `grep " 503 " … \| wc -l` (tube) |
 | Trouver qui envoie autant de demandes | `cut -d " " -f 1 … \| sort \| uniq -c \| sort -n \| tail -3` |
 | Voir la surcharge | `ps aux` |
-| Bloquer le robot dans un fichier de root | `echo "deny …;" \| sudo tee -a /etc/nginx/bloques.conf` (et pourquoi `sudo echo … >>` échoue) |
+| Bloquer le robot dans un fichier de root | `echo "deny …;" \| sudo tee -a /etc/nginx/blocked.conf` (et pourquoi `sudo echo … >>` échoue) |
 | Faire relire la configuration | `sudo systemctl reload nginx` |
 | Relancer le service bloqué | `sudo kill PID` (systemd le relance) |
 | Écrire le rapport | `… > rapport.txt`, `echo … >> rapport.txt` |
 
 Pièges prévus : `kill` avant de bloquer (le service repart à 99 %), `tee`
-sans `-a` ou `>` qui écrase `bloques.conf` (une sauvegarde `.bak` existe).
+sans `-a` ou `>` qui écrase `blocked.conf` (une sauvegarde `.bak` existe).
 
 ### Chapitre 2 — Deuxième jour (fait)
 
@@ -390,7 +390,7 @@ montées sur `/mnt/sauvegarde`, avec le plan de reprise d'Awa (`PRA.txt`).
 | Se reconnecter | `ssh datacenter` refuse (« REMOTE HOST IDENTIFICATION HAS CHANGED! ») ; comparer l'empreinte annoncée, `ssh-keygen -R datacenter.internal` (le nom écrit dans `known_hosts`), puis `yes` |
 | Installer le serveur web | `sudo apt update`, puis `sudo apt install nginx` (qui le démarre et l'active) ; `curl http://localhost` |
 | Vérifier la sauvegarde | `tar -tzf` : l'archive de cette nuit est coupée (« Fin de fichier inattendue ») ; `ls -l` montre sa taille |
-| Restaurer | `sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /` |
+| Restaurer | `sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz -C /` |
 | Recharger sans casser | `sudo nginx -t` (« a duplicate default server »), retirer `sites-enabled/default`, `sudo nginx -t`, `sudo systemctl reload nginx` |
 | Tester | `curl http://medialibrary.example` |
 
@@ -426,7 +426,7 @@ juin 2025, Let's Encrypt n'envoie plus de courriel avant l'expiration.
 | Voir comme un visiteur | `curl https://medialibrary.example` (erreur 60), `openssl s_client -connect … \| openssl x509 -noout -dates` |
 | Le certificat sur le disque | `sudo certbot certificates`, `openssl x509 -in … -noout -dates -subject -ext subjectAltName` |
 | Pourquoi pas renouvelé | `systemctl --failed`, `journalctl -u certbot`, `sudo certbot renew --dry-run` (le défi en 404) |
-| Le bon dossier | `cat /etc/letsencrypt/renewal/medialibrary.example.conf` ; `sudo certbot renew --webroot -w /var/www/mediatheque` |
+| Le bon dossier | `cat /etc/letsencrypt/renewal/medialibrary.example.conf` ; `sudo certbot renew --webroot -w /var/www/medialibrary` |
 | Que nginx serve le nouveau | `sudo systemctl reload nginx` (nginx lit le certificat au chargement) |
 | Que ça tienne | `sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx"` |
 
@@ -621,7 +621,7 @@ s'afficher sous `http://letters.example/agenda/`.
 | Étape | Commande apprise |
 |---|---|
 | Voir comment un site est activé | `ls -l /etc/nginx/sites-enabled` (un lien symbolique) |
-| Créer le site du café | `sudo cp sites-available/lettres sites-available/cafe`, `sudo nano …` (server_name, root, sans default_server) |
+| Créer le site du café | `sudo cp sites-available/letters sites-available/cafe`, `sudo nano …` (server_name, root, sans default_server) |
 | L'activer | `sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/` |
 | Tester avant le DNS | `curl -H "Host: cafe.example" http://127.0.0.1` |
 | Publier l'agenda | `location /agenda/ { proxy_pass http://127.0.0.1:3000/; }`, `sudo nginx -t`, `sudo systemctl reload nginx` |
@@ -1585,7 +1585,7 @@ sait que demander son adresse en DHCP, mais doit garder `10.10.30.10`.
 | Étape | Commande apprise |
 |---|---|
 | Voir | `journalctl -u dnsmasq`, `/var/lib/misc/dnsmasq.leases` |
-| Configurer | `/etc/dnsmasq.d/ruche` : `interface=eth1.10,…` (ou `eth1*`), une `dhcp-range` par VLAN, `dhcp-host=MAC,imprimante,10.10.30.10` |
+| Configurer | `/etc/dnsmasq.d/hive` : `interface=eth1.10,…` (ou `eth1*`), une `dhcp-range` par VLAN, `dhcp-host=MAC,imprimante,10.10.30.10` |
 | Appliquer | `dnsmasq --test`, `systemctl restart dnsmasq`, `ping imprimante` |
 
 Objectif vérifié sur l'état : chaque appareil en DHCP a une adresse dans

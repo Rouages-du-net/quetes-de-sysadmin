@@ -26,7 +26,7 @@ const ROBOT = '198.51.100.77';
 // Les sauvegardes de chaque nuit (0 h 30) ; celle de cette nuit a été coupée
 // par l'incendie (0 h 47).
 const ARCHIVES = ['2026-10-21', '2026-10-22', '2026-10-23'];
-const archive = (jour: string) => `${SAUVEGARDES}/mediatheque-${jour}.tar.gz`;
+const archive = (jour: string) => `${SAUVEGARDES}/medialibrary-${jour}.tar.gz`;
 
 const comptes = (): Comptes => ({
   utilisateurs: {
@@ -50,10 +50,10 @@ const CONF_SITE = `server {
     listen [::]:80 default_server;
     server_name ${SITE} www.${SITE};
 
-    root /var/www/mediatheque;
+    root /var/www/medialibrary;
     index index.html;
 
-    include /etc/nginx/bloques.conf;
+    include /etc/nginx/blocked.conf;
 
     location / {
         try_files $uri $uri/ =404;
@@ -71,11 +71,11 @@ const accueil = (t: Traduire, version: number) => t(`incendie-site-index-${versi
 function contenuArchive(t: Traduire, version: number): Record<string, Fichier> {
   const fichier = (texte: string): Fichier => ({ type: 'fichier', contenu: texte, lignes: true, proprio: 'root', groupe: 'root' });
   return {
-    'etc/nginx/bloques.conf': fichier(bloques(t)),
-    'etc/nginx/sites-available/mediatheque': fichier(CONF_SITE),
-    'etc/nginx/sites-enabled/mediatheque': fichier(CONF_SITE),
-    'var/www/mediatheque/index.html': fichier(accueil(t, version)),
-    'var/www/mediatheque/horaires.html': fichier(t('incendie-site-horaires')),
+    'etc/nginx/blocked.conf': fichier(bloques(t)),
+    'etc/nginx/sites-available/medialibrary': fichier(CONF_SITE),
+    'etc/nginx/sites-enabled/medialibrary': fichier(CONF_SITE),
+    'var/www/medialibrary/index.html': fichier(accueil(t, version)),
+    'var/www/medialibrary/horaires.html': fichier(t('incendie-site-horaires')),
   };
 }
 
@@ -175,10 +175,10 @@ export const incendie: Chapitre = {
       mnt: lieu({
         sauvegarde: lieu({
           'PRA.txt': f(t('incendie-pra'), { proprio: 'root' }),
-          [`mediatheque-${ARCHIVES[0]}.tar.gz`]: sauvegarde(t, 1, 48_213),
-          [`mediatheque-${ARCHIVES[1]}.tar.gz`]: sauvegarde(t, 2, 48_390),
+          [`medialibrary-${ARCHIVES[0]}.tar.gz`]: sauvegarde(t, 1, 48_213),
+          [`medialibrary-${ARCHIVES[1]}.tar.gz`]: sauvegarde(t, 2, 48_390),
           // Coupée après les trois fichiers de configuration.
-          [`mediatheque-${ARCHIVES[2]}.tar.gz`]: sauvegarde(t, 3, 20_480, 3),
+          [`medialibrary-${ARCHIVES[2]}.tar.gz`]: sauvegarde(t, 3, 20_480, 3),
         }),
       }),
       usr: lieu({ sbin: lieu({}), bin: lieu({}) }),

@@ -33,7 +33,7 @@ indice-droits-fin =
 
 indice-secret-fermee =
     .piste = Ask the site for /.env yourself with curl: nginx serves the whole app directory, hidden files included (.env, but also .git). In the site's configuration, a location with a regular expression can refuse any path containing "/." (the documentation of location and deny).
-    .solution = sudo nano /etc/nginx/sites-available/cooperative: add location ~ /\. {"{"} deny all; {"}"} in the server block, then sudo nginx -t and sudo systemctl reload nginx
+    .solution = sudo nano /etc/nginx/sites-available/coop: add location ~ /\. {"{"} deny all; {"}"} in the server block, then sudo nginx -t and sudo systemctl reload nginx
 indice-secret-attaquant =
     .piste = Who took the key? nginx's access log (/var/log/nginx/access.log) keeps every request for /.env, with the address and the 200 response. One nginx directive refuses an address.
     .solution = sudo grep '\.env' /var/log/nginx/access.log (it's 203.0.113.77), then deny 203.0.113.77; in the site's server block, and sudo systemctl reload nginx
@@ -48,7 +48,7 @@ indice-secret-fin =
 
 indice-proxy-fin =
     .piste = Compare the two logs: nginx sees the robot (198.51.100.66), the till only sees 127.0.0.1. nginx must pass the client's address in a header (proxy_set_header), and the app must believe that header only when it comes from nginx (TRUST_PROXY, Express guide "behind proxies"): not true, the robot writes its own X-Forwarded-For.
-    .solution = In the /caisse/ location of /etc/nginx/sites-available/cooperative: proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; — in /srv/caisse/app/.env: TRUST_PROXY=loopback — then sudo systemctl reload nginx and sudo systemctl restart caisse
+    .solution = In the /caisse/ location of /etc/nginx/sites-available/coop: proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; — in /srv/caisse/app/.env: TRUST_PROXY=loopback — then sudo systemctl reload nginx and sudo systemctl restart caisse
 
 ## Chapter 5 — Updates
 

@@ -14,8 +14,8 @@ indice-vlan-fin =
 ## Chapter 2 — DHCP
 
 indice-dhcp-fin =
-    .piste = dnsmasq still serves the old network (/etc/dnsmasq.d/ruche): it needs one range per VLAN (dhcp-range), to listen on the VLAN interfaces and never on eth0 (interface=), and a reservation for the printer based on its MAC (dhcp-host). man dnsmasq; dnsmasq --test to check.
-    .solution = sudo nano /etc/dnsmasq.d/ruche: interface=eth1.10,eth1.20,eth1.30; dhcp-range=10.10.10.100,10.10.10.200,12h (same for 10.10.20.x and 10.10.30.x); dhcp-host=00:00:5e:00:53:30,imprimante,10.10.30.10. Then sudo dnsmasq --test and sudo systemctl restart dnsmasq.
+    .piste = dnsmasq still serves the old network (/etc/dnsmasq.d/hive): it needs one range per VLAN (dhcp-range), to listen on the VLAN interfaces and never on eth0 (interface=), and a reservation for the printer based on its MAC (dhcp-host). man dnsmasq; dnsmasq --test to check.
+    .solution = sudo nano /etc/dnsmasq.d/hive: interface=eth1.10,eth1.20,eth1.30; dhcp-range=10.10.10.100,10.10.10.200,12h (same for 10.10.20.x and 10.10.30.x); dhcp-host=00:00:5e:00:53:30,imprimante,10.10.30.10. Then sudo dnsmasq --test and sudo systemctl restart dnsmasq.
 
 ## Chapter 3 — The Zones
 

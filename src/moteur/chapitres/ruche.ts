@@ -270,7 +270,7 @@ export function mondeRuche(o: {
           hostname: fichier('ruche'),
           network: d({ interfaces: fichier(o.interfaces), 'interfaces.d': d({}, undefined, racine) }, undefined, racine),
           'dnsmasq.conf': fichier('# Configuration file for dnsmasq.\n#\n# See /etc/dnsmasq.d for the local configuration.'),
-          'dnsmasq.d': d({ ruche: fichier(o.dnsmasq) }, undefined, racine),
+          'dnsmasq.d': d({ hive: fichier(o.dnsmasq) }, undefined, racine),
           'nftables.conf': f(o.nftables ?? NFTABLES_DEBIAN, { lignes: true, proprio: 'root', mode: 'rwxr-xr-x' }),
           'sysctl.conf': fichier(SYSCTL_CONF),
           ...o.etc,

@@ -106,7 +106,7 @@ for (const langue of LANGUES)
       expect(c.termines).not.toContain('vlan');
     });
 
-    const RUCHE = '/etc/dnsmasq.d/ruche';
+    const RUCHE = '/etc/dnsmasq.d/hive';
     const PLAGES = 'dhcp-range=10.10.10.100,10.10.10.200,12h\ndhcp-range=10.10.20.100,10.10.20.250,2h\ndhcp-range=10.10.30.100,10.10.30.200,24h\n';
     const RESERVATION = 'dhcp-host=00:00:5e:00:53:30,imprimante,10.10.30.10\n';
 

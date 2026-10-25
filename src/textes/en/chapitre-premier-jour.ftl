@@ -71,10 +71,10 @@ premier-jour-notes-awa =
     command again, with sudo in front. And history shows everything you typed.
 
     The web server (nginx) blocks the addresses listed in
-    /etc/nginx/bloques.conf, in the format: deny ADDRESS;
+    /etc/nginx/blocked.conf, in the format: deny ADDRESS;
     This file belongs to root. After changing it, you must ask
     nginx to reload it: sudo systemctl reload nginx
-# Comment at the top of /etc/nginx/bloques.conf (after "#")
+# Comment at the top of /etc/nginx/blocked.conf (after "#")
 premier-jour-bloques-commentaire = Addresses blocked by nginx (one rule per line)
 # Service description, shown by "systemctl status catalogue"
 premier-jour-service-catalogue = Media library online catalogue (php-fpm)
@@ -84,7 +84,7 @@ premier-jour-service-catalogue = Media library online catalogue (php-fpm)
 premier-jour-relance-calme = systemd restarts the catalogue service: new process { $pid }. With the robot blocked, it stays calm.
 premier-jour-relance-robot = systemd immediately restarts the catalogue service: new process { $pid }… and the robot starts again. It's already at 99%!
 
-## Events ({ $robot }: the robot's IP address; { $bloques }: path of bloques.conf)
+## Events ({ $robot }: the robot's IP address; { $bloques }: path of blocked.conf)
 
 # Nudges, when the player heads down a path that is too long (without giving the command).
 premier-jour-evenement-tout-lire =
@@ -118,7 +118,7 @@ premier-jour-evenement-robot =
 premier-jour-evenement-surcharge =
     Process 4242 (php-fpm: pool catalogue) is using 99% of the CPU.
     You could stop it with kill… but if the robot keeps going, it will fall
-    over again right away. First block the robot in /etc/nginx/bloques.conf.
+    over again right away. First block the robot in /etc/nginx/blocked.conf.
 
     This file belongs to root, and  sudo echo … >> file  doesn't work:
     the >> redirection is done by YOUR shell, not by sudo. The classic
@@ -126,10 +126,10 @@ premier-jour-evenement-surcharge =
 
       echo "deny { $robot };" | sudo tee -a { $bloques }
 premier-jour-evenement-ecrase =
-    Oops! The old rules in bloques.conf are gone: the file was
+    Oops! The old rules in blocked.conf are gone: the file was
     OVERWRITTEN (> or tee without -a) instead of appended to (>> or tee -a). Don't
     panic: a backup copy exists. Restore it with
-    sudo cp /etc/nginx/bloques.conf.bak { $bloques }, then try again with -a.
+    sudo cp /etc/nginx/blocked.conf.bak { $bloques }, then try again with -a.
 premier-jour-evenement-regle = The rule is written. But nginx doesn't reread its file by itself: sudo systemctl reload nginx
 premier-jour-evenement-bloque =
     nginx has reloaded its configuration: { $robot } now gets "403 Forbidden"

@@ -199,7 +199,7 @@ for (const langue of LANGUES)
           'kill 4242',
           'sudo kill 4242',
           'bienvenue-2026',
-          `echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/bloques.conf`,
+          `echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf`,
           'sudo systemctl reload nginx',
           'ps aux',
           'sudo kill 4244',
@@ -337,9 +337,9 @@ for (const langue of LANGUES)
           'y',
           'curl http://localhost',
           // Fausse piste : l'archive de cette nuit a été coupée par le feu.
-          'tar -tzf /mnt/sauvegarde/mediatheque-2026-10-23.tar.gz',
-          'tar -tzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
-          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /',
+          'tar -tzf /mnt/sauvegarde/medialibrary-2026-10-23.tar.gz',
+          'tar -tzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz',
+          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz -C /',
           // Fausse piste : deux sites « default_server » sur le port 80.
           'sudo nginx -t',
           'sudo systemctl reload nginx',
@@ -350,7 +350,7 @@ for (const langue of LANGUES)
         ]);
         expect(tout).toContain('Error: Unable to locate package nginx');
         expect(tout).toContain('Welcome to nginx!');
-        expect(tout).toContain('a duplicate default server for 0.0.0.0:80 in /etc/nginx/sites-enabled/mediatheque:2');
+        expect(tout).toContain('a duplicate default server for 0.0.0.0:80 in /etc/nginx/sites-enabled/medialibrary:2');
         expect(tout).toContain('Job for nginx.service failed');
         expect(tout).toContain('test is successful');
         contient(tout, 'Une machine neuve ne connaît encore aucun paquet');
@@ -364,7 +364,7 @@ for (const langue of LANGUES)
       it('Le Datacenter, chapitre 4 — restaurer d’abord, installer ensuite, garder le site Debian', () => {
         const { s, tout } = jouer('incendie', [
           'cd /',
-          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
+          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz',
           'bienvenue-2026',
           'sudo apt update',
           // nginx ne démarre pas : deux serveurs par défaut.
@@ -375,7 +375,7 @@ for (const langue of LANGUES)
         expect(tout).toContain('failed');
         expect(s.termine).toBe(false);
         // Autre solution : la médiathèque n'est plus le site par défaut ; on la joint par son nom.
-        const conf = '/etc/nginx/sites-enabled/mediatheque';
+        const conf = '/etc/nginx/sites-enabled/medialibrary';
         s.executer(`sudo nano ${conf}`);
         s.enregistrerEdition(s.edition!.texte.replaceAll(' default_server', ''));
         s.quitterEdition();
@@ -391,11 +391,11 @@ for (const langue of LANGUES)
           'bienvenue-2026',
           'sudo apt install -y nginx',
           'sudo rm /etc/nginx/sites-enabled/default',
-          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
-          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-23.tar.gz -C /',
+          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz',
+          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-23.tar.gz -C /',
           'sudo systemctl reload nginx',
           'curl -I medialibrary.example',
-          'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-21.tar.gz -C /',
+          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-21.tar.gz -C /',
           'sudo systemctl reload nginx',
         ]);
         contient(tout, 'extraite là où tu étais');
@@ -403,7 +403,7 @@ for (const langue of LANGUES)
         expect(tout).toContain('HTTP/1.1 404 Not Found');
         contient(tout, 'avec la page de mercredi');
         expect(s.termine).toBe(false);
-        s.executer(L('sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /'));
+        s.executer(L('sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz -C /'));
         expect(s.termine).toBe(true);
       });
 
@@ -416,8 +416,8 @@ for (const langue of LANGUES)
           'sudo certbot renew --dry-run',
           'sudo cat /etc/letsencrypt/renewal/medialibrary.example.conf',
           // Fausse piste : --dry-run n'enregistre rien.
-          'sudo certbot renew --dry-run --webroot -w /var/www/mediatheque',
-          'sudo certbot renew --webroot -w /var/www/mediatheque',
+          'sudo certbot renew --dry-run --webroot -w /var/www/medialibrary',
+          'sudo certbot renew --webroot -w /var/www/medialibrary',
           // Fausse piste : renouvelé sur le disque, mais nginx sert encore l'ancien.
           'curl https://medialibrary.example',
           'sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx"',
@@ -444,7 +444,7 @@ for (const langue of LANGUES)
           'sudo nano /etc/letsencrypt/renewal/medialibrary.example.conf',
         ]);
         expect(tout).toContain('Some challenges have failed');
-        s.enregistrerEdition(s.edition!.texte.replaceAll('/var/www/html', '/var/www/mediatheque'));
+        s.enregistrerEdition(s.edition!.texte.replaceAll('/var/www/html', '/var/www/medialibrary'));
         s.quitterEdition();
         const suite = [
           'sudo certbot renew --dry-run',
@@ -589,7 +589,7 @@ for (const langue of LANGUES)
         const { s, tout } = jouer('colocation', [
           'curl http://cafe.example',
           'cd /etc/nginx',
-          'sudo cp sites-available/lettres sites-available/cafe',
+          'sudo cp sites-available/letters sites-available/cafe',
           'fourmis-2026',
           'sudo ln -s sites-available/cafe sites-enabled/',
           'sudo nginx -t',
@@ -608,7 +608,7 @@ for (const langue of LANGUES)
         modifier(s, '/etc/nginx/sites-available/cafe', /lettres|letters/g, 'cafe');
         s.executer('sudo systemctl reload nginx');
         if (reference) expect(s.executer('curl -H "Host: cafe.example" http://127.0.0.1')).toContain('Le café associatif');
-        modifier(s, '/etc/nginx/sites-available/lettres', '    location / {', '    location /agenda/ {\n        proxy_pass http://127.0.0.1:3000;\n    }\n\n    location / {');
+        modifier(s, '/etc/nginx/sites-available/letters', '    location / {', '    location /agenda/ {\n        proxy_pass http://127.0.0.1:3000;\n    }\n\n    location / {');
         const suite = ['sudo nginx -t', 'sudo systemctl reload nginx', 'curl -I http://letters.example/agenda/', 'sudo tail -1 /var/log/nginx/error.log', 'sudo systemctl enable --now agenda', 'curl http://letters.example/agenda/']
           .map((l) => s.executer(l) ?? '')
           .join('\n');
@@ -617,7 +617,7 @@ for (const langue of LANGUES)
         expect(suite).toContain('Cannot GET /agenda/');
         contient(suite, 'la barre finale');
         expect(s.termine).toBe(false);
-        modifier(s, '/etc/nginx/sites-available/lettres', 'proxy_pass http://127.0.0.1:3000;', 'proxy_pass http://127.0.0.1:3000/;');
+        modifier(s, '/etc/nginx/sites-available/letters', 'proxy_pass http://127.0.0.1:3000;', 'proxy_pass http://127.0.0.1:3000/;');
         s.executer('sudo systemctl reload nginx');
         if (reference) expect(s.executer('curl http://letters.example/agenda/ateliers')).toContain('Les ateliers');
         expect(s.termine).toBe(true);
@@ -629,7 +629,7 @@ for (const langue of LANGUES)
         s.enregistrerEdition('server {\n    listen 80;\n    server_name cafe.example;\n    root /var/www/cafe;\n}');
         s.quitterEdition();
         s.executer('sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/cafe');
-        modifier(s, '/etc/nginx/sites-available/lettres', '    location / {', '    location /agenda/ {\n        proxy_pass http://localhost:3000/;\n    }\n    location / {');
+        modifier(s, '/etc/nginx/sites-available/letters', '    location / {', '    location /agenda/ {\n        proxy_pass http://localhost:3000/;\n    }\n    location / {');
         s.executer('sudo systemctl reload nginx');
         expect(s.termine).toBe(false);
         s.executer('sudo systemctl enable agenda');
@@ -683,7 +683,7 @@ for (const langue of LANGUES)
     });
 
     describe('Les Lettres du quartier, chapitre 6 — Le soir du concert (awk, limit_req)', () => {
-      const SITE = '/etc/nginx/sites-available/lettres';
+      const SITE = '/etc/nginx/sites-available/letters';
       const modifier = (s: Shell, fichier: string, change: (texte: string) => string) => {
         s.executer(`sudo nano ${fichier}`);
         s.enregistrerEdition(change(s.edition!.texte));
@@ -722,7 +722,7 @@ for (const langue of LANGUES)
       it('autre solution : la zone dans conf.d, la limite sur tout le site, 1 requête par seconde', () => {
         const { s } = jouer('concert', ['sudo id', 'fourmis-2026']);
         s.executer('echo "limit_req_zone $binary_remote_addr zone=lettres:10m rate=1r/s;" | sudo tee /etc/nginx/conf.d/limites.conf');
-        modifier(s, SITE, (t) => t.replace('    root /var/www/lettres;', '    limit_req zone=lettres burst=20 nodelay;\n    root /var/www/lettres;'));
+        modifier(s, SITE, (t) => t.replace('    root /var/www/letters;', '    limit_req zone=lettres burst=20 nodelay;\n    root /var/www/letters;'));
         s.executer('sudo systemctl reload nginx');
         expect(s.termine).toBe(true);
       });

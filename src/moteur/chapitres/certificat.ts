@@ -66,10 +66,10 @@ const CONF_SITE = `server {
     listen [::]:80 default_server;
     server_name ${NOMS.join(' ')};
 
-    root /var/www/mediatheque;
+    root /var/www/medialibrary;
     index index.html;
 
-    include /etc/nginx/bloques.conf;
+    include /etc/nginx/blocked.conf;
 }
 
 server {
@@ -80,10 +80,10 @@ server {
     ssl_certificate /etc/letsencrypt/live/${SITE}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${SITE}/privkey.pem;
 
-    root /var/www/mediatheque;
+    root /var/www/medialibrary;
     index index.html;
 
-    include /etc/nginx/bloques.conf;
+    include /etc/nginx/blocked.conf;
 }`;
 
 const bloques = (t: Traduire) => `# ${t('premier-jour-bloques-commentaire')}
@@ -273,11 +273,11 @@ export const certificat: Chapitre = {
         nginx: lieu({
           'nginx.conf': fichier(NGINX_CONF),
           'mime.types': fichier(MIME),
-          'bloques.conf': fichier(bloques(t)),
+          'blocked.conf': fichier(bloques(t)),
           'conf.d': lieu({}),
           'modules-enabled': lieu({}),
-          'sites-available': lieu({ default: fichier(SITE_PAR_DEFAUT), mediatheque: fichier(CONF_SITE) }),
-          'sites-enabled': lieu({ mediatheque: fichier(CONF_SITE) }),
+          'sites-available': lieu({ default: fichier(SITE_PAR_DEFAUT), medialibrary: fichier(CONF_SITE) }),
+          'sites-enabled': lieu({ medialibrary: fichier(CONF_SITE) }),
         }),
         letsencrypt: lieu({
           live: lieu(
@@ -308,7 +308,7 @@ export const certificat: Chapitre = {
       var: lieu({
         www: lieu({
           html: lieu({ 'index.nginx-debian.html': fichier(BIENVENUE) }),
-          mediatheque: lieu({ 'index.html': fichier(t('certificat-site-index')) }),
+          medialibrary: lieu({ 'index.html': fichier(t('certificat-site-index')) }),
         }),
         log: lieu({
           letsencrypt: lieu({ 'letsencrypt.log': fichier(JOURNAL_CERTBOT) }, { proprio: 'root', mode: 'rwx------' }),

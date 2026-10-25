@@ -34,7 +34,7 @@ indice-droits-fin =
 
 indice-secret-fermee =
     .piste = Demande toi-même /.env au site avec curl : nginx sert tout le dossier de l'appli, fichiers cachés compris (.env, mais aussi .git). Dans la configuration du site, une location avec une expression régulière peut refuser tout chemin qui contient « /. » (la documentation de location et de deny).
-    .solution = sudo nano /etc/nginx/sites-available/cooperative : ajoute location ~ /\. {"{"} deny all; {"}"} dans le bloc server, puis sudo nginx -t et sudo systemctl reload nginx
+    .solution = sudo nano /etc/nginx/sites-available/coop : ajoute location ~ /\. {"{"} deny all; {"}"} dans le bloc server, puis sudo nginx -t et sudo systemctl reload nginx
 indice-secret-attaquant =
     .piste = Qui a pris la clé ? Le journal d'accès de nginx (/var/log/nginx/access.log) garde chaque requête vers /.env, avec l'adresse et la réponse 200. Une directive de nginx refuse une adresse.
     .solution = sudo grep '\.env' /var/log/nginx/access.log (c'est 203.0.113.77), puis deny 203.0.113.77; dans le bloc server du site, et sudo systemctl reload nginx
@@ -49,7 +49,7 @@ indice-secret-fin =
 
 indice-proxy-fin =
     .piste = Compare les deux journaux : nginx voit le robot (198.51.100.66), la caisse ne voit que 127.0.0.1. nginx doit transmettre l'adresse du client dans un en-tête (proxy_set_header), et l'appli ne doit croire cet en-tête que s'il vient de nginx (TRUST_PROXY, guide d'Express « behind proxies ») : pas true, le robot écrit son propre X-Forwarded-For.
-    .solution = Dans la location /caisse/ de /etc/nginx/sites-available/cooperative : proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; — dans /srv/caisse/app/.env : TRUST_PROXY=loopback — puis sudo systemctl reload nginx et sudo systemctl restart caisse
+    .solution = Dans la location /caisse/ de /etc/nginx/sites-available/coop : proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; — dans /srv/caisse/app/.env : TRUST_PROXY=loopback — puis sudo systemctl reload nginx et sudo systemctl restart caisse
 
 ## Chapitre 5 — Les mises à jour
 

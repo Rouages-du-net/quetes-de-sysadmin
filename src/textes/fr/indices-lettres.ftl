@@ -40,10 +40,10 @@ indice-sentinelle-fin =
 
 indice-colocation-cafe =
     .piste = Sur Debian, un site nginx = un fichier dans /etc/nginx/sites-available, activé par un lien symbolique dans sites-enabled (voir note_de_rania.txt). Le site du café a son propre server_name et sa racine /var/www/cafe, sans default_server.
-    .solution = sudo cp /etc/nginx/sites-available/lettres /etc/nginx/sites-available/cafe, y remplacer lettres par cafe et retirer default_server (sudo nano), puis sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/, sudo nginx -t et sudo systemctl reload nginx
+    .solution = sudo cp /etc/nginx/sites-available/letters /etc/nginx/sites-available/cafe, y remplacer letters par cafe et retirer default_server (sudo nano), puis sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/, sudo nginx -t et sudo systemctl reload nginx
 indice-colocation-fin =
     .piste = L'agenda écoute sur 127.0.0.1:3000 et ses pages commencent à / : nginx doit lui passer /agenda/ en retirant ce préfixe (proxy_pass, et la barre finale). Et le service agenda doit tourner, même après un redémarrage (man systemctl).
-    .solution = Dans /etc/nginx/sites-available/lettres : location /agenda/ {"{"} proxy_pass http://127.0.0.1:3000/; {"}"} ; sudo nginx -t, sudo systemctl reload nginx, puis sudo systemctl enable --now agenda
+    .solution = Dans /etc/nginx/sites-available/letters : location /agenda/ {"{"} proxy_pass http://127.0.0.1:3000/; {"}"} ; sudo nginx -t, sudo systemctl reload nginx, puis sudo systemctl enable --now agenda
 
 ## Chapitre 5 — Ça marche chez moi
 
@@ -58,7 +58,7 @@ indice-concert-robot =
     .solution = awk '{"{"}print $1{"}"}' /var/log/nginx/access.log | sort | uniq -c | sort -n (trois adresses en 198.51.100.x dominent).
 indice-concert-fin =
     .piste = Bloquer les adresses ne tiendra pas : il faut limiter le débit par adresse (limit_req_zone dans le contexte http, limit_req dans la location de l'agenda). Un navigateur demande une page et ses quatre fichiers d'un coup : sans rafale (burst), les vrais visiteurs sont refusés aussi.
-    .solution = En tête de /etc/nginx/sites-available/lettres : limit_req_zone $binary_remote_addr zone=agenda:10m rate=2r/s; et dans location /agenda/ : limit_req zone=agenda burst=10 nodelay; puis sudo nginx -t et sudo systemctl reload nginx
+    .solution = En tête de /etc/nginx/sites-available/letters : limit_req_zone $binary_remote_addr zone=agenda:10m rate=2r/s; et dans location /agenda/ : limit_req zone=agenda burst=10 nodelay; puis sudo nginx -t et sudo systemctl reload nginx
 
 ## Chapitre 7 — Le port
 

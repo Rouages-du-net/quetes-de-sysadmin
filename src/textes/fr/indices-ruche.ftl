@@ -15,8 +15,8 @@ indice-vlan-fin =
 ## Chapitre 2 — Le DHCP
 
 indice-dhcp-fin =
-    .piste = dnsmasq sert encore l'ancien réseau (/etc/dnsmasq.d/ruche) : il lui faut une plage par VLAN (dhcp-range), écouter les interfaces VLAN et jamais eth0 (interface=), et une réservation pour l'imprimante d'après sa MAC (dhcp-host). man dnsmasq ; dnsmasq --test pour vérifier.
-    .solution = sudo nano /etc/dnsmasq.d/ruche : interface=eth1.10,eth1.20,eth1.30 ; dhcp-range=10.10.10.100,10.10.10.200,12h (idem 10.10.20.x et 10.10.30.x) ; dhcp-host=00:00:5e:00:53:30,imprimante,10.10.30.10. Puis sudo dnsmasq --test et sudo systemctl restart dnsmasq.
+    .piste = dnsmasq sert encore l'ancien réseau (/etc/dnsmasq.d/hive) : il lui faut une plage par VLAN (dhcp-range), écouter les interfaces VLAN et jamais eth0 (interface=), et une réservation pour l'imprimante d'après sa MAC (dhcp-host). man dnsmasq ; dnsmasq --test pour vérifier.
+    .solution = sudo nano /etc/dnsmasq.d/hive : interface=eth1.10,eth1.20,eth1.30 ; dhcp-range=10.10.10.100,10.10.10.200,12h (idem 10.10.20.x et 10.10.30.x) ; dhcp-host=00:00:5e:00:53:30,imprimante,10.10.30.10. Puis sudo dnsmasq --test et sudo systemctl restart dnsmasq.
 
 ## Chapitre 3 — Les zones
 

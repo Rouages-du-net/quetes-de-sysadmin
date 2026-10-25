@@ -48,7 +48,7 @@ const CONF_LETTRES = `server {
     listen [::]:80 default_server;
     server_name ${LETTRES} www.${LETTRES};
 
-    root /var/www/lettres;
+    root /var/www/letters;
     index index.html;
 
     location / {
@@ -161,9 +161,9 @@ export const colocation: Chapitre = {
           'mime.types': fichier(MIME),
           'conf.d': lieu({}),
           'modules-enabled': lieu({}),
-          'sites-available': lieu({ default: fichier(SITE_PAR_DEFAUT), lettres: fichier(CONF_LETTRES) }),
+          'sites-available': lieu({ default: fichier(SITE_PAR_DEFAUT), letters: fichier(CONF_LETTRES) }),
           // Comme sur Debian : un site activé est un lien vers sites-available.
-          'sites-enabled': lieu({ lettres: f('', { proprio: 'root', lien: '/etc/nginx/sites-available/lettres' }) }),
+          'sites-enabled': lieu({ letters: f('', { proprio: 'root', lien: '/etc/nginx/sites-available/letters' }) }),
         }),
       }),
       home: lieu({
@@ -183,7 +183,7 @@ export const colocation: Chapitre = {
       var: lieu({
         www: lieu({
           html: lieu({ 'index.nginx-debian.html': fichier(BIENVENUE) }),
-          lettres: lieu({ 'index.html': fichier(t('colocation-site-lettres')) }),
+          letters: lieu({ 'index.html': fichier(t('colocation-site-lettres')) }),
           // Rania a déjà déposé les pages du café.
           cafe: lieu({ 'index.html': fichier(t('colocation-site-cafe'), { proprio: 'rania' }) }, { proprio: 'rania' }),
         }),
