@@ -25,7 +25,7 @@ certificat-courriel-awa =
     2. renouveler le certificat, pour que le site soit de nouveau sûr ;
     3. t'assurer que ça marchera TOUT SEUL la prochaine fois, jusqu'au bout.
 
-    Pour vérifier ce que voit un navigateur : curl https://mediatheque.example
+    Pour vérifier ce que voit un navigateur : curl https://medialibrary.example
     Le reste est dans man certbot et man openssl. Le mot de passe pour sudo
     n'a pas changé.
 certificat-message-de-lea =
@@ -34,7 +34,7 @@ certificat-message-de-lea =
     Ce matin, en ouvrant le site de la médiathèque, Firefox affiche :
 
       Attention : risque probable de sécurité
-      Le certificat de mediatheque.example a expiré le 21/01/2027.
+      Le certificat de medialibrary.example a expiré le 21/01/2027.
       Code d'erreur : SEC_ERROR_EXPIRED_CERTIFICATE
 
     Sur le téléphone, Chrome dit « Votre connexion n'est pas privée »
@@ -83,12 +83,12 @@ certificat-evenement-expire =
 certificat-evenement-defi =
     Let's Encrypt ne donne un certificat qu'à qui prouve qu'il tient le site :
     certbot dépose un petit fichier (le « défi ») dans un dossier, puis
-    l'autorité vient le chercher sur http://mediatheque.example/.well-known/acme-challenge/.
+    l'autorité vient le chercher sur http://medialibrary.example/.well-known/acme-challenge/.
     Ici, elle reçoit une 404 : le fichier n'est pas là où nginx sert ce site.
 
     Dans quel dossier certbot dépose-t-il le défi (regarde toutes les lignes
-    de /etc/letsencrypt/renewal/mediatheque.example.conf) ? Et quel dossier
-    nginx sert-il pour mediatheque.example ? man certbot dit comment changer
+    de /etc/letsencrypt/renewal/medialibrary.example.conf) ? Et quel dossier
+    nginx sert-il pour medialibrary.example ? man certbot dit comment changer
     de dossier.
 certificat-evenement-pas-recharge =
     Le nouveau certificat est sur le disque… mais curl voit encore l'ancien.
@@ -102,7 +102,7 @@ certificat-evenement-sans-hook =
     ce qu'il expire, comme aujourd'hui. certbot peut lancer une commande
     après chaque renouvellement réussi : cherche « hook » dans man certbot.
 certificat-evenement-fin =
-    curl https://mediatheque.example répond sans alerte : le cadenas est
+    curl https://medialibrary.example répond sans alerte : le cadenas est
     revenu. Et la prochaine fois, certbot renouvellera tout seul, puis
     rechargera nginx tout seul.
 

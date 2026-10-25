@@ -175,7 +175,7 @@ function avecMdp(jeu: Shell, o: Options, faire: (mdp: string | null) => string):
   return '';
 }
 
-// « # sami, people, laruche.example » : le commentaire de ldapsearch devant chaque entrée.
+// « # sami, people, thehive.example » : le commentaire de ldapsearch devant chaque entrée.
 function titre(dn: string): string {
   const rdns = dn.split(',').map((r) => r.split('=').map((x) => x.trim()));
   const dcs = rdns.filter(([a]) => a.toLowerCase() === 'dc').map(([, v]) => v);

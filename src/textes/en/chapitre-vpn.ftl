@@ -24,7 +24,7 @@ vpn-courriel-malik =
         { $cle }
 
     In the tunnel, my laptop will have the address 10.10.99.2. The app
-    asks me for the router's public key, its address (ruche.example, or
+    asks me for the router's public key, its address (hive.example, or
     192.0.2.21) and its port: fill in portable-malik.conf, I'll copy
     it over.
 

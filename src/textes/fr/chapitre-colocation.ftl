@@ -19,12 +19,12 @@ colocation-courriel-kofi =
     J'ai déjà fait pointer le nom cafe.example vers notre adresse.
 
     Et Rania a terminé l'agenda des ateliers : un petit programme qui doit
-    s'afficher sous http://lettres.example/agenda/.
+    s'afficher sous http://letters.example/agenda/.
 
     Il faudrait donc :
     1. que http://cafe.example montre le site du café ;
-    2. que http://lettres.example reste notre site, bien sûr ;
-    3. que http://lettres.example/agenda/ montre l'agenda (et ses pages,
+    2. que http://letters.example reste notre site, bien sûr ;
+    3. que http://letters.example/agenda/ montre l'agenda (et ses pages,
        comme /agenda/semaine) ;
     4. que tout ça tienne après un redémarrage.
 
@@ -148,7 +148,7 @@ colocation-evenement-agenda-sans-enable =
     L'agenda répond. Mais il ne démarrera pas avec la machine : au prochain
     redémarrage, 502 de nouveau. (man systemctl)
 colocation-evenement-fin =
-    cafe.example, lettres.example et l'agenda répondent, chacun avec ses
+    cafe.example, letters.example et l'agenda répondent, chacun avec ses
     pages, depuis un seul serveur. Kofi : « On fait une fête pour
     l'emménagement du café. Tu es invité·e ! »
 

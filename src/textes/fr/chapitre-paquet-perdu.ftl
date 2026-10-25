@@ -13,7 +13,7 @@ paquet-perdu-note-de-kofi =
     Un mot de Kofi, bénévole au café associatif La Fourmilière :
 
     « Au secours ! Internet ne marche plus sur l'ordinateur du café. Le site
-    des Lettres du quartier (lettres.example) ne s'ouvre pas, et c'est là que
+    des Lettres du quartier (letters.example) ne s'ouvre pas, et c'est là que
     l'on publie le programme de la semaine.
 
     J'ai déjà redémarré la box. Rien. Peux-tu regarder ? Le mot de passe de cet
@@ -27,12 +27,12 @@ paquet-perdu-carnet =
 
       1. Ma box répond-elle ?           ping 192.168.1.1
       2. Internet répond-il ?           ping 9.9.9.9   (un serveur DNS public)
-      3. Les noms fonctionnent-ils ?    ping lettres.example
-                                        dig lettres.example
-      4. Par où passent les paquets ?   traceroute lettres.example
-      5. Le site répond-il ?            curl -I https://lettres.example
+      3. Les noms fonctionnent-ils ?    ping letters.example
+                                        dig letters.example
+      4. Par où passent les paquets ?   traceroute letters.example
+      5. Le site répond-il ?            curl -I https://letters.example
 
-    Le DNS traduit un nom (lettres.example) en adresse IP (des chiffres).
+    Le DNS traduit un nom (letters.example) en adresse IP (des chiffres).
     L'ordinateur sait quel serveur DNS interroger grâce au fichier
     /etc/resolv.conf (ligne « nameserver »).
 
@@ -58,29 +58,29 @@ paquet-perdu-evenement-box =
 paquet-perdu-evenement-internet =
     9.9.9.9 répond : les paquets sortent bien sur internet et reviennent.
     Donc « internet » marche ! Le problème est ailleurs. Essaie le nom du site :
-    ping lettres.example
+    ping letters.example
 paquet-perdu-evenement-nom =
     « Temporary failure in name resolution » : l'ordinateur n'arrive pas à
     traduire le nom en adresse IP. C'est le travail du DNS. Pose-lui la
-    question directement : dig lettres.example
+    question directement : dig letters.example
 paquet-perdu-evenement-dns-muet =
     Le serveur DNS 192.168.1.250 ne répond pas : « timed out ». D'où vient cette
     adresse ? Regarde cat /etc/resolv.conf
 
     Et pour vérifier que le nom existe bien, demande à un autre serveur DNS :
-    dig @9.9.9.9 lettres.example
+    dig @9.9.9.9 letters.example
 paquet-perdu-evenement-dns-autre =
-    Avec un autre serveur DNS, la réponse arrive : lettres.example = { $ip }.
+    Avec un autre serveur DNS, la réponse arrive : letters.example = { $ip }.
     Le nom existe, c'est le réglage de l'ordinateur qui est faux : il interroge
     192.168.1.250, l'adresse de l'ANCIENNE box, qui n'existe plus.
 
     Le bon réglage est dans /etc/resolv.conf.box. Ce fichier appartient à root :
     sudo cp /etc/resolv.conf.box /etc/resolv.conf
-paquet-perdu-evenement-dns-repare = Le DNS est réparé : l'ordinateur interroge maintenant la nouvelle box. Réessaie :  ping lettres.example
+paquet-perdu-evenement-dns-repare = Le DNS est réparé : l'ordinateur interroge maintenant la nouvelle box. Réessaie :  ping letters.example
 paquet-perdu-evenement-ping-perdu =
     Le nom est traduit ({ $ip })… mais 100 % des paquets sont perdus !
     Le site serait-il en panne ? Ou les paquets se perdent-ils en route ?
-    Suis-les à la trace :  traceroute lettres.example
+    Suis-les à la trace :  traceroute letters.example
 paquet-perdu-evenement-route =
     Voilà le voyage du paquet, saut par saut :
      1. ta box ;
@@ -91,7 +91,7 @@ paquet-perdu-evenement-route =
     l'hébergeur. Beaucoup de serveurs ignorent volontairement le ping et le
     traceroute (leur pare-feu les filtre) : ce silence ne prouve pas une panne.
 
-    Le seul vrai test, c'est de demander la page :  curl -I https://lettres.example
+    Le seul vrai test, c'est de demander la page :  curl -I https://letters.example
 paquet-perdu-evenement-curl =
     HTTP/2 200 : le site répond parfaitement ! Kofi peut publier le programme.
 

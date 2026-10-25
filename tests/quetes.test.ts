@@ -346,7 +346,7 @@ for (const langue of LANGUES)
           'sudo rm /etc/nginx/sites-enabled/default',
           'sudo nginx -t',
           'sudo systemctl reload nginx',
-          'curl http://mediatheque.example',
+          'curl http://medialibrary.example',
         ]);
         expect(tout).toContain('Error: Unable to locate package nginx');
         expect(tout).toContain('Welcome to nginx!');
@@ -394,7 +394,7 @@ for (const langue of LANGUES)
           'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz',
           'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-23.tar.gz -C /',
           'sudo systemctl reload nginx',
-          'curl -I mediatheque.example',
+          'curl -I medialibrary.example',
           'sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-21.tar.gz -C /',
           'sudo systemctl reload nginx',
         ]);
@@ -409,24 +409,24 @@ for (const langue of LANGUES)
 
       it('Le Datacenter, chapitre 5 — Le certificat a expiré', () => {
         const { s, tout } = jouer('certificat', [
-          'curl https://mediatheque.example',
+          'curl https://medialibrary.example',
           'journalctl -u certbot -n 8',
           'sudo certbot certificates',
           'bienvenue-2026',
           'sudo certbot renew --dry-run',
-          'sudo cat /etc/letsencrypt/renewal/mediatheque.example.conf',
+          'sudo cat /etc/letsencrypt/renewal/medialibrary.example.conf',
           // Fausse piste : --dry-run n'enregistre rien.
           'sudo certbot renew --dry-run --webroot -w /var/www/mediatheque',
           'sudo certbot renew --webroot -w /var/www/mediatheque',
           // Fausse piste : renouvelé sur le disque, mais nginx sert encore l'ancien.
-          'curl https://mediatheque.example',
-          'sudo certbot reconfigure --cert-name mediatheque.example --deploy-hook "systemctl reload nginx"',
+          'curl https://medialibrary.example',
+          'sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx"',
           'sudo systemctl reload nginx',
-          'curl -I https://mediatheque.example',
+          'curl -I https://medialibrary.example',
         ]);
         expect(tout).toContain('curl: (60) SSL certificate problem: certificate has expired');
         expect(tout).toContain('(INVALID: EXPIRED)');
-        expect(tout).toContain('Invalid response from http://mediatheque.example/.well-known/acme-challenge/');
+        expect(tout).toContain('Invalid response from http://medialibrary.example/.well-known/acme-challenge/');
         expect(tout).toContain('Congratulations, all simulated renewals succeeded');
         expect(tout).toContain('Congratulations, all renewals succeeded');
         expect(tout).toContain('Dry run: skipping deploy hook command: systemctl reload nginx');
@@ -441,7 +441,7 @@ for (const langue of LANGUES)
         const { s, tout } = jouer('certificat', [
           'sudo certbot renew',
           'bienvenue-2026',
-          'sudo nano /etc/letsencrypt/renewal/mediatheque.example.conf',
+          'sudo nano /etc/letsencrypt/renewal/medialibrary.example.conf',
         ]);
         expect(tout).toContain('Some challenges have failed');
         s.enregistrerEdition(s.edition!.texte.replaceAll('/var/www/html', '/var/www/mediatheque'));
@@ -465,7 +465,7 @@ for (const langue of LANGUES)
           'bienvenue-2026',
           'sudo apt install -y python3-certbot-nginx',
           'sudo certbot renew --nginx',
-          'openssl s_client -connect mediatheque.example:443 | openssl x509 -noout -enddate',
+          'openssl s_client -connect medialibrary.example:443 | openssl x509 -noout -enddate',
         ]);
         expect(tout).toContain('The requested nginx plugin does not appear to be installed');
         expect(tout).toContain('notAfter=Apr 21');
@@ -477,15 +477,15 @@ for (const langue of LANGUES)
           'cat carnet.txt',
           'ping 192.168.1.1',
           'ping 9.9.9.9',
-          'ping lettres.example',
-          'dig lettres.example',
+          'ping letters.example',
+          'dig letters.example',
           'cat /etc/resolv.conf',
-          'dig @9.9.9.9 lettres.example',
+          'dig @9.9.9.9 letters.example',
           'sudo cp /etc/resolv.conf.box /etc/resolv.conf',
           'fourmiliere',
-          'ping lettres.example',
-          'traceroute lettres.example',
-          'curl -I https://lettres.example',
+          'ping letters.example',
+          'traceroute letters.example',
+          'curl -I https://letters.example',
         ]);
         expect(s.termine).toBe(true);
       });
@@ -603,13 +603,13 @@ for (const langue of LANGUES)
         contient(tout, 'le lien est cassé');
         modifier(s, '/etc/nginx/sites-available/cafe', /default_server/g, '');
         const conflit = s.executer('sudo nginx -t') ?? '';
-        expect(conflit).toContain('nginx: [warn] conflicting server name "lettres.example" on 0.0.0.0:80, ignored');
+        expect(conflit).toContain('nginx: [warn] conflicting server name "letters.example" on 0.0.0.0:80, ignored');
         contient(conflit, 'deux sites répondent au même nom');
-        modifier(s, '/etc/nginx/sites-available/cafe', /lettres/g, 'cafe');
+        modifier(s, '/etc/nginx/sites-available/cafe', /lettres|letters/g, 'cafe');
         s.executer('sudo systemctl reload nginx');
         if (reference) expect(s.executer('curl -H "Host: cafe.example" http://127.0.0.1')).toContain('Le café associatif');
         modifier(s, '/etc/nginx/sites-available/lettres', '    location / {', '    location /agenda/ {\n        proxy_pass http://127.0.0.1:3000;\n    }\n\n    location / {');
-        const suite = ['sudo nginx -t', 'sudo systemctl reload nginx', 'curl -I http://lettres.example/agenda/', 'sudo tail -1 /var/log/nginx/error.log', 'sudo systemctl enable --now agenda', 'curl http://lettres.example/agenda/']
+        const suite = ['sudo nginx -t', 'sudo systemctl reload nginx', 'curl -I http://letters.example/agenda/', 'sudo tail -1 /var/log/nginx/error.log', 'sudo systemctl enable --now agenda', 'curl http://letters.example/agenda/']
           .map((l) => s.executer(l) ?? '')
           .join('\n');
         expect(suite).toContain('HTTP/1.1 502 Bad Gateway');
@@ -619,7 +619,7 @@ for (const langue of LANGUES)
         expect(s.termine).toBe(false);
         modifier(s, '/etc/nginx/sites-available/lettres', 'proxy_pass http://127.0.0.1:3000;', 'proxy_pass http://127.0.0.1:3000/;');
         s.executer('sudo systemctl reload nginx');
-        if (reference) expect(s.executer('curl http://lettres.example/agenda/ateliers')).toContain('Les ateliers');
+        if (reference) expect(s.executer('curl http://letters.example/agenda/ateliers')).toContain('Les ateliers');
         expect(s.termine).toBe(true);
       });
 
@@ -658,7 +658,7 @@ for (const langue of LANGUES)
         contient(fausse, 'named refuse la zone');
         // Le bon contenu, mais ni serial ni point final.
         modifier(s, (t) => t.replace('203.0.113.310', '203.0.113.10') + '\nwww     IN CNAME cafe.example');
-        const demi = ['sudo rndc reload cafe.example', 'journalctl -u named', 'dig @localhost www.cafe.example', 'dig @ns2.registre.example cafe.example +short', 'dig cafe.example']
+        const demi = ['sudo rndc reload cafe.example', 'journalctl -u named', 'dig @localhost www.cafe.example', 'dig @ns2.registry.example cafe.example +short', 'dig cafe.example']
           .map((l) => s.executer(l) ?? '')
           .join('\n');
         expect(demi).toContain('zone serial (2026091501) unchanged. zone may fail to transfer to secondaries.');
@@ -671,7 +671,7 @@ for (const langue of LANGUES)
         s.executer('named-checkzone cafe.example ' + ZONE);
         expect(s.executer('sudo rndc reload')).toContain('server reload successful');
         expect(s.termine).toBe(true);
-        expect(s.executer('dig @ns2.registre.example www.cafe.example +short')).toBe('cafe.example.\n203.0.113.10');
+        expect(s.executer('dig @ns2.registry.example www.cafe.example +short')).toBe('cafe.example.\n203.0.113.10');
       });
 
       it('autre solution : un enregistrement A pour www, et systemctl reload named', () => {
@@ -743,7 +743,7 @@ for (const langue of LANGUES)
           "sudo docker inspect -f '{{json .Mounts}}' outiltheque",
           'sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde',
           // Fausse piste : l'ancien conteneur occupe encore le port 8080.
-          'sudo docker run -d --name outiltheque-15 -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque registre.example/outiltheque:1.5',
+          'sudo docker run -d --name outiltheque-15 -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque registry.example/outiltheque:1.5',
           'sudo docker stop outiltheque',
           'sudo docker start outiltheque-15',
           'sudo docker cp sauvegarde/. outiltheque-15:/var/lib/outiltheque',
@@ -770,7 +770,7 @@ for (const langue of LANGUES)
           'fablab-2027',
           'sudo docker cp outiltheque:/var/lib/outiltheque/outiltheque.db /srv/outiltheque/',
           'sudo docker rm -f outiltheque',
-          'sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v /srv/outiltheque:/var/lib/outiltheque registre.example/outiltheque:1.5',
+          'sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v /srv/outiltheque:/var/lib/outiltheque registry.example/outiltheque:1.5',
         ]);
         expect(s.termine).toBe(true);
       });
@@ -779,7 +779,7 @@ for (const langue of LANGUES)
         const { s, tout } = jouer('mise-a-jour', ['sudo docker rm outiltheque', 'fablab-2027', 'sudo docker rm -f outiltheque']);
         expect(tout).toContain('container is running: stop the container before removing or force remove');
         contient(tout, 'Les 37 prêts ont disparu');
-        s.executer('sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v outiltheque:/var/lib/outiltheque registre.example/outiltheque:1.5');
+        s.executer('sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v outiltheque:/var/lib/outiltheque registry.example/outiltheque:1.5');
         expect(s.termine).toBe(false);
       });
     });
@@ -869,7 +869,7 @@ for (const langue of LANGUES)
         s.executer('sudo docker compose up -d');
         const menage = s.executer('sudo docker system prune -a -f') ?? '';
         expect(menage).toContain('Deleted Containers:');
-        expect(menage).toContain('untagged: registre.example/ia-locale:latest');
+        expect(menage).toContain('untagged: registry.example/ia-locale:latest');
         expect(s.termine).toBe(true);
       });
 
@@ -926,7 +926,7 @@ for (const langue of LANGUES)
         const { s, tout } = jouer('pleins-pouvoirs', [
           'sudo docker rm -f galerie-galerie-1',
           'fablab-2027',
-          'sudo docker run -d --name galerie -u node -p 8082:3000 -v /srv/galerie/photos:/app/photos --restart unless-stopped registre.example/galerie:3.2',
+          'sudo docker run -d --name galerie -u node -p 8082:3000 -v /srv/galerie/photos:/app/photos --restart unless-stopped registry.example/galerie:3.2',
           'sudo chown -R 1000 /srv/galerie/photos',
           'sudo docker exec galerie whoami',
           'ls -l /srv/galerie',
@@ -1595,7 +1595,7 @@ for (const langue of LANGUES)
     describe("L'Astreinte, chapitre 4 — L'horloge (timedatectl, NTP, fuseau, cron)", () => {
       const corrigerNtp = (s: Shell) => {
         s.executer('sudo nano /etc/systemd/timesyncd.conf');
-        s.enregistrerEdition(s.edition!.texte.replace('NTP=ntp.ancien-hebergeur.example', 'NTP=ntp.hebergeur.example'));
+        s.enregistrerEdition(s.edition!.texte.replace('NTP=ntp.old-hosting.example', 'NTP=ntp.hosting.example'));
         return s.quitterEdition();
       };
 
@@ -1614,7 +1614,7 @@ for (const langue of LANGUES)
         contient(tout, "C'est vrai de beaucoup de services");
         contient(tout, 'le serveur NTP qu');
         expect(s.executer('sudo journalctl -u systemd-timesyncd')).toContain(
-          'Timed out waiting for reply from 198.51.100.7:123 (ntp.ancien-hebergeur.example).',
+          'Timed out waiting for reply from 198.51.100.7:123 (ntp.old-hosting.example).',
         );
         corrigerNtp(s);
         contient(s.executer('sudo systemctl restart systemd-timesyncd') ?? '', "l'horloge est synchronisée");
@@ -1622,7 +1622,7 @@ for (const langue of LANGUES)
         if (reference) expect(etat).toMatch(/Local time: lun\. 2027-08-30 09:12:\d\d CEST/);
         expect(etat).toContain('Time zone: Europe/Paris (CEST, +0200)');
         expect(etat).toContain('System clock synchronized: yes');
-        expect(s.executer('timedatectl timesync-status')).toContain('Server: 192.0.2.123 (ntp.hebergeur.example)');
+        expect(s.executer('timedatectl timesync-status')).toContain('Server: 192.0.2.123 (ntp.hosting.example)');
         expect(s.termine).toBe(false);
         contient(s.executer('sudo systemctl restart cron') ?? '', "Tu as terminé le chapitre 4 de L'Astreinte");
         expect(s.termine).toBe(true);

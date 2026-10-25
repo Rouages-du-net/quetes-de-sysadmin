@@ -96,7 +96,7 @@ export const PAGES: Record<string, Page> = {
     exemples: ['timedatectl', 'timedatectl list-timezones | grep Europe', 'sudo timedatectl set-timezone Europe/Paris', 'sudo timedatectl set-ntp true', 'timedatectl timesync-status'],
     voir: ['date', 'systemctl', 'journalctl', 'crontab'],
   },
-  dig: { exemples: ['dig cafe.example', 'dig @ns1.lettres.example cafe.example', 'dig cafe.example NS +short', 'dig cafe.example SOA +short'], voir: ['host', 'ping', 'curl', 'named-checkzone'] },
+  dig: { exemples: ['dig cafe.example', 'dig @ns1.letters.example cafe.example', 'dig cafe.example NS +short', 'dig cafe.example SOA +short'], voir: ['host', 'ping', 'curl', 'named-checkzone'] },
   docker: {
     exemples: [
       'sudo docker ps -a',
@@ -124,7 +124,7 @@ export const PAGES: Record<string, Page> = {
   grep: { longues: { 'color': '', 'colour': '', 'ignore-case': 'i', 'invert-match': 'v', 'count': 'c', 'quiet': 'q', 'silent': 'q', 'extended-regexp': 'E', 'fixed-strings': 'F' }, options: ['i', 'v', 'c', 'q', 'E', 'F'], exemples: ['grep Effaceur chronique.txt', 'grep -i effaceur *', 'grep "mot de passe" journal.txt', "grep '\\.env' access.log", "grep -E '(GET|POST) /caisse' access.log"], voir: ['cat', 'find'] },
   groups: { exemples: ['groups', 'groups malo'], voir: ['id', 'usermod'] },
   head: { longues: {  }, options: ['n'], voir: ['tail', 'cat'] },
-  host: { exemples: ['host cafe.example', 'host cafe.example ns2.registre.example'], voir: ['dig'] },
+  host: { exemples: ['host cafe.example', 'host cafe.example ns2.registry.example'], voir: ['dig'] },
   ip: {
     section: 8,
     exemples: [
@@ -187,37 +187,37 @@ export const PAGES: Record<string, Page> = {
     exemples: [
       'ldapsearch -x -LLL uid=malik',
       'ldapsearch -x -LLL "(memberUid=camille)" dn',
-      'ldapsearch -x -LLL -b ou=people,dc=laruche,dc=example "(objectClass=posixAccount)" uid uidNumber',
+      'ldapsearch -x -LLL -b ou=people,dc=thehive,dc=example "(objectClass=posixAccount)" uid uidNumber',
       'sudo ldapsearch -Q -LLL -Y EXTERNAL -H ldapi:/// uid=sami',
     ],
     voir: ['ldapadd', 'ldapmodify', 'ldif'],
   },
   ldapadd: {
     options: ['x', 'D', 'W', 'w', 'f', 'H', 'Y', 'c'],
-    exemples: ['ldapadd -x -D cn=admin,dc=laruche,dc=example -W -f sami.ldif', 'sudo ldapadd -Y EXTERNAL -H ldapi:/// -f sami.ldif'],
+    exemples: ['ldapadd -x -D cn=admin,dc=thehive,dc=example -W -f sami.ldif', 'sudo ldapadd -Y EXTERNAL -H ldapi:/// -f sami.ldif'],
     voir: ['ldapmodify', 'ldif', 'slappasswd'],
   },
   ldapmodify: {
     options: ['x', 'D', 'W', 'w', 'f', 'H', 'Y', 'a', 'c'],
-    exemples: ['ldapmodify -x -D cn=admin,dc=laruche,dc=example -W -f groupes.ldif'],
+    exemples: ['ldapmodify -x -D cn=admin,dc=thehive,dc=example -W -f groupes.ldif'],
     voir: ['ldapadd', 'ldapdelete', 'ldif'],
   },
   ldapdelete: {
     options: ['x', 'D', 'W', 'w', 'H', 'Y'],
-    exemples: ['ldapdelete -x -D cn=admin,dc=laruche,dc=example -W uid=camille,ou=people,dc=laruche,dc=example'],
+    exemples: ['ldapdelete -x -D cn=admin,dc=thehive,dc=example -W uid=camille,ou=people,dc=thehive,dc=example'],
     voir: ['ldapmodify', 'ldapsearch'],
   },
   ldappasswd: {
     options: ['x', 'D', 'W', 'w', 'S', 's'],
     exemples: [
-      'ldappasswd -x -D cn=admin,dc=laruche,dc=example -W -S uid=sami,ou=people,dc=laruche,dc=example',
-      'ldappasswd -x -D uid=sami,ou=people,dc=laruche,dc=example -W -S',
+      'ldappasswd -x -D cn=admin,dc=thehive,dc=example -W -S uid=sami,ou=people,dc=thehive,dc=example',
+      'ldappasswd -x -D uid=sami,ou=people,dc=thehive,dc=example -W -S',
     ],
     voir: ['slappasswd', 'ldapwhoami'],
   },
   ldapwhoami: {
     options: ['x', 'D', 'W', 'w'],
-    exemples: ['ldapwhoami -x -D uid=sami,ou=people,dc=laruche,dc=example -W'],
+    exemples: ['ldapwhoami -x -D uid=sami,ou=people,dc=thehive,dc=example -W'],
     voir: ['ldappasswd', 'ldapsearch'],
   },
   slappasswd: { section: 8, options: ['s'], exemples: ['slappasswd', 'slappasswd -s "un mot de passe"'], voir: ['ldappasswd', 'ldif'] },
@@ -250,10 +250,10 @@ export const PAGES: Record<string, Page> = {
   lftp: {
     options: ['u', 'e', 'c'],
     exemples: [
-      'lftp -u maisonasso ftp.hebergeur.example',
+      'lftp -u maisonasso ftp.hosting.example',
       'mirror -R --dry-run site public_html',
       'mirror -R --delete site public_html',
-      'lftp -u maisonasso -e "mirror -R --delete site public_html; bye" ftp.hebergeur.example',
+      'lftp -u maisonasso -e "mirror -R --delete site public_html; bye" ftp.hosting.example',
     ],
     voir: ['sftp', 'scp', 'rsync'],
   },

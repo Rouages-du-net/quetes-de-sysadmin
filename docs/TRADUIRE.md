@@ -140,7 +140,7 @@ Le moteur garde l'identifiant français (`nomMachine()` et `hoteDansLaLangue()`
 dans `src/moteur/machines.ts`) ; une sauvegarde faite dans une autre langue
 (`known_hosts`, `~/.ssh/config`) suit la langue de la partie. Dans les
 textes, écrire le nom de la langue (`ssh kingdom`, `kingdom.internal`) ;
-les sites publics (`lettres.example`) et les fichiers de configuration
+les sites publics (`letters.example`) et les fichiers de configuration
 (`/etc/nginx/sites-available/lettres`) gardent le leur.
 
 Les **mots de passe** que donnent les histoires (sudo, ssh, dépôts restic,

@@ -135,7 +135,7 @@ incendie-evenement-mercredi =
     are missing, which Awa added on Wednesday afternoon. This archive is
     not the most recent intact one.
 incendie-evenement-fin =
-    curl http://mediatheque.example answers: the media library is back
+    curl http://medialibrary.example answers: the media library is back
     online, on a machine that didn't exist last night.
 
     Awa: "Thanks. We lost Thursday's work: the announcement for next

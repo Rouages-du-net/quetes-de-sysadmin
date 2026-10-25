@@ -14,7 +14,7 @@ mise-a-jour-message-de-yasmine =
     record everything in the outiltheque, a small web app. I installed
     it two weeks ago with Docker, following the instructions:
 
-      docker run -d --name outiltheque -p 8080:8080 registre.example/outiltheque:1.4
+      docker run -d --name outiltheque -p 8080:8080 registry.example/outiltheque:1.4
 
     Version 1.5 has just come out (it fixes a bug in the return dates).
     Can you update it? Above all, don't lose the 37 current loans: I have

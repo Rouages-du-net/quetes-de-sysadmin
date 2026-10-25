@@ -24,7 +24,7 @@ secret-courriel-awa =
     que l'appli lit au démarrage.
 
     Mais d'abord : comment est-elle sortie ? Essaie de la demander au site
-    toi-même (curl http://cooperative.example/.env), regarde le journal de
+    toi-même (curl http://coop.example/.env), regarde le journal de
     nginx (/var/log/nginx/access.log), et ferme la porte. Si tu trouves qui l'a
     prise, bloque-le aussi (man nginx… et la documentation de deny).
 

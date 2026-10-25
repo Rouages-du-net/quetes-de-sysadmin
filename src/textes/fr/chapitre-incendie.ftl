@@ -135,7 +135,7 @@ incendie-evenement-mercredi =
     vacances, qu'Awa a ajoutés mercredi après-midi. Cette archive n'est pas
     la plus récente qui soit intacte.
 incendie-evenement-fin =
-    curl http://mediatheque.example répond : la médiathèque est de nouveau en
+    curl http://medialibrary.example répond : la médiathèque est de nouveau en
     ligne, sur une machine qui n'existait pas hier soir.
 
     Awa : « Merci. On a perdu la journée de jeudi : l'annonce de la rencontre

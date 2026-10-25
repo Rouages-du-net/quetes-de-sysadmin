@@ -198,7 +198,7 @@ const SERVICES: ServiceScan[] = [
 
 /** Ce que nmap peut sonder : le Fournil (son état suit la machine) et le serveur du voisin, hors périmètre. */
 export const scanFournil = (): EtatScan => {
-  const fournil: HoteScan = { adresse: '192.0.2.22', noms: ['fournil.internal', 'fournil.example', 'fournil'], local: true, services: SERVICES, latence: 0.011 };
+  const fournil: HoteScan = { adresse: '192.0.2.22', noms: ['fournil.internal', 'bakery.example', 'fournil'], local: true, services: SERVICES, latence: 0.011 };
   const voisin: HoteScan = {
     adresse: VOISIN.adresse,
     noms: [VOISIN.nom],

@@ -15,8 +15,8 @@ const M = '/home/vous';
 const LOGS = '/var/log/nginx';
 const PARTAGE = '/srv/equipe';
 
-const ERREURS = `2026/10/13 20:31:02 [error] 613#613: *1842 connect() to unix:/run/php/php-fpm.sock failed (11: Resource temporarily unavailable) while connecting to upstream, client: 198.51.100.77, server: mediatheque.example, request: "GET /catalogue/recherche?q=a HTTP/1.1"
-2026/10/13 20:31:09 [error] 613#613: *1857 upstream timed out (110: Connection timed out) while reading response header from upstream, client: 192.0.2.31, server: mediatheque.example, request: "GET /agenda HTTP/1.1"
+const ERREURS = `2026/10/13 20:31:02 [error] 613#613: *1842 connect() to unix:/run/php/php-fpm.sock failed (11: Resource temporarily unavailable) while connecting to upstream, client: 198.51.100.77, server: medialibrary.example, request: "GET /catalogue/recherche?q=a HTTP/1.1"
+2026/10/13 20:31:09 [error] 613#613: *1857 upstream timed out (110: Connection timed out) while reading response header from upstream, client: 192.0.2.31, server: medialibrary.example, request: "GET /agenda HTTP/1.1"
 2026/10/13 21:02:44 [notice] 612#612: signal process started`;
 
 // Sur Debian, les journaux de nginx appartiennent à www-data, groupe adm, en 640.

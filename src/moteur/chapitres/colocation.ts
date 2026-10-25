@@ -2,7 +2,7 @@
 // virtuels et reverse proxy avec nginx. Le café associatif veut son site,
 // cafe.example, sur le serveur des Lettres ; et l'agenda des ateliers de
 // Rania (un petit programme Node.js qui écoute sur 127.0.0.1:3000) doit
-// être publié sous http://lettres.example/agenda/.
+// être publié sous http://letters.example/agenda/.
 // Commandes : cp, nano, ln -s (sites-available → sites-enabled, comme
 // Debian), nginx -t, systemctl reload, curl -H "Host: …", proxy_pass,
 // /var/log/nginx/error.log, systemctl enable --now.
@@ -20,7 +20,7 @@ import { chargerNginx, requete, verifierNginx, type Appli } from '../nginx';
 import { BIENVENUE, MIME, NGINX_CONF, SITE_PAR_DEFAUT } from '../commandes/apt';
 
 const M = '/home/vous';
-const LETTRES = 'lettres.example';
+const LETTRES = 'letters.example';
 const CAFE = 'cafe.example';
 
 const comptes = (): Comptes => ({

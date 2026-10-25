@@ -121,10 +121,10 @@ export const horloge: Chapitre = {
       fuseau: 'Etc/UTC',
       decalage: -9 * 60_000 - 17_000,
       synchronise: false,
-      serveurs: { 'ntp.hebergeur.example': '192.0.2.123' },
+      serveurs: { 'ntp.hosting.example': '192.0.2.123' },
       // Les serveurs NTP publics sont filtrés par l'hébergeur ; l'ancien ne répond plus.
       muets: {
-        'ntp.ancien-hebergeur.example': '198.51.100.7',
+        'ntp.old-hosting.example': '198.51.100.7',
         '0.debian.pool.ntp.org': '203.0.113.10',
         '1.debian.pool.ntp.org': '203.0.113.11',
         '2.debian.pool.ntp.org': '203.0.113.12',

@@ -24,7 +24,7 @@ chez-moi-courriel-kofi =
 
     Rania says that's not how it's done, and that our server is the one
     that is authoritative for the cafe.example zone (BIND, the named
-    service). The registry keeps a copy of it, on ns2.registre.example.
+    service). The registry keeps a copy of it, on ns2.registry.example.
 
     Can you take a look? Rania left some help in help_dns.txt. For
     sudo: ants-2026
@@ -37,12 +37,12 @@ chez-moi-aide-dns =
     The real DNS, for our domains:
       /etc/bind/named.conf.local      the list of our zones
       /etc/bind/zones/db.NAME         one zone per file
-    Our lettres.example zone is a good model.
+    Our letters.example zone is a good model.
 
     Who answers what?
       dig cafe.example                        the public resolver (9.9.9.9)
       dig @localhost cafe.example             our server (ns1)
-      dig @ns2.registre.example cafe.example  the registry's copy (ns2)
+      dig @ns2.registry.example cafe.example  the registry's copy (ns2)
 
     After a change: named-checkzone, then rndc reload.
     Everything else: man dig, man named-checkzone, man rndc.

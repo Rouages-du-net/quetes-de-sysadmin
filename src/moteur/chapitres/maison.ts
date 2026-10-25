@@ -215,5 +215,5 @@ export const planMaison =
           },
         ],
       },
-      ...(o.hebergeur ? [{ role: 'serveur' as const, nom: 'ftp.hebergeur.example', adresse: '203.0.113.80', note: t('plan-note-hebergeur') }] : []),
+      ...(o.hebergeur ? [{ role: 'serveur' as const, nom: 'ftp.hosting.example', adresse: '203.0.113.80', note: t('plan-note-hebergeur') }] : []),
     );

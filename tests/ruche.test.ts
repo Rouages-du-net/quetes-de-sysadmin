@@ -279,7 +279,7 @@ table ip nat {
       publique: () => c.shell.lire(L('/home/vous/publickey'))!.trim(),
     });
     const PORTABLE =
-      (pub: string, endpoint = 'ruche.example:51820') =>
+      (pub: string, endpoint = 'hive.example:51820') =>
       (t: string) =>
         t
           .replace('PublicKey =', `PublicKey = ${pub}`)
@@ -434,7 +434,7 @@ table ip nat {
       (t: string) =>
         t
           .replace('PublicKey =', `PublicKey = ${pub}`)
-          .replace('Endpoint =', 'Endpoint = ruche.example:51820')
+          .replace('Endpoint =', 'Endpoint = hive.example:51820')
           .replace('AllowedIPs =', `AllowedIPs = ${autorisees}${keepalive ? '\nPersistentKeepalive = 25' : ''}`);
 
     it('chapitre 6 — solution : un pair pour le site, ses AllowedIPs, PersistentKeepalive', () => {
@@ -474,7 +474,7 @@ table ip nat {
       expect(c.termines).toContain('annexe');
     });
 
-    const B = 'dc=laruche,dc=example';
+    const B = 'dc=thehive,dc=example';
     const ADMIN = `-x -D cn=admin,${B} -w rayon-de-miel`;
     const SAMI = (motDePasse: string, numero = '10004') =>
       `dn: uid=sami,ou=people,${B}\nobjectClass: inetOrgPerson\nobjectClass: posixAccount\nuid: sami\ncn: Sami Lemaire\nsn: Lemaire\ngivenName: Sami\nuidNumber: ${numero}\ngidNumber: 10000\nhomeDirectory: /home/sami\nloginShell: /bin/bash\nuserPassword: ${motDePasse}\n`;
@@ -487,7 +487,7 @@ table ip nat {
         'ldapsearch -x -LLL "(memberUid=camille)" dn',
         'ldapsearch -x -LLL "(objectClass=posixAccount)" uidNumber',
       ]);
-      expect(tout).toContain('dn: cn=bureaux,ou=groups,dc=laruche,dc=example');
+      expect(tout).toContain('dn: cn=bureaux,ou=groups,dc=thehive,dc=example');
       expect(tout).toContain('uidNumber: 10003');
       expect(tout).not.toContain('userPassword: {SSHA}');
       tout = jouer([`ldapdelete ${ADMIN} uid=camille,ou=people,${B}`, 'slappasswd -s choisi-par-sami']);
@@ -558,10 +558,10 @@ table ip nat {
     const CLIENT_BORNE = (t: string) => t + '\n\nclient bornes {\n\tipaddr = 10.10.30.0/24\n\tsecret = Rk7-borne-2028\n}\n';
     const MODULE = (t: string) =>
       t
-        .replace("base_dn = 'dc=example,dc=org'", "base_dn = 'dc=laruche,dc=example'")
+        .replace("base_dn = 'dc=example,dc=org'", "base_dn = 'dc=thehive,dc=example'")
         .replace(
           "#\tidentity = 'cn=admin,dc=example,dc=org'\n#\tpassword = mypass",
-          "\tidentity = 'cn=admin,dc=laruche,dc=example'\n\tpassword = rayon-de-miel",
+          "\tidentity = 'cn=admin,dc=thehive,dc=example'\n\tpassword = rayon-de-miel",
         )
         .replace('#\t\tmembership_filter', '\t\tmembership_filter');
     const VLAN = (id: number) => `\tTunnel-Type = VLAN,\n\tTunnel-Medium-Type = IEEE-802,\n\tTunnel-Private-Group-Id = ${id}\n`;

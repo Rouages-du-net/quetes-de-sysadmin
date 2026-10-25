@@ -20,7 +20,7 @@ horloge-message-de-zoe =
     machine ce week-end (son mail est dans mail_hebergeur.txt). Pourtant,
     le journal de l'enregistrement dit bien « 06:00 »… »
 horloge-mail-hebergeur =
-    De : support@hebergeur.example
+    De : support@hosting.example
     Objet : Migration de votre serveur radio terminée
 
     Bonjour,
@@ -30,8 +30,8 @@ horloge-mail-hebergeur =
     configuration ont été recopiées.
 
     Rappel : depuis notre réseau, l'accès aux serveurs NTP publics est
-    filtré. Utilisez notre serveur de temps : ntp.hebergeur.example
-    (l'ancien, ntp.ancien-hebergeur.example, est arrêté).
+    filtré. Utilisez notre serveur de temps : ntp.hosting.example
+    (l'ancien, ntp.old-hosting.example, est arrêté).
 
     L'équipe support
 horloge-timesyncd-conf =
@@ -47,7 +47,7 @@ horloge-timesyncd-conf =
     # See timesyncd.conf(5) for details.
 
     {"[Time]"}
-    NTP=ntp.ancien-hebergeur.example
+    NTP=ntp.old-hosting.example
     #FallbackNTP=0.debian.pool.ntp.org 1.debian.pool.ntp.org 2.debian.pool.ntp.org 3.debian.pool.ntp.org
     #RootDistanceMaxSec=5
     #PollIntervalMinSec=32

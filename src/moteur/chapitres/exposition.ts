@@ -33,7 +33,7 @@ const REDIS_CONF = '/etc/redis/redis.conf';
 
 // Le balayage de Salomé, comme nmap l'affiche.
 const BALAYAGE = `Starting Nmap 7.94 ( https://nmap.org ) at 2028-03-13 17:41 CET
-Nmap scan report for fournil.example (192.0.2.22)
+Nmap scan report for bakery.example (192.0.2.22)
 Host is up (0.011s latency).
 Not shown: 994 closed tcp ports (reset)
 PORT     STATE SERVICE

@@ -392,10 +392,10 @@ montées sur `/mnt/sauvegarde`, avec le plan de reprise d'Awa (`PRA.txt`).
 | Vérifier la sauvegarde | `tar -tzf` : l'archive de cette nuit est coupée (« Fin de fichier inattendue ») ; `ls -l` montre sa taille |
 | Restaurer | `sudo tar -xzf /mnt/sauvegarde/mediatheque-2026-10-22.tar.gz -C /` |
 | Recharger sans casser | `sudo nginx -t` (« a duplicate default server »), retirer `sites-enabled/default`, `sudo nginx -t`, `sudo systemctl reload nginx` |
-| Tester | `curl http://mediatheque.example` |
+| Tester | `curl http://medialibrary.example` |
 
 Objectif vérifié sur l'état : nginx tourne, démarre avec la machine, et sert
-pour `mediatheque.example` la page de la dernière sauvegarde intacte (celle
+pour `medialibrary.example` la page de la dernière sauvegarde intacte (celle
 du 22).
 
 Pièges prévus : `apt install` avant `apt update` (« Unable to locate
@@ -423,12 +423,12 @@ juin 2025, Let's Encrypt n'envoie plus de courriel avant l'expiration.
 
 | Étape | Commande apprise |
 |---|---|
-| Voir comme un visiteur | `curl https://mediatheque.example` (erreur 60), `openssl s_client -connect … \| openssl x509 -noout -dates` |
+| Voir comme un visiteur | `curl https://medialibrary.example` (erreur 60), `openssl s_client -connect … \| openssl x509 -noout -dates` |
 | Le certificat sur le disque | `sudo certbot certificates`, `openssl x509 -in … -noout -dates -subject -ext subjectAltName` |
 | Pourquoi pas renouvelé | `systemctl --failed`, `journalctl -u certbot`, `sudo certbot renew --dry-run` (le défi en 404) |
-| Le bon dossier | `cat /etc/letsencrypt/renewal/mediatheque.example.conf` ; `sudo certbot renew --webroot -w /var/www/mediatheque` |
+| Le bon dossier | `cat /etc/letsencrypt/renewal/medialibrary.example.conf` ; `sudo certbot renew --webroot -w /var/www/mediatheque` |
 | Que nginx serve le nouveau | `sudo systemctl reload nginx` (nginx lit le certificat au chargement) |
-| Que ça tienne | `sudo certbot reconfigure --cert-name mediatheque.example --deploy-hook "systemctl reload nginx"` |
+| Que ça tienne | `sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx"` |
 
 Objectif vérifié sur l'état : nginx présente un certificat valide pour les
 deux noms du site, le prochain renouvellement automatique réussirait (le
@@ -457,13 +457,13 @@ page ».
 |---|---|
 | `ping 192.168.1.1` | le réseau local marche |
 | `ping 9.9.9.9` | internet marche |
-| `ping lettres.example` | « Temporary failure in name resolution » : le DNS |
-| `dig lettres.example`, `cat /etc/resolv.conf` | l'ordinateur interroge l'ancienne box, disparue |
-| `dig @9.9.9.9 lettres.example` | le nom existe bien |
+| `ping letters.example` | « Temporary failure in name resolution » : le DNS |
+| `dig letters.example`, `cat /etc/resolv.conf` | l'ordinateur interroge l'ancienne box, disparue |
+| `dig @9.9.9.9 letters.example` | le nom existe bien |
 | `sudo cp /etc/resolv.conf.box /etc/resolv.conf` | DNS réparé |
-| `ping lettres.example` | 100 % de pertes… |
-| `traceroute lettres.example` | box, opérateur, point d'échange, hébergeur, puis silence |
-| `curl -I https://lettres.example` | `HTTP/2 200` : le serveur ignorait juste le ping |
+| `ping letters.example` | 100 % de pertes… |
+| `traceroute letters.example` | box, opérateur, point d'échange, hébergeur, puis silence |
+| `curl -I https://letters.example` | `HTTP/2 200` : le serveur ignorait juste le ping |
 
 ## Histoire 4 : La Machine à remonter le temps (faite)
 
@@ -518,7 +518,7 @@ liens vers la documentation de restic.
 ## Histoire 6 : Les Lettres du quartier (huit chapitres)
 
 L'association de Kofi (vue dans Le Paquet perdu) loue un petit serveur pour
-son site, `lettres.example` (machine `lettres`, même adresse que dans Le
+son site, `letters.example` (machine `lettres`, même adresse que dans Le
 Paquet perdu). L'hébergeur l'a livré avec la configuration par défaut :
 connexion root et mots de passe acceptés.
 
@@ -616,7 +616,7 @@ explique pourquoi c'est une mauvaise idée). Autre solution acceptée :
 Le café associatif (celui du Paquet perdu) emménage sur le serveur des
 Lettres : deux sites sur une machine. Et l'agenda des ateliers de Rania, un
 petit programme Node.js qui n'écoute que sur `127.0.0.1:3000`, doit
-s'afficher sous `http://lettres.example/agenda/`.
+s'afficher sous `http://letters.example/agenda/`.
 
 | Étape | Commande apprise |
 |---|---|
@@ -628,7 +628,7 @@ s'afficher sous `http://lettres.example/agenda/`.
 | Comprendre un 502 | `sudo tail /var/log/nginx/error.log`, `sudo systemctl enable --now agenda` |
 
 Objectif vérifié sur l'état : nginx sert la page du café pour
-`cafe.example`, celle des Lettres pour `lettres.example`, l'agenda sous
+`cafe.example`, celle des Lettres pour `letters.example`, l'agenda sous
 `/agenda/` et `/agenda/semaine`, et le service `agenda` démarrera avec la
 machine.
 
@@ -650,13 +650,13 @@ Kofi a « fait pointer » cafe.example vers le serveur… dans le `/etc/hosts`
 de son propre ordinateur. Chez lui, le site du café marche ; ailleurs, le
 nom mène à l'ancien hébergeur, et `www.cafe.example` n'existe pas. Le
 serveur des Lettres fait autorité pour la zone (BIND, `named`) ; le registre
-en garde une copie (`ns2.registre.example`). Le DNS simulé est dans
+en garde une copie (`ns2.registry.example`). Le DNS simulé est dans
 `src/moteur/dns.ts`.
 
 | Étape | Commande apprise |
 |---|---|
 | Voir ce que voient les autres | `dig cafe.example` (résolveur public, ancienne adresse, TTL qui décroît) |
-| Interroger les serveurs qui font autorité | `dig @localhost cafe.example`, `dig @ns2.registre.example cafe.example SOA +short` |
+| Interroger les serveurs qui font autorité | `dig @localhost cafe.example`, `dig @ns2.registry.example cafe.example SOA +short` |
 | Corriger la zone | `sudo nano /etc/bind/zones/db.cafe.example` : l'adresse, `www IN CNAME cafe.example.`, le serial |
 | Vérifier, recharger | `named-checkzone cafe.example …`, `sudo rndc reload`, `journalctl -u named` |
 
@@ -714,7 +714,7 @@ ufw, le `~/.ssh/config` du poste), et une sentinelle à prévenir.
 |---|---|
 | Comprendre | `journalctl -u ssh`, `sudo ufw status`, `sudo nft list ruleset` (les règles que ufw et fail2ban écrivent) |
 | Écouter sur les deux ports | `Port 22` et `Port 2222` dans `sshd_config`, `sudo sshd -t`, `sudo ufw allow 2222/tcp`, `sudo systemctl reload ssh`, `sudo ss -tlnp` |
-| Tester depuis le poste | `Port 2222` dans `~/.ssh/config` (ou `ssh -p 2222`) ; la clé d'hôte est notée `[lettres.example]:2222` dans `known_hosts` |
+| Tester depuis le poste | `Port 2222` dans `~/.ssh/config` (ou `ssh -p 2222`) ; la clé d'hôte est notée `[letters.example]:2222` dans `known_hosts` |
 | Fermer l'ancienne porte | retirer `Port 22`, `sudo ufw delete allow OpenSSH` |
 | La sentinelle | `[sshd]` puis `port = 2222` dans `jail.local`, `sudo systemctl reload fail2ban`, `sudo nft list table inet f2b-table` |
 
@@ -780,7 +780,7 @@ sortie, et il y a 37 prêts en cours à ne pas perdre.
 | Voir ce qui tourne | `sudo docker ps -a`, `docker logs`, `curl http://localhost:8080` (et `docker` sans `sudo` : le socket refuse) |
 | Savoir où sont les données | `sudo docker inspect -f '{{json .Mounts}}' outiltheque`, `docker exec outiltheque ls -l /var/lib/outiltheque` |
 | Mettre la base à l'abri | `sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde` |
-| Le nouveau conteneur | `docker stop outiltheque`, `docker run -d --name … -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque --restart unless-stopped registre.example/outiltheque:1.5` |
+| Le nouveau conteneur | `docker stop outiltheque`, `docker run -d --name … -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque --restart unless-stopped registry.example/outiltheque:1.5` |
 | Remettre la base | `docker cp sauvegarde/. conteneur:/var/lib/outiltheque`, `docker restart` (la base migre), `docker logs` |
 
 Objectif vérifié sur l'état : un conteneur de la version 1.5 tourne, publie
@@ -1137,7 +1137,7 @@ vise le serveur NTP de l'ancien hébergeur.
 |---|---|
 | Comprendre | `date` (UTC), `timedatectl` (fuseau, `synchronized: no`, `NTP service: inactive`), `sudo crontab -u radio -l`, le journal de l'enregistrement |
 | Le fuseau | `timedatectl list-timezones`, `sudo timedatectl set-timezone Europe/Paris` |
-| NTP | `sudo timedatectl set-ntp true` ; `journalctl -u systemd-timesyncd` (pas de réponse) ; `NTP=ntp.hebergeur.example` dans `/etc/systemd/timesyncd.conf`, `systemctl restart systemd-timesyncd`, `timedatectl timesync-status` |
+| NTP | `sudo timedatectl set-ntp true` ; `journalctl -u systemd-timesyncd` (pas de réponse) ; `NTP=ntp.hosting.example` dans `/etc/systemd/timesyncd.conf`, `systemctl restart systemd-timesyncd`, `timedatectl timesync-status` |
 | cron | `sudo systemctl restart cron` (il lit le fuseau au démarrage) |
 
 Objectif vérifié sur l'état : fuseau Europe/Paris, horloge synchronisée
@@ -1408,13 +1408,13 @@ et telnet, qui font passer les mots de passe en clair.
 Le nouveau site de la Maison est prêt sur le wiki (`/srv/wiki/site`) ; il est
 publié chez un hébergeur mutualisé qui ne propose que FTP, et refuse
 désormais le FTP en clair. Gaspard publiait avec FileZilla, sans chiffrement,
-sur `ftp.maison.example` (un nom qui pointe chez l'hébergeur, mais que son
+sur `ftp.community.example` (un nom qui pointe chez l'hébergeur, mais que son
 certificat ne couvre pas).
 
 | Étape | Commande apprise |
 |---|---|
 | Rapatrier | depuis le poste, `sftp wiki` : `cd /srv/wiki`, `ls`, `get -r site`, `lls`, `bye` |
-| Se connecter | `lftp -u maisonasso ftp.hebergeur.example` (le mot de passe demandé, FTPS par défaut) |
+| Se connecter | `lftp -u maisonasso ftp.hosting.example` (le mot de passe demandé, FTPS par défaut) |
 | Publier | `mirror -R --delete --dry-run site public_html`, puis sans `--dry-run` |
 
 Objectif vérifié sur l'état : `public_html` contient exactement le site du
@@ -1474,7 +1474,7 @@ dossier de l'appli (`root /srv/caisse/app`), avec son `.env` et son `.git`.
 
 | Étape | Commande apprise |
 |---|---|
-| Constater | `curl http://cooperative.example/.env`, `sudo grep '\.env' /var/log/nginx/access.log` |
+| Constater | `curl http://coop.example/.env`, `sudo grep '\.env' /var/log/nginx/access.log` |
 | Fermer | `location ~ /\. { deny all; }` (ou des droits que www-data ne peut pas lire), `nginx -t`, `reload` |
 | Bloquer | `deny 203.0.113.77;` |
 | Changer la clé | `.env`, puis `systemctl restart caisse` (l'appli ne relit son `.env` qu'au démarrage), `curl 127.0.0.1:3000/health` |
@@ -1634,7 +1634,7 @@ pare-feu des zones est en place, avec une chaîne `input` fermée par défaut.
 |---|---|
 | Les clés | `umask 077`, `wg genkey \| tee privatekey \| wg pubkey > publickey` |
 | Le routeur | `/etc/wireguard/wg0.conf` : `[Interface]` (`Address`, `ListenPort`, `PrivateKey`), `[Peer]` (`PublicKey`, `AllowedIPs = 10.10.99.2/32`) ; `wg-quick up wg0`, `wg show` (`latest handshake`) |
-| Le portable | `PublicKey` du routeur, `Endpoint = ruche.example:51820`, `AllowedIPs = 10.10.10.0/24` |
+| Le portable | `PublicKey` du routeur, `Endpoint = hive.example:51820`, `AllowedIPs = 10.10.10.0/24` |
 | Le pare-feu | `udp dport 51820 accept` (input), `iifname "wg0" oifname "eth1.10" accept` (forward), dans `/etc/nftables.conf` |
 | Faire durer | `systemctl enable --now wg-quick@wg0` |
 
@@ -1697,7 +1697,7 @@ caméras), `wg-quick up` sur une interface déjà montée.
 ### Chapitre 7 — L'annuaire (fait)
 
 Les comptes de l'équipe sont dans un annuaire OpenLDAP installé par Sacha sur
-le routeur (`dc=laruche,dc=example`). Avant le Wi-Fi des bureaux, qui
+le routeur (`dc=thehive,dc=example`). Avant le Wi-Fi des bureaux, qui
 s'appuiera dessus, il faut le remettre à jour : Camille est partie, Sami
 (l'Annexe) arrive.
 

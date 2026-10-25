@@ -24,7 +24,7 @@ chez-moi-courriel-kofi =
 
     Rania dit que ce n'est pas comme ça qu'on fait, et que c'est notre
     serveur qui fait autorité pour la zone cafe.example (BIND, le service
-    named). Le registre en garde une copie, sur ns2.registre.example.
+    named). Le registre en garde une copie, sur ns2.registry.example.
 
     Tu peux regarder ? Rania a laissé une aide dans aide_dns.txt. Pour
     sudo : fourmis-2026
@@ -37,12 +37,12 @@ chez-moi-aide-dns =
     Le vrai DNS, pour nos domaines :
       /etc/bind/named.conf.local      la liste de nos zones
       /etc/bind/zones/db.NOM          une zone par fichier
-    Notre zone lettres.example est un bon modèle.
+    Notre zone letters.example est un bon modèle.
 
     Qui répond quoi ?
       dig cafe.example                        le résolveur public (9.9.9.9)
       dig @localhost cafe.example             notre serveur (ns1)
-      dig @ns2.registre.example cafe.example  la copie du registre (ns2)
+      dig @ns2.registry.example cafe.example  la copie du registre (ns2)
 
     Après une modification : named-checkzone, puis rndc reload.
     Tout le reste : man dig, man named-checkzone, man rndc.

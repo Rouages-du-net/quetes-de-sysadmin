@@ -24,7 +24,7 @@ vpn-courriel-malik =
         { $cle }
 
     Dans le tunnel, mon portable aura l'adresse 10.10.99.2. L'appli me
-    demande la clé publique du routeur, son adresse (ruche.example, ou
+    demande la clé publique du routeur, son adresse (hive.example, ou
     192.0.2.21) et son port : complète portable-malik.conf, je le
     recopierai.
 

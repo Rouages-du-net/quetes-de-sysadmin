@@ -2,11 +2,11 @@
 // nouveau site de la Maison est prêt sur le wiki (/srv/wiki/site). Il est
 // publié chez un hébergeur mutualisé, qui ne propose que FTP… et refuse
 // désormais le FTP en clair. Gaspard publiait avec FileZilla, sans
-// chiffrement, sur ftp.maison.example (un nom qui pointe chez l'hébergeur,
+// chiffrement, sur ftp.community.example (un nom qui pointe chez l'hébergeur,
 // mais que son certificat ne couvre pas).
 //   - rapatrier le site du wiki sur le poste, par SSH (sftp, get -r) ;
 //   - le publier en FTPS avec lftp, sur le nom de l'hébergeur
-//     (ftp.hebergeur.example), certificat vérifié ;
+//     (ftp.hosting.example), certificat vérifié ;
 //   - mirror -R (du poste vers l'hébergement), dans public_html, avec
 //     --delete (la page des tarifs de 2025 ne doit plus être en ligne).
 // Objectif vérifié sur l'état : public_html contient exactement le site du
@@ -32,9 +32,9 @@ const page = (t: (id: string) => string, id: string) => f(t(id), { lignes: true,
 
 // L'hébergement de la Maison : l'ancien site, en ligne depuis 2025.
 HEBERGEMENTS.hebergeur = {
-  noms: ['ftp.hebergeur.example', 'hebergeur.example', 'ftp.maison.example'],
+  noms: ['ftp.hosting.example', 'hosting.example', 'ftp.community.example'],
   adresse: '203.0.113.80',
-  certificat: ['*.hebergeur.example', 'hebergeur.example'],
+  certificat: ['*.hosting.example', 'hosting.example'],
   comptes: { [COMPTE]: MOT_DE_PASSE_FTP },
   fichiers: (t) => ({
     [COMPTE]: d({

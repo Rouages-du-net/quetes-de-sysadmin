@@ -19,7 +19,7 @@ import { MAINTENANT } from './cooperative';
 export const SITE = '/etc/nginx/sites-available/cooperative';
 export const APPLI = '/srv/caisse/app';
 export const ENV = `${APPLI}/.env`;
-export const DOMAINE = 'cooperative.example';
+export const DOMAINE = 'coop.example';
 export const CLE_ANCIENNE = 'pk_live_coop_4f9a2c71e8b3';
 export const CLE_NOUVELLE = 'pk_live_coop_9d27be05c4a1';
 const JOURNAL = '/var/log/caisse/app.log';
@@ -206,7 +206,7 @@ export function mondeCaisse(o: { env: string; envMode?: string; accesLog: string
                 '.git': d(
                   {
                     config: fichier(
-                      '[core]\n\trepositoryformatversion = 0\n\tbare = false\n[remote "origin"]\n\turl = https://deploy:ghp_coopExampleToken42@git.cooperative.example/caisse.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*',
+                      '[core]\n\trepositoryformatversion = 0\n\tbare = false\n[remote "origin"]\n\turl = https://deploy:ghp_coopExampleToken42@git.coop.example/caisse.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*',
                       caisseDroits,
                     ),
                     HEAD: fichier('ref: refs/heads/main', caisseDroits),

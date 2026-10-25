@@ -19,7 +19,7 @@ import { nouveauSystemd, systemd } from '../systemd';
 import { APPLIS, demarrerDocker, docker, ecrireDans, identifiant, lireDans, nomImage, type Conteneur, type EtatDocker, type Image } from '../docker';
 
 const M = '/home/vous';
-const DEPOT = 'registre.example/outiltheque';
+const DEPOT = 'registry.example/outiltheque';
 const BASE = '/var/lib/outiltheque/outiltheque.db';
 const SCHEMAS: Record<string, number> = { '1.4': 3, '1.5': 4 };
 const PRETS = 37;

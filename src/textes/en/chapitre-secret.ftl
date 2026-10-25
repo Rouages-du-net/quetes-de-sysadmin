@@ -22,7 +22,7 @@ secret-courriel-awa =
     the app reads when it starts.
 
     But first: how did it get out? Try requesting it from the website
-    yourself (curl http://cooperative.example/.env), look at the nginx log
+    yourself (curl http://coop.example/.env), look at the nginx log
     (/var/log/nginx/access.log), and shut the door. If you find out who took
     it, block them too (man nginx… and the documentation of deny).
 

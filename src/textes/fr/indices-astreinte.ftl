@@ -67,7 +67,7 @@ indice-horloge-retard =
     .solution = timedatectl (System clock synchronized: no, NTP service: inactive)
 indice-horloge-synchro =
     .piste = La synchronisation est le travail de systemd-timesyncd : il faut l'activer, et lui donner un serveur NTP qui répond. Le mail de l'hébergeur dit lequel ; la configuration est dans /etc/systemd/timesyncd.conf (relue au démarrage).
-    .solution = sudo nano /etc/systemd/timesyncd.conf (NTP=ntp.hebergeur.example), puis sudo timedatectl set-ntp true (ou sudo systemctl restart systemd-timesyncd s'il tourne déjà)
+    .solution = sudo nano /etc/systemd/timesyncd.conf (NTP=ntp.hosting.example), puis sudo timedatectl set-ntp true (ou sudo systemctl restart systemd-timesyncd s'il tourne déjà)
 indice-horloge-cron =
     .piste = La machine doit vivre à l'heure de Paris. Le fuseau se règle avec timedatectl (man timedatectl : set-timezone, list-timezones).
     .solution = sudo timedatectl set-timezone Europe/Paris

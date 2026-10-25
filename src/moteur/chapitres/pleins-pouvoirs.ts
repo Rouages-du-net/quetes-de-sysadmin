@@ -73,7 +73,7 @@ const comptes = (): Comptes => ({
 
 const COMPOSE = `services:
   galerie:
-    image: registre.example/galerie:3.2
+    image: registry.example/galerie:3.2
     ports:
       - "8082:3000"
     volumes:
@@ -145,8 +145,8 @@ const image = (depot: string, tag: string, appli: string, port: number, commande
 
 function etatDocker(): EtatDocker {
   const liste = [
-    image('registre.example/outiltheque', '1.5', 'outiltheque', 8080, '/usr/local/bin/outiltheque serve', 151_600_000, 31),
-    image('registre.example/galerie', '3.2', 'galerie', 3000, 'docker-entrypoint.sh node serveur.js', 236_800_000, 12),
+    image('registry.example/outiltheque', '1.5', 'outiltheque', 8080, '/usr/local/bin/outiltheque serve', 151_600_000, 31),
+    image('registry.example/galerie', '3.2', 'galerie', 3000, 'docker-entrypoint.sh node serveur.js', 236_800_000, 12),
   ];
   return {
     images: Object.fromEntries(liste.map((i) => [nomImage(i), i])),
@@ -261,7 +261,7 @@ export const pleinsPouvoirs: Chapitre = {
     const outil: Conteneur = {
       id: identifiant('conteneur-outiltheque-4'),
       nom: 'outiltheque',
-      image: 'registre.example/outiltheque:1.5',
+      image: 'registry.example/outiltheque:1.5',
       etat: 'created',
       code: 0,
       ports: [{ ip: '0.0.0.0', hote: 8080, conteneur: 8080 }],

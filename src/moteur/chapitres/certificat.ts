@@ -31,7 +31,7 @@ import {
 } from '../commandes/certbot';
 
 const M = '/home/vous';
-const SITE = 'mediatheque.example';
+const SITE = 'medialibrary.example';
 const NOMS = [SITE, `www.${SITE}`];
 const ROBOT = '198.51.100.77';
 

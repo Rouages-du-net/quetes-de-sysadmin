@@ -2,7 +2,7 @@
 ### traceroute and curl answer in English, like the real tools; only
 ### the game's own messages are here.
 
-dig-usage = Usage: dig name (e.g. dig lettres.example)
+dig-usage = Usage: dig name (e.g. dig letters.example)
 traceroute-usage = Usage: traceroute host
 # Deliberate difference: the real traceroute goes on up to 30 hops.
 traceroute-plus-personne = (… and so on up to 30: nobody answers any more)

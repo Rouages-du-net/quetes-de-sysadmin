@@ -93,7 +93,7 @@ Address = 10.10.99.2/32
 
 [Peer]
 PublicKey = ${PUBLIQUE_ROUTEUR}
-Endpoint = ruche.example:51820
+Endpoint = hive.example:51820
 AllowedIPs = 10.10.10.0/24`;
 
 /** wg0.conf à la fin de « L'Annexe » : Malik et le routeur de l'Annexe. */

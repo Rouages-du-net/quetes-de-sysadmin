@@ -21,7 +21,7 @@ const INTERNET = '198.51.100.23';
 
 // Le rapport de scan de Yasmine, comme nmap l'affiche.
 const SCAN = `Starting Nmap 7.94 ( https://nmap.org ) at 2026-10-21 18:02 CEST
-Nmap scan report for lettres.example (203.0.113.10)
+Nmap scan report for letters.example (203.0.113.10)
 Host is up (0.012s latency).
 Not shown: 996 closed tcp ports (reset)
 PORT     STATE SERVICE

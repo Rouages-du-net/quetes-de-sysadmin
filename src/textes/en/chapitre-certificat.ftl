@@ -25,7 +25,7 @@ certificat-courriel-awa =
     2. renew the certificate, so the website is safe again;
     3. make sure it will work ALL BY ITSELF next time, all the way through.
 
-    To check what a browser sees: curl https://mediatheque.example
+    To check what a browser sees: curl https://medialibrary.example
     The rest is in man certbot and man openssl. The sudo password hasn't
     changed.
 certificat-message-de-lea =
@@ -34,7 +34,7 @@ certificat-message-de-lea =
     This morning, when I opened the media library's website, Firefox showed:
 
       Warning: Potential Security Risk Ahead
-      The certificate for mediatheque.example expired on 01/21/2027.
+      The certificate for medialibrary.example expired on 01/21/2027.
       Error code: SEC_ERROR_EXPIRED_CERTIFICATE
 
     On my phone, Chrome says "Your connection is not private"
@@ -83,12 +83,12 @@ certificat-evenement-expire =
 certificat-evenement-defi =
     Let's Encrypt only gives a certificate to whoever proves they control
     the website: certbot drops a small file (the "challenge") in a
-    directory, then the authority fetches it from http://mediatheque.example/.well-known/acme-challenge/.
+    directory, then the authority fetches it from http://medialibrary.example/.well-known/acme-challenge/.
     Here, it gets a 404: the file isn't where nginx serves this website.
 
     In which directory does certbot drop the challenge (look at every line
-    of /etc/letsencrypt/renewal/mediatheque.example.conf)? And which
-    directory does nginx serve for mediatheque.example? man certbot tells
+    of /etc/letsencrypt/renewal/medialibrary.example.conf)? And which
+    directory does nginx serve for medialibrary.example? man certbot tells
     you how to change the directory.
 certificat-evenement-pas-recharge =
     The new certificate is on the disk… but curl still sees the old one.
@@ -102,7 +102,7 @@ certificat-evenement-sans-hook =
     it expires, just like today. certbot can run a command after each
     successful renewal: look for "hook" in man certbot.
 certificat-evenement-fin =
-    curl https://mediatheque.example answers without a warning: the
+    curl https://medialibrary.example answers without a warning: the
     padlock is back. And next time, certbot will renew on its own, then
     reload nginx on its own.
 

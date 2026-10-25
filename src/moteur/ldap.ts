@@ -1,5 +1,5 @@
 // Un annuaire LDAP (OpenLDAP, slapd) sur une machine (etat.ldap) : des
-// entrées rangées en arbre sous une base (dc=laruche,dc=example), chacune
+// entrées rangées en arbre sous une base (dc=thehive,dc=example), chacune
 // avec ses classes d'objets (objectClass) et ses attributs.
 //   - le format LDIF (RFC 2849) : entrées à ajouter, ou changements
 //     (changetype: add, modify, delete ; add:, replace:, delete: dans un modify) ;

@@ -27,7 +27,7 @@ const SITE = `server {
     listen 80 default_server;
     listen [::]:80 default_server;
 
-    server_name cooperative.example www.cooperative.example;
+    server_name coop.example www.coop.example;
 
     # quick and simple: serve the app directory
     root /srv/caisse/app;

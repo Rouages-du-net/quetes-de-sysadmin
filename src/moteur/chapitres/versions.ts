@@ -125,7 +125,7 @@ export const versions: Chapitre = {
     // L'heure des prochaines sauvegardes à la main : samedi 6 février, 9 h 40.
     resticHorloge: Date.UTC(2027, 1, 6, 9, 40, 0),
     montages: [
-      { chemin: chemin(t, '/mnt/mairie'), capacite: CAPACITE, nom: `mairie.example:${chemin(t, '/partage/sauvegardes')}` },
+      { chemin: chemin(t, '/mnt/mairie'), capacite: CAPACITE, nom: `townhall.example:${chemin(t, '/partage/sauvegardes')}` },
       { chemin: '/', capacite: 20 * 1024 * Mo, nom: '/dev/sda1' },
     ],
   }),

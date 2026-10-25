@@ -10,12 +10,12 @@
 import { d, f, type Chapitre } from '../monde';
 
 const M = '/home/vous';
-const SITE = 'lettres.example';
+const SITE = 'letters.example';
 const IP_SITE = '203.0.113.10';
 
 const saut = (ip: string, nom: string, ms: number) => ({ ip, nom, ms });
 const BOX = saut('192.168.1.1', 'box.maison', 0.9);
-const VERS_FAI = [BOX, saut('100.64.0.1', 'collecte.fai.example', 4.2), saut('198.51.100.1', 'coeur.fai.example', 7.9)];
+const VERS_FAI = [BOX, saut('100.64.0.1', 'backhaul.isp.example', 4.2), saut('198.51.100.1', 'core.isp.example', 7.9)];
 
 const derniere = (j: { derniere: { commandes: string[][] } }) => j.derniere.commandes[0] ?? [];
 const pingReussi = (j: any, cible: string) =>
@@ -46,7 +46,7 @@ export const paquet: Chapitre = {
       routes: {
         '192.168.1.1': [BOX],
         '9.9.9.9': [...VERS_FAI, saut('9.9.9.9', 'dns9.quad9.net', 11.8)],
-        [IP_SITE]: [...VERS_FAI, saut('198.51.100.130', 'echange.ix.example', 9.1), saut('203.0.113.1', 'routeur.hebergeur.example', 11.4)],
+        [IP_SITE]: [...VERS_FAI, saut('198.51.100.130', 'exchange.ix.example', 9.1), saut('203.0.113.1', 'router.hosting.example', 11.4)],
       },
       web: {
         [SITE]: {

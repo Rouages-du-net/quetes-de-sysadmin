@@ -57,16 +57,16 @@ indice-incendie-nginx =
     .solution = sudo apt update, then sudo apt install nginx (curl http://localhost shows the welcome page).
 indice-incendie-fin =
     .piste = Follow the DRP (/mnt/backup/DRP.txt): check each archive by listing it (tar -t) before extracting it, take the most recent one that reads to the end, extract it from the root (man tar, -C). Then nginx -t: two sites cannot both be default_server on the same port.
-    .solution = sudo tar -xzf /mnt/backup/mediatheque-2026-10-22.tar.gz -C /, then sudo rm /etc/nginx/sites-enabled/default, sudo nginx -t, sudo systemctl reload nginx, and curl http://mediatheque.example
+    .solution = sudo tar -xzf /mnt/backup/mediatheque-2026-10-22.tar.gz -C /, then sudo rm /etc/nginx/sites-enabled/default, sudo nginx -t, sudo systemctl reload nginx, and curl http://medialibrary.example
 
 ## Chapter 5 — The certificate has expired
 
 indice-certificat-expire =
     .piste = Start by confirming the outage: request the site over HTTPS, or ask certbot about the state of its certificates.
-    .solution = curl https://mediatheque.example (or sudo certbot certificates: INVALID: EXPIRED).
+    .solution = curl https://medialibrary.example (or sudo certbot certificates: INVALID: EXPIRED).
 indice-certificat-defi =
     .piste = Why did the automatic renewal fail? Replay it without breaking anything: man certbot mentions a dress rehearsal.
     .solution = sudo certbot renew --dry-run (and journalctl -u certbot for the log of previous nights).
 indice-certificat-fin =
-    .piste = certbot puts the challenge in the directory from /etc/letsencrypt/renewal/mediatheque.example.conf, but nginx serves the site from /var/www/mediatheque. Fix the directory, renew for real, reload nginx, and have it reloaded automatically after each renewal (search for "hook" in man certbot).
-    .solution = sudo certbot renew --webroot -w /var/www/mediatheque, then sudo certbot reconfigure --cert-name mediatheque.example --deploy-hook "systemctl reload nginx", then sudo systemctl reload nginx
+    .piste = certbot puts the challenge in the directory from /etc/letsencrypt/renewal/medialibrary.example.conf, but nginx serves the site from /var/www/mediatheque. Fix the directory, renew for real, reload nginx, and have it reloaded automatically after each renewal (search for "hook" in man certbot).
+    .solution = sudo certbot renew --webroot -w /var/www/mediatheque, then sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx", then sudo systemctl reload nginx

@@ -229,13 +229,13 @@ for (const langue of LANGUES)
       expect(c.termines).toContain('transferts');
     });
 
-    const LFTP = 'lftp -u maisonasso ftp.hebergeur.example';
+    const LFTP = 'lftp -u maisonasso ftp.hosting.example';
     const MDP_FTP = 'Kp7-hebergement-2028';
 
     it('chapitre 5 — solution : sftp depuis le wiki, puis lftp en FTPS, mirror -R --delete', () => {
       const { c, jouer } = equipe(['cles', 'rebond', 'tunnel', 'transferts']);
       let tout = jouer(['ssh maison', L('cat courriel_hebergeur.txt'), 'exit']);
-      if (fr) expect(tout).toContain('Serveur : ftp.hebergeur.example');
+      if (fr) expect(tout).toContain('Serveur : ftp.hosting.example');
       tout = jouer(['sftp wiki', 'pwd', 'cd /srv/wiki', 'ls', 'get -r site', 'lls', 'bye', 'ls site']);
       expect(tout).toContain('Connected to wiki.');
       expect(tout).toContain(L('Remote working directory: /home/vous'));
@@ -260,12 +260,12 @@ for (const langue of LANGUES)
     it('chapitre 5 — fausses pistes : en clair, le nom de Gaspard, sans vérification, à l’envers, sans cible, sans --delete', () => {
       const { c, jouer } = equipe(['cles', 'rebond', 'tunnel', 'transferts']);
       jouer(['ssh maison', 'exit']);
-      let tout = jouer(['lftp -u maisonasso -e "set ftp:ssl-allow no; ls" ftp.maison.example', MDP_FTP]);
+      let tout = jouer(['lftp -u maisonasso -e "set ftp:ssl-allow no; ls" ftp.community.example', MDP_FTP]);
       expect(tout).toContain('ls: Login failed: 421 Sorry, cleartext sessions and weak ciphers are not accepted on this server.');
       contient(tout, 'plus de FTP en clair');
       tout = jouer(['set ftp:ssl-allow yes', 'ls']);
       expect(tout).toContain(
-        "ls: Fatal error: Certificate verification: certificate common name doesn't match requested host name ‘ftp.maison.example’",
+        "ls: Fatal error: Certificate verification: certificate common name doesn't match requested host name ‘ftp.community.example’",
       );
       contient(tout, 'le nom que son\ncertificat porte'.replace('\n', ' '));
       tout = jouer(['set ssl:verify-certificate no', 'ls public_html', 'mirror public_html site']);

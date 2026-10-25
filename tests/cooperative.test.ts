@@ -159,13 +159,13 @@ for (const langue of LANGUES)
 
     it('chapitre 3 — solution : le journal, location ~ /\\., deny, la nouvelle clé', () => {
       const { c, jouer, editer } = partie(AVANT_SECRET);
-      let tout = jouer(['curl http://cooperative.example/.env', "sudo grep '\\.env' /var/log/nginx/access.log"]);
+      let tout = jouer(['curl http://coop.example/.env', "sudo grep '\\.env' /var/log/nginx/access.log"]);
       expect(tout).toContain('PAIEMENT_CLE=pk_live_coop_4f9a2c71e8b3');
       expect(tout).toContain('203.0.113.77 - - [19/Oct/2027:03:12:40 +0200] "GET /.env HTTP/1.1" 200');
       editer(`sudo nano ${SITE}`, (t) =>
         t.replace('    location /caisse/', '    deny 203.0.113.77;\n\n    location ~ /\\. {\n        deny all;\n    }\n\n    location /caisse/'),
       );
-      tout = jouer(['sudo nginx -t', 'sudo systemctl reload nginx', 'curl -I http://cooperative.example/.git/config']);
+      tout = jouer(['sudo nginx -t', 'sudo systemctl reload nginx', 'curl -I http://coop.example/.git/config']);
       expect(tout).toContain('HTTP/1.1 403 Forbidden');
       contient(tout, 'Les fichiers cachés ne sortent plus');
       tout = editer('sudo nano /srv/caisse/app/.env', nouvelleCle);
