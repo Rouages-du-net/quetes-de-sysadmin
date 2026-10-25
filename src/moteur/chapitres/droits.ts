@@ -1,15 +1,15 @@
 // Histoire « La Coopérative » — chapitre « Les droits partagés » : Lina et
-// Karim (groupe caisse) tiennent les relevés de la caisse dans
-// /srv/caisse/releves, mais chacun·e ne peut pas modifier les fichiers de
+// Karim (groupe till) tiennent les relevés de la caisse dans
+// /srv/till/releves, mais chacun·e ne peut pas modifier les fichiers de
 // l'autre (créés -rw-r--r--, à son propre groupe). Et quand la caisse se
 // fige, il leur faut quelqu'un qui a sudo pour la relancer.
-//   - le dossier : groupe caisse, écriture pour le groupe, bit setgid (ce
+//   - le dossier : groupe till, écriture pour le groupe, bit setgid (ce
 //     qu'on y crée prend le groupe du dossier) ; les fichiers existants :
 //     chgrp -R, chmod -R g+w ;
 //   - le masque : umask 002 pour Lina et Karim (~/.profile, ou
 //     /etc/profile.d) ;
 //   - sudo : une règle dans /etc/sudoers.d (avec visudo) qui ne permet au
-//     groupe caisse QUE de relancer la caisse.
+//     groupe till QUE de relancer la caisse.
 // Pièges réels : un fichier de sudoers.d dont le nom contient un point
 // (ignoré), une commande sans chemin complet (refusée par visudo), une erreur
 // écrite avec nano (sudo refuse tout), une règle trop large (ALL, ou
@@ -26,8 +26,8 @@ import { nouveauSystemd } from '../systemd';
 import { fichiersInclus, lire, permis } from '../sudoers';
 import { comptesCooperative, M, MAINTENANT, mondeCooperative, MOT_DE_PASSE } from './cooperative';
 
-const RELEVES = '/srv/caisse/releves';
-const RELANCER = '/usr/bin/systemctl restart caisse';
+const RELEVES = '/srv/till/releves';
+const RELANCER = '/usr/bin/systemctl restart till';
 const EQUIPE = ['lina', 'karim'];
 const sh = (j: Jeu) => j as Shell;
 
@@ -104,13 +104,13 @@ export function masqueDe(j: Jeu, compte: string): number {
 
 const dossierOk = (j: Jeu) => {
   const n = j.trouver(chemin(j.t, RELEVES));
-  return n?.type === 'dossier' && (n.groupe ?? n.proprio) === 'caisse' && n.mode?.[4] === 'w' && n.mode?.[5] === 's';
+  return n?.type === 'dossier' && (n.groupe ?? n.proprio) === 'till' && n.mode?.[4] === 'w' && n.mode?.[5] === 's';
 };
 const fichiersOk = (j: Jeu) => {
   const n = j.trouver(chemin(j.t, RELEVES));
   if (n?.type !== 'dossier') return false;
   const tous = (x: Noeud): Noeud[] => (x.type === 'dossier' ? Object.values(x.enfants).flatMap(tous) : [x]);
-  return tous(n).every((x) => (x.groupe ?? x.proprio) === 'caisse' && (x.mode ?? 'rw-r--r--')[4] === 'w');
+  return tous(n).every((x) => (x.groupe ?? x.proprio) === 'till' && (x.mode ?? 'rw-r--r--')[4] === 'w');
 };
 const masqueOk = (j: Jeu) => EQUIPE.every((c) => (masqueDe(j, c) & 0o020) === 0);
 
@@ -130,7 +130,7 @@ const fichierIgnore = (j: Jeu) => {
   return (
     Object.keys(dossier.enfants)
       .map((n) => `/etc/sudoers.d/${n}`)
-      .find((c) => !lus.includes(c) && /caisse/.test(j.lire(c) ?? '') && !c.endsWith('.tmp')) ?? null
+      .find((c) => !lus.includes(c) && /till/.test(j.lire(c) ?? '') && !c.endsWith('.tmp')) ?? null
   );
 };
 
@@ -176,11 +176,11 @@ export const droits: Chapitre = {
   comptes: () => comptesCooperative(false),
   etat: () => ({
     systemd: nouveauSystemd('cooperative', MAINTENANT - 6 * 86_400_000, MAINTENANT, {
-      caisse: {
-        description: 'Cooperative till (caisse)',
+      till: {
+        description: 'Cooperative till',
         active: true,
         executable: 'node',
-        processus: [{ pid: 731, utilisateur: 'caisse', cpu: 1.2, mem: 3.4, commande: '/usr/bin/node /srv/caisse/app/server.js' }],
+        processus: [{ pid: 731, utilisateur: 'till', cpu: 1.2, mem: 3.4, commande: '/usr/bin/node /srv/till/app/server.js' }],
       },
     }),
   }),
@@ -200,7 +200,7 @@ export const droits: Chapitre = {
       plus: {
         srv: d(
           {
-            caisse: d(
+            till: d(
               {
                 releves: d(
                   {
@@ -212,7 +212,7 @@ export const droits: Chapitre = {
                 ),
               },
               undefined,
-              { proprio: 'caisse', groupe: 'caisse' },
+              { proprio: 'till', groupe: 'till' },
             ),
           },
           undefined,

@@ -1,6 +1,6 @@
 // Histoire « La Coopérative » : ce que ses chapitres ont en commun. Le
 // serveur de l'épicerie coopérative du quartier (machine cooperative) : la
-// caisse (un service), le dossier partagé de l'équipe caisse, un compte de
+// till (un service), le dossier partagé de l'équipe caisse, un compte de
 // déploiement partagé (deploy). Des bénévoles arrivent et partent : les
 // comptes, les groupes, sudo.
 
@@ -26,7 +26,7 @@ export const comptesCooperative = (avecMarc = true): Comptes => {
     utilisateurs: {
       root: { uid: 0, groupe: 'root', maison: '/root' },
       deploy: { uid: 998, groupe: 'deploy', maison: '/home/deploy' },
-      caisse: { uid: 997, groupe: 'caisse', maison: '/var/lib/caisse', shell: '/usr/sbin/nologin' },
+      till: { uid: 997, groupe: 'till', maison: '/var/lib/till', shell: '/usr/sbin/nologin' },
       vous: { uid: 1000, groupe: 'vous' },
       marc: { uid: 1001, groupe: 'marc' },
       lina: { uid: 1002, groupe: 'lina' },
@@ -36,7 +36,7 @@ export const comptesCooperative = (avecMarc = true): Comptes => {
       root: { gid: 0, membres: [] },
       adm: { gid: 4, membres: ['vous', 'marc'] },
       sudo: { gid: 27, membres: ['vous', 'marc'] },
-      caisse: { gid: 997, membres: ['marc', 'lina', 'karim'] },
+      till: { gid: 997, membres: ['marc', 'lina', 'karim'] },
       deploy: { gid: 998, membres: [] },
       vous: { gid: 1000, membres: [] },
       marc: { gid: 1001, membres: [] },

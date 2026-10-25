@@ -18,7 +18,7 @@ secret-courriel-awa =
       { $cle }
 
     As long as the till uses the old one, no more card payments!
-    The key is in the .env file of the till app (/srv/caisse/app), which
+    The key is in the .env file of the till app (/srv/till/app), which
     the app reads when it starts.
 
     But first: how did it get out? Try requesting it from the website
@@ -37,7 +37,7 @@ secret-evenement-env-seul =
     location with a regular expression (location ~ /\. ),
     or a root that only contains what must be public.
 secret-evenement-site-casse =
-    Careful: the leak is closed, but the website (/) or the till (/caisse/)
+    Careful: the leak is closed, but the website (/) or the till (/till/)
     no longer answers normally. Check with curl, and reread your
     configuration (sudo nginx -t).
 secret-evenement-fermee =

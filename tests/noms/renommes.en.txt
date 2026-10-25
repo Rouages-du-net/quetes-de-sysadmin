@@ -479,9 +479,9 @@ depart
 droits
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
-  /srv/caisse/releves → /srv/caisse/statements
-  /srv/caisse/releves/2027-10-17.txt → /srv/caisse/statements/2027-10-17.txt
-  /srv/caisse/releves/2027-10-18.txt → /srv/caisse/statements/2027-10-18.txt
+  /srv/till/releves → /srv/till/statements
+  /srv/till/releves/2027-10-17.txt → /srv/till/statements/2027-10-17.txt
+  /srv/till/releves/2027-10-18.txt → /srv/till/statements/2027-10-18.txt
 
 secret
   /home/vous → /home/you

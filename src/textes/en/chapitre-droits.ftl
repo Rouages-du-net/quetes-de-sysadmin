@@ -12,16 +12,16 @@ droits-courriel-awa =
     To:      you
     Subject: The till team
 
-    Two problems with the till team (Lina and Karim, group caisse):
+    Two problems with the till team (Lina and Karim, group till):
 
-    1. The daily statements are in /srv/caisse/statements. Lina can't
+    1. The daily statements are in /srv/till/statements. Lina can't
        correct Karim's, and vice versa. And yet they are both in the
-       caisse group! Look at ls -l. Everything they create there, today
-       and tomorrow, must belong to the caisse group and be writable by
+       till group! Look at ls -l. Everything they create there, today
+       and tomorrow, must belong to the till group and be writable by
        the group (man chmod, man umask).
 
     2. When the till freezes, they have to call someone who has sudo
-       to run systemctl restart caisse. Marc used to give them his
+       to run systemctl restart till. Marc used to give them his
        password… Give them the right to restart the till, and NOTHING else
        (man sudoers, man visudo; sudo -l -U lina to check).
 
@@ -50,7 +50,7 @@ droits-evenement-fichier-ignore =
     Your rule is in { $fichier }… which sudo doesn't read! @includedir
     ignores files whose name contains a dot or ends with ~ (reread
     /etc/sudoers.d/README). Give it a name without a dot, like
-    /etc/sudoers.d/caisse.
+    /etc/sudoers.d/till.
 droits-evenement-trop-large =
     Careful: with this rule, Lina and Karim can start a root shell
     (sudo bash), and so do ANYTHING. That's not what Awa is asking for:
@@ -65,15 +65,15 @@ droits-evenement-sudo =
     nothing else.
 # { $dossier }: the shared directory
 droits-evenement-dossier =
-    { $dossier } now belongs to the caisse group, which can write to it, and
+    { $dossier } now belongs to the till group, which can write to it, and
     has the setgid bit (the s in drwxrwsr-x): everything created in it will
-    get the caisse group. What remains is what's already there, and the
+    get the till group. What remains is what's already there, and the
     permissions Lina and Karim will give their next files (umask).
 droits-evenement-masque =
     Lina and Karim will have the 002 mask at their next login: their new
     files will be rw-rw-r--, editable by the group.
 droits-evenement-fin =
-    The next day: Lina saves her statement (-rw-rw-r-- lina caisse), Karim
+    The next day: Lina saves her statement (-rw-rw-r-- lina till), Karim
     fixes a decimal point without asking anyone, and when the till freezes
     at noon, he restarts it himself with sudo. Awa: "No more passwords
     going around!"

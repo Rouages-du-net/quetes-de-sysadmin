@@ -47,7 +47,7 @@ mises-a-jour-evenement-a-jour =
     /var/run/reboot-required.pkgs: you need to reboot (before 10 a.m.!).
 mises-a-jour-evenement-caisse-tombee =
     The server rebooted on the new kernel… but the till no longer answers.
-    systemctl status caisse: "disabled". Marc used to start it by hand; its
+    systemctl status till: "disabled". Marc used to start it by hand; its
     service was never enabled at boot (man systemctl: enable).
 mises-a-jour-evenement-fin =
     The fixes are installed, the new kernel is running, and both the

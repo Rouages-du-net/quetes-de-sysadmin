@@ -31,7 +31,7 @@ export const SITE = `server {
 
     server_name coop.example www.coop.example;
 
-    root /srv/caisse/app;
+    root /srv/till/app;
     index index.html;
 
     deny 203.0.113.77;
@@ -40,7 +40,7 @@ export const SITE = `server {
         deny all;
     }
 
-    location /caisse/ {
+    location /till/ {
         proxy_pass http://127.0.0.1:3000/;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
@@ -69,7 +69,7 @@ const sd = (j: Jeu) => systemd(j)!;
 const aJour = (j: Jeu) => Object.entries(MISES).every(([n, v]) => apt(j).installes[n] === v) && !apt(j).interrompu?.length;
 const noyau = (j: Jeu) => j.etat.noyau as { courant: string; installe: string };
 const redemarre = (j: Jeu) => noyau(j).courant === NOUVEAU_NOYAU;
-const servicesOk = (j: Jeu) => sd(j).services.nginx.etat === 'active' && sd(j).services.caisse.etat === 'active' && sd(j).services.caisse.active;
+const servicesOk = (j: Jeu) => sd(j).services.nginx.etat === 'active' && sd(j).services.till.etat === 'active' && sd(j).services.till.active;
 const tmuxOuvert = (j: Jeu) => Object.keys(j.etat.tmux ?? {}).length > 0 && !(j as Shell).tmux;
 
 export const misesAJour: Chapitre = {
@@ -109,7 +109,7 @@ export const misesAJour: Chapitre = {
     const e = etatCaisse(envCaisse(CLE_NOUVELLE, 'loopback'));
     const s = systemdCaisse();
     // Marc lançait la caisse à la main : elle tourne, mais son service n'est pas activé.
-    s.services.caisse.active = false;
+    s.services.till.active = false;
     return {
       ...e,
       systemd: s,
@@ -138,7 +138,7 @@ export const misesAJour: Chapitre = {
     },
     {
       id: 'caisse-tombee',
-      condition: (j) => redemarre(j) && sd(j).services.caisse.etat !== 'active',
+      condition: (j) => redemarre(j) && sd(j).services.till.etat !== 'active',
       message: (j) => j.t('mises-a-jour-evenement-caisse-tombee'),
     },
     { id: 'fin', condition: (j) => aJour(j) && redemarre(j) && servicesOk(j), message: (j) => j.t('mises-a-jour-evenement-fin') },

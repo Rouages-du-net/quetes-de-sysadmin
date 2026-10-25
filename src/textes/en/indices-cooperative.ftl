@@ -17,17 +17,17 @@ indice-depart-fin =
 ## Chapter 2 — Shared permissions
 
 indice-droits-dossier =
-    .piste = ls -l /srv/caisse/statements: the directory belongs to root, and each statement to its author's group. You need a directory of the caisse group, writable by the group, whose setgid bit hands its group to everything created in it (man chmod).
-    .solution = sudo chgrp -R caisse /srv/caisse/statements, sudo chmod -R g+w /srv/caisse/statements, then sudo chmod g+s /srv/caisse/statements (ls -ld shows drwxrwsr-x)
+    .piste = ls -l /srv/till/statements: the directory belongs to root, and each statement to its author's group. You need a directory of the till group, writable by the group, whose setgid bit hands its group to everything created in it (man chmod).
+    .solution = sudo chgrp -R till /srv/till/statements, sudo chmod -R g+w /srv/till/statements, then sudo chmod g+s /srv/till/statements (ls -ld shows drwxrwsr-x)
 indice-droits-masque =
     .piste = Lina's and Karim's next files will be born rw-r--r--: that is their mask (umask 022). It is set at login, in their ~/.profile or for everyone in /etc/profile.d (man umask).
     .solution = sudo nano /home/lina/.profile and sudo nano /home/karim/.profile: replace #umask 022 with umask 002 (or a file /etc/profile.d/umask-team.sh containing umask 002)
 indice-droits-sudo =
-    .piste = A sudo rule for the caisse group, in its own file in /etc/sudoers.d (no dot in the name), written with visudo, which checks before saving. The command is written with its full path (which) and its arguments, so nothing else is allowed (man sudoers).
-    .solution = sudo visudo -f /etc/sudoers.d/caisse, with the line %caisse ALL=(root) /usr/bin/systemctl restart caisse — then sudo -l -U lina to check
+    .piste = A sudo rule for the till group, in its own file in /etc/sudoers.d (no dot in the name), written with visudo, which checks before saving. The command is written with its full path (which) and its arguments, so nothing else is allowed (man sudoers).
+    .solution = sudo visudo -f /etc/sudoers.d/till, with the line %till ALL=(root) /usr/bin/systemctl restart till — then sudo -l -U lina to check
 indice-droits-fin =
-    .piste = Directory, mask and sudo all set? Look at what was already in the directory: yesterday's statements must also belong to the caisse group and be writable by it.
-    .solution = ls -l /srv/caisse/statements, then sudo chgrp -R caisse /srv/caisse/statements and sudo chmod -R g+w /srv/caisse/statements
+    .piste = Directory, mask and sudo all set? Look at what was already in the directory: yesterday's statements must also belong to the till group and be writable by it.
+    .solution = ls -l /srv/till/statements, then sudo chgrp -R till /srv/till/statements and sudo chmod -R g+w /srv/till/statements
 
 ## Chapter 3 — The secret
 
@@ -38,17 +38,17 @@ indice-secret-attaquant =
     .piste = Who took the key? nginx's access log (/var/log/nginx/access.log) keeps every request for /.env, with the address and the 200 response. One nginx directive refuses an address.
     .solution = sudo grep '\.env' /var/log/nginx/access.log (it's 203.0.113.77), then deny 203.0.113.77; in the site's server block, and sudo systemctl reload nginx
 indice-secret-cle-ecrite =
-    .piste = The old key is disabled: the new one is in Awa's email, and it belongs in the .env file of the till app (/srv/caisse/app).
-    .solution = sudo nano /srv/caisse/app/.env: replace the value of PAIEMENT_CLE= with the new key from the email
+    .piste = The old key is disabled: the new one is in Awa's email, and it belongs in the .env file of the till app (/srv/till/app).
+    .solution = sudo nano /srv/till/app/.env: replace the value of PAIEMENT_CLE= with the new key from the email
 indice-secret-fin =
     .piste = The new key is written, but the app only reads its .env at startup. Its /health route tells you which key it uses.
-    .solution = sudo systemctl restart caisse, then curl http://127.0.0.1:3000/health ("paiement": "ok")
+    .solution = sudo systemctl restart till, then curl http://127.0.0.1:3000/health ("paiement": "ok")
 
 ## Chapter 4 — The proxy
 
 indice-proxy-fin =
     .piste = Compare the two logs: nginx sees the robot (198.51.100.66), the till only sees 127.0.0.1. nginx must pass the client's address in a header (proxy_set_header), and the app must believe that header only when it comes from nginx (TRUST_PROXY, Express guide "behind proxies"): not true, the robot writes its own X-Forwarded-For.
-    .solution = In the /caisse/ location of /etc/nginx/sites-available/coop: proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; — in /srv/caisse/app/.env: TRUST_PROXY=loopback — then sudo systemctl reload nginx and sudo systemctl restart caisse
+    .solution = In the /till/ location of /etc/nginx/sites-available/coop: proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; — in /srv/till/app/.env: TRUST_PROXY=loopback — then sudo systemctl reload nginx and sudo systemctl restart till
 
 ## Chapter 5 — Updates
 
@@ -59,8 +59,8 @@ indice-mises-a-jour-caisse-tombee =
     .piste = The packages are installed, but uname -r still gives the old kernel. A file in /var/run says why you need to reboot.
     .solution = cat /var/run/reboot-required.pkgs, then sudo reboot (and ssh coop to come back)
 indice-mises-a-jour-fin =
-    .piste = After a reboot, only enabled services come back. Check the site and the till (systemctl --failed, systemctl status caisse: "disabled").
-    .solution = sudo systemctl enable --now caisse (enabled at boot, and started right away)
+    .piste = After a reboot, only enabled services come back. Check the site and the till (systemctl --failed, systemctl status till: "disabled").
+    .solution = sudo systemctl enable --now till (enabled at boot, and started right away)
 
 ## Chapter 6 — Automatic updates
 

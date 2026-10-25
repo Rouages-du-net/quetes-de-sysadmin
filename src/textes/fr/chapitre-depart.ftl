@@ -33,7 +33,7 @@ depart-courriel-awa =
 depart-notes-marc =
     Mes notes (Marc)
 
-    - La caisse tourne en service (caisse.service), sous le compte caisse.
+    - La caisse tourne en service (till.service), sous le compte till.
     - Mises en ligne : par le compte deploy (clés dans
       /home/deploy/.ssh/authorized_keys : la CI, Lina et moi).
     - Sauvegarde : mon script ~/bin/sauvegarde-caisse.sh, chaque nuit à

@@ -34,7 +34,7 @@ const script = (t: Traduire) => {
 set -e
 JOUR=$(date +%F)
 mkdir -p ${sauvegardes}/$JOUR
-tar -czf ${sauvegardes}/$JOUR/caisse.tar.gz /srv/caisse
+tar -czf ${sauvegardes}/$JOUR/till.tar.gz /srv/till
 tar -czf ${sauvegardes}/$JOUR/home.tar.gz /home`;
 };
 const SCRIPT = 'sauvegarde-caisse.sh';
@@ -139,10 +139,10 @@ export const depart: Chapitre = {
     crontabs: { marc: crontabMarc(t) },
     processus: [
       { pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
-      { pid: 731, utilisateur: 'caisse', cpu: 1.2, mem: 3.4, commande: '/usr/bin/node /srv/caisse/app/server.js' },
+      { pid: 731, utilisateur: 'till', cpu: 1.2, mem: 3.4, commande: '/usr/bin/node /srv/till/app/server.js' },
       { pid: 2741, utilisateur: 'marc', cpu: 0, mem: 0.1, commande: 'sshd: marc@pts/1' },
       { pid: 2745, utilisateur: 'marc', cpu: 0, mem: 0.1, commande: '-bash', ppid: 2741 },
-      { pid: 2790, utilisateur: 'marc', cpu: 0.1, mem: 0.1, commande: 'tail -f /var/log/caisse/app.log', ppid: 2745 },
+      { pid: 2790, utilisateur: 'marc', cpu: 0.1, mem: 0.1, commande: 'tail -f /var/log/till/app.log', ppid: 2745 },
       { pid: 3102, utilisateur: joueur(t), cpu: 0, mem: 0.1, commande: '-bash' },
     ],
     sessions: [
@@ -167,7 +167,7 @@ export const depart: Chapitre = {
       plus: {
         srv: d(
           {
-            caisse: d({}, undefined, { proprio: 'caisse', groupe: 'caisse' }),
+            till: d({}, undefined, { proprio: 'till', groupe: 'till' }),
             // La sauvegarde de la nuit dernière (elle contient /home : le script de Marc y est).
             sauvegardes: d(
               {

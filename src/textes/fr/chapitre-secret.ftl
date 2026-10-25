@@ -20,7 +20,7 @@ secret-courriel-awa =
       { $cle }
 
     Tant que la caisse utilise l'ancienne, plus aucun paiement par carte !
-    La clé est dans le fichier .env de l'appli de caisse (/srv/caisse/app),
+    La clé est dans le fichier .env de l'appli de caisse (/srv/till/app),
     que l'appli lit au démarrage.
 
     Mais d'abord : comment est-elle sortie ? Essaie de la demander au site
@@ -39,7 +39,7 @@ secret-evenement-env-seul =
     une location avec une expression régulière (location ~ /\. ),
     ou un root qui ne contient que ce qui doit être public.
 secret-evenement-site-casse =
-    Attention : la fuite est fermée, mais le site (/) ou la caisse (/caisse/)
+    Attention : la fuite est fermée, mais le site (/) ou la caisse (/till/)
     ne répond plus normalement. Vérifie avec curl, et relis ta configuration
     (sudo nginx -t).
 secret-evenement-fermee =

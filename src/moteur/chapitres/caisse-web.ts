@@ -1,6 +1,6 @@
 // Histoire « La Coopérative » : le site et l'appli de caisse, communs aux
 // chapitres « Le secret » et « Le proxy ». nginx sert le site et passe
-// /caisse/ à l'appli (Node.js, Express, 127.0.0.1:3000), qui lit son .env
+// /till/ à l'appli (Node.js, Express, 127.0.0.1:3000), qui lit son .env
 // au démarrage.
 // L'adresse du client, vue par l'appli : comme Express et son réglage
 // « trust proxy » (https://expressjs.com/en/guide/behind-proxies.html) :
@@ -17,16 +17,16 @@ import { MIME, NGINX_CONF } from '../commandes/apt';
 import { MAINTENANT } from './cooperative';
 
 export const SITE = '/etc/nginx/sites-available/coop';
-export const APPLI = '/srv/caisse/app';
+export const APPLI = '/srv/till/app';
 export const ENV = `${APPLI}/.env`;
 export const DOMAINE = 'coop.example';
 export const CLE_ANCIENNE = 'pk_live_coop_4f9a2c71e8b3';
 export const CLE_NOUVELLE = 'pk_live_coop_9d27be05c4a1';
-const JOURNAL = '/var/log/caisse/app.log';
+const JOURNAL = '/var/log/till/app.log';
 
 export const envCaisse = (cle: string, confiance = 'false') => `NODE_ENV=production
 PORT=3000
-DATABASE_URL=postgres://caisse:Pois-Chiches-42@localhost/caisse
+DATABASE_URL=postgres://till:Pois-Chiches-42@localhost/till
 PAIEMENT_CLE=${cle}
 TRUST_PROXY=${confiance}`;
 
@@ -47,7 +47,7 @@ interface EtatCaisse {
   bannis: string[];
   connectes: string[];
 }
-export const caisse = (j: Jeu) => j.etat.caisse as EtatCaisse;
+export const till = (j: Jeu) => j.etat.till as EtatCaisse;
 
 // Une adresse fiable pour « trust proxy » : loopback (127.0.0.0/8, ::1), ou une liste.
 function fiable(adresse: string, reglage: string): boolean {
@@ -81,13 +81,13 @@ function noter(j: Jeu, ligne: string) {
 // L'appli : la page de connexion, /health, et /connexion (u=compte&p=mot de passe), avec un
 // verrou après 5 échecs depuis la même adresse.
 export const APPLI_CAISSE: Appli = {
-  service: 'caisse',
+  service: 'till',
   pages: {},
   repondre: (j, chemin, demande) => {
-    const c = caisse(j);
+    const c = till(j);
     const json = (code: number, corps: unknown) => ({ code, type: 'application/json; charset=utf-8', corps: JSON.stringify(corps) });
     if (chemin === '/')
-      return { code: 200, corps: '<!DOCTYPE html>\n<title>Caisse</title>\n<form method="post" action="/caisse/connexion">…</form>' };
+      return { code: 200, corps: '<!DOCTYPE html>\n<title>Caisse</title>\n<form method="post" action="/till/connexion">…</form>' };
     if (chemin === '/health') return json(200, { status: 'ok', paiement: c.charge.PAIEMENT_CLE === CLE_NOUVELLE ? 'ok' : 'cle_revoquee' });
     if (chemin === '/connexion') {
       const ip = adresseClient(demande, c.charge.TRUST_PROXY ?? 'false');
@@ -139,12 +139,12 @@ export function systemdCaisse(apresNginx?: (j: Jeu) => void, apresCaisse?: (j: J
     verifierAuRechargement: true,
   };
   const appli: DefinitionService = {
-    description: 'Cooperative till (caisse)',
+    description: 'Cooperative till',
     active: true,
     executable: 'node',
-    processus: [{ pid: 731, utilisateur: 'caisse', cpu: 1.2, mem: 3.4, commande: '/usr/bin/node /srv/caisse/app/server.js' }],
+    processus: [{ pid: 731, utilisateur: 'till', cpu: 1.2, mem: 3.4, commande: '/usr/bin/node /srv/till/app/server.js' }],
     charger: (j) => {
-      const c = caisse(j);
+      const c = till(j);
       if (!c) return;
       // Au démarrage : le .env relu, la mémoire des verrous vidée.
       c.charge = lireEnv(j.lire(ENV) ?? '');
@@ -152,11 +152,11 @@ export function systemdCaisse(apresNginx?: (j: Jeu) => void, apresCaisse?: (j: J
       c.bannis = [];
       c.connectes = [];
       const sd = systemd(j);
-      if (sd) journaliser(sd, 'caisse.service', 'node', 731, 'caisse listening on 127.0.0.1:3000');
+      if (sd) journaliser(sd, 'till.service', 'node', 731, 'till listening on 127.0.0.1:3000');
       apresCaisse?.(j);
     },
   };
-  return nouveauSystemd('cooperative', MAINTENANT - 6 * 86_400_000, MAINTENANT, { nginx, caisse: appli });
+  return nouveauSystemd('cooperative', MAINTENANT - 6 * 86_400_000, MAINTENANT, { nginx, till: appli });
 }
 
 /** L'état du site : nginx (journal d'accès), l'appli et ses verrous. */
@@ -164,7 +164,7 @@ export const etatCaisse = (env: string, plus: Record<string, unknown> = {}) => (
   systemd: systemdCaisse(),
   nginx: { charge: null, noms: ['coop', DOMAINE, `www.${DOMAINE}`, '192.0.2.20', 'localhost', '127.0.0.1'], journalAcces: true },
   applis: { '127.0.0.1:3000': APPLI_CAISSE },
-  caisse: { charge: lireEnv(env), echecs: {}, bannis: [], connectes: [] } satisfies EtatCaisse,
+  till: { charge: lireEnv(env), echecs: {}, bannis: [], connectes: [] } satisfies EtatCaisse,
   ...plus,
 });
 
@@ -192,13 +192,13 @@ export function nginxCooperative(site: string): Record<string, Noeud> {
   };
 }
 
-/** /srv/caisse/app (le code, le .env, le dépôt git) et /var/log. */
+/** /srv/till/app (le code, le .env, le dépôt git) et /var/log. */
 export function mondeCaisse(o: { env: string; envMode?: string; accesLog: string; appLog: string }): { srv: Dossier; var: Dossier } {
-  const caisseDroits = { proprio: 'caisse', groupe: 'caisse' };
+  const caisseDroits = { proprio: 'till', groupe: 'till' };
   return {
     srv: d(
       {
-        caisse: d(
+        till: d(
           {
             app: d(
               {
@@ -206,7 +206,7 @@ export function mondeCaisse(o: { env: string; envMode?: string; accesLog: string
                 '.git': d(
                   {
                     config: fichier(
-                      '[core]\n\trepositoryformatversion = 0\n\tbare = false\n[remote "origin"]\n\turl = https://deploy:ghp_coopExampleToken42@git.coop.example/caisse.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*',
+                      '[core]\n\trepositoryformatversion = 0\n\tbare = false\n[remote "origin"]\n\turl = https://deploy:ghp_coopExampleToken42@git.coop.example/till.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*',
                       caisseDroits,
                     ),
                     HEAD: fichier('ref: refs/heads/main', caisseDroits),
@@ -215,7 +215,7 @@ export function mondeCaisse(o: { env: string; envMode?: string; accesLog: string
                   caisseDroits,
                 ),
                 'index.html': fichier(
-                  '<!DOCTYPE html>\n<html lang="fr">\n<title>Cooperative</title>\n<h1>Cooperative</h1>\n<a href="/caisse/">Caisse</a>\n</html>',
+                  '<!DOCTYPE html>\n<html lang="fr">\n<title>Cooperative</title>\n<h1>Cooperative</h1>\n<a href="/till/">Caisse</a>\n</html>',
                   caisseDroits,
                 ),
                 'server.js': fichier(
@@ -223,7 +223,7 @@ export function mondeCaisse(o: { env: string; envMode?: string; accesLog: string
                   caisseDroits,
                 ),
                 'package.json': fichier(
-                  '{\n  "name": "caisse",\n  "version": "2.3.1",\n  "dependencies": { "dotenv": "^16.4.5", "express": "^4.21.2" }\n}',
+                  '{\n  "name": "till",\n  "version": "2.3.1",\n  "dependencies": { "dotenv": "^16.4.5", "express": "^4.21.2" }\n}',
                   caisseDroits,
                 ),
               },
@@ -250,7 +250,7 @@ export function mondeCaisse(o: { env: string; envMode?: string; accesLog: string
               undefined,
               { proprio: 'root', groupe: 'adm' },
             ),
-            caisse: d({ 'app.log': f(o.appLog, { lignes: true, proprio: 'caisse', groupe: 'adm', mode: 'rw-r-----' }) }, undefined, caisseDroits),
+            till: d({ 'app.log': f(o.appLog, { lignes: true, proprio: 'till', groupe: 'adm', mode: 'rw-r-----' }) }, undefined, caisseDroits),
           },
           undefined,
           racine,

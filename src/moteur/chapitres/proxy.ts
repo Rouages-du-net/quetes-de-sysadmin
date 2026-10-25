@@ -21,7 +21,7 @@ import { f, type Chapitre } from '../monde';
 import type { Jeu } from '../shell';
 import { chargerNginx } from '../nginx';
 import { comptesCooperative, M, mondeCooperative, MOT_DE_PASSE } from './cooperative';
-import { caisse, CLE_NOUVELLE, envCaisse, etatCaisse, mondeCaisse, NGINX_BINAIRE, nginxCooperative, systemdCaisse, visite } from './caisse-web';
+import { till, CLE_NOUVELLE, envCaisse, etatCaisse, mondeCaisse, NGINX_BINAIRE, nginxCooperative, systemdCaisse, visite } from './caisse-web';
 
 const ROBOT = '198.51.100.66';
 const LINA = '192.0.2.44';
@@ -33,7 +33,7 @@ const SITE = `server {
 
     server_name coop.example www.coop.example;
 
-    root /srv/caisse/app;
+    root /srv/till/app;
     index index.html;
 
     deny 203.0.113.77;
@@ -42,22 +42,22 @@ const SITE = `server {
         deny all;
     }
 
-    location /caisse/ {
+    location /till/ {
         proxy_pass http://127.0.0.1:3000/;
     }
 }`;
 
 const robot = (n: number) =>
-  `${ROBOT} - - [19/Oct/2027:07:5${Math.floor(n / 10)}:${String((n % 10) * 6).padStart(2, '0')} +0200] "POST /caisse/connexion HTTP/1.1" ${n < 5 ? 401 : 429} 41 "-" "python-requests/2.32.3"`;
+  `${ROBOT} - - [19/Oct/2027:07:5${Math.floor(n / 10)}:${String((n % 10) * 6).padStart(2, '0')} +0200] "POST /till/connexion HTTP/1.1" ${n < 5 ? 401 : 429} 41 "-" "python-requests/2.32.3"`;
 const ACCES = [
   ...Array.from({ length: 12 }, (_, n) => robot(n)),
-  `${LINA} - - [19/Oct/2027:08:58:30 +0200] "GET /caisse/ HTTP/1.1" 200 95 "-" "Mozilla/5.0 (X11; Linux x86_64)"`,
-  `${LINA} - - [19/Oct/2027:08:58:44 +0200] "POST /caisse/connexion HTTP/1.1" 429 52 "-" "Mozilla/5.0 (X11; Linux x86_64)"`,
-  `192.0.2.51 - - [19/Oct/2027:09:12:03 +0200] "POST /caisse/connexion HTTP/1.1" 429 52 "-" "Mozilla/5.0 (Android 14)"`,
+  `${LINA} - - [19/Oct/2027:08:58:30 +0200] "GET /till/ HTTP/1.1" 200 95 "-" "Mozilla/5.0 (X11; Linux x86_64)"`,
+  `${LINA} - - [19/Oct/2027:08:58:44 +0200] "POST /till/connexion HTTP/1.1" 429 52 "-" "Mozilla/5.0 (X11; Linux x86_64)"`,
+  `192.0.2.51 - - [19/Oct/2027:09:12:03 +0200] "POST /till/connexion HTTP/1.1" 429 52 "-" "Mozilla/5.0 (Android 14)"`,
 ].join('\n');
 
 const APP_LOG = [
-  '2027-10-19 05:00:02 caisse listening on 127.0.0.1:3000',
+  '2027-10-19 05:00:02 till listening on 127.0.0.1:3000',
   ...Array.from({ length: 5 }, (_, n) => `2027-10-19 05:5${n}:0${n} login failed for admin from 127.0.0.1`),
   '2027-10-19 05:54:04 locked 127.0.0.1 for 15 minutes',
   '2027-10-19 06:58:44 rejected login for lina from 127.0.0.1 (locked)',
@@ -66,16 +66,16 @@ const APP_LOG = [
 
 // Cinq minutes de trafic : le robot (un faux X-Forwarded-For à chaque essai), puis Lina.
 function simuler(j: Jeu) {
-  const c = caisse(j);
+  const c = till(j);
   if (!c || !j.etat.nginx?.charge) return;
   for (let n = 0; n < 8; n++)
-    visite(j, '/caisse/connexion', {
+    visite(j, '/till/connexion', {
       adresse: ROBOT,
       methode: 'POST',
       agent: 'python-requests/2.32.3',
       entetes: { 'x-forwarded-for': `10.${n + 1}.${n * 7}.${n + 3}`, 'x-compte': 'admin', 'x-mot-de-passe': `essai${n}` },
     });
-  const r = visite(j, '/caisse/connexion', { adresse: LINA, methode: 'POST', entetes: { 'x-compte': 'lina', 'x-mot-de-passe': 'bon' } });
+  const r = visite(j, '/till/connexion', { adresse: LINA, methode: 'POST', entetes: { 'x-compte': 'lina', 'x-mot-de-passe': 'bon' } });
   j.etat.simulation = { lina: r?.code === 200, robotVerrouille: c.bannis.includes(ROBOT), bannis: [...c.bannis] };
 }
 
@@ -117,7 +117,7 @@ export const proxy: Chapitre = {
   initialiser: (j) => {
     chargerNginx(j);
     // Ce matin : le robot a fait verrouiller 127.0.0.1, c'est-à-dire tout le monde.
-    caisse(j).bannis = ['127.0.0.1'];
+    till(j).bannis = ['127.0.0.1'];
   },
   creerMonde: (t) =>
     mondeCooperative({

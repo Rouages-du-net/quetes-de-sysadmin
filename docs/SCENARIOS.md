@@ -1455,32 +1455,32 @@ contient), la tâche dans sa propre crontab.
 
 | Étape | Commande apprise |
 |---|---|
-| Le dossier | `chgrp -R caisse`, `chmod -R g+w`, `chmod g+s` (ou `2775`), `ls -ld` |
+| Le dossier | `chgrp -R till`, `chmod -R g+w`, `chmod g+s` (ou `2775`), `ls -ld` |
 | Le masque | `umask`, `umask 002` dans `~/.profile` de Lina et Karim (ou `/etc/profile.d`) |
-| sudo | `which systemctl`, `sudo visudo -f /etc/sudoers.d/caisse` : `%caisse ALL=(root) /usr/bin/systemctl restart caisse`, `sudo -l -U lina`, `visudo -c` |
+| sudo | `which systemctl`, `sudo visudo -f /etc/sudoers.d/till` : `%till ALL=(root) /usr/bin/systemctl restart till`, `sudo -l -U lina`, `visudo -c` |
 
-Objectif vérifié sur l'état : le dossier (groupe caisse, écriture du
+Objectif vérifié sur l'état : le dossier (groupe till, écriture du
 groupe, setgid), les fichiers existants, le masque des deux comptes, et ce
 que la politique de sudo permet (relancer la caisse) et refuse (un shell,
 arrêter ssh), sans erreur. Pièges prévus : une commande sans chemin
-(visudo refuse et demande « Et maintenant ? »), un fichier `caisse.conf`
+(visudo refuse et demande « Et maintenant ? »), un fichier `till.conf`
 (ignoré), une règle `ALL`, `systemctl` sans arguments, une faute écrite
 avec nano (sudo refuse tout).
 
 ### Chapitre 3 — Le secret (fait)
 
 La clé de paiement traîne sur internet : le site est servi depuis le
-dossier de l'appli (`root /srv/caisse/app`), avec son `.env` et son `.git`.
+dossier de l'appli (`root /srv/till/app`), avec son `.env` et son `.git`.
 
 | Étape | Commande apprise |
 |---|---|
 | Constater | `curl http://coop.example/.env`, `sudo grep '\.env' /var/log/nginx/access.log` |
 | Fermer | `location ~ /\. { deny all; }` (ou des droits que www-data ne peut pas lire), `nginx -t`, `reload` |
 | Bloquer | `deny 203.0.113.77;` |
-| Changer la clé | `.env`, puis `systemctl restart caisse` (l'appli ne relit son `.env` qu'au démarrage), `curl 127.0.0.1:3000/health` |
+| Changer la clé | `.env`, puis `systemctl restart till` (l'appli ne relit son `.env` qu'au démarrage), `curl 127.0.0.1:3000/health` |
 
 Objectif vérifié par des requêtes au nginx simulé : `/.env` et
-`/.git/config` ne sont plus servis, `/` et `/caisse/` répondent, l'adresse
+`/.git/config` ne sont plus servis, `/` et `/till/` répondent, l'adresse
 fautive reçoit 403, et l'appli a chargé la nouvelle clé. Pièges prévus :
 bloquer seulement `/.env` (le jeton de `.git/config` sort encore), un
 `deny all` qui ferme tout le site, la clé écrite sans relancer l'appli.
@@ -1493,9 +1493,9 @@ derrière nginx, a verrouillé tout le monde.
 
 | Étape | Commande apprise |
 |---|---|
-| Comprendre | comparer `/var/log/caisse/app.log` (127.0.0.1) et `access.log` (198.51.100.66) |
+| Comprendre | comparer `/var/log/till/app.log` (127.0.0.1) et `access.log` (198.51.100.66) |
 | nginx | `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` (ou `$remote_addr`) |
-| L'appli | `TRUST_PROXY=loopback` dans `.env` (ou l'adresse de nginx), `systemctl restart caisse` |
+| L'appli | `TRUST_PROXY=loopback` dans `.env` (ou l'adresse de nginx), `systemctl restart till` |
 
 À chaque rechargement de nginx ou démarrage de l'appli, le jeu rejoue cinq
 minutes de trafic (le robot, avec un faux `X-Forwarded-For` à chaque essai,
@@ -1515,7 +1515,7 @@ coupe une fois, au milieu de la mise à jour.
 | Voir | `uname -r`, `sudo apt update`, `apt list --upgradable` |
 | Mettre à jour | `tmux new -s maj`, `sudo apt upgrade` ; après la coupure : `tmux ls`, `tmux attach -t maj` (sans tmux : `sudo dpkg --configure -a`) |
 | Redémarrer | `cat /var/run/reboot-required.pkgs`, `sudo reboot`, `uname -r` |
-| Vérifier | `systemctl --failed`, `systemctl status caisse`, `sudo systemctl enable --now caisse` |
+| Vérifier | `systemctl --failed`, `systemctl status till`, `sudo systemctl enable --now till` |
 
 Objectif vérifié sur l'état : plus de mise à jour en attente, dpkg
 propre, le nouveau noyau tourne, nginx et la caisse actifs, la caisse
