@@ -34,6 +34,11 @@ rouages.net.
 - `src/moteur/nginx.ts` : nginx d'une machine (configuration lue et vérifiée
   comme `nginx -t`, appliquée au reload ; `curl` s'y adresse) ; `apt` et la
   commande `nginx` dans `commandes/apt.ts`.
+- `src/moteur/apache.ts` : Apache d'une machine (configuration de Debian lue
+  comme `apache2ctl configtest`, hôtes virtuels, `.htaccess` et `AllowOverride`,
+  `mod_rewrite`) ; joint par nginx et `curl` comme une appli (`etat.applis`) ;
+  `/etc/apache2` du paquet dans `apache-debian.ts` ; `apache2ctl`, `a2ensite`,
+  `a2enmod`… dans `commandes/apache.ts`.
 - `src/moteur/tls.ts` : certificats (fichiers PEM lisibles par le jeu) ;
   `certbot` et `openssl` dans `commandes/certbot.ts` (le défi HTTP-01 passe
   par le nginx simulé).

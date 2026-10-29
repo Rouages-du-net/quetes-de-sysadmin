@@ -9,6 +9,19 @@ import type { Commande } from './index';
 type Page = Pick<Commande, 'options' | 'longues' | 'exemples' | 'voir' | 'section'>;
 
 export const PAGES: Record<string, Page> = {
+  a2dismod: { section: 8, exemples: ['sudo a2dismod autoindex'], voir: ['a2enmod', 'apache2ctl'] },
+  a2disconf: { section: 8, exemples: ['sudo a2disconf serve-cgi-bin'], voir: ['a2enconf', 'apache2ctl'] },
+  a2dissite: { section: 8, exemples: ['sudo a2dissite 000-default', 'sudo systemctl reload apache2'], voir: ['a2ensite', 'apache2ctl'] },
+  a2enconf: { section: 8, exemples: ['ls /etc/apache2/conf-available', 'sudo a2enconf servername'], voir: ['a2disconf', 'a2ensite', 'apache2ctl'] },
+  a2enmod: { section: 8, exemples: ['sudo a2enmod rewrite', 'sudo systemctl restart apache2', 'apache2ctl -M'], voir: ['a2dismod', 'a2ensite', 'apache2ctl'] },
+  a2ensite: { section: 8, exemples: ['ls /etc/apache2/sites-available', 'sudo a2ensite site', 'sudo systemctl reload apache2'], voir: ['a2dissite', 'a2enmod', 'apache2ctl', 'ln'] },
+  apache2ctl: {
+    section: 8,
+    options: ['t', 'S', 'M', 'v', 'V'],
+    exemples: ['sudo apache2ctl configtest', 'sudo apache2ctl -S', 'apache2ctl -M', 'sudo apache2ctl graceful'],
+    voir: ['a2ensite', 'a2enmod', 'systemctl', 'journalctl', 'nginx'],
+  },
+  apachectl: { section: 8, options: ['t', 'S', 'M', 'v', 'V'], exemples: ['sudo apachectl configtest', 'sudo apachectl -S'], voir: ['apache2ctl', 'a2ensite'] },
   apropos: { voir: ['man', 'whatis'] },
   apt: {
     section: 8,
@@ -337,7 +350,7 @@ export const PAGES: Record<string, Page> = {
   'named-checkconf': { section: 8, exemples: ['sudo named-checkconf'], voir: ['named-checkzone', 'rndc'] },
   nano: { exemples: ['nano notes.txt', 'sudo nano /etc/nginx/blocked.conf'], voir: ['cat', 'sudo'] },
   nc: { exemples: ['nc -zv fabrique 22', 'nc -zv fabrique 5430-5435'], voir: ['ss', 'ufw', 'ssh'] },
-  nginx: { options: ['t', 'T', 'v'], exemples: ['sudo nginx -t', 'sudo nginx -T | less', 'nginx -v'], voir: ['systemctl', 'journalctl', 'curl', 'apt'] },
+  nginx: { options: ['t', 'T', 'v'], exemples: ['sudo nginx -t', 'sudo nginx -T | less', 'nginx -v'], voir: ['systemctl', 'journalctl', 'curl', 'apt', 'apache2ctl'] },
   openssl: {
     exemples: ['openssl x509 -in /etc/letsencrypt/live/site.example/cert.pem -noout -dates', 'openssl s_client -connect site.example:443 | openssl x509 -noout -dates', 'openssl x509 -in cert.pem -noout -checkend 1296000'],
     voir: ['certbot', 'curl'],

@@ -32,13 +32,28 @@ establish a secure connection to it. To learn more about this situation and
 how to fix it, please visit the webpage mentioned above.`;
 
 // La réponse d'une appli dans un conteneur, avec ses en-têtes.
-function reponseAppli(jeu: Shell, r: { code: number; corps: string; type?: string }): Reponse {
-  const raisons: Record<number, string> = { 200: 'OK', 404: 'Not Found', 500: 'Internal Server Error', 503: 'Service Unavailable' };
+function reponseAppli(jeu: Shell, r: { code: number; corps: string; type?: string; entetes?: string[] }): Reponse {
+  const raisons: Record<number, string> = {
+    200: 'OK',
+    301: 'Moved Permanently',
+    302: 'Found',
+    403: 'Forbidden',
+    404: 'Not Found',
+    410: 'Gone',
+    500: 'Internal Server Error',
+    503: 'Service Unavailable',
+  };
   const date = new Date(versUtc(systemd(jeu)?.horloge ?? 0)).toUTCString();
   return {
     code: r.code,
     corps: r.corps,
-    entetes: [`HTTP/1.1 ${r.code} ${raisons[r.code] ?? ''}`.trimEnd(), `Content-Type: ${r.type ?? 'text/html; charset=utf-8'}`, `Content-Length: ${new TextEncoder().encode(r.corps).length}`, `Date: ${date}`],
+    entetes: [
+      `HTTP/1.1 ${r.code} ${raisons[r.code] ?? ''}`.trimEnd(),
+      `Date: ${date}`,
+      ...(r.entetes ?? []),
+      `Content-Type: ${r.type ?? 'text/html; charset=utf-8'}`,
+      `Content-Length: ${new TextEncoder().encode(r.corps).length}`,
+    ],
   };
 }
 
@@ -292,7 +307,7 @@ export const RESEAU: Record<string, Commande> = {
           // Un port publié par un conteneur (docker run -p) : c'est lui qui répond.
           const viaDocker = requeteDocker(jeu, cible.toLowerCase() === 'localhost' ? '127.0.0.1' : cible, port, chemin);
           // Une appli de la machine, jointe sur son propre port (sans nginx).
-          const viaAppli = port !== 80 && port !== 443 && LOCAL_DE_BASE.includes(cible.toLowerCase()) ? requeteAppli(jeu, port, chemin) : null;
+          const viaAppli = port !== 80 && port !== 443 && LOCAL_DE_BASE.includes(cible.toLowerCase()) ? requeteAppli(jeu, port, chemin, { ...enTetes, host: nom === cible ? `${cible}:${port}` : nom }) : null;
           const r =
             viaDocker !== undefined
               ? viaDocker && viaDocker.code !== 0 && reponseAppli(jeu, viaDocker)

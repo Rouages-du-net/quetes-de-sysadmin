@@ -168,6 +168,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `ping` sur un réseau local | un appareil répond s'il est dans le VLAN de l'interface dont le réseau contient son adresse ; une adresse privée envoyée à la box se perd ; un nom d'appareil est reconnu sans DNS | ARP, DNS local, `/etc/hosts` |
 | `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, une fenêtre par session ; pas de raccourcis clavier (`tmux detach` pour Ctrl+b d) ; attach rejoue les dernières lignes ; le nom de la session s'affiche devant l'invite (la barre d'état) ; `uname -r/-a` ; `dpkg --configure -a` | fenêtres, volets, raccourcis, `screen` ; toutes les options de dpkg |
 | `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe, `=`, `^~`, ou expression régulière (`~`, `~*`, syntaxe de JavaScript plutôt que PCRE), choisie dans l'ordre de nginx ; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
+| Apache (`apache2ctl`, `a2ensite`, `a2enmod`…) | `configtest`/`-t`, `-S`, `-M`, `-v` (même hors de root) ; `start`, `stop`, `restart`, `graceful` passent par systemd ; une partie des directives (les autres sont refusées comme celles d'un module absent : « Invalid command ») ; hôte virtuel choisi par adresse et port, puis `ServerName`/`ServerAlias`, sinon le premier ; `<Directory>` sans jokers ; `.htaccess` relus à chaque requête, avec `AllowOverride` par catégorie ; `mod_rewrite` : `RewriteEngine`, `RewriteCond` (`-f`, `-d`, `-s`, `=`, expressions, `[NC]`, `[OR]`), `RewriteRule` (`[L]`, `[END]`, `[R]`, `[F]`, `[G]`, `[QSA]`, `[NC]`), dans le serveur ou par répertoire, 10 redirections internes au plus ; pas de PHP, de CGI, de compression ni de journal d'accès ; sans argument, `a2ensite` & co. listent les choix sans les demander | toutes les directives et modules, `apache2ctl` interactif sans argument |
 | `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse), ou un tunnel `ssh -L` ouvert sur le poste | tout le réseau |
 | `tar` | `-C` ; une archive coupée s'arrête à la coupure (messages proches de GNU tar) ; root garde propriétaires et droits | aussi `--strip-components`, `-p`, archives multi-volumes… |
 | `ssh-keygen` | `-R`, `-F`, `-l -f` ; crée des clés ed25519 seulement (`-t`, `-C`, `-N`, `-f`), fausses mais de la bonne forme, avec leur image aléatoire | tous les types de clés, conversion, certificats… |
@@ -515,7 +516,7 @@ versions plutôt que miroir, politique de rétention, forget n'est pas prune,
 check et restaurations d'essai, chiffrement et garde du mot de passe ;
 liens vers la documentation de restic.
 
-## Histoire 6 : Les Lettres du quartier (huit chapitres)
+## Histoire 6 : Les Lettres du quartier (neuf chapitres)
 
 L'association de Kofi (vue dans Le Paquet perdu) loue un petit serveur pour
 son site, `letters.example` (machine `lettres`, même adresse que dans Le
@@ -759,6 +760,40 @@ Autres solutions acceptées : `jail.d/*.local`, `bantime = -1`, un autre
 `maxretry`. Débrief : journal, filtre, action ; activer dans sa section ;
 `dbpurgeage` ; `bantime.increment` ; liens vers `jail.conf(5)`, le
 `jail.conf` de fail2ban et `limit_req`.
+
+### Chapitre 9 — L'atelier de réparation (fait)
+
+L'ancien hébergeur de l'atelier de réparation ferme ; leur site tournait
+sous Apache, avec un `.htaccess` qui réécrit les adresses courtes des fiches
+(`/guide/42`, imprimées en QR codes sur les affiches). Rania a installé
+`apache2`, qui ne démarre pas. On le met derrière nginx, sur
+`127.0.0.1:8080`, comme l'agenda. Le chapitre compare Apache et nginx.
+
+| Étape | Commande apprise |
+|---|---|
+| Comprendre l'échec | `systemctl status apache2`, `journalctl -u apache2` (« Address already in use »), `sudo ss -tlnp` |
+| Changer de port | `Listen 127.0.0.1:8080` dans `/etc/apache2/ports.conf`, `sudo apache2ctl configtest`, `sudo systemctl restart apache2` |
+| Activer le site | `sudo apache2ctl -S`, `sudo a2ensite repair` (le lien de Rania, sans `.conf`, est ignoré), `<VirtualHost 127.0.0.1:8080>` |
+| Le publier | `sudo ln -s /etc/nginx/sites-available/repair /etc/nginx/sites-enabled/`, `sudo nginx -t`, `sudo systemctl reload nginx` |
+| Les adresses courtes | `<Directory /var/www/repair> AllowOverride All`, `/var/log/apache2/repair-error.log`, `sudo a2enmod rewrite`, `sudo systemctl restart apache2` |
+
+Objectif vérifié sur l'état : Apache tourne, activé au démarrage, n'écoute
+que sur la boucle locale ; par nginx, `repair.example` sert l'accueil de
+l'atelier et `/guide/42` la fiche 42 ; `letters.example` reste intact.
+
+Pièges prévus : le port 80 déjà pris (AH00072), l'avertissement AH00558 (sans
+conséquence), un `Listen 8080` qui écoute sur toutes les adresses, le site
+par défaut qui répond (VirtualHost resté sur `*:80`, lien sans `.conf`, ou
+nginx qui transmet `Host: 127.0.0.1:8080`), le `.htaccess` ignoré (404,
+`AllowOverride None` de Debian), `RewriteEngine` sans le module (500, « Invalid
+command » dans le journal du site), une catégorie d'`AllowOverride`
+insuffisante (« not allowed here »), une règle qui boucle (AH00124). Autres
+solutions acceptées : les règles dans le VirtualHost (`RewriteRule ^/guide/…`),
+`AllowOverride FileInfo`, `*:8080`, `000-default` aussi déplacé avec
+`proxy_set_header Host $host;` dans nginx, ou désactivé (`a2dissite`).
+Débrief : nginx et Apache côte à côte, un seul programme par port, `-S`,
+`Host` derrière un proxy, `.htaccess` et performances ; liens vers la
+documentation d'Apache (hôtes virtuels, `.htaccess`, `mod_rewrite`).
 
 ## Histoire 7 : La Fabrique (quatre chapitres)
 

@@ -509,7 +509,8 @@ export interface Appli {
   // Les pages qu'elle sert, par chemin ; ailleurs, la page 404 d'Express.
   pages: Record<string, string>;
   // Ou une appli qui calcule sa réponse (version, configuration, santé…).
-  repondre?: (jeu: Jeu, chemin: string, demande: Demande) => { code: number; corps: string; type?: string };
+  // entetes : ceux qu'elle ajoute (Server, Location…).
+  repondre?: (jeu: Jeu, chemin: string, demande: Demande) => { code: number; corps: string; type?: string; entetes?: string[] };
   // Requêtes par seconde qu'elle sait servir (sans limite si absent).
   capacite?: number;
 }
@@ -518,6 +519,8 @@ export interface Appli {
 export interface Demande {
   entetes: Record<string, string>;
   adresse: string;
+  // false : une vérification du jeu, qui ne laisse pas de trace dans les journaux.
+  trace?: boolean;
 }
 
 const PAGE_EXPRESS = (chemin: string) =>
@@ -529,7 +532,7 @@ export function repondreAppli(
   appli: Appli,
   chemin: string,
   demande: Demande = { entetes: {}, adresse: '127.0.0.1' },
-): { code: number; corps: string; type?: string } {
+): { code: number; corps: string; type?: string; entetes?: string[] } {
   if (appli.repondre) return appli.repondre(jeu, chemin.split('?')[0], demande);
   const corps = appli.pages[chemin.split('?')[0]];
   return corps === undefined ? { code: 404, corps: PAGE_EXPRESS(chemin) } : { code: 200, corps };
@@ -541,7 +544,7 @@ export function requeteAppli(
   port: number,
   chemin: string,
   entetes: Record<string, string> = {},
-): { code: number; corps: string; type?: string } | null {
+): { code: number; corps: string; type?: string; entetes?: string[] } | null {
   const appli: Appli | undefined = jeu.etat.applis?.[`127.0.0.1:${port}`];
   if (!appli || systemd(jeu)?.services[appli.service]?.etat !== 'active') return null;
   return repondreAppli(jeu, appli, chemin, { entetes, adresse: '127.0.0.1' });
@@ -749,8 +752,9 @@ function traiter(jeu: Jeu, hote: string, chemin: string, port: number, client: C
       if (variables(v) === '') delete recus[nom.toLowerCase()];
       else recus[nom.toLowerCase()] = variables(v);
     }
-    const r = repondreAppli(jeu, appli, amont, { entetes: recus, adresse: '127.0.0.1' });
-    return reponse(r.code, r.corps);
+    const r = repondreAppli(jeu, appli, amont, { entetes: recus, adresse: '127.0.0.1', trace: !!jeu.etat.nginxTrace });
+    // Une redirection de l'appli passe telle quelle (proxy_redirect n'est pas simulé).
+    return reponse(r.code, r.corps, (r.entetes ?? []).filter((e) => e.startsWith('Location: ')));
   }
   // Un fichier : root + chemin, ou alias à la place du préfixe de la location.
   const sansRequete = chemin.split('?')[0] || '/';

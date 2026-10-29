@@ -67,7 +67,7 @@ describe('Le carnet et la progression', () => {
     const md = enMarkdown({}, t, ['eveil', 'bourg', 'fermer-la-porte']);
     expect(md).toContain('## Progression');
     expect(md).toMatch(/- L.Effaceur : 2 chapitres terminés sur 4/);
-    expect(md).toMatch(/- Les Lettres du quartier : 1 chapitre terminé sur 8/);
+    expect(md).toMatch(/- Les Lettres du quartier : 1 chapitre terminé sur 9/);
     expect(md).toContain('Fermer la porte');
     expect(enMarkdown({}, t, [])).toContain('Aucun chapitre terminé');
   });

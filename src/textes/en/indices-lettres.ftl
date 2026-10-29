@@ -83,3 +83,24 @@ indice-recidive-agenda =
 indice-recidive-fin =
     .piste = The jails are loaded: check whom they ban (the repeat offenders and the bot, but neither Rania nor the visitors).
     .solution = sudo fail2ban-client status, then sudo fail2ban-client status recidive and sudo fail2ban-client status nginx-limit-req
+
+## Chapter 9 — The Repair Café
+
+indice-atelier-occupe =
+    .piste = apt said "Job for apache2.service failed". systemctl status apache2 and journalctl -u apache2 say why; sudo ss -tlnp shows who listens on which port.
+    .solution = journalctl -u apache2: "Address already in use" on port 80; sudo ss -tlnp: nginx holds it.
+indice-atelier-ecoute =
+    .piste = Apache's ports are in /etc/apache2/ports.conf (Listen). Rania expects it on 127.0.0.1:8080, like the calendar. Then start the service.
+    .solution = sudo nano /etc/apache2/ports.conf: Listen 127.0.0.1:8080 instead of Listen 80; sudo apache2ctl configtest; sudo systemctl restart apache2
+indice-atelier-site =
+    .piste = sudo apache2ctl -S lists the sites Apache has read: is the café's there? Apache only reads files ending in .conf from sites-enabled (man a2ensite). And the site's VirtualHost must be on the port Apache listens on.
+    .solution = sudo a2ensite repair; in /etc/apache2/sites-available/repair.conf, <VirtualHost 127.0.0.1:8080> (or *:8080); sudo apache2ctl configtest; sudo systemctl reload apache2; curl -H "Host: repair.example" http://127.0.0.1:8080/
+indice-atelier-proxy =
+    .piste = The café's nginx site is ready in /etc/nginx/sites-available/repair, but not enabled (like the café's, in "Sharing a home").
+    .solution = sudo ln -s /etc/nginx/sites-available/repair /etc/nginx/sites-enabled/; sudo nginx -t; sudo systemctl reload nginx; curl http://repair.example/
+indice-atelier-reecriture =
+    .piste = /guide/42 isn't a file: a rule in /var/www/repair's .htaccess transforms the address. Apache only reads .htaccess files if AllowOverride allows it (man apache2ctl), and RewriteRule comes from a module (man a2enmod). The site's error log says what's wrong.
+    .solution = In repair.conf's VirtualHost: <Directory /var/www/repair>, AllowOverride All, </Directory> (three lines); sudo a2enmod rewrite; sudo apache2ctl configtest; sudo systemctl restart apache2; curl http://repair.example/guide/42
+indice-atelier-fin =
+    .piste = Check everything: Apache enabled at boot and only on 127.0.0.1, http://repair.example/ and /guide/42 through nginx, letters.example intact.
+    .solution = systemctl is-enabled apache2; sudo ss -tlnp; curl http://repair.example/guide/42; curl http://letters.example/
