@@ -75,6 +75,7 @@ import { priorite } from './priorite';
 import { correctif } from './correctif';
 import { preuve } from './preuve';
 import { routine } from './routine';
+import { atelier } from './atelier';
 
 // Les histoires s'ouvrent peu à peu : chacune dit, dans `apres`, les chapitres
 // à finir avant d'en recevoir la clé (voir deverrouillage.ts et docs/SCENARIOS.md).
@@ -106,7 +107,7 @@ export const HISTOIRES: Histoire[] = [
   {
     id: 'lettres',
     apres: ['redemarrage', 'paquet-perdu'],
-    chapitres: [porte, pareFeu, sentinelle, colocation, chezMoi, concert, port, recidive],
+    chapitres: [porte, pareFeu, sentinelle, colocation, chezMoi, concert, port, recidive, atelier],
   },
   {
     id: 'fabrique',

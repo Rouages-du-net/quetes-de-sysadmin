@@ -188,7 +188,9 @@ demandent plusieurs.
 - [x] **Serveur web** : **Nginx**, **hôtes virtuels** (plusieurs sites sur une
       même machine), `sites-available` et `ln -s`, `nginx -t` avant de
       recharger ; quête « La colocation » (Les Lettres du quartier, chapitre 4)
-- [ ] Apache, pour comparer
+- [x] **Apache**, pour comparer : `ports.conf`, `a2ensite`, `apache2ctl -S`,
+      `.htaccess` et `AllowOverride`, `a2enmod rewrite`, derrière nginx ; quête
+      « L'atelier de réparation » (Les Lettres du quartier, chapitre 9)
 - [x] **Reverse proxy** devant une application (`proxy_pass`, barre finale,
       502 et `error.log`) ; `return 301` simulé
 - [x] En-têtes transmis à l'appli (`proxy_set_header`, `X-Forwarded-For`,

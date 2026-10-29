@@ -51,6 +51,7 @@ import { TRANSFERTS } from './transferts';
 import { STOCKAGE } from './stockage';
 import { LVM } from './lvm';
 import { FSTAB } from './fstab';
+import { APACHE } from './apache';
 
 export interface Contexte {
   args: string[];
@@ -132,6 +133,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...HEURE,
   ...SUPERVISION,
   ...TRANSFERTS,
+  ...APACHE,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: ({ args, jeu }) => (/^-l+$/.test(args[0] ?? '') ? sudoListe(jeu, args) : '') },

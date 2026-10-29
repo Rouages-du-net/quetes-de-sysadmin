@@ -245,6 +245,11 @@ recidive
   /home/vous → /home/you
   /home/vous/courriel_rania.txt → /home/you/email_rania.txt
 
+atelier
+  /home/vous → /home/you
+  /home/vous/courriel_kofi.txt → /home/you/email_kofi.txt
+  /home/vous/note_de_rania.txt → /home/you/note_from_rania.txt
+
 mise-a-jour
   /home/vous → /home/you
   /home/vous/message_de_yasmine.txt → /home/you/message_from_yasmine.txt

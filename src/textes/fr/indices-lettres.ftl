@@ -83,3 +83,24 @@ indice-recidive-agenda =
 indice-recidive-fin =
     .piste = Les prisons sont chargées : vérifie qui elles bannissent (les récidivistes et le robot, mais ni Rania ni les visiteur·ses).
     .solution = sudo fail2ban-client status, puis sudo fail2ban-client status recidive et sudo fail2ban-client status nginx-limit-req
+
+## Chapitre 9 — L'atelier de réparation
+
+indice-atelier-occupe =
+    .piste = apt a dit « Job for apache2.service failed ». systemctl status apache2 et journalctl -u apache2 disent pourquoi ; sudo ss -tlnp montre qui écoute sur quel port.
+    .solution = journalctl -u apache2 : « Address already in use » sur le port 80 ; sudo ss -tlnp : c'est nginx qui le tient.
+indice-atelier-ecoute =
+    .piste = Les ports d'Apache sont dans /etc/apache2/ports.conf (Listen). Rania l'attend sur 127.0.0.1:8080, comme l'agenda. Puis démarrer le service.
+    .solution = sudo nano /etc/apache2/ports.conf : Listen 127.0.0.1:8080 à la place de Listen 80 ; sudo apache2ctl configtest ; sudo systemctl restart apache2
+indice-atelier-site =
+    .piste = sudo apache2ctl -S liste les sites qu'Apache a lus : celui de l'atelier y est-il ? Apache ne lit dans sites-enabled que les fichiers en .conf (man a2ensite). Et le VirtualHost du site doit être sur le port où Apache écoute.
+    .solution = sudo a2ensite repair ; dans /etc/apache2/sites-available/repair.conf, <VirtualHost 127.0.0.1:8080> (ou *:8080) ; sudo apache2ctl configtest ; sudo systemctl reload apache2 ; curl -H "Host: repair.example" http://127.0.0.1:8080/
+indice-atelier-proxy =
+    .piste = Le site nginx de l'atelier est prêt dans /etc/nginx/sites-available/repair, mais pas activé (comme celui du café, dans « La colocation »).
+    .solution = sudo ln -s /etc/nginx/sites-available/repair /etc/nginx/sites-enabled/ ; sudo nginx -t ; sudo systemctl reload nginx ; curl http://repair.example/
+indice-atelier-reecriture =
+    .piste = /guide/42 n'est pas un fichier : une règle du .htaccess de /var/www/repair transforme l'adresse. Apache ne lit les .htaccess que si AllowOverride le permet (man apache2ctl), et RewriteRule vient d'un module (man a2enmod). Le journal d'erreurs du site dit ce qui coince.
+    .solution = Dans le VirtualHost de repair.conf : <Directory /var/www/repair>, AllowOverride All, </Directory> (trois lignes) ; sudo a2enmod rewrite ; sudo apache2ctl configtest ; sudo systemctl restart apache2 ; curl http://repair.example/guide/42
+indice-atelier-fin =
+    .piste = Vérifie tout : Apache activé au démarrage et seulement sur 127.0.0.1, http://repair.example/ et /guide/42 par nginx, letters.example intact.
+    .solution = systemctl is-enabled apache2 ; sudo ss -tlnp ; curl http://repair.example/guide/42 ; curl http://letters.example/
