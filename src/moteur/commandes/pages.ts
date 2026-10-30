@@ -9,6 +9,10 @@ import type { Commande } from './index';
 type Page = Pick<Commande, 'options' | 'longues' | 'exemples' | 'voir' | 'section'>;
 
 export const PAGES: Record<string, Page> = {
+  ansible: { options: ['m', 'a', 'b', 'i', 'u', 'l', 'C', 'D'], exemples: ['ansible centres -m ping', 'ansible centres -a "cat /etc/hostname"', 'ansible north -b -m service -a "name=ssh state=reloaded"', 'ansible centres --list-hosts'], voir: ['ansible-playbook', 'ansible-inventory', 'ansible-doc', 'ssh'] },
+  'ansible-doc': { options: ['l'], exemples: ['ansible-doc -l', 'ansible-doc copy'], voir: ['ansible', 'ansible-playbook'] },
+  'ansible-inventory': { exemples: ['ansible-inventory --graph', 'ansible-inventory --list'], voir: ['ansible', 'ansible-playbook'] },
+  'ansible-playbook': { options: ['i', 'l', 'C', 'D', 'b', 'u'], exemples: ['ansible-playbook site.yml', 'ansible-playbook site.yml --check --diff', 'ansible-playbook ssh.yml --limit north', 'ansible-playbook site.yml --syntax-check'], voir: ['ansible', 'ansible-doc', 'ansible-inventory'] },
   mailq: { exemples: ['mailq'], voir: ['postqueue', 'postsuper', 'mail'] },
   'opendkim-genkey': { section: 8, options: ['b', 'd', 'D', 's', 'v', 'r'], exemples: ['sudo -u opendkim opendkim-genkey -d gardens.example -s mail -D /etc/dkimkeys', 'sudo cat /etc/dkimkeys/mail.txt'], voir: ['opendkim-testkey', 'chown'] },
   'opendkim-testkey': { section: 8, options: ['d', 's', 'k', 'v'], exemples: ['sudo opendkim-testkey -d gardens.example -s mail -vvv'], voir: ['opendkim-genkey', 'dig'] },

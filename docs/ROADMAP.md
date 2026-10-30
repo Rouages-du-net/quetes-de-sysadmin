@@ -332,8 +332,9 @@ qui travaille sur les machines plutôt que sur les commutateurs).
 - [x] Histoire : le courrier qui arrive en spam (SPF, DKIM, DMARC, Postfix) ;
       « Le courrier indésirable », trois chapitres (Le facteur, La signature,
       La politique)
-- [ ] Histoire : automatiser avec Ansible (inventaire, playbook,
-      idempotence, `--check`)
+- [x] Histoire : automatiser avec Ansible (inventaire, playbook,
+      idempotence, `--check`) ; « La flotte », trois chapitres (L'inventaire,
+      Le playbook, La répétition)
 - [ ] Caddy, plus tard, en court chapitre de comparaison (HTTPS automatique)
 
 ---

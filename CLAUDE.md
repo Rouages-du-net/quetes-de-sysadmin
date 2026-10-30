@@ -46,6 +46,12 @@ rouages.net.
   `opendkim-genkey`, `opendkim-testkey` dans `commandes/courrier.ts` ;
   `chapitres/jardins.ts` : ce que les chapitres du « Courrier indésirable »
   ont en commun.
+- `src/moteur/ansible.ts` : Ansible (un sous-ensemble de YAML, `ansible.cfg`,
+  inventaire INI, modules, `become`, `--check`, `--diff`, handlers, PLAY
+  RECAP) ; la connexion passe par `connecterSansQuestion` d'`acces.ts`
+  (comme BatchMode) ; `ansible`, `ansible-playbook`, `ansible-inventory`,
+  `ansible-doc` dans `commandes/ansible.ts` ; `chapitres/flotte.ts` : ce que
+  les chapitres de « La flotte » ont en commun.
 - `src/moteur/tls.ts` : certificats (fichiers PEM lisibles par le jeu) ;
   `certbot` et `openssl` dans `commandes/certbot.ts` (le défi HTTP-01 passe
   par le nginx simulé).

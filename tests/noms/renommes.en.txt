@@ -649,6 +649,41 @@ politique
   /home/vous/rapports_dmarc/mailbox.example-2027-05-16.xml → /home/you/dmarc_reports/mailbox.example-2027-05-16.xml
   /home/vous/rapports_dmarc/post.example-2027-05-16.xml → /home/you/dmarc_reports/post.example-2027-05-16.xml
 
+inventaire
+  /home/vous → /home/you
+  /home/vous/.ssh → /home/you/.ssh
+  /home/vous/.ssh/id_ed25519 → /home/you/.ssh/id_ed25519
+  /home/vous/.ssh/id_ed25519.pub → /home/you/.ssh/id_ed25519.pub
+  /home/vous/ansible → /home/you/ansible
+  /home/vous/ansible/ansible.cfg → /home/you/ansible/ansible.cfg
+  /home/vous/ansible/inventory.ini → /home/you/ansible/inventory.ini
+  /home/vous/courriel_theo.txt → /home/you/email_theo.txt
+
+playbook
+  /home/vous → /home/you
+  /home/vous/.ssh → /home/you/.ssh
+  /home/vous/.ssh/id_ed25519 → /home/you/.ssh/id_ed25519
+  /home/vous/.ssh/id_ed25519.pub → /home/you/.ssh/id_ed25519.pub
+  /home/vous/.ssh/known_hosts → /home/you/.ssh/known_hosts
+  /home/vous/ansible → /home/you/ansible
+  /home/vous/ansible/ansible.cfg → /home/you/ansible/ansible.cfg
+  /home/vous/ansible/inventory.ini → /home/you/ansible/inventory.ini
+  /home/vous/ansible/site.yml → /home/you/ansible/site.yml
+  /home/vous/message_de_theo.txt → /home/you/message_from_theo.txt
+
+repetition
+  /home/vous → /home/you
+  /home/vous/.ssh → /home/you/.ssh
+  /home/vous/.ssh/id_ed25519 → /home/you/.ssh/id_ed25519
+  /home/vous/.ssh/id_ed25519.pub → /home/you/.ssh/id_ed25519.pub
+  /home/vous/.ssh/known_hosts → /home/you/.ssh/known_hosts
+  /home/vous/ansible → /home/you/ansible
+  /home/vous/ansible/ansible.cfg → /home/you/ansible/ansible.cfg
+  /home/vous/ansible/inventory.ini → /home/you/ansible/inventory.ini
+  /home/vous/ansible/site.yml → /home/you/ansible/site.yml
+  /home/vous/ansible/ssh.yml → /home/you/ansible/ssh.yml
+  /home/vous/note_de_theo.txt → /home/you/note_from_theo.txt
+
 poste
   /home/vous → /home/you
   /home/vous/bienvenue.txt → /home/you/welcome.txt

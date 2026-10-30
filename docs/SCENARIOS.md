@@ -182,6 +182,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | DNS (BIND) | zones A, AAAA, CNAME, MX, NS, TXT, SOA ; un primaire (`named`), un secondaire qui recopie quand le serial augmente (tout de suite), un résolveur public avec cache, ou le serveur de la machine en résolveur récursif (`recursif`) ; un `;` entre guillemets n'est pas un commentaire, les chaînes d'un TXT sont mises bout à bout ; `dig` (`@serveur`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (accolades et fichiers), `rndc reload`/`status` ; pas de section AUTHORITY, de DNSSEC ni de zones inverses | tout cela |
 | Postfix | `main.cf` lu comme `postconf` (une partie des paramètres ; un nom inconnu : « unused parameter »), `postconf` (`-n`, `-d`, `-x`, `-e`, `-h`), `postfix check/reload/start/stop/status/flush`, `postqueue -p/-f`, `mailq`, `postsuper -d` ; la file d'attente (raisons, identifiants) et `/var/log/mail.log` ; pas de vrai SMTP : les serveurs d'en face (déclarés par l'histoire) vérifient SPF, DKIM, DMARC avec le DNS simulé, sans cache ; Postfix ne réessaie pas tout seul (`postqueue -f`) ; le chroot n'est simulé que pour la prise du milter | MTA complet, réessais automatiques, TLS, `master.cf` |
 | OpenDKIM | `opendkim.conf` (`Domain`, `Selector`, `KeyFile`, `Socket`, `Mode`, `RequireSafeKeys`) ; refus d'une clé illisible ou lisible par d'autres ; `opendkim-genkey` (`-b`, `-d`, `-D`, `-s`, `-v`), `opendkim-testkey` (`-d`, `-s`, `-k`, `-v`) ; pas de vraie cryptographie (la clé publique est calculée à partir du fichier privé), pas de `KeyTable`/`SigningTable` ni de DNSSEC | signature RSA réelle, tables de clés, plusieurs domaines |
+| Ansible | `ansible.cfg` (`./`, `~/.ansible.cfg`, `/etc/ansible`), inventaire INI (groupes, `:vars`, `:children`), un sous-ensemble de YAML ; modules `ping`, `debug`, `apt`, `copy`, `file`, `lineinfile`, `user`, `service`/`systemd`, `command`, `shell` ; `become`, `--check`, `--diff`, handlers, `--limit`, `--force-handlers` ; connexion ssh sans question (BatchMode) ; pas de collecte réelle des faits, ni de variables Jinja, de rôles, de boucles ni de Python sur les cibles | gabarits Jinja, rôles, collections, `ansible-vault`, facts |
 | SPF, DKIM, DMARC | SPF (RFC 7208) : `ip4`, `a`, `mx`, `include`, `all`, `redirect=`, qualificatifs, dix requêtes au plus, deux enregistrements = `permerror` ; DKIM : la clé publiée sous `sélecteur._domainkey`, CNAME suivis ; DMARC (RFC 7489) : `p=`, `rua=`, alignement relâché (domaine organisationnel : les deux derniers niveaux) ; les rapports agrégés sont des fichiers donnés par l'histoire | `ip6`, `exists`, `ptr`, macros SPF, alignement strict, `sp=`, `pct=` appliqué, rapports reçus en pièce jointe |
 | `awk` | programme entre apostrophes : motifs, `BEGIN`/`END`, champs, tableaux, `printf`, fonctions courantes, `-F`, `-v` ; pas de `getline`, de redirection dans `print`, de fonctions définies ni de `?:` | le langage complet (mawk sur Debian) |
 | trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
@@ -1372,6 +1373,57 @@ Objectif vérifié sur l'état : internet voit p=quarantine (ou reject) avec
 rua=, la lettre et les courriels du serveur passent DMARC. Pièges prévus :
 quarantine avant l'alignement, l'include SPF du prestataire (qui n'aligne
 rien), le CNAME sans point final, deux enregistrements DMARC.
+
+## Histoire 18 : La flotte (trois chapitres)
+
+Les maisons de quartier ont trois serveurs (north, south, east, sur
+10.30.0.0/24, compte `deploy` avec sudo sans mot de passe) et un poste de
+pilotage, `pilote` (192.0.2.25), où Ansible est installé. Théo a commencé un
+dossier `~/ansible` avant de partir. L'histoire s'ouvre après « Les clés »
+(ssh par clé).
+
+### Chapitre 1 — L'inventaire (fait)
+
+| Étape | Commande apprise |
+|---|---|
+| Lancer depuis le bon dossier | `cd ansible` (sinon « No inventory was parsed ») |
+| Les clés d'hôte | `ansible centres -m ping` (« Host key verification failed »), `ssh deploy@north` puis `yes` |
+| Le compte | `remote_user` dans `ansible.cfg` (ou `-u deploy`, `ansible_user=`) |
+| Le centre qui manque | `ansible-inventory --graph`, l'inventaire INI |
+
+Objectif vérifié sur l'état : le groupe `centres` de l'inventaire contient
+les trois centres, et le dernier ping les a tous joints. Autre solution
+acceptée : `host_key_checking = False`.
+
+### Chapitre 2 — Le playbook (fait)
+
+| Étape | Commande apprise |
+|---|---|
+| Lancer le playbook de Théo | `ansible-playbook site.yml` (mkdir échoue sur north, la ligne du motd en double) |
+| Décrire un état | `ansible-doc copy`, `ansible-doc file`, `ansible-doc lineinfile` |
+| Répéter sans risque | `ansible-playbook site.yml --check --diff` |
+| Vérifier l'idempotence | une deuxième exécution : `changed=0` |
+
+Objectif vérifié sur l'état : htop installé, une seule ligne « Ansible »
+dans `/etc/motd`, `/srv/shared` présent sur les trois centres, et la
+dernière exécution complète n'a rien changé. Pièges prévus : `lineinfile`
+qui laisse le doublon déjà là, une erreur de YAML, un module mal écrit.
+Autre solution acceptée : `command` avec `creates=`.
+
+### Chapitre 3 — La répétition (fait)
+
+| Étape | Commande apprise |
+|---|---|
+| Répéter | `ansible-playbook ssh.yml --check --diff` (le handler introuvable) |
+| Un centre d'abord | `--limit north`, le nom du handler (majuscules comprises) |
+| Rattraper le rechargement | `ansible north -b -m service -a "name=ssh state=reloaded"` (ou `--force-handlers`) |
+| Tous | `ansible-playbook ssh.yml`, puis une exécution qui ne change rien |
+
+Objectif vérifié sur l'état : sur les trois centres, le fichier et la
+configuration chargée par sshd disent `PasswordAuthentication no`, et la
+dernière exécution complète n'a rien changé. Piège prévu : le fichier
+modifié sans que sshd soit rechargé (le handler n'est notifié qu'au
+changement).
 
 ## Idées pour la suite
 

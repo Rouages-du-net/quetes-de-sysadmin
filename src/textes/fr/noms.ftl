@@ -280,3 +280,8 @@ nom-courriel_nour-txt = courriel_nour.txt
 nom-message_de_nour-txt = message_de_nour.txt
 nom-rapports_dmarc = rapports_dmarc
 nom-lettre_newsmail-txt = lettre_newsmail.txt
+
+## La flotte
+nom-courriel_theo-txt = courriel_theo.txt
+nom-note_de_theo-txt = note_de_theo.txt
+nom-message_de_theo-txt = message_de_theo.txt

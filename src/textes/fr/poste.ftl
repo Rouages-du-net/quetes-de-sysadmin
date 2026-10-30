@@ -61,6 +61,7 @@ machine-ruche-motd = La Ruche — le routeur du tiers-lieu. eth0 : la box ; eth1
 machine-fournil-motd = Le Fournil — le serveur de la boulangerie : le site, l'appli de commandes, sa base. Un audit est passé par là.
 machine-labo-motd = Le Labo — le serveur du club photo : la galerie et les archives des membres. Deux disques en RAID 1.
 machine-jardin-motd = Les Jardins partagés — le site et le courrier de l'association (gardens.example). Merci de prendre soin des plants comme du serveur !
+machine-pilote-motd = Les maisons de quartier — le poste de pilotage : d'ici, Ansible s'occupe des serveurs des trois maisons.
 machine-petrin-motd = Le Fournil — nouveau serveur (migration), six mois après l'audit. La veille de sécurité, maintenant sans Salomé.
 
 # En se reconnectant à une machine dont le chapitre est en cours.
