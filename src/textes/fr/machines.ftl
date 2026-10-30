@@ -21,3 +21,4 @@ machine-ruche = ruche
 machine-fournil = fournil
 machine-labo = labo
 machine-jardin = jardin
+machine-pilote = pilote

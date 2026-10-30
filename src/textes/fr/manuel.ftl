@@ -29,6 +29,41 @@ man-a2ensite = active un site d'Apache : crée, dans /etc/apache2/sites-enabled,
     .exemple-1 = les sites disponibles
     .exemple-2 = activer sites-available/site.conf
     .exemple-3 = puis recharger Apache
+man-ansible = lance un module Ansible sur des machines de l'inventaire, sans playbook (une commande « ad-hoc »). Le motif dit lesquelles : all, un groupe, un hôte, plusieurs séparés par des virgules. -m donne le module (command par défaut), -a ses arguments (« name=htop state=present », ou la commande pour command et shell), -b le lance avec sudo (become). Ansible se connecte en ssh, sans jamais poser de question : la clé d'hôte doit être dans ~/.ssh/known_hosts et le compte (remote_user dans ansible.cfg, -u, ou ansible_user) doit avoir la clé. La configuration est lue dans ./ansible.cfg (le dossier courant), sinon ~/.ansible.cfg, sinon /etc/ansible/ansible.cfg. Chaque hôte répond SUCCESS (rien changé), CHANGED, FAILED ou UNREACHABLE.
+    .synopsis = ansible MOTIF [-m module] [-a arguments] [-b] [-i inventaire] [-u compte] [--list-hosts]
+    .option-m = le module (ping, apt, copy, service…).
+    .option-a = les arguments du module.
+    .option-b = avec sudo (become).
+    .option-i = l'inventaire à lire.
+    .option-u = le compte pour la connexion ssh.
+    .option-l = seulement ces hôtes (limit).
+    .option-C = vérifie seulement, sans rien changer (check).
+    .option-D = montre les différences (diff).
+    .exemple-1 = joindre les trois centres
+    .exemple-2 = lancer une commande partout
+    .exemple-3 = recharger ssh sur un centre, avec sudo
+    .exemple-4 = qui est dans le groupe centres
+man-ansible-doc = la documentation des modules d'Ansible : -l les liste, avec une ligne chacun ; ansible-doc MODULE en donne les options (= devant celles qui sont obligatoires) et des exemples. Le préfixe ansible.builtin. est facultatif.
+    .synopsis = ansible-doc -l ; ansible-doc MODULE
+    .option-l = la liste des modules.
+    .exemple-1 = les modules
+    .exemple-2 = les options du module copy
+man-ansible-inventory = montre l'inventaire tel qu'Ansible le comprend : --graph l'arbre des groupes et de leurs hôtes, --list tout, en JSON, avec les variables de chaque hôte. L'inventaire est un fichier INI : un [groupe] par section, un hôte par ligne (avec ses variables : ansible_host=…, ansible_user=…).
+    .synopsis = ansible-inventory --graph ; ansible-inventory --list
+    .exemple-1 = les groupes et leurs hôtes
+    .exemple-2 = tout, en JSON
+man-ansible-playbook = joue un playbook : un fichier YAML, une liste de plays ; chaque play a des hôtes (hosts), et des tâches (tasks) qui appellent chacune un module, dans l'ordre, sur chaque hôte. become: true passe par sudo. Une tâche qui change quelque chose peut notifier un handler (notify), joué une seule fois à la fin du play. La sortie dit, pour chaque tâche et chaque hôte, ok (rien à changer), changed, skipping ou fatal ; PLAY RECAP fait le compte. Un bon playbook relancé dit changed=0 (idempotence). --check joue sans rien changer, --diff montre les différences dans les fichiers, --limit restreint à quelques hôtes, --syntax-check vérifie seulement le YAML.
+    .synopsis = ansible-playbook PLAYBOOK [--check] [--diff] [--limit MOTIF] [--syntax-check] [--list-hosts] [--force-handlers]
+    .option-i = l'inventaire à lire.
+    .option-l = seulement ces hôtes (limit).
+    .option-C = vérifie seulement, sans rien changer (check).
+    .option-D = montre les différences (diff).
+    .option-b = avec sudo (become), pour tous les plays.
+    .option-u = le compte pour la connexion ssh.
+    .exemple-1 = jouer le playbook
+    .exemple-2 = la répétition : ce qui changerait, sans rien changer
+    .exemple-3 = un seul centre d'abord
+    .exemple-4 = vérifier le YAML
 man-apache2ctl = vérifie la configuration d'Apache et pilote le service (sous systemd, start, stop, restart et graceful passent par systemctl). La configuration part de /etc/apache2/apache2.conf, qui charge les modules (mods-enabled), les ports (ports.conf : Listen, les adresses et ports où Apache écoute), puis les fragments (conf-enabled) et les sites (sites-enabled/*.conf). Un site est un bloc <VirtualHost adresse:port> avec ServerName (son nom), ServerAlias (ses autres noms) et DocumentRoot (le lieu des pages) ; une section <Directory chemin> règle un répertoire (Require all granted, Options, AllowOverride). Pour une demande, Apache choisit d'abord les VirtualHost de l'adresse et du port, puis celui dont le nom correspond à l'en-tête Host, sinon le premier lu. Avec AllowOverride (All, FileInfo…), Apache lit à chaque visite les fichiers .htaccess des répertoires : il n'y a rien à recharger, mais chaque directive doit être permise et son module chargé. Erreurs du service : /var/log/apache2/error.log (ou l'ErrorLog du site).
     .synopsis = apache2ctl configtest ; apache2ctl -S ; apache2ctl -M ; apache2ctl start|stop|restart|graceful ; apache2ctl -v
     .option-t = vérifie la configuration (comme configtest) : « Syntax OK », ou le fichier et la ligne de l'erreur.

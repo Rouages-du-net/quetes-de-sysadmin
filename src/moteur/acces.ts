@@ -321,3 +321,34 @@ function authentifier(origine: Shell, sauts: Saut[], suite: () => string, i: num
   };
   return cle(0);
 }
+
+/**
+ * Une connexion sans question (comme ssh -o BatchMode=yes, ce que fait
+ * Ansible) : la clé d'hôte doit déjà être dans known_hosts, et une clé
+ * privée sans phrase de passe doit être autorisée en face. Renvoie la
+ * session d'en face, ou le message d'erreur de ssh.
+ */
+export function connecterSansQuestion(origine: Shell, cible: string, verifierCleHote = true): { shell: Shell } | { erreur: string } {
+  const sauts = preparer(origine, cible);
+  if (typeof sauts === 'string') return { erreur: sauts };
+  const lignes = (origine.lire('~/.ssh/known_hosts') ?? '').split('\n');
+  for (const s of sauts) {
+    const cle = cleHote(s.machine, '');
+    const connue = lignes.filter((l) => l.split(' ')[0].split(',').includes(s.hote));
+    if (verifierCleHote && !connue.length) return { erreur: 'Host key verification failed.' };
+    if (verifierCleHote && !connue.some((l) => l.endsWith(cle))) return { erreur: `Host key for ${s.hote} has changed and you have requested strict checking.\nHost key verification failed.` };
+    const config: Record<string, string> = s.shell.etat.sshd?.charge ?? {};
+    const permis = !!s.shell.comptes.utilisateurs[s.utilisateur] && autorise(config, s.utilisateur);
+    const autorisees = clesAutorisees(s.shell, s.utilisateur);
+    const phrases = (origine.etat.phrasesDePasse as Record<string, string> | undefined) ?? {};
+    const ok = [...new Set([...s.identites, ...CLES_PAR_DEFAUT])].some((chemin) => {
+      const n = origine.trouver(chemin);
+      if (!n || n.type !== 'fichier' || typeof n.contenu !== 'string') return false;
+      if ((n.mode ?? 'rw-r--r--').slice(3) !== '------' || phrases[origine.resoudre(chemin)]) return false;
+      return permis && autorisees.includes(publiqueDe(n.contenu));
+    });
+    if (!ok) return { erreur: `${s.utilisateur}@${s.hote}: Permission denied (${methodes(config) || 'publickey'}).` };
+    noter(s, 'cle');
+  }
+  return { shell: sauts.at(-1)!.shell };
+}

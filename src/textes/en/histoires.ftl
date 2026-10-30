@@ -35,3 +35,5 @@ histoire-veille = The Watch
     .resume = Six months after the audit, the bakery has migrated to a new server: building the habit of a security watch, sorting a bulletin of CVEs, fixing what matters, proving it holds, then automating what can be automated.
 histoire-courrier = Junk Mail
     .resume = The Community Gardens' emails don't arrive, or end up in junk folders: SPF, DKIM and DMARC, with Postfix, OpenDKIM and DNS.
+histoire-flotte = The Fleet
+    .resume = Three neighbourhood centres, three servers, one person: manage them together with Ansible (inventory, playbook, idempotence, --check).

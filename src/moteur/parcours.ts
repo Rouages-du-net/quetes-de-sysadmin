@@ -30,7 +30,7 @@ export const PARCOURS: Parcours[] = [
   { id: 'sauvegardes', chapitres: ['sauvegarde', 'archives', 'versions', 'rancon', 'instantanes', 'base', 'transferts', 'hebergeur'] },
   {
     id: 'deploiement',
-    chapitres: ['manuscrit', 'mise-a-jour', 'composition', 'contournement', 'pleins-pouvoirs', 'depot-nu', 'retour-arriere', 'bleu-vert', 'canari', 'migration'],
+    chapitres: ['manuscrit', 'mise-a-jour', 'composition', 'contournement', 'pleins-pouvoirs', 'depot-nu', 'retour-arriere', 'bleu-vert', 'canari', 'migration', 'inventaire', 'playbook', 'repetition'],
   },
   { id: 'production', chapitres: ['redemarrage', 'disque-plein', 'memoire', 'inodes', 'horloge', 'sonde', 'post-mortem', 'goulot', 'fatigue', 'disque-neuf', 'agrandir', 'secours'] },
   { id: 'identites', chapitres: ['deuxieme-jour', 'depart', 'droits', 'cles', 'annuaire', 'wifi'] },

@@ -29,6 +29,41 @@ man-a2ensite = enables an Apache site: creates, in /etc/apache2/sites-enabled, a
     .exemple-1 = the available sites
     .exemple-2 = enable sites-available/site.conf
     .exemple-3 = then reload Apache
+man-ansible = runs an Ansible module on machines from the inventory, without a playbook (an "ad-hoc" command). The pattern says which: all, a group, a host, several separated by commas. -m gives the module (command by default), -a its arguments ("name=htop state=present", or the command for command and shell), -b runs it with sudo (become). Ansible connects over ssh, never asking a question: the host key must be in ~/.ssh/known_hosts and the account (remote_user in ansible.cfg, -u, or ansible_user) must have the key. The configuration is read from ./ansible.cfg (the current directory), else ~/.ansible.cfg, else /etc/ansible/ansible.cfg. Each host answers SUCCESS (nothing changed), CHANGED, FAILED or UNREACHABLE.
+    .synopsis = ansible PATTERN [-m module] [-a arguments] [-b] [-i inventory] [-u account] [--list-hosts]
+    .option-m = the module (ping, apt, copy, service…).
+    .option-a = the module's arguments.
+    .option-b = with sudo (become).
+    .option-i = the inventory to read.
+    .option-u = the account for the ssh connection.
+    .option-l = only these hosts (limit).
+    .option-C = only checks, changing nothing (check).
+    .option-D = shows the differences (diff).
+    .exemple-1 = reach the three centres
+    .exemple-2 = run a command everywhere
+    .exemple-3 = reload ssh on one centre, with sudo
+    .exemple-4 = who is in the centres group
+man-ansible-doc = the documentation of Ansible's modules: -l lists them, one line each; ansible-doc MODULE gives its options (= in front of the required ones) and examples. The ansible.builtin. prefix is optional.
+    .synopsis = ansible-doc -l ; ansible-doc MODULE
+    .option-l = the list of modules.
+    .exemple-1 = the modules
+    .exemple-2 = the copy module's options
+man-ansible-inventory = shows the inventory as Ansible understands it: --graph the tree of groups and their hosts, --list everything, in JSON, with each host's variables. The inventory is an INI file: one [group] per section, one host per line (with its variables: ansible_host=…, ansible_user=…).
+    .synopsis = ansible-inventory --graph ; ansible-inventory --list
+    .exemple-1 = the groups and their hosts
+    .exemple-2 = everything, in JSON
+man-ansible-playbook = plays a playbook: a YAML file, a list of plays; each play has hosts, and tasks that each call a module, in order, on each host. become: true goes through sudo. A task that changes something can notify a handler (notify), played only once at the end of the play. The output says, for each task and each host, ok (nothing to change), changed, skipping or fatal; PLAY RECAP sums it up. A good playbook run again says changed=0 (idempotence). --check plays without changing anything, --diff shows the differences in files, --limit restricts to some hosts, --syntax-check only checks the YAML.
+    .synopsis = ansible-playbook PLAYBOOK [--check] [--diff] [--limit PATTERN] [--syntax-check] [--list-hosts] [--force-handlers]
+    .option-i = the inventory to read.
+    .option-l = only these hosts (limit).
+    .option-C = only checks, changing nothing (check).
+    .option-D = shows the differences (diff).
+    .option-b = with sudo (become), for all plays.
+    .option-u = the account for the ssh connection.
+    .exemple-1 = play the playbook
+    .exemple-2 = the rehearsal: what would change, without changing anything
+    .exemple-3 = one centre first
+    .exemple-4 = check the YAML
 man-apache2ctl = checks Apache's configuration and drives the service (under systemd, start, stop, restart and graceful go through systemctl). The configuration starts from /etc/apache2/apache2.conf, which loads the modules (mods-enabled), the ports (ports.conf: Listen, the addresses and ports Apache listens on), then the snippets (conf-enabled) and the sites (sites-enabled/*.conf). A site is a <VirtualHost address:port> block with ServerName (its name), ServerAlias (its other names) and DocumentRoot (the directory of the pages); a <Directory path> section sets up a directory (Require all granted, Options, AllowOverride). For a request, Apache first picks the VirtualHosts of the address and port, then the one whose name matches the Host header, otherwise the first one read. With AllowOverride (All, FileInfo…), Apache reads the directories' .htaccess files on every visit: nothing to reload, but every directive must be allowed and its module loaded. Service errors: /var/log/apache2/error.log (or the site's ErrorLog).
     .synopsis = apache2ctl configtest ; apache2ctl -S ; apache2ctl -M ; apache2ctl start|stop|restart|graceful ; apache2ctl -v
     .option-t = checks the configuration (like configtest): "Syntax OK", or the file and line of the error.

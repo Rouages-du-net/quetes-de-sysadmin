@@ -75,3 +75,6 @@ atelier
 facteur
 signature
 politique
+inventaire
+playbook
+repetition

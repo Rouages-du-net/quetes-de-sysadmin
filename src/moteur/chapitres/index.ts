@@ -79,6 +79,9 @@ import { atelier } from './atelier';
 import { facteur } from './facteur';
 import { signature } from './signature';
 import { politiqueChapitre } from './politique';
+import { inventaire } from './inventaire';
+import { playbook } from './playbook';
+import { repetition } from './repetition';
 
 // Les histoires s'ouvrent peu à peu : chacune dit, dans `apres`, les chapitres
 // à finir avant d'en recevoir la clé (voir deverrouillage.ts et docs/SCENARIOS.md).
@@ -166,6 +169,11 @@ export const HISTOIRES: Histoire[] = [
     id: 'courrier',
     apres: ['chez-moi'],
     chapitres: [facteur, signature, politiqueChapitre],
+  },
+  {
+    id: 'flotte',
+    apres: ['cles'],
+    chapitres: [inventaire, playbook, repetition],
   },
 ];
 
