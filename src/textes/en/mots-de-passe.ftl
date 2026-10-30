@@ -10,6 +10,7 @@ mdp-bienvenue-2026 = welcome-2026
 mdp-fourmis-2026 = ants-2026
 mdp-semis-2027 = seeds-2027
 mdp-quartiers-2027 = districts-2027
+mdp-rayons-2027 = spokes-2027
 mdp-antenne-2027 = antenna-2027
 mdp-atelier2027 = workshop2027
 mdp-pion-cavalier-tour-27 = pawn-knight-rook-27

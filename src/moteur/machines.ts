@@ -54,6 +54,8 @@ export const MACHINES: Machine[] = [
   machine('jardin', '203.0.113.30', 'courrier'),
   // Le poste de pilotage des maisons de quartier : Ansible, et derrière lui trois serveurs.
   machine('pilote', '192.0.2.25', 'flotte'),
+  // La Rustine, l'atelier vélo : son petit serveur public (cycles.example), avec Caddy.
+  machine('rustine', '203.0.113.40', 'rustine'),
 ];
 
 /** Le nom d'une machine dans la langue (machines.ftl : royaume → kingdom) ; une machine sans traduction garde le sien. */

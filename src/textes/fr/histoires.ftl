@@ -37,3 +37,5 @@ histoire-courrier = Le courrier indésirable
     .resume = Les courriels des Jardins partagés n'arrivent pas, ou finissent dans les indésirables : SPF, DKIM et DMARC, avec Postfix, OpenDKIM et le DNS.
 histoire-flotte = La flotte
     .resume = Trois maisons de quartier, trois serveurs, une seule personne : les gérer ensemble avec Ansible (inventaire, playbook, idempotence, --check).
+histoire-rustine = La Rustine
+    .resume = L'atelier vélo a un serveur neuf, avec Caddy, qui « fait le HTTPS tout seul »… à condition de lui donner le bon nom et de laisser passer l'autorité de certification. Un court chapitre pour comparer avec nginx et certbot.

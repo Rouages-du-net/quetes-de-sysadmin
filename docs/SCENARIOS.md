@@ -183,6 +183,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | Postfix | `main.cf` lu comme `postconf` (une partie des paramètres ; un nom inconnu : « unused parameter »), `postconf` (`-n`, `-d`, `-x`, `-e`, `-h`), `postfix check/reload/start/stop/status/flush`, `postqueue -p/-f`, `mailq`, `postsuper -d` ; la file d'attente (raisons, identifiants) et `/var/log/mail.log` ; pas de vrai SMTP : les serveurs d'en face (déclarés par l'histoire) vérifient SPF, DKIM, DMARC avec le DNS simulé, sans cache ; Postfix ne réessaie pas tout seul (`postqueue -f`) ; le chroot n'est simulé que pour la prise du milter | MTA complet, réessais automatiques, TLS, `master.cf` |
 | OpenDKIM | `opendkim.conf` (`Domain`, `Selector`, `KeyFile`, `Socket`, `Mode`, `RequireSafeKeys`) ; refus d'une clé illisible ou lisible par d'autres ; `opendkim-genkey` (`-b`, `-d`, `-D`, `-s`, `-v`), `opendkim-testkey` (`-d`, `-s`, `-k`, `-v`) ; pas de vraie cryptographie (la clé publique est calculée à partir du fichier privé), pas de `KeyTable`/`SigningTable` ni de DNSSEC | signature RSA réelle, tables de clés, plusieurs domaines |
 | Ansible | `ansible.cfg` (`./`, `~/.ansible.cfg`, `/etc/ansible`), inventaire INI (groupes, `:vars`, `:children`), un sous-ensemble de YAML ; modules `ping`, `debug`, `apt`, `copy`, `file`, `lineinfile`, `user`, `service`/`systemd`, `command`, `shell` ; `become`, `--check`, `--diff`, handlers, `--limit`, `--force-handlers` ; connexion ssh sans question (BatchMode) ; pas de collecte réelle des faits, ni de variables Jinja, de rôles, de boucles ni de Python sur les cibles | gabarits Jinja, rôles, collections, `ansible-vault`, facts |
+| Caddy | le Caddyfile (adresses, options globales, un ou plusieurs sites, erreurs de l'adaptateur), `caddy validate`, `adapt` (JSON simplifié), `fmt`, `reload` (par l'API d'administration), `version` ; HTTPS automatique : certificat de Let's Encrypt pour les noms de domaine, redirection 308, défi raté si le DNS ne mène pas à la machine ou si le pare-feu ferme 80 et 443 ; directives appliquées : `root`, `file_server`, `respond`, `redir`, `reverse_proxy` (les autres sont reconnues sans effet) ; un défi raté est retenté dès que la cause a disparu ; journaux JSON | matchers nommés, `handle`, ZeroSSL, certificats internes (`localhost`, IP), renouvellement, `caddy run` à côté du service |
 | SPF, DKIM, DMARC | SPF (RFC 7208) : `ip4`, `a`, `mx`, `include`, `all`, `redirect=`, qualificatifs, dix requêtes au plus, deux enregistrements = `permerror` ; DKIM : la clé publiée sous `sélecteur._domainkey`, CNAME suivis ; DMARC (RFC 7489) : `p=`, `rua=`, alignement relâché (domaine organisationnel : les deux derniers niveaux) ; les rapports agrégés sont des fichiers donnés par l'histoire | `ip6`, `exists`, `ptr`, macros SPF, alignement strict, `sp=`, `pct=` appliqué, rapports reçus en pièce jointe |
 | `awk` | programme entre apostrophes : motifs, `BEGIN`/`END`, champs, tableaux, `printf`, fonctions courantes, `-F`, `-v` ; pas de `getline`, de redirection dans `print`, de fonctions définies ni de `?:` | le langage complet (mawk sur Debian) |
 | trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
@@ -1424,6 +1425,35 @@ configuration chargée par sshd disent `PasswordAuthentication no`, et la
 dernière exécution complète n'a rien changé. Piège prévu : le fichier
 modifié sans que sshd soit rechargé (le handler n'est notifié qu'au
 changement).
+
+## Histoire 19 : La Rustine (un chapitre)
+
+La Rustine, l'atelier vélo associatif, a un petit serveur public (`rustine`,
+203.0.113.40, `cycles.example`) où Inès a installé Caddy « parce qu'il fait
+le HTTPS tout seul ». Un court chapitre de comparaison avec nginx et certbot
+(« Le certificat a expiré », Datacenter). L'histoire s'ouvre après « Le
+certificat a expiré » et « La colocation ».
+
+### Chapitre 1 — Le cadenas (fait)
+
+| Étape | Commande apprise |
+|---|---|
+| Lire ce que dit Caddy | `systemctl status caddy`, `journalctl -u caddy` (« no automatic HTTPS will be applied ») |
+| Donner son nom au site | le Caddyfile (`:80` → `cycles.example`), `caddy validate`, `systemctl reload caddy` |
+| Laisser passer l'autorité | le journal (« Timeout during connect (likely firewall problem) »), `ufw allow 80/tcp`, `ufw allow 443/tcp` |
+| Vérifier | `curl -I http://cycles.example` (308), `curl https://cycles.example` |
+| Le nom des affiches | un bloc `www.cycles.example` avec `redir`, ou une liste d'adresses |
+
+Objectif vérifié sur l'état : vu d'internet (le pare-feu compte),
+https://cycles.example sert le site avec un certificat valable,
+http://cycles.example renvoie vers HTTPS, https://www.cycles.example sert le
+site ou y renvoie ; Caddy tourne et démarrera avec la machine. Pièges
+prévus : `http://cycles.example` (HTTP seulement), une directive mal écrite
+(le rechargement échoue, l'ancienne configuration reste), `caddy run` à
+côté du service, le seul port 443 ouvert (certificat obtenu, mais HTTP
+fermé dehors), un Caddyfile non formaté (`caddy fmt --overwrite`). Autres
+solutions acceptées : `cycles.example, www.cycles.example`, `caddy reload`,
+`ufw allow http`.
 
 ## Idées pour la suite
 

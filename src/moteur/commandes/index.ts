@@ -54,6 +54,7 @@ import { FSTAB } from './fstab';
 import { APACHE } from './apache';
 import { COURRIER } from './courrier';
 import { ANSIBLE } from './ansible';
+import { CADDY } from './caddy';
 
 export interface Contexte {
   args: string[];
@@ -138,6 +139,7 @@ export const COMMANDES: Record<string, Commande> = {
   ...APACHE,
   ...COURRIER,
   ...ANSIBLE,
+  ...CADDY,
   // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
   // manuel et la complétion.
   sudo: { lancer: ({ args, jeu }) => (/^-l+$/.test(args[0] ?? '') ? sudoListe(jeu, args) : '') },

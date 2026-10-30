@@ -52,6 +52,10 @@ rouages.net.
   (comme BatchMode) ; `ansible`, `ansible-playbook`, `ansible-inventory`,
   `ansible-doc` dans `commandes/ansible.ts` ; `chapitres/flotte.ts` : ce que
   les chapitres de « La flotte » ont en commun.
+- `src/moteur/caddy.ts` : Caddy d'une machine (`etat.caddy` : Caddyfile lu
+  comme l'adaptateur, `caddy fmt`, HTTPS automatique avec une autorité ACME
+  simulée que le DNS et le pare-feu peuvent bloquer, journaux JSON, ce que
+  répond Caddy à `curl`) ; `caddy` dans `commandes/caddy.ts`.
 - `src/moteur/tls.ts` : certificats (fichiers PEM lisibles par le jeu) ;
   `certbot` et `openssl` dans `commandes/certbot.ts` (le défi HTTP-01 passe
   par le nginx simulé).

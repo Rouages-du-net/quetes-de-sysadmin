@@ -37,3 +37,5 @@ histoire-courrier = Junk Mail
     .resume = The Community Gardens' emails don't arrive, or end up in junk folders: SPF, DKIM and DMARC, with Postfix, OpenDKIM and DNS.
 histoire-flotte = The Fleet
     .resume = Three neighbourhood centres, three servers, one person: manage them together with Ansible (inventory, playbook, idempotence, --check).
+histoire-rustine = The Patch
+    .resume = The bike workshop has a new server, with Caddy, which "does HTTPS by itself"… provided you give it the right name and let the certificate authority through. A short chapter to compare with nginx and certbot.

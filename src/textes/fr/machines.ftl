@@ -22,3 +22,4 @@ machine-fournil = fournil
 machine-labo = labo
 machine-jardin = jardin
 machine-pilote = pilote
+machine-rustine = rustine

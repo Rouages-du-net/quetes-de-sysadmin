@@ -17,6 +17,7 @@
 import type { Shell } from '../shell';
 import type { Commande } from './index';
 import { requete, requeteAppli, type Reponse } from '../nginx';
+import { requeteCaddy } from '../caddy';
 import { requeteDocker } from '../docker';
 import { digDns } from './bind';
 import { couvre, lire } from '../tls';
@@ -296,9 +297,9 @@ export const RESEAU: Record<string, Commande> = {
       }
       // Une machine avec nginx : la requête part vers elle-même (localhost,
       // son nom, son adresse), et nginx répond selon sa configuration chargée.
-      if (jeu.etat.nginx || jeu.etat.docker || jeu.etat.applis) {
+      if (jeu.etat.nginx || jeu.etat.docker || jeu.etat.applis || jeu.etat.caddy) {
         const conteneurs: string[] = (jeu.etat.docker?.conteneurs ?? []).map((c: { ip: string }) => c.ip);
-        const locaux = [...LOCAL_DE_BASE, ...(jeu.etat.nginx?.noms ?? jeu.etat.docker?.noms ?? []), ...conteneurs];
+        const locaux = [...LOCAL_DE_BASE, ...(jeu.etat.nginx?.noms ?? jeu.etat.docker?.noms ?? jeu.etat.caddy?.noms ?? []), ...conteneurs];
         const blocs: string[] = [];
         let [schema, cible, port, chemin, nom] = [m[1] ?? 'http', hote, Number(m[3] ?? (m[1] === 'https' ? 443 : 80)), m[4] || '/', hoteDemande ?? hote];
         // -L suit les redirections (au plus 5 ici).
@@ -308,8 +309,13 @@ export const RESEAU: Record<string, Commande> = {
           const viaDocker = requeteDocker(jeu, cible.toLowerCase() === 'localhost' ? '127.0.0.1' : cible, port, chemin);
           // Une appli de la machine, jointe sur son propre port (sans nginx).
           const viaAppli = port !== 80 && port !== 443 && LOCAL_DE_BASE.includes(cible.toLowerCase()) ? requeteAppli(jeu, port, chemin, { ...enTetes, host: nom === cible ? `${cible}:${port}` : nom }) : null;
+          // Caddy : il répond sur ses ports ; sans certificat pour ce nom, la poignée de main TLS échoue.
+          const viaCaddy = jeu.etat.caddy ? requeteCaddy(jeu, nom, chemin, port) : null;
+          if (viaCaddy && 'tls' in viaCaddy) return jeu.erreur('curl: (35) OpenSSL/3.5.1: error:0A000438:SSL routines::tlsv1 alert internal error');
           const r =
-            viaDocker !== undefined
+            viaCaddy
+              ? viaCaddy
+              : viaDocker !== undefined
               ? viaDocker && viaDocker.code !== 0 && reponseAppli(jeu, viaDocker)
               : viaAppli
                 ? reponseAppli(jeu, viaAppli)
