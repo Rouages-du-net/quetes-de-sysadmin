@@ -78,3 +78,4 @@ politique
 inventaire
 playbook
 repetition
+cadenas

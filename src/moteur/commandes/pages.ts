@@ -13,6 +13,11 @@ export const PAGES: Record<string, Page> = {
   'ansible-doc': { options: ['l'], exemples: ['ansible-doc -l', 'ansible-doc copy'], voir: ['ansible', 'ansible-playbook'] },
   'ansible-inventory': { exemples: ['ansible-inventory --graph', 'ansible-inventory --list'], voir: ['ansible', 'ansible-playbook'] },
   'ansible-playbook': { options: ['i', 'l', 'C', 'D', 'b', 'u'], exemples: ['ansible-playbook site.yml', 'ansible-playbook site.yml --check --diff', 'ansible-playbook ssh.yml --limit north', 'ansible-playbook site.yml --syntax-check'], voir: ['ansible', 'ansible-doc', 'ansible-inventory'] },
+  caddy: {
+    section: 8,
+    exemples: ['caddy validate --config /etc/caddy/Caddyfile', 'caddy fmt /etc/caddy/Caddyfile', 'sudo caddy fmt --overwrite /etc/caddy/Caddyfile', 'caddy reload --config /etc/caddy/Caddyfile', 'caddy version'],
+    voir: ['systemctl', 'journalctl', 'curl', 'openssl', 'nginx', 'certbot'],
+  },
   mailq: { exemples: ['mailq'], voir: ['postqueue', 'postsuper', 'mail'] },
   'opendkim-genkey': { section: 8, options: ['b', 'd', 'D', 's', 'v', 'r'], exemples: ['sudo -u opendkim opendkim-genkey -d gardens.example -s mail -D /etc/dkimkeys', 'sudo cat /etc/dkimkeys/mail.txt'], voir: ['opendkim-testkey', 'chown'] },
   'opendkim-testkey': { section: 8, options: ['d', 's', 'k', 'v'], exemples: ['sudo opendkim-testkey -d gardens.example -s mail -vvv'], voir: ['opendkim-genkey', 'dig'] },

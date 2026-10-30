@@ -22,3 +22,4 @@ machine-fournil = bakery
 machine-labo = lab
 machine-jardin = garden
 machine-pilote = pilot
+machine-rustine = patch

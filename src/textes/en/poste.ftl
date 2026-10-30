@@ -62,6 +62,7 @@ machine-fournil-motd = The Bakery — the bakery's server: the website, the orde
 machine-labo-motd = The Lab — the photo club's server: the gallery and the members' archives. Two disks in RAID 1.
 machine-jardin-motd = The Community Gardens — the association's website and mail (gardens.example). Please look after the seedlings and the server alike!
 machine-pilote-motd = The neighbourhood centres — the control machine: from here, Ansible looks after the three centres' servers.
+machine-rustine-motd = The Patch — the community bike workshop (cycles.example). A brand-new server, with Caddy. Remember to pump up your tyres!
 machine-petrin-motd = The Bakery — new server (migration), six months after the audit. The security watch, now without Salomé.
 
 # When reconnecting to a machine whose chapter is in progress.

@@ -335,7 +335,8 @@ qui travaille sur les machines plutôt que sur les commutateurs).
 - [x] Histoire : automatiser avec Ansible (inventaire, playbook,
       idempotence, `--check`) ; « La flotte », trois chapitres (L'inventaire,
       Le playbook, La répétition)
-- [ ] Caddy, plus tard, en court chapitre de comparaison (HTTPS automatique)
+- [x] Caddy, en court chapitre de comparaison (HTTPS automatique) ; « La
+      Rustine », un chapitre (Le cadenas)
 
 ---
 

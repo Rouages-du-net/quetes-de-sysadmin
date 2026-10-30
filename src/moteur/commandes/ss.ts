@@ -38,7 +38,7 @@ export const SS: Record<string, Commande> = {
             '0',
             e.proto === 'tcp' ? '128' : '0',
             `${e.adresse}:${port(e.port)}`,
-            `${e.adresse.includes(':') ? '[::]' : '0.0.0.0'}:*`,
+            `${e.adresse === '*' ? '*' : e.adresse.includes(':') ? '[::]' : '0.0.0.0'}:*`,
             lettres.has('p') && jeu.qui === 'root' ? `users:(("${e.processus}",pid=${e.pid},fd=3))` : '',
           ]);
       // La session ssh en cours, depuis le poste (sur le port par lequel on est entré).

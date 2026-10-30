@@ -283,3 +283,6 @@ nom-lettre_newsmail-txt = newsmail_letter.txt
 nom-courriel_theo-txt = email_theo.txt
 nom-note_de_theo-txt = note_from_theo.txt
 nom-message_de_theo-txt = message_from_theo.txt
+
+## The Patch
+nom-message_de_ines-txt = message_from_ines.txt

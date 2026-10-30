@@ -62,6 +62,7 @@ machine-fournil-motd = Le Fournil — le serveur de la boulangerie : le site, l'
 machine-labo-motd = Le Labo — le serveur du club photo : la galerie et les archives des membres. Deux disques en RAID 1.
 machine-jardin-motd = Les Jardins partagés — le site et le courrier de l'association (gardens.example). Merci de prendre soin des plants comme du serveur !
 machine-pilote-motd = Les maisons de quartier — le poste de pilotage : d'ici, Ansible s'occupe des serveurs des trois maisons.
+machine-rustine-motd = La Rustine — l'atelier vélo associatif (cycles.example). Un serveur tout neuf, avec Caddy. Pensez à regonfler vos pneus !
 machine-petrin-motd = Le Fournil — nouveau serveur (migration), six mois après l'audit. La veille de sécurité, maintenant sans Salomé.
 
 # En se reconnectant à une machine dont le chapitre est en cours.

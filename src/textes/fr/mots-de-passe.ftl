@@ -10,6 +10,7 @@ mdp-bienvenue-2026 = bienvenue-2026
 mdp-fourmis-2026 = fourmis-2026
 mdp-semis-2027 = semis-2027
 mdp-quartiers-2027 = quartiers-2027
+mdp-rayons-2027 = rayons-2027
 mdp-antenne-2027 = antenne-2027
 mdp-atelier2027 = atelier2027
 mdp-pion-cavalier-tour-27 = pion-cavalier-tour-27

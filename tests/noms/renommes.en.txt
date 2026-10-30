@@ -684,6 +684,10 @@ repetition
   /home/vous/ansible/ssh.yml → /home/you/ansible/ssh.yml
   /home/vous/note_de_theo.txt → /home/you/note_from_theo.txt
 
+cadenas
+  /home/vous → /home/you
+  /home/vous/message_de_ines.txt → /home/you/message_from_ines.txt
+
 poste
   /home/vous → /home/you
   /home/vous/bienvenue.txt → /home/you/welcome.txt

@@ -82,6 +82,7 @@ import { politiqueChapitre } from './politique';
 import { inventaire } from './inventaire';
 import { playbook } from './playbook';
 import { repetition } from './repetition';
+import { cadenas } from './cadenas';
 
 // Les histoires s'ouvrent peu à peu : chacune dit, dans `apres`, les chapitres
 // à finir avant d'en recevoir la clé (voir deverrouillage.ts et docs/SCENARIOS.md).
@@ -174,6 +175,11 @@ export const HISTOIRES: Histoire[] = [
     id: 'flotte',
     apres: ['cles'],
     chapitres: [inventaire, playbook, repetition],
+  },
+  {
+    id: 'rustine',
+    apres: ['certificat', 'colocation'],
+    chapitres: [cadenas],
   },
 ];
 

@@ -32,6 +32,7 @@ export const ORDRE_DU_CODE = [
   'atelier',
   'facteur', 'signature', 'politique',
   'inventaire', 'playbook', 'repetition',
+  'cadenas',
 ];
 
 // Base32 de Crockford : pas de I, L, O ni U, qu'on confondrait en recopiant.

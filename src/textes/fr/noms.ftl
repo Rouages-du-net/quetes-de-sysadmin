@@ -285,3 +285,6 @@ nom-lettre_newsmail-txt = lettre_newsmail.txt
 nom-courriel_theo-txt = courriel_theo.txt
 nom-note_de_theo-txt = note_de_theo.txt
 nom-message_de_theo-txt = message_de_theo.txt
+
+## La Rustine
+nom-message_de_ines-txt = message_de_ines.txt
