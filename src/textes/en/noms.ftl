@@ -272,3 +272,9 @@ nom-procedure_hebergeur-txt = host_procedure.txt
 nom-bulletin-securite-txt = security_bulletin.txt
 nom-veille-md = watch.md
 nom-priorite-md = priority.md
+
+## Junk Mail
+nom-courriel_nour-txt = email_nour.txt
+nom-message_de_nour-txt = message_from_nour.txt
+nom-rapports_dmarc = dmarc_reports
+nom-lettre_newsmail-txt = newsmail_letter.txt

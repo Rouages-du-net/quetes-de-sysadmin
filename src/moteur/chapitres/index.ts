@@ -76,6 +76,9 @@ import { correctif } from './correctif';
 import { preuve } from './preuve';
 import { routine } from './routine';
 import { atelier } from './atelier';
+import { facteur } from './facteur';
+import { signature } from './signature';
+import { politiqueChapitre } from './politique';
 
 // Les histoires s'ouvrent peu à peu : chacune dit, dans `apres`, les chapitres
 // à finir avant d'en recevoir la clé (voir deverrouillage.ts et docs/SCENARIOS.md).
@@ -158,6 +161,11 @@ export const HISTOIRES: Histoire[] = [
     id: 'veille',
     apres: ['contre-visite'],
     chapitres: [bulletin, priorite, correctif, preuve, routine],
+  },
+  {
+    id: 'courrier',
+    apres: ['chez-moi'],
+    chapitres: [facteur, signature, politiqueChapitre],
   },
 ];
 

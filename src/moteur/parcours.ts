@@ -24,7 +24,7 @@ export const PARCOURS: Parcours[] = [
   },
   {
     id: 'web',
-    chapitres: ['premier-jour', 'redemarrage', 'incendie', 'certificat', 'colocation', 'concert', 'proxy', 'atelier'],
+    chapitres: ['premier-jour', 'redemarrage', 'incendie', 'certificat', 'colocation', 'concert', 'proxy', 'atelier', 'facteur', 'signature', 'politique'],
   },
   { id: 'reseau', chapitres: ['paquet-perdu', 'chez-moi', 'rebond', 'tunnel', 'vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe'] },
   { id: 'sauvegardes', chapitres: ['sauvegarde', 'archives', 'versions', 'rancon', 'instantanes', 'base', 'transferts', 'hebergeur'] },
