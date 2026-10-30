@@ -9,6 +9,13 @@ import type { Commande } from './index';
 type Page = Pick<Commande, 'options' | 'longues' | 'exemples' | 'voir' | 'section'>;
 
 export const PAGES: Record<string, Page> = {
+  mailq: { exemples: ['mailq'], voir: ['postqueue', 'postsuper', 'mail'] },
+  'opendkim-genkey': { section: 8, options: ['b', 'd', 'D', 's', 'v', 'r'], exemples: ['sudo -u opendkim opendkim-genkey -d gardens.example -s mail -D /etc/dkimkeys', 'sudo cat /etc/dkimkeys/mail.txt'], voir: ['opendkim-testkey', 'chown'] },
+  'opendkim-testkey': { section: 8, options: ['d', 's', 'k', 'v'], exemples: ['sudo opendkim-testkey -d gardens.example -s mail -vvv'], voir: ['opendkim-genkey', 'dig'] },
+  postconf: { options: ['n', 'd', 'x', 'e', 'h'], exemples: ['postconf -n', 'postconf myorigin mydestination', 'sudo postconf -e "non_smtpd_milters = $smtpd_milters"'], voir: ['postfix', 'postqueue'] },
+  postfix: { exemples: ['sudo postfix check', 'sudo postfix reload', 'postfix status'], voir: ['postconf', 'postqueue', 'systemctl'] },
+  postqueue: { options: ['p', 'f'], exemples: ['postqueue -p', 'sudo postqueue -f'], voir: ['mailq', 'postsuper', 'postfix'] },
+  postsuper: { options: ['d'], exemples: ['sudo postsuper -d 3F2A9C1B7D', 'sudo postsuper -d ALL deferred'], voir: ['mailq', 'postqueue'] },
   a2dismod: { section: 8, exemples: ['sudo a2dismod autoindex'], voir: ['a2enmod', 'apache2ctl'] },
   a2disconf: { section: 8, exemples: ['sudo a2disconf serve-cgi-bin'], voir: ['a2enconf', 'apache2ctl'] },
   a2dissite: { section: 8, exemples: ['sudo a2dissite 000-default', 'sudo systemctl reload apache2'], voir: ['a2ensite', 'apache2ctl'] },

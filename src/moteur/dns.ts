@@ -41,6 +41,10 @@ export interface EtatDns {
   serveurs: { primaire: string[]; secondaire: string[]; resolveur: string[] };
   // Les fichiers de zone tels qu'ils étaient au dernier chargement (pour « up-to-date »).
   charges: Record<string, string>;
+  // Le serveur de la machine est aussi un résolveur (récursif) : pour les noms
+  // hors de ses zones, il répond comme le reste d'internet (le secondaire et
+  // les zones des autres, rangées avec lui).
+  recursif?: boolean;
 }
 
 export const dns = (jeu: Jeu): EtatDns | undefined => jeu.etat.dns;
@@ -56,6 +60,16 @@ function duree(texte: string): number | null {
   return Number(m[1]) * { s: 1, m: 60, h: 3600, d: 86400, w: 604800 }[m[2].toLowerCase() as 's']!;
 }
 
+// Un « ; » commence un commentaire, sauf entre guillemets (« v=DKIM1; k=rsa; »).
+const sansCommentaire = (ligne: string) => ligne.replace(/^((?:"[^"]*"|[^";])*);.*$/, '$1');
+const horsGuillemets = (ligne: string) => ligne.replace(/"[^"]*"/g, '');
+
+/** Le texte d'un enregistrement TXT : ses chaînes entre guillemets, mises bout à bout (RFC 7208, 3.3). */
+export const texteTxt = (donnees: string) => {
+  const chaines = [...donnees.matchAll(/"([^"]*)"/g)].map((m) => m[1]);
+  return chaines.length ? chaines.join('') : donnees;
+};
+
 /**
  * Lit un fichier de zone comme named-checkzone ; renvoie les enregistrements
  * et le serial, ou les erreurs au format de BIND (fichier:ligne: message).
@@ -70,11 +84,11 @@ export function lireZone(texte: string, zone: string, fichier: string): { zone: 
   const lignes = texte.split('\n');
   for (let i = 0; i < lignes.length; i++) {
     const numero = i + 1;
-    // Les parenthèses regroupent plusieurs lignes (le SOA).
-    let ligne = lignes[i].replace(/;.*$/, '');
-    if (ligne.includes('(')) {
-      while (!ligne.includes(')') && i + 1 < lignes.length) ligne += ' ' + lignes[++i].replace(/;.*$/, '');
-      ligne = ligne.replace(/[()]/g, ' ');
+    // Les parenthèses regroupent plusieurs lignes (le SOA, une clé DKIM).
+    let ligne = sansCommentaire(lignes[i]);
+    if (horsGuillemets(ligne).includes('(')) {
+      while (!horsGuillemets(ligne).includes(')') && i + 1 < lignes.length) ligne += ' ' + sansCommentaire(lignes[++i]);
+      ligne = ligne.replace(/"[^"]*"|[()]/g, (m) => (m === '(' || m === ')' ? ' ' : m));
     }
     if (!ligne.trim()) continue;
     const mots = [...ligne.matchAll(/"[^"]*"|\S+/g)].map((m) => m[0]);
@@ -254,6 +268,10 @@ function autoritaire(zones: Record<string, Zone>, nom: string, type: string): Re
 export function interroger(jeu: Jeu, serveur: Serveur, nom: string, type: string, maintenant: number): Reponse & { ttlRestant?: number } {
   const d = dns(jeu)!;
   const q = nom.replace(/\.?$/, '.').toLowerCase();
+  if (serveur === 'primaire' && d.recursif) {
+    const r = autoritaire({ ...d.secondaire, ...d.primaire }, q, type);
+    return { ...r, autorite: !!zoneDe(d.primaire, q) };
+  }
   if (serveur !== 'resolveur') return autoritaire(serveur === 'primaire' ? d.primaire : d.secondaire, q, type);
   const cle = `${q} ${type}`;
   const memo = d.cache[cle];

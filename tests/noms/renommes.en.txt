@@ -633,6 +633,22 @@ routine
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
+facteur
+  /home/vous → /home/you
+  /home/vous/courriel_nour.txt → /home/you/email_nour.txt
+
+signature
+  /home/vous → /home/you
+  /home/vous/message_de_nour.txt → /home/you/message_from_nour.txt
+
+politique
+  /home/vous → /home/you
+  /home/vous/courriel_nour.txt → /home/you/email_nour.txt
+  /home/vous/lettre_newsmail.txt → /home/you/newsmail_letter.txt
+  /home/vous/rapports_dmarc → /home/you/dmarc_reports
+  /home/vous/rapports_dmarc/mailbox.example-2027-05-16.xml → /home/you/dmarc_reports/mailbox.example-2027-05-16.xml
+  /home/vous/rapports_dmarc/post.example-2027-05-16.xml → /home/you/dmarc_reports/post.example-2027-05-16.xml
+
 poste
   /home/vous → /home/you
   /home/vous/bienvenue.txt → /home/you/welcome.txt

@@ -39,6 +39,13 @@ rouages.net.
   `mod_rewrite`) ; joint par nginx et `curl` comme une appli (`etat.applis`) ;
   `/etc/apache2` du paquet dans `apache-debian.ts` ; `apache2ctl`, `a2ensite`,
   `a2enmod`… dans `commandes/apache.ts`.
+- `src/moteur/courrier.ts` : le courrier d'une machine (Postfix : `main.cf`, la
+  file, `/var/log/mail.log` ; OpenDKIM : `opendkim.conf`, clé, signature au
+  passage du milter ; SPF, DKIM et DMARC vérifiés par les serveurs d'en face
+  avec le DNS simulé) ; `postconf`, `postfix`, `postqueue`, `mailq`, `postsuper`,
+  `opendkim-genkey`, `opendkim-testkey` dans `commandes/courrier.ts` ;
+  `chapitres/jardins.ts` : ce que les chapitres du « Courrier indésirable »
+  ont en commun.
 - `src/moteur/tls.ts` : certificats (fichiers PEM lisibles par le jeu) ;
   `certbot` et `openssl` dans `commandes/certbot.ts` (le défi HTTP-01 passe
   par le nginx simulé).

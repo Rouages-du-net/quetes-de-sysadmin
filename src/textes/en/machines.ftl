@@ -20,3 +20,4 @@ machine-cooperative = coop
 machine-ruche = hive
 machine-fournil = bakery
 machine-labo = lab
+machine-jardin = garden

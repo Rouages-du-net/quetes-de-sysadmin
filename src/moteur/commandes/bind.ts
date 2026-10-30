@@ -63,7 +63,7 @@ export function digDns(args: string[], jeu: Shell): string {
   if (court) return r.reponses.map((x) => x.donnees).join('\n');
   if (reponseSeule) return r.reponses.map(ligneRr).join('\n');
   const q = nom.replace(/\.?$/, '.').toLowerCase();
-  const recursif = serveur === 'resolveur';
+  const recursif = serveur === 'resolveur' || (serveur === 'primaire' && !!d.recursif);
   const adresse = adresseDe(jeu, cible);
   return [
     `; <<>> DiG ${VERSION} <<>> ${args.join(' ')}`,

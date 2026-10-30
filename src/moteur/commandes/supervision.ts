@@ -16,6 +16,7 @@ import { requeteAppli } from '../nginx';
 import { systemd } from '../systemd';
 import { heure, heureMachine } from '../heure';
 import type { Commande } from './index';
+import { soumettre } from '../courrier';
 
 export const PLUGINS = '/usr/lib/nagios/plugins';
 const CODES = ['OK', 'WARNING', 'CRITICAL', 'UNKNOWN'];
@@ -238,6 +239,11 @@ export const SUPERVISION: Record<string, Commande> = {
       if (!corps) {
         if (videInterdit) return '';
         jeu.erreur('Null message body; hope that\u0027s ok');
+      }
+      // Une machine avec Postfix (courrier.ts) : le message part par la file d'attente, vers la machine ou au-dehors.
+      if (jeu.etat.courrier) {
+        soumettre(jeu, jeu.qui, adresses, sujet, corps, jeu.comptes.utilisateurs[jeu.qui]?.uid ?? 1000);
+        return '';
       }
       envoyer(jeu, adresses, sujet, corps);
       return '';

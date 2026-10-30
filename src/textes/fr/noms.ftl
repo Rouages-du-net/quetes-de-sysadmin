@@ -274,3 +274,9 @@ nom-procedure_hebergeur-txt = procedure_hebergeur.txt
 nom-bulletin-securite-txt = bulletin-securite.txt
 nom-veille-md = veille.md
 nom-priorite-md = priorite.md
+
+## Le courrier indésirable
+nom-courriel_nour-txt = courriel_nour.txt
+nom-message_de_nour-txt = message_de_nour.txt
+nom-rapports_dmarc = rapports_dmarc
+nom-lettre_newsmail-txt = lettre_newsmail.txt

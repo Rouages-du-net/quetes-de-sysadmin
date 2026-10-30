@@ -33,3 +33,5 @@ histoire-labo = Le Labo
     .resume = Le serveur du club photo : un disque qui fatigue, ce que SMART dit vraiment, le RAID logiciel, remplacer un disque sans rien perdre ni se tromper de disque, agrandir la place avec LVM, puis sortir du mode secours.
 histoire-veille = La Veille
     .resume = Six mois après l'audit, la boulangerie a migré sur un nouveau serveur : prendre l'habitude de la veille de sécurité, trier un bulletin de CVE, corriger ce qui compte, prouver que ça tient, puis automatiser ce qui peut l'être.
+histoire-courrier = Le courrier indésirable
+    .resume = Les courriels des Jardins partagés n'arrivent pas, ou finissent dans les indésirables : SPF, DKIM et DMARC, avec Postfix, OpenDKIM et le DNS.

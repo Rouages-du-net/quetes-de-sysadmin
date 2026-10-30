@@ -50,6 +50,8 @@ export const MACHINES: Machine[] = [
   // Le Fournil, six mois plus tard (histoire 16) : un nouveau serveur
   // (migration pendant la croissance de l'activité), mêmes personnages.
   machine('petrin', '192.0.2.24', 'veille'),
+  // Les Jardins partagés : leur serveur, avec leur nom public gardens.example (même adresse).
+  machine('jardin', '203.0.113.30', 'courrier'),
 ];
 
 /** Le nom d'une machine dans la langue (machines.ftl : royaume → kingdom) ; une machine sans traduction garde le sien. */

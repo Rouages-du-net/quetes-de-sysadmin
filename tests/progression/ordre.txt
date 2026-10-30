@@ -72,3 +72,6 @@ correctif
 preuve
 routine
 atelier
+facteur
+signature
+politique

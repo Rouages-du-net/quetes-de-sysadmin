@@ -179,7 +179,10 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | `restic` | `-r` et `--password-file` obligatoires (pas de variables d'environnement) ; `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check`, `stats` ; pas d'`init` ; un « pack » par sauvegarde ; fichiers du dépôt illisibles mais pas binaires ; pas de barres de progression | tout cela, et `mount`, `copy`, `key`, `tag`, dépôts distants (sftp, S3, rest-server) |
 | liens symboliques | `ln -s` (`-f`, `-n`), suivis pour lire, écrire et entrer ; `ls -l` les montre ; `readlink` | aussi `realpath`, `find -L`… |
 | `curl` | `-I`, `-i`, `-k`, `-L`, `-H` (Host, ou un en-tête transmis), `-X`, `-d` (seulement la méthode) ; ne joint que la machine où l'on est (nginx, une appli sur son port, un conteneur) | toutes les options, tout le réseau |
-| DNS (BIND) | zones A, AAAA, CNAME, MX, NS, TXT, SOA ; un primaire (`named`), un secondaire qui recopie quand le serial augmente (tout de suite), un résolveur public avec cache ; `dig` (`@serveur`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (accolades et fichiers), `rndc reload`/`status` ; pas de section AUTHORITY, de DNSSEC ni de zones inverses | tout cela |
+| DNS (BIND) | zones A, AAAA, CNAME, MX, NS, TXT, SOA ; un primaire (`named`), un secondaire qui recopie quand le serial augmente (tout de suite), un résolveur public avec cache, ou le serveur de la machine en résolveur récursif (`recursif`) ; un `;` entre guillemets n'est pas un commentaire, les chaînes d'un TXT sont mises bout à bout ; `dig` (`@serveur`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (accolades et fichiers), `rndc reload`/`status` ; pas de section AUTHORITY, de DNSSEC ni de zones inverses | tout cela |
+| Postfix | `main.cf` lu comme `postconf` (une partie des paramètres ; un nom inconnu : « unused parameter »), `postconf` (`-n`, `-d`, `-x`, `-e`, `-h`), `postfix check/reload/start/stop/status/flush`, `postqueue -p/-f`, `mailq`, `postsuper -d` ; la file d'attente (raisons, identifiants) et `/var/log/mail.log` ; pas de vrai SMTP : les serveurs d'en face (déclarés par l'histoire) vérifient SPF, DKIM, DMARC avec le DNS simulé, sans cache ; Postfix ne réessaie pas tout seul (`postqueue -f`) ; le chroot n'est simulé que pour la prise du milter | MTA complet, réessais automatiques, TLS, `master.cf` |
+| OpenDKIM | `opendkim.conf` (`Domain`, `Selector`, `KeyFile`, `Socket`, `Mode`, `RequireSafeKeys`) ; refus d'une clé illisible ou lisible par d'autres ; `opendkim-genkey` (`-b`, `-d`, `-D`, `-s`, `-v`), `opendkim-testkey` (`-d`, `-s`, `-k`, `-v`) ; pas de vraie cryptographie (la clé publique est calculée à partir du fichier privé), pas de `KeyTable`/`SigningTable` ni de DNSSEC | signature RSA réelle, tables de clés, plusieurs domaines |
+| SPF, DKIM, DMARC | SPF (RFC 7208) : `ip4`, `a`, `mx`, `include`, `all`, `redirect=`, qualificatifs, dix requêtes au plus, deux enregistrements = `permerror` ; DKIM : la clé publiée sous `sélecteur._domainkey`, CNAME suivis ; DMARC (RFC 7489) : `p=`, `rua=`, alignement relâché (domaine organisationnel : les deux derniers niveaux) ; les rapports agrégés sont des fichiers donnés par l'histoire | `ip6`, `exists`, `ptr`, macros SPF, alignement strict, `sp=`, `pct=` appliqué, rapports reçus en pièce jointe |
 | `awk` | programme entre apostrophes : motifs, `BEGIN`/`END`, champs, tableaux, `printf`, fonctions courantes, `-F`, `-v` ; pas de `getline`, de redirection dans `print`, de fonctions définies ni de `?:` | le langage complet (mawk sur Debian) |
 | trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
 | Docker | images d'un registre simulé, conteneurs (couche, volumes, dossiers montés, ports, `--restart`), `run`, `ps`, `images`, `pull`, `logs` (`-n`, `-t`), `exec` (`-u` ; `ls`, `cat`, `env`, `id`, `whoami`), `cp`, `stop`, `start`, `restart`, `rm`, `port`, `update --restart`, `inspect` (`-f '{{.Champ}}'`), `volume` ; sans `-d`, `run` rend la main ; pas de réseau entre conteneurs hors Compose, pas de `build` | tout Docker |
@@ -208,7 +211,7 @@ il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
 | sorties géantes | l'écran ne garde que les 2 000 dernières lignes d'une sortie (avec une mention) | l'historique du terminal |
 | heure | chaque machine a un fuseau et un décalage d'horloge (`etat.heure`) ; `date` (`-s`), `timedatectl` (`status`, `show`, `list-timezones`, `set-timezone`, `set-ntp`, `set-time`, `timesync-status`) ; timesyncd essaie ses serveurs (`NTP=`, sinon `FallbackNTP=`) et se synchronise d'un coup à son démarrage ; le journal suit l'heure de la machine ; les fuseaux viennent d'`Intl` | ajustement progressif de l'horloge, RTC séparée, `hwclock`, chrony |
 | supervision | `check_disk` (`-w`, `-c`, `-W`, `-K`, `-p`), `check_http` (`-H`, `-I`, `-p`, `-u`, machine locale seulement), `check_procs` (`-C`, `-w`, `-c`) ; codes de retour 0 à 3 ; pas de page `man` réelle (les plugins répondent à `--help`) | tous les plugins et leurs options, `check_curl` |
-| `mail`, `last` | `mail` : `-s`, `-E`, livraison locale dans `/var/mail` après `/etc/aliases`, liste de la boîte sans mode interactif ; `last` : connexions décrites par le chapitre, `-n` | le courrier qui quitte la machine (MTA), `mail` interactif, `lastb`, `who` |
+| `mail`, `last` | `mail` : `-s`, `-E`, livraison locale dans `/var/mail` après `/etc/aliases` (sur une machine avec Postfix, le courrier passe par sa file et peut quitter la machine), liste de la boîte sans mode interactif ; `last` : connexions décrites par le chapitre, `-n` | le courrier qui quitte la machine (MTA), `mail` interactif, `lastb`, `who` |
 | timers systemd | unités écrites à la main dans `/etc/systemd/system` (`.service` : `Type=`, `ExecStart=`, `User=` ; `.timer` : `OnCalendar=` avec jour de la semaine, `*-*-*` et `H:M[:S]`, `OnBootSec=`, `OnActiveSec=`, `OnUnitActiveSec=`, `Unit=`), à la minute près ; `list-timers`, `systemd-analyze calendar` ; cron envoie par courrier ce qu'écrit une tâche | `Persistent=`, `RandomizedDelaySec=`, `AccuracySec=`, dépendances entre unités |
 | codes de retour | une commande rend 1 si elle a écrit une erreur, sauf si elle donne le sien (plugins, `grep`) ; dans un tube, celui de la dernière commande | tous les codes des vrais outils |
 | zombies | `ps -ef` montre le parent ; aucun signal n'agit sur un zombie ; ils disparaissent quand leur parent s'arrête | `wait()`, `SIGCHLD`, adoption par un sous-reaper |
@@ -1314,6 +1317,61 @@ secours) ; `/dev/sde1` (juste aujourd'hui, fragile demain) ; l'UUID sans
 `nofail` ; reprendre sans `daemon-reload` (systemd garde l'ancienne fstab) ;
 effacer la ligne (le serveur démarre, mais plus de scans) ; une ligne
 illisible.
+
+## Histoire 17 : Le courrier indésirable (trois chapitres)
+
+Les Jardins partagés (serveur `jardin`, 203.0.113.30, `gardens.example`) ont
+quitté leur hébergeur pour leur propre serveur : site, courrier (Postfix) et
+DNS (BIND, avec un secondaire chez le registre). Leurs courriels n'arrivent
+plus, ou finissent dans les indésirables. En face, des serveurs de courrier
+simulés vérifient SPF, DKIM et DMARC avec le DNS que publie internet :
+mailbox.example (exigeant), verifier.example (qui répond avec ses résultats,
+comme check-auth) et newsmail.example (le prestataire de la lettre
+d'information). L'histoire s'ouvre après « Ça marche chez moi » (le DNS).
+
+### Chapitre 1 — Le facteur (fait)
+
+| Étape | Commande apprise |
+|---|---|
+| Voir ce qui attend | `mailq`, `grep deferred /var/log/mail.log` (451 4.7.26 : ni SPF ni DKIM) |
+| Lire le SPF | `dig TXT gardens.example` (celui de l'ancien hébergeur) |
+| Le corriger | la zone (`v=spf1 mx -all`), le serial, `named-checkzone`, `rndc reload`, `dig @ns2.registry.example` |
+| Renvoyer | `sudo postqueue -f`, `mailq` |
+
+Objectif vérifié sur l'état : le secondaire publie un SPF qui autorise
+203.0.113.30, et les cinq courriels de bienvenue sont partis. Pièges prévus :
+deux enregistrements SPF (`permerror`), le serial oublié. Autres solutions
+acceptées : `a`, `ip4:203.0.113.30`, `~all`.
+
+### Chapitre 2 — La signature (fait)
+
+| Étape | Commande apprise |
+|---|---|
+| Voir ce que voit un destinataire | `echo test \| mail -s test check-auth@verifier.example`, `mail` |
+| La clé | `opendkim-genkey -d gardens.example -s mail -D /etc/dkimkeys`, `chown opendkim:` |
+| opendkim | `/etc/opendkim.conf` (`Domain`, `Selector`, `KeyFile`, `Socket`), `systemctl restart opendkim`, `journalctl -u opendkim` |
+| Le milter | `postconf -e` (`smtpd_milters`, `non_smtpd_milters`, `milter_default_action`), `systemctl reload postfix` |
+| Publier la clé | le fichier `.txt` dans la zone, le serial, `opendkim-testkey -vvv` |
+
+Objectif vérifié sur l'état : un courriel déposé sur la machine serait signé
+pour gardens.example, et la signature se vérifie avec la clé que publie
+internet. Pièges prévus : la clé créée par root (illisible pour opendkim),
+une clé lisible par tous (« key data is not secure »), la prise locale de
+Debian vue depuis le chroot de Postfix, les deux syntaxes de prise réseau,
+`smtpd_milters` seul, « key not secure » (DNSSEC, sans gravité), le serial.
+
+### Chapitre 3 — La politique (fait)
+
+| Étape | Commande apprise |
+|---|---|
+| Lire les rapports agrégés | `grep source_ip rapports_dmarc/*.xml`, `less` (le prestataire non aligné, un usurpateur) |
+| Aligner le prestataire | `nm1._domainkey IN CNAME nm1.dkim.newsmail.example.`, le serial |
+| Durcir | `_dmarc IN TXT "v=DMARC1; p=quarantine; rua=…"` |
+
+Objectif vérifié sur l'état : internet voit p=quarantine (ou reject) avec
+rua=, la lettre et les courriels du serveur passent DMARC. Pièges prévus :
+quarantine avant l'alignement, l'include SPF du prestataire (qui n'aligne
+rien), le CNAME sans point final, deux enregistrements DMARC.
 
 ## Idées pour la suite
 

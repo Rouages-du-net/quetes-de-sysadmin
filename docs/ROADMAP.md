@@ -329,7 +329,9 @@ qui travaille sur les machines plutôt que sur les commutateurs).
 - [x] Le Labo, chapitre 4 : « Le redémarrage qui coince » (`/etc/fstab` par
       UUID, `nofail`, le mode secours, `findmnt --verify`, `daemon-reload`)
 - [x] Journaux qui défilent et attaques pendant une quête (défensif)
-- [ ] Histoire : le courrier qui arrive en spam (SPF, DKIM, DMARC, Postfix)
+- [x] Histoire : le courrier qui arrive en spam (SPF, DKIM, DMARC, Postfix) ;
+      « Le courrier indésirable », trois chapitres (Le facteur, La signature,
+      La politique)
 - [ ] Histoire : automatiser avec Ansible (inventaire, playbook,
       idempotence, `--check`)
 - [ ] Caddy, plus tard, en court chapitre de comparaison (HTTPS automatique)
