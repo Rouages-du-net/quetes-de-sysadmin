@@ -1,5 +1,6 @@
-# Quêtes de Sysadmin — configuration Apache (cPanel), sysadmin.rouages.net
-# Reprise de rouages.net, plus l'en-tête CORS du fichier à intégrer.
+# Sysadmin Quests — Apache configuration (cPanel), sysadmin.rouages.net
+# Taken from rouages.net, plus the CORS header of the file to embed, and the
+# language chosen at the root.
 
 Options -Indexes
 ErrorDocument 404 /404.html
@@ -10,6 +11,17 @@ ErrorDocument 404 /404.html
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !=https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # The French pages used to be at the root: they now live under /fr/.
+  RewriteRule ^enseignants/?$ /fr/enseignants/ [L,R=301]
+  RewriteRule ^enseignants/classe/?$ /fr/enseignants/classe/ [L,R=301]
+
+  # The root picks a language from the browser (Accept-Language): French when
+  # the first language asked for is French, English otherwise. 302, so that
+  # the choice is made again on each visit (and by each browser).
+  RewriteCond %{HTTP:Accept-Language} ^fr [NC]
+  RewriteRule ^$ /fr/ [L,R=302]
+  RewriteRule ^$ /en/ [L,R=302]
 </IfModule>
 
 # Ne pas exposer l'état de synchronisation du déploiement FTP
@@ -37,6 +49,11 @@ ErrorDocument 404 /404.html
   <FilesMatch "\.html$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
+
+  # The root's answer depends on the browser's language: caches must know.
+  <If "%{REQUEST_URI} == '/'">
+    Header always merge Vary "Accept-Language"
+  </If>
 
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"

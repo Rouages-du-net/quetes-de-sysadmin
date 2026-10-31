@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { cleHote, empreinte, machineDeHistoire } from '../src/moteur/machines';
-import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { LANGUES, traducteur } from '../src/textes';
 import { dansLaLangue } from './noms';
 
 // Les trois chapitres qui donnent les clés (le quatrième, ajouté ensuite, ne compte pas).
@@ -159,7 +159,7 @@ for (const langue of LANGUES)
       expect(c.completer(debut('bibliotheque'))).toBe(L('ssh bibliotheque '));
     });
 
-    it.runIf(langue === LANGUE_DE_REFERENCE)('exit sur le poste explique où l’on est', () => {
+    it.runIf(langue === 'fr')('exit sur le poste explique où l’on est', () => {
       expect(jouer(new Console({ langue }), ['exit'])).toContain(L('Tu es sur ton propre poste'));
     });
   });

@@ -1,6 +1,6 @@
 // Les textes sont séparés du code (src/textes/<langue>/*.ftl, format Fluent) :
-// fichiers valides, identifiants uniques, traductions alignées sur le
-// français, et aucun texte en dur dans le moteur ni dans l'interface.
+// fichiers valides, identifiants uniques, traductions alignées sur
+// l'anglais (la langue de référence), et aucun texte en dur dans le moteur ni dans l'interface.
 
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -26,10 +26,13 @@ describe('Fichiers de textes', () => {
       expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([]);
     });
 
+  // English is the reference: every text exists in English first.
   for (const langue of LANGUES.filter((l) => l !== LANGUE_DE_REFERENCE))
-    it(`${langue} : pas de texte inconnu du français`, () => {
-      const fr = new Set(identifiants(LANGUE_DE_REFERENCE));
-      expect(identifiants(langue).filter((id) => !fr.has(id))).toEqual([]);
+    it(`${langue}: no text unknown in ${LANGUE_DE_REFERENCE}, none missing`, () => {
+      const reference = new Set(identifiants(LANGUE_DE_REFERENCE));
+      const traduits = new Set(identifiants(langue));
+      expect([...traduits].filter((id) => !reference.has(id))).toEqual([]);
+      expect([...reference].filter((id) => !traduits.has(id))).toEqual([]);
     });
 
   it('un texte absent est une erreur, pas un trou silencieux', () => {

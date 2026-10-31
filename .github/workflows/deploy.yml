@@ -75,10 +75,15 @@ jobs:
         run: |
           set -eu
           SITE=https://sysadmin.rouages.net
-          for i in 1 2 3 4 5; do curl -fsS -o /dev/null "$SITE/" && break; sleep 10; done
-          curl -fsS "$SITE/" | grep -q '<quetes-de-sysadmin'
+          for i in 1 2 3 4 5; do curl -fsS -o /dev/null "$SITE/en/" && break; sleep 10; done
+          curl -fsS "$SITE/en/" | grep -q '<quetes-de-sysadmin'
+          curl -fsS "$SITE/fr/" | grep -q '<quetes-de-sysadmin'
+          # The root picks the language from the browser.
+          test "$(curl -s -o /dev/null -w '%{redirect_url}' -H 'Accept-Language: fr-FR,fr;q=0.9' "$SITE/")" = "$SITE/fr/"
+          test "$(curl -s -o /dev/null -w '%{redirect_url}' -H 'Accept-Language: en-GB,en;q=0.9' "$SITE/")" = "$SITE/en/"
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$SITE/enseignants/")" = 301
           curl -fsSI "$SITE/integration/quetes-de-sysadmin.js" | grep -qi '^access-control-allow-origin: \*'
-          curl -fsSI "$SITE/" | grep -qi '^content-security-policy:'
+          curl -fsSI "$SITE/en/" | grep -qi '^content-security-policy:'
           test "$(curl -s -o /dev/null -w '%{http_code}' "$SITE/n-existe-pas/")" = 404
           test "$(curl -s -o /dev/null -w '%{http_code}' "$SITE/.ftp-deploy-sync-state.json")" = 403
           test "$(curl -s -o /dev/null -w '%{http_code}' "http://sysadmin.rouages.net/")" = 301
