@@ -11,7 +11,7 @@
 // pas sur la page, et ceux de la page ne le cassent pas. Les couleurs se
 // règlent de l'extérieur avec les variables --qds-* (voir styles.css).
 
-import { monter } from './interface/jeu';
+import { monter } from './interface/game';
 import styles from './interface/styles.css?inline';
 
 export class QuetesDeSysadmin extends HTMLElement {

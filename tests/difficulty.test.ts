@@ -1,11 +1,11 @@
-// The difficulty of the chapters (src/moteur/difficulty.ts): every chapter has
+// The difficulty of the chapters (src/engine/difficulty.ts): every chapter has
 // a level from 1 to 5, the levels are spread out, the first steps are easy,
 // and a chapter is never easier than the one before it in its story.
 
 import { describe, expect, it } from 'vitest';
-import { HISTOIRES } from '../src/moteur/chapitres';
-import { difficulty, stars, storyDifficulty } from '../src/moteur/difficulty';
-import { LANGUES, traducteur } from '../src/textes';
+import { HISTOIRES } from '../src/engine/chapters';
+import { difficulty, stars, storyDifficulty } from '../src/engine/difficulty';
+import { LANGUES, traducteur } from '../src/texts';
 
 const chapters = HISTOIRES.flatMap((h) => h.chapitres);
 

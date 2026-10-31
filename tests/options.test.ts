@@ -3,8 +3,8 @@
 // vrais outils (au lieu d'être prises pour un nom de fichier).
 
 import { describe, expect, it } from 'vitest';
-import { Console } from '../src/moteur/console';
-import { LANGUES } from '../src/textes';
+import { Console } from '../src/engine/console';
+import { LANGUES } from '../src/texts';
 
 for (const langue of LANGUES)
   describe(`Options longues — ${langue}`, () => {

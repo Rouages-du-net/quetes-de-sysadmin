@@ -17,7 +17,7 @@ agents, but its rules apply to everyone.
 - **Write a quest**: see "The format of a quest". Propose the idea in an
   issue first (the story, the commands it teaches, the traps), so we can
   agree on where it fits.
-- **Translate**: every text lives in `src/textes/<language>/*.ftl`
+- **Translate**: every text lives in `src/texts/<language>/*.ftl`
   (Fluent format). Copy the `en/` directory and translate; see
   [`docs/TRANSLATING.md`](docs/TRANSLATING.md) for names,
   passwords and machine names, which are translated too.
@@ -50,15 +50,15 @@ agents, but its rules apply to everyone.
 ## Languages
 
 - **English first.** English is the reference language of the game's texts:
-  every text is written in English first (`src/textes/en/`), then
-  translated (`src/textes/fr/`…). A missing translation shows in English.
+  every text is written in English first (`src/texts/en/`), then
+  translated (`src/texts/fr/`…). A missing translation shows in English.
 - **The repository is in English**: documentation, code comments, commit
   messages and pull requests. French versions of the README, of this page
   and of the embedding guide are kept up to date; the other documents are in
   English only.
 - **Code in English, over time.** The project started in French, and most
   identifiers (variables, functions, files, components) are still French
-  (`langue`, `chapitre`, `histoire`, `moteur/`…). Write **new** code in
+  (`langue`, `chapitre`, `histoire`, `engine/`…). Write **new** code in
   English. When you touch existing code, you may rename what you change
   (keeping the change focused), but don't mix a large rename with a
   feature in the same pull request. Public names get an English alias
@@ -79,19 +79,19 @@ simulated network. A chapter is:
 
 | File | Contents |
 |---|---|
-| `src/moteur/chapitres/<id>.ts` | the chapter: its commands, starting world, state and events |
-| `src/textes/en/chapitre-<id>.ftl` (and `fr/`) | all its texts: the starting email, files, events, debrief |
-| `src/textes/en/indices-<story>.ftl` (and `fr/`) | its graduated hints: a lead, then almost the answer, for each step |
+| `src/engine/chapitres/<id>.ts` | the chapter: its commands, starting world, state and events |
+| `src/texts/en/chapitre-<id>.ftl` (and `fr/`) | all its texts: the starting email, files, events, debrief |
+| `src/texts/en/indices-<story>.ftl` (and `fr/`) | its graduated hints: a lead, then almost the answer, for each step |
 | `tests/<story>.test.ts` | the replayed game: the expected solution, another solution, the false leads |
 | `docs/SCENARIOS.md` | its sheet: the story, the commands learnt, the goal, the traps |
 
 A new chapter also goes at the end of `ORDRE_DU_CODE` in
-`src/moteur/progression.ts` and of `tests/progression/ordre.txt`, and in at
-least one learning path (`src/moteur/parcours.ts`). A new story declares in
-`src/moteur/chapitres/index.ts` which chapters unlock it (`apres`), and gets
-a machine in `src/moteur/machines.ts`.
+`src/engine/progress.ts` and of `tests/progress/order.txt`, and in at
+least one learning path (`src/engine/paths.ts`). A new story declares in
+`src/engine/chapters/index.ts` which chapters unlock it (`apres`), and gets
+a machine in `src/engine/machines.ts`.
 
-### The chapter (`Chapitre`, in `src/moteur/monde.ts`)
+### The chapter (`Chapitre`, in `src/engine/world.ts`)
 
 - `id`, `numero`, and the story that holds it.
 - `commandes`: the commands the chapter knows (others answer "command not
@@ -134,7 +134,7 @@ the tool's **official** documentation (manual pages, project site, RFCs).
 ### Difficulty
 
 Each chapter shows a difficulty from 1 to 5 stars, computed by
-`src/moteur/difficulty.ts` from how much of the game comes before it and
+`src/engine/difficulty.ts` from how much of the game comes before it and
 from its size: there is nothing to set by hand.
 
 ### Tests
@@ -153,13 +153,13 @@ the tests are written with the French names of places and files (the
 
 ## A new simulated tool
 
-A tool (nginx, nftables, slapd…) has its engine in `src/moteur/<tool>.ts`
+A tool (nginx, nftables, slapd…) has its engine in `src/engine/<tool>.ts`
 (no DOM, no displayed text) and its commands in
-`src/moteur/commandes/<tool>.ts`. For each command:
+`src/engine/commandes/<tool>.ts`. For each command:
 
-- its entry in `src/moteur/commandes/index.ts`;
-- its options and examples in `src/moteur/commandes/pages.ts`;
-- its page in `src/textes/en/manuel.ftl` and `fr/manuel.ftl`
+- its entry in `src/engine/commands/index.ts`;
+- its options and examples in `src/engine/commands/pages.ts`;
+- its page in `src/texts/en/manuel.ftl` and `fr/manuel.ftl`
   (`man-<command>`, `.synopsis`, `.option-X`, `.exemple-N`);
 - a row in the table of differences in `docs/SCENARIOS.md`;
 - a line in the structure section of `CLAUDE.md`.
@@ -170,7 +170,7 @@ A tool (nginx, nftables, slapd…) has its engine in `src/moteur/<tool>.ts`
 npm test                    # every quest replayed
 npm run build               # the site, the embeddable file, tsc
 npm run preview &           # then:
-npm run test:navigateur     # Chromium, 1000 and 375 px, CSP
+npm run test:browser     # Chromium, 1000 and 375 px, CSP
 ```
 
 For a visible change, play the chapter in a browser at 375 and 1000 px wide:

@@ -39,18 +39,18 @@ npm run dev                # http://localhost:4321
 npm test                   # rejoue toutes les quêtes (Vitest)
 npm run build              # dist/ : le site, et dist/integration/ : le fichier à intégrer
 npm run preview &          # http://localhost:4340
-npm run test:navigateur    # vérifie le jeu dans Chromium (1000 et 375 px, CSP, intégration)
+npm run test:browser    # vérifie le jeu dans Chromium (1000 et 375 px, CSP, intégration)
 ```
 
 | Dossier | Contenu |
 |---|---|
 | `src/pages/`, `src/layouts/` | les pages du site (Astro) |
 | `public/.htaccess` | configuration Apache : HTTPS, cache, sécurité, CORS |
-| `src/moteur/` | le shell simulé, les commandes, le manuel, les histoires et leurs chapitres |
+| `src/engine/` | le shell simulé, les commandes, le manuel, les histoires et leurs chapitres |
 | `src/interface/` | l'interface du jeu (terminal, choix des histoires, progression) et ses styles |
 | `src/element.ts` | l'élément `<quetes-de-sysadmin>` à intégrer |
-| `src/textes/` | tous les textes du jeu, par langue, au format Fluent ([traduire](docs/TRANSLATING.md)) |
-| `tests/` | parties rejouées (`quetes.test.ts`) et vérifications dans le navigateur |
+| `src/texts/` | tous les textes du jeu, par langue, au format Fluent ([traduire](docs/TRANSLATING.md)) |
+| `tests/` | parties rejouées (`quests.test.ts`) et vérifications dans le navigateur |
 | `docs/` (en anglais, sauf l'intégration) | [scénarios](docs/SCENARIOS.md), [intégration](docs/INTEGRER.md), [déploiement](docs/DEPLOYMENT.md), [feuille de route](docs/ROADMAP.md), [contribuer](CONTRIBUTING.fr.md), [une histoire offensive](docs/OFFENSIVE-STORY.md) |
 
 ## D'où vient ce jeu

@@ -35,15 +35,15 @@ machine du réseau simulé. Un chapitre, c'est :
 
 | Fichier | Contenu |
 |---|---|
-| `src/moteur/chapitres/<id>.ts` | le chapitre : ses commandes, son monde de départ, son état, ses événements |
-| `src/textes/en/chapitre-<id>.ftl` (et `fr/`) | tous ses textes : courriel de départ, fichiers, événements, débrief |
-| `src/textes/en/indices-<histoire>.ftl` (et `fr/`) | ses indices gradués : une piste, puis presque la réponse, pour chaque étape |
+| `src/engine/chapitres/<id>.ts` | le chapitre : ses commandes, son monde de départ, son état, ses événements |
+| `src/texts/en/chapitre-<id>.ftl` (et `fr/`) | tous ses textes : courriel de départ, fichiers, événements, débrief |
+| `src/texts/en/indices-<histoire>.ftl` (et `fr/`) | ses indices gradués : une piste, puis presque la réponse, pour chaque étape |
 | `tests/<histoire>.test.ts` | la partie rejouée : la solution attendue, une autre solution, les fausses pistes |
 | `docs/SCENARIOS.md` | sa fiche : l'histoire, les commandes apprises, l'objectif, les pièges |
 
-### Le chapitre (`Chapitre`, dans `src/moteur/monde.ts`)
+### Le chapitre (`Chapitre`, dans `src/engine/world.ts`)
 
-- `id`, `numero`, et l'histoire qui l'accueille (`src/moteur/chapitres/index.ts`).
+- `id`, `numero`, et l'histoire qui l'accueille (`src/engine/chapters/index.ts`).
 - `commandes` : celles que le chapitre connaît (les autres répondent
   « commande introuvable », comme sur une machine où le paquet manque) ;
   leur manuel reste lisible avec `man`.
@@ -100,18 +100,18 @@ traduit), et les textes vérifiés en français.
 ### La difficulté
 
 Chaque chapitre affiche une difficulté de 1 à 5 étoiles, calculée par
-`src/moteur/difficulty.ts` d'après ce qui le précède dans le jeu et sa
+`src/engine/difficulty.ts` d'après ce qui le précède dans le jeu et sa
 taille : rien à régler à la main.
 
 ## Un nouvel outil simulé
 
-Un outil (nginx, nftables, slapd…) a son moteur dans `src/moteur/<outil>.ts`
+Un outil (nginx, nftables, slapd…) a son moteur dans `src/engine/<outil>.ts`
 (sans DOM, sans texte affiché) et ses commandes dans
-`src/moteur/commandes/<outil>.ts`. Pour chaque commande :
+`src/engine/commandes/<outil>.ts`. Pour chaque commande :
 
-- son entrée dans `src/moteur/commandes/index.ts` ;
-- ses options et exemples dans `src/moteur/commandes/pages.ts` ;
-- sa page dans `src/textes/en/manuel.ftl` et `fr/manuel.ftl`
+- son entrée dans `src/engine/commands/index.ts` ;
+- ses options et exemples dans `src/engine/commands/pages.ts` ;
+- sa page dans `src/texts/en/manuel.ftl` et `fr/manuel.ftl`
   (`man-<commande>`, `.synopsis`, `.option-X`, `.exemple-N`) ;
 - une ligne dans le tableau des écarts de `SCENARIOS.md` ;
 - une ligne dans la structure de `CLAUDE.md`.
@@ -122,7 +122,7 @@ Un outil (nginx, nftables, slapd…) a son moteur dans `src/moteur/<outil>.ts`
 npm test                    # chaque quête rejouée
 npm run build               # le site, le fichier d'intégration, tsc
 npm run preview &           # puis :
-npm run test:navigateur     # Chromium, 1000 et 375 px, CSP
+npm run test:browser     # Chromium, 1000 et 375 px, CSP
 ```
 
 Pour un changement visible, jouer le chapitre dans Chromium à 375 et 1000 px
@@ -131,14 +131,14 @@ de large : pas d'erreur console, pas de défilement horizontal.
 ## Les langues
 
 - **L'anglais d'abord.** C'est la langue de référence des textes du jeu :
-  chaque texte s'écrit d'abord en anglais (`src/textes/en/`), puis se
-  traduit (`src/textes/fr/`…).
+  chaque texte s'écrit d'abord en anglais (`src/texts/en/`), puis se
+  traduit (`src/texts/fr/`…).
 - **Le dépôt est en anglais** : documentation, commentaires du code,
   messages de commit et PR. Ce guide, le README et le guide d'intégration
   ont leur version française ; les autres documents sont en anglais
   seulement.
 - **Le code en anglais, peu à peu.** La plupart des identifiants sont
-  encore en français (`langue`, `chapitre`, `histoire`, `moteur/`…). Le
+  encore en français (`langue`, `chapitre`, `histoire`, `engine/`…). Le
   **nouveau** code s'écrit en anglais ; on peut renommer ce qu'on touche,
   sans mêler un grand renommage et une fonctionnalité dans la même PR. Un
   nom public reçoit d'abord son alias anglais, l'ancien reste accepté.

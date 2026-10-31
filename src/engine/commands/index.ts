@@ -1,0 +1,154 @@
+// Toutes les commandes du jeu. Chaque chapitre choisit celles qu'il connaît
+// (Chapitre.commandes). Une commande lit ses arguments et l'entrée du tube,
+// renvoie sa sortie, et signale ses erreurs avec jeu.erreur().
+
+import type { Shell } from '../shell';
+import { FICHIERS } from './files';
+import { TEXTE } from './text';
+import { SYSTEME } from './system';
+import { RESEAU } from './network';
+import { GIT } from './git';
+import { PAGES } from './pages';
+import { SSH } from './ssh';
+import { COMPTES } from './accounts';
+import { SUDOERS_COMMANDES, sudoListe } from './sudoers';
+import { TMUX } from './tmux';
+import { LAN } from './lan';
+import { NFTABLES } from './nftables';
+import { WIREGUARD } from './wireguard';
+import { LDAP } from './ldap';
+import { RADIUS } from './radius';
+import { NMAP } from './nmap';
+import { LYNIS } from './lynis';
+import { SFTP } from './sftp';
+import { LFTP } from './lftp';
+import { SYSTEMD } from './systemd';
+import { EDITEUR } from './editor';
+import { SSHD } from './sshd';
+import { UFW } from './ufw';
+import { SS } from './ss';
+import { FAIL2BAN } from './fail2ban';
+import { SAUVEGARDE } from './backup';
+import { APT } from './apt';
+import { IOSTAT } from './iostat';
+import { UNATTENDED } from './unattended';
+import { CERTBOT } from './certbot';
+import { RESTIC } from './restic';
+import { BIND } from './bind';
+import { AWK } from './awk';
+import { DOCKER } from './docker';
+import { NC } from './nc';
+import { DIFF } from './diff';
+import { SCRIPTS } from './scripts';
+import { DISQUES } from './disks';
+import { RSNAPSHOT } from './rsnapshot';
+import { POSTGRES } from './postgres';
+import { JOURNAUX } from './logs';
+import { MEMOIRE } from './memory';
+import { HEURE } from './time';
+import { SUPERVISION } from './monitoring';
+import { TRANSFERTS } from './transfers';
+import { STOCKAGE } from './storage';
+import { LVM } from './lvm';
+import { FSTAB } from './fstab';
+import { APACHE } from './apache';
+import { COURRIER } from './mail';
+import { ANSIBLE } from './ansible';
+import { CADDY } from './caddy';
+
+export interface Contexte {
+  args: string[];
+  // Ce qui arrive par un tube (null : rien, la commande est en tête).
+  entree: string | null;
+  jeu: Shell;
+  // Vrai si la sortie va à l'écran (dernière commande, sans redirection).
+  dernier: boolean;
+}
+
+export interface Commande {
+  // Le texte de la page man est dans src/texts/<langue>/manuel.ftl
+  // (man-<commande>) ; ici, la partie technique (voir pages.ts).
+  // Options courtes acceptées. Si présent, une option inconnue donne le
+  // vrai message d'erreur, qui renvoie vers --help.
+  options?: string[];
+  // Options longues de GNU que le jeu comprend : leur équivalent court (« all » → « a »),
+  // ou '' pour une option longue lue telle quelle (--max-depth=1). Les autres :
+  // « unrecognized option '--x' », comme les vrais outils.
+  longues?: Record<string, string>;
+  // Commandes d'exemple (leur explication : .exemple-N dans manuel.ftl).
+  exemples?: string[];
+  voir?: string[];
+  // La commande analyse elle-même ses options (pas de contrôle générique).
+  propresOptions?: boolean;
+  // Section du manuel : 1 (commandes), 8 (administration, ex. usermod).
+  section?: number;
+  // Une commande hors du PATH (un plugin de supervision) : on ne la lance que
+  // par son chemin complet, dans ce dossier.
+  dossier?: string;
+  lancer: (c: Contexte) => string;
+}
+
+export const COMMANDES: Record<string, Commande> = {
+  ...FICHIERS,
+  ...TEXTE,
+  ...SYSTEME,
+  ...RESEAU,
+  ...GIT,
+  ...SSH,
+  ...COMPTES,
+  ...SUDOERS_COMMANDES,
+  ...TMUX,
+  ...LAN,
+  ...NFTABLES,
+  ...WIREGUARD,
+  ...LDAP,
+  ...RADIUS,
+  ...NMAP,
+  ...LYNIS,
+  ...SFTP,
+  ...LFTP,
+  ...SYSTEMD,
+  ...EDITEUR,
+  ...SSHD,
+  ...UFW,
+  ...SS,
+  ...FAIL2BAN,
+  ...SAUVEGARDE,
+  ...APT,
+  ...IOSTAT,
+  ...UNATTENDED,
+  ...CERTBOT,
+  ...RESTIC,
+  ...BIND,
+  ...AWK,
+  ...DOCKER,
+  ...NC,
+  ...DIFF,
+  ...SCRIPTS,
+  ...DISQUES,
+  ...STOCKAGE,
+  ...LVM,
+  ...FSTAB,
+  ...RSNAPSHOT,
+  ...POSTGRES,
+  ...JOURNAUX,
+  ...MEMOIRE,
+  ...HEURE,
+  ...SUPERVISION,
+  ...TRANSFERTS,
+  ...APACHE,
+  ...COURRIER,
+  ...ANSIBLE,
+  ...CADDY,
+  // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
+  // manuel et la complétion.
+  sudo: { lancer: ({ args, jeu }) => (/^-l+$/.test(args[0] ?? '') ? sudoListe(jeu, args) : '') },
+  clear: { lancer: () => '' },
+  man: { lancer: () => '' },
+  apropos: { lancer: () => '' },
+  whatis: { lancer: () => '' },
+  aide: { lancer: () => '' },
+};
+
+// Options, exemples et renvois du manuel (pages.ts).
+for (const [nom, complement] of Object.entries(PAGES)) if (COMMANDES[nom]) Object.assign(COMMANDES[nom], complement);

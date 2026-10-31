@@ -3,11 +3,11 @@
 // Rejoué avec la console, dans chaque langue.
 
 import { describe, expect, it } from 'vitest';
-import { Console } from '../src/moteur/console';
-import { HISTOIRES } from '../src/moteur/chapitres';
-import { prerequis } from '../src/moteur/deverrouillage';
-import { LANGUES, traducteur } from '../src/textes';
-import { dansLaLangue, machinesDansLaLangue } from './noms';
+import { Console } from '../src/engine/console';
+import { HISTOIRES } from '../src/engine/chapters';
+import { prerequis } from '../src/engine/unlocking';
+import { LANGUES, traducteur } from '../src/texts';
+import { dansLaLangue, machinesDansLaLangue } from './names';
 
 // L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
 const EFFACEUR = [...new Set([...HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id), ...prerequis('audit')])];

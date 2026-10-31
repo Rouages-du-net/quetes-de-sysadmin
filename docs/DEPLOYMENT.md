@@ -8,11 +8,11 @@ every push to `main`, as for rouages.net.
 
 Workflow `.github/workflows/deploy.yml`:
 
-1. **tester** (every PR and every push): `npm test` (quests replayed),
-   `npm run build`, then `npm run test:navigateur` in Chromium (1000 and
+1. **test** (every PR and every push): `npm test` (quests replayed),
+   `npm run build`, then `npm run test:browser` in Chromium (1000 and
    375 px, no console error, with the CSP of `.htaccess`, the root's
    language choice, the 404 page, embedding in another page).
-2. **deployer** (`main` only): upload of `dist/` over FTPS, then a check of
+2. **deploy** (`main` only): upload of `dist/` over FTPS, then a check of
    the live site (the `/en/` and `/fr/` pages, the root's redirection to
    each language, the redirect of the old `/enseignants/` address, the CORS
    header of the embeddable file, the CSP, the 404, the FTP state file
@@ -50,8 +50,8 @@ Repository → *Settings* → *Secrets and variables* → *Actions* (or the
 
 ### 3. First deployment
 
-*Actions* → "Tester et déployer sur sysadmin.rouages.net" → *Run workflow*
-on `main`. The "Vérifier le site en ligne" step must pass; otherwise, its
+*Actions* → "Test and deploy to sysadmin.rouages.net" → *Run workflow*
+on `main`. The "Check the live site" step must pass; otherwise, its
 log says which check fails.
 
 ## Good to know

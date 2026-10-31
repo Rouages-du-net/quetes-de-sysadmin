@@ -2,9 +2,9 @@
 // a son adresse et le texte de son lien, dans chaque langue.
 
 import { describe, expect, it } from 'vitest';
-import { CHAPITRES } from '../src/moteur/chapitres';
-import { LIENS_ROUAGES, PAGES_ROUAGES, liensRouages } from '../src/moteur/rouages';
-import { LANGUES, traducteur } from '../src/textes';
+import { CHAPITRES } from '../src/engine/chapters';
+import { LIENS_ROUAGES, PAGES_ROUAGES, liensRouages } from '../src/engine/rouages';
+import { LANGUES, traducteur } from '../src/texts';
 
 describe('Liens vers Les rouages du net', () => {
   it('chaque chapitre cité existe, et chaque page citée a son adresse', () => {

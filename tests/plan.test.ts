@@ -2,11 +2,11 @@
 // son histoire et ses machines internes ; le schéma ne superpose rien ; les
 // repères (tu es ici, déjà connecté·e) suivent la partie.
 import { describe, expect, it } from 'vitest';
-import { HISTOIRES } from '../src/moteur/chapitres';
-import { machineDeHistoire } from '../src/moteur/machines';
-import { disposer, reperes, type ElementPlan } from '../src/moteur/plan';
-import { Console } from '../src/moteur/console';
-import { LANGUES, traducteur } from '../src/textes';
+import { HISTOIRES } from '../src/engine/chapters';
+import { machineDeHistoire } from '../src/engine/machines';
+import { disposer, reperes, type ElementPlan } from '../src/engine/plan';
+import { Console } from '../src/engine/console';
+import { LANGUES, traducteur } from '../src/texts';
 
 const tous = (e: ElementPlan): ElementPlan[] => [e, ...(e.enfants ?? []).flatMap(tous)];
 const EFFACEUR = ['eveil', 'bourg', 'racine', 'sauvegarde'];

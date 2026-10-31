@@ -1,7 +1,7 @@
 // awk : les tournures courantes des administrateur·rices, sur un journal web.
 import { describe, expect, it } from 'vitest';
-import { Shell } from '../src/moteur/shell';
-import { d, f, type Chapitre } from '../src/moteur/monde';
+import { Shell } from '../src/engine/shell';
+import { d, f, type Chapitre } from '../src/engine/world';
 
 const JOURNAL = [
   '198.51.100.23 - - [27/Mar/2027:20:00:01 +0100] "GET /agenda/ateliers?page=1 HTTP/1.1" 502 157 "-" "Aspirateur/2.1"',

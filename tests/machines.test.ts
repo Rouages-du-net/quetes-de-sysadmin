@@ -3,18 +3,18 @@
 // textes qui emploient ceux de leur langue.
 import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
-import { MACHINES, nomMachine, POSTE } from '../src/moteur/machines';
-import { motDePasse } from '../src/moteur/monde';
-import { LANGUES, traducteur } from '../src/textes';
+import { MACHINES, nomMachine, POSTE } from '../src/engine/machines';
+import { motDePasse } from '../src/engine/world';
+import { LANGUES, traducteur } from '../src/texts';
 
 const IDS = [POSTE, ...MACHINES].map((m) => m.nom);
-const MOTS_DE_PASSE = [...readFileSync(new URL('../src/textes/fr/mots-de-passe.ftl', import.meta.url), 'utf8').matchAll(/^mdp-(\S+) =/gm)].map((m) => m[1]);
+const MOTS_DE_PASSE = [...readFileSync(new URL('../src/texts/fr/mots-de-passe.ftl', import.meta.url), 'utf8').matchAll(/^mdp-(\S+) =/gm)].map((m) => m[1]);
 // Les valeurs des messages d'une langue (sans les commentaires ni les identifiants).
 const valeurs = (langue: string) =>
-  readdirSync(new URL(`../src/textes/${langue}/`, import.meta.url))
+  readdirSync(new URL(`../src/texts/${langue}/`, import.meta.url))
     .filter((f) => f.endsWith('.ftl') && !['machines.ftl', 'mots-de-passe.ftl'].includes(f))
     .flatMap((f) =>
-      readFileSync(new URL(`../src/textes/${langue}/${f}`, import.meta.url), 'utf8')
+      readFileSync(new URL(`../src/texts/${langue}/${f}`, import.meta.url), 'utf8')
         .split('\n')
         .filter((l) => !l.startsWith('#'))
         .map((l) => [f, l.replace(/^[\w-]+(\.[\w-]+)?\s*=/, '')] as const),

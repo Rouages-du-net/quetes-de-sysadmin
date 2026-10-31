@@ -16,10 +16,10 @@ work for when you take it on, and possibly for having it built afterwards.
   example *The Penetration Test*, *The Other Side*, *Red Team*. Check when
   you start: `grep "^## Story" docs/SCENARIOS.md` gives the current list and
   the next free number.
-- **A machine and an address**, in `src/moteur/machines.ts` (see the
+- **A machine and an address**, in `src/engine/machines.ts` (see the
   existing entries for the form).
-- **A story identifier** (`id`), used in `src/moteur/chapitres/index.ts`,
-  `src/moteur/progression.ts` and `tests/progression/ordre.txt`.
+- **A story identifier** (`id`), used in `src/engine/chapters/index.ts`,
+  `src/engine/progress.ts` and `tests/progress/order.txt`.
 
 ## 2. The decisions that are yours
 
@@ -31,12 +31,12 @@ This is the part I didn't make for you:
   world? The closer you get to the third option, the heavier section 4 below
   weighs.
 - **Real or fictitious CVEs.** The rest of the game uses fictitious CVEs
-  (`CVE-2099-NNNNN`, see `src/moteur/chapitres/veille.ts`) precisely so as
+  (`CVE-2099-NNNNN`, see `src/engine/chapters/watch.ts`) precisely so as
   never to document a real exploitable flaw. Starting from real ones is a
   choice to own and to explain in the debrief.
 - **The safeguards told in the story itself**: written authorisation, legal
   framework, the difference between a commissioned penetration test and an
-  intrusion — as `src/moteur/chapitres/perimetre.ts` ("L'Audit") already
+  intrusion — as `src/engine/chapters/scope.ts` ("L'Audit") already
   does for reading a scope. An offensive story without this explicit
   reminder would be an attack manual, not a quest.
 
@@ -47,17 +47,17 @@ chapter:
 
 | File | Contents |
 |---|---|
-| `src/moteur/chapitres/<id>.ts` | known commands, starting world, the tools' state, events |
-| `src/textes/en/chapitre-<id>.ftl` + `fr/...` | every text: arrival, events, debrief |
-| `src/textes/en/indices-<story>.ftl` + `fr/...` | one graduated hint per step |
+| `src/engine/chapitres/<id>.ts` | known commands, starting world, the tools' state, events |
+| `src/texts/en/chapitre-<id>.ftl` + `fr/...` | every text: arrival, events, debrief |
+| `src/texts/en/indices-<story>.ftl` + `fr/...` | one graduated hint per step |
 | `tests/<story>.test.ts` | each chapter replayed (solution, another way if possible, false leads), in every language |
 | `docs/SCENARIOS.md` | the story's sheet |
 
-And the wiring once the chapters are written: `src/moteur/chapitres/index.ts`
-(register the story), `src/moteur/parcours.ts` (each chapter in at least one
-learning path, otherwise `tests/parcours.test.ts` fails),
-`src/textes/en/histoires.ftl` + `fr/...` (title, summary),
-`src/textes/en/noms.ftl` + `fr/...` (if `noms: true`).
+And the wiring once the chapters are written: `src/engine/chapters/index.ts`
+(register the story), `src/engine/paths.ts` (each chapter in at least one
+learning path, otherwise `tests/paths.test.ts` fails),
+`src/texts/en/histoires.ftl` + `fr/...` (title, summary),
+`src/texts/en/noms.ftl` + `fr/...` (if `noms: true`).
 
 ## 4. The real sticking point: a new simulated tool
 
@@ -70,13 +70,13 @@ Some reference points, taken from `nmap` and `lynis` (the tools added for
 
 | Piece | Example | Size |
 |---|---|---|
-| The engine (the simulated state) | `src/moteur/scan.ts` | ~250 lines |
-| The command (reads arguments, writes output) | `src/moteur/commandes/nmap.ts` | ~70 lines |
-| A simpler tool (state read directly) | `src/moteur/lynis.ts` + `commandes/lynis.ts` | ~235 + ~30 lines |
+| The engine (the simulated state) | `src/engine/scan.ts` | ~250 lines |
+| The command (reads arguments, writes output) | `src/engine/commands/nmap.ts` | ~70 lines |
+| A simpler tool (state read directly) | `src/engine/lynis.ts` + `commands/lynis.ts` | ~235 + ~30 lines |
 | The manual page (`man`, `--help`), in `manuel.ftl` | `man-nmap`, `man-lynis` | a few dozen lines per tool, ×2 languages |
 
-On top of that: the entry in `src/moteur/commandes/index.ts`, the options
-and examples in `src/moteur/commandes/pages.ts`, a row in the table of
+On top of that: the entry in `src/engine/commands/index.ts`, the options
+and examples in `src/engine/commands/pages.ts`, a row in the table of
 differences of `docs/SCENARIOS.md` (what the tool simplifies compared with
 the real one), and a line in the structure section of `CLAUDE.md`. For an
 offensive tool that models a real exploitation (not just reading), you also
@@ -109,12 +109,12 @@ expensive:
 npm test                    # every quest replayed, texts, hints, progress…
 npm run build               # Astro + tsc
 npm run preview &           # then:
-npm run test:navigateur     # Chromium, 1000 and 375 px
+npm run test:browser     # Chromium, 1000 and 375 px
 ```
 
 ## What an agent can do, on request
 
 The mechanical, neutral part can still be delegated: wiring a story once its
-chapters are written (`index.ts`, `machines.ts`, `parcours.ts`,
-`progression.ts`), or reviewing an already written chapter for consistency
+chapters are written (`index.ts`, `machines.ts`, `paths.ts`,
+`progress.ts`), or reviewing an already written chapter for consistency
 with the existing engine, without changing its offensive substance.

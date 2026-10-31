@@ -32,17 +32,17 @@ npm run dev                # http://localhost:4321
 npm test                   # replays every quest (Vitest)
 npm run build              # dist/: the site, and dist/integration/: the file to embed
 npm run preview &          # http://localhost:4340
-npm run test:navigateur    # checks the game in Chromium (1000 and 375 px, CSP, embedding)
+npm run test:browser    # checks the game in Chromium (1000 and 375 px, CSP, embedding)
 ```
 
 | Directory | Contents |
 |---|---|
 | `src/pages/`, `src/layouts/` | the site's pages (Astro): `/en/`, `/fr/`, and the root |
 | `public/.htaccess` | Apache configuration: HTTPS, language at the root, cache, security, CORS |
-| `src/moteur/` | the engine: simulated shell, commands, manual, stories and their chapters |
+| `src/engine/` | the engine: simulated shell, commands, manual, stories and their chapters |
 | `src/interface/` | the game's interface (terminal, story menu, progress) and its styles |
 | `src/element.ts` | the embeddable `<quetes-de-sysadmin>` element |
-| `src/textes/` | every text of the game, per language, in Fluent format |
+| `src/texts/` | every text of the game, per language, in Fluent format |
 | `tests/` | replayed games and browser checks |
 | `docs/` | [scenarios](docs/SCENARIOS.md), [embedding](docs/EMBEDDING.md), [deployment](docs/DEPLOYMENT.md), [roadmap](docs/ROADMAP.md), [translating](docs/TRANSLATING.md), [an offensive story](docs/OFFENSIVE-STORY.md) |
 

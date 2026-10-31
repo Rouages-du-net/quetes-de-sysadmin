@@ -4,11 +4,11 @@
 // liste les autres porte le nom de la langue (aide, help), et l'anglais est
 // la langue par défaut et de repli.
 import { describe, expect, it } from 'vitest';
-import { Shell } from '../src/moteur/shell';
-import { Console } from '../src/moteur/console';
-import { HISTOIRES } from '../src/moteur/chapitres';
-import { enColonnes } from '../src/moteur/commandes/fichiers';
-import { langueDuJeu, traducteur } from '../src/textes';
+import { Shell } from '../src/engine/shell';
+import { Console } from '../src/engine/console';
+import { HISTOIRES } from '../src/engine/chapters';
+import { enColonnes } from '../src/engine/commands/files';
+import { langueDuJeu, traducteur } from '../src/texts';
 
 const chapitre = (id: string) => HISTOIRES.flatMap((h) => h.chapitres).find((c) => c.id === id)!;
 
