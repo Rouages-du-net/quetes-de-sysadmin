@@ -23,9 +23,8 @@ presents them for people.
   English is also the default and fallback language.
 - **The repository is in English**: documentation, code comments, commit
   messages and pull requests. French versions are kept for `README.fr.md`,
-  `CONTRIBUTING.fr.md` and `docs/INTEGRER.md`; other documents still in
-  French (`docs/SCENARIOS.md`, `docs/ROADMAP.md`, `docs/TRADUIRE.md`,
-  `docs/DEPLOIEMENT.md`…) are translated over time.
+  `CONTRIBUTING.fr.md` and `docs/INTEGRER.md` (keep them in step with the
+  English ones); every other document is in English only.
 - **Code in English, over time.** Most identifiers are still French
   (`langue`, `chapitre`, `histoire`, `moteur/`, `Chapitre.evenements`…).
   Write new code (files, functions, variables, props, CSS classes, new
@@ -265,7 +264,7 @@ presents them for people.
   language choice, the 404 page, embedding in another page.
 - Deployment: `.github/workflows/deploy.yml` (tests on each PR, FTPS and a
   check of the live site from `main`, including the root's redirections);
-  see `docs/DEPLOIEMENT.md`. Every new resource must respect the CSP (no
+  see `docs/DEPLOYMENT.md`. Every new resource must respect the CSP (no
   inline script).
 
 ```bash
@@ -280,7 +279,7 @@ npm run test:navigateur
 **Texts**: every displayed text (story, dialogue, debrief, message, `man`
 page) goes in `src/textes/en/*.ftl` first, then its translations
 (`src/textes/fr/*.ftl`…) (Fluent format), never in the code; the code calls
-`t('id', { variable })` or `jeu.t(...)`. How-to: `docs/TRADUIRE.md`.
+`t('id', { variable })` or `jeu.t(...)`. How-to: `docs/TRANSLATING.md`.
 `tests/textes.test.ts` fails if accented French remains in `src/moteur/` or
 `src/interface/`, or if a key is missing in a language.
 
@@ -331,7 +330,7 @@ The game will be translated into more languages. All code must allow it:
 - **No text in the code**: stories, dialogues, debriefs, game messages and
   `man` pages live in `src/textes/<language>/*.ftl` (**Fluent** format,
   English the reference, default and fallback language); the code only uses
-  identifiers (see `docs/TRADUIRE.md`).
+  identifiers (see `docs/TRANSLATING.md`).
 - **Plurals, numbers and dates** through Fluent (selectors, which rely on
   `Intl`) or `Intl` directly, never by concatenation. A technical number
   (PID, port, raw size) is passed as text: `String(pid)`.

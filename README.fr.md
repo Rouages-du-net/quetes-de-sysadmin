@@ -49,9 +49,9 @@ npm run test:navigateur    # vérifie le jeu dans Chromium (1000 et 375 px, CSP,
 | `src/moteur/` | le shell simulé, les commandes, le manuel, les histoires et leurs chapitres |
 | `src/interface/` | l'interface du jeu (terminal, choix des histoires, progression) et ses styles |
 | `src/element.ts` | l'élément `<quetes-de-sysadmin>` à intégrer |
-| `src/textes/` | tous les textes du jeu, par langue, au format Fluent ([traduire](docs/TRADUIRE.md)) |
+| `src/textes/` | tous les textes du jeu, par langue, au format Fluent ([traduire](docs/TRANSLATING.md)) |
 | `tests/` | parties rejouées (`quetes.test.ts`) et vérifications dans le navigateur |
-| `docs/` | [scénarios](docs/SCENARIOS.md), [intégration](docs/INTEGRER.md), [déploiement](docs/DEPLOIEMENT.md), [feuille de route](docs/ROADMAP.md), [contribuer](CONTRIBUTING.fr.md), [une histoire offensive](docs/VERSION-OFFENSIVE.md) |
+| `docs/` (en anglais, sauf l'intégration) | [scénarios](docs/SCENARIOS.md), [intégration](docs/INTEGRER.md), [déploiement](docs/DEPLOYMENT.md), [feuille de route](docs/ROADMAP.md), [contribuer](CONTRIBUTING.fr.md), [une histoire offensive](docs/OFFENSIVE-STORY.md) |
 
 ## D'où vient ce jeu
 

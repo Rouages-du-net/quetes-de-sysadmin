@@ -44,14 +44,14 @@ npm run test:navigateur    # checks the game in Chromium (1000 and 375 px, CSP, 
 | `src/element.ts` | the embeddable `<quetes-de-sysadmin>` element |
 | `src/textes/` | every text of the game, per language, in Fluent format |
 | `tests/` | replayed games and browser checks |
-| `docs/` | [scenarios](docs/SCENARIOS.md), [embedding](docs/EMBEDDING.md), [deployment](docs/DEPLOIEMENT.md), [roadmap](docs/ROADMAP.md), [translating](docs/TRADUIRE.md), [an offensive story](docs/VERSION-OFFENSIVE.md) |
+| `docs/` | [scenarios](docs/SCENARIOS.md), [embedding](docs/EMBEDDING.md), [deployment](docs/DEPLOYMENT.md), [roadmap](docs/ROADMAP.md), [translating](docs/TRANSLATING.md), [an offensive story](docs/OFFENSIVE-STORY.md) |
 
 Want to write a quest, fix a bug or translate the game? Start with
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
-The project started in French: most of the code's identifiers and some of
-the documentation are still in French, and are being moved to English
-little by little (see CONTRIBUTING.md).
+The project started in French: most of the code's identifiers are still in
+French, and are being moved to English little by little (see
+CONTRIBUTING.md).
 
 ## Where this game comes from
 

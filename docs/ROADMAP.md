@@ -1,490 +1,502 @@
-# Quêtes de Sysadmin — feuille de route
+# Sysadmin Quests — roadmap
 
-*Apprendre le métier d'administrateur·rice système en jouant, dans le
-navigateur, avec de vraies commandes et de vrais comportements.*
+*Learn the job of a system administrator by playing, in the browser, with
+real commands and real behaviours.*
 
-Projet issu de « Terminus en français » ([rouages.net](https://rouages.net/jeux/terminus/),
-code dans `src/scripts/terminus/` du dépôt
-[Rouages-du-net/rouages.net](https://github.com/Rouages-du-net/rouages.net)),
-lui-même **inspiré de [Terminus](https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html),
-créé au MIT par Shawn Conrad et Michele Pratusevich**. Le nouveau projet
-garde cette mention et le lien vers l'original.
-
----
-
-## Principes (repris de Terminus en français, à confirmer)
-
-- **100 % statique**, dans le navigateur : aucune vraie machine, aucun vrai
-  réseau. Tout est simulé (fichiers, services, réseau, temps), de façon
-  déterministe et testable.
-- **Vraies commandes, vrais comportements** : mêmes noms, mêmes options
-  courantes, mêmes sorties (en anglais quand le vrai outil répond en
-  anglais). Chaque écart volontaire est listé dans un tableau.
-- **Une quête = un incident ou une mission réaliste** : un ticket, un
-  objectif vérifiable par l'état du système simulé (pas par la commande
-  exacte tapée), une ou plusieurs solutions acceptées.
-- **On apprend aussi le « pourquoi »** : chaque quête finit par un débrief
-  court (ce qui s'est passé, la bonne pratique, le lien vers la doc officielle).
-- **Sans danger** : adresses de documentation (RFC 5737, 3849), domaines
-  `.example`, aucune vraie cible ; les quêtes de sécurité restent défensives.
-- **Accessible** : clavier, lecteur d'écran (sortie annoncée), contraste AA,
-  mode réduit pour les animations, utilisable sur mobile (clavier virtuel).
-- **Progression locale** (`localStorage`), sans compte, sans pisteur.
-- **En français d'abord**, textes séparés du code pour pouvoir traduire
-  (anglais, allemand, espagnol, mandarin, coréen… une fois le jeu terminé).
-- **Licences** : code sous GPL v3 ou ultérieure, textes sous CC BY-SA 4.0.
-- **Apprendre à se dépanner** : `man`, `--help`, `man -k`/`apropos` et
-  `whatis` partout, dès la première quête ; des énigmes qui ne se résolvent
-  qu'en lisant le manuel ; des messages d'erreur fidèles qui renvoient vers
-  `--help`.
+A project that grew out of "Terminus en français"
+([rouages.net](https://rouages.net/jeux/terminus/), code in
+`src/scripts/terminus/` of the
+[Rouages-du-net/rouages.net](https://github.com/Rouages-du-net/rouages.net)
+repository), itself **inspired by
+[Terminus](https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html),
+created at MIT by Shawn Conrad and Michele Pratusevich**. The new project
+keeps this credit and the link to the original.
 
 ---
 
-## Phase 0 — Fondations du nouveau dépôt
+## Principles
 
-- [x] Reprendre le moteur de Terminus en français (shell, commandes,
-      manuel, monde, cinq histoires) dans `src/moteur/` : le projet ne dépend
-      plus de rouages.net
-- [x] Interface autonome (`src/interface/`) et élément intégrable
-      `<quetes-de-sysadmin>` (Shadow DOM, attributs `histoire`, `cle`,
-      `theme`, `langue`, couleurs en variables CSS) ; mode d'emploi
-      `docs/INTEGRER.md`
-- [x] **Extraire les textes** des histoires, des commandes, du manuel et de
-      l'interface vers `src/textes/fr/*.ftl`, au format standard **Fluent**
-      (Weblate, Pontoon) ; aucun texte en dur, vérifié par les tests ; mode
-      d'emploi `docs/TRADUIRE.md`
-- [x] Nom, mention « inspiré de Terminus (MIT) », README, CLAUDE.md
-      (consignes de l'agent dédié)
-- [x] Licences : GPL v3 (code), CC BY-SA 4.0 (textes)
-- [x] Charte de contribution (format d'une quête, tests, relecture) :
+- **100 % static**, in the browser: no real machine, no real network.
+  Everything is simulated (files, services, network, time), deterministically
+  and testably.
+- **Real commands, real behaviours**: same names, same common options, same
+  outputs (in English when the real tool answers in English). Every
+  deliberate difference is listed in a table.
+- **One quest = one realistic incident or mission**: a ticket, a goal
+  checkable on the state of the simulated system (not on the exact command
+  typed), one or more accepted solutions.
+- **You also learn the "why"**: every quest ends with a short debrief (what
+  happened, the good practice, the link to the official documentation).
+- **Safe**: documentation addresses (RFC 5737, 3849), `.example` domains, no
+  real target; security quests stay defensive.
+- **Accessible**: keyboard, screen readers (announced output), AA contrast,
+  reduced motion, usable on mobile (virtual keyboard).
+- **Local progress** (`localStorage`), no account, no tracker.
+- **English first** (the game started in French), with the texts kept apart
+  from the code so it can be translated (German, Spanish, Mandarin,
+  Korean…).
+- **Licences**: code under GPL v3 or later, texts under CC BY-SA 4.0.
+- **Learning to help yourself**: `man`, `--help`, `man -k`/`apropos` and
+  `whatis` everywhere, from the first quest; puzzles that can only be solved
+  by reading the manual; faithful error messages that point to `--help`.
+
+---
+
+## Phase 0 — Foundations of the new repository
+
+- [x] Take over the engine of Terminus en français (shell, commands, manual,
+      world, five stories) in `src/moteur/`: the project no longer depends
+      on rouages.net
+- [x] Standalone interface (`src/interface/`) and embeddable
+      `<quetes-de-sysadmin>` element (Shadow DOM, attributes `story`,
+      `save-key`, `theme`, `lang`, colours in CSS variables); guide
+      `docs/EMBEDDING.md`
+- [x] **Extract the texts** of the stories, commands, manual and interface
+      into `.ftl` files, in the standard **Fluent** format (Weblate,
+      Pontoon); no text in the code, checked by the tests; guide
+      `docs/TRANSLATING.md`
+- [x] Name, "inspired by Terminus (MIT)" credit, README, CLAUDE.md
+      (instructions for the dedicated agent)
+- [x] Licences: GPL v3 (code), CC BY-SA 4.0 (texts)
+- [x] Contribution guide (format of a quest, tests, review):
       `CONTRIBUTING.md`
-- [x] Pile : site **Astro** (pages statiques), jeu en TypeScript sans
-      framework (élément `<quetes-de-sysadmin>`, construit aussi seul par
-      Vite pour l'intégration) ; tests Vitest (chaque chapitre rejoué) et
-      vérification Playwright (`tests/navigateur.mjs`, aussi en CI)
-- [x] Déploiement statique sur **sysadmin.rouages.net** : workflow
-      `.github/workflows/deploy.yml` (FTPS depuis `main`, vérification du site
-      en ligne), `.htaccess` (HTTPS, cache, CSP, CORS), page 404 ; mode
-      d'emploi `docs/DEPLOIEMENT.md`
-- [x] Créer le sous-domaine sur cPanel et renseigner les secrets FTP
-- [x] Rediriger l'ancienne page `rouages.net/jeux/terminus/` vers
-      sysadmin.rouages.net (ou y intégrer l'élément)
-- [x] Réécrire les chapitres 1 et 2 dans un univers propre (fait dans
-      rouages.net le 17 octobre 2026 : « L'Île du Phare » et « Le Bourg »)
-- [x] Progression : les joueur·ses de rouages.net (clé `rouages-terminus`,
-      autre domaine) repartent de zéro ; l'annoncer sur l'ancienne page
+- [x] Stack: **Astro** site (static pages), game in TypeScript with no
+      framework (the `<quetes-de-sysadmin>` element, also built alone by
+      Vite for embedding); Vitest tests (each chapter replayed) and
+      Playwright check (`tests/navigateur.mjs`, also in CI)
+- [x] Static deployment to **sysadmin.rouages.net**: workflow
+      `.github/workflows/deploy.yml` (FTPS from `main`, check of the live
+      site), `.htaccess` (HTTPS, cache, CSP, CORS), 404 page; guide
+      `docs/DEPLOYMENT.md`
+- [x] Create the subdomain on cPanel and set the FTP secrets
+- [x] Redirect the old `rouages.net/jeux/terminus/` page to
+      sysadmin.rouages.net (or embed the element there)
+- [x] Rewrite chapters 1 and 2 in a world of our own (done in rouages.net on
+      17 October 2026: "L'Île du Phare" and "Le Bourg")
+- [x] Progress: rouages.net players (key `rouages-terminus`, another domain)
+      start from scratch; announce it on the old page
 
-## Phase 1 — Un moteur de « machines » simulées
+## Phase 1 — An engine of simulated "machines"
 
-Aujourd'hui, le moteur simule **une** machine. Les quêtes d'administration en
-demandent plusieurs.
+The engine used to simulate **one** machine. Administration quests need
+several.
 
-- [x] **Un seul monde** : chaque histoire devient une machine
-      du même réseau simulé, et l'on passe de l'une à l'autre avec `ssh`
-      (`ssh fourmiliere`). Finir l'Effaceur donne les clés des premières
-      machines ; les autres s'ouvrent par vagues (`apres`, `deverrouillage.ts`). Le menu des
-      histoires reste disponible (accessibilité, enseignant·es, intégration
-      avec l'attribut `histoire`) ; une seule progression.
-- [x] **Plusieurs hôtes** : chacun son système de fichiers et son nom,
-      invite `utilisateur@hôte:~$` (`console.ts`, `machines.ts`, `poste.ts`)
-- [x] Comptes propres à chaque machine ; l'état d'une machine est gardé
-      entre deux connexions ssh (tant que la page est ouverte)
-- [x] Services et ports propres à chaque machine (`ss`, `nc`, services
-      systemd et leurs sockets décrits par chaque chapitre)
-- [x] **Réseau simulé** : adresses, ports ouverts, résolution de noms
-      (`/etc/hosts`, DNS), routes, latence ; ce qu'un pare-feu laisse passer
-      (ufw, nftables), réseau local d'un routeur (VLAN, DHCP, NAT, VPN)
-- [x] **Services** (`systemd` simulé, `src/moteur/systemd.ts`) : état,
-      démarrage, échec, activation au démarrage, `systemctl`, `journalctl`,
-      `reboot` ; quête « La nuit du redémarrage » (Datacenter, chapitre 3)
-- [ ] Dépendances entre services, timers, fichiers d'unité modifiables
-- [x] **Temps simulé** : horloge de systemd, tâches planifiées (`cron` :
-      une nuit simulée lance les tâches qui y tombent)
-- [ ] Timers systemd (faits : unités écrites à la main, `OnCalendar=`,
-      `list-timers`, « La sonde »)
-- [x] Journaux qui défilent et attaques « pendant » la quête : `tail -f`,
-      `journalctl -f` et Ctrl-C ; Premier jour (le robot en direct) et La
-      sentinelle (robots, scanners, fail2ban qui bannit et relâche)
-- [x] **Utilisateur·rices et groupes** : vrais droits de groupe, comptes par
-      machine (`/etc/passwd`, `/etc/group`), `id`, `groups`, `usermod -aG`,
-      `chgrp`, `chown` ; quête « Deuxième jour » (Datacenter, chapitre 2)
-- [x] `sudoers` (`visudo`, `sudo -l -U`, `/etc/sudoers.d`), `umask`, bit
-      setgid des dossiers partagés ; « Les droits partagés » (La
-      Coopérative, chapitre 2)
-- [x] **Éditeur de fichiers** façon `nano` (`^O`, `^X`, boutons sur
-      mobile), droits vérifiés à l'enregistrement, objectifs des quêtes mis
-      à jour ; solution alternative au chapitre 1 du Datacenter
-- [x] Vérification de syntaxe par service : `sshd -t`, `nginx -t` (et
-      `nginx -T`), rechargement refusé si la configuration est fausse
-- [x] **Manuel intégré** : pages `man` complètes générées depuis la
-      définition de chaque commande, `--help`, `man -k`, `apropos`, `whatis` ;
-      option inconnue → vrai message d'erreur (repris du travail fait dans
-      rouages.net)
-- [x] **Vérificateur d'objectifs** : prédicats sur l'état (« le port 22
-      n'accepte plus les mots de passe », « le site répond en HTTPS »…) :
-      les événements de chaque chapitre
+- [x] **One world**: each story becomes a machine of the same simulated
+      network, and you go from one to another with `ssh`
+      (`ssh fourmiliere`). Finishing the Eraser gives the keys to the first
+      machines; the others open in waves (`apres`, `deverrouillage.ts`).
+      The story menu stays available (accessibility, teachers, embedding
+      with the `story` attribute); a single progress.
+- [x] **Several hosts**: each with its file system and name, prompt
+      `user@host:~$` (`console.ts`, `machines.ts`, `poste.ts`)
+- [x] Accounts specific to each machine; a machine's state is kept between
+      two ssh connections (while the page is open)
+- [x] Services and ports specific to each machine (`ss`, `nc`, systemd
+      services and their sockets described by each chapter)
+- [x] **Simulated network**: addresses, open ports, name resolution
+      (`/etc/hosts`, DNS), routes, latency; what a firewall lets through
+      (ufw, nftables), a router's local network (VLAN, DHCP, NAT, VPN)
+- [x] **Services** (simulated `systemd`, `src/moteur/systemd.ts`): state,
+      start, failure, enabling at boot, `systemctl`, `journalctl`,
+      `reboot`; quest "La nuit du redémarrage" (Datacenter, chapter 3)
+- [ ] Dependencies between services, timers, editable unit files
+- [x] **Simulated time**: systemd's clock, scheduled tasks (`cron`: a
+      simulated night runs the tasks that fall in it)
+- [ ] systemd timers (done: hand-written units, `OnCalendar=`,
+      `list-timers`, "La sonde")
+- [x] Scrolling logs and attacks "during" the quest: `tail -f`,
+      `journalctl -f` and Ctrl-C; Premier jour (the robot live) and La
+      sentinelle (robots, scanners, fail2ban banning and releasing)
+- [x] **Users and groups**: real group rights, per-machine accounts
+      (`/etc/passwd`, `/etc/group`), `id`, `groups`, `usermod -aG`, `chgrp`,
+      `chown`; quest "Deuxième jour" (Datacenter, chapter 2)
+- [x] `sudoers` (`visudo`, `sudo -l -U`, `/etc/sudoers.d`), `umask`, the
+      setgid bit of shared directories; "Les droits partagés" (La
+      Coopérative, chapter 2)
+- [x] **File editor** like `nano` (`^O`, `^X`, buttons on mobile), rights
+      checked on save, quest goals updated; alternative solution in
+      chapter 1 of the Datacenter
+- [x] Per-service syntax check: `sshd -t`, `nginx -t` (and `nginx -T`),
+      reload refused if the configuration is wrong
+- [x] **Built-in manual**: full `man` pages generated from each command's
+      definition, `--help`, `man -k`, `apropos`, `whatis`; unknown option →
+      the real error message (taken from the work done in rouages.net)
+- [x] **Goal checker**: predicates on the state ("port 22 no longer accepts
+      passwords", "the site answers over HTTPS"…): each chapter's events
 
-## Phase 2 — Se connecter et se déplacer
+## Phase 2 — Connecting and moving around
 
-- [x] **SSH** : `ssh`, clés (`ssh-keygen`, `ssh-copy-id`, `authorized_keys`,
-      phrase de passe), `~/.ssh/config`, empreinte de l'hôte (`known_hosts`),
-      mot de passe puis refus du mot de passe ; « Les clés » (La Maison des
-      associations, chapitre 1)
-- [x] **Rebonds** : hôte bastion, `ssh -J` / `ProxyJump` (« Le rebond »),
-      redirection de port locale `-L` avec `-f -N` (« Le tunnel ») ; reste
-      `-R` et `-D`
-- [x] **Durcissement SSH** : `PermitRootLogin no`, `PasswordAuthentication
-      no`, `AllowUsers`, `sshd -t`, `sshd -T`, `Include` de Debian ; quête
-      « Fermer la porte » (Les Lettres du quartier), où l'on peut s'enfermer
-      dehors (le menu sert de console de secours)
-- [x] **Changer le port SSH** : deux `Port`, ufw, `~/.ssh/config`, `known_hosts`
-      en `[nom]:port`, le `port` de la prison fail2ban (« Le port », Les
-      Lettres du quartier, chapitre 7)
-- [x] **Transferts** : **`scp`**, `rsync` à distance (`-a`, `--delete`,
-      `-n`) et pourquoi FTP en clair est à proscrire (« Les transferts ») ;
-      `sftp`, et **FTPS** avec `lftp` pour les hébergeurs mutualisés qui
-      l'imposent, le cas de rouages.net (« L'hébergeur », La Maison des
-      associations, chapitre 5)
-- [x] `tmux` : garder une session vivante quand la connexion tombe ;
-      « Les mises à jour » (La Coopérative, chapitre 5)
+- [x] **SSH**: `ssh`, keys (`ssh-keygen`, `ssh-copy-id`, `authorized_keys`,
+      passphrase), `~/.ssh/config`, host fingerprint (`known_hosts`),
+      password then password refused; "Les clés" (La Maison des
+      associations, chapter 1)
+- [x] **Jump hosts**: bastion host, `ssh -J` / `ProxyJump` ("Le rebond"),
+      local port forwarding `-L` with `-f -N` ("Le tunnel"); still to do:
+      `-R` and `-D`
+- [x] **SSH hardening**: `PermitRootLogin no`, `PasswordAuthentication no`,
+      `AllowUsers`, `sshd -t`, `sshd -T`, Debian's `Include`; quest "Fermer
+      la porte" (Les Lettres du quartier), where you can lock yourself out
+      (the menu serves as a rescue console)
+- [x] **Changing the SSH port**: two `Port` lines, ufw, `~/.ssh/config`,
+      `known_hosts` as `[name]:port`, the fail2ban jail's `port` ("Le
+      port", Les Lettres du quartier, chapter 7)
+- [x] **Transfers**: **`scp`**, remote `rsync` (`-a`, `--delete`, `-n`) and
+      why clear-text FTP is to be avoided ("Les transferts"); `sftp`, and
+      **FTPS** with `lftp` for shared hosts that require it, rouages.net's
+      case ("L'hébergeur", La Maison des associations, chapter 5)
+- [x] `tmux`: keeping a session alive when the connection drops; "Les mises
+      à jour" (La Coopérative, chapter 5)
 
-## Phase 3 — Sécuriser le serveur
+## Phase 3 — Securing the server
 
-- [x] **Pare-feu** : `ufw` (politique par défaut, `allow`, `deny`, `reject`,
-      `limit`, `delete`, profils d'applications, numéros), et `ssh` qui
-      s'arrête au pare-feu (timeout) ; quête « Le pare-feu » (Les Lettres du
-      quartier, chapitre 2)
-- [x] Un aperçu de `nftables` sous `ufw` : `nft list ruleset` montre les
-      chaînes `ufw-*` et la table de fail2ban (« Le port »)
-- [x] **fail2ban** : lire `fail2ban.log` et le journal de SSH, `jail.local`
-      (jamais `jail.conf`), `bantime`, `maxretry`, `ignoreip` (CIDR),
-      `fail2ban-client status`, `unbanip`, `-t`, `reload` ; quête « La
-      sentinelle » (Les Lettres du quartier, chapitre 3), où l'on peut se
-      bannir soi-même
-- [x] La prison `recidive` et la prison `nginx-limit-req`, activées dans
-      leur section (« La récidive », Les Lettres du quartier, chapitre 8)
-- [x] **Mises à jour** : `apt update`, `list --upgradable`, `upgrade`,
-      `dpkg --configure -a`, `/var/run/reboot-required`, `uname -r`, noyau
-      (« Les mises à jour », La Coopérative, chapitre 5) ; mises à jour
-      automatiques (`unattended-upgrades` : `20auto-upgrades`,
-      `Origins-Pattern`, `Mail`, `Automatic-Reboot-Time`, `apt-config`,
-      « Les mises à jour automatiques », chapitre 6)
-- [x] **Comptes** : supprimer un compte (`userdel`), désactiver le compte
-      d'un ancien collègue (`usermod -e`, `chage -E`), clés à révoquer (y
-      compris dans un compte partagé), `gpasswd -d`, `who`, `pkill -u` ;
-      « Le départ » (La Coopérative, chapitre 1)
-- [x] **Surface d'attaque** : `ss -tlnp`, un service qui écoute sur
-      `0.0.0.0` au lieu de `127.0.0.1` (la base de données exposée)
-- [x] **Certificats TLS** : Let's Encrypt (`certbot`), défi HTTP-01,
-      renouvellement automatique, deploy hook, `openssl x509` et `s_client`,
-      `curl https://` ; quête « Le certificat a expiré » (Datacenter,
-      chapitre 5)
-- [x] **Secrets** : fichier `.env` (et `.git`) publié par erreur, le journal
-      d'accès, `location ~ /\.`, `deny`, rotation d'une clé ; « Le secret »
-      (La Coopérative, chapitre 3)
+- [x] **Firewall**: `ufw` (default policy, `allow`, `deny`, `reject`,
+      `limit`, `delete`, application profiles, numbers), and `ssh` stopping
+      at the firewall (timeout); quest "Le pare-feu" (Les Lettres du
+      quartier, chapter 2)
+- [x] A glimpse of `nftables` under `ufw`: `nft list ruleset` shows the
+      `ufw-*` chains and fail2ban's table ("Le port")
+- [x] **fail2ban**: reading `fail2ban.log` and SSH's log, `jail.local`
+      (never `jail.conf`), `bantime`, `maxretry`, `ignoreip` (CIDR),
+      `fail2ban-client status`, `unbanip`, `-t`, `reload`; quest "La
+      sentinelle" (Les Lettres du quartier, chapter 3), where you can ban
+      yourself
+- [x] The `recidive` jail and the `nginx-limit-req` jail, enabled in their
+      section ("La récidive", Les Lettres du quartier, chapter 8)
+- [x] **Updates**: `apt update`, `list --upgradable`, `upgrade`,
+      `dpkg --configure -a`, `/var/run/reboot-required`, `uname -r`, kernel
+      ("Les mises à jour", La Coopérative, chapter 5); automatic updates
+      (`unattended-upgrades`: `20auto-upgrades`, `Origins-Pattern`, `Mail`,
+      `Automatic-Reboot-Time`, `apt-config`, "Les mises à jour
+      automatiques", chapter 6)
+- [x] **Accounts**: deleting an account (`userdel`), disabling a former
+      colleague's account (`usermod -e`, `chage -E`), keys to revoke
+      (including in a shared account), `gpasswd -d`, `who`, `pkill -u`;
+      "Le départ" (La Coopérative, chapter 1)
+- [x] **Attack surface**: `ss -tlnp`, a service listening on `0.0.0.0`
+      instead of `127.0.0.1` (the exposed database)
+- [x] **TLS certificates**: Let's Encrypt (`certbot`), HTTP-01 challenge,
+      automatic renewal, deploy hook, `openssl x509` and `s_client`,
+      `curl https://`; quest "Le certificat a expiré" (Datacenter,
+      chapter 5)
+- [x] **Secrets**: a `.env` file (and `.git`) published by mistake, the
+      access log, `location ~ /\.`, `deny`, rotating a key; "Le secret" (La
+      Coopérative, chapter 3)
 
-## Phase 4 — Servir des sites
+## Phase 4 — Serving websites
 
-- [x] **Serveur web** : **Nginx**, **hôtes virtuels** (plusieurs sites sur une
-      même machine), `sites-available` et `ln -s`, `nginx -t` avant de
-      recharger ; quête « La colocation » (Les Lettres du quartier, chapitre 4)
-- [x] **Apache**, pour comparer : `ports.conf`, `a2ensite`, `apache2ctl -S`,
-      `.htaccess` et `AllowOverride`, `a2enmod rewrite`, derrière nginx ; quête
-      « L'atelier de réparation » (Les Lettres du quartier, chapitre 9)
-- [x] **Reverse proxy** devant une application (`proxy_pass`, barre finale,
-      502 et `error.log`) ; `return 301` simulé
-- [x] En-têtes transmis à l'appli (`proxy_set_header`, `X-Forwarded-For`,
-      `trust proxy` d'Express) ; « Le proxy » (La Coopérative, chapitre 4)
-- [x] **DNS** : enregistrements A, AAAA, CNAME, MX, TXT, TTL et caches (la
-      « propagation »), zone BIND, serial, secondaire ; quête « Ça marche
-      chez moi » (Les Lettres du quartier, chapitre 5)
-- [x] **Journaux d'accès** : trouver qui fait tomber le site (`awk`, `sort`,
-      `uniq -c`), limiter le débit (`limit_req`, rafale, 429) ; quête « Le
-      soir du concert » (Les Lettres du quartier, chapitre 6)
+- [x] **Web server**: **Nginx**, **virtual hosts** (several sites on one
+      machine), `sites-available` and `ln -s`, `nginx -t` before reloading;
+      quest "La colocation" (Les Lettres du quartier, chapter 4)
+- [x] **Apache**, to compare: `ports.conf`, `a2ensite`, `apache2ctl -S`,
+      `.htaccess` and `AllowOverride`, `a2enmod rewrite`, behind nginx;
+      quest "L'atelier de réparation" (Les Lettres du quartier, chapter 9)
+- [x] **Reverse proxy** in front of an application (`proxy_pass`, trailing
+      slash, 502 and `error.log`); simulated `return 301`
+- [x] Headers passed to the app (`proxy_set_header`, `X-Forwarded-For`,
+      Express's `trust proxy`); "Le proxy" (La Coopérative, chapter 4)
+- [x] **DNS**: A, AAAA, CNAME, MX, TXT records, TTL and caches (the
+      "propagation"), BIND zone, serial, secondary; quest "Ça marche chez
+      moi" (Les Lettres du quartier, chapter 5)
+- [x] **Access logs**: finding who brings the site down (`awk`, `sort`,
+      `uniq -c`), rate limiting (`limit_req`, burst, 429); quest "Le soir du
+      concert" (Les Lettres du quartier, chapter 6)
 
-## Phase 5 — Conteneurs
+## Phase 5 — Containers
 
-- [x] **Docker** : image, conteneur, `docker run/ps/logs/exec/cp`, ports,
-      volumes (et ce qu'on perd sans volume), `--restart` ; quête « La mise
-      à jour » (La Fabrique, chapitre 1)
-- [x] **Docker Compose** : plusieurs services (appli, base), réseau
-      interne (le nom du service), variables et `.env`, volumes, redémarrage ;
-      quête « La composition » (La Fabrique, chapitre 2)
-- [x] Mettre à jour une image sans perdre les données (« La mise à jour »)
-- [x] Nettoyer le disque (`docker system df`, `prune`) ; « Le trou dans le pare-feu »
-- [x] Sécurité : ne pas exposer la base, `ufw` et Docker (les ports publiés
-      contournent ufw) ; « Le trou dans le pare-feu » (La Fabrique, chapitre 3)
-- [x] Ne pas tourner en root dans le conteneur : `--user`, `user:`, l'uid
-      partagé avec la machine, `chown -R` ; « Les pleins pouvoirs » (La Fabrique,
-      chapitre 4)
+- [x] **Docker**: image, container, `docker run/ps/logs/exec/cp`, ports,
+      volumes (and what you lose without a volume), `--restart`; quest "La
+      mise à jour" (La Fabrique, chapter 1)
+- [x] **Docker Compose**: several services (app, database), internal
+      network (the service's name), variables and `.env`, volumes, restart;
+      quest "La composition" (La Fabrique, chapter 2)
+- [x] Updating an image without losing the data ("La mise à jour")
+- [x] Cleaning the disk (`docker system df`, `prune`); "Le trou dans le
+      pare-feu"
+- [x] Security: not exposing the database, `ufw` and Docker (published
+      ports bypass ufw); "Le trou dans le pare-feu" (La Fabrique, chapter 3)
+- [x] Not running as root in the container: `--user`, `user:`, the uid
+      shared with the machine, `chown -R`; "Les pleins pouvoirs" (La
+      Fabrique, chapter 4)
 
-## Phase 6 — Déployer
+## Phase 6 — Deploying
 
-- [x] **Déploiement par git** : dépôt nu sur le serveur, crochet
-      `post-receive` ; « Le dépôt nu » (La Gazette, chapitre 1)
-- [x] **Intégration continue** (simulée) : tests qui bloquent un déploiement
-      (`tests.sh` lancé par le crochet avant la bascule) ; « Le retour arrière »
-      (La Gazette, chapitre 2)
-- [x] **Bleu/vert** : deux versions côte à côte, bascule du proxy, retour
-      arrière instantané ; « Bleu et vert » (La Gazette, chapitre 3)
-- [x] **Canari** et vérifications de santé (`/health`) : `upstream` et
-      `weight`, les 500 dans `access.log` ; « Le canari » (La Gazette, chapitre 4)
-- [x] **Migrations de base de données** qui empêchent le retour arrière ;
-      « La migration » (La Gazette, chapitre 5)
-- [x] **Retour arrière** (`rollback`) après un déploiement raté : `ln -sfn`
-      vers la version d'avant (chapitre 2), rebascule du proxy (chapitres 3 et 4)
+- [x] **Deploying with git**: a bare repository on the server, a
+      `post-receive` hook; "Le dépôt nu" (La Gazette, chapter 1)
+- [x] **Continuous integration** (simulated): tests that block a deployment
+      (`tests.sh` run by the hook before the switch); "Le retour arrière"
+      (La Gazette, chapter 2)
+- [x] **Blue/green**: two versions side by side, switching the proxy,
+      instant rollback; "Bleu et vert" (La Gazette, chapter 3)
+- [x] **Canary** and health checks (`/health`): `upstream` and `weight`,
+      the 500s in `access.log`; "Le canari" (La Gazette, chapter 4)
+- [x] **Database migrations** that prevent rolling back; "La migration" (La
+      Gazette, chapter 5)
+- [x] **Rollback** after a failed deployment: `ln -sfn` to the previous
+      version (chapter 2), switching the proxy back (chapters 3 and 4)
 
-## Phase 7 — Sauvegarder et restaurer
+## Phase 7 — Backing up and restoring
 
-- [x] **La règle 3-2-1**, et pourquoi une copie sur le même disque n'est pas
-      une sauvegarde (débrief de « La Sauvegarde »)
-- [x] **rsync** : `-a`, `-v`, `-n`, `--delete`, la barre finale ; planifié
-      avec `cron` ; quête « La Sauvegarde » (Effaceur, chapitre 4)
-- [x] **rsnapshot** (instantanés par liens physiques, rotation quotidienne et
-      hebdomadaire, cron) ; « Les instantanés » (La Ludothèque, chapitre 2)
-- [x] **restic** (chiffrement, déduplication, `snapshots`, `find`, `diff`,
-      `dump`, `restore`, `forget --prune`, `check`) ; quête « Les versions »
-      (Les Archives, chapitre 2)
-- [x] Sauvegarder une base (`pg_dump`, `pg_restore`) plutôt que ses fichiers,
-      restauration de test ; « La base » (La Ludothèque, chapitre 3)
-- [x] **Restauration de service** : quête « Le grand incendie » (Datacenter,
-      chapitre 4) : repartir d'une machine vide avec les sauvegardes et le
-      plan de reprise ; archive coupée à vérifier avec `tar -tzf`, `apt`,
-      `nginx -t`, clé d'hôte SSH qui change (`ssh-keygen -R`)
-- [x] **Exercice de restauration** : un souvenir effacé à restaurer depuis
-      la sauvegarde (« La Sauvegarde »)
-- [x] Rançongiciel et sauvegardes hors ligne (`mount -o ro`, restic) ;
-      « La rançon » (La Ludothèque, chapitre 1)
-- [x] Charge et ressources : `top`, `free`, `df`, `du` faits (L'Astreinte,
-      chapitres 1 et 2) ; `iostat`, `pidstat -d`, `ionice` et la limite de débit
-      de systemd (`IOWriteBandwidthMax=`) : « Le goulot » (chapitre 7)
-- [x] Pannes classiques : disque plein et fuite de journaux (« Le disque
-      plein »), mémoire épuisée (OOM) et processus zombies (« La mémoire »),
-      inodes épuisés (« Les inodes »), horloge décalée et fuseau
-      (« L'horloge », NTP et `timedatectl`) faits
-- [x] Rotation des journaux (`logrotate`) ; « Le disque plein »
-      (L'Astreinte, chapitre 1)
-- [x] Supervision et alertes (plugins `check_disk`, `check_http`,
-      `check_procs`, `mail`, seuils, exercice de panne) ; « La sonde »
-      (L'Astreinte, chapitre 5)
-- [x] **Post-mortem sans reproche** : rédiger ce qui s'est passé
-      (`journalctl --since/--until`, `last`) ; « Le post-mortem »
-      (L'Astreinte, chapitre 6)
+- [x] **The 3-2-1 rule**, and why a copy on the same disk is not a backup
+      (debrief of "La Sauvegarde")
+- [x] **rsync**: `-a`, `-v`, `-n`, `--delete`, the trailing slash;
+      scheduled with `cron`; quest "La Sauvegarde" (Eraser, chapter 4)
+- [x] **rsnapshot** (snapshots with hard links, daily and weekly rotation,
+      cron); "Les instantanés" (La Ludothèque, chapter 2)
+- [x] **restic** (encryption, deduplication, `snapshots`, `find`, `diff`,
+      `dump`, `restore`, `forget --prune`, `check`); quest "Les versions"
+      (Les Archives, chapter 2)
+- [x] Backing up a database (`pg_dump`, `pg_restore`) rather than its
+      files, a test restore; "La base" (La Ludothèque, chapter 3)
+- [x] **Service restoration**: quest "Le grand incendie" (Datacenter,
+      chapter 4): starting again from an empty machine with the backups and
+      the recovery plan; a truncated archive to check with `tar -tzf`,
+      `apt`, `nginx -t`, an SSH host key that changes (`ssh-keygen -R`)
+- [x] **Restore drill**: an erased memory to restore from the backup ("La
+      Sauvegarde")
+- [x] Ransomware and offline backups (`mount -o ro`, restic); "La rançon"
+      (La Ludothèque, chapter 1)
+- [x] Load and resources: `top`, `free`, `df`, `du` done (L'Astreinte,
+      chapters 1 and 2); `iostat`, `pidstat -d`, `ionice` and systemd's
+      bandwidth limit (`IOWriteBandwidthMax=`): "Le goulot" (chapter 7)
+- [x] Classic failures: full disk and leaking logs ("Le disque plein"),
+      memory exhausted (OOM) and zombie processes ("La mémoire"), inodes
+      exhausted ("Les inodes"), wrong clock and time zone ("L'horloge", NTP
+      and `timedatectl`) done
+- [x] Log rotation (`logrotate`); "Le disque plein" (L'Astreinte, chapter 1)
+- [x] Monitoring and alerts (plugins `check_disk`, `check_http`,
+      `check_procs`, `mail`, thresholds, failure drill); "La sonde"
+      (L'Astreinte, chapter 5)
+- [x] **Blameless post-mortem**: writing up what happened
+      (`journalctl --since/--until`, `last`); "Le post-mortem"
+      (L'Astreinte, chapter 6)
 
-## Phase 9 — Le réseau d'entreprise
+## Phase 9 — The company network
 
-- [x] Commutateurs et **VLAN** : séparer bureaux, invité·es et
-      équipements ; port « trunk » (802.1Q) vers le routeur, `ip link`,
-      `/etc/network/interfaces` ; « Les VLAN » (La Ruche, chapitre 1)
-- [x] DHCP : dnsmasq, une plage par VLAN, réservations ; « Le DHCP » (La
-      Ruche, chapitre 2)
-- [x] Routage, NAT et pare-feu entre zones : `sysctl`, nftables
-      (`forward`, `masquerade`, `ct state`), `conntrack` ; « Les zones » (La
-      Ruche, chapitre 3)
-- [x] Une DMZ : un serveur public dans un VLAN à part, `dnat` au
-      `prerouting`, la DMZ isolée du réseau interne ; « La DMZ » (La Ruche,
-      chapitre 5)
-- [x] VPN WireGuard pour le télétravail : clés, `wg0.conf`, `wg-quick`,
-      pare-feu ; « Le télétravail » (La Ruche, chapitre 4)
-- [x] VPN entre deux sites : un pair de plus sur `wg0`, `AllowedIPs` comme
-      table de routage, `PersistentKeepalive` derrière une box ; « L'Annexe »
-      (La Ruche, chapitre 6)
-- [x] Annuaire : OpenLDAP pour les comptes de l'équipe (`ldapsearch`,
-      LDIF, `ldapmodify`, `slappasswd`) ; « L'annuaire » (La Ruche, chapitre 7)
-- [x] Wi-Fi d'entreprise : 802.1X avec FreeRADIUS, qui vérifie les comptes
-      dans l'annuaire et place chacun dans son VLAN ; « Le Wi-Fi des bureaux »
-      (La Ruche, chapitre 8)
+- [x] Switches and **VLANs**: separating offices, guests and equipment; a
+      "trunk" port (802.1Q) to the router, `ip link`,
+      `/etc/network/interfaces`; "Les VLAN" (La Ruche, chapter 1)
+- [x] DHCP: dnsmasq, a range per VLAN, reservations; "Le DHCP" (La Ruche,
+      chapter 2)
+- [x] Routing, NAT and firewall between zones: `sysctl`, nftables
+      (`forward`, `masquerade`, `ct state`), `conntrack`; "Les zones" (La
+      Ruche, chapter 3)
+- [x] A DMZ: a public server in a separate VLAN, `dnat` in `prerouting`,
+      the DMZ isolated from the internal network; "La DMZ" (La Ruche,
+      chapter 5)
+- [x] WireGuard VPN for remote work: keys, `wg0.conf`, `wg-quick`, firewall;
+      "Le télétravail" (La Ruche, chapter 4)
+- [x] VPN between two sites: one more peer on `wg0`, `AllowedIPs` as a
+      routing table, `PersistentKeepalive` behind a home router; "L'Annexe"
+      (La Ruche, chapter 6)
+- [x] Directory: OpenLDAP for the team's accounts (`ldapsearch`, LDIF,
+      `ldapmodify`, `slappasswd`); "L'annuaire" (La Ruche, chapter 7)
+- [x] Enterprise Wi-Fi: 802.1X with FreeRADIUS, which checks accounts in the
+      directory and puts each one in its VLAN; "Le Wi-Fi des bureaux" (La
+      Ruche, chapter 8)
 
-Écarté : les boucles réseau et Spanning Tree (trop bas niveau pour ce jeu,
-qui travaille sur les machines plutôt que sur les commutateurs).
+Set aside: network loops and Spanning Tree (too low-level for this game,
+which works on machines rather than switches).
 
-## Phase 11 — L'audit (histoire de clôture)
+## Phase 11 — The audit (closing story)
 
-- [x] **L'Audit** (histoire 14, machine `fournil`) : une mission d'audit en
-      cinq chapitres, qui réunit ce que les autres histoires enseignent
-      séparément. « Le périmètre » (lettre de mission, `nmap`, rester dans le
-      périmètre), « Le rapport » (SSH sans root, un compte oublié, sudo sans
-      mot de passe, un secret lisible), « L'exposition » (balayage de ports,
-      `ufw`, Redis en local), « Les traces » (journal de ssh, `last`,
-      empreintes de clés, `authorized_keys`, une tâche `cron` laissée par
-      l'intrus, le mot de passe de la base changé de bout en bout) et « La
-      contre-visite » (`nmap`, `lynis`, mises à jour, rapport de clôture).
-- [x] **La Veille** (histoire 16, machine `petrin`) : six mois après
-      « L'Audit », la veille de sécurité hebdomadaire — lire un bulletin de
-      CVE fictives, trier par exposition autant que par gravité, corriger
-      sans casser, prouver, puis automatiser ce qui peut l'être
-      (`unattended-upgrades` restreint à la sécurité, un timer ou une
-      tâche cron). Aucun outil nouveau, aucune exploitation.
+- [x] **L'Audit** (story 14, machine `fournil`): an audit mission in five
+      chapters, bringing together what the other stories teach separately.
+      "Le périmètre" (engagement letter, `nmap`, staying in scope), "Le
+      rapport" (SSH without root, a forgotten account, passwordless sudo, a
+      readable secret), "L'exposition" (port scan, `ufw`, Redis on
+      localhost), "Les traces" (ssh's log, `last`, key fingerprints,
+      `authorized_keys`, a `cron` job left by the intruder, the database
+      password changed end to end) and "La contre-visite" (`nmap`, `lynis`,
+      updates, closing report).
+- [x] **La Veille** (story 16, machine `petrin`): six months after
+      "L'Audit", the weekly security watch — reading a bulletin of
+      fictitious CVEs, sorting by exposure as much as by severity, fixing
+      without breaking, proving, then automating what can be
+      (`unattended-upgrades` restricted to security, a timer or a cron job).
+      No new tool, no exploitation.
 
-## Phase 12 — Le matériel, et les histoires suivantes
+## Phase 12 — Hardware, and the following stories
 
-- [x] Déverrouillage graduel des histoires (`deverrouillage.ts`, `apres`)
-- [x] **Le Labo** (histoire 15, machine `labo`) : « Le disque qui fatigue »
-      (smartd, `smartctl`, `/proc/mdstat`, `mdadm --fail/--remove`, le
-      numéro de série) et « Le disque neuf » (`sfdisk -d | sfdisk`,
-      `mdadm --add`, la reconstruction, `grub-install`)
-- [x] Le Labo, chapitre 3 : « La place qui manque » (`mdadm --create`,
+- [x] Gradual unlocking of the stories (`deverrouillage.ts`, `apres`)
+- [x] **Le Labo** (story 15, machine `labo`): "Le disque qui fatigue"
+      (smartd, `smartctl`, `/proc/mdstat`, `mdadm --fail/--remove`, the
+      serial number) and "Le disque neuf" (`sfdisk -d | sfdisk`,
+      `mdadm --add`, the rebuild, `grub-install`)
+- [x] Le Labo, chapter 3: "La place qui manque" (`mdadm --create`,
       `pvcreate`, `vgextend`, `lvextend -r`, `resize2fs`, `mdadm.conf`,
       `update-initramfs`)
-- [x] Le Labo, chapitre 4 : « Le redémarrage qui coince » (`/etc/fstab` par
-      UUID, `nofail`, le mode secours, `findmnt --verify`, `daemon-reload`)
-- [x] Journaux qui défilent et attaques pendant une quête (défensif)
-- [x] Histoire : le courrier qui arrive en spam (SPF, DKIM, DMARC, Postfix) ;
-      « Le courrier indésirable », trois chapitres (Le facteur, La signature,
-      La politique)
-- [x] Histoire : automatiser avec Ansible (inventaire, playbook,
-      idempotence, `--check`) ; « La flotte », trois chapitres (L'inventaire,
-      Le playbook, La répétition)
-- [x] Caddy, en court chapitre de comparaison (HTTPS automatique) ; « La
-      Rustine », un chapitre (Le cadenas)
+- [x] Le Labo, chapter 4: "Le redémarrage qui coince" (`/etc/fstab` by
+      UUID, `nofail`, emergency mode, `findmnt --verify`, `daemon-reload`)
+- [x] Scrolling logs and attacks during a quest (defensive)
+- [x] Story: mail that lands in spam (SPF, DKIM, DMARC, Postfix); "Le
+      courrier indésirable", three chapters (Le facteur, La signature, La
+      politique)
+- [x] Story: automating with Ansible (inventory, playbook, idempotence,
+      `--check`); "La flotte", three chapters (L'inventaire, Le playbook,
+      La répétition)
+- [x] Caddy, as a short comparison chapter (automatic HTTPS); "La Rustine",
+      one chapter (Le cadenas)
 
 ---
 
-## Phase 10 — Traductions
+## Phase 10 — Translations
 
-Une fois le jeu terminé en français (l'architecture le prépare dès la
-phase 0 : voir « Traductions » dans `CLAUDE.md`).
+The architecture has prepared for it since phase 0 (see "Translations" in
+`CLAUDE.md`).
 
-- [x] Anglais (`src/textes/en/`, page `/en/`, chaque quête rejouée en anglais)
-- [ ] Allemand, espagnol, mandarin, coréen, puis d'autres langues
-- [x] Sorties des commandes simulées selon `LANG`, comme les vrais outils (en anglais : les messages d'origine, comme avec `LANG=C`)
-- [x] Noms de lieux et d'objets traduits et faciles à taper (`noms.ftl`,
-      L'Effaceur et le poste) ; complétion testée dans chaque langue
-- [x] Noms des documents des autres histoires (courriels, messages, notes
-      d'aide, `LISEZMOI.txt`… : `noms: true` partout)
-- [x] Noms des données des serveurs, jusque dans ce qui les garde en mémoire
-      (instantanés restic et rsnapshot, copies rsync, fichiers suivis par
-      git, scripts, crontabs, journaux) : fonds des Archives et disque de
-      la mairie, roman et poèmes d'Inès, partage et rançongiciel de la
-      Ludothèque, partage, sauvegardes et wiki de la Maison des
-      associations, relevés et sauvegardes de la Coopérative, dossier de
-      l'équipe du Datacenter, dossiers de la radio de L'Astreinte ; restent
-      tels quels les noms techniques (sites et adresses servis par HTTP,
-      bases, images et projets Docker, unités systemd, programmes et
-      scripts du PATH) et les noms propres (émissions de la radio)
-- [x] Nom du compte du joueur ou de la joueuse (`vous`, en anglais `you` :
-      invite, `/home`, propriétaires, journaux…) et de l'utilisateur de
-      l'Effaceur (`effaceur`, `eraser`) ; les noms des machines (`royaume`,
-      `datacenter`…) restent ceux des hôtes
-- [ ] Recollage des paragraphes et typographie selon la langue (le chinois et
-      le coréen ne séparent pas les lignes par une espace)
-- [ ] Plateforme de traduction (Weblate hébergé, gratuit pour les projets
-      libres) branchée sur `src/textes/`
-- [ ] Terminal simulé compatible avec les caractères larges (CJK)
-- [ ] Relecture par des locuteur·rices natif·ves, glossaire technique par langue
-- [x] Quêtes rejouées automatiquement dans chaque langue (`tests/quetes.test.ts`)
+- [x] English (`src/textes/en/`, page `/en/`, each quest replayed in
+      English)
+- [x] **English first**: English becomes the reference language of the
+      texts, the root picks the language from the browser (`/en/`, `/fr/`),
+      the element takes English attributes (`lang`, `story`, `save-key`),
+      the repository's documentation is in English (`README.md`,
+      `CONTRIBUTING.md`, `CLAUDE.md`, `docs/`), with French versions of the
+      README, the contribution guide and the embedding guide
+- [ ] Code identifiers in English, over time (new code in English; French
+      names renamed when touched, never mixed with a feature)
+- [ ] German, Spanish, Mandarin, Korean, then other languages
+- [x] Outputs of the simulated commands according to `LANG`, like the real
+      tools (in English: the original messages, as with `LANG=C`)
+- [x] Translated, easy-to-type names of places and objects (`noms.ftl`, the
+      Eraser and the workstation); completion tested in each language
+- [x] Names of the other stories' documents (emails, messages, help notes,
+      `LISEZMOI.txt`…: `noms: true` everywhere)
+- [x] Names of the servers' data, right down to what keeps them (restic and
+      rsnapshot snapshots, rsync copies, files tracked by git, scripts,
+      crontabs, logs): the Archives' collection and the town hall's disk,
+      Inès's novel and poems, the Ludothèque's share and ransomware, the
+      Maison des associations' share, backups and wiki, the Coopérative's
+      statements and backups, the Datacenter team's folder, the radio's
+      folders in L'Astreinte; technical names stay as they are (sites and
+      addresses served over HTTP, databases, Docker images and projects,
+      systemd units, programs and scripts in the PATH), and so do proper
+      names (the radio's shows)
+- [x] The player's account name (`vous`, in English `you`: prompt, `/home`,
+      owners, logs…) and the Eraser's user (`effaceur`, `eraser`); machine
+      names translated too (`royaume` → `kingdom`, `machines.ftl`)
+- [ ] Paragraph joining and typography per language (Chinese and Korean
+      don't separate lines with a space)
+- [ ] Translation platform (hosted Weblate, free for libre projects)
+      connected to `src/textes/`
+- [ ] Simulated terminal compatible with wide characters (CJK)
+- [ ] Review by native speakers, technical glossary per language
+- [x] Quests replayed automatically in each language
+      (`tests/quetes.test.ts`)
 
-## Idées en plus
+## More ideas
 
-- [ ] **Une histoire offensive** : comprendre une attaque en la rejouant,
-  pas seulement en lire le résultat. Hors du périmètre habituel du jeu
-  (« Règles du jeu » dans `CLAUDE.md` : les quêtes de sécurité restent
-  défensives) ; un guide pour qui voudra la construire est dans
-  `docs/VERSION-OFFENSIVE.md`.
-- [x] **Astreinte et incident du jour** (`src/moteur/astreinte.ts`) : chaque
-  jour, un chapitre tiré de la date (le même pour tout le monde, sans
-  serveur) parmi ceux des parcours qui parlent de pannes, ouvert après La
-  Racine ; un budget d'erreur de 30 minutes qui fond avec le temps (−3 min
-  par indice, −20 s par commande en erreur) ; à la fin, une carte de score
-  en texte à copier (jauge en cinq cases) ; le meilleur résultat du jour
-  est gardé dans le navigateur.
-- [x] **Bilan de fin de chapitre** (`src/moteur/bilan.ts`) : temps passé,
-  commandes tapées (et en erreur), indices ; le détail compare, étape par
-  étape, la commande qui l'a franchie à la solution de référence (celle des
-  indices), en rappelant qu'une autre façon de faire est tout aussi juste.
-- [x] **Instantané de secours** (panneau Mission, `Console.restaurer`) :
-  prendre un instantané, y revenir, annuler la dernière saisie. Le moteur
-  est déterministe : rouvrir le chapitre et rejouer les saisies (commandes,
-  réponses, enregistrements de nano) redonne la machine d'alors. Pas
-  d'instantané en mode examen, ni quand on est passé par le poste.
-- [x] **Parcours thématiques** (`src/moteur/parcours.ts`, troisième vue du
-  menu) : premiers pas, sécurité, web, réseaux, sauvegardes, conteneurs et
-  déploiement, production, comptes et identités ; chaque chapitre est dans
-  au moins un parcours ; le prochain à faire est mis en avant, ce qui
-  attend dit quel chapitre finir d'abord.
-- [x] **Coloration de la ligne de commande**, comme fish ou
-  zsh-syntax-highlighting : la commande en vert si le shell du jeu la
-  lancerait, en rouge (et soulignée d'une vague) sinon, les options, les
-  chaînes, les jokers qui trouvent quelque chose, les tubes et redirections,
-  les chemins qui existent soulignés ; la commande reste colorée au-dessus de
-  sa sortie. Rien pour une réponse (yes/no, mot de passe, `sftp>`). Contraste
-  AA dans les quatre thèmes ; bouton « Couleurs » pour la couper.
-- [x] **Couleurs des sorties**, comme les vrais outils (séquences ANSI,
-  `src/moteur/couleurs.ts`) : `ls --color=auto` et `grep --color=auto` (les
-  alias de Debian), `diff --color`, `systemctl status` et `--failed` ; à
-  l'écran seulement, jamais dans un tube ni un fichier (sauf
-  `--color=always`) ; les événements lisent la sortie sans les codes, et
-  chaque chapitre est rejoué avec les couleurs. Aussi : `ip -c`, les
-  priorités de `journalctl` (et l'extrait de `systemctl status`), `git`
-  (`diff`, `log`, `show`, `status`, `--no-color`).
-- [x] **Carte du réseau en menu** : le poste, internet, puis une machine par
-  histoire (nom et adresse), branchée sur un même câble ; sa branche est en
-  pointillés tant qu'elle est verrouillée, ambre quand on y joue, verte quand
-  l'histoire est finie, et un paquet y file (coupé si le système demande moins
-  d'animations). La vue « Baies » (les mêmes boutons, avec leur résumé) reste
-  au choix ; le choix est gardé dans le navigateur.
-- [x] **Affichage du terminal** : quatre thèmes (phosphore, ambre, contraste
-  élevé, papier), taille du texte, plein écran (Échap en sort), gardés dans le
-  navigateur ; mises en scène d'une connexion et d'un redémarrage (coupées si
-  le système demande moins d'animations).
-- [x] **Tableau de classe** pour les enseignant·es : on y glisse les fichiers
-  de sauvegarde des élèves (ou on colle leurs codes) ; chapitres, grade,
-  succès, meilleur examen, avancée par histoire ; export CSV (sans formule
-  injectable) ; tout reste dans le navigateur.
-- [x] **Indices gradués**, dans la Mission : le manuel d'abord, puis une
-  piste, puis presque la réponse, pour la première étape pas encore franchie
-  (`indices-<histoire>.ftl`) ; le débrief compte les indices demandés ; rien
-  en mode examen ; un succès « Sans filet » pour un chapitre sans indice.
-- [x] **Succès et grades** : 17 succès vérifiés sur ce qui s'est vraiment
-  passé (ls -a, un tube, une redirection, une restauration, le mode examen…),
-  dont 3 clins d'œil cachés (xyzzy, le sandwich de xkcd 149, sl) ; un grade,
-  de Stagiaire à SRE, selon les chapitres terminés, aussi dans le carnet.
-- [x] **Mission, barre de touches mobile, Ctrl-R et Ctrl-C** ; **style
-  « salle des machines »** propre au site.
-- [x] **Emporter sa progression** (salles de TP) : « Ma progression » donne
-  un code court à recopier (les chapitres terminés, somme de contrôle contre
-  les fautes de frappe, ordre des chapitres figé : `tests/progression/ordre.txt`)
-  ou un fichier JSON avec toute la sauvegarde ; un nom facultatif s'inscrit
-  en tête du carnet. Sans serveur ni chiffrement : ce n'est pas une preuve.
-- [x] **La carte** : un bouton au-dessus du terminal ouvre, dans une
-  fenêtre, l'arbre des lieux connus de la machine où l'on est (lieux
-  visités, lieux aperçus en italique, maison, lieux fermés), avec « tu es
-  ici ». Rien n'est dévoilé au-delà de ce qu'on a vu ; pas de fichiers.
-- [x] **Le plan du réseau** : dans les histoires à plusieurs machines (La
-  Maison des associations, La Ruche), un onglet « Réseau » de la carte
-  montre le réseau prévu (le schéma affiché au mur : routeur, VLAN,
-  machines internes, tunnels WireGuard), en SVG et en liste, avec « tu es
-  ici » et les machines où l'on s'est déjà connecté·e. C'est le plan, pas
-  l'état : le vérifier reste le travail des vraies commandes.
-- [x] **Le carnet du sysadmin** : chaque commande découverte s'ajoute à un
-  aide-mémoire personnel (sa ligne du manuel, la première ligne tapée, le
-  chapitre), gardé dans le navigateur, exportable en Markdown.
-- [x] **Mode « examen »** : une case au-dessus du terminal ; le chapitre
-  recommence sur une machine neuve, sans aucun indice (seul le débrief
-  s'affiche), avec un chrono et le meilleur temps gardé dans le navigateur.
-  Reste possible : des pannes tirées au hasard, propres à l'examen.
-- [x] **Quêtes à plusieurs bonnes réponses** : « UNE AUTRE VOIE » dans le
-  débrief de quinze chapitres (`ufw` ou `nftables`, `rsnapshot` ou `restic`,
-  fail2ban ou `ufw limit`, certbot ou acme.sh et DNS-01…). Reste possible :
-  des chapitres qu'on fait des deux façons.
-- [x] **Défis de la communauté** : format de quête documenté pour que d'autres
-  en écrivent (`CONTRIBUTING.md`).
-- [x] **Lien avec rouages.net** : après un chapitre, les étapes des modules
-  ou les mots du glossaire qui expliquent son concept (DNS, TLS, NAT…),
-  `src/moteur/rouages.ts`. Reste le sens inverse, à faire sur rouages.net.
-- [x] **Pour les enseignant·es** : fiches par quête (objectif, prérequis,
-  commandes découvertes, durée indicative) sur `/fr/enseignants/` et `/en/teachers/`, générées à la
-  construction (`src/moteur/fiches.ts`) ; progression exportable sans compte,
-  en tête du carnet téléchargé.
+- [ ] **An offensive story**: understanding an attack by replaying it, not
+  just reading its outcome. Outside the game's usual scope ("Game rules" in
+  `CLAUDE.md`: security quests stay defensive); a guide for whoever wants to
+  build it is in `docs/OFFENSIVE-STORY.md`.
+- [x] **Difficulty**: 1 to 5 stars per chapter (and a range per story),
+  computed from what comes before it in the game and from its size
+  (`src/moteur/difficulty.ts`); in the menu, the learning paths and the
+  teachers' sheets.
+- [x] **On-call duty and the incident of the day** (`src/moteur/astreinte.ts`):
+  every day, a chapter drawn from the date (the same for everyone, with no
+  server) among those of the learning paths about failures, open after La
+  Racine; an error budget of 30 minutes that melts with time (−3 min per
+  hint, −20 s per failed command); at the end, a score card as text to copy
+  (a five-box gauge); the day's best result is kept in the browser.
+- [x] **End-of-chapter summary** (`src/moteur/bilan.ts`): time spent,
+  commands typed (and failed), hints; the detail compares, step by step,
+  the command that passed it with the reference solution (the hints'), and
+  reminds that another way is just as right.
+- [x] **Rescue snapshot** (Mission panel, `Console.restaurer`): take a
+  snapshot, go back to it, undo the last input. The engine is
+  deterministic: reopening the chapter and replaying the inputs (commands,
+  answers, nano saves) gives back the machine as it was. No snapshot in exam
+  mode, nor after going through the workstation.
+- [x] **Learning paths** (`src/moteur/parcours.ts`, the menu's third view):
+  first steps, security, web, networks, backups, containers and deployment,
+  production, accounts and identities; each chapter is in at least one
+  path; the next one to play is highlighted, and what is waiting says which
+  chapter to finish first.
+- [x] **Command-line highlighting**, like fish or zsh-syntax-highlighting:
+  the command in green if the game's shell would run it, in red (with a wavy
+  underline) otherwise, options, strings, globs that match something, pipes
+  and redirections, existing paths underlined; the command stays coloured
+  above its output. Nothing for an answer (yes/no, password, `sftp>`). AA
+  contrast in all four themes; a "Colours" button to turn it off.
+- [x] **Output colours**, like the real tools (ANSI sequences,
+  `src/moteur/couleurs.ts`): `ls --color=auto` and `grep --color=auto`
+  (Debian's aliases), `diff --color`, `systemctl status` and `--failed`; on
+  screen only, never in a pipe or a file (unless `--color=always`); events
+  read the output without the codes, and each chapter is replayed with the
+  colours. Also: `ip -c`, `journalctl`'s priorities (and the excerpt in
+  `systemctl status`), `git` (`diff`, `log`, `show`, `status`,
+  `--no-color`).
+- [x] **Network map as a menu**: the workstation, the internet, then one
+  machine per story (name and address), plugged into one cable; its branch
+  is dashed while locked, amber while you play on it, green when the story
+  is finished, and a packet runs along it (stopped if the system asks for
+  less motion). The "Racks" view (the same buttons, with their summary)
+  stays available; the choice is kept in the browser.
+- [x] **Terminal display**: four themes (phosphor, amber, high contrast,
+  paper), text size, full screen (Escape leaves it), kept in the browser;
+  staging of a connection and of a reboot (turned off if the system asks
+  for less motion).
+- [x] **Class table** for teachers: drop the students' save files (or paste
+  their codes); chapters, rank, achievements, best exam, progress per
+  story; CSV export (with no injectable formula); everything stays in the
+  browser.
+- [x] **Graduated hints**, in the Mission: the manual first, then a lead,
+  then almost the answer, for the first step not yet passed
+  (`indices-<story>.ftl`); the debrief counts the hints asked for; none in
+  exam mode; a "No safety net" achievement for a chapter without hints.
+- [x] **Achievements and ranks**: 17 achievements checked on what really
+  happened (ls -a, a pipe, a redirection, a restore, exam mode…), including
+  3 hidden easter eggs (xyzzy, the sandwich of xkcd 149, sl); a rank, from
+  Intern to SRE, according to the chapters finished, also in the notebook.
+- [x] **Mission, mobile key bar, Ctrl-R and Ctrl-C**; the site's own
+  **"machine room" style**.
+- [x] **Taking your progress with you** (computer labs): "My progress" gives
+  a short code to copy (the finished chapters, a checksum against typos, a
+  frozen chapter order: `tests/progression/ordre.txt`) or a JSON file with
+  the whole save; an optional name goes at the top of the notebook. No
+  server, no encryption: it is not proof.
+- [x] **The map**: a button above the terminal opens, in a window, the tree
+  of the known places of the machine you are on (places visited, places
+  glimpsed in italics, home, closed places), with "you are here". Nothing is
+  revealed beyond what you have seen; no files.
+- [x] **The network plan**: in the stories with several machines (La Maison
+  des associations, La Ruche), a "Network" tab of the map shows the planned
+  network (the diagram on the wall: router, VLANs, internal machines,
+  WireGuard tunnels), as SVG and as a list, with "you are here" and the
+  machines you have already connected to. It is the plan, not the state:
+  checking it stays the job of the real commands.
+- [x] **The sysadmin's notebook**: each command discovered goes into a
+  personal cheat sheet (its line from the manual, the first line typed, the
+  chapter), kept in the browser, exportable as Markdown.
+- [x] **Exam mode**: a checkbox above the terminal; the chapter starts again
+  on a fresh machine, with no hint at all (only the debrief shows), with a
+  timer and the best time kept in the browser. Still possible: random
+  failures, specific to the exam.
+- [x] **Quests with several right answers**: "ANOTHER WAY" in the debrief of
+  fifteen chapters (`ufw` or `nftables`, `rsnapshot` or `restic`, fail2ban
+  or `ufw limit`, certbot or acme.sh and DNS-01…). Still possible: chapters
+  you do both ways.
+- [x] **Community challenges**: a documented quest format so others can
+  write some (`CONTRIBUTING.md`).
+- [x] **Link with rouages.net**: after a chapter, the module steps or the
+  glossary words that explain its concept (DNS, TLS, NAT…),
+  `src/moteur/rouages.ts`. The other direction remains, to be done on
+  rouages.net.
+- [x] **For teachers**: a sheet per quest (goal, prerequisites, commands
+  discovered, difficulty, approximate time) at `/en/teachers/` and
+  `/fr/enseignants/`, generated at build time (`src/moteur/fiches.ts`);
+  progress exportable with no account, at the top of the downloaded
+  notebook.
 
 ---
 
 ## Organisation
 
-- Un **agent dédié** sur le dépôt, avec un CLAUDE.md qui reprend les règles de
-  rouages.net : français, accessibilité, statique, tests avant de pousser, PR
-  automatique, écarts avec le vrai Linux documentés, aucune donnée
-  personnelle.
-- Ordre conseillé : phase 0, puis 1 (moteur multi-hôtes), puis 2 et 3 (le
-  cœur du métier), puis 7 (sauvegardes), avant les conteneurs et le
-  déploiement.
+- A **dedicated agent** on the repository, with a CLAUDE.md that takes over
+  rouages.net's rules: accessibility, static, tests before pushing,
+  automatic PR, differences with the real Linux documented, no personal
+  data; English first since October 2026.
+- Recommended order (followed): phase 0, then 1 (multi-host engine), then 2
+  and 3 (the core of the job), then 7 (backups), before containers and
+  deployment.
