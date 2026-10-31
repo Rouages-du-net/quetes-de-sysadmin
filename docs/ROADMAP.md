@@ -57,7 +57,7 @@ garde cette mention et le lien vers l'original.
       (consignes de l'agent dédié)
 - [x] Licences : GPL v3 (code), CC BY-SA 4.0 (textes)
 - [x] Charte de contribution (format d'une quête, tests, relecture) :
-      `docs/CONTRIBUER.md`
+      `CONTRIBUTING.md`
 - [x] Pile : site **Astro** (pages statiques), jeu en TypeScript sans
       framework (élément `<quetes-de-sysadmin>`, construit aussi seul par
       Vite pour l'intégration) ; tests Vitest (chaque chapitre rejoué) et
@@ -468,12 +468,12 @@ phase 0 : voir « Traductions » dans `CLAUDE.md`).
   fail2ban ou `ufw limit`, certbot ou acme.sh et DNS-01…). Reste possible :
   des chapitres qu'on fait des deux façons.
 - [x] **Défis de la communauté** : format de quête documenté pour que d'autres
-  en écrivent (`docs/CONTRIBUER.md`).
+  en écrivent (`CONTRIBUTING.md`).
 - [x] **Lien avec rouages.net** : après un chapitre, les étapes des modules
   ou les mots du glossaire qui expliquent son concept (DNS, TLS, NAT…),
   `src/moteur/rouages.ts`. Reste le sens inverse, à faire sur rouages.net.
 - [x] **Pour les enseignant·es** : fiches par quête (objectif, prérequis,
-  commandes découvertes, durée indicative) sur `/enseignants/`, générées à la
+  commandes découvertes, durée indicative) sur `/fr/enseignants/` et `/en/teachers/`, générées à la
   construction (`src/moteur/fiches.ts`) ; progression exportable sans compte,
   en tête du carnet téléchargé.
 

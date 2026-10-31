@@ -3,10 +3,11 @@
 Tous les textes du jeu sont dans **`src/textes/<langue>/`**, au format
 **[Fluent](https://projectfluent.org)** (`.ftl`), créé par Mozilla pour des
 traductions naturelles : pluriels, variables nommées, longs textes sur
-plusieurs lignes. Le code ne contient que des identifiants. Le **français**
-(`src/textes/fr/`) est la langue de référence : les textes s'écrivent
-d'abord en français. L'**anglais** est la langue par défaut et de repli :
-sans langue demandée (ni attribut `langue`, ni `lang` sur la page), ou dans
+plusieurs lignes. Le code ne contient que des identifiants. L'**anglais**
+(`src/textes/en/`) est la langue de référence : les textes s'écrivent
+d'abord en anglais, et chaque identifiant existe en anglais. C'est aussi la
+langue par défaut et de repli :
+sans langue demandée (ni attribut `lang` sur l'élément ou la page), ou dans
 une langue que le jeu ne connaît pas, le jeu parle anglais ; un texte absent
 d'une traduction s'affiche en anglais (`LANGUE_PAR_DEFAUT` et `langueDuJeu()`
 dans `src/textes/index.ts`). La commande `help` marche dans toutes les
@@ -173,16 +174,16 @@ noms de jeux de la base…) se traduisent par ce que le joueur ou la joueuse
 
 | Code | Langue | État |
 |---|---|---|
-| `fr` | français | langue de référence |
-| `en` | anglais | langue par défaut et de repli ; complet (textes, manuel, messages des outils comme avec `LANG=C`, noms des lieux et des objets de L'Effaceur et du poste, documents et données des serveurs des autres histoires, comptes `you` et `eraser`) |
+| `en` | anglais | langue de référence, par défaut et de repli ; complet (textes, manuel, messages des outils comme avec `LANG=C`, noms des lieux et des objets de L'Effaceur et du poste, documents et données des serveurs des autres histoires, comptes `you` et `eraser`) |
+| `fr` | français | complet ; la langue d'origine du projet : les noms internes (identifiants des chapitres, des lieux, des machines) sont français |
 
 ## Ajouter une langue
 
-1. Copier `src/textes/fr/` vers `src/textes/<code>/` (code BCP 47 : `en`,
+1. Copier `src/textes/en/` vers `src/textes/<code>/` (code BCP 47 : `en`,
    `de`, `es`, `zh-Hans`, `ko`…) et traduire. Un texte absent s'affiche en
    anglais : on peut avancer fichier par fichier.
 2. `npm test` : vérifie que les fichiers sont valides, sans identifiant en
-   double ni inconnu du français, et rejoue chaque quête dans chaque langue.
+   double, ni inconnu de l'anglais, ni manquant, et rejoue chaque quête dans chaque langue.
 3. Ajouter, si la langue en a besoin, ses règles typographiques dans
    `typographie()` (`src/textes/index.ts`) : les espaces insécables du
    français en sont un exemple.

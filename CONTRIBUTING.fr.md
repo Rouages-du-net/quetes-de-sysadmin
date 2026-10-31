@@ -1,10 +1,12 @@
 # Contribuer à Quêtes de Sysadmin
 
+— [English version](CONTRIBUTING.md) (la version de référence)
+
 Merci de vouloir écrire une quête ou améliorer le jeu ! Cette page décrit ce
 qu'on attend d'une contribution, et surtout le **format d'une quête**. Les
 règles complètes sont dans `CLAUDE.md` (elles valent pour tout le monde,
 pas seulement pour l'agent) ; le détail des textes est dans
-[`TRADUIRE.md`](TRADUIRE.md).
+[`docs/TRADUIRE.md`](docs/TRADUIRE.md).
 
 ## Les principes
 
@@ -34,7 +36,8 @@ machine du réseau simulé. Un chapitre, c'est :
 | Fichier | Contenu |
 |---|---|
 | `src/moteur/chapitres/<id>.ts` | le chapitre : ses commandes, son monde de départ, son état, ses événements |
-| `src/textes/fr/chapitre-<id>.ftl` | tous ses textes : courriel de départ, fichiers, événements, débrief |
+| `src/textes/en/chapitre-<id>.ftl` (et `fr/`) | tous ses textes : courriel de départ, fichiers, événements, débrief |
+| `src/textes/en/indices-<histoire>.ftl` (et `fr/`) | ses indices gradués : une piste, puis presque la réponse, pour chaque étape |
 | `tests/<histoire>.test.ts` | la partie rejouée : la solution attendue, une autre solution, les fausses pistes |
 | `docs/SCENARIOS.md` | sa fiche : l'histoire, les commandes apprises, l'objectif, les pièges |
 
@@ -90,19 +93,26 @@ Chaque chapitre a au moins :
 - un test des **fausses pistes** : chaque événement d'indice est déclenché,
   et le chapitre n'est pas fini tant que l'erreur reste.
 
-Les tests rejouent chaque quête dans chaque langue disponible ; les textes
-ne sont vérifiés qu'en français (`contient`).
+Les tests rejouent chaque quête dans chaque langue disponible ; les
+scénarios des tests sont écrits avec les noms français (`dansLaLangue()` les
+traduit), et les textes vérifiés en français.
+
+### La difficulté
+
+Chaque chapitre affiche une difficulté de 1 à 5 étoiles, calculée par
+`src/moteur/difficulty.ts` d'après ce qui le précède dans le jeu et sa
+taille : rien à régler à la main.
 
 ## Un nouvel outil simulé
 
 Un outil (nginx, nftables, slapd…) a son moteur dans `src/moteur/<outil>.ts`
-(sans DOM, sans texte français) et ses commandes dans
+(sans DOM, sans texte affiché) et ses commandes dans
 `src/moteur/commandes/<outil>.ts`. Pour chaque commande :
 
 - son entrée dans `src/moteur/commandes/index.ts` ;
 - ses options et exemples dans `src/moteur/commandes/pages.ts` ;
-- sa page dans `src/textes/fr/manuel.ftl` (`man-<commande>`, `.synopsis`,
-  `.option-X`, `.exemple-N`) ;
+- sa page dans `src/textes/en/manuel.ftl` et `fr/manuel.ftl`
+  (`man-<commande>`, `.synopsis`, `.option-X`, `.exemple-N`) ;
 - une ligne dans le tableau des écarts de `SCENARIOS.md` ;
 - une ligne dans la structure de `CLAUDE.md`.
 
@@ -118,10 +128,23 @@ npm run test:navigateur     # Chromium, 1000 et 375 px, CSP
 Pour un changement visible, jouer le chapitre dans Chromium à 375 et 1000 px
 de large : pas d'erreur console, pas de défilement horizontal.
 
-Tout est **en français** : textes du jeu, documentation, messages de commit
-et PR. Écriture inclusive au point médian quand c'est naturel. Les sorties
-des commandes simulées restent en anglais quand le vrai outil répond en
-anglais.
+## Les langues
+
+- **L'anglais d'abord.** C'est la langue de référence des textes du jeu :
+  chaque texte s'écrit d'abord en anglais (`src/textes/en/`), puis se
+  traduit (`src/textes/fr/`…).
+- **Le dépôt est en anglais** : documentation, commentaires du code,
+  messages de commit et PR. Certains documents sont encore en français
+  (`docs/SCENARIOS.md`, `docs/ROADMAP.md`, `docs/TRADUIRE.md`…) et seront
+  traduits ; ce guide et le README ont leur version française.
+- **Le code en anglais, peu à peu.** La plupart des identifiants sont
+  encore en français (`langue`, `chapitre`, `histoire`, `moteur/`…). Le
+  **nouveau** code s'écrit en anglais ; on peut renommer ce qu'on touche,
+  sans mêler un grand renommage et une fonctionnalité dans la même PR. Un
+  nom public reçoit d'abord son alias anglais, l'ancien reste accepté.
+- Écriture inclusive au point médian quand c'est naturel, dans les textes
+  français. Les sorties des commandes simulées restent en anglais quand le
+  vrai outil répond en anglais.
 
 ## Licences
 
