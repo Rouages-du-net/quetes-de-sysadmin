@@ -19,7 +19,7 @@ agents, but its rules apply to everyone.
   agree on where it fits.
 - **Translate**: every text lives in `src/textes/<language>/*.ftl`
   (Fluent format). Copy the `en/` directory and translate; see
-  [`docs/TRADUIRE.md`](docs/TRADUIRE.md) (in French for now) for names,
+  [`docs/TRANSLATING.md`](docs/TRANSLATING.md) for names,
   passwords and machine names, which are translated too.
 
 ## Principles
@@ -53,10 +53,9 @@ agents, but its rules apply to everyone.
   every text is written in English first (`src/textes/en/`), then
   translated (`src/textes/fr/`…). A missing translation shows in English.
 - **The repository is in English**: documentation, code comments, commit
-  messages and pull requests. Some documents are still in French
-  (`docs/SCENARIOS.md`, `docs/ROADMAP.md`, `docs/TRADUIRE.md`…) and are
-  being translated; French versions of the README and of this page are kept
-  up to date.
+  messages and pull requests. French versions of the README, of this page
+  and of the embedding guide are kept up to date; the other documents are in
+  English only.
 - **Code in English, over time.** The project started in French, and most
   identifiers (variables, functions, files, components) are still French
   (`langue`, `chapitre`, `histoire`, `moteur/`…). Write **new** code in

@@ -6,7 +6,7 @@ Merci de vouloir écrire une quête ou améliorer le jeu ! Cette page décrit ce
 qu'on attend d'une contribution, et surtout le **format d'une quête**. Les
 règles complètes sont dans `CLAUDE.md` (elles valent pour tout le monde,
 pas seulement pour l'agent) ; le détail des textes est dans
-[`docs/TRADUIRE.md`](docs/TRADUIRE.md).
+[`docs/TRANSLATING.md`](docs/TRANSLATING.md).
 
 ## Les principes
 
@@ -134,9 +134,9 @@ de large : pas d'erreur console, pas de défilement horizontal.
   chaque texte s'écrit d'abord en anglais (`src/textes/en/`), puis se
   traduit (`src/textes/fr/`…).
 - **Le dépôt est en anglais** : documentation, commentaires du code,
-  messages de commit et PR. Certains documents sont encore en français
-  (`docs/SCENARIOS.md`, `docs/ROADMAP.md`, `docs/TRADUIRE.md`…) et seront
-  traduits ; ce guide et le README ont leur version française.
+  messages de commit et PR. Ce guide, le README et le guide d'intégration
+  ont leur version française ; les autres documents sont en anglais
+  seulement.
 - **Le code en anglais, peu à peu.** La plupart des identifiants sont
   encore en français (`langue`, `chapitre`, `histoire`, `moteur/`…). Le
   **nouveau** code s'écrit en anglais ; on peut renommer ce qu'on touche,

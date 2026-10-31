@@ -1,2233 +1,2185 @@
-# Scénarios — Quêtes de Sysadmin
+# Scenarios — Sysadmin Quests
 
-*Apprendre la ligne de commande Linux en jouant.* Publié sur
-https://sysadmin.rouages.net et intégrable dans d'autres sites
-(voir [INTEGRER.md](INTEGRER.md)). Le moteur est dans `src/moteur/` :
+*Learn the Linux command line by playing.* Published at
+https://sysadmin.rouages.net and embeddable in other sites (see
+[EMBEDDING.md](EMBEDDING.md)). The engine is in `src/moteur/`:
 
-- `shell.ts` : le moteur d'une machine (chemins, permissions, tubes `|`,
-  redirections `>` et `>>`, `sudo`, événements) ;
-- `console.ts`, `machines.ts`, `poste.ts` : le réseau simulé (le poste de
-  départ, une machine par histoire, `ssh` et `exit` pour passer de l'une à
-  l'autre) ;
-- `commandes/` : les commandes, par famille (`fichiers`, `texte`, `systeme`,
-  `reseau`, `git`) ; chacune lit ses arguments et l'entrée du tube, renvoie
-  sa sortie et signale ses erreurs à part (elles ne passent pas dans les
-  tubes, comme la sortie d'erreur d'un vrai shell) ;
-- `monde.ts` : les briques d'un monde (lieux, objets, droits, événements) ;
-- `chapitres/` : un fichier par chapitre, et `index.ts` qui les range en
-  histoires ;
-- `commandes/manuel.ts` et `commandes/pages.ts` : le manuel (`man`, `--help`,
-  `man -k`).
+- `shell.ts`: a machine's engine (paths, permissions, pipes `|`,
+  redirections `>` and `>>`, `sudo`, events);
+- `console.ts`, `machines.ts`, `poste.ts`: the simulated network (the
+  starting workstation, one machine per story, `ssh` and `exit` to go from
+  one to another);
+- `commandes/`: the commands, by family (`fichiers`, `texte`, `systeme`,
+  `reseau`, `git`…); each one reads its arguments and the pipe's input,
+  returns its output and reports its errors separately (they don't go
+  through pipes, like a real shell's standard error);
+- `monde.ts`: the building blocks of a world (places, objects, rights,
+  events);
+- `chapitres/`: one file per chapter, and `index.ts` which groups them into
+  stories;
+- `commandes/manuel.ts` and `commandes/pages.ts`: the manual (`man`,
+  `--help`, `man -k`).
 
-L'interface est dans `src/interface/` (`jeu.ts`, `styles.css`), l'élément
-`<quetes-de-sysadmin>` dans `src/element.ts`. Tous les textes (histoires,
-messages, manuel, interface) sont dans `src/textes/fr/*.ftl` (voir
-`docs/TRADUIRE.md`). Les parties sont rejouées par `tests/quetes.test.ts`.
+The interface is in `src/interface/` (`jeu.ts`, `styles.css`), the
+`<quetes-de-sysadmin>` element in `src/element.ts`. All texts (stories,
+messages, manual, interface) are in `src/textes/<language>/*.ftl`, English
+first (see `docs/TRANSLATING.md`). Games are replayed by
+`tests/quetes.test.ts` and one test file per story.
 
-## Principes
+The stories and chapters below keep their original French titles, which are
+also their names in the French version of the game; the English version
+translates them (`src/textes/en/`).
 
-- **Inspiré de l'original, sans le recopier** : l'idée (un lieu = un dossier,
-  un objet = un fichier, des commandes apprises en avançant) vient de
+## Principles
+
+- **Inspired by the original, without copying it**: the idea (a place = a
+  directory, an object = a file, commands learnt as you go) comes from
   [Terminus](https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html),
-  créé au MIT par Shawn Conrad et Michele Pratusevich. Les chapitres 1 et 2
-  ont leurs propres lieux et leurs propres énigmes (l'île du Phare, le Bourg
-  du port) ; ils ne suivent pas le parcours de l'original. Le jeu est né
-  sous le nom « Terminus en français » sur Les rouages du net (rouages.net)
-  avant de devenir ce projet indépendant, en octobre 2026.
-- **Nos propres textes** : l'histoire, les lieux et les dialogues sont
-  originaux, ce n'est pas une traduction.
-- **De vraies commandes, de vrais comportements** : mêmes chemins (`..`, `~`,
-  `/`), mêmes règles (`mv` renomme, `cp` copie, `rm` est définitif, les
-  jokers `*` sont développés avant la commande, comme le fait le shell). Les
-  écarts volontaires sont signalés dans le code et listés ci-dessous.
-- **Un seul monde, relié par `ssh`** : on part de son **poste**
-  (`vous@poste`) ; chaque histoire tourne sur une machine du réseau
-  (`royaume`, `datacenter`, `fourmiliere`, `manuscrit`, `bibliotheque`), que
-  l'on rejoint avec `ssh` et que l'on quitte avec `exit`. Le poste n'a au
-  départ que la clé du royaume. Les autres histoires s'ouvrent **par
-  vagues** (`deverrouillage.ts`) : chacune déclare dans `chapitres/index.ts`
-  (`apres`) les chapitres à finir avant d'en recevoir la clé, ce qu'elle
-  suppose déjà su. Le menu montre sous une histoire verrouillée ce qui
-  manque ; l'astreinte ne tire son incident que parmi les histoires ouvertes.
-  Le menu reste un raccourci (accessibilité, enseignant·es) ; l'attribut
-  `histoire` ouvre directement une histoire, même sans sa clé.
+  created at MIT by Shawn Conrad and Michele Pratusevich. Chapters 1 and 2
+  have their own places and puzzles (the Lighthouse island, the harbour
+  Town); they don't follow the original's route. The game was born as
+  "Terminus en français" on Les rouages du net (rouages.net) before becoming
+  this independent project, in October 2026.
+- **Our own texts**: the story, places and dialogues are original, not a
+  translation.
+- **Real commands, real behaviours**: same paths (`..`, `~`, `/`), same
+  rules (`mv` renames, `cp` copies, `rm` is final, `*` globs are expanded
+  before the command runs, as the shell does). Deliberate differences are
+  marked in the code and listed below.
+- **One world, linked by `ssh`**: you start from your **workstation**
+  (`you@desk`); each story runs on a machine of the network (`kingdom`,
+  `datacenter`, `fourmiliere`, `manuscrit`, `bibliotheque`…), which you
+  reach with `ssh` and leave with `exit`. At first, the workstation only has
+  the kingdom's key. The other stories open **in waves**
+  (`deverrouillage.ts`): each declares in `chapitres/index.ts` (`apres`) the
+  chapters to finish before receiving its key, what it assumes you already
+  know. Under a locked story, the menu shows what is missing; on-call duty
+  only draws its incident from open stories. The menu stays a shortcut
+  (accessibility, teachers); the `story` attribute opens a story directly,
+  even without its key.
 
-  | Histoire | s'ouvre après |
+  | Story | opens after |
   |---|---|
-  | L'Effaceur | (d'emblée) |
-  | Le Datacenter, Le Paquet perdu, La Machine à remonter le temps, Les Archives | « La Racine » (L'Effaceur) |
-  | La Fabrique, L'Astreinte | « La nuit du redémarrage » (Le Datacenter) |
-  | Les Lettres du quartier | « La nuit du redémarrage », « Le Paquet perdu » |
-  | La Gazette | « La Machine à remonter le temps », « La nuit du redémarrage » |
-  | La Ludothèque | « Les versions » (Les Archives) |
-  | La Maison des associations | « Fermer la porte » (Les Lettres) |
-  | La Coopérative | « La colocation » (Les Lettres), « Deuxième jour » (Le Datacenter) |
-  | La Ruche | « Le pare-feu » (Les Lettres), « Le rebond » (La Maison) |
-  | L'Audit | « La sentinelle » (Les Lettres), « Les droits partagés » (La Coopérative) |
-- **Histoires et chapitres** : cinq histoires ; dans une
-  histoire, chaque chapitre a son monde, ses commandes et sa fin, et s'ouvre
-  quand le précédent est terminé. La progression est gardée dans le
-  navigateur (`localStorage`, clé `quetes-de-sysadmin`, réglable par l’attribut `cle`), chapitre par chapitre.
-- **Des exemples sans danger** : adresses IP privées (RFC 1918), de
-  collecte d'opérateur (RFC 6598) ou réservées à la documentation (RFC 5737),
-  noms en `.internal` pour les machines et les réseaux internes (réservé
-  par l'ICANN aux réseaux privés en 2024) et en `.example` pour ce qui est
-  public : sites, zones DNS, courriels (RFC 6761). Un nom inventé
-  (`cooperative.fr`) pourrait appartenir à quelqu'un : le jeu apprendrait à
-  viser une vraie machine. Le `/etc/hosts` du poste l'explique aux joueur·ses.
-  Seule exception : 9.9.9.9, le vrai résolveur DNS public de Quad9.
-- **Sorties authentiques** : `ping`, `dig`, `traceroute`, `curl`, `ps`,
-  `systemctl` répondent en anglais, comme sur un vrai système ; `git` et
-  les messages d'erreur de base (« Permission non accordée ») en français,
-  comme avec un système réglé en français.
+  | L'Effaceur (The Eraser) | (from the start) |
+  | Le Datacenter, Le Paquet perdu, La Machine à remonter le temps, Les Archives | "La Racine" (L'Effaceur) |
+  | La Fabrique, L'Astreinte | "La nuit du redémarrage" (Le Datacenter) |
+  | Les Lettres du quartier | "La nuit du redémarrage", "Le Paquet perdu" |
+  | La Gazette | "La Machine à remonter le temps", "La nuit du redémarrage" |
+  | La Ludothèque | "Les versions" (Les Archives) |
+  | La Maison des associations | "Fermer la porte" (Les Lettres) |
+  | La Coopérative | "La colocation" (Les Lettres), "Deuxième jour" (Le Datacenter) |
+  | La Ruche | "Le pare-feu" (Les Lettres), "Le rebond" (La Maison) |
+  | L'Audit | "La sentinelle" (Les Lettres), "Les droits partagés" (La Coopérative) |
+  | Le Labo, La Veille, Le courrier indésirable, La flotte, La Rustine | see their sections below |
+- **Stories and chapters**: in a story, each chapter has its world, its
+  commands and its ending, and opens when the previous one is finished.
+  Progress is kept in the browser (`localStorage`, key
+  `quetes-de-sysadmin`, set with the `save-key` attribute), chapter by
+  chapter. Each chapter shows a difficulty from 1 to 5 stars
+  (`difficulty.ts`).
+- **Safe examples**: private IP addresses (RFC 1918), carrier-grade NAT
+  (RFC 6598) or addresses reserved for documentation (RFC 5737), names in
+  `.internal` for internal machines and networks (reserved by ICANN for
+  private networks in 2024) and in `.example` for anything public: sites,
+  DNS zones, emails (RFC 6761). An invented name (`cooperative.fr`) could
+  belong to someone: the game would teach you to aim at a real machine. The
+  workstation's `/etc/hosts` explains it to players. Only exception:
+  9.9.9.9, Quad9's real public DNS resolver.
+- **Authentic outputs**: `ping`, `dig`, `traceroute`, `curl`, `ps`,
+  `systemctl` answer in English, as on a real system; `git` and the basic
+  error messages ("Permission denied") follow the game's language, as with
+  a system set to that language.
 
-### Le manuel, premier réflexe
+### The manual, the first reflex
 
-Pour apprendre à se dépanner seul·e, le manuel est disponible partout, dès le
-chapitre 1, et pour toutes les commandes du jeu (même celles qu'on n'a pas
-encore le droit de lancer, comme sur un vrai système) :
+To learn to help yourself, the manual is available everywhere, from
+chapter 1, and for every command of the game (even those you aren't allowed
+to run yet, as on a real system):
 
-- `man commande` : une page au format habituel (NOM, SYNOPSIS, DESCRIPTION,
-  OPTIONS, EXEMPLES, VOIR AUSSI), fabriquée par `commandes/manuel.ts` à
-  partir de la définition de la commande et de ses compléments
-  (`commandes/pages.ts` : options, exemples, renvois) ;
-- `commande --help` : un résumé ;
-- `man -k mot` et `apropos mot` : chercher une commande par mot-clé ;
-  `whatis commande` : une ligne ;
-- une option inconnue donne le vrai message des coreutils : « ls : option
-  invalide -- 'z' / Saisissez « ls --help » pour plus d'informations. »
+- `man command`: a page in the usual format (NAME, SYNOPSIS, DESCRIPTION,
+  OPTIONS, EXAMPLES, SEE ALSO), built by `commandes/manuel.ts` from the
+  command's definition and its additions (`commandes/pages.ts`: options,
+  examples, cross-references);
+- `command --help`: a summary;
+- `man -k word` and `apropos word`: look for a command by keyword;
+  `whatis command`: one line;
+- an unknown option gives the real coreutils message: "ls: invalid option
+  -- 'z' / Try 'ls --help' for more information."
 
-Dans le chapitre 1, le cours sur les fichiers cachés ne donne plus l'option :
-il renvoie à `man ls`, et la gardienne du phare renvoie aux EXEMPLES de
-`man mv`. Au chapitre 2, le parchemin présente `--help` et `man -k`.
+In chapter 1, the lesson on hidden files no longer gives the option: it
+points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
+`man mv`. In chapter 2, the scroll introduces `--help` and `man -k`.
 
-### Écarts volontaires avec un vrai Linux
+### Deliberate differences from a real Linux
 
-| Commande | Dans le jeu | Sous Linux |
+| Command | In the game | On Linux |
 |---|---|---|
-| `less` | affiche tout, comme `cat` | affiche page par page (`q` pour quitter) |
-| `mv` | ne déplace que des objets (fichiers) | déplace aussi les dossiers |
-| `rm -r`, `cp -r` | refusés | effacent / copient des dossiers entiers |
-| `grep` sans résultat | « (aucune ligne ne contient …) » | n'affiche rien |
-| `grep` | expressions régulières basiques (par défaut), étendues (`-E`) ou texte brut (`-F`), traduites en expressions JavaScript ; pas de classes `[[:alpha:]]` ni de références arrière `\1` | POSIX complet |
-| couleurs (`ls`, `grep`, `diff --color`, `systemctl`, `journalctl`, `ip -c`, `git`) | `ls` et `grep` colorent à l'écran par défaut, comme les alias `--color=auto` du `~/.bashrc` de Debian (sans commande `alias`) ; `ls` garde le `/` après les lieux même en couleur ; seulement les couleurs par défaut des types courants (lieux, liens, programmes, archives, images) ; le bouton « Couleurs » de l'interface joue le rôle d'un terminal sans couleurs | `LS_COLORS`/`dircolors`, `GREP_COLORS`, `diff --palette`, `SYSTEMD_COLORS` ; l'alias se lit dans `~/.bashrc` |
-| `man` | affiche la page d'un coup, en quelques sections | ouvre une page plein écran (flèches, `/mot` pour chercher, `q` pour quitter), bien plus longue |
-| `ls -l` | type et droits, propriétaire, groupe (= propriétaire), taille, nom | ajoute le nombre de liens et la date |
-| permissions | propriétaire, groupe, autres ; bits spéciaux affichés (`s`, `t`) ; le setgid d'un dossier passe son groupe (et le setgid) à ce qu'on y crée ; `chmod` à 4 chiffres ; pas de setuid ni de sticky appliqués, ni d'ACL ; un fichier déplacé dans un dossier setgid sans groupe à lui en prend aussi le groupe | setuid, sticky appliqués, ACL (`setfacl`), `mv` garde le groupe |
-| `usermod -G` | prend effet tout de suite | les groupes d'une session sont lus à la connexion : il faut se reconnecter (le jeu le dit dans le texte) |
-| `chown`, `chgrp` | `-R` seulement | aussi `--reference`, `-h`… |
-| `chmod -w` (sans u/g/o) | agit sur tout le monde | tient compte du masque `umask` |
-| `umask` | commande avec sa page `man` ; vaut pour la session ; le masque des autres comptes se lit dans `/etc/profile`, `/etc/profile.d/*.sh`, `~/.bashrc`, `~/.profile` (la dernière ligne `umask` l'emporte) | commande intégrée à bash (`help umask`) ; `pam_umask`, `login.defs` |
-| comptes (`usermod`, `userdel`, `gpasswd`, `chage`) | `usermod -L/-U/-e/-s/-G` ; `userdel [-r] [-f]` (refus si un processus du compte tourne) ; `gpasswd -a/-d` ; `chage -l/-E` (dates au format AAAA-MM-JJ) ; pas de `/etc/shadow` lisible ; messages de la traduction française de shadow-utils | toutes les options, `passwd`, `deluser`, `/etc/shadow` |
-| `sudo`, `sudoers`, `visudo` | `/etc/sudoers` et `@includedir` (fichiers sans point ni `~`), règles `qui machines=(compte) [NOPASSWD:] commandes`, `Cmnd_Alias`, jokers ; `sudo -l [-U compte]` ; `visudo [-c] [-f fichier]` vérifie à la fermeture de l'éditeur et demande « Et maintenant ? » ; une erreur dans la politique bloque sudo ; seul « vous » lance des commandes avec sudo (les autres comptes : `sudo -l -U`) ; pas d'alias d'utilisateurs ni de machines, pas de `!` | toute la grammaire de sudoers, plugins, `sudoedit` |
-| `who`, `pkill`, `which` | sessions décrites par le chapitre (une session vit tant que son `sshd` tourne) ; `pkill [-u compte] [motif]` ; `which` déduit le chemin (`/usr/bin`, ou `/usr/sbin` pour la section 8) | `w`, `loginctl`, toutes les options de procps ; `which` lit le PATH |
-| `rm` d'un fichier protégé en écriture | efface sans demander | demande confirmation |
-| `sudo` | redemande le mot de passe seulement au premier usage du chapitre | s'en souvient environ 15 minutes |
-| `cat` d'une archive | message d'erreur | affiche des octets illisibles |
-| `ping` | 4 envois par défaut | continue jusqu'à Ctrl+C |
-| `traceroute` | s'arrête 3 sauts après le dernier qui répond | continue jusqu'à 30 sauts |
-| `ps aux` | utilisateur, PID, %CPU, %MEM, commande | ajoute VSZ, RSS, TTY, STAT, START, TIME |
-| `tar` | taille calculée (texte compressé au tiers, médias à 98 %) ; s'il n'y a pas la place, rien n'est écrit | vraie compression ; une archive partielle peut rester |
-| `git` | une seule branche (`main`), fichiers à la racine du dépôt seulement, identifiants calculés par le jeu, `commit` exige `-m` ; distants par chemin seulement (dépôts nus de la machine) ; `push` et `pull` en avance rapide seulement (pas de fusion) ; crochets `pre-receive` et `post-receive` ; chiffres de `push` indicatifs | branches, sous-dossiers, SHA-1/SHA-256, éditeur de texte, distants par SSH ou HTTPS, fusions, tous les crochets |
-| scripts (`sh`, crochets) | `/bin/sh` réduit (`script.ts`) : une commande par ligne, `#`, `set -e`, `exit`, variables, `$(…)`, `read`, `&&`, `\|\|`, `[ … ]` ; pas de `if`, `for`, `while`, `case` ni de fonctions ; une commande réussit si elle n'a écrit aucune erreur | le langage complet |
-| `diff` | format normal, `-u` (trois lignes de contexte), `-r`, `-q` ; l'heure de l'en-tête `-u` est l'heure de la machine | toutes les options |
-| `date`, `test`, `readlink` | `date` sans option ou `+FORMAT` (directives courantes) ; `test` (et `[ … ]` dans un script) : `-e -f -d -L -s -r -w -x -n -z`, `=`, `!=`, comparaisons numériques ; `readlink [-f]` | `date -d`, `-u`… ; `test` complet ; `realpath` |
-| Le Kiosque (La Gazette) | une appli Node.js simulée : version lue au démarrage via un lien, `/health` en JSON, configuration dans un fichier `.env`, migration de schéma au démarrage (jamais en arrière) ; une heure de visites simulée à chaque rechargement de nginx dans « Le canari » | une vraie appli et sa base PostgreSQL |
-| journal nginx | format « combined » sans la page d'origine ni le navigateur | deux champs de plus en fin de ligne |
-| `ssh` | deux modèles : sur la plupart des machines, une clé est acceptée si c'est celle que le jeu a donnée pour cette machine ; sur `maison` et son réseau interne (`acces.ts`), le vrai fonctionnement : `authorized_keys` d'en face, phrase de passe, mot de passe si sshd l'accepte (trois essais), `-J`/`ProxyJump` (le nom suivant est résolu par la machine du saut), `-L` avec `-f -N` (un processus à arrêter avec `kill`), commande à distance, `-G` (extrait) ; pas d'agent, de `-R`, de `-D` ni de certificats ; une seule clé d'hôte (ed25519) ; message d'usage raccourci | tout cela, agent, `ForwardAgent`, redirections distantes et dynamiques |
-| `exit` | a sa page `man` | commande intégrée à bash : `help exit` |
-| session `ssh` | la machine garde son état tant que la page reste ouverte ; un rechargement relance le chapitre en cours | la machine garde son état |
-| sections du manuel | 1 (commandes), 5 (fichiers de configuration : `sshd_config`, `ssh_config`, `sudoers`) et 8 (administration : `usermod`, `reboot`) | aussi 2, 3, 4, 6 et 7 (appels système, bibliothèques…) |
-| systemd | services seuls (pas de cibles, de dépendances, de timers ni de fichiers d'unité modifiables) ; l'horloge avance d'une seconde par action | unités de tous types, `daemon-reload` |
-| `tail -f`, `journalctl -f` (activité en direct) | la commande garde la main jusqu'à Ctrl-C ; l'écran fait passer 3 s sur la machine par seconde réelle, et chaque commande tapée en fait passer quelques-unes (`Chapitre.activite`, voir `src/moteur/activite.ts`) : des visiteurs, des robots, des scanners écrivent dans les journaux ; dans un tube (`tail -f journal \| grep …`), le jeu affiche une fois sans suivre | le temps réel ; un tube qui suit en continu ; `tail -F` qui rouvre un fichier remplacé |
-| `systemctl` sans être root | « Access denied », il faut `sudo` | demande le mot de passe (polkit) |
-| `sudo` après `reboot` | se souvient encore du mot de passe | le redemande |
-| `sshd` | une partie des mots-clés ; toutes les erreurs listées d'un coup ; le mot de passe n'est demandé que sur les machines au vrai ssh (`maison`) ; pas de `StrictModes` (droits de `~/.ssh` non vérifiés) ni d'options dans `authorized_keys` | s'arrête à la première erreur ; propose le mot de passe partout ; refuse un `authorized_keys` modifiable par d'autres |
-| `ufw` | règles IPv4 et IPv6 confondues (lignes « (v6) » pour la forme) ; pas de règles sortantes, de routage, de journalisation, d'`insert` ni de `reset` ; messages proches de la traduction française d'ufw | tout cela |
-| `ss` | sockets décrites par le chapitre, et la session ssh en cours (sur le port par lequel on est entré) | toutes les sockets du système |
-| fail2ban | prisons `sshd`, `nginx-limit-req` et `recidive` (les autres se chargent, sans filtre ; une prison active sans journal empêche le démarrage) ; le `port` d'une prison borne le bannissement ; `findtime` non appliqué (tous les échecs du journal comptent) ; filtre réduit à « Failed password », « Invalid user », « Failed publickey » ; le poste banni garde sa session ouverte | plusieurs prisons ; fenêtre `findtime` ; filtres complets ; le bannissement coupe aussi la session en cours |
-| `rsync` | `-a`, `-v`, `-n`, `--delete` ; local, ou à distance par ssh (`machine:chemin`, dans un sens ou dans l'autre, avec les mêmes clés et rebonds que `ssh`) ; un fichier change si son contenu change ; chiffres de « sent/received » indicatifs | compare taille et date, toutes les options, démon rsync |
-| `scp`, `ssh-copy-id` | `scp` : `-r`, `-P`, `-J`, `-i`, une copie dans un sens ou dans l'autre (pas entre deux machines distantes), ligne de progression immédiate ; `ssh-copy-id` : `-i`, `-p`, `-J`, la clé `~/.ssh/id*.pub` la plus récente par défaut | `scp` entre deux machines distantes (`-3`) ; `ssh-copy-id -f`, `-n` |
-| `sftp` | session interactive (`sftp>`) par les mêmes sauts et clés que `ssh` ; `ls`, `cd`, `pwd`, `lcd`, `lls`, `lpwd`, `get [-r]`, `put [-r]`, `mkdir`, `rm`, `rmdir`, `rename`, `help`, `bye` ; un dossier qui existe déjà reçoit le contenu | `-b` (fichier de commandes), `reget`/`reput`, jokers, `chmod`, `df` |
-| `lftp` et l'hébergement mutualisé | FTP (Pure-FTPd) qui refuse le clair (FTPS explicite, AUTH TLS) ; certificat vérifié contre le nom demandé (`ssl:verify-certificate`) ; `-u`, `-e`, `-c`, `open`, `user`, `set`, `ls`, `cd`, `pwd`, `lcd`, `lpwd`, `mirror` (`-R`, `--delete`, `--dry-run`, `-v`), `put`, `get`, `mkdir`, `rm`, `cat` ; la connexion se fait à la première commande distante ; l'hébergement est décrit par l'histoire | SFTP et HTTP par lftp, `~/.lftprc`, `~/.netrc`, files d'attente, tâches de fond, jokers |
-| machines internes | derrière `maison`, `wiki` et `archives` existent dès qu'on s'y connecte ; on y entre par ssh depuis `maison`, ou avec `-J` depuis le poste (`exit` ramène alors au poste) ; un programme absent répond `command not found` | un vrai réseau, routé |
-| `crontab`, cron | l'éditeur est toujours `nano` ; pas de variables d'environnement ni de `%` ; le jeu « fait passer la nuit » quand la crontab change | cron tourne en continu ; `select-editor` au premier `crontab -e` |
-| `unattended-upgrade`, `apt-config` | `--dry-run`, `-d`, `-v` ; `Origins-Pattern` (clés `o`, `n`, `l`, `a`, `site`, jokers), `Package-Blacklist`, `Mail`, `MailReport`, `Automatic-Reboot`, `Automatic-Reboot-Time` ; `apt-daily-upgrade.service` ne lance la passe que si `APT::Periodic::Unattended-Upgrade` le demande ; `apt.conf.d` lu comme apt (dernière valeur, listes qui s'allongent, `;` obligatoire) ; `apt-config dump [préfixe]` ; origines des paquets décrites par le chapitre ; le redémarrage programmé n'est pas joué | autoremove, `MinimalSteps`, batterie, `#include`/`#clear`, sortie complète de `--debug`, `apt-cache policy` |
-| `apt` | `update`, `install [-y]`, `list --installed`, `list --upgradable`, `upgrade` et `full-upgrade` (les mises à jour décrites par le chapitre) ; un petit catalogue, versions et tailles indicatives ; un paquet qui échoue à démarrer n'est pas laissé « à moitié configuré » ; une mise à jour coupée laisse ses paquets dépaquetés (`dpkg --configure -a`) ; `/var/run/reboot-required` pour un noyau ou la libc | tout le catalogue Debian, `remove`, `search`, `show`, `apt-get`… ; dpkg garde l'état de chaque paquet |
-| réseau local (`ip`, `ifup`, `ifdown`) | IPv4 seulement ; `ip addr`, `ip link`, `ip route` (show, add, del, set, `-br`, `-d`), interfaces VLAN 802.1Q ; `/etc/network/interfaces` lu comme ifupdown (`auto`, `iface … inet static`, `manual`, `loopback`, `address`, `netmask`, `gateway`, `vlan-raw-device`, `source`) ; le commutateur et ses ports sont décrits par le chapitre ; pas d'ARP visible, de MTU, de bonding ni de systemd-networkd | tout iproute2, ifupdown2, NetworkManager, systemd-networkd |
-| `dnsmasq` | DHCP seulement (les options DNS sont acceptées et ignorées) ; `interface` (avec `*`), `except-interface`, `dhcp-range`, `dhcp-host`, `dhcp-option` ; les appareils demandent une adresse à chaque démarrage du service ; l'adresse est tirée de l'adresse MAC ; pas de renouvellement de bail | DNS, TFTP, PXE, DHCPv6, renouvellement |
-| `nft` (nftables) | IPv4 ; tables `ip`, `inet` (`ip6` lu, sans effet) ; chaînes de base `filter` et `nat` (hooks, priorités, politique), chaînes ordinaires (`jump`, `goto`) ; conditions `iifname`, `oifname`, `ip saddr`, `ip daddr`, `ip protocol`, `meta l4proto`, `tcp`/`udp` `dport`/`sport` (services connus du jeu), `ct state`, négation `!=`, ensembles anonymes ; actions `counter`, `log`, `accept`, `drop`, `reject`, `masquerade`, `snat` (au `postrouting`), `dnat` (au `prerouting`, vers une adresse et un port) ; `define`, `include` ; `-f`, `-c`, `-a` ; `add`, `insert`, `delete`, `flush`, `list` ; le trafic est celui des appareils décrits par le chapitre (et de visiteurs d'internet), et les compteurs comptent un passage de chaque échange ; messages d'erreur proches de nft ; la chaîne `input` ne coupe pas la session ssh du jeu | ensembles nommés, maps, `limit`, `quota`, IPv6, `bridge`, `netdev`, `nft monitor`, les règles sur le contenu des paquets |
-| `nft` sous ufw et fail2ban | sur les machines sans règles nftables écrites à la main : `list ruleset`, `list tables`, `list table`, en lecture seule ; table `ip filter` (chaînes `INPUT`, `OUTPUT`, `ufw-before-input`, `ufw-user-input`, `ufw-after-input`), table `inet f2b-table` de l'action nftables de fail2ban ; compteurs à zéro ; un profil à plusieurs ports en un ensemble `{ 80, 443 }` | la table `ip6 filter`, les chaînes de journalisation et de routage de ufw, les vrais compteurs ; on pourrait y écrire (et ufw l'écraserait) |
-| `sysctl`, `conntrack` | `sysctl` : lire, `-w`, `clé=valeur`, `-p`, `--system`, `-a`, `-n` sur quelques clés (`/proc/sys` est un vrai dossier du jeu) ; `/etc/sysctl.d/*.conf` puis `/etc/sysctl.conf` au démarrage ; `conntrack -L` (`-p`, `-s`, `-d`), `-C`, `-F` : les échanges du moment, dont la session ssh | toutes les clés du noyau ; `conntrack -E`, `-D`, états UDP et ICMP détaillés |
-| `wg`, `wg-quick` (WireGuard) | `genkey`, `genpsk`, `pubkey`, `show`, `showconf` ; `wg-quick up`, `down`, `strip` ; le service `wg-quick@wg0` ; la clé publique n'est pas calculée par Curve25519 (une empreinte qui en tient lieu, au bon format) ; les pairs sont décrits par le chapitre (le portable de Malik, le routeur d'un autre site et son réseau) ; `wg-quick` ajoute une route par `AllowedIPs` hors du réseau de l'interface ; un pair derrière une box (NAT) n'est joignable qu'avec `PersistentKeepalive` (sans délai simulé) ; pas de `wg set`, `PostUp`, `PresharedKey` vérifiée, IPv6, ni de tout le trafic par le tunnel côté routeur ; `wg-quick` sans sudo refuse au lieu de relancer sudo | Curve25519, `wg set`, `syncconf`, `PostUp`/`PostDown`, IPv6, `wg-quick save` |
-| OpenLDAP (`ldapsearch`, `ldapadd`, `ldapmodify`, `ldapdelete`, `ldappasswd`, `ldapwhoami`, `slappasswd`, `slapcat`) | un annuaire par machine (`etat.ldap`), un schéma réduit (core, cosine, inetorgperson, nis : les classes courantes, leurs attributs obligatoires) ; LDIF (`changetype`, `add`/`replace`/`delete`, `-`, lignes repliées), filtres `&`, `\|`, `!`, `=`, `*` ; `-x`, `-D`, `-W`, `-w`, `-H`, `-Y EXTERNAL` (root par `ldapi:///`, comme sur Debian), `-b`, `-s`, `-LLL`, `-f`, `-c` ; droits de Debian (lecture anonyme sauf `userPassword`, écriture par l'administrateur ou root) ; `{SSHA}` au bon format, mais pas un vrai SHA-1 ; les commandes ne lisent pas le clavier (un fichier ou un tube) | `cn=config`, réplication, index, `memberOf`, base64 (`::`), TLS, SASL autre qu'EXTERNAL, toute la syntaxe des filtres (`>=`, `~=`) |
-| FreeRADIUS (`freeradius`, `radtest`) | `clients.conf` (adresse ou réseau, secret), le module `ldap` activé par un lien dans `mods-enabled` (`server`, `identity`, `password`, `base_dn`, `user`, `group` et `membership_filter`), le fichier `users` (`DEFAULT`, `Ldap-Group`, `Auth-Type := Reject`, réponses, `Fall-Through`) ; configuration lue au démarrage ; `-XC`, `-X` (service arrêté, demandes de la borne racontées en abrégé) ; les bornes parlent PAP (comme EAP-TTLS/PAP), pas d'EAP simulé ; une syntaxe de configuration simplifiée | EAP (PEAP, TLS), accounting, `sites-available`, `unlang`, SQL, tous les modules |
-| Redis (service `redis-server`, `/etc/redis/redis.conf`) | seul le `bind` est lu, au démarrage et au redémarrage du service (`*`, `0.0.0.0`, ou la boucle locale `127.0.0.1`/`::1` ; sans `bind`, toutes les interfaces) pour décider d'où le port 6379 répond ; pas de `redis-cli`, de `requirepass` ni de `protected-mode` simulés ; PostgreSQL n'a pas de `listen_addresses` (son port se ferme avec ufw) | tout `redis.conf`, `redis-cli`, ACL, `CONFIG SET`, `listen_addresses` de `postgresql.conf` |
-| nmap | TCP seulement ; `-sV`, `-sT`, `-sS` (root), `-sn`, `-Pn`, `-n`, `-F`, `-p`, `-oN` ; les cibles sont un nom, une adresse, un réseau (`/16` à `/32`) ou une plage `192.0.2.20-25` ; tout est vu d'internet (127.0.0.1 : de l'intérieur, sans pare-feu) ; seules les machines du chapitre répondent, une adresse hors du réseau simulé ne répond jamais ; les 1000 ports courants se réduisent aux services déclarés ; la durée est calculée, sans attente | `-sU`, `-O`, `-A`, scripts NSE, `-oX`/`-oG`, la synchronisation des paquets, les vrais ports de tous les services |
-| Lynis (`lynis audit system`) | une soixantaine de lignes au lieu de 300 ; lit `sshd_config`, les mises à jour apt en attente, `UMASK` de `/etc/login.defs`, `/etc/issue` et ufw ; l'indice se calcule par pénalités fixes (pas par la pondération de Lynis) ; `/var/log/lynis-report.dat` est écrit (`hardening_index=`, `warning[]=`, `suggestion[]=`) ; seulement `audit system`, `show version` ; sans root, l'audit est refusé (Lynis tournerait en mode restreint) | les 200 tests, les profils, `show details`, `--pentest`, les modules de conformité |
-| `ping` sur un réseau local | un appareil répond s'il est dans le VLAN de l'interface dont le réseau contient son adresse ; une adresse privée envoyée à la box se perd ; un nom d'appareil est reconnu sans DNS | ARP, DNS local, `/etc/hosts` |
-| `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, une fenêtre par session ; pas de raccourcis clavier (`tmux detach` pour Ctrl+b d) ; attach rejoue les dernières lignes ; le nom de la session s'affiche devant l'invite (la barre d'état) ; `uname -r/-a` ; `dpkg --configure -a` | fenêtres, volets, raccourcis, `screen` ; toutes les options de dpkg |
-| `nginx` | `-t`, `-T`, `-v` ; une partie des directives ; le site est choisi par `server_name` puis `default_server` ; `location` par préfixe, `=`, `^~`, ou expression régulière (`~`, `~*`, syntaxe de JavaScript plutôt que PCRE), choisie dans l'ordre de nginx ; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` vers une appli simulée ou un `upstream` (`weight`, `backup`, `down`, tourniquet pondéré, serveur suivant s'il ne répond pas ; pas de `max_fails`/`fail_timeout` appliqués) ; `try_files` lu mais pas appliqué | toutes les directives et modules |
-| Apache (`apache2ctl`, `a2ensite`, `a2enmod`…) | `configtest`/`-t`, `-S`, `-M`, `-v` (même hors de root) ; `start`, `stop`, `restart`, `graceful` passent par systemd ; une partie des directives (les autres sont refusées comme celles d'un module absent : « Invalid command ») ; hôte virtuel choisi par adresse et port, puis `ServerName`/`ServerAlias`, sinon le premier ; `<Directory>` sans jokers ; `.htaccess` relus à chaque requête, avec `AllowOverride` par catégorie ; `mod_rewrite` : `RewriteEngine`, `RewriteCond` (`-f`, `-d`, `-s`, `=`, expressions, `[NC]`, `[OR]`), `RewriteRule` (`[L]`, `[END]`, `[R]`, `[F]`, `[G]`, `[QSA]`, `[NC]`), dans le serveur ou par répertoire, 10 redirections internes au plus ; pas de PHP, de CGI, de compression ni de journal d'accès ; sans argument, `a2ensite` & co. listent les choix sans les demander | toutes les directives et modules, `apache2ctl` interactif sans argument |
-| `curl` sur la machine du site | ne joint que la machine elle-même (localhost, son nom, son adresse), ou un tunnel `ssh -L` ouvert sur le poste | tout le réseau |
-| `tar` | `-C` ; une archive coupée s'arrête à la coupure (messages proches de GNU tar) ; root garde propriétaires et droits | aussi `--strip-components`, `-p`, archives multi-volumes… |
-| `ssh-keygen` | `-R`, `-F`, `-l -f` ; crée des clés ed25519 seulement (`-t`, `-C`, `-N`, `-f`), fausses mais de la bonne forme, avec leur image aléatoire | tous les types de clés, conversion, certificats… |
-| `certbot` | un seul certificat, celui du chapitre ; `certificates`, `renew`, `certonly`, `reconfigure` ; autorité simulée (le défi HTTP-01 passe par le nginx simulé) ; les fichiers de `live/` sont réécrits (pas de liens vers `archive/`) ; le module nginx ne modifie pas la configuration | plusieurs certificats, vraie autorité ACME, liens symboliques, défis DNS |
-| `openssl` | `x509` (`-dates`, `-subject`, `-issuer`, `-ext`, `-checkend`) et `s_client -connect` (rend la main tout de suite) ; le contenu des PEM est propre au jeu | des centaines de sous-commandes ; vrai X.509 ; `s_client` attend une entrée |
-| `curl https://` | vérifie dates et noms du certificat présenté (erreur 60), `-k` pour passer outre | vérifie aussi la chaîne de confiance complète, OCSP… |
-| horloge | heure de Paris : CET l'hiver, CEST l'été | fuseau de la machine |
-| `restic` | `-r` et `--password-file` obligatoires (pas de variables d'environnement) ; `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check`, `stats` ; pas d'`init` ; un « pack » par sauvegarde ; fichiers du dépôt illisibles mais pas binaires ; pas de barres de progression | tout cela, et `mount`, `copy`, `key`, `tag`, dépôts distants (sftp, S3, rest-server) |
-| liens symboliques | `ln -s` (`-f`, `-n`), suivis pour lire, écrire et entrer ; `ls -l` les montre ; `readlink` | aussi `realpath`, `find -L`… |
-| `curl` | `-I`, `-i`, `-k`, `-L`, `-H` (Host, ou un en-tête transmis), `-X`, `-d` (seulement la méthode) ; ne joint que la machine où l'on est (nginx, une appli sur son port, un conteneur) | toutes les options, tout le réseau |
-| DNS (BIND) | zones A, AAAA, CNAME, MX, NS, TXT, SOA ; un primaire (`named`), un secondaire qui recopie quand le serial augmente (tout de suite), un résolveur public avec cache, ou le serveur de la machine en résolveur récursif (`recursif`) ; un `;` entre guillemets n'est pas un commentaire, les chaînes d'un TXT sont mises bout à bout ; `dig` (`@serveur`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (accolades et fichiers), `rndc reload`/`status` ; pas de section AUTHORITY, de DNSSEC ni de zones inverses | tout cela |
-| Postfix | `main.cf` lu comme `postconf` (une partie des paramètres ; un nom inconnu : « unused parameter »), `postconf` (`-n`, `-d`, `-x`, `-e`, `-h`), `postfix check/reload/start/stop/status/flush`, `postqueue -p/-f`, `mailq`, `postsuper -d` ; la file d'attente (raisons, identifiants) et `/var/log/mail.log` ; pas de vrai SMTP : les serveurs d'en face (déclarés par l'histoire) vérifient SPF, DKIM, DMARC avec le DNS simulé, sans cache ; Postfix ne réessaie pas tout seul (`postqueue -f`) ; le chroot n'est simulé que pour la prise du milter | MTA complet, réessais automatiques, TLS, `master.cf` |
-| OpenDKIM | `opendkim.conf` (`Domain`, `Selector`, `KeyFile`, `Socket`, `Mode`, `RequireSafeKeys`) ; refus d'une clé illisible ou lisible par d'autres ; `opendkim-genkey` (`-b`, `-d`, `-D`, `-s`, `-v`), `opendkim-testkey` (`-d`, `-s`, `-k`, `-v`) ; pas de vraie cryptographie (la clé publique est calculée à partir du fichier privé), pas de `KeyTable`/`SigningTable` ni de DNSSEC | signature RSA réelle, tables de clés, plusieurs domaines |
-| Ansible | `ansible.cfg` (`./`, `~/.ansible.cfg`, `/etc/ansible`), inventaire INI (groupes, `:vars`, `:children`), un sous-ensemble de YAML ; modules `ping`, `debug`, `apt`, `copy`, `file`, `lineinfile`, `user`, `service`/`systemd`, `command`, `shell` ; `become`, `--check`, `--diff`, handlers, `--limit`, `--force-handlers` ; connexion ssh sans question (BatchMode) ; pas de collecte réelle des faits, ni de variables Jinja, de rôles, de boucles ni de Python sur les cibles | gabarits Jinja, rôles, collections, `ansible-vault`, facts |
-| Caddy | le Caddyfile (adresses, options globales, un ou plusieurs sites, erreurs de l'adaptateur), `caddy validate`, `adapt` (JSON simplifié), `fmt`, `reload` (par l'API d'administration), `version` ; HTTPS automatique : certificat de Let's Encrypt pour les noms de domaine, redirection 308, défi raté si le DNS ne mène pas à la machine ou si le pare-feu ferme 80 et 443 ; directives appliquées : `root`, `file_server`, `respond`, `redir`, `reverse_proxy` (les autres sont reconnues sans effet) ; un défi raté est retenté dès que la cause a disparu ; journaux JSON | matchers nommés, `handle`, ZeroSSL, certificats internes (`localhost`, IP), renouvellement, `caddy run` à côté du service |
-| SPF, DKIM, DMARC | SPF (RFC 7208) : `ip4`, `a`, `mx`, `include`, `all`, `redirect=`, qualificatifs, dix requêtes au plus, deux enregistrements = `permerror` ; DKIM : la clé publiée sous `sélecteur._domainkey`, CNAME suivis ; DMARC (RFC 7489) : `p=`, `rua=`, alignement relâché (domaine organisationnel : les deux derniers niveaux) ; les rapports agrégés sont des fichiers donnés par l'histoire | `ip6`, `exists`, `ptr`, macros SPF, alignement strict, `sp=`, `pct=` appliqué, rapports reçus en pièce jointe |
-| `awk` | programme entre apostrophes : motifs, `BEGIN`/`END`, champs, tableaux, `printf`, fonctions courantes, `-F`, `-v` ; pas de `getline`, de redirection dans `print`, de fonctions définies ni de `?:` | le langage complet (mawk sur Debian) |
-| trafic web | dans « Le soir du concert », une minute de trafic simulée après chaque rechargement de nginx ; `limit_req` suit l'algorithme de nginx (seau qui fuit, rafale, `nodelay`) ; pas de `delay=`, ni de `limit_conn` | trafic réel, en continu |
-| Docker | images d'un registre simulé, conteneurs (couche, volumes, dossiers montés, ports, `--restart`), `run`, `ps`, `images`, `pull`, `logs` (`-n`, `-t`), `exec` (`-u` ; `ls`, `cat`, `env`, `id`, `whoami`), `cp`, `stop`, `start`, `restart`, `rm`, `port`, `update --restart`, `inspect` (`-f '{{.Champ}}'`), `volume` ; sans `-d`, `run` rend la main ; pas de réseau entre conteneurs hors Compose, pas de `build` | tout Docker |
-| Docker Compose | `compose.yaml` en YAML réduit (correspondances, listes, chaînes, `[a, b]`) ; clés `image`, `ports`, `volumes`, `environment`, `env_file`, `depends_on`, `restart`, `user`, `read_only`, `cap_drop`, `security_opt` ; `up` (recrée ce qui a changé), `down` (`-v`), `ps`, `logs`, `config`, `restart`, `stop`, `start`, `exec`, `pull` ; un service qui échoue au démarrage est relancé une fois s'il a une politique `restart` | toute la spécification Compose, `build`, `healthcheck`, profils |
-| Docker et le pare-feu | un port publié sur 0.0.0.0 répond de l'extérieur quelles que soient les règles ufw (comme les règles iptables de Docker) ; `nc -zv` depuis une autre machine ; `system df`, `image prune` (`-a`), `container prune`, `volume prune` (`-a`), `system prune` (`-a`, `--volumes`), `rmi` | chaîne DOCKER-USER, ufw-docker, `iptables -L` |
-| Utilisateur d'un conteneur | `--user`/`-u` et `user:` (nom de l'image ou `uid[:gid]`, un uid inconnu de l'image prend le gid 0), `docker exec -u` ; l'uid du conteneur est celui de la machine (pas de userns-remap) : droits Unix appliqués par numéro sur les dossiers montés, fichiers créés au nom de cet uid, processus visibles dans `ps aux` ; `--read-only` empêche d'écrire hors des volumes ; `--cap-drop` et `--security-opt` sont gardés (et montrés par `inspect`) sans autre effet ; un conteneur tombé est relancé à chaque commande (pas d'attente qui double) | userns-remap, mode rootless, capacités réelles, seccomp, AppArmor, droits sur les volumes nommés |
-| `nc` | `-z`, `-v`, une plage de ports ; sans `-z`, rend la main | netcat complet (écouter, envoyer, proxy) |
-| disques (`lsblk`, `mount`, `umount`) | périphériques décrits par le chapitre ; `mount` sans argument, `-o ro` ; un support en lecture seule refuse toute création (le contenu d'un fichier existant reste modifiable par une redirection) ; pas de `/etc/fstab` ; sur une machine au stockage décrit (`stockage.ts`, Le Labo), `lsblk` montre disques, partitions et grappes RAID, avec `-d` et `-o` (NAME, MAJ:MIN, RM, SIZE, RO, TYPE, MOUNTPOINT(S), MODEL, SERIAL, FSTYPE, UUID) | toutes les options, `fstab`, systèmes de fichiers réels ; RM et RO toujours à 0 |
-| `smartctl` | `-a`, `-x`, `-H`, `-i`, `-A`, `-l error`, `-l selftest`, `-t short/long` (le test est noté tout de suite, sans attendre) ; attributs d'un disque ATA, valeurs déduites des comptes du chapitre ; code de retour en masque (64, 128) | NVMe, SCSI, `-d`, `-s`, `-X`, la base de disques, tous les attributs |
-| `mdadm` | RAID 1 seulement : `--detail` (`-D`), `--detail --scan`, mode « manage » (`--fail`, `--remove` dont `failed`, `--add`, `--re-add`, plusieurs à la suite) ; refus du vrai noyau (retirer un membre actif, marquer défectueux le dernier membre à jour, une partition déjà prise) ; reconstruction une grappe à la fois, une demi-heure par commande ; le disque entier dans une grappe efface sa table | `--create`, `--assemble`, `--grow`, `--examine`, `--zero-superblock`, `--monitor`, autres niveaux de RAID, bitmap réel (`--re-add` se rattrape plus vite) |
-| `sfdisk` | tables GPT : `-l`, `-d`, écriture d'un script lu sur l'entrée standard (celui de `-d`) ; refuse un disque en service ; recopie les identifiants du script, comme le vrai | mode interactif (un message l'explique), `--force`, `--no-reread`, tables MBR, scripts écrits à la main au-delà de `start=`, `size=`, `type=`, `uuid=` |
-| `grub-install` | `grub-install /dev/DISQUE` en mode BIOS sur table GPT : il faut la partition « BIOS boot » ; refuse une partition | UEFI, `--target`, `--boot-directory`, `update-grub` |
-| `mdadm --create` | RAID 1 seulement (`--level`, `--raid-devices`, `--run`, `missing`), sur disques ou partitions libres ; la vraie question « Continue creating array? » ; la synchronisation initiale avance avec les commandes | autres niveaux, `--chunk`, `--bitmap`, `--name`, `--homehost` |
-| LVM (`pvs`, `vgs`, `lvs`, `pvcreate`, `pvremove`, `vgextend`, `vgreduce`, `pvmove`, `lvextend`) | étendues de 4 Mio, segments par PV ; `lvextend -L`/`-l` (`+`, `%FREE`, `%VG`), `-r` (sortie de lvm2 2.03) ; refus réels (disque partitionné, membre d'une grappe, PV encore utilisé, place insuffisante) ; colonnes par défaut seulement | `lvcreate`, `lvreduce`, `lvremove`, instantanés, volumes fins, `-o`, `--units`, `pvdisplay`… |
-| fstab, mode secours (`mount -a`, `blkid`, `findmnt`, `systemctl default`) | fstab lu comme mount et systemd (`UUID=`, `LABEL=`, `/dev/…`, `/dev/disk/by-*`, `nofail`, `noauto`) ; au démarrage, une source manquante sans `nofail` arrête la machine en mode secours (journal de systemd fidèle, attente de 90 s jouée d'un coup) ; `systemctl default`/`exit` reprennent avec la fstab lue au dernier `daemon-reload` ; l'indice de `mount -a` quand fstab a changé ; `findmnt --verify` (sources, types, points de montage) ; `blkid` (`-U`, `-L`) | swap, montages réseau, `x-systemd.*`, `fsck`, unités `.mount` écrites à la main, `findmnt` sur /proc et /sys |
-| `resize2fs`, `update-initramfs` | `resize2fs` agrandit l'ext4 d'un LV à sa taille (à chaud) ; `update-initramfs -u` garde une copie de `mdadm.conf` | rétrécir, une taille donnée, autres systèmes de fichiers ; le contenu réel de l'initramfs |
-| `rsnapshot` | `configtest`, `-t`, `-v`, `du`, la rotation des niveaux (`cp -al` puis `rsync`) ; une partie des directives ; messages proches de rsnapshot 1.4 | `backup_script`, `link_dest`, `sync_first`, sauvegardes distantes |
-| PostgreSQL | rôles et authentification « peer » ; `psql -c/-f/-l` avec un SQL réduit (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `ALTER ROLE … PASSWORD` par le compte `postgres`, `\l`, `\dt`, `\d`, `\du`) ; le mot de passe d'un rôle n'est lu que par l'appli d'un chapitre (« Les traces ») ; `pg_dump` (texte, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb` ; une archive `-Fc` ne contient qu'une référence gardée par le jeu ; une seule clé primaire par table | tout PostgreSQL, psql interactif, WAL et restauration à un instant donné |
-| `lsof`, `truncate`, `logrotate` | `lsof` ne connaît que les fichiers ouverts décrits par le chapitre (`+L1`, `-p`, `-u`, un fichier) ; `logrotate` : une partie des directives, `-d`, `-f`, `-v`, sorties abrégées | toutes les options, tous les fichiers ouverts du système |
-| mémoire (`free`, `top`, `dmesg`) | la mémoire de chaque processus est décrite par le chapitre ; pas de swap, le cache ne se libère pas (`available` = `free`) ; l'OOM killer tue le plus gros processus (sans `oom_score_adj`) ; `top` affiche un instantané et rend la main (`-b`, `-n`, `-o`, `-c`) ; `dmesg` (`-T`) réservé à root | swap, récupération du cache, score de l'OOM killer, `top` interactif, `htop` |
-| `iostat`, `pidstat`, `ionice` | `iostat` `-c`, `-d`, `-x`, `-k`, `-m`, `-y`, intervalle et nombre ; `pidstat -d`, `-u` ; `ionice -p`, `-c`, `-n` ; un disque, un modèle de file d'attente simplifié (l'attente grimpe au-delà de 60 % de la capacité) ; les priorités d'ionice ne comptent qu'avec `mq-deadline` ou `bfq` ; tous les rapports donnent l'instant | plusieurs disques, partitions (`-p`), `iotop`, `ionice` d'une commande à lancer, `blkio` de cgroup v1 |
-| surcharges systemd | `systemctl edit`, `set-property` (`MemoryMax=`, `IOReadBandwidthMax=`, `IOWriteBandwidthMax=`), `daemon-reload` ; dans les surcharges, seuls `MemoryMax=`, `IO*BandwidthMax=` et `Restart=` de `[Service]` comptent ; un service relancé par `Restart=` repart aussitôt | toutes les directives, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
-| inodes | `df -i`, `du --inodes` : un inode par fichier ou lieu ; un support peut déclarer son nombre d'inodes (et ceux pris par le système) ; plus d'inode libre, plus de création | blocs réservés, `tune2fs`, inodes des liens symboliques et des fichiers spéciaux |
-| `find` | `-name`, `-type`, `-mtime`, `-maxdepth`, `-delete`, `-print` ; l'âge se compte sur l'horloge de la machine simulée | `-exec`, `-newer`, `-size`, `-user`, les opérateurs (`-o`, `!`) |
-| « Liste d'arguments trop longue » | un programme (pas `cd`, `echo`, `pwd`, `test`, `printf`) refuse plus de 2 Mio d'arguments (ARG_MAX) | la limite compte aussi l'environnement ; `xargs` |
-| sorties géantes | l'écran ne garde que les 2 000 dernières lignes d'une sortie (avec une mention) | l'historique du terminal |
-| heure | chaque machine a un fuseau et un décalage d'horloge (`etat.heure`) ; `date` (`-s`), `timedatectl` (`status`, `show`, `list-timezones`, `set-timezone`, `set-ntp`, `set-time`, `timesync-status`) ; timesyncd essaie ses serveurs (`NTP=`, sinon `FallbackNTP=`) et se synchronise d'un coup à son démarrage ; le journal suit l'heure de la machine ; les fuseaux viennent d'`Intl` | ajustement progressif de l'horloge, RTC séparée, `hwclock`, chrony |
-| supervision | `check_disk` (`-w`, `-c`, `-W`, `-K`, `-p`), `check_http` (`-H`, `-I`, `-p`, `-u`, machine locale seulement), `check_procs` (`-C`, `-w`, `-c`) ; codes de retour 0 à 3 ; pas de page `man` réelle (les plugins répondent à `--help`) | tous les plugins et leurs options, `check_curl` |
-| `mail`, `last` | `mail` : `-s`, `-E`, livraison locale dans `/var/mail` après `/etc/aliases` (sur une machine avec Postfix, le courrier passe par sa file et peut quitter la machine), liste de la boîte sans mode interactif ; `last` : connexions décrites par le chapitre, `-n` | le courrier qui quitte la machine (MTA), `mail` interactif, `lastb`, `who` |
-| timers systemd | unités écrites à la main dans `/etc/systemd/system` (`.service` : `Type=`, `ExecStart=`, `User=` ; `.timer` : `OnCalendar=` avec jour de la semaine, `*-*-*` et `H:M[:S]`, `OnBootSec=`, `OnActiveSec=`, `OnUnitActiveSec=`, `Unit=`), à la minute près ; `list-timers`, `systemd-analyze calendar` ; cron envoie par courrier ce qu'écrit une tâche | `Persistent=`, `RandomizedDelaySec=`, `AccuracySec=`, dépendances entre unités |
-| codes de retour | une commande rend 1 si elle a écrit une erreur, sauf si elle donne le sien (plugins, `grep`) ; dans un tube, celui de la dernière commande | tous les codes des vrais outils |
-| zombies | `ps -ef` montre le parent ; aucun signal n'agit sur un zombie ; ils disparaissent quand leur parent s'arrête | `wait()`, `SIGCHLD`, adoption par un sous-reaper |
-| `sudo -u`, `crontab -u`, `usermod -L` | `sudo -u compte` sans autre option ; `crontab -u` réservé à root ; `usermod -L/-U` marque le compte sans montrer `/etc/shadow` | toutes les options |
-| s'enfermer dehors | le menu du jeu rouvre la session | console de secours (VNC, KVM) de l'hébergeur |
-| `nano` | une zone de texte : `^O` écrire, `^X` quitter (avec `O`/`N`/`^C`), boutons pour les claviers sans Ctrl ; pas de recherche, de couper-coller ni de numéros de ligne ; le texte passe à la ligne ; messages proches de la traduction française de nano | tous les raccourcis de la barre d'aide, pas de retour à la ligne automatique |
+| `less` | shows everything, like `cat` | shows page by page (`q` to quit) |
+| `mv` | only moves objects (files) | also moves directories |
+| `rm -r`, `cp -r` | refused | delete / copy whole directories |
+| `grep` with no result | "(no line contains …)" | shows nothing |
+| `grep` | basic (default), extended (`-E`) or fixed-string (`-F`) regular expressions, translated into JavaScript expressions; no `[[:alpha:]]` classes nor `\1` back-references | full POSIX |
+| colours (`ls`, `grep`, `diff --color`, `systemctl`, `journalctl`, `ip -c`, `git`) | `ls` and `grep` colour on screen by default, like the `--color=auto` aliases of Debian's `~/.bashrc` (without an `alias` command); `ls` keeps the `/` after places even in colour; only the default colours of common types (places, links, programs, archives, images); the interface's "Colours" button plays the part of a terminal without colours | `LS_COLORS`/`dircolors`, `GREP_COLORS`, `diff --palette`, `SYSTEMD_COLORS`; the alias is read from `~/.bashrc` |
+| `man` | shows the page at once, in a few sections | opens a full-screen page (arrows, `/word` to search, `q` to quit), much longer |
+| `ls -l` | type and rights, owner, group (= owner), size, name | adds the link count and the date |
+| permissions | owner, group, others; special bits shown (`s`, `t`); a directory's setgid passes its group (and the setgid) to what is created in it; 4-digit `chmod`; setuid and sticky not applied, no ACLs; a file moved into a setgid directory without a group of its own takes its group too | setuid, sticky applied, ACLs (`setfacl`), `mv` keeps the group |
+| `usermod -G` | takes effect at once | a session's groups are read at login: you must log in again (the game says so in the text) |
+| `chown`, `chgrp` | `-R` only | also `--reference`, `-h`… |
+| `chmod -w` (without u/g/o) | acts on everyone | takes the `umask` into account |
+| `umask` | a command with its `man` page; applies to the session; other accounts' mask is read from `/etc/profile`, `/etc/profile.d/*.sh`, `~/.bashrc`, `~/.profile` (the last `umask` line wins) | a bash builtin (`help umask`); `pam_umask`, `login.defs` |
+| accounts (`usermod`, `userdel`, `gpasswd`, `chage`) | `usermod -L/-U/-e/-s/-G`; `userdel [-r] [-f]` (refused if a process of the account is running); `gpasswd -a/-d`; `chage -l/-E` (dates as YYYY-MM-DD); no readable `/etc/shadow`; shadow-utils' messages in the game's language | every option, `passwd`, `deluser`, `/etc/shadow` |
+| `sudo`, `sudoers`, `visudo` | `/etc/sudoers` and `@includedir` (files with no dot or `~`), rules `who hosts=(account) [NOPASSWD:] commands`, `Cmnd_Alias`, wildcards; `sudo -l [-U account]`; `visudo [-c] [-f file]` checks when the editor closes and asks "What now?"; an error in the policy blocks sudo; only the player runs commands with sudo (other accounts: `sudo -l -U`); no user or host aliases, no `!` | sudoers' whole grammar, plugins, `sudoedit` |
+| `who`, `pkill`, `which` | sessions described by the chapter (a session lives as long as its `sshd` runs); `pkill [-u account] [pattern]`; `which` deduces the path (`/usr/bin`, or `/usr/sbin` for section 8) | `w`, `loginctl`, all procps options; `which` reads the PATH |
+| `rm` of a write-protected file | deletes without asking | asks for confirmation |
+| `sudo` | asks for the password again only on the chapter's first use | remembers it for about 15 minutes |
+| `cat` of an archive | an error message | shows unreadable bytes |
+| `ping` | 4 pings by default | goes on until Ctrl+C |
+| `traceroute` | stops 3 hops after the last one that answers | goes on up to 30 hops |
+| `ps aux` | user, PID, %CPU, %MEM, command | adds VSZ, RSS, TTY, STAT, START, TIME |
+| `tar` | computed size (text compressed to a third, media to 98 %); if there isn't room, nothing is written | real compression; a partial archive may remain |
+| `git` | a single branch (`main`), files at the repository's root only, identifiers computed by the game, `commit` requires `-m`; remotes by path only (bare repositories of the machine); `push` and `pull` fast-forward only (no merge); `pre-receive` and `post-receive` hooks; `push` figures approximate | branches, subdirectories, SHA-1/SHA-256, text editor, remotes over SSH or HTTPS, merges, every hook |
+| scripts (`sh`, hooks) | a reduced `/bin/sh` (`script.ts`): one command per line, `#`, `set -e`, `exit`, variables, `$(…)`, `read`, `&&`, `\|\|`, `[ … ]`; no `if`, `for`, `while`, `case` nor functions; a command succeeds if it wrote no error | the full language |
+| `diff` | normal format, `-u` (three lines of context), `-r`, `-q`; the time in the `-u` header is the machine's | every option |
+| `date`, `test`, `readlink` | `date` without option or `+FORMAT` (common directives); `test` (and `[ … ]` in a script): `-e -f -d -L -s -r -w -x -n -z`, `=`, `!=`, numeric comparisons; `readlink [-f]` | `date -d`, `-u`…; full `test`; `realpath` |
+| Le Kiosque (La Gazette) | a simulated Node.js app: version read at start through a link, `/health` as JSON, configuration in a `.env` file, schema migration at start (never backwards); an hour of simulated visits on each nginx reload in "Le canari" | a real app and its PostgreSQL database |
+| nginx log | "combined" format without the referrer and the user agent | two more fields at the end of the line |
+| `ssh` | two models: on most machines, a key is accepted if it is the one the game gave for that machine; on `maison` and its internal network (`acces.ts`), the real behaviour: the other side's `authorized_keys`, passphrase, password if sshd accepts it (three tries), `-J`/`ProxyJump` (the next name is resolved by the jump machine), `-L` with `-f -N` (a process to stop with `kill`), remote command, `-G` (excerpt); no agent, `-R`, `-D` nor certificates; a single host key (ed25519); shortened usage message | all of it, agent, `ForwardAgent`, remote and dynamic forwarding |
+| `exit` | has its `man` page | a bash builtin: `help exit` |
+| `ssh` session | the machine keeps its state while the page stays open; a reload restarts the current chapter | the machine keeps its state |
+| manual sections | 1 (commands), 5 (configuration files: `sshd_config`, `ssh_config`, `sudoers`) and 8 (administration: `usermod`, `reboot`) | also 2, 3, 4, 6 and 7 (system calls, libraries…) |
+| systemd | services only (no targets nor dependencies; timers and hand-written units: see below); the clock moves one second per action | units of every type |
+| `tail -f`, `journalctl -f` (live activity) | the command keeps control until Ctrl-C; the screen moves 3 s on the machine per real second, and each typed command moves a few (`Chapitre.activite`, see `src/moteur/activite.ts`): visitors, robots, scanners write to the logs; in a pipe (`tail -f log \| grep …`), the game shows it once without following | real time; a pipe that follows continuously; `tail -F` reopening a replaced file |
+| `systemctl` without being root | "Access denied", you need `sudo` | asks for the password (polkit) |
+| `sudo` after `reboot` | still remembers the password | asks for it again |
+| `sshd` | some of the keywords; all errors listed at once; the password is only asked on machines with the real ssh (`maison`); no `StrictModes` (rights of `~/.ssh` not checked) nor options in `authorized_keys` | stops at the first error; offers the password everywhere; refuses an `authorized_keys` writable by others |
+| `ufw` | IPv4 and IPv6 rules merged ("(v6)" lines for show); no outgoing rules, routing, logging, `insert` nor `reset`; messages in the game's language, close to ufw's own | all of it |
+| `ss` | sockets described by the chapter, and the current ssh session (on the port you came in through) | every socket of the system |
+| fail2ban | `sshd`, `nginx-limit-req` and `recidive` jails (others load, without a filter; an enabled jail without a log prevents starting); a jail's `port` limits the ban; `findtime` not applied (every failure in the log counts); filter reduced to "Failed password", "Invalid user", "Failed publickey"; the banned workstation keeps its open session | several jails; `findtime` window; full filters; the ban also cuts the current session |
+| `rsync` | `-a`, `-v`, `-n`, `--delete`; local, or remote over ssh (`machine:path`, in either direction, with the same keys and jumps as `ssh`); a file changes if its contents change; "sent/received" figures approximate | compares size and date, every option, rsync daemon |
+| `scp`, `ssh-copy-id` | `scp`: `-r`, `-P`, `-J`, `-i`, a copy in either direction (not between two remote machines), immediate progress line; `ssh-copy-id`: `-i`, `-p`, `-J`, the most recent `~/.ssh/id*.pub` key by default | `scp` between two remote machines (`-3`); `ssh-copy-id -f`, `-n` |
+| `sftp` | interactive session (`sftp>`) through the same jumps and keys as `ssh`; `ls`, `cd`, `pwd`, `lcd`, `lls`, `lpwd`, `get [-r]`, `put [-r]`, `mkdir`, `rm`, `rmdir`, `rename`, `help`, `bye`; an existing directory receives the contents | `-b` (batch file), `reget`/`reput`, globs, `chmod`, `df` |
+| `lftp` and shared hosting | FTP (Pure-FTPd) that refuses clear text (explicit FTPS, AUTH TLS); certificate checked against the requested name (`ssl:verify-certificate`); `-u`, `-e`, `-c`, `open`, `user`, `set`, `ls`, `cd`, `pwd`, `lcd`, `lpwd`, `mirror` (`-R`, `--delete`, `--dry-run`, `-v`), `put`, `get`, `mkdir`, `rm`, `cat`; the connection happens on the first remote command; the hosting is described by the story | SFTP and HTTP through lftp, `~/.lftprc`, `~/.netrc`, queues, background jobs, globs |
+| internal machines | behind `maison`, `wiki` and `archives` exist as soon as you connect to them; you get in by ssh from `maison`, or with `-J` from the workstation (`exit` then brings you back to the workstation); a missing program answers `command not found` | a real, routed network |
+| `crontab`, cron | the editor is always `nano`; no environment variables nor `%`; the game "lets the night pass" when the crontab changes | cron runs continuously; `select-editor` on the first `crontab -e` |
+| `unattended-upgrade`, `apt-config` | `--dry-run`, `-d`, `-v`; `Origins-Pattern` (keys `o`, `n`, `l`, `a`, `site`, wildcards), `Package-Blacklist`, `Mail`, `MailReport`, `Automatic-Reboot`, `Automatic-Reboot-Time`; `apt-daily-upgrade.service` only runs the pass if `APT::Periodic::Unattended-Upgrade` asks for it; `apt.conf.d` read like apt (last value wins, lists that grow, `;` required); `apt-config dump [prefix]`; package origins described by the chapter; the scheduled reboot isn't played | autoremove, `MinimalSteps`, battery, `#include`/`#clear`, full `--debug` output, `apt-cache policy` |
+| `apt` | `update`, `install [-y]`, `list --installed`, `list --upgradable`, `upgrade` and `full-upgrade` (the updates described by the chapter); a small catalogue, approximate versions and sizes; a package that fails to start isn't left "half-configured"; an interrupted upgrade leaves its packages unpacked (`dpkg --configure -a`); `/var/run/reboot-required` for a kernel or the libc | the whole Debian catalogue, `remove`, `search`, `show`, `apt-get`…; dpkg keeps each package's state |
+| local network (`ip`, `ifup`, `ifdown`) | IPv4 only; `ip addr`, `ip link`, `ip route` (show, add, del, set, `-br`, `-d`), 802.1Q VLAN interfaces; `/etc/network/interfaces` read like ifupdown (`auto`, `iface … inet static`, `manual`, `loopback`, `address`, `netmask`, `gateway`, `vlan-raw-device`, `source`); the switch and its ports are described by the chapter; no visible ARP, MTU, bonding nor systemd-networkd | all of iproute2, ifupdown2, NetworkManager, systemd-networkd |
+| `dnsmasq` | DHCP only (DNS options are accepted and ignored); `interface` (with `*`), `except-interface`, `dhcp-range`, `dhcp-host`, `dhcp-option`; devices ask for an address each time the service starts; the address is derived from the MAC address; no lease renewal | DNS, TFTP, PXE, DHCPv6, renewal |
+| `nft` (nftables) | IPv4; `ip`, `inet` tables (`ip6` read, with no effect); base `filter` and `nat` chains (hooks, priorities, policy), regular chains (`jump`, `goto`); matches `iifname`, `oifname`, `ip saddr`, `ip daddr`, `ip protocol`, `meta l4proto`, `tcp`/`udp` `dport`/`sport` (services known to the game), `ct state`, `!=` negation, anonymous sets; actions `counter`, `log`, `accept`, `drop`, `reject`, `masquerade`, `snat` (in `postrouting`), `dnat` (in `prerouting`, to an address and port); `define`, `include`; `-f`, `-c`, `-a`; `add`, `insert`, `delete`, `flush`, `list`; the traffic is that of the devices described by the chapter (and visitors from the internet), and counters count one pass per exchange; error messages close to nft's; the `input` chain doesn't cut the game's ssh session | named sets, maps, `limit`, `quota`, IPv6, `bridge`, `netdev`, `nft monitor`, rules on packet contents |
+| `nft` under ufw and fail2ban | on machines without hand-written nftables rules: `list ruleset`, `list tables`, `list table`, read-only; `ip filter` table (chains `INPUT`, `OUTPUT`, `ufw-before-input`, `ufw-user-input`, `ufw-after-input`), `inet f2b-table` table of fail2ban's nftables action; counters at zero; a multi-port profile as a `{ 80, 443 }` set | the `ip6 filter` table, ufw's logging and routing chains, real counters; you could write to it (and ufw would overwrite it) |
+| `sysctl`, `conntrack` | `sysctl`: read, `-w`, `key=value`, `-p`, `--system`, `-a`, `-n` on a few keys (`/proc/sys` is a real directory of the game); `/etc/sysctl.d/*.conf` then `/etc/sysctl.conf` at boot; `conntrack -L` (`-p`, `-s`, `-d`), `-C`, `-F`: the current exchanges, including the ssh session | every kernel key; `conntrack -E`, `-D`, detailed UDP and ICMP states |
+| `wg`, `wg-quick` (WireGuard) | `genkey`, `genpsk`, `pubkey`, `show`, `showconf`; `wg-quick up`, `down`, `strip`; the `wg-quick@wg0` service; the public key isn't computed with Curve25519 (a fingerprint stands in for it, in the right format); peers are described by the chapter (Malik's laptop, another site's router and its network); `wg-quick` adds a route per `AllowedIPs` outside the interface's network; a peer behind a home router (NAT) is only reachable with `PersistentKeepalive` (no simulated delay); no `wg set`, `PostUp`, checked `PresharedKey`, IPv6, nor all traffic through the tunnel on the router side; `wg-quick` without sudo refuses instead of re-running sudo | Curve25519, `wg set`, `syncconf`, `PostUp`/`PostDown`, IPv6, `wg-quick save` |
+| OpenLDAP (`ldapsearch`, `ldapadd`, `ldapmodify`, `ldapdelete`, `ldappasswd`, `ldapwhoami`, `slappasswd`, `slapcat`) | one directory per machine (`etat.ldap`), a reduced schema (core, cosine, inetorgperson, nis: the common classes, their required attributes); LDIF (`changetype`, `add`/`replace`/`delete`, `-`, folded lines), filters `&`, `\|`, `!`, `=`, `*`; `-x`, `-D`, `-W`, `-w`, `-H`, `-Y EXTERNAL` (root through `ldapi:///`, as on Debian), `-b`, `-s`, `-LLL`, `-f`, `-c`; Debian's access rights (anonymous read except `userPassword`, write by the administrator or root); `{SSHA}` in the right format, but not a real SHA-1; the commands don't read the keyboard (a file or a pipe) | `cn=config`, replication, indexes, `memberOf`, base64 (`::`), TLS, SASL other than EXTERNAL, the full filter syntax (`>=`, `~=`) |
+| FreeRADIUS (`freeradius`, `radtest`) | `clients.conf` (address or network, secret), the `ldap` module enabled by a link in `mods-enabled` (`server`, `identity`, `password`, `base_dn`, `user`, `group` and `membership_filter`), the `users` file (`DEFAULT`, `Ldap-Group`, `Auth-Type := Reject`, replies, `Fall-Through`); configuration read at start; `-XC`, `-X` (service stopped, the access point's requests told in short); access points speak PAP (as EAP-TTLS/PAP), no simulated EAP; a simplified configuration syntax | EAP (PEAP, TLS), accounting, `sites-available`, `unlang`, SQL, every module |
+| Redis (`redis-server` service, `/etc/redis/redis.conf`) | only `bind` is read, at the service's start and restart (`*`, `0.0.0.0`, or loopback `127.0.0.1`/`::1`; without `bind`, every interface) to decide where port 6379 answers from; no simulated `redis-cli`, `requirepass` nor `protected-mode`; PostgreSQL has no `listen_addresses` (its port is closed with ufw) | the whole `redis.conf`, `redis-cli`, ACLs, `CONFIG SET`, `listen_addresses` in `postgresql.conf` |
+| nmap | TCP only; `-sV`, `-sT`, `-sS` (root), `-sn`, `-Pn`, `-n`, `-F`, `-p`, `-oN`; targets are a name, an address, a network (`/16` to `/32`) or a range `192.0.2.20-25`; everything is seen from the internet (127.0.0.1: from inside, without firewall); only the chapter's machines answer, an address outside the simulated network never answers; the 1000 common ports shrink to the declared services; the duration is computed, without waiting | `-sU`, `-O`, `-A`, NSE scripts, `-oX`/`-oG`, packet timing, every service's real ports |
+| Lynis (`lynis audit system`) | some sixty lines instead of 300; reads `sshd_config`, pending apt updates, `UMASK` in `/etc/login.defs`, `/etc/issue` and ufw; the index is computed with fixed penalties (not Lynis's weighting); `/var/log/lynis-report.dat` is written (`hardening_index=`, `warning[]=`, `suggestion[]=`); only `audit system`, `show version`; without root, the audit is refused (Lynis would run in restricted mode) | the 200 tests, profiles, `show details`, `--pentest`, compliance modules |
+| `ping` on a local network | a device answers if it is in the VLAN of the interface whose network contains its address; a private address sent to the home router is lost; a device name is recognised without DNS | ARP, local DNS, `/etc/hosts` |
+| `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, one window per session; no key bindings (`tmux detach` for Ctrl+b d); attach replays the last lines; the session's name shows before the prompt (the status bar); `uname -r/-a`; `dpkg --configure -a` | windows, panes, key bindings, `screen`; every dpkg option |
+| `nginx` | `-t`, `-T`, `-v`; some of the directives; the site is chosen by `server_name` then `default_server`; `location` by prefix, `=`, `^~`, or regular expression (`~`, `~*`, JavaScript syntax rather than PCRE), chosen in nginx's order; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` to a simulated app or an `upstream` (`weight`, `backup`, `down`, weighted round robin, next server if one doesn't answer; `max_fails`/`fail_timeout` not applied); `try_files` read but not applied | every directive and module |
+| Apache (`apache2ctl`, `a2ensite`, `a2enmod`…) | `configtest`/`-t`, `-S`, `-M`, `-v` (even without root); `start`, `stop`, `restart`, `graceful` go through systemd; some of the directives (others are refused like those of a missing module: "Invalid command"); virtual host chosen by address and port, then `ServerName`/`ServerAlias`, otherwise the first; `<Directory>` without wildcards; `.htaccess` reread on each request, with `AllowOverride` by category; `mod_rewrite`: `RewriteEngine`, `RewriteCond` (`-f`, `-d`, `-s`, `=`, expressions, `[NC]`, `[OR]`), `RewriteRule` (`[L]`, `[END]`, `[R]`, `[F]`, `[G]`, `[QSA]`, `[NC]`), in the server or per directory, at most 10 internal redirects; no PHP, CGI, compression nor access log; without an argument, `a2ensite` & co. list the choices without asking | every directive and module, interactive `apache2ctl` without an argument |
+| `curl` on the site's machine | only reaches the machine itself (localhost, its name, its address), or an `ssh -L` tunnel opened on the workstation | the whole network |
+| `tar` | `-C`; a truncated archive stops at the cut (messages close to GNU tar); root keeps owners and rights | also `--strip-components`, `-p`, multi-volume archives… |
+| `ssh-keygen` | `-R`, `-F`, `-l -f`; creates ed25519 keys only (`-t`, `-C`, `-N`, `-f`), fake but well-formed, with their randomart | every key type, conversion, certificates… |
+| `certbot` | a single certificate, the chapter's; `certificates`, `renew`, `certonly`, `reconfigure`; simulated authority (the HTTP-01 challenge goes through the simulated nginx); the files in `live/` are rewritten (no links to `archive/`); the nginx plugin doesn't change the configuration | several certificates, a real ACME authority, symbolic links, DNS challenges |
+| `openssl` | `x509` (`-dates`, `-subject`, `-issuer`, `-ext`, `-checkend`) and `s_client -connect` (returns at once); the PEM contents are specific to the game | hundreds of subcommands; real X.509; `s_client` waits for input |
+| `curl https://` | checks the dates and names of the presented certificate (error 60), `-k` to skip | also checks the full chain of trust, OCSP… |
+| clock | Paris time: CET in winter, CEST in summer (unless the chapter sets a time zone) | the machine's time zone |
+| `restic` | `-r` and `--password-file` required (no environment variables); `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check`, `stats`; no `init`; one "pack" per backup; repository files unreadable but not binary; no progress bars | all of it, and `mount`, `copy`, `key`, `tag`, remote repositories (sftp, S3, rest-server) |
+| symbolic links | `ln -s` (`-f`, `-n`), followed to read, write and enter; `ls -l` shows them; `readlink` | also `realpath`, `find -L`… |
+| `curl` | `-I`, `-i`, `-k`, `-L`, `-H` (Host, or a forwarded header), `-X`, `-d` (only the method); only reaches the machine you are on (nginx, Caddy, an app on its port, a container) | every option, the whole network |
+| DNS (BIND) | A, AAAA, CNAME, MX, NS, TXT, SOA zones; a primary (`named`), a secondary that copies when the serial increases (at once), a public resolver with a cache, or the machine's server as a recursive resolver (`recursif`); a `;` inside quotes isn't a comment, a TXT's strings are joined; `dig` (`@server`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (braces and files), `rndc reload`/`status`; no AUTHORITY section, DNSSEC nor reverse zones | all of it |
+| Postfix | `main.cf` read like `postconf` (some of the parameters; an unknown name: "unused parameter"), `postconf` (`-n`, `-d`, `-x`, `-e`, `-h`), `postfix check/reload/start/stop/status/flush`, `postqueue -p/-f`, `mailq`, `postsuper -d`; the queue (reasons, identifiers) and `/var/log/mail.log`; no real SMTP: the servers on the other side (declared by the story) check SPF, DKIM, DMARC with the simulated DNS, without a cache; Postfix doesn't retry by itself (`postqueue -f`); the chroot is only simulated for the milter's socket | a full MTA, automatic retries, TLS, `master.cf` |
+| OpenDKIM | `opendkim.conf` (`Domain`, `Selector`, `KeyFile`, `Socket`, `Mode`, `RequireSafeKeys`); refuses an unreadable key or one readable by others; `opendkim-genkey` (`-b`, `-d`, `-D`, `-s`, `-v`), `opendkim-testkey` (`-d`, `-s`, `-k`, `-v`); no real cryptography (the public key is computed from the private file), no `KeyTable`/`SigningTable` nor DNSSEC | real RSA signing, key tables, several domains |
+| Ansible | `ansible.cfg` (`./`, `~/.ansible.cfg`, `/etc/ansible`), INI inventory (groups, `:vars`, `:children`), a subset of YAML; modules `ping`, `debug`, `apt`, `copy`, `file`, `lineinfile`, `user`, `service`/`systemd`, `command`, `shell`; `become`, `--check`, `--diff`, handlers, `--limit`, `--force-handlers`; ssh connection without questions (BatchMode); no real fact gathering, Jinja variables, roles, loops nor Python on the targets | Jinja templates, roles, collections, `ansible-vault`, facts |
+| Caddy | the Caddyfile (addresses, global options, one or several sites, the adapter's errors), `caddy validate`, `adapt` (simplified JSON), `fmt`, `reload` (through the admin API), `version`; automatic HTTPS: a Let's Encrypt certificate for domain names, 308 redirection, a failed challenge if DNS doesn't lead to the machine or if the firewall closes 80 and 443; directives applied: `root`, `file_server`, `respond`, `redir`, `reverse_proxy` (others are recognised with no effect); a failed challenge is retried as soon as its cause is gone; JSON logs | named matchers, `handle`, ZeroSSL, internal certificates (`localhost`, IPs), renewal, `caddy run` beside the service |
+| SPF, DKIM, DMARC | SPF (RFC 7208): `ip4`, `a`, `mx`, `include`, `all`, `redirect=`, qualifiers, at most ten lookups, two records = `permerror`; DKIM: the key published under `selector._domainkey`, CNAMEs followed; DMARC (RFC 7489): `p=`, `rua=`, relaxed alignment (organisational domain: the last two labels); aggregate reports are files given by the story | `ip6`, `exists`, `ptr`, SPF macros, strict alignment, `sp=`, `pct=` applied, reports received as attachments |
+| `awk` | program in single quotes: patterns, `BEGIN`/`END`, fields, arrays, `printf`, common functions, `-F`, `-v`; no `getline`, redirection in `print`, user-defined functions nor `?:` | the full language (mawk on Debian) |
+| web traffic | in "Le soir du concert", one minute of simulated traffic after each nginx reload; `limit_req` follows nginx's algorithm (leaky bucket, burst, `nodelay`); no `delay=` nor `limit_conn` | real, continuous traffic |
+| Docker | images from a simulated registry, containers (layer, volumes, bind mounts, ports, `--restart`), `run`, `ps`, `images`, `pull`, `logs` (`-n`, `-t`), `exec` (`-u`; `ls`, `cat`, `env`, `id`, `whoami`), `cp`, `stop`, `start`, `restart`, `rm`, `port`, `update --restart`, `inspect` (`-f '{{.Field}}'`), `volume`; without `-d`, `run` returns; no network between containers outside Compose, no `build` | all of Docker |
+| Docker Compose | `compose.yaml` in reduced YAML (mappings, lists, strings, `[a, b]`); keys `image`, `ports`, `volumes`, `environment`, `env_file`, `depends_on`, `restart`, `user`, `read_only`, `cap_drop`, `security_opt`; `up` (recreates what changed), `down` (`-v`), `ps`, `logs`, `config`, `restart`, `stop`, `start`, `exec`, `pull`; a service that fails to start is restarted once if it has a `restart` policy | the whole Compose specification, `build`, `healthcheck`, profiles |
+| Docker and the firewall | a port published on 0.0.0.0 answers from outside whatever the ufw rules (like Docker's iptables rules); `nc -zv` from another machine; `system df`, `image prune` (`-a`), `container prune`, `volume prune` (`-a`), `system prune` (`-a`, `--volumes`), `rmi` | the DOCKER-USER chain, ufw-docker, `iptables -L` |
+| A container's user | `--user`/`-u` and `user:` (a name from the image or `uid[:gid]`, an uid unknown to the image gets gid 0), `docker exec -u`; the container's uid is the machine's (no userns-remap): Unix rights applied by number on bind mounts, files created as that uid, processes visible in `ps aux`; `--read-only` prevents writing outside volumes; `--cap-drop` and `--security-opt` are kept (and shown by `inspect`) with no other effect; a fallen container is restarted on each command (no doubling delay) | userns-remap, rootless mode, real capabilities, seccomp, AppArmor, rights on named volumes |
+| `nc` | `-z`, `-v`, a port range; without `-z`, returns | full netcat (listen, send, proxy) |
+| disks (`lsblk`, `mount`, `umount`) | devices described by the chapter; `mount` without an argument, `-o ro`; a read-only medium refuses any creation (an existing file's contents can still be changed by a redirection); on a machine with described storage (`stockage.ts`, Le Labo), `lsblk` shows disks, partitions and RAID arrays, with `-d` and `-o` (NAME, MAJ:MIN, RM, SIZE, RO, TYPE, MOUNTPOINT(S), MODEL, SERIAL, FSTYPE, UUID) | every option, real file systems; RM and RO always 0 |
+| `smartctl` | `-a`, `-x`, `-H`, `-i`, `-A`, `-l error`, `-l selftest`, `-t short/long` (the test is logged at once, without waiting); an ATA disk's attributes, values derived from the chapter's counts; exit code as a bit mask (64, 128) | NVMe, SCSI, `-d`, `-s`, `-X`, the drive database, every attribute |
+| `mdadm` | RAID 1 only: `--detail` (`-D`), `--detail --scan`, "manage" mode (`--fail`, `--remove` including `failed`, `--add`, `--re-add`, several in a row); the real kernel's refusals (removing an active member, failing the last up-to-date member, a partition already in use); one array rebuilt at a time, half an hour per command; a whole disk in an array erases its table | `--assemble`, `--grow`, `--examine`, `--zero-superblock`, `--monitor`, other RAID levels, a real bitmap (`--re-add` catches up faster) |
+| `mdadm --create` | RAID 1 only (`--level`, `--raid-devices`, `--run`, `missing`), on free disks or partitions; the real "Continue creating array?" question; the initial sync progresses with the commands | other levels, `--chunk`, `--bitmap`, `--name`, `--homehost` |
+| `sfdisk` | GPT tables: `-l`, `-d`, writing a script read from standard input (that of `-d`); refuses a disk in use; copies the script's identifiers, like the real one | interactive mode (a message explains it), `--force`, `--no-reread`, MBR tables, hand-written scripts beyond `start=`, `size=`, `type=`, `uuid=` |
+| `grub-install` | `grub-install /dev/DISK` in BIOS mode on a GPT table: the "BIOS boot" partition is required; refuses a partition | UEFI, `--target`, `--boot-directory`, `update-grub` |
+| LVM (`pvs`, `vgs`, `lvs`, `pvcreate`, `pvremove`, `vgextend`, `vgreduce`, `pvmove`, `lvextend`) | 4 MiB extents, segments per PV; `lvextend -L`/`-l` (`+`, `%FREE`, `%VG`), `-r` (lvm2 2.03's output); real refusals (partitioned disk, member of an array, PV still in use, not enough space); default columns only | `lvcreate`, `lvreduce`, `lvremove`, snapshots, thin volumes, `-o`, `--units`, `pvdisplay`… |
+| fstab, emergency mode (`mount -a`, `blkid`, `findmnt`, `systemctl default`) | fstab read like mount and systemd (`UUID=`, `LABEL=`, `/dev/…`, `/dev/disk/by-*`, `nofail`, `noauto`); at boot, a missing source without `nofail` stops the machine in emergency mode (faithful systemd log, the 90 s wait played at once); `systemctl default`/`exit` resume with the fstab read at the last `daemon-reload`; `mount -a`'s hint when fstab has changed; `findmnt --verify` (sources, types, mount points); `blkid` (`-U`, `-L`) | swap, network mounts, `x-systemd.*`, `fsck`, hand-written `.mount` units, `findmnt` on /proc and /sys |
+| `resize2fs`, `update-initramfs` | `resize2fs` grows an LV's ext4 to its size (online); `update-initramfs -u` keeps a copy of `mdadm.conf` | shrinking, a given size, other file systems; the initramfs's real contents |
+| `rsnapshot` | `configtest`, `-t`, `-v`, `du`, rotation of the levels (`cp -al` then `rsync`); some of the directives; messages close to rsnapshot 1.4 | `backup_script`, `link_dest`, `sync_first`, remote backups |
+| PostgreSQL | roles and "peer" authentication; `psql -c/-f/-l` with a reduced SQL (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `ALTER ROLE … PASSWORD` by the `postgres` account, `\l`, `\dt`, `\d`, `\du`); a role's password is only read by one chapter's app ("Les traces"); `pg_dump` (text, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb`; a `-Fc` archive only holds a reference kept by the game; one primary key per table | all of PostgreSQL, interactive psql, WAL and point-in-time recovery |
+| `lsof`, `truncate`, `logrotate` | `lsof` only knows the open files described by the chapter (`+L1`, `-p`, `-u`, a file); `logrotate`: some of the directives, `-d`, `-f`, `-v`, shortened outputs | every option, every open file of the system |
+| memory (`free`, `top`, `dmesg`) | each process's memory is described by the chapter; no swap, the cache isn't freed (`available` = `free`); the OOM killer kills the biggest process (no `oom_score_adj`); `top` shows a snapshot and returns (`-b`, `-n`, `-o`, `-c`); `dmesg` (`-T`) for root only | swap, cache reclaim, the OOM killer's score, interactive `top`, `htop` |
+| `iostat`, `pidstat`, `ionice` | `iostat` `-c`, `-d`, `-x`, `-k`, `-m`, `-y`, interval and count; `pidstat -d`, `-u`; `ionice -p`, `-c`, `-n`; one disk, a simplified queue model (waiting climbs beyond 60 % of capacity); ionice priorities only count with `mq-deadline` or `bfq`; every report gives the current instant | several disks, partitions (`-p`), `iotop`, `ionice` on a command to start, cgroup v1 `blkio` |
+| systemd overrides | `systemctl edit`, `set-property` (`MemoryMax=`, `IOReadBandwidthMax=`, `IOWriteBandwidthMax=`), `daemon-reload`; in overrides, only `MemoryMax=`, `IO*BandwidthMax=` and `Restart=` of `[Service]` count; a service restarted by `Restart=` starts again at once | every directive, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
+| inodes | `df -i`, `du --inodes`: one inode per file or place; a medium can declare its number of inodes (and those used by the system); no free inode, no creation | reserved blocks, `tune2fs`, inodes of symbolic links and special files |
+| `find` | `-name`, `-type`, `-mtime`, `-maxdepth`, `-delete`, `-print`; age is counted on the simulated machine's clock | `-exec`, `-newer`, `-size`, `-user`, operators (`-o`, `!`) |
+| "Argument list too long" | a program (not `cd`, `echo`, `pwd`, `test`, `printf`) refuses more than 2 MiB of arguments (ARG_MAX) | the limit also counts the environment; `xargs` |
+| huge outputs | the screen only keeps the last 2,000 lines of an output (with a note) | the terminal's scrollback |
+| time | each machine has a time zone and a clock offset (`etat.heure`); `date` (`-s`), `timedatectl` (`status`, `show`, `list-timezones`, `set-timezone`, `set-ntp`, `set-time`, `timesync-status`); timesyncd tries its servers (`NTP=`, otherwise `FallbackNTP=`) and syncs at once when it starts; the journal follows the machine's time; time zones come from `Intl` | gradual clock adjustment, a separate RTC, `hwclock`, chrony |
+| monitoring | `check_disk` (`-w`, `-c`, `-W`, `-K`, `-p`), `check_http` (`-H`, `-I`, `-p`, `-u`, local machine only), `check_procs` (`-C`, `-w`, `-c`); exit codes 0 to 3; no real `man` page (plugins answer `--help`) | every plugin and its options, `check_curl` |
+| `mail`, `last` | `mail`: `-s`, `-E`, local delivery in `/var/mail` after `/etc/aliases` (on a machine with Postfix, mail goes through its queue and can leave the machine), list of the mailbox without interactive mode; `last`: logins described by the chapter, `-n` | mail leaving the machine (MTA), interactive `mail`, `lastb`, `who` |
+| systemd timers | hand-written units in `/etc/systemd/system` (`.service`: `Type=`, `ExecStart=`, `User=`; `.timer`: `OnCalendar=` with day of week, `*-*-*` and `H:M[:S]`, `OnBootSec=`, `OnActiveSec=`, `OnUnitActiveSec=`, `Unit=`), to the minute; `list-timers`, `systemd-analyze calendar`; cron mails what a job writes | `Persistent=`, `RandomizedDelaySec=`, `AccuracySec=`, dependencies between units |
+| exit codes | a command returns 1 if it wrote an error, unless it gives its own (plugins, `grep`); in a pipe, the last command's | every code of the real tools |
+| zombies | `ps -ef` shows the parent; no signal acts on a zombie; they disappear when their parent stops | `wait()`, `SIGCHLD`, adoption by a subreaper |
+| `sudo -u`, `crontab -u`, `usermod -L` | `sudo -u account` without other options; `crontab -u` for root only; `usermod -L/-U` marks the account without showing `/etc/shadow` | every option |
+| locking yourself out | the game's menu reopens the session | the host's rescue console (VNC, KVM) |
+| `nano` | a text area: `^O` write, `^X` exit (with `Y`/`N`/`^C`), buttons for keyboards without Ctrl; no search, cut and paste nor line numbers; the text wraps; messages close to nano's in the game's language | every shortcut of the help bar, no automatic wrapping |
 
-## Histoire 1 : l'Effaceur
+## Story 1: L'Effaceur (The Eraser)
 
-Une créature, l'Effaceur, parcourt le royaume et efface tout ce qu'elle
-touche. On découvrira qu'elle n'est pas méchante : c'est un programme qui
-obéit à un ordre ancien, écrit par erreur dans sa configuration, à la
-Racine (`/`).
-Morale technique : un programme fait ce qu'on lui a dit, pas ce qu'on voulait.
+A creature, the Eraser, roams the kingdom and erases everything it touches.
+We find out it isn't wicked: it is a program obeying an old order, written
+by mistake in its configuration, at the Root (`/`). Technical moral: a
+program does what it was told, not what was meant.
+
+The places and files below carry their French names, which are also the
+internal names; the English game translates them (`Phare` → `Lighthouse`,
+`crabe` → `crab`, `noms.ftl`).
 
 ```mermaid
 flowchart LR
-  C1["Chapitre 1 · L'Île du Phare<br/>ls, cd, pwd, cat, less, ls -a, mv"] --> C2["Chapitre 2 · Le Bourg<br/>grep, touch, cp, mkdir, rm"]
-  C2 --> C3["Chapitre 3 · La Racine<br/>ls -l, chmod, whoami, sudo"]
-  C3 --> C4["Chapitre 4 · La Sauvegarde<br/>rsync, crontab"]
+  C1["Chapter 1 · L'Île du Phare<br/>ls, cd, pwd, cat, less, ls -a, mv"] --> C2["Chapter 2 · Le Bourg<br/>grep, touch, cp, mkdir, rm"]
+  C2 --> C3["Chapter 3 · La Racine<br/>ls -l, chmod, whoami, sudo"]
+  C3 --> C4["Chapter 4 · La Sauvegarde<br/>rsync, crontab"]
 ```
 
-### Chapitre 1 — L'Île du Phare (fait)
+### Chapter 1 — L'Île du Phare (done)
 
-L'Effaceur a effacé l'ampoule du phare : sans lumière, aucun bateau ne peut
-quitter l'île pour le Bourg.
+The Eraser has erased the lighthouse's bulb: without light, no boat can leave
+the island for the Town.
 
-| Lieu | Énigme | Commande apprise |
+| Place | Puzzle | Command learnt |
 |---|---|---|
-| Cabane | lire le message de Maëlle, la gardienne du phare | `ls`, `cat` |
-| Plage | panneau, ravaudeuse (touche Tab, flèche ↑) | `cd`, `cd ..`, `pwd` |
-| Colline/EcoleDesSignaux/SalleDExercice | remettre le crabe dans le Seau | `mv objet Lieu` |
-| Colline/EcoleDesSignaux/Cours | manuel, chemins, fichier caché `.note_secrete`, déplacer et renommer d'un coup | `man`, `~`, `/`, `ls -a` |
-| Jetee | ranger le filet qui bloque le Phare au Hangar du Port | `mv filet ~/Port/Hangar` (chemin depuis `~`) |
-| Port/Remise → Phare/Escalier/Lanterne | rapporter l'ampoule de secours cachée sous le nom exact `ampoule` | `ls -a`, `mv .ampoule_de_secours …/Lanterne/ampoule` |
+| Cabane | read the message from Maëlle, the lighthouse keeper | `ls`, `cat` |
+| Plage | sign, net mender (Tab key, ↑ arrow) | `cd`, `cd ..`, `pwd` |
+| Colline/EcoleDesSignaux/SalleDExercice | put the crab back in the Bucket | `mv object Place` |
+| Colline/EcoleDesSignaux/Cours | manual, paths, hidden file `.note_secrete`, moving and renaming at once | `man`, `~`, `/`, `ls -a` |
+| Jetee | move the net blocking the Lighthouse to the Harbour's Shed | `mv filet ~/Port/Hangar` (path from `~`) |
+| Port/Remise → Phare/Escalier/Lanterne | bring back the spare bulb, hidden, under the exact name `ampoule` | `ls -a`, `mv .ampoule_de_secours …/Lanterne/ampoule` |
 
-### Chapitre 2 — Le Bourg (fait)
+### Chapter 2 — Le Bourg (done)
 
-Le bateau dépose le personnage au Bourg du port.
+The boat drops the character at the harbour Town.
 
-| Lieu | Énigme | Commande apprise |
+| Place | Puzzle | Command learnt |
 |---|---|---|
-| Mairie | quelle affiche parle de l'Effaceur, puis la clé sous le `.paillasson` | `grep Effaceur *`, `ls -a` |
-| Mairie/Archives | lire la chronique de l'Effaceur | `grep`, `grep -i` |
-| Boulangerie | trois levains pour le boulanger | `cp` |
-| Atelier | fabriquer un engrenage, puis cinq : l'horloge repart et ouvre la grille de la Ruelle | `touch`, `cp` |
-| Ruelle | barricade trop lourde pour `mv` | `rm` (et pas de corbeille) |
-| Ruelle/Cour/Egout | payer les rats avec le fromage du Marché, sans y retourner | `cp ~/Marche/fromage .` (chemin complet, `.`) |
-| Egout/Galerie | retrouver Nour au bord du Toboggan | — |
-| Ecole | reconstruire la Classe de Nour (un lieu) | `mkdir` |
+| Mairie | which poster speaks of the Eraser, then the key under the `.paillasson` | `grep Effaceur *`, `ls -a` |
+| Mairie/Archives | read the Eraser's chronicle | `grep`, `grep -i` |
+| Boulangerie | three sourdoughs for the baker | `cp` |
+| Atelier | make a gear, then five: the clock starts again and opens the Alley's gate | `touch`, `cp` |
+| Ruelle | a barricade too heavy for `mv` | `rm` (and no recycle bin) |
+| Ruelle/Cour/Egout | pay the rats with the Market's cheese, without going back | `cp ~/Marche/fromage .` (full path, `.`) |
+| Egout/Galerie | find Nour at the edge of the Slide | — |
+| Ecole | rebuild Nour's Classroom (a place) | `mkdir` |
 
-### Chapitre 3 — La Racine (fait)
+### Chapter 3 — La Racine (done)
 
-Pourquoi « La Racine » et pas « Le Noyau » : sous Linux, le noyau (*kernel*)
-est le programme central du système ; l'arborescence des fichiers, elle,
-part de la racine `/`, et l'administrateur s'appelle `root`.
+Why "The Root" and not "The Kernel": on Linux, the kernel is the system's
+central program; the file tree starts from the root `/`, and the
+administrator is called `root`.
 
-Le Toboggan dépose le personnage dans sa vraie maison, `/home/vous`. Le
-monde ressemble enfin à un vrai Linux : `/home`, `/etc`, `/var/log`, `/root`.
+The Slide drops the character in their real home, `/home/vous` (`/home/you`
+in English). The world finally looks like a real Linux: `/home`, `/etc`,
+`/var/log`, `/root`.
 
-| Lieu | Énigme | Commande apprise |
+| Place | Puzzle | Command learnt |
 |---|---|---|
-| `/home/vous` | l'Effaceur efface un souvenir à chaque commande : le lieu `souvenirs` est en `rwxrwxrwx` | `ls -l`, `chmod o-w` (effacer = écrire dans le lieu) |
-| `/var/log` | le journal du démon montre deux cibles au lieu d'une | `cat`, `grep cible` |
-| `/etc/effaceur.conf` | « cible = /Royaume /Corbeille » : une espace en trop ; le fichier appartient à root | Permission non accordée |
-| `journal.txt` | retrouver son mot de passe (noté, « très mauvaise idée ») | `grep "mot de passe"` (guillemets) |
-| `/etc` | installer la version corrigée | `sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf` |
-| bonus | `/root`, `/etc/sudoers`, `/home/nour` (journal intime : on ne le lit pas, même root) | `sudo ls`, `sudo cat`, `whoami`, `sudo cd` (introuvable : `cd` est intégré au shell) |
+| `/home/vous` | the Eraser erases a memory on each command: the `souvenirs` place is `rwxrwxrwx` | `ls -l`, `chmod o-w` (erasing = writing in the place) |
+| `/var/log` | the daemon's log shows two targets instead of one | `cat`, `grep cible` |
+| `/etc/effaceur.conf` | "cible = /Royaume /Corbeille": one space too many; the file belongs to root | Permission denied |
+| `journal.txt` | find your password (written down, "a very bad idea") | `grep "mot de passe"` (quotes) |
+| `/etc` | install the fixed version | `sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf` |
+| bonus | `/root`, `/etc/sudoers`, `/home/nour` (a diary: we don't read it, even as root) | `sudo ls`, `sudo cat`, `whoami`, `sudo cd` (not found: `cd` is a shell builtin) |
 
-Le dénouement : le personnage était l'administrateur·ice du royaume. C'est
-lui ou elle qui avait écrit la configuration, avec une espace de trop.
-L'Effaceur n'était pas méchant : il faisait exactement ce qu'on lui avait
-écrit. Le message de `sudo` (« Réfléchissez avant de taper ») est le vrai.
+The outcome: the character was the kingdom's administrator. They were the
+one who wrote the configuration, with one space too many. The Eraser wasn't
+wicked: it did exactly what had been written for it. `sudo`'s message
+("Think before you type") is the real one.
 
-### Chapitre 4 — La Sauvegarde (fait)
+### Chapter 4 — La Sauvegarde (done)
 
-Maëlle veut que les souvenirs ne puissent plus disparaître : un disque de
-sauvegarde est monté sur `/mnt/sauvegarde`. Le chapitre se joue sur
-`royaume` ; les clés des autres machines restent données à la fin de La
-Racine (chapitre 3).
+Maëlle wants memories never to disappear again: a backup disk is mounted on
+`/mnt/sauvegarde`. The chapter plays on `royaume`; the keys to the other
+machines are still given at the end of La Racine (chapter 3).
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Copier | `rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/` (la barre finale compte), `rsync -n` pour essayer |
-| Automatiser | `crontab -e`, une ligne `15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/` (ou `@daily`) ; `crontab -l` |
-| La nuit passe | le jeu lance les tâches qui tombent entre minuit et 6 h (`src/moteur/cron.ts`) ; un souvenir arrivé dans la journée doit se retrouver dans la sauvegarde |
-| Restaurer | au matin, un souvenir est effacé : `rsync -a` ou `cp` depuis la sauvegarde |
+| Copy | `rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/` (the trailing slash matters), `rsync -n` to try |
+| Automate | `crontab -e`, a line `15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/` (or `@daily`); `crontab -l` |
+| The night passes | the game runs the jobs that fall between midnight and 6 am (`src/moteur/cron.ts`); a memory that arrived during the day must end up in the backup |
+| Restore | in the morning, a memory is erased: `rsync -a` or `cp` from the backup |
 
-Objectif vérifié sur l'état : la nuit a mis la sauvegarde à jour (y compris
-le nouveau souvenir), le souvenir effacé est revenu à l'identique, et une
-tâche de nuit avec `rsync` reste planifiée.
+Goal checked on the state: the night updated the backup (including the new
+memory), the erased memory is back, identical, and a night job with `rsync`
+stays scheduled.
 
-Pièges prévus : `rsync` sans `-a` (`skipping directory`), la barre finale
-oubliée (`souvenirs/souvenirs`), une crontab invalide (`bad hour`, refusée
-à l'installation), une tâche qui ne tombe pas la nuit, une tâche qui échoue
-(le courrier de cron montre l'erreur de rsync), `--delete` après
-l'effacement (la sauvegarde perd aussi le souvenir). Autre solution
-acceptée : `@daily`, copie du dossier entier, restauration avec `cp`.
-Débrief : barre finale, `-n`, planifier, tester la restauration, règle
-3-2-1 et versions ; liens vers `rsync(1)` et `crontab(5)`.
+Expected traps: `rsync` without `-a` (`skipping directory`), the trailing
+slash forgotten (`souvenirs/souvenirs`), an invalid crontab (`bad hour`,
+refused on install), a job that doesn't fall in the night, a job that fails
+(cron's mail shows rsync's error), `--delete` after the erasure (the backup
+loses the memory too). Other accepted solutions: `@daily`, copying the whole
+directory, restoring with `cp`. Debrief: trailing slash, `-n`, scheduling,
+testing the restore, the 3-2-1 rule and versions; links to `rsync(1)` and
+`crontab(5)`.
 
-## Histoire 2 : Le Datacenter (faite, cinq chapitres)
+## Story 2: Le Datacenter (done, five chapters)
 
-Premier jour de stage : le site de la médiathèque répond par des erreurs 503.
-Awa, responsable d'exploitation, est en réunion ; ses notes guident.
+First day of the internship: the media library's website answers with 503
+errors. Awa, the operations lead, is in a meeting; her notes guide you.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Lire le journal `/var/log/nginx/access.log` | `head`, `tail`, `wc -l` |
-| Compter les erreurs 503 | `grep " 503 " … \| wc -l` (tube) |
-| Trouver qui envoie autant de demandes | `cut -d " " -f 1 … \| sort \| uniq -c \| sort -n \| tail -3` |
-| Voir la surcharge | `ps aux` |
-| Bloquer le robot dans un fichier de root | `echo "deny …;" \| sudo tee -a /etc/nginx/blocked.conf` (et pourquoi `sudo echo … >>` échoue) |
-| Faire relire la configuration | `sudo systemctl reload nginx` |
-| Relancer le service bloqué | `sudo kill PID` (systemd le relance) |
-| Écrire le rapport | `… > rapport.txt`, `echo … >> rapport.txt` |
+| Read the log `/var/log/nginx/access.log` | `head`, `tail`, `wc -l` |
+| Count the 503 errors | `grep " 503 " … \| wc -l` (pipe) |
+| Find who sends so many requests | `cut -d " " -f 1 … \| sort \| uniq -c \| sort -n \| tail -3` |
+| See the overload | `ps aux` |
+| Block the robot in a file owned by root | `echo "deny …;" \| sudo tee -a /etc/nginx/blocked.conf` (and why `sudo echo … >>` fails) |
+| Have the configuration reread | `sudo systemctl reload nginx` |
+| Restart the stuck service | `sudo kill PID` (systemd restarts it) |
+| Write the report | `… > rapport.txt`, `echo … >> rapport.txt` |
 
-Pièges prévus : `kill` avant de bloquer (le service repart à 99 %), `tee`
-sans `-a` ou `>` qui écrase `blocked.conf` (une sauvegarde `.bak` existe).
+Expected traps: `kill` before blocking (the service goes back to 99 %),
+`tee` without `-a` or `>` overwriting `blocked.conf` (a `.bak` backup
+exists).
 
-### Chapitre 2 — Deuxième jour (fait)
+### Chapter 2 — Deuxième jour (done)
 
-Malo arrive en renfort : il doit lire les journaux de nginx sans `sudo`, et
-l'équipe web a besoin d'un dossier partagé fermé aux autres comptes. La
-machine a de vrais comptes et groupes (`/etc/passwd`, `/etc/group`), comme
-une Debian : les journaux appartiennent à `www-data`, groupe `adm`, en 640.
+Malo comes to help: he must read nginx's logs without `sudo`, and the web
+team needs a shared directory closed to other accounts. The machine has real
+accounts and groups (`/etc/passwd`, `/etc/group`), like a Debian: the logs
+belong to `www-data`, group `adm`, mode 640.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Comprendre pourquoi on lit les journaux sans `sudo` | `id`, `id malo`, `groups`, `ls -l /var/log/nginx` |
-| Donner la lecture des journaux à Malo | `sudo usermod -aG adm malo` |
-| Dossier d'équipe | `sudo chgrp web-team /srv/equipe` puis `sudo chmod 770 /srv/equipe` (ou `chown root:web-team`, `chmod g+w,o-rx`) |
+| Understand why you can read the logs without `sudo` | `id`, `id malo`, `groups`, `ls -l /var/log/nginx` |
+| Give Malo read access to the logs | `sudo usermod -aG adm malo` |
+| Team directory | `sudo chgrp web-team /srv/equipe` then `sudo chmod 770 /srv/equipe` (or `chown root:web-team`, `chmod g+w,o-rx`) |
 
-Objectifs vérifiés sur l'état : Malo lit les deux journaux et reste dans
-`web-team`, les journaux restent fermés aux autres, et l'équipe (et elle
-seule) entre, lit et écrit dans `/srv/equipe`.
+Goals checked on the state: Malo reads both logs and stays in `web-team`,
+the logs stay closed to others, and the team (and only the team) enters,
+reads and writes in `/srv/equipe`.
 
-Pièges prévus : `usermod -G` sans `-a` (Malo perd `web-team`),
-`chmod o+r` sur les journaux (adresses IP lisibles par tous : données
-personnelles), `chmod 777` sur le partage, `chgrp` sans être propriétaire.
-Débrief : moindre privilège, `-aG`, setgid pour aller plus loin, liens vers
-`usermod(8)`, `chmod(1)` et les groupes système de Debian.
+Expected traps: `usermod -G` without `-a` (Malo loses `web-team`),
+`chmod o+r` on the logs (IP addresses readable by everyone: personal data),
+`chmod 777` on the share, `chgrp` without being the owner. Debrief: least
+privilege, `-aG`, setgid to go further, links to `usermod(8)`, `chmod(1)`
+and Debian's system groups.
 
-### Chapitre 3 — La nuit du redémarrage (fait)
+### Chapter 3 — La nuit du redémarrage (done)
 
-Le serveur a redémarré cette nuit (mises à jour automatiques) et le site
-est tombé. Deux problèmes cachés depuis vendredi : `nginx` a été désactivé
-pendant un test, et un `chown -R root:` a donné à root le dossier où
-`php-fpm` (compte `www-data`) écrit son journal. La machine a un vrai
-systemd simulé (`src/moteur/systemd.ts`) : services, journal, horloge,
-redémarrages.
+The server rebooted last night (automatic updates) and the site went down.
+Two problems hidden since Friday: `nginx` was disabled during a test, and a
+`chown -R root:` gave root the directory where `php-fpm` (account
+`www-data`) writes its log. The machine has a real simulated systemd
+(`src/moteur/systemd.ts`): services, journal, clock, reboots.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Trouver ce qui ne tourne pas | `systemctl --failed`, `systemctl status nginx catalogue` |
-| Comprendre pourquoi | `journalctl -xeu catalogue`, `journalctl -b -p err`, `ls -l /var/log` |
-| Réparer | `sudo chown www-data: /var/log/catalogue`, `sudo systemctl restart catalogue` |
-| Que ça tienne | `sudo systemctl enable --now nginx` |
-| Le prouver | `sudo reboot` (la session ssh est coupée), puis `systemctl --failed` |
+| Find what isn't running | `systemctl --failed`, `systemctl status nginx catalogue` |
+| Understand why | `journalctl -xeu catalogue`, `journalctl -b -p err`, `ls -l /var/log` |
+| Repair | `sudo chown www-data: /var/log/catalogue`, `sudo systemctl restart catalogue` |
+| Make it last | `sudo systemctl enable --now nginx` |
+| Prove it | `sudo reboot` (the ssh session is cut), then `systemctl --failed` |
 
-Objectif vérifié sur l'état : après un redémarrage, sans rien relancer à la
-main, les deux services tournent, et on a consulté leur état.
+Goal checked on the state: after a reboot, without restarting anything by
+hand, both services run, and you have checked their state.
 
-Pièges prévus : `start` sans `enable` (nginx ne revient pas au redémarrage
-suivant), `chmod 777` sur le dossier des journaux, `systemctl` sans `sudo`.
-Débrief : `--failed` après chaque redémarrage, `journalctl -xeu`, start
-n'est pas enable, le dossier d'un service appartient à son compte, liens
-vers `systemctl` et `journalctl` (freedesktop.org).
+Expected traps: `start` without `enable` (nginx doesn't come back at the
+next reboot), `chmod 777` on the log directory, `systemctl` without `sudo`.
+Debrief: `--failed` after every reboot, `journalctl -xeu`, start isn't
+enable, a service's directory belongs to its account, links to `systemctl`
+and `journalctl` (freedesktop.org).
 
-### Chapitre 4 — Le grand incendie (fait)
+### Chapter 4 — Le grand incendie (done)
 
-Cette nuit, le datacenter de l'hébergeur a brûlé (clin d'œil à l'incendie
-d'OVHcloud à Strasbourg, en mars 2021). L'hébergeur livre une machine neuve,
-même nom et même adresse, mais vide, et avec une **nouvelle clé d'hôte SSH**.
-Les sauvegardes de chaque nuit étaient dans un autre datacenter : elles sont
-montées sur `/mnt/sauvegarde`, avec le plan de reprise d'Awa (`PRA.txt`).
+Last night, the host's datacenter burned down (a nod to the OVHcloud fire in
+Strasbourg, in March 2021). The host delivers a new machine, same name and
+same address, but empty, and with a **new SSH host key**. The nightly
+backups were in another datacenter: they are mounted on `/mnt/sauvegarde`,
+with Awa's recovery plan (`PRA.txt`).
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Se reconnecter | `ssh datacenter` refuse (« REMOTE HOST IDENTIFICATION HAS CHANGED! ») ; comparer l'empreinte annoncée, `ssh-keygen -R datacenter.internal` (le nom écrit dans `known_hosts`), puis `yes` |
-| Installer le serveur web | `sudo apt update`, puis `sudo apt install nginx` (qui le démarre et l'active) ; `curl http://localhost` |
-| Vérifier la sauvegarde | `tar -tzf` : l'archive de cette nuit est coupée (« Fin de fichier inattendue ») ; `ls -l` montre sa taille |
-| Restaurer | `sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz -C /` |
-| Recharger sans casser | `sudo nginx -t` (« a duplicate default server »), retirer `sites-enabled/default`, `sudo nginx -t`, `sudo systemctl reload nginx` |
-| Tester | `curl http://medialibrary.example` |
+| Reconnect | `ssh datacenter` refuses ("REMOTE HOST IDENTIFICATION HAS CHANGED!"); compare the announced fingerprint, `ssh-keygen -R datacenter.internal` (the name written in `known_hosts`), then `yes` |
+| Install the web server | `sudo apt update`, then `sudo apt install nginx` (which starts and enables it); `curl http://localhost` |
+| Check the backup | `tar -tzf`: last night's archive is truncated ("Unexpected EOF"); `ls -l` shows its size |
+| Restore | `sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz -C /` |
+| Reload without breaking | `sudo nginx -t` ("a duplicate default server"), remove `sites-enabled/default`, `sudo nginx -t`, `sudo systemctl reload nginx` |
+| Test | `curl http://medialibrary.example` |
 
-Objectif vérifié sur l'état : nginx tourne, démarre avec la machine, et sert
-pour `medialibrary.example` la page de la dernière sauvegarde intacte (celle
-du 22).
+Goal checked on the state: nginx runs, starts with the machine, and serves
+for `medialibrary.example` the page of the last intact backup (the 22nd's).
 
-Pièges prévus : `apt install` avant `apt update` (« Unable to locate
-package »), `apt` sans `sudo` (verrou de dpkg), l'archive coupée (extraite,
-elle rend la configuration sans les pages : 404), une extraction dans `~`
-(sans `-C /`), la sauvegarde de mercredi (plus ancienne que nécessaire), les
-deux `default_server` (le rechargement est refusé, l'ancienne configuration
-reste), `ssh-keygen -R datacenter` (le nom court n'est pas dans
-`known_hosts`). Autres solutions acceptées : restaurer avant d'installer
-(nginx ne démarre pas à l'installation, puis `systemctl start`), garder le
-site de Debian et enlever `default_server` de la médiathèque, `cd /` puis
-`tar -xzf` sans `-C`. Débrief : 3-2-1 avec une copie loin, plan de reprise
-écrit et essayé, relire ses sauvegardes, perte acceptée (une journée),
-clé d'hôte, `nginx -t` ; liens vers apt(8), la documentation de nginx, GNU
-tar et ssh-keygen.
+Expected traps: `apt install` before `apt update` ("Unable to locate
+package"), `apt` without `sudo` (dpkg's lock), the truncated archive
+(extracted, it gives back the configuration without the pages: 404), an
+extraction into `~` (without `-C /`), Wednesday's backup (older than
+needed), the two `default_server` (the reload is refused, the old
+configuration stays), `ssh-keygen -R datacenter` (the short name isn't in
+`known_hosts`). Other accepted solutions: restoring before installing (nginx
+doesn't start on install, then `systemctl start`), keeping Debian's site and
+removing the media library's `default_server`, `cd /` then `tar -xzf`
+without `-C`. Debrief: 3-2-1 with a far copy, a written and tried recovery
+plan, rereading your backups, accepted loss (one day), host key, `nginx -t`;
+links to apt(8), nginx's documentation, GNU tar and ssh-keygen.
 
-### Chapitre 5 — Le certificat a expiré (fait)
+### Chapter 5 — Le certificat a expiré (done)
 
-Trois mois après l'incendie, le certificat HTTPS de la médiathèque a expiré
-ce matin ; les navigateurs affichent une alerte. Le jour de l'incendie, le
-certificat avait été demandé avant la restauration du site : certbot a noté
-`/var/www/html` (le site par défaut de Debian) comme dossier du défi. Depuis
-30 jours, chaque renouvellement automatique échoue en silence (404). Depuis
-juin 2025, Let's Encrypt n'envoie plus de courriel avant l'expiration.
+Three months after the fire, the media library's HTTPS certificate expired
+this morning; browsers show a warning. On the day of the fire, the
+certificate had been requested before the site was restored: certbot noted
+`/var/www/html` (Debian's default site) as the challenge directory. For 30
+days, every automatic renewal has failed silently (404). Since June 2025,
+Let's Encrypt no longer sends an email before expiry.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Voir comme un visiteur | `curl https://medialibrary.example` (erreur 60), `openssl s_client -connect … \| openssl x509 -noout -dates` |
-| Le certificat sur le disque | `sudo certbot certificates`, `openssl x509 -in … -noout -dates -subject -ext subjectAltName` |
-| Pourquoi pas renouvelé | `systemctl --failed`, `journalctl -u certbot`, `sudo certbot renew --dry-run` (le défi en 404) |
-| Le bon dossier | `cat /etc/letsencrypt/renewal/medialibrary.example.conf` ; `sudo certbot renew --webroot -w /var/www/medialibrary` |
-| Que nginx serve le nouveau | `sudo systemctl reload nginx` (nginx lit le certificat au chargement) |
-| Que ça tienne | `sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx"` |
+| See as a visitor | `curl https://medialibrary.example` (error 60), `openssl s_client -connect … \| openssl x509 -noout -dates` |
+| The certificate on disk | `sudo certbot certificates`, `openssl x509 -in … -noout -dates -subject -ext subjectAltName` |
+| Why it wasn't renewed | `systemctl --failed`, `journalctl -u certbot`, `sudo certbot renew --dry-run` (the challenge gets a 404) |
+| The right directory | `cat /etc/letsencrypt/renewal/medialibrary.example.conf`; `sudo certbot renew --webroot -w /var/www/medialibrary` |
+| Have nginx serve the new one | `sudo systemctl reload nginx` (nginx reads the certificate on load) |
+| Make it last | `sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx"` |
 
-Objectif vérifié sur l'état : nginx présente un certificat valide pour les
-deux noms du site, le prochain renouvellement automatique réussirait (le
-défi est servi), et nginx sera rechargé après (deploy hook dans le fichier
-de renouvellement, script exécutable dans `renewal-hooks/deploy/`, ou module
-nginx de certbot).
+Goal checked on the state: nginx presents a valid certificate for both of
+the site's names, the next automatic renewal would succeed (the challenge is
+served), and nginx will be reloaded afterwards (a deploy hook in the renewal
+file, an executable script in `renewal-hooks/deploy/`, or certbot's nginx
+plugin).
 
-Pièges prévus : `certbot` sans `sudo`, `--dry-run` qui n'enregistre rien,
-ne corriger que `webroot_path` sans `[[webroot_map]]`, le certificat
-renouvelé que nginx ne sert pas encore, un script de deploy hook non
-exécutable, `--nginx` sans le paquet `python3-certbot-nginx`. Autres
-solutions acceptées : modifier le fichier de renouvellement avec `nano`,
-`certonly --webroot -w … -d … -d …`, `--deploy-hook` sur `renew`, le module
-nginx (`apt install python3-certbot-nginx`, `certbot renew --nginx`), relancer
-le service `certbot`. Débrief : 90 jours et 30 jours, surveiller soi-même
-l'expiration, `--dry-run`, le défi HTTP-01, deploy hook ; liens vers la
-documentation de certbot, les défis de Let's Encrypt et `openssl x509`.
+Expected traps: `certbot` without `sudo`, `--dry-run` that saves nothing,
+fixing only `webroot_path` without `[[webroot_map]]`, the renewed
+certificate that nginx doesn't serve yet, a non-executable deploy hook
+script, `--nginx` without the `python3-certbot-nginx` package. Other
+accepted solutions: editing the renewal file with `nano`,
+`certonly --webroot -w … -d … -d …`, `--deploy-hook` on `renew`, the nginx
+plugin (`apt install python3-certbot-nginx`, `certbot renew --nginx`),
+restarting the `certbot` service. Debrief: 90 days and 30 days, monitoring
+expiry yourself, `--dry-run`, the HTTP-01 challenge, deploy hook; links to
+certbot's documentation, Let's Encrypt's challenges and `openssl x509`.
 
-## Histoire 3 : Le Paquet perdu (faite)
+## Story 3: Le Paquet perdu (done)
 
-« Internet ne marche plus » au café associatif. Le carnet de Kofi donne la
-méthode : tester de proche en proche. Prolonge le module « De l'Entrée à la
-page ».
+"The internet doesn't work any more" at the community café. Kofi's notebook
+gives the method: test step by step, from near to far.
 
-| Étape | Ce qu'on découvre |
+| Step | What you find out |
 |---|---|
-| `ping 192.168.1.1` | le réseau local marche |
-| `ping 9.9.9.9` | internet marche |
-| `ping letters.example` | « Temporary failure in name resolution » : le DNS |
-| `dig letters.example`, `cat /etc/resolv.conf` | l'ordinateur interroge l'ancienne box, disparue |
-| `dig @9.9.9.9 letters.example` | le nom existe bien |
-| `sudo cp /etc/resolv.conf.box /etc/resolv.conf` | DNS réparé |
-| `ping letters.example` | 100 % de pertes… |
-| `traceroute letters.example` | box, opérateur, point d'échange, hébergeur, puis silence |
-| `curl -I https://letters.example` | `HTTP/2 200` : le serveur ignorait juste le ping |
+| `ping 192.168.1.1` | the local network works |
+| `ping 9.9.9.9` | the internet works |
+| `ping letters.example` | "Temporary failure in name resolution": DNS |
+| `dig letters.example`, `cat /etc/resolv.conf` | the computer asks the old home router, which is gone |
+| `dig @9.9.9.9 letters.example` | the name does exist |
+| `sudo cp /etc/resolv.conf.box /etc/resolv.conf` | DNS repaired |
+| `ping letters.example` | 100 % packet loss… |
+| `traceroute letters.example` | home router, ISP, exchange point, host, then silence |
+| `curl -I https://letters.example` | `HTTP/2 200`: the server was just ignoring ping |
 
-## Histoire 4 : La Machine à remonter le temps (faite)
+## Story 4: La Machine à remonter le temps (done)
 
-Le chat d'Inès, romancière, a marché sur le clavier ; elle a enregistré et
-fait un commit. `git log`, `git show HEAD`, `git diff HEAD~1 roman.txt`,
-`git restore --source=HEAD~1 roman.txt`, puis `git add` et `git commit`
-pour enregistrer la version réparée (sans effacer l'histoire). Ensuite,
-mettre ses poèmes à l'abri : `git init`, `git add .`, `git commit -m`.
+The cat of Inès, a novelist, walked on the keyboard; she saved and made a
+commit. `git log`, `git show HEAD`, `git diff HEAD~1 roman.txt`,
+`git restore --source=HEAD~1 roman.txt`, then `git add` and `git commit` to
+record the repaired version (without erasing history). Then, putting her
+poems in safety: `git init`, `git add .`, `git commit -m`.
 
-## Histoire 5 : Les Archives (faite, deux chapitres)
+## Story 5: Les Archives (done, two chapters)
 
-Le serveur de la bibliothèque du quartier s'éteint à minuit ; Rosa n'a
-qu'une clé USB de 64 Mo. `du -sh` et `df -h` montrent que le fonds (174 Mo)
-ne tient pas ; `tar` échoue (« Aucun espace disponible sur le
-périphérique »). `find fonds -name "*.tmp"` trouve 120 Mo de fichiers
-temporaires, effacés avec `-delete`. L'archive compressée (`tar -czf`)
-fait alors 48 Mo ; `tar -tzf` la vérifie. Morale d'archiviste : une seule
-copie n'est pas une sauvegarde.
+The neighbourhood library's server shuts down at midnight; Rosa only has a
+64 MB USB stick. `du -sh` and `df -h` show that the collection (174 MB)
+doesn't fit; `tar` fails ("No space left on device"). `find fonds -name
+"*.tmp"` finds 120 MB of temporary files, deleted with `-delete`. The
+compressed archive (`tar -czf`) is then 48 MB; `tar -tzf` checks it. An
+archivist's moral: a single copy isn't a backup.
 
-### Chapitre 2 — Les versions (fait)
+### Chapter 2 — Les versions (done)
 
-Depuis janvier, le fonds vit sur un nouveau serveur, sauvegardé chaque nuit
-avec restic sur le disque que la mairie prête (`/mnt/mairie`, presque
-plein). Il y a quatre nuits, un script de « correction automatique » a
-abîmé la transcription du journal de Marie ; chaque sauvegarde a gardé la
-version abîmée. Trente instantanés, du 7 janvier au 5 février.
+Since January, the collection lives on a new server, backed up every night
+with restic on the disk the town hall lends (`/mnt/mairie`, almost full).
+Four nights ago, an "automatic correction" script damaged the transcription
+of Marie's diary; each backup kept the damaged version. Thirty snapshots,
+from 7 January to 5 February.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Ouvrir le dépôt | `restic -r … --password-file … snapshots` (ou le mot de passe tapé) |
-| Trouver quand c'est arrivé | `restic find --long journal_de_marie.txt` (la date change le 2 février), `restic diff A B`, `restic dump ID fichier` |
-| Restaurer | `restic restore ID --target /tmp/restauration --include …` puis `cp` (le chemin complet est recréé), ou `restic dump … > fichier` |
-| Faire de la place | `restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --dry-run`, puis sans `--dry-run`, puis `restic prune` (ou `--prune`) ; `df -h /mnt/mairie` |
-| Vérifier | `restic check` |
-| Protéger le mot de passe | `chmod 600 ~/.config/restic/mot-de-passe` |
+| Open the repository | `restic -r … --password-file … snapshots` (or the password typed in) |
+| Find when it happened | `restic find --long journal_de_marie.txt` (the date changes on 2 February), `restic diff A B`, `restic dump ID file` |
+| Restore | `restic restore ID --target /tmp/restauration --include …` then `cp` (the full path is recreated), or `restic dump … > file` |
+| Make room | `restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --dry-run`, then without `--dry-run`, then `restic prune` (or `--prune`); `df -h /mnt/mairie` |
+| Check | `restic check` |
+| Protect the password | `chmod 600 ~/.config/restic/mot-de-passe` |
 
-Objectif vérifié sur l'état : le journal est revenu à l'identique, un
-instantané contient encore la bonne version, le disque a retrouvé de la
-place, le dépôt a été vérifié depuis sa dernière modification, et le
-fichier du mot de passe n'est plus lisible par les autres comptes.
+Goal checked on the state: the diary is back, identical, a snapshot still
+holds the good version, the disk has space again, the repository has been
+checked since its last change, and the password file is no longer readable
+by other accounts.
 
-Pièges prévus : `restic` sans `-r`, un mauvais mot de passe, la restauration
-qui recrée le chemin complet sous `--target`, `forget` sans `prune` (la
-place ne revient pas), une politique trop sévère avant d'avoir restauré
-(plus aucun instantané ne contient la bonne version). Autres solutions
-acceptées : `dump` redirigé, `forget --prune` d'un coup, une nouvelle
-sauvegarde après restauration puis une politique plus courte. Débrief :
-versions plutôt que miroir, politique de rétention, forget n'est pas prune,
-check et restaurations d'essai, chiffrement et garde du mot de passe ;
-liens vers la documentation de restic.
+Expected traps: `restic` without `-r`, a wrong password, the restore that
+recreates the full path under `--target`, `forget` without `prune` (the
+space doesn't come back), too strict a policy before restoring (no snapshot
+holds the good version any more). Other accepted solutions: redirected
+`dump`, `forget --prune` at once, a new backup after restoring then a
+shorter policy. Debrief: versions rather than a mirror, retention policy,
+forget isn't prune, check and test restores, encryption and keeping the
+password; links to restic's documentation.
 
-## Histoire 6 : Les Lettres du quartier (neuf chapitres)
+## Story 6: Les Lettres du quartier (nine chapters)
 
-L'association de Kofi (vue dans Le Paquet perdu) loue un petit serveur pour
-son site, `letters.example` (machine `lettres`, même adresse que dans Le
-Paquet perdu). L'hébergeur l'a livré avec la configuration par défaut :
-connexion root et mots de passe acceptés.
+Kofi's association (seen in Le Paquet perdu) rents a small server for its
+site, `letters.example` (machine `lettres`, the same address as in Le Paquet
+perdu). The host delivered it with the default configuration: root login and
+passwords accepted.
 
-### Chapitre 1 — Fermer la porte (fait)
+### Chapter 1 — Fermer la porte (done)
 
-Le serveur SSH simulé (`src/moteur/sshd.ts`) lit `/etc/ssh/sshd_config`
-comme OpenSSH : mots-clés, `Include` lu à sa place, **première valeur lue
-qui l'emporte**, valeurs par défaut. La configuration appliquée est celle du
-dernier démarrage ou rechargement du service `ssh`, et c'est elle que la
-commande `ssh` du poste consulte pour accepter ou refuser une connexion.
+The simulated SSH server (`src/moteur/sshd.ts`) reads `/etc/ssh/sshd_config`
+like OpenSSH: keywords, `Include` read in its place, **the first value read
+wins**, default values. The applied configuration is the one of the `ssh`
+service's last start or reload, and that is what the workstation's `ssh`
+command checks to accept or refuse a connection.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Voir les attaques | `journalctl -u ssh` (force brute sur root, admin, test, ubuntu) |
-| Changer la configuration | `sudo nano /etc/ssh/sshd_config` : `PermitRootLogin no`, `PasswordAuthentication no` |
-| Vérifier | `sudo sshd -t` (fichier et ligne de l'erreur), `sudo sshd -T` (configuration effective) |
-| Appliquer | `sudo systemctl reload ssh` (refusé si la configuration est fausse : l'ancienne reste) |
-| Prouver qu'on peut encore entrer | `exit`, puis `ssh lettres` |
+| See the attacks | `journalctl -u ssh` (brute force on root, admin, test, ubuntu) |
+| Change the configuration | `sudo nano /etc/ssh/sshd_config`: `PermitRootLogin no`, `PasswordAuthentication no` |
+| Check | `sudo sshd -t` (file and line of the error), `sudo sshd -T` (effective configuration) |
+| Apply | `sudo systemctl reload ssh` (refused if the configuration is wrong: the old one stays) |
+| Prove you can still get in | `exit`, then `ssh lettres` |
 
-Objectif vérifié sur l'état : la configuration *appliquée* refuse root et
-les mots de passe, accepte toujours le compte `vous`, et une nouvelle
-connexion a réussi depuis.
+Goal checked on the state: the *applied* configuration refuses root and
+passwords, still accepts the player's account, and a new connection has
+succeeded since.
 
-Pièges prévus : faute de frappe (`PermitRootLogin non`), le fichier
-`sshd_config.d/50-cloud-init.conf` inclus en tête qui garde
-`PasswordAuthentication yes`, modifier sans recharger, un `AllowUsers` qui
-oublie son propre compte (on s'enferme dehors : la session en cours reste
-ouverte, et le menu du jeu sert de console de secours de l'hébergeur).
-Autre solution acceptée : un fichier `sshd_config.d/00-…conf`, lu en
-premier. Débrief : clés seulement, jamais root en direct, `sshd -t` et
-`sshd -T`, garder une session ouverte, liens vers `sshd_config(5)` et
-`sshd(8)` (man.openbsd.org).
+Expected traps: a typo (`PermitRootLogin non`), the
+`sshd_config.d/50-cloud-init.conf` file included first that keeps
+`PasswordAuthentication yes`, changing without reloading, an `AllowUsers`
+that forgets your own account (you lock yourself out: the current session
+stays open, and the game's menu serves as the host's rescue console). Other
+accepted solution: a `sshd_config.d/00-…conf` file, read first. Debrief:
+keys only, never root directly, `sshd -t` and `sshd -T`, keep a session
+open, links to `sshd_config(5)` and `sshd(8)` (man.openbsd.org).
 
-### Chapitre 2 — Le pare-feu (fait)
+### Chapter 2 — Le pare-feu (done)
 
-Un scan (sortie de nmap) montre la base de données du site (MariaDB, 3306)
-joignable depuis internet. Le pare-feu simulé (`src/moteur/parefeu.ts`)
-suit ufw : politique par défaut, règles ordonnées (la première qui
-correspond décide), connexions établies jamais coupées. La commande `ssh`
-du poste s'y heurte : `deny` donne `Connection timed out`, `reject`
-`Connection refused`.
+A scan (nmap's output) shows the site's database (MariaDB, 3306) reachable
+from the internet. The simulated firewall (`src/moteur/parefeu.ts`) follows
+ufw: default policy, ordered rules (the first that matches decides),
+established connections never cut. The workstation's `ssh` command runs into
+it: `deny` gives `Connection timed out`, `reject` `Connection refused`.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Qui écoute, et où ? | `ss -tln`, `sudo ss -tlnp` (0.0.0.0 contre 127.0.0.1) |
-| Autoriser les portes utiles | `sudo ufw allow "Nginx Full"`, `sudo ufw limit OpenSSH` (ou `allow from 192.0.2.2 to any port 22`) |
-| Activer | `sudo ufw enable` (question o/n) |
-| Vérifier | `sudo ufw status verbose`, puis `exit` et `ssh lettres` |
+| Who listens, and where? | `ss -tln`, `sudo ss -tlnp` (0.0.0.0 versus 127.0.0.1) |
+| Allow the useful doors | `sudo ufw allow "Nginx Full"`, `sudo ufw limit OpenSSH` (or `allow from 192.0.2.2 to any port 22`) |
+| Enable | `sudo ufw enable` (y/n question) |
+| Check | `sudo ufw status verbose`, then `exit` and `ssh lettres` |
 
-Objectif vérifié sur l'état : pare-feu actif, entrant refusé par défaut,
-SSH joignable depuis le poste, 80 et 443 depuis internet, 3306 fermé, et
-une nouvelle connexion ssh réussie depuis l'activation.
+Goal checked on the state: firewall active, incoming denied by default, SSH
+reachable from the workstation, 80 and 443 from the internet, 3306 closed,
+and a new ssh connection succeeded since it was enabled.
 
-Pièges prévus : activer avant d'autoriser SSH (la session tient, la
-suivante est bloquée : le menu sert de console de secours), `default allow`
-(la base reste ouverte), oublier le site, ne pas activer. Autre solution
-acceptée : `default reject` et SSH depuis l'adresse du poste seulement.
-Débrief : `ss -tlnp` d'abord, autoriser SSH avant `enable`, `limit`,
-`bind-address`, liens vers `ufw(8)` et `ss(8)`.
+Expected traps: enabling before allowing SSH (the session holds, the next
+one is blocked: the menu serves as a rescue console), `default allow` (the
+database stays open), forgetting the site, not enabling. Other accepted
+solution: `default reject` and SSH from the workstation's address only.
+Debrief: `ss -tlnp` first, allow SSH before `enable`, `limit`,
+`bind-address`, links to `ufw(8)` and `ss(8)`.
 
-### Chapitre 3 — La sentinelle (fait)
+### Chapter 3 — La sentinelle (done)
 
-fail2ban tourne avec les réglages de Debian (prison `sshd`, bannissement de
-10 minutes). `/var/log/fail2ban.log` montre les robots qui reviennent dès la
-fin de leur bannissement, et Rania, la webmestre, bannie après cinq erreurs
-de nom d'utilisateur. Le fail2ban simulé (`src/moteur/fail2ban.ts`) lit la
-configuration dans l'ordre `jail.conf`, `jail.d/*.conf`, `jail.local`,
-`jail.d/*.local` (le dernier lu l'emporte ; `[sshd]` sur `[DEFAULT]`, quel que soit le fichier), compte
-les échecs dans le journal de SSH et bannit à `maxretry`, sauf `ignoreip`.
-La commande `ssh` du poste se heurte aux bannissements (`Connection
-refused`).
+fail2ban runs with Debian's settings (`sshd` jail, 10-minute ban).
+`/var/log/fail2ban.log` shows robots coming back as soon as their ban ends,
+and Rania, the webmaster, banned after five user-name mistakes. The
+simulated fail2ban (`src/moteur/fail2ban.ts`) reads the configuration in the
+order `jail.conf`, `jail.d/*.conf`, `jail.local`, `jail.d/*.local` (the last
+read wins; `[sshd]` over `[DEFAULT]`, whatever the file), counts failures in
+SSH's log and bans at `maxretry`, except `ignoreip`. The workstation's `ssh`
+command runs into the bans (`Connection refused`).
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Comprendre | `cat /var/log/fail2ban.log`, `sudo fail2ban-client status sshd`, `journalctl -u ssh` |
-| Rendre l'accès à Rania | `sudo fail2ban-client set sshd unbanip 198.51.100.40` |
-| Régler | `sudo nano /etc/fail2ban/jail.local` : `bantime = 1h`, `ignoreip = 127.0.0.1/8 ::1 192.0.2.2 198.51.100.40` |
-| Appliquer et vérifier | `sudo fail2ban-client -t`, `sudo systemctl reload fail2ban`, `sudo fail2ban-client status sshd` |
+| Understand | `cat /var/log/fail2ban.log`, `sudo fail2ban-client status sshd`, `journalctl -u ssh` |
+| Give Rania her access back | `sudo fail2ban-client set sshd unbanip 198.51.100.40` |
+| Tune | `sudo nano /etc/fail2ban/jail.local`: `bantime = 1h`, `ignoreip = 127.0.0.1/8 ::1 192.0.2.2 198.51.100.40` |
+| Apply and check | `sudo fail2ban-client -t`, `sudo systemctl reload fail2ban`, `sudo fail2ban-client status sshd` |
 
-Objectif vérifié sur l'état : la configuration chargée active la prison,
-bannit au moins une heure et ignore Rania et le poste ; Rania et le poste ne
-sont pas bannis, les deux robots si ; et l'on a consulté l'état de la prison
-depuis.
+Goal checked on the state: the loaded configuration enables the jail, bans
+for at least an hour and ignores Rania and the workstation; Rania and the
+workstation aren't banned, both robots are; and you have checked the jail's
+state since.
 
-Pièges prévus : faute de syntaxe (le vrai message de configparser),
-`maxretry = 3` sans `ignoreip` (le poste, qui a raté trois connexions hier,
-se bannit lui-même : le menu sert de console de secours), oublier de
-recharger, oublier que Rania reste bannie (un bannissement survit au
-rechargement), modifier `jail.conf` (ça marche, mais un avertissement
-explique pourquoi c'est une mauvaise idée). Autre solution acceptée :
-`jail.d/*.local`, `bantime = -1`, `ignoreip` en CIDR.
+Expected traps: a syntax error (configparser's real message), `maxretry = 3`
+without `ignoreip` (the workstation, which failed three connections
+yesterday, bans itself: the menu serves as a rescue console), forgetting to
+reload, forgetting that Rania stays banned (a ban survives the reload),
+editing `jail.conf` (it works, but a warning explains why it's a bad idea).
+Other accepted solutions: `jail.d/*.local`, `bantime = -1`, `ignoreip` in
+CIDR.
 
-### Chapitre 4 — La colocation (fait)
+### Chapter 4 — La colocation (done)
 
-Le café associatif (celui du Paquet perdu) emménage sur le serveur des
-Lettres : deux sites sur une machine. Et l'agenda des ateliers de Rania, un
-petit programme Node.js qui n'écoute que sur `127.0.0.1:3000`, doit
-s'afficher sous `http://letters.example/agenda/`.
+The community café (the one from Le Paquet perdu) moves onto the Lettres'
+server: two sites on one machine. And Rania's workshop calendar, a small
+Node.js program listening only on `127.0.0.1:3000`, must show under
+`http://letters.example/agenda/`.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Voir comment un site est activé | `ls -l /etc/nginx/sites-enabled` (un lien symbolique) |
-| Créer le site du café | `sudo cp sites-available/letters sites-available/cafe`, `sudo nano …` (server_name, root, sans default_server) |
-| L'activer | `sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/` |
-| Tester avant le DNS | `curl -H "Host: cafe.example" http://127.0.0.1` |
-| Publier l'agenda | `location /agenda/ { proxy_pass http://127.0.0.1:3000/; }`, `sudo nginx -t`, `sudo systemctl reload nginx` |
-| Comprendre un 502 | `sudo tail /var/log/nginx/error.log`, `sudo systemctl enable --now agenda` |
+| See how a site is enabled | `ls -l /etc/nginx/sites-enabled` (a symbolic link) |
+| Create the café's site | `sudo cp sites-available/letters sites-available/cafe`, `sudo nano …` (server_name, root, no default_server) |
+| Enable it | `sudo ln -s /etc/nginx/sites-available/cafe /etc/nginx/sites-enabled/` |
+| Test before DNS | `curl -H "Host: cafe.example" http://127.0.0.1` |
+| Publish the calendar | `location /agenda/ { proxy_pass http://127.0.0.1:3000/; }`, `sudo nginx -t`, `sudo systemctl reload nginx` |
+| Understand a 502 | `sudo tail /var/log/nginx/error.log`, `sudo systemctl enable --now agenda` |
 
-Objectif vérifié sur l'état : nginx sert la page du café pour
-`cafe.example`, celle des Lettres pour `letters.example`, l'agenda sous
-`/agenda/` et `/agenda/semaine`, et le service `agenda` démarrera avec la
-machine.
+Goal checked on the state: nginx serves the café's page for `cafe.example`,
+the Lettres' for `letters.example`, the calendar under `/agenda/` and
+`/agenda/semaine`, and the `agenda` service will start with the machine.
 
-Pièges prévus : `ln -s` avec un chemin relatif lu depuis le mauvais lieu
-(lien cassé, `nginx -t` échoue), le fichier copié qui garde
-`default_server` (« duplicate default server ») ou `server_name`
-(« conflicting server name », le café montre les Lettres), l'agenda arrêté
-(502, `connect() failed` dans error.log), `proxy_pass` sans barre finale
-(« Cannot GET /agenda/ »), `start` sans `enable`. Autres solutions
-acceptées : un fichier écrit de zéro, `localhost` dans `proxy_pass`, une
-copie au lieu d'un lien dans `sites-enabled`. Débrief : sites-available et
-sites-enabled, default_server et server_name, tester avec `Host`, barre
-finale de proxy_pass, 502 et error.log, appli derrière un proxy sur
-127.0.0.1 ; liens vers la documentation de nginx.
+Expected traps: `ln -s` with a relative path read from the wrong place (a
+broken link, `nginx -t` fails), the copied file that keeps `default_server`
+("duplicate default server") or `server_name` ("conflicting server name",
+the café shows the Lettres), the calendar stopped (502, `connect() failed`
+in error.log), `proxy_pass` without a trailing slash ("Cannot GET
+/agenda/"), `start` without `enable`. Other accepted solutions: a file
+written from scratch, `localhost` in `proxy_pass`, a copy instead of a link
+in `sites-enabled`. Debrief: sites-available and sites-enabled,
+default_server and server_name, testing with `Host`, proxy_pass's trailing
+slash, 502 and error.log, an app behind a proxy on 127.0.0.1; links to
+nginx's documentation.
 
-### Chapitre 5 — Ça marche chez moi (fait)
+### Chapter 5 — Ça marche chez moi (done)
 
-Kofi a « fait pointer » cafe.example vers le serveur… dans le `/etc/hosts`
-de son propre ordinateur. Chez lui, le site du café marche ; ailleurs, le
-nom mène à l'ancien hébergeur, et `www.cafe.example` n'existe pas. Le
-serveur des Lettres fait autorité pour la zone (BIND, `named`) ; le registre
-en garde une copie (`ns2.registry.example`). Le DNS simulé est dans
-`src/moteur/dns.ts`.
+Kofi "pointed" cafe.example at the server… in his own computer's
+`/etc/hosts`. At his place, the café's site works; elsewhere, the name leads
+to the old host, and `www.cafe.example` doesn't exist. The Lettres' server
+is authoritative for the zone (BIND, `named`); the registry keeps a copy
+(`ns2.registry.example`). The simulated DNS is in `src/moteur/dns.ts`.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Voir ce que voient les autres | `dig cafe.example` (résolveur public, ancienne adresse, TTL qui décroît) |
-| Interroger les serveurs qui font autorité | `dig @localhost cafe.example`, `dig @ns2.registry.example cafe.example SOA +short` |
-| Corriger la zone | `sudo nano /etc/bind/zones/db.cafe.example` : l'adresse, `www IN CNAME cafe.example.`, le serial |
-| Vérifier, recharger | `named-checkzone cafe.example …`, `sudo rndc reload`, `journalctl -u named` |
+| See what others see | `dig cafe.example` (public resolver, old address, decreasing TTL) |
+| Ask the authoritative servers | `dig @localhost cafe.example`, `dig @ns2.registry.example cafe.example SOA +short` |
+| Fix the zone | `sudo nano /etc/bind/zones/db.cafe.example`: the address, `www IN CNAME cafe.example.`, the serial |
+| Check, reload | `named-checkzone cafe.example …`, `sudo rndc reload`, `journalctl -u named` |
 
-Objectif vérifié sur l'état : les deux serveurs qui font autorité répondent
-la nouvelle adresse pour `cafe.example` et `www.cafe.example`, le MX est
-toujours là, la zone des Lettres n'a pas bougé.
+Goal checked on the state: both authoritative servers answer the new address
+for `cafe.example` and `www.cafe.example`, the MX is still there, the
+Lettres' zone hasn't moved.
 
-Pièges prévus : `/etc/hosts` « maison », le résolveur qui garde l'ancienne
-réponse en cache (TTL de 24 heures), une adresse mal tapée (`bad dotted
-quad`, la zone reste l'ancienne), le serial oublié (« zone serial
-unchanged », ns2 garde l'ancienne zone), le point final oublié
-(`cafe.example.cafe.example.`), `rndc` sans `sudo`. Autres solutions
-acceptées : un enregistrement A pour `www`, `systemctl reload named`.
-Débrief : tester comme les autres, serveurs faisant autorité contre
-résolveur, serial, `named-checkzone`, point final, baisser le TTL avant un
-déménagement ; liens vers la documentation de BIND et la RFC 1034.
+Expected traps: the "home-made" `/etc/hosts`, the resolver keeping the old
+answer in cache (a 24-hour TTL), a mistyped address (`bad dotted quad`, the
+zone stays the old one), the forgotten serial ("zone serial unchanged", ns2
+keeps the old zone), the forgotten trailing dot
+(`cafe.example.cafe.example.`), `rndc` without `sudo`. Other accepted
+solutions: an A record for `www`, `systemctl reload named`. Debrief: test
+like the others, authoritative servers versus resolver, serial,
+`named-checkzone`, trailing dot, lowering the TTL before a move; links to
+BIND's documentation and RFC 1034.
 
-### Chapitre 6 — Le soir du concert (fait)
+### Chapter 6 — Le soir du concert (done)
 
-Soir de concert au café : l'agenda (une appli qui sert une vingtaine de
-pages par seconde) ne répond plus, les visiteur·ses reçoivent des 504. Un
-robot aspire l'agenda depuis trois adresses, 24 requêtes par seconde. Après
-chaque rechargement de nginx, le jeu fait passer une minute de trafic, qui
-s'écrit dans `access.log`.
+Concert night at the café: the calendar (an app serving some twenty pages
+per second) no longer answers, visitors get 504s. A robot is scraping the
+calendar from three addresses, 24 requests per second. After each nginx
+reload, the game plays a minute of traffic, written to `access.log`.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Lire les codes de réponse | `awk '{print $9}' access.log \| sort \| uniq -c` |
-| Trouver qui demande | `awk '{print $1}' … \| sort \| uniq -c \| sort -n`, `awk '$9 == 504 {print $1}' …` |
-| Limiter le débit | `limit_req_zone $binary_remote_addr zone=agenda:10m rate=2r/s;` puis `limit_req zone=agenda burst=10 nodelay;` (et `limit_req_status 429;`) |
-| Vérifier | `sudo nginx -t`, `sudo systemctl reload nginx`, la minute suivante dans `access.log` et `error.log` |
+| Read the response codes | `awk '{print $9}' access.log \| sort \| uniq -c` |
+| Find who is asking | `awk '{print $1}' … \| sort \| uniq -c \| sort -n`, `awk '$9 == 504 {print $1}' …` |
+| Limit the rate | `limit_req_zone $binary_remote_addr zone=agenda:10m rate=2r/s;` then `limit_req zone=agenda burst=10 nodelay;` (and `limit_req_status 429;`) |
+| Check | `sudo nginx -t`, `sudo systemctl reload nginx`, the next minute in `access.log` and `error.log` |
 
-Objectif vérifié sur l'état : pendant la dernière minute simulée, toutes les
-requêtes des visiteur·ses ont été servies, et la limitation de débit a
-refusé au moins 60 % des requêtes du robot.
+Goal checked on the state: during the last simulated minute, every visitor
+request was served, and rate limiting refused at least 60 % of the robot's
+requests.
 
-Pièges prévus : `limit_req` sans `limit_req_zone` (« zero size shared
-memory zone »), une limite sans rafale (une page et ses quatre fichiers
-d'un coup : les vraies personnes sont refusées), une limite trop large ou
-mal placée (le robot passe encore), `deny` des adresses du robot (marche ce
-soir, mais pas une règle durable). Autres solutions acceptées : la zone dans
-`conf.d/`, la limite sur tout le site, un débit de 1 requête par seconde.
-Débrief : lire les journaux avant d'agir, limiter par adresse là où c'est
-coûteux, rafale et `nodelay`, 429, `deny` contre règle durable ; liens vers
-`limit_req`, le format des journaux et awk (POSIX).
+Expected traps: `limit_req` without `limit_req_zone` ("zero size shared
+memory zone"), a limit without burst (a page and its four files at once:
+real people are refused), too loose or misplaced a limit (the robot still
+gets through), `deny` of the robot's addresses (works tonight, but isn't a
+lasting rule). Other accepted solutions: the zone in `conf.d/`, the limit on
+the whole site, a rate of 1 request per second. Debrief: read the logs
+before acting, limit per address where it is costly, burst and `nodelay`,
+429, `deny` versus a lasting rule; links to `limit_req`, the log format and
+awk (POSIX).
 
-### Chapitre 7 — Le port (fait)
+### Chapter 7 — Le port (done)
 
-Le journal de SSH déborde de robots, tous sur le port 22. Rania propose de
-déplacer SSH sur le port 2222 : ça ne protège de rien, mais le journal
-redeviendra lisible. Trois portes à ouvrir avant d'en fermer une (sshd,
-ufw, le `~/.ssh/config` du poste), et une sentinelle à prévenir.
+SSH's log overflows with robots, all on port 22. Rania suggests moving SSH
+to port 2222: it protects from nothing, but the log will be readable again.
+Three doors to open before closing one (sshd, ufw, the workstation's
+`~/.ssh/config`), and a sentinel to warn.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Comprendre | `journalctl -u ssh`, `sudo ufw status`, `sudo nft list ruleset` (les règles que ufw et fail2ban écrivent) |
-| Écouter sur les deux ports | `Port 22` et `Port 2222` dans `sshd_config`, `sudo sshd -t`, `sudo ufw allow 2222/tcp`, `sudo systemctl reload ssh`, `sudo ss -tlnp` |
-| Tester depuis le poste | `Port 2222` dans `~/.ssh/config` (ou `ssh -p 2222`) ; la clé d'hôte est notée `[letters.example]:2222` dans `known_hosts` |
-| Fermer l'ancienne porte | retirer `Port 22`, `sudo ufw delete allow OpenSSH` |
-| La sentinelle | `[sshd]` puis `port = 2222` dans `jail.local`, `sudo systemctl reload fail2ban`, `sudo nft list table inet f2b-table` |
+| Understand | `journalctl -u ssh`, `sudo ufw status`, `sudo nft list ruleset` (the rules ufw and fail2ban write) |
+| Listen on both ports | `Port 22` and `Port 2222` in `sshd_config`, `sudo sshd -t`, `sudo ufw allow 2222/tcp`, `sudo systemctl reload ssh`, `sudo ss -tlnp` |
+| Test from the workstation | `Port 2222` in `~/.ssh/config` (or `ssh -p 2222`); the host key is recorded as `[letters.example]:2222` in `known_hosts` |
+| Close the old door | remove `Port 22`, `sudo ufw delete allow OpenSSH` |
+| The sentinel | `[sshd]` then `port = 2222` in `jail.local`, `sudo systemctl reload fail2ban`, `sudo nft list table inet f2b-table` |
 
-Objectif vérifié sur l'état : sshd n'écoute que sur 2222 ; ufw laisse passer
-2222 et plus 22 ; la prison sshd bloque le port 2222 ; le poste est connecté
-par le port 2222 grâce à son `~/.ssh/config`.
+Goal checked on the state: sshd only listens on 2222; ufw lets 2222 through
+and no longer 22; the sshd jail blocks port 2222; the workstation is
+connected through port 2222 thanks to its `~/.ssh/config`.
 
-Pièges prévus : retirer le port 22 avant d'ouvrir 2222 dans ufw (alerte ;
-la connexion suivante attend, le menu sert de console de secours), oublier
-le poste (« Connection refused » sur 22, avec un rappel du port), un
-`port = 2222` dans le `[DEFAULT]` de `jail.local`, que le `port = ssh` du
-`[sshd]` de `jail.conf` continue d'emporter. Autres solutions acceptées :
-`ssh -p 2222` pour tester, `port = ssh,2222`, `ufw limit 2222/tcp`.
-Débrief : un port n'est pas une protection, ouvrir avant de fermer, tout ce
-qui parle du port suit, ufw et fail2ban écrivent des règles nftables,
-`ssh.socket` sur Ubuntu ; liens vers `sshd_config(5)`, `ssh_config(5)`,
-`jail.conf(5)` et ufw.
+Expected traps: removing port 22 before opening 2222 in ufw (a warning; the
+next connection hangs, the menu serves as a rescue console), forgetting the
+workstation ("Connection refused" on 22, with a reminder of the port), a
+`port = 2222` in `jail.local`'s `[DEFAULT]`, which `jail.conf`'s
+`[sshd]` `port = ssh` keeps overriding. Other accepted solutions:
+`ssh -p 2222` to test, `port = ssh,2222`, `ufw limit 2222/tcp`. Debrief: a
+port isn't a protection, open before closing, everything that mentions the
+port follows, ufw and fail2ban write nftables rules, `ssh.socket` on Ubuntu;
+links to `sshd_config(5)`, `ssh_config(5)`, `jail.conf(5)` and ufw.
 
-### Chapitre 8 — La récidive (fait)
+### Chapter 8 — La récidive (done)
 
-Depuis le changement de port, les mêmes adresses sont bannies une heure,
-débannies, rebannies, encore et encore ; et le robot de l'agenda, que nginx
-limite depuis le soir du concert, insiste (« limiting requests » dans
-`error.log`). `jail.conf` a des prisons toutes prêtes, désactivées.
+Since the port change, the same addresses are banned for an hour, unbanned,
+banned again, over and over; and the calendar's robot, which nginx has
+limited since concert night, insists ("limiting requests" in `error.log`).
+`jail.conf` has ready-made jails, disabled.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Comprendre | `grep -c "Ban 203.0.113.66" /var/log/fail2ban.log`, `grep -c "limiting requests" /var/log/nginx/error.log`, `grep "^\[" /etc/fail2ban/jail.conf` |
-| Activer les prisons | `[recidive]` et `[nginx-limit-req]` avec `enabled = true` dans `jail.local` (ou `jail.d/*.local`) |
-| Vérifier | `sudo fail2ban-client -t`, `sudo systemctl reload fail2ban`, `sudo fail2ban-client status`, `status recidive`, `status nginx-limit-req`, `sudo nft list table inet f2b-table` |
+| Understand | `grep -c "Ban 203.0.113.66" /var/log/fail2ban.log`, `grep -c "limiting requests" /var/log/nginx/error.log`, `grep "^\[" /etc/fail2ban/jail.conf` |
+| Enable the jails | `[recidive]` and `[nginx-limit-req]` with `enabled = true` in `jail.local` (or `jail.d/*.local`) |
+| Check | `sudo fail2ban-client -t`, `sudo systemctl reload fail2ban`, `sudo fail2ban-client status`, `status recidive`, `status nginx-limit-req`, `sudo nft list table inet f2b-table` |
 
-Objectif vérifié sur l'état : `recidive` et `nginx-limit-req` chargées, les
-deux récidivistes bannis par `recidive` (sur tous les ports), les trois
-adresses du robot par `nginx-limit-req`, Rania et les visiteur·ses épargné·es,
-`recidive` plus longue que `sshd`, l'état d'une prison consulté.
+Goal checked on the state: `recidive` and `nginx-limit-req` loaded, both
+repeat offenders banned by `recidive` (on every port), the robot's three
+addresses by `nginx-limit-req`, Rania and the visitors spared, `recidive`
+longer than `sshd`, a jail's state checked.
 
-Pièges prévus : `enabled = true` dans `[DEFAULT]` (toutes les prisons de
-`jail.conf`, dont apache et postfix : « Have not found any log file », le
-service ne recharge pas), une `recidive` qui ne bannit pas plus longtemps
-que `sshd`, Rania sortie d'`ignoreip` (la prison nginx la bannit ; `unban`).
-Autres solutions acceptées : `jail.d/*.local`, `bantime = -1`, un autre
-`maxretry`. Débrief : journal, filtre, action ; activer dans sa section ;
-`dbpurgeage` ; `bantime.increment` ; liens vers `jail.conf(5)`, le
-`jail.conf` de fail2ban et `limit_req`.
+Expected traps: `enabled = true` in `[DEFAULT]` (every jail of `jail.conf`,
+including apache and postfix: "Have not found any log file", the service
+doesn't reload), a `recidive` that doesn't ban longer than `sshd`, Rania
+removed from `ignoreip` (the nginx jail bans her; `unban`). Other accepted
+solutions: `jail.d/*.local`, `bantime = -1`, another `maxretry`. Debrief:
+log, filter, action; enable in its own section; `dbpurgeage`;
+`bantime.increment`; links to `jail.conf(5)`, fail2ban's `jail.conf` and
+`limit_req`.
 
-### Chapitre 9 — L'atelier de réparation (fait)
+### Chapter 9 — L'atelier de réparation (done)
 
-L'ancien hébergeur de l'atelier de réparation ferme ; leur site tournait
-sous Apache, avec un `.htaccess` qui réécrit les adresses courtes des fiches
-(`/guide/42`, imprimées en QR codes sur les affiches). Rania a installé
-`apache2`, qui ne démarre pas. On le met derrière nginx, sur
-`127.0.0.1:8080`, comme l'agenda. Le chapitre compare Apache et nginx.
+The repair workshop's old host is closing; their site ran on Apache, with a
+`.htaccess` that rewrites the short addresses of the repair guides
+(`/guide/42`, printed as QR codes on the posters). Rania installed
+`apache2`, which doesn't start. It goes behind nginx, on `127.0.0.1:8080`,
+like the calendar. The chapter compares Apache and nginx.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Comprendre l'échec | `systemctl status apache2`, `journalctl -u apache2` (« Address already in use »), `sudo ss -tlnp` |
-| Changer de port | `Listen 127.0.0.1:8080` dans `/etc/apache2/ports.conf`, `sudo apache2ctl configtest`, `sudo systemctl restart apache2` |
-| Activer le site | `sudo apache2ctl -S`, `sudo a2ensite repair` (le lien de Rania, sans `.conf`, est ignoré), `<VirtualHost 127.0.0.1:8080>` |
-| Le publier | `sudo ln -s /etc/nginx/sites-available/repair /etc/nginx/sites-enabled/`, `sudo nginx -t`, `sudo systemctl reload nginx` |
-| Les adresses courtes | `<Directory /var/www/repair> AllowOverride All`, `/var/log/apache2/repair-error.log`, `sudo a2enmod rewrite`, `sudo systemctl restart apache2` |
+| Understand the failure | `systemctl status apache2`, `journalctl -u apache2` ("Address already in use"), `sudo ss -tlnp` |
+| Change port | `Listen 127.0.0.1:8080` in `/etc/apache2/ports.conf`, `sudo apache2ctl configtest`, `sudo systemctl restart apache2` |
+| Enable the site | `sudo apache2ctl -S`, `sudo a2ensite repair` (Rania's link, without `.conf`, is ignored), `<VirtualHost 127.0.0.1:8080>` |
+| Publish it | `sudo ln -s /etc/nginx/sites-available/repair /etc/nginx/sites-enabled/`, `sudo nginx -t`, `sudo systemctl reload nginx` |
+| The short addresses | `<Directory /var/www/repair> AllowOverride All`, `/var/log/apache2/repair-error.log`, `sudo a2enmod rewrite`, `sudo systemctl restart apache2` |
 
-Objectif vérifié sur l'état : Apache tourne, activé au démarrage, n'écoute
-que sur la boucle locale ; par nginx, `repair.example` sert l'accueil de
-l'atelier et `/guide/42` la fiche 42 ; `letters.example` reste intact.
+Goal checked on the state: Apache runs, enabled at boot, only listens on the
+loopback; through nginx, `repair.example` serves the workshop's home page
+and `/guide/42` guide 42; `letters.example` stays intact.
 
-Pièges prévus : le port 80 déjà pris (AH00072), l'avertissement AH00558 (sans
-conséquence), un `Listen 8080` qui écoute sur toutes les adresses, le site
-par défaut qui répond (VirtualHost resté sur `*:80`, lien sans `.conf`, ou
-nginx qui transmet `Host: 127.0.0.1:8080`), le `.htaccess` ignoré (404,
-`AllowOverride None` de Debian), `RewriteEngine` sans le module (500, « Invalid
-command » dans le journal du site), une catégorie d'`AllowOverride`
-insuffisante (« not allowed here »), une règle qui boucle (AH00124). Autres
-solutions acceptées : les règles dans le VirtualHost (`RewriteRule ^/guide/…`),
-`AllowOverride FileInfo`, `*:8080`, `000-default` aussi déplacé avec
-`proxy_set_header Host $host;` dans nginx, ou désactivé (`a2dissite`).
-Débrief : nginx et Apache côte à côte, un seul programme par port, `-S`,
-`Host` derrière un proxy, `.htaccess` et performances ; liens vers la
-documentation d'Apache (hôtes virtuels, `.htaccess`, `mod_rewrite`).
+Expected traps: port 80 already taken (AH00072), the AH00558 warning
+(harmless), a `Listen 8080` that listens on every address, the default site
+answering (VirtualHost left on `*:80`, a link without `.conf`, or nginx
+passing `Host: 127.0.0.1:8080`), the `.htaccess` ignored (404, Debian's
+`AllowOverride None`), `RewriteEngine` without the module (500, "Invalid
+command" in the site's log), an insufficient `AllowOverride` category ("not
+allowed here"), a looping rule (AH00124). Other accepted solutions: the
+rules in the VirtualHost (`RewriteRule ^/guide/…`), `AllowOverride
+FileInfo`, `*:8080`, `000-default` moved too with `proxy_set_header Host
+$host;` in nginx, or disabled (`a2dissite`). Debrief: nginx and Apache side
+by side, one program per port, `-S`, `Host` behind a proxy, `.htaccess` and
+performance; links to Apache's documentation (virtual hosts, `.htaccess`,
+`mod_rewrite`).
 
-## Histoire 7 : La Fabrique (quatre chapitres)
+## Story 7: La Fabrique (four chapters)
 
-Le fablab du quartier (machine `fabrique`, 192.0.2.15) prête des outils aux
-habitant·es grâce à l'outilthèque, une petite appli web qui tourne dans
-Docker. Yasmine s'en occupe. Docker est simulé dans `src/moteur/docker.ts`
-(images, conteneurs et leur couche, volumes, dossiers montés, ports publiés,
-politiques de redémarrage) ; les applis des images sont décrites par les
-chapitres.
+The neighbourhood fablab (machine `fabrique`, 192.0.2.15) lends tools to
+residents through the tool library, a small web app running in Docker.
+Yasmine looks after it. Docker is simulated in `src/moteur/docker.ts`
+(images, containers and their layer, volumes, bind mounts, published ports,
+restart policies); the images' apps are described by the chapters.
 
-### Chapitre 1 — La mise à jour (fait)
+### Chapter 1 — La mise à jour (done)
 
-L'outilthèque a été lancée il y a deux semaines avec un simple `docker run`,
-sans volume : sa base vit dans la couche du conteneur. La version 1.5 est
-sortie, et il y a 37 prêts en cours à ne pas perdre.
+The tool library was started two weeks ago with a plain `docker run`,
+without a volume: its database lives in the container's layer. Version 1.5
+is out, and there are 37 ongoing loans not to lose.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Voir ce qui tourne | `sudo docker ps -a`, `docker logs`, `curl http://localhost:8080` (et `docker` sans `sudo` : le socket refuse) |
-| Savoir où sont les données | `sudo docker inspect -f '{{json .Mounts}}' outiltheque`, `docker exec outiltheque ls -l /var/lib/outiltheque` |
-| Mettre la base à l'abri | `sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde` |
-| Le nouveau conteneur | `docker stop outiltheque`, `docker run -d --name … -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque --restart unless-stopped registry.example/outiltheque:1.5` |
-| Remettre la base | `docker cp sauvegarde/. conteneur:/var/lib/outiltheque`, `docker restart` (la base migre), `docker logs` |
+| See what runs | `sudo docker ps -a`, `docker logs`, `curl http://localhost:8080` (and `docker` without `sudo`: the socket refuses) |
+| Know where the data is | `sudo docker inspect -f '{{json .Mounts}}' outiltheque`, `docker exec outiltheque ls -l /var/lib/outiltheque` |
+| Put the database in safety | `sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde` |
+| The new container | `docker stop outiltheque`, `docker run -d --name … -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque --restart unless-stopped registry.example/outiltheque:1.5` |
+| Put the database back | `docker cp sauvegarde/. container:/var/lib/outiltheque`, `docker restart` (the database migrates), `docker logs` |
 
-Objectif vérifié sur l'état : un conteneur de la version 1.5 tourne, publie
-le port 8080, garde sa base dans un volume ou un dossier de la machine, y
-retrouve les 37 prêts, et repartira avec la machine (`always` ou
+Goal checked on the state: a version 1.5 container runs, publishes port
+8080, keeps its database in a volume or a directory of the machine, finds
+the 37 loans there, and will come back with the machine (`always` or
 `unless-stopped`).
 
-Pièges prévus : `docker` sans `sudo`, `docker rm` d'un conteneur qui tourne,
-`docker rm -f` avant d'avoir copié la base (perdue pour de bon : le chapitre
-se recommence depuis le menu), le port 8080 encore pris par l'ancien
-conteneur (« port is already allocated »), le nouveau conteneur qui crée une
-base vide, l'oubli de `--restart`. Autres solutions acceptées : un dossier
-de la machine (`-v /srv/outiltheque:/var/lib/outiltheque`), copier la base
-dans le volume avant de lancer, `docker update --restart`, `always`.
-Débrief : `inspect` avant de toucher, volumes, `docker cp`, remplacer sans
-supprimer trop tôt, `--restart`, le groupe docker vaut root ; liens vers
-la documentation de Docker.
+Expected traps: `docker` without `sudo`, `docker rm` of a running
+container, `docker rm -f` before copying the database (lost for good: the
+chapter restarts from the menu), port 8080 still taken by the old container
+("port is already allocated"), the new container creating an empty
+database, forgetting `--restart`. Other accepted solutions: a directory of
+the machine (`-v /srv/outiltheque:/var/lib/outiltheque`), copying the
+database into the volume before starting, `docker update --restart`,
+`always`. Debrief: `inspect` before touching, volumes, `docker cp`,
+replacing without deleting too early, `--restart`, the docker group equals
+root; links to Docker's documentation.
 
-### Chapitre 2 — La composition (fait)
+### Chapter 2 — La composition (done)
 
-Le fablab veut un site de réservation des machines : l'appli
-`reservations` et sa base PostgreSQL, décrites dans un `compose.yaml` copié
-d'un tutoriel (`/srv/reservations`). Compose est simulé dans
-`src/moteur/compose.ts` (YAML réduit, variables de `.env`, réseau du projet
-où chaque service est joignable par son nom, volumes nommés).
+The fablab wants a site to book its machines: the `reservations` app and its
+PostgreSQL database, described in a `compose.yaml` copied from a tutorial
+(`/srv/reservations`). Compose is simulated in `src/moteur/compose.ts`
+(reduced YAML, variables from `.env`, the project's network where each
+service is reachable by its name, named volumes).
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Lancer, regarder | `sudo docker compose up -d`, `docker compose ps`, `docker compose logs appli`, `curl http://localhost:8081` |
-| Joindre la base | `DATABASE_URL=postgres://…@db:5432/…` (le nom du service, pas `localhost`) |
-| Garder les données | `volumes: - donnees:/var/lib/postgresql/data` et `volumes: donnees:` en bas du fichier |
-| Sortir le secret | `${POSTGRES_PASSWORD}` dans `compose.yaml`, la valeur dans `.env`, `chmod 600 .env` ; `docker compose config` |
-| Que ça tienne | `restart: unless-stopped` sur chaque service, puis `docker compose up -d` |
+| Start, look | `sudo docker compose up -d`, `docker compose ps`, `docker compose logs appli`, `curl http://localhost:8081` |
+| Reach the database | `DATABASE_URL=postgres://…@db:5432/…` (the service's name, not `localhost`) |
+| Keep the data | `volumes: - donnees:/var/lib/postgresql/data` and `volumes: donnees:` at the bottom of the file |
+| Take the secret out | `${POSTGRES_PASSWORD}` in `compose.yaml`, the value in `.env`, `chmod 600 .env`; `docker compose config` |
+| Make it last | `restart: unless-stopped` on each service, then `docker compose up -d` |
 
-Objectif vérifié sur l'état : les conteneurs correspondent au fichier et à
-`.env` actuels, l'appli est connectée à la base, la base garde ses données
-dans un volume, le mot de passe n'est plus dans `compose.yaml` mais dans un
-`.env` lisible par root seulement, et les deux services ont une politique de
-redémarrage.
+Goal checked on the state: the containers match the current file and `.env`,
+the app is connected to the database, the database keeps its data in a
+volume, the password is no longer in `compose.yaml` but in a `.env` readable
+by root only, and both services have a restart policy.
 
-Pièges prévus : `localhost` dans un conteneur (`ECONNREFUSED 127.0.0.1:5432`),
-`version:` obsolète (avertissement), variable absente de `.env` (PostgreSQL
-refuse de s'initialiser sans mot de passe), mot de passe changé après la
-création de la base (`password authentication failed` : `POSTGRES_PASSWORD`
-ne sert qu'à l'initialisation ; `down -v` efface les volumes), `.env`
-lisible par tous, l'oubli de `restart`. Débrief : nom des services, volume
-nommé, secrets dans `.env`, `config`, `down -v`, `restart` ; liens vers la
-documentation de Compose et l'image PostgreSQL.
+Expected traps: `localhost` in a container (`ECONNREFUSED 127.0.0.1:5432`),
+the obsolete `version:` (a warning), a variable missing from `.env`
+(PostgreSQL refuses to initialise without a password), a password changed
+after the database was created (`password authentication failed`:
+`POSTGRES_PASSWORD` is only used at initialisation; `down -v` erases the
+volumes), a `.env` readable by everyone, forgetting `restart`. Debrief:
+service names, named volume, secrets in `.env`, `config`, `down -v`,
+`restart`; links to Compose's documentation and the PostgreSQL image.
 
-### Chapitre 3 — Le trou dans le pare-feu (fait)
+### Chapter 3 — Le trou dans le pare-feu (done)
 
-Rania a testé le serveur depuis chez elle : PostgreSQL répond sur le port
-5432, alors qu'ufw n'autorise que SSH, 8080 et 8081. Yasmine avait ajouté
-`ports: - "5432:5432"` à la base pour pgAdmin. Docker publie ce port avec
-ses propres règles iptables, appliquées avant celles d'ufw. Et le disque est
-plein à 92 %.
+Rania tested the server from home: PostgreSQL answers on port 5432, whereas
+ufw only allows SSH, 8080 and 8081. Yasmine had added
+`ports: - "5432:5432"` to the database for pgAdmin. Docker publishes this
+port with its own iptables rules, applied before ufw's. And the disk is 92 %
+full.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Tester comme le monde | depuis le poste : `nc -zv fabrique 5432` (puis 22, 3306…) |
-| Comprendre | `sudo ss -tlnp` (docker-proxy sur 0.0.0.0:5432), `sudo ufw status` (pas de 5432) ; `ufw deny 5432` ne change rien |
-| Fermer | dans `compose.yaml` : retirer `ports:` de la base, ou `"127.0.0.1:5432:5432"` ; `sudo docker compose up -d` ; retester depuis le poste |
-| Faire de la place | `df -h /`, `sudo docker system df`, `docker image prune -a`, `docker container prune` |
+| Test like the world | from the workstation: `nc -zv fabrique 5432` (then 22, 3306…) |
+| Understand | `sudo ss -tlnp` (docker-proxy on 0.0.0.0:5432), `sudo ufw status` (no 5432); `ufw deny 5432` changes nothing |
+| Close | in `compose.yaml`: remove the database's `ports:`, or `"127.0.0.1:5432:5432"`; `sudo docker compose up -d`; test again from the workstation |
+| Make room | `df -h /`, `sudo docker system df`, `docker image prune -a`, `docker container prune` |
 
-Objectif vérifié sur l'état : le port 5432 ne répond plus depuis
-l'extérieur, les deux applis répondent toujours, le disque est sous 75 %, et
-les volumes utiles (dont `wiki-ancien`, qu'aucun conteneur n'utilise) sont
-toujours là.
+Goal checked on the state: port 5432 no longer answers from outside, both
+apps still answer, the disk is under 75 %, and the useful volumes (including
+`wiki-ancien`, which no container uses) are still there.
 
-Pièges prévus : croire `ufw status`, ajouter une règle ufw (sans effet),
-`docker image prune` sans `-a` (trop peu de place gagnée),
-`docker volume prune -a` qui efface le wiki (le chapitre se recommence
-depuis le menu), une image utilisée par un conteneur arrêté (protégée).
-Autres solutions acceptées : plus de port du tout pour la base,
-`docker system prune -a -f`, `docker rmi`. Débrief : publier le moins
-possible, `127.0.0.1` et tunnel SSH, tester de l'extérieur, `system df` et
-`prune`, le danger de `volume prune -a` ; liens vers la documentation de
-Docker (ufw, ports publiés, ménage).
+Expected traps: believing `ufw status`, adding a ufw rule (no effect),
+`docker image prune` without `-a` (too little space gained),
+`docker volume prune -a` erasing the wiki (the chapter restarts from the
+menu), an image used by a stopped container (protected). Other accepted
+solutions: no port at all for the database, `docker system prune -a -f`,
+`docker rmi`. Debrief: publish as little as possible, `127.0.0.1` and an SSH
+tunnel, test from outside, `system df` and `prune`, the danger of
+`volume prune -a`; links to Docker's documentation (ufw, published ports,
+pruning).
 
-### Chapitre 4 — Les pleins pouvoirs (fait)
+### Chapter 4 — Les pleins pouvoirs (done)
 
-La galerie photo du fablab (`/srv/galerie`, port 8082) reçoit les photos
-envoyées par les visiteur·ses. Son image ne déclare pas d'utilisateur et
-`compose.yaml` n'a pas de `user:` : elle tourne en root. Les fichiers
-qu'elle écrit dans le dossier monté `photos/` appartiennent à root sur la
-machine, et Yasmine ne peut plus gérer les photos sans `sudo`. Rania
-rappelle qu'une faille dans la galerie donnerait root sur tout ce qui est
-monté.
+The fablab's photo gallery (`/srv/galerie`, port 8082) receives photos sent
+by visitors. Its image declares no user and `compose.yaml` has no `user:`:
+it runs as root. The files it writes in the mounted `photos/` directory
+belong to root on the machine, and Yasmine can no longer manage the photos
+without `sudo`. Rania reminds that a flaw in the gallery would give root on
+everything mounted.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Qui suis-je, dedans et dehors | `sudo docker exec galerie-galerie-1 id` (uid=0), `ps aux` sur la machine (le processus de la galerie au nom de root) |
-| Changer d'utilisateur | `user: "1001:1001"` dans `compose.yaml` (ou `docker run --user`), `sudo docker compose up -d` |
-| Comprendre l'échec | `docker compose ps` (Restarting), `docker compose logs` (EACCES), `ls -lan photos` (uid et gid en numéros, fichiers cachés) |
-| Donner le dossier | `sudo chown -R 1001:1001 /srv/galerie/photos` ; Docker relance la galerie tout seul |
+| Who am I, inside and outside | `sudo docker exec galerie-galerie-1 id` (uid=0), `ps aux` on the machine (the gallery's process as root) |
+| Change user | `user: "1001:1001"` in `compose.yaml` (or `docker run --user`), `sudo docker compose up -d` |
+| Understand the failure | `docker compose ps` (Restarting), `docker compose logs` (EACCES), `ls -lan photos` (numeric uid and gid, hidden files) |
+| Give the directory | `sudo chown -R 1001:1001 /srv/galerie/photos`; Docker restarts the gallery by itself |
 
-Objectif vérifié sur l'état : un conteneur de la galerie tourne sous un uid
-autre que 0 et répond, les 14 photos sont là, Yasmine (uid 1001) peut
-écrire dans le dossier, et ni celui-ci ni `.miniatures` ne sont ouverts en
-écriture à tous.
+Goal checked on the state: a gallery container runs under a uid other than 0
+and answers, the 14 photos are there, Yasmine (uid 1001) can write in the
+directory, and neither it nor `.miniatures` is world-writable.
 
-Pièges prévus : un nom inconnu de l'image (`user: galerie` : « unable to
-find user galerie: no matching entries in passwd file »), `chown` sans `-R`
-(le dossier `.miniatures` reste à root), `user: node` (uid 1000 : sur la
-machine, ses fichiers appartiennent à « vous », et Yasmine ne peut toujours
-pas écrire), `chmod 777`, une photo effacée (le chapitre se recommence
-depuis le menu). Autres solutions acceptées : `docker run -u`, un autre uid
-avec le groupe de Yasmine et `chmod -R g+w`. Débrief : `id` et `ps aux`,
-l'uid partagé avec la machine (sans userns-remap), `USER`/`--user`/`user:`,
-des numéros plutôt que des noms, `chown -R` plutôt que `chmod 777`,
-`--cap-drop ALL`, `no-new-privileges`, `--read-only`, ni `--privileged` ni
-socket Docker monté, mode rootless ; liens vers la documentation de Docker.
+Expected traps: a name unknown to the image (`user: galerie`: "unable to
+find user galerie: no matching entries in passwd file"), `chown` without
+`-R` (the `.miniatures` directory stays root's), `user: node` (uid 1000: on
+the machine, its files belong to the player, and Yasmine still can't write),
+`chmod 777`, a deleted photo (the chapter restarts from the menu). Other
+accepted solutions: `docker run -u`, another uid with Yasmine's group and
+`chmod -R g+w`. Debrief: `id` and `ps aux`, the uid shared with the machine
+(without userns-remap), `USER`/`--user`/`user:`, numbers rather than names,
+`chown -R` rather than `chmod 777`, `--cap-drop ALL`, `no-new-privileges`,
+`--read-only`, neither `--privileged` nor a mounted Docker socket, rootless
+mode; links to Docker's documentation.
 
-## Histoire 8 : La Gazette (cinq chapitres)
+## Story 8: La Gazette (five chapters)
 
-Le journal en ligne du quartier (machine `gazette`, 192.0.2.16) apprend à
-déployer : Samia (rédactrice en chef) et Théo (stagiaire). Phase 6 de la
-feuille de route.
+The neighbourhood's online newspaper (machine `gazette`, 192.0.2.16) learns
+to deploy: Samia (editor-in-chief) and Théo (intern). Phase 6 of the
+roadmap.
 
-### Chapitre 1 — Le dépôt nu (fait)
+### Chapter 1 — Le dépôt nu (done)
 
-Le site est servi par nginx depuis `/var/www/gazette`, où chacun·e copiait
-ses fichiers à la main. Le code est suivi par git dans `~/gazette`.
+The site is served by nginx from `/var/www/gazette`, where everyone copied
+their files by hand. The code is tracked by git in `~/gazette`.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Voir ce qui a dérivé | `diff -r ~/gazette /var/www/gazette` (la correction de Théo n'existe que sur le serveur) |
-| Le dépôt du serveur | `sudo git init --bare /srv/git/gazette.git`, `sudo chown -R vous: …` |
-| Le crochet | `hooks/post-receive` : `git --work-tree=/var/www/gazette checkout -f main`, `chmod +x` |
-| Publier | `git remote add prod /srv/git/gazette.git`, `git commit -am`, `git push prod main` |
+| See what has drifted | `diff -r ~/gazette /var/www/gazette` (Théo's fix only exists on the server) |
+| The server's repository | `sudo git init --bare /srv/git/gazette.git`, `sudo chown -R you: …` |
+| The hook | `hooks/post-receive`: `git --work-tree=/var/www/gazette checkout -f main`, `chmod +x` |
+| Publish | `git remote add prod /srv/git/gazette.git`, `git commit -am`, `git push prod main` |
 
-Objectif vérifié sur l'état : le site est exactement le dernier commit du
-dépôt du serveur, extrait par son crochet, avec l'article, la correction de
-Théo, puis la date de l'agenda corrigée (demandée une fois le site en ligne).
-Pièges prévus : dépôt créé avec sudo (« droits insuffisants »), pas de
-crochet, crochet non exécutable (l'astuce de git), `checkout` sans `-f`
-(fichiers non suivis), correction de Théo écrasée par le déploiement,
-correction faite directement sur le serveur. Débrief : une seule source,
-dépôt nu, crochets, `--shared=group` ; liens vers le livre de git et
-githooks.
+Goal checked on the state: the site is exactly the last commit of the
+server's repository, checked out by its hook, with the article, Théo's fix,
+then the calendar's corrected date (asked for once the site is online).
+Expected traps: a repository created with sudo ("insufficient permission"),
+no hook, a non-executable hook (git's hint), `checkout` without `-f`
+(untracked files), Théo's fix overwritten by the deployment, a fix made
+directly on the server. Debrief: a single source, bare repository, hooks,
+`--shared=group`; links to the git book and githooks.
 
-### Chapitre 2 — Le retour arrière (fait)
+### Chapter 2 — Le retour arrière (done)
 
-Chaque push est publié dans `/srv/gazette/releases/<date>`, et le lien
-`/srv/gazette/current` (servi par nginx) désigne la version en ligne. La
-mise en page de Théo, sans `index.html`, donne un 403.
+Each push is published in `/srv/gazette/releases/<date>`, and the link
+`/srv/gazette/current` (served by nginx) points to the online version.
+Théo's layout, without `index.html`, gives a 403.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Comprendre | `curl -I`, `ls -l /srv/gazette`, `readlink`, `ls releases/*` |
-| Revenir en arrière | `ln -sfn releases/20270514101502 current` |
-| Le garde-fou | dans le crochet, `cd` dans la nouvelle version puis `sh tests.sh` AVANT `ln -sfn` (avec `set -e`) |
-| Publier la réparation | `git pull prod main`, `mv accueil.html index.html`, `git add .`, `git commit`, `git push` |
+| Understand | `curl -I`, `ls -l /srv/gazette`, `readlink`, `ls releases/*` |
+| Roll back | `ln -sfn releases/20270514101502 current` |
+| The safeguard | in the hook, `cd` into the new version then `sh tests.sh` BEFORE `ln -sfn` (with `set -e`) |
+| Publish the fix | `git pull prod main`, `mv accueil.html index.html`, `git add .`, `git commit`, `git push` |
 
-Objectif vérifié sur l'état : la nouvelle mise en page est en ligne,
-publiée par le crochet après ses tests, et un nouveau push cassé de Théo
-(simulé dès que le crochet lance les tests) n'a pas été mis en ligne.
-Pièges prévus : `ln -sf` sans `-n` (le lien est créé dans la version
-cassée), tests après la bascule, tests lancés depuis le dépôt (tout est
-refusé), `push` refusé tant qu'on n'a pas récupéré les commits de Théo.
+Goal checked on the state: the new layout is online, published by the hook
+after its tests, and a new broken push from Théo (simulated as soon as the
+hook runs the tests) wasn't put online. Expected traps: `ln -sf` without
+`-n` (the link is created inside the broken version), tests after the
+switch, tests run from the repository (everything is refused), `push`
+refused until you have fetched Théo's commits.
 
-### Chapitre 3 — Bleu et vert (fait)
+### Chapter 3 — Bleu et vert (done)
 
-Le Kiosque (abonnements à la lettre, Node.js) tourne sur l'emplacement bleu
-(port 3001) derrière nginx ; l'emplacement vert (3002) est libre.
+Le Kiosque (newsletter subscriptions, Node.js) runs on the blue slot (port
+3001) behind nginx; the green slot (3002) is free.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| La nouvelle version à côté | `ln -sfn /srv/kiosk/versions/1.5.0 /srv/kiosk/vert`, `sudo systemctl start kiosk-vert` |
-| Vérifier sa santé | `curl -s localhost:3002/health` (503), `cat …/NOTES.txt`, la variable dans `/etc/kiosk/kiosk.env`, `systemctl restart` |
-| Basculer | `proxy_pass http://127.0.0.1:3002/;`, `sudo nginx -t`, `sudo systemctl reload nginx` |
+| The new version beside it | `ln -sfn /srv/kiosk/versions/1.5.0 /srv/kiosk/vert`, `sudo systemctl start kiosk-vert` |
+| Check its health | `curl -s localhost:3002/health` (503), `cat …/NOTES.txt`, the variable in `/etc/kiosk/kiosk.env`, `systemctl restart` |
+| Switch | `proxy_pass http://127.0.0.1:3002/;`, `sudo nginx -t`, `sudo systemctl reload nginx` |
 
-Objectif vérifié sur l'état : nginx (configuration chargée) envoie
-`/kiosk/` vers une instance 1.5.0 en bonne santé, et l'autre instance
-tourne toujours. Pièges prévus : changer le lien sans redémarrer, basculer
-avant `/health`, oublier le `reload`, arrêter bleu tout de suite.
+Goal checked on the state: nginx (loaded configuration) sends `/kiosk/` to a
+healthy 1.5.0 instance, and the other instance still runs. Expected traps:
+changing the link without restarting, switching before `/health`,
+forgetting the `reload`, stopping blue at once.
 
-### Chapitre 4 — Le canari (fait)
+### Chapter 4 — Le canari (done)
 
-La 1.6.0 passe `/health` mais plante sur `/archives`. Vert sert la 1.5.0.
+1.6.0 passes `/health` but crashes on `/archives`. Green serves 1.5.0.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Le canari | `upstream kiosk { server 127.0.0.1:3002 weight=9; server 127.0.0.1:3001 weight=1; }`, `proxy_pass http://kiosk/;`, reload |
-| Regarder | `awk '{print $9}' access.log \| sort \| uniq -c`, `grep " 500 "`, `curl localhost:3001/archives` |
-| Arrêter, recommencer | `down`, reload ; la 1.6.1 publiée ; nouveau canari ; puis tout vers bleu |
+| The canary | `upstream kiosk { server 127.0.0.1:3002 weight=9; server 127.0.0.1:3001 weight=1; }`, `proxy_pass http://kiosk/;`, reload |
+| Watch | `awk '{print $9}' access.log \| sort \| uniq -c`, `grep " 500 "`, `curl localhost:3001/archives` |
+| Stop, start again | `down`, reload; 1.6.1 published; a new canary; then everything to blue |
 
-Objectif vérifié sur l'état : tout `/kiosk/` va à la 1.6.1 en bonne
-santé, après un canari de la 1.6.1 sans erreur, vert toujours allumé.
-Pièges prévus : tout basculer d'un coup sur la 1.6.0 (toutes les visites
-d'archives en 500), un « canari » à 50 %.
+Goal checked on the state: all of `/kiosk/` goes to a healthy 1.6.1, after
+an error-free 1.6.1 canary, green still on. Expected traps: switching
+everything at once to 1.6.0 (every archive visit a 500), a 50 % "canary".
 
-### Chapitre 5 — La migration (fait)
+### Chapter 5 — La migration (done)
 
-Théo a mis la 2.0.0 sur vert et basculé nginx ; au démarrage, elle a migré
-la base (schéma 3 → 4). Elle ne marche pas (variable renommée), et bleu
-(1.6.1) ne sait plus lire la base.
+Théo put 2.0.0 on green and switched nginx; at start, it migrated the
+database (schema 3 → 4). It doesn't work (a renamed variable), and blue
+(1.6.1) can no longer read the database.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Comprendre | `curl localhost:3002/health`, `curl localhost:3001/health`, `sudo journalctl -u kiosk-vert` (la migration), les notes de version |
-| Réparer en avant | `KIOSK_SMTP_URL=…` dans `kiosk.env`, `systemctl restart kiosk-vert` |
-| Refaire le filet | `ln -sfn …/2.0.0 /srv/kiosk/bleu`, `systemctl restart kiosk-bleu` |
+| Understand | `curl localhost:3002/health`, `curl localhost:3001/health`, `sudo journalctl -u kiosk-vert` (the migration), the release notes |
+| Fix forward | `KIOSK_SMTP_URL=…` in `kiosk.env`, `systemctl restart kiosk-vert` |
+| Rebuild the safety net | `ln -sfn …/2.0.0 /srv/kiosk/bleu`, `systemctl restart kiosk-bleu` |
 
-Objectif vérifié sur l'état : nginx sert une instance 2.x en bonne santé, et
-l'autre instance tourne aussi en 2.x en bonne santé. Piège prévu : revenir
-sur bleu (1.6.1), qui répond 500. Débrief : sauvegarder avant une
-migration (`pg_dump`), étendre puis contracter, réparer en avant.
+Goal checked on the state: nginx serves a healthy 2.x instance, and the
+other instance also runs a healthy 2.x. Expected trap: going back to blue
+(1.6.1), which answers 500. Debrief: back up before a migration
+(`pg_dump`), expand then contract, fix forward.
 
-## Histoire 9 : La Ludothèque (trois chapitres)
+## Story 9: La Ludothèque (three chapters)
 
-Le serveur de la ludothèque du quartier (machine `ludotheque`, 192.0.2.17) :
-Bérénice (présidente) et Malo (bénévole). Phase 7 de la feuille de route.
+The neighbourhood toy library's server (machine `ludotheque`, 192.0.2.17):
+Bérénice (president) and Malo (volunteer). Phase 7 of the roadmap.
 
-### Chapitre 1 — La rançon (fait)
+### Chapter 1 — La rançon (done)
 
-Lundi matin, le partage (`/srv/partage`) est chiffré (`.locked`) ; une
-demande de rançon traîne dans chaque dossier. Le mot de passe du compte
-`accueil` a été deviné ; un programme tourne encore sous ce compte, et sa
-crontab le relance. La copie nocturne du NAS (`rsync --delete`) est chiffrée
-aussi.
+Monday morning, the share (`/srv/partage`) is encrypted (`.locked`); a
+ransom note lies in every directory. The `accueil` account's password was
+guessed; a program still runs under that account, and its crontab restarts
+it. The NAS's nightly copy (`rsync --delete`) is encrypted too.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Mesurer | `find /srv/partage -name "*.locked" \| wc -l`, `cat LISEZ-MOI…` (on ne paie pas) |
-| Arrêter l'attaque | `ps aux`, `sudo kill 3141`, `sudo crontab -u accueil -l/-r`, `sudo usermod -L accueil`, `journalctl -u ssh` |
-| Trouver une sauvegarde | `ls /mnt/nas/partage` (chiffrée), `lsblk -f` (le disque `SAUVEGARDE`) |
-| Restaurer | `sudo mount -o ro /dev/sdb1 /mnt/cle`, `restic snapshots`, `restic restore latest --target /`, `find … -delete`, `sudo umount /mnt/cle` |
+| Measure | `find /srv/partage -name "*.locked" \| wc -l`, `cat LISEZ-MOI…` (we don't pay) |
+| Stop the attack | `ps aux`, `sudo kill 3141`, `sudo crontab -u accueil -l/-r`, `sudo usermod -L accueil`, `journalctl -u ssh` |
+| Find a backup | `ls /mnt/nas/partage` (encrypted), `lsblk -f` (the `SAUVEGARDE` disk) |
+| Restore | `sudo mount -o ro /dev/sdb1 /mnt/cle`, `restic snapshots`, `restic restore latest --target /`, `find … -delete`, `sudo umount /mnt/cle` |
 
-Objectif vérifié sur l'état : le chiffreur est arrêté et ne revient plus,
-le compte est verrouillé, les six fichiers sont restaurés, plus aucun
-`.locked` ni demande de rançon, et le disque est démonté. Pièges prévus :
-restaurer avant d'arrêter le chiffreur (les fichiers sont rechiffrés),
-oublier la crontab (il revient), brancher la sauvegarde pendant l'attaque,
-démonter depuis le point de montage (« target is busy »).
+Goal checked on the state: the encryptor is stopped and doesn't come back,
+the account is locked, the six files are restored, no `.locked` nor ransom
+note left, and the disk is unmounted. Expected traps: restoring before
+stopping the encryptor (the files are encrypted again), forgetting the
+crontab (it comes back), plugging in the backup during the attack,
+unmounting from inside the mount point ("target is busy").
 
-### Chapitre 2 — Les instantanés (fait)
+### Chapter 2 — Les instantanés (done)
 
-Régler rsnapshot (configuration de Debian) pour `/srv/partage/` vers le
-second disque, 7 quotidiens et 4 hebdomadaires, et le lancer avec cron. Le
-jeu fait passer deux semaines ; le dernier soir, Bérénice écrase
-l'inventaire par une vieille copie.
+Setting up rsnapshot (Debian's configuration) for `/srv/partage/` to the
+second disk, 7 dailies and 4 weeklies, and running it with cron. The game
+lets two weeks pass; on the last evening, Bérénice overwrites the inventory
+with an old copy.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Régler | `/etc/rsnapshot.conf` (tabulations), `rsnapshot configtest`, `rsnapshot -t daily` |
-| Planifier | `sudo crontab -e` : `0 3 * * 1 … weekly`, `30 3 * * * … daily` |
-| Constater | `ls /mnt/instantanes`, `rsnapshot du`, `ls -i` (même inode), `diff` |
-| Restaurer | `cp …/daily.1/localhost/srv/partage/inventaire.csv /srv/partage/` |
+| Configure | `/etc/rsnapshot.conf` (tabs), `rsnapshot configtest`, `rsnapshot -t daily` |
+| Schedule | `sudo crontab -e`: `0 3 * * 1 … weekly`, `30 3 * * * … daily` |
+| Observe | `ls /mnt/instantanes`, `rsnapshot du`, `ls -i` (same inode), `diff` |
+| Restore | `cp …/daily.1/localhost/srv/partage/inventaire.csv /srv/partage/` |
 
-Objectif vérifié sur l'état : 7 instantanés quotidiens et un hebdomadaire
-sur `/mnt/instantanes`, et l'inventaire revenu à sa version de
-l'avant-veille. Pièges prévus : des espaces au lieu de tabulations, la
-crontab d'un compte ordinaire (le courrier de cron le dit), le dernier
-instantané (pris après l'erreur).
+Goal checked on the state: 7 daily snapshots and a weekly one on
+`/mnt/instantanes`, and the inventory back to its version of two days
+before. Expected traps: spaces instead of tabs, an ordinary account's
+crontab (cron's mail says so), the latest snapshot (taken after the
+mistake).
 
-### Chapitre 3 — La base (fait)
+### Chapter 3 — La base (done)
 
-Les prêts vivent dans une base PostgreSQL ; Malo copie ses fichiers avec
-rsnapshot pendant qu'elle tourne.
+The loans live in a PostgreSQL database; Malo copies its files with
+rsnapshot while it runs.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Se connecter | `psql -l` (rôle inconnu), `sudo -u postgres psql -d ludo -c "\dt"` |
-| Sauvegarder | `sudo -u postgres pg_dump -Fc -f /var/backups/postgresql/ludo.dump ludo` |
-| Tester | `createdb ludo_test`, `pg_restore -d ludo_test …`, `SELECT count(*)` |
-| Réparer | la table `prets` vidée : `pg_restore -d ludo --data-only -t prets …` |
-| Planifier | `sudo crontab -u postgres -e` |
+| Connect | `psql -l` (unknown role), `sudo -u postgres psql -d ludo -c "\dt"` |
+| Back up | `sudo -u postgres pg_dump -Fc -f /var/backups/postgresql/ludo.dump ludo` |
+| Test | `createdb ludo_test`, `pg_restore -d ludo_test …`, `SELECT count(*)` |
+| Repair | the `prets` table emptied: `pg_restore -d ludo --data-only -t prets …` |
+| Schedule | `sudo crontab -u postgres -e` |
 
-Objectif vérifié sur l'état : une tâche cron fait le `pg_dump` de `ludo`
-sous `postgres`, une archive existe, une base de test a les mêmes nombres
-de lignes, et les prêts sont revenus. Pièges prévus : la redirection `>`
-avec `sudo -u`, restaurer par-dessus la base en service, réinjecter dans
-une table pleine (doublons), `pg_dump` dans la crontab de root.
+Goal checked on the state: a cron job runs `ludo`'s `pg_dump` as
+`postgres`, an archive exists, a test database has the same row counts, and
+the loans are back. Expected traps: the `>` redirection with `sudo -u`,
+restoring over the live database, reinjecting into a full table
+(duplicates), `pg_dump` in root's crontab.
 
-## Histoire 10 : L'Astreinte (sept chapitres)
+## Story 10: L'Astreinte (seven chapters)
 
-Des nuits d'astreinte pour Radio Quartier (machine `radio`, 192.0.2.18),
-avec Zoé, bénévole technique. Les pannes classiques, une par nuit, puis la
-supervision qui prévient avant que ça casse. Phase 7 de la feuille de route.
+On-call nights for Radio Quartier (machine `radio`, 192.0.2.18), with Zoé, a
+technical volunteer. The classic failures, one per night, then monitoring
+that warns before things break. Phase 7 of the roadmap.
 
-### Chapitre 1 — Le disque plein (fait)
+### Chapter 1 — Le disque plein (done)
 
-2 h 47 : l'enregistrement de nuit échoue, « No space left on device ». Le
-relais du flux (`radio-stream`) écrit son journal en mode debug depuis trois
-jours (16 Go).
+2:47 am: the night recording fails, "No space left on device". The stream
+relay (`radio-stream`) has been writing its log in debug mode for three days
+(16 GB).
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Trouver | `df -h`, `sudo du -sh /var/log/*`, `tail` (des lignes DEBUG) |
-| Le piège | `rm` d'un fichier encore ouvert : `df` reste plein, `sudo lsof +L1` montre `(deleted)` |
-| Vider | `sudo truncate -s 0 /var/log/radio/stream.log` (ou redémarrer le relais) |
-| Corriger | `loglevel = info` dans `/etc/radio/stream.conf`, `systemctl restart radio-stream` |
-| Éviter | `/etc/logrotate.d/radio` (`rotate`, `daily`, `copytruncate` ou `postrotate … systemctl reload`), `logrotate -d` |
+| Find | `df -h`, `sudo du -sh /var/log/*`, `tail` (DEBUG lines) |
+| The trap | `rm` of a file still open: `df` stays full, `sudo lsof +L1` shows `(deleted)` |
+| Empty | `sudo truncate -s 0 /var/log/radio/stream.log` (or restart the relay) |
+| Fix | `loglevel = info` in `/etc/radio/stream.conf`, `systemctl restart radio-stream` |
+| Prevent | `/etc/logrotate.d/radio` (`rotate`, `daily`, `copytruncate` or `postrotate … systemctl reload`), `logrotate -d` |
 
-Objectif vérifié sur l'état : le disque est sous 80 %, aucun fichier effacé
-n'est encore tenu ouvert, le relais tourne sans debug, et une configuration
-logrotate valable couvre son journal et sait le faire rouvrir. Pièges
-prévus : `rm` d'un fichier ouvert, une rotation qui renomme sans faire
-rouvrir (le relais écrit dans `stream.log.1`), une directive mal écrite.
+Goal checked on the state: the disk is under 80 %, no deleted file is still
+held open, the relay runs without debug, and a valid logrotate configuration
+covers its log and knows how to have it reopened. Expected traps: `rm` of an
+open file, a rotation that renames without having the file reopened (the
+relay writes into `stream.log.1`), a misspelt directive.
 
-### Chapitre 2 — La mémoire (fait)
+### Chapter 2 — La mémoire (done)
 
-4 h 31 : le direct ne diffuse plus que du silence. La playlist de la nuit
-(`radio-playlist`, un programme Node) a été tuée par l'OOM killer : elle
-garde en mémoire chaque morceau décodé (une fuite). Et des processus
-zombies (`<defunct>`) résistent à `kill -9`.
+4:31 am: the live stream only broadcasts silence. The night playlist
+(`radio-playlist`, a Node program) was killed by the OOM killer: it keeps
+every decoded track in memory (a leak). And zombie processes (`<defunct>`)
+resist `kill -9`.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Comprendre | `systemctl status` (`Result: oom-kill`), `sudo dmesg -T` ou `journalctl -k` (`Out of memory: Killed process`), `free -h` |
-| Voir la fuite | relancer, puis `top -o %MEM` d'une commande à l'autre ; le noyau frappe à nouveau |
-| Contenir | `sudo systemctl edit radio-playlist` : `[Service]`, `MemoryMax=600M`, `Restart=on-failure` (ou `systemctl set-property … MemoryMax=`, une surcharge écrite à la main et `daemon-reload`) |
-| Les zombies | `ps -ef` (le parent, PPID 2305), `kill` n'y peut rien, `sudo systemctl restart radio-podcast` |
+| Understand | `systemctl status` (`Result: oom-kill`), `sudo dmesg -T` or `journalctl -k` (`Out of memory: Killed process`), `free -h` |
+| See the leak | restart, then `top -o %MEM` from one command to the next; the kernel strikes again |
+| Contain | `sudo systemctl edit radio-playlist`: `[Service]`, `MemoryMax=600M`, `Restart=on-failure` (or `systemctl set-property … MemoryMax=`, a hand-written override and `daemon-reload`) |
+| The zombies | `ps -ef` (the parent, PPID 2305), `kill` can't do anything, `sudo systemctl restart radio-podcast` |
 
-Objectif vérifié sur l'état : la playlist tourne avec une limite de mémoire
-entre 256 Mo et 1 Go et une relance automatique, plus aucun zombie, le
-relais actif. Pièges prévus : `kill -9` sur un zombie, relancer sans limite
-(l'OOM killer revient), une limite sans `Restart=` (la playlist reste
-arrêtée), une limite trop basse (tuée au démarrage) ou trop haute, une
-surcharge écrite à la main sans `daemon-reload`.
+Goal checked on the state: the playlist runs with a memory limit between
+256 MB and 1 GB and an automatic restart, no zombies left, the relay active.
+Expected traps: `kill -9` on a zombie, restarting without a limit (the OOM
+killer comes back), a limit without `Restart=` (the playlist stays stopped),
+too low a limit (killed at start) or too high, a hand-written override
+without `daemon-reload`.
 
-### Chapitre 3 — Les inodes (fait)
+### Chapter 3 — Les inodes (done)
 
-3 h 20 : l'enregistrement de nuit échoue de nouveau, « No space left on
-device », mais `df -h` dit que le volume des données (`/srv/radio`, 1 Gio)
-est presque vide. Le relais y écrit un petit fichier par écoute depuis
-mars : les 65 536 inodes sont pris.
+3:20 am: the night recording fails again, "No space left on device", but
+`df -h` says the data volume (`/srv/radio`, 1 GiB) is almost empty. The
+relay has been writing a small file per listen there since March: the 65,536
+inodes are used up.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Comprendre | `df -h` (22 %), `sudo touch` (« Aucun espace disponible »), `df -i` (100 %) |
-| Trouver | `sudo du --inodes -d 1 /srv/radio`, `ls \| wc -l` |
-| Le piège | `rm *` : « Liste d'arguments trop longue » (ARG_MAX) |
-| Faire le ménage | `find /srv/radio/stats -type f -mtime +30` (voir), puis `-delete` |
-| Éviter | une tâche cron (root ou radio) : `find … -mtime +30 -delete` ; le jeu fait passer une journée et une nuit |
+| Understand | `df -h` (22 %), `sudo touch` ("No space left on device"), `df -i` (100 %) |
+| Find | `sudo du --inodes -d 1 /srv/radio`, `ls \| wc -l` |
+| The trap | `rm *`: "Argument list too long" (ARG_MAX) |
+| Clean up | `find /srv/radio/stats -type f -mtime +30` (look), then `-delete` |
+| Prevent | a cron job (root or radio): `find … -mtime +30 -delete`; the game lets a day and a night pass |
 
-Objectif vérifié sur l'état, après la nuit simulée : aucune statistique de
-moins de 31 jours n'a disparu, la plus ancienne a au plus 60 jours, moins
-de 80 % des inodes sont occupés. Pièges prévus : `rm *`, la crontab de
-`vous` (pas le droit d'effacer les fichiers de `radio` : courrier de cron),
-une tâche qui efface tout (le rapport du mois est perdu), un horaire qui ne
-tombe pas la nuit.
+Goal checked on the state, after the simulated night: no statistics file
+younger than 31 days has disappeared, the oldest is at most 60 days old,
+less than 80 % of the inodes are used. Expected traps: `rm *`, the player's
+crontab (not allowed to delete `radio`'s files: cron's mail), a job that
+deletes everything (the month's report is lost), a schedule that doesn't
+fall in the night.
 
-### Chapitre 4 — L'horloge (fait)
+### Chapter 4 — L'horloge (done)
 
-Lundi, 9 h 12 : la matinale (6 h – 9 h) ne s'est enregistrée qu'à partir
-de 8 h 09. Le serveur, migré ce week-end sur une image standard, vit à
-l'heure UTC (cron lance l'enregistrement à 6 h UTC, 8 h à Paris) et son
-horloge retarde de neuf minutes : timesyncd est arrêté, et sa configuration
-vise le serveur NTP de l'ancien hébergeur.
+Monday, 9:12 am: the morning show (6 am – 9 am) only recorded from 8:09. The
+server, migrated this weekend to a standard image, lives in UTC (cron starts
+the recording at 6 am UTC, 8 am in Paris) and its clock is nine minutes
+slow: timesyncd is stopped, and its configuration points to the old host's
+NTP server.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Comprendre | `date` (UTC), `timedatectl` (fuseau, `synchronized: no`, `NTP service: inactive`), `sudo crontab -u radio -l`, le journal de l'enregistrement |
-| Le fuseau | `timedatectl list-timezones`, `sudo timedatectl set-timezone Europe/Paris` |
-| NTP | `sudo timedatectl set-ntp true` ; `journalctl -u systemd-timesyncd` (pas de réponse) ; `NTP=ntp.hosting.example` dans `/etc/systemd/timesyncd.conf`, `systemctl restart systemd-timesyncd`, `timedatectl timesync-status` |
-| cron | `sudo systemctl restart cron` (il lit le fuseau au démarrage) |
+| Understand | `date` (UTC), `timedatectl` (time zone, `synchronized: no`, `NTP service: inactive`), `sudo crontab -u radio -l`, the recording's log |
+| The time zone | `timedatectl list-timezones`, `sudo timedatectl set-timezone Europe/Paris` |
+| NTP | `sudo timedatectl set-ntp true`; `journalctl -u systemd-timesyncd` (no answer); `NTP=ntp.hosting.example` in `/etc/systemd/timesyncd.conf`, `systemctl restart systemd-timesyncd`, `timedatectl timesync-status` |
+| cron | `sudo systemctl restart cron` (it reads the time zone at start) |
 
-Objectif vérifié sur l'état : fuseau Europe/Paris, horloge synchronisée
-par timesyncd, activé au démarrage, cron redémarré après le changement de
-fuseau. Pièges prévus : `date -s` à la main (l'horloge redérive), un fuseau
-mal écrit, `set-time` avec NTP actif, timesyncd démarré sans être activé,
-cron pas redémarré.
+Goal checked on the state: Europe/Paris time zone, clock synchronised by
+timesyncd, enabled at boot, cron restarted after the time zone change.
+Expected traps: `date -s` by hand (the clock drifts again), a misspelt time
+zone, `set-time` with NTP active, timesyncd started without being enabled,
+cron not restarted.
 
-### Chapitre 5 — La sonde (fait)
+### Chapter 5 — La sonde (done)
 
-Après quatre nuits à réparer après coup, Zoé veut être prévenue avant que
-ça casse. Sa sonde (`/usr/local/bin/probe`) lance des plugins de
-supervision et envoie par courrier ce qui n'est pas OK ; elle ne regarde
-que le disque système, et rien ne la lance. Puis Zoé organise un exercice :
-la nuit suivante, deux pannes (le relais qui tombe à 1 h 10, un import qui
-épuise les inodes de `/srv/radio` à partir de 1 h 40).
+After four nights of repairing after the fact, Zoé wants to be warned before
+things break. Her probe (`/usr/local/bin/probe`) runs monitoring plugins and
+mails whatever isn't OK; it only looks at the system disk, and nothing runs
+it. Then Zoé organises a drill: the next night, two failures (the relay
+falling at 1:10 am, an import exhausting `/srv/radio`'s inodes from 1:40
+am).
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Les plugins | `/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio`, `check_http -H localhost -p 8000 -u /direct`, `check_procs -C flux -c 1:` (hors du PATH) |
-| L'alerte | `… \| grep -v " OK" \| mail -E -s Alerte-radio root`, `/etc/aliases`, `/var/mail/zoe` |
-| Planifier | `probe.service` (`Type=oneshot`) et `probe.timer` (`OnCalendar=*:0/5`, `WantedBy=timers.target`), `systemd-analyze calendar`, `systemctl daemon-reload`, `enable --now`, `list-timers` (ou une ligne de crontab) |
-| Vérifier | la nuit d'exercice, `journalctl -u sonde` |
+| The plugins | `/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio`, `check_http -H localhost -p 8000 -u /direct`, `check_procs -C flux -c 1:` (outside the PATH) |
+| The alert | `… \| grep -v " OK" \| mail -E -s Alerte-radio root`, `/etc/aliases`, `/var/mail/zoe` |
+| Schedule | `probe.service` (`Type=oneshot`) and `probe.timer` (`OnCalendar=*:0/5`, `WantedBy=timers.target`), `systemd-analyze calendar`, `systemctl daemon-reload`, `enable --now`, `list-timers` (or a crontab line) |
+| Check | the drill night, `journalctl -u sonde` |
 
-Objectif vérifié sur l'état, après la nuit simulée (qui se rejoue à chaque
-changement de la sonde ou de sa planification) : le relais tombé a donné
-une alerte en moins de 15 minutes, les inodes avant d'être épuisés, et
-aucune alerte n'est partie quand tout allait bien. Pièges prévus : les
-plugins appelés sans leur chemin, `OnUnitActiveSec=` seul (ne part
-jamais), un timer modifié sans `daemon-reload`, un seuil trop serré
-(fausses alertes), une sonde qui ne regarde pas les inodes ni le direct.
+Goal checked on the state, after the simulated night (replayed each time the
+probe or its schedule changes): the fallen relay gave an alert within 15
+minutes, the inodes before being exhausted, and no alert was sent while all
+was well. Expected traps: plugins called without their path,
+`OnUnitActiveSec=` alone (never fires), a timer changed without
+`daemon-reload`, too tight a threshold (false alerts), a probe that watches
+neither the inodes nor the live stream.
 
-### Chapitre 6 — Le post-mortem (fait)
+### Chapter 6 — Le post-mortem (done)
 
-Dimanche nuit, Théo était d'astreinte : le direct a coupé 45 minutes. Ses
-notes sont approximatives ; les faits sont dans les journaux. La mise à
-jour automatique (unattended-upgrades, needrestart) a relancé le relais à
-2 h 13, qui n'a pas pu repartir : une option inconnue attendait dans
-`stream.conf` depuis le 20 août, jamais appliquée.
+Sunday night, Théo was on call: the live stream cut out for 45 minutes. His
+notes are approximate; the facts are in the logs. The automatic update
+(unattended-upgrades, needrestart) restarted the relay at 2:13 am, which
+couldn't start again: an unknown option had been waiting in `stream.conf`
+since 20 August, never applied.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Les faits | `journalctl --since "2027-09-12 02:00" --until "…"`, `last`, `/var/log/apt/history.log`, `/var/log/unattended-upgrades/`, `/var/mail/theo` |
-| L'origine | `journalctl \| grep stream.conf` (la commande `sudo nano` du 20 août) |
-| Écrire | `nano postmortem.md` : résumé, chronologie, impact, causes, ce qui a marché, actions |
+| The facts | `journalctl --since "2027-09-12 02:00" --until "…"`, `last`, `/var/log/apt/history.log`, `/var/log/unattended-upgrades/`, `/var/mail/theo` |
+| The origin | `journalctl \| grep stream.conf` (the `sudo nano` command of 20 August) |
+| Write | `nano postmortem.md`: summary, timeline, impact, causes, what worked, actions |
 
-Objectif vérifié sur l'état du fichier : plus de « (à compléter) », la
-chronologie avec 2 h 13, 2 h 15 et 2 h 58, l'impact (45 minutes), le
-déclencheur et la cause (`stream.conf`, depuis le 20 août), au moins deux
-actions, et aucun mot qui cherche un coupable (liste dans le fichier de
-textes). Zoé relit à chaque enregistrement et dit ce qui manque.
+Goal checked on the file's state: no "(to be completed)" left, the timeline
+with 2:13, 2:15 and 2:58, the impact (45 minutes), the trigger and the
+cause (`stream.conf`, since 20 August), at least two actions, and no word
+that looks for someone to blame (a list in the texts file). Zoé rereads at
+each save and says what is missing.
 
-## Histoire 15 : Le Labo (quatre chapitres)
+### Chapter 7 — Le goulot (done)
 
-Le serveur du Labo, le club photo du quartier (machine `labo`), loué chez un
-hébergeur : deux disques de 2 To en RAID 1 logiciel. `md0` porte le système
-(`/`), `md1` les photos des membres (`/srv`). Odile, la présidente, n'est
-pas technicienne ; l'hébergeur change un disque sur demande (un ticket avec
-le numéro de série), mais le RAID est l'affaire du client. Le stockage est
-décrit par `stockage.ts` (disques, SMART, partitions GPT, grappes) ; les
-commandes dans `commandes/stockage.ts`. L'histoire s'ouvre après « Le
-disque plein » (L'Astreinte).
+Every day at 4 pm, the live stream has half-second gaps. The machine looks
+overloaded, but the processor does nothing: the day's archiving (an `rsync`
+started by a timer) saturates the disk, and the relay's reads queue up. The
+archiving mustn't be stopped: the day's shows must be archived.
 
-### Chapitre 1 — Le disque qui fatigue (fait)
-
-smartd écrit depuis deux jours que `sdb` a des secteurs illisibles, et le
-noyau a relu des blocs sur l'autre miroir. SMART dit pourtant « PASSED ».
-
-| Étape | Commandes |
+| Step | Command learnt |
 |---|---|
-| Lire l'alerte | `mail`, `cat /var/mail/vous`, `sudo dmesg` |
-| Voir le RAID | `cat /proc/mdstat`, `sudo mdadm --detail /dev/md0` |
-| Juger le disque | `sudo smartctl -a /dev/sdb`, puis `/dev/sda` pour comparer |
-| Sortir `sdb` | `sudo mdadm --manage /dev/md0 --fail /dev/sdb2 --remove /dev/sdb2`, puis `md1` et `sdb3` |
-| Le ticket | `smartctl -i` ou `lsblk -o NAME,SERIAL`, puis `~/ticket.txt` avec le numéro de `sdb` |
+| Understand | `top` (`wa`, the load), `iostat -x` (`%util`, `r_await`), `sudo pidstat -d` (who), `journalctl -u radio-stream` |
+| The false remedy | `sudo ionice -c 3 -p 2190` (nothing changes), `cat /sys/block/vda/queue/scheduler` (`[none]`) |
+| Limit | `sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M"` (or `systemctl edit` and `daemon-reload`) |
+| Check | `iostat -x` (the wait drops), `journalctl -u radio-stream` |
 
-Fausses pistes : `--remove` sans `--fail` (« Device or resource busy ») ;
-sortir un membre de `sda`, le disque sain (on le remet avec `--re-add`) ;
-une seule grappe sur deux ; un ticket qui donne le numéro de `sda`.
+Goal checked on the state: the live relay is served in time, the archiving
+still runs, and its limit (saved in `/etc`) targets the right disk, without
+going under 5 MiB/s. Expected traps: `ionice` under the `none` scheduler,
+stopping the archiving, a limit on `/dev/sda`, too low a limit. Other
+accepted solutions: `IOReadBandwidthMax=`, a path (`/srv`) instead of the
+disk, `systemctl edit`. Debrief: iowait and load, `iostat -x`,
+`pidstat -d`, io.max versus ionice, `set-property` versus `edit`; links to
+`iostat(1)`, `systemd.resource-control(5)` and cgroup v2's io controller.
 
-### Chapitre 2 — Le disque neuf (fait)
+## Story 11: La Maison des associations (five chapters)
 
-Le disque a été remplacé, vierge ; les grappes tournent sur `sda` seul.
+The neighbourhood's community centre (machine `maison`, 192.0.2.19): a
+gateway, the only machine visible from the internet, and behind it an
+internal network (`wiki`, 10.20.0.11, and `archives`, 10.20.0.12). Yasmine,
+the coordinator, hands IT over to the player; Gaspard, the former volunteer,
+has moved away. Here, ssh works for real (`acces.ts`): no key given by the
+game. Phase 2 of the roadmap.
 
-| Étape | Commandes |
+### Chapter 1 — Les clés (done)
+
+A brand-new account, with a temporary password (`lilas-2027`, `lilac-2027`
+in English).
+
+| Step | Command learnt |
 |---|---|
-| Voir le disque neuf | `lsblk`, `cat /proc/mdstat` (`[U_]`) |
-| Recopier la table | `sudo sfdisk -d /dev/sda \| sudo sfdisk /dev/sdb` |
-| Reconstruire | `sudo mdadm --manage /dev/md0 --add /dev/sdb2`, puis `md1` et `sdb3` ; `cat /proc/mdstat` jusqu'à `[UU]` |
-| Démarrer sur l'un ou l'autre | `sudo grub-install /dev/sdb` |
+| Create your key pair | `ssh-keygen` (on the workstation), optional passphrase |
+| Install it | `ssh-copy-id maison` (password one last time), or `~/.ssh/authorized_keys` by hand |
+| Close | `PasswordAuthentication no` in `sshd_config` (or a file in `sshd_config.d`), `sshd -t`, `systemctl reload ssh` |
+| Check | `exit`, `ssh maison`: in by key |
 
-Fausses pistes : ajouter une partition qui n'existe pas encore ; le sens
-inversé (`sfdisk` refuse d'écrire sur `sda`, en service) ; le disque entier
-dans une grappe (sa table est écrasée) ; GRUB sur une partition, ou sur un
-disque sans partition « BIOS boot ».
+Goal checked on the state: sshd applies `PasswordAuthentication no`, a key
+of your own is authorised, and a key connection happened after this load.
+Expected traps: `ssh-copy-id` before `ssh-keygen` (it installs the kingdom's
+key, the most recent in `~/.ssh`, which ssh won't offer), closing the door
+before installing your key (the menu serves as a rescue console).
 
-Depuis le chapitre 1, les photos sont dans un volume logique LVM
-(`labo/photos`, monté sur `/srv`) posé sur `md1`, comme l'installateur de
-Debian le propose (« RAID puis LVM ») ; `lvm.ts` décrit LVM.
+### Chapter 2 — Le rebond (done)
 
-### Chapitre 3 — La place qui manque (fait)
+The wiki is only reachable from the gateway; Gaspard used to leave his
+private key there.
 
-`/srv` est plein à 97 % et le concours d'hiver demande 1,5 To ; le groupe
-`labo` n'a plus de place. L'hébergeur a branché deux disques neufs de 4 To.
-
-| Étape | Commandes |
+| Step | Command learnt |
 |---|---|
-| Comprendre | `df -h`, `sudo vgs`, `sudo pvs`, `sudo lvs`, `lsblk` |
-| Une grappe des disques neufs | `sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 /dev/sdc /dev/sdd` (puis `y`) |
-| La donner à LVM | `sudo pvcreate /dev/md2`, `sudo vgextend labo /dev/md2` |
-| Agrandir | `sudo lvextend -r -l +100%FREE /dev/labo/photos` (ou `lvextend` puis `resize2fs`) |
-| Le démarrage | `sudo mdadm --detail --brief /dev/md2 \| sudo tee -a /etc/mdadm/mdadm.conf`, `sudo update-initramfs -u` |
+| Jump | `ssh -J maison wiki` (the wiki's host key is checked from the workstation) |
+| The shortcut | `Host wiki`, `HostName wiki`, `ProxyJump maison` in the workstation's `~/.ssh/config`; `ssh -G wiki` |
+| Where am I? | `hostname`, the prompt |
 
-Fausses pistes : un disque seul dans le groupe (on répare avec une grappe
-dégradée `… /dev/sdd missing`, `pvmove`, `vgreduce`, `pvremove`, puis
-`mdadm --add`) ; `lvextend` sans le système de fichiers (`df` ne bouge pas) ;
-`sudo … >> mdadm.conf` (la redirection n'est pas faite par root) ;
-`mdadm --detail --scan` ajouté en entier (md0 et md1 en double) ;
-l'initramfs refait avant la dernière modification de `mdadm.conf`.
+Goal checked on the state: a key connection to the wiki, a `Host` block on
+the workstation that leads there through maison (checked as ssh would read
+it), and no private key on maison. Expected traps: `ssh wiki` from the
+workstation (unknown name), from maison ("Permission denied"), a private key
+copied onto maison (`scp`).
 
-### Chapitre 4 — Le redémarrage qui coince (fait)
+### Chapter 3 — Le tunnel (done)
 
-Après un redémarrage (un nouveau noyau), le serveur s'est arrêté en mode
-secours. Théo avait ajouté le disque USB des numérisations dans `fstab` par
-son nom, `/dev/sdc1` ; depuis le chapitre 3, `sdc` est un des disques de
-4 To, et le disque USB s'appelle `sde`. On joue en root sur la console de
-l'hébergeur (`fstab.ts` : lecture de fstab, démarrage, mode secours).
+The wiki's admin page only listens on the wiki's 127.0.0.1:8080, and the
+wiki has neither a browser nor curl; three sign-ups are waiting.
 
-| Étape | Commandes |
+| Step | Command learnt |
 |---|---|
-| Lire le journal | `journalctl -xb` (« Timed out waiting for device … /dev/sdc1 ») |
-| Trouver le disque | `lsblk -f`, `blkid` (`sde1`, étiquette `SCANS`, son UUID) |
-| Corriger | `nano /etc/fstab` : `UUID=…  /srv/scans  ext4  defaults,nofail  0  2` |
-| Vérifier | `findmnt --verify`, `systemctl daemon-reload`, `mount -a` |
-| Reprendre | `systemctl default` (ou `exit`, ou `reboot`) |
+| Understand | `ss -tln`, `systemctl status wiki-admin` (on the wiki) |
+| The tunnel | `ssh -f -N -L 8080:localhost:8080 wiki` |
+| Act | `curl localhost:8080/admin`, `/admin/valider/samir`, `/admin/valider/lea` |
+| Close again | `ps`, `kill` |
 
-Fausses pistes : reprendre le démarrage sans rien corriger (retour en mode
-secours) ; `/dev/sde1` (juste aujourd'hui, fragile demain) ; l'UUID sans
-`nofail` ; reprendre sans `daemon-reload` (systemd garde l'ancienne fstab) ;
-effacer la ligne (le serveur démarre, mais plus de scans) ; une ligne
-illisible.
+Goal checked on the state: Samir and Léa approved, the advertising account
+not, no tunnel left open on the workstation. Expected traps:
+`-L 8080:localhost:8080 maison` (localhost as seen from maison),
+`-L 8080:wiki:8080 maison` (the service doesn't listen on the wiki's
+address), `-N` without `-f`, approving the advert (you can reject it
+afterwards).
 
-## Histoire 17 : Le courrier indésirable (trois chapitres)
+### Chapter 4 — Les transferts (done)
 
-Les Jardins partagés (serveur `jardin`, 203.0.113.30, `gardens.example`) ont
-quitté leur hébergeur pour leur propre serveur : site, courrier (Postfix) et
-DNS (BIND, avec un secondaire chez le registre). Leurs courriels n'arrivent
-plus, ou finissent dans les indésirables. En face, des serveurs de courrier
-simulés vérifient SPF, DKIM et DMARC avec le DNS que publie internet :
-mailbox.example (exigeant), verifier.example (qui répond avec ses résultats,
-comme check-auth) et newsmail.example (le prestataire de la lettre
-d'information). L'histoire s'ouvre après « Ça marche chez moi » (le DNS).
+Before the general meeting: the activity report to bring back, the shared
+directory's backup to redo.
 
-### Chapitre 1 — Le facteur (fait)
-
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Voir ce qui attend | `mailq`, `grep deferred /var/log/mail.log` (451 4.7.26 : ni SPF ni DKIM) |
-| Lire le SPF | `dig TXT gardens.example` (celui de l'ancien hébergeur) |
-| Le corriger | la zone (`v=spf1 mx -all`), le serial, `named-checkzone`, `rndc reload`, `dig @ns2.registry.example` |
-| Renvoyer | `sudo postqueue -f`, `mailq` |
+| Bring back | `scp wiki:/srv/wiki/exports/rapport-2027.pdf .` (from the workstation, through the shortcut) |
+| Back up | from maison, with the dedicated `id_sauvegarde` key: `rsync -avn /srv/partage/ archives:/srv/sauvegardes/partage/`, then without `-n` |
+| Repair | `rsync -av --delete …` (after a `-n` try) |
 
-Objectif vérifié sur l'état : le secondaire publie un SPF qui autorise
-203.0.113.30, et les cinq courriels de bienvenue sont partis. Pièges prévus :
-deux enregistrements SPF (`permerror`), le serial oublié. Autres solutions
-acceptées : `a`, `ip4:203.0.113.30`, `~all`.
+Goal checked on the state: the report intact on the workstation, every file
+of the shared directory identical on archives, with no extra copied
+directory. Expected traps: the forgotten trailing slash (a
+`partage/partage` directory), `--delete` without a dry run. The debrief
+talks about FTP and telnet, which send passwords in clear text.
 
-### Chapitre 2 — La signature (fait)
+### Chapter 5 — L'hébergeur (done)
 
-| Étape | Commande apprise |
+The Maison's new website is ready on the wiki (`/srv/wiki/site`); it is
+published on shared hosting that only offers FTP, and now refuses clear-text
+FTP. Gaspard used to publish with FileZilla, without encryption, to
+`ftp.community.example` (a name that points to the host, but that its
+certificate doesn't cover).
+
+| Step | Command learnt |
 |---|---|
-| Voir ce que voit un destinataire | `echo test \| mail -s test check-auth@verifier.example`, `mail` |
-| La clé | `opendkim-genkey -d gardens.example -s mail -D /etc/dkimkeys`, `chown opendkim:` |
-| opendkim | `/etc/opendkim.conf` (`Domain`, `Selector`, `KeyFile`, `Socket`), `systemctl restart opendkim`, `journalctl -u opendkim` |
-| Le milter | `postconf -e` (`smtpd_milters`, `non_smtpd_milters`, `milter_default_action`), `systemctl reload postfix` |
-| Publier la clé | le fichier `.txt` dans la zone, le serial, `opendkim-testkey -vvv` |
+| Bring back | from the workstation, `sftp wiki`: `cd /srv/wiki`, `ls`, `get -r site`, `lls`, `bye` |
+| Connect | `lftp -u maisonasso ftp.hosting.example` (the password asked, FTPS by default) |
+| Publish | `mirror -R --delete --dry-run site public_html`, then without `--dry-run` |
 
-Objectif vérifié sur l'état : un courriel déposé sur la machine serait signé
-pour gardens.example, et la signature se vérifie avec la clé que publie
-internet. Pièges prévus : la clé créée par root (illisible pour opendkim),
-une clé lisible par tous (« key data is not secure »), la prise locale de
-Debian vue depuis le chroot de Postfix, les deux syntaxes de prise réseau,
-`smtpd_milters` seul, « key not secure » (DNSSEC, sans gravité), le serial.
+Goal checked on the state: `public_html` holds exactly the wiki's site, and
+the last upload went encrypted, certificate checked. Expected traps:
+clear-text FTP (`421 Sorry, cleartext sessions…`), Gaspard's name
+(`certificate common name doesn't match`), verification turned off
+(`ssl:verify-certificate no`), `mirror` without `-R` (the old site brought
+back to the workstation), `mirror -R site` without a target (a `site`
+directory beside `public_html`), without `--delete` (the 2025 prices stay
+online).
 
-### Chapitre 3 — La politique (fait)
+## Story 12: La Coopérative (six chapters)
 
-| Étape | Commande apprise |
+The neighbourhood's cooperative grocery (machine `cooperative`,
+192.0.2.20): the till (a service), the till team (Lina, Karim), a shared
+deployment account (`deploy`). Awa, the coordinator, hands the server over
+to the player when Marc, who ran it, leaves. The roadmap's gaps: accounts,
+sudoers, shared rights, a secret exposed by nginx, `X-Forwarded-For`,
+`apt upgrade` and tmux.
+
+### Chapter 1 — Le départ (done)
+
+| Step | Command learnt |
 |---|---|
-| Lire les rapports agrégés | `grep source_ip rapports_dmarc/*.xml`, `less` (le prestataire non aligné, un usurpateur) |
-| Aligner le prestataire | `nm1._domainkey IN CNAME nm1.dkim.newsmail.example.`, le serial |
-| Durcir | `_dmarc IN TXT "v=DMARC1; p=quarantine; rua=…"` |
+| See | `who`, `ps -u marc`, `sudo crontab -l -u marc`, `/home/deploy/.ssh/authorized_keys` |
+| Close | `usermod -e 1` (or `chage -E 0`, `usermod -s /usr/sbin/nologin`, `userdel`); `usermod -L` alone isn't enough |
+| Remove | his line in `deploy`'s `authorized_keys`, `gpasswd -d marc sudo`, `pkill -u marc` |
+| Keep | the backup script outside `/home/marc`, in root's crontab (or `/etc/cron.d`) |
 
-Objectif vérifié sur l'état : internet voit p=quarantine (ou reject) avec
-rua=, la lettre et les courriels du serveur passent DMARC. Pièges prévus :
-quarantine avant l'alignement, l'include SPF du prestataire (qui n'aligne
-rien), le CNAME sans point final, deux enregistrements DMARC.
+Goal checked on the state: marc can no longer get in (account expired,
+without a shell or deleted, or password locked and no key left), his key is
+no longer in `deploy` (the two others are), no sudo nor processes left, and
+the backup runs as root or deploy. Expected traps: `usermod -L` alone (the
+key gets through), emptying deploy's whole `authorized_keys`, `userdel -r`
+before taking the script over (yesterday's backup contains it), the job in
+your own crontab.
 
-## Histoire 18 : La flotte (trois chapitres)
+### Chapter 2 — Les droits partagés (done)
 
-Les maisons de quartier ont trois serveurs (north, south, east, sur
-10.30.0.0/24, compte `deploy` avec sudo sans mot de passe) et un poste de
-pilotage, `pilote` (192.0.2.25), où Ansible est installé. Théo a commencé un
-dossier `~/ansible` avant de partir. L'histoire s'ouvre après « Les clés »
-(ssh par clé).
-
-### Chapitre 1 — L'inventaire (fait)
-
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Lancer depuis le bon dossier | `cd ansible` (sinon « No inventory was parsed ») |
-| Les clés d'hôte | `ansible centres -m ping` (« Host key verification failed »), `ssh deploy@north` puis `yes` |
-| Le compte | `remote_user` dans `ansible.cfg` (ou `-u deploy`, `ansible_user=`) |
-| Le centre qui manque | `ansible-inventory --graph`, l'inventaire INI |
+| The directory | `chgrp -R till`, `chmod -R g+w`, `chmod g+s` (or `2775`), `ls -ld` |
+| The mask | `umask`, `umask 002` in Lina's and Karim's `~/.profile` (or `/etc/profile.d`) |
+| sudo | `which systemctl`, `sudo visudo -f /etc/sudoers.d/till`: `%till ALL=(root) /usr/bin/systemctl restart till`, `sudo -l -U lina`, `visudo -c` |
 
-Objectif vérifié sur l'état : le groupe `centres` de l'inventaire contient
-les trois centres, et le dernier ping les a tous joints. Autre solution
-acceptée : `host_key_checking = False`.
+Goal checked on the state: the directory (group till, group write, setgid),
+the existing files, both accounts' mask, and what the sudo policy allows
+(restarting the till) and refuses (a shell, stopping ssh), without errors.
+Expected traps: a command without a path (visudo refuses and asks "What
+now?"), a `till.conf` file (ignored), an `ALL` rule, `systemctl` without
+arguments, a mistake written with nano (sudo refuses everything).
 
-### Chapitre 2 — Le playbook (fait)
+### Chapter 3 — Le secret (done)
 
-| Étape | Commande apprise |
+The payment key is lying around on the internet: the site is served from
+the app's directory (`root /srv/till/app`), with its `.env` and its `.git`.
+
+| Step | Command learnt |
 |---|---|
-| Lancer le playbook de Théo | `ansible-playbook site.yml` (mkdir échoue sur north, la ligne du motd en double) |
-| Décrire un état | `ansible-doc copy`, `ansible-doc file`, `ansible-doc lineinfile` |
-| Répéter sans risque | `ansible-playbook site.yml --check --diff` |
-| Vérifier l'idempotence | une deuxième exécution : `changed=0` |
+| Observe | `curl http://coop.example/.env`, `sudo grep '\.env' /var/log/nginx/access.log` |
+| Close | `location ~ /\. { deny all; }` (or rights www-data can't read), `nginx -t`, `reload` |
+| Block | `deny 203.0.113.77;` |
+| Change the key | `.env`, then `systemctl restart till` (the app only rereads its `.env` at start), `curl 127.0.0.1:3000/health` |
 
-Objectif vérifié sur l'état : htop installé, une seule ligne « Ansible »
-dans `/etc/motd`, `/srv/shared` présent sur les trois centres, et la
-dernière exécution complète n'a rien changé. Pièges prévus : `lineinfile`
-qui laisse le doublon déjà là, une erreur de YAML, un module mal écrit.
-Autre solution acceptée : `command` avec `creates=`.
+Goal checked by requests to the simulated nginx: `/.env` and `/.git/config`
+are no longer served, `/` and `/till/` answer, the offending address gets
+403, and the app has loaded the new key. Expected traps: blocking only
+`/.env` (the token in `.git/config` still leaks), a `deny all` that closes
+the whole site, the key written without restarting the app.
 
-### Chapitre 3 — La répétition (fait)
+### Chapter 4 — Le proxy (done)
 
-| Étape | Commande apprise |
+Nobody can log in to the till any more: a robot is trying passwords, and the
+app (Express), which sees everyone as 127.0.0.1 behind nginx, has locked
+everyone out.
+
+| Step | Command learnt |
 |---|---|
-| Répéter | `ansible-playbook ssh.yml --check --diff` (le handler introuvable) |
-| Un centre d'abord | `--limit north`, le nom du handler (majuscules comprises) |
-| Rattraper le rechargement | `ansible north -b -m service -a "name=ssh state=reloaded"` (ou `--force-handlers`) |
-| Tous | `ansible-playbook ssh.yml`, puis une exécution qui ne change rien |
+| Understand | compare `/var/log/till/app.log` (127.0.0.1) and `access.log` (198.51.100.66) |
+| nginx | `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` (or `$remote_addr`) |
+| The app | `TRUST_PROXY=loopback` in `.env` (or nginx's address), `systemctl restart till` |
 
-Objectif vérifié sur l'état : sur les trois centres, le fichier et la
-configuration chargée par sshd disent `PasswordAuthentication no`, et la
-dernière exécution complète n'a rien changé. Piège prévu : le fichier
-modifié sans que sshd soit rechargé (le handler n'est notifié qu'au
-changement).
+On each nginx reload or app start, the game replays five minutes of traffic
+(the robot, with a fake `X-Forwarded-For` on each try, then Lina). Goal
+checked on this traffic: Lina gets in, and it is the robot's address that is
+locked. Expected traps: nothing on nginx's side (everyone stays 127.0.0.1),
+`TRUST_PROXY=true` (the robot changes address at will),
+`$http_x_forwarded_for` (nginx passes on the client's header without
+appending to it).
 
-## Histoire 19 : La Rustine (un chapitre)
+### Chapter 5 — Les mises à jour (done)
 
-La Rustine, l'atelier vélo associatif, a un petit serveur public (`rustine`,
-203.0.113.40, `cycles.example`) où Inès a installé Caddy « parce qu'il fait
-le HTTPS tout seul ». Un court chapitre de comparaison avec nginx et certbot
-(« Le certificat a expiré », Datacenter). L'histoire s'ouvre après « Le
-certificat a expiré » et « La colocation ».
+Months without an update; before opening time, the cooperative's Wi-Fi drops
+once, in the middle of the upgrade.
 
-### Chapitre 1 — Le cadenas (fait)
-
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Lire ce que dit Caddy | `systemctl status caddy`, `journalctl -u caddy` (« no automatic HTTPS will be applied ») |
-| Donner son nom au site | le Caddyfile (`:80` → `cycles.example`), `caddy validate`, `systemctl reload caddy` |
-| Laisser passer l'autorité | le journal (« Timeout during connect (likely firewall problem) »), `ufw allow 80/tcp`, `ufw allow 443/tcp` |
-| Vérifier | `curl -I http://cycles.example` (308), `curl https://cycles.example` |
-| Le nom des affiches | un bloc `www.cycles.example` avec `redir`, ou une liste d'adresses |
+| See | `uname -r`, `sudo apt update`, `apt list --upgradable` |
+| Upgrade | `tmux new -s maj`, `sudo apt upgrade`; after the drop: `tmux ls`, `tmux attach -t maj` (without tmux: `sudo dpkg --configure -a`) |
+| Reboot | `cat /var/run/reboot-required.pkgs`, `sudo reboot`, `uname -r` |
+| Check | `systemctl --failed`, `systemctl status till`, `sudo systemctl enable --now till` |
 
-Objectif vérifié sur l'état : vu d'internet (le pare-feu compte),
-https://cycles.example sert le site avec un certificat valable,
-http://cycles.example renvoie vers HTTPS, https://www.cycles.example sert le
-site ou y renvoie ; Caddy tourne et démarrera avec la machine. Pièges
-prévus : `http://cycles.example` (HTTP seulement), une directive mal écrite
-(le rechargement échoue, l'ancienne configuration reste), `caddy run` à
-côté du service, le seul port 443 ouvert (certificat obtenu, mais HTTP
-fermé dehors), un Caddyfile non formaté (`caddy fmt --overwrite`). Autres
-solutions acceptées : `cycles.example, www.cycles.example`, `caddy reload`,
-`ufw allow http`.
+Goal checked on the state: no pending update left, dpkg clean, the new
+kernel running, nginx and the till active, the till enabled at boot.
+Expected traps: `apt upgrade` before `apt update` (nothing to do), the
+upgrade outside tmux (dpkg interrupted, apt refuses everything), forgetting
+to reboot (the old kernel runs), the till never enabled (it doesn't come
+back), nested tmux.
 
-## Idées pour la suite
+### Chapter 6 — Les mises à jour automatiques (done)
 
-- Le Paquet perdu, chapitre 2 : le réseau local (`ip a`, adresses privées,
-  NAT), en lien avec « La box ».
+New vulnerabilities, already. Marc had installed `unattended-upgrades`
+without ever enabling it (`20auto-upgrades` at "0"); Awa wants security
+updates every day, a report to root, a reboot only when the cooperative is
+closed (it is open 7 am – 8 pm), and above all not `nodejs` (Marc added the
+version 22 repository; the till requires 20).
 
-## Pour ajouter un chapitre
-
-1. Créer `src/scripts/terminus/chapitres/mon-chapitre.ts` qui exporte un
-   `Chapitre` (voir `monde.ts`) : commandes connues, monde (`d()` pour un
-   lieu, `f()` pour un objet), événements (condition → message, une seule
-   fois) et l'événement final.
-   Si l'histoire a besoin de processus, d'un réseau ou de dépôts git, les
-   décrire dans `etat()` (voir l'en-tête de chaque fichier de `commandes/`).
-2. L'ajouter à une histoire de `HISTOIRES` dans `chapitres/index.ts` (ou
-   créer une nouvelle histoire).
-3. Vérifier qu'on peut le finir : une partie complète jouée par un script
-   (le moteur se compile avec esbuild pour Node), puis dans Chromium à 1000
-   et 375 px.
-
-### Chapitre 7 — Le goulot (fait)
-
-Chaque jour à 16 h, le direct a des trous d'une demi-seconde. La machine
-paraît surchargée, mais le processeur ne fait rien : l'archivage du jour (un
-`rsync` lancé par un timer) sature le disque, et les lectures du relais font
-la queue. Il ne faut pas arrêter l'archivage : les émissions du jour doivent
-être archivées.
-
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Comprendre | `top` (`wa`, la charge), `iostat -x` (`%util`, `r_await`), `sudo pidstat -d` (qui), `journalctl -u radio-stream` |
-| Le faux remède | `sudo ionice -c 3 -p 2190` (rien ne change), `cat /sys/block/vda/queue/scheduler` (`[none]`) |
-| Limiter | `sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M"` (ou `systemctl edit` et `daemon-reload`) |
-| Vérifier | `iostat -x` (l'attente retombe), `journalctl -u radio-stream` |
+| Understand | `ls /var/log/unattended-upgrades`, `systemctl list-timers`, `apt-config dump APT::Periodic`, `sudo systemctl start apt-daily-upgrade` (which does nothing) |
+| Enable | `APT::Periodic::Update-Package-Lists "1";` and `APT::Periodic::Unattended-Upgrade "1";` in `20auto-upgrades` |
+| Configure | `Unattended-Upgrade::Mail "root";`, `Automatic-Reboot "true";`, `Automatic-Reboot-Time "02:00";` in `50unattended-upgrades` |
+| Try, then prove | `sudo unattended-upgrade --dry-run --debug` (nodejs: origin not allowed), `sudo systemctl start apt-daily-upgrade`, `/var/log/unattended-upgrades/unattended-upgrades.log` |
 
-Objectif vérifié sur l'état : le relais du direct est servi à temps,
-l'archivage tourne toujours, et sa limite (enregistrée dans `/etc`) vise le
-bon disque, sans descendre sous 5 Mio/s. Pièges prévus : `ionice` sous
-l'ordonnanceur `none`, arrêter l'archivage, une limite sur `/dev/sda`, une
-limite trop basse. Autres solutions acceptées : `IOReadBandwidthMax=`, un
-chemin (`/srv`) au lieu du disque, `systemctl edit`. Débrief : iowait et
-charge, `iostat -x`, `pidstat -d`, io.max contre ionice, `set-property`
-contre `edit` ; liens vers `iostat(1)`, `systemd.resource-control(5)` et le
-contrôleur io de cgroup v2.
+Goal checked on the state: both tasks enabled, a pass started by the service
+installed the security updates, `nodejs` stayed at 20, the mail report and
+the automatic night reboot are set, the till runs. Expected traps: a
+forgotten `;` ("E: Syntax error", apt refuses everything), `origin=*`
+(nodejs goes to 22: the till wouldn't restart; restart the chapter),
+`Automatic-Reboot` without a time (immediate reboot in the middle of the
+day), the service started before enabling. Other accepted solutions: a file
+of your own (`52cooperative`), `nodejs` in `Package-Blacklist`, another
+night time, another recipient. Debrief: 20auto-upgrades (when) and
+50unattended-upgrades (what), third-party repositories by hand, report and
+scheduled reboot; links to the Debian wiki, `unattended-upgrade(8)` and
+`apt.conf(5)`.
 
-## Histoire 11 : La Maison des associations (cinq chapitres)
+## Story 13: La Ruche (phase 9)
 
-La Maison des associations du quartier (machine `maison`, 192.0.2.19) :
-une passerelle, seule visible depuis internet, et derrière elle un réseau
-interne (`wiki`, 10.20.0.11, et `archives`, 10.20.0.12). Yasmine, la
-coordinatrice, confie l'informatique à la joueuse ou au joueur ; Gaspard,
-l'ancien bénévole, a déménagé. Ici, ssh fonctionne pour de vrai (`acces.ts`) :
-pas de clé donnée par le jeu. Phase 2 de la feuille de route.
+A third place (offices of associations, a café with a guest Wi-Fi, a
+printer and cameras). Its router is a Debian (machine `ruche`, 192.0.2.21):
+`eth0` to the ISP's home router, `eth1` to the switch. Malik, the manager;
+the electrician has split the network into VLANs on the switch. Phase 9 of
+the roadmap.
 
-### Chapitre 1 — Les clés (fait)
+### Chapter 1 — Les VLAN (done)
 
-Un compte tout neuf, avec un mot de passe provisoire (`lilas-2027`).
+The switch has three VLANs (10 offices, 20 guests, 30 equipment), port 1 as
+an 802.1Q trunk to the router; the router still talks flat.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Créer sa paire | `ssh-keygen` (sur le poste), phrase de passe facultative |
-| La poser | `ssh-copy-id maison` (mot de passe une dernière fois), ou `~/.ssh/authorized_keys` à la main |
-| Fermer | `PasswordAuthentication no` dans `sshd_config` (ou un fichier de `sshd_config.d`), `sshd -t`, `systemctl reload ssh` |
-| Vérifier | `exit`, `ssh maison` : entrée par la clé |
+| See | `ip -br a`, `ip route`, `ping`, `plan-commutateur.txt` |
+| Try | `ip link add link eth1 name eth1.10 type vlan id 10`, `ip addr add`, `ip link set … up`, `ip -d link show` |
+| Make it last | `/etc/network/interfaces` (`auto eth1.10`, `iface eth1.10 inet static`, `address`), `ifup -a` |
 
-Objectif vérifié sur l'état : sshd applique `PasswordAuthentication no`,
-une clé à soi est autorisée, et une connexion par clé a eu lieu après ce
-chargement. Pièges prévus : `ssh-copy-id` avant `ssh-keygen` (il pose la
-clé du royaume, la plus récente de `~/.ssh`, que ssh ne proposera pas),
-fermer la porte avant d'avoir posé sa clé (le menu sert de console de
-secours).
+Goal checked on the state: for each VLAN, an interface up on `eth1` with the
+right number and the `.1` address of its network, and the same in
+`/etc/network/interfaces`. Expected traps: a wrong VLAN number
+(`Destination Host Unreachable`), only `ip` (doesn't survive a reboot), a
+wrong mask in the file, `ip` without sudo.
 
-### Chapitre 2 — Le rebond (fait)
+### Chapter 2 — Le DHCP (done)
 
-Le wiki n'est joignable que depuis la passerelle ; Gaspard y laissait sa
-clé privée.
+dnsmasq still serves the old flat network; the new printer can only ask for
+its address over DHCP, but must keep `10.10.30.10`.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Rebondir | `ssh -J maison wiki` (la clé d'hôte du wiki est vérifiée depuis le poste) |
-| Le raccourci | `Host wiki`, `HostName wiki`, `ProxyJump maison` dans `~/.ssh/config` du poste ; `ssh -G wiki` |
-| Où suis-je ? | `hostname`, l'invite |
+| See | `journalctl -u dnsmasq`, `/var/lib/misc/dnsmasq.leases` |
+| Configure | `/etc/dnsmasq.d/hive`: `interface=eth1.10,…` (or `eth1*`), one `dhcp-range` per VLAN, `dhcp-host=MAC,imprimante,10.10.30.10` |
+| Apply | `dnsmasq --test`, `systemctl restart dnsmasq`, `ping imprimante` |
 
-Objectif vérifié sur l'état : une connexion par clé au wiki, un bloc
-`Host` du poste qui y mène par maison (vérifié comme ssh le lirait), et
-aucune clé privée sur maison. Pièges prévus : `ssh wiki` depuis le poste
-(nom inconnu), depuis maison (« Permission denied »), une clé privée
-recopiée sur maison (`scp`).
+Goal checked on the state: each DHCP device has an address in its VLAN's
+network, the printer its own, and dnsmasq doesn't listen on `eth0`. Expected
+traps: keeping `interface=eth1` (doesn't listen on `eth1.10`), no
+restriction (dnsmasq hears the home router: a "rogue DHCP"), a misspelt
+option (`bad option`), the printer without a reservation.
 
-### Chapitre 3 — Le tunnel (fait)
+### Chapter 3 — Les zones (done)
 
-La page d'administration du wiki n'écoute que sur 127.0.0.1:8080 du wiki,
-qui n'a ni navigateur ni curl ; trois inscriptions attendent.
+The addresses are there, but nothing goes out: the router doesn't forward
+packets, and nobody translates the private addresses. Sacha, the former
+volunteer, had done it by hand (`notes-de-sacha.txt`); everything went at
+the reboot. Malik also wants zones: offices go everywhere, guests only to
+the internet, equipment nowhere (but the NAS records the cameras).
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Comprendre | `ss -tln`, `systemctl status wiki-admin` (sur le wiki) |
-| Le tunnel | `ssh -f -N -L 8080:localhost:8080 wiki` |
-| Agir | `curl localhost:8080/admin`, `/admin/valider/samir`, `/admin/valider/lea` |
-| Refermer | `ps`, `kill` |
+| See | `sysctl net.ipv4.ip_forward`, `nft list ruleset`, `conntrack -L` (`[UNREPLIED]`, the translated address), `journalctl -k` (`log prefix`) |
+| Route, translate | `sysctl -w`, a `type nat hook postrouting` chain with `oifname "eth0" masquerade` |
+| Filter | `forward` chain with `policy drop`, `ct state established,related accept`, then `iifname`/`oifname` (or `ip saddr`/`ip daddr`, sets `{ … }`) zone by zone |
+| Make it last | `/etc/sysctl.d/*.conf` (or `/etc/sysctl.conf`), `sysctl --system`, `/etc/nftables.conf`, `nft -c -f`, `systemctl enable --now nftables` |
 
-Objectif vérifié sur l'état : Samir et Léa validé·es, le compte
-publicitaire non, plus aucun tunnel ouvert sur le poste. Pièges prévus :
-`-L 8080:localhost:8080 maison` (localhost vu de maison),
-`-L 8080:wiki:8080 maison` (le service n'écoute pas sur l'adresse du wiki),
-`-N` sans `-f`, valider la publicité (on peut la refuser ensuite).
+Goal checked on the state: the devices' simulated traffic (the internet from
+the offices and the Wi-Fi, printing, the cameras' recording; a visitor's
+phone to the NAS and a camera, the camera to its manufacturer) passes or is
+blocked as planned, now and with what the router would load at boot, without
+refusing a new ssh connection from the admin workstation. Expected traps:
+routing without translating (replies don't come back), translating without
+filtering (the camera goes out, the visitor sees the NAS), `policy drop`
+without `ct state` (replies are dropped), the `input` chain closing ssh, a
+mistake in the file (`syntax error`, the service doesn't start), everything
+by hand (lost at `reboot`), `nft` and `sysctl -w` without sudo.
 
-### Chapitre 4 — Les transferts (fait)
+### Chapter 4 — Le télétravail (done)
 
-Avant l'assemblée générale : le rapport d'activité à rapatrier, la
-sauvegarde du dossier partagé à refaire.
+Malik wants to open the NAS from home; someone suggests "opening port 445 on
+the home router". Instead: a WireGuard VPN on the router. Malik's laptop
+already has its keys (its public key is in the email); its
+`malik-laptop.conf` file waits for the `[Peer]` part (the router). The zones
+firewall is in place, with an `input` chain closed by default.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Rapatrier | `scp wiki:/srv/wiki/exports/rapport-2027.pdf .` (depuis le poste, par le raccourci) |
-| Sauvegarder | depuis maison, avec la clé dédiée `id_sauvegarde` : `rsync -avn /srv/partage/ archives:/srv/sauvegardes/partage/`, puis sans `-n` |
-| Réparer | `rsync -av --delete …` (après un essai `-n`) |
+| The keys | `umask 077`, `wg genkey \| tee privatekey \| wg pubkey > publickey` |
+| The router | `/etc/wireguard/wg0.conf`: `[Interface]` (`Address`, `ListenPort`, `PrivateKey`), `[Peer]` (`PublicKey`, `AllowedIPs = 10.10.99.2/32`); `wg-quick up wg0`, `wg show` (`latest handshake`) |
+| The laptop | the router's `PublicKey`, `Endpoint = hive.example:51820`, `AllowedIPs = 10.10.10.0/24` |
+| The firewall | `udp dport 51820 accept` (input), `iifname "wg0" oifname "eth1.10" accept` (forward), in `/etc/nftables.conf` |
+| Make it last | `systemctl enable --now wg-quick@wg0` |
 
-Objectif vérifié sur l'état : le rapport intact sur le poste, chaque
-fichier du dossier partagé identique sur archives, sans dossier copié en
-trop. Pièges prévus : la barre oblique finale oubliée (un dossier
-`partage/partage`), `--delete` sans essai à blanc. Le débrief parle de FTP
-et telnet, qui font passer les mots de passe en clair.
+Goal checked on the state: the laptop does its handshake and reaches the
+NAS, now and at the next boot (service enabled, files), ssh stays open to
+the admin workstation, and no copy of the router's private key is readable
+by other accounts. Expected traps: `wg genkey > privatekey` without `umask`
+(wg's warning, then a world-readable key), the `input` chain dropping UDP,
+the private key given instead of the public one, `wg-quick up` then the
+service ("already exists"), a rule typed by hand and lost at reboot,
+`wg show` without sudo.
 
-### Chapitre 5 — L'hébergeur (fait)
+### Chapter 5 — La DMZ (done)
 
-Le nouveau site de la Maison est prêt sur le wiki (`/srv/wiki/site`) ; il est
-publié chez un hébergeur mutualisé qui ne propose que FTP, et refuse
-désormais le FTP en clair. Gaspard publiait avec FileZilla, sans chiffrement,
-sur `ftp.community.example` (un nom qui pointe chez l'hébergeur, mais que son
-certificat ne couvre pas).
+The room-booking site now runs on site, on a small server (`web`,
+10.10.40.10) that the electrician put in a new VLAN 40, the DMZ. Inès, a
+volunteer, would like ports 80 and 443 of the public address to lead there;
+Malik wants the server, if it is hacked, to see nothing else.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Rapatrier | depuis le poste, `sftp wiki` : `cd /srv/wiki`, `ls`, `get -r site`, `lls`, `bye` |
-| Se connecter | `lftp -u maisonasso ftp.hosting.example` (le mot de passe demandé, FTPS par défaut) |
-| Publier | `mirror -R --delete --dry-run site public_html`, puis sans `--dry-run` |
+| The VLAN | `eth1.40` in `/etc/network/interfaces`, `ifup eth1.40`, `ping web` |
+| Publish | a `type nat hook prerouting priority dstnat` chain, `iifname "eth0" tcp dport { 80, 443 } dnat to 10.10.40.10` |
+| Let through | `forward`: `iifname "eth0" oifname "eth1.40" tcp dport { 80, 443 } accept` (the address after translation), `iifname "eth1.40" oifname "eth0" accept` (updates) |
+| Check | `conntrack -L -s 203.0.113.77` (the reply comes from 10.10.40.10), `/etc/nftables.conf`, `systemctl reload nftables` |
 
-Objectif vérifié sur l'état : `public_html` contient exactement le site du
-wiki, et le dernier envoi est passé chiffré, certificat vérifié. Pièges
-prévus : le FTP en clair (`421 Sorry, cleartext sessions…`), le nom de
-Gaspard (`certificate common name doesn't match`), la vérification coupée
-(`ssl:verify-certificate no`), `mirror` sans `-R` (l'ancien site rapatrié
-sur le poste), `mirror -R site` sans cible (un dossier `site` à côté de
-`public_html`), sans `--delete` (les tarifs 2025 restent en ligne).
+Goal checked on the state: the simulated traffic (a visitor from the
+internet to ports 80, 443 and 22 of the public address, the server to its
+updates, the NAS and the printer, the offices to the server, and chapter 3's
+zones) passes or is blocked as planned, now and at the next boot, ssh
+staying open to the admin workstation. Expected traps: `dnat` without a
+`forward` rule, a `forward` rule expecting the public address (it never
+sees it), publishing everything (`dnat` without a port: the server's ssh
+visible from the internet), a DMZ that can open connections inwards,
+everything by hand (lost at reboot).
 
-## Histoire 12 : La Coopérative (six chapitres)
+### Chapter 6 — L'Annexe (done)
 
-L'épicerie coopérative du quartier (machine `cooperative`, 192.0.2.20) :
-la caisse (un service), l'équipe caisse (Lina, Karim), un compte de
-déploiement partagé (`deploy`). Awa, la coordinatrice, confie le serveur à
-la joueuse ou au joueur quand Marc, qui le tenait, s'en va. Les trous de
-la feuille de route : comptes, sudoers, droits partagés, un secret exposé
-par nginx, `X-Forwarded-For`, `apt upgrade` et tmux.
+La Ruche opens a second place, the Annexe (network 10.20.10.0/24, a router
+behind its ISP's home router). Sami, a volunteer there, has created his keys
+and prepared `annex-wg0.conf`; the Annexe's router becomes one more peer on
+the remote-work `wg0`.
 
-### Chapitre 1 — Le départ (fait)
-
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Voir | `who`, `ps -u marc`, `sudo crontab -l -u marc`, `/home/deploy/.ssh/authorized_keys` |
-| Fermer | `usermod -e 1` (ou `chage -E 0`, `usermod -s /usr/sbin/nologin`, `userdel`) ; `usermod -L` seul ne suffit pas |
-| Retirer | sa ligne dans `authorized_keys` de `deploy`, `gpasswd -d marc sudo`, `pkill -u marc` |
-| Garder | le script de sauvegarde hors de `/home/marc`, dans la crontab de root (ou `/etc/cron.d`) |
+| The router | one more `[Peer]` in `wg0.conf`: `AllowedIPs = 10.10.99.3/32, 10.20.10.0/24`; `systemctl restart wg-quick@wg0`; `ip route` (wg-quick's route) |
+| The Annexe | the router's `PublicKey` (`wg show`), `Endpoint`, `AllowedIPs = 10.10.10.0/24`, `PersistentKeepalive = 25` |
+| Check | `wg show` (two peers), `ping 10.20.10.20` |
 
-Objectif vérifié sur l'état : marc ne peut plus entrer (compte expiré,
-sans shell ou supprimé, ou mot de passe verrouillé et plus de clé), sa clé
-n'est plus dans `deploy` (les deux autres y sont), plus de sudo ni de
-processus, et la sauvegarde tourne sous root ou deploy. Pièges prévus :
-`usermod -L` seul (la clé passe), vider tout `authorized_keys` de deploy,
-`userdel -r` avant d'avoir repris le script (la sauvegarde d'hier le
-contient), la tâche dans sa propre crontab.
+Goal checked on the state: a computer at the Annexe reaches the NAS, a
+computer in the offices prints at the Annexe, the Annexe doesn't reach the
+cameras, Malik still reaches the NAS, now and at the next boot. Expected
+traps: the file changed without restarting `wg0`, only the tunnel address in
+`AllowedIPs` (the Annexe network's packets are dropped), the offices'
+network missing on the Annexe's side, no `PersistentKeepalive` (the Annexe
+falls asleep behind its home router), opening everything from the tunnel
+(the Annexe sees the cameras), `wg-quick up` on an interface already up.
 
-### Chapitre 2 — Les droits partagés (fait)
+### Chapter 7 — L'annuaire (done)
 
-| Étape | Commande apprise |
+The team's accounts are in an OpenLDAP directory installed by Sacha on the
+router (`dc=thehive,dc=example`). Before the offices' Wi-Fi, which will rely
+on it, it must be brought up to date: Camille has left, Sami (the Annexe)
+arrives.
+
+| Step | Command learnt |
 |---|---|
-| Le dossier | `chgrp -R till`, `chmod -R g+w`, `chmod g+s` (ou `2775`), `ls -ld` |
-| Le masque | `umask`, `umask 002` dans `~/.profile` de Lina et Karim (ou `/etc/profile.d`) |
-| sudo | `which systemctl`, `sudo visudo -f /etc/sudoers.d/till` : `%till ALL=(root) /usr/bin/systemctl restart till`, `sudo -l -U lina`, `visudo -c` |
+| Read | `ldapsearch -x -LLL uid=camille`, `"(memberUid=camille)" dn`, `"(objectClass=posixAccount)" uidNumber` |
+| Remove | `ldapdelete -x -D cn=admin,… -W uid=camille,…`, then `ldapmodify` (`delete: memberUid`) in each group |
+| Add | an LDIF based on `modele-ines.ldif` (`inetOrgPerson`, `posixAccount`, a free `uidNumber`), `slappasswd` for the hash, `ldapadd`; or `sudo … -Y EXTERNAL -H ldapi:///` |
+| Check | `ldappasswd -S`, `ldapwhoami -x -D uid=sami,… -W`, `ldapsearch -x -LLL cn=bureaux` |
 
-Objectif vérifié sur l'état : le dossier (groupe till, écriture du
-groupe, setgid), les fichiers existants, le masque des deux comptes, et ce
-que la politique de sudo permet (relancer la caisse) et refuse (un shell,
-arrêter ssh), sans erreur. Pièges prévus : une commande sans chemin
-(visudo refuse et demande « Et maintenant ? »), un fichier `till.conf`
-(ignoré), une règle `ALL`, `systemctl` sans arguments, une faute écrite
-avec nano (sudo refuse tout).
+Goal checked on the directory's state: no trace of Camille left (entry and
+`memberUid`), Sami exists (classes, hashed password, unique `uidNumber`) and
+is in the `bureaux` group, `slapd` runs. Expected traps: writing anonymously
+(`Strong(er) authentication required`), a wrong password (`Invalid
+credentials`), a forgotten required attribute (`Object class violation`), a
+clear-text password (Sacha's template had one), a `uidNumber` already taken,
+Camille still in the groups after `ldapdelete`, Sami outside the group,
+`slapd` stopped.
 
-### Chapitre 3 — Le secret (fait)
+### Chapter 8 — Le Wi-Fi des bureaux (done)
 
-La clé de paiement traîne sur internet : le site est servi depuis le
-dossier de l'appli (`root /srv/till/app`), avec son `.env` et son `.git`.
+No more shared Wi-Fi password on a sticky note: a WPA2-Enterprise access
+point (802.1X, on VLAN 30) asks the router's RADIUS server (FreeRADIUS)
+whether each person may come in, according to the directory, and in which
+VLAN.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Constater | `curl http://coop.example/.env`, `sudo grep '\.env' /var/log/nginx/access.log` |
-| Fermer | `location ~ /\. { deny all; }` (ou des droits que www-data ne peut pas lire), `nginx -t`, `reload` |
-| Bloquer | `deny 203.0.113.77;` |
-| Changer la clé | `.env`, puis `systemctl restart till` (l'appli ne relit son `.env` qu'au démarrage), `curl 127.0.0.1:3000/health` |
+| Let the access point talk | `iifname "eth1.30" udp dport 1812 accept` (`input` chain, in the file) |
+| Declare the access point | `clients.conf`: `client bornes { ipaddr = 10.10.30.0/24  secret = … }` |
+| The directory | `ln -s ../mods-available/ldap mods-enabled/ldap`; `base_dn`, `identity`, `password`, `membership_filter` (memberUid) |
+| The VLAN | `mods-config/files/authorize`: `DEFAULT Ldap-Group == "bureaux"` → `Tunnel-Private-Group-Id = 10`, then `DEFAULT` → 20 |
+| Check | `freeradius -XC`, `systemctl restart freeradius`, `radtest`, `journalctl -u freeradius`, `freeradius -X` (service stopped) |
 
-Objectif vérifié par des requêtes au nginx simulé : `/.env` et
-`/.git/config` ne sont plus servis, `/` et `/till/` répondent, l'adresse
-fautive reçoit 403, et l'appli a chargé la nouvelle clé. Pièges prévus :
-bloquer seulement `/.env` (le jeton de `.git/config` sort encore), un
-`deny all` qui ferme tout le site, la clé écrite sans relancer l'appli.
+Goal checked on the state: the access point's simulated requests (Malik,
+Inès, Sami → VLAN 10; Léo → VLAN 20; Camille, removed from the directory →
+refused) get the right answer, now and at the next boot. Expected traps: the
+closed `input` chain, the configuration changed without restarting, a wrong
+shared secret, the `ldap` module not enabled, the module anonymous (no
+`userPassword`), no `memberOf` (the groups are `posixGroup`), the entry for
+everyone before the group's, a syntax error (`Expecting section start
+brace`), `freeradius -X` with the service running (`Address already in
+use`).
 
-### Chapitre 4 — Le proxy (fait)
+## Story 14: L'Audit (five chapters)
 
-Plus personne ne peut se connecter à la caisse : un robot essaie des mots
-de passe, et l'appli (Express), qui voit tout le monde en 127.0.0.1
-derrière nginx, a verrouillé tout le monde.
+Nadia's bakery takes its orders online; her insurer wants a security audit
+before renewing the contract. Salomé, an independent auditor, goes through
+the server (machine `fournil`, 192.0.2.22: nginx, the order app under the
+`commandes` account, PostgreSQL, Redis) with a fine-tooth comb and hands in
+her report. The closing story: it brings together what the others teach
+separately (SSH, accounts, sudo, rights, firewall, logs, cron) and asks you
+to **check** as much as to fix. Everything stays defensive: you take stock,
+read a report, repair, trace an intrusion back. Phase 11 of the roadmap.
 
-| Étape | Commande apprise |
+### Chapter 1 — Le périmètre (done)
+
+Salomé has you take stock before starting: you read the engagement letter
+(the scope is ONE server, `fournil.internal`, 192.0.2.22), scan with `nmap`
+and write your notes. The neighbour's server (the pizzeria, 192.0.2.24,
+which shares the home router) looks "interesting" — an open database: it is
+**out of scope**.
+
+| Step | Command learnt |
 |---|---|
-| Comprendre | comparer `/var/log/till/app.log` (127.0.0.1) et `access.log` (198.51.100.66) |
-| nginx | `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` (ou `$remote_addr`) |
-| L'appli | `TRUST_PROXY=loopback` dans `.env` (ou l'adresse de nginx), `systemctl restart till` |
+| The framework | `cat lettre-de-mission.txt` |
+| The inventory | `nmap -sV fournil.internal` (open ports and versions) |
+| The evidence | `nmap -sV -oN inventaire.txt fournil.internal` |
+| The notes | `nano notes-audit.md`: scope, what you found (5432 and 6379), out of scope |
 
-À chaque rechargement de nginx ou démarrage de l'appli, le jeu rejoue cinq
-minutes de trafic (le robot, avec un faux `X-Forwarded-For` à chaque essai,
-puis Lina). Objectif vérifié sur ce trafic : Lina entre, et c'est l'adresse
-du robot qui est verrouillée. Pièges prévus : rien côté nginx (tout le
-monde reste en 127.0.0.1), `TRUST_PROXY=true` (le robot change d'adresse à
-volonté), `$http_x_forwarded_for` (nginx transmet l'en-tête du client sans
-le compléter).
+Goal checked on the state: a `nmap -sV` trace of the Fournil kept in a file,
+completed notes that name the database (5432), Redis (6379) and the
+out-of-scope machine (Salomé rereads at each save). Expected trap: scanning
+the whole network (`192.0.2.16/28`) probes the neighbour; the game accepts
+it and the debrief tells it (`{ $faute }`): nothing blocks, everything is
+said. Debrief: the ethics of auditing (written authorisation, exact scope,
+observe without exploiting).
 
-### Chapitre 5 — Les mises à jour (fait)
+### Chapter 2 — Le rapport (done)
 
-Des mois sans mise à jour ; avant l'ouverture, le wifi de la coopérative
-coupe une fois, au milieu de la mise à jour.
+Four hygiene findings: C1 root can log in over SSH, C2 a forgotten account
+(Lucas, an intern who left, still in sudo), C3 passwordless sudo for the
+admin account (`90-cloud-init-users`), C4 `/srv/commandes/.env` (the
+database password) readable by everyone.
 
-| Étape | Commande apprise |
-|---|---|
-| Voir | `uname -r`, `sudo apt update`, `apt list --upgradable` |
-| Mettre à jour | `tmux new -s maj`, `sudo apt upgrade` ; après la coupure : `tmux ls`, `tmux attach -t maj` (sans tmux : `sudo dpkg --configure -a`) |
-| Redémarrer | `cat /var/run/reboot-required.pkgs`, `sudo reboot`, `uname -r` |
-| Vérifier | `systemctl --failed`, `systemctl status till`, `sudo systemctl enable --now till` |
-
-Objectif vérifié sur l'état : plus de mise à jour en attente, dpkg
-propre, le nouveau noyau tourne, nginx et la caisse actifs, la caisse
-activée au démarrage. Pièges prévus : `apt upgrade` avant `apt update`
-(rien à faire), la mise à jour hors de tmux (dpkg interrompu, apt refuse
-tout), oublier de redémarrer (l'ancien noyau tourne), la caisse jamais
-activée (elle ne repart pas), tmux imbriqué.
-
-### Chapitre 6 — Les mises à jour automatiques (fait)
-
-De nouvelles failles, déjà. Marc avait installé `unattended-upgrades` sans
-jamais l'activer (`20auto-upgrades` à « 0 ») ; Awa veut les mises à jour de
-sécurité chaque jour, un rapport à root, un redémarrage seulement quand la
-coopérative est fermée (7 h – 20 h), et surtout pas `nodejs` (Marc a ajouté
-le dépôt de la version 22 ; la caisse exige la 20).
-
-| Étape | Commande apprise |
-|---|---|
-| Comprendre | `ls /var/log/unattended-upgrades`, `systemctl list-timers`, `apt-config dump APT::Periodic`, `sudo systemctl start apt-daily-upgrade` (qui ne fait rien) |
-| Activer | `APT::Periodic::Update-Package-Lists "1";` et `APT::Periodic::Unattended-Upgrade "1";` dans `20auto-upgrades` |
-| Régler | `Unattended-Upgrade::Mail "root";`, `Automatic-Reboot "true";`, `Automatic-Reboot-Time "02:00";` dans `50unattended-upgrades` |
-| Essayer, puis prouver | `sudo unattended-upgrade --dry-run --debug` (nodejs : origine non permise), `sudo systemctl start apt-daily-upgrade`, `/var/log/unattended-upgrades/unattended-upgrades.log` |
-
-Objectif vérifié sur l'état : les deux tâches activées, une passe lancée par
-le service a installé les mises à jour de sécurité, `nodejs` est resté en
-20, le rapport par courrier et le redémarrage automatique la nuit sont
-réglés, la caisse tourne. Pièges prévus : un `;` oublié (« E: Syntax
-error », apt refuse tout), `origin=*` (nodejs passe en 22 : la caisse ne
-redémarrerait plus ; recommencer le chapitre), `Automatic-Reboot` sans heure
-(redémarrage immédiat en pleine journée), le service lancé avant d'activer.
-Autres solutions acceptées : un fichier à soi (`52cooperative`), `nodejs`
-dans `Package-Blacklist`, une autre heure de nuit, un autre destinataire.
-Débrief : 20auto-upgrades (quand) et 50unattended-upgrades (quoi), dépôts
-tiers à la main, rapport et redémarrage programmé ; liens vers le wiki
-Debian, `unattended-upgrade(8)` et `apt.conf(5)`.
-
-## Histoire 13 : La Ruche (phase 9)
-
-Un tiers-lieu (des bureaux d'associations, un café avec un wifi pour les
-invité·es, une imprimante et des caméras). Son routeur est une Debian
-(machine `ruche`, 192.0.2.21) : `eth0` vers la box du fournisseur, `eth1`
-vers le commutateur. Malik, le régisseur ; l'électricien a découpé le
-réseau en VLAN sur le commutateur. Phase 9 de la feuille de route.
-
-### Chapitre 1 — Les VLAN (fait)
-
-Le commutateur a trois VLAN (10 bureaux, 20 invité·es, 30 équipements),
-port 1 en trunk 802.1Q vers le routeur ; le routeur parle encore à plat.
-
-| Étape | Commande apprise |
-|---|---|
-| Voir | `ip -br a`, `ip route`, `ping`, `plan-commutateur.txt` |
-| Essayer | `ip link add link eth1 name eth1.10 type vlan id 10`, `ip addr add`, `ip link set … up`, `ip -d link show` |
-| Faire durer | `/etc/network/interfaces` (`auto eth1.10`, `iface eth1.10 inet static`, `address`), `ifup -a` |
-
-Objectif vérifié sur l'état : pour chaque VLAN, une interface montée sur
-`eth1` avec le bon numéro et l'adresse `.1` de son réseau, et la même
-chose dans `/etc/network/interfaces`. Pièges prévus : un mauvais numéro de
-VLAN (`Destination Host Unreachable`), seulement `ip` (ne tient pas au
-redémarrage), un masque faux dans le fichier, `ip` sans sudo.
-
-### Chapitre 2 — Le DHCP (fait)
-
-dnsmasq sert encore l'ancien réseau à plat ; la nouvelle imprimante ne
-sait que demander son adresse en DHCP, mais doit garder `10.10.30.10`.
-
-| Étape | Commande apprise |
-|---|---|
-| Voir | `journalctl -u dnsmasq`, `/var/lib/misc/dnsmasq.leases` |
-| Configurer | `/etc/dnsmasq.d/hive` : `interface=eth1.10,…` (ou `eth1*`), une `dhcp-range` par VLAN, `dhcp-host=MAC,imprimante,10.10.30.10` |
-| Appliquer | `dnsmasq --test`, `systemctl restart dnsmasq`, `ping imprimante` |
-
-Objectif vérifié sur l'état : chaque appareil en DHCP a une adresse dans
-le réseau de son VLAN, l'imprimante la sienne, et dnsmasq n'écoute pas
-`eth0`. Pièges prévus : garder `interface=eth1` (n'écoute pas `eth1.10`),
-aucune restriction (dnsmasq entend la box : « DHCP pirate »), une option
-mal écrite (`bad option`), l'imprimante sans réservation.
-
-### Chapitre 3 — Les zones (fait)
-
-Les adresses sont là, mais rien ne sort : le routeur ne transmet pas les
-paquets, et personne ne traduit les adresses privées. Sacha, l'ancien
-bénévole, l'avait fait à la main (`notes-de-sacha.txt`) ; tout est parti au
-redémarrage. Malik veut aussi des zones : les bureaux vont partout, les
-invité·es seulement sur internet, les équipements nulle part (mais le NAS
-enregistre les caméras).
-
-| Étape | Commande apprise |
-|---|---|
-| Voir | `sysctl net.ipv4.ip_forward`, `nft list ruleset`, `conntrack -L` (`[UNREPLIED]`, l'adresse traduite), `journalctl -k` (`log prefix`) |
-| Router, traduire | `sysctl -w`, une chaîne `type nat hook postrouting` avec `oifname "eth0" masquerade` |
-| Filtrer | chaîne `forward` en `policy drop`, `ct state established,related accept`, puis `iifname`/`oifname` (ou `ip saddr`/`ip daddr`, ensembles `{ … }`) zone par zone |
-| Faire durer | `/etc/sysctl.d/*.conf` (ou `/etc/sysctl.conf`), `sysctl --system`, `/etc/nftables.conf`, `nft -c -f`, `systemctl enable --now nftables` |
-
-Objectif vérifié sur l'état : le trafic simulé des appareils (internet
-depuis les bureaux et le wifi, l'impression, l'enregistrement des caméras ;
-le téléphone d'un visiteur vers le NAS et une caméra, la caméra vers son
-fabricant) passe ou est bloqué comme prévu, maintenant et avec ce que le
-routeur chargerait au démarrage, sans refuser une nouvelle connexion ssh
-depuis le poste d'administration. Pièges prévus : router sans traduire
-(les réponses ne reviennent pas), traduire sans filtrer (la caméra sort, le
-visiteur voit le NAS), `policy drop` sans `ct state` (les réponses sont
-jetées), la chaîne `input` qui ferme ssh, une faute dans le fichier
-(`syntax error`, le service ne démarre pas), tout à la main (perdu au
-`reboot`), `nft` et `sysctl -w` sans sudo.
-
-### Chapitre 4 — Le télétravail (fait)
-
-Malik veut ouvrir le NAS depuis chez lui ; on lui propose « d'ouvrir le port
-445 sur la box ». À la place : un VPN WireGuard sur le routeur. Le portable
-de Malik a déjà ses clés (sa clé publique est dans le courriel) ; son
-fichier `malik-laptop.conf` attend la partie `[Peer]` (le routeur). Le
-pare-feu des zones est en place, avec une chaîne `input` fermée par défaut.
-
-| Étape | Commande apprise |
-|---|---|
-| Les clés | `umask 077`, `wg genkey \| tee privatekey \| wg pubkey > publickey` |
-| Le routeur | `/etc/wireguard/wg0.conf` : `[Interface]` (`Address`, `ListenPort`, `PrivateKey`), `[Peer]` (`PublicKey`, `AllowedIPs = 10.10.99.2/32`) ; `wg-quick up wg0`, `wg show` (`latest handshake`) |
-| Le portable | `PublicKey` du routeur, `Endpoint = hive.example:51820`, `AllowedIPs = 10.10.10.0/24` |
-| Le pare-feu | `udp dport 51820 accept` (input), `iifname "wg0" oifname "eth1.10" accept` (forward), dans `/etc/nftables.conf` |
-| Faire durer | `systemctl enable --now wg-quick@wg0` |
-
-Objectif vérifié sur l'état : le portable fait sa poignée de main et joint le
-NAS, maintenant et au prochain démarrage (service activé, fichiers), ssh
-reste ouvert au poste d'administration, et aucune copie de la clé privée du
-routeur n'est lisible par les autres comptes. Pièges prévus : `wg genkey >
-privatekey` sans `umask` (l'avertissement de wg, puis la clé lisible par
-tous), la chaîne `input` qui jette l'UDP, la clé privée donnée à la place de
-la clé publique, `wg-quick up` puis le service (« already exists »), une
-règle tapée à la main et perdue au redémarrage, `wg show` sans sudo.
-
-### Chapitre 5 — La DMZ (fait)
-
-Le site de réservation des salles tourne maintenant sur place, sur un petit
-serveur (`web`, 10.10.40.10) que l'électricien a mis dans un nouveau VLAN 40,
-la DMZ. Inès, bénévole, voudrait que les ports 80 et 443 de l'adresse
-publique y mènent ; Malik veut que le serveur, s'il est piraté, ne voie rien
-d'autre.
-
-| Étape | Commande apprise |
-|---|---|
-| Le VLAN | `eth1.40` dans `/etc/network/interfaces`, `ifup eth1.40`, `ping web` |
-| Publier | une chaîne `type nat hook prerouting priority dstnat`, `iifname "eth0" tcp dport { 80, 443 } dnat to 10.10.40.10` |
-| Laisser passer | `forward` : `iifname "eth0" oifname "eth1.40" tcp dport { 80, 443 } accept` (l'adresse après traduction), `iifname "eth1.40" oifname "eth0" accept` (les mises à jour) |
-| Vérifier | `conntrack -L -s 203.0.113.77` (la réponse vient de 10.10.40.10), `/etc/nftables.conf`, `systemctl reload nftables` |
-
-Objectif vérifié sur l'état : le trafic simulé (un visiteur d'internet vers
-les ports 80, 443 et 22 de l'adresse publique, le serveur vers ses mises à
-jour, le NAS et l'imprimante, les bureaux vers le serveur, et les zones du
-chapitre 3) passe ou est bloqué comme prévu, maintenant et au prochain
-démarrage, ssh restant ouvert au poste d'administration. Pièges prévus :
-`dnat` sans règle `forward`, une règle `forward` qui attend l'adresse
-publique (elle ne la voit jamais), tout publier (`dnat` sans port : ssh du
-serveur visible d'internet), la DMZ qui peut ouvrir vers l'intérieur, tout à
-la main (perdu au redémarrage).
-
-### Chapitre 6 — L'Annexe (fait)
-
-La Ruche ouvre un second lieu, l'Annexe (réseau 10.20.10.0/24, routeur
-derrière la box de son fournisseur). Sami, bénévole là-bas, a créé ses clés
-et préparé `annex-wg0.conf` ; le routeur de l'Annexe devient un pair de plus
-sur le `wg0` du télétravail.
-
-| Étape | Commande apprise |
-|---|---|
-| Le routeur | un `[Peer]` de plus dans `wg0.conf` : `AllowedIPs = 10.10.99.3/32, 10.20.10.0/24` ; `systemctl restart wg-quick@wg0` ; `ip route` (la route de wg-quick) |
-| L'Annexe | `PublicKey` du routeur (`wg show`), `Endpoint`, `AllowedIPs = 10.10.10.0/24`, `PersistentKeepalive = 25` |
-| Vérifier | `wg show` (deux pairs), `ping 10.20.10.20` |
-
-Objectif vérifié sur l'état : un poste de l'Annexe joint le NAS, un poste
-des bureaux imprime à l'Annexe, l'Annexe ne joint pas les caméras, Malik
-joint toujours le NAS, maintenant et au prochain démarrage. Pièges prévus :
-le fichier modifié sans relancer `wg0`, l'adresse du tunnel seule dans
-`AllowedIPs` (les paquets du réseau de l'Annexe sont jetés), le réseau des
-bureaux absent côté Annexe, pas de `PersistentKeepalive` (l'Annexe
-s'endort derrière sa box), tout ouvrir depuis le tunnel (l'Annexe voit les
-caméras), `wg-quick up` sur une interface déjà montée.
-
-### Chapitre 7 — L'annuaire (fait)
-
-Les comptes de l'équipe sont dans un annuaire OpenLDAP installé par Sacha sur
-le routeur (`dc=thehive,dc=example`). Avant le Wi-Fi des bureaux, qui
-s'appuiera dessus, il faut le remettre à jour : Camille est partie, Sami
-(l'Annexe) arrive.
-
-| Étape | Commande apprise |
-|---|---|
-| Lire | `ldapsearch -x -LLL uid=camille`, `"(memberUid=camille)" dn`, `"(objectClass=posixAccount)" uidNumber` |
-| Retirer | `ldapdelete -x -D cn=admin,… -W uid=camille,…`, puis `ldapmodify` (`delete: memberUid`) dans chaque groupe |
-| Ajouter | un LDIF d'après `modele-ines.ldif` (`inetOrgPerson`, `posixAccount`, un `uidNumber` libre), `slappasswd` pour l'empreinte, `ldapadd` ; ou `sudo … -Y EXTERNAL -H ldapi:///` |
-| Vérifier | `ldappasswd -S`, `ldapwhoami -x -D uid=sami,… -W`, `ldapsearch -x -LLL cn=bureaux` |
-
-Objectif vérifié sur l'état de l'annuaire : plus aucune trace de Camille
-(entrée et `memberUid`), Sami existe (classes, mot de passe en empreinte,
-`uidNumber` unique) et est dans le groupe `bureaux`, `slapd` tourne. Pièges
-prévus : écrire en anonyme (`Strong(er) authentication required`), un
-mauvais mot de passe (`Invalid credentials`), un attribut obligatoire oublié
-(`Object class violation`), un mot de passe en clair (le modèle de Sacha en
-avait un), un `uidNumber` déjà pris, Camille encore dans les groupes après
-`ldapdelete`, Sami hors du groupe, `slapd` arrêté.
-
-### Chapitre 8 — Le Wi-Fi des bureaux (fait)
-
-Fini le mot de passe Wi-Fi commun sur un post-it : une borne WPA2-Entreprise
-(802.1X, sur le VLAN 30) demande au serveur RADIUS du routeur (FreeRADIUS) si
-chaque personne peut entrer, d'après l'annuaire, et dans quel VLAN.
-
-| Étape | Commande apprise |
-|---|---|
-| Laisser parler la borne | `iifname "eth1.30" udp dport 1812 accept` (chaîne `input`, dans le fichier) |
-| Déclarer la borne | `clients.conf` : `client bornes { ipaddr = 10.10.30.0/24  secret = … }` |
-| L'annuaire | `ln -s ../mods-available/ldap mods-enabled/ldap` ; `base_dn`, `identity`, `password`, `membership_filter` (memberUid) |
-| Le VLAN | `mods-config/files/authorize` : `DEFAULT Ldap-Group == "bureaux"` → `Tunnel-Private-Group-Id = 10`, puis `DEFAULT` → 20 |
-| Vérifier | `freeradius -XC`, `systemctl restart freeradius`, `radtest`, `journalctl -u freeradius`, `freeradius -X` (service arrêté) |
-
-Objectif vérifié sur l'état : les demandes simulées de la borne (Malik, Inès,
-Sami → VLAN 10 ; Léo → VLAN 20 ; Camille, supprimée de l'annuaire → refus)
-reçoivent la bonne réponse, maintenant et au prochain démarrage. Pièges
-prévus : la chaîne `input` fermée, la configuration modifiée sans
-redémarrer, un mauvais secret partagé, le module `ldap` pas activé, le
-module en anonyme (pas de `userPassword`), `memberOf` absent (les groupes
-`posixGroup`), l'entrée pour tout le monde avant celle du groupe, une faute
-de syntaxe (`Expecting section start brace`), `freeradius -X` avec le
-service lancé (`Address already in use`).
-
-## Histoire 14 : L'Audit (cinq chapitres)
-
-La boulangerie de Nadia prend ses commandes en ligne ; son assureur veut un
-audit de sécurité avant de renouveler le contrat. Salomé, auditrice
-indépendante, passe le serveur (machine `fournil`, 192.0.2.22 : nginx,
-l'appli de commandes sous le compte `commandes`, PostgreSQL, Redis) au crible
-et remet son rapport en trois parties, une par chapitre. L'histoire de
-clôture : elle réunit ce que les autres apprennent séparément (SSH, comptes,
-sudo, droits, pare-feu, journaux, cron) et demande de **vérifier** autant que
-de corriger. Les trois chapitres sont défensifs : on lit un rapport, on
-répare, on remonte une trace. Phase 11 de la feuille de route.
-
-### Chapitre 2 — Le rapport (fait)
-
-Quatre constats d'hygiène : C1 root peut entrer en SSH, C2 un compte oublié
-(Lucas, stagiaire parti, encore dans sudo), C3 sudo sans mot de passe pour le
-compte d'administration (`90-cloud-init-users`), C4 `/srv/commandes/.env`
-(mot de passe de la base) lisible par tous.
-
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
 | C1 | `sudo nano /etc/ssh/sshd_config` (`PermitRootLogin no`), `sudo sshd -t`, `sudo systemctl reload ssh`, `sudo sshd -T` |
-| C2 | `sudo userdel lucas`, ou `sudo usermod -L -e 1 lucas` + `sudo gpasswd -d lucas sudo` ; `id`, `sudo chage -l` |
-| C3 | `sudo -l` (la règle `NOPASSWD`), `sudo visudo -f /etc/sudoers.d/90-cloud-init-users` (ou `sudo rm`) |
-| C4 | `ls -l`, `sudo chmod 600 /srv/commandes/.env` (ou 640 avec le groupe `commandes`) |
+| C2 | `sudo userdel lucas`, or `sudo usermod -L -e 1 lucas` + `sudo gpasswd -d lucas sudo`; `id`, `sudo chage -l` |
+| C3 | `sudo -l` (the `NOPASSWD` rule), `sudo visudo -f /etc/sudoers.d/90-cloud-init-users` (or `sudo rm`) |
+| C4 | `ls -l`, `sudo chmod 600 /srv/commandes/.env` (or 640 with the `commandes` group) |
 
-Objectif vérifié sur l'état : root refusé par la configuration que sshd a
-chargée, sans enfermer le compte du joueur ; Lucas supprimé (ou verrouillé,
-expiré ET hors de sudo) ; plus de règle `NOPASSWD` pour le compte du joueur,
-sudo fonctionnant encore ; le fichier fermé aux autres comptes mais lisible
-par l'appli. Pièges prévus : fichier modifié sans recharger sshd (« sans
-effet »), un nouveau `sshd_config` qui enferme le compte, un compte verrouillé
-mais encore dans sudo, un fichier de sudoers faux, un secret fermé à l'appli
-(`chown root`).
+Goal checked on the state: root refused by the configuration sshd loaded,
+without locking out the player's account; Lucas deleted (or locked, expired
+AND out of sudo); no `NOPASSWD` rule left for the player's account, sudo
+still working; the file closed to other accounts but readable by the app.
+Expected traps: the file changed without reloading sshd ("no effect"), a new
+`sshd_config` that locks the account out, an account locked but still in
+sudo, a broken sudoers file, a secret closed to the app (`chown root`).
 
-### Chapitre 3 — L'exposition (fait)
+### Chapter 3 — L'exposition (done)
 
-Le balayage de ports de Salomé (`balayage-audit.txt`) trouve PostgreSQL (5432)
-et Redis (6379) joignables depuis internet ; ufw est installé mais éteint ;
-Redis n'a pas de mot de passe et écoute partout (`bind * -::*`).
+Salomé's port scan (`balayage-audit.txt`) finds PostgreSQL (5432) and Redis
+(6379) reachable from the internet; ufw is installed but off; Redis has no
+password and listens everywhere (`bind * -::*`).
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Voir | `sudo ss -tlnp` (`0.0.0.0` partout, `127.0.0.1` seulement) |
-| Filtrer | `sudo ufw allow OpenSSH`, `sudo ufw allow "Nginx Full"`, puis `sudo ufw enable` |
-| Fermer à la source | `bind 127.0.0.1 -::1` dans `/etc/redis/redis.conf`, `sudo systemctl restart redis-server` |
-| Vérifier | `ss -tln`, `ufw status verbose`, une nouvelle connexion `ssh fournil` |
+| See | `sudo ss -tlnp` (`0.0.0.0` everywhere, `127.0.0.1` only) |
+| Filter | `sudo ufw allow OpenSSH`, `sudo ufw allow "Nginx Full"`, then `sudo ufw enable` |
+| Close at the source | `bind 127.0.0.1 -::1` in `/etc/redis/redis.conf`, `sudo systemctl restart redis-server` |
+| Check | `ss -tln`, `ufw status verbose`, a new `ssh fournil` connection |
 
-Objectif vérifié sur l'état : pare-feu actif (entrant refusé par défaut), SSH
-du poste, 80 et 443 joignables depuis internet, 5432 et 6379 fermés, Redis
-actif et à l'écoute seulement sur `127.0.0.1`, une nouvelle connexion ssh
-réussie depuis l'activation. Pièges prévus : activer ufw avant d'autoriser
-SSH, couper le site, une règle trop large sur la base ou Redis, arrêter Redis
-(l'appli en a besoin), modifier `redis.conf` sans redémarrer (le programme ne
-relit pas sa configuration tout seul).
+Goal checked on the state: firewall active (incoming denied by default), SSH
+from the workstation, 80 and 443 reachable from the internet, 5432 and 6379
+closed, Redis active and listening only on `127.0.0.1`, a new ssh connection
+succeeded since enabling. Expected traps: enabling ufw before allowing SSH,
+cutting the site, too broad a rule on the database or Redis, stopping Redis
+(the app needs it), changing `redis.conf` without restarting (the program
+doesn't reread its configuration by itself).
 
-### Chapitre 4 — Les traces (fait)
+### Chapter 4 — Les traces (done)
 
-Dans le journal de ssh, une connexion du compte de Nadia dans la nuit du 13
-mars à 3 h 12, depuis 203.0.113.99 ; Nadia dormait. Son `authorized_keys`
-porte deux clés : l'autre se fait passer pour une clé de Nadia
-(`nadia@portable`) ; seule l'empreinte la trahit.
+In ssh's log, a login to Nadia's account in the night of 13 March at 3:12
+am, from 203.0.113.99; Nadia was asleep. Her `authorized_keys` holds two
+keys: the other one passes itself off as one of Nadia's keys
+(`nadia@portable`); only the fingerprint gives it away.
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Retrouver | `journalctl -u ssh \| grep Accepted`, `last nadia` |
-| Identifier | `sudo ssh-keygen -l -f /home/nadia/.ssh/authorized_keys`, à comparer à l'empreinte du journal |
-| Révoquer | retirer cette ligne (et elle seule) de `authorized_keys` |
-| Chercher la persistance | `sudo crontab -u nadia -l`, puis `sudo crontab -u nadia -e` (retirer `curl … \| sh`, garder `sauvegarde.sh`) |
-| Ce qu'il a lu | `sudo cat /home/nadia/.bash_history` : l'intrus a lu `/srv/commandes/.env` (lisible par tous avant « Le rapport ») |
-| Changer le secret | `sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD '…'"`, le même mot de passe dans `DATABASE_URL` de `.env`, `sudo systemctl restart commandes` |
+| Find | `journalctl -u ssh \| grep Accepted`, `last nadia` |
+| Identify | `sudo ssh-keygen -l -f /home/nadia/.ssh/authorized_keys`, compared with the fingerprint in the log |
+| Revoke | remove that line (and only that one) from `authorized_keys` |
+| Look for persistence | `sudo crontab -u nadia -l`, then `sudo crontab -u nadia -e` (remove `curl … \| sh`, keep `sauvegarde.sh`) |
+| What it read | `sudo cat /home/nadia/.bash_history`: the intruder read `/srv/commandes/.env` (world-readable before "Le rapport") |
+| Change the secret | `sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD '…'"`, the same password in `.env`'s `DATABASE_URL`, `sudo systemctl restart commandes` |
 
-Objectif vérifié sur l'état : la clé intruse retirée et celle de Nadia
-gardée ; la tâche de l'intrus retirée et la sauvegarde gardée ; un nouveau
-mot de passe de base d'au moins douze caractères, le même dans PostgreSQL et
-dans `.env`, et l'appli relancée avec lui. Pièges prévus : se fier au
-commentaire de la clé, effacer tout `authorized_keys` (Nadia dehors),
-`crontab -r` (la sauvegarde disparaît aussi), un mot de passe trop court, ne
-le changer que d'un côté (l'appli ne repart plus : « password authentication
-failed »), oublier de relancer l'appli. Le débrief rappelle ce que le jeu ne
-simule pas : garder une copie des journaux, prévenir qui de droit (les
-autorités de protection des données de plusieurs pays sont citées).
+Goal checked on the state: the intruder's key removed and Nadia's kept; the
+intruder's job removed and the backup kept; a new database password of at
+least twelve characters, the same in PostgreSQL and in `.env`, and the app
+restarted with it. Expected traps: trusting the key's comment, erasing the
+whole `authorized_keys` (Nadia locked out), `crontab -r` (the backup goes
+too), too short a password, changing it on one side only (the app no longer
+starts: "password authentication failed"), forgetting to restart the app.
+The debrief recalls what the game doesn't simulate: keeping a copy of the
+logs, notifying whoever must be (data protection authorities of several
+countries are cited).
 
+### Chapter 5 — La contre-visite (done)
 
-### Chapitre 1 — Le périmètre (fait)
+The fixes of chapters 2 to 4 are in place (firewall active, Redis on
+localhost, root closed). Salomé comes back to check: you show it, you don't
+just say it.
 
-Salomé fait faire l'inventaire avant de commencer : on lit la lettre de
-mission (le périmètre est UN serveur, `fournil.internal`, 192.0.2.22), on
-balaie avec `nmap` et on rédige ses notes. Le serveur du voisin (la
-pizzeria, 192.0.2.24, qui partage la box) paraît « intéressant » — une base
-ouverte : il est **hors périmètre**.
-
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Le cadre | `cat lettre-de-mission.txt` |
-| L'inventaire | `nmap -sV fournil.internal` (les ports ouverts et les versions) |
-| La preuve | `nmap -sV -oN inventaire.txt fournil.internal` |
-| Les notes | `nano notes-audit.md` : périmètre, ce qu'on a trouvé (5432 et 6379), hors périmètre |
+| Look again | `nmap -sV fournil.internal`: only 22, 80 and 443 left; but OpenSSH's version is the one from before the update |
+| Audit | `sudo lynis audit system`: a warning (`PKGS-7392`, vulnerable packages) and suggestions; `sudo grep suggestion /var/log/lynis-report.dat` |
+| Fix | `sudo apt update`, `sudo apt upgrade`; `sshd_config` (`X11Forwarding`, `MaxAuthTries`, `AllowTcpForwarding`, `AllowAgentForwarding`), `UMASK` in `/etc/login.defs`, the `/etc/issue` banner; `sudo sshd -t`, `sudo systemctl reload ssh` |
+| Prove | run `lynis` and `nmap -sV` again (OpenSSH's version has changed) |
+| Report | `nano rapport-cloture.md`: summary, findings fixed, evidence (the exact index), still to do (a Lynis identifier still open) |
 
-Objectif vérifié sur l'état : une trace `nmap -sV` du Fournil gardée dans un
-fichier, des notes complétées qui nomment la base de données (5432), Redis
-(6379) et la machine hors périmètre (Salomé relit à chaque enregistrement).
-Piège prévu : balayer tout le réseau (`192.0.2.16/28`) sonde le voisin ; le
-jeu l'accepte et le débrief le raconte (`{ $faute }`) : rien ne bloque, tout
-se dit. Débrief : l'éthique de l'audit (autorisation écrite, périmètre exact,
-constater sans exploiter).
+Goal checked on the state: no warning left and a hardening index of at least
+70 (real, recomputed on the machine), ssh's configuration applied, a last
+scan that only sees 22, 80 and 443 with OpenSSH's updated version, a last
+Lynis audit that reflects the machine, and a complete report. Lynis also
+gives suggestions that aren't fixed (file integrity, antimalware, remote
+logging, `auditd`): they go in the report with their identifier. Expected
+traps: the configuration changed without reloading sshd (Lynis reads the
+file, not the service), a report without the last audit's index, an
+out-of-scope scan.
 
-### Chapitre 5 — La contre-visite (fait)
+### The starting plan: the audit mission (auditor's side, done)
 
-Les correctifs des chapitres 2 à 4 sont en place (pare-feu actif, Redis en
-local, root fermé). Salomé revient vérifier : on le montre, on ne le dit pas.
+The plan agreed with the project owner before story 14: playing **the audit
+itself**, from the signed engagement to the follow-up visit, alongside the
+original three chapters that had the player as **the audited party** (read
+the report, fix, trace back). Everything stays defensive: nothing is
+exploited; you observe, report, have things fixed and check. It became the
+five chapters above: *Le périmètre* (new: the scan done by the player with
+`nmap` replaces the provided `balayage-audit.txt`), *Le rapport*,
+*L'exposition*, *Les traces* (the original three), and *La contre-visite*
+(new: `nmap` and Lynis again, and the closing report written in `nano`).
+The new tool, `nmap` (with its `man` page, `--help`, the real outputs), is
+simulated on the story's network only: an address outside the simulated
+network never answers. Debrief links: nmap's official documentation
+(https://nmap.org/book/man.html) and ANSSI's guides.
 
-| Étape | Commande apprise |
+## Story 15: Le Labo (four chapters)
+
+The server of the Labo, the neighbourhood photo club (machine `labo`),
+rented from a host: two 2 TB disks in software RAID 1. `md0` holds the
+system (`/`), `md1` the members' photos (`/srv`). Odile, the president,
+isn't a technician; the host replaces a disk on request (a ticket with the
+serial number), but the RAID is the customer's business. Storage is
+described by `stockage.ts` (disks, SMART, GPT partitions, arrays); the
+commands in `commandes/stockage.ts`. The story opens after "Le disque plein"
+(L'Astreinte).
+
+### Chapter 1 — Le disque qui fatigue (done)
+
+For two days, smartd has been writing that `sdb` has unreadable sectors, and
+the kernel has reread blocks from the other mirror. Yet SMART says
+"PASSED".
+
+| Step | Commands |
 |---|---|
-| Revoir | `nmap -sV fournil.internal` : plus que 22, 80 et 443 ; mais la version d'OpenSSH est celle d'avant la mise à jour |
-| Auditer | `sudo lynis audit system` : un avertissement (`PKGS-7392`, paquets vulnérables) et des suggestions ; `sudo grep suggestion /var/log/lynis-report.dat` |
-| Corriger | `sudo apt update`, `sudo apt upgrade` ; `sshd_config` (`X11Forwarding`, `MaxAuthTries`, `AllowTcpForwarding`, `AllowAgentForwarding`), `UMASK` de `/etc/login.defs`, bannière `/etc/issue` ; `sudo sshd -t`, `sudo systemctl reload ssh` |
-| Prouver | relancer `lynis` et `nmap -sV` (la version d'OpenSSH a changé) |
-| Rapporter | `nano rapport-cloture.md` : résumé, constats corrigés, preuves (l'indice exact), reste à faire (un identifiant Lynis encore ouvert) |
+| Read the alert | `mail`, `cat /var/mail/you`, `sudo dmesg` |
+| See the RAID | `cat /proc/mdstat`, `sudo mdadm --detail /dev/md0` |
+| Judge the disk | `sudo smartctl -a /dev/sdb`, then `/dev/sda` to compare |
+| Take `sdb` out | `sudo mdadm --manage /dev/md0 --fail /dev/sdb2 --remove /dev/sdb2`, then `md1` and `sdb3` |
+| The ticket | `smartctl -i` or `lsblk -o NAME,SERIAL`, then `~/ticket.txt` with `sdb`'s serial number |
 
-Objectif vérifié sur l'état : plus aucun avertissement et un indice de
-durcissement d'au moins 70 (réel, recalculé sur la machine), la configuration
-de ssh appliquée, un dernier balayage qui ne voit que 22, 80 et 443 avec la
-version d'OpenSSH à jour, un dernier audit Lynis qui reflète la machine, et un
-rapport complet. Lynis donne aussi des suggestions qu'on ne corrige pas
-(intégrité des fichiers, antimalware, journaux distants, `auditd`) : on les met
-au rapport avec leur identifiant. Pièges prévus : la configuration modifiée
-sans recharger sshd (Lynis lit le fichier, pas le service), un rapport sans
-l'indice du dernier audit, un balayage hors périmètre.
+False leads: `--remove` without `--fail` ("Device or resource busy");
+taking out a member on `sda`, the healthy disk (put it back with
+`--re-add`); only one array of the two; a ticket giving `sda`'s serial
+number.
 
-### Le plan de départ : la mission d'audit (côté auditrice, réalisé)
+### Chapter 2 — Le disque neuf (done)
 
-Le plan décidé avec le porteur du projet avant l'histoire 14 : on y joue
-**l'audit lui-même**, du mandat signé à la contre-visite. Il complète
-l'histoire 14, qui fait jouer **l'audité** (lire le rapport, corriger,
-remonter une trace). Tout reste défensif : on n'exploite rien, on constate,
-on rapporte, on fait corriger et on vérifie.
+The disk has been replaced, blank; the arrays run on `sda` alone.
 
-- **Cadre** : une association confie à la joueuse ou au joueur l'audit de
-  **son propre réseau**, par une lettre de mission signée qui fixe le
-  périmètre (des machines en `.internal`, le site public en `.example`) et
-  ce qui est permis. Machines fictives, adresses de documentation.
-- **Chapitre 1 — Le périmètre** : lire la lettre de mission ; inventorier
-  les machines du périmètre avec `nmap` (ports ouverts, versions des
-  services : `nmap -sV`, `-p`, `-oN` pour garder la trace). Une machine
-  intéressante est **hors périmètre** : la bonne réponse est de ne pas y
-  toucher et de le noter (fausse piste qui compte dans le débrief).
-- **Chapitre 2 — Les constats** : relever, sans rien exploiter, les
-  problèmes d'exposition : un service qui ne devrait répondre qu'en interne,
-  une version périmée, une copie de sauvegarde oubliée dans le dossier du
-  site, une page d'administration joignable de l'extérieur. On les confirme
-  par des requêtes inoffensives (`curl -I`, le code HTTP), jamais en
-  téléchargeant les données.
-- **Chapitre 3 — Le rapport** : écrire le rapport dans `nano` (constat,
-  gravité, recommandation) ; il est vérifié sur ce qui a vraiment été
-  constaté (un constat inventé ou un oubli se voit).
-- **Chapitre 4 — La correction et la contre-visite** : appliquer les
-  correctifs (pare-feu, configuration nginx, fichier retiré, mise à jour),
-  puis relancer `nmap` et les requêtes pour montrer que les problèmes ont
-  disparu.
-- **Débrief** : l'éthique de l'audit (autorisation écrite, rester dans le
-  périmètre, rapporter sans exploiter) ; liens vers la documentation
-  officielle de nmap (https://nmap.org/book/man.html) et les guides de
-  l'ANSSI.
-- **Outils nouveaux** : `nmap` (avec sa page `man`, `--help`, les vraies
-  sorties), simulé sur le réseau de l'histoire seulement : une adresse hors
-  du réseau simulé ne répond jamais.
-
-**Avec l'histoire 14** : les deux se complètent plutôt qu'elles ne se
-répètent. L'histoire 14 apprend à **réagir à un audit** (corriger, puis
-enquêter) avec des outils déjà vus ailleurs ; ce plan apprend **la méthode
-de l'audit** (périmètre, inventaire, preuve sans exploitation, rapport,
-vérification) et un outil nouveau, `nmap`. Proposition : une seule
-histoire, la boulangerie de Nadia, en cinq chapitres :
-1. *Le périmètre* (nouveau) : le balayage, fait par la joueuse ou le
-   joueur avec `nmap`, remplace le fichier `balayage-audit.txt` déjà fourni ;
-2. *Le rapport*, 3. *L'exposition*, 4. *Les traces* : les trois chapitres
-   actuels, inchangés ;
-5. *La contre-visite* (nouveau) : `nmap` et les requêtes à nouveau, et le
-   rapport de clôture écrit dans `nano`.
-Les « constats » du plan (chapitre 2) se fondent dans le premier chapitre et
-dans les chapitres actuels, qui partent déjà d'un rapport.
-
-## Histoire 16 : La Veille (cinq chapitres)
-
-Six mois après « L'Audit » (histoire 14, « Je repasserai dans six mois : la
-sécurité, ça se revérifie »), Salomé revient — non plus pour auditer, mais
-pour transmettre une habitude : la veille de sécurité, hebdomadaire, qu'on
-tient seul·e une fois qu'elle n'est plus là. L'activité du Fournil a grandi :
-la machine (`petrin`, 192.0.2.23) est un nouveau serveur (migration),
-Salomé et Nadia reprennent leurs rôles. Chaque chapitre correspond à un
-geste réel de sysadmin : lire un bulletin, trier, corriger sans casser,
-prouver, puis automatiser ce qui peut l'être. Tout reste défensif : aucune
-CVE réelle n'est citée (des identifiants fictifs, `CVE-2099-NNNNN`, de la
-forme des vrais), rien n'est exploité, seule une preuve de version ou de
-configuration est vérifiée. Aucun outil nouveau : tout s'appuie sur ce que
-le jeu sait déjà faire (`apt`, `nmap`, `lynis`, `ss`, `curl`, `grep`,
-`systemctl`, `crontab`/timers, `unattended-upgrades`).
-
-### Chapitre 1 — Le bulletin (fait)
-
-Un fichier hebdomadaire (comme une liste de diffusion d'avis de sécurité :
-Debian Security Advisories, oss-security…) liste cinq CVE fictives, chacune
-avec son paquet, son score CVSS, la plage de versions touchées, la version
-corrigée et un résumé. Avant de s'inquiéter, il faut vérifier que chaque
-ligne concerne vraiment CE serveur : un paquet absent, ou déjà au-delà de
-la version corrigée, n'est pas une alerte.
-
-| Étape | Commande apprise |
+| Step | Commands |
 |---|---|
-| Lire | `cat bulletin-securite.txt` |
-| Vérifier l'installation et la version | `apt list --installed` |
-| Trier | `nano veille.md` : « Concerne ce serveur » ou « Sans objet », et pourquoi |
+| See the new disk | `lsblk`, `cat /proc/mdstat` (`[U_]`) |
+| Copy the table | `sudo sfdisk -d /dev/sda \| sudo sfdisk /dev/sdb` |
+| Rebuild | `sudo mdadm --manage /dev/md0 --add /dev/sdb2`, then `md1` and `sdb3`; `cat /proc/mdstat` until `[UU]` |
+| Boot from either | `sudo grub-install /dev/sdb` |
 
-Objectif vérifié sur l'état : `veille.md` classe nginx, rsync et
-openssh-server sous « Concerne ce serveur » (ce dernier déjà protégé par
-`KbdInteractiveAuthentication no`, sans rien demander de plus), et
-python3-certbot-nginx (absent) et curl (déjà à jour) sous « Sans objet ».
-Pièges prévus : classer certbot ou curl comme pertinentes, oublier nginx,
-rsync ou openssh-server.
+False leads: adding a partition that doesn't exist yet; the reverse
+direction (`sfdisk` refuses to write on `sda`, in use); the whole disk in an
+array (its table is overwritten); GRUB on a partition, or on a disk without
+a "BIOS boot" partition.
 
-### Chapitre 2 — La priorité (fait)
+Since chapter 1, the photos are in an LVM logical volume (`labo/photos`,
+mounted on `/srv`) on top of `md1`, as Debian's installer suggests ("RAID
+then LVM"); `lvm.ts` describes LVM.
 
-Deux CVE restent à traiter (nginx, rsync), avec un score CVSS et une
-exposition différente : nginx (80, 443) est joignable depuis internet ;
-rsync n'a aucun port en écoute (un outil en ligne de commande, pas un
-service). Le score seul ne suffit pas : il faut croiser avec l'exposition,
-déjà apprise dans « Le périmètre » et « L'exposition ».
+### Chapter 3 — La place qui manque (done)
 
-| Étape | Commande apprise |
+`/srv` is 97 % full and the winter competition needs 1.5 TB; the `labo`
+group has no space left. The host has plugged in two new 4 TB disks.
+
+| Step | Commands |
 |---|---|
-| Revoir l'exposition | `ss -tlnp` ou `nmap -sV petrin.internal` |
-| Décider | `nano priorite.md` : un ordre de traitement, justifié ; et openssh-server (déjà protégée) |
+| Understand | `df -h`, `sudo vgs`, `sudo pvs`, `sudo lvs`, `lsblk` |
+| An array of the new disks | `sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 /dev/sdc /dev/sdd` (then `y`) |
+| Give it to LVM | `sudo pvcreate /dev/md2`, `sudo vgextend labo /dev/md2` |
+| Grow | `sudo lvextend -r -l +100%FREE /dev/labo/photos` (or `lvextend` then `resize2fs`) |
+| Booting | `sudo mdadm --detail --brief /dev/md2 \| sudo tee -a /etc/mdadm/mdadm.conf`, `sudo update-initramfs -u` |
 
-Objectif vérifié sur l'état : `priorite.md` classe nginx avant rsync (même
-si son score est plus bas), avec une justification qui cite l'exposition
-(pas seulement le score), et note qu'openssh-server n'a rien à faire ici.
-Piège prévu : classer uniquement par score CVSS décroissant (rsync avant
-nginx).
+False leads: a single disk in the group (repaired with a degraded array
+`… /dev/sdd missing`, `pvmove`, `vgreduce`, `pvremove`, then `mdadm
+--add`); `lvextend` without the file system (`df` doesn't move);
+`sudo … >> mdadm.conf` (the redirection isn't done by root); the whole of
+`mdadm --detail --scan` appended (md0 and md1 twice); the initramfs rebuilt
+before the last change to `mdadm.conf`.
 
-### Chapitre 3 — Le correctif (fait)
+### Chapter 4 — Le redémarrage qui coince (done)
 
-nginx et rsync ont chacune un correctif Debian déjà publié. `apt upgrade`
-installe toutes les mises à jour disponibles d'un coup (pas une par une),
-après avoir rafraîchi la liste des paquets.
+After a reboot (a new kernel), the server stopped in emergency mode. Théo
+had added the scans' USB disk to `fstab` by its name, `/dev/sdc1`; since
+chapter 3, `sdc` is one of the 4 TB disks, and the USB disk is called
+`sde`. You play as root on the host's console (`fstab.ts`: reading fstab,
+boot, emergency mode).
 
-| Étape | Commande apprise |
+| Step | Commands |
 |---|---|
-| Rafraîchir | `sudo apt update` |
-| Corriger | `sudo apt upgrade` |
-| Vérifier que le site tient | `curl -I http://fournil.example/` |
+| Read the log | `journalctl -xb` ("Timed out waiting for device … /dev/sdc1") |
+| Find the disk | `lsblk -f`, `blkid` (`sde1`, label `SCANS`, its UUID) |
+| Fix | `nano /etc/fstab`: `UUID=…  /srv/scans  ext4  defaults,nofail  0  2` |
+| Check | `findmnt --verify`, `systemctl daemon-reload`, `mount -a` |
+| Resume | `systemctl default` (or `exit`, or `reboot`) |
 
-Objectif vérifié sur l'état : nginx et rsync à la version corrigée, et le
-site toujours servi (200). Piège prévu : `apt upgrade` sans `apt update`
-d'abord (« Upgrading: 0 »).
+False leads: resuming the boot without fixing anything (back to emergency
+mode); `/dev/sde1` (right today, fragile tomorrow); the UUID without
+`nofail`; resuming without `daemon-reload` (systemd keeps the old fstab);
+deleting the line (the server boots, but no more scans); an unreadable line.
 
-### Chapitre 4 — Sans preuve, pas de certitude (fait)
+## Story 16: La Veille (five chapters)
 
-Un correctif qui n'est pas vérifié n'est qu'une intention (la leçon de
-« La contre-visite », reprise). On reprouve que les deux paquets sont à
-jour, et on regarde dans le journal d'accès de nginx si la faille HTTP/2
-avait déjà été tentée.
+Six months after "L'Audit" (story 14, "I'll come back in six months:
+security has to be checked again"), Salomé returns — no longer to audit,
+but to pass on a habit: the weekly security watch, which you keep up on
+your own once she's gone. Le Fournil's business has grown: the machine
+(`petrin`, 192.0.2.24) is a new server (a migration), Salomé and Nadia take
+up their roles again. Each chapter matches a real sysadmin gesture: reading
+a bulletin, sorting, fixing without breaking, proving, then automating what
+can be. Everything stays defensive: no real CVE is cited (fictitious
+identifiers, `CVE-2099-NNNNN`, shaped like real ones), nothing is
+exploited, only a version or configuration proof is checked. No new tool:
+everything relies on what the game already does (`apt`, `nmap`, `lynis`,
+`ss`, `curl`, `grep`, `systemctl`, `crontab`/timers,
+`unattended-upgrades`).
 
-| Étape | Commande apprise |
+### Chapter 1 — Le bulletin (done)
+
+A weekly file (like a security advisory mailing list: Debian Security
+Advisories, oss-security…) lists five fictitious CVEs, each with its
+package, its CVSS score, the affected version range, the fixed version and a
+summary. Before worrying, you must check that each line really concerns
+THIS server: a package that isn't installed, or already past the fixed
+version, isn't an alert.
+
+| Step | Command learnt |
 |---|---|
-| Reprouver | `apt list --upgradable` (rien ne doit plus apparaître) |
-| Chercher une tentative | `grep "HTTP/2" /var/log/nginx/access.log` |
-| Vérifier que le site tient | `curl -I http://fournil.example/` |
+| Read | `cat bulletin-securite.txt` |
+| Check installation and version | `apt list --installed` |
+| Sort | `nano veille.md`: "Concerns this server" or "Not applicable", and why |
 
-Objectif vérifié sur l'état : les deux paquets confirmés à jour, une
-tentative antérieure trouvée dans le journal d'accès (une requête HTTP/2
-vide, refusée par nginx, quelques jours avant le correctif), et le site
-toujours servi.
+Goal checked on the state: `veille.md` puts nginx, rsync and openssh-server
+under "Concerns this server" (the last one already protected by
+`KbdInteractiveAuthentication no`, with nothing more asked), and
+python3-certbot-nginx (not installed) and curl (already up to date) under
+"Not applicable". Expected traps: marking certbot or curl as relevant,
+forgetting nginx, rsync or openssh-server.
 
-### Chapitre 5 — Mettre en veille (fait)
+### Chapter 2 — La priorité (done)
 
-Une vérification ponctuelle ne suffit pas : la veille est une habitude.
-Deux choses à mettre en place, qui tournent seules sans remplacer la
-décision humaine : `unattended-upgrades` restreint aux mises à jour de
-**sécurité** seulement, et un rendez-vous hebdomadaire (un timer systemd ou
-une tâche `cron`) qui envoie par courrier la liste des paquets en attente.
+Two CVEs remain to handle (nginx, rsync), with a CVSS score and a different
+exposure: nginx (80, 443) is reachable from the internet; rsync has no
+listening port (a command-line tool, not a service). The score alone isn't
+enough: it must be crossed with exposure, already learnt in "Le périmètre"
+and "L'exposition".
 
-| Étape | Commande apprise |
+| Step | Command learnt |
 |---|---|
-| Activer | `/etc/apt/apt.conf.d/20auto-upgrades` : les deux tâches périodiques à `"1"` |
-| Restreindre à la sécurité | `/etc/apt/apt.conf.d/50unattended-upgrades` : ne garder que les lignes `label=Debian-Security`, régler `Unattended-Upgrade::Mail` |
-| Planifier | un timer systemd (`/etc/systemd/system/*.timer` et `*.service`, `systemctl enable --now`) ou une tâche `crontab -e`, qui envoie `apt list --upgradable` par `mail` |
+| Review exposure | `ss -tlnp` or `nmap -sV petrin.internal` |
+| Decide | `nano priorite.md`: an order of treatment, justified; and openssh-server (already protected) |
 
-Objectif vérifié sur l'état : les deux tâches de `20auto-upgrades`
-activées, `50unattended-upgrades` limité aux mises à jour de sécurité avec
-un rapport par courrier, et un timer (ou une tâche cron) actif et
-persistant. Pièges prévus : activer sans restreindre à la sécurité (ou
-l'inverse), un rendez-vous qui ne survit pas à un redémarrage (hors de
-`/etc`).
+Goal checked on the state: `priorite.md` puts nginx before rsync (even
+though its score is lower), with a justification that cites exposure (not
+just the score), and notes that openssh-server has nothing to do here.
+Expected trap: sorting only by decreasing CVSS score (rsync before nginx).
 
-### Débrief de l'histoire
+### Chapter 3 — Le correctif (done)
 
-Ce qui s'est passé : une veille régulière transforme une alerte en
-routine plutôt qu'en urgence. La bonne pratique : trier par exposition
-autant que par gravité, corriger puis prouver, chercher les traces d'une
-exploitation déjà tentée, et automatiser ce qui peut l'être sans perdre la
-décision humaine. Documentation : Debian Security
-(https://www.debian.org/security/), le glossaire CVE
-(https://www.cve.org/), le calculateur CVSS
+nginx and rsync each have a Debian fix already published. `apt upgrade`
+installs all available updates at once (not one by one), after refreshing
+the package list.
+
+| Step | Command learnt |
+|---|---|
+| Refresh | `sudo apt update` |
+| Fix | `sudo apt upgrade` |
+| Check the site holds | `curl -I http://fournil.example/` |
+
+Goal checked on the state: nginx and rsync at the fixed version, and the
+site still served (200). Expected trap: `apt upgrade` without `apt update`
+first ("Upgrading: 0").
+
+### Chapter 4 — Sans preuve, pas de certitude (done)
+
+A fix that isn't checked is only an intention (the lesson of "La
+contre-visite", taken up again). You prove again that both packages are up
+to date, and look in nginx's access log for whether the HTTP/2 flaw had
+already been tried.
+
+| Step | Command learnt |
+|---|---|
+| Prove again | `apt list --upgradable` (nothing must show any more) |
+| Look for an attempt | `grep "HTTP/2" /var/log/nginx/access.log` |
+| Check the site holds | `curl -I http://fournil.example/` |
+
+Goal checked on the state: both packages confirmed up to date, an earlier
+attempt found in the access log (an empty HTTP/2 request, refused by nginx,
+a few days before the fix), and the site still served.
+
+### Chapter 5 — Mettre en veille (done)
+
+A one-off check isn't enough: the watch is a habit. Two things to set up,
+which run on their own without replacing the human decision:
+`unattended-upgrades` restricted to **security** updates only, and a weekly
+appointment (a systemd timer or a `cron` job) that mails the list of
+pending packages.
+
+| Step | Command learnt |
+|---|---|
+| Enable | `/etc/apt/apt.conf.d/20auto-upgrades`: both periodic tasks at `"1"` |
+| Restrict to security | `/etc/apt/apt.conf.d/50unattended-upgrades`: keep only the `label=Debian-Security` lines, set `Unattended-Upgrade::Mail` |
+| Schedule | a systemd timer (`/etc/systemd/system/*.timer` and `*.service`, `systemctl enable --now`) or a `crontab -e` job, which mails `apt list --upgradable` with `mail` |
+
+Goal checked on the state: both tasks of `20auto-upgrades` enabled,
+`50unattended-upgrades` limited to security updates with a mail report, and
+an active, persistent timer (or cron job). Expected traps: enabling without
+restricting to security (or the reverse), an appointment that doesn't
+survive a reboot (outside `/etc`).
+
+### The story's debrief
+
+What happened: a regular watch turns an alert into a routine rather than an
+emergency. Good practice: sort by exposure as much as by severity, fix then
+prove, look for traces of an exploitation already tried, and automate what
+can be without losing the human decision. Documentation: Debian Security
+(https://www.debian.org/security/), the CVE glossary
+(https://www.cve.org/), the CVSS calculator
 (https://www.first.org/cvss/calculator/4-0), `unattended-upgrades`
 (https://wiki.debian.org/UnattendedUpgrades), `systemd.timer`
 (https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html).
 
-### Ce qui reste volontairement hors de cette histoire
+### What deliberately stays out of this story
 
-Comprendre une faille pour mieux la corriger n'exige pas de l'exploiter
-dans le jeu. Une version plus offensive (une machine d'audit façon Kali,
-des outils de reconnaissance plus poussés) resterait une histoire à part,
-avec ses propres garde-fous, à concevoir séparément si le projet le
-décide.
+Understanding a flaw to fix it better doesn't require exploiting it in the
+game. A more offensive version (a Kali-like audit machine, deeper
+reconnaissance tools) would remain a separate story, with its own
+safeguards, to design separately if the project decides so (see
+`docs/OFFENSIVE-STORY.md`).
+
+## Story 17: Le courrier indésirable (three chapters)
+
+The Community Gardens (server `jardin`, 203.0.113.30, `gardens.example`)
+left their host for their own server: website, mail (Postfix) and DNS
+(BIND, with a secondary at the registry). Their emails no longer arrive, or
+end up in spam. On the other side, simulated mail servers check SPF, DKIM
+and DMARC with the DNS the internet sees: mailbox.example (strict),
+verifier.example (which answers with its results, like check-auth) and
+newsmail.example (the newsletter provider). The story opens after "Ça
+marche chez moi" (DNS).
+
+### Chapter 1 — Le facteur (done)
+
+| Step | Command learnt |
+|---|---|
+| See what's waiting | `mailq`, `grep deferred /var/log/mail.log` (451 4.7.26: neither SPF nor DKIM) |
+| Read the SPF | `dig TXT gardens.example` (the old host's) |
+| Fix it | the zone (`v=spf1 mx -all`), the serial, `named-checkzone`, `rndc reload`, `dig @ns2.registry.example` |
+| Send again | `sudo postqueue -f`, `mailq` |
+
+Goal checked on the state: the secondary publishes an SPF that allows
+203.0.113.30, and the five welcome emails have gone. Expected traps: two SPF
+records (`permerror`), the forgotten serial. Other accepted solutions: `a`,
+`ip4:203.0.113.30`, `~all`.
+
+### Chapter 2 — La signature (done)
+
+| Step | Command learnt |
+|---|---|
+| See what a recipient sees | `echo test \| mail -s test check-auth@verifier.example`, `mail` |
+| The key | `opendkim-genkey -d gardens.example -s mail -D /etc/dkimkeys`, `chown opendkim:` |
+| opendkim | `/etc/opendkim.conf` (`Domain`, `Selector`, `KeyFile`, `Socket`), `systemctl restart opendkim`, `journalctl -u opendkim` |
+| The milter | `postconf -e` (`smtpd_milters`, `non_smtpd_milters`, `milter_default_action`), `systemctl reload postfix` |
+| Publish the key | the `.txt` file in the zone, the serial, `opendkim-testkey -vvv` |
+
+Goal checked on the state: an email dropped on the machine would be signed
+for gardens.example, and the signature checks out with the key the internet
+sees. Expected traps: the key created by root (unreadable for opendkim), a
+world-readable key ("key data is not secure"), Debian's local socket seen
+from Postfix's chroot, the two network socket syntaxes, `smtpd_milters`
+alone, "key not secure" (DNSSEC, harmless), the serial.
+
+### Chapter 3 — La politique (done)
+
+| Step | Command learnt |
+|---|---|
+| Read the aggregate reports | `grep source_ip rapports_dmarc/*.xml`, `less` (the unaligned provider, a spoofer) |
+| Align the provider | `nm1._domainkey IN CNAME nm1.dkim.newsmail.example.`, the serial |
+| Tighten | `_dmarc IN TXT "v=DMARC1; p=quarantine; rua=…"` |
+
+Goal checked on the state: the internet sees p=quarantine (or reject) with
+rua=, the newsletter and the server's emails pass DMARC. Expected traps:
+quarantine before alignment, the provider's SPF include (which aligns
+nothing), the CNAME without a trailing dot, two DMARC records.
+
+## Story 18: La flotte (three chapters)
+
+The neighbourhood centres have three servers (north, south, east, on
+10.30.0.0/24, a `deploy` account with passwordless sudo) and a control
+machine, `pilote` (192.0.2.25, `pilot` in English), where Ansible is
+installed. Théo started an `~/ansible` directory before leaving. The story
+opens after "Les clés" (ssh by key).
+
+### Chapter 1 — L'inventaire (done)
+
+| Step | Command learnt |
+|---|---|
+| Run from the right directory | `cd ansible` (otherwise "No inventory was parsed") |
+| Host keys | `ansible centres -m ping` ("Host key verification failed"), `ssh deploy@north` then `yes` |
+| The account | `remote_user` in `ansible.cfg` (or `-u deploy`, `ansible_user=`) |
+| The missing centre | `ansible-inventory --graph`, the INI inventory |
+
+Goal checked on the state: the inventory's `centres` group holds the three
+centres, and the last ping reached them all. Other accepted solution:
+`host_key_checking = False`.
+
+### Chapter 2 — Le playbook (done)
+
+| Step | Command learnt |
+|---|---|
+| Run Théo's playbook | `ansible-playbook site.yml` (mkdir fails on north, the motd line duplicated) |
+| Describe a state | `ansible-doc copy`, `ansible-doc file`, `ansible-doc lineinfile` |
+| Rehearse safely | `ansible-playbook site.yml --check --diff` |
+| Check idempotence | a second run: `changed=0` |
+
+Goal checked on the state: htop installed, a single "Ansible" line in
+`/etc/motd`, `/srv/shared` present on the three centres, and the last full
+run changed nothing. Expected traps: `lineinfile` leaving the duplicate that
+was already there, a YAML error, a misspelt module. Other accepted solution:
+`command` with `creates=`.
+
+### Chapter 3 — La répétition (done)
+
+| Step | Command learnt |
+|---|---|
+| Rehearse | `ansible-playbook ssh.yml --check --diff` (the handler not found) |
+| One centre first | `--limit north`, the handler's name (case included) |
+| Catch up the reload | `ansible north -b -m service -a "name=ssh state=reloaded"` (or `--force-handlers`) |
+| All of them | `ansible-playbook ssh.yml`, then a run that changes nothing |
+
+Goal checked on the state: on the three centres, the file and the
+configuration loaded by sshd say `PasswordAuthentication no`, and the last
+full run changed nothing. Expected trap: the file changed without sshd being
+reloaded (the handler is only notified on a change).
+
+## Story 19: La Rustine (one chapter)
+
+La Rustine ("The Patch"), the community bike workshop, has a small public
+server (`rustine`, `patch` in English, 203.0.113.40, `cycles.example`) where
+Inès installed Caddy "because it does HTTPS by itself". A short chapter to
+compare with nginx and certbot ("Le certificat a expiré", Datacenter). The
+story opens after "Le certificat a expiré" and "La colocation".
+
+### Chapter 1 — Le cadenas (done)
+
+| Step | Command learnt |
+|---|---|
+| Read what Caddy says | `systemctl status caddy`, `journalctl -u caddy` ("no automatic HTTPS will be applied") |
+| Give the site its name | the Caddyfile (`:80` → `cycles.example`), `caddy validate`, `systemctl reload caddy` |
+| Let the authority through | the journal ("Timeout during connect (likely firewall problem)"), `ufw allow 80/tcp`, `ufw allow 443/tcp` |
+| Check | `curl -I http://cycles.example` (308), `curl https://cycles.example` |
+| The posters' name | a `www.cycles.example` block with `redir`, or a list of addresses |
+
+Goal checked on the state: seen from the internet (the firewall counts),
+https://cycles.example serves the site with a valid certificate,
+http://cycles.example redirects to HTTPS, https://www.cycles.example serves
+the site or redirects to it; Caddy runs and will start with the machine.
+Expected traps: `http://cycles.example` (HTTP only), a misspelt directive
+(the reload fails, the old configuration stays), `caddy run` beside the
+service, only port 443 open (certificate obtained, but HTTP closed from
+outside), an unformatted Caddyfile (`caddy fmt --overwrite`). Other
+accepted solutions: `cycles.example, www.cycles.example`, `caddy reload`,
+`ufw allow http`.
+
+## Ideas for later
+
+- Le Paquet perdu, chapter 2: the local network (`ip a`, private addresses,
+  NAT), linked with "the home router".
+- More in `docs/ROADMAP.md`.
+
+## Adding a chapter
+
+The format of a quest (files, events, debrief, tests) is described in
+[CONTRIBUTING.md](../CONTRIBUTING.md). In short:
+
+1. Create `src/moteur/chapitres/<id>.ts`, which exports a `Chapitre` (see
+   `monde.ts`): known commands, world (`d()` for a place, `f()` for an
+   object), state of the simulated tools (`etat()`, `initialiser()`),
+   events (condition → message, once) and the final event.
+2. Write its texts in `src/textes/en/chapitre-<id>.ftl` then
+   `src/textes/fr/`, and its hints in `indices-<story>.ftl`.
+3. Add it to a story of `HISTOIRES` in `chapitres/index.ts` (or create a
+   new story, with its machine and its `apres`), at the end of
+   `ORDRE_DU_CODE` and `tests/progression/ordre.txt`, and in a learning
+   path (`parcours.ts`).
+4. Check it can be finished: a test that replays it in every language (the
+   solution, another one, the false leads), then in Chromium at 1000 and
+   375 px. Give it its section in this document.

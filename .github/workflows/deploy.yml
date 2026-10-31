@@ -44,13 +44,13 @@ jobs:
     env:
       FTP_SERVER: ${{ secrets.FTP_SERVER }}
     steps:
-      # Tant que les secrets ne sont pas renseignés (voir docs/DEPLOIEMENT.md),
+      # Tant que les secrets ne sont pas renseignés (voir docs/DEPLOYMENT.md),
       # on ne déploie pas, sans faire échouer le workflow.
       - name: Secrets présents ?
         id: secrets
         run: |
           if [ -z "$FTP_SERVER" ]; then
-            echo "::notice::Secrets FTP absents : déploiement ignoré (voir docs/DEPLOIEMENT.md)."
+            echo "::notice::Secrets FTP absents : déploiement ignoré (voir docs/DEPLOYMENT.md)."
             echo "pret=non" >> "$GITHUB_OUTPUT"
           else
             echo "pret=oui" >> "$GITHUB_OUTPUT"
