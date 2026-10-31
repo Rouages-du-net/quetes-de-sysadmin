@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
-import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { LANGUES, traducteur } from '../src/textes';
 import { dansLaLangue, machinesDansLaLangue } from './noms';
 
 // L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
@@ -28,7 +28,7 @@ iface eth1.30 inet static
 
 for (const langue of LANGUES)
   describe(`La Ruche — ${langue}`, () => {
-    const fr = langue === LANGUE_DE_REFERENCE;
+    const fr = langue === 'fr';
     // Une ligne écrite avec les noms français, dans la langue de la partie.
     const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     const contient = (tout: string, texte: string) => fr && expect(tout).toContain(texte);

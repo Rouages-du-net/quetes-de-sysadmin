@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
-import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { LANGUES, traducteur } from '../src/textes';
 import { dansLaLangue, machinesDansLaLangue } from './noms';
 
 // L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
@@ -14,7 +14,7 @@ const MDP = 'radis-2027';
 
 for (const langue of LANGUES)
   describe(`La Coopérative — ${langue}`, () => {
-    const fr = langue === LANGUE_DE_REFERENCE;
+    const fr = langue === 'fr';
     // Le compte du joueur dans la langue (vous@poste, you@poste), comme les noms des lieux.
     const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     const contient = (tout: string, texte: string) => fr && expect(tout).toContain(texte);

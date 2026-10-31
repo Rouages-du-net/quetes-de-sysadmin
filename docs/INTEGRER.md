@@ -1,5 +1,7 @@
 # Intégrer Quêtes de Sysadmin dans un site
 
+— [English version](EMBEDDING.md) (la version de référence)
+
 Le jeu est un **composant web** autonome : un seul fichier JavaScript, sans
 dépendance, sans pisteur, sans requête vers l'extérieur. Il fonctionne dans
 n'importe quelle page HTML (site statique, CMS, plateforme de cours…).
@@ -25,15 +27,18 @@ configure le même en-tête.
 
 | Attribut | Valeurs | Effet |
 |---|---|---|
-| `histoire` | `effaceur`, `datacenter`, `paquet`, `temps`, `archives` | histoire ouverte au départ, directement sur sa machine, même sans sa clé SSH (sans l'attribut, on part du poste, ou de l'histoire en cours) |
-| `cle` | texte | clé de sauvegarde dans `localStorage` (par défaut `quetes-de-sysadmin`) ; à changer pour séparer plusieurs jeux sur un même site |
-| `theme` | `clair`, `sombre` | force un thème (par défaut, celui du système) |
-| `langue` | langue de la page (`lang`), sinon `en` | langue du jeu : `fr` ou `en` (d'autres viendront, voir la feuille de route) ; une langue inconnue donne l'anglais |
+| `lang` | `en`, `fr` | langue du jeu ; sans l'attribut, la langue de la page (`lang` d'un élément parent), sinon l'anglais ; une langue inconnue donne l'anglais |
+| `story` | l'identifiant d'une histoire : `effaceur`, `datacenter`, `paquet`, `temps`, `archives`… | histoire ouverte au départ, directement sur sa machine, même sans sa clé SSH (sans l'attribut, on part du poste, ou de l'histoire en cours) |
+| `save-key` | texte | clé de sauvegarde dans `localStorage` (par défaut `quetes-de-sysadmin`) ; à changer pour séparer plusieurs jeux sur un même site |
+| `theme` | `light`, `dark` | force un thème (par défaut, celui du système) |
+
+Les anciens noms français marchent toujours : `langue`, `histoire`, `cle`,
+et `theme="clair"` / `"sombre"`.
 
 Exemple : un cours sur le réseau qui ouvre directement « Le Paquet perdu » :
 
 ```html
-<quetes-de-sysadmin histoire="paquet" cle="cours-reseau"></quetes-de-sysadmin>
+<quetes-de-sysadmin story="paquet" save-key="cours-reseau" lang="fr"></quetes-de-sysadmin>
 ```
 
 ## Couleurs
@@ -63,7 +68,8 @@ quetes-de-sysadmin {
 ```
 
 `--qds-accent` colore les liens, les boutons et les diodes des chapitres
-finis ; `--qds-ambre`, la diode du prochain chapitre à faire. Garde un
+finis ; `--qds-ambre`, la diode du prochain chapitre à faire et les étoiles
+de difficulté. Garde un
 contraste suffisant (WCAG AA) entre le texte et le fond.
 
 ## Licence et crédit

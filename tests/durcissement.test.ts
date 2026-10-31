@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
-import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { LANGUES, traducteur } from '../src/textes';
 import { dansLaLangue, machinesDansLaLangue } from './noms';
 
 // L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
@@ -14,7 +14,7 @@ const CONFIG = '/etc/ssh/sshd_config';
 
 for (const langue of LANGUES)
   describe(`Langue : ${langue}`, () => {
-    const fr = langue === LANGUE_DE_REFERENCE;
+    const fr = langue === 'fr';
     // Le compte du joueur dans la langue (vous@poste, you@poste), comme les noms des lieux.
     const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     const contient = (tout: string, texte: string) => fr && expect(tout).toContain(texte);
@@ -95,7 +95,7 @@ for (const langue of LANGUES)
 // Les Lettres du quartier, « Le pare-feu » : ufw.
 for (const langue of LANGUES)
   describe(`Le pare-feu — ${langue}`, () => {
-    const fr = langue === LANGUE_DE_REFERENCE;
+    const fr = langue === 'fr';
     // Le compte du joueur dans la langue (vous@poste, you@poste), comme les noms des lieux.
     const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     const partie = () => {
@@ -152,7 +152,7 @@ for (const langue of LANGUES)
 // Les Lettres du quartier, « La sentinelle » : fail2ban.
 for (const langue of LANGUES)
   describe(`La sentinelle — ${langue}`, () => {
-    const fr = langue === LANGUE_DE_REFERENCE;
+    const fr = langue === 'fr';
     const partie = () => {
       const c = new Console({ langue, termines: [...EFFACEUR, 'fermer-la-porte', 'pare-feu'] });
       const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
@@ -226,7 +226,7 @@ const LETTRES = ['fermer-la-porte', 'pare-feu', 'sentinelle', 'colocation', 'che
 
 for (const langue of LANGUES)
   describe(`Le port — ${langue}`, () => {
-    const fr = langue === LANGUE_DE_REFERENCE;
+    const fr = langue === 'fr';
     const partie = () => {
       const c = new Console({ langue, termines: [...EFFACEUR, ...LETTRES] });
       const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
@@ -311,7 +311,7 @@ for (const langue of LANGUES)
 // Les Lettres du quartier, « La récidive » : les prisons recidive et nginx-limit-req.
 for (const langue of LANGUES)
   describe(`La récidive — ${langue}`, () => {
-    const fr = langue === LANGUE_DE_REFERENCE;
+    const fr = langue === 'fr';
     const partie = () => {
       const c = new Console({ langue, termines: [...EFFACEUR, ...LETTRES, 'port'] });
       const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');

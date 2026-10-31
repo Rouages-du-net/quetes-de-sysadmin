@@ -4,6 +4,7 @@
 // monter() construit tout dans un conteneur (un élément ou la racine
 // fantôme d'un composant), sans rien supposer de la page qui l'accueille.
 
+import { difficulty, stars, storyDifficulty, type Level } from '../moteur/difficulty';
 import { Console } from '../moteur/console';
 import type { Shell } from '../moteur/shell';
 import { HISTOIRES } from '../moteur/chapitres';
@@ -62,11 +63,20 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
   // ——— Construction ———
   // Le nom et l'adresse de la machine, montrés sur la carte du réseau (des identifiants techniques, jamais traduits).
   const hote = (m: Machine | undefined) => el('span', { class: 'hote' }, m ? `${domaineMachine(t, m)} ${m.adresse}` : '');
+  // The difficulty: stars for the eye, the level in words for screen readers (see difficulty.ts).
+  const niveau = (min: Level, max: Level = min) =>
+    el(
+      'span',
+      { class: 'difficulty' },
+      el('span', { 'aria-hidden': 'true' }, min === max ? stars(min) : `${'★'.repeat(min)} – ${'★'.repeat(max)}`),
+      el('span', { class: 'visually-hidden' }, min === max ? t('difficulty', { level: min }) : t('difficulty-range', { min, max })),
+    );
   const boutonsHistoires = HISTOIRES.map((h, i) =>
     el('button', { type: 'button', 'data-histoire': String(i) },
       el('span', { class: 'titre' }, titreHistoire(i)),
       hote(machineDeHistoire(h.id)),
       el('span', { class: 'resume' }, typo(t(`histoire-${h.id}.resume`))),
+      niveau(storyDifficulty(h.id).min, storyDifficulty(h.id).max),
       el('span', { class: 'etat' }),
       // Une diode par chapitre, comme sur une baie de serveur (l'état en toutes lettres est dans .etat).
       el('span', { class: 'diodes', 'aria-hidden': 'true' }, ...h.chapitres.map(() => el('span', { class: 'diode' })))),
@@ -122,6 +132,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
           el('span', { class: 'num' }, t('chapitre-numero', { numero: c.numero })),
           el('span', { class: 'titre' }, t(`chapitre-${c.id}`)),
           el('span', { class: 'resume' }, typo(t(`chapitre-${c.id}.resume`))),
+          niveau(difficulty(c.id)),
           el('span', { class: 'etat' })))))),
   );
 
@@ -562,6 +573,7 @@ export function monter(racine: HTMLElement | ShadowRoot, options: Options = {}) 
           { type: 'button', 'data-h': String(e.h), 'data-c': String(e.c), 'data-etat': e.etat },
           el('span', { class: 'titre' }, t(`chapitre-${e.chapitre}`)),
           el('span', { class: 'resume' }, t('parcours-dans', { histoire: titreHistoire(e.h) })),
+          niveau(difficulty(e.chapitre)),
           el('span', { class: 'etat' }, etat),
         );
         b.disabled = e.etat === 'verrouille' || e.etat === 'sans-cle';

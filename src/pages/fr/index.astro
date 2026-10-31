@@ -1,0 +1,53 @@
+---
+import Base from '../../layouts/Base.astro';
+import { HISTOIRES } from '../../moteur/chapitres';
+---
+<Base
+  langue="fr"
+  titre="Quêtes de Sysadmin"
+  autre={{ href: '/en/', langue: 'en', nom: 'English' }}
+  description="Apprendre l'administration système Linux en jouant, dans le navigateur, avec de vraies commandes : se déplacer, chercher, les permissions, les journaux, le réseau, git, les archives."
+>
+  <h1>Quêtes de Sysadmin</h1>
+  <p class="intro">
+    Des aventures où l'on agit avec de <strong>vraies commandes Linux</strong>. Chaque lieu est
+    un dossier, chaque objet un fichier. {HISTOIRES.length} histoires indépendantes : commence par
+    l'Effaceur si tu n'as jamais ouvert un terminal.
+  </p>
+  <p class="intro">
+    Bloqué·e ? Fais comme les pros : <code>man commande</code> ouvre le manuel,
+    <code>commande --help</code> en donne un résumé, et <code>man -k mot</code> cherche la
+    commande qui fait ce que tu veux.
+  </p>
+  <noscript><p class="avertissement">Ce jeu a besoin de JavaScript pour simuler un terminal dans ton navigateur.</p></noscript>
+
+  <quetes-de-sysadmin lang="fr"></quetes-de-sysadmin>
+
+  <section aria-labelledby="integrer">
+    <h2 id="integrer">Mettre le jeu sur ton site</h2>
+    <p>Le jeu est libre et s'intègre dans n'importe quelle page avec deux lignes :</p>
+    <pre><code>{`<script type="module" src="https://sysadmin.rouages.net/integration/quetes-de-sysadmin.js"></script>
+<quetes-de-sysadmin lang="fr"></quetes-de-sysadmin>`}</code></pre>
+    <p>Mode d'emploi complet : <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/docs/INTEGRER.md">docs/INTEGRER.md</a>.</p>
+  </section>
+
+  <section aria-labelledby="noms">
+    <h2 id="noms">Pourquoi des noms en .internal et en .example ?</h2>
+    <p>
+      Les machines du jeu sont fictives, mais leurs noms suivent les règles réelles : <code>.internal</code>
+      est réservé aux réseaux privés (ICANN, 2024), <code>.example</code> aux exemples
+      (<a href="https://www.rfc-editor.org/rfc/rfc6761">RFC 6761</a>), et les adresses 192.0.2.x, 198.51.100.x
+      et 203.0.113.x à la documentation (<a href="https://www.rfc-editor.org/rfc/rfc5737">RFC 5737</a>). Un nom
+      inventé pourrait appartenir à quelqu'un : ce que tu essaies ici ne vise jamais une vraie machine.
+    </p>
+  </section>
+
+  <section aria-labelledby="enseigner">
+    <h2 id="enseigner">Pour les enseignant·es</h2>
+    <p>Objectifs, prérequis, commandes découvertes et durée de chaque chapitre : <a href="/fr/enseignants/">les fiches des quêtes</a>.</p>
+  </section>
+</Base>
+
+<script>
+  import '../../element';
+</script>

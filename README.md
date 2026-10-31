@@ -1,91 +1,94 @@
-# Quêtes de Sysadmin
+# Sysadmin Quests
 
-*Apprendre le métier d'administrateur·rice système en jouant, dans le
-navigateur, avec de vraies commandes et de vrais comportements.*
+*Learn the job of a Linux system administrator by playing, in your browser,
+with real commands and real behaviours.* — [Version française](README.fr.md)
 
-On y apprend la ligne de commande Linux, puis à se connecter à des serveurs,
-à les sécuriser, à servir des sites, à déployer, à sauvegarder et à réparer
-quand tout casse. Chaque quête est un incident ou une mission réaliste, dans
-un système entièrement simulé : rien ne sort du navigateur.
+You learn the Linux command line, then how to connect to servers, secure
+them, serve websites, deploy, back up, and repair things when everything
+breaks. Each quest is a realistic incident or mission, in a fully simulated
+system: nothing leaves the browser.
 
-> **État** : treize histoires jouables, reliées par `ssh` depuis son poste
-> (ligne de commande, permissions et sudo, journaux et processus, comptes et
-> groupes, services systemd, réseau, git, archives, clés SSH, rebonds et
-> tunnels, scp, comptes et sudoers, secrets et X-Forwarded-For,
-> mises à jour et tmux, VLAN et DHCP,
-> durcissement SSH, pare-feu,
-> fail2ban, sauvegardes avec rsync, cron et restic, nginx, TLS, DNS, Docker et
-> Compose, déploiement par git, bleu/vert, canari, migrations, rançongiciel,
-> rsnapshot, pg_dump, disque plein et logrotate, mémoire et OOM killer,
-> inodes, heure et NTP, supervision, timers systemd, post-mortem), avec
-> un manuel intégré et un éditeur `nano`. La suite est dans la
-> [feuille de route](docs/ROADMAP.md).
+> **Status**: about twenty playable stories and over a hundred chapters,
+> reached over `ssh` from your own workstation: the command line,
+> permissions and sudo, logs and processes, accounts and groups, systemd
+> services, networking, git, archives, SSH keys, jump hosts and tunnels,
+> firewalls, fail2ban, backups (rsync, cron, restic, rsnapshot, pg_dump),
+> nginx, Apache, Caddy, TLS, DNS, mail (SPF, DKIM, DMARC), Docker and
+> Compose, deployments, VLANs, DHCP, nftables, WireGuard, LDAP, RAID and
+> LVM, Ansible, security audits, and more — with a built-in manual and a
+> `nano` editor. What comes next is in the [roadmap](docs/ROADMAP.md).
 
-## Jouer
+## Play
 
-- En ligne : **https://sysadmin.rouages.net**
-- Sur ton site, en deux lignes : voir [docs/INTEGRER.md](docs/INTEGRER.md).
+- Online: **https://sysadmin.rouages.net** (in English at `/en/`, in French
+  at `/fr/`; the root picks one from your browser's language).
+- On your own site, in two lines: see [docs/EMBEDDING.md](docs/EMBEDDING.md).
 
-## Développer
+## Develop
 
 ```bash
 npm install
 npm run dev                # http://localhost:4321
-npm test                   # rejoue toutes les quêtes (Vitest)
-npm run build              # dist/ : le site, et dist/integration/ : le fichier à intégrer
+npm test                   # replays every quest (Vitest)
+npm run build              # dist/: the site, and dist/integration/: the file to embed
 npm run preview &          # http://localhost:4340
-npm run test:navigateur    # vérifie le jeu dans Chromium (1000 et 375 px, CSP, intégration)
+npm run test:navigateur    # checks the game in Chromium (1000 and 375 px, CSP, embedding)
 ```
 
-| Dossier | Contenu |
+| Directory | Contents |
 |---|---|
-| `src/pages/`, `src/layouts/` | les pages du site (Astro) |
-| `public/.htaccess` | configuration Apache : HTTPS, cache, sécurité, CORS |
-| `src/moteur/` | le shell simulé, les commandes, le manuel, les histoires et leurs chapitres |
-| `src/interface/` | l'interface du jeu (terminal, choix des histoires, progression) et ses styles |
-| `src/element.ts` | l'élément `<quetes-de-sysadmin>` à intégrer |
-| `src/textes/` | tous les textes du jeu, par langue, au format Fluent ([traduire](docs/TRADUIRE.md)) |
-| `tests/` | parties rejouées (`quetes.test.ts`) et vérifications dans le navigateur |
-| `docs/` | [scénarios](docs/SCENARIOS.md), [intégration](docs/INTEGRER.md), [déploiement](docs/DEPLOIEMENT.md), [feuille de route](docs/ROADMAP.md), [contribuer](docs/CONTRIBUER.md), [une histoire offensive](docs/VERSION-OFFENSIVE.md) |
+| `src/pages/`, `src/layouts/` | the site's pages (Astro): `/en/`, `/fr/`, and the root |
+| `public/.htaccess` | Apache configuration: HTTPS, language at the root, cache, security, CORS |
+| `src/moteur/` | the engine: simulated shell, commands, manual, stories and their chapters |
+| `src/interface/` | the game's interface (terminal, story menu, progress) and its styles |
+| `src/element.ts` | the embeddable `<quetes-de-sysadmin>` element |
+| `src/textes/` | every text of the game, per language, in Fluent format |
+| `tests/` | replayed games and browser checks |
+| `docs/` | [scenarios](docs/SCENARIOS.md), [embedding](docs/EMBEDDING.md), [deployment](docs/DEPLOIEMENT.md), [roadmap](docs/ROADMAP.md), [translating](docs/TRADUIRE.md), [an offensive story](docs/VERSION-OFFENSIVE.md) |
 
-## D'où vient ce jeu
+Want to write a quest, fix a bug or translate the game? Start with
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
-Quêtes de Sysadmin est **inspiré de
+The project started in French: most of the code's identifiers and some of
+the documentation are still in French, and are being moved to English
+little by little (see CONTRIBUTING.md).
+
+## Where this game comes from
+
+Sysadmin Quests is **inspired by
 [Terminus](https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html),
-créé au MIT par Shawn Conrad et Michele Pratusevich** : l'idée d'un monde où
-chaque lieu est un dossier et chaque objet un fichier vient de là. Les lieux,
-les histoires, les énigmes et le code sont les nôtres. Le jeu est né sous le
-nom « Terminus en français » sur [Les rouages du net](https://rouages.net), un
-site de vulgarisation sur internet, l'informatique et l'IA, avant de devenir
-ce projet indépendant.
+created at MIT by Shawn Conrad and Michele Pratusevich**: the idea of a world
+where each place is a directory and each object a file comes from there. The
+places, stories, puzzles and code are our own. The game was born as
+"Terminus en français" on [Les rouages du net](https://rouages.net), a
+French site that explains the internet, computing and AI, before becoming
+this independent project.
 
-## Principes
+## Principles
 
-- **Statique** : un site sans serveur ni base de données, publié sur
-  [sysadmin.rouages.net](https://sysadmin.rouages.net) ; tout se passe dans le navigateur, la
-  progression est gardée localement, sans compte.
-- **Apprendre à se dépanner** : `man`, `--help` et `man -k` marchent partout
-  dès la première quête, et certaines énigmes ne se résolvent qu'en lisant le
-  manuel.
-- **Vraies commandes** : mêmes noms, mêmes options courantes, mêmes sorties ;
-  chaque écart volontaire avec un vrai Linux est documenté.
-- **Sans danger** : adresses et noms de domaine réservés aux exemples, aucune
-  vraie cible ; les quêtes de sécurité restent défensives.
-- **Accessible** : clavier, lecteur d'écran, contraste, mobile.
-- **Sans pisteur**, sans publicité, sans ressource tierce.
-- **En français d'abord**, et déjà **en anglais** (page `/en/`, attribut
-  `langue="en"`) ; d'autres langues viendront (allemand, espagnol, mandarin,
-  coréen…) : les textes sont séparés du code dès le départ.
+- **Static**: a site with no server and no database, published at
+  [sysadmin.rouages.net](https://sysadmin.rouages.net); everything happens in
+  the browser, progress is kept locally, with no account.
+- **Learning to help yourself**: `man`, `--help` and `man -k` work everywhere
+  from the first quest, and some puzzles can only be solved by reading the
+  manual.
+- **Real commands**: same names, same common options, same outputs; every
+  deliberate difference from a real Linux is documented.
+- **Safe**: addresses and domain names reserved for examples, no real
+  target; security quests stay defensive.
+- **Accessible**: keyboard, screen readers, contrast, mobile.
+- **No trackers**, no ads, no third-party resources.
+- **English first**, French too; more languages will come (German, Spanish,
+  Mandarin, Korean…): texts are kept apart from the code.
 
 ## Licences
 
-- **Code** : [GNU GPL version 3](LICENSE) (ou toute version ultérieure).
-  Tu peux utiliser, étudier, modifier et redistribuer le jeu ; les versions
-  modifiées que tu distribues restent sous GPL.
-- **Textes** (histoires, dialogues, débriefs, documentation) :
-  [Creative Commons Attribution - Partage dans les mêmes conditions 4.0
-  International (CC BY-SA 4.0)](LICENSE-CONTENUS.txt), comme
-  [Les rouages du net](https://rouages.net).
+- **Code**: [GNU GPL version 3](LICENSE) (or any later version). You may
+  use, study, modify and redistribute the game; modified versions you
+  distribute stay under the GPL.
+- **Texts** (stories, dialogues, debriefs, documentation):
+  [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA
+  4.0)](LICENSE-CONTENUS.txt), like [Les rouages du net](https://rouages.net).
 
-Terminus, le jeu du MIT qui a inspiré celui-ci, n'est pas repris : ni son
-code, ni ses textes.
+Terminus, the MIT game that inspired this one, is not reused: neither its
+code nor its texts.

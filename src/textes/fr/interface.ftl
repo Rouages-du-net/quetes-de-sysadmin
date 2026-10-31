@@ -421,3 +421,7 @@ affichage-plus-grand = Texte plus grand
 affichage-couleurs = Couleurs
 affichage-focus = Plein écran
 affichage-quitter-focus = Quitter le plein écran (Échap)
+
+## Difficulté d'un chapitre ou d'une histoire (de 1 à 5, voir difficulty.ts)
+difficulty = Difficulté : { $level } sur 5
+difficulty-range = Difficulté : de { $min } à { $max } sur 5

@@ -38,7 +38,7 @@ for (const largeur of [1000, 375]) {
   page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
   page.on('request', (r) => !r.url().startsWith(BASE) && !r.url().startsWith('data:') && externes.push(r.url()));
   await avecCsp(page);
-  await page.goto(`${BASE}/`);
+  await page.goto(`${BASE}/fr/`);
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   const jeu = page.locator('quetes-de-sysadmin');
@@ -157,7 +157,7 @@ for (const largeur of [1000, 375]) {
   verifier(externes.length === 0, `${largeur} px : aucune ressource tierce ${externes.join(' ')}`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/jeu-${largeur}.png`, fullPage: true });
   // Les fiches pour les enseignant·es : une page statique, générée à la construction.
-  await page.goto(`${BASE}/enseignants/`);
+  await page.goto(`${BASE}/fr/enseignants/`);
   verifier((await page.locator('.fiche').count()) > 50, `${largeur} px : les fiches des enseignant·es sont là`);
   verifier((await page.locator('#c-goulot').textContent()).includes('iostat'), `${largeur} px : une fiche donne ses commandes nouvelles`);
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${largeur} px : fiches sans défilement horizontal`);
@@ -181,7 +181,7 @@ for (const largeur of [1000, 375]) {
       JSON.stringify({ termines: ['eveil', 'bourg', 'racine', 'sauvegarde', 'premier-jour', 'deuxieme-jour', 'redemarrage', 'paquet-perdu', 'fermer-la-porte', 'pare-feu', 'cles', 'rebond'], histoire: 'ruche' }),
     ),
   );
-  await page.goto(`${BASE}/`);
+  await page.goto(`${BASE}/fr/`);
   const jeu = page.locator('quetes-de-sysadmin');
   await jeu.locator('.bouton-carte').click();
   const reseau = jeu.locator('[role="tab"]', { hasText: 'Réseau' });
@@ -213,7 +213,7 @@ for (const largeur of [1000, 375]) {
   await saisie.fill('ls -y');
   await saisie.press('Enter');
   verifier((await jeu.locator('.sortie').textContent()).includes("Try 'ls --help' for more information."), `en ${largeur} px : les messages des commandes sont ceux de LANG=C`);
-  verifier((await page.locator('.langue a').getAttribute('href')) === '/', `en ${largeur} px : lien vers la page française`);
+  verifier((await page.locator('.langue a').getAttribute('href')) === '/fr/', `en ${largeur} px : lien vers la page française`);
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `en ${largeur} px : pas de défilement horizontal`);
   verifier(erreurs.length === 0, `en ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/en-${largeur}.png` });
@@ -222,7 +222,7 @@ for (const largeur of [1000, 375]) {
   await page.waitForURL(/\/en\/teachers\//);
   verifier((await page.locator('h1').textContent()).includes('For teachers'), `en ${largeur} px : la page des enseignant·es en anglais`);
   verifier((await page.locator('#c-goulot dt').first().textContent()) === 'Goal', `en ${largeur} px : fiches en anglais`);
-  verifier((await page.locator('.langue a').getAttribute('href')) === '/enseignants/', `en ${largeur} px : lien vers les fiches en français`);
+  verifier((await page.locator('.langue a').getAttribute('href')) === '/fr/enseignants/', `en ${largeur} px : lien vers les fiches en français`);
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `en ${largeur} px : fiches sans défilement horizontal`);
   verifier(erreurs.length === 0, `en ${largeur} px : fiches sans erreur console ${erreurs.join(' ')}`);
   await page.close();
@@ -233,7 +233,7 @@ for (const largeur of [1000, 375]) {
 {
   const page = await navigateur.newPage();
   await avecCsp(page);
-  await page.goto(`${BASE}/`);
+  await page.goto(`${BASE}/fr/`);
   const jeuFr = page.locator('quetes-de-sysadmin');
   await jeuFr.locator('form input').fill('ls');
   await jeuFr.locator('form input').press('Enter');
@@ -260,7 +260,7 @@ for (const largeur of [1000, 375]) {
     if (!localStorage.getItem('quetes-de-sysadmin'))
       localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ termines: ['eveil', 'bourg', 'racine', 'sauvegarde', 'cles'], carnet: { ls: { ligne: 'ls -a', chapitre: 'eveil' } } }));
   });
-  await page.goto(`${BASE}/`);
+  await page.goto(`${BASE}/fr/`);
   let jeu = page.locator('quetes-de-sysadmin');
   await jeu.locator('button', { hasText: 'Ma progression' }).click();
   const fenetre = jeu.locator('dialog.fenetre-progression');
@@ -281,7 +281,7 @@ for (const largeur of [1000, 375]) {
   const ailleurs = await navigateur.newContext({ viewport: { width: largeur, height: 900 } });
   const autre = await ailleurs.newPage();
   await avecCsp(autre);
-  await autre.goto(`${BASE}/`);
+  await autre.goto(`${BASE}/fr/`);
   jeu = autre.locator('quetes-de-sysadmin');
   await jeu.locator('button', { hasText: 'Ma progression' }).click();
   const saisieCode = jeu.locator('dialog.fenetre-progression input[type="text"]').nth(1);
@@ -300,7 +300,7 @@ for (const largeur of [1000, 375]) {
   const troisieme = await (await navigateur.newContext({ viewport: { width: largeur, height: 900 } })).newPage();
   await avecCsp(troisieme);
   troisieme.on('dialog', (d) => d.accept());
-  await troisieme.goto(`${BASE}/`);
+  await troisieme.goto(`${BASE}/fr/`);
   jeu = troisieme.locator('quetes-de-sysadmin');
   await jeu.locator('button', { hasText: 'Ma progression' }).click();
   await jeu.locator('dialog.fenetre-progression input[type="file"]').setInputFiles(fichier);
@@ -318,7 +318,7 @@ for (const largeur of [1000, 375]) {
   page.on('pageerror', (e) => erreurs.push(e.message));
   page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
   await avecCsp(page);
-  await page.goto(`${BASE}/`);
+  await page.goto(`${BASE}/fr/`);
   const jeu = page.locator('quetes-de-sysadmin');
   const saisie = jeu.locator('form input');
   for (const l of ['ssh royaume', 'yes', 'cat message.txt', 'cd Jetee', 'mv filet ~/Port/Hangar', 'cd ~']) {
@@ -348,7 +348,7 @@ for (const largeur of [1000, 375]) {
   const telephone = await navigateur.newContext({ viewport: { width: 375, height: 800 }, isMobile: true, hasTouch: true });
   const mobile = await telephone.newPage();
   await avecCsp(mobile);
-  await mobile.goto(`${BASE}/`);
+  await mobile.goto(`${BASE}/fr/`);
   const jeuMobile = mobile.locator('quetes-de-sysadmin');
   verifier(await jeuMobile.locator('.touches').isVisible(), 'téléphone : la barre de touches est là');
   const ligne = jeuMobile.locator('form input');
@@ -410,7 +410,7 @@ for (const largeur of [1000, 375]) {
   page.on('pageerror', (e) => erreurs.push(e.message));
   page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
   await avecCsp(page);
-  await page.goto(`${BASE}/`);
+  await page.goto(`${BASE}/fr/`);
   const jeu = page.locator('quetes-de-sysadmin');
   for (const l of ['ls -a ~/.ssh', 'xyzzy']) {
     await jeu.locator('form input').fill(l);
@@ -438,7 +438,7 @@ for (const largeur of [1000, 375]) {
   page.on('pageerror', (e) => erreurs.push(e.message));
   page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
   await avecCsp(page);
-  await page.goto(`${BASE}/`);
+  await page.goto(`${BASE}/fr/`);
   const jeu = page.locator('quetes-de-sysadmin');
   const taper = async (l) => {
     await jeu.locator('form input').fill(l);
@@ -486,9 +486,9 @@ for (const largeur of [1000, 375]) {
   page.on('pageerror', (e) => erreurs.push(e.message));
   page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
   await avecCsp(page);
-  await page.goto(`${BASE}/enseignants/`);
-  await page.locator('a[href="/enseignants/classe/"]').click();
-  await page.waitForURL(/\/enseignants\/classe\//);
+  await page.goto(`${BASE}/fr/enseignants/`);
+  await page.locator('a[href="/fr/enseignants/classe/"]').click();
+  await page.waitForURL(/\/fr\/enseignants\/classe\//);
   const fichier = (nom, sauvegarde) => ({
     name: nom,
     mimeType: 'application/json',
@@ -521,7 +521,7 @@ for (const largeur of [1000, 375]) {
   page.on('pageerror', (e) => erreurs.push(e.message));
   page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
   await avecCsp(page);
-  await page.goto(`${BASE}/`);
+  await page.goto(`${BASE}/fr/`);
   const jeu = page.locator('quetes-de-sysadmin');
   const terminal = jeu.locator('.terminal');
   // Le menu : la carte du réseau d'abord, une branche par machine.
@@ -600,7 +600,7 @@ for (const largeur of [1000, 375]) {
   page.on('pageerror', (e) => erreurs.push(e.message));
   page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
   await avecCsp(page);
-  await page.goto(`${BASE}/`);
+  await page.goto(`${BASE}/fr/`);
   await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ termines: ['eveil', 'bourg', 'racine', 'sauvegarde', 'premier-jour', 'deuxieme-jour', 'redemarrage', 'paquet-perdu', 'fermer-la-porte'] })));
   await page.reload();
   const jeu = page.locator('quetes-de-sysadmin');
@@ -629,7 +629,7 @@ for (const largeur of [1000, 375]) {
   page.on('pageerror', (e) => erreurs.push(e.message));
   page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
   await avecCsp(page);
-  await page.goto(`${BASE}/`);
+  await page.goto(`${BASE}/fr/`);
   await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ termines: ['eveil', 'bourg', 'racine', 'sauvegarde'] })));
   await page.reload();
   const jeu = page.locator('quetes-de-sysadmin');
@@ -665,7 +665,7 @@ for (const largeur of [1000, 375]) {
   page.on('console', (m) => m.type() === 'error' && erreurs.push(m.text()));
   await page.clock.install({ time: new Date('2027-01-14T10:00:00') });
   await avecCsp(page);
-  await page.goto(`${BASE}/`);
+  await page.goto(`${BASE}/fr/`);
   await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ termines: ['eveil', 'bourg', 'racine', 'sauvegarde'] })));
   await page.reload();
   const jeu = page.locator('quetes-de-sysadmin');
@@ -696,6 +696,17 @@ for (const largeur of [1000, 375]) {
   verifier(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `astreinte ${largeur} px : pas de défilement horizontal`);
   verifier(erreurs.length === 0, `astreinte ${largeur} px : aucune erreur console ${erreurs.join(' ')}`);
   await page.evaluate(() => localStorage.clear());
+  await page.close();
+}
+
+// The root: a choice of language (Apache redirects according to the browser,
+// the preview server shows the page), English first.
+{
+  const page = await navigateur.newPage();
+  await page.goto(`${BASE}/`);
+  const liens = await page.locator('.langues a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+  verifier(liens.join(' ') === '/en/ /fr/', 'racine : choix de la langue, l’anglais d’abord');
+  verifier((await page.locator('html').getAttribute('lang')) === 'en', 'racine : page en anglais');
   await page.close();
 }
 

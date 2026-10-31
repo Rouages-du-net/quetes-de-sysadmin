@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
-import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { LANGUES, traducteur } from '../src/textes';
 import { dansLaLangue } from './noms';
 
 const EFFACEUR = HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id);
@@ -14,7 +14,7 @@ const ZONE = '/etc/bind/zones/db.gardens.example';
 
 for (const langue of LANGUES)
   describe(`Langue : ${langue}`, () => {
-    const fr = langue === LANGUE_DE_REFERENCE;
+    const fr = langue === 'fr';
     const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     const partie = (termines: string[], chapitre: string) => {
       const c = new Console({ langue, termines: [...AVANT, ...termines] });

@@ -9,7 +9,7 @@ import { Shell } from '../src/moteur/shell';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
-import { LANGUES, LANGUE_DE_REFERENCE, traducteur, typographie } from '../src/textes';
+import { LANGUES, traducteur, typographie } from '../src/textes';
 import { nettoyer } from '../src/moteur/monde';
 import { dansLaLangue, machinesDansLaLangue } from './noms';
 import { sansCouleurs } from '../src/moteur/couleurs';
@@ -18,7 +18,7 @@ const chapitre = (id: string) => HISTOIRES.flatMap((h) => h.chapitres).find((c) 
 
 for (const langue of LANGUES)
   describe(`Langue : ${langue}`, () => {
-    const reference = langue === LANGUE_DE_REFERENCE;
+    const reference = langue === 'fr';
     // Une ligne écrite avec les noms français, dans la langue de la partie.
     const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
     // Un texte attendu, vérifié seulement dans la langue de référence.

@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/moteur/console';
 import { HISTOIRES } from '../src/moteur/chapitres';
 import { prerequis } from '../src/moteur/deverrouillage';
-import { LANGUES, LANGUE_DE_REFERENCE } from '../src/textes';
+import { LANGUES } from '../src/textes';
 import { formater, lireCaddyfile } from '../src/moteur/caddy';
 import { dansLaLangue, machinesDansLaLangue } from './noms';
 
@@ -36,7 +36,7 @@ describe('Le Caddyfile', () => {
 
 for (const langue of LANGUES)
   describe(`Langue : ${langue}`, () => {
-    const fr = langue === LANGUE_DE_REFERENCE;
+    const fr = langue === 'fr';
     const partie = () => {
       const c = new Console({ langue, termines: AVANT });
       const L = (l: string) => dansLaLangue(c.t, machinesDansLaLangue(c.t, l));

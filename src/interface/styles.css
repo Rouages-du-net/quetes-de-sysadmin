@@ -3,7 +3,7 @@
    --qds-accent… (posées sur l'élément ou au-dessus) ; le jeu les lit dans
    ses variables internes --_fond, --_accent…, qui ont des valeurs par
    défaut claires et sombres. Thème clair et sombre selon le système, ou
-   forcé par l'attribut theme="clair" | "sombre" de l'élément.
+   forcé par l'attribut theme="light" | "dark" de l'élément (ou "clair" | "sombre").
    Par défaut, « la salle des machines » : lumière de console (phosphore
    vert, voyants ambre) sur fond anthracite, ou « la salle blanche » en clair. */
 
@@ -28,7 +28,7 @@
 /* Thème sombre : seulement les valeurs par défaut ; les variables --qds-*
    données par la page d'accueil gardent la priorité. */
 @media (prefers-color-scheme: dark) {
-  :host(:not([theme='clair'])) .qds,
+  :host(:not([theme='clair']):not([theme='light'])) .qds,
   .qds:not([data-theme='clair']) {
     --_fond: var(--qds-fond, #0e1319);
     --_carte: var(--qds-carte, #16202a);
@@ -41,6 +41,7 @@
   }
 }
 :host([theme='sombre']) .qds,
+:host([theme='dark']) .qds,
 .qds[data-theme='sombre'] {
   --_fond: var(--qds-fond, #0e1319);
   --_carte: var(--qds-carte, #16202a);
@@ -194,6 +195,10 @@
 .qds .titre { font-weight: 700; font-family: var(--_police-mono); letter-spacing: -0.01em; }
 .qds .resume { font-size: 0.9rem; color: var(--_discret); }
 .qds .etat { font-size: 0.85rem; font-weight: 600; color: var(--_accent); }
+/* Difficulty, from 1 to 5 stars (the level in words is for screen readers). */
+.qds .difficulty { font-size: 0.8rem; color: var(--_ambre); letter-spacing: 0.05em; }
+.qds .histoires .difficulty { grid-column: 1 / -1; }
+.qds .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 .qds .terminal {
   background: var(--_terminal-fond);

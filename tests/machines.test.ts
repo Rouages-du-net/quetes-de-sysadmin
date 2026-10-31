@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { MACHINES, nomMachine, POSTE } from '../src/moteur/machines';
 import { motDePasse } from '../src/moteur/monde';
-import { LANGUES, LANGUE_DE_REFERENCE, traducteur } from '../src/textes';
+import { LANGUES, traducteur } from '../src/textes';
 
 const IDS = [POSTE, ...MACHINES].map((m) => m.nom);
 const MOTS_DE_PASSE = [...readFileSync(new URL('../src/textes/fr/mots-de-passe.ftl', import.meta.url), 'utf8').matchAll(/^mdp-(\S+) =/gm)].map((m) => m[1]);
@@ -20,7 +20,7 @@ const valeurs = (langue: string) =>
         .map((l) => [f, l.replace(/^[\w-]+(\.[\w-]+)?\s*=/, '')] as const),
     );
 
-for (const langue of LANGUES.filter((l) => l !== LANGUE_DE_REFERENCE))
+for (const langue of LANGUES.filter((l) => l !== 'fr'))
   describe(`Machines et mots de passe — ${langue}`, () => {
     const t = traducteur(langue);
 

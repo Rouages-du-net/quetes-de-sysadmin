@@ -43,7 +43,7 @@ C'est la partie que je n'ai pas prise à votre place :
 
 ## 3. Le format d'une quête (rappel)
 
-Le format complet, avec exemples, est dans `docs/CONTRIBUER.md`. En résumé,
+Le format complet, avec exemples, est dans `CONTRIBUTING.md`. En résumé,
 par chapitre :
 
 | Fichier | Contenu |

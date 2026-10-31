@@ -1,25 +1,25 @@
-// Les textes du jeu, au format Fluent (https://projectfluent.org) : un
-// dossier par langue (src/textes/fr/, src/textes/en/…), plusieurs fichiers
-// .ftl par dossier (interface, manuel, commandes, une histoire par fichier).
-// Le français est la langue de référence (les textes s'écrivent d'abord en
-// français) ; l'anglais est la langue par défaut et de repli : sans langue
-// demandée, ou dans une langue que le jeu ne connaît pas, le jeu parle
-// anglais, et un texte absent d'une traduction s'affiche en anglais (puis en
-// français s'il manque aussi). Le code n'utilise que des identifiants :
+// The game's texts, in Fluent format (https://projectfluent.org): one
+// directory per language (src/textes/en/, src/textes/fr/…), several .ftl
+// files per directory (interface, manual, commands, one story per file).
+// English is the reference language (texts are written in English first,
+// every key exists in English) and the default and fallback language:
+// without a requested language, or in a language the game doesn't know, the
+// game speaks English, and a text missing from a translation shows in
+// English. The code only uses identifiers:
 //
-//   t('eveil-message')                       un message
-//   t('histoire-effaceur.resume')            un attribut
-//   t('ls-acces-impossible', { cible })      avec des variables nommées
+//   t('eveil-message')                       a message
+//   t('histoire-effaceur.resume')            an attribute
+//   t('ls-acces-impossible', { cible })      with named variables
 //
-// Les pluriels, les nombres et les dates passent par Fluent, qui s'appuie sur
-// Intl. Un nombre passé en variable est mis en forme selon la langue
-// (« 1 234 ») : passer en texte (String(pid)) ce qui doit rester tel quel.
+// Plurals, numbers and dates go through Fluent, which relies on Intl. A
+// number passed as a variable is formatted for the language ("1,234"):
+// pass as text (String(pid)) what must stay as is.
 
 import { FluentBundle, FluentResource, type FluentVariable } from '@fluent/bundle';
 
 const SOURCES = import.meta.glob('./*/*.ftl', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
-export const LANGUE_DE_REFERENCE = 'fr';
+export const LANGUE_DE_REFERENCE = 'en';
 export const LANGUE_PAR_DEFAUT = 'en';
 export const LANGUES = [...new Set(Object.keys(SOURCES).map((f) => f.split('/')[1]))].sort();
 export type Langue = string;
