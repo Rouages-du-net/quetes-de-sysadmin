@@ -562,6 +562,10 @@ report
   /home/you/audit_report.txt → /home/vous/rapport-audit.txt
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /srv/orders → /srv/commandes
+  /srv/orders/.env → /srv/commandes/.env
+  /srv/orders/app → /srv/commandes/app
+  /srv/orders/app/server.js → /srv/commandes/app/server.js
 
 exposure
   /home/you → /home/vous
@@ -575,6 +579,8 @@ traces
   /home/you/email_salome.txt → /home/vous/courriel_salome.txt
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /srv/orders → /srv/commandes
+  /srv/orders/.env → /srv/commandes/.env
 
 follow-up
   /home/you → /home/vous
@@ -587,53 +593,109 @@ tired-disk
   /home/you → /home/vous
   /home/you/message_from_odile.txt → /home/vous/message_d_odile.txt
   /home/you/host_procedure.txt → /home/vous/procedure_hebergeur.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/expo-printemps
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/expo-printemps/tirages.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/sortie-port
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/sortie-port/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/concours-nuit
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/concours-nuit/raw.tar
   /var/mail/you → /var/mail/vous
+  /var/www/gallery → /var/www/galerie
+  /var/www/gallery/index.html → /var/www/galerie/index.html
 
 new-disk
   /home/you → /home/vous
   /home/you/message_from_odile.txt → /home/vous/message_d_odile.txt
   /home/you/host_procedure.txt → /home/vous/procedure_hebergeur.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/expo-printemps
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/expo-printemps/tirages.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/sortie-port
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/sortie-port/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/concours-nuit
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/concours-nuit/raw.tar
+  /var/www/gallery → /var/www/galerie
+  /var/www/gallery/index.html → /var/www/galerie/index.html
 
 more-room
   /home/you → /home/vous
   /home/you/message_from_odile.txt → /home/vous/message_d_odile.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/expo-printemps
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/expo-printemps/tirages.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/sortie-port
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/sortie-port/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/concours-nuit
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/concours-nuit/raw.tar
+  /srv/photos/2027/autumn-archives → /srv/photos/2027/archives-automne
+  /srv/photos/2027/autumn-archives/raw.tar → /srv/photos/2027/archives-automne/raw.tar
+  /var/www/gallery → /var/www/galerie
+  /var/www/gallery/index.html → /var/www/galerie/index.html
 
 stuck-boot
   /home/you → /home/vous
   /root/message_from_odile.txt → /root/message_d_odile.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/expo-printemps
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/expo-printemps/tirages.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/sortie-port
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/sortie-port/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/concours-nuit
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/concours-nuit/raw.tar
+  /srv/photos/2027/autumn-archives → /srv/photos/2027/archives-automne
+  /srv/photos/2027/autumn-archives/raw.tar → /srv/photos/2027/archives-automne/raw.tar
+  /var/www/gallery → /var/www/galerie
+  /var/www/gallery/index.html → /var/www/galerie/index.html
 
 bulletin
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/fournil
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/fournil
   /home/you → /home/vous
   /home/you/email_salome.txt → /home/vous/courriel_salome.txt
   /home/you/security_bulletin.txt → /home/vous/bulletin-securite.txt
   /home/you/watch.md → /home/vous/veille.md
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /var/www/bakery → /var/www/fournil
+  /var/www/bakery/index.html → /var/www/fournil/index.html
 
 priority
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/fournil
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/fournil
   /home/you → /home/vous
   /home/you/email_salome.txt → /home/vous/courriel_salome.txt
   /home/you/priority.md → /home/vous/priorite.md
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /var/www/bakery → /var/www/fournil
+  /var/www/bakery/index.html → /var/www/fournil/index.html
 
 fix
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/fournil
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/fournil
   /home/you → /home/vous
   /home/you/email_salome.txt → /home/vous/courriel_salome.txt
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /var/www/bakery → /var/www/fournil
+  /var/www/bakery/index.html → /var/www/fournil/index.html
 
 proof
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/fournil
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/fournil
   /home/you → /home/vous
   /home/you/email_salome.txt → /home/vous/courriel_salome.txt
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /var/www/bakery → /var/www/fournil
+  /var/www/bakery/index.html → /var/www/fournil/index.html
 
 routine
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/fournil
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/fournil
   /home/you → /home/vous
   /home/you/email_salome.txt → /home/vous/courriel_salome.txt
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /var/www/bakery → /var/www/fournil
+  /var/www/bakery/index.html → /var/www/fournil/index.html
 
 postman
   /home/you → /home/vous

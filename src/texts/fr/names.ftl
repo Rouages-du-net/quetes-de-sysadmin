@@ -312,3 +312,24 @@ name-id_backup-pub = id_sauvegarde.pub
 name-commcentre = maisonasso
 name-membership-html = adhesion.html
 name-prices-2025-html = tarifs-2025.html
+## L'Audit, La Veille et Le Labo : les noms du monde (le compte, le service,
+## la base et le dossier de l'appli de commandes ; le domaine et le site du
+## Fournil ; le groupe de volumes du Labo, ses dossiers de photos et ses
+## numérisations)
+name-orders = commandes
+name-backup-sh = sauvegarde.sh
+name-neighbour-internal = voisin.internal
+name-shop = boutique
+name-laptop = portable
+name-bakery-example = fournil.example
+name-bakery = fournil
+name-lab = labo
+name-gallery = galerie
+name-spring-show = expo-printemps
+name-harbour-trip = sortie-port
+name-night-contest = concours-nuit
+name-autumn-archives = archives-automne
+name-prints-tar = tirages.tar
+name-negatives-001-tif = negatifs-001.tif
+name-negatives-002-tif = negatifs-002.tif
+name-prints-001-tif = tirages-001.tif

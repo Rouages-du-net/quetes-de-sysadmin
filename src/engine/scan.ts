@@ -33,7 +33,7 @@ export interface ServiceScan {
 
 export interface ScanHost {
   address: string;
-  // The first name is used for display ("fournil.internal (192.0.2.22)").
+  // The first name is used for display ("bakery.internal (192.0.2.22)").
   names: string[];
   // The machine being played: its ports' state comes from the model, and 127.0.0.1 is itself.
   local?: boolean;

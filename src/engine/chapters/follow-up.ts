@@ -1,8 +1,8 @@
-// Story "L'Audit" — chapter "The follow-up visit": the fixes of
+// Story "The Audit" — chapter "The follow-up visit": the fixes of
 // parts 1 to 4 are in place. Before handing in her report, Salomé comes back
 // to check, like an auditor: scan again, run Lynis,
 // fix what matters, prove it, then write the closing report.
-//   - nmap -sV fournil.internal: only 22, 80 and 443 seen from the internet; but
+//   - nmap -sV bakery.internal: only 22, 80 and 443 seen from the internet; but
 //     the SSH version is the one from before the security update;
 //   - sudo lynis audit system: a warning (PKGS-7392, vulnerable
 //     packages) and suggestions of uneven severity. Some can be
@@ -51,7 +51,7 @@ PASS_MIN_DAYS   0
 PASS_WARN_AGE   7
 ENCRYPT_METHOD  YESCRYPT`;
 
-// The firewall after "L'exposition": SSH, 80 and 443.
+// The firewall after "The Exposure": SSH, 80 and 443.
 const RULES: Rule[] = [
   { action: 'allow', to: 'OpenSSH', ports: [22], forEachOf: null },
   { action: 'allow', to: 'Nginx Full', ports: [80, 443], forEachOf: null },
@@ -122,11 +122,11 @@ export const againstVisit: Chapter = {
   steps: ['scan', 'lynis', 'update', 'hardened', 'proof-lynis', 'nmap-own', 'end'],
   password: PASSWORD,
   accounts: () => bakeryAccounts(false),
-  state: () => ({
+  state: (t) => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
     ufw: { ...newFirewall(), enabled: true, rules: RULES.map((r) => ({ ...r })) },
     listening: bakeryListening(true),
-    scan: bakeryScan(),
+    scan: bakeryScan(t),
     apt: bakeryApt(true),
     systemd: newSystemd('bakery', NOW - 5 * 86_400_000, NOW, {
       ssh: serviceSsh(),

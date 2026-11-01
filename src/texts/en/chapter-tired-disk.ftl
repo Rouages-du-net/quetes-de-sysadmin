@@ -1,7 +1,7 @@
 ### Story "The Lab", chapter 1 "The tired disk": SMART, software RAID
 ### (mdadm), taking a disk out of its arrays. Commands, options, paths and
 ### outputs (smartctl, mdadm, /proc/mdstat) are not translated. Also holds
-### the texts shared by the story (labo-…).
+### the texts shared by the story (lab-…).
 
 chapter-tired-disk = The tired disk
     .summary = smartd is worried about a disk: read what SMART really says, understand the server's RAID, take the sick disk out of its arrays and ask for its replacement by its serial number.
@@ -26,6 +26,9 @@ lab-syslog =
     Nov 13 03:00:12 lab smartd[588]: Device: /dev/sdb [SAT], starting scheduled Short Self-Test.
     Nov 13 03:02:44 lab smartd[588]: Device: /dev/sdb [SAT], previous self-test completed with error (read test element)
     Nov 13 03:12:44 lab smartd[588]: Device: /dev/sdb [SAT], 8 Currently unreadable (pending) sectors
+
+# The gallery's home page (/var/www/gallery/index.html).
+lab-gallery-index = <!doctype html><title>The Lab</title>
 
 ## Files
 

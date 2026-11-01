@@ -23,3 +23,6 @@ password-film-2027 = argentique-2027
 
 ## La Maison des associations : le compte chez l'hébergeur
 password-Kp7-hosting-2028 = Kp7-hebergement-2028
+## L'Audit et La Veille
+password-butter-brioche-91 = brioche-beurre-91
+password-sourdough-2028 = levain-2028

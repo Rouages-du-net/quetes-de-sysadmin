@@ -23,3 +23,6 @@ password-film-2027 = film-2027
 
 ## The Community Centre: the account at the web host
 password-Kp7-hosting-2028 = Kp7-hosting-2028
+## The Audit and The Watch
+password-butter-brioche-91 = butter-brioche-91
+password-sourdough-2028 = sourdough-2028

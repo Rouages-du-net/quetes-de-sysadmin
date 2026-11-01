@@ -1,4 +1,4 @@
-// La Veille: the petrin server, six months after "L'Audit". Replayed with
+// The Watch: the kneader server, six months after "The Audit". Replayed with
 // the console, in every language.
 
 import { describe, expect, it } from 'vitest';
@@ -6,11 +6,11 @@ import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
 import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage } from './names';
+import { inLanguage, machinesInLanguage } from './names';
 import { CVE } from '../src/engine/chapters/watch';
 
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('watch')])];
-const MDP = 'levain-2028';
+const MDP = 'sourdough-2028';
 
 for (const language of LANGUAGES)
   describe(`The Watch — ${language}`, () => {
@@ -21,7 +21,7 @@ for (const language of LANGUAGES)
       const c = new Console({ language, finished: [...ERASER, ...finished] });
       const one = (l: string) => {
         let output = c.execute(L(l)) ?? '';
-        if (c.shell.waiting) output += '\n' + (c.execute(MDP) ?? '');
+        if (c.shell.waiting) output += '\n' + (c.execute(machinesInLanguage(c.t, MDP)) ?? '');
         return output;
       };
       const play = (lines: string[]) => lines.map(one).join('\n');
@@ -30,7 +30,7 @@ for (const language of LANGUAGES)
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
-      play(['ssh petrin', 'yes']);
+      play(['ssh kneader', 'yes']);
       return { c, jouer: play, editer: edit };
     };
 
@@ -89,9 +89,9 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
     it('chapter 2 — false lead: ranking by score alone (rsync before nginx)', () => {
       const { c, jouer: play, editer: edit } = part(['bulletin']);
       const e = (id: string) => c.shell.flags.has(id);
-      play(['nmap -sV petrin.internal']);
+      play(['nmap -sV kneader.internal']);
       edit('nano priority.md', () => DOC_PRIORITY(true));
-      expect(e('score-seul') || !c.finished.includes('priority')).toBe(true);
+      expect(e('score-only') || !c.finished.includes('priority')).toBe(true);
       expect(c.finished).not.toContain('priority');
       edit('nano priority.md', () => DOC_PRIORITY(false));
       expect(c.finished).toContain('priority');
@@ -104,7 +104,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       expect(all).toContain('Upgrading: 0');
       expect(c.finished).not.toContain('fix');
       play(['sudo apt update', 'sudo apt upgrade -y']);
-      all = play(['curl -I http://fournil.example/']);
+      all = play(['curl -I http://bakery.example/']);
       expect(all).toContain('200');
       expect(c.finished).toContain('fix');
     });
@@ -117,7 +117,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       expect(c.finished).not.toContain('proof');
       all = play(['grep "HTTP/2" /var/log/nginx/access.log']);
       expect(all).toContain('203.0.113.77');
-      play(['curl -I http://fournil.example/']);
+      play(['curl -I http://bakery.example/']);
       expect(c.finished).toContain('proof');
     });
 
@@ -135,7 +135,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       expect(c.finished).not.toContain('routine');
       edit('sudo nano /etc/apt/apt.conf.d/50unattended-upgrades', restrict);
       expect(c.finished).not.toContain('routine');
-      edit('sudo crontab -e', (t) => `${t}\n0 9 * * 1 apt list --upgradable | mail -s "Veille hebdomadaire" root\n`);
+      edit('sudo crontab -e', (t) => `${t}\n0 9 * * 1 apt list --upgradable | mail -s "Weekly watch" root\n`);
       expect(c.finished).toContain('routine');
     });
 
@@ -144,14 +144,14 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       edit('sudo nano /etc/apt/apt.conf.d/20auto-upgrades', TWENTY_ACTIVE);
       edit('sudo nano /etc/apt/apt.conf.d/50unattended-upgrades', restrict);
       edit(
-        'sudo nano /etc/systemd/system/veille.service',
-        () => '[Unit]\nDescription=Veille hebdomadaire\n\n[Service]\nType=oneshot\nExecStart=/bin/sh -c "apt list --upgradable | mail -s Veille root"\n',
+        'sudo nano /etc/systemd/system/weekly-watch.service',
+        () => '[Unit]\nDescription=Weekly watch\n\n[Service]\nType=oneshot\nExecStart=/bin/sh -c "apt list --upgradable | mail -s Watch root"\n',
       );
       edit(
-        'sudo nano /etc/systemd/system/veille.timer',
-        () => '[Unit]\nDescription=Veille hebdomadaire\n\n[Timer]\nOnCalendar=weekly\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n',
+        'sudo nano /etc/systemd/system/weekly-watch.timer',
+        () => '[Unit]\nDescription=Weekly watch\n\n[Timer]\nOnCalendar=weekly\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n',
       );
-      play(['sudo systemctl enable --now veille.timer']);
+      play(['sudo systemctl enable --now weekly-watch.timer']);
       expect(c.finished).toContain('routine');
     });
 

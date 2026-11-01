@@ -1,13 +1,13 @@
 // Story "The Watch": what its chapters have in common. Six months after
-// "The Audit", Le Fournil has moved to a new server (petrin, same public
-// domain fournil.example) while the business was growing. Salomé comes back
+// "The Audit", the Bakery has moved to a new server (kneader, same public
+// domain bakery.example) while the business was growing. Salomé comes back
 // no longer to audit, but to pass on a habit: the weekly security watch,
 // which you keep up alone once she is gone. No real CVE: fictitious
 // identifiers (CVE-2099-NNNNN), shaped like real ones. You only fix after
 // checking it concerns this server; you break nothing; you prove it.
 
-import { d, f, accountsFiles, player, type Accounts, type Directory, type Node } from '../world';
-import { publicKey, storyMachine } from '../machines';
+import { d, f, path, name, accountsFiles, player, type Accounts, type Directory, type Node } from '../world';
+import { publicKey, storyMachine, machineName } from '../machines';
 import type { Translate } from '../../texts';
 import type { AptState } from '../commands/apt';
 import { NGINX_CONF, MIME } from '../commands/apt';
@@ -27,7 +27,8 @@ export const initialiseWatch = (j: Game) => {
 };
 
 export const M = '/home/you';
-export const PASSWORD = 'levain-2028';
+// levain-2028 in French (passwords.ftl).
+export const PASSWORD = 'sourdough-2028';
 // Tuesday 15 September 2028, 9:30: six months after "The Audit".
 export const NOW = Date.UTC(2028, 8, 15, 9, 30, 0);
 // Any address on the internet (RFC 5737).
@@ -110,27 +111,21 @@ AcceptEnv LANG LC_*
 Subsystem	sftp	/usr/lib/openssh/sftp-server
 `.trim();
 
-// Le Fournil's site: an order page, nothing dynamic.
-export const SITE = `server {
+// The Bakery's site: an order page, nothing dynamic. Its domain and its
+// folder take their name in the language (bakery.example, /var/www/bakery).
+export const site = (t: Translate) => `server {
     listen 80 default_server;
     listen [::]:80 default_server;
 
-    server_name fournil.example www.fournil.example;
+    server_name ${name(t, 'bakery.example')} www.${name(t, 'bakery.example')};
 
-    root /var/www/fournil;
+    root ${path(t, '/var/www/bakery')};
     index index.html;
 
     location ~ /\\. {
         deny all;
     }
 }`;
-
-const INDEX = `<!DOCTYPE html>
-<html lang="fr">
-<title>Le Fournil</title>
-<h1>Le Fournil</h1>
-<p>Commandez votre pain pour le retrait en boutique.</p>
-</html>`;
 
 // The accounts: Nadia (the manager, no sudo access) and the player's account.
 export const watchAccounts = (): Accounts => ({
@@ -172,14 +167,14 @@ const SERVICES: ServiceScan[] = [
   { port: 443, service: 'http', ssl: true, product: 'nginx 1.26.3' },
 ];
 
-/** What nmap sees of Le Fournil, from the internet (a single host: the scope is already settled). */
-export const watchScan = (): ScanState => ({
-  hosts: [{ address: ADDRESS, names: ['petrin.internal', 'fournil.example', 'petrin'], local: true, services: SERVICES, latency: 0.012 }],
+/** What nmap sees of the Bakery, from the internet (a single host: the scope is already settled). */
+export const watchScan = (t: Translate): ScanState => ({
+  hosts: [{ address: ADDRESS, names: ['kneader.internal', name(t, 'bakery.example'), 'kneader'], local: true, services: SERVICES, latency: 0.012 }],
   scope: [ADDRESS],
 });
 
 /** nginx's initial state (before loadNginx): the names it serves, so that curl resolves them. */
-export const watchNginx = () => ({ load: null, names: ['fournil.example', 'www.fournil.example', 'petrin', 'petrin.internal', ADDRESS] });
+export const watchNginx = (t: Translate) => ({ load: null, names: [name(t, 'bakery.example'), `www.${name(t, 'bakery.example')}`, 'kneader', 'kneader.internal', ADDRESS] });
 
 /** The listening sockets: nginx and sshd only (rsync isn't a service, just a command-line tool). */
 export const watchListening = (): Listening[] => [
@@ -199,7 +194,7 @@ export function watchWorld(
       etc: d(
         {
           ...accountsFiles(),
-          hostname: file('petrin'),
+          hostname: file(machineName(t, 'kneader')),
           sudoers: file(SUDOERS, 'root', 'r--r-----'),
           'sudoers.d': d({ README: file('# See sudoers(5): files here are read unless their name has a dot or ends in ~.', 'root', 'r--r-----') }, undefined, { owner: 'root', mode: 'rwxr-xr-x' }),
           ssh: d({ sshd_config: f(SSHD_CONFIG, { lines: true, owner: 'root' }) }, undefined, root),
@@ -210,8 +205,8 @@ export function watchWorld(
               'mime.types': file(MIME),
               'conf.d': d({}, undefined, root),
               'modules-enabled': d({}, undefined, root),
-              'sites-available': d({ fournil: file(SITE) }, undefined, root),
-              'sites-enabled': d({ fournil: f('', { owner: 'root', link: '/etc/nginx/sites-available/fournil' }) }, undefined, root),
+              'sites-available': d({ bakery: file(site(t)) }, undefined, root),
+              'sites-enabled': d({ bakery: f('', { owner: 'root', link: path(t, '/etc/nginx/sites-available/bakery') }) }, undefined, root),
             },
             undefined,
             root,
@@ -234,7 +229,7 @@ export function watchWorld(
       ),
       var: d(
         {
-          www: d({ fournil: d({ 'index.html': file(INDEX, 'root') }, undefined, root) }, undefined, root),
+          www: d({ bakery: d({ 'index.html': file(t('watch-site-index'), 'root') }, undefined, root) }, undefined, root),
           log: d({ nginx: d({ 'access.log': f(o.logAccess ?? '', { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }) }, undefined, { owner: 'root', group: 'adm' }) }, undefined, root),
         },
         undefined,

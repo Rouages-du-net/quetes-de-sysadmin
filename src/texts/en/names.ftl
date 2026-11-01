@@ -265,7 +265,7 @@ name-closing_report-md = closing_report.md
 name-message_from_odile-txt = message_from_odile.txt
 name-host_procedure-txt = host_procedure.txt
 
-## The Watch (the petrin server, six months after the audit)
+## The Watch (the kneader server, six months after the audit)
 name-security_bulletin-txt = security_bulletin.txt
 name-watch-md = watch.md
 name-priority-md = priority.md
@@ -310,3 +310,23 @@ name-id_backup-pub = id_backup.pub
 name-commcentre = commcentre
 name-membership-html = membership.html
 name-prices-2025-html = prices-2025.html
+## The Audit, The Watch and The Lab: the world's names (the orders app's
+## account, service, database and folder; the bakery's domain and site; the
+## Lab's volume group, photo folders and scans)
+name-orders = orders
+name-backup-sh = backup.sh
+name-neighbour-internal = neighbour.internal
+name-shop = shop
+name-laptop = laptop
+name-bakery-example = bakery.example
+name-bakery = bakery
+name-lab = lab
+name-gallery = gallery
+name-spring-show = spring-show
+name-harbour-trip = harbour-trip
+name-night-contest = night-contest
+name-autumn-archives = autumn-archives
+name-prints-tar = prints.tar
+name-negatives-001-tif = negatives-001.tif
+name-negatives-002-tif = negatives-002.tif
+name-prints-001-tif = prints-001.tif

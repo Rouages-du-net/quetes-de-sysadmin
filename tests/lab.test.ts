@@ -12,6 +12,7 @@ import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
 import { LANGUAGES, translator } from '../src/texts';
 import { inLanguage, machinesInLanguage } from './names';
+import { name } from '../src/engine/world';
 import { SERIES } from '../src/engine/chapters/lab';
 import { storageOf } from '../src/engine/storage';
 
@@ -22,6 +23,9 @@ for (const language of LANGUAGES)
   describe(`The Lab — ${language}`, () => {
     const fr = language === 'fr';
     const L = (line: string) => inLanguage(translator(language), line);
+    // The volume group (lab, labo in French) and the machine's name, which names the arrays (lab:2).
+    const VG = name(translator(language), 'lab');
+    const HOST = machineName(translator(language), 'lab');
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);
 
     // A game: each line (written with the French names), with sudo's password if asked for.
@@ -57,7 +61,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('md1 : active raid1 sda3[0]\n      1919824896 blocks super 1.2 [2/1] [U_]');
       contains(all, 'ne fait plus partie');
       expect(s.finished).toBe(false);
-      all = play(['lsblk -d -o NAME,SERIAL', `echo "Merci de remplacer le disque S/N ${SERIES.sdb}" > ~/ticket.txt`]);
+      all = play(['lsblk -d -o NAME,SERIAL', `echo "Please replace the disk S/N ${SERIES.sdb}" > ~/ticket.txt`]);
       expect(all).toMatch(new RegExp(`sdb\\s+${SERIES.sdb}`));
       contains(all, 'Tu as terminé le chapitre 1 du Labo');
       expect(Object.values(st().arrays).every((g) => g.members.length === 1)).toBe(true);
@@ -85,10 +89,10 @@ for (const language of LANGUAGES)
       // Then the right disk, in both arrays.
       play(['sudo mdadm /dev/md0 --fail /dev/sdb2 --remove /dev/sdb2', 'sudo mdadm /dev/md1 --fail /dev/sdb3 --remove /dev/sdb3']);
       // A ticket with sda's number: refused (the healthy disk would be unplugged).
-      all = play([`echo "Disque à remplacer : ${SERIES.sda}" > ~/ticket.txt`]);
+      all = play([`echo "Disk to replace: ${SERIES.sda}" > ~/ticket.txt`]);
       contains(all, 'le numéro de série de sda');
       expect(s.finished).toBe(false);
-      play([`echo "Disque à remplacer : ${SERIES.sdb}" > ~/ticket.txt`]);
+      play([`echo "Disk to replace: ${SERIES.sdb}" > ~/ticket.txt`]);
       expect(s.finished).toBe(true);
     });
 
@@ -163,7 +167,7 @@ for (const language of LANGUAGES)
         'sudo mdadm --detail /dev/sda2',
         'sudo mdadm /dev/md0 --fail /dev/sdc2',
         'sudo mdadm --detail --scan',
-        'lsblk -o NAME,COULEUR',
+        'lsblk -o NAME,COLOUR',
         'sudo smartctl -t short /dev/sdb',
         'sudo smartctl -l selftest /dev/sdb',
       ]);
@@ -174,8 +178,8 @@ for (const language of LANGUAGES)
       expect(all).toContain('mdadm: cannot open /dev/md9: No such file or directory');
       expect(all).toContain('mdadm: /dev/sda2 does not appear to be an md device');
       expect(all).toContain('mdadm: set device faulty failed for /dev/sdc2:  No such device');
-      expect(all).toContain('ARRAY /dev/md/0 metadata=1.2 name=lab:0 UUID=5d1e0a3c:7b2f4e91:a6c83f0d:9b1e2c47');
-      expect(all).toContain('lsblk: unknown column: COULEUR');
+      expect(all).toContain(`ARRAY /dev/md/0 metadata=1.2 name=${HOST}:0 UUID=5d1e0a3c:7b2f4e91:a6c83f0d:9b1e2c47`);
+      expect(all).toContain('lsblk: unknown column: COLOUR');
       expect(all).toContain('Testing has begun.');
       expect(all).toMatch(/# 1  Short offline\s+Completed: read failure\s+90%/);
       // sfdisk and grub-install: in chapter 2.
@@ -198,8 +202,8 @@ for (const language of LANGUAGES)
     it('chapter 3 — solution: an array of the new disks, pvcreate, vgextend, lvextend then resize2fs, mdadm.conf, initramfs', () => {
       const { s, jouer: play, st } = part('more-room');
       let all = play(['cat message_from_odile.txt', 'df -h /srv', 'sudo vgs', 'lsblk']);
-      expect(all).toMatch(/\/dev\/mapper\/labo-photos.* 97% \/srv/);
-      expect(all).toMatch(/labo +1 +1 +0 wz--n- <1\.79t +0\n/);
+      expect(all).toMatch(new RegExp(`/dev/mapper/${VG}-photos.* 97% /srv`));
+      expect(all).toMatch(new RegExp(`${VG} +1 +1 +0 wz--n- <1\\.79t +0\n`));
       expect(all).toMatch(/^sdc +8:32 +0 3\.6T +0 disk$/m);
       contains(all, 'un volume logique LVM');
       all = play(['sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 /dev/sdc /dev/sdd']);
@@ -207,18 +211,18 @@ for (const language of LANGUAGES)
       all = play(['y', 'cat /proc/mdstat']);
       expect(all).toContain('mdadm: array /dev/md2 started.');
       expect(all).toMatch(/md2 : active raid1 sdd\[1\] sdc\[0\]\n +\d+ blocks super 1\.2 \[2\/2\] \[UU\]\n +\[=*>\.*\] +resync = /);
-      all = play(['sudo pvcreate /dev/md2', 'sudo vgextend labo /dev/md2', 'sudo lvextend -l +100%FREE /dev/labo/photos', 'df -h /srv']);
+      all = play(['sudo pvcreate /dev/md2', 'sudo vgextend lab /dev/md2', 'sudo lvextend -l +100%FREE /dev/lab/photos', 'df -h /srv']);
       expect(all).toContain('Physical volume "/dev/md2" successfully created.');
-      expect(all).toContain('Volume group "labo" successfully extended');
-      expect(all).toMatch(/Size of logical volume labo\/photos changed from <1\.79 TiB \(\d+ extents\) to <5\.43 TiB/);
+      expect(all).toContain(`Volume group "${VG}" successfully extended`);
+      expect(all).toMatch(new RegExp(`Size of logical volume ${VG}/photos changed from <1\\.79 TiB \\(\\d+ extents\\) to <5\\.43 TiB`));
       expect(all).toMatch(/ 97% \/srv/);
       contains(all, 'df ne voit rien');
-      all = play(['sudo resize2fs /dev/mapper/labo-photos', 'df -h /srv']);
+      all = play([`sudo resize2fs /dev/mapper/${VG}-photos`, 'df -h /srv']);
       expect(all).toContain('on-line resizing required');
       expect(all).toMatch(/ 32% \/srv/);
       expect(s.finished).toBe(false);
       all = play(['sudo mdadm --detail --brief /dev/md2 | sudo tee -a /etc/mdadm/mdadm.conf']);
-      expect(all).toMatch(/^ARRAY \/dev\/md2 metadata=1\.2 name=labo:2 UUID=[0-9a-f:]{35}$/m);
+      expect(all).toMatch(new RegExp(`^ARRAY /dev/md2 metadata=1\\.2 name=${HOST}:2 UUID=[0-9a-f:]{35}$`, 'm'));
       expect(s.finished).toBe(false);
       all = play(['sudo update-initramfs -u']);
       expect(all).toContain('update-initramfs: Generating /boot/initrd.img-6.12.48+deb13-amd64');
@@ -229,10 +233,10 @@ for (const language of LANGUAGES)
 
     it('chapter 3 — another solution: --run, vgextend without pvcreate, lvextend -r -L, mdadm.conf written with nano', () => {
       const { s, jouer: play } = part('more-room');
-      let all = play(['sudo mdadm -C /dev/md2 -l1 -n2 --run /dev/sdc /dev/sdd', 'sudo vgextend labo /dev/md2', 'sudo lvextend -r -L +2T /dev/labo/photos']);
+      let all = play(['sudo mdadm -C /dev/md2 -l1 -n2 --run /dev/sdc /dev/sdd', 'sudo vgextend lab /dev/md2', 'sudo lvextend -r -L +2T /dev/lab/photos']);
       expect(all).toContain('Physical volume "/dev/md2" successfully created.');
-      expect(all).toContain('File system ext4 found on labo/photos mounted at /srv.');
-      expect(all).toContain('Extended file system ext4 on labo/photos.');
+      expect(all).toContain(`File system ext4 found on ${VG}/photos mounted at /srv.`);
+      expect(all).toContain(`Extended file system ext4 on ${VG}/photos.`);
       all = play(['sudo mdadm --detail --brief /dev/md2']);
       const line = /ARRAY .*/.exec(all)![0];
       s.execute('sudo nano /etc/mdadm/mdadm.conf');
@@ -245,40 +249,40 @@ for (const language of LANGUAGES)
     it('chapter 3 — false lead: a lone disk in the group, repaired with a degraded array and pvmove', () => {
       const { s, jouer: play, st } = part('more-room');
       // sdc given as is to LVM, and the volume extended onto it: no more redundancy.
-      let all = play(['sudo vgextend labo /dev/sdc', 'sudo lvextend -r -L +500G /dev/labo/photos']);
-      expect(all).toContain('Volume group "labo" successfully extended');
+      let all = play(['sudo vgextend lab /dev/sdc', 'sudo lvextend -r -L +500G /dev/lab/photos']);
+      expect(all).toContain(`Volume group "${VG}" successfully extended`);
       contains(all, 'tel quel, sans');
       // It can neither join an array nor leave the group while it holds data.
-      all = play(['sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 /dev/sdc /dev/sdd', 'sudo vgreduce labo /dev/sdc', 'sudo pvmove /dev/sdc']);
+      all = play(['sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 /dev/sdc /dev/sdd', 'sudo vgreduce lab /dev/sdc', 'sudo pvmove /dev/sdc']);
       expect(all).toContain('mdadm: cannot open /dev/sdc: Device or resource busy');
       expect(all).toContain('Physical volume "/dev/sdc" still in use');
       expect(all).toMatch(/Insufficient free space: \d+ extents needed, but only 0 available/);
       // A degraded array on sdd, the data moved, sdc freed then added to the array.
       all = play([
         'sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 --run /dev/sdd missing',
-        'sudo vgextend labo /dev/md2',
+        'sudo vgextend lab /dev/md2',
         'sudo pvmove /dev/sdc /dev/md2',
-        'sudo vgreduce labo /dev/sdc',
+        'sudo vgreduce lab /dev/sdc',
         'sudo pvremove /dev/sdc',
         'sudo mdadm /dev/md2 --add /dev/sdc',
         'cat /proc/mdstat',
       ]);
       expect(all).toContain('/dev/sdc: Moved: 100.00%');
-      expect(all).toContain('Removed "/dev/sdc" from volume group "labo"');
+      expect(all).toContain(`Removed "/dev/sdc" from volume group "${VG}"`);
       expect(all).toContain('Labels on physical volume "/dev/sdc" successfully wiped.');
       expect(all).toContain('mdadm: added /dev/sdc');
       expect(all).toMatch(/md2 : active raid1 sdc\[\d\] sdd\[0\]/);
       // 500 GB isn't enough for the contest: the rest of the space.
       expect(s.finished).toBe(false);
-      play(['sudo lvextend -r -l +100%FREE /dev/labo/photos', 'sudo mdadm --detail --brief /dev/md2 | sudo tee -a /etc/mdadm/mdadm.conf', 'sudo update-initramfs -u']);
+      play(['sudo lvextend -r -l +100%FREE /dev/lab/photos', 'sudo mdadm --detail --brief /dev/md2 | sudo tee -a /etc/mdadm/mdadm.conf', 'sudo update-initramfs -u']);
       expect(Object.keys(st().lvm!.pvs).sort()).toEqual(['md1', 'md2']);
       expect(s.finished).toBe(true);
     });
 
     it('chapter 3 — false leads: lvextend without the file system, the duplicates of --scan, the initramfs rebuilt too early', () => {
       const { s, jouer: play } = part('more-room');
-      play(['sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 --run /dev/sdc /dev/sdd', 'sudo vgextend labo /dev/md2', 'sudo lvextend -l +100%FREE /dev/labo/photos']);
-      let all = play(['sudo lvextend -l +100%FREE /dev/labo/photos', 'sudo update-initramfs -u', 'sudo resize2fs /dev/labo/photos', 'sudo resize2fs /dev/labo/photos']);
+      play(['sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 --run /dev/sdc /dev/sdd', 'sudo vgextend lab /dev/md2', 'sudo lvextend -l +100%FREE /dev/lab/photos']);
+      let all = play(['sudo lvextend -l +100%FREE /dev/lab/photos', 'sudo update-initramfs -u', 'sudo resize2fs /dev/lab/photos', 'sudo resize2fs /dev/lab/photos']);
       expect(all).toMatch(/New size \(\d+ extents\) matches existing size/);
       expect(all).toMatch(/The filesystem is already \d+ \(4k\) blocks long\.  Nothing to do!/);
       all = play(['sudo mdadm --detail --scan | sudo tee -a /etc/mdadm/mdadm.conf']);
@@ -381,11 +385,11 @@ for (const language of LANGUAGES)
       s.execute('nano /etc/fstab');
       s.saveEdition(s.edition!.text + '\n/dev/sdz9 /mnt\n');
       contains(s.quitEdition(), 'une ligne illisible');
-      const all = play(['mount -a', 'findmnt --verify', 'blkid /dev/sdz9', 'blkid -U c27a9e41-5b3d-4f8a-a1e6-9d0b2c4f7e13', 'mount /srv/scans', 'mount /nulle-part']);
+      const all = play(['mount -a', 'findmnt --verify', 'blkid /dev/sdz9', 'blkid -U c27a9e41-5b3d-4f8a-a1e6-9d0b2c4f7e13', 'mount /srv/scans', 'mount /nowhere']);
       expect(all).toMatch(/mount: \/etc\/fstab: parse error at line \d+ -- ignored/);
       expect(all).toMatch(/1 parse error, 1 error, 0 warnings/);
       expect(all).toContain('/dev/sde1');
-      expect(all).toContain("mount: /nulle-part: can't find in /etc/fstab.");
+      expect(all).toContain("mount: /nowhere: can't find in /etc/fstab.");
       for (const c of ['blkid', 'findmnt', 'fstab']) expect(s.execute(`man ${c}`)).toMatch(new RegExp(`${c.toUpperCase()}\\([58]\\)`));
     });
 

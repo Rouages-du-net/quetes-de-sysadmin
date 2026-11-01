@@ -1,7 +1,7 @@
-// Story "La Veille" — chapter "The priority": two CVEs remain to
+// Story "The Watch" — chapter "The priority": two CVEs remain to
 // handle (nginx and rsync). The CVSS score alone isn't enough to decide
 // what to fix first: it must be crossed with exposure, already
-// learnt in "Le périmètre" and "L'exposition" (L'Audit). nginx (80,
+// learnt in "The Scope" and "The Exposure" (The Audit). nginx (80,
 // 443) is reachable from the internet; rsync has no listening port (a
 // command-line tool, not a service): even with a lower score,
 // nginx comes first.
@@ -59,13 +59,13 @@ export const priority: Chapter = {
   steps: ['expose', 'order', 'end'],
   password: PASSWORD,
   accounts: watchAccounts,
-  state: () => ({
+  state: (t) => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
     listening: watchListening(),
-    nginx: watchNginx(),
-    scan: watchScan(),
+    nginx: watchNginx(t),
+    scan: watchScan(t),
     apt: watchApt(false),
-    systemd: newSystemd('petrin', STARTED, NOW, {
+    systemd: newSystemd('kneader', STARTED, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },

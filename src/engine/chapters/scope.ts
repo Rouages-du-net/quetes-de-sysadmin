@@ -1,22 +1,22 @@
-// Story "L'Audit" — chapter "The scope": before scanning anything at all,
+// Story "The Audit" — chapter "The scope": before scanning anything at all,
 // you read the engagement letter: it says what you are allowed to probe
-// (the fournil server, 192.0.2.22) and what you are not allowed to touch.
+// (the bakery server, 192.0.2.22) and what you are not allowed to touch.
 // The neighbour's server (the pizzeria, 192.0.2.24) shares the router and
 // looks "interesting" (an open database): it is out of scope. You inventory
-// Le Fournil as seen from the internet with nmap, keep a record (-oN), and
+// the Bakery as seen from the internet with nmap, keep a record (-oN), and
 // write your notes: what you found, and what you spotted without touching it.
-//   - nmap -sV fournil.internal -oN inventaire.txt: the open ports and the
+//   - nmap -sV bakery.internal -oN inventory.txt: the open ports and the
 //     versions; ports 5432 (PostgreSQL) and 6379 (Redis) have no business there;
 //   - a scan of the whole network (192.0.2.0/24) probes the neighbour: the mistake.
 //     The game accepts it (without consequence) and tells it in the debrief;
-//   - notes-audit.md: scope, findings, out of scope. Salomé rereads at each
+//   - audit_notes.md: scope, findings, out of scope. Salomé rereads at each
 //     save and says what is missing.
-// Objective checked on the state: a record of nmap -sV of Le Fournil kept in
+// Objective checked on the state: a record of nmap -sV of the Bakery kept in
 // a file, completed notes that name ports 5432 and 6379 and the machine out
 // of scope. The debrief depends on what was probed.
 // Sources: https://nmap.org/book/man.html, https://nmap.org/book/legal-issues.html
 
-import { path, f, name, type Chapter } from '../world';
+import { path, f, name, player, type Chapter } from '../world';
 import type { Game, Shell } from '../shell';
 import { newSystemd } from '../systemd';
 import type { Scan } from '../scan';
@@ -53,7 +53,7 @@ const missing = (j: Game): string[] => {
   const m: string[] = [];
   if (raw.toLowerCase().includes(j.t('scope-a-complete').toLowerCase())) m.push('template');
   if (!found.includes('5432') || !found.includes('6379')) m.push('ports');
-  if (!outside.includes(NEIGHBOUR.address) && !outside.includes('voisin')) m.push('neighbour');
+  if (!outside.includes(NEIGHBOUR.address) && !outside.includes(name(j.t, NEIGHBOUR.name).split('.')[0])) m.push('neighbour');
   else if (!words(j, 'scope-words-outside').some((x) => outside.includes(x))) m.push('outside');
   return m;
 };
@@ -70,10 +70,10 @@ export const scope: Chapter = {
   steps: ['letter', 'scan', 'trace', 'end'],
   password: PASSWORD,
   accounts: () => bakeryAccounts(true),
-  state: () => ({
+  state: (t) => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
     listening: bakeryListening(),
-    scan: bakeryScan(),
+    scan: bakeryScan(t),
     apt: {
       lists: true,
       installed: Object.fromEntries(BASE_INSTALLED.map((p) => [p, PACKAGES[p].version])),
@@ -93,7 +93,7 @@ export const scope: Chapter = {
         'engagement_letter.txt': f(t('scope-letter-mission'), { lines: true }),
         'audit_notes.md': f(t(NOTES_TEMPLATE), { lines: true }),
       },
-      sudoersD: { '90-cloud-init-users': file('# Created by cloud-init\n\nvous ALL=(ALL) NOPASSWD:ALL', 'root', 'r--r-----') },
+      sudoersD: { '90-cloud-init-users': file(`# Created by cloud-init\n\n${player(t)} ALL=(ALL) NOPASSWD:ALL`, 'root', 'r--r-----') },
     }),
   // Salomé rereads the notes after each save.
   afterCommand: (j) => {

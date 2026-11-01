@@ -30,7 +30,7 @@ routine-email-salome =
     every week, with the next bulletin.
 
     Salomé
-    (For sudo, your password is still: levain-2028)
+    (For sudo, your password is still: sourdough-2028)
 
 ## Events
 

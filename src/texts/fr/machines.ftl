@@ -23,3 +23,6 @@ machine-lab = labo
 machine-garden = jardin
 machine-pilot = pilote
 machine-patch = rustine
+
+## La Veille
+machine-kneader = petrin

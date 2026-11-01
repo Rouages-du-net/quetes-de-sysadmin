@@ -61,7 +61,7 @@ export const fatigue: Chapter = {
   steps: ['alert', 'arrays', 'smart', 'removed', 'ticket', 'end'],
   password: PASSWORD,
   accounts: labAccounts,
-  state: () => labState('tired'),
+  state: (t) => labState(t, 'tired'),
   initialise: (j) => {
     labKernel(j, 'tired');
     devUpdate(j);

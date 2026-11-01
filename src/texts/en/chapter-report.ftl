@@ -26,6 +26,9 @@ report-email-nadia =
     For sudo, your password is: flour-2028
     And please check each fix: Salomé will come back to verify.
 
+# The orders app's service, as systemctl status describes it.
+audit-orders-description = Bakery orders (online ordering app)
+
 report-report-audit =
     AUDIT REPORT — The Bakery (bakery.example)
     Auditor: Salomé, independent
@@ -49,7 +52,7 @@ report-report-audit =
          without typing anything. Reference: sudoers(5), NOPASSWD.
 
     C4 — A secrets file is readable by everyone                [medium]
-         /srv/commandes/.env holds the database address with its password.
+         /srv/orders/.env holds the database address with its password.
          Any account on the server can read it.
 
     Expected: for each finding, fix it, then check that the fix holds (and
@@ -79,7 +82,7 @@ report-event-account-incomplete =
     sudo chage -l lucas  (man chage, man usermod).
 report-event-app-blind =
     The secret is no longer readable by everyone… but the orders app can't
-    read it either! It runs as the "commandes" account and reads .env at
+    read it either! It runs as the "orders" account and reads .env at
     startup: it would not come back at the next reboot. Look at who owns the
     file (ls -l): the goal is to close the door to the other accounts, not
     to the app.

@@ -20,7 +20,7 @@
 // https://redis.io/docs/latest/operate/oss_and_stack/management/security/,
 // https://www.postgresql.org/docs/current/runtime-config-connection.html
 
-import { d, f, type Chapter } from '../world';
+import { d, f, name, type Chapter } from '../world';
 import type { Game } from '../shell';
 import { WORKSTATION } from '../machines';
 import { newFirewall, type Firewall } from '../firewall';
@@ -32,8 +32,8 @@ import { loadSshd, bakeryAccounts, file, INTERNET, M, NOW, PASSWORD, bakeryWorld
 const REDIS_CONF = '/etc/redis/redis.conf';
 
 // Salomé's scan, as nmap shows it.
-const SCAN = `Starting Nmap 7.94 ( https://nmap.org ) at 2028-03-13 17:41 CET
-Nmap scan report for bakery.example (192.0.2.22)
+const scan = (domain: string) => `Starting Nmap 7.94 ( https://nmap.org ) at 2028-03-13 17:41 CET
+Nmap scan report for ${domain} (192.0.2.22)
 Host is up (0.011s latency).
 Not shown: 994 closed tcp ports (reset)
 PORT     STATE SERVICE
@@ -124,7 +124,7 @@ export const exposure: Chapter = {
   createWorld: (t) =>
     bakeryWorld(t, {
       withoutLucas: true,
-      home: { 'email_salome.txt': f(t('exposure-email-salome')), 'audit_scan.txt': f(SCAN, { lines: true }) },
+      home: { 'email_salome.txt': f(t('exposure-email-salome')), 'audit_scan.txt': f(scan(name(t, 'bakery.example')), { lines: true }) },
       etc: { redis: d({ 'redis.conf': f(REDIS_CONFIG, { lines: true, owner: 'redis', group: 'redis', mode: 'rw-r-----' }) }, undefined, { owner: 'root' }) },
       ssh: { 'sshd_config.d': d({ '00-hardening.conf': file('PermitRootLogin no', 'root') }, undefined, { owner: 'root' }) },
     }),

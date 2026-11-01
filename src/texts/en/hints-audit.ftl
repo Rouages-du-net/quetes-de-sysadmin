@@ -15,8 +15,8 @@ hint-report-sudo =
     .lead = Finding C3: sudo -l shows your account's rules. One comes from a file in /etc/sudoers.d, written by cloud-init. A sudoers file is edited with visudo (man visudo, man sudoers).
     .solution = sudo grep -r NOPASSWD /etc/sudoers.d finds the file; sudo visudo -f /etc/sudoers.d/90-cloud-init-users, remove the NOPASSWD: (or delete the file with sudo rm: the sudo group keeps its right, with a password).
 hint-report-secret =
-    .lead = Finding C4: ls -l shows who can read /srv/commandes/.env (man chmod). Close it to the other accounts, but not to its owner: the app is what reads it.
-    .solution = sudo chmod 600 /srv/commandes/.env (or 640 if the commandes group must read it), then ls -l to check the owner is still commandes.
+    .lead = Finding C4: ls -l shows who can read /srv/orders/.env (man chmod). Close it to the other accounts, but not to its owner: the app is what reads it.
+    .solution = sudo chmod 600 /srv/orders/.env (or 640 if the orders group must read it), then ls -l to check the owner is still orders.
 
 ## Chapter 3 — The exposure
 
@@ -43,19 +43,19 @@ hint-traces-key-identified =
     .solution = sudo ssh-keygen -l -f /home/nadia/.ssh/authorized_keys, then compare with the SHA256 fingerprint in the journal.
 hint-traces-key-revoked =
     .lead = Remove from authorized_keys the line whose fingerprint is the night login's, and only that one: Nadia's must stay.
-    .solution = sudo nano /home/nadia/.ssh/authorized_keys: delete the "… nadia@portable" line (the second one), save.
+    .solution = sudo nano /home/nadia/.ssh/authorized_keys: delete the "… nadia@laptop" line (the second one), save.
 hint-traces-cron-found =
     .lead = What runs by itself for an account: its crontab (man crontab). To read another account's, you must be root.
     .solution = sudo crontab -u nadia -l
 hint-traces-cron-cleaned =
     .lead = Remove the intruder's line from Nadia's crontab without erasing her backup: crontab -r erases everything, crontab -e lets you choose.
-    .solution = sudo crontab -u nadia -e: delete the line containing curl … | sh, keep the sauvegarde.sh one.
+    .solution = sudo crontab -u nadia -e: delete the line containing curl … | sh, keep the backup.sh one.
 hint-traces-secret-seen =
     .lead = Nadia's command history (.bash_history, readable only by her) says what was typed during the night's session. To read it in her place, you need sudo.
-    .solution = sudo cat /home/nadia/.bash_history: the person read /srv/commandes/.env, so the database password is compromised.
+    .solution = sudo cat /home/nadia/.bash_history: the person read /srv/orders/.env, so the database password is compromised.
 hint-traces-password =
     .lead = A database password is changed on both sides: in PostgreSQL (psql, ALTER ROLE, from the postgres account: man psql) AND in DATABASE_URL of the .env file; the app rereads .env only when it restarts. At least twelve characters.
-    .solution = sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD 'a-long-passphrase'", then sudo nano /srv/commandes/.env (the same password in DATABASE_URL), then sudo systemctl restart commandes and systemctl status commandes.
+    .solution = sudo -u postgres psql -c "ALTER ROLE orders PASSWORD 'a-long-passphrase'", then sudo nano /srv/orders/.env (the same password in DATABASE_URL), then sudo systemctl restart orders and systemctl status orders.
 
 ## Chapter 1 — The scope
 
@@ -70,7 +70,7 @@ hint-scope-trace =
     .solution = nmap -sV -oN inventory.txt bakery.internal
 hint-scope-end =
     .lead = Complete audit_notes.md with nano: what you found (the database and Redis ports have no business on the internet) and what you spotted without touching it (the neighbour's server).
-    .solution = nano audit_notes.md: under "What I found", quote 5432 (PostgreSQL) and 6379 (Redis); under "Out of scope", quote voisin.internal (192.0.2.24), out of scope, not probed.
+    .solution = nano audit_notes.md: under "What I found", quote 5432 (PostgreSQL) and 6379 (Redis); under "Out of scope", quote neighbour.internal (192.0.2.24), out of scope, not probed.
 
 ## Chapter 5 — The follow-up visit
 
