@@ -1,17 +1,17 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { HISTOIRES } from '../../moteur/chapitres';
+import { STORIES } from '../../engine/chapters';
 ---
 <Base
-  langue="fr"
-  titre="Quêtes de Sysadmin"
-  autre={{ href: '/en/', langue: 'en', nom: 'English' }}
+  lang="fr"
+  title="Quêtes de Sysadmin"
+  other={{ href: '/en/', lang: 'en', name: 'English' }}
   description="Apprendre l'administration système Linux en jouant, dans le navigateur, avec de vraies commandes : se déplacer, chercher, les permissions, les journaux, le réseau, git, les archives."
 >
   <h1>Quêtes de Sysadmin</h1>
   <p class="intro">
     Des aventures où l'on agit avec de <strong>vraies commandes Linux</strong>. Chaque lieu est
-    un dossier, chaque objet un fichier. {HISTOIRES.length} histoires indépendantes : commence par
+    un dossier, chaque objet un fichier. {STORIES.length} histoires indépendantes : commence par
     l'Effaceur si tu n'as jamais ouvert un terminal.
   </p>
   <p class="intro">

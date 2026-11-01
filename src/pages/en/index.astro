@@ -1,17 +1,17 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { HISTOIRES } from '../../moteur/chapitres';
+import { STORIES } from '../../engine/chapters';
 ---
 <Base
-  titre="Sysadmin Quests"
-  langue="en"
-  autre={{ href: '/fr/', langue: 'fr', nom: 'Français' }}
+  title="Sysadmin Quests"
+  lang="en"
+  other={{ href: '/fr/', lang: 'fr', name: 'Français' }}
   description="Learn Linux system administration by playing, in your browser, with real commands: moving around, searching, permissions, logs, networking, git, backups."
 >
   <h1>Sysadmin Quests</h1>
   <p class="intro">
     Adventures where you act with <strong>real Linux commands</strong>. Every place is a
-    directory, every object a file. {HISTOIRES.length} independent stories: start with The Eraser
+    directory, every object a file. {STORIES.length} independent stories: start with The Eraser
     if you have never opened a terminal.
   </p>
   <p class="intro">

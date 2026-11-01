@@ -3,38 +3,38 @@
 // textes qui emploient ceux de leur langue.
 import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
-import { MACHINES, nomMachine, POSTE } from '../src/moteur/machines';
-import { motDePasse } from '../src/moteur/monde';
-import { LANGUES, traducteur } from '../src/textes';
+import { MACHINES, machineName, WORKSTATION } from '../src/engine/machines';
+import { password } from '../src/engine/world';
+import { LANGUAGES, translator } from '../src/texts';
 
-const IDS = [POSTE, ...MACHINES].map((m) => m.nom);
-const MOTS_DE_PASSE = [...readFileSync(new URL('../src/textes/fr/mots-de-passe.ftl', import.meta.url), 'utf8').matchAll(/^mdp-(\S+) =/gm)].map((m) => m[1]);
+const IDS = [WORKSTATION, ...MACHINES].map((m) => m.name);
+const PASSWORDS = [...readFileSync(new URL('../src/texts/fr/mots-de-passe.ftl', import.meta.url), 'utf8').matchAll(/^mdp-(\S+) =/gm)].map((m) => m[1]);
 // Les valeurs des messages d'une langue (sans les commentaires ni les identifiants).
-const valeurs = (langue: string) =>
-  readdirSync(new URL(`../src/textes/${langue}/`, import.meta.url))
+const values = (language: string) =>
+  readdirSync(new URL(`../src/texts/${language}/`, import.meta.url))
     .filter((f) => f.endsWith('.ftl') && !['machines.ftl', 'mots-de-passe.ftl'].includes(f))
     .flatMap((f) =>
-      readFileSync(new URL(`../src/textes/${langue}/${f}`, import.meta.url), 'utf8')
+      readFileSync(new URL(`../src/texts/${language}/${f}`, import.meta.url), 'utf8')
         .split('\n')
         .filter((l) => !l.startsWith('#'))
         .map((l) => [f, l.replace(/^[\w-]+(\.[\w-]+)?\s*=/, '')] as const),
     );
 
-for (const langue of LANGUES.filter((l) => l !== 'fr'))
-  describe(`Machines et mots de passe — ${langue}`, () => {
-    const t = traducteur(langue);
+for (const language of LANGUAGES.filter((l) => l !== 'fr'))
+  describe(`Machines et mots de passe — ${language}`, () => {
+    const t = translator(language);
 
     it('chaque machine a un nom d’hôte valide (RFC 1123), distinct des autres', () => {
-      const noms = IDS.map((id) => nomMachine(t, id));
-      for (const n of noms) expect(n).toMatch(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/);
-      expect(new Set(noms).size).toBe(noms.length);
+      const names = IDS.map((id) => machineName(t, id));
+      for (const n of names) expect(n).toMatch(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/);
+      expect(new Set(names).size).toBe(names.length);
     });
 
     it('les textes emploient les noms et les mots de passe de la langue', () => {
-      const autres = IDS.filter((id) => nomMachine(t, id) !== id);
-      const machine = new RegExp(`(?:\\bssh |@|\\bid_|\\bHost )(${autres.join('|')})\\b|(?<![\\w-])(${autres.join('|')})\\.internal\\b`);
-      const mdp = new RegExp(`(?<![\\w-])(${MOTS_DE_PASSE.filter((m) => motDePasse(t, m) !== m).join('|')})(?![\\w-])`);
-      const fautes = valeurs(langue).filter(([, v]) => machine.test(v) || mdp.test(v));
-      expect(fautes.map(([f, v]) => `${f}: ${v.trim()}`)).toEqual([]);
+      const other = IDS.filter((id) => machineName(t, id) !== id);
+      const machine = new RegExp(`(?:\\bssh |@|\\bid_|\\bHost )(${other.join('|')})\\b|(?<![\\w-])(${other.join('|')})\\.internal\\b`);
+      const mdp = new RegExp(`(?<![\\w-])(${PASSWORDS.filter((m) => password(t, m) !== m).join('|')})(?![\\w-])`);
+      const mistakes = values(language).filter(([, v]) => machine.test(v) || mdp.test(v));
+      expect(mistakes.map(([f, v]) => `${f}: ${v.trim()}`)).toEqual([]);
     });
   });

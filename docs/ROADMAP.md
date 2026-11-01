@@ -45,7 +45,7 @@ keeps this credit and the link to the original.
 ## Phase 0 — Foundations of the new repository
 
 - [x] Take over the engine of Terminus en français (shell, commands, manual,
-      world, five stories) in `src/moteur/`: the project no longer depends
+      world, five stories) in `src/engine/`: the project no longer depends
       on rouages.net
 - [x] Standalone interface (`src/interface/`) and embeddable
       `<quetes-de-sysadmin>` element (Shadow DOM, attributes `story`,
@@ -63,7 +63,7 @@ keeps this credit and the link to the original.
 - [x] Stack: **Astro** site (static pages), game in TypeScript with no
       framework (the `<quetes-de-sysadmin>` element, also built alone by
       Vite for embedding); Vitest tests (each chapter replayed) and
-      Playwright check (`tests/navigateur.mjs`, also in CI)
+      Playwright check (`tests/browser.mjs`, also in CI)
 - [x] Static deployment to **sysadmin.rouages.net**: workflow
       `.github/workflows/deploy.yml` (FTPS from `main`, check of the live
       site), `.htaccess` (HTTPS, cache, CSP, CORS), 404 page; guide
@@ -84,11 +84,11 @@ several.
 - [x] **One world**: each story becomes a machine of the same simulated
       network, and you go from one to another with `ssh`
       (`ssh fourmiliere`). Finishing the Eraser gives the keys to the first
-      machines; the others open in waves (`apres`, `deverrouillage.ts`).
+      machines; the others open in waves (`after`, `unlocking.ts`).
       The story menu stays available (accessibility, teachers, embedding
       with the `story` attribute); a single progress.
 - [x] **Several hosts**: each with its file system and name, prompt
-      `user@host:~$` (`console.ts`, `machines.ts`, `poste.ts`)
+      `user@host:~$` (`console.ts`, `machines.ts`, `workstation.ts`)
 - [x] Accounts specific to each machine; a machine's state is kept between
       two ssh connections (while the page is open)
 - [x] Services and ports specific to each machine (`ss`, `nc`, systemd
@@ -96,7 +96,7 @@ several.
 - [x] **Simulated network**: addresses, open ports, name resolution
       (`/etc/hosts`, DNS), routes, latency; what a firewall lets through
       (ufw, nftables), a router's local network (VLAN, DHCP, NAT, VPN)
-- [x] **Services** (simulated `systemd`, `src/moteur/systemd.ts`): state,
+- [x] **Services** (simulated `systemd`, `src/engine/systemd.ts`): state,
       start, failure, enabling at boot, `systemctl`, `journalctl`,
       `reboot`; quest "La nuit du redémarrage" (Datacenter, chapter 3)
 - [ ] Dependencies between services, timers, editable unit files
@@ -317,7 +317,7 @@ which works on machines rather than switches).
 
 ## Phase 12 — Hardware, and the following stories
 
-- [x] Gradual unlocking of the stories (`deverrouillage.ts`, `apres`)
+- [x] Gradual unlocking of the stories (`unlocking.ts`, `after`)
 - [x] **Le Labo** (story 15, machine `labo`): "Le disque qui fatigue"
       (smartd, `smartctl`, `/proc/mdstat`, `mdadm --fail/--remove`, the
       serial number) and "Le disque neuf" (`sfdisk -d | sfdisk`,
@@ -344,7 +344,7 @@ which works on machines rather than switches).
 The architecture has prepared for it since phase 0 (see "Translations" in
 `CLAUDE.md`).
 
-- [x] English (`src/textes/en/`, page `/en/`, each quest replayed in
+- [x] English (`src/texts/en/`, page `/en/`, each quest replayed in
       English)
 - [x] **English first**: English becomes the reference language of the
       texts, the root picks the language from the browser (`/en/`, `/fr/`),
@@ -360,7 +360,7 @@ The architecture has prepared for it since phase 0 (see "Translations" in
 - [x] Translated, easy-to-type names of places and objects (`noms.ftl`, the
       Eraser and the workstation); completion tested in each language
 - [x] Names of the other stories' documents (emails, messages, help notes,
-      `LISEZMOI.txt`…: `noms: true` everywhere)
+      `LISEZMOI.txt`…: `names: true` everywhere)
 - [x] Names of the servers' data, right down to what keeps them (restic and
       rsnapshot snapshots, rsync copies, files tracked by git, scripts,
       crontabs, logs): the Archives' collection and the town hall's disk,
@@ -377,11 +377,11 @@ The architecture has prepared for it since phase 0 (see "Translations" in
 - [ ] Paragraph joining and typography per language (Chinese and Korean
       don't separate lines with a space)
 - [ ] Translation platform (hosted Weblate, free for libre projects)
-      connected to `src/textes/`
+      connected to `src/texts/`
 - [ ] Simulated terminal compatible with wide characters (CJK)
 - [ ] Review by native speakers, technical glossary per language
 - [x] Quests replayed automatically in each language
-      (`tests/quetes.test.ts`)
+      (`tests/quests.test.ts`)
 
 ## More ideas
 
@@ -391,24 +391,24 @@ The architecture has prepared for it since phase 0 (see "Translations" in
   build it is in `docs/OFFENSIVE-STORY.md`.
 - [x] **Difficulty**: 1 to 5 stars per chapter (and a range per story),
   computed from what comes before it in the game and from its size
-  (`src/moteur/difficulty.ts`); in the menu, the learning paths and the
+  (`src/engine/difficulty.ts`); in the menu, the learning paths and the
   teachers' sheets.
-- [x] **On-call duty and the incident of the day** (`src/moteur/astreinte.ts`):
+- [x] **On-call duty and the incident of the day** (`src/engine/on-call.ts`):
   every day, a chapter drawn from the date (the same for everyone, with no
   server) among those of the learning paths about failures, open after La
   Racine; an error budget of 30 minutes that melts with time (−3 min per
   hint, −20 s per failed command); at the end, a score card as text to copy
   (a five-box gauge); the day's best result is kept in the browser.
-- [x] **End-of-chapter summary** (`src/moteur/bilan.ts`): time spent,
+- [x] **End-of-chapter summary** (`src/engine/summary.ts`): time spent,
   commands typed (and failed), hints; the detail compares, step by step,
   the command that passed it with the reference solution (the hints'), and
   reminds that another way is just as right.
-- [x] **Rescue snapshot** (Mission panel, `Console.restaurer`): take a
+- [x] **Rescue snapshot** (Mission panel, `Console.restore`): take a
   snapshot, go back to it, undo the last input. The engine is
   deterministic: reopening the chapter and replaying the inputs (commands,
   answers, nano saves) gives back the machine as it was. No snapshot in exam
   mode, nor after going through the workstation.
-- [x] **Learning paths** (`src/moteur/parcours.ts`, the menu's third view):
+- [x] **Learning paths** (`src/engine/paths.ts`, the menu's third view):
   first steps, security, web, networks, backups, containers and deployment,
   production, accounts and identities; each chapter is in at least one
   path; the next one to play is highlighted, and what is waiting says which
@@ -420,7 +420,7 @@ The architecture has prepared for it since phase 0 (see "Translations" in
   above its output. Nothing for an answer (yes/no, password, `sftp>`). AA
   contrast in all four themes; a "Colours" button to turn it off.
 - [x] **Output colours**, like the real tools (ANSI sequences,
-  `src/moteur/couleurs.ts`): `ls --color=auto` and `grep --color=auto`
+  `src/engine/colours.ts`): `ls --color=auto` and `grep --color=auto`
   (Debian's aliases), `diff --color`, `systemctl status` and `--failed`; on
   screen only, never in a pipe or a file (unless `--color=always`); events
   read the output without the codes, and each chapter is replayed with the
@@ -453,7 +453,7 @@ The architecture has prepared for it since phase 0 (see "Translations" in
   **"machine room" style**.
 - [x] **Taking your progress with you** (computer labs): "My progress" gives
   a short code to copy (the finished chapters, a checksum against typos, a
-  frozen chapter order: `tests/progression/ordre.txt`) or a JSON file with
+  frozen chapter order: `tests/progress/order.txt`) or a JSON file with
   the whole save; an optional name goes at the top of the notebook. No
   server, no encryption: it is not proof.
 - [x] **The map**: a button above the terminal opens, in a window, the tree
@@ -481,11 +481,11 @@ The architecture has prepared for it since phase 0 (see "Translations" in
   write some (`CONTRIBUTING.md`).
 - [x] **Link with rouages.net**: after a chapter, the module steps or the
   glossary words that explain its concept (DNS, TLS, NAT…),
-  `src/moteur/rouages.ts`. The other direction remains, to be done on
+  `src/engine/rouages.ts`. The other direction remains, to be done on
   rouages.net.
 - [x] **For teachers**: a sheet per quest (goal, prerequisites, commands
   discovered, difficulty, approximate time) at `/en/teachers/` and
-  `/fr/enseignants/`, generated at build time (`src/moteur/fiches.ts`);
+  `/fr/enseignants/`, generated at build time (`src/engine/sheets.ts`);
   progress exportable with no account, at the top of the downloaded
   notebook.
 

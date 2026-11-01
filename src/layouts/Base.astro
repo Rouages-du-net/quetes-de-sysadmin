@@ -8,36 +8,36 @@ import '@fontsource/jetbrains-mono/700.css';
 import '../styles/site.css';
 
 interface Props {
-  titre: string;
+  title: string;
   description: string;
-  langue?: string;
+  lang?: string;
   // La même page dans une autre langue (lien en haut de page).
-  autre?: { href: string; langue: string; nom: string };
+  other?: { href: string; lang: string; name: string };
 }
-const { titre, description, langue = 'en', autre } = Astro.props;
-const en = langue !== 'fr';
-const accueil = en ? '/en/' : '/fr/';
-const canonique = new URL(Astro.url.pathname, Astro.site);
+const { title, description, lang = 'en', other } = Astro.props;
+const en = lang !== 'fr';
+const home = en ? '/en/' : '/fr/';
+const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 <!doctype html>
-<html lang={langue}>
+<html lang={lang}>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{titre}</title>
+  <title>{title}</title>
   <meta name="description" content={description} />
   <meta name="color-scheme" content="dark light" />
   <meta name="theme-color" content="#0e1319" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#eef2ee" media="(prefers-color-scheme: light)" />
-  <link rel="canonical" href={canonique} />
+  <link rel="canonical" href={canonical} />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  {autre && <link rel="alternate" hreflang={autre.langue} href={new URL(autre.href, Astro.site)} />}
-  {autre && <link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site)} />}
+  {other && <link rel="alternate" hreflang={other.lang} href={new URL(other.href, Astro.site)} />}
+  {other && <link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site)} />}
 </head>
 <body>
   <header>
-    <p class="nom"><a href={accueil}><span class="invite" aria-hidden="true">~$ </span>{en ? 'Sysadmin Quests' : 'Quêtes de Sysadmin'}<span class="curseur" aria-hidden="true"></span></a></p>
-    {autre && <p class="langue"><a href={autre.href} hreflang={autre.langue} lang={autre.langue}>{autre.nom}</a></p>}
+    <p class="nom"><a href={home}><span class="invite" aria-hidden="true">~$ </span>{en ? 'Sysadmin Quests' : 'Quêtes de Sysadmin'}<span class="curseur" aria-hidden="true"></span></a></p>
+    {other && <p class="langue"><a href={other.href} hreflang={other.lang} lang={other.lang}>{other.name}</a></p>}
   </header>
   <main>
     <slot />

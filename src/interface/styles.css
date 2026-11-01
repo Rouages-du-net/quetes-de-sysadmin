@@ -439,7 +439,7 @@
 .qds .nano-touche:focus-visible { outline: 2px solid var(--_terminal-invite); }
 .qds .nano-touche kbd { font: inherit; background: var(--_terminal-texte); color: var(--_terminal-fond); padding: 0 0.2ch; }
 
-/* La coloration de la ligne de commande (voir src/moteur/coloration.ts) :
+/* La coloration de la ligne de commande (voir src/engine/highlighting.ts) :
    la copie colorée est dessinée sous le champ, dont le texte devient
    transparent (le curseur reste visible). Les couleurs ont un contraste AA
    au moins sur le fond de chaque thème ; une commande inconnue est aussi
@@ -480,7 +480,7 @@
 .qds .c-chemin { text-decoration: underline; text-underline-offset: 0.2em; }
 
 /* Les couleurs des sorties (ls, grep, diff --color, systemctl), lues dans
-   les séquences ANSI (voir src/moteur/couleurs.ts). Contraste AA au moins
+   les séquences ANSI (voir src/engine/colours.ts). Contraste AA au moins
    sur le fond de chaque thème. */
 .qds .terminal {
   --_a-31: #ff7a6b;
@@ -516,7 +516,7 @@
 .qds .a-42 { background: var(--_a-fond-42); }
 .qds .a-41.a-37 { color: #ffffff; }
 
-/* Le bilan de fin de chapitre (voir src/moteur/bilan.ts) : une ligne dans
+/* Le bilan de fin de chapitre (voir src/engine/summary.ts) : une ligne dans
    le terminal, et le détail dans une fenêtre (le tableau défile de côté sur
    un petit écran). */
 .qds .sortie .bilan { margin: 0 0 0.5rem; color: var(--_terminal-invite); font-weight: 700; }
@@ -554,7 +554,7 @@
 .qds .parcours button[data-prochain] .etat { color: var(--_ambre); }
 .qds .parcours button:disabled .etat { color: var(--_discret); font-weight: 400; }
 
-/* L'astreinte (voir src/moteur/astreinte.ts) : l'entrée dans le menu, la
+/* L'astreinte (voir src/engine/on-call.ts) : l'entrée dans le menu, la
    jauge du budget dans la barre, et les deux fenêtres. */
 .qds .incident { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; margin: 0 0 0.75rem; }
 .qds .bouton-incident { font: inherit; font-size: 0.9rem; font-weight: 600; padding: 0.3rem 0.8rem; border: 1px solid var(--_ambre); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }

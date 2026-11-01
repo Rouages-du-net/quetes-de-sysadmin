@@ -11,25 +11,25 @@
 // pas sur la page, et ceux de la page ne le cassent pas. Les couleurs se
 // règlent de l'extérieur avec les variables --qds-* (voir styles.css).
 
-import { monter } from './interface/jeu';
+import { mount } from './interface/game';
 import styles from './interface/styles.css?inline';
 
-export class QuetesDeSysadmin extends HTMLElement {
+export class SysadminQuests extends HTMLElement {
   connectedCallback() {
     if (this.shadowRoot) return;
-    const racine = this.attachShadow({ mode: 'open' });
+    const root = this.attachShadow({ mode: 'open' });
     const style = document.createElement('style');
     style.textContent = `:host { display: block; }\n${styles}`;
-    racine.append(style);
+    root.append(style);
     // The English attribute first, then its older French name.
-    const attribut = (nom: string, ancien: string) => this.getAttribute(nom) ?? this.getAttribute(ancien) ?? undefined;
-    monter(racine, {
-      histoire: attribut('story', 'histoire'),
-      cle: attribut('save-key', 'cle'),
+    const attribute = (name: string, old: string) => this.getAttribute(name) ?? this.getAttribute(old) ?? undefined;
+    mount(root, {
+      story: attribute('story', 'histoire'),
+      saveKey: attribute('save-key', 'cle'),
       // lang on the element, then langue, then the page's language (lang), otherwise English.
-      langue: this.getAttribute('lang') ?? this.getAttribute('langue') ?? this.closest('[lang]')?.getAttribute('lang') ?? undefined,
+      language: this.getAttribute('lang') ?? this.getAttribute('langue') ?? this.closest('[lang]')?.getAttribute('lang') ?? undefined,
     });
   }
 }
 
-if (!customElements.get('quetes-de-sysadmin')) customElements.define('quetes-de-sysadmin', QuetesDeSysadmin);
+if (!customElements.get('quetes-de-sysadmin')) customElements.define('quetes-de-sysadmin', SysadminQuests);

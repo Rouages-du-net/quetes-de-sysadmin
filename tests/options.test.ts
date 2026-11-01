@@ -3,29 +3,29 @@
 // vrais outils (au lieu d'être prises pour un nom de fichier).
 
 import { describe, expect, it } from 'vitest';
-import { Console } from '../src/moteur/console';
-import { LANGUES } from '../src/textes';
+import { Console } from '../src/engine/console';
+import { LANGUAGES } from '../src/texts';
 
-for (const langue of LANGUES)
-  describe(`Options longues — ${langue}`, () => {
-    const poste = () => new Console({ langue });
+for (const language of LANGUAGES)
+  describe(`Options longues — ${language}`, () => {
+    const workstation = () => new Console({ language });
     it('une option longue inconnue : le vrai message, rien ne se passe', () => {
-      const c = poste();
-      const sortie = c.executer('ls --frobnicate') ?? '';
-      if (langue === 'en') expect(sortie).toBe("ls: unrecognized option '--frobnicate'\nTry 'ls --help' for more information.");
-      else expect(sortie).toContain('--frobnicate');
-      expect(sortie).not.toContain('No such file');
-      expect(c.executer('mkdir --nope essai-option')).toContain('--nope');
-      expect(c.executer('ls')).not.toContain('essai-option');
+      const c = workstation();
+      const output = c.execute('ls --frobnicate') ?? '';
+      if (language === 'en') expect(output).toBe("ls: unrecognized option '--frobnicate'\nTry 'ls --help' for more information.");
+      else expect(output).toContain('--frobnicate');
+      expect(output).not.toContain('No such file');
+      expect(c.execute('mkdir --nope essai-option')).toContain('--nope');
+      expect(c.execute('ls')).not.toContain('essai-option');
     });
     it('une option longue connue se lit comme la courte', () => {
-      const c = poste();
-      expect(c.executer('ls --all')).toBe(c.executer('ls -a'));
-      expect(c.executer('mkdir --parents a/b/c')).toBe('');
-      expect(c.executer('ls a/b')).toContain('c');
+      const c = workstation();
+      expect(c.execute('ls --all')).toBe(c.execute('ls -a'));
+      expect(c.execute('mkdir --parents a/b/c')).toBe('');
+      expect(c.execute('ls a/b')).toContain('c');
     });
     it('après --, plus aucune option', () => {
-      const c = poste();
-      expect(c.executer('ls -- --frobnicate')).not.toContain('unrecognized');
+      const c = workstation();
+      expect(c.execute('ls -- --frobnicate')).not.toContain('unrecognized');
     });
   });

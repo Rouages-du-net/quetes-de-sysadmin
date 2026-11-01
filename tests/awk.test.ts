@@ -1,29 +1,29 @@
 // awk : les tournures courantes des administrateur·rices, sur un journal web.
 import { describe, expect, it } from 'vitest';
-import { Shell } from '../src/moteur/shell';
-import { d, f, type Chapitre } from '../src/moteur/monde';
+import { Shell } from '../src/engine/shell';
+import { d, f, type Chapter } from '../src/engine/world';
 
-const JOURNAL = [
+const LOG = [
   '198.51.100.23 - - [27/Mar/2027:20:00:01 +0100] "GET /agenda/ateliers?page=1 HTTP/1.1" 502 157 "-" "Aspirateur/2.1"',
   '203.0.113.7 - - [27/Mar/2027:20:00:02 +0100] "GET /agenda/ HTTP/1.1" 200 612 "-" "Mozilla/5.0"',
   '198.51.100.23 - - [27/Mar/2027:20:00:02 +0100] "GET /agenda/ateliers?page=2 HTTP/1.1" 502 157 "-" "Aspirateur/2.1"',
   '203.0.113.9 - - [27/Mar/2027:20:00:03 +0100] "GET / HTTP/1.1" 200 1024 "-" "Mozilla/5.0"',
 ].join('\n');
 
-const chapitre: Chapitre = {
+const chapter: Chapter = {
   id: 'essai-awk',
-  numero: 1,
-  commandes: ['awk', 'sort', 'uniq', 'cat', 'head'],
-  maison: '/home/vous',
-  accueil: 'access.log',
+  number: 1,
+  commands: ['awk', 'sort', 'uniq', 'cat', 'head'],
+  home: '/home/vous',
+  welcome: 'access.log',
   final: '',
-  evenements: [],
-  creerMonde: () => d({ home: d({ vous: d({ 'access.log': f(JOURNAL, { lignes: true }) }) }) }),
+  events: [],
+  createWorld: () => d({ home: d({ vous: d({ 'access.log': f(LOG, { lines: true }) }) }) }),
 };
 
 describe('awk', () => {
-  const s = new Shell(chapitre, 'fr');
-  const awk = (ligne: string) => s.executer(ligne);
+  const s = new Shell(chapter, 'fr');
+  const awk = (line: string) => s.execute(line);
   it('champs et motifs', () => {
     expect(awk("awk '{print $1}' access.log")).toBe('198.51.100.23\n203.0.113.7\n198.51.100.23\n203.0.113.9');
     expect(awk("awk '$9 == 502 {print $7}' access.log")).toBe('/agenda/ateliers?page=1\n/agenda/ateliers?page=2');
@@ -38,7 +38,7 @@ describe('awk', () => {
     expect(awk('awk \'BEGIN {x = 3; y = x * 2 + 1; print y, length("abc"), toupper("ok"), substr("bonjour", 4)}\'')).toBe('7 3 OK jour');
   });
   it('erreurs de syntaxe à la façon de mawk', () => {
-    s.executer("awk '{print $1' access.log");
-    expect(s.derniere.erreurs[0]).toMatch(/^awk: line 1: syntax error at or near/);
+    s.execute("awk '{print $1' access.log");
+    expect(s.last.errors[0]).toMatch(/^awk: line 1: syntax error at or near/);
   });
 });

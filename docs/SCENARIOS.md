@@ -2,33 +2,33 @@
 
 *Learn the Linux command line by playing.* Published at
 https://sysadmin.rouages.net and embeddable in other sites (see
-[EMBEDDING.md](EMBEDDING.md)). The engine is in `src/moteur/`:
+[EMBEDDING.md](EMBEDDING.md)). The engine is in `src/engine/`:
 
 - `shell.ts`: a machine's engine (paths, permissions, pipes `|`,
   redirections `>` and `>>`, `sudo`, events);
-- `console.ts`, `machines.ts`, `poste.ts`: the simulated network (the
+- `console.ts`, `machines.ts`, `workstation.ts`: the simulated network (the
   starting workstation, one machine per story, `ssh` and `exit` to go from
   one to another);
-- `commandes/`: the commands, by family (`fichiers`, `texte`, `systeme`,
+- `commands/`: the commands, by family (`fichiers`, `texte`, `systeme`,
   `reseau`, `git`…); each one reads its arguments and the pipe's input,
   returns its output and reports its errors separately (they don't go
   through pipes, like a real shell's standard error);
-- `monde.ts`: the building blocks of a world (places, objects, rights,
+- `world.ts`: the building blocks of a world (places, objects, rights,
   events);
-- `chapitres/`: one file per chapter, and `index.ts` which groups them into
+- `chapters/`: one file per chapter, and `index.ts` which groups them into
   stories;
-- `commandes/manuel.ts` and `commandes/pages.ts`: the manual (`man`,
+- `commands/manual.ts` and `commands/pages.ts`: the manual (`man`,
   `--help`, `man -k`).
 
-The interface is in `src/interface/` (`jeu.ts`, `styles.css`), the
+The interface is in `src/interface/` (`game.ts`, `styles.css`), the
 `<quetes-de-sysadmin>` element in `src/element.ts`. All texts (stories,
-messages, manual, interface) are in `src/textes/<language>/*.ftl`, English
+messages, manual, interface) are in `src/texts/<language>/*.ftl`, English
 first (see `docs/TRANSLATING.md`). Games are replayed by
-`tests/quetes.test.ts` and one test file per story.
+`tests/quests.test.ts` and one test file per story.
 
 The stories and chapters below keep their original French titles, which are
 also their names in the French version of the game; the English version
-translates them (`src/textes/en/`).
+translates them (`src/texts/en/`).
 
 ## Principles
 
@@ -51,7 +51,7 @@ translates them (`src/textes/en/`).
   `datacenter`, `fourmiliere`, `manuscrit`, `bibliotheque`…), which you
   reach with `ssh` and leave with `exit`. At first, the workstation only has
   the kingdom's key. The other stories open **in waves**
-  (`deverrouillage.ts`): each declares in `chapitres/index.ts` (`apres`) the
+  (`unlocking.ts`): each declares in `chapters/index.ts` (`after`) the
   chapters to finish before receiving its key, what it assumes you already
   know. Under a locked story, the menu shows what is missing; on-call duty
   only draws its incident from open stories. The menu stays a shortcut
@@ -97,8 +97,8 @@ chapter 1, and for every command of the game (even those you aren't allowed
 to run yet, as on a real system):
 
 - `man command`: a page in the usual format (NAME, SYNOPSIS, DESCRIPTION,
-  OPTIONS, EXAMPLES, SEE ALSO), built by `commandes/manuel.ts` from the
-  command's definition and its additions (`commandes/pages.ts`: options,
+  OPTIONS, EXAMPLES, SEE ALSO), built by `commands/manual.ts` from the
+  command's definition and its additions (`commands/pages.ts`: options,
   examples, cross-references);
 - `command --help`: a summary;
 - `man -k word` and `apropos word`: look for a command by keyword;
@@ -143,12 +143,12 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `date`, `test`, `readlink` | `date` without option or `+FORMAT` (common directives); `test` (and `[ … ]` in a script): `-e -f -d -L -s -r -w -x -n -z`, `=`, `!=`, numeric comparisons; `readlink [-f]` | `date -d`, `-u`…; full `test`; `realpath` |
 | Le Kiosque (La Gazette) | a simulated Node.js app: version read at start through a link, `/health` as JSON, configuration in a `.env` file, schema migration at start (never backwards); an hour of simulated visits on each nginx reload in "Le canari" | a real app and its PostgreSQL database |
 | nginx log | "combined" format without the referrer and the user agent | two more fields at the end of the line |
-| `ssh` | two models: on most machines, a key is accepted if it is the one the game gave for that machine; on `maison` and its internal network (`acces.ts`), the real behaviour: the other side's `authorized_keys`, passphrase, password if sshd accepts it (three tries), `-J`/`ProxyJump` (the next name is resolved by the jump machine), `-L` with `-f -N` (a process to stop with `kill`), remote command, `-G` (excerpt); no agent, `-R`, `-D` nor certificates; a single host key (ed25519); shortened usage message | all of it, agent, `ForwardAgent`, remote and dynamic forwarding |
+| `ssh` | two models: on most machines, a key is accepted if it is the one the game gave for that machine; on `maison` and its internal network (`access.ts`), the real behaviour: the other side's `authorized_keys`, passphrase, password if sshd accepts it (three tries), `-J`/`ProxyJump` (the next name is resolved by the jump machine), `-L` with `-f -N` (a process to stop with `kill`), remote command, `-G` (excerpt); no agent, `-R`, `-D` nor certificates; a single host key (ed25519); shortened usage message | all of it, agent, `ForwardAgent`, remote and dynamic forwarding |
 | `exit` | has its `man` page | a bash builtin: `help exit` |
 | `ssh` session | the machine keeps its state while the page stays open; a reload restarts the current chapter | the machine keeps its state |
 | manual sections | 1 (commands), 5 (configuration files: `sshd_config`, `ssh_config`, `sudoers`) and 8 (administration: `usermod`, `reboot`) | also 2, 3, 4, 6 and 7 (system calls, libraries…) |
 | systemd | services only (no targets nor dependencies; timers and hand-written units: see below); the clock moves one second per action | units of every type |
-| `tail -f`, `journalctl -f` (live activity) | the command keeps control until Ctrl-C; the screen moves 3 s on the machine per real second, and each typed command moves a few (`Chapitre.activite`, see `src/moteur/activite.ts`): visitors, robots, scanners write to the logs; in a pipe (`tail -f log \| grep …`), the game shows it once without following | real time; a pipe that follows continuously; `tail -F` reopening a replaced file |
+| `tail -f`, `journalctl -f` (live activity) | the command keeps control until Ctrl-C; the screen moves 3 s on the machine per real second, and each typed command moves a few (`Chapter.activity`, see `src/engine/activity.ts`): visitors, robots, scanners write to the logs; in a pipe (`tail -f log \| grep …`), the game shows it once without following | real time; a pipe that follows continuously; `tail -F` reopening a replaced file |
 | `systemctl` without being root | "Access denied", you need `sudo` | asks for the password (polkit) |
 | `sudo` after `reboot` | still remembers the password | asks for it again |
 | `sshd` | some of the keywords; all errors listed at once; the password is only asked on machines with the real ssh (`maison`); no `StrictModes` (rights of `~/.ssh` not checked) nor options in `authorized_keys` | stops at the first error; offers the password everywhere; refuses an `authorized_keys` writable by others |
@@ -169,7 +169,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `nft` under ufw and fail2ban | on machines without hand-written nftables rules: `list ruleset`, `list tables`, `list table`, read-only; `ip filter` table (chains `INPUT`, `OUTPUT`, `ufw-before-input`, `ufw-user-input`, `ufw-after-input`), `inet f2b-table` table of fail2ban's nftables action; counters at zero; a multi-port profile as a `{ 80, 443 }` set | the `ip6 filter` table, ufw's logging and routing chains, real counters; you could write to it (and ufw would overwrite it) |
 | `sysctl`, `conntrack` | `sysctl`: read, `-w`, `key=value`, `-p`, `--system`, `-a`, `-n` on a few keys (`/proc/sys` is a real directory of the game); `/etc/sysctl.d/*.conf` then `/etc/sysctl.conf` at boot; `conntrack -L` (`-p`, `-s`, `-d`), `-C`, `-F`: the current exchanges, including the ssh session | every kernel key; `conntrack -E`, `-D`, detailed UDP and ICMP states |
 | `wg`, `wg-quick` (WireGuard) | `genkey`, `genpsk`, `pubkey`, `show`, `showconf`; `wg-quick up`, `down`, `strip`; the `wg-quick@wg0` service; the public key isn't computed with Curve25519 (a fingerprint stands in for it, in the right format); peers are described by the chapter (Malik's laptop, another site's router and its network); `wg-quick` adds a route per `AllowedIPs` outside the interface's network; a peer behind a home router (NAT) is only reachable with `PersistentKeepalive` (no simulated delay); no `wg set`, `PostUp`, checked `PresharedKey`, IPv6, nor all traffic through the tunnel on the router side; `wg-quick` without sudo refuses instead of re-running sudo | Curve25519, `wg set`, `syncconf`, `PostUp`/`PostDown`, IPv6, `wg-quick save` |
-| OpenLDAP (`ldapsearch`, `ldapadd`, `ldapmodify`, `ldapdelete`, `ldappasswd`, `ldapwhoami`, `slappasswd`, `slapcat`) | one directory per machine (`etat.ldap`), a reduced schema (core, cosine, inetorgperson, nis: the common classes, their required attributes); LDIF (`changetype`, `add`/`replace`/`delete`, `-`, folded lines), filters `&`, `\|`, `!`, `=`, `*`; `-x`, `-D`, `-W`, `-w`, `-H`, `-Y EXTERNAL` (root through `ldapi:///`, as on Debian), `-b`, `-s`, `-LLL`, `-f`, `-c`; Debian's access rights (anonymous read except `userPassword`, write by the administrator or root); `{SSHA}` in the right format, but not a real SHA-1; the commands don't read the keyboard (a file or a pipe) | `cn=config`, replication, indexes, `memberOf`, base64 (`::`), TLS, SASL other than EXTERNAL, the full filter syntax (`>=`, `~=`) |
+| OpenLDAP (`ldapsearch`, `ldapadd`, `ldapmodify`, `ldapdelete`, `ldappasswd`, `ldapwhoami`, `slappasswd`, `slapcat`) | one directory per machine (`state.ldap`), a reduced schema (core, cosine, inetorgperson, nis: the common classes, their required attributes); LDIF (`changetype`, `add`/`replace`/`delete`, `-`, folded lines), filters `&`, `\|`, `!`, `=`, `*`; `-x`, `-D`, `-W`, `-w`, `-H`, `-Y EXTERNAL` (root through `ldapi:///`, as on Debian), `-b`, `-s`, `-LLL`, `-f`, `-c`; Debian's access rights (anonymous read except `userPassword`, write by the administrator or root); `{SSHA}` in the right format, but not a real SHA-1; the commands don't read the keyboard (a file or a pipe) | `cn=config`, replication, indexes, `memberOf`, base64 (`::`), TLS, SASL other than EXTERNAL, the full filter syntax (`>=`, `~=`) |
 | FreeRADIUS (`freeradius`, `radtest`) | `clients.conf` (address or network, secret), the `ldap` module enabled by a link in `mods-enabled` (`server`, `identity`, `password`, `base_dn`, `user`, `group` and `membership_filter`), the `users` file (`DEFAULT`, `Ldap-Group`, `Auth-Type := Reject`, replies, `Fall-Through`); configuration read at start; `-XC`, `-X` (service stopped, the access point's requests told in short); access points speak PAP (as EAP-TTLS/PAP), no simulated EAP; a simplified configuration syntax | EAP (PEAP, TLS), accounting, `sites-available`, `unlang`, SQL, every module |
 | Redis (`redis-server` service, `/etc/redis/redis.conf`) | only `bind` is read, at the service's start and restart (`*`, `0.0.0.0`, or loopback `127.0.0.1`/`::1`; without `bind`, every interface) to decide where port 6379 answers from; no simulated `redis-cli`, `requirepass` nor `protected-mode`; PostgreSQL has no `listen_addresses` (its port is closed with ufw) | the whole `redis.conf`, `redis-cli`, ACLs, `CONFIG SET`, `listen_addresses` in `postgresql.conf` |
 | nmap | TCP only; `-sV`, `-sT`, `-sS` (root), `-sn`, `-Pn`, `-n`, `-F`, `-p`, `-oN`; targets are a name, an address, a network (`/16` to `/32`) or a range `192.0.2.20-25`; everything is seen from the internet (127.0.0.1: from inside, without firewall); only the chapter's machines answer, an address outside the simulated network never answers; the 1000 common ports shrink to the declared services; the duration is computed, without waiting | `-sU`, `-O`, `-A`, NSE scripts, `-oX`/`-oG`, packet timing, every service's real ports |
@@ -201,7 +201,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | Docker and the firewall | a port published on 0.0.0.0 answers from outside whatever the ufw rules (like Docker's iptables rules); `nc -zv` from another machine; `system df`, `image prune` (`-a`), `container prune`, `volume prune` (`-a`), `system prune` (`-a`, `--volumes`), `rmi` | the DOCKER-USER chain, ufw-docker, `iptables -L` |
 | A container's user | `--user`/`-u` and `user:` (a name from the image or `uid[:gid]`, an uid unknown to the image gets gid 0), `docker exec -u`; the container's uid is the machine's (no userns-remap): Unix rights applied by number on bind mounts, files created as that uid, processes visible in `ps aux`; `--read-only` prevents writing outside volumes; `--cap-drop` and `--security-opt` are kept (and shown by `inspect`) with no other effect; a fallen container is restarted on each command (no doubling delay) | userns-remap, rootless mode, real capabilities, seccomp, AppArmor, rights on named volumes |
 | `nc` | `-z`, `-v`, a port range; without `-z`, returns | full netcat (listen, send, proxy) |
-| disks (`lsblk`, `mount`, `umount`) | devices described by the chapter; `mount` without an argument, `-o ro`; a read-only medium refuses any creation (an existing file's contents can still be changed by a redirection); on a machine with described storage (`stockage.ts`, Le Labo), `lsblk` shows disks, partitions and RAID arrays, with `-d` and `-o` (NAME, MAJ:MIN, RM, SIZE, RO, TYPE, MOUNTPOINT(S), MODEL, SERIAL, FSTYPE, UUID) | every option, real file systems; RM and RO always 0 |
+| disks (`lsblk`, `mount`, `umount`) | devices described by the chapter; `mount` without an argument, `-o ro`; a read-only medium refuses any creation (an existing file's contents can still be changed by a redirection); on a machine with described storage (`storage.ts`, Le Labo), `lsblk` shows disks, partitions and RAID arrays, with `-d` and `-o` (NAME, MAJ:MIN, RM, SIZE, RO, TYPE, MOUNTPOINT(S), MODEL, SERIAL, FSTYPE, UUID) | every option, real file systems; RM and RO always 0 |
 | `smartctl` | `-a`, `-x`, `-H`, `-i`, `-A`, `-l error`, `-l selftest`, `-t short/long` (the test is logged at once, without waiting); an ATA disk's attributes, values derived from the chapter's counts; exit code as a bit mask (64, 128) | NVMe, SCSI, `-d`, `-s`, `-X`, the drive database, every attribute |
 | `mdadm` | RAID 1 only: `--detail` (`-D`), `--detail --scan`, "manage" mode (`--fail`, `--remove` including `failed`, `--add`, `--re-add`, several in a row); the real kernel's refusals (removing an active member, failing the last up-to-date member, a partition already in use); one array rebuilt at a time, half an hour per command; a whole disk in an array erases its table | `--assemble`, `--grow`, `--examine`, `--zero-superblock`, `--monitor`, other RAID levels, a real bitmap (`--re-add` catches up faster) |
 | `mdadm --create` | RAID 1 only (`--level`, `--raid-devices`, `--run`, `missing`), on free disks or partitions; the real "Continue creating array?" question; the initial sync progresses with the commands | other levels, `--chunk`, `--bitmap`, `--name`, `--homehost` |
@@ -220,7 +220,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `find` | `-name`, `-type`, `-mtime`, `-maxdepth`, `-delete`, `-print`; age is counted on the simulated machine's clock | `-exec`, `-newer`, `-size`, `-user`, operators (`-o`, `!`) |
 | "Argument list too long" | a program (not `cd`, `echo`, `pwd`, `test`, `printf`) refuses more than 2 MiB of arguments (ARG_MAX) | the limit also counts the environment; `xargs` |
 | huge outputs | the screen only keeps the last 2,000 lines of an output (with a note) | the terminal's scrollback |
-| time | each machine has a time zone and a clock offset (`etat.heure`); `date` (`-s`), `timedatectl` (`status`, `show`, `list-timezones`, `set-timezone`, `set-ntp`, `set-time`, `timesync-status`); timesyncd tries its servers (`NTP=`, otherwise `FallbackNTP=`) and syncs at once when it starts; the journal follows the machine's time; time zones come from `Intl` | gradual clock adjustment, a separate RTC, `hwclock`, chrony |
+| time | each machine has a time zone and a clock offset (`state.heure`); `date` (`-s`), `timedatectl` (`status`, `show`, `list-timezones`, `set-timezone`, `set-ntp`, `set-time`, `timesync-status`); timesyncd tries its servers (`NTP=`, otherwise `FallbackNTP=`) and syncs at once when it starts; the journal follows the machine's time; time zones come from `Intl` | gradual clock adjustment, a separate RTC, `hwclock`, chrony |
 | monitoring | `check_disk` (`-w`, `-c`, `-W`, `-K`, `-p`), `check_http` (`-H`, `-I`, `-p`, `-u`, local machine only), `check_procs` (`-C`, `-w`, `-c`); exit codes 0 to 3; no real `man` page (plugins answer `--help`) | every plugin and its options, `check_curl` |
 | `mail`, `last` | `mail`: `-s`, `-E`, local delivery in `/var/mail` after `/etc/aliases` (on a machine with Postfix, mail goes through its queue and can leave the machine), list of the mailbox without interactive mode; `last`: logins described by the chapter, `-n` | mail leaving the machine (MTA), interactive `mail`, `lastb`, `who` |
 | systemd timers | hand-written units in `/etc/systemd/system` (`.service`: `Type=`, `ExecStart=`, `User=`; `.timer`: `OnCalendar=` with day of week, `*-*-*` and `H:M[:S]`, `OnBootSec=`, `OnActiveSec=`, `OnUnitActiveSec=`, `Unit=`), to the minute; `list-timers`, `systemd-analyze calendar`; cron mails what a job writes | `Persistent=`, `RandomizedDelaySec=`, `AccuracySec=`, dependencies between units |
@@ -311,7 +311,7 @@ machines are still given at the end of La Racine (chapter 3).
 |---|---|
 | Copy | `rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/` (the trailing slash matters), `rsync -n` to try |
 | Automate | `crontab -e`, a line `15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/` (or `@daily`); `crontab -l` |
-| The night passes | the game runs the jobs that fall between midnight and 6 am (`src/moteur/cron.ts`); a memory that arrived during the day must end up in the backup |
+| The night passes | the game runs the jobs that fall between midnight and 6 am (`src/engine/cron.ts`); a memory that arrived during the day must end up in the backup |
 | Restore | in the morning, a memory is erased: `rsync -a` or `cp` from the backup |
 
 Goal checked on the state: the night updated the backup (including the new
@@ -376,7 +376,7 @@ The server rebooted last night (automatic updates) and the site went down.
 Two problems hidden since Friday: `nginx` was disabled during a test, and a
 `chown -R root:` gave root the directory where `php-fpm` (account
 `www-data`) writes its log. The machine has a real simulated systemd
-(`src/moteur/systemd.ts`): services, journal, clock, reboots.
+(`src/engine/systemd.ts`): services, journal, clock, reboots.
 
 | Step | Command learnt |
 |---|---|
@@ -537,7 +537,7 @@ passwords accepted.
 
 ### Chapter 1 — Fermer la porte (done)
 
-The simulated SSH server (`src/moteur/sshd.ts`) reads `/etc/ssh/sshd_config`
+The simulated SSH server (`src/engine/sshd.ts`) reads `/etc/ssh/sshd_config`
 like OpenSSH: keywords, `Include` read in its place, **the first value read
 wins**, default values. The applied configuration is the one of the `ssh`
 service's last start or reload, and that is what the workstation's `ssh`
@@ -567,7 +567,7 @@ open, links to `sshd_config(5)` and `sshd(8)` (man.openbsd.org).
 ### Chapter 2 — Le pare-feu (done)
 
 A scan (nmap's output) shows the site's database (MariaDB, 3306) reachable
-from the internet. The simulated firewall (`src/moteur/parefeu.ts`) follows
+from the internet. The simulated firewall (`src/engine/firewall.ts`) follows
 ufw: default policy, ordered rules (the first that matches decides),
 established connections never cut. The workstation's `ssh` command runs into
 it: `deny` gives `Connection timed out`, `reject` `Connection refused`.
@@ -595,7 +595,7 @@ Debrief: `ss -tlnp` first, allow SSH before `enable`, `limit`,
 fail2ban runs with Debian's settings (`sshd` jail, 10-minute ban).
 `/var/log/fail2ban.log` shows robots coming back as soon as their ban ends,
 and Rania, the webmaster, banned after five user-name mistakes. The
-simulated fail2ban (`src/moteur/fail2ban.ts`) reads the configuration in the
+simulated fail2ban (`src/engine/fail2ban.ts`) reads the configuration in the
 order `jail.conf`, `jail.d/*.conf`, `jail.local`, `jail.d/*.local` (the last
 read wins; `[sshd]` over `[DEFAULT]`, whatever the file), counts failures in
 SSH's log and bans at `maxretry`, except `ignoreip`. The workstation's `ssh`
@@ -659,7 +659,7 @@ Kofi "pointed" cafe.example at the server… in his own computer's
 `/etc/hosts`. At his place, the café's site works; elsewhere, the name leads
 to the old host, and `www.cafe.example` doesn't exist. The Lettres' server
 is authoritative for the zone (BIND, `named`); the registry keeps a copy
-(`ns2.registry.example`). The simulated DNS is in `src/moteur/dns.ts`.
+(`ns2.registry.example`). The simulated DNS is in `src/engine/dns.ts`.
 
 | Step | Command learnt |
 |---|---|
@@ -804,7 +804,7 @@ performance; links to Apache's documentation (virtual hosts, `.htaccess`,
 
 The neighbourhood fablab (machine `fabrique`, 192.0.2.15) lends tools to
 residents through the tool library, a small web app running in Docker.
-Yasmine looks after it. Docker is simulated in `src/moteur/docker.ts`
+Yasmine looks after it. Docker is simulated in `src/engine/docker.ts`
 (images, containers and their layer, volumes, bind mounts, published ports,
 restart policies); the images' apps are described by the chapters.
 
@@ -842,7 +842,7 @@ root; links to Docker's documentation.
 
 The fablab wants a site to book its machines: the `reservations` app and its
 PostgreSQL database, described in a `compose.yaml` copied from a tutorial
-(`/srv/reservations`). Compose is simulated in `src/moteur/compose.ts`
+(`/srv/reservations`). Compose is simulated in `src/engine/compose.ts`
 (reduced YAML, variables from `.env`, the project's network where each
 service is reachable by its name, named volumes).
 
@@ -1251,7 +1251,7 @@ The neighbourhood's community centre (machine `maison`, 192.0.2.19): a
 gateway, the only machine visible from the internet, and behind it an
 internal network (`wiki`, 10.20.0.11, and `archives`, 10.20.0.12). Yasmine,
 the coordinator, hands IT over to the player; Gaspard, the former volunteer,
-has moved away. Here, ssh works for real (`acces.ts`): no key given by the
+has moved away. Here, ssh works for real (`access.ts`): no key given by the
 game. Phase 2 of the roadmap.
 
 ### Chapter 1 — Les clés (done)
@@ -1812,8 +1812,8 @@ rented from a host: two 2 TB disks in software RAID 1. `md0` holds the
 system (`/`), `md1` the members' photos (`/srv`). Odile, the president,
 isn't a technician; the host replaces a disk on request (a ticket with the
 serial number), but the RAID is the customer's business. Storage is
-described by `stockage.ts` (disks, SMART, GPT partitions, arrays); the
-commands in `commandes/stockage.ts`. The story opens after "Le disque plein"
+described by `storage.ts` (disks, SMART, GPT partitions, arrays); the
+commands in `commands/storage.ts`. The story opens after "Le disque plein"
 (L'Astreinte).
 
 ### Chapter 1 — Le disque qui fatigue (done)
@@ -2170,16 +2170,16 @@ accepted solutions: `cycles.example, www.cycles.example`, `caddy reload`,
 The format of a quest (files, events, debrief, tests) is described in
 [CONTRIBUTING.md](../CONTRIBUTING.md). In short:
 
-1. Create `src/moteur/chapitres/<id>.ts`, which exports a `Chapitre` (see
-   `monde.ts`): known commands, world (`d()` for a place, `f()` for an
-   object), state of the simulated tools (`etat()`, `initialiser()`),
+1. Create `src/engine/chapitres/<id>.ts`, which exports a `Chapter` (see
+   `world.ts`): known commands, world (`d()` for a place, `f()` for an
+   object), state of the simulated tools (`state()`, `initialise()`),
    events (condition → message, once) and the final event.
-2. Write its texts in `src/textes/en/chapitre-<id>.ftl` then
-   `src/textes/fr/`, and its hints in `indices-<story>.ftl`.
-3. Add it to a story of `HISTOIRES` in `chapitres/index.ts` (or create a
-   new story, with its machine and its `apres`), at the end of
-   `ORDRE_DU_CODE` and `tests/progression/ordre.txt`, and in a learning
-   path (`parcours.ts`).
+2. Write its texts in `src/texts/en/chapitre-<id>.ftl` then
+   `src/texts/fr/`, and its hints in `indices-<story>.ftl`.
+3. Add it to a story of `STORIES` in `chapters/index.ts` (or create a
+   new story, with its machine and its `after`), at the end of
+   `CODE_ORDER` and `tests/progress/order.txt`, and in a learning
+   path (`paths.ts`).
 4. Check it can be finished: a test that replays it in every language (the
    solution, another one, the false leads), then in Chromium at 1000 and
    375 px. Give it its section in this document.

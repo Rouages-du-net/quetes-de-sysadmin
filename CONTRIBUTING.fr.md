@@ -35,25 +35,25 @@ machine du réseau simulé. Un chapitre, c'est :
 
 | Fichier | Contenu |
 |---|---|
-| `src/moteur/chapitres/<id>.ts` | le chapitre : ses commandes, son monde de départ, son état, ses événements |
-| `src/textes/en/chapitre-<id>.ftl` (et `fr/`) | tous ses textes : courriel de départ, fichiers, événements, débrief |
-| `src/textes/en/indices-<histoire>.ftl` (et `fr/`) | ses indices gradués : une piste, puis presque la réponse, pour chaque étape |
+| `src/engine/chapitres/<id>.ts` | le chapitre : ses commandes, son monde de départ, son état, ses événements |
+| `src/texts/en/chapitre-<id>.ftl` (et `fr/`) | tous ses textes : courriel de départ, fichiers, événements, débrief |
+| `src/texts/en/indices-<histoire>.ftl` (et `fr/`) | ses indices gradués : une piste, puis presque la réponse, pour chaque étape |
 | `tests/<histoire>.test.ts` | la partie rejouée : la solution attendue, une autre solution, les fausses pistes |
 | `docs/SCENARIOS.md` | sa fiche : l'histoire, les commandes apprises, l'objectif, les pièges |
 
-### Le chapitre (`Chapitre`, dans `src/moteur/monde.ts`)
+### Le chapitre (`Chapter`, dans `src/engine/world.ts`)
 
-- `id`, `numero`, et l'histoire qui l'accueille (`src/moteur/chapitres/index.ts`).
-- `commandes` : celles que le chapitre connaît (les autres répondent
+- `id`, `number`, et l'histoire qui l'accueille (`src/engine/chapters/index.ts`).
+- `commands` : celles que le chapitre connaît (les autres répondent
   « commande introuvable », comme sur une machine où le paquet manque) ;
   leur manuel reste lisible avec `man`.
-- `creerMonde(t)` : le système de fichiers de départ ; les textes viennent
+- `createWorld(t)` : le système de fichiers de départ ; les textes viennent
   de `t('…')`, jamais du code.
-- `etat()` et `initialiser(jeu)` : l'état des outils simulés (services,
+- `state()` et `initialise(jeu)` : l'état des outils simulés (services,
   pare-feu, annuaire…) au début.
-- `accueil` : le fichier lu à l'arrivée (souvent un courriel) ; `motDePasse`
+- `welcome` : le fichier lu à l'arrivée (souvent un courriel) ; `password`
   pour sudo.
-- `evenements` : des conditions sur l'état, vérifiées après chaque commande
+- `events` : des conditions sur l'état, vérifiées après chaque commande
   et à la fermeture de l'éditeur. Chacune affiche son message une seule
   fois. L'événement `final` termine le chapitre : c'est le débrief.
 
@@ -88,30 +88,30 @@ La documentation : des liens vers la documentation **officielle** de l'outil
 Chaque chapitre a au moins :
 
 - un test qui **rejoue la solution attendue** jusqu'au bout
-  (`expect(c.termines).toContain('<id>')`) ;
+  (`expect(c.finished).toContain('<id>')`) ;
 - un test d'**une autre solution** correcte, quand il y en a une ;
 - un test des **fausses pistes** : chaque événement d'indice est déclenché,
   et le chapitre n'est pas fini tant que l'erreur reste.
 
 Les tests rejouent chaque quête dans chaque langue disponible ; les
-scénarios des tests sont écrits avec les noms français (`dansLaLangue()` les
+scénarios des tests sont écrits avec les noms français (`inLanguage()` les
 traduit), et les textes vérifiés en français.
 
 ### La difficulté
 
 Chaque chapitre affiche une difficulté de 1 à 5 étoiles, calculée par
-`src/moteur/difficulty.ts` d'après ce qui le précède dans le jeu et sa
+`src/engine/difficulty.ts` d'après ce qui le précède dans le jeu et sa
 taille : rien à régler à la main.
 
 ## Un nouvel outil simulé
 
-Un outil (nginx, nftables, slapd…) a son moteur dans `src/moteur/<outil>.ts`
+Un outil (nginx, nftables, slapd…) a son moteur dans `src/engine/<outil>.ts`
 (sans DOM, sans texte affiché) et ses commandes dans
-`src/moteur/commandes/<outil>.ts`. Pour chaque commande :
+`src/engine/commandes/<outil>.ts`. Pour chaque commande :
 
-- son entrée dans `src/moteur/commandes/index.ts` ;
-- ses options et exemples dans `src/moteur/commandes/pages.ts` ;
-- sa page dans `src/textes/en/manuel.ftl` et `fr/manuel.ftl`
+- son entrée dans `src/engine/commands/index.ts` ;
+- ses options et exemples dans `src/engine/commands/pages.ts` ;
+- sa page dans `src/texts/en/manuel.ftl` et `fr/manuel.ftl`
   (`man-<commande>`, `.synopsis`, `.option-X`, `.exemple-N`) ;
 - une ligne dans le tableau des écarts de `SCENARIOS.md` ;
 - une ligne dans la structure de `CLAUDE.md`.
@@ -122,7 +122,7 @@ Un outil (nginx, nftables, slapd…) a son moteur dans `src/moteur/<outil>.ts`
 npm test                    # chaque quête rejouée
 npm run build               # le site, le fichier d'intégration, tsc
 npm run preview &           # puis :
-npm run test:navigateur     # Chromium, 1000 et 375 px, CSP
+npm run test:browser     # Chromium, 1000 et 375 px, CSP
 ```
 
 Pour un changement visible, jouer le chapitre dans Chromium à 375 et 1000 px
@@ -131,15 +131,17 @@ de large : pas d'erreur console, pas de défilement horizontal.
 ## Les langues
 
 - **L'anglais d'abord.** C'est la langue de référence des textes du jeu :
-  chaque texte s'écrit d'abord en anglais (`src/textes/en/`), puis se
-  traduit (`src/textes/fr/`…).
+  chaque texte s'écrit d'abord en anglais (`src/texts/en/`), puis se
+  traduit (`src/texts/fr/`…).
 - **Le dépôt est en anglais** : documentation, commentaires du code,
   messages de commit et PR. Ce guide, le README et le guide d'intégration
   ont leur version française ; les autres documents sont en anglais
   seulement.
-- **Le code en anglais, peu à peu.** La plupart des identifiants sont
-  encore en français (`langue`, `chapitre`, `histoire`, `moteur/`…). Le
-  **nouveau** code s'écrit en anglais ; on peut renommer ce qu'on touche,
+- **Le code en anglais.** Les fichiers et les identifiants (variables,
+  fonctions, types, composants) sont en anglais ; certains identifiants de
+  données (ceux des histoires, chapitres, lieux et machines, les clés
+  `.ftl`, les classes CSS) et des commentaires sont encore en français, et
+  passent peu à peu à l'anglais. Le **nouveau** code s'écrit en anglais,
   sans mêler un grand renommage et une fonctionnalité dans la même PR. Un
   nom public reçoit d'abord son alias anglais, l'ancien reste accepté.
 - Écriture inclusive au point médian quand c'est naturel, dans les textes
