@@ -604,7 +604,7 @@ function localeTime(ms: number): string {
 
 // A line of /var/log/nginx/access.log (combined format), if the chapter asks for it.
 function accessLog(game: Game, c: Client, path: string, r: Response) {
-  if (!game.state.nginx?.journalAcces) return;
+  if (!game.state.nginx?.accessLog) return;
   const n = game.find('/var/log/nginx/access.log');
   if (n?.type !== 'file' || typeof n.content !== 'string') return;
   const line = `${c.address} - - [${localeTime(c.time)}] "${c.method ?? 'GET'} ${path} HTTP/1.1" ${r.code} ${new TextEncoder().encode(r.body).length} "-" "${c.agent}"`;

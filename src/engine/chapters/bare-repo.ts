@@ -255,7 +255,7 @@ export const bareRepo: Chapter = {
       message: (j) => j.t('bare-repo-event-correction-lost'),
     },
     { id: 'in-line', condition: (j) => inLine(j), message: (j) => j.t('bare-repo-event-in-line') },
-    { id: 'a-main', condition: (j) => fixedAgenda(j) && !deployed(j), message: (j) => j.t('bare-repo-event-a-main') },
+    { id: 'by-hand', condition: (j) => fixedAgenda(j) && !deployed(j), message: (j) => j.t('bare-repo-event-by-hand') },
     {
       id: 'end',
       condition: (j) => inLine(j) && fixedAgenda(j) && httpRequest(j, GAZETTE, '/agenda.html', 80, false)?.code === 200,

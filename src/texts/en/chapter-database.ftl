@@ -42,7 +42,7 @@ database-event-role =
     the name of your account ("peer" authentication), and neither "you" nor
     root is a role in this database. The postgres account, however, has all
     the rights: sudo -u postgres (man sudo).
-database-event-on-true =
+database-event-on-live =
     Stop! This restore targeted gamelib, the live database: its tables
     already exist, hence the errors. Restoring over the real database to
     "try it out" risks overwriting today's loans. A test

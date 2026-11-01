@@ -287,15 +287,15 @@ export const rollback: Chapter = {
       message: (j) => j.t('rollback-event-restored'),
     },
     {
-      id: 'kept-fou',
+      id: 'safeguard',
       condition: (j) => {
         const ok = !!j.state.theoPushed && works(j) && inLine(j) === j.state.versionBeforeTheo;
         if (ok) j.state.safeguard = true;
         return ok;
       },
-      message: (j) => j.t('rollback-event-kept-fou'),
+      message: (j) => j.t('rollback-event-safeguard'),
     },
-    { id: 'kept-fou-pierced', condition: (j) => !!j.state.theoPushed && !works(j), message: (j) => j.t('rollback-event-kept-fou-pierced') },
+    { id: 'safeguard-pierced', condition: (j) => !!j.state.theoPushed && !works(j), message: (j) => j.t('rollback-event-safeguard-pierced') },
     {
       id: 'tests-elsewhere',
       condition: (j) =>

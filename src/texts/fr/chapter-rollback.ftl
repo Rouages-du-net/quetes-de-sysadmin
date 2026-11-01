@@ -101,13 +101,13 @@ rollback-event-restored =
     lien. Maintenant, que ça ne se reproduise plus : le crochet doit lancer
     tests.sh sur la nouvelle version, et ne pas basculer current si les
     tests échouent. » (Regarde le crochet, et man sh.)
-rollback-event-kept-fou =
+rollback-event-safeguard =
     Le push de Théo est arrivé sur le serveur, mais ses tests ont échoué et
     le crochet s'est arrêté avant de basculer current : le site n'a pas
     bougé. C'est le rôle d'un garde-fou. Reste à publier sa mise en page
     pour de bon : récupère ses commits (git pull), mets la page au bon nom,
     commit et push.
-rollback-event-kept-fou-pierced =
+rollback-event-safeguard-pierced =
     Le push cassé de Théo est passé en ligne malgré tout : le crochet n'a
     pas arrêté la publication. Rétablis le site, puis regarde le crochet :
     les tests sont-ils lancés AVANT de basculer current, depuis le dossier

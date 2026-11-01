@@ -330,7 +330,7 @@ export const powersFull: Chapter = {
       condition: (j) => running(j) && uid(j, galleryContainer(j)) === 1000 && !canYasmine(j),
       message: (j) => j.t('full-powers-event-uid-1000'),
     },
-    { id: 'open-a-all', condition: (j) => allAOpen(j), message: (j) => j.t('full-powers-event-open-a-all') },
+    { id: 'open-to-all', condition: (j) => allAOpen(j), message: (j) => j.t('full-powers-event-open-to-all') },
     {
       id: 'photos-lost',
       condition: (j) => !photosAll(j),

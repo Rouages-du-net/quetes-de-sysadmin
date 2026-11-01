@@ -128,7 +128,7 @@ export const canary: Chapter = {
       { pid: 1501, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/blue/server.js` },
       { pid: 1502, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/green/server.js` },
     ],
-    nginx: { load: null, names: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'], journalAcces: true },
+    nginx: { load: null, names: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'], accessLog: true },
     apps: { '127.0.0.1:3001': kioskApp('blue'), '127.0.0.1:3002': kioskApp('green') },
   }),
   initialise: (j) => {
@@ -217,9 +217,9 @@ export const canary: Chapter = {
   },
   events: [
     {
-      id: 'all-one-coup',
+      id: 'all-at-once',
       condition: (j) => (distribution(j).blue ?? 0) === 1 && !!lastBatch(j)?.byVersion['1.6.0']?.errors && !j.state.canary160,
-      message: (j) => j.t('canary-event-all-one-coup', { errors: lastBatch(j)!.errors }),
+      message: (j) => j.t('canary-event-all-at-once', { errors: lastBatch(j)!.errors }),
     },
     {
       id: 'canary-160',

@@ -12,7 +12,7 @@ work for when you take it on, and possibly for having it built afterwards.
 ## 1. A place, not yet taken
 
 - **A name**: neither "Le Labo" (the disks story) nor "La Veille" (the
-  `petrin` server story). Something on the offensive-audit side — for
+  `kneader` server story). Something on the offensive-audit side — for
   example *The Penetration Test*, *The Other Side*, *Red Team*. Check when
   you start: `grep "^## Story" docs/SCENARIOS.md` gives the current list and
   the next free number.

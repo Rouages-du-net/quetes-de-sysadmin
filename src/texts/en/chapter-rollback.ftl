@@ -101,13 +101,13 @@ rollback-event-restored =
     link. Now, let's make sure it doesn't happen again: the hook must run
     tests.sh on the new version, and not switch current if the
     tests fail." (Look at the hook, and man sh.)
-rollback-event-kept-fou =
+rollback-event-safeguard =
     Théo's push reached the server, but its tests failed and
     the hook stopped before switching current: the site didn't
     change. That's what a safeguard is for. Now publish his layout
     for real: fetch his commits (git pull), give the page the right name,
     commit and push.
-rollback-event-kept-fou-pierced =
+rollback-event-safeguard-pierced =
     Théo's broken push went live anyway: the hook didn't
     stop the publication. Restore the site, then look at the hook:
     are the tests run BEFORE switching current, from the directory

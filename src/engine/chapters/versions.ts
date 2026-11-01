@@ -69,7 +69,7 @@ const translatedCollection = (t: Translate, day: number) => Object.fromEntries(O
 
 // Thirty nights of backups, from 7 January to 5 February.
 function initialRepo(t: Translate): Repo {
-  const repo: Repo = { id: hex('repo-library'), password: password(t, PASSWORD), snapshotList: [], packs: [], checked: true, pruneA: false };
+  const repo: Repo = { id: hex('repo-library'), password: password(t, PASSWORD), snapshotList: [], packs: [], checked: true, pruneNeeded: false };
   for (let day = 7; day <= 36; day++)
     addSnapshot(repo, { id: hex(`snapshot-${day}`), time: night(day), host: 'library', paths: [path(t, COLLECTION)], files: translatedCollection(t, day) });
   repo.checked = true;
@@ -182,7 +182,7 @@ export const versions: Chapter = {
     },
     {
       id: 'forgotten-without-prune',
-      condition: (j) => j.state.resticForgotten === true && repo(j).pruneA,
+      condition: (j) => j.state.resticForgotten === true && repo(j).pruneNeeded,
       message: (j) => j.t('versions-event-forgotten-without-prune'),
     },
     {

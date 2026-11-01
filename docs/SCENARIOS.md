@@ -1902,7 +1902,7 @@ Six months after "L'Audit" (story 14, "I'll come back in six months:
 security has to be checked again"), Salomé returns — no longer to audit,
 but to pass on a habit: the weekly security watch, which you keep up on
 your own once she's gone. Le Fournil's business has grown: the machine
-(`petrin`, 192.0.2.24) is a new server (a migration), Salomé and Nadia take
+(`kneader`, 192.0.2.24) is a new server (a migration), Salomé and Nadia take
 up their roles again. Each chapter matches a real sysadmin gesture: reading
 a bulletin, sorting, fixing without breaking, proving, then automating what
 can be. Everything stays defensive: no real CVE is cited (fictitious
@@ -1944,7 +1944,7 @@ and "L'exposition".
 
 | Step | Command learnt |
 |---|---|
-| Review exposure | `ss -tlnp` or `nmap -sV petrin.internal` |
+| Review exposure | `ss -tlnp` or `nmap -sV kneader.internal` |
 | Decide | `nano priorite.md`: an order of treatment, justified; and openssh-server (already protected) |
 
 Goal checked on the state: `priorite.md` puts nginx before rsync (even

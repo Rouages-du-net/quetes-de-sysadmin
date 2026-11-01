@@ -232,10 +232,10 @@ export const base: Chapter = {
   events: [
     { id: 'role', condition: (j) => new RegExp(`role "(${j.player}|root)" does not exist`).test(output(j)), message: (j) => j.t('database-event-role') },
     {
-      id: 'on-true',
+      id: 'on-live',
       condition: (j) =>
         output(j).includes('already exists') && j.last.commands.some((c) => c.includes('pg_restore') && c.includes(db(j.t))) && !j.state.incident,
-      message: (j) => j.t('database-event-on-true'),
+      message: (j) => j.t('database-event-on-live'),
     },
     {
       id: 'test-succeeded',

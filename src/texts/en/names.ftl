@@ -354,7 +354,6 @@ name-old-wiki = old-wiki
 name-base-system = base-system
 name-webapp = webapp
 name-pgdata = pgdata
-name-gallery = gallery
 name-point-thumbnails = .thumbnails
 name-benchy-first-try-jpg = benchy-first-try.jpg
 name-benchy-success-jpg = benchy-success.jpg

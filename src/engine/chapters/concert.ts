@@ -183,7 +183,7 @@ export const concert: Chapter = {
       { pid: 802, user: 'www-data', cpu: 12.4, mem: 0.9, command: 'nginx: worker process' },
       { pid: 1450, user: 'agenda', cpu: 99.2, mem: 6.8, command: agendaProgram(t) },
     ],
-    nginx: { load: null, names: ['letters', LETTERS, `www.${LETTERS}`, '203.0.113.10'], journalAcces: true },
+    nginx: { load: null, names: ['letters', LETTERS, `www.${LETTERS}`, '203.0.113.10'], accessLog: true },
     apps: {
       '127.0.0.1:3000': {
         service: 'agenda',

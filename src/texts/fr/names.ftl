@@ -357,7 +357,6 @@ name-old-wiki = wiki-ancien
 name-base-system = systeme
 name-webapp = appli
 name-pgdata = donnees
-name-gallery = galerie
 name-point-thumbnails = .miniatures
 name-benchy-first-try-jpg = benchy-premier-essai.jpg
 name-benchy-success-jpg = benchy-reussi.jpg

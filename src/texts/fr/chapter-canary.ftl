@@ -42,7 +42,7 @@ canary-one-time =
     Une heure passe : { $visits } visites sur le Kiosque, à travers nginx.
     Tout est écrit dans /var/log/nginx/access.log.
 # { $errors } : le nombre de visites qui ont reçu une erreur
-canary-event-all-one-coup =
+canary-event-all-at-once =
     Tout le trafic est passé d'un coup à la 1.6.0… et { $errors } visites
     sur l'heure ont reçu une erreur 500 : tout le monde en profite. C'est
     ce que le canari aurait évité. Reviens à green (proxy_pass, nginx -t,

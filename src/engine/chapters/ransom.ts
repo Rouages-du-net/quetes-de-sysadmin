@@ -69,7 +69,7 @@ const unreadable = (seed: string) =>
 
 // The backup of Sunday 13 June, on the USB disk.
 function usbRepo(t: Game['t']): Repo {
-  const repo: Repo = { id: hex('repo-game-library'), password: password(t, PASSWORD), snapshotList: [], packs: [], checked: true, pruneA: false };
+  const repo: Repo = { id: hex('repo-game-library'), password: password(t, PASSWORD), snapshotList: [], packs: [], checked: true, pruneNeeded: false };
   const sundays = [Date.UTC(2027, 4, 30, 18, 0, 0), Date.UTC(2027, 5, 6, 18, 0, 0), Date.UTC(2027, 5, 13, 18, 0, 0)];
   sundays.forEach((time, i) => {
     const files: Record<string, Version> = {};

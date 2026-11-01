@@ -41,7 +41,7 @@ export interface Repo {
   // check was run since the repository's last modification.
   checked: boolean;
   // forget removed snapshots, without prune: the space is not given back yet.
-  pruneA: boolean;
+  pruneNeeded: boolean;
 }
 
 // Hexadecimal hash derived from a text (FNV-1a), always the same.
@@ -237,7 +237,7 @@ function prune(c: Context): string[] {
     })
     .filter((p): p is Repo['packs'][number] => p !== null);
   const after = repoSize(repo);
-  repo.pruneA = false;
+  repo.pruneNeeded = false;
   repo.checked = false;
   c.game.state.resticPruned = true;
   writeRepo(c.game, c.path, repo);
@@ -481,7 +481,7 @@ function launch(c: Context, action: string, args: string[]): string {
     if (trial) return [...output, 'Would have removed the snapshots above (dry run).'].join('\n');
     repo.snapshotList = repo.snapshotList.filter((s) => !removed.includes(s));
     repo.checked = false;
-    if (removed.length) repo.pruneA = true;
+    if (removed.length) repo.pruneNeeded = true;
     game.state.resticForgotten = true;
     writeRepo(game, c.path, repo);
     if (removed.length) output.push(`[0:00] 100.00%  ${removed.length} / ${removed.length} files deleted`);

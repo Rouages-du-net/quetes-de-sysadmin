@@ -176,7 +176,7 @@ export function tillSystemd(afterNginx?: (j: Game) => void, afterTill?: (j: Game
 /** The site's state: nginx (access log), the app and its locks. */
 export const tillState = (env: string, more: Record<string, unknown> = {}) => ({
   systemd: tillSystemd(),
-  nginx: { load: null, names: ['coop', DOMAIN, `www.${DOMAIN}`, '192.0.2.20', 'localhost', '127.0.0.1'], journalAcces: true },
+  nginx: { load: null, names: ['coop', DOMAIN, `www.${DOMAIN}`, '192.0.2.20', 'localhost', '127.0.0.1'], accessLog: true },
   apps: { '127.0.0.1:3000': TILL_APP },
   till: { load: readEnv(env), failures: {}, banned: [], connected: [] } satisfies TillState,
   ...more,

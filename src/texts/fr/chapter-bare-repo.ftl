@@ -129,7 +129,7 @@ bare-repo-event-in-line =
     samedi 12 juin, pas le 21. La date est écrite deux fois : dans le texte
     et dans datetime="2027-06-21". Tu corriges, et tu publies comme il se
     doit ? »
-bare-repo-event-a-main =
+bare-repo-event-by-hand =
     La date est corrigée sur le serveur, mais pas dans git : c'est
     exactement ce qu'on voulait arrêter. Au prochain push, la correction
     serait écrasée. Corrige-la dans ~/gazette, puis commit et push.

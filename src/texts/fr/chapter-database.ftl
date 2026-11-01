@@ -42,7 +42,7 @@ database-event-role =
     le nom de son compte (authentification « peer »), et ni vous ni root ne
     sont des rôles de cette base. Le compte postgres, lui, a tous les droits :
     sudo -u postgres (man sudo).
-database-event-on-true =
+database-event-on-live =
     Halte ! Cette restauration visait ludo, la base en service : ses tables
     existent déjà, d'où les erreurs. Restaurer par-dessus la vraie base pour
     « essayer », c'est risquer d'écraser les prêts du jour. Une
