@@ -9,7 +9,7 @@ chapter-sentinel = The sentinel
 ## Files
 
 sentinel-email-kofi =
-    From:    Kofi (La Fourmilière)
+    From:    Kofi (The Anthill)
     To:      you
     Subject: Rania can't log in anymore
 

@@ -1,5 +1,5 @@
 ### Graded hints for The Neighbourhood Letters (see src/engine/hints.ts): one
-### message per step, indice-<chapter>-<event>, with .piste (a lead, without
+### message per step, hint-<chapter>-<event>, with .lead (a lead, without
 ### the exact command) and .solution (almost the answer). Place names as in
 ### names.ftl.
 

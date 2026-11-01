@@ -1,4 +1,4 @@
-// Story "Les Lettres du quartier" — chapter "Repeat offenders": other
+// Story "The Neighbourhood Letters" — chapter "Repeat offenders": other
 // fail2ban jails. The same robots are banned for an hour, come back, are
 // banned again, for weeks; and the calendar's robot, which nginx has been
 // limiting since the concert night ("limiting requests" in error.log),

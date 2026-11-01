@@ -1,5 +1,5 @@
 ### The graduated hints of the story "The Patch": a lead, then almost the
-### answer, for each step (see indices.ts).
+### answer, for each step (see src/engine/hints.ts).
 
 ## Chapter 1 — The Padlock
 

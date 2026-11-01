@@ -1,7 +1,7 @@
 ### Story "The Neighbourhood Letters", chapter 4 "Sharing a home":
 ### virtual hosts and reverse proxy with nginx. Commands, paths,
 ### directives and nginx messages are never translated. The site pages
-### (colocation-site-*, colocation-agenda-*) are translated.
+### (sharing-site-*, sharing-agenda-*) are translated.
 
 chapter-sharing = Sharing a home
     .summary = Two sites and an app on a single server: virtual hosts, ln -s, reverse proxy with nginx.
@@ -9,7 +9,7 @@ chapter-sharing = Sharing a home
 ## Files
 
 sharing-email-kofi =
-    From:    Kofi (Les Lettres du quartier association)
+    From:    Kofi (The Neighbourhood Letters association)
     To:      you
     Subject: The café is moving in with us
 
@@ -25,7 +25,7 @@ sharing-email-kofi =
     1. http://cafe.example to show the café's site;
     2. http://letters.example to stay our site, of course;
     3. http://letters.example/agenda/ to show the calendar (and its pages,
-       like /agenda/semaine);
+       like /agenda/week);
     4. all of this to survive a reboot.
 
     Rania left her notes (note_from_rania.txt). For sudo, your
@@ -43,25 +43,27 @@ sharing-note-rania =
     The calendar is in /opt/agenda (systemd service "agenda"). It listens
     on 127.0.0.1:3000, only on the machine itself: nginx has to
     pass visits on to it (reverse proxy, see proxy_pass in
-    man nginx). Its pages start at /: /, /semaine, /ateliers.
+    man nginx). Its pages start at /: /, /week, /workshops.
 
     To test a site from the server, before the whole world sees it:
       curl -H "Host: cafe.example" http://127.0.0.1
     And always: sudo nginx -t before reloading.
+sharing-agenda-description = Workshop calendar (Node.js)
+# { $file }: the program's file (server.js)
 sharing-agenda-readme =
     Workshop calendar — Node.js server
 
-    Listens on 127.0.0.1:3000 (see serveur.js).
-    Pages: /  /semaine  /ateliers
+    Listens on 127.0.0.1:3000 (see { $file }).
+    Pages: /  /week  /workshops
     systemd service: agenda
 sharing-agenda-code =
-    // Workshop calendar of Les Lettres du quartier.
+    // Workshop calendar of The Neighbourhood Letters.
     const express = require('express');
     const app = express();
 
-    app.get('/', (req, res) => res.sendFile(__dirname + '/pages/accueil.html'));
-    app.get('/semaine', (req, res) => res.sendFile(__dirname + '/pages/semaine.html'));
-    app.get('/ateliers', (req, res) => res.sendFile(__dirname + '/pages/ateliers.html'));
+    app.get('/', (req, res) => res.sendFile(__dirname + '/pages/home.html'));
+    app.get('/week', (req, res) => res.sendFile(__dirname + '/pages/week.html'));
+    app.get('/workshops', (req, res) => res.sendFile(__dirname + '/pages/workshops.html'));
 
     // Only on the machine itself: nginx is in front.
     app.listen(3000, '127.0.0.1');
@@ -71,9 +73,9 @@ sharing-agenda-code =
 sharing-site-letters =
     <!DOCTYPE html>
     <html lang="en">
-    <head><meta charset="utf-8"><title>Les Lettres du quartier</title></head>
+    <head><meta charset="utf-8"><title>The Neighbourhood Letters</title></head>
     <body>
-    <h1>Les Lettres du quartier</h1>
+    <h1>The Neighbourhood Letters</h1>
     <p>Public letter writer, writing workshops, help with paperwork.</p>
     </body>
     </html>
@@ -92,7 +94,7 @@ sharing-agenda-welcome =
     <head><meta charset="utf-8"><title>Workshop calendar</title></head>
     <body>
     <h1>Workshop calendar</h1>
-    <p><a href="semaine">This week</a> · <a href="ateliers">All workshops</a></p>
+    <p><a href="week">This week</a> · <a href="workshops">All workshops</a></p>
     </body>
     </html>
 sharing-agenda-week =
@@ -125,9 +127,9 @@ sharing-event-link-broken =
 sharing-event-conflict =
     "conflicting server name": two sites answer to the same name. nginx
     keeps the first one it reads and ignores the other for that name. The
-    copied file probably kept the server_name of the Lettres site.
+    copied file probably kept the server_name of the Letters site.
 sharing-event-bad-site =
-    You asked for cafe.example… and the Lettres site answers.
+    You asked for cafe.example… and the Letters site answers.
     nginx picks the site from the requested name (server_name); if none
     matches, it takes the port's default site (default_server).
     Is the café site enabled, and does it carry that name?

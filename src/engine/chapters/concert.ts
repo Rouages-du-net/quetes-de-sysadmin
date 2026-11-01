@@ -12,11 +12,12 @@
 // Sources: https://nginx.org/en/docs/http/ngx_http_limit_req_module.html,
 // https://blog.nginx.org/blog/rate-limiting-nginx, https://pubs.opengroup.org/onlinepubs/9799919799/utilities/awk.html
 
-import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import { d, f, accountsFiles, name, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { loadNginx, httpRequest, checkNginx, type App, type Client } from '../nginx';
 import { MIME, NGINX_CONF, SITE_BY_DEFAULT } from '../commands/apt';
+import { agendaDescription, agendaPages, agendaProgram } from './sharing';
 
 const M = '/home/you';
 const LETTERS = 'letters.example';
@@ -83,11 +84,11 @@ function minute(j: Game, start: number): Summary {
     const t = start + 5_000 + i * 9_000;
     requests.push({ time: t, address, path: '/agenda/', human: true });
     FILES.forEach((path, k) => requests.push({ time: t + 40 + k * 30, address, path, human: true }));
-    requests.push({ time: t + 21_000, address, path: i % 2 ? '/agenda/ateliers' : '/agenda/semaine', human: true });
+    requests.push({ time: t + 21_000, address, path: `/agenda/${name(j.t, i % 2 ? 'workshops' : 'week')}`, human: true });
   });
   ROBOTS.forEach((address, r) => {
     for (let k = 0; k < 480; k++)
-      requests.push({ time: start + r * 41 + k * 125, address, path: `/agenda/ateliers?page=${((k * 3 + r) % 240) + 1}`, human: false });
+      requests.push({ time: start + r * 41 + k * 125, address, path: `/agenda/${name(j.t, 'workshops')}?page=${((k * 3 + r) % 240) + 1}`, human: false });
   });
   requests.sort((a, b) => a.time - b.time);
   const summary: Summary = { humans: 0, servedHumans: 0, robot: 0, limitRobot: 0, forbiddenRobot: 0, exceeded: 0, limitsHumans: 0 };
@@ -169,10 +170,10 @@ export const concert: Chapter = {
         checkToReload: true,
       },
       agenda: {
-        description: 'Agenda des ateliers (Node.js)',
+        description: agendaDescription(t),
         active: true,
         executable: 'node',
-        process: [{ pid: 1450, user: 'agenda', cpu: 99.2, mem: 6.8, command: 'node /opt/agenda/serveur.js' }],
+        process: [{ pid: 1450, user: 'agenda', cpu: 99.2, mem: 6.8, command: agendaProgram(t) }],
       },
     }),
     process: [
@@ -180,7 +181,7 @@ export const concert: Chapter = {
       { pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
       { pid: 802, user: 'www-data', cpu: 12.4, mem: 0.9, command: 'nginx: worker process' },
-      { pid: 1450, user: 'agenda', cpu: 99.2, mem: 6.8, command: 'node /opt/agenda/serveur.js' },
+      { pid: 1450, user: 'agenda', cpu: 99.2, mem: 6.8, command: agendaProgram(t) },
     ],
     nginx: { load: null, names: ['letters', LETTERS, `www.${LETTERS}`, '203.0.113.10'], journalAcces: true },
     apps: {
@@ -188,9 +189,7 @@ export const concert: Chapter = {
         service: 'agenda',
         capacity: 20,
         pages: {
-          '/': t('sharing-agenda-welcome'),
-          '/semaine': t('sharing-agenda-week'),
-          '/ateliers': t('sharing-agenda-workshops'),
+          ...agendaPages(t),
           '/style.css': '(CSS)',
           '/app.js': '(JavaScript)',
           '/logo.png': '(PNG)',

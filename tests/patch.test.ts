@@ -1,4 +1,4 @@
-// "La Rustine", "The padlock": Caddy and its automatic HTTPS. Replayed in
+// "The Patch", "The Padlock": Caddy and its automatic HTTPS. Replayed in
 // every language: the solution, another one (a list of addresses, caddy
 // reload, ufw allow http), and the false leads.
 
@@ -56,11 +56,11 @@ for (const language of LANGUAGES)
       };
       play(['ssh patch', 'yes']);
       expect(c.remote?.shell.chapter.id).toBe('padlock');
-      return { c, jouer: play, ecrire: write, L };
+      return { c, play, write, L };
     };
 
     it('solution: the site name, the firewall, then www', () => {
-      const { c, jouer: play, ecrire: write } = part();
+      const { c, play, write } = part();
       let all = play(['cat message_from_ines.txt', 'systemctl status caddy', 'curl -I http://localhost', 'curl https://cycles.example']);
       expect(all).toContain('"msg":"server is listening only on the HTTP port, so no automatic HTTPS will be applied to this server"');
       expect(all).toContain('HTTP/1.1 200 OK');
@@ -91,7 +91,7 @@ for (const language of LANGUAGES)
     });
 
     it('another solution: a list of addresses, ufw allow http and https, caddy reload', () => {
-      const { c, jouer: play, ecrire: write } = part();
+      const { c, play, write } = part();
       play(['sudo ufw allow http', 'sudo ufw allow https']);
       write(CADDYFILE, (t) => t.replace(':80 {', 'cycles.example, www.cycles.example {'));
       let all = play(['caddy reload --config /etc/caddy/Caddyfile', 'journalctl -u caddy | grep obtained', 'sudo ss -tlnp']);
@@ -105,12 +105,12 @@ for (const language of LANGUAGES)
     });
 
     it('false leads: http://, a misspelt directive, caddy run, port 443 alone, the format', () => {
-      const { c, jouer: play, ecrire: write } = part();
-      let all = play(['caddy reload', 'caddy run', 'caddy frobnicate', 'caddy validate --config /nulle/part']);
+      const { c, play, write } = part();
+      let all = play(['caddy reload', 'caddy run', 'caddy frobnicate', 'caddy validate --config /no/such/file']);
       expect(all).toContain('Error: no config file to load');
       expect(all).toContain('bind: address already in use');
       expect(all).toContain('Error: unknown command "frobnicate" for "caddy"');
-      expect(all).toContain('Error: reading config from file: open /nulle/part: no such file or directory');
+      expect(all).toContain('Error: reading config from file: open /no/such/file: no such file or directory');
       // http://: a site over HTTP only.
       all = write(CADDYFILE, (t) => t.replace(':80 {', 'http://cycles.example {'));
       all += play(['sudo systemctl reload caddy']);

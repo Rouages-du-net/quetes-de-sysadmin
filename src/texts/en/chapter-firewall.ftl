@@ -8,7 +8,7 @@ chapter-firewall = The firewall
 ## Files
 
 firewall-email-kofi =
-    From:    Kofi (La Fourmilière)
+    From:    Kofi (The Anthill)
     To:      you
     Subject: One door too many?
 
