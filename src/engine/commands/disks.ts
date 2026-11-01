@@ -16,7 +16,7 @@
 import type { Directory, Node } from '../world';
 import type { Shell } from '../shell';
 import type { Command } from './index';
-import { stockage } from '../storage';
+import { storageOf } from '../storage';
 import { readFstab, resolveSource, systemFor } from '../fstab';
 import { lsblkStockage } from './storage';
 
@@ -43,8 +43,8 @@ export interface Mount {
   cache?: { children: Record<string, Node>; owner?: string; group?: string; mode?: string };
 }
 
-const devices = (game: Shell): Record<string, Device> => game.state.peripheriques ?? {};
-const mounts = (game: Shell): Mount[] => (game.state.montages ??= []);
+const devices = (game: Shell): Record<string, Device> => game.state.devices ?? {};
+const mounts = (game: Shell): Mount[] => (game.state.mounts ??= []);
 
 /** « 29.3G », « 20G », comme lsblk (puissances de 1024). */
 function lsblkSize(bytes: number): string {
@@ -61,7 +61,7 @@ function lsblkSize(bytes: number): string {
 
 function lsblk(game: Shell, args: string[]): string {
   // Une machine aux disques décrits (stockage.ts) : disques, partitions, RAID, colonnes au choix.
-  const st = stockage(game);
+  const st = storageOf(game);
   if (st) return lsblkStockage(game, st, args);
   const complete = args.includes('-f') || args.includes('--fs');
   // Le disque de la machine (vda) et ses partitions montées, puis les périphériques.
@@ -147,7 +147,7 @@ const DMESG = '\n       dmesg(1) may have more information after failed mount sy
 
 // Sur une machine au stockage décrit (stockage.ts), un système de fichiers qu'on peut monter.
 function periphStockage(game: Shell, source: string): (Device & { name: string }) | null {
-  const st = stockage(game);
+  const st = storageOf(game);
   if (!st) return null;
   const dev = resolveSource(st, source);
   const fs = dev ? systemFor(st, dev) : null;
@@ -161,7 +161,7 @@ function mountAll(game: Shell): string {
   const text = game.read('/etc/fstab') ?? '';
   const { inputs, errors } = readFstab(text);
   for (const n of errors) game.error(`mount: /etc/fstab: parse error at line ${n} -- ignored`);
-  const st = stockage(game);
+  const st = storageOf(game);
   for (const e of inputs) {
     if (e.type === 'swap' || e.options.includes('noauto') || mounts(game).some((m) => m.path === e.target)) continue;
     const dev = st ? resolveSource(st, e.source) : null;
@@ -175,7 +175,7 @@ function mountAll(game: Shell): string {
     if (r) game.error(r, 32);
   }
   // util-linux prévient quand fstab a changé depuis que systemd l'a lue.
-  if (game.state.fstabLue !== undefined && game.state.fstabLue !== text)
+  if (game.state.fstabRead !== undefined && game.state.fstabRead !== text)
     game.error("mount: (hint) your fstab has been modified, but systemd still uses\n       the old version; use 'systemctl daemon-reload' to reload.");
   return '';
 }
@@ -239,7 +239,7 @@ function mount(game: Shell, args: string[]): string {
   const absolute = game.resolve(point);
   if (game.who !== 'root')
     return game.error(`mount: ${absolute}: must be superuser to use mount.\n       dmesg(1) may have more information after failed mount system call.`);
-  if (!devices(game)[source] && stockage(game)) {
+  if (!devices(game)[source] && storageOf(game)) {
     const r = brancher(game, source, point, options);
     return r ? game.error(r, 32) : '';
   }
@@ -279,10 +279,10 @@ function unmount(game: Shell, args: string[]): string {
   const place = game.find(m.path) as Directory;
   const p = devices(game)[m.name];
   if (p) p.tree.children = place.children;
-  const fs = stockage(game) ? systemFor(stockage(game)!, m.name) : null;
+  const fs = storageOf(game) ? systemFor(storageOf(game)!, m.name) : null;
   if (fs?.tree) fs.tree.children = place.children;
   Object.assign(place, { children: m.cache.children, owner: m.cache.owner, group: m.cache.group, mode: m.cache.mode });
-  game.state.montages = mounts(game).filter((x) => x !== m);
+  game.state.mounts = mounts(game).filter((x) => x !== m);
   return '';
 }
 

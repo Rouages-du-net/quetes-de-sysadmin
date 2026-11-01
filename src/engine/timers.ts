@@ -245,7 +245,7 @@ function execute(game: Shell, sd: Systemd, name: string, command: string, accoun
   game.who = account;
   try {
     const r = game.underCommand(command, '/');
-    const pid = 4000 + (game.state.prochainPidUnite = ((game.state.prochainPidUnite as number | undefined) ?? 0) + 1);
+    const pid = 4000 + (game.state.nextUnitPid = ((game.state.nextUnitPid as number | undefined) ?? 0) + 1);
     for (const line of r.output.split('\n').filter(Boolean))
       writeLog(sd, `${name}.service`, command.split(/\s+/)[0].split('/').at(-1)!, pid, line, 6, false);
     return r.code;

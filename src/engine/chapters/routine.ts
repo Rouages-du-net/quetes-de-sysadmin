@@ -115,7 +115,7 @@ export const routine: Chapter = {
   accounts: watchAccounts,
   state: () => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
-    ecoute: watchListening(),
+    listening: watchListening(),
     nginx: watchNginx(),
     scan: watchScan(),
     apt: watchApt(true),

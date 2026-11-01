@@ -160,13 +160,13 @@ export const postMortem: Chapter = {
       },
       probe: { description: 'Radio Quartier probe', active: false, state: 'inactive', executable: 'probe', oneshot: true },
     }),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 611, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
       { pid: 25232, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
-    connexionsPassees: [
+    pastConnections: [
       { account: 'zoe', tty: 'pts/1', since: '198.51.100.80', start: Date.UTC(2027, 7, 20, 21, 16), end: Date.UTC(2027, 7, 20, 21, 54) },
       { account: player(t), tty: 'pts/0', since: '198.51.100.23', start: Date.UTC(2027, 8, 6, 18, 25), end: Date.UTC(2027, 8, 6, 19, 40) },
       { account: 'theo', tty: 'pts/0', since: '203.0.113.45', start: NIGHT(2, 41), end: NIGHT(3, 5) },
@@ -230,17 +230,17 @@ export const postMortem: Chapter = {
     s.clock = now;
     const box = j.find('/var/mail/theo');
     if (box?.type === 'fichier') box.content = alerts.join('\n');
-    j.state.postMortemLu = j.read(path(j.t, FILE));
+    j.state.readPostMortem = j.read(path(j.t, FILE));
   },
   // Après chaque enregistrement du post-mortem, Zoé le relit.
   afterCommand: (j) => {
     const text = j.read(path(j.t, FILE));
-    if (text === j.state.postMortemLu || j.state.postMortemFini) return;
-    j.state.postMortemLu = text;
+    if (text === j.state.readPostMortem || j.state.finishedPostMortem) return;
+    j.state.readPostMortem = text;
     const word = blame(j);
     const rest = missing(j);
     if (!rest.length && !word) {
-      j.state.postMortemFini = true;
+      j.state.finishedPostMortem = true;
       return;
     }
     return [
@@ -300,6 +300,6 @@ export const postMortem: Chapter = {
       condition: (j) => /zoe : TTY=pts\/1 .*stream\.conf/.test(j.last.output),
       message: (j) => j.t('post-mortem-event-origin'),
     },
-    { id: 'end', condition: (j) => !!j.state.postMortemFini, message: (j) => j.t('post-mortem-event-end') },
+    { id: 'end', condition: (j) => !!j.state.finishedPostMortem, message: (j) => j.t('post-mortem-event-end') },
   ],
 };

@@ -30,7 +30,7 @@ export const SS: Record<string, Command> = {
       const port = (p: number) => (letters.has('n') ? String(p) : (NAMES[p] ?? String(p)));
       const lines: string[][] = [['State', 'Recv-Q', 'Send-Q', 'Local Address:Port', 'Peer Address:Port', 'Process']];
       // Les sockets du chapitre, et celles de docker-proxy pour les ports publiés.
-      const listening: Listening[] = [...(game.state.ecoute ?? []), ...dockerListeners(game)];
+      const listening: Listening[] = [...(game.state.listening ?? []), ...dockerListeners(game)];
       if (inListening)
         for (const e of listening.filter((s) => (s.proto === 'tcp' ? tcp : udp)))
           lines.push([

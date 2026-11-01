@@ -193,7 +193,7 @@ export const atMe: Chapter = {
           load: (j) => void reloadZones(j),
         },
       }),
-      processus: [
+      process: [
         { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
         { pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
         { pid: 733, user: 'bind', cpu: 0.1, mem: 1.4, command: '/usr/sbin/named -f -u bind' },
@@ -246,7 +246,7 @@ export const atMe: Chapter = {
       id: 'cache',
       // Juste après une question au résolveur public, qui répond encore l'ancienne adresse.
       condition: (j) => {
-        const q: { server: string; data: string[] } | undefined = j.state.dnsQuestions?.at(-1);
+        const q: { server: string; data: string[] } | undefined = j.state.dnsQueries?.at(-1);
         return (
           j.last.commands.some((c) => c[0] === 'dig' || c[0] === 'host') &&
           q?.server === 'resolver' &&

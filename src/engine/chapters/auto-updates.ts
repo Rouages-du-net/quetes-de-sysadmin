@@ -223,7 +223,7 @@ export const automatic: Chapter = {
         fresh: { [`linux-image-${NEW_KERNEL}`]: '6.12.57-1' },
         origins: ORIGINS,
       },
-      noyau: { active: KERNEL, installed: KERNEL },
+      kernel: { active: KERNEL, installed: KERNEL },
     };
   },
   initialise: (j) => {
@@ -272,17 +272,17 @@ export const automatic: Chapter = {
     }),
   events: [
     { id: 'syntax', condition: (j) => conf(j).errors.length > 0, message: (j) => j.t('auto-updates-event-syntax') },
-    { id: 'nothing', condition: (j) => (j.state.quotidiens ?? 0) > 0 && !(j.state.passesAuto ?? 0), message: (j) => j.t('auto-updates-event-nothing') },
+    { id: 'nothing', condition: (j) => (j.state.daily ?? 0) > 0 && !(j.state.autoPasses ?? 0), message: (j) => j.t('auto-updates-event-nothing') },
     { id: 'nodejs', condition: (j) => !nodeIntact(j), message: (j) => j.t('auto-updates-event-nodejs') },
     { id: 'in-day', condition: (j) => systemd(j)!.boot > 1, message: (j) => j.t('auto-updates-event-in-day') },
     {
       id: 'without-report',
-      condition: (j) => (j.state.passesAuto ?? 0) > 0 && !conf(j).values[`${UU}::Mail`],
+      condition: (j) => (j.state.autoPasses ?? 0) > 0 && !conf(j).values[`${UU}::Mail`],
       message: (j) => j.t('auto-updates-event-without-report'),
     },
     {
       id: 'end',
-      condition: (j) => active(j) && (j.state.passesAuto ?? 0) > 0 && installedSecurity(j) && nodeIntact(j) && report(j) && night(j) && okTill(j),
+      condition: (j) => active(j) && (j.state.autoPasses ?? 0) > 0 && installedSecurity(j) && nodeIntact(j) && report(j) && night(j) && okTill(j),
       message: (j) => j.t('auto-updates-event-end'),
     },
   ],

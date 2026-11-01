@@ -82,7 +82,7 @@ const openSite = (j: Game) => open(j, 80) && open(j, 443);
 const openBase = (j: Game) => open(j, 5432) || open(j, 6379);
 const filter = (j: Game) => pf(j).enabled && pf(j).incoming !== 'allow' && openSsh(j) && openSite(j) && !openBase(j);
 
-const redis = (j: Game) => (j.state.ecoute as Listening[]).find((e) => e.port === 6379);
+const redis = (j: Game) => (j.state.listening as Listening[]).find((e) => e.port === 6379);
 const activeRedis = (j: Game) => systemd(j)!.services['redis-server'].state === 'active';
 const localeListeningRedis = (j: Game) => activeRedis(j) && redis(j)?.address === '127.0.0.1';
 const confLocale = (j: Game) => redisLocal(j.read(REDIS_CONF) ?? '');
@@ -101,7 +101,7 @@ export const exposure: Chapter = {
   state: () => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
     ufw: newFirewall(),
-    ecoute: listening(),
+    listening: listening(),
     systemd: newSystemd('bakery', NOW - 5 * 86_400_000, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
@@ -147,7 +147,7 @@ export const exposure: Chapter = {
     { id: 'redis-local', condition: localeListeningRedis, message: (j) => j.t('exposure-event-redis-local') },
     {
       id: 'end',
-      condition: (j) => filter(j) && localeListeningRedis(j) && (j.state.connexions ?? 1) > (pf(j).activationAlConnections ?? Infinity),
+      condition: (j) => filter(j) && localeListeningRedis(j) && (j.state.connections ?? 1) > (pf(j).activationAlConnections ?? Infinity),
       message: (j) => j.t('exposure-event-end'),
     },
   ],

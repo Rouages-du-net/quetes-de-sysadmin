@@ -432,8 +432,8 @@ const MODULES: Record<string, Module> = {
     launch: (h, a, c) => {
       const names = listing(a.name ?? a.pkg);
       const state = string(a.state) ?? 'present';
-      const installed: Record<string, string> = (h.state.paquets ??= {});
-      const repo: Record<string, string> = h.state.depot ?? {};
+      const installed: Record<string, string> = (h.state.packages ??= {});
+      const repo: Record<string, string> = h.state.repo ?? {};
       if (h.who !== 'root')
         return {
           changed: false,

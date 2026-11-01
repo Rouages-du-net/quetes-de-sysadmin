@@ -230,7 +230,7 @@ export const update: Chapter = {
         load: (j) => startDocker(j),
       },
     }),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 702, user: 'root', cpu: 0.4, mem: 2.1, command: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
       { pid: 1188, user: '1000', cpu: 0.8, mem: 3.4, command: '/usr/local/bin/outiltheque serve' },

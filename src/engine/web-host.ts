@@ -42,7 +42,7 @@ export const definition = (name: string): [string, HostingDef] | null => {
 
 /** L'état de l'hébergement (créé à la première connexion). */
 export function hosting(j: Game, key: string): Hosting {
-  const all = (j.state.hebergements ??= {}) as Record<string, Hosting>;
+  const all = (j.state.hostings ??= {}) as Record<string, Hosting>;
   return (all[key] ??= { def: key, roots: HOSTINGS[key].files(j.t), log: [] });
 }
 

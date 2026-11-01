@@ -72,7 +72,7 @@ const serviceSsh = {
   description: 'OpenBSD Secure Shell server',
   active: true,
   executable: 'sshd',
-  processus: [{ pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+  process: [{ pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
   check: (j: Game) => {
     const e = readConfig(j).errors;
     return e.length ? e : null;
@@ -98,8 +98,8 @@ export function centre(name: string, e: CentreState = {}): InternalHost {
     accounts: centreAccounts,
     commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'mkdir', 'echo', 'sudo', 'systemctl', 'journalctl', 'sshd', 'id', 'whoami', 'exit', 'logout'],
     state: () => ({
-      paquets: { ...INSTALLED, ...Object.fromEntries((e.packages ?? []).map((p) => [p, REPO[p]])) },
-      depot: REPO,
+      packages: { ...INSTALLED, ...Object.fromEntries((e.packages ?? []).map((p) => [p, REPO[p]])) },
+      repo: REPO,
       sshd: { load: {} },
       systemd: newSystemd(name, NOW - 20 * 86_400_000, NOW, { ssh: serviceSsh }),
     }),

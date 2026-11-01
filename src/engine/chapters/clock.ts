@@ -110,14 +110,14 @@ export const clock: Chapter = {
         stop: desync,
       },
     }),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 611, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
       { pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
     // La machine : en UTC, et son horloge retarde de 9 minutes.
-    heure: {
+    clockTime: {
       zone: 'Etc/UTC',
       offset: -9 * 60_000 - 17_000,
       synchronised: false,

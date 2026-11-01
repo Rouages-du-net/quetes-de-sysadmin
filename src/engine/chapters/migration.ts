@@ -119,7 +119,7 @@ export const migration: Chapter = {
       'kiosk-blue': kioskService('blue', 1501),
       'kiosk-green': kioskService('green', 1502),
     }),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
@@ -128,7 +128,7 @@ export const migration: Chapter = {
       { pid: 1502, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/green/serveur.js` },
     ],
     nginx: { load: null, names: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'] },
-    applis: { '127.0.0.1:3001': kioskApp('blue'), '127.0.0.1:3002': kioskApp('green') },
+    apps: { '127.0.0.1:3001': kioskApp('blue'), '127.0.0.1:3002': kioskApp('green') },
   }),
   initialise: (j) => {
     loadNginx(j);

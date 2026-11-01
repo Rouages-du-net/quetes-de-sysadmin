@@ -12,7 +12,7 @@
 
 import type { Game } from './shell';
 import type { Directory } from './world';
-import { partitionFor, type Stockage } from './storage';
+import { partitionFor, type StorageState } from './storage';
 import { readLv } from './lvm';
 
 /** Un système de fichiers sur un périphérique (/dev/md0, /dev/mapper/labo-photos, /dev/sde1). */
@@ -51,10 +51,10 @@ export function readFstab(text: string): { inputs: FstabInput[]; errors: number[
   return { inputs, errors };
 }
 
-export const systems = (st: Stockage): Record<string, FilesSystem> => (st.fs ??= {});
+export const systems = (st: StorageState): Record<string, FilesSystem> => (st.fs ??= {});
 
 /** Le périphérique (/dev/…) que désigne une source de fstab ou de mount, s'il existe. */
-export function resolveSource(st: Stockage, source: string): string | null {
+export function resolveSource(st: StorageState, source: string): string | null {
   const fs = systems(st);
   const by = (key: 'uuid' | 'label', value: string) => Object.keys(fs).find((d) => fs[d][key] === value) ?? null;
   const m = /^(UUID|LABEL)=(.*)$/.exec(source);
@@ -69,13 +69,13 @@ export function resolveSource(st: Stockage, source: string): string | null {
 }
 
 /** Le système de fichiers d'un périphérique, s'il en a un. */
-export const systemFor = (st: Stockage, dev: string): FilesSystem | null => systems(st)[dev] ?? null;
+export const systemFor = (st: StorageState, dev: string): FilesSystem | null => systems(st)[dev] ?? null;
 
 /**
  * Ce que systemd trouverait au démarrage avec cette fstab : les entrées dont la
  * source manque (sans nofail), qui bloquent local-fs.target.
  */
-export function blocking(st: Stockage, text: string): FstabInput[] {
+export function blocking(st: StorageState, text: string): FstabInput[] {
   return readFstab(text).inputs.filter(
     (e) => e.type !== 'swap' && !e.options.includes('noauto') && !e.options.includes('nofail') && (!resolveSource(st, e.source) || !systemFor(st, resolveSource(st, e.source)!)),
   );
@@ -87,4 +87,4 @@ export const mountUnit = (target: string) => (target === '/' ? '-.mount' : `${ta
 export const deviceUnit = (source: string) => `${source.replace(/^\//, '').replace(/-/g, '\\x2d').replace(/\//g, '-')}.device`;
 
 /** La fstab telle que systemd l'a lue (au démarrage, ou au dernier daemon-reload). */
-export const systemdFstab = (j: Game): string => j.state.fstabLue ?? j.read('/etc/fstab') ?? '';
+export const systemdFstab = (j: Game): string => j.state.fstabRead ?? j.read('/etc/fstab') ?? '';

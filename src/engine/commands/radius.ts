@@ -75,7 +75,7 @@ function freeradius(game: Shell, args: string[]): string {
   loadRadius(game);
   const conf = game.state.radius.conf;
   game.state.radius = before;
-  const requests: Request[] = game.state.radiusDemandes ?? [];
+  const requests: Request[] = game.state.radiusRequests ?? [];
   const lines = [...start, 'Listening on auth address * port 1812 bound to server default', 'Ready to process requests'];
   requests.forEach((d, i) => {
     const r = handle(game, d, { conf, works: true });

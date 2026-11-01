@@ -52,7 +52,7 @@ function status(game: Shell, sd: Systemd, name: string, paint: Paint = raw): str
   ];
   if (s.state === 'active' && s.process[0]) lines.push(`   Main PID: ${s.process[0].pid} (${s.executable})`);
   // La mémoire du service (et sa limite, MemoryMax=), si la machine la suit.
-  const rss = game.state.memoire?.rss?.[s.process[0]?.pid ?? -1];
+  const rss = game.state.memory?.rss?.[s.process[0]?.pid ?? -1];
   if (s.state === 'active' && rss !== undefined) {
     const mo = (o: number) => `${(o / 1048576).toFixed(1)}M`;
     lines.push(`     Memory: ${mo(rss)}${s.maxMemory ? ` (max: ${mo(s.maxMemory)} available: ${mo(Math.max(0, s.maxMemory - rss))})` : ''}`);
@@ -355,13 +355,13 @@ export const SYSTEMD: Record<string, Command> = {
         if (game.who !== 'root') return refuse(game, 'daemon-reload', 'systemd');
         reread(game, sd);
         // systemd relit aussi /etc/fstab (ses unités .mount en sont tirées).
-        if (game.state.fstabLue !== undefined) game.state.fstabLue = game.read('/etc/fstab') ?? '';
+        if (game.state.fstabRead !== undefined) game.state.fstabRead = game.read('/etc/fstab') ?? '';
         return '';
       }
       // default : quitter le mode secours, reprendre le démarrage normal (multi-user.target).
       if (action === 'default') {
         if (game.who !== 'root') return refuse(game, 'default', 'system');
-        const resume = game.state.continuerDemarrage as ((j: Shell) => string) | undefined;
+        const resume = game.state.continueBoot as ((j: Shell) => string) | undefined;
         return resume ? resume(game) : '';
       }
       if (action === 'list-timers') return timersList(game, sd, args.includes('--all'));
@@ -461,7 +461,7 @@ export const SYSTEMD: Record<string, Command> = {
             if (action === 'restart' && s.state === 'active') stop(game, sd, name);
             if (s.state !== 'active' && !start(game, sd, name)) failure();
           }
-          const m = game.state.surSystemctl?.(game, action, name);
+          const m = game.state.onSystemctl?.(game, action, name);
           if (m) outputs.push(m);
         }
       }

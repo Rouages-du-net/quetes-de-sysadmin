@@ -86,7 +86,7 @@ export const TMUX: Record<string, Command> = {
 
   uname: {
     launch: ({ args, game }) => {
-      const kernel = (game.state.noyau as { active: string } | undefined)?.active ?? '6.12.0-quetes';
+      const kernel = (game.state.kernel as { active: string } | undefined)?.active ?? '6.12.0-quetes';
       const all = args.some((a) => /^-\w*a/.test(a));
       if (all) return `Linux ${game.host} ${kernel} #1 SMP PREEMPT_DYNAMIC Debian ${kernel.replace(/\+.*$/, '')}-1 x86_64 GNU/Linux`;
       if (args.some((a) => /^-\w*r/.test(a))) return kernel;

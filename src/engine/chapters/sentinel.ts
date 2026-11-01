@@ -109,7 +109,7 @@ const SCANNERS = ['203.0.113.', '192.0.2.', '198.51.100.'];
 const COURANTS_ACCOUNTS = ['root', 'admin', 'pi', 'oracle', 'test', 'ubuntu', 'support', 'user'];
 const scanner = (n: number) => `${SCANNERS[n % 3]}${150 + ((n * 37) % 50)}`;
 // Depuis quand chaque robot est banni (pour le relâcher à la fin du bantime).
-const since = (j: Game): Record<string, number> => (j.state.bannisDepuis ??= {}) as Record<string, number>;
+const since = (j: Game): Record<string, number> => (j.state.bannedSince ??= {}) as Record<string, number>;
 
 function release(j: Game, t: number) {
   const state = f2b(j);

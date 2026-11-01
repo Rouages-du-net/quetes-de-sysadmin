@@ -49,7 +49,7 @@ function connect(game: Shell, s: Session, command: string): string | null {
   const [key, def] = d;
   const tls = s.settings['ftp:ssl-allow'] !== 'no';
   const checked = s.settings['ssl:verify-certificate'] !== 'no';
-  const refusal = (what: string) => ((game.state.refusFtp ??= []) as string[]).push(what);
+  const refusal = (what: string) => ((game.state.ftpRefusal ??= []) as string[]).push(what);
   if (!tls) {
     refusal('clair');
     return `${command}: Login failed: 421 Sorry, cleartext sessions and weak ciphers are not accepted on this server.\nPlease reconnect using TLS security mechanisms.`;

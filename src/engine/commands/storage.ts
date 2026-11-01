@@ -32,14 +32,14 @@ import {
   freePlace,
   rebuiltInThisMoment,
   SECTOR,
-  stockage,
+  storageOf,
   binarySize,
   shortSize,
   decimalSize,
   type Disk,
   type Array,
   type Partition,
-  type Stockage,
+  type StorageState,
   type TypePartition,
 } from '../storage';
 
@@ -152,7 +152,7 @@ function smartctl(game: Shell, args: string[]): string {
     return game.error(`${SMART_HEADER}\n\n=======> UNRECOGNIZED OPTION: ${unknown.replace(/^-+/, '')}\n=======> VALID ARGUMENTS ARE: help\n\nUse smartctl -h to get a usage summary`, 1);
   if (args.includes('-h') || args.includes('--help')) return help('smartctl', STOCKAGE.smartctl, game.t);
   if (!target) return game.error(`${SMART_HEADER}\n\nERROR: smartctl requires a device name as the final command-line argument.\n\n\nUse smartctl -h to get a usage summary`, 1);
-  const st = stockage(game);
+  const st = storageOf(game);
   const name = withoutDev(target).replace(/\d+$/, '');
   const d = st?.disks[name];
   if (game.who !== 'root') return game.error(`${SMART_HEADER}\n\nSmartctl open device: ${target} failed: Permission denied`, 2);
@@ -198,16 +198,16 @@ function smartctl(game: Shell, args: string[]): string {
 
 // ——— mdadm ———
 
-const arrayName = (st: Stockage, target: string) => {
+const arrayName = (st: StorageState, target: string) => {
   const n = withoutDev(target).replace(/^md\//, 'md');
   return st.arrays[n] ? n : null;
 };
-const memberLine = (st: Stockage, number: number | string, part: string, role: number | string, state: string) => {
+const memberLine = (st: StorageState, number: number | string, part: string, role: number | string, state: string) => {
   const [update, min] = part ? majmin(st, part) : [0, 0];
   return `${String(number).padStart(8)}${String(update).padStart(8)}${String(min).padStart(9)}${String(role).padStart(9)}      ${state}${part ? `   /dev/${part}` : ''}`;
 };
 
-function detail(game: Shell, st: Stockage, name: string): string {
+function detail(game: Shell, st: StorageState, name: string): string {
   const g = st.arrays[name];
   const bytes = g.blocks * 1024;
   const recons = inRebuild(g);
@@ -259,7 +259,7 @@ function detail(game: Shell, st: Stockage, name: string): string {
 
 export const uuidMdadm = (uuid: string) => uuid.replace(/-/g, '').replace(/(.{8})(?=.)/g, '$1:');
 
-function manage(game: Shell, st: Stockage, name: string, ops: [string, string[]][]): string {
+function manage(game: Shell, st: StorageState, name: string, ops: [string, string[]][]): string {
   const g = st.arrays[name];
   const outputs: string[] = [];
   const md = `/dev/${name}`;
@@ -314,7 +314,7 @@ function manage(game: Shell, st: Stockage, name: string, ops: [string, string[]]
           game.error(`mdadm: ${target} not large enough to join array`);
           continue;
         }
-        const old = (game.state.anciensMembres ??= {})[`${name}:${part}`] as number | undefined;
+        const old = (game.state.oldMembers ??= {})[`${name}:${part}`] as number | undefined;
         if (op === 're-add' && old === undefined) {
           game.error(`mdadm: --re-add for ${target} to ${md} is not possible`);
           continue;
@@ -339,7 +339,7 @@ function manage(game: Shell, st: Stockage, name: string, ops: [string, string[]]
       }
     }
     // On garde la trace des anciens membres (pour --re-add).
-    for (const x of g.members) (game.state.anciensMembres ??= {})[`${name}:${x.part}`] = x.number;
+    for (const x of g.members) (game.state.oldMembers ??= {})[`${name}:${x.part}`] = x.number;
   }
   devUpdate(game);
   return outputs.join('\n');
@@ -359,7 +359,7 @@ const OPERATIONS: Record<string, string> = {
 function mdadm(game: Shell, args: string[]): string {
   if (!args.length) return game.error('Usage: mdadm --help\n  for help', 2);
   if (args.includes('--help') || args.includes('-h')) return help('mdadm', STOCKAGE.mdadm, game.t);
-  const st = stockage(game);
+  const st = storageOf(game);
   if (args[0] === '--create' || args[0] === '-C') return create(game, st, args.slice(1));
   const detailMode = args.includes('--detail') || args.includes('-D');
   if (detailMode) {
@@ -410,7 +410,7 @@ function mdadm(game: Shell, args: string[]): string {
 }
 
 // mdadm --create : une grappe RAID 1 neuve, sur des disques ou des partitions libres.
-function create(game: Shell, st: Stockage | null, args: string[]): string {
+function create(game: Shell, st: StorageState | null, args: string[]): string {
   let level = '';
   let count = 0;
   let withoutQuestion = false;
@@ -587,7 +587,7 @@ function sfdisk(game: Shell, args: string[], input: string | null): string {
       unknown.startsWith('--') ? `sfdisk: unrecognized option '${unknown}'\nTry 'sfdisk --help' for more information.` : `sfdisk: invalid option -- '${unknown.slice(1, 2)}'\nTry 'sfdisk --help' for more information.`,
       1,
     );
-  const st = stockage(game);
+  const st = storageOf(game);
   const targets = args.filter((a) => !a.startsWith('-'));
   const disk = (c: string) => (st && /^\/dev\/sd[a-z]$/.test(c) ? st.disks[withoutDev(c)] : undefined);
   const open = (c: string): Disk | null => {
@@ -672,7 +672,7 @@ function grubInstall(game: Shell, args: string[]): string {
   const target = args.find((a) => !a.startsWith('-'));
   if (game.who !== 'root') return game.error('grub-install: error: failed to get canonical path of `/boot/grub/i386-pc\'.', 1);
   if (!target) return game.error('grub-install: error: install device isn\'t specified.', 1);
-  const st = stockage(game);
+  const st = storageOf(game);
   const name = withoutDev(target);
   if (st && partitionFor(st, name)) return game.error(`grub-install: error: unable to identify a filesystem in ${target}; safety check can't be performed.`, 1);
   const d = st?.disks[name];
@@ -704,8 +704,8 @@ interface LsblkLine {
   removable?: boolean;
 }
 
-export function lsblkStockage(game: Shell, st: Stockage, args: string[]): string {
-  const mounts: { path: string; name: string; system?: string }[] = game.state.montages ?? [];
+export function lsblkStockage(game: Shell, st: StorageState, args: string[]): string {
+  const mounts: { path: string; name: string; system?: string }[] = game.state.mounts ?? [];
   const point = (n: string) => mounts.find((m) => m.name === `/dev/${n}`)?.path ?? '';
   const withoutChildren = args.some((a) => /^-\w*d/.test(a) || a === '--nodeps');
   const lines: LsblkLine[] = [];
@@ -790,6 +790,6 @@ export const STOCKAGE: Record<string, Command> = {
 
 /** Le temps passe d'une commande sur la machine : la reconstruction avance. */
 export function timeWhoPass(game: Shell): void {
-  const st = stockage(game);
+  const st = storageOf(game);
   if (st) advance(st);
 }

@@ -151,7 +151,7 @@ export const padlock: Chapter = {
   password: 'spokes-2027',
   accounts,
   state: () => ({
-    ecoute: LISTENING.map((e) => ({ ...e })),
+    listening: LISTENING.map((e) => ({ ...e })),
     ufw: {
       enabled: true,
       incoming: 'deny',
@@ -173,7 +173,7 @@ export const padlock: Chapter = {
         checkToReload: true,
       },
     }),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
     ],

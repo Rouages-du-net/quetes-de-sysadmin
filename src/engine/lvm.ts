@@ -15,7 +15,7 @@
 // ext4, et sa taille est gardée à côté du LV.
 
 import type { Game } from './shell';
-import { SECTOR, partitionFor, type Stockage } from './storage';
+import { SECTOR, partitionFor, type StorageState } from './storage';
 
 export const EXTENT = 4 * 1024 * 1024;
 // La place que LVM garde en tête de chaque PV pour ses métadonnées.
@@ -50,10 +50,10 @@ export interface Lvm {
   vgs: Record<string, VolumesGroup>;
 }
 
-export const lvm = (st: Stockage): Lvm => (st.lvm ??= { pvs: {}, vgs: {} });
+export const lvm = (st: StorageState): Lvm => (st.lvm ??= { pvs: {}, vgs: {} });
 
 /** La taille d'un périphérique (sda, sdb2, md1), en octets, ou null s'il n'existe pas. */
-export function sizeFor(st: Stockage, name: string): number | null {
+export function sizeFor(st: StorageState, name: string): number | null {
   if (st.arrays[name]) return st.arrays[name].blocks * 1024;
   if (st.disks[name]) return st.disks[name].sectors * SECTOR;
   const p = partitionFor(st, name);
@@ -61,21 +61,21 @@ export function sizeFor(st: Stockage, name: string): number | null {
 }
 
 /** Les étendues d'un PV. */
-export const pvExtents = (st: Stockage, pv: string) => Math.floor(((sizeFor(st, pv) ?? 0) - PV_HEADER) / EXTENT);
+export const pvExtents = (st: StorageState, pv: string) => Math.floor(((sizeFor(st, pv) ?? 0) - PV_HEADER) / EXTENT);
 /** Les étendues prises sur un PV par les LV de son groupe. */
-export function socketsOn(st: Stockage, pv: string): number {
+export function socketsOn(st: StorageState, pv: string): number {
   const vg = lvm(st).pvs[pv]?.vg;
   if (!vg) return 0;
   return Object.values(lvm(st).vgs[vg].lvs).reduce((t, lv) => t + lv.segments.filter((s) => s.pv === pv).reduce((u, s) => u + s.extents, 0), 0);
 }
-export const pvsFor = (st: Stockage, vg: string) => Object.keys(lvm(st).pvs).filter((p) => lvm(st).pvs[p].vg === vg);
-export const freeOn = (st: Stockage, pv: string) => pvExtents(st, pv) - socketsOn(st, pv);
+export const pvsFor = (st: StorageState, vg: string) => Object.keys(lvm(st).pvs).filter((p) => lvm(st).pvs[p].vg === vg);
+export const freeOn = (st: StorageState, pv: string) => pvExtents(st, pv) - socketsOn(st, pv);
 export const lvExtents = (lv: LogicVolume) => lv.segments.reduce((t, s) => t + s.extents, 0);
-export const totalVg = (st: Stockage, vg: string) => pvsFor(st, vg).reduce((t, p) => t + pvExtents(st, p), 0);
-export const vgFree = (st: Stockage, vg: string) => pvsFor(st, vg).reduce((t, p) => t + freeOn(st, p), 0);
+export const totalVg = (st: StorageState, vg: string) => pvsFor(st, vg).reduce((t, p) => t + pvExtents(st, p), 0);
+export const vgFree = (st: StorageState, vg: string) => pvsFor(st, vg).reduce((t, p) => t + freeOn(st, p), 0);
 
 /** « /dev/labo/photos », « labo/photos », « /dev/mapper/labo-photos » → [groupe, volume], ou null. */
-export function readLv(st: Stockage, name: string): [string, string] | null {
+export function readLv(st: StorageState, name: string): [string, string] | null {
   const mapper = /^\/dev\/mapper\/([\w.+]+)-([\w.+]+)$/.exec(name);
   const path = /^(?:\/dev\/)?([\w.+-]+)\/([\w.+-]+)$/.exec(name);
   const [vg, lv] = mapper ? [mapper[1], mapper[2]] : path && path[1] !== 'mapper' ? [path[1], path[2]] : [];
@@ -83,7 +83,7 @@ export function readLv(st: Stockage, name: string): [string, string] | null {
 }
 
 /** Prend `n` étendues pour un LV, sur les PV permis (dans l'ordre), en prolongeant son dernier segment si possible. */
-export function allocate(st: Stockage, lv: LogicVolume, n: number, pvs: string[]): void {
+export function allocate(st: StorageState, lv: LogicVolume, n: number, pvs: string[]): void {
   let rest = n;
   for (const pv of pvs) {
     if (rest <= 0) break;
@@ -97,7 +97,7 @@ export function allocate(st: Stockage, lv: LogicVolume, n: number, pvs: string[]
 }
 
 /** Le périphérique est-il tenu par LVM (un PV dans un groupe) ? */
-export const heldByLvm = (st: Stockage, name: string) => !!lvm(st).pvs[name];
+export const heldByLvm = (st: StorageState, name: string) => !!lvm(st).pvs[name];
 
 /** La taille d'un LV en octets. */
 export const lvSize = (lv: LogicVolume) => lvExtents(lv) * EXTENT;
@@ -123,8 +123,8 @@ export function lvmSize(bytes: number, long = false): string {
 }
 
 /** Le montage d'un LV (pour df) suit la taille de son système de fichiers. */
-export function mountsUpdate(j: Game, st: Stockage): void {
-  const mounts: { path: string; name: string; capacity: number }[] = j.state.montages ?? [];
+export function mountsUpdate(j: Game, st: StorageState): void {
+  const mounts: { path: string; name: string; capacity: number }[] = j.state.mounts ?? [];
   for (const [vg, g] of Object.entries(lvm(st).vgs))
     for (const [name, lv] of Object.entries(g.lvs)) {
       const m = mounts.find((x) => x.name === `/dev/mapper/${vg}-${name}`);

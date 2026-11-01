@@ -19,7 +19,7 @@ import { loadSshd, homeAccounts, connectionsBy, sshDirectory, homeState, interna
 const WIKI = '10.20.0.11';
 const INTERNAL_COMMANDS = ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname'];
 
-const workstation = (j: Game) => (j.state.poste as (() => Shell) | undefined)?.();
+const workstation = (j: Game) => (j.state.workstation as (() => Shell) | undefined)?.();
 const wiki = (j: Game) => (j as Shell).internal('wiki');
 const connectionsToWiki = (j: Game) => (wiki(j) ? connectionsBy(wiki(j)!, 'cle') : 0);
 

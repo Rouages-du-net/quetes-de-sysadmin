@@ -20,8 +20,8 @@ export interface Memory {
   rss: Record<number, number>;
 }
 
-export const memory = (j: Game): Memory | undefined => j.state.memoire;
-export const process = (j: Game): Process[] => j.state.processus ?? [];
+export const memory = (j: Game): Memory | undefined => j.state.memory;
+export const process = (j: Game): Process[] => j.state.process ?? [];
 const Mo = 1024 * 1024;
 
 /** La mémoire occupée (noyau compris). */
@@ -34,7 +34,7 @@ export const used = (j: Game) => {
 /** Une ligne du noyau (dmesg, journalctl -k). */
 export function kernel(j: Game, text: string) {
   const sd = systemd(j);
-  (j.state.noyau ??= []).push({ time: sd?.clock ?? 0, text });
+  (j.state.kernel ??= []).push({ time: sd?.clock ?? 0, text });
   if (sd) writeLog(sd, '', 'kernel', 0, text, 3, false);
 }
 
@@ -53,7 +53,7 @@ function kill(j: Game, p: Process, group: string | null) {
       ? `Memory cgroup out of memory: Killed process ${p.pid} (${name}) total-vm:${rss + 180_000}kB, anon-rss:${rss}kB, file-rss:0kB, shmem-rss:0kB, UID:${uid} pgtables:${Math.round(rss / 470)}kB oom_score_adj:0`
       : `Out of memory: Killed process ${p.pid} (${name}) total-vm:${rss + 180_000}kB, anon-rss:${rss}kB, file-rss:0kB, shmem-rss:0kB, UID:${uid} pgtables:${Math.round(rss / 470)}kB oom_score_adj:0`,
   );
-  j.state.processus = process(j).filter((x) => x.pid !== p.pid);
+  j.state.process = process(j).filter((x) => x.pid !== p.pid);
   delete m.rss[p.pid];
   const sd = systemd(j);
   const found = sd && serviceFor(sd, p.pid);
@@ -67,10 +67,10 @@ function kill(j: Game, p: Process, group: string | null) {
   s.result = 'oom-kill';
   s.since = sd.clock;
   const restart = ['on-failure', 'always', 'on-abnormal'].includes(s.reboot ?? '');
-  j.state.oomTues = [...(j.state.oomTues ?? []), { service: serviceName, cgroup: !!group, restart }];
+  j.state.oomKilled = [...(j.state.oomKilled ?? []), { service: serviceName, cgroup: !!group, restart }];
   // Restart=on-failure (ou always, on-abnormal) : systemd le relance.
   if (restart) {
-    const restarts = (j.state.relances ??= {});
+    const restarts = (j.state.restarts ??= {});
     restarts[serviceName] = (restarts[serviceName] ?? 0) + 1;
     writeLog(sd, unit, 'systemd', 1, `${unit}: Scheduled restart job, restart counter is at ${restarts[serviceName]}.`);
     start(j, sd, serviceName, true);
@@ -95,7 +95,7 @@ export function checkMemory(j: Game) {
     const moreBig = [...process(j)].filter((p) => (m.rss[p.pid] ?? 0) > 0).sort((a, b) => (m.rss[b.pid] ?? 0) - (m.rss[a.pid] ?? 0))[0];
     if (!moreBig) break;
     // Le processus qui demandait de la mémoire (ici, celui qui grossit) déclenche l'OOM killer.
-    const requester = process(j).find((p) => p.pid === j.state.memoireDemandeur) ?? moreBig;
+    const requester = process(j).find((p) => p.pid === j.state.memoryRequester) ?? moreBig;
     kernel(
       j,
       `${requester.command.split(/\s+/)[0].split('/').at(-1)} invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0`,

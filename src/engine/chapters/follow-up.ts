@@ -125,7 +125,7 @@ export const againstVisit: Chapter = {
   state: () => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
     ufw: { ...newFirewall(), enabled: true, rules: RULES.map((r) => ({ ...r })) },
-    ecoute: bakeryListening(true),
+    listening: bakeryListening(true),
     scan: bakeryScan(),
     apt: bakeryApt(true),
     systemd: newSystemd('bakery', NOW - 5 * 86_400_000, NOW, {
@@ -137,7 +137,7 @@ export const againstVisit: Chapter = {
   initialise: (j) => {
     loadSshd(j);
     // Salomé ne relit que ce qui a changé : l'état de départ compte comme déjà lu.
-    j.state.rapportLu = readReport(j);
+    j.state.readReport = readReport(j);
   },
   createWorld: (t) =>
     bakeryWorld(t, {
@@ -153,11 +153,11 @@ export const againstVisit: Chapter = {
   // Salomé relit le rapport de clôture après chaque enregistrement.
   afterCommand: (j) => {
     const text = readReport(j);
-    if (text === j.state.rapportLu || j.state.rapportFini) return;
-    j.state.rapportLu = text;
+    if (text === j.state.readReport || j.state.finishedReport) return;
+    j.state.readReport = text;
     const rest = missing(j);
     if (!rest.length) {
-      j.state.rapportFini = true;
+      j.state.finishedReport = true;
       return;
     }
     return [j.t('follow-up-review'), ...rest.map((m) => `- ${j.t(`follow-up-missing-${m}`, { cible: String(TARGET) })}`)].join('\n');

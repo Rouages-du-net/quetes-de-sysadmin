@@ -61,7 +61,7 @@ export const priority: Chapter = {
   accounts: watchAccounts,
   state: () => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
-    ecoute: watchListening(),
+    listening: watchListening(),
     nginx: watchNginx(),
     scan: watchScan(),
     apt: watchApt(false),
@@ -78,12 +78,12 @@ export const priority: Chapter = {
     }),
   afterCommand: (j) => {
     const text = readDoc(j);
-    if (text === j.state.prioriteLue || j.state.prioriteFinie) return;
-    j.state.prioriteLue = text;
+    if (text === j.state.readPriority || j.state.finishedPriority) return;
+    j.state.readPriority = text;
     if (onlyScore(j)) return j.t('priority-event-score-only');
     const rest = missing(j);
     if (!rest.length) {
-      j.state.prioriteFinie = true;
+      j.state.finishedPriority = true;
       return;
     }
     return [j.t('priority-review'), ...rest.map((m) => `- ${j.t(`priority-missing-${m}`)}`)].join('\n');

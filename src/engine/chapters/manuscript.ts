@@ -48,7 +48,7 @@ export const time: Chapter = {
   final: 'end',
   state: (t) => ({
     git: { [path(t, NOVEL)]: history(t) },
-    auteur: t('manuscript-author'),
+    author: t('manuscript-author'),
     date: 'Tue Oct 13 10:30:00 2026 +0200',
   }),
   createWorld: (t) => {

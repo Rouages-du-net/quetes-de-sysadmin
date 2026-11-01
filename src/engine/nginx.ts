@@ -428,7 +428,7 @@ function tourniquet(game: Game, name: string, upstream: Upstream, excluded: stri
   const candidates = upstream.servers.filter((x) => !x.off && !x.rescue && !excluded.includes(x.address));
   const listing = candidates.length ? candidates : upstream.servers.filter((x) => !x.off && x.rescue && !excluded.includes(x.address));
   if (!listing.length) return null;
-  const states: Record<string, Record<string, number>> = (game.state.nginxTourniquets ??= {});
+  const states: Record<string, Record<string, number>> = (game.state.nginxTurnstiles ??= {});
   const active = { ...(states[name] ?? {}) };
   const total = listing.reduce((t, x) => t + x.weight, 0);
   for (const x of listing) active[x.address] = (active[x.address] ?? 0) + x.weight;
@@ -545,7 +545,7 @@ export function appRequest(
   path: string,
   headers: Record<string, string> = {},
 ): { code: number; body: string; type?: string; headers?: string[] } | null {
-  const app: App | undefined = game.state.applis?.[`127.0.0.1:${port}`];
+  const app: App | undefined = game.state.apps?.[`127.0.0.1:${port}`];
   if (!app || systemd(game)?.services[app.service]?.state !== 'active') return null;
   return answerApp(game, app, path, { headers, address: '127.0.0.1' });
 }
@@ -555,7 +555,7 @@ function errorLog(game: Game, level: string, message: string) {
   if (!game.state.nginxTrace) return;
   const n = game.find('/var/log/nginx/error.log');
   if (n?.type !== 'fichier' || typeof n.content !== 'string') return;
-  const number = (game.state.nginxConnexions = (game.state.nginxConnexions ?? 0) + 1);
+  const number = (game.state.nginxConnections = (game.state.nginxConnections ?? 0) + 1);
   const line = `${nginxTime(systemd(game)?.clock ?? 0)} [${level}] 2412#2412: *${number} ${message}`;
   n.content = n.content ? `${n.content}\n${line}` : line;
 }
@@ -669,7 +669,7 @@ function handle(game: Game, host: string, path: string, port: number, client: Cl
   if (limit) {
     const zone = config.zones[limit.zone];
     const key = zone.key === '$binary_remote_addr' || zone.key === '$remote_addr' ? client.address : zone.key;
-    const buckets: Record<string, { excess: number; last: number }> = (game.state.nginxSeaux ??= {});
+    const buckets: Record<string, { excess: number; last: number }> = (game.state.nginxBuckets ??= {});
     const bucket = buckets[`${limit.zone}|${key}`];
     const excess = bucket ? Math.max(0, bucket.excess - (zone.rate * (client.time - bucket.last)) / 1000 + 1) : 0;
     if (excess > limit.burst) {
@@ -691,7 +691,7 @@ function handle(game: Game, host: string, path: string, port: number, client: Cl
     const connection = (address: string) =>
       `connect() failed (111: Connection refused) while connecting to upstream, client: ${client.address}, server: ${server.names[0] ?? '_'}, request: "GET ${path} HTTP/1.1", upstream: "http://${address}${upstream}", host: "${host}"`;
     const reach = (address: string): App | null => {
-      const a: App | undefined = game.state.applis?.[address.includes(':') ? address : `${address}:80`];
+      const a: App | undefined = game.state.apps?.[address.includes(':') ? address : `${address}:80`];
       return a && sd!.services[a.service]?.state === 'active' ? a : null;
     };
     let address = upstreamHost;
@@ -722,10 +722,10 @@ function handle(game: Game, host: string, path: string, port: number, client: Cl
         return response(502, page(502));
       }
     }
-    game.state.nginxDernierAmont = address;
+    game.state.nginxLastUpstream = address;
     // Une appli a une capacité : au-delà, elle ne répond plus à temps (504).
     if (app.capacity) {
-      const load: Record<string, number> = (game.state.appliCharge ??= {});
+      const load: Record<string, number> = (game.state.appLoaded ??= {});
       const seconde = `${address}|${Math.floor(client.time / 1000)}`;
       if (game.state.nginxTrace) load[seconde] = (load[seconde] ?? 0) + 1;
       if ((load[seconde] ?? 0) > app.capacity) {

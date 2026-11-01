@@ -41,13 +41,13 @@ const byId = (j: Game) => {
 };
 const withNofail = (j: Game) => !!scansLine(j)?.options.includes('nofail');
 const healthy = (j: Game) => blocking(st(j), fstab(j)).length === 0 && readFstab(fstab(j)).errors.length === 0;
-const mounted = (j: Game) => ((j.state.montages ?? []) as { path: string; name: string }[]).some((m) => m.path === '/srv/scans' && m.name === '/dev/sde1');
+const mounted = (j: Game) => ((j.state.mounts ?? []) as { path: string; name: string }[]).some((m) => m.path === '/srv/scans' && m.name === '/dev/sde1');
 const fstabOk = (j: Game) => byId(j) && withNofail(j) && healthy(j);
 
 // La machine s'arrête en mode secours : ce que systemd écrit au journal.
 function enterInRescue(j: Game): void {
   const sd = systemd(j)!;
-  const e = blocking(st(j), j.state.fstabLue ?? fstab(j))[0];
+  const e = blocking(st(j), j.state.fstabRead ?? fstab(j))[0];
   const dev = deviceUnit(e.source);
   const mount = mountUnit(e.target);
   sd.clock += 90_000;
@@ -60,28 +60,28 @@ function enterInRescue(j: Game): void {
   writeLog(sd, 'local-fs.target', 'systemd', 1, 'local-fs.target: Triggering OnFailure= dependencies.', 5);
   writeLog(sd, 'emergency.service', 'systemd', 1, 'Started emergency.service - Emergency Shell.');
   writeLog(sd, 'emergency.target', 'systemd', 1, 'Reached target emergency.target - Emergency Mode.');
-  j.state.secours = true;
-  j.state.rechutes = (j.state.rechutes ?? 0) + 1;
+  j.state.rescue = true;
+  j.state.relapses = (j.state.relapses ?? 0) + 1;
   // Rechute avec une fstab déjà juste : systemd n'a simplement pas relu le fichier.
-  if (fstabOk(j)) j.state.rechuteSansReload = true;
+  if (fstabOk(j)) j.state.relapseWithoutReload = true;
 }
 
 // Au démarrage (reboot) : systemd lit fstab tel qu'il est sur le disque.
 function startMounts(j: Game): boolean {
-  j.state.fstabLue = fstab(j);
+  j.state.fstabRead = fstab(j);
   if (blocking(st(j), fstab(j)).length) {
     enterInRescue(j);
     return false;
   }
   mountToBoot(j as Shell);
-  j.state.secours = false;
+  j.state.rescue = false;
   return true;
 }
 
 // systemctl default (ou exit) : systemd reprend le démarrage avec fstab tel qu'il l'a lu (daemon-reload).
 function continueBoot(j: Shell): string {
-  if (!j.state.secours) return '';
-  if (blocking(st(j), j.state.fstabLue ?? fstab(j)).length) {
+  if (!j.state.rescue) return '';
+  if (blocking(st(j), j.state.fstabRead ?? fstab(j)).length) {
     enterInRescue(j);
     return BANNER;
   }
@@ -90,7 +90,7 @@ function continueBoot(j: Shell): string {
   writeLog(sd, 'local-fs.target', 'systemd', 1, 'Reached target local-fs.target - Local File Systems.');
   for (const [name, s] of Object.entries(sd.services)) if (s.active && s.state !== 'active') start(j, sd, name, true);
   writeLog(sd, 'multi-user.target', 'systemd', 1, 'Reached target multi-user.target - Multi-User System.');
-  j.state.secours = false;
+  j.state.rescue = false;
   return '';
 }
 
@@ -127,20 +127,20 @@ export const rescue: Chapter = {
   final: 'end',
   steps: ['journal', 'disks', 'fixed', 'mounted', 'end'],
   accounts: labAccounts,
-  state: () => ({ ...labState('secours'), secours: true, consoleHebergeur: true }),
+  state: () => ({ ...labState('secours'), rescue: true, hostConsole: true }),
   initialise: (j) => {
     labKernel(j, 'secours');
     devUpdate(j);
     // On travaille en root sur la console de l'hébergeur.
     j.who = 'root';
-    j.state.fstabLue = fstab(j);
-    j.state.demarrerMontages = startMounts;
-    j.state.continuerDemarrage = continueBoot;
-    j.state.banniereSecours = BANNER;
+    j.state.fstabRead = fstab(j);
+    j.state.startMounts = startMounts;
+    j.state.continueBoot = continueBoot;
+    j.state.rescueBanner = BANNER;
     // La machine est arrêtée en mode secours : aucun service n'a démarré.
     for (const s of Object.values(systemd(j)!.services)) s.state = 'inactive';
     enterInRescue(j);
-    j.state.rechutes = 0;
+    j.state.relapses = 0;
   },
   createWorld: (t) => labWorld(t, { 'message_from_odile.txt': f(t('stuck-boot-message-odile', { banniere: BANNER })) }, { winter: true, rescue: true }),
   events: [
@@ -175,12 +175,12 @@ export const rescue: Chapter = {
       message: (j) => j.t('stuck-boot-event-without-nofail'),
     },
     { id: 'fixed', condition: fstabOk, message: (j) => j.t('stuck-boot-event-fixed') },
-    { id: 'relapse', condition: (j) => (j.state.rechutes ?? 0) > 0 && !fstabOk(j), message: (j) => j.t('stuck-boot-event-relapse') },
-    { id: 'relapse-reload', condition: (j) => !!j.state.rechuteSansReload, message: (j) => j.t('stuck-boot-event-relapse-reload') },
+    { id: 'relapse', condition: (j) => (j.state.relapses ?? 0) > 0 && !fstabOk(j), message: (j) => j.t('stuck-boot-event-relapse') },
+    { id: 'relapse-reload', condition: (j) => !!j.state.relapseWithoutReload, message: (j) => j.t('stuck-boot-event-relapse-reload') },
     { id: 'mounted', condition: mounted, message: (j) => j.t('stuck-boot-event-mounted') },
     {
       id: 'end',
-      condition: (j) => fstabOk(j) && mounted(j) && !j.state.secours,
+      condition: (j) => fstabOk(j) && mounted(j) && !j.state.rescue,
       message: (j) => j.t('stuck-boot-event-end'),
     },
   ],

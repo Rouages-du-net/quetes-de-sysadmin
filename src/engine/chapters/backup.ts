@@ -24,7 +24,7 @@ const ERASES = 'first-letter.txt';
 // La nuit du vendredi au samedi 24 octobre 2026, de minuit à 6 h.
 const NIGHT = [Date.UTC(2026, 9, 24, 0, 0), Date.UTC(2026, 9, 24, 6, 0)];
 
-const originals = (j: Game): Record<string, string> => j.state.originaux;
+const originals = (j: Game): Record<string, string> => j.state.originals;
 // La sauvegarde contient-elle ces souvenirs, à l'identique ?
 const saved = (j: Game, names: string[]) => names.every((n) => j.read(path(j.t, `${BACKUP}/${n}`)) === originals(j)[n]);
 const nightTasks = (j: Game) =>
@@ -41,9 +41,9 @@ export const backup: Chapter = {
   names: true,
   welcome: 'note_from_maelle.txt',
   final: 'end',
-  state: () => ({ crontabs: {}, versionCrontab: 0, versionNuit: 0, originaux: {} }),
+  state: () => ({ crontabs: {}, crontabVersion: 0, nightVersion: 0, originals: {} }),
   initialise: (j) => {
-    for (const n of FILES) j.state.originaux[n] = j.read(path(j.t, `${MEMORIES}/${n}`));
+    for (const n of FILES) j.state.originals[n] = j.read(path(j.t, `${MEMORIES}/${n}`));
   },
   createWorld: (t) =>
     d({
@@ -62,15 +62,15 @@ export const backup: Chapter = {
     }),
   // Dès que la crontab change, la nuit passe : cron lance ce qui tombe entre minuit et 6 h.
   afterCommand: (j) => {
-    if ((j.state.versionCrontab ?? 0) === j.state.versionNuit || !j.state.crontabs?.[j.player] || j.flags.has('night-ok')) return;
-    j.state.versionNuit = j.state.versionCrontab;
+    if ((j.state.crontabVersion ?? 0) === j.state.nightVersion || !j.state.crontabs?.[j.player] || j.flags.has('night-ok')) return;
+    j.state.nightVersion = j.state.crontabVersion;
     const chunks: string[] = [];
     if (!j.flags.has('day')) {
       // Le souvenir du jour, arrivé avant la nuit : la tâche doit l'emporter.
       j.flags.add('day');
       const n = j.find(path(j.t, MEMORIES));
       if (n?.type === 'dossier') n.children[name(j.t, NEW)] = f(j.t('backup-memory-lighthouse-festival'));
-      j.state.originaux[NEW] = j.read(path(j.t, `${MEMORIES}/${NEW}`));
+      j.state.originals[NEW] = j.read(path(j.t, `${MEMORIES}/${NEW}`));
       chunks.push(j.t('backup-night-start', { fichier: name(j.t, NEW) }));
     } else chunks.push(j.t('backup-night-still'));
     const executions = pass(j as Shell, NIGHT[0], NIGHT[1]);

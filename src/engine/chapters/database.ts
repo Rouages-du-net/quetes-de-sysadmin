@@ -169,12 +169,12 @@ export const base: Chapter = {
       archives: {},
     } satisfies PostgresState,
     crontabs: { root: `# ${t('database-crontab-root')}\n30 3 * * * /usr/bin/rsnapshot daily\n0 3 * * 1 /usr/bin/rsnapshot weekly` },
-    montages: [{ path: '/', capacity: 40 * Go, name: '/dev/vda1', system: 'ext4' }],
-    comptesVerrouilles: ['accueil'],
+    mounts: [{ path: '/', capacity: 40 * Go, name: '/dev/vda1', system: 'ext4' }],
+    lockedAccounts: ['accueil'],
   }),
   // Après la restauration de test réussie : l'incident de 14 h 02.
   afterCommand: (j) => {
-    if (j.state.incident || !j.state.testValide) return;
+    if (j.state.incident || !j.state.testPassed) return;
     j.state.incident = true;
     pg(j).bases.ludo.tables.prets.lines = [];
     const s = systemd(j)!;
@@ -235,7 +235,7 @@ export const base: Chapter = {
       id: 'test-succeeded',
       condition: (j) => succeededTest(j),
       // L'incident arrive à la commande suivante.
-      action: (j) => (j.state.testValide = true),
+      action: (j) => (j.state.testPassed = true),
       message: (j) => j.t('database-event-test-succeeded'),
     },
     {

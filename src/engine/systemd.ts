@@ -142,15 +142,15 @@ export function start(game: Game, sd: Systemd, name: string, toBoot = false): bo
   s.result = undefined;
   s.load?.(game);
   s.since = sd.clock;
-  const listing: Process[] = (game.state.processus ??= []);
+  const listing: Process[] = (game.state.process ??= []);
   for (const p of s.process) if (!listing.some((q) => q.pid === p.pid)) listing.push({ ...p });
   return true;
 }
 
 // Les processus du service s'arrêtent ; leurs enfants zombies disparaissent avec eux (init les récupère).
 function processRetirer(game: Game, s: Service) {
-  if (game.state.processus)
-    game.state.processus = (game.state.processus as Process[]).filter(
+  if (game.state.process)
+    game.state.process = (game.state.process as Process[]).filter(
       (p) => !s.process.some((q) => q.pid === p.pid || (p.ppid === q.pid && p.zombie)),
     );
 }
@@ -172,9 +172,9 @@ export function restart(game: Game, sd: Systemd) {
   for (const [name, s] of Object.entries(sd.services)) if (s.state === 'active') stop(game, sd, name);
   sd.clock += 90_000;
   sd.boot++;
-  game.state.processus = (game.state.processus as Process[] | undefined)?.filter((p) => p.pid === 1) ?? [];
+  game.state.process = (game.state.process as Process[] | undefined)?.filter((p) => p.pid === 1) ?? [];
   // Le noyau installé devient celui qui tourne ; /run (tmpfs) repart vide, avec reboot-required.
-  const kernel = game.state.noyau as { active: string; installed: string } | undefined;
+  const kernel = game.state.kernel as { active: string; installed: string } | undefined;
   if (kernel) kernel.active = kernel.installed;
   for (const f of ['/var/run/reboot-required', '/var/run/reboot-required.pkgs']) if (game.exists(f)) game.erase(f);
   // Les sessions tmux meurent avec la machine ; les règles du pare-feu aussi (nftables.service les recharge s'il est activé).
@@ -188,7 +188,7 @@ export function restart(game: Game, sd: Systemd) {
   writeLog(sd, '', 'kernel', 0, `Linux version ${kernel?.active ?? '6.12.0-quetes'} (${sd.host})`);
   // Une machine qui monte ses disques selon /etc/fstab (voir fstab.ts) : si ce n'est
   // pas possible, elle s'arrête en mode secours, sans lancer ses services.
-  const mounts = game.state.demarrerMontages as ((j: Game) => boolean) | undefined;
+  const mounts = game.state.startMounts as ((j: Game) => boolean) | undefined;
   if (mounts && !mounts(game)) {
     for (const s of Object.values(sd.services)) {
       s.state = 'inactive';

@@ -158,9 +158,9 @@ export const chapterSnapshots: Chapter = {
         },
         cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },
       }),
-      montages: [{ path: '/', capacity: 40 * Go, name: '/dev/vda1', system: 'ext4' }],
-      peripheriques: { '/dev/sdc1': second },
-      comptesVerrouilles: ['accueil'],
+      mounts: [{ path: '/', capacity: 40 * Go, name: '/dev/vda1', system: 'ext4' }],
+      devices: { '/dev/sdc1': second },
+      lockedAccounts: ['accueil'],
     };
   },
   initialise: (j) => {
@@ -173,10 +173,10 @@ export const chapterSnapshots: Chapter = {
   },
   // Une fois rsnapshot programmé avec une configuration valable, deux semaines passent.
   afterCommand: (j) => {
-    if (j.state.semainesPassees || !crontabsRsnapshot(j) || conf(j).errors.length) return;
-    j.state.semainesPassees = true;
+    if (j.state.pastWeeks || !crontabsRsnapshot(j) || conf(j).errors.length) return;
+    j.state.pastWeeks = true;
     const mails = twoWeeks(j);
-    j.state.mailsCron = mails;
+    j.state.cronMails = mails;
     return j.t('snapshots-two-weeks', { mails: mails.length });
   },
   createWorld: (t) => {
@@ -225,15 +225,15 @@ export const chapterSnapshots: Chapter = {
     },
     {
       id: 'same-disk',
-      condition: (j) => !!j.state.semainesPassees && !conf(j).conf.root.startsWith(`${path(j.t, DISK)}/`),
+      condition: (j) => !!j.state.pastWeeks && !conf(j).conf.root.startsWith(`${path(j.t, DISK)}/`),
       message: (j) => j.t('snapshots-event-same-disk'),
     },
     {
       id: 'mails',
-      condition: (j) => ((j.state.mailsCron ?? []) as string[]).some((m) => m.includes('ERROR')),
+      condition: (j) => ((j.state.cronMails ?? []) as string[]).some((m) => m.includes('ERROR')),
       message: (j) =>
         j.t('snapshots-event-mails', {
-          exemple: ((j.state.mailsCron ?? []) as string[])
+          exemple: ((j.state.cronMails ?? []) as string[])
             .find((m) => m.includes('ERROR'))!
             .split('\n')
             .slice(0, 7)
@@ -243,7 +243,7 @@ export const chapterSnapshots: Chapter = {
     {
       id: 'links',
       condition: (j) =>
-        !!j.state.semainesPassees &&
+        !!j.state.pastWeeks &&
         j.last.commands.some((c) => c[0] === 'du' || (c[0] === 'rsnapshot' && c.includes('du'))) &&
         /\.1\/?\s*$/m.test(j.last.output),
       message: (j) => j.t('snapshots-event-links'),

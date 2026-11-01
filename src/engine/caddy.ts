@@ -339,10 +339,10 @@ export function checkCaddy(game: Game): string[] | null {
 
 // Les écoutes de Caddy (ss -tlnp) : celles de la configuration, et l'API d'administration.
 function listen(game: Game, c: ConfigCaddy | null) {
-  const other = ((game.state.ecoute ?? []) as Listening[]).filter((e) => e.process !== 'caddy');
+  const other = ((game.state.listening ?? []) as Listening[]).filter((e) => e.process !== 'caddy');
   const caddy: Listening[] = c ? [{ proto: 'tcp', address: '127.0.0.1', port: 2019, process: 'caddy', pid: PID }, ...listenersPorts(c).map((port) => ({ proto: 'tcp' as const, address: '*', port, process: 'caddy', pid: PID }))] : [];
   if (c && listenersPorts(c).includes(443)) caddy.push({ proto: 'udp', address: '*', port: 443, process: 'caddy', pid: PID });
-  game.state.ecoute = [...other, ...caddy];
+  game.state.listening = [...other, ...caddy];
 }
 
 /** Après un démarrage ou un rechargement réussi : Caddy applique sa configuration, et obtient les certificats qui manquent. */

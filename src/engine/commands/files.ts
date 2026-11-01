@@ -530,7 +530,7 @@ export const FILES: Record<string, Command> = {
     launch: ({ args, game }) => {
       const { letters, rest } = options(args);
       const fmt = (o: number) => (letters.has('h') ? readable(o, game.t.language) : String(Math.ceil(o / 1024)));
-      const mounts: { path: string; capacity: number; name: string; inodes?: number; inodesBase?: number }[] = game.state.montages ?? [];
+      const mounts: { path: string; capacity: number; name: string; inodes?: number; inodesBase?: number }[] = game.state.mounts ?? [];
       const chosen = (rest.length ? rest.map((r) => game.mount(game.resolve(r))).filter(Boolean) : mounts) as typeof mounts;
       // -i : les inodes (un par fichier ou lieu) au lieu des octets.
       if (letters.has('i')) {
@@ -613,14 +613,14 @@ export const FILES: Record<string, Command> = {
       const { truncated } = n.archive;
       const inputs = Object.entries(n.archive.files).slice(0, truncated);
       const cut = () => {
-        game.state.archiveTronquee = game.resolve(archiveName);
+        game.state.truncatedArchive = game.resolve(archiveName);
         game.error(game.t('tar-truncated'));
       };
       if (letters.has('t')) {
         const listing = inputs.map(([path]) => path).join('\n');
         if (truncated === undefined) return listing;
         // La liste, puis l'erreur à l'endroit de la coupure.
-        game.state.archiveTronquee = game.resolve(archiveName);
+        game.state.truncatedArchive = game.resolve(archiveName);
         return game.error([listing, game.t('tar-truncated')].filter(Boolean).join('\n'));
       }
       if (letters.has('x')) {

@@ -87,11 +87,11 @@ function usbRepo(t: Game['t']): Repo {
 const expected = (j: Game) => Object.fromEntries(Object.entries(FILES).map(([rel, id]) => [path(j.t, `${SHARE}/${rel}`), j.t(id)]));
 
 const sd = (j: Game) => systemd(j)!;
-const process = (j: Game): Process[] => j.state.processus ?? [];
+const process = (j: Game): Process[] => j.state.process ?? [];
 const activeEncryptor = (j: Game) => process(j).some((p) => p.command.startsWith(path(j.t, ENCRYPTOR)));
 const persistence = (j: Game) => (j.state.crontabs?.accueil ?? '').includes(name(j.t, 'system-update'));
-const locked = (j: Game) => (j.state.comptesVerrouilles ?? []).includes('accueil');
-const mountedKey = (j: Game) => (j.state.montages ?? []).some((m: { name: string }) => m.name === USB);
+const locked = (j: Game) => (j.state.lockedAccounts ?? []).includes('accueil');
+const mountedKey = (j: Game) => (j.state.mounts ?? []).some((m: { name: string }) => m.name === USB);
 
 // Tous les fichiers sous un lieu (chemins absolus).
 function all(j: Game, place: string): string[] {
@@ -197,7 +197,7 @@ export const ransom: Chapter = {
         },
         cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },
       }),
-      processus: [
+      process: [
         { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
         { pid: 611, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
         { pid: 640, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
@@ -207,7 +207,7 @@ export const ransom: Chapter = {
         root: `# ${t('ransom-crontab-root')}\n30 2 * * * rsync -a --delete ${path(t, SHARE)}/ ${path(t, `${NAS}/share`)}/`,
         accueil: `*/10 * * * * ${path(t, ENCRYPTOR)} --silencieux\n@reboot ${path(t, ENCRYPTOR)} --silencieux`,
       },
-      montages: [
+      mounts: [
         { path: '/', capacity: 40 * Go, name: '/dev/vda1', system: 'ext4' },
         {
           path: NAS,
@@ -217,16 +217,16 @@ export const ransom: Chapter = {
           options: 'relatime,vers=3.1.1,uid=0,file_mode=0777,dir_mode=0777',
         },
       ],
-      peripheriques: { [USB]: usb },
+      devices: { [USB]: usb },
       restic: { [path(t, REPO)]: usbRepo(t) },
-      resticHorloge: Date.UTC(2027, 5, 21, 9, 0, 0),
+      resticClock: Date.UTC(2027, 5, 21, 9, 0, 0),
     };
   },
   initialise: (j) => {
     const game = j as Shell;
     // Les fichiers du dépôt restic, sur le disque USB (monté le temps de les écrire).
     const place = j.find(path(j.t, KEY)) as Directory;
-    const tree = (j.state.peripheriques[USB] as Device).tree;
+    const tree = (j.state.devices[USB] as Device).tree;
     const cache = place.children;
     place.children = tree.children;
     writeRepo(game, path(j.t, REPO), j.state.restic[path(j.t, REPO)]);
@@ -252,12 +252,12 @@ export const ransom: Chapter = {
     const messages: string[] = [];
     if (activeEncryptor(j)) {
       const touches = encrypt(j, path(j.t, SHARE));
-      if (touches) j.state.rechiffres = (j.state.rechiffres ?? 0) + touches;
+      if (touches) j.state.reencrypted = (j.state.reencrypted ?? 0) + touches;
     } else if (persistence(j)) {
-      j.state.attente = (j.state.attente ?? 0) + 1;
-      if (j.state.attente >= 4) {
-        j.state.attente = 0;
-        const pid = 3141 + (j.state.retours = (j.state.retours ?? 0) + 1) * 7;
+      j.state.waiting = (j.state.waiting ?? 0) + 1;
+      if (j.state.waiting >= 4) {
+        j.state.waiting = 0;
+        const pid = 3141 + (j.state.returns = (j.state.returns ?? 0) + 1) * 7;
         process(j).push({ pid, user: 'accueil', cpu: 97.3, mem: 1.4, command: `${path(j.t, ENCRYPTOR)} --silencieux` });
         writeLog(sd(j), 'cron.service', 'CRON', pid - 1, `(accueil) CMD (${path(j.t, ENCRYPTOR)} --silencieux)`);
         encrypt(j, path(j.t, SHARE));
@@ -324,7 +324,7 @@ export const ransom: Chapter = {
       condition: (j) => j.last.commands.some((c) => c.some((a) => a.startsWith(NAS))) && /\.locked/.test(j.last.output),
       message: (j) => j.t('ransom-event-nas'),
     },
-    { id: 'reencrypted', condition: (j) => (j.state.rechiffres ?? 0) > 0, message: (j) => j.t('ransom-event-reencrypted') },
+    { id: 'reencrypted', condition: (j) => (j.state.reencrypted ?? 0) > 0, message: (j) => j.t('ransom-event-reencrypted') },
     { id: 'key-too-early', condition: (j) => mountedKey(j) && activeEncryptor(j), message: (j) => j.t('ransom-event-key-too-early') },
     { id: 'restored', condition: (j) => allRestored(j) && !activeEncryptor(j), message: (j) => j.t('ransom-event-restored') },
     {

@@ -145,7 +145,7 @@ export const fire: Chapter = {
           process: [{ pid: 598, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' }],
         },
       }),
-      processus: [
+      process: [
         { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
         { pid: 598, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
         { pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
@@ -188,7 +188,7 @@ export const fire: Chapter = {
   events: [
     {
       id: 'list-empty',
-      condition: (j) => j.state.aptIntrouvable === true,
+      condition: (j) => j.state.missingApt === true,
       message: (j) => j.t('fire-event-list-empty'),
     },
     {
@@ -198,7 +198,7 @@ export const fire: Chapter = {
     },
     {
       id: 'truncated',
-      condition: (j) => j.state.archiveTronquee === path(j.t, archive(ARCHIVES[2])),
+      condition: (j) => j.state.truncatedArchive === path(j.t, archive(ARCHIVES[2])),
       message: (j) => j.t('fire-event-truncated'),
     },
     {
@@ -209,7 +209,7 @@ export const fire: Chapter = {
     {
       id: 'duplicate',
       condition: (j) =>
-        (j.state.nginxErreur ?? '').includes('duplicate default server') || sd(j).log.some((e) => e.message.includes('duplicate default server')),
+        (j.state.nginxError ?? '').includes('duplicate default server') || sd(j).log.some((e) => e.message.includes('duplicate default server')),
       message: (j) => j.t('fire-event-duplicate'),
     },
     {

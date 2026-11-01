@@ -68,7 +68,7 @@ const keptBackup = (j: Game) => crontab(j).some((l) => /sauvegarde\.sh/.test(l))
 const basePassword = (j: Game) => postgres(j)?.passwords?.commandes ?? '';
 const filePassword = (j: Game) => /^DATABASE_URL=postgres:\/\/commandes:([^@]*)@/m.exec(j.read(ENV) ?? '')?.[1] ?? '';
 // L'appli lit .env quand elle démarre : le mot de passe qu'elle utilise est celui du dernier démarrage.
-const appLPassword = (j: Game) => (j.state.appMotDePasse as string | undefined) ?? '';
+const appLPassword = (j: Game) => (j.state.appPassword as string | undefined) ?? '';
 const activeApp = (j: Game) => systemd(j)!.services.commandes.state === 'active';
 const changeBase = (j: Game) => basePassword(j) !== OLD_PASSWORD;
 const longEnough = (j: Game) => basePassword(j).length >= 12;
@@ -132,9 +132,9 @@ export const traces: Chapter = {
   state: (t) => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
     ufw: { ...newFirewall(), enabled: true, rules: RULES.map((r) => ({ ...r })) },
-    ecoute: LISTENING.map((e) => ({ ...e })),
+    listening: LISTENING.map((e) => ({ ...e })),
     crontabs: { nadia: CRONTAB_NADIA },
-    connexionsPassees: [
+    pastConnections: [
       { account: 'nadia', tty: 'pts/1', since: BOUTIQUE, start: day(9, 18, 2), end: day(9, 18, 40) },
       { account: 'nadia', tty: 'pts/1', since: BOUTIQUE, start: day(10, 17, 55), end: day(10, 18, 20) },
       { account: 'nadia', tty: 'pts/2', since: INTRUDER, start: day(13, 3, 12), end: day(13, 3, 15) },
@@ -155,7 +155,7 @@ export const traces: Chapter = {
         check: (j) =>
           filePassword(j) === basePassword(j) ? null : ['error: password authentication failed for user "commandes"', "    at Parser.parseErrorMessage (/srv/commandes/app/node_modules/pg-protocol/dist/parser.js:283:98) { code: '28P01' }"],
         load: (j) => {
-          j.state.appMotDePasse = filePassword(j);
+          j.state.appPassword = filePassword(j);
         },
       },
     }),
@@ -166,7 +166,7 @@ export const traces: Chapter = {
       passwords: { commandes: OLD_PASSWORD },
     } satisfies PostgresState,
     // Le démarrage d'avant la nuit du 13 mars : l'appli tourne avec l'ancien mot de passe.
-    appMotDePasse: OLD_PASSWORD,
+    appPassword: OLD_PASSWORD,
   }),
   // Le journal de ssh : les connexions de Nadia, celle de la nuit, les robots.
   initialise: (j) => {

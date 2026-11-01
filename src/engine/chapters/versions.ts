@@ -123,8 +123,8 @@ export const versions: Chapter = {
   state: (t) => ({
     restic: { [path(t, REPO)]: initialRepo(t) },
     // L'heure des prochaines sauvegardes à la main : samedi 6 février, 9 h 40.
-    resticHorloge: Date.UTC(2027, 1, 6, 9, 40, 0),
-    montages: [
+    resticClock: Date.UTC(2027, 1, 6, 9, 40, 0),
+    mounts: [
       { path: path(t, '/mnt/townhall'), capacity: CAPACITY, name: `townhall.example:${path(t, '/share/backups')}` },
       { path: '/', capacity: 20 * 1024 * Mo, name: '/dev/sda1' },
     ],
@@ -158,12 +158,12 @@ export const versions: Chapter = {
   events: [
     {
       id: 'password',
-      condition: (j) => !!j.state.resticFichierMdp && openMdp(j),
+      condition: (j) => !!j.state.resticPasswordFile && openMdp(j),
       message: (j) => j.t('versions-event-password', { fichier: path(j.t, MDP) }),
     },
     {
       id: 'bad-password',
-      condition: (j) => j.state.resticMauvaisMdp === true,
+      condition: (j) => j.state.resticWrongPassword === true,
       message: (j) => j.t('versions-event-bad-password'),
     },
     {
@@ -183,7 +183,7 @@ export const versions: Chapter = {
     },
     {
       id: 'forgotten-without-plum',
-      condition: (j) => j.state.resticOublie === true && repo(j).pruneA,
+      condition: (j) => j.state.resticForgotten === true && repo(j).pruneA,
       message: (j) => j.t('versions-event-forgotten-without-plum'),
     },
     {

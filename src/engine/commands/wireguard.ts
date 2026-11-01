@@ -142,7 +142,7 @@ export function serviceWg(name: string) {
     state: 'inactive' as const,
     executable: 'wg-quick',
     activeRest: true,
-    processus: [],
+    process: [],
     check: (j: Parameters<typeof mountWg>[0]) => {
       if (j.state.wg?.[name]) return [`wg-quick: \`${name}' already exists`];
       if (j.read(confFor(name)) === null) return [`wg-quick: \`${confFor(name)}' does not exist`];

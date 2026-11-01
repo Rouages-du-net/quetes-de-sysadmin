@@ -106,7 +106,7 @@ export const serviceSsh = (): DefinitionService => ({
     const c = sshd(j);
     if (!c) return;
     c.load = readConfig(j).values;
-    c.connectionsToLoad = j.state.connexions ?? 1;
+    c.connectionsToLoad = j.state.connections ?? 1;
     c.reloads++;
   },
 });

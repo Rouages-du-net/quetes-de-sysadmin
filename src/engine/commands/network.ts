@@ -91,7 +91,7 @@ function dnsServers(game: Shell): string[] {
 // Résout un nom comme le ferait le système. `serveur` : forcer un serveur DNS.
 function resolveName(game: Shell, name: string, server?: string): { ip: string } | { error: 'delai' | 'inconnu'; servers: string[] } {
   if (isIp(name)) return { ip: name };
-  const r: Network = game.state.reseau;
+  const r: Network = game.state.network;
   const servers = server ? [server] : dnsServers(game);
   if (!servers.some((s) => r.resolvers.includes(s))) return { error: 'delai', servers };
   const ip = r.names[name.replace(/\.$/, '')];
@@ -161,7 +161,7 @@ export const NETWORK: Record<string, Command> = {
       const res = resolveName(game, host);
       if ('error' in res)
         return game.error(`ping: ${host}: ${res.error === 'delai' ? 'Temporary failure in name resolution' : 'Name or service not known'}`);
-      const r: Network = game.state.reseau;
+      const r: Network = game.state.network;
       const m = r.machines[res.ip];
       const jumps = r.routes[res.ip]?.length ?? 1;
       const lines = [`PING ${host} (${res.ip}) 56(84) bytes of data.`];
@@ -202,7 +202,7 @@ export const NETWORK: Record<string, Command> = {
         const errors = Array(3).fill(`;; communications error to ${s}#53: timed out`).join('\n');
         return short ? errors : `${errors}\n\n${header}\n;; no servers could be reached`;
       }
-      const inUse = server ?? dnsServers(game).find((s) => (game.state.reseau as Network).resolvers.includes(s))!;
+      const inUse = server ?? dnsServers(game).find((s) => (game.state.network as Network).resolvers.includes(s))!;
       if (short) return 'ip' in res ? res.ip : '';
       const fqdn = name.replace(/\.$/, '') + '.';
       return [
@@ -229,7 +229,7 @@ export const NETWORK: Record<string, Command> = {
         return game.error(
           `${host}: ${res.error === 'delai' ? 'Temporary failure in name resolution' : 'Name or service not known'}\nCannot handle "host" cmdline arg \`${host}' on position 1 (argc 1)`,
         );
-      const r: Network = game.state.reseau;
+      const r: Network = game.state.network;
       const jumps = r.routes[res.ip] ?? [];
       const lines = [`traceroute to ${host} (${res.ip}), 30 hops max, 60 byte packets`];
       jumps.forEach((s, i) => {
@@ -283,7 +283,7 @@ export const NETWORK: Record<string, Command> = {
       // Un tunnel ssh (ssh -L) : le port local mène à un service vu depuis une autre machine.
       const tunnel = BASE_LOCAL.includes(host.toLowerCase())
         ? ((game.state.tunnels ?? []) as { port: number; shell: Shell; remotePort: number; pid: number; loop: boolean }[]).find(
-            (t) => t.port === Number(m[3] ?? 80) && ((game.state.processus ?? []) as { pid: number }[]).some((p) => p.pid === t.pid),
+            (t) => t.port === Number(m[3] ?? 80) && ((game.state.process ?? []) as { pid: number }[]).some((p) => p.pid === t.pid),
           )
         : undefined;
       if (tunnel) {
@@ -297,7 +297,7 @@ export const NETWORK: Record<string, Command> = {
       }
       // Une machine avec nginx : la requête part vers elle-même (localhost,
       // son nom, son adresse), et nginx répond selon sa configuration chargée.
-      if (game.state.nginx || game.state.docker || game.state.applis || game.state.caddy) {
+      if (game.state.nginx || game.state.docker || game.state.apps || game.state.caddy) {
         const containers: string[] = (game.state.docker?.containers ?? []).map((c: { ip: string }) => c.ip);
         const local = [...BASE_LOCAL, ...(game.state.nginx?.names ?? game.state.docker?.names ?? game.state.caddy?.names ?? []), ...containers];
         const blocks: string[] = [];
@@ -342,7 +342,7 @@ export const NETWORK: Record<string, Command> = {
         return game.error('curl: (47) Maximum (5) redirects followed');
       }
       // Une machine sans réseau simulé (le poste) : personne ne répond, sauf par un tunnel.
-      if (!game.state.reseau)
+      if (!game.state.network)
         return game.error(
           BASE_LOCAL.includes(host.toLowerCase())
             ? `curl: (7) Failed to connect to ${host} port ${m[3] ?? 80} after 0 ms: Couldn't connect to server`
@@ -350,7 +350,7 @@ export const NETWORK: Record<string, Command> = {
         );
       const res = resolveName(game, host);
       if ('error' in res) return game.error(`curl: (6) Could not resolve host: ${host}`);
-      const site = (game.state.reseau as Network).web[host];
+      const site = (game.state.network as Network).web[host];
       if (!site)
         return game.error(`curl: (7) Failed to connect to ${host} port ${m[1] === 'http' ? 80 : 443} after 3002 ms: Couldn't connect to server`);
       return headers ? site.headers.join('\n') : site.body;

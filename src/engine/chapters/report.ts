@@ -38,7 +38,7 @@ const closedRoot = (j: Game) => sshd(j).load.permitrootlogin === 'no';
 const between = (j: Game) => allowed(sshd(j).load, j.player);
 
 const lucas = (j: Game) => j.accounts.users.lucas;
-const lockedLucas = (j: Game) => ((j.state.comptesVerrouilles ?? []) as string[]).includes('lucas');
+const lockedLucas = (j: Game) => ((j.state.lockedAccounts ?? []) as string[]).includes('lucas');
 const lucasSudo = (j: Game) => !!j.accounts.groups.sudo?.members.includes('lucas');
 const okAccount = (j: Game) => !lucas(j) || (lockedLucas(j) && !!lucas(j).expires && !lucasSudo(j));
 // Verrouillé ou expiré, mais encore dans sudo : le constat n'est qu'à moitié traité.

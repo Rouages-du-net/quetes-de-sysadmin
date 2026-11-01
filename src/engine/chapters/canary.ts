@@ -54,7 +54,7 @@ const conf = (t: Game['t']) => `server {
 
 const sd = (j: Game) => systemd(j)!;
 const enabled = (j: Game, colour: string) => sd(j).services[`kiosk-${colour}`]?.state === 'active';
-const lastBatch = (j: Game): Batch | undefined => j.state.dernierLot;
+const lastBatch = (j: Game): Batch | undefined => j.state.lastBatch;
 const output = (j: Game) => [j.last.output, ...j.last.errors].join('\n');
 
 export const canary: Chapter = {
@@ -120,7 +120,7 @@ export const canary: Chapter = {
       'kiosk-blue': kioskService('blue', 1501),
       'kiosk-green': kioskService('green', 1502),
     }),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
@@ -129,23 +129,23 @@ export const canary: Chapter = {
       { pid: 1502, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/green/serveur.js` },
     ],
     nginx: { load: null, names: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'], journalAcces: true },
-    applis: { '127.0.0.1:3001': kioskApp('blue'), '127.0.0.1:3002': kioskApp('green') },
+    apps: { '127.0.0.1:3001': kioskApp('blue'), '127.0.0.1:3002': kioskApp('green') },
   }),
   initialise: (j) => {
     loadNginx(j);
     sd(j).services['kiosk-blue'].load!(j);
     sd(j).services['kiosk-green'].load!(j);
-    j.state.configVue = JSON.stringify(j.state.nginx.load);
+    j.state.configSeen = JSON.stringify(j.state.nginx.load);
   },
   // À chaque nouvelle configuration de nginx, une heure de lecteur·rices passe.
   afterCommand: (j) => {
     const view = JSON.stringify(j.state.nginx.load);
-    if (view === j.state.configVue) return;
-    j.state.configVue = view;
+    if (view === j.state.configSeen) return;
+    j.state.configSeen = view;
     const batch = readers(j);
-    j.state.dernierLot = batch;
-    j.state.lots = [...(j.state.lots ?? []), batch];
-    if (batch.byVersion['1.6.1']?.visits && !batch.byVersion['1.6.1'].errors && (distribution(j).blue ?? 0) < 1) j.state.canariPropre = true;
+    j.state.lastBatch = batch;
+    j.state.batches = [...(j.state.batches ?? []), batch];
+    if (batch.byVersion['1.6.1']?.visits && !batch.byVersion['1.6.1'].errors && (distribution(j).blue ?? 0) < 1) j.state.canaryClean = true;
     return j.t('canary-one-time', { visites: batch.total });
   },
   createWorld: (t) => {
@@ -218,7 +218,7 @@ export const canary: Chapter = {
   events: [
     {
       id: 'all-one-coup',
-      condition: (j) => (distribution(j).blue ?? 0) === 1 && !!lastBatch(j)?.byVersion['1.6.0']?.errors && !j.state.canari160,
+      condition: (j) => (distribution(j).blue ?? 0) === 1 && !!lastBatch(j)?.byVersion['1.6.0']?.errors && !j.state.canary160,
       message: (j) => j.t('canary-event-all-one-coup', { erreurs: lastBatch(j)!.errors }),
     },
     {
@@ -226,7 +226,7 @@ export const canary: Chapter = {
       condition: (j) => {
         const parts = distribution(j);
         const ok = (parts.blue ?? 0) > 0 && (parts.blue ?? 0) <= 0.25 && !!lastBatch(j)?.byVersion['1.6.0'];
-        if (ok) j.state.canari160 = true;
+        if (ok) j.state.canary160 = true;
         return ok;
       },
       message: (j) => j.t('canary-event-canary-160'),
@@ -238,12 +238,12 @@ export const canary: Chapter = {
     },
     {
       id: 'found',
-      condition: (j) => !!j.state.canari160 && /" 500 \d+ /.test(output(j)) && output(j).includes('/kiosk/archives'),
+      condition: (j) => !!j.state.canary160 && /" 500 \d+ /.test(output(j)) && output(j).includes('/kiosk/archives'),
       message: (j) => j.t('canary-event-found'),
     },
     {
       id: 'stopped',
-      condition: (j) => !!j.state.canari160 && (distribution(j).blue ?? 0) === 0 && (distribution(j).green ?? 0) > 0,
+      condition: (j) => !!j.state.canary160 && (distribution(j).blue ?? 0) === 0 && (distribution(j).green ?? 0) > 0,
       message: (j) => j.t('canary-event-stopped'),
       // Les développeur·ses publient le correctif.
       action: (j) => {
@@ -251,13 +251,13 @@ export const canary: Chapter = {
         if (versions?.type === 'dossier') versions.children['1.6.1'] = versionDirectory(j.t, '1.6.1', 'canary-notes-161');
       },
     },
-    { id: 'canary-161', condition: (j) => !!j.state.canariPropre, message: (j) => j.t('canary-event-canary-161') },
+    { id: 'canary-161', condition: (j) => !!j.state.canaryClean, message: (j) => j.t('canary-event-canary-161') },
     {
       id: 'end',
       condition: (j) => {
         const s = health(j, 'blue');
         return (
-          !!j.state.canariPropre &&
+          !!j.state.canaryClean &&
           (distribution(j).blue ?? 0) === 1 &&
           s?.status === 'ok' &&
           s.version === '1.6.1' &&

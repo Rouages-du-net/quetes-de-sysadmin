@@ -12,7 +12,7 @@ import type { Listening } from './commands/ss';
 export type PortState = 'ouvert' | 'refuse' | 'filtre';
 
 export function portState(game: Game, port: number, local: boolean, source: string): PortState {
-  const listeners: Listening[] = [...(game.state.ecoute ?? []), ...dockerListeners(game)].filter((e) => e.proto === 'tcp' && e.port === port);
+  const listeners: Listening[] = [...(game.state.listening ?? []), ...dockerListeners(game)].filter((e) => e.proto === 'tcp' && e.port === port);
   const onAll = listeners.some((e) => e.address === '0.0.0.0' || e.address === '[::]' || e.address === '*');
   if (local) return listeners.length ? 'ouvert' : 'refuse';
   if (publishedToWorld(game, port)) return 'ouvert';

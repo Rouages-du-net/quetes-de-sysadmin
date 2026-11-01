@@ -68,7 +68,7 @@ export interface SshdState {
   reloads: number;
 }
 export const sshd = (j: Game) => j.state.sshd as SshdState;
-export const connectionsBy = (j: Game, comment: 'cle' | 'motDePasse') => (j.state.connexionsSsh?.[comment] as number | undefined) ?? 0;
+export const connectionsBy = (j: Game, comment: 'cle' | 'motDePasse') => (j.state.sshConnections?.[comment] as number | undefined) ?? 0;
 
 // Le service ssh, comme celui de Debian : ExecReload vérifie d'abord (sshd -t).
 const serviceSsh = (): DefinitionService => ({
@@ -92,7 +92,7 @@ const serviceSsh = (): DefinitionService => ({
 
 /** L'état de maison : le vrai ssh, sshd et systemd (plus les services du chapitre). */
 export const homeState = (services: Record<string, DefinitionService> = {}, more: Record<string, unknown> = {}) => ({
-  sshReel: true,
+  realSsh: true,
   sshd: { load: {}, keysToLoad: 0, reloads: 0 },
   systemd: newSystemd('community', NOW - 9 * 86_400_000, NOW, { ssh: serviceSsh(), ...services }),
   ...more,

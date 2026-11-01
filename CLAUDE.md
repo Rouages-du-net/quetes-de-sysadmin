@@ -27,10 +27,10 @@ presents them for people.
   English ones); every other document is in English only.
 - **Code in English.** Files and identifiers (functions, variables,
   types, props), and the world (places, machines, accounts, passwords) are
-  in English, and so are the `.ftl` files and keys. Some identifiers are
-  still French: the keys of a machine's state (`state.montages`,
-  `state.applis`…), CSS classes and some comments; they are being moved to
-  English. Write new
+  in English, and so are the `.ftl` files and keys and the keys of a
+  machine's state (`state.mounts`, `state.apps`…). Still French: CSS
+  classes, Fluent variables (`{ $cible }`) and some comments; they are being
+  moved to English. Write new
   code (files, functions, variables, props, CSS classes, new `.ftl` keys)
   in English; never mix a large rename with a feature. A public name (attribute of
   the element, URL) gets its English form first and keeps the French one
@@ -70,7 +70,7 @@ presents them for people.
 - `src/engine/apache.ts`: a machine's Apache (Debian's configuration read
   like `apache2ctl configtest`, virtual hosts, `.htaccess` and
   `AllowOverride`, `mod_rewrite`); reached by nginx and `curl` like an app
-  (`state.applis`); the package's `/etc/apache2` in `apache-debian.ts`;
+  (`state.apps`); the package's `/etc/apache2` in `apache-debian.ts`;
   `apache2ctl`, `a2ensite`, `a2enmod`… in `commands/apache.ts`.
 - `src/engine/mail.ts`: a machine's mail (Postfix: `main.cf`, the
   queue, `/var/log/mail.log`; OpenDKIM: `opendkim.conf`, key, signing as
@@ -106,7 +106,7 @@ presents them for people.
 - `chapters/kiosk.ts`: the app of La Gazette's deployment chapters
   (blue/green, `/health`, migration, simulated visits); nginx can balance
   between several servers (`upstream`).
-- `commands/disks.ts` (`lsblk`, `mount`, `umount`, `state.peripheriques`),
+- `commands/disks.ts` (`lsblk`, `mount`, `umount`, `state.devices`),
   `commands/rsnapshot.ts`, `src/engine/postgres.ts` and
   `commands/postgres.ts` (`psql`, `pg_dump`, `pg_restore`, `createdb`,
   `dropdb`).
@@ -118,7 +118,7 @@ presents them for people.
   `commands/systemd.ts`. Disk I/O (`state.io`: requests, scheduler,
   `IO*BandwidthMax=`, ionice classes) in `src/engine/disk-io.ts`,
   `iostat`, `pidstat`, `ionice` in `commands/iostat.ts`. Inodes: a medium
-  of `state.montages` may declare `inodes` (and `inodesBase`); `df -i`,
+  of `state.mounts` may declare `inodes` (and `inodesBase`); `df -i`,
   `du --inodes`, `find -mtime` (the files' `mtime`); the ARG_MAX limit in
   `shell.ts`. A machine's time (time zone, drifting clock, NTP) in
   `src/engine/time.ts`, `timedatectl` in `commands/time.ts`. Hand-written
@@ -130,16 +130,16 @@ presents them for people.
   monitoring (`check_disk`, `check_http`, `check_procs`, outside the PATH),
   `mail` and `last` in `commands/monitoring.ts`. A command can set its
   exit code (`game.status`).
-- `src/engine/storage.ts`: a machine's storage (`state.stockage`: disks and
+- `src/engine/storage.ts`: a machine's storage (`state.storage`: disks and
   SMART, GPT partitions, RAID 1 arrays, `/proc/mdstat`, the rebuild that
   progresses before each command, `Chapter.beforeCommand`); `smartctl`,
   `mdadm`, `sfdisk`, `grub-install` and `lsblk` on this model in
-  `commands/storage.ts` (including `mdadm --create`); LVM (`stockage.lvm`:
+  `commands/storage.ts` (including `mdadm --create`); LVM (`storage.lvm`:
   PVs, VGs, LVs in segments, file system size) in `src/engine/lvm.ts`,
   `pvs`, `vgs`, `lvs`, `pvcreate`, `pvremove`, `vgextend`, `vgreduce`,
   `pvmove`, `lvextend`, `resize2fs`, `update-initramfs` in
   `commands/lvm.ts`; `/etc/fstab` (reading, `UUID=`/`LABEL=` sources, boot
-  and emergency mode: `state.demarrerMontages`, `state.continuerDemarrage`
+  and emergency mode: `state.startMounts`, `state.continueBoot`
   called by `reboot`, `systemctl default` and `exit`) in
   `src/engine/fstab.ts`, `mount -a` in `commands/disks.ts`, `blkid` and
   `findmnt` in `commands/fstab.ts`; `chapters/lab.ts`: what Le Labo's
@@ -157,7 +157,7 @@ presents them for people.
   (and the rescue snapshot, `Console.restore`: the engine stays
   deterministic, no `Date.now` nor `Math.random`); you start from the
   workstation and `ssh` to each story's machine (`commands/ssh.ts`).
-- `src/engine/access.ts`: the "real" ssh (machines with `state.sshReel` and
+- `src/engine/access.ts`: the "real" ssh (machines with `state.realSsh` and
   a story's internal machines, `Chapter.hosts`): `~/.ssh/config`,
   `ProxyJump`, `known_hosts`, `authorized_keys`, passphrase, password;
   `ssh-copy-id` and `scp` in `commands/transfers.ts`, remote `rsync` in
@@ -178,7 +178,7 @@ presents them for people.
 - `commands/tmux.ts`: a machine's tmux sessions (`state.tmux`,
   `Shell.tmux`; the console copies what is displayed) and `uname`;
   `apt upgrade` and `dpkg --configure -a` in `commands/apt.ts`
-  (`state.apt.updates`, `state.noyau`, `state.coupureReseau`: the connection
+  (`state.apt.updates`, `state.kernel`, `state.networkCut`: the connection
   drops, `Shell.cut`); `unattended-upgrade` and `apt-config` in
   `commands/unattended.ts`, apt's configuration (`apt.conf.d`) in
   `src/engine/apt-conf.ts`.

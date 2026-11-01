@@ -353,7 +353,7 @@ function ldappasswd(game: Shell, args: string[]): string {
 
 // Le mot de passe que choisit ldappasswd quand on ne lui en donne pas.
 const generated = (game: Shell) => {
-  const n = (game.state.ldapGenere = (game.state.ldapGenere ?? 0) + 1);
+  const n = (game.state.ldapGenerated = (game.state.ldapGenerated ?? 0) + 1);
   return ['aB3dEf9h', 'Qw7rTy2u', 'Zx5cVb8n'][(n - 1) % 3];
 };
 

@@ -22,7 +22,7 @@ export interface Activity {
 export function activityClock(game: Shell): number | null {
   const a = game.chapter.activity;
   if (!a) return null;
-  return ((game.state.activite ??= { clock: a.departure?.(game) ?? systemd(game)?.clock ?? 0 }) as { clock: number }).clock;
+  return ((game.state.activity ??= { clock: a.departure?.(game) ?? systemd(game)?.clock ?? 0 }) as { clock: number }).clock;
 }
 
 /** Fait passer des secondes sur la machine : son activité écrit ce qui se passe pendant ce temps. */
@@ -32,7 +32,7 @@ export function live(game: Shell, seconds: number): void {
   if (!a || forEachOf === null || seconds <= 0) return;
   const end = forEachOf + seconds * 1000;
   a.advance(game, forEachOf, end);
-  (game.state.activite as { clock: number }).clock = end;
+  (game.state.activity as { clock: number }).clock = end;
   const sd = systemd(game);
   if (sd && sd.clock < end) sd.clock = end;
 }

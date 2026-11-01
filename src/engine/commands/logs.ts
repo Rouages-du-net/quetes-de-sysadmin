@@ -266,7 +266,7 @@ function logrotate(game: Shell, args: string[]): string {
       `Handling ${blocks.length} logs`,
       '',
     );
-  const state: Record<string, number> = (game.state.logrotateEtat ??= {});
+  const state: Record<string, number> = (game.state.logrotateState ??= {});
   const now = systemd(game)?.clock ?? 0;
   const parent = (path: string) => game.find(path.replace(/\/[^/]+$/, '')) as { children: Record<string, Node> };
   const name = (path: string) => path.split('/').at(-1)!;
@@ -359,7 +359,7 @@ function logrotate(game: Shell, args: string[]): string {
       }
     }
   }
-  game.state.logrotateTours = (game.state.logrotateTours ?? 0) + (debug ? 0 : 1);
+  game.state.logrotateRuns = (game.state.logrotateRuns ?? 0) + (debug ? 0 : 1);
   if (errors.length) game.error(errors.join('\n'));
   return verbose ? output.join('\n') : '';
 }

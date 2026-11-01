@@ -48,7 +48,7 @@ export const archives: Chapter = {
   names: true,
   final: 'saved',
   state: (t) => ({
-    montages: [
+    mounts: [
       { path: path(t, KEY), capacity: 64 * Mo, name: '/dev/sdb1' },
       { path: '/', capacity: 20 * 1024 * Mo, name: '/dev/sda1' },
     ],

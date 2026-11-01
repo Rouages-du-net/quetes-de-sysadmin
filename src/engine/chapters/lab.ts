@@ -10,7 +10,7 @@ import { d, f, accountsFiles, type Accounts, type Directory, type Rights } from 
 import type { Game, Shell } from '../shell';
 import type { Translate } from '../../texts';
 import { newSystemd, type DefinitionService } from '../systemd';
-import { devDirectory, devUpdate, mdstat, stockage, type Disk, type Partition, type Smart, type Stockage } from '../storage';
+import { devDirectory, devUpdate, mdstat, storageOf, type Disk, type Partition, type Smart, type StorageState } from '../storage';
 import { allocate, pvExtents, lvSize, type LogicVolume } from '../lvm';
 import { timeWhoPass } from '../commands/storage';
 
@@ -83,7 +83,7 @@ const afterReplacement = (m: Moment) => m === 'place' || m === 'secours';
  * sont dans un volume logique (LVM) posé sur md1, comme l'installateur de
  * Debian le propose (« RAID puis LVM »).
  */
-export function labStockage(moment: Moment): Stockage {
+export function labStorage(moment: Moment): StorageState {
   const fresh = moment === 'neuf';
   const sdb = fresh
     ? disk(1, SERIES.neuf, healthySmart(3), null, [])
@@ -94,7 +94,7 @@ export function labStockage(moment: Moment): Stockage {
     { part: `sda${n}`, number: 0, role: 0, state: 'actif' as const },
     ...(fresh ? [] : [{ part: `sdb${n}`, number: 1, role: 1, state: 'actif' as const }]),
   ];
-  const st: Stockage = {
+  const st: StorageState = {
     disks: {
       sda: disk(0, SERIES.sda, healthySmart(28_512), '6A1B3C5D-7E9F-4012-8A3B-C4D5E6F70812', partitions('1A3B')),
       sdb,
@@ -158,7 +158,7 @@ export function labStockage(moment: Moment): Stockage {
   return st;
 }
 
-export const st = (j: Game) => stockage(j)!;
+export const st = (j: Game) => storageOf(j)!;
 
 // Le disque des numérisations : des dossiers de scans d'archives du club.
 export const UUID_SCANS = 'c27a9e41-5b3d-4f8a-a1e6-9d0b2c4f7e13';
@@ -204,7 +204,7 @@ const services = (): Record<string, DefinitionService> => ({
 
 /** L'état de la machine au début d'un chapitre (systemd, stockage, montages). */
 export const labState = (moment: Moment) => {
-  const stockage = labStockage(moment);
+  const storage = labStorage(moment);
   return {
     systemd: newSystemd(
       'labo',
@@ -212,10 +212,10 @@ export const labState = (moment: Moment) => {
       moment === 'place' ? PLACE_NOW : moment === 'secours' ? RESCUE_NOW : NOW,
       services(),
     ),
-    stockage,
-    montages: [
+    storage,
+    mounts: [
       { path: '/', capacity: 33_000_000_000, name: '/dev/md0', system: 'ext4' },
-      { path: '/srv', capacity: stockage.lvm!.vgs.labo.lvs.photos.fs, name: '/dev/mapper/labo-photos', system: 'ext4' },
+      { path: '/srv', capacity: storage.lvm!.vgs.labo.lvs.photos.fs, name: '/dev/mapper/labo-photos', system: 'ext4' },
     ],
   };
 };
@@ -271,7 +271,7 @@ export function labKernel(j: Game, moment: Moment): void {
           [Date.UTC(2027, 10, 14, 7, 6, 52), 'sd 1:0:0:0: [sdb] 3907029168 512-byte logical blocks: (2.00 TB/1.82 TiB)'],
           [Date.UTC(2027, 10, 14, 7, 6, 52), 'sd 1:0:0:0: [sdb] Attached SCSI disk'],
         ];
-  j.state.noyau = [
+  j.state.kernel = [
     { time: start, text: 'Linux version 6.12.48+deb13-amd64 (debian-kernel@lists.debian.org)' },
     { time: start + 2000, text: 'md/raid1:md0: active with 2 out of 2 mirrors' },
     { time: start + 2100, text: 'md/raid1:md1: active with 2 out of 2 mirrors' },
@@ -363,7 +363,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
     home: place({ you: d(more.rescue ? {} : home), odile: place({}, { owner: 'odile', mode: 'rwx------' }) }),
     // Chapitre 4 : on travaille en root, sur la console de l'hébergeur.
     ...(more.rescue ? { root: place(home, { owner: 'root', mode: 'rwx------' }) } : {}),
-    proc: place({ mdstat: f((j) => mdstat(stockage(j)!), { lines: true, owner: 'root', mode: 'r--r--r--' }) }),
+    proc: place({ mdstat: f((j) => mdstat(storageOf(j)!), { lines: true, owner: 'root', mode: 'r--r--r--' }) }),
     srv: place({
       photos: place(
         {
