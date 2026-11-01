@@ -33,3 +33,15 @@ hint-slow-boot-no-carrier =
 hint-slow-boot-end =
     .lead = Dis à wait-online de ne pas attendre eth1 (man systemd.network : RequiredForOnline=), puis redémarre et mesure à nouveau.
     .solution = Dans /etc/systemd/network/20-eth1.network, ajouter {"["}Link] puis RequiredForOnline=no ; sudo reboot, puis systemd-analyze time.
+
+## Chapitre 4 — Le disque en retard
+
+hint-late-disk-hidden =
+    .lead = Quand /srv/data a-t-il été monté, et quand l'appli a-t-elle démarré ? (journalctl -b, findmnt /srv/data). Puis : que contient /srv/data sans son disque ? (man umount)
+    .solution = sudo umount /srv/data, puis ls /srv/data/bookings : le fichier du jour est là, sur le disque système.
+hint-late-disk-recovered =
+    .lead = Copie le fichier à l'abri, remonte le disque (man mount : mount /srv/data lit /etc/fstab), puis copie-le sur le disque.
+    .solution = sudo cp /srv/data/bookings/2027-11-29.csv /root/, sudo mount /srv/data, sudo cp /root/2027-11-29.csv /srv/data/bookings/
+hint-late-disk-end =
+    .lead = Dis à systemd que l'appli a besoin de /srv/data (man systemd.unit : RequiresMountsFor=), puis redémarre.
+    .solution = sudo systemctl edit menu : {"["}Unit] puis RequiresMountsFor=/srv/data ; sudo reboot, puis systemctl status menu.

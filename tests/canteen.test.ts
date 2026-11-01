@@ -203,6 +203,50 @@ for (const language of LANGUAGES)
       expect(s.finished).toBe(true);
     });
 
+    it('chapter 4 — solution: the order of the boot, the hidden list, RequiresMountsFor=, a reboot', () => {
+      const { s, play, edit, sd } = part('late-disk');
+      let all = play(['cat message_from_ibrahim.txt', 'findmnt /srv/data', 'ls /srv/data/bookings', 'journalctl -b']);
+      expect(all).toContain('/srv/data /dev/sdb1 ext4   rw,relatime');
+      expect(all).not.toContain('2027-11-29.csv');
+      expect(all).toMatch(/06:30:12 canteen systemd\[1\]: Started menu\.service[\s\S]*06:30:24 canteen systemd\[1\]: Mounted srv-data\.mount - \/srv\/data\./);
+      contains(all, 'rien n');
+      all = play(['sudo umount /srv/data', 'ls /srv/data/bookings']);
+      expect(all).toContain('2027-11-29.csv');
+      contains(all, 'sur le disque système');
+      all = play(['sudo cp /srv/data/bookings/2027-11-29.csv /root/', 'sudo mount /srv/data', 'sudo cp /root/2027-11-29.csv /srv/data/bookings/', 'cat /srv/data/bookings/2027-11-29.csv']);
+      expect(all).toContain('08:59;Nadia;2');
+      contains(all, 'de retour sur le disque USB');
+      expect(s.finished).toBe(false);
+      edit('sudo systemctl edit menu', dropIn('[Unit]\nRequiresMountsFor=/srv/data'));
+      all = play(['systemctl list-dependencies menu']);
+      expect(all).toContain('└─srv-data.mount');
+      all = play(['sudo reboot', 'systemd-analyze critical-chain menu.service']);
+      expect(all).toContain('menu.service @24.31s +512ms\n└─srv-data.mount @0ms +24.31s');
+      contains(all, 'Tu as terminé le chapitre');
+      expect(sd().services.menu.state).toBe('active');
+      expect(s.finished).toBe(true);
+    });
+
+    it('chapter 4 — another way, and false leads: fixed without the hidden list, then nofail removed', () => {
+      const { s, play, edit } = part('late-disk');
+      // The order fixed, but the morning's list is still hidden under the mount point.
+      edit('sudo systemctl edit menu', dropIn('[Unit]\nRequiresMountsFor=/srv/data'));
+      let all = play(['sudo reboot', 'systemctl status menu', 'ls /srv/data/bookings']);
+      expect(all).toContain('Active: active (running)');
+      expect(all).toContain('2027-11-29.csv');
+      expect(s.finished).toBe(false);
+      all = play(['head -n 1 /srv/data/bookings/2027-11-29.csv']);
+      expect(all).not.toContain('Nadia');
+      // Found and copied with the disk mounted elsewhere is not possible here: unmount, copy, mount.
+      play(['sudo umount /srv/data', 'sudo cp /srv/data/bookings/2027-11-29.csv /tmp/today.csv', 'sudo mount /srv/data', 'sudo cp /tmp/today.csv /srv/data/bookings/2027-11-29.csv']);
+      // nofail removed (and the drop-in too): the whole boot waits for the disk. Accepted, with a warning.
+      edit('sudo nano /etc/fstab', (t) => t.replace('defaults,nofail', 'defaults'));
+      play(['sudo rm /etc/systemd/system/menu.service.d/override.conf', 'sudo systemctl daemon-reload']);
+      all = play(['sudo reboot', 'systemctl status menu']);
+      contains(all, 'mode de secours');
+      expect(s.finished).toBe(true);
+    });
+
     it('chapter 3 — false leads: the app alone stops waiting; wait-online disabled (accepted)', () => {
       const { s, play, edit } = part('slow-boot');
       edit('sudo nano /etc/systemd/system/menu.service', (t) =>

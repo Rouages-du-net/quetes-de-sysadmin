@@ -785,6 +785,10 @@ slow-boot
   /home/you → /home/vous
   /home/you/message_from_ibrahim.txt → /home/vous/message_de_ibrahim.txt
 
+late-disk
+  /home/you → /home/vous
+  /home/you/message_from_ibrahim.txt → /home/vous/message_de_ibrahim.txt
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

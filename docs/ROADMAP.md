@@ -347,8 +347,9 @@ which works on machines rather than switches).
       `BindsTo=`), "The Slow Boot" (`systemd-analyze time` / `blame` /
       `critical-chain`, `network-online.target`,
       `systemd-networkd-wait-online`, `networkctl`, `RequiredForOnline=`)
-- [ ] The Canteen, a fourth chapter: a mount the app needs isn't there yet
-      at boot (`RequiresMountsFor=`, `x-systemd.automount`)
+- [x] The Canteen, chapter 4, "The Late Disk": a mount the app needs isn't
+      there yet at boot (`nofail`, what a mount point hides,
+      `RequiresMountsFor=`)
 
 ---
 
