@@ -33,3 +33,15 @@ hint-slow-boot-no-carrier =
 hint-slow-boot-end =
     .lead = Tell wait-online not to wait for eth1 (man systemd.network: RequiredForOnline=), then reboot and measure again.
     .solution = In /etc/systemd/network/20-eth1.network add [Link] then RequiredForOnline=no; sudo reboot, then systemd-analyze time.
+
+## Chapter 4 — The Late Disk
+
+hint-late-disk-hidden =
+    .lead = When was /srv/data mounted, and when did the app start? (journalctl -b, findmnt /srv/data). Then: what does /srv/data hold without its disk? (man umount)
+    .solution = sudo umount /srv/data, then ls /srv/data/bookings: today's file is there, on the system disk.
+hint-late-disk-recovered =
+    .lead = Copy the file somewhere safe, mount the disk again (man mount: mount /srv/data reads /etc/fstab), then copy it onto the disk.
+    .solution = sudo cp /srv/data/bookings/2027-11-29.csv /root/, sudo mount /srv/data, sudo cp /root/2027-11-29.csv /srv/data/bookings/
+hint-late-disk-end =
+    .lead = Tell systemd that the app needs /srv/data (man systemd.unit: RequiresMountsFor=), then reboot.
+    .solution = sudo systemctl edit menu: {"["}Unit] then RequiresMountsFor=/srv/data; sudo reboot, then systemctl status menu.

@@ -82,3 +82,4 @@ padlock
 boot-order
 restart-loop
 slow-boot
+late-disk

@@ -109,6 +109,9 @@ export interface Systemd {
   lastBoot?: import('./units').BootTiming;
   // Restarts scheduled by Restart= (run by runPending, units.ts).
   pending?: { unit: string; at: number; counter: number }[];
+  // The mounts of /etc/fstab at boot, and what each service waits for or requires among them.
+  mountUnits?: Record<string, import('./units').MountUnit>;
+  mountEdges?: Record<string, { after: string[]; requires: string[] }>;
   shuttingDown?: boolean;
 }
 

@@ -134,6 +134,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `sudo` | asks for the password again only on the chapter's first use | remembers it for about 15 minutes |
 | `cat` of an archive | an error message | shows unreadable bytes |
 | systemd's dependencies (`After=`, `Requires=`, `Wants=`, `BindsTo=`, `PartOf=`, `Restart=`, the start limit) | units that start "in parallel" start one after the other in the order of their definition (the race is always lost the same way); a few targets only, declared by the chapter (`network-online.target`); a service is ready when it starts (no `Type=notify` handshake); PostgreSQL is a single service; no `Conflicts=`, `Requisite=`, slices nor sockets | a real job queue, every target, `postgresql@17-main.service` behind `postgresql.service` |
+| mounts at boot (The Canteen) | the fstab lines on a simple device become `.mount` units with the device's delay; `nofail` mounts are waited for only by `RequiresMountsFor=`, the others by every service; no `x-systemd.*` options, no `mount --bind` | `local-fs.target`, `x-systemd.automount`, `x-systemd.device-timeout=`… |
 | `systemd-analyze`, `networkctl` | `calendar`, `time`, `blame`, `critical-chain`, `verify` (unknown sections and keys, required units that don't exist); `networkctl list`, `status`, `reload` | every verb (`plot`, `dot`, `security`…), every option |
 | `ping` | 4 pings by default | goes on until Ctrl+C |
 | `traceroute` | stops 3 hops after the last one that answers | goes on up to 30 hops |
@@ -2161,7 +2162,7 @@ outside), an unformatted Caddyfile (`caddy fmt --overwrite`). Other
 accepted solutions: `cycles.example, www.cycles.example`, `caddy reload`,
 `ufw allow http`.
 
-## Story 20: The Canteen (three chapters)
+## Story 20: The Canteen (four chapters)
 
 The Canteen, the neighbourhood's solidarity canteen, has a server
 (`canteen`, `cantine` in French, 192.0.2.26) for its menu and bookings app
@@ -2222,6 +2223,23 @@ checked. Expected traps: removing `network-online.target` from the app only
 `systemd-networkd-wait-online` (`--any`, `--interface=eth0`), no
 configuration for eth1, or wait-online disabled (accepted, with a word on
 what network-online.target then means).
+
+### Chapter 4 — The Late Disk (done)
+
+| Step | Command learnt |
+|---|---|
+| The order of the boot | `journalctl -b` (the app started, then "Mounted srv-data.mount" 25 s later), `findmnt /srv/data`, `systemd-analyze blame` |
+| What the mount point hides | `umount /srv/data`, `ls /srv/data/bookings` (today's list, on the system disk) |
+| Put the list back | `cp` somewhere safe, `mount /srv/data` (read from fstab), `cp` onto the disk |
+| Make the app wait | `systemctl edit menu`: `RequiresMountsFor=/srv/data`; `systemctl list-dependencies menu` |
+| Check | `reboot`, `systemd-analyze critical-chain menu.service` |
+
+Goal checked on the state: the morning's bookings are back on the USB disk,
+and after a reboot started by the player the app started once the disk was
+mounted, and this was checked. Expected trap: the order fixed but the list
+left hidden under the mount point. Other accepted solution: `nofail` removed
+from fstab (the whole boot waits for the disk; the game warns about
+emergency mode if it is ever missing).
 
 ## Ideas for later
 

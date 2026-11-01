@@ -40,4 +40,4 @@ story-fleet = La flotte
 story-patch = La Rustine
     .summary = L'atelier vélo a un serveur neuf, avec Caddy, qui « fait le HTTPS tout seul »… à condition de lui donner le bon nom et de laisser passer l'autorité de certification. Un court chapitre pour comparer avec nginx et certbot.
 story-canteen = La Cantine
-    .summary = L'appli de réservations de la cantine solidaire ne revient pas après un redémarrage, abandonne après un redémarrage de la base, attend deux minutes un câble absent : les dépendances de systemd, Restart= et un démarrage lent.
+    .summary = L'appli de réservations de la cantine solidaire ne revient pas après un redémarrage, abandonne après un redémarrage de la base, attend deux minutes un câble absent, écrit avant que son disque soit là : les dépendances de systemd, Restart=, un démarrage lent et RequiresMountsFor=.

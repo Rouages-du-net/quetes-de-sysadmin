@@ -286,5 +286,7 @@ export function canteenWorld(t: Translate, o: { menuUnit: string; welcome: Recor
       ),
     }),
     usr: directory({ lib: directory({ systemd: directory({ system: directory(units) }) }) }),
+    root: directory({}, { owner: 'root', mode: 'rwx------' }),
+    tmp: directory({}, { owner: 'root', mode: 'rwxrwxrwt' }),
   });
 }

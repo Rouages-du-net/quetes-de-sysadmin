@@ -86,6 +86,7 @@ import { padlock } from './padlock';
 import { bootOrder } from './boot-order';
 import { restartLoop } from './restart-loop';
 import { slowBoot } from './slow-boot';
+import { lateDisk } from './late-disk';
 
 // Stories open little by little: each one says, in `after`, the chapters
 // to finish before receiving its key (see unlocking.ts and docs/SCENARIOS.md).
@@ -187,7 +188,7 @@ export const STORIES: Story[] = [
   {
     id: 'canteen',
     after: ['reboot-night', 'probe'],
-    chapters: [bootOrder, restartLoop, slowBoot],
+    chapters: [bootOrder, restartLoop, slowBoot, lateDisk],
   },
 ];
 

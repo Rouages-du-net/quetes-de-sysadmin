@@ -30,6 +30,8 @@ export interface Device {
   label?: string;
   uuid: string;
   tree: Directory;
+  // How long the device takes to appear at boot (ms): an old USB disk spinning up.
+  delay?: number;
 }
 
 export interface Mount {
@@ -44,6 +46,14 @@ export interface Mount {
 }
 
 const devices = (game: Shell): Record<string, Device> => game.state.devices ?? {};
+
+/** A source of /etc/fstab or mount (/dev/vdb1, UUID=…, LABEL=…) among the simple devices (state.devices). */
+export function deviceFor(game: Shell, source: string): string | null {
+  const m = /^(UUID|LABEL)=(.*)$/.exec(source);
+  const value = m?.[2].replace(/^"|"$/g, '');
+  const found = Object.entries(devices(game)).find(([path, d]) => (m ? (m[1] === 'UUID' ? d.uuid === value : d.label === value) : path === source));
+  return found?.[0] ?? null;
+}
 const mounts = (game: Shell): Mount[] => (game.state.mounts ??= []);
 
 /** "29.3G", "20G", like lsblk (powers of 1024). */
@@ -164,8 +174,20 @@ function mountAll(game: Shell): string {
   const st = storageOf(game);
   for (const e of inputs) {
     if (e.type === 'swap' || e.options.includes('noauto') || mounts(game).some((m) => m.path === e.target)) continue;
-    const dev = st ? resolveSource(st, e.source) : null;
-    if (!dev || !st || !systemFor(st, dev)) {
+    // A machine without described storage: its simple devices (state.devices).
+    if (!st) {
+      const d = deviceFor(game, e.source);
+      if (!d) {
+        if (!e.options.includes('nofail')) game.error(`mount: ${e.target}: special device ${e.source} does not exist.${DMESG}`, 32);
+        continue;
+      }
+      if (mounts(game).some((m) => m.name === d)) continue;
+      const r = brancher(game, d, e.target, e.options.join(','));
+      if (r) game.error(r, 32);
+      continue;
+    }
+    const dev = resolveSource(st, e.source);
+    if (!dev || !systemFor(st, dev)) {
       // nofail: a missing medium is not an error.
       if (!e.options.includes('nofail')) game.error(`mount: ${e.target}: special device ${e.source} does not exist.${DMESG}`, 32);
       continue;
@@ -181,7 +203,7 @@ function mountAll(game: Shell): string {
 }
 
 /** Mounts a source on a point (returns mount's error message, or ''). */
-function brancher(game: Shell, source: string, point: string, options: string): string {
+export function brancher(game: Shell, source: string, point: string, options: string): string {
   const absolute = game.resolve(point);
   const p = devices(game)[source] ? { ...devices(game)[source], name: source } : periphStockage(game, source);
   if (!p) return `mount: ${absolute}: special device ${source} does not exist.${DMESG}`;
@@ -239,6 +261,11 @@ function mount(game: Shell, args: string[]): string {
   const absolute = game.resolve(point);
   if (game.who !== 'root')
     return game.error(`mount: ${absolute}: must be superuser to use mount.\n       dmesg(1) may have more information after failed mount system call.`);
+  // UUID= or LABEL= (from fstab) on a machine with simple devices.
+  if (!devices(game)[source] && !storageOf(game) && deviceFor(game, source)) {
+    const r = brancher(game, deviceFor(game, source)!, point, options);
+    return r ? game.error(r, 32) : '';
+  }
   if (!devices(game)[source] && storageOf(game)) {
     const r = brancher(game, source, point, options);
     return r ? game.error(r, 32) : '';
@@ -284,6 +311,18 @@ function unmount(game: Shell, args: string[]): string {
   Object.assign(place, { children: m.cache.children, owner: m.cache.owner, group: m.cache.group, mode: m.cache.mode });
   game.state.mounts = mounts(game).filter((x) => x !== m);
   return '';
+}
+
+/** Before a reboot: every simple device is detached (what the mount points hid comes back). */
+export function detachDevices(game: Shell) {
+  for (const m of [...mounts(game)]) {
+    const p = devices(game)[m.name];
+    if (!p || !m.cache) continue;
+    const place = game.find(m.path) as Directory;
+    p.tree.children = place.children;
+    Object.assign(place, { children: m.cache.children, owner: m.cache.owner, group: m.cache.group, mode: m.cache.mode });
+    game.state.mounts = mounts(game).filter((x) => x !== m);
+  }
 }
 
 export const DISKS: Record<string, Command> = {

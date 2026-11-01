@@ -56,7 +56,9 @@ presents them for people.
 - `src/engine/units.ts`: dependencies between units, read from the unit
   files and their drop-ins (`After=`, `Requires=`, `Wants=`, `BindsTo=`,
   `PartOf=`, `Restart=`, `RestartSec=`, the start limit), the order and
-  timing of a boot (`Systemd.ordered`, `bootUnits`), restarts scheduled by
+  timing of a boot (`Systemd.ordered`, `bootUnits`; the mounts of
+  `/etc/fstab` on `state.devices` become units, `RequiresMountsFor=`),
+  restarts scheduled by
   `Restart=` (`runPending`); `systemctl cat`, `list-dependencies`,
   `reset-failed`, `systemd-analyze time`/`blame`/`critical-chain`/`verify`
   and `networkctl` in `commands/systemd.ts`; `chapters/canteen.ts`: what

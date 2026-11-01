@@ -405,9 +405,9 @@ export const SYSTEMD: Record<string, Command> = {
       if (verb === 'blame') {
         if (!sd || !boot) return game.error('Bootup is not yet finished. Please try again later.');
         const units = Object.entries(boot.units)
-          .filter(([k, t]) => sd.services[k] && t.took > 0)
+          .filter(([k, t]) => (sd.services[k] || sd.mountUnits?.[k]) && t.took > 0)
           .sort((a, b) => b[1].took - a[1].took)
-          .map(([k, t]) => [analyzeDuration(t.took), `${k}.service`]);
+          .map(([k, t]) => [analyzeDuration(t.took), k.includes('.') ? k : `${k}.service`]);
         const width = Math.max(...units.map((u) => u[0].length));
         return units.map(([d, u]) => `${d.padStart(width)} ${u}`).join('\n');
       }
