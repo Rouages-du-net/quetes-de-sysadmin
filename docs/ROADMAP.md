@@ -72,7 +72,7 @@ keeps this credit and the link to the original.
 - [x] Redirect the old `rouages.net/jeux/terminus/` page to
       sysadmin.rouages.net (or embed the element there)
 - [x] Rewrite chapters 1 and 2 in a world of our own (done in rouages.net on
-      17 October 2026: "L'Île du Phare" and "Le Bourg")
+      17 October 2026: "Lighthouse Island" and "The Village")
 - [x] Progress: rouages.net players (key `rouages-terminus`, another domain)
       start from scratch; announce it on the old page
 
@@ -98,20 +98,21 @@ several.
       (ufw, nftables), a router's local network (VLAN, DHCP, NAT, VPN)
 - [x] **Services** (simulated `systemd`, `src/engine/systemd.ts`): state,
       start, failure, enabling at boot, `systemctl`, `journalctl`,
-      `reboot`; quest "La nuit du redémarrage" (Datacenter, chapter 3)
-- [ ] Dependencies between services, timers, editable unit files
+      `reboot`; quest "The night of the reboot" (Datacenter, chapter 3)
+- [ ] Dependencies between services, timers, editable unit files (planned:
+      the "services that depend on each other" story, phase 12)
 - [x] **Simulated time**: systemd's clock, scheduled tasks (`cron`: a
       simulated night runs the tasks that fall in it)
 - [ ] systemd timers (done: hand-written units, `OnCalendar=`,
-      `list-timers`, "La sonde")
+      `list-timers`, "The Probe")
 - [x] Scrolling logs and attacks "during" the quest: `tail -f`,
       `journalctl -f` and Ctrl-C; Premier jour (the robot live) and La
       sentinelle (robots, scanners, fail2ban banning and releasing)
 - [x] **Users and groups**: real group rights, per-machine accounts
       (`/etc/passwd`, `/etc/group`), `id`, `groups`, `usermod -aG`, `chgrp`,
-      `chown`; quest "Deuxième jour" (Datacenter, chapter 2)
+      `chown`; quest "Second day" (Datacenter, chapter 2)
 - [x] `sudoers` (`visudo`, `sudo -l -U`, `/etc/sudoers.d`), `umask`, the
-      setgid bit of shared directories; "Les droits partagés" (La
+      setgid bit of shared directories; "Shared permissions" (La
       Coopérative, chapter 2)
 - [x] **File editor** like `nano` (`^O`, `^X`, buttons on mobile), rights
       checked on save, quest goals updated; alternative solution in
@@ -128,108 +129,108 @@ several.
 
 - [x] **SSH**: `ssh`, keys (`ssh-keygen`, `ssh-copy-id`, `authorized_keys`,
       passphrase), `~/.ssh/config`, host fingerprint (`known_hosts`),
-      password then password refused; "Les clés" (La Maison des
-      associations, chapter 1)
-- [x] **Jump hosts**: bastion host, `ssh -J` / `ProxyJump` ("Le rebond"),
-      local port forwarding `-L` with `-f -N` ("Le tunnel"); still to do:
+      password then password refused; "The keys" (The Community
+      Centre, chapter 1)
+- [x] **Jump hosts**: bastion host, `ssh -J` / `ProxyJump` ("The Jump"),
+      local port forwarding `-L` with `-f -N` ("The tunnel"); still to do:
       `-R` and `-D`
 - [x] **SSH hardening**: `PermitRootLogin no`, `PasswordAuthentication no`,
       `AllowUsers`, `sshd -t`, `sshd -T`, Debian's `Include`; quest "Fermer
-      la porte" (Les Lettres du quartier), where you can lock yourself out
+      la porte" (The Neighbourhood Letters), where you can lock yourself out
       (the menu serves as a rescue console)
 - [x] **Changing the SSH port**: two `Port` lines, ufw, `~/.ssh/config`,
       `known_hosts` as `[name]:port`, the fail2ban jail's `port` ("Le
-      port", Les Lettres du quartier, chapter 7)
+      port", The Neighbourhood Letters, chapter 7)
 - [x] **Transfers**: **`scp`**, remote `rsync` (`-a`, `--delete`, `-n`) and
-      why clear-text FTP is to be avoided ("Les transferts"); `sftp`, and
+      why clear-text FTP is to be avoided ("Transfers"); `sftp`, and
       **FTPS** with `lftp` for shared hosts that require it, rouages.net's
-      case ("L'hébergeur", La Maison des associations, chapter 5)
+      case ("The web host", The Community Centre, chapter 5)
 - [x] `tmux`: keeping a session alive when the connection drops; "Les mises
-      à jour" (La Coopérative, chapter 5)
+      à jour" (The Co-op, chapter 5)
 
 ## Phase 3 — Securing the server
 
 - [x] **Firewall**: `ufw` (default policy, `allow`, `deny`, `reject`,
       `limit`, `delete`, application profiles, numbers), and `ssh` stopping
-      at the firewall (timeout); quest "Le pare-feu" (Les Lettres du
-      quartier, chapter 2)
+      at the firewall (timeout); quest "The firewall" (The Neighbourhood
+      Letters, chapter 2)
 - [x] A glimpse of `nftables` under `ufw`: `nft list ruleset` shows the
-      `ufw-*` chains and fail2ban's table ("Le port")
+      `ufw-*` chains and fail2ban's table ("The port")
 - [x] **fail2ban**: reading `fail2ban.log` and SSH's log, `jail.local`
       (never `jail.conf`), `bantime`, `maxretry`, `ignoreip` (CIDR),
       `fail2ban-client status`, `unbanip`, `-t`, `reload`; quest "La
-      sentinelle" (Les Lettres du quartier, chapter 3), where you can ban
+      sentinelle" (The Neighbourhood Letters, chapter 3), where you can ban
       yourself
 - [x] The `recidive` jail and the `nginx-limit-req` jail, enabled in their
-      section ("La récidive", Les Lettres du quartier, chapter 8)
+      section ("Repeat offenders", The Neighbourhood Letters, chapter 8)
 - [x] **Updates**: `apt update`, `list --upgradable`, `upgrade`,
       `dpkg --configure -a`, `/var/run/reboot-required`, `uname -r`, kernel
-      ("Les mises à jour", La Coopérative, chapter 5); automatic updates
+      ("Updates", The Co-op, chapter 5); automatic updates
       (`unattended-upgrades`: `20auto-upgrades`, `Origins-Pattern`, `Mail`,
-      `Automatic-Reboot-Time`, `apt-config`, "Les mises à jour
+      `Automatic-Reboot-Time`, `apt-config`, "Updates
       automatiques", chapter 6)
 - [x] **Accounts**: deleting an account (`userdel`), disabling a former
       colleague's account (`usermod -e`, `chage -E`), keys to revoke
       (including in a shared account), `gpasswd -d`, `who`, `pkill -u`;
-      "Le départ" (La Coopérative, chapter 1)
+      "The departure" (The Co-op, chapter 1)
 - [x] **Attack surface**: `ss -tlnp`, a service listening on `0.0.0.0`
       instead of `127.0.0.1` (the exposed database)
 - [x] **TLS certificates**: Let's Encrypt (`certbot`), HTTP-01 challenge,
       automatic renewal, deploy hook, `openssl x509` and `s_client`,
-      `curl https://`; quest "Le certificat a expiré" (Datacenter,
+      `curl https://`; quest "The certificate has expired" (Datacenter,
       chapter 5)
 - [x] **Secrets**: a `.env` file (and `.git`) published by mistake, the
-      access log, `location ~ /\.`, `deny`, rotating a key; "Le secret" (La
+      access log, `location ~ /\.`, `deny`, rotating a key; "The secret" (La
       Coopérative, chapter 3)
 
 ## Phase 4 — Serving websites
 
 - [x] **Web server**: **Nginx**, **virtual hosts** (several sites on one
       machine), `sites-available` and `ln -s`, `nginx -t` before reloading;
-      quest "La colocation" (Les Lettres du quartier, chapter 4)
+      quest "Sharing a home" (The Neighbourhood Letters, chapter 4)
 - [x] **Apache**, to compare: `ports.conf`, `a2ensite`, `apache2ctl -S`,
       `.htaccess` and `AllowOverride`, `a2enmod rewrite`, behind nginx;
-      quest "L'atelier de réparation" (Les Lettres du quartier, chapter 9)
+      quest "The Repair Café" (The Neighbourhood Letters, chapter 9)
 - [x] **Reverse proxy** in front of an application (`proxy_pass`, trailing
       slash, 502 and `error.log`); simulated `return 301`
 - [x] Headers passed to the app (`proxy_set_header`, `X-Forwarded-For`,
-      Express's `trust proxy`); "Le proxy" (La Coopérative, chapter 4)
+      Express's `trust proxy`); "The proxy" (The Co-op, chapter 4)
 - [x] **DNS**: A, AAAA, CNAME, MX, TXT records, TTL and caches (the
       "propagation"), BIND zone, serial, secondary; quest "Ça marche chez
-      moi" (Les Lettres du quartier, chapter 5)
+      moi" (The Neighbourhood Letters, chapter 5)
 - [x] **Access logs**: finding who brings the site down (`awk`, `sort`,
       `uniq -c`), rate limiting (`limit_req`, burst, 429); quest "Le soir du
-      concert" (Les Lettres du quartier, chapter 6)
+      concert" (The Neighbourhood Letters, chapter 6)
 
 ## Phase 5 — Containers
 
 - [x] **Docker**: image, container, `docker run/ps/logs/exec/cp`, ports,
       volumes (and what you lose without a volume), `--restart`; quest "La
-      mise à jour" (La Fabrique, chapter 1)
+      mise à jour" (The Workshop, chapter 1)
 - [x] **Docker Compose**: several services (app, database), internal
       network (the service's name), variables and `.env`, volumes, restart;
-      quest "La composition" (La Fabrique, chapter 2)
-- [x] Updating an image without losing the data ("La mise à jour")
+      quest "The Composition" (The Workshop, chapter 2)
+- [x] Updating an image without losing the data ("The Update")
 - [x] Cleaning the disk (`docker system df`, `prune`); "Le trou dans le
       pare-feu"
 - [x] Security: not exposing the database, `ufw` and Docker (published
-      ports bypass ufw); "Le trou dans le pare-feu" (La Fabrique, chapter 3)
+      ports bypass ufw); "The hole in the firewall" (The Workshop, chapter 3)
 - [x] Not running as root in the container: `--user`, `user:`, the uid
-      shared with the machine, `chown -R`; "Les pleins pouvoirs" (La
+      shared with the machine, `chown -R`; "Full powers" (La
       Fabrique, chapter 4)
 
 ## Phase 6 — Deploying
 
 - [x] **Deploying with git**: a bare repository on the server, a
-      `post-receive` hook; "Le dépôt nu" (La Gazette, chapter 1)
+      `post-receive` hook; "The bare repository" (The Gazette, chapter 1)
 - [x] **Continuous integration** (simulated): tests that block a deployment
-      (`tests.sh` run by the hook before the switch); "Le retour arrière"
-      (La Gazette, chapter 2)
+      (`tests.sh` run by the hook before the switch); "Rolling back"
+      (The Gazette, chapter 2)
 - [x] **Blue/green**: two versions side by side, switching the proxy,
-      instant rollback; "Bleu et vert" (La Gazette, chapter 3)
+      instant rollback; "Blue and green" (The Gazette, chapter 3)
 - [x] **Canary** and health checks (`/health`): `upstream` and `weight`,
-      the 500s in `access.log`; "Le canari" (La Gazette, chapter 4)
-- [x] **Database migrations** that prevent rolling back; "La migration" (La
+      the 500s in `access.log`; "The canary" (The Gazette, chapter 4)
+- [x] **Database migrations** that prevent rolling back; "The migration" (La
       Gazette, chapter 5)
 - [x] **Rollback** after a failed deployment: `ln -sfn` to the previous
       version (chapter 2), switching the proxy back (chapters 3 and 4)
@@ -237,61 +238,61 @@ several.
 ## Phase 7 — Backing up and restoring
 
 - [x] **The 3-2-1 rule**, and why a copy on the same disk is not a backup
-      (debrief of "La Sauvegarde")
+      (debrief of "The Backup")
 - [x] **rsync**: `-a`, `-v`, `-n`, `--delete`, the trailing slash;
-      scheduled with `cron`; quest "La Sauvegarde" (Eraser, chapter 4)
+      scheduled with `cron`; quest "The Backup" (Eraser, chapter 4)
 - [x] **rsnapshot** (snapshots with hard links, daily and weekly rotation,
-      cron); "Les instantanés" (La Ludothèque, chapter 2)
+      cron); "Snapshots" (The Game Library, chapter 2)
 - [x] **restic** (encryption, deduplication, `snapshots`, `find`, `diff`,
-      `dump`, `restore`, `forget --prune`, `check`); quest "Les versions"
-      (Les Archives, chapter 2)
+      `dump`, `restore`, `forget --prune`, `check`); quest "The versions"
+      (The Archives, chapter 2)
 - [x] Backing up a database (`pg_dump`, `pg_restore`) rather than its
-      files, a test restore; "La base" (La Ludothèque, chapter 3)
-- [x] **Service restoration**: quest "Le grand incendie" (Datacenter,
+      files, a test restore; "The Database" (The Game Library, chapter 3)
+- [x] **Service restoration**: quest "The great fire" (Datacenter,
       chapter 4): starting again from an empty machine with the backups and
       the recovery plan; a truncated archive to check with `tar -tzf`,
       `apt`, `nginx -t`, an SSH host key that changes (`ssh-keygen -R`)
 - [x] **Restore drill**: an erased memory to restore from the backup ("La
       Sauvegarde")
-- [x] Ransomware and offline backups (`mount -o ro`, restic); "La rançon"
-      (La Ludothèque, chapter 1)
-- [x] Load and resources: `top`, `free`, `df`, `du` done (L'Astreinte,
+- [x] Ransomware and offline backups (`mount -o ro`, restic); "The ransom"
+      (The Game Library, chapter 1)
+- [x] Load and resources: `top`, `free`, `df`, `du` done (On Call,
       chapters 1 and 2); `iostat`, `pidstat -d`, `ionice` and systemd's
-      bandwidth limit (`IOWriteBandwidthMax=`): "Le goulot" (chapter 7)
-- [x] Classic failures: full disk and leaking logs ("Le disque plein"),
-      memory exhausted (OOM) and zombie processes ("La mémoire"), inodes
-      exhausted ("Les inodes"), wrong clock and time zone ("L'horloge", NTP
+      bandwidth limit (`IOWriteBandwidthMax=`): "The bottleneck" (chapter 7)
+- [x] Classic failures: full disk and leaking logs ("The full disk"),
+      memory exhausted (OOM) and zombie processes ("Memory"), inodes
+      exhausted ("Inodes"), wrong clock and time zone ("The clock", NTP
       and `timedatectl`) done
-- [x] Log rotation (`logrotate`); "Le disque plein" (L'Astreinte, chapter 1)
+- [x] Log rotation (`logrotate`); "The full disk" (On Call, chapter 1)
 - [x] Monitoring and alerts (plugins `check_disk`, `check_http`,
-      `check_procs`, `mail`, thresholds, failure drill); "La sonde"
-      (L'Astreinte, chapter 5)
+      `check_procs`, `mail`, thresholds, failure drill); "The Probe"
+      (On Call, chapter 5)
 - [x] **Blameless post-mortem**: writing up what happened
-      (`journalctl --since/--until`, `last`); "Le post-mortem"
-      (L'Astreinte, chapter 6)
+      (`journalctl --since/--until`, `last`); "The Post-Mortem"
+      (On Call, chapter 6)
 
 ## Phase 9 — The company network
 
 - [x] Switches and **VLANs**: separating offices, guests and equipment; a
       "trunk" port (802.1Q) to the router, `ip link`,
-      `/etc/network/interfaces`; "Les VLAN" (La Ruche, chapter 1)
-- [x] DHCP: dnsmasq, a range per VLAN, reservations; "Le DHCP" (La Ruche,
+      `/etc/network/interfaces`; "VLANs" (The Hive, chapter 1)
+- [x] DHCP: dnsmasq, a range per VLAN, reservations; "DHCP" (The Hive,
       chapter 2)
 - [x] Routing, NAT and firewall between zones: `sysctl`, nftables
-      (`forward`, `masquerade`, `ct state`), `conntrack`; "Les zones" (La
+      (`forward`, `masquerade`, `ct state`), `conntrack`; "The Zones" (La
       Ruche, chapter 3)
 - [x] A DMZ: a public server in a separate VLAN, `dnat` in `prerouting`,
-      the DMZ isolated from the internal network; "La DMZ" (La Ruche,
+      the DMZ isolated from the internal network; "The DMZ" (The Hive,
       chapter 5)
 - [x] WireGuard VPN for remote work: keys, `wg0.conf`, `wg-quick`, firewall;
-      "Le télétravail" (La Ruche, chapter 4)
+      "Working from home" (The Hive, chapter 4)
 - [x] VPN between two sites: one more peer on `wg0`, `AllowedIPs` as a
-      routing table, `PersistentKeepalive` behind a home router; "L'Annexe"
-      (La Ruche, chapter 6)
+      routing table, `PersistentKeepalive` behind a home router; "The Annex"
+      (The Hive, chapter 6)
 - [x] Directory: OpenLDAP for the team's accounts (`ldapsearch`, LDIF,
-      `ldapmodify`, `slappasswd`); "L'annuaire" (La Ruche, chapter 7)
+      `ldapmodify`, `slappasswd`); "The Directory" (The Hive, chapter 7)
 - [x] Enterprise Wi-Fi: 802.1X with FreeRADIUS, which checks accounts in the
-      directory and puts each one in its VLAN; "Le Wi-Fi des bureaux" (La
+      directory and puts each one in its VLAN; "The Office Wi-Fi" (La
       Ruche, chapter 8)
 
 Set aside: network loops and Spanning Tree (too low-level for this game,
@@ -299,17 +300,17 @@ which works on machines rather than switches).
 
 ## Phase 11 — The audit (closing story)
 
-- [x] **L'Audit** (story 14, machine `fournil`): an audit mission in five
+- [x] **The Audit** (story 14, machine `fournil`): an audit mission in five
       chapters, bringing together what the other stories teach separately.
-      "Le périmètre" (engagement letter, `nmap`, staying in scope), "Le
+      "The Scope" (engagement letter, `nmap`, staying in scope), "Le
       rapport" (SSH without root, a forgotten account, passwordless sudo, a
-      readable secret), "L'exposition" (port scan, `ufw`, Redis on
-      localhost), "Les traces" (ssh's log, `last`, key fingerprints,
+      readable secret), "The Exposure" (port scan, `ufw`, Redis on
+      localhost), "The Traces" (ssh's log, `last`, key fingerprints,
       `authorized_keys`, a `cron` job left by the intruder, the database
-      password changed end to end) and "La contre-visite" (`nmap`, `lynis`,
+      password changed end to end) and "The Follow-up Visit" (`nmap`, `lynis`,
       updates, closing report).
-- [x] **La Veille** (story 16, machine `kneader`): six months after
-      "L'Audit", the weekly security watch — reading a bulletin of
+- [x] **The Watch** (story 16, machine `kneader`): six months after
+      "The Audit", the weekly security watch — reading a bulletin of
       fictitious CVEs, sorting by exposure as much as by severity, fixing
       without breaking, proving, then automating what can be
       (`unattended-upgrades` restricted to security, a timer or a cron job).
@@ -318,24 +319,38 @@ which works on machines rather than switches).
 ## Phase 12 — Hardware, and the following stories
 
 - [x] Gradual unlocking of the stories (`unlocking.ts`, `after`)
-- [x] **Le Labo** (story 15, machine `labo`): "Le disque qui fatigue"
+- [x] **The Lab** (story 15, machine `labo`): "The tired disk"
       (smartd, `smartctl`, `/proc/mdstat`, `mdadm --fail/--remove`, the
-      serial number) and "Le disque neuf" (`sfdisk -d | sfdisk`,
+      serial number) and "The new disk" (`sfdisk -d | sfdisk`,
       `mdadm --add`, the rebuild, `grub-install`)
-- [x] Le Labo, chapter 3: "La place qui manque" (`mdadm --create`,
+- [x] The Lab, chapter 3: "Running out of room" (`mdadm --create`,
       `pvcreate`, `vgextend`, `lvextend -r`, `resize2fs`, `mdadm.conf`,
       `update-initramfs`)
-- [x] Le Labo, chapter 4: "Le redémarrage qui coince" (`/etc/fstab` by
+- [x] The Lab, chapter 4: "The stuck reboot" (`/etc/fstab` by
       UUID, `nofail`, emergency mode, `findmnt --verify`, `daemon-reload`)
 - [x] Scrolling logs and attacks during a quest (defensive)
 - [x] Story: mail that lands in spam (SPF, DKIM, DMARC, Postfix); "Le
-      courrier indésirable", three chapters (Le facteur, La signature, La
+      courrier indésirable", three chapters (The Postman, The Signature, La
       politique)
 - [x] Story: automating with Ansible (inventory, playbook, idempotence,
-      `--check`); "La flotte", three chapters (L'inventaire, Le playbook,
-      La répétition)
-- [x] Caddy, as a short comparison chapter (automatic HTTPS); "La Rustine",
-      one chapter (Le cadenas)
+      `--check`); "The Fleet", three chapters (The Inventory, The Playbook,
+      The Rehearsal)
+- [x] Caddy, as a short comparison chapter (automatic HTTPS); "The Patch",
+      one chapter (The Padlock)
+- [ ] **Next story: services that depend on each other** (systemd unit
+      dependencies). A small organisation's server whose boot goes wrong
+      after a change: the app starts before its database (`After=` without
+      `Requires=`, or the reverse), a service stops when another one
+      restarts (`BindsTo=`, `PartOf=`), a mount it needs isn't there yet
+      (`RequiresMountsFor=`), a restart loop (`Restart=`,
+      `StartLimitBurst=`). Tools: `systemctl list-dependencies`,
+      `systemctl cat`, `systemctl edit` (drop-ins), `systemd-analyze
+      verify`, `systemd-analyze critical-chain`, `journalctl -b -u`,
+      `daemon-reload`. Engine work: editable unit files read like systemd
+      (`[Unit]`/`[Service]`/`[Install]`), the dependency graph and the
+      order of a boot, and the `wants`/`requires` links (see "Dependencies
+      between services" in phase 1). Every chapter checks the state of the
+      machine after a reboot, not the command typed.
 
 ---
 
@@ -352,8 +367,13 @@ The architecture has prepared for it since phase 0 (see "Translations" in
       the repository's documentation is in English (`README.md`,
       `CONTRIBUTING.md`, `CLAUDE.md`, `docs/`), with French versions of the
       README, the contribution guide and the embedding guide
-- [ ] Code identifiers in English, over time (new code in English; French
-      names renamed when touched, never mixed with a feature)
+- [x] **The code in English**: files and folders, identifiers, `.ftl` keys
+      and Fluent variables, a machine's state keys, CSS classes and
+      `data-*` attributes, internal values, comments and test titles; the
+      English game shows no French world content any more (file names,
+      databases, groups, services, hosts, routes, passwords, organisation
+      names: English identifiers, French through `names.ftl`,
+      `passwords.ftl`, `machines.ftl` and the stories' texts)
 - [ ] German, Spanish, Mandarin, Korean, then other languages
 - [x] Outputs of the simulated commands according to `LANG`, like the real
       tools (in English: the original messages, as with `LANG=C`)
@@ -367,7 +387,7 @@ The architecture has prepared for it since phase 0 (see "Translations" in
       Inès's novel and poems, the Ludothèque's share and ransomware, the
       Maison des associations' share, backups and wiki, the Coopérative's
       statements and backups, the Datacenter team's folder, the radio's
-      folders in L'Astreinte; technical names stay as they are (sites and
+      folders in On Call; technical names stay as they are (sites and
       addresses served over HTTP, databases, Docker images and projects,
       systemd units, programs and scripts in the PATH), and so do proper
       names (the radio's shows)
@@ -460,8 +480,8 @@ The architecture has prepared for it since phase 0 (see "Translations" in
   of the known places of the machine you are on (places visited, places
   glimpsed in italics, home, closed places), with "you are here". Nothing is
   revealed beyond what you have seen; no files.
-- [x] **The network plan**: in the stories with several machines (La Maison
-  des associations, La Ruche), a "Network" tab of the map shows the planned
+- [x] **The network plan**: in the stories with several machines (The Community
+  Centre, The Hive), a "Network" tab of the map shows the planned
   network (the diagram on the wall: router, VLANs, internal machines,
   WireGuard tunnels), as SVG and as a list, with "you are here" and the
   machines you have already connected to. It is the plan, not the state:

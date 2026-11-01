@@ -11,7 +11,7 @@ work for when you take it on, and possibly for having it built afterwards.
 
 ## 1. A place, not yet taken
 
-- **A name**: neither "Le Labo" (the disks story) nor "La Veille" (the
+- **A name**: neither "The Lab" (the disks story) nor "The Watch" (the
   `kneader` server story). Something on the offensive-audit side — for
   example *The Penetration Test*, *The Other Side*, *Red Team*. Check when
   you start: `grep "^## Story" docs/SCENARIOS.md` gives the current list and
@@ -36,7 +36,7 @@ This is the part I didn't make for you:
   choice to own and to explain in the debrief.
 - **The safeguards told in the story itself**: written authorisation, legal
   framework, the difference between a commissioned penetration test and an
-  intrusion — as `src/engine/chapters/scope.ts` ("L'Audit") already
+  intrusion — as `src/engine/chapters/scope.ts` ("The Audit") already
   does for reading a scope. An offensive story without this explicit
   reminder would be an attack manual, not a quest.
 
@@ -66,7 +66,7 @@ predictable: every tool already in the game (`nmap`, `lynis`, `ufw`,
 `fail2ban`…) took an engine, a command, a manual page, texts in both
 languages and a row in the table of differences of `docs/SCENARIOS.md`.
 Some reference points, taken from `nmap` and `lynis` (the tools added for
-"L'Audit"):
+"The Audit"):
 
 | Piece | Example | Size |
 |---|---|---|
@@ -92,7 +92,7 @@ expensive:
    service, for example nginx or a Docker app), `ss`, `grep` in logs:
    everything already exists. An "exploitation" can be modelled as a series
    of these commands against a service **already misconfigured** by the
-   chapter (a bit like "L'exposition" in "L'Audit" leaves Redis open),
+   chapter (a bit like "The Exposure" in "The Audit" leaves Redis open),
    with no new tool at all.
 2. **A small read-only tool.** A tool that only consults an already
    simulated state (like `lynis`, ~265 lines in both parts) costs much less
