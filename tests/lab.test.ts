@@ -40,7 +40,7 @@ for (const language of LANGUAGES)
     it('chapitre 1 — solution : courriers, mdstat, SMART des deux disques, sdb sorti de md0 et md1, ticket', () => {
       const { s, jouer: play, st } = part('tired-disk');
       let all = play(['cat message_d_odile.txt', 'mail', 'cat /var/mail/vous', 'cat /proc/mdstat']);
-      expect(all).toContain(`SMART error (CurrentPendingSector) detected on host: ${machineName(translator(language), 'labo')}`);
+      expect(all).toContain(`SMART error (CurrentPendingSector) detected on host: ${machineName(translator(language), 'lab')}`);
       expect(all).toContain('md0 : active raid1 sdb2[1] sda2[0]');
       expect(all).toContain('[2/2] [UU]');
       contains(all, 'smartd et le noyau parlent du même disque');
@@ -174,7 +174,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('mdadm: cannot open /dev/md9: No such file or directory');
       expect(all).toContain('mdadm: /dev/sda2 does not appear to be an md device');
       expect(all).toContain('mdadm: set device faulty failed for /dev/sdc2:  No such device');
-      expect(all).toContain('ARRAY /dev/md/0 metadata=1.2 name=labo:0 UUID=5d1e0a3c:7b2f4e91:a6c83f0d:9b1e2c47');
+      expect(all).toContain('ARRAY /dev/md/0 metadata=1.2 name=lab:0 UUID=5d1e0a3c:7b2f4e91:a6c83f0d:9b1e2c47');
       expect(all).toContain('lsblk: unknown column: COULEUR');
       expect(all).toContain('Testing has begun.');
       expect(all).toMatch(/# 1  Short offline\s+Completed: read failure\s+90%/);
@@ -394,8 +394,8 @@ for (const language of LANGUAGES)
       expect(before).toContain('full-disk');
       const c = new Console({ language, finished: before });
       expect(c.isOpen('lab')).toBe(true);
-      const all = [c.execute(machinesInLanguage(translator(language), 'ssh labo')), c.execute('yes')].join('\n');
-      expect(all).toContain(machinesInLanguage(translator(language), 'labo.internal'));
+      const all = [c.execute(machinesInLanguage(translator(language), 'ssh lab')), c.execute('yes')].join('\n');
+      expect(all).toContain(machinesInLanguage(translator(language), 'lab.internal'));
       expect(c.remote?.shell.chapter.id).toBe('tired-disk');
       expect(new Console({ language, finished: before.filter((x) => x !== 'full-disk') }).isOpen('lab')).toBe(false);
     });

@@ -28,7 +28,7 @@ for (const language of LANGUAGES)
     const part = () => {
       const c = new Console({ language, finished: BEFORE });
       const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
-      play(['ssh lettres', 'yes']);
+      play(['ssh letters', 'yes']);
       expect(c.remote?.shell.chapter.id).toBe('sentinel');
       return { c, jouer: play };
     };

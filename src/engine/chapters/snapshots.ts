@@ -149,7 +149,7 @@ export const chapterSnapshots: Chapter = {
       tree,
     };
     return {
-      systemd: newSystemd('ludotheque', Date.UTC(2027, 5, 21, 11, 0, 0), START, {
+      systemd: newSystemd('games', Date.UTC(2027, 5, 21, 11, 0, 0), START, {
         ssh: {
           description: 'OpenBSD Secure Shell server',
           active: true,
@@ -205,7 +205,7 @@ export const chapterSnapshots: Chapter = {
       ),
     };
     return place({
-      etc: place({ ...accountsFiles(), hostname: file('ludotheque'), 'rsnapshot.conf': file(CONF_DEBIAN) }),
+      etc: place({ ...accountsFiles(), hostname: file('games'), 'rsnapshot.conf': file(CONF_DEBIAN) }),
       home: place({
         vous: d({ 'message_de_berenice.txt': f(t('snapshots-message-de-berenice')) }),
         accueil: place({}, { owner: 'accueil', mode: 'rwxr-x---' }),

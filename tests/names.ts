@@ -2,11 +2,11 @@
 // objets ; dans une autre langue, chaque nom du monde prend sa traduction
 // (voir nom() dans src/engine/world.ts). Une copie numérotée (levain_2)
 // suit son original. Le compte du joueur se traduit aussi dans vous@royaume
-// ou /home/vous:/bin/bash (@ et : séparent les noms). Les noms de machines
-// (royaume → kingdom, voir machines.ftl) se traduisent là où ce sont des noms
-// d'hôte : après ssh et ses cousins, après @, dans royaume.internal, id_royaume,
-// royaume:chemin (scp), ~/.ssh/config (Host, HostName, ProxyJump) et la
-// bannière « Linux royaume ». Les mots de passe des histoires aussi
+// ou /home/vous:/bin/bash (@ et : séparent les noms). Machine names are
+// written in English, the engine's identifiers (kingdom → royaume in French,
+// see machines.ftl), and translated where they are host names: after ssh and
+// its cousins, after @, in kingdom.internal, id_kingdom, kingdom:path (scp),
+// ~/.ssh/config (Host, HostName, ProxyJump) and the banner "Linux kingdom". Les mots de passe des histoires aussi
 // (farine-2028 → flour-2028, voir mots-de-passe.ftl), partout où ils sont un mot entier.
 import { readFileSync } from 'node:fs';
 import { password, name } from '../src/engine/world';

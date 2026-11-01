@@ -171,14 +171,14 @@ export const atMe: Chapter = {
         },
       },
       servers: {
-        primary: ['localhost', '127.0.0.1', 'lettres', 'letters.example', 'ns1.letters.example', NEW],
+        primary: ['localhost', '127.0.0.1', 'letters', 'letters.example', 'ns1.letters.example', NEW],
         secondary: ['ns2.registry.example', '192.0.2.53'],
         resolver: ['9.9.9.9', 'dns.quad9.net'],
       },
       charges: {},
     };
     return {
-      systemd: newSystemd('lettres', Date.UTC(2027, 2, 1, 6, 12, 0), now, {
+      systemd: newSystemd('letters', Date.UTC(2027, 2, 1, 6, 12, 0), now, {
         ssh: {
           description: 'OpenBSD Secure Shell server',
           active: true,
@@ -216,7 +216,7 @@ export const atMe: Chapter = {
     return place({
       etc: place({
         ...accountsFiles(),
-        hostname: file('lettres', root),
+        hostname: file('letters', root),
         'resolv.conf': file('nameserver 9.9.9.9', root),
         bind: place(
           {

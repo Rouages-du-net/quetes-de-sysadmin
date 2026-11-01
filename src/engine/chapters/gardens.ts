@@ -378,7 +378,7 @@ export function gardensState(t: Translate, departure: Departure): Record<string,
     secondary: {},
     cache: {},
     servers: {
-      primary: ['localhost', '127.0.0.1', 'jardin', `ns1.${DOMAIN}`, IP],
+      primary: ['localhost', '127.0.0.1', 'garden', `ns1.${DOMAIN}`, IP],
       secondary: ['ns2.registry.example', '192.0.2.53'],
       resolver: ['9.9.9.9', 'dns.quad9.net'],
     },
@@ -387,7 +387,7 @@ export function gardensState(t: Translate, departure: Departure): Record<string,
   };
   const state: MailState = { ip: IP, file: departure.file?.(t) ?? [], counter: 40, postfix: null, dkim: null, providers: providers(t), restored: [] };
   return {
-    systemd: newSystemd('jardin', departure.now - 6 * 86_400_000, departure.now, services),
+    systemd: newSystemd('garden', departure.now - 6 * 86_400_000, departure.now, services),
     processus: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 733, user: 'bind', cpu: 0.1, mem: 1.4, command: '/usr/sbin/named -f -u bind' },
@@ -426,7 +426,7 @@ export function gardensWorld(t: Translate, departure: Departure, home: Record<st
   return place({
     etc: place({
       ...accountsFiles(),
-      hostname: file('jardin'),
+      hostname: file('garden'),
       mailname: file(DOMAIN),
       'resolv.conf': file('nameserver 127.0.0.1'),
       aliases: file(`# See man 5 aliases for format\npostmaster:    root\nroot:          ${player(t)}\ndmarc:         ${player(t)}`),

@@ -94,7 +94,7 @@ export const door: Chapter = {
   },
   state: () => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
-    systemd: newSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 20, 9, 15, 0), {
+    systemd: newSystemd('letters', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 20, 9, 15, 0), {
       ssh: {
         description: SSH,
         active: true,
@@ -157,7 +157,7 @@ export const door: Chapter = {
           {
             vous: d({
               'courriel_kofi.txt': f(t('porte-courriel-kofi')),
-              '.ssh': d({ authorized_keys: f(publicKey(letters, player(t), machineName(t, 'poste')), { lines: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
+              '.ssh': d({ authorized_keys: f(publicKey(letters, player(t), machineName(t, 'desk')), { lines: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
             }),
           },
           undefined,

@@ -239,7 +239,7 @@ export const composition: Chapter = {
   password: 'fablab-2027',
   accounts,
   state: () => ({
-    systemd: newSystemd('fabrique', Date.UTC(2027, 3, 3, 10, 30, 0), Date.UTC(2027, 3, 10, 14, 0, 0), {
+    systemd: newSystemd('workshop', Date.UTC(2027, 3, 3, 10, 30, 0), Date.UTC(2027, 3, 10, 14, 0, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,
@@ -256,13 +256,13 @@ export const composition: Chapter = {
         load: (j) => startDocker(j),
       },
     }),
-    docker: { ...dockerState(), names: ['fabrique', 'fabrique.internal', '192.0.2.15'] },
+    docker: { ...dockerState(), names: ['workshop', 'workshop.internal', '192.0.2.15'] },
   }),
   createWorld: (t) => {
     const root = { owner: 'root' };
     const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
     return place({
-      etc: place({ ...accountsFiles(), hostname: f('fabrique', { lines: true, owner: 'root' }) }),
+      etc: place({ ...accountsFiles(), hostname: f('workshop', { lines: true, owner: 'root' }) }),
       home: place({
         vous: d({ 'message_de_yasmine.txt': f(t('compose-message-de-yasmine')), 'aide_compose.txt': f(t('compose-aide-compose')) }),
       }),

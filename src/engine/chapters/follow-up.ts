@@ -128,7 +128,7 @@ export const againstVisit: Chapter = {
     ecoute: bakeryListening(true),
     scan: bakeryScan(),
     apt: bakeryApt(true),
-    systemd: newSystemd('fournil', NOW - 5 * 86_400_000, NOW, {
+    systemd: newSystemd('bakery', NOW - 5 * 86_400_000, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },

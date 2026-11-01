@@ -20,40 +20,40 @@ for (const language of LANGUAGES)
 
     it('première connexion : empreinte, yes, bannière, chapitre, exit', () => {
       const c = new Console({ language });
-      expect(c.prompt()).toBe(L('vous@poste:~$'));
-      const question = play(c, ['ssh royaume']);
-      expect(question).toContain(L("The authenticity of host 'royaume.internal (192.0.2.10)' can't be established."));
+      expect(c.prompt()).toBe(L('vous@desk:~$'));
+      const question = play(c, ['ssh kingdom']);
+      expect(question).toContain(L("The authenticity of host 'kingdom.internal (192.0.2.10)' can't be established."));
       expect(question).toMatch(/ED25519 key fingerprint is SHA256:[A-Za-z0-9+/]{43}\./);
       expect(c.prompt()).toBe('Are you sure you want to continue connecting (yes/no/[fingerprint])?');
       expect(play(c, ['peut-être'])).toBe('');
       expect(c.prompt()).toBe("Please type 'yes', 'no' or the fingerprint:");
       const connection = play(c, ['yes']);
-      expect(connection).toContain(L("Warning: Permanently added 'royaume.internal' (ED25519) to the list of known hosts."));
-      expect(connection).toContain(L('Linux royaume'));
-      expect(c.prompt()).toBe(L('vous@royaume:~$'));
+      expect(connection).toContain(L("Warning: Permanently added 'kingdom.internal' (ED25519) to the list of known hosts."));
+      expect(connection).toContain(L('Linux kingdom'));
+      expect(c.prompt()).toBe(L('vous@kingdom:~$'));
       expect(c.remote?.shell.chapter.id).toBe('lighthouse');
-      expect(play(c, ['exit'])).toBe(L('logout\nConnection to royaume.internal closed.'));
-      expect(c.prompt()).toBe(L('vous@poste:~$'));
+      expect(play(c, ['exit'])).toBe(L('logout\nConnection to kingdom.internal closed.'));
+      expect(c.prompt()).toBe(L('vous@desk:~$'));
       // Deuxième fois : la machine est connue, pas de question ; le chapitre reprend, avec où relire ses consignes.
-      const reprise = play(c, ['ssh royaume']);
+      const reprise = play(c, ['ssh kingdom']);
       expect(reprise).not.toContain('authenticity');
       expect(reprise).toContain(L('cat bienvenue.txt'));
-      expect(c.prompt()).toBe(L('vous@royaume:~$'));
+      expect(c.prompt()).toBe(L('vous@kingdom:~$'));
     });
 
     it('no : la vérification de la clé d’hôte échoue', () => {
       const c = new Console({ language });
-      expect(play(c, ['ssh royaume', 'no'])).toContain('Host key verification failed.');
-      expect(c.prompt()).toBe(L('vous@poste:~$'));
+      expect(play(c, ['ssh kingdom', 'no'])).toContain('Host key verification failed.');
+      expect(c.prompt()).toBe(L('vous@desk:~$'));
     });
 
     it('fausses pistes : nom inconnu, mauvais port, mauvais utilisateur, poste lui-même', () => {
       const c = new Console({ language });
       expect(play(c, ['ssh nulle-part'])).toBe('ssh: Could not resolve hostname nulle-part: Name or service not known');
-      expect(play(c, ['ssh -p 2222 royaume'])).toBe(L('ssh: connect to host royaume.internal port 2222: Connection refused'));
-      expect(play(c, ['ssh poste'])).toBe(L('ssh: connect to host poste port 22: Connection refused'));
+      expect(play(c, ['ssh -p 2222 kingdom'])).toBe(L('ssh: connect to host kingdom.internal port 2222: Connection refused'));
+      expect(play(c, ['ssh desk'])).toBe(L('ssh: connect to host desk port 22: Connection refused'));
       expect(play(c, ['ssh', ''])).toContain('usage: ssh');
-      expect(play(c, ['ssh root@royaume', 'yes'])).toContain(L('root@royaume.internal: Permission denied (publickey).'));
+      expect(play(c, ['ssh root@kingdom', 'yes'])).toContain(L('root@kingdom.internal: Permission denied (publickey).'));
     });
 
     it('sans la clé : Permission denied, puis la clé gagnée en finissant l’Effaceur', () => {
@@ -61,12 +61,12 @@ for (const language of LANGUAGES)
       expect(c.isOpen('datacenter')).toBe(false);
       expect(play(c, ['ssh datacenter', 'yes'])).toContain(L('vous@datacenter.internal: Permission denied (publickey).'));
       const end = new Console({ language, finished: ERASER.slice(0, 2) });
-      end.connect('royaume');
+      end.connect('kingdom');
       expect(end.remote?.shell.chapter.id).toBe('root');
       const last = play(end, ['cat arrivee.txt', 'chmod o-w souvenirs', 'sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf', 'tournesol']);
       expect(end.finished).toEqual(ERASER);
       expect(last).toContain('~/.ssh/id_datacenter');
-      expect(play(end, ['exit', 'ls -a ~/.ssh'])).toContain(L('id_bibliotheque'));
+      expect(play(end, ['exit', 'ls -a ~/.ssh'])).toContain(L('id_library'));
       play(end, ['ssh datacenter', 'yes']);
       expect(end.prompt()).toBe(L('vous@datacenter:~$'));
       expect(end.remote?.story.id).toBe(L('datacenter'));
@@ -74,34 +74,34 @@ for (const language of LANGUAGES)
 
     it('une clé privée trop ouverte est ignorée, comme avec le vrai ssh', () => {
       const c = new Console({ language });
-      const output = play(c, ['chmod 644 ~/.ssh/id_royaume', 'ssh royaume', 'yes']);
+      const output = play(c, ['chmod 644 ~/.ssh/id_kingdom', 'ssh kingdom', 'yes']);
       expect(output).toContain('WARNING: UNPROTECTED PRIVATE KEY FILE!');
-      expect(output).toContain(L("Permissions 0644 for '/home/vous/.ssh/id_royaume' are too open."));
-      expect(output).toContain(L('vous@royaume.internal: Permission denied (publickey).'));
-      play(c, ['chmod 600 ~/.ssh/id_royaume', 'ssh royaume']);
-      expect(c.prompt()).toBe(L('vous@royaume:~$'));
+      expect(output).toContain(L("Permissions 0644 for '/home/vous/.ssh/id_kingdom' are too open."));
+      expect(output).toContain(L('vous@kingdom.internal: Permission denied (publickey).'));
+      play(c, ['chmod 600 ~/.ssh/id_kingdom', 'ssh kingdom']);
+      expect(c.prompt()).toBe(L('vous@kingdom:~$'));
     });
 
     it('-i : une clé copiée ailleurs marche aussi', () => {
       const c = new Console({ language, knownHosts: '' });
-      play(c, ['ssh -i ~/.ssh/id_royaume vous@192.0.2.10', 'yes']);
-      expect(c.prompt()).toBe(L('vous@royaume:~$'));
+      play(c, ['ssh -i ~/.ssh/id_kingdom vous@192.0.2.10', 'yes']);
+      expect(c.prompt()).toBe(L('vous@kingdom:~$'));
     });
 
     it('hôtes connus gardés d’une partie à l’autre', () => {
       const c = new Console({ language });
-      play(c, ['ssh royaume', 'yes', 'exit']);
+      play(c, ['ssh kingdom', 'yes', 'exit']);
       const next = new Console({ language, knownHosts: c.knownHosts() });
-      expect(play(next, ['ssh royaume'])).not.toContain('authenticity');
+      expect(play(next, ['ssh kingdom'])).not.toContain('authenticity');
     });
 
     it('la machine garde son état d’une connexion à l’autre', () => {
       const c = new Console({ language });
-      play(c, ['ssh royaume', 'yes', 'cd Colline/EcoleDesSignaux/SalleDExercice', 'mv crabe Seau', 'exit']);
-      const back = play(c, ['ssh royaume']);
+      play(c, ['ssh kingdom', 'yes', 'cd Colline/EcoleDesSignaux/SalleDExercice', 'mv crabe Seau', 'exit']);
+      const back = play(c, ['ssh kingdom']);
       expect(back).toContain('— ');
       // Comme une nouvelle connexion : on repart de sa maison, le monde n'a pas bougé.
-      expect(c.prompt()).toBe(L('vous@royaume:~$'));
+      expect(c.prompt()).toBe(L('vous@kingdom:~$'));
       expect(play(c, ['ls Colline/EcoleDesSignaux/SalleDExercice/Seau'])).toBe(L('crabe'));
     });
 
@@ -114,7 +114,7 @@ for (const language of LANGUAGES)
       expect(c.remote?.shell.chapter.id).toBe('reboot-night');
       const cut = play(c, ['sudo reboot', 'bienvenue-2026']);
       expect(cut).toContain(L('Connection to datacenter.internal closed by remote host.'));
-      expect(c.prompt()).toBe(L('vous@poste:~$'));
+      expect(c.prompt()).toBe(L('vous@desk:~$'));
       play(c, ['ssh datacenter']);
       expect(play(c, ['journalctl -b -u catalogue -n 1'])).toContain('Failed to start catalogue.service');
     });
@@ -131,7 +131,7 @@ for (const language of LANGUAGES)
       expect(refusal).toContain('WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!');
       expect(refusal).toContain(L("ssh-keygen -f '/home/vous/.ssh/known_hosts' -R 'datacenter.internal'"));
       expect(refusal).toContain('Host key verification failed.');
-      expect(c.prompt()).toBe(L('vous@poste:~$'));
+      expect(c.prompt()).toBe(L('vous@desk:~$'));
       // Le nom court n'est pas celui écrit dans known_hosts.
       expect(play(c, ['ssh-keygen -R datacenter'])).toContain(L('Host datacenter not found'));
       expect(play(c, ['ssh-keygen -F datacenter.internal'])).toContain(L('# Host datacenter.internal found: line 1'));
@@ -155,8 +155,8 @@ for (const language of LANGUAGES)
       const c = new Console({ language });
       // Les trois premières lettres du nom dans la langue (roy, kin) : Tab complète le reste.
       const start = (id: string) => L(`ssh ${id}`).slice(0, 7);
-      expect(c.complete(start('royaume'))).toBe(L('ssh royaume '));
-      expect(c.complete(start('bibliotheque'))).toBe(L('ssh bibliotheque '));
+      expect(c.complete(start('kingdom'))).toBe(L('ssh kingdom '));
+      expect(c.complete(start('library'))).toBe(L('ssh library '));
     });
 
     it.runIf(language === 'fr')('exit sur le poste explique où l’on est', () => {

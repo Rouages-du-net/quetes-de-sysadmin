@@ -19,14 +19,14 @@ describe('Sauvegarde reprise dans une autre langue', () => {
     // Avant la correction, la config du jeu était gardée telle quelle, en français.
     const c = new Console({ language: 'en', ssh: { files: { config: config(translator('fr')) } } });
     expect(c.workstation.read('~/.ssh/config')).toBe(config(translator('en')));
-    play(c, ['ssh royaume', 'yes']);
+    play(c, ['ssh kingdom', 'yes']);
     expect(c.prompt()).toBe('you@kingdom:~$');
   });
 
   it('une config modifiée garde ses ajouts, et se connecte avec le compte de la langue', () => {
     const fr = new Console({ language: 'fr' });
     fr.workstation.place('nano', '~/.ssh/config', { type: 'fichier', content: `${config(translator('fr'))}\n\nHost wiki\n    HostName wiki.maison.internal\n    User vous\n    User gaspard\n    ProxyJump maison` });
-    play(fr, ['ssh royaume', 'yes', 'exit']);
+    play(fr, ['ssh kingdom', 'yes', 'exit']);
     expect(fr.knownHosts()).toContain('royaume.internal');
     const saved = fr.ssh();
     expect(saved.files.config).toContain('ProxyJump maison');
@@ -40,7 +40,7 @@ describe('Sauvegarde reprise dans une autre langue', () => {
     expect(text).toContain('User gaspard');
     // known_hosts suit aussi : royaume.internal est déjà connue sous son nom anglais, pas de question.
     expect(inside.knownHosts()).not.toContain('royaume');
-    play(inside, ['ssh royaume']);
+    play(inside, ['ssh kingdom']);
     expect(inside.prompt()).toBe('you@kingdom:~$');
   });
 });

@@ -49,7 +49,7 @@ export const keyFiles = (t: Translate, m: Machine) => ({
 /** Le poste, avec les clés des machines déjà ouvertes. */
 export function workstation(keys: Machine[]): Chapter {
   return {
-    id: 'poste',
+    id: 'desk',
     number: 0,
     commands: [
       'ls',

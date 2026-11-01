@@ -207,7 +207,7 @@ export const bypass: Chapter = {
       { action: 'allow', to: '8081/tcp', ports: [8081], forEachOf: null },
     ];
     return {
-      systemd: newSystemd('fabrique', Date.UTC(2027, 3, 20, 7, 10, 0), Date.UTC(2027, 3, 24, 10, 0, 0), {
+      systemd: newSystemd('workshop', Date.UTC(2027, 3, 20, 7, 10, 0), Date.UTC(2027, 3, 24, 10, 0, 0), {
         ssh: {
           description: 'OpenBSD Secure Shell server',
           active: true,
@@ -231,7 +231,7 @@ export const bypass: Chapter = {
         { proto: 'tcp', address: '[::]', port: 22, processus: 'sshd', pid: 610 },
       ],
       montages: [{ path: '/', capacity: DISK, name: '/dev/vda1' }],
-      docker: { ...dockerState(), names: ['fabrique', 'fabrique.internal', '192.0.2.15'] },
+      docker: { ...dockerState(), names: ['workshop', 'workshop.internal', '192.0.2.15'] },
     };
   },
   // Les conteneurs du fablab, tels qu'ils tournent depuis le dernier démarrage.
@@ -270,7 +270,7 @@ export const bypass: Chapter = {
     const root = { owner: 'root' };
     const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
     return place({
-      etc: place({ ...accountsFiles(), hostname: f('fabrique', { lines: true, owner: 'root' }) }),
+      etc: place({ ...accountsFiles(), hostname: f('workshop', { lines: true, owner: 'root' }) }),
       home: place({
         vous: d({ 'message_de_rania.txt': f(t('firewall-hole-message-de-rania')), 'mot_de_yasmine.txt': f(t('firewall-hole-mot-de-yasmine')) }),
       }),

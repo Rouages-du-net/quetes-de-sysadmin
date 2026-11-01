@@ -102,7 +102,7 @@ export const exposure: Chapter = {
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
     ufw: newFirewall(),
     ecoute: listening(),
-    systemd: newSystemd('fournil', NOW - 5 * 86_400_000, NOW, {
+    systemd: newSystemd('bakery', NOW - 5 * 86_400_000, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       postgresql: { description: 'PostgreSQL RDBMS', active: true, executable: 'postgres' },

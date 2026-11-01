@@ -206,7 +206,7 @@ export const update: Chapter = {
   password: 'fablab-2027',
   accounts,
   state: (t) => ({
-    systemd: newSystemd('fabrique', Date.UTC(2027, 2, 31, 8, 39, 0), Date.UTC(2027, 3, 3, 10, 0, 0), {
+    systemd: newSystemd('workshop', Date.UTC(2027, 2, 31, 8, 39, 0), Date.UTC(2027, 3, 3, 10, 0, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,
@@ -235,13 +235,13 @@ export const update: Chapter = {
       { pid: 702, user: 'root', cpu: 0.4, mem: 2.1, command: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
       { pid: 1188, user: '1000', cpu: 0.8, mem: 3.4, command: '/usr/local/bin/outiltheque serve' },
     ],
-    docker: { ...dockerState(t), names: ['fabrique', 'fabrique.internal', '192.0.2.15'] },
+    docker: { ...dockerState(t), names: ['workshop', 'workshop.internal', '192.0.2.15'] },
   }),
   createWorld: (t) => {
     const root = { owner: 'root' };
     const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
     return place({
-      etc: place({ ...accountsFiles(), hostname: f('fabrique', { lines: true, owner: 'root' }) }),
+      etc: place({ ...accountsFiles(), hostname: f('workshop', { lines: true, owner: 'root' }) }),
       home: place({
         vous: d({ 'message_de_yasmine.txt': f(t('update-message-de-yasmine')), 'notes_docker.txt': f(t('update-notes-docker')) }),
       }),

@@ -119,7 +119,7 @@ const dayAFirewall = (j: Game) => pf(j).enabled && open(j, NEW) && !open(j, 22);
 const sentinel = (j: Game) => !!f2b(j).load?.enabled && portBlocked(f2b(j).load, NEW);
 const dayAWorkstation = (j: Game) => {
   const p = workstation(j);
-  return !!p && configuration(p, machineName(j.t, 'lettres')).port?.[0] === String(NEW);
+  return !!p && configuration(p, machineName(j.t, 'letters')).port?.[0] === String(NEW);
 };
 
 export const port: Chapter = {
@@ -170,7 +170,7 @@ export const port: Chapter = {
       ],
     } satisfies Firewall,
     fail2ban: { load: null, banned: ROBOTS.slice(0, 2), bannedTotal: 214, log: [], loads: 0, consulted: false } satisfies Fail2banState,
-    systemd: newSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 10, 3, 8, 0, 0), {
+    systemd: newSystemd('letters', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 10, 3, 8, 0, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,

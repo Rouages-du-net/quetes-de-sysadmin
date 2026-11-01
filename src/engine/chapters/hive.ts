@@ -178,7 +178,7 @@ const file = (content: string, owner = 'root') => f(content, { lines: true, owne
 
 /** Les services : networking (ifup -a), systemd-sysctl, ssh, dnsmasq (le DHCP) et nftables (désactivé, comme sur Debian). */
 export function hiveSystemd(services: Record<string, DefinitionService> = {}) {
-  return newSystemd('ruche', NOW - 40 * 86_400_000, NOW, {
+  return newSystemd('hive', NOW - 40 * 86_400_000, NOW, {
     networking: {
       description: 'Raise network interfaces',
       active: true,
@@ -267,7 +267,7 @@ export function hiveWorld(o: {
       etc: d(
         {
           ...accountsFiles(),
-          hostname: file('ruche'),
+          hostname: file('hive'),
           network: d({ interfaces: file(o.interfaces), 'interfaces.d': d({}, undefined, root) }, undefined, root),
           'dnsmasq.conf': file('# Configuration file for dnsmasq.\n#\n# See /etc/dnsmasq.d for the local configuration.'),
           'dnsmasq.d': d({ hive: file(o.dnsmasq) }, undefined, root),
@@ -389,10 +389,10 @@ export const hivePlan =
     ];
     return internet(t, {
       role: 'routeur',
-      name: machineName(t, 'ruche'),
+      name: machineName(t, 'hive'),
       address: '192.0.2.21',
       note: listing([t('plan-note-routeur'), 'DHCP', ...(o.directory || o.wifi ? ['LDAP'] : []), ...(o.wifi ? ['RADIUS'] : [])]),
-      host: 'ruche',
+      host: 'hive',
       children: [
         ...vlans.map((v) => ({
           role: 'reseau' as const,

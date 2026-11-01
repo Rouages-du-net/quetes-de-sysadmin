@@ -119,8 +119,8 @@ export function labStockage(moment: Moment): Stockage {
         : {}),
     },
     arrays: {
-      md0: { level: 'raid1', wanted: 2, blocks: 33_520_640, uuid: '5d1e0a3c-7b2f-4e91-a6c8-3f0d9b1e2c47', name: 'labo:0', members: members(2), events: fresh ? 4182 : 4171, creation: Date.UTC(2024, 2, 6, 10, 12, 31), rank: 0 },
-      md1: { level: 'raid1', wanted: 2, blocks: 1_919_824_896, uuid: 'a8c3e5f1-2d4b-4a6e-9f17-0b3c5d7e9a21', name: 'labo:1', members: members(3), events: fresh ? 91_877 : 91_866, creation: Date.UTC(2024, 2, 6, 10, 12, 58), bitmap: true, rank: 1 },
+      md0: { level: 'raid1', wanted: 2, blocks: 33_520_640, uuid: '5d1e0a3c-7b2f-4e91-a6c8-3f0d9b1e2c47', name: 'lab:0', members: members(2), events: fresh ? 4182 : 4171, creation: Date.UTC(2024, 2, 6, 10, 12, 31), rank: 0 },
+      md1: { level: 'raid1', wanted: 2, blocks: 1_919_824_896, uuid: 'a8c3e5f1-2d4b-4a6e-9f17-0b3c5d7e9a21', name: 'lab:1', members: members(3), events: fresh ? 91_877 : 91_866, creation: Date.UTC(2024, 2, 6, 10, 12, 58), bitmap: true, rank: 1 },
     },
     grub: fresh ? ['sda'] : ['sda', 'sdb'],
   };
@@ -135,7 +135,7 @@ export function labStockage(moment: Moment): Stockage {
       wanted: 2,
       blocks: 3_906_887_488,
       uuid: 'e3b9d1c7-4a2f-4c8e-b5d6-7f1a9c3e2b40',
-      name: 'labo:2',
+      name: 'lab:2',
       members: [
         { part: 'sdc', number: 0, role: 0, state: 'actif' },
         { part: 'sdd', number: 1, role: 1, state: 'actif' },
@@ -325,7 +325,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
     dev: devDirectory(),
     etc: place({
       ...accountsFiles(),
-      hostname: file('labo'),
+      hostname: file('lab'),
       aliases: file('# See man 5 aliases for format\npostmaster:    root\nroot: vous'),
       fstab: file(
         [
@@ -347,9 +347,9 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
             'HOMEHOST <system>',
             'MAILADDR root',
             '',
-            'ARRAY /dev/md/0  metadata=1.2 UUID=5d1e0a3c:7b2f4e91:a6c83f0d:9b1e2c47 name=labo:0',
-            'ARRAY /dev/md/1  metadata=1.2 UUID=a8c3e5f1:2d4b4a6e:9f170b3c:5d7e9a21 name=labo:1',
-            ...(more.rescue ? ['ARRAY /dev/md2 metadata=1.2 name=labo:2 UUID=e3b9d1c7:4a2f4c8e:b5d67f1a:9c3e2b40'] : []),
+            'ARRAY /dev/md/0  metadata=1.2 UUID=5d1e0a3c:7b2f4e91:a6c83f0d:9b1e2c47 name=lab:0',
+            'ARRAY /dev/md/1  metadata=1.2 UUID=a8c3e5f1:2d4b4a6e:9f170b3c:5d7e9a21 name=lab:1',
+            ...(more.rescue ? ['ARRAY /dev/md2 metadata=1.2 name=lab:2 UUID=e3b9d1c7:4a2f4c8e:b5d67f1a:9c3e2b40'] : []),
           ].join('\n'),
         ),
       }),

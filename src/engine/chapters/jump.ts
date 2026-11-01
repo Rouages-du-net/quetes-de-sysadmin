@@ -39,7 +39,7 @@ const shortcut = (j: Game) => {
   return alias(p).some((a) => {
     const c = configuration(p, a);
     const hop = c.proxyjump?.[0]?.split(',').at(-1)?.split('@').at(-1);
-    if (!hop || !['maison', 'maison.internal', '192.0.2.19'].map((n) => hostInLanguage(j.t, n)).includes(hop)) return false;
+    if (!hop || !['community', 'community.internal', '192.0.2.19'].map((n) => hostInLanguage(j.t, n)).includes(hop)) return false;
     return resolveName(j as Shell, (c.hostname?.[0] ?? a).toLowerCase()) === WIKI;
   });
 };

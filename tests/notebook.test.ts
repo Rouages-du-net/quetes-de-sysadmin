@@ -30,7 +30,7 @@ for (const language of LANGUAGES)
       play('ls -a | cat');
       play('ls');
       play('head -n 2 bienvenue.txt');
-      play('ssh royaume');
+      play('ssh kingdom');
       play('yes');
       play('pwd');
       expect(Object.keys(notebook).sort()).toEqual(['cat', 'ls', 'pwd', 'ssh']);
@@ -92,7 +92,7 @@ describe('Le mode examen', () => {
     c.exam = true;
     const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
     // La Porte, avec la configuration de sshd : la faute de frappe ne donne plus d'indice.
-    let all = play(['ssh lettres', 'yes']);
+    let all = play(['ssh letters', 'yes']);
     c.execute('sudo nano /etc/ssh/sshd_config');
     c.execute(machinesInLanguage(c.t, 'fourmis-2026'));
     c.save(c.edition!.text.replace('PermitRootLogin yes', 'PermitRootLogin non'));
@@ -106,7 +106,7 @@ describe('Le mode examen', () => {
     c.execute('sudo nano /etc/ssh/sshd_config');
     c.save(c.edition!.text.replace('PermitRootLogin non', 'PermitRootLogin no'));
     c.quitEdition();
-    all = play(['sudo systemctl reload ssh', 'exit', 'ssh lettres']);
+    all = play(['sudo systemctl reload ssh', 'exit', 'ssh letters']);
     expect(all).toContain('https://man.openbsd.org/sshd_config');
     expect(c.finished).toContain('shut-the-door');
   });

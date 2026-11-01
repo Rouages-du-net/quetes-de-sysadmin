@@ -158,7 +158,7 @@ export const padlock: Chapter = {
       outgoing: 'allow',
       rules: [{ action: 'allow', to: 'OpenSSH', ports: [22], forEachOf: null }],
     } satisfies Firewall,
-    systemd: newSystemd('rustine', START, START, {
+    systemd: newSystemd('patch', START, START, {
       ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
       ufw: { description: 'Uncomplicated firewall', active: true, executable: 'ufw', activeRest: true },
       caddy: {
@@ -180,7 +180,7 @@ export const padlock: Chapter = {
     // Le DNS de cycles.example et de www.cycles.example mène déjà ici.
     caddy: {
       load: null,
-      names: ['rustine', SITE, WWW, IP],
+      names: ['patch', SITE, WWW, IP],
       ip: IP,
       dns: { [SITE]: IP, [WWW]: IP },
       waiting: [],
@@ -201,7 +201,7 @@ export const padlock: Chapter = {
     return directory({
       etc: directory({
         ...accountsFiles(),
-        hostname: file('rustine'),
+        hostname: file('patch'),
         caddy: directory({ Caddyfile: file(CADDYFILE_INES) }),
       }),
       home: directory({

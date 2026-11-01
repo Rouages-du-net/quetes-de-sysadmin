@@ -175,7 +175,7 @@ export const rights: Chapter = {
   password: PASSWORD,
   accounts: () => cooperativeAccounts(false),
   state: () => ({
-    systemd: newSystemd('cooperative', NOW - 6 * 86_400_000, NOW, {
+    systemd: newSystemd('coop', NOW - 6 * 86_400_000, NOW, {
       till: {
         description: 'Cooperative till',
         active: true,

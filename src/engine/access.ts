@@ -89,7 +89,7 @@ export const publicFor = (isPrivate: string) => `${PUBLIC_HEADER}${base64(conden
 // La session d'en face : depuis le poste, une machine d'histoire ; depuis
 // une machine d'histoire (ou interne), une machine de son réseau interne.
 function machineInFace(origin: Shell, address: string): { machine: Host; shell: Shell; story?: string } | null {
-  if (origin.host === 'poste') {
+  if (origin.host === 'desk') {
     const m = MACHINES.find((x) => x.address === address);
     const shell = m && (origin.state.sessionDistante?.(m.name) as Shell | undefined);
     return m && shell ? { machine: m, shell, story: m.name } : null;
@@ -251,7 +251,7 @@ function authenticate(origin: Shell, jumps: Jump[], next: () => string, i: numbe
   const existsAccount = !!s.shell.accounts.users[s.user];
   const permitted = existsAccount && allowed(config, s.user);
   // Les clés du poste, tenues à jour sur les machines de l'histoire (d'où que parte la connexion).
-  const workstation = origin.host === 'poste' ? origin : (s.shell.principal.state.poste?.() as Shell | undefined);
+  const workstation = origin.host === 'desk' ? origin : (s.shell.principal.state.poste?.() as Shell | undefined);
   if (workstation && s.shell.principal.chapter.playerKeys) copyKeys(workstation, s.shell);
   const authorised = allowedKeys(s.shell, s.user);
   const paths = [...new Set([...s.identities, ...KEYS_BY_DEFAULT])];

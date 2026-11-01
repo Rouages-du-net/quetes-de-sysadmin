@@ -72,7 +72,7 @@ const translatedCollection = (t: Translate, day: number) => Object.fromEntries(O
 function initialRepo(t: Translate): Repo {
   const repo: Repo = { id: hex('depot-bibliotheque'), password: password(t, PASSWORD), snapshotList: [], packs: [], checked: true, pruneA: false };
   for (let day = 7; day <= 36; day++)
-    addSnapshot(repo, { id: hex(`instantane-${day}`), time: night(day), host: 'bibliotheque', paths: [path(t, COLLECTION)], files: translatedCollection(t, day) });
+    addSnapshot(repo, { id: hex(`instantane-${day}`), time: night(day), host: 'library', paths: [path(t, COLLECTION)], files: translatedCollection(t, day) });
   repo.checked = true;
   return repo;
 }

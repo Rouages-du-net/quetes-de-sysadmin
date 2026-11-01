@@ -174,7 +174,7 @@ export const sentinel: Chapter = {
   state: () => ({
     // Le second robot vient d'être relâché (09:35) : il recommence pendant qu'on joue, et fail2ban le rattrape.
     fail2ban: { load: null, banned: [ROBOTS[0], RANIA], bannedTotal: 6, log: [], loads: 0, consulted: false, restored: { [ROBOTS[1]]: Date.UTC(2026, 9, 22, 9, 35, 40) } } satisfies Fail2banState,
-    systemd: newSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 22, 6, 0, 0), {
+    systemd: newSystemd('letters', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 22, 6, 0, 0), {
       ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       fail2ban: {

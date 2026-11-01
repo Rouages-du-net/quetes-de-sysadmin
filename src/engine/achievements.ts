@@ -40,7 +40,7 @@ export const ACHIEVEMENTS: Achievements[] = [
   { id: 'trois-histoires', obtained: (c) => finishedStories(c.finished).length >= 3 },
   { id: 'toutes-histoires', obtained: (c) => finishedStories(c.finished).length === STORIES.length },
   { id: 'cinquante-commandes', obtained: (c) => Object.keys(c.notebook).length >= 50 },
-  { id: 'sans-indice', obtained: (c) => !!c.sh?.finished && c.sh.chapter.id !== 'poste' && c.sh.requestsHints.size === 0 },
+  { id: 'sans-indice', obtained: (c) => !!c.sh?.finished && c.sh.chapter.id !== 'desk' && c.sh.requestsHints.size === 0 },
   { id: 'examen', obtained: (c) => Object.keys(c.records).length > 0 },
   { id: 'examen-eclair', obtained: (c) => Object.values(c.records).some((ms) => ms < 5 * 60_000) },
   // Les clins d'œil : une ligne bien précise (voir OEUFS dans shell.ts).

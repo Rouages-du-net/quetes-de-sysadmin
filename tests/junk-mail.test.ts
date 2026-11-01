@@ -32,7 +32,7 @@ for (const language of LANGUAGES)
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
-      play(['ssh jardin', 'yes']);
+      play(['ssh garden', 'yes']);
       expect(c.remote?.shell.chapter.id).toBe(chapter);
       const box = () => c.remote!.shell.read(`/var/mail/${c.remote!.shell.player}`) ?? '';
       const read = (path: string) => c.remote!.shell.read(path) ?? '';

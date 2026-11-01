@@ -141,7 +141,7 @@ export const traces: Chapter = {
       { account: 'nadia', tty: 'pts/1', since: BOUTIQUE, start: day(13, 18, 2), end: day(13, 18, 31) },
       { account: player(t), tty: 'pts/0', since: '192.0.2.2', start: NOW - 60_000, end: null },
     ],
-    systemd: newSystemd('fournil', NOW - 9 * 86_400_000, NOW, {
+    systemd: newSystemd('bakery', NOW - 9 * 86_400_000, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },

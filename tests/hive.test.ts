@@ -45,7 +45,7 @@ for (const language of LANGUAGES)
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
-      play(['ssh ruche', 'yes']);
+      play(['ssh hive', 'yes']);
       return { c, jouer: play, editer: edit };
     };
 
@@ -199,7 +199,7 @@ table ip nat {
       contains(all, 'https://wiki.nftables.org/wiki-nftables/index.php/Performing_Network_Address_Translation_(NAT)');
       expect(c.finished).toContain('zones');
       // Après un redémarrage, tout revient tout seul.
-      all = play(['sudo reboot', 'ssh ruche', 'sysctl net.ipv4.ip_forward', 'sudo conntrack -L -s 10.10.20.197']);
+      all = play(['sudo reboot', 'ssh hive', 'sysctl net.ipv4.ip_forward', 'sudo conntrack -L -s 10.10.20.197']);
       expect(all).toContain('net.ipv4.ip_forward = 1');
       expect(all).toContain('dst=198.51.100.80 sport=47099 dport=443 src=198.51.100.80 dst=192.0.2.21');
       expect(all).not.toContain('dport=445');
@@ -230,7 +230,7 @@ table ip nat {
       expect(all).toContain('ip saddr 10.10.20.0/24 ip daddr != 10.0.0.0/8 accept # handle 3');
       contains(all, 'si le routeur');
       expect(c.finished).not.toContain('zones');
-      all = play(['sudo reboot', 'ssh ruche', 'cat /proc/sys/net/ipv4/ip_forward', 'sudo nft list ruleset']);
+      all = play(['sudo reboot', 'ssh hive', 'cat /proc/sys/net/ipv4/ip_forward', 'sudo nft list ruleset']);
       expect(all).toContain(`cat ${L('courriel_malik.txt')}\n0\n`);
       expect(all).not.toContain('masquerade');
       edit('sudo nano /etc/sysctl.conf', (t) => t.replace('#net.ipv4.ip_forward=1', 'net.ipv4.ip_forward=1'));
@@ -345,7 +345,7 @@ table ip nat {
       play(['sudo nft add rule inet filter forward iifname wg0 accept', 'chmod 600 privatekey']);
       // Tout marche… jusqu'au redémarrage : le pare-feu n'est pas dans le fichier.
       expect(c.finished).not.toContain('remote-work');
-      all = play(['sudo wg-quick down wg0', 'sudo systemctl start wg-quick@wg0', 'sudo reboot', 'ssh ruche', 'sudo wg show wg0']);
+      all = play(['sudo wg-quick down wg0', 'sudo systemctl start wg-quick@wg0', 'sudo reboot', 'ssh hive', 'sudo wg show wg0']);
       expect(all).toContain('[#] ip link delete dev wg0');
       // wg0 est revenu (le service), mais pas la règle tapée à la main : plus de poignée de main.
       expect(all).toContain('peer: ');

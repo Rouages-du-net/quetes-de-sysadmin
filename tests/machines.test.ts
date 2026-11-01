@@ -20,7 +20,7 @@ const values = (language: string) =>
         .map((l) => [f, l.replace(/^[\w-]+(\.[\w-]+)?\s*=/, '')] as const),
     );
 
-for (const language of LANGUAGES.filter((l) => l !== 'fr'))
+for (const language of LANGUAGES)
   describe(`Machines et mots de passe — ${language}`, () => {
     const t = translator(language);
 
@@ -31,10 +31,12 @@ for (const language of LANGUAGES.filter((l) => l !== 'fr'))
     });
 
     it('les textes emploient les noms et les mots de passe de la langue', () => {
-      const other = IDS.filter((id) => machineName(t, id) !== id);
-      const machine = new RegExp(`(?:\\bssh |@|\\bid_|\\bHost )(${other.join('|')})\\b|(?<![\\w-])(${other.join('|')})\\.internal\\b`);
-      const mdp = new RegExp(`(?<![\\w-])(${PASSWORDS.filter((m) => password(t, m) !== m).join('|')})(?![\\w-])`);
-      const mistakes = values(language).filter(([, v]) => machine.test(v) || mdp.test(v));
+      // The names other languages give the machines (and the French passwords), where this language's differ.
+      const other = [...new Set(LANGUAGES.filter((l) => l !== language).flatMap((l) => IDS.map((id) => machineName(translator(l), id))))].filter((n) => !IDS.some((id) => machineName(t, id) === n));
+      const machine = other.length ? new RegExp(`(?:\\bssh |@|\\bid_|\\bHost )(${other.join('|')})\\b|(?<![\\w-])(${other.join('|')})\\.internal\\b`) : null;
+      const french = PASSWORDS.filter((m) => password(t, m) !== m);
+      const mdp = french.length ? new RegExp(`(?<![\\w-])(${french.join('|')})(?![\\w-])`) : null;
+      const mistakes = values(language).filter(([, v]) => machine?.test(v) || mdp?.test(v));
       expect(mistakes.map(([f, v]) => `${f}: ${v.trim()}`)).toEqual([]);
     });
   });

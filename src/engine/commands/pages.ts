@@ -266,7 +266,7 @@ export const PAGES: Record<string, Page> = {
   },
   nmap: {
     options: ['sV', 'sn', 'Pn', 'n', 'F', 'p', 'oN'],
-    examples: ['nmap fournil.internal', 'nmap -sV -oN inventaire.txt fournil.internal', 'nmap -p 22,80,443 fournil.internal', 'nmap -sn 192.0.2.22', 'nmap -p- 192.0.2.22'],
+    examples: ['nmap bakery.internal', 'nmap -sV -oN inventaire.txt bakery.internal', 'nmap -p 22,80,443 bakery.internal', 'nmap -sn 192.0.2.22', 'nmap -p- 192.0.2.22'],
     see: ['ss', 'nc', 'curl', 'ufw'],
   },
   lynis: {
@@ -365,7 +365,7 @@ export const PAGES: Record<string, Page> = {
   'named-checkzone': { section: 8, examples: ['named-checkzone cafe.example /etc/bind/zones/db.cafe.example'], see: ['rndc', 'dig', 'named-checkconf'] },
   'named-checkconf': { section: 8, examples: ['sudo named-checkconf'], see: ['named-checkzone', 'rndc'] },
   nano: { examples: ['nano notes.txt', 'sudo nano /etc/nginx/blocked.conf'], see: ['cat', 'sudo'] },
-  nc: { examples: ['nc -zv fabrique 22', 'nc -zv fabrique 5430-5435'], see: ['ss', 'ufw', 'ssh'] },
+  nc: { examples: ['nc -zv workshop 22', 'nc -zv workshop 5430-5435'], see: ['ss', 'ufw', 'ssh'] },
   nginx: { options: ['t', 'T', 'v'], examples: ['sudo nginx -t', 'sudo nginx -T | less', 'nginx -v'], see: ['systemctl', 'journalctl', 'curl', 'apt', 'apache2ctl'] },
   openssl: {
     examples: ['openssl x509 -in /etc/letsencrypt/live/site.example/cert.pem -noout -dates', 'openssl s_client -connect site.example:443 | openssl x509 -noout -dates', 'openssl x509 -in cert.pem -noout -checkend 1296000'],
@@ -390,7 +390,7 @@ export const PAGES: Record<string, Page> = {
     examples: ['rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'rsync -avn --delete ~/souvenirs/ /mnt/sauvegarde/souvenirs/', 'rsync -a /mnt/sauvegarde/souvenirs/lettre.txt ~/souvenirs/', 'rsync -av --delete site/ wiki:/srv/site/'],
     see: ['cp', 'scp', 'crontab', 'tar'],
   },
-  scp: { examples: ['scp rapport.txt maison:', 'scp wiki:/var/backups/wiki.tar.gz .', 'scp -r -J maison site/ vous@wiki:/srv/'], see: ['ssh', 'rsync', 'cp'] },
+  scp: { examples: ['scp rapport.txt community:', 'scp wiki:/var/backups/wiki.tar.gz .', 'scp -r -J community site/ vous@wiki:/srv/'], see: ['ssh', 'rsync', 'cp'] },
   rndc: { section: 8, examples: ['sudo rndc reload cafe.example', 'sudo rndc status'], see: ['named-checkzone', 'dig', 'journalctl'] },
   restic: {
     examples: [
@@ -411,12 +411,12 @@ export const PAGES: Record<string, Page> = {
   sort: { long: { 'numeric-sort': 'n', 'reverse': 'r' }, options: ['n', 'r'], examples: ['sort -n tailles.txt'], see: ['uniq', 'wc'] },
   ssh: {
     options: ['i', 'p', 'J', 'L', 'N', 'f', 'G'],
-    examples: ['ssh royaume', 'ssh -i ~/.ssh/id_royaume vous@royaume.internal', 'cat ~/.ssh/config', 'ssh -J maison wiki', 'ssh -f -N -L 8080:localhost:8080 wiki', 'ssh wiki uptime'],
+    examples: ['ssh kingdom', 'ssh -i ~/.ssh/id_kingdom vous@kingdom.internal', 'cat ~/.ssh/config', 'ssh -J community wiki', 'ssh -f -N -L 8080:localhost:8080 wiki', 'ssh wiki uptime'],
     see: ['exit', 'chmod', 'ssh_config', 'ssh-keygen', 'ssh-copy-id', 'scp'],
   },
-  'ssh-copy-id': { examples: ['ssh-copy-id maison', 'ssh-copy-id -i ~/.ssh/id_ed25519.pub vous@maison.internal'], see: ['ssh', 'ssh-keygen', 'sshd_config'] },
+  'ssh-copy-id': { examples: ['ssh-copy-id community', 'ssh-copy-id -i ~/.ssh/id_ed25519.pub vous@community.internal'], see: ['ssh', 'ssh-keygen', 'sshd_config'] },
   'ssh-keygen': {
-    examples: ['ssh-keygen -R datacenter.internal', 'ssh-keygen -F datacenter.internal', 'ssh-keygen -l -f ~/.ssh/known_hosts', 'ssh-keygen -t ed25519 -C vous@poste'],
+    examples: ['ssh-keygen -R datacenter.internal', 'ssh-keygen -F datacenter.internal', 'ssh-keygen -l -f ~/.ssh/known_hosts', 'ssh-keygen -t ed25519 -C vous@desk'],
     see: ['ssh', 'ssh-copy-id'],
   },
   ss: { long: { 'tcp': 't', 'udp': 'u', 'listening': 'l', 'all': 'a', 'numeric': 'n', 'processes': 'p' }, section: 8, options: ['t', 'u', 'l', 'a', 'n', 'p'], examples: ['sudo ss -tlnp', 'ss -t'], see: ['ufw', 'ps', 'systemctl'] },

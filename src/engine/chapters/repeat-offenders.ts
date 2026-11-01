@@ -228,7 +228,7 @@ export const repeatOffence: Chapter = {
       ],
     } satisfies Firewall,
     fail2ban: { load: null, banned: [...REPEAT_OFFENDERS], bannedTotal: 18, log: [], loads: 0, consulted: false } satisfies Fail2banState,
-    systemd: newSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 10, 12, 9, 0, 0), {
+    systemd: newSystemd('letters', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 10, 12, 9, 0, 0), {
       ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       ufw: { description: 'Uncomplicated firewall', active: true, executable: 'ufw' },
