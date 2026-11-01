@@ -102,7 +102,7 @@ APPS.reservations = {
   answer: (game, c, path) => {
     const error = connect(game, c);
     if (error) return { code: 500, body: `Internal Server Error: ${error}` };
-    if (path === '/' || path === '') return { code: 200, body: game.t('compose-appli-accueil') };
+    if (path === '/' || path === '') return { code: 200, body: game.t('compose-app-welcome') };
     return { code: 404, body: `Cannot GET ${path}` };
   },
 };
@@ -235,7 +235,7 @@ export const composition: Chapter = {
   home: M,
   welcome: 'message_from_yasmine.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'fablab-2027',
   accounts,
   state: () => ({
@@ -264,7 +264,7 @@ export const composition: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: f('workshop', { lines: true, owner: 'root' }) }),
       home: place({
-        you: d({ 'message_from_yasmine.txt': f(t('compose-message-de-yasmine')), 'help_compose.txt': f(t('compose-aide-compose')) }),
+        you: d({ 'message_from_yasmine.txt': f(t('compose-message-yasmine')), 'help_compose.txt': f(t('compose-help-compose')) }),
       }),
       srv: place({ reservations: place({ 'compose.yaml': f(COMPOSE.replaceAll('workshop2027', password(t, 'workshop2027')), { lines: true, owner: 'root' }) }) }),
     });
@@ -274,45 +274,45 @@ export const composition: Chapter = {
       id: 'localhost',
       condition: (j) =>
         (service(j, 'appli')?.log ?? []).some((l) => l.text.includes('ECONNREFUSED 127.0.0.1')) && j.last.line.includes('docker'),
-      message: (j) => j.t('compose-evenement-localhost'),
+      message: (j) => j.t('compose-event-localhost'),
     },
     {
-      id: 'sans-mot-de-passe',
+      id: 'without-password',
       condition: (j) => (service(j, 'db')?.log ?? []).some((l) => l.text.includes('superuser password is not specified')),
-      message: (j) => j.t('compose-evenement-sans-mot-de-passe'),
+      message: (j) => j.t('compose-event-without-password'),
     },
     {
-      id: 'authentification',
+      id: 'authentication',
       condition: (j) => (service(j, 'appli')?.log ?? []).some((l) => l.text.includes('password authentication failed')),
-      message: (j) => j.t('compose-evenement-authentification'),
+      message: (j) => j.t('compose-event-authentication'),
     },
     {
-      id: 'connectee',
+      id: 'connected',
       condition: connected,
-      message: (j) => j.t('compose-evenement-connectee'),
+      message: (j) => j.t('compose-event-connected'),
     },
     {
-      id: 'volumes-effaces',
+      id: 'volumes-erased',
       condition: (j) => j.state.composeVolumesEffaces === true,
-      message: (j) => j.t('compose-evenement-volumes-effaces'),
+      message: (j) => j.t('compose-event-volumes-erased'),
     },
     {
-      id: 'en-clair',
+      id: 'in-clear',
       condition: (j) => connected(j) && onVolume(j) && inClear(j),
-      message: (j) => j.t('compose-evenement-en-clair'),
+      message: (j) => j.t('compose-event-in-clear'),
     },
     {
-      id: 'env-lisible',
+      id: 'env-readable',
       condition: (j) => connected(j) && onVolume(j) && !inClear(j) && envPassword(j) !== '' && !protectedEnv(j),
-      message: (j) => j.t('compose-evenement-env-lisible'),
+      message: (j) => j.t('compose-event-env-readable'),
     },
     {
-      id: 'sans-redemarrage',
+      id: 'without-reboot',
       condition: (j) => connected(j) && onVolume(j) && !inClear(j) && protectedEnv(j) && !(restart(service(j, 'appli')) && restart(service(j, 'db'))),
-      message: (j) => j.t('compose-evenement-sans-redemarrage'),
+      message: (j) => j.t('compose-event-without-reboot'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) =>
         connected(j) &&
         dayA(j) &&
@@ -322,7 +322,7 @@ export const composition: Chapter = {
         protectedEnv(j) &&
         restart(service(j, 'appli')) &&
         restart(service(j, 'db')),
-      message: (j) => j.t('compose-evenement-fin'),
+      message: (j) => j.t('compose-event-end'),
     },
   ],
 };

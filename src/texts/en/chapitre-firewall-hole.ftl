@@ -2,12 +2,12 @@
 ### Docker and ufw, and the space Docker takes up. Commands, paths and the
 ### messages of docker, ufw, ss and nc are not translated.
 
-chapitre-firewall-hole = The hole in the firewall
+chapter-firewall-hole = The hole in the firewall
     .resume = The fablab's database open to the world despite ufw: ports published by Docker, then freeing up space without throwing away what matters.
 
 ## Files
 
-firewall-hole-message-de-rania =
+firewall-hole-message-rania =
     A message from Rania, from The Neighbourhood Letters:
 
     "Hi! Last night I tested the fablab server's ports from home, out of
@@ -20,7 +20,7 @@ firewall-hole-message-de-rania =
 
     A database open on the internet is an open door for every bot that
     tries passwords…"
-firewall-hole-mot-de-yasmine =
+firewall-hole-word-yasmine =
     A note from Yasmine:
 
     "Oops. I had added port 5432 to the database in
@@ -37,37 +37,37 @@ firewall-hole-mot-de-yasmine =
 
 ## Events
 
-firewall-hole-evenement-ss =
+firewall-hole-event-ss =
     docker-proxy listens on 0.0.0.0:5432: Docker is publishing the
     database's port, on every address of the machine. And sudo ufw status
     says nothing about 5432… Docker writes its own rules into iptables,
     which the kernel checks BEFORE ufw's rules: a port published by Docker
     bypasses ufw.
-firewall-hole-evenement-ufw-inutile =
+firewall-hole-event-ufw-useless =
     A ufw rule for 5432 changes nothing: packets to a port published by
     Docker are redirected to the container before they reach ufw's rules.
     Test from your workstation: nc -zv workshop 5432. The solution is in
     compose.yaml: don't publish this port, or publish it only on
     127.0.0.1.
-firewall-hole-evenement-ferme =
+firewall-hole-event-closed =
     Port 5432 no longer answers from outside, and the booking app still
     works: it reaches the database through the project network, without a
     published port. For pgAdmin, Yasmine will go through an SSH tunnel:
     ssh -L 5432:127.0.0.1:5432 workshop (with the port published on
     127.0.0.1 only), or docker compose exec db psql.
 # { $volumes }: the deleted volumes
-firewall-hole-evenement-volume-perdu =
+firewall-hole-event-volume-lost =
     The { $volumes } volume is gone, along with all its data: docker
     volume prune -a deletes every volume no container uses, even if they
     have a name and matter. On a real server, it would be lost. Here, you
     can restart the chapter from the menu. Before a prune: docker system
     df, docker volume ls, and read the warning.
 # { $pourcent }: disk usage
-firewall-hole-evenement-disque =
+firewall-hole-event-disk =
     The disk can breathe again: { $pourcent }% used. Images no container
     uses (old versions, forgotten tests, unnamed images) were taking up
     almost all the space.
-firewall-hole-evenement-fin =
+firewall-hole-event-end =
     The database is no longer visible from the internet, both apps are
     running, the disk has room, and the wiki is still waiting in its
     volume. Rania runs her test again: "Nothing on 5432 any more. Well

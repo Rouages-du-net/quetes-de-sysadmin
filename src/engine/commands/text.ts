@@ -9,7 +9,7 @@ import type { Command, Context } from './index';
 // Les lignes à traiter : celles des fichiers donnés, sinon l'entrée du tube.
 function texts(cmd: string, { input, game }: Context, files: string[]): { name: string; text: string }[] {
   if (!files.length) {
-    if (input === null) game.error(game.t('texte-sans-entree', { commande: cmd }));
+    if (input === null) game.error(game.t('text-without-input', { commande: cmd }));
     return input === null ? [] : [{ name: '', text: input }];
   }
   return files
@@ -103,7 +103,7 @@ export const TEXT: Record<string, Command> = {
       if (letters.has('q')) return outputs.length ? '' : c.game.error('');
       // Comme grep : code 1 quand rien ne correspond (utile dans un script).
       c.game.status = outputs.length ? 0 : 1;
-      if (!outputs.length && c.last && ts.length) c.game.error(c.game.t('grep-rien', { motif: pattern }));
+      if (!outputs.length && c.last && ts.length) c.game.error(c.game.t('grep-nothing', { motif: pattern }));
       return outputs.join('\n');
     },
   },
@@ -194,8 +194,8 @@ export const TEXT: Record<string, Command> = {
         else if (a.startsWith('-f')) fields = a.slice(2).split(',').map(Number);
         else files.push(a);
       }
-      if (!fields.length || fields.some((n) => !n)) return c.game.error(c.game.t('cut-champs'));
-      if (sep.length !== 1) return c.game.error(c.game.t('cut-separateur'));
+      if (!fields.length || fields.some((n) => !n)) return c.game.error(c.game.t('cut-fields'));
+      if (sep.length !== 1) return c.game.error(c.game.t('cut-separator'));
       return texts('cut', c, files)
         .flatMap((t) => linesFor(t.text))
         .map((l) => {

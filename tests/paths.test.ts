@@ -31,13 +31,13 @@ describe('Parcours thématiques', () => {
     it(`un titre et une description en ${language}`, () => {
       const t = translator(language);
       for (const p of PATH) {
-        expect(t.exists(`parcours-${p.id}`)).toBe(true);
-        expect(t.exists(`parcours-${p.id}.description`)).toBe(true);
+        expect(t.exists(`path-${p.id}`)).toBe(true);
+        expect(t.exists(`path-${p.id}.description`)).toBe(true);
       }
     });
 
   it('l’état des étapes : fait, ouvert, verrouillé (avec le chapitre à finir d’abord), sans clé', () => {
-    const security = PATH.find((p) => p.id === 'securite')!;
+    const security = PATH.find((p) => p.id === 'security')!;
     const { steps, next } = pathSteps(security, ['shut-the-door'], (h) => h !== 'coop');
     expect(steps[0].state).toBe('fait');
     expect(steps[1]).toMatchObject({ chapter: 'firewall', state: 'ouvert' });

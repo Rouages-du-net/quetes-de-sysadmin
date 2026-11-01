@@ -2,12 +2,12 @@
 ### fixes hold, look for an earlier attempt in the logs. The commands, the
 ### paths and nginx's access log format are not translated.
 
-chapitre-proof = No Proof, No Certainty
+chapter-proof = No Proof, No Certainty
     .resume = Reprove that the fixes hold, and check whether the flaw had already been tried.
 
 ## Files
 
-proof-courriel-salome =
+proof-email-salome =
     From:     Salomé
     To:       you
     Subject:  One last thing before closing the week
@@ -26,17 +26,17 @@ proof-courriel-salome =
 
 ## Events
 
-proof-evenement-versions =
+proof-event-versions =
     apt confirms: nothing left to update for nginx or rsync. It's only once
     checked that it's really fixed.
 # { $adresse }: the address of the attempt that was found
-proof-evenement-trouve =
+proof-event-found =
     One line of the access log stands out: an empty HTTP/2 request, with no
     declared browser, refused by nginx (code 400), from { $adresse }, a few
     days before the fix. It isn't proof of a successful intrusion (nginx
     refused it), but it's a trace worth keeping: someone was already
     looking.
-proof-evenement-fin =
+proof-event-end =
     Salomé: "That's what I mean by proof: not 'I think it's fixed', but
     'apt confirms it, and here's the attempt we spotted'."
 

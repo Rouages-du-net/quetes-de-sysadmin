@@ -3,13 +3,13 @@
 ### ~/.ssh/config, the fail2ban jail). Commands, paths, options
 ### and log lines are not translated.
 
-chapitre-port = The port
+chapter-port = The port
     .resume = Robots are flooding the SSH log: move it to port 2222, without locking yourself out, and without forgetting fail2ban.
 
 ## Files
 
 # { $port }: the new SSH port
-port-courriel-kofi =
+port-email-kofi =
     From:    Kofi
     To:      you
     Subject: The SSH port
@@ -36,13 +36,13 @@ port-courriel-kofi =
 
 ## Events
 
-port-evenement-enferme =
+port-event-locked-out =
     WARNING: sshd is no longer listening on any port the firewall lets
     through. Your session holds (neither sshd nor ufw cuts existing
     connections), but the next connection will fail. Fix it BEFORE you
     disconnect: put the old port back, or open the new one in ufw.
 # { $port }: the new port
-port-evenement-deux-ports =
+port-event-two-ports =
     Well played: sshd listens on both ports, 22 and { $port }, and the
     firewall lets { $port } through. That's the safe manoeuvre: the old
     door stays open while you try the new one. Test it from
@@ -50,23 +50,23 @@ port-evenement-deux-ports =
     (sudo nft list ruleset shows the rule ufw just wrote, in the
     ufw-user-input chain.)
 # { $port }: the new port
-port-evenement-essai =
+port-event-attempt =
     There you are, connected through port { $port }. The new door works:
     you can now close the old one, in sshd and in the firewall.
-port-evenement-defaut =
+port-event-default =
     fail2ban reloaded jail.local, but its sshd jail still keeps
     port 22. A "port = 2222" placed in [DEFAULT] only applies to
     jails that say nothing about their port; but the [sshd] in jail.conf says
     "port = ssh", and a value in a jail's own section always wins
     over [DEFAULT], whatever the file (man jail.conf). The
     setting goes in an [sshd] section of jail.local.
-port-evenement-sentinelle =
+port-event-sentinel =
     SSH now only listens on 2222… but fail2ban's sshd jail still bans
     on the "ssh" port, that is 22 (port = ssh, in
     jail.conf). A banned address could keep trying on 2222.
     sudo nft list ruleset shows it: in the f2b-table table, the rule
     rejects banned addresses towards "tcp dport {"{"} 22 {"}"}" only.
-port-evenement-fin =
+port-event-end =
     SSH now only listens on port 2222, the firewall only lets that
     through, fail2ban watches it, and your workstation knows where to knock.
     The next day, Rania: "Three attempts last night instead of four

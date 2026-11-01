@@ -77,15 +77,15 @@ export function parse(text: string, file: string): { rules: Rule[]; included: st
       continue;
     }
     const r = /^\s*([^\s=,]+(?:\s*,\s*[^\s=,]+)*)\s+([^\s=]+)\s*=\s*(?:\(([^)]*)\)\s*)?((?:[A-Z_]+:\s*)*)(.*)$/.exec(line);
-    if (!r) return { rules, included, defaults, error: error('sudoers-erreur-syntaxe', line.trim().split(/\s+/).at(-1) ?? line) };
+    if (!r) return { rules, included, defaults, error: error('sudoers-error-syntax', line.trim().split(/\s+/).at(-1) ?? line) };
     const commands = r[5]
       .split(',')
       .map((c) => c.trim())
       .flatMap((c) => alias[c] ?? [c]);
     if (!commands.length || commands.some((c) => !c))
-      return { rules, included, defaults, error: error('sudoers-erreur-syntaxe', r[5] || line.trim()) };
+      return { rules, included, defaults, error: error('sudoers-error-syntax', r[5] || line.trim()) };
     const relative = commands.find((c) => c !== 'ALL' && !c.startsWith('/'));
-    if (relative) return { rules, included, defaults, error: error('sudoers-erreur-chemin', relative.split(/\s+/)[0]) };
+    if (relative) return { rules, included, defaults, error: error('sudoers-error-path', relative.split(/\s+/)[0]) };
     rules.push({
       who: r[1].split(',').map((q) => q.trim()),
       as: (r[3] ?? 'root').split(',').map((c) => c.trim().split(':')[0] || 'root'),

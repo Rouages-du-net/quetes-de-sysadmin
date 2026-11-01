@@ -90,7 +90,7 @@ function freeradius(game: Shell, args: string[]): string {
         ...r.attributes.map((a) => `(${i})   ${a.attr} = ${a.value}`),
       );
   });
-  lines.push('', game.t('freeradius-x-fin'));
+  lines.push('', game.t('freeradius-x-end'));
   return lines.join('\n');
 }
 

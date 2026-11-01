@@ -2,12 +2,12 @@
 ### automatiques » : unattended-upgrades. Les commandes, chemins, clés de
 ### configuration d'apt et noms de paquets ne se traduisent pas.
 
-chapitre-auto-updates = Les mises à jour automatiques
+chapter-auto-updates = Les mises à jour automatiques
     .resume = De nouvelles mises à jour de sécurité, déjà : activer unattended-upgrades, recevoir le rapport, redémarrer la nuit, et laisser nodejs tranquille.
 
 ## Fichiers
 
-auto-updates-courriel-awa =
+auto-updates-email-awa =
     De :     Awa
     À :      toi
     Objet :  Encore des mises à jour ?
@@ -33,18 +33,18 @@ auto-updates-courriel-awa =
 
 ## Événements
 
-auto-updates-evenement-syntaxe =
+auto-updates-event-syntax =
     apt ne comprend plus sa configuration (« E: Syntax error ») : il refuse
     TOUT, et les mises à jour automatiques avec. Le plus souvent, un « ; »
     oublié en fin de ligne, ou une accolade. apt-config dump donne le
     fichier et la ligne.
-auto-updates-evenement-rien =
+auto-updates-event-nothing =
     Le service apt-daily-upgrade a tourné… et n'a rien fait. Il lance
     apt.systemd.daily, qui lit APT::Periodic::Unattended-Upgrade : à « 0 »
     (c'est le cas dans 20auto-upgrades), il s'arrête aussitôt. C'est
     pour ça que rien ne s'est jamais installé. (apt-config dump
     APT::Periodic montre ce qu'apt a compris.)
-auto-updates-evenement-nodejs =
+auto-updates-event-nodejs =
     Aïe : nodejs vient de passer en version 22. La caisse tourne encore
     (avec l'ancien programme en mémoire), mais elle ne redémarrera pas :
     elle exige Node.js 20. Un motif trop large dans Origins-Pattern laisse
@@ -52,16 +52,16 @@ auto-updates-evenement-nodejs =
     Pour revenir en arrière, recommence le chapitre depuis le menu ; et
     garde nodejs à l'écart (ne pas autoriser son origine, ou
     Package-Blacklist).
-auto-updates-evenement-en-journee =
+auto-updates-event-in-day =
     La machine vient de redémarrer, en plein après-midi : Automatic-Reboot
     est activé, mais sans heure, unattended-upgrades redémarre tout de
     suite (« now »). Deux minutes sans caisse, une file à l'accueil. Il
     faut une heure où la coopérative est fermée :
     Automatic-Reboot-Time.
-auto-updates-evenement-sans-rapport =
+auto-updates-event-without-report =
     Les mises à jour se sont installées, mais personne n'en saura rien :
     sans Unattended-Upgrade::Mail, aucun rapport n'est envoyé.
-auto-updates-evenement-fin =
+auto-updates-event-end =
     Les mises à jour de sécurité s'installent seules chaque matin, le
     rapport part à root, la machine redémarrera cette nuit pour le nouveau
     noyau, et nodejs reste en version 20. Lina : « J'ai reçu le courrier !

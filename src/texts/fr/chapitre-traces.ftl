@@ -4,12 +4,12 @@
 ### Les commandes, les chemins et les messages des outils (en anglais) ne se
 ### traduisent pas.
 
-chapitre-traces = Les traces
+chapter-traces = Les traces
     .resume = Remonter la trace d'une connexion inattendue : journal, last, empreinte d'une clé, clé et tâche cron de l'intrus.
 
 ## Fichiers
 
-traces-courriel-salome =
+traces-email-salome =
     De :     Salomé (auditrice)
     À :      toi
     Objet :  Audit du Fournil — troisième partie : les traces
@@ -47,7 +47,7 @@ traces-courriel-salome =
 ## Événements
 
 # { $adresse } : l'adresse d'où est venue la connexion
-traces-evenement-trouve =
+traces-event-found =
     Voilà la connexion : une session du compte « nadia » venue de
     { $adresse }, à 3 h 12, alors que Nadia se connecte d'habitude de la
     boutique (198.51.100.7), le soir. Le journal de ssh a gardé l'empreinte
@@ -55,33 +55,33 @@ traces-evenement-trouve =
 
     Quelle clé de /home/nadia/.ssh/authorized_keys a cette empreinte ?
     (man ssh-keygen, option -l)
-traces-evenement-cle-identifiee =
+traces-event-key-identified =
     Voilà l'empreinte de chaque clé du fichier. Compare avec celle du
     journal : c'est la seconde qui a servi la nuit de la connexion, et elle
     porte pourtant le commentaire « nadia@portable ». Le commentaire n'est
     qu'une étiquette.
 
     Retire cette ligne (et elle seule) de authorized_keys.
-traces-evenement-nadia-enfermee =
+traces-event-nadia-locked-out =
     Attention : la clé de Nadia n'est plus dans authorized_keys ! Elle ne
     pourrait plus se connecter. Remets sa clé (celle dont l'empreinte est
     dans les connexions du soir, depuis la boutique) : on retire la clé de
     l'intrus, pas celle de Nadia.
-traces-evenement-cle-revoquee =
+traces-event-key-revoked =
     Il ne reste dans authorized_keys que la clé de Nadia : la clé de l'intrus
     ne peut plus ouvrir de session.
 
     Mais retirer la clé, c'est fermer la porte par laquelle il est entré.
     Qu'a-t-il laissé à l'intérieur pendant ces trois minutes ? Regarde ce
     qui se lance tout seul pour le compte de Nadia (man crontab).
-traces-evenement-cron-decouvert =
+traces-event-cron-found =
     Deux tâches pour Nadia : sauvegarde.sh à 4 h (c'est la sienne), et une
     ligne qui, toutes les dix minutes, télécharge un programme depuis
     203.0.113.99 et l'exécute. C'est la balise de l'intrus : il peut changer
     ce que le serveur fait à distance, même sans clé.
 
     Retire cette ligne, et seulement elle.
-traces-evenement-secret-vu =
+traces-event-secret-seen =
     Voilà ce que la personne a tapé pendant ses trois minutes : elle a lu
     /srv/commandes/.env. À l'époque, ce fichier était lisible par tout le
     monde (« Le rapport ») : le mot de passe de la base de données est
@@ -92,34 +92,34 @@ traces-evenement-secret-vu =
     psql ; ALTER ROLE ... PASSWORD, depuis le compte postgres) ET dans le
     fichier .env, puis relancer l'appli. Choisis un mot de passe long (douze
     caractères au moins) et différent de l'ancien.
-traces-evenement-mot-de-passe-faible =
+traces-event-password-weak =
     Le mot de passe de la base a changé, mais il est trop court : douze
     caractères au moins, et mieux vaut une phrase de passe qu'un mot. Un
     secret qui se devine se remplace aussi mal que celui qu'on a perdu.
-traces-evenement-a-redemarrer =
+traces-event-a-restart =
     La base et .env ont le même nouveau mot de passe, mais l'appli tourne
     encore avec l'ancien : elle lit .env quand elle démarre, pas quand le
     fichier change. Relance-la (systemctl restart commandes) puis regarde
     qu'elle reste active (systemctl status commandes).
-traces-evenement-appli-tombee =
+traces-event-app-down =
     L'appli de commandes est arrêtée : au démarrage, elle a lu dans .env un
     mot de passe que la base n'accepte pas (journalctl -u commandes : « password
     authentication failed »). Les deux côtés doivent dire la même chose : le
     mot de passe du rôle commandes dans PostgreSQL, et celui de DATABASE_URL
     dans .env. Corrige celui qui diffère, puis relance l'appli.
-traces-evenement-mot-de-passe =
+traces-event-password =
     Le mot de passe de la base est changé de bout en bout : le rôle dans
     PostgreSQL, le fichier .env (toujours fermé aux autres comptes), et
     l'appli relancée qui s'y connecte. L'ancien, que l'intrus a lu,
     n'ouvre plus rien.
-traces-evenement-sauvegarde-perdue =
+traces-event-backup-lost =
     La sauvegarde de Nadia (sauvegarde.sh, à 4 h) n'est plus planifiée :
     crontab -r efface TOUTE la crontab. Remets sa ligne :
       0 4 * * * /srv/commandes/bin/sauvegarde.sh
     et retire seulement la ligne de l'intrus.
-traces-evenement-cron-nettoye =
+traces-event-cron-cleaned =
     Plus de balise, et la vraie sauvegarde de Nadia est toujours là.
-traces-evenement-fin =
+traces-event-end =
     La clé de l'intrus est retirée, sa tâche aussi, le mot de passe qu'il a lu
     est remplacé partout, et Nadia peut toujours entrer et sauvegarder. Salomé : « Mon rapport est complet. Je repasserai
     dans six mois pour voir si tout tient. »

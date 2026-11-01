@@ -2,12 +2,12 @@
 ### accès à un bénévole qui part, sans rien casser. Les commandes, les
 ### chemins et les noms de comptes ne se traduisent pas.
 
-chapitre-departure = Le départ
+chapter-departure = Le départ
     .resume = Marc s'en va : fermer son compte (vraiment), retirer sa clé partout, son sudo, sa session, et garder la sauvegarde qu'il faisait tourner.
 
 ## Fichiers
 
-departure-courriel-awa =
+departure-email-awa =
     De :     Awa (coordinatrice de l'épicerie coopérative)
     À :      toi
     Objet :  Marc s'en va
@@ -41,18 +41,18 @@ departure-notes-marc =
 
 ## Événements
 
-departure-evenement-verrou-seul =
+departure-event-lock-only =
     Le mot de passe de marc est verrouillé… mais il se connectait par clé
     SSH, et usermod -L n'y change rien. Relis man usermod : pour fermer
     vraiment un compte, il faut aussi le faire expirer (ou lui retirer son
     shell de connexion, ou ses clés).
 # { $fichier } : le fichier des clés du compte deploy
-departure-evenement-deploy-vide =
+departure-event-deploy-empty =
     Attention : il manque des clés dans { $fichier } ! La CI et Lina ne
     pourront plus mettre la caisse en ligne. On ne retire que la ligne de
     Marc (sa clé finit par marc@portable). Remets les autres : nano, en
     gardant les lignes deploy@ci et lina@atelier.
-departure-evenement-script-perdu =
+departure-event-script-lost =
     Le dossier de Marc a disparu, et avec lui son script de sauvegarde… et
     la sauvegarde de cette nuit ne tournera pas (cron ignore la crontab d'un
     compte supprimé).
@@ -60,19 +60,19 @@ departure-evenement-script-perdu =
     Heureusement, la sauvegarde d'hier contient /home : regarde dans
     /srv/sauvegardes (en root). La prochaine fois : d'abord regarder ce
     qu'un compte fait tourner, ensuite supprimer.
-departure-evenement-tache-personnelle =
+departure-event-task-personal =
     La sauvegarde est dans TA crontab. Elle tourne… jusqu'au jour où, toi
     aussi, tu passeras la main : c'est exactement le piège de Marc. Une
     tâche de la coopérative va dans la crontab de root (sudo crontab -e), ou
     dans un fichier de /etc/cron.d, et son script hors d'un dossier
     personnel (par exemple /usr/local/bin).
-departure-evenement-sauvegarde =
+departure-event-backup =
     La sauvegarde de la caisse ne dépend plus du compte de Marc : son script
     est hors de /home/marc, et c'est un compte qui reste qui la lance.
-departure-evenement-ferme =
+departure-event-closed =
     Marc ne peut plus entrer : ni par son compte, ni par deploy, plus de
     sudo, plus de session ouverte.
-departure-evenement-fin =
+departure-event-end =
     Tout est fermé, rien n'est cassé. Awa : « Marc te dit merci… et
     bienvenue dans l'équipe ! »
 

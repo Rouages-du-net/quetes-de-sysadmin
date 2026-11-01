@@ -99,7 +99,7 @@ export const zones: Chapter = {
   home: M,
   welcome: 'email_malik.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: PASSWORD,
   accounts: hiveAccounts,
   state: () => ({ lan: { ...newLan(true), flux: FLUX.map(({ permitted: _, ...x }) => x) }, systemd: hiveSystemd(), nft: { tables: [] } }),
@@ -108,29 +108,29 @@ export const zones: Chapter = {
     hiveWorld({
       interfaces: INTERFACES_VLAN,
       dnsmasq: DNSMASQ_VLAN,
-      home: { 'email_malik.txt': f(t('zones-courriel-malik')), 'notes-from-sacha.txt': f(t('zones-notes-sacha'), { lines: true }) },
+      home: { 'email_malik.txt': f(t('zones-email-malik')), 'notes-from-sacha.txt': f(t('zones-notes-sacha'), { lines: true }) },
     }),
   events: [
     {
-      id: 'sans-traduction',
+      id: 'without-translation',
       condition: (j) => routing(j) && results(j).some((r) => permitted(r) && internet(r) && r.state === 'sans-reponse' && !r.translated),
-      message: (j) => j.t('zones-evenement-sans-traduction'),
+      message: (j) => j.t('zones-event-without-translation'),
     },
     {
-      id: 'reponses',
+      id: 'responses',
       condition: (j) => results(j).some((r) => permitted(r) && r.state === 'sans-reponse' && (!internet(r) || !!r.translated)),
-      message: (j) => j.t('zones-evenement-reponses'),
+      message: (j) => j.t('zones-event-responses'),
     },
     {
-      id: 'tout-ouvert',
+      id: 'all-open',
       condition: (j) => {
         const rs = results(j);
         return rs.filter((r) => permitted(r) && internet(r)).every((r) => r.state === 'ok') && rs.some((r) => !permitted(r) && r.state !== 'bloque');
       },
-      message: (j) => j.t('zones-evenement-tout-ouvert'),
+      message: (j) => j.t('zones-event-all-open'),
     },
-    { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-evenement-ssh') },
-    { id: 'en-place', condition: (j) => now(j) && !toReboot(j), message: (j) => j.t('zones-evenement-en-place') },
-    { id: 'fin', condition: (j) => now(j) && toReboot(j), message: (j) => j.t('zones-evenement-fin') },
+    { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-event-ssh') },
+    { id: 'in-place', condition: (j) => now(j) && !toReboot(j), message: (j) => j.t('zones-event-in-place') },
+    { id: 'end', condition: (j) => now(j) && toReboot(j), message: (j) => j.t('zones-event-end') },
   ],
 };

@@ -41,8 +41,8 @@ export const proof: Chapter = {
   home: M,
   welcome: 'email_salome.txt',
   names: true,
-  final: 'fin',
-  steps: ['versions', 'trouve', 'fin'],
+  final: 'end',
+  steps: ['versions', 'found', 'end'],
   password: PASSWORD,
   accounts: watchAccounts,
   state: () => ({
@@ -60,16 +60,16 @@ export const proof: Chapter = {
   initialise: initialiseWatch,
   createWorld: (t) =>
     watchWorld(t, {
-      home: { 'email_salome.txt': f(t('proof-courriel-salome')) },
+      home: { 'email_salome.txt': f(t('proof-email-salome')) },
       logAccess: ACCESS,
     }),
   events: [
     {
       id: 'versions',
       condition: (j) => j.last.commands.some((c) => c[0] === 'apt') && okUpToDate(j) && /Listing\.\.\. Done/.test(j.last.output),
-      message: (j) => j.t('proof-evenement-versions'),
+      message: (j) => j.t('proof-event-versions'),
     },
-    { id: 'trouve', condition: okFound, message: (j) => j.t('proof-evenement-trouve', { adresse: SUSPICIOUS }) },
-    { id: 'fin', condition: (j) => okUpToDate(j) && j.flags.has('trouve') && siteOk(j), message: (j) => j.t('proof-evenement-fin') },
+    { id: 'found', condition: okFound, message: (j) => j.t('proof-event-found', { adresse: SUSPICIOUS }) },
+    { id: 'end', condition: (j) => okUpToDate(j) && j.flags.has('found') && siteOk(j), message: (j) => j.t('proof-event-end') },
   ],
 };

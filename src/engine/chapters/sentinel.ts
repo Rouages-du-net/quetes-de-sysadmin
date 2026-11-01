@@ -163,7 +163,7 @@ export const sentinel: Chapter = {
   home: M,
   welcome: 'email_kofi.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'ants-2026',
   accounts: () => {
     const c = accountsByDefault();
@@ -222,7 +222,7 @@ export const sentinel: Chapter = {
           undefined,
           root,
         ),
-        home: d({ you: d({ 'email_kofi.txt': f(t('sentinel-courriel-kofi')) }) }, undefined, root),
+        home: d({ you: d({ 'email_kofi.txt': f(t('sentinel-email-kofi')) }) }, undefined, root),
         var: d(
           {
             log: d(
@@ -243,32 +243,32 @@ export const sentinel: Chapter = {
     {
       id: 'jail-conf',
       condition: (j) => j.read(`${DIRECTORY}/jail.conf`) !== JAIL_CONF,
-      message: (j) => j.t('sentinel-evenement-jail-conf'),
+      message: (j) => j.t('sentinel-event-jail-conf'),
     },
     {
-      id: 'erreur',
+      id: 'error',
       condition: (j) => readConfig(j).errors.length > 0,
-      message: (j) => j.t('sentinel-evenement-erreur'),
+      message: (j) => j.t('sentinel-event-error'),
     },
     {
       id: 'rania',
       condition: (j) => !f2b(j).banned.includes(RANIA),
-      message: (j) => j.t('sentinel-evenement-rania'),
+      message: (j) => j.t('sentinel-event-rania'),
     },
     {
-      id: 'banni-soi',
+      id: 'banned-self',
       condition: (j) => f2b(j).banned.includes(WORKSTATION.address),
-      message: (j) => j.t('sentinel-evenement-banni-soi', { adresse: WORKSTATION.address }),
+      message: (j) => j.t('sentinel-event-banned-self', { adresse: WORKSTATION.address }),
     },
     {
-      id: 'reglee',
+      id: 'set',
       condition: (j) => set(j) && f2b(j).loads > 0,
-      message: (j) => j.t('sentinel-evenement-reglee'),
+      message: (j) => j.t('sentinel-event-set'),
     },
     {
-      id: 'fin',
-      condition: (j) => j.flags.has('reglee') && set(j) && rightBans(j) && f2b(j).consulted,
-      message: (j) => j.t('sentinel-evenement-fin'),
+      id: 'end',
+      condition: (j) => j.flags.has('set') && set(j) && rightBans(j) && f2b(j).consulted,
+      message: (j) => j.t('sentinel-event-end'),
     },
   ],
 };

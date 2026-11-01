@@ -605,7 +605,7 @@ for (const width of [1000, 375]) {
   await page.reload();
   const game = page.locator('quetes-de-sysadmin');
   await game.locator('.choix-vue button', { hasText: 'Parcours' }).click();
-  await game.locator('.parcours select').selectOption('securite');
+  await game.locator('.parcours select').selectOption('security');
   const maps = game.locator('.parcours-liste button');
   check((await maps.count()) === 21 && (await game.locator('.parcours-avancee').textContent()).includes('1 sur 21'), `parcours ${width} px : le parcours et son avancée`);
   const next = game.locator('.parcours-liste button[data-prochain]');
@@ -613,7 +613,7 @@ for (const width of [1000, 375]) {
   await next.click();
   check((await game.locator('.invite').textContent()).startsWith('vous@lettres'), `parcours ${width} px : le prochain chapitre s’ouvre`);
   await page.reload();
-  check((await game.locator('nav.histoires').getAttribute('data-vue')) === 'parcours' && (await game.locator('.parcours select').inputValue()) === 'securite', `parcours ${width} px : la vue et le parcours sont gardés`);
+  check((await game.locator('nav.histoires').getAttribute('data-vue')) === 'parcours' && (await game.locator('.parcours select').inputValue()) === 'security', `parcours ${width} px : la vue et le parcours sont gardés`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `parcours ${width} px : pas de défilement horizontal`);
   check(errors.length === 0, `parcours ${width} px : aucune erreur console ${errors.join(' ')}`);
   await page.evaluate(() => localStorage.clear());

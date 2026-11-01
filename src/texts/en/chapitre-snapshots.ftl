@@ -2,12 +2,12 @@
 ### links, daily and weekly rotation, cron. Commands, paths, directives and
 ### rsnapshot's messages are not translated.
 
-chapitre-snapshots = Snapshots
+chapter-snapshots = Snapshots
     .resume = Being able to go back to any day of the last two weeks: rsnapshot, its tabs, its hard links, and cron.
 
 ## Files
 
-snapshots-message-de-berenice =
+snapshots-message-berenice =
     A message from Bérénice:
 
     "After the attack, Malo would like us to be able to go back to any
@@ -25,8 +25,8 @@ snapshots-message-de-berenice =
     Malo left a tip: "rsnapshot configtest before anything else, and
     watch out for tabs". For sudo: ludo-2027."
 # { $numero }: the number of the added game
-snapshots-ligne-inventaire = donated game no. { $numero };1;new
-snapshots-inventaire-ancien =
+snapshots-line-inventory = donated game no. { $numero };1;new
+snapshots-inventory-old =
     game;copies;condition
     snakes and ladders;3;good
     ludo;2;good
@@ -34,7 +34,7 @@ snapshots-inventaire-ancien =
 ## Events
 
 # { $mails }: the number of emails sent by cron
-snapshots-deux-semaines =
+snapshots-two-weeks =
     Two weeks go by. Every day, Bérénice adds the donated games to the
     inventory; every night, cron runs what is scheduled. Look at what is
     now in /mnt/snapshots (and at cron's mail:
@@ -45,16 +45,16 @@ snapshots-deux-semaines =
        *[other] { $mails } messages; "nothing to copy" is normal for the
             first days, as long as there aren't enough daily snapshots)
     }.
-snapshots-evenement-espaces =
+snapshots-event-spaces =
     rsnapshot rejects its configuration: in /etc/rsnapshot.conf, the
     elements of a line are separated by TABS, never by spaces (even if
     they look the same on screen). In nano, the Tab key writes a tab.
-snapshots-evenement-meme-disque =
+snapshots-event-same-disk =
     The snapshots are stored on the system disk, next to the data: if
     that disk fails, everything goes with it. Malo wanted the second
     disk, /mnt/snapshots (snapshot_root).
 # { $exemple }: the beginning of an email from cron
-snapshots-evenement-mails =
+snapshots-event-mails =
     cron sent mail: its jobs wrote errors. For
     example:
 
@@ -62,23 +62,23 @@ snapshots-evenement-mails =
 
     A job in an ordinary account's crontab doesn't have root's
     permissions; one in root's crontab does (sudo crontab -e).
-snapshots-evenement-liens =
+snapshots-event-links =
     The first snapshot takes its full size, the next ones almost nothing:
     files that haven't changed are not copied again, but linked. ls
     -i shows the same inode number for the same file in two snapshots:
     one single file, two names. Yet each snapshot looks complete.
-snapshots-evenement-erreur-berenice =
+snapshots-event-error-berenice =
     The snapshots are rotating: seven daily ones, and the first weekly.
     And as it happens, Bérénice: "Oops… Last night, I replaced the
     inventory with an old copy lying around on my USB stick: all the
     donated games are gone! Can you put it back as it was the day before
     yesterday?" (Last night's snapshot already has the wrong version:
     look at the earlier ones, diff will help you.)
-snapshots-evenement-mauvaise-version =
+snapshots-event-wrong-version =
     The inventory on the share is still the old copy: the most recent
     snapshot (.0) was taken AFTER Bérénice's mistake. You need the one
     from the night before.
-snapshots-evenement-fin =
+snapshots-event-end =
     The inventory is back, with all the donated games. Bérénice: "And
     every day of the last two weeks is there, without the disk being
     full!"

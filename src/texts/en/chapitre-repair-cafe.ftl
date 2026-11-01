@@ -2,12 +2,12 @@
 ### Apache behind nginx (ports, virtual hosts, .htaccess, mod_rewrite).
 ### Apache's commands, paths, directives and messages are not translated.
 
-chapitre-repair-cafe = The Repair Café
+chapter-repair-cafe = The Repair Café
     .resume = The repair café's site runs on Apache, with an .htaccess: make it live behind nginx, on the same server.
 
 ## Files
 
-repair-cafe-courriel-kofi =
+repair-cafe-email-kofi =
     From:    Kofi
     To:      you
     Subject: The repair café
@@ -39,7 +39,7 @@ repair-cafe-courriel-kofi =
     Thanks!
     Kofi
 
-repair-cafe-note-de-rania =
+repair-cafe-note-rania =
     I ran sudo apt install apache2 last night. At the end, apt printed
     "Job for apache2.service failed", and I didn't have time to look into
     why (systemctl status apache2, journalctl -u apache2…).
@@ -59,11 +59,11 @@ repair-cafe-note-de-rania =
 
     Rania
 
-repair-cafe-htaccess-commentaire =
+repair-cafe-htaccess-comment =
     # Short addresses of the guides, printed on the posters:
     # /guide/42 leads to guides/42.html
 
-repair-cafe-site-accueil =
+repair-cafe-site-welcome =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>The Repair Café</title></head>
@@ -74,7 +74,7 @@ repair-cafe-site-accueil =
     </body>
     </html>
 
-repair-cafe-fiche-7 =
+repair-cafe-sheet-7 =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>Guide 7: replacing an inner tube</title></head>
@@ -84,7 +84,7 @@ repair-cafe-fiche-7 =
     </body>
     </html>
 
-repair-cafe-fiche-42 =
+repair-cafe-sheet-42 =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>Guide 42: descaling a kettle</title></head>
@@ -96,29 +96,29 @@ repair-cafe-fiche-42 =
 
 ## Events
 
-repair-cafe-evenement-occupe =
+repair-cafe-event-busy =
     "Address already in use": Apache wants to listen on port 80 (Listen 80,
     in /etc/apache2/ports.conf), but nginx is already there, for every
     site. Two programs cannot listen on the same port of the same address:
     sudo ss -tlnp shows who listens where. Here, nginx keeps port 80;
     Apache will go to 127.0.0.1:8080, where the nginx site Rania prepared
     expects it.
-repair-cafe-evenement-ah00558 =
+repair-cafe-event-ah00558 =
     "AH00558" is only a warning: Apache doesn't know a full name for the
     machine and uses its address. A global ServerName line silences it
     (for example ServerName localhost in
     /etc/apache2/conf-available/servername.conf, then sudo a2enconf
     servername). It is not what stops Apache from starting.
-repair-cafe-evenement-ecoute =
+repair-cafe-event-listening =
     Apache is running! sudo ss -tlnp shows it, with its addresses. Check
     that it serves the café, giving the site's name:
     curl -H "Host: repair.example" http://127.0.0.1:8080/
-repair-cafe-evenement-partout =
+repair-cafe-event-everywhere =
     Careful: Apache listens on every address of the machine (a Listen with
     just the port). The firewall protects it today, but Rania wants it to
     listen only on 127.0.0.1, like the calendar: only nginx should be able
     to reach it. Listen 127.0.0.1:8080, in ports.conf.
-repair-cafe-evenement-defaut =
+repair-cafe-event-default =
     That's Apache's default page (/var/www/html), not the café's. For a
     request, Apache first keeps the VirtualHosts that match the address
     and port, then the one whose ServerName matches the requested name
@@ -127,33 +127,33 @@ repair-cafe-evenement-defaut =
     café's site read at all (a file in sites-enabled ending in .conf)? Is
     its VirtualHost on the right port? And through nginx: which name does
     nginx pass on to Apache?
-repair-cafe-evenement-site =
+repair-cafe-event-site =
     Apache serves the café's home page on the loopback. Now publish it:
     nginx, in front, must hand it the visits for repair.example.
-repair-cafe-evenement-passerelle =
+repair-cafe-event-gateway =
     502: nginx can't reach Apache (in /var/log/nginx/error.log: "connect()
     failed"). Is Apache running, and on the port where nginx expects it
     (proxy_pass http://127.0.0.1:8080)?
-repair-cafe-evenement-proxy =
+repair-cafe-event-proxy =
     http://repair.example/ shows the café's home page: nginx, then Apache.
     Now try an address from the posters:
     curl http://repair.example/guide/42
-repair-cafe-evenement-ignore =
+repair-cafe-event-ignore =
     404 on /guide/…: Apache looks for the file /var/www/repair/guide/42,
     which doesn't exist. The rule that transforms this address is in
     /var/www/repair/.htaccess… but Apache only reads .htaccess files if
     AllowOverride allows it, and apache2.conf says AllowOverride None for
     /var/www. Allow it for this site only, in a
     <Directory /var/www/repair> section of its VirtualHost.
-repair-cafe-evenement-interne =
+repair-cafe-event-internal =
     500 Internal Server Error: Apache read the .htaccess, but something is
     wrong. The reason is in the site's error log:
     sudo tail /var/log/apache2/repair-error.log
-repair-cafe-evenement-reecriture =
+repair-cafe-event-rewrite =
     /guide/42 leads to guide 42: the .htaccess rule (RewriteRule) turned
     the address into guides/42.html. Apache rereads the .htaccess on every
     visit: when you change it, nothing to reload.
-repair-cafe-evenement-fin =
+repair-cafe-event-end =
     The posters' addresses work, through nginx then Apache. Rania: "The
     café's QR codes lead to the right guides again!"
 

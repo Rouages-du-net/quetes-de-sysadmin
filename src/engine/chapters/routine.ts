@@ -109,8 +109,8 @@ export const routine: Chapter = {
   home: M,
   welcome: 'email_salome.txt',
   names: true,
-  final: 'fin',
-  steps: ['active', 'securite', 'periodique', 'fin'],
+  final: 'end',
+  steps: ['active', 'security', 'periodic', 'end'],
   password: PASSWORD,
   accounts: watchAccounts,
   state: () => ({
@@ -129,7 +129,7 @@ export const routine: Chapter = {
   initialise: initialiseWatch,
   createWorld: (t) =>
     watchWorld(t, {
-      home: { 'email_salome.txt': f(t('routine-courriel-salome')) },
+      home: { 'email_salome.txt': f(t('routine-email-salome')) },
       etc: {
         apt: d(
           { 'apt.conf.d': d({ '20auto-upgrades': f(TWENTY_CONTENT, { lines: true, owner: 'root' }), '50unattended-upgrades': f(FIFTY_CONTENT, { lines: true, owner: 'root' }) }, undefined, { owner: 'root' }) },
@@ -139,10 +139,10 @@ export const routine: Chapter = {
       },
     }),
   events: [
-    { id: 'syntaxe', condition: (j) => conf(j).errors.length > 0, message: (j) => j.t('routine-evenement-syntaxe') },
-    { id: 'active', condition: okActive, message: (j) => j.t('routine-evenement-active') },
-    { id: 'securite', condition: (j) => okActive(j) && okOnlySecurity(j) && okReport(j), message: (j) => j.t('routine-evenement-securite') },
-    { id: 'periodique', condition: okPeriodic, message: (j) => j.t('routine-evenement-periodique') },
-    { id: 'fin', condition: (j) => autoOk(j) && okPeriodic(j), message: (j) => j.t('routine-evenement-fin') },
+    { id: 'syntax', condition: (j) => conf(j).errors.length > 0, message: (j) => j.t('routine-event-syntax') },
+    { id: 'active', condition: okActive, message: (j) => j.t('routine-event-active') },
+    { id: 'security', condition: (j) => okActive(j) && okOnlySecurity(j) && okReport(j), message: (j) => j.t('routine-event-security') },
+    { id: 'periodic', condition: okPeriodic, message: (j) => j.t('routine-event-periodic') },
+    { id: 'end', condition: (j) => autoOk(j) && okPeriodic(j), message: (j) => j.t('routine-event-end') },
   ],
 };

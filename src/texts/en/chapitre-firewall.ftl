@@ -2,12 +2,12 @@
 ### Commands, ports, addresses and ufw keywords (allow, deny…) are not
 ### translated; the output of nmap and ss stays in English.
 
-chapitre-firewall = The firewall
+chapter-firewall = The firewall
     .resume = Who is listening, and who can get in: ss, ufw, and never locking yourself out.
 
 ## Files
 
-firewall-courriel-kofi =
+firewall-email-kofi =
     From:    Kofi (La Fourmilière)
     To:      you
     Subject: One door too many?
@@ -29,30 +29,30 @@ firewall-courriel-kofi =
 
 ## Events
 
-firewall-evenement-ecoute =
+firewall-event-listening =
     Look at the "Local Address" column: 0.0.0.0:3306 means MariaDB is
     listening on ALL interfaces, so anyone on the internet can knock on
     that door. php-fpm, on the other hand, only listens on 127.0.0.1: it
     can only be reached from the machine itself.
-firewall-evenement-enferme =
+firewall-event-locked-out =
     WARNING: the firewall is active and blocks SSH. Your session holds
     (the firewall lets already established connections through), but any
     new connection will fail. Allow SSH now, before you log out!
-firewall-evenement-site-coupe =
+firewall-event-site-cut =
     The firewall is active… and the Letters website no longer answers:
     http (80) and https (443) are blocked. Kofi is going to get worried
     messages.
-firewall-evenement-base-ouverte =
+firewall-event-base-open =
     The firewall is active, but the database (3306) can still be reached
     from the internet. Read Kofi's request again.
-firewall-evenement-filtre =
+firewall-event-filter =
     The firewall filters properly: the website answers everyone, SSH
     answers you, and the database answers nobody from outside. Check with
     sudo ufw status verbose.
 
     Last step, as with SSH: check that you can still get in.
     exit, then ssh letters.
-firewall-evenement-fin =
+firewall-event-end =
     New connection successful: the firewall lets SSH through. Yasmine
     runs her scan again: 22, 80 and 443 open, 3306 filtered. Kofi: "She
     says it's great work!"

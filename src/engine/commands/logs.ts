@@ -61,13 +61,13 @@ function truncate(game: Shell, args: string[]): string {
   const i = args.findIndex((a) => a === '-s' || a.startsWith('--size='));
   const raw = i < 0 ? undefined : args[i] === '-s' ? args[i + 1] : args[i].slice(7);
   const files = args.filter((a, k) => !a.startsWith('-') && !(i >= 0 && args[i] === '-s' && k === i + 1));
-  if (raw === undefined) return game.error(game.t('truncate-taille'));
+  if (raw === undefined) return game.error(game.t('truncate-size'));
   const n = bytes(raw);
-  if (n === null) return game.error(game.t('truncate-taille-incorrecte', { taille: raw }));
-  if (!files.length) return game.error(game.t('truncate-operande'));
+  if (n === null) return game.error(game.t('truncate-size-incorrect', { taille: raw }));
+  if (!files.length) return game.error(game.t('truncate-operand'));
   for (const f of files) {
     const node = game.find(f);
-    if (node?.type === 'dossier') game.error(game.t('truncate-dossier', { fichier: f }));
+    if (node?.type === 'dossier') game.error(game.t('truncate-directory', { fichier: f }));
     else if (node) {
       if (!game.can(node, 'w')) game.error(game.t('truncate-permission', { fichier: f }));
       else {

@@ -318,7 +318,7 @@ function providers(t: Translate): MailState['providers'] {
           forEachOf: CHECKER.address,
           a: [m.forEachOf],
           from: `Authentication Checker <${CHECKER.address}>`,
-          subject: t('jardins-sujet-verification'),
+          subject: t('gardens-subject-verification'),
           body: verificationReport(a, m, CHECKER.mx),
           arrives: systemd(j)?.clock ?? 0,
           size: 1800,

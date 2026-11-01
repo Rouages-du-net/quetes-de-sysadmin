@@ -46,7 +46,7 @@ export const archives: Chapter = {
   home: M,
   welcome: 'letter_from_rosa.txt',
   names: true,
-  final: 'sauve',
+  final: 'saved',
   state: (t) => ({
     montages: [
       { path: path(t, KEY), capacity: 64 * Mo, name: '/dev/sdb1' },
@@ -57,29 +57,29 @@ export const archives: Chapter = {
     d({
       home: d({
         you: d({
-          'letter_from_rosa.txt': f(t('archives-lettre-de-rosa')),
+          'letter_from_rosa.txt': f(t('archives-letter-rosa')),
           'notes_rosa.txt': f(t('archives-notes-rosa')),
           collection: d({
-            'readme.txt': f(t('archives-lisezmoi')),
+            'readme.txt': f(t('archives-readme')),
             manuscripts: d({
-              'marie_diary.txt': text(t('archives-journal-de-marie'), 3),
-              'letters_1914.txt': text(t('archives-lettres-1914'), 2.5),
-              'neighbourhood_recipes.txt': text(t('archives-recettes-du-quartier'), 1.5),
+              'marie_diary.txt': text(t('archives-journal-marie'), 3),
+              'letters_1914.txt': text(t('archives-letters-1914'), 2.5),
+              'neighbourhood_recipes.txt': text(t('archives-recipes-neighbourhood'), 1.5),
             }),
             maps: d({
               'map_1890.png': binary(t('archives-image-png'), 6),
               'map_1954.png': binary(t('archives-image-png'), 5),
-              'render.tmp': binary(t('archives-fichier-temporaire'), 30),
+              'render.tmp': binary(t('archives-file-temporary'), 30),
             }),
             press: d({
               'gazette_1936.pdf': binary(t('archives-document-pdf'), 4),
               'gazette_1968.pdf': binary(t('archives-document-pdf'), 4.5),
-              'export.tmp': binary(t('archives-fichier-temporaire'), 40),
+              'export.tmp': binary(t('archives-file-temporary'), 40),
             }),
             recordings: d({
-              'market_songs.ogg': binary(t('archives-son-ogg'), 12),
-              'interview_fatou.ogg': binary(t('archives-son-ogg'), 15),
-              'raw.tmp': binary(t('archives-fichier-temporaire'), 50),
+              'market_songs.ogg': binary(t('archives-its-ogg'), 12),
+              'interview_fatou.ogg': binary(t('archives-its-ogg'), 15),
+              'raw.tmp': binary(t('archives-file-temporary'), 50),
             }),
           }),
         }),
@@ -88,34 +88,34 @@ export const archives: Chapter = {
     }),
   events: [
     {
-      id: 'mesure',
+      id: 'measure',
       condition: (j) => j.last.commands[0]?.[0] === 'du',
-      message: (j) => j.t('archives-evenement-mesure'),
+      message: (j) => j.t('archives-event-measure'),
     },
     {
-      id: 'plein',
-      condition: (j) => j.last.errors.some((e) => WRITERS.some((command) => e === j.t('erreur-espace', { commande: command }))),
-      message: (j) => j.t('archives-evenement-plein'),
+      id: 'full',
+      condition: (j) => j.last.errors.some((e) => WRITERS.some((command) => e === j.t('error-space', { commande: command }))),
+      message: (j) => j.t('archives-event-full'),
     },
     {
       id: 'tmp',
       condition: (j) => j.last.commands[0]?.[0] === 'find' && j.last.output.includes(name(j.t, 'raw.tmp')),
-      message: (j) => j.t('archives-evenement-tmp'),
+      message: (j) => j.t('archives-event-tmp'),
     },
     {
-      id: 'perte',
+      id: 'loss',
       condition: (j) => !archiveComplete(j) && PRECIOUS.some((p) => !j.exists(path(j.t, `${M}/${p}`))),
-      message: (j) => j.t('archives-evenement-perte'),
+      message: (j) => j.t('archives-event-loss'),
     },
     {
-      id: 'menage',
+      id: 'cleanup',
       condition: (j) => j.exists(path(j.t, `${M}/collection`)) && !['maps/render.tmp', 'press/export.tmp', 'recordings/raw.tmp'].some((t) => j.exists(path(j.t, `${M}/collection/${t}`))),
-      message: (j) => j.t('archives-evenement-menage'),
+      message: (j) => j.t('archives-event-cleanup'),
     },
     {
-      id: 'sauve',
+      id: 'saved',
       condition: (j) => !!archiveComplete(j),
-      message: (j) => j.t('archives-evenement-sauve', { taille: (archiveComplete(j)!.size ?? 0) / Mo }),
+      message: (j) => j.t('archives-event-saved', { taille: (archiveComplete(j)!.size ?? 0) / Mo }),
     },
   ],
 };

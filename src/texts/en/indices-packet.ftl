@@ -4,30 +4,30 @@
 
 ## Chapter 1 — The Lost Packet
 
-indice-lost-packet-box =
+hint-lost-packet-box =
     .piste = Test step by step, from nearest to furthest (Kofi's notebook.txt). The nearest is the router: one command sends a small message and waits for it to come back.
     .solution = ping 192.168.1.1 (the router; 0% packet loss: the local network works).
-indice-lost-packet-internet =
+hint-lost-packet-internet =
     .piste = The router answers. One step further: a server on the internet, by its IP address (the notebook gives one).
     .solution = ping 9.9.9.9 (Quad9's public DNS server).
-indice-lost-packet-nom =
+hint-lost-packet-name =
     .piste = The internet answers by address. And by name? Try the website itself, by its name.
     .solution = ping letters.example
-indice-lost-packet-dns-muet =
+hint-lost-packet-dns-silent =
     .piste = The name does not turn into an address: that is DNS's job. One command asks the DNS server directly (man dig).
     .solution = dig letters.example (then cat /etc/resolv.conf: which DNS server does the computer ask?).
-indice-lost-packet-dns-autre =
+hint-lost-packet-dns-other =
     .piste = The configured DNS server does not answer. Does the name really exist? dig can ask a server other than the one in /etc/resolv.conf (man dig, the @).
     .solution = dig @9.9.9.9 letters.example
-indice-lost-packet-dns-repare =
+hint-lost-packet-dns-repaired =
     .piste = /etc/resolv.conf points to the old router, which no longer exists. The right setting is in a file next to it. /etc belongs to root: sudo (the password is in Kofi's note).
     .solution = sudo cp /etc/resolv.conf.box /etc/resolv.conf (password: anthill).
-indice-lost-packet-ping-perdu =
+hint-lost-packet-ping-lost =
     .piste = DNS is fixed: try to reach the website by its name again.
     .solution = ping letters.example
-indice-lost-packet-route =
+hint-lost-packet-route =
     .piste = The name is translated, but the ping gets lost. Where do the packets stop? One command shows their path, router by router.
     .solution = traceroute letters.example
-indice-lost-packet-curl =
+hint-lost-packet-curl =
     .piste = Many servers ignore ping on purpose. The only real test: ask for the page itself, over HTTPS (the notebook, step 5).
     .solution = curl -I https://letters.example (HTTP/2 200: the website answers).

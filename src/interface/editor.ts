@@ -39,12 +39,12 @@ export function editor(o: EditorOptions): HTMLElement {
   zone.value = o.text;
   const state = el('div', { class: 'nano-etat', role: 'status', 'aria-live': 'polite' }, o.message);
 
-  const write = shortcut('^O', t('nano-ecrire'));
-  const quit = shortcut('^X', t('nano-quitter'));
+  const write = shortcut('^O', t('nano-write'));
+  const quit = shortcut('^X', t('nano-quit'));
   const help = el('div', { class: 'nano-aide' }, write, quit);
-  const yes = shortcut('O', t('nano-oui'));
-  const not = shortcut('N', t('nano-non'));
-  const cancel = shortcut('^C', t('nano-annuler'));
+  const yes = shortcut('O', t('nano-yes'));
+  const not = shortcut('N', t('nano-not'));
+  const cancel = shortcut('^C', t('nano-cancel'));
   const question = el('div', { class: 'nano-aide', hidden: '' }, yes, not, cancel);
 
   const root = el(
@@ -58,7 +58,7 @@ export function editor(o: EditorOptions): HTMLElement {
   );
 
   let saves = o.text;
-  const modifiedUpdate = () => (modified.textContent = zone.value !== saves ? t('nano-modifie') : '');
+  const modifiedUpdate = () => (modified.textContent = zone.value !== saves ? t('nano-modified') : '');
   const close = () => {
     root.remove();
     o.close();
@@ -72,7 +72,7 @@ export function editor(o: EditorOptions): HTMLElement {
   const ask = (yes: boolean) => {
     help.hidden = yes;
     question.hidden = !yes;
-    state.textContent = yes ? t('nano-sauver') : '';
+    state.textContent = yes ? t('nano-save') : '';
     (yes ? question.querySelector('button')! : zone).focus();
     // Sur un petit écran, la question doit se voir.
     if (yes) question.scrollIntoView?.({ block: 'nearest' });

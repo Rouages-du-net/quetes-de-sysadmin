@@ -102,7 +102,7 @@ export const updates: Chapter = {
   home: M,
   welcome: 'email_awa.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: PASSWORD,
   accounts: () => cooperativeAccounts(false),
   state: () => {
@@ -123,24 +123,24 @@ export const updates: Chapter = {
   createWorld: (t) =>
     cooperativeWorld({
       withoutMarc: true,
-      home: { 'email_awa.txt': f(t('updates-courriel-awa')) },
+      home: { 'email_awa.txt': f(t('updates-email-awa')) },
       etc: nginxCooperative(SITE),
       sbin: BINARY_NGINX,
       more: tillWorld({ env: tillEnv(NEW_KEY, 'loopback'), envMode: 'rw-------', logAccess: '', appLog: '' }),
     }),
   events: [
-    { id: 'interrompu', condition: (j) => !!apt(j).interrupted?.length, message: (j) => j.t('updates-evenement-interrompu') },
-    { id: 'dans-tmux', condition: (j) => dayA(j) && openTmux(j) && !restarts(j), message: (j) => j.t('updates-evenement-dans-tmux') },
+    { id: 'interrupted', condition: (j) => !!apt(j).interrupted?.length, message: (j) => j.t('updates-event-interrupted') },
+    { id: 'in-tmux', condition: (j) => dayA(j) && openTmux(j) && !restarts(j), message: (j) => j.t('updates-event-in-tmux') },
     {
-      id: 'a-jour',
+      id: 'a-day',
       condition: (j) => dayA(j) && !restarts(j),
-      message: (j) => j.t('updates-evenement-a-jour', { ancien: OLD_KERNEL, nouveau: NEW_KERNEL }),
+      message: (j) => j.t('updates-event-a-day', { ancien: OLD_KERNEL, nouveau: NEW_KERNEL }),
     },
     {
-      id: 'caisse-tombee',
+      id: 'till-down',
       condition: (j) => restarts(j) && sd(j).services.till.state !== 'active',
-      message: (j) => j.t('updates-evenement-caisse-tombee'),
+      message: (j) => j.t('updates-event-till-down'),
     },
-    { id: 'fin', condition: (j) => dayA(j) && restarts(j) && servicesOk(j), message: (j) => j.t('updates-evenement-fin') },
+    { id: 'end', condition: (j) => dayA(j) && restarts(j) && servicesOk(j), message: (j) => j.t('updates-event-end') },
   ],
 };

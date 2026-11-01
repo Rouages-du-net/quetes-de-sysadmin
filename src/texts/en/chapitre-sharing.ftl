@@ -3,12 +3,12 @@
 ### directives and nginx messages are never translated. The site pages
 ### (colocation-site-*, colocation-agenda-*) are translated.
 
-chapitre-sharing = Sharing a home
+chapter-sharing = Sharing a home
     .resume = Two sites and an app on a single server: virtual hosts, ln -s, reverse proxy with nginx.
 
 ## Files
 
-sharing-courriel-kofi =
+sharing-email-kofi =
     From:    Kofi (Les Lettres du quartier association)
     To:      you
     Subject: The café is moving in with us
@@ -30,7 +30,7 @@ sharing-courriel-kofi =
 
     Rania left her notes (note_from_rania.txt). For sudo, your
     password is still the same: ants-2026
-sharing-note-de-rania =
+sharing-note-rania =
     RANIA'S NOTES
 
     The café's pages are ready: /var/www/cafe/
@@ -48,7 +48,7 @@ sharing-note-de-rania =
     To test a site from the server, before the whole world sees it:
       curl -H "Host: cafe.example" http://127.0.0.1
     And always: sudo nginx -t before reloading.
-sharing-agenda-lisezmoi =
+sharing-agenda-readme =
     Workshop calendar — Node.js server
 
     Listens on 127.0.0.1:3000 (see serveur.js).
@@ -68,7 +68,7 @@ sharing-agenda-code =
 
 ## The sites
 
-sharing-site-lettres =
+sharing-site-letters =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>Les Lettres du quartier</title></head>
@@ -86,7 +86,7 @@ sharing-site-cafe =
     <p>Open Wednesday to Sunday. Soup of the day, pay what you can.</p>
     </body>
     </html>
-sharing-agenda-accueil =
+sharing-agenda-welcome =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>Workshop calendar</title></head>
@@ -95,7 +95,7 @@ sharing-agenda-accueil =
     <p><a href="semaine">This week</a> · <a href="ateliers">All workshops</a></p>
     </body>
     </html>
-sharing-agenda-semaine =
+sharing-agenda-week =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>This week</title></head>
@@ -104,7 +104,7 @@ sharing-agenda-semaine =
     <p>Tuesday 6 pm: writing workshop. Thursday 2 pm: help with online paperwork.</p>
     </body>
     </html>
-sharing-agenda-ateliers =
+sharing-agenda-workshops =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>The workshops</title></head>
@@ -116,38 +116,38 @@ sharing-agenda-ateliers =
 
 ## Events
 
-sharing-evenement-lien-casse =
+sharing-event-link-broken =
     nginx can't find a file in /etc/nginx/sites-enabled/: the link
     is broken. ls -l /etc/nginx/sites-enabled shows where it points. A
     relative path is read from the link's directory (sites-enabled), not
     from where you were when you created it: reread man ln, and delete the
     bad link with rm (the target file doesn't move).
-sharing-evenement-conflit =
+sharing-event-conflict =
     "conflicting server name": two sites answer to the same name. nginx
     keeps the first one it reads and ignores the other for that name. The
     copied file probably kept the server_name of the Lettres site.
-sharing-evenement-mauvais-site =
+sharing-event-bad-site =
     You asked for cafe.example… and the Lettres site answers.
     nginx picks the site from the requested name (server_name); if none
     matches, it takes the port's default site (default_server).
     Is the café site enabled, and does it carry that name?
-sharing-evenement-cafe =
+sharing-event-cafe =
     cafe.example answers with the café's page: two sites on the same
     machine, at the same address, told apart only by the requested name.
     That's a virtual host.
-sharing-evenement-passerelle =
+sharing-event-gateway =
     502 Bad Gateway: nginx did receive the visit, but nobody answers
     behind it. Its error log says why:
     sudo tail /var/log/nginx/error.log. And is the calendar running?
-sharing-evenement-cannot-get =
+sharing-event-cannot-get =
     "Cannot GET /agenda/": this time it's the calendar answering… but it
     receives the path /agenda/, while its pages start at /. With
     proxy_pass, one detail matters enormously: the trailing slash. Reread
     proxy_pass in man nginx.
-sharing-evenement-agenda-sans-enable =
+sharing-event-agenda-without-enable =
     The calendar answers. But it won't start with the machine: at the next
     reboot, 502 again. (man systemctl)
-sharing-evenement-fin =
+sharing-event-end =
     cafe.example, letters.example and the calendar all answer, each with its
     own pages, from a single server. Kofi: "We're throwing a party for
     the café moving in. You're invited!"

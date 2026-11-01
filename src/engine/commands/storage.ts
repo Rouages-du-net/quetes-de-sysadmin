@@ -434,7 +434,7 @@ function create(game: Shell, st: Stockage | null, args: string[]): string {
   if (!st || !/^md\d+$/.test(name)) return game.error(`mdadm: ${md} is an invalid name for an md device.  Try /dev/md/${name.replace(/\D/g, '') || '0'}`, 1);
   if (st.arrays[name]) return game.error(`mdadm: ${md} is already in use.`, 1);
   if (!level) return game.error('mdadm: a RAID level is needed to create an array.', 2);
-  if (!['1', 'raid1', 'mirror'].includes(level)) return game.error(game.t('mdadm-niveau', { niveau: level }), 2);
+  if (!['1', 'raid1', 'mirror'].includes(level)) return game.error(game.t('mdadm-level', { niveau: level }), 2);
   if (!count) return game.error('mdadm: no raid-devices specified.', 2);
   if (members.length > count) return game.error(`mdadm: You have listed more devices (${members.length}) than are in the array(${count})!`, 2);
   if (members.length < count) return game.error("mdadm: You haven't given enough devices (real or missing) to create this array", 2);
@@ -618,7 +618,7 @@ function sfdisk(game: Shell, args: string[], input: string | null): string {
   const name = withoutDev(targets[0]);
   const d = open(targets[0]);
   if (!d) return '';
-  if (input === null) return game.error(game.t('sfdisk-interactif'), 1);
+  if (input === null) return game.error(game.t('sfdisk-interactive'), 1);
   const header = ['Checking that no-one is using this disk right now ... FAILED', ''];
   if (busyDisk(st!, name))
     return game.error(

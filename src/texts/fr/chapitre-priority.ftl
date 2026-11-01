@@ -3,12 +3,12 @@
 ### fictifs ; les noms de paquets, les commandes et les chemins ne se
 ### traduisent pas.
 
-chapitre-priority = La priorité
+chapter-priority = La priorité
     .resume = Décider quoi corriger en premier : l'exposition compte autant que le score CVSS.
 
 ## Fichiers
 
-priority-courriel-salome =
+priority-email-salome =
     De :     Salomé
     À :      toi
     Objet :  Deux CVE, dans quel ordre ?
@@ -29,40 +29,40 @@ priority-courriel-salome =
 
     Salomé
 
-priority-modele =
+priority-template =
     # Priorité — Le Fournil
 
     (à compléter : l'ordre de traitement des deux CVE retenues, avec pourquoi ;
     et ce qu'on fait de la CVE d'openssh-server)
 
-priority-a-completer = (à compléter
-priority-mots-expose = internet, joignable, exposé, exposée, public, publique, l'extérieur, 80, 443
-priority-mots-local = aucun port, pas de port, n'écoute pas, local, ligne de commande, outil, pas un service, pas de service
-priority-mots-protege = déjà protégé, déjà protégée, déjà à « no », déjà à no, rien à faire, pas d'action, kbdinteractiveauthentication
+priority-a-complete = (à compléter
+priority-words-expose = internet, joignable, exposé, exposée, public, publique, l'extérieur, 80, 443
+priority-words-local = aucun port, pas de port, n'écoute pas, local, ligne de commande, outil, pas un service, pas de service
+priority-words-protected = déjà protégé, déjà protégée, déjà à « no », déjà à no, rien à faire, pas d'action, kbdinteractiveauthentication
 
 ## Relecture
 
-priority-relecture = Salomé relit ta décision :
-priority-manque-modele = Il reste la ligne « (à compléter) » du modèle.
-priority-manque-ordre = Les deux CVE (nginx et rsync) doivent être citées, nginx en premier.
-priority-manque-exposition = Dis pourquoi : qu'est-ce qui rend nginx joignable depuis internet, et pourquoi rsync ne l'est pas (regarde ss -tlnp ou nmap) ?
-priority-manque-ssh = N'oublie pas la CVE d'openssh-server : s'applique-t-elle ? Faut-il agir ?
+priority-review = Salomé relit ta décision :
+priority-missing-template = Il reste la ligne « (à compléter) » du modèle.
+priority-missing-order = Les deux CVE (nginx et rsync) doivent être citées, nginx en premier.
+priority-missing-exposure = Dis pourquoi : qu'est-ce qui rend nginx joignable depuis internet, et pourquoi rsync ne l'est pas (regarde ss -tlnp ou nmap) ?
+priority-missing-ssh = N'oublie pas la CVE d'openssh-server : s'applique-t-elle ? Faut-il agir ?
 
 ## Événements
 
-priority-evenement-score-seul =
+priority-event-score-only =
     Tu as classé rsync avant nginx : c'est l'ordre du score CVSS (9.8 contre
     8.2), mais regarde l'exposition. Un score mesure la gravité SI la faille
     est atteinte ; il ne dit rien de la facilité à l'atteindre. Relance
     ss -tlnp ou nmap -sV sur ce serveur : qui peut parler à chaque service ?
-priority-evenement-expose =
+priority-event-expose =
     Voilà ce qui écoute vraiment : 80 et 443 répondent à n'importe quelle
     adresse. rsync, lui, n'a jamais de port ouvert : c'est un outil qu'on
     lance, pas un service qui attend des connexions.
-priority-evenement-ordre =
+priority-event-order =
     Ton classement tient : nginx d'abord (exposé), rsync ensuite (un score
     plus haut, mais aucun port, donc aucune façon de l'atteindre à distance).
-priority-evenement-fin =
+priority-event-end =
     Salomé : « C'est exactement ça. Le score dit « si ça touche », pas « est-ce
     que ça peut me toucher ». »
 

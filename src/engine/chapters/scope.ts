@@ -25,7 +25,7 @@ import { machineName } from '../machines';
 import { loadSshd, bakeryAccounts, sectionsMd, bakeryListening, file, M, NOW, PASSWORD, bakeryWorld, bakeryScan, serviceSsh, NEIGHBOUR } from './audit';
 
 const NOTES = `${M}/audit_notes.md`;
-const NOTES_TEMPLATE = 'scope-notes-modele';
+const NOTES_TEMPLATE = 'scope-notes-template';
 
 const scans = (j: Game): Scan[] => j.state.scans ?? [];
 const probe = (b: Scan) => b.addresses.includes('192.0.2.22') || b.addresses.includes('127.0.0.1');
@@ -47,14 +47,14 @@ const readNotes = (j: Game) => j.read(path(j.t, NOTES));
 const words = (j: Game, key: string) => j.t(key).split(',').map((m) => m.trim().toLowerCase());
 const missing = (j: Game): string[] => {
   const raw = readNotes(j) ?? '';
-  const s = sectionsMd(j, raw, 'scope-section', ['perimetre', 'trouve', 'hors']);
-  const found = (s.trouve ?? '').toLowerCase();
-  const outside = (s.hors ?? '').toLowerCase();
+  const s = sectionsMd(j, raw, 'scope-section', ['scope', 'found', 'outside']);
+  const found = (s.found ?? '').toLowerCase();
+  const outside = (s.outside ?? '').toLowerCase();
   const m: string[] = [];
-  if (raw.toLowerCase().includes(j.t('scope-a-completer').toLowerCase())) m.push('modele');
+  if (raw.toLowerCase().includes(j.t('scope-a-complete').toLowerCase())) m.push('template');
   if (!found.includes('5432') || !found.includes('6379')) m.push('ports');
-  if (!outside.includes(NEIGHBOUR.address) && !outside.includes('voisin')) m.push('voisin');
-  else if (!words(j, 'scope-mots-hors').some((x) => outside.includes(x))) m.push('hors');
+  if (!outside.includes(NEIGHBOUR.address) && !outside.includes('voisin')) m.push('neighbour');
+  else if (!words(j, 'scope-words-outside').some((x) => outside.includes(x))) m.push('outside');
   return m;
 };
 const notesOk = (j: Game) => missing(j).length === 0;
@@ -66,8 +66,8 @@ export const scope: Chapter = {
   home: M,
   welcome: 'email_salome.txt',
   names: true,
-  final: 'fin',
-  steps: ['lettre', 'balayage', 'trace', 'fin'],
+  final: 'end',
+  steps: ['letter', 'scan', 'trace', 'end'],
   password: PASSWORD,
   accounts: () => bakeryAccounts(true),
   state: () => ({
@@ -89,8 +89,8 @@ export const scope: Chapter = {
   createWorld: (t) =>
     bakeryWorld(t, {
       home: {
-        'email_salome.txt': f(t('scope-courriel-salome')),
-        'engagement_letter.txt': f(t('scope-lettre-de-mission'), { lines: true }),
+        'email_salome.txt': f(t('scope-email-salome')),
+        'engagement_letter.txt': f(t('scope-letter-mission'), { lines: true }),
         'audit_notes.md': f(t(NOTES_TEMPLATE), { lines: true }),
       },
       sudoersD: { '90-cloud-init-users': file('# Created by cloud-init\n\nvous ALL=(ALL) NOPASSWD:ALL', 'root', 'r--r-----') },
@@ -105,29 +105,29 @@ export const scope: Chapter = {
       j.state.notesFinies = true;
       return;
     }
-    return [j.t('scope-relecture'), ...rest.map((m) => `- ${j.t(`scope-manque-${m}`)}`)].join('\n');
+    return [j.t('scope-review'), ...rest.map((m) => `- ${j.t(`scope-missing-${m}`)}`)].join('\n');
   },
   events: [
     {
-      id: 'lettre',
+      id: 'letter',
       condition: (j) => j.last.commands.some((c) => c.some((a) => a.endsWith(name(j.t, 'engagement_letter.txt')))),
-      message: (j) => j.t('scope-evenement-lettre'),
+      message: (j) => j.t('scope-event-letter'),
     },
     {
-      id: 'balayage',
+      id: 'scan',
       condition: (j) => scans(j).some(probe),
-      message: (j) => j.t('scope-evenement-balayage'),
+      message: (j) => j.t('scope-event-scan'),
     },
     {
-      id: 'hors-perimetre',
+      id: 'outside-scope',
       condition: outsideScope,
-      message: (j) => j.t('scope-evenement-hors-perimetre', { adresses: addressesOutside(j).join(', '), voisin: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
+      message: (j) => j.t('scope-event-outside-scope', { adresses: addressesOutside(j).join(', '), voisin: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
     },
-    { id: 'trace', condition: traceOk, message: (j) => j.t('scope-evenement-trace') },
+    { id: 'trace', condition: traceOk, message: (j) => j.t('scope-event-trace') },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => traceOk(j) && notesOk(j),
-      message: (j) => j.t('scope-evenement-fin', { faute: outsideScope(j) ? 'oui' : 'non' }),
+      message: (j) => j.t('scope-event-end', { faute: outsideScope(j) ? 'oui' : 'non' }),
     },
   ],
 };

@@ -2,13 +2,13 @@
 ### WireGuard. Commands, wg-quick keywords, addresses and paths are
 ### never translated.
 
-chapitre-annex = The Annex
+chapter-annex = The Annex
     .resume = La Ruche opens a second site: link its two networks through the VPN, with AllowedIPs acting as a routing table, and a path kept open through the Annex's ISP box.
 
 ## Files
 
 # { $cle }: the WireGuard public key of the Annex router
-annex-courriel-sami =
+annex-email-sami =
     From:    Sami (volunteer at the Annex)
     To:      you
     Subject: Linking the Annex to La Ruche
@@ -51,45 +51,45 @@ annex-conf =
 
 ## Events
 
-annex-evenement-pas-relu =
+annex-event-not-reread =
     The file /etc/wireguard/wg0.conf has a peer for the Annex… but wg0
     is still running with the old configuration (sudo wg show):
     wg-quick doesn't reread the file by itself. You need to restart
     the interface (the wg-quick@wg0 service).
-annex-evenement-poignee =
+annex-event-handshake =
     Sami: "Our router says: Handshake did not complete." sudo wg show
     confirms it: no "latest handshake" for the Annex peer.
     Each side must have the other's PUBLIC key, and the Endpoint must
     give the address and port of your router.
-annex-evenement-autorisees =
+annex-event-allowed =
     Sami: "The tunnel is up, but our computers can't reach the
     NAS." The packets arrive… and the router drops them: they come from
     10.20.10.15, and for WireGuard, a peer may only send from the
     addresses in its AllowedIPs. For a whole site, that's its whole
     network.
-annex-evenement-route =
+annex-event-route =
     Sami: "Still nothing to the NAS." On the Annex side, packets for
     10.10.10.5 don't go into the tunnel: in annex-wg0.conf,
     AllowedIPs says what must go in (and wg-quick turns it into routes).
-annex-evenement-endormi =
+annex-event-asleep =
     Sami: "The NAS works!" Malik: "And I can print at the Annex…
     sometimes. Then nothing for hours." The Annex router is
     behind its ISP's box: as long as it sends nothing, the
     box forgets the path, and La Ruche can no longer reach it. WireGuard
     can keep it open by sending a small packet from time to time
     (man wg: PersistentKeepalive).
-annex-evenement-cameras =
+annex-event-cameras =
     Careful: the Annex can now reach La Ruche's cameras. Sami
     only asked for the NAS: the tunnel doesn't open everything, the firewall
     (the forward chain) decides where it leads.
-annex-evenement-malik =
+annex-event-malik =
     Careful: Malik can no longer reach the NAS from home. His laptop's
     peer must stay in wg0.conf, with its own address.
-annex-evenement-en-place =
+annex-event-in-place =
     The two sites can talk… right now. At the next reboot,
     wg0 starts again from /etc/wireguard/wg0.conf through the wg-quick@wg0
     service: everything must be in there.
-annex-evenement-fin =
+annex-event-end =
     The Annex computers open the NAS, Malik prints at the Annex, the
     tunnel stays open despite the box, and nothing else gets through. Sami:
     "It feels like we're in the same building."

@@ -3,12 +3,12 @@
 ### options, les chemins et les messages des outils (en anglais) ne se
 ### traduisent pas.
 
-chapitre-transfers = Les transferts
+chapter-transfers = Les transferts
     .resume = Rapatrier un fichier du wiki sur ton poste (scp), puis mettre la sauvegarde à jour sur archives (rsync).
 
 ## Fichiers
 
-transfers-courriel-yasmine =
+transfers-email-yasmine =
     De :     Yasmine
     À :      toi
     Objet :  Avant l'assemblée générale
@@ -30,19 +30,19 @@ transfers-courriel-yasmine =
     Gaspard me dit au téléphone : « Attention à la barre oblique à la fin
     de la source, avec rsync. Et essaie d'abord avec -n. »
 
-transfers-cr-ag-2026 =
+transfers-minutes-ag-2026 =
     Assemblée générale 2026 — compte rendu
 
     Présent·es : 34 associations sur 41.
     Rapport moral adopté à l'unanimité. Budget adopté (2 abstentions).
     Projet de l'année : un wiki commun pour toutes les associations.
-transfers-cr-ca-2027-09 =
+transfers-minutes-it-2027-09 =
     Conseil d'administration — septembre 2027
 
     Point 1 : l'informatique de la Maison est reprise par une nouvelle
     personne bénévole. Gaspard reste joignable par téléphone.
     Point 2 : l'assemblée générale aura lieu le samedi 9 octobre.
-transfers-planning =
+transfers-schedule =
     Planning des salles — octobre 2027
 
     Salle 1 : chorale (mardi 19 h), club d'échecs (jeudi 18 h)
@@ -51,11 +51,11 @@ transfers-planning =
 
 ## Événements
 
-transfers-evenement-rapport =
+transfers-event-report =
     Le rapport d'activité est sur ton poste : scp est passé par maison (le
     ProxyJump de ton raccourci), comme ssh.
 # { $dossier } : le dossier créé en trop
-transfers-evenement-imbrique =
+transfers-event-nested =
     Regarde sur archives : il y a maintenant un dossier { $dossier }. Sans
     barre oblique finale, rsync a copié le DOSSIER partage dans la
     sauvegarde, au lieu de son CONTENU.
@@ -63,11 +63,11 @@ transfers-evenement-imbrique =
     Recommence avec /srv/partage/. Et pour retirer le dossier en trop,
     rsync sait effacer en face ce qui n'existe pas à la source : l'option
     --delete (man rsync). Puissante, donc d'abord à blanc, avec -n.
-transfers-evenement-sauvegarde =
+transfers-event-backup =
     La sauvegarde sur archives est à jour : chaque fichier de /srv/partage y
     est, au même endroit. Relance la même commande : rsync n'a plus rien à
     copier.
-transfers-evenement-fin =
+transfers-event-end =
     Le rapport est sur ton poste, et la sauvegarde sur archives est à jour.
     Yasmine : « Merci ! Gaspard aussi te dit bravo, il a vu ta sauvegarde. »
 

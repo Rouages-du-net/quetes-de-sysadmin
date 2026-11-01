@@ -2,12 +2,12 @@
 ### more fail2ban jails (recidive, nginx-limit-req). Commands,
 ### paths, jail names and log lines are never translated.
 
-chapitre-repeat-offenders = Repeat offenders
+chapter-repeat-offenders = Repeat offenders
     .resume = The same bots come back every hour, and the calendar's bot keeps at it: enable fail2ban's recidive and nginx-limit-req jails.
 
 ## Files
 
-repeat-offenders-courriel-rania =
+repeat-offenders-email-rania =
     From:    Rania
     To:      you
     Subject: Always the same ones
@@ -39,26 +39,26 @@ repeat-offenders-courriel-rania =
 
 ## Events
 
-repeat-offenders-evenement-tout-active =
+repeat-offenders-event-all-active =
     fail2ban refuses to start: "Have not found any log file". With
     enabled = true in [DEFAULT], you enabled ALL the jails in
     jail.conf, including those for apache and postfix, which don't run
     here: fail2ban can't find their logs and stops. You enable a
     jail in its own section: [recidive], [nginx-limit-req]…
-repeat-offenders-evenement-courte =
+repeat-offenders-event-short =
     The recidive jail is active, but it doesn't ban for longer
     than the sshd jail. That's its whole point: an address banned
     several times is then banned for a long time (a week, in
     jail.conf). Keep a much longer bantime for recidive.
-repeat-offenders-evenement-recidive =
+repeat-offenders-event-repeat-offence =
     The recidive jail read fail2ban.log, counted the bans of
     each address, and banned the repeat offenders for a week, on all
     ports (banaction_allports): SSH, but the website too.
-repeat-offenders-evenement-agenda =
+repeat-offenders-event-agenda =
     The nginx-limit-req jail read nginx's error log and banned
     the calendar bot's addresses. nginx doesn't even see them
     arrive anymore: the firewall rejects them first.
-repeat-offenders-evenement-fin =
+repeat-offenders-event-end =
     The repeat offenders are banned for a week, the calendar bot
     too, and neither Rania nor the visitors were affected. Rania:
     "fail2ban.log fits on one screen now!"

@@ -2,12 +2,12 @@
 ### alignment, p=quarantine). Commands, paths, DNS records and tags are not
 ### translated.
 
-chapitre-policy = The Policy
+chapter-policy = The Policy
     .resume = Move DMARC to p=quarantine without losing the newsletter: read the reports, align the provider, then tighten the policy.
 
 ## Files
 
-policy-courriel-nour =
+policy-email-nour =
     From:    Nour
     To:      you
     Subject: DMARC
@@ -31,7 +31,7 @@ policy-courriel-nour =
 
     Nour
 
-policy-lettre-newsmail =
+policy-letter-newsmail =
     newsmail.example — Help — Signing with your own domain (DKIM)
 
     By default, our servers sign your campaigns with our domain
@@ -51,42 +51,42 @@ policy-lettre-newsmail =
 
 ## Events
 
-policy-evenement-rapport =
+policy-event-report =
     198.51.100.77: those are newsmail.example's servers, sending the
     newsletter (412 messages at mailbox.example). SPF passes, DKIM passes…
     but for bounce.newsmail.example and newsmail.example, not for
     gardens.example. DMARC requires alignment: the domain checked by SPF
     (the envelope) or by DKIM (d=) must be the one in the From: address.
     With p=quarantine, these 412 messages would end up in junk folders.
-policy-evenement-usurpation =
+policy-event-spoofing =
     192.0.2.66 belongs to nobody in the association: 17 messages in the
     name of gardens.example, with no valid SPF or DKIM. Someone is
     impersonating the Gardens. That's exactly what p=quarantine (or reject)
     will stop.
-policy-evenement-inclusion =
+policy-event-inclusion =
     Adding include:_spf.newsmail.example to gardens.example's SPF changes
     nothing for DMARC: recipients check SPF for the envelope's domain,
     bounce.newsmail.example, not for gardens.example. And each include
     costs DNS lookups (ten at most). It's DKIM that must be aligned: see
     newsmail_letter.txt.
-policy-evenement-point =
+policy-event-point =
     The CNAME for nm1._domainkey leads nowhere: in a zone, a name without a
     trailing dot is relative. nm1.dkim.newsmail.example becomes
     nm1.dkim.newsmail.example.gardens.example. It needs the trailing dot:
     nm1.dkim.newsmail.example.
-policy-evenement-deux =
+policy-event-two =
     There are now two DMARC records for gardens.example: RFC 7489 says to
     ignore DMARC in that case, as if there were no policy. Change the
     existing record instead of adding another.
-policy-evenement-aligne =
+policy-event-aligned =
     The internet sees the CNAME: newsmail.example now signs the newsletter
     with d=gardens.example, and the key is found by following the CNAME.
     The newsletter passes DMARC. The policy can be tightened.
-policy-evenement-trop-tot =
+policy-event-too-early =
     Careful: with this policy, the newsletter (not aligned) would be
     quarantined, or refused, by mail providers. Align newsmail.example's
     signature first.
-policy-evenement-fin =
+policy-event-end =
     gardens.example publishes p=quarantine (or stricter), the newsletter
     and the server's emails pass DMARC, and the messages from 192.0.2.66
     don't stand a chance any more. Nour: "I'll keep an eye on the reports

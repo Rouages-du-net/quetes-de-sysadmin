@@ -19,7 +19,7 @@ export const MS_ERROR_COST = 20 * 1000;
 // ceux qui s'appuient sur le poste tel que les chapitres précédents l'ont
 // laissé (clés, ~/.ssh/config : surveillePoste, clesDuJoueur) : ouverts
 // directement, ils pourraient être impossibles à finir.
-const THEMES = ['production', 'web', 'securite', 'reseau', 'sauvegardes', 'deploiement'];
+const THEMES = ['production', 'web', 'security', 'network', 'backups', 'deployment'];
 const standalone = (id: string) => {
   const c = STORIES.flatMap((h) => h.chapters).find((x) => x.id === id)!;
   return !c.watchesWorkstation && !c.playerKeys;

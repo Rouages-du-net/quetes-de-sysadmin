@@ -40,7 +40,7 @@ export const backup: Chapter = {
   home: M,
   names: true,
   welcome: 'note_from_maelle.txt',
-  final: 'fin',
+  final: 'end',
   state: () => ({ crontabs: {}, versionCrontab: 0, versionNuit: 0, originaux: {} }),
   initialise: (j) => {
     for (const n of FILES) j.state.originaux[n] = j.read(path(j.t, `${MEMORIES}/${n}`));
@@ -50,8 +50,8 @@ export const backup: Chapter = {
       home: d(
         {
           you: d({
-            'note_from_maelle.txt': f(t('backup-mot-de-maelle')),
-            memories: d(Object.fromEntries(FILES.map((n) => [n, f(t(`backup-souvenir-${n.replace('.txt', '')}`))]))),
+            'note_from_maelle.txt': f(t('backup-word-maelle')),
+            memories: d(Object.fromEntries(FILES.map((n) => [n, f(t(`backup-memory-${n.replace('.txt', '')}`))]))),
           }),
         },
         undefined,
@@ -62,51 +62,51 @@ export const backup: Chapter = {
     }),
   // Dès que la crontab change, la nuit passe : cron lance ce qui tombe entre minuit et 6 h.
   afterCommand: (j) => {
-    if ((j.state.versionCrontab ?? 0) === j.state.versionNuit || !j.state.crontabs?.[j.player] || j.flags.has('nuit-ok')) return;
+    if ((j.state.versionCrontab ?? 0) === j.state.versionNuit || !j.state.crontabs?.[j.player] || j.flags.has('night-ok')) return;
     j.state.versionNuit = j.state.versionCrontab;
     const chunks: string[] = [];
-    if (!j.flags.has('jour')) {
+    if (!j.flags.has('day')) {
       // Le souvenir du jour, arrivé avant la nuit : la tâche doit l'emporter.
-      j.flags.add('jour');
+      j.flags.add('day');
       const n = j.find(path(j.t, MEMORIES));
-      if (n?.type === 'dossier') n.children[name(j.t, NEW)] = f(j.t('backup-souvenir-lighthouse-festival'));
+      if (n?.type === 'dossier') n.children[name(j.t, NEW)] = f(j.t('backup-memory-lighthouse-festival'));
       j.state.originaux[NEW] = j.read(path(j.t, `${MEMORIES}/${NEW}`));
-      chunks.push(j.t('backup-nuit-debut', { fichier: name(j.t, NEW) }));
-    } else chunks.push(j.t('backup-nuit-encore'));
+      chunks.push(j.t('backup-night-start', { fichier: name(j.t, NEW) }));
+    } else chunks.push(j.t('backup-night-still'));
     const executions = pass(j as Shell, NIGHT[0], NIGHT[1]);
     const mail = executions
       .filter((e) => e.output)
       .map((e) => `$ ${e.command}\n${e.output}`)
       .join('\n\n');
     if (saved(j, [...FILES, NEW])) {
-      j.flags.add('nuit-ok');
+      j.flags.add('night-ok');
       // Au matin, l'erreur humaine.
       j.erase(path(j.t, `${MEMORIES}/${ERASES}`));
-      chunks.push(j.t('backup-nuit-ok', { fichier: name(j.t, NEW) }), j.t('backup-matin', { fichier: name(j.t, ERASES) }));
-    } else if (!executions.length) chunks.push(j.t('backup-nuit-rien'));
-    else chunks.push(mail ? j.t('backup-nuit-courrier', { courrier: mail }) : j.t('backup-nuit-echec'));
+      chunks.push(j.t('backup-night-ok', { fichier: name(j.t, NEW) }), j.t('backup-morning', { fichier: name(j.t, ERASES) }));
+    } else if (!executions.length) chunks.push(j.t('backup-night-nothing'));
+    else chunks.push(mail ? j.t('backup-night-mail', { courrier: mail }) : j.t('backup-night-failure'));
     return chunks.join('\n\n');
   },
   events: [
     {
-      id: 'imbrique',
+      id: 'nested',
       condition: (j) => j.exists(path(j.t, `${BACKUP}/memories`)),
-      message: (j) => j.t('backup-evenement-imbrique', { sauvegarde: path(j.t, BACKUP) }),
+      message: (j) => j.t('backup-event-nested', { sauvegarde: path(j.t, BACKUP) }),
     },
     {
-      id: 'copie',
-      condition: (j) => saved(j, FILES) && !j.flags.has('nuit-ok'),
-      message: (j) => j.t('backup-evenement-copie'),
+      id: 'copy',
+      condition: (j) => saved(j, FILES) && !j.flags.has('night-ok'),
+      message: (j) => j.t('backup-event-copy'),
     },
     {
-      id: 'perdu',
-      condition: (j) => j.flags.has('nuit-ok') && !j.exists(path(j.t, `${BACKUP}/${ERASES}`)) && !j.exists(path(j.t, `${MEMORIES}/${ERASES}`)),
-      message: (j) => j.t('backup-evenement-perdu', { fichier: name(j.t, ERASES) }),
+      id: 'lost',
+      condition: (j) => j.flags.has('night-ok') && !j.exists(path(j.t, `${BACKUP}/${ERASES}`)) && !j.exists(path(j.t, `${MEMORIES}/${ERASES}`)),
+      message: (j) => j.t('backup-event-lost', { fichier: name(j.t, ERASES) }),
     },
     {
-      id: 'fin',
-      condition: (j) => j.flags.has('nuit-ok') && j.read(path(j.t, `${MEMORIES}/${ERASES}`)) === originals(j)[ERASES] && nightTasks(j).length > 0,
-      message: (j) => j.t('backup-evenement-fin'),
+      id: 'end',
+      condition: (j) => j.flags.has('night-ok') && j.read(path(j.t, `${MEMORIES}/${ERASES}`)) === originals(j)[ERASES] && nightTasks(j).length > 0,
+      message: (j) => j.t('backup-event-end'),
     },
   ],
 };

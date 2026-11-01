@@ -334,7 +334,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
           'UUID=0f9c2a4e-61d3-4b8a-9e57-c3d1a2b4e6f8 /             ext4   errors=remount-ro  0      1',
           'UUID=7b3e5d1f-2a4c-4e6b-8d9f-1a2b3c4d5e6f /srv          ext4   defaults           0      2',
           // Chapitre 4 : la ligne ajoutée par Théo, d'après un tutoriel suivi sur son portable.
-          ...(more.rescue ? ['', t('stuck-boot-fstab-commentaire'), '/dev/sdc1  /srv/scans  ext4  defaults  0  2'] : []),
+          ...(more.rescue ? ['', t('stuck-boot-fstab-comment'), '/dev/sdc1  /srv/scans  ext4  defaults  0  2'] : []),
         ].join('\n'),
       ),
       mdadm: place({
@@ -386,7 +386,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
     tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
     usr: place({ lib: f('', { owner: 'root', size: 2_900_000_000 }) }),
     var: place({
-      log: place({ syslog: f(t('labo-syslog'), { lines: true, owner: 'root', group: 'adm', mode: 'rw-r-----' }) }),
+      log: place({ syslog: f(t('lab-syslog'), { lines: true, owner: 'root', group: 'adm', mode: 'rw-r-----' }) }),
       mail: place(
         more.mail === undefined ? {} : { you: f(more.mail, { lines: true, owner: 'you', group: 'mail', mode: 'rw-rw----' }) },
         { owner: 'root', group: 'mail', mode: 'rwxrwsr-x' },

@@ -44,7 +44,7 @@ const conf = (t: Game['t']) => `server {
         try_files $uri $uri/ =404;
     }
 
-    # ${t('blue-green-conf-commentaire')}
+    # ${t('blue-green-conf-comment')}
     location /kiosk/ {
         proxy_pass http://127.0.0.1:3001/;
     }
@@ -97,7 +97,7 @@ export const greenBlue: Chapter = {
   home: M,
   welcome: 'message_from_samia.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'gazette-2027',
   accounts,
   state: () => ({
@@ -167,13 +167,13 @@ export const greenBlue: Chapter = {
         }),
       }),
       home: place({
-        you: d({ 'message_from_samia.txt': f(t('blue-green-message-de-samia')) }),
+        you: d({ 'message_from_samia.txt': f(t('blue-green-message-samia')) }),
         samia: place({}, { owner: 'samia', mode: 'rwx------' }),
         theo: place({}, { owner: 'theo', mode: 'rwx------' }),
       }),
       srv: place({
         gazette: place({
-          releases: place({ '20270524090000': place({ 'index.html': file(t('rollback-site-accueil'), { owner: 'you' }) }) }),
+          releases: place({ '20270524090000': place({ 'index.html': file(t('rollback-site-welcome'), { owner: 'you' }) }) }),
           current: f('', { owner: 'you', link: '/srv/gazette/releases/20270524090000' }),
         }),
         kiosk: place(
@@ -201,35 +201,35 @@ export const greenBlue: Chapter = {
   },
   events: [
     {
-      id: 'sante-ko',
+      id: 'health-ko',
       condition: (j) => output(j).includes('"status":"error"') && output(j).includes('is not set'),
-      message: (j) => j.t('blue-green-evenement-sante-ko'),
+      message: (j) => j.t('blue-green-event-health-ko'),
     },
     {
-      id: 'pas-redemarre',
+      id: 'not-restarts',
       condition: (j) =>
         enabled(j, 'green') &&
         !!instances(j).green &&
         linkVersion(j, 'green') !== instances(j).green.version &&
         output(j).includes(`"version":"${instances(j).green.version}"`),
-      message: (j) => j.t('blue-green-evenement-pas-redemarre'),
+      message: (j) => j.t('blue-green-event-not-restarts'),
     },
-    { id: 'trop-tot', condition: (j) => !okReaders(j), message: (j) => j.t('blue-green-evenement-trop-tot') },
+    { id: 'too-early', condition: (j) => !okReaders(j), message: (j) => j.t('blue-green-event-too-early') },
     {
-      id: 'pas-recharge',
+      id: 'not-reload',
       condition: (j) => (j.read(SITE) ?? '').includes('127.0.0.1:3002') && served(j) === 'blue' && j.last.commands.some((c) => c[0] === 'curl'),
-      message: (j) => j.t('blue-green-evenement-pas-recharge'),
+      message: (j) => j.t('blue-green-event-not-reload'),
     },
-    { id: 'plus-de-filet', condition: (j) => served(j) === 'green' && !enabled(j, 'blue'), message: (j) => j.t('blue-green-evenement-plus-de-filet') },
+    { id: 'more-net', condition: (j) => served(j) === 'green' && !enabled(j, 'blue'), message: (j) => j.t('blue-green-event-more-net') },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => {
         const c = served(j);
         const other = c === 'blue' ? 'green' : 'blue';
         const s = c ? health(j, c) : null;
         return !!c && s?.status === 'ok' && s.version === '1.5.0' && okReaders(j) && enabled(j, other);
       },
-      message: (j) => j.t('blue-green-evenement-fin'),
+      message: (j) => j.t('blue-green-event-end'),
     },
   ],
 };

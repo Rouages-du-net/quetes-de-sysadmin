@@ -3,12 +3,12 @@
 ### systemd. Les commandes, chemins, noms d'unités et lignes de journal ne
 ### se traduisent pas.
 
-chapitre-bottleneck = Le goulot
+chapter-bottleneck = Le goulot
     .resume = Chaque après-midi à 16 h, le direct hoquette : trouver ce qui sature le disque, et le limiter sans l'arrêter.
 
 ## Fichiers
 
-bottleneck-message-de-zoe =
+bottleneck-message-zoe =
     Un message de Zoé (16 h 12) :
 
     « Ça recommence ! Tous les jours, vers 16 h, le direct a des trous :
@@ -28,7 +28,7 @@ bottleneck-message-de-zoe =
 
 ## Événements
 
-bottleneck-evenement-iowait =
+bottleneck-event-iowait =
     Regarde la ligne %Cpu(s) de top : le processeur n'est presque jamais
     occupé (us, sy), mais « wa » est énorme. C'est l'iowait : le temps où
     des processus attendent le disque. La charge (load average) compte ces
@@ -36,7 +36,7 @@ bottleneck-evenement-iowait =
     Le goulot, c'est le disque : iostat -x montre à quel point il est
     occupé (%util) et combien attend chaque requête (r_await, en ms) ;
     pidstat -d, qui lit et écrit.
-bottleneck-evenement-ionice =
+bottleneck-event-ionice =
     ionice a accepté la classe « idle »… mais regarde iostat : rien n'a
     changé. Les priorités d'ionice ne comptent que si l'ordonnanceur du
     disque les gère (bfq, mq-deadline). Celui de ce disque virtuel est
@@ -44,21 +44,21 @@ bottleneck-evenement-ionice =
     dans l'ordre, sans priorité. Une limite de débit, elle, marche avec
     tous les ordonnanceurs : systemd la pose sur le cgroup du service
     (man systemd.resource-control, IOWriteBandwidthMax=).
-bottleneck-evenement-arret =
+bottleneck-event-stop =
     L'archivage ne tourne plus. Le direct respire… mais les émissions du
     jour ne seront pas archivées, et demain à 16 h, le timer le relancera
     à pleine vitesse. Relance-le (sudo systemctl start radio-archives),
     mais avec une limite de débit.
-bottleneck-evenement-mauvais-disque =
+bottleneck-event-bad-disk =
     systemd a enregistré la limite, mais elle vise un disque qui n'existe
     pas ici : elle ne freine rien. Le disque de cette machine est vda
     (iostat le montre) ; on peut aussi donner un chemin, systemd trouve
     le disque qui le porte.
-bottleneck-evenement-trop-lent =
+bottleneck-event-too-slow =
     Une limite aussi basse protège le direct… mais l'archivage du jour
     n'aura pas fini avant demain. Quelques dizaines de Mio/s suffisent :
     regarde iostat après chaque essai, et cherche le juste milieu.
-bottleneck-evenement-fin =
+bottleneck-event-end =
     Le direct ne hoquette plus : ses lectures attendent quelques
     millisecondes, plus des centaines. L'archivage continue, plus
     lentement, et sa limite est enregistrée : demain à 16 h, elle

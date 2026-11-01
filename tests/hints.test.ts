@@ -15,7 +15,7 @@ const messages = (language: string) => {
   for (const f of readdirSync(`src/texts/${language}`).filter((n) => n.startsWith('indices-'))) {
     let active = '';
     for (const l of readFileSync(`src/texts/${language}/${f}`, 'utf8').split('\n')) {
-      const m = /^(indice-[a-z0-9-]+) =/.exec(l);
+      const m = /^(hint-[a-z0-9-]+) =/.exec(l);
       if (m) all[(active = m[1])] = [];
       const a = /^\s+\.([a-z]+) =/.exec(l);
       if (a && active) all[active].push(a[1]);
@@ -30,7 +30,7 @@ for (const h of STORIES)
       const all = messages(language);
       it(`${language} : chaque chapitre a des indices, sur ses vraies étapes, avec piste et solution`, () => {
         for (const c of h.chapters) {
-          const valid = new Set(c.events.map((e) => `indice-${c.id}-${e.id}`));
+          const valid = new Set(c.events.map((e) => `hint-${c.id}-${e.id}`));
           const itsOwn = Object.keys(all).filter((id) => valid.has(id));
           expect(itsOwn.length, `${language} : ${c.id} n'a aucun indice`).toBeGreaterThan(0);
           for (const id of itsOwn) expect(all[id].sort(), `${language} : ${id}`).toEqual(['piste', 'solution']);
@@ -44,17 +44,17 @@ for (const h of STORIES)
 
 describe('Indices : messages sans chapitre', () => {
   it('tout message d’indice vise un événement qui existe', () => {
-    const valid = new Set(STORIES.flatMap((h) => h.chapters.flatMap((c) => c.events.map((e) => `indice-${c.id}-${e.id}`))));
+    const valid = new Set(STORIES.flatMap((h) => h.chapters.flatMap((c) => c.events.map((e) => `hint-${c.id}-${e.id}`))));
     for (const language of LANGUAGES) for (const id of Object.keys(messages(language))) expect(valid.has(id), `${language} : ${id}`).toBe(true);
   });
 
   it('l’indice suit la partie (effaceur, chapitre 1)', () => {
     const s = new Shell(STORIES[0].chapters[0], 'fr');
-    expect(hint(s).step).toBe('crabe');
+    expect(hint(s).step).toBe('crab');
     s.execute('mv Colline/EcoleDesSignaux/SalleDExercice/crabe Colline/EcoleDesSignaux/SalleDExercice/Seau');
-    expect(hint(s).step).toBe('filet');
+    expect(hint(s).step).toBe('net');
     s.execute('mv Jetee/filet Port/Hangar');
-    expect(hint(s)).toMatchObject({ step: 'lumiere', manual: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv'] });
+    expect(hint(s)).toMatchObject({ step: 'light', manual: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv'] });
     s.execute('mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule');
     expect(hint(s).step).toBeNull();
   });

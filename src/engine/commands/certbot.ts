@@ -439,7 +439,7 @@ export const CERTBOT: Record<string, Command> = {
   certbot: {
     ownOptions: true,
     launch: ({ args, game }) => {
-      if (!game.find('/usr/bin/certbot')) return game.error(game.t('commande-introuvable', { commande: 'certbot' }));
+      if (!game.find('/usr/bin/certbot')) return game.error(game.t('command-missing', { commande: 'certbot' }));
       const [action = 'run', ...rest] = args[0]?.startsWith('-') ? ['run', ...args] : args;
       const o = parse(rest);
       if (o.unknown)
@@ -478,15 +478,15 @@ export const CERTBOT: Record<string, Command> = {
           return game.error(
             `${LOG}\nCould not bind TCP port 80 because it is already in use by another process on this system (such as a web server). Please stop the program in question and then try again.`,
           );
-        if (!name) return game.error(`${LOG}\n${game.t('certbot-aucun-certificat')}`);
+        if (!name) return game.error(`${LOG}\n${game.t('certbot-none-certificate')}`);
         if (action === 'certonly') {
-          if (!o.plugin && !o.webroot && !o.paths.length) return game.error(`${LOG}\n${game.t('certbot-authentificateur')}`);
-          if (o.webroot && !o.paths.length) return game.error(`${LOG}\n${game.t('certbot-webroot-sans-chemin')}`);
+          if (!o.plugin && !o.webroot && !o.paths.length) return game.error(`${LOG}\n${game.t('certbot-authenticator')}`);
+          if (o.webroot && !o.paths.length) return game.error(`${LOG}\n${game.t('certbot-webroot-without-path')}`);
           const c = read(game.read(files(name).complet));
           const wanted = [...new Set(o.domains.map((d) => d.toLowerCase()))].sort();
-          if (!wanted.length) return game.error(`${LOG}\n${game.t('certbot-sans-domaine')}`);
+          if (!wanted.length) return game.error(`${LOG}\n${game.t('certbot-without-domain')}`);
           if (c && wanted.join(' ') !== [...c.names].sort().join(' '))
-            return game.error(`${LOG}\n${game.t('certbot-autres-domaines', { noms: c.names.join(', ') })}`);
+            return game.error(`${LOG}\n${game.t('certbot-other-domains', { noms: c.names.join(', ') })}`);
         }
         if (action === 'reconfigure' && o.certName && o.certName !== name)
           return game.error(`${LOG}\nThe certificate name ${o.certName} was not found.`);

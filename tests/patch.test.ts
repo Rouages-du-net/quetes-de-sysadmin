@@ -131,7 +131,7 @@ for (const language of LANGUAGES)
       expect(all).not.toContain('not formatted');
       write(CADDYFILE, (t) => `${t}\n${WWW}`);
       play(['sudo systemctl reload caddy', 'curl -I https://www.cycles.example']);
-      expect(c.remote!.shell.flags.has('certificat')).toBe(true);
+      expect(c.remote!.shell.flags.has('certificate')).toBe(true);
       expect(c.finished).not.toContain('padlock');
       play(['sudo ufw allow 80/tcp']);
       expect(c.finished).toContain('padlock');

@@ -2,13 +2,13 @@
 ### dans OpenLDAP. Les commandes, les attributs LDAP, les DN et les chemins
 ### ne se traduisent pas.
 
-chapitre-directory = L'annuaire
+chapter-directory = L'annuaire
     .resume = Les comptes de l'équipe sont dans un annuaire LDAP : retirer une personne partie (vraiment), ajouter Sami avec un LDIF, un mot de passe chiffré et le bon groupe.
 
 ## Fichiers
 
 # { $admin } : le DN de l'administrateur de l'annuaire ; { $motdepasse } : son mot de passe
-directory-courriel-malik =
+directory-email-malik =
     De :     Malik
     À :      toi
     Objet :  L'annuaire, avant le Wi-Fi
@@ -34,30 +34,30 @@ directory-courriel-malik =
 
 ## Événements
 
-directory-evenement-clair =
+directory-event-clear =
     Attention : un mot de passe est stocké EN CLAIR dans l'annuaire
     (userPassword sans {"{"}SSHA{"}"} devant). Quiconque lit l'annuaire avec
     les bons droits, ou une sauvegarde, le voit. slappasswd en calcule une
     empreinte à mettre à la place ; ldappasswd change le mot de passe et
     stocke l'empreinte lui-même.
-directory-evenement-uid-double =
+directory-event-uid-double =
     Attention : deux comptes ont le même uidNumber. Pour Linux, ce serait
     la même personne : mêmes fichiers, mêmes droits. Chaque compte a son
     propre numéro (un ldapsearch sur uidNumber montre ceux qui sont pris).
-directory-evenement-camille-reste =
+directory-event-camille-rest =
     L'entrée de Camille a disparu… mais pas son nom dans les groupes
     (memberUid: camille). Un groupe posixGroup ne contient que des noms :
     rien ne le met à jour quand une entrée est supprimée, et un futur
     compte « camille » hériterait de ses droits. Il faut l'en retirer
     (ldapmodify, delete: memberUid).
-directory-evenement-sami-seul =
+directory-event-sami-only =
     Sami a son compte, mais il n'est pas dans le groupe « bureaux » : le
     Wi-Fi des bureaux ne le laissera pas entrer. Un groupe posixGroup
     liste ses membres dans memberUid.
-directory-evenement-arrete =
+directory-event-stopped =
     slapd ne tourne plus : plus personne ne peut se connecter avec son
     compte de l'annuaire. Remets-le en route.
-directory-evenement-fin =
+directory-event-end =
     Camille n'a plus de compte nulle part, Sami a le sien, avec un mot de
     passe chiffré, et il est dans le groupe des bureaux. Malik : « On est
     prêts pour le Wi-Fi ! »

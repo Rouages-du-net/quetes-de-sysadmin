@@ -3,12 +3,12 @@
 ### come back. Commands, paths and the output of apt, dpkg and tmux (in
 ### English) are not translated.
 
-chapitre-updates = Updates
+chapter-updates = Updates
     .resume = Months behind: apt upgrade over Wi-Fi that keeps dropping (tmux, dpkg --configure -a), a new kernel, and a reboot that reveals a forgotten service.
 
 ## Files
 
-updates-courriel-awa =
+updates-email-awa =
     From:    Awa
     To:      you
     Subject: Updates
@@ -29,27 +29,27 @@ updates-courriel-awa =
 
 ## Events
 
-updates-evenement-interrompu =
+updates-event-interrupted =
     The connection dropped in the middle of the update, and dpkg with it:
     some packages are unpacked, but not configured. apt refuses to go on
     until the job is finished: sudo dpkg --configure -a (man dpkg).
 
     Next time, start a long operation on a server inside tmux: it survives
     the connection.
-updates-evenement-dans-tmux =
+updates-event-in-tmux =
     Your connection dropped… but the update was running in tmux: it went
     all the way, without you. Reattach to your session (tmux ls, then
     tmux attach) to see how it ended.
 # { $ancien }: the running kernel; { $nouveau }: the one just installed
-updates-evenement-a-jour =
+updates-event-a-day =
     The updates are installed. But the new kernel ({ $nouveau }) isn't
     running yet: uname -r still says { $ancien }. Look at
     /var/run/reboot-required.pkgs: you need to reboot (before 10 a.m.!).
-updates-evenement-caisse-tombee =
+updates-event-till-down =
     The server rebooted on the new kernel… but the till no longer answers.
     systemctl status till: "disabled". Marc used to start it by hand; its
     service was never enabled at boot (man systemctl: enable).
-updates-evenement-fin =
+updates-event-end =
     The fixes are installed, the new kernel is running, and both the
     website and the till came back on their own. It's 9:50 a.m. Awa: "Right
     on time. Let's open!"

@@ -1,7 +1,7 @@
 ### The workstation: the starting machine, from which you connect with ssh
 ### to the machines of the stories. And the welcome message (motd) of each machine.
 
-poste-bienvenue =
+workstation-welcome =
     Welcome to your workstation.
 
     Each story takes place on a machine on the network. To connect to it,
@@ -22,24 +22,24 @@ poste-bienvenue =
 
       ls -a ~/.ssh
 # Comment at the top of ~/.ssh/config (each line becomes a "#" comment)
-poste-config-commentaire =
+workstation-config-comment =
     The machines you know. "ssh kingdom" connects to kingdom.internal
     as the user you with the key ~/.ssh/id_kingdom.
     Manual: man ssh
 # Comment at the top of the workstation's /etc/hosts (each line becomes a "#" comment)
-poste-hosts-commentaire =
+workstation-hosts-comment =
     The machines in this game are fictional.
     Names ending in .internal are reserved for private networks (ICANN, 2024);
     names ending in .example, for examples (RFC 6761). The addresses 192.0.2.x,
     198.51.100.x and 203.0.113.x are reserved for documentation (RFC 5737).
     None of these names or addresses leads to anyone real.
-poste-exit = (You are on your own workstation: exit would close your terminal. To connect to a machine: ssh name, for example ssh kingdom.)
+workstation-exit = (You are on your own workstation: exit would close your terminal. To connect to a machine: ssh name, for example ssh kingdom.)
 # { $cles }: the list of new keys, separated by commas
-poste-cles-recues =
+workstation-keys-received =
     🔑 The kingdom thanks you: new SSH keys are waiting for you on your
     workstation ({ $cles }). Go back there (exit), look at ~/.ssh/config, and
     connect to the machine of your choice.
-poste-cles-recues-suite =
+workstation-keys-received-next =
     🔑 Another milestone: more stories open up, their keys are waiting on
     your workstation ({ $cles }).
 
@@ -67,4 +67,4 @@ machine-petrin-motd = The Bakery — new server (migration), six months after th
 
 # When reconnecting to a machine whose chapter is in progress.
 # { $fichier }: the chapter's welcome file (e.g. welcome.txt)
-reprise-chapitre = You are resuming this chapter where you left it. To read again what awaits you:   cat { $fichier }
+resumed-chapter = You are resuming this chapter where you left it. To read again what awaits you:   cat { $fichier }

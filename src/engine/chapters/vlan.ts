@@ -68,7 +68,7 @@ export const vlan: Chapter = {
   home: M,
   welcome: 'email_malik.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: PASSWORD,
   accounts: hiveAccounts,
   state: () => ({ lan: newLan(false), systemd: hiveSystemd() }),
@@ -77,11 +77,11 @@ export const vlan: Chapter = {
     hiveWorld({
       interfaces: FLAT_A_INTERFACES,
       dnsmasq: FLAT_A_DNSMASQ,
-      home: { 'email_malik.txt': f(t('vlan-courriel-malik')), 'switch-plan.txt': f(t('vlan-plan-commutateur'), { lines: true }) },
+      home: { 'email_malik.txt': f(t('vlan-email-malik')), 'switch-plan.txt': f(t('vlan-plan-switch'), { lines: true }) },
     }),
   events: [
-    { id: 'mauvais-numero', condition: badNumber, message: (j) => j.t('vlan-evenement-mauvais-numero') },
-    { id: 'en-place', condition: (j) => allInPlace(j) && !allWritten(j), message: (j) => j.t('vlan-evenement-en-place') },
-    { id: 'fin', condition: (j) => allInPlace(j) && allWritten(j), message: (j) => j.t('vlan-evenement-fin') },
+    { id: 'bad-number', condition: badNumber, message: (j) => j.t('vlan-event-bad-number') },
+    { id: 'in-place', condition: (j) => allInPlace(j) && !allWritten(j), message: (j) => j.t('vlan-event-in-place') },
+    { id: 'end', condition: (j) => allInPlace(j) && allWritten(j), message: (j) => j.t('vlan-event-end') },
   ],
 };

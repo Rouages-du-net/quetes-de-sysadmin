@@ -111,8 +111,8 @@ const NOW = Date.UTC(2026, 10, 20, 9, 30, 0);
 
 const sd = (j: Game) => systemd(j)!;
 const serves = (r: Response | { code: number; body: string } | null, text: string) => r?.code === 200 && r.body === text;
-const welcome = (j: Game) => j.t('repair-cafe-site-accueil');
-const sheet = (j: Game) => j.t('repair-cafe-fiche-42');
+const welcome = (j: Game) => j.t('repair-cafe-site-welcome');
+const sheet = (j: Game) => j.t('repair-cafe-sheet-42');
 // Par nginx (sans trace dans les journaux), comme un visiteur.
 const byNginx = (j: Game, path: string) => httpRequest(j, WORKSHOP, path, 80, false);
 // Apache lui-même, sur l'un de ses ports.
@@ -120,7 +120,7 @@ const byApache = (j: Game, path: string, text: string) => apacheListeners(j).som
 const runningApache = (j: Game) => sd(j).services.apache2.state === 'active';
 const servedSite = (j: Game) => serves(byNginx(j, '/'), welcome(j));
 const servedSheet = (j: Game) => serves(byNginx(j, '/guide/42'), sheet(j));
-const servedLetters = (j: Game) => serves(httpRequest(j, LETTERS, '/', 80, false), j.t('sharing-site-lettres'));
+const servedLetters = (j: Game) => serves(httpRequest(j, LETTERS, '/', 80, false), j.t('sharing-site-letters'));
 const curl = (j: Game) => j.last.commands.some((c) => c[0] === 'curl');
 const seen = (j: Game, text: string) => j.last.output.includes(text) || j.last.errors.some((e) => e.includes(text));
 
@@ -167,8 +167,8 @@ export const workshop: Chapter = {
   home: M,
   welcome: 'email_kofi.txt',
   names: true,
-  final: 'fin',
-  steps: ['occupe', 'ecoute', 'site', 'proxy', 'reecriture', 'fin'],
+  final: 'end',
+  steps: ['busy', 'listening', 'site', 'proxy', 'rewrite', 'end'],
   password: 'ants-2026',
   accounts,
   state: () => ({
@@ -263,7 +263,7 @@ export const workshop: Chapter = {
         ),
       }),
       home: place({
-        you: d({ 'email_kofi.txt': f(t('repair-cafe-courriel-kofi')), 'note_from_rania.txt': f(t('repair-cafe-note-de-rania')) }),
+        you: d({ 'email_kofi.txt': f(t('repair-cafe-email-kofi')), 'note_from_rania.txt': f(t('repair-cafe-note-rania')) }),
         rania: place({}, { owner: 'rania', mode: 'rwx------' }),
       }),
       usr: place({
@@ -284,17 +284,17 @@ export const workshop: Chapter = {
       var: place({
         www: place({
           html: place({ 'index.html': file(APACHE_WELCOME), 'index.nginx-debian.html': file(WELCOME) }),
-          letters: place({ 'index.html': file(t('sharing-site-lettres')) }),
+          letters: place({ 'index.html': file(t('sharing-site-letters')) }),
           cafe: place({ 'index.html': file(t('sharing-site-cafe')) }),
           // Le site de l'atelier, tel qu'il était chez l'ancien hébergeur.
           repair: place(
             {
-              'index.html': file(t('repair-cafe-site-accueil'), { owner: 'rania' }),
-              '.htaccess': file(`${t('repair-cafe-htaccess-commentaire')}\n${HTACCESS}`, { owner: 'rania' }),
+              'index.html': file(t('repair-cafe-site-welcome'), { owner: 'rania' }),
+              '.htaccess': file(`${t('repair-cafe-htaccess-comment')}\n${HTACCESS}`, { owner: 'rania' }),
               guides: place(
                 {
-                  '7.html': file(t('repair-cafe-fiche-7'), { owner: 'rania' }),
-                  '42.html': file(t('repair-cafe-fiche-42'), { owner: 'rania' }),
+                  '7.html': file(t('repair-cafe-sheet-7'), { owner: 'rania' }),
+                  '42.html': file(t('repair-cafe-sheet-42'), { owner: 'rania' }),
                 },
                 { owner: 'rania' },
               ),
@@ -325,29 +325,29 @@ export const workshop: Chapter = {
     });
   },
   events: [
-    { id: 'occupe', condition: (j) => seen(j, 'Address already in use'), message: (j) => j.t('repair-cafe-evenement-occupe') },
-    { id: 'ah00558', condition: (j) => seen(j, 'AH00558'), message: (j) => j.t('repair-cafe-evenement-ah00558') },
-    { id: 'ecoute', condition: (j) => runningApache(j), message: (j) => j.t('repair-cafe-evenement-ecoute') },
-    { id: 'partout', condition: (j) => runningApache(j) && !onlyLocal(j), message: (j) => j.t('repair-cafe-evenement-partout') },
-    { id: 'defaut', condition: (j) => curl(j) && j.last.output.includes('Apache2 Debian Default Page'), message: (j) => j.t('repair-cafe-evenement-defaut') },
-    { id: 'site', condition: (j) => byApache(j, '/', welcome(j)), message: (j) => j.t('repair-cafe-evenement-site') },
-    { id: 'passerelle', condition: (j) => curl(j) && j.last.output.includes('502 Bad Gateway'), message: (j) => j.t('repair-cafe-evenement-passerelle') },
-    { id: 'proxy', condition: servedSite, message: (j) => j.t('repair-cafe-evenement-proxy') },
+    { id: 'busy', condition: (j) => seen(j, 'Address already in use'), message: (j) => j.t('repair-cafe-event-busy') },
+    { id: 'ah00558', condition: (j) => seen(j, 'AH00558'), message: (j) => j.t('repair-cafe-event-ah00558') },
+    { id: 'listening', condition: (j) => runningApache(j), message: (j) => j.t('repair-cafe-event-listening') },
+    { id: 'everywhere', condition: (j) => runningApache(j) && !onlyLocal(j), message: (j) => j.t('repair-cafe-event-everywhere') },
+    { id: 'default', condition: (j) => curl(j) && j.last.output.includes('Apache2 Debian Default Page'), message: (j) => j.t('repair-cafe-event-default') },
+    { id: 'site', condition: (j) => byApache(j, '/', welcome(j)), message: (j) => j.t('repair-cafe-event-site') },
+    { id: 'gateway', condition: (j) => curl(j) && j.last.output.includes('502 Bad Gateway'), message: (j) => j.t('repair-cafe-event-gateway') },
+    { id: 'proxy', condition: servedSite, message: (j) => j.t('repair-cafe-event-proxy') },
     {
       id: 'ignore',
       condition: (j) => curl(j) && j.last.line.includes('guide') && j.last.output.includes('The requested URL was not found on this server'),
-      message: (j) => j.t('repair-cafe-evenement-ignore'),
+      message: (j) => j.t('repair-cafe-event-ignore'),
     },
     {
-      id: 'interne',
+      id: 'internal',
       condition: (j) => curl(j) && j.last.output.includes('misconfiguration and was unable'),
-      message: (j) => j.t('repair-cafe-evenement-interne'),
+      message: (j) => j.t('repair-cafe-event-internal'),
     },
-    { id: 'reecriture', condition: (j) => byApache(j, '/guide/42', sheet(j)) || servedSheet(j), message: (j) => j.t('repair-cafe-evenement-reecriture') },
+    { id: 'rewrite', condition: (j) => byApache(j, '/guide/42', sheet(j)) || servedSheet(j), message: (j) => j.t('repair-cafe-event-rewrite') },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => runningApache(j) && sd(j).services.apache2.active && onlyLocal(j) && servedSite(j) && servedSheet(j) && servedLetters(j),
-      message: (j) => j.t('repair-cafe-evenement-fin'),
+      message: (j) => j.t('repair-cafe-event-end'),
     },
   ],
 };

@@ -2,12 +2,12 @@
 ### volumes. Commands, paths, image names and the messages of docker and
 ### of the outiltheque (in English) are not translated.
 
-chapitre-update = The Update
+chapter-update = The Update
     .resume = Update an app in Docker without losing its data: the container layer, docker cp, volumes, --restart.
 
 ## Files
 
-update-message-de-yasmine =
+update-message-yasmine =
     A message from Yasmine, who runs the fablab:
 
     "Hello! Here, we lend tools to people in the neighbourhood, and we
@@ -36,12 +36,12 @@ update-notes-docker =
     new one, created from the new image. The rest is in man docker (and
     the outiltheque's docs say it keeps its database in
     /var/lib/outiltheque).
-update-outils = drill, jigsaw, sander, stepladder, cordless screwdriver, soldering iron, laser level, staple gun, wallpaper steamer, lawnmower, sewing machine, circular saw
-update-personnes = Aya, Bilal, Chloé, Dmitri, Esra, Farid, Gaëlle, Hugo, Ines, Jun, Kenza, Lucas
+update-tools = drill, jigsaw, sander, stepladder, cordless screwdriver, soldering iron, laser level, staple gun, wallpaper steamer, lawnmower, sewing machine, circular saw
+update-people = Aya, Bilal, Chloé, Dmitri, Esra, Farid, Gaëlle, Hugo, Ines, Jun, Kenza, Lucas
 
 ## The app (pages)
 
-update-appli-accueil =
+update-app-welcome =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>Fablab tool library</title></head>
@@ -55,37 +55,37 @@ update-appli-accueil =
     <footer>outiltheque { $version }</footer>
     </body>
     </html>
-update-appli-prets = Current loans: { $prets } (the first five)
+update-app-loans = Current loans: { $prets } (the first five)
 
 ## Events
 
-update-evenement-couche =
+update-event-layer =
     "Mounts": []: this container has no volume and no machine directory
     mounted. Everything the app writes (its database included) lives in
     the container layer, which disappears with it. Before deleting it,
     you must put the database somewhere safe (man docker: cp).
-update-evenement-port-occupe =
+update-event-port-busy =
     "port is already allocated": port 8080 of the machine is already
     published by another running container (the old one). Two containers
     can't listen on the same port of the machine: you must stop the old
     one first.
-update-evenement-perdu =
+update-event-lost =
     The 37 loans are gone: the container was deleted along with its
     layer, and the database hadn't been copied anywhere. On a real
     server, it would be lost for good. Here, you can restart the chapter
     from the menu. The rule: a container's data goes in a volume, and you
     copy it before any risky operation.
-update-evenement-neuf-vide =
+update-event-new-empty =
     Version 1.5 is running… with a brand-new, empty database (docker logs
     says so: "creating a new one"). The old container's database is not
     in the new one. If you put it somewhere safe, you still have to put
     it back in place (and restart the app so it migrates it).
-update-evenement-sans-redemarrage =
+update-event-without-reboot =
     The 37 loans are there, in version 1.5, and the database is finally
     in a volume. But Yasmine said it: after a power cut, the outiltheque
     doesn't come back by itself. Look at the --restart option of
     docker run (or docker update).
-update-evenement-fin =
+update-event-end =
     Outiltheque 1.5 is running, with its 37 loans, in a volume that will
     survive the next updates, and it will start again by itself after a
     power cut. Yasmine: "And the next update will just be: new container,

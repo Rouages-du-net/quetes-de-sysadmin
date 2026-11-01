@@ -39,9 +39,9 @@ HOSTINGS.hebergeur = {
   files: (t) => ({
     [ACCOUNT]: d({
       public_html: d({
-        'index.html': f(t('web-host-ancien-index'), { lines: true }),
-        'agenda.html': f(t('web-host-ancien-agenda'), { lines: true }),
-        'tarifs-2025.html': f(t('web-host-ancien-tarifs'), { lines: true }),
+        'index.html': f(t('web-host-old-index'), { lines: true }),
+        'agenda.html': f(t('web-host-old-agenda'), { lines: true }),
+        'tarifs-2025.html': f(t('web-host-old-prices'), { lines: true }),
       }),
       tmp: d({}),
     }),
@@ -93,7 +93,7 @@ export const host: Chapter = {
   home: M,
   welcome: 'email_yasmine.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: PASSWORD,
   accounts: homeAccounts,
   playerKeys: true,
@@ -111,7 +111,7 @@ export const host: Chapter = {
                 {
                   'index.html': page(t, 'web-host-index'),
                   'agenda.html': page(t, 'web-host-agenda'),
-                  'adhesion.html': page(t, 'web-host-adhesion'),
+                  'adhesion.html': page(t, 'web-host-membership'),
                   'style.css': f(STYLE, { lines: true, owner: 'www-data' }),
                   images: d({ 'logo.svg': f(LOGO, { lines: true, owner: 'www-data' }) }, undefined, { owner: 'www-data' }),
                 },
@@ -131,37 +131,37 @@ export const host: Chapter = {
       passwords: 'no',
       home: {
         '.ssh': sshDirectory(),
-        'email_yasmine.txt': f(t('web-host-courriel-yasmine', { compte: ACCOUNT, motdepasse: FTP_PASSWORD })),
-        'email_hosting.txt': f(t('web-host-courriel-hebergeur'), { lines: true }),
+        'email_yasmine.txt': f(t('web-host-email-yasmine', { compte: ACCOUNT, motdepasse: FTP_PASSWORD })),
+        'email_hosting.txt': f(t('web-host-email-host'), { lines: true }),
         'notes-gaspard.txt': f(t('web-host-notes-gaspard'), { lines: true }),
       },
     }),
   events: [
-    { id: 'clair', condition: (j) => refusal(j, 'clair'), message: (j) => j.t('web-host-evenement-clair') },
-    { id: 'certificat', condition: (j) => refusal(j, 'certificat'), message: (j) => j.t('web-host-evenement-certificat') },
+    { id: 'clear', condition: (j) => refusal(j, 'clair'), message: (j) => j.t('web-host-event-clear') },
+    { id: 'certificate', condition: (j) => refusal(j, 'certificat'), message: (j) => j.t('web-host-event-certificate') },
     {
-      id: 'sans-verification',
+      id: 'without-verification',
       condition: (j) => !!inLine(j)?.log.some((e) => !e.checked),
-      message: (j) => j.t('web-host-evenement-sans-verification'),
+      message: (j) => j.t('web-host-event-without-verification'),
     },
     {
-      id: 'mauvais-sens',
+      id: 'bad-direction',
       condition: (j) => !!workstation(j)?.read('~/site/tarifs-2025.html') || !!workstation(j)?.read('~/public_html/tarifs-2025.html'),
-      message: (j) => j.t('web-host-evenement-mauvais-sens'),
+      message: (j) => j.t('web-host-event-bad-direction'),
     },
     {
-      id: 'mauvais-dossier',
+      id: 'bad-directory',
       condition: (j) => {
         const h = inLine(j);
         return !!h && Object.keys(h.roots[ACCOUNT].children).some((k) => !['public_html', 'tmp'].includes(k)) && !published(j);
       },
-      message: (j) => j.t('web-host-evenement-mauvais-dossier'),
+      message: (j) => j.t('web-host-event-bad-directory'),
     },
     {
-      id: 'reste',
+      id: 'rest',
       condition: (j) => published(j) && !!node(inLine(j)!.roots[ACCOUNT], '/public_html/tarifs-2025.html'),
-      message: (j) => j.t('web-host-evenement-reste'),
+      message: (j) => j.t('web-host-event-rest'),
     },
-    { id: 'fin', condition: (j) => exact(j) && !!lastSend(j)?.tls && !!lastSend(j)?.checked, message: (j) => j.t('web-host-evenement-fin') },
+    { id: 'end', condition: (j) => exact(j) && !!lastSend(j)?.tls && !!lastSend(j)?.checked, message: (j) => j.t('web-host-event-end') },
   ],
 };

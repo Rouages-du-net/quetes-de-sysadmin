@@ -2,12 +2,12 @@
 ### PostgreSQL database with pg_dump, check the restore, repair a table. The
 ### commands, the SQL and PostgreSQL's messages are not translated.
 
-chapitre-database = The Database
+chapter-database = The Database
     .resume = Copying the files of a running database is not a backup: pg_dump every night, a test restore, then a table to put back in a hurry.
 
 ## Files
 
-database-message-de-berenice =
+database-message-berenice =
     A message from Bérénice:
 
     "The game loans are in a PostgreSQL database, ludo, on the
@@ -21,28 +21,28 @@ database-message-de-berenice =
     things out: volunteers record loans all day long.
 
     For sudo: ludo-2027."
-database-mot-de-malo =
+database-word-malo =
     A note from Malo:
 
     "The database files are in /var/lib/postgresql/16/main, and
     rsnapshot copies them every night along with the rest. To talk to the
     database: psql. The account with all the rights on the database is called postgres."
 database-crontab-root = Snapshots (rsnapshot): weekly at 3:00 on Monday, daily at 3:30
-database-noms-de-jeux = snakes and ladders,ludo,draughts,mikado,dominoes,animal memory,ladder game,oware,go,connect four,mancala,tangram,solitaire,battleship,happy families
+database-names-games = snakes and ladders,ludo,draughts,mikado,dominoes,animal memory,ladder game,oware,go,connect four,mancala,tangram,solitaire,battleship,happy families
 
 ## Events
 
-database-evenement-role =
+database-event-role =
     PostgreSQL doesn't know you: through the local socket, you connect under
     the name of your account ("peer" authentication), and neither "you" nor
     root is a role in this database. The postgres account, however, has all
     the rights: sudo -u postgres (man sudo).
-database-evenement-sur-la-vraie =
+database-event-on-true =
     Stop! This restore targeted ludo, the live database: its tables
     already exist, hence the errors. Restoring over the real database to
     "try it out" risks overwriting today's loans. A test
     restore is done in a separate database (man createdb).
-database-evenement-test-reussi =
+database-event-test-succeeded =
     The test database contains as many games, members and loans as the
     real one: the backup can be restored. That's the only way to know
     a backup works. (The test database can be deleted with
@@ -54,19 +54,19 @@ database-incident =
     loans back, WITHOUT touching the rest?"
     (Check with psql: how many rows are left in prets? Your
     backup from this morning contains the whole table; man pg_restore.)
-database-evenement-doublons =
+database-event-duplicates =
     pg_restore refuses: some loans from the backup are already in the table
     (duplicate key). You only reload data into an empty table, or
     by recreating it (--clean).
-database-evenement-cron-root =
+database-event-cron-root =
     The job in root's crontab runs pg_dump as root, which is not a
     role in the database: every night, it would fail (role "root" does not
     exist). Use the postgres account's crontab (sudo crontab -u postgres -e), or
     sudo -u postgres in front of the command.
-database-evenement-prets-revenus =
+database-event-loans-returned =
     The 1,873 loans are back, and nothing else has moved. Bérénice:
     "Phew!"
-database-evenement-fin =
+database-event-end =
     The database is backed up every night for real, the restore has been
     checked, and the table emptied by mistake came back in one command.
 

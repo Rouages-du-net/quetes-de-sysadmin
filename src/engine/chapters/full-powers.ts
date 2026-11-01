@@ -127,7 +127,7 @@ APPS.galerie = {
   },
   answer: (game, _c, path) => {
     if (path === '/' || path === '')
-      return { code: 200, body: game.t('full-powers-galerie-accueil', { nombre: presentPhotos(game).length }) };
+      return { code: 200, body: game.t('full-powers-gallery-welcome', { nombre: presentPhotos(game).length }) };
     return { code: 404, body: `Cannot GET ${path}` };
   },
 };
@@ -219,7 +219,7 @@ export const powersFull: Chapter = {
   home: M,
   welcome: 'message_from_yasmine.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'fablab-2027',
   accounts,
   state: () => {
@@ -292,13 +292,13 @@ export const powersFull: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: f('workshop', { lines: true, owner: 'root' }) }),
       home: place({
-        you: d({ 'message_from_yasmine.txt': f(t('full-powers-message-de-yasmine')), 'note_from_rania.txt': f(t('full-powers-mot-de-rania')) }),
+        you: d({ 'message_from_yasmine.txt': f(t('full-powers-message-yasmine')), 'note_from_rania.txt': f(t('full-powers-word-rania')) }),
         yasmine: d({}, undefined, { owner: 'yasmine', mode: 'rwxr-x---' }),
       }),
       srv: place({
         galerie: place({
           'compose.yaml': f(COMPOSE, { lines: true, owner: 'root' }),
-          'README.txt': f(t('full-powers-lisezmoi'), { owner: 'root' }),
+          'README.txt': f(t('full-powers-readme'), { owner: 'root' }),
           // Créé par Docker au premier lancement (le dossier n'existait pas) : à root.
           photos: place(Object.fromEntries(PHOTOS_NAMES.map((p, i) => [p, photo(1_800_000 + i * 137_000)]))),
         }),
@@ -310,29 +310,29 @@ export const powersFull: Chapter = {
     {
       id: 'root',
       condition: (j) => inRoot(j) && (j.last.output.includes('uid=0(root)') || /^root\s+\d+.*node serveur\.js/m.test(j.last.output)),
-      message: (j) => j.t('full-powers-evenement-root'),
+      message: (j) => j.t('full-powers-event-root'),
     },
     {
-      id: 'inconnu',
+      id: 'unknown',
       condition: (j) => [j.last.output, ...j.last.errors].some((x) => x.includes('no matching entries in passwd file')),
-      message: (j) => j.t('full-powers-evenement-inconnu'),
+      message: (j) => j.t('full-powers-event-unknown'),
     },
-    { id: 'eacces', condition: (j) => inError(j), message: (j) => j.t('full-powers-evenement-eacces') },
+    { id: 'eacces', condition: (j) => inError(j), message: (j) => j.t('full-powers-event-eacces') },
     {
       id: 'uid-1000',
       condition: (j) => running(j) && uid(j, gallery(j)) === 1000 && !canYasmine(j),
-      message: (j) => j.t('full-powers-evenement-uid-1000'),
+      message: (j) => j.t('full-powers-event-uid-1000'),
     },
-    { id: 'ouvert-a-tous', condition: (j) => allAOpen(j), message: (j) => j.t('full-powers-evenement-ouvert-a-tous') },
+    { id: 'open-a-all', condition: (j) => allAOpen(j), message: (j) => j.t('full-powers-event-open-a-all') },
     {
-      id: 'photos-perdues',
+      id: 'photos-lost',
       condition: (j) => !photosAll(j),
-      message: (j) => j.t('full-powers-evenement-photos-perdues', { nombre: PHOTOS_NAMES.length - presentPhotos(j).length }),
+      message: (j) => j.t('full-powers-event-photos-lost', { nombre: PHOTOS_NAMES.length - presentPhotos(j).length }),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => running(j) && !inRoot(j) && answers(j) && photosAll(j) && canYasmine(j) && !allAOpen(j),
-      message: (j) => j.t('full-powers-evenement-fin'),
+      message: (j) => j.t('full-powers-event-end'),
     },
   ],
 };

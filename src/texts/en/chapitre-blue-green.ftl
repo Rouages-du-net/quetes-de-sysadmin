@@ -2,12 +2,12 @@
 ### downtime, with two slots and a health check. Commands, paths,
 ### and messages from nginx, systemctl and curl are not translated.
 
-chapitre-blue-green = Blue and green
+chapter-blue-green = Blue and green
     .resume = Update the subscriptions app without downtime: the new version next to the old one, its health checked, then nginx switches over.
 
 ## Files
 
-blue-green-message-de-samia =
+blue-green-message-samia =
     A message from Samia:
 
     "The Gazette now has its Kiosk: the app for subscribing to the
@@ -27,7 +27,7 @@ blue-green-message-de-samia =
 
     And keep the old version running until we're sure about the
     new one. For sudo: gazette-2027."
-blue-green-conf-commentaire = The Kiosk (subscriptions): the slot that serves readers
+blue-green-conf-comment = The Kiosk (subscriptions): the slot that serves readers
 blue-green-notes-150 =
     Kiosk 1.5.0 — release notes
 
@@ -40,7 +40,7 @@ blue-green-notes-150 =
 
 ## The Kiosk (pages served; { $version }: the app's version)
 
-kiosque-accueil =
+kiosk-welcome =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>The Gazette's Kiosk</title></head>
@@ -51,7 +51,7 @@ kiosque-accueil =
     <footer>Kiosk { $version }</footer>
     </body>
     </html>
-kiosque-archives =
+kiosk-archives =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>Previous newsletters</title></head>
@@ -64,29 +64,29 @@ kiosque-archives =
 
 ## Events
 
-blue-green-evenement-sante-ko =
+blue-green-event-health-ko =
     /health answers 503: the version is running, but it's not in a state to
     serve. A version that fails its health check never gets
     any traffic. What it's missing is probably written in its release
     notes (/srv/kiosk/versions/1.5.0/).
-blue-green-evenement-pas-redemarre =
+blue-green-event-not-restarts =
     The link points to the new version, but the service still answers with
     the old one: a program reads its code (and its configuration) when it
     starts. It needs to be restarted (man systemctl).
-blue-green-evenement-trop-tot =
+blue-green-event-too-early =
     Ouch: readers are getting an error on /kiosk/. nginx is sending
     traffic to an instance that isn't answering, or not correctly. The
     rollback is immediate: put the other slot back in
     proxy_pass, nginx -t, reload. Check /health BEFORE switching over.
-blue-green-evenement-pas-recharge =
+blue-green-event-not-reload =
     The nginx file does point to green (3002), but nginx is still serving
     blue: it only rereads its configuration on reload (nginx -t, then
     systemctl reload nginx).
-blue-green-evenement-plus-de-filet =
+blue-green-event-more-net =
     Blue is stopped: if 1.5.0 shows a problem tonight, there will be
     no instant rollback anymore. Keep the old version running
     for a while, until you're sure.
-blue-green-evenement-fin =
+blue-green-event-end =
     Readers have moved to 1.5.0 without noticing, and
     the old version is waiting, still running, just in case. Samia: "If things go
     wrong, we switch back with one command."

@@ -391,7 +391,7 @@ export const hivePlan =
       role: 'routeur',
       name: machineName(t, 'hive'),
       address: '192.0.2.21',
-      note: listing([t('plan-note-routeur'), 'DHCP', ...(o.directory || o.wifi ? ['LDAP'] : []), ...(o.wifi ? ['RADIUS'] : [])]),
+      note: listing([t('plan-note-router'), 'DHCP', ...(o.directory || o.wifi ? ['LDAP'] : []), ...(o.wifi ? ['RADIUS'] : [])]),
       host: 'hive',
       children: [
         ...vlans.map((v) => ({
@@ -403,20 +403,20 @@ export const hivePlan =
             .map((a) => ({ role: (a.name === 'nas' || a.name === 'web' ? 'serveur' : 'appareil') as ElementPlan['role'], name: a.name, address: a.fixed ?? t('plan-dhcp') })),
         })),
         ...(o.remoteWork
-          ? [{ role: 'poste' as const, name: 'malik-laptop', address: '198.51.100.23', note: t('plan-note-teletravail'), tunnel: true }]
+          ? [{ role: 'poste' as const, name: 'malik-laptop', address: '198.51.100.23', note: t('plan-note-remote-work'), tunnel: true }]
           : []),
         ...(o.annex
           ? [
               {
                 role: 'routeur' as const,
-                name: t('plan-annexe'),
+                name: t('plan-annex'),
                 address: '203.0.113.60',
-                note: t('plan-note-annexe'),
+                note: t('plan-note-annex'),
                 tunnel: true,
                 children: [
                   {
                     role: 'reseau' as const,
-                    name: t('plan-reseau-annexe'),
+                    name: t('plan-network-annex'),
                     address: '10.20.10.0/24',
                     children: [
                       { role: 'appareil' as const, name: 'poste-annexe', address: '10.20.10.15' },

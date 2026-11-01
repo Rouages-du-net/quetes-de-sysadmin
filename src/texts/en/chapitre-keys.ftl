@@ -3,13 +3,13 @@
 ### sshd_config keywords, commands, paths and OpenSSH messages
 ### (in English) are never translated.
 
-chapitre-keys = The keys
+chapter-keys = The keys
     .resume = Your account has a temporary password (lilac-2027): ssh-keygen, ssh-copy-id, then no more passwords at all.
 
 ## Files
 
 # { $motdepasse }: the account's temporary password
-keys-courriel-yasmine =
+keys-email-yasmine =
     From:    Yasmine (coordinator of the Maison des associations)
     To:      you
     Subject: Welcome to the team!
@@ -40,32 +40,32 @@ keys-courriel-yasmine =
 ## Events
 
 # { $config }: the path of the configuration file
-keys-evenement-erreur =
+keys-event-error =
     There's an error in the SSH configuration. Before reloading,
     always check with  sudo sshd -t: it gives the file and the line
     at fault. As long as it's wrong, systemctl reload ssh refuses to
     apply it, and sshd keeps the old one.
-keys-evenement-enferme =
+keys-event-locked-out =
     WARNING: sshd now refuses passwords… and no key is
     authorized for your account (~/.ssh/authorized_keys). Your current session
     stays open, but a new connection would be refused!
 
     Set PasswordAuthentication yes back and reload ssh, long enough to put your
     key in place. Order matters: first the key, then the door.
-keys-evenement-cle-du-jeu =
+keys-event-key-game =
     A key arrived in ~/.ssh/authorized_keys… but it's a key the
     game gave you for another machine (look at the end of the line, and
     ls -lt ~/.ssh on your computer). Without -i, ssh-copy-id takes the most
     recent public key in ~/.ssh; and ssh won't offer it to community.
 
     First create your own pair (ssh-keygen), then run ssh-copy-id again.
-keys-evenement-copiee =
+keys-event-copied =
     Your public key is in ~/.ssh/authorized_keys on community. Look at the
     file (cat): a line "ssh-ed25519 AAAA…", the public half of
     your pair. The private half has never left your computer.
 
     Reconnect (exit, then ssh community): this time, no password.
-keys-evenement-par-cle =
+keys-event-by-key =
     You got in with your key, no password! The server sent you a challenge
     that only your private key could sign.
 
@@ -73,11 +73,11 @@ keys-evenement-par-cle =
     try to guess one. In /etc/ssh/sshd_config, look for the
     PasswordAuthentication line (man sshd_config), then sudo sshd -t and sudo
     systemctl reload ssh.
-keys-evenement-fermee =
+keys-event-closed =
     sshd now accepts only keys. Before closing this session, test:
     exit, then ssh community. (On a real server, you keep the session open
     and test in a second terminal.)
-keys-evenement-fin =
+keys-event-end =
     In with your key, and passwords are refused: the gateway is
     closed to bots, but not to you. Yasmine: "Gaspard will be proud of you!"
 

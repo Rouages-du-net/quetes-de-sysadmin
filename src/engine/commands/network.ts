@@ -240,7 +240,7 @@ export const NETWORK: Record<string, Command> = {
       if (!arrives) {
         for (let i = jumps.length + 1; i <= jumps.length + 3; i++) lines.push(`${String(i).padStart(2)}  * * *`);
         // Écart volontaire : le vrai traceroute continue jusqu'à 30 sauts.
-        lines.push('    ' + game.t('traceroute-plus-personne'));
+        lines.push('    ' + game.t('traceroute-more-person'));
       }
       return lines.join('\n');
     },

@@ -3,12 +3,12 @@
 ### GRUB on the new disk. Commands, options, paths and outputs are not
 ### translated.
 
-chapitre-new-disk = The new disk
+chapter-new-disk = The new disk
     .resume = The new disk has arrived, blank: split it like the other one without getting the direction wrong, rebuild both RAID arrays, and make the server able to boot from either disk.
 
 ## Files
 
-new-disk-message-d-odile =
+new-disk-message-odile =
     A message from Odile (Sunday, 8:05 am):
 
     "The host replied overnight: “The faulty disk has been replaced. The
@@ -21,40 +21,40 @@ new-disk-message-d-odile =
 
 ## Events
 
-new-disk-evenement-neuf =
+new-disk-event-new =
     The new sdb: 1.8 T, no partition. The arrays run on sda alone ([U_] in
     /proc/mdstat). Before adding it to the RAID, it must be split exactly
     like sda: sfdisk can write a disk's table as a script, and read it
     back (man sfdisk).
-new-disk-evenement-trop-tot =
+new-disk-event-too-early =
     mdadm can't find this partition: sdb is still blank. First the
     partition table (the same as sda's), then the arrays.
-new-disk-evenement-sens =
+new-disk-event-direction =
     sfdisk refused to write to a disk in use: luckily! That was sda, the
     disk running the server. In a pipe, the disk named last is the one
     overwritten: sfdisk -d /dev/sda reads sda, sfdisk /dev/sdb writes to
     sdb.
-new-disk-evenement-disque-entier =
+new-disk-event-disk-whole =
     You put the WHOLE sdb disk into an array: its RAID superblock
     overwrote its partition table, and there is no room left for GRUB or
     for the other array. Take it out again (--fail then --remove), copy
     sda's table, and add the right partition: sdb2 into md0, sdb3 into md1.
-new-disk-evenement-table =
+new-disk-event-table =
     sdb is split like sda: sdb1 (BIOS boot, GRUB's spot), sdb2 and sdb3
     (Linux RAID). Each partition now joins its twin's array: sdb2 into md0,
     sdb3 into md1.
-new-disk-evenement-ajoutes =
+new-disk-event-added =
     Both partitions have joined their array. Look at /proc/mdstat: one
     array rebuilds at a time (recovery), the other waits its turn
     (DELAYED). Meanwhile, the server keeps serving the photos. Time flies
     here: each command counts for half an hour.
-new-disk-evenement-reconstruit =
+new-disk-event-rebuilt =
     Everywhere [UU]: both arrays have their two copies again. What's left
     is what will matter the day sda dies: being able to boot from sdb.
-new-disk-evenement-grub =
+new-disk-event-grub =
     GRUB is installed on sdb: if sda fails, the server can boot from the
     other disk.
-new-disk-evenement-fin =
+new-disk-event-end =
     Odile: "So if a disk fails again, we lose nothing, and the server still
     restarts? Great."
 

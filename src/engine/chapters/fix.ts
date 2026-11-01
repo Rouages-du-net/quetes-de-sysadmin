@@ -32,8 +32,8 @@ export const fix: Chapter = {
   home: M,
   welcome: 'email_salome.txt',
   names: true,
-  final: 'fin',
-  steps: ['corrige', 'verifie', 'fin'],
+  final: 'end',
+  steps: ['fixed', 'checked', 'end'],
   password: PASSWORD,
   accounts: watchAccounts,
   state: () => ({
@@ -51,12 +51,12 @@ export const fix: Chapter = {
   initialise: initialiseWatch,
   createWorld: (t) =>
     watchWorld(t, {
-      home: { 'email_salome.txt': f(t('fix-courriel-salome')) },
+      home: { 'email_salome.txt': f(t('fix-email-salome')) },
     }),
   events: [
-    { id: 'sans-maj', condition: triesWithoutUpdate, message: (j) => j.t('fix-evenement-sans-maj') },
-    { id: 'corrige', condition: okFixed, message: (j) => j.t('fix-evenement-corrige') },
-    { id: 'verifie', condition: (j) => okFixed(j) && siteOk(j), message: (j) => j.t('fix-evenement-verifie') },
-    { id: 'fin', condition: (j) => okFixed(j) && siteOk(j), message: (j) => j.t('fix-evenement-fin') },
+    { id: 'without-update', condition: triesWithoutUpdate, message: (j) => j.t('fix-event-without-update') },
+    { id: 'fixed', condition: okFixed, message: (j) => j.t('fix-event-fixed') },
+    { id: 'checked', condition: (j) => okFixed(j) && siteOk(j), message: (j) => j.t('fix-event-checked') },
+    { id: 'end', condition: (j) => okFixed(j) && siteOk(j), message: (j) => j.t('fix-event-end') },
   ],
 };

@@ -52,20 +52,20 @@ function commits(t: Game['t']): Commit[] {
   const { 'index.html': _index, ...withoutIndex } = c5.files;
   const c6 = newCommit(c5, t('rollback-commit-6'), THEO_AUTHOR, 'Mon May 17 20:29:40 2027 +0200', {
     ...withoutIndex,
-    'accueil.html': t('rollback-site-accueil'),
+    'accueil.html': t('rollback-site-welcome'),
   });
   return [c1, c2, c3, c4, c5, c6];
 }
 
 // Le crochet de déploiement : une version par push, puis le lien current.
 const HOOK = (t: Game['t']) => `#!/bin/sh
-# ${t('rollback-crochet-commentaire')}
+# ${t('rollback-hook-comment')}
 set -e
 VERSION=$(date +%Y%m%d%H%M%S)
 mkdir -p ${RELEASES}/$VERSION
 git --work-tree=${RELEASES}/$VERSION checkout -f main
 ln -sfn ${RELEASES}/$VERSION ${CURRENT}
-echo "${t('rollback-crochet-echo')}"`;
+echo "${t('rollback-hook-echo')}"`;
 
 const repo = (j: Game, path: string): Repo | undefined => j.state.git?.[path];
 const link = (j: Game) => (j.find(CURRENT, false) as { link?: string } | null)?.link ?? null;
@@ -99,7 +99,7 @@ function theoRepousse(j: Game): string {
   const { 'index.html': _index, ...withoutIndex } = head.files;
   const c = newCommit(head, j.t('rollback-commit-theo', { numero: number }), THEO_AUTHOR, 'Mon May 17 21:05:00 2027 +0200', {
     ...withoutIndex,
-    'accueil.html': `${j.t('rollback-site-accueil')}\n<!-- ${number} -->`,
+    'accueil.html': `${j.t('rollback-site-welcome')}\n<!-- ${number} -->`,
   });
   j.state.git[THEO] = { commits: [...server.commits, c], index: { ...c.files }, remotes: { prod: REPO } };
   const before = game.who;
@@ -107,7 +107,7 @@ function theoRepousse(j: Game): string {
   try {
     const r = game.underCommand('git push prod main', THEO);
     j.state.theoAPousse = c.id;
-    return j.t('rollback-theo-pousse', { sortie: r.output.replace(/^/gm, '  ') });
+    return j.t('rollback-theo-push', { sortie: r.output.replace(/^/gm, '  ') });
   } finally {
     game.who = before;
   }
@@ -150,7 +150,7 @@ export const rollback: Chapter = {
   home: M,
   welcome: 'message_from_samia.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'gazette-2027',
   accounts: gazetteAccounts,
   state: (t) => {
@@ -225,7 +225,7 @@ export const rollback: Chapter = {
       }),
       home: place({
         you: d({
-          'message_from_samia.txt': f(t('rollback-message-de-samia')),
+          'message_from_samia.txt': f(t('rollback-message-samia')),
           gazette: d({
             '.git': d({ HEAD: f('ref: refs/heads/main', { lines: true }) }),
             ...Object.fromEntries(Object.entries(all[4].files).map(([name, text]) => [name, f(text, { lines: true })])),
@@ -272,42 +272,42 @@ export const rollback: Chapter = {
   },
   events: [
     {
-      id: 'panne',
+      id: 'failure',
       condition: (j) => j.last.commands.some((c) => c[0] === 'curl') && page(j)?.code === 403,
-      message: (j) => j.t('rollback-evenement-panne'),
+      message: (j) => j.t('rollback-event-failure'),
     },
-    { id: 'sans-n', condition: (j) => insideLink(j), message: (j) => j.t('rollback-evenement-sans-n') },
+    { id: 'without-n', condition: (j) => insideLink(j), message: (j) => j.t('rollback-event-without-n') },
     {
-      id: 'retabli',
+      id: 'restored',
       condition: (j) => {
         const ok = works(j);
         if (ok) j.state.retabli = true;
         return ok;
       },
-      message: (j) => j.t('rollback-evenement-retabli'),
+      message: (j) => j.t('rollback-event-restored'),
     },
     {
-      id: 'garde-fou',
+      id: 'kept-fou',
       condition: (j) => {
         const ok = !!j.state.theoAPousse && works(j) && inLine(j) === j.state.versionAvantTheo;
         if (ok) j.state.gardeFou = true;
         return ok;
       },
-      message: (j) => j.t('rollback-evenement-garde-fou'),
+      message: (j) => j.t('rollback-event-kept-fou'),
     },
-    { id: 'garde-fou-perce', condition: (j) => !!j.state.theoAPousse && !works(j), message: (j) => j.t('rollback-evenement-garde-fou-perce') },
+    { id: 'kept-fou-pierced', condition: (j) => !!j.state.theoAPousse && !works(j), message: (j) => j.t('rollback-event-kept-fou-pierced') },
     {
-      id: 'tests-ailleurs',
+      id: 'tests-elsewhere',
       condition: (j) =>
         j.last.commands.some((c) => c[0] === 'git' && c.includes('push')) &&
         'index.html' in (repo(j, REPO)?.commits.at(-1)?.files ?? {}) &&
         !deployedByHook(j),
-      message: (j) => j.t('rollback-evenement-tests-ailleurs'),
+      message: (j) => j.t('rollback-event-tests-elsewhere'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => !!j.state.gardeFou && newUpdateInPage(j) && deployedByHook(j) && hook(j).includes('tests.sh'),
-      message: (j) => j.t('rollback-evenement-fin'),
+      message: (j) => j.t('rollback-event-end'),
     },
   ],
 };

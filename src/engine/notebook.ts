@@ -44,22 +44,22 @@ export function progress(finished: string[], t: Translate): string[] {
     const done = h.chapters.filter((c) => finished.includes(c.id));
     if (!done.length) return [];
     return [
-      `- ${t('carnet-progression-histoire', { histoire: t(`histoire-${h.id}`), faits: done.length, total: h.chapters.length })}`,
-      ...done.map((c) => `  - ${t('chapitre-numero', { numero: c.number })} : ${t(`chapitre-${c.id}`)}`),
+      `- ${t('notebook-progress-story', { histoire: t(`story-${h.id}`), faits: done.length, total: h.chapters.length })}`,
+      ...done.map((c) => `  - ${t('chapter-number', { numero: c.number })} : ${t(`chapter-${c.id}`)}`),
     ];
   });
-  return [`## ${t('carnet-progression')}`, '', ...(lines.length ? lines : [t('carnet-progression-vide')]), ''];
+  return [`## ${t('notebook-progress')}`, '', ...(lines.length ? lines : [t('notebook-progress-empty')]), ''];
 }
 
 /** Le carnet en Markdown : son titre (au nom de la joueuse ou du joueur, s'il est donné), la progression (si elle est donnée), puis les commandes, triées par nom. */
 export function inMarkdown(notebook: Notebook, t: Translate, finished?: string[], playerName = ''): string {
   const names = Object.keys(notebook).sort((a, b) => a.localeCompare(b));
   return [
-    `# ${playerName ? t('carnet-titre-de', { nom: playerName }) : t('carnet-titre')}`,
+    `# ${playerName ? t('notebook-title-of', { nom: playerName }) : t('notebook-title')}`,
     '',
-    t('carnet-markdown-intro', { nombre: names.length }),
+    t('notebook-markdown-intro', { nombre: names.length }),
     '',
-    ...(finished ? [t('carnet-grade', { grade: t(`grade-${grade(finished)}`) }), ''] : []),
+    ...(finished ? [t('notebook-grade', { grade: t(`grade-${grade(finished)}`) }), ''] : []),
     ...(finished ? progress(finished, t) : []),
     ...names.flatMap((name) => {
       const e = notebook[name];
@@ -72,8 +72,8 @@ export function inMarkdown(notebook: Notebook, t: Translate, finished?: string[]
         e.line,
         '```',
         '',
-        ...(e.chapter ? [t('carnet-decouverte', { chapitre: t(`chapitre-${e.chapter}`) }), ''] : []),
-        t('carnet-manuel', { commande: `man ${name}` }),
+        ...(e.chapter ? [t('notebook-discovery', { chapitre: t(`chapter-${e.chapter}`) }), ''] : []),
+        t('notebook-manual', { commande: `man ${name}` }),
         '',
       ];
     }),

@@ -7,7 +7,7 @@ import { progressCode, backupFile } from '../src/engine/progress';
 describe('Le tableau de classe', () => {
   it('lit un fichier de sauvegarde : nom, chapitres, succès, records, date', () => {
     const text = backupFile(
-      { finished: ['lighthouse', 'village', 'root', 'backup', 'keys'], name: 'Lina', achievements: { tube: 'x', manuel: 'y' }, records: { lighthouse: 90_000, village: 61_000 } },
+      { finished: ['lighthouse', 'village', 'root', 'backup', 'keys'], name: 'Lina', achievements: { pipe: 'x', manual: 'y' }, records: { lighthouse: 90_000, village: 61_000 } },
       new Date('2027-01-15T10:00:00Z'),
     );
     const e = fileStudent('lina.json', text) as Student;

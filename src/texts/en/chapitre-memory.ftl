@@ -3,12 +3,12 @@
 ### Commands, options, directives and messages (free, top, dmesg,
 ### systemctl) are not translated.
 
-chapitre-memory = Memory
+chapter-memory = Memory
     .resume = 4:31 a.m., the live stream is broadcasting nothing but silence: who killed the night playlist, and how do you stop it from taking everything down next time?
 
 ## Files
 
-memory-message-de-zoe =
+memory-message-zoe =
     A message from Zoé (4:25 a.m.):
 
     "Me again… Since 4:12, the live stream has been broadcasting nothing
@@ -27,7 +27,7 @@ memory-server-js =
       if (!cache.has(morceau.id)) cache.set(morceau.id, lire(morceau)); // TODO: empty the cache some day
       return cache.get(morceau.id);
     {"}"}
-memory-convertir-py =
+memory-convert-py =
     # Radio Quartier: converts shows into podcasts.
     import subprocess
 
@@ -37,56 +37,56 @@ memory-convertir-py =
 
 ## Events
 
-memory-evenement-oom =
+memory-event-oom =
     "Out of memory", "oom-kill": the machine ran out of memory, and the
     kernel chose a process to kill in order to survive. That's the OOM
     killer (Out Of Memory): it targets the process using the most memory.
     Its messages are in the kernel log: sudo dmesg (or sudo
     journalctl -k). How much memory is left, and who is taking it? free -h
     and top.
-memory-evenement-zombies =
+memory-event-zombies =
     Zombies: processes that have already finished, whose parent hasn't yet
     read their result (the wait system call). They take up almost nothing,
     but they give away a parent that isn't doing its job. Who is this
     parent? ps -ef shows the PPID column.
-memory-evenement-kill-zombie =
+memory-event-kill-zombie =
     kill does nothing to a zombie: it's already dead! Only its parent can
     make it disappear… or disappear itself: when the parent dies, init
     (PID 1) adopts the zombies and reaps them at once. Restarting the
     parent service is enough.
-memory-evenement-grossit =
+memory-event-grows =
     Watch the playlist in top (or top -o %MEM) from one command to the
     next: it keeps growing, by tens of megabytes each time. A memory leak!
     The code is in /opt/playlist. If nothing stops it, the kernel will have
     to kill someone again…
-memory-evenement-encore =
+memory-event-still =
     There you go: out of memory, the OOM killer has struck again (sudo
     dmesg). Restarting isn't enough, the leak starts again. Fixing the
     program is the developers' job; tonight, it has to be contained.
     systemd can limit a service's memory (MemoryMax=, see man systemctl:
     edit, set-property) and restart it if it dies (Restart=).
-memory-evenement-trop-bas =
+memory-event-too-down =
     This limit is too low: the playlist needs about 200 MB just to start,
     it would be killed almost as soon as it was launched. Give it enough
     to run for a while (a few hundred megabytes), without putting the
     machine at risk.
-memory-evenement-trop-haut =
+memory-event-too-up =
     This limit is higher than what the machine can offer without suffering
     (2 GB in total, 1 GB of which is taken by everything else): the kernel
     would strike before systemd. Aim for a few hundred megabytes instead.
-memory-evenement-sans-relance =
+memory-event-without-restart =
     systemd killed the playlist when it went over its limit, as planned:
     the machine and the relay didn't feel a thing. But it stayed stopped
     (systemctl status radio-playlist: Result: oom-kill). For systemd to
     restart it on its own, you need to add Restart=on-failure to the
     {"["}Service] section of the override (sudo systemctl edit radio-playlist).
-memory-evenement-contenue =
+memory-event-contained =
     The playlist reached its limit: systemd killed it, and immediately
     restarted it (systemctl status radio-playlist). Only the playlist
     suffered, not the machine. The silence only lasted a moment.
-memory-evenement-sans-zombies =
+memory-event-without-zombies =
     No more zombies: with their parent restarted, init reaped them.
-memory-evenement-fin =
+memory-event-end =
     The playlist is running, contained by its limit and restarted if it
     goes over it; the zombies are gone. The live stream has its music
     back. Zoé: "I'm opening a ticket about the playlist's cache. Thanks!"

@@ -19,7 +19,7 @@ import { history } from '../commands/ansible';
 import { centre, pilotAccounts, pilotState, idempotent, M, pilotWorld, NAMES, onCentre } from './fleet';
 import { CFG, INVENTORY } from './playbook';
 
-const centreState = (n: string) => centre(n, { motd: (t) => `${t('playbook-ligne-motd')}\n`, share: true, packages: ['htop'] });
+const centreState = (n: string) => centre(n, { motd: (t) => `${t('playbook-line-motd')}\n`, share: true, packages: ['htop'] });
 const ditFile = (h: Shell) => readConfig(h).values.passwordauthentication;
 const ditLoad = (h: Shell) => (h.state.sshd?.load as Record<string, string> | undefined)?.passwordauthentication;
 const executions = (j: Game) => history(j as Shell).executions;
@@ -32,8 +32,8 @@ export const rehearsal: Chapter = {
   home: M,
   welcome: 'note_from_theo.txt',
   names: true,
-  final: 'fin',
-  steps: ['repetition', 'gestionnaire', 'canari', 'fin'],
+  final: 'end',
+  steps: ['rehearsal', 'handler', 'canary', 'end'],
   password: 'districts-2027',
   accounts: pilotAccounts,
   hosts: Object.fromEntries(NAMES.map((n) => [n, centreState(n)])),
@@ -50,22 +50,22 @@ export const rehearsal: Chapter = {
       home: { 'note_from_theo.txt': f(t('rehearsal-note-theo')) },
     }),
   events: [
-    { id: 'repetition', condition: (j) => executions(j).some((e) => e.check), message: (j) => j.t('rehearsal-evenement-repetition') },
-    { id: 'gestionnaire', condition: (j) => seen(j, 'The requested handler'), message: (j) => j.t('rehearsal-evenement-gestionnaire') },
+    { id: 'rehearsal', condition: (j) => executions(j).some((e) => e.check), message: (j) => j.t('rehearsal-event-rehearsal') },
+    { id: 'handler', condition: (j) => seen(j, 'The requested handler'), message: (j) => j.t('rehearsal-event-handler') },
     {
-      id: 'canari',
+      id: 'canary',
       condition: (j) => executions(j).some((e) => !e.check && !!e.limit && Object.values(e.changes).some((l) => l.includes('/etc/ssh/sshd_config'))),
-      message: (j) => j.t('rehearsal-evenement-canari'),
+      message: (j) => j.t('rehearsal-event-canary'),
     },
     {
-      id: 'pas-recharge',
+      id: 'not-reload',
       condition: (j) => NAMES.some((n) => ditFile(onCentre(j, n)) === 'no' && ditLoad(onCentre(j, n)) !== 'no'),
-      message: (j) => j.t('rehearsal-evenement-pas-recharge'),
+      message: (j) => j.t('rehearsal-event-not-reload'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => NAMES.every((n) => ditFile(onCentre(j, n)) === 'no' && ditLoad(onCentre(j, n)) === 'no') && idempotent(j),
-      message: (j) => j.t('rehearsal-evenement-fin'),
+      message: (j) => j.t('rehearsal-event-end'),
     },
   ],
 };

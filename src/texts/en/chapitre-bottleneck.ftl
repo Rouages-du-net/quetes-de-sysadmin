@@ -2,12 +2,12 @@
 ### (iowait), iostat, pidstat, ionice and systemd's bandwidth limit.
 ### Commands, paths, unit names and log lines are not translated.
 
-chapitre-bottleneck = The bottleneck
+chapter-bottleneck = The bottleneck
     .resume = Every afternoon at 4 pm, the live stream stutters: find what is saturating the disk, and limit it without stopping it.
 
 ## Files
 
-bottleneck-message-de-zoe =
+bottleneck-message-zoe =
     A message from Zoé (4:12 pm):
 
     "It's happening again! Every day, around 4 pm, the live stream has
@@ -27,7 +27,7 @@ bottleneck-message-de-zoe =
 
 ## Events
 
-bottleneck-evenement-iowait =
+bottleneck-event-iowait =
     Look at top's %Cpu(s) line: the processor is almost never busy (us,
     sy), but "wa" is huge. That's iowait: the time processes spend
     waiting for the disk. The load (load average) counts these blocked
@@ -35,7 +35,7 @@ bottleneck-evenement-iowait =
     The bottleneck is the disk: iostat -x shows how busy it is (%util)
     and how long each request waits (r_await, in ms); pidstat -d shows
     who reads and writes.
-bottleneck-evenement-ionice =
+bottleneck-event-ionice =
     ionice accepted the "idle" class… but look at iostat: nothing has
     changed. ionice priorities only count if the disk's scheduler
     handles them (bfq, mq-deadline). This virtual disk's scheduler is
@@ -43,21 +43,21 @@ bottleneck-evenement-ionice =
     order, with no priority. A bandwidth limit, however, works with
     every scheduler: systemd sets it on the service's cgroup
     (man systemd.resource-control, IOWriteBandwidthMax=).
-bottleneck-evenement-arret =
+bottleneck-event-stop =
     The archiving is no longer running. The live stream can breathe… but
     today's shows won't be archived, and tomorrow at 4 pm, the timer will
     start it again at full speed. Start it again (sudo systemctl start
     radio-archives), but with a bandwidth limit.
-bottleneck-evenement-mauvais-disque =
+bottleneck-event-bad-disk =
     systemd recorded the limit, but it targets a disk that doesn't exist
     here: it slows nothing down. This machine's disk is vda (iostat
     shows it); you can also give a path, and systemd finds the disk that
     holds it.
-bottleneck-evenement-trop-lent =
+bottleneck-event-too-slow =
     A limit this low protects the live stream… but today's archiving
     won't be done before tomorrow. A few tens of MiB/s are enough: look
     at iostat after each try, and find the right balance.
-bottleneck-evenement-fin =
+bottleneck-event-end =
     The live stream no longer stutters: its reads wait a few
     milliseconds, not hundreds. The archiving goes on, more slowly, and
     its limit is recorded: tomorrow at 4 pm, it will apply by itself.

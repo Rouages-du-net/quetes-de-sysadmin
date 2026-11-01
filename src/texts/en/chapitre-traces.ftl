@@ -3,12 +3,12 @@
 ### cron job left by the intruder. The commands, the paths and the tools'
 ### messages are not translated.
 
-chapitre-traces = The Traces
+chapter-traces = The Traces
     .resume = Trace an unexpected login: journal, last, a key's fingerprint, the intruder's key and cron job.
 
 ## Files
 
-traces-courriel-salome =
+traces-email-salome =
     From:     Salomé (auditor)
     To:       you
     Subject:  Bakery audit — part three: the traces
@@ -45,7 +45,7 @@ traces-courriel-salome =
 ## Events
 
 # { $adresse }: the address the login came from
-traces-evenement-trouve =
+traces-event-found =
     There is the login: a session of the "nadia" account from { $adresse },
     at 3:12 a.m., whereas Nadia usually connects from the shop
     (198.51.100.7), in the evening. The ssh journal kept the fingerprint of
@@ -53,32 +53,32 @@ traces-evenement-trouve =
 
     Which key in /home/nadia/.ssh/authorized_keys has that fingerprint?
     (man ssh-keygen, option -l)
-traces-evenement-cle-identifiee =
+traces-event-key-identified =
     There is the fingerprint of each key in the file. Compare with the one
     in the journal: the second key is the one used that night, and yet it
     carries the comment "nadia@portable". The comment is only a label.
 
     Remove that line (and only that one) from authorized_keys.
-traces-evenement-nadia-enfermee =
+traces-event-nadia-locked-out =
     Warning: Nadia's key is no longer in authorized_keys! She could no
     longer log in. Put her key back (the one whose fingerprint is in the
     evening logins, from the shop): we remove the intruder's key, not
     Nadia's.
-traces-evenement-cle-revoquee =
+traces-event-key-revoked =
     Only Nadia's key is left in authorized_keys: the intruder's key can no
     longer open a session.
 
     But removing the key only closes the door they came through. What did
     they leave inside during those three minutes? Look at what runs by
     itself for Nadia's account (man crontab).
-traces-evenement-cron-decouvert =
+traces-event-cron-found =
     Two tasks for Nadia: sauvegarde.sh at 4 a.m. (that one is hers), and a
     line that, every ten minutes, downloads a program from 203.0.113.99 and
     runs it. That is the intruder's beacon: they can change what the server
     does remotely, even without a key.
 
     Remove that line, and only that one.
-traces-evenement-secret-vu =
+traces-event-secret-seen =
     There is what the person typed during their three minutes: they read
     /srv/commandes/.env. At the time, that file was readable by everyone
     ("The Report"): the database password is compromised, even though the key
@@ -89,34 +89,34 @@ traces-evenement-secret-vu =
     ALTER ROLE ... PASSWORD, from the postgres account) AND in the .env file,
     then restart the app. Pick a long password (twelve characters at least)
     and different from the old one.
-traces-evenement-mot-de-passe-faible =
+traces-event-password-weak =
     The database password has changed, but it is too short: twelve characters
     at least, and a passphrase beats a word. A secret that can be guessed is
     as bad a replacement as the one you lost.
-traces-evenement-a-redemarrer =
+traces-event-a-restart =
     The database and .env have the same new password, but the app still runs
     with the old one: it reads .env when it starts, not when the file
     changes. Restart it (systemctl restart commandes) then check that it
     stays active (systemctl status commandes).
-traces-evenement-appli-tombee =
+traces-event-app-down =
     The orders app is stopped: at startup, it read in .env a password the
     database does not accept (journalctl -u commandes: "password
     authentication failed"). Both sides must say the same thing: the
     password of the commandes role in PostgreSQL, and that of DATABASE_URL in
     the .env file. Fix the one that differs, then restart the app.
-traces-evenement-mot-de-passe =
+traces-event-password =
     The database password is changed end to end: the role in PostgreSQL, the
     file .env (still closed to the other accounts), and the restarted app
     that connects with it. The old one, which the intruder read, opens
     nothing any more.
-traces-evenement-sauvegarde-perdue =
+traces-event-backup-lost =
     Nadia's backup (sauvegarde.sh, at 4 a.m.) is no longer scheduled:
     crontab -r erases the WHOLE crontab. Put her line back:
       0 4 * * * /srv/commandes/bin/sauvegarde.sh
     and remove only the intruder's line.
-traces-evenement-cron-nettoye =
+traces-event-cron-cleaned =
     No more beacon, and Nadia's real backup is still there.
-traces-evenement-fin =
+traces-event-end =
     The intruder's key is removed, so is their task, the password they read
     is replaced everywhere, and Nadia can still log in and back up. Salomé: "My report is complete. I'll come back in six
     months to see whether everything holds."

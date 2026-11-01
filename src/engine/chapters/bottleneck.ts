@@ -92,7 +92,7 @@ export const bottleneck: Chapter = {
   home: M,
   welcome: 'message_from_zoe.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'antenna-2027',
   accounts,
   state: (t) => ({
@@ -193,7 +193,7 @@ export const bottleneck: Chapter = {
     const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
     return place({
       etc: place({ ...accountsFiles(), hostname: file('radio'), systemd: place({ system: place({}) }) }),
-      home: place({ you: d({ 'message_from_zoe.txt': f(t('bottleneck-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      home: place({ you: d({ 'message_from_zoe.txt': f(t('bottleneck-message-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       sys: place({ block: place({ vda: place({ queue: place({ scheduler: file('[none] mq-deadline'), rotational: file('0') }) }) }) }),
       srv: place({ radio: place({ recordings: place({}), live: place({}) }, { owner: 'radio' }), archives: place({}) }),
       usr: place({
@@ -219,20 +219,20 @@ export const bottleneck: Chapter = {
     {
       id: 'iowait',
       condition: (j) => !timeAServed(j) && j.last.commands.some((c) => c.includes('top')),
-      message: (j) => j.t('bottleneck-evenement-iowait'),
+      message: (j) => j.t('bottleneck-event-iowait'),
     },
     {
       id: 'ionice',
       condition: (j) => (io(j) as IoState).classes[ARCHIVES]?.cls === 3 && !activesPriorities(io(j) as IoState),
-      message: (j) => j.t('bottleneck-evenement-ionice'),
+      message: (j) => j.t('bottleneck-event-ionice'),
     },
-    { id: 'arret', condition: (j) => !running(j), message: (j) => j.t('bottleneck-evenement-arret') },
+    { id: 'stop', condition: (j) => !running(j), message: (j) => j.t('bottleneck-event-stop') },
     {
-      id: 'mauvais-disque',
+      id: 'bad-disk',
       condition: (j) => [archives(j).writeIo, archives(j).readIo].some((l) => l && !targetsPartition(l.device, 'vda')),
-      message: (j) => j.t('bottleneck-evenement-mauvais-disque'),
+      message: (j) => j.t('bottleneck-event-bad-disk'),
     },
-    { id: 'trop-lent', condition: (j) => limit(j).some((l) => l!.bytes < 5 * Mo), message: (j) => j.t('bottleneck-evenement-trop-lent') },
-    { id: 'fin', condition: (j) => running(j) && reasonable(j), message: (j) => j.t('bottleneck-evenement-fin') },
+    { id: 'too-slow', condition: (j) => limit(j).some((l) => l!.bytes < 5 * Mo), message: (j) => j.t('bottleneck-event-too-slow') },
+    { id: 'end', condition: (j) => running(j) && reasonable(j), message: (j) => j.t('bottleneck-event-end') },
   ],
 };

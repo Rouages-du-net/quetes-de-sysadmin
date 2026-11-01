@@ -202,7 +202,7 @@ function findCommit(d: Repo, ref: string): Commit | null {
 function write(game: Shell, path: string, text: string): string | null {
   const n = game.find(path);
   if (n?.type === 'fichier') {
-    if (!game.can(n, 'w')) return game.t('git-ecriture-permission', { fichier: game.name(path) });
+    if (!game.can(n, 'w')) return game.t('git-write-permission', { fichier: game.name(path) });
     n.content = text;
     delete n.size;
     return null;
@@ -216,7 +216,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const bare = args.includes('--bare');
     const place = args.find((a) => !a.startsWith('-'));
     const path = place ? game.resolve(place) : game.cwd;
-    if (depots[path] && game.exists(path)) return game.t(bare ? 'git-init-existant-nu' : 'git-init-existant', { chemin: path });
+    if (depots[path] && game.exists(path)) return game.t(bare ? 'git-init-existing-bare' : 'git-init-existing', { chemin: path });
     if (place && !game.exists(path)) {
       const error = game.place('git', path, { type: 'dossier', owner: game.who, children: {} });
       if (error) return game.error(game.t('git-init-impossible', { chemin: path }));
@@ -251,13 +251,13 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
       if (error) return game.error(error);
     }
     depots[path] = { commits: [], index: {}, ...(bare ? { bare: true } : {}) };
-    return game.t(bare ? 'git-init-vide-nu' : 'git-init-vide', { chemin: path });
+    return game.t(bare ? 'git-init-empty-bare' : 'git-init-empty', { chemin: path });
   },
 
   status: (game) => {
     const here = hereRepo(game);
-    if (!here) return game.error(game.t('git-pas-de-depot'));
-    if (here.repo.bare) return game.error(game.t('git-pas-d-arbre'));
+    if (!here) return game.error(game.t('git-not-repo'));
+    if (here.repo.bare) return game.error(game.t('git-not-tree'));
     const { repo } = here;
     const head = headRef(repo)?.files ?? {};
     const w = travail(game, here.path);
@@ -266,52 +266,52 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const notTracked: string[] = [];
     const line = (state: string, file: string, code: string) => '\t' + paint(code, game.t(`git-status-${state}`, { fichier: file }));
     for (const name of Object.keys({ ...head, ...repo.index }).sort()) {
-      if (!(name in repo.index)) indexes.push(line('supprime', name, '32'));
-      else if (!(name in head)) indexes.push(line('nouveau', name, '32'));
-      else if (head[name] !== repo.index[name]) indexes.push(line('modifie', name, '32'));
+      if (!(name in repo.index)) indexes.push(line('deleted', name, '32'));
+      else if (!(name in head)) indexes.push(line('new', name, '32'));
+      else if (head[name] !== repo.index[name]) indexes.push(line('modified', name, '32'));
     }
     for (const name of Object.keys(repo.index).sort()) {
-      if (!(name in w)) notIndexes.push(line('supprime', name, '31'));
-      else if (w[name] !== repo.index[name]) notIndexes.push(line('modifie', name, '31'));
+      if (!(name in w)) notIndexes.push(line('deleted', name, '31'));
+      else if (w[name] !== repo.index[name]) notIndexes.push(line('modified', name, '31'));
     }
     for (const name of Object.keys(w).sort()) if (!(name in repo.index)) notTracked.push(`\t${paint('31', name)}`);
-    const blocks = [game.t('git-status-branche')];
-    if (!repo.commits.length) blocks.push('\n' + game.t('git-status-aucun-commit'));
+    const blocks = [game.t('git-status-branch')];
+    if (!repo.commits.length) blocks.push('\n' + game.t('git-status-none-commit'));
     if (indexes.length) blocks.push('\n' + game.t('git-status-indexes') + '\n' + indexes.join('\n'));
-    if (notIndexes.length) blocks.push('\n' + game.t('git-status-non-indexes') + '\n' + notIndexes.join('\n'));
-    if (notTracked.length) blocks.push('\n' + game.t('git-status-non-suivis') + '\n' + notTracked.join('\n'));
-    if (!indexes.length && !notIndexes.length && !notTracked.length) blocks.push(game.t('git-status-propre'));
+    if (notIndexes.length) blocks.push('\n' + game.t('git-status-not-indexes') + '\n' + notIndexes.join('\n'));
+    if (notTracked.length) blocks.push('\n' + game.t('git-status-not-tracked') + '\n' + notTracked.join('\n'));
+    if (!indexes.length && !notIndexes.length && !notTracked.length) blocks.push(game.t('git-status-own'));
     else if (!indexes.length)
-      blocks.push('\n' + game.t(notTracked.length && !notIndexes.length ? 'git-status-seulement-non-suivis' : 'git-status-rien-ajoute'));
+      blocks.push('\n' + game.t(notTracked.length && !notIndexes.length ? 'git-status-only-not-tracked' : 'git-status-nothing-added'));
     return blocks.join('\n');
   },
 
   add: (game, args) => {
     const here = hereRepo(game);
-    if (!here) return game.error(game.t('git-pas-de-depot'));
-    if (here.repo.bare) return game.error(game.t('git-pas-d-arbre'));
-    if (!args.length) return game.error(game.t('git-add-rien'));
+    if (!here) return game.error(game.t('git-not-repo'));
+    if (here.repo.bare) return game.error(game.t('git-not-tree'));
+    if (!args.length) return game.error(game.t('git-add-nothing'));
     const w = travail(game, here.path);
     const all = args.includes('.') || args.includes('-A') || args.includes('--all');
     const names = all ? [...new Set([...Object.keys(w), ...Object.keys(here.repo.index)])] : args.map((a) => game.name(a));
     for (const name of names) {
       if (name in w) here.repo.index[name] = w[name];
       else if (name in here.repo.index) delete here.repo.index[name];
-      else return game.error(game.t('git-chemin-inconnu', { fichier: name }));
+      else return game.error(game.t('git-path-unknown', { fichier: name }));
     }
     return '';
   },
 
   rm: (game, args) => {
     const here = hereRepo(game);
-    if (!here) return game.error(game.t('git-pas-de-depot'));
-    if (here.repo.bare) return game.error(game.t('git-pas-d-arbre'));
+    if (!here) return game.error(game.t('git-not-repo'));
+    if (here.repo.bare) return game.error(game.t('git-not-tree'));
     const keep = args.includes('--cached');
     const names = args.filter((a) => !a.startsWith('-')).map((a) => game.name(a));
     if (!names.length) return game.error(game.t('git-rm-usage'));
     const outputs: string[] = [];
     for (const name of names) {
-      if (!(name in here.repo.index)) return game.error(game.t('git-chemin-inconnu', { fichier: name }));
+      if (!(name in here.repo.index)) return game.error(game.t('git-path-unknown', { fichier: name }));
       delete here.repo.index[name];
       // Sans --cached, git rm efface aussi le fichier de la copie de travail.
       if (!keep) delete (game.find(here.path) as Directory).children[name];
@@ -322,12 +322,12 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
 
   commit: (game, args) => {
     const here = hereRepo(game);
-    if (!here) return game.error(game.t('git-pas-de-depot'));
-    if (here.repo.bare) return game.error(game.t('git-pas-d-arbre'));
+    if (!here) return game.error(game.t('git-not-repo'));
+    if (here.repo.bare) return game.error(game.t('git-not-tree'));
     // -m message, -a (ajouter d'abord les fichiers suivis modifiés), ou les deux : -am.
     const i = args.findIndex((a) => a === '-m' || /^-[a-z]*m$/.test(a));
     const message = i >= 0 ? args[i + 1] : undefined;
-    if (!message) return game.error(game.t('git-commit-sans-message'));
+    if (!message) return game.error(game.t('git-commit-without-message'));
     if (args.some((a) => a === '--all' || /^-[a-z]*a[a-z]*$/.test(a))) {
       const w = travail(game, here.path);
       for (const name of Object.keys(here.repo.index)) {
@@ -338,23 +338,23 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const parent = headRef(here.repo);
     const before = parent?.files ?? {};
     const { files, more, moins: less } = account(before, here.repo.index);
-    if (!files) return game.error(game.t('git-rien-a-valider'));
+    if (!files) return game.error(game.t('git-nothing-a-validate'));
     const c = newCommit(parent, message, game.state.auteur ?? `${game.player} <${game.player}@example.org>`, game.state.date ?? 'Tue Oct 13 21:04:00 2026 +0200', here.repo.index);
     here.repo.commits.push(c);
     // Comme git : on ne mentionne pas les insertions ou suppressions nulles.
     const summary = [
-      game.t('git-commit-fichiers', { nombre: files }),
+      game.t('git-commit-files', { nombre: files }),
       ...(more ? [game.t('git-commit-insertions', { nombre: more })] : []),
-      ...(less ? [game.t('git-commit-suppressions', { nombre: less })] : []),
+      ...(less ? [game.t('git-commit-deletions', { nombre: less })] : []),
     ].join(', ');
-    const header = game.t(parent ? 'git-commit-entete' : 'git-commit-entete-racine', { id: c.id.slice(0, 7), message });
+    const header = game.t(parent ? 'git-commit-header' : 'git-commit-header-root', { id: c.id.slice(0, 7), message });
     return `${header}\n ${summary}`;
   },
 
   log: (game, args) => {
     const here = hereRepo(game);
-    if (!here) return game.error(game.t('git-pas-de-depot'));
-    if (!here.repo.commits.length) return game.error(game.t('git-aucun-commit-branche'));
+    if (!here) return game.error(game.t('git-not-repo'));
+    if (!here.repo.commits.length) return game.error(game.t('git-none-commit-branch'));
     const short = args.includes('--oneline');
     return [...here.repo.commits]
       .reverse()
@@ -368,8 +368,8 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
 
   diff: (game, args) => {
     const here = hereRepo(game);
-    if (!here) return game.error(game.t('git-pas-de-depot'));
-    if (here.repo.bare) return game.error(game.t('git-pas-d-arbre'));
+    if (!here) return game.error(game.t('git-not-repo'));
+    if (here.repo.bare) return game.error(game.t('git-not-tree'));
     const { repo } = here;
     const w = travail(game, here.path);
     const indexed = args.includes('--staged') || args.includes('--cached');
@@ -382,7 +382,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
       after = repo.index;
     } else if (words[0] && !game.exists(`${here.path}/${words[0]}`)) {
       const c = findCommit(repo, words[0]);
-      if (!c) return game.error(game.t('git-revision-ambigue', { revision: words[0] }));
+      if (!c) return game.error(game.t('git-revision-ambiguous', { revision: words[0] }));
       before = c.files;
       rest = words.slice(1);
     }
@@ -397,9 +397,9 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
 
   show: (game, args) => {
     const here = hereRepo(game);
-    if (!here) return game.error(game.t('git-pas-de-depot'));
+    if (!here) return game.error(game.t('git-not-repo'));
     const c = findCommit(here.repo, args[0] ?? 'HEAD');
-    if (!c) return game.error(game.t('git-revision-ambigue', { revision: String(args[0]) }));
+    if (!c) return game.error(game.t('git-revision-ambiguous', { revision: String(args[0]) }));
     const parent = c.parent ? here.repo.commits.find((p) => p.id === c.parent)!.files : {};
     const names = [...new Set([...Object.keys(parent), ...Object.keys(c.files)])].sort();
     return [
@@ -410,20 +410,20 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
 
   restore: (game, args) => {
     const here = hereRepo(game);
-    if (!here) return game.error(game.t('git-pas-de-depot'));
-    if (here.repo.bare) return game.error(game.t('git-pas-d-arbre'));
+    if (!here) return game.error(game.t('git-not-repo'));
+    if (here.repo.bare) return game.error(game.t('git-not-tree'));
     const source = args.find((a) => a.startsWith('--source='))?.slice(9);
     const indexed = args.includes('--staged');
     const names = args.filter((a) => !a.startsWith('-')).map((a) => game.name(a));
-    if (!names.length) return game.error(game.t('git-restore-sans-chemin'));
+    if (!names.length) return game.error(game.t('git-restore-without-path'));
     let since: Record<string, string> = here.repo.index;
     if (source) {
       const c = findCommit(here.repo, source);
-      if (!c) return game.error(game.t('git-reference-invalide', { revision: source }));
+      if (!c) return game.error(game.t('git-reference-invalid', { revision: source }));
       since = c.files;
     } else if (indexed) since = headRef(here.repo)?.files ?? {};
     for (const name of names) {
-      if (!(name in since)) return game.error(game.t('git-restore-inconnu', { fichier: name }));
+      if (!(name in since)) return game.error(game.t('git-restore-unknown', { fichier: name }));
       if (indexed) here.repo.index[name] = since[name];
       else {
         const error = write(game, `${here.path}/${name}`, since[name]);
@@ -442,17 +442,17 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
       return UNDER.restore(game, [...(ref ? [`--source=${ref}`] : []), ...args.slice(sep + 1)]);
     }
     const here = hereRepo(game);
-    if (!here) return game.error(game.t('git-pas-de-depot'));
-    if (!general.workTree) return game.error(game.t(here.repo.bare ? 'git-pas-d-arbre' : 'git-checkout-usage'));
+    if (!here) return game.error(game.t('git-not-repo'));
+    if (!general.workTree) return game.error(game.t(here.repo.bare ? 'git-not-tree' : 'git-checkout-usage'));
     const force = args.includes('-f') || args.includes('--force');
     const ref = args.find((a) => !a.startsWith('-')) ?? 'HEAD';
     const c = findCommit(here.repo, ref);
     if (!c)
       return game.error(
-        here.repo.commits.length ? game.t('git-revision-ambigue', { revision: ref }) : game.t('git-reference-invalide', { revision: ref }),
+        here.repo.commits.length ? game.t('git-revision-ambiguous', { revision: ref }) : game.t('git-reference-invalid', { revision: ref }),
       );
     const place = game.resolve(general.workTree);
-    if (game.find(place)?.type !== 'dossier') return game.error(game.t('git-work-tree-introuvable', { chemin: place }));
+    if (game.find(place)?.type !== 'dossier') return game.error(game.t('git-work-tree-missing', { chemin: place }));
     const excerpts = (here.repo.excerpts ??= {});
     const before = excerpts[place];
     // Sans -f, git refuse d'écraser ce qu'il ne connaît pas, ou ce qu'on a modifié à la main.
@@ -467,7 +467,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
         });
       if (overwritten.length)
         return game.error(
-          game.t(before ? 'git-checkout-modifications-locales' : 'git-checkout-non-suivis', { fichiers: overwritten.map((f) => `\t${f}`).join('\n') }),
+          game.t(before ? 'git-checkout-changes-local' : 'git-checkout-not-tracked', { fichiers: overwritten.map((f) => `\t${f}`).join('\n') }),
         );
     }
     for (const [name, text] of Object.entries(c.files)) {
@@ -488,7 +488,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     if (!source) return game.error(game.t('git-clone-usage'));
     const path = game.resolve(source).replace(/\/$/, '');
     const origin = repoIn(game, path);
-    if (!origin) return game.error(game.t('git-distant-introuvable', { depot: source }));
+    if (!origin) return game.error(game.t('git-remote-missing', { depot: source }));
     const name =
       destination ??
       path
@@ -496,8 +496,8 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
         .at(-1)!
         .replace(/\.git$/, '');
     const target = game.resolve(name);
-    if (game.exists(target)) return game.error(game.t('git-clone-existe', { chemin: name }));
-    const lines = [game.t('git-clone-dans', { chemin: name })];
+    if (game.exists(target)) return game.error(game.t('git-clone-exists', { chemin: name }));
+    const lines = [game.t('git-clone-in', { chemin: name })];
     const before = game.cwd;
     const error = game.place('git', target, { type: 'dossier', owner: game.who, children: {} });
     if (error) return game.error(error);
@@ -514,14 +514,14 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     if (h) {
       repo.index = { ...h.files };
       for (const [f, text] of Object.entries(h.files)) write(game, `${target}/${f}`, text);
-      lines.push(game.t('git-fait'));
-    } else lines.push(game.t('git-clone-vide'));
+      lines.push(game.t('git-done'));
+    } else lines.push(game.t('git-clone-empty'));
     return lines.join('\n');
   },
 
   remote: (game, args) => {
     const here = hereRepo(game);
-    if (!here) return game.error(game.t('git-pas-de-depot'));
+    if (!here) return game.error(game.t('git-not-repo'));
     const remotes = (here.repo.remotes ??= {});
     const [action, name, url] = args.filter((a) => a !== '-v' && a !== '--verbose');
     if (!action)
@@ -530,57 +530,57 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
         .join('\n');
     if (action === 'add') {
       if (!name || !url) return game.error(game.t('git-remote-usage'));
-      if (remotes[name]) return game.error(game.t('git-remote-existe', { nom: name }));
+      if (remotes[name]) return game.error(game.t('git-remote-exists', { nom: name }));
       remotes[name] = url;
       return '';
     }
     if (action === 'remove' || action === 'rm') {
-      if (!name || !remotes[name]) return game.error(game.t('git-remote-inconnu', { nom: name ?? '' }));
+      if (!name || !remotes[name]) return game.error(game.t('git-remote-unknown', { nom: name ?? '' }));
       delete remotes[name];
       return '';
     }
     if (action === 'set-url') {
       if (!name || !url) return game.error(game.t('git-remote-usage'));
-      if (!remotes[name]) return game.error(game.t('git-remote-inconnu', { nom: name }));
+      if (!remotes[name]) return game.error(game.t('git-remote-unknown', { nom: name }));
       remotes[name] = url;
       return '';
     }
-    if (action === 'get-url') return remotes[name ?? ''] ?? game.error(game.t('git-remote-inconnu', { nom: name ?? '' }));
+    if (action === 'get-url') return remotes[name ?? ''] ?? game.error(game.t('git-remote-unknown', { nom: name ?? '' }));
     return game.error(game.t('git-remote-usage'));
   },
 
   push: (game, args) => {
     const here = hereRepo(game);
-    if (!here) return game.error(game.t('git-pas-de-depot'));
+    if (!here) return game.error(game.t('git-not-repo'));
     const [remoteName, branch = 'main'] = args.filter((a) => !a.startsWith('-'));
     const follow = args.includes('-u') || args.includes('--set-upstream');
     const remotes = here.repo.remotes ?? {};
     const name = remoteName ?? (remotes.origin ? 'origin' : undefined);
-    if (!name) return game.error(game.t('git-push-sans-destination'));
+    if (!name) return game.error(game.t('git-push-without-destination'));
     const url = remotes[name] ?? name;
     const path = game.resolve(url).replace(/\/$/, '');
     const remote = repoIn(game, path);
-    if (!remote) return game.error(game.t('git-distant-introuvable', { depot: url }));
+    if (!remote) return game.error(game.t('git-remote-missing', { depot: url }));
     const refusal = (reason: string) =>
-      `${game.t('git-vers', { depot: url })}\n ! [remote rejected] main -> main (${reason})\n${game.t('git-push-impossible', { depot: url })}`;
+      `${game.t('git-to', { depot: url })}\n ! [remote rejected] main -> main (${reason})\n${game.t('git-push-impossible', { depot: url })}`;
     if (branch.replace(/^refs\/heads\//, '').replace(/^HEAD$/, 'main') !== 'main' || !here.repo.commits.length)
-      return game.error(`${game.t('git-refspec-inconnue', { ref: branch })}\n${game.t('git-push-impossible', { depot: url })}`);
+      return game.error(`${game.t('git-refspec-unknown', { ref: branch })}\n${game.t('git-push-impossible', { depot: url })}`);
     const before = headRef(remote);
     const local = headRef(here.repo)!;
-    if (before?.id === local.id) return game.t('git-tout-a-jour');
+    if (before?.id === local.id) return game.t('git-all-a-day');
     // Le distant a des commits qu'on n'a pas : il faut d'abord les récupérer (git pull).
     if (before && !here.repo.commits.some((c) => c.id === before.id))
       return game.error(
-        `${game.t('git-vers', { depot: url })}\n ! [rejected]        main -> main (fetch first)\n${game.t('git-push-impossible', { depot: url })}\n${game.t('git-push-rejete-astuce')}`,
+        `${game.t('git-to', { depot: url })}\n ! [rejected]        main -> main (fetch first)\n${game.t('git-push-impossible', { depot: url })}\n${game.t('git-push-rejected-tip')}`,
       );
     const fresh = here.repo.commits.length - (before ? here.repo.commits.findIndex((c) => c.id === before.id) + 1 : 0);
     const objets = fresh * 3;
-    const lines = game.t('git-push-progression', { objets: String(objets), octets: String(240 + objets * 37) }).split('\n');
+    const lines = game.t('git-push-progress', { objets: String(objets), octets: String(240 + objets * 37) }).split('\n');
     // Écrire dans un dépôt nu : il faut le droit d'écrire dans ses objets.
     const objetsPlace = game.find(`${path}/objects`) ?? game.find(`${path}/.git/objects`);
-    if (objetsPlace && !game.can(objetsPlace, 'w')) return game.error([...lines, game.t('git-push-droits'), refusal('unpacker error')].join('\n'));
+    if (objetsPlace && !game.can(objetsPlace, 'w')) return game.error([...lines, game.t('git-push-rights'), refusal('unpacker error')].join('\n'));
     // Pousser vers la branche extraite d'un dépôt non nu : refusé (receive.denyCurrentBranch).
-    if (!remote.bare) return game.error([...lines, game.t('git-push-branche-extraite'), refusal('branch is currently checked out')].join('\n'));
+    if (!remote.bare) return game.error([...lines, game.t('git-push-branch-extracted'), refusal('branch is currently checked out')].join('\n'));
     // Envoyer prend un peu de temps (l'horloge de la machine avance).
     const sd = systemd(game);
     if (sd) sd.clock += 20_000;
@@ -590,7 +590,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
       const n = game.find(file);
       if (n?.type !== 'fichier') return null;
       if (!game.can(n, 'x')) {
-        remoteRefs.push(...game.t('git-crochet-ignore', { crochet: file }).split('\n'));
+        remoteRefs.push(...game.t('git-hook-ignore', { crochet: file }).split('\n'));
         return null;
       }
       const previous = general;
@@ -616,7 +616,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
         [
           ...lines,
           ...prefix(),
-          `${game.t('git-vers', { depot: url })}\n ! [remote rejected] main -> main (pre-receive hook declined)`,
+          `${game.t('git-to', { depot: url })}\n ! [remote rejected] main -> main (pre-receive hook declined)`,
           game.t('git-push-impossible', { depot: url }),
         ].join('\n'),
       );
@@ -626,26 +626,26 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     return [
       ...lines,
       ...prefix(),
-      game.t('git-vers', { depot: url }),
+      game.t('git-to', { depot: url }),
       before ? `   ${short(before)}..${short(local)}  main -> main` : ' * [new branch]      main -> main',
-      ...(follow ? [game.t('git-push-suivi', { distant: name })] : []),
+      ...(follow ? [game.t('git-push-follow', { distant: name })] : []),
     ].join('\n');
   },
 
   pull: (game, args) => {
     const here = hereRepo(game);
-    if (!here) return game.error(game.t('git-pas-de-depot'));
-    if (here.repo.bare) return game.error(game.t('git-pas-d-arbre'));
+    if (!here) return game.error(game.t('git-not-repo'));
+    if (here.repo.bare) return game.error(game.t('git-not-tree'));
     const [remoteName] = args.filter((a) => !a.startsWith('-'));
     const name = remoteName ?? (here.repo.remotes?.origin ? 'origin' : undefined);
-    if (!name) return game.error(game.t('git-pull-sans-distant'));
+    if (!name) return game.error(game.t('git-pull-without-remote'));
     const url = here.repo.remotes?.[name] ?? name;
     const remote = repoIn(game, game.resolve(url).replace(/\/$/, ''));
-    if (!remote) return game.error(game.t('git-distant-introuvable', { depot: url }));
+    if (!remote) return game.error(game.t('git-remote-missing', { depot: url }));
     const their = headRef(remote);
     const our = headRef(here.repo);
-    const header = [game.t('git-depuis', { depot: url }), ' * branch            main       -> FETCH_HEAD'];
-    if (!their || their.id === our?.id || here.repo.commits.some((c) => c.id === their.id)) return [...header, game.t('git-deja-a-jour')].join('\n');
+    const header = [game.t('git-since', { depot: url }), ' * branch            main       -> FETCH_HEAD'];
+    if (!their || their.id === our?.id || here.repo.commits.some((c) => c.id === their.id)) return [...header, game.t('git-already-a-day')].join('\n');
     if (our && !remote.commits.some((c) => c.id === our.id)) return game.error([...header, game.t('git-pull-diverge')].join('\n'));
     const before = our?.files ?? {};
     here.repo.commits = [...remote.commits];
@@ -662,14 +662,14 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
         return `${n} | ${k.more + k.moins} ${'+'.repeat(k.more)}${'-'.repeat(k.moins)}`;
       });
     const summary = [
-      game.t('git-commit-fichiers', { nombre: files }),
+      game.t('git-commit-files', { nombre: files }),
       ...(more ? [game.t('git-commit-insertions', { nombre: more })] : []),
-      ...(less ? [game.t('git-commit-suppressions', { nombre: less })] : []),
+      ...(less ? [game.t('git-commit-deletions', { nombre: less })] : []),
     ].join(', ');
     return [
       ...header,
-      game.t('git-mise-a-jour', { avant: short(our), apres: short(their) }),
-      game.t('git-avance-rapide'),
+      game.t('git-update', { avant: short(our), apres: short(their) }),
+      game.t('git-advance-fast'),
       ...names.map((n) => ` ${n}`),
       ` ${summary}`,
     ].join('\n');
@@ -693,7 +693,7 @@ export const GIT: Record<string, Command> = {
         else if (a === '--work-tree') general.workTree = args[++i];
         else if (a === '--version') return 'git version 2.47.2';
         else if (a === '--help') return game.t('git-usage');
-        else return game.error(game.t('git-option-inconnue', { option: a }));
+        else return game.error(game.t('git-option-unknown', { option: a }));
       }
       const [under, ...raw] = args.slice(i);
       // --color[=QUAND] et --no-color, sur la sous-commande ; par défaut, à l'écran seulement.
@@ -703,7 +703,7 @@ export const GIT: Record<string, Command> = {
       try {
         if (!under) return game.error(game.t('git-usage'));
         const f = UNDER[under];
-        if (!f) return game.error(game.t('git-sous-commande-inconnue', { commande: under, commandes: Object.keys(UNDER).join(', ') }));
+        if (!f) return game.error(game.t('git-under-command-unknown', { commande: under, commandes: Object.keys(UNDER).join(', ') }));
         const output = f(game, rest);
         return ['diff', 'show', 'log'].includes(under) ? colourDiff(output) : output;
       } finally {

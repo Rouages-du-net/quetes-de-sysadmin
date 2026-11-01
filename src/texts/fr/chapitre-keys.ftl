@@ -3,13 +3,13 @@
 ### Les mots-clés de sshd_config, les commandes, les chemins et les messages
 ### d'OpenSSH (en anglais) ne se traduisent pas.
 
-chapitre-keys = Les clés
+chapter-keys = Les clés
     .resume = Ton compte a un mot de passe provisoire (lilas-2027) : ssh-keygen, ssh-copy-id, puis plus de mots de passe du tout.
 
 ## Fichiers
 
 # { $motdepasse } : le mot de passe provisoire du compte
-keys-courriel-yasmine =
+keys-email-yasmine =
     De :     Yasmine (coordinatrice de la Maison des associations)
     À :      toi
     Objet :  Bienvenue dans l'équipe !
@@ -40,32 +40,32 @@ keys-courriel-yasmine =
 ## Événements
 
 # { $config } : le chemin du fichier de configuration
-keys-evenement-erreur =
+keys-event-error =
     Il y a une erreur dans la configuration de SSH. Avant de recharger,
     vérifie toujours avec  sudo sshd -t : il donne le fichier et la ligne en
     cause. Tant qu'elle est fausse, systemctl reload ssh refuse de
     l'appliquer, et sshd garde l'ancienne.
-keys-evenement-enferme =
+keys-event-locked-out =
     ATTENTION : sshd refuse maintenant les mots de passe… et aucune clé n'est
     autorisée pour ton compte (~/.ssh/authorized_keys). Ta session actuelle
     reste ouverte, mais une nouvelle connexion serait refusée !
 
     Remets PasswordAuthentication yes et recharge ssh, le temps de poser ta
     clé. L'ordre compte : d'abord la clé, ensuite la porte.
-keys-evenement-cle-du-jeu =
+keys-event-key-game =
     Une clé est arrivée dans ~/.ssh/authorized_keys… mais c'est une clé que le
     jeu t'a donnée pour une autre machine (regarde la fin de la ligne, et
     ls -lt ~/.ssh sur ton poste). Sans -i, ssh-copy-id prend la clé publique
     la plus récente de ~/.ssh ; et ssh, lui, ne la proposera pas à maison.
 
     Crée d'abord ta propre paire (ssh-keygen), puis recommence ssh-copy-id.
-keys-evenement-copiee =
+keys-event-copied =
     Ta clé publique est dans ~/.ssh/authorized_keys sur maison. Regarde le
     fichier (cat) : une ligne « ssh-ed25519 AAAA… », la moitié publique de
     ta paire. La moitié privée, elle, n'a jamais quitté ton poste.
 
     Reconnecte-toi (exit, puis ssh maison) : cette fois, pas de mot de passe.
-keys-evenement-par-cle =
+keys-event-by-key =
     Entré·e par ta clé, sans mot de passe ! Le serveur t'a envoyé un défi que
     seule ta clé privée pouvait signer.
 
@@ -73,11 +73,11 @@ keys-evenement-par-cle =
     essayer d'en deviner un. Dans /etc/ssh/sshd_config, cherche la ligne
     PasswordAuthentication (man sshd_config), puis sudo sshd -t et sudo
     systemctl reload ssh.
-keys-evenement-fermee =
+keys-event-closed =
     sshd n'accepte plus que les clés. Avant de fermer cette session, teste :
     exit, puis ssh maison. (Sur un vrai serveur, on garde la session ouverte
     et on teste dans un deuxième terminal.)
-keys-evenement-fin =
+keys-event-end =
     Entré·e par ta clé, et les mots de passe sont refusés : la passerelle est
     fermée aux robots, mais pas à toi. Yasmine : « Gaspard sera fier de toi ! »
 

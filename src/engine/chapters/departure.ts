@@ -132,7 +132,7 @@ export const departure: Chapter = {
   home: M,
   welcome: 'email_awa.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: PASSWORD,
   accounts: () => cooperativeAccounts(),
   state: (t) => ({
@@ -152,7 +152,7 @@ export const departure: Chapter = {
   }),
   createWorld: (t) =>
     cooperativeWorld({
-      home: { 'email_awa.txt': f(t('departure-courriel-awa')) },
+      home: { 'email_awa.txt': f(t('departure-email-awa')) },
       homes: {
         marc: d(
           {
@@ -186,23 +186,23 @@ export const departure: Chapter = {
     }),
   events: [
     {
-      id: 'verrou-seul',
+      id: 'lock-only',
       condition: (j) => ((j.state.comptesVerrouilles ?? []) as string[]).includes('marc') && byItsAccount(j),
-      message: (j) => j.t('departure-evenement-verrou-seul'),
+      message: (j) => j.t('departure-event-lock-only'),
     },
-    { id: 'deploy-vide', condition: (j) => !deployIntact(j), message: (j) => j.t('departure-evenement-deploy-vide', { fichier: DEPLOY }) },
+    { id: 'deploy-empty', condition: (j) => !deployIntact(j), message: (j) => j.t('departure-event-deploy-empty', { fichier: DEPLOY }) },
     {
-      id: 'script-perdu',
+      id: 'script-lost',
       condition: (j) => !j.exists('/home/marc/bin') && !entrustedBackup(j),
-      message: (j) => j.t('departure-evenement-script-perdu'),
+      message: (j) => j.t('departure-event-script-lost'),
     },
     {
-      id: 'tache-personnelle',
+      id: 'task-personal',
       condition: (j) => entrustedBackup(j, [j.player]) && !entrustedBackup(j),
-      message: (j) => j.t('departure-evenement-tache-personnelle'),
+      message: (j) => j.t('departure-event-task-personal'),
     },
-    { id: 'sauvegarde', condition: (j) => entrustedBackup(j), message: (j) => j.t('departure-evenement-sauvegarde') },
-    { id: 'ferme', condition: (j) => closed(j) && deployIntact(j), message: (j) => j.t('departure-evenement-ferme') },
-    { id: 'fin', condition: (j) => closed(j) && deployIntact(j) && entrustedBackup(j), message: (j) => j.t('departure-evenement-fin') },
+    { id: 'backup', condition: (j) => entrustedBackup(j), message: (j) => j.t('departure-event-backup') },
+    { id: 'closed', condition: (j) => closed(j) && deployIntact(j), message: (j) => j.t('departure-event-closed') },
+    { id: 'end', condition: (j) => closed(j) && deployIntact(j) && entrustedBackup(j), message: (j) => j.t('departure-event-end') },
   ],
 };

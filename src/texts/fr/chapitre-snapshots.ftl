@@ -2,12 +2,12 @@
 ### liens physiques, rotation quotidienne et hebdomadaire, cron. Les
 ### commandes, chemins, directives et messages de rsnapshot ne se traduisent pas.
 
-chapitre-snapshots = Les instantanés
+chapter-snapshots = Les instantanés
     .resume = Pouvoir revenir à n'importe quel jour des deux dernières semaines : rsnapshot, ses tabulations, ses liens physiques, et cron.
 
 ## Fichiers
 
-snapshots-message-de-berenice =
+snapshots-message-berenice =
     Un message de Bérénice :
 
     « Après l'attaque, Malo voudrait qu'on puisse revenir à n'importe quel
@@ -25,8 +25,8 @@ snapshots-message-de-berenice =
     Malo a laissé un conseil : « rsnapshot configtest avant tout, et
     attention aux tabulations ». Pour sudo : ludo-2027. »
 # { $numero } : le numéro du jeu ajouté
-snapshots-ligne-inventaire = jeu offert n°{ $numero };1;neuf
-snapshots-inventaire-ancien =
+snapshots-line-inventory = jeu offert n°{ $numero };1;neuf
+snapshots-inventory-old =
     jeu;exemplaires;etat
     jeu de l'oie;3;bon
     petits chevaux;2;bon
@@ -34,7 +34,7 @@ snapshots-inventaire-ancien =
 ## Événements
 
 # { $mails } : le nombre de courriels envoyés par cron
-snapshots-deux-semaines =
+snapshots-two-weeks =
     Deux semaines passent. Chaque jour, Bérénice ajoute à l'inventaire les
     jeux offerts ; chaque nuit, cron lance ce qui est prévu. Regarde ce
     qu'il y a maintenant dans /mnt/instantanes (et le courrier de cron :
@@ -45,17 +45,17 @@ snapshots-deux-semaines =
        *[other] { $mails } messages ; « nothing to copy » est normal les
             premiers jours, tant qu'il n'y a pas assez d'instantanés quotidiens)
     }.
-snapshots-evenement-espaces =
+snapshots-event-spaces =
     rsnapshot refuse sa configuration : dans /etc/rsnapshot.conf, les
     éléments d'une ligne sont séparés par des TABULATIONS, jamais par des
     espaces (même si ça se ressemble à l'écran). Dans nano, la touche Tab
     écrit une tabulation.
-snapshots-evenement-meme-disque =
+snapshots-event-same-disk =
     Les instantanés sont rangés sur le disque du système, à côté des
     données : si ce disque lâche, tout part avec. Malo voulait le second
     disque, /mnt/instantanes (snapshot_root).
 # { $exemple } : le début d'un courriel de cron
-snapshots-evenement-mails =
+snapshots-event-mails =
     cron a envoyé du courrier : ses tâches ont écrit des erreurs. Par
     exemple :
 
@@ -63,24 +63,24 @@ snapshots-evenement-mails =
 
     Une tâche de la crontab d'un compte ordinaire n'a pas les droits de
     root ; celle de root, si (sudo crontab -e).
-snapshots-evenement-liens =
+snapshots-event-links =
     Le premier instantané pèse tout son poids, les suivants presque rien :
     les fichiers qui n'ont pas changé ne sont pas recopiés, mais liés. ls
     -i montre le même numéro d'inode pour le même fichier dans deux
     instantanés : un seul fichier, deux noms. Chaque instantané paraît
     pourtant complet.
-snapshots-evenement-erreur-berenice =
+snapshots-event-error-berenice =
     Les instantanés tournent : sept quotidiens, et le premier hebdomadaire.
     Et justement, Bérénice : « Oups… Hier soir, j'ai remplacé l'inventaire
     par une vieille copie qui traînait sur ma clé : tous les jeux offerts
     ont disparu ! Tu peux le remettre comme avant-hier ? »
     (L'instantané de cette nuit a déjà la mauvaise version : regarde les
     précédents, diff t'aidera.)
-snapshots-evenement-mauvaise-version =
+snapshots-event-wrong-version =
     L'inventaire du partage est toujours l'ancienne copie : l'instantané le
     plus récent (.0) a été pris APRÈS l'erreur de Bérénice. Il faut celui
     de la nuit d'avant.
-snapshots-evenement-fin =
+snapshots-event-end =
     L'inventaire est revenu, avec tous les jeux offerts. Bérénice : « Et
     chaque jour des deux dernières semaines est là, sans que le disque
     soit plein ! »

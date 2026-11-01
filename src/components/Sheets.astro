@@ -30,7 +30,7 @@ const fr = lang === 'fr';
 const storyOf = (c: string) => STORIES.find((h) => h.chapters.some((x) => x.id === c))!;
 const after = (ids: string[]) =>
   new Intl.ListFormat(lang, { type: 'conjunction' }).format(
-    ids.map((c) => (fr ? `« ${t(`chapitre-${c}`)} » (${t(`histoire-${storyOf(c).id}`)})` : `"${t(`chapitre-${c}`)}" (${t(`histoire-${storyOf(c).id}`)})`)),
+    ids.map((c) => (fr ? `« ${t(`chapter-${c}`)} » (${t(`story-${storyOf(c).id}`)})` : `"${t(`chapter-${c}`)}" (${t(`story-${storyOf(c).id}`)})`)),
   );
 ---
 <h1>{fr ? 'Pour les enseignant·es' : 'For teachers'}</h1>
@@ -85,8 +85,8 @@ const after = (ids: string[]) =>
   const duration = hours(list.reduce((s, f) => s + f.duration, 0));
   return (
     <section class="fiche-histoire" aria-labelledby={`h-${h.id}`}>
-      <h2 id={`h-${h.id}`}>{t(`histoire-${h.id}`)}</h2>
-      <p>{typo(t(`histoire-${h.id}.resume`))}</p>
+      <h2 id={`h-${h.id}`}>{t(`story-${h.id}`)}</h2>
+      <p>{typo(t(`story-${h.id}.resume`))}</p>
       <p class="discret">
         {fr
           ? `${list.length} ${list.length > 1 ? 'chapitres' : 'chapitre'}, environ ${duration}.`
@@ -97,14 +97,14 @@ const after = (ids: string[]) =>
       <ol class="fiches">
         {list.map((f) => (
           <li class="fiche" id={`c-${f.chapter.id}`}>
-            <h3>{t('chapitre-numero', { numero: f.chapter.number })}{fr ? ' : ' : ': '}{t(`chapitre-${f.chapter.id}`)}</h3>
+            <h3>{t('chapter-number', { numero: f.chapter.number })}{fr ? ' : ' : ': '}{t(`chapter-${f.chapter.id}`)}</h3>
             <dl>
               <dt>{fr ? 'Objectif' : 'Goal'}</dt>
-              <dd>{typo(t(`chapitre-${f.chapter.id}.resume`))}</dd>
+              <dd>{typo(t(`chapter-${f.chapter.id}.resume`))}</dd>
               <dt>{fr ? 'Avant' : 'Before'}</dt>
               <dd>
                 {f.before
-                  ? fr ? `« ${t(`chapitre-${f.before.id}`)} »` : `"${t(`chapitre-${f.before.id}`)}"`
+                  ? fr ? `« ${t(`chapter-${f.before.id}`)} »` : `"${t(`chapter-${f.before.id}`)}"`
                   : h.id === 'eraser'
                     ? fr ? 'Rien : on part de zéro.' : 'Nothing: you start from scratch.'
                     : fr ? `${after(h.after ?? [])} (ou une ouverture directe).` : `${after(h.after ?? [])} (or a live opening).`}

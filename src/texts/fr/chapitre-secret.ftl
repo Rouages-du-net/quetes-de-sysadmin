@@ -2,13 +2,13 @@
 ### nginx. Les directives de nginx, les chemins et les sorties des outils ne
 ### se traduisent pas.
 
-chapitre-secret = Le secret
+chapter-secret = Le secret
     .resume = La clé de paiement traîne sur internet : trouver par où elle est sortie, fermer la fuite dans nginx, bloquer qui l'a prise, changer la clé.
 
 ## Fichiers
 
 # { $cle } : la nouvelle clé de paiement
-secret-courriel-awa =
+secret-email-awa =
     De :     Awa
     À :      toi
     Objet :  URGENT : notre clé de paiement
@@ -32,29 +32,29 @@ secret-courriel-awa =
 
 ## Événements
 
-secret-evenement-env-seul =
+secret-event-env-only =
     /.env ne sort plus… mais /.git/config, si (essaie curl). Le dossier .git
     contient l'adresse du dépôt, avec un jeton d'accès dedans. Ce ne sont pas
     seulement les .env qu'il faut cacher, ce sont TOUS les fichiers cachés :
     une location avec une expression régulière (location ~ /\. ),
     ou un root qui ne contient que ce qui doit être public.
-secret-evenement-site-casse =
+secret-event-site-broken =
     Attention : la fuite est fermée, mais le site (/) ou la caisse (/till/)
     ne répond plus normalement. Vérifie avec curl, et relis ta configuration
     (sudo nginx -t).
-secret-evenement-fermee =
+secret-event-closed =
     Les fichiers cachés ne sortent plus, et le site répond toujours.
 # { $adresse } : l'adresse bloquée
-secret-evenement-attaquant =
+secret-event-attacker =
     { $adresse } reçoit maintenant 403 : c'est elle qui a téléchargé
     les fichiers .env et .git/config cette nuit (python-requests, à 3 h 12). Elle ne reviendra pas
     par ce site… mais ce qu'elle a pris, elle l'a déjà : il faut changer les
     secrets.
-secret-evenement-cle-ecrite =
+secret-event-key-written =
     La nouvelle clé est dans .env… mais la caisse tourne toujours avec
     l'ancienne : l'appli ne lit son .env qu'au démarrage. Vérifie avec
     curl http://127.0.0.1:3000/health.
-secret-evenement-fin =
+secret-event-end =
     Plus de fuite, l'adresse bloquée, et la caisse accepte de nouveau les
     cartes. Awa : « Ouf. On en parlera à la prochaine réunion. »
 

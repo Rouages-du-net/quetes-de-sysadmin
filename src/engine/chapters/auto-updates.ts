@@ -168,7 +168,7 @@ export const automatic: Chapter = {
   home: M,
   welcome: 'email_awa.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: PASSWORD,
   accounts: () => cooperativeAccounts(false),
   state: () => {
@@ -235,7 +235,7 @@ export const automatic: Chapter = {
   createWorld: (t) =>
     cooperativeWorld({
       withoutMarc: true,
-      home: { 'email_awa.txt': f(t('auto-updates-courriel-awa')) },
+      home: { 'email_awa.txt': f(t('auto-updates-email-awa')) },
       etc: {
         ...nginxCooperative(SITE),
         apt: d(
@@ -271,19 +271,19 @@ export const automatic: Chapter = {
       more: tillWorld({ env: tillEnv(NEW_KEY, 'loopback'), envMode: 'rw-------', logAccess: '', appLog: '' }),
     }),
   events: [
-    { id: 'syntaxe', condition: (j) => conf(j).errors.length > 0, message: (j) => j.t('auto-updates-evenement-syntaxe') },
-    { id: 'rien', condition: (j) => (j.state.quotidiens ?? 0) > 0 && !(j.state.passesAuto ?? 0), message: (j) => j.t('auto-updates-evenement-rien') },
-    { id: 'nodejs', condition: (j) => !nodeIntact(j), message: (j) => j.t('auto-updates-evenement-nodejs') },
-    { id: 'en-journee', condition: (j) => systemd(j)!.boot > 1, message: (j) => j.t('auto-updates-evenement-en-journee') },
+    { id: 'syntax', condition: (j) => conf(j).errors.length > 0, message: (j) => j.t('auto-updates-event-syntax') },
+    { id: 'nothing', condition: (j) => (j.state.quotidiens ?? 0) > 0 && !(j.state.passesAuto ?? 0), message: (j) => j.t('auto-updates-event-nothing') },
+    { id: 'nodejs', condition: (j) => !nodeIntact(j), message: (j) => j.t('auto-updates-event-nodejs') },
+    { id: 'in-day', condition: (j) => systemd(j)!.boot > 1, message: (j) => j.t('auto-updates-event-in-day') },
     {
-      id: 'sans-rapport',
+      id: 'without-report',
       condition: (j) => (j.state.passesAuto ?? 0) > 0 && !conf(j).values[`${UU}::Mail`],
-      message: (j) => j.t('auto-updates-evenement-sans-rapport'),
+      message: (j) => j.t('auto-updates-event-without-report'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => active(j) && (j.state.passesAuto ?? 0) > 0 && installedSecurity(j) && nodeIntact(j) && report(j) && night(j) && okTill(j),
-      message: (j) => j.t('auto-updates-evenement-fin'),
+      message: (j) => j.t('auto-updates-event-end'),
     },
   ],
 };

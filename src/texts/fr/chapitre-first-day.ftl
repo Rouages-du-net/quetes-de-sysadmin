@@ -4,12 +4,12 @@
 ### processus, écrire dans un fichier de root avec sudo tee.
 ### Les commandes, chemins et adresses IP ne se traduisent pas.
 
-chapitre-first-day = Premier jour
+chapter-first-day = Premier jour
     .resume = Lire un journal de serveur, enchaîner les commandes avec |, écrire avec > et >>, arrêter un processus.
 
 ## Fichiers
 
-first-day-courriel-awa =
+first-day-email-awa =
     De :     Awa (responsable d'exploitation)
     À :      toi, stagiaire
     Objet :  Bienvenue… et urgence !
@@ -75,48 +75,48 @@ first-day-notes-awa =
     Ce fichier appartient à root. Après l'avoir modifié, il faut demander à
     nginx de le relire : sudo systemctl reload nginx
 # Commentaire en tête de /etc/nginx/blocked.conf (après « # »)
-first-day-bloques-commentaire = Adresses bloquées par nginx (une règle par ligne)
+first-day-blocked-comment = Adresses bloquées par nginx (une règle par ligne)
 # Description du service, affichée par « systemctl status catalogue »
 first-day-service-catalogue = Catalogue en ligne de la médiathèque (php-fpm)
 
 ## Relance du service par systemd après kill ({ $pid } : numéro du nouveau processus)
 
-first-day-relance-calme = systemd relance le service catalogue : nouveau processus { $pid }. Le robot étant bloqué, il reste calme.
-first-day-relance-robot = systemd relance aussitôt le service catalogue : nouveau processus { $pid }… et le robot recommence. Il est déjà à 99 % !
+first-day-restart-calm = systemd relance le service catalogue : nouveau processus { $pid }. Le robot étant bloqué, il reste calme.
+first-day-restart-robot = systemd relance aussitôt le service catalogue : nouveau processus { $pid }… et le robot recommence. Il est déjà à 99 % !
 
 ## Événements ({ $robot } : adresse IP du robot ; { $bloques } : chemin de blocked.conf)
 
 # Coups de pouce, quand on part sur une piste trop longue (sans donner la commande).
-first-day-evenement-tout-lire =
+first-day-event-all-read =
     Ça fait beaucoup de lignes ! Les compter à la main serait long, et on se
     tromperait. Un sysadmin laisse la machine compter : Awa a noté dans
     ~/notes_awa.txt un outil qui garde seulement les lignes qui t'intéressent,
     et un autre qui compte les lignes.
-first-day-evenement-grep-seul =
+first-day-event-grep-only =
     Bien vu : grep n'a gardé que les lignes des erreurs 503. Mais ça en fait
     encore beaucoup à compter. Et si la sortie de grep partait directement
     dans une commande qui compte les lignes ? Regarde le tube | dans
     ~/notes_awa.txt.
-first-day-evenement-adresses-seules =
+first-day-event-addresses-only =
     Une adresse par ligne… impossible de voir laquelle revient le plus
     souvent. Range-les pour que les mêmes se suivent, puis compte les
     doublons : les notes d'Awa enchaînent quatre petites commandes pour ça.
 
 # { $erreurs } : nombre d'erreurs 503 dans le journal
-first-day-evenement-compte =
+first-day-event-account =
     Exact : { $erreurs } erreurs 503. Tu viens d'enchaîner deux petits outils :
     grep filtre les lignes, wc les compte. C'est toute la philosophie d'Unix :
     des outils simples, qu'on branche les uns aux autres.
 
     Question suivante : qui envoie autant de demandes ? (voir ~/notes_awa.txt)
 # { $requetes } : nombre de demandes du robot
-first-day-evenement-robot =
+first-day-event-robot =
     { $robot } : { $requetes } demandes en quelques minutes, toutes vers
     /catalogue/recherche. Ce n'est pas un humain : c'est un robot qui aspire
     le catalogue, et le service « catalogue » n'arrive plus à suivre.
 
     Regarde ce qui se passe sur la machine :  ps aux
-first-day-evenement-surcharge =
+first-day-event-override =
     Le processus 4242 (php-fpm: pool catalogue) utilise 99 % du processeur.
     Tu pourrais l'arrêter avec kill… mais si le robot continue, il retombera
     aussitôt. Bloque d'abord le robot dans /etc/nginx/blocked.conf.
@@ -126,28 +126,28 @@ first-day-evenement-surcharge =
     classique, c'est tee, qui écrit ce qu'il reçoit dans un fichier :
 
       echo "deny { $robot };" | sudo tee -a { $bloques }
-first-day-evenement-ecrase =
+first-day-event-overwritten =
     Oups ! Les anciennes règles de blocked.conf ont disparu : le fichier a été
     ÉCRASÉ (> ou tee sans -a) au lieu d'être complété (>> ou tee -a). Pas de
     panique : une copie de sauvegarde existe. Restaure-la avec
     sudo cp /etc/nginx/blocked.conf.bak { $bloques }, puis recommence avec -a.
-first-day-evenement-regle = La règle est écrite. Mais nginx ne relit pas son fichier tout seul : sudo systemctl reload nginx
-first-day-evenement-bloque =
+first-day-event-rule = La règle est écrite. Mais nginx ne relit pas son fichier tout seul : sudo systemctl reload nginx
+first-day-event-blocked =
     nginx a relu sa configuration : { $robot } reçoit maintenant « 403 Forbidden »
     au lieu de pages.
 # Variante quand le processus surchargé tourne encore ({ $pid } : son numéro)
-first-day-evenement-bloque-processus =
+first-day-event-blocked-process =
     nginx a relu sa configuration : { $robot } reçoit maintenant « 403 Forbidden »
     au lieu de pages. Reste le processus { $pid }, toujours bloqué à 99 % : arrête-le
     (il appartient à www-data, donc… sudo). systemd le relancera tout propre.
-first-day-evenement-repare =
+first-day-event-repaired =
     Le site de la médiathèque répond de nouveau ! Dernière chose : le rapport
     pour Awa, dans ~/rapport.txt. Avec > on crée le fichier, avec >> on ajoute
     une ligne. Par exemple :
 
       grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt
       echo "Coupable : { $robot }" >> ~/rapport.txt
-first-day-evenement-rapport =
+first-day-event-report =
     Awa sort de réunion et lit ton rapport : « { $erreurs } erreurs, robot
     identifié, bloqué, service relancé. Pour un premier jour… bravo ! »
 

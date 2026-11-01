@@ -3,12 +3,12 @@
 ### configuration. The commands, the paths, the redis.conf keywords and the
 ### tools' messages are not translated.
 
-chapitre-exposure = The Exposure
+chapter-exposure = The Exposure
     .resume = Close what a port scan finds open: ufw, and make Redis listen on the local machine only.
 
 ## Files
 
-exposure-courriel-salome =
+exposure-email-salome =
     From:     Salomé (auditor)
     To:       you
     Subject:  Bakery audit — part two: exposure
@@ -41,43 +41,43 @@ exposure-courriel-salome =
 
 ## Events
 
-exposure-evenement-ecoute =
+exposure-event-listening =
     There is who listens, and where. Look at the "Local Address:Port"
     column: 0.0.0.0 means "all interfaces", so reachable from anywhere (if
     nothing filters); 127.0.0.1 means "this machine only". Port 3000 (the
     app) is already local: that is the right example.
-exposure-evenement-enferme =
+exposure-event-locked-out =
     WARNING: the firewall is active and no longer lets SSH in from your
     workstation. Your current session holds (established connections are not
     cut), but the next one will not. Allow SSH right now (sudo ufw status to
     look, man ufw for the rule).
-exposure-evenement-site-coupe =
+exposure-event-site-cut =
     The firewall now blocks the website: customers can no longer order.
     Allow ports 80 and 443 (a ufw profile names them: ufw app list, or just
     the numbers).
-exposure-evenement-base-ouverte =
+exposure-event-base-open =
     The firewall is active, but a database or Redis port still gets through:
     a rule that is too broad ("allow" without a port, a range…) or a default
     policy set to "allow". Reread  sudo ufw status verbose  : by default,
     whatever is not allowed must be denied inbound.
-exposure-evenement-redis-arrete =
+exposure-event-redis-stopped =
     Redis is stopped: the orders app needs it (sessions and queue), online
     orders no longer go through! Shutting a service down is not fixing it:
     start it again, and change its listening address instead.
-exposure-evenement-sans-effet =
+exposure-event-without-effect =
     redis.conf does say "bind 127.0.0.1"… but Redis is still listening on all
     interfaces: a program reads its configuration when it starts, not when
     the file changes. Have it restart, then run
       ss -tln
     to see the new address.
-exposure-evenement-pare-feu =
+exposure-event-firewall =
     The firewall is active: SSH (from your workstation), 80 and 443 get
     through; the database and Redis are closed from the internet. But that
     is only one layer: Redis still listens on all interfaces.
-exposure-evenement-redis-local =
+exposure-event-redis-local =
     Redis now listens only on 127.0.0.1: even without a firewall it would no
     longer be reachable from outside, and the app still reaches it.
-exposure-evenement-fin =
+exposure-event-end =
     You got in with the firewall active: SSH gets through, so does the
     website, and the database and Redis are closed. Salomé: "My scan sees
     only three ports now. Thank you! The third part remains, the login

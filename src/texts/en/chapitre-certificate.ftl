@@ -2,12 +2,12 @@
 ### TLS, Let's Encrypt and certbot. Commands, paths, file names and the
 ### messages of certbot, openssl, curl and nginx are not translated.
 
-chapitre-certificate = The certificate has expired
+chapter-certificate = The certificate has expired
     .resume = The padlock is gone: certbot, the HTTP challenge, openssl, and a renewal that works on its own.
 
 ## Files
 
-certificate-courriel-awa =
+certificate-email-awa =
     From:    Awa (operations manager)
     To:      you
     Subject: The website is scaring visitors
@@ -28,7 +28,7 @@ certificate-courriel-awa =
     To check what a browser sees: curl https://medialibrary.example
     The rest is in man certbot and man openssl. The sudo password hasn't
     changed.
-certificate-message-de-lea =
+certificate-message-lea =
     Hello Awa,
 
     This morning, when I opened the media library's website, Firefox showed:
@@ -43,7 +43,7 @@ certificate-message-de-lea =
     website for now.
 
     Léa
-certificate-lisezmoi-live =
+certificate-readme-live =
     This directory contains your keys and certificates.
 
     `privkey.pem`  : the private key for your certificate.
@@ -74,13 +74,13 @@ certificate-site-index =
 
 ## Events
 
-certificate-evenement-expire =
+certificate-event-expires =
     The certificate has indeed expired: that is exactly what browsers see.
     But why wasn't it renewed? certbot runs on its own, started by
     systemd: its journal knows (journalctl -u certbot, or systemctl
     --failed). To try a renewal without breaking anything, man certbot
     talks about a dry run.
-certificate-evenement-defi =
+certificate-event-challenge =
     Let's Encrypt only gives a certificate to whoever proves they control
     the website: certbot drops a small file (the "challenge") in a
     directory, then the authority fetches it from http://medialibrary.example/.well-known/acme-challenge/.
@@ -90,18 +90,18 @@ certificate-evenement-defi =
     of /etc/letsencrypt/renewal/medialibrary.example.conf)? And which
     directory does nginx serve for medialibrary.example? man certbot tells
     you how to change the directory.
-certificate-evenement-pas-recharge =
+certificate-event-not-reload =
     The new certificate is on the disk… but curl still sees the old one.
     nginx reads its certificate when it starts or reloads its
     configuration, not on every visit: it is still serving October's.
     What do you need to tell nginx?
-certificate-evenement-sans-hook =
+certificate-event-without-hook =
     The website is safe again, and certbot can now renew. But in 60 days,
     when it renews on its own, in the middle of the night, who will
     reload nginx? Nobody: the website will serve the old certificate until
     it expires, just like today. certbot can run a command after each
     successful renewal: look for "hook" in man certbot.
-certificate-evenement-fin =
+certificate-event-end =
     curl https://medialibrary.example answers without a warning: the
     padlock is back. And next time, certbot will renew on its own, then
     reload nginx on its own.

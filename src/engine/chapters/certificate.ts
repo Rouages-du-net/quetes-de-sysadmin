@@ -86,7 +86,7 @@ server {
     include /etc/nginx/blocked.conf;
 }`;
 
-const blocked = (t: Translate) => `# ${t('first-day-bloques-commentaire')}
+const blocked = (t: Translate) => `# ${t('first-day-blocked-comment')}
 deny 203.0.113.5;
 deny 192.0.2.99;
 deny ${ROBOT};`;
@@ -242,7 +242,7 @@ export const certificate: Chapter = {
   home: M,
   welcome: 'email_awa.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'welcome-2026',
   // La machine reconstruite après l'incendie : même clé d'hôte qu'au chapitre 4.
   hostKey: '-apres-incendie',
@@ -287,7 +287,7 @@ export const certificate: Chapter = {
                 'chain.pem': file(cert['chain.pem']),
                 'fullchain.pem': file(cert['fullchain.pem']),
                 'privkey.pem': file(cert['privkey.pem'], 'rw-------'),
-                README: file(t('certificate-lisezmoi-live')),
+                README: file(t('certificate-readme-live')),
               }),
             },
             { owner: 'root', mode: 'rwx------' },
@@ -296,7 +296,7 @@ export const certificate: Chapter = {
           'renewal-hooks': place({ deploy: place({}), pre: place({}), post: place({}) }),
         }),
       }),
-      home: place({ you: d({ 'email_awa.txt': f(t('certificate-courriel-awa')), 'message_from_lea.txt': f(t('certificate-message-de-lea')) }) }),
+      home: place({ you: d({ 'email_awa.txt': f(t('certificate-email-awa')), 'message_from_lea.txt': f(t('certificate-message-lea')) }) }),
       usr: place({
         bin: place({
           certbot: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 966 }),
@@ -322,32 +322,32 @@ export const certificate: Chapter = {
   },
   events: [
     {
-      id: 'expire',
+      id: 'expires',
       condition: (j) => j.last.errors.some((e) => e.includes('certificate has expired')) || j.last.output.includes('INVALID: EXPIRED'),
-      message: (j) => j.t('certificate-evenement-expire'),
+      message: (j) => j.t('certificate-event-expires'),
     },
     {
-      id: 'defi',
+      id: 'challenge',
       condition: (j) => j.state.certbotDefiEchoue === true,
-      message: (j) => j.t('certificate-evenement-defi'),
+      message: (j) => j.t('certificate-event-challenge'),
     },
     {
-      id: 'pas-recharge',
+      id: 'not-reload',
       condition: (j) => {
         const c = onDisk(j);
         return !!c && c.end > toUtc(sd(j).clock) && !served(j);
       },
-      message: (j) => j.t('certificate-evenement-pas-recharge'),
+      message: (j) => j.t('certificate-event-not-reload'),
     },
     {
-      id: 'sans-hook',
+      id: 'without-hook',
       condition: (j) => served(j) && possibleRenewal(shell(j)) && !automaticReload(shell(j)),
-      message: (j) => j.t('certificate-evenement-sans-hook'),
+      message: (j) => j.t('certificate-event-without-hook'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => served(j) && possibleRenewal(shell(j)) && automaticReload(shell(j)),
-      message: (j) => j.t('certificate-evenement-fin'),
+      message: (j) => j.t('certificate-event-end'),
     },
   ],
 };

@@ -3,13 +3,13 @@
 ### ~/.ssh/config, la prison de fail2ban). Les commandes, chemins, options
 ### et lignes de journal ne se traduisent pas.
 
-chapitre-port = Le port
+chapter-port = Le port
     .resume = Les robots saturent le journal de SSH : le déplacer sur le port 2222, sans s'enfermer dehors, et sans oublier fail2ban.
 
 ## Fichiers
 
 # { $port } : le nouveau port de SSH
-port-courriel-kofi =
+port-email-kofi =
     De :     Kofi
     À :      toi
     Objet :  Le port de SSH
@@ -36,13 +36,13 @@ port-courriel-kofi =
 
 ## Événements
 
-port-evenement-enferme =
+port-event-locked-out =
     ATTENTION : sshd n'écoute plus sur aucun port que le pare-feu laisse
     passer. Ta session tient (ni sshd ni ufw ne coupent les connexions en
     cours), mais la prochaine connexion échouera. Corrige AVANT de te
     déconnecter : remets l'ancien port, ou ouvre le nouveau dans ufw.
 # { $port } : le nouveau port
-port-evenement-deux-ports =
+port-event-two-ports =
     Bien joué : sshd écoute sur les deux ports, 22 et { $port }, et le
     pare-feu laisse passer { $port }. C'est la manœuvre sûre : l'ancienne
     porte reste ouverte pendant qu'on essaie la nouvelle. Teste-la depuis
@@ -50,23 +50,23 @@ port-evenement-deux-ports =
     (sudo nft list ruleset montre la règle que ufw vient d'écrire, dans la
     chaîne ufw-user-input.)
 # { $port } : le nouveau port
-port-evenement-essai =
+port-event-attempt =
     Te voilà connecté·e par le port { $port }. La nouvelle porte marche :
     tu peux maintenant fermer l'ancienne, dans sshd et dans le pare-feu.
-port-evenement-defaut =
+port-event-default =
     fail2ban a rechargé jail.local, mais sa prison sshd garde toujours le
     port 22. Un « port = 2222 » placé dans [DEFAULT] ne vaut que pour les
     prisons qui ne disent rien de leur port ; or le [sshd] de jail.conf dit
     « port = ssh », et une valeur dans la section d'une prison l'emporte
     toujours sur [DEFAULT], quel que soit le fichier (man jail.conf). Le
     réglage va dans une section [sshd] de jail.local.
-port-evenement-sentinelle =
+port-event-sentinel =
     SSH n'écoute plus que sur 2222… mais la prison sshd de fail2ban bannit
     toujours sur le port « ssh », c'est-à-dire 22 (port = ssh, dans
     jail.conf). Une adresse bannie pourrait continuer d'essayer sur 2222.
     sudo nft list ruleset le montre : dans la table f2b-table, la règle
     rejette les adresses bannies vers « tcp dport {"{"} 22 {"}"} » seulement.
-port-evenement-fin =
+port-event-end =
     SSH n'écoute plus que sur le port 2222, le pare-feu ne laisse plus
     passer que lui, fail2ban le surveille, et ton poste sait où frapper.
     Le lendemain, Rania : « Trois tentatives cette nuit au lieu de quatre

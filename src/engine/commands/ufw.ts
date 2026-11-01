@@ -31,7 +31,7 @@ function readRule(game: Shell, action: Action, words: string[]): Rule | null {
     else return null;
   }
   if (forEachOf !== null && !/^\d+\.\d+\.\d+\.\d+(\/\d+)?$/.test(forEachOf)) return null;
-  const to = port ? (proto ? `${port}/${proto}` : port) : game.t('ufw-partout');
+  const to = port ? (proto ? `${port}/${proto}` : port) : game.t('ufw-everywhere');
   return { action, to, ports: port ? [Number(port)] : [], forEachOf };
 }
 
@@ -40,15 +40,15 @@ const ruleText = (r: Rule) => (r.forEachOf ? `${r.action} from ${r.forEachOf}${r
 
 // Le tableau de ufw status : une ligne par règle, plus sa jumelle (v6).
 function grid(game: Shell, pf: Firewall, sens: string, numbers: boolean): string[] {
-  const everywhere = game.t('ufw-partout');
+  const everywhere = game.t('ufw-everywhere');
   const lines: [string, string, string][] = [];
   for (const r of pf.rules) {
     const action = r.action.toUpperCase() + sens;
     lines.push([r.to, action, r.forEachOf ?? everywhere]);
     if (!r.forEachOf) lines.push([r.to === everywhere ? r.to : `${r.to} (v6)`, action, `${everywhere} (v6)`]);
   }
-  const header = (numbers ? '     ' : '') + `${game.t('ufw-vers').padEnd(27)}${game.t('ufw-action').padEnd(12)}${game.t('ufw-de')}`;
-  const traits = (numbers ? '     ' : '') + `${'-'.repeat(game.t('ufw-vers').length).padEnd(27)}${'-'.repeat(game.t('ufw-action').length).padEnd(12)}${'-'.repeat(game.t('ufw-de').length)}`;
+  const header = (numbers ? '     ' : '') + `${game.t('ufw-to').padEnd(27)}${game.t('ufw-action').padEnd(12)}${game.t('ufw')}`;
+  const traits = (numbers ? '     ' : '') + `${'-'.repeat(game.t('ufw-to').length).padEnd(27)}${'-'.repeat(game.t('ufw-action').length).padEnd(12)}${'-'.repeat(game.t('ufw').length)}`;
   return [header, traits, ...lines.map(([v, a, d], i) => (numbers ? `[${String(i + 1).padStart(2)}] ` : '') + `${v.padEnd(27)}${a.padEnd(12)}${d}`)];
 }
 
@@ -60,23 +60,23 @@ export const UFW: Record<string, Command> = {
       const [action, ...rest] = args;
       if (!action || action === '--help') return game.error(game.t('ufw-usage'));
       if (game.who !== 'root') return game.error(game.t('ufw-root'));
-      if (!pf) return game.error(game.t('ufw-absent'));
+      if (!pf) return game.error(game.t('ufw-missing'));
       const v6 = (key: string) => `${game.t(key)}\n${game.t(key)} (v6)`;
       if (action === 'status') {
-        if (!pf.enabled) return game.t('ufw-inactif');
+        if (!pf.enabled) return game.t('ufw-idle');
         const detail = rest[0] === 'verbose';
-        const header = [game.t('ufw-statut-actif')];
+        const header = [game.t('ufw-status-active')];
         if (detail)
           header.push(
             game.t('ufw-journalisation'),
-            game.t('ufw-defauts', { entrant: pf.incoming, sortant: pf.outgoing }),
-            game.t('ufw-profils'),
+            game.t('ufw-defaults', { entrant: pf.incoming, sortant: pf.outgoing }),
+            game.t('ufw-profiles'),
           );
         if (!pf.rules.length) return header.join('\n');
         return [...header, '', ...grid(game, pf, detail || rest[0] === 'numbered' ? ' IN' : '', rest[0] === 'numbered')].join('\n');
       }
       if (action === 'enable') {
-        if (pf.enabled) return game.t('ufw-deja-actif');
+        if (pf.enabled) return game.t('ufw-already-active');
         game.ask(game.t('ufw-question'), (r) => {
           if (!/^(y|yes|o|oui)$/i.test(r)) return game.t('ufw-abandon');
           pf.enabled = true;
@@ -87,14 +87,14 @@ export const UFW: Record<string, Command> = {
       }
       if (action === 'disable') {
         pf.enabled = false;
-        return game.t('ufw-desactive');
+        return game.t('ufw-disabled');
       }
       if (action === 'default') {
         const [policy, sens = 'incoming'] = rest;
-        if (!['allow', 'deny', 'reject'].includes(policy) || !['incoming', 'outgoing'].includes(sens)) return game.error(game.t('ufw-syntaxe'));
+        if (!['allow', 'deny', 'reject'].includes(policy) || !['incoming', 'outgoing'].includes(sens)) return game.error(game.t('ufw-syntax'));
         if (sens === 'incoming') pf.incoming = policy as Policy;
         else pf.outgoing = policy as Policy;
-        return game.t(sens === 'incoming' ? 'ufw-defaut-entrant' : 'ufw-defaut-sortant', { politique: policy });
+        return game.t(sens === 'incoming' ? 'ufw-default-incoming' : 'ufw-default-outgoing', { politique: policy });
       }
       if (action === 'app' && rest[0] === 'list') return [game.t('ufw-applications'), ...Object.keys(APPLICATIONS).sort().map((a) => `  ${a}`)].join('\n');
       if (action === 'delete') {
@@ -102,29 +102,29 @@ export const UFW: Record<string, Command> = {
           // La numérotation de ufw status numbered compte aussi les lignes (v6).
           const lines = pf.rules.flatMap((r) => (r.forEachOf ? [r] : [r, r]));
           const r = lines[Number(rest[0]) - 1];
-          if (!r) return game.error(game.t('ufw-numero', { numero: rest[0] }));
-          game.ask(game.t('ufw-question-suppression', { regle: ruleText(r) }), (rep) => {
+          if (!r) return game.error(game.t('ufw-number', { numero: rest[0] }));
+          game.ask(game.t('ufw-question-deletion', { regle: ruleText(r) }), (rep) => {
             if (!/^(y|yes|o|oui)$/i.test(rep)) return game.t('ufw-abandon');
             pf.rules = pf.rules.filter((q) => q !== r);
-            return r.forEachOf ? game.t('ufw-regle-supprimee') : v6('ufw-regle-supprimee');
+            return r.forEachOf ? game.t('ufw-rule-deleted') : v6('ufw-rule-deleted');
           });
           return '';
         }
         const r = ACTIONS.includes(rest[0]) ? readRule(game, rest[0] as Action, rest.slice(1)) : null;
-        if (!r) return game.error(game.t('ufw-syntaxe'));
+        if (!r) return game.error(game.t('ufw-syntax'));
         const existing = pf.rules.find((q) => sameRule(q, r));
-        if (!existing) return game.error(game.t('ufw-inexistante'));
+        if (!existing) return game.error(game.t('ufw-nonexistent'));
         pf.rules = pf.rules.filter((q) => q !== existing);
-        return r.forEachOf ? game.t('ufw-regle-supprimee') : v6('ufw-regle-supprimee');
+        return r.forEachOf ? game.t('ufw-rule-deleted') : v6('ufw-rule-deleted');
       }
       if (ACTIONS.includes(action)) {
         const r = readRule(game, action as Action, rest);
-        if (!r) return game.error(game.t('ufw-syntaxe'));
-        if (pf.rules.some((q) => sameRule(q, r))) return r.forEachOf ? game.t('ufw-existante') : v6('ufw-existante');
+        if (!r) return game.error(game.t('ufw-syntax'));
+        if (pf.rules.some((q) => sameRule(q, r))) return r.forEachOf ? game.t('ufw-existing') : v6('ufw-existing');
         pf.rules.push(r);
-        return r.forEachOf ? game.t('ufw-regles-mises-a-jour') : v6('ufw-regles-mises-a-jour');
+        return r.forEachOf ? game.t('ufw-rules-updates') : v6('ufw-rules-updates');
       }
-      return game.error(game.t('ufw-syntaxe'));
+      return game.error(game.t('ufw-syntax'));
     },
   },
 };

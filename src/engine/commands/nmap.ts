@@ -61,7 +61,7 @@ export const NMAP: Record<string, Command> = {
         else if (a.startsWith('-')) return game.error(INVALID(a.slice(1, 2)), 1);
         else targets.push(a);
       }
-      if (!targets.length) return game.error(game.t('nmap-aucune-cible'), 1);
+      if (!targets.length) return game.error(game.t('nmap-none-target'), 1);
       const r = scan(game, targets, o, `nmap ${args.join(' ')}`);
       if ('error' in r) return game.error(r.error, 1);
       let note = '';

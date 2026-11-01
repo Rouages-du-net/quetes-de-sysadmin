@@ -23,7 +23,7 @@ export const root: Chapter = {
   home: M,
   names: true,
   welcome: 'arrival.txt',
-  final: 'corrige',
+  final: 'fixed',
   password: 'sunflower',
   createWorld: (t) =>
     d(
@@ -32,25 +32,25 @@ export const root: Chapter = {
           {
             you: d({
               'arrival.txt': f(
-                t('root-arrivee'),
-                { read: (j) => void j.flags.add('arrivee') },
+                t('root-arrival'),
+                { read: (j) => void j.flags.add('arrival') },
               ),
-              'admin_manual.txt': f(t('root-manuel-admin')),
+              'admin_manual.txt': f(t('root-manual-admin')),
               'journal.txt': f(
                 t('root-journal'),
                 { mode: 'rw-------', lines: true },
               ),
-              'eraser.conf.fixed': f(t('root-effaceur-conf-corrige'), { lines: true }),
+              'eraser.conf.fixed': f(t('root-eraser-conf-fixed'), { lines: true }),
               memories: d(
                 {
-                  school: memory(t('root-souvenir-ecole')),
-                  first_program: memory(t('root-souvenir-premier-programme')),
-                  garden: memory(t('root-souvenir-jardin')),
-                  song: memory(t('root-souvenir-chanson')),
-                  journey: memory(t('root-souvenir-voyage')),
-                  friend: memory(t('root-souvenir-amie')),
-                  library: memory(t('root-souvenir-bibliotheque')),
-                  first_server: memory(t('root-souvenir-premier-serveur')),
+                  school: memory(t('root-memory-school')),
+                  first_program: memory(t('root-memory-first-program')),
+                  garden: memory(t('root-memory-garden')),
+                  song: memory(t('root-memory-song')),
+                  journey: memory(t('root-memory-journey')),
+                  friend: memory(t('root-memory-friend')),
+                  library: memory(t('root-memory-library')),
+                  first_server: memory(t('root-memory-first-server')),
                 },
                 undefined,
                 { mode: 'rwxrwxrwx' },
@@ -61,7 +61,7 @@ export const root: Chapter = {
                 'diary.txt': f(
                   (j) =>
                     j.who === 'root'
-                      ? j.t('root-journal-intime-root')
+                      ? j.t('root-journal-private-root')
                       : '',
                   { owner: 'nour', mode: 'rw-------' },
                 ),
@@ -76,7 +76,7 @@ export const root: Chapter = {
         etc: d(
           {
             'eraser.conf': f(
-              t('root-effaceur-conf'),
+              t('root-eraser-conf'),
               { owner: 'root', lines: true },
             ),
             sudoers: f(
@@ -92,7 +92,7 @@ export const root: Chapter = {
             log: d(
               {
                 'eraser.log': f(
-                  t('root-effaceur-log'),
+                  t('root-eraser-log'),
                   { owner: 'root', lines: true },
                 ),
               },
@@ -120,42 +120,42 @@ export const root: Chapter = {
   // L'Effaceur avance : à chaque commande, il efface un souvenir, tant que
   // les autres utilisateurs ont le droit d'écrire dans le lieu.
   afterCommand: (j) => {
-    if (!j.flags.has('alerte') || j.flags.has('corrige') || !j.exists(path(j.t, CONF))) return;
+    if (!j.flags.has('alert') || j.flags.has('fixed') || !j.exists(path(j.t, CONF))) return;
     const place = j.find(path(j.t, MEMORIES));
     if (place?.type !== 'dossier' || !j.can(place, 'w', eraser(j)) || !j.can(place, 'x', eraser(j))) return;
     const name = Object.keys(place.children).sort()[0];
     if (!name) return;
     delete place.children[name];
-    return j.t('root-souvenir-efface', { souvenir: name });
+    return j.t('root-memory-erases', { souvenir: name });
   },
   events: [
     {
-      id: 'alerte',
-      condition: (j) => j.flags.has('arrivee'),
-      message: (j) => j.t('root-evenement-alerte'),
+      id: 'alert',
+      condition: (j) => j.flags.has('arrival'),
+      message: (j) => j.t('root-event-alert'),
     },
     {
-      id: 'protege',
+      id: 'protected',
       condition: (j) => {
         const place = j.find(path(j.t, MEMORIES));
-        return j.flags.has('alerte') && !j.flags.has('corrige') && place?.type === 'dossier' && !(j.can(place, 'w', eraser(j)) && j.can(place, 'x', eraser(j)));
+        return j.flags.has('alert') && !j.flags.has('fixed') && place?.type === 'dossier' && !(j.can(place, 'w', eraser(j)) && j.can(place, 'x', eraser(j)));
       },
-      message: (j) => j.t('root-evenement-protege', { sauves: j.count(path(j.t, MEMORIES), ''), total: TOTAL }),
+      message: (j) => j.t('root-event-protected', { sauves: j.count(path(j.t, MEMORIES), ''), total: TOTAL }),
     },
     {
-      id: 'conf-effacee',
+      id: 'conf-erased',
       condition: (j) => !j.exists(path(j.t, CONF)),
-      message: (j) => j.t('root-evenement-conf-effacee'),
+      message: (j) => j.t('root-event-conf-erased'),
     },
     {
-      id: 'corrige',
+      id: 'fixed',
       condition: (j) => {
         const conf = j.find(path(j.t, CONF));
         return conf?.type === 'fichier' && typeof conf.content === 'string' && conf.content.includes(fixedTarget(j));
       },
       message: (j) => {
         const saved = j.count(path(j.t, MEMORIES), '');
-        return j.t('root-evenement-corrige', { sauves: saved, total: TOTAL, perte: saved < TOTAL ? 'oui' : 'non' });
+        return j.t('root-event-fixed', { sauves: saved, total: TOTAL, perte: saved < TOTAL ? 'oui' : 'non' });
       },
     },
   ],

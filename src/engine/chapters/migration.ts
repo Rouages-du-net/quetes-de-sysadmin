@@ -45,7 +45,7 @@ const conf = (t: Game['t']) => `server {
         try_files $uri $uri/ =404;
     }
 
-    # ${t('blue-green-conf-commentaire')}
+    # ${t('blue-green-conf-comment')}
     location /kiosk/ {
         proxy_pass http://127.0.0.1:3002/;
     }
@@ -93,7 +93,7 @@ export const migration: Chapter = {
   home: M,
   welcome: 'message_from_samia.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'gazette-2027',
   accounts,
   state: () => ({
@@ -168,13 +168,13 @@ export const migration: Chapter = {
         }),
       }),
       home: place({
-        you: d({ 'message_from_samia.txt': f(t('migration-message-de-samia')), 'note_from_theo.txt': f(t('migration-mot-de-theo')) }),
+        you: d({ 'message_from_samia.txt': f(t('migration-message-samia')), 'note_from_theo.txt': f(t('migration-word-theo')) }),
         samia: place({}, { owner: 'samia', mode: 'rwx------' }),
         theo: place({}, { owner: 'theo', mode: 'rwx------' }),
       }),
       srv: place({
         gazette: place({
-          releases: place({ '20270524090000': place({ 'index.html': file(t('rollback-site-accueil'), { owner: 'you' }) }) }),
+          releases: place({ '20270524090000': place({ 'index.html': file(t('rollback-site-welcome'), { owner: 'you' }) }) }),
           current: f('', { owner: 'you', link: '/srv/gazette/releases/20270524090000' }),
         }),
         kiosk: place(
@@ -211,37 +211,37 @@ export const migration: Chapter = {
   },
   events: [
     {
-      id: 'vert-malade',
+      id: 'green-sick',
       condition: (j) => output(j).includes('KIOSK_SMTP_URL is not set'),
-      message: (j) => j.t('migration-evenement-vert-malade'),
+      message: (j) => j.t('migration-event-green-sick'),
     },
-    { id: 'schema', condition: (j) => output(j).includes('is newer than supported'), message: (j) => j.t('migration-evenement-schema') },
+    { id: 'schema', condition: (j) => output(j).includes('is newer than supported'), message: (j) => j.t('migration-event-schema') },
     {
-      id: 'migration-vue',
+      id: 'migration-view',
       condition: (j) => output(j).includes('rename_abonnes_courriel_to_email'),
-      message: (j) => j.t('migration-evenement-migration-vue'),
+      message: (j) => j.t('migration-event-migration-view'),
     },
     {
-      id: 'retour-impossible',
+      id: 'return-impossible',
       condition: (j) => served(j) === 'blue' && !inTwo(j, 'blue') && !okReaders(j),
-      message: (j) => j.t('migration-evenement-retour-impossible'),
+      message: (j) => j.t('migration-event-return-impossible'),
     },
     {
-      id: 'repare',
+      id: 'repaired',
       condition: (j) => {
         const c = served(j);
         return !!c && inTwo(j, c) && okReaders(j);
       },
-      message: (j) => j.t('migration-evenement-repare'),
+      message: (j) => j.t('migration-event-repaired'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => {
         const c = served(j);
         const other = c === 'blue' ? 'green' : 'blue';
         return !!c && inTwo(j, c) && okReaders(j) && enabled(j, other) && inTwo(j, other);
       },
-      message: (j) => j.t('migration-evenement-fin'),
+      message: (j) => j.t('migration-event-end'),
     },
   ],
 };

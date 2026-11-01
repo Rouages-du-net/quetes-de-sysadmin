@@ -4,12 +4,12 @@
 ### messages des outils ne se traduisent pas. Les titres de section du
 ### modèle (post-mortem-section-…) doivent rester ceux du modèle.
 
-chapitre-post-mortem = Le post-mortem
+chapter-post-mortem = Le post-mortem
     .resume = Dimanche nuit, Théo était d'astreinte et le direct a coupé : écrire ce qui s'est passé, avec les faits des journaux et sans chercher de coupable.
 
 ## Fichiers
 
-post-mortem-message-de-zoe =
+post-mortem-message-zoe =
     Un message de Zoé (lundi, 9 h 40) :
 
     « Dimanche nuit, c'est Théo qui était d'astreinte : le direct a coupé,
@@ -31,7 +31,7 @@ post-mortem-notes-theo =
 
     Ce que je ne comprends pas : pourquoi le relais a redémarré en pleine
     nuit ? Personne n'était connecté.
-post-mortem-modele =
+post-mortem-template =
     # Post-mortem : coupure du direct, nuit du 11 au 12 septembre 2027
 
     Sans reproche : on cherche ce qui a permis la panne, pas un coupable.
@@ -102,41 +102,41 @@ post-mortem-section-causes = Causes
 post-mortem-section-marche = Ce qui a bien marché
 post-mortem-section-actions = Actions
 # Le début des lignes du modèle à remplacer.
-post-mortem-a-completer = (à compléter
+post-mortem-a-complete = (à compléter
 # Des mots dont l'un doit apparaître dans « Causes » (séparés par des virgules, en minuscules).
-post-mortem-mots-declencheur = unattended, upgrade, apt, needrestart, mise à jour, mises à jour
-post-mortem-mots-origine = 20 août, 20/08, 2027-08-20, aug 20, août
+post-mortem-words-trigger = unattended, upgrade, apt, needrestart, mise à jour, mises à jour
+post-mortem-words-origin = 20 août, 20/08, 2027-08-20, aug 20, août
 # Des mots qui cherchent un coupable (le post-mortem doit les éviter).
-post-mortem-mots-reproche = faute, coupable, négligence, négligent, aurait dû, auraient dû, incompétent, erreur de théo, erreur de zoé
+post-mortem-words-blame = faute, coupable, négligence, négligent, aurait dû, auraient dû, incompétent, erreur de théo, erreur de zoé
 
-post-mortem-relecture = Zoé relit ton post-mortem :
+post-mortem-review = Zoé relit ton post-mortem :
 # { $mot } : le mot qui cherche un coupable
-post-mortem-reproche = « { $mot } » : on cherche ce qui a permis la panne, pas qui l'a causée. Personne n'a mal agi ; c'est le système (les outils, les habitudes) qu'on améliore. Tu peux reformuler ?
-post-mortem-manque-modele = Il reste des lignes « (à compléter) » du modèle.
-post-mortem-manque-chronologie = La chronologie doit donner, vérifiées dans les journaux, l'heure de la coupure, celle de la première alerte et celle du retour du direct (journalctl --since … --until …, le courrier de l'alerte).
-post-mortem-manque-impact = L'impact : combien de minutes de silence pour les auditeur·rices ?
-post-mortem-manque-cause = Les causes : ce qui a relancé le relais en pleine nuit (l'historique d'apt, /var/log/unattended-upgrades), et l'erreur de configuration qui l'a empêché de repartir.
-post-mortem-manque-origine = Et depuis quand cette erreur attendait-elle dans stream.conf ? Le journal garde la trace des commandes lancées avec sudo.
-post-mortem-manque-actions = Au moins deux actions, une par ligne « - ».
-post-mortem-manque-marche = Le résumé, et ce qui a bien marché (il y a des choses !).
+post-mortem-blame = « { $mot } » : on cherche ce qui a permis la panne, pas qui l'a causée. Personne n'a mal agi ; c'est le système (les outils, les habitudes) qu'on améliore. Tu peux reformuler ?
+post-mortem-missing-template = Il reste des lignes « (à compléter) » du modèle.
+post-mortem-missing-timeline = La chronologie doit donner, vérifiées dans les journaux, l'heure de la coupure, celle de la première alerte et celle du retour du direct (journalctl --since … --until …, le courrier de l'alerte).
+post-mortem-missing-impact = L'impact : combien de minutes de silence pour les auditeur·rices ?
+post-mortem-missing-cause = Les causes : ce qui a relancé le relais en pleine nuit (l'historique d'apt, /var/log/unattended-upgrades), et l'erreur de configuration qui l'a empêché de repartir.
+post-mortem-missing-origin = Et depuis quand cette erreur attendait-elle dans stream.conf ? Le journal garde la trace des commandes lancées avec sudo.
+post-mortem-missing-actions = Au moins deux actions, une par ligne « - ».
+post-mortem-missing-works = Le résumé, et ce qui a bien marché (il y a des choses !).
 
 ## Événements
 
-post-mortem-evenement-notes =
+post-mortem-event-notes =
     Les notes de Théo donnent des pistes, pas des faits : « vers 2 h 30 ? »,
     « vers 2 h 20 je crois ». Les journaux, eux, sont précis à la seconde
     (journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30").
     Et qui s'est connecté cette nuit-là ? (last)
-post-mortem-evenement-redemarrage =
+post-mortem-event-reboot =
     Juste avant que le relais ne tombe, apt-daily-upgrade a démarré : la
     mise à jour automatique de la nuit. Qu'a-t-elle installé, et qu'a-t-elle
     fait ensuite ? (/var/log/apt/history.log, /var/log/unattended-upgrades)
-post-mortem-evenement-origine =
+post-mortem-event-origin =
     Le 20 août, Zoé a modifié stream.conf… sans relancer le relais, qui a
     continué de tourner avec l'ancienne configuration. L'erreur a attendu
     trois semaines le premier redémarrage. Ce n'est la faute de personne :
     rien ne vérifiait la configuration après une modification.
-post-mortem-evenement-fin =
+post-mortem-event-end =
     Zoé : « Parfait. Je le lis à la réunion de jeudi, et on attaque les
     actions. Merci pour ces nuits ; tu as fait de cette radio un endroit où
     les pannes nous apprennent quelque chose. »

@@ -3,13 +3,13 @@
 ### Les commandes, les noms de machines, les chemins et le HTML ne se
 ### traduisent pas (le texte des pages, si).
 
-chapitre-web-host = L'hébergeur
+chapter-web-host = L'hébergeur
     .resume = Le nouveau site est prêt sur le wiki : le rapatrier par sftp, puis le publier chez l'hébergeur, qui n'accepte plus le FTP en clair. FTPS, le bon nom de serveur, et rien de vieux qui traîne.
 
 ## Fichiers
 
 # { $compte } : le compte FTP chez l'hébergeur ; { $motdepasse } : son mot de passe
-web-host-courriel-yasmine =
+web-host-email-yasmine =
     De :     Yasmine
     À :      toi
     Objet :  Le nouveau site
@@ -31,7 +31,7 @@ web-host-courriel-yasmine =
     l'hébergeur, qui ne propose que FTP : man lftp, installé sur ton
     poste.
 
-web-host-courriel-hebergeur =
+web-host-email-host =
     De :     Le support de l'hébergeur <support@hosting.example>
     Objet :  Fin du FTP non chiffré le 1er mars
 
@@ -66,16 +66,16 @@ web-host-notes-gaspard =
 
 ## Le site
 
-web-host-ancien-index =
+web-host-old-index =
     <!doctype html>
     <html lang="fr"><head><meta charset="utf-8"><title>Maison des associations</title></head>
     <body><h1>Maison des associations</h1>
     <p>Bienvenue ! Voir l'agenda et les tarifs 2025.</p></body></html>
-web-host-ancien-agenda =
+web-host-old-agenda =
     <!doctype html>
     <html lang="fr"><head><meta charset="utf-8"><title>Agenda</title></head>
     <body><h1>Agenda 2025</h1><p>Fête des voisins : 23 mai 2025.</p></body></html>
-web-host-ancien-tarifs =
+web-host-old-prices =
     <!doctype html>
     <html lang="fr"><head><meta charset="utf-8"><title>Tarifs 2025</title></head>
     <body><h1>Tarifs 2025</h1><p>Location de salle : 15 € de l'heure.</p></body></html>
@@ -90,46 +90,46 @@ web-host-agenda =
     <!doctype html>
     <html lang="fr"><head><meta charset="utf-8"><title>Agenda</title><link rel="stylesheet" href="style.css"></head>
     <body><h1>Agenda 2028</h1><p>Assemblée générale : 12 avril. Fête des voisins : 26 mai.</p></body></html>
-web-host-adhesion =
+web-host-membership =
     <!doctype html>
     <html lang="fr"><head><meta charset="utf-8"><title>Adhérer</title><link rel="stylesheet" href="style.css"></head>
     <body><h1>Adhérer</h1><p>L'adhésion est à prix libre, à l'accueil ou par courriel.</p></body></html>
 
 ## Événements
 
-web-host-evenement-clair =
+web-host-event-clear =
     L'hébergeur refuse : plus de FTP en clair, comme il l'avait annoncé. Et
     c'est tant mieux : en FTP simple, le mot de passe du compte passe en
     clair sur le réseau, lisible par quiconque se trouve sur le chemin (le
     wifi d'un café…). lftp chiffre tout seul (FTPS), à moins qu'on ne le
     lui interdise.
-web-host-evenement-certificat =
+web-host-event-certificate =
     La connexion est chiffrée, mais lftp refuse le certificat : il est
     émis pour *.hosting.example, et tu as demandé ftp.community.example.
     C'est l'erreur qu'avait eue Gaspard. Elle ne se règle pas en coupant
     la vérification, mais en demandant le serveur sous le nom que son
     certificat porte (courriel_hebergeur.txt).
-web-host-evenement-sans-verification =
+web-host-event-without-verification =
     Attention : la vérification du certificat est coupée
     (ssl:verify-certificate). La connexion est chiffrée… mais avec
     n'importe qui : quelqu'un qui se ferait passer pour l'hébergeur
     recevrait le mot de passe sans que lftp proteste. Remets la
     vérification, et passe par le nom que le certificat couvre.
-web-host-evenement-mauvais-sens =
+web-host-event-bad-direction =
     Oups : mirror sans -R copie DE l'hébergement VERS ton poste. Tu viens
     de rapatrier l'ancien site (la page des tarifs 2025 est arrivée chez
     toi). -R (reverse) envoie dans l'autre sens. Pour retrouver le
     nouveau site, il est toujours sur le wiki.
-web-host-evenement-mauvais-dossier =
+web-host-event-bad-directory =
     Le site est arrivé chez l'hébergeur… mais pas dans public_html : mirror
     -R site, sans cible, crée un dossier du même nom à côté. Le dossier
     publié par le serveur web, c'est public_html (et le dossier en trop
     peut se retirer : rm -r).
-web-host-evenement-reste =
+web-host-event-rest =
     Le nouveau site est en ligne… et la page des tarifs 2025 aussi :
     mirror n'efface rien de l'autre côté sans --delete. (Pour voir ce qu'il
     ferait avant de le faire : --dry-run.)
-web-host-evenement-fin =
+web-host-event-end =
     Le nouveau site est en ligne, exactement celui du wiki, et les tarifs
     de 2025 ont disparu. Le mot de passe n'a jamais circulé en clair.
     Yasmine : « Gaspard demande si tu peux lui montrer, pour la prochaine

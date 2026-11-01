@@ -8,8 +8,8 @@
 // English. The code only uses identifiers:
 //
 //   t('lighthouse-message')                       a message
-//   t('histoire-eraser.resume')            an attribute
-//   t('ls-acces-impossible', { cible })      with named variables
+//   t('story-eraser.resume')             an attribute
+//   t('ls-access-missing', { cible })         with named variables
 //
 // Plurals, numbers and dates go through Fluent, which relies on Intl. A
 // number passed as a variable is formatted for the language ("1,234"):

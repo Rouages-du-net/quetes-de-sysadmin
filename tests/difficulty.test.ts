@@ -31,7 +31,7 @@ describe('Difficulty', () => {
     for (const language of LANGUAGES) {
       const t = translator(language);
       expect(t('difficulty', { level: 3 })).toMatch(/3/);
-      expect(t('difficulty-range', { min: 2, max: 4 })).toMatch(/2.*4/);
+      expect(t('difficulty-tidy', { min: 2, max: 4 })).toMatch(/2.*4/);
     }
   });
 });

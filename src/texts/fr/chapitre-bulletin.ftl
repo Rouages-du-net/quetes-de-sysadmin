@@ -5,12 +5,12 @@
 ### se traduisent pas. Les titres de section du modèle (bulletin-section-…)
 ### doivent rester ceux du modèle.
 
-chapitre-bulletin = Le bulletin
+chapter-bulletin = Le bulletin
     .resume = Trier un bulletin de CVE : ce qui concerne vraiment ce serveur, et ce qui n'est qu'une fausse alerte.
 
 ## Fichiers
 
-bulletin-courriel-salome =
+bulletin-email-salome =
     De :     Salomé
     À :      toi
     Objet :  La veille, six mois après
@@ -40,7 +40,7 @@ bulletin-courriel-salome =
     Salomé
     (Pour sudo, ton mot de passe est : levain-2028)
 
-bulletin-fichier =
+bulletin-file =
     BULLETIN DE SÉCURITÉ — semaine du 8 septembre 2028
     (CVE fictives, à but pédagogique : aucune n'existe réellement)
 
@@ -77,7 +77,7 @@ bulletin-fichier =
     désactiver KbdInteractiveAuthentication dans sshd_config.
     Versions touchées : openssh-server (toutes, si l'option est activée)
 
-bulletin-modele =
+bulletin-template =
     # Veille — Le Fournil
 
     ## Concerne ce serveur
@@ -88,29 +88,29 @@ bulletin-modele =
 
 bulletin-section-concerne = Concerne ce serveur
 bulletin-section-sansobjet = Sans objet
-bulletin-a-completer = (à compléter
-bulletin-mots-absent = n'est pas installé, pas installé, non installé, absent, aucun paquet, n'existe pas sur ce serveur
-bulletin-mots-corrige = déjà corrigé, déjà à jour, version installée, au-delà de la version corrigée, supérieure à la version corrigée, plus récente
+bulletin-a-complete = (à compléter
+bulletin-words-missing = n'est pas installé, pas installé, non installé, absent, aucun paquet, n'existe pas sur ce serveur
+bulletin-words-fixed = déjà corrigé, déjà à jour, version installée, au-delà de la version corrigée, supérieure à la version corrigée, plus récente
 
 ## Relecture
 
-bulletin-relecture = Salomé relit ton tri :
-bulletin-manque-modele = Il reste des lignes « (à compléter) » du modèle.
-bulletin-manque-concerne = Sous « Concerne ce serveur », il doit y avoir exactement nginx, rsync et openssh-server (celle-ci s'applique, même si elle ne demande rien de plus ici) — ni certbot ni curl, qui n'ont rien à faire là.
-bulletin-manque-sansobjet = Sous « Sans objet », explique pourquoi pour chacune : certbot (regarde s'il est seulement installé) et curl (compare la version installée à la version corrigée du bulletin).
+bulletin-review = Salomé relit ton tri :
+bulletin-missing-template = Il reste des lignes « (à compléter) » du modèle.
+bulletin-missing-concerns = Sous « Concerne ce serveur », il doit y avoir exactement nginx, rsync et openssh-server (celle-ci s'applique, même si elle ne demande rien de plus ici) — ni certbot ni curl, qui n'ont rien à faire là.
+bulletin-missing-not-applicable = Sous « Sans objet », explique pourquoi pour chacune : certbot (regarde s'il est seulement installé) et curl (compare la version installée à la version corrigée du bulletin).
 
 ## Événements
 
-bulletin-evenement-lu =
+bulletin-event-read =
     Cinq lignes, cinq CVE. Avant de rien corriger : lesquelles concernent
     VRAIMENT ce serveur ? apt list --installed te dit ce qui est posé ici,
     et avec quelle version (man apt).
-bulletin-evenement-tri =
+bulletin-event-sort =
     Ton tri distingue ce qui mérite qu'on s'en occupe de ce qui n'a pas lieu
     d'inquiéter : certbot n'est pas sur ce serveur, curl est déjà au-delà de
     la version corrigée. Il reste nginx, rsync, et openssh-server (déjà
     protégé par la configuration, mais à garder à l'œil).
-bulletin-evenement-fin =
+bulletin-event-end =
     Salomé : « Voilà le bon réflexe : lire avant de s'affoler. La moitié
     d'un bulletin de sécurité, en général, ne te concerne pas. »
 

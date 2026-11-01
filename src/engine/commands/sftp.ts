@@ -138,7 +138,7 @@ function sftpCommand(game: Shell, s: SessionSftp, line: string): string | null {
       });
     case 'help':
     case '?':
-      return game.t('sftp-aide');
+      return game.t('sftp-help');
     default:
       return game.error('Invalid command.', 1);
   }

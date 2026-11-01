@@ -2,12 +2,12 @@
 ### Les commandes, ports, adresses et mots-clés d'ufw (allow, deny…) ne se
 ### traduisent pas ; la sortie de nmap et de ss reste en anglais.
 
-chapitre-firewall = Le pare-feu
+chapter-firewall = Le pare-feu
     .resume = Qui écoute, et qui peut entrer : ss, ufw, et toujours ne pas s'enfermer dehors.
 
 ## Fichiers
 
-firewall-courriel-kofi =
+firewall-email-kofi =
     De :     Kofi (La Fourmilière)
     À :      toi
     Objet :  Une porte de trop ?
@@ -29,29 +29,29 @@ firewall-courriel-kofi =
 
 ## Événements
 
-firewall-evenement-ecoute =
+firewall-event-listening =
     Regarde la colonne « Local Address » : 0.0.0.0:3306 veut dire que MariaDB
     écoute sur TOUTES les interfaces, donc que n'importe qui sur internet
     peut frapper à cette porte. php-fpm, lui, n'écoute que sur 127.0.0.1 : il
     n'est joignable que depuis la machine elle-même.
-firewall-evenement-enferme =
+firewall-event-locked-out =
     ATTENTION : le pare-feu est actif et bloque SSH. Ta session tient (le
     pare-feu laisse passer les connexions déjà établies), mais toute nouvelle
     connexion échouera. Autorise SSH maintenant, avant de te déconnecter !
-firewall-evenement-site-coupe =
+firewall-event-site-cut =
     Le pare-feu est actif… et le site des Lettres ne répond plus : http (80)
     et https (443) sont bloqués. Kofi va recevoir des messages inquiets.
-firewall-evenement-base-ouverte =
+firewall-event-base-open =
     Le pare-feu est actif, mais la base de données (3306) est toujours
     joignable depuis internet. Relis la demande de Kofi.
-firewall-evenement-filtre =
+firewall-event-filter =
     Le pare-feu filtre comme il faut : le site répond à tout le monde, SSH à
     toi, et la base de données à personne de l'extérieur. Vérifie avec
     sudo ufw status verbose.
 
     Dernière étape, comme pour SSH : vérifier que tu peux toujours entrer.
     exit, puis ssh lettres.
-firewall-evenement-fin =
+firewall-event-end =
     Nouvelle connexion réussie : le pare-feu laisse passer SSH. Yasmine
     relance son scan : 22, 80 et 443 ouverts, 3306 filtré. Kofi : « Elle dit
     que c'est du beau travail ! »

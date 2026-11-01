@@ -2,12 +2,12 @@
 ### dans chaque VLAN. Les options de dnsmasq, les commandes et les chemins ne
 ### se traduisent pas.
 
-chapitre-dhcp = Le DHCP
+chapter-dhcp = Le DHCP
     .resume = Les VLAN sont là, mais personne n'a d'adresse : une plage DHCP par VLAN avec dnsmasq, une réservation pour l'imprimante, et pas un mot vers la box.
 
 ## Fichiers
 
-dhcp-courriel-malik =
+dhcp-email-malik =
     De :     Malik
     À :      toi
     Objet :  Les VLAN, c'est bien, mais…
@@ -31,18 +31,18 @@ dhcp-courriel-malik =
 
 ## Événements
 
-dhcp-evenement-wan =
+dhcp-event-wan =
     Attention : dnsmasq écoute toutes les interfaces, y compris eth0, le
     réseau du fournisseur d'accès. Un serveur DHCP qui répond chez le voisin
     (un « DHCP pirate »), c'est le genre de panne qui coupe tout un quartier.
     Dis à dnsmasq où il a le droit d'écouter (interface=, ou
     except-interface=eth0).
 # { $adresse } : l'adresse attendue de l'imprimante
-dhcp-evenement-imprimante-ailleurs =
+dhcp-event-printer-elsewhere =
     L'imprimante a reçu une adresse… mais pas { $adresse }, et les postes ne
     la trouvent pas. dnsmasq sait réserver une adresse à un appareil, d'après
     son adresse MAC (man dnsmasq : dhcp-host).
-dhcp-evenement-fin =
+dhcp-event-end =
     Chaque appareil a son adresse dans son VLAN, l'imprimante est à sa place,
     et la box n'entend rien. Malik : « Le café a du wifi, les bureaux ont
     internet… enfin, presque : il paraît que ça ne sort pas encore. »

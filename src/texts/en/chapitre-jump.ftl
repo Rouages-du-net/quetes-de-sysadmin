@@ -3,12 +3,12 @@
 ### The ssh_config options, the commands, the paths and OpenSSH's
 ### messages (in English) are not translated.
 
-chapitre-jump = The Jump
+chapter-jump = The Jump
     .resume = The wiki can only be reached through the gateway: ssh -J, then a ProxyJump shortcut in ~/.ssh/config.
 
 ## Files
 
-jump-courriel-yasmine =
+jump-email-yasmine =
     From:     Yasmine
     To:       you
     Subject:  The wiki
@@ -41,7 +41,7 @@ jump-note-gaspard =
     To get here: ssh community, then ssh wiki. (I put my key in
     ~/.ssh on community, it's more convenient.)
 
-jump-wiki-accueil =
+jump-wiki-welcome =
     # Associations' wiki
 
     Welcome to the wiki of the Community Centre! Each association
@@ -54,13 +54,13 @@ jump-wiki-accueil =
 
 ## Events
 
-jump-evenement-cle-privee =
+jump-event-key-private =
     WARNING: there is a private key in ~/.ssh on community (a line
     "BEGIN OPENSSH PRIVATE KEY"). That's exactly what Yasmine wanted to
     avoid: the gateway is the most exposed machine on the network.
 
     Delete it (rm), and jump from your workstation instead: man ssh, option -J.
-jump-evenement-au-wiki =
+jump-event-to-wiki =
     Here you are on the wiki! Your connection went through community, but your private
     key stayed on your workstation: community only relayed a
     tunnel encrypted end to end between your workstation and the wiki.
@@ -69,11 +69,11 @@ jump-evenement-au-wiki =
 
     One thing left, the shortcut: on your workstation, a block in ~/.ssh/config so that a
     simple "ssh wiki" is enough (man ssh_config, ProxyJump).
-jump-evenement-raccourci =
+jump-event-shortcut =
     The shortcut is in your workstation's ~/.ssh/config: ssh finds there the
     way to the wiki, through community. (To see what ssh makes of it:
     ssh -G wiki.)
-jump-evenement-fin =
+jump-event-end =
     A simple "ssh wiki" from your workstation, and no private key on the
     gateway. Yasmine: "That's cleaner than in Gaspard's day… but
     don't tell him!"

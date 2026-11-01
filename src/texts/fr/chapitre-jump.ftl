@@ -3,12 +3,12 @@
 ### Les options de ssh_config, les commandes, les chemins et les messages
 ### d'OpenSSH (en anglais) ne se traduisent pas.
 
-chapitre-jump = Le rebond
+chapter-jump = Le rebond
     .resume = Le wiki n'est joignable que par la passerelle : ssh -J, puis un raccourci ProxyJump dans ~/.ssh/config.
 
 ## Fichiers
 
-jump-courriel-yasmine =
+jump-email-yasmine =
     De :     Yasmine
     À :      toi
     Objet :  Le wiki
@@ -41,7 +41,7 @@ jump-note-gaspard =
     Pour venir ici : ssh maison, puis ssh wiki. (J'ai mis ma clé dans
     ~/.ssh sur maison, c'est plus pratique.)
 
-jump-wiki-accueil =
+jump-wiki-welcome =
     # Wiki des associations
 
     Bienvenue sur le wiki de la Maison des associations ! Chaque association
@@ -54,13 +54,13 @@ jump-wiki-accueil =
 
 ## Événements
 
-jump-evenement-cle-privee =
+jump-event-key-private =
     ATTENTION : il y a une clé privée dans ~/.ssh sur maison (une ligne
     « BEGIN OPENSSH PRIVATE KEY »). C'est exactement ce que Yasmine voulait
     éviter : la passerelle est la machine la plus exposée du réseau.
 
     Efface-la (rm), et rebondis plutôt depuis ton poste : man ssh, option -J.
-jump-evenement-au-wiki =
+jump-event-to-wiki =
     Te voilà sur le wiki ! Ta connexion est passée par maison, mais ta clé
     privée, elle, est restée sur ton poste : maison n'a fait que relayer un
     tunnel chiffré de bout en bout entre ton poste et le wiki.
@@ -69,11 +69,11 @@ jump-evenement-au-wiki =
 
     Reste le raccourci : sur ton poste, un bloc dans ~/.ssh/config pour qu'un
     simple « ssh wiki » suffise (man ssh_config, ProxyJump).
-jump-evenement-raccourci =
+jump-event-shortcut =
     Le raccourci est dans ~/.ssh/config de ton poste : ssh y trouve le
     chemin du wiki, par maison. (Pour voir ce que ssh en comprend :
     ssh -G wiki.)
-jump-evenement-fin =
+jump-event-end =
     Un simple « ssh wiki » depuis ton poste, et aucune clé privée sur la
     passerelle. Yasmine : « C'est plus propre que du temps de Gaspard… mais
     ne lui dis pas ! »

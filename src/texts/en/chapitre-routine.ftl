@@ -2,12 +2,12 @@
 ### updates (without doing everything on its own) and schedule a weekly
 ### check-in. apt.conf keywords, commands and paths are not translated.
 
-chapitre-routine = Settling Into a Routine
+chapter-routine = Settling Into a Routine
     .resume = Automate what can be automated (security updates, a weekly check-in), without replacing human judgment.
 
 ## Files
 
-routine-courriel-salome =
+routine-email-salome =
     From:     Salomé
     To:       you
     Subject:  The last piece: making it a habit
@@ -34,22 +34,22 @@ routine-courriel-salome =
 
 ## Events
 
-routine-evenement-syntaxe =
+routine-event-syntax =
     There is a syntax error in apt's configuration! An assignment is
     written "Key "value";", a list "Key {"{"} "a"; "b"; {"}"};" (man apt.conf).
     Fix it before moving on: apt refuses to read the rest while it's there.
-routine-evenement-active =
+routine-event-active =
     Both periodic tasks are enabled. What's left is limiting what
     unattended-upgrades touches, and giving yourself a report.
-routine-evenement-securite =
+routine-event-security =
     unattended-upgrades is active, limited to security updates
     (Debian-Security), and a report will go out by mail. The weekly
     check-in remains.
-routine-evenement-periodique =
+routine-event-periodic =
     A check-in exists, and it's one that survives a reboot. It will remind
     you, every week, to read the next bulletin — even for what
     unattended-upgrades doesn't fix on its own.
-routine-evenement-fin =
+routine-event-end =
     Salomé: "There you go. unattended-upgrades for what fixes itself, a
     check-in for the rest. You don't need me for this any more."
 

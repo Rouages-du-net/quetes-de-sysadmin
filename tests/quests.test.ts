@@ -169,7 +169,7 @@ for (const language of LANGUAGES)
       it('une autre solution : @daily, copie dans un dossier, restauration avec cp', () => {
         const s = new Shell(chapter('backup'), language);
         crontab(s, (t) => t + L('@daily rsync -a memories /mnt/backup/\n'));
-        expect(s.flags.has('nuit-ok')).toBe(true);
+        expect(s.flags.has('night-ok')).toBe(true);
         s.execute(L('cp /mnt/backup/memories/first-letter.txt memories/'));
         expect(s.finished).toBe(true);
       });
@@ -181,7 +181,7 @@ for (const language of LANGUAGES)
         const mail = crontab(s, (t) => t.replace('0 12', '0 2').replace(L('~/memories/'), L('~/memories/').replace(/s\/$/, '/')));
         expect(mail).toContain(L(`rsync: [sender] link_stat "${L('/home/you/memories').replace(/s$/, '')}" failed: No such file or directory (2)`));
         crontab(s, (t) => t.replace(L('~/memories/').replace(/s\/$/, '/'), L('~/memories/')));
-        expect(s.flags.has('nuit-ok')).toBe(true);
+        expect(s.flags.has('night-ok')).toBe(true);
         const perdu = s.execute(L('rsync -a --delete ~/memories/ /mnt/backup/memories/'))!;
         contains(perdu, 'de la sauvegarde aussi');
         expect(s.finished).toBe(false);
@@ -222,13 +222,13 @@ for (const language of LANGUAGES)
           `cut -d " " -f 1 ${J} | sort | uniq -c | sort -n | tail -3`,
         ]);
         // Chaque piste trop longue renvoie aux notes d'Awa, sans donner la commande ; la bonne passe ensuite.
-        expect(outputs[1]).toContain(t('first-day-evenement-tout-lire'));
-        expect(outputs[2]).toContain(t('first-day-evenement-grep-seul'));
-        expect(outputs[3]).toContain(t('first-day-evenement-compte', { erreurs: outputs[3].split('\n')[0] }).slice(0, 12));
-        expect(outputs[4]).toContain(t('first-day-evenement-adresses-seules'));
+        expect(outputs[1]).toContain(t('first-day-event-all-read'));
+        expect(outputs[2]).toContain(t('first-day-event-grep-only'));
+        expect(outputs[3]).toContain(t('first-day-event-account', { erreurs: outputs[3].split('\n')[0] }).slice(0, 12));
+        expect(outputs[4]).toContain(t('first-day-event-addresses-only'));
         expect(s.flags.has('robot')).toBe(true);
         // Une fois le compte fait, relire le journal ne redit rien.
-        expect(s.execute(`cat ${J}`)).not.toContain(t('first-day-evenement-tout-lire'));
+        expect(s.execute(`cat ${J}`)).not.toContain(t('first-day-event-all-read'));
       });
 
       it('Le Datacenter, chapitre 2 — Deuxième jour', () => {

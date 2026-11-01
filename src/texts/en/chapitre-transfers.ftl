@@ -3,12 +3,12 @@
 ### options, the paths and the tools' messages (in English) are not
 ### translated.
 
-chapitre-transfers = Transfers
+chapter-transfers = Transfers
     .resume = Fetch a file from the wiki onto your workstation (scp), then bring the backup on archives up to date (rsync).
 
 ## Files
 
-transfers-courriel-yasmine =
+transfers-email-yasmine =
     From:    Yasmine
     To:      you
     Subject: Before the general meeting
@@ -30,19 +30,19 @@ transfers-courriel-yasmine =
     Gaspard tells me on the phone: "Watch out for the trailing slash
     on the source, with rsync. And try with -n first."
 
-transfers-cr-ag-2026 =
+transfers-minutes-ag-2026 =
     General meeting 2026 — minutes
 
     Present: 34 associations out of 41.
     Annual report adopted unanimously. Budget adopted (2 abstentions).
     Project of the year: a shared wiki for all the associations.
-transfers-cr-ca-2027-09 =
+transfers-minutes-it-2027-09 =
     Board meeting — September 2027
 
     Item 1: the Centre's IT is taken over by a new
     volunteer. Gaspard can still be reached by phone.
     Item 2: the general meeting will take place on Saturday 9 October.
-transfers-planning =
+transfers-schedule =
     Room bookings — October 2027
 
     Room 1: choir (Tuesday 7pm), chess club (Thursday 6pm)
@@ -51,11 +51,11 @@ transfers-planning =
 
 ## Events
 
-transfers-evenement-rapport =
+transfers-event-report =
     The annual report is on your workstation: scp went through community (the
     ProxyJump of your shortcut), just like ssh.
 # { $dossier }: the extra directory that was created
-transfers-evenement-imbrique =
+transfers-event-nested =
     Look on archives: there is now a directory { $dossier }. Without
     a trailing slash, rsync copied the DIRECTORY share into the
     backup, instead of its CONTENTS.
@@ -63,11 +63,11 @@ transfers-evenement-imbrique =
     Start again with /srv/share/. And to remove the extra directory,
     rsync can delete on the other side what doesn't exist at the source: the
     --delete option (man rsync). Powerful, so do a dry run first, with -n.
-transfers-evenement-sauvegarde =
+transfers-event-backup =
     The backup on archives is up to date: every file from /srv/share is
     there, in the same place. Run the same command again: rsync has nothing
     left to copy.
-transfers-evenement-fin =
+transfers-event-end =
     The report is on your workstation, and the backup on archives is up to date.
     Yasmine: "Thanks! Gaspard says well done too, he saw your backup."
 

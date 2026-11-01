@@ -94,7 +94,7 @@ export const secret: Chapter = {
   home: M,
   welcome: 'email_awa.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: PASSWORD,
   accounts: () => cooperativeAccounts(false),
   state: () => tillState(tillEnv(OLD_KEY)),
@@ -103,22 +103,22 @@ export const secret: Chapter = {
     const webTill = tillWorld({ env: tillEnv(OLD_KEY), logAccess: ACCESS, appLog: APP_LOG });
     return cooperativeWorld({
       withoutMarc: true,
-      home: { 'email_awa.txt': f(t('secret-courriel-awa', { cle: NEW_KEY })) },
+      home: { 'email_awa.txt': f(t('secret-email-awa', { cle: NEW_KEY })) },
       etc: nginxCooperative(SITE),
       sbin: BINARY_NGINX,
       more: webTill,
     });
   },
   events: [
-    { id: 'env-seul', condition: (j) => !leak(j, '/.env') && leak(j, '/.git/config'), message: (j) => j.t('secret-evenement-env-seul') },
-    { id: 'site-casse', condition: (j) => !leak(j, '/.env') && !siteOk(j), message: (j) => j.t('secret-evenement-site-casse') },
-    { id: 'fermee', condition: closed, message: (j) => j.t('secret-evenement-fermee') },
-    { id: 'attaquant', condition: blockedAttacker, message: (j) => j.t('secret-evenement-attaquant', { adresse: ATTACKER }) },
+    { id: 'env-only', condition: (j) => !leak(j, '/.env') && leak(j, '/.git/config'), message: (j) => j.t('secret-event-env-only') },
+    { id: 'site-broken', condition: (j) => !leak(j, '/.env') && !siteOk(j), message: (j) => j.t('secret-event-site-broken') },
+    { id: 'closed', condition: closed, message: (j) => j.t('secret-event-closed') },
+    { id: 'attacker', condition: blockedAttacker, message: (j) => j.t('secret-event-attacker', { adresse: ATTACKER }) },
     {
-      id: 'cle-ecrite',
+      id: 'key-written',
       condition: (j) => (j.read(ENV) ?? '').includes(NEW_KEY) && !loadedKey(j),
-      message: (j) => j.t('secret-evenement-cle-ecrite'),
+      message: (j) => j.t('secret-event-key-written'),
     },
-    { id: 'fin', condition: (j) => closed(j) && blockedAttacker(j) && loadedKey(j), message: (j) => j.t('secret-evenement-fin') },
+    { id: 'end', condition: (j) => closed(j) && blockedAttacker(j) && loadedKey(j), message: (j) => j.t('secret-event-end') },
   ],
 };

@@ -42,19 +42,19 @@ function collection(t: Translate, day: number): Record<string, Version> {
   const base = COLLECTION;
   const before = Date.UTC(2026, 11, 14, 16, 2, 0);
   const v: Record<string, Version> = {
-    [`${base}/readme.txt`]: text(t('archives-lisezmoi'), before),
-    [`${base}/manuscripts/marie_diary.txt`]: day >= 33 ? text(t('versions-journal-abime'), CORRECTION) : text(t('versions-journal'), before),
-    [`${base}/manuscripts/letters_1914.txt`]: text(t('archives-lettres-1914'), before),
+    [`${base}/readme.txt`]: text(t('archives-readme'), before),
+    [`${base}/manuscripts/marie_diary.txt`]: day >= 33 ? text(t('versions-journal-damaged'), CORRECTION) : text(t('versions-journal'), before),
+    [`${base}/manuscripts/letters_1914.txt`]: text(t('archives-letters-1914'), before),
     [`${base}/manuscripts/neighbourhood_recipes.txt`]:
       day >= 20
-        ? text(`${t('archives-recettes-du-quartier')}\n${t('versions-recette-ajoutee')}`, Date.UTC(2027, 0, 20, 11, 15, 0))
-        : text(t('archives-recettes-du-quartier'), before),
+        ? text(`${t('archives-recipes-neighbourhood')}\n${t('versions-recipe-added')}`, Date.UTC(2027, 0, 20, 11, 15, 0))
+        : text(t('archives-recipes-neighbourhood'), before),
     [`${base}/maps/map_1890.png`]: media(t('archives-image-png'), 6, before),
     [`${base}/maps/map_1954.png`]: media(t('archives-image-png'), 5, before),
     [`${base}/press/gazette_1936.pdf`]: media(t('archives-document-pdf'), 4, before),
     [`${base}/press/gazette_1968.pdf`]: media(t('archives-document-pdf'), 4.5, before),
-    [`${base}/recordings/market_songs.ogg`]: media(t('archives-son-ogg'), 12, before),
-    [`${base}/recordings/interview_fatou.ogg`]: media(t('archives-son-ogg'), 15, before),
+    [`${base}/recordings/market_songs.ogg`]: media(t('archives-its-ogg'), 12, before),
+    [`${base}/recordings/interview_fatou.ogg`]: media(t('archives-its-ogg'), 15, before),
   };
   // Du 8 au 14 janvier, les numérisations brutes (énormes) attendaient d'être traitées.
   if (day >= 8 && day <= 14)
@@ -115,7 +115,7 @@ export const versions: Chapter = {
   home: M,
   welcome: 'note_from_rosa.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   accounts: () => ({
     users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' }, rosa: { uid: 1001, group: 'rosa' } },
     groups: { root: { gid: 0, members: [] }, you: { gid: 1000, members: [] }, rosa: { gid: 1001, members: [] } },
@@ -144,7 +144,7 @@ export const versions: Chapter = {
     return d({
       home: d({
         you: d({
-          'note_from_rosa.txt': f(t('versions-mot-de-rosa')),
+          'note_from_rosa.txt': f(t('versions-word-rosa')),
           'notes_restic.txt': f(t('versions-notes-restic')),
           '.config': d({ restic: d({ 'password': f(password(t, PASSWORD), { lines: true }) }) }),
           collection: d({ ...collectionRoot, ...Object.fromEntries(Object.entries(underPlaces).map(([name, children]) => [name, d(children)])) }),
@@ -157,44 +157,44 @@ export const versions: Chapter = {
   },
   events: [
     {
-      id: 'mot-de-passe',
+      id: 'password',
       condition: (j) => !!j.state.resticFichierMdp && openMdp(j),
-      message: (j) => j.t('versions-evenement-mot-de-passe', { fichier: path(j.t, MDP) }),
+      message: (j) => j.t('versions-event-password', { fichier: path(j.t, MDP) }),
     },
     {
-      id: 'mauvais-mot-de-passe',
+      id: 'bad-password',
       condition: (j) => j.state.resticMauvaisMdp === true,
-      message: (j) => j.t('versions-evenement-mauvais-mot-de-passe'),
+      message: (j) => j.t('versions-event-bad-password'),
     },
     {
-      id: 'ailleurs',
+      id: 'elsewhere',
       condition: (j) => !restored(j) && findElsewhereRestore(j),
-      message: (j) => j.t('versions-evenement-ailleurs'),
+      message: (j) => j.t('versions-event-elsewhere'),
     },
     {
-      id: 'restaure',
+      id: 'restored',
       condition: restored,
-      message: (j) => j.t('versions-evenement-restaure'),
+      message: (j) => j.t('versions-event-restored'),
     },
     {
-      id: 'perdu',
+      id: 'lost',
       condition: (j) => !restored(j) && !keptVersionBonne(j),
-      message: (j) => j.t('versions-evenement-perdu'),
+      message: (j) => j.t('versions-event-lost'),
     },
     {
-      id: 'oublie-sans-prune',
+      id: 'forgotten-without-plum',
       condition: (j) => j.state.resticOublie === true && repo(j).pruneA,
-      message: (j) => j.t('versions-evenement-oublie-sans-prune'),
+      message: (j) => j.t('versions-event-forgotten-without-plum'),
     },
     {
       id: 'place',
       condition: freeMem,
-      message: (j) => j.t('versions-evenement-place'),
+      message: (j) => j.t('versions-event-place'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => restored(j) && !openMdp(j) && freeMem(j) && repo(j).checked && keptVersionBonne(j),
-      message: (j) => j.t('versions-evenement-fin'),
+      message: (j) => j.t('versions-event-end'),
     },
   ],
 };

@@ -15,8 +15,8 @@ describe('Les succès', () => {
     for (const language of LANGUAGES) {
       const t = translator(language);
       for (const s of ACHIEVEMENTS) {
-        expect(t.exists(`succes-${s.id}`), `${language} : ${s.id}`).toBe(true);
-        expect(t(`succes-${s.id}.description`), `${language} : ${s.id}`).not.toBe(`succes-${s.id}.description`);
+        expect(t.exists(`achievements-${s.id}`), `${language} : ${s.id}`).toBe(true);
+        expect(t(`achievements-${s.id}.description`), `${language} : ${s.id}`).not.toBe(`achievements-${s.id}.description`);
       }
     }
   });
@@ -29,7 +29,7 @@ describe('Les succès', () => {
     s.execute('ls -a');
     expect(newAchievements(ctx, {})).toEqual(['cache-ls']);
     s.execute('ls | grep txt');
-    expect(newAchievements(ctx, {})).toEqual(['tube']);
+    expect(newAchievements(ctx, {})).toEqual(['pipe']);
     s.execute('ls > liste');
     expect(newAchievements(ctx, {})).toEqual(['redirection']);
     // Déjà obtenu : pas une deuxième fois.
@@ -38,7 +38,7 @@ describe('Les succès', () => {
 
   it('se gagnent sur la progression : chapitres, histoires, examen', () => {
     const ctx = { sh: null, finished: ['lighthouse', 'village', 'root', 'backup'], notebook: { man: { line: 'man ls', chapter: 'lighthouse' } }, records: { lighthouse: 4 * 60_000 } };
-    expect(newAchievements(ctx, {})).toEqual(['premiere-commande', 'manuel', 'premier-chapitre', 'effaceur', 'restauration', 'examen', 'examen-eclair']);
+    expect(newAchievements(ctx, {})).toEqual(['first-command', 'manual', 'first-chapter', 'eraser', 'restore', 'exam', 'exam-lightning']);
   });
 
   it('les clins d’œil répondent, et donnent leur succès caché', () => {
@@ -52,15 +52,15 @@ describe('Les succès', () => {
   });
 
   it('le grade suit les chapitres terminés', () => {
-    expect(grade([])).toBe('stagiaire');
-    expect(grade(['lighthouse'])).toBe('apprenti');
+    expect(grade([])).toBe('intern');
+    expect(grade(['lighthouse'])).toBe('apprentice');
     expect(grade(ALL.slice(0, 4))).toBe('junior');
     expect(grade(ALL.slice(0, 15))).toBe('admin');
     expect(grade(ALL)).toBe('sre');
   });
 
   it('voyagent avec le fichier de sauvegarde, sans succès inconnu', () => {
-    const read = readFile(backupFile({ achievements: { tube: '2027-01-15T10:00:00.000Z', invente: 'x' } as Record<string, string> }, new Date()));
-    expect('backup' in read && read.backup.achievements).toEqual({ tube: '2027-01-15T10:00:00.000Z' });
+    const read = readFile(backupFile({ achievements: { pipe: '2027-01-15T10:00:00.000Z', invente: 'x' } as Record<string, string> }, new Date()));
+    expect('backup' in read && read.backup.achievements).toEqual({ pipe: '2027-01-15T10:00:00.000Z' });
   });
 });

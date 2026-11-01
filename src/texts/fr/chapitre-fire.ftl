@@ -4,12 +4,12 @@
 ### ne se traduisent pas. Les pages HTML du site (incendie-site-*) sont
 ### celles de la médiathèque : elles se traduisent.
 
-chapitre-fire = Le grand incendie
+chapter-fire = Le grand incendie
     .resume = Le datacenter a brûlé : repartir d'une machine vide avec les sauvegardes, apt, tar et nginx -t.
 
 ## Fichiers
 
-fire-courriel-awa =
+fire-email-awa =
     De :     Awa (responsable d'exploitation)
     À :      toi
     Objet :  Incendie au datacenter : on reconstruit
@@ -29,7 +29,7 @@ fire-courriel-awa =
 
     Je suis sur place avec les pompiers. Remets le site de la médiathèque en
     ligne, et dis-moi ce qu'on a perdu.
-fire-pra =
+fire-drp =
     PLAN DE REPRISE (PRA) — SITE DE LA MÉDIATHÈQUE
     À suivre si le serveur est perdu : on repart d'une machine neuve.
 
@@ -87,7 +87,7 @@ fire-site-index-3 =
     <p>Le catalogue en ligne revient bientôt.</p>
     </body>
     </html>
-fire-site-horaires =
+fire-site-hours =
     <!DOCTYPE html>
     <html lang="fr">
     <head><meta charset="utf-8"><title>Horaires — Médiathèque du quartier</title></head>
@@ -99,15 +99,15 @@ fire-site-horaires =
 
 ## Événements
 
-fire-evenement-liste-vide =
+fire-event-list-empty =
     Une machine neuve ne connaît encore aucun paquet : sa liste des paquets
     disponibles est vide. Il faut d'abord la télécharger depuis les dépôts
     Debian. Le manuel dit comment : man apt.
-fire-evenement-nginx =
+fire-event-nginx =
     nginx est installé, et il tourne déjà : sur Debian, installer un service
     le démarre et l'active. Essaie curl http://localhost : c'est la page de
     bienvenue de nginx. Le serveur web est là ; reste le site.
-fire-evenement-tronquee =
+fire-event-truncated =
     « Fin de fichier inattendue » : l'archive de cette nuit est coupée.
     La sauvegarde a démarré à 0 h 30 ; à 0 h 47, le feu a pris, et l'envoi
     s'est arrêté au milieu. Regarde sa taille avec ls -l, à côté des autres.
@@ -115,12 +115,12 @@ fire-evenement-tronquee =
     tar lit ce qui précède la coupure, puis s'arrête : extraite, cette
     archive rendrait la configuration, mais aucune page du site. Une sauvegarde qu'on n'a jamais relue n'est qu'un espoir. Prends la
     dernière archive qui se lit jusqu'au bout.
-fire-evenement-mauvais-lieu =
+fire-event-bad-place =
     L'archive s'est extraite là où tu étais : dans ton dossier, et pas à la
     place des fichiers perdus. nginx ne les trouvera pas là. Relis man tar :
     une option permet de choisir le lieu où extraire. (Tu peux effacer ce
     qui a été extrait ici.)
-fire-evenement-doublon =
+fire-event-duplicate =
     nginx refuse la configuration : « a duplicate default server ». Deux
     sites veulent être le site par défaut du port 80 : celui de la
     médiathèque, restauré de la sauvegarde, et celui que Debian installe
@@ -130,11 +130,11 @@ fire-evenement-doublon =
 
     Bonne nouvelle : tant que la nouvelle configuration est refusée, nginx
     garde l'ancienne. Le serveur ne tombe pas.
-fire-evenement-mercredi =
+fire-event-wednesday =
     Le site répond… avec la page de mercredi : il manque les horaires des
     vacances, qu'Awa a ajoutés mercredi après-midi. Cette archive n'est pas
     la plus récente qui soit intacte.
-fire-evenement-fin =
+fire-event-end =
     curl http://medialibrary.example répond : la médiathèque est de nouveau en
     ligne, sur une machine qui n'existait pas hier soir.
 

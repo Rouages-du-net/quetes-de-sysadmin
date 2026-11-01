@@ -96,9 +96,9 @@ export const report: Chapter = {
   home: M,
   welcome: 'email_nadia.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   // Dans l'ordre du rapport de Salomé.
-  steps: ['ssh', 'compte', 'sudo', 'secret', 'fin'],
+  steps: ['ssh', 'account', 'sudo', 'secret', 'end'],
   password: PASSWORD,
   accounts: () => bakeryAccounts(true),
   state: () => ({
@@ -116,7 +116,7 @@ export const report: Chapter = {
   initialise: (j) => loadSshd(j),
   createWorld: (t) =>
     bakeryWorld(t, {
-      home: { 'email_nadia.txt': f(t('report-courriel-nadia')), 'audit_report.txt': f(t('report-rapport-audit'), { lines: true }) },
+      home: { 'email_nadia.txt': f(t('report-email-nadia')), 'audit_report.txt': f(t('report-report-audit'), { lines: true }) },
       sudoersD: { '90-cloud-init-users': file(cloudInitSudo(player(t)), 'root', 'r--r-----') },
       more: {
         srv: d(
@@ -136,23 +136,23 @@ export const report: Chapter = {
       },
     }),
   events: [
-    { id: 'sudoers-casse', condition: (j) => !validPolicy(j), message: (j) => j.t('report-evenement-sudoers-casse') },
-    { id: 'enferme', condition: (j) => !between(j), message: (j) => j.t('report-evenement-enferme') },
+    { id: 'sudoers-broken', condition: (j) => !validPolicy(j), message: (j) => j.t('report-event-sudoers-broken') },
+    { id: 'locked-out', condition: (j) => !between(j), message: (j) => j.t('report-event-locked-out') },
     {
-      id: 'sans-effet',
+      id: 'without-effect',
       condition: (j) => sshd(j).reloads === 0 && /^\s*PermitRootLogin\s+no\b/im.test(j.read('/etc/ssh/sshd_config') ?? ''),
-      message: (j) => j.t('report-evenement-sans-effet'),
+      message: (j) => j.t('report-event-without-effect'),
     },
-    { id: 'compte-incomplet', condition: incompleteAccount, message: (j) => j.t('report-evenement-compte-incomplet') },
-    { id: 'appli-aveugle', condition: (j) => closedToOther(j) && !readableByApp(j), message: (j) => j.t('report-evenement-appli-aveugle') },
-    { id: 'ssh', condition: (j) => closedRoot(j) && between(j), message: (j) => j.t('report-evenement-ssh') },
-    { id: 'compte', condition: okAccount, message: (j) => j.t('report-evenement-compte') },
-    { id: 'sudo', condition: sudoOk, message: (j) => j.t('report-evenement-sudo') },
-    { id: 'secret', condition: secretOk, message: (j) => j.t('report-evenement-secret') },
+    { id: 'account-incomplete', condition: incompleteAccount, message: (j) => j.t('report-event-account-incomplete') },
+    { id: 'app-blind', condition: (j) => closedToOther(j) && !readableByApp(j), message: (j) => j.t('report-event-app-blind') },
+    { id: 'ssh', condition: (j) => closedRoot(j) && between(j), message: (j) => j.t('report-event-ssh') },
+    { id: 'account', condition: okAccount, message: (j) => j.t('report-event-account') },
+    { id: 'sudo', condition: sudoOk, message: (j) => j.t('report-event-sudo') },
+    { id: 'secret', condition: secretOk, message: (j) => j.t('report-event-secret') },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => closedRoot(j) && between(j) && okAccount(j) && sudoOk(j) && secretOk(j),
-      message: (j) => j.t('report-evenement-fin'),
+      message: (j) => j.t('report-event-end'),
     },
   ],
 };

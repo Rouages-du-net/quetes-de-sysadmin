@@ -130,7 +130,7 @@ export function writeRepo(game: Shell, path: string, repo: Repo) {
   const place = (children: Record<string, Node>) => ({ type: 'dossier' as const, children, mode: 'rwx------' });
   n.children = {
     config: digit(`config-${repo.id}`, 155),
-    keys: place({ [hex(`cle-${repo.id}`)]: digit(`cle-${repo.id}`, 455) }),
+    keys: place({ [hex(`key-${repo.id}`)]: digit(`key-${repo.id}`, 455) }),
     snapshots: place(Object.fromEntries(repo.snapshotList.map((i) => [i.id, digit(`instantane-${i.id}`, 290)]))),
     index: place({ [hex(`index-${repo.packs.length}-${repoSize(repo)}`)]: digit(`index-${repo.id}`, 1200 + repo.packs.length * 180) }),
     data: place(Object.fromEntries(repo.packs.map((p) => [p.id, digit(p.id, Object.values(p.blobs).reduce((a, b) => a + b, 0) + 512)]))),

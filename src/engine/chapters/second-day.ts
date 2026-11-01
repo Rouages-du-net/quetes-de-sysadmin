@@ -37,7 +37,7 @@ export const secondDay: Chapter = {
   home: M,
   welcome: 'email_awa.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'welcome-2026',
   accounts: datacenterAccounts,
   createWorld: (t) => {
@@ -48,7 +48,7 @@ export const secondDay: Chapter = {
         etc: d(accountsFiles(), undefined, root),
         home: d(
           {
-            you: d({ 'email_awa.txt': f(t('second-day-courriel-awa')), 'notes_awa.txt': f(t('second-day-notes-awa')) }),
+            you: d({ 'email_awa.txt': f(t('second-day-email-awa')), 'notes_awa.txt': f(t('second-day-notes-awa')) }),
             awa: home('awa'),
             malo: home('malo'),
           },
@@ -75,38 +75,38 @@ export const secondDay: Chapter = {
   },
   events: [
     {
-      id: 'remplace',
+      id: 'replaced',
       condition: (j) => !j.groupsFor('malo').includes('web-team'),
-      message: (j) => j.t('second-day-evenement-remplace'),
+      message: (j) => j.t('second-day-event-replaced'),
     },
     {
-      id: 'journaux-ouverts',
+      id: 'logs-open',
       condition: openLogs,
-      message: (j) => j.t('second-day-evenement-journaux-ouverts', { logs: LOGS }),
+      message: (j) => j.t('second-day-event-logs-open', { logs: LOGS }),
     },
     {
-      id: 'malo-lit',
+      id: 'malo-reads',
       condition: (j) => malo.lit(j) && !openLogs(j),
-      message: (j) => j.t('second-day-evenement-malo-lit'),
+      message: (j) => j.t('second-day-event-malo-reads'),
     },
     {
-      id: 'partage-ouvert',
+      id: 'share-open',
       condition: (j) => j.can(share(j), 'w', 'nobody'),
-      message: (j) => j.t('second-day-evenement-partage-ouvert', { partage: path(j.t, SHARE) }),
+      message: (j) => j.t('second-day-event-share-open', { partage: path(j.t, SHARE) }),
     },
     {
-      id: 'partage',
+      id: 'share',
       condition: (j) => {
         const n = share(j);
         const team = [j.player, 'awa', 'malo'].every((u) => j.can(n, 'w', u) && j.can(n, 'x', u));
         return team && !j.can(n, 'r', 'www-data') && !j.can(n, 'w', 'www-data');
       },
-      message: (j) => j.t('second-day-evenement-partage', { partage: path(j.t, SHARE) }),
+      message: (j) => j.t('second-day-event-share', { partage: path(j.t, SHARE) }),
     },
     {
-      id: 'fin',
-      condition: (j) => j.flags.has('malo-lit') && j.flags.has('partage') && malo.lit(j) && !openLogs(j),
-      message: (j) => j.t('second-day-evenement-fin'),
+      id: 'end',
+      condition: (j) => j.flags.has('malo-reads') && j.flags.has('share') && malo.lit(j) && !openLogs(j),
+      message: (j) => j.t('second-day-event-end'),
     },
   ],
 };

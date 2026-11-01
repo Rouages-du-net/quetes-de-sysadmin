@@ -3,12 +3,12 @@
 ### and an outage drill at night. The tools' commands, options, directives
 ### and messages are not translated.
 
-chapitre-probe = The Probe
+chapter-probe = The Probe
     .resume = Four nights of fixing things after the fact: this time, Zoé wants to be warned before things break. And tonight, she is organising a drill…
 
 ## Files
 
-probe-message-de-zoe =
+probe-message-zoe =
     A message from Zoé (Monday, 6:20 pm):
 
     "Four nights, four outages, and each time we found out too late.
@@ -42,14 +42,14 @@ probe-script =
     # TODO: the data volume, /srv/radio (and its inodes: remember…)
     # TODO: is the live stream answering? (the relay listens on port 8000, path /direct)
     # TODO: run it every 5 minutes (cron? a systemd timer?)
-probe-podcasts-lisezmoi =
+probe-podcasts-readme =
     Podcast thumbnails: the automatic import drops them into
     thumbnails/ (one image per episode).
 
 ## The drill night
 
 # { $lancements }: how many times the probe (or a scheduled job) ran
-probe-nuit =
+probe-night =
     Your probe is scheduled: Zoé starts the drill. The evening, then the night
     go by ({ $lancements ->
         [0] no scheduled job ran
@@ -57,32 +57,32 @@ probe-nuit =
        *[other] the scheduled jobs ran { $lancements } times
     }).
 # { $alerte }, { $repare }: times; { $minutes }: length of the silence
-probe-nuit-relais-vu =
+probe-night-relay-seen =
     1:10 am: Zoé stops the stream relay, all of a sudden. At { $alerte }, her
     phone rings; she restarts the relay at { $repare }. The live stream was
     silent for { $minutes } minutes.
-probe-nuit-relais-rate =
+probe-night-relay-missed =
     1:10 am: Zoé stops the stream relay, all of a sudden… and nobody is
     warned. The live stream stays silent until morning. What does your probe check
     when the relay stops answering? (man check_http, man check_procs)
-probe-nuit-relais-lent =
+probe-night-relay-slow =
     The alert arrived, but more than 15 minutes after the outage: for
     a radio station, that's long. How often does the probe run?
     (systemctl list-timers, systemd-analyze calendar)
 # { $alerte }: time
-probe-nuit-inodes-vu =
+probe-night-inodes-seen =
     1:40 am: the thumbnail import runs wild and creates thousands of
     small files on /srv/radio. At { $alerte }, well before the inodes
     run out, Zoé is warned and stops the import.
 # { $plein }: time
-probe-nuit-inodes-rate =
+probe-night-inodes-missed =
     1:40 am: the thumbnail import runs wild and creates thousands of
     small files on /srv/radio. At { $plein }, not a single free inode left:
     the night recording fails, without anyone being warned.
     Does check_disk watch this volume, and its inodes? (man check_disk:
     -W and -K)
 # { $nombre }: alerts received when everything was fine
-probe-nuit-fausses =
+probe-night-false =
     { $nombre ->
         [one] Zoé received one alert
        *[other] Zoé received { $nombre } alerts
@@ -90,7 +90,7 @@ probe-nuit-fausses =
     a few nights nobody reads them any more: a threshold too tight, a
     check that writes even when all is well (cron also mails
     everything a job writes)?
-probe-nuit-jamais =
+probe-night-never =
     Nothing ran all night. Is the timer started, and does it
     really fire (systemctl list-timers)? Careful:
     OnUnitActiveSec= alone never fires, since the service has never
@@ -99,14 +99,14 @@ probe-nuit-jamais =
 ## Events
 
 # { $dossier }: the plugins directory
-probe-evenement-plugin-hors-path =
+probe-event-plugin-outside-path =
     The monitoring plugins are not in the PATH: on Debian, they
     live in { $dossier }, and are run by their full path (as
     in Zoé's probe).
-probe-evenement-premiere-alerte =
+probe-event-first-alert =
     Zoé: "Got your mail!" Testing an alert before you
     need it is the right idea.
-probe-evenement-fin =
+probe-event-end =
     Both outages of the drill were spotted in time, and the night was
     quiet the rest of the time. Zoé: "I've never slept so well
     during an outage."

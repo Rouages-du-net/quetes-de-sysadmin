@@ -2,12 +2,12 @@
 ### Docker et ufw, et la place que prend Docker. Les commandes, chemins et
 ### messages de docker, ufw, ss et nc ne se traduisent pas.
 
-chapitre-firewall-hole = Le trou dans le pare-feu
+chapter-firewall-hole = Le trou dans le pare-feu
     .resume = La base du fablab ouverte au monde malgré ufw : les ports publiés par Docker, puis faire de la place sans jeter ce qui compte.
 
 ## Fichiers
 
-firewall-hole-message-de-rania =
+firewall-hole-message-rania =
     Un message de Rania, des Lettres du quartier :
 
     « Salut ! Hier soir, j'ai testé les ports du serveur du fablab depuis
@@ -20,7 +20,7 @@ firewall-hole-message-de-rania =
 
     Une base de données ouverte sur internet, c'est la porte à tous les
     robots qui essaient des mots de passe… »
-firewall-hole-mot-de-yasmine =
+firewall-hole-word-yasmine =
     Un mot de Yasmine :
 
     « Oups. J'avais ajouté le port 5432 à la base dans
@@ -37,37 +37,37 @@ firewall-hole-mot-de-yasmine =
 
 ## Événements
 
-firewall-hole-evenement-ss =
+firewall-hole-event-ss =
     docker-proxy écoute sur 0.0.0.0:5432 : c'est Docker qui publie le port
     de la base, sur toutes les adresses de la machine. Et sudo ufw status ne
     parle pas du 5432… Docker écrit ses propres règles dans iptables, que
     le noyau consulte AVANT celles d'ufw : un port publié par Docker
     contourne ufw.
-firewall-hole-evenement-ufw-inutile =
+firewall-hole-event-ufw-useless =
     Une règle ufw pour le 5432 ne change rien : les paquets vers un port
     publié par Docker sont redirigés vers le conteneur avant d'arriver aux
     règles d'ufw. Teste depuis ton poste : nc -zv fabrique 5432. La
     solution est dans compose.yaml : ne pas publier ce port, ou seulement
     sur 127.0.0.1.
-firewall-hole-evenement-ferme =
+firewall-hole-event-closed =
     Le port 5432 ne répond plus depuis l'extérieur, et l'appli de
     réservation fonctionne toujours : elle joint la base par le réseau du
     projet, sans port publié. Pour pgAdmin, Yasmine passera par un tunnel
     SSH : ssh -L 5432:127.0.0.1:5432 fabrique (avec le port publié sur
     127.0.0.1 seulement), ou docker compose exec db psql.
 # { $volumes } : les volumes effacés
-firewall-hole-evenement-volume-perdu =
+firewall-hole-event-volume-lost =
     Le volume { $volumes } a disparu, avec toutes ses données : docker
     volume prune -a efface tous les volumes qu'aucun conteneur n'utilise,
     même s'ils ont un nom et comptent. Sur un vrai serveur, ce serait perdu.
     Ici, tu peux recommencer le chapitre depuis le menu. Avant un prune :
     docker system df, docker volume ls, et lire l'avertissement.
 # { $pourcent } : l'occupation du disque
-firewall-hole-evenement-disque =
+firewall-hole-event-disk =
     Le disque respire : { $pourcent } % occupés. Les images qu'aucun
     conteneur n'utilise (anciennes versions, essais oubliés, images sans
     nom) prenaient presque toute la place.
-firewall-hole-evenement-fin =
+firewall-hole-event-end =
     La base n'est plus visible d'internet, les deux applis tournent, le
     disque a de la place, et le wiki attend toujours dans son volume.
     Rania refait son test : « Plus rien sur le 5432. Bien joué ! »

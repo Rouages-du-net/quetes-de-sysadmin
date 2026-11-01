@@ -3,12 +3,12 @@
 ### (bantime, ignoreip…) and fail2ban's output (in English) are not
 ### translated.
 
-chapitre-sentinel = The sentinel
+chapter-sentinel = The sentinel
     .resume = Ban the robots without banning your friends: fail2ban, jail.local, ignoreip.
 
 ## Files
 
-sentinel-courriel-kofi =
+sentinel-email-kofi =
     From:    Kofi (La Fourmilière)
     To:      you
     Subject: Rania can't log in anymore
@@ -38,28 +38,28 @@ sentinel-courriel-kofi =
 
 ## Events
 
-sentinel-evenement-jail-conf =
+sentinel-event-jail-conf =
     You changed /etc/fail2ban/jail.conf. It works… until the next
     fail2ban update, which will replace this file, and your settings along
     with it. The file says so itself at the top: "YOU SHOULD NOT MODIFY THIS
     FILE". Better put your settings in /etc/fail2ban/jail.local.
-sentinel-evenement-erreur =
+sentinel-event-error =
     fail2ban's configuration has an error. Before reloading, check it
     with  sudo fail2ban-client -t: it gives the file and the line at fault.
-sentinel-evenement-rania =
+sentinel-event-rania =
     Rania is no longer banned: she can log in again. But if she
     gets it wrong five more times, fail2ban will ban her again…
 # { $adresse }: the address of the workstation
-sentinel-evenement-banni-soi =
+sentinel-event-banned-self =
     WARNING: fail2ban just banned { $adresse }… the address of your own
     workstation! Yesterday you had three failed logins (look for "Failed publickey"
     in journalctl -u ssh), and with these settings, that's enough. Unban yourself,
     and add your address to ignoreip, before you disconnect.
-sentinel-evenement-reglee =
+sentinel-event-set =
     fail2ban applies your settings: the robots stay banned for
     longer, and neither Rania nor you will be banned again. Check the state of the
     jail: sudo fail2ban-client status sshd.
-sentinel-evenement-fin =
+sentinel-event-end =
     The robots are banned for good, Rania can log in again, and your workstation
     is no longer at risk. Kofi: "Rania says thank you, she was able to publish the
     programme!"

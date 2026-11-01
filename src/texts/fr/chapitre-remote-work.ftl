@@ -2,13 +2,13 @@
 ### sur le routeur. Les commandes, les mots-clés de wg-quick, les noms
 ### d'interfaces et les chemins ne se traduisent pas.
 
-chapitre-remote-work = Le télétravail
+chapter-remote-work = Le télétravail
     .resume = Malik veut ouvrir le NAS depuis chez lui : pas en ouvrant un port sur internet, mais avec un VPN WireGuard, des clés bien gardées et un pare-feu qui le laisse entrer.
 
 ## Fichiers
 
 # { $cle } : la clé publique WireGuard du portable de Malik
-remote-work-courriel-malik =
+remote-work-email-malik =
     De :     Malik
     À :      toi
     Objet :  Le NAS depuis chez moi
@@ -34,7 +34,7 @@ remote-work-courriel-malik =
 
     Pour sudo : abeille-2027
 
-remote-work-portable-malik =
+remote-work-laptop-malik =
     # La configuration WireGuard du portable de Malik. Sa clé privée reste
     # sur le portable : l'appli ne la montre jamais.
     # À compléter : la partie Peer, c'est-à-dire le routeur.
@@ -52,38 +52,38 @@ remote-work-portable-malik =
 ## Événements
 
 # { $fichier } : le fichier qui contient la clé privée
-remote-work-evenement-cle-exposee =
+remote-work-event-key-exposed =
     Attention : { $fichier } contient la clé privée du routeur, et tous les
     comptes de la machine peuvent le lire. Avec cette clé, n'importe qui
     pourrait se faire passer pour le routeur. Une clé privée n'est lisible
     que par son propriétaire (chmod 600, ou umask 077 avant de la créer) ;
     une fois recopiée dans /etc/wireguard, réservé à root, les autres
     copies n'ont plus de raison d'exister.
-remote-work-evenement-filtre =
+remote-work-event-filter =
     Malik : « Mon appli dit : Handshake did not complete after 5 seconds. »
     Ses paquets arrivent bien au routeur… et la chaîne input les jette :
     elle est fermée par défaut (policy drop), et rien n'y laisse passer le
     port où WireGuard écoute (en UDP).
-remote-work-evenement-poignee =
+remote-work-event-handshake =
     Malik : « Toujours rien : Handshake did not complete. » sudo wg show le
     confirme : pas de « latest handshake » pour son pair. Pour se
     reconnaître, chacun doit avoir la clé PUBLIQUE de l'autre : celle de
     Malik dans le Peer de wg0.conf, celle du routeur dans
     malik-laptop.conf. Et l'Endpoint doit donner l'adresse du routeur et
     le port où il écoute (ListenPort).
-remote-work-evenement-sans-nas =
+remote-work-event-without-nas =
     Malik : « Connecté ! … mais le NAS ne répond pas. » La poignée de main a
     eu lieu (sudo wg show : latest handshake). Reste le chemin des paquets :
     l'adresse du portable doit être dans les AllowedIPs de son pair, côté
     routeur ; le NAS dans les AllowedIPs, côté portable ; et la chaîne
     forward doit laisser passer wg0 vers les bureaux.
-remote-work-evenement-en-place =
+remote-work-event-in-place =
     Malik ouvre ses dossiers depuis chez lui… en ce moment. Au prochain
     redémarrage, wg0 ne reviendra que si le service wg-quick@wg0 est
     activé, et le pare-feu que si ses règles sont dans /etc/nftables.conf.
     (Une interface montée à la main avec wg-quick up empêche le service de
     démarrer : wg-quick down d'abord.)
-remote-work-evenement-fin =
+remote-work-event-end =
     Malik ouvre les dossiers du NAS depuis chez lui, à travers un tunnel
     chiffré, sans que rien du NAS ne soit visible d'internet. Et tout
     reviendra au prochain redémarrage. Malik : « Le neveu de la trésorière

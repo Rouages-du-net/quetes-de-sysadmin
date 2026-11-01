@@ -5,9 +5,9 @@
 ### /Kingdom/Bin…), and the account names (you, and the daemon's user
 ### "eraser"), come from noms.ftl.
 
-chapitre-root = The Root
+chapter-root = The Root
     .resume = Permissions and administration: ls -l, chmod, whoami, sudo.
-root-arrivee =
+root-arrival =
     You whizz down the slide and land… in a room that feels
     familiar. On the door, a plate: /home/you.
 
@@ -17,7 +17,7 @@ root-arrivee =
     for the administrator.
 
     Read the manual lying on the table:  cat admin_manual.txt
-root-manuel-admin =
+root-manual-admin =
     THE ADMINISTRATOR'S MANUAL
 
     Every object and every place has an OWNER and PERMISSIONS.
@@ -61,23 +61,23 @@ root-journal =
     Year 103: it must be installed with sudo before the Eraser reaches me.
 # Configuration file: keep the line "target = /Kingdom/Bin"
 # as is (the game checks it: nom-cible = /nom-Royaume/nom-Corbeille in noms.ftl).
-root-effaceur-conf-corrige =
+root-eraser-conf-fixed =
     # The Eraser's configuration — fixed version (year 103)
     # On every pass, the daemon deletes everything found in the target.
     target = /Kingdom/Bin
-root-souvenir-ecole = A classroom. Someone is teaching you to count in binary on your fingers: up to 31 with just one hand.
-root-souvenir-premier-programme = Your very first program. It printed "Hello" and you shouted with joy.
-root-souvenir-jardin = A garden full of sunflowers. You loved their colour.
-root-souvenir-chanson = A song you used to hum while fixing servers.
-root-souvenir-voyage = A train journey, your nose pressed against the window.
-root-souvenir-amie = A friend who used to tell you: "Always read it again before pressing Enter."
-root-souvenir-bibliotheque = A huge library, where you learned the word "Unix".
-root-souvenir-premier-serveur = The first server you were in charge of. It purred like a cat.
-root-journal-intime-root =
+root-memory-school = A classroom. Someone is teaching you to count in binary on your fingers: up to 31 with just one hand.
+root-memory-first-program = Your very first program. It printed "Hello" and you shouted with joy.
+root-memory-garden = A garden full of sunflowers. You loved their colour.
+root-memory-song = A song you used to hum while fixing servers.
+root-memory-journey = A train journey, your nose pressed against the window.
+root-memory-friend = A friend who used to tell you: "Always read it again before pressing Enter."
+root-memory-library = A huge library, where you learned the word "Unix".
+root-memory-first-server = The first server you were in charge of. It purred like a cat.
+root-journal-private-root =
     You could read it: root has all the rights. But it's Nour's private diary. You close it without reading it.
     (#1: respect the privacy of others.)
 # Faulty configuration: keep the line "target = /Kingdom /Bin" (with the space).
-root-effaceur-conf =
+root-eraser-conf =
     # The Eraser's configuration — written by: you (year 102)
     # On every pass, the daemon deletes everything found in the target.
     target = /Kingdom /Bin
@@ -86,7 +86,7 @@ root-sudoers =
     root    ALL=(ALL:ALL) ALL
     you     ALL=(ALL:ALL) ALL   # you: administrator of the kingdom
 # Daemon log: one entry per line (read with grep).
-root-effaceur-log =
+root-eraser-log =
     {"["}year 102] starting the eraser daemon (user: eraser)
     {"["}year 102] reading /etc/eraser.conf
     {"["}year 102] target = /Kingdom /Bin
@@ -103,7 +103,7 @@ root-notes-root =
     root can read everything, change everything, delete everything, including
     the system itself. That's why you never work as root day to day:
     you use sudo, for a single command, when it's needed.
-root-evenement-alerte =
+root-event-alert =
     Suddenly, a crackling sound from the memories place… The Eraser is here! With
     each of your commands, it will delete one of your memories.
 
@@ -113,16 +113,16 @@ root-evenement-alerte =
     right away from others (o), quick:
 
       chmod o-w memories
-root-evenement-conf-effacee =
+root-event-conf-erased =
     The daemon looks for its configuration… and can't find it anymore. It stops.
     That's better than nothing, but now nobody empties the Bin. A correct
     configuration is missing in /etc: the daemon only reads the file
     /etc/eraser.conf, under that exact name.
 
 # { $souvenir }: name of the deleted file (technical identifier)
-root-souvenir-efface = ✗ A memory fades away: { $souvenir }
+root-memory-erases = ✗ A memory fades away: { $souvenir }
 # { $sauves }: memories saved; { $total }: number of memories at the start
-root-evenement-protege =
+root-event-protected =
     The Eraser keeps attacking your memories… "Permission denied". It
     backs off. On Linux, deleting a file means changing the place that
     contains it: without the right to write in that place, nothing can be deleted there.
@@ -136,7 +136,7 @@ root-evenement-protege =
 
       cat /var/log/eraser.log
 # { $perte }: "oui" if memories were deleted, otherwise "non"
-root-evenement-corrige =
+root-event-fixed =
     The daemon rereads its configuration: "target = /Kingdom/Bin". Just one
     target, this time. The Eraser stops dead… then starts emptying the
     Bin, just like on the first day.

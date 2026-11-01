@@ -3,12 +3,12 @@
 ### tests avant de mettre en ligne. Les commandes, chemins et messages de
 ### git, ln, nginx et sh ne se traduisent pas.
 
-chapitre-rollback = Le retour arrière
+chapter-rollback = Le retour arrière
     .resume = Une mise en ligne qui casse le site : revenir à la version d'avant en un instant, puis faire passer des tests avant chaque publication.
 
 ## Fichiers
 
-rollback-message-de-samia =
+rollback-message-samia =
     Un message de Samia, lundi 21 h 02 :
 
     « Au secours ! Le site affiche une erreur depuis que Théo a poussé sa
@@ -28,8 +28,8 @@ rollback-message-de-samia =
       3. puis publie la mise en page de Théo, réparée.
 
     Pour sudo : gazette-2027. »
-rollback-crochet-commentaire = Publie chaque push dans un nouveau dossier de releases/, puis bascule le lien current.
-rollback-crochet-echo = Version $VERSION en ligne
+rollback-hook-comment = Publie chaque push dans un nouveau dossier de releases/, puis bascule le lien current.
+rollback-hook-echo = Version $VERSION en ligne
 rollback-tests =
     #!/bin/sh
     # Vérifications avant publication (Samia).
@@ -57,7 +57,7 @@ rollback-site-index =
     </ul>
     </body>
     </html>
-rollback-site-accueil =
+rollback-site-welcome =
     <!DOCTYPE html>
     <html lang="fr">
     <head><meta charset="utf-8"><title>La Gazette du quartier</title><link rel="stylesheet" href="style.css"></head>
@@ -79,46 +79,46 @@ rollback-commit-theo = Nouvelle mise en page, essai { $numero }
 ## Événements
 
 # { $sortie } : ce que git a affiché à Théo (lignes en retrait)
-rollback-theo-pousse =
+rollback-theo-push =
     Théo, depuis chez lui : « Je retente ma mise en page… » Il pousse
     (toujours sans index.html). Voici ce que git lui répond :
 
     { $sortie }
-rollback-evenement-panne =
+rollback-event-failure =
     403 Forbidden : nginx sert /srv/gazette/current, mais n'y trouve pas de
     page d'accueil (index.html). Regarde ce que vise current (ls -l
     /srv/gazette, ou readlink), et ce qu'il y a dans chaque version de
     releases/. La version d'avant est intacte : il suffit que current la
     désigne de nouveau (man ln).
-rollback-evenement-sans-n =
+rollback-event-without-n =
     Le nouveau lien a été créé DANS la version cassée (ls -l
     /srv/gazette/releases/20270517203012) : current vise un lieu, alors ln
     est entré dedans au lieu de remplacer le lien. C'est l'option -n qui
     traite current comme un simple fichier : ln -sfn cible current.
-rollback-evenement-retabli =
+rollback-event-restored =
     Le site répond de nouveau. Samia : « Ouf ! Et ça a pris une seconde :
     l'ancienne version n'avait jamais été effacée, on a juste changé de
     lien. Maintenant, que ça ne se reproduise plus : le crochet doit lancer
     tests.sh sur la nouvelle version, et ne pas basculer current si les
     tests échouent. » (Regarde le crochet, et man sh.)
-rollback-evenement-garde-fou =
+rollback-event-kept-fou =
     Le push de Théo est arrivé sur le serveur, mais ses tests ont échoué et
     le crochet s'est arrêté avant de basculer current : le site n'a pas
     bougé. C'est le rôle d'un garde-fou. Reste à publier sa mise en page
     pour de bon : récupère ses commits (git pull), mets la page au bon nom,
     commit et push.
-rollback-evenement-garde-fou-perce =
+rollback-event-kept-fou-pierced =
     Le push cassé de Théo est passé en ligne malgré tout : le crochet n'a
     pas arrêté la publication. Rétablis le site, puis regarde le crochet :
     les tests sont-ils lancés AVANT de basculer current, depuis le dossier
     de la nouvelle version, et un échec arrête-t-il le script (set -e,
     ou || exit 1) ? Théo réessaiera dès que le crochet changera.
-rollback-evenement-tests-ailleurs =
+rollback-event-tests-elsewhere =
     La dernière version contient bien index.html, mais elle n'a pas été mise
     en ligne : ses tests ont échoué quand même. tests.sh cherche index.html
     dans le lieu d'où on le lance. D'où le crochet le lance-t-il ? (Un
     crochet démarre dans le dépôt, /srv/git/gazette.git ; cd change de lieu.)
-rollback-evenement-fin =
+rollback-event-end =
     La nouvelle mise en page est en ligne, publiée par le crochet après ses
     tests. Samia : « Cette fois, une erreur dans le dépôt ne peut plus
     casser le site. Et si une version passe les tests mais nous déplaît, on

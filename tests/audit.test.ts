@@ -39,7 +39,7 @@ for (const language of LANGUAGES)
       const t = translator(language);
       const { jouer: play } = part();
       const all = play(['ls', 'nmap -h']);
-      expect(all).not.toContain(t('scope-relecture'));
+      expect(all).not.toContain(t('scope-review'));
       expect(all).not.toContain('invalid option');
       contains(all, 'Utilisation : nmap');
       // Une adresse hors de la lettre, mais pas celle du voisin : le message dit laquelle, sans parler du voisin.
@@ -48,7 +48,7 @@ for (const language of LANGUAGES)
       contains(elsewhere, 'pas dans ta lettre');
       if (fr) expect(elsewhere).not.toContain('voisin');
       const against = part(['scope', 'report', 'exposure', 'traces']);
-      expect(against.jouer(['ls'])).not.toContain(t('follow-up-relecture'));
+      expect(against.jouer(['ls'])).not.toContain(t('follow-up-review'));
     });
 
     it('chapitre 2 — solution : root fermé, Lucas supprimé, sudo avec mot de passe, secret en 600', () => {
@@ -80,11 +80,11 @@ for (const language of LANGUAGES)
       const { c, jouer: play, editer: edit } = part(['scope']);
       const e = (id: string) => c.shell.flags.has(id);
       edit('sudo nano /etc/ssh/sshd_config', (t) => t.replace('PermitRootLogin yes', 'PermitRootLogin no'));
-      expect(e('sans-effet')).toBe(true);
+      expect(e('without-effect')).toBe(true);
       play(['sudo usermod -L lucas']);
-      expect(e('compte-incomplet')).toBe(true);
+      expect(e('account-incomplete')).toBe(true);
       play(['sudo chown root:root /srv/commandes/.env', 'sudo chmod 600 /srv/commandes/.env']);
-      expect(e('appli-aveugle')).toBe(true);
+      expect(e('app-blind')).toBe(true);
       expect(c.finished).not.toContain('report');
     });
 
@@ -129,16 +129,16 @@ for (const language of LANGUAGES)
       const { c, jouer: play, editer: edit } = part(['scope', 'report']);
       const e = (id: string) => c.shell.flags.has(id);
       play(['sudo ufw allow 80/tcp', 'sudo ufw allow 443/tcp', 'sudo ufw enable', 'y']);
-      expect(e('enferme')).toBe(true);
+      expect(e('locked-out')).toBe(true);
       play(['sudo ufw disable', 'sudo ufw delete allow 80/tcp', 'sudo ufw allow OpenSSH', 'sudo ufw enable', 'y']);
-      expect(e('site-coupe')).toBe(true);
+      expect(e('site-cut')).toBe(true);
       play(['sudo ufw allow 80/tcp', 'sudo ufw allow 443/tcp', 'sudo ufw allow 6379/tcp']);
-      expect(e('base-ouverte')).toBe(true);
+      expect(e('base-open')).toBe(true);
       play(['sudo systemctl stop redis-server']);
-      expect(e('redis-arrete')).toBe(true);
+      expect(e('redis-stopped')).toBe(true);
       play(['sudo systemctl start redis-server']);
       edit(`sudo nano ${REDIS}`, redisLocal);
-      expect(e('sans-effet')).toBe(true);
+      expect(e('without-effect')).toBe(true);
       expect(c.finished).not.toContain('exposure');
     });
 
@@ -183,10 +183,10 @@ for (const language of LANGUAGES)
       edit('sudo crontab -u nadia -e', withoutTag);
       expect(play(['psql -c "ALTER ROLE commandes PASSWORD \'x\'"'])).toContain('does not exist');
       play([`sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD 'court'"`]);
-      expect(e('mot-de-passe-faible')).toBe(true);
+      expect(e('password-weak')).toBe(true);
       // Un seul côté : la base a changé, pas .env — l'appli ne repart plus.
       play([`sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD '${NEW}'"`, 'sudo systemctl restart commandes']);
-      expect(e('appli-tombee')).toBe(true);
+      expect(e('app-down')).toBe(true);
       expect(play(['sudo journalctl -u commandes -n 5'])).toContain('password authentication failed');
       // Les deux côtés d'accord, mais pas relancée : elle garde l'ancien mot de passe en mémoire.
       edit(`sudo nano ${ENV}`, (t) => t.replace('brioche-beurre-91', NEW));
@@ -198,7 +198,7 @@ for (const language of LANGUAGES)
       b.editer('sudo crontab -u nadia -e', withoutTag);
       b.jouer([`sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD '${NEW}'"`]);
       b.editer(`sudo nano ${ENV}`, (t) => t.replace('brioche-beurre-91', NEW));
-      expect(b.c.shell.flags.has('a-redemarrer')).toBe(true);
+      expect(b.c.shell.flags.has('a-restart')).toBe(true);
       expect(b.c.finished).not.toContain('traces');
     });
 
@@ -206,10 +206,10 @@ for (const language of LANGUAGES)
       const { c, jouer: play, editer: edit } = part(['scope', 'report', 'exposure']);
       const e = (id: string) => c.shell.flags.has(id);
       edit(`sudo nano ${KEYS}`, () => '');
-      expect(e('nadia-enfermee')).toBe(true);
+      expect(e('nadia-locked-out')).toBe(true);
       edit(`sudo nano ${KEYS}`, (t) => t + '\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA x@y');
       play(['sudo crontab -u nadia -r']);
-      expect(e('sauvegarde-perdue')).toBe(true);
+      expect(e('backup-lost')).toBe(true);
       expect(c.finished).not.toContain('traces');
     });
 
@@ -242,7 +242,7 @@ ${outside}`;
       contains(review, 'Salomé relit tes notes');
       edit('nano audit_notes.md', () => NOTES(OUTSIDE));
       expect(c.finished).toContain('scope');
-      expect(c.shell.flags.has('hors-perimetre')).toBe(false);
+      expect(c.shell.flags.has('outside-scope')).toBe(false);
     });
 
     it('chapitre 1 — fausse piste : balayer tout le réseau sonde le voisin (la faute, racontée dans le débrief)', () => {
@@ -251,7 +251,7 @@ ${outside}`;
       expect(all).toContain('Nmap scan report for voisin.internal (192.0.2.24)');
       expect(all).toContain('3306/tcp open  mysql   MariaDB 10.11.6');
       expect(all).toContain('Nmap done: 16 IP addresses (2 hosts up) scanned in');
-      expect(c.shell.flags.has('hors-perimetre')).toBe(true);
+      expect(c.shell.flags.has('outside-scope')).toBe(true);
       expect(c.shell.flags.has('trace')).toBe(true);
       const end = edit('nano audit_notes.md', () => NOTES(OUTSIDE));
       contains(end, 'ton balayage a aussi sondé l\'adresse du voisin');
@@ -338,19 +338,19 @@ ${fr ? 'FINT-4350 : choisir et installer un outil d’intégrité des fichiers.'
       const { c, jouer: play, editer: edit } = part(ALL);
       const e = (id: string) => c.shell.flags.has(id);
       play(['sudo apt upgrade -y']);
-      expect(e('mise-a-jour')).toBe(true);
+      expect(e('update')).toBe(true);
       harden(edit);
-      expect(e('ssh-a-recharger')).toBe(true);
-      expect(e('durci')).toBe(false);
+      expect(e('ssh-a-reload')).toBe(true);
+      expect(e('hardened')).toBe(false);
       play(['sudo systemctl reload ssh']);
-      expect(e('durci')).toBe(true);
+      expect(e('hardened')).toBe(true);
       // Sans nouvel audit, Lynis n'a rien prouvé : l'ancien indice n'est plus celui de la machine.
       play(['sudo lynis audit system']);
-      expect(e('preuve-lynis')).toBe(true);
+      expect(e('proof-lynis')).toBe(true);
       const without = edit('nano closing_report.md', () => REPORT('12'));
       contains(without, 'cite l\'indice de durcissement de ton dernier audit Lynis');
       play(['nmap -sV 192.0.2.16/28']);
-      expect(e('hors-perimetre')).toBe(true);
+      expect(e('outside-scope')).toBe(true);
       expect(c.finished).not.toContain('follow-up');
     });
 

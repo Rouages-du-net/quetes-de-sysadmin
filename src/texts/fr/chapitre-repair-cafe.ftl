@@ -2,12 +2,12 @@
 ### Apache derrière nginx (ports, hôtes virtuels, .htaccess, mod_rewrite).
 ### Les commandes, chemins, directives et messages d'Apache ne se traduisent pas.
 
-chapitre-repair-cafe = L'atelier de réparation
+chapter-repair-cafe = L'atelier de réparation
     .resume = Le site de l'atelier de réparation tourne sous Apache, avec un .htaccess : le faire vivre derrière nginx, sur le même serveur.
 
 ## Fichiers
 
-repair-cafe-courriel-kofi =
+repair-cafe-email-kofi =
     De :     Kofi
     À :      toi
     Objet :  L'atelier de réparation
@@ -39,7 +39,7 @@ repair-cafe-courriel-kofi =
     Merci !
     Kofi
 
-repair-cafe-note-de-rania =
+repair-cafe-note-rania =
     J'ai fait sudo apt install apache2 hier soir. À la fin, apt a affiché
     « Job for apache2.service failed », et je n'ai pas eu le temps de
     regarder pourquoi (systemctl status apache2, journalctl -u apache2…).
@@ -59,11 +59,11 @@ repair-cafe-note-de-rania =
 
     Rania
 
-repair-cafe-htaccess-commentaire =
+repair-cafe-htaccess-comment =
     # Les adresses courtes des fiches, imprimées sur les affiches :
     # /guide/42 mène à guides/42.html
 
-repair-cafe-site-accueil =
+repair-cafe-site-welcome =
     <!DOCTYPE html>
     <html lang="fr">
     <head><meta charset="utf-8"><title>L'atelier de réparation</title></head>
@@ -74,7 +74,7 @@ repair-cafe-site-accueil =
     </body>
     </html>
 
-repair-cafe-fiche-7 =
+repair-cafe-sheet-7 =
     <!DOCTYPE html>
     <html lang="fr">
     <head><meta charset="utf-8"><title>Fiche 7 : changer une chambre à air</title></head>
@@ -84,7 +84,7 @@ repair-cafe-fiche-7 =
     </body>
     </html>
 
-repair-cafe-fiche-42 =
+repair-cafe-sheet-42 =
     <!DOCTYPE html>
     <html lang="fr">
     <head><meta charset="utf-8"><title>Fiche 42 : détartrer une bouilloire</title></head>
@@ -96,29 +96,29 @@ repair-cafe-fiche-42 =
 
 ## Événements
 
-repair-cafe-evenement-occupe =
+repair-cafe-event-busy =
     « Address already in use » : Apache veut écouter sur le port 80
     (Listen 80, dans /etc/apache2/ports.conf), mais nginx y est déjà, pour
     tous les sites. Deux programmes ne peuvent pas écouter sur le même port
     de la même adresse : sudo ss -tlnp montre qui écoute où. Ici, nginx
     garde le port 80 ; Apache ira sur 127.0.0.1:8080, là où le site nginx
     préparé par Rania l'attend.
-repair-cafe-evenement-ah00558 =
+repair-cafe-event-ah00558 =
     « AH00558 » n'est qu'un avertissement : Apache ne connaît pas de nom
     complet pour la machine et prend son adresse. Une ligne ServerName au
     niveau global le fait taire (par exemple ServerName localhost dans
     /etc/apache2/conf-available/servername.conf, puis sudo a2enconf
     servername). Ce n'est pas lui qui empêche Apache de démarrer.
-repair-cafe-evenement-ecoute =
+repair-cafe-event-listening =
     Apache tourne ! sudo ss -tlnp le montre, avec ses adresses. Vérifie
     qu'il sert bien l'atelier, en donnant le nom du site :
     curl -H "Host: repair.example" http://127.0.0.1:8080/
-repair-cafe-evenement-partout =
+repair-cafe-event-everywhere =
     Attention : Apache écoute sur toutes les adresses de la machine (un
     Listen avec le port seul). Le pare-feu le protège aujourd'hui, mais
     Rania veut qu'il n'écoute que sur 127.0.0.1, comme l'agenda : seul
     nginx doit pouvoir le joindre. Listen 127.0.0.1:8080, dans ports.conf.
-repair-cafe-evenement-defaut =
+repair-cafe-event-default =
     C'est la page par défaut d'Apache (/var/www/html), pas celle de
     l'atelier. Pour une demande, Apache garde d'abord les VirtualHost qui
     correspondent à l'adresse et au port, puis celui dont le ServerName
@@ -127,33 +127,33 @@ repair-cafe-evenement-defaut =
     montre qui répond où. Le site de l'atelier est-il lu (un fichier de
     sites-enabled qui finit par .conf) ? Son VirtualHost est-il sur le bon
     port ? Et par nginx : quel nom nginx transmet-il à Apache ?
-repair-cafe-evenement-site =
+repair-cafe-event-site =
     Apache sert l'accueil de l'atelier sur la boucle locale. Reste à le
     publier : nginx, devant, doit lui passer les visites de repair.example.
-repair-cafe-evenement-passerelle =
+repair-cafe-event-gateway =
     502 : nginx n'arrive pas à joindre Apache (dans
     /var/log/nginx/error.log : « connect() failed »). Apache tourne-t-il,
     et sur le port où nginx l'attend (proxy_pass http://127.0.0.1:8080) ?
-repair-cafe-evenement-proxy =
+repair-cafe-event-proxy =
     http://repair.example/ montre l'accueil de l'atelier : nginx, puis
     Apache. Essaie maintenant une adresse des affiches :
     curl http://repair.example/guide/42
-repair-cafe-evenement-ignore =
+repair-cafe-event-ignore =
     404 sur /guide/… : Apache cherche le fichier /var/www/repair/guide/42,
     qui n'existe pas. La règle qui transforme cette adresse est dans
     /var/www/repair/.htaccess… mais Apache ne lit les .htaccess que si
     AllowOverride le permet, et apache2.conf dit AllowOverride None pour
     /var/www. Autorise-le pour ce site seulement, dans une section
     <Directory /var/www/repair> de son VirtualHost.
-repair-cafe-evenement-interne =
+repair-cafe-event-internal =
     500 Internal Server Error : Apache a lu le .htaccess, mais quelque
     chose ne va pas. La raison est dans le journal d'erreurs du site :
     sudo tail /var/log/apache2/repair-error.log
-repair-cafe-evenement-reecriture =
+repair-cafe-event-rewrite =
     /guide/42 mène à la fiche 42 : la règle du .htaccess (RewriteRule) a
     transformé l'adresse en guides/42.html. Apache relit le .htaccess à
     chaque visite : quand on le modifie, rien à recharger.
-repair-cafe-evenement-fin =
+repair-cafe-event-end =
     Les adresses des affiches marchent, par nginx puis Apache. Rania :
     « Les QR codes de l'atelier mènent de nouveau aux bonnes fiches ! »
 

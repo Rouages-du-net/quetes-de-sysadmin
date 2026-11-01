@@ -2,12 +2,12 @@
 ### nginx ne voit que 127.0.0.1 (X-Forwarded-For, trust proxy). Les
 ### directives de nginx, les variables et les chemins ne se traduisent pas.
 
-chapitre-proxy = Le proxy
+chapter-proxy = Le proxy
     .resume = Un robot fait verrouiller tout le monde : derrière nginx, la caisse voit chaque client en 127.0.0.1. X-Forwarded-For, et à qui faire confiance.
 
 ## Fichiers
 
-proxy-courriel-awa =
+proxy-email-awa =
     De :     Awa
     À :      toi
     Objet :  Plus personne ne peut se connecter à la caisse
@@ -28,14 +28,14 @@ proxy-courriel-awa =
 
 ## Événements
 
-proxy-evenement-tout-le-monde =
+proxy-event-all-world =
     Cinq minutes plus tard : le robot a encore fait verrouiller 127.0.0.1…
     et Lina avec. Pour la caisse, toutes les requêtes viennent de nginx
     (127.0.0.1) : il faut que nginx lui transmette l'adresse du vrai client
     (un en-tête X-Forwarded-For), ET qu'elle accepte de le lire (TRUST_PROXY),
     puis relancer les deux.
 # { $robot } : l'adresse du robot
-proxy-evenement-usurpe =
+proxy-event-spoofed =
     Lina peut entrer… mais le robot ({ $robot }) n'est jamais verrouillé : il
     écrit lui-même un faux X-Forwarded-For, différent à chaque essai, et la
     caisse le croit. Regarde /var/log/till/app.log : 10.1.0.4, 10.2.7.5…
@@ -46,7 +46,7 @@ proxy-evenement-usurpe =
     qu'à 127.0.0.1. Et côté nginx, cet en-tête doit être écrit ou complété
     par nginx, pas seulement transmis.
 # { $robot } : l'adresse du robot
-proxy-evenement-fin =
+proxy-event-end =
     Cinq minutes plus tard : le robot ({ $robot }) est verrouillé, et Lina
     entre sans souci. Awa : « On peut rouvrir les caisses ! »
 

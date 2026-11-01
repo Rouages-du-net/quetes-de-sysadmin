@@ -46,7 +46,7 @@ const conf = (t: Game['t']) => `server {
         try_files $uri $uri/ =404;
     }
 
-    # ${t('blue-green-conf-commentaire')}
+    # ${t('blue-green-conf-comment')}
     location /kiosk/ {
         proxy_pass http://127.0.0.1:3002/;
     }
@@ -94,7 +94,7 @@ export const canary: Chapter = {
   home: M,
   welcome: 'message_from_samia.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'gazette-2027',
   accounts,
   state: () => ({
@@ -146,7 +146,7 @@ export const canary: Chapter = {
     j.state.dernierLot = batch;
     j.state.lots = [...(j.state.lots ?? []), batch];
     if (batch.byVersion['1.6.1']?.visits && !batch.byVersion['1.6.1'].errors && (distribution(j).blue ?? 0) < 1) j.state.canariPropre = true;
-    return j.t('canary-une-heure', { visites: batch.total });
+    return j.t('canary-one-time', { visites: batch.total });
   },
   createWorld: (t) => {
     const root: Rights = { owner: 'root' };
@@ -176,13 +176,13 @@ export const canary: Chapter = {
         }),
       }),
       home: place({
-        you: d({ 'message_from_samia.txt': f(t('canary-message-de-samia')) }),
+        you: d({ 'message_from_samia.txt': f(t('canary-message-samia')) }),
         samia: place({}, { owner: 'samia', mode: 'rwx------' }),
         theo: place({}, { owner: 'theo', mode: 'rwx------' }),
       }),
       srv: place({
         gazette: place({
-          releases: place({ '20270524090000': place({ 'index.html': file(t('rollback-site-accueil'), { owner: 'you' }) }) }),
+          releases: place({ '20270524090000': place({ 'index.html': file(t('rollback-site-welcome'), { owner: 'you' }) }) }),
           current: f('', { owner: 'you', link: '/srv/gazette/releases/20270524090000' }),
         }),
         kiosk: place(
@@ -217,43 +217,43 @@ export const canary: Chapter = {
   },
   events: [
     {
-      id: 'tout-d-un-coup',
+      id: 'all-one-coup',
       condition: (j) => (distribution(j).blue ?? 0) === 1 && !!lastBatch(j)?.byVersion['1.6.0']?.errors && !j.state.canari160,
-      message: (j) => j.t('canary-evenement-tout-d-un-coup', { erreurs: lastBatch(j)!.errors }),
+      message: (j) => j.t('canary-event-all-one-coup', { erreurs: lastBatch(j)!.errors }),
     },
     {
-      id: 'canari-160',
+      id: 'canary-160',
       condition: (j) => {
         const parts = distribution(j);
         const ok = (parts.blue ?? 0) > 0 && (parts.blue ?? 0) <= 0.25 && !!lastBatch(j)?.byVersion['1.6.0'];
         if (ok) j.state.canari160 = true;
         return ok;
       },
-      message: (j) => j.t('canary-evenement-canari-160'),
+      message: (j) => j.t('canary-event-canary-160'),
     },
     {
-      id: 'trop-gros',
+      id: 'too-big',
       condition: (j) => (distribution(j).blue ?? 0) > 0.25 && (distribution(j).blue ?? 0) < 1,
-      message: (j) => j.t('canary-evenement-trop-gros'),
+      message: (j) => j.t('canary-event-too-big'),
     },
     {
-      id: 'trouve',
+      id: 'found',
       condition: (j) => !!j.state.canari160 && /" 500 \d+ /.test(output(j)) && output(j).includes('/kiosk/archives'),
-      message: (j) => j.t('canary-evenement-trouve'),
+      message: (j) => j.t('canary-event-found'),
     },
     {
-      id: 'arrete',
+      id: 'stopped',
       condition: (j) => !!j.state.canari160 && (distribution(j).blue ?? 0) === 0 && (distribution(j).green ?? 0) > 0,
-      message: (j) => j.t('canary-evenement-arrete'),
+      message: (j) => j.t('canary-event-stopped'),
       // Les développeur·ses publient le correctif.
       action: (j) => {
         const versions = j.find(`${KIOSK}/versions`);
         if (versions?.type === 'dossier') versions.children['1.6.1'] = versionDirectory(j.t, '1.6.1', 'canary-notes-161');
       },
     },
-    { id: 'canari-161', condition: (j) => !!j.state.canariPropre, message: (j) => j.t('canary-evenement-canari-161') },
+    { id: 'canary-161', condition: (j) => !!j.state.canariPropre, message: (j) => j.t('canary-event-canary-161') },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => {
         const s = health(j, 'blue');
         return (
@@ -265,7 +265,7 @@ export const canary: Chapter = {
           httpRequest(j, GAZETTE, '/kiosk/archives', 80, false)?.code === 200
         );
       },
-      message: (j) => j.t('canary-evenement-fin'),
+      message: (j) => j.t('canary-event-end'),
     },
   ],
 };

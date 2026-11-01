@@ -2,12 +2,12 @@
 ### container as root. Commands, paths, options and messages of
 ### docker, chown, ls and ps are never translated.
 
-chapitre-full-powers = Full powers
+chapter-full-powers = Full powers
     .resume = The fablab's photo gallery runs as root: --user, the uid shared between the container and the machine, and the directory to hand over to the right account.
 
 ## Files
 
-full-powers-message-de-yasmine =
+full-powers-message-yasmine =
     A message from Yasmine:
 
     "Hi! You know the fablab's photo gallery (port 8082)? Visitors
@@ -25,7 +25,7 @@ full-powers-message-de-yasmine =
       - and above all not to lose any of the 14 photos!
 
     For sudo: fablab-2027."
-full-powers-mot-de-rania =
+full-powers-word-rania =
     A note from Rania:
 
     "The gallery receives files uploaded by strangers: that's
@@ -41,7 +41,7 @@ full-powers-mot-de-rania =
       sudo docker exec galerie-galerie-1 id
       ps aux
     Then the manual: man docker and man docker-compose."
-full-powers-lisezmoi =
+full-powers-readme =
     Galerie 3.2 — README (shipped with the image registry.example/galerie)
 
     The photos live in /app/photos: mount a directory or a volume there.
@@ -53,14 +53,14 @@ full-powers-lisezmoi =
     to /app/photos.
 
 # { $nombre }: the number of photos
-full-powers-galerie-accueil = { $nombre ->
+full-powers-gallery-welcome = { $nombre ->
         [one] Fablab gallery: one project photo. Send yours!
        *[other] Fablab gallery: { $nombre } project photos. Send yours!
     }
 
 ## Events
 
-full-powers-evenement-root =
+full-powers-event-root =
     The gallery runs as root: uid=0 in the container, and root in ps aux
     on the machine, like sshd. Its image doesn't declare a user (no
     USER), and neither does compose.yaml: so by default, a container runs
@@ -69,12 +69,12 @@ full-powers-evenement-root =
     That's also why the files in /srv/galerie/photos
     belong to root. Look for --user in man docker, and user: in
     man docker-compose.
-full-powers-evenement-inconnu =
+full-powers-event-unknown =
     "unable to find user": a name given to --user (or to user:) must exist
     in the IMAGE's /etc/passwd, not the machine's. With
     numbers (uid:gid), no more problem: the kernel only knows
     numbers.
-full-powers-evenement-eacces =
+full-powers-event-eacces =
     The gallery no longer starts: EACCES, permission denied (sudo docker
     logs, or docker compose logs). It no longer runs as root, so the
     machine's Unix permissions apply to it, by number: uid and gid.
@@ -82,24 +82,24 @@ full-powers-evenement-eacces =
     Look at ls -lan /srv/galerie/photos (-n: the numbers, -a: hidden
     files too). Docker restarts it on its own (restart: unless-stopped):
     it will come back as soon as it can write.
-full-powers-evenement-uid-1000 =
+full-powers-event-uid-1000 =
     The gallery runs under uid 1000… and on this machine, uid 1000
     is you (your account, you)! In ls -l, its files belong to you: the kernel
     only sees numbers, and each /etc/passwd gives them its own name (node
     in the image, you on the machine). Yasmine (uid 1001), however, still
     can't write to the photos directory.
-full-powers-evenement-ouvert-a-tous =
+full-powers-event-open-a-all =
     A directory writable by everyone (chmod 777, o+w): it "works",
     but then any account, any program on the machine can
     drop or delete files there. Instead, give the directory to the
     right owner (chown), without opening up the others' permissions.
 # { $nombre }: the number of missing photos
-full-powers-evenement-photos-perdues =
+full-powers-event-photos-lost =
     { $nombre ->
         [one] One photo has disappeared from /srv/galerie/photos. On a real server, without a backup, it would be lost.
        *[other] { $nombre } photos have disappeared from /srv/galerie/photos. On a real server, without a backup, they would be lost.
     } Here, you can restart the chapter from the menu.
-full-powers-evenement-fin =
+full-powers-event-end =
     The gallery runs under an ordinary account, Yasmine manages the photos
     without sudo, and all 14 photos are there. Rania: "If someone breaks
     into the gallery, they'll only get an ordinary account's privileges.

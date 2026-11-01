@@ -18,28 +18,28 @@ export function mountClass(root: HTMLElement, language: Language) {
   const students: Student[] = [];
   const errors: ClassError[] = [];
 
-  const filesField = el('input', { type: 'file', id: 'classe-fichiers', accept: '.json,application/json', multiple: '' }) as HTMLInputElement;
-  const zone = el('div', { class: 'classe-zone' }, el('p', {}, el('label', { for: filesField.id }, t('classe-fichiers')), ' ', filesField), el('p', { class: 'discret' }, t('classe-glisser')));
-  const codesField = el('textarea', { id: 'classe-codes', rows: '4', spellcheck: 'false', placeholder: t('classe-codes-exemple') }) as HTMLTextAreaElement;
-  const addCodes = el('button', { type: 'button' }, t('classe-codes-ajouter'));
-  const codes = el('p', {}, el('label', { for: codesField.id }, t('classe-codes')), el('br'), codesField, el('br'), addCodes);
+  const filesField = el('input', { type: 'file', id: 'class-files', accept: '.json,application/json', multiple: '' }) as HTMLInputElement;
+  const zone = el('div', { class: 'classe-zone' }, el('p', {}, el('label', { for: filesField.id }, t('class-files')), ' ', filesField), el('p', { class: 'discret' }, t('class-slide')));
+  const codesField = el('textarea', { id: 'class-codes', rows: '4', spellcheck: 'false', placeholder: t('class-codes-example') }) as HTMLTextAreaElement;
+  const addCodes = el('button', { type: 'button' }, t('class-codes-add'));
+  const codes = el('p', {}, el('label', { for: codesField.id }, t('class-codes')), el('br'), codesField, el('br'), addCodes);
   const state = el('p', { class: 'classe-etat', role: 'status' });
-  const exported = el('button', { type: 'button' }, t('classe-exporter'));
-  const empty = el('button', { type: 'button' }, t('classe-vider'));
+  const exported = el('button', { type: 'button' }, t('class-export'));
+  const empty = el('button', { type: 'button' }, t('class-empty'));
   const actions = el('p', { class: 'classe-actions' }, exported, ' ', empty);
-  const grid = el('div', { class: 'classe-tableau', tabindex: '0', role: 'region', 'aria-label': t('classe-tableau') });
+  const grid = el('div', { class: 'classe-tableau', tabindex: '0', role: 'region', 'aria-label': t('class-table') });
   root.replaceChildren(zone, codes, state, actions, grid);
 
   const minutes = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
   const date = (iso: string | null) => (iso ? new Intl.DateTimeFormat(t.language, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso)) : '');
   const HEADERS = () => [
-    t('classe-col-eleve'),
-    t('classe-col-chapitres'),
-    t('classe-col-grade'),
-    t('classe-col-succes'),
-    t('classe-col-examen'),
-    t('classe-col-date'),
-    ...STORIES.map((h) => t(`histoire-${h.id}`)),
+    t('class-col-student'),
+    t('class-col-chapters'),
+    t('class-col-grade'),
+    t('class-col-achievements'),
+    t('class-col-exam'),
+    t('class-col-date'),
+    ...STORIES.map((h) => t(`story-${h.id}`)),
   ];
   const line = (e: Student) => [
     e.name,
@@ -58,15 +58,15 @@ export function mountClass(root: HTMLElement, language: Language) {
     students.sort((a, b) => a.name.localeCompare(b.name, t.language));
     actions.hidden = students.length === 0;
     state.replaceChildren(
-      t('classe-compte', { nombre: students.length }),
-      ...errors.map((x) => el('span', { class: 'classe-erreur' }, ' ', t('classe-erreur', { source: x.source, raison: t(`progression-${x.error}`) }))),
+      t('class-account', { nombre: students.length }),
+      ...errors.map((x) => el('span', { class: 'classe-erreur' }, ' ', t('class-error', { source: x.source, raison: t(`progress-${x.error}`) }))),
     );
     if (!students.length) return grid.replaceChildren();
     grid.replaceChildren(
       el(
         'table',
         {},
-        el('caption', {}, t('classe-tableau')),
+        el('caption', {}, t('class-table')),
         el('thead', {}, el('tr', {}, ...HEADERS().map((x) => el('th', { scope: 'col' }, x)))),
         el(
           'tbody',
@@ -124,7 +124,7 @@ export function mountClass(root: HTMLElement, language: Language) {
   exported.addEventListener('click', () => {
     const link = el('a', {
       href: URL.createObjectURL(new Blob([`﻿${inCsv(students, HEADERS(), line)}`], { type: 'text/csv' })),
-      download: t('classe-nom-fichier'),
+      download: t('class-name-file'),
     });
     link.click();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);

@@ -147,7 +147,7 @@ export const concert: Chapter = {
   home: M,
   welcome: 'message_from_kofi.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'ants-2026',
   accounts,
   state: (t) => ({
@@ -190,9 +190,9 @@ export const concert: Chapter = {
         service: 'agenda',
         capacity: 20,
         pages: {
-          '/': t('sharing-agenda-accueil'),
-          '/semaine': t('sharing-agenda-semaine'),
-          '/ateliers': t('sharing-agenda-ateliers'),
+          '/': t('sharing-agenda-welcome'),
+          '/semaine': t('sharing-agenda-week'),
+          '/ateliers': t('sharing-agenda-workshops'),
           '/style.css': '(CSS)',
           '/app.js': '(JavaScript)',
           '/logo.png': '(PNG)',
@@ -239,10 +239,10 @@ export const concert: Chapter = {
           'sites-enabled': place({ letters: f('', { owner: 'root', link: '/etc/nginx/sites-available/letters' }) }),
         }),
       }),
-      home: place({ you: d({ 'message_from_kofi.txt': f(t('concert-message-de-kofi')), 'help_logs.txt': f(t('concert-aide-journaux')) }) }),
+      home: place({ you: d({ 'message_from_kofi.txt': f(t('concert-message-kofi')), 'help_logs.txt': f(t('concert-help-logs')) }) }),
       usr: place({ sbin: place({ nginx: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_342_520 }) }) }),
       var: place({
-        www: place({ letters: place({ 'index.html': file(t('sharing-site-lettres')) }) }),
+        www: place({ letters: place({ 'index.html': file(t('sharing-site-letters')) }) }),
         log: place({
           nginx: place(
             {
@@ -259,30 +259,30 @@ export const concert: Chapter = {
     {
       id: 'robot',
       condition: (j) => j.last.commands.some((c) => ['awk', 'cut', 'uniq'].includes(c[0])) && ROBOTS.some((r) => j.last.output.includes(r)),
-      message: (j) => j.t('concert-evenement-robot'),
+      message: (j) => j.t('concert-event-robot'),
     },
     {
-      id: 'interdit',
+      id: 'forbidden',
       condition: (j) => (summary(j)?.forbiddenRobot ?? 0) > 0,
-      message: (j) => j.t('concert-evenement-interdit'),
+      message: (j) => j.t('concert-event-forbidden'),
     },
     {
-      id: 'humains-limites',
+      id: 'humans-limits',
       condition: (j) => (summary(j)?.limitsHumans ?? 0) > 0,
-      message: (j) => j.t('concert-evenement-humains-limites'),
+      message: (j) => j.t('concert-event-humans-limits'),
     },
     {
-      id: 'encore-trop',
+      id: 'still-too',
       condition: (j) => {
         const b = summary(j);
         return !!b && b.limitRobot > 0 && b.limitsHumans === 0 && !succeeded(b);
       },
-      message: (j) => j.t('concert-evenement-encore-trop'),
+      message: (j) => j.t('concert-event-still-too'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => succeeded(summary(j)),
-      message: (j) => j.t('concert-evenement-fin'),
+      message: (j) => j.t('concert-event-end'),
     },
   ],
 };

@@ -2,12 +2,12 @@
 ### Les commandes, chemins, clés YAML et messages de docker, de PostgreSQL
 ### et de l'appli (en anglais) ne se traduisent pas.
 
-chapitre-compose = La composition
+chapter-compose = La composition
     .resume = Une appli et sa base avec Docker Compose : le nom des services, les volumes, les secrets dans .env, le redémarrage.
 
 ## Fichiers
 
-compose-message-de-yasmine =
+compose-message-yasmine =
     Un message de Yasmine :
 
     « On voudrait que les gens réservent les machines du fablab (la
@@ -25,7 +25,7 @@ compose-message-de-yasmine =
     L'appli doit répondre sur http://localhost:8081.
 
     Pour sudo : fablab-2027. Mes notes : aide_compose.txt. »
-compose-aide-compose =
+compose-help-compose =
     NOTES DE YASMINE — DOCKER COMPOSE
 
     On lance tout depuis le dossier du projet (/srv/reservations) :
@@ -39,7 +39,7 @@ compose-aide-compose =
 
 ## L'appli
 
-compose-appli-accueil =
+compose-app-welcome =
     <!DOCTYPE html>
     <html lang="fr">
     <head><meta charset="utf-8"><title>Réserver une machine — Fablab</title></head>
@@ -52,17 +52,17 @@ compose-appli-accueil =
 
 ## Événements
 
-compose-evenement-localhost =
+compose-event-localhost =
     « connect ECONNREFUSED 127.0.0.1:5432 » : l'appli cherche la base sur
     localhost. Mais dans un conteneur, localhost désigne le conteneur
     lui-même, pas la machine ni les autres conteneurs. Dans un projet
     Compose, chaque service est joignable par son nom, sur le réseau du
     projet.
-compose-evenement-sans-mot-de-passe =
+compose-event-without-password =
     PostgreSQL refuse de créer sa base sans mot de passe : la variable
     POSTGRES_PASSWORD est vide. docker compose config montre ce que Compose
     a compris, et les avertissements disent quelle variable manque dans .env.
-compose-evenement-authentification =
+compose-event-authentication =
     « password authentication failed » : l'appli et la base n'ont pas le
     même mot de passe. Piège classique : l'image de PostgreSQL ne lit
     POSTGRES_PASSWORD qu'une fois, quand elle crée la base dans un dossier
@@ -70,25 +70,25 @@ compose-evenement-authentification =
     change rien. Tant que la base ne contient rien d'important, on peut la
     recréer (down -v efface les volumes) ; sinon, on change le mot de passe
     dans la base elle-même.
-compose-evenement-connectee =
+compose-event-connected =
     L'appli est connectée à sa base : http://localhost:8081 répond. Reste
     à rendre l'installation solide (données, secrets, redémarrage).
-compose-evenement-volumes-effaces =
+compose-event-volumes-erased =
     docker compose down -v : les volumes du projet sont effacés, avec
     toutes les données de la base. Utile tant qu'elle est vide ; à ne jamais
     taper sur une base en service.
-compose-evenement-en-clair =
+compose-event-in-clear =
     Tout marche… mais le mot de passe est toujours écrit dans compose.yaml,
     qui va partir sur le dépôt git. Compose remplace ${"{"}VARIABLE{"}"} par la
     valeur trouvée dans le fichier .env du projet (man docker-compose).
-compose-evenement-env-lisible =
+compose-event-env-readable =
     Le mot de passe a quitté compose.yaml : bien. Mais .env est lisible par
     tous les comptes de la machine (ls -la). Yasmine voulait qu'il ne le
     soit que par root.
-compose-evenement-sans-redemarrage =
+compose-event-without-reboot =
     Presque : après une coupure de courant, ces conteneurs ne repartiraient
     pas. Dans compose.yaml, chaque service peut avoir sa politique restart.
-compose-evenement-fin =
+compose-event-end =
     http://localhost:8081 répond, la base garde ses données dans un volume,
     le mot de passe dort dans .env (lisible par root seulement), et tout
     repartira après une coupure. Yasmine publie compose.yaml sur le dépôt

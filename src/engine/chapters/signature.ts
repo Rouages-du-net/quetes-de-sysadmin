@@ -74,43 +74,43 @@ export const signature: Chapter = {
   home: M,
   welcome: 'message_from_nour.txt',
   names: true,
-  final: 'fin',
-  steps: ['verifier', 'cle', 'opendkim', 'milter', 'fin'],
+  final: 'end',
+  steps: ['check', 'key', 'opendkim', 'milter', 'end'],
   password: 'seeds-2027',
   accounts,
   state: (t) => gardensState(t, departure),
   initialise: initialiseGardens,
   createWorld: (t) => gardensWorld(t, departure, { 'message_from_nour.txt': f(t('signature-message-nour')) }, ''),
   events: [
-    { id: 'verifier', condition: (j) => /DKIM check: +none/.test(box(j)), message: (j) => j.t('signature-evenement-verifier') },
+    { id: 'check', condition: (j) => /DKIM check: +none/.test(box(j)), message: (j) => j.t('signature-event-check') },
     {
-      id: 'cle',
+      id: 'key',
       condition: (j) => {
         const n = j.find('/etc/dkimkeys');
         return n?.type === 'dossier' && Object.keys(n.children).some((x) => x.endsWith('.private'));
       },
-      message: (j) => j.t('signature-evenement-cle'),
+      message: (j) => j.t('signature-event-key'),
     },
-    { id: 'illisible', condition: (j) => dkimLog(j, 'Permission denied'), message: (j) => j.t('signature-evenement-illisible') },
-    { id: 'pas-sure', condition: (j) => dkimLog(j, 'key data is not secure'), message: (j) => j.t('signature-evenement-pas-sure') },
+    { id: 'unreadable', condition: (j) => dkimLog(j, 'Permission denied'), message: (j) => j.t('signature-event-unreadable') },
+    { id: 'not-sure', condition: (j) => dkimLog(j, 'key data is not secure'), message: (j) => j.t('signature-event-not-sure') },
     {
       id: 'opendkim',
       condition: (j) => systemd(j)?.services.opendkim?.state === 'active' && !!mail(j)?.dkim?.key && (mail(j)?.dkim?.domains.length ?? 0) > 0,
-      message: (j) => j.t('signature-evenement-opendkim'),
+      message: (j) => j.t('signature-event-opendkim'),
     },
-    { id: 'chroot', condition: (j) => mailLog(j, 'connect to Milter service unix:'), message: (j) => j.t('signature-evenement-chroot') },
-    { id: 'prise', condition: (j) => mailLog(j, 'connect to Milter service inet'), message: (j) => j.t('signature-evenement-prise') },
+    { id: 'chroot', condition: (j) => mailLog(j, 'connect to Milter service unix:'), message: (j) => j.t('signature-event-chroot') },
+    { id: 'socket', condition: (j) => mailLog(j, 'connect to Milter service inet'), message: (j) => j.t('signature-event-socket') },
     {
-      id: 'smtpd-seul',
+      id: 'smtpd-only',
       condition: (j) => {
         const v = mail(j)?.postfix?.values ?? {};
         return !!v.smtpd_milters && !v.non_smtpd_milters;
       },
-      message: (j) => j.t('signature-evenement-smtpd-seul'),
+      message: (j) => j.t('signature-event-smtpd-only'),
     },
-    { id: 'milter', condition: (j) => !!expectedSignature(j), message: (j) => j.t('signature-evenement-milter') },
-    { id: 'pas-secure', condition: (j) => seen(j, 'key not secure'), message: (j) => j.t('signature-evenement-pas-secure') },
-    { id: 'serie', condition: (j) => dkim(j, 'primary') === 'pass' && dkim(j, 'secondary') !== 'pass', message: (j) => j.t('signature-evenement-serie') },
-    { id: 'fin', condition: (j) => passSpf(j) && dkim(j, 'secondary') === 'pass', message: (j) => j.t('signature-evenement-fin') },
+    { id: 'milter', condition: (j) => !!expectedSignature(j), message: (j) => j.t('signature-event-milter') },
+    { id: 'not-secure', condition: (j) => seen(j, 'key not secure'), message: (j) => j.t('signature-event-not-secure') },
+    { id: 'serial', condition: (j) => dkim(j, 'primary') === 'pass' && dkim(j, 'secondary') !== 'pass', message: (j) => j.t('signature-event-serial') },
+    { id: 'end', condition: (j) => passSpf(j) && dkim(j, 'secondary') === 'pass', message: (j) => j.t('signature-event-end') },
   ],
 };

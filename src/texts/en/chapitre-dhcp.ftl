@@ -1,12 +1,12 @@
 ### Story "The Hive", chapter "DHCP": dnsmasq hands out addresses in each
 ### VLAN. dnsmasq options, commands and paths are not translated.
 
-chapitre-dhcp = DHCP
+chapter-dhcp = DHCP
     .resume = The VLANs are there, but nobody has an address: one DHCP range per VLAN with dnsmasq, a reservation for the printer, and not a word towards the ISP box.
 
 ## Files
 
-dhcp-courriel-malik =
+dhcp-email-malik =
     From:    Malik
     To:      you
     Subject: VLANs are great, but…
@@ -30,18 +30,18 @@ dhcp-courriel-malik =
 
 ## Events
 
-dhcp-evenement-wan =
+dhcp-event-wan =
     Careful: dnsmasq listens on every interface, including eth0, the
     internet provider's network. A DHCP server answering at the
     neighbours' (a "rogue DHCP server") is the kind of failure that cuts
     off a whole neighbourhood. Tell dnsmasq where it is allowed to listen
     (interface=, or except-interface=eth0).
 # { $adresse }: the printer's expected address
-dhcp-evenement-imprimante-ailleurs =
+dhcp-event-printer-elsewhere =
     The printer got an address… but not { $adresse }, and the computers
     can't find it. dnsmasq can reserve an address for a device, based on
     its MAC address (man dnsmasq: dhcp-host).
-dhcp-evenement-fin =
+dhcp-event-end =
     Every device has its address in its VLAN, the printer is in its place,
     and the ISP box hears nothing. Malik: "The café has wifi, the offices
     have internet… well, almost: apparently nothing gets out yet."

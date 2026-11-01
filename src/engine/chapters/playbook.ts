@@ -37,13 +37,13 @@ export const playbook: Chapter = {
   home: M,
   welcome: 'message_from_theo.txt',
   names: true,
-  final: 'fin',
-  steps: ['echec', 'modules', 'deuxieme', 'fin'],
+  final: 'end',
+  steps: ['failure', 'modules', 'second', 'end'],
   password: 'districts-2027',
   accounts: pilotAccounts,
   hosts: {
     // north a reçu le playbook deux fois : la ligne en double, htop et le dossier.
-    north: centre('north', { motd: (t) => `${MOTD_DEBIAN}\n${t('playbook-ligne-motd')}\n${t('playbook-ligne-motd')}`, share: true, packages: ['htop'] }),
+    north: centre('north', { motd: (t) => `${MOTD_DEBIAN}\n${t('playbook-line-motd')}\n${t('playbook-line-motd')}`, share: true, packages: ['htop'] }),
     south: centre('south'),
     east: centre('east'),
   },
@@ -55,24 +55,24 @@ export const playbook: Chapter = {
       home: { 'message_from_theo.txt': f(t('playbook-message-theo')) },
     }),
   events: [
-    { id: 'echec', condition: (j) => executions(j).some((e) => Object.values(e.hosts).some((b) => b.failed > 0)), message: (j) => j.t('playbook-evenement-echec') },
-    { id: 'doublon', condition: (j) => executions(j).length > 0 && NAMES.some((n) => ansibleLines(onCentre(j, n)) > 1), message: (j) => j.t('playbook-evenement-doublon') },
+    { id: 'failure', condition: (j) => executions(j).some((e) => Object.values(e.hosts).some((b) => b.failed > 0)), message: (j) => j.t('playbook-event-failure') },
+    { id: 'duplicate', condition: (j) => executions(j).length > 0 && NAMES.some((n) => ansibleLines(onCentre(j, n)) > 1), message: (j) => j.t('playbook-event-duplicate') },
     {
       id: 'modules',
       condition: (j) => {
         const text = j.read(path(j.t, `${DIRECTORY}/site.yml`)) ?? '';
         return !/^\s*-?\s*(ansible\.builtin\.)?(shell|command):/m.test(text);
       },
-      message: (j) => j.t('playbook-evenement-modules'),
+      message: (j) => j.t('playbook-event-modules'),
     },
     {
-      id: 'deuxieme',
+      id: 'second',
       condition: (j) => {
         const e = executions(j).at(-1);
         return !!e && !e.check && !e.limit && NAMES.every((n) => e.hosts[n] && e.hosts[n].failed === 0 && e.hosts[n].unreachable === 0) && NAMES.some((n) => e.hosts[n].changed > 0);
       },
-      message: (j) => j.t('playbook-evenement-deuxieme'),
+      message: (j) => j.t('playbook-event-second'),
     },
-    { id: 'fin', condition: (j) => NAMES.every((n) => ready(j, n)) && idempotent(j), message: (j) => j.t('playbook-evenement-fin') },
+    { id: 'end', condition: (j) => NAMES.every((n) => ready(j, n)) && idempotent(j), message: (j) => j.t('playbook-event-end') },
   ],
 };

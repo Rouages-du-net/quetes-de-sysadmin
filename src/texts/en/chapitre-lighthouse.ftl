@@ -2,9 +2,9 @@
 ### around: ls, cd, pwd, cat, less, mv, hidden files. Place and file names
 ### (Hut, Pier, .spare_bulb…) come from noms.ftl.
 
-chapitre-lighthouse = Lighthouse Island
+chapter-lighthouse = Lighthouse Island
     .resume = Finding your way and moving around: ls, cd, pwd, cat, mv, hidden files.
-lighthouse-bienvenue =
+lighthouse-welcome =
     You wake up in a fisher's Hut, on a small island. In front of
     you, a black screen and a blinking cursor.
 
@@ -34,7 +34,7 @@ lighthouse-message =
     Lighthouse, at the end of the Pier.
 
                                   — Maëlle, lighthouse keeper"
-lighthouse-panneau =
+lighthouse-panel =
     "Pebble Beach."
 
     You can always go back: ".." means the parent place.
@@ -53,9 +53,9 @@ lighthouse-ravaudeuse =
 
     And beware of the Eraser. It doesn't destroy out of malice: it obeys
     an order that someone gave it, a long time ago."
-lighthouse-coquillage = A pearly seashell. If you hold it to your ear, you hear… a server fan.
-lighthouse-vent = The wind blows hard on the Hill. Down below, the Pier and the dark Lighthouse.
-lighthouse-directrice =
+lighthouse-seashell = A pearly seashell. If you hold it to your ear, you hear… a server fan.
+lighthouse-wind = The wind blows hard on the Hill. Down below, the Pier and the dark Lighthouse.
+lighthouse-headteacher =
     The head of the Signal School welcomes you between two coloured
     flags.
 
@@ -69,15 +69,15 @@ lighthouse-directrice =
 
     And remember the School's motto: "When in doubt, read the manual."
     man mv will tell you everything about mv."
-lighthouse-consigne =
+lighthouse-instructions =
     EXERCISE: a crab has escaped from the aquarium. Put it back in the
     Bucket.
 
       mv crab Bucket
 
     Then check with  ls  and  ls Bucket
-lighthouse-crabe = A small green crab. It walks sideways, looking very busy.
-lighthouse-cours-1-manuel =
+lighthouse-crab = A small green crab. It walks sideways, looking very busy.
+lighthouse-course-1-manual =
     LESSON 1 — THE MANUAL
 
     Every command has its manual. Type  man  followed by the command name:
@@ -96,7 +96,7 @@ lighthouse-cours-1-manuel =
 
     On a real Linux, the manual opens full screen: you scroll through it
     with the arrows, search with /word, and quit with q.
-lighthouse-cours-2-chemins =
+lighthouse-course-2-paths =
     LESSON 2 — PATHS
 
     A path says where a place or an object is.
@@ -112,7 +112,7 @@ lighthouse-cours-2-chemins =
     And ~/ starts from your home:               ls ~/Harbour
 
     Try:  cd ~  then  pwd
-lighthouse-cours-3-caches =
+lighthouse-course-3-caches =
     LESSON 3 — WHAT YOU CAN'T SEE
 
     On Linux, a file whose name starts with a dot is HIDDEN: a plain "ls"
@@ -123,13 +123,13 @@ lighthouse-cours-3-caches =
     in the manual.  man ls
 
     There is a hidden file in this classroom. It's up to you to find it.
-lighthouse-note-secrete =
+lighthouse-note-secret =
     Well spotted! You found a hidden file.
 
     Remember this: on an island, precious things are stored safely out of
     sight. And things stored out of sight often get a name that starts
     with a dot.
-lighthouse-cours-4-renommer =
+lighthouse-course-4-rename =
     LESSON 4 — RENAMING
 
     mv isn't only for moving: if the destination isn't an existing place,
@@ -144,7 +144,7 @@ lighthouse-cours-4-renommer =
 
     On Linux, moving and renaming are the same operation: changing a
     file's path.
-lighthouse-livre-des-commandes =
+lighthouse-book-commands =
     THE BOOK OF COMMANDS
 
       ls       lists what is here (list); ls -a also shows hidden ones
@@ -159,24 +159,24 @@ lighthouse-livre-des-commandes =
     These commands have existed since the 1970s: they come from Unix, the
     ancestor of Linux and macOS. The people who run the internet's servers
     type them every day.
-lighthouse-capitaine =
+lighthouse-captain =
     Captain Ana is pacing up and down the quay.
 
     "My boat can take you to the Village. But without the Lighthouse,
     there's no way to get past the reefs after nightfall. Light it again,
     and we'll set off!"
-lighthouse-inventaire = The Harbour's Boathouse: oars, buoys, an anchor. There's still room.
-lighthouse-etiquette = The keeper's Storeroom. Crates of spare parts… almost all empty: the Eraser came through.
-lighthouse-ampoule-de-secours = A big lighthouse bulb, stored safely. A label says: "For the Lantern."
-lighthouse-filet = A huge, tangled fishing net blocking the door of the Lighthouse. It would be better stored in the Harbour's Boathouse.
-lighthouse-indice =
+lighthouse-inventory = The Harbour's Boathouse: oars, buoys, an anchor. There's still room.
+lighthouse-label = The keeper's Storeroom. Crates of spare parts… almost all empty: the Eraser came through.
+lighthouse-bulb-rescue = A big lighthouse bulb, stored safely. A label says: "For the Lantern."
+lighthouse-net = A huge, tangled fishing net blocking the door of the Lighthouse. It would be better stored in the Harbour's Boathouse.
+lighthouse-hint =
     Carved on a stone post:
 
       "What clutters the Pier belongs in the Boathouse.
         ~ always takes you back home, where the path to the Harbour starts."
 
     (Try:  mv net ~/Harbour/Boathouse)
-lighthouse-gardienne =
+lighthouse-keeper =
     Maëlle, the lighthouse keeper, is waiting for you at the foot of the
     stairs.
 
@@ -189,17 +189,17 @@ lighthouse-gardienne =
 
     Bring it back to the Lantern, under its proper name. mv can move and
     rename: look at the EXAMPLES in man mv."
-lighthouse-marches = A hundred and twenty spiral steps. At the very top, the Lantern.
-lighthouse-lanterne =
+lighthouse-steps = A hundred and twenty spiral steps. At the very top, the Lantern.
+lighthouse-lantern =
     The great lens of the lighthouse, all rings of glass. In the centre,
     the bulb holder is empty. A plate reads:
 
       "Bulb — exact name: bulb"
-lighthouse-phare-bloque = A huge tangled net blocks the door of the Lighthouse. It should be moved (mv) somewhere else…
-lighthouse-evenement-crabe = The crab is back in its bucket. The head of the school applauds: you know how to move an object with mv.
-lighthouse-evenement-filet = The net is put away. The door of the Lighthouse is clear.
-lighthouse-evenement-mauvais-nom = The bulb is in the Lantern all right… but the holder refuses any object that isn't called exactly bulb. Rename it with mv.
-lighthouse-evenement-lumiere =
+lighthouse-lighthouse-blocked = A huge tangled net blocks the door of the Lighthouse. It should be moved (mv) somewhere else…
+lighthouse-event-crab = The crab is back in its bucket. The head of the school applauds: you know how to move an object with mv.
+lighthouse-event-net = The net is put away. The door of the Lighthouse is clear.
+lighthouse-event-bad-name = The bulb is in the Lantern all right… but the holder refuses any object that isn't called exactly bulb. Rename it with mv.
+lighthouse-event-light =
     The Lighthouse lights up! A beam sweeps across the sea, and at the Harbour,
     Captain Ana hoists the sail.
 

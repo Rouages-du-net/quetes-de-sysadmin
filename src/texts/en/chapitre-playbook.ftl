@@ -2,12 +2,12 @@
 ### commands, modules, paths and output are not translated; task names and
 ### the welcome message text are.
 
-chapitre-playbook = The Playbook
+chapter-playbook = The Playbook
     .resume = A playbook that duplicates a line and fails the second time: rewrite it with the right modules, so a second run changes nothing.
 
 ## Files
 
-playbook-ligne-motd = Neighbourhood centre. Server managed by Ansible, do not edit by hand.
+playbook-line-motd = Neighbourhood centre. Server managed by Ansible, do not edit by hand.
 
 playbook-site-yml =
     # The neighbourhood centres' playbook (Lucie)
@@ -47,25 +47,25 @@ playbook-message-theo =
 
 ## Events
 
-playbook-evenement-echec =
+playbook-event-failure =
     A task failed: mkdir refuses to create /srv/shared, which already
     exists. The command module runs the command every time, without
     knowing whether it's still useful. Ansible's modules, on the other
     hand, describe a state: "this directory exists" (ansible-doc file),
     and only do something if needed.
-playbook-evenement-doublon =
+playbook-event-duplicate =
     The welcome message has the line twice: shell: echo … >> adds a line
     on every run. To describe "the file contains this line once", there
     are modules: copy (the whole content of the file) or lineinfile (one
     line). ansible-doc copy, ansible-doc lineinfile.
-playbook-evenement-modules =
+playbook-event-modules =
     site.yml no longer uses shell or command: each task describes a state,
     and Ansible checks before acting.
-playbook-evenement-deuxieme =
+playbook-event-second =
     The playbook went through everywhere. But an idempotent playbook is
     checked… by running it again: the second time, it must change nothing
     (changed=0 in the PLAY RECAP).
-playbook-evenement-fin =
+playbook-event-end =
     Second run: ok everywhere, changed=0, failed=0. The three centres are
     in the same state, and the playbook can run every day without damaging
     anything. Théo: "Lucie will be pleased, she almost had it all right."

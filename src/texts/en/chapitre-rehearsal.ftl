@@ -2,7 +2,7 @@
 ### and handlers. Ansible's commands, modules, paths and output are not
 ### translated; task and handler names are.
 
-chapitre-rehearsal = The Rehearsal
+chapter-rehearsal = The Rehearsal
     .resume = Turn off SSH passwords on three servers without locking yourself out: rehearse (--check --diff), one centre first (--limit), and a handler that reloads sshd.
 
 ## Files
@@ -70,27 +70,27 @@ rehearsal-note-theo =
 
 ## Events
 
-rehearsal-evenement-repetition =
+rehearsal-event-rehearsal =
     The rehearsal: with --check, Ansible looks at each host and says what
     it would change, without changing anything; --diff shows the lines
     involved. Now's the time to read carefully, and to find mistakes before
     they cost anything.
-rehearsal-evenement-gestionnaire =
+rehearsal-event-handler =
     "The requested handler 'Reload ssh' was not found": the task notifies
     "Reload ssh", but the handler is called "reload ssh". Ansible compares
     names exactly, capitals included. Fix one or the other in ssh.yml.
-rehearsal-evenement-canari =
+rehearsal-event-canary =
     A single centre got the change (--limit). Before going on, check you
     can still connect with the key: ansible north -m ping (or ssh
     deploy@north). If something breaks, it only breaks in one place.
-rehearsal-evenement-pas-recharge =
+rehearsal-event-not-reload =
     On at least one centre, sshd_config says PasswordAuthentication no, but
     sshd still runs with the old configuration: the handler didn't reload
     the service. And running the playbook again won't change that: the line
     is already there, the task says "ok", it no longer notifies. You have
     to reload ssh yourself, on the centres concerned (the service module,
     with ansible).
-rehearsal-evenement-fin =
+rehearsal-event-end =
     On all three centres, sshd now refuses passwords, and running the
     playbook again changes nothing. Théo: "And nobody got locked out."
 

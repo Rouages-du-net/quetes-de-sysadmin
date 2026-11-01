@@ -84,7 +84,7 @@ function authenticate(game: Shell, d: Destination, m: Machine): string {
     game.state.portConnexion = Number(d.port);
   } else output.push(`${d.user}@${d.host}: Permission denied (${config ? methods(config) : 'publickey'}).`);
   // La bonne clé, mais un serveur qui refuse le compte : on s'est enfermé dehors.
-  if (refuse && d.user === game.player) output.push(game.t('ssh-enferme', { machine: machineName(game.t, m.name) }));
+  if (refuse && d.user === game.player) output.push(game.t('ssh-locked-out', { machine: machineName(game.t, m.name) }));
   return output.join('\n');
 }
 
@@ -132,7 +132,7 @@ function changedKey(game: Shell, d: Destination, m: Machine, line: number): stri
     `  ssh-keygen -f '${file}' -R '${d.known}'`,
     `Host key for ${d.known} has changed and you have requested strict checking.`,
     'Host key verification failed.',
-    game.t('ssh-cle-changee', { machine: machineName(game.t, m.name), empreinte: fingerprint(m, generation(game, m)) }),
+    game.t('ssh-key-changed', { machine: machineName(game.t, m.name), empreinte: fingerprint(m, generation(game, m)) }),
   ].join('\n');
 }
 
@@ -203,7 +203,7 @@ function completeSsh(game: Shell, target: string, command: string[], o: OptionsS
         last.shell.who = before;
       }
     }
-    if (o.withoutSession) return o.planBack ? '' : game.t('ssh-sans-arriere-plan');
+    if (o.withoutSession) return o.planBack ? '' : game.t('ssh-without-back-plan');
     if (jumps.length === 1 && last.story) game.connectionRequest = last.story;
     else game.sessionRequest = { shell: last.shell, domain: last.machine.domain, address: last.machine.address, via: jumps[0].story };
     return '';
@@ -378,14 +378,14 @@ export const SSH: Record<string, Command> = {
         return game.error(
           `ssh: connect to host ${d.host} port ${d.port}: Connection refused` +
             // Un serveur qu'on a soi-même déplacé : rappeler où il écoute.
-            (listening.join() !== '22' ? `\n${game.t('ssh-autre-port', { machine: machineName(game.t, m.name), port: d.port, ports: listening.join(', ') })}` : ''),
+            (listening.join() !== '22' ? `\n${game.t('ssh-other-port', { machine: machineName(game.t, m.name), port: d.port, ports: listening.join(', ') })}` : ''),
         );
       if (!m) return game.error(`ssh: connect to host ${d.host} port ${d.port}: No route to host`);
       // fail2ban d'en face a banni le poste : sur Debian, l'action par défaut
       // rejette (REJECT) les paquets de l'adresse vers les ports de la prison.
       if ((game.state.bannisDistant?.(m.name, Number(d.port)) ?? []).includes(WORKSTATION.address))
         return game.error(
-          `ssh: connect to host ${d.host} port ${d.port}: Connection refused\n` + game.t('ssh-banni', { machine: machineName(game.t, m.name), adresse: WORKSTATION.address }),
+          `ssh: connect to host ${d.host} port ${d.port}: Connection refused\n` + game.t('ssh-banned', { machine: machineName(game.t, m.name), adresse: WORKSTATION.address }),
         );
       // Le pare-feu d'en face : deny laisse attendre (timeout), reject refuse tout de suite.
       const pf: Firewall | null = game.state.pareFeuDistant?.(m.name) ?? null;
@@ -393,9 +393,9 @@ export const SSH: Record<string, Command> = {
       if (pass !== 'accepte')
         return game.error(
           `ssh: connect to host ${d.host} port ${d.port}: ${pass === 'bloque' ? 'Connection timed out' : 'Connection refused'}\n` +
-            game.t('ssh-pare-feu', { machine: machineName(game.t, m.name) }),
+            game.t('ssh-firewall', { machine: machineName(game.t, m.name) }),
         );
-      const remarque = command.length ? game.t('ssh-commande-distante') + '\n' : '';
+      const remarque = command.length ? game.t('ssh-command-remote') + '\n' : '';
       const lines = (game.read('~/.ssh/known_hosts') ?? '').split('\n');
       const key = hostKey(m, generation(game, m));
       const number = lines.findIndex((l) => l.split(' ')[0].split(',').includes(d.known));

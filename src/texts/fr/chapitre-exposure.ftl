@@ -4,12 +4,12 @@
 ### les mots-clés de redis.conf et les messages des outils (en anglais) ne se
 ### traduisent pas.
 
-chapitre-exposure = L'exposition
+chapter-exposure = L'exposition
     .resume = Fermer ce qu'un balayage de ports trouve ouvert : ufw, et faire écouter Redis seulement en local.
 
 ## Fichiers
 
-exposure-courriel-salome =
+exposure-email-salome =
     De :     Salomé (auditrice)
     À :      toi
     Objet :  Audit du Fournil — deuxième partie : l'exposition
@@ -43,44 +43,44 @@ exposure-courriel-salome =
 
 ## Événements
 
-exposure-evenement-ecoute =
+exposure-event-listening =
     Voilà qui écoute, et où. Regarde la colonne « Local Address:Port » :
     0.0.0.0 veut dire « toutes les interfaces », donc joignable de partout
     (si rien ne filtre) ; 127.0.0.1 veut dire « cette machine seulement ».
     Le port 3000 (l'appli) est déjà en local : c'est le bon exemple.
-exposure-evenement-enferme =
+exposure-event-locked-out =
     ATTENTION : le pare-feu est actif et ne laisse plus entrer SSH depuis
     ton poste. Ta session actuelle tient (les connexions établies ne sont
     pas coupées), mais pas la suivante. Autorise SSH tout de suite
     (sudo ufw status pour voir, man ufw pour la règle).
-exposure-evenement-site-coupe =
+exposure-event-site-cut =
     Le pare-feu bloque maintenant le site : les clientes et clients ne
     peuvent plus commander. Autorise les ports 80 et 443 (un profil d'ufw
     les nomme : ufw app list, ou directement les numéros).
-exposure-evenement-base-ouverte =
+exposure-event-base-open =
     Le pare-feu est actif, mais un port de la base ou de Redis passe encore :
     une règle trop large (« allow » sans port, une plage…) ou une politique
     par défaut à « allow ». Relis  sudo ufw status verbose  : par défaut, ce
     qui n'est pas autorisé doit être refusé en entrée.
-exposure-evenement-redis-arrete =
+exposure-event-redis-stopped =
     Redis est arrêté : l'appli de commandes en a besoin (sessions et file
     d'attente), les commandes en ligne ne passent plus ! Fermer un service
     n'est pas le réparer : relance-le, et change plutôt son adresse
     d'écoute.
-exposure-evenement-sans-effet =
+exposure-event-without-effect =
     redis.conf dit bien « bind 127.0.0.1 »… mais Redis écoute toujours sur
     toutes les interfaces : un programme lit sa configuration quand il
     démarre, pas quand le fichier change. Fais-le redémarrer, puis relance
       ss -tln
     pour voir la nouvelle adresse.
-exposure-evenement-pare-feu =
+exposure-event-firewall =
     Le pare-feu est actif : SSH (depuis ton poste), 80 et 443 passent ; la
     base et Redis sont fermés depuis internet. Mais ce n'est qu'une couche :
     Redis écoute encore sur toutes les interfaces.
-exposure-evenement-redis-local =
+exposure-event-redis-local =
     Redis n'écoute plus que sur 127.0.0.1 : même sans pare-feu, il ne serait
     plus joignable de l'extérieur, et l'appli le joint toujours.
-exposure-evenement-fin =
+exposure-event-end =
     Tu es entré·e avec le pare-feu actif : SSH passe, le site aussi, et la
     base et Redis sont fermés. Salomé : « Mon balayage ne voit plus que trois
     ports. Merci ! Reste la troisième partie, les traces de connexion. »

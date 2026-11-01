@@ -2,12 +2,12 @@
 ### coupure, avec deux emplacements et une vérification de santé. Les
 ### commandes, chemins, messages de nginx, systemctl et curl ne se traduisent pas.
 
-chapitre-blue-green = Bleu et vert
+chapter-blue-green = Bleu et vert
     .resume = Mettre à jour l'appli des abonnements sans coupure : la nouvelle version à côté de l'ancienne, sa santé vérifiée, puis la bascule de nginx.
 
 ## Fichiers
 
-blue-green-message-de-samia =
+blue-green-message-samia =
     Un message de Samia :
 
     « La Gazette a maintenant son Kiosque : l'appli des abonnements à la
@@ -27,7 +27,7 @@ blue-green-message-de-samia =
 
     Et garde l'ancienne version allumée tant qu'on n'est pas sûr·es de la
     nouvelle. Pour sudo : gazette-2027. »
-blue-green-conf-commentaire = Le Kiosque (abonnements) : l'emplacement qui sert les lecteur·rices
+blue-green-conf-comment = Le Kiosque (abonnements) : l'emplacement qui sert les lecteur·rices
 blue-green-notes-150 =
     Kiosque 1.5.0 — notes de version
 
@@ -40,7 +40,7 @@ blue-green-notes-150 =
 
 ## Le Kiosque (pages servies ; { $version } : la version de l'appli)
 
-kiosque-accueil =
+kiosk-welcome =
     <!DOCTYPE html>
     <html lang="fr">
     <head><meta charset="utf-8"><title>Le Kiosque de la Gazette</title></head>
@@ -51,7 +51,7 @@ kiosque-accueil =
     <footer>Kiosque { $version }</footer>
     </body>
     </html>
-kiosque-archives =
+kiosk-archives =
     <!DOCTYPE html>
     <html lang="fr">
     <head><meta charset="utf-8"><title>Les lettres précédentes</title></head>
@@ -64,29 +64,29 @@ kiosque-archives =
 
 ## Événements
 
-blue-green-evenement-sante-ko =
+blue-green-event-health-ko =
     /health répond 503 : la version tourne, mais elle n'est pas en état de
     servir. Une version qui ne passe pas sa vérification de santé ne reçoit
     jamais de trafic. Ce qui lui manque est sans doute écrit dans ses notes
     de version (/srv/kiosk/versions/1.5.0/).
-blue-green-evenement-pas-redemarre =
+blue-green-event-not-restarts =
     Le lien vise la nouvelle version, mais le service répond encore avec
     l'ancienne : un programme lit son code (et sa configuration) quand il
     démarre. Il faut le redémarrer (man systemctl).
-blue-green-evenement-trop-tot =
+blue-green-event-too-early =
     Aïe : les lecteur·rices reçoivent une erreur sur /kiosk/. nginx envoie
     le trafic vers une instance qui ne répond pas, ou pas correctement. Le
     retour arrière est immédiat : remettre l'autre emplacement dans
     proxy_pass, nginx -t, reload. On vérifie /health AVANT de basculer.
-blue-green-evenement-pas-recharge =
+blue-green-event-not-reload =
     Le fichier de nginx désigne bien green (3002), mais nginx sert encore
     blue : il ne relit sa configuration qu'au rechargement (nginx -t, puis
     systemctl reload nginx).
-blue-green-evenement-plus-de-filet =
+blue-green-event-more-net =
     Blue est arrêté : si la 1.5.0 montre un problème ce soir, il n'y aura
     plus de retour arrière instantané. On garde l'ancienne version allumée
     un moment, le temps d'être sûr·es.
-blue-green-evenement-fin =
+blue-green-event-end =
     Les lecteur·rices sont passé·es à la 1.5.0 sans s'en rendre compte, et
     l'ancienne version attend, allumée, au cas où. Samia : « Si ça tourne
     mal, on rebascule en une commande. »

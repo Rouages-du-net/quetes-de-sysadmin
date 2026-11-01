@@ -110,7 +110,7 @@ export const proxy: Chapter = {
   home: M,
   welcome: 'email_awa.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: PASSWORD,
   accounts: () => cooperativeAccounts(false),
   state: () => ({ ...tillState(tillEnv(NEW_KEY)), systemd: tillSystemd(simulate, simulate) }),
@@ -122,26 +122,26 @@ export const proxy: Chapter = {
   createWorld: (t) =>
     cooperativeWorld({
       withoutMarc: true,
-      home: { 'email_awa.txt': f(t('proxy-courriel-awa')) },
+      home: { 'email_awa.txt': f(t('proxy-email-awa')) },
       etc: nginxCooperative(SITE),
       sbin: BINARY_NGINX,
       more: tillWorld({ env: tillEnv(NEW_KEY), envMode: 'rw-------', logAccess: ACCESS, appLog: APP_LOG }),
     }),
   events: [
     {
-      id: 'tout-le-monde',
+      id: 'all-world',
       condition: (j) => !!sim(j) && !sim(j)!.lina && sim(j)!.banned.some((b) => b.startsWith('127.')),
-      message: (j) => j.t('proxy-evenement-tout-le-monde'),
+      message: (j) => j.t('proxy-event-all-world'),
     },
     {
-      id: 'usurpe',
+      id: 'spoofed',
       condition: (j) => !!sim(j) && sim(j)!.lina && !sim(j)!.lockedRobot,
-      message: (j) => j.t('proxy-evenement-usurpe', { robot: ROBOT }),
+      message: (j) => j.t('proxy-event-spoofed', { robot: ROBOT }),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => !!sim(j) && sim(j)!.lina && sim(j)!.lockedRobot,
-      message: (j) => j.t('proxy-evenement-fin', { robot: ROBOT }),
+      message: (j) => j.t('proxy-event-end', { robot: ROBOT }),
     },
   ],
 };

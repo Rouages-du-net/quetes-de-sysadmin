@@ -184,7 +184,7 @@ const TEMP = '/tmp/crontab.Zx81Ab';
 // Installe une crontab après vérification, comme crontab(1).
 function installer(game: Shell, text: string, file: string): string {
   const { errors } = parse(text, file);
-  if (errors.length) return [...errors, game.t('crontab-reessayer')].join('\n');
+  if (errors.length) return [...errors, game.t('crontab-retry')].join('\n');
   const crontabs: Record<string, string> = (game.state.crontabs ??= {});
   crontabs[game.who] = text;
   game.state.versionCrontab = (game.state.versionCrontab ?? 0) + 1;
@@ -248,7 +248,7 @@ export const BACKUP: Record<string, Command> = {
           path: file,
           text: text.endsWith('\n') ? text : text + '\n',
           root: game.who === 'root',
-          message: game.t('nano-lignes-lues', { lignes: text.split('\n').length - (text.endsWith('\n') ? 1 : 0) }),
+          message: game.t('nano-lines-read', { lignes: text.split('\n').length - (text.endsWith('\n') ? 1 : 0) }),
           // La crontab est installée pour le compte qui l'a ouverte (root avec sudo), à la fermeture de l'éditeur.
           after: () => {
             const who = game.who;

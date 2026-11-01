@@ -4,12 +4,12 @@
 ### Lynis are not translated. The section titles of the template
 ### (contre-visite-section-…) must stay those of the template.
 
-chapitre-follow-up = The Follow-up Visit
+chapter-follow-up = The Follow-up Visit
     .resume = Prove the fixes hold: a new scan, a Lynis audit, reasoned hardening, and the closing report.
 
 ## Files
 
-follow-up-courriel-salome =
+follow-up-email-salome =
     From:     Salomé (auditor)
     To:       you
     Subject:  Bakery audit — the follow-up visit
@@ -35,7 +35,7 @@ follow-up-courriel-salome =
     Salomé
     (For sudo, your password is still: flour-2028)
 
-follow-up-modele =
+follow-up-template =
     # Closing report — Le Fournil
 
     ## Summary
@@ -54,45 +54,45 @@ follow-up-section-resume = Summary
 follow-up-section-constats = Findings fixed
 follow-up-section-preuves = Evidence
 follow-up-section-reste = Still to do
-follow-up-a-completer = (to complete
+follow-up-a-complete = (to complete
 
 ## Words the review looks for (comma-separated, case-insensitive)
 
-follow-up-mots-indice = index, hardening, indice
-follow-up-mots-ssh = ssh, root
-follow-up-mots-compte = lucas, account
-follow-up-mots-sudo = sudo, nopasswd
-follow-up-mots-secret = .env, secret
-follow-up-mots-reseau = ufw, firewall, redis
-follow-up-mots-cle = key, cron
+follow-up-words-hint = index, hardening, indice
+follow-up-words-ssh = ssh, root
+follow-up-words-account = lucas, account
+follow-up-words-sudo = sudo, nopasswd
+follow-up-words-secret = .env, secret
+follow-up-words-network = ufw, firewall, redis
+follow-up-words-key = key, cron
 
 ## Review
 
-follow-up-relecture = Salomé reads your report:
-follow-up-manque-modele = Some "(to complete)" lines of the template are still there.
-follow-up-manque-resume = The summary is meant to be two sentences, and it needs a bit more than a word.
-follow-up-manque-constats = Under "Findings fixed", findings are missing: go back over parts 1 to 4 (SSH, the forgotten account, sudo, the secret, network exposure, the intruder's key and cron job), at least five out of six.
-follow-up-manque-lynis = Run Lynis first: with no audit, there is no figure to quote.
-follow-up-manque-preuves = Under "Evidence", quote the hardening index of your last Lynis audit (the exact figure) and what your last scan shows (ports 22, 80 and 443).
-follow-up-manque-reste = Under "Still to do", quote at least one Lynis finding that is still open with its identifier (like FINT-4350): an honest report says what is not done.
+follow-up-review = Salomé reads your report:
+follow-up-missing-template = Some "(to complete)" lines of the template are still there.
+follow-up-missing-summary = The summary is meant to be two sentences, and it needs a bit more than a word.
+follow-up-missing-findings = Under "Findings fixed", findings are missing: go back over parts 1 to 4 (SSH, the forgotten account, sudo, the secret, network exposure, the intruder's key and cron job), at least five out of six.
+follow-up-missing-lynis = Run Lynis first: with no audit, there is no figure to quote.
+follow-up-missing-proofs = Under "Evidence", quote the hardening index of your last Lynis audit (the exact figure) and what your last scan shows (ports 22, 80 and 443).
+follow-up-missing-rest = Under "Still to do", quote at least one Lynis finding that is still open with its identifier (like FINT-4350): an honest report says what is not done.
 
 ## Events
 
-follow-up-evenement-erreur-ssh =
+follow-up-event-error-ssh =
     There is an error in the SSH configuration! Before reloading, always check
     with  sudo sshd -t : it gives the file and the line at fault.
-follow-up-evenement-enferme =
+follow-up-event-locked-out =
     WARNING: with the configuration sshd has just loaded, a new login from your
     account would be refused. Your session stays open: fix it BEFORE you
     disconnect.
-follow-up-evenement-hors-perimetre =
+follow-up-event-outside-scope =
     You probed an address outside the letter of engagement ({ $adresses }). Even
     for a follow-up visit, you stay in the scope: { $voisin ->
         [oui] the neighbour's server is still not ours.
        *[non] what is not listed in it is not ours.
     }
 # { $ancienne }: "oui" if the SSH version shown is not up to date
-follow-up-evenement-balayage =
+follow-up-event-scan =
     That is what the internet sees now. Compare with day one: ports 5432
     (PostgreSQL) and 6379 (Redis) no longer answer, SSH, the website and its
     secure port remain. The firewall fixes hold.
@@ -100,7 +100,7 @@ follow-up-evenement-balayage =
         [oui] But look at the SSH version: it is not that of an up-to-date machine. A security update is waiting (apt list --upgradable); that is the kind of detail nmap -sV reveals and nobody looks at.
        *[non] And the SSH version is that of an up-to-date machine.
     }
-follow-up-evenement-lynis =
+follow-up-event-lynis =
     There is the audit: a hardening index of { $indice }, and
     { $avertissements } warning(s). An index is for comparing, not for chasing
     100: read each suggestion, its identifier (SSH-7408…) and its explanation
@@ -109,31 +109,31 @@ follow-up-evenement-lynis =
 
     The audit is kept in /var/log/lynis-report.dat: a  sudo grep suggestion  on
     it gives the list in one go.
-follow-up-evenement-mise-a-jour =
+follow-up-event-update =
     No security update waiting any more: Lynis's warning (PKGS-7392) is gone,
     and the SSH version nmap will show will be the new one. (Remember to rerun
     nmap and Lynis: a fix that is not proven is only an intention.)
-follow-up-evenement-ssh-a-recharger =
+follow-up-event-ssh-a-reload =
     You changed the SSH configuration, but sshd is still running with the old
     one: a service rereads its configuration when told to (sudo sshd -t to
     check, then sudo systemctl reload ssh). Lynis reads the file: its new index
     does not tell you what is applied.
 # { $cible }: the index to reach
-follow-up-evenement-durci =
+follow-up-event-hardened =
     No warning and an index of at least { $cible }, with the SSH configuration
     applied. That is a good level for this server; the rest is a project, not an
     emergency.
 
     Prove it: run Lynis again, and redo the scan.
-follow-up-evenement-preuve-lynis =
+follow-up-event-proof-lynis =
     The last Lynis audit reflects the machine's current state: no warning, and
     above the target. Note the index figure: the report quotes it.
-follow-up-evenement-nmap-propre =
+follow-up-event-nmap-own =
     The last scan sees only SSH, the website and its secure port, with the SSH
     version up to date. That is the proof, from the internet's side, that
     everything holds. The closing report remains.
 # { $faute }: "oui" if a scan went beyond the scope
-follow-up-evenement-fin =
+follow-up-event-end =
     Salomé: "It is complete, and it is honest. I'll pass it on to Nadia and her
     insurer. I'll come back in six months: security gets rechecked."
 

@@ -160,9 +160,9 @@ export class Console {
   }
 
   title(h: Story, c: Chapter): string {
-    const story = this.t(`histoire-${h.id}`);
+    const story = this.t(`story-${h.id}`);
     const title =
-      h.chapters.length > 1 ? this.t('chapitre-titre-complet', { histoire: story, numero: c.number, titre: this.t(`chapitre-${c.id}`) }) : story;
+      h.chapters.length > 1 ? this.t('chapter-title-complete', { histoire: story, numero: c.number, titre: this.t(`chapter-${c.id}`) }) : story;
     return `— ${title} —`;
   }
 
@@ -225,7 +225,7 @@ export class Console {
       this.inputs = null;
       const next = old.events();
       // Un chapitre en cours : rappeler où relire ses consignes.
-      const rappel = old.finished ? '' : this.t('reprise-chapitre', { fichier: old.welcome });
+      const rappel = old.finished ? '' : this.t('resumed-chapter', { fichier: old.welcome });
       // Un simple rebond (ssh -J) n'ouvre pas de session sur la passerelle : ni bannière ni rappel.
       const header = jump ? [] : [...banner, this.title(story, old.chapter), rappel];
       return [...header, next, this.noteEnd(old, alreadyFinished)].filter(Boolean).join('\n\n');
@@ -307,7 +307,7 @@ export class Console {
     if (ssh?.type === 'dossier') for (const m of fresh) Object.assign(ssh.children, keyFiles(this.t, m));
     // La première vague (après La Racine) explique où trouver les clés ; les suivantes les annoncent.
     const first = !before.some((h) => h !== FIRST);
-    return this.t(first ? 'poste-cles-recues' : 'poste-cles-recues-suite', { cles: fresh.map((m) => `~/.ssh/${keyFor(this.t, m)}`).join(', ') });
+    return this.t(first ? 'workstation-keys-received' : 'workstation-keys-received-next', { cles: fresh.map((m) => `~/.ssh/${keyFor(this.t, m)}`).join(', ') });
   }
 
   /** Exécute une ligne ; renvoie le texte à afficher, ou null pour « clear ». */
@@ -344,7 +344,7 @@ export class Console {
       chunks.push('client_loop: send disconnect: Broken pipe');
     } else if (sh.output) {
       sh.output = false;
-      chunks.push(this.inside.length ? this.quitInside() : this.remote ? this.disconnect() : this.t('poste-exit'));
+      chunks.push(this.inside.length ? this.quitInside() : this.remote ? this.disconnect() : this.t('workstation-exit'));
     } else if (sh.reboot && sh.state.consoleHebergeur) {
       // La console de l'hébergeur (l'écran du serveur) ne coupe pas : on voit le démarrage.
       sh.reboot = false;

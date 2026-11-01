@@ -2,12 +2,12 @@
 ### reading logs with awk, rate limiting with nginx. Commands, paths,
 ### directives and log lines are not translated.
 
-chapitre-concert = Concert night
+chapter-concert = Concert night
     .resume = The events calendar collapses on concert night: reading logs with awk, rate limiting with nginx (limit_req).
 
 ## Files
 
-concert-message-de-kofi =
+concert-message-kofi =
     A message from Kofi, sent at 8:02 pm:
 
     "Help! Tonight there's a concert at the café, and everyone is checking
@@ -19,7 +19,7 @@ concert-message-de-kofi =
     sure the real visitors get through? Rania left a guide
     (help_logs.txt). And no quick hack that only works tonight: a rule
     that holds up."
-concert-aide-journaux =
+concert-help-logs =
     LOG GUIDE — BY RANIA
 
     Each visit writes a line to /var/log/nginx/access.log ("combined"
@@ -44,30 +44,30 @@ concert-minute =
     A minute goes by. Visitors: { $servis } requests served out of { $humains }.
     Robot: { $refuses } requests refused out of { $robot }. Timeouts
     (504): { $depasses }. (The details are at the end of access.log.)
-concert-evenement-robot =
+concert-event-robot =
     Three neighbouring addresses (198.51.100.23, .24, .25), the same
     "browser" (AgendaScraper), hundreds of calendar pages per minute: it's
     a robot scraping the website. On its own, it asks for more than the
     calendar can serve. Real people, on the other hand, ask for a page and
     its four files, then read.
-concert-evenement-interdit =
+concert-event-forbidden =
     Blocking the robot's addresses (deny) works… tonight. Kofi: "Rania
     says these robots change addresses every week. We're not going to keep
     a list by hand!" A rate limit per address would apply to every robot,
     known or not.
-concert-evenement-humains-limites =
+concert-event-humans-limits =
     The limit refuses real people too! A browser asks for a page and its
     files (stylesheet, script, images) almost at the same time: five
     requests in the same second. With no leeway, the limit refuses them.
     limit_req accepts a burst, and nodelay serves it right away (man
     nginx).
-concert-evenement-encore-trop =
+concert-event-still-too =
     The limit slows the robot down, but it still gets through too often,
     and the calendar can overflow (504). The rate allowed per address,
     multiplied by the robot's number of addresses, must stay well below
     what the calendar can serve (about twenty pages per second). And does
     the limit really apply to /agenda/?
-concert-evenement-fin =
+concert-event-end =
     All human visits get through, the robot is slowed down, and the
     calendar can breathe. Kofi: "The time shows up! The concert starts at
     9 pm." The error the robot receives (429 Too Many Requests, or 503)

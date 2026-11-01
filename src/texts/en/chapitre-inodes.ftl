@@ -3,12 +3,12 @@
 ### long", find -mtime -delete and cron. Commands, options and tool
 ### messages are not translated.
 
-chapitre-inodes = Inodes
+chapter-inodes = Inodes
     .resume = 3:20 a.m., "No space left on device"… on an almost empty disk. What is missing, if not space?
 
 ## Files
 
-inodes-message-de-zoe =
+inodes-message-zoe =
     A message from Zoé (3:05 a.m.):
 
     "I don't understand anything any more. The recording of the night
@@ -29,7 +29,7 @@ inodes-conf-flux =
     record_dir = /srv/radio/shows
     # Statistics: one file per listen (monthly report for the town hall)
     stats_dir = /srv/radio/stats
-inodes-stats-lisezmoi =
+inodes-stats-readme =
     Listening statistics, written by the relay: one small file per
     listen (anonymised address, duration). The monthly report for the
     town hall reads the files of the past month.
@@ -38,11 +38,11 @@ inodes-stats-lisezmoi =
 ## The simulated night
 
 # { $commande }: the cron job's command; { $sortie }: what it wrote
-inodes-courrier =
+inodes-mail =
     Mail from cron (Cron Daemon) about: { $commande }
     { $sortie }
 # { $taches }: jobs run; { $effaces }: files deleted; { $ancien }: age of the oldest, in days; { $pourcent }: inodes in use
-inodes-nuit =
+inodes-night =
     A day and a night go by. The relay logs its listens; cron
     runs { $taches ->
         [0] no job
@@ -54,63 +54,63 @@ inodes-nuit =
     }, the
     oldest is { $ancien } days old, and { $pourcent } % of the inodes of
     /srv/radio are in use.
-inodes-nuit-recentes-perdues =
+inodes-night-recent-lost =
     Ouch: statistics less than 30 days old have disappeared, the ones for
     the town hall report. A job that deletes everything, without looking
     at the files' age? Restart the chapter to try another way (link
     below the terminal), and test your command by hand before handing it
     to cron.
-inodes-nuit-rien =
+inodes-night-nothing =
     Your job didn't run tonight: its schedule doesn't fall during the
     night. The five fields (minute, hour, day of month, month, day of
     week) are explained in man crontab.
 # { $jours }: age of the oldest file
-inodes-nuit-trop-vieux =
+inodes-night-too-old =
     In the morning, there are still statistics { $jours } days old: the
     job didn't clean up. Run its command by hand to see what it does
     (and sudo crontab -l, to reread the line).
 # { $pourcent }: inodes in use
-inodes-nuit-plein =
+inodes-night-full =
     { $pourcent } % of the inodes are still in use: the volume will fill
     up again very quickly. You should keep them for less time (but at
     least 30 days).
 
 ## Events
 
-inodes-evenement-presque-vide =
+inodes-event-almost-empty =
     The data volume is hardly filled at all, and yet no file can be
     created on it any more. Space isn't the only resource of a file
     system: each of its files also needs an inode (its record card:
     owner, permissions, dates, where its data is), and their number is
     fixed when it is created. In man df, an option counts them.
-inodes-evenement-plus-d-inodes =
+inodes-event-more-inodes =
     100 % of the inodes of /srv/radio are taken: not a single file can be
     created there any more, even an empty one, however much space is
     free. Who created so many files? du can count inodes instead of
     bytes (man du).
-inodes-evenement-coupable =
+inodes-event-culprit =
     Tens of thousands of files! One per listen, written by the relay
     since March, and never deleted. Before deleting: Zoé wants to keep
     at least the last 30 days. find can select files by their age
     (man find).
-inodes-evenement-trop-long =
+inodes-event-too-long =
     "Argument list too long": the shell replaces * with all the names in
     the directory BEFORE running the command, and the list doesn't fit
     in the space reserved for a program's arguments (about 2 MB).
     find, on the other hand, walks the directory by itself: it can
     delete what it finds, with no giant list.
-inodes-evenement-recentes-perdues =
+inodes-event-recent-lost =
     Careful: statistics less than 30 days old have disappeared, the ones
     the town hall needs. Restart the chapter to try another way (link
     below the terminal).
 # { $pourcent }: inodes in use
-inodes-evenement-repart =
+inodes-event-restarts =
     Some inodes have been freed ({ $pourcent } % in use): the night
     recording has resumed, and the relay is logging listens again. Now
     to stop it happening again: a cron job, every night, to keep only
     the last month (the game will let a night go by to see it at
     work).
-inodes-evenement-fin =
+inodes-event-end =
     The night has passed, the job has cleaned up, and the last month of
     statistics is intact. Zoé: "Inodes… I didn't even know the word.
     Thank you!"

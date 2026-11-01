@@ -4,27 +4,27 @@
 ### messages and the poems are story texts: they are translated
 ### (the commit identifiers then change with the language).
 
-chapitre-manuscript = The Time Machine
+chapter-manuscript = The Time Machine
     .resume = Travel through the versions of a text with git: log, diff, restore, add, commit, init.
 
 # Author of the commits (git log): name and address, in git's format
-manuscript-autrice = Inès Haddad <ines@example.org>
+manuscript-author = Inès Haddad <ines@example.org>
 
 ## Inès's novel (novel.txt), chapter by chapter
 
-manuscript-roman-chapitre-1 =
+manuscript-novel-chapter-1 =
     CHAPTER 1 — THE DEPARTURE
 
     The night coach left Marseille at ten o'clock.
     Yasmina held her grandmother's letter close.
     "Go and see the lighthouse," Grandma Zohra had written. "It's all there."
-manuscript-roman-chapitre-2 =
+manuscript-novel-chapter-2 =
     CHAPTER 2 — THE CROSSING
 
     The boat to the island left at dawn.
     On deck, an old sailor was mending a net, humming to himself.
     He knew the lighthouse: "Nobody has gone up there since 1962."
-manuscript-roman-chapitre-3 =
+manuscript-novel-chapter-3 =
     CHAPTER 3 — THE LIGHTHOUSE
 
     The door gave way at the third shove of her shoulder.
@@ -32,7 +32,7 @@ manuscript-roman-chapitre-3 =
     Inside: notebooks, covered in Zohra's tight handwriting.
 # Chapter 3 after the cat walked on the keyboard: keep the title,
 # translate only the title; the lines of letters stay as they are.
-manuscript-roman-chapitre-3-abime =
+manuscript-novel-chapter-3-abime =
     CHAPTER 3 — THE LIGHTHOUSE
 
     jjjjjjjjjjjjjjjjjjjjjjkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk;;;;;;;;;;;;;
@@ -47,22 +47,22 @@ manuscript-commit-4 = Morning backup
 
 ## The poems (poems directory)
 
-manuscript-poeme-sea =
+manuscript-poem-sea =
     The sea stitches up
     the edges of the world
     with a thread of foam.
-manuscript-poeme-lighthouse =
+manuscript-poem-lighthouse =
     An eye that turns
     in the sailors' night:
     it never sleeps.
-manuscript-poeme-zohra =
+manuscript-poem-zohra =
     My grandmother spoke
     three and a half languages,
     the half was silence.
 
 ## Files
 
-manuscript-message-d-ines =
+manuscript-message-ines =
     A message from Inès, your novelist friend:
 
     "Disaster! This morning my cat walked across the keyboard while my
@@ -80,7 +80,7 @@ manuscript-message-d-ines =
 
     And while you're at it… my poems, in the poems directory, aren't tracked
     by anything at all. If my cat does it again, I lose everything."
-manuscript-aide-git =
+manuscript-help-git =
     GIT CHEAT SHEET (see also:  man git)
 
       git log --oneline          the history, one commit per line (most recent at the top)
@@ -101,11 +101,11 @@ manuscript-aide-git =
 
 ## Events
 
-manuscript-evenement-historique =
+manuscript-event-history =
     Four commits, from most recent to oldest. The last one, "Morning
     backup", is the cat's. The one before, "Chapter 3: the lighthouse", dates
     from before the disaster. To see what the cat changed: git show HEAD
-manuscript-evenement-restaure =
+manuscript-event-restored =
     Chapter 3 is back! The file has travelled through time.
     But for now, only your working copy is repaired: the last
     commit still contains the mush. Look at git status , then save
@@ -113,15 +113,15 @@ manuscript-evenement-restaure =
 
       git add novel.txt
       git commit -m "Restore chapter 3 (thanks, cat)"
-manuscript-evenement-sauve =
+manuscript-event-saved =
     Commit saved. Notice: nothing was erased from history. The cat's
     commit is still there (git log); we simply added a new,
     repaired snapshot on top. With git, you almost never lose anything.
 
     There are still Inès's poems: turn the poems directory into a repository
     (git init), then take a first snapshot of all the poems.
-manuscript-evenement-poemes = The three poems are now in a commit: even if the cat comes back, they're safe in the history.
-manuscript-evenement-fin =
+manuscript-event-poems = The three poems are now in a commit: even if the cat comes back, they're safe in the history.
+manuscript-event-end =
     Inès replies: "My chapter! My poems! You're a wizard, a
     sorceress, well… a wonderful person."
 

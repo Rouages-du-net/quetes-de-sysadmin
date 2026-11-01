@@ -2,12 +2,12 @@
 ### le DNS (BIND). Les commandes, chemins, noms de domaine, fichiers de zone
 ### et messages de dig, named et rndc ne se traduisent pas.
 
-chapitre-works-for-me = Ça marche chez moi
+chapter-works-for-me = Ça marche chez moi
     .resume = Le site du café ne marche que chez Kofi : DNS, zone BIND, numéro de série, TTL.
 
 ## Fichiers
 
-works-for-me-courriel-kofi =
+works-for-me-email-kofi =
     De :     Kofi (association Les Lettres du quartier)
     À :      toi
     Objet :  Ça marche chez moi !
@@ -28,7 +28,7 @@ works-for-me-courriel-kofi =
 
     Tu peux regarder ? Rania a laissé une aide dans aide_dns.txt. Pour
     sudo : fourmis-2026
-works-for-me-aide-dns =
+works-for-me-help-dns =
     AIDE DNS — PAR RANIA
 
     /etc/hosts ne change que l'ordinateur sur lequel il est : c'est une
@@ -50,7 +50,7 @@ works-for-me-aide-dns =
 ## Événements
 
 # { $heures } : le temps qu'il reste au résolveur avant d'oublier l'ancienne adresse
-works-for-me-evenement-cache =
+works-for-me-event-cache =
     Notre serveur donne la nouvelle adresse… mais le résolveur public
     répond encore l'ancienne. Regarde le nombre avant IN : c'est le TTL qui
     reste. Le résolveur a gardé la réponse d'hier en cache, et la gardera
@@ -62,22 +62,22 @@ works-for-me-evenement-cache =
     expirent. On ne peut pas les vider ; on peut seulement prévoir (un TTL
     court avant un changement). En attendant, vérifie directement auprès des
     deux serveurs qui font autorité.
-works-for-me-evenement-erreur-zone =
+works-for-me-event-error-zone =
     named refuse la zone et garde l'ancienne version : le site ne casse pas,
     mais rien n'a changé. journalctl -u named dit pourquoi ;
     named-checkzone le dit avant de recharger.
-works-for-me-evenement-serial =
+works-for-me-event-serial =
     ns1 (notre serveur) et ns2 (la copie du registre) ne répondent plus la
     même chose : ns2 n'a pas recopié la zone. Un serveur secondaire ne
     recopie une zone que si son numéro de série (le serial du SOA) a
     augmenté. journalctl -u named le signale. L'habitude : AAAAMMJJnn, la
     date du jour et un numéro de modification.
-works-for-me-evenement-point-final =
+works-for-me-event-point-final =
     Attention : dans la zone, un nom écrit sans point final est complété par
     le nom de la zone. cafe.example (sans point) devient
     cafe.example.cafe.example. : dig @localhost www.cafe.example le montre.
     Pour un nom complet : cafe.example. avec le point.
-works-for-me-evenement-fin =
+works-for-me-event-end =
     ns1 et ns2 répondent la même chose : cafe.example et www.cafe.example
     mènent au serveur des Lettres. Les résolveurs suivront, au plus tard
     quand leur cache expirera. Kofi retire la ligne de son /etc/hosts :

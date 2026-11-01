@@ -108,7 +108,7 @@ export const fullDisk: Chapter = {
   home: M,
   welcome: 'message_from_zoe.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'antenna-2027',
   accounts,
   state: () => ({
@@ -163,11 +163,11 @@ export const fullDisk: Chapter = {
         'logrotate.conf': file(t('full-disk-logrotate-conf')),
         'logrotate.d': place({ rsyslog: file(t('full-disk-logrotate-rsyslog')), apt: file(t('full-disk-logrotate-apt')) }),
       }),
-      home: place({ you: d({ 'message_from_zoe.txt': f(t('full-disk-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      home: place({ you: d({ 'message_from_zoe.txt': f(t('full-disk-message-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       srv: place({
         radio: place({
           shows: place(
-            { 'matinale-2027-08-14.ogg': f(t('archives-son-ogg'), { lines: true, owner: 'radio', size: 92_000_000 }) },
+            { 'matinale-2027-08-14.ogg': f(t('archives-its-ogg'), { lines: true, owner: 'radio', size: 92_000_000 }) },
             { owner: 'radio' },
           ),
         }),
@@ -194,38 +194,38 @@ export const fullDisk: Chapter = {
   },
   events: [
     {
-      id: 'plein',
+      id: 'full',
       condition: (j) => j.last.commands.some((c) => c[0] === 'df') && occupation(j) > 0.97,
-      message: (j) => j.t('full-disk-evenement-plein'),
+      message: (j) => j.t('full-disk-event-full'),
     },
     {
-      id: 'coupable',
+      id: 'culprit',
       condition: (j) =>
         j.last.commands.some((c) => ['du', 'ls', 'find'].includes(c[0])) &&
         /\b1[5-9]G\b|flux\.log/.test(j.last.output) &&
         /radio/.test(j.last.line),
-      message: (j) => j.t('full-disk-evenement-coupable'),
+      message: (j) => j.t('full-disk-event-culprit'),
     },
-    { id: 'debug', condition: (j) => j.last.output.includes('DEBUG'), message: (j) => j.t('full-disk-evenement-debug') },
+    { id: 'debug', condition: (j) => j.last.output.includes('DEBUG'), message: (j) => j.t('full-disk-event-debug') },
     {
-      id: 'fantome',
+      id: 'ghost',
       condition: (j) => ghost(j) && j.last.commands.some((c) => c[0] === 'df' || c[0] === 'du'),
-      message: (j) => j.t('full-disk-evenement-fantome'),
+      message: (j) => j.t('full-disk-event-ghost'),
     },
     {
-      id: 'renomme',
+      id: 'renamed',
       condition: (j) => openSet(j).some((o) => held(j, o) && o.service === 'radio-stream' && o.path !== LOG),
-      message: (j) => j.t('full-disk-evenement-renomme'),
+      message: (j) => j.t('full-disk-event-renamed'),
     },
     {
-      id: 'respire',
+      id: 'breathes',
       condition: (j) => occupation(j) < 0.8 && !ghost(j),
-      message: (j) => j.t('full-disk-evenement-respire', { pourcent: Math.round(occupation(j) * 100) }),
+      message: (j) => j.t('full-disk-event-breathes', { pourcent: Math.round(occupation(j) * 100) }),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => occupation(j) < 0.8 && !ghost(j) && enabled(j) && j.state.fluxNiveau !== 'debug' && validRotation(j),
-      message: (j) => j.t('full-disk-evenement-fin'),
+      message: (j) => j.t('full-disk-event-end'),
     },
   ],
 };

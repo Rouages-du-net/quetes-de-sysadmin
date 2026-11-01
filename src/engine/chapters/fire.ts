@@ -60,7 +60,7 @@ const CONF_SITE = `server {
     }
 }`;
 
-const blocked = (t: Translate) => `# ${t('first-day-bloques-commentaire')}
+const blocked = (t: Translate) => `# ${t('first-day-blocked-comment')}
 deny 203.0.113.5;
 deny 192.0.2.99;
 deny ${ROBOT};`;
@@ -75,7 +75,7 @@ function archiveContent(t: Translate, version: number): Record<string, File> {
     'etc/nginx/sites-available/medialibrary': file(CONF_SITE),
     'etc/nginx/sites-enabled/medialibrary': file(CONF_SITE),
     'var/www/medialibrary/index.html': file(welcome(t, version)),
-    'var/www/medialibrary/horaires.html': file(t('fire-site-horaires')),
+    'var/www/medialibrary/horaires.html': file(t('fire-site-hours')),
   };
 }
 
@@ -123,7 +123,7 @@ export const fire: Chapter = {
   home: M,
   welcome: 'email_awa.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'welcome-2026',
   // Une machine neuve : la clé d'hôte n'est plus celle que le poste connaît.
   hostKey: '-apres-incendie',
@@ -171,10 +171,10 @@ export const fire: Chapter = {
           }),
         }),
       }),
-      home: place({ you: d({ 'email_awa.txt': f(t('fire-courriel-awa')) }) }),
+      home: place({ you: d({ 'email_awa.txt': f(t('fire-email-awa')) }) }),
       mnt: place({
         backup: place({
-          'DRP.txt': f(t('fire-pra'), { owner: 'root' }),
+          'DRP.txt': f(t('fire-drp'), { owner: 'root' }),
           [`medialibrary-${ARCHIVES[0]}.tar.gz`]: backup(t, 1, 48_213),
           [`medialibrary-${ARCHIVES[1]}.tar.gz`]: backup(t, 2, 48_390),
           // Coupée après les trois fichiers de configuration.
@@ -187,40 +187,40 @@ export const fire: Chapter = {
   },
   events: [
     {
-      id: 'liste-vide',
+      id: 'list-empty',
       condition: (j) => j.state.aptIntrouvable === true,
-      message: (j) => j.t('fire-evenement-liste-vide'),
+      message: (j) => j.t('fire-event-list-empty'),
     },
     {
       id: 'nginx',
       condition: (j) => sd(j).services.nginx?.state === 'active',
-      message: (j) => j.t('fire-evenement-nginx'),
+      message: (j) => j.t('fire-event-nginx'),
     },
     {
-      id: 'tronquee',
+      id: 'truncated',
       condition: (j) => j.state.archiveTronquee === path(j.t, archive(ARCHIVES[2])),
-      message: (j) => j.t('fire-evenement-tronquee'),
+      message: (j) => j.t('fire-event-truncated'),
     },
     {
-      id: 'mauvais-lieu',
+      id: 'bad-place',
       condition: (j) => j.exists(path(j.t, `${M}/etc`)) || j.exists(path(j.t, `${M}/var`)),
-      message: (j) => j.t('fire-evenement-mauvais-lieu'),
+      message: (j) => j.t('fire-event-bad-place'),
     },
     {
-      id: 'doublon',
+      id: 'duplicate',
       condition: (j) =>
         (j.state.nginxErreur ?? '').includes('duplicate default server') || sd(j).log.some((e) => e.message.includes('duplicate default server')),
-      message: (j) => j.t('fire-evenement-doublon'),
+      message: (j) => j.t('fire-event-duplicate'),
     },
     {
-      id: 'mercredi',
+      id: 'wednesday',
       condition: (j) => serves(j, 1),
-      message: (j) => j.t('fire-evenement-mercredi'),
+      message: (j) => j.t('fire-event-wednesday'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => serves(j, 2) && sd(j).services.nginx?.active === true,
-      message: (j) => j.t('fire-evenement-fin'),
+      message: (j) => j.t('fire-event-end'),
     },
   ],
 };

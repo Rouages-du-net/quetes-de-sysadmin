@@ -260,7 +260,7 @@ export const wifi: Chapter = {
   home: M,
   welcome: 'email_malik.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: PASSWORD,
   accounts: () => {
     const c = hiveAccounts();
@@ -337,46 +337,46 @@ export const wifi: Chapter = {
         ),
       },
       home: {
-        'email_malik.txt': f(t('wifi-courriel-malik')),
-        'ap-offices.txt': f(t('wifi-borne', { secret: BOUND_SECRET, adresse: BOUND }), { lines: true }),
+        'email_malik.txt': f(t('wifi-email-malik')),
+        'ap-offices.txt': f(t('wifi-bound', { secret: BOUND_SECRET, adresse: BOUND }), { lines: true }),
         'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },
     }),
   events: [
     {
       // Dès que la borne est déclarée : ses demandes ne passent pas la chaîne input.
-      id: 'filtre',
+      id: 'filter',
       condition: (j) => filteredBound(j) && !!readRadius(j).conf?.clients.some((c) => inside(BOUND, c.network)),
-      message: (j) => j.t('wifi-evenement-filtre'),
+      message: (j) => j.t('wifi-event-filter'),
     },
-    { id: 'pas-relu', condition: (j) => !filteredBound(j) && notReread(j), message: (j) => j.t('wifi-evenement-pas-relu') },
+    { id: 'not-reread', condition: (j) => !filteredBound(j) && notReread(j), message: (j) => j.t('wifi-event-not-reread') },
     {
-      id: 'inconnue',
+      id: 'unknown',
       condition: (j) => !filteredBound(j) && !notReread(j) && malik(j).what === 'rien' && systemd(j)?.services.freeradius?.state === 'active',
-      message: (j) => j.t('wifi-evenement-inconnue'),
+      message: (j) => j.t('wifi-event-unknown'),
     },
     {
-      id: 'sans-ldap',
+      id: 'without-ldap',
       condition: (j) => !notReread(j) && malik(j).what === 'reject' && !load(j)?.ldap,
-      message: (j) => j.t('wifi-evenement-sans-ldap'),
+      message: (j) => j.t('wifi-event-without-ldap'),
     },
     {
-      id: 'anonyme',
+      id: 'anonymous',
       condition: (j) => !notReread(j) && malik(j).what === 'reject' && !!load(j)?.ldap && !load(j)?.ldap?.identity,
-      message: (j) => j.t('wifi-evenement-anonyme'),
+      message: (j) => j.t('wifi-event-anonymous'),
     },
     {
-      id: 'groupes',
+      id: 'groups',
       condition: (j) => !notReread(j) && malik(j).what === 'accept' && vlanFor(malik(j)) !== 10 && !load(j)?.ldap?.byMemberUid,
-      message: (j) => j.t('wifi-evenement-groupes'),
+      message: (j) => j.t('wifi-event-groups'),
     },
     {
-      id: 'ordre',
+      id: 'order',
       condition: (j) => !notReread(j) && vlanFor(malik(j)) === 20 && !!load(j)?.ldap?.byMemberUid,
-      message: (j) => j.t('wifi-evenement-ordre'),
+      message: (j) => j.t('wifi-event-order'),
     },
-    { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-evenement-ssh') },
-    { id: 'en-place', condition: (j) => compliant(j) && !compliant(j, toRadiusBoot(j)), message: (j) => j.t('wifi-evenement-en-place') },
-    { id: 'fin', condition: (j) => compliant(j) && openSsh(nft(j)) && compliant(j, toRadiusBoot(j)), message: (j) => j.t('wifi-evenement-fin') },
+    { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-event-ssh') },
+    { id: 'in-place', condition: (j) => compliant(j) && !compliant(j, toRadiusBoot(j)), message: (j) => j.t('wifi-event-in-place') },
+    { id: 'end', condition: (j) => compliant(j) && openSsh(nft(j)) && compliant(j, toRadiusBoot(j)), message: (j) => j.t('wifi-event-end') },
   ],
 };

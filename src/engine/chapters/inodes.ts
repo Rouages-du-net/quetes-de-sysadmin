@@ -156,14 +156,14 @@ function night(j: Game): string {
     .map((e) => {
       const lines = e.output.split('\n');
       const output = lines.length > 5 ? [...lines.slice(0, 5), '[…]'].join('\n') : e.output;
-      return j.t('inodes-courrier', { commande: e.command, sortie: output });
+      return j.t('inodes-mail', { commande: e.command, sortie: output });
     })
     .join('\n\n');
-  const result = [j.t('inodes-nuit', { taches: executions.length, effaces, ancien: moreOld(j), pourcent: inodesPercent(j) }), mails];
-  if (!intactRecent(j)) result.push(j.t('inodes-nuit-recentes-perdues'));
-  else if (!executions.length) result.push(j.t('inodes-nuit-rien'));
-  else if (moreOld(j) > 60) result.push(j.t('inodes-nuit-trop-vieux', { jours: moreOld(j) }));
-  else if (inodesPercent(j) >= 80) result.push(j.t('inodes-nuit-plein', { pourcent: inodesPercent(j) }));
+  const result = [j.t('inodes-night', { taches: executions.length, effaces, ancien: moreOld(j), pourcent: inodesPercent(j) }), mails];
+  if (!intactRecent(j)) result.push(j.t('inodes-night-recent-lost'));
+  else if (!executions.length) result.push(j.t('inodes-night-nothing'));
+  else if (moreOld(j) > 60) result.push(j.t('inodes-night-too-old', { jours: moreOld(j) }));
+  else if (inodesPercent(j) >= 80) result.push(j.t('inodes-night-full', { pourcent: inodesPercent(j) }));
   else j.state.nuitReussie = true;
   return result.filter(Boolean).join('\n\n');
 }
@@ -202,7 +202,7 @@ export const inodes: Chapter = {
   home: M,
   welcome: 'message_from_zoe.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'antenna-2027',
   accounts,
   state: () => ({
@@ -290,7 +290,7 @@ export const inodes: Chapter = {
     const radio: Rights = { owner: 'radio' };
     return place({
       etc: place({ ...accountsFiles(), hostname: file('radio'), radio: place({ 'stream.conf': file(t('inodes-conf-flux')) }) }),
-      home: place({ you: d({ 'message_from_zoe.txt': f(t('inodes-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      home: place({ you: d({ 'message_from_zoe.txt': f(t('inodes-message-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       srv: place({
         radio: place(
           {
@@ -303,7 +303,7 @@ export const inodes: Chapter = {
               },
               radio,
             ),
-            stats: place({ 'README.txt': file(t('inodes-stats-lisezmoi'), radio) }, radio),
+            stats: place({ 'README.txt': file(t('inodes-stats-readme'), radio) }, radio),
           },
           radio,
         ),
@@ -318,27 +318,27 @@ export const inodes: Chapter = {
   },
   events: [
     {
-      id: 'presque-vide',
+      id: 'almost-empty',
       condition: (j) =>
         j.last.commands.some((c) => c.includes('df')) &&
         !j.last.commands.some((c) => c.some((a) => /^-\w*i/.test(a))) &&
         /\/srv\/radio/.test(j.last.output),
-      message: (j) => j.t('inodes-evenement-presque-vide'),
+      message: (j) => j.t('inodes-event-almost-empty'),
     },
-    { id: 'plus-d-inodes', condition: (j) => /100% \/srv\/radio/.test(j.last.output), message: (j) => j.t('inodes-evenement-plus-d-inodes') },
+    { id: 'more-inodes', condition: (j) => /100% \/srv\/radio/.test(j.last.output), message: (j) => j.t('inodes-event-more-inodes') },
     {
-      id: 'coupable',
+      id: 'culprit',
       condition: (j) =>
         /\b6\d{4}\b/.test(j.last.output) && /stats|^6\d{4}$/m.test(j.last.output) && !/100% \/srv\/radio/.test(j.last.output),
-      message: (j) => j.t('inodes-evenement-coupable'),
+      message: (j) => j.t('inodes-event-culprit'),
     },
-    { id: 'trop-long', condition: (j) => (j.state.argumentsTropLongs ?? 0) > 0, message: (j) => j.t('inodes-evenement-trop-long') },
-    { id: 'recentes-perdues', condition: (j) => !intactRecent(j), message: (j) => j.t('inodes-evenement-recentes-perdues') },
-    { id: 'repart', condition: (j) => !!j.find(record(j)), message: (j) => j.t('inodes-evenement-repart', { pourcent: inodesPercent(j) }) },
+    { id: 'too-long', condition: (j) => (j.state.argumentsTropLongs ?? 0) > 0, message: (j) => j.t('inodes-event-too-long') },
+    { id: 'recent-lost', condition: (j) => !intactRecent(j), message: (j) => j.t('inodes-event-recent-lost') },
+    { id: 'restarts', condition: (j) => !!j.find(record(j)), message: (j) => j.t('inodes-event-restarts', { pourcent: inodesPercent(j) }) },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => !!j.state.nuitReussie && intactRecent(j) && inodesPercent(j) < 80,
-      message: (j) => j.t('inodes-evenement-fin'),
+      message: (j) => j.t('inodes-event-end'),
     },
   ],
 };

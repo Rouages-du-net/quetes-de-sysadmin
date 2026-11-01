@@ -1,276 +1,276 @@
 ### Game interface: choosing stories and chapters, terminal,
 ### progress. One whole sentence per message; variables between { }.
 
-histoires-titre = Stories
+stories-title = Stories
 # { $histoire }: title of the story
-chapitres-titre = Chapters of "{ $histoire }"
-chapitre-numero = Chapter { $numero }
-chapitre-titre-complet = { $histoire } — chapter { $numero }: { $titre }
-etat-histoire-terminee = ✓ Completed
-etat-chapitres-faits =
+chapters-title = Chapters of "{ $histoire }"
+chapter-number = Chapter { $numero }
+chapter-title-complete = { $histoire } — chapter { $numero }: { $titre }
+state-story-finished = ✓ Completed
+state-chapters-done =
     { $faits ->
         [one] { $faits } chapter
        *[other] { $faits } chapters
     } of { $total }
-etat-chapitre-termine = ✓ Completed
-etat-verrouille = 🔒 Finish the previous chapter
-etat-cle-manquante = 🔒 Locked
+state-chapter-finished = ✓ Completed
+state-locked = 🔒 Finish the previous chapter
+state-key-missing = 🔒 Locked
 # { $chapitres }: the titles of the chapters still to finish (formatted list)
-etat-cle-apres = 🔒 After { $chapitres }
+state-key-after = 🔒 After { $chapitres }
 # { $titre }: a chapter title, in the list above
-etat-cle-chapitre = “{ $titre }”
-cle-aide = 🔑 The greyed-out stories open little by little: each one shows under its name the chapters to finish before you receive its key. The first ones open after The Root (The Eraser, chapter 3).
-bouton-suivant = Next chapter →
-bouton-recommencer = Restart this chapter
-astuces = Tips: Tab completes names, ↑ recalls commands, "help" lists the ones you know, "man command" opens the manual, "exit" takes you back to your workstation. As in most Linux terminals, selecting text copies it and right-clicking pastes it. Your progress is saved in this browser.
+state-key-chapter = “{ $titre }”
+key-help = 🔑 The greyed-out stories open little by little: each one shows under its name the chapters to finish before you receive its key. The first ones open after The Root (The Eraser, chapter 3).
+button-next = Next chapter →
+button-restart = Restart this chapter
+tips = Tips: Tab completes names, ↑ recalls commands, "help" lists the ones you know, "man command" opens the manual, "exit" takes you back to your workstation. As in most Linux terminals, selecting text copies it and right-clicking pastes it. Your progress is saved in this browser.
 # { $lignes }: number of lines not shown
-sortie-coupee =
+output-cut =
     { $lignes ->
         [one] (… { $lignes } line above, not shown)
        *[other] (… { $lignes } lines above, not shown)
     }
-poste-titre = Your workstation
+workstation-title = Your workstation
 ## The story menu: two views
-vue-titre = How to show the stories
-vue-reseau = Network map
-vue-baies = Racks
-vue-internet = Internet
-saisie-etiquette = Command
+view-title = How to show the stories
+view-reseau = Network map
+view-baies = Racks
+view-internet = Internet
+input-label = Command
 credit = Quêtes de Sysadmin, a free game (GPL v3, texts CC BY-SA 4.0), inspired by Terminus, created at MIT by Shawn Conrad and Michele Pratusevich.
-credit-lien-projet = The project
-credit-lien-original = Terminus
+credit-link-project = The project
+credit-link-original = Terminus
 
 ## The sysadmin's notebook
 
-carnet-titre = The sysadmin's notebook
+notebook-title = The sysadmin's notebook
 # { $nombre }: the number of commands noted
-carnet-compte = { $nombre ->
+notebook-account = { $nombre ->
     [0] (empty)
     [one] ({ $nombre } command)
    *[other] ({ $nombre } commands)
 }
-carnet-aide = Every command you run for the first time is added here, with what it does and the line you typed. Your cheat sheet, to take with you.
-carnet-vide = Nothing yet: run a command (ls, for example) and it will be written here.
-carnet-exporter = Download (Markdown)
-carnet-copier = Copy
-carnet-copie = Copied to the clipboard.
-carnet-copie-impossible = This browser refuses access to the clipboard: use the download instead.
+notebook-help = Every command you run for the first time is added here, with what it does and the line you typed. Your cheat sheet, to take with you.
+notebook-empty = Nothing yet: run a command (ls, for example) and it will be written here.
+notebook-export = Download (Markdown)
+notebook-copy-button = Copy
+notebook-copy = Copied to the clipboard.
+notebook-copy-impossible = This browser refuses access to the clipboard: use the download instead.
 # The name of the downloaded file: no spaces or hard-to-type characters.
-carnet-fichier = sysadmin-notebook.md
+notebook-file = sysadmin-notebook.md
 # At the top of the Markdown file. { $nombre }: the number of commands
-carnet-markdown-intro = { $nombre ->
+notebook-markdown-intro = { $nombre ->
     [one] One command learnt while playing Quêtes de Sysadmin.
    *[other] { $nombre } commands learnt while playing Quêtes de Sysadmin.
 }
-carnet-progression = Progress
-carnet-progression-vide = No chapter completed yet.
+notebook-progress = Progress
+notebook-progress-empty = No chapter completed yet.
 # { $histoire }: the title of the story; { $faits } and { $total }: chapters completed and in total
-carnet-progression-histoire = { $histoire }: { $faits ->
+notebook-progress-story = { $histoire }: { $faits ->
     [one] { $faits } chapter completed
    *[other] { $faits } chapters completed
 } of { $total }
 # { $chapitre }: the title of the chapter where the command was first used
-carnet-decouverte = Discovered in "{ $chapitre }".
+notebook-discovery = Discovered in "{ $chapitre }".
 # { $commande }: the command that opens the manual (man ls)
-carnet-manuel = To go further: { $commande }
+notebook-manual = To go further: { $commande }
 
 ## Links to Les rouages du net (after a chapter)
 
 rouages-intro = To understand what happens under the hood, on Les rouages du net (in French):
-rouages-lien-entree-nom = "From the Enter key to the page": the name becomes an address (DNS)
-rouages-lien-entree-box = "From the Enter key to the page": your router and your local network
-rouages-lien-entree-liaison = "From the Enter key to the page": opening the connection (TCP, ports)
-rouages-lien-entree-cadenas = "From the Enter key to the page": the padlock (TLS, certificates)
-rouages-lien-entree-voyage = "From the Enter key to the page": the journey of packets
-rouages-lien-entree-serveur = "From the Enter key to the page": the server answers
-rouages-lien-ordinateur-binaire = "How a computer works": everything is a number
-rouages-lien-ordinateur-memoire = "How a computer works": memory
-rouages-lien-glossaire-ttl = Glossary: TTL
-rouages-lien-glossaire-port = Glossary: port
-rouages-lien-glossaire-nat = Glossary: NAT
-rouages-lien-glossaire-routeur = Glossary: router
-rouages-lien-glossaire-commutateur = Glossary: switch
-rouages-lien-glossaire-hebergeur = Glossary: hosting provider
-rouages-lien-glossaire-chiffrement = Glossary: encryption
-rouages-lien-glossaire-autorite-certification = Glossary: certificate authority
-rouages-lien-glossaire-code-http = Glossary: HTTP status code
-rouages-lien-glossaire-requete = Glossary: request
-rouages-lien-glossaire-datacenter = Glossary: data centre
-rouages-lien-glossaire-octet = Glossary: byte
+rouages-link-entree-nom = "From the Enter key to the page": the name becomes an address (DNS)
+rouages-link-entree-box = "From the Enter key to the page": your router and your local network
+rouages-link-entree-liaison = "From the Enter key to the page": opening the connection (TCP, ports)
+rouages-link-entree-cadenas = "From the Enter key to the page": the padlock (TLS, certificates)
+rouages-link-entree-voyage = "From the Enter key to the page": the journey of packets
+rouages-link-entree-serveur = "From the Enter key to the page": the server answers
+rouages-link-ordinateur-binaire = "How a computer works": everything is a number
+rouages-link-ordinateur-memoire = "How a computer works": memory
+rouages-link-glossaire-ttl = Glossary: TTL
+rouages-link-glossaire-port = Glossary: port
+rouages-link-glossaire-nat = Glossary: NAT
+rouages-link-glossaire-routeur = Glossary: router
+rouages-link-glossaire-commutateur = Glossary: switch
+rouages-link-glossaire-hebergeur = Glossary: hosting provider
+rouages-link-glossaire-chiffrement = Glossary: encryption
+rouages-link-glossaire-autorite-certification = Glossary: certificate authority
+rouages-link-glossaire-code-http = Glossary: HTTP status code
+rouages-link-glossaire-requete = Glossary: request
+rouages-link-glossaire-datacenter = Glossary: data centre
+rouages-link-glossaire-octet = Glossary: byte
 
 ## Exam mode
 
-examen-case = Exam mode: no hints, with a timer (the chapter restarts)
+exam-case = Exam mode: no hints, with a timer (the chapter restarts)
 # { $temps }: the elapsed time, in minutes:seconds
-examen-chrono = ⏱ { $temps }
+exam-timer = ⏱ { $temps }
 # The confirmation, when a chapter is in progress (exam mode restarts it).
-examen-confirmer-titre = Switch to exam mode?
-examen-confirmer-texte = The current chapter will restart from the beginning, on a fresh machine: what you have already done in it will be lost. Finished chapters stay finished.
-examen-confirmer = Restart in exam mode
-examen-quitter-titre = Leave exam mode?
-examen-quitter-texte = The current chapter will restart from the beginning, with hints: what you have already done in it will be lost. Finished chapters stay finished.
-examen-quitter = Restart without exam mode
-examen-annuler = Cancel
-examen-debut = Exam mode: no hints will be shown, the timer is running. Your mission is in the welcome message (read it again with cat). The debrief will come at the end. To start from scratch, machine and timer: "Restart this chapter", below the terminal.
+exam-confirm-title = Switch to exam mode?
+exam-confirm-text = The current chapter will restart from the beginning, on a fresh machine: what you have already done in it will be lost. Finished chapters stay finished.
+exam-confirm = Restart in exam mode
+exam-quit-title = Leave exam mode?
+exam-quit-text = The current chapter will restart from the beginning, with hints: what you have already done in it will be lost. Finished chapters stay finished.
+exam-quit = Restart without exam mode
+exam-cancel = Cancel
+exam-start = Exam mode: no hints will be shown, the timer is running. Your mission is in the welcome message (read it again with cat). The debrief will come at the end. To start from scratch, machine and timer: "Restart this chapter", below the terminal.
 # { $temps }: the time of this game; { $record }: the best time in this browser
-examen-fini = Exam passed in { $temps }. Your best time on this chapter: { $record }.
-examen-fini-record = Exam passed in { $temps }: that's your best time on this chapter.
+exam-finished = Exam passed in { $temps }. Your best time on this chapter: { $record }.
+exam-finished-record = Exam passed in { $temps }: that's your best time on this chapter.
 
 ## The map (a button next to the terminal; see src/engine/map.ts)
 
-carte-bouton = Map
+map-button = Map
 # { $machine }: the name of the machine you are on (kingdom, desk…).
-carte-titre = Map of { $machine }
-carte-legende = The places (directories) you know on this machine: the ones you have entered, and in italics the ones you have only glimpsed. Files are not shown: for those, use ls.
-carte-ici = ← you are here
-carte-maison = your home, ~
-carte-ferme = locked for now
-carte-apercu = not visited yet
-carte-fermer = Close
+map-title = Map of { $machine }
+map-caption = The places (directories) you know on this machine: the ones you have entered, and in italics the ones you have only glimpsed. Files are not shown: for those, use ls.
+map-here = ← you are here
+map-home = your home, ~
+map-closed = locked for now
+map-preview = not visited yet
+map-close = Close
 
 ## The network plan ("Network" tab of the map; see src/engine/plan.ts)
 
-carte-onglet-lieux = Places
-carte-onglet-reseau = Network
-plan-legende = The network as the team planned it, like the diagram on the wall: what should be, not necessarily what is. To check: ip a, ip route, ping, wg show… Dotted links go through a WireGuard tunnel.
-plan-version-texte = The plan as a list
+map-tab-places = Places
+map-tab-network = Network
+plan-caption = The network as the team planned it, like the diagram on the wall: what should be, not necessarily what is. To check: ip a, ip route, ping, wg show… Dotted links go through a WireGuard tunnel.
+plan-version-text = The plan as a list
 plan-internet = Internet
-plan-ton-poste = your workstation
-plan-ici = you are here
-plan-visite = already connected
-plan-pas-visite = not connected yet
+plan-your-workstation = your workstation
+plan-here = you are here
+plan-visit = already connected
+plan-not-visit = not connected yet
 plan-tunnel = through the WireGuard tunnel
 plan-dhcp = DHCP
-plan-reseau-interne = internal network
-plan-note-passerelle = gateway
+plan-network-internal = internal network
+plan-note-gateway = gateway
 plan-note-wiki = wiki
 plan-note-archives = backups
-plan-note-hebergeur = website host
-plan-note-routeur = router
+plan-note-host = website host
+plan-note-router = router
 # { $id }: the VLAN number; { $nom }: its name in the configuration (bureaux, invites…).
 plan-vlan = VLAN { $id } · { $nom }
-plan-note-teletravail = remote work
-plan-annexe = Annexe router
-plan-note-annexe = second site
-plan-reseau-annexe = Annexe network
+plan-note-remote-work = remote work
+plan-annex = Annexe router
+plan-note-annex = second site
+plan-network-annex = Annexe network
 
 ## My progress (see src/engine/progress.ts)
 
 # The notebook's title when a name is given.
-carnet-titre-de = { $nom }'s notebook
-progression-bouton = My progress
-progression-titre = My progress
-progression-intro = Your progress stays in this browser. To carry on on another machine (another lab room, at home), take it with you with the code or the file. Nothing is sent anywhere.
-progression-nom = Your name (optional)
-progression-nom-aide = It goes at the top of your notebook ("…'s notebook") and in your saves.
-progression-code-titre = The code, to copy down
-progression-code-aide = It holds the finished chapters, nothing else: not the notebook, not the keys you created. Write it down, then type it on the other machine.
-progression-copier = Copy
-progression-code-saisie = Resume with a code:
-progression-reprendre = Resume
-progression-fichier-titre = The file, to take everything
-progression-fichier-aide = Chapters, notebook, keys you created, ssh config, exam mode records. Keep it on a USB stick or send it to yourself.
-progression-telecharger = Download my save
-progression-fichier-saisie = Resume from a file:
-progression-nom-fichier = quetes-de-sysadmin.json
-progression-telechargee = Save downloaded.
+notebook-title-of = { $nom }'s notebook
+progress-button = My progress
+progress-title = My progress
+progress-intro = Your progress stays in this browser. To carry on on another machine (another lab room, at home), take it with you with the code or the file. Nothing is sent anywhere.
+progress-name = Your name (optional)
+progress-name-help = It goes at the top of your notebook ("…'s notebook") and in your saves.
+progress-code-title = The code, to copy down
+progress-code-help = It holds the finished chapters, nothing else: not the notebook, not the keys you created. Write it down, then type it on the other machine.
+progress-copy = Copy
+progress-code-input = Resume with a code:
+progress-resume = Resume
+progress-file-title = The file, to take everything
+progress-file-help = Chapters, notebook, keys you created, ssh config, exam mode records. Keep it on a USB stick or send it to yourself.
+progress-download = Download my save
+progress-file-input = Resume from a file:
+progress-name-file = quetes-de-sysadmin.json
+progress-downloaded = Save downloaded.
 # { $nombre }: the finished chapters in the file.
-progression-confirmer = Resume this save ({ $nombre ->
+progress-confirm = Resume this save ({ $nombre ->
         [one] { $nombre } finished chapter
        *[other] { $nombre } finished chapters
     })? It will replace everything kept in this browser.
-progression-rien-de-neuf = This code adds no chapter to the ones you have already finished here.
-progression-code-illisible = This is not a progress code: it starts with QDS, followed by groups of letters and digits.
-progression-code-faute = This code has a typo: check it, character by character.
-progression-code-trop-recent = This code comes from a newer version of the game: reload the page.
-progression-fichier-illisible = This file is not a readable save (JSON).
-progression-fichier-autre = This file is not a Sysadmin Quests save.
-progression-fichier-trop-recent = This save comes from a newer version of the game: reload the page.
+progress-nothing-new = This code adds no chapter to the ones you have already finished here.
+progress-code-illisible = This is not a progress code: it starts with QDS, followed by groups of letters and digits.
+progress-code-faute = This code has a typo: check it, character by character.
+progress-code-trop-recent = This code comes from a newer version of the game: reload the page.
+progress-fichier-illisible = This file is not a readable save (JSON).
+progress-fichier-autre = This file is not a Sysadmin Quests save.
+progress-fichier-trop-recent = This save comes from a newer version of the game: reload the page.
 
 ## The mission, the key bar, Ctrl-R
 
-mission-bouton = Mission
+mission-button = Mission
 # { $chapitre }: "Chapter 2"; { $titre }: its title.
-mission-titre = { $chapitre }: { $titre }
-mission-consignes = The instructions
+mission-title = { $chapitre }: { $titre }
+mission-instructions = The instructions
 mission-journal = What has happened
-mission-rien = Nothing yet: the story moves on as you act.
+mission-nothing = Nothing yet: the story moves on as you act.
 # During tail -f or journalctl -f: the button that does Ctrl-C.
-suivi-arreter = Stop (Ctrl-C)
-touches-titre = Terminal keys
-touche-haut = Previous command
-touche-bas = Next command
+follow-stop = Stop (Ctrl-C)
+keys-title = Terminal keys
+key-haut = Previous command
+key-bas = Next command
 # What bash shows during Ctrl-R (readline).
-recherche-historique = (reverse-i-search)`{ $motif }': { $commande }
+search-history = (reverse-i-search)`{ $motif }': { $commande }
 
 ## Achievements and ranks (see src/engine/achievements.ts)
 
-succes-titre = Achievements
+achievements-title = Achievements
 # { $obtenus } of { $total }: the count shown on the link.
-succes-bouton = Achievements ({ $obtenus }/{ $total })
+achievements-button = Achievements ({ $obtenus }/{ $total })
 # Announced in the terminal when an achievement is earned.
-succes-obtenu = 🏆 Achievement: { $nom }
-succes-grade = Your rank: { $grade }.
-succes-grade-suivant = Next rank, { $grade }, at { $chapitres } finished chapters.
-succes-le = ({ $date })
-succes-cache = Hidden achievement
+achievements-obtained = 🏆 Achievement: { $nom }
+achievements-grade = Your rank: { $grade }.
+achievements-grade-next = Next rank, { $grade }, at { $chapitres } finished chapters.
+achievements = ({ $date })
+achievements-cache = Hidden achievement
     .description = A nod to terminal culture. Up to you to find it.
-carnet-grade = Rank: { $grade }.
-grade-stagiaire = Intern
-grade-apprenti = Apprentice sysadmin
+notebook-grade = Rank: { $grade }.
+grade-intern = Intern
+grade-apprentice = Apprentice sysadmin
 grade-junior = Junior admin
 grade-admin = System administrator
-grade-confirme = Experienced admin
+grade-confirmed = Experienced admin
 grade-senior = Senior admin
 grade-sre = SRE (site reliability engineer)
-succes-premiere-commande = First step
+achievements-first-command = First step
     .description = Run a first command.
-succes-manuel = Read the manual
+achievements-manual = Read the manual
     .description = Open the manual (man or apropos): the pros' first reflex.
-succes-cache-ls = What is hidden
+achievements-cache-ls = What is hidden
     .description = Show the hidden files (ls -a).
-succes-tube = First pipe
+achievements-pipe = First pipe
     .description = Join two commands with a pipe (|).
-succes-redirection = Into the file
+achievements-redirection = Into the file
     .description = Send a command's output into a file (> or >>).
-succes-premier-chapitre = First chapter
+achievements-first-chapter = First chapter
     .description = Finish a chapter.
-succes-effaceur = The Eraser stopped
+achievements-eraser = The Eraser stopped
     .description = Finish the Eraser's story.
-succes-restauration = Restore tested
+achievements-restore = Restore tested
     .description = Restore a backup for real: a backup you have never restored is not a backup.
-succes-reseau = The whole Hive
+achievements-network = The whole Hive
     .description = Finish The Hive: VLANs, DHCP, firewall, VPN, directory and Wi-Fi.
-succes-trois-histoires = Three stories
+achievements-three-stories = Three stories
     .description = Finish three stories.
-succes-toutes-histoires = The grand tour
+achievements-all-stories = The grand tour
     .description = Finish every story.
-succes-cinquante-commandes = Toolbox
+achievements-fifty-commands = Toolbox
     .description = Have 50 commands in your notebook.
-succes-examen = Exam passed
+achievements-exam = Exam passed
     .description = Finish a chapter in exam mode.
-succes-examen-eclair = Lightning
+achievements-exam-lightning = Lightning
     .description = Finish a chapter in exam mode in under 5 minutes.
-succes-xyzzy = Magic word
+achievements-xyzzy = Magic word
     .description = The password of Colossal Cave Adventure (1976), one of the first text adventure games.
-succes-sandwich = With the rights
+achievements-sandwich = With the rights
     .description = With sudo, you get everything, even a sandwich (xkcd 149).
-succes-sl = Locomotive
+achievements-sl = Locomotive
     .description = sl instead of ls: the most famous typo, punished by a train.
 
 ## Graded hints (see src/engine/hints.ts; the hints themselves: indices-<story>.ftl)
 
-indice-titre = Need help?
-indice-intro = Three levels, to open one after the other: the manual first, like at work. The debrief will say how many you asked for.
-indice-bouton-manuel = The manual
-indice-bouton-piste = A lead
-indice-bouton-solution = Almost the answer
+hint-title = Need help?
+hint-intro = Three levels, to open one after the other: the manual first, like at work. The debrief will say how many you asked for.
+hint-button-manuel = The manual
+hint-button-piste = A lead
+hint-button-solution = Almost the answer
 # { $pages }: "man mv, man cp".
-indice-manuel = Pages to read: { $pages }. Also search with man -k and a keyword.
-indice-plus-rien = No more hints for this chapter: reread the instructions and what has happened.
+hint-manual = Pages to read: { $pages }. Also search with man -k and a keyword.
+hint-more-nothing = No more hints for this chapter: reread the instructions and what has happened.
 ## The end-of-chapter summary (see src/engine/summary.ts)
 # { $temps }: "6:12"; { $commandes }, { $erreurs }, { $indices }: numbers
-bilan-resume = Summary: { $temps } · { $commandes ->
+summary-summary = Summary: { $temps } · { $commandes ->
         [one] one command
        *[other] { $commandes } commands
     }{ $erreurs ->
@@ -281,93 +281,93 @@ bilan-resume = Summary: { $temps } · { $commandes ->
         [one] one hint
        *[other] { $indices } hints
     }
-bilan-bouton = See the details
+summary-button = See the details
 # { $chapitre }: the chapter's title
-bilan-titre = Summary: { $chapitre }
-bilan-intro = Your command next to the reference solution, step by step. The game checks the state of the machine, not the command you typed: another way of doing it is just as right if it reaches the same result.
-bilan-col-etape = Step
-bilan-col-toi = Your command
-bilan-col-reference = The reference solution
-bilan-autrement = (reached another way)
-bilan-encourager = { $indices ->
+summary-title = Summary: { $chapitre }
+summary-intro = Your command next to the reference solution, step by step. The game checks the state of the machine, not the command you typed: another way of doing it is just as right if it reaches the same result.
+summary-col-step = Step
+summary-col-you = Your command
+summary-col-reference = The reference solution
+summary-otherwise = (reached another way)
+summary-encourage = { $indices ->
         [0] No hints: well done. Replay it in exam mode to beat your time?
        *[other] Next time, with fewer hints?
     }
 ## The restore point (Mission panel; see Console.restaurer)
-secours-titre = Restore point
-secours-intro = Like a virtual machine snapshot before a risky operation: take one, try your move, and come back to it if things go wrong. The chapter is replayed up to that point, without losing anything else.
-secours-prendre = Take a snapshot
-secours-revenir = Go back to the snapshot
-secours-annuler = Undo the last input
-secours-aucun = No snapshot yet in this chapter.
+rescue-title = Restore point
+rescue-intro = Like a virtual machine snapshot before a risky operation: take one, try your move, and come back to it if things go wrong. The chapter is replayed up to that point, without losing anything else.
+rescue-take = Take a snapshot
+rescue-go-back = Go back to the snapshot
+rescue-cancel = Undo the last input
+rescue-none = No snapshot yet in this chapter.
 # { $pas }: the number of inputs (commands, answers, nano saves) since the chapter started
-secours-pris = { $pas ->
+rescue-taken = { $pas ->
         [0] Snapshot taken at the start of the chapter.
         [one] Snapshot taken after one input.
        *[other] Snapshot taken after { $pas } inputs.
     }
-secours-impossible = No snapshot possible here: the chapter was resumed or you went through your workstation. "Restart this chapter" starts from scratch.
-secours-examen = No snapshots in exam mode.
-secours-restaure = { $pas ->
+rescue-impossible = No snapshot possible here: the chapter was resumed or you went through your workstation. "Restart this chapter" starts from scratch.
+rescue-exam = No snapshots in exam mode.
+rescue-restored = { $pas ->
         [0] ↺ Machine put back as at the start of the chapter.
         [one] ↺ Machine put back as after the chapter's first input.
        *[other] ↺ Machine put back as after { $pas } inputs of the chapter.
     }
 ## Themed paths ("Paths" menu; see src/engine/paths.ts)
-vue-parcours = Paths
-parcours-choix = Choose a path
-parcours-debuter = First steps
+view-parcours = Paths
+path-choice = Choose a path
+path-start = First steps
     .description = Moving around, reading, searching, tidying up, then the network, git and archives: for anyone who has never opened a terminal.
-parcours-securite = Protecting a server
+path-security = Protecting a server
     .description = SSH, firewall, fail2ban, accounts and permissions, secrets, updates, then the closing audit: closing the doors, keeping the house in order, and proving it.
-parcours-web = Serving the web
+path-web = Serving the web
     .description = nginx, logs, emergency backups, certificates, shared sites, traffic and proxies.
-parcours-reseau = Networks
+path-network = Networks
     .description = DNS, SSH jumps and tunnels, VLANs, DHCP, nftables firewall, WireGuard VPN and DMZ.
-parcours-sauvegardes = Backing up and restoring
+path-backups = Backing up and restoring
     .description = rsync, archives, restic, rsnapshot, PostgreSQL databases, transfers: and always, checking you know how to restore.
-parcours-deploiement = Containers and deployment
+path-deployment = Containers and deployment
     .description = git, Docker and Compose, bare repositories and hooks, rollback, blue/green, canary and migration.
-parcours-production = Troubleshooting in production
+path-production = Troubleshooting in production
     .description = A service that won't restart, a full disk, memory, inodes, time, monitoring and the post-mortem.
-parcours-identites = Accounts and identities
+path-identities = Accounts and identities
     .description = Groups, a colleague leaving, shared permissions, SSH keys, LDAP directory and enterprise Wi-Fi.
 # { $faits } / { $total }: numbers
-parcours-avancee = { $faits } of { $total } chapters done
-parcours-fini = ✓ Path complete
+path-progress = { $faits } of { $total } chapters done
+path-finished = ✓ Path complete
 # { $histoire }: the story's title
-parcours-dans = in "{ $histoire }"
-parcours-fait = ✓ Done
-parcours-ouvert = To do
-parcours-prochain = ▶ Next
+path-in = in "{ $histoire }"
+path-done = ✓ Done
+path-open = To do
+path-next = ▶ Next
 # { $chapitre }: the title of the chapter to finish first
-parcours-verrouille = 🔒 First: { $chapitre }
-parcours-sans-cle = 🔒 Story locked
+path-locked = 🔒 First: { $chapitre }
+path-without-key = 🔒 Story locked
 ## On-call and the incident of the day (see src/engine/on-call.ts)
-astreinte-bouton = 🚨 Incident of the day
+on-call-button = 🚨 Incident of the day
 # { $chapitre }: chapter title; { $histoire }: story title
-astreinte-aujourdhui = Today: "{ $chapitre }" ({ $histoire })
-astreinte-verrouille = 🔒 On-call opens once you finish The Root (The Eraser, chapter 3).
+on-call-today = Today: "{ $chapitre }" ({ $histoire })
+on-call-locked = 🔒 On-call opens once you finish The Root (The Eraser, chapter 3).
 # { $pourcent }: budget left
-astreinte-deja = Done today: { $pourcent }% of the budget kept.
+on-call-already = Done today: { $pourcent }% of the budget kept.
 # { $date }: today's date, spelled out
-astreinte-titre = On call, { $date }
-astreinte-intro = The on-call phone rings: an incident to fix. The same one for everyone today; tomorrow, another.
-astreinte-regles = You have an error budget of 30 minutes, like a service's availability objective (SLA): it melts with time, each hint costs 3 minutes, each command that fails 20 seconds. No exam mode; the restore point is still allowed (time, though, does not come back).
-astreinte-prendre = Take the call
-astreinte-annuler = Not now
-astreinte-debut = 🚨 On call: the error budget starts melting.
+on-call-title = On call, { $date }
+on-call-intro = The on-call phone rings: an incident to fix. The same one for everyone today; tomorrow, another.
+on-call-rules = You have an error budget of 30 minutes, like a service's availability objective (SLA): it melts with time, each hint costs 3 minutes, each command that fails 20 seconds. No exam mode; the restore point is still allowed (time, though, does not come back).
+on-call-take = Take the call
+on-call-cancel = Not now
+on-call-start = 🚨 On call: the error budget starts melting.
 # { $temps }: "24:10"; { $pourcent }: a number
-astreinte-jauge = Budget: { $temps } ({ $pourcent }%)
-astreinte-epuise = Budget spent: SLA breached. Finish anyway, the incident must be fixed.
-astreinte-abandon = On-call abandoned: you left the incident.
-astreinte-fin-titre = End of on-call
-astreinte-fin-intro = The incident is fixed. Here is your score card, to share (nothing is sent: you copy it wherever you like).
-astreinte-copier = Copy the card
-astreinte-copiee = Card copied.
+on-call-gauge = Budget: { $temps } ({ $pourcent }%)
+on-call-exhausted = Budget spent: SLA breached. Finish anyway, the incident must be fixed.
+on-call-abandon = On-call abandoned: you left the incident.
+on-call-end-title = End of on-call
+on-call-end-intro = The incident is fixed. Here is your score card, to share (nothing is sent: you copy it wherever you like).
+on-call-copy = Copy the card
+on-call-copied = Card copied.
 # The score card, like a shared word grid.
 # { $date } (YYYY-MM-DD), { $chapitre }, { $jauge } (five squares), { $pourcent }, { $temps }, { $indices }, { $erreurs }, { $adresse }
-astreinte-carte =
+on-call-map =
     Quêtes de Sysadmin · on call, { $date }
     "{ $chapitre }" fixed in { $temps }
     { $jauge } { $pourcent }% of the budget
@@ -381,47 +381,47 @@ astreinte-carte =
        *[other] { $erreurs } errors
     }
     { $adresse }
-succes-sans-indice = No safety net
+achievements-without-hint = No safety net
     .description = Finish a chapter without asking for a hint.
 
 ## The class table (teachers' page; see src/engine/classroom.ts)
 
-classe-fichiers = The students' save files:
-classe-glisser = Or drop them here, several at once.
-classe-codes = Or their codes, one per line, after the name:
-classe-codes-exemple = Lina QDS-047G-0000-000M-G
-classe-codes-ajouter = Add the codes
-classe-exporter = Download the table (CSV)
-classe-vider = Clear the table
-classe-nom-fichier = class-table.csv
-classe-tableau = The class
-classe-compte = { $nombre ->
+class-files = The students' save files:
+class-slide = Or drop them here, several at once.
+class-codes = Or their codes, one per line, after the name:
+class-codes-example = Lina QDS-047G-0000-000M-G
+class-codes-add = Add the codes
+class-export = Download the table (CSV)
+class-empty = Clear the table
+class-name-file = class-table.csv
+class-table = The class
+class-account = { $nombre ->
         [0] No student yet.
         [one] One student.
        *[other] { $nombre } students.
     }
 # { $source }: the file or line; { $raison }: what is wrong.
-classe-erreur = { $source }: { $raison }
-classe-col-eleve = Student
-classe-col-chapitres = Chapters
-classe-col-grade = Rank
-classe-col-succes = Achievements
-classe-col-examen = Best exam
-classe-col-date = Saved
+class-error = { $source }: { $raison }
+class-col-student = Student
+class-col-chapters = Chapters
+class-col-grade = Rank
+class-col-achievements = Achievements
+class-col-exam = Best exam
+class-col-date = Saved
 
 ## The terminal display
 
-affichage-theme = Terminal theme
-affichage-theme-phosphore = Phosphor
-affichage-theme-ambre = Amber
-affichage-theme-contraste = High contrast
-affichage-theme-papier = Paper
-affichage-plus-petit = Smaller text
-affichage-plus-grand = Larger text
-affichage-couleurs = Colours
-affichage-focus = Full screen
-affichage-quitter-focus = Leave full screen (Esc)
+display-theme = Terminal theme
+display-theme-phosphore = Phosphor
+display-theme-ambre = Amber
+display-theme-contraste = High contrast
+display-theme-papier = Paper
+display-more-small = Smaller text
+display-more-big = Larger text
+display-colours = Colours
+display-focus = Full screen
+display-quit-focus = Leave full screen (Esc)
 
 ## Difficulty of a chapter or a story (1 to 5, see difficulty.ts)
 difficulty = Difficulty: { $level } out of 5
-difficulty-range = Difficulty: { $min } to { $max } out of 5
+difficulty-tidy = Difficulty: { $min } to { $max } out of 5

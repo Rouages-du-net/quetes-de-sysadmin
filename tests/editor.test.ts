@@ -45,7 +45,7 @@ for (const language of LANGUAGES)
       s.execute(machinesInLanguage(s.t, 'welcome-2026'));
       expect(s.edition?.root).toBe(true);
       s.saveEdition(s.edition!.text + 'deny 198.51.100.77;\n');
-      expect(s.flags.has('regle')).toBe(true);
+      expect(s.flags.has('rule')).toBe(true);
       if (fr) expect(s.quitEdition()).toContain('sudo systemctl reload nginx');
       expect(s.read(BLOCKED)).toContain('deny 203.0.113.5;');
     });
