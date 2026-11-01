@@ -333,3 +333,17 @@ name-prints-tar = tirages.tar
 name-negatives-001-tif = negatifs-001.tif
 name-negatives-002-tif = negatifs-002.tif
 name-prints-001-tif = tirages-001.tif
+## La Ruche : les appareils du réseau local (noms d'hôtes), les VLAN et
+## les groupes de l'annuaire (equipe : voir Le Datacenter), le modèle de Sacha
+name-printer = imprimante
+name-entrance-camera = camera-entree
+name-malik-pc = poste-malik
+name-reception-pc = poste-accueil
+name-visitor-phone = telephone-visiteur
+name-wifi-ap = borne-wifi
+name-annex-pc = poste-annexe
+name-annex-printer = imprimante-annexe
+name-offices = bureaux
+name-guests = invites
+name-equipment = equipements
+name-ines-template-ldif = modele-ines.ldif

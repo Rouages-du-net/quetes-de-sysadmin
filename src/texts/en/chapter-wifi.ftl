@@ -21,7 +21,7 @@ wifi-email-malik =
 
     The RADIUS server is FreeRADIUS, already installed on the router
     (/etc/freeradius/3.0, man freeradius). What we want:
-    - members of the "bureaux" group (Malik, Inès, Sami): VLAN 10;
+    - members of the "offices" group (Malik, Inès, Sami): VLAN 10;
     - the other directory accounts (Léo, at the café): VLAN 20;
     - deleted accounts (Camille): out.
 
@@ -32,10 +32,10 @@ wifi-email-malik =
 
 # { $secret }: the access point's shared secret; { $address }: its address
 wifi-bound =
-    "BUREAUX" WI-FI ACCESS POINT — settings (the electrician, February 2028)
+    "OFFICES" WI-FI ACCESS POINT — settings (the electrician, February 2028)
 
     Access point address   : { $address } (VLAN 30, equipment)
-    Wi-Fi network (SSID)   : LaRuche-Bureaux
+    Wi-Fi network (SSID)   : TheHive-Offices
     Security               : WPA2-Enterprise (802.1X), EAP-TTLS / PAP
     RADIUS server          : 10.10.30.1, port 1812 (UDP)
     Shared secret          : { $secret }
@@ -76,7 +76,7 @@ wifi-event-groups =
 wifi-event-order =
     Malik gets VLAN 20, like Léo. In the users file, the first
     matching entry wins: if the entry for everyone comes
-    before the one for the bureaux group, nobody ever reaches the second.
+    before the one for the offices group, nobody ever reaches the second.
 wifi-event-in-place =
     The office Wi-Fi works… right now. At the next boot?
     The firewall rule must be in /etc/nftables.conf (freeradius,

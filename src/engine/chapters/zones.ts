@@ -25,23 +25,26 @@ import { toBoot, attempt, nft, results, routing, traverse, type Flux, type Resul
 import { sysctlToBoot } from '../commands/nftables';
 import { systemd } from '../systemd';
 import { WORKSTATION } from '../machines';
-import { hiveAccounts, DNSMASQ_VLAN, initialiseHive, INTERFACES_VLAN, M, hiveWorld, PASSWORD, newLan, hiveSystemd, hivePlan } from './hive';
+import { hiveAccounts, dnsmasqVlan, initialiseHive, interfacesVlan, M, hiveWorld, PASSWORD, newLan, hiveSystemd, hivePlan, fluxIn } from './hive';
+import type { Translate } from '../../texts';
 
-// The devices' traffic, and what must get through.
+// The devices' traffic, and what must get through (the devices' names in the language: see fluxIn).
 export const FLUX: (Flux & { permitted: boolean })[] = [
-  { forEachOf: 'poste-malik', to: '198.51.100.80', proto: 'tcp', port: 443, permitted: true },
-  { forEachOf: 'poste-accueil', to: 'imprimante', proto: 'tcp', port: 631, permitted: true },
-  { forEachOf: 'nas', to: 'camera-entree', proto: 'tcp', port: 554, permitted: true },
-  { forEachOf: 'telephone-visiteur', to: '198.51.100.80', proto: 'tcp', port: 443, permitted: true },
-  { forEachOf: 'telephone-visiteur', to: 'nas', proto: 'tcp', port: 445, permitted: false },
-  { forEachOf: 'telephone-visiteur', to: 'camera-entree', proto: 'tcp', port: 554, permitted: false },
-  { forEachOf: 'camera-entree', to: '203.0.113.50', proto: 'tcp', port: 443, permitted: false },
+  { forEachOf: 'malik-pc', to: '198.51.100.80', proto: 'tcp', port: 443, permitted: true },
+  { forEachOf: 'reception-pc', to: 'printer', proto: 'tcp', port: 631, permitted: true },
+  { forEachOf: 'nas', to: 'entrance-camera', proto: 'tcp', port: 554, permitted: true },
+  { forEachOf: 'visitor-phone', to: '198.51.100.80', proto: 'tcp', port: 443, permitted: true },
+  { forEachOf: 'visitor-phone', to: 'nas', proto: 'tcp', port: 445, permitted: false },
+  { forEachOf: 'visitor-phone', to: 'entrance-camera', proto: 'tcp', port: 554, permitted: false },
+  { forEachOf: 'entrance-camera', to: '203.0.113.50', proto: 'tcp', port: 443, permitted: false },
 ];
-const permitted = (r: Result) => FLUX.find((x) => x.forEachOf === r.flux.forEachOf && x.to === r.flux.to)!.permitted;
+/** The flows as the network sees them, in the language, without what must get through. */
+export const fluxFor = (t: Translate, all: (Flux & { permitted: boolean })[]) => all.map(({ permitted: _, ...x }) => fluxIn(t, x));
+const permitted = (j: Game, r: Result) => FLUX.map((x) => fluxIn(j.t, x)).find((x) => x.forEachOf === r.flux.forEachOf && x.to === r.flux.to)!.permitted;
 // An exchange with the internet (an address), not with a device on the local network (a name).
 const internet = (r: Result) => isIp(r.flux.to);
 
-const compliant = (rs: Result[]) => rs.every((r) => (permitted(r) ? r.state === 'ok' : r.state === 'blocked'));
+const compliant = (j: Game, rs: Result[]) => rs.every((r) => (permitted(j, r) ? r.state === 'ok' : r.state === 'blocked'));
 
 // ssh from the administration computer to the router (input chain), for a new connection.
 export const openSsh = (r: Ruleset) =>
@@ -57,14 +60,14 @@ export const openSsh = (r: Ruleset) =>
     size: 60,
   }).pass;
 
-const now = (j: Game) => compliant(results(j)) && openSsh(nft(j));
+const now = (j: Game) => compliant(j, results(j)) && openSsh(nft(j));
 // At the next boot: the sysctl files, /etc/nftables.conf if nftables.service is enabled.
 const toReboot = (j: Game) => {
   const l = lan(j)!;
   const active = !!systemd(j)?.services.nftables?.active;
   const rs = (active && toBoot(j)) || { tables: [] };
   const transfer = sysctlToBoot(j, 'net.ipv4.ip_forward', '0') === '1';
-  return compliant(FLUX.map((x) => attempt(l, rs, transfer, x))) && openSsh(rs);
+  return compliant(j, FLUX.map((x) => attempt(l, rs, transfer, fluxIn(j.t, x)))) && openSsh(rs);
 };
 
 export const zones: Chapter = {
@@ -102,30 +105,30 @@ export const zones: Chapter = {
   final: 'end',
   password: PASSWORD,
   accounts: hiveAccounts,
-  state: () => ({ lan: { ...newLan(true), flux: FLUX.map(({ permitted: _, ...x }) => x) }, systemd: hiveSystemd(), nft: { tables: [] } }),
+  state: (t) => ({ lan: { ...newLan(t, true), flux: fluxFor(t, FLUX) }, systemd: hiveSystemd(), nft: { tables: [] } }),
   initialise: initialiseHive,
   createWorld: (t) =>
     hiveWorld({
-      interfaces: INTERFACES_VLAN,
-      dnsmasq: DNSMASQ_VLAN,
+      interfaces: interfacesVlan(t),
+      dnsmasq: dnsmasqVlan(t),
       home: { 'email_malik.txt': f(t('zones-email-malik')), 'notes-from-sacha.txt': f(t('zones-notes-sacha'), { lines: true }) },
     }),
   events: [
     {
       id: 'without-translation',
-      condition: (j) => routing(j) && results(j).some((r) => permitted(r) && internet(r) && r.state === 'no-response' && !r.translated),
+      condition: (j) => routing(j) && results(j).some((r) => permitted(j, r) && internet(r) && r.state === 'no-response' && !r.translated),
       message: (j) => j.t('zones-event-without-translation'),
     },
     {
       id: 'responses',
-      condition: (j) => results(j).some((r) => permitted(r) && r.state === 'no-response' && (!internet(r) || !!r.translated)),
+      condition: (j) => results(j).some((r) => permitted(j, r) && r.state === 'no-response' && (!internet(r) || !!r.translated)),
       message: (j) => j.t('zones-event-responses'),
     },
     {
       id: 'all-open',
       condition: (j) => {
         const rs = results(j);
-        return rs.filter((r) => permitted(r) && internet(r)).every((r) => r.state === 'ok') && rs.some((r) => !permitted(r) && r.state !== 'blocked');
+        return rs.filter((r) => permitted(j, r) && internet(r)).every((r) => r.state === 'ok') && rs.some((r) => !permitted(j, r) && r.state !== 'blocked');
       },
       message: (j) => j.t('zones-event-all-open'),
     },

@@ -15,7 +15,7 @@ hint-vlan-end =
 
 hint-dhcp-end =
     .lead = dnsmasq still serves the old network (/etc/dnsmasq.d/hive): it needs one range per VLAN (dhcp-range), to listen on the VLAN interfaces and never on eth0 (interface=), and a reservation for the printer based on its MAC (dhcp-host). man dnsmasq; dnsmasq --test to check.
-    .solution = sudo nano /etc/dnsmasq.d/hive: interface=eth1.10,eth1.20,eth1.30; dhcp-range=10.10.10.100,10.10.10.200,12h (same for 10.10.20.x and 10.10.30.x); dhcp-host=00:00:5e:00:53:30,imprimante,10.10.30.10. Then sudo dnsmasq --test and sudo systemctl restart dnsmasq.
+    .solution = sudo nano /etc/dnsmasq.d/hive: interface=eth1.10,eth1.20,eth1.30; dhcp-range=10.10.10.100,10.10.10.200,12h (same for 10.10.20.x and 10.10.30.x); dhcp-host=00:00:5e:00:53:30,printer,10.10.30.10. Then sudo dnsmasq --test and sudo systemctl restart dnsmasq.
 
 ## Chapter 3 — The Zones
 
@@ -56,14 +56,14 @@ hint-annex-end =
 ## Chapter 7 — The Directory
 
 hint-directory-end =
-    .lead = Two people to deal with: Camille (her entry, but also her name in the groups: memberUid is not updated by itself), and Sami (an entry based on modele-ines.ldif, a free uidNumber, a hashed password, and the bureaux group). man ldapdelete, man ldapadd, man ldapmodify, man slappasswd; writing requires binding as someone (Malik's email).
-    .solution = ldapdelete -x -D cn=admin,dc=thehive,dc=example -w rayon-de-miel uid=camille,ou=people,dc=thehive,dc=example; slappasswd for the {"{"}SSHA{"}"} hash; sami.ldif based on modele-ines.ldif (uid sami, cn Sami Lemaire, sn Lemaire, uidNumber 10004, userPassword = the hash) and ldapadd -x -D … -w … -f sami.ldif; then an LDIF with "changetype: modify" for cn=bureaux (delete: memberUid camille, add: memberUid sami) and cn=equipe (delete: memberUid camille), fed to ldapmodify -x -D … -w … -f.
+    .lead = Two people to deal with: Camille (her entry, but also her name in the groups: memberUid is not updated by itself), and Sami (an entry based on ines-template.ldif, a free uidNumber, a hashed password, and the offices group). man ldapdelete, man ldapadd, man ldapmodify, man slappasswd; writing requires binding as someone (Malik's email).
+    .solution = ldapdelete -x -D cn=admin,dc=thehive,dc=example -w honeycomb uid=camille,ou=people,dc=thehive,dc=example; slappasswd for the {"{"}SSHA{"}"} hash; sami.ldif based on ines-template.ldif (uid sami, cn Sami Lemaire, sn Lemaire, uidNumber 10004, userPassword = the hash) and ldapadd -x -D … -w … -f sami.ldif; then an LDIF with "changetype: modify" for cn=offices (delete: memberUid camille, add: memberUid sami) and cn=team (delete: memberUid camille), fed to ldapmodify -x -D … -w … -f.
 
 ## Chapter 8 — The Office Wi-Fi
 
 hint-wifi-in-place =
     .lead = Four settings, in the order a request travels: the input chain must let UDP 1812 in from the access point's VLAN; the access point must be declared in clients.conf (ap-offices.txt); the ldap module enabled (a link in mods-enabled) with base_dn, an identity, and membership_filter; the users file (mods-config/files/authorize) gives the VLAN, and order matters. freeradius only rereads its files at startup: freeradius -XC to check, radtest to try.
-    .solution = /etc/nftables.conf, input chain: "iifname "eth1.30" udp dport 1812 accept"; clients.conf: client bornes with ipaddr = 10.10.30.0/24 and secret = Rk7-borne-2028; mods-available/ldap: base_dn = 'dc=thehive,dc=example', identity = 'cn=admin,dc=thehive,dc=example', password = rayon-de-miel, membership_filter uncommented; sudo ln -s ../mods-available/ldap /etc/freeradius/3.0/mods-enabled/ldap; in authorize: DEFAULT Ldap-Group == "bureaux" with Tunnel-Private-Group-Id = 10, then DEFAULT with 20 (plus Tunnel-Type = VLAN, Tunnel-Medium-Type = IEEE-802); sudo freeradius -XC, sudo systemctl reload nftables, sudo systemctl restart freeradius.
+    .solution = /etc/nftables.conf, input chain: "iifname "eth1.30" udp dport 1812 accept"; clients.conf: client aps with ipaddr = 10.10.30.0/24 and secret = Rk7-ap-2028; mods-available/ldap: base_dn = 'dc=thehive,dc=example', identity = 'cn=admin,dc=thehive,dc=example', password = honeycomb, membership_filter uncommented; sudo ln -s ../mods-available/ldap /etc/freeradius/3.0/mods-enabled/ldap; in authorize: DEFAULT Ldap-Group == "offices" with Tunnel-Private-Group-Id = 10, then DEFAULT with 20 (plus Tunnel-Type = VLAN, Tunnel-Medium-Type = IEEE-802); sudo freeradius -XC, sudo systemctl reload nftables, sudo systemctl restart freeradius.
 hint-wifi-end =
     .lead = The Wi-Fi works right now; freeradius will reread its files at boot, but what about the firewall? A rule typed with nft vanishes at reboot.
     .solution = Copy the input chain rule ("iifname "eth1.30" udp dport 1812 accept") into /etc/nftables.conf, then sudo nft -c -f /etc/nftables.conf and sudo systemctl reload nftables.

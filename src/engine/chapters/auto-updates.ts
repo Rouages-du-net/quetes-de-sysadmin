@@ -1,4 +1,4 @@
-// Story "La Coopérative" — chapter "Automatic updates": after the manual
+// Story "The Co-op" — chapter "Automatic updates": after the manual
 // update of the previous chapter, new security updates are already there.
 // Marc had installed unattended-upgrades… without ever enabling it
 // (20auto-upgrades at "0"). Enable it, receive the report by mail, reboot
@@ -170,8 +170,8 @@ export const automatic: Chapter = {
   final: 'end',
   password: PASSWORD,
   accounts: () => cooperativeAccounts(false),
-  state: () => {
-    const e = tillState(tillEnv(NEW_KEY, 'loopback'));
+  state: (t) => {
+    const e = tillState(tillEnv(t, NEW_KEY, 'loopback'));
     const s = tillSystemd();
     // The till only starts with Node.js 20 (its package.json requires it).
     s.services.till.check = (j) =>
@@ -233,6 +233,7 @@ export const automatic: Chapter = {
   },
   createWorld: (t) =>
     cooperativeWorld({
+      t,
       withoutMarc: true,
       home: { 'email_awa.txt': f(t('auto-updates-email-awa')) },
       etc: {
@@ -267,7 +268,7 @@ export const automatic: Chapter = {
         ),
       },
       sbin: BINARY_NGINX,
-      more: tillWorld({ env: tillEnv(NEW_KEY, 'loopback'), envMode: 'rw-------', logAccess: '', appLog: '' }),
+      more: tillWorld(t, { env: tillEnv(t, NEW_KEY, 'loopback'), envMode: 'rw-------', logAccess: '', appLog: '' }),
     }),
   events: [
     { id: 'syntax', condition: (j) => conf(j).errors.length > 0, message: (j) => j.t('auto-updates-event-syntax') },

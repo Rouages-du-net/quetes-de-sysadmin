@@ -32,19 +32,19 @@ vlan-plan-switch =
 
     Port 1     : to the router (eth1). 802.1Q TRUNK: VLAN 10, 20, 30
                  tagged. Nothing left on the native VLAN.
-    Ports 2-12 : VLAN 10 "bureaux"      (untagged, offices)
-    Ports 13-16: VLAN 20 "invites"      (café Wi-Fi access points)
-    Ports 17-20: VLAN 30 "equipements"  (printer, cameras)
+    Ports 2-12 : VLAN 10 "offices"      (untagged, offices)
+    Ports 13-16: VLAN 20 "guests"       (café Wi-Fi access points)
+    Ports 17-20: VLAN 30 "equipment"    (printer, cameras)
 
     Addresses (to configure on the router):
-      VLAN 10  bureaux      10.10.10.0/24   router: 10.10.10.1
-      VLAN 20  invites      10.10.20.0/24   router: 10.10.20.1
-      VLAN 30  equipements  10.10.30.0/24   router: 10.10.30.1
+      VLAN 10  offices      10.10.10.0/24   router: 10.10.10.1
+      VLAN 20  guests       10.10.20.0/24   router: 10.10.20.1
+      VLAN 30  equipment    10.10.30.0/24   router: 10.10.30.1
 
     Devices with a fixed address:
-      nas           10.10.10.5   (VLAN 10)
-      imprimante    10.10.30.10  (VLAN 30)
-      camera-entree 10.10.30.11  (VLAN 30)
+      nas             10.10.10.5   (VLAN 10)
+      printer         10.10.30.10  (VLAN 30)
+      entrance-camera 10.10.30.11  (VLAN 30)
 
 ## Events
 

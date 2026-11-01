@@ -116,3 +116,6 @@ annex-event-end =
     - Le routage par clés (cryptokey routing) : https://www.wireguard.com/#cryptokey-routing
     - wg (PersistentKeepalive) : https://man7.org/linux/man-pages/man8/wg.8.html
     - wg-quick (les routes) : https://man7.org/linux/man-pages/man8/wg-quick.8.html
+
+# Le commentaire au-dessus du pair de l'Annexe dans wg0.conf.
+annex-peer-comment = Annexe

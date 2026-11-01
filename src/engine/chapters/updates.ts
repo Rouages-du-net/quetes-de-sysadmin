@@ -105,8 +105,8 @@ export const updates: Chapter = {
   final: 'end',
   password: PASSWORD,
   accounts: () => cooperativeAccounts(false),
-  state: () => {
-    const e = tillState(tillEnv(NEW_KEY, 'loopback'));
+  state: (t) => {
+    const e = tillState(tillEnv(t, NEW_KEY, 'loopback'));
     const s = tillSystemd();
     // Marc started the till by hand: it runs, but its service isn't enabled.
     s.services.till.active = false;
@@ -122,11 +122,12 @@ export const updates: Chapter = {
   initialise: (j) => loadNginx(j),
   createWorld: (t) =>
     cooperativeWorld({
+      t,
       withoutMarc: true,
       home: { 'email_awa.txt': f(t('updates-email-awa')) },
       etc: nginxCooperative(SITE),
       sbin: BINARY_NGINX,
-      more: tillWorld({ env: tillEnv(NEW_KEY, 'loopback'), envMode: 'rw-------', logAccess: '', appLog: '' }),
+      more: tillWorld(t, { env: tillEnv(t, NEW_KEY, 'loopback'), envMode: 'rw-------', logAccess: '', appLog: '' }),
     }),
   events: [
     { id: 'interrupted', condition: (j) => !!apt(j).interrupted?.length, message: (j) => j.t('updates-event-interrupted') },

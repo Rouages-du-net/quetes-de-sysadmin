@@ -26,3 +26,13 @@ password-Kp7-hosting-2028 = Kp7-hosting-2028
 ## The Audit and The Watch
 password-butter-brioche-91 = butter-brioche-91
 password-sourdough-2028 = sourdough-2028
+## The Co-op: the till's database (in its .env)
+password-Chickpeas-42 = Chickpeas-42
+
+## The Hive: the directory (administrator, accounts) and the Wi-Fi access point's RADIUS secret
+password-honeycomb = honeycomb
+password-chosen-by-sami = chosen-by-sami
+password-hive-malik-2027 = hive-malik-2027
+password-hive-ines-2027 = hive-ines-2027
+password-hive-camille-2026 = hive-camille-2026
+password-Rk7-ap-2028 = Rk7-ap-2028

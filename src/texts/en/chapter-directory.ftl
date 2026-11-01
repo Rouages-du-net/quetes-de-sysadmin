@@ -18,11 +18,11 @@ directory-email-malik =
     on the router (slapd). But it's no longer up to date:
 
     - Camille left in December, and her account is still there;
-    - Sami, from the Annexe, has no account. He needs the same kind of
+    - Sami, from the Annex, has no account. He needs the same kind of
       entry as everyone else (Sami Lemaire, uid sami), and he must be
-      in the "bureaux" group, like us.
+      in the "offices" group, like us.
 
-    Sacha kept the file that was used for Inès: modele-ines.ldif.
+    Sacha kept the file that was used for Inès: ines-template.ldif.
 
     To read the directory: ldapsearch -x (the base is already in
     /etc/ldap/ldap.conf). To write, you have to authenticate:
@@ -51,7 +51,7 @@ directory-event-camille-rest =
     would inherit her permissions. She must be removed from it
     (ldapmodify, delete: memberUid).
 directory-event-sami-only =
-    Sami has his account, but he isn't in the "bureaux" group: the
+    Sami has his account, but he isn't in the "offices" group: the
     office Wi-Fi won't let him in. A posixGroup lists its members in
     memberUid.
 directory-event-stopped =
@@ -79,7 +79,7 @@ directory-event-end =
     - Never a clear-text password: {"{"}SSHA{"}"} (slappasswd), or
       ldappasswd; and the password chosen by the person themselves.
     - A unique uidNumber per account; and regular backups
-      (sudo slapcat > sauvegarde.ldif).
+      (sudo slapcat > backup.ldif).
 
     ANOTHER WAY
     FreeIPA (LDAP, Kerberos, certificates and sudo rules in one place),
@@ -92,3 +92,6 @@ directory-event-end =
     - OpenLDAP (tools, LDIF): https://www.openldap.org/doc/admin26/dbtools.html
     - ldapmodify: https://manpages.debian.org/trixie/ldap-utils/ldapmodify.1.en.html
     - OpenLDAP on Debian: https://wiki.debian.org/LDAP/OpenLDAPSetup
+
+# The organisation at the top of the directory (attribute o).
+directory-organisation = The Hive

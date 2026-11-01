@@ -12,11 +12,11 @@
 // eth0.
 // Sources: https://dnsmasq.org/docs/dnsmasq-man.html
 
-import { f, type Chapter } from '../world';
+import { f, name, type Chapter } from '../world';
 import type { Game } from '../shell';
 import { inside, lan } from '../lan';
 import { answersOn } from '../dnsmasq';
-import { hiveAccounts, initialiseHive, INTERFACES_VLAN, M, hiveWorld, PASSWORD, newLan, hiveSystemd, VLANS, hivePlan } from './hive';
+import { hiveAccounts, initialiseHive, interfacesVlan, M, hiveWorld, PASSWORD, newLan, hiveSystemd, VLANS, hivePlan } from './hive';
 
 const FLAT_A_DNSMASQ = `# The DHCP server of the LAN
 interface=eth1
@@ -26,7 +26,7 @@ const PRINTER = '10.10.30.10';
 const inDhcp = (j: Game) => lan(j)!.devices.filter((a) => !a.fixed);
 const servedWell = (j: Game) =>
   inDhcp(j).every((a) => a.lease && inside(a.lease, VLANS.find((v) => v.id === a.vlan)!.network)) &&
-  lan(j)!.devices.find((a) => a.name === 'imprimante')?.lease === PRINTER;
+  lan(j)!.devices.find((a) => a.name === name(j.t, 'printer'))?.lease === PRINTER;
 
 export const dhcp: Chapter = {
   id: 'dhcp',
@@ -60,16 +60,16 @@ export const dhcp: Chapter = {
   final: 'end',
   password: PASSWORD,
   accounts: hiveAccounts,
-  state: () => ({ lan: newLan(true), systemd: hiveSystemd() }),
+  state: (t) => ({ lan: newLan(t, true), systemd: hiveSystemd() }),
   initialise: initialiseHive,
   createWorld: (t) =>
-    hiveWorld({ interfaces: INTERFACES_VLAN, dnsmasq: FLAT_A_DNSMASQ, home: { 'email_malik.txt': f(t('dhcp-email-malik')) } }),
+    hiveWorld({ interfaces: interfacesVlan(t), dnsmasq: FLAT_A_DNSMASQ, home: { 'email_malik.txt': f(t('dhcp-email-malik')) } }),
   events: [
     { id: 'wan', condition: (j) => answersOn(j, 'eth0'), message: (j) => j.t('dhcp-event-wan') },
     {
       id: 'printer-elsewhere',
       condition: (j) => {
-        const b = lan(j)!.devices.find((a) => a.name === 'imprimante')?.lease;
+        const b = lan(j)!.devices.find((a) => a.name === name(j.t, 'printer'))?.lease;
         return !!b && b !== PRINTER;
       },
       message: (j) => j.t('dhcp-event-printer-elsewhere', { address: PRINTER }),

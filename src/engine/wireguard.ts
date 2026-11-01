@@ -248,9 +248,9 @@ export type TunnelState =
   | 'conf' // the peer's configuration is incomplete or wrong
   | 'address' // Endpoint: not the router, or not the right port
   | 'filtered' // the input chain drops the UDP
-  | 'cle-routeur' // the peer doesn't have the router's public key
+  | 'router-key' // the peer doesn't have the router's public key
   | 'unknown' // the router doesn't know the peer's public key
-  | 'autorisees' // the address the exchange starts from is not in the peer's AllowedIPs (router side)
+  | 'allowed-ips' // the address the exchange starts from is not in the peer's AllowedIPs (router side)
   | 'route' // the destination is not in the peer's AllowedIPs (its own side)
   | 'asleep' // the peer is behind a home router and doesn't keep the way open (PersistentKeepalive)
   | 'forwarding' // ip_forward, or the forward chain
@@ -304,7 +304,7 @@ function handshake(j: Game, d: Remote, o: Options): Handshake | { state: TunnelS
     size: 148,
   };
   if (!traverse(ruleset, 'input', 'filter', input).pass) return { state: 'filtered', name };
-  if (!i.conf.key || routerPeer.key !== isPublic(i.conf.key)) return { state: 'cle-routeur', name };
+  if (!i.conf.key || routerPeer.key !== isPublic(i.conf.key)) return { state: 'router-key', name };
   const peer = i.conf.peers.find((p) => p.key === d.key);
   if (!peer) return { state: 'unknown', name };
   return { name, peer, client, clientAddress, ruleset, transfer };
@@ -327,7 +327,7 @@ export function tunnelState(j: Game, d: Remote, o: Options): { state: TunnelStat
   if ('state' in p) return p;
   const { name, peer, client, clientAddress, ruleset, transfer } = p;
   const source = d.source ?? clientAddress;
-  if (!peer.allowed.some((a) => inside(source, a))) return { state: 'autorisees', name };
+  if (!peer.allowed.some((a) => inside(source, a))) return { state: 'allowed-ips', name };
   if (!isIp(d.to) || !client.peers[0].allowed.some((a) => inside(d.to, a))) return { state: 'route', name };
   if (!transfer) return { state: 'forwarding', name };
   const output = outputFor(j, d.to, name);
@@ -341,7 +341,7 @@ export function stateToRemote(j: Game, d: Remote, forEachOf: string, to: string,
   if ('state' in p) return p;
   const { name, peer, client, ruleset, transfer } = p;
   // On the router's side, the peer's AllowedIPs say where to send (and wg-quick's routes).
-  if (!peer.allowed.some((a) => inside(to, a))) return { state: 'autorisees', name };
+  if (!peer.allowed.some((a) => inside(to, a))) return { state: 'allowed-ips', name };
   // On the peer's side, the reply must be able to go back into the tunnel (and the packet be accepted).
   if (!client.peers[0].allowed.some((a) => inside(forEachOf, a))) return { state: 'route', name };
   if (d.behindNat && !client.peers[0].keepalive) return { state: 'asleep', name };

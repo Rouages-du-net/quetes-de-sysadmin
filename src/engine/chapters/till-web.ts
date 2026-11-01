@@ -9,7 +9,8 @@
 //   - loopback (or a list of addresses): X-Forwarded-For is walked from the
 //     right, and the first untrusted address is the client's.
 
-import { d, f, type Directory, type Node } from '../world';
+import { d, f, password, type Directory, type Node } from '../world';
+import type { Translate } from '../../texts';
 import type { Game } from '../shell';
 import { loadNginx, httpRequest, checkNginx, type App, type Client, type Request } from '../nginx';
 import { writeLog, newSystemd, systemd, type DefinitionService } from '../systemd';
@@ -24,10 +25,18 @@ export const OLD_KEY = 'pk_live_coop_4f9a2c71e8b3';
 export const NEW_KEY = 'pk_live_coop_9d27be05c4a1';
 const LOG = '/var/log/till/app.log';
 
-export const tillEnv = (key: string, trust = 'false') => `NODE_ENV=production
+// The words of the app the player sees are those of the language
+// (secret-till-* in chapter-secret.ftl): the payment key's variable, the
+// login page's path, the fields of /health.
+/** The name of the variable that holds the payment key (PAYMENT_KEY…). */
+export const paymentKey = (t: Translate) => t('secret-till-env-payment');
+/** The login page's path, under /till/ for nginx (/login…). */
+export const loginPath = (t: Translate) => `/${t('secret-till-login')}`;
+
+export const tillEnv = (t: Translate, key: string, trust = 'false') => `NODE_ENV=production
 PORT=3000
-DATABASE_URL=postgres://till:Pois-Chiches-42@localhost/till
-PAIEMENT_CLE=${key}
+DATABASE_URL=postgres://till:${password(t, 'Chickpeas-42')}@localhost/till
+${paymentKey(t)}=${key}
 TRUST_PROXY=${trust}`;
 
 /** The variables of a .env (KEY=value, without quotes or comments). */
@@ -78,25 +87,30 @@ function note(j: Game, line: string) {
   n.content = `${n.content}\n${timeOfDay} ${line}`;
 }
 
-// The app: the login page, /health, and /connexion (u=account&p=password), with a
-// lock after 5 failures from the same address.
+// The app: the home page, /health, and the login page (the x-account and
+// x-password headers), with a lock after 5 failures from the same address.
 export const TILL_APP: App = {
   service: 'till',
   pages: {},
   answer: (j, path, request) => {
     const c = till(j);
     const json = (code: number, body: unknown) => ({ code, type: 'application/json; charset=utf-8', body: JSON.stringify(body) });
+    const t = j.t;
     if (path === '/')
-      return { code: 200, body: '<!DOCTYPE html>\n<title>Caisse</title>\n<form method="post" action="/till/connexion">…</form>' };
-    if (path === '/health') return json(200, { status: 'ok', paiement: c.load.PAIEMENT_CLE === NEW_KEY ? 'ok' : 'cle_revoquee' });
-    if (path === '/connexion') {
+      return {
+        code: 200,
+        body: `<!DOCTYPE html>\n<title>${t('secret-till-title')}</title>\n<form method="post" action="/till${loginPath(t)}">…</form>`,
+      };
+    if (path === '/health')
+      return json(200, { status: 'ok', [t('secret-till-health-payment')]: c.load[paymentKey(t)] === NEW_KEY ? 'ok' : t('secret-till-health-revoked') });
+    if (path === loginPath(t)) {
       const ip = clientAddress(request, c.load.TRUST_PROXY ?? 'false');
-      const account = request.headers['x-compte'] ?? '';
+      const account = request.headers['x-account'] ?? '';
       if (c.banned.includes(ip)) {
         note(j, `rejected login for ${account} from ${ip} (locked)`);
         return json(429, { error: 'Too many attempts, try again in 15 minutes' });
       }
-      if (request.headers['x-mot-de-passe'] === 'bon') {
+      if (request.headers['x-password'] === 'good') {
         if (!c.connected.includes(account)) c.connected.push(account);
         note(j, `login ok for ${account} from ${ip}`);
         return json(200, { ok: true });
@@ -193,7 +207,7 @@ export function nginxCooperative(site: string): Record<string, Node> {
 }
 
 /** /srv/till/app (the code, the .env, the git repository) and /var/log. */
-export function tillWorld(o: { env: string; envMode?: string; logAccess: string; appLog: string }): { srv: Directory; var: Directory } {
+export function tillWorld(t: Translate, o: { env: string; envMode?: string; logAccess: string; appLog: string }): { srv: Directory; var: Directory } {
   const rightsTill = { owner: 'till', group: 'till' };
   return {
     srv: d(
@@ -215,7 +229,7 @@ export function tillWorld(o: { env: string; envMode?: string; logAccess: string;
                   rightsTill,
                 ),
                 'index.html': file(
-                  '<!DOCTYPE html>\n<html lang="fr">\n<title>Cooperative</title>\n<h1>Cooperative</h1>\n<a href="/till/">Caisse</a>\n</html>',
+                  `<!DOCTYPE html>\n<html lang="${t('secret-till-lang')}">\n<title>${t('secret-till-site')}</title>\n<h1>${t('secret-till-site')}</h1>\n<a href="/till/">${t('secret-till-title')}</a>\n</html>`,
                   rightsTill,
                 ),
                 'server.js': file(

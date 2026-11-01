@@ -101,3 +101,8 @@ departure-event-end =
     - usermod : https://man7.org/linux/man-pages/man8/usermod.8.html
     - userdel : https://man7.org/linux/man-pages/man8/userdel.8.html
     - chage : https://man7.org/linux/man-pages/man1/chage.1.html
+
+## Les ordinateurs nommés dans les clés SSH de l'équipe (marc@portable) : des
+## noms d'hôtes, en minuscules, sans accents ni espaces (partagés par les chapitres de La Coopérative)
+departure-host-marc = portable
+departure-host-lina = atelier

@@ -81,3 +81,13 @@ secret-event-end =
     LA DOCUMENTATION
     - location : https://nginx.org/en/docs/http/ngx_http_core_module.html#location
     - deny : https://nginx.org/en/docs/http/ngx_http_access_module.html
+
+## L'appli de caisse (partagée avec les chapitres suivants, voir till-web.ts) :
+## les mots que voit le joueur, dans la langue
+secret-till-env-payment = PAIEMENT_CLE
+secret-till-login = connexion
+secret-till-health-payment = paiement
+secret-till-health-revoked = cle_revoquee
+secret-till-title = Caisse
+secret-till-site = Cooperative
+secret-till-lang = fr

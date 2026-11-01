@@ -3,7 +3,7 @@
 ### never translated.
 
 chapter-annex = The Annex
-    .summary = La Ruche opens a second site: link its two networks through the VPN, with AllowedIPs acting as a routing table, and a path kept open through the Annex's ISP box.
+    .summary = The Hive opens a second site: link its two networks through the VPN, with AllowedIPs acting as a routing table, and a path kept open through the Annex's ISP box.
 
 ## Files
 
@@ -11,17 +11,17 @@ chapter-annex = The Annex
 annex-email-sami =
     From:    Sami (volunteer at the Annex)
     To:      you
-    Subject: Linking the Annex to La Ruche
+    Subject: Linking the Annex to The Hive
 
     Hi! The Annex opens on Monday. I've set up our router (a Debian
     too, behind our ISP's box); our network is
     10.20.10.0/24.
 
     What we need:
-    - the Annex computers can open the folders on La Ruche's NAS
+    - the Annex computers can open the folders on The Hive's NAS
       (10.10.10.5);
     - Malik can print on our printer (10.20.10.20) from the offices;
-    - and nothing more: La Ruche's cameras don't look at us.
+    - and nothing more: The Hive's cameras don't look at us.
 
     Malik says the remote-work VPN can do the job: our router will be one
     more peer on wg0. It took the address 10.10.99.3 in the tunnel,
@@ -43,10 +43,10 @@ annex-conf =
     ListenPort = 51820
 
     {"["}Peer]
-    # La Ruche's router:
+    # The Hive's router:
     PublicKey =
     Endpoint =
-    # La Ruche's addresses to send into the tunnel:
+    # The Hive's addresses to send into the tunnel:
     AllowedIPs =
 
 ## Events
@@ -75,11 +75,11 @@ annex-event-asleep =
     Sami: "The NAS works!" Malik: "And I can print at the Annex…
     sometimes. Then nothing for hours." The Annex router is
     behind its ISP's box: as long as it sends nothing, the
-    box forgets the path, and La Ruche can no longer reach it. WireGuard
+    box forgets the path, and The Hive can no longer reach it. WireGuard
     can keep it open by sending a small packet from time to time
     (man wg: PersistentKeepalive).
 annex-event-cameras =
-    Careful: the Annex can now reach La Ruche's cameras. Sami
+    Careful: the Annex can now reach The Hive's cameras. Sami
     only asked for the NAS: the tunnel doesn't open everything, the firewall
     (the forward chain) decides where it leads.
 annex-event-malik =
@@ -105,7 +105,7 @@ annex-event-end =
     sends a packet every 25 seconds.
 
     GOOD PRACTICE
-    - Networks that don't overlap (10.10.x for La Ruche,
+    - Networks that don't overlap (10.10.x for The Hive,
       10.20.x for the Annex), chosen before linking the sites.
     - The tunnel carries, the firewall decides: open only what
       was asked for.
@@ -116,3 +116,6 @@ annex-event-end =
     - Cryptokey routing: https://www.wireguard.com/#cryptokey-routing
     - wg (PersistentKeepalive): https://man7.org/linux/man-pages/man8/wg.8.html
     - wg-quick (routes): https://man7.org/linux/man-pages/man8/wg-quick.8.html
+
+# The comment above the Annex's peer in wg0.conf.
+annex-peer-comment = Annex

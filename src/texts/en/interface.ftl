@@ -147,12 +147,12 @@ plan-note-wiki = wiki
 plan-note-archives = backups
 plan-note-host = website host
 plan-note-router = router
-# { $id }: the VLAN number; { $name }: its name in the configuration (bureaux, invites…).
+# { $id }: the VLAN number; { $name }: its name in the configuration (offices, guests…).
 plan-vlan = VLAN { $id } · { $name }
 plan-note-remote-work = remote work
-plan-annex = Annexe router
+plan-annex = Annex router
 plan-note-annex = second site
-plan-network-annex = Annexe network
+plan-network-annex = Annex network
 
 ## My progress (see src/engine/progress.ts)
 

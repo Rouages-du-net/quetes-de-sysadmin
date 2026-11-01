@@ -7,6 +7,7 @@ import { storyMachine } from '../src/engine/machines';
 import { layOut, landmarks, type ElementPlan } from '../src/engine/plan';
 import { Console } from '../src/engine/console';
 import { LANGUAGES, translator } from '../src/texts';
+import { name } from '../src/engine/world';
 
 const all = (e: ElementPlan): ElementPlan[] => [e, ...(e.children ?? []).flatMap(all)];
 const ERASER = ['lighthouse', 'village', 'root', 'backup'];
@@ -38,8 +39,8 @@ for (const language of LANGUAGES)
       const plan = (id: string) => all(STORIES.find((h) => h.id === 'hive')!.chapters.find((c) => c.id === id)!.plan!(t)).map((e) => e.name);
       expect(plan('vlan')).not.toContain('web');
       expect(plan('dmz')).toContain('web');
-      expect(plan('dmz')).not.toContain('borne-wifi');
-      expect(plan('wifi')).toEqual(expect.arrayContaining(['web', 'borne-wifi', 'malik-laptop', t('plan-annex')]));
+      expect(plan('dmz')).not.toContain(name(t, 'wifi-ap'));
+      expect(plan('wifi')).toEqual(expect.arrayContaining(['web', name(t, 'wifi-ap'), 'malik-laptop', t('plan-annex')]));
     });
 
     it('the diagram overlaps no box, and each parent sits between its children', () => {
