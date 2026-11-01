@@ -355,7 +355,7 @@ export const SSH: Record<string, Command> = {
       if (!target) return game.error(USAGE);
       if (args.includes('-G')) return configurationEffective(game, target, { identities, port, hop });
       // Le « vrai » ssh (acces.ts) : rebonds, tunnels, réseau interne, machines où l'on gère ses clés.
-      if (game.host !== 'poste' || hop || tunnels.length || withoutSession || trueSsh(game, target))
+      if (game.host !== 'desk' || hop || tunnels.length || withoutSession || trueSsh(game, target))
         return completeSsh(game, target, command, { identities, port, hop, tunnels, withoutSession, planBack });
       const [givesUser, alias] = target.includes('@') ? target.split('@', 2) : [null, target];
       const config = configuration(game, alias);

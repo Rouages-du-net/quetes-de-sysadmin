@@ -58,7 +58,7 @@ export class Console {
   // reconnecter retrouve le chapitre là où on l'a laissé.
   private sessions = new Map<string, Shell>();
   // Les machines où l'on s'est connecté·e pendant cette partie (le plan du réseau les marque).
-  visited = new Set<string>(['poste']);
+  visited = new Set<string>(['desk']);
 
   constructor(private options: OptionsConsole = {}) {
     this.t = translator(options.language);
@@ -68,7 +68,7 @@ export class Console {
 
   private newWorkstation(knownHosts = this.options.knownHosts): Shell {
     const keys = MACHINES.filter((m) => this.isOpen(m.story!) && !m.withoutKey);
-    const s = new Shell(workstation(keys), this.t.language, 'poste');
+    const s = new Shell(workstation(keys), this.t.language, 'desk');
     // ssh demande au serveur d'en face sa configuration appliquée (sshd).
     // (celui du chapitre qu'ouvrirait la connexion : un chapitre peut commencer avec SSH sur un autre port).
     s.state.sshdDistant = (name: string) => this.sessionFor(name).state.sshd?.load ?? null;

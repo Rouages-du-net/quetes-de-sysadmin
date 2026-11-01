@@ -41,7 +41,7 @@ const texts = (j: Game): string[] => {
     .filter(([, n]) => n.type === 'fichier')
     .map(([name]) => j.read(`${(j as Shell).home}/${name}`) ?? '');
 };
-const traceOk = (j: Game) => texts(j).some((t) => /^# Nmap .* as: nmap .*-sV/m.test(t) && t.includes(`Nmap scan report for ${machineName(j.t, 'fournil')}`) && /5432\/tcp/.test(t) && /6379\/tcp/.test(t));
+const traceOk = (j: Game) => texts(j).some((t) => /^# Nmap .* as: nmap .*-sV/m.test(t) && t.includes(`Nmap scan report for ${machineName(j.t, 'bakery')}`) && /5432\/tcp/.test(t) && /6379\/tcp/.test(t));
 
 const readNotes = (j: Game) => j.read(path(j.t, NOTES));
 const words = (j: Game, key: string) => j.t(key).split(',').map((m) => m.trim().toLowerCase());
@@ -79,7 +79,7 @@ export const scope: Chapter = {
       installed: Object.fromEntries(BASE_INSTALLED.map((p) => [p, PACKAGES[p].version])),
       updates: {},
     },
-    systemd: newSystemd('fournil', NOW - 5 * 86_400_000, NOW, { ssh: serviceSsh() }),
+    systemd: newSystemd('bakery', NOW - 5 * 86_400_000, NOW, { ssh: serviceSsh() }),
   }),
   initialise: (j) => {
     loadSshd(j);

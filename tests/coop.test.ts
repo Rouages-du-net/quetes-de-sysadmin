@@ -32,7 +32,7 @@ for (const language of LANGUAGES)
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
-      play(['ssh cooperative', 'yes']);
+      play(['ssh coop', 'yes']);
       return { c, jouer: play, editer: edit };
     };
 
@@ -254,11 +254,11 @@ for (const language of LANGUAGES)
       expect(all).toContain("5 packages can be upgraded. Run 'apt list --upgradable' to see them.");
       expect(all).toContain('linux-image-amd64/trixie-security 6.12.48-1 amd64 [upgradable from: 6.12.38-1]');
       play(['tmux new -s maj']);
-      expect(c.prompt()).toBe(L('[maj] vous@cooperative:~$'));
+      expect(c.prompt()).toBe(L('[maj] vous@coop:~$'));
       all = play(['sudo apt upgrade', 'y']);
       expect(all).toContain('client_loop: send disconnect: Broken pipe');
-      expect(c.prompt()).toBe(L('vous@poste:~$'));
-      all = play(['ssh cooperative', 'tmux ls', 'tmux attach -t maj']);
+      expect(c.prompt()).toBe(L('vous@desk:~$'));
+      all = play(['ssh coop', 'tmux ls', 'tmux attach -t maj']);
       contains(all, 'la mise à jour tournait dans tmux');
       expect(all).toContain('maj: 1 windows');
       expect(all).toContain('Setting up linux-image-amd64 (6.12.48-1) ...');
@@ -266,8 +266,8 @@ for (const language of LANGUAGES)
       expect(all).toContain('linux-image-6.12.48+deb13-amd64');
       expect(all).toContain('[detached (from session maj)]');
       contains(all, 'la caisse ne répond plus');
-      all = play(['ssh cooperative', 'uname -r', 'systemctl --failed', 'sudo systemctl enable --now till']);
-      expect(all).toContain(machinesInLanguage(translator(language), 'Linux cooperative 6.12.48+deb13-amd64'));
+      all = play(['ssh coop', 'uname -r', 'systemctl --failed', 'sudo systemctl enable --now till']);
+      expect(all).toContain(machinesInLanguage(translator(language), 'Linux coop 6.12.48+deb13-amd64'));
       contains(all, 'https://man.openbsd.org/tmux');
       expect(c.finished).toContain('updates');
     });
@@ -276,13 +276,13 @@ for (const language of LANGUAGES)
       const { c, jouer: play } = part(BEFORE_UPDATE);
       let all = play(['sudo apt update', 'sudo apt upgrade -y']);
       expect(all).toContain('client_loop: send disconnect: Broken pipe');
-      all = play(['ssh cooperative', 'sudo apt upgrade -y', 'sudo apt install curl']);
+      all = play(['ssh coop', 'sudo apt upgrade -y', 'sudo apt install curl']);
       contains(all, 'dpkg --configure -a');
       expect(all).toContain("Error: dpkg was interrupted, you must manually run 'dpkg --configure -a' to correct the problem.");
       all = play(['sudo dpkg --configure -a', 'sudo apt upgrade']);
       expect(all).toContain('Setting up libc6 (2.41-12+deb13u1) ...');
       expect(all).toContain('Upgrading: 0, Installing: 0');
-      play(['sudo systemctl enable till', 'sudo systemctl reboot', 'ssh cooperative']);
+      play(['sudo systemctl enable till', 'sudo systemctl reboot', 'ssh coop']);
       expect(c.finished).toContain('updates');
     });
 
@@ -293,8 +293,8 @@ for (const language of LANGUAGES)
       expect(all).toContain('sessions should be nested with care, unset $TMUX to force');
       all = play(['exit']);
       expect(all).toContain('[exited]');
-      expect(c.prompt()).toBe(L('vous@cooperative:~$'));
-      play(['tmux new -s maj', 'sudo apt update', 'sudo apt upgrade -y', 'ssh cooperative', 'sudo systemctl enable till']);
+      expect(c.prompt()).toBe(L('vous@coop:~$'));
+      play(['tmux new -s maj', 'sudo apt update', 'sudo apt upgrade -y', 'ssh coop', 'sudo systemctl enable till']);
       all = play(['uname -r']);
       expect(all).toContain('6.12.38+deb13-amd64');
       expect(c.finished).not.toContain('updates');
@@ -367,7 +367,7 @@ for (const language of LANGUAGES)
       // Redémarrage immédiat : la connexion tombe.
       expect(all).toContain('closed by remote host');
       expect(c.remote).toBeNull();
-      all += play(['ssh cooperative']);
+      all += play(['ssh coop']);
       contains(all, 'en plein après-midi');
       contains(all, 'nodejs vient de passer en version 22');
       expect(all).not.toContain('Bravo');

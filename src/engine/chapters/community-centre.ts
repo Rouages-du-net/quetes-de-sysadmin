@@ -94,7 +94,7 @@ const serviceSsh = (): DefinitionService => ({
 export const homeState = (services: Record<string, DefinitionService> = {}, more: Record<string, unknown> = {}) => ({
   sshReel: true,
   sshd: { load: {}, keysToLoad: 0, reloads: 0 },
-  systemd: newSystemd('maison', NOW - 9 * 86_400_000, NOW, { ssh: serviceSsh(), ...services }),
+  systemd: newSystemd('community', NOW - 9 * 86_400_000, NOW, { ssh: serviceSsh(), ...services }),
   ...more,
 });
 
@@ -127,7 +127,7 @@ export function homeWorld(o: { passwords: 'yes' | 'no' | null; home: Record<stri
       etc: d(
         {
           ...accountsFiles(),
-          hostname: f('maison', { lines: true, owner: 'root' }),
+          hostname: f('community', { lines: true, owner: 'root' }),
           hosts: f(HOSTS, { lines: true, owner: 'root' }),
           ssh: d(
             { sshd_config: f(sshdConfig(o.passwords), { lines: true, owner: 'root' }), 'sshd_config.d': d({}, undefined, root) },
@@ -199,10 +199,10 @@ export const homePlan =
       t,
       {
         role: 'routeur',
-        name: machineName(t, 'maison'),
+        name: machineName(t, 'community'),
         address: '192.0.2.19',
         note: t('plan-note-passerelle'),
-        host: 'maison',
+        host: 'community',
         children: [
           {
             role: 'reseau',

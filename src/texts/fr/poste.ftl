@@ -45,24 +45,24 @@ poste-cles-recues-suite =
 
 ## Messages d'accueil des machines (motd), affichés à la connexion
 
-machine-royaume-motd = Royaume — serveur de la gardienne du phare. Accès réservé aux voyageur·ses munis d'une clé.
+machine-kingdom-motd = Royaume — serveur de la gardienne du phare. Accès réservé aux voyageur·ses munis d'une clé.
 machine-datacenter-motd = Datacenter — serveur web de la médiathèque. Toute intervention est journalisée.
-machine-fourmiliere-motd = La Fourmilière — l'ordinateur du café associatif. « Merci de venir nous aider ! » (Kofi)
-machine-manuscrit-motd = Manuscrit — l'ordinateur d'Inès. Ne pas toucher au roman sans sauvegarde !
-machine-bibliotheque-motd = Bibliothèque du quartier — ce serveur sera éteint ce soir à minuit.
-machine-lettres-motd = Les Lettres du quartier — le serveur de l'association. Merci de prendre soin de lui !
-machine-fabrique-motd = La Fabrique — le serveur du fablab. Ici, on répare, on prête, on bidouille.
+machine-anthill-motd = La Fourmilière — l'ordinateur du café associatif. « Merci de venir nous aider ! » (Kofi)
+machine-manuscript-motd = Manuscrit — l'ordinateur d'Inès. Ne pas toucher au roman sans sauvegarde !
+machine-library-motd = Bibliothèque du quartier — ce serveur sera éteint ce soir à minuit.
+machine-letters-motd = Les Lettres du quartier — le serveur de l'association. Merci de prendre soin de lui !
+machine-workshop-motd = La Fabrique — le serveur du fablab. Ici, on répare, on prête, on bidouille.
 machine-gazette-motd = La Gazette du quartier — le serveur du journal. On publie avec git push, pas à la main.
-machine-ludotheque-motd = La Ludothèque du quartier — le serveur des bénévoles. On joue, on prête, on range les pions.
+machine-games-motd = La Ludothèque du quartier — le serveur des bénévoles. On joue, on prête, on range les pions.
 machine-radio-motd = Radio Quartier — le serveur de l'antenne. Astreinte : un œil sur le flux, l'autre sur les journaux.
-machine-maison-motd = Maison des associations — la passerelle. Derrière elle : le wiki et les archives.
-machine-cooperative-motd = L'épicerie coopérative du quartier — le serveur de la caisse. Ici, on partage tout, sauf les mots de passe.
-machine-ruche-motd = La Ruche — le routeur du tiers-lieu. eth0 : la box ; eth1 : le commutateur.
-machine-fournil-motd = Le Fournil — le serveur de la boulangerie : le site, l'appli de commandes, sa base. Un audit est passé par là.
-machine-labo-motd = Le Labo — le serveur du club photo : la galerie et les archives des membres. Deux disques en RAID 1.
-machine-jardin-motd = Les Jardins partagés — le site et le courrier de l'association (gardens.example). Merci de prendre soin des plants comme du serveur !
-machine-pilote-motd = Les maisons de quartier — le poste de pilotage : d'ici, Ansible s'occupe des serveurs des trois maisons.
-machine-rustine-motd = La Rustine — l'atelier vélo associatif (cycles.example). Un serveur tout neuf, avec Caddy. Pensez à regonfler vos pneus !
+machine-community-motd = Maison des associations — la passerelle. Derrière elle : le wiki et les archives.
+machine-coop-motd = L'épicerie coopérative du quartier — le serveur de la caisse. Ici, on partage tout, sauf les mots de passe.
+machine-hive-motd = La Ruche — le routeur du tiers-lieu. eth0 : la box ; eth1 : le commutateur.
+machine-bakery-motd = Le Fournil — le serveur de la boulangerie : le site, l'appli de commandes, sa base. Un audit est passé par là.
+machine-lab-motd = Le Labo — le serveur du club photo : la galerie et les archives des membres. Deux disques en RAID 1.
+machine-garden-motd = Les Jardins partagés — le site et le courrier de l'association (gardens.example). Merci de prendre soin des plants comme du serveur !
+machine-pilot-motd = Les maisons de quartier — le poste de pilotage : d'ici, Ansible s'occupe des serveurs des trois maisons.
+machine-patch-motd = La Rustine — l'atelier vélo associatif (cycles.example). Un serveur tout neuf, avec Caddy. Pensez à regonfler vos pneus !
 machine-petrin-motd = Le Fournil — nouveau serveur (migration), six mois après l'audit. La veille de sécurité, maintenant sans Salomé.
 
 # En se reconnectant à une machine dont le chapitre est en cours.

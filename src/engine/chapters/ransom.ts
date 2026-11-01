@@ -77,7 +77,7 @@ function usbRepo(t: Game['t']): Repo {
       const text = t(id);
       files[path(t, `${SHARE}/${rel}`)] = { content: text, size: new TextEncoder().encode(text).length, modified: time - 86_400_000 };
     }
-    addSnapshot(repo, { id: hex(`instantane-ludo-${i}`), time, host: 'ludotheque', paths: [path(t, SHARE)], files });
+    addSnapshot(repo, { id: hex(`instantane-ludo-${i}`), time, host: 'games', paths: [path(t, SHARE)], files });
   });
   repo.checked = true;
   return repo;
@@ -188,7 +188,7 @@ export const ransom: Chapter = {
       tree,
     };
     return {
-      systemd: newSystemd('ludotheque', Date.UTC(2027, 5, 1, 7, 0, 0), Date.UTC(2027, 5, 21, 8, 45, 0), {
+      systemd: newSystemd('games', Date.UTC(2027, 5, 1, 7, 0, 0), Date.UTC(2027, 5, 21, 8, 45, 0), {
         ssh: {
           description: 'OpenBSD Secure Shell server',
           active: true,
@@ -212,7 +212,7 @@ export const ransom: Chapter = {
         {
           path: NAS,
           capacity: 2000 * Go,
-          name: `//nas.${machineName(t, 'ludotheque')}.internal${path(t, '/sauvegardes')}`,
+          name: `//nas.${machineName(t, 'games')}.internal${path(t, '/sauvegardes')}`,
           system: 'cifs',
           options: 'relatime,vers=3.1.1,uid=0,file_mode=0777,dir_mode=0777',
         },
@@ -280,7 +280,7 @@ export const ransom: Chapter = {
       target[name] = file(t(id), ludo(directory ? 'berenice' : 'accueil'));
     }
     return place({
-      etc: place({ ...accountsFiles(), hostname: file('ludotheque') }),
+      etc: place({ ...accountsFiles(), hostname: file('games') }),
       home: place({
         vous: d({ 'message_de_berenice.txt': f(t('ransom-message-de-berenice')) }),
         accueil: place(

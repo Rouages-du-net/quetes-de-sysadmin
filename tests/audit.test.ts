@@ -31,7 +31,7 @@ for (const language of LANGUAGES)
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
-      play(['ssh fournil', 'yes']);
+      play(['ssh bakery', 'yes']);
       return { c, jouer: play, editer: edit };
     };
 
@@ -104,7 +104,7 @@ for (const language of LANGUAGES)
       all = play(['sudo ss -tln', 'sudo ufw status verbose']);
       expect(all).toContain('127.0.0.1:6379');
       expect(c.finished).not.toContain('exposure');
-      play(['exit', 'ssh fournil']);
+      play(['exit', 'ssh bakery']);
       expect(c.finished).toContain('exposure');
     });
 
@@ -120,7 +120,7 @@ for (const language of LANGUAGES)
         'sudo ufw enable',
         'y',
         'exit',
-        'ssh fournil',
+        'ssh bakery',
       ]);
       expect(c.finished).toContain('exposure');
     });
@@ -227,15 +227,15 @@ ${outside}`;
       const { c, jouer: play, editer: edit } = part();
       let all = play(['cat lettre-de-mission.txt']);
       contains(all, 'LETTRE DE MISSION');
-      all = play(['nmap -sV -oN inventaire.txt fournil.internal']);
-      expect(all).toContain(machinesInLanguage(translator(language), 'Nmap scan report for fournil.internal (192.0.2.22)'));
+      all = play(['nmap -sV -oN inventaire.txt bakery.internal']);
+      expect(all).toContain(machinesInLanguage(translator(language), 'Nmap scan report for bakery.internal (192.0.2.22)'));
       expect(all).toContain('Not shown: 995 closed tcp ports (reset)');
       expect(all).toContain('5432/tcp open  postgresql PostgreSQL DB 17.0 - 17.2');
       expect(all).toContain('443/tcp  open  ssl/http   nginx 1.26.3');
       expect(all).toContain('Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel');
       expect(all).toContain('Nmap done: 1 IP address (1 host up) scanned in');
       all = play(['cat inventaire.txt']);
-      expect(all).toMatch(new RegExp(`^# Nmap 7\\.95 scan initiated .* as: nmap -sV -oN \\S+ ${machinesInLanguage(translator(language), 'fournil.internal')}`, 'm'));
+      expect(all).toMatch(new RegExp(`^# Nmap 7\\.95 scan initiated .* as: nmap -sV -oN \\S+ ${machinesInLanguage(translator(language), 'bakery.internal')}`, 'm'));
       expect(all).toMatch(/# Nmap done at .* -- 1 IP address \(1 host up\) scanned in/);
       expect(c.finished).not.toContain('scope');
       const review = edit('nano notes-audit.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*/, 'x'));
@@ -270,18 +270,18 @@ ${outside}`;
     it('nmap — messages : sans cible, option inconnue, machine muette, nom inconnu, -sn, -p', () => {
       const { jouer: play } = part();
       expect(play(['nmap'])).toContain('WARNING: No targets were specified, so 0 hosts scanned.');
-      expect(play(['nmap -z fournil.internal'])).toContain("nmap: invalid option -- 'z'");
-      expect(play(['nmap --frobnicate fournil.internal'])).toContain("nmap: unrecognized option '--frobnicate'");
+      expect(play(['nmap -z bakery.internal'])).toContain("nmap: invalid option -- 'z'");
+      expect(play(['nmap --frobnicate bakery.internal'])).toContain("nmap: unrecognized option '--frobnicate'");
       const muted = play(['nmap 192.0.2.99']);
       expect(muted).toContain('Note: Host seems down. If it is really up, but blocking our ping probes, try -Pn');
       expect(muted).toContain('Nmap done: 1 IP address (0 hosts up) scanned in');
       expect(play(['nmap inconnue.internal'])).toContain('Failed to resolve "inconnue.internal".');
-      expect(play(['nmap -sn fournil.internal'])).toContain('Host is up (0.011s latency).');
-      const ports = play(['nmap -p 22,3306 fournil.internal']);
+      expect(play(['nmap -sn bakery.internal'])).toContain('Host is up (0.011s latency).');
+      const ports = play(['nmap -p 22,3306 bakery.internal']);
       expect(ports).toContain('22/tcp   open   ssh');
       expect(ports).toContain('3306/tcp closed mysql');
-      expect(play(['nmap -sS fournil.internal'])).toContain('requires root privileges');
-      expect(play(['sudo nmap -sS fournil.internal'])).toContain('22/tcp');
+      expect(play(['nmap -sS bakery.internal'])).toContain('requires root privileges');
+      expect(play(['sudo nmap -sS bakery.internal'])).toContain('22/tcp');
       expect(play(['nmap -V'])).toContain('Nmap version 7.95');
     });
 
@@ -302,7 +302,7 @@ ${fr ? 'FINT-4350 : choisir et installer un outil d’intégrité des fichiers.'
 
     it('chapitre 5 — solution : nmap, lynis, mise à jour, durcissement, preuves, rapport', () => {
       const { c, jouer: play, editer: edit } = part(ALL);
-      let all = play(['nmap -sV fournil.internal']);
+      let all = play(['nmap -sV bakery.internal']);
       expect(all).toContain('Not shown: 997 filtered tcp ports (no-response)');
       expect(all).toContain('22/tcp  open  ssh      OpenSSH 10.0p1 Debian 7 (protocol 2.0)');
       expect(all).not.toContain('5432/tcp');
@@ -317,7 +317,7 @@ ${fr ? 'FINT-4350 : choisir et installer un outil d’intégrité des fichiers.'
       all = play(['sudo lynis audit system']);
       expect(all).toContain('Hardening index : 80 [################    ]');
       expect(all).not.toContain('Warnings (');
-      all = play(['nmap -sV fournil.internal']);
+      all = play(['nmap -sV bakery.internal']);
       expect(all).toContain('OpenSSH 10.0p1 Debian 7+deb13u1 (protocol 2.0)');
       expect(c.finished).not.toContain('follow-up');
       edit('nano rapport-cloture.md', () => REPORT('80'));
@@ -328,7 +328,7 @@ ${fr ? 'FINT-4350 : choisir et installer un outil d’intégrité des fichiers.'
       const { c, jouer: play, editer: edit } = part(ALL);
       play(['sudo apt update', 'sudo apt upgrade -y']);
       edit('sudo nano /etc/login.defs', (t) => t.replace('UMASK           022', 'UMASK           027'));
-      play(['sudo lynis audit system', 'nmap -sV fournil.internal']);
+      play(['sudo lynis audit system', 'nmap -sV bakery.internal']);
       expect(c.shell.state.lynis.hint).toBe(72);
       edit('nano rapport-cloture.md', () => REPORT('72'));
       expect(c.finished).toContain('follow-up');
@@ -359,7 +359,7 @@ ${fr ? 'FINT-4350 : choisir et installer un outil d’intégrité des fichiers.'
       contains(play(['lynis audit system']), 'Lynis a besoin de root');
       expect(play(['lynis show version'])).toBe('3.1.4');
       contains(play(['lynis']), 'Utilisation : lynis audit system');
-      const ports = play(['nmap -p 22,5432,6379 fournil.internal']);
+      const ports = play(['nmap -p 22,5432,6379 bakery.internal']);
       expect(ports).toContain('5432/tcp filtered postgresql');
       expect(ports).toContain('6379/tcp filtered redis');
       const inside = play(['nmap -p 5432,6379 127.0.0.1']);

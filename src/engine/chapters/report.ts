@@ -103,7 +103,7 @@ export const report: Chapter = {
   accounts: () => bakeryAccounts(true),
   state: () => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
-    systemd: newSystemd('fournil', NOW - 5 * 86_400_000, NOW, {
+    systemd: newSystemd('bakery', NOW - 5 * 86_400_000, NOW, {
       ssh: serviceSsh(),
       commandes: {
         description: 'Fournil orders (commandes)',

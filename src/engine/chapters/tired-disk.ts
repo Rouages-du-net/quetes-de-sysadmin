@@ -73,7 +73,7 @@ export const fatigue: Chapter = {
         'message_d_odile.txt': f(t('tired-disk-message-d-odile')),
         'procedure_hebergeur.txt': f(t('labo-procedure-hebergeur'), { lines: true }),
       },
-      { mail: smartdBox(machineName(t, 'labo')) },
+      { mail: smartdBox(machineName(t, 'lab')) },
     ),
   beforeCommand: beforeLabCommand,
   afterCommand: (j) => devUpdate(j),

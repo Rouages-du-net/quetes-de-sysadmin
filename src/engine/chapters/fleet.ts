@@ -21,7 +21,7 @@ export const NAMES = Object.keys(CENTRES);
 const NOW = Date.UTC(2027, 8, 14, 9, 0, 0);
 
 // La clé du compte vous sur pilote ; sa partie publique est dans ~deploy/.ssh/authorized_keys sur chaque centre.
-export const KEY = generateKey('pilote-ansible', 'vous@pilote');
+export const KEY = generateKey('pilote-ansible', 'vous@pilot');
 
 export const HOSTS = `127.0.0.1\tlocalhost
 192.0.2.25\tpilote.internal pilote
@@ -152,7 +152,7 @@ export const pilotAccounts = (): Accounts => ({
 });
 
 export const pilotState = () => ({
-  systemd: newSystemd('pilote', NOW - 30 * 86_400_000, NOW, {
+  systemd: newSystemd('pilot', NOW - 30 * 86_400_000, NOW, {
     ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
   }),
 });
@@ -168,7 +168,7 @@ export function pilotWorld(t: Parameters<typeof player>[0], o: { known: string[]
       etc: d(
         {
           ...accountsFiles(),
-          hostname: f('pilote', { lines: true, owner: 'root' }),
+          hostname: f('pilot', { lines: true, owner: 'root' }),
           hosts: f(HOSTS, { lines: true, owner: 'root' }),
           ansible: d({ 'ansible.cfg': f('# Since Ansible 2.12 (core):\n# To generate an example config file (a "disabled" one with all default settings, commented out):\n#               $ ansible-config init --disabled > ansible.cfg', { lines: true, owner: 'root' }) }, undefined, root),
         },

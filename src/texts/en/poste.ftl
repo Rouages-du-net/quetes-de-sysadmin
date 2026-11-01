@@ -45,24 +45,24 @@ poste-cles-recues-suite =
 
 ## Welcome messages of the machines (motd), shown on login
 
-machine-royaume-motd = Kingdom — server of the lighthouse keeper. Access restricted to travellers carrying a key.
+machine-kingdom-motd = Kingdom — server of the lighthouse keeper. Access restricted to travellers carrying a key.
 machine-datacenter-motd = Data centre — web server of the media library. Every intervention is logged.
-machine-fourmiliere-motd = The Anthill — the computer of the community café. "Thanks for coming to help us!" (Kofi)
-machine-manuscrit-motd = Manuscript — Inès's computer. Don't touch the novel without a backup!
-machine-bibliotheque-motd = Neighbourhood library — this server will be shut down tonight at midnight.
-machine-lettres-motd = The Neighbourhood Letters — the association's server. Please take good care of it!
-machine-fabrique-motd = The Workshop — the fablab's server. Here, we repair, we lend, we tinker.
+machine-anthill-motd = The Anthill — the computer of the community café. "Thanks for coming to help us!" (Kofi)
+machine-manuscript-motd = Manuscript — Inès's computer. Don't touch the novel without a backup!
+machine-library-motd = Neighbourhood library — this server will be shut down tonight at midnight.
+machine-letters-motd = The Neighbourhood Letters — the association's server. Please take good care of it!
+machine-workshop-motd = The Workshop — the fablab's server. Here, we repair, we lend, we tinker.
 machine-gazette-motd = The Neighbourhood Gazette — the newspaper's server. We publish with git push, not by hand.
-machine-ludotheque-motd = The Neighbourhood Game Library — the volunteers' server. We play, we lend, we put the pieces away.
+machine-games-motd = The Neighbourhood Game Library — the volunteers' server. We play, we lend, we put the pieces away.
 machine-radio-motd = Radio Quartier — the station's server. On call: one eye on the stream, the other on the logs.
-machine-maison-motd = Community Centre — the gateway. Behind it: the wiki and the archives.
-machine-cooperative-motd = The neighbourhood food co-op — the till's server. Here, we share everything except passwords.
-machine-ruche-motd = The Hive — the community space's router. eth0: the ISP box; eth1: the switch.
-machine-fournil-motd = The Bakery — the bakery's server: the website, the orders app and its database. An audit has been through here.
-machine-labo-motd = The Lab — the photo club's server: the gallery and the members' archives. Two disks in RAID 1.
-machine-jardin-motd = The Community Gardens — the association's website and mail (gardens.example). Please look after the seedlings and the server alike!
-machine-pilote-motd = The neighbourhood centres — the control machine: from here, Ansible looks after the three centres' servers.
-machine-rustine-motd = The Patch — the community bike workshop (cycles.example). A brand-new server, with Caddy. Remember to pump up your tyres!
+machine-community-motd = Community Centre — the gateway. Behind it: the wiki and the archives.
+machine-coop-motd = The neighbourhood food co-op — the till's server. Here, we share everything except passwords.
+machine-hive-motd = The Hive — the community space's router. eth0: the ISP box; eth1: the switch.
+machine-bakery-motd = The Bakery — the bakery's server: the website, the orders app and its database. An audit has been through here.
+machine-lab-motd = The Lab — the photo club's server: the gallery and the members' archives. Two disks in RAID 1.
+machine-garden-motd = The Community Gardens — the association's website and mail (gardens.example). Please look after the seedlings and the server alike!
+machine-pilot-motd = The neighbourhood centres — the control machine: from here, Ansible looks after the three centres' servers.
+machine-patch-motd = The Patch — the community bike workshop (cycles.example). A brand-new server, with Caddy. Remember to pump up your tyres!
 machine-petrin-motd = The Bakery — new server (migration), six months after the audit. The security watch, now without Salomé.
 
 # When reconnecting to a machine whose chapter is in progress.

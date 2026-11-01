@@ -104,7 +104,7 @@ export const colocation: Chapter = {
   password: 'fourmis-2026',
   accounts,
   state: (t) => ({
-    systemd: newSystemd('lettres', Date.UTC(2027, 2, 1, 6, 12, 0), Date.UTC(2027, 2, 13, 10, 0, 0), {
+    systemd: newSystemd('letters', Date.UTC(2027, 2, 1, 6, 12, 0), Date.UTC(2027, 2, 13, 10, 0, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,
@@ -139,7 +139,7 @@ export const colocation: Chapter = {
       { pid: 802, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
     ],
     // Le DNS de cafe.example pointe déjà ici (Kofi s'en est occupé).
-    nginx: { load: null, names: ['lettres', LETTERS, `www.${LETTERS}`, CAFE, `www.${CAFE}`, '203.0.113.10'] },
+    nginx: { load: null, names: ['letters', LETTERS, `www.${LETTERS}`, CAFE, `www.${CAFE}`, '203.0.113.10'] },
     applis: {
       '127.0.0.1:3000': {
         service: 'agenda',
@@ -155,7 +155,7 @@ export const colocation: Chapter = {
     return place({
       etc: place({
         ...accountsFiles(),
-        hostname: file('lettres'),
+        hostname: file('letters'),
         nginx: place({
           'nginx.conf': file(NGINX_CONF),
           'mime.types': file(MIME),

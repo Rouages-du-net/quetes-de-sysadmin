@@ -24,7 +24,7 @@ language, like bash's builtin; each language adds its own name for it
 | `manuel.ftl` | each command's `man` page, and `--help` |
 | `commandes-*.ftl` | the commands' messages (`ls`, `tar`, `git`…) |
 | `noms.ftl` | the names of places, objects and accounts that you type |
-| `machines.ftl` | the names of the network's machines (`royaume` → `kingdom`) |
+| `machines.ftl` | the names of the network's machines (`kingdom` → `royaume` in French) |
 | `mots-de-passe.ftl` | the passwords the stories give (`farine-2028` → `flour-2028`) |
 | `indices-<story>.ftl` | the graduated hints of a story's chapters |
 
@@ -129,11 +129,11 @@ files the texts describe (sudoers, configurations, logs), write the
 account's name in the language (`you    ALL=(ALL:ALL) ALL`).
 
 **Machine names** are translated in `machines.ftl`
-(`machine-royaume = kingdom`, `machine-poste = desk`): it is the name you
+(`machine-kingdom = royaume`, `machine-desk = poste` in French): it is the name you
 type (`ssh kingdom`), the one in the prompt, in `/etc/hosts`, in the
 workstation's `~/.ssh/config` and keys (`~/.ssh/id_kingdom`), in
 `/etc/hostname` and in the logs. A valid host name (RFC 1123): lower case,
-digits and dashes. The engine keeps the French identifier (`machineName()`
+digits and dashes. The engine's identifier is the English name (`machineName()`
 and `hostInLanguage()` in `src/engine/machines.ts`); a save made in
 another language (`known_hosts`, `~/.ssh/config`) follows the game's
 language. In texts, write the language's name (`ssh kingdom`,

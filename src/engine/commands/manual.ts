@@ -24,7 +24,7 @@ function texts(name: string, t: Translate) {
     (c.examples ?? []).map((e, i) => {
       const own = `${page(name)}.commande-${i + 1}`;
       // Le compte du joueur (vous@wiki, /home/vous) et les machines (ssh royaume) prennent leur nom dans la langue (you@wiki, ssh kingdom).
-      const command = t.exists(own) ? t(own) : translateHosts(e.replace(/\bvous\b/g, player(t)), t, [translator('fr')]);
+      const command = t.exists(own) ? t(own) : translateHosts(e.replace(/\bvous\b/g, player(t)), t, [translator('en')]);
       return [command, t(`${page(name)}.exemple-${i + 1}`)];
     });
   return { synopsis, description: t(page(name)), options, examples };

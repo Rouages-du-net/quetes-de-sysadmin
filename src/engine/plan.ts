@@ -30,7 +30,7 @@ export interface ElementPlan {
 export const internet = (t: Translate, ...children: ElementPlan[]): ElementPlan => ({
   role: 'internet',
   name: t('plan-internet'),
-  children: [{ role: 'poste', name: machineName(t, 'poste'), address: '192.0.2.2', note: t('plan-ton-poste'), host: 'poste' }, ...children],
+  children: [{ role: 'poste', name: machineName(t, 'desk'), address: '192.0.2.2', note: t('plan-ton-poste'), host: 'desk' }, ...children],
 });
 
 export interface Landmark {

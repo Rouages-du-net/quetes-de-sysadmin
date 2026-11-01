@@ -151,7 +151,7 @@ export const concert: Chapter = {
   password: 'fourmis-2026',
   accounts,
   state: (t) => ({
-    systemd: newSystemd('lettres', Date.UTC(2027, 2, 1, 6, 12, 0), Date.UTC(2027, 2, 27, 20, 3, 0), {
+    systemd: newSystemd('letters', Date.UTC(2027, 2, 1, 6, 12, 0), Date.UTC(2027, 2, 27, 20, 3, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,
@@ -184,7 +184,7 @@ export const concert: Chapter = {
       { pid: 802, user: 'www-data', cpu: 12.4, mem: 0.9, command: 'nginx: worker process' },
       { pid: 1450, user: 'agenda', cpu: 99.2, mem: 6.8, command: 'node /opt/agenda/serveur.js' },
     ],
-    nginx: { load: null, names: ['lettres', LETTERS, `www.${LETTERS}`, '203.0.113.10'], journalAcces: true },
+    nginx: { load: null, names: ['letters', LETTERS, `www.${LETTERS}`, '203.0.113.10'], journalAcces: true },
     applis: {
       '127.0.0.1:3000': {
         service: 'agenda',
@@ -229,7 +229,7 @@ export const concert: Chapter = {
     return place({
       etc: place({
         ...accountsFiles(),
-        hostname: file('lettres'),
+        hostname: file('letters'),
         nginx: place({
           'nginx.conf': file(NGINX_CONF),
           'mime.types': file(MIME),

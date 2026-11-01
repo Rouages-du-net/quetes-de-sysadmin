@@ -124,7 +124,7 @@ export function cooperativeWorld(o: {
       etc: d(
         {
           ...accountsFiles(),
-          hostname: file('cooperative'),
+          hostname: file('coop'),
           sudoers: file(SUDOERS, 'root', 'r--r-----'),
           'sudoers.d': d({ README: file(README_SUDOERS, 'root', 'r--r-----') }, undefined, { owner: 'root', mode: 'rwxr-xr-x' }),
           'cron.d': d({ e2scrub_all: file(E2SCRUB) }, undefined, root),

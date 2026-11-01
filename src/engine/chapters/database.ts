@@ -140,7 +140,7 @@ export const base: Chapter = {
   password: 'ludo-2027',
   accounts,
   state: (t) => ({
-    systemd: newSystemd('ludotheque', Date.UTC(2027, 6, 1, 7, 0, 0), Date.UTC(2027, 6, 14, 10, 30, 0), {
+    systemd: newSystemd('games', Date.UTC(2027, 6, 1, 7, 0, 0), Date.UTC(2027, 6, 14, 10, 30, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,
@@ -189,7 +189,7 @@ export const base: Chapter = {
     return place({
       etc: place({
         ...accountsFiles(),
-        hostname: file('ludotheque'),
+        hostname: file('games'),
         postgresql: place(
           {
             '16': place({ main: place({ 'postgresql.conf': file("data_directory = '/var/lib/postgresql/16/main'\nport = 5432", pgd) }, pgd) }, pgd),

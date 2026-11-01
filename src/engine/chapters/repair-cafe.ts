@@ -184,7 +184,7 @@ export const workshop: Chapter = {
         { action: 'allow', to: 'Nginx Full', ports: [80, 443], forEachOf: null },
       ],
     } satisfies Firewall,
-    systemd: newSystemd('lettres', Date.UTC(2026, 10, 2, 7, 14, 0), INSTALLATION, {
+    systemd: newSystemd('letters', Date.UTC(2026, 10, 2, 7, 14, 0), INSTALLATION, {
       ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
       nginx: {
         description: 'A high performance web server and a reverse proxy server',
@@ -219,7 +219,7 @@ export const workshop: Chapter = {
       { pid: 702, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
     ],
     // Le DNS de repair.example pointe déjà ici (Kofi s'en est occupé).
-    nginx: { load: null, names: ['lettres', LETTERS, `www.${LETTERS}`, CAFE, `www.${CAFE}`, WORKSHOP, `www.${WORKSHOP}`, '203.0.113.10'] },
+    nginx: { load: null, names: ['letters', LETTERS, `www.${LETTERS}`, CAFE, `www.${CAFE}`, WORKSHOP, `www.${WORKSHOP}`, '203.0.113.10'] },
     applis: {},
     apache: { load: null },
   }),
@@ -239,7 +239,7 @@ export const workshop: Chapter = {
     return place({
       etc: place({
         ...accountsFiles(),
-        hostname: file('lettres'),
+        hostname: file('letters'),
         nginx: place({
           'nginx.conf': file(NGINX_CONF),
           'mime.types': file(MIME),

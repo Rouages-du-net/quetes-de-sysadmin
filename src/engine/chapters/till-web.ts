@@ -156,7 +156,7 @@ export function tillSystemd(afterNginx?: (j: Game) => void, afterTill?: (j: Game
       afterTill?.(j);
     },
   };
-  return newSystemd('cooperative', NOW - 6 * 86_400_000, NOW, { nginx, till: app });
+  return newSystemd('coop', NOW - 6 * 86_400_000, NOW, { nginx, till: app });
 }
 
 /** L'état du site : nginx (journal d'accès), l'appli et ses verrous. */

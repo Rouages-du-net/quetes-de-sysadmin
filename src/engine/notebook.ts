@@ -29,7 +29,7 @@ export function note(notebook: Notebook, sh: Shell): string[] {
     const name = (args[0] ?? '').split('/').at(-1)!;
     const known = MANUAL.includes(name) || (sh.known().includes(name) && !!COMMANDS[name] && COMMANDS[name].section !== 5);
     if (!name || !known || notebook[name]) continue;
-    notebook[name] = { line: line.trim(), chapter: sh.chapter.id === 'poste' ? '' : sh.chapter.id };
+    notebook[name] = { line: line.trim(), chapter: sh.chapter.id === 'desk' ? '' : sh.chapter.id };
     fresh.push(name);
   }
   return fresh;

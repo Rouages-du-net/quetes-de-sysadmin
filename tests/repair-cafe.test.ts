@@ -34,7 +34,7 @@ for (const language of LANGUAGES)
         return c.quitEdition();
       };
       // SSH écoute sur 2222 depuis « Le port ».
-      play(['ssh -p 2222 lettres', 'yes']);
+      play(['ssh -p 2222 letters', 'yes']);
       expect(c.remote?.shell.chapter.id).toBe('repair-cafe');
       return { c, jouer: play, ecrire: write };
     };

@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { STORIES } from '../src/engine/chapters';
 import { missing, isOpen, prerequisites, FIRST } from '../src/engine/unlocking';
 import { Console } from '../src/engine/console';
-import { MACHINES } from '../src/engine/machines';
+import { MACHINES, machineName } from '../src/engine/machines';
+import { translator } from '../src/texts';
 import { dayIncident, INCIDENTS, placeFor } from '../src/engine/on-call';
 
 const storyFor = (chapter: string) => STORIES.find((h) => h.chapters.some((c) => c.id === chapter));
@@ -52,7 +53,7 @@ describe('Déverrouillage graduel', () => {
 
   it('le poste reçoit les clés vague par vague', () => {
     const keys = (finished: string[]) => new Console({ language: 'fr', finished }).workstation.execute('ls ~/.ssh') ?? '';
-    const name = (h: string) => `id_${MACHINES.find((m) => m.story === h)!.name}`;
+    const name = (h: string) => `id_${machineName(translator('fr'), MACHINES.find((m) => m.story === h)!.name)}`;
     const root = keys(['lighthouse', 'village', 'root']);
     expect(root).toContain(name('datacenter'));
     expect(root).not.toContain(name('fablab'));

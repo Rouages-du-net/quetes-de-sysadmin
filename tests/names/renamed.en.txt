@@ -688,7 +688,7 @@ padlock
   /home/vous → /home/you
   /home/vous/message_de_ines.txt → /home/you/message_from_ines.txt
 
-poste
+desk
   /home/vous → /home/you
   /home/vous/bienvenue.txt → /home/you/welcome.txt
   /home/vous/.ssh → /home/you/.ssh

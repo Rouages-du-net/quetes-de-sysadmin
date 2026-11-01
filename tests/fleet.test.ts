@@ -23,7 +23,7 @@ for (const language of LANGUAGES)
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
-      play(['ssh pilote', 'yes']);
+      play(['ssh pilot', 'yes']);
       expect(c.remote?.shell.chapter.id).toBe(chapter);
       const centre = (n: string) => c.remote!.shell.internal(n)!;
       return { c, jouer: play, ecrire: write, centre };

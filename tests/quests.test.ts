@@ -482,7 +482,7 @@ for (const language of LANGUAGES)
           'cat /etc/resolv.conf',
           'dig @9.9.9.9 letters.example',
           'sudo cp /etc/resolv.conf.box /etc/resolv.conf',
-          'fourmiliere',
+          'anthill',
           'ping letters.example',
           'traceroute letters.example',
           'curl -I https://letters.example',
@@ -848,18 +848,18 @@ for (const language of LANGUAGES)
       it('solution, testée depuis le poste : ufw ne suffit pas, port lié à 127.0.0.1, ménage', () => {
         const c = new Console({ language, finished: BEFORE });
         const playC = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
-        expect(playC(['nc -zv fabrique 5432'])).toContain(`Connection to ${machineName(c.t, 'fabrique')} (192.0.2.15) 5432 port [tcp/postgresql] succeeded!`);
-        const inside = playC(['ssh fabrique', 'yes', 'sudo ss -tlnp', 'fablab-2027', 'sudo ufw deny 5432', 'df -h /']);
+        expect(playC(['nc -zv workshop 5432'])).toContain(`Connection to ${machineName(c.t, 'workshop')} (192.0.2.15) 5432 port [tcp/postgresql] succeeded!`);
+        const inside = playC(['ssh workshop', 'yes', 'sudo ss -tlnp', 'fablab-2027', 'sudo ufw deny 5432', 'df -h /']);
         expect(inside).toContain('0.0.0.0:5432');
         expect(inside).toMatch(/9\d% \//);
         contains(inside, 'contourne ufw');
         contains(inside, 'ne change rien');
-        expect(playC(['exit', 'nc -zv fabrique 5432'])).toContain('succeeded!');
-        playC(['ssh fabrique', 'cd /srv/reservations']);
+        expect(playC(['exit', 'nc -zv workshop 5432'])).toContain('succeeded!');
+        playC(['ssh workshop', 'cd /srv/reservations']);
         modify(c.shell, (t) => t.replace('      - "5432:5432"', '      - "127.0.0.1:5432:5432"'));
         playC(['sudo docker compose up -d', 'sudo docker image prune -a', 'y']);
         expect(c.finished).toContain('firewall-hole');
-        const outside = playC(['exit', 'nc -zv fabrique 5432']);
+        const outside = playC(['exit', 'nc -zv workshop 5432']);
         expect(outside).toContain('timed out');
       });
 

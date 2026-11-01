@@ -30,7 +30,7 @@ export const pkg: Chapter = {
   welcome: 'note_de_kofi.txt',
   names: true,
   final: 'curl',
-  password: 'fourmiliere',
+  password: 'anthill',
   // t : les textes dans la langue du jeu (français tant que le shell ne le
   // transmet pas).
   state: (t) => ({

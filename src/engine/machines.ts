@@ -26,36 +26,36 @@ const machine = (name: string, address: string, story?: string, withoutKey = fal
   ...(withoutKey ? { withoutKey } : {}),
 });
 
-export const WORKSTATION = machine('poste', '192.0.2.2');
+export const WORKSTATION = machine('desk', '192.0.2.2');
 
 export const MACHINES: Machine[] = [
-  machine('royaume', '192.0.2.10', 'eraser'),
+  machine('kingdom', '192.0.2.10', 'eraser'),
   machine('datacenter', '192.0.2.11', 'datacenter'),
-  machine('fourmiliere', '192.0.2.12', 'packet'),
-  machine('manuscrit', '192.0.2.13', 'time-machine'),
-  machine('bibliotheque', '192.0.2.14', 'archives'),
+  machine('anthill', '192.0.2.12', 'packet'),
+  machine('manuscript', '192.0.2.13', 'time-machine'),
+  machine('library', '192.0.2.14', 'archives'),
   // Le serveur des Lettres du quartier : la même adresse que letters.example
   // dans Le Paquet perdu.
-  machine('lettres', '203.0.113.10', 'letters'),
-  machine('fabrique', '192.0.2.15', 'fablab'),
+  machine('letters', '203.0.113.10', 'letters'),
+  machine('workshop', '192.0.2.15', 'fablab'),
   machine('gazette', '192.0.2.16', 'gazette'),
-  machine('ludotheque', '192.0.2.17', 'game-library'),
+  machine('games', '192.0.2.17', 'game-library'),
   machine('radio', '192.0.2.18', 'on-call'),
   // La Maison des associations : une passerelle, devant son réseau interne.
-  machine('maison', '192.0.2.19', 'community-centre', true),
-  machine('cooperative', '192.0.2.20', 'coop'),
-  machine('ruche', '192.0.2.21', 'hive'),
-  machine('fournil', '192.0.2.22', 'audit'),
-  machine('labo', '192.0.2.23', 'lab'),
+  machine('community', '192.0.2.19', 'community-centre', true),
+  machine('coop', '192.0.2.20', 'coop'),
+  machine('hive', '192.0.2.21', 'hive'),
+  machine('bakery', '192.0.2.22', 'audit'),
+  machine('lab', '192.0.2.23', 'lab'),
   // Le Fournil, six mois plus tard (histoire 16) : un nouveau serveur
   // (migration pendant la croissance de l'activité), mêmes personnages.
   machine('petrin', '192.0.2.24', 'watch'),
   // Les Jardins partagés : leur serveur, avec leur nom public gardens.example (même adresse).
-  machine('jardin', '203.0.113.30', 'junk-mail'),
+  machine('garden', '203.0.113.30', 'junk-mail'),
   // Le poste de pilotage des maisons de quartier : Ansible, et derrière lui trois serveurs.
-  machine('pilote', '192.0.2.25', 'fleet'),
+  machine('pilot', '192.0.2.25', 'fleet'),
   // La Rustine, l'atelier vélo : son petit serveur public (cycles.example), avec Caddy.
-  machine('rustine', '203.0.113.40', 'patch'),
+  machine('patch', '203.0.113.40', 'patch'),
 ];
 
 /** Le nom d'une machine dans la langue (machines.ftl : royaume → kingdom) ; une machine sans traduction garde le sien. */
@@ -134,4 +134,4 @@ export const privateKey = (m: Machine) =>
   ].join('\n');
 
 /** La clé publique correspondante (~/.ssh/id_<machine>.pub), commentée du compte qui l'a créée sur le poste (vous@poste, you@desk…). */
-export const publicKey = (m: Machine, account = 'vous', workstation = 'poste') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-publique-' + m.name, 43)} ${account}@${workstation}`;
+export const publicKey = (m: Machine, account = 'vous', workstation = 'desk') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-publique-' + m.name, 43)} ${account}@${workstation}`;

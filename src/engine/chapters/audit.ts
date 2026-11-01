@@ -145,7 +145,7 @@ export function bakeryWorld(
       etc: d(
         {
           ...accountsFiles(),
-          hostname: file('fournil'),
+          hostname: file('bakery'),
           sudoers: file(SUDOERS, 'root', 'r--r-----'),
           'sudoers.d': d(
             { README: file('# See sudoers(5): files here are read unless their name has a dot or ends in ~.', 'root', 'r--r-----'), ...(o.sudoersD ?? {}) },
@@ -162,7 +162,7 @@ export function bakeryWorld(
         {
           vous: d({
             ...o.home,
-            '.ssh': d({ authorized_keys: f(publicKey(bakery, player(t), machineName(t, 'poste')), { lines: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
+            '.ssh': d({ authorized_keys: f(publicKey(bakery, player(t), machineName(t, 'desk')), { lines: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
           }),
           nadia: d({}, undefined, { owner: 'nadia', mode: 'rwx------' }),
           ...(o.withoutLucas ? {} : { lucas: d({}, undefined, { owner: 'lucas', mode: 'rwx------' }) }),
@@ -198,7 +198,7 @@ const SERVICES: ServiceScan[] = [
 
 /** Ce que nmap peut sonder : le Fournil (son état suit la machine) et le serveur du voisin, hors périmètre. */
 export const bakeryScan = (): ScanState => {
-  const bakery: ScanHost = { address: '192.0.2.22', names: ['fournil.internal', 'bakery.example', 'fournil'], local: true, services: SERVICES, latency: 0.011 };
+  const bakery: ScanHost = { address: '192.0.2.22', names: ['bakery.internal', 'bakery.example', 'bakery'], local: true, services: SERVICES, latency: 0.011 };
   const neighbour: ScanHost = {
     address: NEIGHBOUR.address,
     names: [NEIGHBOUR.name],

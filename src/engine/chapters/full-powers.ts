@@ -229,7 +229,7 @@ export const powersFull: Chapter = {
     pf.rules = [22, 8080, 8081, 8082].map((p) => ({ action: 'allow', to: p === 22 ? 'OpenSSH' : `${p}/tcp`, ports: [p], forEachOf: null }));
     return {
       ufw: pf,
-      systemd: newSystemd('fabrique', Date.UTC(2027, 3, 28, 7, 5, 0), Date.UTC(2027, 4, 2, 9, 30, 0), {
+      systemd: newSystemd('workshop', Date.UTC(2027, 3, 28, 7, 5, 0), Date.UTC(2027, 4, 2, 9, 30, 0), {
         ssh: {
           description: 'OpenBSD Secure Shell server',
           active: true,
@@ -252,7 +252,7 @@ export const powersFull: Chapter = {
         { pid: 702, user: 'root', cpu: 0.4, mem: 2.1, command: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
       ],
       montages: [{ path: '/', capacity: 20_000_000_000, name: '/dev/vda1' }],
-      docker: { ...dockerState(), names: ['fabrique', 'fabrique.internal', '192.0.2.15'] },
+      docker: { ...dockerState(), names: ['workshop', 'workshop.internal', '192.0.2.15'] },
     };
   },
   initialise: (j) => {
@@ -290,7 +290,7 @@ export const powersFull: Chapter = {
     const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
     const photo = (size: number) => f('JFIF', { lines: true, owner: 'root', size });
     return place({
-      etc: place({ ...accountsFiles(), hostname: f('fabrique', { lines: true, owner: 'root' }) }),
+      etc: place({ ...accountsFiles(), hostname: f('workshop', { lines: true, owner: 'root' }) }),
       home: place({
         vous: d({ 'message_de_yasmine.txt': f(t('full-powers-message-de-yasmine')), 'mot_de_rania.txt': f(t('full-powers-mot-de-rania')) }),
         yasmine: d({}, undefined, { owner: 'yasmine', mode: 'rwxr-x---' }),

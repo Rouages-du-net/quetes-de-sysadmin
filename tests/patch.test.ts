@@ -54,7 +54,7 @@ for (const language of LANGUAGES)
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
-      play(['ssh rustine', 'yes']);
+      play(['ssh patch', 'yes']);
       expect(c.remote?.shell.chapter.id).toBe('padlock');
       return { c, jouer: play, ecrire: write, L };
     };

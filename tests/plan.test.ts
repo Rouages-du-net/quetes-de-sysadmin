@@ -22,7 +22,7 @@ for (const language of LANGUAGES)
           expect(c.plan, c.id).toBeDefined();
           const elements = all(c.plan!(t));
           const hosts = elements.map((e) => e.host).filter(Boolean);
-          expect(hosts, c.id).toContain('poste');
+          expect(hosts, c.id).toContain('desk');
           expect(hosts, c.id).toContain(storyMachine(id)!.name);
           for (const internal of Object.keys(c.hosts ?? {})) expect(hosts, `${c.id} : ${internal}`).toContain(internal);
           // Rien de vide, et des adresses de documentation ou privées.
@@ -54,9 +54,9 @@ for (const language of LANGUAGES)
     it('tu es ici, et les machines où l’on s’est connecté·e', () => {
       const c = new Console({ language, finished: ERASER });
       const plan = STORIES.find((h) => h.id === 'hive')!.chapters[0].plan!(t);
-      const hive = all(plan).find((e) => e.host === 'ruche')!;
+      const hive = all(plan).find((e) => e.host === 'hive')!;
       expect(landmarks(hive, c.shell.host, c.visited)).toEqual({ here: false, visit: false });
-      c.connect('ruche');
+      c.connect('hive');
       expect(landmarks(hive, c.shell.host, c.visited)).toEqual({ here: true, visit: true });
       c.execute('exit');
       expect(landmarks(hive, c.shell.host, c.visited)).toEqual({ here: false, visit: true });

@@ -22,7 +22,7 @@ const BACKUP = '/srv/sauvegardes/partage';
 // Un PDF (son début) : le contenu exact sert à vérifier que la copie est intacte.
 const PDF = '%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 12 >>\nendobj';
 // La clé de sauvegarde de maison vers archives (une clé par usage, pas celle d'une personne).
-const BACKUP_KEY = generateKey('maison-sauvegarde', 'sauvegarde@maison');
+const BACKUP_KEY = generateKey('maison-sauvegarde', 'sauvegarde@community');
 
 const you = { owner: 'vous' };
 const file = (content: string) => f(content, { lines: true, owner: 'vous' });
