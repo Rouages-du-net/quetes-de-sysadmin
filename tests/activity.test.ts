@@ -95,7 +95,8 @@ for (const language of LANGUAGES)
       const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
       play(['ssh datacenter', 'yes', 'tail -f /var/log/nginx/access.log']);
       expect(c.follows).toBe(true);
-      expect(c.follow(6)).toMatch(/^198\.51\.100\.77 .*"GET \/catalogue\/recherche\?q=\w+ HTTP\/1\.1" 503 197$/m);
+      const search = language === 'fr' ? 'recherche' : 'search';
+      expect(c.follow(6)).toMatch(new RegExp(`^198\\.51\\.100\\.77 .*"GET /catalogue/${search}\\?q=\\w+ HTTP/1\\.1" 503 197$`, 'm'));
       c.interrupt();
       play(['echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf', 'welcome-2026', 'sudo systemctl reload nginx', 'tail -f /var/log/nginx/access.log']);
       const after = c.follow(10);

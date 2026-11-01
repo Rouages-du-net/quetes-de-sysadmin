@@ -14,7 +14,7 @@ const SITE = 'letters.example';
 const IP_SITE = '203.0.113.10';
 
 const hop = (ip: string, name: string, ms: number) => ({ ip, name, ms });
-const BOX = hop('192.168.1.1', 'box.maison', 0.9);
+const BOX = hop('192.168.1.1', 'box.internal', 0.9);
 const TO_ISP = [BOX, hop('100.64.0.1', 'backhaul.isp.example', 4.2), hop('198.51.100.1', 'core.isp.example', 7.9)];
 
 const last = (j: { last: { commands: string[][] } }) => j.last.commands[0] ?? [];
@@ -41,7 +41,7 @@ export const pkg: Chapter = {
         // The site's server doesn't answer ping: its firewall ignores it.
         [IP_SITE]: { ping: false, ms: 12.6 },
       },
-      names: { [SITE]: IP_SITE, 'box.maison': '192.168.1.1' },
+      names: { [SITE]: IP_SITE, 'box.internal': '192.168.1.1' },
       resolvers: ['192.168.1.1', '9.9.9.9'],
       routes: {
         '192.168.1.1': [BOX],

@@ -13,7 +13,7 @@
 // https://nginx.org/en/docs/switches.html, https://nginx.org/en/docs/http/request_processing.html,
 // https://www.gnu.org/software/tar/manual/, https://man.openbsd.org/ssh-keygen
 
-import { path, d, f, accountsFiles, type Chapter, type Accounts, type File } from '../world';
+import { path, name, d, f, accountsFiles, type Chapter, type Accounts, type File } from '../world';
 import type { Game } from '../shell';
 import type { Translate } from '../../texts';
 import { newSystemd, systemd } from '../systemd';
@@ -75,7 +75,7 @@ function archiveContent(t: Translate, version: number): Record<string, File> {
     'etc/nginx/sites-available/medialibrary': file(CONF_SITE),
     'etc/nginx/sites-enabled/medialibrary': file(CONF_SITE),
     'var/www/medialibrary/index.html': file(welcome(t, version)),
-    'var/www/medialibrary/horaires.html': file(t('fire-site-hours')),
+    [`var/www/medialibrary/${name(t, 'opening-hours.html')}`]: file(t('fire-site-hours')),
   };
 }
 
@@ -126,7 +126,7 @@ export const fire: Chapter = {
   final: 'end',
   password: 'welcome-2026',
   // A new machine: the host key is no longer the one the workstation knows.
-  hostKey: '-apres-incendie',
+  hostKey: '-after-fire',
   accounts,
   state: () => {
     const friday = Date.UTC(2026, 9, 23, 7, 12, 0);

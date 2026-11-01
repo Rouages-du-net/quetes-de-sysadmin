@@ -21,7 +21,7 @@ import { addSnapshot, writeRepo, hex, repoSize, type Repo, type Version } from '
 const M = '/home/you';
 const COLLECTION = `${M}/collection`;
 const REPO = '/mnt/townhall/restic-library';
-const MDP = `${M}/.config/restic/password`;
+const PASSWORD_FILE = `${M}/.config/restic/password`;
 const PASSWORD = 'lantern-paper-cherry-41';
 const LOG = `${COLLECTION}/manuscripts/marie_diary.txt`;
 const Mo = 1024 * 1024;
@@ -58,9 +58,9 @@ function collection(t: Translate, day: number): Record<string, Version> {
   // From 8 to 14 January, the raw scans (huge) were waiting to be processed.
   if (day >= 8 && day <= 14)
     for (const n of [1, 2, 3])
-      v[`${base}/scans/brut_registre_${n}.tiff`] = media(t('versions-image-tiff'), 540, Date.UTC(2027, 0, 8, 10, n, 0));
+      v[`${base}/scans/raw_register_${n}.tiff`] = media(t('versions-image-tiff'), 540, Date.UTC(2027, 0, 8, 10, n, 0));
   if (day >= 15)
-    for (const n of [1, 2, 3]) v[`${base}/scans/registre_${n}.png`] = media(t('archives-image-png'), 3, Date.UTC(2027, 0, 15, 9, n, 0));
+    for (const n of [1, 2, 3]) v[`${base}/scans/register_${n}.png`] = media(t('archives-image-png'), 3, Date.UTC(2027, 0, 15, 9, n, 0));
   return v;
 }
 
@@ -69,9 +69,9 @@ const translatedCollection = (t: Translate, day: number) => Object.fromEntries(O
 
 // Thirty nights of backups, from 7 January to 5 February.
 function initialRepo(t: Translate): Repo {
-  const repo: Repo = { id: hex('depot-bibliotheque'), password: password(t, PASSWORD), snapshotList: [], packs: [], checked: true, pruneA: false };
+  const repo: Repo = { id: hex('repo-library'), password: password(t, PASSWORD), snapshotList: [], packs: [], checked: true, pruneA: false };
   for (let day = 7; day <= 36; day++)
-    addSnapshot(repo, { id: hex(`instantane-${day}`), time: night(day), host: 'library', paths: [path(t, COLLECTION)], files: translatedCollection(t, day) });
+    addSnapshot(repo, { id: hex(`snapshot-${day}`), time: night(day), host: 'library', paths: [path(t, COLLECTION)], files: translatedCollection(t, day) });
   repo.checked = true;
   return repo;
 }
@@ -80,12 +80,12 @@ const shell = (j: Game) => j as Shell;
 const repo = (j: Game): Repo => j.state.restic[path(j.t, REPO)];
 const restored = (j: Game) => j.read(path(j.t, LOG)) === j.t('versions-journal');
 // The password file: readable by the machine's other accounts?
-const openMdp = (j: Game) => {
-  const n = j.find(path(j.t, MDP));
+const openPasswordFile = (j: Game) => {
+  const n = j.find(path(j.t, PASSWORD_FILE));
   return !!n && j.can(n, 'r', 'rosa');
 };
-const keptVersionBonne = (j: Game) => repo(j).snapshotList.some((s) => s.files[path(j.t, LOG)]?.content === j.t('versions-journal'));
-const freeMem = (j: Game) => repoSize(repo(j)) < CAPACITY * 0.6;
+const keptGoodVersion = (j: Game) => repo(j).snapshotList.some((s) => s.files[path(j.t, LOG)]?.content === j.t('versions-journal'));
+const roomMade = (j: Game) => repoSize(repo(j)) < CAPACITY * 0.6;
 
 export const versions: Chapter = {
   id: 'versions',
@@ -157,8 +157,8 @@ export const versions: Chapter = {
   events: [
     {
       id: 'password',
-      condition: (j) => !!j.state.resticPasswordFile && openMdp(j),
-      message: (j) => j.t('versions-event-password', { file: path(j.t, MDP) }),
+      condition: (j) => !!j.state.resticPasswordFile && openPasswordFile(j),
+      message: (j) => j.t('versions-event-password', { file: path(j.t, PASSWORD_FILE) }),
     },
     {
       id: 'bad-password',
@@ -177,22 +177,22 @@ export const versions: Chapter = {
     },
     {
       id: 'lost',
-      condition: (j) => !restored(j) && !keptVersionBonne(j),
+      condition: (j) => !restored(j) && !keptGoodVersion(j),
       message: (j) => j.t('versions-event-lost'),
     },
     {
-      id: 'forgotten-without-plum',
+      id: 'forgotten-without-prune',
       condition: (j) => j.state.resticForgotten === true && repo(j).pruneA,
-      message: (j) => j.t('versions-event-forgotten-without-plum'),
+      message: (j) => j.t('versions-event-forgotten-without-prune'),
     },
     {
       id: 'place',
-      condition: freeMem,
+      condition: roomMade,
       message: (j) => j.t('versions-event-place'),
     },
     {
       id: 'end',
-      condition: (j) => restored(j) && !openMdp(j) && freeMem(j) && repo(j).checked && keptVersionBonne(j),
+      condition: (j) => restored(j) && !openPasswordFile(j) && roomMade(j) && repo(j).checked && keptGoodVersion(j),
       message: (j) => j.t('versions-event-end'),
     },
   ],

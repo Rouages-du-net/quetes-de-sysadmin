@@ -28,7 +28,7 @@ first-day-email-awa =
     1. How many 503 errors are there in the log?
     2. Who is sending so many requests?
     3. Get the site working again, then write me a short report in
-       ~/rapport.txt: the number of 503 errors and the culprit's address.
+       ~/report.txt: the number of 503 errors and the culprit's address.
 
     The log has hundreds of lines: don't count them by hand! Start by
     reading my notes, the commands you need are in there:
@@ -111,7 +111,7 @@ first-day-event-account =
 # { $requests }: number of requests from the robot
 first-day-event-robot =
     { $robot }: { $requests } requests in a few minutes, all to
-    /catalogue/recherche. That's not a human: it's a robot scraping
+    /catalogue/search. That's not a human: it's a robot scraping
     the catalogue, and the "catalogue" service can't keep up anymore.
 
     Look at what's happening on the machine:  ps aux
@@ -141,11 +141,11 @@ first-day-event-blocked-process =
     (it belongs to www-data, so… sudo). systemd will restart it nice and clean.
 first-day-event-repaired =
     The media library website is answering again! One last thing: the report
-    for Awa, in ~/rapport.txt. With > you create the file, with >> you append
+    for Awa, in ~/report.txt. With > you create the file, with >> you append
     a line. For example:
 
-      grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt
-      echo "Culprit: { $robot }" >> ~/rapport.txt
+      grep " 503 " /var/log/nginx/access.log | wc -l > ~/report.txt
+      echo "Culprit: { $robot }" >> ~/report.txt
 first-day-event-report =
     Awa comes out of her meeting and reads your report: "{ $errors } errors, robot
     identified, blocked, service restarted. For a first day… well done!"

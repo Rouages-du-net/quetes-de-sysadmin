@@ -12,7 +12,7 @@
 import { d, f, accountsFiles, type Chapter } from '../world';
 import type { Game } from '../shell';
 import { newSystemd, systemd, type Systemd } from '../systemd';
-import { datacenterAccounts, NGINX_LOG } from './first-day';
+import { datacenterAccounts, nginxLog } from './first-day';
 
 const M = '/home/you';
 const LOGS = '/var/log/catalogue';
@@ -107,7 +107,7 @@ export const reboot: Chapter = {
                 // After Friday's "chown -R root:": php-fpm (www-data) can no longer write there.
                 catalogue: d({ 'error.log': f('', { lines: true, owner: 'root' }) }, undefined, root),
                 nginx: d(
-                  { 'access.log': f(NGINX_LOG, { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }) },
+                  { 'access.log': f(nginxLog(t), { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }) },
                   undefined,
                   { owner: 'root', group: 'adm' },
                 ),

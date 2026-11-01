@@ -78,7 +78,7 @@ for (const language of LANGUAGES)
         const { s, tout: all } = play('village', [
           'cd TownHall',
           'cd Archives',
-          'grep Effaceur *',
+          'grep Eraser *',
           'ls -a',
           'cat .doormat',
           'cd Archives',
@@ -121,9 +121,9 @@ for (const language of LANGUAGES)
           'cat /var/log/eraser.log',
           'grep target /var/log/eraser.log',
           'cp ~/eraser.conf.fixed /etc/eraser.conf',
-          'grep "mot de passe" journal.txt',
+          'grep password journal.txt',
           'sudo ls /root',
-          'mauvais',
+          'wrong',
           'sunflower',
           'sudo cd /root',
           'sudo cp ~/eraser.conf.fixed /etc/eraser.conf',
@@ -203,8 +203,8 @@ for (const language of LANGUAGES)
           'sudo systemctl reload nginx',
           'ps aux',
           'sudo kill 4244',
-          `grep " 503 " ${L} | wc -l > ~/rapport.txt`,
-          'echo "Coupable : 198.51.100.77" >> rapport.txt',
+          `grep " 503 " ${L} | wc -l > ~/report.txt`,
+          'echo "Culprit: 198.51.100.77" >> report.txt',
         ]);
         expect(s.finished).toBe(true);
       });
@@ -448,13 +448,13 @@ for (const language of LANGUAGES)
         s.quitEdition();
         const next = [
           'sudo certbot renew --dry-run',
-          'echo "systemctl reload nginx" | sudo tee /etc/letsencrypt/renewal-hooks/deploy/recharger-nginx',
+          'echo "systemctl reload nginx" | sudo tee /etc/letsencrypt/renewal-hooks/deploy/reload-nginx',
           // False lead: a script that is not executable is ignored.
           'sudo certbot renew',
         ].map((l) => s.execute(l) ?? '');
-        expect(next.join('\n')).toContain("Skipping deploy-hook '/etc/letsencrypt/renewal-hooks/deploy/recharger-nginx' as it is not executable.");
+        expect(next.join('\n')).toContain("Skipping deploy-hook '/etc/letsencrypt/renewal-hooks/deploy/reload-nginx' as it is not executable.");
         expect(s.finished).toBe(false);
-        s.execute('sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/recharger-nginx');
+        s.execute('sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx');
         s.execute('sudo systemctl reload nginx');
         expect(s.finished).toBe(true);
       });
@@ -498,11 +498,11 @@ for (const language of LANGUAGES)
           'git restore --source=HEAD~1 novel.txt',
           'git commit -m "x"',
           'git add novel.txt',
-          'git commit -m "Restaure le chapitre 3"',
+          'git commit -m "Restore chapter 3"',
           'cd ../poems',
           'git init',
           'git add .',
-          'git commit -m "Premiers poèmes"',
+          'git commit -m "First poems"',
         ]);
         expect(s.finished).toBe(true);
       });
@@ -512,10 +512,10 @@ for (const language of LANGUAGES)
           'cat notes_rosa.txt',
           'du -sh collection',
           'df -h /media/usb',
-          'tar -czf /media/usb/fonds.tar.gz collection',
+          'tar -czf /media/usb/collection.tar.gz collection',
           'find collection -name "*.tmp" -delete',
-          'tar -czf /media/usb/fonds.tar.gz collection',
-          'tar -tzf /media/usb/fonds.tar.gz',
+          'tar -czf /media/usb/collection.tar.gz collection',
+          'tar -tzf /media/usb/collection.tar.gz',
         ]);
         expect(s.finished).toBe(true);
       });
@@ -534,8 +534,8 @@ for (const language of LANGUAGES)
         const good = ids[25];
         const next = [
           `${R} diff ${good} ${ids[26]}`,
-          `${R} restore ${good} --target /tmp/restauration --include /home/you/collection/manuscripts/marie_diary.txt`,
-          'cp /tmp/restauration/home/you/collection/manuscripts/marie_diary.txt ~/collection/manuscripts/',
+          `${R} restore ${good} --target /tmp/restore --include /home/you/collection/manuscripts/marie_diary.txt`,
+          'cp /tmp/restore/home/you/collection/manuscripts/marie_diary.txt ~/collection/manuscripts/',
           `${R} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --dry-run`,
           // False lead: forget alone does not free the space.
           `${R} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12`,
@@ -556,7 +556,7 @@ for (const language of LANGUAGES)
       });
 
       it('another solution: the password typed, dump, forget --prune, then a backup', () => {
-        const { s, tout: all } = play('versions', ['chmod go-rwx ~/.config/restic/password', 'restic -r /mnt/townhall/restic-library snapshots', 'mauvais']);
+        const { s, tout: all } = play('versions', ['chmod go-rwx ~/.config/restic/password', 'restic -r /mnt/townhall/restic-library snapshots', 'wrong']);
         expect(all).toContain('Fatal: wrong password or no key found');
         contains(all, 'Mauvais mot de passe');
         const ids = snapshotList(s);
