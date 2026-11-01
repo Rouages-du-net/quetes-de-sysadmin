@@ -61,10 +61,10 @@ for (const language of LANGUAGES)
       write(REPAIR, (t) => t.replace('<VirtualHost *:80>', '<VirtualHost 127.0.0.1:8080>'));
       all = play(['sudo systemctl reload apache2', 'sudo apache2ctl -S', 'curl -H "Host: repair.example" http://127.0.0.1:8080/']);
       expect(all).toContain('127.0.0.1:8080         repair.example (/etc/apache2/sites-enabled/repair.conf:1)');
-      expect(all).toContain(c.t('repair-cafe-site-accueil'));
+      expect(all).toContain(c.t('repair-cafe-site-welcome'));
       // nginx n'a pas encore le site : la visite tombe sur les Lettres (site par défaut).
       all = play(['sudo ln -s /etc/nginx/sites-available/repair /etc/nginx/sites-enabled/', 'sudo nginx -t', 'sudo systemctl reload nginx', 'curl http://repair.example/']);
-      expect(all).toContain(c.t('repair-cafe-site-accueil'));
+      expect(all).toContain(c.t('repair-cafe-site-welcome'));
       all = play(['curl http://repair.example/guide/42']);
       expect(all).toContain('The requested URL was not found on this server.');
       if (fr) expect(all).toContain('AllowOverride None');
@@ -78,7 +78,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('systemctl restart apache2');
       expect(all).toContain(' rewrite_module (shared)');
       all = play(['sudo systemctl restart apache2', 'curl http://repair.example/guide/42']);
-      expect(all).toContain(c.t('repair-cafe-fiche-42'));
+      expect(all).toContain(c.t('repair-cafe-sheet-42'));
       if (fr) expect(all).toContain('https://httpd.apache.org/docs/2.4/howto/htaccess.html');
       expect(c.finished).toContain('repair-cafe');
     });
@@ -105,7 +105,7 @@ for (const language of LANGUAGES)
       expect(c.finished).not.toContain('repair-cafe');
       write('/etc/nginx/sites-available/repair', (t) => t.replace('proxy_pass http://127.0.0.1:8080;', 'proxy_pass http://127.0.0.1:8080;\n        proxy_set_header Host $host;'));
       all = play(['sudo nginx -t', 'sudo systemctl reload nginx', 'curl http://repair.example/guide/42']);
-      expect(all).toContain(c.t('repair-cafe-fiche-42'));
+      expect(all).toContain(c.t('repair-cafe-sheet-42'));
       expect(c.finished).toContain('repair-cafe');
     });
 

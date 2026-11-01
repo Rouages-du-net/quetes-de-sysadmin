@@ -13,7 +13,7 @@ const HOME = '/home/you';
 // .example (ils ne mènent jamais chez quelqu'un de réel).
 const hosts = (t: Translate) =>
   [
-    ...t('poste-hosts-commentaire').split('\n').map((l) => `# ${l}`),
+    ...t('workstation-hosts-comment').split('\n').map((l) => `# ${l}`),
     '',
     '127.0.0.1\tlocalhost',
     `127.0.1.1\t${machineDomain(t, WORKSTATION)} ${machineName(t, WORKSTATION.name)}`,
@@ -24,7 +24,7 @@ const hosts = (t: Translate) =>
 /** Le ~/.ssh/config que le jeu donne au poste, dans une langue. */
 export const config = (t: Translate) =>
   [
-    ...t('poste-config-commentaire').split('\n').map((l) => `# ${l}`),
+    ...t('workstation-config-comment').split('\n').map((l) => `# ${l}`),
     '',
     ...MACHINES.flatMap((m) => [
       `Host ${machineName(t, m.name)}`,
@@ -85,7 +85,7 @@ export function workstation(keys: Machine[]): Chapter {
         etc: d({ hosts: f(hosts(t), { lines: true, owner: 'root' }) }),
         home: d({
           you: d({
-            'welcome.txt': f(t('poste-bienvenue')),
+            'welcome.txt': f(t('workstation-welcome')),
             '.ssh': d(
               { config: f(config(t), { lines: true }), ...Object.assign({}, ...keys.map((m) => keyFiles(t, m))) },
               undefined,

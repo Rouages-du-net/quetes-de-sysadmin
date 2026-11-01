@@ -2,12 +2,12 @@
 ### TLS, Let's Encrypt et certbot. Les commandes, chemins, noms de fichiers
 ### et messages de certbot, d'openssl, de curl et de nginx ne se traduisent pas.
 
-chapitre-certificate = Le certificat a expiré
+chapter-certificate = Le certificat a expiré
     .resume = Le cadenas a sauté : certbot, le défi HTTP, openssl, et un renouvellement qui marche tout seul.
 
 ## Fichiers
 
-certificate-courriel-awa =
+certificate-email-awa =
     De :     Awa (responsable d'exploitation)
     À :      toi
     Objet :  Le site fait peur aux visiteurs
@@ -28,7 +28,7 @@ certificate-courriel-awa =
     Pour vérifier ce que voit un navigateur : curl https://medialibrary.example
     Le reste est dans man certbot et man openssl. Le mot de passe pour sudo
     n'a pas changé.
-certificate-message-de-lea =
+certificate-message-lea =
     Bonjour Awa,
 
     Ce matin, en ouvrant le site de la médiathèque, Firefox affiche :
@@ -43,7 +43,7 @@ certificate-message-de-lea =
     le site en attendant.
 
     Léa
-certificate-lisezmoi-live =
+certificate-readme-live =
     This directory contains your keys and certificates.
 
     `privkey.pem`  : the private key for your certificate.
@@ -74,13 +74,13 @@ certificate-site-index =
 
 ## Événements
 
-certificate-evenement-expire =
+certificate-event-expires =
     Le certificat a bien expiré : c'est exactement ce que voient les
     navigateurs. Mais pourquoi n'a-t-il pas été renouvelé ? certbot tourne
     tout seul, lancé par systemd : son journal le sait (journalctl -u certbot,
     ou systemctl --failed). Pour essayer un renouvellement sans rien casser,
     man certbot parle d'une répétition générale.
-certificate-evenement-defi =
+certificate-event-challenge =
     Let's Encrypt ne donne un certificat qu'à qui prouve qu'il tient le site :
     certbot dépose un petit fichier (le « défi ») dans un dossier, puis
     l'autorité vient le chercher sur http://medialibrary.example/.well-known/acme-challenge/.
@@ -90,18 +90,18 @@ certificate-evenement-defi =
     de /etc/letsencrypt/renewal/medialibrary.example.conf) ? Et quel dossier
     nginx sert-il pour medialibrary.example ? man certbot dit comment changer
     de dossier.
-certificate-evenement-pas-recharge =
+certificate-event-not-reload =
     Le nouveau certificat est sur le disque… mais curl voit encore l'ancien.
     nginx lit son certificat quand il démarre ou recharge sa configuration,
     pas à chaque visite : il sert toujours celui d'octobre. Que faut-il dire
     à nginx ?
-certificate-evenement-sans-hook =
+certificate-event-without-hook =
     Le site est de nouveau sûr, et certbot sait maintenant renouveler.
     Mais dans 60 jours, quand il renouvellera tout seul, en pleine nuit, qui
     rechargera nginx ? Personne : le site servira l'ancien certificat jusqu'à
     ce qu'il expire, comme aujourd'hui. certbot peut lancer une commande
     après chaque renouvellement réussi : cherche « hook » dans man certbot.
-certificate-evenement-fin =
+certificate-event-end =
     curl https://medialibrary.example répond sans alerte : le cadenas est
     revenu. Et la prochaine fois, certbot renouvellera tout seul, puis
     rechargera nginx tout seul.

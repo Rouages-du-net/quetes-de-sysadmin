@@ -2,12 +2,12 @@
 ### swells, a deleted file still open, logrotate. Commands,
 ### paths, directives and messages (df, du, lsof, logrotate) are never translated.
 
-chapitre-full-disk = The full disk
+chapter-full-disk = The full disk
     .resume = 2:47 am, the radio's server disk is full: find the culprit, understand why rm frees nothing, and hand the logs over to logrotate.
 
 ## Files
 
-full-disk-message-de-zoe =
+full-disk-message-zoe =
     A message from Zoé, tech volunteer at Radio Quartier (2:40 am):
 
     "Sorry to wake you up on your first on-call shift… The automatic
@@ -84,36 +84,36 @@ full-disk-logrotate-apt =
 
 ## Events
 
-full-disk-evenement-plein =
+full-disk-event-full =
     100%: not a single byte free. Before deleting anything, you need to
     know what takes up the space: du measures, directory by directory (du -sh
     /var/*, then deeper), and it's often on the logs' side.
-full-disk-evenement-coupable =
+full-disk-event-culprit =
     The relay's log alone weighs more than fifteen gigabytes! Before
     deleting it, look at what it contains (tail), and why it grew
     so much.
-full-disk-evenement-debug =
+full-disk-event-debug =
     DEBUG lines, several per stream packet: the relay writes down everything
     it does, hundreds of times per second. The log level is set in its
     configuration (/etc/radio/stream.conf); a program only rereads its
     configuration at startup, or on reload.
-full-disk-evenement-fantome =
+full-disk-event-ghost =
     df still says full, but du can no longer find the file: it was
     deleted while the relay still held it open. As long as a
     program keeps a file open, its space isn't given back (sudo lsof
     +L1 shows it). It has to close it: by restarting it, for example.
     Next time, truncate -s 0 empties a log without this trap.
-full-disk-evenement-renomme =
+full-disk-event-renamed =
     The log was renamed, but the relay still writes into the old
     file, under its new name (sudo lsof -p 1730): a program keeps
     the file it opened, not its name. For logrotate, you need either
     copytruncate (copy then empty), or to make it reopen its log
     (postrotate … systemctl reload radio-stream … endscript).
 # { $pourcent }: disk usage
-full-disk-evenement-respire =
+full-disk-event-breathes =
     The disk can breathe: { $pourcent }% used. The night recording
     can resume. Now to avoid the next time.
-full-disk-evenement-fin =
+full-disk-event-end =
     The disk has room, the relay runs in normal mode, and logrotate
     will take care of its log from now on. Zoé: "Sorry about the debug…
     I'd completely forgotten about it."

@@ -17,7 +17,7 @@ describe('Liens vers Les rouages du net', () => {
   it('chaque page a le texte de son lien', () => {
     for (const language of LANGUAGES) {
       const t = translator(language);
-      for (const id of Object.keys(ROUAGES_PAGES)) expect(t.exists(`rouages-lien-${id}`)).toBe(true);
+      for (const id of Object.keys(ROUAGES_PAGES)) expect(t.exists(`rouages-link-${id}`)).toBe(true);
     }
   });
   it('un chapitre donne des adresses complètes vers rouages.net', () => {

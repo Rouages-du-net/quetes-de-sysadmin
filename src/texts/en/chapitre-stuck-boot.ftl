@@ -2,15 +2,15 @@
 ### /etc/fstab by UUID, nofail, findmnt --verify, mount -a, systemctl
 ### daemon-reload. Commands, options, paths and outputs are not translated.
 
-chapitre-stuck-boot = The stuck reboot
+chapter-stuck-boot = The stuck reboot
     .resume = The server no longer reboots: it is waiting for a disk that changed its name. Understand emergency mode, refer to the disk by its UUID, check fstab before resuming the boot.
 
 ## Files
 
 # The line Théo added to /etc/fstab (a comment)
-stuck-boot-fstab-commentaire = # USB disk for the scans (Theo, from a tutorial I followed on my laptop)
+stuck-boot-fstab-comment = # USB disk for the scans (Theo, from a tutorial I followed on my laptop)
 # { $banniere }: the emergency mode message, in English as on the real console
-stuck-boot-message-d-odile =
+stuck-boot-message-odile =
     A message from Odile (Tuesday 25 January, 7:50 am):
 
     "The website has been down since last night! The host says the
@@ -26,50 +26,50 @@ stuck-boot-message-d-odile =
 
 ## Events
 
-stuck-boot-evenement-journal =
+stuck-boot-event-journal =
     systemd waited 90 seconds for /dev/sdc1, then gave up: without it,
     /srv/scans can't be mounted, and local-fs.target (all the local file
     systems) fails. The machine then stops in emergency mode, without
     starting its services. But who is sdc today? (lsblk -f, blkid)
-stuck-boot-evenement-disques =
+stuck-boot-event-disks =
     sdc is one of the two 4 TB disks, which joined md2 in the previous
     chapter: it doesn't even have a partition any more. Théo's USB disk is
     now called sde (RM = 1: removable), and its partition carries the
     label SCANS. The sdX names follow the order in which the kernel finds
     the disks; the UUID does not change.
-stuck-boot-evenement-nom =
+stuck-boot-event-name =
     /dev/sde1 would work today… until the next disk is added, or the next
     boot where the USB disk is found before another one. Like the first
     two lines of fstab, refer to it by what does not change: UUID=… (or
     LABEL=…).
-stuck-boot-evenement-supprimee =
+stuck-boot-event-deleted =
     Without its line in fstab, the server would boot… but Théo's scans
     would never be mounted again. Keep the line, and fix it.
-stuck-boot-evenement-lecture =
+stuck-boot-event-read =
     fstab now has an unreadable line (it needs at least four fields:
     source, mount point, type, options): mount -a reports it, and the boot
     would ignore it. Read the file again.
-stuck-boot-evenement-sans-nofail =
+stuck-boot-event-without-nofail =
     The UUID is right. But Théo sometimes takes the disk away: that day,
     the server would stop in emergency mode again. The nofail option (man
     fstab) tells systemd to carry on without it.
-stuck-boot-evenement-corrige =
+stuck-boot-event-fixed =
     fstab is right: the scans disk by its UUID, with nofail. Before
     resuming the boot, check it (findmnt --verify), try it (mount -a), and
     have systemd reread it: it derived its mount units from the old
     version (systemctl daemon-reload).
-stuck-boot-evenement-rechute =
+stuck-boot-event-relapse =
     The boot resumed… and stopped in emergency mode again: systemd is
     still waiting for a disk that can't be found. Fix fstab first.
-stuck-boot-evenement-rechute-reload =
+stuck-boot-event-relapse-reload =
     The boot resumed… and stopped in emergency mode again: fstab is right,
     but systemd still uses the old version, the one it read at boot.
     systemctl daemon-reload makes it reread it.
-stuck-boot-evenement-monte =
+stuck-boot-event-mounted =
     The scans disk is mounted on /srv/scans (df -h, findmnt). What's left
     is leaving emergency mode: resume the normal boot (man systemctl:
     default, or exit), or reboot.
-stuck-boot-evenement-fin =
+stuck-boot-event-end =
     Odile: "The website is back! And Théo has his scans again. He says
     he'll never copy a tutorial again without understanding it."
 

@@ -2,12 +2,12 @@
 ### a switch split into VLANs. The commands, the interface names and the
 ### syntax of /etc/network/interfaces are not translated.
 
-chapitre-vlan = VLANs
+chapter-vlan = VLANs
     .resume = The switch has been split into three VLANs; the router still talks flat. 802.1Q interfaces, and make them survive a reboot.
 
 ## Files
 
-vlan-courriel-malik =
+vlan-email-malik =
     From:    Malik (facilities manager at The Hive)
     To:      you
     Subject: No network since this morning
@@ -27,7 +27,7 @@ vlan-courriel-malik =
 
     For sudo: bee-2027
 
-vlan-plan-commutateur =
+vlan-plan-switch =
     SWITCH PLAN — The Hive (electrician, November 2027)
 
     Port 1     : to the router (eth1). 802.1Q TRUNK: VLAN 10, 20, 30
@@ -48,18 +48,18 @@ vlan-plan-commutateur =
 
 ## Events
 
-vlan-evenement-mauvais-numero =
+vlan-event-bad-number =
     One of your VLAN interfaces has an address on a network… but not the right
     VLAN number: its frames go out tagged with another number, and
     the switch doesn't put them in the right VLAN. A ping to a device
     on that network shows it (Destination Host Unreachable). Check with
     ip -d link show.
-vlan-evenement-en-place =
+vlan-event-in-place =
     All three VLANs respond: the NAS, the printer and the camera too (ping).
     But what you did with ip will disappear at the next reboot: only
     /etc/network/interfaces is read again at boot. Write the three VLANs there
     (man interfaces), then ifup.
-vlan-evenement-fin =
+vlan-event-end =
     The three VLANs are up, and written down to last. Malik: "The NAS is
     back! And the café Wi-Fi can't see the printer any more, that's what
     the electrician wanted."

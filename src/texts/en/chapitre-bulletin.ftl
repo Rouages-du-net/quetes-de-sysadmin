@@ -4,12 +4,12 @@
 ### package names, commands and paths are not translated. The template's
 ### section titles (bulletin-section-…) must stay those of the template.
 
-chapitre-bulletin = The Bulletin
+chapter-bulletin = The Bulletin
     .resume = Sort a bulletin of CVEs: what really concerns this server, and what is only a false alarm.
 
 ## Files
 
-bulletin-courriel-salome =
+bulletin-email-salome =
     From:     Salomé
     To:       you
     Subject:  The watch, six months on
@@ -39,7 +39,7 @@ bulletin-courriel-salome =
     Salomé
     (For sudo, your password is: levain-2028)
 
-bulletin-fichier =
+bulletin-file =
     SECURITY BULLETIN — week of 8 September 2028
     (fictional CVEs, for teaching purposes: none of them really exist)
 
@@ -75,7 +75,7 @@ bulletin-fichier =
     meantime, disable KbdInteractiveAuthentication in sshd_config.
     Affected versions: openssh-server (all, if the option is enabled)
 
-bulletin-modele =
+bulletin-template =
     # Watch — The Bakery
 
     ## Concerns this server
@@ -86,29 +86,29 @@ bulletin-modele =
 
 bulletin-section-concerne = Concerns this server
 bulletin-section-sansobjet = Not applicable
-bulletin-a-completer = (to complete
-bulletin-mots-absent = is not installed, not installed, absent, no such package, doesn't exist on this server
-bulletin-mots-corrige = already fixed, already up to date, installed version, past the fixed version, newer than the fixed version, more recent
+bulletin-a-complete = (to complete
+bulletin-words-missing = is not installed, not installed, absent, no such package, doesn't exist on this server
+bulletin-words-fixed = already fixed, already up to date, installed version, past the fixed version, newer than the fixed version, more recent
 
 ## Review
 
-bulletin-relecture = Salomé reviews your sort:
-bulletin-manque-modele = Some "(to complete)" lines of the template are still there.
-bulletin-manque-concerne = Under "Concerns this server" there must be exactly nginx, rsync and openssh-server (that one applies, even though it needs nothing more here) — neither certbot nor curl belong there.
-bulletin-manque-sansobjet = Under "Not applicable", explain why for each one: certbot (check whether it is even installed) and curl (compare the installed version with the bulletin's fixed version).
+bulletin-review = Salomé reviews your sort:
+bulletin-missing-template = Some "(to complete)" lines of the template are still there.
+bulletin-missing-concerns = Under "Concerns this server" there must be exactly nginx, rsync and openssh-server (that one applies, even though it needs nothing more here) — neither certbot nor curl belong there.
+bulletin-missing-not-applicable = Under "Not applicable", explain why for each one: certbot (check whether it is even installed) and curl (compare the installed version with the bulletin's fixed version).
 
 ## Events
 
-bulletin-evenement-lu =
+bulletin-event-read =
     Five lines, five CVEs. Before fixing anything: which ones REALLY concern
     this server? apt list --installed tells you what is installed here, and
     at which version (man apt).
-bulletin-evenement-tri =
+bulletin-event-sort =
     Your sort separates what deserves attention from what doesn't need to
     worry you: certbot isn't on this server, curl is already past the fixed
     version. What's left is nginx, rsync, and openssh-server (already
     protected by the configuration, but worth keeping an eye on).
-bulletin-evenement-fin =
+bulletin-event-end =
     Salomé: "That's the right reflex: read before panicking. Half of a
     security bulletin, usually, doesn't concern you."
 

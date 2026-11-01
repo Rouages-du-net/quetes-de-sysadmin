@@ -3,12 +3,12 @@
 ### dans les journaux. Les commandes, les chemins et le format du journal
 ### d'accès de nginx (en anglais) ne se traduisent pas.
 
-chapitre-proof = Sans preuve, pas de certitude
+chapter-proof = Sans preuve, pas de certitude
     .resume = Reprouver que les correctifs tiennent, et chercher si la faille avait déjà été tentée.
 
 ## Fichiers
 
-proof-courriel-salome =
+proof-email-salome =
     De :     Salomé
     À :      toi
     Objet :  Une dernière chose avant de clore la semaine
@@ -28,17 +28,17 @@ proof-courriel-salome =
 
 ## Événements
 
-proof-evenement-versions =
+proof-event-versions =
     apt confirme : plus rien à mettre à jour pour nginx ni rsync. Ce n'est
     qu'une fois vérifié que c'est vraiment corrigé.
 # { $adresse } : l'adresse de la tentative trouvée
-proof-evenement-trouve =
+proof-event-found =
     Une ligne du journal d'accès attire l'œil : une requête HTTP/2 vide,
     sans navigateur déclaré, refusée par nginx (code 400), depuis
     { $adresse }, quelques jours avant le correctif. Ce n'est pas une preuve
     d'intrusion réussie (nginx l'a refusée), mais c'est une trace qu'il vaut
     la peine de garder : quelqu'un cherchait déjà.
-proof-evenement-fin =
+proof-event-end =
     Salomé : « Voilà ce que je veux dire par preuve : pas « je pense que
     c'est corrigé », mais « apt confirme, et voici la tentative qu'on a
     repérée ». »

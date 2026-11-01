@@ -3,12 +3,12 @@
 ### Commands, options, paths and the messages of OpenSSH and curl (in
 ### English) are not translated.
 
-chapitre-tunnel = The tunnel
+chapter-tunnel = The tunnel
     .resume = The wiki's admin interface only listens on 127.0.0.1: an ssh -L tunnel, curl, then close the tunnel.
 
 ## Files
 
-tunnel-courriel-yasmine =
+tunnel-email-yasmine =
     From:     Yasmine
     To:       you
     Subject:  Sign-ups waiting
@@ -64,16 +64,16 @@ tunnel-admin-introuvable = Page not found.
 ## Events
 
 # { $compte }: the advertising account
-tunnel-evenement-publicite =
+tunnel-event-advert =
     Oops: the account { $compte } is approved. Yasmine: "It's going to fill
     the wiki with ads!" Reject it (the address is on the admin page).
-tunnel-evenement-validees =
+tunnel-event-approved =
     Samir and Léa are signed up, and the advertising stays outside.
 
     All that's left is to close the tunnel: it's running in the
     background on your workstation. Find its process (ps), then stop it
     (kill).
-tunnel-evenement-fin =
+tunnel-event-end =
     Sign-ups approved, tunnel closed. Yasmine: "Samir has already created
     the bike workshop's page!"
 

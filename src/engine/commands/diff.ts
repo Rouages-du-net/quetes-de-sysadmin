@@ -118,13 +118,13 @@ export const DIFF: Record<string, Command> = {
           [a, na],
           [b, nb],
         ] as const)
-          if (!n) return void game.error(game.t('diff-introuvable', { cible: path }));
+          if (!n) return void game.error(game.t('diff-missing', { cible: path }));
         if (na!.type === 'dossier' && nb!.type === 'dossier') {
-          if (!root && !letters.has('r')) return void outputs.push(game.t('diff-sous-dossiers', { a, b }));
+          if (!root && !letters.has('r')) return void outputs.push(game.t('diff-under-directories', { a, b }));
           const names = [...new Set([...Object.keys(na!.children), ...Object.keys(nb!.children)])].sort();
           for (const name of names) {
-            if (!(name in nb!.children)) outputs.push(game.t('diff-seulement', { lieu: a, nom: name }));
-            else if (!(name in na!.children)) outputs.push(game.t('diff-seulement', { lieu: b, nom: name }));
+            if (!(name in nb!.children)) outputs.push(game.t('diff-only', { lieu: a, nom: name }));
+            else if (!(name in na!.children)) outputs.push(game.t('diff-only', { lieu: b, nom: name }));
             else compare(`${a.replace(/\/$/, '')}/${name}`, `${b.replace(/\/$/, '')}/${name}`, false);
           }
           return;
@@ -137,7 +137,7 @@ export const DIFF: Record<string, Command> = {
         const ta = game.readFor('diff', a);
         const tb = game.readFor('diff', b);
         if (ta === null || tb === null || ta === tb) return;
-        if (letters.has('q')) return void outputs.push(game.t('diff-differents', { a, b }));
+        if (letters.has('q')) return void outputs.push(game.t('diff-different', { a, b }));
         const ops = edit(lines(ta), lines(tb));
         if (!root) outputs.push(paint('1', `diff ${[...letters].map((l) => `-${l}`).join(' ')} ${a} ${b}`.replace(/ +/g, ' ')));
         outputs.push(letters.has('u') ? unified(ops, a, b, dateDiff(game), paint) : normal(ops, paint));

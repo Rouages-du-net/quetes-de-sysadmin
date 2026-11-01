@@ -2,12 +2,12 @@
 ### breaking anything. The commands, paths and apt's output are not
 ### translated.
 
-chapitre-fix = The Fix
+chapter-fix = The Fix
     .resume = Fix nginx and rsync without breaking anything: apt update before apt upgrade, then check the site still answers.
 
 ## Files
 
-fix-courriel-salome =
+fix-email-salome =
     From:     Salomé
     To:       you
     Subject:  Time for the fix
@@ -27,17 +27,17 @@ fix-courriel-salome =
 
 ## Events
 
-fix-evenement-sans-maj =
+fix-event-without-update =
     apt upgrade says "Upgrading: 0": nothing happened. apt only knows about
     available updates after refreshing its package list (sudo apt update),
     like a catalogue that needs reloading before you can look up something
     new in it.
-fix-evenement-corrige =
+fix-event-fixed =
     nginx and rsync are at the fixed version. One more thing to check
     before moving on: does the site still answer?
-fix-evenement-verifie =
+fix-event-checked =
     The site answers (curl returns 200): the update broke nothing.
-fix-evenement-fin =
+fix-event-end =
     Salomé: "Two fixed, the site still standing. That's all we ask of an
     update."
 

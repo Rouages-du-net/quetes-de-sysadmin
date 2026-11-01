@@ -4,12 +4,12 @@
 ### adresses IP ne se traduisent pas ; les sorties des outils réseau restent
 ### en anglais, comme sur un vrai système.
 
-chapitre-lost-packet = Le Paquet perdu
+chapter-lost-packet = Le Paquet perdu
     .resume = Trouver où se perd un message, couche par couche : ping, dig, traceroute, curl.
 
 ## Fichiers
 
-lost-packet-note-de-kofi =
+lost-packet-note-kofi =
     Un mot de Kofi, bénévole au café associatif La Fourmilière :
 
     « Au secours ! Internet ne marche plus sur l'ordinateur du café. Le site
@@ -20,7 +20,7 @@ lost-packet-note-de-kofi =
     ordinateur, si tu en as besoin : fourmiliere
 
     Il y a un carnet à côté de l'écran :  cat carnet.txt  »
-lost-packet-carnet =
+lost-packet-notebook =
     CARNET DE DÉPANNAGE — trouver où le paquet se perd
 
     On teste de proche en proche, du plus près au plus loin :
@@ -39,49 +39,49 @@ lost-packet-carnet =
     Les commandes réseau répondent en anglais, comme sur un vrai système :
     « packet loss » = paquets perdus, « timed out » = délai dépassé.
 # Commentaires des fichiers /etc/resolv.conf et /etc/resolv.conf.box (après « # »)
-lost-packet-resolv-commentaire = Écrit lors de l'installation, avec l'ancienne box
-lost-packet-resolv-box-commentaire = Réglage conseillé par la nouvelle box
+lost-packet-resolv-comment = Écrit lors de l'installation, avec l'ancienne box
+lost-packet-resolv-box-comment = Réglage conseillé par la nouvelle box
 
 ## La page du site, renvoyée par curl (HTML)
 
-lost-packet-site-titre = Les Lettres du quartier
-lost-packet-site-texte = Le site fonctionne ! Écrivez-nous.
+lost-packet-site-title = Les Lettres du quartier
+lost-packet-site-text = Le site fonctionne ! Écrivez-nous.
 
 ## Événements ({ $ip } : adresse IP du site)
 
-lost-packet-evenement-box =
+lost-packet-event-box =
     La box répond, en une milliseconde à peine : le réseau local (le câble ou
     le Wi-Fi jusqu'à la box) fonctionne. ping envoie un petit message ICMP
     « echo » ; la machine renvoie la balle, et l'on mesure l'aller-retour.
 
     Plus loin maintenant : un serveur sur internet,  ping 9.9.9.9
-lost-packet-evenement-internet =
+lost-packet-event-internet =
     9.9.9.9 répond : les paquets sortent bien sur internet et reviennent.
     Donc « internet » marche ! Le problème est ailleurs. Essaie le nom du site :
     ping letters.example
-lost-packet-evenement-nom =
+lost-packet-event-name =
     « Temporary failure in name resolution » : l'ordinateur n'arrive pas à
     traduire le nom en adresse IP. C'est le travail du DNS. Pose-lui la
     question directement : dig letters.example
-lost-packet-evenement-dns-muet =
+lost-packet-event-dns-silent =
     Le serveur DNS 192.168.1.250 ne répond pas : « timed out ». D'où vient cette
     adresse ? Regarde cat /etc/resolv.conf
 
     Et pour vérifier que le nom existe bien, demande à un autre serveur DNS :
     dig @9.9.9.9 letters.example
-lost-packet-evenement-dns-autre =
+lost-packet-event-dns-other =
     Avec un autre serveur DNS, la réponse arrive : letters.example = { $ip }.
     Le nom existe, c'est le réglage de l'ordinateur qui est faux : il interroge
     192.168.1.250, l'adresse de l'ANCIENNE box, qui n'existe plus.
 
     Le bon réglage est dans /etc/resolv.conf.box. Ce fichier appartient à root :
     sudo cp /etc/resolv.conf.box /etc/resolv.conf
-lost-packet-evenement-dns-repare = Le DNS est réparé : l'ordinateur interroge maintenant la nouvelle box. Réessaie :  ping letters.example
-lost-packet-evenement-ping-perdu =
+lost-packet-event-dns-repaired = Le DNS est réparé : l'ordinateur interroge maintenant la nouvelle box. Réessaie :  ping letters.example
+lost-packet-event-ping-lost =
     Le nom est traduit ({ $ip })… mais 100 % des paquets sont perdus !
     Le site serait-il en panne ? Ou les paquets se perdent-ils en route ?
     Suis-les à la trace :  traceroute letters.example
-lost-packet-evenement-route =
+lost-packet-event-route =
     Voilà le voyage du paquet, saut par saut :
      1. ta box ;
      2-3. les routeurs de ton opérateur (le FAI) ;
@@ -92,7 +92,7 @@ lost-packet-evenement-route =
     traceroute (leur pare-feu les filtre) : ce silence ne prouve pas une panne.
 
     Le seul vrai test, c'est de demander la page :  curl -I https://letters.example
-lost-packet-evenement-curl =
+lost-packet-event-curl =
     HTTP/2 200 : le site répond parfaitement ! Kofi peut publier le programme.
 
     Résumé de l'enquête : le réseau local marchait (ping box), internet aussi

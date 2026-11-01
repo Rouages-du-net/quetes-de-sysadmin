@@ -30,7 +30,7 @@ export function summary(sh: Shell): Summary {
     errors: sh.commandsInError,
     hints: sh.requestsHints.size,
     steps: order
-      .filter((e) => sh.t.exists(`indice-${c.id}-${e}.solution`))
-      .map((e) => ({ step: e, line: sh.passed[e] ?? null, solution: sh.t(`indice-${c.id}-${e}.solution`) })),
+      .filter((e) => sh.t.exists(`hint-${c.id}-${e}.solution`))
+      .map((e) => ({ step: e, line: sh.passed[e] ?? null, solution: sh.t(`hint-${c.id}-${e}.solution`) })),
   };
 }

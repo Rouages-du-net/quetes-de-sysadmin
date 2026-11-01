@@ -2,12 +2,12 @@
 ### much as by CVSS score. The CVE identifiers are fictional; package
 ### names, commands and paths are not translated.
 
-chapitre-priority = The Priority
+chapter-priority = The Priority
     .resume = Decide what to fix first: exposure matters as much as the CVSS score.
 
 ## Files
 
-priority-courriel-salome =
+priority-email-salome =
     From:     Salomé
     To:       you
     Subject:  Two CVEs, in which order?
@@ -28,41 +28,41 @@ priority-courriel-salome =
 
     Salomé
 
-priority-modele =
+priority-template =
     # Priority — The Bakery
 
     (to complete: the order to handle the two retained CVEs, with why;
     and what to do about the openssh-server CVE)
 
-priority-a-completer = (to complete
-priority-mots-expose = internet, reachable, exposed, public, outside, 80, 443
-priority-mots-local = no port, not listening, doesn't listen, local, command line, tool, not a service, no service
-priority-mots-protege = already protected, already set to "no", already no, nothing to do, no action, kbdinteractiveauthentication
+priority-a-complete = (to complete
+priority-words-expose = internet, reachable, exposed, public, outside, 80, 443
+priority-words-local = no port, not listening, doesn't listen, local, command line, tool, not a service, no service
+priority-words-protected = already protected, already set to "no", already no, nothing to do, no action, kbdinteractiveauthentication
 
 ## Review
 
-priority-relecture = Salomé reviews your decision:
-priority-manque-modele = The "(to complete)" line of the template is still there.
-priority-manque-ordre = Both CVEs (nginx and rsync) must be named, nginx first.
-priority-manque-exposition = Say why: what makes nginx reachable from the internet, and why isn't rsync (check ss -tlnp or nmap)?
-priority-manque-ssh = Don't forget the openssh-server CVE: does it apply? Does it need action?
+priority-review = Salomé reviews your decision:
+priority-missing-template = The "(to complete)" line of the template is still there.
+priority-missing-order = Both CVEs (nginx and rsync) must be named, nginx first.
+priority-missing-exposure = Say why: what makes nginx reachable from the internet, and why isn't rsync (check ss -tlnp or nmap)?
+priority-missing-ssh = Don't forget the openssh-server CVE: does it apply? Does it need action?
 
 ## Events
 
-priority-evenement-score-seul =
+priority-event-score-only =
     You ranked rsync before nginx: that's the CVSS score order (9.8 against
     8.2), but look at the exposure. A score measures how bad things get IF
     the flaw is reached; it says nothing about how easy it is to reach.
     Rerun ss -tlnp or nmap -sV on this server: who can talk to each
     service?
-priority-evenement-expose =
+priority-event-expose =
     Here is what actually listens: 80 and 443 answer any address. rsync
     never has an open port: it's a tool you run, not a service waiting for
     connections.
-priority-evenement-ordre =
+priority-event-order =
     Your ranking holds: nginx first (exposed), rsync next (a higher score,
     but no port, so no way to reach it remotely).
-priority-evenement-fin =
+priority-event-end =
     Salomé: "That's exactly it. The score says 'if it hits', not 'can it
     hit me'."
 

@@ -2,12 +2,12 @@
 ### dossier d'équipe (setgid, umask) et une règle sudo étroite (visudo).
 ### Les commandes, les chemins et la syntaxe de sudoers ne se traduisent pas.
 
-chapitre-shared-rights = Les droits partagés
+chapter-shared-rights = Les droits partagés
     .resume = Un dossier où l'équipe caisse peut vraiment travailler à plusieurs (setgid, umask), et le droit de relancer la caisse, rien de plus (visudo).
 
 ## Fichiers
 
-shared-rights-courriel-awa =
+shared-rights-email-awa =
     De :     Awa
     À :      toi
     Objet :  L'équipe caisse
@@ -27,18 +27,18 @@ shared-rights-courriel-awa =
 
     Pour sudo, ton mot de passe est toujours : radis-2027
 
-shared-rights-releve-17 =
+shared-rights-statement-17 =
     Relevé de caisse — dimanche 17 octobre (Lina)
     Fond de caisse : 150,00
     Ventes : 1 243,60
-shared-rights-releve-18 =
+shared-rights-statement-18 =
     Relevé de caisse — lundi 18 octobre (Karim)
     Fond de caisse : 150,00
     Ventes : 987,20
 
 ## Événements
 
-shared-rights-evenement-sudoers-casse =
+shared-rights-event-sudoers-broken =
     sudo est cassé : la politique a une erreur (relis le message), et sudo
     refuse alors TOUT, même à toi. C'est pour ça qu'on modifie sudoers avec
     visudo, qui vérifie avant d'enregistrer.
@@ -46,33 +46,33 @@ shared-rights-evenement-sudoers-casse =
     Sur un vrai serveur, il faudrait la console de secours de l'hébergeur
     (ou pkexec). Ici : « Recommencer ce chapitre », sous le terminal.
 # { $fichier } : le fichier de règles ignoré
-shared-rights-evenement-fichier-ignore =
+shared-rights-event-file-ignore =
     Ta règle est dans { $fichier }… que sudo ne lit pas ! @includedir ignore
     les fichiers dont le nom contient un point ou finit par ~ (relis
     /etc/sudoers.d/README). Donne-lui un nom sans point, comme
     /etc/sudoers.d/till.
-shared-rights-evenement-trop-large =
+shared-rights-event-too-large =
     Attention : avec cette règle, Lina et Karim peuvent lancer un shell
     root (sudo bash), donc TOUT faire. Ce n'est pas ce qu'Awa demande :
     seulement relancer la caisse, avec le chemin complet de la commande et
     ses arguments.
-shared-rights-evenement-systemctl-entier =
+shared-rights-event-systemctl-whole =
     Presque : avec systemctl sans arguments, Lina et Karim peuvent relancer
     la caisse… mais aussi arrêter ssh ou n'importe quel service. Écris la
     commande entière : chemin, et arguments.
-shared-rights-evenement-sudo =
+shared-rights-event-sudo =
     sudo -l -U lina le confirme : l'équipe caisse peut relancer la caisse,
     et rien d'autre.
 # { $dossier } : le dossier partagé
-shared-rights-evenement-dossier =
+shared-rights-event-directory =
     { $dossier } appartient maintenant au groupe till, qui peut y écrire, et
     porte le bit setgid (le s de drwxrwsr-x) : tout ce qui y sera créé prendra
     le groupe till. Reste ce qui y est déjà, et les droits que Lina et Karim
     donneront à leurs prochains fichiers (umask).
-shared-rights-evenement-masque =
+shared-rights-event-mask =
     Lina et Karim auront le masque 002 à leur prochaine connexion : leurs
     nouveaux fichiers seront rw-rw-r--, modifiables par le groupe.
-shared-rights-evenement-fin =
+shared-rights-event-end =
     Le lendemain : Lina enregistre son relevé (-rw-rw-r-- lina till),
     Karim corrige une virgule sans demander à personne, et quand la caisse se
     fige à midi, il la relance lui-même avec sudo. Awa : « Plus de mot de

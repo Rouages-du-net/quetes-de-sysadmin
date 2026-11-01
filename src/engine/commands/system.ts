@@ -49,8 +49,8 @@ export const SYSTEM: Record<string, Command> = {
       for (const raw of pids) {
         const listing: Process[] = game.state.processus ?? [];
         const p = listing.find((q) => String(q.pid) === raw);
-        if (!p) game.error(game.t('kill-aucun', { pid: raw }));
-        else if (game.who !== 'root' && p.user !== game.who) game.error(game.t('kill-non-permise', { pid: raw }));
+        if (!p) game.error(game.t('kill-none', { pid: raw }));
+        else if (game.who !== 'root' && p.user !== game.who) game.error(game.t('kill-not-allowed', { pid: raw }));
         // Un zombie est déjà mort : aucun signal n'y fait rien, seul son parent peut le récupérer.
         else if (p.zombie) continue;
         else {

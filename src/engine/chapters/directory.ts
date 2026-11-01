@@ -192,7 +192,7 @@ export const chapterDirectory: Chapter = {
   home: M,
   welcome: 'email_malik.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: PASSWORD,
   accounts: () => {
     const c = hiveAccounts();
@@ -231,28 +231,28 @@ export const chapterDirectory: Chapter = {
         ldap: d({ 'ldap.conf': f(LDAP_CONF, { lines: true, owner: 'root' }) }, undefined, { owner: 'root' }),
       },
       home: {
-        'email_malik.txt': f(t('directory-courriel-malik', { admin: ADMIN, motdepasse: MDP_ADMIN })),
+        'email_malik.txt': f(t('directory-email-malik', { admin: ADMIN, motdepasse: MDP_ADMIN })),
         'modele-ines.ldif': f(INES_TEMPLATE, { lines: true }),
         'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },
     }),
   events: [
-    { id: 'clair', condition: (j) => wordsInClear(directory(j)!), message: (j) => j.t('directory-evenement-clair') },
-    { id: 'uid-double', condition: (j) => uidDouble(directory(j)!), message: (j) => j.t('directory-evenement-uid-double') },
+    { id: 'clear', condition: (j) => wordsInClear(directory(j)!), message: (j) => j.t('directory-event-clear') },
+    { id: 'uid-double', condition: (j) => uidDouble(directory(j)!), message: (j) => j.t('directory-event-uid-double') },
     {
-      id: 'camille-reste',
+      id: 'camille-rest',
       condition: (j) => {
         const a = directory(j)!;
         return !find(a, `uid=camille,ou=people,${BASE}`) && camilleTrace(a);
       },
-      message: (j) => j.t('directory-evenement-camille-reste'),
+      message: (j) => j.t('directory-event-camille-rest'),
     },
     {
-      id: 'sami-seul',
+      id: 'sami-only',
       condition: (j) => completeSami(directory(j)!) && !members(directory(j)!, OFFICES).includes('sami'),
-      message: (j) => j.t('directory-evenement-sami-seul'),
+      message: (j) => j.t('directory-event-sami-only'),
     },
-    { id: 'arrete', condition: (j) => systemd(j)?.services.slapd?.state !== 'active', message: (j) => j.t('directory-evenement-arrete') },
-    { id: 'fin', condition: finished, message: (j) => j.t('directory-evenement-fin') },
+    { id: 'stopped', condition: (j) => systemd(j)?.services.slapd?.state !== 'active', message: (j) => j.t('directory-event-stopped') },
+    { id: 'end', condition: finished, message: (j) => j.t('directory-event-end') },
   ],
 };

@@ -160,9 +160,9 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       const e = (id: string) => c.shell.flags.has(id);
       edit('sudo nano /etc/apt/apt.conf.d/20auto-upgrades', TWENTY_ACTIVE);
       expect(e('active')).toBe(true);
-      expect(e('securite')).toBe(false);
+      expect(e('security')).toBe(false);
       edit('sudo nano /etc/apt/apt.conf.d/50unattended-upgrades', restrict);
-      expect(e('securite')).toBe(true);
+      expect(e('security')).toBe(true);
       expect(c.finished).not.toContain('routine');
     });
   });

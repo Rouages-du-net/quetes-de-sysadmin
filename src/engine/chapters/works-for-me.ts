@@ -153,7 +153,7 @@ export const atMe: Chapter = {
   home: M,
   welcome: 'email_kofi.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'ants-2026',
   accounts,
   state: () => {
@@ -237,7 +237,7 @@ export const atMe: Chapter = {
           { owner: 'root', group: 'bind', mode: 'rwxr-sr-x' },
         ),
       }),
-      home: place({ you: d({ 'email_kofi.txt': f(t('works-for-me-courriel-kofi')), 'help_dns.txt': f(t('works-for-me-aide-dns')) }) }),
+      home: place({ you: d({ 'email_kofi.txt': f(t('works-for-me-email-kofi')), 'help_dns.txt': f(t('works-for-me-help-dns')) }) }),
       usr: place({ sbin: place({ named: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_201_664 }) }) }),
     });
   },
@@ -257,13 +257,13 @@ export const atMe: Chapter = {
       message: (j) => {
         const memo = state(j).cache['cafe.example. A'];
         const hours = Math.max(1, Math.round((memo.expires - toUtc(sd(j).clock)) / 3_600_000));
-        return j.t('works-for-me-evenement-cache', { heures: hours });
+        return j.t('works-for-me-event-cache', { heures: hours });
       },
     },
     {
-      id: 'erreur-zone',
+      id: 'error-zone',
       condition: (j) => j.last.errors.some((e) => e.includes("'reload' failed")),
-      message: (j) => j.t('works-for-me-evenement-erreur-zone'),
+      message: (j) => j.t('works-for-me-event-error-zone'),
     },
     {
       id: 'serial',
@@ -271,17 +271,17 @@ export const atMe: Chapter = {
         const e = state(j);
         return !same(e.primary['cafe.example']?.rrs, e.secondary['cafe.example']?.rrs);
       },
-      message: (j) => j.t('works-for-me-evenement-serial'),
+      message: (j) => j.t('works-for-me-event-serial'),
     },
     {
       id: 'point-final',
       condition: forgottenPoint,
-      message: (j) => j.t('works-for-me-evenement-point-final'),
+      message: (j) => j.t('works-for-me-event-point-final'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => good(j, 'primary') && good(j, 'secondary'),
-      message: (j) => j.t('works-for-me-evenement-fin'),
+      message: (j) => j.t('works-for-me-event-end'),
     },
   ],
 };

@@ -139,8 +139,8 @@ de large : pas d'erreur console, pas de défilement horizontal.
   seulement.
 - **Le code en anglais.** Les fichiers et les identifiants (variables,
   fonctions, types, composants) sont en anglais, et le monde aussi (lieux,
-  machines, comptes, mots de passe) ; certains identifiants de données (les
-  clés `.ftl`, les classes CSS) et des commentaires sont encore en français, et
+  machines, comptes, mots de passe) ; certains identifiants (les noms des
+  fichiers `.ftl`, les classes CSS) et des commentaires sont encore en français, et
   passent peu à peu à l'anglais. Le **nouveau** code s'écrit en anglais,
   sans mêler un grand renommage et une fonctionnalité dans la même PR. Un
   nom public reçoit d'abord son alias anglais, l'ancien reste accepté.

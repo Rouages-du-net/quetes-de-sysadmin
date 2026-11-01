@@ -26,9 +26,9 @@ function forEach(n: Node, recursive: boolean, run: (n: Node) => void) {
 function change(game: Shell, command: string, targets: string[], recursive: boolean, allowed: (n: Node) => boolean, run: (n: Node) => void) {
   for (const target of targets) {
     const n = game.find(target);
-    if (!n) game.error(game.t('erreur-acces-introuvable', { commande: command, cible: target }));
-    else if (!game.traverses(target)) game.error(game.t('erreur-acces-permission', { commande: command, cible: target }));
-    else if (!allowed(n)) game.error(game.t(`${command}-non-permise`, { cible: target }));
+    if (!n) game.error(game.t('error-access-missing', { commande: command, cible: target }));
+    else if (!game.traverses(target)) game.error(game.t('error-access-permission', { commande: command, cible: target }));
+    else if (!allowed(n)) game.error(game.t(`${command}-not-allowed`, { cible: target }));
     else forEach(n, recursive, run);
   }
   return '';
@@ -39,9 +39,9 @@ export const ACCOUNTS: Record<string, Command> = {
     launch: ({ args, game }) => {
       const name = args[0] ?? game.who;
       const u = game.accounts.users[name];
-      if (!u) return game.error(game.t('id-inexistant', { utilisateur: name }));
+      if (!u) return game.error(game.t('id-missing', { utilisateur: name }));
       const gid = (g: string) => game.accounts.groups[g]?.gid;
-      return game.t('id-ligne', {
+      return game.t('id-line', {
         uid: withNumber(name, u.uid),
         gid: withNumber(u.group, gid(u.group)),
         groupes: game.groupsFor(name).map((g) => withNumber(g, gid(g))).join(','),
@@ -54,7 +54,7 @@ export const ACCOUNTS: Record<string, Command> = {
       if (!args.length) return game.groupsFor(game.who).join(' ');
       return args
         .map((name) =>
-          game.accounts.users[name] ? `${name} : ${game.groupsFor(name).join(' ')}` : game.error(game.t('groups-inexistant', { utilisateur: name })),
+          game.accounts.users[name] ? `${name} : ${game.groupsFor(name).join(' ')}` : game.error(game.t('groups-missing', { utilisateur: name })),
         )
         .filter(Boolean)
         .join('\n');
@@ -66,7 +66,7 @@ export const ACCOUNTS: Record<string, Command> = {
       const { letters, rest } = options(args);
       const [group, ...targets] = rest;
       if (!group || !targets.length) return game.error(game.t('chgrp-usage'));
-      if (!game.accounts.groups[group]) return game.error(game.t('chgrp-groupe-incorrect', { groupe: group }));
+      if (!game.accounts.groups[group]) return game.error(game.t('chgrp-group-incorrect', { groupe: group }));
       const allowed = (n: Node) => game.who === 'root' || ((n.owner ?? game.player) === game.who && game.groupsFor(game.who).includes(group));
       return change(game, 'chgrp', targets, letters.has('R'), allowed, (n) => (n.group = group));
     },
@@ -83,8 +83,8 @@ export const ACCOUNTS: Record<string, Command> = {
       const [nameRaw, groupRaw] = owner.split(':');
       const name = nameRaw && /^\d+$/.test(nameRaw) ? byUid(nameRaw) : nameRaw;
       const group = groupRaw && /^\d+$/.test(groupRaw) ? byGid(groupRaw) : groupRaw;
-      if (name && !/^\d+$/.test(name) && !game.accounts.users[name]) return game.error(game.t('chown-utilisateur-incorrect', { proprio: owner }));
-      if (group && !/^\d+$/.test(group) && !game.accounts.groups[group]) return game.error(game.t('chown-groupe-incorrect', { proprio: owner }));
+      if (name && !/^\d+$/.test(name) && !game.accounts.users[name]) return game.error(game.t('chown-user-incorrect', { proprio: owner }));
+      if (group && !/^\d+$/.test(group) && !game.accounts.groups[group]) return game.error(game.t('chown-group-incorrect', { proprio: owner }));
       // « chown malo: f » : le groupe principal de malo.
       const newGroup = group || (owner.endsWith(':') && name ? (game.accounts.users[name]?.group ?? name) : undefined);
       return change(game, 'chown', targets, letters.has('R'), () => game.who === 'root', (n) => {
@@ -117,20 +117,20 @@ export const ACCOUNTS: Record<string, Command> = {
       }
       const name = rest[0];
       if (!name || (listing === null && lock === null && expires === null && shell === null))
-        return game.error(game.t(addition && listing === null ? 'usermod-a-sans-G' : 'usermod-usage'));
-      if (addition && listing === null) return game.error(game.t('usermod-a-sans-G'));
+        return game.error(game.t(addition && listing === null ? 'usermod-a-without-G' : 'usermod-usage'));
+      if (addition && listing === null) return game.error(game.t('usermod-a-without-G'));
       if (game.who !== 'root') return game.error(game.t('usermod-permission'));
       const u = game.accounts.users[name];
-      if (!u) return game.error(game.t('usermod-utilisateur-inexistant', { utilisateur: name }));
+      if (!u) return game.error(game.t('usermod-user-missing', { utilisateur: name }));
       let date: string | undefined;
       if (expires !== null && expires !== '') {
         date = dateExpiration(expires) ?? undefined;
-        if (!date) return game.error(game.t('usermod-date-invalide', { date: expires }));
+        if (!date) return game.error(game.t('usermod-date-invalid', { date: expires }));
       }
       if (listing !== null) {
         const groups = listing.split(',').filter(Boolean);
         const unknown = groups.find((g) => !game.accounts.groups[g]);
-        if (unknown) return game.error(game.t('usermod-groupe-inexistant', { groupe: unknown }));
+        if (unknown) return game.error(game.t('usermod-group-missing', { groupe: unknown }));
         // Sans -a, les groupes secondaires sont REMPLACÉS par la liste.
         if (!addition) for (const g of Object.values(game.accounts.groups)) g.members = g.members.filter((m) => m !== name);
         for (const g of groups) if (!game.accounts.groups[g].members.includes(name)) game.accounts.groups[g].members.push(name);
@@ -156,10 +156,10 @@ export const ACCOUNTS: Record<string, Command> = {
       if (!name) return game.error(game.t('userdel-usage'));
       if (game.who !== 'root') return game.error(game.t('userdel-permission'));
       const u = game.accounts.users[name];
-      if (!u) return game.error(game.t('userdel-inexistant', { utilisateur: name }), 6);
+      if (!u) return game.error(game.t('userdel-missing', { utilisateur: name }), 6);
       // Un compte encore utilisé par un processus n'est pas supprimé (sauf -f).
       const p = ((game.state.processus ?? []) as { pid: number; user: string }[]).find((x) => x.user === name);
-      if (p && !letters.has('f')) return game.error(game.t('userdel-utilise', { utilisateur: name, pid: String(p.pid) }), 8);
+      if (p && !letters.has('f')) return game.error(game.t('userdel-used', { utilisateur: name, pid: String(p.pid) }), 8);
       delete game.accounts.users[name];
       for (const g of Object.values(game.accounts.groups)) g.members = g.members.filter((m) => m !== name);
       // Son groupe personnel (même nom) part aussi, s'il n'a pas d'autre membre.
@@ -169,7 +169,7 @@ export const ACCOUNTS: Record<string, Command> = {
         const output: string[] = [];
         if (game.exists(home)) game.erase(home);
         if (game.exists(`/var/mail/${name}`)) game.erase(`/var/mail/${name}`);
-        else output.push(game.t('userdel-sans-courrier', { utilisateur: name }));
+        else output.push(game.t('userdel-without-mail', { utilisateur: name }));
         return output.join('\n');
       }
       return '';
@@ -185,15 +185,15 @@ export const ACCOUNTS: Record<string, Command> = {
       if (i < 0 || !name || !group) return game.error(game.t('gpasswd-usage'), 2);
       if (game.who !== 'root') return game.error(game.t('gpasswd-permission'), 1);
       const g = game.accounts.groups[group];
-      if (!g) return game.error(game.t('gpasswd-groupe-inexistant', { groupe: group }), 3);
-      if (!game.accounts.users[name]) return game.error(game.t('gpasswd-utilisateur-inexistant', { utilisateur: name }), 3);
+      if (!g) return game.error(game.t('gpasswd-group-missing', { groupe: group }), 3);
+      if (!game.accounts.users[name]) return game.error(game.t('gpasswd-user-missing', { utilisateur: name }), 3);
       if (args[i] === '-a') {
         if (!g.members.includes(name)) g.members.push(name);
-        return game.t('gpasswd-ajout', { utilisateur: name, groupe: group });
+        return game.t('gpasswd-addition', { utilisateur: name, groupe: group });
       }
-      if (!g.members.includes(name)) return game.error(game.t('gpasswd-pas-membre', { utilisateur: name, groupe: group }), 3);
+      if (!g.members.includes(name)) return game.error(game.t('gpasswd-not-member', { utilisateur: name, groupe: group }), 3);
       g.members = g.members.filter((m) => m !== name);
-      return game.t('gpasswd-retrait', { utilisateur: name, groupe: group });
+      return game.t('gpasswd-indent', { utilisateur: name, groupe: group });
     },
   },
 
@@ -205,17 +205,17 @@ export const ACCOUNTS: Record<string, Command> = {
       const name = args.filter((a, k) => !a.startsWith('-') && (i < 0 || k !== i + 1)).at(-1);
       if (!name || (i < 0 && !listing)) return game.error(game.t('chage-usage'), 2);
       const u = game.accounts.users[name];
-      if (!u) return game.error(game.t('chage-inexistant', { utilisateur: name }), 1);
+      if (!u) return game.error(game.t('chage-missing', { utilisateur: name }), 1);
       if (listing && i < 0) {
         if (game.who !== 'root' && game.who !== name) return game.error(game.t('chage-permission'), 1);
-        return game.t('chage-liste', { expire: u.expires ?? 'never' });
+        return game.t('chage-list', { expire: u.expires ?? 'never' });
       }
       if (game.who !== 'root') return game.error(game.t('chage-permission'), 1);
       const value = args[i + 1] ?? '';
       if (value === '-1') delete u.expires;
       else {
         const date = value === '0' ? '1970-01-01' : dateExpiration(value);
-        if (!date) return game.error(game.t('chage-date-invalide', { date: value }), 2);
+        if (!date) return game.error(game.t('chage-date-invalid', { date: value }), 2);
         u.expires = date;
       }
       return '';

@@ -3,12 +3,12 @@
 ### translated; place and file names (memories, /mnt/backup,
 ### note_from_maelle.txt…) come from noms.ftl.
 
-chapitre-backup = The Backup
+chapter-backup = The Backup
     .resume = Never again: back up with rsync, every night with cron, and know how to restore.
 
 ## Files
 
-backup-mot-de-maelle =
+backup-word-maelle =
     A note from Maëlle, the keeper of the Lighthouse:
 
     "Since the Eraser stopped, the kingdom has got its memories back
@@ -24,54 +24,54 @@ backup-mot-de-maelle =
 
     I was told about rsync and cron. You'll find everything in man rsync
     and man crontab."
-backup-souvenir-first-letter =
+backup-memory-first-letter =
     The first letter that reached the Harbour after the light came back. It
     begins: "Dear Maëlle, we saw the Lighthouse from out at sea…"
-backup-souvenir-lighthouse =
+backup-memory-lighthouse =
     The evening the Lighthouse was lit again: a beam sweeping the sea, and
     Captain Ana hoisting the sail.
-backup-souvenir-village =
+backup-memory-village =
     The Village celebrating: the sourdough saved, the clock running again,
     the school found again.
-backup-souvenir-nour =
+backup-memory-nour =
     Nour, found in the Tunnel, laughing as she eats cheese.
-backup-souvenir-eraser =
+backup-memory-eraser =
     The Eraser finally emptying the Bin, as on the first day, and
     nothing else.
-backup-souvenir-lighthouse-festival =
+backup-memory-lighthouse-festival =
     The Lighthouse festival, today: the whole kingdom on the Pier, and
     paper lanterns all the way up to the Lantern.
 
 ## The night (cron)
 
 # { $fichier }: the memory that arrived during the day
-backup-nuit-debut =
+backup-night-start =
     Evening falls on the kingdom. During the day, a new memory
     arrived: ~/memories/{ $fichier }.
 
     The night goes by. Between midnight and 6 am, cron wakes up and runs
     what your crontab asks of it…
-backup-nuit-encore =
+backup-night-still =
     Another night goes by. Between midnight and 6 am, cron runs what your
     crontab asks of it…
-backup-nuit-ok =
+backup-night-ok =
     In the morning, the backup is up to date: { $fichier } is there,
     without you typing anything. That's an automatic backup.
-backup-matin =
+backup-morning =
     But Maëlle arrives, distraught: "I wanted to tidy up… and I deleted
     ~/memories/{ $fichier }!" On Linux, rm doesn't go through a trash
     can. Luckily, you have a backup. Restore this memory.
-backup-nuit-rien =
+backup-night-nothing =
     In the morning, nothing has changed: none of your crontab's jobs fell
     during the night, between midnight and 6 am. Read the five time fields
     again (man crontab): minute, hour, day of month, month, day of week.
 # { $courrier }: what the jobs wrote
-backup-nuit-courrier =
+backup-night-mail =
     In the morning, the backup isn't up to date. Cron left you this mail,
     with what your job wrote:
 
     { $courrier }
-backup-nuit-echec =
+backup-night-failure =
     In the morning, the backup isn't up to date: your job ran, but it
     didn't copy the memories to the right place. Check the command by
     hand, with rsync -n to try without touching anything.
@@ -79,24 +79,24 @@ backup-nuit-echec =
 ## Events
 
 # { $sauvegarde }: the backup directory
-backup-evenement-imbrique =
+backup-event-nested =
     Look closely: you now have { $sauvegarde }/memories, a memories
     directory INSIDE the memories directory. For rsync, the source's
     trailing slash matters: "memories/" means "the contents of
     memories", "memories" means "the directory itself". This extra
     directory doesn't get in the way, but aim right from now on: rsync -a
     ~/memories/ followed by the destination.
-backup-evenement-copie =
+backup-event-copy =
     The memories are copied to the backup disk. But a backup you have to
     remember to do by hand always ends up forgotten. Ask cron to redo it
     every night: crontab -e.
 # { $fichier }: the deleted memory
-backup-evenement-perdu =
+backup-event-lost =
     { $fichier } has disappeared… from the backup too! With --delete,
     rsync copied the deletion: a mirror reproduces mistakes like
     everything else. That's why you keep several versions (rsnapshot,
     restic: that's for later). Here, restart the chapter to try again.
-backup-evenement-fin =
+backup-event-end =
     The memory is back. Maëlle: "So that's a real backup: a copy
     somewhere else, redone on its own, that we've already managed to
     restore."

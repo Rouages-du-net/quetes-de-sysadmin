@@ -3,12 +3,12 @@
 ### keywords (PermitRootLogin…), commands, paths and OpenSSH messages
 ### (in English) are not translated.
 
-chapitre-shut-the-door = Shut the Door
+chapter-shut-the-door = Shut the Door
     .resume = Harden SSH: sshd_config, sshd -t, reload, and don't lock yourself out.
 
 ## Files
 
-porte-courriel-kofi =
+door-email-kofi =
     From:    Kofi (La Fourmilière)
     To:      you
     Subject: The Lettres' new server
@@ -33,21 +33,21 @@ porte-courriel-kofi =
 ## Events
 
 # { $config }: the path of the configuration file
-porte-evenement-erreur =
+door-event-error =
     There's an error in the SSH configuration! Before reloading, always
     check with  sudo sshd -t: it gives the file and line at fault.
 
     (Good news: as long as the configuration is wrong, systemctl reload
     ssh refuses to apply it and sshd keeps the old one. You won't lock
     yourself out because of a typo.)
-porte-evenement-enferme =
+door-event-locked-out =
     WARNING: with the configuration sshd has just loaded, a new connection
     from your account would be refused. Your current session, however,
     stays open: sshd never cuts off sessions in progress.
 
     Now is the time to fix it, BEFORE you log out. That's why you always
     keep a session open when you change the SSH configuration.
-porte-evenement-sans-effet =
+door-event-without-effect =
     Strange: you wrote PasswordAuthentication no and reloaded ssh… but
     passwords are still accepted. Ask sshd what it really applies:
 
@@ -55,7 +55,7 @@ porte-evenement-sans-effet =
 
     Then reread the beginning of /etc/ssh/sshd_config, and man sshd_config:
     for each keyword, which value wins when it appears twice?
-porte-evenement-fermee =
+door-event-closed =
     sshd is applying your new configuration: no more root, no more
     passwords. In the log (journalctl -u ssh), the bots are now turned
     away before they even try a password ("[preauth]").
@@ -63,7 +63,7 @@ porte-evenement-fermee =
     The most important thing remains: checking that YOU can still get in.
     On a real server, you keep this session open and open a second one
     to test. Here: exit, then ssh letters.
-porte-evenement-fin =
+door-event-end =
     You got in with your key: the door is shut to the bots, but not to you.
     Kofi: "Thanks! I'll sleep better."
 

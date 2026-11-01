@@ -201,12 +201,12 @@ export const homePlan =
         role: 'routeur',
         name: machineName(t, 'community'),
         address: '192.0.2.19',
-        note: t('plan-note-passerelle'),
+        note: t('plan-note-gateway'),
         host: 'community',
         children: [
           {
             role: 'reseau',
-            name: t('plan-reseau-interne'),
+            name: t('plan-network-internal'),
             address: '10.20.0.0/24',
             children: [
               { role: 'serveur', name: 'wiki', address: '10.20.0.11', note: t('plan-note-wiki'), host: 'wiki' },
@@ -215,5 +215,5 @@ export const homePlan =
           },
         ],
       },
-      ...(o.host ? [{ role: 'serveur' as const, name: 'ftp.hosting.example', address: '203.0.113.80', note: t('plan-note-hebergeur') }] : []),
+      ...(o.host ? [{ role: 'serveur' as const, name: 'ftp.hosting.example', address: '203.0.113.80', note: t('plan-note-host') }] : []),
     );

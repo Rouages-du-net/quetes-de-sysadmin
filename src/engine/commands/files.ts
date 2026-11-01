@@ -64,17 +64,17 @@ function list({ args, game, last }: Context, paint: Paint = withoutPainting): st
   // ls -l d'un lien montre le lien lui-même ; sans -l, ls entre dans le lieu visé.
   const link = game.find(target, false);
   const n = (letters.has('l') || letters.has('n')) && link?.type === 'fichier' && link.link !== undefined ? link : game.find(target);
-  if (!n) return game.error(game.t('ls-acces-introuvable', { cible: target }));
+  if (!n) return game.error(game.t('ls-access-missing', { cible: target }));
   const reason = game.block(target);
   if (reason) return game.error(reason);
-  if (!game.traverses(target)) return game.error(game.t('ls-acces-permission', { cible: target }));
+  if (!game.traverses(target)) return game.error(game.t('ls-access-permission', { cible: target }));
   // -n est un -l qui montre les numéros.
   const long = letters.has('l') || letters.has('n');
   // -i : le numéro d'inode devant chaque nom.
   const ino = (e: Node, text: string) => (letters.has('i') ? `${String(inode(e)).padStart(7)} ${text}` : text);
   // -d : le lieu lui-même, pas son contenu.
   if (n.type === 'fichier' || letters.has('d')) return ino(n, long ? longLine(game, target, n, letters.has('h'), letters.has('n'), paint) : paint(target, n));
-  if (!game.can(n, 'r')) return game.error(game.t('ls-ouvrir-permission', { cible: target }));
+  if (!game.can(n, 'r')) return game.error(game.t('ls-open-permission', { cible: target }));
   const inputs: [string, Node][] = Object.entries(n.children)
     .filter(([name]) => letters.has('a') || !name.startsWith('.'))
     .sort(([a], [b]) => compareNames(a, b));
@@ -203,9 +203,9 @@ export const FILES: Record<string, Command> = {
     launch: ({ args, game }) => {
       // cd - : retour au dossier d'avant ($OLDPWD), que bash affiche.
       if (args[0] === '-') {
-        if (game.old === null) return game.error(game.t('cd-ancien-absent'));
+        if (game.old === null) return game.error(game.t('cd-old-missing'));
         const old = game.old;
-        if (game.find(old)?.type !== 'dossier') return game.error(game.t('erreur-introuvable', { commande: 'cd', cible: old }));
+        if (game.find(old)?.type !== 'dossier') return game.error(game.t('error-missing', { commande: 'cd', cible: old }));
         game.old = game.cwd;
         game.cwd = old;
         game.visits.add(old);
@@ -213,11 +213,11 @@ export const FILES: Record<string, Command> = {
       }
       const target = args[0] ?? '~';
       const n = game.find(target);
-      if (!n) return game.error(game.t('erreur-introuvable', { commande: 'cd', cible: target }));
-      if (n.type !== 'dossier') return game.error(game.t('cd-pas-un-dossier', { cible: target }));
+      if (!n) return game.error(game.t('error-missing', { commande: 'cd', cible: target }));
+      if (n.type !== 'dossier') return game.error(game.t('cd-not-one-directory', { cible: target }));
       const reason = game.block(target);
       if (reason) return game.error(reason);
-      if (!game.traverses(target) || !game.can(n, 'x')) return game.error(game.t('erreur-permission', { commande: 'cd', cible: target }));
+      if (!game.traverses(target) || !game.can(n, 'x')) return game.error(game.t('error-permission', { commande: 'cd', cible: target }));
       game.old = game.cwd;
       game.cwd = game.resolve(target);
       game.visits.add(game.cwd);
@@ -253,7 +253,7 @@ export const FILES: Record<string, Command> = {
         const n = game.find(target);
         if (n?.type === 'fichier') {
           if (!game.traverses(target) || !game.can(n, 'w')) {
-            game.error(game.t('erreur-permission', { commande: 'tee', cible: target }));
+            game.error(game.t('error-permission', { commande: 'tee', cible: target }));
             continue;
           }
           const before = content(n, game);
@@ -274,9 +274,9 @@ export const FILES: Record<string, Command> = {
       const [source, dest] = args;
       if (!source || !dest) return game.error(game.t('mv-usage'));
       const n = game.find(source);
-      if (!n) return game.error(game.t('mv-introuvable', { cible: source }));
+      if (!n) return game.error(game.t('mv-missing', { cible: source }));
       // Simplification du jeu : on déplace des objets, jamais des lieux.
-      if (n.type === 'dossier') return game.error(game.t('mv-lieu', { cible: source }));
+      if (n.type === 'dossier') return game.error(game.t('mv-place', { cible: source }));
       if (n.isProtected?.mv) return game.error(n.isProtected.mv);
       const target = destination(game, source, dest);
       const reason = game.block(source) ?? game.block(target + '/..');
@@ -296,13 +296,13 @@ export const FILES: Record<string, Command> = {
       const [source, dest] = rest;
       if (!source || !dest) return game.error(game.t('cp-usage'));
       const n = game.find(source);
-      if (!n) return game.error(game.t('cp-introuvable', { cible: source }));
-      if (n.type === 'dossier' && !letters.has('r')) return game.error(game.t('cp-repertoire', { cible: source }));
+      if (!n) return game.error(game.t('cp-missing', { cible: source }));
+      if (n.type === 'dossier' && !letters.has('r')) return game.error(game.t('cp-directory', { cible: source }));
       const target = destination(game, source, dest);
       const reason = game.block(source) ?? game.block(target + '/..');
       if (reason) return game.error(reason);
-      if (game.resolve(source) === target) return game.error(game.t('cp-meme-fichier', { source, destination: dest }));
-      if (!game.traverses(source) || !game.can(n, 'r')) return game.error(game.t('cp-lecture-permission', { cible: source }));
+      if (game.resolve(source) === target) return game.error(game.t('cp-same-file', { source, destination: dest }));
+      if (!game.traverses(source) || !game.can(n, 'r')) return game.error(game.t('cp-read-permission', { cible: source }));
       const error = game.place('cp', target, copy(n, game.who));
       return error ? game.error(error) : '';
     },
@@ -314,8 +314,8 @@ export const FILES: Record<string, Command> = {
       for (const target of args.filter((a) => !a.startsWith('-'))) {
         // rm efface le lien lui-même, jamais ce qu'il vise.
         const n = game.find(target, false);
-        if (!n) game.error(game.t('rm-introuvable', { cible: target }));
-        else if (n.type === 'dossier') game.error(game.t('rm-dossier', { cible: target }));
+        if (!n) game.error(game.t('rm-missing', { cible: target }));
+        else if (n.type === 'dossier') game.error(game.t('rm-directory', { cible: target }));
         else if (n.isProtected?.rm) game.error(n.isProtected.rm);
         else if (game.block(target)) game.error(game.block(target)!);
         // Effacer un fichier, c'est modifier le lieu qui le contient : il faut
@@ -333,7 +333,7 @@ export const FILES: Record<string, Command> = {
   ln: {
     launch: ({ args, game }) => {
       const { letters, rest } = options(args);
-      if (!rest.length) return game.error(game.t('ln-operande-manquant'));
+      if (!rest.length) return game.error(game.t('ln-operand-missing'));
       const [target, dest = '.'] = rest;
       // -n : si la destination est un lien vers un lieu, on remplace le lien
       // au lieu d'entrer dans le lieu (ln -sfn, pour basculer un lien « current »).
@@ -341,18 +341,18 @@ export const FILES: Record<string, Command> = {
       const path = place?.type === 'dossier' ? `${game.resolve(dest)}/${target.replace(/\/$/, '').split('/').at(-1)}` : game.resolve(dest);
       const shows = place?.type === 'dossier' ? path : dest;
       const symbolic = letters.has('s');
-      const what = symbolic ? 'ln-impossible-symbolique' : 'ln-impossible-physique';
+      const what = symbolic ? 'ln-impossible-symbolic' : 'ln-impossible-physical';
       if (game.find(path, false)) {
-        if (!letters.has('f')) return game.error(game.t(what, { cible: shows, raison: game.t('ln-existe') }));
+        if (!letters.has('f')) return game.error(game.t(what, { cible: shows, raison: game.t('ln-exists') }));
         if (!game.writtenIn(path)) return game.error(game.t(what, { cible: shows, raison: game.t('ln-permission') }));
         game.erase(path);
       }
       if (!symbolic) {
         const source = game.find(target);
-        if (!source) return game.error(game.t('ln-acces-impossible', { cible: target }));
-        if (source.type === 'dossier') return game.error(game.t('ln-physique-dossier', { cible: target }));
+        if (!source) return game.error(game.t('ln-access-impossible', { cible: target }));
+        if (source.type === 'dossier') return game.error(game.t('ln-physical-directory', { cible: target }));
       }
-      if (game.find(path + '/..')?.type !== 'dossier') return game.error(game.t(what, { cible: shows, raison: game.t('ln-introuvable') }));
+      if (game.find(path + '/..')?.type !== 'dossier') return game.error(game.t(what, { cible: shows, raison: game.t('ln-missing') }));
       if (!game.writtenIn(path)) return game.error(game.t(what, { cible: shows, raison: game.t('ln-permission') }));
       // Un lien physique est un deuxième nom pour le même fichier : le même nœud.
       const node: Node = symbolic ? { type: 'fichier', content: '', link: target, owner: game.who } : game.find(target)!;
@@ -387,13 +387,13 @@ export const FILES: Record<string, Command> = {
             const path = '/' + chunks.slice(0, i).join('/');
             const n = game.find(path);
             if (n?.type === 'dossier') continue;
-            const error = n ? game.t('mkdir-existe', { cible: path }) : game.place('mkdir', path, { type: 'dossier', children: {}, owner: game.who });
+            const error = n ? game.t('mkdir-exists', { cible: path }) : game.place('mkdir', path, { type: 'dossier', children: {}, owner: game.who });
             if (error) {
               game.error(error);
               break;
             }
           }
-        } else if (game.exists(target)) game.error(game.t('mkdir-existe', { cible: target }));
+        } else if (game.exists(target)) game.error(game.t('mkdir-exists', { cible: target }));
         else {
           const error = game.place('mkdir', target, { type: 'dossier', children: {}, owner: game.who });
           if (error) game.error(error);
@@ -419,9 +419,9 @@ export const FILES: Record<string, Command> = {
       };
       for (const target of targets) {
         const n = game.find(target);
-        if (!n) game.error(game.t('chmod-acces-introuvable', { cible: target }));
-        else if (!game.traverses(target)) game.error(game.t('chmod-acces-permission', { cible: target }));
-        else if (game.who !== 'root' && (n.owner ?? game.player) !== game.who) game.error(game.t('chmod-non-permise', { cible: target }));
+        if (!n) game.error(game.t('chmod-access-missing', { cible: target }));
+        else if (!game.traverses(target)) game.error(game.t('chmod-access-permission', { cible: target }));
+        else if (game.who !== 'root' && (n.owner ?? game.player) !== game.who) game.error(game.t('chmod-not-allowed', { cible: target }));
         else if (!applyMode(modeFor(n), rights)) game.error(game.t('chmod-mode-incorrect', { droits: rights }));
         else apply(n);
       }
@@ -446,14 +446,14 @@ export const FILES: Record<string, Command> = {
         else if (crit[i] === '-print') continue;
         else if (crit[i] === '-maxdepth') {
           const v = crit[++i] ?? '';
-          if (!/^\d+$/.test(v)) return game.error(game.t('find-argument-numerique', { predicat: '-maxdepth', valeur: v }));
+          if (!/^\d+$/.test(v)) return game.error(game.t('find-argument-numeric', { predicat: '-maxdepth', valeur: v }));
           depth = Number(v);
         } else if (crit[i] === '-mtime') {
           const v = crit[++i] ?? '';
           const m = /^([+-]?)(\d+)$/.exec(v);
-          if (!m) return game.error(game.t('find-argument-numerique', { predicat: '-mtime', valeur: v }));
+          if (!m) return game.error(game.t('find-argument-numeric', { predicat: '-mtime', valeur: v }));
           age = { sign: m[1], days: Number(m[2]) };
-        } else return game.error(game.t('find-predicat-inconnu', { predicat: crit[i] }));
+        } else return game.error(game.t('find-predicate-unknown', { predicat: crit[i] }));
       }
       const now: number = game.state.systemd?.clock ?? 0;
       const ageOk = (e: Node) => {
@@ -462,7 +462,7 @@ export const FILES: Record<string, Command> = {
         return age.sign === '+' ? days > age.days : age.sign === '-' ? days < age.days : days === age.days;
       };
       const n = game.find(departure);
-      if (!n) return game.error(game.t('find-introuvable', { cible: departure }));
+      if (!n) return game.error(game.t('find-missing', { cible: departure }));
       const found: string[] = [];
       const walk = (path: string, e: Node, level: number) => {
         const kept = (!name || name.test(path.split('/').pop()!)) && (!type || (type === 'd') === (e.type === 'dossier')) && ageOk(e);
@@ -476,8 +476,8 @@ export const FILES: Record<string, Command> = {
       if (!erase) return found.join('\n');
       for (const path of found.reverse()) {
         const e = game.find(path)!;
-        if (e.type === 'dossier' && Object.keys(e.children).length) game.error(game.t('find-supprimer-non-vide', { cible: path }));
-        else if (!game.writtenIn(path)) game.error(game.t('find-supprimer-permission', { cible: path }));
+        if (e.type === 'dossier' && Object.keys(e.children).length) game.error(game.t('find-remove-not-empty', { cible: path }));
+        else if (!game.writtenIn(path)) game.error(game.t('find-remove-permission', { cible: path }));
         else game.erase(path);
       }
       return '';
@@ -496,7 +496,7 @@ export const FILES: Record<string, Command> = {
         else if (args[i].startsWith('--max-depth=')) depth = Number(args[i].slice(12));
         else raw.push(args[i]);
       }
-      if (Number.isNaN(depth)) return game.error(game.t('du-profondeur'));
+      if (Number.isNaN(depth)) return game.error(game.t('depth'));
       const { letters, rest } = options(raw);
       const fmt = (o: number) => (inodes ? String(o) : letters.has('h') ? readable(o, game.t.language) : String(Math.ceil(o / 1024)));
       const lines: string[] = [];
@@ -516,7 +516,7 @@ export const FILES: Record<string, Command> = {
       for (const target of rest.length ? rest : ['.']) {
         const n = game.find(target);
         if (!n) {
-          game.error(game.t('du-introuvable', { cible: target }));
+          game.error(game.t('missing', { cible: target }));
           continue;
         }
         const total = walk(target, n);
@@ -536,7 +536,7 @@ export const FILES: Record<string, Command> = {
       if (letters.has('i')) {
         // -h avec -i : 64K plutôt que 65536, comme GNU df -ih.
         const n = (v: number) => (letters.has('h') ? readable(v, game.t.language) : String(v));
-        const iLines = [game.t('df-entete-inodes')];
+        const iLines = [game.t('df-header-inodes')];
         for (const m of chosen) {
           const total = m.inodes ?? Math.round(m.capacity / 16384);
           const taken = Math.min(total, game.usedInodes(m));
@@ -547,7 +547,7 @@ export const FILES: Record<string, Command> = {
         }
         return iLines.join('\n');
       }
-      const lines = [game.t('df-entete')];
+      const lines = [game.t('df-header')];
       for (const m of chosen) {
         const place = game.find(m.path);
         // Les fichiers effacés mais encore ouverts par un processus occupent toujours leur place.
@@ -578,17 +578,17 @@ export const FILES: Record<string, Command> = {
       if (!letters.has('f') || !rest.length) return game.error(game.t('tar-usage'));
       const [archiveName, ...sources] = rest;
       if (letters.has('c')) {
-        if (!sources.length) return game.error(game.t('tar-archive-vide'));
+        if (!sources.length) return game.error(game.t('tar-archive-empty'));
         const files: Record<string, File> = {};
         const add = (path: string, e: Node) => {
           if (e.type === 'fichier') {
-            if (!game.can(e, 'r')) return void game.error(game.t('erreur-permission', { commande: 'tar', cible: path }));
+            if (!game.can(e, 'r')) return void game.error(game.t('error-permission', { commande: 'tar', cible: path }));
             files[path] = { ...e, read: undefined } as File;
           } else for (const [k, child] of Object.entries(e.children)) add(`${path.replace(/\/$/, '')}/${k}`, child);
         };
         for (const s of sources) {
           const e = game.find(s);
-          if (!e) game.error(game.t('erreur-introuvable', { commande: 'tar', cible: s }));
+          if (!e) game.error(game.t('error-missing', { commande: 'tar', cible: s }));
           else add(s.replace(/^\.?\/+/, ''), e);
         }
         const compressed = letters.has('z');
@@ -607,27 +607,27 @@ export const FILES: Record<string, Command> = {
       }
       const n = game.find(archiveName);
       if (!n) return game.error(game.t('tar-open-impossible', { cible: archiveName }));
-      if (n.type !== 'fichier' || !n.archive) return game.error(game.t('tar-pas-une-archive', { cible: archiveName }));
+      if (n.type !== 'fichier' || !n.archive) return game.error(game.t('tar-not-one-archive', { cible: archiveName }));
       // Une archive coupée (disque plein, machine éteinte pendant l'écriture) :
       // tar lit ce qui précède la coupure, puis s'arrête sur une erreur.
       const { truncated } = n.archive;
       const inputs = Object.entries(n.archive.files).slice(0, truncated);
       const cut = () => {
         game.state.archiveTronquee = game.resolve(archiveName);
-        game.error(game.t('tar-tronquee'));
+        game.error(game.t('tar-truncated'));
       };
       if (letters.has('t')) {
         const listing = inputs.map(([path]) => path).join('\n');
         if (truncated === undefined) return listing;
         // La liste, puis l'erreur à l'endroit de la coupure.
         game.state.archiveTronquee = game.resolve(archiveName);
-        return game.error([listing, game.t('tar-tronquee')].filter(Boolean).join('\n'));
+        return game.error([listing, game.t('tar-truncated')].filter(Boolean).join('\n'));
       }
       if (letters.has('x')) {
         const base = cPlace || '.';
         if (cPlace) {
           const l = game.find(cPlace);
-          if (!l || l.type !== 'dossier') return game.error(game.t('tar-lieu-introuvable', { cible: cPlace }));
+          if (!l || l.type !== 'dossier') return game.error(game.t('tar-place-missing', { cible: cPlace }));
         }
         const inside = (path: string) => `${base.replace(/\/$/, '')}/${path}`;
         for (const [path, f] of inputs) {
@@ -645,7 +645,7 @@ export const FILES: Record<string, Command> = {
         if (truncated !== undefined) cut();
         return '';
       }
-      return game.error(game.t('tar-option-manquante'));
+      return game.error(game.t('tar-option-missing'));
     },
   },
 };

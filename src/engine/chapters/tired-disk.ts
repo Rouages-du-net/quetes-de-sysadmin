@@ -57,8 +57,8 @@ export const fatigue: Chapter = {
   home: M,
   welcome: 'message_from_odile.txt',
   names: true,
-  final: 'fin',
-  steps: ['alerte', 'grappes', 'smart', 'retire', 'ticket', 'fin'],
+  final: 'end',
+  steps: ['alert', 'arrays', 'smart', 'removed', 'ticket', 'end'],
   password: PASSWORD,
   accounts: labAccounts,
   state: () => labState('fatigue'),
@@ -70,8 +70,8 @@ export const fatigue: Chapter = {
     labWorld(
       t,
       {
-        'message_from_odile.txt': f(t('tired-disk-message-d-odile')),
-        'host_procedure.txt': f(t('labo-procedure-hebergeur'), { lines: true }),
+        'message_from_odile.txt': f(t('tired-disk-message-odile')),
+        'host_procedure.txt': f(t('lab-procedure-host'), { lines: true }),
       },
       { mail: smartdBox(machineName(t, 'lab')) },
     ),
@@ -79,45 +79,45 @@ export const fatigue: Chapter = {
   afterCommand: (j) => devUpdate(j),
   events: [
     {
-      id: 'alerte',
+      id: 'alert',
       condition: (j) => /Currently unreadable|CurrentPendingSector|I\/O error, dev sdb/.test(j.last.output),
-      message: (j) => j.t('tired-disk-evenement-alerte'),
+      message: (j) => j.t('tired-disk-event-alert'),
     },
     {
-      id: 'grappes',
+      id: 'arrays',
       condition: (j) => /md1 : active raid1|Raid Level : raid1/.test(j.last.output),
-      message: (j) => j.t('tired-disk-evenement-grappes'),
+      message: (j) => j.t('tired-disk-event-arrays'),
     },
     {
       id: 'smart',
       condition: (j) => j.last.output.includes(`Serial Number:    ${SERIES.sdb}`) && j.last.output.includes('Current_Pending_Sector'),
-      message: (j) => j.t('tired-disk-evenement-smart'),
+      message: (j) => j.t('tired-disk-event-smart'),
     },
     {
-      id: 'occupe',
+      id: 'busy',
       condition: (j) => j.last.errors.some((e) => /hot remove failed for \/dev\/sdb\d: Device or resource busy/.test(e)),
-      message: (j) => j.t('tired-disk-evenement-occupe'),
+      message: (j) => j.t('tired-disk-event-busy'),
     },
-    { id: 'sain', condition: keySda, message: (j) => j.t('tired-disk-evenement-sain') },
+    { id: 'healthy', condition: keySda, message: (j) => j.t('tired-disk-event-healthy') },
     {
-      id: 'moitie',
+      id: 'half',
       condition: (j) => !outSdb(j) && Object.values(st(j).arrays).some((g) => !g.members.some((m) => m.part.startsWith('sdb'))),
       message: (j) => {
         const rest = sdbRemains(j)[0].part;
-        return j.t('tired-disk-evenement-moitie', { partition: `/dev/${rest}`, grappe: `/dev/${arrayFor(st(j), rest)![0]}` });
+        return j.t('tired-disk-event-half', { partition: `/dev/${rest}`, grappe: `/dev/${arrayFor(st(j), rest)![0]}` });
       },
     },
-    { id: 'retire', condition: (j) => outSdb(j) && sdaIntact(j), message: (j) => j.t('tired-disk-evenement-retire') },
+    { id: 'removed', condition: (j) => outSdb(j) && sdaIntact(j), message: (j) => j.t('tired-disk-event-removed') },
     {
-      id: 'ticket-faux',
+      id: 'ticket-false',
       condition: (j) => ticket(j).includes(SERIES.sda),
-      message: (j) => j.t('tired-disk-evenement-ticket-faux', { fichier: name(j.t, 'ticket.txt') }),
+      message: (j) => j.t('tired-disk-event-ticket-false', { fichier: name(j.t, 'ticket.txt') }),
     },
-    { id: 'ticket', condition: ticketOk, message: (j) => j.t('tired-disk-evenement-ticket') },
+    { id: 'ticket', condition: ticketOk, message: (j) => j.t('tired-disk-event-ticket') },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => outSdb(j) && sdaIntact(j) && !keySda(j) && ticketOk(j),
-      message: (j) => j.t('tired-disk-evenement-fin'),
+      message: (j) => j.t('tired-disk-event-end'),
     },
   ],
 };

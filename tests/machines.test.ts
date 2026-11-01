@@ -8,7 +8,7 @@ import { password } from '../src/engine/world';
 import { LANGUAGES, translator } from '../src/texts';
 
 const IDS = [WORKSTATION, ...MACHINES].map((m) => m.name);
-const PASSWORDS = [...readFileSync(new URL('../src/texts/fr/mots-de-passe.ftl', import.meta.url), 'utf8').matchAll(/^mdp-(\S+) =/gm)].map((m) => m[1]);
+const PASSWORDS = [...readFileSync(new URL('../src/texts/fr/mots-de-passe.ftl', import.meta.url), 'utf8').matchAll(/^password-(\S+) =/gm)].map((m) => m[1]);
 // Les valeurs des messages d'une langue (sans les commentaires ni les identifiants).
 const values = (language: string) =>
   readdirSync(new URL(`../src/texts/${language}/`, import.meta.url))

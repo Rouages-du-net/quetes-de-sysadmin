@@ -109,14 +109,14 @@ export function runScript(game: Shell, text: string, options: OptionsScript): Sc
     // [ condition ] est la commande test (son dernier argument doit être « ] »).
     if (/^\[(\s|$)/.test(line)) {
       if (!/\s\]$/.test(line)) {
-        outputs.push(game.t('test-crochet-manquant', { script: options.name, numero: number }));
+        outputs.push(game.t('test-hook-missing', { script: options.name, numero: number }));
         return 2;
       }
       line = `test ${line.slice(1, -1).trim()}`;
     }
     const first = line.split(/\s+/)[0];
     if (RESERVES_WORDS.includes(first)) {
-      outputs.push(game.t('script-non-simule', { script: options.name, numero: number, mot: first }));
+      outputs.push(game.t('script-not-simulated', { script: options.name, numero: number, mot: first }));
       return 2;
     }
     const set = /^set\s+(.*)$/.exec(line);

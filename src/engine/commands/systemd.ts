@@ -275,7 +275,7 @@ function editOverride(game: Shell, sd: Systemd, name: string): string {
     text,
     root: true,
     conclude: true,
-    message: game.t('nano-lignes-lues', { lignes: text.split('\n').length }),
+    message: game.t('nano-lines-read', { lignes: text.split('\n').length }),
     after: () => {
       // Seules les lignes au-dessus du commentaire « Edits below… » sont gardées.
       const raw = game.read(file) ?? '';
@@ -298,7 +298,7 @@ function editOverride(game: Shell, sd: Systemd, name: string): string {
 }
 
 // systemctl sans être root : systemd demanderait un mot de passe (polkit).
-const refuse = (game: Shell, action: string, name: string) => game.error(game.t('systemctl-acces-refuse', { action, service: name }));
+const refuse = (game: Shell, action: string, name: string) => game.error(game.t('systemctl-access-refuse', { action, service: name }));
 
 export const SYSTEMD: Record<string, Command> = {
   // systemd-analyze calendar : tester une expression OnCalendar= avant de l'écrire dans un timer.

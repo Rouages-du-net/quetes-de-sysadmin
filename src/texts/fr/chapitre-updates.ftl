@@ -3,12 +3,12 @@
 ### service qui ne repart pas. Les commandes, les chemins et les sorties
 ### d'apt, de dpkg et de tmux (en anglais) ne se traduisent pas.
 
-chapitre-updates = Les mises à jour
+chapter-updates = Les mises à jour
     .resume = Des mois de retard : apt upgrade sur un wifi qui coupe (tmux, dpkg --configure -a), un nouveau noyau, et un redémarrage qui révèle un service oublié.
 
 ## Fichiers
 
-updates-courriel-awa =
+updates-email-awa =
     De :     Awa
     À :      toi
     Objet :  Les mises à jour
@@ -29,27 +29,27 @@ updates-courriel-awa =
 
 ## Événements
 
-updates-evenement-interrompu =
+updates-event-interrupted =
     La connexion est tombée en pleine mise à jour, et dpkg avec elle : des
     paquets sont dépaquetés, mais pas configurés. apt refuse de continuer
     tant qu'on n'a pas fini le travail : sudo dpkg --configure -a (man dpkg).
 
     La prochaine fois, une longue opération sur un serveur se lance dans tmux :
     elle survit à la connexion.
-updates-evenement-dans-tmux =
+updates-event-in-tmux =
     Ta connexion est tombée… mais la mise à jour tournait dans tmux : elle
     est allée au bout, sans toi. Rattache-toi à ta session (tmux ls, puis
     tmux attach) pour voir comment elle s'est terminée.
 # { $ancien } : le noyau qui tourne ; { $nouveau } : celui qui vient d'être installé
-updates-evenement-a-jour =
+updates-event-a-day =
     Les mises à jour sont installées. Mais le nouveau noyau ({ $nouveau }) ne
     tourne pas encore : uname -r dit toujours { $ancien }. Regarde
     /var/run/reboot-required.pkgs : il faut redémarrer (avant 10 h !).
-updates-evenement-caisse-tombee =
+updates-event-till-down =
     Le serveur a redémarré sur le nouveau noyau… mais la caisse ne répond plus.
     systemctl status till : « disabled ». Marc la lançait à la main, son
     service n'a jamais été activé au démarrage (man systemctl : enable).
-updates-evenement-fin =
+updates-event-end =
     Les correctifs sont installés, le nouveau noyau tourne, et le site comme
     la caisse sont repartis tout seuls. Il est 9 h 50. Awa : « Pile à
     l'heure. On ouvre ! »

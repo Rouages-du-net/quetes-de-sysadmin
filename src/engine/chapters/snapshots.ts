@@ -46,7 +46,7 @@ const accounts = (): Accounts => ({
 
 // L'inventaire au soir du jour n (un jeu de plus chaque jour).
 const inventory = (t: Game['t'], n: number) =>
-  [t('ransom-inventaire'), ...Array.from({ length: n }, (_, k) => t('snapshots-ligne-inventaire', { numero: k + 1 }))].join('\n');
+  [t('ransom-inventory'), ...Array.from({ length: n }, (_, k) => t('snapshots-line-inventory', { numero: k + 1 }))].join('\n');
 
 const sd = (j: Game) => systemd(j)!;
 const conf = (j: Game) => readConf(j.read(CONF) ?? '');
@@ -85,7 +85,7 @@ function twoWeeks(j: Game): string[] {
     game.place(
       'cp',
       path(j.t, INVENTORY),
-      f(n === 14 ? j.t('snapshots-inventaire-ancien') : inventory(j.t, n), {
+      f(n === 14 ? j.t('snapshots-inventory-old') : inventory(j.t, n), {
         lines: true,
         owner: 'berenice',
         group: 'ludo',
@@ -133,7 +133,7 @@ export const chapterSnapshots: Chapter = {
   home: M,
   welcome: 'message_from_berenice.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'ludo-2027',
   accounts,
   state: () => {
@@ -177,7 +177,7 @@ export const chapterSnapshots: Chapter = {
     j.state.semainesPassees = true;
     const mails = twoWeeks(j);
     j.state.mailsCron = mails;
-    return j.t('snapshots-deux-semaines', { mails: mails.length });
+    return j.t('snapshots-two-weeks', { mails: mails.length });
   },
   createWorld: (t) => {
     const root: Rights = { owner: 'root' };
@@ -190,14 +190,14 @@ export const chapterSnapshots: Chapter = {
       ...(size ? { size } : {}),
     });
     const share: Record<string, Node> = {
-      'inventory.csv': file(t('ransom-inventaire'), ludo('berenice')),
-      'volunteer-rota.txt': file(t('ransom-planning'), ludo('berenice')),
-      'games-day-poster.txt': file(t('ransom-affiche'), ludo('berenice')),
+      'inventory.csv': file(t('ransom-inventory'), ludo('berenice')),
+      'volunteer-rota.txt': file(t('ransom-schedule'), ludo('berenice')),
+      'games-day-poster.txt': file(t('ransom-shows'), ludo('berenice')),
       rules: place(
         {
-          'goose-game.txt': file(t('ransom-regles-oie'), ludo('berenice')),
-          'ludo.txt': file(t('ransom-regles-chevaux'), ludo('berenice')),
-          'draughts.txt': file(t('ransom-regles-dames'), ludo('berenice')),
+          'goose-game.txt': file(t('ransom-rules-goose'), ludo('berenice')),
+          'ludo.txt': file(t('ransom-rules-horses'), ludo('berenice')),
+          'draughts.txt': file(t('ransom-rules-ladies'), ludo('berenice')),
           // Les règles numérisées : de gros fichiers qui ne changent jamais.
           'rules-scans.pdf': f(t('archives-document-pdf'), { lines: true, ...ludo('berenice', 48_000_000) }),
         },
@@ -207,7 +207,7 @@ export const chapterSnapshots: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: file('games'), 'rsnapshot.conf': file(CONF_DEBIAN) }),
       home: place({
-        you: d({ 'message_from_berenice.txt': f(t('snapshots-message-de-berenice')) }),
+        you: d({ 'message_from_berenice.txt': f(t('snapshots-message-berenice')) }),
         accueil: place({}, { owner: 'accueil', mode: 'rwxr-x---' }),
         berenice: place({}, { owner: 'berenice', mode: 'rwx------' }),
       }),
@@ -219,20 +219,20 @@ export const chapterSnapshots: Chapter = {
   },
   events: [
     {
-      id: 'espaces',
+      id: 'spaces',
       condition: (j) => j.last.errors.some((e) => e.includes('spaces where only tabs should be')),
-      message: (j) => j.t('snapshots-evenement-espaces'),
+      message: (j) => j.t('snapshots-event-spaces'),
     },
     {
-      id: 'meme-disque',
+      id: 'same-disk',
       condition: (j) => !!j.state.semainesPassees && !conf(j).conf.root.startsWith(`${path(j.t, DISK)}/`),
-      message: (j) => j.t('snapshots-evenement-meme-disque'),
+      message: (j) => j.t('snapshots-event-same-disk'),
     },
     {
       id: 'mails',
       condition: (j) => ((j.state.mailsCron ?? []) as string[]).some((m) => m.includes('ERROR')),
       message: (j) =>
-        j.t('snapshots-evenement-mails', {
+        j.t('snapshots-event-mails', {
           exemple: ((j.state.mailsCron ?? []) as string[])
             .find((m) => m.includes('ERROR'))!
             .split('\n')
@@ -241,22 +241,22 @@ export const chapterSnapshots: Chapter = {
         }),
     },
     {
-      id: 'liens',
+      id: 'links',
       condition: (j) =>
         !!j.state.semainesPassees &&
         j.last.commands.some((c) => c[0] === 'du' || (c[0] === 'rsnapshot' && c.includes('du'))) &&
         /\.1\/?\s*$/m.test(j.last.output),
-      message: (j) => j.t('snapshots-evenement-liens'),
+      message: (j) => j.t('snapshots-event-links'),
     },
-    { id: 'erreur-berenice', condition: (j) => wellSaved(j), message: (j) => j.t('snapshots-evenement-erreur-berenice') },
+    { id: 'error-berenice', condition: (j) => wellSaved(j), message: (j) => j.t('snapshots-event-error-berenice') },
     {
-      id: 'mauvaise-version',
+      id: 'wrong-version',
       condition: (j) =>
         wellSaved(j) &&
-        j.read(path(j.t, INVENTORY)) === j.t('snapshots-inventaire-ancien') &&
+        j.read(path(j.t, INVENTORY)) === j.t('snapshots-inventory-old') &&
         j.last.commands.some((c) => ['cp', 'rsync'].includes(c[0])),
-      message: (j) => j.t('snapshots-evenement-mauvaise-version'),
+      message: (j) => j.t('snapshots-event-wrong-version'),
     },
-    { id: 'fin', condition: (j) => wellSaved(j) && j.read(path(j.t, INVENTORY)) === inventory(j.t, 13), message: (j) => j.t('snapshots-evenement-fin') },
+    { id: 'end', condition: (j) => wellSaved(j) && j.read(path(j.t, INVENTORY)) === inventory(j.t, 13), message: (j) => j.t('snapshots-event-end') },
   ],
 };

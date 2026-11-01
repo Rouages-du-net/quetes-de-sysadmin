@@ -4,27 +4,27 @@
 ### des commits et les poèmes sont des textes de l'histoire : ils se
 ### traduisent (les identifiants des commits changent alors avec la langue).
 
-chapitre-manuscript = La Machine à remonter le temps
+chapter-manuscript = La Machine à remonter le temps
     .resume = Voyager dans les versions d’un texte avec git : log, diff, restore, add, commit, init.
 
 # Autrice des commits (git log) : nom et adresse, au format de git
-manuscript-autrice = Inès Haddad <ines@example.org>
+manuscript-author = Inès Haddad <ines@example.org>
 
 ## Le roman d'Inès (roman.txt), chapitre par chapitre
 
-manuscript-roman-chapitre-1 =
+manuscript-novel-chapter-1 =
     CHAPITRE 1 — LE DÉPART
 
     Le car de nuit quitta Marseille à vingt-deux heures.
     Yasmina serrait contre elle la lettre de sa grand-mère.
     « Va voir le phare, avait écrit Mamie Zohra. Tout y est. »
-manuscript-roman-chapitre-2 =
+manuscript-novel-chapter-2 =
     CHAPITRE 2 — LA TRAVERSÉE
 
     Le bateau pour l'île partait à l'aube.
     Sur le pont, un vieux marin réparait un filet en chantonnant.
     Il connaissait le phare : « Personne n'y monte plus depuis 1962. »
-manuscript-roman-chapitre-3 =
+manuscript-novel-chapter-3 =
     CHAPITRE 3 — LE PHARE
 
     La porte céda au troisième coup d'épaule.
@@ -32,7 +32,7 @@ manuscript-roman-chapitre-3 =
     Dedans : des cahiers, couverts de l'écriture serrée de Zohra.
 # Le chapitre 3 après le passage du chat sur le clavier : garder le titre,
 # ne traduire que le titre ; les lignes de lettres restent telles quelles.
-manuscript-roman-chapitre-3-abime =
+manuscript-novel-chapter-3-abime =
     CHAPITRE 3 — LE PHARE
 
     jjjjjjjjjjjjjjjjjjjjjjkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk;;;;;;;;;;;;;
@@ -47,22 +47,22 @@ manuscript-commit-4 = Sauvegarde du matin
 
 ## Les poèmes (dossier poemes)
 
-manuscript-poeme-sea =
+manuscript-poem-sea =
     La mer recoud
     les bords du monde
     avec du fil d’écume.
-manuscript-poeme-lighthouse =
+manuscript-poem-lighthouse =
     Un œil qui tourne
     dans la nuit des marins :
     il ne dort jamais.
-manuscript-poeme-zohra =
+manuscript-poem-zohra =
     Ma grand-mère parlait
     trois langues et demie,
     la demie, c’était le silence.
 
 ## Fichiers
 
-manuscript-message-d-ines =
+manuscript-message-ines =
     Un message d'Inès, ton amie romancière :
 
     « Catastrophe ! Ce matin, mon chat a marché sur le clavier pendant que mon
@@ -80,7 +80,7 @@ manuscript-message-d-ines =
 
     Et pendant que tu y es… mes poèmes, dans le dossier poemes, ne sont suivis
     par rien du tout. Si mon chat recommence, je perds tout. »
-manuscript-aide-git =
+manuscript-help-git =
     AIDE-MÉMOIRE GIT (voir aussi :  man git)
 
       git log --oneline          l'historique, un commit par ligne (le plus récent en haut)
@@ -101,11 +101,11 @@ manuscript-aide-git =
 
 ## Événements
 
-manuscript-evenement-historique =
+manuscript-event-history =
     Quatre commits, du plus récent au plus ancien. Le dernier, « Sauvegarde du
     matin », est celui du chat. L'avant-dernier, « Chapitre 3 : le phare », date
     d'avant la catastrophe. Pour voir ce que le chat a changé : git show HEAD
-manuscript-evenement-restaure =
+manuscript-event-restored =
     Le chapitre 3 est de retour ! Le fichier a voyagé dans le temps.
     Mais pour l'instant, seule ta copie de travail est réparée : le dernier
     commit contient toujours la bouillie. Regarde git status , puis enregistre
@@ -113,15 +113,15 @@ manuscript-evenement-restaure =
 
       git add roman.txt
       git commit -m "Restaure le chapitre 3 (merci le chat)"
-manuscript-evenement-sauve =
+manuscript-event-saved =
     Commit enregistré. Remarque : on n'a rien effacé de l'histoire. Le commit
     du chat est toujours là (git log) ; on a simplement ajouté une nouvelle
     photo, réparée, par-dessus. Avec git, on ne perd presque jamais rien.
 
     Reste les poèmes d'Inès : dans le dossier poemes, transforme-le en dépôt
     (git init), puis prends une première photo de tous les poèmes.
-manuscript-evenement-poemes = Les trois poèmes sont désormais dans un commit : même si le chat revient, ils sont à l'abri dans l'historique.
-manuscript-evenement-fin =
+manuscript-event-poems = Les trois poèmes sont désormais dans un commit : même si le chat revient, ils sont à l'abri dans l'historique.
+manuscript-event-end =
     Inès te répond : « Mon chapitre ! Mes poèmes ! Tu es une magicienne, un
     magicien, enfin… une personne formidable. »
 

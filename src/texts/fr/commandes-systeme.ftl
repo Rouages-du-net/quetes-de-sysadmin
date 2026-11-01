@@ -4,11 +4,11 @@
 
 kill-usage = Usage : kill PID (le numéro du processus, donné par ps)
 # { $pid } : le numéro tapé
-kill-aucun = kill : ({ $pid }) - Aucun processus de ce type
-kill-non-permise = kill : ({ $pid }) - Opération non permise
+kill-none = kill : ({ $pid }) - Aucun processus de ce type
+kill-not-allowed = kill : ({ $pid }) - Opération non permise
 systemctl-usage = Usage : systemctl status service (ex. : systemctl status nginx ; voir man systemctl)
 # Première ligne : message de systemctl (en anglais) ; seconde : conseil du jeu.
-systemctl-acces-refuse =
+systemctl-access-refuse =
     Failed to { $action } { $service }.service: Access denied
     (il faut être root : sudo systemctl { $action } { $service })
 journalctl-argument = journalctl : argument inattendu « { $argument } » (pour un service : journalctl -u { $argument })
@@ -18,14 +18,14 @@ reboot-refuse =
 
 ## Journaux (truncate, logrotate)
 
-truncate-taille = truncate: vous devez spécifier « --size »
-truncate-operande =
+truncate-size = truncate: vous devez spécifier « --size »
+truncate-operand =
     truncate: opérande de fichier manquant
     Saisissez « truncate --help » pour plus d'informations.
 # { $taille } : la taille donnée
-truncate-taille-incorrecte = truncate: Taille incorrecte : « { $taille } »
+truncate-size-incorrect = truncate: Taille incorrecte : « { $taille } »
 # { $fichier } : le fichier
-truncate-dossier = truncate: impossible d'ouvrir '{ $fichier }' en écriture: Est un dossier
+truncate-directory = truncate: impossible d'ouvrir '{ $fichier }' en écriture: Est un dossier
 truncate-permission = truncate: impossible d'ouvrir '{ $fichier }' en écriture: Permission non accordée
 logrotate-usage =
     logrotate 3.21.0 - Copyright (C) 1995-2001 Red Hat, Inc.
@@ -37,4 +37,4 @@ pkill-usage =
     Try `pkill --help' for more information.
 
 # ionice suivi d'une commande : le jeu ne sait régler que des processus déjà lancés.
-ionice-commande = ionice : ici, seulement pour un processus qui tourne déjà (ionice -p PID, ou ionice -c 3 -p PID). Voir man ionice.
+ionice-command = ionice : ici, seulement pour un processus qui tourne déjà (ionice -p PID, ou ionice -c 3 -p PID). Voir man ionice.

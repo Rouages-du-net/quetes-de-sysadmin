@@ -2,12 +2,12 @@
 ### between the VLANs, with sysctl and nftables. Commands, nft keywords,
 ### interface names and paths are not translated.
 
-chapitre-zones = The Zones
+chapter-zones = The Zones
     .resume = Nothing gets out to the internet, and everyone sees everything: routing, address translation (NAT) and a firewall between the VLANs, with nftables, all surviving a reboot.
 
 ## Files
 
-zones-courriel-malik =
+zones-email-malik =
     From:    Malik
     To:      you
     Subject: The internet doesn't get out
@@ -51,7 +51,7 @@ zones-notes-sacha =
 
 ## Events
 
-zones-evenement-sans-traduction =
+zones-event-without-translation =
     The router now forwards packets… and they go out through eth0 with
     their private address (10.10.x.x). On the internet, nobody knows
     where to reply to a private address: they are reserved for local
@@ -59,31 +59,31 @@ zones-evenement-sans-traduction =
     send them out under its own address (address translation, or NAT:
     man nft, masquerade). sudo conntrack -L shows the exchanges left
     without a reply ([UNREPLIED]).
-zones-evenement-reponses =
+zones-event-responses =
     The questions get through, but not the answers: with a drop policy,
     a server's reply is a packet like any other, coming in through an
     interface where nothing allows it. The firewall tracks exchanges
     (ct state): it can recognise a reply to an exchange already allowed
     (established) and let it come back.
-zones-evenement-tout-ouvert =
+zones-event-all-open =
     The internet works everywhere… including where it shouldn't: a
     visitor's phone reaches the NAS or a camera, or the camera gets out
     to the internet. By default, the forward chain lets everything
     through. The right method: close everything (policy drop), then open
     only what is wanted, zone by zone.
-zones-evenement-ssh =
+zones-event-ssh =
     Careful: with these rules, a new ssh connection from the admin
     workstation (192.0.2.2) would be refused by the input chain. Your
     current session is hanging by a thread: if it drops, nobody gets
     into the router any more (short of plugging a screen into it). Let
     ssh through before closing the rest.
-zones-evenement-en-place =
+zones-event-in-place =
     Everything works the way Malik wanted… for now. But what if the
     router reboots, like on Saturday? sysctl -w and nft on the command
     line don't last. Kernel settings are written in /etc/sysctl.d (man
     sysctl.d), the rules in /etc/nftables.conf, which the nftables
     service loads at boot… if it is enabled.
-zones-evenement-fin =
+zones-event-end =
     The offices get out to the internet and can print, the café has wifi
     and sees only that, the cameras stay at home, and everything will
     hold at the next reboot. Malik: "Sacha says it's the first time the

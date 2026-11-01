@@ -168,7 +168,7 @@ export const BIND: Record<string, Command> = {
     ownOptions: true,
     launch: ({ args, game }) => {
       const d = dns(game);
-      if (!d) return game.error(game.t('commande-introuvable', { commande: 'rndc' }));
+      if (!d) return game.error(game.t('command-missing', { commande: 'rndc' }));
       if (game.who !== 'root') return game.error('open: /etc/bind/rndc.key: permission denied\nrndc: could not load rndc configuration');
       const sd = systemd(game);
       if (sd?.services.named?.state !== 'active') return game.error('rndc: connect failed: 127.0.0.1#953: connection refused');

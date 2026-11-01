@@ -3,12 +3,12 @@
 ### rendez-vous hebdomadaire. Les mots-clés d'apt.conf, les commandes et les
 ### chemins ne se traduisent pas.
 
-chapitre-routine = Mettre en veille
+chapter-routine = Mettre en veille
     .resume = Automatiser ce qui peut l'être (mises à jour de sécurité, un rendez-vous hebdomadaire), sans remplacer la décision humaine.
 
 ## Fichiers
 
-routine-courriel-salome =
+routine-email-salome =
     De :     Salomé
     À :      toi
     Objet :  La dernière pièce : en faire une habitude
@@ -38,24 +38,24 @@ routine-courriel-salome =
 
 ## Événements
 
-routine-evenement-syntaxe =
+routine-event-syntax =
     Il y a une erreur de syntaxe dans la configuration d'apt ! Une
     affectation s'écrit « Clé "valeur"; », une liste « Clé {"{"} "a"; "b"; {"}"}; »
     (man apt.conf). Corrige-la avant de continuer : apt refuse de lire le
     reste tant qu'elle y est.
-routine-evenement-active =
+routine-event-active =
     Les deux tâches périodiques sont activées. Reste à limiter ce
     qu'unattended-upgrades touche, et à te donner un rapport.
-routine-evenement-securite =
+routine-event-security =
     unattended-upgrades est actif, limité aux mises à jour de sécurité
     (Debian-Security), et un rapport partira par courrier. Reste le
     rendez-vous hebdomadaire.
-routine-evenement-periodique =
+routine-event-periodic =
     Un rendez-vous existe, et il est de ceux qui survivent à un
     redémarrage. Il te rappellera, chaque semaine, de lire le prochain
     bulletin — même pour ce qu'unattended-upgrades ne corrige pas tout
     seul.
-routine-evenement-fin =
+routine-event-end =
     Salomé : « Voilà. unattended-upgrades pour ce qui se corrige tout seul,
     un rendez-vous pour le reste. Tu n'as plus besoin de moi pour ça. »
 

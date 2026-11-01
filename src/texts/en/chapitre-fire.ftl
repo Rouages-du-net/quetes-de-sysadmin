@@ -4,12 +4,12 @@
 ### HTML pages (incendie-site-*) belong to the media library: they are
 ### translated.
 
-chapitre-fire = The great fire
+chapter-fire = The great fire
     .resume = The data centre burned down: start again from an empty machine with the backups, apt, tar and nginx -t.
 
 ## Files
 
-fire-courriel-awa =
+fire-email-awa =
     From:    Awa (operations manager)
     To:      you
     Subject: Fire at the data centre: we're rebuilding
@@ -29,7 +29,7 @@ fire-courriel-awa =
 
     I'm on site with the firefighters. Get the media library's website
     back online, and tell me what we lost.
-fire-pra =
+fire-drp =
     DISASTER RECOVERY PLAN (DRP) — MEDIA LIBRARY WEBSITE
     To follow if the server is lost: we start again from a new machine.
 
@@ -87,7 +87,7 @@ fire-site-index-3 =
     <p>The online catalogue will be back soon.</p>
     </body>
     </html>
-fire-site-horaires =
+fire-site-hours =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>Opening hours — Neighbourhood Media Library</title></head>
@@ -99,15 +99,15 @@ fire-site-horaires =
 
 ## Events
 
-fire-evenement-liste-vide =
+fire-event-list-empty =
     A new machine doesn't know any package yet: its list of available
     packages is empty. First you need to download it from the Debian
     repositories. The manual tells you how: man apt.
-fire-evenement-nginx =
+fire-event-nginx =
     nginx is installed, and it's already running: on Debian, installing a
     service starts and enables it. Try curl http://localhost: it's nginx's
     welcome page. The web server is there; the website is still missing.
-fire-evenement-tronquee =
+fire-event-truncated =
     "Unexpected EOF": last night's archive is cut off. The backup
     started at 12:30 am; at 12:47 am, the fire broke out, and the upload
     stopped halfway. Look at its size with ls -l, next to the others.
@@ -115,12 +115,12 @@ fire-evenement-tronquee =
     tar reads what comes before the cut, then stops: extracted, this
     archive would give back the configuration, but not a single page of the website. A backup you have never read back is only a hope. Take the
     latest archive that reads all the way through.
-fire-evenement-mauvais-lieu =
+fire-event-bad-place =
     The archive was extracted where you were: in your directory, not in
     place of the lost files. nginx won't find them there. Read man tar
     again: an option lets you choose where to extract. (You can delete
     what was extracted here.)
-fire-evenement-doublon =
+fire-event-duplicate =
     nginx rejects the configuration: "a duplicate default server". Two
     websites want to be the default website on port 80: the media
     library's, restored from the backup, and the one Debian installs with
@@ -130,11 +130,11 @@ fire-evenement-doublon =
 
     Good news: as long as the new configuration is rejected, nginx keeps
     the old one. The server doesn't go down.
-fire-evenement-mercredi =
+fire-event-wednesday =
     The website answers… with Wednesday's page: the holiday opening hours
     are missing, which Awa added on Wednesday afternoon. This archive is
     not the most recent intact one.
-fire-evenement-fin =
+fire-event-end =
     curl http://medialibrary.example answers: the media library is back
     online, on a machine that didn't exist last night.
 

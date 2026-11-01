@@ -32,12 +32,12 @@ const share = (t: (id: string) => string): Directory =>
   d(
     {
       'minutes': d(
-        { 'agm-2026.txt': file(t('transfers-cr-ag-2026')), 'board-2027-09.txt': file(t('transfers-cr-ca-2027-09')) },
+        { 'agm-2026.txt': file(t('transfers-minutes-ag-2026')), 'board-2027-09.txt': file(t('transfers-minutes-it-2027-09')) },
         undefined,
         you,
       ),
       posters: d({ 'street-party.pdf': file('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj') }, undefined, you),
-      'room-bookings.txt': file(t('transfers-planning')),
+      'room-bookings.txt': file(t('transfers-schedule')),
     },
     undefined,
     you,
@@ -101,7 +101,7 @@ export const transfers: Chapter = {
   home: M,
   welcome: 'email_yasmine.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: PASSWORD,
   accounts: homeAccounts,
   playerKeys: true,
@@ -125,7 +125,7 @@ export const transfers: Chapter = {
         srv: d(
           {
             backups: d(
-              { share: d({ 'minutes': d({ 'agm-2026.txt': file(t('transfers-cr-ag-2026')) }, undefined, you) }, undefined, you) },
+              { share: d({ 'minutes': d({ 'agm-2026.txt': file(t('transfers-minutes-ag-2026')) }, undefined, you) }, undefined, you) },
               undefined,
               you,
             ),
@@ -140,7 +140,7 @@ export const transfers: Chapter = {
     homeWorld({
       passwords: 'no',
       home: {
-        'email_yasmine.txt': f(t('transfers-courriel-yasmine')),
+        'email_yasmine.txt': f(t('transfers-email-yasmine')),
         '.ssh': sshDirectory({
           config: f('Host archives\n    IdentityFile ~/.ssh/id_sauvegarde', { lines: true, owner: 'you', mode: 'rw-r--r--' }),
           id_sauvegarde: f(BACKUP_KEY.isPrivate, { lines: true, owner: 'you', mode: 'rw-------' }),
@@ -150,21 +150,21 @@ export const transfers: Chapter = {
       more: { srv: d({ share: share(t) }, undefined, { owner: 'root' }) },
     }),
   events: [
-    { id: 'rapport', condition: reportOnWorkstation, message: (j) => j.t('transfers-evenement-rapport') },
+    { id: 'report', condition: reportOnWorkstation, message: (j) => j.t('transfers-event-report') },
     {
-      id: 'imbrique',
+      id: 'nested',
       condition: (j) => archives(j).exists(nested(j)),
-      message: (j) => j.t('transfers-evenement-imbrique', { dossier: nested(j) }),
+      message: (j) => j.t('transfers-event-nested', { dossier: nested(j) }),
     },
     {
-      id: 'sauvegarde',
+      id: 'backup',
       condition: (j) => dayABackup(j) && !archives(j).exists(nested(j)),
-      message: (j) => j.t('transfers-evenement-sauvegarde'),
+      message: (j) => j.t('transfers-event-backup'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => reportOnWorkstation(j) && dayABackup(j) && !archives(j).exists(nested(j)),
-      message: (j) => j.t('transfers-evenement-fin'),
+      message: (j) => j.t('transfers-event-end'),
     },
   ],
 };

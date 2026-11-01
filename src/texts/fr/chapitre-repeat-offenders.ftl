@@ -2,12 +2,12 @@
 ### d'autres prisons de fail2ban (recidive, nginx-limit-req). Les commandes,
 ### chemins, noms de prisons et lignes de journal ne se traduisent pas.
 
-chapitre-repeat-offenders = La récidive
+chapter-repeat-offenders = La récidive
     .resume = Les mêmes robots reviennent chaque heure, et celui de l'agenda insiste : activer les prisons recidive et nginx-limit-req de fail2ban.
 
 ## Fichiers
 
-repeat-offenders-courriel-rania =
+repeat-offenders-email-rania =
     De :     Rania
     À :      toi
     Objet :  Toujours les mêmes
@@ -39,26 +39,26 @@ repeat-offenders-courriel-rania =
 
 ## Événements
 
-repeat-offenders-evenement-tout-active =
+repeat-offenders-event-all-active =
     fail2ban refuse de démarrer : « Have not found any log file ». Avec
     enabled = true dans [DEFAULT], tu as activé TOUTES les prisons de
     jail.conf, y compris celles d'apache et de postfix, qui ne tournent pas
     ici : fail2ban ne trouve pas leurs journaux et s'arrête. On active une
     prison dans sa propre section : [recidive], [nginx-limit-req]…
-repeat-offenders-evenement-courte =
+repeat-offenders-event-short =
     La prison recidive est active, mais elle ne bannit pas plus longtemps
     que la prison sshd. Tout son intérêt est là : une adresse bannie
     plusieurs fois l'est ensuite pour longtemps (une semaine, dans
     jail.conf). Garde un bantime nettement plus long pour recidive.
-repeat-offenders-evenement-recidive =
+repeat-offenders-event-repeat-offence =
     La prison recidive a lu fail2ban.log, compté les bannissements de
     chaque adresse, et banni les récidivistes pour une semaine, sur tous
     les ports (banaction_allports) : SSH, mais aussi le site.
-repeat-offenders-evenement-agenda =
+repeat-offenders-event-agenda =
     La prison nginx-limit-req a lu le journal d'erreurs de nginx et banni
     les adresses du robot de l'agenda. nginx ne les voit même plus
     arriver : le pare-feu les rejette avant.
-repeat-offenders-evenement-fin =
+repeat-offenders-event-end =
     Les récidivistes sont bannis pour une semaine, le robot de l'agenda
     aussi, et ni Rania ni les visiteur·ses n'ont été touché·es. Rania :
     « fail2ban.log tient sur un écran, maintenant ! »

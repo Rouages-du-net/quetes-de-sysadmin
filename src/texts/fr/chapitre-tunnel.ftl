@@ -3,12 +3,12 @@
 ### Les commandes, les options, les chemins et les messages d'OpenSSH et de
 ### curl (en anglais) ne se traduisent pas.
 
-chapitre-tunnel = Le tunnel
+chapter-tunnel = Le tunnel
     .resume = L'administration du wiki n'écoute que sur 127.0.0.1 : un tunnel ssh -L, curl, puis refermer le tunnel.
 
 ## Fichiers
 
-tunnel-courriel-yasmine =
+tunnel-email-yasmine =
     De :     Yasmine
     À :      toi
     Objet :  Des inscriptions en attente
@@ -63,15 +63,15 @@ tunnel-admin-introuvable = Page introuvable.
 ## Événements
 
 # { $compte } : le compte publicitaire
-tunnel-evenement-publicite =
+tunnel-event-advert =
     Oups : le compte { $compte } est validé. Yasmine : « Il va remplir le wiki
     de publicités ! » Refuse-le (l'adresse est sur la page d'administration).
-tunnel-evenement-validees =
+tunnel-event-approved =
     Samir et Léa sont inscrit·es, et la publicité reste à la porte.
 
     Reste à refermer le tunnel : il tourne en arrière-plan sur ton poste.
     Retrouve son processus (ps), puis arrête-le (kill).
-tunnel-evenement-fin =
+tunnel-event-end =
     Inscriptions validées, tunnel refermé. Yasmine : « Samir a déjà créé la
     page de l'atelier vélo ! »
 

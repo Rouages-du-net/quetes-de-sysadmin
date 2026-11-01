@@ -3,12 +3,12 @@
 ### d'aller plus loin. Les commandes, chemins et messages de nginx, curl et
 ### des journaux ne se traduisent pas.
 
-chapitre-canary = Le canari
+chapter-canary = Le canari
     .resume = Une version qui passe ses vérifications de santé mais plante sur une page : un canari (une visite sur dix), les journaux, et la bascule seulement quand tout est propre.
 
 ## Fichiers
 
-canary-message-de-samia =
+canary-message-samia =
     Un message de Samia :
 
     « La 1.6.0 du Kiosque est sortie (/srv/kiosk/versions/1.6.0), avec
@@ -38,40 +38,40 @@ canary-notes-161 =
 ## Événements
 
 # { $visites } : le nombre de visites simulées
-canary-une-heure =
+canary-one-time =
     Une heure passe : { $visites } visites sur le Kiosque, à travers nginx.
     Tout est écrit dans /var/log/nginx/access.log.
 # { $erreurs } : le nombre de visites qui ont reçu une erreur
-canary-evenement-tout-d-un-coup =
+canary-event-all-one-coup =
     Tout le trafic est passé d'un coup à la 1.6.0… et { $erreurs } visites
     sur l'heure ont reçu une erreur 500 : tout le monde en profite. C'est
     ce que le canari aurait évité. Reviens à green (proxy_pass, nginx -t,
     reload), puis essaie avec une petite part du trafic.
-canary-evenement-canari-160 =
+canary-event-canary-160 =
     Le canari est en place : blue (1.6.0) reçoit une petite part des visites.
     Regarde maintenant ce que les lecteur·rices ont reçu : les codes de
     réponse sont dans access.log (le nombre après la requête : 200, 404,
     500…). grep ou awk aident à trier.
-canary-evenement-trop-gros =
+canary-event-too-big =
     Une grosse part du trafic va à la nouvelle version : si elle a un
     problème, beaucoup de monde le verra. Un canari, c'est une petite part
     (une visite sur dix, ou moins) : weight=1 face à weight=9.
-canary-evenement-trouve =
+canary-event-found =
     Des 500 sur /kiosk/archives ! Ils viennent forcément de blue : green
     sert la même page depuis des semaines. Essaie-la directement sur chaque
     instance (curl http://localhost:3001/archives, puis 3002) pour en être
     sûr·e. /health ne vérifiait pas cette page. Arrête le canari : plus
     aucune visite pour blue (down, ou retirer le serveur).
-canary-evenement-arrete =
+canary-event-stopped =
     Canari arrêté : seule une visite sur dix a vu l'erreur, pendant une
     heure, au lieu de tout le monde. Samia transmet le problème aux
     développeur·ses… qui publient aussitôt la 1.6.1 (/srv/kiosk/versions/).
     On recommence : blue, /health, canari, journaux.
-canary-evenement-canari-161 =
+canary-event-canary-161 =
     Une heure de canari avec la 1.6.1 : aucune erreur dans ce lot de
     visites. La nouvelle version peut recevoir tout le trafic. Garde green
     allumé, au cas où.
-canary-evenement-fin =
+canary-event-end =
     Tout le Kiosque passe par la 1.6.1, sans erreur, et green attend en
     réserve. Samia : « Le premier essai n'a gêné qu'une visite sur dix,
     pendant une heure. Sans canari, on l'aurait servi à tout le monde. »

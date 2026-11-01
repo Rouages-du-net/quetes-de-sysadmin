@@ -14,7 +14,7 @@ export const LYNIS: Record<string, Command> = {
       const [action, ...rest] = args;
       if (action === '--version' || action === '-V' || (action === 'show' && rest[0] === 'version')) return VERSION_LYNIS;
       if (action === 'audit' && rest[0] === 'system') {
-        if (game.who !== 'root') return game.error(game.t('lynis-sans-root'), 1);
+        if (game.who !== 'root') return game.error(game.t('lynis-without-root'), 1);
         const r = audit(game);
         const rights = { type: 'fichier' as const, lines: true, owner: 'root', mode: 'rw-------' };
         game.place('lynis', REPORT, { ...rights, content: r.report });
@@ -22,9 +22,9 @@ export const LYNIS: Record<string, Command> = {
         game.state.lynis = { hint: r.hint, ids: r.findings.map((c) => c.id), warnings: r.findings.filter((c) => c.type === 'warning').length };
         return r.output;
       }
-      if (action === 'audit') return game.error(game.t('lynis-audit-cible', { cible: rest[0] ?? '' }), 1);
+      if (action === 'audit') return game.error(game.t('lynis-audit-target', { cible: rest[0] ?? '' }), 1);
       if (!action) return game.error(game.t('lynis-usage'), 1);
-      return game.error(game.t('lynis-commande-inconnue', { commande: action }), 1);
+      return game.error(game.t('lynis-command-unknown', { commande: action }), 1);
     },
   },
 };

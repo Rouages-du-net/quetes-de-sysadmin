@@ -4,12 +4,12 @@
 ### les commandes, les chemins et les messages des outils (en anglais) ne se
 ### traduisent pas.
 
-chapitre-report = Le rapport
+chapter-report = Le rapport
     .resume = Corriger les constats d'un audit : SSH, un compte oublié, sudo sans mot de passe, un secret lisible par tous.
 
 ## Fichiers
 
-report-courriel-nadia =
+report-email-nadia =
     De :     Nadia (Le Fournil)
     À :      toi
     Objet :  L'audit de mon serveur
@@ -27,7 +27,7 @@ report-courriel-nadia =
     Pour sudo, ton mot de passe est : farine-2028
     Et merci de vérifier chaque correction : Salomé reviendra contrôler.
 
-report-rapport-audit =
+report-report-audit =
     RAPPORT D'AUDIT — Le Fournil (bakery.example)
     Auditrice : Salomé, indépendante
     Périmètre : le serveur fournil (192.0.2.22)
@@ -59,47 +59,47 @@ report-rapport-audit =
 
 ## Événements
 
-report-evenement-sudoers-casse =
+report-event-sudoers-broken =
     Il y a une erreur dans la politique de sudo ! Quand un fichier de sudoers
     est faux, sudo refuse tout, pour tout le monde. On modifie ces fichiers
     avec visudo (man visudo) : il vérifie la syntaxe avant d'enregistrer.
-report-evenement-enferme =
+report-event-locked-out =
     ATTENTION : avec la configuration que sshd vient de charger, une nouvelle
     connexion de ton compte serait refusée. Ta session actuelle reste ouverte
     (sshd ne coupe jamais les sessions en cours) : c'est le moment de
     corriger, AVANT de te déconnecter.
-report-evenement-sans-effet =
+report-event-without-effect =
     Le fichier dit bien « PermitRootLogin no »… mais sshd ne l'a pas encore
     appliqué : il lit sa configuration au démarrage et quand on la lui fait
     recharger. Vérifie avec  sudo sshd -t  (la syntaxe), puis fais recharger
     le service. Pour voir ce que sshd applique vraiment :  sudo sshd -T
-report-evenement-compte-incomplet =
+report-event-account-incomplete =
     Tu as traité une partie du constat C2 seulement. Un compte « fermé »,
     c'est : plus de connexion possible (mot de passe verrouillé, compte
     expiré) ET plus aucun droit (retiré du groupe sudo). Regarde ce qui reste
     avec  id lucas  et  sudo chage -l lucas  (man chage, man usermod).
-report-evenement-appli-aveugle =
+report-event-app-blind =
     Le secret n'est plus lisible par tout le monde… mais l'appli de commandes
     non plus ! Elle tourne avec le compte « commandes » et lit .env au
     démarrage : elle ne repartirait pas au prochain redémarrage. Regarde qui
     possède le fichier (ls -l) : le but est de fermer la porte aux autres
     comptes, pas à l'appli.
-report-evenement-ssh =
+report-event-ssh =
     sshd applique ta nouvelle configuration : root ne peut plus entrer, et
     ton compte, lui, le peut toujours. C1 est traité.
 
     Sur un vrai serveur, on garde une session ouverte et on teste avec une
     deuxième avant de fermer la première.
-report-evenement-compte =
+report-event-account =
     Plus personne ne peut se connecter avec le compte de Lucas, et il n'a plus
     aucun droit sur le serveur. C2 est traité.
-report-evenement-sudo =
+report-event-sudo =
     Plus aucune règle NOPASSWD pour ton compte : sudo te demande ton mot de
     passe, comme il faut, et tu peux toujours administrer. C3 est traité.
-report-evenement-secret =
+report-event-secret =
     Le fichier de secrets n'est plus lisible que par l'appli (et son
     propriétaire), et l'appli peut toujours le lire. C4 est traité.
-report-evenement-fin =
+report-event-end =
     Les quatre constats sont corrigés, et rien n'est cassé. Nadia : « Le site
     n'a pas bougé d'un poil. Je transmets ça à Salomé ! »
 

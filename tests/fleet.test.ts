@@ -84,7 +84,7 @@ for (const language of LANGUAGES)
         expect(all).toMatch(/north +: ok=3 +changed=1 +unreachable=0 +failed=1/);
         if (fr) expect(all).toContain('ligne en double');
         expect(c.remote!.shell.status).toBe(2);
-        const line = c.t('playbook-ligne-motd');
+        const line = c.t('playbook-line-motd');
         write('site.yml', fix(line));
         // La répétition ne change rien.
         all = play(['ansible-playbook site.yml --check --diff']);
@@ -102,7 +102,7 @@ for (const language of LANGUAGES)
 
       it('autre solution : command avec creates ; fausses pistes : lineinfile qui garde le doublon, YAML et module mal écrits', () => {
         const { c, jouer: play, ecrire: write, centre } = part(['inventory'], 'playbook');
-        const line = c.t('playbook-ligne-motd');
+        const line = c.t('playbook-line-motd');
         play(['cd ansible']);
         // Une erreur de YAML : Ansible montre la ligne fautive.
         write('site.yml', (t) => t.replace('      apt:\n', '      apt: name: htop\n'));

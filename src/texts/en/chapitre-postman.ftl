@@ -1,12 +1,12 @@
 ### "Junk Mail" story, chapter 1 "The Postman": SPF.
 ### Commands, paths, DNS records and Postfix messages are not translated.
 
-chapitre-postman = The Postman
+chapter-postman = The Postman
     .resume = The Community Gardens' welcome emails are stuck: the published SPF is still the old hosting provider's.
 
 ## Files
 
-postman-courriel-nour =
+postman-email-nour =
     From:    Nour
     To:      you
     Subject: The welcome emails don't arrive any more
@@ -32,7 +32,7 @@ postman-courriel-nour =
 
 ## Events
 
-postman-evenement-differe =
+postman-event-differs =
     mailbox.example isn't refusing the mail forever: 451 is a "temporary"
     code (4xx), Postfix keeps the message and will try again. But the
     reason is clear: "neither SPF nor DKIM passed". Neither SPF (which says
@@ -40,27 +40,27 @@ postman-evenement-differe =
     that this server really speaks for gardens.example. Start with SPF:
     it's a TXT record of the domain, starting with v=spf1 (dig TXT
     gardens.example).
-postman-evenement-ancien =
+postman-event-old =
     Here's gardens.example's SPF: "include:_spf.old-hosting.example -all".
     It only authorizes the old host's servers (what
     _spf.old-hosting.example publishes), and -all refuses all others…
     including this server, 203.0.113.30. The record is in the zone, on this
     server: /etc/bind/zones/db.gardens.example.
-postman-evenement-deux =
+postman-event-two =
     Careful: the zone now contains two records starting with v=spf1. RFC
     7208 is strict: with two SPF records, the result is "permerror", as if
     none were valid. Replace the old one rather than adding another.
-postman-evenement-serie =
+postman-event-serial =
     This server publishes the right SPF, but the rest of the internet also
     asks the registry's secondary, which keeps the old version: dig TXT
     gardens.example @ns2.registry.example. The secondary only copies the
     zone again if its serial number (serial, in the SOA) goes up.
-postman-evenement-spf =
+postman-event-spf =
     The SPF the internet sees now authorizes 203.0.113.30 to send for
     gardens.example. The waiting emails will only leave at Postfix's next
     attempt (every few minutes); to avoid waiting: sudo postqueue -f, then
     mailq.
-postman-evenement-fin =
+postman-event-end =
     The queue is empty: mailbox.example accepted the five welcome emails.
     Nour: "Amina just answered, she got it! … in her junk folder, but she
     got it."

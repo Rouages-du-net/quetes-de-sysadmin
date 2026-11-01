@@ -41,18 +41,18 @@ const withoutOkObject = (j: Game) => {
   return (
     s.includes(CVE.certbot.id.toLowerCase()) &&
     s.includes(CVE.curl.id.toLowerCase()) &&
-    words(j, 'bulletin-mots-absent').some((m) => s.includes(m)) &&
-    words(j, 'bulletin-mots-corrige').some((m) => s.includes(m))
+    words(j, 'bulletin-words-missing').some((m) => s.includes(m)) &&
+    words(j, 'bulletin-words-fixed').some((m) => s.includes(m))
   );
 };
-const okTemplate = (j: Game) => !(readDoc(j) ?? '').toLowerCase().includes(j.t('bulletin-a-completer').toLowerCase());
+const okTemplate = (j: Game) => !(readDoc(j) ?? '').toLowerCase().includes(j.t('bulletin-a-complete').toLowerCase());
 const okSort = (j: Game) => okTemplate(j) && concernsOk(j) && withoutOkObject(j);
 
 const missing = (j: Game): string[] => {
   const m: string[] = [];
-  if (!okTemplate(j)) m.push('modele');
-  if (!concernsOk(j)) m.push('concerne');
-  if (!withoutOkObject(j)) m.push('sansobjet');
+  if (!okTemplate(j)) m.push('template');
+  if (!concernsOk(j)) m.push('concerns');
+  if (!withoutOkObject(j)) m.push('not-applicable');
   return m;
 };
 
@@ -63,8 +63,8 @@ export const bulletin: Chapter = {
   home: M,
   welcome: 'email_salome.txt',
   names: true,
-  final: 'fin',
-  steps: ['lu', 'tri', 'fin'],
+  final: 'end',
+  steps: ['read', 'sort', 'end'],
   password: PASSWORD,
   accounts: watchAccounts,
   state: () => ({
@@ -82,7 +82,7 @@ export const bulletin: Chapter = {
   initialise: initialiseWatch,
   createWorld: (t) =>
     watchWorld(t, {
-      home: { 'email_salome.txt': f(t('bulletin-courriel-salome')), 'security_bulletin.txt': f(t('bulletin-fichier'), { lines: true }), 'watch.md': f(t('bulletin-modele'), { lines: true }) },
+      home: { 'email_salome.txt': f(t('bulletin-email-salome')), 'security_bulletin.txt': f(t('bulletin-file'), { lines: true }), 'watch.md': f(t('bulletin-template'), { lines: true }) },
     }),
   afterCommand: (j) => {
     const text = readDoc(j);
@@ -93,16 +93,16 @@ export const bulletin: Chapter = {
       j.state.veilleFinie = true;
       return;
     }
-    return [j.t('bulletin-relecture'), ...rest.map((m) => `- ${j.t(`bulletin-manque-${m}`)}`)].join('\n');
+    return [j.t('bulletin-review'), ...rest.map((m) => `- ${j.t(`bulletin-missing-${m}`)}`)].join('\n');
   },
   events: [
     {
-      id: 'lu',
+      id: 'read',
       condition: (j) => j.last.commands.some((c) => c.some((a) => a.endsWith(name(j.t, 'security_bulletin.txt')))),
-      message: (j) => j.t('bulletin-evenement-lu'),
+      message: (j) => j.t('bulletin-event-read'),
     },
-    { id: 'tri', condition: okSort, message: (j) => j.t('bulletin-evenement-tri') },
-    { id: 'fin', condition: okSort, message: (j) => j.t('bulletin-evenement-fin') },
+    { id: 'sort', condition: okSort, message: (j) => j.t('bulletin-event-sort') },
+    { id: 'end', condition: okSort, message: (j) => j.t('bulletin-event-end') },
   ],
 };
 

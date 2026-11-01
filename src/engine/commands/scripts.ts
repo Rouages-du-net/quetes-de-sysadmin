@@ -14,7 +14,7 @@ import type { Command } from './index';
 /** Lance un fichier comme un script /bin/sh ; renvoie sa sortie (échec si son code n'est pas 0). */
 export function launchScript(game: Shell, file: string, args: string[], name = file): string {
   const n = game.find(file);
-  if (n?.type !== 'fichier') return game.error(game.t('sh-introuvable', { fichier: file }));
+  if (n?.type !== 'fichier') return game.error(game.t('sh-missing', { fichier: file }));
   const r = runScript(game, content(n, game), { cwd: game.cwd, name, arguments: args });
   if (r.code !== 0) game.error('');
   return r.output;
@@ -52,7 +52,7 @@ function evaluate(game: Shell, a: string[]): boolean | string {
       case '-z':
         return x === '';
     }
-    return game.t('test-operateur', { operateur: op });
+    return game.t('test-operator', { operateur: op });
   }
   if (a.length === 3) {
     const [x, op, y] = a;
@@ -77,9 +77,9 @@ function evaluate(game: Shell, a: string[]): boolean | string {
       case '-ge':
         return nx >= ny;
     }
-    return game.t('test-operateur', { operateur: op });
+    return game.t('test-operator', { operateur: op });
   }
-  return game.t('test-trop-d-arguments');
+  return game.t('test-too-arguments');
 }
 
 // « [ … ] » est la même commande : script.ts le réécrit en test.
@@ -135,7 +135,7 @@ export const SCRIPTS: Record<string, Command> = {
     ownOptions: true,
     launch: ({ args, game }) => {
       const [file, ...rest] = args;
-      if (!file) return game.error(game.t('sh-interactif'));
+      if (!file) return game.error(game.t('sh-interactive'));
       return launchScript(game, file, rest);
     },
   },
@@ -143,7 +143,7 @@ export const SCRIPTS: Record<string, Command> = {
     ownOptions: true,
     launch: ({ args, game }) => {
       const [file, ...rest] = args;
-      if (!file) return game.error(game.t('sh-interactif'));
+      if (!file) return game.error(game.t('sh-interactive'));
       return launchScript(game, file, rest);
     },
   },
@@ -157,9 +157,9 @@ export const SCRIPTS: Record<string, Command> = {
         const text = args[i] === '-s' ? args[i + 1] : args[i].slice(6);
         if (text === undefined) return game.error(game.t('date-option-argument'));
         const wall = readDate(game, text);
-        if (wall === null) return game.error(game.t('date-invalide', { argument: text }));
+        if (wall === null) return game.error(game.t('date-invalid', { argument: text }));
         if (game.who !== 'root') {
-          game.error(game.t('date-reglage-refuse'));
+          game.error(game.t('date-setting-refuse'));
         } else if (timeOfDay(game)) setClock(game, wall);
         return formatValue(wall, game.t('date-format'), game.t.language, timeOfDay(game) ? machineTime(game) : undefined);
       }
@@ -167,7 +167,7 @@ export const SCRIPTS: Record<string, Command> = {
       const ms = machine?.wall ?? systemd(game)?.clock ?? Date.UTC(2027, 0, 1);
       const format = args.find((a) => a.startsWith('+'));
       const unknown = args.find((a) => !a.startsWith('+'));
-      if (unknown) return game.error(game.t('date-invalide', { argument: unknown }));
+      if (unknown) return game.error(game.t('date-invalid', { argument: unknown }));
       // Sans format : comme date en français (LANG=fr_FR.UTF-8).
       return formatValue(ms, format ? format.slice(1) : game.t('date-format'), game.t.language, machine ?? undefined);
     },
@@ -177,7 +177,7 @@ export const SCRIPTS: Record<string, Command> = {
     launch: ({ args, game }) => {
       const canonical = args.includes('-f');
       const [target] = args.filter((a) => !a.startsWith('-'));
-      if (!target) return game.error(game.t('readlink-operande'));
+      if (!target) return game.error(game.t('readlink-operand'));
       if (canonical) {
         // Le chemin absolu, tous les liens suivis.
         let path = game.resolve(target);

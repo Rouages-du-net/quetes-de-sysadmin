@@ -13,9 +13,9 @@ export interface Path {
 }
 
 export const PATH: Path[] = [
-  { id: 'debuter', chapters: ['lighthouse', 'village', 'root', 'backup', 'lost-packet', 'manuscript', 'archives'] },
+  { id: 'start', chapters: ['lighthouse', 'village', 'root', 'backup', 'lost-packet', 'manuscript', 'archives'] },
   {
-    id: 'securite',
+    id: 'security',
     chapters: [
       'shut-the-door', 'firewall', 'sentinel', 'port', 'repeat-offenders', 'keys', 'departure', 'shared-rights', 'secret', 'updates', 'auto-updates',
       'scope', 'report', 'exposure', 'traces', 'follow-up',
@@ -26,14 +26,14 @@ export const PATH: Path[] = [
     id: 'web',
     chapters: ['first-day', 'reboot-night', 'fire', 'certificate', 'sharing', 'concert', 'proxy', 'repair-cafe', 'postman', 'signature', 'policy', 'padlock'],
   },
-  { id: 'reseau', chapters: ['lost-packet', 'works-for-me', 'jump', 'tunnel', 'vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex'] },
-  { id: 'sauvegardes', chapters: ['backup', 'archives', 'versions', 'ransom', 'snapshots', 'database', 'transfers', 'web-host'] },
+  { id: 'network', chapters: ['lost-packet', 'works-for-me', 'jump', 'tunnel', 'vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex'] },
+  { id: 'backups', chapters: ['backup', 'archives', 'versions', 'ransom', 'snapshots', 'database', 'transfers', 'web-host'] },
   {
-    id: 'deploiement',
+    id: 'deployment',
     chapters: ['manuscript', 'update', 'compose', 'firewall-hole', 'full-powers', 'bare-repo', 'rollback', 'blue-green', 'canary', 'migration', 'inventory', 'playbook', 'rehearsal'],
   },
   { id: 'production', chapters: ['reboot-night', 'full-disk', 'memory', 'inodes', 'clock', 'probe', 'post-mortem', 'bottleneck', 'tired-disk', 'new-disk', 'more-room', 'stuck-boot'] },
-  { id: 'identites', chapters: ['second-day', 'departure', 'shared-rights', 'keys', 'directory', 'wifi'] },
+  { id: 'identities', chapters: ['second-day', 'departure', 'shared-rights', 'keys', 'directory', 'wifi'] },
 ];
 
 export type StepState = 'fait' | 'ouvert' | 'verrouille' | 'sans-cle';

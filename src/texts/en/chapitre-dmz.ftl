@@ -2,12 +2,12 @@
 ### VLAN, destination translation (dnat) and the firewall. Commands, nft
 ### keywords, interface names and paths are not translated.
 
-chapitre-dmz = The DMZ
+chapter-dmz = The DMZ
     .resume = The room booking website is now hosted on site: a separate VLAN (the DMZ), destination translation to make it reachable from the internet, and a server that sees nothing of the rest.
 
 ## Files
 
-dmz-courriel-ines =
+dmz-email-ines =
     From:    Inès (volunteer, La Ruche's website)
     To:      you
     Subject: The booking website, at our place!
@@ -35,7 +35,7 @@ dmz-courriel-ines =
 
     For sudo: bee-2027
 
-dmz-plan-commutateur =
+dmz-plan-switch =
     SWITCH PLAN — La Ruche (electrician, updated January 2028)
 
     Port 1     : to the router (eth1). 802.1Q TRUNK: VLAN 10, 20, 30, 40
@@ -52,27 +52,27 @@ dmz-plan-commutateur =
 ## Events
 
 # { $adresse }: the router's public address
-dmz-evenement-adresse-publique =
+dmz-event-address-public =
     A rule in the forward chain expects the address { $adresse }… but it
     will never see it: destination translation (dnat) happens earlier,
     at the prerouting hook. When the packet reaches forward, it is already
     going to 10.10.40.10. That is the address forward must let through.
-dmz-evenement-sans-forward =
+dmz-event-without-forward =
     Inès: "The website still doesn't answer from home." The router does
     translate the destination (sudo nft list ruleset), but the translated
     packet then goes through the forward chain, closed by default: nothing
     there lets the internet through to the DMZ.
-dmz-evenement-trop-ouvert =
+dmz-event-too-open =
     Careful: with these rules, the DMZ is too open. Either the internet
     reaches the server on ports other than 80 and 443 (ssh, for example),
     or the server can open connections to the internal network. A DMZ
     only lets in what it publishes, and lets nothing out towards the
     inside.
-dmz-evenement-en-place =
+dmz-event-in-place =
     The website answers, and the DMZ holds… for now. But after the next
     reboot? The eth1.40 interface must be in
     /etc/network/interfaces, and the rules in /etc/nftables.conf.
-dmz-evenement-fin =
+dmz-event-end =
     The booking website answers from the internet, the server gets its
     updates, the offices administer it, and if it is ever hacked, it sees
     neither the NAS nor the printer. Inès: "And hosting doesn't cost us

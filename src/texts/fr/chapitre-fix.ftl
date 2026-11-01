@@ -2,12 +2,12 @@
 ### rsync sans rien casser. Les commandes, les chemins et les sorties d'apt
 ### (en anglais) ne se traduisent pas.
 
-chapitre-fix = Le correctif
+chapter-fix = Le correctif
     .resume = Corriger nginx et rsync sans rien casser : apt update avant apt upgrade, puis vérifier que le site répond toujours.
 
 ## Fichiers
 
-fix-courriel-salome =
+fix-email-salome =
     De :     Salomé
     À :      toi
     Objet :  Au tour du correctif
@@ -29,17 +29,17 @@ fix-courriel-salome =
 
 ## Événements
 
-fix-evenement-sans-maj =
+fix-event-without-update =
     apt upgrade dit « Upgrading: 0 » : rien ne s'est passé. apt ne connaît
     les mises à jour disponibles qu'après avoir rafraîchi sa liste des
     paquets (sudo apt update), comme un catalogue qu'il faut recharger
     avant d'y chercher quelque chose de nouveau.
-fix-evenement-corrige =
+fix-event-fixed =
     nginx et rsync sont à la version corrigée. Encore une chose à vérifier
     avant de continuer : le site répond-il toujours ?
-fix-evenement-verifie =
+fix-event-checked =
     Le site répond (curl renvoie 200) : la mise à jour n'a rien cassé.
-fix-evenement-fin =
+fix-event-end =
     Salomé : « Deux corrigées, le site toujours debout. C'est tout ce qu'on
     demande à une mise à jour. »
 

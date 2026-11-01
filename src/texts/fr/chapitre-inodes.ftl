@@ -3,12 +3,12 @@
 ### d'arguments trop longue », find -mtime -delete et cron. Les commandes,
 ### options et messages des outils ne se traduisent pas.
 
-chapitre-inodes = Les inodes
+chapter-inodes = Les inodes
     .resume = 3 h 20, « No space left on device »… sur un disque presque vide. Qu'est-ce qui manque, si ce n'est pas la place ?
 
 ## Fichiers
 
-inodes-message-de-zoe =
+inodes-message-zoe =
     Un message de Zoé (3 h 05) :
 
     « Je n'y comprends plus rien. L'enregistrement de l'émission de nuit a
@@ -29,7 +29,7 @@ inodes-conf-flux =
     record_dir = /srv/radio/emissions
     # Statistiques : un fichier par écoute (rapport mensuel pour la mairie)
     stats_dir = /srv/radio/stats
-inodes-stats-lisezmoi =
+inodes-stats-readme =
     Statistiques d'écoute, écrites par le relais : un petit fichier par
     écoute (adresse anonymisée, durée). Le rapport mensuel pour la mairie
     lit les fichiers du mois écoulé.
@@ -38,11 +38,11 @@ inodes-stats-lisezmoi =
 ## La nuit simulée
 
 # { $commande } : la commande de la tâche cron ; { $sortie } : ce qu'elle a écrit
-inodes-courrier =
+inodes-mail =
     Courrier de cron (Cron Daemon) au sujet de : { $commande }
     { $sortie }
 # { $taches } : tâches lancées ; { $effaces } : fichiers effacés ; { $ancien } : âge du plus ancien, en jours ; { $pourcent } : inodes occupés
-inodes-nuit =
+inodes-night =
     Une journée et une nuit passent. Le relais note ses écoutes ; cron
     lance { $taches ->
         [0] aucune tâche
@@ -54,62 +54,62 @@ inodes-nuit =
     }, le plus
     ancien a { $ancien } jours, et { $pourcent } % des inodes de /srv/radio
     sont occupés.
-inodes-nuit-recentes-perdues =
+inodes-night-recent-lost =
     Aïe : des statistiques de moins de 30 jours ont disparu, celles du
     rapport pour la mairie. Une tâche qui efface tout, sans regarder l'âge
     des fichiers ? Recommence le chapitre pour essayer autrement (lien sous
     le terminal), et teste ta commande à la main avant de la confier à cron.
-inodes-nuit-rien =
+inodes-night-nothing =
     Ta tâche n'a pas tourné cette nuit : son horaire ne tombe pas dans la
     nuit. Les cinq champs (minute, heure, jour du mois, mois, jour de la
     semaine) sont expliqués dans man crontab.
 # { $jours } : âge du plus ancien fichier
-inodes-nuit-trop-vieux =
+inodes-night-too-old =
     Au matin, il reste des statistiques de { $jours } jours : la tâche n'a
     pas fait le ménage. Lance sa commande à la main pour voir ce qu'elle
     fait (et sudo crontab -l, pour relire la ligne).
 # { $pourcent } : inodes occupés
-inodes-nuit-plein =
+inodes-night-full =
     { $pourcent } % des inodes sont encore occupés : le volume se remplira
     de nouveau très vite. Il faudrait garder moins longtemps (mais au moins
     30 jours).
 
 ## Événements
 
-inodes-evenement-presque-vide =
+inodes-event-almost-empty =
     Le volume des données n'est presque pas rempli, et pourtant on ne peut
     plus y créer de fichier. La place n'est pas la seule ressource d'un
     système de fichiers : chacun de ses fichiers a aussi besoin d'un inode
     (sa fiche : propriétaire, droits, dates, où sont ses données), et leur
     nombre est fixé à la création. Dans man df, une option les compte.
-inodes-evenement-plus-d-inodes =
+inodes-event-more-inodes =
     100 % des inodes de /srv/radio sont pris : plus un seul fichier ne
     peut y être créé, même vide, quelle que soit la place libre. Qui a
     créé autant de fichiers ? du sait compter les inodes au lieu des
     octets (man du).
-inodes-evenement-coupable =
+inodes-event-culprit =
     Des dizaines de milliers de fichiers ! Un par écoute, écrit par le
     relais depuis le mois de mars, et jamais effacé. Avant d'effacer :
     Zoé veut garder au moins les 30 derniers jours. find sait choisir les
     fichiers selon leur âge (man find).
-inodes-evenement-trop-long =
+inodes-event-too-long =
     « Liste d'arguments trop longue » : le shell remplace * par tous les
     noms du lieu AVANT de lancer la commande, et la liste ne tient pas
     dans la place réservée aux arguments d'un programme (environ 2 Mo).
     find, lui, parcourt le lieu tout seul : il peut effacer ce qu'il
     trouve, sans liste géante.
-inodes-evenement-recentes-perdues =
+inodes-event-recent-lost =
     Attention : des statistiques de moins de 30 jours ont disparu, celles
     dont la mairie a besoin. Recommence le chapitre pour essayer autrement
     (lien sous le terminal).
 # { $pourcent } : inodes occupés
-inodes-evenement-repart =
+inodes-event-restarts =
     Des inodes se sont libérés ({ $pourcent } % occupés) : l'enregistrement
     de nuit a repris, et le relais note de nouveau les écoutes. Reste à
     éviter que ça recommence : une tâche cron, chaque nuit, pour ne garder
     que le dernier mois (le jeu fera passer une nuit pour la voir à
     l'œuvre).
-inodes-evenement-fin =
+inodes-event-end =
     La nuit a passé, la tâche a fait le ménage, et le dernier mois de
     statistiques est intact. Zoé : « Les inodes… je ne connaissais même
     pas le mot. Merci ! »

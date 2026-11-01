@@ -3,12 +3,12 @@
 ### went down. Commands, service names, paths and messages
 ### from systemd or php-fpm (in English) are never translated.
 
-chapitre-reboot-night = The night of the reboot
+chapter-reboot-night = The night of the reboot
     .resume = Services that don't come back: systemctl, journalctl, enable, and checking after a reboot.
 
 ## Files
 
-reboot-night-courriel-awa =
+reboot-night-email-awa =
     From:    Awa (operations manager)
     To:      you
     Subject: The website went down last night
@@ -45,27 +45,27 @@ reboot-night-notes-awa =
 ## Events
 
 # { $logs }: the catalogue's log directory
-reboot-night-evenement-logs-ouverts =
+reboot-night-event-logs-open =
     Careful: any account can now write to { $logs },
     and so delete the logs there… or slip in fake messages to cover
     tracks. A log directory must belong to the account of the service
     that writes to it, with no write permission for others.
-reboot-night-evenement-nginx =
+reboot-night-event-nginx =
     nginx is running: the website responds again… for now.
 
     Look closely at the Loaded line of systemctl status nginx: "disabled".
     What will happen at the next reboot?
-reboot-night-evenement-nginx-active =
+reboot-night-event-nginx-active =
     nginx is running, and it's enabled: it will come back on its own at
     the machine's next boot.
-reboot-night-evenement-catalogue =
+reboot-night-event-catalogue =
     The catalogue starts: php-fpm, which runs under the www-data account, can
     write its log again. Searches on the website work again.
-reboot-night-evenement-oubli =
+reboot-night-event-forgotten =
     The machine rebooted… and nginx isn't running: the website is down
     again. systemctl start only lasts until the next boot. For
     a service to start with the machine, reread man systemctl.
-reboot-night-evenement-fin =
+reboot-night-event-end =
     After the reboot, everything came back on its own: nginx and the catalogue
     are running, and you checked it. Awa: "That's exactly what the job is:
     not just fixing, but making sure it will hold."

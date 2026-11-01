@@ -145,8 +145,8 @@ export const chapterPolicy: Chapter = {
   home: M,
   welcome: 'email_nour.txt',
   names: true,
-  final: 'fin',
-  steps: ['rapport', 'aligne', 'fin'],
+  final: 'end',
+  steps: ['report', 'aligned', 'end'],
   password: 'seeds-2027',
   accounts,
   state: (t) => gardensState(t, departure),
@@ -156,8 +156,8 @@ export const chapterPolicy: Chapter = {
       t,
       departure,
       {
-        'email_nour.txt': f(t('policy-courriel-nour')),
-        'newsmail_letter.txt': f(t('policy-lettre-newsmail')),
+        'email_nour.txt': f(t('policy-email-nour')),
+        'newsmail_letter.txt': f(t('policy-letter-newsmail')),
         dmarc_reports: d({
           'mailbox.example-2027-05-16.xml': f(
             report('mailbox.example', '1810425600712204', DAY, [
@@ -179,28 +179,28 @@ export const chapterPolicy: Chapter = {
       '',
     ),
   events: [
-    { id: 'rapport', condition: (j) => seen(j, NEWSMAIL.ip), message: (j) => j.t('policy-evenement-rapport') },
-    { id: 'usurpation', condition: (j) => seen(j, SPOOFER), message: (j) => j.t('policy-evenement-usurpation') },
+    { id: 'report', condition: (j) => seen(j, NEWSMAIL.ip), message: (j) => j.t('policy-event-report') },
+    { id: 'spoofing', condition: (j) => seen(j, SPOOFER), message: (j) => j.t('policy-event-spoofing') },
     {
       id: 'inclusion',
       condition: (j) => txt(j, DOMAIN, 'primary').some((x) => /^v=spf1\b.*include:_spf\.newsmail\.example/i.test(x)),
-      message: (j) => j.t('policy-evenement-inclusion'),
+      message: (j) => j.t('policy-event-inclusion'),
     },
     {
       id: 'point',
       condition: (j) => txt(j, `${NEWSMAIL.selector}._domainkey.${DOMAIN}`, 'primary').length === 0 && /nm1\._domainkey\s+(\d+\s+)?(IN\s+)?CNAME\s+nm1\.dkim\.newsmail\.example\s*$/im.test(j.read('/etc/bind/zones/db.gardens.example') ?? ''),
-      message: (j) => j.t('policy-evenement-point'),
+      message: (j) => j.t('policy-event-point'),
     },
-    { id: 'deux', condition: (j) => dmarcPolicy(j, DOMAIN, 'primary') === 'permerror', message: (j) => j.t('policy-evenement-deux') },
-    { id: 'aligne', condition: alignedLetter, message: (j) => j.t('policy-evenement-aligne') },
-    { id: 'trop-tot', condition: (j) => strict(j) && !alignedLetter(j), message: (j) => j.t('policy-evenement-trop-tot') },
+    { id: 'two', condition: (j) => dmarcPolicy(j, DOMAIN, 'primary') === 'permerror', message: (j) => j.t('policy-event-two') },
+    { id: 'aligned', condition: alignedLetter, message: (j) => j.t('policy-event-aligned') },
+    { id: 'too-early', condition: (j) => strict(j) && !alignedLetter(j), message: (j) => j.t('policy-event-too-early') },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => {
         const p = policy(j);
         return strict(j) && !!p && p !== 'permerror' && !!p.rua && alignedLetter(j) && gardensAuth(j).dmarc === 'pass';
       },
-      message: (j) => j.t('policy-evenement-fin'),
+      message: (j) => j.t('policy-event-end'),
     },
   ],
 };

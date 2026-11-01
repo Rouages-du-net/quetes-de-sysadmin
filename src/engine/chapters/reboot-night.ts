@@ -86,7 +86,7 @@ export const reboot: Chapter = {
   home: M,
   welcome: 'email_awa.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'welcome-2026',
   accounts: () => {
     const c = datacenterAccounts();
@@ -99,7 +99,7 @@ export const reboot: Chapter = {
     return d(
       {
         etc: d(accountsFiles(), undefined, root),
-        home: d({ you: d({ 'email_awa.txt': f(t('reboot-night-courriel-awa')), 'notes_awa.txt': f(t('reboot-night-notes-awa')) }) }, undefined, root),
+        home: d({ you: d({ 'email_awa.txt': f(t('reboot-night-email-awa')), 'notes_awa.txt': f(t('reboot-night-notes-awa')) }) }, undefined, root),
         var: d(
           {
             log: d(
@@ -126,27 +126,27 @@ export const reboot: Chapter = {
   },
   events: [
     {
-      id: 'logs-ouverts',
+      id: 'logs-open',
       condition: openLogs,
-      message: (j) => j.t('reboot-night-evenement-logs-ouverts', { logs: LOGS }),
+      message: (j) => j.t('reboot-night-event-logs-open', { logs: LOGS }),
     },
     {
       id: 'nginx',
       condition: (j) => running(j, 'nginx'),
-      message: (j) => j.t(sd(j).services.nginx.active ? 'reboot-night-evenement-nginx-active' : 'reboot-night-evenement-nginx'),
+      message: (j) => j.t(sd(j).services.nginx.active ? 'reboot-night-event-nginx-active' : 'reboot-night-event-nginx'),
     },
     {
       id: 'catalogue',
       condition: (j) => running(j, 'catalogue'),
-      message: (j) => j.t('reboot-night-evenement-catalogue'),
+      message: (j) => j.t('reboot-night-event-catalogue'),
     },
     {
-      id: 'oubli',
+      id: 'forgotten',
       condition: (j) => sd(j).boot > 2 && !running(j, 'nginx'),
-      message: (j) => j.t('reboot-night-evenement-oubli'),
+      message: (j) => j.t('reboot-night-event-forgotten'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) =>
         sd(j).boot > 2 &&
         sd(j).checkedAfterBoot === true &&
@@ -154,7 +154,7 @@ export const reboot: Chapter = {
         running(j, 'nginx') &&
         running(j, 'catalogue') &&
         !openLogs(j),
-      message: (j) => j.t('reboot-night-evenement-fin'),
+      message: (j) => j.t('reboot-night-event-end'),
     },
   ],
 };

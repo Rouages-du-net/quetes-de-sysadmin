@@ -2,7 +2,7 @@
 ### (site address, ACME challenge, firewall, www redirection).
 ### Caddy's commands, paths, directives and messages are not translated.
 
-chapitre-padlock = The Padlock
+chapter-padlock = The Padlock
     .resume = Caddy was supposed to do HTTPS by itself, but the bike workshop's site stays on HTTP: give it its name, let Let's Encrypt through, and don't forget www.
 
 ## Files
@@ -51,42 +51,42 @@ padlock-site =
 
 ## Events
 
-padlock-evenement-http-seul =
+padlock-event-http-only =
     Caddy only listens on port 80, over HTTP: the Caddyfile starts with
     ":80 {"{"}", the package's template. An address without a domain name, or
     one that gives port 80 (or http://), gets no certificate: Caddy
     wouldn't know which name to request it for. The comment at the top of
     the file says so: replace :80 with the site's name. Then
     sudo systemctl reload caddy, and look at what the journal says.
-padlock-evenement-schema-http =
+padlock-event-schema-http =
     http://cycles.example: with http://, the address asks for an HTTP-only
     site, so no certificate. For automatic HTTPS, the name alone is
     enough: cycles.example (or https://cycles.example).
-padlock-evenement-adresse =
+padlock-event-address =
     Caddy took the name: it now listens on ports 80 and 443
     (sudo ss -tlnp), and it requests a certificate from Let's Encrypt by
     itself. Did it get it? It's all in its journal:
     journalctl -u caddy (the tls.obtain and acme_client lines).
-padlock-evenement-pare-feu =
+padlock-event-firewall =
     "Timeout during connect (likely firewall problem)": to check that the
     server really answers for cycles.example, Let's Encrypt comes to look
     from the internet, on port 80 (HTTP-01 challenge) or 443 (TLS-ALPN-01).
     But ufw only lets ssh in: sudo ufw status. Visitors will use these
     ports too. Caddy will try again by itself, a little later.
-padlock-evenement-alerte =
+padlock-event-alert =
     "tlsv1 alert internal error": Caddy answers on port 443, but it
     doesn't have a certificate for this name (yet), so the TLS handshake
     fails. The journal says where it's at: journalctl -u caddy.
-padlock-evenement-format =
+padlock-event-format =
     Only a warning: the Caddyfile isn't written the way caddy fmt would
     like (tabs for indentation, one space between words).
     sudo caddy fmt --overwrite /etc/caddy/Caddyfile formats it.
-padlock-evenement-certificat =
+padlock-event-certificate =
     The padlock! Caddy got its certificate ("certificate obtained
     successfully" in the journal), stored in /var/lib/caddy. Try
     curl -I http://cycles.example: the redirection to HTTPS, Caddy added
     it by itself. Still to do: the posters' address, www.cycles.example.
-padlock-evenement-fin =
+padlock-event-end =
     https://cycles.example and https://www.cycles.example answer, with
     their certificates, and HTTP sends people to HTTPS. Inès: "The padlock!
     I can print the new posters."

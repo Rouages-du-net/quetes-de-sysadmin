@@ -528,12 +528,12 @@ export const APT: Record<string, Command> = {
     section: 8,
     ownOptions: true,
     launch: ({ args, game }) => {
-      if (!game.find('/usr/sbin/nginx')) return game.error(game.t('commande-introuvable', { commande: 'nginx' }));
+      if (!game.find('/usr/sbin/nginx')) return game.error(game.t('command-missing', { commande: 'nginx' }));
       const option = args[0];
       if (option === '-v') return `nginx version: nginx/${VERSION}`;
       if (option !== '-t' && option !== '-T') {
         const letter = option?.replace(/^-+/, '') ?? '';
-        return game.error(option ? `nginx: invalid option: "${letter}"` : game.t('nginx-sans-option'));
+        return game.error(option ? `nginx: invalid option: "${letter}"` : game.t('nginx-without-option'));
       }
       const res = test(game);
       const output: string[] = [];

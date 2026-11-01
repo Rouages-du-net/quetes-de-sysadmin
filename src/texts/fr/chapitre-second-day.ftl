@@ -4,12 +4,12 @@
 ### Les noms de comptes et de groupes (malo, adm, web-team), les commandes,
 ### les chemins et les modes (640, 770) ne se traduisent pas.
 
-chapitre-second-day = Deuxième jour
+chapter-second-day = Deuxième jour
     .resume = Une nouvelle recrue : comptes et groupes, id, usermod -aG, chgrp, chmod pour le groupe.
 
 ## Fichiers
 
-second-day-courriel-awa =
+second-day-email-awa =
     De :     Awa (responsable d'exploitation)
     À :      toi
     Objet :  Deuxième jour, deux petites choses
@@ -54,7 +54,7 @@ second-day-notes-awa =
 
 ## Événements
 
-second-day-evenement-remplace =
+second-day-event-replaced =
     Aïe : Malo n'est plus dans le groupe web-team !
 
     Sans l'option -a, usermod -G REMPLACE la liste des groupes secondaires
@@ -62,14 +62,14 @@ second-day-evenement-remplace =
     privé plus d'un·e admin de son propre accès à sudo. Vérifie avec
     groups malo, puis relis man usermod pour rendre à Malo ses groupes.
 # { $logs } : le dossier des journaux
-second-day-evenement-journaux-ouverts =
+second-day-event-logs-open =
     Attention : avec ces droits, TOUS les comptes de la machine peuvent lire
     les journaux de { $logs }, y compris www-data, le compte du site web.
 
     Or un journal d'accès contient les adresses IP des visiteur·ses : ce sont
     des données personnelles, à protéger (RGPD). Rends aux autres leur
     absence de droits (640), et passe plutôt par le groupe prévu pour ça.
-second-day-evenement-malo-lit =
+second-day-event-malo-reads =
     Malo peut lire les journaux, sans sudo et sans les ouvrir à tout le
     monde : il est membre du groupe adm, et les journaux donnent le droit de
     lecture à ce groupe (r-- au milieu de rw-r-----).
@@ -77,14 +77,14 @@ second-day-evenement-malo-lit =
     Au passage, sur une vraie machine, Malo devra se reconnecter : les
     groupes d'une session sont lus à la connexion.
 # { $partage } : le chemin du dossier partagé
-second-day-evenement-partage-ouvert =
+second-day-event-share-open =
     Prudence : n'importe quel compte peut maintenant écrire dans { $partage },
     y compris www-data. Si le site est piraté, l'attaquant pourra y déposer
     ce qu'il veut. Retire tout droit aux autres (le dernier chiffre à 0).
-second-day-evenement-partage =
+second-day-event-share =
     Le dossier { $partage } est prêt : l'équipe web peut y entrer, y lire et
     y écrire, et les autres comptes n'y voient rien.
-second-day-evenement-fin =
+second-day-event-end =
     Awa passe la tête par la porte : « Parfait. Malo lit les journaux, le
     partage est fermé aux autres, et personne n'a reçu plus de droits que
     nécessaire. »

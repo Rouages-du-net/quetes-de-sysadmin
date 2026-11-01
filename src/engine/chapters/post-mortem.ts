@@ -78,15 +78,15 @@ export function missing(j: Game): string[] {
   const s = sections(j, text);
   const full = (n: string) => (s[n] ?? '').trim().length > 0;
   const m: string[] = [];
-  if (text.includes(j.t('post-mortem-a-completer'))) m.push('modele');
+  if (text.includes(j.t('post-mortem-a-complete'))) m.push('template');
   const timer = s.chronologie ?? '';
-  if (!timeOfDay(2, 13).test(timer) || !timeOfDay(2, 15).test(timer) || !timeOfDay(2, 58).test(timer)) m.push('chronologie');
+  if (!timeOfDay(2, 13).test(timer) || !timeOfDay(2, 15).test(timer) || !timeOfDay(2, 58).test(timer)) m.push('timeline');
   if (!/\b45\b/.test(s.impact ?? '')) m.push('impact');
   const causes = s.causes ?? '';
-  if (!/stream\.conf|bitrate_max/i.test(causes) || !containsOne(causes, words(j, 'post-mortem-mots-declencheur'))) m.push('cause');
-  if (!containsOne(causes, words(j, 'post-mortem-mots-origine'))) m.push('origine');
+  if (!/stream\.conf|bitrate_max/i.test(causes) || !containsOne(causes, words(j, 'post-mortem-words-trigger'))) m.push('cause');
+  if (!containsOne(causes, words(j, 'post-mortem-words-origin'))) m.push('origin');
   if ((s.actions ?? '').split('\n').filter((l) => /^\s*[-*]\s+\S/.test(l)).length < 2) m.push('actions');
-  if (!full('marche') || !full('resume')) m.push('marche');
+  if (!full('marche') || !full('resume')) m.push('works');
   return m;
 }
 
@@ -95,7 +95,7 @@ const blame = (j: Game) => {
   const text = Object.values(sections(j, j.read(path(j.t, FILE)) ?? ''))
     .join('\n')
     .toLowerCase();
-  return words(j, 'post-mortem-mots-reproche').find((word) => text.includes(word));
+  return words(j, 'post-mortem-words-blame').find((word) => text.includes(word));
 };
 
 export const postMortem: Chapter = {
@@ -128,7 +128,7 @@ export const postMortem: Chapter = {
   home: M,
   welcome: 'message_from_zoe.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'antenna-2027',
   accounts,
   state: (t) => ({
@@ -244,9 +244,9 @@ export const postMortem: Chapter = {
       return;
     }
     return [
-      j.t('post-mortem-relecture'),
-      ...(word ? [j.t('post-mortem-reproche', { mot: word })] : []),
-      ...rest.map((m) => `- ${j.t(`post-mortem-manque-${m}`)}`),
+      j.t('post-mortem-review'),
+      ...(word ? [j.t('post-mortem-blame', { mot: word })] : []),
+      ...rest.map((m) => `- ${j.t(`post-mortem-missing-${m}`)}`),
     ].join('\n');
   },
   createWorld: (t) => {
@@ -264,9 +264,9 @@ export const postMortem: Chapter = {
       }),
       home: place({
         you: d({
-          'message_from_zoe.txt': f(t('post-mortem-message-de-zoe')),
+          'message_from_zoe.txt': f(t('post-mortem-message-zoe')),
           'notes_theo.txt': f(t('post-mortem-notes-theo')),
-          'postmortem.md': f(t('post-mortem-modele'), { lines: true }),
+          'postmortem.md': f(t('post-mortem-template'), { lines: true }),
         }),
         zoe: place({}, { owner: 'zoe', mode: 'rwx------' }),
         theo: place({}, { owner: 'theo', mode: 'rwx------' }),
@@ -288,18 +288,18 @@ export const postMortem: Chapter = {
     {
       id: 'notes',
       condition: (j) => j.last.commands.some((c) => c.some((a) => a.endsWith('notes_theo.txt'))),
-      message: (j) => j.t('post-mortem-evenement-notes'),
+      message: (j) => j.t('post-mortem-event-notes'),
     },
     {
-      id: 'redemarrage',
+      id: 'reboot',
       condition: (j) => /Stopping radio-stream\.service/.test(j.last.output) && /Starting apt-daily-upgrade/.test(j.last.output),
-      message: (j) => j.t('post-mortem-evenement-redemarrage'),
+      message: (j) => j.t('post-mortem-event-reboot'),
     },
     {
-      id: 'origine',
+      id: 'origin',
       condition: (j) => /zoe : TTY=pts\/1 .*stream\.conf/.test(j.last.output),
-      message: (j) => j.t('post-mortem-evenement-origine'),
+      message: (j) => j.t('post-mortem-event-origin'),
     },
-    { id: 'fin', condition: (j) => !!j.state.postMortemFini, message: (j) => j.t('post-mortem-evenement-fin') },
+    { id: 'end', condition: (j) => !!j.state.postMortemFini, message: (j) => j.t('post-mortem-event-end') },
   ],
 };

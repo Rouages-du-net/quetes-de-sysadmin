@@ -1174,21 +1174,21 @@ man-crontab = manages your scheduled tasks: commands that cron runs on its own, 
 ## Manual layout and messages from man-db and coreutils
 
 # Header of each page, between "LS(1)" and "LS(1)"
-manuel-entete = Game Manual
-manuel-section-nom = NAME
-manuel-section-synopsis = SYNOPSIS
-manuel-section-description = DESCRIPTION
-manuel-section-options = OPTIONS
-manuel-section-exemples = EXAMPLES
-manuel-section-voir-aussi = SEE ALSO
+manual-header = Game Manual
+manual-section-name = NAME
+manual-section-synopsis = SYNOPSIS
+manual-section-description = DESCRIPTION
+manual-section-options = OPTIONS
+manual-section-examples = EXAMPLES
+manual-section-see-also = SEE ALSO
 # First line of "command --help"
-manuel-utilisation = Usage: { $synopsis }
-manuel-complet = Full manual: man { $commande }
-manuel-option-invalide =
+manual-use = Usage: { $synopsis }
+manual-complete = Full manual: man { $commande }
+manual-option-invalid =
     { $commande }: invalid option -- '{ $lettre }'
     Try '{ $commande } --help' for more information.
 # An unknown long option (--frobnicate), as getopt prints it in coreutils. { $option }: the option typed
-manuel-option-longue-inconnue =
+manual-option-long-unknown =
     { $commande }: unrecognized option '{ $option }'
     Try '{ $commande } --help' for more information.
 

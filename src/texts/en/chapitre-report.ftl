@@ -3,12 +3,12 @@
 ### readable by everyone). The keywords (PermitRootLogin, NOPASSWD…), the
 ### commands, the paths and the tools' messages are not translated.
 
-chapitre-report = The Report
+chapter-report = The Report
     .resume = Fix an audit's findings: SSH, a forgotten account, passwordless sudo, a secret readable by everyone.
 
 ## Files
 
-report-courriel-nadia =
+report-email-nadia =
     From:     Nadia (The Bakery)
     To:       you
     Subject:  The audit of my server
@@ -26,7 +26,7 @@ report-courriel-nadia =
     For sudo, your password is: flour-2028
     And please check each fix: Salomé will come back to verify.
 
-report-rapport-audit =
+report-report-audit =
     AUDIT REPORT — The Bakery (bakery.example)
     Auditor: Salomé, independent
     Scope: the bakery server (192.0.2.22)
@@ -58,47 +58,47 @@ report-rapport-audit =
 
 ## Events
 
-report-evenement-sudoers-casse =
+report-event-sudoers-broken =
     There is an error in the sudo policy! When a sudoers file is wrong, sudo
     refuses everything, for everyone. These files are edited with visudo
     (man visudo): it checks the syntax before saving.
-report-evenement-enferme =
+report-event-locked-out =
     WARNING: with the configuration sshd has just loaded, a new login from
     your account would be refused. Your current session stays open (sshd
     never cuts the sessions in progress): now is the time to fix it, BEFORE
     you disconnect.
-report-evenement-sans-effet =
+report-event-without-effect =
     The file does say "PermitRootLogin no"… but sshd has not applied it yet:
     it reads its configuration at startup and when it is told to reload.
     Check with  sudo sshd -t  (the syntax), then have the service reload. To
     see what sshd really applies:  sudo sshd -T
-report-evenement-compte-incomplet =
+report-event-account-incomplete =
     You have handled only part of finding C2. A "closed" account means: no
     way to log in any more (locked password, expired account) AND no rights
     left (removed from the sudo group). See what remains with  id lucas  and
     sudo chage -l lucas  (man chage, man usermod).
-report-evenement-appli-aveugle =
+report-event-app-blind =
     The secret is no longer readable by everyone… but the orders app can't
     read it either! It runs as the "commandes" account and reads .env at
     startup: it would not come back at the next reboot. Look at who owns the
     file (ls -l): the goal is to close the door to the other accounts, not
     to the app.
-report-evenement-ssh =
+report-event-ssh =
     sshd applies your new configuration: root can no longer log in, and your
     account still can. C1 is handled.
 
     On a real server you keep one session open and test with a second one
     before closing the first.
-report-evenement-compte =
+report-event-account =
     Nobody can log in with Lucas's account any more, and it has no rights
     left on the server. C2 is handled.
-report-evenement-sudo =
+report-event-sudo =
     No NOPASSWD rule left for your account: sudo asks for your password, as
     it should, and you can still administer. C3 is handled.
-report-evenement-secret =
+report-event-secret =
     The secrets file is now readable only by the app (and its owner), and the
     app can still read it. C4 is handled.
-report-evenement-fin =
+report-event-end =
     All four findings are fixed, and nothing is broken. Nadia: "The site
     didn't move a bit. I'll pass this on to Salomé!"
 

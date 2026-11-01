@@ -2,9 +2,9 @@
 ### ls -l, chmod, whoami, sudo. L’arborescence est celle d’un vrai Linux
 ### (/home, /etc, /var/log, /root) : les chemins ne se traduisent pas.
 
-chapitre-root = La Racine
+chapter-root = La Racine
     .resume = Les permissions et l’administration : ls -l, chmod, whoami, sudo.
-root-arrivee =
+root-arrival =
     Tu glisses le long du Toboggan et tu atterris… dans une pièce qui te
     semble familière. Sur la porte, une plaque : /home/vous.
 
@@ -14,7 +14,7 @@ root-arrivee =
     pour l'administrateur.
 
     Lis le manuel posé sur la table :  cat manuel_admin.txt
-root-manuel-admin =
+root-manual-admin =
     MANUEL DE L'ADMINISTRATEUR·ICE
 
     Chaque objet et chaque lieu a un PROPRIÉTAIRE et des PERMISSIONS.
@@ -58,23 +58,23 @@ root-journal =
     An 103 : il faut l'installer avec sudo avant que l'Effaceur n'arrive jusqu'à moi.
 # Fichier de configuration : garder la ligne « cible = /Royaume/Corbeille »
 # telle quelle (le jeu la vérifie).
-root-effaceur-conf-corrige =
+root-eraser-conf-fixed =
     # Configuration de l'Effaceur — version corrigée (an 103)
     # Le démon efface, à chaque passage, tout ce qui se trouve dans la cible.
     cible = /Royaume/Corbeille
-root-souvenir-ecole = Une salle de classe. Quelqu’un t’apprend à compter en binaire sur tes doigts : jusqu’à 31 avec une seule main.
-root-souvenir-premier-programme = Ton tout premier programme. Il affichait « Bonjour » et tu as crié de joie.
-root-souvenir-jardin = Un jardin plein de tournesols. Tu adorais leur couleur.
-root-souvenir-chanson = Une chanson que tu fredonnais en réparant les serveurs.
-root-souvenir-voyage = Un voyage en train, le nez collé à la vitre.
-root-souvenir-amie = Une amie qui te disait : « Relis toujours avant d’appuyer sur Entrée. »
-root-souvenir-bibliotheque = Une bibliothèque immense, où tu as appris le mot « Unix ».
-root-souvenir-premier-serveur = Le premier serveur dont tu as eu la charge. Il ronronnait comme un chat.
-root-journal-intime-root =
+root-memory-school = Une salle de classe. Quelqu’un t’apprend à compter en binaire sur tes doigts : jusqu’à 31 avec une seule main.
+root-memory-first-program = Ton tout premier programme. Il affichait « Bonjour » et tu as crié de joie.
+root-memory-garden = Un jardin plein de tournesols. Tu adorais leur couleur.
+root-memory-song = Une chanson que tu fredonnais en réparant les serveurs.
+root-memory-journey = Un voyage en train, le nez collé à la vitre.
+root-memory-friend = Une amie qui te disait : « Relis toujours avant d’appuyer sur Entrée. »
+root-memory-library = Une bibliothèque immense, où tu as appris le mot « Unix ».
+root-memory-first-server = Le premier serveur dont tu as eu la charge. Il ronronnait comme un chat.
+root-journal-private-root =
     Tu pourrais le lire : root a tous les droits. Mais c’est le journal intime de Nour. Tu le refermes sans le lire.
     (#1 : respectez la vie privée des autres.)
 # Configuration fautive : garder la ligne « cible = /Royaume /Corbeille ».
-root-effaceur-conf =
+root-eraser-conf =
     # Configuration de l'Effaceur — écrite par : vous (an 102)
     # Le démon efface, à chaque passage, tout ce qui se trouve dans la cible.
     cible = /Royaume /Corbeille
@@ -83,7 +83,7 @@ root-sudoers =
     root    ALL=(ALL:ALL) ALL
     vous    ALL=(ALL:ALL) ALL   # vous : administrateur·ice du royaume
 # Journal du démon : une entrée par ligne (lu avec grep).
-root-effaceur-log =
+root-eraser-log =
     {"["}an 102] démarrage du démon effaceur (utilisateur : effaceur)
     {"["}an 102] lecture de /etc/effaceur.conf
     {"["}an 102] cible = /Royaume /Corbeille
@@ -100,7 +100,7 @@ root-notes-root =
     root peut tout lire, tout modifier, tout effacer, y compris le système
     lui-même. C'est pour cela qu'on ne travaille jamais en root au quotidien :
     on utilise sudo, pour une seule commande, quand c'est nécessaire.
-root-evenement-alerte =
+root-event-alert =
     Soudain, un grésillement venu du lieu souvenirs… L'Effaceur est ici ! À
     chacune de tes commandes, il va effacer un de tes souvenirs.
 
@@ -110,16 +110,16 @@ root-evenement-alerte =
     autres (o), vite :
 
       chmod o-w souvenirs
-root-evenement-conf-effacee =
+root-event-conf-erased =
     Le démon cherche sa configuration… et ne la trouve plus. Il s'arrête.
     C'est mieux que rien, mais plus personne ne vide la Corbeille. Il manque
     une configuration correcte dans /etc : le démon ne lit que le fichier
     /etc/effaceur.conf, sous ce nom exact.
 
 # { $souvenir } : nom du fichier effacé (identifiant technique)
-root-souvenir-efface = ✗ Un souvenir s’efface : { $souvenir }
+root-memory-erases = ✗ Un souvenir s’efface : { $souvenir }
 # { $sauves } : souvenirs sauvés ; { $total } : nombre de souvenirs au départ
-root-evenement-protege =
+root-event-protected =
     L'Effaceur s'acharne sur tes souvenirs… « Permission non accordée ». Il
     recule. Sous Linux, effacer un fichier, c'est modifier le lieu qui le
     contient : sans le droit d'écrire dans ce lieu, impossible d'y effacer.
@@ -133,7 +133,7 @@ root-evenement-protege =
 
       cat /var/log/effaceur.log
 # { $perte } : « oui » si des souvenirs ont été effacés, sinon « non »
-root-evenement-corrige =
+root-event-fixed =
     Le démon relit sa configuration : « cible = /Royaume/Corbeille ». Une
     seule cible, cette fois. L'Effaceur s'arrête net… puis se met à vider la
     Corbeille, comme au premier jour.

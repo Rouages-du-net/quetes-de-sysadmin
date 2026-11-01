@@ -2,13 +2,13 @@
 ### in OpenLDAP. Commands, LDAP attributes, DNs and paths are not
 ### translated.
 
-chapitre-directory = The Directory
+chapter-directory = The Directory
     .resume = The team's accounts are in an LDAP directory: remove someone who has left (for real), add Sami with an LDIF, a hashed password and the right group.
 
 ## Files
 
 # { $admin }: the DN of the directory administrator; { $motdepasse }: their password
-directory-courriel-malik =
+directory-email-malik =
     From:    Malik
     To:      you
     Subject: The directory, before the Wi-Fi
@@ -34,30 +34,30 @@ directory-courriel-malik =
 
 ## Events
 
-directory-evenement-clair =
+directory-event-clear =
     Careful: a password is stored IN CLEAR TEXT in the directory
     (userPassword without {"{"}SSHA{"}"} in front). Anyone who reads the
     directory with the right permissions, or a backup, can see it.
     slappasswd computes a hash to put in its place; ldappasswd changes
     the password and stores the hash itself.
-directory-evenement-uid-double =
+directory-event-uid-double =
     Careful: two accounts have the same uidNumber. To Linux, that would
     be the same person: same files, same permissions. Each account has
     its own number (an ldapsearch on uidNumber shows the ones taken).
-directory-evenement-camille-reste =
+directory-event-camille-rest =
     Camille's entry is gone… but not her name in the groups
     (memberUid: camille). A posixGroup only contains names: nothing
     updates it when an entry is deleted, and a future "camille" account
     would inherit her permissions. She must be removed from it
     (ldapmodify, delete: memberUid).
-directory-evenement-sami-seul =
+directory-event-sami-only =
     Sami has his account, but he isn't in the "bureaux" group: the
     office Wi-Fi won't let him in. A posixGroup lists its members in
     memberUid.
-directory-evenement-arrete =
+directory-event-stopped =
     slapd is no longer running: nobody can log in with their directory
     account any more. Get it running again.
-directory-evenement-fin =
+directory-event-end =
     Camille no longer has an account anywhere, Sami has his, with a
     hashed password, and he is in the offices group. Malik: "We're
     ready for the Wi-Fi!"

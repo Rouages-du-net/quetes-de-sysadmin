@@ -2,12 +2,12 @@
 ### Les commandes, chemins, identifiants d'instantanés et messages de
 ### restic (en anglais) ne se traduisent pas.
 
-chapitre-versions = Les versions
+chapter-versions = Les versions
     .resume = Une sauvegarde qui garde l'erreur : retrouver la bonne version avec restic, puis faire de la place sans la perdre.
 
 ## Fichiers
 
-versions-mot-de-rosa =
+versions-word-rosa =
     Un mot de Rosa, bibliothécaire :
 
     « Depuis janvier, le fonds vit sur ce nouveau serveur, et je le sauvegarde
@@ -55,7 +55,7 @@ versions-journal =
 
     9 septembre 1939. Ahmed est parti ce matin. J'ai brodé son nom dans la
     doublure de sa veste, pour qu'il ne l'oublie pas, là-bas.
-versions-journal-abime =
+versions-journal-damaged =
     JOURNAL DE MARIE, COUTURIÈRE (1931-1940) — TRANSCRIPTION
 
     12 mars 1931. Le marcher a brûler cette nuit. Les marchande on sauvé ce
@@ -68,47 +68,47 @@ versions-journal-abime =
 
     9 septembre 1939. Ahmed est partie ce matin. J'ai broder son nom dans la
     doublure de sa veste, pour qu'il ne l'oubli pas, la-bas.
-versions-recette-ajoutee = Ajout de janvier 2027 : le mafé de Fatou, dicté par sa petite-fille.
+versions-recipe-added = Ajout de janvier 2027 : le mafé de Fatou, dicté par sa petite-fille.
 versions-image-tiff = (image TIFF, numérisation brute)
 
 ## Événements
 
 # { $fichier } : le fichier du mot de passe
-versions-evenement-mot-de-passe =
+versions-event-password =
     Le dépôt est chiffré… mais son mot de passe est dans { $fichier },
     lisible par tous les comptes de la machine (ls -l). Rosa a un compte
     ici, et demain peut-être un stagiaire de plus. Qui doit pouvoir le lire ?
-versions-evenement-mauvais-mot-de-passe =
+versions-event-bad-password =
     Mauvais mot de passe : sans lui, restic ne peut rien déchiffrer, pas même
     la liste des sauvegardes. C'est voulu. Perdre ce mot de passe, c'est
     perdre toutes les sauvegardes : gardez-en toujours une copie ailleurs
     (Rosa a la sienne au coffre).
-versions-evenement-ailleurs =
+versions-event-elsewhere =
     La bonne version du journal est revenue… mais pas à sa place : restic
     recrée le chemin complet sous le lieu donné à --target. Il reste à la
     remettre dans ~/fonds/manuscrits/.
-versions-evenement-restaure =
+versions-event-restored =
     Le journal de Marie est revenu, mot pour mot. C'est tout l'intérêt
     d'avoir des versions : une copie miroir (rsync --delete) aurait recopié
     l'erreur dès la première nuit.
 
     Pense aussi à la sauvegarde de cette nuit : tant qu'aucun instantané
     récent ne contient la bonne version, la garder dépend des anciens.
-versions-evenement-perdu =
+versions-event-lost =
     Plus aucun instantané ne contient la bonne version du journal : la
     politique de forget les a tous retirés. Sur un vrai serveur, ce serait
     perdu (sauf une autre copie ailleurs). Ici, tu peux recommencer le
     chapitre depuis le menu. Avant de supprimer, forget --dry-run montre ce
     qui partirait.
-versions-evenement-oublie-sans-prune =
+versions-event-forgotten-without-plum =
     forget a retiré des instantanés de la liste… mais df -h /mnt/mairie ne
     bouge pas : forget n'efface que les « étiquettes ». Les données ne
     partent qu'avec prune (ou forget --prune).
-versions-evenement-place =
+versions-event-place =
     Le disque respire : prune a supprimé les données qu'aucun instantané
     restant n'utilise (surtout les numérisations brutes de janvier). df -h
     /mnt/mairie le montre.
-versions-evenement-fin =
+versions-event-end =
     Rosa relit le journal de Marie : « Le marché a brûlé cette nuit »,
     comme dans le cahier original. Le disque de la mairie a de la place, le
     dépôt est vérifié, et le mot de passe n'est plus à la portée de tous.

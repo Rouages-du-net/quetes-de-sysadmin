@@ -2,12 +2,12 @@
 ### save the collection of a neighbourhood library onto a small USB stick,
 ### with du, df, find and tar.
 
-chapitre-archives = The Archives
+chapter-archives = The Archives
     .resume = Measure, sort and pack a collection to save it onto a stick: du, df, find, tar.
 
 ## Files
 
-archives-lettre-de-rosa =
+archives-letter-rosa =
     A letter from Rosa, librarian at the neighbourhood library:
 
     "The library server will be switched off tonight at midnight, for good:
@@ -40,44 +40,44 @@ archives-notes-rosa =
       tar -czf /media/usb/collection.tar.gz collection
     Check what it contains:
       tar -tzf /media/usb/collection.tar.gz
-archives-lisezmoi = Collection of the neighbourhood library. Donations from residents, 1890-2026.
-archives-journal-de-marie = Diary of Marie, seamstress, 1931-1940 (transcription).
-archives-lettres-1914 = Letters from Ahmed to his sister, 1914-1918 (transcription).
-archives-recettes-du-quartier = Recipes collected at the market, 1975-2020.
+archives-readme = Collection of the neighbourhood library. Donations from residents, 1890-2026.
+archives-journal-marie = Diary of Marie, seamstress, 1931-1940 (transcription).
+archives-letters-1914 = Letters from Ahmed to his sister, 1914-1918 (transcription).
+archives-recipes-neighbourhood = Recipes collected at the market, 1975-2020.
 # Content shown by cat for files that are not text
 archives-image-png = (PNG image)
 archives-document-pdf = (PDF document)
-archives-son-ogg = (Ogg Vorbis audio)
-archives-fichier-temporaire = (temporary file)
+archives-its-ogg = (Ogg Vorbis audio)
+archives-file-temporary = (temporary file)
 
 ## Events
 
-archives-evenement-mesure =
+archives-event-measure =
     The collection weighs far more than the stick's 64 MB. But look where
     the space goes: a few big files… Rosa mentioned temporary files.
     find collection -name "*.tmp"
-archives-evenement-plein =
+archives-event-full =
     "No space left on device": the archive doesn't fit on the stick. You
     need to make room BEFORE: what in the collection is not precious?
     (du -h collection, then find collection -name "*.tmp")
-archives-evenement-tmp =
+archives-event-tmp =
     Three temporary files, 120 MB between them! Rosa says we can throw
     them away. find can delete them in one go, with -delete at the end:
 
       find collection -name "*.tmp" -delete
 
     (Read it again before Enter: without the -name, find would delete the WHOLE collection.)
-archives-evenement-perte =
+archives-event-loss =
     Ouch: a precious file from the collection has disappeared, and
     find -delete, like rm, goes through no bin… In real life, that's why you make backups BEFORE cleaning
     up. Here, you can restart the chapter (link below the terminal).
-archives-evenement-menage =
+archives-event-cleanup =
     The cleanup is done. Check with du -sh collection, then create the compressed
     archive directly on the stick:
 
       tar -czf /media/usb/collection.tar.gz collection
 # { $taille }: size of the archive in MB (number, with one decimal)
-archives-evenement-sauve =
+archives-event-saved =
     The archive is on the stick: { NUMBER($taille, minimumFractionDigits: 1, maximumFractionDigits: 1) } MB, with the whole collection. The texts were
     highly compressed; the images, sounds and PDFs, already compressed,
     hardly at all. To check its contents without extracting it:

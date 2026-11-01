@@ -85,7 +85,7 @@ export const door: Chapter = {
   home: M,
   welcome: 'email_kofi.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'ants-2026',
   accounts: () => {
     const c = accountsByDefault();
@@ -156,7 +156,7 @@ export const door: Chapter = {
         home: d(
           {
             you: d({
-              'email_kofi.txt': f(t('porte-courriel-kofi')),
+              'email_kofi.txt': f(t('door-email-kofi')),
               '.ssh': d({ authorized_keys: f(publicKey(letters, player(t), machineName(t, 'desk')), { lines: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
             }),
           },
@@ -170,36 +170,36 @@ export const door: Chapter = {
   },
   events: [
     {
-      id: 'erreur',
+      id: 'error',
       condition: (j) => readConfig(j).errors.length > 0,
-      message: (j) => j.t('porte-evenement-erreur', { config: CONFIG }),
+      message: (j) => j.t('door-event-error', { config: CONFIG }),
     },
     {
-      id: 'enferme',
+      id: 'locked-out',
       condition: (j) => !allowed(config(j).load, j.player),
-      message: (j) => j.t('porte-evenement-enferme'),
+      message: (j) => j.t('door-event-locked-out'),
     },
     {
-      id: 'sans-effet',
+      id: 'without-effect',
       condition: (j) =>
         config(j).reloads > 0 &&
         config(j).load.passwordauthentication === 'yes' &&
         /^\s*PasswordAuthentication\s+no\b/im.test(j.read(CONFIG) ?? ''),
-      message: (j) => j.t('porte-evenement-sans-effet'),
+      message: (j) => j.t('door-event-without-effect'),
     },
     {
-      id: 'fermee',
+      id: 'closed',
       condition: (j) => closed(config(j).load) && allowed(config(j).load, j.player),
-      message: (j) => j.t('porte-evenement-fermee'),
+      message: (j) => j.t('door-event-closed'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) =>
-        j.flags.has('fermee') &&
+        j.flags.has('closed') &&
         closed(config(j).load) &&
         allowed(config(j).load, j.player) &&
         (j.state.connexions ?? 1) > config(j).connectionsToLoad,
-      message: (j) => j.t('porte-evenement-fin'),
+      message: (j) => j.t('door-event-end'),
     },
   ],
 };

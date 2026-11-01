@@ -49,7 +49,7 @@ const SECONDS_FOLLOW = 3;
 export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const t = translator(options.language);
   const typo = (text: string) => typography(text, t.language);
-  const storyTitle = (h: number) => t(`histoire-${STORIES[h].id}`);
+  const storyTitle = (h: number) => t(`story-${STORIES[h].id}`);
   const KEY = options.saveKey ?? 'quetes-de-sysadmin';
   const chapters = (h: number) => STORIES[h].chapters;
   // L'affichage (thème, taille, vue du menu, couleurs) : un réglage de ce navigateur seulement.
@@ -69,20 +69,20 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       'span',
       { class: 'difficulty' },
       el('span', { 'aria-hidden': 'true' }, min === max ? stars(min) : `${'★'.repeat(min)} – ${'★'.repeat(max)}`),
-      el('span', { class: 'visually-hidden' }, min === max ? t('difficulty', { level: min }) : t('difficulty-range', { min, max })),
+      el('span', { class: 'visually-hidden' }, min === max ? t('difficulty', { level: min }) : t('difficulty-tidy', { min, max })),
     );
   const storiesBoutons = STORIES.map((h, i) =>
     el('button', { type: 'button', 'data-histoire': String(i) },
       el('span', { class: 'titre' }, storyTitle(i)),
       host(storyMachine(h.id)),
-      el('span', { class: 'resume' }, typo(t(`histoire-${h.id}.resume`))),
+      el('span', { class: 'resume' }, typo(t(`story-${h.id}.resume`))),
       level(storyDifficulty(h.id).min, storyDifficulty(h.id).max),
       el('span', { class: 'etat' }),
       // Une diode par chapitre, comme sur une baie de serveur (l'état en toutes lettres est dans .etat).
       el('span', { class: 'diodes', 'aria-hidden': 'true' }, ...h.chapters.map(() => el('span', { class: 'diode' })))),
   );
-  const workstationButton = el('button', { type: 'button', 'data-poste': '' }, el('span', { class: 'titre' }, t('poste-titre')), host(WORKSTATION));
-  const keyHelp = el('p', { class: 'cle-aide' }, typo(t('cle-aide')));
+  const workstationButton = el('button', { type: 'button', 'data-poste': '' }, el('span', { class: 'titre' }, t('workstation-title')), host(WORKSTATION));
+  const keyHelp = el('p', { class: 'cle-aide' }, typo(t('key-help')));
   // Deux vues du menu : la carte du réseau (le poste, internet, puis une
   // machine par histoire, branchée sur le même câble, qui s'allume à mesure
   // qu'on avance) et les baies (les mêmes boutons, en grille, avec leur
@@ -90,15 +90,15 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // page change, et les lecteurs d'écran lisent la même chose.
   const VIEWS = ['reseau', 'baies', 'parcours'] as const;
   const viewBoutons = Object.fromEntries(
-    VIEWS.map((v) => [v, el('button', { type: 'button', class: 'bouton-vue', 'aria-pressed': 'false', 'data-vue': v }, t(`vue-${v}`))]),
+    VIEWS.map((v) => [v, el('button', { type: 'button', class: 'bouton-vue', 'aria-pressed': 'false', 'data-vue': v }, t(`view-${v}`))]),
   ) as Record<(typeof VIEWS)[number], HTMLButtonElement>;
-  const viewChoice = el('p', { class: 'choix-vue', role: 'group', 'aria-label': t('vue-titre') }, ...VIEWS.map((v) => viewBoutons[v]));
+  const viewChoice = el('p', { class: 'choix-vue', role: 'group', 'aria-label': t('view-title') }, ...VIEWS.map((v) => viewBoutons[v]));
   const storiesList = el(
     'ol',
     {},
     el('li', { class: 'noeud-poste' }, workstationButton),
     // Internet, entre le poste et les machines : un repère, pas un bouton.
-    el('li', { class: 'noeud-internet', 'aria-hidden': 'true' }, el('span', {}, t('vue-internet'))),
+    el('li', { class: 'noeud-internet', 'aria-hidden': 'true' }, el('span', {}, t('view-internet'))),
     ...storiesBoutons.map((b, i) => el('li', { class: 'noeud', 'data-cote': i % 2 ? 'droite' : 'gauche' }, b)),
   );
   // La vue « Parcours » : un thème, et ses chapitres pris dans plusieurs histoires (voir parcours.ts).
@@ -106,7 +106,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const pathChoice = el(
     'select',
     { id: pathId },
-    ...PATH.map((p) => el('option', { value: p.id }, t(`parcours-${p.id}`))),
+    ...PATH.map((p) => el('option', { value: p.id }, t(`path-${p.id}`))),
   ) as HTMLSelectElement;
   const descriptionPath = el('p', { class: 'parcours-description' });
   const progressPath = el('p', { class: 'parcours-avancee' });
@@ -114,24 +114,24 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const pathBlock = el(
     'div',
     { class: 'parcours', hidden: '' },
-    el('p', { class: 'parcours-choix' }, el('label', { for: pathId }, t('parcours-choix')), ' ', pathChoice),
+    el('p', { class: 'parcours-choix' }, el('label', { for: pathId }, t('path-choice')), ' ', pathChoice),
     descriptionPath,
     progressPath,
     pathList,
   );
   // L'incident du jour (voir astreinte.ts) : le même chapitre pour tout le monde, à rejouer d'astreinte.
-  const incidentButton = el('button', { type: 'button', class: 'bouton-incident', 'aria-haspopup': 'dialog' }, t('astreinte-bouton'));
+  const incidentButton = el('button', { type: 'button', class: 'bouton-incident', 'aria-haspopup': 'dialog' }, t('on-call-button'));
   const incidentText = el('span', { class: 'incident-texte' });
   const incidentBlock = el('p', { class: 'incident' }, incidentButton, ' ', incidentText);
-  const storiesNav = el('nav', { class: 'histoires', 'aria-label': t('histoires-titre') }, viewChoice, incidentBlock, storiesList, pathBlock, keyHelp);
+  const storiesNav = el('nav', { class: 'histoires', 'aria-label': t('stories-title') }, viewChoice, incidentBlock, storiesList, pathBlock, keyHelp);
 
   const chaptersNavs = STORIES.map((h, i) =>
-    el('nav', { class: 'chapitres', 'aria-label': t('chapitres-titre', { histoire: storyTitle(i) }), 'data-chapitres': String(i) },
+    el('nav', { class: 'chapitres', 'aria-label': t('chapters-title', { histoire: storyTitle(i) }), 'data-chapitres': String(i) },
       el('ol', {}, ...h.chapters.map((c, j) =>
         el('li', {}, el('button', { type: 'button', 'data-chapitre': String(j) },
-          el('span', { class: 'num' }, t('chapitre-numero', { numero: c.number })),
-          el('span', { class: 'titre' }, t(`chapitre-${c.id}`)),
-          el('span', { class: 'resume' }, typo(t(`chapitre-${c.id}.resume`))),
+          el('span', { class: 'num' }, t('chapter-number', { numero: c.number })),
+          el('span', { class: 'titre' }, t(`chapter-${c.id}`)),
+          el('span', { class: 'resume' }, typo(t(`chapter-${c.id}.resume`))),
           level(difficulty(c.id)),
           el('span', { class: 'etat' })))))),
   );
@@ -141,26 +141,26 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const stopwatch = el('span', { class: 'chrono', role: 'timer' });
   // La carte : un bouton à côté du terminal ouvre, dans une fenêtre, les lieux
   // connus de la machine où l'on est (voir carte.ts).
-  const mapButton = el('button', { type: 'button', class: 'bouton-carte', 'aria-haspopup': 'dialog' }, t('carte-bouton'));
+  const mapButton = el('button', { type: 'button', class: 'bouton-carte', 'aria-haspopup': 'dialog' }, t('map-button'));
   // L'affichage du terminal : thème, taille du texte, plein écran (réglages de ce navigateur).
   const THEMES = ['phosphore', 'ambre', 'contraste', 'papier'];
   const themeChoice = el(
     'select',
-    { 'aria-label': t('affichage-theme') },
-    ...THEMES.map((x) => el('option', { value: x }, t(`affichage-theme-${x}`))),
+    { 'aria-label': t('display-theme') },
+    ...THEMES.map((x) => el('option', { value: x }, t(`display-theme-${x}`))),
   ) as HTMLSelectElement;
-  const moreSmall = el('button', { type: 'button', class: 'bouton-reglage', 'aria-label': t('affichage-plus-petit') }, 'A−');
-  const moreGrand = el('button', { type: 'button', class: 'bouton-reglage', 'aria-label': t('affichage-plus-grand') }, 'A+');
-  const focusButton = el('button', { type: 'button', class: 'bouton-reglage', 'aria-pressed': 'false' }, t('affichage-focus'));
-  const coloursButton = el('button', { type: 'button', class: 'bouton-reglage', 'aria-pressed': 'true' }, t('affichage-couleurs'));
+  const moreSmall = el('button', { type: 'button', class: 'bouton-reglage', 'aria-label': t('display-more-small') }, 'A−');
+  const moreGrand = el('button', { type: 'button', class: 'bouton-reglage', 'aria-label': t('display-more-big') }, 'A+');
+  const focusButton = el('button', { type: 'button', class: 'bouton-reglage', 'aria-pressed': 'false' }, t('display-focus'));
+  const coloursButton = el('button', { type: 'button', class: 'bouton-reglage', 'aria-pressed': 'true' }, t('display-colours'));
   const settings = el('span', { class: 'reglages' }, themeChoice, moreSmall, moreGrand, coloursButton, focusButton);
   // La mission : l'objectif du chapitre, ses consignes, et ce qui s'est déjà passé.
-  const missionButton = el('button', { type: 'button', class: 'bouton-mission', 'aria-haspopup': 'dialog' }, t('mission-bouton'));
+  const missionButton = el('button', { type: 'button', class: 'bouton-mission', 'aria-haspopup': 'dialog' }, t('mission-button'));
   const onCallGauge = el('span', { class: 'jauge-astreinte', role: 'timer', hidden: '' });
   const examBar = el(
     'p',
     { class: 'examen' },
-    el('label', {}, examCase, el('span', {}, t('examen-case'))),
+    el('label', {}, examCase, el('span', {}, t('exam-case'))),
     stopwatch,
     onCallGauge,
     el('span', { class: 'outils' }, missionButton, mapButton, settings),
@@ -170,31 +170,31 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const goalMission = el('p', { class: 'carte-legende' });
   const instructionsMission = el('pre', { class: 'mission-texte' });
   const logMission = el('ol', { class: 'mission-journal' });
-  const emptyMission = el('p', { class: 'carte-legende' }, typo(t('mission-rien')));
-  const closeMission = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  const emptyMission = el('p', { class: 'carte-legende' }, typo(t('mission-nothing')));
+  const closeMission = el('button', { type: 'button', class: 'bouton' }, t('map-close'));
   // Besoin d'aide ? Trois niveaux, l'un après l'autre (voir indices.ts) ; rien en mode examen.
   const hintBoutons = Object.fromEntries(
-    HINT_LEVELS.map((n) => [n, el('button', { type: 'button', class: 'bouton-indice', 'data-niveau': n }, t(`indice-bouton-${n}`))]),
+    HINT_LEVELS.map((n) => [n, el('button', { type: 'button', class: 'bouton-indice', 'data-niveau': n }, t(`hint-button-${n}`))]),
   ) as Record<HintLevel, HTMLButtonElement>;
   const hintText = el('div', { class: 'indice-texte', 'aria-live': 'polite' });
   const help = el(
     'section',
     { class: 'aide' },
-    el('h3', {}, t('indice-titre')),
-    el('p', { class: 'carte-legende' }, typo(t('indice-intro'))),
+    el('h3', {}, t('hint-title')),
+    el('p', { class: 'carte-legende' }, typo(t('hint-intro'))),
     el('p', { class: 'indice-boutons' }, ...HINT_LEVELS.map((n) => hintBoutons[n])),
     hintText,
   );
   // L'instantané de secours (voir Console.restaurer) : comme celui d'une machine virtuelle.
-  const takeSnapshot = el('button', { type: 'button', class: 'bouton-secours' }, t('secours-prendre'));
-  const goBackSnapshot = el('button', { type: 'button', class: 'bouton-secours' }, t('secours-revenir'));
-  const cancelInput = el('button', { type: 'button', class: 'bouton-secours' }, t('secours-annuler'));
+  const takeSnapshot = el('button', { type: 'button', class: 'bouton-secours' }, t('rescue-take'));
+  const goBackSnapshot = el('button', { type: 'button', class: 'bouton-secours' }, t('rescue-go-back'));
+  const cancelInput = el('button', { type: 'button', class: 'bouton-secours' }, t('rescue-cancel'));
   const rescueState = el('p', { class: 'carte-legende secours-etat', role: 'status' });
   const rescue = el(
     'section',
     { class: 'secours' },
-    el('h3', {}, t('secours-titre')),
-    el('p', { class: 'carte-legende' }, typo(t('secours-intro'))),
+    el('h3', {}, t('rescue-title')),
+    el('p', { class: 'carte-legende' }, typo(t('rescue-intro'))),
     el('p', { class: 'indice-boutons' }, takeSnapshot, goBackSnapshot, cancelInput),
     rescueState,
   );
@@ -203,7 +203,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     { class: 'fenetre-mission', 'aria-labelledby': idMission },
     titleMission,
     goalMission,
-    el('h3', {}, t('mission-consignes')),
+    el('h3', {}, t('mission-instructions')),
     instructionsMission,
     el('h3', {}, t('mission-journal')),
     emptyMission,
@@ -215,26 +215,26 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const mapId = `qds-carte-${Math.random().toString(36).slice(2, 8)}`;
   const titleMap = el('h2', { id: mapId });
   const treeMap = el('div', { class: 'carte-arbre' });
-  const closeMap = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  const closeMap = el('button', { type: 'button', class: 'bouton' }, t('map-close'));
   // Deux onglets quand l'histoire a un réseau : les lieux de la machine, et le plan du réseau (voir plan.ts).
   const tab = (suffix: string, text: string) =>
     el('button', { type: 'button', role: 'tab', id: `${mapId}-onglet-${suffix}`, 'aria-controls': `${mapId}-${suffix}` }, text);
-  const placesTab = tab('lieux', t('carte-onglet-lieux'));
-  const networkTab = tab('reseau', t('carte-onglet-reseau'));
+  const placesTab = tab('lieux', t('map-tab-places'));
+  const networkTab = tab('reseau', t('map-tab-network'));
   const tabs = el('div', { role: 'tablist', class: 'carte-onglets' }, placesTab, networkTab);
   const placesPanel = el(
     'div',
     { role: 'tabpanel', id: `${mapId}-lieux`, 'aria-labelledby': placesTab.id },
-    el('p', { class: 'carte-legende' }, typo(t('carte-legende'))),
+    el('p', { class: 'carte-legende' }, typo(t('map-caption'))),
     treeMap,
   );
   const planSchema = el('div', { class: 'plan-schema' });
   const listPlan = el('div', { class: 'carte-arbre' });
-  const textPlan = el('details', { class: 'plan-texte' }, el('summary', {}, t('plan-version-texte')), listPlan);
+  const textPlan = el('details', { class: 'plan-texte' }, el('summary', {}, t('plan-version-text')), listPlan);
   const networkPanel = el(
     'div',
     { role: 'tabpanel', id: `${mapId}-reseau`, 'aria-labelledby': networkTab.id },
-    el('p', { class: 'carte-legende' }, typo(t('plan-legende'))),
+    el('p', { class: 'carte-legende' }, typo(t('plan-caption'))),
     planSchema,
     textPlan,
   );
@@ -252,7 +252,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const prompt = el('label', { class: 'invite', for: id });
   const input = el('input', {
     id, type: 'text', spellcheck: 'false', autocapitalize: 'off', autocorrect: 'off', autocomplete: 'off',
-    'aria-label': t('saisie-etiquette'),
+    'aria-label': t('input-label'),
   }) as HTMLInputElement;
   // Ctrl-R : la recherche dans l'historique, comme bash ; la commande trouvée s'affiche sous la ligne.
   const match = el('p', { class: 'recherche', 'aria-live': 'polite' });
@@ -263,9 +263,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const field = el('span', { class: 'champ' }, coloration, input);
   const form = el('form', { autocomplete: 'off' }, prompt, field, match);
   // tail -f, journalctl -f : la commande garde la main jusqu'à Ctrl-C (ce bouton, le clavier ou la barre de touches).
-  const followStop = el('button', { type: 'button', class: 'arret-suivi', hidden: '' }, el('kbd', {}, '^C'), ` ${t('suivi-arreter')}`);
+  const followStop = el('button', { type: 'button', class: 'arret-suivi', hidden: '' }, el('kbd', {}, '^C'), ` ${t('follow-stop')}`);
   const terminal = el('div', { class: 'terminal' }, output, form, followStop);
-  const quitFocus = el('button', { type: 'button', class: 'quitter-focus' }, t('affichage-quitter-focus'));
+  const quitFocus = el('button', { type: 'button', class: 'quitter-focus' }, t('display-quit-focus'));
   // Les touches qui manquent aux claviers des téléphones (affichées sur les écrans tactiles).
   const TOUCHES: [string, string][] = [
     ['Tab', 'Tab'],
@@ -283,15 +283,15 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   ];
   const touchesBar = el(
     'div',
-    { class: 'touches', role: 'toolbar', 'aria-label': t('touches-titre') },
+    { class: 'touches', role: 'toolbar', 'aria-label': t('keys-title') },
     ...TOUCHES.map(([text, pressedKey]) =>
-      el('button', { type: 'button', 'data-touche': pressedKey, ...(pressedKey.startsWith('Arrow') ? { 'aria-label': t(`touche-${pressedKey === 'ArrowUp' ? 'haut' : 'bas'}`) } : {}) }, text),
+      el('button', { type: 'button', 'data-touche': pressedKey, ...(pressedKey.startsWith('Arrow') ? { 'aria-label': t(`key-${pressedKey === 'ArrowUp' ? 'haut' : 'bas'}`) } : {}) }, text),
     ),
     // Pendant nano : ses raccourcis, qu'un téléphone ne sait pas taper (pas de touche Ctrl).
-    el('button', { type: 'button', class: 'pour-nano', 'data-touche': 'ctrl-o' }, `^O ${t('nano-ecrire')}`),
-    el('button', { type: 'button', class: 'pour-nano', 'data-touche': 'ctrl-x' }, `^X ${t('nano-quitter')}`),
+    el('button', { type: 'button', class: 'pour-nano', 'data-touche': 'ctrl-o' }, `^O ${t('nano-write')}`),
+    el('button', { type: 'button', class: 'pour-nano', 'data-touche': 'ctrl-x' }, `^X ${t('nano-quit')}`),
   );
-  const following = el('button', { type: 'button', class: 'bouton principal' }, t('bouton-suivant'));
+  const following = el('button', { type: 'button', class: 'bouton principal' }, t('button-next'));
   const end = el('div', { class: 'fin', hidden: '' }, following);
   // Après un chapitre : la page de Les rouages du net qui explique son concept.
   const rouagesList = el('ul', {});
@@ -300,35 +300,35 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const accountNotebook = el('span', { class: 'compte' });
   const titleNotebook = el('span', {});
   const listNotebook = el('dl', {});
-  const emptyNotebook = el('p', {}, typo(t('carnet-vide')));
-  const exported = el('button', { type: 'button', class: 'lien' }, t('carnet-exporter'));
-  const copyNotebook = el('button', { type: 'button', class: 'lien' }, t('carnet-copier'));
+  const emptyNotebook = el('p', {}, typo(t('notebook-empty')));
+  const exported = el('button', { type: 'button', class: 'lien' }, t('notebook-export'));
+  const copyNotebook = el('button', { type: 'button', class: 'lien' }, t('notebook-copy-button'));
   const stateNotebook = el('span', { class: 'carnet-etat', role: 'status' });
   const actionsNotebook = el('p', { class: 'carnet-actions' }, exported, ' · ', copyNotebook, ' ', stateNotebook);
   const notebookPanel = el(
     'details',
     { class: 'carnet' },
     el('summary', {}, titleNotebook, ' ', accountNotebook),
-    el('p', { class: 'carnet-aide' }, typo(t('carnet-aide'))),
+    el('p', { class: 'carnet-aide' }, typo(t('notebook-help'))),
     emptyNotebook,
     listNotebook,
     actionsNotebook,
   );
-  const restart = el('button', { type: 'button', class: 'lien' }, t('bouton-recommencer'));
+  const restart = el('button', { type: 'button', class: 'lien' }, t('button-restart'));
   // Ma progression : un nom pour le carnet, et de quoi continuer sur une autre
   // machine (le code court, ou le fichier ; voir progression.ts).
-  const progressButton = el('button', { type: 'button', class: 'lien', 'aria-haspopup': 'dialog' }, t('progression-bouton'));
+  const progressButton = el('button', { type: 'button', class: 'lien', 'aria-haspopup': 'dialog' }, t('progress-button'));
   // Les succès et le grade : une fenêtre (voir succes.ts).
   const achievementsButton = el('button', { type: 'button', class: 'lien', 'aria-haspopup': 'dialog' });
-  const tips = el('p', { class: 'astuces' }, typo(t('astuces')), ' ', restart, ' · ', progressButton, ' · ', achievementsButton);
+  const tips = el('p', { class: 'astuces' }, typo(t('tips')), ' ', restart, ' · ', progressButton, ' · ', achievementsButton);
   const achievementsId = `qds-succes-${Math.random().toString(36).slice(2, 8)}`;
   const gradeAchievements = el('p', { class: 'succes-grade' });
   const listAchievements = el('ul', { class: 'succes-liste' });
-  const closeAchievements = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  const closeAchievements = el('button', { type: 'button', class: 'bouton' }, t('map-close'));
   const achievementsWindow = el(
     'dialog',
     { class: 'fenetre-succes', 'aria-labelledby': achievementsId },
-    el('h2', { id: achievementsId }, t('succes-titre')),
+    el('h2', { id: achievementsId }, t('achievements-title')),
     gradeAchievements,
     listAchievements,
     el('p', { class: 'carte-actions' }, closeAchievements),
@@ -337,27 +337,27 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const onCallId = `qds-astreinte-${Math.random().toString(36).slice(2, 8)}`;
   const titleOnCall = el('h2', { id: onCallId });
   const chapterOnCall = el('p', { class: 'astreinte-chapitre' });
-  const takeOnCall = el('button', { type: 'button', class: 'bouton' }, t('astreinte-prendre'));
-  const cancelOnCall = el('button', { type: 'button', class: 'bouton bouton-second' }, t('astreinte-annuler'));
+  const takeOnCall = el('button', { type: 'button', class: 'bouton' }, t('on-call-take'));
+  const cancelOnCall = el('button', { type: 'button', class: 'bouton bouton-second' }, t('on-call-cancel'));
   const onCallWindow = el(
     'dialog',
     { class: 'fenetre-astreinte', 'aria-labelledby': onCallId },
     titleOnCall,
-    el('p', { class: 'carte-legende' }, typo(t('astreinte-intro'))),
+    el('p', { class: 'carte-legende' }, typo(t('on-call-intro'))),
     chapterOnCall,
-    el('p', { class: 'carte-legende' }, typo(t('astreinte-regles'))),
+    el('p', { class: 'carte-legende' }, typo(t('on-call-rules'))),
     el('p', { class: 'carte-actions' }, cancelOnCall, ' ', takeOnCall),
   ) as HTMLDialogElement;
   const onCallEndId = `qds-fin-astreinte-${Math.random().toString(36).slice(2, 8)}`;
   const scoreMap = el('pre', { class: 'carte-score' });
-  const copyMap = el('button', { type: 'button', class: 'bouton' }, t('astreinte-copier'));
+  const copyMap = el('button', { type: 'button', class: 'bouton' }, t('on-call-copy'));
   const mapState = el('p', { class: 'carte-legende', role: 'status' });
-  const closeOnCallEnd = el('button', { type: 'button', class: 'bouton bouton-second' }, t('carte-fermer'));
+  const closeOnCallEnd = el('button', { type: 'button', class: 'bouton bouton-second' }, t('map-close'));
   const onCallEndWindow = el(
     'dialog',
     { class: 'fenetre-astreinte', 'aria-labelledby': onCallEndId },
-    el('h2', { id: onCallEndId }, t('astreinte-fin-titre')),
-    el('p', { class: 'carte-legende' }, typo(t('astreinte-fin-intro'))),
+    el('h2', { id: onCallEndId }, t('on-call-end-title')),
+    el('p', { class: 'carte-legende' }, typo(t('on-call-end-intro'))),
     scoreMap,
     mapState,
     el('p', { class: 'carte-actions' }, closeOnCallEnd, ' ', copyMap),
@@ -368,13 +368,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const mapCaption = el('p', { class: 'carte-legende' });
   const tableSummary = el('div', { class: 'bilan-tableau', tabindex: '0', role: 'region', 'aria-labelledby': summaryId });
   const encourageSummary = el('p', { class: 'carte-legende' });
-  const closeSummary = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  const closeSummary = el('button', { type: 'button', class: 'bouton' }, t('map-close'));
   const summaryWindow = el(
     'dialog',
     { class: 'fenetre-bilan', 'aria-labelledby': summaryId },
     titleSummary,
     mapCaption,
-    el('p', { class: 'carte-legende' }, typo(t('bilan-intro'))),
+    el('p', { class: 'carte-legende' }, typo(t('summary-intro'))),
     tableSummary,
     encourageSummary,
     el('p', { class: 'carte-actions' }, closeSummary),
@@ -382,35 +382,35 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const progressId = `qds-progression-${Math.random().toString(36).slice(2, 8)}`;
   const nameField = el('input', { type: 'text', id: `${progressId}-nom`, maxlength: '60', autocomplete: 'name', spellcheck: 'false' }) as HTMLInputElement;
   const currentCode = el('code', { class: 'code-progression' });
-  const copyCode = el('button', { type: 'button', class: 'lien' }, t('progression-copier'));
+  const copyCode = el('button', { type: 'button', class: 'lien' }, t('progress-copy'));
   const codeField = el('input', { type: 'text', id: `${progressId}-code`, autocomplete: 'off', spellcheck: 'false', autocapitalize: 'characters', placeholder: 'QDS-…' }) as HTMLInputElement;
-  const resumeCode = el('button', { type: 'button', class: 'bouton' }, t('progression-reprendre'));
-  const download = el('button', { type: 'button', class: 'bouton' }, t('progression-telecharger'));
+  const resumeCode = el('button', { type: 'button', class: 'bouton' }, t('progress-resume'));
+  const download = el('button', { type: 'button', class: 'bouton' }, t('progress-download'));
   const fileField = el('input', { type: 'file', id: `${progressId}-fichier`, accept: '.json,application/json' }) as HTMLInputElement;
   const progressState = el('p', { class: 'progression-etat', role: 'status' });
-  const closeProgress = el('button', { type: 'button', class: 'bouton' }, t('carte-fermer'));
+  const closeProgress = el('button', { type: 'button', class: 'bouton' }, t('map-close'));
   const progressWindow = el(
     'dialog',
     { class: 'fenetre-progression', 'aria-labelledby': progressId },
-    el('h2', { id: progressId }, t('progression-titre')),
-    el('p', { class: 'carte-legende' }, typo(t('progression-intro'))),
-    el('h3', {}, el('label', { for: nameField.id }, t('progression-nom'))),
+    el('h2', { id: progressId }, t('progress-title')),
+    el('p', { class: 'carte-legende' }, typo(t('progress-intro'))),
+    el('h3', {}, el('label', { for: nameField.id }, t('progress-name'))),
     el('p', {}, nameField),
-    el('p', { class: 'carte-legende' }, typo(t('progression-nom-aide'))),
-    el('h3', {}, t('progression-code-titre')),
-    el('p', { class: 'carte-legende' }, typo(t('progression-code-aide'))),
+    el('p', { class: 'carte-legende' }, typo(t('progress-name-help'))),
+    el('h3', {}, t('progress-code-title')),
+    el('p', { class: 'carte-legende' }, typo(t('progress-code-help'))),
     el('p', {}, currentCode, ' ', copyCode),
-    el('p', { class: 'progression-saisie' }, el('label', { for: codeField.id }, t('progression-code-saisie')), ' ', codeField, ' ', resumeCode),
-    el('h3', {}, t('progression-fichier-titre')),
-    el('p', { class: 'carte-legende' }, typo(t('progression-fichier-aide'))),
+    el('p', { class: 'progression-saisie' }, el('label', { for: codeField.id }, t('progress-code-input')), ' ', codeField, ' ', resumeCode),
+    el('h3', {}, t('progress-file-title')),
+    el('p', { class: 'carte-legende' }, typo(t('progress-file-help'))),
     el('p', {}, download),
-    el('p', { class: 'progression-saisie' }, el('label', { for: fileField.id }, t('progression-fichier-saisie')), ' ', fileField),
+    el('p', { class: 'progression-saisie' }, el('label', { for: fileField.id }, t('progress-file-input')), ' ', fileField),
     progressState,
     el('p', { class: 'carte-actions' }, closeProgress),
   ) as HTMLDialogElement;
   const credit = el('p', { class: 'credit' }, typo(t('credit')), ' ',
-    el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit-lien-projet')), ' · ',
-    el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-lien-original')));
+    el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit-link-project')), ' · ',
+    el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-link-original')));
 
   // Le terminal et sa barre de touches : ensemble en plein écran.
   const screen = el('div', { class: 'ecran' }, quitFocus, terminal, touchesBar);
@@ -419,7 +419,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const titleExam = el('h2', { id: examId });
   const textExam = el('p', { class: 'carte-legende' });
   const yesExam = el('button', { type: 'button', class: 'bouton' });
-  const notExam = el('button', { type: 'button', class: 'bouton bouton-second' }, t('examen-annuler'));
+  const notExam = el('button', { type: 'button', class: 'bouton bouton-second' }, t('exam-cancel'));
   const examWindow = el(
     'dialog',
     { class: 'fenetre-examen', 'aria-labelledby': examId },
@@ -499,7 +499,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (lines.length > LINES_MAX) {
       const coupees = lines.length - LINES_MAX;
       lines = lines.slice(-LINES_MAX);
-      output.appendChild(el('p', { class: 'coupure' }, t('sortie-coupee', { lignes: coupees })));
+      output.appendChild(el('p', { class: 'coupure' }, t('output-cut', { lignes: coupees })));
     }
     // Une ligne soulignée par ^~~~ (sudo, compilateurs) : la ligne et son soulignement ne se replient pas.
     const underlined = (i: number) => /^\s*\^~*\s*$/.test(lines[i] ?? '');
@@ -554,25 +554,25 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const p = PATH.find((x) => x.id === display.parcours) ?? PATH[0];
     const { steps, next } = pathSteps(p, finished, (id) => accessible(STORIES.findIndex((x) => x.id === id)));
     const done = steps.filter((e) => e.state === 'fait').length;
-    descriptionPath.textContent = typo(t(`parcours-${p.id}.description`));
-    progressPath.textContent = done === steps.length ? t('parcours-fini') : t('parcours-avancee', { faits: done, total: steps.length });
+    descriptionPath.textContent = typo(t(`path-${p.id}.description`));
+    progressPath.textContent = done === steps.length ? t('path-finished') : t('path-progress', { faits: done, total: steps.length });
     pathList.replaceChildren(
       ...steps.map((e, i) => {
         const state =
           e.state === 'fait'
-            ? t('parcours-fait')
+            ? t('path-done')
             : e.state === 'sans-cle'
-              ? t('parcours-sans-cle')
+              ? t('path-without-key')
               : e.state === 'verrouille'
-                ? t('parcours-verrouille', { chapitre: t(`chapitre-${e.before}`) })
+                ? t('path-locked', { chapitre: t(`chapter-${e.before}`) })
                 : i === next
-                  ? t('parcours-prochain')
-                  : t('parcours-ouvert');
+                  ? t('path-next')
+                  : t('path-open');
         const b = el(
           'button',
           { type: 'button', 'data-h': String(e.h), 'data-c': String(e.c), 'data-etat': e.state },
-          el('span', { class: 'titre' }, t(`chapitre-${e.chapter}`)),
-          el('span', { class: 'resume' }, t('parcours-dans', { histoire: storyTitle(e.h) })),
+          el('span', { class: 'titre' }, t(`chapter-${e.chapter}`)),
+          el('span', { class: 'resume' }, t('path-in', { histoire: storyTitle(e.h) })),
           level(difficulty(e.chapter)),
           el('span', { class: 'etat' }, state),
         );
@@ -604,12 +604,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       const rest = missing(STORIES[h].id, finished);
       b.querySelector('.etat')!.textContent = !accessible(h)
         ? rest.length
-          ? t('etat-cle-apres', { chapitres: new Intl.ListFormat(t.language, { type: 'conjunction' }).format(rest.map((c) => t('etat-cle-chapitre', { titre: t(`chapitre-${c}`) }))) })
-          : t('etat-cle-manquante')
+          ? t('state-key-after', { chapitres: new Intl.ListFormat(t.language, { type: 'conjunction' }).format(rest.map((c) => t('state-key-chapter', { titre: t(`chapter-${c}`) }))) })
+          : t('state-key-missing')
         : done === total
-          ? t('etat-histoire-terminee')
+          ? t('state-story-finished')
           : total > 1
-            ? t('etat-chapitres-faits', { faits: done, total })
+            ? t('state-chapters-done', { faits: done, total })
             : '';
     });
     keyHelp.hidden = storiesBoutons.every((b) => !b.disabled) || display.vue === 'parcours';
@@ -620,10 +620,10 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
         b.disabled = !open(h, c);
         b.setAttribute('aria-current', String(h === story() && c === active()));
         b.querySelector('.etat')!.textContent = finished.includes(chapters(h)[c].id)
-          ? t('etat-chapitre-termine')
+          ? t('state-chapter-finished')
           : open(h, c)
             ? ''
-            : t('etat-verrouille');
+            : t('state-locked');
       });
     });
     // « Chapitre suivant » : après un chapitre fini, s'il en reste un.
@@ -632,14 +632,14 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const links = h >= 0 && gameTerminal.remote!.shell.finished ? rouagesLinks(gameTerminal.remote!.shell.chapter.id) : [];
     forUnderstand.hidden = links.length === 0;
     rouagesList.replaceChildren(
-      ...links.map((l) => el('li', {}, el('a', { href: l.address, hreflang: 'fr', target: '_blank', rel: 'noopener' }, typo(t(`rouages-lien-${l.id}`))))),
+      ...links.map((l) => el('li', {}, el('a', { href: l.address, hreflang: 'fr', target: '_blank', rel: 'noopener' }, typo(t(`rouages-link-${l.id}`))))),
     );
   };
 
   const notebookUpdate = () => {
     const names = Object.keys(notebook).sort((a, b) => a.localeCompare(b));
-    titleNotebook.textContent = playerName ? t('carnet-titre-de', { nom: playerName }) : t('carnet-titre');
-    accountNotebook.textContent = t('carnet-compte', { nombre: names.length });
+    titleNotebook.textContent = playerName ? t('notebook-title-of', { nom: playerName }) : t('notebook-title');
+    accountNotebook.textContent = t('notebook-account', { nombre: names.length });
     emptyNotebook.hidden = names.length > 0;
     actionsNotebook.hidden = names.length === 0;
     listNotebook.replaceChildren(
@@ -658,7 +658,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     return h ? `${h}:${mmss}` : mmss;
   };
   const timerUpdate = () => {
-    stopwatch.textContent = examStart === null ? '' : t('examen-chrono', { temps: minutes(Date.now() - examStart) });
+    stopwatch.textContent = examStart === null ? '' : t('exam-timer', { temps: minutes(Date.now() - examStart) });
   };
   const timer = setInterval(() => {
     if (examStart !== null) timerUpdate();
@@ -671,7 +671,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const time = Date.now() - examStart;
     const old = records[id];
     if (old === undefined || time < old) records[id] = time;
-    show(t(old === undefined || time < old ? 'examen-fini-record' : 'examen-fini', { temps: minutes(time), record: minutes(records[id]) }), 'examen-resultat');
+    show(t(old === undefined || time < old ? 'exam-finished-record' : 'exam-finished', { temps: minutes(time), record: minutes(records[id]) }), 'examen-resultat');
     examStart = null;
     timerUpdate();
   };
@@ -680,12 +680,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const checkAchievements = (sh: Shell | null) => {
     for (const id of newAchievements({ sh, finished, notebook, records }, achievements)) {
       achievements[id] = new Date().toISOString();
-      show(t('succes-obtenu', { nom: t(`succes-${id}`) }), 'succes');
+      show(t('achievements-obtained', { nom: t(`achievements-${id}`) }), 'succes');
     }
     achievementsUpdate();
   };
   const achievementsUpdate = () => {
-    achievementsButton.textContent = t('succes-bouton', { obtenus: Object.keys(achievements).length, total: ACHIEVEMENTS.length });
+    achievementsButton.textContent = t('achievements-button', { obtenus: Object.keys(achievements).length, total: ACHIEVEMENTS.length });
   };
   // Le bilan : le temps passé se compte depuis la première fois qu'on voit le chapitre en cours.
   const debuts = new WeakMap<Shell, number>();
@@ -693,18 +693,18 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const doneSummary = new WeakSet<Shell>();
   const summaryText = (sh: Shell) => {
     const b = summary(sh);
-    return t('bilan-resume', { temps: minutes(Date.now() - (debuts.get(sh) ?? Date.now())), commandes: b.commands, erreurs: b.errors, indices: b.hints });
+    return t('summary-summary', { temps: minutes(Date.now() - (debuts.get(sh) ?? Date.now())), commandes: b.commands, erreurs: b.errors, indices: b.hints });
   };
   const openSummary = (sh: Shell, recap: string) => {
     const b = summary(sh);
-    titleSummary.textContent = t('bilan-titre', { chapitre: t(`chapitre-${sh.chapter.id}`) });
+    titleSummary.textContent = t('summary-title', { chapitre: t(`chapter-${sh.chapter.id}`) });
     mapCaption.textContent = recap;
-    encourageSummary.textContent = t('bilan-encourager', { indices: b.hints });
+    encourageSummary.textContent = t('summary-encourage', { indices: b.hints });
     tableSummary.replaceChildren(
       el(
         'table',
         {},
-        el('thead', {}, el('tr', {}, ...['bilan-col-etape', 'bilan-col-toi', 'bilan-col-reference'].map((k) => el('th', { scope: 'col' }, t(k))))),
+        el('thead', {}, el('tr', {}, ...['summary-col-step', 'summary-col-you', 'summary-col-reference'].map((k) => el('th', { scope: 'col' }, t(k))))),
         el(
           'tbody',
           {},
@@ -713,8 +713,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
               'tr',
               {},
               el('th', { scope: 'row' }, String(i + 1)),
-              el('td', { 'data-titre': t('bilan-col-toi') }, e.line === null ? el('span', { class: 'bilan-autrement' }, t('bilan-autrement')) : el('code', {}, e.line)),
-              el('td', { 'data-titre': t('bilan-col-reference') }, typo(e.solution)),
+              el('td', { 'data-titre': t('summary-col-you') }, e.line === null ? el('span', { class: 'bilan-autrement' }, t('summary-otherwise')) : el('code', {}, e.line)),
+              el('td', { 'data-titre': t('summary-col-reference') }, typo(e.solution)),
             ),
           ),
         ),
@@ -731,7 +731,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (!sh.finished || !inCourse.has(sh) || doneSummary.has(sh)) return;
     doneSummary.add(sh);
     const recap = summaryText(sh);
-    const detail = el('button', { type: 'button', class: 'lien bouton-bilan', 'aria-haspopup': 'dialog' }, t('bilan-bouton'));
+    const detail = el('button', { type: 'button', class: 'lien bouton-bilan', 'aria-haspopup': 'dialog' }, t('summary-button'));
     detail.addEventListener('click', () => openSummary(sh, recap));
     output.appendChild(el('p', { class: 'bilan' }, recap, ' ', detail));
   };
@@ -757,7 +757,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     timerUpdate();
     output.replaceChildren(measure);
     if (gameTerminal.remote) gameTerminal.disconnect();
-    show(`— ${t('poste-titre')} —`);
+    show(`— ${t('workstation-title')} —`);
     show(gameTerminal.resetWorkstation());
     after();
   };
@@ -769,7 +769,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     else show(gameTerminal.connect(storyMachine(STORIES[h].id)!.name, chapter));
     // En mode examen, un chapitre qui (re)commence lance le chrono ; un chapitre déjà fini, non.
     examStart = gameTerminal.exam && !gameTerminal.remote?.shell.finished ? Date.now() : null;
-    if (examStart !== null) show(t('examen-debut'), 'examen-resultat');
+    if (examStart !== null) show(t('exam-start'), 'examen-resultat');
     timerUpdate();
     after();
   };
@@ -875,7 +875,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
         break;
       }
     if (found || !moreOld) query.match = found;
-    match.textContent = t('recherche-historique', { motif: input.value, commande: query.match });
+    match.textContent = t('search-history', { motif: input.value, commande: query.match });
   };
   const finishSearch = (keep: boolean) => {
     if (!query) return;
@@ -1022,15 +1022,15 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // Le carnet s'emporte : un fichier Markdown, ou le presse-papiers.
   const markdown = () => inMarkdown(notebook, t, finished, playerName);
   exported.addEventListener('click', () => {
-    const link = el('a', { href: URL.createObjectURL(new Blob([markdown()], { type: 'text/markdown' })), download: t('carnet-fichier') });
+    const link = el('a', { href: URL.createObjectURL(new Blob([markdown()], { type: 'text/markdown' })), download: t('notebook-file') });
     link.click();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   });
   copyNotebook.addEventListener('click', () => {
     navigator.clipboard
       ?.writeText(markdown())
-      .then(() => (stateNotebook.textContent = t('carnet-copie')))
-      .catch(() => (stateNotebook.textContent = t('carnet-copie-impossible')));
+      .then(() => (stateNotebook.textContent = t('notebook-copy')))
+      .catch(() => (stateNotebook.textContent = t('notebook-copy-impossible')));
   });
   // ——— L'astreinte ———
   // Les résultats des jours passés, dans ce navigateur (le meilleur de chaque jour).
@@ -1054,16 +1054,16 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     incidentButton.disabled = !id || onCall !== null;
     const done = results[today()];
     incidentText.textContent = !id
-      ? t('astreinte-verrouille')
+      ? t('on-call-locked')
       : done
-        ? t('astreinte-deja', { pourcent: percent(done.remaining) })
-        : t('astreinte-aujourdhui', { chapitre: t(`chapitre-${id}`), histoire: storyTitle(placeFor(id).h) });
+        ? t('on-call-already', { pourcent: percent(done.remaining) })
+        : t('on-call-today', { chapitre: t(`chapter-${id}`), histoire: storyTitle(placeFor(id).h) });
   };
   incidentButton.addEventListener('click', () => {
     const id = incident();
     if (!id) return;
-    titleOnCall.textContent = t('astreinte-titre', { date: longDate(today()) });
-    chapterOnCall.textContent = t('astreinte-aujourdhui', { chapitre: t(`chapitre-${id}`), histoire: storyTitle(placeFor(id).h) });
+    titleOnCall.textContent = t('on-call-title', { date: longDate(today()) });
+    chapterOnCall.textContent = t('on-call-today', { chapitre: t(`chapter-${id}`), histoire: storyTitle(placeFor(id).h) });
     onCallWindow.showModal();
   });
   cancelOnCall.addEventListener('click', () => onCallWindow.close());
@@ -1081,7 +1081,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     onCall = { date, chapter, start: Date.now(), sh: gameTerminal.remote?.shell ?? null, epuise: false };
     // Pendant l'astreinte, pas de seconde astreinte : le bouton revient à la fin (ou à l'abandon).
     incidentButton.disabled = true;
-    show(t('astreinte-debut'), 'succes');
+    show(t('on-call-start'), 'succes');
     onCallUpdate();
     input.focus();
   });
@@ -1096,7 +1096,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     // Un autre chapitre ouvert : l'astreinte est abandonnée (passer par le poste, non).
     if (here && here.chapter.id !== onCall.chapter) {
       onCall = null;
-      show(t('astreinte-abandon'));
+      show(t('on-call-abandon'));
       return onCallUpdate();
     }
     if (here) onCall.sh = here;
@@ -1105,11 +1105,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const elapsed = Date.now() - onCall.start;
     const remaining = remainingBudget(elapsed, sh.requestsHints.size, sh.commandsInError);
     onCallGauge.hidden = false;
-    onCallGauge.textContent = t('astreinte-jauge', { temps: minutes(remaining), pourcent: percent(remaining) });
+    onCallGauge.textContent = t('on-call-gauge', { temps: minutes(remaining), pourcent: percent(remaining) });
     onCallGauge.classList.toggle('bas', remaining < 5 * 60 * 1000);
     if (remaining === 0 && !onCall.epuise) {
       onCall.epuise = true;
-      show(t('astreinte-epuise'), 'examen-resultat');
+      show(t('on-call-exhausted'), 'examen-resultat');
     }
     if (!sh.finished) return;
     // L'incident est réglé : le résultat (le meilleur du jour est gardé), puis la carte de score.
@@ -1119,9 +1119,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     try {
       localStorage.setItem(ON_CALL_KEY, JSON.stringify(results));
     } catch {}
-    scoreMap.textContent = t('astreinte-carte', {
+    scoreMap.textContent = t('on-call-map', {
       date: onCall.date,
-      chapitre: t(`chapitre-${r.chapter}`),
+      chapitre: t(`chapter-${r.chapter}`),
       temps: minutes(r.time),
       jauge: gauge(r.remaining),
       pourcent: percent(r.remaining),
@@ -1137,7 +1137,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   copyMap.addEventListener('click', () => {
     navigator.clipboard
       ?.writeText(scoreMap.textContent ?? '')
-      .then(() => (mapState.textContent = t('astreinte-copiee')))
+      .then(() => (mapState.textContent = t('on-call-copied')))
       .catch(() => {});
   });
   closeOnCallEnd.addEventListener('click', () => onCallEndWindow.close());
@@ -1159,9 +1159,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (!inCourse) return applyExam(wanted);
     examCase.checked = !wanted;
     wantedExam = wanted;
-    titleExam.textContent = t(wanted ? 'examen-confirmer-titre' : 'examen-quitter-titre');
-    textExam.textContent = typo(t(wanted ? 'examen-confirmer-texte' : 'examen-quitter-texte'));
-    yesExam.textContent = t(wanted ? 'examen-confirmer' : 'examen-quitter');
+    titleExam.textContent = t(wanted ? 'exam-confirm-title' : 'exam-quit-title');
+    textExam.textContent = typo(t(wanted ? 'exam-confirm-text' : 'exam-quit-text'));
+    yesExam.textContent = t(wanted ? 'exam-confirm' : 'exam-quit');
     examWindow.showModal();
     notExam.focus();
   });
@@ -1174,13 +1174,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // Un lieu de la carte : son nom, ses repères en toutes lettres (lus aussi
   // par les lecteurs d'écran), puis les lieux qu'il contient.
   const drawPlace = (l: Place): HTMLElement => {
-    const landmarks = [l.home && t('carte-maison'), l.closed && t('carte-ferme'), !l.visit && t('carte-apercu')].filter(Boolean).join(', ');
+    const landmarks = [l.home && t('map-home'), l.closed && t('map-closed'), !l.visit && t('map-preview')].filter(Boolean).join(', ');
     return el(
       'li',
       { class: [l.visit ? 'visite' : 'apercu', l.here ? 'ici' : ''].join(' ').trim(), ...(l.here ? { 'aria-current': 'location' } : {}) },
       el('span', { class: 'nom' }, l.name === '/' ? '/' : `${l.name}/`),
       ...(landmarks ? [' ', el('span', { class: 'reperes' }, `(${landmarks})`)] : []),
-      ...(l.here ? [' ', el('strong', { class: 'vous-etes-ici' }, t('carte-ici'))] : []),
+      ...(l.here ? [' ', el('strong', { class: 'vous-etes-ici' }, t('map-here'))] : []),
       ...(l.children.length ? [el('ul', {}, ...l.children.map(drawPlace))] : []),
     );
   };
@@ -1228,21 +1228,21 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
         svg('text', { x: String(bx + 10), y: String(by + (e.address || e.note ? 19 : HEIGHT / 2 + 5)), class: 'nom' }, e.name),
         ...(e.address ? [svg('text', { x: String(bx + 10), y: String(by + 34), class: 'adresse' }, e.address)] : []),
         ...(e.note ? [svg('text', { x: String(bx + 10), y: String(by + 48), class: 'note' }, e.note)] : []),
-        ...(planLandmarks(e, here, visited).here ? [svg('text', { x: String(bx), y: String(by - 6), class: 'repere-ici' }, `▼ ${t('plan-ici')}`)] : []),
+        ...(planLandmarks(e, here, visited).here ? [svg('text', { x: String(bx), y: String(by - 6), class: 'repere-ici' }, `▼ ${t('plan-here')}`)] : []),
       );
     });
     return svg('svg', { viewBox: `0 0 ${width} ${height}`, width: String(width), height: String(height), 'aria-hidden': 'true', focusable: 'false' }, ...links, ...boites);
   };
   const drawElement = (e: ElementPlan, here: string, visited: Set<string>): HTMLElement => {
     const r = planLandmarks(e, here, visited);
-    const notes = [e.note, e.tunnel && t('plan-tunnel'), e.host && (r.visit ? t('plan-visite') : t('plan-pas-visite'))].filter(Boolean).join(', ');
+    const notes = [e.note, e.tunnel && t('plan-tunnel'), e.host && (r.visit ? t('plan-visit') : t('plan-not-visit'))].filter(Boolean).join(', ');
     return el(
       'li',
       { class: classesPlan(e, here, visited), ...(r.here ? { 'aria-current': 'location' } : {}) },
       el('span', { class: 'nom' }, e.name),
       ...(e.address ? [' ', el('code', {}, e.address)] : []),
       ...(notes ? [' ', el('span', { class: 'reperes' }, `(${notes})`)] : []),
-      ...(r.here ? [' ', el('strong', { class: 'vous-etes-ici' }, `← ${t('plan-ici')}`)] : []),
+      ...(r.here ? [' ', el('strong', { class: 'vous-etes-ici' }, `← ${t('plan-here')}`)] : []),
       ...(e.children?.length ? [el('ul', {}, ...e.children.map((x) => drawElement(x, here, visited)))] : []),
     );
   };
@@ -1266,7 +1266,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   });
   mapButton.addEventListener('click', () => {
     const sh = gameTerminal.shell;
-    titleMap.textContent = t('carte-titre', { machine: sh.host });
+    titleMap.textContent = t('map-title', { machine: sh.host });
     treeMap.replaceChildren(el('ul', { class: 'arbre' }, drawPlace(map(sh))));
     const plan = gameTerminal.remote?.shell.chapter.plan?.(t);
     tabs.hidden = !plan;
@@ -1322,8 +1322,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   missionButton.addEventListener('click', () => {
     const sh = gameTerminal.remote?.shell;
     const c = sh?.chapter;
-    titleMission.textContent = c ? t('mission-titre', { chapitre: t('chapitre-numero', { numero: c.number }), titre: t(`chapitre-${c.id}`) }) : t('poste-titre');
-    goalMission.textContent = c ? typo(t(`chapitre-${c.id}.resume`)) : '';
+    titleMission.textContent = c ? t('mission-title', { chapitre: t('chapter-number', { numero: c.number }), titre: t(`chapter-${c.id}`) }) : t('workstation-title');
+    goalMission.textContent = c ? typo(t(`chapter-${c.id}.resume`)) : '';
     instructionsMission.textContent = (sh ?? gameTerminal.workstation).read(`${(sh ?? gameTerminal.workstation).home}/${(sh ?? gameTerminal.workstation).welcome}`) ?? '';
     const log = sh?.log ?? [];
     emptyMission.hidden = log.length > 0;
@@ -1346,12 +1346,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     goBackSnapshot.disabled = !possible || !snapshot || snapshot.not > not!;
     cancelInput.disabled = !possible || not === 0;
     rescueState.textContent = gameTerminal.exam
-      ? t('secours-examen')
+      ? t('rescue-exam')
       : not === null
-        ? t('secours-impossible')
+        ? t('rescue-impossible')
         : snapshot
-          ? t('secours-pris', { pas: snapshot.not })
-          : t('secours-aucun');
+          ? t('rescue-taken', { pas: snapshot.not })
+          : t('rescue-none');
   };
   takeSnapshot.addEventListener('click', () => {
     const not = gameTerminal.not;
@@ -1370,7 +1370,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (doneSummary.has(old) && fresh.finished) doneSummary.add(fresh);
     missionWindow.close();
     output.replaceChildren(measure);
-    show(t('secours-restaure', { pas: not }), 'succes');
+    show(t('rescue-restored', { pas: not }), 'succes');
     after();
     // Revenu au milieu d'un tail -f : il continue.
     openFollow();
@@ -1388,10 +1388,10 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const i = hint(sh);
     const openSet = HINT_LEVELS.filter((n) => sh.requestsHints.has(`${i.step ?? ''}:${n}`) || (n === 'manuel' && sh.requestsHints.has(`:${n}`)));
     const blocks: HTMLElement[] = [];
-    if (openSet.includes('manuel')) blocks.push(el('p', {}, t('indice-manuel', { pages: i.manual.map((c) => `man ${c}`).join(', ') })));
+    if (openSet.includes('manuel')) blocks.push(el('p', {}, t('hint-manual', { pages: i.manual.map((c) => `man ${c}`).join(', ') })));
     if (openSet.includes('piste') && i.lead) blocks.push(el('p', {}, typo(i.lead)));
     if (openSet.includes('solution') && i.solution) blocks.push(el('pre', { class: 'mission-texte' }, i.solution));
-    if (!i.step && openSet.length < 3) blocks.push(el('p', { class: 'carte-legende' }, typo(t('indice-plus-rien'))));
+    if (!i.step && openSet.length < 3) blocks.push(el('p', { class: 'carte-legende' }, typo(t('hint-more-nothing'))));
     hintText.replaceChildren(...blocks);
     // Un niveau à la fois : le suivant s'ouvre quand le précédent a été lu.
     HINT_LEVELS.forEach((n, k) => {
@@ -1482,8 +1482,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const current = grade(finished);
     const following = GRADES.find((g) => g.chapters > finished.length);
     gradeAchievements.replaceChildren(
-      el('strong', {}, t('succes-grade', { grade: t(`grade-${current}`) })),
-      ...(current === 'sre' ? [] : [' ', t('succes-grade-suivant', { grade: t(`grade-${following?.id ?? 'sre'}`), chapitres: following?.chapters ?? finished.length })]),
+      el('strong', {}, t('achievements-grade', { grade: t(`grade-${current}`) })),
+      ...(current === 'sre' ? [] : [' ', t('achievements-grade-next', { grade: t(`grade-${following?.id ?? 'sre'}`), chapitres: following?.chapters ?? finished.length })]),
     );
     const date = (iso: string) => new Intl.DateTimeFormat(t.language, { dateStyle: 'medium' }).format(new Date(iso));
     listAchievements.replaceChildren(
@@ -1493,10 +1493,10 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
         return el(
           'li',
           { class: obtained ? 'obtenu' : 'a-obtenir' },
-          el('span', { class: 'succes-nom' }, `${obtained ? '🏆' : '·'} ${visible ? t(`succes-${x.id}`) : t('succes-cache')}`),
+          el('span', { class: 'succes-nom' }, `${obtained ? '🏆' : '·'} ${visible ? t(`achievements-${x.id}`) : t('achievements-cache')}`),
           ' ',
-          el('span', { class: 'succes-description' }, visible ? typo(t(`succes-${x.id}.description`)) : typo(t('succes-cache.description'))),
-          ...(obtained ? [' ', el('span', { class: 'succes-date' }, t('succes-le', { date: date(obtained) }))] : []),
+          el('span', { class: 'succes-description' }, visible ? typo(t(`achievements-${x.id}.description`)) : typo(t('achievements-cache.description'))),
+          ...(obtained ? [' ', el('span', { class: 'succes-date' }, t('achievements', { date: date(obtained) }))] : []),
         );
       }),
     );
@@ -1535,20 +1535,20 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   copyCode.addEventListener('click', () => {
     navigator.clipboard
       ?.writeText(currentCode.textContent ?? '')
-      .then(() => (progressState.textContent = t('carnet-copie')))
-      .catch(() => (progressState.textContent = t('carnet-copie-impossible')));
+      .then(() => (progressState.textContent = t('notebook-copy')))
+      .catch(() => (progressState.textContent = t('notebook-copy-impossible')));
   });
   // Le code ne donne que des chapitres terminés : on les ajoute, sans rien perdre d'ici.
   const tryCode = () => {
     const read = readCode(codeField.value);
     if ('error' in read) {
-      progressState.textContent = t(`progression-${read.error}`);
+      progressState.textContent = t(`progress-${read.error}`);
       codeField.focus();
       return;
     }
     const fresh = read.finished.filter((id) => !finished.includes(id));
     if (!fresh.length) {
-      progressState.textContent = t('progression-rien-de-neuf');
+      progressState.textContent = t('progress-nothing-new');
       return;
     }
     resume({ ...backupState(), finished: [...finished, ...fresh] });
@@ -1560,11 +1560,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   download.addEventListener('click', () => {
     const link = el('a', {
       href: URL.createObjectURL(new Blob([backupFile(backupState(), new Date())], { type: 'application/json' })),
-      download: t('progression-nom-fichier'),
+      download: t('progress-name-file'),
     });
     link.click();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-    progressState.textContent = t('progression-telechargee');
+    progressState.textContent = t('progress-downloaded');
   });
   // Le fichier remplace tout ce qui est gardé ici : on demande d'abord.
   fileField.addEventListener('change', async () => {
@@ -1573,10 +1573,10 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const read = readFile(await file.text());
     fileField.value = '';
     if ('error' in read) {
-      progressState.textContent = t(`progression-${read.error}`);
+      progressState.textContent = t(`progress-${read.error}`);
       return;
     }
-    if (!confirm(t('progression-confirmer', { nombre: read.backup.finished?.length ?? 0 }))) return;
+    if (!confirm(t('progress-confirm', { nombre: read.backup.finished?.length ?? 0 }))) return;
     resume(read.backup);
   });
   restart.addEventListener('click', () => {

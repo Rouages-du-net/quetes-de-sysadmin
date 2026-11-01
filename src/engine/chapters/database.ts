@@ -43,7 +43,7 @@ const accounts = (): Accounts => ({
 
 // Des données déterministes : des jeux, des membres (par numéro de carte, sans nom) et leurs prêts.
 function tables(t: Game['t']): Record<string, Table> {
-  const names = t('database-noms-de-jeux').split(',');
+  const names = t('database-names-games').split(',');
   const neighbourhoods = ['nord', 'sud', 'est', 'ouest', 'centre'];
   const day = (n: number) => new Date(Date.UTC(2025, 8, 1) + n * 86_400_000).toISOString().slice(0, 10);
   return {
@@ -136,7 +136,7 @@ export const base: Chapter = {
   home: M,
   welcome: 'message_from_berenice.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'ludo-2027',
   accounts,
   state: (t) => ({
@@ -198,7 +198,7 @@ export const base: Chapter = {
         ),
       }),
       home: place({
-        you: d({ 'message_from_berenice.txt': f(t('database-message-de-berenice')), 'note_from_malo.txt': f(t('database-mot-de-malo')) }),
+        you: d({ 'message_from_berenice.txt': f(t('database-message-berenice')), 'note_from_malo.txt': f(t('database-word-malo')) }),
         berenice: place({}, { owner: 'berenice', mode: 'rwx------' }),
       }),
       tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
@@ -224,27 +224,27 @@ export const base: Chapter = {
     });
   },
   events: [
-    { id: 'role', condition: (j) => new RegExp(`role "(${j.player}|root)" does not exist`).test(output(j)), message: (j) => j.t('database-evenement-role') },
+    { id: 'role', condition: (j) => new RegExp(`role "(${j.player}|root)" does not exist`).test(output(j)), message: (j) => j.t('database-event-role') },
     {
-      id: 'sur-la-vraie',
+      id: 'on-true',
       condition: (j) =>
         output(j).includes('already exists') && j.last.commands.some((c) => c.includes('pg_restore') && c.includes('ludo')) && !j.state.incident,
-      message: (j) => j.t('database-evenement-sur-la-vraie'),
+      message: (j) => j.t('database-event-on-true'),
     },
     {
-      id: 'test-reussi',
+      id: 'test-succeeded',
       condition: (j) => succeededTest(j),
       // L'incident arrive à la commande suivante.
       action: (j) => (j.state.testValide = true),
-      message: (j) => j.t('database-evenement-test-reussi'),
+      message: (j) => j.t('database-event-test-succeeded'),
     },
     {
-      id: 'doublons',
+      id: 'duplicates',
       condition: (j) => !!j.state.incident && output(j).includes('duplicate key value'),
-      message: (j) => j.t('database-evenement-doublons'),
+      message: (j) => j.t('database-event-duplicates'),
     },
-    { id: 'cron-root', condition: (j) => dumpRoot(j), message: (j) => j.t('database-evenement-cron-root') },
-    { id: 'prets-revenus', condition: (j) => !!j.state.incident && allIsFor(j), message: (j) => j.t('database-evenement-prets-revenus') },
-    { id: 'fin', condition: (j) => !!j.state.incident && allIsFor(j) && dumpTask(j) && archive(j), message: (j) => j.t('database-evenement-fin') },
+    { id: 'cron-root', condition: (j) => dumpRoot(j), message: (j) => j.t('database-event-cron-root') },
+    { id: 'loans-returned', condition: (j) => !!j.state.incident && allIsFor(j), message: (j) => j.t('database-event-loans-returned') },
+    { id: 'end', condition: (j) => !!j.state.incident && allIsFor(j) && dumpTask(j) && archive(j), message: (j) => j.t('database-event-end') },
   ],
 };

@@ -27,9 +27,10 @@ presents them for people.
   English ones); every other document is in English only.
 - **Code in English.** Files and identifiers (functions, variables,
   types, props), and the world (places, machines, accounts, passwords) are
-  in English. Some data identifiers are still French: the keys of a
-  machine's state (`state.montages`, `state.applis`…), `.ftl` keys, CSS
-  classes and some comments; they are being moved to English. Write new
+  in English, and so are the `.ftl` keys. Some identifiers are still
+  French: the keys of a machine's state (`state.montages`, `state.applis`…),
+  the `.ftl` file names and attributes (`.piste`, `.resume`…), CSS classes
+  and some comments; they are being moved to English. Write new
   code (files, functions, variables, props, CSS classes, new `.ftl` keys)
   in English; never mix a large rename with a feature. A public name (attribute of
   the element, URL) gets its English form first and keeps the French one

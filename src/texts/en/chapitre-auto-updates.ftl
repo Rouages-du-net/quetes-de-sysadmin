@@ -2,12 +2,12 @@
 ### unattended-upgrades. Commands, paths, apt configuration keys and
 ### package names are not translated.
 
-chapitre-auto-updates = Automatic updates
+chapter-auto-updates = Automatic updates
     .resume = New security updates already: enable unattended-upgrades, get the report, reboot at night, and leave nodejs alone.
 
 ## Files
 
-auto-updates-courriel-awa =
+auto-updates-email-awa =
     From:     Awa
     To:       you
     Subject:  More updates?
@@ -34,18 +34,18 @@ auto-updates-courriel-awa =
 
 ## Events
 
-auto-updates-evenement-syntaxe =
+auto-updates-event-syntax =
     apt no longer understands its configuration ("E: Syntax error"): it
     refuses EVERYTHING, automatic updates included. Most often, a ";"
     forgotten at the end of a line, or a brace. apt-config dump gives
     the file and the line.
-auto-updates-evenement-rien =
+auto-updates-event-nothing =
     The apt-daily-upgrade service ran… and did nothing. It starts
     apt.systemd.daily, which reads APT::Periodic::Unattended-Upgrade: at
     "0" (which is the case in 20auto-upgrades), it stops right away.
     That's why nothing has ever been installed. (apt-config dump
     APT::Periodic shows what apt understood.)
-auto-updates-evenement-nodejs =
+auto-updates-event-nodejs =
     Ouch: nodejs just moved to version 22. The till still runs (with
     the old program in memory), but it won't restart: it requires
     Node.js 20. A pattern that is too broad in Origins-Pattern lets
@@ -53,16 +53,16 @@ auto-updates-evenement-nodejs =
     till. To go back, restart the chapter from the menu; and keep
     nodejs out of it (don't allow its origin, or use
     Package-Blacklist).
-auto-updates-evenement-en-journee =
+auto-updates-event-in-day =
     The machine just rebooted, in the middle of the afternoon:
     Automatic-Reboot is enabled, but without a time, unattended-upgrades
     reboots right away ("now"). Two minutes without a till, a queue at
     the front desk. You need a time when the co-op is closed:
     Automatic-Reboot-Time.
-auto-updates-evenement-sans-rapport =
+auto-updates-event-without-report =
     The updates were installed, but nobody will ever know: without
     Unattended-Upgrade::Mail, no report is sent.
-auto-updates-evenement-fin =
+auto-updates-event-end =
     Security updates install themselves every morning, the report goes
     to root, the machine will reboot tonight for the new kernel, and
     nodejs stays at version 20. Lina: "I got the email! It says a

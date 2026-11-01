@@ -3,12 +3,12 @@
 ### commandes, les mots-clés de nft, les noms d'interfaces et les chemins
 ### ne se traduisent pas.
 
-chapitre-dmz = La DMZ
+chapter-dmz = La DMZ
     .resume = Le site de réservation des salles est hébergé sur place : un VLAN à part (la DMZ), une traduction de destination pour le rendre visible d'internet, et un serveur qui ne voit rien du reste.
 
 ## Fichiers
 
-dmz-courriel-ines =
+dmz-email-ines =
     De :     Inès (bénévole, le site de La Ruche)
     À :      toi
     Objet :  Le site de réservation, chez nous !
@@ -36,7 +36,7 @@ dmz-courriel-ines =
 
     Pour sudo : abeille-2027
 
-dmz-plan-commutateur =
+dmz-plan-switch =
     PLAN DU COMMUTATEUR — La Ruche (électricien, mise à jour de janvier 2028)
 
     Port 1     : vers le routeur (eth1). TRUNK 802.1Q : VLAN 10, 20, 30, 40
@@ -53,27 +53,27 @@ dmz-plan-commutateur =
 ## Événements
 
 # { $adresse } : l'adresse publique du routeur
-dmz-evenement-adresse-publique =
+dmz-event-address-public =
     Une règle de la chaîne forward attend l'adresse { $adresse }… mais elle
     ne la verra jamais : la traduction de destination (dnat) a lieu avant,
     au hook prerouting. Quand le paquet arrive dans forward, il va déjà à
     10.10.40.10. C'est cette adresse-là que forward doit laisser passer.
-dmz-evenement-sans-forward =
+dmz-event-without-forward =
     Inès : « Le site ne répond toujours pas de chez moi. » Le routeur traduit
     bien la destination (sudo nft list ruleset), mais le paquet traduit
     traverse ensuite la chaîne forward, fermée par défaut : rien n'y laisse
     passer internet vers la DMZ.
-dmz-evenement-trop-ouvert =
+dmz-event-too-open =
     Attention : avec ces règles, la DMZ est trop ouverte. Soit internet
     atteint le serveur sur d'autres ports que 80 et 443 (ssh, par exemple),
     soit le serveur peut ouvrir des connexions vers le réseau interne. Une
     DMZ ne laisse entrer que ce qu'elle publie, et ne laisse rien sortir
     vers l'intérieur.
-dmz-evenement-en-place =
+dmz-event-in-place =
     Le site répond, et la DMZ tient… en ce moment. Mais au prochain
     redémarrage ? L'interface eth1.40 doit être dans
     /etc/network/interfaces, et les règles dans /etc/nftables.conf.
-dmz-evenement-fin =
+dmz-event-end =
     Le site de réservation répond depuis internet, le serveur fait ses
     mises à jour, les bureaux l'administrent, et s'il est un jour piraté,
     il ne voit ni le NAS, ni l'imprimante. Inès : « Et l'hébergeur ne nous

@@ -3,12 +3,12 @@
 ### outputs (smartctl, mdadm, /proc/mdstat) are not translated. Also holds
 ### the texts shared by the story (labo-…).
 
-chapitre-tired-disk = The tired disk
+chapter-tired-disk = The tired disk
     .resume = smartd is worried about a disk: read what SMART really says, understand the server's RAID, take the sick disk out of its arrays and ask for its replacement by its serial number.
 
 ## Shared by the story
 
-labo-procedure-hebergeur =
+lab-procedure-host =
     Replacing a faulty disk — dedicated servers
 
     1. Before writing to us, remove the disk from your software RAID
@@ -20,7 +20,7 @@ labo-procedure-hebergeur =
        (smartctl -i or lsblk -o show it).
     3. We step in within 24 hours. The new disk is delivered blank: it is
        up to you to partition it and rebuild your RAID.
-labo-syslog =
+lab-syslog =
     Nov 11 03:12:44 lab smartd[588]: Device: /dev/sdb [SAT], 8 Currently unreadable (pending) sectors
     Nov 11 03:42:44 lab smartd[588]: Device: /dev/sdb [SAT], 8 Offline uncorrectable sectors
     Nov 13 03:00:12 lab smartd[588]: Device: /dev/sdb [SAT], starting scheduled Short Self-Test.
@@ -29,7 +29,7 @@ labo-syslog =
 
 ## Files
 
-tired-disk-message-d-odile =
+tired-disk-message-odile =
     A message from Odile, president of the Lab, the neighbourhood photo
     club (Saturday, 7:30 am):
 
@@ -49,51 +49,51 @@ tired-disk-message-d-odile =
 
 ## Events
 
-tired-disk-evenement-alerte =
+tired-disk-event-alert =
     smartd and the kernel are talking about the same disk: sdb. Sectors it
     can no longer read (pending), and reads the RAID had to redo on the
     other disk (redirecting … to other mirror). Before concluding, look at
     how the disks are put together: cat /proc/mdstat.
-tired-disk-evenement-grappes =
+tired-disk-event-arrays =
     Two RAID 1 arrays: md0 (the system, /) with sda2 and sdb2, and md1 (the
     photos, /srv) with sda3 and sdb3. [UU]: for now, both copies are there.
     So each disk is in both arrays. What does SMART say about sdb, and
     about sda to compare? (man smartctl)
-tired-disk-evenement-smart =
+tired-disk-event-smart =
     "PASSED"… and yet: over a thousand reallocated sectors, 8 pending, 37
     errors in its log. The overall verdict only flips at the
     manufacturer's threshold; a reallocated sector count that keeps
     climbing announces the failure. Compare with sda: zero everywhere. sdb
     has to leave both its arrays before it is replaced (man mdadm: --fail,
     then --remove).
-tired-disk-evenement-occupe =
+tired-disk-event-busy =
     mdadm refuses: you don't remove an active member from an array
     ("Device or resource busy"). First declare it faulty (--fail), then
     remove it (--remove); both fit in the same command.
-tired-disk-evenement-sain =
+tired-disk-event-healthy =
     Careful: you just took a member of sda, the HEALTHY disk, out of its
     array! It now only stands on sdb, the one that is wearing out. Remove
     it (--remove), then put it back (--re-add): it will be brought up to
     date and the array will get its healthy copy back. Only then deal with
     sdb.
 # { $partition }: the sdb partition still in place; { $grappe }: its array
-tired-disk-evenement-moitie =
+tired-disk-event-half =
     One array is done. But sdb is in the other one too: { $partition } is
     still part of { $grappe }. A disk being replaced leaves all its arrays.
-tired-disk-evenement-retire =
+tired-disk-event-removed =
     sdb is no longer part of any array: /proc/mdstat shows [U_] for both.
     The server runs on sda alone, without a safety net: the disk must be
     replaced quickly. The ticket remains, ~/ticket.txt, with what the
     host's procedure asks for.
 # { $fichier }: the ticket's name
-tired-disk-evenement-ticket-faux =
+tired-disk-event-ticket-false =
     The ticket contains sda's serial number: that's the HEALTHY disk! The
     host would unplug the only disk that still works. Fix { $fichier }:
     only sdb's serial number.
-tired-disk-evenement-ticket =
+tired-disk-event-ticket =
     The ticket gives the serial number of the disk to replace. Odile will
     send it as soon as the disk is out of its arrays.
-tired-disk-evenement-fin =
+tired-disk-event-end =
     Odile: "Sent! The host replies they'll swap the disk tonight."
 
     Well done! You finished chapter 1 of The Lab. (What comes next is

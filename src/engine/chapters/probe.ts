@@ -149,27 +149,27 @@ function night(j: Game): string {
   if (relay(j).state !== 'active') start(j, s, 'radio-stream');
   const v = place();
   if (v) v.children = {};
-  const r: string[] = [j.t('probe-nuit', { lancements: launches })];
+  const r: string[] = [j.t('probe-night', { lancements: launches })];
   r.push(
     alertRelay !== null
-      ? j.t('probe-nuit-relais-vu', {
+      ? j.t('probe-night-relay-seen', {
           alerte: timeOfDay(alertRelay),
           repare: timeOfDay(repairedRelay ?? alertRelay),
           minutes: Math.round(((repairedRelay ?? alertRelay) - fallsRelay) / MINUTE),
         })
-      : j.t('probe-nuit-relais-rate'),
+      : j.t('probe-night-relay-missed'),
   );
   r.push(
     alertInodes !== null && (fullInodes === null || alertInodes < fullInodes)
-      ? j.t('probe-nuit-inodes-vu', { alerte: timeOfDay(alertInodes) })
-      : j.t('probe-nuit-inodes-rate', { plein: timeOfDay(fullInodes ?? end) }),
+      ? j.t('probe-night-inodes-seen', { alerte: timeOfDay(alertInodes) })
+      : j.t('probe-night-inodes-missed', { plein: timeOfDay(fullInodes ?? end) }),
   );
-  if (no) r.push(j.t('probe-nuit-fausses', { nombre: no }));
-  if (!launches) r.push(j.t('probe-nuit-jamais'));
+  if (no) r.push(j.t('probe-night-false', { nombre: no }));
+  if (!launches) r.push(j.t('probe-night-never'));
   const okRelay = alertRelay !== null && alertRelay - fallsRelay <= RELAY_DELAY * MINUTE;
   const inodesOk = alertInodes !== null && (fullInodes === null || alertInodes < fullInodes);
   if (okRelay && inodesOk && !no) j.state.exerciceReussi = true;
-  else if (alertRelay !== null && !okRelay) r.push(j.t('probe-nuit-relais-lent'));
+  else if (alertRelay !== null && !okRelay) r.push(j.t('probe-night-relay-slow'));
   // Le matin : 7 h.
   s.clock = end + 60 * MINUTE;
   return r.join('\n\n');
@@ -215,7 +215,7 @@ export const probe: Chapter = {
   home: M,
   welcome: 'message_from_zoe.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'antenna-2027',
   accounts,
   state: () => ({
@@ -290,7 +290,7 @@ export const probe: Chapter = {
         aliases: file('# See man 5 aliases for format\npostmaster:    root\nroot: zoe'),
         systemd: place({ system: place({}) }),
       }),
-      home: place({ you: d({ 'message_from_zoe.txt': f(t('probe-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      home: place({ you: d({ 'message_from_zoe.txt': f(t('probe-message-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       srv: place({
         radio: place(
           {
@@ -302,7 +302,7 @@ export const probe: Chapter = {
               },
               radio,
             ),
-            podcasts: place({ thumbnails: place({}, radio), 'README.txt': file(t('probe-podcasts-lisezmoi'), radio) }, radio),
+            podcasts: place({ thumbnails: place({}, radio), 'README.txt': file(t('probe-podcasts-readme'), radio) }, radio),
           },
           radio,
         ),
@@ -325,15 +325,15 @@ export const probe: Chapter = {
   },
   events: [
     {
-      id: 'plugin-hors-path',
+      id: 'plugin-outside-path',
       condition: (j) => j.last.commands.some((c) => /^check_/.test(c[0]) || (c[0] === 'sudo' && /^check_/.test(c[1] ?? ''))),
-      message: (j) => j.t('probe-evenement-plugin-hors-path', { dossier: PLUGINS }),
+      message: (j) => j.t('probe-event-plugin-outside-path', { dossier: PLUGINS }),
     },
     {
-      id: 'premiere-alerte',
+      id: 'first-alert',
       condition: (j) => !j.state.empreinteNuit && alertsForZoe(j).length > 0,
-      message: (j) => j.t('probe-evenement-premiere-alerte'),
+      message: (j) => j.t('probe-event-first-alert'),
     },
-    { id: 'fin', condition: (j) => !!j.state.exerciceReussi, message: (j) => j.t('probe-evenement-fin') },
+    { id: 'end', condition: (j) => !!j.state.exerciceReussi, message: (j) => j.t('probe-event-end') },
   ],
 };

@@ -244,7 +244,7 @@ function lftpCommand(game: Shell, s: Session, line: string): string | null {
     return `lcd ok, local cwd=${dest}`;
   }
   if (cmd === 'lpwd') return s.local;
-  if (cmd === 'help') return game.t('lftp-aide');
+  if (cmd === 'help') return game.t('lftp-help');
   if (cmd === 'mirror') return mirror(game, s, args);
   // Les commandes distantes : la connexion d'abord.
   if (!['ls', 'dir', 'cd', 'pwd', 'mkdir', 'rm', 'get', 'put', 'cat'].includes(cmd)) return game.error(`Unknown command \`${cmd}'.`, 1);

@@ -118,8 +118,8 @@ export function kioskApp(colour: string): App {
             ? json(503, { status: 'error', version: here.version, error: `${missing[0]} is not set` })
             : json(200, { status: 'ok', version: here.version });
       if (recentTrop || missing.length || v.failure?.includes(path)) return { code: 500, body: 'Internal Server Error' };
-      if (path === '/' || path === '') return { code: 200, body: j.t('kiosque-accueil', { version: here.version }) };
-      if (path === '/archives') return { code: 200, body: j.t('kiosque-archives', { version: here.version }) };
+      if (path === '/' || path === '') return { code: 200, body: j.t('kiosk-welcome', { version: here.version }) };
+      if (path === '/archives') return { code: 200, body: j.t('kiosk-archives', { version: here.version }) };
       return {
         code: 404,
         body: `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET ${path}</pre>\n</body>\n</html>`,

@@ -3,12 +3,12 @@
 ### tests before going live. The commands, paths and messages of
 ### git, ln, nginx and sh are not translated.
 
-chapitre-rollback = Rolling back
+chapter-rollback = Rolling back
     .resume = A release that breaks the site: go back to the previous version in an instant, then make every publication pass tests first.
 
 ## Files
 
-rollback-message-de-samia =
+rollback-message-samia =
     A message from Samia, Monday 9:02 pm:
 
     "Help! The site has been showing an error ever since Théo pushed his
@@ -28,8 +28,8 @@ rollback-message-de-samia =
       3. then publish Théo's layout, fixed.
 
     For sudo: gazette-2027."
-rollback-crochet-commentaire = Publishes each push in a new directory under releases/, then switches the current link.
-rollback-crochet-echo = Version $VERSION live
+rollback-hook-comment = Publishes each push in a new directory under releases/, then switches the current link.
+rollback-hook-echo = Version $VERSION live
 rollback-tests =
     #!/bin/sh
     # Checks before publishing (Samia).
@@ -57,7 +57,7 @@ rollback-site-index =
     </ul>
     </body>
     </html>
-rollback-site-accueil =
+rollback-site-welcome =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>The Neighbourhood Gazette</title><link rel="stylesheet" href="style.css"></head>
@@ -79,46 +79,46 @@ rollback-commit-theo = New layout, attempt { $numero }
 ## Events
 
 # { $sortie }: what git showed Théo (indented lines)
-rollback-theo-pousse =
+rollback-theo-push =
     Théo, from home: "Trying my layout again…" He pushes
     (still without index.html). Here's what git tells him:
 
     { $sortie }
-rollback-evenement-panne =
+rollback-event-failure =
     403 Forbidden: nginx serves /srv/gazette/current, but finds no
     home page in it (index.html). Look at what current points to (ls -l
     /srv/gazette, or readlink), and at what's in each version under
     releases/. The previous version is intact: current just has to
     point to it again (man ln).
-rollback-evenement-sans-n =
+rollback-event-without-n =
     The new link was created INSIDE the broken version (ls -l
     /srv/gazette/releases/20270517203012): current points to a directory, so ln
     went into it instead of replacing the link. The -n option is what
     treats current as a plain file: ln -sfn target current.
-rollback-evenement-retabli =
+rollback-event-restored =
     The site responds again. Samia: "Phew! And it took a second:
     the old version had never been deleted, we just changed the
     link. Now, let's make sure it doesn't happen again: the hook must run
     tests.sh on the new version, and not switch current if the
     tests fail." (Look at the hook, and man sh.)
-rollback-evenement-garde-fou =
+rollback-event-kept-fou =
     Théo's push reached the server, but its tests failed and
     the hook stopped before switching current: the site didn't
     change. That's what a safeguard is for. Now publish his layout
     for real: fetch his commits (git pull), give the page the right name,
     commit and push.
-rollback-evenement-garde-fou-perce =
+rollback-event-kept-fou-pierced =
     Théo's broken push went live anyway: the hook didn't
     stop the publication. Restore the site, then look at the hook:
     are the tests run BEFORE switching current, from the directory
     of the new version, and does a failure stop the script (set -e,
     or || exit 1)? Théo will try again as soon as the hook changes.
-rollback-evenement-tests-ailleurs =
+rollback-event-tests-elsewhere =
     The latest version does contain index.html, but it wasn't put
     live: its tests failed anyway. tests.sh looks for index.html
     in the directory it's run from. Where does the hook run it from? (A
     hook starts in the repository, /srv/git/gazette.git; cd changes directory.)
-rollback-evenement-fin =
+rollback-event-end =
     The new layout is live, published by the hook after its
     tests. Samia: "This time, a mistake in the repository can no longer
     break the site. And if a version passes the tests but we don't like it, we

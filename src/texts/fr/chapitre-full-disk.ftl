@@ -2,12 +2,12 @@
 ### enfle, un fichier effacé encore ouvert, logrotate. Les commandes,
 ### chemins, directives et messages (df, du, lsof, logrotate) ne se traduisent pas.
 
-chapitre-full-disk = Le disque plein
+chapter-full-disk = Le disque plein
     .resume = 2 h 47, le disque du serveur de la radio est plein : trouver le coupable, comprendre pourquoi rm ne rend rien, et confier les journaux à logrotate.
 
 ## Fichiers
 
-full-disk-message-de-zoe =
+full-disk-message-zoe =
     Un message de Zoé, bénévole technique de Radio Quartier (2 h 40) :
 
     « Désolée de te réveiller pour ta première astreinte… L'enregistrement
@@ -84,36 +84,36 @@ full-disk-logrotate-apt =
 
 ## Événements
 
-full-disk-evenement-plein =
+full-disk-event-full =
     100 % : plus un octet de libre. Avant d'effacer quoi que ce soit, il
     faut savoir ce qui prend la place : du mesure, lieu par lieu (du -sh
     /var/*, puis plus profond), et c'est souvent du côté des journaux.
-full-disk-evenement-coupable =
+full-disk-event-culprit =
     Le journal du relais pèse à lui seul plus de quinze gigaoctets ! Avant
     de le supprimer, regarde ce qu'il contient (tail), et pourquoi il a
     tant grossi.
-full-disk-evenement-debug =
+full-disk-event-debug =
     Des lignes DEBUG, plusieurs par paquet du flux : le relais écrit tout
     ce qu'il fait, des centaines de fois par seconde. Le niveau de journal
     est réglé dans sa configuration (/etc/radio/stream.conf) ; un programme
     ne relit sa configuration qu'au démarrage, ou au rechargement.
-full-disk-evenement-fantome =
+full-disk-event-ghost =
     df dit toujours plein, mais du ne trouve plus le fichier : il a été
     effacé alors que le relais le tenait encore ouvert. Tant qu'un
     programme garde un fichier ouvert, sa place n'est pas rendue (sudo lsof
     +L1 le montre). Il faut qu'il le ferme : en le redémarrant, par exemple.
     La prochaine fois, truncate -s 0 vide un journal sans ce piège.
-full-disk-evenement-renomme =
+full-disk-event-renamed =
     Le journal a été renommé, mais le relais écrit toujours dans l'ancien
     fichier, sous son nouveau nom (sudo lsof -p 1730) : un programme garde
     le fichier qu'il a ouvert, pas son nom. Pour logrotate, il faut soit
     copytruncate (copier puis vider), soit lui faire rouvrir son journal
     (postrotate … systemctl reload radio-stream … endscript).
 # { $pourcent } : l'occupation du disque
-full-disk-evenement-respire =
+full-disk-event-breathes =
     Le disque respire : { $pourcent } % occupés. L'enregistrement de nuit
     pourra reprendre. Reste à éviter la prochaine fois.
-full-disk-evenement-fin =
+full-disk-event-end =
     Le disque a de la place, le relais tourne en mode normal, et logrotate
     s'occupera désormais de son journal. Zoé : « Désolée pour le debug…
     Je l'avais complètement oublié. »

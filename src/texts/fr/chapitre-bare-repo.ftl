@@ -2,12 +2,12 @@
 ### avec git push, un dépôt nu et un crochet post-receive. Les commandes,
 ### chemins et messages de git, nginx et diff ne se traduisent pas.
 
-chapitre-bare-repo = Le dépôt nu
+chapter-bare-repo = Le dépôt nu
     .resume = Publier le site du journal avec git push : un dépôt nu sur le serveur, un crochet post-receive, et plus de retouche à la main.
 
 ## Fichiers
 
-bare-repo-message-de-samia =
+bare-repo-message-samia =
     Un message de Samia, rédactrice en chef de La Gazette du quartier :
 
     « Bienvenue à la Gazette ! Notre site (curl http://gazette.example) est
@@ -23,7 +23,7 @@ bare-repo-message-de-samia =
 
     Mon article sur la fête des voisins est prêt dans ~/gazette, mais pas
     encore en ligne. Tout est dans man git. Pour sudo : gazette-2027. »
-bare-repo-mot-de-theo =
+bare-repo-word-theo =
     Un mot de Théo, le stagiaire :
 
     « Encore désolé pour l'article écrasé ! Au fait : j'ai corrigé une faute
@@ -32,7 +32,7 @@ bare-repo-mot-de-theo =
 
 ## Le site (HTML ; { $date } : AAAA-MM-JJ, { $jour } : le jour du mois)
 
-bare-repo-titre-faute = La Gazzette du quartier
+bare-repo-title-mistake = La Gazzette du quartier
 bare-repo-site-index-v1 =
     <!DOCTYPE html>
     <html lang="fr">
@@ -94,46 +94,46 @@ bare-repo-commit-2 = Article : la fête des voisins
 
 ## Événements
 
-bare-repo-evenement-derive =
+bare-repo-event-drift =
     Voilà la correction de Théo : « Gazzette » devenu « Gazette », dans la
     copie du serveur seulement. Elle n'est pas dans git : si tu déploies
     ~/gazette tel quel, elle disparaîtra. Mieux vaut la reporter d'abord dans
     ~/gazette/index.html, puis git commit.
-bare-repo-evenement-droits =
+bare-repo-event-rights =
     Le dépôt a été créé avec sudo : il appartient à root, et git push, lancé
     en ton nom, n'a pas le droit d'y écrire. Regarde ls -l /srv/git : à qui
     devrait-il appartenir ? (man chown)
-bare-repo-evenement-sans-crochet =
+bare-repo-event-without-hook =
     Le dépôt du serveur a bien reçu tes commits (git log --oneline dans
     /srv/git/gazette.git), mais le site n'a pas bougé : rien ne les extrait
     dans /var/www/gazette. C'est le rôle d'un crochet, hooks/post-receive,
     lancé après chaque réception (man git).
-bare-repo-evenement-crochet-ignore =
+bare-repo-event-hook-ignore =
     Le push est passé, mais git n'a pas lancé le crochet : il n'est pas
     exécutable (ls -l /srv/git/gazette.git/hooks). Un crochet est un
     programme ; voir man chmod.
-bare-repo-evenement-non-suivis =
+bare-repo-event-not-tracked =
     git refuse d'écraser des fichiers qu'il ne connaît pas dans
     /var/www/gazette : ils ont été posés à la main, et il ne veut rien
     perdre. Avec -f (force), il les remplace. Avant de forcer, regarde ce
     que tu perdrais : diff -r ~/gazette /var/www/gazette.
-bare-repo-evenement-correction-perdue =
+bare-repo-event-correction-lost =
     La correction de Théo a disparu du site : le déploiement a remplacé
     index.html par celui de git, qui ne l'avait pas. Désormais, ce qui
     n'est pas dans git n'existe pas. Refais la correction dans ~/gazette
     (« Gazzette » devient « Gazette », deux fois dans index.html), puis
     commit et push.
-bare-repo-evenement-en-ligne =
+bare-repo-event-in-line =
     Samia : « Mon article est en ligne, et la faute du titre a disparu,
     merci ! Une petite chose : dans agenda.html, le vide-grenier est le
     samedi 12 juin, pas le 21. La date est écrite deux fois : dans le texte
     et dans datetime="2027-06-21". Tu corriges, et tu publies comme il se
     doit ? »
-bare-repo-evenement-a-la-main =
+bare-repo-event-a-main =
     La date est corrigée sur le serveur, mais pas dans git : c'est
     exactement ce qu'on voulait arrêter. Au prochain push, la correction
     serait écrasée. Corrige-la dans ~/gazette, puis commit et push.
-bare-repo-evenement-fin =
+bare-repo-event-end =
     Le site est à jour, et il ne se modifie plus qu'avec git push. Samia :
     « Plus personne n'écrase le travail des autres. Et si une publication
     tourne mal, l'historique est là. »

@@ -28,21 +28,21 @@ const finishedStories = (finished: string[]) => STORIES.filter((h) => h.chapters
 const commands = (c: Context) => c.sh?.last.commands ?? [];
 
 export const ACHIEVEMENTS: Achievements[] = [
-  { id: 'premiere-commande', obtained: (c) => Object.keys(c.notebook).length > 0 },
-  { id: 'manuel', obtained: (c) => 'man' in c.notebook || 'apropos' in c.notebook },
+  { id: 'first-command', obtained: (c) => Object.keys(c.notebook).length > 0 },
+  { id: 'manual', obtained: (c) => 'man' in c.notebook || 'apropos' in c.notebook },
   { id: 'cache-ls', obtained: (c) => commands(c).some((a) => a[0] === 'ls' && a.slice(1).some((o) => /^-[a-zA-Z]*a/.test(o) || o === '--all')) },
-  { id: 'tube', obtained: (c) => commands(c).length >= 2 },
+  { id: 'pipe', obtained: (c) => commands(c).length >= 2 },
   { id: 'redirection', obtained: (c) => !!c.sh?.last.redirection },
-  { id: 'premier-chapitre', obtained: (c) => c.finished.length >= 1 },
-  { id: 'effaceur', obtained: (c) => finishedStories(c.finished).some((h) => h.id === 'eraser') },
-  { id: 'restauration', obtained: (c) => ['backup', 'versions', 'snapshots', 'database'].some((id) => c.finished.includes(id)) },
-  { id: 'reseau', obtained: (c) => finishedStories(c.finished).some((h) => h.id === 'hive') },
-  { id: 'trois-histoires', obtained: (c) => finishedStories(c.finished).length >= 3 },
-  { id: 'toutes-histoires', obtained: (c) => finishedStories(c.finished).length === STORIES.length },
-  { id: 'cinquante-commandes', obtained: (c) => Object.keys(c.notebook).length >= 50 },
-  { id: 'sans-indice', obtained: (c) => !!c.sh?.finished && c.sh.chapter.id !== 'desk' && c.sh.requestsHints.size === 0 },
-  { id: 'examen', obtained: (c) => Object.keys(c.records).length > 0 },
-  { id: 'examen-eclair', obtained: (c) => Object.values(c.records).some((ms) => ms < 5 * 60_000) },
+  { id: 'first-chapter', obtained: (c) => c.finished.length >= 1 },
+  { id: 'eraser', obtained: (c) => finishedStories(c.finished).some((h) => h.id === 'eraser') },
+  { id: 'restore', obtained: (c) => ['backup', 'versions', 'snapshots', 'database'].some((id) => c.finished.includes(id)) },
+  { id: 'network', obtained: (c) => finishedStories(c.finished).some((h) => h.id === 'hive') },
+  { id: 'three-stories', obtained: (c) => finishedStories(c.finished).length >= 3 },
+  { id: 'all-stories', obtained: (c) => finishedStories(c.finished).length === STORIES.length },
+  { id: 'fifty-commands', obtained: (c) => Object.keys(c.notebook).length >= 50 },
+  { id: 'without-hint', obtained: (c) => !!c.sh?.finished && c.sh.chapter.id !== 'desk' && c.sh.requestsHints.size === 0 },
+  { id: 'exam', obtained: (c) => Object.keys(c.records).length > 0 },
+  { id: 'exam-lightning', obtained: (c) => Object.values(c.records).some((ms) => ms < 5 * 60_000) },
   // Les clins d'œil : une ligne bien précise (voir OEUFS dans shell.ts).
   { id: 'xyzzy', cache: true, obtained: (c) => !!c.sh?.eggs.has('xyzzy') },
   { id: 'sandwich', cache: true, obtained: (c) => !!c.sh?.eggs.has('sandwich') },
@@ -54,11 +54,11 @@ export const newAchievements = (c: Context, already: Record<string, string>) => 
 
 // Les grades, du premier au dernier : le nombre de chapitres terminés pour l'atteindre.
 export const GRADES: { id: string; chapters: number }[] = [
-  { id: 'stagiaire', chapters: 0 },
-  { id: 'apprenti', chapters: 1 },
+  { id: 'intern', chapters: 0 },
+  { id: 'apprentice', chapters: 1 },
   { id: 'junior', chapters: 4 },
   { id: 'admin', chapters: 15 },
-  { id: 'confirme', chapters: 30 },
+  { id: 'confirmed', chapters: 30 },
   { id: 'senior', chapters: 45 },
 ];
 const ALL = () => STORIES.reduce((n, h) => n + h.chapters.length, 0);

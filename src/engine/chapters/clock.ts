@@ -77,7 +77,7 @@ export const clock: Chapter = {
   home: M,
   welcome: 'message_from_zoe.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'antenna-2027',
   accounts,
   state: () => ({
@@ -155,15 +155,15 @@ export const clock: Chapter = {
         systemd: place({ 'timesyncd.conf': file(t('clock-timesyncd-conf')), system: place({}) }),
       }),
       home: place({
-        you: d({ 'message_from_zoe.txt': f(t('clock-message-de-zoe')), 'mail_hosting.txt': f(t('clock-mail-hebergeur')) }),
+        you: d({ 'message_from_zoe.txt': f(t('clock-message-zoe')), 'mail_hosting.txt': f(t('clock-mail-host')) }),
         zoe: place({}, { owner: 'zoe', mode: 'rwx------' }),
       }),
       tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
-      usr: place({ local: place({ bin: place({ record: file(t('clock-script-enregistrer'), { owner: 'root', mode: 'rwxr-xr-x' }) }) }) }),
+      usr: place({ local: place({ bin: place({ record: file(t('clock-script-save'), { owner: 'root', mode: 'rwxr-xr-x' }) }) }) }),
       var: place({
         log: place({
           radio: place(
-            { 'record.log': f(t('clock-journal-enregistrer'), { lines: true, owner: 'radio', group: 'adm', mode: 'rw-r-----' }) },
+            { 'record.log': f(t('clock-journal-save'), { lines: true, owner: 'radio', group: 'adm', mode: 'rw-r-----' }) },
             { owner: 'radio', group: 'adm', mode: 'rwxr-x---' },
           ),
         }),
@@ -174,26 +174,26 @@ export const clock: Chapter = {
     {
       id: 'utc',
       condition: (j) => commands(j, 'date', 'timedatectl') && /\bUTC\b/.test(j.last.output) && !aParis(j),
-      message: (j) => j.t('clock-evenement-utc'),
+      message: (j) => j.t('clock-event-utc'),
     },
     {
-      id: 'retard',
+      id: 'late',
       condition: (j) => commands(j, 'timedatectl') && /synchronized: no/.test(j.last.output),
-      message: (j) => j.t('clock-evenement-retard'),
+      message: (j) => j.t('clock-event-late'),
     },
-    { id: 'manuel', condition: (j) => !!h(j).manual && !h(j).synchronised, message: (j) => j.t('clock-evenement-manuel') },
-    { id: 'muet', condition: (j) => timesyncd(j).state === 'active' && !h(j).synchronised, message: (j) => j.t('clock-evenement-muet') },
-    { id: 'synchro', condition: (j) => h(j).synchronised, message: (j) => j.t('clock-evenement-synchro') },
-    { id: 'non-active', condition: (j) => h(j).synchronised && !timesyncd(j).active, message: (j) => j.t('clock-evenement-non-active') },
+    { id: 'manual', condition: (j) => !!h(j).manual && !h(j).synchronised, message: (j) => j.t('clock-event-manual') },
+    { id: 'silent', condition: (j) => timesyncd(j).state === 'active' && !h(j).synchronised, message: (j) => j.t('clock-event-silent') },
+    { id: 'synchro', condition: (j) => h(j).synchronised, message: (j) => j.t('clock-event-synchro') },
+    { id: 'not-active', condition: (j) => h(j).synchronised && !timesyncd(j).active, message: (j) => j.t('clock-event-not-active') },
     {
       id: 'cron',
       condition: (j) => aParis(j) && !dayACron(j) && commands(j, 'timedatectl', 'date', 'systemctl', 'crontab'),
-      message: (j) => j.t('clock-evenement-cron'),
+      message: (j) => j.t('clock-event-cron'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => aParis(j) && h(j).synchronised && timesyncd(j).state === 'active' && timesyncd(j).active && dayACron(j),
-      message: (j) => j.t('clock-evenement-fin'),
+      message: (j) => j.t('clock-event-end'),
     },
   ],
 };

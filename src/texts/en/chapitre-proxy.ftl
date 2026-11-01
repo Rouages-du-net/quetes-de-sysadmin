@@ -2,12 +2,12 @@
 ### sees 127.0.0.1 (X-Forwarded-For, trust proxy). nginx directives,
 ### variables and paths are not translated.
 
-chapitre-proxy = The proxy
+chapter-proxy = The proxy
     .resume = A bot gets everyone locked out: behind nginx, the till sees every client as 127.0.0.1. X-Forwarded-For, and whom to trust.
 
 ## Files
 
-proxy-courriel-awa =
+proxy-email-awa =
     From:     Awa
     To:       you
     Subject:  Nobody can log in to the till anymore
@@ -28,14 +28,14 @@ proxy-courriel-awa =
 
 ## Events
 
-proxy-evenement-tout-le-monde =
+proxy-event-all-world =
     Five minutes later: the bot got 127.0.0.1 locked again… and Lina
     with it. For the till, every request comes from nginx (127.0.0.1):
     nginx has to pass on the real client's address (an X-Forwarded-For
     header), AND the till has to agree to read it (TRUST_PROXY), then
     both need restarting.
 # { $robot }: the bot's address
-proxy-evenement-usurpe =
+proxy-event-spoofed =
     Lina can get in… but the bot ({ $robot }) is never locked: it writes
     a fake X-Forwarded-For itself, different on each try, and the till
     believes it. Look at /var/log/till/app.log: 10.1.0.4, 10.2.7.5…
@@ -46,7 +46,7 @@ proxy-evenement-usurpe =
     trusts 127.0.0.1. And on the nginx side, this header must be written
     or appended to by nginx, not just passed on.
 # { $robot }: the bot's address
-proxy-evenement-fin =
+proxy-event-end =
     Five minutes later: the bot ({ $robot }) is locked, and Lina gets in
     without trouble. Awa: "We can open the tills again!"
 

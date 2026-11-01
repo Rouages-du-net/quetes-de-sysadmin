@@ -3,12 +3,12 @@
 ### startup. Commands, options, directives and tool messages are not
 ### translated.
 
-chapitre-clock = The clock
+chapter-clock = The clock
     .resume = Monday, 9:12 a.m.: the morning show was only recorded from 8:09 on. Has the server, migrated this weekend, lost track of time?
 
 ## Files
 
-clock-message-de-zoe =
+clock-message-zoe =
     A message from Zoé (Monday, 9:05 a.m.):
 
     "The morning show ("matinale", 6 a.m. to 9 a.m.) was only recorded
@@ -19,7 +19,7 @@ clock-message-de-zoe =
     What has changed: the hosting provider migrated the server to a new
     machine this weekend (their email is in mail_hosting.txt). And
     yet, the recording log does say "06:00"…"
-clock-mail-hebergeur =
+clock-mail-host =
     From: support@hosting.example
     Subject: Migration of your radio server completed
 
@@ -52,13 +52,13 @@ clock-timesyncd-conf =
     #RootDistanceMaxSec=5
     #PollIntervalMinSec=32
     #PollIntervalMaxSec=2048
-clock-script-enregistrer =
+clock-script-save =
     #!/bin/sh
     # record SHOW DURATION: records the live stream for DURATION minutes.
     # The time in the log is the machine's time (date).
     echo "$(date '+%F %T') $1: start ($2 min)" >> /var/log/radio/record.log
     exec /usr/local/bin/stream-record --mount /direct --minutes "$2" --out "/srv/radio/shows/$1-$(date +%F).ogg"
-clock-journal-enregistrer =
+clock-journal-save =
     2027-08-26 06:00:01 matinale: start (180 min)
     2027-08-26 23:00:01 nuit: start (240 min)
     2027-08-27 06:00:01 matinale: start (180 min)
@@ -69,42 +69,42 @@ clock-journal-enregistrer =
 
 ## Events
 
-clock-evenement-utc =
+clock-event-utc =
     UTC: the machine lives on Greenwich time, not Paris time (two hours
     ahead in summer). And cron starts jobs at the machine's local time:
     "6 a.m." in the crontab means 6 a.m. UTC, so 8 a.m. in Paris. The
     provider's image kept the default time zone. The time zone is set
     with timedatectl (man timedatectl).
-clock-evenement-retard =
+clock-event-late =
     "System clock synchronized: no": nobody puts the clock right. A
     computer clock drifts by a few seconds a day… and this one is
     already nine minutes slow (your workstation says 9:12). That's the
     job of NTP (Network Time Protocol): here, the systemd-timesyncd
     service, which is stopped (NTP service: inactive).
-clock-evenement-manuel =
+clock-event-manual =
     The clock is set right… for now. Without NTP, it keeps drifting, and
     nobody will correct it next time. Better to leave this job to
     systemd-timesyncd.
-clock-evenement-muet =
+clock-event-silent =
     systemd-timesyncd is running, but the clock still isn't
     synchronized: the NTP server it queries doesn't answer (sudo
     journalctl -u systemd-timesyncd, or timedatectl timesync-status). Its
     configuration is in /etc/systemd/timesyncd.conf; it only reads it
     again at startup. The provider's email happens to mention NTP.
-clock-evenement-synchro =
+clock-event-synchro =
     "Contacted time server": the clock is synchronized, and
     systemd-timesyncd will keep it on time (timedatectl).
-clock-evenement-non-active =
+clock-event-not-active =
     systemd-timesyncd is running, but it isn't enabled: the next time
     the machine reboots, it won't start again. timedatectl set-ntp
     true does both (or systemctl enable).
-clock-evenement-cron =
+clock-event-cron =
     The time zone has changed, but cron read it when it started, on
     Saturday: until it restarts, it still counts in UTC, and tomorrow's
     morning show would still start at 8 a.m. (This is true of many
     services that have been running for a long time: a time zone change
     should be followed by a restart.)
-clock-evenement-fin =
+clock-event-end =
     The machine is on Paris time, synchronized by NTP, and cron knows
     it. Tomorrow, the morning show will be recorded at 6 a.m. Zoé: "I'll
     ask the provider to set the time zone in their image…"

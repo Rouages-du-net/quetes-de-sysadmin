@@ -2,12 +2,12 @@
 ### base de données qui empêche le retour arrière. Les commandes, chemins et
 ### messages de journalctl, systemctl et curl ne se traduisent pas.
 
-chapitre-migration = La migration
+chapter-migration = La migration
     .resume = La nouvelle version a migré la base : l'ancienne ne sait plus la lire. Quand le retour arrière est impossible, on répare en avant.
 
 ## Fichiers
 
-migration-message-de-samia =
+migration-message-samia =
     Un message de Samia, mardi 8 h 30 :
 
     « Le Kiosque répond une erreur depuis ce matin ! Théo a mis la 2.0.0
@@ -21,7 +21,7 @@ migration-message-de-samia =
         prêt à prendre le relais.
 
     Pour sudo : gazette-2027. »
-migration-mot-de-theo =
+migration-word-theo =
     Un mot de Théo :
 
     « Désolé… J'ai lancé la 2.0.0 sur green hier vers 23 h, /health n'était
@@ -42,29 +42,29 @@ migration-notes-200 =
 
 ## Événements
 
-migration-evenement-vert-malade =
+migration-event-green-sick =
     Green (2.0.0) n'est pas en bonne santé : une variable de configuration
     lui manque. Ses notes de version (/srv/kiosk/versions/2.0.0/) disent
     sans doute ce qui a changé.
-migration-evenement-schema =
+migration-event-schema =
     Blue (1.6.1) ne sait plus lire la base : elle est au schéma 4, et la
     1.6.1 ne connaît que le 3. Qui l'a modifiée ? Le journal du service
     green le dit (journalctl -u kiosk-green).
-migration-evenement-migration-vue =
+migration-event-migration-view =
     Voilà : au démarrage, la 2.0.0 a migré la base (la colonne courriel
     renommée en email). Une migration ne revient pas en arrière toute
     seule : la 1.6.1 ne retrouvera plus sa colonne. Le retour arrière par
     blue est impossible ; il reste à réparer en avant : faire marcher la
     2.0.0.
-migration-evenement-retour-impossible =
+migration-event-return-impossible =
     nginx envoie le trafic à blue (1.6.1)… qui répond 500 : la base a été
     migrée sous ses pieds. Changer de version de code ne suffit pas quand
     les données ont changé de forme. Remets green, et répare-le.
-migration-evenement-repare =
+migration-event-repaired =
     Le Kiosque répond de nouveau, en 2.0.0. Mais l'autre emplacement
     tourne une version qui ne sait plus lire la base : ce n'est plus un
     filet de sécurité. Mets-le en 2.0.0 aussi, en bonne santé.
-migration-evenement-fin =
+migration-event-end =
     Le Kiosque marche en 2.0.0, et les deux emplacements savent lire la
     base migrée : le prochain retour arrière sera possible. Samia : « Et la
     prochaine fois, une sauvegarde de la base avant chaque migration. »

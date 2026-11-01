@@ -112,7 +112,7 @@ export const datacenterAccounts = (): Accounts => ({
   },
 });
 
-const initialBlocked = (t: Translate) => `# ${t('first-day-bloques-commentaire')}
+const initialBlocked = (t: Translate) => `# ${t('first-day-blocked-comment')}
 deny 203.0.113.5;
 deny 192.0.2.99;`;
 
@@ -125,7 +125,7 @@ export const datacenter: Chapter = {
   home: M,
   welcome: 'email_awa.txt',
   names: true,
-  final: 'rapport',
+  final: 'report',
   password: 'welcome-2026',
   activity: { not: 5, departure: () => DIRECT_START, advance: visits },
   // t : les textes dans la langue du jeu (français tant que le shell ne le
@@ -165,7 +165,7 @@ export const datacenter: Chapter = {
       const blocked = game.state.confChargee.includes(`deny ${ROBOT};`);
       const fresh = blocked ? catalogueStable() : { ...catalogueStable(), pid: p.pid + 2, cpu: 99.1, mem: 37.9 };
       game.state.processus.push(fresh);
-      return game.t(blocked ? 'first-day-relance-calme' : 'first-day-relance-robot', { pid: String(fresh.pid) });
+      return game.t(blocked ? 'first-day-restart-calm' : 'first-day-restart-robot', { pid: String(fresh.pid) });
     },
   }),
   createWorld: (t) =>
@@ -174,7 +174,7 @@ export const datacenter: Chapter = {
         home: d(
           {
             you: d({
-              'email_awa.txt': f(t('first-day-courriel-awa')),
+              'email_awa.txt': f(t('first-day-email-awa')),
               'notes_awa.txt': f(t('first-day-notes-awa')),
             }),
           },
@@ -221,86 +221,86 @@ export const datacenter: Chapter = {
   events: [
     // Coups de pouce : une piste trop longue (tout lire, compter à la main) renvoie aux notes d'Awa.
     {
-      id: 'tout-lire',
+      id: 'all-read',
       condition: (j) =>
-        !j.flags.has('compte') &&
+        !j.flags.has('account') &&
         j.last.commands.length === 1 &&
         ['cat', 'less', 'more'].includes(j.last.commands[0][0]) &&
         j.last.commands[0].some((a) => a.endsWith('access.log')),
-      message: (j) => j.t('first-day-evenement-tout-lire'),
+      message: (j) => j.t('first-day-event-all-read'),
     },
     {
-      id: 'grep-seul',
+      id: 'grep-only',
       condition: (j) => {
         const cmds = j.last.commands.flat();
-        return !j.flags.has('compte') && cmds.includes('grep') && !cmds.includes('wc') && j.last.output.split('\n').filter((l) => / 503 /.test(l)).length >= 20;
+        return !j.flags.has('account') && cmds.includes('grep') && !cmds.includes('wc') && j.last.output.split('\n').filter((l) => / 503 /.test(l)).length >= 20;
       },
-      message: (j) => j.t('first-day-evenement-grep-seul'),
+      message: (j) => j.t('first-day-event-grep-only'),
     },
     {
-      id: 'adresses-seules',
+      id: 'addresses-only',
       condition: (j) => {
         const cmds = j.last.commands.flat();
         return !j.flags.has('robot') && cmds.includes('cut') && !cmds.includes('uniq') && j.last.output.split('\n').length >= 20;
       },
-      message: (j) => j.t('first-day-evenement-adresses-seules'),
+      message: (j) => j.t('first-day-event-addresses-only'),
     },
     {
-      id: 'compte',
+      id: 'account',
       // Le journal grandit : le bon compte est celui du journal à cet instant.
       condition: (j) => {
         const cmds = j.last.commands.flat();
         return cmds.includes('grep') && j.last.output.trim().split(/\s+/)[0] === String(erreurs503(j));
       },
-      message: (j) => j.t('first-day-evenement-compte', { erreurs: String(erreurs503(j)) }),
+      message: (j) => j.t('first-day-event-account', { erreurs: String(erreurs503(j)) }),
     },
     {
       id: 'robot',
       condition: (j) => j.last.commands.flat().includes('uniq') && j.last.output.includes(ROBOT),
-      message: (j) => j.t('first-day-evenement-robot', { robot: ROBOT, requetes: String(ROBOT_REQUESTS) }),
+      message: (j) => j.t('first-day-event-robot', { robot: ROBOT, requetes: String(ROBOT_REQUESTS) }),
     },
     {
-      id: 'surcharge',
+      id: 'override',
       condition: (j) => j.last.commands[0]?.[0] === 'ps' && j.last.output.includes('99.3'),
-      message: (j) => j.t('first-day-evenement-surcharge', { robot: ROBOT, bloques: BLOCKED }),
+      message: (j) => j.t('first-day-event-override', { robot: ROBOT, bloques: BLOCKED }),
     },
     {
-      id: 'ecrase',
+      id: 'overwritten',
       condition: (j) => !(j.read(BLOCKED) ?? '').includes('deny 203.0.113.5;'),
-      message: (j) => j.t('first-day-evenement-ecrase', { bloques: BLOCKED }),
+      message: (j) => j.t('first-day-event-overwritten', { bloques: BLOCKED }),
     },
     {
-      id: 'regle',
+      id: 'rule',
       condition: (j) => (j.read(BLOCKED) ?? '').includes(`deny ${ROBOT};`),
-      message: (j) => j.t('first-day-evenement-regle'),
+      message: (j) => j.t('first-day-event-rule'),
     },
     {
-      id: 'bloque',
+      id: 'blocked',
       condition: (j) => j.state.confChargee.includes(`deny ${ROBOT};`),
       message: (j) => {
         const p = (j.state.processus as Process[]).find((q) => q.cpu > 90);
         return p
-          ? j.t('first-day-evenement-bloque-processus', { robot: ROBOT, pid: String(p.pid) })
-          : j.t('first-day-evenement-bloque', { robot: ROBOT });
+          ? j.t('first-day-event-blocked-process', { robot: ROBOT, pid: String(p.pid) })
+          : j.t('first-day-event-blocked', { robot: ROBOT });
       },
     },
     {
-      id: 'repare',
+      id: 'repaired',
       condition: (j) =>
-        j.flags.has('bloque') && !(j.state.processus as Process[]).some((p) => p.cpu > 90),
-      message: (j) => j.t('first-day-evenement-repare', { robot: ROBOT }),
+        j.flags.has('blocked') && !(j.state.processus as Process[]).some((p) => p.cpu > 90),
+      message: (j) => j.t('first-day-event-repaired', { robot: ROBOT }),
     },
     {
-      id: 'rapport',
+      id: 'report',
       // Un compte pris à un moment de l'enquête : entre le journal du début et celui de maintenant.
       condition: (j) => {
         const r = j.read(path(j.t, `${M}/rapport.txt`)) ?? '';
-        return j.flags.has('repare') && r.includes(ROBOT) && reportCount(r).some((n) => n >= ERRORS_503 && n <= erreurs503(j));
+        return j.flags.has('repaired') && r.includes(ROBOT) && reportCount(r).some((n) => n >= ERRORS_503 && n <= erreurs503(j));
       },
       message: (j) => {
         const r = j.read(path(j.t, `${M}/rapport.txt`)) ?? '';
         const n = reportCount(r).find((x) => x >= ERRORS_503 && x <= erreurs503(j)) ?? ERRORS_503;
-        return j.t('first-day-evenement-rapport', { erreurs: String(n) });
+        return j.t('first-day-event-report', { erreurs: String(n) });
       },
     },
   ],

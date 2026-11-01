@@ -2,12 +2,12 @@
 ### lire les journaux avec awk, limiter le débit avec nginx. Les commandes,
 ### chemins, directives et lignes de journal ne se traduisent pas.
 
-chapitre-concert = Le soir du concert
+chapter-concert = Le soir du concert
     .resume = L'agenda s'écroule le soir du concert : lire les journaux avec awk, limiter le débit avec nginx (limit_req).
 
 ## Fichiers
 
-concert-message-de-kofi =
+concert-message-kofi =
     Un message de Kofi, envoyé à 20 h 02 :
 
     « Au secours ! Ce soir, concert au café, et tout le monde va voir
@@ -19,7 +19,7 @@ concert-message-de-kofi =
     en sorte que les vrais visiteurs passent ? Rania a laissé une aide
     (aide_journaux.txt). Et pas de bricolage qui marche juste ce soir :
     une règle qui tienne. »
-concert-aide-journaux =
+concert-help-logs =
     AIDE JOURNAUX — PAR RANIA
 
     Chaque visite fait une ligne dans /var/log/nginx/access.log (format
@@ -44,30 +44,30 @@ concert-minute =
     Une minute passe. Visiteur·ses : { $servis } requêtes servies sur { $humains }.
     Robot : { $refuses } requêtes refusées sur { $robot }. Délais dépassés
     (504) : { $depasses }. (Le détail est à la fin de access.log.)
-concert-evenement-robot =
+concert-event-robot =
     Trois adresses voisines (198.51.100.23, .24, .25), un même « navigateur »
     (AgendaScraper), des centaines de pages d'agenda par minute : c'est un
     robot qui aspire le site. À lui seul, il demande plus que ce que
     l'agenda sait servir. Les vraies personnes, elles, demandent une page
     et ses quatre fichiers, puis lisent.
-concert-evenement-interdit =
+concert-event-forbidden =
     Bloquer les adresses du robot (deny) marche… ce soir. Kofi : « Rania
     dit que ces robots changent d'adresse toutes les semaines. On ne va pas
     tenir une liste à la main ! » Une limite de débit par adresse
     s'appliquerait à tous les robots, connus ou pas.
-concert-evenement-humains-limites =
+concert-event-humans-limits =
     La limite refuse aussi des vraies personnes ! Un navigateur demande une
     page et ses fichiers (feuille de style, script, images) presque en même
     temps : cinq requêtes dans la même seconde. Sans marge, la limite les
     refuse. limit_req accepte une rafale (burst), et nodelay la sert tout de
     suite (man nginx).
-concert-evenement-encore-trop =
+concert-event-still-too =
     La limite freine le robot, mais il passe encore trop souvent, et
     l'agenda peut déborder (504). Le débit autorisé par adresse, multiplié
     par le nombre d'adresses du robot, doit rester bien sous ce que
     l'agenda sait servir (une vingtaine de pages par seconde). Et la limite
     s'applique-t-elle bien à /agenda/ ?
-concert-evenement-fin =
+concert-event-end =
     Toutes les visites humaines passent, le robot est freiné, et l'agenda
     respire. Kofi : « L'horaire s'affiche ! Le concert commence à
     21 heures. » Le message d'erreur que reçoit le robot (429 Too Many

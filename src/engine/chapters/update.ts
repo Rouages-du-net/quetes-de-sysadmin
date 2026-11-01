@@ -78,12 +78,12 @@ APPS.outiltheque = {
     const base = readBase(readIn(game, c, BASE));
     const version = c.image.split(':').at(-1)!;
     if (!base) return { code: 500, body: 'Internal Server Error: database is missing' };
-    if (path === '/' || path === '') return { code: 200, body: game.t('update-appli-accueil', { version, prets: base.loans.length }) };
+    if (path === '/' || path === '') return { code: 200, body: game.t('update-app-welcome', { version, prets: base.loans.length }) };
     if (path === '/prets')
       return {
         code: 200,
         body: [
-          game.t('update-appli-prets', { prets: base.loans.length }),
+          game.t('update-app-loans', { prets: base.loans.length }),
           ...base.loans.slice(0, 5).map((p) => `  ${p.tool} — ${p.person} — ${p.until}`),
         ].join('\n'),
       };
@@ -116,7 +116,7 @@ const image = (tag: string, created: number): Image => ({
 const dockerState = (t: (id: string) => string): DockerState => {
   const v14 = image('1.4', Date.UTC(2026, 11, 2, 10, 0, 0));
   const v15 = image('1.5', Date.UTC(2027, 3, 1, 9, 0, 0));
-  const base = writeBase({ schema: 3, loans: loans(t('update-outils').split(', '), t('update-personnes').split(', ')) });
+  const base = writeBase({ schema: 3, loans: loans(t('update-tools').split(', '), t('update-people').split(', ')) });
   // Lancé il y a deux semaines : docker run -d --name outiltheque -p 8080:8080 …:1.4
   const old: Container = {
     id: identifier('conteneur-outiltheque-1.4'),
@@ -202,7 +202,7 @@ export const update: Chapter = {
   home: M,
   welcome: 'message_from_yasmine.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'fablab-2027',
   accounts,
   state: (t) => ({
@@ -243,7 +243,7 @@ export const update: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: f('workshop', { lines: true, owner: 'root' }) }),
       home: place({
-        you: d({ 'message_from_yasmine.txt': f(t('update-message-de-yasmine')), 'notes_docker.txt': f(t('update-notes-docker')) }),
+        you: d({ 'message_from_yasmine.txt': f(t('update-message-yasmine')), 'notes_docker.txt': f(t('update-notes-docker')) }),
       }),
       srv: place({}),
       var: place({ lib: place({ docker: place({}, { owner: 'root', mode: 'rwx--x---' }) }) }),
@@ -251,46 +251,46 @@ export const update: Chapter = {
   },
   events: [
     {
-      id: 'couche',
+      id: 'layer',
       // docker inspect montre un conteneur sans volume ni dossier monté.
       condition: (j) =>
         j.last.line.includes('docker') &&
         (j.last.output.includes('"Mounts": []') || (j.last.line.includes('Mounts') && j.last.output.trim() === '[]')),
-      message: (j) => j.t('update-evenement-couche'),
+      message: (j) => j.t('update-event-layer'),
     },
     {
-      id: 'port-occupe',
+      id: 'port-busy',
       condition: (j) => j.last.errors.some((e) => e.includes('port is already allocated')),
-      message: (j) => j.t('update-evenement-port-occupe'),
+      message: (j) => j.t('update-event-port-busy'),
     },
     {
-      id: 'perdu',
+      id: 'lost',
       condition: (j) => !somePart(j),
-      message: (j) => j.t('update-evenement-perdu'),
+      message: (j) => j.t('update-event-lost'),
     },
     {
-      id: 'neuf-vide',
+      id: 'new-empty',
       condition: (j) => {
         const c = fresh(j);
         return !!c && (readBase(readIn(j, c, BASE))?.loans.length ?? 0) === 0;
       },
-      message: (j) => j.t('update-evenement-neuf-vide'),
+      message: (j) => j.t('update-event-new-empty'),
     },
     {
-      id: 'sans-redemarrage',
+      id: 'without-reboot',
       condition: (j) => {
         const c = fresh(j);
         return !!c && onMount(c) && baseComplete(readIn(j, c, BASE)) && !['always', 'unless-stopped'].includes(c.reboot);
       },
-      message: (j) => j.t('update-evenement-sans-redemarrage'),
+      message: (j) => j.t('update-event-without-reboot'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => {
         const c = fresh(j);
         return !!c && onMount(c) && baseComplete(readIn(j, c, BASE)) && ['always', 'unless-stopped'].includes(c.reboot);
       },
-      message: (j) => j.t('update-evenement-fin'),
+      message: (j) => j.t('update-event-end'),
     },
   ],
 };

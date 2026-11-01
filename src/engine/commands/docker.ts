@@ -303,7 +303,7 @@ function run(d: DockerState, game: Shell, args: string[]): string {
   game.state.dockerRun = (game.state.dockerRun ?? 0) + 1;
   if (o.detached) return [...output, id].join('\n');
   // Sans -d, docker resterait attaché au conteneur : on montre son journal.
-  return [...output, ...c.log.map((l) => l.text), game.t('docker-attache')].join('\n');
+  return [...output, ...c.log.map((l) => l.text), game.t('docker-attached')].join('\n');
 }
 
 // docker cp conteneur:chemin chemin_machine, ou l'inverse.
@@ -615,7 +615,7 @@ function compose(d: DockerState, game: Shell, args: string[]): string {
           .map((c) => c.name)
           .join(', ')}`,
         ...logs,
-        game.t('docker-attache'),
+        game.t('docker-attached'),
       ].join('\n');
     }
     case 'down': {
@@ -781,7 +781,7 @@ export const DOCKER: Record<string, Command> = {
     launch: ({ args, game }) => {
       if (args[0] === '--version' || args[0] === '-v') return 'Docker version 27.5.1, build 9f9e405';
       const d = docker(game);
-      if (!d) return game.error(game.t('commande-introuvable', { commande: 'docker' }));
+      if (!d) return game.error(game.t('command-missing', { commande: 'docker' }));
       // Le groupe docker donne les droits de root sur la machine : ici, sudo.
       if (game.who !== 'root' && !game.groupsFor(game.who).includes('docker'))
         return game.error(

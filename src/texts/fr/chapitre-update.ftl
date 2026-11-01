@@ -2,12 +2,12 @@
 ### conteneurs et volumes. Les commandes, chemins, noms d'images et
 ### messages de docker et de l'outilthèque (en anglais) ne se traduisent pas.
 
-chapitre-update = La mise à jour
+chapter-update = La mise à jour
     .resume = Mettre à jour une appli dans Docker sans perdre ses données : couche du conteneur, docker cp, volumes, --restart.
 
 ## Fichiers
 
-update-message-de-yasmine =
+update-message-yasmine =
     Un message de Yasmine, qui fait tourner le fablab :
 
     « Bonjour ! Ici, on prête des outils aux habitant·es du quartier, et on
@@ -36,12 +36,12 @@ update-notes-docker =
     remplace par un neuf, créé avec la nouvelle image. Le reste est dans
     man docker (et la doc de l'outilthèque dit qu'elle range sa base dans
     /var/lib/outiltheque).
-update-outils = perceuse, scie sauteuse, ponceuse, escabeau, visseuse, fer à souder, niveau laser, agrafeuse, décolleuse, tondeuse, machine à coudre, scie circulaire
-update-personnes = Aya, Bilal, Chloé, Dmitri, Esra, Farid, Gaëlle, Hugo, Ines, Jun, Kenza, Lucas
+update-tools = perceuse, scie sauteuse, ponceuse, escabeau, visseuse, fer à souder, niveau laser, agrafeuse, décolleuse, tondeuse, machine à coudre, scie circulaire
+update-people = Aya, Bilal, Chloé, Dmitri, Esra, Farid, Gaëlle, Hugo, Ines, Jun, Kenza, Lucas
 
 ## L'appli (pages)
 
-update-appli-accueil =
+update-app-welcome =
     <!DOCTYPE html>
     <html lang="fr">
     <head><meta charset="utf-8"><title>Outilthèque du fablab</title></head>
@@ -55,37 +55,37 @@ update-appli-accueil =
     <footer>outiltheque { $version }</footer>
     </body>
     </html>
-update-appli-prets = Prêts en cours : { $prets } (les cinq premiers)
+update-app-loans = Prêts en cours : { $prets } (les cinq premiers)
 
 ## Événements
 
-update-evenement-couche =
+update-event-layer =
     « Mounts »: [] : ce conteneur n'a ni volume, ni dossier de la machine
     monté. Tout ce que l'appli écrit (sa base de données comprise) vit dans
     la couche du conteneur, qui disparaît avec lui. Avant de le supprimer,
     il faut mettre la base à l'abri (man docker : cp).
-update-evenement-port-occupe =
+update-event-port-busy =
     « port is already allocated » : le port 8080 de la machine est déjà
     publié par un autre conteneur qui tourne (l'ancien). Deux conteneurs ne
     peuvent pas écouter sur le même port de la machine : il faut d'abord
     arrêter l'ancien.
-update-evenement-perdu =
+update-event-lost =
     Les 37 prêts ont disparu : le conteneur a été supprimé avec sa couche,
     et la base n'avait été copiée nulle part. Sur un vrai serveur, ce
     serait perdu pour de bon. Ici, tu peux recommencer le chapitre depuis
     le menu. La règle : les données d'un conteneur vont dans un volume, et
     on les copie avant toute opération risquée.
-update-evenement-neuf-vide =
+update-event-new-empty =
     La version 1.5 tourne… avec une base toute neuve et vide (docker logs
     le dit : « creating a new one »). La base de l'ancien conteneur n'est
     pas dans le nouveau. Si tu l'as mise à l'abri, il reste à la remettre à
     sa place (et à redémarrer l'appli pour qu'elle la migre).
-update-evenement-sans-redemarrage =
+update-event-without-reboot =
     Les 37 prêts sont là, dans la version 1.5, et la base est enfin dans un
     volume. Mais Yasmine l'a dit : après une coupure de courant,
     l'outilthèque ne revient pas toute seule. Regarde l'option --restart de
     docker run (ou docker update).
-update-evenement-fin =
+update-event-end =
     L'outilthèque 1.5 tourne, avec ses 37 prêts, dans un volume qui
     survivra aux prochaines mises à jour, et elle repartira toute seule
     après une coupure. Yasmine : « Et la prochaine mise à jour, ce sera

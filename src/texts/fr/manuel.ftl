@@ -1144,21 +1144,21 @@ man-crontab = gère tes tâches planifiées : des commandes que cron lance tout 
 ## Mise en page du manuel et messages de man-db et des coreutils
 
 # En-tête de chaque page, entre « LS(1) » et « LS(1) »
-manuel-entete = Manuel du jeu
-manuel-section-nom = NOM
-manuel-section-synopsis = SYNOPSIS
-manuel-section-description = DESCRIPTION
-manuel-section-options = OPTIONS
-manuel-section-exemples = EXEMPLES
-manuel-section-voir-aussi = VOIR AUSSI
+manual-header = Manuel du jeu
+manual-section-name = NOM
+manual-section-synopsis = SYNOPSIS
+manual-section-description = DESCRIPTION
+manual-section-options = OPTIONS
+manual-section-examples = EXEMPLES
+manual-section-see-also = VOIR AUSSI
 # Première ligne de « commande --help »
-manuel-utilisation = Utilisation : { $synopsis }
-manuel-complet = Manuel complet : man { $commande }
-manuel-option-invalide =
+manual-use = Utilisation : { $synopsis }
+manual-complete = Manuel complet : man { $commande }
+manual-option-invalid =
     { $commande } : option invalide -- '{ $lettre }'
     Saisissez « { $commande } --help » pour plus d'informations.
 # Une option longue inconnue (--frobnicate), comme getopt dans les coreutils. { $option } : l'option tapée
-manuel-option-longue-inconnue =
+manual-option-long-unknown =
     { $commande } : option non reconnue « { $option } »
     Saisissez « { $commande } --help » pour plus d'informations.
 

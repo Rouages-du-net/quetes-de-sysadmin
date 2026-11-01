@@ -93,7 +93,7 @@ function wgCommand(game: Shell, args: string[], input: string | null): string {
       .map(([name, i]) => show(game, name, i).join('\n'))
       .join('\n\n');
   }
-  if (action === 'set' || action === 'setconf' || action === 'addconf' || action === 'syncconf') return game.error(game.t('wg-set-non-simule'), 1);
+  if (action === 'set' || action === 'setconf' || action === 'addconf' || action === 'syncconf') return game.error(game.t('wg-set-not-simulated'), 1);
   return game.error(`Invalid subcommand: \`${action}'\n${game.t('wg-usage')}`, 1);
 }
 
@@ -109,7 +109,7 @@ function wgQuick(game: Shell, args: string[]): string {
       .filter((l) => !/^\s*(Address|DNS|MTU|Table|PreUp|PostUp|PreDown|PostDown|SaveConfig)\s*=/i.test(l))
       .join('\n');
   }
-  if (action === 'save') return game.error(game.t('wg-set-non-simule'), 1);
+  if (action === 'save') return game.error(game.t('wg-set-not-simulated'), 1);
   if (action === 'down') {
     const e = unmountWg(game, name);
     if (e) return game.error(e, 1);

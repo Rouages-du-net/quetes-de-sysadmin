@@ -2,7 +2,7 @@
 ### avec OpenDKIM. Les commandes, chemins, directives et messages ne se
 ### traduisent pas.
 
-chapitre-signature = La signature
+chapter-signature = La signature
     .resume = Les courriels arrivent, mais dans les indésirables : signer avec DKIM (OpenDKIM, le milter de Postfix, la clé dans le DNS).
 
 ## Fichiers
@@ -30,35 +30,35 @@ signature-message-nour =
 
 ## Événements
 
-signature-evenement-verifier =
+signature-event-check =
     Le vérificateur a répondu : SPF passe, mais « DKIM check: none » : les
     courriels ne sont pas signés. DKIM, c'est une signature ajoutée à chaque
     message avec une clé privée, que le destinataire vérifie avec la clé
     publique publiée dans le DNS (sélecteur._domainkey.gardens.example).
     Sur Debian, c'est opendkim qui signe, branché sur Postfix comme
     « milter ». Commence par la paire de clés : man opendkim-genkey.
-signature-evenement-cle =
+signature-event-key =
     Une clé privée dans /etc/dkimkeys. opendkim-genkey a aussi écrit, à côté,
     un fichier .txt : l'enregistrement DNS à publier, avec la clé publique.
     Regarde qui possède la clé privée (ls -l) : opendkim tourne sous le
     compte opendkim, et doit pouvoir la lire.
-signature-evenement-illisible =
+signature-event-unreadable =
     opendkim ne démarre pas : « Permission denied » sur la clé privée. Elle
     appartient à root (c'est root qui l'a créée), avec les droits
     rw------- : le compte opendkim ne peut pas la lire. Donne-la-lui :
     sudo chown opendkim:opendkim /etc/dkimkeys/…private
-signature-evenement-pas-sure =
+signature-event-not-sure =
     opendkim refuse la clé : « key data is not secure ». Une clé privée
     lisible par d'autres comptes n'est plus secrète, et opendkim
     (RequireSafeKeys) refuse de s'en servir. Rends-la lisible par son seul
     propriétaire : sudo chmod 600 …
-signature-evenement-opendkim =
+signature-event-opendkim =
     opendkim tourne avec la clé et le domaine. Mais il ne signe que ce que
     Postfix lui passe : il faut brancher le milter dans
     /etc/postfix/main.cf (man postconf, et MILTER_README). L'adresse de la
     prise doit correspondre au Socket d'opendkim.conf, chacun avec sa
     syntaxe.
-signature-evenement-chroot =
+signature-event-chroot =
     « connect to Milter service unix:… : No such file or directory » : sur
     Debian, Postfix tourne enfermé dans /var/spool/postfix (chroot). Un
     chemin comme /run/opendkim/opendkim.sock, pour lui, est
@@ -66,30 +66,30 @@ signature-evenement-chroot =
     commentaire d'opendkim.conf le dit : soit une prise dans
     /var/spool/postfix, soit une prise réseau (Socket inet:8891@localhost,
     et inet:localhost:8891 côté Postfix).
-signature-evenement-prise =
+signature-event-socket =
     « connect to Milter service inet:… : Connection refused » : Postfix ne
     trouve personne à cette adresse. opendkim tourne-t-il, et écoute-t-il
     sur ce port ? Attention aux deux syntaxes : inet:8891@localhost dans
     opendkim.conf, inet:localhost:8891 dans main.cf.
-signature-evenement-smtpd-seul =
+signature-event-smtpd-only =
     smtpd_milters ne concerne que le courrier qui arrive par le réseau
     (SMTP). Les courriels du site et de la commande mail sont déposés sur
     la machine : ils passent par non_smtpd_milters. Pour signer les deux :
     non_smtpd_milters = $smtpd_milters.
-signature-evenement-milter =
+signature-event-milter =
     Postfix passe maintenant le courrier à opendkim, qui le signe
     (« DKIM-Signature field added » dans /var/log/mail.log). Reste à publier
     la clé publique dans la zone, sinon personne ne peut vérifier la
     signature. opendkim-testkey vérifie la clé publiée.
-signature-evenement-pas-secure =
+signature-event-not-secure =
     « key not secure » n'est pas une erreur : opendkim-testkey dit
     seulement que la réponse du DNS n'est pas protégée par DNSSEC. Ce qui
     compte, c'est la ligne suivante : « key OK ».
-signature-evenement-serie =
+signature-event-serial =
     Le serveur de la machine publie la clé, mais le secondaire du registre
     ne l'a pas : as-tu augmenté le serial de la zone ? dig TXT
     mail._domainkey.gardens.example @ns2.registry.example
-signature-evenement-fin =
+signature-event-end =
     Les courriels des Jardins sont signés, et internet peut vérifier la
     signature avec la clé publiée. Nour : « mailbox.example les met dans la
     boîte de réception, enfin ! »

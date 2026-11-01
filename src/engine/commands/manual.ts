@@ -48,30 +48,30 @@ const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 export function pageMan(name: string, c: Command, t: Translate): string {
   const { synopsis, description, options, examples } = texts(name, t);
   const title = `${name.toUpperCase()}(${section(name)})`;
-  const middle = t('manuel-entete');
+  const middle = t('manual-header');
   const white = Math.max(2, Math.floor((60 - title.length * 2 - middle.length) / 2));
   // Comme une vraie page : le titre de section, puis son texte en retrait.
-  const sections: [string, string][] = [[t('manuel-section-nom'), indent(`${name} - ${recap(description)}`)]];
-  if (synopsis) sections.push([t('manuel-section-synopsis'), indent(synopsis)]);
-  sections.push([t('manuel-section-description'), indent(majuscule(description))]);
+  const sections: [string, string][] = [[t('manual-section-name'), indent(`${name} - ${recap(description)}`)]];
+  if (synopsis) sections.push([t('manual-section-synopsis'), indent(synopsis)]);
+  sections.push([t('manual-section-description'), indent(majuscule(description))]);
   const opts = options(name, c);
   if (opts.length)
-    sections.push([t('manuel-section-options'), opts.map(([o, d]) => indent(`-${o}`) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
+    sections.push([t('manual-section-options'), opts.map(([o, d]) => indent(`-${o}`) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
   const ex = examples(name, c);
-  if (ex.length) sections.push([t('manuel-section-exemples'), ex.map(([cmd, d]) => indent(cmd) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
-  if (c.see?.length) sections.push([t('manuel-section-voir-aussi'), indent(c.see.map((v) => `${v}(${section(v)})`).join(', '))]);
+  if (ex.length) sections.push([t('manual-section-examples'), ex.map(([cmd, d]) => indent(cmd) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
+  if (c.see?.length) sections.push([t('manual-section-see-also'), indent(c.see.map((v) => `${v}(${section(v)})`).join(', '))]);
   return [`${title}${' '.repeat(white)}${middle}${' '.repeat(white)}${title}`, ...sections.map(([s, x]) => `${s}\n${x}`)].join('\n\n');
 }
 
 export function help(name: string, c: Command, t: Translate): string {
   const { synopsis, description, options } = texts(name, t);
-  const lines = [t('manuel-utilisation', { synopsis: synopsis || name }), majuscule(recap(description)) + '.'];
+  const lines = [t('manual-use', { synopsis: synopsis || name }), majuscule(recap(description)) + '.'];
   const opts = options(name, c);
   if (opts.length) {
     lines.push('');
     for (const [o, d] of opts) lines.push(`  -${o.padEnd(5)} ${d}`);
   }
-  lines.push('', t('manuel-complet', { commande: name }));
+  lines.push('', t('manual-complete', { commande: name }));
   return lines.join('\n');
 }
 
@@ -104,10 +104,10 @@ export function invalidOption(name: string, c: Command, args: string[], t: Trans
     if (a.startsWith('--')) {
       const long = a.slice(2).split('=')[0];
       if (c.long && long in c.long) continue;
-      return t('manuel-option-longue-inconnue', { commande: name, option: a.split('=')[0] });
+      return t('manual-option-long-unknown', { commande: name, option: a.split('=')[0] });
     }
     if (!a.startsWith('-') || a === '-' || /^-\d+$/.test(a)) continue;
-    for (const letter of a.slice(1)) if (!c.options.includes(letter)) return t('manuel-option-invalide', { commande: name, lettre: letter });
+    for (const letter of a.slice(1)) if (!c.options.includes(letter)) return t('manual-option-invalid', { commande: name, lettre: letter });
   }
   return null;
 }

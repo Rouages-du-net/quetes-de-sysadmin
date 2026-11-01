@@ -27,61 +27,61 @@ export const village: Chapter = {
   welcome: 'crier.txt',
   final: 'nour',
   // Dans le jeu : le levain, les engrenages, la barricade, les rats, puis Nour et sa Classe.
-  steps: ['levain', 'engrenage', 'engrenages', 'barricade', 'rats', 'nour-sans-classe', 'classe', 'nour'],
+  steps: ['sourdough', 'gear', 'gears', 'barricade', 'rats', 'nour-without-class', 'class', 'nour'],
   createWorld: (t) =>
     d({
       Quay: d({
-        'crier.txt': f(t('village-crieur')),
-        'scroll_of_spells.txt': f(t('village-parchemin-des-sorts')),
+        'crier.txt': f(t('village-crier')),
+        'scroll_of_spells.txt': f(t('village-scroll-spells')),
         Market: d({
-          'stallholder.txt': f(t('village-marchande')),
-          'apple': f(t('village-pomme')),
-          'apple_2': f(t('village-pomme-2')),
-          'cheese': f(t('village-fromage'), {
-            isProtected: { rm: t('village-fromage-protege-rm') },
+          'stallholder.txt': f(t('village-stallholder')),
+          'apple': f(t('village-apple')),
+          'apple_2': f(t('village-apple-2')),
+          'cheese': f(t('village-cheese'), {
+            isProtected: { rm: t('village-cheese-protected-rm') },
           }),
         }),
         Bakery: d({
-          'baker.txt': f(t('village-boulanger')),
-          'sourdough': f(t('village-levain'), {
-            isProtected: { rm: t('village-levain-protege-rm') },
+          'baker.txt': f(t('village-baker')),
+          'sourdough': f(t('village-sourdough'), {
+            isProtected: { rm: t('village-sourdough-protected-rm') },
           }),
         }),
         Workshop: d({
-          'maker.txt': f(t('village-artisane')),
+          'maker.txt': f(t('village-craftswoman')),
         }),
         School: d({
-          'teacher.txt': f(t('village-institutrice')),
+          'teacher.txt': f(t('village-teacher')),
         }),
         TownHall: d({
-          'clerk.txt': f(t('village-greffiere')),
-          'notice_dance.txt': shows(t('village-avis-bal')),
-          'notice_cat.txt': shows(t('village-avis-chat')),
-          'notice_sewers.txt': shows(t('village-avis-egouts')),
-          'notice_market.txt': shows(t('village-avis-marche')),
-          'notice_clock.txt': shows(t('village-avis-horloge')),
-          '.doormat': f(t('village-paillasson'), {
+          'clerk.txt': f(t('village-clerk')),
+          'notice_dance.txt': shows(t('village-notice-ball')),
+          'notice_cat.txt': shows(t('village-notice-cat')),
+          'notice_sewers.txt': shows(t('village-notice-sewers')),
+          'notice_market.txt': shows(t('village-notice-works')),
+          'notice_clock.txt': shows(t('village-notice-clock')),
+          '.doormat': f(t('village-doormat'), {
             read: (j) => {
-              j.flags.add('cle-archives');
-              return j.t('village-paillasson-lu');
+              j.flags.add('key-archives');
+              return j.t('village-doormat-read');
             },
           }),
           Archives: d(
             {
-              'archivist.txt': f(t('village-archiviste')),
-              'chronicle.txt': f(t('village-chronique'), { lines: true }),
+              'archivist.txt': f(t('village-archivist')),
+              'chronicle.txt': f(t('village-column'), { lines: true }),
             },
-            (game) => (game.flags.has('cle-archives') ? null : game.t('village-archives-bloque')),
+            (game) => (game.flags.has('key-archives') ? null : game.t('village-archives-blocked')),
           ),
         }),
         Alley: d(
           {
             'barricade': f(t('village-barricade'), {
-              isProtected: { mv: t('village-barricade-protege-mv') },
+              isProtected: { mv: t('village-barricade-protected-mv') },
             }),
             Yard: d(
               {
-                'wall.txt': f(t('village-mur')),
+                'wall.txt': f(t('village-wall')),
                 Sewer: d(
                   {
                     'rats.txt': f(t('village-rats')),
@@ -89,51 +89,51 @@ export const village: Chapter = {
                       {
                         'nour.txt': f(t('village-nour'), {
                           read: (j) => {
-                            j.flags.add('nour-lue');
+                            j.flags.add('nour-read');
                           },
                         }),
                       },
-                      (game) => (game.exists(path(game.t, `${SEWER}/rats.txt`)) ? game.t('village-galerie-bloque') : null),
+                      (game) => (game.exists(path(game.t, `${SEWER}/rats.txt`)) ? game.t('village-gallery-blocked') : null),
                     ),
                   },
                 ),
               },
-              (game) => (game.exists(path(game.t, `${ALLEY}/barricade`)) ? game.t('village-cour-bloque') : null),
+              (game) => (game.exists(path(game.t, `${ALLEY}/barricade`)) ? game.t('village-yard-blocked') : null),
             ),
           },
           (game) =>
-            engrenages(game) >= 5 ? null : game.t('village-ruelle-bloque'),
+            engrenages(game) >= 5 ? null : game.t('village-alley-blocked'),
         ),
       }),
     }),
   events: [
     {
-      id: 'levain',
+      id: 'sourdough',
       condition: (j) => j.count(path(j.t, BAKERY), name(j.t, 'sourdough')) >= 3,
-      message: (j) => j.t('village-evenement-levain'),
+      message: (j) => j.t('village-event-sourdough'),
     },
     {
-      id: 'engrenage',
+      id: 'gear',
       condition: (j) => engrenages(j) >= 1,
-      message: (j) => j.t('village-evenement-engrenage'),
+      message: (j) => j.t('village-event-gear'),
     },
     {
-      id: 'engrenages',
+      id: 'gears',
       condition: (j) => engrenages(j) >= 5,
-      message: (j) => j.t('village-evenement-engrenages'),
+      message: (j) => j.t('village-event-gears'),
     },
     {
-      id: 'classe',
+      id: 'class',
       condition: (j) => j.find(path(j.t, CLASS))?.type === 'dossier',
       message: (j) =>
-        j.flags.has('nour-lue')
-          ? j.t('village-evenement-classe')
-          : j.t('village-evenement-classe-sans-nour'),
+        j.flags.has('nour-read')
+          ? j.t('village-event-class')
+          : j.t('village-event-class-without-nour'),
     },
     {
       id: 'barricade',
       condition: (j) => !j.exists(path(j.t, `${ALLEY}/barricade`)),
-      message: (j) => j.t('village-evenement-barricade'),
+      message: (j) => j.t('village-event-barricade'),
     },
     {
       id: 'rats',
@@ -142,17 +142,17 @@ export const village: Chapter = {
         j.erase(path(j.t, `${SEWER}/rats.txt`));
         j.erase(path(j.t, `${SEWER}/cheese`));
       },
-      message: (j) => j.t('village-evenement-rats'),
+      message: (j) => j.t('village-event-rats'),
     },
     {
-      id: 'nour-sans-classe',
-      condition: (j) => j.flags.has('nour-lue') && j.find(path(j.t, CLASS))?.type !== 'dossier',
-      message: (j) => j.t('village-evenement-nour-sans-classe'),
+      id: 'nour-without-class',
+      condition: (j) => j.flags.has('nour-read') && j.find(path(j.t, CLASS))?.type !== 'dossier',
+      message: (j) => j.t('village-event-nour-without-class'),
     },
     {
       id: 'nour',
-      condition: (j) => j.flags.has('nour-lue') && j.find(path(j.t, CLASS))?.type === 'dossier',
-      message: (j) => j.t('village-evenement-nour'),
+      condition: (j) => j.flags.has('nour-read') && j.find(path(j.t, CLASS))?.type === 'dossier',
+      message: (j) => j.t('village-event-nour'),
     },
   ],
 };

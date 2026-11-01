@@ -3,12 +3,12 @@
 ### sshd_config (PermitRootLogin…), les commandes, les chemins et les
 ### messages d'OpenSSH (en anglais) ne se traduisent pas.
 
-chapitre-shut-the-door = Fermer la porte
+chapter-shut-the-door = Fermer la porte
     .resume = Durcir SSH : sshd_config, sshd -t, reload, et ne pas s'enfermer dehors.
 
 ## Fichiers
 
-porte-courriel-kofi =
+door-email-kofi =
     De :     Kofi (La Fourmilière)
     À :      toi
     Objet :  Le nouveau serveur des Lettres
@@ -33,14 +33,14 @@ porte-courriel-kofi =
 ## Événements
 
 # { $config } : le chemin du fichier de configuration
-porte-evenement-erreur =
+door-event-error =
     Il y a une erreur dans la configuration de SSH ! Avant de recharger, vérifie
     toujours avec  sudo sshd -t : il donne le fichier et la ligne en cause.
 
     (Bonne nouvelle : tant que la configuration est fausse, systemctl reload
     ssh refuse de l'appliquer et sshd garde l'ancienne. Tu ne t'enfermeras pas
     dehors à cause d'une faute de frappe.)
-porte-evenement-enferme =
+door-event-locked-out =
     ATTENTION : avec la configuration que sshd vient de charger, une nouvelle
     connexion de ton compte serait refusée. Ta session actuelle, elle, reste
     ouverte : sshd ne coupe jamais les sessions en cours.
@@ -48,7 +48,7 @@ porte-evenement-enferme =
     C'est le moment de corriger, AVANT de te déconnecter. C'est pour ça qu'on
     garde toujours une session ouverte quand on modifie la configuration de
     SSH.
-porte-evenement-sans-effet =
+door-event-without-effect =
     Étrange : tu as écrit PasswordAuthentication no et rechargé ssh… mais les
     mots de passe sont toujours acceptés. Demande à sshd ce qu'il applique
     vraiment :
@@ -57,7 +57,7 @@ porte-evenement-sans-effet =
 
     Puis relis le début de /etc/ssh/sshd_config, et man sshd_config : pour
     chaque mot-clé, quelle valeur l'emporte quand il apparaît deux fois ?
-porte-evenement-fermee =
+door-event-closed =
     sshd applique ta nouvelle configuration : plus de root, plus de mots de
     passe. Dans le journal (journalctl -u ssh), les robots se font maintenant
     éconduire avant même d'essayer un mot de passe (« [preauth] »).
@@ -65,7 +65,7 @@ porte-evenement-fermee =
     Reste le plus important : vérifier que TU peux toujours entrer. Sur un
     vrai serveur, on garde cette session ouverte et on en ouvre une deuxième
     pour tester. Ici : exit, puis ssh lettres.
-porte-evenement-fin =
+door-event-end =
     Tu es entré·e avec ta clé : la porte est fermée aux robots, mais pas à toi.
     Kofi : « Merci ! Je dormirai mieux. »
 

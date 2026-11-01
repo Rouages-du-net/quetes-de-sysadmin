@@ -2,12 +2,12 @@
 ### un commutateur découpé en VLAN. Les commandes, les noms d'interfaces et la
 ### syntaxe de /etc/network/interfaces ne se traduisent pas.
 
-chapitre-vlan = Les VLAN
+chapter-vlan = Les VLAN
     .resume = Le commutateur a été découpé en trois VLAN ; le routeur, lui, parle encore à plat. Des interfaces 802.1Q, et qu'elles tiennent au redémarrage.
 
 ## Fichiers
 
-vlan-courriel-malik =
+vlan-email-malik =
     De :     Malik (régisseur de La Ruche)
     À :      toi
     Objet :  Plus de réseau depuis ce matin
@@ -27,7 +27,7 @@ vlan-courriel-malik =
 
     Pour sudo : abeille-2027
 
-vlan-plan-commutateur =
+vlan-plan-switch =
     PLAN DU COMMUTATEUR — La Ruche (électricien, novembre 2027)
 
     Port 1     : vers le routeur (eth1). TRUNK 802.1Q : VLAN 10, 20, 30
@@ -48,18 +48,18 @@ vlan-plan-commutateur =
 
 ## Événements
 
-vlan-evenement-mauvais-numero =
+vlan-event-bad-number =
     Une de tes interfaces VLAN porte l'adresse d'un réseau… mais pas le bon
     numéro de VLAN : ses trames partent étiquetées avec un autre numéro, et
     le commutateur ne les met pas dans le bon VLAN. Un ping vers un appareil
     de ce réseau le montre (Destination Host Unreachable). Vérifie avec
     ip -d link show.
-vlan-evenement-en-place =
+vlan-event-in-place =
     Les trois VLAN répondent : le NAS, l'imprimante et la caméra aussi (ping).
     Mais ce que tu as fait avec ip disparaîtra au prochain redémarrage : seul
     /etc/network/interfaces est relu au démarrage. Écris-y les trois VLAN
     (man interfaces), puis ifup.
-vlan-evenement-fin =
+vlan-event-end =
     Les trois VLAN sont montés, et écrits pour durer. Malik : « Le NAS est
     revenu ! Et le wifi du café ne voit plus l'imprimante, c'est ce que
     voulait l'électricien. »

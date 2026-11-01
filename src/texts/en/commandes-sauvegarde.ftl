@@ -8,7 +8,7 @@ rsync-usage =
 crontab-usage =
     usage: crontab [-u user] [-l | -r | -e] [file]
     (To edit your scheduled tasks: crontab -e; see man crontab)
-crontab-reessayer = (The crontab was not installed. Run crontab -e again to fix it: the manual, man crontab, details the five time fields.)
+crontab-retry = (The crontab was not installed. Run crontab -e again to fix it: the manual, man crontab, details the five time fields.)
 
 ## restic
 
@@ -27,7 +27,7 @@ rsnapshot-usage =
 
 ## PostgreSQL (psql, pg_restore)
 
-psql-interactif = (In this game, psql does not open in interactive mode: give the query with -c "…", or a file with -f. See man psql.)
-pg-restore-entree =
+psql-interactive = (In this game, psql does not open in interactive mode: give the query with -c "…", or a file with -f. See man psql.)
+pg-restore-input =
     pg_restore: error: one of -d/--dbname and -f/--file must be specified
     Try "pg_restore --help" for more information.

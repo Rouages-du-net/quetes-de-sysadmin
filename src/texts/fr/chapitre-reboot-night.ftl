@@ -3,12 +3,12 @@
 ### tombé. Les commandes, les noms de services, les chemins et les messages
 ### de systemd ou de php-fpm (en anglais) ne se traduisent pas.
 
-chapitre-reboot-night = La nuit du redémarrage
+chapter-reboot-night = La nuit du redémarrage
     .resume = Des services qui ne repartent pas : systemctl, journalctl, enable, et vérifier après un redémarrage.
 
 ## Fichiers
 
-reboot-night-courriel-awa =
+reboot-night-email-awa =
     De :     Awa (responsable d'exploitation)
     À :      toi
     Objet :  Le site est tombé cette nuit
@@ -45,27 +45,27 @@ reboot-night-notes-awa =
 ## Événements
 
 # { $logs } : le dossier des journaux du catalogue
-reboot-night-evenement-logs-ouverts =
+reboot-night-event-logs-open =
     Prudence : n'importe quel compte peut maintenant écrire dans { $logs },
     et donc y effacer les journaux… ou y glisser de faux messages pour brouiller
     les pistes. Un dossier de journaux doit appartenir au compte du service
     qui y écrit, sans droit d'écriture pour les autres.
-reboot-night-evenement-nginx =
+reboot-night-event-nginx =
     nginx tourne : le site répond de nouveau… pour l'instant.
 
     Regarde bien la ligne Loaded de systemctl status nginx : « disabled ».
     Que se passera-t-il au prochain redémarrage ?
-reboot-night-evenement-nginx-active =
+reboot-night-event-nginx-active =
     nginx tourne, et il est activé (enabled) : il repartira tout seul au
     prochain démarrage de la machine.
-reboot-night-evenement-catalogue =
+reboot-night-event-catalogue =
     Le catalogue démarre : php-fpm, qui tourne sous le compte www-data, peut
     de nouveau écrire son journal. Les recherches du site remarchent.
-reboot-night-evenement-oubli =
+reboot-night-event-forgotten =
     La machine a redémarré… et nginx ne tourne pas : le site est de nouveau
     en panne. systemctl start ne vaut que jusqu'au prochain démarrage. Pour
     qu'un service démarre avec la machine, relis man systemctl.
-reboot-night-evenement-fin =
+reboot-night-event-end =
     Après le redémarrage, tout est reparti tout seul : nginx et le catalogue
     tournent, et tu l'as vérifié. Awa : « C'est exactement ça, le métier :
     pas seulement réparer, mais s'assurer que ça tiendra. »

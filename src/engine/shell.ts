@@ -31,10 +31,10 @@ const BUILT_IN = ['cd', 'echo', 'pwd', 'test', 'printf'];
 // sandwich de xkcd 149 (https://xkcd.com/149/), et sl, la locomotive qui punit
 // ceux qui tapent sl au lieu de ls (le paquet Debian sl).
 const EGGS: Record<string, { text: string; achievements: string }> = {
-  xyzzy: { text: 'oeuf-xyzzy', achievements: 'xyzzy' },
-  'make me a sandwich': { text: 'oeuf-sandwich-refus', achievements: '' },
-  'sudo make me a sandwich': { text: 'oeuf-sandwich', achievements: 'sandwich' },
-  sl: { text: 'oeuf-sl', achievements: 'sl' },
+  xyzzy: { text: 'egg-xyzzy', achievements: 'xyzzy' },
+  'make me a sandwich': { text: 'egg-sandwich-refusal', achievements: '' },
+  'sudo make me a sandwich': { text: 'egg-sandwich', achievements: 'sandwich' },
+  sl: { text: 'egg-sl', achievements: 'sl' },
 };
 
 export interface Game {
@@ -365,12 +365,12 @@ export class Shell implements Game {
   readFor(cmd: string, target: string): string | null {
     const n = this.find(target);
     const v = { commande: cmd, cible: target };
-    if (!n) return this.error(this.t('erreur-introuvable', v)), null;
-    if (n.type === 'dossier') return this.error(this.t('erreur-est-un-dossier', v)), null;
+    if (!n) return this.error(this.t('error-missing', v)), null;
+    if (n.type === 'dossier') return this.error(this.t('error-is-one-directory', v)), null;
     const reason = this.block(target);
     if (reason) return this.error(reason), null;
-    if (!this.traverses(target) || !this.can(n, 'r')) return this.error(this.t('erreur-permission', v)), null;
-    if (n.archive) return this.error(this.t('erreur-binaire', v)), null;
+    if (!this.traverses(target) || !this.can(n, 'r')) return this.error(this.t('error-permission', v)), null;
+    if (n.archive) return this.error(this.t('error-binary', v)), null;
     return content(n, this);
   }
 
@@ -380,16 +380,16 @@ export class Shell implements Game {
   place(cmd: string, path: string, n: Node): string | null {
     const v = { commande: cmd, cible: path };
     const parent = this.find(path + '/..');
-    if (parent?.type !== 'dossier') return this.t('erreur-introuvable', v);
+    if (parent?.type !== 'dossier') return this.t('error-missing', v);
     const reason = this.block(path + '/..');
     if (reason) return reason;
-    if (this.onlyRead(path)) return this.t('erreur-lecture-seule', v);
-    if (!this.writtenIn(path)) return this.t(cmd === 'bash' ? 'redirection-permission' : 'erreur-creation-permission', v);
+    if (this.onlyRead(path)) return this.t('error-read-only', v);
+    if (!this.writtenIn(path)) return this.t(cmd === 'bash' ? 'redirection-permission' : 'error-creation-permission', v);
     const name = this.name(path);
     const old = parent.children[name];
     // Écrire dans un lien, c'est écrire dans le fichier qu'il vise.
     if (old?.type === 'fichier' && old.link !== undefined && n.type === 'fichier' && n.link === undefined) return this.place(cmd, this.realPath(path), n);
-    if (this.missingPlace(this.resolve(path), n, old)) return this.t('erreur-espace', v);
+    if (this.missingPlace(this.resolve(path), n, old)) return this.t('error-space', v);
     if (!old) {
       // Un nouveau fichier prend les droits permis par le masque (umask) ;
       // dans un dossier setgid, il prend le groupe du dossier (et un dossier, le setgid).
@@ -470,7 +470,7 @@ export class Shell implements Game {
   }
 
   prompt(): string {
-    if (this.waiting) return this.t('sudo-invite', { utilisateur: this.player });
+    if (this.waiting) return this.t('sudo-prompt', { utilisateur: this.player });
     if (this.question) return this.question.prompt;
     const here =
       this.cwd === this.home ? '~' : this.cwd.startsWith(this.home + '/') ? '~' + this.cwd.slice(this.home.length) : this.cwd;
@@ -598,7 +598,7 @@ export class Shell implements Game {
   known(): string[] {
     // La commande qui liste les autres a le nom de la langue (aide en français) ;
     // help, comme le builtin de bash, marche dans toutes les langues.
-    return [...this.chapter.commands, 'man', 'apropos', 'whatis', 'clear', 'exit', 'history', this.t('commande-aide')];
+    return [...this.chapter.commands, 'man', 'apropos', 'whatis', 'clear', 'exit', 'history', this.t('command-help')];
   }
 
 
@@ -607,20 +607,20 @@ export class Shell implements Game {
   // système, où le manuel décrit aussi ce qu'on n'a pas le droit de lancer).
   private consulter(cmd: string, rest: string[]): string {
     const all = Object.entries(COMMANDS).filter(([n]) => n !== 'aide').sort(([a], [b]) => a.localeCompare(b));
-    const notStill = (n: string) => (this.known().includes(n) ? '' : '\n\n' + this.t('manuel-pas-encore'));
+    const notStill = (n: string) => (this.known().includes(n) ? '' : '\n\n' + this.t('manual-not-still'));
     if (cmd === 'apropos' || (cmd === 'man' && rest[0] === '-k')) {
       const word = cmd === 'apropos' ? rest[0] : rest[1];
-      if (!word) return this.error(this.t('manuel-quoi-chercher', { commande: cmd === 'apropos' ? 'apropos' : 'man -k' }));
+      if (!word) return this.error(this.t('manual-what-search', { commande: cmd === 'apropos' ? 'apropos' : 'man -k' }));
       const lines = apropos(word, all.map(([n]) => n), this.t);
-      return lines.length ? lines.join('\n') : this.error(this.t('manuel-rien', { mot: word }));
+      return lines.length ? lines.join('\n') : this.error(this.t('manual-nothing', { mot: word }));
     }
     if (!rest.length)
-      return this.error(cmd === 'man' ? this.t('manuel-quelle-page') : this.t('manuel-quoi-chercher', { commande: 'whatis' }));
+      return this.error(cmd === 'man' ? this.t('manual-which-page') : this.t('manual-what-search', { commande: 'whatis' }));
     const outputs: string[] = [];
     for (const name of rest) {
       const c = COMMANDS[name];
       if (!c || name === 'aide') {
-        this.error(cmd === 'man' ? this.t('manuel-pas-de-page', { commande: name }) : this.t('manuel-rien', { mot: name }));
+        this.error(cmd === 'man' ? this.t('manual-not-page', { commande: name }) : this.t('manual-nothing', { mot: name }));
         continue;
       }
       outputs.push(cmd === 'man' ? pageMan(name, c, this.t) + notStill(name) : whatisLine(name, this.t));
@@ -724,13 +724,13 @@ export class Shell implements Game {
           `${error.file}:${error.line}:${error.column}: ${this.t(error.key)}`,
           error.text,
           `${' '.repeat(error.column - 1)}^${'~'.repeat(error.length - 1)}`,
-          this.t('sudo-sources-invalides'),
+          this.t('sudo-sources-invalid'),
         ].join('\n');
       }
     }
     if (withSudo && this.known().includes('sudo') && !this.authenticated) {
       this.waiting = { line, attempts: 0 };
-      const lecture = this.doneLecture ? '' : this.t('sudo-sermon');
+      const lecture = this.doneLecture ? '' : this.t('sudo-lecture');
       this.doneLecture = true;
       return lecture;
     }
@@ -761,9 +761,9 @@ export class Shell implements Game {
       return this.conclude(this.countLine(this.tube(waiting.line, split(waiting.line))), true);
     }
     waiting.attempts++;
-    if (waiting.attempts < 3) return this.t('sudo-mauvais-mot-de-passe');
+    if (waiting.attempts < 3) return this.t('sudo-bad-password');
     this.waiting = null;
-    return this.t('sudo-trois-echecs');
+    return this.t('sudo-three-failures');
   }
 
   /**
@@ -827,12 +827,12 @@ export class Shell implements Game {
       if (m.op === '|') segments.push([]);
       else if (m.op === '>' || m.op === '>>') {
         const target = words[i + 1];
-        if (!target || target.op) return this.t('syntaxe-redirection', { operateur: m.op });
+        if (!target || target.op) return this.t('syntax-redirection', { operateur: m.op });
         redirection = { file: target.text, addition: m.op === '>>' };
         i++;
       } else segments.at(-1)!.push(m);
     }
-    if (segments.some((s) => !s.length)) return this.t('syntaxe-tube');
+    if (segments.some((s) => !s.length)) return this.t('syntax-pipe');
 
     let input: string | null = null;
     const commands: string[][] = [];
@@ -851,7 +851,7 @@ export class Shell implements Game {
           as = args[1] ?? '';
           args = args.slice(2);
           if (!this.accounts.users[as]) {
-            this.error(this.t('sudo-compte-inconnu', { compte: as }));
+            this.error(this.t('sudo-account-unknown', { compte: as }));
             input = '';
             return;
           }
@@ -883,9 +883,9 @@ export class Shell implements Game {
 
   private redirect(file: string, text: string, addition: boolean): string | null {
     const n = this.find(file);
-    if (n?.type === 'dossier') return this.t('redirection-est-un-dossier', { cible: file });
+    if (n?.type === 'dossier') return this.t('redirection-is-one-directory', { cible: file });
     if (n) {
-      if (this.onlyRead(file)) return this.t('erreur-lecture-seule', { commande: 'bash', cible: file });
+      if (this.onlyRead(file)) return this.t('error-read-only', { commande: 'bash', cible: file });
       if (!this.traverses(file) || !this.can(n, 'w')) return this.t('redirection-permission', { cible: file });
       const before = content(n, this);
       n.content = addition && before ? `${before}\n${text}` : text;
@@ -910,18 +910,18 @@ export class Shell implements Game {
       raw && ((/^\/(usr\/)?s?bin\/[\w.-]+$/.test(raw) && COMMANDS[onlyName] && !outsidePath) || (outsidePath && raw === `${outsidePath}/${onlyName}`))
         ? onlyName
         : raw;
-    if (cmd && COMMANDS[cmd]?.directory && cmd === raw) return this.error(this.t('commande-introuvable', { commande: cmd }));
+    if (cmd && COMMANDS[cmd]?.directory && cmd === raw) return this.error(this.t('command-missing', { commande: cmd }));
     if (!cmd) return '';
-    if (root && !this.known().includes('sudo')) return this.error(this.t('sudo-pas-encore'));
+    if (root && !this.known().includes('sudo')) return this.error(this.t('sudo-not-still'));
     // Vrai comportement : cd est intégré au shell, ce n'est pas un programme.
     if (root && cmd === 'cd') return this.error(this.t('sudo-cd'));
-    if (cmd === 'help' || cmd === this.t('commande-aide')) return this.t('aide-commandes', { commandes: this.known().join(', ') });
+    if (cmd === 'help' || cmd === this.t('command-help')) return this.t('help-commands', { commandes: this.known().join(', ') });
     if (cmd === 'man' || cmd === 'apropos' || cmd === 'whatis') return this.consulter(cmd, rest);
     // Un chemin (./deployer.sh, /srv/site/deployer.sh) : un script, s'il est exécutable.
     if (cmd.includes('/')) {
       const n = this.find(cmd);
-      if (!n) return this.error(this.t('script-introuvable', { commande: cmd }));
-      if (n.type === 'dossier') return this.error(this.t('script-dossier', { commande: cmd }));
+      if (!n) return this.error(this.t('script-missing', { commande: cmd }));
+      if (n.type === 'dossier') return this.error(this.t('script-directory', { commande: cmd }));
       if (!this.traverses(cmd) || !this.can(n, 'x') || !this.can(n, 'r')) return this.error(this.t('script-permission', { commande: cmd }));
       const before = this.who;
       if (root) this.who = this.as;
@@ -940,13 +940,13 @@ export class Shell implements Game {
       return output;
     }
     if (!this.known().includes(cmd) || !command)
-      return this.error(this.t(command || cmd === 'sudo' ? 'commande-pas-encore' : 'commande-introuvable', { commande: cmd }));
+      return this.error(this.t(command || cmd === 'sudo' ? 'command-not-still' : 'command-missing', { commande: cmd }));
     // Un programme reçoit ses arguments dans une zone limitée (ARG_MAX, 2 Mio
     // sous Linux) : un joker qui donne des dizaines de milliers de noms
     // dépasse. echo, intégré au shell, n'a pas cette limite.
     if (!BUILT_IN.includes(cmd) && args.reduce((t, a) => t + a.length + 1, 0) > ARG_MAX) {
       this.state.argumentsTropLongs = (this.state.argumentsTropLongs ?? 0) + 1;
-      return this.error(this.t(root ? 'sudo-liste-arguments-trop-longue' : 'liste-arguments-trop-longue', { programme: `/usr/bin/${cmd}` }));
+      return this.error(this.t(root ? 'sudo-list-arguments-too-long' : 'list-arguments-too-long', { programme: `/usr/bin/${cmd}` }));
     }
     // Les réflexes d'auto-dépannage : --help et les options inconnues.
     if (rest.includes('--help')) return help(cmd, command, this.t);
@@ -979,18 +979,18 @@ export class Shell implements Game {
       const n = this.find(e.path);
       const lines = text === '' ? 0 : text.replace(/\n$/, '').split('\n').length;
       if (n?.type === 'fichier') {
-        if (!this.traverses(e.path) || !this.can(n, 'w')) return this.t('nano-erreur-ecriture', { chemin: e.path });
+        if (!this.traverses(e.path) || !this.can(n, 'w')) return this.t('nano-error-write', { chemin: e.path });
         n.content = text.replace(/\n$/, '');
         n.lines = true;
         delete n.size;
       } else {
         const error = this.place('nano', e.path, { type: 'fichier', content: text.replace(/\n$/, ''), owner: this.who, lines: true });
-        if (error) return this.t(this.find(e.path + '/..') ? 'nano-erreur-ecriture' : 'nano-erreur-dossier', { chemin: e.path });
+        if (error) return this.t(this.find(e.path + '/..') ? 'nano-error-write' : 'nano-error-directory', { chemin: e.path });
       }
       e.text = text;
       const next = this.conclude('', true);
       if (next) this.inWaiting.push(next);
-      return this.t('nano-lignes-ecrites', { lignes: lines });
+      return this.t('nano-lines-written', { lignes: lines });
     } finally {
       this.who = before;
     }

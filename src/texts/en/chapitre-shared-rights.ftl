@@ -2,12 +2,12 @@
 ### (setgid, umask) and a narrow sudo rule (visudo). Commands, paths and
 ### sudoers syntax are not translated.
 
-chapitre-shared-rights = Shared permissions
+chapter-shared-rights = Shared permissions
     .resume = A directory where the till team can really work together (setgid, umask), and the right to restart the till, nothing more (visudo).
 
 ## Files
 
-shared-rights-courriel-awa =
+shared-rights-email-awa =
     From:    Awa
     To:      you
     Subject: The till team
@@ -27,18 +27,18 @@ shared-rights-courriel-awa =
 
     For sudo, your password is still: radish-2027
 
-shared-rights-releve-17 =
+shared-rights-statement-17 =
     Till statement — Sunday 17 October (Lina)
     Opening float: 150.00
     Sales: 1,243.60
-shared-rights-releve-18 =
+shared-rights-statement-18 =
     Till statement — Monday 18 October (Karim)
     Opening float: 150.00
     Sales: 987.20
 
 ## Events
 
-shared-rights-evenement-sudoers-casse =
+shared-rights-event-sudoers-broken =
     sudo is broken: the policy has an error (reread the message), and sudo
     then refuses EVERYTHING, even to you. That's why sudoers is edited with
     visudo, which checks before saving.
@@ -46,33 +46,33 @@ shared-rights-evenement-sudoers-casse =
     On a real server, you would need the hosting provider's rescue console
     (or pkexec). Here: "Restart this chapter", below the terminal.
 # { $fichier }: the ignored rules file
-shared-rights-evenement-fichier-ignore =
+shared-rights-event-file-ignore =
     Your rule is in { $fichier }… which sudo doesn't read! @includedir
     ignores files whose name contains a dot or ends with ~ (reread
     /etc/sudoers.d/README). Give it a name without a dot, like
     /etc/sudoers.d/till.
-shared-rights-evenement-trop-large =
+shared-rights-event-too-large =
     Careful: with this rule, Lina and Karim can start a root shell
     (sudo bash), and so do ANYTHING. That's not what Awa is asking for:
     only restarting the till, with the full path of the command and its
     arguments.
-shared-rights-evenement-systemctl-entier =
+shared-rights-event-systemctl-whole =
     Almost: with systemctl and no arguments, Lina and Karim can restart
     the till… but also stop ssh or any other service. Write the whole
     command: path, and arguments.
-shared-rights-evenement-sudo =
+shared-rights-event-sudo =
     sudo -l -U lina confirms it: the till team can restart the till, and
     nothing else.
 # { $dossier }: the shared directory
-shared-rights-evenement-dossier =
+shared-rights-event-directory =
     { $dossier } now belongs to the till group, which can write to it, and
     has the setgid bit (the s in drwxrwsr-x): everything created in it will
     get the till group. What remains is what's already there, and the
     permissions Lina and Karim will give their next files (umask).
-shared-rights-evenement-masque =
+shared-rights-event-mask =
     Lina and Karim will have the 002 mask at their next login: their new
     files will be rw-rw-r--, editable by the group.
-shared-rights-evenement-fin =
+shared-rights-event-end =
     The next day: Lina saves her statement (-rw-rw-r-- lina till), Karim
     fixes a decimal point without asking anyone, and when the till freezes
     at noon, he restarts it himself with sudo. Awa: "No more passwords

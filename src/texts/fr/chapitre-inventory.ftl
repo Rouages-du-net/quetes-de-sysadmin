@@ -2,12 +2,12 @@
 ### trois maisons de quartier ? Les commandes, chemins et sorties d'Ansible ne
 ### se traduisent pas.
 
-chapitre-inventory = L'inventaire
+chapter-inventory = L'inventaire
     .resume = Trois serveurs à gérer d'un coup : un inventaire Ansible, les clés d'hôte, le bon compte, puis ansible -m ping.
 
 ## Fichiers
 
-inventory-courriel-theo =
+inventory-email-theo =
     De :     Théo
     À :      toi
     Objet :  Les trois maisons de quartier
@@ -34,27 +34,27 @@ inventory-courriel-theo =
 
 ## Événements
 
-inventory-evenement-sans-config =
+inventory-event-without-config =
     « No inventory was parsed » : Ansible n'a trouvé ni ansible.cfg ni
     inventaire. Il cherche ansible.cfg dans le dossier où tu es, puis
     ~/.ansible.cfg, puis /etc/ansible/ansible.cfg. La configuration de Théo
     est dans ~/ansible : place-toi dedans (cd ~/ansible).
-inventory-evenement-cle-hote =
+inventory-event-key-host =
     « Host key verification failed » : Ansible passe par ssh, mais ne pose
     jamais la question « Are you sure you want to continue connecting ? ».
     Une machine dont la clé d'hôte n'est pas dans ~/.ssh/known_hosts est
     refusée. Connecte-toi une fois à chacune (ssh deploy@north, vérifie
     l'empreinte, yes, puis exit) : la clé est notée, et Ansible passera.
-inventory-evenement-compte =
+inventory-event-account =
     « theo@… : Permission denied » : Ansible se connecte avec le compte
     remote_user de ansible.cfg, theo, qui n'existe pas sur les centres. Le
     compte qui a ta clé, c'est deploy (ou ansible_user dans l'inventaire,
     ou -u deploy pour une seule commande).
-inventory-evenement-manque =
+inventory-event-missing =
     Tous ceux de l'inventaire répondent « pong »… mais l'inventaire n'en
     connaît que deux. Théo parlait de trois maisons de quartier :
     ansible-inventory --graph montre ce qu'Ansible a lu.
-inventory-evenement-fin =
+inventory-event-end =
     north, south et east répondent « pong » : Ansible les joint tous les
     trois, avec le bon compte et des clés d'hôte vérifiées. Théo : « Une
     commande pour trois serveurs, on y est ! »

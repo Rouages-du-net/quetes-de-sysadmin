@@ -3,12 +3,12 @@
 ### further. Commands, paths and messages from nginx, curl and the logs
 ### are not translated.
 
-chapitre-canary = The canary
+chapter-canary = The canary
     .resume = A version that passes its health checks but crashes on one page: a canary (one visit in ten), the logs, and the switch only when everything is clean.
 
 ## Files
 
-canary-message-de-samia =
+canary-message-samia =
     A message from Samia:
 
     "Kiosk 1.6.0 is out (/srv/kiosk/versions/1.6.0), with a new
@@ -37,40 +37,40 @@ canary-notes-161 =
 ## Events
 
 # { $visites }: the number of simulated visits
-canary-une-heure =
+canary-one-time =
     An hour goes by: { $visites } visits to the Kiosk, through nginx.
     Everything is written in /var/log/nginx/access.log.
 # { $erreurs }: the number of visits that got an error
-canary-evenement-tout-d-un-coup =
+canary-event-all-one-coup =
     All the traffic moved to 1.6.0 at once… and { $erreurs } visits
     in that hour got a 500 error: everyone gets to enjoy it. That's
     what the canary would have avoided. Go back to green (proxy_pass,
     nginx -t, reload), then try with a small share of the traffic.
-canary-evenement-canari-160 =
+canary-event-canary-160 =
     The canary is in place: blue (1.6.0) gets a small share of the visits.
     Now look at what readers received: the response codes are in
     access.log (the number after the request: 200, 404, 500…). grep or
     awk help you sort them.
-canary-evenement-trop-gros =
+canary-event-too-big =
     A large share of the traffic goes to the new version: if it has a
     problem, a lot of people will see it. A canary is a small share
     (one visit in ten, or less): weight=1 against weight=9.
-canary-evenement-trouve =
+canary-event-found =
     500s on /kiosk/archives! They must come from blue: green has been
     serving the same page for weeks. Try it directly on each instance
     (curl http://localhost:3001/archives, then 3002) to be sure.
     /health didn't check this page. Stop the canary: no more visits
     for blue (down, or remove the server).
-canary-evenement-arrete =
+canary-event-stopped =
     Canary stopped: only one visit in ten saw the error, for one hour,
     instead of everyone. Samia passes the problem on to the
     developers… who immediately release 1.6.1 (/srv/kiosk/versions/).
     Start again: blue, /health, canary, logs.
-canary-evenement-canari-161 =
+canary-event-canary-161 =
     One hour of canary with 1.6.1: no errors in this batch of visits.
     The new version can take all the traffic. Keep green running, just
     in case.
-canary-evenement-fin =
+canary-event-end =
     The whole Kiosk goes through 1.6.1, without errors, and green waits
     in reserve. Samia: "The first try only bothered one visit in ten,
     for one hour. Without a canary, we would have served it to everyone."

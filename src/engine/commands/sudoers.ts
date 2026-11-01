@@ -21,7 +21,7 @@ function edit(game: Shell, target: string, temp: string) {
     path: temp,
     text: text && !text.endsWith('\n') ? text + '\n' : text,
     root: true,
-    message: game.t('nano-lignes-lues', { lignes: text ? text.split('\n').length : 0 }),
+    message: game.t('nano-lines-read', { lignes: text ? text.split('\n').length : 0 }),
     conclude: true,
     after: () => check(game, target, temp),
   };
@@ -51,7 +51,7 @@ function check(game: Shell, target: string, temp: string): string {
   const { error } = parse(fresh, temp);
   if (!error) return installer(game, target, temp);
   const ask = (): void =>
-    game.ask(game.t('visudo-et-maintenant'), (r) => {
+    game.ask(game.t('visudo-and-now'), (r) => {
       const choice = r.trim();
       if (choice === 'e') {
         edit(game, target, temp);
@@ -81,18 +81,18 @@ export const COMMANDS_SUDOERS: Record<string, Command> = {
         if (game.who !== 'root') return game.error(game.t('visudo-permission', { fichier: target }), 1);
         if (i >= 0) {
           const text = game.read(target);
-          if (text === null) return game.error(game.t('visudo-introuvable', { fichier: target }), 1);
+          if (text === null) return game.error(game.t('visudo-missing', { fichier: target }), 1);
           const { error } = parse(text, target);
           if (error) return game.error(showError(game, error), 1);
-          return game.t('visudo-analyse-reussie', { fichier: target });
+          return game.t('visudo-analysis-succeeded', { fichier: target });
         }
         const { error, files } = read(game);
         if (error) return game.error(showError(game, error), 1);
-        return files.map((file) => game.t('visudo-analyse-reussie', { fichier: file })).join('\n');
+        return files.map((file) => game.t('visudo-analysis-succeeded', { fichier: file })).join('\n');
       }
       if (game.who !== 'root') return game.error(game.t('visudo-permission', { fichier: target }), 1);
       const directory = target.replace(/\/[^/]+$/, '') || '/';
-      if (!game.exists(directory)) return game.error(game.t('visudo-introuvable', { fichier: `${target}.tmp` }), 1);
+      if (!game.exists(directory)) return game.error(game.t('visudo-missing', { fichier: `${target}.tmp` }), 1);
       const temp = `${target}.tmp`;
       game.place('visudo', temp, { type: 'fichier', content: game.read(target) ?? '', lines: true, owner: 'root', mode: 'rw-------' });
       edit(game, target, temp);
@@ -105,16 +105,16 @@ export const COMMANDS_SUDOERS: Record<string, Command> = {
 export function listSudo(game: Shell, args: string[]): string {
   const i = args.indexOf('-U');
   const account = i >= 0 ? (args[i + 1] ?? '') : game.player;
-  if (i >= 0 && !game.accounts.users[account]) return game.error(game.t('sudo-compte-inconnu', { compte: account }), 1);
+  if (i >= 0 && !game.accounts.users[account]) return game.error(game.t('sudo-account-unknown', { compte: account }), 1);
   const host = game.read('/etc/hostname')?.trim() || game.host;
   // Une machine sans /etc/sudoers décrit par le chapitre : celui de Debian (le groupe sudo a tous les droits).
   const rules = game.exists(SUDOERS) ? rulesFor(game, account) : game.groupsFor(account).includes('sudo') || account === 'root' ? ['(ALL : ALL) ALL'] : [];
-  if (!rules.length) return game.t('sudo-l-aucune', { compte: account, hote: host });
+  if (!rules.length) return game.t('sudo-none', { compte: account, hote: host });
   // Comme sudo -l : sans les guillemets, les deux-points échappés.
   const defaults = game.exists(SUDOERS)
     ? read(game)
         .defaults.flatMap((x) => x.split(','))
         .map((x) => x.trim().replace(/"/g, '').replace(/:/g, '\\:'))
     : ['env_reset', 'mail_badpass', 'secure_path=/usr/local/sbin\\:/usr/local/bin\\:/usr/sbin\\:/usr/bin\\:/sbin\\:/bin', 'use_pty'];
-  return game.t('sudo-l', { compte: account, hote: host, defauts: defaults.join(', '), regles: rules.map((r) => `    ${r}`).join('\n') });
+  return game.t('sudo', { compte: account, hote: host, defauts: defaults.join(', '), regles: rules.map((r) => `    ${r}`).join('\n') });
 }

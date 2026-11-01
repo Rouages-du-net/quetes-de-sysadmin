@@ -3,12 +3,12 @@
 ### processus zombies. Les commandes, options, directives et messages
 ### (free, top, dmesg, systemctl) ne se traduisent pas.
 
-chapitre-memory = La mémoire
+chapter-memory = La mémoire
     .resume = 4 h 31, le direct ne diffuse plus que du silence : qui a tué la playlist de la nuit, et comment l'empêcher de tout emporter la prochaine fois ?
 
 ## Fichiers
 
-memory-message-de-zoe =
+memory-message-zoe =
     Un message de Zoé (4 h 25) :
 
     « Encore moi… Depuis 4 h 12, le direct ne diffuse plus que du silence.
@@ -27,7 +27,7 @@ memory-server-js =
       if (!cache.has(morceau.id)) cache.set(morceau.id, lire(morceau)); // TODO : vider le cache un jour
       return cache.get(morceau.id);
     {"}"}
-memory-convertir-py =
+memory-convert-py =
     # Radio Quartier : convertit les émissions en podcasts.
     import subprocess
     
@@ -37,57 +37,57 @@ memory-convertir-py =
 
 ## Événements
 
-memory-evenement-oom =
+memory-event-oom =
     « Out of memory », « oom-kill » : la machine a manqué de mémoire, et le
     noyau a choisi un processus à tuer pour survivre. C'est l'OOM killer
     (Out Of Memory) : il vise le processus qui occupe le plus de mémoire.
     Ses messages sont dans le journal du noyau : sudo dmesg (ou sudo
     journalctl -k). Combien de mémoire reste-t-il, et qui la prend ? free -h
     et top.
-memory-evenement-zombies =
+memory-event-zombies =
     Les zombies : des processus déjà terminés, dont le parent n'a pas encore
     lu le résultat (l'appel système wait). Ils ne prennent presque rien,
     mais ils trahissent un parent qui ne fait pas son travail. Qui est ce
     parent ? ps -ef montre la colonne PPID.
-memory-evenement-kill-zombie =
+memory-event-kill-zombie =
     kill ne fait rien à un zombie : il est déjà mort ! Seul son parent peut
     le faire disparaître… ou disparaître lui-même : à la mort du parent, init
     (PID 1) adopte les zombies et les récupère aussitôt. Redémarrer le
     service parent suffit.
-memory-evenement-grossit =
+memory-event-grows =
     Regarde la playlist dans top (ou top -o %MEM) d'une commande à l'autre :
     elle grossit sans arrêt, des dizaines de mégaoctets à chaque fois. Une
     fuite de mémoire ! Le code est dans /opt/playlist. Si rien ne l'arrête,
     le noyau devra encore tuer quelqu'un…
-memory-evenement-encore =
+memory-event-still =
     Et voilà : plus de mémoire, l'OOM killer a de nouveau frappé (sudo
     dmesg). Relancer ne suffit pas, la fuite recommence. Corriger le
     programme, c'est le travail des développeur·ses ; ce soir, il faut le
     contenir. systemd peut limiter la mémoire d'un service (MemoryMax=,
     voir man systemctl : edit, set-property) et le relancer s'il meurt
     (Restart=).
-memory-evenement-trop-bas =
+memory-event-too-down =
     Cette limite est trop basse : la playlist a besoin d'environ 200 Mo
     rien que pour démarrer, elle serait tuée presque aussitôt lancée.
     Donne-lui de quoi tourner un moment (quelques centaines de mégaoctets),
     sans mettre la machine en danger.
-memory-evenement-trop-haut =
+memory-event-too-up =
     Cette limite est plus haute que ce que la machine peut offrir sans
     souffrir (2 Go en tout, dont 1 Go pris par le reste) : le noyau
     frapperait avant systemd. Vise plutôt quelques centaines de mégaoctets.
-memory-evenement-sans-relance =
+memory-event-without-restart =
     systemd a tué la playlist quand elle a dépassé sa limite, comme prévu :
     la machine et le relais n'ont rien senti. Mais elle est restée arrêtée
     (systemctl status radio-playlist : Result: oom-kill). Pour que systemd
     la relance tout seul, il faut ajouter Restart=on-failure dans la
     section {"["}Service] de la surcharge (sudo systemctl edit radio-playlist).
-memory-evenement-contenue =
+memory-event-contained =
     La playlist a atteint sa limite : systemd l'a tuée, et aussitôt
     relancée (systemctl status radio-playlist). Seule elle a souffert, pas
     la machine. Le silence n'a duré qu'un instant.
-memory-evenement-sans-zombies =
+memory-event-without-zombies =
     Plus aucun zombie : leur parent redémarré, init les a récupérés.
-memory-evenement-fin =
+memory-event-end =
     La playlist tourne, contenue par sa limite et relancée si elle la
     dépasse ; les zombies ont disparu. Le direct a retrouvé sa musique.
     Zoé : « J'ouvre un ticket pour le cache de la playlist. Merci ! »

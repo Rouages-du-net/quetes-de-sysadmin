@@ -59,7 +59,7 @@ agents, but its rules apply to everyone.
 - **Code in English.** The project started in French. Files and
   identifiers (variables, functions, types, components) are now in
   English, and so is the world (places, machines, accounts, passwords);
-  some data identifiers are still French (`.ftl` keys, CSS classes) and some
+  some identifiers are still French (`.ftl` file names, CSS classes) and some
   comments, and are being moved to English. Write **new** code in
   English, and don't mix a large rename with a feature in the same pull
   request. Public names get an English alias

@@ -2,12 +2,12 @@
 ### DNS (BIND). Commands, paths, domain names, zone files and the messages
 ### of dig, named and rndc are not translated.
 
-chapitre-works-for-me = Works on my machine
+chapter-works-for-me = Works on my machine
     .resume = The café's website only works for Kofi: DNS, BIND zone, serial number, TTL.
 
 ## Files
 
-works-for-me-courriel-kofi =
+works-for-me-email-kofi =
     From:    Kofi (The Neighbourhood Letters association)
     To:      you
     Subject: It works on my machine!
@@ -28,7 +28,7 @@ works-for-me-courriel-kofi =
 
     Can you take a look? Rania left some help in help_dns.txt. For
     sudo: ants-2026
-works-for-me-aide-dns =
+works-for-me-help-dns =
     DNS HELP — BY RANIA
 
     /etc/hosts only changes the computer it is on: it's a "homemade"
@@ -50,7 +50,7 @@ works-for-me-aide-dns =
 ## Events
 
 # { $heures }: the time left before the resolver forgets the old address
-works-for-me-evenement-cache =
+works-for-me-event-cache =
     Our server gives the new address… but the public resolver still
     answers with the old one. Look at the number before IN: it's the TTL
     left. The resolver kept yesterday's answer in its cache, and will keep
@@ -62,22 +62,22 @@ works-for-me-evenement-cache =
     You can't flush them; you can only plan ahead (a short TTL before a
     change). In the meantime, check directly with the two authoritative
     servers.
-works-for-me-evenement-erreur-zone =
+works-for-me-event-error-zone =
     named rejects the zone and keeps the old version: the site doesn't
     break, but nothing has changed. journalctl -u named tells you why;
     named-checkzone tells you before reloading.
-works-for-me-evenement-serial =
+works-for-me-event-serial =
     ns1 (our server) and ns2 (the registry's copy) no longer give the same
     answer: ns2 hasn't copied the zone. A secondary server only copies a
     zone if its serial number (the SOA serial) has increased.
     journalctl -u named reports it. The usual habit: YYYYMMDDnn, today's
     date and a change number.
-works-for-me-evenement-point-final =
+works-for-me-event-point-final =
     Careful: in a zone, a name written without a trailing dot is completed
     with the zone name. cafe.example (without the dot) becomes
     cafe.example.cafe.example.: dig @localhost www.cafe.example shows it.
     For a full name: cafe.example. with the dot.
-works-for-me-evenement-fin =
+works-for-me-event-end =
     ns1 and ns2 give the same answer: cafe.example and www.cafe.example
     lead to the Letters server. Resolvers will follow, at the latest when
     their cache expires. Kofi removes the line from his /etc/hosts:

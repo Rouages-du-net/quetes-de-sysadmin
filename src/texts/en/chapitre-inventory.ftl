@@ -2,12 +2,12 @@
 ### neighbourhood centres? Ansible's commands, paths and output are not
 ### translated.
 
-chapitre-inventory = The Inventory
+chapter-inventory = The Inventory
     .resume = Three servers to manage at once: an Ansible inventory, host keys, the right account, then ansible -m ping.
 
 ## Files
 
-inventory-courriel-theo =
+inventory-email-theo =
     From:    Théo
     To:      you
     Subject: The three neighbourhood centres
@@ -34,27 +34,27 @@ inventory-courriel-theo =
 
 ## Events
 
-inventory-evenement-sans-config =
+inventory-event-without-config =
     "No inventory was parsed": Ansible found neither ansible.cfg nor an
     inventory. It looks for ansible.cfg in the directory you're in, then
     ~/.ansible.cfg, then /etc/ansible/ansible.cfg. Théo's configuration is
     in ~/ansible: go there (cd ~/ansible).
-inventory-evenement-cle-hote =
+inventory-event-key-host =
     "Host key verification failed": Ansible goes through ssh, but never
     asks "Are you sure you want to continue connecting?". A machine whose
     host key isn't in ~/.ssh/known_hosts is refused. Connect once to each
     (ssh deploy@north, check the fingerprint, yes, then exit): the key is
     recorded, and Ansible will get through.
-inventory-evenement-compte =
+inventory-event-account =
     "theo@…: Permission denied": Ansible connects with the remote_user
     account from ansible.cfg, theo, which doesn't exist on the centres.
     The account with your key is deploy (or ansible_user in the inventory,
     or -u deploy for a single command).
-inventory-evenement-manque =
+inventory-event-missing =
     Everyone in the inventory answers "pong"… but the inventory only knows
     two of them. Théo talked about three neighbourhood centres:
     ansible-inventory --graph shows what Ansible read.
-inventory-evenement-fin =
+inventory-event-end =
     north, south and east answer "pong": Ansible reaches all three, with
     the right account and verified host keys. Théo: "One command for three
     servers, we're there!"

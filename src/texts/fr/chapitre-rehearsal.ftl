@@ -2,7 +2,7 @@
 ### --limit et handlers. Les commandes, modules, chemins et sorties d'Ansible
 ### ne se traduisent pas ; les noms des tâches et des handlers, si.
 
-chapitre-rehearsal = La répétition
+chapter-rehearsal = La répétition
     .resume = Couper les mots de passe SSH sur trois serveurs sans s'enfermer dehors : répéter (--check --diff), un centre d'abord (--limit), et un handler qui recharge sshd.
 
 ## Fichiers
@@ -72,29 +72,29 @@ rehearsal-note-theo =
 
 ## Événements
 
-rehearsal-evenement-repetition =
+rehearsal-event-rehearsal =
     La répétition : avec --check, Ansible regarde chaque hôte et dit ce
     qu'il changerait, sans rien changer ; --diff montre les lignes en
     question. C'est le moment de relire, et de trouver les erreurs avant
     qu'elles ne coûtent quelque chose.
-rehearsal-evenement-gestionnaire =
+rehearsal-event-handler =
     « The requested handler 'Recharger ssh' was not found » : la tâche
     notifie « Recharger ssh », mais le handler s'appelle « recharger ssh ».
     Ansible compare les noms exactement, majuscules comprises. Corrige
     l'un ou l'autre dans ssh.yml.
-rehearsal-evenement-canari =
+rehearsal-event-canary =
     Un seul centre a reçu le changement (--limit). Avant de continuer,
     vérifie qu'on s'y connecte toujours avec la clé : ansible north -m ping
     (ou ssh deploy@north). Si quelque chose casse, il ne casse qu'à un
     endroit.
-rehearsal-evenement-pas-recharge =
+rehearsal-event-not-reload =
     Sur au moins un centre, sshd_config dit PasswordAuthentication no, mais
     sshd tourne encore avec l'ancienne configuration : le handler n'a pas
     rechargé le service. Et relancer le playbook n'y changera rien : la
     ligne est déjà là, la tâche dit « ok », elle ne notifie plus. Il faut
     recharger ssh soi-même, sur les centres concernés (le module service,
     avec ansible).
-rehearsal-evenement-fin =
+rehearsal-event-end =
     Sur les trois centres, sshd refuse désormais les mots de passe, et le
     playbook relancé ne change plus rien. Théo : « Et personne n'est resté
     enfermé dehors. »

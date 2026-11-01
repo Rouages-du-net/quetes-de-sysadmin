@@ -38,7 +38,7 @@ const REPORT = `${M}/closing_report.md`;
 const TARGET = 70;
 const SSH_KEYS = ['permitrootlogin', 'x11forwarding', 'maxauthtries', 'allowtcpforwarding', 'allowagentforwarding'];
 const SECTIONS = ['resume', 'constats', 'preuves', 'reste'];
-const SUBJECTS = ['ssh', 'compte', 'sudo', 'secret', 'reseau', 'cle'];
+const SUBJECTS = ['ssh', 'account', 'sudo', 'secret', 'network', 'key'];
 
 const LOGIN_DEFS = `# /etc/login.defs - Configuration control definitions for the login package.
 MAIL_DIR        /var/mail
@@ -89,7 +89,7 @@ const sections = (j: Game, text: string) => sectionsMd(j, text, 'follow-up-secti
 const words = (j: Game, key: string) => j.t(key).split(',').map((m) => m.trim().toLowerCase());
 // Les nombres écrits juste après le mot « indice » (ou « index », « hardening »…) : « indice de durcissement 80 ».
 const digits = (j: Game, text: string) => {
-  const word = words(j, 'follow-up-mots-indice').map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  const word = words(j, 'follow-up-words-hint').map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   return [...text.matchAll(new RegExp(`(?:${word})\\D{0,40}(\\d+)`, 'gi'))].map((x) => Number(x[1]));
 };
 const readReport = (j: Game) => j.read(path(j.t, REPORT));
@@ -98,15 +98,15 @@ const missing = (j: Game): string[] => {
   const text = readReport(j) ?? '';
   const s = sections(j, text);
   const m: string[] = [];
-  if (text.toLowerCase().includes(j.t('follow-up-a-completer').toLowerCase())) m.push('modele');
-  if ((s.resume ?? '').trim().length < 30) m.push('resume');
+  if (text.toLowerCase().includes(j.t('follow-up-a-complete').toLowerCase())) m.push('template');
+  if ((s.resume ?? '').trim().length < 30) m.push('summary');
   const bas = (s.constats ?? '').toLowerCase();
-  if (SUBJECTS.filter((x) => words(j, `follow-up-mots-${x}`).some((w) => bas.includes(w))).length < 5) m.push('constats');
+  if (SUBJECTS.filter((x) => words(j, `follow-up-words-${x}`).some((w) => bas.includes(w))).length < 5) m.push('findings');
   const l = lynis(j);
   if (!l) m.push('lynis');
-  else if (!digits(j, s.preuves ?? '').includes(l.hint) || !/443/.test(s.preuves ?? '')) m.push('preuves');
+  else if (!digits(j, s.preuves ?? '').includes(l.hint) || !/443/.test(s.preuves ?? '')) m.push('proofs');
   const ids = (s.reste ?? '').match(/\b[A-Z]{3,4}-\d{4}\b/g) ?? [];
-  if (!ids.some((id) => lynis(j)?.ids.includes(id))) m.push('reste');
+  if (!ids.some((id) => lynis(j)?.ids.includes(id))) m.push('rest');
   return m;
 };
 const okReport = (j: Game) => missing(j).length === 0;
@@ -118,8 +118,8 @@ export const againstVisit: Chapter = {
   home: M,
   welcome: 'email_salome.txt',
   names: true,
-  final: 'fin',
-  steps: ['balayage', 'lynis', 'mise-a-jour', 'durci', 'preuve-lynis', 'nmap-propre', 'fin'],
+  final: 'end',
+  steps: ['scan', 'lynis', 'update', 'hardened', 'proof-lynis', 'nmap-own', 'end'],
   password: PASSWORD,
   accounts: () => bakeryAccounts(false),
   state: () => ({
@@ -142,7 +142,7 @@ export const againstVisit: Chapter = {
   createWorld: (t) =>
     bakeryWorld(t, {
       withoutLucas: true,
-      home: { 'email_salome.txt': f(t('follow-up-courriel-salome')), 'closing_report.md': f(t('follow-up-modele'), { lines: true }) },
+      home: { 'email_salome.txt': f(t('follow-up-email-salome')), 'closing_report.md': f(t('follow-up-template'), { lines: true }) },
       etc: {
         'login.defs': file(LOGIN_DEFS),
         issue: file('Debian GNU/Linux 13 \\n \\l\n'),
@@ -160,39 +160,39 @@ export const againstVisit: Chapter = {
       j.state.rapportFini = true;
       return;
     }
-    return [j.t('follow-up-relecture'), ...rest.map((m) => `- ${j.t(`follow-up-manque-${m}`, { cible: String(TARGET) })}`)].join('\n');
+    return [j.t('follow-up-review'), ...rest.map((m) => `- ${j.t(`follow-up-missing-${m}`, { cible: String(TARGET) })}`)].join('\n');
   },
   events: [
-    { id: 'erreur-ssh', condition: errorSsh, message: (j) => j.t('follow-up-evenement-erreur-ssh') },
-    { id: 'enferme', condition: (j) => !between(j), message: (j) => j.t('follow-up-evenement-enferme') },
+    { id: 'error-ssh', condition: errorSsh, message: (j) => j.t('follow-up-event-error-ssh') },
+    { id: 'locked-out', condition: (j) => !between(j), message: (j) => j.t('follow-up-event-locked-out') },
     {
-      id: 'hors-perimetre',
+      id: 'outside-scope',
       condition: outsideScope,
-      message: (j) => j.t('follow-up-evenement-hors-perimetre', { adresses: addressesOutside(j).join(', '), voisin: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
+      message: (j) => j.t('follow-up-event-outside-scope', { adresses: addressesOutside(j).join(', '), voisin: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
     },
     {
-      id: 'balayage',
+      id: 'scan',
       condition: (j) => !!lastScan(j),
-      message: (j) => j.t('follow-up-evenement-balayage', { ancienne: dayASsh(lastScan(j)) ? 'non' : 'oui' }),
+      message: (j) => j.t('follow-up-event-scan', { ancienne: dayASsh(lastScan(j)) ? 'non' : 'oui' }),
     },
     {
       id: 'lynis',
       condition: (j) => !!lynis(j),
-      message: (j) => j.t('follow-up-evenement-lynis', { indice: String(lynis(j)!.hint), avertissements: String(lynis(j)!.warnings) }),
+      message: (j) => j.t('follow-up-event-lynis', { indice: String(lynis(j)!.hint), avertissements: String(lynis(j)!.warnings) }),
     },
-    { id: 'mise-a-jour', condition: dayA, message: (j) => j.t('follow-up-evenement-mise-a-jour') },
+    { id: 'update', condition: dayA, message: (j) => j.t('follow-up-event-update') },
     {
-      id: 'ssh-a-recharger',
+      id: 'ssh-a-reload',
       condition: (j) => sshChange(j) && !errorSsh(j),
-      message: (j) => j.t('follow-up-evenement-ssh-a-recharger'),
+      message: (j) => j.t('follow-up-event-ssh-a-reload'),
     },
-    { id: 'durci', condition: (j) => hardened(j) && appliesSsh(j), message: (j) => j.t('follow-up-evenement-durci', { cible: String(TARGET) }) },
-    { id: 'preuve-lynis', condition: (j) => lynisProof(j) && appliesSsh(j), message: (j) => j.t('follow-up-evenement-preuve-lynis') },
-    { id: 'nmap-propre', condition: nmapOk, message: (j) => j.t('follow-up-evenement-nmap-propre') },
+    { id: 'hardened', condition: (j) => hardened(j) && appliesSsh(j), message: (j) => j.t('follow-up-event-hardened', { cible: String(TARGET) }) },
+    { id: 'proof-lynis', condition: (j) => lynisProof(j) && appliesSsh(j), message: (j) => j.t('follow-up-event-proof-lynis') },
+    { id: 'nmap-own', condition: nmapOk, message: (j) => j.t('follow-up-event-nmap-own') },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => lynisProof(j) && appliesSsh(j) && nmapOk(j) && okReport(j),
-      message: (j) => j.t('follow-up-evenement-fin', { faute: outsideScope(j) ? 'oui' : 'non' }),
+      message: (j) => j.t('follow-up-event-end', { faute: outsideScope(j) ? 'oui' : 'non' }),
     },
   ],
 };

@@ -2,12 +2,12 @@
 ### commandes, modules, chemins et sorties d'Ansible ne se traduisent pas ;
 ### les noms des tâches et le texte du message d'accueil, si.
 
-chapitre-playbook = Le playbook
+chapter-playbook = Le playbook
     .resume = Un playbook qui double une ligne et échoue la deuxième fois : le réécrire avec les bons modules, pour qu'une deuxième exécution ne change rien.
 
 ## Fichiers
 
-playbook-ligne-motd = Maison de quartier. Serveur géré par Ansible, ne pas modifier à la main.
+playbook-line-motd = Maison de quartier. Serveur géré par Ansible, ne pas modifier à la main.
 
 playbook-site-yml =
     # Le playbook des maisons de quartier (Lucie)
@@ -48,26 +48,26 @@ playbook-message-theo =
 
 ## Événements
 
-playbook-evenement-echec =
+playbook-event-failure =
     Une tâche a échoué : mkdir refuse de créer /srv/shared, qui existe déjà.
     Le module command lance la commande à chaque fois, sans savoir si
     c'est encore utile. Les modules d'Ansible, eux, décrivent un état :
     « ce dossier existe » (man… ou plutôt ansible-doc file), et ne font
     quelque chose que s'il le faut.
-playbook-evenement-doublon =
+playbook-event-duplicate =
     Le message d'accueil a la ligne en double : shell: echo … >> ajoute
     une ligne à chaque exécution. Pour décrire « le fichier contient cette
     ligne une fois », il y a des modules : copy (tout le contenu du
     fichier) ou lineinfile (une ligne). ansible-doc copy, ansible-doc
     lineinfile.
-playbook-evenement-modules =
+playbook-event-modules =
     site.yml n'utilise plus ni shell ni command : chaque tâche décrit un
     état, et Ansible vérifie avant d'agir.
-playbook-evenement-deuxieme =
+playbook-event-second =
     Le playbook est passé partout. Mais un playbook idempotent se
     vérifie… en le relançant : la deuxième fois, il ne doit rien changer
     (changed=0 dans le PLAY RECAP).
-playbook-evenement-fin =
+playbook-event-end =
     Deuxième exécution : ok partout, changed=0, failed=0. Les trois
     centres sont dans le même état, et le playbook peut tourner tous les
     jours sans rien abîmer. Théo : « Lucie va être contente, elle avait

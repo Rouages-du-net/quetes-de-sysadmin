@@ -2,12 +2,12 @@
 ### pare-feu entre les VLAN, avec sysctl et nftables. Les commandes, les
 ### mots-clés de nft, les noms d'interfaces et les chemins ne se traduisent pas.
 
-chapitre-zones = Les zones
+chapter-zones = Les zones
     .resume = Rien ne sort sur internet, et tout le monde voit tout : le routage, la traduction d'adresses (NAT) et un pare-feu entre les VLAN, avec nftables, et qui tiennent au redémarrage.
 
 ## Fichiers
 
-zones-courriel-malik =
+zones-email-malik =
     De :     Malik
     À :      toi
     Objet :  Internet ne sort pas
@@ -51,7 +51,7 @@ zones-notes-sacha =
 
 ## Événements
 
-zones-evenement-sans-traduction =
+zones-event-without-translation =
     Le routeur transmet maintenant les paquets… et ils sortent par eth0
     avec leur adresse privée (10.10.x.x). Sur internet, personne ne sait
     où répondre à une adresse privée : elles sont réservées aux réseaux
@@ -59,31 +59,31 @@ zones-evenement-sans-traduction =
     fasse sortir sous sa propre adresse (de la traduction d'adresses, ou
     NAT : man nft, masquerade). sudo conntrack -L montre les échanges
     restés sans réponse ([UNREPLIED]).
-zones-evenement-reponses =
+zones-event-responses =
     Les questions passent, mais pas les réponses : avec une politique
     drop, la réponse d'un serveur est un paquet comme un autre, qui entre
     par une interface où rien ne la permet. Le pare-feu suit les échanges
     (ct state) : il sait reconnaître une réponse à un échange déjà permis
     (established) et la laisser revenir.
-zones-evenement-tout-ouvert =
+zones-event-all-open =
     Internet marche partout… y compris là où il ne faut pas : le téléphone
     d'un visiteur atteint le NAS ou une caméra, ou la caméra sort sur
     internet. Par défaut, la chaîne forward laisse tout passer. La bonne
     méthode : tout fermer (policy drop), puis ouvrir seulement ce qui est
     voulu, zone par zone.
-zones-evenement-ssh =
+zones-event-ssh =
     Attention : avec ces règles, une nouvelle connexion ssh depuis le poste
     d'administration (192.0.2.2) serait refusée par la chaîne input. Ta
     session actuelle ne tient qu'à un fil : si elle se coupe, plus personne
     n'entre sur le routeur (sauf à brancher un écran dessus). Laisse passer
     ssh avant de fermer le reste.
-zones-evenement-en-place =
+zones-event-in-place =
     Tout marche comme Malik le voulait… en ce moment. Mais si le routeur
     redémarre, comme samedi ? sysctl -w et nft en ligne de commande ne
     durent pas. Les réglages du noyau s'écrivent dans /etc/sysctl.d (man
     sysctl.d), les règles dans /etc/nftables.conf, que le service nftables
     charge au démarrage… s'il est activé.
-zones-evenement-fin =
+zones-event-end =
     Les bureaux sortent sur internet et impriment, le café a du wifi et ne
     voit que lui, les caméras restent à la maison, et tout tiendra au
     prochain redémarrage. Malik : « Sacha dit que c'est la première fois

@@ -2,12 +2,12 @@
 ### sauver le fonds d'une bibliothèque de quartier sur une petite clé USB,
 ### avec du, df, find et tar.
 
-chapitre-archives = Les Archives
+chapter-archives = Les Archives
     .resume = Mesurer, trier et empaqueter un fonds pour le sauver sur une clé : du, df, find, tar.
 
 ## Fichiers
 
-archives-lettre-de-rosa =
+archives-letter-rosa =
     Une lettre de Rosa, bibliothécaire de la bibliothèque du quartier :
 
     « Le serveur de la bibliothèque sera éteint ce soir à minuit, définitivement :
@@ -40,44 +40,44 @@ archives-notes-rosa =
       tar -czf /media/cle/fonds.tar.gz fonds
     Vérifier ce qu'elle contient :
       tar -tzf /media/cle/fonds.tar.gz
-archives-lisezmoi = Fonds de la bibliothèque du quartier. Dons des habitant·es, 1890-2026.
-archives-journal-de-marie = Journal de Marie, couturière, 1931-1940 (transcription).
-archives-lettres-1914 = Lettres d’Ahmed à sa sœur, 1914-1918 (transcription).
-archives-recettes-du-quartier = Recettes collectées au marché, 1975-2020.
+archives-readme = Fonds de la bibliothèque du quartier. Dons des habitant·es, 1890-2026.
+archives-journal-marie = Journal de Marie, couturière, 1931-1940 (transcription).
+archives-letters-1914 = Lettres d’Ahmed à sa sœur, 1914-1918 (transcription).
+archives-recipes-neighbourhood = Recettes collectées au marché, 1975-2020.
 # Contenu affiché par cat pour les fichiers qui ne sont pas du texte
 archives-image-png = (image PNG)
 archives-document-pdf = (document PDF)
-archives-son-ogg = (son Ogg Vorbis)
-archives-fichier-temporaire = (fichier temporaire)
+archives-its-ogg = (son Ogg Vorbis)
+archives-file-temporary = (fichier temporaire)
 
 ## Événements
 
-archives-evenement-mesure =
+archives-event-measure =
     Le fonds pèse bien plus que les 64 Mo de la clé. Mais regarde où se trouve
     la place : quelques gros fichiers… Rosa parlait de fichiers temporaires.
     find fonds -name "*.tmp"
-archives-evenement-plein =
+archives-event-full =
     « Aucun espace disponible sur le périphérique » : l'archive ne tient pas sur
     la clé. Il faut faire de la place AVANT : que contient le fonds qui n'est
     pas précieux ? (du -h fonds, puis find fonds -name "*.tmp")
-archives-evenement-tmp =
+archives-event-tmp =
     Trois fichiers temporaires, 120 Mo à eux trois ! Rosa dit qu'on peut les
     jeter. find peut les effacer d'un coup, avec -delete à la fin :
 
       find fonds -name "*.tmp" -delete
 
     (Relis bien avant Entrée : sans le -name, find effacerait TOUT le fonds.)
-archives-evenement-perte =
+archives-event-loss =
     Aïe : un fichier précieux du fonds a disparu, et find -delete, comme rm, ne passe par aucune corbeille…
     Dans la vraie vie, c'est pour cela qu'on fait des sauvegardes AVANT de faire
     le ménage. Ici, tu peux recommencer le chapitre (lien sous le terminal).
-archives-evenement-menage =
+archives-event-cleanup =
     Le ménage est fait. Vérifie avec du -sh fonds, puis crée l'archive
     compressée directement sur la clé :
 
       tar -czf /media/cle/fonds.tar.gz fonds
 # { $taille } : taille de l'archive en Mo (nombre, avec une décimale)
-archives-evenement-sauve =
+archives-event-saved =
     L'archive est sur la clé : { NUMBER($taille, minimumFractionDigits: 1, maximumFractionDigits: 1) } Mo, avec tout le fonds. Les textes ont été
     fortement compressés ; les images, les sons et les PDF, déjà compressés,
     presque pas. Pour vérifier son contenu sans l'ouvrir :

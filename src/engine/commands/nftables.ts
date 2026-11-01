@@ -74,7 +74,7 @@ function preview(game: Shell, words: string[]): string {
       ? t.join('\n')
       : game.error(`Error: No such file or directory\nlist table ${family} ${name}\n${' '.repeat(12 + family.length)}${'^'.repeat(name.length)}`, 1);
   }
-  return game.error(game.t('nft-apercu-ufw'), 1);
+  return game.error(game.t('nft-preview-ufw'), 1);
 }
 
 // ——— sysctl ———
@@ -226,7 +226,7 @@ function conntrack(game: Shell, args: string[]): string {
   const action = args.find((a) => ['-L', '--dump', '-C', '--count', '-F', '--flush', '-E', '--event'].includes(a));
   if (!action) return game.error(`${CONNTRACK}: no command specified\nTry \`conntrack -h' or 'conntrack --help' for more information.`, 2);
   if (game.who !== 'root') return game.error(`${CONNTRACK}: Operation failed: Operation not permitted`, 1);
-  if (action === '-E' || action === '--event') return game.error(game.t('conntrack-evenements'), 1);
+  if (action === '-E' || action === '--event') return game.error(game.t('conntrack-events'), 1);
   if (action === '-F' || action === '--flush') {
     // Les échanges en cours se recréent aussitôt : les appareils continuent de parler.
     game.error(`${CONNTRACK}: connection tracking table has been emptied.`, 0);

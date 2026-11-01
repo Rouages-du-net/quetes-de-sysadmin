@@ -4,12 +4,12 @@
 ### Account and group names (malo, adm, web-team), commands,
 ### paths and modes (640, 770) are not translated.
 
-chapitre-second-day = Second day
+chapter-second-day = Second day
     .resume = A new recruit: accounts and groups, id, usermod -aG, chgrp, chmod for the group.
 
 ## Files
 
-second-day-courriel-awa =
+second-day-email-awa =
     From:    Awa (operations manager)
     To:      you
     Subject: Second day, two small things
@@ -54,7 +54,7 @@ second-day-notes-awa =
 
 ## Events
 
-second-day-evenement-remplace =
+second-day-event-replaced =
     Ouch: Malo is no longer in the web-team group!
 
     Without the -a option, usermod -G REPLACES the list of secondary groups
@@ -62,14 +62,14 @@ second-day-evenement-remplace =
     already locked more than one admin out of their own sudo access. Check
     with groups malo, then reread man usermod to give Malo his groups back.
 # { $logs }: the log directory
-second-day-evenement-journaux-ouverts =
+second-day-event-logs-open =
     Careful: with these permissions, ALL accounts on the machine can read
     the logs in { $logs }, including www-data, the website's account.
 
     An access log contains visitors' IP addresses: that is personal
     data, which must be protected (GDPR). Take the permissions away from
     others again (640), and use the group meant for this instead.
-second-day-evenement-malo-lit =
+second-day-event-malo-reads =
     Malo can read the logs, without sudo and without opening them to
     everyone: he is a member of the adm group, and the logs grant read
     permission to that group (r-- in the middle of rw-r-----).
@@ -77,14 +77,14 @@ second-day-evenement-malo-lit =
     By the way, on a real machine, Malo will have to log in again: a
     session's groups are read at login.
 # { $partage }: the path of the shared directory
-second-day-evenement-partage-ouvert =
+second-day-event-share-open =
     Careful: any account can now write in { $partage },
     including www-data. If the site gets hacked, the attacker can drop
     whatever they want there. Remove all permissions for others (last digit 0).
-second-day-evenement-partage =
+second-day-event-share =
     The directory { $partage } is ready: the web team can enter it, read
     and write there, and other accounts see nothing in it.
-second-day-evenement-fin =
+second-day-event-end =
     Awa pops her head through the door: "Perfect. Malo reads the logs, the
     share is closed to others, and nobody got more permissions than
     needed."

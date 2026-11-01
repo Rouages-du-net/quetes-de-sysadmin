@@ -152,7 +152,7 @@ function ionice(game: Shell, args: string[]): string {
     } else if (a === '-h' || a === '--help') return help('ionice', IOSTAT.ionice, game.t);
     else if (a.startsWith('-'))
       return game.error(`ionice: invalid option -- '${a.replace(/^-+/, '')}'\nTry 'ionice --help' for more information.`, 1);
-    else return game.error(game.t('ionice-commande'), 1);
+    else return game.error(game.t('ionice-command'), 1);
   }
   const e = io(game);
   const live = new Set((game.state.processus ?? []).map((p: { pid: number }) => p.pid));

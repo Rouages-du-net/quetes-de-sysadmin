@@ -3,12 +3,12 @@
 ### inside the scope. The commands, options, paths and nmap's output are not
 ### translated.
 
-chapitre-scope = The Scope
+chapter-scope = The Scope
     .resume = Before scanning: read the letter of engagement, take an inventory with nmap, and leave alone whatever is not in the scope.
 
 ## Files
 
-scope-courriel-salome =
+scope-email-salome =
     From:     Salomé (auditor)
     To:       you
     Subject:  Bakery audit mission — where to start
@@ -36,7 +36,7 @@ scope-courriel-salome =
     Salomé
     (For sudo, your password is: flour-2028)
 
-scope-lettre-de-mission =
+scope-letter-mission =
     LETTER OF ENGAGEMENT
 
     Between: the bakery Le Fournil, represented by Nadia, manager
@@ -69,7 +69,7 @@ scope-lettre-de-mission =
 
     Signed: Nadia (manager) and Salomé, 3 March 2028.
 
-scope-notes-modele =
+scope-notes-template =
     # Audit notes — Le Fournil
 
     ## Scope
@@ -81,23 +81,23 @@ scope-notes-modele =
     ## Out of scope
     (to complete: what I spotted and did NOT probe, and why)
 
-scope-section-perimetre = Scope
-scope-section-trouve = What I found
-scope-section-hors = Out of scope
-scope-a-completer = (to complete
-scope-mots-hors = out of scope, not in the letter, not in the mandate, not probed, did not probe, not scanned, did not touch, without touching, left alone
+scope-section-scope = Scope
+scope-section-found = What I found
+scope-section-outside = Out of scope
+scope-a-complete = (to complete
+scope-words-outside = out of scope, not in the letter, not in the mandate, not probed, did not probe, not scanned, did not touch, without touching, left alone
 
 ## Review
 
-scope-relecture = Salomé reads your notes:
-scope-manque-modele = Some "(to complete)" lines of the template are still there.
-scope-manque-ports = Under "What I found", what has no business on the internet is missing: the port numbers of the database and of Redis (what nmap showed).
-scope-manque-voisin = The machine you spotted without touching it is missing: the neighbour's server (name or address).
-scope-manque-hors = You mention the neighbour's server: also say that it is out of scope (and that you did not probe it).
+scope-review = Salomé reads your notes:
+scope-missing-template = Some "(to complete)" lines of the template are still there.
+scope-missing-ports = Under "What I found", what has no business on the internet is missing: the port numbers of the database and of Redis (what nmap showed).
+scope-missing-neighbour = The machine you spotted without touching it is missing: the neighbour's server (name or address).
+scope-missing-outside = You mention the neighbour's server: also say that it is out of scope (and that you did not probe it).
 
 ## Events
 
-scope-evenement-lettre =
+scope-event-letter =
     The letter of engagement is the document that protects you as much as
     the client: it says where you may go. Remember two things: the scope
     (ONE machine: bakery, 192.0.2.22) and the list of what is forbidden.
@@ -105,7 +105,7 @@ scope-evenement-lettre =
     worst an offence.
 
     On to the inventory: nmap, with versions (man nmap).
-scope-evenement-balayage =
+scope-event-scan =
     That is what the internet sees of the Bakery. Read the STATE column:
     "open" means a program answers; "filtered", that a firewall drops the
     packet; "closed", that nobody listens. And the VERSION column: an
@@ -115,7 +115,7 @@ scope-evenement-balayage =
     reason to be reachable by anyone? Keep the trace in a file (the -oN
     option): a finding without proof is only an opinion.
 # { $adresses }: the addresses probed outside the letter of engagement; { $voisin }: "oui" if the neighbour's server is one of them
-scope-evenement-hors-perimetre =
+scope-event-outside-scope =
     WARNING: you have just probed an address that is not in your letter of
     engagement ({ $adresses }{ $voisin ->
         [oui] , including the neighbour's server
@@ -128,7 +128,7 @@ scope-evenement-hors-perimetre =
 
     (Scanning a whole network, like 192.0.2.0/24, also probes everything in
     it: always give the exact addresses of the scope.)
-scope-evenement-trace =
+scope-event-trace =
     You have proof: a file with the exact command, the date, the ports and
     the versions. In the report you can say "on 6 March, from the internet,
     the database answered on port 5432" and show it.
@@ -136,7 +136,7 @@ scope-evenement-trace =
     Your notes remain to be written (audit_notes.md): what you found, and
     what you saw without touching it.
 # { $faute }: "oui" if the scan went beyond the scope, "non" otherwise
-scope-evenement-fin =
+scope-event-end =
     Salomé: "That is a clean inventory: a scope, proof, and honest notes. We
     can use it for the report."
 

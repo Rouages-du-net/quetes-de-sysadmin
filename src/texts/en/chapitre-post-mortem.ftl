@@ -4,12 +4,12 @@
 ### translated. The section titles of the template (post-mortem-section-…)
 ### must stay the same as in the template.
 
-chapitre-post-mortem = The Post-Mortem
+chapter-post-mortem = The Post-Mortem
     .resume = Sunday night, Théo was on call and the live broadcast cut out: write down what happened, with the facts from the logs and without looking for someone to blame.
 
 ## Files
 
-post-mortem-message-de-zoe =
+post-mortem-message-zoe =
     A message from Zoé (Monday, 9:40 a.m.):
 
     "On Sunday night, Théo was on call: the live broadcast cut out, and he
@@ -30,7 +30,7 @@ post-mortem-notes-theo =
 
     What I don't understand: why did the relay restart in the middle of
     the night? Nobody was logged in.
-post-mortem-modele =
+post-mortem-template =
     # Post-mortem: live broadcast outage, night of 11 to 12 September 2027
 
     Blameless: we look for what made the outage possible, not for someone at fault.
@@ -101,42 +101,42 @@ post-mortem-section-causes = Causes
 post-mortem-section-marche = What went well
 post-mortem-section-actions = Actions
 # The beginning of the template lines to replace.
-post-mortem-a-completer = (to be completed
+post-mortem-a-complete = (to be completed
 # Words, one of which must appear in "Causes" (comma-separated, lowercase).
-post-mortem-mots-declencheur = unattended, upgrade, apt, needrestart, update, updating
-post-mortem-mots-origine = august, aug 20, 20 aug, 20/08, 08/20, 2027-08-20
+post-mortem-words-trigger = unattended, upgrade, apt, needrestart, update, updating
+post-mortem-words-origin = august, aug 20, 20 aug, 20/08, 08/20, 2027-08-20
 # Words that look for someone to blame (the post-mortem must avoid them).
 # (Not "fault" or "blame" alone: they are inside "default" and "blameless".)
-post-mortem-mots-reproche = at fault, to blame, guilty, negligence, negligent, careless, should have, incompetent, théo's mistake, theo's mistake, zoé's mistake, zoe's mistake, théo's fault, theo's fault, zoé's fault, zoe's fault
+post-mortem-words-blame = at fault, to blame, guilty, negligence, negligent, careless, should have, incompetent, théo's mistake, theo's mistake, zoé's mistake, zoe's mistake, théo's fault, theo's fault, zoé's fault, zoe's fault
 
-post-mortem-relecture = Zoé rereads your post-mortem:
+post-mortem-review = Zoé rereads your post-mortem:
 # { $mot }: the word that looks for someone to blame
-post-mortem-reproche = "{ $mot }": we're looking for what made the outage possible, not who caused it. Nobody acted wrongly; it's the system (the tools, the habits) that we improve. Could you rephrase?
-post-mortem-manque-modele = There are still "(to be completed)" lines from the template.
-post-mortem-manque-chronologie = The timeline must give, checked in the logs, the time of the outage, of the first alert and of the live broadcast's return (journalctl --since … --until …, the alert's mail).
-post-mortem-manque-impact = The impact: how many minutes of silence for the listeners?
-post-mortem-manque-cause = The causes: what restarted the relay in the middle of the night (apt's history, /var/log/unattended-upgrades), and the configuration error that stopped it from starting again.
-post-mortem-manque-origine = And how long had that error been waiting in stream.conf? The log keeps a record of commands run with sudo.
-post-mortem-manque-actions = At least two actions, one per "-" line.
-post-mortem-manque-marche = The summary, and what went well (there are things!).
+post-mortem-blame = "{ $mot }": we're looking for what made the outage possible, not who caused it. Nobody acted wrongly; it's the system (the tools, the habits) that we improve. Could you rephrase?
+post-mortem-missing-template = There are still "(to be completed)" lines from the template.
+post-mortem-missing-timeline = The timeline must give, checked in the logs, the time of the outage, of the first alert and of the live broadcast's return (journalctl --since … --until …, the alert's mail).
+post-mortem-missing-impact = The impact: how many minutes of silence for the listeners?
+post-mortem-missing-cause = The causes: what restarted the relay in the middle of the night (apt's history, /var/log/unattended-upgrades), and the configuration error that stopped it from starting again.
+post-mortem-missing-origin = And how long had that error been waiting in stream.conf? The log keeps a record of commands run with sudo.
+post-mortem-missing-actions = At least two actions, one per "-" line.
+post-mortem-missing-works = The summary, and what went well (there are things!).
 
 ## Events
 
-post-mortem-evenement-notes =
+post-mortem-event-notes =
     Théo's notes give leads, not facts: "around 2:30?", "around 2:20 I
     think". The logs, on the other hand, are accurate to the second
     (journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30").
     And who logged in that night? (last)
-post-mortem-evenement-redemarrage =
+post-mortem-event-reboot =
     Just before the relay went down, apt-daily-upgrade started: the
     night's automatic update. What did it install, and what did it do
     next? (/var/log/apt/history.log, /var/log/unattended-upgrades)
-post-mortem-evenement-origine =
+post-mortem-event-origin =
     On 20 August, Zoé changed stream.conf… without restarting the relay,
     which kept running with the old configuration. The error waited three
     weeks for the first restart. It's nobody's fault: nothing checked the
     configuration after a change.
-post-mortem-evenement-fin =
+post-mortem-event-end =
     Zoé: "Perfect. I'll read it at Thursday's meeting, and we'll get
     started on the actions. Thank you for these nights; you've made this
     radio a place where outages teach us something."

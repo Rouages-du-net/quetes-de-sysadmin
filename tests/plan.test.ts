@@ -39,7 +39,7 @@ for (const language of LANGUAGES)
       expect(plan('vlan')).not.toContain('web');
       expect(plan('dmz')).toContain('web');
       expect(plan('dmz')).not.toContain('borne-wifi');
-      expect(plan('wifi')).toEqual(expect.arrayContaining(['web', 'borne-wifi', 'malik-laptop', t('plan-annexe')]));
+      expect(plan('wifi')).toEqual(expect.arrayContaining(['web', 'borne-wifi', 'malik-laptop', t('plan-annex')]));
     });
 
     it('le schéma ne superpose aucune boîte, et chaque parent est entre ses enfants', () => {

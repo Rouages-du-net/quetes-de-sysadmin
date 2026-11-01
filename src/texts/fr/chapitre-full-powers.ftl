@@ -2,12 +2,12 @@
 ### faire tourner un conteneur en root. Les commandes, chemins, options et
 ### messages de docker, chown, ls et ps ne se traduisent pas.
 
-chapitre-full-powers = Les pleins pouvoirs
+chapter-full-powers = Les pleins pouvoirs
     .resume = La galerie photo du fablab tourne en root : --user, l'uid partagé entre le conteneur et la machine, et le dossier à donner au bon compte.
 
 ## Fichiers
 
-full-powers-message-de-yasmine =
+full-powers-message-yasmine =
     Un message de Yasmine :
 
     « Salut ! Tu connais la galerie photo du fablab (port 8082) ? Les
@@ -25,7 +25,7 @@ full-powers-message-de-yasmine =
       - et surtout ne perdre aucune des 14 photos !
 
     Pour sudo : fablab-2027. »
-full-powers-mot-de-rania =
+full-powers-word-rania =
     Un mot de Rania :
 
     « La galerie reçoit des fichiers envoyés par des inconnu·es : c'est
@@ -41,7 +41,7 @@ full-powers-mot-de-rania =
       sudo docker exec galerie-galerie-1 id
       ps aux
     Puis le manuel : man docker et man docker-compose. »
-full-powers-lisezmoi =
+full-powers-readme =
     Galerie 3.2 — LISEZMOI (fourni avec l'image registry.example/galerie)
 
     Les photos vivent dans /app/photos : montez-y un dossier ou un volume.
@@ -53,14 +53,14 @@ full-powers-lisezmoi =
     dans /app/photos.
 
 # { $nombre } : le nombre de photos
-full-powers-galerie-accueil = { $nombre ->
+full-powers-gallery-welcome = { $nombre ->
         [one] Galerie du fablab : une photo de projet. Envoie la tienne !
        *[other] Galerie du fablab : { $nombre } photos de projets. Envoie la tienne !
     }
 
 ## Événements
 
-full-powers-evenement-root =
+full-powers-event-root =
     La galerie tourne en root : uid=0 dans le conteneur, et root dans ps aux
     sur la machine, comme sshd. Son image ne déclare pas d'utilisateur (pas
     de USER), et compose.yaml non plus : par défaut, un conteneur tourne
@@ -69,12 +69,12 @@ full-powers-evenement-root =
     C'est aussi pour cela que les fichiers de /srv/galerie/photos
     appartiennent à root. Cherche --user dans man docker, et user: dans
     man docker-compose.
-full-powers-evenement-inconnu =
+full-powers-event-unknown =
     « unable to find user » : un nom donné à --user (ou à user:) doit exister
     dans le /etc/passwd DE L'IMAGE, pas dans celui de la machine. Avec des
     numéros (uid:gid), plus de problème : le noyau ne connaît que des
     numéros.
-full-powers-evenement-eacces =
+full-powers-event-eacces =
     La galerie ne démarre plus : EACCES, permission refusée (sudo docker
     logs, ou docker compose logs). Elle ne tourne plus en root, alors les
     droits Unix de la machine s'appliquent à elle, par numéro : uid et gid.
@@ -82,24 +82,24 @@ full-powers-evenement-eacces =
     Regarde ls -lan /srv/galerie/photos (-n : les numéros, -a : les fichiers
     cachés aussi). Docker la relance tout seul (restart: unless-stopped) :
     elle repartira dès qu'elle pourra écrire.
-full-powers-evenement-uid-1000 =
+full-powers-event-uid-1000 =
     La galerie tourne sous l'uid 1000… et sur cette machine, l'uid 1000,
     c'est toi (vous) ! Dans ls -l, ses fichiers t'appartiennent : le noyau
     ne voit que des numéros, et chaque /etc/passwd leur donne son nom (node
     dans l'image, vous sur la machine). Yasmine (uid 1001), elle, ne peut
     toujours pas écrire dans le dossier des photos.
-full-powers-evenement-ouvert-a-tous =
+full-powers-event-open-a-all =
     Un dossier ouvert en écriture à tous (chmod 777, o+w) : ça « marche »,
     mais n'importe quel compte, n'importe quel programme de la machine peut
     alors y déposer ou y effacer des fichiers. On donne plutôt le dossier au
     bon propriétaire (chown), sans ouvrir les droits des autres.
 # { $nombre } : le nombre de photos disparues
-full-powers-evenement-photos-perdues =
+full-powers-event-photos-lost =
     { $nombre ->
         [one] Une photo a disparu de /srv/galerie/photos. Sur un vrai serveur, sans sauvegarde, elle serait perdue.
        *[other] { $nombre } photos ont disparu de /srv/galerie/photos. Sur un vrai serveur, sans sauvegarde, elles seraient perdues.
     } Ici, tu peux recommencer le chapitre depuis le menu.
-full-powers-evenement-fin =
+full-powers-event-end =
     La galerie tourne sous un compte ordinaire, Yasmine gère les photos
     sans sudo, et les 14 photos sont toutes là. Rania : « Si quelqu'un perce
     la galerie, il n'aura plus que les droits d'un compte ordinaire. Pas

@@ -2,12 +2,12 @@
 ### The commands, paths, YAML keys and messages from docker, PostgreSQL
 ### and the app (in English) are not translated.
 
-chapitre-compose = The Composition
+chapter-compose = The Composition
     .resume = An app and its database with Docker Compose: service names, volumes, secrets in .env, restarting.
 
 ## Files
 
-compose-message-de-yasmine =
+compose-message-yasmine =
     A message from Yasmine:
 
     "We'd like people to book the fablab's machines (the
@@ -25,7 +25,7 @@ compose-message-de-yasmine =
     The app must answer on http://localhost:8081.
 
     For sudo: fablab-2027. My notes: help_compose.txt."
-compose-aide-compose =
+compose-help-compose =
     YASMINE'S NOTES — DOCKER COMPOSE
 
     Run everything from the project directory (/srv/reservations):
@@ -39,7 +39,7 @@ compose-aide-compose =
 
 ## The app
 
-compose-appli-accueil =
+compose-app-welcome =
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="utf-8"><title>Book a machine — Fablab</title></head>
@@ -52,17 +52,17 @@ compose-appli-accueil =
 
 ## Events
 
-compose-evenement-localhost =
+compose-event-localhost =
     "connect ECONNREFUSED 127.0.0.1:5432": the app looks for the database on
     localhost. But in a container, localhost means the container
     itself, not the machine nor the other containers. In a Compose
     project, each service can be reached by its name, on the project's
     network.
-compose-evenement-sans-mot-de-passe =
+compose-event-without-password =
     PostgreSQL refuses to create its database without a password: the variable
     POSTGRES_PASSWORD is empty. docker compose config shows what Compose
     understood, and the warnings say which variable is missing from .env.
-compose-evenement-authentification =
+compose-event-authentication =
     "password authentication failed": the app and the database don't have the
     same password. A classic trap: the PostgreSQL image only reads
     POSTGRES_PASSWORD once, when it creates the database in an empty
@@ -70,25 +70,25 @@ compose-evenement-authentification =
     changes nothing. As long as the database holds nothing important, you can
     recreate it (down -v deletes the volumes); otherwise, you change the password
     in the database itself.
-compose-evenement-connectee =
+compose-event-connected =
     The app is connected to its database: http://localhost:8081 answers. Now
     make the setup solid (data, secrets, restarting).
-compose-evenement-volumes-effaces =
+compose-event-volumes-erased =
     docker compose down -v: the project's volumes are deleted, along with
     all the database's data. Useful while it's empty; never to be
     typed on a database in service.
-compose-evenement-en-clair =
+compose-event-in-clear =
     Everything works… but the password is still written in compose.yaml,
     which is going to the git repository. Compose replaces ${"{"}VARIABLE{"}"} with the
     value found in the project's .env file (man docker-compose).
-compose-evenement-env-lisible =
+compose-event-env-readable =
     The password has left compose.yaml: good. But .env is readable by
     every account on the machine (ls -la). Yasmine wanted it to be
     readable by root only.
-compose-evenement-sans-redemarrage =
+compose-event-without-reboot =
     Almost: after a power cut, these containers would not start
     again. In compose.yaml, each service can have its restart policy.
-compose-evenement-fin =
+compose-event-end =
     http://localhost:8081 answers, the database keeps its data in a volume,
     the password sleeps in .env (readable by root only), and everything
     will start again after a power cut. Yasmine publishes compose.yaml on the fablab's

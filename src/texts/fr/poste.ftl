@@ -1,7 +1,7 @@
 ### Le poste : la machine de départ, d'où l'on se connecte en ssh aux
 ### machines des histoires. Et le message d'accueil (motd) de chaque machine.
 
-poste-bienvenue =
+workstation-welcome =
     Bienvenue sur ton poste de travail.
 
     Chaque histoire se passe sur une machine du réseau. Pour t'y connecter,
@@ -22,24 +22,24 @@ poste-bienvenue =
 
       ls -a ~/.ssh
 # Commentaire en tête de ~/.ssh/config (chaque ligne devient un commentaire « # »)
-poste-config-commentaire =
+workstation-config-comment =
     Les machines que tu connais. « ssh royaume » se connecte à royaume.internal
     avec l'utilisateur vous et la clé ~/.ssh/id_royaume.
     Manuel : man ssh
 # Commentaire en tête de /etc/hosts du poste (chaque ligne devient un commentaire « # »)
-poste-hosts-commentaire =
+workstation-hosts-comment =
     Les machines de ce jeu sont fictives.
     Les noms en .internal sont réservés aux réseaux privés (ICANN, 2024) ;
     ceux en .example, aux exemples (RFC 6761). Les adresses 192.0.2.x,
     198.51.100.x et 203.0.113.x sont réservées à la documentation (RFC 5737).
     Aucun de ces noms ni de ces adresses ne mène chez quelqu'un de réel.
-poste-exit = (Tu es sur ton propre poste : exit fermerait ton terminal. Pour te connecter à une machine : ssh nom, par exemple ssh royaume.)
+workstation-exit = (Tu es sur ton propre poste : exit fermerait ton terminal. Pour te connecter à une machine : ssh nom, par exemple ssh royaume.)
 # { $cles } : la liste des nouvelles clés, séparées par des virgules
-poste-cles-recues =
+workstation-keys-received =
     🔑 Le royaume te remercie : de nouvelles clés SSH t'attendent sur ton poste
     ({ $cles }). Reviens-y (exit), regarde ~/.ssh/config, et connecte-toi à la
     machine de ton choix.
-poste-cles-recues-suite =
+workstation-keys-received-next =
     🔑 Nouvelle étape franchie : d'autres histoires s'ouvrent, leurs clés
     t'attendent sur ton poste ({ $cles }).
 
@@ -67,4 +67,4 @@ machine-petrin-motd = Le Fournil — nouveau serveur (migration), six mois aprè
 
 # En se reconnectant à une machine dont le chapitre est en cours.
 # { $fichier } : le fichier d'accueil du chapitre (ex. bienvenue.txt)
-reprise-chapitre = Tu reprends ce chapitre là où tu l'avais laissé. Pour relire ce qui t'attend :   cat { $fichier }
+resumed-chapter = Tu reprends ce chapitre là où tu l'avais laissé. Pour relire ce qui t'attend :   cat { $fichier }

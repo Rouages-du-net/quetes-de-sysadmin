@@ -63,7 +63,7 @@ export const tunnel: Chapter = {
   home: M,
   welcome: 'email_yasmine.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: PASSWORD,
   accounts: homeAccounts,
   playerKeys: true,
@@ -95,10 +95,10 @@ export const tunnel: Chapter = {
     }),
     archives: internalHost('archives', '10.20.0.12'),
   },
-  createWorld: (t) => homeWorld({ passwords: 'no', home: { 'email_yasmine.txt': f(t('tunnel-courriel-yasmine')), '.ssh': sshDirectory() } }),
+  createWorld: (t) => homeWorld({ passwords: 'no', home: { 'email_yasmine.txt': f(t('tunnel-email-yasmine')), '.ssh': sshDirectory() } }),
   events: [
-    { id: 'publicite', condition: approvedAdvert, message: (j) => j.t('tunnel-evenement-publicite', { compte: ADVERT }) },
-    { id: 'validees', condition: (j) => approved(j) && !approvedAdvert(j), message: (j) => j.t('tunnel-evenement-validees') },
-    { id: 'fin', condition: (j) => approved(j) && !approvedAdvert(j) && openTunnels(j) === 0, message: (j) => j.t('tunnel-evenement-fin') },
+    { id: 'advert', condition: approvedAdvert, message: (j) => j.t('tunnel-event-advert', { compte: ADVERT }) },
+    { id: 'approved', condition: (j) => approved(j) && !approvedAdvert(j), message: (j) => j.t('tunnel-event-approved') },
+    { id: 'end', condition: (j) => approved(j) && !approvedAdvert(j) && openTunnels(j) === 0, message: (j) => j.t('tunnel-event-end') },
   ],
 };

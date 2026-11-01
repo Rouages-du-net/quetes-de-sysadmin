@@ -3,12 +3,12 @@
 ### (resize2fs), mdadm.conf and the initramfs. Commands, options, paths and
 ### outputs are not translated.
 
-chapitre-more-room = Running out of room
+chapter-more-room = Running out of room
     .resume = The photo disk is full and the winter contest is coming: make a RAID array of the two new disks, give it to LVM, grow the volume and its file system, and make the boot remember it.
 
 ## Files
 
-more-room-message-d-odile =
+more-room-message-odile =
     A message from Odile (Saturday 15 January, 9:50 am):
 
     "Happy New Year! The winter contest starts on Monday, and we expect
@@ -24,11 +24,11 @@ more-room-message-d-odile =
 
 ## Events
 
-more-room-evenement-plein =
+more-room-event-full =
     /srv is 97% full. It is not on a partition, but on
     /dev/mapper/labo-photos: an LVM logical volume. What is left in its
     group? (man vgs, man lvs, man pvs)
-more-room-evenement-lvm =
+more-room-event-lvm =
     LVM stacks three layers: physical volumes (PV, here the md1 array),
     gathered into a group (VG labo), where logical volumes are carved out
     (LV photos, mounted on /srv). The group has not a single free extent
@@ -36,7 +36,7 @@ more-room-evenement-lvm =
     array with them, to keep the safety of two disks (man mdadm,
     --create).
 # { $disque }: the lone disk in the group
-more-room-evenement-seul =
+more-room-event-only =
     Careful: { $disque } joined the labo group as is, without RAID. If
     this disk dies, everything LVM put on it is lost, and with it the
     whole photos volume. Take it out of the group (man vgreduce). If data
@@ -44,31 +44,31 @@ more-room-evenement-seul =
     be born with a single disk and an empty slot ("missing", man mdadm),
     and get its second disk later.
 # { $grappe }: the new array
-more-room-evenement-grappe =
+more-room-event-array =
     { $grappe } is created, and already usable: its first
     synchronization (resync, in /proc/mdstat) runs in the background. It
     now becomes a physical volume of the labo group (man pvcreate, man
     vgextend).
-more-room-evenement-etendu =
+more-room-event-extended =
     The labo group has room: vgs shows it (VFree). The photos volume has
     not moved yet: grow it (man lvextend).
-more-room-evenement-lv-seul =
+more-room-event-lv-only =
     The logical volume grew (lvs), but df sees nothing: the file system it
     carries kept its size. It must be grown too (man resize2fs; next time,
     lvextend -r does both).
-more-room-evenement-agrandi =
+more-room-event-grown =
     /srv has room for the winter contest, still on two copies. The boot
     remains: the new array must be declared in /etc/mdadm/mdadm.conf (its
     ARRAY line: man mdadm, --detail --brief), or it may come back under
     another name.
-more-room-evenement-doublons =
+more-room-event-duplicates =
     mdadm.conf now describes an array twice: mdadm --detail --scan also
     gives md0 and md1, already there. At boot, mdadm would complain. Keep
     a single ARRAY line per array (sudo nano).
-more-room-evenement-conf =
+more-room-event-conf =
     The new array is in mdadm.conf. But at boot, the copy of that file in
     the initramfs is what counts: rebuild it (man update-initramfs).
-more-room-evenement-fin =
+more-room-event-end =
     Odile: "3.6 TB more? Bring on the contest!"
 
     Well done! You finished chapter 3 of The Lab. (What comes next is

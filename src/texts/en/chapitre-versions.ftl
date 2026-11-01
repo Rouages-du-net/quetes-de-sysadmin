@@ -2,12 +2,12 @@
 ### Commands, paths, snapshot IDs and restic messages (in English) are
 ### not translated.
 
-chapitre-versions = The versions
+chapter-versions = The versions
     .resume = A backup that keeps the mistake: find the right version with restic, then free up space without losing it.
 
 ## Files
 
-versions-mot-de-rosa =
+versions-word-rosa =
     A note from Rosa, the librarian:
 
     "Since January, the collection has lived on this new server, and I back
@@ -56,7 +56,7 @@ versions-journal =
 
     9 September 1939. Ahmed left this morning. I embroidered his name in
     the lining of his jacket, so that he won't forget it, over there.
-versions-journal-abime =
+versions-journal-damaged =
     DIARY OF MARIE, SEAMSTRESS (1931-1940) — TRANSCRIPTION
 
     12 March 1931. The market burnt down last knight. The market woman
@@ -69,47 +69,47 @@ versions-journal-abime =
 
     9 September 1939. Ahmed leaved this morning. I embroidered his name in
     the lining of his jacket, so that he wont forget it, over their.
-versions-recette-ajoutee = Added in January 2027: Fatou's mafé, dictated by her granddaughter.
+versions-recipe-added = Added in January 2027: Fatou's mafé, dictated by her granddaughter.
 versions-image-tiff = (TIFF image, raw scan)
 
 ## Events
 
 # { $fichier }: the password file
-versions-evenement-mot-de-passe =
+versions-event-password =
     The repository is encrypted… but its password is in { $fichier },
     readable by every account on the machine (ls -l). Rosa has an account
     here, and tomorrow maybe one more intern. Who should be able to read it?
-versions-evenement-mauvais-mot-de-passe =
+versions-event-bad-password =
     Wrong password: without it, restic can't decrypt anything, not even
     the list of backups. That's on purpose. Losing this password means
     losing all the backups: always keep a copy of it somewhere else
     (Rosa has hers in the safe).
-versions-evenement-ailleurs =
+versions-event-elsewhere =
     The right version of the diary is back… but not in its place: restic
     recreates the full path under the directory given to --target. You
     still have to put it back in ~/collection/manuscripts/.
-versions-evenement-restaure =
+versions-event-restored =
     Marie's diary is back, word for word. That's the whole point of
     having versions: a mirror copy (rsync --delete) would have copied the
     mistake over on the very first night.
 
     Think about tonight's backup too: as long as no recent snapshot
     contains the right version, keeping it depends on the old ones.
-versions-evenement-perdu =
+versions-event-lost =
     No snapshot contains the right version of the diary anymore: the
     forget policy removed them all. On a real server, it would be lost
     (unless there's another copy elsewhere). Here, you can restart the
     chapter from the menu. Before deleting, forget --dry-run shows what
     would go.
-versions-evenement-oublie-sans-prune =
+versions-event-forgotten-without-plum =
     forget removed snapshots from the list… but df -h /mnt/townhall doesn't
     budge: forget only deletes the "labels". The data only goes away
     with prune (or forget --prune).
-versions-evenement-place =
+versions-event-place =
     The disk can breathe: prune deleted the data that no remaining
     snapshot uses (mostly the raw scans from January). df -h
     /mnt/townhall shows it.
-versions-evenement-fin =
+versions-event-end =
     Rosa reads Marie's diary again: "The market burned down last night",
     as in the original notebook. The town hall's disk has room, the
     repository is checked, and the password is no longer within

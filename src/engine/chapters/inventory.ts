@@ -45,8 +45,8 @@ export const inventory: Chapter = {
   home: M,
   welcome: 'email_theo.txt',
   names: true,
-  final: 'fin',
-  steps: ['cle-hote', 'compte', 'manque', 'fin'],
+  final: 'end',
+  steps: ['key-host', 'account', 'missing', 'end'],
   password: 'districts-2027',
   accounts: pilotAccounts,
   hosts: Object.fromEntries(NAMES.map((n) => [n, centre(n)])),
@@ -55,28 +55,28 @@ export const inventory: Chapter = {
     pilotWorld(t, {
       known: [],
       ansible: { 'ansible.cfg': f(CFG, { lines: true }), 'inventory.ini': f(INVENTORY, { lines: true }) },
-      home: { 'email_theo.txt': f(t('inventory-courriel-theo')) },
+      home: { 'email_theo.txt': f(t('inventory-email-theo')) },
     }),
   events: [
-    { id: 'sans-config', condition: (j) => seen(j, 'No inventory was parsed'), message: (j) => j.t('inventory-evenement-sans-config') },
-    { id: 'cle-hote', condition: (j) => seen(j, 'Host key verification failed'), message: (j) => j.t('inventory-evenement-cle-hote') },
-    { id: 'compte', condition: (j) => seen(j, 'theo@') && seen(j, 'Permission denied'), message: (j) => j.t('inventory-evenement-compte') },
+    { id: 'without-config', condition: (j) => seen(j, 'No inventory was parsed'), message: (j) => j.t('inventory-event-without-config') },
+    { id: 'key-host', condition: (j) => seen(j, 'Host key verification failed'), message: (j) => j.t('inventory-event-key-host') },
+    { id: 'account', condition: (j) => seen(j, 'theo@') && seen(j, 'Permission denied'), message: (j) => j.t('inventory-event-account') },
     {
-      id: 'manque',
+      id: 'missing',
       condition: (j) => {
         const p = lastPing(j);
         const listing = Object.keys(p);
         return listing.length > 0 && listing.every((h) => p[h] === 'SUCCESS') && !NAMES.every((n) => n in p);
       },
-      message: (j) => j.t('inventory-evenement-manque'),
+      message: (j) => j.t('inventory-event-missing'),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => {
         const p = lastPing(j);
         return NAMES.every((n) => inventoryCentres(j).includes(n) && p[n] === 'SUCCESS');
       },
-      message: (j) => j.t('inventory-evenement-fin'),
+      message: (j) => j.t('inventory-event-end'),
     },
   ],
 };

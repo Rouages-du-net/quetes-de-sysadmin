@@ -5,12 +5,12 @@
 ### pas. Les titres de section du modèle (contre-visite-section-…) doivent
 ### rester ceux du modèle.
 
-chapitre-follow-up = La contre-visite
+chapter-follow-up = La contre-visite
     .resume = Prouver que les correctifs tiennent : nouveau balayage, audit Lynis, durcissement raisonné, et le rapport de clôture.
 
 ## Fichiers
 
-follow-up-courriel-salome =
+follow-up-email-salome =
     De :     Salomé (auditrice)
     À :      toi
     Objet :  Audit du Fournil — la contre-visite
@@ -37,7 +37,7 @@ follow-up-courriel-salome =
     Salomé
     (Pour sudo, ton mot de passe est toujours : farine-2028)
 
-follow-up-modele =
+follow-up-template =
     # Rapport de clôture — Le Fournil
 
     ## Résumé
@@ -56,45 +56,45 @@ follow-up-section-resume = Résumé
 follow-up-section-constats = Constats corrigés
 follow-up-section-preuves = Preuves
 follow-up-section-reste = Reste à faire
-follow-up-a-completer = (à compléter
+follow-up-a-complete = (à compléter
 
 ## Mots que la relecture cherche (séparés par des virgules, sans tenir compte des majuscules)
 
-follow-up-mots-indice = indice, durcissement, index, hardening
-follow-up-mots-ssh = ssh, root
-follow-up-mots-compte = lucas, compte
-follow-up-mots-sudo = sudo, nopasswd
-follow-up-mots-secret = .env, secret
-follow-up-mots-reseau = ufw, pare-feu, redis, firewall
-follow-up-mots-cle = clé, cle, cron
+follow-up-words-hint = indice, durcissement, index, hardening
+follow-up-words-ssh = ssh, root
+follow-up-words-account = lucas, compte
+follow-up-words-sudo = sudo, nopasswd
+follow-up-words-secret = .env, secret
+follow-up-words-network = ufw, pare-feu, redis, firewall
+follow-up-words-key = clé, cle, cron
 
 ## Relecture
 
-follow-up-relecture = Salomé relit ton rapport :
-follow-up-manque-modele = Il reste des lignes « (à compléter) » du modèle.
-follow-up-manque-resume = Le résumé tient en deux phrases, mais il en faut (un peu plus qu'un mot).
-follow-up-manque-constats = Dans « Constats corrigés », il manque des constats : reprends les parties 1 à 4 (SSH, le compte oublié, sudo, le secret, l'exposition réseau, la clé et la tâche cron de l'intrus), au moins cinq sur six.
-follow-up-manque-lynis = Il faut d'abord lancer Lynis : sans audit, pas de chiffre à citer.
-follow-up-manque-preuves = Dans « Preuves », cite l'indice de durcissement de ton dernier audit Lynis (le chiffre exact) et ce que montre ton dernier balayage (les ports 22, 80 et 443).
-follow-up-manque-reste = Dans « Reste à faire », cite au moins un constat Lynis encore ouvert avec son identifiant (comme FINT-4350) : un rapport honnête dit ce qui n'est pas fait.
+follow-up-review = Salomé relit ton rapport :
+follow-up-missing-template = Il reste des lignes « (à compléter) » du modèle.
+follow-up-missing-summary = Le résumé tient en deux phrases, mais il en faut (un peu plus qu'un mot).
+follow-up-missing-findings = Dans « Constats corrigés », il manque des constats : reprends les parties 1 à 4 (SSH, le compte oublié, sudo, le secret, l'exposition réseau, la clé et la tâche cron de l'intrus), au moins cinq sur six.
+follow-up-missing-lynis = Il faut d'abord lancer Lynis : sans audit, pas de chiffre à citer.
+follow-up-missing-proofs = Dans « Preuves », cite l'indice de durcissement de ton dernier audit Lynis (le chiffre exact) et ce que montre ton dernier balayage (les ports 22, 80 et 443).
+follow-up-missing-rest = Dans « Reste à faire », cite au moins un constat Lynis encore ouvert avec son identifiant (comme FINT-4350) : un rapport honnête dit ce qui n'est pas fait.
 
 ## Événements
 
-follow-up-evenement-erreur-ssh =
+follow-up-event-error-ssh =
     Il y a une erreur dans la configuration de SSH ! Avant de recharger, vérifie
     toujours avec  sudo sshd -t  : il donne le fichier et la ligne en cause.
-follow-up-evenement-enferme =
+follow-up-event-locked-out =
     ATTENTION : avec la configuration que sshd vient de charger, une nouvelle
     connexion de ton compte serait refusée. Ta session reste ouverte : corrige
     AVANT de te déconnecter.
-follow-up-evenement-hors-perimetre =
+follow-up-event-outside-scope =
     Tu as sondé une adresse hors de la lettre de mission ({ $adresses }). Même pour
     une contre-visite, on reste dans le périmètre : { $voisin ->
         [oui] le serveur du voisin n'est toujours pas à nous.
        *[non] ce qui n'y figure pas n'est pas à nous.
     }
 # { $ancienne } : « oui » si la version de SSH affichée n'est pas à jour
-follow-up-evenement-balayage =
+follow-up-event-scan =
     Voilà ce que voit internet maintenant. Compare avec le premier jour : les
     ports 5432 (PostgreSQL) et 6379 (Redis) ne répondent plus, il reste SSH, le
     site et son port sécurisé. Les correctifs de pare-feu tiennent.
@@ -102,7 +102,7 @@ follow-up-evenement-balayage =
         [oui] Mais regarde la version de SSH : elle n'est pas celle d'une machine à jour. Une mise à jour de sécurité attend (apt list --upgradable) ; c'est le genre de détail que nmap -sV révèle et que personne ne regarde.
        *[non] Et la version de SSH est celle d'une machine à jour.
     }
-follow-up-evenement-lynis =
+follow-up-event-lynis =
     Voilà l'audit : un indice de durcissement de { $indice }, et
     { $avertissements } avertissement(s). Un indice sert à comparer, pas à
     viser 100 : lis chaque suggestion, son identifiant (SSH-7408…) et sa page
@@ -112,33 +112,33 @@ follow-up-evenement-lynis =
 
     L'audit est gardé dans /var/log/lynis-report.dat : un  sudo grep
     suggestion  dessus donne la liste d'un coup.
-follow-up-evenement-mise-a-jour =
+follow-up-event-update =
     Plus de mise à jour de sécurité en attente : l'avertissement de Lynis
     (PKGS-7392) a disparu, et la version de SSH que nmap affichera sera la
     nouvelle. (Pense à relancer nmap et Lynis : un correctif non prouvé n'est
     qu'une intention.)
-follow-up-evenement-ssh-a-recharger =
+follow-up-event-ssh-a-reload =
     Tu as modifié la configuration de SSH, mais sshd tourne encore avec
     l'ancienne : un service relit sa configuration quand on le lui demande
     (sudo sshd -t pour vérifier, puis sudo systemctl reload ssh). Lynis, lui,
     lit le fichier : son nouvel indice ne dit pas ce qui est appliqué.
 # { $cible } : l'indice à atteindre
-follow-up-evenement-durci =
+follow-up-event-hardened =
     Aucun avertissement et un indice d'au moins { $cible }, avec une
     configuration de SSH appliquée. C'est un bon niveau pour ce serveur ; le
     reste est de l'ordre du chantier, pas de l'urgence.
 
     Prouve-le : relance Lynis, et refais le balayage.
-follow-up-evenement-preuve-lynis =
+follow-up-event-proof-lynis =
     Le dernier audit Lynis reflète l'état actuel de la machine : sans
     avertissement, et au-dessus de la cible. Note le chiffre de l'indice : le
     rapport le cite.
-follow-up-evenement-nmap-propre =
+follow-up-event-nmap-own =
     Le dernier balayage ne voit que SSH, le site et son port sécurisé, avec la
     version de SSH à jour. C'est la preuve, côté internet, que tout tient.
     Reste le rapport de clôture.
 # { $faute } : « oui » si un balayage a débordé du périmètre
-follow-up-evenement-fin =
+follow-up-event-end =
     Salomé : « C'est complet, et c'est honnête. Je le transmets à Nadia et à son
     assureur. Je repasserai dans six mois : la sécurité, ça se revérifie. »
 

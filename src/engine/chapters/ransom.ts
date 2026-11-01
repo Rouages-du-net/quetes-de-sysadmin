@@ -53,12 +53,12 @@ const accounts = (): Accounts => ({
 
 // Les fichiers du partage (chemin relatif → identifiant du texte).
 const FILES: Record<string, string> = {
-  'inventory.csv': 'ransom-inventaire',
-  'volunteer-rota.txt': 'ransom-planning',
-  'games-day-poster.txt': 'ransom-affiche',
-  'rules/goose-game.txt': 'ransom-regles-oie',
-  'rules/ludo.txt': 'ransom-regles-chevaux',
-  'rules/draughts.txt': 'ransom-regles-dames',
+  'inventory.csv': 'ransom-inventory',
+  'volunteer-rota.txt': 'ransom-schedule',
+  'games-day-poster.txt': 'ransom-shows',
+  'rules/goose-game.txt': 'ransom-rules-goose',
+  'rules/ludo.txt': 'ransom-rules-horses',
+  'rules/draughts.txt': 'ransom-rules-ladies',
 };
 
 // Un fichier chiffré : un nom en .locked et des octets illisibles.
@@ -172,7 +172,7 @@ export const ransom: Chapter = {
   home: M,
   welcome: 'message_from_berenice.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'ludo-2027',
   accounts,
   state: (t) => {
@@ -261,7 +261,7 @@ export const ransom: Chapter = {
         process(j).push({ pid, user: 'accueil', cpu: 97.3, mem: 1.4, command: `${path(j.t, ENCRYPTOR)} --silencieux` });
         writeLog(sd(j), 'cron.service', 'CRON', pid - 1, `(accueil) CMD (${path(j.t, ENCRYPTOR)} --silencieux)`);
         encrypt(j, path(j.t, SHARE));
-        messages.push(j.t('ransom-retour'));
+        messages.push(j.t('ransom-return'));
       }
     }
     return messages.join('\n\n') || undefined;
@@ -282,7 +282,7 @@ export const ransom: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: file('games') }),
       home: place({
-        you: d({ 'message_from_berenice.txt': f(t('ransom-message-de-berenice')) }),
+        you: d({ 'message_from_berenice.txt': f(t('ransom-message-berenice')) }),
         accueil: place(
           {
             '.cache': place(
@@ -310,27 +310,27 @@ export const ransom: Chapter = {
   },
   events: [
     {
-      id: 'etendue',
+      id: 'extent',
       condition: (j) => /\.locked/.test(j.last.output) && !j.last.commands.some((c) => c.includes(NAS) || c.some((a) => a.startsWith(NAS))),
-      message: (j) => j.t('ransom-evenement-etendue'),
+      message: (j) => j.t('ransom-event-extent'),
     },
     {
-      id: 'chiffreur-vu',
+      id: 'encryptor-seen',
       condition: (j) => j.last.output.includes(name(j.t, 'system-update')) && j.last.commands.some((c) => c[0] === 'ps') && activeEncryptor(j),
-      message: (j) => j.t('ransom-evenement-chiffreur-vu'),
+      message: (j) => j.t('ransom-event-encryptor-seen'),
     },
     {
       id: 'nas',
       condition: (j) => j.last.commands.some((c) => c.some((a) => a.startsWith(NAS))) && /\.locked/.test(j.last.output),
-      message: (j) => j.t('ransom-evenement-nas'),
+      message: (j) => j.t('ransom-event-nas'),
     },
-    { id: 'rechiffre', condition: (j) => (j.state.rechiffres ?? 0) > 0, message: (j) => j.t('ransom-evenement-rechiffre') },
-    { id: 'cle-trop-tot', condition: (j) => mountedKey(j) && activeEncryptor(j), message: (j) => j.t('ransom-evenement-cle-trop-tot') },
-    { id: 'restaure', condition: (j) => allRestored(j) && !activeEncryptor(j), message: (j) => j.t('ransom-evenement-restaure') },
+    { id: 'reencrypted', condition: (j) => (j.state.rechiffres ?? 0) > 0, message: (j) => j.t('ransom-event-reencrypted') },
+    { id: 'key-too-early', condition: (j) => mountedKey(j) && activeEncryptor(j), message: (j) => j.t('ransom-event-key-too-early') },
+    { id: 'restored', condition: (j) => allRestored(j) && !activeEncryptor(j), message: (j) => j.t('ransom-event-restored') },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => !activeEncryptor(j) && !persistence(j) && locked(j) && allRestored(j) && remains(j).length === 0 && !mountedKey(j),
-      message: (j) => j.t('ransom-evenement-fin'),
+      message: (j) => j.t('ransom-event-end'),
     },
   ],
 };

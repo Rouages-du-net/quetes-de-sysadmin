@@ -2,12 +2,12 @@
 ### FreeRADIUS and the LDAP directory. The commands, the file names and
 ### the RADIUS attribute names are not translated.
 
-chapitre-wifi = The Office Wi-Fi
+chapter-wifi = The Office Wi-Fi
     .resume = No more shared Wi-Fi password: everyone connects with their directory account, and the RADIUS server puts each person in their VLAN.
 
 ## Files
 
-wifi-courriel-malik =
+wifi-email-malik =
     From:     Malik
     To:       you
     Subject:  The office Wi-Fi
@@ -31,7 +31,7 @@ wifi-courriel-malik =
     For sudo: bee-2027
 
 # { $secret }: the access point's shared secret; { $adresse }: its address
-wifi-borne =
+wifi-bound =
     "BUREAUX" WI-FI ACCESS POINT — settings (the electrician, February 2028)
 
     Access point address   : { $adresse } (VLAN 30, equipment)
@@ -44,44 +44,44 @@ wifi-borne =
 
 ## Events
 
-wifi-evenement-filtre =
+wifi-event-filter =
     The access point sends its requests to the router (UDP 1812)… and the input chain
     drops them: nothing lets them in from the equipment VLAN.
     freeradius's log stays silent: it doesn't even receive them.
-wifi-evenement-pas-relu =
+wifi-event-not-reread =
     The configuration has changed on disk, but freeradius is still
     running with the old one: it only rereads its files at startup
     (sudo freeradius -XC to check, then systemctl restart freeradius).
-wifi-evenement-inconnue =
+wifi-event-unknown =
     The requests arrive, but freeradius doesn't answer (journalctl -u
     freeradius): the access point is not a client it knows, or its shared
     secret is wrong. Each access point is declared in clients.conf,
     with its address and the same secret as in its settings.
-wifi-evenement-sans-ldap =
+wifi-event-without-ldap =
     freeradius answers… no, to everyone: it doesn't know any
     password ("No known good password"). The accounts are in the directory,
     but the ldap module is not enabled: enabled modules are links
     in mods-enabled, pointing to mods-available.
-wifi-evenement-anonyme =
+wifi-event-anonymous =
     The ldap module does find the accounts… but not their passwords:
     it binds anonymously, and the directory only shows userPassword
     to accounts allowed to see it. The module needs an identity
     (identity, password). And its base (base_dn) must be The Hive's.
-wifi-evenement-groupes =
+wifi-event-groups =
     Malik gets in, but doesn't get VLAN 10: Ldap-Group doesn't find him
     in any group. By default, the ldap module looks for the memberOf
     attribute in the person's entry… which this directory doesn't have: its
     posixGroup groups list their members in memberUid. The module can
     search another way (membership_filter).
-wifi-evenement-ordre =
+wifi-event-order =
     Malik gets VLAN 20, like Léo. In the users file, the first
     matching entry wins: if the entry for everyone comes
     before the one for the bureaux group, nobody ever reaches the second.
-wifi-evenement-en-place =
+wifi-event-in-place =
     The office Wi-Fi works… right now. At the next boot?
     The firewall rule must be in /etc/nftables.conf (freeradius,
     for its part, rereads its files).
-wifi-evenement-fin =
+wifi-event-end =
     Malik, Inès and Sami get into the office VLAN with their own
     accounts, Léo into the café's, and Camille stays out: all it took was
     deleting their account. Malik peels off the sticky note.

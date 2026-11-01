@@ -172,7 +172,7 @@ function scp(game: Shell, args: string[]): string {
   const other = toRemote ?? since.find(Boolean);
   // Sans machine d'en face : une simple copie locale, comme cp.
   if (!other) return game.error(game.t('scp-local'));
-  if (toRemote && since.some(Boolean)) return game.error(game.t('scp-deux-distants'));
+  if (toRemote && since.some(Boolean)) return game.error(game.t('scp-two-remote'));
   const jumps = prepare(game, other.target, { identities, port, hop, program: 'ssh' });
   if (typeof jumps === 'string') return game.error(jumps);
   const d = jumps.at(-1)!;

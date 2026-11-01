@@ -2,12 +2,12 @@
 ### volunteer who is leaving, without breaking anything. Commands,
 ### paths and account names are not translated.
 
-chapitre-departure = The departure
+chapter-departure = The departure
     .resume = Marc is leaving: close his account (for real), remove his key everywhere, his sudo, his session, and keep the backup he was running.
 
 ## Files
 
-departure-courriel-awa =
+departure-email-awa =
     From:    Awa (coordinator of the grocery co-op)
     To:      you
     Subject: Marc is leaving
@@ -41,18 +41,18 @@ departure-notes-marc =
 
 ## Events
 
-departure-evenement-verrou-seul =
+departure-event-lock-only =
     marc's password is locked… but he logged in with an SSH
     key, and usermod -L changes nothing about that. Read man usermod again: to really
     close an account, you also have to expire it (or take away its
     login shell, or its keys).
 # { $fichier }: the deploy account's key file
-departure-evenement-deploy-vide =
+departure-event-deploy-empty =
     Watch out: keys are missing from { $fichier }! The CI and Lina
     won't be able to release the till anymore. Only remove Marc's
     line (his key ends with marc@portable). Put the others back: nano, keeping
     the deploy@ci and lina@atelier lines.
-departure-evenement-script-perdu =
+departure-event-script-lost =
     Marc's directory is gone, and with it his backup script… and
     tonight's backup won't run (cron ignores the crontab of a
     deleted account).
@@ -60,19 +60,19 @@ departure-evenement-script-perdu =
     Luckily, yesterday's backup contains /home: look in
     /srv/backups (as root). Next time: first look at what
     an account runs, then delete it.
-departure-evenement-tache-personnelle =
+departure-event-task-personal =
     The backup is in YOUR crontab. It runs… until the day you, too,
     hand over: that's exactly Marc's trap. A
     co-op task goes in root's crontab (sudo crontab -e), or
     in a file in /etc/cron.d, and its script outside any home
     directory (for example /usr/local/bin).
-departure-evenement-sauvegarde =
+departure-event-backup =
     The till backup no longer depends on Marc's account: its script
     is outside /home/marc, and it's run by an account that stays.
-departure-evenement-ferme =
+departure-event-closed =
     Marc can no longer get in: not through his account, not through deploy, no more
     sudo, no more open session.
-departure-evenement-fin =
+departure-event-end =
     Everything is closed, nothing is broken. Awa: "Marc says thank you… and
     welcome to the team!"
 

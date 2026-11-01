@@ -211,7 +211,7 @@ export const POSTGRES: Record<string, Command> = {
         if (errors.length) game.error(errors.join('\n'));
         return ['SET', ...Object.keys(tables).flatMap((n) => ['CREATE TABLE', 'ALTER TABLE', `COPY ${tables[n].lines.length}`])].join('\n');
       }
-      return game.error(game.t('psql-interactif'));
+      return game.error(game.t('psql-interactive'));
     },
   },
 
@@ -272,7 +272,7 @@ export const POSTGRES: Record<string, Command> = {
     launch: ({ args, game }) => {
       const { options, lists, positionnels: positional } = readOptions(args, ['-d', '--dbname', '-t', '--table', '-f', '--file', '-U', '--username']);
       const file = positional[0];
-      if (!file) return game.error(game.t('pg-restore-entree'));
+      if (!file) return game.error(game.t('pg-restore-input'));
       const text = game.readFor('pg_restore', file);
       if (text === null) return '';
       const m = CUSTOM.exec(text.trim());

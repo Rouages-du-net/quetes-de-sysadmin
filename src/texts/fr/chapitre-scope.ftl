@@ -3,12 +3,12 @@
 ### périmètre. Les commandes, les options, les chemins et les sorties de nmap
 ### (en anglais) ne se traduisent pas.
 
-chapitre-scope = Le périmètre
+chapter-scope = Le périmètre
     .resume = Avant de balayer : lire la lettre de mission, faire l'inventaire avec nmap, et ne pas toucher à ce qui n'est pas dans le périmètre.
 
 ## Fichiers
 
-scope-courriel-salome =
+scope-email-salome =
     De :     Salomé (auditrice)
     À :      toi
     Objet :  Mission d'audit du Fournil — par où commencer
@@ -36,7 +36,7 @@ scope-courriel-salome =
     Salomé
     (Pour sudo, ton mot de passe est : farine-2028)
 
-scope-lettre-de-mission =
+scope-letter-mission =
     LETTRE DE MISSION
 
     Entre : la boulangerie Le Fournil, représentée par Nadia, gérante
@@ -69,7 +69,7 @@ scope-lettre-de-mission =
 
     Signé : Nadia (gérante) et Salomé, le 3 mars 2028.
 
-scope-notes-modele =
+scope-notes-template =
     # Notes d'audit — Le Fournil
 
     ## Périmètre
@@ -81,23 +81,23 @@ scope-notes-modele =
     ## Hors périmètre
     (à compléter : ce que j'ai repéré et que je n'ai PAS sondé, et pourquoi)
 
-scope-section-perimetre = Périmètre
-scope-section-trouve = Ce que j'ai trouvé
-scope-section-hors = Hors périmètre
-scope-a-completer = (à compléter
-scope-mots-hors = hors périmètre, hors perimetre, pas dans la lettre, pas dans le mandat, pas sondé, sans y toucher, pas touché, non sondé
+scope-section-scope = Périmètre
+scope-section-found = Ce que j'ai trouvé
+scope-section-outside = Hors périmètre
+scope-a-complete = (à compléter
+scope-words-outside = hors périmètre, hors perimetre, pas dans la lettre, pas dans le mandat, pas sondé, sans y toucher, pas touché, non sondé
 
 ## Relecture
 
-scope-relecture = Salomé relit tes notes :
-scope-manque-modele = Il reste des lignes « (à compléter) » du modèle.
-scope-manque-ports = Dans « Ce que j'ai trouvé », il manque ce qui n'a rien à faire sur internet : les numéros de port de la base de données et de Redis (ce que nmap a montré).
-scope-manque-voisin = Il manque la machine que tu as repérée sans y toucher : le serveur du voisin (nom ou adresse).
-scope-manque-hors = Tu cites le serveur du voisin : dis aussi que c'est hors périmètre (et que tu ne l'as pas sondé).
+scope-review = Salomé relit tes notes :
+scope-missing-template = Il reste des lignes « (à compléter) » du modèle.
+scope-missing-ports = Dans « Ce que j'ai trouvé », il manque ce qui n'a rien à faire sur internet : les numéros de port de la base de données et de Redis (ce que nmap a montré).
+scope-missing-neighbour = Il manque la machine que tu as repérée sans y toucher : le serveur du voisin (nom ou adresse).
+scope-missing-outside = Tu cites le serveur du voisin : dis aussi que c'est hors périmètre (et que tu ne l'as pas sondé).
 
 ## Événements
 
-scope-evenement-lettre =
+scope-event-letter =
     La lettre de mission est le document qui te protège autant qu'elle
     protège le client : elle dit où tu as le droit d'aller. Retiens deux
     choses : le périmètre (UNE machine : fournil, 192.0.2.22) et la liste de
@@ -105,7 +105,7 @@ scope-evenement-lettre =
     au mieux mal vu, au pire une infraction.
 
     Passe à l'inventaire : nmap, avec les versions (man nmap).
-scope-evenement-balayage =
+scope-event-scan =
     Voilà ce que voit internet du Fournil. Lis la colonne STATE : « open »
     veut dire qu'un programme répond ; « filtered », qu'un pare-feu jette le
     paquet ; « closed », que personne n'écoute. Et la colonne VERSION : une
@@ -115,7 +115,7 @@ scope-evenement-balayage =
     raison d'être joignables par n'importe qui ? Garde la trace dans un
     fichier (l'option -oN) : un constat sans preuve n'est qu'une opinion.
 # { $adresses } : les adresses sondées hors de la lettre de mission ; { $voisin } : « oui » si le serveur du voisin en fait partie
-scope-evenement-hors-perimetre =
+scope-event-outside-scope =
     ATTENTION : tu viens de sonder une adresse qui n'est pas dans ta lettre
     de mission ({ $adresses }{ $voisin ->
         [oui] , dont le serveur du voisin
@@ -128,7 +128,7 @@ scope-evenement-hors-perimetre =
 
     (Un balayage d'un réseau entier, comme 192.0.2.0/24, sonde aussi tout ce
     qui s'y trouve : donne toujours les adresses exactes du périmètre.)
-scope-evenement-trace =
+scope-event-trace =
     Tu as une preuve : un fichier avec la commande exacte, la date, les ports
     et les versions. Dans le rapport, on peut dire « au 6 mars, depuis internet,
     la base de données répondait sur le port 5432 » et le montrer.
@@ -136,7 +136,7 @@ scope-evenement-trace =
     Reste à écrire tes notes (notes-audit.md) : ce que tu as trouvé, et ce que
     tu as vu sans y toucher.
 # { $faute } : « oui » si le balayage a débordé du périmètre, « non » sinon
-scope-evenement-fin =
+scope-event-end =
     Salomé : « Voilà un inventaire propre : un périmètre, des preuves, et des
     notes honnêtes. On pourra s'en servir pour le rapport. »
 

@@ -3,12 +3,12 @@
 ### (bantime, ignoreip…) et la sortie de fail2ban (en anglais) ne se
 ### traduisent pas.
 
-chapitre-sentinel = La sentinelle
+chapter-sentinel = La sentinelle
     .resume = Bannir les robots sans bannir les amis : fail2ban, jail.local, ignoreip.
 
 ## Fichiers
 
-sentinel-courriel-kofi =
+sentinel-email-kofi =
     De :     Kofi (La Fourmilière)
     À :      toi
     Objet :  Rania n'arrive plus à se connecter
@@ -38,28 +38,28 @@ sentinel-courriel-kofi =
 
 ## Événements
 
-sentinel-evenement-jail-conf =
+sentinel-event-jail-conf =
     Tu as modifié /etc/fail2ban/jail.conf. Ça marche… jusqu'à la prochaine
     mise à jour de fail2ban, qui remplacera ce fichier et tes réglages avec
     lui. Le fichier le dit lui-même en tête : « YOU SHOULD NOT MODIFY THIS
     FILE ». Mieux vaut mettre tes réglages dans /etc/fail2ban/jail.local.
-sentinel-evenement-erreur =
+sentinel-event-error =
     La configuration de fail2ban a une erreur. Avant de recharger, vérifie
     avec  sudo fail2ban-client -t : il donne le fichier et la ligne en cause.
-sentinel-evenement-rania =
+sentinel-event-rania =
     Rania n'est plus bannie : elle peut de nouveau se connecter. Mais si elle
     se trompe encore cinq fois, fail2ban la bannira de nouveau…
 # { $adresse } : l'adresse du poste
-sentinel-evenement-banni-soi =
+sentinel-event-banned-self =
     ATTENTION : fail2ban vient de bannir { $adresse }… l'adresse de ton propre
     poste ! Hier, tu avais raté trois connexions (cherche « Failed publickey »
     dans journalctl -u ssh), et avec ces réglages, ça suffit. Débannis-toi,
     et ajoute ton adresse à ignoreip, avant de te déconnecter.
-sentinel-evenement-reglee =
+sentinel-event-set =
     fail2ban applique tes réglages : les robots restent bannis plus
     longtemps, et ni Rania ni toi ne serez plus bannis. Vérifie l'état de la
     prison : sudo fail2ban-client status sshd.
-sentinel-evenement-fin =
+sentinel-event-end =
     Les robots sont bannis pour de bon, Rania se reconnecte, et ton poste ne
     risque plus rien. Kofi : « Rania te remercie, elle a pu publier le
     programme ! »

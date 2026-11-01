@@ -120,8 +120,8 @@ export const traces: Chapter = {
   home: M,
   welcome: 'email_salome.txt',
   names: true,
-  final: 'fin',
-  steps: ['trouve', 'cle-identifiee', 'cle-revoquee', 'cron-decouvert', 'cron-nettoye', 'secret-vu', 'mot-de-passe', 'fin'],
+  final: 'end',
+  steps: ['found', 'key-identified', 'key-revoked', 'cron-found', 'cron-cleaned', 'secret-seen', 'password', 'end'],
   password: PASSWORD,
   accounts: () => {
     const c = bakeryAccounts(false);
@@ -188,7 +188,7 @@ export const traces: Chapter = {
   createWorld: (t) =>
     bakeryWorld(t, {
       withoutLucas: true,
-      home: { 'email_salome.txt': f(t('traces-courriel-salome')) },
+      home: { 'email_salome.txt': f(t('traces-email-salome')) },
       more: {
         srv: d(
           {
@@ -220,45 +220,45 @@ export const traces: Chapter = {
     }),
   events: [
     {
-      id: 'trouve',
+      id: 'found',
       condition: (j) => j.last.commands.some((c) => ['journalctl', 'last', 'grep'].includes(c[0])) && j.last.output.includes(INTRUDER),
-      message: (j) => j.t('traces-evenement-trouve', { adresse: INTRUDER }),
+      message: (j) => j.t('traces-event-found', { adresse: INTRUDER }),
     },
     {
-      id: 'cle-identifiee',
+      id: 'key-identified',
       condition: (j) => j.last.commands.some((c) => c[0] === 'ssh-keygen') && j.last.output.includes(keyFingerprint(KEYS.unknown)),
-      message: (j) => j.t('traces-evenement-cle-identifiee'),
+      message: (j) => j.t('traces-event-key-identified'),
     },
-    { id: 'nadia-enfermee', condition: (j) => !nadiaKey(j), message: (j) => j.t('traces-evenement-nadia-enfermee') },
-    { id: 'cle-revoquee', condition: okKeys, message: (j) => j.t('traces-evenement-cle-revoquee') },
+    { id: 'nadia-locked-out', condition: (j) => !nadiaKey(j), message: (j) => j.t('traces-event-nadia-locked-out') },
+    { id: 'key-revoked', condition: okKeys, message: (j) => j.t('traces-event-key-revoked') },
     {
-      id: 'cron-decouvert',
+      id: 'cron-found',
       condition: (j) => j.last.commands.some((c) => c[0] === 'crontab') && j.last.output.includes(INTRUDER),
-      message: (j) => j.t('traces-evenement-cron-decouvert'),
+      message: (j) => j.t('traces-event-cron-found'),
     },
-    { id: 'sauvegarde-perdue', condition: (j) => !keptBackup(j), message: (j) => j.t('traces-evenement-sauvegarde-perdue') },
-    { id: 'cron-nettoye', condition: cronOk, message: (j) => j.t('traces-evenement-cron-nettoye') },
+    { id: 'backup-lost', condition: (j) => !keptBackup(j), message: (j) => j.t('traces-event-backup-lost') },
+    { id: 'cron-cleaned', condition: cronOk, message: (j) => j.t('traces-event-cron-cleaned') },
     {
-      id: 'secret-vu',
+      id: 'secret-seen',
       condition: (j) => j.last.output.includes(`cat ${ENV}`),
-      message: (j) => j.t('traces-evenement-secret-vu'),
+      message: (j) => j.t('traces-event-secret-seen'),
     },
     {
-      id: 'mot-de-passe-faible',
+      id: 'password-weak',
       condition: (j) => changeBase(j) && !longEnough(j),
-      message: (j) => j.t('traces-evenement-mot-de-passe-faible'),
+      message: (j) => j.t('traces-event-password-weak'),
     },
     {
-      id: 'a-redemarrer',
+      id: 'a-restart',
       condition: (j) => changeBase(j) && longEnough(j) && accord(j) && activeApp(j) && appLPassword(j) !== basePassword(j),
-      message: (j) => j.t('traces-evenement-a-redemarrer'),
+      message: (j) => j.t('traces-event-a-restart'),
     },
     {
-      id: 'appli-tombee',
+      id: 'app-down',
       condition: (j) => !activeApp(j) && !accord(j),
-      message: (j) => j.t('traces-evenement-appli-tombee'),
+      message: (j) => j.t('traces-event-app-down'),
     },
-    { id: 'mot-de-passe', condition: okPassword, message: (j) => j.t('traces-evenement-mot-de-passe') },
-    { id: 'fin', condition: (j) => okKeys(j) && cronOk(j) && okPassword(j), message: (j) => j.t('traces-evenement-fin') },
+    { id: 'password', condition: okPassword, message: (j) => j.t('traces-event-password') },
+    { id: 'end', condition: (j) => okKeys(j) && cronOk(j) && okPassword(j), message: (j) => j.t('traces-event-end') },
   ],
 };

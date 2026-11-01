@@ -195,7 +195,7 @@ export const bypass: Chapter = {
   home: M,
   welcome: 'message_from_rania.txt',
   names: true,
-  final: 'fin',
+  final: 'end',
   password: 'fablab-2027',
   accounts,
   state: () => {
@@ -272,7 +272,7 @@ export const bypass: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: f('workshop', { lines: true, owner: 'root' }) }),
       home: place({
-        you: d({ 'message_from_rania.txt': f(t('firewall-hole-message-de-rania')), 'note_from_yasmine.txt': f(t('firewall-hole-mot-de-yasmine')) }),
+        you: d({ 'message_from_rania.txt': f(t('firewall-hole-message-rania')), 'note_from_yasmine.txt': f(t('firewall-hole-word-yasmine')) }),
       }),
       srv: place({
         reservations: place({
@@ -292,32 +292,32 @@ export const bypass: Chapter = {
     {
       id: 'ss',
       condition: (j) => j.last.output.includes('docker-proxy') && j.last.output.includes(':5432'),
-      message: (j) => j.t('firewall-hole-evenement-ss'),
+      message: (j) => j.t('firewall-hole-event-ss'),
     },
     {
-      id: 'ufw-inutile',
+      id: 'ufw-useless',
       condition: (j) => ufw(j).rules.some((r) => r.ports.includes(5432) && r.action !== 'allow') && openToWorld(j),
-      message: (j) => j.t('firewall-hole-evenement-ufw-inutile'),
+      message: (j) => j.t('firewall-hole-event-ufw-useless'),
     },
     {
-      id: 'ferme',
+      id: 'closed',
       condition: (j) => !openToWorld(j) && okApp(j),
-      message: (j) => j.t('firewall-hole-evenement-ferme'),
+      message: (j) => j.t('firewall-hole-event-closed'),
     },
     {
-      id: 'volume-perdu',
+      id: 'volume-lost',
       condition: (j) => volumesPerdus(j).length > 0,
-      message: (j) => j.t('firewall-hole-evenement-volume-perdu', { volumes: volumesPerdus(j).join(', ') }),
+      message: (j) => j.t('firewall-hole-event-volume-lost', { volumes: volumesPerdus(j).join(', ') }),
     },
     {
-      id: 'disque',
+      id: 'disk',
       condition: (j) => occupation(j) < 0.75,
-      message: (j) => j.t('firewall-hole-evenement-disque', { pourcent: Math.round(occupation(j) * 100) }),
+      message: (j) => j.t('firewall-hole-event-disk', { pourcent: Math.round(occupation(j) * 100) }),
     },
     {
-      id: 'fin',
+      id: 'end',
       condition: (j) => !openToWorld(j) && okApp(j) && okTool(j) && occupation(j) < 0.75 && volumesPerdus(j).length === 0,
-      message: (j) => j.t('firewall-hole-evenement-fin'),
+      message: (j) => j.t('firewall-hole-event-end'),
     },
   ],
 };

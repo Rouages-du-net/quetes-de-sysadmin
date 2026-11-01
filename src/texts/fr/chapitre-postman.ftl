@@ -2,12 +2,12 @@
 ### Les commandes, chemins, enregistrements DNS et messages de Postfix ne se
 ### traduisent pas.
 
-chapitre-postman = Le facteur
+chapter-postman = Le facteur
     .resume = Les courriels de bienvenue des Jardins partagés restent bloqués : le SPF publié est encore celui de l'ancien hébergeur.
 
 ## Fichiers
 
-postman-courriel-nour =
+postman-email-nour =
     De :     Nour
     À :      toi
     Objet :  Les courriels de bienvenue n'arrivent plus
@@ -35,7 +35,7 @@ postman-courriel-nour =
 
 ## Événements
 
-postman-evenement-differe =
+postman-event-differs =
     mailbox.example ne refuse pas le courrier pour toujours : 451 est un
     code « temporaire » (4xx), Postfix garde le message et réessaiera. Mais
     la raison est claire : « neither SPF nor DKIM passed ». Ni SPF (qui dit
@@ -43,28 +43,28 @@ postman-evenement-differe =
     signature) ne prouvent que ce serveur parle bien au nom de
     gardens.example. Commence par SPF : c'est un enregistrement TXT du
     domaine, qui commence par v=spf1 (dig TXT gardens.example).
-postman-evenement-ancien =
+postman-event-old =
     Voilà le SPF de gardens.example : « include:_spf.old-hosting.example
     -all ». Il autorise seulement les serveurs de l'ancien hébergeur (ce que
     publie _spf.old-hosting.example), et -all refuse tous les autres… dont
     ce serveur, 203.0.113.30. L'enregistrement est dans la zone, sur ce
     serveur : /etc/bind/zones/db.gardens.example.
-postman-evenement-deux =
+postman-event-two =
     Attention : la zone contient maintenant deux enregistrements qui
     commencent par v=spf1. La RFC 7208 est stricte : avec deux SPF, le
     résultat est « permerror », comme s'il n'y en avait aucun de valable.
     Remplace l'ancien plutôt que d'en ajouter un.
-postman-evenement-serie =
+postman-event-serial =
     Ce serveur publie le bon SPF, mais le reste d'internet interroge aussi
     le secondaire du registre, qui garde l'ancienne version : dig TXT
     gardens.example @ns2.registry.example. Le secondaire ne recopie la zone
     que si son numéro de série (serial, dans le SOA) augmente.
-postman-evenement-spf =
+postman-event-spf =
     Le SPF publié par internet autorise maintenant 203.0.113.30 à envoyer
     pour gardens.example. Les courriels en attente ne partiront qu'au
     prochain essai de Postfix (toutes les quelques minutes) ; pour ne pas
     attendre : sudo postqueue -f, puis mailq.
-postman-evenement-fin =
+postman-event-end =
     La file d'attente est vide : mailbox.example a accepté les cinq
     courriels de bienvenue. Nour : « Amina vient de me répondre, elle l'a
     reçu ! … dans ses indésirables, mais elle l'a reçu. »

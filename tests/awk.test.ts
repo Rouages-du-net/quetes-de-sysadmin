@@ -11,7 +11,7 @@ const LOG = [
 ].join('\n');
 
 const chapter: Chapter = {
-  id: 'essai-awk',
+  id: 'attempt-awk',
   number: 1,
   commands: ['awk', 'sort', 'uniq', 'cat', 'head'],
   home: '/home/you',

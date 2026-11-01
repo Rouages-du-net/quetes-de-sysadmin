@@ -1,8 +1,8 @@
 ### "Junk Mail" story: what its chapters share (the Community Gardens
 ### website's emails, the checker's answer).
 
-jardins-sujet-bienvenue = Welcome to the Community Gardens!
-jardins-corps-bienvenue =
+gardens-subject-welcome = Welcome to the Community Gardens!
+gardens-body-welcome =
     Hello,
 
     Thanks for signing up to the Community Gardens. Your plot is waiting:
@@ -10,4 +10,4 @@ jardins-corps-bienvenue =
 
     See you soon,
     The Gardens team
-jardins-sujet-verification = Authentication check results
+gardens-subject-verification = Authentication check results
