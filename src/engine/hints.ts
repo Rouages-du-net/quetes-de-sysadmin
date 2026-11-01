@@ -10,8 +10,8 @@
 import type { Shell } from './shell';
 import { allSheets } from './sheets';
 
-export type HintLevel = 'manuel' | 'piste' | 'solution';
-export const HINT_LEVELS: HintLevel[] = ['manuel', 'piste', 'solution'];
+export type HintLevel = 'manual' | 'lead' | 'solution';
+export const HINT_LEVELS: HintLevel[] = ['manual', 'lead', 'solution'];
 
 export interface Hint {
   // L'étape visée (l'identifiant de l'événement), ou null : plus rien à indiquer.

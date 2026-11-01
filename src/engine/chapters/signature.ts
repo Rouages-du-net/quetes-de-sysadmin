@@ -87,7 +87,7 @@ export const signature: Chapter = {
       id: 'key',
       condition: (j) => {
         const n = j.find('/etc/dkimkeys');
-        return n?.type === 'dossier' && Object.keys(n.children).some((x) => x.endsWith('.private'));
+        return n?.type === 'directory' && Object.keys(n.children).some((x) => x.endsWith('.private'));
       },
       message: (j) => j.t('signature-event-key'),
     },

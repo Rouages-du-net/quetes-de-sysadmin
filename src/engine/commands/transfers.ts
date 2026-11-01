@@ -19,7 +19,7 @@ const ID_COPY_SSH_NAME = '/usr/bin/ssh-copy-id';
 function chosenPublicKey(game: Shell, data?: string): string | null {
   if (data) return data.endsWith('.pub') ? data : `${data}.pub`;
   const ssh = game.find('~/.ssh');
-  if (ssh?.type !== 'dossier') return null;
+  if (ssh?.type !== 'directory') return null;
   const pub = Object.keys(ssh.children).filter((n) => /^id_.*\.pub$/.test(n));
   return pub.includes('id_ed25519.pub') ? '~/.ssh/id_ed25519.pub' : pub.length ? `~/.ssh/${pub[0]}` : null;
 }
@@ -60,12 +60,12 @@ function sshCopyId(game: Shell, args: string[]): string {
     s.who = d.user;
     try {
       if (!s.exists(`${home}/.ssh`))
-        s.place('mkdir', `${home}/.ssh`, { type: 'dossier', children: {}, owner: d.user, mode: 'rwx------' });
+        s.place('mkdir', `${home}/.ssh`, { type: 'directory', children: {}, owner: d.user, mode: 'rwx------' });
       const n = s.find(`${home}/.ssh/authorized_keys`);
-      if (n?.type === 'fichier') n.content = [s.read(`${home}/.ssh/authorized_keys`), key].filter(Boolean).join('\n');
+      if (n?.type === 'file') n.content = [s.read(`${home}/.ssh/authorized_keys`), key].filter(Boolean).join('\n');
       else
         s.place('ssh-copy-id', `${home}/.ssh/authorized_keys`, {
-          type: 'fichier',
+          type: 'file',
           content: key,
           lines: true,
           owner: d.user,
@@ -98,19 +98,19 @@ export function copy(src: Shell, dst: Shell, path: string, dest: string, recursi
     errors.push(`scp: ${absolute}: No such file or directory`);
     return [];
   }
-  if (n.type === 'dossier' && !recursive) {
+  if (n.type === 'directory' && !recursive) {
     errors.push(`scp: ${absolute}: not a regular file`);
     return [];
   }
   const name = absolute.split('/').at(-1)!;
   const existsTarget = dst.find(dest);
-  const destination = existsTarget?.type === 'dossier' ? `${dst.resolve(dest)}/${name}` : dst.resolve(dest);
+  const destination = existsTarget?.type === 'directory' ? `${dst.resolve(dest)}/${name}` : dst.resolve(dest);
   const lines: string[] = [];
   const put = (source: Node, to: string) => {
-    if (source.type === 'dossier') {
+    if (source.type === 'directory') {
       if (!src.can(source, 'r') || !src.can(source, 'x')) return void errors.push(`scp: ${to}: Permission denied`);
-      if (dst.find(to)?.type !== 'dossier') {
-        const e = dst.place('scp', to, { type: 'dossier', children: {}, owner: dst.who });
+      if (dst.find(to)?.type !== 'directory') {
+        const e = dst.place('scp', to, { type: 'directory', children: {}, owner: dst.who });
         if (e) return void errors.push(`scp: ${to}: Permission denied`);
       }
       for (const [k, e] of Object.entries((source as Directory).children)) put(e, `${to}/${k}`);
@@ -119,7 +119,7 @@ export function copy(src: Shell, dst: Shell, path: string, dest: string, recursi
     const f = source as File;
     if (!src.can(f, 'r')) return void errors.push(`scp: ${src.resolve(path)}: Permission denied`);
     const copyOf: File = {
-      type: 'fichier',
+      type: 'file',
       content: content(f, src),
       lines: f.lines,
       prose: f.prose,
@@ -130,7 +130,7 @@ export function copy(src: Shell, dst: Shell, path: string, dest: string, recursi
     };
     const old = dst.find(to);
     const e =
-      old?.type === 'fichier' && dst.can(old, 'w')
+      old?.type === 'file' && dst.can(old, 'w')
         ? (Object.assign(old, { content: copyOf.content, size: copyOf.size }), null)
         : dst.place('scp', to, copyOf);
     if (e) return void errors.push(`scp: ${to}: Permission denied`);

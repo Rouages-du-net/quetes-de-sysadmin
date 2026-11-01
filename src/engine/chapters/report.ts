@@ -51,12 +51,12 @@ const sudoOk = (j: Game) => validPolicy(j) && !withoutPassword(j) && permitted(s
 const env = (j: Game) => j.find(ENV);
 const closedToOther = (j: Game) => {
   const n = env(j);
-  return n?.type === 'fichier' && (n.mode ?? 'rw-r--r--').slice(6) === '---';
+  return n?.type === 'file' && (n.mode ?? 'rw-r--r--').slice(6) === '---';
 };
 // L'appli (compte commandes) doit pouvoir lire son fichier : propriétaire, ou groupe.
 const readableByApp = (j: Game) => {
   const n = env(j);
-  if (n?.type !== 'fichier') return false;
+  if (n?.type !== 'file') return false;
   const mode = n.mode ?? 'rw-r--r--';
   return ((n.owner ?? 'you') === 'commandes' && mode[0] === 'r') || ((n.group ?? n.owner) === 'commandes' && mode[3] === 'r');
 };

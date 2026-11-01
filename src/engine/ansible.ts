@@ -206,7 +206,7 @@ const no = (v: string | undefined) => /^(no|false|0|off)$/i.test(v ?? '');
 
 /** La configuration : ./ansible.cfg, puis ~/.ansible.cfg, puis /etc/ansible/ansible.cfg (la première trouvée). */
 export function readConfig(game: Shell): Config {
-  const file = [`${game.cwd}/ansible.cfg`, '~/.ansible.cfg', '/etc/ansible/ansible.cfg'].map((c) => game.resolve(c)).find((c) => game.find(c)?.type === 'fichier') ?? null;
+  const file = [`${game.cwd}/ansible.cfg`, '~/.ansible.cfg', '/etc/ansible/ansible.cfg'].map((c) => game.resolve(c)).find((c) => game.find(c)?.type === 'file') ?? null;
   const ini = file ? readIni(game.read(file) ?? '') : {};
   const d = ini.defaults ?? {};
   const directory = file ? file.slice(0, file.lastIndexOf('/')) : game.cwd;
@@ -226,14 +226,14 @@ export function readInventory(text: string): Inventory {
   const variables: Record<string, Record<string, string>> = {};
   const children: Record<string, string[]> = {};
   let group = 'ungrouped';
-  let mode: 'hotes' | 'vars' | 'children' = 'hotes';
+  let mode: 'hosts' | 'vars' | 'children' = 'hosts';
   for (const rawValue of text.split('\n')) {
     const l = rawValue.replace(/(^|\s)[#;].*$/, '').trim();
     if (!l) continue;
     const s = /^\[([^\]:]+)(?::(vars|children))?\]$/.exec(l);
     if (s) {
       group = s[1];
-      mode = (s[2] as 'vars' | 'children') ?? 'hotes';
+      mode = (s[2] as 'vars' | 'children') ?? 'hosts';
       inv.groups[group] ??= [];
       continue;
     }
@@ -401,8 +401,8 @@ const notWritable = (directory: string): Result => ({ changed: false, failed: tr
 
 function writeFile(h: Shell, path: string, content: string, a: Args): void {
   const n = h.find(path);
-  if (n?.type === 'fichier') n.content = content;
-  else h.place('ansible', path, { type: 'fichier', content, lines: true, owner: 'root', group: 'root', mode: 'rw-r--r--' });
+  if (n?.type === 'file') n.content = content;
+  else h.place('ansible', path, { type: 'file', content, lines: true, owner: 'root', group: 'root', mode: 'rw-r--r--' });
   applyAttributes(h, path, a);
 }
 
@@ -411,7 +411,7 @@ function changeAttributes(h: Shell, path: string, a: Args): boolean {
   const n = h.find(path);
   if (!n) return false;
   const mode = toMode(string(a.mode));
-  return (!!a.owner && n.owner !== string(a.owner)) || (!!a.group && (n.group ?? n.owner) !== string(a.group)) || (!!mode && (n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--')) !== mode);
+  return (!!a.owner && n.owner !== string(a.owner)) || (!!a.group && (n.group ?? n.owner) !== string(a.group)) || (!!mode && (n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--')) !== mode);
 }
 function applyAttributes(h: Shell, path: string, a: Args) {
   const n = h.find(path);
@@ -461,7 +461,7 @@ const MODULES: Record<string, Module> = {
         if (content === undefined) return { changed: false, failed: true, msg: `Could not find or access '${src}'\nSearched in:\n\t${c.game.cwd}/files/${src}\n\t${c.game.cwd}/${src} on the Ansible Controller.\nIf you are using a module and expect the file to exist on the remote, see the remote_src option` };
       }
       const directory = directoryFor(dest);
-      if (h.find(directory)?.type !== 'dossier') return { changed: false, failed: true, msg: `Destination directory ${directory} does not exist` };
+      if (h.find(directory)?.type !== 'directory') return { changed: false, failed: true, msg: `Destination directory ${directory} does not exist` };
       const before = h.read(dest);
       const change = before !== content || changeAttributes(h, dest, a);
       if (change && !canWrite(h, dest)) return notWritable(directory);
@@ -483,11 +483,11 @@ const MODULES: Record<string, Module> = {
         return { changed: true };
       }
       if (state === 'directory') {
-        if (n && n.type !== 'dossier') return { changed: false, failed: true, msg: `${path} already exists as a file` };
+        if (n && n.type !== 'directory') return { changed: false, failed: true, msg: `${path} already exists as a file` };
         if (!n) {
           if (!canWrite(h, path)) return { changed: false, failed: true, msg: `There was an issue creating ${path} as requested: [Errno 13] Permission denied: b'${path}'` };
           if (!c.check) {
-            h.place('ansible', path, { type: 'dossier', children: {}, owner: 'root', group: 'root', mode: 'rwxr-xr-x' });
+            h.place('ansible', path, { type: 'directory', children: {}, owner: 'root', group: 'root', mode: 'rwxr-xr-x' });
             applyAttributes(h, path, a);
           }
           return { changed: true };
@@ -560,7 +560,7 @@ const MODULES: Record<string, Module> = {
           const uid = Math.max(1000, ...Object.values(h.accounts.users).map((u) => u.uid)) + 1;
           h.accounts.groups[name] ??= { gid: uid, members: [] };
           h.accounts.users[name] = { uid, group: name, home: `/home/${name}`, shell: wantedShell ?? '/bin/sh' };
-          if (boolean(a.create_home, true) && !h.find(`/home/${name}`)) h.place('ansible', `/home/${name}`, { type: 'dossier', children: {}, owner: name, group: name, mode: 'rwxr-xr-x' });
+          if (boolean(a.create_home, true) && !h.find(`/home/${name}`)) h.place('ansible', `/home/${name}`, { type: 'directory', children: {}, owner: name, group: name, mode: 'rwxr-xr-x' });
         } else if (wantedShell) h.accounts.users[name].shell = wantedShell;
         for (const g of groups) if (!inside(g)) h.accounts.groups[g].members.push(name);
       }

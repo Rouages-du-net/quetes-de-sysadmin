@@ -24,33 +24,33 @@ function el<K extends keyof HTMLElementTagNameMap>(name: K, attrs: Record<string
 }
 
 const shortcut = (key: string, label: string) =>
-  el('button', { type: 'button', class: 'nano-touche' }, el('kbd', {}, key), ` ${label}`);
+  el('button', { type: 'button', class: 'nano-key' }, el('kbd', {}, key), ` ${label}`);
 
 export function editor(o: EditorOptions): HTMLElement {
   const { t } = o;
-  const modified = el('span', { class: 'nano-modifie' });
+  const modified = el('span', { class: 'nano-modified' });
   const zone = el('textarea', {
-    class: 'nano-texte',
+    class: 'nano-text',
     spellcheck: 'false',
     autocapitalize: 'off',
     autocomplete: 'off',
     'aria-label': t('nano-zone', { path: o.path }),
   }) as HTMLTextAreaElement;
   zone.value = o.text;
-  const state = el('div', { class: 'nano-etat', role: 'status', 'aria-live': 'polite' }, o.message);
+  const state = el('div', { class: 'nano-status', role: 'status', 'aria-live': 'polite' }, o.message);
 
   const write = shortcut('^O', t('nano-write'));
   const quit = shortcut('^X', t('nano-quit'));
-  const help = el('div', { class: 'nano-aide' }, write, quit);
+  const help = el('div', { class: 'nano-help' }, write, quit);
   const yes = shortcut('O', t('nano-yes'));
   const not = shortcut('N', t('nano-not'));
   const cancel = shortcut('^C', t('nano-cancel'));
-  const question = el('div', { class: 'nano-aide', hidden: '' }, yes, not, cancel);
+  const question = el('div', { class: 'nano-help', hidden: '' }, yes, not, cancel);
 
   const root = el(
     'div',
     { class: 'nano', role: 'group', 'aria-label': `nano ${o.path}` },
-    el('div', { class: 'nano-titre' }, el('span', {}, 'GNU nano 7.2'), el('span', { class: 'nano-chemin' }, o.path), modified),
+    el('div', { class: 'nano-title' }, el('span', {}, 'GNU nano 7.2'), el('span', { class: 'nano-path' }, o.path), modified),
     zone,
     state,
     help,

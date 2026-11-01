@@ -26,7 +26,7 @@ east`;
 const ansibleLines = (h: Shell) => (h.read('/etc/motd') ?? '').split('\n').filter((l) => l.includes('Ansible')).length;
 const ready = (j: Game, n: string) => {
   const h = onCentre(j, n);
-  return !!h.state.packages?.htop && ansibleLines(h) === 1 && h.find('/srv/shared')?.type === 'dossier';
+  return !!h.state.packages?.htop && ansibleLines(h) === 1 && h.find('/srv/shared')?.type === 'directory';
 };
 const executions = (j: Game) => history(j as Shell).executions;
 

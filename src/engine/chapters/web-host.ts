@@ -58,7 +58,7 @@ function wikiSite(j: Game): Record<string, string> {
   const walk = (path: string, rel: string) => {
     const n = w?.find(path);
     if (!n) return;
-    if (n.type === 'dossier') for (const k of Object.keys(n.children)) walk(`${path}/${k}`, rel ? `${rel}/${k}` : k);
+    if (n.type === 'directory') for (const k of Object.keys(n.children)) walk(`${path}/${k}`, rel ? `${rel}/${k}` : k);
     else res[rel] = w!.read(path) ?? '';
   };
   walk(SITE, '');
@@ -83,7 +83,7 @@ const lastSend = (j: Game) =>
   inLine(j)
     ?.log.filter((e) => e.send)
     .at(-1);
-const refusal = (j: Game, what: 'clair' | 'certificat') => !!(workstation(j)?.state.ftpRefusal as string[] | undefined)?.includes(what);
+const refusal = (j: Game, what: 'plain' | 'certificate') => !!(workstation(j)?.state.ftpRefusal as string[] | undefined)?.includes(what);
 
 export const host: Chapter = {
   id: 'web-host',
@@ -137,8 +137,8 @@ export const host: Chapter = {
       },
     }),
   events: [
-    { id: 'clear', condition: (j) => refusal(j, 'clair'), message: (j) => j.t('web-host-event-clear') },
-    { id: 'certificate', condition: (j) => refusal(j, 'certificat'), message: (j) => j.t('web-host-event-certificate') },
+    { id: 'clear', condition: (j) => refusal(j, 'plain'), message: (j) => j.t('web-host-event-clear') },
+    { id: 'certificate', condition: (j) => refusal(j, 'certificate'), message: (j) => j.t('web-host-event-certificate') },
     {
       id: 'without-verification',
       condition: (j) => !!inLine(j)?.log.some((e) => !e.checked),

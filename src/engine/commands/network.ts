@@ -89,13 +89,13 @@ function dnsServers(game: Shell): string[] {
 }
 
 // Résout un nom comme le ferait le système. `serveur` : forcer un serveur DNS.
-function resolveName(game: Shell, name: string, server?: string): { ip: string } | { error: 'delai' | 'inconnu'; servers: string[] } {
+function resolveName(game: Shell, name: string, server?: string): { ip: string } | { error: 'timeout' | 'unknown'; servers: string[] } {
   if (isIp(name)) return { ip: name };
   const r: Network = game.state.network;
   const servers = server ? [server] : dnsServers(game);
-  if (!servers.some((s) => r.resolvers.includes(s))) return { error: 'delai', servers };
+  if (!servers.some((s) => r.resolvers.includes(s))) return { error: 'timeout', servers };
   const ip = r.names[name.replace(/\.$/, '')];
-  return ip ? { ip } : { error: 'inconnu', servers };
+  return ip ? { ip } : { error: 'unknown', servers };
 }
 
 // ping sur le réseau local : un appareil répond, ou l'interface du routeur dit qu'il est injoignable.
@@ -105,17 +105,17 @@ function pingLan(game: Shell, host: string, n: number): string {
   const ip = isIp(host) ? host : l.devices.find((a) => a.name === host) ? addressFor(l.devices.find((a) => a.name === host)!) : undefined;
   if (!ip) return game.error(`ping: ${host}: Name or service not known`, 2);
   const r = reach(l, ip);
-  if (r.what === 'pas-de-route') return game.error('ping: connect: Network is unreachable', 2);
+  if (r.what === 'no-route') return game.error('ping: connect: Network is unreachable', 2);
   const lines = [`PING ${host} (${ip}) 56(84) bytes of data.`];
   const time: number[] = [];
   // Par un tunnel WireGuard : il faut un pair pour cette adresse, et que la poignée de main ait eu lieu.
   const tunnel = interfaceFor(l, ip)?.wireguard ? pingTunnel(game, ip) : null;
   for (let i = 1; i <= n; i++) {
-    if (tunnel === 'sans-pair') {
+    if (tunnel === 'no-peer') {
       lines.push('ping: sendmsg: Required key not available');
       continue;
     }
-    if (tunnel === 'perdu') continue;
+    if (tunnel === 'lost') continue;
     if (tunnel === 'ok') {
       const t = 23.1 + ((i * 37) % 11) / 10;
       time.push(t);
@@ -126,8 +126,8 @@ function pingLan(game: Shell, host: string, n: number): string {
       if (i <= 3) lines.push(`From ${r.source} icmp_seq=${i} Destination Host Unreachable`);
       continue;
     }
-    if (r.what === 'perdu') continue;
-    const t = r.what === 'local' ? 0.03 : r.what === 'appareil' ? 0.4 + ((i * 37) % 11) / 40 : 11.2 + ((i * 37) % 11) / 10;
+    if (r.what === 'lost') continue;
+    const t = r.what === 'local' ? 0.03 : r.what === 'device' ? 0.4 + ((i * 37) % 11) / 40 : 11.2 + ((i * 37) % 11) / 10;
     time.push(t);
     lines.push(`64 bytes from ${ip}: icmp_seq=${i} ttl=${r.what === 'internet' ? 57 : 64} time=${t.toFixed(t < 10 ? 2 : 1)} ms`);
   }
@@ -160,7 +160,7 @@ export const NETWORK: Record<string, Command> = {
       if (lan(game)) return pingLan(game, host, n);
       const res = resolveName(game, host);
       if ('error' in res)
-        return game.error(`ping: ${host}: ${res.error === 'delai' ? 'Temporary failure in name resolution' : 'Name or service not known'}`);
+        return game.error(`ping: ${host}: ${res.error === 'timeout' ? 'Temporary failure in name resolution' : 'Name or service not known'}`);
       const r: Network = game.state.network;
       const m = r.machines[res.ip];
       const jumps = r.routes[res.ip]?.length ?? 1;
@@ -197,7 +197,7 @@ export const NETWORK: Record<string, Command> = {
       if (!name) return game.error(game.t('dig-usage'));
       const res = resolveName(game, name, server);
       const header = `; <<>> DiG 9.18.28 <<>> ${args.join(' ')}\n;; global options: +cmd`;
-      if ('error' in res && res.error === 'delai') {
+      if ('error' in res && res.error === 'timeout') {
         const s = res.servers[0] ?? '?';
         const errors = Array(3).fill(`;; communications error to ${s}#53: timed out`).join('\n');
         return short ? errors : `${errors}\n\n${header}\n;; no servers could be reached`;
@@ -227,7 +227,7 @@ export const NETWORK: Record<string, Command> = {
       const res = resolveName(game, host);
       if ('error' in res)
         return game.error(
-          `${host}: ${res.error === 'delai' ? 'Temporary failure in name resolution' : 'Name or service not known'}\nCannot handle "host" cmdline arg \`${host}' on position 1 (argc 1)`,
+          `${host}: ${res.error === 'timeout' ? 'Temporary failure in name resolution' : 'Name or service not known'}\nCannot handle "host" cmdline arg \`${host}' on position 1 (argc 1)`,
         );
       const r: Network = game.state.network;
       const jumps = r.routes[res.ip] ?? [];

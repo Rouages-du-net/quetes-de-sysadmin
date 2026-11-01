@@ -88,7 +88,7 @@ export function readConfig(game: Game, path = CONFIG): ConfigSshd {
           const k = absolute.lastIndexOf('/');
           const directory = game.find(absolute.slice(0, k));
           const re = wildcard(absolute.slice(k + 1));
-          if (directory?.type === 'dossier')
+          if (directory?.type === 'directory')
             for (const name of Object.keys(directory.children).sort()) if (re.test(name)) read(`${absolute.slice(0, k)}/${name}`);
         }
         return;

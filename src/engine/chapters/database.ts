@@ -89,9 +89,9 @@ const dumpRoot = (j: Game) =>
 const archive = (j: Game) => {
   const n = j.find(BACKUPS);
   return (
-    n?.type === 'dossier' &&
+    n?.type === 'directory' &&
     Object.values(n.children).some(
-      (e) => e.type === 'fichier' && /^(PGDMP|--\n-- PostgreSQL database dump)/.test(typeof e.content === 'string' ? e.content : ''),
+      (e) => e.type === 'file' && /^(PGDMP|--\n-- PostgreSQL database dump)/.test(typeof e.content === 'string' ? e.content : ''),
     )
   );
 };

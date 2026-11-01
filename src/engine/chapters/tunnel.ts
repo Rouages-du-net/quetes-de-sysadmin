@@ -17,10 +17,10 @@ import type { App } from '../nginx';
 import { newSystemd } from '../systemd';
 import { loadSshd, homeAccounts, sshDirectory, homeState, internalHost, M, NOW, homeWorld, PASSWORD, homePlan } from './community-centre';
 
-type Signup = 'attente' | 'validee' | 'refusee';
+type Signup = 'pending' | 'approved' | 'refused';
 const VALIDATE = ['samir', 'lea'];
 const ADVERT = 'promo-casino';
-const SIGNUPS = (): Record<string, Signup> => ({ samir: 'attente', lea: 'attente', [ADVERT]: 'attente' });
+const SIGNUPS = (): Record<string, Signup> => ({ samir: 'pending', lea: 'pending', [ADVERT]: 'pending' });
 
 const signups = (j: Game) => j.state.signups as Record<string, Signup>;
 
@@ -36,7 +36,7 @@ const ADMIN: App = {
     }
     const m = /^\/admin\/(valider|refuser)\/([\w-]+)\/?$/.exec(path);
     if (m && listing[m[2]]) {
-      listing[m[2]] = m[1] === 'valider' ? 'validee' : 'refusee';
+      listing[m[2]] = m[1] === 'valider' ? 'approved' : 'refused';
       return { code: 200, type: 'text/plain; charset=utf-8', body: j.t(`tunnel-admin-${m[1]}`, { name: m[2] }) };
     }
     return { code: 404, type: 'text/plain; charset=utf-8', body: j.t('tunnel-admin-introuvable') };
@@ -52,8 +52,8 @@ const openTunnels = (j: Game) => {
   const live = ((p.state.process ?? []) as { pid: number }[]).map((x) => x.pid);
   return ((p.state.tunnels ?? []) as { pid: number }[]).filter((t) => live.includes(t.pid)).length;
 };
-const approved = (j: Game) => VALIDATE.every((n) => signups(wiki(j))[n] === 'validee');
-const approvedAdvert = (j: Game) => signups(wiki(j))[ADVERT] === 'validee';
+const approved = (j: Game) => VALIDATE.every((n) => signups(wiki(j))[n] === 'approved');
+const approvedAdvert = (j: Game) => signups(wiki(j))[ADVERT] === 'approved';
 
 export const tunnel: Chapter = {
   id: 'tunnel',

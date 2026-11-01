@@ -9,7 +9,7 @@
 import type { Translate } from '../texts';
 import { machineName } from './machines';
 
-export type Role = 'internet' | 'poste' | 'routeur' | 'serveur' | 'appareil' | 'reseau';
+export type Role = 'internet' | 'workstation' | 'router' | 'server' | 'device' | 'network';
 
 export interface ElementPlan {
   role: Role;
@@ -30,7 +30,7 @@ export interface ElementPlan {
 export const internet = (t: Translate, ...children: ElementPlan[]): ElementPlan => ({
   role: 'internet',
   name: t('plan-internet'),
-  children: [{ role: 'poste', name: machineName(t, 'desk'), address: '192.0.2.2', note: t('plan-your-workstation'), host: 'desk' }, ...children],
+  children: [{ role: 'workstation', name: machineName(t, 'desk'), address: '192.0.2.2', note: t('plan-your-workstation'), host: 'desk' }, ...children],
 });
 
 export interface Landmark {

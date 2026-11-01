@@ -84,19 +84,19 @@ const after = (ids: string[]) =>
   const list = sheets.filter((f) => f.story === h);
   const duration = hours(list.reduce((s, f) => s + f.duration, 0));
   return (
-    <section class="fiche-histoire" aria-labelledby={`h-${h.id}`}>
+    <section class="sheet-story" aria-labelledby={`h-${h.id}`}>
       <h2 id={`h-${h.id}`}>{t(`story-${h.id}`)}</h2>
       <p>{typo(t(`story-${h.id}.summary`))}</p>
-      <p class="discret">
+      <p class="muted">
         {fr
           ? `${list.length} ${list.length > 1 ? 'chapitres' : 'chapitre'}, environ ${duration}.`
           : `${list.length} ${list.length > 1 ? 'chapters' : 'chapter'}, about ${duration}.`}
         {h.after && (fr ? ` S'ouvre dans le jeu après ${after(h.after)}, sauf en ouverture directe :` : ` Opens in the game after ${after(h.after)}, unless opened directly:`)}
       </p>
       {h.id !== 'eraser' && <pre><code>{`<quetes-de-sysadmin story="${h.id}"${fr ? ' lang="fr"' : ' lang="en"'}></quetes-de-sysadmin>`}</code></pre>}
-      <ol class="fiches">
+      <ol class="sheets">
         {list.map((f) => (
-          <li class="fiche" id={`c-${f.chapter.id}`}>
+          <li class="sheet" id={`c-${f.chapter.id}`}>
             <h3>{t('chapter-number', { number: f.chapter.number })}{fr ? ' : ' : ': '}{t(`chapter-${f.chapter.id}`)}</h3>
             <dl>
               <dt>{fr ? 'Objectif' : 'Goal'}</dt>

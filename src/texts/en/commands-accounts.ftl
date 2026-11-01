@@ -67,7 +67,7 @@ chage-list =
     Password inactive					: never
     Account expires						: { $expire ->
         [never] never
-       *[autre] { $expire }
+       *[other] { $expire }
     }
     Minimum number of days between password change		: 0
     Maximum number of days between password change		: 99999

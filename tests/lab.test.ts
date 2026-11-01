@@ -81,7 +81,7 @@ for (const language of LANGUAGES)
       all = play(['sudo mdadm /dev/md0 --re-add /dev/sda2']);
       expect(all).toContain('mdadm: Cannot open /dev/sda2: Device or resource busy');
       play(['sudo mdadm /dev/md0 --remove /dev/sda2', 'sudo mdadm /dev/md0 --re-add /dev/sda2', 'cat /proc/mdstat']);
-      expect(st().arrays.md0.members.find((m) => m.part === 'sda2')?.state).toBe('actif');
+      expect(st().arrays.md0.members.find((m) => m.part === 'sda2')?.state).toBe('active');
       // Puis le bon disque, dans les deux grappes.
       play(['sudo mdadm /dev/md0 --fail /dev/sdb2 --remove /dev/sdb2', 'sudo mdadm /dev/md1 --fail /dev/sdb3 --remove /dev/sdb3']);
       // Un ticket avec le numéro de sda : refusé (on débrancherait le disque sain).
@@ -107,7 +107,7 @@ for (const language of LANGUAGES)
       expect(all).toMatch(/recovery = +\d+\.\d% \(\d+\/1919824896\) finish=[\d.]+min speed=180000K\/sec/);
       expect(s.finished).toBe(false);
       // La reconstruction prend quelques commandes.
-      for (let i = 0; i < 6 && !st().arrays.md1.members.every((m) => m.state === 'actif'); i++) play(['cat /proc/mdstat']);
+      for (let i = 0; i < 6 && !st().arrays.md1.members.every((m) => m.state === 'active'); i++) play(['cat /proc/mdstat']);
       all = play(['cat /proc/mdstat']);
       expect(all).toContain('md1 : active raid1 sdb3[1] sda3[0]\n      1919824896 blocks super 1.2 [2/2] [UU]');
       all = play(['sudo grub-install /dev/sdb']);

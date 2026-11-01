@@ -101,7 +101,7 @@ function nodeError(game: Game, c: Container, code: 'EACCES' | 'EROFS', call: 'mk
 
 const presentPhotos = (j: Game) => {
   const n = j.find(PHOTOS);
-  return n?.type === 'dossier' ? PHOTOS_NAMES.filter((p) => n.children[p]?.type === 'fichier') : [];
+  return n?.type === 'directory' ? PHOTOS_NAMES.filter((p) => n.children[p]?.type === 'file') : [];
 };
 
 APPS.galerie = {

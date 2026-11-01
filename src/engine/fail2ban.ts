@@ -99,7 +99,7 @@ export function covers(input: string, address: string): boolean {
 const files = (game: Game): string[] => {
   const inside = (directory: string, ext: string) => {
     const n = game.find(directory);
-    return n?.type === 'dossier' ? Object.keys(n.children).filter((f) => f.endsWith(ext)).sort().map((f) => `${directory}/${f}`) : [];
+    return n?.type === 'directory' ? Object.keys(n.children).filter((f) => f.endsWith(ext)).sort().map((f) => `${directory}/${f}`) : [];
   };
   return [`${DIRECTORY}/jail.conf`, ...inside(`${DIRECTORY}/jail.d`, '.conf'), `${DIRECTORY}/jail.local`, ...inside(`${DIRECTORY}/jail.d`, '.local')].filter((f) =>
     game.exists(f),
@@ -119,7 +119,7 @@ function existsLog(game: Game, pattern: string): boolean {
   const k = pattern.lastIndexOf('/');
   const directory = game.find(pattern.slice(0, k));
   const re = new RegExp(`^${pattern.slice(k + 1).replace(/[.]/g, '\\.').replace(/\*/g, '.*')}$`);
-  return directory?.type === 'dossier' && Object.keys(directory.children).some((n) => re.test(n));
+  return directory?.type === 'directory' && Object.keys(directory.children).some((n) => re.test(n));
 }
 
 /**

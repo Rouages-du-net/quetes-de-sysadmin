@@ -74,7 +74,7 @@ export interface Disk {
 }
 
 // spare : un membre de rechange, qui prendra la place d'un défectueux.
-export type MemberState = 'actif' | 'defectueux' | 'reconstruction' | 'spare';
+export type MemberState = 'active' | 'faulty' | 'rebuilding' | 'spare';
 
 export interface Member {
   // La partition, sans /dev/ (sda2).
@@ -147,10 +147,10 @@ export const majmin = (st: StorageState, name: string): [number, number] => {
 };
 
 /** Les membres en état de marche (actifs, ou à jour) et le compte des places tenues. */
-export const active = (g: Array) => g.members.filter((m) => m.state === 'actif');
-export const inRebuild = (g: Array) => g.members.filter((m) => m.state === 'reconstruction');
+export const active = (g: Array) => g.members.filter((m) => m.state === 'active');
+export const inRebuild = (g: Array) => g.members.filter((m) => m.state === 'rebuilding');
 export const degraded = (g: Array) => active(g).length < g.wanted;
-export const healthy = (g: Array) => active(g).length === g.wanted && g.members.every((m) => m.state === 'actif');
+export const healthy = (g: Array) => active(g).length === g.wanted && g.members.every((m) => m.state === 'active');
 
 // La grappe qui reconstruit en ce moment : la première (dans l'ordre md0, md1…) ; les autres attendent.
 export function rebuiltInThisMoment(st: StorageState): string | null {
@@ -188,7 +188,7 @@ export function advance(st: StorageState, seconds = SECONDS_BY_COMMAND): void {
       return;
     }
     rest -= Math.ceil((total - done) / SPEED);
-    m.state = 'actif';
+    m.state = 'active';
     delete m.copyOf;
     delete m.fast;
     g.events += 1;
@@ -200,7 +200,7 @@ export const freeNumber = (g: Array) => Math.max(-1, ...g.members.map((m) => m.n
 
 /** La place libre (RaidDevice) d'une grappe dégradée, ou null. */
 export function freePlace(g: Array): number | null {
-  for (let r = 0; r < g.wanted; r++) if (!g.members.some((m) => m.role === r && m.state !== 'defectueux')) return r;
+  for (let r = 0; r < g.wanted; r++) if (!g.members.some((m) => m.role === r && m.state !== 'faulty')) return r;
   return null;
 }
 
@@ -221,10 +221,10 @@ export function mdstat(st: StorageState): string {
     // Les membres, du plus récent au plus ancien, (F) pour les défectueux.
     const members = [...g.members]
       .sort((a, b) => b.number - a.number)
-      .map((m) => `${m.part}[${m.number}]${m.state === 'defectueux' ? '(F)' : m.state === 'spare' ? '(S)' : ''}`)
+      .map((m) => `${m.part}[${m.number}]${m.state === 'faulty' ? '(F)' : m.state === 'spare' ? '(S)' : ''}`)
       .join(' ');
     lines.push(`${name} : active ${g.level} ${members}`);
-    const places = Array.from({ length: g.wanted }, (_, r) => (g.members.some((m) => m.role === r && m.state === 'actif') ? 'U' : '_')).join('');
+    const places = Array.from({ length: g.wanted }, (_, r) => (g.members.some((m) => m.role === r && m.state === 'active') ? 'U' : '_')).join('');
     lines.push(`      ${g.blocks} blocks super 1.2 [${g.wanted}/${active(g).length}] [${places}]`);
     const r = inRebuild(g)[0];
     if (r && name === inCourse) {
@@ -294,15 +294,15 @@ export function decimalSize(bytes: number): string {
 export function devUpdate(j: Game): void {
   const st = storageOf(j);
   const dev = j.find('/dev');
-  if (!st || dev?.type !== 'dossier') return;
+  if (!st || dev?.type !== 'directory') return;
   const names = [
     ...Object.entries(st.disks).flatMap(([n, d]) => [n, ...d.partitions.map((p) => `${n}${p.number}`)]),
     ...Object.keys(st.arrays),
   ];
   for (const k of Object.keys(dev.children)) if (/^(sd[a-z]\d*|md\d+)$/.test(k) && !names.includes(k)) delete dev.children[k];
   for (const n of names)
-    dev.children[n] ??= { type: 'fichier', content: '', owner: 'root', group: 'disk', mode: 'rw-rw----', lines: true };
+    dev.children[n] ??= { type: 'file', content: '', owner: 'root', group: 'disk', mode: 'rw-rw----', lines: true };
 }
 
 /** Un dossier /dev de départ (rempli par majDev). */
-export const devDirectory = (): Directory => ({ type: 'dossier', children: {}, owner: 'root', mode: 'rwxr-xr-x' });
+export const devDirectory = (): Directory => ({ type: 'directory', children: {}, owner: 'root', mode: 'rwxr-xr-x' });

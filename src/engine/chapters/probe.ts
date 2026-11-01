@@ -132,7 +132,7 @@ function night(j: Game): string {
       const howMany = Math.min(BY_MINUTE, free);
       if (v)
         for (let k = 0; k < howMany; k++)
-          v.children[`${name(j.t, 'thumbnail')}-${String(++number).padStart(5, '0')}.jpg`] = { type: 'fichier', content: '', size: 0, owner: 'radio' };
+          v.children[`${name(j.t, 'thumbnail')}-${String(++number).padStart(5, '0')}.jpg`] = { type: 'file', content: '', size: 0, owner: 'radio' };
       if (free <= BY_MINUTE) {
         fullInodes = t;
         writeLog(s, 'radio-stream.service', 'stream', 1730, `record: cannot create ${path(j.t, '/srv/radio/shows')}/nuit.ogg: No space left on device`, 3, false);

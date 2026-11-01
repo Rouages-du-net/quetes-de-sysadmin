@@ -145,7 +145,7 @@ const notReread = (j: Game) => {
   return file.peers.some((p) => p.key === ANNEX_PUBLIC) && !inWorks?.peers.some((p) => p.key === ANNEX_PUBLIC);
 };
 
-const failedHandshake = (e: TunnelState) => ['conf', 'adresse', 'filtre', 'cle-routeur', 'inconnu'].includes(e);
+const failedHandshake = (e: TunnelState) => ['conf', 'address', 'filtered', 'cle-routeur', 'unknown'].includes(e);
 
 export const annex: Chapter = {
   id: 'annex',
@@ -200,7 +200,7 @@ export const annex: Chapter = {
       sysctl: ROUTER_SYSCTL,
       etc: {
         wireguard: {
-          type: 'dossier',
+          type: 'directory',
           children: { 'wg0.conf': f(WG0, { lines: true, owner: 'root', mode: 'rw-------' }) },
           owner: 'root',
           mode: 'rwx------',
@@ -221,7 +221,7 @@ export const annex: Chapter = {
     },
     { id: 'allowed', condition: (j) => toNas(j) === 'autorisees', message: (j) => j.t('annex-event-allowed') },
     { id: 'route', condition: (j) => toNas(j) === 'route', message: (j) => j.t('annex-event-route') },
-    { id: 'asleep', condition: (j) => toNas(j) === 'ok' && toPrinter(j) === 'endormi', message: (j) => j.t('annex-event-asleep') },
+    { id: 'asleep', condition: (j) => toNas(j) === 'ok' && toPrinter(j) === 'asleep', message: (j) => j.t('annex-event-asleep') },
     { id: 'cameras', condition: (j) => toCamera(j) === 'ok', message: (j) => j.t('annex-event-cameras') },
     { id: 'malik', condition: (j) => !!wg(j).wg0 && malik(j) !== 'ok', message: (j) => j.t('annex-event-malik') },
     { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-event-ssh') },

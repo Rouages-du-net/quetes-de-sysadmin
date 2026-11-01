@@ -56,7 +56,7 @@ export function codesStudents(text: string): (Student | ClassError)[] {
     .filter(Boolean)
     .map((line) => {
       const m = /^(.*?)[\s:;,]*\b(qds[\s-]*[0-9a-z][0-9a-z\s-]*)$/i.exec(line);
-      if (!m) return { source: line, error: 'code-illisible' };
+      if (!m) return { source: line, error: 'code-unreadable' };
       const read = readCode(m[2]);
       if ('error' in read) return { source: line, error: read.error };
       return { name: m[1].trim() || m[2].trim(), source: m[2].trim().toUpperCase(), finished: read.finished, achievements: 0, records: {}, date: null };

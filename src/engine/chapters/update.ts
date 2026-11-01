@@ -162,7 +162,7 @@ function somePart(j: Game): boolean {
   const search = (path: string, depth: number): boolean => {
     const n = j.find(path);
     if (!n || depth > 8) return false;
-    if (n.type === 'fichier') return baseComplete(j.read(path));
+    if (n.type === 'file') return baseComplete(j.read(path));
     return Object.keys(n.children).some((k) => search(`${path === '/' ? '' : path}/${k}`, depth + 1));
   };
   return search('/home', 0) || search('/srv', 0) || search('/tmp', 0) || search('/root', 0) || search('/opt', 0);

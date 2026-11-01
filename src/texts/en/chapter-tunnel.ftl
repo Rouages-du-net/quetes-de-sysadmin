@@ -53,9 +53,9 @@ tunnel-admin-page =
     Reject:    /admin/refuser/<account>
 # { $name }: the account; { $state }: attente (pending), validee (approved) or refusee (rejected)
 tunnel-admin-ligne = { $state ->
-        [validee] - { $name }: approved
-        [refusee] - { $name }: rejected
-       *[attente] - { $name }: pending
+        [approved] - { $name }: approved
+        [refused] - { $name }: rejected
+       *[pending] - { $name }: pending
     }
 tunnel-admin-valider = Sign-up of { $name } approved.
 tunnel-admin-refuser = Sign-up of { $name } rejected.

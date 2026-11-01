@@ -54,7 +54,7 @@ function authenticate(game: Shell, d: Destination, m: Machine): string {
   for (const path of identities) {
     const n = game.find(path);
     const absolute = game.resolve(path);
-    if (!n || n.type !== 'fichier') {
+    if (!n || n.type !== 'file') {
       if (d.identities.includes(path)) output.push(`Warning: Identity file ${path} not accessible: No such file or directory.`);
       continue;
     }
@@ -94,8 +94,8 @@ const generation = (game: Shell, m: Machine): string => game.state.remoteKey?.(m
 function addKnownHost(game: Shell, d: Destination, m: Machine) {
   const line = `${d.known} ${hostKey(m, generation(game, m))}`;
   const n = game.find('~/.ssh/known_hosts');
-  if (n?.type === 'fichier') n.content = [game.read('~/.ssh/known_hosts'), line].filter(Boolean).join('\n');
-  else game.place('ssh', '~/.ssh/known_hosts', { type: 'fichier', content: line, lines: true });
+  if (n?.type === 'file') n.content = [game.read('~/.ssh/known_hosts'), line].filter(Boolean).join('\n');
+  else game.place('ssh', '~/.ssh/known_hosts', { type: 'file', content: line, lines: true });
 }
 
 // Question de la première connexion : yes, no, ou l'empreinte elle-même.
@@ -263,7 +263,7 @@ function generate(game: Shell, args: string[]): string {
     const directory = path.replace(/\/[^/]+$/, '');
     if (!game.exists(directory)) {
       if (directory !== `${game.resolve('~')}/.ssh`) return `Saving key "${path}" failed: No such file or directory`;
-      game.place('ssh-keygen', directory, { type: 'dossier', children: {}, owner: game.who, mode: 'rwx------' });
+      game.place('ssh-keygen', directory, { type: 'directory', children: {}, owner: game.who, mode: 'rwx------' });
       lines.push(`Created directory '${directory}'.`);
     }
     const n = (game.state.generatedKeys = ((game.state.generatedKeys as number | undefined) ?? 0) + 1);
@@ -273,9 +273,9 @@ function generate(game: Shell, args: string[]): string {
       [`${path}.pub`, key.isPublic, 'rw-r--r--'],
     ] as const) {
       const old = game.find(c);
-      if (old?.type === 'fichier') Object.assign(old, { content, mode, lines: true, size: undefined });
+      if (old?.type === 'file') Object.assign(old, { content, mode, lines: true, size: undefined });
       else {
-        const e = game.place('ssh-keygen', c, { type: 'fichier', content, lines: true, owner: game.who, mode });
+        const e = game.place('ssh-keygen', c, { type: 'file', content, lines: true, owner: game.who, mode });
         if (e) return `Saving key "${path}" failed: Permission denied`;
       }
     }
@@ -389,10 +389,10 @@ export const SSH: Record<string, Command> = {
         );
       // Le pare-feu d'en face : deny laisse attendre (timeout), reject refuse tout de suite.
       const pf: Firewall | null = game.state.remoteFirewall?.(m.name) ?? null;
-      const pass = pf ? verdict(pf, Number(d.port), WORKSTATION.address) : 'accepte';
-      if (pass !== 'accepte')
+      const pass = pf ? verdict(pf, Number(d.port), WORKSTATION.address) : 'accepted';
+      if (pass !== 'accepted')
         return game.error(
-          `ssh: connect to host ${d.host} port ${d.port}: ${pass === 'bloque' ? 'Connection timed out' : 'Connection refused'}\n` +
+          `ssh: connect to host ${d.host} port ${d.port}: ${pass === 'blocked' ? 'Connection timed out' : 'Connection refused'}\n` +
             game.t('ssh-firewall', { machine: machineName(game.t, m.name) }),
         );
       const remarque = command.length ? game.t('ssh-command-remote') + '\n' : '';
@@ -445,7 +445,7 @@ export const SSH: Record<string, Command> = {
       if (!action) return generate(game, args);
       const path = game.resolve(file);
       const n = game.find(file);
-      if (!n || n.type !== 'fichier') return game.error(`${path}: No such file or directory`);
+      if (!n || n.type !== 'file') return game.error(`${path}: No such file or directory`);
       if (!game.can(n, 'r')) return game.error(`${path}: Permission denied`);
       const lines = (game.read(file) ?? '').split('\n').filter(Boolean);
       if (action === 'l')

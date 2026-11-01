@@ -169,7 +169,7 @@ function includedFiles(game: Game, pattern: string, file: string, line: number):
   const path = pattern.startsWith('/') ? pattern : `${PREFIX}/${pattern}`;
   if (!path.includes('*') && !path.includes('?')) {
     const n = game.find(path);
-    if (!n || n.type !== 'fichier') failure(`open() "${path}" failed (2: No such file or directory)`, file, line);
+    if (!n || n.type !== 'file') failure(`open() "${path}" failed (2: No such file or directory)`, file, line);
     return [path];
   }
   // Un lien cassé dans sites-enabled/ fait échouer nginx -t.
@@ -179,10 +179,10 @@ function includedFiles(game: Game, pattern: string, file: string, line: number):
   };
   const directory = path.slice(0, path.lastIndexOf('/')) || '/';
   const n = game.find(directory);
-  if (!n || n.type !== 'dossier') return [];
+  if (!n || n.type !== 'directory') return [];
   const re = wildcard(path.slice(path.lastIndexOf('/') + 1));
   return Object.keys(n.children)
-    .filter((name) => re.test(name) && n.children[name].type === 'fichier')
+    .filter((name) => re.test(name) && n.children[name].type === 'file')
     .sort()
     .map((name) => check(`${directory}/${name}`));
 }
@@ -241,7 +241,7 @@ function loadCertificate(game: Game, children: Directive[], http: Directive[], s
   const open = (d: Directive, what: string) => {
     const path = d.args[0];
     const n = game.find(path);
-    if (!n || n.type !== 'fichier')
+    if (!n || n.type !== 'file')
       failure(
         `cannot load ${what} "${path}": BIO_new_file() failed (SSL: error:80000002:system library::No such file or directory:calling fopen(${path}, r) error:10000080:BIO routines::no such file)`,
         d.file,
@@ -554,7 +554,7 @@ export function appRequest(
 function errorLog(game: Game, level: string, message: string) {
   if (!game.state.nginxTrace) return;
   const n = game.find('/var/log/nginx/error.log');
-  if (n?.type !== 'fichier' || typeof n.content !== 'string') return;
+  if (n?.type !== 'file' || typeof n.content !== 'string') return;
   const number = (game.state.nginxConnections = (game.state.nginxConnections ?? 0) + 1);
   const line = `${nginxTime(systemd(game)?.clock ?? 0)} [${level}] 2412#2412: *${number} ${message}`;
   n.content = n.content ? `${n.content}\n${line}` : line;
@@ -606,7 +606,7 @@ function localeTime(ms: number): string {
 function accessLog(game: Game, c: Client, path: string, r: Response) {
   if (!game.state.nginx?.journalAcces) return;
   const n = game.find('/var/log/nginx/access.log');
-  if (n?.type !== 'fichier' || typeof n.content !== 'string') return;
+  if (n?.type !== 'file' || typeof n.content !== 'string') return;
   const line = `${c.address} - - [${localeTime(c.time)}] "${c.method ?? 'GET'} ${path} HTTP/1.1" ${r.code} ${new TextEncoder().encode(r.body).length} "-" "${c.agent}"`;
   n.content = n.content ? `${n.content}\n${line}` : line;
 }
@@ -764,8 +764,8 @@ function handle(game: Game, host: string, path: string, port: number, client: Cl
   const index = loc?.index ?? server.index;
   const request = game.find(target);
   let file = request;
-  if (request?.type === 'dossier') {
-    const name = index.find((i) => request.children[i] && game.find(`${target.replace(/\/$/, '')}/${i}`)?.type === 'fichier');
+  if (request?.type === 'directory') {
+    const name = index.find((i) => request.children[i] && game.find(`${target.replace(/\/$/, '')}/${i}`)?.type === 'file');
     // Un lieu sans page d'index : nginx refuse d'en montrer la liste.
     if (!name) {
       errorLog(
@@ -777,7 +777,7 @@ function handle(game: Game, host: string, path: string, port: number, client: Cl
     }
     file = game.find(`${target.replace(/\/$/, '')}/${name}`);
   }
-  if (!file || file.type !== 'fichier') {
+  if (!file || file.type !== 'file') {
     errorLog(
       game,
       'error',

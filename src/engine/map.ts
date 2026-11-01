@@ -32,7 +32,7 @@ export function map(sh: Shell): Place {
   const place = (name: string, path: string, d: Directory, showChildren: boolean): Place => {
     const children = showChildren
       ? Object.entries(d.children)
-          .filter(([n, e]) => e.type === 'dossier' && (!n.startsWith('.') || walked.has(`${path === '/' ? '' : path}/${n}`)))
+          .filter(([n, e]) => e.type === 'directory' && (!n.startsWith('.') || walked.has(`${path === '/' ? '' : path}/${n}`)))
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([n, e]) => {
             const c = `${path === '/' ? '' : path}/${n}`;

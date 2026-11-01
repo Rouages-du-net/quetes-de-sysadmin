@@ -110,7 +110,7 @@ const ports = (j: Game) => portsSshd(sshd(j).load);
 const pf = (j: Game) => j.state.ufw as Firewall;
 const f2b = (j: Game) => j.state.fail2ban as Fail2banState;
 const workstation = (j: Game) => (j.state.workstation as (() => Shell) | undefined)?.();
-const open = (j: Game, port: number, source = INTERNET) => verdict(pf(j), port, source) === 'accepte';
+const open = (j: Game, port: number, source = INTERNET) => verdict(pf(j), port, source) === 'accepted';
 
 // Un port où sshd écoute et que le pare-feu laisse passer depuis le poste.
 const reachable = (j: Game) => ports(j).some((p) => open(j, p, WORKSTATION.address));

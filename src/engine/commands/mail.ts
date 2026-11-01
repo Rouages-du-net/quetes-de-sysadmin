@@ -49,7 +49,7 @@ function postconf(game: Shell, args: string[]): string {
       fresh = re.test(fresh) ? fresh.replace(re, line) : `${fresh.replace(/\n*$/, '')}\n${line}\n`;
     }
     const n = game.find(MAIN_CF);
-    if (n?.type === 'fichier') n.content = fresh;
+    if (n?.type === 'file') n.content = fresh;
     return '';
   }
   const warn = () => unknown.forEach((n) => game.error(`postconf: warning: ${MAIN_CF}: unused parameter: ${n}=${values[n]}`, 0));
@@ -182,17 +182,17 @@ function genkey(game: Shell, args: string[]): string {
   }
   if (!Number.isInteger(bits) || bits < 1024) return game.error(`opendkim-genkey: invalid key size ${bits}`);
   const place = game.resolve(directory);
-  if (game.find(place)?.type !== 'dossier') return game.error(`opendkim-genkey: ${directory}: No such file or directory`);
+  if (game.find(place)?.type !== 'directory') return game.error(`opendkim-genkey: ${directory}: No such file or directory`);
   const c = mail(game);
   const draw = (game.state.dkimKeys = (game.state.dkimKeys ?? 0) + 1);
   const isPrivate = privateKey(`${domain}:${selector}:${bits}:${draw}:${c?.ip ?? ''}`, bits);
   const output: string[] = [];
   if (verbose) output.push('opendkim-genkey: generating private key');
-  const error = game.place('opendkim-genkey', `${place}/${selector}.private`, { type: 'fichier', content: isPrivate, lines: true, owner: game.who, group: game.who, mode: 'rw-------' });
+  const error = game.place('opendkim-genkey', `${place}/${selector}.private`, { type: 'file', content: isPrivate, lines: true, owner: game.who, group: game.who, mode: 'rw-------' });
   if (error) return game.error(`opendkim-genkey: ${selector}.private: Permission denied`);
   if (verbose) output.push(`opendkim-genkey: private key written to ${selector}.private`, 'opendkim-genkey: extracting public key');
   game.place('opendkim-genkey', `${place}/${selector}.txt`, {
-    type: 'fichier',
+    type: 'file',
     content: dkimRecord(selector, domain, publicKey(isPrivate)!),
     lines: true,
     owner: game.who,
@@ -237,7 +237,7 @@ function testkey(game: Shell, args: string[]): string {
   if (!p) return game.error([...lines, `opendkim-testkey: '${name}' key revoked`].join('\n'));
   if (key) {
     const n = game.find(key);
-    if (!n || n.type !== 'fichier') return game.error([...lines, `opendkim-testkey: ${key}: open(): No such file or directory`].join('\n'));
+    if (!n || n.type !== 'file') return game.error([...lines, `opendkim-testkey: ${key}: open(): No such file or directory`].join('\n'));
     if (!game.can(n, 'r')) return game.error([...lines, `opendkim-testkey: ${key}: open(): Permission denied`].join('\n'));
     if (publicKey(game.read(key) ?? '') !== p) return game.error([...lines, 'opendkim-testkey: key data does not match private key'].join('\n'));
   }

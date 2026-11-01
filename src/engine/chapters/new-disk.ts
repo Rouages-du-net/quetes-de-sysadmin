@@ -24,7 +24,7 @@ const split = (j: Game) => {
   const b = sdb(j).partitions;
   return a.length === b.length && a.every((p, i) => b[i].type === p.type && b[i].sectors === p.sectors && b[i].number === p.number);
 };
-const inside = (j: Game, array: string, part: string) => st(j).arrays[array].members.some((m) => m.part === part && m.state !== 'defectueux');
+const inside = (j: Game, array: string, part: string) => st(j).arrays[array].members.some((m) => m.part === part && m.state !== 'faulty');
 const added = (j: Game) => inside(j, 'md0', 'sdb2') && inside(j, 'md1', 'sdb3');
 const rebuilt = (j: Game) => healthy(st(j).arrays.md0) && healthy(st(j).arrays.md1) && added(j);
 const wholeDisk = (j: Game) => Object.values(st(j).arrays).some((g) => g.members.some((m) => m.part === 'sdb'));
@@ -64,9 +64,9 @@ export const newDisk: Chapter = {
   steps: ['new', 'table', 'added', 'rebuilt', 'grub', 'end'],
   password: PASSWORD,
   accounts: labAccounts,
-  state: () => labState('neuf'),
+  state: () => labState('new'),
   initialise: (j) => {
-    labKernel(j, 'neuf');
+    labKernel(j, 'new');
     devUpdate(j);
   },
   createWorld: (t) =>

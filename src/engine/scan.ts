@@ -68,7 +68,7 @@ export interface Options {
   numbers: boolean;
   onlyOpen: boolean;
   // null : les 1000 ports courants ; sinon la liste, ou « tous ».
-  ports: number[] | 'tous' | 'rapide' | null;
+  ports: number[] | 'all' | 'fast' | null;
   file?: string;
 }
 
@@ -111,7 +111,7 @@ function state(game: Game, h: ScanHost, port: number, inside: boolean): LineStat
   const declare = h.services.some((s) => s.port === port);
   if (!h.local) return declare ? 'open' : 'closed';
   const e = portState(game, port, inside, INTERNET);
-  if (declare || e !== 'refuse') return e === 'ouvert' ? 'open' : e === 'filtre' ? 'filtered' : 'closed';
+  if (declare || e !== 'refused') return e === 'open' ? 'open' : e === 'filtered' ? 'filtered' : 'closed';
   // Un port où rien n'écoute : fermé, ou jeté en silence par le pare-feu.
   const pf: Firewall | undefined = game.state.ufw;
   return !inside && pf?.enabled && pf.incoming === 'deny' ? 'filtered' : 'closed';
@@ -126,8 +126,8 @@ const decimals = (n: number, d = 2) => n.toFixed(d);
 function portsExamines(h: ScanHost, o: Options): { ports: number[]; total: number } {
   const declares = h.services.map((s) => s.port);
   if (Array.isArray(o.ports)) return { ports: o.ports, total: o.ports.length };
-  if (o.ports === 'tous') return { ports: declares, total: 65535 };
-  if (o.ports === 'rapide') return { ports: declares.filter((p) => FAST.has(p)), total: 100 };
+  if (o.ports === 'all') return { ports: declares, total: 65535 };
+  if (o.ports === 'fast') return { ports: declares.filter((p) => FAST.has(p)), total: 100 };
   return { ports: declares, total: 1000 };
 }
 

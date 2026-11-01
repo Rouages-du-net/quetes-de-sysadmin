@@ -15,7 +15,7 @@ export const EDITOR: Record<string, Command> = {
       const n = game.find(target);
       const reason = game.block(target);
       if (reason) return game.error(reason);
-      if (n?.type === 'dossier') return game.error(game.t('nano-directory', { path: path }));
+      if (n?.type === 'directory') return game.error(game.t('nano-directory', { path: path }));
       let text = '';
       let message: string;
       if (!n) message = game.t('nano-new');

@@ -86,7 +86,7 @@ const OVERRIDES_PLACES = ['/etc/systemd/system.control', '/etc/systemd/system'];
 const overridesPaths = (game: Shell, name: string) =>
   OVERRIDES_PLACES.flatMap((base) => {
     const place = game.find(`${base}/${name}.service.d`);
-    return place?.type === 'dossier' ? Object.keys(place.children).filter((f) => f.endsWith('.conf')).sort().map((f) => `${base}/${name}.service.d/${f}`) : [];
+    return place?.type === 'directory' ? Object.keys(place.children).filter((f) => f.endsWith('.conf')).sort().map((f) => `${base}/${name}.service.d/${f}`) : [];
   });
 // Ce que disent les surcharges sur le disque (pour voir si elles ont changé depuis la dernière lecture).
 // Le fichier d'unité écrit à la main (s'il y en a un) et ses surcharges, tels qu'ils sont sur le disque.
@@ -266,7 +266,7 @@ function editOverride(game: Shell, sd: Systemd, name: string): string {
   const place = `/etc/systemd/system/${name}.service.d`;
   const file = `${place}/override.conf`;
   for (const path of ['/etc/systemd', '/etc/systemd/system', place])
-    if (!game.exists(path)) game.place('systemctl', path, { type: 'dossier', children: {}, owner: 'root' });
+    if (!game.exists(path)) game.place('systemctl', path, { type: 'directory', children: {}, owner: 'root' });
   const existing = game.read(file);
   const template = `### Editing ${file}\n### Anything between here and the comment below will become the contents of the drop-in file\n\n\n\n### Edits below this comment will be discarded\n`;
   const text = existing ?? template;
@@ -288,8 +288,8 @@ function editOverride(game: Shell, sd: Systemd, name: string): string {
       const n = game.find(file);
       if (!kept) {
         const d = game.find(place);
-        if (d?.type === 'dossier') delete d.children['override.conf'];
-      } else if (n?.type === 'fichier') n.content = kept;
+        if (d?.type === 'directory') delete d.children['override.conf'];
+      } else if (n?.type === 'file') n.content = kept;
       loadOverrides(game, sd);
       return '';
     },
@@ -381,13 +381,13 @@ export const SYSTEMD: Record<string, Command> = {
           if (!io && m[2] !== 'infinity' && readSize(m[2]) === null) return game.error(`Failed to parse MemoryMax= value: ${m[2]}`);
           const place = `/etc/systemd/system.control/${name}.service.d`;
           for (const path of ['/etc/systemd', '/etc/systemd/system.control', place])
-            if (!game.exists(path)) game.place('systemctl', path, { type: 'dossier', children: {}, owner: 'root' });
+            if (!game.exists(path)) game.place('systemctl', path, { type: 'directory', children: {}, owner: 'root' });
           const file = `${place}/50-${m[1]}.conf`;
           const value = io ? `${readIoLimit(m[2])!.device} ${readIoLimit(m[2])!.bytes}` : m[2] === 'infinity' ? 'infinity' : readSize(m[2]);
           const content = `# This is a drop-in unit file extension, created via "systemctl set-property"\n# or an equivalent operation. Do not edit.\n[Service]\n${m[1]}=${value}`;
           const n = game.find(file);
-          if (n?.type === 'fichier') n.content = content;
-          else game.place('systemctl', file, { type: 'fichier', content, lines: true, owner: 'root' });
+          if (n?.type === 'file') n.content = content;
+          else game.place('systemctl', file, { type: 'file', content, lines: true, owner: 'root' });
         }
         loadOverrides(game, sd);
         return '';

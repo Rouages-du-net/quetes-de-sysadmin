@@ -96,8 +96,8 @@ const mountedKey = (j: Game) => (j.state.mounts ?? []).some((m: { name: string }
 // Tous les fichiers sous un lieu (chemins absolus).
 function all(j: Game, place: string): string[] {
   const n = j.find(place);
-  if (n?.type !== 'dossier') return [];
-  return Object.entries(n.children).flatMap(([name, e]) => (e.type === 'dossier' ? all(j, `${place}/${name}`) : [`${place}/${name}`]));
+  if (n?.type !== 'directory') return [];
+  return Object.entries(n.children).flatMap(([name, e]) => (e.type === 'directory' ? all(j, `${place}/${name}`) : [`${place}/${name}`]));
 }
 const remains = (j: Game) => all(j, path(j.t, SHARE)).filter((c) => c.endsWith('.locked') || c.endsWith(`/${name(j.t, NOTE)}`));
 const restored = (j: Game) => Object.entries(expected(j)).filter(([c, text]) => j.read(c) === text).length;
@@ -110,15 +110,15 @@ const allRestored = (j: Game) => restored(j) === Object.keys(FILES).length;
  */
 function encrypt(j: Game, place: string): number {
   const n = j.find(place);
-  if (n?.type !== 'dossier' || !j.can(n, 'w', 'accueil')) return 0;
+  if (n?.type !== 'directory' || !j.can(n, 'w', 'accueil')) return 0;
   const note = name(j.t, NOTE);
   let touches = 0;
   for (const [name, e] of Object.entries(n.children)) {
-    if (e.type === 'dossier') touches += encrypt(j, `${place}/${name}`);
+    if (e.type === 'directory') touches += encrypt(j, `${place}/${name}`);
     else if (!name.endsWith('.locked') && name !== note && e.link === undefined) {
       delete n.children[name];
       n.children[`${name}.locked`] = {
-        type: 'fichier',
+        type: 'file',
         content: unreadable(`${place}/${name}`),
         lines: true,
         owner: 'accueil',
@@ -128,7 +128,7 @@ function encrypt(j: Game, place: string): number {
       touches++;
     }
   }
-  if (touches && !n.children[note]) n.children[note] = { type: 'fichier', content: j.t('ransom-note'), owner: 'accueil', group: 'ludo' };
+  if (touches && !n.children[note]) n.children[note] = { type: 'file', content: j.t('ransom-note'), owner: 'accueil', group: 'ludo' };
   return touches;
 }
 
@@ -245,7 +245,7 @@ export const ransom: Chapter = {
     encrypt(j, path(j.t, SHARE));
     const nas = j.find(path(j.t, `${NAS}/share`));
     const share = j.find(path(j.t, SHARE));
-    if (nas?.type === 'dossier' && share?.type === 'dossier') nas.children = structuredClone(share.children);
+    if (nas?.type === 'directory' && share?.type === 'directory') nas.children = structuredClone(share.children);
   },
   // Tant qu'il tourne, le chiffreur repasse ; tant que sa crontab existe, il revient.
   afterCommand: (j) => {

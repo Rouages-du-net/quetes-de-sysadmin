@@ -77,7 +77,7 @@ function tasks(j: Game): { account: string; command: string }[] {
   for (const [account, text] of Object.entries((j.state.crontabs ?? {}) as Record<string, string>))
     if (j.accounts.users[account]) for (const t of parse(text, account).tasks) res.push({ account, command: t.command });
   const cronD = j.find('/etc/cron.d');
-  if (cronD?.type === 'dossier')
+  if (cronD?.type === 'directory')
     for (const name of Object.keys(cronD.children))
       for (const l of (j.read(`/etc/cron.d/${name}`) ?? '').split('\n')) {
         const words = l.trim().split(/\s+/);

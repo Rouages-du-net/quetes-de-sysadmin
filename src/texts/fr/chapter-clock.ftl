@@ -91,7 +91,7 @@ clock-event-silent =
     journalctl -u systemd-timesyncd, ou timedatectl timesync-status). Sa
     configuration est dans /etc/systemd/timesyncd.conf ; il ne la relit
     qu'au démarrage. Le mail de l'hébergeur parle justement de NTP.
-clock-event-synchro =
+clock-event-synced =
     « Contacted time server » : l'horloge est synchronisée, et
     systemd-timesyncd la gardera à l'heure (timedatectl).
 clock-event-not-active =

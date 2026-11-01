@@ -5,57 +5,57 @@
    police du système pour rester lisible. Le jeu reçoit les mêmes couleurs
    par ses variables --qds-* (voir docs/INTEGRER.md). */
 :root {
-  --fond: #0e1319;
-  --fond-2: #121a22;
-  --carte: #16202a;
-  --texte: #d8e1ea;
-  --discret: #93a4b6;
-  --bord: #283645;
-  --phosphore: #5fe08a;
-  --ambre: #ffb84d;
-  --alerte: #ff7a6b;
+  --background: #0e1319;
+  --background-2: #121a22;
+  --card: #16202a;
+  --text: #d8e1ea;
+  --muted: #93a4b6;
+  --border: #283645;
+  --phosphor: #5fe08a;
+  --amber: #ffb84d;
+  --alert: #ff7a6b;
   --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', 'DejaVu Sans Mono', Menlo, Consolas, monospace;
-  --grille: rgb(95 224 138 / 0.035);
+  --grid: rgb(95 224 138 / 0.035);
   color-scheme: dark;
 
-  --qds-fond: var(--fond);
-  --qds-carte: var(--carte);
-  --qds-texte: var(--texte);
-  --qds-discret: var(--discret);
-  --qds-bord: var(--bord);
-  --qds-accent: var(--phosphore);
-  --qds-ambre: var(--ambre);
-  --qds-terminal-fond: #070b0f;
-  --qds-terminal-texte: #c8f5d3;
-  --qds-terminal-invite: var(--ambre);
-  --qds-police-mono: var(--mono);
+  --qds-background: var(--background);
+  --qds-card: var(--card);
+  --qds-text: var(--text);
+  --qds-muted: var(--muted);
+  --qds-border: var(--border);
+  --qds-accent: var(--phosphor);
+  --qds-amber: var(--amber);
+  --qds-terminal-background: #070b0f;
+  --qds-terminal-text: #c8f5d3;
+  --qds-terminal-prompt: var(--amber);
+  --qds-font-mono: var(--mono);
 }
 @media (prefers-color-scheme: light) {
   :root {
-    --fond: #eef2ee;
-    --fond-2: #e4eae5;
-    --carte: #ffffff;
-    --texte: #13201a;
-    --discret: #4a5b52;
-    --bord: #c3cfc7;
-    --phosphore: #0f6b37;
-    --ambre: #8a4f00;
-    --alerte: #b3261e;
-    --grille: rgb(15 107 55 / 0.05);
+    --background: #eef2ee;
+    --background-2: #e4eae5;
+    --card: #ffffff;
+    --text: #13201a;
+    --muted: #4a5b52;
+    --border: #c3cfc7;
+    --phosphor: #0f6b37;
+    --amber: #8a4f00;
+    --alert: #b3261e;
+    --grid: rgb(15 107 55 / 0.05);
     color-scheme: light;
-    --qds-terminal-fond: #0b1410;
-    --qds-terminal-texte: #c8f5d3;
-    --qds-terminal-invite: #ffb84d;
+    --qds-terminal-background: #0b1410;
+    --qds-terminal-text: #c8f5d3;
+    --qds-terminal-prompt: #ffb84d;
   }
 }
 
 body {
   margin: 0;
-  background-color: var(--fond);
+  background-color: var(--background);
   /* Une grille légère, comme le sol technique d'une salle de serveurs. */
-  background-image: linear-gradient(var(--grille) 1px, transparent 1px), linear-gradient(90deg, var(--grille) 1px, transparent 1px);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   background-size: 2rem 2rem;
-  color: var(--texte);
+  color: var(--text);
   font: 1rem/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
 }
 header, main, footer { max-width: 62rem; margin: 0 auto; padding: 0 1rem; }
@@ -64,68 +64,68 @@ header, main, footer { max-width: 62rem; margin: 0 auto; padding: 0 1rem; }
 header {
   padding-top: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--bord);
+  border-bottom: 1px solid var(--border);
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
   gap: 0.25rem 1rem;
 }
-.nom { font-family: var(--mono); font-weight: 700; margin: 0; letter-spacing: -0.01em; }
-.nom a { color: var(--texte); text-decoration: none; }
-.nom .invite { color: var(--phosphore); }
-.nom .curseur { display: inline-block; width: 0.6em; height: 1.1em; margin-left: 0.15em; vertical-align: -0.2em; background: var(--phosphore); animation: clignote 1.1s steps(1) infinite; }
-@keyframes clignote { 50% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .nom .curseur { animation: none; } }
-.langue { margin: 0; font-family: var(--mono); font-size: 0.9rem; }
+.name { font-family: var(--mono); font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.name a { color: var(--text); text-decoration: none; }
+.name .prompt { color: var(--phosphor); }
+.name .cursor { display: inline-block; width: 0.6em; height: 1.1em; margin-left: 0.15em; vertical-align: -0.2em; background: var(--phosphor); animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .name .cursor { animation: none; } }
+.language { margin: 0; font-family: var(--mono); font-size: 0.9rem; }
 
 h1, h2, h3 { font-family: var(--mono); letter-spacing: -0.02em; }
 h1 { font-size: clamp(1.7rem, 5vw, 2.5rem); line-height: 1.15; margin: 1.75rem 0 0.75rem; }
 /* « $ » devant le titre : la page se lit comme une session. */
-h1::before { content: '$ '; color: var(--phosphore); }
+h1::before { content: '$ '; color: var(--phosphor); }
 h2 { font-size: 1.3rem; margin-top: 2.5rem; }
-h2::before { content: '## '; color: var(--discret); font-weight: 400; }
+h2::before { content: '## '; color: var(--muted); font-weight: 400; }
 .intro { max-width: 42rem; }
-strong { color: color-mix(in oklab, var(--texte) 80%, var(--phosphore)); }
+strong { color: color-mix(in oklab, var(--text) 80%, var(--phosphor)); }
 code, pre { font-family: var(--mono); }
-code { font-size: 0.92em; color: var(--phosphore); }
-pre { overflow-x: auto; padding: 0.75rem 1rem; background: var(--fond-2); border: 1px solid var(--bord); border-left: 3px solid var(--phosphore); border-radius: 0.4rem; font-size: 0.85rem; }
-pre code { color: var(--texte); }
-a { color: var(--phosphore); text-underline-offset: 0.2em; }
-a:hover { color: var(--ambre); }
-a:focus-visible { outline: 3px solid var(--ambre); outline-offset: 2px; }
+code { font-size: 0.92em; color: var(--phosphor); }
+pre { overflow-x: auto; padding: 0.75rem 1rem; background: var(--background-2); border: 1px solid var(--border); border-left: 3px solid var(--phosphor); border-radius: 0.4rem; font-size: 0.85rem; }
+pre code { color: var(--text); }
+a { color: var(--phosphor); text-underline-offset: 0.2em; }
+a:hover { color: var(--amber); }
+a:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 quetes-de-sysadmin { margin: 1.5rem 0 3rem; }
-footer { margin-top: 3rem; padding-top: 0.5rem; padding-bottom: 2rem; border-top: 1px solid var(--bord); color: var(--discret); font-size: 0.9rem; }
-.avertissement { padding: 1rem; border: 1px solid var(--ambre); border-radius: 0.4rem; color: var(--ambre); }
+footer { margin-top: 3rem; padding-top: 0.5rem; padding-bottom: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+.warning { padding: 1rem; border: 1px solid var(--amber); border-radius: 0.4rem; color: var(--amber); }
 
 /* Les fiches pour les enseignant·es : des étiquettes de baie. */
-.discret { color: var(--discret); }
-.fiche-histoire { margin-top: 2.5rem; }
-.fiches { padding-left: 0; list-style: none; display: grid; gap: 1rem; }
-.fiche { background: var(--carte); border: 1px solid var(--bord); border-left: 3px solid var(--phosphore); border-radius: 0.4rem; padding: 0.75rem 1rem; }
-.fiche h3 { margin: 0 0 0.5rem; font-size: 1rem; }
-.fiche dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; margin: 0; }
-.fiche dt { font-weight: 600; color: var(--discret); }
-.fiche dd { margin: 0; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+.sheet-story { margin-top: 2.5rem; }
+.sheets { padding-left: 0; list-style: none; display: grid; gap: 1rem; }
+.sheet { background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--phosphor); border-radius: 0.4rem; padding: 0.75rem 1rem; }
+.sheet h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+.sheet dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; margin: 0; }
+.sheet dt { font-weight: 600; color: var(--muted); }
+.sheet dd { margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 40rem) {
-  .fiche dl { grid-template-columns: 1fr; }
-  .fiche dd { margin-bottom: 0.5rem; }
+  .sheet dl { grid-template-columns: 1fr; }
+  .sheet dd { margin-bottom: 0.5rem; }
 }
 
 /* Le tableau de classe : la zone où glisser les fichiers, puis le tableau,
    qui défile dans sa boîte s'il est plus large que l'écran. */
-.classe-zone { padding: 1rem; border: 2px dashed var(--bord); border-radius: 0.4rem; background: var(--fond-2); }
-.classe-zone.survol { border-color: var(--phosphore); }
-.classe-zone p { margin: 0.25rem 0; }
-#classe textarea { box-sizing: border-box; width: 100%; max-width: 40rem; font: 0.9rem var(--mono); background: var(--carte); color: var(--texte); border: 1px solid var(--bord); border-radius: 0.3rem; padding: 0.5rem; }
-#classe button { font: inherit; padding: 0.35rem 0.9rem; border-radius: 0.35rem; border: 1px solid var(--phosphore); background: var(--carte); color: var(--texte); cursor: pointer; }
-#classe button:hover { color: var(--phosphore); }
-.classe-etat { color: var(--discret); }
-.classe-erreur { display: block; color: var(--alerte); }
-.classe-tableau { overflow-x: auto; margin: 1rem 0; }
-.classe-tableau table { border-collapse: collapse; font-size: 0.9rem; min-width: 100%; }
-.classe-tableau caption { text-align: left; font-family: var(--mono); font-weight: 700; padding: 0.25rem 0; }
-.classe-tableau th, .classe-tableau td { border: 1px solid var(--bord); padding: 0.3rem 0.5rem; white-space: nowrap; text-align: left; }
-.classe-tableau thead th { background: var(--fond-2); font-family: var(--mono); font-size: 0.8rem; }
-.classe-tableau td.fini { color: var(--phosphore); font-weight: 700; }
+.class-zone { padding: 1rem; border: 2px dashed var(--border); border-radius: 0.4rem; background: var(--background-2); }
+.class-zone.hover { border-color: var(--phosphor); }
+.class-zone p { margin: 0.25rem 0; }
+#class textarea { box-sizing: border-box; width: 100%; max-width: 40rem; font: 0.9rem var(--mono); background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 0.3rem; padding: 0.5rem; }
+#class button { font: inherit; padding: 0.35rem 0.9rem; border-radius: 0.35rem; border: 1px solid var(--phosphor); background: var(--card); color: var(--text); cursor: pointer; }
+#class button:hover { color: var(--phosphor); }
+.class-state { color: var(--muted); }
+.class-error { display: block; color: var(--alert); }
+.class-table { overflow-x: auto; margin: 1rem 0; }
+.class-table table { border-collapse: collapse; font-size: 0.9rem; min-width: 100%; }
+.class-table caption { text-align: left; font-family: var(--mono); font-weight: 700; padding: 0.25rem 0; }
+.class-table th, .class-table td { border: 1px solid var(--border); padding: 0.3rem 0.5rem; white-space: nowrap; text-align: left; }
+.class-table thead th { background: var(--background-2); font-family: var(--mono); font-size: 0.8rem; }
+.class-table td.finished { color: var(--phosphor); font-weight: 700; }
 

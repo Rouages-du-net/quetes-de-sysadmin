@@ -127,9 +127,9 @@ export const rescue: Chapter = {
   final: 'end',
   steps: ['journal', 'disks', 'fixed', 'mounted', 'end'],
   accounts: labAccounts,
-  state: () => ({ ...labState('secours'), rescue: true, hostConsole: true }),
+  state: () => ({ ...labState('rescue'), rescue: true, hostConsole: true }),
   initialise: (j) => {
-    labKernel(j, 'secours');
+    labKernel(j, 'rescue');
     devUpdate(j);
     // On travaille en root sur la console de l'hébergeur.
     j.who = 'root';

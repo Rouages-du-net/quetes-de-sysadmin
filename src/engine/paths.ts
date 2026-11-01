@@ -36,7 +36,7 @@ export const PATH: Path[] = [
   { id: 'identities', chapters: ['second-day', 'departure', 'shared-rights', 'keys', 'directory', 'wifi'] },
 ];
 
-export type StepState = 'fait' | 'ouvert' | 'verrouille' | 'sans-cle';
+export type StepState = 'done' | 'open' | 'locked' | 'no-key';
 
 export interface PathStep {
   chapter: string;
@@ -56,8 +56,8 @@ export function pathSteps(p: Path, finished: string[], isOpen: (story: string) =
     const story = STORIES[h];
     const c = story.chapters.findIndex((x) => x.id === id);
     const missing = story.chapters.slice(0, c).find((x) => !finished.includes(x.id));
-    const state: StepState = finished.includes(id) ? 'fait' : !isOpen(story.id) ? 'sans-cle' : missing ? 'verrouille' : 'ouvert';
-    return { chapter: id, story: story.id, h, c, state, before: state === 'verrouille' ? missing!.id : null };
+    const state: StepState = finished.includes(id) ? 'done' : !isOpen(story.id) ? 'no-key' : missing ? 'locked' : 'open';
+    return { chapter: id, story: story.id, h, c, state, before: state === 'locked' ? missing!.id : null };
   });
-  return { steps, next: steps.findIndex((e) => e.state !== 'fait') };
+  return { steps, next: steps.findIndex((e) => e.state !== 'done') };
 }

@@ -149,7 +149,7 @@ const container = (
 const sd = (j: Game) => systemd(j)!;
 const state = (j: Game) => docker(j)!;
 const shell = (j: Game) => j as Shell;
-const openToWorld = (j: Game) => portState(j, 5432, false, WORKSTATION.address) === 'ouvert';
+const openToWorld = (j: Game) => portState(j, 5432, false, WORKSTATION.address) === 'open';
 const occupation = (j: Game) => shell(j).size(j.find('/')!) / DISK;
 const volumesPerdus = (j: Game) => USEFUL_VOLUMES.filter((v) => !state(j).volumes[v]);
 const okApp = (j: Game) => {

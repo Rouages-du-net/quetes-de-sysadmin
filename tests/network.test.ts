@@ -126,7 +126,7 @@ for (const language of LANGUAGES)
       const c = new Console({ language, finished: [...ERASER, ...finished] });
       // La clé de l'ancien serveur, connue depuis les chapitres précédents.
       const old = `datacenter.internal ${hostKey(storyMachine('datacenter')!)}`;
-      c.workstation.place('test', '~/.ssh/known_hosts', { type: 'fichier', content: old, lines: true });
+      c.workstation.place('test', '~/.ssh/known_hosts', { type: 'file', content: old, lines: true });
       const refusal = play(c, ['ssh datacenter']);
       expect(refusal).toContain('WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!');
       expect(refusal).toContain(L("ssh-keygen -f '/home/you/.ssh/known_hosts' -R 'datacenter.internal'"));

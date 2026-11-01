@@ -216,12 +216,12 @@ function detail(game: Shell, st: StorageState, name: string): string {
   if (degraded(g)) states.push('degraded');
   if (recons.length) states.push(inCourse ? 'recovering' : 'resyncing (DELAYED)');
   if (g.synchro !== undefined) states.push(inCourse ? 'resyncing' : 'resyncing (DELAYED)');
-  const faulty = g.members.filter((m) => m.state === 'defectueux');
+  const faulty = g.members.filter((m) => m.state === 'faulty');
   const rows: string[] = [];
   for (let r = 0; r < g.wanted; r++) {
-    const m = g.members.find((x) => x.role === r && x.state !== 'defectueux');
+    const m = g.members.find((x) => x.role === r && x.state !== 'faulty');
     if (!m) rows.push(memberLine(st, '-', '', r, 'removed'));
-    else rows.push(memberLine(st, m.number, m.part, r, m.state === 'actif' ? 'active sync' : 'spare rebuilding'));
+    else rows.push(memberLine(st, m.number, m.part, r, m.state === 'active' ? 'active sync' : 'spare rebuilding'));
   }
   for (const m of g.members.filter((x) => x.state === 'spare')) rows.push(memberLine(st, m.number, m.part, '-', 'spare'));
   for (const m of faulty) rows.push(memberLine(st, m.number, m.part, '-', 'faulty'));
@@ -273,23 +273,23 @@ function manage(game: Shell, st: StorageState, name: string, ops: [string, strin
           continue;
         }
         // RAID 1 : le noyau refuse de marquer défectueux le dernier membre à jour.
-        if (m.state === 'actif' && active(g).length === 1) {
+        if (m.state === 'active' && active(g).length === 1) {
           game.error(`mdadm: set device faulty failed for ${target}:  Device or resource busy`);
           continue;
         }
-        m.state = 'defectueux';
+        m.state = 'faulty';
         delete m.copyOf;
         g.events += 1;
         outputs.push(`mdadm: set ${target} faulty in ${md}`);
       } else if (op === 'remove') {
-        const targeted = target === 'failed' ? g.members.filter((x) => x.state === 'defectueux') : m ? [m] : [];
+        const targeted = target === 'failed' ? g.members.filter((x) => x.state === 'faulty') : m ? [m] : [];
         if (!targeted.length) {
           if (target !== 'failed') game.error(`mdadm: hot remove failed for ${target}: No such device or address`);
           continue;
         }
         for (const v of targeted) {
           // On ne retire qu'un membre défectueux (ou un spare) : un membre actif est occupé.
-          if (v.state === 'actif') {
+          if (v.state === 'active') {
             game.error(`mdadm: hot remove failed for /dev/${v.part}: Device or resource busy`);
             continue;
           }
@@ -330,7 +330,7 @@ function manage(game: Shell, st: StorageState, name: string, ops: [string, strin
           part,
           number: freeNumber(g),
           role: place,
-          state: place === null ? 'spare' : 'reconstruction',
+          state: place === null ? 'spare' : 'rebuilding',
           ...(place === null ? {} : { copyOf: 0 }),
           ...(op === 're-add' ? { fast: true } : {}),
         });
@@ -475,7 +475,7 @@ function create(game: Shell, st: StorageState | null, args: string[]): string {
         return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
       })(),
       name: `${systemd(game)?.host ?? game.host}:${rank}`,
-      members: members.flatMap((m, i) => (m === 'missing' ? [] : [{ part: withoutDev(m), number: i, role: i, state: 'actif' as const }])),
+      members: members.flatMap((m, i) => (m === 'missing' ? [] : [{ part: withoutDev(m), number: i, role: i, state: 'active' as const }])),
       events: 0,
       creation: now(game),
       bitmap: blocks * 1024 > 100e9,

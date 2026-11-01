@@ -83,7 +83,7 @@ const repo = (j: Game, path: string): Repo | undefined => j.state.git?.[path];
 const head = (j: Game) => repo(j, REPO)?.commits.at(-1);
 const readSite = (j: Game, name: string) => {
   const n = j.find(`${SITE}/${name}`);
-  return n?.type === 'fichier' ? content(n, j) : null;
+  return n?.type === 'file' ? content(n, j) : null;
 };
 // Le site est-il exactement le dernier commit du serveur, extrait par son crochet ?
 const deployed = (j: Game) => {

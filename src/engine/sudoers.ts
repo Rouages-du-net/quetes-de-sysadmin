@@ -40,9 +40,9 @@ export interface SudoersError {
 // Les fichiers qu'un @includedir lit : sans point ni ~ final, triés.
 export function includedFiles(game: Shell, directory: string): string[] {
   const d = game.find(directory);
-  if (d?.type !== 'dossier') return [];
+  if (d?.type !== 'directory') return [];
   return Object.keys(d.children)
-    .filter((n) => !n.includes('.') && !n.endsWith('~') && d.children[n].type === 'fichier')
+    .filter((n) => !n.includes('.') && !n.endsWith('~') && d.children[n].type === 'file')
     .sort()
     .map((n) => `${directory}/${n}`);
 }

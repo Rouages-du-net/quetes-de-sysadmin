@@ -186,7 +186,7 @@ function brancher(game: Shell, source: string, point: string, options: string): 
   const p = devices(game)[source] ? { ...devices(game)[source], name: source } : periphStockage(game, source);
   if (!p) return `mount: ${absolute}: special device ${source} does not exist.${DMESG}`;
   const place = game.find(absolute);
-  if (place?.type !== 'dossier') return `mount: ${absolute}: mount point does not exist.${DMESG}`;
+  if (place?.type !== 'directory') return `mount: ${absolute}: mount point does not exist.${DMESG}`;
   const already = mounts(game).find((m) => m.name === p.name);
   if (already) return `mount: ${absolute}: ${p.name} already mounted on ${already.path}.${DMESG}`;
   const onlyRead = options.split(',').includes('ro');
@@ -249,7 +249,7 @@ function mount(game: Shell, args: string[]): string {
       `mount: ${absolute}: special device ${source} does not exist.\n       dmesg(1) may have more information after failed mount system call.`,
     );
   const place = game.find(absolute);
-  if (place?.type !== 'dossier')
+  if (place?.type !== 'directory')
     return game.error(`mount: ${absolute}: mount point does not exist.\n       dmesg(1) may have more information after failed mount system call.`);
   const already = mounts(game).find((m) => m.name === source);
   if (already)

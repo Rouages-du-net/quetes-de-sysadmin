@@ -48,8 +48,8 @@ describe('Le code court', () => {
       if ('error' in no) spotted++;
     }
     expect(spotted).toBe(body.length);
-    expect(readCode('QDS-ZZ')).toEqual({ error: 'code-illisible' });
-    expect(readCode('n’importe quoi')).toEqual({ error: 'code-illisible' });
+    expect(readCode('QDS-ZZ')).toEqual({ error: 'code-unreadable' });
+    expect(readCode('n’importe quoi')).toEqual({ error: 'code-unreadable' });
   });
 });
 
@@ -74,15 +74,15 @@ describe('Le fichier', () => {
       JSON.stringify({
         format: 'quetes-de-sysadmin',
         version: 1,
-        backup: { finished: ['lighthouse', 'inconnu', 42], story: 'nulle-part', notebook: { ls: 'pas un objet' }, records: { lighthouse: -1 }, name: '  Lina\n\tB.  ' },
+        backup: { finished: ['lighthouse', 'unknown', 42], story: 'nulle-part', notebook: { ls: 'pas un objet' }, records: { lighthouse: -1 }, name: '  Lina\n\tB.  ' },
       }),
     );
     expect(read).toEqual({ backup: { finished: ['lighthouse'], story: null, notebook: {}, exam: false, records: {}, name: 'Lina B.' } });
   });
 
   it('refuse ce qui n’est pas une sauvegarde du jeu', () => {
-    expect(readFile('pas du JSON')).toEqual({ error: 'fichier-illisible' });
-    expect(readFile('{"format":"autre"}')).toEqual({ error: 'fichier-autre' });
-    expect(readFile('{"format":"quetes-de-sysadmin","version":9,"backup":{}}')).toEqual({ error: 'fichier-trop-recent' });
+    expect(readFile('pas du JSON')).toEqual({ error: 'file-unreadable' });
+    expect(readFile('{"format":"autre"}')).toEqual({ error: 'file-other' });
+    expect(readFile('{"format":"quetes-de-sysadmin","version":9,"backup":{}}')).toEqual({ error: 'file-too-recent' });
   });
 });

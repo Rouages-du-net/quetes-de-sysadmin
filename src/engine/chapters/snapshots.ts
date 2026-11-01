@@ -53,7 +53,7 @@ const conf = (j: Game) => readConf(j.read(CONF) ?? '');
 const root = (j: Game) => conf(j).conf.root;
 const snapshotList = (j: Game, level: string) => {
   const n = j.find(root(j));
-  return n?.type === 'dossier' ? Object.keys(n.children).filter((k) => k.startsWith(`${level}.`)) : [];
+  return n?.type === 'directory' ? Object.keys(n.children).filter((k) => k.startsWith(`${level}.`)) : [];
 };
 const wellSaved = (j: Game) => {
   const { conf: c, errors } = conf(j);
@@ -66,7 +66,7 @@ const wellSaved = (j: Game) => {
     !!b &&
     snapshotList(j, small.name).length >= 7 &&
     snapshotList(j, grand.name).length >= 1 &&
-    all.every((name) => j.find(`${c.root}${name}/${b.destination}${path(j.t, INVENTORY)}`)?.type === 'fichier')
+    all.every((name) => j.find(`${c.root}${name}/${b.destination}${path(j.t, INVENTORY)}`)?.type === 'file')
   );
 };
 const crontabsRsnapshot = (j: Game) =>

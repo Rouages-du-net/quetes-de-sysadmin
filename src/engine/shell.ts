@@ -197,7 +197,7 @@ export class Shell implements Game {
   private nameMachine(): void {
     // /etc/hosts : chaque nom (aussi sur les machines internes : wiki.maison.internal).
     const hosts = this.find('/etc/hosts');
-    if (hosts?.type === 'fichier' && typeof hosts.content === 'string')
+    if (hosts?.type === 'file' && typeof hosts.content === 'string')
       hosts.content = hosts.content
         .split('\n')
         .map((l) => (l.trimStart().startsWith('#') ? l : l.replace(/[^\s]+/g, (n) => hostInLanguage(this.t, n))))
@@ -214,7 +214,7 @@ export class Shell implements Game {
       for (const e of sd.log) e.message = e.message.replace(`(${id})`, `(${name})`);
     }
     const file = this.find('/etc/hostname');
-    if (file?.type === 'fichier' && typeof file.content === 'string' && file.content.trim() === id) file.content = file.content.replace(id, name);
+    if (file?.type === 'file' && typeof file.content === 'string' && file.content.trim() === id) file.content = file.content.replace(id, name);
     for (const service of ['nginx', 'docker']) {
       const e = this.state[service] as { names?: string[] } | undefined;
       if (Array.isArray(e?.names)) e.names = e.names.map(translate);
@@ -253,10 +253,10 @@ export class Shell implements Game {
     const parts = this.resolve(path).split('/').filter(Boolean);
     for (let i = 0; i < parts.length; i++) {
       const p = parts[i];
-      if (n.type !== 'dossier' || !Object.hasOwn(n.children, p)) return null;
+      if (n.type !== 'directory' || !Object.hasOwn(n.children, p)) return null;
       n = n.children[p];
       const end = i === parts.length - 1;
-      if (n.type === 'fichier' && n.link !== undefined && (!end || last)) {
+      if (n.type === 'file' && n.link !== undefined && (!end || last)) {
         // Trop de liens en chaîne : ELOOP, comme le noyau.
         if (depth > 8) return null;
         const here = '/' + parts.slice(0, i).join('/');
@@ -271,7 +271,7 @@ export class Shell implements Game {
   realPath(path: string): string {
     const absolute = this.resolve(path);
     const n = this.find(absolute, false);
-    if (n?.type !== 'fichier' || n.link === undefined) return absolute;
+    if (n?.type !== 'file' || n.link === undefined) return absolute;
     const here = absolute.slice(0, absolute.lastIndexOf('/')) || '/';
     return this.resolve(n.link.startsWith('/') ? n.link : `${here}/${n.link}`);
   }
@@ -282,18 +282,18 @@ export class Shell implements Game {
 
   read(path: string): string | null {
     const n = this.find(path);
-    return n?.type === 'fichier' ? content(n, this) : null;
+    return n?.type === 'file' ? content(n, this) : null;
   }
 
   count(place: string, prefix: string): number {
     const n = this.find(place);
-    return n?.type === 'dossier' ? Object.keys(n.children).filter((k) => k.startsWith(prefix)).length : 0;
+    return n?.type === 'directory' ? Object.keys(n.children).filter((k) => k.startsWith(prefix)).length : 0;
   }
 
   erase(path: string): void {
     const absolute = this.resolve(path);
     const parent = this.find(absolute + '/..');
-    if (parent?.type === 'dossier') delete parent.children[absolute.split('/').pop()!];
+    if (parent?.type === 'directory') delete parent.children[absolute.split('/').pop()!];
   }
 
   name(path: string): string {
@@ -317,7 +317,7 @@ export class Shell implements Game {
   // (même si le groupe ou les autres ont plus). root a tous les droits.
   can(n: Node, right: 'r' | 'w' | 'x', user = this.who): boolean {
     if (user === 'root') return true;
-    const mode = n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--');
+    const mode = n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--');
     const owner = n.owner ?? this.player;
     const triplet =
       owner === user ? mode.slice(0, 3) : this.groupsFor(user).includes(n.group ?? owner) ? mode.slice(3, 6) : mode.slice(6, 9);
@@ -329,7 +329,7 @@ export class Shell implements Game {
   traverses(path: string): boolean {
     let n: Node | undefined = this.root;
     for (const p of this.resolve(path).split('/').filter(Boolean)) {
-      if (!n || n.type !== 'dossier') return true;
+      if (!n || n.type !== 'directory') return true;
       if (!this.can(n, 'x')) return false;
       n = n.children[p];
     }
@@ -352,9 +352,9 @@ export class Shell implements Game {
   block(path: string): string | null {
     let n: Node = this.root;
     for (const p of this.resolve(path).split('/').filter(Boolean)) {
-      if (n.type !== 'dossier' || !Object.hasOwn(n.children, p)) return null;
+      if (n.type !== 'directory' || !Object.hasOwn(n.children, p)) return null;
       n = n.children[p];
-      const reason = n.type === 'dossier' ? n.blocked?.(this) : null;
+      const reason = n.type === 'directory' ? n.blocked?.(this) : null;
       if (reason) return reason;
     }
     return null;
@@ -366,7 +366,7 @@ export class Shell implements Game {
     const n = this.find(target);
     const v = { command: cmd, target: target };
     if (!n) return this.error(this.t('error-missing', v)), null;
-    if (n.type === 'dossier') return this.error(this.t('error-is-one-directory', v)), null;
+    if (n.type === 'directory') return this.error(this.t('error-is-one-directory', v)), null;
     const reason = this.block(target);
     if (reason) return this.error(reason), null;
     if (!this.traverses(target) || !this.can(n, 'r')) return this.error(this.t('error-permission', v)), null;
@@ -380,7 +380,7 @@ export class Shell implements Game {
   place(cmd: string, path: string, n: Node): string | null {
     const v = { command: cmd, target: path };
     const parent = this.find(path + '/..');
-    if (parent?.type !== 'dossier') return this.t('error-missing', v);
+    if (parent?.type !== 'directory') return this.t('error-missing', v);
     const reason = this.block(path + '/..');
     if (reason) return reason;
     if (this.onlyRead(path)) return this.t('error-read-only', v);
@@ -388,15 +388,15 @@ export class Shell implements Game {
     const name = this.name(path);
     const old = parent.children[name];
     // Écrire dans un lien, c'est écrire dans le fichier qu'il vise.
-    if (old?.type === 'fichier' && old.link !== undefined && n.type === 'fichier' && n.link === undefined) return this.place(cmd, this.realPath(path), n);
+    if (old?.type === 'file' && old.link !== undefined && n.type === 'file' && n.link === undefined) return this.place(cmd, this.realPath(path), n);
     if (this.missingPlace(this.resolve(path), n, old)) return this.t('error-space', v);
     if (!old) {
       // Un nouveau fichier prend les droits permis par le masque (umask) ;
       // dans un dossier setgid, il prend le groupe du dossier (et un dossier, le setgid).
-      if (n.mode === undefined && this.mask !== '0022') n.mode = modeWithMask(n.type === 'dossier', this.mask);
+      if (n.mode === undefined && this.mask !== '0022') n.mode = modeWithMask(n.type === 'directory', this.mask);
       if (/[sS]/.test(parent.mode?.[5] ?? '') && n.group === undefined) {
         n.group = parent.group ?? parent.owner ?? this.player;
-        if (n.type === 'dossier') n.mode = applyMode(n.mode ?? modeWithMask(true, this.mask), 'g+s')!;
+        if (n.type === 'directory') n.mode = applyMode(n.mode ?? modeWithMask(true, this.mask), 'g+s')!;
       }
     }
     parent.children[name] = n;
@@ -405,7 +405,7 @@ export class Shell implements Game {
 
   // Taille d'un nœud en octets (un lieu : la somme de son contenu).
   size(n: Node): number {
-    if (n.type === 'fichier') return sizeFor(n, this);
+    if (n.type === 'file') return sizeFor(n, this);
     return Object.values(n.children).reduce((t, e) => t + this.size(e), 0);
   }
 
@@ -425,12 +425,12 @@ export class Shell implements Game {
     const other: string[] = (this.state.mounts ?? []).map((x: { path: string }) => x.path).filter((c: string) => c !== m.path);
     const count = (path: string, n: Node): number => {
       if (other.includes(path)) return 0;
-      if (n.type === 'fichier') return 1;
+      if (n.type === 'file') return 1;
       let total = 1;
       // Seuls les lieux ont besoin de leur chemin (pour reconnaître un autre support monté dedans).
       for (const k in n.children) {
         const e = n.children[k];
-        total += e.type === 'fichier' ? 1 : count(`${path === '/' ? '' : path}/${k}`, e);
+        total += e.type === 'file' ? 1 : count(`${path === '/' ? '' : path}/${k}`, e);
       }
       return total;
     };
@@ -536,7 +536,7 @@ export class Shell implements Game {
     const base = i >= 0 ? word.slice(0, i + 1) : '';
     const pattern = word.slice(i + 1);
     const place = this.find(base || '.');
-    if (place?.type !== 'dossier' || this.block(base || '.') || !this.can(place, 'r')) return [word];
+    if (place?.type !== 'directory' || this.block(base || '.') || !this.can(place, 'r')) return [word];
     const re = wildcard(pattern);
     const found = Object.keys(place.children)
       .filter((n) => re.test(n) && (pattern.startsWith('.') || !n.startsWith('.')))
@@ -563,11 +563,11 @@ export class Shell implements Game {
     const base = i >= 0 ? last.slice(0, i + 1) : '';
     const start = last.slice(i + 1);
     const place = this.find(base || '.');
-    if (!place || place.type !== 'dossier') return null;
+    if (!place || place.type !== 'directory') return null;
     const names = Object.keys(place.children)
       .filter((n) => n.startsWith(start) && (start.startsWith('.') || !n.startsWith('.')))
       .sort();
-    return { words, base, names, directories: new Set(names.filter((n) => place.children[n].type === 'dossier')) };
+    return { words, base, names, directories: new Set(names.filter((n) => place.children[n].type === 'directory')) };
   }
 
   complete(line: string): string {
@@ -883,7 +883,7 @@ export class Shell implements Game {
 
   private redirect(file: string, text: string, addition: boolean): string | null {
     const n = this.find(file);
-    if (n?.type === 'dossier') return this.t('redirection-is-one-directory', { target: file });
+    if (n?.type === 'directory') return this.t('redirection-is-one-directory', { target: file });
     if (n) {
       if (this.onlyRead(file)) return this.t('error-read-only', { command: 'bash', target: file });
       if (!this.traverses(file) || !this.can(n, 'w')) return this.t('redirection-permission', { target: file });
@@ -893,7 +893,7 @@ export class Shell implements Game {
       delete n.size;
       return null;
     }
-    return this.place('bash', file, { type: 'fichier', content: text, owner: this.who, lines: true });
+    return this.place('bash', file, { type: 'file', content: text, owner: this.who, lines: true });
   }
 
   // Lance une commande. `dernier` : sa sortie s'affiche à l'écran (sinon elle
@@ -921,7 +921,7 @@ export class Shell implements Game {
     if (cmd.includes('/')) {
       const n = this.find(cmd);
       if (!n) return this.error(this.t('script-missing', { command: cmd }));
-      if (n.type === 'dossier') return this.error(this.t('script-directory', { command: cmd }));
+      if (n.type === 'directory') return this.error(this.t('script-directory', { command: cmd }));
       if (!this.traverses(cmd) || !this.can(n, 'x') || !this.can(n, 'r')) return this.error(this.t('script-permission', { command: cmd }));
       const before = this.who;
       if (root) this.who = this.as;
@@ -978,13 +978,13 @@ export class Shell implements Game {
     try {
       const n = this.find(e.path);
       const lines = text === '' ? 0 : text.replace(/\n$/, '').split('\n').length;
-      if (n?.type === 'fichier') {
+      if (n?.type === 'file') {
         if (!this.traverses(e.path) || !this.can(n, 'w')) return this.t('nano-error-write', { path: e.path });
         n.content = text.replace(/\n$/, '');
         n.lines = true;
         delete n.size;
       } else {
-        const error = this.place('nano', e.path, { type: 'fichier', content: text.replace(/\n$/, ''), owner: this.who, lines: true });
+        const error = this.place('nano', e.path, { type: 'file', content: text.replace(/\n$/, ''), owner: this.who, lines: true });
         if (error) return this.t(this.find(e.path + '/..') ? 'nano-error-write' : 'nano-error-directory', { path: e.path });
       }
       e.text = text;

@@ -105,7 +105,7 @@ export class Console {
           : saved;
       const old = s.find(`~/.ssh/${name}`);
       const isPrivate = /^id_/.test(name) && !name.endsWith('.pub');
-      if (old?.type === 'fichier') old.content = content;
+      if (old?.type === 'file') old.content = content;
       else s.place('ssh', `~/.ssh/${name}`, f(content, { lines: true, mode: isPrivate ? 'rw-------' : 'rw-r--r--' }));
     }
     if (this.options.ssh?.phrases) s.state.passPhrases = { ...this.options.ssh.phrases };
@@ -117,9 +117,9 @@ export class Console {
     const directory = this.workstation.find('~/.ssh');
     const data = new Set(MACHINES.filter((m) => !m.withoutKey).flatMap((m) => [keyFor(this.t, m), `${keyFor(this.t, m)}.pub`]));
     const files: Record<string, string> = {};
-    if (directory?.type === 'dossier')
+    if (directory?.type === 'directory')
       for (const name of Object.keys(directory.children))
-        if (name !== 'known_hosts' && !data.has(name) && directory.children[name].type === 'fichier')
+        if (name !== 'known_hosts' && !data.has(name) && directory.children[name].type === 'file')
           files[name] = this.workstation.read(`~/.ssh/${name}`) ?? '';
     // La config que le jeu a donnée, pas modifiée : rien à garder.
     if (files.config?.trim() === configSsh(this.t)) delete files.config;
@@ -304,7 +304,7 @@ export class Console {
     const fresh = MACHINES.filter((m) => this.isOpen(m.story!) && !before.includes(m.story!) && !m.withoutKey);
     if (!fresh.length) return '';
     const ssh = this.workstation.find('~/.ssh');
-    if (ssh?.type === 'dossier') for (const m of fresh) Object.assign(ssh.children, keyFiles(this.t, m));
+    if (ssh?.type === 'directory') for (const m of fresh) Object.assign(ssh.children, keyFiles(this.t, m));
     // La première vague (après La Racine) explique où trouver les clés ; les suivantes les annoncent.
     const first = !before.some((h) => h !== FIRST);
     return this.t(first ? 'workstation-keys-received' : 'workstation-keys-received-next', { keys: fresh.map((m) => `~/.ssh/${keyFor(this.t, m)}`).join(', ') });

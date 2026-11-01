@@ -36,8 +36,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 </head>
 <body>
   <header>
-    <p class="nom"><a href={home}><span class="invite" aria-hidden="true">~$ </span>{en ? 'Sysadmin Quests' : 'Quêtes de Sysadmin'}<span class="curseur" aria-hidden="true"></span></a></p>
-    {other && <p class="langue"><a href={other.href} hreflang={other.lang} lang={other.lang}>{other.name}</a></p>}
+    <p class="name"><a href={home}><span class="prompt" aria-hidden="true">~$ </span>{en ? 'Sysadmin Quests' : 'Quêtes de Sysadmin'}<span class="cursor" aria-hidden="true"></span></a></p>
+    {other && <p class="language"><a href={other.href} hreflang={other.lang} lang={other.lang}>{other.name}</a></p>}
   </header>
   <main>
     <slot />

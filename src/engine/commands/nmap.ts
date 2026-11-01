@@ -10,15 +10,15 @@ import { help } from './manual';
 const INVALID = (o: string) => `nmap: invalid option -- '${o}'\nSee the output of nmap -h for a summary of options.`;
 
 // Une liste de ports : 22,80 ; 1-1024 ; - (tous).
-function readPorts(spec: string): number[] | 'tous' | null {
-  if (spec === '-') return 'tous';
+function readPorts(spec: string): number[] | 'all' | null {
+  if (spec === '-') return 'all';
   const ports: number[] = [];
   for (const chunk of spec.split(',')) {
     const m = /^(\d+)(?:-(\d+))?$/.exec(chunk);
     if (!m) return null;
     const [a, b] = [Number(m[1]), Number(m[2] ?? m[1])];
     if (a < 1 || b > 65535 || a > b) return null;
-    if (b - a > 2000) return 'tous';
+    if (b - a > 2000) return 'all';
     for (let p = a; p <= b; p++) ports.push(p);
   }
   return ports;
@@ -45,7 +45,7 @@ export const NMAP: Record<string, Command> = {
         else if (a === '-n') o.numbers = true;
         else if (a === '-v' || a === '-vv') continue;
         else if (a === '--open') o.onlyOpen = true;
-        else if (a === '-F') o.ports ??= 'rapide';
+        else if (a === '-F') o.ports ??= 'fast';
         else if (/^-T[0-5]$/.test(a)) continue;
         else if (a === '-oN') {
           const f = args[++i];
@@ -66,7 +66,7 @@ export const NMAP: Record<string, Command> = {
       if ('error' in r) return game.error(r.error, 1);
       let note = '';
       if (o.file) {
-        const refusal = game.place('nmap', o.file, { type: 'fichier', content: r.file, lines: true, owner: game.who });
+        const refusal = game.place('nmap', o.file, { type: 'file', content: r.file, lines: true, owner: game.who });
         if (refusal) note = `\nFailed to open normal output file ${o.file} for writing: ${refusal}`;
       }
       return r.output + note;

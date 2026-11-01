@@ -38,8 +38,8 @@ function radtest(game: Shell, args: string[]): string {
   ];
   const local = ['localhost', '127.0.0.1', game.host].includes(server.split(':')[0]);
   const d: Request = { client: '127.0.0.1', iif: 'lo', secret, user, password };
-  const r: Response = local ? handle(game, d) : { what: 'rien', attributes: [], log: [] };
-  if (r.what === 'rien') {
+  const r: Response = local ? handle(game, d) : { what: 'nothing', attributes: [], log: [] };
+  if (r.what === 'nothing') {
     game.status = 1;
     return [...send, ...[1, 2].flatMap(() => send), `(0) No reply from server for ID ${id} socket 3`].join('\n');
   }
@@ -84,7 +84,7 @@ function freeradius(game: Shell, args: string[]): string {
       `(${i})   User-Name = "${d.user}"`,
     );
     lines.push(...r.log.map((l) => (l.startsWith('(') ? l.replace(/^\(0\)/, `(${i})`) : `(${i}) ${l.replace(/^Auth: \(0\) /, '')}`)));
-    if (r.what !== 'rien')
+    if (r.what !== 'nothing')
       lines.push(
         `(${i}) Sent ${r.what === 'accept' ? 'Access-Accept' : 'Access-Reject'} Id ${40 + i} from 10.10.30.1:1812 to ${d.client}:41234 length 0`,
         ...r.attributes.map((a) => `(${i})   ${a.attr} = ${a.value}`),

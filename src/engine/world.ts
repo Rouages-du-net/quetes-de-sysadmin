@@ -8,7 +8,7 @@ import type { Translate } from '../texts';
 import type { ElementPlan } from './plan';
 
 export type File = {
-  type: 'fichier';
+  type: 'file';
   content: string | ((game: Game) => string);
   // Effet de la lecture (cat), ex. tirer un levier. Renvoie un message en plus.
   read?: (game: Game) => string | void;
@@ -54,7 +54,7 @@ export const accountsByDefault = (): Accounts => ({
   groups: { root: { gid: 0, members: [] }, sudo: { gid: 27, members: ['you'] }, you: { gid: 1000, members: [] } },
 });
 export type Directory = {
-  type: 'dossier';
+  type: 'directory';
   children: Record<string, Node>;
   // Raison du blocage si on ne peut pas encore y entrer, sinon null.
   blocked?: (game: Game) => string | null;
@@ -174,7 +174,7 @@ export const clean = (t: string) =>
     .join('\n');
 
 export const f = (content: File['content'], options: Omit<File, 'type' | 'content'> = {}): File => ({
-  type: 'fichier',
+  type: 'file',
   content: typeof content !== 'string' ? content : options.lines ? content.replace(/^\n+|\s+$/g, '') : clean(content),
   prose: typeof content === 'string' && !options.lines,
   ...options,
@@ -185,9 +185,9 @@ export const f = (content: File['content'], options: Omit<File, 'type' | 'conten
 // donne le sien dans src/texts/<langue>/names.ftl, sous nom-<nom> (le point
 // initial devient « point- », les autres points des tirets). Un nom absent
 // reste tel quel (home, etc, les noms des vrais outils).
-const nameKey = (french: string) => `name-${french.replace(/^\./, 'point-').replace(/\./g, '-')}`;
+const nameKey = (id: string) => `name-${id.replace(/^\./, 'point-').replace(/\./g, '-')}`;
 /** Un mot de passe donné par une histoire, dans la langue (passwords.ftl : farine-2028 → flour-2028). */
-export const password = (t: Translate, french: string) => (t.exists(`password-${french}`) ? t(`password-${french}`) : french);
+export const password = (t: Translate, id: string) => (t.exists(`password-${id}`) ? t(`password-${id}`) : id);
 export const name = (t: Translate, french: string) => (t.exists(nameKey(french)) ? t(nameKey(french)) : french);
 /** Un chemin du monde, traduit nom par nom : /Cabane/Jetee/filet → /Hut/Pier/net. */
 export const path = (t: Translate, english: string) =>
@@ -223,7 +223,7 @@ export function translateNames(t: Translate, directory: Directory, at = ''): Dir
   };
   rights(directory);
   directory.children = Object.fromEntries(
-    Object.entries(directory.children).map(([n, e]) => [systemDirectory(`${at}/${n}`) ? n : name(t, n), e.type === 'dossier' ? translateNames(t, e, `${at}/${n}`) : rights(e)]),
+    Object.entries(directory.children).map(([n, e]) => [systemDirectory(`${at}/${n}`) ? n : name(t, n), e.type === 'directory' ? translateNames(t, e, `${at}/${n}`) : rights(e)]),
   );
   return directory;
 }
@@ -237,7 +237,7 @@ export const translateAccounts = (t: Translate, c: Accounts): Accounts => ({
 });
 
 export const d = (children: Record<string, Node>, blocked?: Directory['blocked'], rights: Rights = {}): Directory => ({
-  type: 'dossier',
+  type: 'directory',
   children,
   blocked,
   ...rights,

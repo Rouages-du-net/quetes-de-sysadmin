@@ -113,9 +113,9 @@ const root = { owner: 'root' };
 function put(game: Shell, path: string, tree: Directory) {
   const here = game.find(path);
   if (!here) return void game.place('apt', path, tree);
-  if (here.type !== 'dossier') return;
+  if (here.type !== 'directory') return;
   for (const [name, child] of Object.entries(tree.children)) {
-    if (child.type === 'dossier') put(game, `${path}/${name}`, child);
+    if (child.type === 'directory') put(game, `${path}/${name}`, child);
     else if (!here.children[name]) here.children[name] = child;
   }
 }
@@ -287,8 +287,8 @@ export function configure(game: Shell, e: AptState, packages: [string, string][]
       ['/var/run/reboot-required.pkgs', listing],
     ]) {
       const n = game.find(file);
-      if (n?.type === 'fichier') n.content = content;
-      else game.place('dpkg', file, { type: 'fichier', content, lines: true, owner: 'root' });
+      if (n?.type === 'file') n.content = content;
+      else game.place('dpkg', file, { type: 'file', content, lines: true, owner: 'root' });
     }
   }
   return lines;

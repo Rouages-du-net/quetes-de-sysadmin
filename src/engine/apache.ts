@@ -356,7 +356,7 @@ function included(game: Game, pattern: string, optional: boolean, file: string, 
   const directory = path.slice(0, path.lastIndexOf('/')) || '/';
   const namePattern = path.slice(path.lastIndexOf('/') + 1);
   const n = game.find(directory);
-  if (!n || n.type !== 'dossier') {
+  if (!n || n.type !== 'directory') {
     if (optional) return [];
     return syntax(file, line, `Could not open config directory ${directory}: No such file or directory`);
   }
@@ -502,7 +502,7 @@ export function build(game: Game): Configuration {
     });
   const warnings = [...read.warnings];
   for (const h of [principal, ...hosts])
-    if (h.root && game.find(h.root)?.type !== 'dossier') warnings.push(`AH00112: Warning: DocumentRoot [${h.root}] does not exist`);
+    if (h.root && game.find(h.root)?.type !== 'directory') warnings.push(`AH00112: Warning: DocumentRoot [${h.root}] does not exist`);
   const listing = listeners(lines);
   if (!listing.length) throw new ApacheError('no listening sockets available, shutting down\nAH00015: Unable to open logs');
   return {
@@ -576,7 +576,7 @@ export const apacheTime = (ms: number) => {
 // Une ligne dans un journal d'erreurs d'Apache (le fichier doit exister).
 function writeLog(game: Game, file: string, level: string, message: string, client?: string) {
   const n = game.find(file);
-  if (n?.type !== 'fichier' || typeof n.content !== 'string') return;
+  if (n?.type !== 'file' || typeof n.content !== 'string') return;
   const tid = level.startsWith('mpm') || level.startsWith('core:notice') ? PID : 140237;
   const line = `[${apacheTime(systemd(game)?.clock ?? 0)}] [${level}] [pid ${client ? PID + 1 : PID}:tid ${client ? 140237 : tid}] ${client ? `[client ${client}] ` : ''}${message}`;
   n.content = n.content ? `${n.content}\n${line}` : line;
@@ -737,14 +737,14 @@ function settingsFor(game: Game, c: Context, file: string, url: string): Setting
   const directories = ['/'];
   for (let i = 1; i <= parts.length; i++) {
     const d = '/' + parts.slice(0, i).join('/');
-    if (game.find(d)?.type !== 'dossier') break;
+    if (game.find(d)?.type !== 'directory') break;
     directories.push(d);
   }
   for (const d of directories) {
     for (const s of all.filter((s) => s.type === 'Directory' && !s.regex && s.pattern === d)) apply(r, s.lines, d);
     if (!r.overrides.size) continue;
     const ht = `${d === '/' ? '' : d}/${c.config.accessFile}`;
-    if (game.find(ht)?.type !== 'fichier') continue;
+    if (game.find(ht)?.type !== 'file') continue;
     try {
       apply(r, readHtaccess(game, ht, r.overrides, c.config.modules), d);
     } catch (e) {
@@ -814,8 +814,8 @@ function rewrite(
       const negation = c.pattern.startsWith('!');
       const p = c.pattern.replace(/^!/, '');
       let yes: boolean;
-      if (p === '-f') yes = game.find(value)?.type === 'fichier';
-      else if (p === '-d') yes = game.find(value)?.type === 'dossier';
+      if (p === '-f') yes = game.find(value)?.type === 'file';
+      else if (p === '-d') yes = game.find(value)?.type === 'directory';
       else if (p === '-s') yes = (game.read(value) ?? '').length > 0;
       else if (p.startsWith('=')) yes = value === p.slice(1);
       else {
@@ -936,10 +936,10 @@ export function answer(game: Game, port: number, path: string, request: Request 
     }
     const n = game.find(file);
     if (!n) return errorPage(c, 404);
-    if (n.type === 'dossier') {
+    if (n.type === 'directory') {
       // mod_dir : un répertoire sans barre finale est redirigé vers l'adresse avec la barre.
       if (!url.endsWith('/')) return errorPage(c, 301, link(`${url}/`));
-      const index = r.index.find((i) => game.find(`${file}${i}`)?.type === 'fichier');
+      const index = r.index.find((i) => game.find(`${file}${i}`)?.type === 'file');
       if (index) {
         url += index;
         continue;

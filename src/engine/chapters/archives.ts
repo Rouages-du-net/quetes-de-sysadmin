@@ -30,9 +30,9 @@ const PRECIOUS = [
 // Une archive tar sur la clé qui contient tous les fichiers précieux.
 function archiveComplete(j: Pick<Game, 'find' | 'player' | 't'>): File | null {
   const key = j.find(path(j.t, KEY));
-  if (key?.type !== 'dossier') return null;
+  if (key?.type !== 'directory') return null;
   for (const n of Object.values(key.children) as File[]) {
-    if (n.type !== 'fichier' || !n.archive) continue;
+    if (n.type !== 'file' || !n.archive) continue;
     const paths = Object.keys(n.archive.files).map((c) => c.replace(new RegExp(`^(\\./|~/|home/${j.player}/)`), ''));
     if (PRECIOUS.map((p) => path(j.t, p)).every((p) => paths.some((c) => c === p || c.endsWith('/' + p)))) return n;
   }

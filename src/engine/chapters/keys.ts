@@ -72,11 +72,11 @@ export const keys: Chapter = {
       message: (j) => j.t('keys-event-key-game'),
     },
     { id: 'copied', condition: (j) => youKeys(j).length > 0, message: (j) => j.t('keys-event-copied') },
-    { id: 'by-key', condition: (j) => connectionsBy(j, 'cle') > 0 && !withoutPassword(j), message: (j) => j.t('keys-event-by-key') },
+    { id: 'by-key', condition: (j) => connectionsBy(j, 'key') > 0 && !withoutPassword(j), message: (j) => j.t('keys-event-by-key') },
     { id: 'closed', condition: closed, message: (j) => j.t('keys-event-closed') },
     {
       id: 'end',
-      condition: (j) => j.flags.has('closed') && closed(j) && connectionsBy(j, 'cle') > sshd(j).keysToLoad,
+      condition: (j) => j.flags.has('closed') && closed(j) && connectionsBy(j, 'key') > sshd(j).keysToLoad,
       message: (j) => j.t('keys-event-end'),
     },
   ],

@@ -22,9 +22,9 @@ export interface ConfApt {
 function files(game: Game): string[] {
   const n = game.find(APT_DIRECTORY);
   const names =
-    n?.type === 'dossier'
+    n?.type === 'directory'
       ? Object.keys(n.children)
-          .filter((f) => /^[A-Za-z0-9_.-]+$/.test(f) && n.children[f].type === 'fichier')
+          .filter((f) => /^[A-Za-z0-9_.-]+$/.test(f) && n.children[f].type === 'file')
           .sort()
       : [];
   return [...names.map((f) => `${APT_DIRECTORY}/${f}`), ...(game.exists('/etc/apt/apt.conf') ? ['/etc/apt/apt.conf'] : [])];

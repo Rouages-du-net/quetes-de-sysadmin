@@ -68,7 +68,7 @@ export interface SshdState {
   reloads: number;
 }
 export const sshd = (j: Game) => j.state.sshd as SshdState;
-export const connectionsBy = (j: Game, comment: 'cle' | 'motDePasse') => (j.state.sshConnections?.[comment] as number | undefined) ?? 0;
+export const connectionsBy = (j: Game, comment: 'key' | 'password') => (j.state.sshConnections?.[comment] as number | undefined) ?? 0;
 
 // Le service ssh, comme celui de Debian : ExecReload vérifie d'abord (sshd -t).
 const serviceSsh = (): DefinitionService => ({
@@ -85,7 +85,7 @@ const serviceSsh = (): DefinitionService => ({
     const c = sshd(j);
     if (!c) return;
     c.load = readConfig(j).values;
-    c.keysToLoad = connectionsBy(j, 'cle');
+    c.keysToLoad = connectionsBy(j, 'key');
     c.reloads++;
   },
 });
@@ -198,22 +198,22 @@ export const homePlan =
     internet(
       t,
       {
-        role: 'routeur',
+        role: 'router',
         name: machineName(t, 'community'),
         address: '192.0.2.19',
         note: t('plan-note-gateway'),
         host: 'community',
         children: [
           {
-            role: 'reseau',
+            role: 'network',
             name: t('plan-network-internal'),
             address: '10.20.0.0/24',
             children: [
-              { role: 'serveur', name: 'wiki', address: '10.20.0.11', note: t('plan-note-wiki'), host: 'wiki' },
-              { role: 'serveur', name: 'archives', address: '10.20.0.12', note: t('plan-note-archives'), host: 'archives' },
+              { role: 'server', name: 'wiki', address: '10.20.0.11', note: t('plan-note-wiki'), host: 'wiki' },
+              { role: 'server', name: 'archives', address: '10.20.0.12', note: t('plan-note-archives'), host: 'archives' },
             ],
           },
         ],
       },
-      ...(o.host ? [{ role: 'serveur' as const, name: 'ftp.hosting.example', address: '203.0.113.80', note: t('plan-note-host') }] : []),
+      ...(o.host ? [{ role: 'server' as const, name: 'ftp.hosting.example', address: '203.0.113.80', note: t('plan-note-host') }] : []),
     );

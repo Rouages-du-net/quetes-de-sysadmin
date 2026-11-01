@@ -78,12 +78,12 @@ function wifiDirectory(): Directory {
 }
 
 // Ce que la borne demande (chaque personne avec son mot de passe), et la réponse attendue.
-const ATTEMPTS: { user: string; password: string; expected: number | 'refus' }[] = [
+const ATTEMPTS: { user: string; password: string; expected: number | 'refused' }[] = [
   { user: 'malik', password: 'ruche-malik-2027', expected: 10 },
   { user: 'ines', password: 'ruche-ines-2027', expected: 10 },
   { user: 'sami', password: 'choisi-par-sami', expected: 10 },
   { user: 'leo', password: 'cafe-leo-2028', expected: 20 },
-  { user: 'camille', password: 'ruche-camille-2026', expected: 'refus' },
+  { user: 'camille', password: 'ruche-camille-2026', expected: 'refused' },
 ];
 const request = (e: (typeof ATTEMPTS)[number]): Request => ({
   client: BOUND,
@@ -96,7 +96,7 @@ const REQUESTS = ATTEMPTS.map(request);
 
 type O = Parameters<typeof handle>[2];
 const responses = (j: Game, o: O = {}) => ATTEMPTS.map((e) => ({ e, r: handle(j, request(e), o) }));
-const compliant = (j: Game, o: O = {}) => responses(j, o).every(({ e, r }) => (e.expected === 'refus' ? r.what !== 'accept' : vlanFor(r) === e.expected));
+const compliant = (j: Game, o: O = {}) => responses(j, o).every(({ e, r }) => (e.expected === 'refused' ? r.what !== 'accept' : vlanFor(r) === e.expected));
 // Au prochain démarrage : la configuration des fichiers, nftables d'après son fichier, slapd et freeradius activés.
 const toRadiusBoot = (j: Game): O => {
   const sd = systemd(j);
@@ -352,7 +352,7 @@ export const wifi: Chapter = {
     { id: 'not-reread', condition: (j) => !filteredBound(j) && notReread(j), message: (j) => j.t('wifi-event-not-reread') },
     {
       id: 'unknown',
-      condition: (j) => !filteredBound(j) && !notReread(j) && malik(j).what === 'rien' && systemd(j)?.services.freeradius?.state === 'active',
+      condition: (j) => !filteredBound(j) && !notReread(j) && malik(j).what === 'nothing' && systemd(j)?.services.freeradius?.state === 'active',
       message: (j) => j.t('wifi-event-unknown'),
     },
     {

@@ -86,9 +86,9 @@ function transfer(game: Shell, src: Shell, dst: Shell, o: Options, paths: string
   // Crée un dossier dans la destination (sauf en essai) ; null si impossible.
   const createDirectory = (path: string, template: Node): boolean => {
     const n = dst.find(path);
-    if (n?.type === 'dossier') return true;
+    if (n?.type === 'directory') return true;
     if (o.trial) return true;
-    const error = dst.place('rsync', path, { type: 'dossier', children: {}, owner: dst.who, mode: o.archive ? template.mode : undefined });
+    const error = dst.place('rsync', path, { type: 'directory', children: {}, owner: dst.who, mode: o.archive ? template.mode : undefined });
     if (error) errors.push(`rsync: [Receiver] mkdir "${dst.resolve(path)}" failed: ${error.includes('ucun espace') ? 'No space left on device (28)' : dst.find(path + '/..') ? 'Permission denied (13)' : 'No such file or directory (2)'}`);
     return !error;
   };
@@ -98,12 +98,12 @@ function transfer(game: Shell, src: Shell, dst: Shell, o: Options, paths: string
     if (!src.can(source, 'r')) return void errors.push(`rsync: [sender] send_files failed to open "${src.resolve(sourcePath)}": Permission denied (13)`);
     const text = content(source, src);
     const old = dst.find(path);
-    if (old?.type === 'fichier' && content(old, dst) === text) return;
+    if (old?.type === 'file' && content(old, dst) === text) return;
     lines.push(relative);
     files++;
     sent += sizeFor(source, src);
     if (o.trial) return;
-    if (old?.type === 'fichier') {
+    if (old?.type === 'file') {
       if (!dst.can(old, 'w')) return void errors.push(`rsync: [Receiver] mkstemp "${dst.resolve(path)}" failed: Permission denied (13)`);
       old.content = text;
       old.lines = source.lines;
@@ -118,24 +118,24 @@ function transfer(game: Shell, src: Shell, dst: Shell, o: Options, paths: string
   };
 
   // Copie récursive d'un dossier source vers un dossier destination.
-  const copyDirectory = (source: Node & { type: 'dossier' }, sourcePath: string, path: string, relative: string) => {
-    const existed = dst.find(path)?.type === 'dossier';
+  const copyDirectory = (source: Node & { type: 'directory' }, sourcePath: string, path: string, relative: string) => {
+    const existed = dst.find(path)?.type === 'directory';
     if (!createDirectory(path, source)) return;
     if (!existed) lines.push(relative || './');
     const target = dst.find(path);
-    if (o.erase && target?.type === 'dossier')
+    if (o.erase && target?.type === 'directory')
       for (const name of Object.keys(target.children).sort())
         if (!(name in source.children)) {
           // Comme rsync : le contenu d'un dossier effacé d'abord, du plus profond au plus haut.
           const effaces = (n: Node, rel: string): string[] =>
-            n.type === 'dossier'
+            n.type === 'directory'
               ? [...Object.keys(n.children).sort().reverse().flatMap((e) => effaces(n.children[e], `${rel}/${e}`)), `deleting ${rel}/`]
               : [`deleting ${rel}`];
           lines.push(...effaces(target.children[name], `${relative}${name}`));
           if (!o.trial) delete target.children[name];
         }
     for (const [name, e] of Object.entries(source.children).sort(([a], [b]) => a.localeCompare(b))) {
-      if (e.type === 'dossier') copyDirectory(e, `${sourcePath}/${name}`, `${path}/${name}`, `${relative}${name}/`);
+      if (e.type === 'directory') copyDirectory(e, `${sourcePath}/${name}`, `${path}/${name}`, `${relative}${name}/`);
       else copyFile(e, `${path}/${name}`, `${relative}${name}`, `${sourcePath}/${name}`);
     }
   };
@@ -147,7 +147,7 @@ function transfer(game: Shell, src: Shell, dst: Shell, o: Options, paths: string
       continue;
     }
     const name = src.name(path);
-    if (n.type === 'dossier') {
+    if (n.type === 'directory') {
       if (!o.recursive) {
         lines.push(`skipping directory ${name}`);
         continue;
@@ -160,7 +160,7 @@ function transfer(game: Shell, src: Shell, dst: Shell, o: Options, paths: string
       }
     } else {
       const d = dst.find(dest);
-      const target = d?.type === 'dossier' || dest.endsWith('/') ? `${dest.replace(/\/+$/, '')}/${name}` : dest;
+      const target = d?.type === 'directory' || dest.endsWith('/') ? `${dest.replace(/\/+$/, '')}/${name}` : dest;
       if (dest.endsWith('/') && !createDirectory(dest, n)) continue;
       copyFile(n, target, name, path);
     }
@@ -241,9 +241,9 @@ export const BACKUP: Record<string, Command> = {
         // vérifiée et installée à la fermeture.
         const account = game.who;
         const text = crontabs[game.who] ?? TEMPLATE;
-        if (!game.exists(TEMP)) game.place('crontab', TEMP, { type: 'dossier', children: {}, owner: game.who, mode: 'rwx------' });
+        if (!game.exists(TEMP)) game.place('crontab', TEMP, { type: 'directory', children: {}, owner: game.who, mode: 'rwx------' });
         const file = `${TEMP}/crontab`;
-        game.place('crontab', file, { type: 'fichier', content: text, owner: game.who, lines: true });
+        game.place('crontab', file, { type: 'file', content: text, owner: game.who, lines: true });
         game.edition = {
           path: file,
           text: text.endsWith('\n') ? text : text + '\n',

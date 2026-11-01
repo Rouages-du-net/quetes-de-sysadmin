@@ -206,7 +206,7 @@ function findElsewhereRestore(j: Game): boolean {
   const search = (path: string, depth: number): boolean => {
     const n = j.find(path);
     if (!n || depth > 9) return false;
-    if (n.type === 'fichier') return path !== log && j.read(path) === good;
+    if (n.type === 'file') return path !== log && j.read(path) === good;
     return Object.keys(n.children).some((name) => search(`${path === '/' ? '' : path}/${name}`, depth + 1));
   };
   return search('/tmp', 0) || search(path(j.t, M), 0);

@@ -36,9 +36,9 @@ const addressesOutside = (j: Game) => [...new Set(scans(j).flatMap((b) => b.outs
 // Les fichiers de la maison : le texte de chacun (la trace nmap peut avoir n'importe quel nom).
 const texts = (j: Game): string[] => {
   const home = j.find((j as Shell).home);
-  if (home?.type !== 'dossier') return [];
+  if (home?.type !== 'directory') return [];
   return Object.entries(home.children)
-    .filter(([, n]) => n.type === 'fichier')
+    .filter(([, n]) => n.type === 'file')
     .map(([name]) => j.read(`${(j as Shell).home}/${name}`) ?? '');
 };
 const traceOk = (j: Game) => texts(j).some((t) => /^# Nmap .* as: nmap .*-sV/m.test(t) && t.includes(`Nmap scan report for ${machineName(j.t, 'bakery')}`) && /5432\/tcp/.test(t) && /6379\/tcp/.test(t));
@@ -121,13 +121,13 @@ export const scope: Chapter = {
     {
       id: 'outside-scope',
       condition: outsideScope,
-      message: (j) => j.t('scope-event-outside-scope', { addresses: addressesOutside(j).join(', '), neighbour: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
+      message: (j) => j.t('scope-event-outside-scope', { addresses: addressesOutside(j).join(', '), neighbour: addressesOutside(j).includes(NEIGHBOUR.address) ? 'yes' : 'no' }),
     },
     { id: 'trace', condition: traceOk, message: (j) => j.t('scope-event-trace') },
     {
       id: 'end',
       condition: (j) => traceOk(j) && notesOk(j),
-      message: (j) => j.t('scope-event-end', { mistake: outsideScope(j) ? 'oui' : 'non' }),
+      message: (j) => j.t('scope-event-end', { mistake: outsideScope(j) ? 'yes' : 'no' }),
     },
   ],
 };

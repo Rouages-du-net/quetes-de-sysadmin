@@ -20,7 +20,7 @@ class AwkError extends Error {}
 // ——— Découpage en jetons ———
 
 interface Token {
-  type: 'nombre' | 'chaine' | 'regex' | 'nom' | 'mot' | 'op' | 'fin';
+  type: 'number' | 'string' | 'regex' | 'name' | 'word' | 'op' | 'end';
   value: string;
 }
 
@@ -69,7 +69,7 @@ function tokens(source: string): Token[] {
   const waitsValue = () => {
     const d = listing.at(-1);
     if (!d) return true;
-    if (d.type === 'nombre' || d.type === 'chaine' || d.type === 'regex' || d.type === 'nom') return false;
+    if (d.type === 'number' || d.type === 'string' || d.type === 'regex' || d.type === 'name') return false;
     return !(d.type === 'op' && [')', ']', '++', '--', '$'].includes(d.value));
   };
   while (i < source.length) {
@@ -88,7 +88,7 @@ function tokens(source: string): Token[] {
     }
     if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(source[i + 1] ?? ''))) {
       const m = /^[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?/.exec(source.slice(i))!;
-      listing.push({ type: 'nombre', value: m[0] });
+      listing.push({ type: 'number', value: m[0] });
       i += m[0].length;
       continue;
     }
@@ -104,7 +104,7 @@ function tokens(source: string): Token[] {
       }
       if (source[i] !== '"') throw new AwkError('runaway string constant "' + s.slice(0, 10) + ' ...');
       i++;
-      listing.push({ type: 'chaine', value: s });
+      listing.push({ type: 'string', value: s });
       continue;
     }
     if (c === '/' && waitsValue()) {
@@ -122,7 +122,7 @@ function tokens(source: string): Token[] {
     }
     if (/[A-Za-z_]/.test(c)) {
       const m = /^[A-Za-z_][A-Za-z0-9_]*/.exec(source.slice(i))!;
-      listing.push({ type: WORDS.includes(m[0]) ? 'mot' : 'nom', value: m[0] });
+      listing.push({ type: WORDS.includes(m[0]) ? 'word' : 'name', value: m[0] });
       i += m[0].length;
       continue;
     }
@@ -131,7 +131,7 @@ function tokens(source: string): Token[] {
     listing.push({ type: 'op', value: op });
     i += op.length;
   }
-  listing.push({ type: 'fin', value: 'end of file' });
+  listing.push({ type: 'end', value: 'end of file' });
   return listing;
 }
 
@@ -145,10 +145,10 @@ type Node =
   | { t: 'champ'; e: Node }
   | { t: 'elem'; name: string; key: Node[] }
   | { t: 'bin'; op: string; a: Node; b: Node }
-  | { t: 'un'; op: string; e: Node }
+  | { t: 'unary'; op: string; e: Node }
   | { t: 'affect'; op: string; target: Node; e: Node }
   | { t: 'incr'; op: string; pre: boolean; target: Node }
-  | { t: 'dans'; key: Node[]; grid: string }
+  | { t: 'in'; key: Node[]; grid: string }
   | { t: 'appel'; name: string; args: Node[] }
   | { t: 'groupe'; e: Node };
 
@@ -156,16 +156,16 @@ type Instr =
   | { t: 'expr'; e: Node }
   | { t: 'print'; args: Node[] }
   | { t: 'printf'; args: Node[] }
-  | { t: 'si'; cond: Node; then: Instr; otherwise?: Instr }
+  | { t: 'if'; cond: Node; then: Instr; otherwise?: Instr }
   | { t: 'pourDans'; variable: string; grid: string; body: Instr }
-  | { t: 'pour'; init?: Instr; cond?: Node; not?: Instr; body: Instr }
-  | { t: 'tantque'; cond: Node; body: Instr }
-  | { t: 'bloc'; body: Instr[] }
+  | { t: 'for'; init?: Instr; cond?: Node; not?: Instr; body: Instr }
+  | { t: 'while'; cond: Node; body: Instr }
+  | { t: 'block'; body: Instr[] }
   | { t: 'next' }
   | { t: 'delete'; name: string; key?: Node[] };
 
 interface Rule {
-  when: 'BEGIN' | 'END' | 'ligne';
+  when: 'BEGIN' | 'END' | 'line';
   pattern?: Node;
   action?: Instr;
 }
@@ -175,9 +175,9 @@ const FUNCTIONS = ['length', 'substr', 'index', 'split', 'sub', 'gsub', 'tolower
 function parse(source: string): Rule[] {
   const j = tokens(source);
   let p = 0;
-  const see = (v?: string) => (v === undefined ? j[p] : j[p].value === v && j[p].type !== 'chaine' ? j[p] : null);
+  const see = (v?: string) => (v === undefined ? j[p] : j[p].value === v && j[p].type !== 'string' ? j[p] : null);
   const error = (): never => {
-    throw new AwkError(`syntax error at or near ${j[p].type === 'fin' ? 'end of file' : j[p].value === '\n' ? 'end of line' : j[p].value}`);
+    throw new AwkError(`syntax error at or near ${j[p].type === 'end' ? 'end of file' : j[p].value === '\n' ? 'end of line' : j[p].value}`);
   };
   const wait = (v: string) => (see(v) ? j[p++] : error());
   const skipLines = () => {
@@ -218,9 +218,9 @@ function parse(source: string): Rule[] {
   };
   const inside = (s: boolean): Node => {
     const a = correspond(s);
-    if (see('in') && j[p + 1].type === 'nom') {
+    if (see('in') && j[p + 1].type === 'name') {
       p++;
-      return { t: 'dans', key: [a], grid: j[p++].value };
+      return { t: 'in', key: [a], grid: j[p++].value };
     }
     return a;
   };
@@ -245,7 +245,7 @@ function parse(source: string): Rule[] {
   // Deux valeurs côte à côte : concaténation.
   const valueStart = () => {
     const t = j[p];
-    if (t.type === 'nombre' || t.type === 'chaine' || t.type === 'regex' || t.type === 'nom') return true;
+    if (t.type === 'number' || t.type === 'string' || t.type === 'regex' || t.type === 'name') return true;
     // (+ et - entre deux valeurs sont des opérations, pas une concaténation.)
     return t.type === 'op' && ['$', '(', '++', '--'].includes(t.value);
   };
@@ -273,11 +273,11 @@ function parse(source: string): Rule[] {
   const unary = (): Node => {
     if (see('!')) {
       p++;
-      return { t: 'un', op: '!', e: unary() };
+      return { t: 'unary', op: '!', e: unary() };
     }
     if (see('-') || see('+')) {
       const op = j[p++].value;
-      return { t: 'un', op, e: unary() };
+      return { t: 'unary', op, e: unary() };
     }
     return increment();
   };
@@ -293,8 +293,8 @@ function parse(source: string): Rule[] {
   };
   const primary = (): Node => {
     const t = j[p];
-    if (t.type === 'nombre') return (p++, { t: 'num', v: Number(t.value) });
-    if (t.type === 'chaine') return (p++, { t: 'str', v: t.value });
+    if (t.type === 'number') return (p++, { t: 'num', v: Number(t.value) });
+    if (t.type === 'string') return (p++, { t: 'str', v: t.value });
     if (t.type === 'regex') return (p++, { t: 'regex', v: t.value });
     if (see('$')) {
       p++;
@@ -307,7 +307,7 @@ function parse(source: string): Rule[] {
       wait(')');
       return { t: 'groupe', e };
     }
-    if (t.type === 'nom') {
+    if (t.type === 'name') {
       p++;
       if (FUNCTIONS.includes(t.value)) {
         const args: Node[] = [];
@@ -342,14 +342,14 @@ function parse(source: string): Rule[] {
   const incrementWithoutPostfix = (): Node => {
     if (see('-')) {
       p++;
-      return { t: 'un', op: '-', e: primary() };
+      return { t: 'unary', op: '-', e: primary() };
     }
     return primary();
   };
 
   const expressionsList = (): Node[] => {
     const args: Node[] = [];
-    if (see(';') || see('\n') || see('}') || j[p].type === 'fin') return args;
+    if (see(';') || see('\n') || see('}') || j[p].type === 'end') return args;
     // print (a, b) : les parenthèses entourent la liste.
     args.push(expression(true));
     while (see(',')) {
@@ -374,22 +374,22 @@ function parse(source: string): Rule[] {
       skipLines();
       if (see('else')) {
         p++;
-        return { t: 'si', cond, then, otherwise: instruction() };
+        return { t: 'if', cond, then, otherwise: instruction() };
       }
       p = before;
-      return { t: 'si', cond, then };
+      return { t: 'if', cond, then };
     }
     if (see('while')) {
       p++;
       wait('(');
       const cond = expression();
       wait(')');
-      return { t: 'tantque', cond, body: instruction() };
+      return { t: 'while', cond, body: instruction() };
     }
     if (see('for')) {
       p++;
       wait('(');
-      if (j[p].type === 'nom' && j[p + 1].value === 'in' && j[p + 2].type === 'nom' && j[p + 3].value === ')') {
+      if (j[p].type === 'name' && j[p + 1].value === 'in' && j[p + 2].type === 'name' && j[p + 3].value === ')') {
         const variable = j[p].value;
         const grid = j[p + 2].value;
         p += 4;
@@ -401,7 +401,7 @@ function parse(source: string): Rule[] {
       wait(';');
       const not = see(')') ? undefined : ({ t: 'expr', e: expression() } as Instr);
       wait(')');
-      return { t: 'pour', init, cond, not, body: instruction() };
+      return { t: 'for', init, cond, not, body: instruction() };
     }
     let i: Instr;
     if (see('print')) {
@@ -415,7 +415,7 @@ function parse(source: string): Rule[] {
       i = { t: 'next' };
     } else if (see('delete')) {
       p++;
-      const name = j[p].type === 'nom' ? j[p++].value : error();
+      const name = j[p].type === 'name' ? j[p++].value : error();
       let key: Node[] | undefined;
       if (see('[')) {
         p++;
@@ -424,10 +424,10 @@ function parse(source: string): Rule[] {
       }
       i = { t: 'delete', name, key };
     } else if (see(';')) {
-      i = { t: 'bloc', body: [] };
+      i = { t: 'block', body: [] };
     } else i = { t: 'expr', e: expression() };
     if (see(';') || see('\n')) p++;
-    else if (!see('}') && j[p].type !== 'fin') error();
+    else if (!see('}') && j[p].type !== 'end') error();
     return i;
   };
   const block = (): Instr => {
@@ -435,25 +435,25 @@ function parse(source: string): Rule[] {
     const body: Instr[] = [];
     skipLines();
     while (!see('}')) {
-      if (j[p].type === 'fin') error();
+      if (j[p].type === 'end') error();
       body.push(instruction());
       skipLines();
     }
     p++;
-    return { t: 'bloc', body };
+    return { t: 'block', body };
   };
 
   const rules: Rule[] = [];
   skipLines();
-  while (j[p].type !== 'fin') {
+  while (j[p].type !== 'end') {
     if (see('BEGIN') || see('END')) {
       const when = j[p++].value as 'BEGIN' | 'END';
       skipNl();
       rules.push({ when, action: block() });
-    } else if (see('{')) rules.push({ when: 'ligne', action: block() });
+    } else if (see('{')) rules.push({ when: 'line', action: block() });
     else {
       const pattern = expression();
-      rules.push({ when: 'ligne', pattern, action: see('{') ? block() : undefined });
+      rules.push({ when: 'line', pattern, action: see('{') ? block() : undefined });
     }
     skipLines();
   }
@@ -561,9 +561,9 @@ function execute(rules: Rule[], lines: string[], variables: Record<string, Value
       }
       case 'elem':
         return grid(n.name).get(keyFor(n.key)) ?? (grid(n.name).set(keyFor(n.key), ''), '');
-      case 'dans':
+      case 'in':
         return grid(n.grid).has(keyFor(n.key)) ? 1 : 0;
-      case 'un': {
+      case 'unary': {
         if (n.op === '!') return yes(evaluate(n.e)) ? 0 : 1;
         const x = count(evaluate(n.e));
         return n.op === '-' ? -x : x;
@@ -691,14 +691,14 @@ function execute(rules: Rule[], lines: string[], variables: Record<string, Value
         output.push('\u0001' + formatValue(text(format ?? ''), rest));
         return;
       }
-      case 'si':
+      case 'if':
         if (yes(evaluate(i.cond))) run(i.then);
         else if (i.otherwise) run(i.otherwise);
         return;
-      case 'tantque':
+      case 'while':
         while (yes(evaluate(i.cond))) run(i.body);
         return;
-      case 'pour':
+      case 'for':
         for (i.init && run(i.init); i.cond ? yes(evaluate(i.cond)) : true; i.not && run(i.not)) run(i.body);
         return;
       case 'pourDans':
@@ -707,7 +707,7 @@ function execute(rules: Rule[], lines: string[], variables: Record<string, Value
           run(i.body);
         }
         return;
-      case 'bloc':
+      case 'block':
         i.body.forEach(run);
         return;
       case 'next':
@@ -722,7 +722,7 @@ function execute(rules: Rule[], lines: string[], variables: Record<string, Value
     v.NR = count(v.NR) + 1;
     split(line);
     try {
-      for (const r of rules.filter((x) => x.when === 'ligne')) {
+      for (const r of rules.filter((x) => x.when === 'line')) {
         if (r.pattern && !yes(evaluate(r.pattern))) continue;
         if (r.action) run(r.action);
         else output.push(fields[0]);

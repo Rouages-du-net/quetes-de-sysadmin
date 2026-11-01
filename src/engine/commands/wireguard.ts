@@ -22,7 +22,7 @@ export const publicFields = (game: Shell) => ({
 });
 
 // La poignée de main a-t-elle eu lieu (le routeur et le pair se sont reconnus) ?
-const serre = (e: string) => ['autorisees', 'route', 'transfert', 'ok'].includes(e);
+const serre = (e: string) => ['autorisees', 'route', 'forwarding', 'ok'].includes(e);
 
 function show(game: Shell, name: string, i: InterfaceWg): string[] {
   const lines = [`interface: ${name}`];
@@ -178,17 +178,17 @@ export const WIREGUARD: Record<string, Command> = {
 };
 
 /** ping vers une adresse derrière un tunnel : « sans-pair » (aucun pair n'a cette adresse), « perdu » ou « ok ». */
-export function pingTunnel(game: Shell, ip: string): 'sans-pair' | 'perdu' | 'ok' {
+export function pingTunnel(game: Shell, ip: string): 'no-peer' | 'lost' | 'ok' {
   for (const [name, i] of Object.entries(wg(game))) {
     const p = i.conf.peers.find((x) => x.allowed.some((a) => inside(ip, a)));
     if (!p) continue;
     const d = lan(game)?.remotes?.find((x) => x.key === p.key);
     const e = d && tunnelState(game, d, publicFields(game));
-    if (!d || !e || e.name !== name || !serre(e.state)) return 'perdu';
+    if (!d || !e || e.name !== name || !serre(e.state)) return 'lost';
     const client = remoteConf(game, d);
     if (client.addresses[0]?.split('/')[0] === ip) return 'ok';
     // Un appareil du site derrière ce pair : seulement si le passage reste ouvert dans sa box.
-    return d.network && inside(ip, d.network) && (!d.behindNat || client.peers[0]?.keepalive) ? 'ok' : 'perdu';
+    return d.network && inside(ip, d.network) && (!d.behindNat || client.peers[0]?.keepalive) ? 'ok' : 'lost';
   }
-  return 'sans-pair';
+  return 'no-peer';
 }

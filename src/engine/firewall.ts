@@ -44,12 +44,12 @@ export const APPLICATIONS: Record<string, number[]> = {
   OpenSSH: [22],
 };
 
-export type Verdict = 'accepte' | 'refuse' | 'bloque';
+export type Verdict = 'accepted' | 'refused' | 'blocked';
 
 /** Une nouvelle connexion vers ce port, depuis cette adresse, passe-t-elle ? */
 export function verdict(pf: Firewall, port: number, source: string): Verdict {
-  if (!pf.enabled) return 'accepte';
+  if (!pf.enabled) return 'accepted';
   const r = pf.rules.find((r) => r.ports.includes(port) && (r.forEachOf === null || r.forEachOf === source));
   const action = r?.action ?? pf.incoming;
-  return action === 'allow' || action === 'limit' ? 'accepte' : action === 'reject' ? 'refuse' : 'bloque';
+  return action === 'allow' || action === 'limit' ? 'accepted' : action === 'reject' ? 'refused' : 'blocked';
 }

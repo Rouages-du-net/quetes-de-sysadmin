@@ -248,7 +248,7 @@ export const canary: Chapter = {
       // Les développeur·ses publient le correctif.
       action: (j) => {
         const versions = j.find(`${KIOSK}/versions`);
-        if (versions?.type === 'dossier') versions.children['1.6.1'] = versionDirectory(j.t, '1.6.1', 'canary-notes-161');
+        if (versions?.type === 'directory') versions.children['1.6.1'] = versionDirectory(j.t, '1.6.1', 'canary-notes-161');
       },
     },
     { id: 'canary-161', condition: (j) => !!j.state.canaryClean, message: (j) => j.t('canary-event-canary-161') },

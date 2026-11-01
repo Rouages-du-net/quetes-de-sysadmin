@@ -32,7 +32,7 @@ manuscript-novel-chapter-3 =
     Dedans : des cahiers, couverts de l'écriture serrée de Zohra.
 # Le chapitre 3 après le passage du chat sur le clavier : garder le titre,
 # ne traduire que le titre ; les lignes de lettres restent telles quelles.
-manuscript-novel-chapter-3-abime =
+manuscript-novel-chapter-3-damaged =
     CHAPITRE 3 — LE PHARE
 
     jjjjjjjjjjjjjjjjjjjjjjkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk;;;;;;;;;;;;;

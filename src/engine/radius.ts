@@ -182,7 +182,7 @@ export interface Request {
 
 export interface Response {
   // accept, reject, ou rien (la demande est ignorée : pas de réponse du tout).
-  what: 'accept' | 'reject' | 'rien';
+  what: 'accept' | 'reject' | 'nothing';
   attributes: { attr: string; value: string }[];
   // Ce que radiusd écrit (journal, ou radiusd -X).
   log: string[];
@@ -206,7 +206,7 @@ export function handle(j: Game, d: Request, o: { conf?: ConfRadius | null; rules
   const conf = o.conf !== undefined ? o.conf : (radius(j)?.conf ?? null);
   const works = o.works ?? inWorks(j);
   const log: string[] = [];
-  const nothing = (): Response => ({ what: 'rien', attributes: [], log });
+  const nothing = (): Response => ({ what: 'nothing', attributes: [], log });
   if (!works || !conf) return nothing();
   // La chaîne input du pare-feu : UDP 1812 vers le routeur.
   const pkg = {

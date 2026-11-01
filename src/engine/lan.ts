@@ -161,7 +161,7 @@ export function readInterfaces(j: Game): { stanzas: Record<string, Strophe>; err
               .replace(/\./g, '\\.')
               .replace(/\*/g, '.*')}$`,
           );
-          if (directory?.type === 'dossier') for (const n of Object.keys(directory.children).sort()) if (re.test(n)) read(`${pattern.slice(0, k)}/${n}`);
+          if (directory?.type === 'directory') for (const n of Object.keys(directory.children).sort()) if (re.test(n)) read(`${pattern.slice(0, k)}/${n}`);
         }
         return;
       }
@@ -314,18 +314,18 @@ export const addressFor = (a: Device) => a.fixed ?? a.lease;
 export function reach(
   l: Lan,
   ip: string,
-): { what: 'local' | 'appareil' | 'internet' | 'perdu' | 'pas-de-route'; source?: string } | { what: 'injoignable'; source: string } {
+): { what: 'local' | 'device' | 'internet' | 'lost' | 'no-route'; source?: string } | { what: 'injoignable'; source: string } {
   if (ip.startsWith('127.') || Object.values(l.interfaces).some((i) => i.addresses.some((a) => a.split('/')[0] === ip))) return { what: 'local' };
   const i = interfaceFor(l, ip);
   if (i) {
     const source = (i.addresses.find((a) => inside(ip, networkFor(a))) ?? i.addresses[0] ?? '').split('/')[0];
     const vlan = vlanFor(l, i);
     const ok = vlan !== null && l.vlans.concat(1).includes(vlan) && l.devices.some((a) => a.vlan === vlan && addressFor(a) === ip);
-    return ok ? { what: 'appareil', source } : { what: 'injoignable', source };
+    return ok ? { what: 'device', source } : { what: 'injoignable', source };
   }
   const gw = l.gateway;
   if (gw && l.interfaces[gw.dev] && inService(l, l.interfaces[gw.dev]))
     // Une adresse privée (RFC 1918) ne se route pas sur internet : la box la jette.
-    return { what: isPrivate(ip) ? 'perdu' : 'internet', source: l.interfaces[gw.dev].addresses[0]?.split('/')[0] };
-  return { what: 'pas-de-route' };
+    return { what: isPrivate(ip) ? 'lost' : 'internet', source: l.interfaces[gw.dev].addresses[0]?.split('/')[0] };
+  return { what: 'no-route' };
 }

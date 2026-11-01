@@ -165,7 +165,7 @@ function travail(game: Shell, path: string): Record<string, string> {
   const place = game.find(path) as Directory;
   return Object.fromEntries(
     Object.entries(place.children)
-      .filter(([name, n]) => n.type === 'fichier' && !name.startsWith('.'))
+      .filter(([name, n]) => n.type === 'file' && !name.startsWith('.'))
       .map(([name, n]) => [name, content(n as File, game)]),
   );
 }
@@ -201,13 +201,13 @@ function findCommit(d: Repo, ref: string): Commit | null {
 
 function write(game: Shell, path: string, text: string): string | null {
   const n = game.find(path);
-  if (n?.type === 'fichier') {
+  if (n?.type === 'file') {
     if (!game.can(n, 'w')) return game.t('git-write-permission', { file: game.name(path) });
     n.content = text;
     delete n.size;
     return null;
   }
-  return game.place('git', path, { type: 'fichier', content: text, owner: game.who, lines: true });
+  return game.place('git', path, { type: 'file', content: text, owner: game.who, lines: true });
 }
 
 const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
@@ -218,12 +218,12 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const path = place ? game.resolve(place) : game.cwd;
     if (depots[path] && game.exists(path)) return game.t(bare ? 'git-init-existing-bare' : 'git-init-existing', { path: path });
     if (place && !game.exists(path)) {
-      const error = game.place('git', path, { type: 'dossier', owner: game.who, children: {} });
+      const error = game.place('git', path, { type: 'directory', owner: game.who, children: {} });
       if (error) return game.error(game.t('git-init-impossible', { path: path }));
     }
-    const directory = (children: Record<string, Node> = {}): Node => ({ type: 'dossier', owner: game.who, children });
+    const directory = (children: Record<string, Node> = {}): Node => ({ type: 'directory', owner: game.who, children });
     const file = (text: string, mode?: string): Node => ({
-      type: 'fichier',
+      type: 'file',
       content: text,
       lines: true,
       owner: game.who,
@@ -244,7 +244,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const gitPlace = bare ? path : `${path}/.git`;
     if (bare) {
       const n = game.find(path);
-      if (n?.type !== 'dossier' || !game.writtenIn(`${path}/HEAD`)) return game.error(game.t('git-init-impossible', { path: path }));
+      if (n?.type !== 'directory' || !game.writtenIn(`${path}/HEAD`)) return game.error(game.t('git-init-impossible', { path: path }));
       Object.assign(n.children, inside);
     } else {
       const error = game.place('git', gitPlace, directory(inside));
@@ -452,7 +452,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
         here.repo.commits.length ? game.t('git-revision-ambiguous', { revision: ref }) : game.t('git-reference-invalid', { revision: ref }),
       );
     const place = game.resolve(general.workTree);
-    if (game.find(place)?.type !== 'dossier') return game.error(game.t('git-work-tree-missing', { path: place }));
+    if (game.find(place)?.type !== 'directory') return game.error(game.t('git-work-tree-missing', { path: place }));
     const excerpts = (here.repo.excerpts ??= {});
     const before = excerpts[place];
     // Sans -f, git refuse d'écraser ce qu'il ne connaît pas, ou ce qu'on a modifié à la main.
@@ -461,7 +461,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
         .sort()
         .filter((name) => {
           const n = game.find(`${place}/${name}`);
-          if (n?.type !== 'fichier') return false;
+          if (n?.type !== 'file') return false;
           const here = content(n, game);
           return here !== c.files[name] && (before ? here !== before[name] : true);
         });
@@ -499,7 +499,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     if (game.exists(target)) return game.error(game.t('git-clone-exists', { path: name }));
     const lines = [game.t('git-clone-in', { path: name })];
     const before = game.cwd;
-    const error = game.place('git', target, { type: 'dossier', owner: game.who, children: {} });
+    const error = game.place('git', target, { type: 'directory', owner: game.who, children: {} });
     if (error) return game.error(error);
     game.cwd = target;
     try {
@@ -588,7 +588,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const hook = (hookName: string): { code: number } | null => {
       const file = `${path}/hooks/${hookName}`;
       const n = game.find(file);
-      if (n?.type !== 'fichier') return null;
+      if (n?.type !== 'file') return null;
       if (!game.can(n, 'x')) {
         remoteRefs.push(...game.t('git-hook-ignore', { hook: file }).split('\n'));
         return null;

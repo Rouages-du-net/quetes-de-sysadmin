@@ -95,11 +95,11 @@ post-mortem-unattended-dpkg =
 ## Ce que le jeu vérifie dans le post-mortem
 
 # Les titres des sections (comme dans le modèle, sans « ## »).
-post-mortem-section-resume = Résumé
-post-mortem-section-chronologie = Chronologie
+post-mortem-section-summary = Résumé
+post-mortem-section-timeline = Chronologie
 post-mortem-section-impact = Impact
 post-mortem-section-causes = Causes
-post-mortem-section-marche = Ce qui a bien marché
+post-mortem-section-went-well = Ce qui a bien marché
 post-mortem-section-actions = Actions
 # Le début des lignes du modèle à remplacer.
 post-mortem-a-complete = (à compléter

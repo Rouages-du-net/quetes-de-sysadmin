@@ -173,9 +173,9 @@ function sections(text: string): Record<string, Record<string, string[]>> {
 /** Lit les unités de /etc/systemd/system (services et timers écrits à la main). */
 export function loadUnits(game: Shell, sd: Systemd): void {
   const place = game.find('/etc/systemd/system');
-  if (place?.type !== 'dossier') return;
+  if (place?.type !== 'directory') return;
   for (const [fileName, n] of Object.entries(place.children)) {
-    if (n.type !== 'fichier') continue;
+    if (n.type !== 'file') continue;
     const path = `/etc/systemd/system/${fileName}`;
     const text = game.read(path) ?? '';
     const u = sections(text);

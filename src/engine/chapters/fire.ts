@@ -69,7 +69,7 @@ deny ${ROBOT};`;
 const welcome = (t: Translate, version: number) => t(`fire-site-index-${version}`);
 
 function archiveContent(t: Translate, version: number): Record<string, File> {
-  const file = (text: string): File => ({ type: 'fichier', content: text, lines: true, owner: 'root', group: 'root' });
+  const file = (text: string): File => ({ type: 'file', content: text, lines: true, owner: 'root', group: 'root' });
   return {
     'etc/nginx/blocked.conf': file(blocked(t)),
     'etc/nginx/sites-available/medialibrary': file(CONF_SITE),

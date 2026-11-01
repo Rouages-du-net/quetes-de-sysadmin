@@ -16,7 +16,7 @@ export const LYNIS: Record<string, Command> = {
       if (action === 'audit' && rest[0] === 'system') {
         if (game.who !== 'root') return game.error(game.t('lynis-without-root'), 1);
         const r = audit(game);
-        const rights = { type: 'fichier' as const, lines: true, owner: 'root', mode: 'rw-------' };
+        const rights = { type: 'file' as const, lines: true, owner: 'root', mode: 'rw-------' };
         game.place('lynis', REPORT, { ...rights, content: r.report });
         game.place('lynis', LOG, { ...rights, content: `# Lynis ${VERSION_LYNIS}\n${r.report}` });
         game.state.lynis = { hint: r.hint, ids: r.findings.map((c) => c.id), warnings: r.findings.filter((c) => c.type === 'warning').length };

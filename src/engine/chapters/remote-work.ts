@@ -69,7 +69,7 @@ const sshToReboot = (j: Game) => openSsh((systemd(j)?.services.nftables?.active 
 // Les clés privées en service (celles des fichiers de /etc/wireguard).
 function privateKeys(j: Game): string[] {
   const directory = j.find('/etc/wireguard');
-  if (directory?.type !== 'dossier') return [];
+  if (directory?.type !== 'directory') return [];
   return Object.keys(directory.children)
     .filter((n) => n.endsWith('.conf'))
     .map((n) => readConfWg(j.read(`/etc/wireguard/${n}`) ?? '').key)
@@ -77,14 +77,14 @@ function privateKeys(j: Game): string[] {
 }
 
 // Un fichier lisible par un compte quelconque (ni propriétaire, ni du groupe) : r pour les autres, et x sur chaque dossier du chemin.
-const forAll = (n: Node, right: 'r' | 'x') => (n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--'))[right === 'r' ? 6 : 8] !== '-';
+const forAll = (n: Node, right: 'r' | 'x') => (n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--'))[right === 'r' ? 6 : 8] !== '-';
 
 /** Une copie de la clé privée du routeur que tout le monde peut lire ? */
 export function exposedKey(j: Game): string | null {
   const keys = privateKeys(j);
   if (!keys.length) return null;
   const search = (n: Node, path: string): string | null => {
-    if (n.type === 'fichier') return forAll(n, 'r') && keys.some((c) => (j.read(path) ?? '').includes(c)) ? path : null;
+    if (n.type === 'file') return forAll(n, 'r') && keys.some((c) => (j.read(path) ?? '').includes(c)) ? path : null;
     if (!forAll(n, 'x') || path === '/proc') return null;
     for (const [name, e] of Object.entries((n as Directory).children)) {
       const r = search(e, `${path === '/' ? '' : path}/${name}`);
@@ -159,15 +159,15 @@ export const vpn: Chapter = {
     }),
   events: [
     { id: 'key-exposed', condition: (j) => !!exposedKey(j), message: (j) => j.t('remote-work-event-key-exposed', { file: exposedKey(j)! }) },
-    { id: 'filter', condition: (j) => now(j).state === 'filtre', message: (j) => j.t('remote-work-event-filter') },
+    { id: 'filter', condition: (j) => now(j).state === 'filtered', message: (j) => j.t('remote-work-event-filter') },
     {
       id: 'handshake',
-      condition: (j) => Object.keys(wg(j)).length > 0 && ['conf', 'adresse', 'cle-routeur', 'inconnu'].includes(now(j).state),
+      condition: (j) => Object.keys(wg(j)).length > 0 && ['conf', 'address', 'cle-routeur', 'unknown'].includes(now(j).state),
       message: (j) => j.t('remote-work-event-handshake'),
     },
     {
       id: 'without-nas',
-      condition: (j) => ['autorisees', 'route', 'transfert'].includes(now(j).state),
+      condition: (j) => ['autorisees', 'route', 'forwarding'].includes(now(j).state),
       message: (j) => j.t('remote-work-event-without-nas'),
     },
     { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-event-ssh') },

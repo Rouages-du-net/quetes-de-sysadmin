@@ -21,7 +21,7 @@ const INTERNAL_COMMANDS = ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'gr
 
 const workstation = (j: Game) => (j.state.workstation as (() => Shell) | undefined)?.();
 const wiki = (j: Game) => (j as Shell).internal('wiki');
-const connectionsToWiki = (j: Game) => (wiki(j) ? connectionsBy(wiki(j)!, 'cle') : 0);
+const connectionsToWiki = (j: Game) => (wiki(j) ? connectionsBy(wiki(j)!, 'key') : 0);
 
 // Les noms écrits dans un bloc Host de ~/.ssh/config du poste (sans jokers).
 function alias(p: Shell): string[] {
@@ -47,7 +47,7 @@ const shortcut = (j: Game) => {
 // Une clé privée laissée dans ~/.ssh de maison.
 const privateKeyOnHome = (j: Game) => {
   const ssh = j.find(path(j.t, `${M}/.ssh`)) as Directory | null;
-  if (ssh?.type !== 'dossier') return false;
+  if (ssh?.type !== 'directory') return false;
   return Object.keys(ssh.children).some((n) => (j.read(`${path(j.t, M)}/.ssh/${n}`) ?? '').includes('PRIVATE KEY'));
 };
 

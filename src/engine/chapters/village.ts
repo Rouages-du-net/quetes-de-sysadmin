@@ -124,7 +124,7 @@ export const village: Chapter = {
     },
     {
       id: 'class',
-      condition: (j) => j.find(path(j.t, CLASS))?.type === 'dossier',
+      condition: (j) => j.find(path(j.t, CLASS))?.type === 'directory',
       message: (j) =>
         j.flags.has('nour-read')
           ? j.t('village-event-class')
@@ -146,12 +146,12 @@ export const village: Chapter = {
     },
     {
       id: 'nour-without-class',
-      condition: (j) => j.flags.has('nour-read') && j.find(path(j.t, CLASS))?.type !== 'dossier',
+      condition: (j) => j.flags.has('nour-read') && j.find(path(j.t, CLASS))?.type !== 'directory',
       message: (j) => j.t('village-event-nour-without-class'),
     },
     {
       id: 'nour',
-      condition: (j) => j.flags.has('nour-read') && j.find(path(j.t, CLASS))?.type === 'dossier',
+      condition: (j) => j.flags.has('nour-read') && j.find(path(j.t, CLASS))?.type === 'directory',
       message: (j) => j.t('village-event-nour'),
     },
   ],

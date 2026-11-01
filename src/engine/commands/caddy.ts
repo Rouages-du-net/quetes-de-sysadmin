@@ -178,7 +178,7 @@ function adapter(game: Shell, o: Options): { lines: string[]; config: ConfigCadd
   const absolute = game.resolve(file);
   const n = game.find(absolute);
   if (!n) return { error: `Error: reading config from file: open ${file}: no such file or directory` };
-  if (n.type === 'dossier') return { error: `Error: reading config from file: read ${file}: is a directory` };
+  if (n.type === 'directory') return { error: `Error: reading config from file: read ${file}: is a directory` };
   if (!game.can(n, 'r')) return { error: `Error: reading config from file: open ${file}: permission denied` };
   const r = readConfigCaddy(game, absolute === CADDYFILE ? CADDYFILE : file);
   if ('error' in r) return { error: `Error: ${r.error}` };
@@ -211,7 +211,7 @@ const caddy: Command = {
     if (under === 'fmt') {
       const file = o.files[0] ?? 'Caddyfile';
       const n = game.find(file);
-      if (!n || n.type !== 'fichier') return game.error(`Error: reading input file: open ${file}: no such file or directory`);
+      if (!n || n.type !== 'file') return game.error(`Error: reading input file: open ${file}: no such file or directory`);
       if (!game.can(n, 'r')) return game.error(`Error: reading input file: open ${file}: permission denied`);
       const text = game.read(file) ?? '';
       const own = formatValue(text);
@@ -257,9 +257,9 @@ const caddy: Command = {
         const text = game.read(absolute) ?? '';
         const kept = game.read(CADDYFILE);
         const n = game.find(CADDYFILE);
-        if (n?.type === 'fichier') n.content = text;
+        if (n?.type === 'file') n.content = text;
         loadCaddy(game);
-        if (n?.type === 'fichier') n.content = kept ?? '';
+        if (n?.type === 'file') n.content = kept ?? '';
       } else loadCaddy(game);
       logCaddy(game, 'info', 'admin.api', 'load complete');
       return '';

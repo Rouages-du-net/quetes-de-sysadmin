@@ -103,7 +103,7 @@ function check(game: Shell, verbose: boolean): string {
       }
     }
     const place = game.find(e.target);
-    if (e.type !== 'swap' && place?.type !== 'dossier') {
+    if (e.type !== 'swap' && place?.type !== 'directory') {
       warnings++;
       notes.push(`   [W] target does not exist`);
     }

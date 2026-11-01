@@ -54,7 +54,7 @@ export const instances = (j: Game): Record<string, Instance> => (j.state.kiosk ?
 export function linkVersion(j: Game, colour: string): string | null {
   const link = (j.find(`${KIOSK}/${colour}`, false) as { link?: string } | null)?.link;
   const name = link?.replace(/\/$/, '').split('/').at(-1);
-  return name && VERSIONS[name] && j.find(`${KIOSK}/${colour}/serveur.js`)?.type === 'fichier' ? name : null;
+  return name && VERSIONS[name] && j.find(`${KIOSK}/${colour}/serveur.js`)?.type === 'file' ? name : null;
 }
 
 /** Le service systemd d'un emplacement. */

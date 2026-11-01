@@ -47,7 +47,7 @@ const sd = (j: Game) => systemd(j)!;
 
 // Le texte du post-mortem, section par section (titres « ## », dans la langue du jeu).
 function sections(j: Game, text: string): Record<string, string> {
-  const names = ['resume', 'chronologie', 'impact', 'causes', 'marche', 'actions'];
+  const names = ['summary', 'timeline', 'impact', 'causes', 'went-well', 'actions'];
   const titres = Object.fromEntries(names.map((n) => [j.t(`post-mortem-section-${n}`).toLowerCase(), n]));
   const r: Record<string, string> = {};
   let current = '';
@@ -79,14 +79,14 @@ export function missing(j: Game): string[] {
   const full = (n: string) => (s[n] ?? '').trim().length > 0;
   const m: string[] = [];
   if (text.includes(j.t('post-mortem-a-complete'))) m.push('template');
-  const timer = s.chronologie ?? '';
+  const timer = s.timeline ?? '';
   if (!timeOfDay(2, 13).test(timer) || !timeOfDay(2, 15).test(timer) || !timeOfDay(2, 58).test(timer)) m.push('timeline');
   if (!/\b45\b/.test(s.impact ?? '')) m.push('impact');
   const causes = s.causes ?? '';
   if (!/stream\.conf|bitrate_max/i.test(causes) || !containsOne(causes, words(j, 'post-mortem-words-trigger'))) m.push('cause');
   if (!containsOne(causes, words(j, 'post-mortem-words-origin'))) m.push('origin');
   if ((s.actions ?? '').split('\n').filter((l) => /^\s*[-*]\s+\S/.test(l)).length < 2) m.push('actions');
-  if (!full('marche') || !full('resume')) m.push('works');
+  if (!full('went-well') || !full('summary')) m.push('works');
   return m;
 }
 
@@ -229,7 +229,7 @@ export const postMortem: Chapter = {
     s.services['radio-stream'].since = NIGHT(2, 58, 4);
     s.clock = now;
     const box = j.find('/var/mail/theo');
-    if (box?.type === 'fichier') box.content = alerts.join('\n');
+    if (box?.type === 'file') box.content = alerts.join('\n');
     j.state.readPostMortem = j.read(path(j.t, FILE));
   },
   // Après chaque enregistrement du post-mortem, Zoé le relit.

@@ -119,7 +119,7 @@ export const DIFF: Record<string, Command> = {
           [b, nb],
         ] as const)
           if (!n) return void game.error(game.t('diff-missing', { target: path }));
-        if (na!.type === 'dossier' && nb!.type === 'dossier') {
+        if (na!.type === 'directory' && nb!.type === 'directory') {
           if (!root && !letters.has('r')) return void outputs.push(game.t('diff-under-directories', { a, b }));
           const names = [...new Set([...Object.keys(na!.children), ...Object.keys(nb!.children)])].sort();
           for (const name of names) {
@@ -130,9 +130,9 @@ export const DIFF: Record<string, Command> = {
           return;
         }
         // Un fichier et un lieu : on compare au fichier de même nom dans le lieu.
-        if (na!.type === 'dossier' || nb!.type === 'dossier') {
+        if (na!.type === 'directory' || nb!.type === 'directory') {
           if (!root) return void outputs.push(game.t('diff-types', { a, b }));
-          return compare(na!.type === 'dossier' ? `${a}/${game.name(b)}` : a, nb!.type === 'dossier' ? `${b}/${game.name(a)}` : b, false);
+          return compare(na!.type === 'directory' ? `${a}/${game.name(b)}` : a, nb!.type === 'directory' ? `${b}/${game.name(a)}` : b, false);
         }
         const ta = game.readFor('diff', a);
         const tb = game.readFor('diff', b);

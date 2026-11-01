@@ -19,7 +19,7 @@ const withNumber = (name: string, number: number | undefined) => `${number ?? '?
 // Applique une modification à une cible, et à tout son contenu avec -R.
 function forEach(n: Node, recursive: boolean, run: (n: Node) => void) {
   run(n);
-  if (recursive && n.type === 'dossier') for (const e of Object.values(n.children)) forEach(e, true, run);
+  if (recursive && n.type === 'directory') for (const e of Object.values(n.children)) forEach(e, true, run);
 }
 
 // Les cibles de chown et chgrp : vérifie l'accès, puis applique `faire`.

@@ -47,11 +47,11 @@ const share = (t: (id: string) => string): Directory =>
 function files(j: Game, root: string): Record<string, string> {
   const res: Record<string, string> = {};
   const walk = (n: Node, path: string) => {
-    if (n.type === 'dossier') for (const [name, e] of Object.entries(n.children)) walk(e, path ? `${path}/${name}` : name);
+    if (n.type === 'directory') for (const [name, e] of Object.entries(n.children)) walk(e, path ? `${path}/${name}` : name);
     else res[path] = j.read(`${root}/${path}`) ?? '';
   };
   const n = j.find(root);
-  if (n?.type === 'dossier') walk(n, '');
+  if (n?.type === 'directory') walk(n, '');
   return res;
 }
 

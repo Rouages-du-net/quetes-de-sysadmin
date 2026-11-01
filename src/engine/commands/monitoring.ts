@@ -68,10 +68,10 @@ export function send(game: Shell, addresses: string[], subject: string, body: st
     ].join('\n');
     const path = `/var/mail/${account}`;
     const n = game.find(path);
-    if (n?.type === 'fichier') n.content = `${typeof n.content === 'string' && n.content ? n.content + '\n' : ''}${message}`;
-    else if (game.find('/var/mail')?.type === 'dossier')
+    if (n?.type === 'file') n.content = `${typeof n.content === 'string' && n.content ? n.content + '\n' : ''}${message}`;
+    else if (game.find('/var/mail')?.type === 'directory')
       (game.find('/var/mail') as { children: Record<string, unknown> }).children[account] = {
-        type: 'fichier',
+        type: 'file',
         content: message,
         lines: true,
         owner: account,

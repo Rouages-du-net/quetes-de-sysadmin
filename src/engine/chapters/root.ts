@@ -122,7 +122,7 @@ export const root: Chapter = {
   afterCommand: (j) => {
     if (!j.flags.has('alert') || j.flags.has('fixed') || !j.exists(path(j.t, CONF))) return;
     const place = j.find(path(j.t, MEMORIES));
-    if (place?.type !== 'dossier' || !j.can(place, 'w', eraser(j)) || !j.can(place, 'x', eraser(j))) return;
+    if (place?.type !== 'directory' || !j.can(place, 'w', eraser(j)) || !j.can(place, 'x', eraser(j))) return;
     const name = Object.keys(place.children).sort()[0];
     if (!name) return;
     delete place.children[name];
@@ -138,7 +138,7 @@ export const root: Chapter = {
       id: 'protected',
       condition: (j) => {
         const place = j.find(path(j.t, MEMORIES));
-        return j.flags.has('alert') && !j.flags.has('fixed') && place?.type === 'dossier' && !(j.can(place, 'w', eraser(j)) && j.can(place, 'x', eraser(j)));
+        return j.flags.has('alert') && !j.flags.has('fixed') && place?.type === 'directory' && !(j.can(place, 'w', eraser(j)) && j.can(place, 'x', eraser(j)));
       },
       message: (j) => j.t('root-event-protected', { saved: j.count(path(j.t, MEMORIES), ''), total: TOTAL }),
     },
@@ -151,11 +151,11 @@ export const root: Chapter = {
       id: 'fixed',
       condition: (j) => {
         const conf = j.find(path(j.t, CONF));
-        return conf?.type === 'fichier' && typeof conf.content === 'string' && conf.content.includes(fixedTarget(j));
+        return conf?.type === 'file' && typeof conf.content === 'string' && conf.content.includes(fixedTarget(j));
       },
       message: (j) => {
         const saved = j.count(path(j.t, MEMORIES), '');
-        return j.t('root-event-fixed', { saved: saved, total: TOTAL, loss: saved < TOTAL ? 'oui' : 'non' });
+        return j.t('root-event-fixed', { saved: saved, total: TOTAL, loss: saved < TOTAL ? 'yes' : 'no' });
       },
     },
   ],

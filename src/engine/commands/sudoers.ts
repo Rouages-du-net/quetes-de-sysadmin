@@ -33,8 +33,8 @@ function installer(game: Shell, target: string, temp: string): string {
   game.who = 'root';
   try {
     const n = game.find(target);
-    if (n?.type === 'fichier') Object.assign(n, { content, lines: true, owner: 'root', group: 'root', mode: 'r--r-----', size: undefined });
-    else game.place('visudo', target, { type: 'fichier', content, lines: true, owner: 'root', group: 'root', mode: 'r--r-----' });
+    if (n?.type === 'file') Object.assign(n, { content, lines: true, owner: 'root', group: 'root', mode: 'r--r-----', size: undefined });
+    else game.place('visudo', target, { type: 'file', content, lines: true, owner: 'root', group: 'root', mode: 'r--r-----' });
     game.erase(temp);
   } finally {
     game.who = before;
@@ -94,7 +94,7 @@ export const COMMANDS_SUDOERS: Record<string, Command> = {
       const directory = target.replace(/\/[^/]+$/, '') || '/';
       if (!game.exists(directory)) return game.error(game.t('visudo-missing', { file: `${target}.tmp` }), 1);
       const temp = `${target}.tmp`;
-      game.place('visudo', temp, { type: 'fichier', content: game.read(target) ?? '', lines: true, owner: 'root', mode: 'rw-------' });
+      game.place('visudo', temp, { type: 'file', content: game.read(target) ?? '', lines: true, owner: 'root', mode: 'rw-------' });
       edit(game, target, temp);
       return '';
     },

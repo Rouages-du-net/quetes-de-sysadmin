@@ -93,7 +93,7 @@ export function progressCode(finished: string[]): string {
   return ['QDS', ...groups].join('-');
 }
 
-export type CodeError = 'code-illisible' | 'code-faute' | 'code-trop-recent';
+export type CodeError = 'code-unreadable' | 'code-mistake' | 'code-too-recent';
 
 /** Les chapitres terminés d'un code, ou ce qui ne va pas. Tolère minuscules, espaces, O pour 0, I et L pour 1. */
 export function readCode(code: string): { finished: string[] } | { error: CodeError } {
@@ -104,12 +104,12 @@ export function readCode(code: string): { finished: string[] } | { error: CodeEr
     .replace(/O/g, '0')
     .replace(/[IL]/g, '1');
   const bytes = net.length >= 4 ? sinceBase32(net) : null;
-  if (!bytes || bytes.length < 2) return { error: 'code-illisible' };
+  if (!bytes || bytes.length < 2) return { error: 'code-unreadable' };
   // Les derniers bits de remplissage du base32 ne forment pas d'octet : la somme est le dernier octet entier.
   const sum = bytes.at(-1)!;
   const data = bytes.slice(0, -1);
-  if (crc8(data) !== sum) return { error: 'code-faute' };
-  if (data[0] !== VERSION) return { error: 'code-trop-recent' };
+  if (crc8(data) !== sum) return { error: 'code-mistake' };
+  if (data[0] !== VERSION) return { error: 'code-too-recent' };
   const finished: string[] = [];
   data.slice(1).forEach((o, j) => {
     for (let b = 0; b < 8; b++)
@@ -121,7 +121,7 @@ export function readCode(code: string): { finished: string[] } | { error: CodeEr
   });
   // Un chapitre au-delà de la liste : le code vient d'une version plus récente du jeu.
   const cases = data.slice(1).reduce((n, o) => n + o.toString(2).replace(/0/g, '').length, 0);
-  if (cases !== finished.length) return { error: 'code-trop-recent' };
+  if (cases !== finished.length) return { error: 'code-too-recent' };
   return { finished };
 }
 
@@ -151,7 +151,7 @@ const string = (x: unknown): x is string => typeof x === 'string';
 const dictionary = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
 const strings = (x: unknown) => (dictionary(x) ? Object.fromEntries(Object.entries(x).filter(([, v]) => string(v))) as Record<string, string> : undefined);
 
-export type FileError = 'fichier-illisible' | 'fichier-autre' | 'fichier-trop-recent';
+export type FileError = 'file-unreadable' | 'file-other' | 'file-too-recent';
 
 /** La sauvegarde d'un fichier, nettoyée (on ne garde que ce que le jeu connaît), ou ce qui ne va pas. */
 export function readFile(text: string): { backup: Backup } | { error: FileError } {
@@ -159,10 +159,10 @@ export function readFile(text: string): { backup: Backup } | { error: FileError 
   try {
     raw = JSON.parse(text);
   } catch {
-    return { error: 'fichier-illisible' };
+    return { error: 'file-unreadable' };
   }
-  if (!dictionary(raw) || raw.format !== FORMAT || !dictionary(raw.backup)) return { error: 'fichier-autre' };
-  if (typeof raw.version !== 'number' || raw.version > VERSION) return { error: 'fichier-trop-recent' };
+  if (!dictionary(raw) || raw.format !== FORMAT || !dictionary(raw.backup)) return { error: 'file-other' };
+  if (typeof raw.version !== 'number' || raw.version > VERSION) return { error: 'file-too-recent' };
   const s = raw.backup;
   const chapters = new Set(STORIES.flatMap((h) => h.chapters.map((c) => c.id)));
   const stories = new Set(STORIES.map((h) => h.id));

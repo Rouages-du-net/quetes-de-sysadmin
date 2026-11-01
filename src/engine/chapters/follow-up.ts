@@ -37,7 +37,7 @@ import { bakeryApt, loadSshd, sectionsMd, bakeryAccounts, bakeryListening, file,
 const REPORT = `${M}/closing_report.md`;
 const TARGET = 70;
 const SSH_KEYS = ['permitrootlogin', 'x11forwarding', 'maxauthtries', 'allowtcpforwarding', 'allowagentforwarding'];
-const SECTIONS = ['resume', 'constats', 'preuves', 'reste'];
+const SECTIONS = ['summary', 'findings', 'evidence', 'remaining'];
 const SUBJECTS = ['ssh', 'account', 'sudo', 'secret', 'network', 'key'];
 
 const LOGIN_DEFS = `# /etc/login.defs - Configuration control definitions for the login package.
@@ -99,13 +99,13 @@ const missing = (j: Game): string[] => {
   const s = sections(j, text);
   const m: string[] = [];
   if (text.toLowerCase().includes(j.t('follow-up-a-complete').toLowerCase())) m.push('template');
-  if ((s.resume ?? '').trim().length < 30) m.push('summary');
-  const bas = (s.constats ?? '').toLowerCase();
+  if ((s.summary ?? '').trim().length < 30) m.push('summary');
+  const bas = (s.findings ?? '').toLowerCase();
   if (SUBJECTS.filter((x) => words(j, `follow-up-words-${x}`).some((w) => bas.includes(w))).length < 5) m.push('findings');
   const l = lynis(j);
   if (!l) m.push('lynis');
-  else if (!digits(j, s.preuves ?? '').includes(l.hint) || !/443/.test(s.preuves ?? '')) m.push('proofs');
-  const ids = (s.reste ?? '').match(/\b[A-Z]{3,4}-\d{4}\b/g) ?? [];
+  else if (!digits(j, s.evidence ?? '').includes(l.hint) || !/443/.test(s.evidence ?? '')) m.push('proofs');
+  const ids = (s.remaining ?? '').match(/\b[A-Z]{3,4}-\d{4}\b/g) ?? [];
   if (!ids.some((id) => lynis(j)?.ids.includes(id))) m.push('rest');
   return m;
 };
@@ -168,12 +168,12 @@ export const againstVisit: Chapter = {
     {
       id: 'outside-scope',
       condition: outsideScope,
-      message: (j) => j.t('follow-up-event-outside-scope', { addresses: addressesOutside(j).join(', '), neighbour: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
+      message: (j) => j.t('follow-up-event-outside-scope', { addresses: addressesOutside(j).join(', '), neighbour: addressesOutside(j).includes(NEIGHBOUR.address) ? 'yes' : 'no' }),
     },
     {
       id: 'scan',
       condition: (j) => !!lastScan(j),
-      message: (j) => j.t('follow-up-event-scan', { outdated: dayASsh(lastScan(j)) ? 'non' : 'oui' }),
+      message: (j) => j.t('follow-up-event-scan', { outdated: dayASsh(lastScan(j)) ? 'no' : 'yes' }),
     },
     {
       id: 'lynis',
@@ -192,7 +192,7 @@ export const againstVisit: Chapter = {
     {
       id: 'end',
       condition: (j) => lynisProof(j) && appliesSsh(j) && nmapOk(j) && okReport(j),
-      message: (j) => j.t('follow-up-event-end', { mistake: outsideScope(j) ? 'oui' : 'non' }),
+      message: (j) => j.t('follow-up-event-end', { mistake: outsideScope(j) ? 'yes' : 'no' }),
     },
   ],
 };

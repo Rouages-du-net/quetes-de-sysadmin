@@ -68,11 +68,11 @@ export function updatesSort(game: Shell, c: ConfApt) {
   const permitted = patterns(c);
   const black = (c.lists[`${UU}::Package-Blacklist`] ?? []).map((m) => new RegExp(`^(?:${m})`));
   const sockets: [string, string][] = [];
-  const left: { pkg: string; reason: 'origine' | 'noire' }[] = [];
+  const left: { pkg: string; reason: 'origin' | 'blacklist' }[] = [];
   for (const [n, v] of availableUpdates(e)) {
     const o = e.origins?.[n] ?? SECURITY;
-    if (!permitted.some((m) => correspond(m, o))) left.push({ pkg: n, reason: 'origine' });
-    else if (black.some((re) => re.test(n))) left.push({ pkg: n, reason: 'noire' });
+    if (!permitted.some((m) => correspond(m, o))) left.push({ pkg: n, reason: 'origin' });
+    else if (black.some((re) => re.test(n))) left.push({ pkg: n, reason: 'blacklist' });
     else sockets.push([n, v]);
   }
   // Le nouveau noyau suit linux-image-amd64.
@@ -90,11 +90,11 @@ const timestamp = (game: Game) => {
 function note(game: Shell, lines: string[]) {
   const text = lines.map((l) => `${timestamp(game)} INFO ${l}`).join('\n');
   const n = game.find(LOG);
-  if (n?.type === 'fichier' && typeof n.content === 'string') n.content = n.content ? `${n.content}\n${text}` : text;
+  if (n?.type === 'file' && typeof n.content === 'string') n.content = n.content ? `${n.content}\n${text}` : text;
   else {
     if (!game.exists('/var/log/unattended-upgrades'))
-      game.place('unattended-upgrade', '/var/log/unattended-upgrades', { type: 'dossier', children: {}, owner: 'root' });
-    game.place('unattended-upgrade', LOG, { type: 'fichier', content: text, lines: true, owner: 'root', mode: 'rw-r--r--' });
+      game.place('unattended-upgrade', '/var/log/unattended-upgrades', { type: 'directory', children: {}, owner: 'root' });
+    game.place('unattended-upgrade', LOG, { type: 'file', content: text, lines: true, owner: 'root', mode: 'rw-r--r--' });
   }
 }
 
@@ -119,7 +119,7 @@ export function uuPass(game: Shell, o: { dry?: boolean; verbose?: boolean } = {}
   const detail = o.verbose
     ? left.map(({ pkg, reason }) => {
         const or = state(game).origins?.[pkg] ?? SECURITY;
-        return reason === 'noire'
+        return reason === 'blacklist'
           ? `${pkg} is blacklisted`
           : `Checking: ${pkg} ([<Origin component:'main' archive:'${or.n}' origin:'${or.o}' label:'${or.l}' site:'${or.site}' isTrusted:True>])\nadjusting candidate version: ${pkg} not in allowed origins`;
       })

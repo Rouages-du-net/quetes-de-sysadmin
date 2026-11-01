@@ -92,9 +92,9 @@ export const TIME: Record<string, Command> = {
           changeZone(game, zone);
           // Comme timedatectl : /etc/localtime devient un lien vers le fichier du fuseau (et /etc/timezone le nomme, sur Debian).
           const link = game.find('/etc/localtime', false);
-          if (link?.type === 'fichier') link.link = `/usr/share/zoneinfo/${zone}`;
+          if (link?.type === 'file') link.link = `/usr/share/zoneinfo/${zone}`;
           const name = game.find('/etc/timezone');
-          if (name?.type === 'fichier') name.content = zone;
+          if (name?.type === 'file') name.content = zone;
           return '';
         }
         case 'set-ntp': {

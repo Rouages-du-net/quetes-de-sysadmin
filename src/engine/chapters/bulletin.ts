@@ -18,7 +18,7 @@ import { newSystemd } from '../systemd';
 import { CVE, M, NOW, PASSWORD, watchApt, watchAccounts, watchListening, initialiseWatch, watchWorld, watchNginx, watchScan, sectionsMd, serviceSsh } from './watch';
 
 const DOC = `${M}/watch.md`;
-const SECTIONS = ['concerne', 'sansobjet'];
+const SECTIONS = ['affected', 'not-applicable'];
 // Dix jours avant le début du chapitre : la machine tourne déjà depuis un moment.
 const STARTED = NOW - 10 * 86_400_000;
 
@@ -27,8 +27,8 @@ const sections = (j: Game) => sectionsMd(j, readDoc(j) ?? '', 'bulletin-section'
 const words = (j: Game, key: string) => j.t(key).split(',').map((m) => m.trim().toLowerCase());
 
 const concernsOk = (j: Game) => {
-  const s = (sections(j).concerne ?? '').toLowerCase();
-  const withoutObject = (sections(j).sansobjet ?? '').toLowerCase();
+  const s = (sections(j).affected ?? '').toLowerCase();
+  const withoutObject = (sections(j)['not-applicable'] ?? '').toLowerCase();
   return (
     [CVE.nginx.id, CVE.rsync.id, CVE.ssh.id].every((id) => s.includes(id.toLowerCase())) &&
     ![CVE.certbot.id, CVE.curl.id].some((id) => s.includes(id.toLowerCase())) &&
@@ -37,7 +37,7 @@ const concernsOk = (j: Game) => {
   );
 };
 const withoutOkObject = (j: Game) => {
-  const s = (sections(j).sansobjet ?? '').toLowerCase();
+  const s = (sections(j)['not-applicable'] ?? '').toLowerCase();
   return (
     s.includes(CVE.certbot.id.toLowerCase()) &&
     s.includes(CVE.curl.id.toLowerCase()) &&

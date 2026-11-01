@@ -93,13 +93,13 @@ const LINKED: Record<string, string> = {
 
 function writeKey(game: Game, key: string, value: string): string | null {
   const n = game.find(path(key));
-  if (n?.type !== 'fichier') return `sysctl: cannot stat ${path(key)}: No such file or directory`;
+  if (n?.type !== 'file') return `sysctl: cannot stat ${path(key)}: No such file or directory`;
   if (game.who !== 'root') return `sysctl: permission denied on key "${key}"`;
   if (!/^-?\d+$/.test(value) && ['net.ipv4.ip_forward', 'net.ipv4.conf.all.forwarding'].includes(key))
     return `sysctl: setting key "${key}": Invalid argument`;
   n.content = value;
   const linked = LINKED[key] && game.find(path(LINKED[key]));
-  if (linked && linked.type === 'fichier') linked.content = value;
+  if (linked && linked.type === 'file') linked.content = value;
   return null;
 }
 
@@ -123,7 +123,7 @@ export function sysctlFiles(game: Game): string[] {
   const byName = new Map<string, string>();
   for (const d of SYSCTL_DIRECTORIES) {
     const n = game.find(d);
-    if (n?.type !== 'dossier') continue;
+    if (n?.type !== 'directory') continue;
     for (const name of Object.keys(n.children)) if (name.endsWith('.conf') && !byName.has(name)) byName.set(name, `${d}/${name}`);
   }
   const listing = [...byName.keys()].sort().map((n) => byName.get(n)!);
@@ -136,7 +136,7 @@ export function applySysctl(game: Game, defaults: Record<string, string>) {
   for (const [key, v] of Object.entries(defaults)) {
     const n = game.find(path(key));
     // Le nom de la machine, dans la langue (ruche → hive).
-    if (n?.type === 'fichier') n.content = key === 'kernel.hostname' ? game.hostName : v;
+    if (n?.type === 'file') n.content = key === 'kernel.hostname' ? game.hostName : v;
   }
   const who = game.who;
   game.who = 'root';
@@ -152,7 +152,7 @@ export function sysctlToBoot(game: Game, key: string, fallback: string): string 
 }
 
 function keysAll(n: Node, prefix: string): string[] {
-  if (n.type !== 'dossier') return [prefix];
+  if (n.type !== 'directory') return [prefix];
   return Object.keys(n.children)
     .sort()
     .flatMap((k) => keysAll(n.children[k], prefix ? `${prefix}.${k}` : k));
@@ -211,8 +211,8 @@ function sysctl(game: Shell, args: string[]): string {
     else {
       const key = keyFor(a);
       const n = game.find(path(key));
-      if (n?.type === 'dossier') for (const k of keysAll(n, key)) show(k, game.read(path(k))?.trim() ?? '');
-      else if (n?.type !== 'fichier') game.error(`sysctl: cannot stat ${path(key)}: No such file or directory`, 255);
+      if (n?.type === 'directory') for (const k of keysAll(n, key)) show(k, game.read(path(k))?.trim() ?? '');
+      else if (n?.type !== 'file') game.error(`sysctl: cannot stat ${path(key)}: No such file or directory`, 255);
       else show(key, game.read(path(key))!.trim());
     }
   }
@@ -251,7 +251,7 @@ function conntrack(game: Shell, args: string[]): string {
   const inputs = [
     ...(ssh.daddr ? [{ ...ssh, answered: true, view: ssh.saddr, ok: true }] : []),
     ...results(game)
-      .filter((r) => r.go && (r.state === 'ok' || r.state === 'sans-reponse'))
+      .filter((r) => r.go && (r.state === 'ok' || r.state === 'no-response'))
       .map((r) => ({ ...r.go!, answered: r.state === 'ok', view: r.translated ?? r.go!.saddr, ok: r.state === 'ok', real: r.destination })),
   ].filter((e) => (!proto || e.proto === proto) && (!source || e.saddr === source) && (!destination || e.daddr === destination));
   for (const e of inputs) {

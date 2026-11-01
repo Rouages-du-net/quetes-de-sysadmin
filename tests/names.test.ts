@@ -13,7 +13,7 @@ const translated = [...STORIES.flatMap((h) => h.chapters), workstation([])].filt
 
 // Tous les noms d'un monde, avec leur chemin.
 const walk = (directory: Directory, here = ''): string[] =>
-  Object.entries(directory.children).flatMap(([n, e]) => [`${here}/${n}`, ...(e.type === 'dossier' ? walk(e, `${here}/${n}`) : [])]);
+  Object.entries(directory.children).flatMap(([n, e]) => [`${here}/${n}`, ...(e.type === 'directory' ? walk(e, `${here}/${n}`) : [])]);
 
 for (const language of LANGUAGES)
   describe(`Noms en ${language}`, () => {
@@ -34,7 +34,7 @@ for (const language of LANGUAGES)
           const n = ch.split('/').at(-1)!;
           if (other.some((u) => name(u, n) !== n)) expect(name(t, n), `${c.id} : ${ch}`).toMatch(/^[A-Za-z0-9._-]+$/);
         }
-        expect(s.find(s.home)?.type, c.id).toBe('dossier');
+        expect(s.find(s.home)?.type, c.id).toBe('directory');
         expect(s.exists(`${s.home}/${s.welcome}`), c.id).toBe(true);
       }
     });

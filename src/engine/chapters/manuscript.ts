@@ -15,7 +15,7 @@ const POEMS = `${M}/poems`;
 const INES_POEMS = ['sea.txt', 'lighthouse.txt', 'zohra.txt'];
 
 function versions(t: Translate) {
-  const [ch1, ch2, ch3, damage] = ['1', '2', '3', '3-abime'].map((n) => t(`manuscript-novel-chapter-${n}`));
+  const [ch1, ch2, ch3, damage] = ['1', '2', '3', '3-damaged'].map((n) => t(`manuscript-novel-chapter-${n}`));
   return {
     v1: ch1,
     v2: `${ch1}\n\n${ch2}`,

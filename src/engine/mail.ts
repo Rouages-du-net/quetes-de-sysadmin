@@ -265,7 +265,7 @@ export function checkOpendkim(game: Game): string[] | null {
   const conf = readDkim(game.read(OPENDKIM_CONF) ?? '');
   if (!conf.key) return null;
   const n = game.find(conf.key);
-  if (!n || n.type !== 'fichier') return [`opendkim: ${OPENDKIM_CONF}: ${conf.key}: open(): No such file or directory`];
+  if (!n || n.type !== 'file') return [`opendkim: ${OPENDKIM_CONF}: ${conf.key}: open(): No such file or directory`];
   if (!game.can(n, 'r', 'opendkim') || !traversable(game, conf.key, 'opendkim')) return [`opendkim: ${OPENDKIM_CONF}: ${conf.key}: open(): Permission denied`];
   if (conf.safe && notSure(game, conf.key))
     return [`opendkim: ${OPENDKIM_CONF}: ${conf.key}: key data is not secure: ${conf.key} can be read or written by other users`];
@@ -467,7 +467,7 @@ let currentPid = 0;
 export function writeLog(game: Game, program: string, message: string) {
   const sd = systemd(game);
   const n = game.find(MAIL_LOG);
-  if (!sd || n?.type !== 'fichier' || typeof n.content !== 'string') return;
+  if (!sd || n?.type !== 'file' || typeof n.content !== 'string') return;
   const pids: Record<string, number> = { pickup: 2401, cleanup: 2402, qmgr: 1188, smtp: 2404, local: 2405, smtpd: 2406, postqueue: 2407, postsuper: 2408, opendkim: 812 };
   currentPid = pids[program.replace(/^postfix\//, '')] ?? 2409;
   const line = `${logTime(sd.clock)} ${sd.host} ${program}[${currentPid}]: ${message}`;
@@ -598,10 +598,10 @@ export function drop(game: Game, address: string, m: Message, headers: string[] 
   ].join('\n');
   const path = `/var/mail/${account}`;
   const n = game.find(path);
-  if (n?.type === 'fichier') n.content = `${typeof n.content === 'string' && n.content ? n.content + '\n' : ''}${text}`;
-  else if (game.find('/var/mail')?.type === 'dossier')
+  if (n?.type === 'file') n.content = `${typeof n.content === 'string' && n.content ? n.content + '\n' : ''}${text}`;
+  else if (game.find('/var/mail')?.type === 'directory')
     (game.find('/var/mail') as { children: Record<string, unknown> }).children[account] = {
-      type: 'fichier',
+      type: 'file',
       content: text,
       lines: true,
       owner: account,

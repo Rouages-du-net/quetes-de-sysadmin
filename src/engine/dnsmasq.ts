@@ -111,7 +111,7 @@ export function readDnsmasq(j: Game): ConfigDnsmasq {
   };
   const readDirectory = (directory: string) => {
     const d = j.find(directory);
-    if (d?.type !== 'dossier') return;
+    if (d?.type !== 'directory') return;
     for (const n of Object.keys(d.children).sort())
       if (!n.startsWith('.') && !n.endsWith('~') && !/\.dpkg-(dist|old|new)$/.test(n)) readFile(`${directory}/${n}`);
   };
@@ -171,7 +171,7 @@ export function startDnsmasq(j: Game) {
     leases.push(`${expiration} ${a.mac} ${ip} ${name} *`);
   }
   const n = j.find(LEASES);
-  if (n?.type === 'fichier') n.content = leases.join('\n');
+  if (n?.type === 'file') n.content = leases.join('\n');
 }
 
 // dnsmasq répond-il sur cette interface ?

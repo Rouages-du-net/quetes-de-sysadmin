@@ -151,8 +151,8 @@ root-event-fixed =
         [one] { $saved } memory
        *[other] { $saved } memories
     } out of { $total }.{ $loss ->
-        [oui] {" "}The ones that are gone won't come back: rm goes through no bin… unless you made backups. But that's another story.
-       *[non] {""}
+        [yes] {" "}The ones that are gone won't come back: rm goes through no bin… unless you made backups. But that's another story.
+       *[no] {""}
     }
 
     THE KINGDOM IS SAVED. (One last chapter awaits you: The Backup,

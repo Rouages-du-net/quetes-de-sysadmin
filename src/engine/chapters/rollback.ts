@@ -81,7 +81,7 @@ const hook = (j: Game) => j.read(`${REPO}/hooks/post-receive`) ?? '';
 // Un lien créé DANS la version cassée (ln -sf sans -n : ln est entré dans le lieu visé).
 const insideLink = (j: Game) => {
   const n = j.find(`${RELEASES}/${BROKEN}`);
-  return n?.type === 'dossier' && Object.values(n.children).some((e) => e.type === 'fichier' && e.link !== undefined);
+  return n?.type === 'directory' && Object.values(n.children).some((e) => e.type === 'file' && e.link !== undefined);
 };
 // La version de releases/ où le crochet a extrait le dernier commit du serveur.
 const deployedByHook = (j: Game) => {

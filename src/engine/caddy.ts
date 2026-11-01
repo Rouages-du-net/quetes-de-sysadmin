@@ -390,7 +390,7 @@ function problem(game: Game, name: string): { type: string; detail: string } | n
   if (!ip) return { type: 'dns', detail: `DNS problem: NXDOMAIN looking up A for ${name} - check that a DNS record exists for this domain` };
   if (ip !== e.ip) return { type: 'connection', detail: `${ip}: Timeout during connect (likely firewall problem)` };
   const pf = game.state.ufw as Firewall | undefined;
-  const open = (port: number) => !pf || verdict(pf, port, VALIDATOR) === 'accepte';
+  const open = (port: number) => !pf || verdict(pf, port, VALIDATOR) === 'accepted';
   if (!open(80) && !open(443)) return { type: 'connection', detail: `${ip}: Timeout during connect (likely firewall problem)` };
   return null;
 }
@@ -413,9 +413,9 @@ function put(game: Game, path: string, content: string, mode: string) {
   const chunks = path.split('/').filter(Boolean);
   for (let k = 1; k < chunks.length; k++) {
     const directory = `/${chunks.slice(0, k).join('/')}`;
-    if (!s.exists(directory)) s.place('caddy', directory, { type: 'dossier', children: {}, owner: 'caddy', group: 'caddy', mode: 'rwx------' });
+    if (!s.exists(directory)) s.place('caddy', directory, { type: 'directory', children: {}, owner: 'caddy', group: 'caddy', mode: 'rwx------' });
   }
-  s.place('caddy', path, { type: 'fichier', content, lines: true, owner: 'caddy', group: 'caddy', mode });
+  s.place('caddy', path, { type: 'file', content, lines: true, owner: 'caddy', group: 'caddy', mode });
   s.who = before;
 }
 
@@ -545,9 +545,9 @@ function serve(game: Game, site: Site, host: string, path: string, https: boolea
     const p = decodeURIComponent(path.split('?')[0]);
     const base = `${docRoot.replace(/\/$/, '')}${p}`;
     const node = game.find(base);
-    const target = node?.type === 'dossier' ? `${base.replace(/\/$/, '')}/index.html` : base;
+    const target = node?.type === 'directory' ? `${base.replace(/\/$/, '')}/index.html` : base;
     const n = game.find(target);
-    if (n?.type !== 'fichier' || !game.can(n, 'r', 'caddy')) return response(game, https, 404, '', [], certificate);
+    if (n?.type !== 'file' || !game.can(n, 'r', 'caddy')) return response(game, https, 404, '', [], certificate);
     const body = game.read(target) ?? '';
     const type = target.endsWith('.html') ? 'text/html; charset=utf-8' : target.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/plain; charset=utf-8';
     return response(game, https, 200, body, [['Accept-Ranges', 'bytes'], ['Content-Type', type], ['Etag', `"${serial(target, body.length).slice(0, 13)}"`]], certificate);
@@ -567,7 +567,7 @@ export function caddyRequest(game: Game, host: string, path: string, port: numbe
   if (!listenersPorts(c).includes(port)) return null;
   if (outside) {
     const pf = game.state.ufw as Firewall | undefined;
-    if (pf && verdict(pf, port, '192.0.2.99') !== 'accepte') return null;
+    if (pf && verdict(pf, port, '192.0.2.99') !== 'accepted') return null;
   }
   const name = host.toLowerCase().replace(/\.$/, '');
   const https = port !== 80 && c.sites.some((s) => s.addresses.some((a) => a.port === port && a.schema !== 'http'));

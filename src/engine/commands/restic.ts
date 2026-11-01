@@ -114,7 +114,7 @@ const short = (id: string) => id.slice(0, 8);
 
 // Un fichier chiffré : du texte illisible, de la taille voulue.
 const digit = (seed: string, bytes?: number): File => ({
-  type: 'fichier',
+  type: 'file',
   content: hex(seed, 96)
     .replace(/(.{48})/g, '$1\n')
     .trim(),
@@ -126,8 +126,8 @@ const digit = (seed: string, bytes?: number): File => ({
 /** Réécrit les fichiers du dépôt (sous `chemin`) selon son contenu. */
 export function writeRepo(game: Shell, path: string, repo: Repo) {
   const n = game.find(path);
-  if (n?.type !== 'dossier') return;
-  const place = (children: Record<string, Node>) => ({ type: 'dossier' as const, children, mode: 'rwx------' });
+  if (n?.type !== 'directory') return;
+  const place = (children: Record<string, Node>) => ({ type: 'directory' as const, children, mode: 'rwx------' });
   n.children = {
     config: digit(`config-${repo.id}`, 155),
     keys: place({ [hex(`key-${repo.id}`)]: digit(`key-${repo.id}`, 455) }),
@@ -374,15 +374,15 @@ function launch(c: Context, action: string, args: string[]): string {
         const parts = p.split('/').filter(Boolean);
         let place = base === '' ? '' : base;
         if (place && !game.exists(place)) {
-          const e = game.place('restic', place, { type: 'dossier', children: {}, owner: game.who });
+          const e = game.place('restic', place, { type: 'directory', children: {}, owner: game.who });
           if (e) errors.push(e);
         }
         for (const part of parts.slice(0, -1)) {
           place = `${place}/${part}`;
-          if (!game.exists(place)) game.place('restic', place, { type: 'dossier', children: {}, owner: game.who });
+          if (!game.exists(place)) game.place('restic', place, { type: 'directory', children: {}, owner: game.who });
         }
         const e = game.place('restic', `${place}/${parts.at(-1)}`, {
-          type: 'fichier',
+          type: 'file',
           content: v.content,
           size: v.size === v.content.length ? undefined : v.size,
           lines: true,
@@ -407,7 +407,7 @@ function launch(c: Context, action: string, args: string[]): string {
     const walk = (path: string) => {
       const n = game.find(path);
       if (!n) return;
-      if (n.type === 'fichier') {
+      if (n.type === 'file') {
         const content = game.read(path) ?? '';
         files[path] = {
           content,
@@ -577,7 +577,7 @@ export const RESTIC: Record<string, Command> = {
       };
       if (mdpFile) {
         const n = game.find(mdpFile);
-        if (!n || n.type !== 'fichier') return game.error(`Fatal: Load(<password file>): open ${mdpFile}: no such file or directory`);
+        if (!n || n.type !== 'file') return game.error(`Fatal: Load(<password file>): open ${mdpFile}: no such file or directory`);
         if (!game.traverses(mdpFile) || !game.can(n, 'r')) return game.error(`Fatal: Load(<password file>): open ${mdpFile}: permission denied`);
         game.state.resticPasswordFile = game.resolve(mdpFile);
         return execute((game.read(mdpFile) ?? '').trim());

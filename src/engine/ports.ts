@@ -9,16 +9,16 @@ import { verdict, type Firewall } from './firewall';
 import { dockerListeners, publishedToWorld } from './docker';
 import type { Listening } from './commands/ss';
 
-export type PortState = 'ouvert' | 'refuse' | 'filtre';
+export type PortState = 'open' | 'refused' | 'filtered';
 
 export function portState(game: Game, port: number, local: boolean, source: string): PortState {
   const listeners: Listening[] = [...(game.state.listening ?? []), ...dockerListeners(game)].filter((e) => e.proto === 'tcp' && e.port === port);
   const onAll = listeners.some((e) => e.address === '0.0.0.0' || e.address === '[::]' || e.address === '*');
-  if (local) return listeners.length ? 'ouvert' : 'refuse';
-  if (publishedToWorld(game, port)) return 'ouvert';
+  if (local) return listeners.length ? 'open' : 'refused';
+  if (publishedToWorld(game, port)) return 'open';
   const pf: Firewall | undefined = game.state.ufw;
-  const pass = pf ? verdict(pf, port, source) : 'accepte';
-  if (pass === 'bloque') return 'filtre';
-  if (pass === 'refuse') return 'refuse';
-  return onAll ? 'ouvert' : 'refuse';
+  const pass = pf ? verdict(pf, port, source) : 'accepted';
+  if (pass === 'blocked') return 'filtered';
+  if (pass === 'refused') return 'refused';
+  return onAll ? 'open' : 'refused';
 }

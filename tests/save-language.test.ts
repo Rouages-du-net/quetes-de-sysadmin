@@ -25,7 +25,7 @@ describe('Sauvegarde reprise dans une autre langue', () => {
 
   it('une config modifiée garde ses ajouts, et se connecte avec le compte de la langue', () => {
     const fr = new Console({ language: 'fr' });
-    fr.workstation.place('nano', '~/.ssh/config', { type: 'fichier', content: `${config(translator('fr'))}\n\nHost wiki\n    HostName wiki.maison.internal\n    User you\n    User gaspard\n    ProxyJump maison` });
+    fr.workstation.place('nano', '~/.ssh/config', { type: 'file', content: `${config(translator('fr'))}\n\nHost wiki\n    HostName wiki.maison.internal\n    User you\n    User gaspard\n    ProxyJump maison` });
     play(fr, ['ssh kingdom', 'yes', 'exit']);
     expect(fr.knownHosts()).toContain('royaume.internal');
     const saved = fr.ssh();

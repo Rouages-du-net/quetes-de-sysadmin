@@ -63,7 +63,7 @@ ${CVE.curl.id} (curl) : ${fr ? 'déjà corrigé, la version installée est au-de
 ## ${fr ? 'Concerne ce serveur' : 'Concerns this server'}
 ${CVE.nginx.id}, ${CVE.rsync.id}, ${CVE.ssh.id}, ${CVE.certbot.id}, ${CVE.curl.id}
 ## ${fr ? 'Sans objet' : 'Not applicable'}
-${fr ? 'rien' : 'nothing'}`;
+${fr ? 'nothing' : 'nothing'}`;
       edit('nano watch.md', bad);
       expect(c.finished).not.toContain('bulletin');
     });

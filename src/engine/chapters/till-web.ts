@@ -72,7 +72,7 @@ export function clientAddress(request: Request, setting: string): string {
 
 function note(j: Game, line: string) {
   const n = j.find(LOG);
-  if (n?.type !== 'fichier' || typeof n.content !== 'string') return;
+  if (n?.type !== 'file' || typeof n.content !== 'string') return;
   const sd = systemd(j);
   const timeOfDay = new Date(sd?.clock ?? NOW).toISOString().slice(0, 19).replace('T', ' ');
   n.content = `${n.content}\n${timeOfDay} ${line}`;

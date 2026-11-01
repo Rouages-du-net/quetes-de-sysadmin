@@ -244,16 +244,16 @@ export interface Remote {
 }
 
 export type TunnelState =
-  | 'eteint' // pas d'interface WireGuard montée
+  | 'down' // pas d'interface WireGuard montée
   | 'conf' // la configuration du pair est incomplète ou fausse
-  | 'adresse' // Endpoint : pas le routeur, ou pas le bon port
-  | 'filtre' // la chaîne input jette l'UDP
+  | 'address' // Endpoint : pas le routeur, ou pas le bon port
+  | 'filtered' // la chaîne input jette l'UDP
   | 'cle-routeur' // le pair n'a pas la clé publique du routeur
-  | 'inconnu' // le routeur ne connaît pas la clé publique du pair
+  | 'unknown' // le routeur ne connaît pas la clé publique du pair
   | 'autorisees' // l'adresse d'où part l'échange n'est pas dans les AllowedIPs du pair (côté routeur)
   | 'route' // la destination n'est pas dans les AllowedIPs du pair (de son côté)
-  | 'endormi' // le pair est derrière une box et ne garde pas le passage ouvert (PersistentKeepalive)
-  | 'transfert' // ip_forward, ou la chaîne forward
+  | 'asleep' // le pair est derrière une box et ne garde pas le passage ouvert (PersistentKeepalive)
+  | 'forwarding' // ip_forward, ou la chaîne forward
   | 'ok';
 
 interface Options {
@@ -282,15 +282,15 @@ function handshake(j: Game, d: Remote, o: Options): Handshake | { state: TunnelS
   const ruleset = o.ruleset ?? nft(j);
   const transfer = o.transfer ?? routing(j);
   const inputs = Object.entries(interfaces);
-  if (!inputs.length) return { state: 'eteint' };
+  if (!inputs.length) return { state: 'down' };
   const client = remoteConf(j, d);
   const routerPeer = client.peers[0];
   const clientAddress = client.addresses[0]?.split('/')[0];
   if (client.errors.length || !routerPeer?.endpoint || !clientAddress) return { state: 'conf' };
   const [host, port] = routerPeer.endpoint.split(':');
-  if (host !== o.publicAddress && !o.names.includes(host)) return { state: 'adresse' };
+  if (host !== o.publicAddress && !o.names.includes(host)) return { state: 'address' };
   const iface = inputs.find(([, i]) => i.conf.port === Number(port));
-  if (!iface) return { state: 'adresse' };
+  if (!iface) return { state: 'address' };
   const [name, i] = iface;
   const input = {
     iif: 'eth0',
@@ -303,10 +303,10 @@ function handshake(j: Game, d: Remote, o: Options): Handshake | { state: TunnelS
     ct: 'new' as const,
     size: 148,
   };
-  if (!traverse(ruleset, 'input', 'filter', input).pass) return { state: 'filtre', name };
+  if (!traverse(ruleset, 'input', 'filter', input).pass) return { state: 'filtered', name };
   if (!i.conf.key || routerPeer.key !== isPublic(i.conf.key)) return { state: 'cle-routeur', name };
   const peer = i.conf.peers.find((p) => p.key === d.key);
-  if (!peer) return { state: 'inconnu', name };
+  if (!peer) return { state: 'unknown', name };
   return { name, peer, client, clientAddress, ruleset, transfer };
 }
 
@@ -329,9 +329,9 @@ export function tunnelState(j: Game, d: Remote, o: Options): { state: TunnelStat
   const source = d.source ?? clientAddress;
   if (!peer.allowed.some((a) => inside(source, a))) return { state: 'autorisees', name };
   if (!isIp(d.to) || !client.peers[0].allowed.some((a) => inside(d.to, a))) return { state: 'route', name };
-  if (!transfer) return { state: 'transfert', name };
+  if (!transfer) return { state: 'forwarding', name };
   const output = outputFor(j, d.to, name);
-  if (!traversesForward(ruleset, name, output?.name ?? '', source, d.to, d.port)) return { state: 'transfert', name };
+  if (!traversesForward(ruleset, name, output?.name ?? '', source, d.to, d.port)) return { state: 'forwarding', name };
   return { state: 'ok', name };
 }
 
@@ -344,9 +344,9 @@ export function stateToRemote(j: Game, d: Remote, forEachOf: string, to: string,
   if (!peer.allowed.some((a) => inside(to, a))) return { state: 'autorisees', name };
   // Côté pair, la réponse doit pouvoir repartir dans le tunnel (et le paquet être accepté).
   if (!client.peers[0].allowed.some((a) => inside(forEachOf, a))) return { state: 'route', name };
-  if (d.behindNat && !client.peers[0].keepalive) return { state: 'endormi', name };
-  if (!transfer) return { state: 'transfert', name };
+  if (d.behindNat && !client.peers[0].keepalive) return { state: 'asleep', name };
+  if (!transfer) return { state: 'forwarding', name };
   const input = outputFor(j, forEachOf, name);
-  if (!traversesForward(ruleset, input?.name ?? '', name, forEachOf, to, port)) return { state: 'transfert', name };
+  if (!traversesForward(ruleset, input?.name ?? '', name, forEachOf, to, port)) return { state: 'forwarding', name };
   return { state: 'ok', name };
 }

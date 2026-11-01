@@ -113,7 +113,7 @@ const CONF: Kind = { word: 'conf', Word: 'Conf', directory: 'conf', extensions: 
 
 const availableNames = (game: Shell, g: Kind) => {
   const n = game.find(`${ROOT}/${g.directory}-available`);
-  if (n?.type !== 'dossier') return [];
+  if (n?.type !== 'directory') return [];
   const ext = g.extensions[0];
   return Object.keys(n.children)
     .filter((f) => f.endsWith(ext))
@@ -154,8 +154,8 @@ function enable(game: Shell, g: Kind, args: string[], enable: boolean): string {
           return;
         }
         const parent = game.find(`${ROOT}/${g.directory}-enabled`);
-        if (parent?.type === 'dossier')
-          parent.children[`${name}${e}`] = { type: 'fichier', content: '', link: `../${g.directory}-available/${name}${e}`, owner: 'root' };
+        if (parent?.type === 'directory')
+          parent.children[`${name}${e}`] = { type: 'file', content: '', link: `../${g.directory}-available/${name}${e}`, owner: 'root' };
       }
       outputs.push(`Enabling ${g.word} ${name}.`);
       change = true;

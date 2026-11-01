@@ -118,8 +118,8 @@ scope-event-scan =
 scope-event-outside-scope =
     ATTENTION : tu viens de sonder une adresse qui n'est pas dans ta lettre
     de mission ({ $addresses }{ $neighbour ->
-        [oui] , dont le serveur du voisin
-       *[non] {""}
+        [yes] , dont le serveur du voisin
+       *[no] {""}
     }). Ici, il ne s'est rien
     passé ; pour de vrai, c'est une faute professionnelle, et selon le
     pays une infraction : l'autorisation du client ne couvre pas le matériel
@@ -150,8 +150,8 @@ scope-event-end =
     balayage dans un fichier. Et tu as noté sans y toucher une machine
     « intéressante » qui n'est pas la tienne : le serveur du voisin.
     { $mistake ->
-        [oui] Mais ton balayage a aussi sondé l'adresse du voisin : l'erreur la plus courante, parce que balayer « tout le réseau » est un réflexe. Ici, ça ne coûte rien ; pour de vrai, c'est la faute qui met fin à une mission, parfois à une carrière.
-       *[non] Ton balayage est resté dans le périmètre : c'est ce qu'on attend d'une auditrice.
+        [yes] Mais ton balayage a aussi sondé l'adresse du voisin : l'erreur la plus courante, parce que balayer « tout le réseau » est un réflexe. Ici, ça ne coûte rien ; pour de vrai, c'est la faute qui met fin à une mission, parfois à une carrière.
+       *[no] Ton balayage est resté dans le périmètre : c'est ce qu'on attend d'une auditrice.
     }
 
     LA BONNE PRATIQUE

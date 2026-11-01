@@ -104,7 +104,7 @@ const now = (game: Shell) => toUtc(systemd(game)?.clock ?? 0);
 // Le nom du certificat géré : le seul fichier de renewal/.
 function managedCertificate(game: Shell): string | null {
   const n = game.find(`${FOR}/renewal`);
-  if (n?.type !== 'dossier') return null;
+  if (n?.type !== 'directory') return null;
   return (
     Object.keys(n.children)
       .find((f) => f.endsWith('.conf'))
@@ -180,7 +180,7 @@ export function challenges(game: Shell, r: Renewal, names: string[], trial: numb
   for (const name of names) {
     const directory = (r.map[name] ?? r.params.webroot_path ?? '').replace(/,$/, '').replace(/\/$/, '');
     const place = game.find(directory);
-    if (!directory || place?.type !== 'dossier') {
+    if (!directory || place?.type !== 'directory') {
       errors.push(`webroot:${directory}`);
       continue;
     }
@@ -192,9 +192,9 @@ export function challenges(game: Shell, r: Renewal, names: string[], trial: numb
     let challengePlace = directory;
     for (const p of ['.well-known', 'acme-challenge']) {
       challengePlace = `${challengePlace}/${p}`;
-      if (!game.exists(challengePlace)) game.place('certbot', challengePlace, { type: 'dossier', children: {}, owner: 'root' });
+      if (!game.exists(challengePlace)) game.place('certbot', challengePlace, { type: 'directory', children: {}, owner: 'root' });
     }
-    game.place('certbot', directory + path, { type: 'fichier', content: `${t}.cle-du-compte`, owner: 'root', lines: true });
+    game.place('certbot', directory + path, { type: 'file', content: `${t}.cle-du-compte`, owner: 'root', lines: true });
     const response = httpRequest(game, name, path, 80, trace);
     game.erase(directory + path);
     game.who = before;
@@ -229,14 +229,14 @@ export function automaticReload(game: Shell): boolean {
 function deploymentScripts(game: Shell) {
   const directory = `${FOR}/renewal-hooks/deploy`;
   const n = game.find(directory);
-  if (n?.type !== 'dossier') return [];
+  if (n?.type !== 'directory') return [];
   return Object.keys(n.children)
     .sort()
     .map((name) => {
       const f = n.children[name];
       return {
         path: `${directory}/${name}`,
-        executable: f.type === 'fichier' && (f.mode ?? 'rw-r--r--')[2] === 'x',
+        executable: f.type === 'file' && (f.mode ?? 'rw-r--r--')[2] === 'x',
         content: game.read(`${directory}/${name}`) ?? '',
       };
     });
@@ -293,7 +293,7 @@ function issue(game: Shell, name: string, old: Certificate) {
     const path = { 'cert.pem': f.cert, 'chain.pem': f.string, 'fullchain.pem': f.complet, 'privkey.pem': f.key }[file]!;
     const oldNode = game.find(path);
     game.place('certbot', path, {
-      type: 'fichier',
+      type: 'file',
       content: text,
       lines: true,
       owner: 'root',
@@ -390,7 +390,7 @@ function renew(
     const before = game.who;
     game.who = 'root';
     const n = game.find(f.conf);
-    if (n?.type === 'fichier') n.content = writeRenewal(fresh);
+    if (n?.type === 'file') n.content = writeRenewal(fresh);
     game.who = before;
   }
   const hooks = deployer(game, fresh, sec);
@@ -522,7 +522,7 @@ export const CERTBOT: Record<string, Command> = {
         let text = input;
         if (file !== null) {
           const n = game.find(file);
-          if (!n || n.type !== 'fichier')
+          if (!n || n.type !== 'file')
             return game.error(`Could not open file or uri for loading certificate from ${file}: No such file or directory`);
           if (!game.traverses(file) || !game.can(n, 'r'))
             return game.error(`Could not open file or uri for loading certificate from ${file}: Permission denied`);

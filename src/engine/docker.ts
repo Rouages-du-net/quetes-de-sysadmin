@@ -158,7 +158,7 @@ export const machineGroup = (game: Game, gid: number) => Object.entries(game.acc
 /** Les droits d'un uid et d'un gid sur un fichier de la machine (comme le noyau : par numéro). */
 export function numericAccess(game: Game, n: Node, right: 'r' | 'w' | 'x', uid: number, gid: number): boolean {
   if (uid === 0) return true;
-  const mode = n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--');
+  const mode = n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--');
   const owner = n.owner ?? game.player;
   const group = n.group ?? owner;
   const numUid = game.accounts.users[owner]?.uid ?? (/^\d+$/.test(owner) ? Number(owner) : -1);
@@ -206,16 +206,16 @@ export function writeIn(game: Game, c: Container, path: string, content: string)
     const id = who(game, c);
     const place = `${found.m.source.replace(/\/$/, '')}/${found.relative}`;
     const n = game.find(place);
-    if (n?.type === 'fichier') {
+    if (n?.type === 'file') {
       if (!numericAccess(game, n, 'w', id.uid, id.gid)) return 'permission denied';
       n.content = content;
     } else {
       const parent = game.find(place.replace(/\/[^/]+$/, ''));
-      if (parent?.type !== 'dossier') return 'no such file or directory';
+      if (parent?.type !== 'directory') return 'no such file or directory';
       if (!numericAccess(game, parent, 'w', id.uid, id.gid) || !numericAccess(game, parent, 'x', id.uid, id.gid)) return 'permission denied';
       // Le fichier créé appartient, sur la machine, à l'uid du conteneur.
       parent.children[place.split('/').at(-1)!] = {
-        type: 'fichier',
+        type: 'file',
         content,
         lines: true,
         owner: machineAccount(game, id.uid),
@@ -231,13 +231,13 @@ export function createDirectoryIn(game: Game, c: Container, path: string): strin
   const found = mount(c, path);
   if (found?.m.type !== 'bind') return null;
   const place = `${found.m.source.replace(/\/$/, '')}/${found.relative}`;
-  if (game.find(place)?.type === 'dossier') return null;
+  if (game.find(place)?.type === 'directory') return null;
   if (found.m.onlyRead) return 'read-only file system';
   const parent = game.find(place.replace(/\/[^/]+$/, ''));
   const id = who(game, c);
-  if (parent?.type !== 'dossier') return 'no such file or directory';
+  if (parent?.type !== 'directory') return 'no such file or directory';
   if (!numericAccess(game, parent, 'w', id.uid, id.gid)) return 'permission denied';
-  parent.children[place.split('/').at(-1)!] = { type: 'dossier', children: {}, owner: machineAccount(game, id.uid), group: machineGroup(game, id.gid) };
+  parent.children[place.split('/').at(-1)!] = { type: 'directory', children: {}, owner: machineAccount(game, id.uid), group: machineGroup(game, id.gid) };
   return null;
 }
 
@@ -264,7 +264,7 @@ export function listIn(game: Game, c: Container, place: string): string[] {
     return Object.keys(d.volumes[found.m.source]?.data ?? {}).map((r) => `${found.m.target.replace(/\/$/, '')}/${r}`);
   if (found?.m.type === 'bind') {
     const n = game.find(found.m.source);
-    return n?.type === 'dossier' ? Object.keys(n.children).map((k) => `${found.m.target.replace(/\/$/, '')}/${k}`) : [];
+    return n?.type === 'directory' ? Object.keys(n.children).map((k) => `${found.m.target.replace(/\/$/, '')}/${k}`) : [];
   }
   return Object.keys(c.layer).filter((p) => p.startsWith(base + '/'));
 }
@@ -476,20 +476,20 @@ export function placeDocker(d: DockerState): { images: number; containers: numbe
 export function diskUpdate(game: Game) {
   const d = docker(game);
   const n = game.find('/var/lib/docker');
-  if (!d || n?.type !== 'dossier') return;
+  if (!d || n?.type !== 'directory') return;
   const p = placeDocker(d);
   n.children = {
     overlay2: {
-      type: 'dossier',
+      type: 'directory',
       owner: 'root',
       mode: 'rwx--x---',
-      children: { couches: { type: 'fichier', content: '', size: p.images + p.containers, owner: 'root' } },
+      children: { couches: { type: 'file', content: '', size: p.images + p.containers, owner: 'root' } },
     },
     volumes: {
-      type: 'dossier',
+      type: 'directory',
       owner: 'root',
       mode: 'rwx------',
-      children: { donnees: { type: 'fichier', content: '', size: p.volumes, owner: 'root' } },
+      children: { donnees: { type: 'file', content: '', size: p.volumes, owner: 'root' } },
     },
   };
 }

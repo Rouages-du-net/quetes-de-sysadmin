@@ -71,9 +71,9 @@ const disk = (rank: number, serial: string, smart: Smart, table: string | null, 
   rank,
 });
 
-export type Moment = 'fatigue' | 'neuf' | 'place' | 'secours';
+export type Moment = 'tired' | 'new' | 'replaced' | 'rescue';
 // Les moments où le disque sdb a déjà été remplacé, et où sdc et sdd sont branchés.
-const afterReplacement = (m: Moment) => m === 'place' || m === 'secours';
+const afterReplacement = (m: Moment) => m === 'replaced' || m === 'rescue';
 
 /**
  * Le stockage du serveur au début d'un chapitre : 'fatigue' (sdb s'abîme,
@@ -84,15 +84,15 @@ const afterReplacement = (m: Moment) => m === 'place' || m === 'secours';
  * Debian le propose (« RAID puis LVM »).
  */
 export function labStorage(moment: Moment): StorageState {
-  const fresh = moment === 'neuf';
+  const fresh = moment === 'new';
   const sdb = fresh
     ? disk(1, SERIES.neuf, healthySmart(3), null, [])
     : afterReplacement(moment)
       ? disk(1, SERIES.neuf, healthySmart(412), '6A1B3C5D-7E9F-4012-8A3B-C4D5E6F70812', partitions('1A3B'))
     : disk(1, SERIES.sdb, { hours: 28_509, temperature: 37, reallocated: 1208, inWaiting: 8, unreadable: 8, crc: 0, ataErrors: 37 }, '6A1B3C5D-7E9F-4012-8A3B-C4D5E6F70812', partitions('2B4C'));
   const members = (n: number) => [
-    { part: `sda${n}`, number: 0, role: 0, state: 'actif' as const },
-    ...(fresh ? [] : [{ part: `sdb${n}`, number: 1, role: 1, state: 'actif' as const }]),
+    { part: `sda${n}`, number: 0, role: 0, state: 'active' as const },
+    ...(fresh ? [] : [{ part: `sdb${n}`, number: 1, role: 1, state: 'active' as const }]),
   ];
   const st: StorageState = {
     disks: {
@@ -105,7 +105,7 @@ export function labStorage(moment: Moment): StorageState {
           }
         : {}),
       // Chapitre 4 : le disque USB des numérisations de Théo, branché au serveur.
-      ...(moment === 'secours'
+      ...(moment === 'rescue'
         ? {
             sde: {
               ...disk(4, 'NA7Q3K1P', healthySmart(1210), '9B2E4F61-3C8A-4D17-A5E2-7F0C6B9D1A33', [
@@ -129,7 +129,7 @@ export function labStorage(moment: Moment): StorageState {
   st.lvm = { pvs: { md1: { vg: 'labo', uuid: 'q3Xk7v-Lb2N-9fRt-Wm4P-cH8s-Jd5Y-a1ZeQo' } }, vgs: { labo: { uuid: 'Hn4w2B-pT6e-Rk9M-sL3v-Qa7X-dF1c-Zg8Y0u', lvs: { photos } } } };
   allocate(st, photos, pvExtents(st, 'md1'), ['md1']);
   // Chapitre 4 : la fin du chapitre 3, md2 faite des disques neufs et donnée au volume des photos.
-  if (moment === 'secours') {
+  if (moment === 'rescue') {
     st.arrays.md2 = {
       level: 'raid1',
       wanted: 2,
@@ -137,8 +137,8 @@ export function labStorage(moment: Moment): StorageState {
       uuid: 'e3b9d1c7-4a2f-4c8e-b5d6-7f1a9c3e2b40',
       name: 'lab:2',
       members: [
-        { part: 'sdc', number: 0, role: 0, state: 'actif' },
-        { part: 'sdd', number: 1, role: 1, state: 'actif' },
+        { part: 'sdc', number: 0, role: 0, state: 'active' },
+        { part: 'sdd', number: 1, role: 1, state: 'active' },
       ],
       events: 2210,
       creation: PLACE_NOW,
@@ -153,7 +153,7 @@ export function labStorage(moment: Moment): StorageState {
   st.fs = {
     '/dev/md0': { type: 'ext4', uuid: '0f9c2a4e-61d3-4b8a-9e57-c3d1a2b4e6f8' },
     '/dev/mapper/labo-photos': { type: 'ext4', uuid: '7b3e5d1f-2a4c-4e6b-8d9f-1a2b3c4d5e6f' },
-    ...(moment === 'secours' ? { '/dev/sde1': { type: 'ext4', uuid: UUID_SCANS, label: 'SCANS', bytes: 984_000_000_000, tree: scans() } } : {}),
+    ...(moment === 'rescue' ? { '/dev/sde1': { type: 'ext4', uuid: UUID_SCANS, label: 'SCANS', bytes: 984_000_000_000, tree: scans() } } : {}),
   };
   return st;
 }
@@ -208,8 +208,8 @@ export const labState = (moment: Moment) => {
   return {
     systemd: newSystemd(
       'labo',
-      moment === 'place' ? PLACE_BOOT : moment === 'secours' ? RESCUE_BOOT : BOOT,
-      moment === 'place' ? PLACE_NOW : moment === 'secours' ? RESCUE_NOW : NOW,
+      moment === 'replaced' ? PLACE_BOOT : moment === 'rescue' ? RESCUE_BOOT : BOOT,
+      moment === 'replaced' ? PLACE_NOW : moment === 'rescue' ? RESCUE_NOW : NOW,
       services(),
     ),
     storage,
@@ -222,16 +222,16 @@ export const labState = (moment: Moment) => {
 
 /** Les messages du noyau : les erreurs de lecture de sdb (chapitre 1), ou son remplacement (chapitre 2). */
 export function labKernel(j: Game, moment: Moment): void {
-  const start = moment === 'place' ? PLACE_BOOT : moment === 'secours' ? RESCUE_BOOT : BOOT;
+  const start = moment === 'replaced' ? PLACE_BOOT : moment === 'rescue' ? RESCUE_BOOT : BOOT;
   const newDisks = (['sdc', 'sdd'] as const).flatMap((d, i): [number, string][] => [
     [start + 3000 + i * 10, `ata${i + 3}.00: ATA-11: LB4000-7K2, LB07, max UDMA/133`],
     [start + 3100 + i * 10, `sd ${i + 2}:0:0:0: [${d}] 7814037168 512-byte logical blocks: (4.00 TB/3.64 TiB)`],
     [start + 3200 + i * 10, `sd ${i + 2}:0:0:0: [${d}] Attached SCSI disk`],
   ]);
   const lines: [number, string][] =
-    moment === 'place'
+    moment === 'replaced'
       ? newDisks
-      : moment === 'secours'
+      : moment === 'rescue'
         ? [
             ...newDisks,
             [start + 3400, 'md/raid1:md2: active with 2 out of 2 mirrors'],
@@ -241,7 +241,7 @@ export function labKernel(j: Game, moment: Moment): void {
             [start + 6300, ' sde: sde1'],
             [start + 6400, 'sd 6:0:0:0: [sde] Attached SCSI removable disk'],
           ]
-      : moment === 'fatigue'
+      : moment === 'tired'
       ? [
           [Date.UTC(2027, 10, 11, 3, 12, 40), 'ata2.00: exception Emask 0x0 SAct 0x40000 SErr 0x0 action 0x0'],
           [Date.UTC(2027, 10, 11, 3, 12, 40), 'ata2.00: irq_stat 0x40000008'],

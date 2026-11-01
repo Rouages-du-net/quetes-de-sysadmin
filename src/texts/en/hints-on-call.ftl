@@ -64,7 +64,7 @@ hint-clock-utc =
 hint-clock-late =
     .lead = timedatectl also tells you whether the clock is synchronised, and whether the NTP service is running. Compare with your workstation's time.
     .solution = timedatectl (System clock synchronized: no, NTP service: inactive)
-hint-clock-synchro =
+hint-clock-synced =
     .lead = Synchronisation is systemd-timesyncd's job: it must be enabled, and given an NTP server that answers. The host's email says which one; the configuration is in /etc/systemd/timesyncd.conf (reread at start-up).
     .solution = sudo nano /etc/systemd/timesyncd.conf (NTP=ntp.hosting.example), then sudo timedatectl set-ntp true (or sudo systemctl restart systemd-timesyncd if it is already running)
 hint-clock-cron =

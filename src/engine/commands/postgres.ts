@@ -32,7 +32,7 @@ function readOptions(args: string[], withValue: string[]) {
     } else if (/^-[A-Za-z]./.test(a) && withValue.includes(a.slice(0, 2))) {
       options[a.slice(0, 2)] = a.slice(2);
       (lists[a.slice(0, 2)] ??= []).push(a.slice(2));
-    } else if (a.startsWith('-')) options[a] = 'oui';
+    } else if (a.startsWith('-')) options[a] = 'yes';
     else positional.push(a);
   }
   return { options, lists, positionnels: positional };
@@ -252,13 +252,13 @@ export const POSTGRES: Record<string, Command> = {
       const file = options['-f'] ?? options['--file'];
       if (!file) return text;
       const n = game.find(file);
-      if (n?.type === 'fichier') {
+      if (n?.type === 'file') {
         if (!game.can(n, 'w')) return game.error(`pg_dump: error: could not open output file "${file}": Permission denied`);
         n.content = text;
         delete n.size;
         return '';
       }
-      const error = game.place('pg_dump', file, { type: 'fichier', content: text, lines: true, owner: game.who, mode: 'rw-r--r--' });
+      const error = game.place('pg_dump', file, { type: 'file', content: text, lines: true, owner: game.who, mode: 'rw-r--r--' });
       return error
         ? game.error(
             `pg_dump: error: could not open output file "${file}": ${game.find(file + '/..') ? 'Permission denied' : 'No such file or directory'}`,

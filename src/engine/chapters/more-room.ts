@@ -84,9 +84,9 @@ export const grow: Chapter = {
   steps: ['full', 'lvm', 'array', 'extended', 'grown', 'conf', 'end'],
   password: PASSWORD,
   accounts: labAccounts,
-  state: () => labState('place'),
+  state: () => labState('replaced'),
   initialise: (j) => {
-    labKernel(j, 'place');
+    labKernel(j, 'replaced');
     devUpdate(j);
   },
   createWorld: (t) => labWorld(t, { 'message_from_odile.txt': f(t('more-room-message-odile')) }, { winter: true }),

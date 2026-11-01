@@ -128,7 +128,7 @@ export const BIND: Record<string, Command> = {
       const [zone, file] = args.filter((a) => !a.startsWith('-'));
       if (!zone || !file) return game.error(game.t('named-checkzone-usage'));
       const n = game.find(file);
-      if (!n || n.type !== 'fichier' || !game.can(n, 'r'))
+      if (!n || n.type !== 'file' || !game.can(n, 'r'))
         return game.error(
           `zone ${zone}/IN: loading from master file ${file} failed: ${!n ? 'file not found' : 'permission denied'}\nzone ${zone}/IN: not loaded due to errors.`,
         );

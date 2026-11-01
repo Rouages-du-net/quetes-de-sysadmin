@@ -11,7 +11,7 @@
 import type { Shell } from './shell';
 import { COMMANDS } from './commands';
 
-export type Kind = 'commande' | 'inconnue' | 'option' | 'chaine' | 'operateur' | 'chemin' | 'joker' | 'texte';
+export type Kind = 'command' | 'unknown' | 'option' | 'string' | 'operator' | 'path' | 'glob' | 'text';
 
 export interface Token {
   text: string;
@@ -81,7 +81,7 @@ function exists(sh: Shell, name: string): boolean {
     if (COMMANDS[only]?.directory && name === `${COMMANDS[only].directory}/${only}`) return sh.known().includes(only);
     // Un script : il faut qu'il existe et qu'on puisse le lancer.
     const n = sh.find(name);
-    return !!n && n.type === 'fichier' && sh.can(n, 'x');
+    return !!n && n.type === 'file' && sh.can(n, 'x');
   }
   if (COMMANDS[name]?.section === 5) return false;
   // !!, !12, !cat : l'historique, que le shell développe avant de lancer la commande.
@@ -110,37 +110,37 @@ export function colourise(sh: Shell, line: string): Token[] {
     else tokens.push({ text, kind });
   };
   // Où l'on en est dans la commande : on attend son nom, une option de sudo, ou des arguments.
-  let expected: 'commande' | 'sudo' | 'valeur-sudo' | 'argument' | 'cible' = 'commande';
+  let expected: 'command' | 'sudo' | 'sudo-value' | 'argument' | 'target' = 'command';
   for (const x of lexer(line)) {
     if (typeof x === 'string') {
-      push(x, 'texte');
+      push(x, 'text');
       continue;
     }
     if (x.op) {
-      push(x.value, 'operateur');
+      push(x.value, 'operator');
       // Après une redirection vient un fichier ; après un tube, une commande.
-      expected = x.op === '|' ? 'commande' : 'cible';
+      expected = x.op === '|' ? 'command' : 'target';
       continue;
     }
     let kind: Kind;
     const notCity = x.chunks.every((m) => !m.city);
-    if (expected === 'commande' || expected === 'sudo') {
+    if (expected === 'command' || expected === 'sudo') {
       if (expected === 'sudo' && x.value.startsWith('-')) {
         kind = 'option';
-        if (x.value === '-u' || x.value === '-g') expected = 'valeur-sudo';
+        if (x.value === '-u' || x.value === '-g') expected = 'sudo-value';
       } else {
-        kind = exists(sh, x.value) ? 'commande' : 'inconnue';
-        expected = x.value === 'sudo' && kind === 'commande' ? 'sudo' : 'argument';
+        kind = exists(sh, x.value) ? 'command' : 'unknown';
+        expected = x.value === 'sudo' && kind === 'command' ? 'sudo' : 'argument';
       }
-    } else if (expected === 'valeur-sudo') {
-      kind = 'texte';
+    } else if (expected === 'sudo-value') {
+      kind = 'text';
       expected = 'sudo';
     } else if (notCity && /^-./.test(x.value) && expected === 'argument') kind = 'option';
-    else if (notCity && /[*?]/.test(x.value)) kind = sh.expand(x.value)[0] !== x.value ? 'joker' : 'texte';
-    else kind = path(sh, x.value) ? 'chemin' : 'texte';
-    if (expected === 'cible') expected = 'argument';
+    else if (notCity && /[*?]/.test(x.value)) kind = sh.expand(x.value)[0] !== x.value ? 'glob' : 'text';
+    else kind = path(sh, x.value) ? 'path' : 'text';
+    if (expected === 'target') expected = 'argument';
     // Les morceaux entre guillemets restent des chaînes, sauf pour le nom de la commande.
-    for (const m of x.chunks) push(m.text, m.city && kind !== 'commande' && kind !== 'inconnue' && kind !== 'chemin' ? 'chaine' : kind);
+    for (const m of x.chunks) push(m.text, m.city && kind !== 'command' && kind !== 'unknown' && kind !== 'path' ? 'string' : kind);
   }
   return tokens;
 }

@@ -48,13 +48,13 @@ export const NC: Record<string, Command> = {
         // Vers soi-même : la boucle locale ; vers une autre machine : son pare-feu, ses conteneurs.
         const local = address.startsWith('127.') || machine?.name === game.host;
         const other = !local && machine && machine !== WORKSTATION ? (game.state.remotePort?.(machine.name, port) as PortState | undefined) : undefined;
-        const state: PortState = local ? portState(game, port, true, '127.0.0.1') : (other ?? 'refuse');
+        const state: PortState = local ? portState(game, port, true, '127.0.0.1') : (other ?? 'refused');
         const target = `${host} (${address})`;
-        if (state === 'ouvert') {
+        if (state === 'open') {
           if (verbose) lines.push(`Connection to ${target} ${port} port [tcp/${name}] succeeded!`);
         } else if (verbose || start === end) {
           game.error(
-            state === 'filtre'
+            state === 'filtered'
               ? `nc: connect to ${target} port ${port} (tcp) timed out: Operation now in progress`
               : `nc: connect to ${target} port ${port} (tcp) failed: Connection refused`,
           );

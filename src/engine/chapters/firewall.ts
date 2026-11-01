@@ -41,7 +41,7 @@ const LISTENING: Listening[] = [
 ];
 
 const pf = (j: Game) => j.state.ufw as Firewall;
-const pass = (j: Game, port: number, source = INTERNET) => verdict(pf(j), port, source) === 'accepte';
+const pass = (j: Game, port: number, source = INTERNET) => verdict(pf(j), port, source) === 'accepted';
 const openSsh = (j: Game) => pass(j, 22, WORKSTATION.address);
 const openSite = (j: Game) => pass(j, 80) && pass(j, 443);
 const filter = (j: Game) => pf(j).enabled && pf(j).incoming !== 'allow' && openSsh(j) && openSite(j) && !pass(j, 3306);

@@ -14,7 +14,7 @@ import type { Command } from './index';
 /** Lance un fichier comme un script /bin/sh ; renvoie sa sortie (échec si son code n'est pas 0). */
 export function launchScript(game: Shell, file: string, args: string[], name = file): string {
   const n = game.find(file);
-  if (n?.type !== 'fichier') return game.error(game.t('sh-missing', { file: file }));
+  if (n?.type !== 'file') return game.error(game.t('sh-missing', { file: file }));
   const r = runScript(game, content(n, game), { cwd: game.cwd, name, arguments: args });
   if (r.code !== 0) game.error('');
   return r.output;
@@ -35,14 +35,14 @@ function evaluate(game: Shell, a: string[]): boolean | string {
       case '-e':
         return !!n;
       case '-f':
-        return n?.type === 'fichier';
+        return n?.type === 'file';
       case '-d':
-        return n?.type === 'dossier';
+        return n?.type === 'directory';
       case '-L':
       case '-h':
-        return game.find(x, false)?.type === 'fichier' && (game.find(x, false) as { link?: string }).link !== undefined;
+        return game.find(x, false)?.type === 'file' && (game.find(x, false) as { link?: string }).link !== undefined;
       case '-s':
-        return n?.type === 'fichier' && content(n, game) !== '';
+        return n?.type === 'file' && content(n, game) !== '';
       case '-r':
       case '-w':
       case '-x':

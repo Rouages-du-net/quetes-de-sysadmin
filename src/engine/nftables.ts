@@ -94,7 +94,7 @@ export const copyOf = (r: Ruleset): Ruleset => structuredClone(r);
 
 interface Token {
   t: string;
-  type: 'mot' | 'chaine' | 'sym' | 'nl' | 'fin';
+  type: 'word' | 'string' | 'sym' | 'nl' | 'end';
   line: number;
   col: number;
 }
@@ -115,7 +115,7 @@ function split(text: string): Token[] {
       if (c === '"') {
         const end = rawValue.indexOf('"', k + 1);
         const edge = end < 0 ? rawValue.length : end;
-        tokens.push({ t: rawValue.slice(k + 1, edge), type: 'chaine', line, col: k + 1 });
+        tokens.push({ t: rawValue.slice(k + 1, edge), type: 'string', line, col: k + 1 });
         k = edge + 1;
         continue;
       }
@@ -131,12 +131,12 @@ function split(text: string): Token[] {
         continue;
       }
       const m = /^[^\s{};,"#=]+/.exec(rawValue.slice(k))!;
-      tokens.push({ t: m[0], type: 'mot', line, col: k + 1 });
+      tokens.push({ t: m[0], type: 'word', line, col: k + 1 });
       k += m[0].length;
     }
     tokens.push({ t: '\n', type: 'nl', line, col: rawValue.length + 1 });
   });
-  tokens.push({ t: '', type: 'fin', line: text.split('\n').length, col: 1 });
+  tokens.push({ t: '', type: 'end', line: text.split('\n').length, col: 1 });
   return tokens;
 }
 
@@ -153,9 +153,9 @@ export class NftError extends Error {
 const describe = (j: Token) =>
   j.type === 'nl'
     ? 'newline'
-    : j.type === 'fin'
+    : j.type === 'end'
       ? 'end of file'
-      : j.type === 'chaine'
+      : j.type === 'string'
         ? 'string'
         : j.type === 'sym'
           ? `'${j.t}'`
@@ -174,7 +174,7 @@ class Reader {
   ) {}
   see(): Token {
     const j = this.tokens[this.k];
-    if (j.type === 'mot' && j.t.startsWith('$')) {
+    if (j.type === 'word' && j.t.startsWith('$')) {
       const d = this.definitions.get(j.t.slice(1));
       if (!d) throw new NftError(`unknown identifier '${j.t.slice(1)}'`, j);
       this.tokens.splice(this.k, 1, ...d.map((x) => ({ ...x, line: j.line, col: j.col })));
@@ -189,20 +189,20 @@ class Reader {
   }
   is(t: string) {
     const j = this.see();
-    return j.type !== 'chaine' && j.t === t;
+    return j.type !== 'string' && j.t === t;
   }
   wait(t: string) {
     const j = this.take();
-    if (j.type === 'chaine' || j.t !== t) throw unexpected(j);
+    if (j.type === 'string' || j.t !== t) throw unexpected(j);
   }
   word(): Token {
     const j = this.take();
-    if (j.type !== 'mot' && j.type !== 'chaine') throw unexpected(j);
+    if (j.type !== 'word' && j.type !== 'string') throw unexpected(j);
     return j;
   }
   lineEnd() {
     const j = this.see();
-    return j.type === 'nl' || j.type === 'fin' || j.t === ';' || j.t === '}';
+    return j.type === 'nl' || j.type === 'end' || j.t === ';' || j.t === '}';
   }
   skipBlanks() {
     while (this.see().type === 'nl' || this.is(';')) this.k++;
@@ -231,7 +231,7 @@ export function runNft(j: Game, text: string, departure: Ruleset, depth = 0): { 
 }
 
 function family(l: Reader): string {
-  return FAMILIES.includes(l.see().t) && l.see().type === 'mot' ? l.take().t : 'ip';
+  return FAMILIES.includes(l.see().t) && l.see().type === 'word' ? l.take().t : 'ip';
 }
 
 function findTable(r: Ruleset, fam: string, name: Token): Table {
@@ -268,14 +268,14 @@ function runIn(j: Game, l: Reader, r: Ruleset, lists: List[], depth: number) {
   for (;;) {
     l.skipBlanks();
     const start = l.see();
-    if (start.type === 'fin') return;
+    if (start.type === 'end') return;
     const word = l.word();
     if (word.t === 'define' || word.t === 'redefine') {
       const name = l.word();
       l.wait('=');
       const value: Token[] = [];
       let accolades = 0;
-      while (!(l.see().type === 'fin' || (accolades === 0 && (l.see().type === 'nl' || l.is(';'))))) {
+      while (!(l.see().type === 'end' || (accolades === 0 && (l.see().type === 'nl' || l.is(';'))))) {
         const x = l.tokens[l.k++];
         if (x.t === '{' && x.type === 'sym') accolades++;
         if (x.t === '}' && x.type === 'sym') accolades--;
@@ -528,7 +528,7 @@ function readRule(l: Reader, t: Table, c?: String): Rule {
         l.take();
         l.word();
         l.word();
-        if (l.see().type === 'mot' && !l.lineEnd() && !['counter', 'log'].includes(l.see().t)) l.word();
+        if (l.see().type === 'word' && !l.lineEnd() && !['counter', 'log'].includes(l.see().t)) l.word();
       }
       rule.instructions.push({ what: 'reject' });
     } else if (m === 'jump' || m === 'goto') {
@@ -749,7 +749,7 @@ export interface Flux {
 export interface Result {
   flux: Flux;
   // ok : échange établi ; sans-reponse : la question passe, la réponse ne revient pas ; bloque : jeté au passage ; impossible : pas d'adresse, pas de route.
-  state: 'ok' | 'sans-reponse' | 'bloque' | 'impossible';
+  state: 'ok' | 'no-response' | 'blocked' | 'impossible';
   // Le premier paquet, tel qu'il arrive au routeur (avant toute traduction).
   go?: Package;
   // L'adresse source après traduction (masquerade, snat), si elle change.
@@ -799,7 +799,7 @@ export function attempt(l: Lan, r: Ruleset, transfer: boolean, f: Flux, count = 
   // La traduction de destination : prerouting, chaînes de type nat (premier paquet seulement).
   const pre = traverse(r, 'prerouting', 'nat', go, count);
   note(pre, go);
-  if (!pre.pass) return res('bloque', { go, logs });
+  if (!pre.pass) return res('blocked', { go, logs });
   let destination: Result['destination'];
   if (pre.nat?.what === 'dnat') {
     const [address, port] = pre.nat.to!.split(':');
@@ -808,26 +808,26 @@ export function attempt(l: Lan, r: Ruleset, transfer: boolean, f: Flux, count = 
   const dest = destination?.address ?? daddr;
   const dport = destination?.port ?? f.port;
   // Pour le routeur lui-même (sans traduction) : la chaîne input, que ces échanges ne regardent pas.
-  if (Object.values(l.interfaces).some((i) => i.addresses.some((a) => a.split('/')[0] === dest))) return res('bloque', { go, destination, logs });
+  if (Object.values(l.interfaces).some((i) => i.addresses.some((a) => a.split('/')[0] === dest))) return res('blocked', { go, destination, logs });
   const internal = interfaceFor(l, dest);
   const oif = internal ?? (isPrivate(dest) ? null : gw);
   if (!oif) return res('impossible', { go, destination });
   const traverses: Package = { ...go, oif: oif.name, daddr: dest, dport };
-  if (!transfer) return res('bloque', { go, destination, logs });
+  if (!transfer) return res('blocked', { go, destination, logs });
   const before = traverse(r, 'forward', 'filter', traverses, count);
   note(before, traverses);
-  if (!before.pass) return res('bloque', { go, destination, logs });
+  if (!before.pass) return res('blocked', { go, destination, logs });
   // La traduction de source : postrouting, chaînes de type nat (premier paquet seulement).
   const nat = traverse(r, 'postrouting', 'nat', traverses, count);
   note(nat, traverses);
-  if (!nat.pass) return res('bloque', { go, destination, logs });
+  if (!nat.pass) return res('blocked', { go, destination, logs });
   const translated =
     nat.nat?.what === 'masquerade' ? oif.addresses[0]?.split('/')[0] : nat.nat?.what === 'snat' ? nat.nat.to!.split(':')[0] : undefined;
   const view = translated ?? saddr;
   // La réponse : d'un appareil du réseau local s'il existe ; d'internet seulement vers une adresse publique.
   const device = l.devices.find((a) => addressFor(a) === dest);
-  const answers = device ? reach(l, dest).what === 'appareil' : internal ? false : !isPrivate(view);
-  if (!answers) return res('sans-reponse', { go, translated, destination, logs });
+  const answers = device ? reach(l, dest).what === 'device' : internal ? false : !isPrivate(view);
+  if (!answers) return res('no-response', { go, translated, destination, logs });
   const back: Package = {
     ...traverses,
     iif: oif.name,
@@ -841,7 +841,7 @@ export function attempt(l: Lan, r: Ruleset, transfer: boolean, f: Flux, count = 
   };
   const r2 = traverse(r, 'forward', 'filter', back, count);
   note(r2, back);
-  return res(r2.pass ? 'ok' : 'sans-reponse', { go, translated, destination, logs });
+  return res(r2.pass ? 'ok' : 'no-response', { go, translated, destination, logs });
 }
 
 /** Les flux du réseau local, maintenant (ruleset chargé, ip_forward du noyau). */
@@ -914,7 +914,7 @@ export function formatError(e: NftError, file: string | null, text: string): str
   const j = e.token;
   if (!j) return `Error: ${e.message}`;
   const line = text.split('\n')[j.line - 1] ?? '';
-  const width = Math.max(1, j.type === 'chaine' ? j.t.length + 2 : j.type === 'nl' || j.type === 'fin' ? 1 : j.t.length);
+  const width = Math.max(1, j.type === 'string' ? j.t.length + 2 : j.type === 'nl' || j.type === 'end' ? 1 : j.t.length);
   const place = fic ? `${fic}:${j.line}:${j.col}-${j.col + width - 1}: ` : '';
   const offset = line.slice(0, j.col - 1).replace(/[^\t]/g, ' ');
   return `${place}Error: ${e.message}\n${line}\n${offset}${'^'.repeat(width)}`;

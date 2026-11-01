@@ -50,10 +50,10 @@ follow-up-template =
     ## Still to do
     (to complete: what is not fixed and why, with the Lynis identifiers)
 
-follow-up-section-resume = Summary
-follow-up-section-constats = Findings fixed
-follow-up-section-preuves = Evidence
-follow-up-section-reste = Still to do
+follow-up-section-summary = Summary
+follow-up-section-findings = Findings fixed
+follow-up-section-evidence = Evidence
+follow-up-section-remaining = Still to do
 follow-up-a-complete = (to complete
 
 ## Words the review looks for (comma-separated, case-insensitive)
@@ -88,8 +88,8 @@ follow-up-event-locked-out =
 follow-up-event-outside-scope =
     You probed an address outside the letter of engagement ({ $addresses }). Even
     for a follow-up visit, you stay in the scope: { $neighbour ->
-        [oui] the neighbour's server is still not ours.
-       *[non] what is not listed in it is not ours.
+        [yes] the neighbour's server is still not ours.
+       *[no] what is not listed in it is not ours.
     }
 # { $outdated }: "oui" if the SSH version shown is not up to date
 follow-up-event-scan =
@@ -97,8 +97,8 @@ follow-up-event-scan =
     (PostgreSQL) and 6379 (Redis) no longer answer, SSH, the website and its
     secure port remain. The firewall fixes hold.
     { $outdated ->
-        [oui] But look at the SSH version: it is not that of an up-to-date machine. A security update is waiting (apt list --upgradable); that is the kind of detail nmap -sV reveals and nobody looks at.
-       *[non] And the SSH version is that of an up-to-date machine.
+        [yes] But look at the SSH version: it is not that of an up-to-date machine. A security update is waiting (apt list --upgradable); that is the kind of detail nmap -sV reveals and nobody looks at.
+       *[no] And the SSH version is that of an up-to-date machine.
     }
 follow-up-event-lynis =
     There is the audit: a hardening index of { $hint }, and
@@ -146,8 +146,8 @@ follow-up-event-end =
     are in your report, with what remains to be done. A follow-up visit does not
     try to fix everything: it shows what is fixed, and says frankly what is not.
     { $mistake ->
-        [oui] Your scan also touched an address that was not in the letter of engagement: note it for the next mission.
-       *[non] All your scans stayed within the scope.
+        [yes] Your scan also touched an address that was not in the letter of engagement: note it for the next mission.
+       *[no] All your scans stayed within the scope.
     }
 
     GOOD PRACTICE

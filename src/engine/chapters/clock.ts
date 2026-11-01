@@ -183,7 +183,7 @@ export const clock: Chapter = {
     },
     { id: 'manual', condition: (j) => !!h(j).manual && !h(j).synchronised, message: (j) => j.t('clock-event-manual') },
     { id: 'silent', condition: (j) => timesyncd(j).state === 'active' && !h(j).synchronised, message: (j) => j.t('clock-event-silent') },
-    { id: 'synchro', condition: (j) => h(j).synchronised, message: (j) => j.t('clock-event-synchro') },
+    { id: 'synced', condition: (j) => h(j).synchronised, message: (j) => j.t('clock-event-synced') },
     { id: 'not-active', condition: (j) => h(j).synchronised && !timesyncd(j).active, message: (j) => j.t('clock-event-not-active') },
     {
       id: 'cron',

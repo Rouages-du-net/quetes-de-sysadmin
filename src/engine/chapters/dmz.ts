@@ -55,7 +55,7 @@ export const FLUX_DMZ: (Flux & { permitted: boolean })[] = [
 ];
 const permitted = (r: Result) => FLUX_DMZ.find((x) => x.forEachOf === r.flux.forEachOf && x.to === r.flux.to && x.port === r.flux.port)!.permitted;
 // Ce qui est interdit doit être jeté (ou impossible : le serveur n'a pas encore de réseau).
-const refuse = (r: Result) => r.state === 'bloque' || r.state === 'impossible';
+const refuse = (r: Result) => r.state === 'blocked' || r.state === 'impossible';
 const compliant = (rs: Result[]) => rs.every((r) => (permitted(r) ? r.state === 'ok' : refuse(r)));
 const site = (r: Result) => r.flux.forEachOf === VISITOR && r.flux.port !== 22;
 
@@ -130,7 +130,7 @@ export const dmz: Chapter = {
     { id: 'address-public', condition: waitsPublic, message: (j) => j.t('dmz-event-address-public', { address: PUBLIC }) },
     {
       id: 'without-forward',
-      condition: (j) => results(j).some((r) => site(r) && r.state === 'bloque' && !!r.destination) && routing(j),
+      condition: (j) => results(j).some((r) => site(r) && r.state === 'blocked' && !!r.destination) && routing(j),
       message: (j) => j.t('dmz-event-without-forward'),
     },
     {

@@ -64,7 +64,7 @@ function statName(ms: number, n: number): string {
 }
 
 const stat = (ms: number): File => ({
-  type: 'fichier',
+  type: 'file',
   content: '{"listener":"203.0.113.0","seconds":1260}',
   mtime: ms,
   owner: 'radio',
@@ -75,10 +75,10 @@ const stat = (ms: number): File => ({
 function byDay(j: Game): Map<number, number> {
   const place = j.find(STATS);
   const account = new Map<number, number>();
-  if (place?.type !== 'dossier') return account;
+  if (place?.type !== 'directory') return account;
   for (const k in place.children) {
     const e = place.children[k];
-    if (e.type === 'fichier' && e.mtime !== undefined) account.set(dayFor(e.mtime), (account.get(dayFor(e.mtime)) ?? 0) + 1);
+    if (e.type === 'file' && e.mtime !== undefined) account.set(dayFor(e.mtime), (account.get(dayFor(e.mtime)) ?? 0) + 1);
   }
   return account;
 }
@@ -95,10 +95,10 @@ function intactRecent(j: Game): boolean {
 const moreOld = (j: Game) => {
   const place = j.find(STATS);
   let min = Infinity;
-  if (place?.type === 'dossier')
+  if (place?.type === 'directory')
     for (const k in place.children) {
       const e = place.children[k];
-      if (e.type === 'fichier' && e.mtime !== undefined && e.mtime < min) min = e.mtime;
+      if (e.type === 'file' && e.mtime !== undefined && e.mtime < min) min = e.mtime;
     }
   return min === Infinity ? 0 : Math.floor((sd(j).clock - min) / DAY);
 };
@@ -136,7 +136,7 @@ function night(j: Game): string {
   const nextDay = (dayFor(s.clock) + 1) * DAY;
   const free = INODES - shell(j).usedInodes(volume(j));
   const place = j.find(STATS);
-  const written = place?.type === 'dossier' ? Math.max(0, Math.min(360, free)) : 0;
+  const written = place?.type === 'directory' ? Math.max(0, Math.min(360, free)) : 0;
   for (let k = 0; k < written; k++) {
     const ms = s.clock + Math.floor((k * (nextDay + 3 * 3600_000 - s.clock)) / 360);
     const n = (j.state.statNumber = (j.state.statNumber ?? 0) + 1);
@@ -276,7 +276,7 @@ export const inodes: Chapter = {
       writeLog(s, 'radio-stream.service', 'stream', 1730, `stats: cannot create ${STATS}/...: No space left on device`, 3, false);
     if (
       !j.find(record(j)) &&
-      writeAsRadio(j, record(j), { type: 'fichier', content: '', size: 48_000_000, owner: 'radio', mtime: s.clock })
+      writeAsRadio(j, record(j), { type: 'file', content: '', size: 48_000_000, owner: 'radio', mtime: s.clock })
     )
       writeLog(s, 'radio-stream.service', 'stream', 1730, `record: writing ${record(j)}`, 6, false);
     if (j.state.nightSucceeded || !cronStats(j) || j.state.nightFingerprint === cronFingerprint(j)) return;

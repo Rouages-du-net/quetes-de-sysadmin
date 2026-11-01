@@ -63,9 +63,9 @@ export const invalidColourMessage = (c: Context, command: string, value: string)
 // ls : les couleurs par défaut de dircolors (coreutils), pour les types les plus courants.
 const ARCHIVES = /\.(tar|tgz|gz|bz2|xz|zst|zip|7z|deb|rpm)$/i;
 const IMAGES = /\.(png|jpe?g|gif|svg|webp|bmp)$/i;
-export function lsColour(name: string, type: 'dossier' | 'fichier', link: boolean, mode: string): string {
+export function lsColour(name: string, type: 'directory' | 'file', link: boolean, mode: string): string {
   if (link) return '01;36';
-  if (type === 'dossier') return /t$/i.test(mode) && mode[7] === 'w' ? '30;42' : '01;34';
+  if (type === 'directory') return /t$/i.test(mode) && mode[7] === 'w' ? '30;42' : '01;34';
   if (/^..s/i.test(mode)) return '37;41';
   if (/[xst]/.test(mode[2] + mode[5] + mode[8])) return '01;32';
   if (ARCHIVES.test(name)) return '01;31';

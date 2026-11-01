@@ -388,39 +388,39 @@ export const hivePlan =
       ...(o.wifi ? [{ name: 'borne-wifi', vlan: 30, fixed: '10.10.30.20' }] : []),
     ];
     return internet(t, {
-      role: 'routeur',
+      role: 'router',
       name: machineName(t, 'hive'),
       address: '192.0.2.21',
       note: listing([t('plan-note-router'), 'DHCP', ...(o.directory || o.wifi ? ['LDAP'] : []), ...(o.wifi ? ['RADIUS'] : [])]),
       host: 'hive',
       children: [
         ...vlans.map((v) => ({
-          role: 'reseau' as const,
+          role: 'network' as const,
           name: t('plan-vlan', { id: String(v.id), name: v.name }),
           address: v.network,
           children: all
             .filter((a) => a.vlan === v.id)
-            .map((a) => ({ role: (a.name === 'nas' || a.name === 'web' ? 'serveur' : 'appareil') as ElementPlan['role'], name: a.name, address: a.fixed ?? t('plan-dhcp') })),
+            .map((a) => ({ role: (a.name === 'nas' || a.name === 'web' ? 'server' : 'device') as ElementPlan['role'], name: a.name, address: a.fixed ?? t('plan-dhcp') })),
         })),
         ...(o.remoteWork
-          ? [{ role: 'poste' as const, name: 'malik-laptop', address: '198.51.100.23', note: t('plan-note-remote-work'), tunnel: true }]
+          ? [{ role: 'workstation' as const, name: 'malik-laptop', address: '198.51.100.23', note: t('plan-note-remote-work'), tunnel: true }]
           : []),
         ...(o.annex
           ? [
               {
-                role: 'routeur' as const,
+                role: 'router' as const,
                 name: t('plan-annex'),
                 address: '203.0.113.60',
                 note: t('plan-note-annex'),
                 tunnel: true,
                 children: [
                   {
-                    role: 'reseau' as const,
+                    role: 'network' as const,
                     name: t('plan-network-annex'),
                     address: '10.20.10.0/24',
                     children: [
-                      { role: 'appareil' as const, name: 'poste-annexe', address: '10.20.10.15' },
-                      { role: 'appareil' as const, name: 'imprimante-annexe', address: '10.20.10.20' },
+                      { role: 'device' as const, name: 'poste-annexe', address: '10.20.10.15' },
+                      { role: 'device' as const, name: 'imprimante-annexe', address: '10.20.10.20' },
                     ],
                   },
                 ],

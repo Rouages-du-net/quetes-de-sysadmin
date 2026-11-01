@@ -67,7 +67,7 @@ function truncate(game: Shell, args: string[]): string {
   if (!files.length) return game.error(game.t('truncate-operand'));
   for (const f of files) {
     const node = game.find(f);
-    if (node?.type === 'dossier') game.error(game.t('truncate-directory', { file: f }));
+    if (node?.type === 'directory') game.error(game.t('truncate-directory', { file: f }));
     else if (node) {
       if (!game.can(node, 'w')) game.error(game.t('truncate-permission', { file: f }));
       else {
@@ -75,7 +75,7 @@ function truncate(game: Shell, args: string[]): string {
         node.size = n;
       }
     } else if (!args.includes('-c')) {
-      const e = game.place('truncate', f, { type: 'fichier', content: '', size: n, owner: game.who });
+      const e = game.place('truncate', f, { type: 'file', content: '', size: n, owner: game.who });
       if (e) game.error(e);
     }
   }
@@ -170,7 +170,7 @@ function readConfig(game: Shell, file: string, errors: string[], fallback?: Part
     else if (key === 'include') {
       const n = game.find(args[0] ?? '');
       const files =
-        n?.type === 'dossier'
+        n?.type === 'directory'
           ? Object.keys(n.children)
               .sort()
               .map((k) => `${args[0].replace(/\/$/, '')}/${k}`)
@@ -227,10 +227,10 @@ function logs(game: Shell, pattern: string): string[] {
   const directory = pattern.slice(0, pattern.lastIndexOf('/')) || '/';
   const name = pattern.slice(pattern.lastIndexOf('/') + 1);
   const n = game.find(directory);
-  if (n?.type !== 'dossier') return [];
+  if (n?.type !== 'directory') return [];
   const re = wildcard(name);
   return Object.keys(n.children)
-    .filter((k) => re.test(k) && n.children[k].type === 'fichier')
+    .filter((k) => re.test(k) && n.children[k].type === 'file')
     .sort()
     .map((k) => `${directory}/${k}`);
 }
@@ -323,7 +323,7 @@ function logrotate(game: Shell, args: string[]): string {
         for (const o of openSet(game)) if (o.node === n) o.path = `${path}.1`;
         if (b.create)
           place.children[name(path)] = {
-            type: 'fichier',
+            type: 'file',
             content: '',
             lines: true,
             size: 0,
@@ -344,9 +344,9 @@ function logrotate(game: Shell, args: string[]): string {
       const compressA = b.compress ? (b.delay ? 2 : 1) : 0;
       if (compressA) {
         const e = place.children[nameFor(compressA, false)];
-        if (e?.type === 'fichier') {
+        if (e?.type === 'file') {
           place.children[nameFor(compressA, true)] = {
-            type: 'fichier',
+            type: 'file',
             content: '',
             size: Math.round(size(e) / 10),
             owner: e.owner,

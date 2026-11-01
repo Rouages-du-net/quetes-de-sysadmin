@@ -163,15 +163,15 @@ function allowedKeys(s: Shell, account: string): string[] {
 }
 
 // La machine d'en face garde trace des connexions (pour les histoires) : par clé, par mot de passe.
-function note(s: Jump, comment: 'cle' | 'motDePasse') {
-  const connections = (s.shell.state.sshConnections ??= { cle: 0, motDePasse: 0 }) as Record<string, number>;
+function note(s: Jump, comment: 'key' | 'password') {
+  const connections = (s.shell.state.sshConnections ??= { key: 0, password: 0 }) as Record<string, number>;
   connections[comment]++;
 }
 
 // Les clés publiques du poste, ajoutées à ~/.ssh/authorized_keys du joueur en face (si elles n'y sont pas).
 function copyKeys(workstation: Shell, s: Shell) {
   const directory = workstation.find('~/.ssh');
-  if (directory?.type !== 'dossier') return;
+  if (directory?.type !== 'directory') return;
   const keys = Object.keys(directory.children)
     .filter((n) => n.endsWith('.pub'))
     .map((n) => (workstation.read(`~/.ssh/${n}`) ?? '').trim())
@@ -182,9 +182,9 @@ function copyKeys(workstation: Shell, s: Shell) {
   const fresh = keys.filter((c) => !already.includes(c.split(/\s+/).slice(0, 2).join(' ')));
   if (!fresh.length) return;
   const n = s.find(path);
-  if (n?.type === 'fichier') n.content = [s.read(path), ...fresh].filter(Boolean).join('\n');
-  else if (s.find(`${home}/.ssh`)?.type === 'dossier')
-    s.place('ssh', path, { type: 'fichier', content: fresh.join('\n'), lines: true, owner: s.player, mode: 'rw-------' });
+  if (n?.type === 'file') n.content = [s.read(path), ...fresh].filter(Boolean).join('\n');
+  else if (s.find(`${home}/.ssh`)?.type === 'directory')
+    s.place('ssh', path, { type: 'file', content: fresh.join('\n'), lines: true, owner: s.player, mode: 'rw-------' });
 }
 
 const octal = (mode: string) =>
@@ -225,8 +225,8 @@ export function pass(origin: Shell, jumps: Jump[], next: () => string, i = 0): s
       if (response === 'yes' || response === fingerprint(s.machine, generation)) {
         const line = `${s.host} ${key}`;
         const n = origin.find(file);
-        if (n?.type === 'fichier') n.content = [origin.read(file), line].filter(Boolean).join('\n');
-        else origin.place('ssh', file, { type: 'fichier', content: line, lines: true, mode: 'rw-------' });
+        if (n?.type === 'file') n.content = [origin.read(file), line].filter(Boolean).join('\n');
+        else origin.place('ssh', file, { type: 'file', content: line, lines: true, mode: 'rw-------' });
         return [`Warning: Permanently added '${s.host}' (ED25519) to the list of known hosts.`, authenticate(origin, jumps, next, i)]
           .filter(Boolean)
           .join('\n');
@@ -266,7 +266,7 @@ function authenticate(origin: Shell, jumps: Jump[], next: () => string, i: numbe
         `${s.user}@${s.host}'s password:`,
         (response) => {
           if (permitted && response === passwordFor(s.shell, s.user)) {
-            note(s, 'motDePasse');
+            note(s, 'password');
             return pass(origin, jumps, next, i + 1);
           }
           if (trial >= 3) return failure(origin, refusal);
@@ -284,7 +284,7 @@ function authenticate(origin: Shell, jumps: Jump[], next: () => string, i: numbe
     if (k >= paths.length) return password();
     const path = paths[k];
     const n = origin.find(path);
-    if (!n || n.type !== 'fichier') {
+    if (!n || n.type !== 'file') {
       if (s.identities.includes(path)) warnings.push(`Warning: Identity file ${path} not accessible: No such file or directory.`);
       return key(k + 1);
     }
@@ -305,14 +305,14 @@ function authenticate(origin: Shell, jumps: Jump[], next: () => string, i: numbe
     // Une clé protégée par une phrase de passe : ssh la demande avant de s'en servir.
     const phrase = (origin.state.passPhrases as Record<string, string> | undefined)?.[origin.resolve(path)];
     if (!phrase) {
-      note(s, 'cle');
+      note(s, 'key');
       return withValue(pass(origin, jumps, next, i + 1));
     }
     origin.ask(
       `Enter passphrase for key '${origin.resolve(path)}':`,
       (response) => {
         if (response !== phrase) return key(k + 1);
-        note(s, 'cle');
+        note(s, 'key');
         return pass(origin, jumps, next, i + 1);
       },
       true,
@@ -343,12 +343,12 @@ export function connectWithoutQuestion(origin: Shell, target: string, checkHostK
     const phrases = (origin.state.passPhrases as Record<string, string> | undefined) ?? {};
     const ok = [...new Set([...s.identities, ...KEYS_BY_DEFAULT])].some((path) => {
       const n = origin.find(path);
-      if (!n || n.type !== 'fichier' || typeof n.content !== 'string') return false;
+      if (!n || n.type !== 'file' || typeof n.content !== 'string') return false;
       if ((n.mode ?? 'rw-r--r--').slice(3) !== '------' || phrases[origin.resolve(path)]) return false;
       return permitted && authorised.includes(publicFor(n.content));
     });
     if (!ok) return { error: `${s.user}@${s.host}: Permission denied (${methods(config) || 'publickey'}).` };
-    note(s, 'cle');
+    note(s, 'key');
   }
   return { shell: jumps.at(-1)!.shell };
 }

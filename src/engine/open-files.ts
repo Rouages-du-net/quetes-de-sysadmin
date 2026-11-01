@@ -37,11 +37,11 @@ export const erases = (j: Game, o: Open) => j.find(o.path) !== o.node;
 export function open(j: Game, o: Omit<Open, 'node'>, owner: string, group?: string): File {
   const here = j.find(o.path);
   let node: File;
-  if (here?.type === 'fichier') node = here;
+  if (here?.type === 'file') node = here;
   else {
-    node = { type: 'fichier', content: '', lines: true, owner, ...(group ? { group } : {}), mode: 'rw-r-----', size: 0 };
+    node = { type: 'file', content: '', lines: true, owner, ...(group ? { group } : {}), mode: 'rw-r-----', size: 0 };
     const parent = j.find(o.path.replace(/\/[^/]+$/, ''));
-    if (parent?.type === 'dossier') parent.children[o.path.split('/').at(-1)!] = node;
+    if (parent?.type === 'directory') parent.children[o.path.split('/').at(-1)!] = node;
   }
   j.state.openFiles = openSet(j).filter((x) => x.service !== o.service);
   openSet(j).push({ ...o, node });

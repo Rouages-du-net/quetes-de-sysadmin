@@ -66,7 +66,7 @@ export const normalise = (cwd: string, path: string) => {
 export function node(root: Directory, path: string): Node | null {
   let n: Node = root;
   for (const p of path.split('/').filter(Boolean)) {
-    if (n.type !== 'dossier') return null;
+    if (n.type !== 'directory') return null;
     const e: Node | undefined = n.children[p];
     if (!e) return null;
     n = e;
@@ -77,10 +77,10 @@ export function node(root: Directory, path: string): Node | null {
 /** Tous les fichiers d'un dossier distant, par chemin relatif, avec leur contenu. */
 export function filesFor(root: Directory, path: string): Record<string, string> | null {
   const n = node(root, path);
-  if (n?.type !== 'dossier') return null;
+  if (n?.type !== 'directory') return null;
   const res: Record<string, string> = {};
   const walk = (d: Node, rel: string) => {
-    if (d.type === 'dossier') for (const [k, e] of Object.entries(d.children)) walk(e, rel ? `${rel}/${k}` : k);
+    if (d.type === 'directory') for (const [k, e] of Object.entries(d.children)) walk(e, rel ? `${rel}/${k}` : k);
     else res[rel] = typeof d.content === 'string' ? d.content : '';
   };
   walk(n, '');

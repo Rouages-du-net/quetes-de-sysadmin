@@ -25,7 +25,7 @@ const sdbRemains = (j: Game) => Object.values(st(j).arrays).flatMap((g) => g.mem
 const outSdb = (j: Game) => sdbRemains(j).length === 0;
 // Les deux grappes tournent toujours sur sda.
 const sdaIntact = (j: Game) => Object.values(st(j).arrays).every((g) => active(g).some((m) => m.part.startsWith('sda')));
-const keySda = (j: Game) => Object.values(st(j).arrays).some((g) => g.members.some((m) => m.part.startsWith('sda') && m.state !== 'actif'));
+const keySda = (j: Game) => Object.values(st(j).arrays).some((g) => g.members.some((m) => m.part.startsWith('sda') && m.state !== 'active'));
 const ticket = (j: Game) => j.read(path(j.t, TICKET)) ?? '';
 const ticketOk = (j: Game) => ticket(j).includes(SERIES.sdb) && !ticket(j).includes(SERIES.sda);
 
@@ -61,9 +61,9 @@ export const fatigue: Chapter = {
   steps: ['alert', 'arrays', 'smart', 'removed', 'ticket', 'end'],
   password: PASSWORD,
   accounts: labAccounts,
-  state: () => labState('fatigue'),
+  state: () => labState('tired'),
   initialise: (j) => {
-    labKernel(j, 'fatigue');
+    labKernel(j, 'tired');
     devUpdate(j);
   },
   createWorld: (t) =>

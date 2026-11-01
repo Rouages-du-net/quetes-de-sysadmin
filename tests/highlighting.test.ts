@@ -18,48 +18,48 @@ describe('Coloration de la ligne de commande', () => {
 
   it('la commande : connue, inconnue, pas encore apprise', () => {
     const s = sh();
-    expect(kinds(s, 'ls')).toEqual([['ls', 'commande']]);
-    expect(kinds(s, 'lss')).toEqual([['lss', 'inconnue']]);
+    expect(kinds(s, 'ls')).toEqual([['ls', 'command']]);
+    expect(kinds(s, 'lss')).toEqual([['lss', 'unknown']]);
     // nmap et echo existent dans le jeu, mais pas encore dans ce chapitre : le shell refuserait.
-    expect(kinds(s, 'nmap')[0][1]).toBe('inconnue');
-    expect(kinds(s, 'echo x')[0][1]).toBe('inconnue');
-    expect(kinds(s, '/bin/ls')).toEqual([['/bin/ls', 'commande']]);
-    expect(kinds(s, 'help')).toEqual([['help', 'commande']]);
+    expect(kinds(s, 'nmap')[0][1]).toBe('unknown');
+    expect(kinds(s, 'echo x')[0][1]).toBe('unknown');
+    expect(kinds(s, '/bin/ls')).toEqual([['/bin/ls', 'command']]);
+    expect(kinds(s, 'help')).toEqual([['help', 'command']]);
   });
 
   it('options, chaînes, jokers, opérateurs, chemins existants', () => {
     const s = sh();
     expect(kinds(s, 'grep -i "un mot" *.txt | grep -v x > copie')).toEqual([
-      ['grep', 'commande'],
+      ['grep', 'command'],
       ['-i', 'option'],
-      ['"un mot"', 'chaine'],
-      ['*.txt', 'joker'],
-      ['|', 'operateur'],
-      ['grep', 'commande'],
+      ['"un mot"', 'string'],
+      ['*.txt', 'glob'],
+      ['|', 'operator'],
+      ['grep', 'command'],
       ['-v', 'option'],
-      ['x', 'texte'],
-      ['>', 'operateur'],
-      ['copie', 'texte'],
+      ['x', 'text'],
+      ['>', 'operator'],
+      ['copie', 'text'],
     ]);
     expect(kinds(s, 'cat journal.txt absent.txt')).toEqual([
-      ['cat', 'commande'],
-      ['journal.txt', 'chemin'],
-      ['absent.txt', 'texte'],
+      ['cat', 'command'],
+      ['journal.txt', 'path'],
+      ['absent.txt', 'text'],
     ]);
     // Un joker qui ne trouve rien reste du texte (le shell le passe tel quel).
-    expect(kinds(s, 'ls *.rien')[1]).toEqual(['*.rien', 'texte']);
+    expect(kinds(s, 'ls *.rien')[1]).toEqual(['*.rien', 'text']);
     // Entre guillemets, « -x » n'est pas une option mais une chaîne.
-    expect(kinds(s, 'grep "-x" journal.txt')[1]).toEqual(['"-x"', 'chaine']);
+    expect(kinds(s, 'grep "-x" journal.txt')[1]).toEqual(['"-x"', 'string']);
   });
 
   it('sudo : ses options, puis la commande', () => {
     expect(kinds(sh(), 'sudo -u bob rm -rf x')).toEqual([
-      ['sudo', 'commande'],
+      ['sudo', 'command'],
       ['-u', 'option'],
-      ['bob', 'texte'],
-      ['rm', 'commande'],
+      ['bob', 'text'],
+      ['rm', 'command'],
       ['-rf', 'option'],
-      ['x', 'texte'],
+      ['x', 'text'],
     ]);
   });
 
@@ -72,7 +72,7 @@ describe('Coloration de la ligne de commande', () => {
   it('dans chaque chapitre, ses commandes sont reconnues', () => {
     for (const c of STORIES.flatMap((h) => h.chapters)) {
       const s = new Shell(c, 'fr');
-      for (const cmd of s.known().filter((x) => x !== 'exit' && x !== 'clear')) expect([cmd, colourise(s, cmd)[0].kind]).toEqual([cmd, 'commande']);
+      for (const cmd of s.known().filter((x) => x !== 'exit' && x !== 'clear')) expect([cmd, colourise(s, cmd)[0].kind]).toEqual([cmd, 'command']);
     }
   });
 });

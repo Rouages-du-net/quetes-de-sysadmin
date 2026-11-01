@@ -252,7 +252,7 @@ function run(d: DockerState, game: Shell, args: string[]): string {
       if (!game.exists(path)) {
         const before = game.who;
         game.who = 'root';
-        game.place('docker', path, { type: 'dossier', children: {}, owner: 'root' });
+        game.place('docker', path, { type: 'directory', children: {}, owner: 'root' });
         game.who = before;
       }
       mounts.push({ type: 'bind', source: path, target, onlyRead: mode === 'ro' });
@@ -329,20 +329,20 @@ function cp(d: DockerState, game: Shell, args: string[]): string {
     const exists = game.find(destPlace);
     // Un dossier copié vers un lieu qui existe : il y garde son nom (sauf avec /.).
     const root = oneFile
-      ? exists?.type === 'dossier'
+      ? exists?.type === 'directory'
         ? `${destPlace}/${base.split('/').at(-1)}`
         : destPlace
-      : exists?.type === 'dossier' && !forEachOf.path.endsWith('/.')
+      : exists?.type === 'directory' && !forEachOf.path.endsWith('/.')
         ? `${destPlace}/${base.split('/').at(-1)}`
         : destPlace;
     if (!oneFile && !game.exists(root)) {
-      const e = game.place('docker', root, { type: 'dossier', children: {}, owner: game.who });
+      const e = game.place('docker', root, { type: 'directory', children: {}, owner: game.who });
       if (e) return game.error(e);
     }
     for (const f of files) {
       const content = readIn(game, c, f) ?? '';
       const target = oneFile ? root : `${root}/${f.slice(base.length + 1)}`;
-      const e = game.place('docker', target, { type: 'fichier', content, lines: true, owner: game.who });
+      const e = game.place('docker', target, { type: 'file', content, lines: true, owner: game.who });
       if (e) return game.error(e);
       bytes += new TextEncoder().encode(content).length;
     }
@@ -356,12 +356,12 @@ function cp(d: DockerState, game: Shell, args: string[]): string {
   const baseTarget = to!.path.replace(/\/\.?$/, '');
   const copy = (path: string, target: string): string | null => {
     const x = game.find(path);
-    if (x?.type === 'fichier') {
+    if (x?.type === 'file') {
       const content = game.read(path) ?? '';
       bytes += new TextEncoder().encode(content).length;
       return writeIn(game, c, target, content);
     }
-    if (x?.type === 'dossier')
+    if (x?.type === 'directory')
       for (const k of Object.keys(x.children)) {
         const e: string | null = copy(`${path}/${k}`, `${target}/${k}`);
         if (e) return e;
@@ -369,8 +369,8 @@ function cp(d: DockerState, game: Shell, args: string[]): string {
     return null;
   };
   // Le contenu d'un dossier (source/.) va directement dans la cible.
-  const toPlace = n.type === 'dossier' && !source.endsWith('/.') ? `${baseTarget}/${game.resolve(source).split('/').at(-1)}` : baseTarget;
-  const e = copy(game.resolve(source), n.type === 'fichier' && listIn(game, c, baseTarget).length ? `${baseTarget}/${game.name(source)}` : toPlace);
+  const toPlace = n.type === 'directory' && !source.endsWith('/.') ? `${baseTarget}/${game.resolve(source).split('/').at(-1)}` : baseTarget;
+  const e = copy(game.resolve(source), n.type === 'file' && listIn(game, c, baseTarget).length ? `${baseTarget}/${game.name(source)}` : toPlace);
   if (e) return game.error(`Error response from daemon: ${e}`);
   return `Successfully copied ${dockerSize(bytes)} to ${to!.container}:${to!.path}`;
 }
@@ -430,11 +430,11 @@ function exec(d: DockerState, game: Shell, args: string[]): string {
         const host = nodeIn(game, c, path);
         const uid = host ? (game.accounts.users[host.owner ?? game.player]?.uid ?? Number(host.owner)) : (accounts[byDefault] ?? 0);
         const owner = Number.isNaN(uid) ? 'root' : nameIn(uid);
-        const directory = host?.type === 'dossier';
+        const directory = host?.type === 'directory';
         const mode = host?.mode ?? (directory ? 'rwxr-xr-x' : 'rw-r--r--');
         const size = directory
           ? 4096
-          : host?.type === 'fichier' && host.size !== undefined
+          : host?.type === 'file' && host.size !== undefined
             ? host.size
             : new TextEncoder().encode(readIn(game, c, path) ?? '').length;
         return `${directory ? 'd' : '-'}${mode} 1 ${owner} ${owner} ${String(size).padStart(6)} ${n}`;

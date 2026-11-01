@@ -76,7 +76,7 @@ export const redisLocal = (conf: string) => {
 };
 
 const pf = (j: Game) => j.state.ufw as Firewall;
-const open = (j: Game, port: number, source = INTERNET) => portState(j, port, false, source) === 'ouvert';
+const open = (j: Game, port: number, source = INTERNET) => portState(j, port, false, source) === 'open';
 const openSsh = (j: Game) => open(j, 22, WORKSTATION.address);
 const openSite = (j: Game) => open(j, 80) && open(j, 443);
 const openBase = (j: Game) => open(j, 5432) || open(j, 6379);

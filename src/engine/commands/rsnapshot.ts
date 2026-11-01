@@ -173,7 +173,7 @@ const BANNER = (args: string[]) =>
 // Une copie par liens physiques (cp -al) : de nouveaux lieux, les mêmes fichiers.
 const linkedCopy = (n: Directory): Directory => ({
   ...n,
-  children: Object.fromEntries(Object.entries(n.children).map(([k, e]) => [k, e.type === 'dossier' ? linkedCopy(e) : e])),
+  children: Object.fromEntries(Object.entries(n.children).map(([k, e]) => [k, e.type === 'directory' ? linkedCopy(e) : e])),
 });
 
 // rsync -a --delete de `source` vers `cible` : un fichier inchangé garde son
@@ -182,11 +182,11 @@ function synchronise(game: Shell, source: Directory, target: Directory) {
   for (const name of Object.keys(target.children)) if (!(name in source.children)) delete target.children[name];
   for (const [name, e] of Object.entries(source.children)) {
     const here = target.children[name];
-    if (e.type === 'dossier') {
+    if (e.type === 'directory') {
       const place =
-        here?.type === 'dossier' ? here : (target.children[name] = { type: 'dossier', children: {}, owner: e.owner, group: e.group, mode: e.mode });
+        here?.type === 'directory' ? here : (target.children[name] = { type: 'directory', children: {}, owner: e.owner, group: e.group, mode: e.mode });
       synchronise(game, e, place);
-    } else if (!(here?.type === 'fichier' && content(here, game) === content(e, game) && here.size === e.size)) {
+    } else if (!(here?.type === 'file' && content(here, game) === content(e, game) && here.size === e.size)) {
       target.children[name] = { ...(e as File), content: content(e, game) };
     }
   }
@@ -197,7 +197,7 @@ function place(game: Shell, path: string): Directory {
   let n = game.find('/') as Directory;
   for (const part of path.split('/').filter(Boolean)) {
     const e = n.children[part];
-    n = e?.type === 'dossier' ? e : (n.children[part] = { type: 'dossier', children: {}, owner: 'root', mode: 'rwxr-xr-x' });
+    n = e?.type === 'directory' ? e : (n.children[part] = { type: 'directory', children: {}, owner: 'root', mode: 'rwxr-xr-x' });
   }
   return n;
 }
@@ -208,7 +208,7 @@ export function run(game: Shell, conf: ConfRsnapshot, level: string, trial: bool
   const { count } = conf.levels[i];
   const r = conf.root;
   const commands = ['echo 4242 > /var/run/rsnapshot.pid'];
-  const exists = (k: number, name = level) => game.find(`${r}${name}.${k}`)?.type === 'dossier';
+  const exists = (k: number, name = level) => game.find(`${r}${name}.${k}`)?.type === 'directory';
   if (!game.exists(r.replace(/\/$/, '') || '/')) {
     if (conf.withoutRootCreate) return { commands, error: 'rsnapshot refuses to create snapshot_root when no_create_root is enabled' };
     commands.push(`mkdir -m 0700 -p ${r}`);
@@ -251,14 +251,14 @@ export function run(game: Shell, conf: ConfRsnapshot, level: string, trial: bool
       if (!trial) root().children[`${level}.0`] = linkedCopy(root().children[`${level}.1`] as Directory);
     } else {
       commands.push(`mkdir -m 0755 -p ${r}${level}.0/`);
-      if (!trial) root().children[`${level}.0`] = { type: 'dossier', children: {}, owner: 'root', mode: 'rwxr-xr-x' };
+      if (!trial) root().children[`${level}.0`] = { type: 'directory', children: {}, owner: 'root', mode: 'rwxr-xr-x' };
     }
     for (const b of conf.backups) {
       const dest = `${r}${level}.0/${b.destination}`;
       commands.push(`/usr/bin/rsync -a --delete --numeric-ids --relative --delete-excluded ${b.source} ${dest}`);
       if (trial) continue;
       const source = game.find(b.source);
-      if (source?.type !== 'dossier') return { commands, error: `rsync: [sender] change_dir "${b.source}" failed: No such file or directory (2)` };
+      if (source?.type !== 'directory') return { commands, error: `rsync: [sender] change_dir "${b.source}" failed: No such file or directory (2)` };
       // --relative : le chemin complet de la source est recréé sous la destination.
       synchronise(game, source, place(game, `${dest}${b.source}`));
     }
@@ -300,11 +300,11 @@ export const RSNAPSHOT: Record<string, Command> = {
       if (command === 'configtest') return 'Syntax OK';
       if (command === 'du') {
         const root = game.find(conf.root);
-        if (root?.type !== 'dossier') return game.error(`${BANNER(args)}\nERROR: snapshot_root ${conf.root} does not exist.`);
+        if (root?.type !== 'directory') return game.error(`${BANNER(args)}\nERROR: snapshot_root ${conf.root} does not exist.`);
         // Comme du -csh : un fichier lié dans plusieurs instantanés n'est compté qu'une fois.
         const seen = new Set<Node>();
         const size = (n: Node): number => {
-          if (n.type === 'dossier') return Object.values(n.children).reduce((t, e) => t + size(e), 0) + 4096;
+          if (n.type === 'directory') return Object.values(n.children).reduce((t, e) => t + size(e), 0) + 4096;
           if (seen.has(n)) return 0;
           seen.add(n);
           return n.size ?? new TextEncoder().encode(content(n, game)).length;

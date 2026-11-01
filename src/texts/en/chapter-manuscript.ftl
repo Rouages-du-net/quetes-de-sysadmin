@@ -32,7 +32,7 @@ manuscript-novel-chapter-3 =
     Inside: notebooks, covered in Zohra's tight handwriting.
 # Chapter 3 after the cat walked on the keyboard: keep the title,
 # translate only the title; the lines of letters stay as they are.
-manuscript-novel-chapter-3-abime =
+manuscript-novel-chapter-3-damaged =
     CHAPTER 3 — THE LIGHTHOUSE
 
     jjjjjjjjjjjjjjjjjjjjjjkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk;;;;;;;;;;;;;

@@ -20,7 +20,7 @@ describe('Le tableau de classe', () => {
 
   it('sans nom dans le fichier, celui du fichier ; un fichier étranger est signalé', () => {
     expect((fileStudent('sacha.json', backupFile({ finished: [] }, new Date())) as Student).name).toBe('sacha');
-    expect(fileStudent('photo.json', '{"a":1}')).toEqual({ source: 'photo.json', error: 'fichier-autre' });
+    expect(fileStudent('photo.json', '{"a":1}')).toEqual({ source: 'photo.json', error: 'file-other' });
   });
 
   it('lit des codes, un par ligne, avec ou sans nom', () => {

@@ -41,7 +41,7 @@ const permitted = (r: Result) => FLUX.find((x) => x.forEachOf === r.flux.forEach
 // Un échange vers internet (une adresse), et non vers un appareil du réseau local (un nom).
 const internet = (r: Result) => isIp(r.flux.to);
 
-const compliant = (rs: Result[]) => rs.every((r) => (permitted(r) ? r.state === 'ok' : r.state === 'bloque'));
+const compliant = (rs: Result[]) => rs.every((r) => (permitted(r) ? r.state === 'ok' : r.state === 'blocked'));
 
 // ssh depuis le poste d'administration vers le routeur (chaîne input), pour une nouvelle connexion.
 export const openSsh = (r: Ruleset) =>
@@ -113,19 +113,19 @@ export const zones: Chapter = {
   events: [
     {
       id: 'without-translation',
-      condition: (j) => routing(j) && results(j).some((r) => permitted(r) && internet(r) && r.state === 'sans-reponse' && !r.translated),
+      condition: (j) => routing(j) && results(j).some((r) => permitted(r) && internet(r) && r.state === 'no-response' && !r.translated),
       message: (j) => j.t('zones-event-without-translation'),
     },
     {
       id: 'responses',
-      condition: (j) => results(j).some((r) => permitted(r) && r.state === 'sans-reponse' && (!internet(r) || !!r.translated)),
+      condition: (j) => results(j).some((r) => permitted(r) && r.state === 'no-response' && (!internet(r) || !!r.translated)),
       message: (j) => j.t('zones-event-responses'),
     },
     {
       id: 'all-open',
       condition: (j) => {
         const rs = results(j);
-        return rs.filter((r) => permitted(r) && internet(r)).every((r) => r.state === 'ok') && rs.some((r) => !permitted(r) && r.state !== 'bloque');
+        return rs.filter((r) => permitted(r) && internet(r)).every((r) => r.state === 'ok') && rs.some((r) => !permitted(r) && r.state !== 'blocked');
       },
       message: (j) => j.t('zones-event-all-open'),
     },

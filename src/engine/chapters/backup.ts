@@ -69,7 +69,7 @@ export const backup: Chapter = {
       // Le souvenir du jour, arrivé avant la nuit : la tâche doit l'emporter.
       j.flags.add('day');
       const n = j.find(path(j.t, MEMORIES));
-      if (n?.type === 'dossier') n.children[name(j.t, NEW)] = f(j.t('backup-memory-lighthouse-festival'));
+      if (n?.type === 'directory') n.children[name(j.t, NEW)] = f(j.t('backup-memory-lighthouse-festival'));
       j.state.originals[NEW] = j.read(path(j.t, `${MEMORIES}/${NEW}`));
       chunks.push(j.t('backup-night-start', { file: name(j.t, NEW) }));
     } else chunks.push(j.t('backup-night-still'));

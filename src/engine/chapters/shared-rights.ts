@@ -84,7 +84,7 @@ export function maskFor(j: Game, account: string): number {
   const profileD = j.find('/etc/profile.d');
   const sources = [
     '/etc/profile',
-    ...(profileD?.type === 'dossier'
+    ...(profileD?.type === 'directory'
       ? Object.keys(profileD.children)
           .filter((n) => n.endsWith('.sh'))
           .sort()
@@ -104,12 +104,12 @@ export function maskFor(j: Game, account: string): number {
 
 const okDirectory = (j: Game) => {
   const n = j.find(path(j.t, STATEMENTS));
-  return n?.type === 'dossier' && (n.group ?? n.owner) === 'till' && n.mode?.[4] === 'w' && n.mode?.[5] === 's';
+  return n?.type === 'directory' && (n.group ?? n.owner) === 'till' && n.mode?.[4] === 'w' && n.mode?.[5] === 's';
 };
 const okFiles = (j: Game) => {
   const n = j.find(path(j.t, STATEMENTS));
-  if (n?.type !== 'dossier') return false;
-  const all = (x: Node): Node[] => (x.type === 'dossier' ? Object.values(x.children).flatMap(all) : [x]);
+  if (n?.type !== 'directory') return false;
+  const all = (x: Node): Node[] => (x.type === 'directory' ? Object.values(x.children).flatMap(all) : [x]);
   return all(n).every((x) => (x.group ?? x.owner) === 'till' && (x.mode ?? 'rw-r--r--')[4] === 'w');
 };
 const okMask = (j: Game) => TEAM.every((c) => (maskFor(j, c) & 0o020) === 0);
@@ -125,7 +125,7 @@ const sudoOk = (j: Game) => restart(j) && !tropLarge(j) && !wholeSystemctl(j) &&
 // Un fichier de /etc/sudoers.d qui parle de la caisse, mais que sudo ne lit pas (un point, ou ~ à la fin).
 const ignoreFile = (j: Game) => {
   const directory = j.find('/etc/sudoers.d');
-  if (directory?.type !== 'dossier') return null;
+  if (directory?.type !== 'directory') return null;
   const read = includedFiles(sh(j), '/etc/sudoers.d');
   return (
     Object.keys(directory.children)
