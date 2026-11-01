@@ -2,11 +2,11 @@
 // security bulletin (like Debian's advisories) lists several CVEs. Before
 // worrying, you must check that each one REALLY concerns this server:
 // a package that isn't installed, or already at a version beyond the fixed one, is
-// not an alert. Two CVEs concern Le Fournil (nginx, rsync); one is
+// not an alert. Two CVEs concern the Bakery (nginx, rsync); one is
 // not installed (certbot); one is already fixed by a previous
 // update (curl); one applies in theory but changes nothing here
 // (openssh-server: KbdInteractiveAuthentication is already "no").
-// Objective checked on the state: the triage in veille.md puts each CVE on the
+// Objective checked on the state: the triage in watch.md puts each CVE on the
 // right side. Expected traps: classing certbot (absent) as relevant,
 // classing curl (already fixed) as relevant, forgetting nginx or rsync.
 // Sources: https://www.debian.org/security/, https://www.cve.org/,
@@ -67,13 +67,13 @@ export const bulletin: Chapter = {
   steps: ['read', 'sort', 'end'],
   password: PASSWORD,
   accounts: watchAccounts,
-  state: () => ({
+  state: (t) => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
     listening: watchListening(),
-    nginx: watchNginx(),
-    scan: watchScan(),
+    nginx: watchNginx(t),
+    scan: watchScan(t),
     apt: watchApt(),
-    systemd: newSystemd('petrin', STARTED, NOW, {
+    systemd: newSystemd('kneader', STARTED, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },

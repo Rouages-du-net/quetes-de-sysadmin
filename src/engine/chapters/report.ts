@@ -1,5 +1,5 @@
-// Story "L'Audit" — chapter "The report": Salomé, an auditor, noted four
-// hygiene findings on Le Fournil's server. To be fixed without breaking
+// Story "The Audit" — chapter "The report": Salomé, an auditor, noted four
+// hygiene findings on the Bakery's server. To be fixed without breaking
 // anything:
 //   - SSH: root can log in (PermitRootLogin yes in sshd_config); the
 //     configuration is only applied on reload (sshd -t, reload);
@@ -7,32 +7,28 @@
 //     the end of February, still has his account and sudo (userdel, or lock +
 //     expire + remove from sudo);
 //   - sudo without a password: /etc/sudoers.d/90-cloud-init-users gives
-//     "vous" NOPASSWD: ALL (sudo -l shows it);
-//   - a secret readable by all: /srv/commandes/.env (the database password)
+//     "you" NOPASSWD: ALL (sudo -l shows it);
+//   - a secret readable by all: /srv/orders/.env (the database password)
 //     in rw-r--r--; chmod 600 without removing the app's access.
 // Objective checked on the state: root refused by sshd (reloaded) without
 // locking yourself out, no more active account for Lucas, no more NOPASSWD
-// rule for "vous" (sudo still works), the file closed to others but
+// rule for "you" (sudo still works), the file closed to others but
 // readable by the app.
 // Sources: https://man.openbsd.org/sshd_config, https://www.sudo.ws/docs/man/sudoers.man/,
 // https://man7.org/linux/man-pages/man8/userdel.8.html, https://man7.org/linux/man-pages/man1/chmod.1.html
 
-import { d, f, player, type Chapter } from '../world';
+import { d, f, path, player, password, type Chapter } from '../world';
 import type { Game, Shell } from '../shell';
 import { newSystemd } from '../systemd';
 import { allowed } from '../sshd';
 import { read, permitted, rulesFor } from '../sudoers';
-import { loadSshd, bakeryAccounts, file, M, NOW, PASSWORD, bakeryWorld, serviceSsh, sshd } from './audit';
+import { loadSshd, bakeryAccounts, file, M, NOW, PASSWORD, bakeryWorld, serviceSsh, sshd, orders, ordersEnv, ordersService } from './audit';
 
-const ENV = '/srv/commandes/.env';
+const ENV = '/srv/orders/.env';
 const sh = (j: Game) => j as Shell;
 
 // The hosting provider's cloud-init: the first account has sudo without a password.
 const cloudInitSudo = (account: string) => `# Created by cloud-init v. 24.4 on Tue, 06 Dec 2027 15:51:43 +0000\n\n${account} ALL=(ALL) NOPASSWD:ALL`;
-
-const CONTENT_ENV = `PORT=3000
-DATABASE_URL=postgres://commandes:brioche-beurre-91@localhost:5432/commandes
-REDIS_URL=redis://localhost:6379`;
 
 const closedRoot = (j: Game) => sshd(j).load.permitrootlogin === 'no';
 const between = (j: Game) => allowed(sshd(j).load, j.player);
@@ -48,17 +44,18 @@ const validPolicy = (j: Game) => !read(sh(j)).error;
 const withoutPassword = (j: Game) => rulesFor(sh(j), j.player).some((r) => r.includes('NOPASSWD'));
 const sudoOk = (j: Game) => validPolicy(j) && !withoutPassword(j) && permitted(sh(j), j.player, '/usr/bin/bash');
 
-const env = (j: Game) => j.find(ENV);
+const env = (j: Game) => j.find(path(j.t, ENV));
 const closedToOther = (j: Game) => {
   const n = env(j);
   return n?.type === 'file' && (n.mode ?? 'rw-r--r--').slice(6) === '---';
 };
-// The app (commandes account) must be able to read its file: owner, or group.
+// The app (orders account) must be able to read its file: owner, or group.
 const readableByApp = (j: Game) => {
   const n = env(j);
   if (n?.type !== 'file') return false;
   const mode = n.mode ?? 'rw-r--r--';
-  return ((n.owner ?? 'you') === 'commandes' && mode[0] === 'r') || ((n.group ?? n.owner) === 'commandes' && mode[3] === 'r');
+  const app = orders(j.t);
+  return ((n.owner ?? 'you') === app && mode[0] === 'r') || ((n.group ?? n.owner) === app && mode[3] === 'r');
 };
 const secretOk = (j: Game) => closedToOther(j) && readableByApp(j);
 
@@ -101,16 +98,11 @@ export const report: Chapter = {
   steps: ['ssh', 'account', 'sudo', 'secret', 'end'],
   password: PASSWORD,
   accounts: () => bakeryAccounts(true),
-  state: () => ({
+  state: (t) => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
     systemd: newSystemd('bakery', NOW - 5 * 86_400_000, NOW, {
       ssh: serviceSsh(),
-      commandes: {
-        description: 'Fournil orders (commandes)',
-        active: true,
-        executable: 'node',
-        process: [{ pid: 731, user: 'commandes', cpu: 0.8, mem: 3.1, command: '/usr/bin/node /srv/commandes/app/server.js' }],
-      },
+      [orders(t)]: ordersService(t),
     }),
   }),
   initialise: (j) => loadSshd(j),
@@ -121,13 +113,13 @@ export const report: Chapter = {
       more: {
         srv: d(
           {
-            commandes: d(
+            orders: d(
               {
-                '.env': f(CONTENT_ENV, { lines: true, owner: 'commandes', group: 'commandes', mode: 'rw-r--r--' }),
-                app: d({ 'server.js': file('// orders application (excerpt)', 'commandes') }, undefined, { owner: 'commandes' }),
+                '.env': f(ordersEnv(t, password(t, 'butter-brioche-91')), { lines: true, owner: 'orders', group: 'orders', mode: 'rw-r--r--' }),
+                app: d({ 'server.js': file('// orders application (excerpt)', 'orders') }, undefined, { owner: 'orders' }),
               },
               undefined,
-              { owner: 'commandes' },
+              { owner: 'orders' },
             ),
           },
           undefined,

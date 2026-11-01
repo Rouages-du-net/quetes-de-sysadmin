@@ -20,3 +20,7 @@ password-radish-2027 = radish-2027
 password-bee-2027 = bee-2027
 password-flour-2028 = flour-2028
 password-film-2027 = film-2027
+
+## The Audit and The Watch
+password-butter-brioche-91 = butter-brioche-91
+password-sourdough-2028 = sourdough-2028

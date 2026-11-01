@@ -23,7 +23,7 @@ fix-email-salome =
     takes the site down would be an odd favour to do Nadia.
 
     Salomé
-    (For sudo, your password is still: levain-2028)
+    (For sudo, your password is still: sourdough-2028)
 
 ## Events
 

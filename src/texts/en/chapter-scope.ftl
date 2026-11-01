@@ -30,7 +30,7 @@ scope-email-salome =
        spotted without touching it.
 
     One precaution: Nadia warned me that the pizzeria next door's server
-    (voisin.internal, 192.0.2.24) is plugged into the same box. It is not in
+    (neighbour.internal, 192.0.2.24) is plugged into the same box. It is not in
     our mandate.
 
     Salomé
@@ -39,7 +39,7 @@ scope-email-salome =
 scope-letter-mission =
     LETTER OF ENGAGEMENT
 
-    Between: the bakery Le Fournil, represented by Nadia, manager
+    Between: The Bakery, represented by Nadia, manager
              ("the client")
     And:     Salomé, independent auditor
 
@@ -70,7 +70,7 @@ scope-letter-mission =
     Signed: Nadia (manager) and Salomé, 3 March 2028.
 
 scope-notes-template =
-    # Audit notes — Le Fournil
+    # Audit notes — The Bakery
 
     ## Scope
     (to complete: what the letter of engagement allows)
@@ -114,7 +114,7 @@ scope-event-scan =
     An auditor's question: among these open services, which ones have a
     reason to be reachable by anyone? Keep the trace in a file (the -oN
     option): a finding without proof is only an opinion.
-# { $addresses }: the addresses probed outside the letter of engagement; { $neighbour }: "oui" if the neighbour's server is one of them
+# { $addresses }: the addresses probed outside the letter of engagement; { $neighbour }: "yes" if the neighbour's server is one of them
 scope-event-outside-scope =
     WARNING: you have just probed an address that is not in your letter of
     engagement ({ $addresses }{ $neighbour ->
@@ -135,7 +135,7 @@ scope-event-trace =
 
     Your notes remain to be written (audit_notes.md): what you found, and
     what you saw without touching it.
-# { $mistake }: "oui" if the scan went beyond the scope, "non" otherwise
+# { $mistake }: "yes" if the scan went beyond the scope, "no" otherwise
 scope-event-end =
     Salomé: "That is a clean inventory: a scope, proof, and honest notes. We
     can use it for the report."

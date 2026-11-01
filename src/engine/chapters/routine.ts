@@ -113,14 +113,14 @@ export const routine: Chapter = {
   steps: ['active', 'security', 'periodic', 'end'],
   password: PASSWORD,
   accounts: watchAccounts,
-  state: () => ({
+  state: (t) => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
     listening: watchListening(),
-    nginx: watchNginx(),
-    scan: watchScan(),
+    nginx: watchNginx(t),
+    scan: watchScan(t),
     apt: watchApt(true),
     crontabs: {},
-    systemd: newSystemd('petrin', STARTED, NOW, {
+    systemd: newSystemd('kneader', STARTED, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },

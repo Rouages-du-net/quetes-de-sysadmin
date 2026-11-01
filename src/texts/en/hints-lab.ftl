@@ -49,7 +49,7 @@ hint-new-disk-end =
 
 hint-more-room-full =
     .lead = Look at how full the file systems are (man df): which one is full, and on which device?
-    .solution = df -h: /srv, on /dev/mapper/labo-photos, is 97% full.
+    .solution = df -h: /srv, on /dev/mapper/lab-photos, is 97% full.
 hint-more-room-lvm =
     .lead = /srv is an LVM logical volume: look at its three layers, physical volumes, groups and logical volumes (man pvs, man vgs, man lvs).
     .solution = sudo vgs (VFree at 0), sudo pvs (md1 alone), sudo lvs; then lsblk: sdc and sdd are new.
@@ -57,11 +57,11 @@ hint-more-room-array =
     .lead = Before giving the new disks to LVM, make a RAID 1 array of them, to keep two copies (man mdadm, creating an array).
     .solution = sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 /dev/sdc /dev/sdd, then y to confirm.
 hint-more-room-extended =
-    .lead = The new array must become a physical volume, then join the labo group (man pvcreate, man vgextend).
-    .solution = sudo pvcreate /dev/md2, then sudo vgextend labo /dev/md2 (sudo vgs: VFree has grown).
+    .lead = The new array must become a physical volume, then join the lab group (man pvcreate, man vgextend).
+    .solution = sudo pvcreate /dev/md2, then sudo vgextend lab /dev/md2 (sudo vgs: VFree has grown).
 hint-more-room-grown =
     .lead = Grow the photos logical volume, then the file system it carries (man lvextend, man resize2fs).
-    .solution = sudo lvextend -r -l +100%FREE /dev/labo/photos (or lvextend without -r, then sudo resize2fs /dev/labo/photos); df -h /srv to check.
+    .solution = sudo lvextend -r -l +100%FREE /dev/lab/photos (or lvextend without -r, then sudo resize2fs /dev/lab/photos); df -h /srv to check.
 hint-more-room-conf =
     .lead = The new array must be declared in /etc/mdadm/mdadm.conf, only once: mdadm can write its ARRAY line (man mdadm). Careful, the file belongs to root.
     .solution = sudo mdadm --detail --brief /dev/md2 | sudo tee -a /etc/mdadm/mdadm.conf

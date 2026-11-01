@@ -36,7 +36,7 @@ traces-email-salome =
        was read is a secret to change, for real: the new one must work
        everywhere, and the orders app must not go down.
 
-    Note: a comment in a key ("nadia@portable") proves nothing, anyone can
+    Note: a comment in a key ("nadia@laptop") proves nothing, anyone can
     write whatever they want. Compare the fingerprints.
 
     Salomé
@@ -56,7 +56,7 @@ traces-event-found =
 traces-event-key-identified =
     There is the fingerprint of each key in the file. Compare with the one
     in the journal: the second key is the one used that night, and yet it
-    carries the comment "nadia@portable". The comment is only a label.
+    carries the comment "nadia@laptop". The comment is only a label.
 
     Remove that line (and only that one) from authorized_keys.
 traces-event-nadia-locked-out =
@@ -72,7 +72,7 @@ traces-event-key-revoked =
     they leave inside during those three minutes? Look at what runs by
     itself for Nadia's account (man crontab).
 traces-event-cron-found =
-    Two tasks for Nadia: sauvegarde.sh at 4 a.m. (that one is hers), and a
+    Two tasks for Nadia: backup.sh at 4 a.m. (that one is hers), and a
     line that, every ten minutes, downloads a program from 203.0.113.99 and
     runs it. That is the intruder's beacon: they can change what the server
     does remotely, even without a key.
@@ -80,7 +80,7 @@ traces-event-cron-found =
     Remove that line, and only that one.
 traces-event-secret-seen =
     There is what the person typed during their three minutes: they read
-    /srv/commandes/.env. At the time, that file was readable by everyone
+    /srv/orders/.env. At the time, that file was readable by everyone
     ("The Report"): the database password is compromised, even though the key
     and the task are removed. Closing the door does not change a key that has
     already been copied.
@@ -96,13 +96,13 @@ traces-event-password-weak =
 traces-event-a-restart =
     The database and .env have the same new password, but the app still runs
     with the old one: it reads .env when it starts, not when the file
-    changes. Restart it (systemctl restart commandes) then check that it
-    stays active (systemctl status commandes).
+    changes. Restart it (systemctl restart orders) then check that it
+    stays active (systemctl status orders).
 traces-event-app-down =
     The orders app is stopped: at startup, it read in .env a password the
-    database does not accept (journalctl -u commandes: "password
+    database does not accept (journalctl -u orders: "password
     authentication failed"). Both sides must say the same thing: the
-    password of the commandes role in PostgreSQL, and that of DATABASE_URL in
+    password of the orders role in PostgreSQL, and that of DATABASE_URL in
     the .env file. Fix the one that differs, then restart the app.
 traces-event-password =
     The database password is changed end to end: the role in PostgreSQL, the
@@ -110,9 +110,9 @@ traces-event-password =
     that connects with it. The old one, which the intruder read, opens
     nothing any more.
 traces-event-backup-lost =
-    Nadia's backup (sauvegarde.sh, at 4 a.m.) is no longer scheduled:
+    Nadia's backup (backup.sh, at 4 a.m.) is no longer scheduled:
     crontab -r erases the WHOLE crontab. Put her line back:
-      0 4 * * * /srv/commandes/bin/sauvegarde.sh
+      0 4 * * * /srv/orders/bin/backup.sh
     and remove only the intruder's line.
 traces-event-cron-cleaned =
     No more beacon, and Nadia's real backup is still there.
