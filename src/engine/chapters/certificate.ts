@@ -249,7 +249,7 @@ export const certificate: Chapter = {
   accounts,
   state: () => ({
     systemd: serverLog(),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 598, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
       { pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
@@ -328,7 +328,7 @@ export const certificate: Chapter = {
     },
     {
       id: 'challenge',
-      condition: (j) => j.state.certbotDefiEchoue === true,
+      condition: (j) => j.state.certbotChallengeFailed === true,
       message: (j) => j.t('certificate-event-challenge'),
     },
     {

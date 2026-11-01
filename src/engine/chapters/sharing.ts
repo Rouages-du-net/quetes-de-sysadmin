@@ -132,7 +132,7 @@ export const colocation: Chapter = {
         process: [{ pid: 1450, user: 'agenda', cpu: 0.4, mem: 2.3, command: 'node /opt/agenda/serveur.js' }],
       },
     }),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
@@ -140,7 +140,7 @@ export const colocation: Chapter = {
     ],
     // Le DNS de cafe.example pointe déjà ici (Kofi s'en est occupé).
     nginx: { load: null, names: ['letters', LETTERS, `www.${LETTERS}`, CAFE, `www.${CAFE}`, '203.0.113.10'] },
-    applis: {
+    apps: {
       '127.0.0.1:3000': {
         service: 'agenda',
         pages: { '/': t('sharing-agenda-welcome'), '/semaine': t('sharing-agenda-week'), '/ateliers': t('sharing-agenda-workshops') },
@@ -203,7 +203,7 @@ export const colocation: Chapter = {
     {
       id: 'link-broken',
       condition: (j) =>
-        /open\(\) "\/etc\/nginx\/sites-enabled\/[^"]+" failed/.test(j.state.nginxErreur ?? '') ||
+        /open\(\) "\/etc\/nginx\/sites-enabled\/[^"]+" failed/.test(j.state.nginxError ?? '') ||
         sd(j).log.some((e) => /open\(\) "\/etc\/nginx\/sites-enabled\//.test(e.message)),
       message: (j) => j.t('sharing-event-link-broken'),
     },

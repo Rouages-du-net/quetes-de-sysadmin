@@ -309,7 +309,7 @@ export const POSTGRES: Record<string, Command> = {
             '\n',
           ),
         );
-      game.state.pgRestaurations = [...(game.state.pgRestaurations ?? []), { base, archive: m[1], tables: Object.keys(tables) }];
+      game.state.pgRestores = [...(game.state.pgRestores ?? []), { base, archive: m[1], tables: Object.keys(tables) }];
       return '';
     },
   },

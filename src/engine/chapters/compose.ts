@@ -293,7 +293,7 @@ export const composition: Chapter = {
     },
     {
       id: 'volumes-erased',
-      condition: (j) => j.state.composeVolumesEffaces === true,
+      condition: (j) => j.state.composeVolumesErased === true,
       message: (j) => j.t('compose-event-volumes-erased'),
     },
     {

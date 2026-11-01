@@ -111,7 +111,7 @@ function dmesg(game: Shell, args: string[]): string {
   if (game.who !== 'root') return game.error('dmesg: read kernel buffer failed: Operation not permitted');
   const start = boot(game);
   const readable = args.some((a) => /^-\w*T/.test(a) || a === '--ctime');
-  const lines: { time: number; text: string }[] = (game.state.noyau ?? []).filter((l: { time: number }) => l.time >= start);
+  const lines: { time: number; text: string }[] = (game.state.kernel ?? []).filter((l: { time: number }) => l.time >= start);
   return lines
     .map(({ time, text }) => {
       if (readable) {

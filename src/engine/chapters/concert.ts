@@ -111,7 +111,7 @@ function minute(j: Game, start: number): Summary {
   return summary;
 }
 
-const summary = (j: Game): Summary | undefined => j.state.concertBilan;
+const summary = (j: Game): Summary | undefined => j.state.concertSummary;
 const succeeded = (b?: Summary) => !!b && b.servedHumans === b.humans && b.limitRobot >= b.robot * 0.6;
 
 export const concert: Chapter = {
@@ -177,7 +177,7 @@ export const concert: Chapter = {
         process: [{ pid: 1450, user: 'agenda', cpu: 99.2, mem: 6.8, command: 'node /opt/agenda/serveur.js' }],
       },
     }),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
@@ -185,7 +185,7 @@ export const concert: Chapter = {
       { pid: 1450, user: 'agenda', cpu: 99.2, mem: 6.8, command: 'node /opt/agenda/serveur.js' },
     ],
     nginx: { load: null, names: ['letters', LETTERS, `www.${LETTERS}`, '203.0.113.10'], journalAcces: true },
-    applis: {
+    apps: {
       '127.0.0.1:3000': {
         service: 'agenda',
         capacity: 20,
@@ -205,15 +205,15 @@ export const concert: Chapter = {
   initialise: (j) => {
     loadNginx(j);
     minute(j, Date.UTC(2027, 2, 27, 20, 3, 0));
-    j.state.concertBilan = minute(j, Date.UTC(2027, 2, 27, 20, 4, 0));
-    j.state.concertCharge = j.state.nginx.load;
+    j.state.concertSummary = minute(j, Date.UTC(2027, 2, 27, 20, 4, 0));
+    j.state.concertLoaded = j.state.nginx.load;
   },
   // Après chaque rechargement réussi de nginx, une minute de trafic passe.
   afterCommand: (j) => {
-    if (j.state.nginx.load === j.state.concertCharge || systemd(j)!.services.nginx.state !== 'active') return;
-    j.state.concertCharge = j.state.nginx.load;
+    if (j.state.nginx.load === j.state.concertLoaded || systemd(j)!.services.nginx.state !== 'active') return;
+    j.state.concertLoaded = j.state.nginx.load;
     const b = minute(j, Math.ceil(systemd(j)!.clock / 60_000) * 60_000);
-    j.state.concertBilan = b;
+    j.state.concertSummary = b;
     return j.t('concert-minute', {
       humains: b.humans,
       servis: b.servedHumans,

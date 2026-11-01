@@ -34,7 +34,7 @@ export const pkg: Chapter = {
   // t : les textes dans la langue du jeu (français tant que le shell ne le
   // transmet pas).
   state: (t) => ({
-    reseau: {
+    network: {
       machines: {
         '192.168.1.1': { ping: true, ms: 0.9 },
         '9.9.9.9': { ping: true, ms: 11.8 },

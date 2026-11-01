@@ -96,7 +96,7 @@ export interface MailState {
   restored: { message: Message; recipient: string; auth: Authentication }[];
 }
 
-export const mail = (game: Game): MailState | undefined => game.state.courrier;
+export const mail = (game: Game): MailState | undefined => game.state.mail;
 
 // ——— Postfix : main.cf ———
 

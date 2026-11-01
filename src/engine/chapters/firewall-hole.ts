@@ -226,11 +226,11 @@ export const bypass: Chapter = {
         },
       }),
       ufw: pf,
-      ecoute: [
-        { proto: 'tcp', address: '0.0.0.0', port: 22, processus: 'sshd', pid: 610 },
-        { proto: 'tcp', address: '[::]', port: 22, processus: 'sshd', pid: 610 },
+      listening: [
+        { proto: 'tcp', address: '0.0.0.0', port: 22, process: 'sshd', pid: 610 },
+        { proto: 'tcp', address: '[::]', port: 22, process: 'sshd', pid: 610 },
       ],
-      montages: [{ path: '/', capacity: DISK, name: '/dev/vda1' }],
+      mounts: [{ path: '/', capacity: DISK, name: '/dev/vda1' }],
       docker: { ...dockerState(), names: ['workshop', 'workshop.internal', '192.0.2.15'] },
     };
   },

@@ -41,7 +41,7 @@ export const VERSIONS: Record<string, KioskVersion> = {
 };
 
 // La base du Kiosque : le schéma où elle en est (les migrations ne font qu'avancer).
-export const base = (j: Game): { schema: number } => (j.state.kiosqueBase ??= { schema: 3 });
+export const base = (j: Game): { schema: number } => (j.state.kioskBase ??= { schema: 3 });
 
 export interface Instance {
   version: string;
@@ -211,9 +211,9 @@ export function readers(j: Game, count = 60): Batch {
       time: sd.clock + i * 60_000,
       agent: 'Mozilla/5.0 (X11; Linux x86_64; rv:139.0) Gecko/20100101 Firefox/139.0',
     };
-    j.state.nginxDernierAmont = null;
+    j.state.nginxLastUpstream = null;
     const r = httpRequest(j, 'gazette.example', path, 80, true, client);
-    const port = Number(String(j.state.nginxDernierAmont ?? '').split(':')[1]);
+    const port = Number(String(j.state.nginxLastUpstream ?? '').split(':')[1]);
     const colour = Object.keys(PORTS).find((c) => PORTS[c] === port);
     const version = colour ? instances(j)[colour]?.version : undefined;
     batch.total++;

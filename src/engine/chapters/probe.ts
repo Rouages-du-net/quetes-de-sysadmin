@@ -116,7 +116,7 @@ function night(j: Game): string {
       relay(j).state = 'failed';
       relay(j).result = 'signal';
       relay(j).since = t;
-      j.state.processus = (j.state.processus ?? []).filter((p: { pid: number }) => p.pid !== 1730);
+      j.state.process = (j.state.process ?? []).filter((p: { pid: number }) => p.pid !== 1730);
       writeLog(s, 'radio-stream.service', 'systemd', 1, 'radio-stream.service: Main process exited, code=killed, status=11/SEGV', 4, false);
       writeLog(s, 'radio-stream.service', 'systemd', 1, "radio-stream.service: Failed with result 'signal'.", 4, false);
     }
@@ -168,7 +168,7 @@ function night(j: Game): string {
   if (!launches) r.push(j.t('probe-night-never'));
   const okRelay = alertRelay !== null && alertRelay - fallsRelay <= RELAY_DELAY * MINUTE;
   const inodesOk = alertInodes !== null && (fullInodes === null || alertInodes < fullInodes);
-  if (okRelay && inodesOk && !no) j.state.exerciceReussi = true;
+  if (okRelay && inodesOk && !no) j.state.drillSucceeded = true;
   else if (alertRelay !== null && !okRelay) r.push(j.t('probe-night-relay-slow'));
   // Le matin : 7 h.
   s.clock = end + 60 * MINUTE;
@@ -256,16 +256,16 @@ export const probe: Chapter = {
       };
       return s;
     })(),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 611, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
       { pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
     // Le relais sert le direct sur le port 8000.
-    applis: { '127.0.0.1:8000': { service: 'radio-stream', pages: { '/live': 'OggS', '/': 'Radio Quartier relay' } } },
-    ecoute: [{ proto: 'tcp', address: '0.0.0.0', port: 8000, processus: 'stream', pid: 1730 }],
-    montages: [
+    apps: { '127.0.0.1:8000': { service: 'radio-stream', pages: { '/live': 'OggS', '/': 'Radio Quartier relay' } } },
+    listening: [{ proto: 'tcp', address: '0.0.0.0', port: 8000, process: 'stream', pid: 1730 }],
+    mounts: [
       { path: '/', capacity: 20_000_000_000, name: '/dev/vda1', system: 'ext4', inodes: 1_310_720, inodesBase: 61_204 },
       { path: DATA, capacity: 268_435_456, name: '/dev/vdb1', system: 'ext4', inodes: INODES, inodesBase: 11 },
     ],
@@ -273,8 +273,8 @@ export const probe: Chapter = {
   }),
   afterCommand: (j) => {
     sd(j).clock += 20_000;
-    if (j.state.exerciceReussi || !scheduled(j) || j.state.empreinteNuit === fingerprint(j)) return;
-    j.state.empreinteNuit = fingerprint(j);
+    if (j.state.drillSucceeded || !scheduled(j) || j.state.nightFingerprint === fingerprint(j)) return;
+    j.state.nightFingerprint = fingerprint(j);
     return night(j);
   },
   createWorld: (t) => {
@@ -331,9 +331,9 @@ export const probe: Chapter = {
     },
     {
       id: 'first-alert',
-      condition: (j) => !j.state.empreinteNuit && alertsForZoe(j).length > 0,
+      condition: (j) => !j.state.nightFingerprint && alertsForZoe(j).length > 0,
       message: (j) => j.t('probe-event-first-alert'),
     },
-    { id: 'end', condition: (j) => !!j.state.exerciceReussi, message: (j) => j.t('probe-event-end') },
+    { id: 'end', condition: (j) => !!j.state.drillSucceeded, message: (j) => j.t('probe-event-end') },
   ],
 };

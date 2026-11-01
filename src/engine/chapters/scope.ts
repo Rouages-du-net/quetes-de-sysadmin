@@ -72,7 +72,7 @@ export const scope: Chapter = {
   accounts: () => bakeryAccounts(true),
   state: () => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
-    ecoute: bakeryListening(),
+    listening: bakeryListening(),
     scan: bakeryScan(),
     apt: {
       lists: true,
@@ -84,7 +84,7 @@ export const scope: Chapter = {
   initialise: (j) => {
     loadSshd(j);
     // Salomé ne relit que ce qui a changé : le modèle de départ compte comme déjà lu.
-    j.state.notesLues = readNotes(j);
+    j.state.notesRead = readNotes(j);
   },
   createWorld: (t) =>
     bakeryWorld(t, {
@@ -98,11 +98,11 @@ export const scope: Chapter = {
   // Salomé relit les notes après chaque enregistrement.
   afterCommand: (j) => {
     const text = readNotes(j);
-    if (text === j.state.notesLues || j.state.notesFinies) return;
-    j.state.notesLues = text;
+    if (text === j.state.notesRead || j.state.finishedNotes) return;
+    j.state.notesRead = text;
     const rest = missing(j);
     if (!rest.length) {
-      j.state.notesFinies = true;
+      j.state.finishedNotes = true;
       return;
     }
     return [j.t('scope-review'), ...rest.map((m) => `- ${j.t(`scope-missing-${m}`)}`)].join('\n');

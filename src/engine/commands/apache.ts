@@ -86,10 +86,10 @@ const apache2ctl: Command = {
     if (first === 'configtest' || first === '-t' || vhost || mods) {
       const v = check(game, first === 'configtest' ? 'configtest' : '-t');
       if (v.error) {
-        game.state.apacheErreur = v.error;
+        game.state.apacheError = v.error;
         return game.error(v.error);
       }
-      game.state.apacheTeste = true;
+      game.state.apacheTested = true;
       if (vhost) game.state.apacheVhosts = true;
       const body = vhost ? vhosts(v.config!) : mods ? modulesCharges(v.config!) : 'Syntax OK';
       return [...v.lines, body].join('\n');

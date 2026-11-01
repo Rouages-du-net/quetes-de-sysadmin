@@ -85,7 +85,7 @@ function byDay(j: Game): Map<number, number> {
 
 // Les statistiques de moins de 31 jours (find -mtime -31) sont-elles toutes là ?
 function intactRecent(j: Game): boolean {
-  const written: Record<number, number> = j.state.statsEcrites;
+  const written: Record<number, number> = j.state.statsWritten;
   const presents = byDay(j);
   const limit = dayFor(sd(j).clock) - 30;
   return Object.entries(written).every(([day, n]) => Number(day) < limit || (presents.get(Number(day)) ?? 0) >= n);
@@ -117,9 +117,9 @@ function writeAsRadio(j: Game, path: string, n: File): boolean {
 
 // Le relais note une écoute ; le compteur des fichiers écrits par jour suit.
 function noteListening(j: Game, ms: number): boolean {
-  const n = (j.state.numeroStat = (j.state.numeroStat ?? 0) + 1);
+  const n = (j.state.statNumber = (j.state.statNumber ?? 0) + 1);
   const ok = writeAsRadio(j, `${STATS}/${statName(ms, n)}`, stat(ms));
-  if (ok) j.state.statsEcrites[dayFor(ms)] = (j.state.statsEcrites[dayFor(ms)] ?? 0) + 1;
+  if (ok) j.state.statsWritten[dayFor(ms)] = (j.state.statsWritten[dayFor(ms)] ?? 0) + 1;
   return ok;
 }
 
@@ -139,9 +139,9 @@ function night(j: Game): string {
   const written = place?.type === 'dossier' ? Math.max(0, Math.min(360, free)) : 0;
   for (let k = 0; k < written; k++) {
     const ms = s.clock + Math.floor((k * (nextDay + 3 * 3600_000 - s.clock)) / 360);
-    const n = (j.state.numeroStat = (j.state.numeroStat ?? 0) + 1);
+    const n = (j.state.statNumber = (j.state.statNumber ?? 0) + 1);
     (place as Directory).children[statName(ms, n)] = stat(ms);
-    j.state.statsEcrites[dayFor(ms)] = (j.state.statsEcrites[dayFor(ms)] ?? 0) + 1;
+    j.state.statsWritten[dayFor(ms)] = (j.state.statsWritten[dayFor(ms)] ?? 0) + 1;
   }
   // La nuit : cron lance les tâches prévues jusqu'à 6 h.
   const start = s.clock;
@@ -164,7 +164,7 @@ function night(j: Game): string {
   else if (!executions.length) result.push(j.t('inodes-night-nothing'));
   else if (moreOld(j) > 60) result.push(j.t('inodes-night-too-old', { jours: moreOld(j) }));
   else if (inodesPercent(j) >= 80) result.push(j.t('inodes-night-full', { pourcent: inodesPercent(j) }));
-  else j.state.nuitReussie = true;
+  else j.state.nightSucceeded = true;
   return result.filter(Boolean).join('\n\n');
 }
 
@@ -226,19 +226,19 @@ export const inodes: Chapter = {
         process: [{ pid: 611, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' }],
       },
     }),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 611, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
       { pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
-    montages: [
+    mounts: [
       { path: '/', capacity: 20_000_000_000, name: '/dev/vda1', system: 'ext4', inodes: 1_310_720, inodesBase: 61_204 },
       // Un petit volume de données : 1 Gio, donc 65 536 inodes (un pour 16 Kio, le réglage par défaut de mkfs.ext4).
       { path: DATA, capacity: 1_073_741_824, name: '/dev/vdb1', system: 'ext4', inodes: INODES, inodesBase: 11 },
     ],
     crontabs: {},
-    statsEcrites: {},
+    statsWritten: {},
   }),
   // Les statistiques remplissent tous les inodes qui restent sur le volume.
   initialise: (j) => {
@@ -248,9 +248,9 @@ export const inodes: Chapter = {
     const byPlannedDay = rest / ((NOW - START) / DAY);
     for (let k = 0; k < rest; k++) {
       const ms = START + Math.floor((k * DAY) / byPlannedDay);
-      const n = (j.state.numeroStat = (j.state.numeroStat ?? 0) + 1);
+      const n = (j.state.statNumber = (j.state.statNumber ?? 0) + 1);
       place.children[statName(ms, n)] = stat(ms);
-      j.state.statsEcrites[dayFor(ms)] = (j.state.statsEcrites[dayFor(ms)] ?? 0) + 1;
+      j.state.statsWritten[dayFor(ms)] = (j.state.statsWritten[dayFor(ms)] ?? 0) + 1;
     }
     // Ce soir, plus rien ne s'écrit sur le volume.
     s.clock = NOW - 40 * 60_000;
@@ -279,8 +279,8 @@ export const inodes: Chapter = {
       writeAsRadio(j, record(j), { type: 'fichier', content: '', size: 48_000_000, owner: 'radio', mtime: s.clock })
     )
       writeLog(s, 'radio-stream.service', 'stream', 1730, `record: writing ${record(j)}`, 6, false);
-    if (j.state.nuitReussie || !cronStats(j) || j.state.empreinteNuit === cronFingerprint(j)) return;
-    j.state.empreinteNuit = cronFingerprint(j);
+    if (j.state.nightSucceeded || !cronStats(j) || j.state.nightFingerprint === cronFingerprint(j)) return;
+    j.state.nightFingerprint = cronFingerprint(j);
     return night(j);
   },
   createWorld: (t) => {
@@ -332,12 +332,12 @@ export const inodes: Chapter = {
         /\b6\d{4}\b/.test(j.last.output) && /stats|^6\d{4}$/m.test(j.last.output) && !/100% \/srv\/radio/.test(j.last.output),
       message: (j) => j.t('inodes-event-culprit'),
     },
-    { id: 'too-long', condition: (j) => (j.state.argumentsTropLongs ?? 0) > 0, message: (j) => j.t('inodes-event-too-long') },
+    { id: 'too-long', condition: (j) => (j.state.argumentsTooLong ?? 0) > 0, message: (j) => j.t('inodes-event-too-long') },
     { id: 'recent-lost', condition: (j) => !intactRecent(j), message: (j) => j.t('inodes-event-recent-lost') },
     { id: 'restarts', condition: (j) => !!j.find(record(j)), message: (j) => j.t('inodes-event-restarts', { pourcent: inodesPercent(j) }) },
     {
       id: 'end',
-      condition: (j) => !!j.state.nuitReussie && intactRecent(j) && inodesPercent(j) < 80,
+      condition: (j) => !!j.state.nightSucceeded && intactRecent(j) && inodesPercent(j) < 80,
       message: (j) => j.t('inodes-event-end'),
     },
   ],

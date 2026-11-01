@@ -57,11 +57,11 @@ export const ROBOT_REQUESTS = LOG.robotRequests;
 // 403 une fois bloqué par nginx), des visiteurs passent toutes les 7 s. Le
 // journal grandit : tail -f /var/log/nginx/access.log le montre en direct.
 const DIRECT_START = Date.UTC(2026, 9, 13, 18, 42, 0);
-const inDirect = (j: Game): string[] => (j.state.accesEnDirect ??= []) as string[];
+const inDirect = (j: Game): string[] => (j.state.liveAccess ??= []) as string[];
 const accessLine = (t: number, ip: string, page: string, status: number, size: number) =>
   `${ip} - - [13/Oct/2026:${new Date(t + 2 * 3_600_000).toISOString().slice(11, 19)} +0200] "GET ${page} HTTP/1.1" ${status} ${size}`;
-const override = (j: Game) => (j.state.processus as Process[]).some((p) => p.cpu > 90);
-const blocked = (j: Game) => (j.state.confChargee as string).includes(`deny ${ROBOT};`);
+const override = (j: Game) => (j.state.process as Process[]).some((p) => p.cpu > 90);
+const blocked = (j: Game) => (j.state.loadedConf as string).includes(`deny ${ROBOT};`);
 
 function visits(j: Game, forEachOf: number, a: number) {
   const robot = instants(forEachOf, a, 2).map((t) => ({ t, robot: true }));
@@ -131,7 +131,7 @@ export const datacenter: Chapter = {
   // t : les textes dans la langue du jeu (français tant que le shell ne le
   // transmet pas).
   state: (t) => ({
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 612, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx' },
       { pid: 613, user: 'www-data', cpu: 4.8, mem: 0.6, command: 'nginx: worker process' },
@@ -153,18 +153,18 @@ export const datacenter: Chapter = {
     }),
     // Configuration que nginx a réellement chargée (il ne relit le fichier
     // qu'au reload ou au restart).
-    confChargee: initialBlocked(t),
-    surSystemctl: (game: any, action: string, name: string) => {
+    loadedConf: initialBlocked(t),
+    onSystemctl: (game: any, action: string, name: string) => {
       if (name !== 'nginx' || action === 'stop') return '';
-      game.state.confChargee = game.read(BLOCKED) ?? '';
+      game.state.loadedConf = game.read(BLOCKED) ?? '';
       return '';
     },
-    surKill: (game: any, p: Process) => {
+    onKill: (game: any, p: Process) => {
       if (p.command !== 'php-fpm: pool catalogue') return '';
       // systemd relance automatiquement le service (Restart=always).
-      const blocked = game.state.confChargee.includes(`deny ${ROBOT};`);
+      const blocked = game.state.loadedConf.includes(`deny ${ROBOT};`);
       const fresh = blocked ? catalogueStable() : { ...catalogueStable(), pid: p.pid + 2, cpu: 99.1, mem: 37.9 };
-      game.state.processus.push(fresh);
+      game.state.process.push(fresh);
       return game.t(blocked ? 'first-day-restart-calm' : 'first-day-restart-robot', { pid: String(fresh.pid) });
     },
   }),
@@ -276,9 +276,9 @@ export const datacenter: Chapter = {
     },
     {
       id: 'blocked',
-      condition: (j) => j.state.confChargee.includes(`deny ${ROBOT};`),
+      condition: (j) => j.state.loadedConf.includes(`deny ${ROBOT};`),
       message: (j) => {
-        const p = (j.state.processus as Process[]).find((q) => q.cpu > 90);
+        const p = (j.state.process as Process[]).find((q) => q.cpu > 90);
         return p
           ? j.t('first-day-event-blocked-process', { robot: ROBOT, pid: String(p.pid) })
           : j.t('first-day-event-blocked', { robot: ROBOT });
@@ -287,7 +287,7 @@ export const datacenter: Chapter = {
     {
       id: 'repaired',
       condition: (j) =>
-        j.flags.has('blocked') && !(j.state.processus as Process[]).some((p) => p.cpu > 90),
+        j.flags.has('blocked') && !(j.state.process as Process[]).some((p) => p.cpu > 90),
       message: (j) => j.t('first-day-event-repaired', { robot: ROBOT }),
     },
     {

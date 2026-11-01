@@ -369,7 +369,7 @@ export const hashWithSalt = (secret: string, salt: string) => `{SSHA}${fingerpri
 
 /** slappasswd : une empreinte {SSHA} (salée : deux fois le même mot de passe ne donne pas la même). */
 export function hash(j: Game, secret: string): string {
-  const n = (j.state.ldapSel = (j.state.ldapSel ?? 0) + 1);
+  const n = (j.state.ldapSalt = (j.state.ldapSalt ?? 0) + 1);
   const salt = fingerprint(String(n), 'sel').slice(0, 8);
   return `{SSHA}${fingerprint(secret, salt)}${salt}`;
 }

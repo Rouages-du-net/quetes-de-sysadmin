@@ -56,8 +56,8 @@ export function digDns(args: string[], game: Shell): string {
   if (server === 'primary' && sd?.services.named?.state !== 'active')
     return game.error(`;; communications error to ${addressFor(game, target)}#53: connection refused\n;; no servers could be reached`);
   const r = query(game, server, name, type, toUtc(local));
-  game.state.dnsQuestions = [
-    ...(game.state.dnsQuestions ?? []),
+  game.state.dnsQueries = [
+    ...(game.state.dnsQueries ?? []),
     { server, name: name.replace(/\.?$/, '.').toLowerCase(), type, data: r.responses.map((x) => x.data) },
   ];
   if (short) return r.responses.map((x) => x.data).join('\n');
@@ -102,7 +102,7 @@ export const BIND: Record<string, Command> = {
       for (const type of ['A', 'AAAA', 'MX']) {
         const r = query(game, server, name, type, now);
         if (type === 'A')
-          game.state.dnsQuestions = [...(game.state.dnsQuestions ?? []), { server, name, type, data: r.responses.map((x) => x.data) }];
+          game.state.dnsQueries = [...(game.state.dnsQueries ?? []), { server, name, type, data: r.responses.map((x) => x.data) }];
         if (r.status === 'NXDOMAIN') return game.error([...header, `Host ${name} not found: 3(NXDOMAIN)`].join('\n'));
         if (r.status === 'REFUSED') return game.error([...header, `Host ${name} not found: 5(REFUSED)`].join('\n'));
         for (const x of r.responses) {
@@ -141,7 +141,7 @@ export const BIND: Record<string, Command> = {
           ),
         );
       }
-      game.state.zoneVerifiee = true;
+      game.state.zoneChecked = true;
       return `zone ${zone}/IN: loaded serial ${z.serial}\nOK`;
     },
   },

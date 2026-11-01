@@ -246,12 +246,12 @@ export const powersFull: Chapter = {
           load: (j) => startDocker(j),
         },
       }),
-      processus: [
+      process: [
         { pid: 1, user: 'root', cpu: 0, mem: 0.3, command: '/sbin/init' },
         { pid: 610, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
         { pid: 702, user: 'root', cpu: 0.4, mem: 2.1, command: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
       ],
-      montages: [{ path: '/', capacity: 20_000_000_000, name: '/dev/vda1' }],
+      mounts: [{ path: '/', capacity: 20_000_000_000, name: '/dev/vda1' }],
       docker: { ...dockerState(), names: ['workshop', 'workshop.internal', '192.0.2.15'] },
     };
   },

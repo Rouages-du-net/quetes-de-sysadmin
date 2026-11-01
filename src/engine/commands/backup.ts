@@ -187,7 +187,7 @@ function installer(game: Shell, text: string, file: string): string {
   if (errors.length) return [...errors, game.t('crontab-retry')].join('\n');
   const crontabs: Record<string, string> = (game.state.crontabs ??= {});
   crontabs[game.who] = text;
-  game.state.versionCrontab = (game.state.versionCrontab ?? 0) + 1;
+  game.state.crontabVersion = (game.state.crontabVersion ?? 0) + 1;
   return 'crontab: installing new crontab';
 }
 
@@ -233,7 +233,7 @@ export const BACKUP: Record<string, Command> = {
       if (action === '-r') {
         if (!(game.who in crontabs)) return game.error(`no crontab for ${game.who}`);
         delete crontabs[game.who];
-        game.state.versionCrontab = (game.state.versionCrontab ?? 0) + 1;
+        game.state.crontabVersion = (game.state.crontabVersion ?? 0) + 1;
         return '';
       }
       if (action === '-e') {

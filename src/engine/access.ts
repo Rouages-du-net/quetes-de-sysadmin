@@ -91,7 +91,7 @@ export const publicFor = (isPrivate: string) => `${PUBLIC_HEADER}${base64(conden
 function machineInFace(origin: Shell, address: string): { machine: Host; shell: Shell; story?: string } | null {
   if (origin.host === 'desk') {
     const m = MACHINES.find((x) => x.address === address);
-    const shell = m && (origin.state.sessionDistante?.(m.name) as Shell | undefined);
+    const shell = m && (origin.state.remoteSession?.(m.name) as Shell | undefined);
     return m && shell ? { machine: m, shell, story: m.name } : null;
   }
   const internal = origin.internal_().find((h) => h.address === address);
@@ -150,7 +150,7 @@ function failure(origin: Shell, text: string): string {
 }
 
 const passwordFor = (s: Shell, account: string): string | undefined =>
-  (s.state.motsDePasse as Record<string, string> | undefined)?.[account] ?? (account === s.player ? s.playerPassword() : undefined);
+  (s.state.passwords as Record<string, string> | undefined)?.[account] ?? (account === s.player ? s.playerPassword() : undefined);
 
 // Les clés publiques autorisées pour ce compte, sur la machine d'en face.
 function allowedKeys(s: Shell, account: string): string[] {
@@ -164,7 +164,7 @@ function allowedKeys(s: Shell, account: string): string[] {
 
 // La machine d'en face garde trace des connexions (pour les histoires) : par clé, par mot de passe.
 function note(s: Jump, comment: 'cle' | 'motDePasse') {
-  const connections = (s.shell.state.connexionsSsh ??= { cle: 0, motDePasse: 0 }) as Record<string, number>;
+  const connections = (s.shell.state.sshConnections ??= { cle: 0, motDePasse: 0 }) as Record<string, number>;
   connections[comment]++;
 }
 
@@ -202,7 +202,7 @@ export function pass(origin: Shell, jumps: Jump[], next: () => string, i = 0): s
   const file = '~/.ssh/known_hosts';
   const lines = (origin.read(file) ?? '').split('\n');
   // Une machine d'histoire réinstallée a changé de clé d'hôte (les machines internes gardent la leur).
-  const generation = s.story ? ((origin.state.cleDistante?.(s.machine.name) as string | undefined) ?? '') : '';
+  const generation = s.story ? ((origin.state.remoteKey?.(s.machine.name) as string | undefined) ?? '') : '';
   const key = hostKey(s.machine, generation);
   const number = lines.findIndex((l) => l.split(' ')[0].split(',').includes(s.host));
   if (number >= 0) {
@@ -251,7 +251,7 @@ function authenticate(origin: Shell, jumps: Jump[], next: () => string, i: numbe
   const existsAccount = !!s.shell.accounts.users[s.user];
   const permitted = existsAccount && allowed(config, s.user);
   // Les clés du poste, tenues à jour sur les machines de l'histoire (d'où que parte la connexion).
-  const workstation = origin.host === 'desk' ? origin : (s.shell.principal.state.poste?.() as Shell | undefined);
+  const workstation = origin.host === 'desk' ? origin : (s.shell.principal.state.workstation?.() as Shell | undefined);
   if (workstation && s.shell.principal.chapter.playerKeys) copyKeys(workstation, s.shell);
   const authorised = allowedKeys(s.shell, s.user);
   const paths = [...new Set([...s.identities, ...KEYS_BY_DEFAULT])];
@@ -303,7 +303,7 @@ function authenticate(origin: Shell, jumps: Jump[], next: () => string, i: numbe
     const text = (n as File).content;
     if (!permitted || typeof text !== 'string' || !authorised.includes(publicFor(text))) return key(k + 1);
     // Une clé protégée par une phrase de passe : ssh la demande avant de s'en servir.
-    const phrase = (origin.state.phrasesDePasse as Record<string, string> | undefined)?.[origin.resolve(path)];
+    const phrase = (origin.state.passPhrases as Record<string, string> | undefined)?.[origin.resolve(path)];
     if (!phrase) {
       note(s, 'cle');
       return withValue(pass(origin, jumps, next, i + 1));
@@ -340,7 +340,7 @@ export function connectWithoutQuestion(origin: Shell, target: string, checkHostK
     const config: Record<string, string> = s.shell.state.sshd?.load ?? {};
     const permitted = !!s.shell.accounts.users[s.user] && allowed(config, s.user);
     const authorised = allowedKeys(s.shell, s.user);
-    const phrases = (origin.state.phrasesDePasse as Record<string, string> | undefined) ?? {};
+    const phrases = (origin.state.passPhrases as Record<string, string> | undefined) ?? {};
     const ok = [...new Set([...s.identities, ...KEYS_BY_DEFAULT])].some((path) => {
       const n = origin.find(path);
       if (!n || n.type !== 'fichier' || typeof n.content !== 'string') return false;

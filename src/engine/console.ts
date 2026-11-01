@@ -71,21 +71,21 @@ export class Console {
     const s = new Shell(workstation(keys), this.t.language, 'desk');
     // ssh demande au serveur d'en face sa configuration appliquée (sshd).
     // (celui du chapitre qu'ouvrirait la connexion : un chapitre peut commencer avec SSH sur un autre port).
-    s.state.sshdDistant = (name: string) => this.sessionFor(name).state.sshd?.load ?? null;
+    s.state.remoteSshd = (name: string) => this.sessionFor(name).state.sshd?.load ?? null;
     // … et son pare-feu (ufw), qui peut bloquer la connexion avant même sshd.
-    s.state.pareFeuDistant = (name: string) => this.sessions.get(name)?.state.ufw ?? null;
+    s.state.remoteFirewall = (name: string) => this.sessions.get(name)?.state.ufw ?? null;
     // … et les adresses que son fail2ban a bannies (pour ce port, s'il est donné : la prison ne bloque que les siens).
-    s.state.bannisDistant = (name: string, port?: number): string[] => {
+    s.state.remoteBanned = (name: string, port?: number): string[] => {
       const f2b: Fail2banState | undefined = this.sessions.get(name)?.state.fail2ban;
       if (!f2b) return [];
       return port === undefined ? f2b.banned : bannedOnPort(f2b, port);
     };
     // … et l'état d'un de ses ports, vu d'ici (nc -zv machine port).
-    s.state.portDistant = (name: string, port: number): PortState => portState(this.sessionFor(name), port, false, WORKSTATION.address);
+    s.state.remotePort = (name: string, port: number): PortState => portState(this.sessionFor(name), port, false, WORKSTATION.address);
     // … et sa clé d'hôte, qui change quand la machine a été réinstallée.
-    s.state.cleDistante = (name: string): string => this.connectionChapter(name).hostKey ?? '';
+    s.state.remoteKey = (name: string): string => this.connectionChapter(name).hostKey ?? '';
     // … et la session elle-même (ssh -J, scp, ssh-copy-id, sur les machines qui gèrent leurs clés).
-    s.state.sessionDistante = (name: string): Shell => this.sessionFor(name);
+    s.state.remoteSession = (name: string): Shell => this.sessionFor(name);
     // Les noms des machines suivent la langue de la partie (royaume.internal → kingdom.internal).
     const other = LANGUAGES.filter((l) => l !== this.t.language).map((l) => translator(l));
     if (knownHosts) s.place('ssh', '~/.ssh/known_hosts', f(translateHosts(knownHosts, this.t, other), { lines: true }));
@@ -108,7 +108,7 @@ export class Console {
       if (old?.type === 'fichier') old.content = content;
       else s.place('ssh', `~/.ssh/${name}`, f(content, { lines: true, mode: isPrivate ? 'rw-------' : 'rw-r--r--' }));
     }
-    if (this.options.ssh?.phrases) s.state.phrasesDePasse = { ...this.options.ssh.phrases };
+    if (this.options.ssh?.phrases) s.state.passPhrases = { ...this.options.ssh.phrases };
     return s;
   }
 
@@ -123,7 +123,7 @@ export class Console {
           files[name] = this.workstation.read(`~/.ssh/${name}`) ?? '';
     // La config que le jeu a donnée, pas modifiée : rien à garder.
     if (files.config?.trim() === configSsh(this.t)) delete files.config;
-    return { files, phrases: this.workstation.state.phrasesDePasse };
+    return { files, phrases: this.workstation.state.passPhrases };
   }
 
   /** Remet le poste à neuf, en gardant les hôtes connus. */
@@ -178,7 +178,7 @@ export class Console {
     const chapter = this.connectionChapter(name);
     if (old?.chapter === chapter) return old;
     const s = this.newSession(MACHINES.find((m) => m.name === name)!, chapter);
-    s.state.preparee = true;
+    s.state.prepared = true;
     return s;
   }
 
@@ -202,12 +202,12 @@ export class Console {
     const c = chapter ?? this.currentChapter(story);
     const old = this.sessions.get(name);
     // La bannière donne le noyau qui tourne (celui de la session, s'il en a un).
-    const kernel = (old?.state.noyau as { active: string } | undefined)?.active ?? '6.12.0-quetes';
+    const kernel = (old?.state.kernel as { active: string } | undefined)?.active ?? '6.12.0-quetes';
     const banner = [`Linux ${machineName(this.t, machine.name)} ${kernel} #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.name}-motd`)];
     // Une session créée de loin (un port testé avec nc) : la première vraie
     // connexion ouvre le chapitre, avec son texte d'accueil.
-    if (!chapter && old?.state.preparee && old.chapter === c) {
-      delete old.state.preparee;
+    if (!chapter && old?.state.prepared && old.chapter === c) {
+      delete old.state.prepared;
       old.state.portSession = port;
       this.remote = { machine, story, shell: old };
       return [...(jump ? [] : banner), this.openChapter(c)].join('\n\n');
@@ -216,7 +216,7 @@ export class Console {
       // Comme une nouvelle connexion : on repart de sa maison. Se reconnecter
       // peut être un objectif (ex. vérifier qu'on ne s'est pas enfermé dehors).
       old.cwd = old.home;
-      old.state.connexions = (old.state.connexions ?? 1) + 1;
+      old.state.connections = (old.state.connections ?? 1) + 1;
       // Le port de la connexion (ss la montre ; la session survit à un changement de port de sshd).
       old.state.portSession = port;
       this.remote = { machine, story, shell: old };
@@ -257,7 +257,7 @@ export class Console {
     this.visited.add(machine.name);
     s.exam = this.exam;
     // Le chapitre peut regarder le poste (sa config ssh, ce qu'on y a copié).
-    s.state.poste = () => this.workstation;
+    s.state.workstation = () => this.workstation;
     this.sessions.set(machine.name, s);
     return s;
   }
@@ -345,10 +345,10 @@ export class Console {
     } else if (sh.output) {
       sh.output = false;
       chunks.push(this.inside.length ? this.quitInside() : this.remote ? this.disconnect() : this.t('workstation-exit'));
-    } else if (sh.reboot && sh.state.consoleHebergeur) {
+    } else if (sh.reboot && sh.state.hostConsole) {
       // La console de l'hébergeur (l'écran du serveur) ne coupe pas : on voit le démarrage.
       sh.reboot = false;
-      if (sh.state.secours && sh.state.banniereSecours) chunks.push(sh.state.banniereSecours as string);
+      if (sh.state.rescue && sh.state.rescueBanner) chunks.push(sh.state.rescueBanner as string);
     } else if (sh.reboot && this.remote) {
       // La machine redémarre : le serveur coupe la connexion.
       sh.reboot = false;
@@ -358,7 +358,7 @@ export class Console {
     } else if (sh.connectionRequest) {
       const name = sh.connectionRequest;
       sh.connectionRequest = null;
-      chunks.push(this.connect(name, undefined, false, sh.state.portConnexion ?? 22));
+      chunks.push(this.connect(name, undefined, false, sh.state.connectionPort ?? 22));
     } else if (sh.sessionRequest) {
       const d = sh.sessionRequest;
       sh.sessionRequest = null;

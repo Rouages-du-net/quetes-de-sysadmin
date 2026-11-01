@@ -13,7 +13,7 @@ import { prerequisites } from '../src/engine/unlocking';
 import { LANGUAGES, translator } from '../src/texts';
 import { inLanguage, machinesInLanguage } from './names';
 import { SERIES } from '../src/engine/chapters/lab';
-import { stockage } from '../src/engine/storage';
+import { storageOf } from '../src/engine/storage';
 
 const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
 const MDP = 'film-2027';
@@ -34,7 +34,7 @@ for (const language of LANGUAGES)
         return [output, ...errors].filter(Boolean).join('\n');
       };
       const play = (lines: string[]) => lines.map(one).join('\n');
-      return { s, jouer: play, st: () => stockage(s)! };
+      return { s, jouer: play, st: () => storageOf(s)! };
     }
 
     it('chapitre 1 — solution : courriers, mdstat, SMART des deux disques, sdb sorti de md0 et md1, ticket', () => {
@@ -339,7 +339,7 @@ for (const language of LANGUAGES)
       const { s, jouer: play } = part('stuck-boot');
       fix(s, 'LABEL=SCANS /srv/scans ext4 nofail 0 2');
       play(['blkid -L SCANS', 'reboot']);
-      expect(s.state.secours).toBe(false);
+      expect(s.state.rescue).toBe(false);
       expect(s.finished).toBe(true);
     });
 
@@ -349,7 +349,7 @@ for (const language of LANGUAGES)
       let all = play(['exit']);
       expect(all).toContain('You are in emergency mode.');
       contains(all, 'corriger fstab');
-      expect(s.state.secours).toBe(true);
+      expect(s.state.rescue).toBe(true);
       // La ligne effacée : le serveur démarrerait, mais sans les scans.
       all = fix(s, null);
       contains(all, 'ne seraient plus jamais montés');

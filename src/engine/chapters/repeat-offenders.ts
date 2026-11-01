@@ -217,7 +217,7 @@ export const repeatOffence: Chapter = {
   state: () => ({
     // SSH écoute sur 2222 depuis « Le port ».
     sshd: { load: { port: '2222' }, reloads: 0 },
-    ecoute: LISTENING,
+    listening: LISTENING,
     ufw: {
       enabled: true,
       incoming: 'deny',

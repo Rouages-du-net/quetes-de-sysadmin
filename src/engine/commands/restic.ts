@@ -240,7 +240,7 @@ function prune(c: Context): string[] {
   const after = repoSize(repo);
   repo.pruneA = false;
   repo.checked = false;
-  c.game.state.resticElague = true;
+  c.game.state.resticPruned = true;
   writeRepo(c.game, c.path, repo);
   return [
     'loading indexes...',
@@ -403,7 +403,7 @@ function launch(c: Context, action: string, args: string[]): string {
     const paths = positional.map((p) => game.resolve(p).replace(/\/$/, ''));
     if (!paths.length) return game.error('Fatal: nothing to backup, please specify source files/dirs');
     const files: Record<string, Version> = {};
-    const clock = game.state.resticHorloge ?? 0;
+    const clock = game.state.resticClock ?? 0;
     const walk = (path: string) => {
       const n = game.find(path);
       if (!n) return;
@@ -420,7 +420,7 @@ function launch(c: Context, action: string, args: string[]): string {
       if (!game.exists(ch)) return game.error(`Fatal: unable to save snapshot: lstat ${ch}: no such file or directory`);
       walk(ch);
     }
-    game.state.resticHorloge = clock + 60_000;
+    game.state.resticClock = clock + 60_000;
     const i: Snapshot = { id: hex(`instantane-${repo.snapshotList.length}-${clock}`), time: clock, host: game.host, paths, files };
     const r = addSnapshot(repo, i);
     writeRepo(game, c.path, repo);
@@ -483,7 +483,7 @@ function launch(c: Context, action: string, args: string[]): string {
     repo.snapshotList = repo.snapshotList.filter((s) => !removed.includes(s));
     repo.checked = false;
     if (removed.length) repo.pruneA = true;
-    game.state.resticOublie = true;
+    game.state.resticForgotten = true;
     writeRepo(game, c.path, repo);
     if (removed.length) output.push(`[0:00] 100.00%  ${removed.length} / ${removed.length} files deleted`);
     if (options.has('--prune')) output.push(...prune(c));
@@ -570,7 +570,7 @@ export const RESTIC: Record<string, Command> = {
       const c: Context = { game, path, repo };
       const execute = (mdp: string) => {
         if (mdp !== repo.password) {
-          game.state.resticMauvaisMdp = true;
+          game.state.resticWrongPassword = true;
           return game.error('Fatal: wrong password or no key found');
         }
         return launch(c, action, next);
@@ -579,7 +579,7 @@ export const RESTIC: Record<string, Command> = {
         const n = game.find(mdpFile);
         if (!n || n.type !== 'fichier') return game.error(`Fatal: Load(<password file>): open ${mdpFile}: no such file or directory`);
         if (!game.traverses(mdpFile) || !game.can(n, 'r')) return game.error(`Fatal: Load(<password file>): open ${mdpFile}: permission denied`);
-        game.state.resticFichierMdp = game.resolve(mdpFile);
+        game.state.resticPasswordFile = game.resolve(mdpFile);
         return execute((game.read(mdpFile) ?? '').trim());
       }
       // Sans fichier, restic demande le mot de passe (la saisie suit, en clair ici).

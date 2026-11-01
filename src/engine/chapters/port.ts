@@ -109,7 +109,7 @@ const sshd = (j: Game) => j.state.sshd as SshdState;
 const ports = (j: Game) => portsSshd(sshd(j).load);
 const pf = (j: Game) => j.state.ufw as Firewall;
 const f2b = (j: Game) => j.state.fail2ban as Fail2banState;
-const workstation = (j: Game) => (j.state.poste as (() => Shell) | undefined)?.();
+const workstation = (j: Game) => (j.state.workstation as (() => Shell) | undefined)?.();
 const open = (j: Game, port: number, source = INTERNET) => verdict(pf(j), port, source) === 'accepte';
 
 // Un port où sshd écoute et que le pare-feu laisse passer depuis le poste.
@@ -159,7 +159,7 @@ export const port: Chapter = {
   },
   state: () => ({
     sshd: { load: {}, reloads: 0 } satisfies SshdState,
-    ecoute: listening([22]),
+    listening: listening([22]),
     ufw: {
       enabled: true,
       incoming: 'deny',
@@ -188,7 +188,7 @@ export const port: Chapter = {
           s.load = readSshd(j).values;
           s.reloads++;
           // sshd relancé rouvre ses sockets : il écoute sur les ports de la nouvelle configuration.
-          j.state.ecoute = listening(ports(j));
+          j.state.listening = listening(ports(j));
           const sd = systemd(j)!;
           for (const p of ports(j)) {
             writeLog(sd, 'ssh.service', 'sshd', 612, `Server listening on 0.0.0.0 port ${p}.`);

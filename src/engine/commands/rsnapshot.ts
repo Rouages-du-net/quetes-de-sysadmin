@@ -320,7 +320,7 @@ export const RSNAPSHOT: Record<string, Command> = {
       const r = run(game, conf, command, options.has('t'));
       if (r.error)
         return game.error([...(options.has('t') || options.has('v') ? r.commands : []), BANNER(args), `ERROR: ${r.error}`].join('\n'));
-      game.state.rsnapshotTours = [...(game.state.rsnapshotTours ?? []), command];
+      game.state.rsnapshotRuns = [...(game.state.rsnapshotRuns ?? []), command];
       return options.has('t') || options.has('v')
         ? r.commands.map((c) => `${c} `).join('\n')
         : r.commands.filter((c) => c.endsWith('nothing to copy')).join('\n');

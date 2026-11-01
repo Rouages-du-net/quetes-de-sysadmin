@@ -29,7 +29,7 @@ export interface Time {
   manual?: boolean;
 }
 
-export const timeOfDay = (j: Game): Time | undefined => j.state.heure;
+export const timeOfDay = (j: Game): Time | undefined => j.state.clockTime;
 
 /** Le fuseau existe-t-il (comme les fichiers de /usr/share/zoneinfo) ? */
 export function validZone(name: string): boolean {

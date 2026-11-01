@@ -271,7 +271,7 @@ export function configure(game: Shell, e: AptState, packages: [string, string][]
     if (n.startsWith('linux-image-6')) {
       const version = n.replace(/^linux-image-/, '');
       lines.push(`I: /vmlinuz is now a symlink to boot/vmlinuz-${version}`, `I: /initrd.img is now a symlink to boot/initrd.img-${version}`);
-      const kernel = game.state.noyau as Kernel | undefined;
+      const kernel = game.state.kernel as Kernel | undefined;
       if (kernel) kernel.installed = version;
       lines.push(`update-initramfs: Generating /boot/initrd.img-${version}`);
     }
@@ -326,8 +326,8 @@ function putDayA(game: Shell, yes: boolean): string {
         e.installed[n] ? `Unpacking ${n} (${v}) over (${e.installed[n]}) ...` : `Unpacking ${n} (${v}) ...`,
       );
     // La connexion tombe pendant la configuration : sans tmux, dpkg meurt avec la session.
-    if (game.state.coupureReseau && !game.tmux) {
-      game.state.coupureReseau = false;
+    if (game.state.networkCut && !game.tmux) {
+      game.state.networkCut = false;
       e.interrupted = all.map(([n]) => n);
       // Ce qui est dépaqueté attend sa nouvelle version : on la garde en mémoire pour dpkg --configure -a.
       e.inWaiting = Object.fromEntries(all);
@@ -335,8 +335,8 @@ function putDayA(game: Shell, yes: boolean): string {
       lines.push(`Setting up ${all[0][0]} (${all[0][1]}) ...`);
       return lines.join('\n');
     }
-    if (game.state.coupureReseau) {
-      game.state.coupureReseau = false;
+    if (game.state.networkCut) {
+      game.state.networkCut = false;
       game.cut = true;
     }
     lines.push(...configure(game, e, all));
@@ -368,7 +368,7 @@ function installer(game: Shell, names: string[], yes: boolean): string {
   if (e.interrupted?.length) return game.error(INTERRUPTED_ERROR, 100);
   const unknown = names.filter((n) => !e.lists || !PACKAGES[n]);
   if (unknown.length) {
-    game.state.aptIntrouvable = true;
+    game.state.missingApt = true;
     return game.error([...READ, ...unknown.map((n) => `Error: Unable to locate package ${n}`)].join('\n'));
   }
   const already = names.filter((n) => e.installed[n]);
@@ -541,11 +541,11 @@ export const APT: Record<string, Command> = {
       if (game.who !== 'root')
         output.push('nginx: [alert] could not open error log file: open() "/var/log/nginx/error.log" failed (13: Permission denied)');
       if (res.error) {
-        game.state.nginxErreur = res.error;
+        game.state.nginxError = res.error;
         output.push(`nginx: [emerg] ${res.error}`, `nginx: configuration file ${CONF} test failed`);
         return game.error(output.join('\n'));
       }
-      game.state.nginxTeste = true;
+      game.state.nginxTested = true;
       output.push(...(res.config?.warnings ?? []).map((a) => `nginx: [warn] ${a}`), `nginx: the configuration file ${CONF} syntax is ok`);
       if (game.who !== 'root') {
         const h = nginxTime(systemd(game)?.clock ?? 0);

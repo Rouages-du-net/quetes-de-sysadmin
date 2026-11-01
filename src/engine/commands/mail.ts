@@ -184,7 +184,7 @@ function genkey(game: Shell, args: string[]): string {
   const place = game.resolve(directory);
   if (game.find(place)?.type !== 'dossier') return game.error(`opendkim-genkey: ${directory}: No such file or directory`);
   const c = mail(game);
-  const draw = (game.state.clesDkim = (game.state.clesDkim ?? 0) + 1);
+  const draw = (game.state.dkimKeys = (game.state.dkimKeys ?? 0) + 1);
   const isPrivate = privateKey(`${domain}:${selector}:${bits}:${draw}:${c?.ip ?? ''}`, bits);
   const output: string[] = [];
   if (verbose) output.push('opendkim-genkey: generating private key');

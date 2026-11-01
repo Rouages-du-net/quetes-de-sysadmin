@@ -278,7 +278,7 @@ function deployer(game: Shell, r: Renewal, sec: boolean): string[] {
 // Un nouveau certificat de 90 jours (Let's Encrypt antidate d'une heure).
 function issue(game: Shell, name: string, old: Certificate) {
   const start = Math.floor((now(game) - 3600_000) / 1000) * 1000;
-  const n = (game.state.certbotEmis = (game.state.certbotEmis ?? 0) + 1);
+  const n = (game.state.certbotIssued = (game.state.certbotIssued ?? 0) + 1);
   // Un nouveau numéro de série (hexadécimal, tiré du précédent).
   const serial = [...`${old.serial}${n}`].reduce((h, car) => Math.imul(h ^ car.charCodeAt(0), 0x01000193) >>> 0, 0x811c9dc5);
   const hexSerial = Array.from({ length: 5 }, (_, i) => ((Math.imul(serial, i + 7) >>> 0) ^ (serial >>> i)).toString(16).padStart(8, '0'))
@@ -354,12 +354,12 @@ function renew(
   }
   const sec = o.dryRun || mode === 'reconfigure';
   lines.push(`${sec ? 'Simulating renewal of' : 'Renewing'} an existing certificate for ${namesList(old.names)}`);
-  const errors = challenges(game, fresh, old.names, (game.state.certbotEssais = (game.state.certbotEssais ?? 0) + 1));
+  const errors = challenges(game, fresh, old.names, (game.state.certbotAttempts = (game.state.certbotAttempts ?? 0) + 1));
   if (errors.includes('plugin')) return { lines: [], ok: false, error: 'The requested nginx plugin does not appear to be installed' };
   const absent = errors.find((e) => e.startsWith('webroot:'));
   if (absent) return { lines, ok: false, error: `--webroot-path ${absent.slice(8) || '(none)'} does not exist or is not a directory` };
   if (errors.length) {
-    game.state.certbotDefiEchoue = true;
+    game.state.certbotChallengeFailed = true;
     lines.push(
       '',
       `Certbot failed to authenticate some domains (authenticator: ${fresh.params.authenticator}). The Certificate Authority reported these problems:`,

@@ -22,7 +22,7 @@ const VALIDATE = ['samir', 'lea'];
 const ADVERT = 'promo-casino';
 const SIGNUPS = (): Record<string, Signup> => ({ samir: 'attente', lea: 'attente', [ADVERT]: 'attente' });
 
-const signups = (j: Game) => j.state.inscriptions as Record<string, Signup>;
+const signups = (j: Game) => j.state.signups as Record<string, Signup>;
 
 // La page d'administration du wiki : la liste des inscriptions, et une adresse pour valider ou refuser chacune.
 const ADMIN: App = {
@@ -44,12 +44,12 @@ const ADMIN: App = {
 };
 
 const wiki = (j: Game) => (j as Shell).internal('wiki')!;
-const workstation = (j: Game) => (j.state.poste as (() => Shell) | undefined)?.();
+const workstation = (j: Game) => (j.state.workstation as (() => Shell) | undefined)?.();
 // Les tunnels du poste encore ouverts (leur processus ssh tourne).
 const openTunnels = (j: Game) => {
   const p = workstation(j);
   if (!p) return 0;
-  const live = ((p.state.processus ?? []) as { pid: number }[]).map((x) => x.pid);
+  const live = ((p.state.process ?? []) as { pid: number }[]).map((x) => x.pid);
   return ((p.state.tunnels ?? []) as { pid: number }[]).filter((t) => live.includes(t.pid)).length;
 };
 const approved = (j: Game) => VALIDATE.every((n) => signups(wiki(j))[n] === 'validee');
@@ -75,12 +75,12 @@ export const tunnel: Chapter = {
       commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname', 'systemctl', 'ss'],
       home: (t) => ({ 'note_gaspard.txt': f(t('tunnel-note-gaspard')) }),
       state: () => ({
-        inscriptions: SIGNUPS(),
-        ecoute: [
-          { proto: 'tcp', address: '0.0.0.0', port: 22, processus: 'sshd', pid: 512 },
-          { proto: 'tcp', address: '127.0.0.1', port: 8080, processus: 'python3', pid: 731 },
+        signups: SIGNUPS(),
+        listening: [
+          { proto: 'tcp', address: '0.0.0.0', port: 22, process: 'sshd', pid: 512 },
+          { proto: 'tcp', address: '127.0.0.1', port: 8080, process: 'python3', pid: 731 },
         ],
-        applis: { '127.0.0.1:8080': ADMIN },
+        apps: { '127.0.0.1:8080': ADMIN },
         systemd: newSystemd('wiki', NOW - 30 * 86_400_000, NOW, {
           'wiki-admin': {
             description: 'Wiki admin interface (127.0.0.1:8080)',

@@ -106,7 +106,7 @@ export interface Array {
   rank: number;
 }
 
-export interface Stockage {
+export interface StorageState {
   disks: Record<string, Disk>;
   arrays: Record<string, Array>;
   // Les disques où GRUB est installé (dans leur zone de démarrage).
@@ -121,10 +121,10 @@ export interface Stockage {
 const SPEED = 180_000;
 export const SECONDS_BY_COMMAND = 1800;
 
-export const stockage = (j: Game): Stockage | null => (j.state.stockage as Stockage | undefined) ?? null;
+export const storageOf = (j: Game): StorageState | null => (j.state.storage as StorageState | undefined) ?? null;
 
 /** « sdb2 » → le disque sdb et sa partition 2 (ou null). */
-export function partitionFor(st: Stockage, name: string): { disk: string; d: Disk; p: Partition } | null {
+export function partitionFor(st: StorageState, name: string): { disk: string; d: Disk; p: Partition } | null {
   const m = /^(?:\/dev\/)?(sd[a-z])(\d+)$/.exec(name);
   if (!m) return null;
   const d = st.disks[m[1]];
@@ -133,14 +133,14 @@ export function partitionFor(st: Stockage, name: string): { disk: string; d: Dis
 }
 
 /** La grappe dont cette partition est membre (sans /dev/), ou null. */
-export const arrayFor = (st: Stockage, part: string): [string, Array] | null =>
+export const arrayFor = (st: StorageState, part: string): [string, Array] | null =>
   Object.entries(st.arrays).find(([, g]) => g.members.some((m) => m.part === part)) ?? null;
 
 /** Une partition est-elle tenue par une grappe ou un montage ? (sfdisk refuse de toucher son disque.) */
-export const busyDisk = (st: Stockage, disk: string) =>
+export const busyDisk = (st: StorageState, disk: string) =>
   [disk, ...(st.disks[disk]?.partitions.map((p) => `${disk}${p.number}`) ?? [])].some((n) => arrayFor(st, n) !== null || !!st.lvm?.pvs[n]);
 
-export const majmin = (st: Stockage, name: string): [number, number] => {
+export const majmin = (st: StorageState, name: string): [number, number] => {
   const p = /^(sd[a-z])(\d*)$/.exec(name);
   if (p) return [8, st.disks[p[1]].rank * 16 + (p[2] ? Number(p[2]) : 0)];
   return [9, st.arrays[name]?.rank ?? 0];
@@ -153,14 +153,14 @@ export const degraded = (g: Array) => active(g).length < g.wanted;
 export const healthy = (g: Array) => active(g).length === g.wanted && g.members.every((m) => m.state === 'actif');
 
 // La grappe qui reconstruit en ce moment : la première (dans l'ordre md0, md1…) ; les autres attendent.
-export function rebuiltInThisMoment(st: Stockage): string | null {
+export function rebuiltInThisMoment(st: StorageState): string | null {
   return Object.keys(st.arrays)
     .sort((a, b) => st.arrays[a].rank - st.arrays[b].rank)
     .find((n) => inRebuild(st.arrays[n]).length > 0 || st.arrays[n].synchro !== undefined) ?? null;
 }
 
 /** Le temps passe (une commande) : la reconstruction avance. */
-export function advance(st: Stockage, seconds = SECONDS_BY_COMMAND): void {
+export function advance(st: StorageState, seconds = SECONDS_BY_COMMAND): void {
   let rest = seconds;
   // Une grappe finie, la suivante commence dans le temps qui reste.
   while (rest > 0) {
@@ -212,7 +212,7 @@ const bar = (copyOf: number) => {
 };
 
 /** Le contenu de /proc/mdstat. */
-export function mdstat(st: Stockage): string {
+export function mdstat(st: StorageState): string {
   const lines = ['Personalities : [raid1] [linear] [multipath] [raid0] [raid6] [raid5] [raid4] [raid10] '];
   const inCourse = rebuiltInThisMoment(st);
   const names = Object.keys(st.arrays).sort((a, b) => st.arrays[b].rank - st.arrays[a].rank);
@@ -292,7 +292,7 @@ export function decimalSize(bytes: number): string {
 
 /** Les fichiers de périphérique de /dev suivent les disques, partitions et grappes (pour ls et la complétion). */
 export function devUpdate(j: Game): void {
-  const st = stockage(j);
+  const st = storageOf(j);
   const dev = j.find('/dev');
   if (!st || dev?.type !== 'dossier') return;
   const names = [

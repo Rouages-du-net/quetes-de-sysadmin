@@ -80,7 +80,7 @@ export const UFW: Record<string, Command> = {
         game.ask(game.t('ufw-question'), (r) => {
           if (!/^(y|yes|o|oui)$/i.test(r)) return game.t('ufw-abandon');
           pf.enabled = true;
-          pf.activationAlConnections = game.state.connexions ?? 1;
+          pf.activationAlConnections = game.state.connections ?? 1;
           return game.t('ufw-active');
         });
         return '';

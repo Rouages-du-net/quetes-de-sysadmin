@@ -185,7 +185,7 @@ export function restartAfter(game: Shell, r: UuResult) {
     restart(game, sd);
     game.reboot = true;
   } else {
-    game.state.redemarrageProgramme = r.reboot;
+    game.state.rebootScheduled = r.reboot;
     writeLog(sd, '', 'systemd-logind', 512, `Reboot scheduled for ${r.reboot}, use 'shutdown -c' to cancel.`);
   }
 }
@@ -194,11 +194,11 @@ export function restartAfter(game: Shell, r: UuResult) {
 export function afterDaily(game: Game) {
   const sh = game as Shell;
   const c = readConfApt(sh);
-  sh.state.quotidiens = (sh.state.quotidiens ?? 0) + 1;
+  sh.state.daily = (sh.state.daily ?? 0) + 1;
   if (c.errors.length || c.values['APT::Periodic::Enable'] === '0') return;
   if (!yes(c.values['APT::Periodic::Unattended-Upgrade'] ?? '0')) return;
   const { result } = uuPass(sh);
-  sh.state.passesAuto = (sh.state.passesAuto ?? 0) + 1;
+  sh.state.autoPasses = (sh.state.autoPasses ?? 0) + 1;
   restartAfter(sh, result);
 }
 

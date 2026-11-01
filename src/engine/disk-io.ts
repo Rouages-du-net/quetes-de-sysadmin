@@ -60,7 +60,7 @@ export interface Rate {
 
 // Le processus principal d'un service actif.
 function pidFor(j: Game, d: Request): Process | undefined {
-  const all: Process[] = j.state.processus ?? [];
+  const all: Process[] = j.state.process ?? [];
   if (d.pid !== undefined) return all.find((p) => p.pid === d.pid);
   const s = systemd(j)?.services[d.service ?? ''];
   if (!s || s.state !== 'active') return undefined;
@@ -128,7 +128,7 @@ export function diskState(j: Game) {
   // Les processus bloqués en attente du disque (état D) : l'iowait et la charge.
   const blocked = rates.filter((x) => x.waiting > 50 || x.read + x.write > e.capacity * 0.2).length;
   const iowait = Math.min(85, utilisation > 50 ? utilisation * 0.8 : utilisation * 0.1);
-  return { e, debits: rates, utilisation, attente: waiting, iowait, load: 0.3 + blocked * 1.9 + (utilisation > 90 ? 1.2 : 0) };
+  return { e, debits: rates, utilisation, waiting: waiting, iowait, load: 0.3 + blocked * 1.9 + (utilisation > 90 ? 1.2 : 0) };
 }
 
 /** Le programme sensible (le direct) est-il servi à temps ? */

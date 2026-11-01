@@ -126,18 +126,18 @@ export const fullDisk: Chapter = {
         process: [{ pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: `/usr/local/bin/stream --config ${CONF}` }],
         // Au démarrage (et au rechargement), le relais relit sa configuration et rouvre son journal.
         load: (j) => {
-          j.state.fluxNiveau = configLevel(j);
+          j.state.fluxLevel = configLevel(j);
           open(j, { service: 'radio-stream', pid: 1730, user: 'radio', command: 'flux', fd: 3, path: LOG }, 'radio', 'adm');
         },
       },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },
     }),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: `/usr/local/bin/stream --config ${CONF}` },
     ],
-    montages: [{ path: '/', capacity: DISK, name: '/dev/vda1', system: 'ext4' }],
+    mounts: [{ path: '/', capacity: DISK, name: '/dev/vda1', system: 'ext4' }],
   }),
   initialise: (j) => sd(j).services['radio-stream'].load!(j),
   // Le relais écrit : en debug, le journal enfle à chaque instant.
@@ -146,7 +146,7 @@ export const fullDisk: Chapter = {
     const o = openSet(j).find((x) => x.service === 'radio-stream');
     if (!o) return;
     const freeMem = DISK - occupation(j) * DISK;
-    const addition = Math.min(Math.max(0, freeMem), j.state.fluxNiveau === 'debug' ? 400_000_000 : 40_000);
+    const addition = Math.min(Math.max(0, freeMem), j.state.fluxLevel === 'debug' ? 400_000_000 : 40_000);
     o.node.size = (o.node.size ?? 0) + addition;
   },
   createWorld: (t) => {
@@ -224,7 +224,7 @@ export const fullDisk: Chapter = {
     },
     {
       id: 'end',
-      condition: (j) => occupation(j) < 0.8 && !ghost(j) && enabled(j) && j.state.fluxNiveau !== 'debug' && validRotation(j),
+      condition: (j) => occupation(j) < 0.8 && !ghost(j) && enabled(j) && j.state.fluxLevel !== 'debug' && validRotation(j),
       message: (j) => j.t('full-disk-event-end'),
     },
   ],

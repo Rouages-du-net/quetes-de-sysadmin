@@ -8,12 +8,12 @@
 import type { Shell } from '../shell';
 import type { Command } from './index';
 import { help } from './manual';
-import { arrayFor, stockage, type Stockage } from '../storage';
+import { arrayFor, storageOf, type StorageState } from '../storage';
 import { lvm } from '../lvm';
 import { readFstab, resolveSource, systemFor } from '../fstab';
 
 // Ce que blkid sait d'un périphérique : son système de fichiers, ou ce qu'il est (membre RAID, PV).
-function attributes(st: Stockage, dev: string): string | null {
+function attributes(st: StorageState, dev: string): string | null {
   const n = dev.replace(/^\/dev\//, '');
   const fs = systemFor(st, dev);
   const fields: string[] = [];
@@ -31,7 +31,7 @@ function attributes(st: Stockage, dev: string): string | null {
 }
 
 // Tous les périphériques, dans l'ordre où blkid les trouve : disques et partitions, grappes, volumes logiques.
-function all(st: Stockage): string[] {
+function all(st: StorageState): string[] {
   const disks = Object.entries(st.disks)
     .sort(([, a], [, b]) => a.rank - b.rank)
     .flatMap(([n, d]) => [`/dev/${n}`, ...d.partitions.map((p) => `/dev/${n}${p.number}`)]);
@@ -41,7 +41,7 @@ function all(st: Stockage): string[] {
 }
 
 function blkid(game: Shell, args: string[]): string {
-  const st = stockage(game);
+  const st = storageOf(game);
   if (!st) return game.error('', 2);
   const value = (o: string) => (args.includes(o) ? args[args.indexOf(o) + 1] : undefined);
   const uuid = value('-U');
@@ -59,7 +59,7 @@ function blkid(game: Shell, args: string[]): string {
   return found.join('\n');
 }
 
-const mounts = (game: Shell): { path: string; name: string; system?: string; onlyRead?: boolean }[] => game.state.montages ?? [];
+const mounts = (game: Shell): { path: string; name: string; system?: string; onlyRead?: boolean }[] => game.state.mounts ?? [];
 
 function findmnt(game: Shell, args: string[]): string {
   if (args.includes('--verify') || args.includes('-x')) return check(game, args.includes('--verbose') || args.includes('-v'));
@@ -82,7 +82,7 @@ function findmnt(game: Shell, args: string[]): string {
 // findmnt --verify : chaque ligne de fstab, ses sources, ses points de montage.
 function check(game: Shell, verbose: boolean): string {
   const text = game.read('/etc/fstab') ?? '';
-  const st = stockage(game);
+  const st = storageOf(game);
   const { inputs, errors: reads } = readFstab(text);
   const outputs: string[] = [];
   let errors = 0;

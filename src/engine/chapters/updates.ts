@@ -67,7 +67,7 @@ type AptState = { installed: Record<string, string>; updates: Record<string, str
 const apt = (j: Game) => j.state.apt as AptState;
 const sd = (j: Game) => systemd(j)!;
 const dayA = (j: Game) => Object.entries(UPDATES).every(([n, v]) => apt(j).installed[n] === v) && !apt(j).interrupted?.length;
-const kernel = (j: Game) => j.state.noyau as { active: string; installed: string };
+const kernel = (j: Game) => j.state.kernel as { active: string; installed: string };
 const restarts = (j: Game) => kernel(j).active === NEW_KERNEL;
 const servicesOk = (j: Game) => sd(j).services.nginx.state === 'active' && sd(j).services.till.state === 'active' && sd(j).services.till.active;
 const openTmux = (j: Game) => Object.keys(j.state.tmux ?? {}).length > 0 && !(j as Shell).tmux;
@@ -114,9 +114,9 @@ export const updates: Chapter = {
       ...e,
       systemd: s,
       apt: { lists: false, installed: { ...INSTALLED }, updates: { ...UPDATES }, fresh: { [`linux-image-${NEW_KERNEL}`]: '6.12.48-1' } },
-      noyau: { active: OLD_KERNEL, installed: OLD_KERNEL },
+      kernel: { active: OLD_KERNEL, installed: OLD_KERNEL },
       // Le wifi de la coopérative coupe une fois, au milieu de la mise à jour.
-      coupureReseau: true,
+      networkCut: true,
     };
   },
   initialise: (j) => loadNginx(j),

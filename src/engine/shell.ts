@@ -412,7 +412,7 @@ export class Shell implements Game {
   // Les supports montés (clé USB…) ont une capacité : etat.montages.
   // Le support le plus précis qui contient ce chemin (/srv/radio avant /).
   mount(absolute: string): { path: string; capacity: number; inodes?: number; inodesBase?: number } | null {
-    const mounts: { path: string; capacity: number; inodes?: number }[] = this.state.montages ?? [];
+    const mounts: { path: string; capacity: number; inodes?: number }[] = this.state.mounts ?? [];
     return (
       mounts
         .filter((m) => m.path === '/' || absolute === m.path || absolute.startsWith(m.path + '/'))
@@ -422,7 +422,7 @@ export class Shell implements Game {
 
   /** Les inodes occupés sur un support : chaque fichier et chaque lieu, plus ceux du système (inodesBase). */
   usedInodes(m: { path: string; inodesBase?: number }): number {
-    const other: string[] = (this.state.montages ?? []).map((x: { path: string }) => x.path).filter((c: string) => c !== m.path);
+    const other: string[] = (this.state.mounts ?? []).map((x: { path: string }) => x.path).filter((c: string) => c !== m.path);
     const count = (path: string, n: Node): number => {
       if (other.includes(path)) return 0;
       if (n.type === 'fichier') return 1;
@@ -445,7 +445,7 @@ export class Shell implements Game {
     if (m.inodes && !old && this.usedInodes(m) >= m.inodes) return true;
     const place = this.find(m.path);
     // Sans les autres supports montés dedans (/srv n'est pas sur /), comme df.
-    const inside = ((this.state.montages ?? []) as { path: string }[]).filter(
+    const inside = ((this.state.mounts ?? []) as { path: string }[]).filter(
       (x) => x.path !== m.path && (m.path === '/' || x.path.startsWith(m.path + '/')),
     );
     const other = inside.reduce((t, x) => t + ((d) => (d ? this.size(d) : 0))(this.find(x.path)), 0);
@@ -708,8 +708,8 @@ export class Shell implements Game {
         return '[exited]';
       }
       // Le shell du mode secours : exit reprend le démarrage (voir fstab.ts).
-      const rescue = this.state.continuerDemarrage as ((j: Shell) => string) | undefined;
-      if (this.state.secours && rescue) return this.conclude(rescue(this), true);
+      const rescue = this.state.continueBoot as ((j: Shell) => string) | undefined;
+      if (this.state.rescue && rescue) return this.conclude(rescue(this), true);
       this.output = true;
       return '';
     }
@@ -945,7 +945,7 @@ export class Shell implements Game {
     // sous Linux) : un joker qui donne des dizaines de milliers de noms
     // dépasse. echo, intégré au shell, n'a pas cette limite.
     if (!BUILT_IN.includes(cmd) && args.reduce((t, a) => t + a.length + 1, 0) > ARG_MAX) {
-      this.state.argumentsTropLongs = (this.state.argumentsTropLongs ?? 0) + 1;
+      this.state.argumentsTooLong = (this.state.argumentsTooLong ?? 0) + 1;
       return this.error(this.t(root ? 'sudo-list-arguments-too-long' : 'list-arguments-too-long', { programme: `/usr/bin/${cmd}` }));
     }
     // Les réflexes d'auto-dépannage : --help et les options inconnues.

@@ -11,7 +11,7 @@
 import type { Shell } from '../shell';
 import type { Command } from './index';
 import { help } from './manual';
-import { arrayFor, devUpdate, partitionFor, stockage, type Stockage } from '../storage';
+import { arrayFor, devUpdate, partitionFor, storageOf, type StorageState } from '../storage';
 import {
   allocate,
   EXTENT,
@@ -43,7 +43,7 @@ const grid = (headers: string[], lines: string[][], right: number[]) => {
   return [line(headers), ...lines.map(line)].join('\n');
 };
 
-function pvs(game: Shell, st: Stockage): string {
+function pvs(game: Shell, st: StorageState): string {
   const l = lvm(st);
   return grid(
     ['PV', 'VG', 'Fmt', 'Attr', 'PSize', 'PFree'],
@@ -54,7 +54,7 @@ function pvs(game: Shell, st: Stockage): string {
   );
 }
 
-function vgs(st: Stockage): string {
+function vgs(st: StorageState): string {
   const l = lvm(st);
   return grid(
     ['VG', '#PV', '#LV', '#SN', 'Attr', 'VSize', 'VFree'],
@@ -71,7 +71,7 @@ function vgs(st: Stockage): string {
   );
 }
 
-function lvs(st: Stockage): string {
+function lvs(st: StorageState): string {
   const l = lvm(st);
   return grid(
     ['LV', 'VG', 'Attr', 'LSize', 'Pool', 'Origin', 'Data%', 'Meta%', 'Move', 'Log', 'Cpy%Sync', 'Convert'],
@@ -83,7 +83,7 @@ function lvs(st: Stockage): string {
 }
 
 /** Un périphérique qu'on peut donner à LVM : il existe, et rien d'autre ne le tient. */
-function usable(game: Shell, st: Stockage, path: string): string | null {
+function usable(game: Shell, st: StorageState, path: string): string | null {
   const n = withoutDev(path);
   if (sizeFor(st, n) === null || !path.startsWith('/dev/')) return game.error(`  No device found for ${path}.`, 5), null;
   const p = partitionFor(st, n);
@@ -92,7 +92,7 @@ function usable(game: Shell, st: Stockage, path: string): string | null {
   return n;
 }
 
-function pvcreate(game: Shell, st: Stockage, targets: string[]): string {
+function pvcreate(game: Shell, st: StorageState, targets: string[]): string {
   if (!targets.length) return game.error('  Please enter a physical volume path.\n  Run `pvcreate --help\' for more information.', 3);
   const outputs: string[] = [];
   for (const c of targets) {
@@ -122,7 +122,7 @@ function uuidLvm(seed: string): string {
   return [6, 4, 4, 4, 4, 4, 6].reduce<[string[], number]>(([g, k], n) => [[...g, s.slice(k, k + n)], k + n], [[], 0])[0].join('-');
 }
 
-function pvremove(game: Shell, st: Stockage, targets: string[]): string {
+function pvremove(game: Shell, st: StorageState, targets: string[]): string {
   if (!targets.length) return game.error('  Please enter a physical volume path\n  Run `pvremove --help\' for more information.', 3);
   const outputs: string[] = [];
   for (const c of targets) {
@@ -142,7 +142,7 @@ function pvremove(game: Shell, st: Stockage, targets: string[]): string {
   return outputs.join('\n');
 }
 
-function vgextend(game: Shell, st: Stockage, args: string[]): string {
+function vgextend(game: Shell, st: StorageState, args: string[]): string {
   const [vg, ...targets] = args;
   if (!vg) return game.error('  Please enter volume group name and physical volume(s)\n  Run `vgextend --help\' for more information.', 3);
   if (!lvm(st).vgs[vg]) return game.error(`  Volume group "${vg}" not found\n  Cannot process volume group ${vg}`, 5);
@@ -164,7 +164,7 @@ function vgextend(game: Shell, st: Stockage, args: string[]): string {
   return [...outputs, `  Volume group "${vg}" successfully extended`].join('\n');
 }
 
-function vgreduce(game: Shell, st: Stockage, args: string[]): string {
+function vgreduce(game: Shell, st: StorageState, args: string[]): string {
   const [vg, ...targets] = args;
   if (!vg || !targets.length) return game.error('  Please give volume group name and physical volume paths\n  Run `vgreduce --help\' for more information.', 3);
   if (!lvm(st).vgs[vg]) return game.error(`  Volume group "${vg}" not found\n  Cannot process volume group ${vg}`, 5);
@@ -189,7 +189,7 @@ function vgreduce(game: Shell, st: Stockage, args: string[]): string {
   return outputs.join('\n');
 }
 
-function pvmove(game: Shell, st: Stockage, args: string[]): string {
+function pvmove(game: Shell, st: StorageState, args: string[]): string {
   const [source, ...dest] = args.filter((a) => !a.startsWith('-'));
   if (!source) return game.error('  Please enter source physical volume.\n  Run `pvmove --help\' for more information.', 3);
   const n = withoutDev(source);
@@ -212,7 +212,7 @@ function pvmove(game: Shell, st: Stockage, args: string[]): string {
 }
 
 // « +1.5T », « 500G », « +100%FREE » : la taille voulue, en étendues, ou une erreur.
-function wantedSize(st: Stockage, vg: string, current: number, l: string | null, L: string | null): number | string {
+function wantedSize(st: StorageState, vg: string, current: number, l: string | null, L: string | null): number | string {
   if (L !== null) {
     const m = /^(\+?)(\d+(?:\.\d+)?)([bkmgtpBKMGTP]?)$/.exec(L);
     if (!m) return `  Invalid argument for --size: ${L}`;
@@ -226,7 +226,7 @@ function wantedSize(st: Stockage, vg: string, current: number, l: string | null,
   return m[1] ? current + n : n;
 }
 
-function lvextend(game: Shell, st: Stockage, args: string[]): string {
+function lvextend(game: Shell, st: StorageState, args: string[]): string {
   let L: string | null = null;
   let l: string | null = null;
   let fs = false;
@@ -278,7 +278,7 @@ const E2FS_HEADER = 'resize2fs 1.47.2 (1-Jan-2025)';
 const descriptors = (bytes: number) => Math.ceil(Math.ceil(bytes / 4096 / 32_768) / 64);
 
 /** Le système de fichiers prend toute la place du LV ; renvoie ce qu'écrit resize2fs. */
-function growFs(st: Stockage, vg: string, name: string): string[] {
+function growFs(st: StorageState, vg: string, name: string): string[] {
   const lv = lvm(st).vgs[vg].lvs[name];
   const before = lv.fs;
   lv.fs = lvSize(lv);
@@ -291,7 +291,7 @@ function growFs(st: Stockage, vg: string, name: string): string[] {
   ];
 }
 
-function resize2fs(game: Shell, st: Stockage | null, args: string[]): string {
+function resize2fs(game: Shell, st: StorageState | null, args: string[]): string {
   const target = args.find((a) => !a.startsWith('-'));
   if (!target) return game.error(`Usage: resize2fs [-d debug_flags] [-f] [-F] [-M] [-P] [-p] device [-b|-s|new_size] [-S RAID-stride] [-z undo_file]\n`, 1);
   if (game.who !== 'root') return game.error(`${E2FS_HEADER}\nresize2fs: Permission denied while trying to open ${target}\nCouldn't find valid filesystem superblock.`, 1);
@@ -314,11 +314,11 @@ function updateInitramfs(game: Shell, args: string[]): string {
 
 // Les commandes de LVM : root d'abord, puis un modèle de stockage.
 const withLvm =
-  (f: (game: Shell, st: Stockage, args: string[]) => string, name: string) =>
+  (f: (game: Shell, st: StorageState, args: string[]) => string, name: string) =>
   ({ args, game }: { args: string[]; game: Shell }) => {
     if (args.includes('-h') || args.includes('--help')) return help(name, LVM[name], game.t);
     if (game.who !== 'root') return notRoot(game);
-    const st = stockage(game);
+    const st = storageOf(game);
     if (!st) return game.error('  No volume groups found.', 5);
     return f(game, st, args);
   };
@@ -336,7 +336,7 @@ export const LVM: Record<string, Command> = {
   resize2fs: {
     section: 8,
     ownOptions: true,
-    launch: ({ args, game }) => (args.includes('--help') ? help('resize2fs', LVM.resize2fs, game.t) : resize2fs(game, stockage(game), args)),
+    launch: ({ args, game }) => (args.includes('--help') ? help('resize2fs', LVM.resize2fs, game.t) : resize2fs(game, storageOf(game), args)),
   },
   'update-initramfs': {
     section: 8,

@@ -541,7 +541,7 @@ function sockets(config: Configuration): Listening[] {
 
 // Une adresse déjà prise par un autre programme (etat.ecoute) : l'erreur d'Apache.
 function listenSockets(game: Game, config: Configuration): string[] {
-  const other = ((game.state.ecoute ?? []) as Listening[]).filter((e) => e.process !== 'apache2' && e.proto === 'tcp');
+  const other = ((game.state.listening ?? []) as Listening[]).filter((e) => e.process !== 'apache2' && e.proto === 'tcp');
   const overlaps = (ip: string, port: number, e: Listening) =>
     e.port === port &&
     (ip === '*' || e.address === ip || e.address === '0.0.0.0' || e.address === '*' || (e.address === '[::]' && ip.startsWith('[')));
@@ -589,9 +589,9 @@ export function loadApache(game: Game) {
   game.state.apache = { ...(game.state.apache ?? {}), load: config };
   if (!config) return;
   // ss : les sockets d'Apache remplacent les anciennes.
-  game.state.ecoute = [...((game.state.ecoute ?? []) as Listening[]).filter((e) => e.process !== 'apache2'), ...sockets(config)];
+  game.state.listening = [...((game.state.listening ?? []) as Listening[]).filter((e) => e.process !== 'apache2'), ...sockets(config)];
   // nginx et curl joignent Apache sur 127.0.0.1 : une « appli » par port d'écoute.
-  const apps: Record<string, App> = (game.state.applis ??= {});
+  const apps: Record<string, App> = (game.state.apps ??= {});
   for (const [key, a] of Object.entries(apps)) if (a.service === 'apache2') delete apps[key];
   for (const { ip, port } of config.listeners)
     if (ip === '*' || ip === '0.0.0.0' || ip === '127.0.0.1')
@@ -604,7 +604,7 @@ export function loadApache(game: Game) {
 
 /** À l'arrêt : plus de sockets, plus de configuration servie. */
 export function stopApache(game: Game) {
-  game.state.ecoute = ((game.state.ecoute ?? []) as Listening[]).filter((e) => e.process !== 'apache2');
+  game.state.listening = ((game.state.listening ?? []) as Listening[]).filter((e) => e.process !== 'apache2');
   const log = (game.state.apache?.load as Configuration | null)?.principal.log;
   if (log) writeLog(game, log, 'mpm_event:notice', 'AH00491: caught SIGTERM, shutting down');
   game.state.apache = { ...(game.state.apache ?? {}), load: null };
@@ -964,7 +964,7 @@ export function answer(game: Game, port: number, path: string, request: Request 
 
 /** Pour les vérifications du jeu : ce qu'Apache répond (sans rien écrire au journal), null s'il n'écoute pas sur ce port. */
 export function ask(game: Game, port: number, path: string, host: string): ApacheResponse | null {
-  const app: App | undefined = game.state.applis?.[`127.0.0.1:${port}`];
+  const app: App | undefined = game.state.apps?.[`127.0.0.1:${port}`];
   if (!app || app.service !== 'apache2' || systemd(game)?.services.apache2?.state !== 'active' || !game.state.apache?.load) return null;
   return answer(game, port, path, { headers: { host: host }, address: '127.0.0.1', trace: false });
 }

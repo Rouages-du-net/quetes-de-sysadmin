@@ -62,7 +62,7 @@ export const firewall: Chapter = {
   },
   state: () => ({
     ufw: newFirewall(),
-    ecoute: LISTENING,
+    listening: LISTENING,
     systemd: newSystemd('letters', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 21, 18, 30, 0), {
       ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
@@ -116,7 +116,7 @@ export const firewall: Chapter = {
     },
     {
       id: 'end',
-      condition: (j) => j.flags.has('filter') && filter(j) && (j.state.connexions ?? 1) > (pf(j).activationAlConnections ?? Infinity),
+      condition: (j) => j.flags.has('filter') && filter(j) && (j.state.connections ?? 1) > (pf(j).activationAlConnections ?? Infinity),
       message: (j) => j.t('firewall-event-end'),
     },
   ],

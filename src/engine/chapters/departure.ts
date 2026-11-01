@@ -63,13 +63,13 @@ const openAccount = (j: Game, name: string) => {
 // Marc peut-il encore entrer ? Par son compte (mot de passe, ou sa clé : -L n'y fait rien), ou par deploy.
 const byItsAccount = (j: Game) => {
   if (!openAccount(j, 'marc')) return false;
-  const locked = ((j.state.comptesVerrouilles ?? []) as string[]).includes('marc');
+  const locked = ((j.state.lockedAccounts ?? []) as string[]).includes('marc');
   return !locked || allowed(j, 'marc', '/home/marc').includes(MARC);
 };
 const byDeploy = (j: Game) => openAccount(j, 'deploy') && allowed(j, 'deploy', '/home/deploy').includes(MARC);
 const deployIntact = (j: Game) => [KEYS.ci, KEYS.lina].map(key).every((c) => allowed(j, 'deploy', '/home/deploy').includes(c));
 const sudoForMarc = (j: Game) => !!j.accounts.users.marc && sh(j).groupsFor('marc').includes('sudo');
-const marcProcess = (j: Game) => ((j.state.processus ?? []) as { user: string }[]).some((p) => p.user === 'marc');
+const marcProcess = (j: Game) => ((j.state.process ?? []) as { user: string }[]).some((p) => p.user === 'marc');
 
 // Les tâches cron (commande et compte) : crontabs des comptes qui existent, et /etc/cron.d (avec la colonne du compte).
 function tasks(j: Game): { account: string; command: string }[] {
@@ -137,7 +137,7 @@ export const departure: Chapter = {
   accounts: () => cooperativeAccounts(),
   state: (t) => ({
     crontabs: { marc: crontabMarc(t) },
-    processus: [
+    process: [
       { pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 731, user: 'till', cpu: 1.2, mem: 3.4, command: '/usr/bin/node /srv/till/app/server.js' },
       { pid: 2741, user: 'marc', cpu: 0, mem: 0.1, command: 'sshd: marc@pts/1' },
@@ -187,7 +187,7 @@ export const departure: Chapter = {
   events: [
     {
       id: 'lock-only',
-      condition: (j) => ((j.state.comptesVerrouilles ?? []) as string[]).includes('marc') && byItsAccount(j),
+      condition: (j) => ((j.state.lockedAccounts ?? []) as string[]).includes('marc') && byItsAccount(j),
       message: (j) => j.t('departure-event-lock-only'),
     },
     { id: 'deploy-empty', condition: (j) => !deployIntact(j), message: (j) => j.t('departure-event-deploy-empty', { fichier: DEPLOY }) },

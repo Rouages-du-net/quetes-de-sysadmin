@@ -339,7 +339,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const before = parent?.files ?? {};
     const { files, more, moins: less } = account(before, here.repo.index);
     if (!files) return game.error(game.t('git-nothing-a-validate'));
-    const c = newCommit(parent, message, game.state.auteur ?? `${game.player} <${game.player}@example.org>`, game.state.date ?? 'Tue Oct 13 21:04:00 2026 +0200', here.repo.index);
+    const c = newCommit(parent, message, game.state.author ?? `${game.player} <${game.player}@example.org>`, game.state.date ?? 'Tue Oct 13 21:04:00 2026 +0200', here.repo.index);
     here.repo.commits.push(c);
     // Comme git : on ne mentionne pas les insertions ou suppressions nulles.
     const summary = [
@@ -479,7 +479,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     for (const name of Object.keys(before ?? {})) if (!(name in c.files)) delete directory.children[name];
     excerpts[place] = { ...c.files };
     // Ce qu'un crochet a déployé, et où (pour les objectifs des chapitres).
-    if (game.state.gitCrochet) game.state.gitDeploiements = { ...game.state.gitDeploiements, [place]: c.id };
+    if (game.state.gitHook) game.state.gitDeployments = { ...game.state.gitDeployments, [place]: c.id };
     return '';
   },
 
@@ -595,7 +595,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
       }
       const previous = general;
       general = {};
-      game.state.gitCrochet = true;
+      game.state.gitHook = true;
       try {
         const r = runScript(game, content(n, game), {
           cwd: path,
@@ -606,7 +606,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
         return { code: r.code };
       } finally {
         general = previous;
-        game.state.gitCrochet = false;
+        game.state.gitHook = false;
       }
     };
     const pre = hook('pre-receive');
@@ -621,7 +621,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
         ].join('\n'),
       );
     remote.commits = [...here.repo.commits];
-    game.state.gitPoussees = (game.state.gitPoussees ?? 0) + 1;
+    game.state.gitPushes = (game.state.gitPushes ?? 0) + 1;
     hook('post-receive');
     return [
       ...lines,

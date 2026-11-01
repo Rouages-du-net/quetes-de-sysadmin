@@ -93,7 +93,7 @@ export const reboot: Chapter = {
     c.groups.adm.members.push('malo');
     return c;
   },
-  state: (t) => ({ systemd: serverStory(t('first-day-service-catalogue')), processus: [{ pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' }] }),
+  state: (t) => ({ systemd: serverStory(t('first-day-service-catalogue')), process: [{ pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' }] }),
   createWorld: (t) => {
     const root = { owner: 'root' };
     return d(

@@ -23,9 +23,9 @@ export const NOW = Date.UTC(2027, 10, 8, 8, 15, 0);
 
 // Le plan des VLAN (celui de l'électricien) : numéro, nom, réseau, adresse du routeur.
 export const VLANS = [
-  { id: 10, name: 'bureaux', reseau: '10.10.10.0/24', routeur: '10.10.10.1/24' },
-  { id: 20, name: 'invites', reseau: '10.10.20.0/24', routeur: '10.10.20.1/24' },
-  { id: 30, name: 'equipements', reseau: '10.10.30.0/24', routeur: '10.10.30.1/24' },
+  { id: 10, name: 'bureaux', network: '10.10.10.0/24', routeur: '10.10.10.1/24' },
+  { id: 20, name: 'invites', network: '10.10.20.0/24', routeur: '10.10.20.1/24' },
+  { id: 30, name: 'equipements', network: '10.10.30.0/24', routeur: '10.10.30.1/24' },
 ];
 
 // Les appareils branchés au commutateur (adresses MAC de documentation, RFC 7042).
@@ -381,7 +381,7 @@ export const hivePlan =
   (t: Translate): ElementPlan => {
     // Les rôles du routeur : des étiquettes, séparées comme sur un schéma.
     const listing = (words: string[]) => words.join(' · ');
-    const vlans = [...VLANS, ...(o.dmz ? [{ id: 40, name: 'dmz', reseau: '10.10.40.0/24' }] : [])];
+    const vlans = [...VLANS, ...(o.dmz ? [{ id: 40, name: 'dmz', network: '10.10.40.0/24' }] : [])];
     const all = [
       ...devices(false),
       ...(o.dmz ? [{ name: 'web', vlan: 40, fixed: '10.10.40.10' }] : []),
@@ -397,7 +397,7 @@ export const hivePlan =
         ...vlans.map((v) => ({
           role: 'reseau' as const,
           name: t('plan-vlan', { id: String(v.id), nom: v.name }),
-          address: v.reseau,
+          address: v.network,
           children: all
             .filter((a) => a.vlan === v.id)
             .map((a) => ({ role: (a.name === 'nas' || a.name === 'web' ? 'serveur' : 'appareil') as ElementPlan['role'], name: a.name, address: a.fixed ?? t('plan-dhcp') })),

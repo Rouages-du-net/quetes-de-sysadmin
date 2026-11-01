@@ -174,7 +174,7 @@ export const workshop: Chapter = {
   state: () => ({
     // SSH écoute sur 2222 depuis « Le port ».
     sshd: { load: { port: '2222' }, reloads: 0 },
-    ecoute: LISTENING.map((e) => ({ ...e })),
+    listening: LISTENING.map((e) => ({ ...e })),
     ufw: {
       enabled: true,
       incoming: 'deny',
@@ -212,7 +212,7 @@ export const workshop: Chapter = {
         checkToReload: true,
       },
     }),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 701, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
@@ -220,7 +220,7 @@ export const workshop: Chapter = {
     ],
     // Le DNS de repair.example pointe déjà ici (Kofi s'en est occupé).
     nginx: { load: null, names: ['letters', LETTERS, `www.${LETTERS}`, CAFE, `www.${CAFE}`, WORKSHOP, `www.${WORKSHOP}`, '203.0.113.10'] },
-    applis: {},
+    apps: {},
     apache: { load: null },
   }),
   initialise: (j) => {

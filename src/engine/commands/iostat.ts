@@ -45,7 +45,7 @@ function iostat(game: Shell, args: string[]): string {
   if (options.has('h')) return help('iostat', IOSTAT.iostat, game.t);
   const rep = repetitions(args);
   if (!rep) return game.error('Usage: iostat [ options ] [ <interval> [ <count> ] ]', 1);
-  const { e, debits: rates, utilisation, attente: waiting, iowait } = diskState(game);
+  const { e, debits: rates, utilisation, waiting: waiting, iowait } = diskState(game);
   const cpu = !options.has('d') || options.has('c');
   const disks = !options.has('c') || options.has('d');
   const unit = options.has('m') ? 1024 : 1;
@@ -124,7 +124,7 @@ function pidstat(game: Shell, args: string[]): string {
           (d) =>
             `${start} ${String(d.uid).padStart(5)} ${String(d.pid).padStart(9)} ${f2(d.read).padStart(9)} ${f2(d.write).padStart(9)} ${f2(0).padStart(9)} ${String(Math.round(d.waiting / 4)).padStart(7)}  ${d.command}`,
         )
-      : (game.state.processus ?? [])
+      : (game.state.process ?? [])
           .filter((p: { cpu: number }) => p.cpu > 0)
           .map(
             (p: { pid: number; cpu: number; user: string; command: string }) =>
@@ -155,7 +155,7 @@ function ionice(game: Shell, args: string[]): string {
     else return game.error(game.t('ionice-command'), 1);
   }
   const e = io(game);
-  const live = new Set((game.state.processus ?? []).map((p: { pid: number }) => p.pid));
+  const live = new Set((game.state.process ?? []).map((p: { pid: number }) => p.pid));
   if (!pids.length) return cls === null ? 'none: prio 0' : game.error("ionice: bad usage\nTry 'ionice --help' for more information.", 1);
   if (cls !== null && (Number.isNaN(cls) || cls < 0 || cls > 3)) return game.error(`ionice: unknown scheduling class: '${cls}'`, 1);
   const outputs: string[] = [];
@@ -166,7 +166,7 @@ function ionice(game: Shell, args: string[]): string {
       outputs.push(!c || c.cls === 2 ? `best-effort: prio ${c?.prio ?? 4}` : c.cls === 3 ? 'idle' : `${CLASSES[c.cls]}: prio ${c.prio}`);
       continue;
     }
-    const owner = (game.state.processus ?? []).find((p: { pid: number }) => p.pid === pid)?.user;
+    const owner = (game.state.process ?? []).find((p: { pid: number }) => p.pid === pid)?.user;
     // Le temps réel est réservé à root ; changer la classe d'un processus d'un autre compte aussi.
     if (game.who !== 'root' && (cls === 1 || owner !== game.who)) return game.error('ionice: ioprio_set failed: Operation not permitted', 1);
     if (e) e.classes[pid] = { cls, prio: cls === 3 ? 0 : (prio ?? 4) };

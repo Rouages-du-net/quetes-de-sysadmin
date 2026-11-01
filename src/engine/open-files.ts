@@ -22,7 +22,7 @@ export interface Open {
   node: File;
 }
 
-export const openSet = (j: Game): Open[] => (j.state.ouverts ??= []);
+export const openSet = (j: Game): Open[] => (j.state.openFiles ??= []);
 
 /** Le fichier tient-il encore (son service tourne) ? */
 export const held = (j: Game, o: Open) => systemd(j)?.services[o.service]?.state === 'active';
@@ -43,7 +43,7 @@ export function open(j: Game, o: Omit<Open, 'node'>, owner: string, group?: stri
     const parent = j.find(o.path.replace(/\/[^/]+$/, ''));
     if (parent?.type === 'dossier') parent.children[o.path.split('/').at(-1)!] = node;
   }
-  j.state.ouverts = openSet(j).filter((x) => x.service !== o.service);
+  j.state.openFiles = openSet(j).filter((x) => x.service !== o.service);
   openSet(j).push({ ...o, node });
   return node;
 }

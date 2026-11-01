@@ -50,7 +50,7 @@ const playlist = (j: Game): Service => sd(j).services['radio-playlist'];
 const active = (j: Game) => playlist(j).state === 'active';
 const zombies = (j: Game) => process(j).filter((p) => p.zombie);
 const killed = (j: Game): { service: string; cgroup: boolean; restart: boolean }[] =>
-  (j.state.oomTues ?? []).filter((t: { service: string }) => t.service === 'radio-playlist');
+  (j.state.oomKilled ?? []).filter((t: { service: string }) => t.service === 'radio-playlist');
 
 // Une limite qui protège la machine sans empêcher la playlist de démarrer.
 const reasonableLimit = (j: Game) => {
@@ -61,18 +61,18 @@ const restart = (j: Game) => ['on-failure', 'always', 'on-abnormal'].includes(pl
 
 // Chaque démarrage : un nouveau processus, qui repart de 200 Mio.
 function launchPlaylist(j: Game) {
-  const pid = (j.state.prochainPid = (j.state.prochainPid ?? 2600) + 1);
+  const pid = (j.state.nextPid = (j.state.nextPid ?? 2600) + 1);
   const s = playlist(j);
   s.process = [{ pid, user: 'radio', cpu: 2.0, mem: 0, command: '/usr/bin/node /opt/playlist/server.js' }];
   memory(j)!.rss[pid] = DEPARTURE;
-  j.state.memoireDemandeur = pid;
+  j.state.memoryRequester = pid;
 }
 
 function launchPodcast(j: Game) {
   const s = sd(j).services['radio-podcast'];
   // Au premier démarrage, le parent des zombies ; ensuite, un nouveau processus.
-  const pid = j.state.podcastLance ? (j.state.prochainPid = (j.state.prochainPid ?? 2600) + 1) : PODCAST;
-  j.state.podcastLance = true;
+  const pid = j.state.podcastStarted ? (j.state.nextPid = (j.state.nextPid ?? 2600) + 1) : PODCAST;
+  j.state.podcastStarted = true;
   s.process = [{ pid, user: 'radio', cpu: 0.3, mem: 0, command: '/usr/bin/python3 /opt/podcast/convertir.py' }];
   memory(j)!.rss[pid] = 160 * Mo;
 }
@@ -145,14 +145,14 @@ export const chapterMemory: Chapter = {
         process: [proc(611, 'root', '/usr/sbin/cron -f')],
       },
     }),
-    processus: [
+    process: [
       proc(1, 'root', '/sbin/init'),
       proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups'),
       proc(611, 'root', '/usr/sbin/cron -f'),
       proc(1730, 'radio', '/usr/local/bin/stream --config /etc/radio/stream.conf', { cpu: 3.2 }),
       ...ZOMBIES.map((pid) => proc(pid, 'radio', '[convertir] <defunct>', { ppid: PODCAST, zombie: true })),
     ],
-    memoire: { total: 2048 * Mo, kernel: 380 * Mo, rss: { 1: 12 * Mo, 598: 8 * Mo, 611: 4 * Mo, 1730: 420 * Mo } },
+    memory: { total: 2048 * Mo, kernel: 380 * Mo, rss: { 1: 12 * Mo, 598: 8 * Mo, 611: 4 * Mo, 1730: 420 * Mo } },
   }),
   // La nuit jusqu'ici : la playlist grossit depuis son démarrage, et à 4 h 12, plus de mémoire.
   initialise: (j) => {
@@ -164,12 +164,12 @@ export const chapterMemory: Chapter = {
       'Linux version 6.12.0-quetes (radio)',
       'Memory: 2097152K/2097152K available',
       'EXT4-fs (vda1): mounted filesystem with ordered data mode.',
-    ].forEach((text, i) => (j.state.noyau ??= []).push({ time: start + i * 211, text }));
+    ].forEach((text, i) => (j.state.kernel ??= []).push({ time: start + i * 211, text }));
     launchPlaylist(j);
     launchPodcast(j);
     for (const name of ['radio-playlist', 'radio-podcast']) {
       const svc = s.services[name];
-      j.state.processus.push({ ...svc.process[0] });
+      j.state.process.push({ ...svc.process[0] });
     }
     const pid = playlist(j).process[0].pid;
     s.clock = start + 60_000;
@@ -181,7 +181,7 @@ export const chapterMemory: Chapter = {
     checkMemory(j);
     writeLog(s, 'radio-stream.service', 'stream', 1730, 'relay: source disconnected (playlist), streaming silence', 4);
     s.clock = Date.UTC(2027, 7, 22, 4, 31, 0);
-    j.state.oomTues = [];
+    j.state.oomKilled = [];
   },
   // La playlist (si elle tourne) prend de la mémoire à chaque instant ; le noyau et systemd veillent.
   afterCommand: (j) => {
@@ -191,7 +191,7 @@ export const chapterMemory: Chapter = {
       const pid = playlist(j).process[0].pid;
       const m = memory(j)!;
       m.rss[pid] = (m.rss[pid] ?? DEPARTURE) + LEAK;
-      j.state.memoireDemandeur = pid;
+      j.state.memoryRequester = pid;
     }
     checkMemory(j);
   },

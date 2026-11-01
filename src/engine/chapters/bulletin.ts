@@ -69,7 +69,7 @@ export const bulletin: Chapter = {
   accounts: watchAccounts,
   state: () => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
-    ecoute: watchListening(),
+    listening: watchListening(),
     nginx: watchNginx(),
     scan: watchScan(),
     apt: watchApt(),
@@ -86,11 +86,11 @@ export const bulletin: Chapter = {
     }),
   afterCommand: (j) => {
     const text = readDoc(j);
-    if (text === j.state.veilleLue || j.state.veilleFinie) return;
-    j.state.veilleLue = text;
+    if (text === j.state.readWatch || j.state.finishedWatch) return;
+    j.state.readWatch = text;
     const rest = missing(j);
     if (!rest.length) {
-      j.state.veilleFinie = true;
+      j.state.finishedWatch = true;
       return;
     }
     return [j.t('bulletin-review'), ...rest.map((m) => `- ${j.t(`bulletin-missing-${m}`)}`)].join('\n');

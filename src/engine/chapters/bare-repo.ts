@@ -88,7 +88,7 @@ const readSite = (j: Game, name: string) => {
 // Le site est-il exactement le dernier commit du serveur, extrait par son crochet ?
 const deployed = (j: Game) => {
   const c = head(j);
-  return !!c && j.state.gitDeploiements?.[SITE] === c.id && Object.entries(c.files).every(([name, text]) => readSite(j, name) === text);
+  return !!c && j.state.gitDeployments?.[SITE] === c.id && Object.entries(c.files).every(([name, text]) => readSite(j, name) === text);
 };
 const withMistake = (j: Game) => (readSite(j, 'index.html') ?? '').includes(j.t('bare-repo-title-mistake'));
 const withArticle = (j: Game) =>
@@ -160,7 +160,7 @@ export const bareRepo: Chapter = {
     }),
     nginx: { load: null, names: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'] },
     git: { [path(t, LOCAL)]: { commits: history(t), index: history(t).at(-1)!.files } },
-    auteur: `${player(t)} <${player(t)}@gazette.example>`,
+    author: `${player(t)} <${player(t)}@gazette.example>`,
     date: 'Mon May 10 09:20:00 2027 +0200',
   }),
   initialise: (j) => loadNginx(j),
@@ -234,7 +234,7 @@ export const bareRepo: Chapter = {
         j.last.commands.some((c) => c[0] === 'git' && c.includes('push')) &&
         !!head(j) &&
         !j.exists(`${REPO}/hooks/post-receive`) &&
-        !j.state.gitDeploiements?.[SITE],
+        !j.state.gitDeployments?.[SITE],
       message: (j) => j.t('bare-repo-event-without-hook'),
     },
     {
@@ -249,7 +249,7 @@ export const bareRepo: Chapter = {
     },
     {
       id: 'correction-lost',
-      condition: (j) => !!j.state.gitDeploiements?.[SITE] && withMistake(j),
+      condition: (j) => !!j.state.gitDeployments?.[SITE] && withMistake(j),
       message: (j) => j.t('bare-repo-event-correction-lost'),
     },
     { id: 'in-line', condition: (j) => inLine(j), message: (j) => j.t('bare-repo-event-in-line') },

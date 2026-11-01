@@ -86,7 +86,7 @@ const insideLink = (j: Game) => {
 // La version de releases/ où le crochet a extrait le dernier commit du serveur.
 const deployedByHook = (j: Game) => {
   const head = repo(j, REPO)?.commits.at(-1);
-  const here = Object.entries(j.state.gitDeploiements ?? {}).find(([, id]) => id === head?.id)?.[0];
+  const here = Object.entries(j.state.gitDeployments ?? {}).find(([, id]) => id === head?.id)?.[0];
   return !!here && here.replace(/\/$/, '').split('/').at(-1) === inLine(j);
 };
 
@@ -95,7 +95,7 @@ function theoRepousse(j: Game): string {
   const game = j as Shell;
   const server = repo(j, REPO)!;
   const head = server.commits.at(-1)!;
-  const number = (j.state.essaisTheo = (j.state.essaisTheo ?? 0) + 1);
+  const number = (j.state.theoAttempts = (j.state.theoAttempts ?? 0) + 1);
   const { 'index.html': _index, ...withoutIndex } = head.files;
   const c = newCommit(head, j.t('rollback-commit-theo', { numero: number }), THEO_AUTHOR, 'Mon May 17 21:05:00 2027 +0200', {
     ...withoutIndex,
@@ -106,7 +106,7 @@ function theoRepousse(j: Game): string {
   game.who = 'theo';
   try {
     const r = game.underCommand('git push prod main', THEO);
-    j.state.theoAPousse = c.id;
+    j.state.theoPushed = c.id;
     return j.t('rollback-theo-push', { sortie: r.output.replace(/^/gm, '  ') });
   } finally {
     game.who = before;
@@ -182,7 +182,7 @@ export const rollback: Chapter = {
         // Ta copie s'est arrêtée aux tests de Samia : la mise en page de Théo est sur le serveur.
         [path(t, LOCAL)]: { commits: all.slice(0, 5), index: { ...all[4].files }, remotes: { prod: REPO } },
       },
-      auteur: `${player(t)} <${player(t)}@gazette.example>`,
+      author: `${player(t)} <${player(t)}@gazette.example>`,
       date: 'Mon May 17 21:10:00 2027 +0200',
     };
   },
@@ -191,9 +191,9 @@ export const rollback: Chapter = {
     // Une fois le site rétabli et les tests ajoutés au crochet, Théo repousse
     // sa mise en page (cassée) : à chaque nouvelle version du crochet.
     const c = hook(j);
-    if (!j.state.retabli || !c.includes('tests.sh') || c === j.state.crochetTeste) return;
-    j.state.crochetTeste = c;
-    j.state.versionAvantTheo = inLine(j);
+    if (!j.state.restored || !c.includes('tests.sh') || c === j.state.hookTested) return;
+    j.state.hookTested = c;
+    j.state.versionBeforeTheo = inLine(j);
     return theoRepousse(j);
   },
   createWorld: (t) => {
@@ -281,7 +281,7 @@ export const rollback: Chapter = {
       id: 'restored',
       condition: (j) => {
         const ok = works(j);
-        if (ok) j.state.retabli = true;
+        if (ok) j.state.restored = true;
         return ok;
       },
       message: (j) => j.t('rollback-event-restored'),
@@ -289,13 +289,13 @@ export const rollback: Chapter = {
     {
       id: 'kept-fou',
       condition: (j) => {
-        const ok = !!j.state.theoAPousse && works(j) && inLine(j) === j.state.versionAvantTheo;
-        if (ok) j.state.gardeFou = true;
+        const ok = !!j.state.theoPushed && works(j) && inLine(j) === j.state.versionBeforeTheo;
+        if (ok) j.state.safeguard = true;
         return ok;
       },
       message: (j) => j.t('rollback-event-kept-fou'),
     },
-    { id: 'kept-fou-pierced', condition: (j) => !!j.state.theoAPousse && !works(j), message: (j) => j.t('rollback-event-kept-fou-pierced') },
+    { id: 'kept-fou-pierced', condition: (j) => !!j.state.theoPushed && !works(j), message: (j) => j.t('rollback-event-kept-fou-pierced') },
     {
       id: 'tests-elsewhere',
       condition: (j) =>
@@ -306,7 +306,7 @@ export const rollback: Chapter = {
     },
     {
       id: 'end',
-      condition: (j) => !!j.state.gardeFou && newUpdateInPage(j) && deployedByHook(j) && hook(j).includes('tests.sh'),
+      condition: (j) => !!j.state.safeguard && newUpdateInPage(j) && deployedByHook(j) && hook(j).includes('tests.sh'),
       message: (j) => j.t('rollback-event-end'),
     },
   ],

@@ -136,8 +136,8 @@ export const ACCOUNTS: Record<string, Command> = {
         for (const g of groups) if (!game.accounts.groups[g].members.includes(name)) game.accounts.groups[g].members.push(name);
       }
       if (lock !== null) {
-        const locks: string[] = (game.state.comptesVerrouilles ??= []);
-        game.state.comptesVerrouilles = lock ? [...new Set([...locks, name])] : locks.filter((v) => v !== name);
+        const locks: string[] = (game.state.lockedAccounts ??= []);
+        game.state.lockedAccounts = lock ? [...new Set([...locks, name])] : locks.filter((v) => v !== name);
       }
       if (expires !== null) {
         if (date) u.expires = date;
@@ -158,7 +158,7 @@ export const ACCOUNTS: Record<string, Command> = {
       const u = game.accounts.users[name];
       if (!u) return game.error(game.t('userdel-missing', { utilisateur: name }), 6);
       // Un compte encore utilisé par un processus n'est pas supprimé (sauf -f).
-      const p = ((game.state.processus ?? []) as { pid: number; user: string }[]).find((x) => x.user === name);
+      const p = ((game.state.process ?? []) as { pid: number; user: string }[]).find((x) => x.user === name);
       if (p && !letters.has('f')) return game.error(game.t('userdel-used', { utilisateur: name, pid: String(p.pid) }), 8);
       delete game.accounts.users[name];
       for (const g of Object.values(game.accounts.groups)) g.members = g.members.filter((m) => m !== name);

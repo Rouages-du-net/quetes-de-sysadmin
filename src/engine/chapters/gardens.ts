@@ -41,7 +41,7 @@ export const MAILBOX = { domain: 'mailbox.example', mx: 'mx.mailbox.example', ip
 export const CHECKER = { domain: 'verifier.example', mx: 'mx.verifier.example', ip: '198.51.100.30', address: 'check-auth@verifier.example' };
 export const NEWSMAIL = { domain: 'newsmail.example', ip: '198.51.100.77', selector: 'nm1' };
 // L'ancien hébergeur : ses serveurs d'envoi, que son SPF autorise.
-export const OLD = { domain: 'old-hosting.example', reseau: '192.0.2.80/28' };
+export const OLD = { domain: 'old-hosting.example', network: '192.0.2.80/28' };
 // La clé DKIM de newsmail.example (publiée chez eux, sous nm1.dkim.newsmail.example).
 export const NEWSMAIL_KEY = publicKey(privateKey('newsmail.example:nm1:2048:1'))!;
 // La clé du serveur des Jardins, créée au chapitre « La signature » (et reprise au suivant).
@@ -52,7 +52,7 @@ const rr = (name: string, type: string, data: string, ttl = 3600): Rr => ({ name
 // Les zones des autres, telles qu'internet les voit.
 function externalZones(): Record<string, Zone> {
   return {
-    [OLD.domain]: { serial: 1, rrs: [rr(`_spf.${OLD.domain}`, 'TXT', `"v=spf1 ip4:${OLD.reseau} -all"`)] },
+    [OLD.domain]: { serial: 1, rrs: [rr(`_spf.${OLD.domain}`, 'TXT', `"v=spf1 ip4:${OLD.network} -all"`)] },
     [MAILBOX.domain]: { serial: 1, rrs: [rr(MAILBOX.domain, 'MX', `10 ${MAILBOX.mx}.`), rr(MAILBOX.mx, 'A', MAILBOX.ip)] },
     [CHECKER.domain]: { serial: 1, rrs: [rr(CHECKER.domain, 'MX', `10 ${CHECKER.mx}.`), rr(CHECKER.mx, 'A', CHECKER.ip)] },
     [NEWSMAIL.domain]: {
@@ -388,20 +388,20 @@ export function gardensState(t: Translate, departure: Departure): Record<string,
   const state: MailState = { ip: IP, file: departure.file?.(t) ?? [], counter: 40, postfix: null, dkim: null, providers: providers(t), restored: [] };
   return {
     systemd: newSystemd('garden', departure.now - 6 * 86_400_000, departure.now, services),
-    processus: [
+    process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 733, user: 'bind', cpu: 0.1, mem: 1.4, command: '/usr/sbin/named -f -u bind' },
       { pid: 1180, user: 'root', cpu: 0, mem: 0.3, command: '/usr/lib/postfix/sbin/master -w' },
       ...(departure.opendkim !== 'absent' ? [{ pid: 812, user: 'opendkim', cpu: 0, mem: 0.4, command: '/usr/sbin/opendkim -f' }] : []),
     ],
     dns: stateDns,
-    courrier: state,
-    ecoute: [
-      { proto: 'tcp', address: '0.0.0.0', port: 22, processus: 'sshd', pid: 612 },
-      { proto: 'tcp', address: '0.0.0.0', port: 25, processus: 'master', pid: 1180 },
-      { proto: 'udp', address: '0.0.0.0', port: 53, processus: 'named', pid: 733 },
-      { proto: 'tcp', address: '0.0.0.0', port: 53, processus: 'named', pid: 733 },
-      ...(departure.opendkim === 'configure' ? [{ proto: 'tcp', address: '127.0.0.1', port: 8891, processus: 'opendkim', pid: 812 }] : []),
+    mail: state,
+    listening: [
+      { proto: 'tcp', address: '0.0.0.0', port: 22, process: 'sshd', pid: 612 },
+      { proto: 'tcp', address: '0.0.0.0', port: 25, process: 'master', pid: 1180 },
+      { proto: 'udp', address: '0.0.0.0', port: 53, process: 'named', pid: 733 },
+      { proto: 'tcp', address: '0.0.0.0', port: 53, process: 'named', pid: 733 },
+      ...(departure.opendkim === 'configure' ? [{ proto: 'tcp', address: '127.0.0.1', port: 8891, process: 'opendkim', pid: 812 }] : []),
     ],
   };
 }

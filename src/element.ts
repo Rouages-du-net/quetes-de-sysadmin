@@ -28,7 +28,7 @@ const OLD_STORY_IDS: Record<string, string> = {
   ruche: 'hive',
   labo: 'lab',
   veille: 'watch',
-  courrier: 'junk-mail',
+  mail: 'junk-mail',
   flotte: 'fleet',
   rustine: 'patch',
 };

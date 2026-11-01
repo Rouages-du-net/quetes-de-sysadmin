@@ -26,7 +26,7 @@ export const SYSTEM: Record<string, Command> = {
       // -u compte[,compte] : seulement les processus de ces comptes.
       const iu = args.findIndex((a) => /^-\w*u$/.test(a));
       const accounts = iu >= 0 ? (args[iu + 1] ?? '').split(',') : null;
-      const listing: Process[] = [...(game.state.processus ?? []), ...dockerProcess(game)]
+      const listing: Process[] = [...(game.state.process ?? []), ...dockerProcess(game)]
         .filter((p: Process) => (accounts ? accounts.includes(p.user) : all || p.user === game.who || p.user === game.player))
         .sort((a: Process, b: Process) => a.pid - b.pid);
       // -f (ps -ef) : le format complet, avec le parent (PPID).
@@ -47,15 +47,15 @@ export const SYSTEM: Record<string, Command> = {
       if (!pids.length) return game.error(game.t('kill-usage'));
       const messages: string[] = [];
       for (const raw of pids) {
-        const listing: Process[] = game.state.processus ?? [];
+        const listing: Process[] = game.state.process ?? [];
         const p = listing.find((q) => String(q.pid) === raw);
         if (!p) game.error(game.t('kill-none', { pid: raw }));
         else if (game.who !== 'root' && p.user !== game.who) game.error(game.t('kill-not-allowed', { pid: raw }));
         // Un zombie est déjà mort : aucun signal n'y fait rien, seul son parent peut le récupérer.
         else if (p.zombie) continue;
         else {
-          game.state.processus = listing.filter((q) => q !== p);
-          const m = game.state.surKill?.(game, p);
+          game.state.process = listing.filter((q) => q !== p);
+          const m = game.state.onKill?.(game, p);
           if (m) messages.push(m);
         }
       }
@@ -77,7 +77,7 @@ export const SYSTEM: Record<string, Command> = {
       } catch {
         return game.error(`pkill: invalid regular expression: ${pattern}`, 2);
       }
-      const listing: Process[] = game.state.processus ?? [];
+      const listing: Process[] = game.state.process ?? [];
       // Le nom du programme : le premier mot de la commande, sans son chemin (comme /proc/pid/comm).
       const name = (p: Process) => p.command.split(/[\s:]/)[0].split('/').at(-1)!.replace(/^-/, '');
       const chosen = listing.filter((p) => (!accounts || accounts.includes(p.user)) && (!re || re.test(name(p))) && !p.zombie);
@@ -91,8 +91,8 @@ export const SYSTEM: Record<string, Command> = {
           game.error(`pkill: killing pid ${p.pid} failed: Operation not permitted`);
           continue;
         }
-        game.state.processus = (game.state.processus as Process[]).filter((q) => q !== p);
-        const m = game.state.surKill?.(game, p);
+        game.state.process = (game.state.process as Process[]).filter((q) => q !== p);
+        const m = game.state.onKill?.(game, p);
         if (m) messages.push(m);
       }
       return messages.join('\n');
@@ -103,7 +103,7 @@ export const SYSTEM: Record<string, Command> = {
   who: {
     launch: ({ game }) => {
       const sessions: { user: string; tty: string; since: string; forEachOf: string; pid?: number }[] = game.state.sessions ?? [];
-      const live = ((game.state.processus ?? []) as Process[]).map((p) => p.pid);
+      const live = ((game.state.process ?? []) as Process[]).map((p) => p.pid);
       return sessions
         .filter((x) => x.pid === undefined || live.includes(x.pid))
         .map((x) => `${x.user.padEnd(8)} ${x.tty.padEnd(12)} ${x.since} (${x.forEachOf})`)

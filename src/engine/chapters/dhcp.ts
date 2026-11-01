@@ -25,7 +25,7 @@ const PRINTER = '10.10.30.10';
 
 const inDhcp = (j: Game) => lan(j)!.devices.filter((a) => !a.fixed);
 const servedWell = (j: Game) =>
-  inDhcp(j).every((a) => a.lease && inside(a.lease, VLANS.find((v) => v.id === a.vlan)!.reseau)) &&
+  inDhcp(j).every((a) => a.lease && inside(a.lease, VLANS.find((v) => v.id === a.vlan)!.network)) &&
   lan(j)!.devices.find((a) => a.name === 'imprimante')?.lease === PRINTER;
 
 export const dhcp: Chapter = {

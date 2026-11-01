@@ -294,7 +294,7 @@ export const wifi: Chapter = {
       wg: {},
       ldap: wifiDirectory(),
       ldapAdmin: MDP_ADMIN,
-      radiusDemandes: REQUESTS,
+      radiusRequests: REQUESTS,
     };
   },
   initialise: (j) => {

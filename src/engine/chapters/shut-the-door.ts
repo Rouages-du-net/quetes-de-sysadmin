@@ -110,7 +110,7 @@ export const door: Chapter = {
           const c = config(j);
           if (!c) return;
           c.load = readConfig(j).values;
-          c.connectionsToLoad = j.state.connexions ?? 1;
+          c.connectionsToLoad = j.state.connections ?? 1;
           c.reloads++;
           // Les robots reviennent… et se font éconduire avant même d'essayer un mot de passe.
           if (closed(c.load)) {
@@ -198,7 +198,7 @@ export const door: Chapter = {
         j.flags.has('closed') &&
         closed(config(j).load) &&
         allowed(config(j).load, j.player) &&
-        (j.state.connexions ?? 1) > config(j).connectionsToLoad,
+        (j.state.connections ?? 1) > config(j).connectionsToLoad,
       message: (j) => j.t('door-event-end'),
     },
   ],

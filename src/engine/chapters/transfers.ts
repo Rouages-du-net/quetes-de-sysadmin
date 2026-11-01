@@ -56,7 +56,7 @@ function files(j: Game, root: string): Record<string, string> {
 }
 
 const archives = (j: Game) => (j as Shell).internal('archives')!;
-const workstation = (j: Game) => (j.state.poste as (() => Shell) | undefined)?.();
+const workstation = (j: Game) => (j.state.workstation as (() => Shell) | undefined)?.();
 
 // Le rapport, intact, quelque part dans la maison du poste.
 const reportOnWorkstation = (j: Game) => {

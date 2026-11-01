@@ -53,7 +53,7 @@ export const validKey = (s: string) => sinceB64(s.trim()) !== null;
 
 /** wg genkey : une clé privée (toujours différente, mais rejouable : un compteur de l'état). */
 export function generateKey(j: Game): string {
-  const n = (j.state.wgCompteur = (j.state.wgCompteur ?? 0) + 1);
+  const n = (j.state.wgCounter = (j.state.wgCounter ?? 0) + 1);
   let x = (n * 2654435761) >>> 0 || 1;
   const o = Array.from({ length: 32 }, () => {
     x ^= x << 13;

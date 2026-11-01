@@ -146,7 +146,7 @@ export const serviceSlapd = () => ({
   description: 'LSB: OpenLDAP standalone server (Lightweight Directory Access Protocol)',
   active: true,
   executable: 'slapd',
-  processus: [
+  process: [
     {
       pid: 980,
       user: 'openldap',

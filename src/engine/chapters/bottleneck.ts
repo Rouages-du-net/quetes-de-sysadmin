@@ -57,7 +57,7 @@ const accounts = (): Accounts => ({
 const proc = (pid: number, user: string, command: string, cpu = 0): Process => ({ pid, user, cpu, mem: 0.4, command });
 const sd = (j: Game) => systemd(j)!;
 const archives = (j: Game): Service => sd(j).services['radio-archives'];
-const running = (j: Game) => archives(j).state === 'active' && (j.state.processus ?? []).some((p: Process) => p.pid === archives(j).process[0]?.pid);
+const running = (j: Game) => archives(j).state === 'active' && (j.state.process ?? []).some((p: Process) => p.pid === archives(j).process[0]?.pid);
 const limit = (j: Game) => [archives(j).writeIo, archives(j).readIo].filter((l) => l && targetsPartition(l.device, (io(j) as IoState).disk));
 // Assez lente pour laisser le direct, assez rapide pour finir dans la soirée (au moins 5 Mio/s).
 const reasonable = (j: Game) => limit(j).length > 0 && limit(j).every((l) => l!.bytes >= 5 * Mo) && timeAServed(j);
@@ -131,14 +131,14 @@ export const bottleneck: Chapter = {
       };
       return s;
     })(),
-    processus: [
+    process: [
       proc(1, 'root', '/sbin/init'),
       proc(312, 'root', '[jbd2/vda1-8]'),
       proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups'),
       proc(FLUX, 'radio', '/usr/local/bin/stream --config /etc/radio/stream.conf', 3.2),
       proc(ARCHIVES, 'root', copyOf(t), 6.1),
     ],
-    memoire: { total: 2048 * Mo, kernel: 380 * Mo, rss: { 1: 12 * Mo, 312: 0, 598: 8 * Mo, [FLUX]: 180 * Mo, [ARCHIVES]: 40 * Mo } },
+    memory: { total: 2048 * Mo, kernel: 380 * Mo, rss: { 1: 12 * Mo, 312: 0, 598: 8 * Mo, [FLUX]: 180 * Mo, [ARCHIVES]: 40 * Mo } },
     io: {
       disk: 'vda',
       scheduler: 'none',
@@ -182,7 +182,7 @@ export const bottleneck: Chapter = {
         'radio-stream.service',
         'stream',
         FLUX,
-        `relay: read stall on ${buffer(j.t)}: waited ${Math.round(diskState(j).attente)} ms, listeners hear a gap`,
+        `relay: read stall on ${buffer(j.t)}: waited ${Math.round(diskState(j).waiting)} ms, listeners hear a gap`,
         4,
         false,
       );

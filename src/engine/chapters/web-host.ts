@@ -48,7 +48,7 @@ HOSTINGS.hebergeur = {
   }),
 };
 
-const workstation = (j: Game) => (j.state.poste as (() => Shell) | undefined)?.();
+const workstation = (j: Game) => (j.state.workstation as (() => Shell) | undefined)?.();
 const wiki = (j: Game) => (j as Shell).internal('wiki');
 
 // Le site du wiki, par chemin relatif.
@@ -83,7 +83,7 @@ const lastSend = (j: Game) =>
   inLine(j)
     ?.log.filter((e) => e.send)
     .at(-1);
-const refusal = (j: Game, what: 'clair' | 'certificat') => !!(workstation(j)?.state.refusFtp as string[] | undefined)?.includes(what);
+const refusal = (j: Game, what: 'clair' | 'certificat') => !!(workstation(j)?.state.ftpRefusal as string[] | undefined)?.includes(what);
 
 export const host: Chapter = {
   id: 'web-host',

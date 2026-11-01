@@ -346,7 +346,7 @@ function cp(d: DockerState, game: Shell, args: string[]): string {
       if (e) return game.error(e);
       bytes += new TextEncoder().encode(content).length;
     }
-    game.state.dockerCopie = (game.state.dockerCopie ?? 0) + 1;
+    game.state.dockerCopy = (game.state.dockerCopy ?? 0) + 1;
     return `Successfully copied ${dockerSize(bytes)} to ${destPlace}`;
   }
   const c = findContainer(d, to!.container);
@@ -521,7 +521,7 @@ function prune(d: DockerState, game: Shell, what: 'image' | 'container' | 'volum
       recovered += partis.reduce((t, n) => t + volumeSize(d.volumes[n]), 0);
       for (const n of partis) delete d.volumes[n];
       if (partis.length) lines.push('Deleted Volumes:', ...partis, '');
-      game.state.dockerVolumesElagues = [...(game.state.dockerVolumesElagues ?? []), ...partis];
+      game.state.dockerPrunedVolumes = [...(game.state.dockerPrunedVolumes ?? []), ...partis];
     }
     diskUpdate(game);
     return [...lines, `Total reclaimed space: ${dockerSize(recovered)}`].join('\n');
@@ -633,7 +633,7 @@ function compose(d: DockerState, game: Shell, args: string[]): string {
           if (d.volumes[name]) {
             delete d.volumes[name];
             lines.push(` ✔ Volume ${name}  Removed`);
-            game.state.composeVolumesEffaces = true;
+            game.state.composeVolumesErased = true;
           }
         }
       const reseaux: Record<string, true> = game.state.dockerReseaux ?? {};
@@ -861,7 +861,7 @@ function execute(d: DockerState, game: Shell, args: string[]): string {
           }
           // La couche du conteneur disparaît avec lui ; les volumes restent.
           d.containers = d.containers.filter((x) => x !== c);
-          game.state.dockerSupprimes = [...(game.state.dockerSupprimes ?? []), c];
+          game.state.dockerRemoved = [...(game.state.dockerRemoved ?? []), c];
         } else {
           if (action !== 'start') stop(game, c);
           if (action !== 'stop') {

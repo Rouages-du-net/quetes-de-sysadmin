@@ -30,7 +30,7 @@ export interface Mail {
 }
 
 /** Les courriers remis sur cette machine (pour les histoires : qui a été prévenu, et quand). */
-export const mails = (game: Shell): Mail[] => (game.state.courriers ??= []);
+export const mails = (game: Shell): Mail[] => (game.state.mails ??= []);
 
 // L'heure de la machine, et sa date au format des courriers.
 const now = (game: Shell) => (timeOfDay(game) ? machineTime(game).wall : (systemd(game)?.clock ?? Date.UTC(2027, 0, 1)));
@@ -180,7 +180,7 @@ function checkProcs(game: Shell, args: string[]): string {
   const name = value('-C');
   const w = value('-w');
   const c = value('-c');
-  const listing: Process[] = (game.state.processus ?? []).filter((p: Process) => !p.zombie);
+  const listing: Process[] = (game.state.process ?? []).filter((p: Process) => !p.zombie);
   const n = listing.filter((p) => !name || p.command.split(/\s+/)[0].split('/').at(-1) === name).length;
   const state = c && !inRange(n, c) ? 2 : w && !inRange(n, w) ? 1 : 0;
   game.status = state;
@@ -202,7 +202,7 @@ function last(game: Shell, args: string[]): string {
   const i = args.indexOf('-n');
   const max = i >= 0 ? Number(args[i + 1]) : Infinity;
   const accounts = args.filter((a, k) => !a.startsWith('-') && args[k - 1] !== '-n');
-  const listing: Connection[] = [...((game.state.connexionsPassees ?? []) as Connection[])]
+  const listing: Connection[] = [...((game.state.pastConnections ?? []) as Connection[])]
     .filter((c) => !accounts.length || accounts.includes(c.account))
     .sort((a, b) => b.start - a.start)
     .slice(0, max);
@@ -241,7 +241,7 @@ export const SUPERVISION: Record<string, Command> = {
         game.error('Null message body; hope that\u0027s ok');
       }
       // Une machine avec Postfix (courrier.ts) : le message part par la file d'attente, vers la machine ou au-dehors.
-      if (game.state.courrier) {
+      if (game.state.mail) {
         submit(game, game.who, addresses, subject, body, game.accounts.users[game.who]?.uid ?? 1000);
         return '';
       }
