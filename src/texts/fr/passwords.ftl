@@ -20,3 +20,6 @@ password-radish-2027 = radis-2027
 password-bee-2027 = abeille-2027
 password-flour-2028 = farine-2028
 password-film-2027 = argentique-2027
+
+## The Game Library
+password-dice-2027 = ludo-2027

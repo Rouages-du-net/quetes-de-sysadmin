@@ -1,5 +1,5 @@
-// Story "La Fabrique" — chapter "The hole in the firewall": Docker
-// and ufw, and the space Docker takes. Rania (from Les Lettres du quartier)
+// Story "The Workshop" — chapter "The hole in the firewall": Docker
+// and ufw, and the space Docker takes. Rania (from The Neighbourhood Letters)
 // tested the fablab's server from outside: PostgreSQL answers on
 // port 5432, although ufw doesn't allow it. Yasmine had added
 // 'ports: - "5432:5432"' to the database to connect to it from her laptop.
@@ -14,7 +14,7 @@
 // https://docs.docker.com/engine/network/#published-ports,
 // https://docs.docker.com/engine/manage-resources/pruning/
 
-import { password, d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import { password, name, d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game, Shell } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import {
@@ -34,13 +34,14 @@ import { newFirewall, type Firewall } from '../firewall';
 import { portState } from '../ports';
 import { WORKSTATION } from '../machines';
 import { connect } from './compose';
-import { writeBase } from './update';
+import { writeBase, toolshed, toolshedBase, toolshedDirectory, toolshedImage } from './update';
 
 const M = '/home/you';
 const PROJECT = '/srv/reservations';
 const Go = 1_000_000_000;
 const DISK = 20 * Go;
-const USEFUL_VOLUMES = ['outiltheque-donnees', 'reservations_donnees', 'wiki-ancien'];
+// The volumes to keep, in the language.
+const usefulVolumes = (t: Game['t']) => [name(t, 'toolshed-data'), `reservations_${name(t, 'pgdata')}`, name(t, 'old-wiki')];
 
 const accounts = (): Accounts => ({
   users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' }, yasmine: { uid: 1001, group: 'yasmine' } },
@@ -54,8 +55,8 @@ const accounts = (): Accounts => ({
 });
 
 // The compose.yaml from the end of chapter 2… plus the database port, added by Yasmine.
-const COMPOSE = `services:
-  appli:
+const COMPOSE = (t: Game['t']) => `services:
+  ${name(t, 'webapp')}:
     image: registry.example/reservations:2.1
     ports:
       - "8081:3000"
@@ -71,15 +72,15 @@ const COMPOSE = `services:
       - POSTGRES_USER=fablab
       - POSTGRES_PASSWORD=\${POSTGRES_PASSWORD}
       - POSTGRES_DB=reservations
-    # Pour pgAdmin, depuis mon portable (Yasmine)
+    # ${t('firewall-hole-compose-comment')}
     ports:
       - "5432:5432"
     volumes:
-      - donnees:/var/lib/postgresql/data
+      - ${name(t, 'pgdata')}:/var/lib/postgresql/data
     restart: unless-stopped
 
 volumes:
-  donnees:`;
+  ${name(t, 'pgdata')}:`;
 
 const image = (repo: string, tag: string, app: string, port: number, command: string, size: number, daysBefore: number): Image => ({
   repo,
@@ -92,18 +93,21 @@ const image = (repo: string, tag: string, app: string, port: number, command: st
   command,
 });
 
-function dockerState(): DockerState {
+const days = (n: number) => Date.UTC(2027, 3, 24, 10, 0, 0) - n * 86_400_000;
+
+function dockerState(t: Game['t']): DockerState {
+  const tool = (tag: string, size: number, n: number) => toolshedImage(t, tag, days(n), size, identifier(`registry.example/toolshed:${tag}:${size}`));
   const listing = [
-    image('registry.example/outiltheque', '1.4', 'outiltheque', 8080, '/usr/local/bin/outiltheque serve', 148_200_000, 140),
-    image('registry.example/outiltheque', '1.5', 'outiltheque', 8080, '/usr/local/bin/outiltheque serve', 151_600_000, 23),
-    image('registry.example/reservations', '2.0', 'reservations', 3000, 'docker-entrypoint.sh node serveur.js', 205_100_000, 40),
-    image('registry.example/reservations', '2.1', 'reservations', 3000, 'docker-entrypoint.sh node serveur.js', 212_400_000, 16),
+    tool('1.4', 148_200_000, 140),
+    tool('1.5', 151_600_000, 23),
+    image('registry.example/reservations', '2.0', 'reservations', 3000, 'docker-entrypoint.sh node server.js', 205_100_000, 40),
+    image('registry.example/reservations', '2.1', 'reservations', 3000, 'docker-entrypoint.sh node server.js', 212_400_000, 16),
     image('postgres', '16', 'postgres', 5432, 'docker-entrypoint.sh postgres', 431_700_000, 60),
     image('postgres', '17', 'postgres', 5432, 'docker-entrypoint.sh postgres', 438_900_000, 22),
     // A local AI model trial, forgotten there.
-    image('registry.example/ia-locale', 'latest', 'aucune', 8000, 'python -m serveur', 9_600_000_000, 31),
-    image('node', '22', 'aucune', 0, 'docker-entrypoint.sh node', 1_120_000_000, 45),
-    ...[0, 1, 2].map((k) => image('<none>', '<none>', 'aucune', 0, '', 410_000_000 + k * 7_000_000, 50 + k * 9)),
+    { ...image(`registry.example/${name(t, 'local-ai')}`, 'latest', 'none', 8000, 'python -m server', 9_600_000_000, 31), id: identifier('registry.example/local-ai:latest:9600000000') },
+    image('node', '22', 'none', 0, 'docker-entrypoint.sh node', 1_120_000_000, 45),
+    ...[0, 1, 2].map((k) => image('<none>', '<none>', 'none', 0, '', 410_000_000 + k * 7_000_000, 50 + k * 9)),
   ];
   const images = Object.fromEntries(listing.map((i) => [i.repo === '<none>' ? `<none>@${i.id}` : imageName(i), i]));
   return {
@@ -111,10 +115,10 @@ function dockerState(): DockerState {
     registry: Object.fromEntries(listing.filter((i) => i.repo !== '<none>').map((i) => [imageName(i), i])),
     containers: [],
     volumes: {
-      'outiltheque-donnees': { created: Date.UTC(2027, 3, 3, 10, 12, 0), data: {}, size: 2_400_000 },
-      reservations_donnees: { created: Date.UTC(2027, 3, 10, 14, 30, 0), data: {}, size: 162_000_000 },
+      [name(t, 'toolshed-data')]: { created: Date.UTC(2027, 3, 3, 10, 12, 0), data: {}, size: 2_400_000 },
+      [`reservations_${name(t, 'pgdata')}`]: { created: Date.UTC(2027, 3, 10, 14, 30, 0), data: {}, size: 162_000_000 },
       // The pages of the fablab's old wiki, kept to extract them some day.
-      'wiki-ancien': { created: Date.UTC(2026, 10, 2, 9, 0, 0), data: { 'wiki.sqlite': 'SQLite format 3' }, size: 48_100_000 },
+      [name(t, 'old-wiki')]: { created: Date.UTC(2026, 10, 2, 9, 0, 0), data: { 'wiki.sqlite': 'SQLite format 3' }, size: 48_100_000 },
     },
     next: 10,
   };
@@ -129,13 +133,13 @@ const container = (
   reboot: string,
   state: Container['state'],
 ): Container => ({
-  id: identifier(`conteneur-${name}`),
+  id: identifier(`container-${name}`),
   name,
   image,
   state,
   code: 0,
   ports,
-  mounts: volume ? [{ type: 'volume', source: volume, target: '/var/lib/outiltheque', onlyRead: false }] : [],
+  mounts: volume ? [{ type: 'volume', source: volume, target: toolshedDirectory(j.t), onlyRead: false }] : [],
   env: {},
   reboot,
   created: Date.UTC(2027, 3, 3, 10, 20, 0),
@@ -151,9 +155,9 @@ const state = (j: Game) => docker(j)!;
 const shell = (j: Game) => j as Shell;
 const openToWorld = (j: Game) => portState(j, 5432, false, WORKSTATION.address) === 'open';
 const occupation = (j: Game) => shell(j).size(j.find('/')!) / DISK;
-const volumesPerdus = (j: Game) => USEFUL_VOLUMES.filter((v) => !state(j).volumes[v]);
+const lostVolumes = (j: Game) => usefulVolumes(j.t).filter((v) => !state(j).volumes[v]);
 const okApp = (j: Game) => {
-  const a = projectContainers(state(j), 'reservations').find((c) => c.service === 'appli');
+  const a = projectContainers(state(j), 'reservations').find((c) => c.service === name(j.t, 'webapp'));
   return a?.state === 'running' && connect(j, a) === null;
 };
 const okTool = (j: Game) => dockerRequest(j, '127.0.0.1', 8080, '/')?.code === 200;
@@ -198,7 +202,7 @@ export const bypass: Chapter = {
   final: 'end',
   password: 'fablab-2027',
   accounts,
-  state: () => {
+  state: (t) => {
     const pf = newFirewall();
     pf.enabled = true;
     pf.rules = [
@@ -231,7 +235,7 @@ export const bypass: Chapter = {
         { proto: 'tcp', address: '[::]', port: 22, process: 'sshd', pid: 610 },
       ],
       mounts: [{ path: '/', capacity: DISK, name: '/dev/vda1' }],
-      docker: { ...dockerState(), names: ['workshop', 'workshop.internal', '192.0.2.15'] },
+      docker: { ...dockerState(t), names: ['workshop', 'workshop.internal', '192.0.2.15'] },
     };
   },
   // The fablab's containers, as they have run since the last boot.
@@ -239,26 +243,26 @@ export const bypass: Chapter = {
     const e = state(j);
     const tool = container(
       j,
-      'outiltheque',
-      'registry.example/outiltheque:1.5',
+      toolshed(j.t),
+      `registry.example/${toolshed(j.t)}:1.5`,
       [{ ip: '0.0.0.0', host: 8080, container: 8080 }],
-      'outiltheque-donnees',
+      name(j.t, 'toolshed-data'),
       'unless-stopped',
       'running',
     );
     const old = container(
       j,
-      'outiltheque-ancien',
-      'registry.example/outiltheque:1.4',
+      name(j.t, 'toolshed-old'),
+      `registry.example/${toolshed(j.t)}:1.4`,
       [{ ip: '0.0.0.0', host: 8080, container: 8080 }],
       null,
       'no',
       'exited',
     );
     e.containers.push(old, tool);
-    writeIn(j, tool, '/var/lib/outiltheque/outiltheque.db', writeBase({ schema: 4, loans: [] }));
+    writeIn(j, tool, toolshedBase(j.t), writeBase({ schema: 4, loans: [] }));
     // The bookings database already exists in its volume (password from .env).
-    e.volumes.reservations_donnees.data = {
+    e.volumes[`reservations_${name(j.t, 'pgdata')}`].data = {
       PG_VERSION: '17',
       'pg_hba_qds.json': JSON.stringify({ user: 'fablab', password: password(j.t, 'workshop2027'), base: 'reservations' }),
     };
@@ -276,12 +280,12 @@ export const bypass: Chapter = {
       }),
       srv: place({
         reservations: place({
-          'compose.yaml': f(COMPOSE, { lines: true, owner: 'root' }),
+          'compose.yaml': f(COMPOSE(t), { lines: true, owner: 'root' }),
           '.env': f(`POSTGRES_PASSWORD=${password(t, 'workshop2027')}`, { lines: true, owner: 'root', mode: 'rw-------' }),
         }),
       }),
       // The system and its logs: the space that isn't Docker's.
-      usr: place({ systeme: f('', { size: 3_100_000_000, owner: 'root' }) }),
+      usr: place({ 'base-system': f('', { size: 3_100_000_000, owner: 'root' }) }),
       var: place({
         lib: place({ docker: place({}, { owner: 'root', mode: 'rwx--x---' }) }),
         log: place({ journal: place({ 'system.journal': f('', { size: 1_600_000_000, owner: 'root' }) }) }),
@@ -306,8 +310,8 @@ export const bypass: Chapter = {
     },
     {
       id: 'volume-lost',
-      condition: (j) => volumesPerdus(j).length > 0,
-      message: (j) => j.t('firewall-hole-event-volume-lost', { volumes: volumesPerdus(j).join(', ') }),
+      condition: (j) => lostVolumes(j).length > 0,
+      message: (j) => j.t('firewall-hole-event-volume-lost', { volumes: lostVolumes(j).join(', ') }),
     },
     {
       id: 'disk',
@@ -316,7 +320,7 @@ export const bypass: Chapter = {
     },
     {
       id: 'end',
-      condition: (j) => !openToWorld(j) && okApp(j) && okTool(j) && occupation(j) < 0.75 && volumesPerdus(j).length === 0,
+      condition: (j) => !openToWorld(j) && okApp(j) && okTool(j) && occupation(j) < 0.75 && lostVolumes(j).length === 0,
       message: (j) => j.t('firewall-hole-event-end'),
     },
   ],

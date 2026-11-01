@@ -29,11 +29,13 @@ firewall-hole-word-yasmine =
 
     And another problem: the server's disk is more than 90% full
     (df -h /). I think it's Docker. Can you free up some space? But
-    careful: whatever you do, DO NOT touch the wiki-ancien volume. It holds
+    careful: whatever you do, DO NOT touch the old-wiki volume. It holds
     the pages of our old wiki, which we still need to recover. No container
     is using it at the moment.
 
     For sudo: fablab-2027."
+
+firewall-hole-compose-comment = For pgAdmin, from my laptop (Yasmine)
 
 ## Events
 

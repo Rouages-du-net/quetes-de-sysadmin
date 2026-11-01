@@ -35,6 +35,8 @@ firewall-hole-word-yasmine =
 
     Pour sudo : fablab-2027. »
 
+firewall-hole-compose-comment = Pour pgAdmin, depuis mon portable (Yasmine)
+
 ## Événements
 
 firewall-hole-event-ss =

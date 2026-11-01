@@ -21,13 +21,16 @@ ransom-message-berenice =
     not mounted). The password for that backup is in the safe:
       pawn-knight-rook-27
 
-    I'll leave it to you. For sudo: ludo-2027."
+    I'll leave it to you. For sudo: dice-2027."
 ransom-note =
     YOUR FILES ARE ENCRYPTED.
     To recover them, send 0.5 bitcoin to the address
-    bc1q-exemple-adresse-fictive within 72 hours.
+    bc1q-example-fictitious-address within 72 hours.
     After that, your files will be lost.
 ransom-crontab-root = Copy of the share to the NAS, every night at 2:30
+# The option the encryptor runs with, and the label of the USB backup disk.
+ransom-option-quiet = --quiet
+ransom-usb-label = BACKUP
 ransom-inventory =
     game;copies;condition
     snakes and ladders;3;good
@@ -72,7 +75,7 @@ ransom-event-extent =
     (ps aux)? And last night's log (journalctl) may tell you how it
     got in.
 ransom-event-encryptor-seen =
-    A program hidden in /home/accueil/.cache, running under the accueil
+    A program hidden in /home/frontdesk/.cache, running under the frontdesk
     account and eating all the CPU: that's the encryptor. You have to
     stop it (it belongs to another account: man kill, and sudo). Then
     look for whatever could restart it.
@@ -92,7 +95,7 @@ ransom-event-key-too-early =
     belong to root), but with another account, the last
     backup could have gone too. Stop the attack first, and mount
     a backup read-only (mount -o ro).
-# The encryptor restarted by the accueil account's crontab
+# The encryptor restarted by the frontdesk account's crontab
 ransom-return =
     The encryptor is back (ps aux)! Something restarts it at
     regular intervals. Where are an account's scheduled tasks kept?
@@ -111,7 +114,7 @@ ransom-event-end =
     ssh games.)
 
     WHAT HAPPENED
-    The accueil account's password was guessed (journalctl: three
+    The frontdesk account's password was guessed (journalctl: three
     failures then a login, at 3 in the morning). A program encrypted everything
     that account could modify, and installed itself in its crontab
     to come back. The nightly copy to the NAS, always plugged in, copied

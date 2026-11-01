@@ -283,3 +283,43 @@ name-message_from_theo-txt = message_from_theo.txt
 
 ## The Patch
 name-message_from_ines-txt = message_from_ines.txt
+
+## The Workshop
+name-toolshed = toolshed
+name-toolshed-db = toolshed.db
+name-toolshed-old = toolshed-old
+name-toolshed-data = toolshed-data
+name-local-ai = local-ai
+name-old-wiki = old-wiki
+name-base-system = base-system
+name-webapp = webapp
+name-pgdata = pgdata
+name-gallery = gallery
+name-point-thumbnails = .thumbnails
+name-benchy-first-try-jpg = benchy-first-try.jpg
+name-benchy-success-jpg = benchy-success.jpg
+name-laser-cut-lamp-jpg = laser-cut-lamp.jpg
+name-wooden-clock-jpg = wooden-clock.jpg
+name-line-following-robot-jpg = line-following-robot.jpg
+name-kids-soldering-workshop-jpg = kids-soldering-workshop.jpg
+name-repaired-bike-jpg = repaired-bike.jpg
+name-revived-toaster-jpg = revived-toaster.jpg
+name-led-sign-jpg = led-sign.jpg
+name-shared-toolbox-jpg = shared-toolbox.jpg
+name-digital-embroidery-jpg = digital-embroidery.jpg
+name-homemade-drone-jpg = homemade-drone.jpg
+name-custom-keyboard-jpg = custom-keyboard.jpg
+name-fablab-party-jpg = fablab-party.jpg
+
+## The Gazette
+name-street-party-html = street-party.html
+name-home-html = home.html
+name-newsroom = newsroom
+name-newsletter = newsletter
+
+## The Game Library
+name-frontdesk = frontdesk
+name-gamelib = gamelib
+name-boardgames = boardgames
+name-members = members
+name-loans = loans

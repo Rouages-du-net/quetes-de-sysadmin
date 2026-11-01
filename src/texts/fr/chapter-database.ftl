@@ -28,6 +28,11 @@ database-word-malo =
     rsnapshot les copie chaque nuit avec le reste. Pour parler à la base :
     psql. Le compte qui a tous les droits sur la base s'appelle postgres. »
 database-crontab-root = Instantanés (rsnapshot) : weekly à 3 h le lundi, daily à 3 h 30
+# Les colonnes des tables, et les quartiers des membres.
+database-columns-boardgames = id,nom,exemplaires
+database-columns-members = id,carte,quartier
+database-columns-loans = id,jeu_id,membre_id,sorti_le,rendu_le
+database-districts = nord,sud,est,ouest,centre
 database-names-games = jeu de l'oie,petits chevaux,dames,mikado,dominos,memory des animaux,jeu de l'échelle,awalé,jeu de go,puissance 4,mancala,tangram,solitaire,bataille navale,jeu des sept familles
 
 ## Événements

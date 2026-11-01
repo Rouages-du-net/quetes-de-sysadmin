@@ -31,6 +31,9 @@ snapshots-inventory-old =
     jeu de l'oie;3;bon
     petits chevaux;2;bon
 
+# L'étiquette du second disque (lsblk -f, blkid).
+snapshots-disk-label = INSTANTANES
+
 ## Événements
 
 # { $mails } : le nombre de courriels envoyés par cron

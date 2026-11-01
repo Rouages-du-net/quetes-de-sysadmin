@@ -6,10 +6,10 @@
 
 hint-ransom-restored =
     .lead = First stop the attack: a program is still running (ps aux), and its account's crontab restarts it. Only then the offline backup: the USB disk from the drawer (lsblk -f), mounted read-only, holds a restic repository. The NAS copy is encrypted too.
-    .solution = sudo kill 3141 ; sudo crontab -u accueil -r ; sudo mount -o ro /dev/sdb1 /mnt/usb ; sudo restic -r /mnt/usb/repo restore latest --target / (password: pawn-knight-rook-27)
+    .solution = sudo kill 3141 ; sudo crontab -u frontdesk -r ; sudo mount -o ro /dev/sdb1 /mnt/usb ; sudo restic -r /mnt/usb/repo restore latest --target / (password: pawn-knight-rook-27)
 hint-ransom-end =
     .lead = The files are back. Now close the way in (the account whose password was guessed), throw away the .locked files and the ransom notes, and put the backup offline again (step out of /mnt/usb to unmount it).
-    .solution = sudo usermod -L accueil ; sudo find /srv/share -name "*.locked" -delete ; sudo find /srv/share -name READ-ME-TO-RECOVER.txt -delete ; cd ; sudo umount /mnt/usb
+    .solution = sudo usermod -L frontdesk ; sudo find /srv/share -name "*.locked" -delete ; sudo find /srv/share -name READ-ME-TO-RECOVER.txt -delete ; cd ; sudo umount /mnt/usb
 
 ## Chapter 2 — Snapshots
 
@@ -23,11 +23,11 @@ hint-snapshots-end =
 ## Chapter 3 — The Database
 
 hint-database-test-succeeded =
-    .lead = A real backup of a running database is pg_dump, run as the postgres account (sudo -u). And a backup is only worth something if it restores: try it in a separate test database (man createdb, man pg_restore), never over ludo.
-    .solution = sudo -u postgres pg_dump -Fc -f /var/backups/postgresql/ludo.dump ludo ; sudo -u postgres createdb ludo_test ; sudo -u postgres pg_restore -d ludo_test /var/backups/postgresql/ludo.dump
+    .lead = A real backup of a running database is pg_dump, run as the postgres account (sudo -u). And a backup is only worth something if it restores: try it in a separate test database (man createdb, man pg_restore), never over gamelib.
+    .solution = sudo -u postgres pg_dump -Fc -f /var/backups/postgresql/gamelib.dump gamelib ; sudo -u postgres createdb gamelib_test ; sudo -u postgres pg_restore -d gamelib_test /var/backups/postgresql/gamelib.dump
 hint-database-loans-returned =
-    .lead = The prets table in ludo is empty, the rest is intact. pg_restore can put back just one table (-t), and only its data into an empty table.
-    .solution = sudo -u postgres pg_restore -d ludo --data-only -t prets /var/backups/postgresql/ludo.dump
+    .lead = The loans table in gamelib is empty, the rest is intact. pg_restore can put back just one table (-t), and only its data into an empty table.
+    .solution = sudo -u postgres pg_restore -d gamelib --data-only -t loans /var/backups/postgresql/gamelib.dump
 hint-database-end =
     .lead = Now run that pg_dump every night, as a role of the database: root is not one. Whose crontab, then?
-    .solution = sudo crontab -u postgres -e, and add: 15 2 * * * pg_dump -Fc -f /var/backups/postgresql/ludo.dump ludo
+    .solution = sudo crontab -u postgres -e, and add: 15 2 * * * pg_dump -Fc -f /var/backups/postgresql/gamelib.dump gamelib

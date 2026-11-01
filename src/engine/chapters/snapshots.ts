@@ -1,4 +1,4 @@
-// Story "La Ludothèque" — chapter "The snapshots": after the attack, Malo
+// Story "The Game Library" — chapter "The snapshots": after the attack, Malo
 // wants to be able to go back to any day of the last two weeks. rsnapshot is
 // installed with Debian's configuration; it must be set up (tabs!) for
 // /srv/share to the second disk (/mnt/snapshots), 7 daily and 4 weekly
@@ -12,7 +12,7 @@
 // Sources: https://rsnapshot.org/rsnapshot/docs/docs.html,
 // https://manpages.debian.org/bookworm/rsnapshot/rsnapshot.1.en.html
 
-import { path, d, f, accountsFiles, type Chapter, type Accounts, type Rights, type Node } from '../world';
+import { path, d, f, account, accountsFiles, type Chapter, type Accounts, type Rights, type Node } from '../world';
 import type { Game, Shell } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { pass } from '../cron';
@@ -31,16 +31,16 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     you: { uid: 1000, group: 'you' },
-    accueil: { uid: 1001, group: 'accueil' },
+    frontdesk: { uid: 1001, group: 'frontdesk' },
     berenice: { uid: 1002, group: 'berenice' },
   },
   groups: {
     root: { gid: 0, members: [] },
     sudo: { gid: 27, members: ['you', 'berenice'] },
     you: { gid: 1000, members: [] },
-    accueil: { gid: 1001, members: [] },
+    frontdesk: { gid: 1001, members: [] },
     berenice: { gid: 1002, members: [] },
-    ludo: { gid: 1100, members: ['you', 'accueil', 'berenice'] },
+    gamelib: { gid: 1100, members: ['you', 'frontdesk', 'berenice'] },
   },
 });
 
@@ -88,7 +88,7 @@ function twoWeeks(j: Game): string[] {
       f(n === 14 ? j.t('snapshots-inventory-old') : inventory(j.t, n), {
         lines: true,
         owner: 'berenice',
-        group: 'ludo',
+        group: account(j.t, 'gamelib'),
         mode: 'rw-rw-r--',
       }),
     );
@@ -134,9 +134,9 @@ export const chapterSnapshots: Chapter = {
   welcome: 'message_from_berenice.txt',
   names: true,
   final: 'end',
-  password: 'ludo-2027',
+  password: 'dice-2027',
   accounts,
-  state: () => {
+  state: (t) => {
     const tree = d({}, undefined, { owner: 'root', mode: 'rwxr-xr-x' });
     const second: Device = {
       disk: '/dev/sdc',
@@ -144,7 +144,7 @@ export const chapterSnapshots: Chapter = {
       removable: false,
       size: 500 * Go,
       system: 'ext4',
-      label: 'INSTANTANES',
+      label: t('snapshots-disk-label'),
       uuid: 'b2e41c07-5d3a-4f19-8c6e-0a7d93f1e258',
       tree,
     };
@@ -160,7 +160,7 @@ export const chapterSnapshots: Chapter = {
       }),
       mounts: [{ path: '/', capacity: 40 * Go, name: '/dev/vda1', system: 'ext4' }],
       devices: { '/dev/sdc1': second },
-      lockedAccounts: ['accueil'],
+      lockedAccounts: [account(t, 'frontdesk')],
     };
   },
   initialise: (j) => {
@@ -183,36 +183,36 @@ export const chapterSnapshots: Chapter = {
     const root: Rights = { owner: 'root' };
     const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
     const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
-    const ludo = (owner: string, size?: number): Rights & { size?: number } => ({
+    const gamelib = (owner: string, size?: number): Rights & { size?: number } => ({
       owner,
-      group: 'ludo',
+      group: 'gamelib',
       mode: 'rw-rw-r--',
       ...(size ? { size } : {}),
     });
     const share: Record<string, Node> = {
-      'inventory.csv': file(t('ransom-inventory'), ludo('berenice')),
-      'volunteer-rota.txt': file(t('ransom-schedule'), ludo('berenice')),
-      'games-day-poster.txt': file(t('ransom-shows'), ludo('berenice')),
+      'inventory.csv': file(t('ransom-inventory'), gamelib('berenice')),
+      'volunteer-rota.txt': file(t('ransom-schedule'), gamelib('berenice')),
+      'games-day-poster.txt': file(t('ransom-shows'), gamelib('berenice')),
       rules: place(
         {
-          'goose-game.txt': file(t('ransom-rules-goose'), ludo('berenice')),
-          'ludo.txt': file(t('ransom-rules-horses'), ludo('berenice')),
-          'draughts.txt': file(t('ransom-rules-ladies'), ludo('berenice')),
+          'goose-game.txt': file(t('ransom-rules-goose'), gamelib('berenice')),
+          'ludo.txt': file(t('ransom-rules-horses'), gamelib('berenice')),
+          'draughts.txt': file(t('ransom-rules-ladies'), gamelib('berenice')),
           // The scanned rules: big files that never change.
-          'rules-scans.pdf': f(t('archives-document-pdf'), { lines: true, ...ludo('berenice', 48_000_000) }),
+          'rules-scans.pdf': f(t('archives-document-pdf'), { lines: true, ...gamelib('berenice', 48_000_000) }),
         },
-        { owner: 'berenice', group: 'ludo', mode: 'rwxrwxr-x' },
+        { owner: 'berenice', group: 'gamelib', mode: 'rwxrwxr-x' },
       ),
     };
     return place({
       etc: place({ ...accountsFiles(), hostname: file('games'), 'rsnapshot.conf': file(CONF_DEBIAN) }),
       home: place({
         you: d({ 'message_from_berenice.txt': f(t('snapshots-message-berenice')) }),
-        accueil: place({}, { owner: 'accueil', mode: 'rwxr-x---' }),
+        frontdesk: place({}, { owner: 'frontdesk', mode: 'rwxr-x---' }),
         berenice: place({}, { owner: 'berenice', mode: 'rwx------' }),
       }),
       tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
-      srv: place({ share: place(share, { owner: 'root', group: 'ludo', mode: 'rwxrwxr-x' }) }),
+      srv: place({ share: place(share, { owner: 'root', group: 'gamelib', mode: 'rwxrwxr-x' }) }),
       mnt: place({ snapshots: place({}), usb: place({}) }),
       var: place({ cache: place({}) }),
     });

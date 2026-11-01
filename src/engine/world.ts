@@ -209,7 +209,14 @@ export const systemDirectory = (p: string) => SYSTEM_DIRECTORIES.includes(p) || 
 // name; the world (owners, /home/vous) and the accounts are
 // renamed on creation, and the code refers to the player's account as
 // `jeu.joueur` (or `joueur(t)` before the game exists).
-const TRANSLATED_ACCOUNTS = ['you', 'eraser'];
+const TRANSLATED_ACCOUNTS = [
+  'you',
+  'eraser',
+  // The Gazette's newsroom group; The Game Library's front desk account and group.
+  'newsroom',
+  'frontdesk',
+  'gamelib',
+];
 export const account = (t: Translate, french: string) => (TRANSLATED_ACCOUNTS.includes(french) ? name(t, french) : french);
 /** The player's account in the language: vous, you… */
 export const player = (t: Translate) => account(t, 'you');

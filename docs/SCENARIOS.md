@@ -817,10 +817,10 @@ is out, and there are 37 ongoing loans not to lose.
 | Step | Command learnt |
 |---|---|
 | See what runs | `sudo docker ps -a`, `docker logs`, `curl http://localhost:8080` (and `docker` without `sudo`: the socket refuses) |
-| Know where the data is | `sudo docker inspect -f '{{json .Mounts}}' outiltheque`, `docker exec outiltheque ls -l /var/lib/outiltheque` |
-| Put the database in safety | `sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde` |
-| The new container | `docker stop outiltheque`, `docker run -d --name … -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque --restart unless-stopped registry.example/outiltheque:1.5` |
-| Put the database back | `docker cp sauvegarde/. container:/var/lib/outiltheque`, `docker restart` (the database migrates), `docker logs` |
+| Know where the data is | `sudo docker inspect -f '{{json .Mounts}}' toolshed`, `docker exec toolshed ls -l /var/lib/toolshed` |
+| Put the database in safety | `sudo docker cp toolshed:/var/lib/toolshed ./backup` |
+| The new container | `docker stop toolshed`, `docker run -d --name … -p 8080:8080 -v toolshed-data:/var/lib/toolshed --restart unless-stopped registry.example/toolshed:1.5` |
+| Put the database back | `docker cp backup/. container:/var/lib/toolshed`, `docker restart` (the database migrates), `docker logs` |
 
 Goal checked on the state: a version 1.5 container runs, publishes port
 8080, keeps its database in a volume or a directory of the machine, finds
@@ -832,7 +832,7 @@ container, `docker rm -f` before copying the database (lost for good: the
 chapter restarts from the menu), port 8080 still taken by the old container
 ("port is already allocated"), the new container creating an empty
 database, forgetting `--restart`. Other accepted solutions: a directory of
-the machine (`-v /srv/outiltheque:/var/lib/outiltheque`), copying the
+the machine (`-v /srv/toolshed:/var/lib/toolshed`), copying the
 database into the volume before starting, `docker update --restart`,
 `always`. Debrief: `inspect` before touching, volumes, `docker cp`,
 replacing without deleting too early, `--restart`, the docker group equals
@@ -848,9 +848,9 @@ service is reachable by its name, named volumes).
 
 | Step | Command learnt |
 |---|---|
-| Start, look | `sudo docker compose up -d`, `docker compose ps`, `docker compose logs appli`, `curl http://localhost:8081` |
+| Start, look | `sudo docker compose up -d`, `docker compose ps`, `docker compose logs webapp`, `curl http://localhost:8081` |
 | Reach the database | `DATABASE_URL=postgres://…@db:5432/…` (the service's name, not `localhost`) |
-| Keep the data | `volumes: - donnees:/var/lib/postgresql/data` and `volumes: donnees:` at the bottom of the file |
+| Keep the data | `volumes: - pgdata:/var/lib/postgresql/data` and `volumes: pgdata:` at the bottom of the file |
 | Take the secret out | `${POSTGRES_PASSWORD}` in `compose.yaml`, the value in `.env`, `chmod 600 .env`; `docker compose config` |
 | Make it last | `restart: unless-stopped` on each service, then `docker compose up -d` |
 
@@ -885,7 +885,7 @@ full.
 
 Goal checked on the state: port 5432 no longer answers from outside, both
 apps still answer, the disk is under 75 %, and the useful volumes (including
-`wiki-ancien`, which no container uses) are still there.
+`old-wiki`, which no container uses) are still there.
 
 Expected traps: believing `ufw status`, adding a ufw rule (no effect),
 `docker image prune` without `-a` (too little space gained),
@@ -899,7 +899,7 @@ pruning).
 
 ### Chapter 4 — Les pleins pouvoirs (done)
 
-The fablab's photo gallery (`/srv/galerie`, port 8082) receives photos sent
+The fablab's photo gallery (`/srv/gallery`, port 8082) receives photos sent
 by visitors. Its image declares no user and `compose.yaml` has no `user:`:
 it runs as root. The files it writes in the mounted `photos/` directory
 belong to root on the machine, and Yasmine can no longer manage the photos
@@ -908,18 +908,18 @@ everything mounted.
 
 | Step | Command learnt |
 |---|---|
-| Who am I, inside and outside | `sudo docker exec galerie-galerie-1 id` (uid=0), `ps aux` on the machine (the gallery's process as root) |
+| Who am I, inside and outside | `sudo docker exec gallery-gallery-1 id` (uid=0), `ps aux` on the machine (the gallery's process as root) |
 | Change user | `user: "1001:1001"` in `compose.yaml` (or `docker run --user`), `sudo docker compose up -d` |
 | Understand the failure | `docker compose ps` (Restarting), `docker compose logs` (EACCES), `ls -lan photos` (numeric uid and gid, hidden files) |
-| Give the directory | `sudo chown -R 1001:1001 /srv/galerie/photos`; Docker restarts the gallery by itself |
+| Give the directory | `sudo chown -R 1001:1001 /srv/gallery/photos`; Docker restarts the gallery by itself |
 
 Goal checked on the state: a gallery container runs under a uid other than 0
 and answers, the 14 photos are there, Yasmine (uid 1001) can write in the
-directory, and neither it nor `.miniatures` is world-writable.
+directory, and neither it nor `.thumbnails` is world-writable.
 
-Expected traps: a name unknown to the image (`user: galerie`: "unable to
-find user galerie: no matching entries in passwd file"), `chown` without
-`-R` (the `.miniatures` directory stays root's), `user: node` (uid 1000: on
+Expected traps: a name unknown to the image (`user: gallery`: "unable to
+find user gallery: no matching entries in passwd file"), `chown` without
+`-R` (the `.thumbnails` directory stays root's), `user: node` (uid 1000: on
 the machine, its files belong to the player, and Yasmine still can't write),
 `chmod 777`, a deleted photo (the chapter restarts from the menu). Other
 accepted solutions: `docker run -u`, another uid with Yasmine's group and
@@ -967,7 +967,7 @@ Théo's layout, without `index.html`, gives a 403.
 | Understand | `curl -I`, `ls -l /srv/gazette`, `readlink`, `ls releases/*` |
 | Roll back | `ln -sfn releases/20270514101502 current` |
 | The safeguard | in the hook, `cd` into the new version then `sh tests.sh` BEFORE `ln -sfn` (with `set -e`) |
-| Publish the fix | `git pull prod main`, `mv accueil.html index.html`, `git add .`, `git commit`, `git push` |
+| Publish the fix | `git pull prod main`, `mv home.html index.html`, `git add .`, `git commit`, `git push` |
 
 Goal checked on the state: the new layout is online, published by the hook
 after its tests, and a new broken push from Théo (simulated as soon as the
@@ -978,7 +978,7 @@ refused until you have fetched Théo's commits.
 
 ### Chapter 3 — Bleu et vert (done)
 
-Le Kiosque (newsletter subscriptions, Node.js) runs on the blue slot (port
+The Kiosk (newsletter subscriptions, Node.js) runs on the blue slot (port
 3001) behind nginx; the green slot (3002) is free.
 
 | Step | Command learnt |
@@ -1025,22 +1025,22 @@ other instance also runs a healthy 2.x. Expected trap: going back to blue
 
 ## Story 9: La Ludothèque (three chapters)
 
-The neighbourhood toy library's server (machine `ludotheque`, 192.0.2.17):
+The neighbourhood toy library's server (machine `games`, 192.0.2.17):
 Bérénice (president) and Malo (volunteer). Phase 7 of the roadmap.
 
 ### Chapter 1 — La rançon (done)
 
-Monday morning, the share (`/srv/partage`) is encrypted (`.locked`); a
-ransom note lies in every directory. The `accueil` account's password was
+Monday morning, the share (`/srv/share`) is encrypted (`.locked`); a
+ransom note lies in every directory. The `frontdesk` account's password was
 guessed; a program still runs under that account, and its crontab restarts
 it. The NAS's nightly copy (`rsync --delete`) is encrypted too.
 
 | Step | Command learnt |
 |---|---|
-| Measure | `find /srv/partage -name "*.locked" \| wc -l`, `cat LISEZ-MOI…` (we don't pay) |
-| Stop the attack | `ps aux`, `sudo kill 3141`, `sudo crontab -u accueil -l/-r`, `sudo usermod -L accueil`, `journalctl -u ssh` |
-| Find a backup | `ls /mnt/nas/partage` (encrypted), `lsblk -f` (the `SAUVEGARDE` disk) |
-| Restore | `sudo mount -o ro /dev/sdb1 /mnt/cle`, `restic snapshots`, `restic restore latest --target /`, `find … -delete`, `sudo umount /mnt/cle` |
+| Measure | `find /srv/share -name "*.locked" \| wc -l`, `cat READ-ME-TO-RECOVER.txt` (we don't pay) |
+| Stop the attack | `ps aux`, `sudo kill 3141`, `sudo crontab -u frontdesk -l/-r`, `sudo usermod -L frontdesk`, `journalctl -u ssh` |
+| Find a backup | `ls /mnt/nas/share` (encrypted), `lsblk -f` (the `BACKUP` disk) |
+| Restore | `sudo mount -o ro /dev/sdb1 /mnt/usb`, `restic snapshots`, `restic restore latest --target /`, `find … -delete`, `sudo umount /mnt/usb` |
 
 Goal checked on the state: the encryptor is stopped and doesn't come back,
 the account is locked, the six files are restored, no `.locked` nor ransom
@@ -1051,7 +1051,7 @@ unmounting from inside the mount point ("target is busy").
 
 ### Chapter 2 — Les instantanés (done)
 
-Setting up rsnapshot (Debian's configuration) for `/srv/partage/` to the
+Setting up rsnapshot (Debian's configuration) for `/srv/share/` to the
 second disk, 7 dailies and 4 weeklies, and running it with cron. The game
 lets two weeks pass; on the last evening, Bérénice overwrites the inventory
 with an old copy.
@@ -1060,11 +1060,11 @@ with an old copy.
 |---|---|
 | Configure | `/etc/rsnapshot.conf` (tabs), `rsnapshot configtest`, `rsnapshot -t daily` |
 | Schedule | `sudo crontab -e`: `0 3 * * 1 … weekly`, `30 3 * * * … daily` |
-| Observe | `ls /mnt/instantanes`, `rsnapshot du`, `ls -i` (same inode), `diff` |
-| Restore | `cp …/daily.1/localhost/srv/partage/inventaire.csv /srv/partage/` |
+| Observe | `ls /mnt/snapshots`, `rsnapshot du`, `ls -i` (same inode), `diff` |
+| Restore | `cp …/daily.1/localhost/srv/share/inventory.csv /srv/share/` |
 
 Goal checked on the state: 7 daily snapshots and a weekly one on
-`/mnt/instantanes`, and the inventory back to its version of two days
+`/mnt/snapshots`, and the inventory back to its version of two days
 before. Expected traps: spaces instead of tabs, an ordinary account's
 crontab (cron's mail says so), the latest snapshot (taken after the
 mistake).
@@ -1076,13 +1076,13 @@ rsnapshot while it runs.
 
 | Step | Command learnt |
 |---|---|
-| Connect | `psql -l` (unknown role), `sudo -u postgres psql -d ludo -c "\dt"` |
-| Back up | `sudo -u postgres pg_dump -Fc -f /var/backups/postgresql/ludo.dump ludo` |
-| Test | `createdb ludo_test`, `pg_restore -d ludo_test …`, `SELECT count(*)` |
-| Repair | the `prets` table emptied: `pg_restore -d ludo --data-only -t prets …` |
+| Connect | `psql -l` (unknown role), `sudo -u postgres psql -d gamelib -c "\dt"` |
+| Back up | `sudo -u postgres pg_dump -Fc -f /var/backups/postgresql/gamelib.dump gamelib` |
+| Test | `createdb gamelib_test`, `pg_restore -d gamelib_test …`, `SELECT count(*)` |
+| Repair | the `loans` table emptied: `pg_restore -d gamelib --data-only -t loans …` |
 | Schedule | `sudo crontab -u postgres -e` |
 
-Goal checked on the state: a cron job runs `ludo`'s `pg_dump` as
+Goal checked on the state: a cron job runs `gamelib`'s `pg_dump` as
 `postgres`, an archive exists, a test database has the same row counts, and
 the loans are back. Expected traps: the `>` redirection with `sudo -u`,
 restoring over the live database, reinjecting into a full table
