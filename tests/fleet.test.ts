@@ -6,6 +6,7 @@ import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
 import { LANGUAGES, translator } from '../src/texts';
+import { machineName } from '../src/engine/machines';
 import { inLanguage } from './names';
 
 const ERASER = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
@@ -34,6 +35,8 @@ for (const language of LANGUAGES)
         const { c, jouer: play, ecrire: write } = part([], 'inventory');
         let all = play(['ansible centres -m ping']);
         expect(all).toContain('[WARNING]: No inventory was parsed, only implicit localhost is available');
+        const pilot = machineName(translator(language), 'pilot');
+        expect(play(['cat /etc/hosts'])).toContain(`192.0.2.25\t${pilot}.internal ${pilot}`);
         all = play(['cd ansible', 'ansible centres -m ping']);
         expect(all).toContain('north | UNREACHABLE! => {');
         expect(all).toContain('"msg": "Failed to connect to the host via ssh: Host key verification failed."');

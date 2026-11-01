@@ -1,4 +1,4 @@
-// Story "Junk Mail" — chapter "The Postman": SPF. The Shared Gardens left
+// Story "Junk Mail" — chapter "The Postman": SPF. The Community Gardens left
 // their host for their own server; since then, the site's welcome emails
 // stay in Postfix's queue: mailbox.example rejects them (for now) because
 // neither SPF nor DKIM passes. The published SPF is still the former host's.

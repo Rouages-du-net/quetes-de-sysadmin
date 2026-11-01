@@ -1,4 +1,4 @@
-// Story "La flotte" — chapter "The inventory": does Ansible reach the three
+// Story "The Fleet" — chapter "The inventory": does Ansible reach the three
 // community centres? Théo started ~/ansible: an ansible.cfg (remote_user =
 // theo, whereas the centres' account is deploy) and an inventory missing
 // east. And known_hosts is empty: Ansible asks no question, it refuses
