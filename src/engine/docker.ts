@@ -13,81 +13,81 @@
 // décrits par elle), pas de réseau entre conteneurs dans ce fichier
 // (voir docker compose), une seule plateforme.
 
-import type { Noeud } from './world';
-import type { Jeu } from './shell';
-import { journaliser, systemd, versUtc } from './systemd';
+import type { Node } from './world';
+import type { Game } from './shell';
+import { writeLog, systemd, toUtc } from './systemd';
 
 export interface Image {
-  depot: string;
+  repo: string;
   tag: string;
   id: string;
-  taille: number;
-  cree: number;
+  size: number;
+  created: number;
   // L'application qu'elle contient (APPLIS), et son port.
-  appli: string;
+  app: string;
   port: number;
-  commande: string;
+  command: string;
   // USER de l'image (vide : root), et les comptes de son /etc/passwd (nom → uid,
   // le groupe principal porte le même numéro).
-  utilisateur?: string;
-  comptes?: Record<string, number>;
+  user?: string;
+  accounts?: Record<string, number>;
 }
 
-export interface Montage {
+export interface Mount {
   type: 'volume' | 'bind';
   source: string;
-  cible: string;
-  lectureSeule: boolean;
+  target: string;
+  onlyRead: boolean;
 }
 
 export interface Port {
   ip: string;
-  hote: number;
-  conteneur: number;
+  host: number;
+  container: number;
 }
 
-export interface Conteneur {
+export interface Container {
   id: string;
-  nom: string;
+  name: string;
   image: string;
-  etat: 'created' | 'running' | 'exited';
+  state: 'created' | 'running' | 'exited';
   code: number;
   ports: Port[];
-  montages: Montage[];
+  mounts: Mount[];
   env: Record<string, string>;
-  redemarrage: string;
-  cree: number;
-  debut: number;
-  fin: number;
+  reboot: string;
+  created: number;
+  start: number;
+  end: number;
   // La couche du conteneur : les fichiers qu'il a écrits (chemin → contenu).
-  couche: Record<string, string>;
-  journal: { temps: number; texte: string }[];
+  layer: Record<string, string>;
+  log: { time: number; text: string }[];
   ip: string;
   // Arrêté à la main (docker stop) : unless-stopped ne le relance pas.
-  arreteALaMain?: boolean;
+  mainAStopped?: boolean;
   // --user (vide : celui de l'image), --read-only, --cap-drop, --security-opt.
-  utilisateur?: string;
-  lectureSeule?: boolean;
+  user?: string;
+  onlyRead?: boolean;
   capDrop?: string[];
-  securite?: string[];
+  security?: string[];
 }
 
-export interface EtatDocker {
+export interface DockerState {
   images: Record<string, Image>;
-  registre: Record<string, Image>;
-  conteneurs: Conteneur[];
+  registry: Record<string, Image>;
+  containers: Container[];
   // taille : ce que le volume occupe en plus de ses fichiers simulés (une vraie base, par exemple).
-  volumes: Record<string, { cree: number; donnees: Record<string, string>; taille?: number }>;
-  prochain: number;
+  volumes: Record<string, { created: number; data: Record<string, string>; size?: number }>;
+  next: number;
 }
 
-export const docker = (jeu: Jeu): EtatDocker | undefined => jeu.etat.docker;
-export const horloge = (jeu: Jeu) => systemd(jeu)?.horloge ?? 0;
+export const docker = (game: Game): DockerState | undefined => game.state.docker;
+export const clock = (game: Game) => systemd(game)?.clock ?? 0;
 
 /** Un identifiant de 64 caractères hexadécimaux, toujours le même pour une graine. */
-export function identifiant(graine: string): string {
+export function identifier(seed: string): string {
   let h = 0x811c9dc5;
-  for (let i = 0; i < graine.length; i++) h = Math.imul(h ^ graine.charCodeAt(i), 0x01000193) >>> 0;
+  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 0x01000193) >>> 0;
   let s = '';
   while (s.length < 64) {
     h = Math.imul(h ^ s.length, 0x01000193) >>> 0;
@@ -96,13 +96,13 @@ export function identifiant(graine: string): string {
   return s.slice(0, 64);
 }
 
-export const nomImage = (i: Image) => `${i.depot}:${i.tag}`;
+export const imageName = (i: Image) => `${i.repo}:${i.tag}`;
 /** « registry.example/outiltheque » → « registry.example/outiltheque:latest ». */
-export const complet = (nom: string) => (/:[^/]+$/.test(nom) ? nom : `${nom}:latest`);
+export const complete = (name: string) => (/:[^/]+$/.test(name) ? name : `${name}:latest`);
 
 /** Un conteneur par son nom ou le début de son identifiant. */
-export function trouverConteneur(d: EtatDocker, cle: string): Conteneur | null {
-  return d.conteneurs.find((c) => c.nom === cle) ?? d.conteneurs.find((c) => cle.length >= 3 && c.id.startsWith(cle)) ?? null;
+export function findContainer(d: DockerState, key: string): Container | null {
+  return d.containers.find((c) => c.name === key) ?? d.containers.find((c) => key.length >= 3 && c.id.startsWith(key)) ?? null;
 }
 
 // ——— L'utilisateur d'un conteneur ———
@@ -113,83 +113,83 @@ export function trouverConteneur(d: EtatDocker, cle: string): Conteneur | null {
 // https://docs.docker.com/reference/cli/docker/container/run/#user,
 // https://docs.docker.com/engine/security/userns-remap/
 
-export interface Identite {
+export interface Identity {
   uid: number;
   gid: number;
   // Les noms dans le /etc/passwd de l'image (null : inconnus).
-  nom: string | null;
-  groupe: string | null;
+  name: string | null;
+  group: string | null;
 }
 
-export const imageDu = (jeu: Jeu, c: Conteneur): Image | undefined => Object.values(docker(jeu)!.images).find((i) => nomImage(i) === c.image);
+export const imageOfContainer = (game: Game, c: Container): Image | undefined => Object.values(docker(game)!.images).find((i) => imageName(i) === c.image);
 
 /** Les comptes du /etc/passwd d'une image (ceux de son appli, et root). */
-export const comptesImage = (image: Image | undefined): Record<string, number> => ({
+export const imageAccounts = (image: Image | undefined): Record<string, number> => ({
   root: 0,
-  ...(image ? (APPLIS[image.appli]?.comptes ?? {}) : {}),
-  ...(image?.comptes ?? {}),
+  ...(image ? (APPS[image.app]?.accounts ?? {}) : {}),
+  ...(image?.accounts ?? {}),
 });
 /** L'utilisateur par défaut d'une image (USER du Dockerfile ; root s'il n'y en a pas). */
-export const utilisateurImage = (image: Image | undefined) => image?.utilisateur || (image && APPLIS[image.appli]?.utilisateur) || 'root';
+export const imageUser = (image: Image | undefined) => image?.user || (image && APPS[image.app]?.user) || 'root';
 
 /** L'identité du processus : --user, sinon USER de l'image, sinon root ; ou l'erreur de runc. */
-export function identite(image: Image | undefined, c: Conteneur, demande?: string): Identite | { erreur: string } {
-  const comptes = comptesImage(image);
-  const nomDe = (n: number) => Object.entries(comptes).find(([, x]) => x === n)?.[0] ?? null;
-  const [u, g] = (demande || c.utilisateur || utilisateurImage(image)).split(':');
+export function identity(image: Image | undefined, c: Container, request?: string): Identity | { error: string } {
+  const accounts = imageAccounts(image);
+  const nameFor = (n: number) => Object.entries(accounts).find(([, x]) => x === n)?.[0] ?? null;
+  const [u, g] = (request || c.user || imageUser(image)).split(':');
   let uid: number;
   if (/^\d+$/.test(u)) uid = Number(u);
-  else if (u in comptes) uid = comptes[u];
-  else return { erreur: `unable to find user ${u}: no matching entries in passwd file` };
+  else if (u in accounts) uid = accounts[u];
+  else return { error: `unable to find user ${u}: no matching entries in passwd file` };
   // Sans groupe : celui du compte dans l'image ; un uid inconnu de l'image prend le groupe 0.
-  let gid = nomDe(uid) === null ? 0 : uid;
+  let gid = nameFor(uid) === null ? 0 : uid;
   if (g !== undefined) {
     if (/^\d+$/.test(g)) gid = Number(g);
-    else if (g in comptes) gid = comptes[g];
-    else return { erreur: `unable to find group ${g}: no matching entries in group file` };
+    else if (g in accounts) gid = accounts[g];
+    else return { error: `unable to find group ${g}: no matching entries in group file` };
   }
-  return { uid, gid, nom: nomDe(uid), groupe: nomDe(gid) };
+  return { uid, gid, name: nameFor(uid), group: nameFor(gid) };
 }
 
 /** Le nom, sur la machine, du compte qui porte cet uid (sinon le numéro). */
-export const compteMachine = (jeu: Jeu, uid: number) => Object.entries(jeu.comptes.utilisateurs).find(([, u]) => u.uid === uid)?.[0] ?? String(uid);
-export const groupeMachine = (jeu: Jeu, gid: number) => Object.entries(jeu.comptes.groupes).find(([, g]) => g.gid === gid)?.[0] ?? String(gid);
+export const machineAccount = (game: Game, uid: number) => Object.entries(game.accounts.users).find(([, u]) => u.uid === uid)?.[0] ?? String(uid);
+export const machineGroup = (game: Game, gid: number) => Object.entries(game.accounts.groups).find(([, g]) => g.gid === gid)?.[0] ?? String(gid);
 
 /** Les droits d'un uid et d'un gid sur un fichier de la machine (comme le noyau : par numéro). */
-export function accesNumerique(jeu: Jeu, n: Noeud, droit: 'r' | 'w' | 'x', uid: number, gid: number): boolean {
+export function numericAccess(game: Game, n: Node, right: 'r' | 'w' | 'x', uid: number, gid: number): boolean {
   if (uid === 0) return true;
   const mode = n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--');
-  const proprio = n.proprio ?? jeu.joueur;
-  const groupe = n.groupe ?? proprio;
-  const numUid = jeu.comptes.utilisateurs[proprio]?.uid ?? (/^\d+$/.test(proprio) ? Number(proprio) : -1);
-  const numGid = jeu.comptes.groupes[groupe]?.gid ?? (/^\d+$/.test(groupe) ? Number(groupe) : -1);
+  const owner = n.owner ?? game.player;
+  const group = n.group ?? owner;
+  const numUid = game.accounts.users[owner]?.uid ?? (/^\d+$/.test(owner) ? Number(owner) : -1);
+  const numGid = game.accounts.groups[group]?.gid ?? (/^\d+$/.test(group) ? Number(group) : -1);
   const triplet = numUid === uid ? mode.slice(0, 3) : numGid === gid ? mode.slice(3, 6) : mode.slice(6, 9);
-  return triplet.includes(droit);
+  return triplet.includes(right);
 }
 
 // L'identité d'un conteneur qui tourne (root si elle n'a pas pu être lue).
-function qui(jeu: Jeu, c: Conteneur): Identite {
-  const id = identite(imageDu(jeu, c), c);
-  return 'erreur' in id ? { uid: 0, gid: 0, nom: 'root', groupe: 'root' } : id;
+function who(game: Game, c: Container): Identity {
+  const id = identity(imageOfContainer(game, c), c);
+  return 'error' in id ? { uid: 0, gid: 0, name: 'root', group: 'root' } : id;
 }
 
 // ——— Fichiers d'un conteneur ———
 
 // Le montage qui contient ce chemin (le plus long), et le chemin relatif.
-function montage(c: Conteneur, chemin: string): { m: Montage; relatif: string } | null {
-  const m = c.montages
-    .filter((x) => chemin === x.cible || chemin.startsWith(x.cible.replace(/\/$/, '') + '/'))
-    .sort((a, b) => b.cible.length - a.cible.length)[0];
-  return m ? { m, relatif: chemin.slice(m.cible.replace(/\/$/, '').length).replace(/^\//, '') } : null;
+function mount(c: Container, path: string): { m: Mount; relative: string } | null {
+  const m = c.mounts
+    .filter((x) => path === x.target || path.startsWith(x.target.replace(/\/$/, '') + '/'))
+    .sort((a, b) => b.target.length - a.target.length)[0];
+  return m ? { m, relative: path.slice(m.target.replace(/\/$/, '').length).replace(/^\//, '') } : null;
 }
 
 /** Lit un fichier vu depuis le conteneur : volume, dossier monté, ou sa couche. */
-export function lireDans(jeu: Jeu, c: Conteneur, chemin: string): string | null {
-  const d = docker(jeu)!;
-  const trouve = montage(c, chemin);
-  if (trouve?.m.type === 'volume') return d.volumes[trouve.m.source]?.donnees[trouve.relatif] ?? null;
-  if (trouve?.m.type === 'bind') return jeu.lire(`${trouve.m.source.replace(/\/$/, '')}/${trouve.relatif}`);
-  return c.couche[chemin] ?? null;
+export function readIn(game: Game, c: Container, path: string): string | null {
+  const d = docker(game)!;
+  const found = mount(c, path);
+  if (found?.m.type === 'volume') return d.volumes[found.m.source]?.data[found.relative] ?? null;
+  if (found?.m.type === 'bind') return game.read(`${found.m.source.replace(/\/$/, '')}/${found.relative}`);
+  return c.layer[path] ?? null;
 }
 
 /**
@@ -197,99 +197,99 @@ export function lireDans(jeu: Jeu, c: Conteneur, chemin: string): string | null 
  * est en lecture seule, ou si l'utilisateur du conteneur n'a pas le droit
  * d'écrire dans le dossier monté (il est soumis aux droits de la machine).
  */
-export function ecrireDans(jeu: Jeu, c: Conteneur, chemin: string, contenu: string): string | null {
-  const d = docker(jeu)!;
-  const trouve = montage(c, chemin);
-  if (trouve?.m.lectureSeule || (!trouve && c.lectureSeule)) return 'read-only file system';
-  if (trouve?.m.type === 'volume') (d.volumes[trouve.m.source] ??= { cree: horloge(jeu), donnees: {} }).donnees[trouve.relatif] = contenu;
-  else if (trouve?.m.type === 'bind') {
-    const id = qui(jeu, c);
-    const lieu = `${trouve.m.source.replace(/\/$/, '')}/${trouve.relatif}`;
-    const n = jeu.trouver(lieu);
+export function writeIn(game: Game, c: Container, path: string, content: string): string | null {
+  const d = docker(game)!;
+  const found = mount(c, path);
+  if (found?.m.onlyRead || (!found && c.onlyRead)) return 'read-only file system';
+  if (found?.m.type === 'volume') (d.volumes[found.m.source] ??= { created: clock(game), data: {} }).data[found.relative] = content;
+  else if (found?.m.type === 'bind') {
+    const id = who(game, c);
+    const place = `${found.m.source.replace(/\/$/, '')}/${found.relative}`;
+    const n = game.find(place);
     if (n?.type === 'fichier') {
-      if (!accesNumerique(jeu, n, 'w', id.uid, id.gid)) return 'permission denied';
-      n.contenu = contenu;
+      if (!numericAccess(game, n, 'w', id.uid, id.gid)) return 'permission denied';
+      n.content = content;
     } else {
-      const parent = jeu.trouver(lieu.replace(/\/[^/]+$/, ''));
+      const parent = game.find(place.replace(/\/[^/]+$/, ''));
       if (parent?.type !== 'dossier') return 'no such file or directory';
-      if (!accesNumerique(jeu, parent, 'w', id.uid, id.gid) || !accesNumerique(jeu, parent, 'x', id.uid, id.gid)) return 'permission denied';
+      if (!numericAccess(game, parent, 'w', id.uid, id.gid) || !numericAccess(game, parent, 'x', id.uid, id.gid)) return 'permission denied';
       // Le fichier créé appartient, sur la machine, à l'uid du conteneur.
-      parent.enfants[lieu.split('/').at(-1)!] = {
+      parent.children[place.split('/').at(-1)!] = {
         type: 'fichier',
-        contenu,
-        lignes: true,
-        proprio: compteMachine(jeu, id.uid),
-        groupe: groupeMachine(jeu, id.gid),
+        content,
+        lines: true,
+        owner: machineAccount(game, id.uid),
+        group: machineGroup(game, id.gid),
       };
     }
-  } else c.couche[chemin] = contenu;
+  } else c.layer[path] = content;
   return null;
 }
 
 /** Crée un dossier vu depuis le conteneur (mkdir) ; mêmes règles qu'ecrireDans. */
-export function creerDossierDans(jeu: Jeu, c: Conteneur, chemin: string): string | null {
-  const trouve = montage(c, chemin);
-  if (trouve?.m.type !== 'bind') return null;
-  const lieu = `${trouve.m.source.replace(/\/$/, '')}/${trouve.relatif}`;
-  if (jeu.trouver(lieu)?.type === 'dossier') return null;
-  if (trouve.m.lectureSeule) return 'read-only file system';
-  const parent = jeu.trouver(lieu.replace(/\/[^/]+$/, ''));
-  const id = qui(jeu, c);
+export function createDirectoryIn(game: Game, c: Container, path: string): string | null {
+  const found = mount(c, path);
+  if (found?.m.type !== 'bind') return null;
+  const place = `${found.m.source.replace(/\/$/, '')}/${found.relative}`;
+  if (game.find(place)?.type === 'dossier') return null;
+  if (found.m.onlyRead) return 'read-only file system';
+  const parent = game.find(place.replace(/\/[^/]+$/, ''));
+  const id = who(game, c);
   if (parent?.type !== 'dossier') return 'no such file or directory';
-  if (!accesNumerique(jeu, parent, 'w', id.uid, id.gid)) return 'permission denied';
-  parent.enfants[lieu.split('/').at(-1)!] = { type: 'dossier', enfants: {}, proprio: compteMachine(jeu, id.uid), groupe: groupeMachine(jeu, id.gid) };
+  if (!numericAccess(game, parent, 'w', id.uid, id.gid)) return 'permission denied';
+  parent.children[place.split('/').at(-1)!] = { type: 'dossier', children: {}, owner: machineAccount(game, id.uid), group: machineGroup(game, id.gid) };
   return null;
 }
 
 /** Le fichier de la machine derrière un chemin du conteneur (dossier monté), s'il y en a un. */
-export function noeudDans(jeu: Jeu, c: Conteneur, chemin: string): Noeud | null {
-  const trouve = montage(c, chemin);
-  if (trouve?.m.type !== 'bind') return null;
-  return jeu.trouver(`${trouve.m.source.replace(/\/$/, '')}/${trouve.relatif}`.replace(/\/$/, '')) ?? null;
+export function nodeIn(game: Game, c: Container, path: string): Node | null {
+  const found = mount(c, path);
+  if (found?.m.type !== 'bind') return null;
+  return game.find(`${found.m.source.replace(/\/$/, '')}/${found.relative}`.replace(/\/$/, '')) ?? null;
 }
 
 /** L'utilisateur du conteneur peut-il faire cela sur ce chemin (dossier monté) ? */
-export function peutDans(jeu: Jeu, c: Conteneur, chemin: string, droit: 'r' | 'w' | 'x'): boolean {
-  const n = noeudDans(jeu, c, chemin);
-  const id = qui(jeu, c);
-  return !n || accesNumerique(jeu, n, droit, id.uid, id.gid);
+export function canIn(game: Game, c: Container, path: string, right: 'r' | 'w' | 'x'): boolean {
+  const n = nodeIn(game, c, path);
+  const id = who(game, c);
+  return !n || numericAccess(game, n, right, id.uid, id.gid);
 }
 
 /** Les fichiers visibles sous un lieu du conteneur (chemins absolus). */
-export function listerDans(jeu: Jeu, c: Conteneur, lieu: string): string[] {
-  const d = docker(jeu)!;
-  const base = lieu.replace(/\/$/, '');
-  const trouve = montage(c, base);
-  if (trouve?.m.type === 'volume')
-    return Object.keys(d.volumes[trouve.m.source]?.donnees ?? {}).map((r) => `${trouve.m.cible.replace(/\/$/, '')}/${r}`);
-  if (trouve?.m.type === 'bind') {
-    const n = jeu.trouver(trouve.m.source);
-    return n?.type === 'dossier' ? Object.keys(n.enfants).map((k) => `${trouve.m.cible.replace(/\/$/, '')}/${k}`) : [];
+export function listIn(game: Game, c: Container, place: string): string[] {
+  const d = docker(game)!;
+  const base = place.replace(/\/$/, '');
+  const found = mount(c, base);
+  if (found?.m.type === 'volume')
+    return Object.keys(d.volumes[found.m.source]?.data ?? {}).map((r) => `${found.m.target.replace(/\/$/, '')}/${r}`);
+  if (found?.m.type === 'bind') {
+    const n = game.find(found.m.source);
+    return n?.type === 'dossier' ? Object.keys(n.children).map((k) => `${found.m.target.replace(/\/$/, '')}/${k}`) : [];
   }
-  return Object.keys(c.couche).filter((p) => p.startsWith(base + '/'));
+  return Object.keys(c.layer).filter((p) => p.startsWith(base + '/'));
 }
 
 // ——— Les applications ———
 
-export interface Appli {
+export interface App {
   // Au démarrage : écrit son journal, prépare ses fichiers ; renvoie le code
   // de sortie si elle s'arrête aussitôt (sinon null : elle tourne).
-  demarrer(jeu: Jeu, c: Conteneur, image: Image): number | null;
+  start(game: Game, c: Container, image: Image): number | null;
   // Une requête HTTP sur son port.
-  repondre(jeu: Jeu, c: Conteneur, chemin: string): { code: number; corps: string };
+  answer(game: Game, c: Container, path: string): { code: number; body: string };
   // Les fichiers de l'image (ce que contient un conteneur neuf).
-  fichiers?: (image: Image) => Record<string, string>;
+  files?: (image: Image) => Record<string, string>;
   // USER de l'image (absent : root) et les comptes de son /etc/passwd.
-  utilisateur?: string;
-  comptes?: Record<string, number>;
+  user?: string;
+  accounts?: Record<string, number>;
 }
 
 // Les applications des images, déclarées par les chapitres.
-export const APPLIS: Record<string, Appli> = {};
+export const APPS: Record<string, App> = {};
 
 /** Une ligne du journal d'un conteneur (docker logs). */
-export function journal(jeu: Jeu, c: Conteneur, texte: string) {
-  c.journal.push({ temps: horloge(jeu), texte });
+export function log(game: Game, c: Container, text: string) {
+  c.log.push({ time: clock(game), text });
 }
 
 /**
@@ -297,23 +297,23 @@ export function journal(jeu: Jeu, c: Conteneur, texte: string) {
  * Renvoie l'erreur de runc si le processus n'a pas pu être créé (utilisateur
  * inconnu de l'image) : le conteneur reste alors « Created ».
  */
-export function lancer(jeu: Jeu, c: Conteneur): string | null {
-  const d = docker(jeu)!;
-  const image = Object.values(d.images).find((i) => nomImage(i) === c.image)!;
-  const id = identite(image, c);
-  if ('erreur' in id) {
-    c.etat = c.etat === 'running' ? 'exited' : c.etat;
-    if (c.etat === 'exited') c.code = 127;
-    return `failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: ${id.erreur}: unknown`;
+export function launch(game: Game, c: Container): string | null {
+  const d = docker(game)!;
+  const image = Object.values(d.images).find((i) => imageName(i) === c.image)!;
+  const id = identity(image, c);
+  if ('error' in id) {
+    c.state = c.state === 'running' ? 'exited' : c.state;
+    if (c.state === 'exited') c.code = 127;
+    return `failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: ${id.error}: unknown`;
   }
-  c.etat = 'running';
-  c.debut = horloge(jeu);
-  c.arreteALaMain = false;
-  const code = APPLIS[image.appli]?.demarrer(jeu, c, image) ?? null;
+  c.state = 'running';
+  c.start = clock(game);
+  c.mainAStopped = false;
+  const code = APPS[image.app]?.start(game, c, image) ?? null;
   if (code !== null) {
-    c.etat = 'exited';
+    c.state = 'exited';
     c.code = code;
-    c.fin = horloge(jeu);
+    c.end = clock(game);
   }
   return null;
 }
@@ -324,22 +324,22 @@ export function lancer(jeu: Jeu, c: Conteneur): string | null {
  * unless-stopped, on-failure) : appelé après chaque commande par les
  * chapitres qui en ont besoin (une tentative par commande).
  */
-export function relancerEnBoucle(jeu: Jeu) {
-  const d = docker(jeu);
-  const service = systemd(jeu)?.services.docker;
-  if (!d || (service && service.etat !== 'active')) return;
-  for (const c of d.conteneurs)
-    if (c.etat === 'exited' && c.code !== 0 && !c.arreteALaMain && ['always', 'unless-stopped', 'on-failure'].includes(c.redemarrage.split(':')[0]))
-      lancer(jeu, c);
+export function restartInLoop(game: Game) {
+  const d = docker(game);
+  const service = systemd(game)?.services.docker;
+  if (!d || (service && service.state !== 'active')) return;
+  for (const c of d.containers)
+    if (c.state === 'exited' && c.code !== 0 && !c.mainAStopped && ['always', 'unless-stopped', 'on-failure'].includes(c.reboot.split(':')[0]))
+      launch(game, c);
 }
 
-export function stopper(jeu: Jeu, c: Conteneur, aLaMain = true) {
-  if (c.etat !== 'running') return;
-  c.etat = 'exited';
+export function stop(game: Game, c: Container, mainA = true) {
+  if (c.state !== 'running') return;
+  c.state = 'exited';
   // SIGTERM : l'appli s'arrête proprement (code 0 ici).
   c.code = 0;
-  c.fin = horloge(jeu);
-  if (aLaMain) c.arreteALaMain = true;
+  c.end = clock(game);
+  if (mainA) c.mainAStopped = true;
 }
 
 /**
@@ -347,20 +347,20 @@ export function stopper(jeu: Jeu, c: Conteneur, aLaMain = true) {
  * conteneurs arrêtés par l'arrêt du démon repartent selon leur politique
  * --restart (always, unless-stopped s'ils n'ont pas été arrêtés à la main).
  */
-export function demarrerDocker(jeu: Jeu) {
-  const d = docker(jeu);
+export function startDocker(game: Game) {
+  const d = docker(game);
   if (!d) return;
-  for (const c of d.conteneurs) {
-    const avant = c.etat === 'running';
-    if (avant) stopper(jeu, c, false);
-    const repart =
-      c.redemarrage === 'always' ||
-      (c.redemarrage === 'unless-stopped' && !c.arreteALaMain) ||
-      (c.redemarrage.startsWith('on-failure') && c.code !== 0);
-    if (repart) lancer(jeu, c);
+  for (const c of d.containers) {
+    const before = c.state === 'running';
+    if (before) stop(game, c, false);
+    const restarts =
+      c.reboot === 'always' ||
+      (c.reboot === 'unless-stopped' && !c.mainAStopped) ||
+      (c.reboot.startsWith('on-failure') && c.code !== 0);
+    if (restarts) launch(game, c);
   }
-  const sd = systemd(jeu);
-  if (sd) journaliser(sd, 'docker.service', 'dockerd', 702, 'Daemon has completed initialization');
+  const sd = systemd(game);
+  if (sd) writeLog(sd, 'docker.service', 'dockerd', 702, 'Daemon has completed initialization');
 }
 
 /**
@@ -368,28 +368,28 @@ export function demarrerDocker(jeu: Jeu) {
  * répond (undefined : aucun conteneur ne publie ce port ; null : il ne
  * répond pas, arrêté).
  */
-export function requeteDocker(jeu: Jeu, adresse: string, port: number, chemin: string): { code: number; corps: string } | null | undefined {
-  const d = docker(jeu);
+export function dockerRequest(game: Game, address: string, port: number, path: string): { code: number; body: string } | null | undefined {
+  const d = docker(game);
   if (!d) return undefined;
-  const local = ['127.0.0.1', 'localhost'].includes(adresse);
+  const local = ['127.0.0.1', 'localhost'].includes(address);
   // Depuis la machine, l'adresse du conteneur (réseau bridge) répond aussi sur son port.
-  const direct = d.conteneurs.find((c) => c.ip === adresse && c.etat === 'running');
-  const publie = (x: Conteneur) => x.ports.some((p) => p.hote === port && (p.ip === '0.0.0.0' || (p.ip === '127.0.0.1' && local)));
+  const direct = d.containers.find((c) => c.ip === address && c.state === 'running');
+  const published = (x: Container) => x.ports.some((p) => p.host === port && (p.ip === '0.0.0.0' || (p.ip === '127.0.0.1' && local)));
   // Le conteneur qui tourne d'abord ; un conteneur arrêté ne répond plus (le port n'est plus relayé).
-  const c = direct ?? d.conteneurs.find((x) => x.etat === 'running' && publie(x)) ?? d.conteneurs.find((x) => x.etat === 'exited' && publie(x));
+  const c = direct ?? d.containers.find((x) => x.state === 'running' && published(x)) ?? d.containers.find((x) => x.state === 'exited' && published(x));
   if (!c) return undefined;
-  if (c.etat !== 'running') return null;
-  const image = Object.values(d.images).find((i) => nomImage(i) === c.image)!;
+  if (c.state !== 'running') return null;
+  const image = Object.values(d.images).find((i) => imageName(i) === c.image)!;
   if (direct && port !== image.port) return null;
-  return APPLIS[image.appli]?.repondre(jeu, c, chemin) ?? null;
+  return APPS[image.app]?.answer(game, c, path) ?? null;
 }
 
 // ——— Affichage ———
 
 /** « 2 weeks ago », « 3 minutes ago », comme docker. */
-export function ilYa(ms: number): string {
+export function yaIt(ms: number): string {
   const s = Math.max(0, Math.round(ms / 1000));
-  const unites: [number, string][] = [
+  const units: [number, string][] = [
     [365 * 86400, 'year'],
     [30 * 86400, 'month'],
     [7 * 86400, 'week'],
@@ -399,7 +399,7 @@ export function ilYa(ms: number): string {
     [1, 'second'],
   ];
   if (s < 1) return 'Less than a second';
-  for (const [n, u] of unites)
+  for (const [n, u] of units)
     if (s >= n) {
       const k = Math.floor(s / n);
       if (u === 'hour' && k === 1) return 'About an hour';
@@ -409,29 +409,29 @@ export function ilYa(ms: number): string {
 }
 
 /** « 148MB », comme docker images. */
-export function tailleDocker(octets: number): string {
-  if (octets >= 1e9) return `${(octets / 1e9).toFixed(2).replace(/\.?0+$/, '')}GB`;
-  if (octets >= 1e6) return `${Math.round(octets / 1e5) / 10}MB`.replace(/\.0MB$/, 'MB');
-  if (octets >= 1e3) return `${Math.round(octets / 100) / 10}kB`;
-  return `${octets}B`;
+export function dockerSize(bytes: number): string {
+  if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(2).replace(/\.?0+$/, '')}GB`;
+  if (bytes >= 1e6) return `${Math.round(bytes / 1e5) / 10}MB`.replace(/\.0MB$/, 'MB');
+  if (bytes >= 1e3) return `${Math.round(bytes / 100) / 10}kB`;
+  return `${bytes}B`;
 }
 
 /** L'heure UTC d'un instant local, au format RFC 3339 (docker logs -t, inspect). */
-export const rfc3339 = (local: number) => new Date(versUtc(local)).toISOString().replace(/\.\d+Z$/, '.000000000Z');
+export const rfc3339 = (local: number) => new Date(toUtc(local)).toISOString().replace(/\.\d+Z$/, '.000000000Z');
 
 // ——— Le réseau et le disque vus de la machine ———
 
 /** Les sockets de docker-proxy pour les ports publiés (pour ss). */
-export function ecoutesDocker(jeu: Jeu): { proto: 'tcp'; adresse: string; port: number; processus: string; pid: number }[] {
-  const d = docker(jeu);
+export function dockerListeners(game: Game): { proto: 'tcp'; address: string; port: number; process: string; pid: number }[] {
+  const d = docker(game);
   if (!d) return [];
-  return d.conteneurs
-    .filter((c) => c.etat === 'running')
+  return d.containers
+    .filter((c) => c.state === 'running')
     .flatMap((c, i) =>
       c.ports.flatMap((p) => {
-        const pid = 3100 + i * 10 + (p.hote % 7);
-        const v4 = { proto: 'tcp' as const, adresse: p.ip, port: p.hote, processus: 'docker-proxy', pid };
-        return p.ip === '0.0.0.0' ? [v4, { ...v4, adresse: '[::]', pid: pid + 1 }] : [v4];
+        const pid = 3100 + i * 10 + (p.host % 7);
+        const v4 = { proto: 'tcp' as const, address: p.ip, port: p.host, process: 'docker-proxy', pid };
+        return p.ip === '0.0.0.0' ? [v4, { ...v4, address: '[::]', pid: pid + 1 }] : [v4];
       }),
     );
 }
@@ -443,53 +443,53 @@ export function ecoutesDocker(jeu: Jeu): { proto: 'tcp'; adresse: string; port: 
  * passer par les règles d'ufw : il entre, quoi qu'en dise ufw status.
  * https://docs.docker.com/engine/network/packet-filtering-firewalls/#docker-and-ufw
  */
-export function publieAuMonde(jeu: Jeu, port: number): boolean {
-  const d = docker(jeu);
-  return !!d?.conteneurs.some((c) => c.etat === 'running' && c.ports.some((p) => p.hote === port && p.ip === '0.0.0.0'));
+export function publishedToWorld(game: Game, port: number): boolean {
+  const d = docker(game);
+  return !!d?.containers.some((c) => c.state === 'running' && c.ports.some((p) => p.host === port && p.ip === '0.0.0.0'));
 }
 
 /**
  * Les processus des conteneurs, vus de la machine (ps aux) : ils y sont des
  * processus comme les autres, au nom du compte qui porte leur uid.
  */
-export function processusDocker(jeu: Jeu): { pid: number; utilisateur: string; cpu: number; mem: number; commande: string }[] {
-  const d = docker(jeu);
+export function dockerProcess(game: Game): { pid: number; user: string; cpu: number; mem: number; command: string }[] {
+  const d = docker(game);
   if (!d) return [];
-  return d.conteneurs
-    .filter((c) => c.etat === 'running')
+  return d.containers
+    .filter((c) => c.state === 'running')
     .map((c, i) => ({
       pid: 3400 + i * 37,
-      utilisateur: compteMachine(jeu, qui(jeu, c).uid),
+      user: machineAccount(game, who(game, c).uid),
       cpu: 0.3,
       mem: 1.8,
-      commande: imageDu(jeu, c)?.commande ?? '',
+      command: imageOfContainer(game, c)?.command ?? '',
     }));
 }
 
 /** La place prise par Docker sur le disque (images, conteneurs, volumes), en octets. */
-export function placeDocker(d: EtatDocker): { images: number; conteneurs: number; volumes: number } {
-  const volumes = Object.values(d.volumes).reduce((t, v) => t + Object.values(v.donnees).reduce((a, x) => a + x.length, 0) + (v.taille ?? 0), 0);
-  return { images: Object.values(d.images).reduce((t, i) => t + i.taille, 0), conteneurs: d.conteneurs.length * 4096, volumes };
+export function placeDocker(d: DockerState): { images: number; containers: number; volumes: number } {
+  const volumes = Object.values(d.volumes).reduce((t, v) => t + Object.values(v.data).reduce((a, x) => a + x.length, 0) + (v.size ?? 0), 0);
+  return { images: Object.values(d.images).reduce((t, i) => t + i.size, 0), containers: d.containers.length * 4096, volumes };
 }
 
 /** Met à jour /var/lib/docker sur le disque simulé (pour df et du). */
-export function majDisque(jeu: Jeu) {
-  const d = docker(jeu);
-  const n = jeu.trouver('/var/lib/docker');
+export function diskUpdate(game: Game) {
+  const d = docker(game);
+  const n = game.find('/var/lib/docker');
   if (!d || n?.type !== 'dossier') return;
   const p = placeDocker(d);
-  n.enfants = {
+  n.children = {
     overlay2: {
       type: 'dossier',
-      proprio: 'root',
+      owner: 'root',
       mode: 'rwx--x---',
-      enfants: { couches: { type: 'fichier', contenu: '', taille: p.images + p.conteneurs, proprio: 'root' } },
+      children: { couches: { type: 'fichier', content: '', size: p.images + p.containers, owner: 'root' } },
     },
     volumes: {
       type: 'dossier',
-      proprio: 'root',
+      owner: 'root',
       mode: 'rwx------',
-      enfants: { donnees: { type: 'fichier', contenu: '', taille: p.volumes, proprio: 'root' } },
+      children: { donnees: { type: 'fichier', content: '', size: p.volumes, owner: 'root' } },
     },
   };
 }

@@ -3,34 +3,34 @@
 // à finir : il n'a pas d'événement final. Les clés SSH de ~/.ssh dépendent
 // de la progression (voir console.ts).
 
-import { d, f, joueur, type Chapitre } from './world';
-import type { Traduire } from '../texts';
-import { clePrivee, clePublique, domaineMachine, MACHINES, nomMachine, POSTE, type Machine } from './machines';
+import { d, f, player, type Chapter } from './world';
+import type { Translate } from '../texts';
+import { privateKey, publicKey, machineDomain, MACHINES, machineName, WORKSTATION, type Machine } from './machines';
 
-const MAISON = '/home/vous';
+const HOME = '/home/vous';
 
 // Le /etc/hosts du poste ; en tête, pourquoi ces noms en .internal et
 // .example (ils ne mènent jamais chez quelqu'un de réel).
-const hosts = (t: Traduire) =>
+const hosts = (t: Translate) =>
   [
     ...t('poste-hosts-commentaire').split('\n').map((l) => `# ${l}`),
     '',
     '127.0.0.1\tlocalhost',
-    `127.0.1.1\t${domaineMachine(t, POSTE)} ${nomMachine(t, POSTE.nom)}`,
+    `127.0.1.1\t${machineDomain(t, WORKSTATION)} ${machineName(t, WORKSTATION.name)}`,
     '',
-    ...MACHINES.map((m) => `${m.adresse}\t${domaineMachine(t, m)} ${nomMachine(t, m.nom)}`),
+    ...MACHINES.map((m) => `${m.address}\t${machineDomain(t, m)} ${machineName(t, m.name)}`),
   ].join('\n');
 
 /** Le ~/.ssh/config que le jeu donne au poste, dans une langue. */
-export const config = (t: Traduire) =>
+export const config = (t: Translate) =>
   [
     ...t('poste-config-commentaire').split('\n').map((l) => `# ${l}`),
     '',
     ...MACHINES.flatMap((m) => [
-      `Host ${nomMachine(t, m.nom)}`,
-      `    HostName ${domaineMachine(t, m)}`,
-      `    User ${joueur(t)}`,
-      ...(m.sansCle ? [] : [`    IdentityFile ~/.ssh/${cleDe(t, m)}`]),
+      `Host ${machineName(t, m.name)}`,
+      `    HostName ${machineDomain(t, m)}`,
+      `    User ${player(t)}`,
+      ...(m.withoutKey ? [] : [`    IdentityFile ~/.ssh/${keyFor(t, m)}`]),
       '',
     ]),
   ]
@@ -38,20 +38,20 @@ export const config = (t: Traduire) =>
     .trim();
 
 /** Le nom du fichier de la clé d'une machine, dans la langue : id_royaume, id_kingdom. */
-export const cleDe = (t: Traduire, m: Machine) => `id_${nomMachine(t, m.nom)}`;
+export const keyFor = (t: Translate, m: Machine) => `id_${machineName(t, m.name)}`;
 
 /** Les fichiers d'une clé SSH : privée (lisible par soi seul) et publique. */
-export const fichiersCle = (t: Traduire, m: Machine) => ({
-  [cleDe(t, m)]: f(clePrivee(m), { lignes: true, mode: 'rw-------' }),
-  [`${cleDe(t, m)}.pub`]: f(clePublique(m, joueur(t), nomMachine(t, POSTE.nom)), { lignes: true }),
+export const keyFiles = (t: Translate, m: Machine) => ({
+  [keyFor(t, m)]: f(privateKey(m), { lines: true, mode: 'rw-------' }),
+  [`${keyFor(t, m)}.pub`]: f(publicKey(m, player(t), machineName(t, WORKSTATION.name)), { lines: true }),
 });
 
 /** Le poste, avec les clés des machines déjà ouvertes. */
-export function poste(cles: Machine[]): Chapitre {
+export function workstation(keys: Machine[]): Chapter {
   return {
     id: 'poste',
-    numero: 0,
-    commandes: [
+    number: 0,
+    commands: [
       'ls',
       'cd',
       'pwd',
@@ -75,19 +75,19 @@ export function poste(cles: Machine[]): Chapitre {
       'kill',
       'nc',
     ],
-    maison: MAISON,
-    noms: true,
-    accueil: 'bienvenue.txt',
+    home: HOME,
+    names: true,
+    welcome: 'bienvenue.txt',
     final: '',
-    evenements: [],
-    creerMonde: (t) =>
+    events: [],
+    createWorld: (t) =>
       d({
-        etc: d({ hosts: f(hosts(t), { lignes: true, proprio: 'root' }) }),
+        etc: d({ hosts: f(hosts(t), { lines: true, owner: 'root' }) }),
         home: d({
           vous: d({
             'bienvenue.txt': f(t('poste-bienvenue')),
             '.ssh': d(
-              { config: f(config(t), { lignes: true }), ...Object.assign({}, ...cles.map((m) => fichiersCle(t, m))) },
+              { config: f(config(t), { lines: true }), ...Object.assign({}, ...keys.map((m) => keyFiles(t, m))) },
               undefined,
               { mode: 'rwx------' },
             ),

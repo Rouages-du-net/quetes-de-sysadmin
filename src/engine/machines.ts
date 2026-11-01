@@ -4,29 +4,29 @@
 // la forme des vraies (ed25519), et ne changent jamais : le jeu reste
 // déterministe.
 
-import type { Traduire } from '../texts';
+import type { Translate } from '../texts';
 
 export interface Machine {
   // L'identifiant de la machine (en français) ; le nom qu'on tape dépend de la langue (nomMachine).
-  nom: string;
+  name: string;
   // Nom complet, résolu par /etc/hosts du poste.
-  domaine: string;
-  adresse: string;
+  domain: string;
+  address: string;
   // Histoire jouée sur cette machine (absent pour le poste).
-  histoire?: string;
+  story?: string;
   // Le jeu ne donne pas de clé : on crée la sienne (ssh-keygen, ssh-copy-id).
-  sansCle?: boolean;
+  withoutKey?: boolean;
 }
 
-const machine = (nom: string, adresse: string, histoire?: string, sansCle = false): Machine => ({
-  nom,
-  domaine: `${nom}.internal`,
-  adresse,
-  histoire,
-  ...(sansCle ? { sansCle } : {}),
+const machine = (name: string, address: string, story?: string, withoutKey = false): Machine => ({
+  name,
+  domain: `${name}.internal`,
+  address,
+  story,
+  ...(withoutKey ? { withoutKey } : {}),
 });
 
-export const POSTE = machine('poste', '192.0.2.2');
+export const WORKSTATION = machine('poste', '192.0.2.2');
 
 export const MACHINES: Machine[] = [
   machine('royaume', '192.0.2.10', 'effaceur'),
@@ -59,15 +59,15 @@ export const MACHINES: Machine[] = [
 ];
 
 /** Le nom d'une machine dans la langue (machines.ftl : royaume → kingdom) ; une machine sans traduction garde le sien. */
-export const nomMachine = (t: Traduire, id: string) => (t.existe(`machine-${id}`) ? t(`machine-${id}`) : id);
+export const machineName = (t: Translate, id: string) => (t.exists(`machine-${id}`) ? t(`machine-${id}`) : id);
 /** Son nom complet (royaume.internal → kingdom.internal). */
-export const domaineMachine = (t: Traduire, m: Machine) => `${nomMachine(t, m.nom)}.internal`;
+export const machineDomain = (t: Translate, m: Machine) => `${machineName(t, m.name)}.internal`;
 
 /** Un nom d'hôte dans la langue : royaume → kingdom, royaume.internal → kingdom.internal, wiki.maison.internal → wiki.community.internal. */
-export function hoteDansLaLangue(t: Traduire, n: string): string {
-  const id = (x: string) => [POSTE, ...MACHINES].some((m) => m.nom === x);
-  if (id(n)) return nomMachine(t, n);
-  return n.replace(/(?<=^|\.)([a-z0-9-]+)(?=\.internal$)/, (x) => (id(x) ? nomMachine(t, x) : x));
+export function hostInLanguage(t: Translate, n: string): string {
+  const id = (x: string) => [WORKSTATION, ...MACHINES].some((m) => m.name === x);
+  if (id(n)) return machineName(t, n);
+  return n.replace(/(?<=^|\.)([a-z0-9-]+)(?=\.internal$)/, (x) => (id(x) ? machineName(t, x) : x));
 }
 
 /**
@@ -75,29 +75,29 @@ export function hoteDansLaLangue(t: Traduire, n: string): string {
  * passés dans la langue de la partie : une sauvegarde faite en français
  * (royaume, royaume.internal, id_royaume) sert aussi en anglais (kingdom…).
  */
-export function traduireHotes(texte: string, t: Traduire, autres: Traduire[]): string {
-  let r = texte;
-  for (const m of [POSTE, ...MACHINES]) {
-    const voulu = nomMachine(t, m.nom);
-    for (const a of autres) {
-      const ancien = nomMachine(a, m.nom);
-      if (ancien === voulu) continue;
-      r = r.replace(new RegExp(`(?:(?<![\\w.-])|(?<=id_))${ancien}(?![\\w-])|(?<=\\.)${ancien}(?=\\.internal\\b)`, 'g'), voulu);
+export function translateHosts(text: string, t: Translate, other: Translate[]): string {
+  let r = text;
+  for (const m of [WORKSTATION, ...MACHINES]) {
+    const wanted = machineName(t, m.name);
+    for (const a of other) {
+      const old = machineName(a, m.name);
+      if (old === wanted) continue;
+      r = r.replace(new RegExp(`(?:(?<![\\w.-])|(?<=id_))${old}(?![\\w-])|(?<=\\.)${old}(?=\\.internal\\b)`, 'g'), wanted);
     }
   }
   return r;
 }
 
-export const machineDeHistoire = (histoire: string) => MACHINES.find((m) => m.histoire === histoire);
-export const machineParAdresse = (adresse: string) => [POSTE, ...MACHINES].find((m) => m.adresse === adresse);
+export const storyMachine = (story: string) => MACHINES.find((m) => m.story === story);
+export const machineByAddress = (address: string) => [WORKSTATION, ...MACHINES].find((m) => m.address === address);
 
 // Suite de caractères base64 tirée d'un nom (FNV-1a), toujours la même.
-export function base64(graine: string, longueur: number): string {
+export function base64(seed: string, length: number): string {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   let h = 0x811c9dc5;
   let s = '';
-  for (let i = 0; s.length < longueur; i++) {
-    h ^= graine.charCodeAt(i % graine.length) + i;
+  for (let i = 0; s.length < length; i++) {
+    h ^= seed.charCodeAt(i % seed.length) + i;
     h = Math.imul(h, 0x01000193) >>> 0;
     s += alphabet[h % 64];
   }
@@ -108,30 +108,30 @@ export function base64(graine: string, longueur: number): string {
 // chapitre joué (Chapitre.cleHote), vide pour la clé d'origine.
 
 /** Clé publique d'hôte (ligne de known_hosts, sans le nom). */
-export const cleHote = (m: Machine, generation = '') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-hote-' + m.nom + generation, 43)}`;
+export const hostKey = (m: Machine, generation = '') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-hote-' + m.name + generation, 43)}`;
 
 /** Un texte de toute longueur résumé en 8 chiffres hexadécimaux (FNV-1a) : base64 ne lit que le début de sa graine. */
-export function condense(texte: string): string {
+export function condensed(text: string): string {
   let h = 0x811c9dc5;
-  for (let i = 0; i < texte.length; i++) h = Math.imul(h ^ texte.charCodeAt(i), 0x01000193) >>> 0;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
   return h.toString(16).padStart(8, '0');
 }
 
 /** Empreinte d'une clé publique, comme ssh l'affiche : SHA256:… (43 caractères). */
-export const empreinteDeCle = (cle: string) => `SHA256:${base64(condense(cle.split(' ').slice(0, 2).join(' ')) + '-empreinte', 43)}`;
+export const keyFingerprint = (key: string) => `SHA256:${base64(condensed(key.split(' ').slice(0, 2).join(' ')) + '-empreinte', 43)}`;
 
 /** Empreinte de la clé d'hôte d'une machine. */
-export const empreinte = (m: Machine, generation = '') => empreinteDeCle(cleHote(m, generation));
+export const fingerprint = (m: Machine, generation = '') => keyFingerprint(hostKey(m, generation));
 
 /** La clé privée qui ouvre une session sur la machine. */
-export const clePrivee = (m: Machine) =>
+export const privateKey = (m: Machine) =>
   [
     '-----BEGIN OPENSSH PRIVATE KEY-----',
-    ...base64('cle-privee-' + m.nom, 70 * 5)
+    ...base64('cle-privee-' + m.name, 70 * 5)
       .match(/.{70}/g)!
       .map((l, i) => (i === 0 ? 'b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW' + l.slice(68) : l)),
     '-----END OPENSSH PRIVATE KEY-----',
   ].join('\n');
 
 /** La clé publique correspondante (~/.ssh/id_<machine>.pub), commentée du compte qui l'a créée sur le poste (vous@poste, you@desk…). */
-export const clePublique = (m: Machine, compte = 'vous', poste = 'poste') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-publique-' + m.nom, 43)} ${compte}@${poste}`;
+export const publicKey = (m: Machine, account = 'vous', workstation = 'poste') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-publique-' + m.name, 43)} ${account}@${workstation}`;

@@ -3,20 +3,20 @@
 // énigmes ; l'idée d'apprendre les commandes en se déplaçant de lieu en lieu
 // vient de Terminus (MIT).
 
-import { chemin, d, f, type Chapitre } from '../world';
+import { path, d, f, type Chapter } from '../world';
 
 const M = '/Cabane';
-const LANTERNE = `${M}/Jetee/Phare/Escalier/Lanterne`;
+const LANTERN = `${M}/Jetee/Phare/Escalier/Lanterne`;
 
-export const eveil: Chapitre = {
+export const awakening: Chapter = {
   id: 'eveil',
-  numero: 1,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv'],
-  maison: M,
-  noms: true,
-  accueil: 'bienvenue.txt',
+  number: 1,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv'],
+  home: M,
+  names: true,
+  welcome: 'bienvenue.txt',
   final: 'lumiere',
-  creerMonde: (t) =>
+  createWorld: (t) =>
     d({
       Cabane: d({
         'bienvenue.txt': f(t('eveil-bienvenue')),
@@ -70,31 +70,31 @@ export const eveil: Chapitre = {
                 }),
               }),
             },
-            (jeu) =>
-              jeu.existe(chemin(jeu.t, `${M}/Jetee/filet`)) ? jeu.t('eveil-phare-bloque') : null,
+            (game) =>
+              game.exists(path(game.t, `${M}/Jetee/filet`)) ? game.t('eveil-phare-bloque') : null,
           ),
         }),
       }),
     }),
-  evenements: [
+  events: [
     {
       id: 'crabe',
-      condition: (j) => j.existe(chemin(j.t, `${M}/Colline/EcoleDesSignaux/SalleDExercice/Seau/crabe`)),
+      condition: (j) => j.exists(path(j.t, `${M}/Colline/EcoleDesSignaux/SalleDExercice/Seau/crabe`)),
       message: (j) => j.t('eveil-evenement-crabe'),
     },
     {
       id: 'filet',
-      condition: (j) => !j.existe(chemin(j.t, `${M}/Jetee/filet`)),
+      condition: (j) => !j.exists(path(j.t, `${M}/Jetee/filet`)),
       message: (j) => j.t('eveil-evenement-filet'),
     },
     {
       id: 'mauvais-nom',
-      condition: (j) => j.existe(chemin(j.t, `${LANTERNE}/.ampoule_de_secours`)),
+      condition: (j) => j.exists(path(j.t, `${LANTERN}/.ampoule_de_secours`)),
       message: (j) => j.t('eveil-evenement-mauvais-nom'),
     },
     {
       id: 'lumiere',
-      condition: (j) => j.existe(chemin(j.t, `${LANTERNE}/ampoule`)),
+      condition: (j) => j.exists(path(j.t, `${LANTERN}/ampoule`)),
       message: (j) => j.t('eveil-evenement-lumiere'),
     },
   ],

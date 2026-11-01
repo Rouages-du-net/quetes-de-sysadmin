@@ -15,54 +15,54 @@
 // Sources : RFC 7489 (https://www.rfc-editor.org/rfc/rfc7489), notamment
 // l'alignement (3.1) et les rapports agrégés (7.2, annexe C).
 
-import { d, f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { politiqueDmarc, txt } from '../mail';
+import { d, f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { dmarcPolicy, txt } from '../mail';
 import {
-  authJardins,
-  authLettre,
-  comptes,
-  dkimBon,
+  gardensAuth,
+  letterAuth,
+  accounts,
+  goodDkim,
   DMARC_NONE,
-  DOMAINE,
-  etatJardins,
-  initialiserJardins,
+  DOMAIN,
+  gardensState,
+  initialiseGardens,
   IP,
   MILTERS,
-  mondeJardins,
+  gardensWorld,
   NEWSMAIL,
-  SPF_BON,
-  type Depart,
+  GOOD_SPF,
+  type Departure,
 } from './gardens';
 
 const M = '/home/vous';
-const MAINTENANT = Date.UTC(2027, 4, 24, 9, 0, 0);
-const USURPATEUR = '192.0.2.66';
+const NOW = Date.UTC(2027, 4, 24, 9, 0, 0);
+const SPOOFER = '192.0.2.66';
 
-const depart: Depart = { zone: [SPF_BON, dkimBon(), DMARC_NONE], serie: 2027051701, mainCf: MILTERS, opendkim: 'configure', maintenant: MAINTENANT };
+const departure: Departure = { zone: [GOOD_SPF, goodDkim(), DMARC_NONE], serial: 2027051701, mainCf: MILTERS, opendkim: 'configure', now: NOW };
 
 // Un rapport agrégé DMARC (RFC 7489, annexe C), tel que les messageries l'envoient à l'adresse de rua=.
-type Ligne = { ip: string; n: number; dkim: [string, string, string]; spf: [string, string]; dmarcDkim: string; dmarcSpf: string };
-const rapport = (org: string, id: string, debut: number, lignes: Ligne[]) => `<?xml version="1.0" encoding="UTF-8" ?>
+type Line = { ip: string; n: number; dkim: [string, string, string]; spf: [string, string]; dmarcDkim: string; dmarcSpf: string };
+const report = (org: string, id: string, start: number, lines: Line[]) => `<?xml version="1.0" encoding="UTF-8" ?>
 <feedback>
   <report_metadata>
     <org_name>${org}</org_name>
     <email>noreply-dmarc-support@${org}</email>
     <report_id>${id}</report_id>
     <date_range>
-      <begin>${debut}</begin>
-      <end>${debut + 86399}</end>
+      <begin>${start}</begin>
+      <end>${start + 86399}</end>
     </date_range>
   </report_metadata>
   <policy_published>
-    <domain>${DOMAINE}</domain>
+    <domain>${DOMAIN}</domain>
     <adkim>r</adkim>
     <aspf>r</aspf>
     <p>none</p>
     <sp>none</sp>
     <pct>100</pct>
   </policy_published>
-${lignes
+${lines
   .map(
     (l) => `  <record>
     <row>
@@ -75,7 +75,7 @@ ${lignes
       </policy_evaluated>
     </row>
     <identifiers>
-      <header_from>${DOMAINE}</header_from>
+      <header_from>${DOMAIN}</header_from>
     </identifiers>
     <auth_results>
       <dkim>
@@ -93,29 +93,29 @@ ${lignes
   .join('\n')}
 </feedback>`;
 
-const NOUS: Omit<Ligne, 'n'> = { ip: IP, dkim: [DOMAINE, 'mail', 'pass'], spf: [DOMAINE, 'pass'], dmarcDkim: 'pass', dmarcSpf: 'pass' };
-const LETTRE: Omit<Ligne, 'n'> = {
+const US: Omit<Line, 'n'> = { ip: IP, dkim: [DOMAIN, 'mail', 'pass'], spf: [DOMAIN, 'pass'], dmarcDkim: 'pass', dmarcSpf: 'pass' };
+const LETTER: Omit<Line, 'n'> = {
   ip: NEWSMAIL.ip,
-  dkim: [NEWSMAIL.domaine, NEWSMAIL.selecteur, 'pass'],
-  spf: [`bounce.${NEWSMAIL.domaine}`, 'pass'],
+  dkim: [NEWSMAIL.domain, NEWSMAIL.selector, 'pass'],
+  spf: [`bounce.${NEWSMAIL.domain}`, 'pass'],
   dmarcDkim: 'fail',
   dmarcSpf: 'fail',
 };
-const FAUX: Omit<Ligne, 'n'> = { ip: USURPATEUR, dkim: [DOMAINE, 'mail', 'fail'], spf: [DOMAINE, 'fail'], dmarcDkim: 'fail', dmarcSpf: 'fail' };
-const JOUR = 1810425600; // 2027-05-16 00:00 UTC
+const FALSE: Omit<Line, 'n'> = { ip: SPOOFER, dkim: [DOMAIN, 'mail', 'fail'], spf: [DOMAIN, 'fail'], dmarcDkim: 'fail', dmarcSpf: 'fail' };
+const DAY = 1810425600; // 2027-05-16 00:00 UTC
 
-const politique = (j: Jeu) => politiqueDmarc(j, DOMAINE);
-const stricte = (j: Jeu) => {
-  const p = politique(j);
+const policy = (j: Game) => dmarcPolicy(j, DOMAIN);
+const strict = (j: Game) => {
+  const p = policy(j);
   return !!p && p !== 'permerror' && ['quarantine', 'reject'].includes(p.p.toLowerCase());
 };
-const lettreAlignee = (j: Jeu) => authLettre(j).dmarc === 'pass';
-const vu = (j: Jeu, texte: string) => j.derniere.sortie.includes(texte);
+const alignedLetter = (j: Game) => letterAuth(j).dmarc === 'pass';
+const seen = (j: Game, text: string) => j.last.output.includes(text);
 
-export const politiqueChapitre: Chapitre = {
+export const chapterPolicy: Chapter = {
   id: 'politique',
-  numero: 3,
-  commandes: [
+  number: 3,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -142,63 +142,63 @@ export const politiqueChapitre: Chapitre = {
     'postconf',
     'opendkim-testkey',
   ],
-  maison: M,
-  accueil: 'courriel_nour.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_nour.txt',
+  names: true,
   final: 'fin',
-  etapes: ['rapport', 'aligne', 'fin'],
-  motDePasse: 'semis-2027',
-  comptes,
-  etat: (t) => etatJardins(t, depart),
-  initialiser: initialiserJardins,
-  creerMonde: (t) =>
-    mondeJardins(
+  steps: ['rapport', 'aligne', 'fin'],
+  password: 'semis-2027',
+  accounts,
+  state: (t) => gardensState(t, departure),
+  initialise: initialiseGardens,
+  createWorld: (t) =>
+    gardensWorld(
       t,
-      depart,
+      departure,
       {
         'courriel_nour.txt': f(t('politique-courriel-nour')),
         'lettre_newsmail.txt': f(t('politique-lettre-newsmail')),
         rapports_dmarc: d({
           'mailbox.example-2027-05-16.xml': f(
-            rapport('mailbox.example', '1810425600712204', JOUR, [
-              { ...NOUS, n: 38 },
-              { ...LETTRE, n: 412 },
-              { ...FAUX, n: 17 },
+            report('mailbox.example', '1810425600712204', DAY, [
+              { ...US, n: 38 },
+              { ...LETTER, n: 412 },
+              { ...FALSE, n: 17 },
             ]),
-            { lignes: true },
+            { lines: true },
           ),
           'post.example-2027-05-16.xml': f(
-            rapport('post.example', 'f3a9c27e-2027-05-16', JOUR, [
-              { ...NOUS, n: 9 },
-              { ...LETTRE, n: 96 },
+            report('post.example', 'f3a9c27e-2027-05-16', DAY, [
+              { ...US, n: 9 },
+              { ...LETTER, n: 96 },
             ]),
-            { lignes: true },
+            { lines: true },
           ),
         }),
       },
       '',
     ),
-  evenements: [
-    { id: 'rapport', condition: (j) => vu(j, NEWSMAIL.ip), message: (j) => j.t('politique-evenement-rapport') },
-    { id: 'usurpation', condition: (j) => vu(j, USURPATEUR), message: (j) => j.t('politique-evenement-usurpation') },
+  events: [
+    { id: 'rapport', condition: (j) => seen(j, NEWSMAIL.ip), message: (j) => j.t('politique-evenement-rapport') },
+    { id: 'usurpation', condition: (j) => seen(j, SPOOFER), message: (j) => j.t('politique-evenement-usurpation') },
     {
       id: 'inclusion',
-      condition: (j) => txt(j, DOMAINE, 'primaire').some((x) => /^v=spf1\b.*include:_spf\.newsmail\.example/i.test(x)),
+      condition: (j) => txt(j, DOMAIN, 'primary').some((x) => /^v=spf1\b.*include:_spf\.newsmail\.example/i.test(x)),
       message: (j) => j.t('politique-evenement-inclusion'),
     },
     {
       id: 'point',
-      condition: (j) => txt(j, `${NEWSMAIL.selecteur}._domainkey.${DOMAINE}`, 'primaire').length === 0 && /nm1\._domainkey\s+(\d+\s+)?(IN\s+)?CNAME\s+nm1\.dkim\.newsmail\.example\s*$/im.test(j.lire('/etc/bind/zones/db.gardens.example') ?? ''),
+      condition: (j) => txt(j, `${NEWSMAIL.selector}._domainkey.${DOMAIN}`, 'primary').length === 0 && /nm1\._domainkey\s+(\d+\s+)?(IN\s+)?CNAME\s+nm1\.dkim\.newsmail\.example\s*$/im.test(j.read('/etc/bind/zones/db.gardens.example') ?? ''),
       message: (j) => j.t('politique-evenement-point'),
     },
-    { id: 'deux', condition: (j) => politiqueDmarc(j, DOMAINE, 'primaire') === 'permerror', message: (j) => j.t('politique-evenement-deux') },
-    { id: 'aligne', condition: lettreAlignee, message: (j) => j.t('politique-evenement-aligne') },
-    { id: 'trop-tot', condition: (j) => stricte(j) && !lettreAlignee(j), message: (j) => j.t('politique-evenement-trop-tot') },
+    { id: 'deux', condition: (j) => dmarcPolicy(j, DOMAIN, 'primary') === 'permerror', message: (j) => j.t('politique-evenement-deux') },
+    { id: 'aligne', condition: alignedLetter, message: (j) => j.t('politique-evenement-aligne') },
+    { id: 'trop-tot', condition: (j) => strict(j) && !alignedLetter(j), message: (j) => j.t('politique-evenement-trop-tot') },
     {
       id: 'fin',
       condition: (j) => {
-        const p = politique(j);
-        return stricte(j) && !!p && p !== 'permerror' && !!p.rua && lettreAlignee(j) && authJardins(j).dmarc === 'pass';
+        const p = policy(j);
+        return strict(j) && !!p && p !== 'permerror' && !!p.rua && alignedLetter(j) && gardensAuth(j).dmarc === 'pass';
       },
       message: (j) => j.t('politique-evenement-fin'),
     },

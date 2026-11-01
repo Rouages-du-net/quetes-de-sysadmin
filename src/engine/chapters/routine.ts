@@ -19,19 +19,19 @@
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html,
 // https://manpages.debian.org/bookworm/cron/crontab.5.en.html
 
-import { d, f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { nouveauSystemd, systemd } from '../systemd';
-import { lireConfApt, vrai } from '../apt-conf';
-import { M, MAINTENANT, MOT_DE_PASSE, aptVeille, comptesVeille, ecouteVeille, initialiserVeille, mondeVeille, nginxVeille, scanVeille, serviceSsh } from './watch';
+import { d, f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { newSystemd, systemd } from '../systemd';
+import { readConfApt, yes } from '../apt-conf';
+import { M, NOW, PASSWORD, watchApt, watchAccounts, watchListening, initialiseWatch, watchWorld, watchNginx, watchScan, serviceSsh } from './watch';
 
-const DEMARRE = MAINTENANT - 14 * 86_400_000;
-const VINGT = '/etc/apt/apt.conf.d/20auto-upgrades';
-const CINQUANTE = '/etc/apt/apt.conf.d/50unattended-upgrades';
+const STARTED = NOW - 14 * 86_400_000;
+const TWENTY = '/etc/apt/apt.conf.d/20auto-upgrades';
+const FIFTY = '/etc/apt/apt.conf.d/50unattended-upgrades';
 
-const VINGT_CONTENU = 'APT::Periodic::Update-Package-Lists "0";\nAPT::Periodic::Unattended-Upgrade "0";\n';
+const TWENTY_CONTENT = 'APT::Periodic::Update-Package-Lists "0";\nAPT::Periodic::Unattended-Upgrade "0";\n';
 
-const CINQUANTE_CONTENU = `Unattended-Upgrade::Origins-Pattern {
+const FIFTY_CONTENT = `Unattended-Upgrade::Origins-Pattern {
         // Codename based matching:
         "origin=Debian,codename=\${distro_codename},label=Debian";
         "origin=Debian,codename=\${distro_codename},label=Debian-Security";
@@ -48,44 +48,44 @@ const CINQUANTE_CONTENU = `Unattended-Upgrade::Origins-Pattern {
 //Unattended-Upgrade::Automatic-Reboot "false";
 `;
 
-const conf = (j: Jeu) => lireConfApt(j);
-const activeOk = (j: Jeu) => {
+const conf = (j: Game) => readConfApt(j);
+const okActive = (j: Game) => {
   const c = conf(j);
-  return !c.erreurs.length && vrai(c.valeurs['APT::Periodic::Update-Package-Lists']) && vrai(c.valeurs['APT::Periodic::Unattended-Upgrade']);
+  return !c.errors.length && yes(c.values['APT::Periodic::Update-Package-Lists']) && yes(c.values['APT::Periodic::Unattended-Upgrade']);
 };
-const lignesCinquante = (j: Jeu) => (j.lire(CINQUANTE) ?? '').split('\n');
+const fiftyLines = (j: Game) => (j.read(FIFTY) ?? '').split('\n');
 const active = (l: string) => !/^\s*\/\//.test(l) && /"origin=/.test(l);
-const securiteSeuleOk = (j: Jeu) => {
-  const l = lignesCinquante(j);
+const okOnlySecurity = (j: Game) => {
+  const l = fiftyLines(j);
   return !l.some((x) => active(x) && /label=Debian"/.test(x)) && l.some((x) => active(x) && /label=Debian-Security/.test(x));
 };
-const rapportOk = (j: Jeu) => lignesCinquante(j).some((l) => !/^\s*\/\//.test(l) && /Unattended-Upgrade::Mail\s+"[^"]/.test(l));
+const okReport = (j: Game) => fiftyLines(j).some((l) => !/^\s*\/\//.test(l) && /Unattended-Upgrade::Mail\s+"[^"]/.test(l));
 
 // Un timer (ou une tâche cron) actif, écrit à la main (persistant), dont la
 // commande s'intéresse aux mises à jour ET en envoie le résultat par courrier.
-const sd = (j: Jeu) => systemd(j)!;
-const timerOk = (j: Jeu) =>
-  Object.values(sd(j).minuteries ?? {}).some((m) => {
-    if (m.etat !== 'active' || !m.fichier.startsWith('/etc/')) return false;
-    const service = sd(j).services[m.unite];
-    const texte = (service?.fichier ? (j.lire(service.fichier) ?? '') : '').toLowerCase();
-    return /exec/.test(texte) && texte.includes('apt') && texte.includes('mail');
+const sd = (j: Game) => systemd(j)!;
+const timerOk = (j: Game) =>
+  Object.values(sd(j).timers ?? {}).some((m) => {
+    if (m.state !== 'active' || !m.file.startsWith('/etc/')) return false;
+    const service = sd(j).services[m.unit];
+    const text = (service?.file ? (j.read(service.file) ?? '') : '').toLowerCase();
+    return /exec/.test(text) && text.includes('apt') && text.includes('mail');
   });
-const cronOk = (j: Jeu) =>
-  Object.values((j.etat.crontabs ?? {}) as Record<string, string>).some((t) =>
+const cronOk = (j: Game) =>
+  Object.values((j.state.crontabs ?? {}) as Record<string, string>).some((t) =>
     t.split('\n').some((l) => {
       const s = l.trim().toLowerCase();
       return !!s && !s.startsWith('#') && s.includes('apt') && s.includes('mail');
     }),
   );
-const periodiqueOk = (j: Jeu) => timerOk(j) || cronOk(j);
+const okPeriodic = (j: Game) => timerOk(j) || cronOk(j);
 
-const autoOk = (j: Jeu) => activeOk(j) && securiteSeuleOk(j) && rapportOk(j);
+const autoOk = (j: Game) => okActive(j) && okOnlySecurity(j) && okReport(j);
 
-export const routine: Chapitre = {
+export const routine: Chapter = {
   id: 'routine',
-  numero: 5,
-  commandes: [
+  number: 5,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -106,43 +106,43 @@ export const routine: Chapitre = {
     'crontab',
     'mail',
   ],
-  maison: M,
-  accueil: 'courriel_salome.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_salome.txt',
+  names: true,
   final: 'fin',
-  etapes: ['active', 'securite', 'periodique', 'fin'],
-  motDePasse: MOT_DE_PASSE,
-  comptes: comptesVeille,
-  etat: () => ({
-    sshd: { charge: {}, connexionsAuChargement: 1, recharges: 0 },
-    ecoute: ecouteVeille(),
-    nginx: nginxVeille(),
-    scan: scanVeille(),
-    apt: aptVeille(true),
+  steps: ['active', 'securite', 'periodique', 'fin'],
+  password: PASSWORD,
+  accounts: watchAccounts,
+  state: () => ({
+    sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
+    ecoute: watchListening(),
+    nginx: watchNginx(),
+    scan: watchScan(),
+    apt: watchApt(true),
     crontabs: {},
-    systemd: nouveauSystemd('petrin', DEMARRE, MAINTENANT, {
+    systemd: newSystemd('petrin', STARTED, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },
     }),
   }),
-  initialiser: initialiserVeille,
-  creerMonde: (t) =>
-    mondeVeille(t, {
-      maison: { 'courriel_salome.txt': f(t('routine-courriel-salome')) },
+  initialise: initialiseWatch,
+  createWorld: (t) =>
+    watchWorld(t, {
+      home: { 'courriel_salome.txt': f(t('routine-courriel-salome')) },
       etc: {
         apt: d(
-          { 'apt.conf.d': d({ '20auto-upgrades': f(VINGT_CONTENU, { lignes: true, proprio: 'root' }), '50unattended-upgrades': f(CINQUANTE_CONTENU, { lignes: true, proprio: 'root' }) }, undefined, { proprio: 'root' }) },
+          { 'apt.conf.d': d({ '20auto-upgrades': f(TWENTY_CONTENT, { lines: true, owner: 'root' }), '50unattended-upgrades': f(FIFTY_CONTENT, { lines: true, owner: 'root' }) }, undefined, { owner: 'root' }) },
           undefined,
-          { proprio: 'root' },
+          { owner: 'root' },
         ),
       },
     }),
-  evenements: [
-    { id: 'syntaxe', condition: (j) => conf(j).erreurs.length > 0, message: (j) => j.t('routine-evenement-syntaxe') },
-    { id: 'active', condition: activeOk, message: (j) => j.t('routine-evenement-active') },
-    { id: 'securite', condition: (j) => activeOk(j) && securiteSeuleOk(j) && rapportOk(j), message: (j) => j.t('routine-evenement-securite') },
-    { id: 'periodique', condition: periodiqueOk, message: (j) => j.t('routine-evenement-periodique') },
-    { id: 'fin', condition: (j) => autoOk(j) && periodiqueOk(j), message: (j) => j.t('routine-evenement-fin') },
+  events: [
+    { id: 'syntaxe', condition: (j) => conf(j).errors.length > 0, message: (j) => j.t('routine-evenement-syntaxe') },
+    { id: 'active', condition: okActive, message: (j) => j.t('routine-evenement-active') },
+    { id: 'securite', condition: (j) => okActive(j) && okOnlySecurity(j) && okReport(j), message: (j) => j.t('routine-evenement-securite') },
+    { id: 'periodique', condition: okPeriodic, message: (j) => j.t('routine-evenement-periodique') },
+    { id: 'fin', condition: (j) => autoOk(j) && okPeriodic(j), message: (j) => j.t('routine-evenement-fin') },
   ],
 };

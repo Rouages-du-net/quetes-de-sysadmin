@@ -15,13 +15,13 @@
 // Sources : https://nginx.org/en/docs/http/ngx_http_core_module.html#location,
 // https://nginx.org/en/docs/http/ngx_http_access_module.html
 
-import { f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { comptesCooperative, M, mondeCooperative, MOT_DE_PASSE } from './coop';
-import { till, NGINX_BINAIRE, CLE_ANCIENNE, CLE_NOUVELLE, ENV, envCaisse, etatCaisse, mondeCaisse, nginxCooperative, visite } from './till-web';
-import { chargerNginx } from '../nginx';
+import { f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { cooperativeAccounts, M, cooperativeWorld, PASSWORD } from './coop';
+import { till, BINARY_NGINX, OLD_KEY, NEW_KEY, ENV, tillEnv, tillState, tillWorld, nginxCooperative, visit } from './till-web';
+import { loadNginx } from '../nginx';
 
-const ATTAQUANT = '203.0.113.77';
+const ATTACKER = '203.0.113.77';
 
 const SITE = `server {
     listen 80 default_server;
@@ -38,30 +38,30 @@ const SITE = `server {
     }
 }`;
 
-const ACCES = `192.0.2.44 - - [18/Oct/2027:18:02:11 +0200] "GET / HTTP/1.1" 200 118 "-" "Mozilla/5.0 (X11; Linux x86_64)"
+const ACCESS = `192.0.2.44 - - [18/Oct/2027:18:02:11 +0200] "GET / HTTP/1.1" 200 118 "-" "Mozilla/5.0 (X11; Linux x86_64)"
 192.0.2.44 - - [18/Oct/2027:18:02:12 +0200] "GET /till/ HTTP/1.1" 200 95 "-" "Mozilla/5.0 (X11; Linux x86_64)"
 192.0.2.51 - - [18/Oct/2027:19:40:03 +0200] "GET / HTTP/1.1" 200 118 "-" "Mozilla/5.0 (Android 14)"
 198.51.100.23 - - [19/Oct/2027:02:47:03 +0200] "GET /wp-login.php HTTP/1.1" 404 162 "-" "Mozilla/5.0 (compatible; scanner)"
 198.51.100.23 - - [19/Oct/2027:02:47:04 +0200] "GET /phpmyadmin/ HTTP/1.1" 404 162 "-" "Mozilla/5.0 (compatible; scanner)"
-${ATTAQUANT} - - [19/Oct/2027:03:12:40 +0200] "GET /.env HTTP/1.1" 200 150 "-" "python-requests/2.32.3"
-${ATTAQUANT} - - [19/Oct/2027:03:12:41 +0200] "GET /.git/config HTTP/1.1" 200 192 "-" "python-requests/2.32.3"
-${ATTAQUANT} - - [19/Oct/2027:03:12:41 +0200] "GET /.git/HEAD HTTP/1.1" 200 20 "-" "python-requests/2.32.3"
+${ATTACKER} - - [19/Oct/2027:03:12:40 +0200] "GET /.env HTTP/1.1" 200 150 "-" "python-requests/2.32.3"
+${ATTACKER} - - [19/Oct/2027:03:12:41 +0200] "GET /.git/config HTTP/1.1" 200 192 "-" "python-requests/2.32.3"
+${ATTACKER} - - [19/Oct/2027:03:12:41 +0200] "GET /.git/HEAD HTTP/1.1" 200 20 "-" "python-requests/2.32.3"
 192.0.2.44 - - [19/Oct/2027:08:58:30 +0200] "GET /till/ HTTP/1.1" 200 95 "-" "Mozilla/5.0 (X11; Linux x86_64)"`;
 
 const APP_LOG = `2027-10-18 08:00:02 till listening on 127.0.0.1:3000
 2027-10-19 08:58:31 login ok for lina from 127.0.0.1`;
 
-const statut = (j: Jeu, chemin: string, adresse = '192.0.2.99') => visite(j, chemin, { adresse }, false)?.code ?? 0;
-const fuite = (j: Jeu, chemin: string) => statut(j, chemin) === 200;
-const siteOk = (j: Jeu) => statut(j, '/') === 200 && statut(j, '/till/') === 200;
-const attaquantBloque = (j: Jeu) => statut(j, '/', ATTAQUANT) === 403;
-const cleChargee = (j: Jeu) => till(j).charge.PAIEMENT_CLE === CLE_NOUVELLE;
-const fermee = (j: Jeu) => !fuite(j, '/.env') && !fuite(j, '/.git/config') && siteOk(j);
+const status = (j: Game, path: string, address = '192.0.2.99') => visit(j, path, { address }, false)?.code ?? 0;
+const leak = (j: Game, path: string) => status(j, path) === 200;
+const siteOk = (j: Game) => status(j, '/') === 200 && status(j, '/till/') === 200;
+const blockedAttacker = (j: Game) => status(j, '/', ATTACKER) === 403;
+const loadedKey = (j: Game) => till(j).load.PAIEMENT_CLE === NEW_KEY;
+const closed = (j: Game) => !leak(j, '/.env') && !leak(j, '/.git/config') && siteOk(j);
 
-export const secret: Chapitre = {
+export const secret: Chapter = {
   id: 'secret',
-  numero: 3,
-  commandes: [
+  number: 3,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -91,34 +91,34 @@ export const secret: Chapitre = {
     'nginx',
     'curl',
   ],
-  maison: M,
-  accueil: 'courriel_awa.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_awa.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: () => comptesCooperative(false),
-  etat: () => etatCaisse(envCaisse(CLE_ANCIENNE)),
-  initialiser: (j) => chargerNginx(j),
-  creerMonde: (t) => {
-    const caisseWeb = mondeCaisse({ env: envCaisse(CLE_ANCIENNE), accesLog: ACCES, appLog: APP_LOG });
-    return mondeCooperative({
-      sansMarc: true,
-      maison: { 'courriel_awa.txt': f(t('secret-courriel-awa', { cle: CLE_NOUVELLE })) },
+  password: PASSWORD,
+  accounts: () => cooperativeAccounts(false),
+  state: () => tillState(tillEnv(OLD_KEY)),
+  initialise: (j) => loadNginx(j),
+  createWorld: (t) => {
+    const webTill = tillWorld({ env: tillEnv(OLD_KEY), logAccess: ACCESS, appLog: APP_LOG });
+    return cooperativeWorld({
+      withoutMarc: true,
+      home: { 'courriel_awa.txt': f(t('secret-courriel-awa', { cle: NEW_KEY })) },
       etc: nginxCooperative(SITE),
-      sbin: NGINX_BINAIRE,
-      plus: caisseWeb,
+      sbin: BINARY_NGINX,
+      more: webTill,
     });
   },
-  evenements: [
-    { id: 'env-seul', condition: (j) => !fuite(j, '/.env') && fuite(j, '/.git/config'), message: (j) => j.t('secret-evenement-env-seul') },
-    { id: 'site-casse', condition: (j) => !fuite(j, '/.env') && !siteOk(j), message: (j) => j.t('secret-evenement-site-casse') },
-    { id: 'fermee', condition: fermee, message: (j) => j.t('secret-evenement-fermee') },
-    { id: 'attaquant', condition: attaquantBloque, message: (j) => j.t('secret-evenement-attaquant', { adresse: ATTAQUANT }) },
+  events: [
+    { id: 'env-seul', condition: (j) => !leak(j, '/.env') && leak(j, '/.git/config'), message: (j) => j.t('secret-evenement-env-seul') },
+    { id: 'site-casse', condition: (j) => !leak(j, '/.env') && !siteOk(j), message: (j) => j.t('secret-evenement-site-casse') },
+    { id: 'fermee', condition: closed, message: (j) => j.t('secret-evenement-fermee') },
+    { id: 'attaquant', condition: blockedAttacker, message: (j) => j.t('secret-evenement-attaquant', { adresse: ATTACKER }) },
     {
       id: 'cle-ecrite',
-      condition: (j) => (j.lire(ENV) ?? '').includes(CLE_NOUVELLE) && !cleChargee(j),
+      condition: (j) => (j.read(ENV) ?? '').includes(NEW_KEY) && !loadedKey(j),
       message: (j) => j.t('secret-evenement-cle-ecrite'),
     },
-    { id: 'fin', condition: (j) => fermee(j) && attaquantBloque(j) && cleChargee(j), message: (j) => j.t('secret-evenement-fin') },
+    { id: 'fin', condition: (j) => closed(j) && blockedAttacker(j) && loadedKey(j), message: (j) => j.t('secret-evenement-fin') },
   ],
 };

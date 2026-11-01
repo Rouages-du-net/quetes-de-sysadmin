@@ -16,82 +16,82 @@
 // dans le tunnel), pas de comptabilité (accounting), ni de sites autres que
 // default ; une syntaxe de configuration simplifiée (sections, clé = valeur).
 
-import type { Jeu } from './shell';
-import { annuaire, normaliser, trouver as trouverLdap, verifier, type Annuaire, type Entree } from './ldap';
-import { dans, estIp } from './lan';
-import { nft, traverser, type Ruleset } from './nftables';
-import { journaliser, systemd } from './systemd';
+import type { Game } from './shell';
+import { directory, normalise, find as findLdap, check, type Directory, type Input } from './ldap';
+import { inside, isIp } from './lan';
+import { nft, traverse, type Ruleset } from './nftables';
+import { writeLog, systemd } from './systemd';
 
-export const DOSSIER = '/etc/freeradius/3.0';
+export const DIRECTORY = '/etc/freeradius/3.0';
 
 // ——— La syntaxe des fichiers de configuration ———
 
 export interface Section {
-  nom: string;
+  name: string;
   args: string[];
-  valeurs: Record<string, string>;
+  values: Record<string, string>;
   sections: Section[];
 }
 
 /** Lit un fichier de configuration de FreeRADIUS ; lève une erreur au format de radiusd. */
-export function lireConfRadius(texte: string, fichier: string): Section {
-  const racine: Section = { nom: '', args: [], valeurs: {}, sections: [] };
-  const pile = [racine];
-  texte.split('\n').forEach((brute, i) => {
-    const ligne = brute.replace(/(^|\s)#.*$/, '').trim();
-    if (!ligne) return;
-    const lieu = `${fichier}[${i + 1}]`;
-    if (ligne === '}') {
-      if (pile.length === 1) throw new Error(`${lieu}: Too many closing braces`);
-      pile.pop();
+export function readConfRadius(text: string, file: string): Section {
+  const root: Section = { name: '', args: [], values: {}, sections: [] };
+  const stack = [root];
+  text.split('\n').forEach((rawValue, i) => {
+    const line = rawValue.replace(/(^|\s)#.*$/, '').trim();
+    if (!line) return;
+    const place = `${file}[${i + 1}]`;
+    if (line === '}') {
+      if (stack.length === 1) throw new Error(`${place}: Too many closing braces`);
+      stack.pop();
       return;
     }
-    const ouvre = /^([\w.-]+)((?:\s+[^\s{]+)*)\s*\{$/.exec(ligne);
-    if (ouvre) {
-      const s: Section = { nom: ouvre[1], args: ouvre[2].trim().split(/\s+/).filter(Boolean), valeurs: {}, sections: [] };
-      pile.at(-1)!.sections.push(s);
-      pile.push(s);
+    const opens = /^([\w.-]+)((?:\s+[^\s{]+)*)\s*\{$/.exec(line);
+    if (opens) {
+      const s: Section = { name: opens[1], args: opens[2].trim().split(/\s+/).filter(Boolean), values: {}, sections: [] };
+      stack.at(-1)!.sections.push(s);
+      stack.push(s);
       return;
     }
-    const kv = /^([\w.:-]+)\s*(\+?=|:=)\s*(.*)$/.exec(ligne);
+    const kv = /^([\w.:-]+)\s*(\+?=|:=)\s*(.*)$/.exec(line);
     if (kv) {
-      const valeur = kv[3].trim().replace(/^(['"])(.*)\1$/, '$2');
-      if (!valeur) throw new Error(`${lieu}: Syntax error: Expected value after "${kv[1]} ="`);
-      pile.at(-1)!.valeurs[kv[1]] = valeur;
+      const value = kv[3].trim().replace(/^(['"])(.*)\1$/, '$2');
+      if (!value) throw new Error(`${place}: Syntax error: Expected value after "${kv[1]} ="`);
+      stack.at(-1)!.values[kv[1]] = value;
       return;
     }
-    if (/^[\w.-]+(\s+[\w.-]+)*$/.test(ligne)) {
+    if (/^[\w.-]+(\s+[\w.-]+)*$/.test(line)) {
       // Un nom seul (un module listé dans authorize { … }), ou une section sans accolade.
-      if (/^(client|ldap|user|group)\b/.test(ligne) && pile.length === 1)
-        throw new Error(`${lieu}: Expecting section start brace '{' after "${ligne}"`);
-      pile.at(-1)!.valeurs[ligne] = '';
+      if (/^(client|ldap|user|group)\b/.test(line) && stack.length === 1)
+        throw new Error(`${place}: Expecting section start brace '{' after "${line}"`);
+      stack.at(-1)!.values[line] = '';
       return;
     }
-    throw new Error(`${lieu}: Parse error after "${ligne.split(/\s+/)[0]}"`);
+    throw new Error(`${place}: Parse error after "${line.split(/\s+/)[0]}"`);
   });
-  if (pile.length > 1) throw new Error(`${fichier}[${texte.split('\n').length}]: Section "${pile.at(-1)!.nom}" is missing a closing brace`);
-  return racine;
+  if (stack.length > 1) throw new Error(`${file}[${text.split('\n').length}]: Section "${stack.at(-1)!.name}" is missing a closing brace`);
+  return root;
 }
 
 // ——— Le fichier users (mods-config/files/authorize) ———
 
-export interface EntreeUsers {
-  nom: string;
-  verifications: { attr: string; op: string; valeur: string }[];
-  reponses: { attr: string; op: string; valeur: string }[];
-  suite: boolean;
+export interface UsersInput {
+  name: string;
+  checks: { attr: string; op: string; value: string }[];
+  responses: { attr: string; op: string; value: string }[];
+  next: boolean;
 }
 
 const COUPLE = /^([\w-]+(?::\d+)?)\s*(==|:=|=|\+=|!=|=~)\s*("[^"]*"|[^,\s]+)$/;
 
-export function lireUsers(texte: string, fichier: string): EntreeUsers[] {
-  const entrees: EntreeUsers[] = [];
-  let courante: EntreeUsers | null = null;
-  texte.split('\n').forEach((brute, i) => {
-    if (/^\s*#/.test(brute) || !brute.trim()) return;
-    const lieu = `${fichier}[${i + 1}]`;
-    const couples = (bout: string) =>
-      bout
+export function readUsers(text: string, file: string): UsersInput[] {
+  const inputs: UsersInput[] = [];
+  let current: UsersInput | null = null;
+  text.split('\n').forEach((rawValue, i) => {
+    if (/^\s*#/.test(rawValue) || !rawValue.trim()) return;
+    const place = `${file}[${i + 1}]`;
+    const couples = (end: string) =>
+      end
         .split(',')
         .map((x) => x.trim())
         .filter(Boolean)
@@ -99,117 +99,117 @@ export function lireUsers(texte: string, fichier: string): EntreeUsers[] {
           const m = COUPLE.exec(x);
           if (!m)
             throw new Error(
-              `${lieu}: Parse error (${courante ? 'reply' : 'check'}) for entry ${courante?.nom ?? x.split(/\s+/)[0]}: Expected end of line or comma`,
+              `${place}: Parse error (${current ? 'reply' : 'check'}) for entry ${current?.name ?? x.split(/\s+/)[0]}: Expected end of line or comma`,
             );
-          return { attr: m[1], op: m[2], valeur: m[3].replace(/^"(.*)"$/, '$1') };
+          return { attr: m[1], op: m[2], value: m[3].replace(/^"(.*)"$/, '$1') };
         });
-    if (!/^\s/.test(brute)) {
-      const [nom, ...reste] = brute.trim().split(/\s+/);
-      courante = { nom, verifications: [], reponses: [], suite: false };
-      entrees.push(courante);
-      courante.verifications = couples(reste.join(' '));
+    if (!/^\s/.test(rawValue)) {
+      const [name, ...rest] = rawValue.trim().split(/\s+/);
+      current = { name, checks: [], responses: [], next: false };
+      inputs.push(current);
+      current.checks = couples(rest.join(' '));
       return;
     }
-    if (!courante) throw new Error(`${lieu}: Entry does not begin with a user name`);
-    const r = couples(brute);
+    if (!current) throw new Error(`${place}: Entry does not begin with a user name`);
+    const r = couples(rawValue);
     for (const c of r) {
-      if (c.attr === 'Fall-Through') courante.suite = /^(yes|1)$/i.test(c.valeur);
-      else courante.reponses.push(c);
+      if (c.attr === 'Fall-Through') current.next = /^(yes|1)$/i.test(c.value);
+      else current.responses.push(c);
     }
   });
-  return entrees;
+  return inputs;
 }
 
 // ——— La configuration chargée ———
 
 export interface ConfRadius {
-  clients: { nom: string; reseau: string; secret: string }[];
-  ldap: null | { serveur: string; identite?: string; motDePasse?: string; base: string; userBase: string; groupeBase: string; parMemberUid: boolean };
-  users: EntreeUsers[];
+  clients: { name: string; network: string; secret: string }[];
+  ldap: null | { server: string; identity?: string; password?: string; base: string; userBase: string; baseGroup: string; byMemberUid: boolean };
+  users: UsersInput[];
 }
 
 /** Lit toute la configuration, comme radiusd au démarrage (ou freeradius -XC) ; les erreurs en lignes. */
-export function lireRadius(j: Jeu): { conf: ConfRadius | null; erreurs: string[] } {
-  const lire = (f: string) => j.lire(`${DOSSIER}/${f}`);
+export function readRadius(j: Game): { conf: ConfRadius | null; errors: string[] } {
+  const read = (f: string) => j.read(`${DIRECTORY}/${f}`);
   try {
-    const clients = lireConfRadius(lire('clients.conf') ?? '', `${DOSSIER}/clients.conf`)
-      .sections.filter((s) => s.nom === 'client')
+    const clients = readConfRadius(read('clients.conf') ?? '', `${DIRECTORY}/clients.conf`)
+      .sections.filter((s) => s.name === 'client')
       .map((s) => {
-        const ip = s.valeurs.ipaddr ?? s.valeurs.ipv4addr ?? s.valeurs.ipv6addr ?? '';
-        if (!s.valeurs.secret) throw new Error(`${DOSSIER}/clients.conf: No 'secret' was specified for client ${s.args[0] ?? ''}`);
-        return { nom: s.args[0] ?? '', reseau: ip.includes('/') || !estIp(ip) ? ip : `${ip}/32`, secret: s.valeurs.secret };
+        const ip = s.values.ipaddr ?? s.values.ipv4addr ?? s.values.ipv6addr ?? '';
+        if (!s.values.secret) throw new Error(`${DIRECTORY}/clients.conf: No 'secret' was specified for client ${s.args[0] ?? ''}`);
+        return { name: s.args[0] ?? '', network: ip.includes('/') || !isIp(ip) ? ip : `${ip}/32`, secret: s.values.secret };
       });
     let ldap: ConfRadius['ldap'] = null;
-    const texteLdap = lire('mods-enabled/ldap');
-    if (texteLdap !== null) {
-      const s = lireConfRadius(texteLdap, `${DOSSIER}/mods-enabled/ldap`).sections.find((x) => x.nom === 'ldap');
+    const ldapText = read('mods-enabled/ldap');
+    if (ldapText !== null) {
+      const s = readConfRadius(ldapText, `${DIRECTORY}/mods-enabled/ldap`).sections.find((x) => x.name === 'ldap');
       if (s) {
-        const base = s.valeurs.base_dn ?? '';
-        const remplacer = (v: string | undefined) => (v ?? '${..base_dn}').replace('${..base_dn}', base);
-        const user = s.sections.find((x) => x.nom === 'user');
-        const groupe = s.sections.find((x) => x.nom === 'group');
+        const base = s.values.base_dn ?? '';
+        const replace = (v: string | undefined) => (v ?? '${..base_dn}').replace('${..base_dn}', base);
+        const user = s.sections.find((x) => x.name === 'user');
+        const group = s.sections.find((x) => x.name === 'group');
         ldap = {
-          serveur: s.valeurs.server ?? 'localhost',
-          identite: s.valeurs.identity,
-          motDePasse: s.valeurs.password,
+          server: s.values.server ?? 'localhost',
+          identity: s.values.identity,
+          password: s.values.password,
           base,
-          userBase: remplacer(user?.valeurs.base_dn),
-          groupeBase: remplacer(groupe?.valeurs.base_dn),
-          parMemberUid: /memberUid=/.test(groupe?.valeurs.membership_filter ?? ''),
+          userBase: replace(user?.values.base_dn),
+          baseGroup: replace(group?.values.base_dn),
+          byMemberUid: /memberUid=/.test(group?.values.membership_filter ?? ''),
         };
       }
     }
-    const users = lireUsers(lire('mods-config/files/authorize') ?? '', `${DOSSIER}/mods-config/files/authorize`);
-    return { conf: { clients, ldap, users }, erreurs: [] };
+    const users = readUsers(read('mods-config/files/authorize') ?? '', `${DIRECTORY}/mods-config/files/authorize`);
+    return { conf: { clients, ldap, users }, errors: [] };
   } catch (e) {
-    return { conf: null, erreurs: [(e as Error).message, `Errors reading or parsing ${DOSSIER}/radiusd.conf`] };
+    return { conf: null, errors: [(e as Error).message, `Errors reading or parsing ${DIRECTORY}/radiusd.conf`] };
   }
 }
 
-export const radius = (j: Jeu) => j.etat.radius as { conf: ConfRadius | null } | undefined;
-export const enMarche = (j: Jeu) => systemd(j)?.services.freeradius?.etat === 'active';
+export const radius = (j: Game) => j.state.radius as { conf: ConfRadius | null } | undefined;
+export const inWorks = (j: Game) => systemd(j)?.services.freeradius?.state === 'active';
 
 // ——— Une demande ———
 
-export interface Demande {
+export interface Request {
   // D'où vient la demande : la borne (son adresse et l'interface du routeur), ou le routeur lui-même (radtest).
   client: string;
   iif: string;
   secret: string;
-  utilisateur: string;
-  motDePasse: string;
+  user: string;
+  password: string;
 }
 
-export interface Reponse {
+export interface Response {
   // accept, reject, ou rien (la demande est ignorée : pas de réponse du tout).
-  quoi: 'accept' | 'reject' | 'rien';
-  attributs: { attr: string; valeur: string }[];
+  what: 'accept' | 'reject' | 'rien';
+  attributes: { attr: string; value: string }[];
   // Ce que radiusd écrit (journal, ou radiusd -X).
-  journal: string[];
+  log: string[];
 }
 
-const groupeDe = (a: Annuaire, conf: NonNullable<ConfRadius['ldap']>, uid: string, user: Entree, groupe: string): boolean => {
-  const g = a.entrees.find(
+const groupFor = (a: Directory, conf: NonNullable<ConfRadius['ldap']>, uid: string, user: Input, group: string): boolean => {
+  const g = a.inputs.find(
     (e) =>
       (e.attrs.objectclass ?? []).some((c) => c.toLowerCase() === 'posixgroup') &&
-      normaliser(e.dn).endsWith(normaliser(conf.groupeBase)) &&
-      ((e.attrs.cn ?? []).includes(groupe) || normaliser(e.dn) === normaliser(groupe)),
+      normalise(e.dn).endsWith(normalise(conf.baseGroup)) &&
+      ((e.attrs.cn ?? []).includes(group) || normalise(e.dn) === normalise(group)),
   );
   if (!g) return false;
   // Par défaut, rlm_ldap cherche l'attribut memberOf de l'utilisateur ; membership_filter permet memberUid.
-  if (conf.parMemberUid) return (g.attrs.memberuid ?? []).includes(uid);
-  return (user.attrs.memberof ?? []).some((m) => normaliser(m) === normaliser(g.dn));
+  if (conf.byMemberUid) return (g.attrs.memberuid ?? []).includes(uid);
+  return (user.attrs.memberof ?? []).some((m) => normalise(m) === normalise(g.dn));
 };
 
 /** Ce que répond radiusd à une demande, avec cette configuration chargée. */
-export function traiter(j: Jeu, d: Demande, o: { conf?: ConfRadius | null; ruleset?: Ruleset; marche?: boolean } = {}): Reponse {
+export function handle(j: Game, d: Request, o: { conf?: ConfRadius | null; ruleset?: Ruleset; works?: boolean } = {}): Response {
   const conf = o.conf !== undefined ? o.conf : (radius(j)?.conf ?? null);
-  const marche = o.marche ?? enMarche(j);
-  const journal: string[] = [];
-  const rien = (): Reponse => ({ quoi: 'rien', attributs: [], journal });
-  if (!marche || !conf) return rien();
+  const works = o.works ?? inWorks(j);
+  const log: string[] = [];
+  const nothing = (): Response => ({ what: 'rien', attributes: [], log });
+  if (!works || !conf) return nothing();
   // La chaîne input du pare-feu : UDP 1812 vers le routeur.
-  const paquet = {
+  const pkg = {
     iif: d.iif,
     oif: '',
     saddr: d.client,
@@ -218,97 +218,97 @@ export function traiter(j: Jeu, d: Demande, o: { conf?: ConfRadius | null; rules
     sport: 41234,
     dport: 1812,
     ct: 'new' as const,
-    taille: 120,
+    size: 120,
   };
-  if (d.iif !== 'lo' && !traverser(o.ruleset ?? nft(j), 'input', 'filter', paquet).passe) return rien();
-  const client = conf.clients.find((c) => (c.reseau.includes('/') ? dans(d.client, c.reseau) : c.reseau === d.client));
+  if (d.iif !== 'lo' && !traverse(o.ruleset ?? nft(j), 'input', 'filter', pkg).pass) return nothing();
+  const client = conf.clients.find((c) => (c.network.includes('/') ? inside(d.client, c.network) : c.network === d.client));
   if (!client) {
-    journal.push(`Ignoring request to auth address * port 1812 bound to server default from unknown client ${d.client} port 41234 proto udp`);
-    return rien();
+    log.push(`Ignoring request to auth address * port 1812 bound to server default from unknown client ${d.client} port 41234 proto udp`);
+    return nothing();
   }
   if (client.secret !== d.secret) {
-    journal.push(
+    log.push(
       `Dropping packet without response because of error: Received packet from ${d.client} with invalid Message-Authenticator!  (Shared secret is incorrect.)`,
     );
-    return rien();
+    return nothing();
   }
-  const refus = (raison: string): Reponse => {
-    journal.push(`Auth: (0) Login incorrect (${raison}): [${d.utilisateur}] (from client ${client.nom} port 0)`);
-    return { quoi: 'reject', attributs: [], journal };
+  const refusal = (reason: string): Response => {
+    log.push(`Auth: (0) Login incorrect (${reason}): [${d.user}] (from client ${client.name} port 0)`);
+    return { what: 'reject', attributes: [], log };
   };
   // Le module ldap : se présenter, trouver la personne, lire son userPassword.
   const l = conf.ldap;
-  const a = annuaire(j);
-  let entree: Entree | undefined;
+  const a = directory(j);
+  let input: Input | undefined;
   if (l) {
-    if (!a || systemd(j)?.services.slapd?.etat !== 'active') {
-      journal.push(`rlm_ldap (ldap): Bind with ${l.identite ?? '(anonymous)'} to ldap://${l.serveur}:389 failed: Can't contact LDAP server`);
-      return refus('ldap: module failed');
+    if (!a || systemd(j)?.services.slapd?.state !== 'active') {
+      log.push(`rlm_ldap (ldap): Bind with ${l.identity ?? '(anonymous)'} to ldap://${l.server}:389 failed: Can't contact LDAP server`);
+      return refusal('ldap: module failed');
     }
     if (
-      l.identite &&
-      !(normaliser(l.identite) === normaliser(a.admin)
-        ? verifier(String(j.etat.ldapAdmin ?? ''), l.motDePasse ?? '')
-        : (trouverLdap(a, l.identite)?.attrs.userpassword ?? []).some((v) => verifier(v, l.motDePasse ?? '')))
+      l.identity &&
+      !(normalise(l.identity) === normalise(a.admin)
+        ? check(String(j.state.ldapAdmin ?? ''), l.password ?? '')
+        : (findLdap(a, l.identity)?.attrs.userpassword ?? []).some((v) => check(v, l.password ?? '')))
     ) {
-      journal.push(`rlm_ldap (ldap): Bind with ${l.identite} to ldap://${l.serveur}:389 failed: Invalid credentials`);
-      return refus('ldap: module failed');
+      log.push(`rlm_ldap (ldap): Bind with ${l.identity} to ldap://${l.server}:389 failed: Invalid credentials`);
+      return refusal('ldap: module failed');
     }
-    entree = a.entrees.find(
-      (e) => (e.attrs.uid ?? []).includes(d.utilisateur) && normaliser(e.dn).endsWith(normaliser(l.userBase)) && l.userBase !== '',
+    input = a.inputs.find(
+      (e) => (e.attrs.uid ?? []).includes(d.user) && normalise(e.dn).endsWith(normalise(l.userBase)) && l.userBase !== '',
     );
-    if (!entree) {
-      journal.push(`(0) ldap: User object not found`);
-      return refus('No Auth-Type found: rejecting the user via Post-Auth-Type = Reject');
+    if (!input) {
+      log.push(`(0) ldap: User object not found`);
+      return refusal('No Auth-Type found: rejecting the user via Post-Auth-Type = Reject');
     }
   }
   // Le mot de passe « connu » : seulement si l'identité du module a le droit de lire userPassword.
-  const admin = !!l?.identite && normaliser(l.identite) === normaliser(a?.admin ?? '');
-  const connus = entree && admin ? (entree.attrs.userpassword ?? []) : [];
-  if (!connus.length) {
-    journal.push('(0) pap: WARNING: No "known good" password found for the user.  Not setting Auth-Type');
-    return refus('No Auth-Type found: rejecting the user via Post-Auth-Type = Reject');
+  const admin = !!l?.identity && normalise(l.identity) === normalise(a?.admin ?? '');
+  const known = input && admin ? (input.attrs.userpassword ?? []) : [];
+  if (!known.length) {
+    log.push('(0) pap: WARNING: No "known good" password found for the user.  Not setting Auth-Type');
+    return refusal('No Auth-Type found: rejecting the user via Post-Auth-Type = Reject');
   }
-  if (!connus.some((v) => verifier(v, d.motDePasse))) return refus('pap: Password comparison failed');
+  if (!known.some((v) => check(v, d.password))) return refusal('pap: Password comparison failed');
   // Le fichier users : la première entrée qui correspond (et les suivantes si Fall-Through).
-  const attributs: Reponse['attributs'] = [];
+  const attributes: Response['attributes'] = [];
   for (const u of conf.users) {
-    if (u.nom !== 'DEFAULT' && u.nom !== d.utilisateur) continue;
-    const ok = u.verifications.every((v) => {
+    if (u.name !== 'DEFAULT' && u.name !== d.user) continue;
+    const ok = u.checks.every((v) => {
       if (v.attr.toLowerCase() === 'ldap-group') {
-        const membre = !!l && !!a && !!entree && groupeDe(a, l, d.utilisateur, entree, v.valeur);
-        return v.op === '!=' ? !membre : membre;
+        const member = !!l && !!a && !!input && groupFor(a, l, d.user, input, v.value);
+        return v.op === '!=' ? !member : member;
       }
       if (v.attr === 'Auth-Type') return true;
       return false;
     });
     if (!ok) continue;
-    if (u.verifications.some((v) => v.attr === 'Auth-Type' && v.valeur === 'Reject')) return refus('Auth-Type = Reject');
-    for (const r of u.reponses) {
-      const i = attributs.findIndex((x) => x.attr === r.attr);
-      if (i >= 0 && r.op !== '+=') attributs[i] = { attr: r.attr, valeur: r.valeur };
-      else attributs.push({ attr: r.attr, valeur: r.valeur });
+    if (u.checks.some((v) => v.attr === 'Auth-Type' && v.value === 'Reject')) return refusal('Auth-Type = Reject');
+    for (const r of u.responses) {
+      const i = attributes.findIndex((x) => x.attr === r.attr);
+      if (i >= 0 && r.op !== '+=') attributes[i] = { attr: r.attr, value: r.value };
+      else attributes.push({ attr: r.attr, value: r.value });
     }
-    if (!u.suite) break;
+    if (!u.next) break;
   }
-  journal.push(`Auth: (0) Login OK: [${d.utilisateur}] (from client ${client.nom} port 0)`);
-  return { quoi: 'accept', attributs, journal };
+  log.push(`Auth: (0) Login OK: [${d.user}] (from client ${client.name} port 0)`);
+  return { what: 'accept', attributes, log };
 }
 
 /** Le VLAN qu'une réponse donne (Tunnel-Private-Group-Id), s'il est complet (avec Tunnel-Type et Tunnel-Medium-Type). */
-export function vlanDe(r: Reponse): number | null {
-  const v = (n: string) => r.attributs.find((x) => x.attr.replace(/:\d+$/, '') === n)?.valeur;
-  if (r.quoi !== 'accept' || v('Tunnel-Type') !== 'VLAN' || !['IEEE-802', '6'].includes(v('Tunnel-Medium-Type') ?? '')) return null;
+export function vlanFor(r: Response): number | null {
+  const v = (n: string) => r.attributes.find((x) => x.attr.replace(/:\d+$/, '') === n)?.value;
+  if (r.what !== 'accept' || v('Tunnel-Type') !== 'VLAN' || !['IEEE-802', '6'].includes(v('Tunnel-Medium-Type') ?? '')) return null;
   const id = Number(v('Tunnel-Private-Group-Id'));
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
 /** Au démarrage de freeradius : la configuration est lue (et gardée) ; les demandes des bornes sont journalisées. */
-export function chargerRadius(j: Jeu, demandes: Demande[] = []) {
-  const { conf } = lireRadius(j);
-  j.etat.radius = { conf };
+export function loadRadius(j: Game, requests: Request[] = []) {
+  const { conf } = readRadius(j);
+  j.state.radius = { conf };
   const sd = systemd(j);
   if (!sd) return;
-  journaliser(sd, 'freeradius.service', 'freeradius', 1630, 'Ready to process requests');
-  for (const d of demandes) for (const l of traiter(j, d).journal) journaliser(sd, 'freeradius.service', 'freeradius', 1630, l);
+  writeLog(sd, 'freeradius.service', 'freeradius', 1630, 'Ready to process requests');
+  for (const d of requests) for (const l of handle(j, d).log) writeLog(sd, 'freeradius.service', 'freeradius', 1630, l);
 }

@@ -2,30 +2,30 @@
 // Ici, l'arborescence ressemble enfin à un vrai Linux : /home, /etc,
 // /var/log, /root. Fin de l'histoire de l'Effaceur.
 
-import { chemin, compte, d, f, nom, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
+import { path, account, d, f, name, type Chapter } from '../world';
+import type { Game } from '../shell';
 
 const M = '/home/vous';
-const SOUVENIRS = `${M}/souvenirs`;
+const MEMORIES = `${M}/souvenirs`;
 const CONF = '/etc/effaceur.conf';
 const TOTAL = 8;
 // L'utilisateur système de l'Effaceur, sous son nom dans la langue (effaceur, eraser…).
-const effaceur = (j: Jeu) => compte(j.t, 'effaceur');
+const eraser = (j: Game) => account(j.t, 'effaceur');
 
-const souvenir = (texte: string) => f(texte);
+const memory = (text: string) => f(text);
 // La ligne corrigée de la configuration, dans la langue : « cible = /Royaume/Corbeille ».
-const cibleCorrigee = (j: Jeu) => `${nom(j.t, 'cible')} = ${chemin(j.t, '/Royaume/Corbeille')}`;
+const fixedTarget = (j: Game) => `${name(j.t, 'cible')} = ${path(j.t, '/Royaume/Corbeille')}`;
 
-export const racine: Chapitre = {
+export const root: Chapter = {
   id: 'racine',
-  numero: 3,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv', 'grep', 'rm', 'touch', 'cp', 'mkdir', 'chmod', 'whoami', 'sudo'],
-  maison: M,
-  noms: true,
-  accueil: 'arrivee.txt',
+  number: 3,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv', 'grep', 'rm', 'touch', 'cp', 'mkdir', 'chmod', 'whoami', 'sudo'],
+  home: M,
+  names: true,
+  welcome: 'arrivee.txt',
   final: 'corrige',
-  motDePasse: 'tournesol',
-  creerMonde: (t) =>
+  password: 'tournesol',
+  createWorld: (t) =>
     d(
       {
         home: d(
@@ -33,24 +33,24 @@ export const racine: Chapitre = {
             vous: d({
               'arrivee.txt': f(
                 t('racine-arrivee'),
-                { lu: (j) => void j.drapeaux.add('arrivee') },
+                { read: (j) => void j.flags.add('arrivee') },
               ),
               'manuel_admin.txt': f(t('racine-manuel-admin')),
               'journal.txt': f(
                 t('racine-journal'),
-                { mode: 'rw-------', lignes: true },
+                { mode: 'rw-------', lines: true },
               ),
-              'effaceur.conf.corrige': f(t('racine-effaceur-conf-corrige'), { lignes: true }),
+              'effaceur.conf.corrige': f(t('racine-effaceur-conf-corrige'), { lines: true }),
               souvenirs: d(
                 {
-                  ecole: souvenir(t('racine-souvenir-ecole')),
-                  premier_programme: souvenir(t('racine-souvenir-premier-programme')),
-                  jardin: souvenir(t('racine-souvenir-jardin')),
-                  chanson: souvenir(t('racine-souvenir-chanson')),
-                  voyage: souvenir(t('racine-souvenir-voyage')),
-                  amie: souvenir(t('racine-souvenir-amie')),
-                  bibliotheque: souvenir(t('racine-souvenir-bibliotheque')),
-                  premier_serveur: souvenir(t('racine-souvenir-premier-serveur')),
+                  ecole: memory(t('racine-souvenir-ecole')),
+                  premier_programme: memory(t('racine-souvenir-premier-programme')),
+                  jardin: memory(t('racine-souvenir-jardin')),
+                  chanson: memory(t('racine-souvenir-chanson')),
+                  voyage: memory(t('racine-souvenir-voyage')),
+                  amie: memory(t('racine-souvenir-amie')),
+                  bibliotheque: memory(t('racine-souvenir-bibliotheque')),
+                  premier_serveur: memory(t('racine-souvenir-premier-serveur')),
                 },
                 undefined,
                 { mode: 'rwxrwxrwx' },
@@ -60,32 +60,32 @@ export const racine: Chapitre = {
               {
                 'journal_intime.txt': f(
                   (j) =>
-                    j.qui === 'root'
+                    j.who === 'root'
                       ? j.t('racine-journal-intime-root')
                       : '',
-                  { proprio: 'nour', mode: 'rw-------' },
+                  { owner: 'nour', mode: 'rw-------' },
                 ),
               },
               undefined,
-              { proprio: 'nour', mode: 'rwx------' },
+              { owner: 'nour', mode: 'rwx------' },
             ),
           },
           undefined,
-          { proprio: 'root' },
+          { owner: 'root' },
         ),
         etc: d(
           {
             'effaceur.conf': f(
               t('racine-effaceur-conf'),
-              { proprio: 'root', lignes: true },
+              { owner: 'root', lines: true },
             ),
             sudoers: f(
               t('racine-sudoers'),
-              { proprio: 'root', mode: 'r--r-----', lignes: true },
+              { owner: 'root', mode: 'r--r-----', lines: true },
             ),
           },
           undefined,
-          { proprio: 'root' },
+          { owner: 'root' },
         ),
         var: d(
           {
@@ -93,69 +93,69 @@ export const racine: Chapitre = {
               {
                 'effaceur.log': f(
                   t('racine-effaceur-log'),
-                  { proprio: 'root', lignes: true },
+                  { owner: 'root', lines: true },
                 ),
               },
               undefined,
-              { proprio: 'root' },
+              { owner: 'root' },
             ),
           },
           undefined,
-          { proprio: 'root' },
+          { owner: 'root' },
         ),
         root: d(
           {
             'notes.txt': f(
               t('racine-notes-root'),
-              { proprio: 'root', mode: 'rw-------' },
+              { owner: 'root', mode: 'rw-------' },
             ),
           },
           undefined,
-          { proprio: 'root', mode: 'rwx------' },
+          { owner: 'root', mode: 'rwx------' },
         ),
       },
       undefined,
-      { proprio: 'root' },
+      { owner: 'root' },
     ),
   // L'Effaceur avance : à chaque commande, il efface un souvenir, tant que
   // les autres utilisateurs ont le droit d'écrire dans le lieu.
-  apresCommande: (j) => {
-    if (!j.drapeaux.has('alerte') || j.drapeaux.has('corrige') || !j.existe(chemin(j.t, CONF))) return;
-    const lieu = j.trouver(chemin(j.t, SOUVENIRS));
-    if (lieu?.type !== 'dossier' || !j.peut(lieu, 'w', effaceur(j)) || !j.peut(lieu, 'x', effaceur(j))) return;
-    const nom = Object.keys(lieu.enfants).sort()[0];
-    if (!nom) return;
-    delete lieu.enfants[nom];
-    return j.t('racine-souvenir-efface', { souvenir: nom });
+  afterCommand: (j) => {
+    if (!j.flags.has('alerte') || j.flags.has('corrige') || !j.exists(path(j.t, CONF))) return;
+    const place = j.find(path(j.t, MEMORIES));
+    if (place?.type !== 'dossier' || !j.can(place, 'w', eraser(j)) || !j.can(place, 'x', eraser(j))) return;
+    const name = Object.keys(place.children).sort()[0];
+    if (!name) return;
+    delete place.children[name];
+    return j.t('racine-souvenir-efface', { souvenir: name });
   },
-  evenements: [
+  events: [
     {
       id: 'alerte',
-      condition: (j) => j.drapeaux.has('arrivee'),
+      condition: (j) => j.flags.has('arrivee'),
       message: (j) => j.t('racine-evenement-alerte'),
     },
     {
       id: 'protege',
       condition: (j) => {
-        const lieu = j.trouver(chemin(j.t, SOUVENIRS));
-        return j.drapeaux.has('alerte') && !j.drapeaux.has('corrige') && lieu?.type === 'dossier' && !(j.peut(lieu, 'w', effaceur(j)) && j.peut(lieu, 'x', effaceur(j)));
+        const place = j.find(path(j.t, MEMORIES));
+        return j.flags.has('alerte') && !j.flags.has('corrige') && place?.type === 'dossier' && !(j.can(place, 'w', eraser(j)) && j.can(place, 'x', eraser(j)));
       },
-      message: (j) => j.t('racine-evenement-protege', { sauves: j.compter(chemin(j.t, SOUVENIRS), ''), total: TOTAL }),
+      message: (j) => j.t('racine-evenement-protege', { sauves: j.count(path(j.t, MEMORIES), ''), total: TOTAL }),
     },
     {
       id: 'conf-effacee',
-      condition: (j) => !j.existe(chemin(j.t, CONF)),
+      condition: (j) => !j.exists(path(j.t, CONF)),
       message: (j) => j.t('racine-evenement-conf-effacee'),
     },
     {
       id: 'corrige',
       condition: (j) => {
-        const conf = j.trouver(chemin(j.t, CONF));
-        return conf?.type === 'fichier' && typeof conf.contenu === 'string' && conf.contenu.includes(cibleCorrigee(j));
+        const conf = j.find(path(j.t, CONF));
+        return conf?.type === 'fichier' && typeof conf.content === 'string' && conf.content.includes(fixedTarget(j));
       },
       message: (j) => {
-        const sauves = j.compter(chemin(j.t, SOUVENIRS), '');
-        return j.t('racine-evenement-corrige', { sauves, total: TOTAL, perte: sauves < TOTAL ? 'oui' : 'non' });
+        const saved = j.count(path(j.t, MEMORIES), '');
+        return j.t('racine-evenement-corrige', { sauves: saved, total: TOTAL, perte: saved < TOTAL ? 'oui' : 'non' });
       },
     },
   ],

@@ -11,20 +11,20 @@
 // Écarts : pas de getline, de redirection dans print, de fonctions définies
 // par l'utilisateur, ni d'opérateur ternaire.
 
-import type { Commande } from './index';
+import type { Command } from './index';
 
-type Valeur = string | number;
+type Value = string | number;
 
-class ErreurAwk extends Error {}
+class AwkError extends Error {}
 
 // ——— Découpage en jetons ———
 
-interface Jeton {
+interface Token {
   type: 'nombre' | 'chaine' | 'regex' | 'nom' | 'mot' | 'op' | 'fin';
-  valeur: string;
+  value: string;
 }
 
-const MOTS = ['BEGIN', 'END', 'print', 'printf', 'if', 'else', 'for', 'in', 'while', 'next', 'delete', 'getline'];
+const WORDS = ['BEGIN', 'END', 'print', 'printf', 'if', 'else', 'for', 'in', 'while', 'next', 'delete', 'getline'];
 const OPS = [
   '&&',
   '||',
@@ -62,15 +62,15 @@ const OPS = [
   '\n',
 ];
 
-function jetons(source: string): Jeton[] {
-  const liste: Jeton[] = [];
+function tokens(source: string): Token[] {
+  const listing: Token[] = [];
   let i = 0;
   // Un / commence une regex là où on attend une valeur.
-  const attendValeur = () => {
-    const d = liste.at(-1);
+  const waitsValue = () => {
+    const d = listing.at(-1);
     if (!d) return true;
     if (d.type === 'nombre' || d.type === 'chaine' || d.type === 'regex' || d.type === 'nom') return false;
-    return !(d.type === 'op' && [')', ']', '++', '--', '$'].includes(d.valeur));
+    return !(d.type === 'op' && [')', ']', '++', '--', '$'].includes(d.value));
   };
   while (i < source.length) {
     const c = source[i];
@@ -88,7 +88,7 @@ function jetons(source: string): Jeton[] {
     }
     if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(source[i + 1] ?? ''))) {
       const m = /^[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?/.exec(source.slice(i))!;
-      liste.push({ type: 'nombre', valeur: m[0] });
+      listing.push({ type: 'nombre', value: m[0] });
       i += m[0].length;
       continue;
     }
@@ -102,12 +102,12 @@ function jetons(source: string): Jeton[] {
         } else s += source[i];
         i++;
       }
-      if (source[i] !== '"') throw new ErreurAwk('runaway string constant "' + s.slice(0, 10) + ' ...');
+      if (source[i] !== '"') throw new AwkError('runaway string constant "' + s.slice(0, 10) + ' ...');
       i++;
-      liste.push({ type: 'chaine', valeur: s });
+      listing.push({ type: 'chaine', value: s });
       continue;
     }
-    if (c === '/' && attendValeur()) {
+    if (c === '/' && waitsValue()) {
       let r = '';
       i++;
       while (i < source.length && source[i] !== '/') {
@@ -115,127 +115,127 @@ function jetons(source: string): Jeton[] {
         else r += source[i];
         i++;
       }
-      if (source[i] !== '/') throw new ErreurAwk('runaway regular expression /' + r.slice(0, 10) + ' ...');
+      if (source[i] !== '/') throw new AwkError('runaway regular expression /' + r.slice(0, 10) + ' ...');
       i++;
-      liste.push({ type: 'regex', valeur: r });
+      listing.push({ type: 'regex', value: r });
       continue;
     }
     if (/[A-Za-z_]/.test(c)) {
       const m = /^[A-Za-z_][A-Za-z0-9_]*/.exec(source.slice(i))!;
-      liste.push({ type: MOTS.includes(m[0]) ? 'mot' : 'nom', valeur: m[0] });
+      listing.push({ type: WORDS.includes(m[0]) ? 'mot' : 'nom', value: m[0] });
       i += m[0].length;
       continue;
     }
     const op = OPS.find((o) => source.startsWith(o, i));
-    if (!op) throw new ErreurAwk(`syntax error at or near ${c}`);
-    liste.push({ type: 'op', valeur: op });
+    if (!op) throw new AwkError(`syntax error at or near ${c}`);
+    listing.push({ type: 'op', value: op });
     i += op.length;
   }
-  liste.push({ type: 'fin', valeur: 'end of file' });
-  return liste;
+  listing.push({ type: 'fin', value: 'end of file' });
+  return listing;
 }
 
 // ——— Arbre ———
 
-type Noeud =
+type Node =
   | { t: 'num'; v: number }
   | { t: 'str'; v: string }
   | { t: 'regex'; v: string }
-  | { t: 'var'; nom: string }
-  | { t: 'champ'; e: Noeud }
-  | { t: 'elem'; nom: string; cle: Noeud[] }
-  | { t: 'bin'; op: string; a: Noeud; b: Noeud }
-  | { t: 'un'; op: string; e: Noeud }
-  | { t: 'affect'; op: string; cible: Noeud; e: Noeud }
-  | { t: 'incr'; op: string; pre: boolean; cible: Noeud }
-  | { t: 'dans'; cle: Noeud[]; tableau: string }
-  | { t: 'appel'; nom: string; args: Noeud[] }
-  | { t: 'groupe'; e: Noeud };
+  | { t: 'var'; name: string }
+  | { t: 'champ'; e: Node }
+  | { t: 'elem'; name: string; key: Node[] }
+  | { t: 'bin'; op: string; a: Node; b: Node }
+  | { t: 'un'; op: string; e: Node }
+  | { t: 'affect'; op: string; target: Node; e: Node }
+  | { t: 'incr'; op: string; pre: boolean; target: Node }
+  | { t: 'dans'; key: Node[]; grid: string }
+  | { t: 'appel'; name: string; args: Node[] }
+  | { t: 'groupe'; e: Node };
 
 type Instr =
-  | { t: 'expr'; e: Noeud }
-  | { t: 'print'; args: Noeud[] }
-  | { t: 'printf'; args: Noeud[] }
-  | { t: 'si'; cond: Noeud; alors: Instr; sinon?: Instr }
-  | { t: 'pourDans'; variable: string; tableau: string; corps: Instr }
-  | { t: 'pour'; init?: Instr; cond?: Noeud; pas?: Instr; corps: Instr }
-  | { t: 'tantque'; cond: Noeud; corps: Instr }
-  | { t: 'bloc'; corps: Instr[] }
+  | { t: 'expr'; e: Node }
+  | { t: 'print'; args: Node[] }
+  | { t: 'printf'; args: Node[] }
+  | { t: 'si'; cond: Node; then: Instr; otherwise?: Instr }
+  | { t: 'pourDans'; variable: string; grid: string; body: Instr }
+  | { t: 'pour'; init?: Instr; cond?: Node; not?: Instr; body: Instr }
+  | { t: 'tantque'; cond: Node; body: Instr }
+  | { t: 'bloc'; body: Instr[] }
   | { t: 'next' }
-  | { t: 'delete'; nom: string; cle?: Noeud[] };
+  | { t: 'delete'; name: string; key?: Node[] };
 
-interface Regle {
-  quand: 'BEGIN' | 'END' | 'ligne';
-  motif?: Noeud;
+interface Rule {
+  when: 'BEGIN' | 'END' | 'ligne';
+  pattern?: Node;
   action?: Instr;
 }
 
-const FONCTIONS = ['length', 'substr', 'index', 'split', 'sub', 'gsub', 'tolower', 'toupper', 'int', 'sprintf', 'match'];
+const FUNCTIONS = ['length', 'substr', 'index', 'split', 'sub', 'gsub', 'tolower', 'toupper', 'int', 'sprintf', 'match'];
 
-function analyser(source: string): Regle[] {
-  const j = jetons(source);
+function parse(source: string): Rule[] {
+  const j = tokens(source);
   let p = 0;
-  const voir = (v?: string) => (v === undefined ? j[p] : j[p].valeur === v && j[p].type !== 'chaine' ? j[p] : null);
-  const erreur = (): never => {
-    throw new ErreurAwk(`syntax error at or near ${j[p].type === 'fin' ? 'end of file' : j[p].valeur === '\n' ? 'end of line' : j[p].valeur}`);
+  const see = (v?: string) => (v === undefined ? j[p] : j[p].value === v && j[p].type !== 'chaine' ? j[p] : null);
+  const error = (): never => {
+    throw new AwkError(`syntax error at or near ${j[p].type === 'fin' ? 'end of file' : j[p].value === '\n' ? 'end of line' : j[p].value}`);
   };
-  const attendre = (v: string) => (voir(v) ? j[p++] : erreur());
-  const sauterLignes = () => {
-    while (voir('\n') || voir(';')) p++;
+  const wait = (v: string) => (see(v) ? j[p++] : error());
+  const skipLines = () => {
+    while (see('\n') || see(';')) p++;
   };
-  const sauterNl = () => {
-    while (voir('\n')) p++;
+  const skipNl = () => {
+    while (see('\n')) p++;
   };
 
   // Expressions, de la priorité la plus basse à la plus haute.
-  const expression = (sansSup = false): Noeud => affectation(sansSup);
-  const affectation = (sansSup: boolean): Noeud => {
-    const gauche = ou(sansSup);
-    const op = ['=', '+=', '-=', '*=', '/=', '%='].find((o) => voir(o));
+  const expression = (withoutSup = false): Node => affectation(withoutSup);
+  const affectation = (withoutSup: boolean): Node => {
+    const gauche = or(withoutSup);
+    const op = ['=', '+=', '-=', '*=', '/=', '%='].find((o) => see(o));
     if (op && (gauche.t === 'var' || gauche.t === 'champ' || gauche.t === 'elem')) {
       p++;
-      return { t: 'affect', op, cible: gauche, e: affectation(sansSup) };
+      return { t: 'affect', op, target: gauche, e: affectation(withoutSup) };
     }
     return gauche;
   };
-  const ou = (s: boolean): Noeud => {
-    let a = et(s);
-    while (voir('||')) {
+  const or = (s: boolean): Node => {
+    let a = and(s);
+    while (see('||')) {
       p++;
-      sauterNl();
-      a = { t: 'bin', op: '||', a, b: et(s) };
+      skipNl();
+      a = { t: 'bin', op: '||', a, b: and(s) };
     }
     return a;
   };
-  const et = (s: boolean): Noeud => {
-    let a = dans(s);
-    while (voir('&&')) {
+  const and = (s: boolean): Node => {
+    let a = inside(s);
+    while (see('&&')) {
       p++;
-      sauterNl();
-      a = { t: 'bin', op: '&&', a, b: dans(s) };
+      skipNl();
+      a = { t: 'bin', op: '&&', a, b: inside(s) };
     }
     return a;
   };
-  const dans = (s: boolean): Noeud => {
+  const inside = (s: boolean): Node => {
     const a = correspond(s);
-    if (voir('in') && j[p + 1].type === 'nom') {
+    if (see('in') && j[p + 1].type === 'nom') {
       p++;
-      return { t: 'dans', cle: [a], tableau: j[p++].valeur };
+      return { t: 'dans', key: [a], grid: j[p++].value };
     }
     return a;
   };
-  const correspond = (s: boolean): Noeud => {
-    let a = comparaison(s);
-    while (voir('~') || voir('!~')) {
-      const op = j[p++].valeur;
-      a = { t: 'bin', op, a, b: comparaison(s) };
+  const correspond = (s: boolean): Node => {
+    let a = comparison(s);
+    while (see('~') || see('!~')) {
+      const op = j[p++].value;
+      a = { t: 'bin', op, a, b: comparison(s) };
     }
     return a;
   };
-  const comparaison = (s: boolean): Noeud => {
+  const comparison = (s: boolean): Node => {
     const a = concat();
     // Dans print, > serait une redirection (non simulée) : pas une comparaison.
-    const op = ['==', '!=', '<=', '>=', '<', '>'].find((o) => voir(o) && !(s && o === '>'));
+    const op = ['==', '!=', '<=', '>=', '<', '>'].find((o) => see(o) && !(s && o === '>'));
     if (op) {
       p++;
       return { t: 'bin', op, a, b: concat() };
@@ -243,118 +243,118 @@ function analyser(source: string): Regle[] {
     return a;
   };
   // Deux valeurs côte à côte : concaténation.
-  const debutValeur = () => {
+  const valueStart = () => {
     const t = j[p];
     if (t.type === 'nombre' || t.type === 'chaine' || t.type === 'regex' || t.type === 'nom') return true;
     // (+ et - entre deux valeurs sont des opérations, pas une concaténation.)
-    return t.type === 'op' && ['$', '(', '++', '--'].includes(t.valeur);
+    return t.type === 'op' && ['$', '(', '++', '--'].includes(t.value);
   };
-  const concat = (): Noeud => {
-    let a = additif();
-    while (debutValeur() && !voir('in')) a = { t: 'bin', op: 'concat', a, b: additif() };
+  const concat = (): Node => {
+    let a = additive();
+    while (valueStart() && !see('in')) a = { t: 'bin', op: 'concat', a, b: additive() };
     return a;
   };
-  const additif = (): Noeud => {
-    let a = multiplicatif();
-    while (voir('+') || voir('-')) {
-      const op = j[p++].valeur;
-      a = { t: 'bin', op, a, b: multiplicatif() };
+  const additive = (): Node => {
+    let a = multiplicative();
+    while (see('+') || see('-')) {
+      const op = j[p++].value;
+      a = { t: 'bin', op, a, b: multiplicative() };
     }
     return a;
   };
-  const multiplicatif = (): Noeud => {
-    let a = unaire();
-    while (voir('*') || voir('/') || voir('%')) {
-      const op = j[p++].valeur;
-      a = { t: 'bin', op, a, b: unaire() };
+  const multiplicative = (): Node => {
+    let a = unary();
+    while (see('*') || see('/') || see('%')) {
+      const op = j[p++].value;
+      a = { t: 'bin', op, a, b: unary() };
     }
     return a;
   };
-  const unaire = (): Noeud => {
-    if (voir('!')) {
+  const unary = (): Node => {
+    if (see('!')) {
       p++;
-      return { t: 'un', op: '!', e: unaire() };
+      return { t: 'un', op: '!', e: unary() };
     }
-    if (voir('-') || voir('+')) {
-      const op = j[p++].valeur;
-      return { t: 'un', op, e: unaire() };
+    if (see('-') || see('+')) {
+      const op = j[p++].value;
+      return { t: 'un', op, e: unary() };
     }
-    return incrementation();
+    return increment();
   };
-  const incrementation = (): Noeud => {
-    if (voir('++') || voir('--')) {
-      const op = j[p++].valeur;
-      return { t: 'incr', op, pre: true, cible: primaire() };
+  const increment = (): Node => {
+    if (see('++') || see('--')) {
+      const op = j[p++].value;
+      return { t: 'incr', op, pre: true, target: primary() };
     }
-    const e = primaire();
-    if ((voir('++') || voir('--')) && (e.t === 'var' || e.t === 'champ' || e.t === 'elem'))
-      return { t: 'incr', op: j[p++].valeur, pre: false, cible: e };
+    const e = primary();
+    if ((see('++') || see('--')) && (e.t === 'var' || e.t === 'champ' || e.t === 'elem'))
+      return { t: 'incr', op: j[p++].value, pre: false, target: e };
     return e;
   };
-  const primaire = (): Noeud => {
+  const primary = (): Node => {
     const t = j[p];
-    if (t.type === 'nombre') return (p++, { t: 'num', v: Number(t.valeur) });
-    if (t.type === 'chaine') return (p++, { t: 'str', v: t.valeur });
-    if (t.type === 'regex') return (p++, { t: 'regex', v: t.valeur });
-    if (voir('$')) {
+    if (t.type === 'nombre') return (p++, { t: 'num', v: Number(t.value) });
+    if (t.type === 'chaine') return (p++, { t: 'str', v: t.value });
+    if (t.type === 'regex') return (p++, { t: 'regex', v: t.value });
+    if (see('$')) {
       p++;
-      return { t: 'champ', e: incrementationSansPostfixe() };
+      return { t: 'champ', e: incrementWithoutPostfix() };
     }
-    if (voir('(')) {
+    if (see('(')) {
       p++;
       const e = expression();
       // (a, b) in tableau
-      attendre(')');
+      wait(')');
       return { t: 'groupe', e };
     }
     if (t.type === 'nom') {
       p++;
-      if (FONCTIONS.includes(t.valeur)) {
-        const args: Noeud[] = [];
-        if (voir('(')) {
+      if (FUNCTIONS.includes(t.value)) {
+        const args: Node[] = [];
+        if (see('(')) {
           p++;
-          if (!voir(')')) {
+          if (!see(')')) {
             args.push(expression());
-            while (voir(',')) {
+            while (see(',')) {
               p++;
               args.push(expression());
             }
           }
-          attendre(')');
+          wait(')');
         }
-        return { t: 'appel', nom: t.valeur, args };
+        return { t: 'appel', name: t.value, args };
       }
-      if (voir('[')) {
+      if (see('[')) {
         p++;
-        const cle = [expression()];
-        while (voir(',')) {
+        const key = [expression()];
+        while (see(',')) {
           p++;
-          cle.push(expression());
+          key.push(expression());
         }
-        attendre(']');
-        return { t: 'elem', nom: t.valeur, cle };
+        wait(']');
+        return { t: 'elem', name: t.value, key };
       }
-      return { t: 'var', nom: t.valeur };
+      return { t: 'var', name: t.value };
     }
-    return erreur();
+    return error();
   };
   // Après $ : un nombre, une variable, ou (expression).
-  const incrementationSansPostfixe = (): Noeud => {
-    if (voir('-')) {
+  const incrementWithoutPostfix = (): Node => {
+    if (see('-')) {
       p++;
-      return { t: 'un', op: '-', e: primaire() };
+      return { t: 'un', op: '-', e: primary() };
     }
-    return primaire();
+    return primary();
   };
 
-  const listeExpressions = (): Noeud[] => {
-    const args: Noeud[] = [];
-    if (voir(';') || voir('\n') || voir('}') || j[p].type === 'fin') return args;
+  const expressionsList = (): Node[] => {
+    const args: Node[] = [];
+    if (see(';') || see('\n') || see('}') || j[p].type === 'fin') return args;
     // print (a, b) : les parenthèses entourent la liste.
     args.push(expression(true));
-    while (voir(',')) {
+    while (see(',')) {
       p++;
-      sauterNl();
+      skipNl();
       args.push(expression(true));
     }
     if (args.length === 1 && args[0].t === 'groupe') return [args[0].e];
@@ -362,419 +362,419 @@ function analyser(source: string): Regle[] {
   };
 
   const instruction = (): Instr => {
-    sauterNl();
-    if (voir('{')) return bloc();
-    if (voir('if')) {
+    skipNl();
+    if (see('{')) return block();
+    if (see('if')) {
       p++;
-      attendre('(');
+      wait('(');
       const cond = expression();
-      attendre(')');
-      const alors = instruction();
-      const avant = p;
-      sauterLignes();
-      if (voir('else')) {
+      wait(')');
+      const then = instruction();
+      const before = p;
+      skipLines();
+      if (see('else')) {
         p++;
-        return { t: 'si', cond, alors, sinon: instruction() };
+        return { t: 'si', cond, then, otherwise: instruction() };
       }
-      p = avant;
-      return { t: 'si', cond, alors };
+      p = before;
+      return { t: 'si', cond, then };
     }
-    if (voir('while')) {
+    if (see('while')) {
       p++;
-      attendre('(');
+      wait('(');
       const cond = expression();
-      attendre(')');
-      return { t: 'tantque', cond, corps: instruction() };
+      wait(')');
+      return { t: 'tantque', cond, body: instruction() };
     }
-    if (voir('for')) {
+    if (see('for')) {
       p++;
-      attendre('(');
-      if (j[p].type === 'nom' && j[p + 1].valeur === 'in' && j[p + 2].type === 'nom' && j[p + 3].valeur === ')') {
-        const variable = j[p].valeur;
-        const tableau = j[p + 2].valeur;
+      wait('(');
+      if (j[p].type === 'nom' && j[p + 1].value === 'in' && j[p + 2].type === 'nom' && j[p + 3].value === ')') {
+        const variable = j[p].value;
+        const grid = j[p + 2].value;
         p += 4;
-        return { t: 'pourDans', variable, tableau, corps: instruction() };
+        return { t: 'pourDans', variable, grid, body: instruction() };
       }
-      const init = voir(';') ? undefined : ({ t: 'expr', e: expression() } as Instr);
-      attendre(';');
-      const cond = voir(';') ? undefined : expression();
-      attendre(';');
-      const pas = voir(')') ? undefined : ({ t: 'expr', e: expression() } as Instr);
-      attendre(')');
-      return { t: 'pour', init, cond, pas, corps: instruction() };
+      const init = see(';') ? undefined : ({ t: 'expr', e: expression() } as Instr);
+      wait(';');
+      const cond = see(';') ? undefined : expression();
+      wait(';');
+      const not = see(')') ? undefined : ({ t: 'expr', e: expression() } as Instr);
+      wait(')');
+      return { t: 'pour', init, cond, not, body: instruction() };
     }
     let i: Instr;
-    if (voir('print')) {
+    if (see('print')) {
       p++;
-      i = { t: 'print', args: listeExpressions() };
-    } else if (voir('printf')) {
+      i = { t: 'print', args: expressionsList() };
+    } else if (see('printf')) {
       p++;
-      i = { t: 'printf', args: listeExpressions() };
-    } else if (voir('next')) {
+      i = { t: 'printf', args: expressionsList() };
+    } else if (see('next')) {
       p++;
       i = { t: 'next' };
-    } else if (voir('delete')) {
+    } else if (see('delete')) {
       p++;
-      const nom = j[p].type === 'nom' ? j[p++].valeur : erreur();
-      let cle: Noeud[] | undefined;
-      if (voir('[')) {
+      const name = j[p].type === 'nom' ? j[p++].value : error();
+      let key: Node[] | undefined;
+      if (see('[')) {
         p++;
-        cle = [expression()];
-        attendre(']');
+        key = [expression()];
+        wait(']');
       }
-      i = { t: 'delete', nom, cle };
-    } else if (voir(';')) {
-      i = { t: 'bloc', corps: [] };
+      i = { t: 'delete', name, key };
+    } else if (see(';')) {
+      i = { t: 'bloc', body: [] };
     } else i = { t: 'expr', e: expression() };
-    if (voir(';') || voir('\n')) p++;
-    else if (!voir('}') && j[p].type !== 'fin') erreur();
+    if (see(';') || see('\n')) p++;
+    else if (!see('}') && j[p].type !== 'fin') error();
     return i;
   };
-  const bloc = (): Instr => {
-    attendre('{');
-    const corps: Instr[] = [];
-    sauterLignes();
-    while (!voir('}')) {
-      if (j[p].type === 'fin') erreur();
-      corps.push(instruction());
-      sauterLignes();
+  const block = (): Instr => {
+    wait('{');
+    const body: Instr[] = [];
+    skipLines();
+    while (!see('}')) {
+      if (j[p].type === 'fin') error();
+      body.push(instruction());
+      skipLines();
     }
     p++;
-    return { t: 'bloc', corps };
+    return { t: 'bloc', body };
   };
 
-  const regles: Regle[] = [];
-  sauterLignes();
+  const rules: Rule[] = [];
+  skipLines();
   while (j[p].type !== 'fin') {
-    if (voir('BEGIN') || voir('END')) {
-      const quand = j[p++].valeur as 'BEGIN' | 'END';
-      sauterNl();
-      regles.push({ quand, action: bloc() });
-    } else if (voir('{')) regles.push({ quand: 'ligne', action: bloc() });
+    if (see('BEGIN') || see('END')) {
+      const when = j[p++].value as 'BEGIN' | 'END';
+      skipNl();
+      rules.push({ when, action: block() });
+    } else if (see('{')) rules.push({ when: 'ligne', action: block() });
     else {
-      const motif = expression();
-      regles.push({ quand: 'ligne', motif, action: voir('{') ? bloc() : undefined });
+      const pattern = expression();
+      rules.push({ when: 'ligne', pattern, action: see('{') ? block() : undefined });
     }
-    sauterLignes();
+    skipLines();
   }
-  return regles;
+  return rules;
 }
 
 // ——— Exécution ———
 
-class Suivante {}
+class Next {}
 
-const estNombre = (v: Valeur) => typeof v === 'number' || /^\s*[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?\s*$/.test(v);
-const nombre = (v: Valeur): number => (typeof v === 'number' ? v : parseFloat(v) || 0);
+const isCount = (v: Value) => typeof v === 'number' || /^\s*[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?\s*$/.test(v);
+const count = (v: Value): number => (typeof v === 'number' ? v : parseFloat(v) || 0);
 // Un nombre affiché : entier tel quel, sinon %.6g (CONVFMT).
-const texte = (v: Valeur): string => {
+const text = (v: Value): string => {
   if (typeof v === 'string') return v;
   if (Number.isInteger(v)) return String(v);
   return String(Number(v.toPrecision(6)));
 };
 
-function formater(format: string, args: Valeur[]): string {
+function formatValue(format: string, args: Value[]): string {
   let i = 0;
   return format.replace(
     /%([-+ 0#]*)(\d+|\*)?(?:\.(\d+))?([a-zA-Z%])/g,
-    (tout, drapeaux: string, largeurBrute: string | undefined, precision: string | undefined, conv: string) => {
+    (all, flags: string, rawWidth: string | undefined, precision: string | undefined, conv: string) => {
       if (conv === '%') return '%';
-      const largeur = largeurBrute === '*' ? nombre(args[i++] ?? 0) : Number(largeurBrute ?? 0);
+      const width = rawWidth === '*' ? count(args[i++] ?? 0) : Number(rawWidth ?? 0);
       const v = args[i++] ?? '';
       let s: string;
-      if (conv === 'd' || conv === 'i') s = String(Math.trunc(nombre(v)));
-      else if (conv === 'f') s = nombre(v).toFixed(precision === undefined ? 6 : Number(precision));
+      if (conv === 'd' || conv === 'i') s = String(Math.trunc(count(v)));
+      else if (conv === 'f') s = count(v).toFixed(precision === undefined ? 6 : Number(precision));
       else if (conv === 'c') s = typeof v === 'number' ? String.fromCharCode(v) : v.charAt(0);
-      else if (conv === 'x') s = Math.trunc(nombre(v)).toString(16);
-      else if (conv === 's') s = precision === undefined ? texte(v) : texte(v).slice(0, Number(precision));
-      else return tout;
-      if (s.length < largeur)
-        s = drapeaux.includes('-') ? s.padEnd(largeur) : s.padStart(largeur, drapeaux.includes('0') && conv !== 's' ? '0' : ' ');
+      else if (conv === 'x') s = Math.trunc(count(v)).toString(16);
+      else if (conv === 's') s = precision === undefined ? text(v) : text(v).slice(0, Number(precision));
+      else return all;
+      if (s.length < width)
+        s = flags.includes('-') ? s.padEnd(width) : s.padStart(width, flags.includes('0') && conv !== 's' ? '0' : ' ');
       return s;
     },
   );
 }
 
-function executer(regles: Regle[], lignes: string[], variables: Record<string, Valeur>): string {
-  const sortie: string[] = [];
-  const tableaux: Record<string, Map<string, Valeur>> = {};
-  const v: Record<string, Valeur> = { FS: ' ', OFS: ' ', ORS: '\n', NR: 0, NF: 0, SUBSEP: '\u001c', RSTART: 0, RLENGTH: -1, ...variables };
-  let champs: string[] = [''];
-  let pas = 0;
-  const decouper = (ligne: string) => {
-    const fs = texte(v.FS);
-    const parties =
+function execute(rules: Rule[], lines: string[], variables: Record<string, Value>): string {
+  const output: string[] = [];
+  const tableaux: Record<string, Map<string, Value>> = {};
+  const v: Record<string, Value> = { FS: ' ', OFS: ' ', ORS: '\n', NR: 0, NF: 0, SUBSEP: '\u001c', RSTART: 0, RLENGTH: -1, ...variables };
+  let fields: string[] = [''];
+  let not = 0;
+  const split = (line: string) => {
+    const fs = text(v.FS);
+    const parts =
       fs === ' '
-        ? ligne
+        ? line
             .trim()
             .split(/[ \t]+/)
             .filter(Boolean)
         : fs.length === 1
-          ? ligne.split(fs)
-          : ligne.split(new RegExp(fs));
-    champs = [ligne, ...(ligne === '' ? [] : parties)];
-    v.NF = champs.length - 1;
+          ? line.split(fs)
+          : line.split(new RegExp(fs));
+    fields = [line, ...(line === '' ? [] : parts)];
+    v.NF = fields.length - 1;
   };
-  const reconstruire = () => {
-    champs[0] = champs.slice(1).join(texte(v.OFS));
+  const rebuild = () => {
+    fields[0] = fields.slice(1).join(text(v.OFS));
   };
-  const tableau = (nom: string) => (tableaux[nom] ??= new Map());
-  const cleDe = (cle: Noeud[]) => cle.map((c) => texte(evaluer(c))).join(texte(v.SUBSEP));
-  const regex = (n: Noeud): RegExp => new RegExp(n.t === 'regex' ? n.v : texte(evaluer(n)));
-  const lire = (n: Noeud): Valeur => evaluer(n);
-  const ecrire = (cible: Noeud, valeur: Valeur) => {
-    if (cible.t === 'var') {
-      v[cible.nom] = valeur;
-      if (cible.nom === 'NF') {
-        champs = champs.slice(0, nombre(valeur) + 1);
-        reconstruire();
+  const grid = (name: string) => (tableaux[name] ??= new Map());
+  const keyFor = (key: Node[]) => key.map((c) => text(evaluate(c))).join(text(v.SUBSEP));
+  const regex = (n: Node): RegExp => new RegExp(n.t === 'regex' ? n.v : text(evaluate(n)));
+  const read = (n: Node): Value => evaluate(n);
+  const write = (target: Node, value: Value) => {
+    if (target.t === 'var') {
+      v[target.name] = value;
+      if (target.name === 'NF') {
+        fields = fields.slice(0, count(value) + 1);
+        rebuild();
       }
-    } else if (cible.t === 'elem') tableau(cible.nom).set(cleDe(cible.cle), valeur);
-    else if (cible.t === 'champ') {
-      const k = Math.trunc(nombre(evaluer(cible.e)));
-      if (k === 0) decouper(texte(valeur));
+    } else if (target.t === 'elem') grid(target.name).set(keyFor(target.key), value);
+    else if (target.t === 'champ') {
+      const k = Math.trunc(count(evaluate(target.e)));
+      if (k === 0) split(text(value));
       else {
-        while (champs.length <= k) champs.push('');
-        champs[k] = texte(valeur);
-        v.NF = champs.length - 1;
-        reconstruire();
+        while (fields.length <= k) fields.push('');
+        fields[k] = text(value);
+        v.NF = fields.length - 1;
+        rebuild();
       }
     }
   };
-  function evaluer(n: Noeud): Valeur {
-    if (++pas > 2_000_000) throw new ErreurAwk('program too long to run here');
+  function evaluate(n: Node): Value {
+    if (++not > 2_000_000) throw new AwkError('program too long to run here');
     switch (n.t) {
       case 'num':
         return n.v;
       case 'str':
         return n.v;
       case 'regex':
-        return new RegExp(n.v).test(champs[0]) ? 1 : 0;
+        return new RegExp(n.v).test(fields[0]) ? 1 : 0;
       case 'groupe':
-        return evaluer(n.e);
+        return evaluate(n.e);
       case 'var':
-        return v[n.nom] ?? '';
+        return v[n.name] ?? '';
       case 'champ': {
-        const k = Math.trunc(nombre(evaluer(n.e)));
-        if (k < 0) throw new ErreurAwk(`negative field index $${k}`);
-        return champs[k] ?? '';
+        const k = Math.trunc(count(evaluate(n.e)));
+        if (k < 0) throw new AwkError(`negative field index $${k}`);
+        return fields[k] ?? '';
       }
       case 'elem':
-        return tableau(n.nom).get(cleDe(n.cle)) ?? (tableau(n.nom).set(cleDe(n.cle), ''), '');
+        return grid(n.name).get(keyFor(n.key)) ?? (grid(n.name).set(keyFor(n.key), ''), '');
       case 'dans':
-        return tableau(n.tableau).has(cleDe(n.cle)) ? 1 : 0;
+        return grid(n.grid).has(keyFor(n.key)) ? 1 : 0;
       case 'un': {
-        if (n.op === '!') return vrai(evaluer(n.e)) ? 0 : 1;
-        const x = nombre(evaluer(n.e));
+        if (n.op === '!') return yes(evaluate(n.e)) ? 0 : 1;
+        const x = count(evaluate(n.e));
         return n.op === '-' ? -x : x;
       }
       case 'incr': {
-        const avant = nombre(lire(n.cible));
-        const apres = n.op === '++' ? avant + 1 : avant - 1;
-        ecrire(n.cible, apres);
-        return n.pre ? apres : avant;
+        const before = count(read(n.target));
+        const after = n.op === '++' ? before + 1 : before - 1;
+        write(n.target, after);
+        return n.pre ? after : before;
       }
       case 'affect': {
-        const valeur = evaluer(n.e);
+        const value = evaluate(n.e);
         if (n.op === '=') {
-          ecrire(n.cible, valeur);
-          return valeur;
+          write(n.target, value);
+          return value;
         }
-        const a = nombre(lire(n.cible));
-        const b = nombre(valeur);
+        const a = count(read(n.target));
+        const b = count(value);
         const r = n.op === '+=' ? a + b : n.op === '-=' ? a - b : n.op === '*=' ? a * b : n.op === '/=' ? a / b : a % b;
-        ecrire(n.cible, r);
+        write(n.target, r);
         return r;
       }
       case 'bin': {
-        if (n.op === '&&') return vrai(evaluer(n.a)) && vrai(evaluer(n.b)) ? 1 : 0;
-        if (n.op === '||') return vrai(evaluer(n.a)) || vrai(evaluer(n.b)) ? 1 : 0;
+        if (n.op === '&&') return yes(evaluate(n.a)) && yes(evaluate(n.b)) ? 1 : 0;
+        if (n.op === '||') return yes(evaluate(n.a)) || yes(evaluate(n.b)) ? 1 : 0;
         if (n.op === '~' || n.op === '!~') {
-          const ok = regex(n.b).test(texte(evaluer(n.a)));
+          const ok = regex(n.b).test(text(evaluate(n.a)));
           return (n.op === '~') === ok ? 1 : 0;
         }
-        const a = evaluer(n.a);
-        const b = evaluer(n.b);
-        if (n.op === 'concat') return texte(a) + texte(b);
+        const a = evaluate(n.a);
+        const b = evaluate(n.b);
+        if (n.op === 'concat') return text(a) + text(b);
         if (['==', '!=', '<', '>', '<=', '>='].includes(n.op)) {
           // Comparaison numérique si les deux ressemblent à des nombres.
-          const num = estNombre(a) && estNombre(b);
-          const x = num ? nombre(a) : texte(a);
-          const y = num ? nombre(b) : texte(b);
+          const num = isCount(a) && isCount(b);
+          const x = num ? count(a) : text(a);
+          const y = num ? count(b) : text(b);
           const r = n.op === '==' ? x === y : n.op === '!=' ? x !== y : n.op === '<' ? x < y : n.op === '>' ? x > y : n.op === '<=' ? x <= y : x >= y;
           return r ? 1 : 0;
         }
-        const x = nombre(a);
-        const y = nombre(b);
-        if ((n.op === '/' || n.op === '%') && y === 0) throw new ErreurAwk('division by zero');
+        const x = count(a);
+        const y = count(b);
+        if ((n.op === '/' || n.op === '%') && y === 0) throw new AwkError('division by zero');
         return n.op === '+' ? x + y : n.op === '-' ? x - y : n.op === '*' ? x * y : n.op === '/' ? x / y : x % y;
       }
       case 'appel':
-        return appeler(n.nom, n.args);
+        return call(n.name, n.args);
     }
   }
-  const vrai = (x: Valeur) => (typeof x === 'number' ? x !== 0 : x !== '');
-  function appeler(nom: string, args: Noeud[]): Valeur {
-    const a = (i: number) => evaluer(args[i]);
-    switch (nom) {
+  const yes = (x: Value) => (typeof x === 'number' ? x !== 0 : x !== '');
+  function call(name: string, args: Node[]): Value {
+    const a = (i: number) => evaluate(args[i]);
+    switch (name) {
       case 'length':
-        if (args[0]?.t === 'var' && tableaux[args[0].nom]) return tableaux[args[0].nom].size;
-        return texte(args.length ? a(0) : champs[0]).length;
+        if (args[0]?.t === 'var' && tableaux[args[0].name]) return tableaux[args[0].name].size;
+        return text(args.length ? a(0) : fields[0]).length;
       case 'substr': {
-        const s = texte(a(0));
-        const debut = Math.round(nombre(a(1)));
-        const longueur = args.length > 2 ? Math.round(nombre(a(2))) : Infinity;
-        const de = Math.max(1, debut);
-        const jusqua = Math.min(s.length + 1, debut + longueur);
-        return jusqua > de ? s.slice(de - 1, jusqua - 1) : '';
+        const s = text(a(0));
+        const start = Math.round(count(a(1)));
+        const length = args.length > 2 ? Math.round(count(a(2))) : Infinity;
+        const forEachOf = Math.max(1, start);
+        const until = Math.min(s.length + 1, start + length);
+        return until > forEachOf ? s.slice(forEachOf - 1, until - 1) : '';
       }
       case 'index':
-        return texte(a(0)).indexOf(texte(a(1))) + 1;
+        return text(a(0)).indexOf(text(a(1))) + 1;
       case 'split': {
-        const s = texte(a(0));
-        const nomTableau = args[1]?.t === 'var' ? args[1].nom : '';
-        const sep = args.length > 2 ? (args[2].t === 'regex' ? new RegExp(args[2].v) : texte(a(2))) : texte(v.FS);
-        const parties =
+        const s = text(a(0));
+        const tableName = args[1]?.t === 'var' ? args[1].name : '';
+        const sep = args.length > 2 ? (args[2].t === 'regex' ? new RegExp(args[2].v) : text(a(2))) : text(v.FS);
+        const parts =
           sep === ' '
             ? s
                 .trim()
                 .split(/[ \t]+/)
                 .filter(Boolean)
             : s.split(sep);
-        const t = tableau(nomTableau);
+        const t = grid(tableName);
         t.clear();
-        parties.forEach((x, i) => t.set(String(i + 1), x));
-        return parties.length;
+        parts.forEach((x, i) => t.set(String(i + 1), x));
+        return parts.length;
       }
       case 'sub':
       case 'gsub': {
-        const re = new RegExp(args[0].t === 'regex' ? args[0].v : texte(a(0)), nom === 'gsub' ? 'g' : '');
+        const re = new RegExp(args[0].t === 'regex' ? args[0].v : text(a(0)), name === 'gsub' ? 'g' : '');
         // Dans le remplacement, & est le texte trouvé, et \& un vrai &.
-        const modele = texte(a(1));
-        const cible: Noeud = args[2] ?? { t: 'champ', e: { t: 'num', v: 0 } };
-        const avant = texte(lire(cible));
+        const template = text(a(1));
+        const target: Node = args[2] ?? { t: 'champ', e: { t: 'num', v: 0 } };
+        const before = text(read(target));
         let n = 0;
-        const apres = avant.replace(re, (trouve: string) => (n++, modele.replace(/\\&|&/g, (x) => (x === '&' ? trouve : '&'))));
-        if (n) ecrire(cible, apres);
+        const after = before.replace(re, (found: string) => (n++, template.replace(/\\&|&/g, (x) => (x === '&' ? found : '&'))));
+        if (n) write(target, after);
         return n;
       }
       case 'match': {
-        const m = new RegExp(args[1].t === 'regex' ? args[1].v : texte(a(1))).exec(texte(a(0)));
+        const m = new RegExp(args[1].t === 'regex' ? args[1].v : text(a(1))).exec(text(a(0)));
         v.RSTART = m ? m.index + 1 : 0;
         v.RLENGTH = m ? m[0].length : -1;
         return v.RSTART;
       }
       case 'tolower':
-        return texte(a(0)).toLowerCase();
+        return text(a(0)).toLowerCase();
       case 'toupper':
-        return texte(a(0)).toUpperCase();
+        return text(a(0)).toUpperCase();
       case 'int':
-        return Math.trunc(nombre(a(0)));
+        return Math.trunc(count(a(0)));
       case 'sprintf':
-        return formater(
-          texte(a(0)),
-          args.slice(1).map((x) => evaluer(x)),
+        return formatValue(
+          text(a(0)),
+          args.slice(1).map((x) => evaluate(x)),
         );
     }
     return '';
   }
-  function faire(i: Instr): void {
+  function run(i: Instr): void {
     switch (i.t) {
       case 'expr':
-        evaluer(i.e);
+        evaluate(i.e);
         return;
       case 'print':
-        sortie.push(i.args.length ? i.args.map((x) => texte(evaluer(x))).join(texte(v.OFS)) : champs[0]);
+        output.push(i.args.length ? i.args.map((x) => text(evaluate(x))).join(text(v.OFS)) : fields[0]);
         return;
       case 'printf': {
-        const [format, ...reste] = i.args.map((x) => evaluer(x));
-        sortie.push('\u0001' + formater(texte(format ?? ''), reste));
+        const [format, ...rest] = i.args.map((x) => evaluate(x));
+        output.push('\u0001' + formatValue(text(format ?? ''), rest));
         return;
       }
       case 'si':
-        if (vrai(evaluer(i.cond))) faire(i.alors);
-        else if (i.sinon) faire(i.sinon);
+        if (yes(evaluate(i.cond))) run(i.then);
+        else if (i.otherwise) run(i.otherwise);
         return;
       case 'tantque':
-        while (vrai(evaluer(i.cond))) faire(i.corps);
+        while (yes(evaluate(i.cond))) run(i.body);
         return;
       case 'pour':
-        for (i.init && faire(i.init); i.cond ? vrai(evaluer(i.cond)) : true; i.pas && faire(i.pas)) faire(i.corps);
+        for (i.init && run(i.init); i.cond ? yes(evaluate(i.cond)) : true; i.not && run(i.not)) run(i.body);
         return;
       case 'pourDans':
-        for (const cle of [...tableau(i.tableau).keys()]) {
-          v[i.variable] = cle;
-          faire(i.corps);
+        for (const key of [...grid(i.grid).keys()]) {
+          v[i.variable] = key;
+          run(i.body);
         }
         return;
       case 'bloc':
-        i.corps.forEach(faire);
+        i.body.forEach(run);
         return;
       case 'next':
-        throw new Suivante();
+        throw new Next();
       case 'delete':
-        if (i.cle) tableau(i.nom).delete(cleDe(i.cle));
-        else tableau(i.nom).clear();
+        if (i.key) grid(i.name).delete(keyFor(i.key));
+        else grid(i.name).clear();
     }
   }
-  for (const r of regles.filter((x) => x.quand === 'BEGIN')) faire(r.action!);
-  for (const ligne of lignes) {
-    v.NR = nombre(v.NR) + 1;
-    decouper(ligne);
+  for (const r of rules.filter((x) => x.when === 'BEGIN')) run(r.action!);
+  for (const line of lines) {
+    v.NR = count(v.NR) + 1;
+    split(line);
     try {
-      for (const r of regles.filter((x) => x.quand === 'ligne')) {
-        if (r.motif && !vrai(evaluer(r.motif))) continue;
-        if (r.action) faire(r.action);
-        else sortie.push(champs[0]);
+      for (const r of rules.filter((x) => x.when === 'ligne')) {
+        if (r.pattern && !yes(evaluate(r.pattern))) continue;
+        if (r.action) run(r.action);
+        else output.push(fields[0]);
       }
     } catch (e) {
-      if (!(e instanceof Suivante)) throw e;
+      if (!(e instanceof Next)) throw e;
     }
   }
-  for (const r of regles.filter((x) => x.quand === 'END')) faire(r.action!);
+  for (const r of rules.filter((x) => x.when === 'END')) run(r.action!);
   // printf n'ajoute pas de fin de ligne : on recolle avec ce qui précède.
-  let texteSortie = '';
-  for (const s of sortie) texteSortie += s.startsWith('\u0001') ? s.slice(1) : s + '\n';
-  return texteSortie.replace(/\n$/, '');
+  let outputText = '';
+  for (const s of output) outputText += s.startsWith('\u0001') ? s.slice(1) : s + '\n';
+  return outputText.replace(/\n$/, '');
 }
 
-export const AWK: Record<string, Commande> = {
+export const AWK: Record<string, Command> = {
   awk: {
-    propresOptions: true,
-    lancer: ({ args, entree, jeu }) => {
-      const variables: Record<string, Valeur> = {};
-      const reste: string[] = [];
+    ownOptions: true,
+    launch: ({ args, input, game }) => {
+      const variables: Record<string, Value> = {};
+      const rest: string[] = [];
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
         if (a === '-F') variables.FS = args[++i] ?? ' ';
         else if (a.startsWith('-F')) variables.FS = a.slice(2);
         else if (a === '-v') {
-          const [nom, ...valeur] = (args[++i] ?? '').split('=');
-          variables[nom] = valeur.join('=');
-        } else reste.push(a);
+          const [name, ...value] = (args[++i] ?? '').split('=');
+          variables[name] = value.join('=');
+        } else rest.push(a);
       }
       if (variables.FS === '\\t') variables.FS = '\t';
-      const [programme, ...fichiers] = reste;
-      if (programme === undefined) return jeu.erreur(jeu.t('awk-usage'));
-      let regles: Regle[];
+      const [program, ...files] = rest;
+      if (program === undefined) return game.error(game.t('awk-usage'));
+      let rules: Rule[];
       try {
-        regles = analyser(programme);
+        rules = parse(program);
       } catch (e) {
-        if (e instanceof ErreurAwk) return jeu.erreur(`awk: line 1: ${e.message}`);
+        if (e instanceof AwkError) return game.error(`awk: line 1: ${e.message}`);
         throw e;
       }
-      const lignes: string[] = [];
-      if (!fichiers.length) lignes.push(...(entree ?? '').split('\n').filter((l, i, t) => l !== '' || i < t.length - 1));
-      for (const f of fichiers) {
-        const t = jeu.lirePour('awk', f);
+      const lines: string[] = [];
+      if (!files.length) lines.push(...(input ?? '').split('\n').filter((l, i, t) => l !== '' || i < t.length - 1));
+      for (const f of files) {
+        const t = game.readFor('awk', f);
         if (t === null) return '';
-        lignes.push(...t.split('\n'));
+        lines.push(...t.split('\n'));
       }
       try {
-        return executer(regles, lignes, variables);
+        return execute(rules, lines, variables);
       } catch (e) {
-        if (e instanceof ErreurAwk) return jeu.erreur(`awk: run time error: ${e.message}`);
-        if (e instanceof SyntaxError) return jeu.erreur(`awk: line 1: regular expression compile failed (${e.message})`);
+        if (e instanceof AwkError) return game.error(`awk: run time error: ${e.message}`);
+        if (e instanceof SyntaxError) return game.error(`awk: line 1: regular expression compile failed (${e.message})`);
         throw e;
       }
     },

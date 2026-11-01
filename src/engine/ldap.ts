@@ -16,25 +16,25 @@
 // référentiel ni de base64 (::) ; un schéma réduit ; l'empreinte {SSHA}
 // n'est pas un vrai SHA-1.
 
-import type { Jeu } from './shell';
+import type { Game } from './shell';
 
-export interface Entree {
+export interface Input {
   dn: string;
   attrs: Record<string, string[]>;
 }
 
-export interface Annuaire {
+export interface Directory {
   base: string;
   admin: string;
-  entrees: Entree[];
+  inputs: Input[];
 }
 
-export const annuaire = (j: Jeu) => j.etat.ldap as Annuaire | undefined;
+export const directory = (j: Game) => j.state.ldap as Directory | undefined;
 
 // ——— Les noms (DN) ———
 
 /** Un DN sous une forme comparable : minuscules, sans blancs autour des virgules et des =. */
-export const normaliser = (dn: string) =>
+export const normalise = (dn: string) =>
   dn
     .split(',')
     .map((r) =>
@@ -47,13 +47,13 @@ export const normaliser = (dn: string) =>
     .toLowerCase();
 
 export const parent = (dn: string) => dn.split(',').slice(1).join(',');
-export const trouver = (a: Annuaire, dn: string) => a.entrees.find((e) => normaliser(e.dn) === normaliser(dn));
-export const sous = (dn: string, base: string) => normaliser(dn) === normaliser(base) || normaliser(dn).endsWith(',' + normaliser(base));
+export const find = (a: Directory, dn: string) => a.inputs.find((e) => normalise(e.dn) === normalise(dn));
+export const under = (dn: string, base: string) => normalise(dn) === normalise(base) || normalise(dn).endsWith(',' + normalise(base));
 
 // ——— Le schéma ———
 
 // Les attributs connus (en minuscules), avec leurs noms officiels.
-const ATTRIBUTS = [
+const ATTRIBUTES = [
   'objectClass',
   'dc',
   'o',
@@ -78,41 +78,41 @@ const ATTRIBUTS = [
   'employeeType',
   'l',
 ];
-const NOM_ATTRIBUT = Object.fromEntries(ATTRIBUTS.map((a) => [a.toLowerCase(), a]));
-export const nomAttribut = (a: string) => NOM_ATTRIBUT[a.toLowerCase()] ?? a;
+const ATTRIBUTE_NAME = Object.fromEntries(ATTRIBUTES.map((a) => [a.toLowerCase(), a]));
+export const attributeName = (a: string) => ATTRIBUTE_NAME[a.toLowerCase()] ?? a;
 
 // Les classes connues : les attributs qu'elles exigent (MUST) et permettent (MAY).
-const CLASSES: Record<string, { must: string[]; may: string[]; structurelle: boolean }> = {
-  top: { must: [], may: [], structurelle: false },
-  dcobject: { must: ['dc'], may: ['description'], structurelle: false },
-  organization: { must: ['o'], may: ['description', 'telephoneNumber', 'l'], structurelle: true },
-  organizationalunit: { must: ['ou'], may: ['description', 'telephoneNumber', 'l'], structurelle: true },
-  person: { must: ['sn', 'cn'], may: ['userPassword', 'telephoneNumber', 'description'], structurelle: true },
-  organizationalperson: { must: ['sn', 'cn'], may: ['title', 'l', 'telephoneNumber', 'description', 'userPassword'], structurelle: true },
+const CLASSES: Record<string, { must: string[]; may: string[]; structural: boolean }> = {
+  top: { must: [], may: [], structural: false },
+  dcobject: { must: ['dc'], may: ['description'], structural: false },
+  organization: { must: ['o'], may: ['description', 'telephoneNumber', 'l'], structural: true },
+  organizationalunit: { must: ['ou'], may: ['description', 'telephoneNumber', 'l'], structural: true },
+  person: { must: ['sn', 'cn'], may: ['userPassword', 'telephoneNumber', 'description'], structural: true },
+  organizationalperson: { must: ['sn', 'cn'], may: ['title', 'l', 'telephoneNumber', 'description', 'userPassword'], structural: true },
   inetorgperson: {
     must: ['sn', 'cn'],
     may: ['givenName', 'displayName', 'uid', 'mail', 'telephoneNumber', 'title', 'employeeType', 'description', 'userPassword', 'l'],
-    structurelle: true,
+    structural: true,
   },
   posixaccount: {
     must: ['cn', 'uid', 'uidNumber', 'gidNumber', 'homeDirectory'],
     may: ['userPassword', 'loginShell', 'gecos', 'description'],
-    structurelle: false,
+    structural: false,
   },
-  shadowaccount: { must: ['uid'], may: ['userPassword', 'description'], structurelle: false },
-  posixgroup: { must: ['cn', 'gidNumber'], may: ['userPassword', 'memberUid', 'description'], structurelle: true },
-  groupofnames: { must: ['member', 'cn'], may: ['description', 'o', 'ou'], structurelle: true },
-  organizationalrole: { must: ['cn'], may: ['description', 'telephoneNumber', 'l'], structurelle: true },
-  simplesecurityobject: { must: ['userPassword'], may: [], structurelle: false },
+  shadowaccount: { must: ['uid'], may: ['userPassword', 'description'], structural: false },
+  posixgroup: { must: ['cn', 'gidNumber'], may: ['userPassword', 'memberUid', 'description'], structural: true },
+  groupofnames: { must: ['member', 'cn'], may: ['description', 'o', 'ou'], structural: true },
+  organizationalrole: { must: ['cn'], may: ['description', 'telephoneNumber', 'l'], structural: true },
+  simplesecurityobject: { must: ['userPassword'], may: [], structural: false },
 };
 
-export interface ErreurLdap {
+export interface LdapError {
   code: number;
-  texte: string;
+  text: string;
   info?: string;
 }
 
-const NOMS_CODES: Record<number, string> = {
+const CODES_NAMES: Record<number, string> = {
   8: 'Strong(er) authentication required',
   16: 'No such attribute',
   17: 'Undefined attribute type',
@@ -128,33 +128,33 @@ const NOMS_CODES: Record<number, string> = {
   66: 'Operation not allowed on non-leaf',
   68: 'Already exists',
 };
-export const erreur = (code: number, info?: string): ErreurLdap => ({ code, texte: NOMS_CODES[code], ...(info ? { info } : {}) });
+export const error = (code: number, info?: string): LdapError => ({ code, text: CODES_NAMES[code], ...(info ? { info } : {}) });
 
 /** Une entrée respecte-t-elle le schéma ? null si oui. */
-export function verifierSchema(e: Entree): ErreurLdap | null {
-  for (const a of Object.keys(e.attrs)) if (!NOM_ATTRIBUT[a]) return erreur(17, `${a}: attribute type undefined`);
+export function checkSchema(e: Input): LdapError | null {
+  for (const a of Object.keys(e.attrs)) if (!ATTRIBUTE_NAME[a]) return error(17, `${a}: attribute type undefined`);
   const classes = (e.attrs.objectclass ?? []).map((c) => c.toLowerCase());
-  if (!classes.length) return erreur(65, 'no objectClass attribute');
-  for (const c of classes) if (!CLASSES[c]) return erreur(21, `objectClass: value #0 invalid per syntax`);
-  if (!classes.some((c) => CLASSES[c].structurelle)) return erreur(65, 'no structural object class provided');
+  if (!classes.length) return error(65, 'no objectClass attribute');
+  for (const c of classes) if (!CLASSES[c]) return error(21, `objectClass: value #0 invalid per syntax`);
+  if (!classes.some((c) => CLASSES[c].structural)) return error(65, 'no structural object class provided');
   for (const c of classes)
     for (const m of CLASSES[c].must)
-      if (!e.attrs[m.toLowerCase()]?.length) return erreur(65, `object class '${nomClasse(c)}' requires attribute '${m}'`);
-  const permis = new Set(['objectclass', ...classes.flatMap((c) => [...CLASSES[c].must, ...CLASSES[c].may].map((x) => x.toLowerCase()))]);
-  for (const a of Object.keys(e.attrs)) if (!permis.has(a)) return erreur(65, `attribute '${nomAttribut(a)}' not allowed`);
+      if (!e.attrs[m.toLowerCase()]?.length) return error(65, `object class '${className(c)}' requires attribute '${m}'`);
+  const permitted = new Set(['objectclass', ...classes.flatMap((c) => [...CLASSES[c].must, ...CLASSES[c].may].map((x) => x.toLowerCase()))]);
+  for (const a of Object.keys(e.attrs)) if (!permitted.has(a)) return error(65, `attribute '${attributeName(a)}' not allowed`);
   // L'attribut du nom (uid=sami…) doit être dans l'entrée.
   const [rdnA, rdnV] = e.dn
     .split(',')[0]
     .split('=')
     .map((x) => x.trim());
   if (!e.attrs[rdnA.toLowerCase()]?.some((v) => v.toLowerCase() === (rdnV ?? '').toLowerCase()))
-    return erreur(64, 'value of naming attribute is not present in entry');
+    return error(64, 'value of naming attribute is not present in entry');
   for (const n of ['uidnumber', 'gidnumber'])
-    if (e.attrs[n]?.some((v) => !/^\d+$/.test(v))) return erreur(21, `${nomAttribut(n)}: value #0 invalid per syntax`);
+    if (e.attrs[n]?.some((v) => !/^\d+$/.test(v))) return error(21, `${attributeName(n)}: value #0 invalid per syntax`);
   return null;
 }
 
-const NOMS_CLASSES: Record<string, string> = {
+const CLASSES_NAMES: Record<string, string> = {
   inetorgperson: 'inetOrgPerson',
   posixaccount: 'posixAccount',
   posixgroup: 'posixGroup',
@@ -168,220 +168,220 @@ const NOMS_CLASSES: Record<string, string> = {
   organizationalrole: 'organizationalRole',
   simplesecurityobject: 'simpleSecurityObject',
 };
-const nomClasse = (c: string) => NOMS_CLASSES[c] ?? c;
+const className = (c: string) => CLASSES_NAMES[c] ?? c;
 
 // ——— LDIF ———
 
-export type Changement =
-  | { quoi: 'add'; entree: Entree; ligne: number }
-  | { quoi: 'delete'; dn: string; ligne: number }
-  | { quoi: 'modify'; dn: string; ops: { op: 'add' | 'replace' | 'delete'; attr: string; valeurs: string[] }[]; ligne: number };
+export type Change =
+  | { what: 'add'; input: Input; line: number }
+  | { what: 'delete'; dn: string; line: number }
+  | { what: 'modify'; dn: string; ops: { op: 'add' | 'replace' | 'delete'; attr: string; values: string[] }[]; line: number };
 
 /** Lit un texte LDIF ; `ajout` : sans changetype, une entrée est un ajout (ldapadd). Lève une erreur au format d'ldapmodify. */
-export function lireLdif(texte: string, ajout: boolean): Changement[] {
+export function readLdif(text: string, addition: boolean): Change[] {
   // Les lignes repliées (qui commencent par une espace) continuent la précédente.
-  const lignes: { t: string; n: number }[] = [];
-  texte.split('\n').forEach((brute, i) => {
-    if (brute.startsWith(' ') && lignes.length && lignes.at(-1)!.t !== '') lignes.at(-1)!.t += brute.slice(1);
-    else lignes.push({ t: brute.replace(/\r$/, ''), n: i + 1 });
+  const lines: { t: string; n: number }[] = [];
+  text.split('\n').forEach((rawValue, i) => {
+    if (rawValue.startsWith(' ') && lines.length && lines.at(-1)!.t !== '') lines.at(-1)!.t += rawValue.slice(1);
+    else lines.push({ t: rawValue.replace(/\r$/, ''), n: i + 1 });
   });
-  const blocs: { t: string; n: number }[][] = [[]];
-  for (const l of lignes) {
+  const blocks: { t: string; n: number }[][] = [[]];
+  for (const l of lines) {
     if (l.t.startsWith('#')) continue;
     if (l.t.trim() === '') {
-      if (blocs.at(-1)!.length) blocs.push([]);
-    } else blocs.at(-1)!.push(l);
+      if (blocks.at(-1)!.length) blocks.push([]);
+    } else blocks.at(-1)!.push(l);
   }
-  const changements: Changement[] = [];
-  for (const bloc of blocs.filter((b) => b.length)) {
-    const paires = bloc.map((l) => {
+  const changes: Change[] = [];
+  for (const block of blocks.filter((b) => b.length)) {
+    const pairs = block.map((l) => {
       // « - » sépare deux changements d'un même modify.
       if (l.t.trim() === '-') return { a: '-', v: '', n: l.n };
       const k = l.t.indexOf(':');
       if (k < 0) throw new Error(`ldapmodify: invalid format (line ${l.n}) entry: ""`);
       return { a: l.t.slice(0, k).trim(), v: l.t.slice(k + 1).replace(/^:?\s*/, ''), n: l.n };
     });
-    if (paires[0].a.toLowerCase() !== 'dn') throw new Error(`ldapmodify: invalid format (line ${paires[0].n}) entry: ""`);
-    const dn = paires[0].v.trim();
-    let reste = paires.slice(1);
-    let type = ajout ? 'add' : 'modify';
-    if (reste[0]?.a.toLowerCase() === 'changetype') {
-      type = reste[0].v.trim().toLowerCase();
-      reste = reste.slice(1);
-    } else if (!ajout) throw new Error(`ldapmodify: modify operation type is missing at line ${paires[0].n}, entry "${dn}"`);
+    if (pairs[0].a.toLowerCase() !== 'dn') throw new Error(`ldapmodify: invalid format (line ${pairs[0].n}) entry: ""`);
+    const dn = pairs[0].v.trim();
+    let rest = pairs.slice(1);
+    let type = addition ? 'add' : 'modify';
+    if (rest[0]?.a.toLowerCase() === 'changetype') {
+      type = rest[0].v.trim().toLowerCase();
+      rest = rest.slice(1);
+    } else if (!addition) throw new Error(`ldapmodify: modify operation type is missing at line ${pairs[0].n}, entry "${dn}"`);
     if (type === 'add') {
       const attrs: Record<string, string[]> = {};
-      for (const p of reste) (attrs[p.a.toLowerCase()] ??= []).push(p.v.trim());
-      changements.push({ quoi: 'add', entree: { dn, attrs }, ligne: paires[0].n });
-    } else if (type === 'delete') changements.push({ quoi: 'delete', dn, ligne: paires[0].n });
+      for (const p of rest) (attrs[p.a.toLowerCase()] ??= []).push(p.v.trim());
+      changes.push({ what: 'add', input: { dn, attrs }, line: pairs[0].n });
+    } else if (type === 'delete') changes.push({ what: 'delete', dn, line: pairs[0].n });
     else if (type === 'modify') {
-      const ops: { op: 'add' | 'replace' | 'delete'; attr: string; valeurs: string[] }[] = [];
-      let courante: (typeof ops)[number] | null = null;
-      for (const p of reste) {
+      const ops: { op: 'add' | 'replace' | 'delete'; attr: string; values: string[] }[] = [];
+      let current: (typeof ops)[number] | null = null;
+      for (const p of rest) {
         if (p.a === '-') {
-          courante = null;
+          current = null;
           continue;
         }
         const op = p.a.toLowerCase();
-        if (!courante && (op === 'add' || op === 'replace' || op === 'delete')) {
-          courante = { op, attr: p.v.trim(), valeurs: [] };
-          ops.push(courante);
-        } else if (courante && p.a.toLowerCase() === courante.attr.toLowerCase()) courante.valeurs.push(p.v.trim());
+        if (!current && (op === 'add' || op === 'replace' || op === 'delete')) {
+          current = { op, attr: p.v.trim(), values: [] };
+          ops.push(current);
+        } else if (current && p.a.toLowerCase() === current.attr.toLowerCase()) current.values.push(p.v.trim());
         else throw new Error(`ldapmodify: wrong attributeType at line ${p.n}, entry "${dn}"`);
       }
-      changements.push({ quoi: 'modify', dn, ops, ligne: paires[0].n });
-    } else throw new Error(`ldapmodify: invalid changetype "${type}" at line ${paires[0].n}, entry "${dn}"`);
+      changes.push({ what: 'modify', dn, ops, line: pairs[0].n });
+    } else throw new Error(`ldapmodify: invalid changetype "${type}" at line ${pairs[0].n}, entry "${dn}"`);
   }
-  return changements;
+  return changes;
 }
 
 /** Applique un changement ; renvoie l'erreur de slapd, ou null. */
-export function appliquer(a: Annuaire, c: Changement): ErreurLdap | null {
-  if (c.quoi === 'add') {
-    if (!/^[\w-]+=[^,]+(,[\w-]+=[^,]+)*$/.test(c.entree.dn.replace(/\s*,\s*/g, ','))) return erreur(34, 'invalid DN');
-    if (trouver(a, c.entree.dn)) return erreur(68);
-    if (!sous(c.entree.dn, a.base)) return erreur(32);
-    if (normaliser(c.entree.dn) !== normaliser(a.base) && !trouver(a, parent(c.entree.dn))) return erreur(32);
-    const e = verifierSchema(c.entree);
+export function apply(a: Directory, c: Change): LdapError | null {
+  if (c.what === 'add') {
+    if (!/^[\w-]+=[^,]+(,[\w-]+=[^,]+)*$/.test(c.input.dn.replace(/\s*,\s*/g, ','))) return error(34, 'invalid DN');
+    if (find(a, c.input.dn)) return error(68);
+    if (!under(c.input.dn, a.base)) return error(32);
+    if (normalise(c.input.dn) !== normalise(a.base) && !find(a, parent(c.input.dn))) return error(32);
+    const e = checkSchema(c.input);
     if (e) return e;
-    a.entrees.push(structuredClone(c.entree));
+    a.inputs.push(structuredClone(c.input));
     return null;
   }
-  const e = trouver(a, c.dn);
-  if (!e) return erreur(32);
-  if (c.quoi === 'delete') {
-    if (a.entrees.some((x) => normaliser(parent(x.dn)) === normaliser(e.dn))) return erreur(66, 'subordinate objects must be deleted first');
-    a.entrees = a.entrees.filter((x) => x !== e);
+  const e = find(a, c.dn);
+  if (!e) return error(32);
+  if (c.what === 'delete') {
+    if (a.inputs.some((x) => normalise(parent(x.dn)) === normalise(e.dn))) return error(66, 'subordinate objects must be deleted first');
+    a.inputs = a.inputs.filter((x) => x !== e);
     return null;
   }
-  const copie = structuredClone(e);
+  const copyOf = structuredClone(e);
   for (const o of c.ops) {
-    const cle = o.attr.toLowerCase();
-    if (!NOM_ATTRIBUT[cle]) return erreur(17, `${o.attr}: attribute type undefined`);
-    const avant = copie.attrs[cle] ?? [];
+    const key = o.attr.toLowerCase();
+    if (!ATTRIBUTE_NAME[key]) return error(17, `${o.attr}: attribute type undefined`);
+    const before = copyOf.attrs[key] ?? [];
     if (o.op === 'add') {
-      const deja = o.valeurs.find((v) => avant.some((x) => x.toLowerCase() === v.toLowerCase()));
-      if (deja) return erreur(20, `modify/add: ${nomAttribut(cle)}: value #0 already exists`);
-      copie.attrs[cle] = [...avant, ...o.valeurs];
+      const already = o.values.find((v) => before.some((x) => x.toLowerCase() === v.toLowerCase()));
+      if (already) return error(20, `modify/add: ${attributeName(key)}: value #0 already exists`);
+      copyOf.attrs[key] = [...before, ...o.values];
     } else if (o.op === 'replace') {
-      if (o.valeurs.length) copie.attrs[cle] = [...o.valeurs];
-      else delete copie.attrs[cle];
+      if (o.values.length) copyOf.attrs[key] = [...o.values];
+      else delete copyOf.attrs[key];
     } else {
-      if (!o.valeurs.length) {
-        if (!avant.length) return erreur(16, `modify/delete: ${nomAttribut(cle)}: no such attribute`);
-        delete copie.attrs[cle];
+      if (!o.values.length) {
+        if (!before.length) return error(16, `modify/delete: ${attributeName(key)}: no such attribute`);
+        delete copyOf.attrs[key];
       } else {
-        const absente = o.valeurs.find((v) => !avant.some((x) => x.toLowerCase() === v.toLowerCase()));
-        if (absente) return erreur(16, `modify/delete: ${nomAttribut(cle)}: no such value`);
-        copie.attrs[cle] = avant.filter((x) => !o.valeurs.some((v) => v.toLowerCase() === x.toLowerCase()));
-        if (!copie.attrs[cle].length) delete copie.attrs[cle];
+        const missing = o.values.find((v) => !before.some((x) => x.toLowerCase() === v.toLowerCase()));
+        if (missing) return error(16, `modify/delete: ${attributeName(key)}: no such value`);
+        copyOf.attrs[key] = before.filter((x) => !o.values.some((v) => v.toLowerCase() === x.toLowerCase()));
+        if (!copyOf.attrs[key].length) delete copyOf.attrs[key];
       }
     }
   }
-  const s = verifierSchema(copie);
+  const s = checkSchema(copyOf);
   if (s) return s;
-  e.attrs = copie.attrs;
+  e.attrs = copyOf.attrs;
   return null;
 }
 
 // ——— Les filtres (RFC 4515) ———
 
-type Filtre = { et: Filtre[] } | { ou: Filtre[] } | { non: Filtre } | { attr: string; motif: string };
+type Filter = { and: Filter[] } | { or: Filter[] } | { not: Filter } | { attr: string; pattern: string };
 
-export function lireFiltre(texte: string): Filtre | null {
+export function readFilter(text: string): Filter | null {
   let k = 0;
-  const t = texte.trim().startsWith('(') ? texte.trim() : `(${texte.trim()})`;
-  const lire = (): Filtre | null => {
+  const t = text.trim().startsWith('(') ? text.trim() : `(${text.trim()})`;
+  const read = (): Filter | null => {
     if (t[k] !== '(') return null;
     k++;
-    let f: Filtre | null;
+    let f: Filter | null;
     if (t[k] === '&' || t[k] === '|') {
       const op = t[k++];
-      const liste: Filtre[] = [];
+      const listing: Filter[] = [];
       while (t[k] === '(') {
-        const x = lire();
+        const x = read();
         if (!x) return null;
-        liste.push(x);
+        listing.push(x);
       }
-      f = op === '&' ? { et: liste } : { ou: liste };
+      f = op === '&' ? { and: listing } : { or: listing };
     } else if (t[k] === '!') {
       k++;
-      const x = lire();
+      const x = read();
       if (!x) return null;
-      f = { non: x };
+      f = { not: x };
     } else {
-      const fin = t.indexOf(')', k);
-      if (fin < 0) return null;
-      const corps = t.slice(k, fin);
-      const e = corps.indexOf('=');
+      const end = t.indexOf(')', k);
+      if (end < 0) return null;
+      const body = t.slice(k, end);
+      const e = body.indexOf('=');
       if (e <= 0) return null;
       f = {
-        attr: corps
+        attr: body
           .slice(0, e)
           .replace(/[~<>]$/, '')
           .toLowerCase(),
-        motif: corps.slice(e + 1),
+        pattern: body.slice(e + 1),
       };
-      k = fin;
+      k = end;
     }
     if (t[k] !== ')') return null;
     k++;
     return f;
   };
-  const f = lire();
+  const f = read();
   return f && k === t.length ? f : null;
 }
 
-export function correspond(f: Filtre, e: Entree): boolean {
-  if ('et' in f) return f.et.every((x) => correspond(x, e));
-  if ('ou' in f) return f.ou.some((x) => correspond(x, e));
-  if ('non' in f) return !correspond(f.non, e);
-  const valeurs = e.attrs[f.attr] ?? [];
-  if (f.motif === '*') return valeurs.length > 0;
+export function correspond(f: Filter, e: Input): boolean {
+  if ('and' in f) return f.and.every((x) => correspond(x, e));
+  if ('or' in f) return f.or.some((x) => correspond(x, e));
+  if ('not' in f) return !correspond(f.not, e);
+  const values = e.attrs[f.attr] ?? [];
+  if (f.pattern === '*') return values.length > 0;
   const re = new RegExp(
-    `^${f.motif
+    `^${f.pattern
       .split('*')
       .map((m) => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
       .join('.*')}$`,
     'i',
   );
-  return valeurs.some((v) => re.test(v));
+  return values.some((v) => re.test(v));
 }
 
 // ——— Les mots de passe ———
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-function empreinte(secret: string, sel: string): string {
+function fingerprint(secret: string, salt: string): string {
   let h = 2166136261;
-  const octets: number[] = [];
+  const bytes: number[] = [];
   for (let i = 0; i < 24; i++) {
-    for (const c of secret + sel + String(i)) {
+    for (const c of secret + salt + String(i)) {
       h ^= c.charCodeAt(0);
       h = Math.imul(h, 16777619) >>> 0;
     }
-    octets.push(h & 63);
+    bytes.push(h & 63);
   }
-  return octets.map((o) => B64[o]).join('');
+  return bytes.map((o) => B64[o]).join('');
 }
 
 /** Une empreinte {SSHA} avec un sel donné (pour les entrées de départ d'un chapitre). */
-export const hacherAvecSel = (secret: string, sel: string) => `{SSHA}${empreinte(secret, sel)}${sel}`;
+export const hashWithSalt = (secret: string, salt: string) => `{SSHA}${fingerprint(secret, salt)}${salt}`;
 
 /** slappasswd : une empreinte {SSHA} (salée : deux fois le même mot de passe ne donne pas la même). */
-export function hacher(j: Jeu, secret: string): string {
-  const n = (j.etat.ldapSel = (j.etat.ldapSel ?? 0) + 1);
-  const sel = empreinte(String(n), 'sel').slice(0, 8);
-  return `{SSHA}${empreinte(secret, sel)}${sel}`;
+export function hash(j: Game, secret: string): string {
+  const n = (j.state.ldapSel = (j.state.ldapSel ?? 0) + 1);
+  const salt = fingerprint(String(n), 'sel').slice(0, 8);
+  return `{SSHA}${fingerprint(secret, salt)}${salt}`;
 }
 
 /** Un mot de passe correspond-il à la valeur de userPassword (empreinte, ou en clair) ? */
-export function verifier(stocke: string, secret: string): boolean {
-  if (stocke.startsWith('{SSHA}')) {
-    const corps = stocke.slice(6);
-    const sel = corps.slice(-8);
-    return empreinte(secret, sel) === corps.slice(0, -8);
+export function check(stores: string, secret: string): boolean {
+  if (stores.startsWith('{SSHA}')) {
+    const body = stores.slice(6);
+    const salt = body.slice(-8);
+    return fingerprint(secret, salt) === body.slice(0, -8);
   }
-  return !stocke.startsWith('{') && stocke === secret;
+  return !stores.startsWith('{') && stores === secret;
 }
 
-export const enClair = (v: string) => !/^\{[A-Z0-9-]+\}/i.test(v);
+export const inClear = (v: string) => !/^\{[A-Z0-9-]+\}/i.test(v);

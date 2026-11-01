@@ -11,101 +11,101 @@
 // Sources : https://download.samba.org/pub/rsync/rsync.1,
 // https://manpages.debian.org/bookworm/cron/crontab.5.en.html
 
-import { chemin, d, f, nom, type Chapitre } from '../world';
-import type { Jeu, Shell } from '../shell';
-import { analyser, passer, tourneA } from '../cron';
+import { path, d, f, name, type Chapter } from '../world';
+import type { Game, Shell } from '../shell';
+import { parse, pass, aRunning } from '../cron';
 
 const M = '/home/vous';
-const SOUVENIRS = `${M}/souvenirs`;
-const SAUVEGARDE = '/mnt/sauvegarde/souvenirs';
-const FICHIERS = ['premiere-lettre.txt', 'phare.txt', 'bourg.txt', 'nour.txt', 'effaceur.txt'];
-const NOUVEAU = 'fete-du-phare.txt';
-const EFFACE = 'premiere-lettre.txt';
+const MEMORIES = `${M}/souvenirs`;
+const BACKUP = '/mnt/sauvegarde/souvenirs';
+const FILES = ['premiere-lettre.txt', 'phare.txt', 'bourg.txt', 'nour.txt', 'effaceur.txt'];
+const NEW = 'fete-du-phare.txt';
+const ERASES = 'premiere-lettre.txt';
 // La nuit du vendredi au samedi 24 octobre 2026, de minuit à 6 h.
-const NUIT = [Date.UTC(2026, 9, 24, 0, 0), Date.UTC(2026, 9, 24, 6, 0)];
+const NIGHT = [Date.UTC(2026, 9, 24, 0, 0), Date.UTC(2026, 9, 24, 6, 0)];
 
-const originaux = (j: Jeu): Record<string, string> => j.etat.originaux;
+const originals = (j: Game): Record<string, string> => j.state.originaux;
 // La sauvegarde contient-elle ces souvenirs, à l'identique ?
-const sauve = (j: Jeu, noms: string[]) => noms.every((n) => j.lire(chemin(j.t, `${SAUVEGARDE}/${n}`)) === originaux(j)[n]);
-const tachesDeNuit = (j: Jeu) =>
-  analyser(j.etat.crontabs?.[j.joueur] ?? '', '').taches.filter((t) => {
-    for (let ms = Date.UTC(2026, 9, 25, 0, 0); ms < Date.UTC(2026, 9, 26, 0, 0); ms += 60_000) if (tourneA(t, ms)) return /\brsync\b/.test(t.commande);
+const saved = (j: Game, names: string[]) => names.every((n) => j.read(path(j.t, `${BACKUP}/${n}`)) === originals(j)[n]);
+const nightTasks = (j: Game) =>
+  parse(j.state.crontabs?.[j.player] ?? '', '').tasks.filter((t) => {
+    for (let ms = Date.UTC(2026, 9, 25, 0, 0); ms < Date.UTC(2026, 9, 26, 0, 0); ms += 60_000) if (aRunning(t, ms)) return /\brsync\b/.test(t.command);
     return false;
   });
 
-export const sauvegarde: Chapitre = {
+export const backup: Chapter = {
   id: 'sauvegarde',
-  numero: 4,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'mkdir', 'cp', 'mv', 'rm', 'nano', 'rsync', 'crontab'],
-  maison: M,
-  noms: true,
-  accueil: 'mot_de_maelle.txt',
+  number: 4,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'mkdir', 'cp', 'mv', 'rm', 'nano', 'rsync', 'crontab'],
+  home: M,
+  names: true,
+  welcome: 'mot_de_maelle.txt',
   final: 'fin',
-  etat: () => ({ crontabs: {}, versionCrontab: 0, versionNuit: 0, originaux: {} }),
-  initialiser: (j) => {
-    for (const n of FICHIERS) j.etat.originaux[n] = j.lire(chemin(j.t, `${SOUVENIRS}/${n}`));
+  state: () => ({ crontabs: {}, versionCrontab: 0, versionNuit: 0, originaux: {} }),
+  initialise: (j) => {
+    for (const n of FILES) j.state.originaux[n] = j.read(path(j.t, `${MEMORIES}/${n}`));
   },
-  creerMonde: (t) =>
+  createWorld: (t) =>
     d({
       home: d(
         {
           vous: d({
             'mot_de_maelle.txt': f(t('sauvegarde-mot-de-maelle')),
-            souvenirs: d(Object.fromEntries(FICHIERS.map((n) => [n, f(t(`sauvegarde-souvenir-${n.replace('.txt', '')}`))]))),
+            souvenirs: d(Object.fromEntries(FILES.map((n) => [n, f(t(`sauvegarde-souvenir-${n.replace('.txt', '')}`))]))),
           }),
         },
         undefined,
-        { proprio: 'root' },
+        { owner: 'root' },
       ),
-      mnt: d({ sauvegarde: d({}) }, undefined, { proprio: 'root' }),
-      tmp: d({}, undefined, { proprio: 'root', mode: 'rwxrwxrwx' }),
+      mnt: d({ sauvegarde: d({}) }, undefined, { owner: 'root' }),
+      tmp: d({}, undefined, { owner: 'root', mode: 'rwxrwxrwx' }),
     }),
   // Dès que la crontab change, la nuit passe : cron lance ce qui tombe entre minuit et 6 h.
-  apresCommande: (j) => {
-    if ((j.etat.versionCrontab ?? 0) === j.etat.versionNuit || !j.etat.crontabs?.[j.joueur] || j.drapeaux.has('nuit-ok')) return;
-    j.etat.versionNuit = j.etat.versionCrontab;
-    const morceaux: string[] = [];
-    if (!j.drapeaux.has('jour')) {
+  afterCommand: (j) => {
+    if ((j.state.versionCrontab ?? 0) === j.state.versionNuit || !j.state.crontabs?.[j.player] || j.flags.has('nuit-ok')) return;
+    j.state.versionNuit = j.state.versionCrontab;
+    const chunks: string[] = [];
+    if (!j.flags.has('jour')) {
       // Le souvenir du jour, arrivé avant la nuit : la tâche doit l'emporter.
-      j.drapeaux.add('jour');
-      const n = j.trouver(chemin(j.t, SOUVENIRS));
-      if (n?.type === 'dossier') n.enfants[nom(j.t, NOUVEAU)] = f(j.t('sauvegarde-souvenir-fete-du-phare'));
-      j.etat.originaux[NOUVEAU] = j.lire(chemin(j.t, `${SOUVENIRS}/${NOUVEAU}`));
-      morceaux.push(j.t('sauvegarde-nuit-debut', { fichier: nom(j.t, NOUVEAU) }));
-    } else morceaux.push(j.t('sauvegarde-nuit-encore'));
-    const executions = passer(j as Shell, NUIT[0], NUIT[1]);
-    const courrier = executions
-      .filter((e) => e.sortie)
-      .map((e) => `$ ${e.commande}\n${e.sortie}`)
+      j.flags.add('jour');
+      const n = j.find(path(j.t, MEMORIES));
+      if (n?.type === 'dossier') n.children[name(j.t, NEW)] = f(j.t('sauvegarde-souvenir-fete-du-phare'));
+      j.state.originaux[NEW] = j.read(path(j.t, `${MEMORIES}/${NEW}`));
+      chunks.push(j.t('sauvegarde-nuit-debut', { fichier: name(j.t, NEW) }));
+    } else chunks.push(j.t('sauvegarde-nuit-encore'));
+    const executions = pass(j as Shell, NIGHT[0], NIGHT[1]);
+    const mail = executions
+      .filter((e) => e.output)
+      .map((e) => `$ ${e.command}\n${e.output}`)
       .join('\n\n');
-    if (sauve(j, [...FICHIERS, NOUVEAU])) {
-      j.drapeaux.add('nuit-ok');
+    if (saved(j, [...FILES, NEW])) {
+      j.flags.add('nuit-ok');
       // Au matin, l'erreur humaine.
-      j.effacer(chemin(j.t, `${SOUVENIRS}/${EFFACE}`));
-      morceaux.push(j.t('sauvegarde-nuit-ok', { fichier: nom(j.t, NOUVEAU) }), j.t('sauvegarde-matin', { fichier: nom(j.t, EFFACE) }));
-    } else if (!executions.length) morceaux.push(j.t('sauvegarde-nuit-rien'));
-    else morceaux.push(courrier ? j.t('sauvegarde-nuit-courrier', { courrier }) : j.t('sauvegarde-nuit-echec'));
-    return morceaux.join('\n\n');
+      j.erase(path(j.t, `${MEMORIES}/${ERASES}`));
+      chunks.push(j.t('sauvegarde-nuit-ok', { fichier: name(j.t, NEW) }), j.t('sauvegarde-matin', { fichier: name(j.t, ERASES) }));
+    } else if (!executions.length) chunks.push(j.t('sauvegarde-nuit-rien'));
+    else chunks.push(mail ? j.t('sauvegarde-nuit-courrier', { courrier: mail }) : j.t('sauvegarde-nuit-echec'));
+    return chunks.join('\n\n');
   },
-  evenements: [
+  events: [
     {
       id: 'imbrique',
-      condition: (j) => j.existe(chemin(j.t, `${SAUVEGARDE}/souvenirs`)),
-      message: (j) => j.t('sauvegarde-evenement-imbrique', { sauvegarde: chemin(j.t, SAUVEGARDE) }),
+      condition: (j) => j.exists(path(j.t, `${BACKUP}/souvenirs`)),
+      message: (j) => j.t('sauvegarde-evenement-imbrique', { sauvegarde: path(j.t, BACKUP) }),
     },
     {
       id: 'copie',
-      condition: (j) => sauve(j, FICHIERS) && !j.drapeaux.has('nuit-ok'),
+      condition: (j) => saved(j, FILES) && !j.flags.has('nuit-ok'),
       message: (j) => j.t('sauvegarde-evenement-copie'),
     },
     {
       id: 'perdu',
-      condition: (j) => j.drapeaux.has('nuit-ok') && !j.existe(chemin(j.t, `${SAUVEGARDE}/${EFFACE}`)) && !j.existe(chemin(j.t, `${SOUVENIRS}/${EFFACE}`)),
-      message: (j) => j.t('sauvegarde-evenement-perdu', { fichier: nom(j.t, EFFACE) }),
+      condition: (j) => j.flags.has('nuit-ok') && !j.exists(path(j.t, `${BACKUP}/${ERASES}`)) && !j.exists(path(j.t, `${MEMORIES}/${ERASES}`)),
+      message: (j) => j.t('sauvegarde-evenement-perdu', { fichier: name(j.t, ERASES) }),
     },
     {
       id: 'fin',
-      condition: (j) => j.drapeaux.has('nuit-ok') && j.lire(chemin(j.t, `${SOUVENIRS}/${EFFACE}`)) === originaux(j)[EFFACE] && tachesDeNuit(j).length > 0,
+      condition: (j) => j.flags.has('nuit-ok') && j.read(path(j.t, `${MEMORIES}/${ERASES}`)) === originals(j)[ERASES] && nightTasks(j).length > 0,
       message: (j) => j.t('sauvegarde-evenement-fin'),
     },
   ],

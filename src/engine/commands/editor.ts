@@ -3,30 +3,30 @@
 // et appelle enregistrerEdition() (^O) et quitterEdition() (^X).
 // Les messages suivent la traduction française de nano.
 
-import type { Commande } from './index';
-import { contenu } from '../tools';
+import type { Command } from './index';
+import { content } from '../tools';
 
-export const EDITEUR: Record<string, Commande> = {
+export const EDITOR: Record<string, Command> = {
   nano: {
-    lancer: ({ args, jeu }) => {
-      const cible = args.find((a) => !a.startsWith('-'));
-      if (!cible) return jeu.erreur(jeu.t('nano-usage'));
-      const chemin = jeu.resoudre(cible);
-      const n = jeu.trouver(cible);
-      const raison = jeu.blocage(cible);
-      if (raison) return jeu.erreur(raison);
-      if (n?.type === 'dossier') return jeu.erreur(jeu.t('nano-dossier', { chemin }));
-      let texte = '';
+    launch: ({ args, game }) => {
+      const target = args.find((a) => !a.startsWith('-'));
+      if (!target) return game.error(game.t('nano-usage'));
+      const path = game.resolve(target);
+      const n = game.find(target);
+      const reason = game.block(target);
+      if (reason) return game.error(reason);
+      if (n?.type === 'dossier') return game.error(game.t('nano-dossier', { chemin: path }));
+      let text = '';
       let message: string;
-      if (!n) message = jeu.t('nano-nouveau');
-      else if (!jeu.traverse(cible) || !jeu.peut(n, 'r')) message = jeu.t('nano-erreur-lecture', { chemin });
-      else if (n.archive) message = jeu.t('nano-binaire', { chemin });
+      if (!n) message = game.t('nano-nouveau');
+      else if (!game.traverses(target) || !game.can(n, 'r')) message = game.t('nano-erreur-lecture', { chemin: path });
+      else if (n.archive) message = game.t('nano-binaire', { chemin: path });
       else {
-        texte = contenu(n, jeu);
-        const lignes = texte === '' ? 0 : texte.split('\n').length;
-        message = jeu.peut(n, 'w') ? jeu.t('nano-lignes-lues', { lignes }) : jeu.t('nano-lecture-seule', { chemin });
+        text = content(n, game);
+        const lines = text === '' ? 0 : text.split('\n').length;
+        message = game.can(n, 'w') ? game.t('nano-lignes-lues', { lignes: lines }) : game.t('nano-lecture-seule', { chemin: path });
       }
-      jeu.edition = { chemin, texte: texte && !texte.endsWith('\n') ? texte + '\n' : texte, root: jeu.qui === 'root', message };
+      game.edition = { path, text: text && !text.endsWith('\n') ? text + '\n' : text, root: game.who === 'root', message };
       return '';
     },
   },

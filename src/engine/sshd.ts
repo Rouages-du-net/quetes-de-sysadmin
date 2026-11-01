@@ -9,26 +9,26 @@
 // La configuration appliquée est celle chargée au dernier démarrage ou
 // rechargement du service ssh (etat.sshd.charge), pas celle du fichier.
 
-import type { Jeu } from './shell';
-import { joker } from './tools';
+import type { Game } from './shell';
+import { wildcard } from './tools';
 
 export const CONFIG = '/etc/ssh/sshd_config';
 
 // Les mots-clés que le jeu connaît, et leurs valeurs permises (null : libre).
-const OUI_NON = ['yes', 'no'];
-const MOTS_CLES: Record<string, string[] | null> = {
+const NOT_YES = ['yes', 'no'];
+const KEYS_WORDS: Record<string, string[] | null> = {
   include: null,
   port: null,
   listenaddress: null,
   permitrootlogin: ['yes', 'prohibit-password', 'without-password', 'forced-commands-only', 'no'],
-  passwordauthentication: OUI_NON,
-  pubkeyauthentication: OUI_NON,
-  kbdinteractiveauthentication: OUI_NON,
-  challengeresponseauthentication: OUI_NON,
-  permitemptypasswords: OUI_NON,
-  usepam: OUI_NON,
-  x11forwarding: OUI_NON,
-  printmotd: OUI_NON,
+  passwordauthentication: NOT_YES,
+  pubkeyauthentication: NOT_YES,
+  kbdinteractiveauthentication: NOT_YES,
+  challengeresponseauthentication: NOT_YES,
+  permitemptypasswords: NOT_YES,
+  usepam: NOT_YES,
+  x11forwarding: NOT_YES,
+  printmotd: NOT_YES,
   allowusers: null,
   denyusers: null,
   allowgroups: null,
@@ -43,7 +43,7 @@ const MOTS_CLES: Record<string, string[] | null> = {
 };
 
 // Valeurs par défaut d'OpenSSH (celles que sshd -T affiche).
-const DEFAUTS: Record<string, string> = {
+const DEFAULTS: Record<string, string> = {
   port: '22',
   permitrootlogin: 'prohibit-password',
   passwordauthentication: 'yes',
@@ -59,80 +59,80 @@ const DEFAUTS: Record<string, string> = {
 };
 
 export interface ConfigSshd {
-  valeurs: Record<string, string>;
-  erreurs: string[];
+  values: Record<string, string>;
+  errors: string[];
 }
 
 /** Lit la configuration comme sshd -t : valeurs effectives et erreurs. */
-export function lireConfig(jeu: Jeu, chemin = CONFIG): ConfigSshd {
-  const valeurs: Record<string, string> = {};
-  const erreurs: string[] = [];
-  let mauvaises = 0;
-  const lire = (fichier: string) => {
-    const texte = jeu.lire(fichier);
-    if (texte === null) return;
-    texte.split('\n').forEach((brute, i) => {
-      const ligne = brute.replace(/#.*/, '').trim();
-      if (!ligne) return;
-      const [mot, ...reste] = ligne.split(/\s+/);
-      const cle = mot.toLowerCase();
-      const valeur = reste.join(' ');
-      if (!(cle in MOTS_CLES)) {
-        erreurs.push(`${fichier}: line ${i + 1}: Bad configuration option: ${mot}`);
-        mauvaises++;
+export function readConfig(game: Game, path = CONFIG): ConfigSshd {
+  const values: Record<string, string> = {};
+  const errors: string[] = [];
+  let bad = 0;
+  const read = (file: string) => {
+    const text = game.read(file);
+    if (text === null) return;
+    text.split('\n').forEach((rawValue, i) => {
+      const line = rawValue.replace(/#.*/, '').trim();
+      if (!line) return;
+      const [word, ...rest] = line.split(/\s+/);
+      const key = word.toLowerCase();
+      const value = rest.join(' ');
+      if (!(key in KEYS_WORDS)) {
+        errors.push(`${file}: line ${i + 1}: Bad configuration option: ${word}`);
+        bad++;
         return;
       }
-      if (cle === 'include') {
-        for (const motif of reste) {
-          const absolu = motif.startsWith('/') ? motif : `/etc/ssh/${motif}`;
-          const k = absolu.lastIndexOf('/');
-          const dossier = jeu.trouver(absolu.slice(0, k));
-          const re = joker(absolu.slice(k + 1));
-          if (dossier?.type === 'dossier')
-            for (const nom of Object.keys(dossier.enfants).sort()) if (re.test(nom)) lire(`${absolu.slice(0, k)}/${nom}`);
+      if (key === 'include') {
+        for (const pattern of rest) {
+          const absolute = pattern.startsWith('/') ? pattern : `/etc/ssh/${pattern}`;
+          const k = absolute.lastIndexOf('/');
+          const directory = game.find(absolute.slice(0, k));
+          const re = wildcard(absolute.slice(k + 1));
+          if (directory?.type === 'dossier')
+            for (const name of Object.keys(directory.children).sort()) if (re.test(name)) read(`${absolute.slice(0, k)}/${name}`);
         }
         return;
       }
-      const permises = MOTS_CLES[cle];
-      if (!valeur || (permises && !permises.includes(valeur.toLowerCase()))) {
-        erreurs.push(valeur ? `${fichier} line ${i + 1}: unsupported option "${valeur}".` : `${fichier} line ${i + 1}: missing argument.`);
+      const permittedOnes = KEYS_WORDS[key];
+      if (!value || (permittedOnes && !permittedOnes.includes(value.toLowerCase()))) {
+        errors.push(value ? `${file} line ${i + 1}: unsupported option "${value}".` : `${file} line ${i + 1}: missing argument.`);
         return;
       }
-      if (cle === 'port') {
-        const n = Number(valeur);
-        if (!/^\d+$/.test(valeur) || n < 1 || n > 65535) erreurs.push(`${fichier} line ${i + 1}: Badly formatted port number.`);
-        else if (!valeurs.port?.split(' ').includes(valeur)) valeurs.port = valeurs.port ? `${valeurs.port} ${valeur}` : valeur;
+      if (key === 'port') {
+        const n = Number(value);
+        if (!/^\d+$/.test(value) || n < 1 || n > 65535) errors.push(`${file} line ${i + 1}: Badly formatted port number.`);
+        else if (!values.port?.split(' ').includes(value)) values.port = values.port ? `${values.port} ${value}` : value;
         return;
       }
-      if (!(cle in valeurs)) valeurs[cle] = permises ? valeur.toLowerCase() : valeur;
+      if (!(key in values)) values[key] = permittedOnes ? value.toLowerCase() : value;
     });
   };
-  lire(chemin);
-  if (mauvaises) erreurs.push(`${chemin}: terminating, ${mauvaises} bad configuration options`);
-  return { valeurs: { ...DEFAUTS, ...valeurs }, erreurs };
+  read(path);
+  if (bad) errors.push(`${path}: terminating, ${bad} bad configuration options`);
+  return { values: { ...DEFAULTS, ...values }, errors };
 }
 
 /** Ce que sshd -T affiche : « mot-clé valeur », en minuscules. */
-export const afficherConfig = (c: ConfigSshd) =>
-  Object.entries(c.valeurs)
+export const showConfig = (c: ConfigSshd) =>
+  Object.entries(c.values)
     .sort(([a], [b]) => a.localeCompare(b))
     .flatMap(([k, v]) => (k === 'port' ? v.split(' ').map((p) => `port ${p}`) : [`${k} ${v}`]))
     .join('\n');
 
 /** La configuration appliquée laisse-t-elle entrer ce compte avec sa clé ? */
-export function autorise(valeurs: Record<string, string>, utilisateur: string): boolean {
-  if (valeurs.pubkeyauthentication === 'no') return false;
-  if (utilisateur === 'root' && valeurs.permitrootlogin === 'no') return false;
-  const liste = (cle: string) => valeurs[cle]?.split(/\s+/).filter(Boolean);
-  if (liste('denyusers')?.includes(utilisateur)) return false;
-  const permis = liste('allowusers');
-  if (permis && !permis.includes(utilisateur)) return false;
+export function allowed(values: Record<string, string>, user: string): boolean {
+  if (values.pubkeyauthentication === 'no') return false;
+  if (user === 'root' && values.permitrootlogin === 'no') return false;
+  const listing = (key: string) => values[key]?.split(/\s+/).filter(Boolean);
+  if (listing('denyusers')?.includes(user)) return false;
+  const permitted = listing('allowusers');
+  if (permitted && !permitted.includes(user)) return false;
   return true;
 }
 
 /** Les méthodes que ssh annonce en cas de refus : « publickey » ou « publickey,password ». */
-export const methodes = (valeurs: Record<string, string>) =>
-  [valeurs.pubkeyauthentication !== 'no' && 'publickey', valeurs.passwordauthentication === 'yes' && 'password'].filter(Boolean).join(',');
+export const methods = (values: Record<string, string>) =>
+  [values.pubkeyauthentication !== 'no' && 'publickey', values.passwordauthentication === 'yes' && 'password'].filter(Boolean).join(',');
 
 /** Les ports sur lesquels sshd écoute avec cette configuration. */
-export const portsSshd = (valeurs: Record<string, string> | null | undefined): number[] => (valeurs?.port ?? '22').split(' ').map(Number);
+export const portsSshd = (values: Record<string, string> | null | undefined): number[] => (values?.port ?? '22').split(' ').map(Number);

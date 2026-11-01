@@ -7,33 +7,33 @@
 // (RFC 5737) ; noms en .example (RFC 6761). Seule exception : 9.9.9.9, le
 // résolveur DNS public de la fondation Quad9.
 
-import { d, f, type Chapitre } from '../world';
+import { d, f, type Chapter } from '../world';
 
 const M = '/home/vous';
 const SITE = 'letters.example';
 const IP_SITE = '203.0.113.10';
 
-const saut = (ip: string, nom: string, ms: number) => ({ ip, nom, ms });
-const BOX = saut('192.168.1.1', 'box.maison', 0.9);
-const VERS_FAI = [BOX, saut('100.64.0.1', 'backhaul.isp.example', 4.2), saut('198.51.100.1', 'core.isp.example', 7.9)];
+const hop = (ip: string, name: string, ms: number) => ({ ip, name, ms });
+const BOX = hop('192.168.1.1', 'box.maison', 0.9);
+const TO_ISP = [BOX, hop('100.64.0.1', 'backhaul.isp.example', 4.2), hop('198.51.100.1', 'core.isp.example', 7.9)];
 
-const derniere = (j: { derniere: { commandes: string[][] } }) => j.derniere.commandes[0] ?? [];
-const pingReussi = (j: any, cible: string) =>
-  derniere(j)[0] === 'ping' && derniere(j).includes(cible) && j.derniere.sortie.includes(' 0% packet loss');
-const dnsRepare = (j: any) => /^\s*nameserver\s+(192\.168\.1\.1|9\.9\.9\.9)\s*$/m.test(j.lire('/etc/resolv.conf') ?? '');
+const last = (j: { last: { commands: string[][] } }) => j.last.commands[0] ?? [];
+const succeededPing = (j: any, target: string) =>
+  last(j)[0] === 'ping' && last(j).includes(target) && j.last.output.includes(' 0% packet loss');
+const repairedDns = (j: any) => /^\s*nameserver\s+(192\.168\.1\.1|9\.9\.9\.9)\s*$/m.test(j.read('/etc/resolv.conf') ?? '');
 
-export const paquet: Chapitre = {
+export const pkg: Chapter = {
   id: 'paquet-perdu',
-  numero: 1,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'cp', 'ping', 'dig', 'traceroute', 'curl', 'sudo', 'grep'],
-  maison: M,
-  accueil: 'note_de_kofi.txt',
-  noms: true,
+  number: 1,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'cp', 'ping', 'dig', 'traceroute', 'curl', 'sudo', 'grep'],
+  home: M,
+  welcome: 'note_de_kofi.txt',
+  names: true,
   final: 'curl',
-  motDePasse: 'fourmiliere',
+  password: 'fourmiliere',
   // t : les textes dans la langue du jeu (français tant que le shell ne le
   // transmet pas).
-  etat: (t) => ({
+  state: (t) => ({
     reseau: {
       machines: {
         '192.168.1.1': { ping: true, ms: 0.9 },
@@ -41,22 +41,22 @@ export const paquet: Chapitre = {
         // Le serveur du site ne répond pas au ping : son pare-feu l'ignore.
         [IP_SITE]: { ping: false, ms: 12.6 },
       },
-      noms: { [SITE]: IP_SITE, 'box.maison': '192.168.1.1' },
-      resolveurs: ['192.168.1.1', '9.9.9.9'],
+      names: { [SITE]: IP_SITE, 'box.maison': '192.168.1.1' },
+      resolvers: ['192.168.1.1', '9.9.9.9'],
       routes: {
         '192.168.1.1': [BOX],
-        '9.9.9.9': [...VERS_FAI, saut('9.9.9.9', 'dns9.quad9.net', 11.8)],
-        [IP_SITE]: [...VERS_FAI, saut('198.51.100.130', 'exchange.ix.example', 9.1), saut('203.0.113.1', 'router.hosting.example', 11.4)],
+        '9.9.9.9': [...TO_ISP, hop('9.9.9.9', 'dns9.quad9.net', 11.8)],
+        [IP_SITE]: [...TO_ISP, hop('198.51.100.130', 'exchange.ix.example', 9.1), hop('203.0.113.1', 'router.hosting.example', 11.4)],
       },
       web: {
         [SITE]: {
-          entetes: ['HTTP/2 200', 'content-type: text/html; charset=utf-8', 'content-length: 1342', 'server: nginx', 'date: Tue, 13 Oct 2026 19:42:07 GMT'],
-          corps: `<!doctype html>\n<html lang="${t.langue}">\n<head><title>${t('paquet-perdu-site-titre')}</title></head>\n<body>\n<h1>${t('paquet-perdu-site-titre')}</h1>\n<p>${t('paquet-perdu-site-texte')}</p>\n</body>\n</html>`,
+          headers: ['HTTP/2 200', 'content-type: text/html; charset=utf-8', 'content-length: 1342', 'server: nginx', 'date: Tue, 13 Oct 2026 19:42:07 GMT'],
+          body: `<!doctype html>\n<html lang="${t.language}">\n<head><title>${t('paquet-perdu-site-titre')}</title></head>\n<body>\n<h1>${t('paquet-perdu-site-titre')}</h1>\n<p>${t('paquet-perdu-site-texte')}</p>\n</body>\n</html>`,
         },
       },
     },
   }),
-  creerMonde: (t) =>
+  createWorld: (t) =>
     d(
       {
         home: d(
@@ -67,7 +67,7 @@ export const paquet: Chapitre = {
             }),
           },
           undefined,
-          { proprio: 'root' },
+          { owner: 'root' },
         ),
         etc: d(
           {
@@ -76,67 +76,67 @@ export const paquet: Chapitre = {
 # ${t('paquet-perdu-resolv-commentaire')}
 nameserver 192.168.1.250
 `,
-              { proprio: 'root', lignes: true },
+              { owner: 'root', lines: true },
             ),
             'resolv.conf.box': f(
               `
 # ${t('paquet-perdu-resolv-box-commentaire')}
 nameserver 192.168.1.1
 `,
-              { proprio: 'root', lignes: true },
+              { owner: 'root', lines: true },
             ),
           },
           undefined,
-          { proprio: 'root' },
+          { owner: 'root' },
         ),
       },
       undefined,
-      { proprio: 'root' },
+      { owner: 'root' },
     ),
-  evenements: [
+  events: [
     {
       id: 'box',
-      condition: (j) => pingReussi(j, '192.168.1.1'),
+      condition: (j) => succeededPing(j, '192.168.1.1'),
       message: (j) => j.t('paquet-perdu-evenement-box'),
     },
     {
       id: 'internet',
-      condition: (j) => pingReussi(j, '9.9.9.9'),
+      condition: (j) => succeededPing(j, '9.9.9.9'),
       message: (j) => j.t('paquet-perdu-evenement-internet'),
     },
     {
       id: 'nom',
-      condition: (j) => derniere(j)[0] === 'ping' && j.derniere.erreurs.some((e) => e.includes('name resolution')),
+      condition: (j) => last(j)[0] === 'ping' && j.last.errors.some((e) => e.includes('name resolution')),
       message: (j) => j.t('paquet-perdu-evenement-nom'),
     },
     {
       id: 'dns-muet',
-      condition: (j) => derniere(j)[0] === 'dig' && /no servers could be reached|timed out/.test(j.derniere.sortie + j.derniere.erreurs.join()),
+      condition: (j) => last(j)[0] === 'dig' && /no servers could be reached|timed out/.test(j.last.output + j.last.errors.join()),
       message: (j) => j.t('paquet-perdu-evenement-dns-muet'),
     },
     {
       id: 'dns-autre',
-      condition: (j) => derniere(j)[0] === 'dig' && j.derniere.sortie.includes(IP_SITE),
+      condition: (j) => last(j)[0] === 'dig' && j.last.output.includes(IP_SITE),
       message: (j) => j.t('paquet-perdu-evenement-dns-autre', { ip: IP_SITE }),
     },
     {
       id: 'dns-repare',
-      condition: dnsRepare,
+      condition: repairedDns,
       message: (j) => j.t('paquet-perdu-evenement-dns-repare'),
     },
     {
       id: 'ping-perdu',
-      condition: (j) => dnsRepare(j) && derniere(j)[0] === 'ping' && derniere(j).includes(SITE) && j.derniere.sortie.includes('100% packet loss'),
+      condition: (j) => repairedDns(j) && last(j)[0] === 'ping' && last(j).includes(SITE) && j.last.output.includes('100% packet loss'),
       message: (j) => j.t('paquet-perdu-evenement-ping-perdu', { ip: IP_SITE }),
     },
     {
       id: 'route',
-      condition: (j) => dnsRepare(j) && derniere(j)[0] === 'traceroute' && j.derniere.sortie.includes('203.0.113.1'),
+      condition: (j) => repairedDns(j) && last(j)[0] === 'traceroute' && j.last.output.includes('203.0.113.1'),
       message: (j) => j.t('paquet-perdu-evenement-route'),
     },
     {
       id: 'curl',
-      condition: (j) => dnsRepare(j) && derniere(j)[0] === 'curl' && /HTTP\/2 200|<html/.test(j.derniere.sortie),
+      condition: (j) => repairedDns(j) && last(j)[0] === 'curl' && /HTTP\/2 200|<html/.test(j.last.output),
       message: (j) => j.t('paquet-perdu-evenement-curl'),
     },
   ],

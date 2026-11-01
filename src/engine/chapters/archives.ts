@@ -2,20 +2,20 @@
 // sur une petite clé USB, avec du, df, find et tar. Les tailles des images,
 // sons et PDF sont simulées (champ `taille`).
 
-import { chemin, d, f, nom, type Chapitre, type Fichier } from '../world';
-import type { Jeu } from '../shell';
+import { path, d, f, name, type Chapter, type File } from '../world';
+import type { Game } from '../shell';
 
 const M = '/home/vous';
-const CLE = '/media/cle';
+const KEY = '/media/cle';
 const Mo = 1024 * 1024;
 // Les commandes qui écrivent sur la clé (bash : une redirection >).
-const ECRIVAINS = ['tar', 'cp', 'mv', 'mkdir', 'bash'];
+const WRITERS = ['tar', 'cp', 'mv', 'mkdir', 'bash'];
 
-const binaire = (description: string, taille: number) => f(description, { taille: Math.round(taille * Mo) });
-const texte = (t: string, taille: number) => f(t, { taille: Math.round(taille * Mo), lignes: true });
+const binary = (description: string, size: number) => f(description, { size: Math.round(size * Mo) });
+const text = (t: string, size: number) => f(t, { size: Math.round(size * Mo), lines: true });
 
 // Les fichiers qu'il faut absolument sauver (chemins relatifs à ~).
-const PRECIEUX = [
+const PRECIOUS = [
   'fonds/manuscrits/journal_de_marie.txt',
   'fonds/manuscrits/lettres_1914.txt',
   'fonds/manuscrits/recettes_du_quartier.txt',
@@ -28,32 +28,32 @@ const PRECIEUX = [
 ];
 
 // Une archive tar sur la clé qui contient tous les fichiers précieux.
-function archiveComplete(j: Pick<Jeu, 'trouver' | 'joueur' | 't'>): Fichier | null {
-  const cle = j.trouver(chemin(j.t, CLE));
-  if (cle?.type !== 'dossier') return null;
-  for (const n of Object.values(cle.enfants) as Fichier[]) {
+function archiveComplete(j: Pick<Game, 'find' | 'player' | 't'>): File | null {
+  const key = j.find(path(j.t, KEY));
+  if (key?.type !== 'dossier') return null;
+  for (const n of Object.values(key.children) as File[]) {
     if (n.type !== 'fichier' || !n.archive) continue;
-    const chemins = Object.keys(n.archive.fichiers).map((c) => c.replace(new RegExp(`^(\\./|~/|home/${j.joueur}/)`), ''));
-    if (PRECIEUX.map((p) => chemin(j.t, p)).every((p) => chemins.some((c) => c === p || c.endsWith('/' + p)))) return n;
+    const paths = Object.keys(n.archive.files).map((c) => c.replace(new RegExp(`^(\\./|~/|home/${j.player}/)`), ''));
+    if (PRECIOUS.map((p) => path(j.t, p)).every((p) => paths.some((c) => c === p || c.endsWith('/' + p)))) return n;
   }
   return null;
 }
 
-export const archives: Chapitre = {
+export const archives: Chapter = {
   id: 'archives',
-  numero: 1,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'du', 'df', 'find', 'tar', 'cp', 'mv', 'rm', 'mkdir'],
-  maison: M,
-  accueil: 'lettre_de_rosa.txt',
-  noms: true,
+  number: 1,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'du', 'df', 'find', 'tar', 'cp', 'mv', 'rm', 'mkdir'],
+  home: M,
+  welcome: 'lettre_de_rosa.txt',
+  names: true,
   final: 'sauve',
-  etat: (t) => ({
+  state: (t) => ({
     montages: [
-      { chemin: chemin(t, CLE), capacite: 64 * Mo, nom: '/dev/sdb1' },
-      { chemin: '/', capacite: 20 * 1024 * Mo, nom: '/dev/sda1' },
+      { path: path(t, KEY), capacity: 64 * Mo, name: '/dev/sdb1' },
+      { path: '/', capacity: 20 * 1024 * Mo, name: '/dev/sda1' },
     ],
   }),
-  creerMonde: (t) =>
+  createWorld: (t) =>
     d({
       home: d({
         vous: d({
@@ -62,60 +62,60 @@ export const archives: Chapitre = {
           fonds: d({
             'lisezmoi.txt': f(t('archives-lisezmoi')),
             manuscrits: d({
-              'journal_de_marie.txt': texte(t('archives-journal-de-marie'), 3),
-              'lettres_1914.txt': texte(t('archives-lettres-1914'), 2.5),
-              'recettes_du_quartier.txt': texte(t('archives-recettes-du-quartier'), 1.5),
+              'journal_de_marie.txt': text(t('archives-journal-de-marie'), 3),
+              'lettres_1914.txt': text(t('archives-lettres-1914'), 2.5),
+              'recettes_du_quartier.txt': text(t('archives-recettes-du-quartier'), 1.5),
             }),
             cartes: d({
-              'plan_1890.png': binaire(t('archives-image-png'), 6),
-              'plan_1954.png': binaire(t('archives-image-png'), 5),
-              'rendu.tmp': binaire(t('archives-fichier-temporaire'), 30),
+              'plan_1890.png': binary(t('archives-image-png'), 6),
+              'plan_1954.png': binary(t('archives-image-png'), 5),
+              'rendu.tmp': binary(t('archives-fichier-temporaire'), 30),
             }),
             presse: d({
-              'gazette_1936.pdf': binaire(t('archives-document-pdf'), 4),
-              'gazette_1968.pdf': binaire(t('archives-document-pdf'), 4.5),
-              'export.tmp': binaire(t('archives-fichier-temporaire'), 40),
+              'gazette_1936.pdf': binary(t('archives-document-pdf'), 4),
+              'gazette_1968.pdf': binary(t('archives-document-pdf'), 4.5),
+              'export.tmp': binary(t('archives-fichier-temporaire'), 40),
             }),
             enregistrements: d({
-              'chants_du_marche.ogg': binaire(t('archives-son-ogg'), 12),
-              'entretien_fatou.ogg': binaire(t('archives-son-ogg'), 15),
-              'brut.tmp': binaire(t('archives-fichier-temporaire'), 50),
+              'chants_du_marche.ogg': binary(t('archives-son-ogg'), 12),
+              'entretien_fatou.ogg': binary(t('archives-son-ogg'), 15),
+              'brut.tmp': binary(t('archives-fichier-temporaire'), 50),
             }),
           }),
         }),
       }),
       media: d({ cle: d({}) }),
     }),
-  evenements: [
+  events: [
     {
       id: 'mesure',
-      condition: (j) => j.derniere.commandes[0]?.[0] === 'du',
+      condition: (j) => j.last.commands[0]?.[0] === 'du',
       message: (j) => j.t('archives-evenement-mesure'),
     },
     {
       id: 'plein',
-      condition: (j) => j.derniere.erreurs.some((e) => ECRIVAINS.some((commande) => e === j.t('erreur-espace', { commande }))),
+      condition: (j) => j.last.errors.some((e) => WRITERS.some((command) => e === j.t('erreur-espace', { commande: command }))),
       message: (j) => j.t('archives-evenement-plein'),
     },
     {
       id: 'tmp',
-      condition: (j) => j.derniere.commandes[0]?.[0] === 'find' && j.derniere.sortie.includes(nom(j.t, 'brut.tmp')),
+      condition: (j) => j.last.commands[0]?.[0] === 'find' && j.last.output.includes(name(j.t, 'brut.tmp')),
       message: (j) => j.t('archives-evenement-tmp'),
     },
     {
       id: 'perte',
-      condition: (j) => !archiveComplete(j) && PRECIEUX.some((p) => !j.existe(chemin(j.t, `${M}/${p}`))),
+      condition: (j) => !archiveComplete(j) && PRECIOUS.some((p) => !j.exists(path(j.t, `${M}/${p}`))),
       message: (j) => j.t('archives-evenement-perte'),
     },
     {
       id: 'menage',
-      condition: (j) => j.existe(chemin(j.t, `${M}/fonds`)) && !['cartes/rendu.tmp', 'presse/export.tmp', 'enregistrements/brut.tmp'].some((t) => j.existe(chemin(j.t, `${M}/fonds/${t}`))),
+      condition: (j) => j.exists(path(j.t, `${M}/fonds`)) && !['cartes/rendu.tmp', 'presse/export.tmp', 'enregistrements/brut.tmp'].some((t) => j.exists(path(j.t, `${M}/fonds/${t}`))),
       message: (j) => j.t('archives-evenement-menage'),
     },
     {
       id: 'sauve',
       condition: (j) => !!archiveComplete(j),
-      message: (j) => j.t('archives-evenement-sauve', { taille: (archiveComplete(j)!.taille ?? 0) / Mo }),
+      message: (j) => j.t('archives-evenement-sauve', { taille: (archiveComplete(j)!.size ?? 0) / Mo }),
     },
   ],
 };

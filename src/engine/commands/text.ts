@@ -3,204 +3,204 @@
 // petits outils qui font une seule chose, et qu'on enchaîne.
 
 import { options } from '../tools';
-import { colorer, lireCouleur, messageCouleurInvalide, sgr } from '../colours';
-import type { Commande, Contexte } from './index';
+import { colourise, readColour, invalidColourMessage, sgr } from '../colours';
+import type { Command, Context } from './index';
 
 // Les lignes à traiter : celles des fichiers donnés, sinon l'entrée du tube.
-function textes(cmd: string, { entree, jeu }: Contexte, fichiers: string[]): { nom: string; texte: string }[] {
-  if (!fichiers.length) {
-    if (entree === null) jeu.erreur(jeu.t('texte-sans-entree', { commande: cmd }));
-    return entree === null ? [] : [{ nom: '', texte: entree }];
+function texts(cmd: string, { input, game }: Context, files: string[]): { name: string; text: string }[] {
+  if (!files.length) {
+    if (input === null) game.error(game.t('texte-sans-entree', { commande: cmd }));
+    return input === null ? [] : [{ name: '', text: input }];
   }
-  return fichiers
-    .map((f) => ({ nom: f, texte: jeu.lirePour(cmd, f) }))
-    .filter((t): t is { nom: string; texte: string } => t.texte !== null);
+  return files
+    .map((f) => ({ name: f, text: game.readFor(cmd, f) }))
+    .filter((t): t is { name: string; text: string } => t.text !== null);
 }
 
-const lignesDe = (t: string) => (t === '' ? [] : t.split('\n'));
+const linesFor = (t: string) => (t === '' ? [] : t.split('\n'));
 
 // -n 5, -n5 ou -5 → 5.
-function nombre(args: string[], defaut: number): { n: number; reste: string[] } {
-  const reste: string[] = [];
-  let n = defaut;
+function count(args: string[], fallback: number): { n: number; rest: string[] } {
+  const rest: string[] = [];
+  let n = fallback;
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '-n') n = Number(args[++i]);
     else if (/^-n\d+$/.test(a)) n = Number(a.slice(2));
     else if (/^-\d+$/.test(a)) n = Number(a.slice(1));
-    else reste.push(a);
+    else rest.push(a);
   }
-  return { n: Number.isFinite(n) ? n : defaut, reste };
+  return { n: Number.isFinite(n) ? n : fallback, rest };
 }
 
-function tete(cmd: 'head' | 'tail') {
-  return (c: Contexte) => {
-    const { n, reste } = nombre(c.args, 10);
-    const ts = textes(cmd, c, reste);
+function head(cmd: 'head' | 'tail') {
+  return (c: Context) => {
+    const { n, rest } = count(c.args, 10);
+    const ts = texts(cmd, c, rest);
     return ts
-      .map(({ nom, texte }) => {
-        const l = lignesDe(texte);
+      .map(({ name, text }) => {
+        const l = linesFor(text);
         const part = cmd === 'head' ? l.slice(0, n) : l.slice(Math.max(0, l.length - n));
-        return (ts.length > 1 ? `==> ${nom} <==\n` : '') + part.join('\n');
+        return (ts.length > 1 ? `==> ${name} <==\n` : '') + part.join('\n');
       })
       .join('\n\n');
   };
 }
 
-export const TEXTE: Record<string, Commande> = {
+export const TEXT: Record<string, Command> = {
   less: {
-    lancer: (c) => textes('less', c, c.args.slice(0, 1)).map((t) => t.texte).join('\n'),
+    launch: (c) => texts('less', c, c.args.slice(0, 1)).map((t) => t.text).join('\n'),
   },
 
   grep: {
-    lancer: (brut) => {
+    launch: (raw) => {
       // --color : comme l'alias « grep --color=auto » du ~/.bashrc de Debian.
-      const couleur = lireCouleur(brut.args, 'auto', 'auto');
-      if (couleur.invalide !== undefined) return brut.jeu.erreur(messageCouleurInvalide(brut, 'grep', couleur.invalide));
-      const c = { ...brut, args: couleur.args };
-      const enCouleur = colorer(c, couleur.quand);
-      const { lettres, reste } = options(c.args);
-      const [motif, ...fichiers] = reste;
-      if (motif === undefined) return c.jeu.erreur(c.jeu.t('grep-usage'));
-      const casse = lettres.has('i');
+      const colour = readColour(raw.args, 'auto', 'auto');
+      if (colour.invalid !== undefined) return raw.game.error(invalidColourMessage(raw, 'grep', colour.invalid));
+      const c = { ...raw, args: colour.args };
+      const inColour = colourise(c, colour.when);
+      const { letters, rest } = options(c.args);
+      const [pattern, ...files] = rest;
+      if (pattern === undefined) return c.game.error(c.game.t('grep-usage'));
+      const broken = letters.has('i');
       // Le motif : une expression régulière basique (BRE), étendue avec -E, du texte brut avec -F.
       let re: RegExp | null = null;
-      if (!lettres.has('F'))
+      if (!letters.has('F'))
         try {
-          re = new RegExp(lettres.has('E') ? motif : versRegexBasique(motif), casse ? 'i' : '');
+          re = new RegExp(letters.has('E') ? pattern : toBasicRegex(pattern), broken ? 'i' : '');
         } catch {
-          c.jeu.statut = 2;
-          return c.jeu.erreur(/\[/.test(motif) && !/\]/.test(motif) ? 'grep: Unmatched [, [^, [:, [., or [=' : 'grep: Invalid regular expression');
+          c.game.status = 2;
+          return c.game.error(/\[/.test(pattern) && !/\]/.test(pattern) ? 'grep: Unmatched [, [^, [:, [., or [=' : 'grep: Invalid regular expression');
         }
-      const cherche = casse ? motif.toLowerCase() : motif;
-      const correspond = (l: string) => (re ? re.test(l) : (casse ? l.toLowerCase() : l).includes(cherche));
-      const ts = textes('grep', c, fichiers);
+      const searches = broken ? pattern.toLowerCase() : pattern;
+      const correspond = (l: string) => (re ? re.test(l) : (broken ? l.toLowerCase() : l).includes(searches));
+      const ts = texts('grep', c, files);
       // En couleur (GREP_COLORS par défaut) : ce qui correspond en rouge gras, le nom du fichier en magenta, le « : » en cyan.
       const global = re ? new RegExp(re.source, re.flags + 'g') : null;
-      const surligner = (l: string) => {
-        if (!enCouleur || lettres.has('v')) return l;
+      const highlight = (l: string) => {
+        if (!inColour || letters.has('v')) return l;
         if (global) return l.replace(global, (m) => sgr('01;31', m));
-        if (!cherche) return l;
-        let sortie = '';
+        if (!searches) return l;
+        let output = '';
         let i = 0;
-        const dans = casse ? l.toLowerCase() : l;
-        for (let k = dans.indexOf(cherche); k >= 0; k = dans.indexOf(cherche, i)) {
-          sortie += l.slice(i, k) + sgr('01;31', l.slice(k, k + cherche.length));
-          i = k + cherche.length;
+        const inside = broken ? l.toLowerCase() : l;
+        for (let k = inside.indexOf(searches); k >= 0; k = inside.indexOf(searches, i)) {
+          output += l.slice(i, k) + sgr('01;31', l.slice(k, k + searches.length));
+          i = k + searches.length;
         }
-        return sortie + l.slice(i);
+        return output + l.slice(i);
       };
-      const prefixe = (nom: string) => (enCouleur ? `${sgr('35', nom)}${sgr('36', ':')}` : `${nom}:`);
-      const sorties: string[] = [];
-      for (const { nom, texte } of ts) {
-        const garde = lignesDe(texte).filter((l) => correspond(l) !== lettres.has('v'));
-        if (lettres.has('c')) sorties.push(ts.length > 1 ? `${prefixe(nom)}${garde.length}` : String(garde.length));
-        else sorties.push(...garde.map((l) => (ts.length > 1 ? `${prefixe(nom)}${surligner(l)}` : surligner(l))));
+      const prefix = (name: string) => (inColour ? `${sgr('35', name)}${sgr('36', ':')}` : `${name}:`);
+      const outputs: string[] = [];
+      for (const { name, text } of ts) {
+        const kept = linesFor(text).filter((l) => correspond(l) !== letters.has('v'));
+        if (letters.has('c')) outputs.push(ts.length > 1 ? `${prefix(name)}${kept.length}` : String(kept.length));
+        else outputs.push(...kept.map((l) => (ts.length > 1 ? `${prefix(name)}${highlight(l)}` : highlight(l))));
       }
       // Écart volontaire : le vrai grep ne dit rien quand il ne trouve rien ;
       // ici, on le précise (seulement à l'écran, jamais dans un tube).
       // -q : rien à l'écran ; seul compte le code de retour (échec si rien trouvé).
-      if (lettres.has('q')) return sorties.length ? '' : c.jeu.erreur('');
+      if (letters.has('q')) return outputs.length ? '' : c.game.error('');
       // Comme grep : code 1 quand rien ne correspond (utile dans un script).
-      c.jeu.statut = sorties.length ? 0 : 1;
-      if (!sorties.length && c.dernier && ts.length) c.jeu.erreur(c.jeu.t('grep-rien', { motif }));
-      return sorties.join('\n');
+      c.game.status = outputs.length ? 0 : 1;
+      if (!outputs.length && c.last && ts.length) c.game.error(c.game.t('grep-rien', { motif: pattern }));
+      return outputs.join('\n');
     },
   },
 
   head: {
-    lancer: tete('head'),
+    launch: head('head'),
   },
 
   tail: {
     // -f (--follow, -F) : après la fin du fichier, tail attend ce qui s'y ajoute
     // et l'affiche, jusqu'à Ctrl-C (Shell.suivi, voir activite.ts).
-    lancer: (c) => {
-      const suivre = c.args.some((a) => a === '-f' || a === '-F' || a === '--follow');
+    launch: (c) => {
+      const follow = c.args.some((a) => a === '-f' || a === '-F' || a === '--follow');
       const args = c.args.filter((a) => a !== '-f' && a !== '-F' && a !== '--follow');
-      const sortie = tete('tail')({ ...c, args });
-      const { reste } = nombre(args, 10);
+      const output = head('tail')({ ...c, args });
+      const { rest } = count(args, 10);
       // Écart : dans un tube (tail -f journal | grep …), le jeu affiche une fois, sans suivre.
-      if (!suivre || !c.dernier || reste.length !== 1 || c.jeu.lirePour('tail', reste[0]) === null) return sortie;
-      const fichier = c.jeu.resoudre(reste[0]);
-      let vues = lignesDe(c.jeu.lire(fichier) ?? '').length;
-      c.jeu.suivi = {
-        lire: () => {
-          const lignes = lignesDe(c.jeu.lire(fichier) ?? '');
-          if (lignes.length < vues) {
-            vues = lignes.length;
-            return `tail: ${reste[0]}: file truncated`;
+      if (!follow || !c.last || rest.length !== 1 || c.game.readFor('tail', rest[0]) === null) return output;
+      const file = c.game.resolve(rest[0]);
+      let views = linesFor(c.game.read(file) ?? '').length;
+      c.game.follow = {
+        read: () => {
+          const lines = linesFor(c.game.read(file) ?? '');
+          if (lines.length < views) {
+            views = lines.length;
+            return `tail: ${rest[0]}: file truncated`;
           }
-          const nouvelles = lignes.slice(vues);
-          vues = lignes.length;
-          return nouvelles.join('\n');
+          const fresh = lines.slice(views);
+          views = lines.length;
+          return fresh.join('\n');
         },
       };
-      return sortie;
+      return output;
     },
   },
 
   wc: {
-    lancer: (c) => {
-      const { lettres, reste } = options(c.args);
-      const tous = !lettres.has('l') && !lettres.has('w') && !lettres.has('c');
-      return textes('wc', c, reste)
-        .map(({ nom, texte }) => {
+    launch: (c) => {
+      const { letters, rest } = options(c.args);
+      const all = !letters.has('l') && !letters.has('w') && !letters.has('c');
+      return texts('wc', c, rest)
+        .map(({ name, text }) => {
           // Comme le vrai wc : on compte les fins de ligne.
-          const champs: number[] = [];
-          if (tous || lettres.has('l')) champs.push(texte === '' ? 0 : texte.split('\n').length);
-          if (tous || lettres.has('w')) champs.push(texte.split(/\s+/).filter(Boolean).length);
-          if (tous || lettres.has('c')) champs.push(new TextEncoder().encode(texte).length + (texte ? 1 : 0));
-          return [champs.length === 1 ? String(champs[0]) : champs.map((n) => String(n).padStart(6)).join(' '), nom].filter(Boolean).join(' ');
+          const fields: number[] = [];
+          if (all || letters.has('l')) fields.push(text === '' ? 0 : text.split('\n').length);
+          if (all || letters.has('w')) fields.push(text.split(/\s+/).filter(Boolean).length);
+          if (all || letters.has('c')) fields.push(new TextEncoder().encode(text).length + (text ? 1 : 0));
+          return [fields.length === 1 ? String(fields[0]) : fields.map((n) => String(n).padStart(6)).join(' '), name].filter(Boolean).join(' ');
         })
         .join('\n');
     },
   },
 
   sort: {
-    lancer: (c) => {
-      const { lettres, reste } = options(c.args);
-      const lignes = textes('sort', c, reste).flatMap((t) => lignesDe(t.texte));
+    launch: (c) => {
+      const { letters, rest } = options(c.args);
+      const lines = texts('sort', c, rest).flatMap((t) => linesFor(t.text));
       const num = (l: string) => parseFloat(l.trim()) || 0;
-      lignes.sort(lettres.has('n') ? (a, b) => num(a) - num(b) || a.localeCompare(b, 'fr') : (a, b) => a.localeCompare(b, 'fr'));
-      if (lettres.has('r')) lignes.reverse();
-      return lignes.join('\n');
+      lines.sort(letters.has('n') ? (a, b) => num(a) - num(b) || a.localeCompare(b, 'fr') : (a, b) => a.localeCompare(b, 'fr'));
+      if (letters.has('r')) lines.reverse();
+      return lines.join('\n');
     },
   },
 
   uniq: {
-    lancer: (c) => {
-      const { lettres, reste } = options(c.args);
-      const groupes: { ligne: string; n: number }[] = [];
-      for (const l of textes('uniq', c, reste).flatMap((t) => lignesDe(t.texte))) {
-        const dernier = groupes.at(-1);
-        if (dernier && dernier.ligne === l) dernier.n++;
-        else groupes.push({ ligne: l, n: 1 });
+    launch: (c) => {
+      const { letters, rest } = options(c.args);
+      const groups: { line: string; n: number }[] = [];
+      for (const l of texts('uniq', c, rest).flatMap((t) => linesFor(t.text))) {
+        const last = groups.at(-1);
+        if (last && last.line === l) last.n++;
+        else groups.push({ line: l, n: 1 });
       }
-      return groupes.map((g) => (lettres.has('c') ? `${String(g.n).padStart(7)} ${g.ligne}` : g.ligne)).join('\n');
+      return groups.map((g) => (letters.has('c') ? `${String(g.n).padStart(7)} ${g.line}` : g.line)).join('\n');
     },
   },
 
   cut: {
-    lancer: (c) => {
+    launch: (c) => {
       let sep = '\t';
-      let champs: number[] = [];
-      const fichiers: string[] = [];
+      let fields: number[] = [];
+      const files: string[] = [];
       for (let i = 0; i < c.args.length; i++) {
         const a = c.args[i];
         if (a === '-d') sep = c.args[++i] ?? sep;
         else if (a.startsWith('-d')) sep = a.slice(2);
-        else if (a === '-f') champs = (c.args[++i] ?? '').split(',').map(Number);
-        else if (a.startsWith('-f')) champs = a.slice(2).split(',').map(Number);
-        else fichiers.push(a);
+        else if (a === '-f') fields = (c.args[++i] ?? '').split(',').map(Number);
+        else if (a.startsWith('-f')) fields = a.slice(2).split(',').map(Number);
+        else files.push(a);
       }
-      if (!champs.length || champs.some((n) => !n)) return c.jeu.erreur(c.jeu.t('cut-champs'));
-      if (sep.length !== 1) return c.jeu.erreur(c.jeu.t('cut-separateur'));
-      return textes('cut', c, fichiers)
-        .flatMap((t) => lignesDe(t.texte))
+      if (!fields.length || fields.some((n) => !n)) return c.game.error(c.game.t('cut-champs'));
+      if (sep.length !== 1) return c.game.error(c.game.t('cut-separateur'));
+      return texts('cut', c, files)
+        .flatMap((t) => linesFor(t.text))
         .map((l) => {
           const parts = l.split(sep);
-          return parts.length === 1 ? l : champs.map((n) => parts[n - 1]).filter((p) => p !== undefined).join(sep);
+          return parts.length === 1 ? l : fields.map((n) => parts[n - 1]).filter((p) => p !== undefined).join(sep);
         })
         .join('\n');
     },
@@ -210,19 +210,19 @@ export const TEXTE: Record<string, Commande> = {
 // Une expression régulière basique (BRE, comme grep sans -E) en expression JavaScript :
 // + ? | ( ) { } sont des caractères ordinaires, et spéciaux précédés de \ ;
 // les crochets [...] sont recopiés tels quels.
-export function versRegexBasique(motif: string): string {
+export function toBasicRegex(pattern: string): string {
   let res = '';
-  for (let i = 0; i < motif.length; i++) {
-    const c = motif[i];
-    if (c === '\\' && i + 1 < motif.length) {
-      const s = motif[++i];
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if (c === '\\' && i + 1 < pattern.length) {
+      const s = pattern[++i];
       res += '+?|(){}'.includes(s) ? s : `\\${s}`;
     } else if ('+?|(){}'.includes(c)) res += `\\${c}`;
     else if (c === '[') {
-      const fin = motif.indexOf(']', i + (motif[i + 1] === ']' ? 2 : motif[i + 1] === '^' && motif[i + 2] === ']' ? 3 : 1));
-      if (fin < 0) return motif.slice(0, i) + '[';
-      res += motif.slice(i, fin + 1);
-      i = fin;
+      const end = pattern.indexOf(']', i + (pattern[i + 1] === ']' ? 2 : pattern[i + 1] === '^' && pattern[i + 2] === ']' ? 3 : 1));
+      if (end < 0) return pattern.slice(0, i) + '[';
+      res += pattern.slice(i, end + 1);
+      i = end;
     } else res += c;
   }
   return res;

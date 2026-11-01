@@ -18,54 +18,54 @@
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html#IOReadBandwidthMax=device%20bytes,
 // https://docs.kernel.org/admin-guide/cgroup-v2.html#io
 
-import { chemin, d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../world';
-import type { Jeu } from '../shell';
-import type { Traduire } from '../../texts';
-import { journaliser, nouveauSystemd, systemd, type Service } from '../systemd';
-import { etatDisque, io, prioritesActives, servieATemps, visePartition, type EtatIO } from '../disk-io';
-import type { Processus } from '../commands/system';
+import { path, d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import type { Game } from '../shell';
+import type { Translate } from '../../texts';
+import { writeLog, newSystemd, systemd, type Service } from '../systemd';
+import { diskState, io, activesPriorities, timeAServed, targetsPartition, type IoState } from '../disk-io';
+import type { Process } from '../commands/system';
 
 const M = '/home/vous';
 const Mo = 1024 * 1024;
 const ARCHIVES = 2190;
 // La copie du jour (rsync), dans la langue : /srv/radio/recordings/… en anglais.
-const copie = (t: Traduire) => `rsync -a ${chemin(t, '/srv/radio/enregistrements')}/ /srv/archives/2027-09-20/`;
+const copyOf = (t: Translate) => `rsync -a ${path(t, '/srv/radio/enregistrements')}/ /srv/archives/2027-09-20/`;
 // Le relais lit le direct ici.
-const tampon = (t: Traduire) => chemin(t, '/srv/radio/direct/buffer.ts');
+const buffer = (t: Translate) => path(t, '/srv/radio/direct/buffer.ts');
 const FLUX = 1730;
 // Lundi 20 septembre 2027, 16 h 14 : l'émission de l'après-midi est en direct.
-const MAINTENANT = Date.UTC(2027, 8, 20, 16, 14, 0);
-const CAPACITE = 150_000;
+const NOW = Date.UTC(2027, 8, 20, 16, 14, 0);
+const CAPACITY = 150_000;
 
-const comptes = (): Comptes => ({
-  utilisateurs: {
-    root: { uid: 0, groupe: 'root', maison: '/root' },
-    radio: { uid: 996, groupe: 'radio', maison: '/var/lib/radio', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, groupe: 'vous' },
-    zoe: { uid: 1001, groupe: 'zoe' },
+const accounts = (): Accounts => ({
+  users: {
+    root: { uid: 0, group: 'root', home: '/root' },
+    radio: { uid: 996, group: 'radio', home: '/var/lib/radio', shell: '/usr/sbin/nologin' },
+    vous: { uid: 1000, group: 'vous' },
+    zoe: { uid: 1001, group: 'zoe' },
   },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    adm: { gid: 4, membres: ['vous', 'zoe'] },
-    sudo: { gid: 27, membres: ['vous', 'zoe'] },
-    radio: { gid: 996, membres: [] },
-    vous: { gid: 1000, membres: [] },
-    zoe: { gid: 1001, membres: [] },
+  groups: {
+    root: { gid: 0, members: [] },
+    adm: { gid: 4, members: ['vous', 'zoe'] },
+    sudo: { gid: 27, members: ['vous', 'zoe'] },
+    radio: { gid: 996, members: [] },
+    vous: { gid: 1000, members: [] },
+    zoe: { gid: 1001, members: [] },
   },
 });
 
-const proc = (pid: number, utilisateur: string, commande: string, cpu = 0): Processus => ({ pid, utilisateur, cpu, mem: 0.4, commande });
-const sd = (j: Jeu) => systemd(j)!;
-const archives = (j: Jeu): Service => sd(j).services['radio-archives'];
-const tourne = (j: Jeu) => archives(j).etat === 'active' && (j.etat.processus ?? []).some((p: Processus) => p.pid === archives(j).processus[0]?.pid);
-const limite = (j: Jeu) => [archives(j).ioEcriture, archives(j).ioLecture].filter((l) => l && visePartition(l.appareil, (io(j) as EtatIO).disque));
+const proc = (pid: number, user: string, command: string, cpu = 0): Process => ({ pid, user, cpu, mem: 0.4, command });
+const sd = (j: Game) => systemd(j)!;
+const archives = (j: Game): Service => sd(j).services['radio-archives'];
+const running = (j: Game) => archives(j).state === 'active' && (j.state.processus ?? []).some((p: Process) => p.pid === archives(j).process[0]?.pid);
+const limit = (j: Game) => [archives(j).writeIo, archives(j).readIo].filter((l) => l && targetsPartition(l.device, (io(j) as IoState).disk));
 // Assez lente pour laisser le direct, assez rapide pour finir dans la soirée (au moins 5 Mio/s).
-const raisonnable = (j: Jeu) => limite(j).length > 0 && limite(j).every((l) => l!.octets >= 5 * Mo) && servieATemps(j);
+const reasonable = (j: Game) => limit(j).length > 0 && limit(j).every((l) => l!.bytes >= 5 * Mo) && timeAServed(j);
 
-export const goulot: Chapitre = {
+export const bottleneck: Chapter = {
   id: 'goulot',
-  numero: 7,
-  commandes: [
+  number: 7,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -89,44 +89,44 @@ export const goulot: Chapitre = {
     'pidstat',
     'ionice',
   ],
-  maison: M,
-  accueil: 'message_de_zoe.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_de_zoe.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'antenne-2027',
-  comptes,
-  etat: (t) => ({
+  password: 'antenne-2027',
+  accounts,
+  state: (t) => ({
     systemd: (() => {
-      const s = nouveauSystemd('radio', Date.UTC(2027, 8, 14, 7, 2, 0), MAINTENANT, {
+      const s = newSystemd('radio', Date.UTC(2027, 8, 14, 7, 2, 0), NOW, {
         ssh: {
           description: 'OpenBSD Secure Shell server',
           active: true,
           executable: 'sshd',
-          processus: [proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups')],
+          process: [proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups')],
         },
         'radio-stream': {
           description: 'Radio Quartier stream relay',
           active: true,
           executable: 'stream',
-          processus: [proc(FLUX, 'radio', '/usr/local/bin/stream --config /etc/radio/stream.conf', 3.2)],
+          process: [proc(FLUX, 'radio', '/usr/local/bin/stream --config /etc/radio/stream.conf', 3.2)],
         },
         'radio-archives': {
           description: "Radio Quartier: archive the day's recordings",
           active: false,
           executable: 'rsync',
-          processus: [proc(ARCHIVES, 'root', copie(t), 6.1)],
+          process: [proc(ARCHIVES, 'root', copyOf(t), 6.1)],
         },
       });
-      s.minuteries = {
+      s.timers = {
         'radio-archives': {
           description: "Archive the day's recordings",
-          unite: 'radio-archives',
-          calendrier: ['*-*-* 16:00'],
+          unit: 'radio-archives',
+          calendar: ['*-*-* 16:00'],
           active: true,
-          etat: 'active',
-          depuis: s.horloge,
-          fichier: '/usr/lib/systemd/system/radio-archives.timer',
-          dernier: Date.UTC(2027, 8, 20, 16, 0, 0),
+          state: 'active',
+          since: s.clock,
+          file: '/usr/lib/systemd/system/radio-archives.timer',
+          last: Date.UTC(2027, 8, 20, 16, 0, 0),
         },
       };
       return s;
@@ -136,77 +136,77 @@ export const goulot: Chapitre = {
       proc(312, 'root', '[jbd2/vda1-8]'),
       proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups'),
       proc(FLUX, 'radio', '/usr/local/bin/stream --config /etc/radio/stream.conf', 3.2),
-      proc(ARCHIVES, 'root', copie(t), 6.1),
+      proc(ARCHIVES, 'root', copyOf(t), 6.1),
     ],
-    memoire: { total: 2048 * Mo, noyau: 380 * Mo, rss: { 1: 12 * Mo, 312: 0, 598: 8 * Mo, [FLUX]: 180 * Mo, [ARCHIVES]: 40 * Mo } },
+    memoire: { total: 2048 * Mo, kernel: 380 * Mo, rss: { 1: 12 * Mo, 312: 0, 598: 8 * Mo, [FLUX]: 180 * Mo, [ARCHIVES]: 40 * Mo } },
     io: {
-      disque: 'vda',
-      ordonnanceur: 'none',
-      capacite: CAPACITE,
+      disk: 'vda',
+      scheduler: 'none',
+      capacity: CAPACITY,
       cpus: 2,
       classes: {},
-      demandes: [
-        { service: 'radio-archives', lecture: 70_000, ecriture: 70_000, copie: true },
-        { service: 'radio-stream', lecture: 2048, ecriture: 0, sensible: true },
-        { pid: 312, lecture: 0, ecriture: 180 },
+      requests: [
+        { service: 'radio-archives', read: 70_000, write: 70_000, copyOf: true },
+        { service: 'radio-stream', read: 2048, write: 0, sensible: true },
+        { pid: 312, read: 0, write: 180 },
       ],
-    } satisfies EtatIO,
+    } satisfies IoState,
   }),
-  initialiser: (j) => {
+  initialise: (j) => {
     const s = sd(j);
     // L'archivage a démarré à 16 h (par son timer), et le direct hoquette depuis.
-    s.services['radio-archives'].etat = 'active';
-    s.horloge = Date.UTC(2027, 8, 20, 16, 0, 0);
-    journaliser(s, 'radio-archives.service', 'systemd', 1, "Started radio-archives.service - Radio Quartier: archive the day's recordings.");
+    s.services['radio-archives'].state = 'active';
+    s.clock = Date.UTC(2027, 8, 20, 16, 0, 0);
+    writeLog(s, 'radio-archives.service', 'systemd', 1, "Started radio-archives.service - Radio Quartier: archive the day's recordings.");
     for (let i = 0; i < 9; i++) {
-      s.horloge = Date.UTC(2027, 8, 20, 16, 1 + i * 1.5, 7 * i);
-      journaliser(
+      s.clock = Date.UTC(2027, 8, 20, 16, 1 + i * 1.5, 7 * i);
+      writeLog(
         s,
         'radio-stream.service',
         'stream',
         FLUX,
-        `relay: read stall on ${tampon(j.t)}: waited ${610 + ((i * 97) % 300)} ms, listeners hear a gap`,
+        `relay: read stall on ${buffer(j.t)}: waited ${610 + ((i * 97) % 300)} ms, listeners hear a gap`,
         4,
         false,
       );
     }
-    s.horloge = MAINTENANT;
+    s.clock = NOW;
   },
   // Chaque commande, une demi-minute : tant que le disque est saturé, le direct hoquette encore.
-  apresCommande: (j) => {
+  afterCommand: (j) => {
     const s = sd(j);
-    s.horloge += 30_000;
-    if (!servieATemps(j))
-      journaliser(
+    s.clock += 30_000;
+    if (!timeAServed(j))
+      writeLog(
         s,
         'radio-stream.service',
         'stream',
         FLUX,
-        `relay: read stall on ${tampon(j.t)}: waited ${Math.round(etatDisque(j).attente)} ms, listeners hear a gap`,
+        `relay: read stall on ${buffer(j.t)}: waited ${Math.round(diskState(j).attente)} ms, listeners hear a gap`,
         4,
         false,
       );
   },
-  creerMonde: (t) => {
-    const racine: Droits = { proprio: 'root' };
-    const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
-    const fichier = (texte: string, droits: Droits = racine) => f(texte, { lignes: true, ...droits });
-    return lieu({
-      etc: lieu({ ...fichiersComptes(), hostname: fichier('radio'), systemd: lieu({ system: lieu({}) }) }),
-      home: lieu({ vous: d({ 'message_de_zoe.txt': f(t('goulot-message-de-zoe')) }), zoe: lieu({}, { proprio: 'zoe', mode: 'rwx------' }) }),
-      sys: lieu({ block: lieu({ vda: lieu({ queue: lieu({ scheduler: fichier('[none] mq-deadline'), rotational: fichier('0') }) }) }) }),
-      srv: lieu({ radio: lieu({ enregistrements: lieu({}), direct: lieu({}) }, { proprio: 'radio' }), archives: lieu({}) }),
-      usr: lieu({
-        lib: lieu({
-          systemd: lieu({
-            system: lieu({
-              'radio-stream.service': fichier(
+  createWorld: (t) => {
+    const root: Rights = { owner: 'root' };
+    const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
+    const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
+    return place({
+      etc: place({ ...accountsFiles(), hostname: file('radio'), systemd: place({ system: place({}) }) }),
+      home: place({ vous: d({ 'message_de_zoe.txt': f(t('goulot-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      sys: place({ block: place({ vda: place({ queue: place({ scheduler: file('[none] mq-deadline'), rotational: file('0') }) }) }) }),
+      srv: place({ radio: place({ enregistrements: place({}), direct: place({}) }, { owner: 'radio' }), archives: place({}) }),
+      usr: place({
+        lib: place({
+          systemd: place({
+            system: place({
+              'radio-stream.service': file(
                 '[Unit]\nDescription=Radio Quartier stream relay\nAfter=network.target\n\n[Service]\nUser=radio\nExecStart=/usr/local/bin/stream --config /etc/radio/stream.conf\n\n[Install]\nWantedBy=multi-user.target',
               ),
-              'radio-archives.service': fichier(
-                `[Unit]\nDescription=Radio Quartier: archive the day's recordings\n\n[Service]\nType=oneshot\nExecStart=/bin/sh -c 'rsync -a ${chemin(t, '/srv/radio/enregistrements')}/ /srv/archives/$(date +%%F)/'`,
+              'radio-archives.service': file(
+                `[Unit]\nDescription=Radio Quartier: archive the day's recordings\n\n[Service]\nType=oneshot\nExecStart=/bin/sh -c 'rsync -a ${path(t, '/srv/radio/enregistrements')}/ /srv/archives/$(date +%%F)/'`,
               ),
-              'radio-archives.timer': fichier(
+              'radio-archives.timer': file(
                 "[Unit]\nDescription=Archive the day's recordings\n\n[Timer]\nOnCalendar=*-*-* 16:00\n\n[Install]\nWantedBy=timers.target",
               ),
             }),
@@ -215,24 +215,24 @@ export const goulot: Chapitre = {
       }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'iowait',
-      condition: (j) => !servieATemps(j) && j.derniere.commandes.some((c) => c.includes('top')),
+      condition: (j) => !timeAServed(j) && j.last.commands.some((c) => c.includes('top')),
       message: (j) => j.t('goulot-evenement-iowait'),
     },
     {
       id: 'ionice',
-      condition: (j) => (io(j) as EtatIO).classes[ARCHIVES]?.classe === 3 && !prioritesActives(io(j) as EtatIO),
+      condition: (j) => (io(j) as IoState).classes[ARCHIVES]?.cls === 3 && !activesPriorities(io(j) as IoState),
       message: (j) => j.t('goulot-evenement-ionice'),
     },
-    { id: 'arret', condition: (j) => !tourne(j), message: (j) => j.t('goulot-evenement-arret') },
+    { id: 'arret', condition: (j) => !running(j), message: (j) => j.t('goulot-evenement-arret') },
     {
       id: 'mauvais-disque',
-      condition: (j) => [archives(j).ioEcriture, archives(j).ioLecture].some((l) => l && !visePartition(l.appareil, 'vda')),
+      condition: (j) => [archives(j).writeIo, archives(j).readIo].some((l) => l && !targetsPartition(l.device, 'vda')),
       message: (j) => j.t('goulot-evenement-mauvais-disque'),
     },
-    { id: 'trop-lent', condition: (j) => limite(j).some((l) => l!.octets < 5 * Mo), message: (j) => j.t('goulot-evenement-trop-lent') },
-    { id: 'fin', condition: (j) => tourne(j) && raisonnable(j), message: (j) => j.t('goulot-evenement-fin') },
+    { id: 'trop-lent', condition: (j) => limit(j).some((l) => l!.bytes < 5 * Mo), message: (j) => j.t('goulot-evenement-trop-lent') },
+    { id: 'fin', condition: (j) => running(j) && reasonable(j), message: (j) => j.t('goulot-evenement-fin') },
   ],
 };

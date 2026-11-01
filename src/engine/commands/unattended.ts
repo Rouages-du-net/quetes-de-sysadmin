@@ -16,21 +16,21 @@
 // batterie ; les origines des paquets sont décrites par le chapitre ; la
 // sortie de --debug est abrégée ; le redémarrage programmé n'est pas joué.
 
-import type { Jeu, Shell } from '../shell';
-import { journaliser, redemarrer, systemd } from '../systemd';
-import { lireConfApt, vider, vrai, type ConfApt } from '../apt-conf';
-import { configurer, etat, misesDisponibles, SECURITE, type Origine } from './apt';
-import { envoyer } from './monitoring';
-import { aide } from './manual';
-import type { Commande } from './index';
+import type { Game, Shell } from '../shell';
+import { writeLog, restart, systemd } from '../systemd';
+import { readConfApt, empty, yes, type ConfApt } from '../apt-conf';
+import { configure, state, availableUpdates, SECURITY, type Origin } from './apt';
+import { send } from './monitoring';
+import { help } from './manual';
+import type { Command } from './index';
 
 const CODENAME = 'trixie';
-const JOURNAL = '/var/log/unattended-upgrades/unattended-upgrades.log';
+const LOG = '/var/log/unattended-upgrades/unattended-upgrades.log';
 export const UU = 'Unattended-Upgrade';
 
 // Un motif d'Origins-Pattern correspond-il à cette origine ? (clés et alias d'unattended-upgrades)
-function correspond(motif: string, o: Origine): boolean {
-  const champs: Record<string, keyof Origine> = {
+function correspond(pattern: string, o: Origin): boolean {
+  const fields: Record<string, keyof Origin> = {
     o: 'o',
     origin: 'o',
     n: 'n',
@@ -42,11 +42,11 @@ function correspond(motif: string, o: Origine): boolean {
     suite: 'n',
     site: 'site',
   };
-  const texte = motif.replace(/\$\{distro_codename\}/g, CODENAME).replace(/\$\{distro_id\}/g, 'Debian');
-  return texte.split(/(?<!\\),/).every((morceau) => {
-    const [cle, ...v] = morceau.split('=');
-    const champ = champs[cle.trim()];
-    if (!champ) return false;
+  const text = pattern.replace(/\$\{distro_codename\}/g, CODENAME).replace(/\$\{distro_id\}/g, 'Debian');
+  return text.split(/(?<!\\),/).every((chunk) => {
+    const [key, ...v] = chunk.split('=');
+    const field = fields[key.trim()];
+    if (!field) return false;
     const re = new RegExp(
       `^${v
         .join('=')
@@ -55,199 +55,199 @@ function correspond(motif: string, o: Origine): boolean {
         .replace(/\*/g, '.*')
         .replace(/\?/g, '.')}$`,
     );
-    return re.test(o[champ]);
+    return re.test(o[field]);
   });
 }
 
-const motifs = (c: ConfApt) =>
-  (c.listes[`${UU}::Origins-Pattern`] ?? []).map((m) => m.replace(/\$\{distro_codename\}/g, CODENAME).replace(/\$\{distro_id\}/g, 'Debian'));
+const patterns = (c: ConfApt) =>
+  (c.lists[`${UU}::Origins-Pattern`] ?? []).map((m) => m.replace(/\$\{distro_codename\}/g, CODENAME).replace(/\$\{distro_id\}/g, 'Debian'));
 
 /** Ce qu'unattended-upgrades installerait, et ce qu'il laisse (origine non permise, liste noire). */
-export function triMises(jeu: Shell, c: ConfApt) {
-  const e = etat(jeu);
-  const permis = motifs(c);
-  const noire = (c.listes[`${UU}::Package-Blacklist`] ?? []).map((m) => new RegExp(`^(?:${m})`));
-  const prises: [string, string][] = [];
-  const laissees: { paquet: string; raison: 'origine' | 'noire' }[] = [];
-  for (const [n, v] of misesDisponibles(e)) {
-    const o = e.origines?.[n] ?? SECURITE;
-    if (!permis.some((m) => correspond(m, o))) laissees.push({ paquet: n, raison: 'origine' });
-    else if (noire.some((re) => re.test(n))) laissees.push({ paquet: n, raison: 'noire' });
-    else prises.push([n, v]);
+export function updatesSort(game: Shell, c: ConfApt) {
+  const e = state(game);
+  const permitted = patterns(c);
+  const black = (c.lists[`${UU}::Package-Blacklist`] ?? []).map((m) => new RegExp(`^(?:${m})`));
+  const sockets: [string, string][] = [];
+  const left: { pkg: string; reason: 'origine' | 'noire' }[] = [];
+  for (const [n, v] of availableUpdates(e)) {
+    const o = e.origins?.[n] ?? SECURITY;
+    if (!permitted.some((m) => correspond(m, o))) left.push({ pkg: n, reason: 'origine' });
+    else if (black.some((re) => re.test(n))) left.push({ pkg: n, reason: 'noire' });
+    else sockets.push([n, v]);
   }
   // Le nouveau noyau suit linux-image-amd64.
-  const nouveaux = Object.entries(e.nouveaux ?? {}).filter(
-    ([n]) => !e.installes[n] && prises.some(([m]) => m === 'linux-image-amd64') && n.startsWith('linux-image-'),
+  const fresh = Object.entries(e.fresh ?? {}).filter(
+    ([n]) => !e.installed[n] && sockets.some(([m]) => m === 'linux-image-amd64') && n.startsWith('linux-image-'),
   );
-  return { prises: [...nouveaux, ...prises], laissees, permis };
+  return { prises: [...fresh, ...sockets], laissees: left, permitted };
 }
 
-const horodatage = (jeu: Jeu) => {
-  const ms = systemd(jeu)?.horloge ?? 0;
+const timestamp = (game: Game) => {
+  const ms = systemd(game)?.clock ?? 0;
   return `${new Date(ms).toISOString().replace('T', ' ').slice(0, 19)},${String(ms % 1000).padStart(3, '0')}`;
 };
 
-function noter(jeu: Shell, lignes: string[]) {
-  const texte = lignes.map((l) => `${horodatage(jeu)} INFO ${l}`).join('\n');
-  const n = jeu.trouver(JOURNAL);
-  if (n?.type === 'fichier' && typeof n.contenu === 'string') n.contenu = n.contenu ? `${n.contenu}\n${texte}` : texte;
+function note(game: Shell, lines: string[]) {
+  const text = lines.map((l) => `${timestamp(game)} INFO ${l}`).join('\n');
+  const n = game.find(LOG);
+  if (n?.type === 'fichier' && typeof n.content === 'string') n.content = n.content ? `${n.content}\n${text}` : text;
   else {
-    if (!jeu.existe('/var/log/unattended-upgrades'))
-      jeu.placer('unattended-upgrade', '/var/log/unattended-upgrades', { type: 'dossier', enfants: {}, proprio: 'root' });
-    jeu.placer('unattended-upgrade', JOURNAL, { type: 'fichier', contenu: texte, lignes: true, proprio: 'root', mode: 'rw-r--r--' });
+    if (!game.exists('/var/log/unattended-upgrades'))
+      game.place('unattended-upgrade', '/var/log/unattended-upgrades', { type: 'dossier', children: {}, owner: 'root' });
+    game.place('unattended-upgrade', LOG, { type: 'fichier', content: text, lines: true, owner: 'root', mode: 'rw-r--r--' });
   }
 }
 
-export interface ResultatUU {
-  installes: string[];
+export interface UuResult {
+  installed: string[];
   // Le redémarrage : « now » (fait), une heure (programmé), ou null.
-  redemarrage: string | null;
+  reboot: string | null;
 }
 
 /** Une passe d'unattended-upgrade, comme le lance apt-daily-upgrade.service (ou root à la main). */
-export function passeUU(jeu: Shell, o: { seche?: boolean; bavard?: boolean } = {}): { sortie: string[]; resultat: ResultatUU } {
-  const c = lireConfApt(jeu);
-  const { prises, laissees, permis } = triMises(jeu, c);
-  const noire = c.listes[`${UU}::Package-Blacklist`] ?? [];
+export function uuPass(game: Shell, o: { dry?: boolean; verbose?: boolean } = {}): { output: string[]; result: UuResult } {
+  const c = readConfApt(game);
+  const { prises: sockets, laissees: left, permitted } = updatesSort(game, c);
+  const black = c.lists[`${UU}::Package-Blacklist`] ?? [];
   const info = [
-    ...(o.seche ? ['Option --dry-run given, *not* performing real actions'] : []),
+    ...(o.dry ? ['Option --dry-run given, *not* performing real actions'] : []),
     'Starting unattended upgrades script',
-    `Allowed origins are: ${permis.join(', ')}`,
-    `Initial blacklist: ${noire.join(' ')}`,
+    `Allowed origins are: ${permitted.join(', ')}`,
+    `Initial blacklist: ${black.join(' ')}`,
     'Initial whitelist (not strict): ',
   ];
-  const detail = o.bavard
-    ? laissees.map(({ paquet, raison }) => {
-        const or = etat(jeu).origines?.[paquet] ?? SECURITE;
-        return raison === 'noire'
-          ? `${paquet} is blacklisted`
-          : `Checking: ${paquet} ([<Origin component:'main' archive:'${or.n}' origin:'${or.o}' label:'${or.l}' site:'${or.site}' isTrusted:True>])\nadjusting candidate version: ${paquet} not in allowed origins`;
+  const detail = o.verbose
+    ? left.map(({ pkg, reason }) => {
+        const or = state(game).origins?.[pkg] ?? SECURITY;
+        return reason === 'noire'
+          ? `${pkg} is blacklisted`
+          : `Checking: ${pkg} ([<Origin component:'main' archive:'${or.n}' origin:'${or.o}' label:'${or.l}' site:'${or.site}' isTrusted:True>])\nadjusting candidate version: ${pkg} not in allowed origins`;
       })
     : [];
-  const resultat: ResultatUU = { installes: [], redemarrage: null };
-  if (!prises.length) {
-    const fin = [...info, 'No packages found that can be upgraded unattended and no pending auto-removals'];
-    if (!o.seche) {
-      noter(jeu, fin);
+  const result: UuResult = { installed: [], reboot: null };
+  if (!sockets.length) {
+    const end = [...info, 'No packages found that can be upgraded unattended and no pending auto-removals'];
+    if (!o.dry) {
+      note(game, end);
       // MailReport « always » : un rapport même quand il n'y avait rien à faire.
-      if (c.valeurs[`${UU}::Mail`] && c.valeurs[`${UU}::MailReport`] === 'always') rapporter(jeu, c, [], false, fin);
+      if (c.values[`${UU}::Mail`] && c.values[`${UU}::MailReport`] === 'always') report(game, c, [], false, end);
     }
-    return { sortie: o.bavard ? [...fin.slice(0, -1), ...detail, fin.at(-1)!] : [], resultat };
+    return { output: o.verbose ? [...end.slice(0, -1), ...detail, end.at(-1)!] : [], result };
   }
-  const noms = prises.map(([n]) => n).sort();
-  const lignes = [
+  const names = sockets.map(([n]) => n).sort();
+  const lines = [
     ...info,
-    `Packages that will be upgraded: ${noms.join(' ')}`,
+    `Packages that will be upgraded: ${names.join(' ')}`,
     'Writing dpkg log to /var/log/unattended-upgrades/unattended-upgrades-dpkg.log',
   ];
-  if (o.seche) return { sortie: o.bavard ? [...info, ...detail, ...lignes.slice(info.length)] : [], resultat };
-  configurer(jeu, etat(jeu), prises);
-  resultat.installes = noms;
-  lignes.push('All upgrades installed');
-  const aRedemarrer = jeu.existe('/var/run/reboot-required');
+  if (o.dry) return { output: o.verbose ? [...info, ...detail, ...lines.slice(info.length)] : [], result };
+  configure(game, state(game), sockets);
+  result.installed = names;
+  lines.push('All upgrades installed');
+  const restartA = game.exists('/var/run/reboot-required');
   // Le rapport par courrier (MailReport : on-change par défaut).
-  if (c.valeurs[`${UU}::Mail`] && (c.valeurs[`${UU}::MailReport`] ?? 'on-change') !== 'only-on-error') rapporter(jeu, c, noms, aRedemarrer, lignes);
-  if (aRedemarrer && vrai(c.valeurs[`${UU}::Automatic-Reboot`])) {
-    const quand = c.valeurs[`${UU}::Automatic-Reboot-Time`] ?? 'now';
-    lignes.push('Found /var/run/reboot-required, rebooting');
-    resultat.redemarrage = quand;
+  if (c.values[`${UU}::Mail`] && (c.values[`${UU}::MailReport`] ?? 'on-change') !== 'only-on-error') report(game, c, names, restartA, lines);
+  if (restartA && yes(c.values[`${UU}::Automatic-Reboot`])) {
+    const when = c.values[`${UU}::Automatic-Reboot-Time`] ?? 'now';
+    lines.push('Found /var/run/reboot-required, rebooting');
+    result.reboot = when;
   }
-  noter(jeu, lignes);
-  return { sortie: o.bavard ? [...lignes.slice(0, info.length), ...detail, ...lignes.slice(info.length)] : [], resultat };
+  note(game, lines);
+  return { output: o.verbose ? [...lines.slice(0, info.length), ...detail, ...lines.slice(info.length)] : [], result };
 }
 
 // Le rapport par courrier, envoyé par root (MailReport : on-change par défaut).
-function rapporter(jeu: Shell, c: ConfApt, noms: string[], aRedemarrer: boolean, lignes: string[]) {
-  const hote = systemd(jeu)?.hote ?? 'localhost';
-  const qui = jeu.qui;
-  jeu.qui = 'root';
-  envoyer(
-    jeu,
-    [c.valeurs[`${UU}::Mail`]],
-    `${aRedemarrer ? '[reboot required] ' : ''}unattended-upgrades result for ${hote}: SUCCESS`,
+function report(game: Shell, c: ConfApt, names: string[], restartA: boolean, lines: string[]) {
+  const host = systemd(game)?.host ?? 'localhost';
+  const who = game.who;
+  game.who = 'root';
+  send(
+    game,
+    [c.values[`${UU}::Mail`]],
+    `${restartA ? '[reboot required] ' : ''}unattended-upgrades result for ${host}: SUCCESS`,
     [
-      `Unattended upgrade result: ${noms.length ? 'All upgrades installed' : 'No packages found that can be upgraded unattended and no pending auto-removals'}`,
+      `Unattended upgrade result: ${names.length ? 'All upgrades installed' : 'No packages found that can be upgraded unattended and no pending auto-removals'}`,
       '',
-      ...(aRedemarrer ? ['Warning: A reboot is required to complete this upgrade, or a previous one.', ''] : []),
-      ...(noms.length ? ['Packages that were upgraded:', ` ${noms.join(' ')}`, ''] : []),
+      ...(restartA ? ['Warning: A reboot is required to complete this upgrade, or a previous one.', ''] : []),
+      ...(names.length ? ['Packages that were upgraded:', ` ${names.join(' ')}`, ''] : []),
       'Unattended-upgrades log:',
-      ...lignes,
+      ...lines,
     ].join('\n'),
   );
-  jeu.qui = qui;
+  game.who = who;
 }
 
 /** Applique le redémarrage demandé par une passe : tout de suite, ou programmé (shutdown -r HH:MM). */
-export function redemarrerApres(jeu: Shell, r: ResultatUU) {
-  const sd = systemd(jeu);
-  if (!r.redemarrage || !sd) return;
-  if (r.redemarrage === 'now') {
-    redemarrer(jeu, sd);
-    jeu.redemarrage = true;
+export function restartAfter(game: Shell, r: UuResult) {
+  const sd = systemd(game);
+  if (!r.reboot || !sd) return;
+  if (r.reboot === 'now') {
+    restart(game, sd);
+    game.reboot = true;
   } else {
-    jeu.etat.redemarrageProgramme = r.redemarrage;
-    journaliser(sd, '', 'systemd-logind', 512, `Reboot scheduled for ${r.redemarrage}, use 'shutdown -c' to cancel.`);
+    game.state.redemarrageProgramme = r.reboot;
+    writeLog(sd, '', 'systemd-logind', 512, `Reboot scheduled for ${r.reboot}, use 'shutdown -c' to cancel.`);
   }
 }
 
 /** apt-daily-upgrade.service : apt.systemd.daily ne lance unattended-upgrade que si 20auto-upgrades le demande. */
-export function apresQuotidien(jeu: Jeu) {
-  const sh = jeu as Shell;
-  const c = lireConfApt(sh);
-  sh.etat.quotidiens = (sh.etat.quotidiens ?? 0) + 1;
-  if (c.erreurs.length || c.valeurs['APT::Periodic::Enable'] === '0') return;
-  if (!vrai(c.valeurs['APT::Periodic::Unattended-Upgrade'] ?? '0')) return;
-  const { resultat } = passeUU(sh);
-  sh.etat.passesAuto = (sh.etat.passesAuto ?? 0) + 1;
-  redemarrerApres(sh, resultat);
+export function afterDaily(game: Game) {
+  const sh = game as Shell;
+  const c = readConfApt(sh);
+  sh.state.quotidiens = (sh.state.quotidiens ?? 0) + 1;
+  if (c.errors.length || c.values['APT::Periodic::Enable'] === '0') return;
+  if (!yes(c.values['APT::Periodic::Unattended-Upgrade'] ?? '0')) return;
+  const { result } = uuPass(sh);
+  sh.state.passesAuto = (sh.state.passesAuto ?? 0) + 1;
+  restartAfter(sh, result);
 }
 
 /** Vérification au démarrage d'apt-daily-upgrade.service : une configuration illisible le fait échouer. */
-export const verifierQuotidien = (jeu: Jeu) => {
-  const e = lireConfApt(jeu).erreurs;
+export const checkDaily = (game: Game) => {
+  const e = readConfApt(game).errors;
   return e.length ? e : null;
 };
 
-export const UNATTENDED: Record<string, Commande> = {
+export const UNATTENDED: Record<string, Command> = {
   'unattended-upgrade': {
     section: 8,
-    propresOptions: true,
-    lancer: ({ args, jeu }) => {
-      const connues = ['--dry-run', '-d', '--debug', '-v', '--verbose', '-h', '--help'];
-      const inconnue = args.find((a) => !connues.includes(a));
-      if (inconnue) return jeu.erreur(`Usage: unattended-upgrade [options]\n\nunattended-upgrade: error: no such option: ${inconnue}`, 2);
-      if (args.includes('-h') || args.includes('--help')) return aide('unattended-upgrade', UNATTENDED['unattended-upgrade'], jeu.t);
-      if (jeu.qui !== 'root') return jeu.erreur('You need to be root to run this application', 1);
-      const c = lireConfApt(jeu);
-      if (c.erreurs.length) return jeu.erreur(c.erreurs.join('\n'), 1);
-      const seche = args.includes('--dry-run');
-      const bavard = args.some((a) => ['-d', '--debug', '-v', '--verbose'].includes(a));
-      const { sortie, resultat } = passeUU(jeu, { seche, bavard });
-      redemarrerApres(jeu, resultat);
-      return sortie.join('\n');
+    ownOptions: true,
+    launch: ({ args, game }) => {
+      const known = ['--dry-run', '-d', '--debug', '-v', '--verbose', '-h', '--help'];
+      const unknown = args.find((a) => !known.includes(a));
+      if (unknown) return game.error(`Usage: unattended-upgrade [options]\n\nunattended-upgrade: error: no such option: ${unknown}`, 2);
+      if (args.includes('-h') || args.includes('--help')) return help('unattended-upgrade', UNATTENDED['unattended-upgrade'], game.t);
+      if (game.who !== 'root') return game.error('You need to be root to run this application', 1);
+      const c = readConfApt(game);
+      if (c.errors.length) return game.error(c.errors.join('\n'), 1);
+      const dry = args.includes('--dry-run');
+      const verbose = args.some((a) => ['-d', '--debug', '-v', '--verbose'].includes(a));
+      const { output, result } = uuPass(game, { dry, verbose });
+      restartAfter(game, result);
+      return output.join('\n');
     },
   },
   'apt-config': {
     section: 8,
-    propresOptions: true,
-    lancer: ({ args, jeu }) => {
+    ownOptions: true,
+    launch: ({ args, game }) => {
       const [action] = args.filter((a) => !a.startsWith('-'));
-      if (!action || args.includes('-h') || args.includes('--help')) return aide('apt-config', UNATTENDED['apt-config'], jeu.t);
-      const c = lireConfApt(jeu);
-      if (c.erreurs.length) return jeu.erreur(c.erreurs.join('\n'), 100);
+      if (!action || args.includes('-h') || args.includes('--help')) return help('apt-config', UNATTENDED['apt-config'], game.t);
+      const c = readConfApt(game);
+      if (c.errors.length) return game.error(c.errors.join('\n'), 100);
       if (action === 'dump') {
-        const filtre = args.filter((a) => !a.startsWith('-'))[1];
-        const tout = vider(c);
-        return filtre
-          ? tout
+        const filter = args.filter((a) => !a.startsWith('-'))[1];
+        const all = empty(c);
+        return filter
+          ? all
               .split('\n')
-              .filter((l) => l.startsWith(filtre))
+              .filter((l) => l.startsWith(filter))
               .join('\n')
-          : tout;
+          : all;
       }
-      return jeu.erreur(`E: Invalid operation ${action}`, 100);
+      return game.error(`E: Invalid operation ${action}`, 100);
     },
   },
   // La page de manuel du fichier de configuration d'apt.
-  'apt.conf': { section: 5, lancer: () => '' },
+  'apt.conf': { section: 5, launch: () => '' },
 };

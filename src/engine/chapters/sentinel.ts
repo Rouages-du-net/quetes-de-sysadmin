@@ -9,11 +9,11 @@
 // Sources : https://manpages.debian.org/bookworm/fail2ban/jail.conf.5.en.html,
 // https://manpages.debian.org/bookworm/fail2ban/fail2ban-client.1.en.html
 
-import { d, f, fichiersComptes, comptesParDefaut, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { POSTE } from '../machines';
-import { journaliser, nouveauSystemd, systemd } from '../systemd';
-import { appliquer, couvre, DOSSIER, lireConfig, noter, type EtatFail2ban } from '../fail2ban';
+import { d, f, accountsFiles, accountsByDefault, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { WORKSTATION } from '../machines';
+import { writeLog, newSystemd, systemd } from '../systemd';
+import { apply, covers, DIRECTORY, readConfig, note, type Fail2banState } from '../fail2ban';
 import { instants } from '../activity';
 
 const M = '/home/vous';
@@ -86,188 +86,188 @@ const LOG = [
   .join('\n');
 
 // Les échecs de connexion de la nuit et de la matinée, dans le journal de ssh (les vôtres sous le nom de votre compte).
-const ECHECS = (joueur: string): [string, string][] => [
-  ...[51234, 51240, 51251].map((p): [string, string] => [POSTE.adresse, `Failed publickey for ${joueur} from ${POSTE.adresse} port ${p} ssh2`]),
+const FAILURES = (player: string): [string, string][] => [
+  ...[51234, 51240, 51251].map((p): [string, string] => [WORKSTATION.address, `Failed publickey for ${player} from ${WORKSTATION.address} port ${p} ssh2`]),
   ...['oracle', 'git', 'admin', 'test', 'oracle', 'pi', 'git'].map((u, i): [string, string] => ['203.0.113.66', `Invalid user ${u} from 203.0.113.66 port ${40100 + i}`]),
   ...['admin', 'user', 'admin', 'ftp', 'guest', 'admin'].map((u, i): [string, string] => ['198.51.100.23', `Invalid user ${u} from 198.51.100.23 port ${33800 + i}`]),
   ...[50211, 50214, 50219, 50223, 50230].map((p): [string, string] => [RANIA, `Invalid user ranja from ${RANIA} port ${p}`]),
 ];
 
-const f2b = (j: Jeu) => j.etat.fail2ban as EtatFail2ban;
+const f2b = (j: Game) => j.state.fail2ban as Fail2banState;
 
 // Les robots ne s'arrêtent pas pendant qu'on joue : chacun retente sa chance
 // à son rythme, avec un nom au hasard de sa liste. Banni, il ne passe plus
 // (le pare-feu le rejette avant sshd) ; à la fin du bantime, fail2ban le
 // relâche et il recommence (« ils reviennent toutes les dix minutes »).
-const EN_DIRECT = [
-  { ip: ROBOTS[0], periode: 20, comptes: ['root', 'admin', 'oracle', 'postgres', 'ubuntu', 'git'] },
-  { ip: ROBOTS[1], periode: 12, comptes: ['admin', 'test', 'user', 'ftp', 'guest'] },
+const IN_DIRECT = [
+  { ip: ROBOTS[0], period: 20, accounts: ['root', 'admin', 'oracle', 'postgres', 'ubuntu', 'git'] },
+  { ip: ROBOTS[1], period: 12, accounts: ['admin', 'test', 'user', 'ftp', 'guest'] },
 ];
 // Le bruit de fond d'internet : des scanners qui essaient un ou deux noms puis
 // passent à une autre cible (trop peu pour fail2ban). Adresses de documentation.
 const SCANNERS = ['203.0.113.', '192.0.2.', '198.51.100.'];
-const COMPTES_COURANTS = ['root', 'admin', 'pi', 'oracle', 'test', 'ubuntu', 'support', 'user'];
+const COURANTS_ACCOUNTS = ['root', 'admin', 'pi', 'oracle', 'test', 'ubuntu', 'support', 'user'];
 const scanner = (n: number) => `${SCANNERS[n % 3]}${150 + ((n * 37) % 50)}`;
 // Depuis quand chaque robot est banni (pour le relâcher à la fin du bantime).
-const depuis = (j: Jeu): Record<string, number> => (j.etat.bannisDepuis ??= {}) as Record<string, number>;
+const since = (j: Game): Record<string, number> => (j.state.bannisDepuis ??= {}) as Record<string, number>;
 
-function relacher(j: Jeu, t: number) {
-  const etat = f2b(j);
-  const bantime = etat.charge?.bantime ?? 600;
+function release(j: Game, t: number) {
+  const state = f2b(j);
+  const bantime = state.load?.bantime ?? 600;
   for (const ip of ROBOTS) {
-    if (!etat.bannis.includes(ip)) continue;
-    const debut = (depuis(j)[ip] ??= t);
-    if (bantime < 0 || t - debut < bantime * 1000) continue;
-    etat.bannis.splice(etat.bannis.indexOf(ip), 1);
-    (etat.remis ??= {})[ip] = t;
-    delete depuis(j)[ip];
-    systemd(j)!.horloge = t;
-    noter(j, etat, `Unban ${ip}`);
+    if (!state.banned.includes(ip)) continue;
+    const start = (since(j)[ip] ??= t);
+    if (bantime < 0 || t - start < bantime * 1000) continue;
+    state.banned.splice(state.banned.indexOf(ip), 1);
+    (state.restored ??= {})[ip] = t;
+    delete since(j)[ip];
+    systemd(j)!.clock = t;
+    note(j, state, `Unban ${ip}`);
   }
 }
 
-function robotsEnDirect(j: Jeu, de: number, a: number) {
+function robotsInDirect(j: Game, forEachOf: number, a: number) {
   const sd = systemd(j)!;
-  const etat = f2b(j);
-  const veille = () => sd.services.fail2ban?.etat === 'active' && !!etat.charge?.enabled;
+  const state = f2b(j);
+  const watch = () => sd.services.fail2ban?.state === 'active' && !!state.load?.enabled;
   // Un scanner toutes les 9 s, deux essais chacun (le second 9 s après le premier).
-  const scanners = instants(de, a, 9).map((t) => {
+  const scanners = instants(forEachOf, a, 9).map((t) => {
     const k = Math.floor(t / 9000);
     const n = Math.floor(k / 2);
-    return { t, r: { ip: scanner(n), periode: 9, comptes: [COMPTES_COURANTS[(n + (k % 2)) % COMPTES_COURANTS.length]] } };
+    return { t, r: { ip: scanner(n), period: 9, accounts: [COURANTS_ACCOUNTS[(n + (k % 2)) % COURANTS_ACCOUNTS.length]] } };
   });
-  const essais = [...EN_DIRECT.flatMap((r) => instants(de, a, r.periode).map((t) => ({ t, r }))), ...scanners].sort((x, y) => x.t - y.t);
-  for (const { t, r } of essais) {
-    sd.horloge = t;
-    if (veille()) relacher(j, t);
-    if (etat.bannis.includes(r.ip)) continue;
-    const n = Math.floor(t / (r.periode * 1000));
-    journaliser(sd, 'ssh.service', 'sshd', 3100 + (n % 60), `Invalid user ${r.comptes[n % r.comptes.length]} from ${r.ip} port ${40000 + (n % 20000)}`, 6, false);
-    if (!veille()) continue;
-    appliquer(j, etat, r.ip);
-    for (const ip of ROBOTS) if (etat.bannis.includes(ip)) depuis(j)[ip] ??= t;
+  const attempts = [...IN_DIRECT.flatMap((r) => instants(forEachOf, a, r.period).map((t) => ({ t, r }))), ...scanners].sort((x, y) => x.t - y.t);
+  for (const { t, r } of attempts) {
+    sd.clock = t;
+    if (watch()) release(j, t);
+    if (state.banned.includes(r.ip)) continue;
+    const n = Math.floor(t / (r.period * 1000));
+    writeLog(sd, 'ssh.service', 'sshd', 3100 + (n % 60), `Invalid user ${r.accounts[n % r.accounts.length]} from ${r.ip} port ${40000 + (n % 20000)}`, 6, false);
+    if (!watch()) continue;
+    apply(j, state, r.ip);
+    for (const ip of ROBOTS) if (state.banned.includes(ip)) since(j)[ip] ??= t;
   }
-  if (veille()) relacher(j, a);
+  if (watch()) release(j, a);
 }
-const ignore = (j: Jeu, ip: string) => f2b(j).charge?.ignoreip.some((e) => couvre(e, ip)) ?? false;
-const reglee = (j: Jeu) => {
-  const p = f2b(j).charge;
-  return !!p && p.enabled && (p.bantime >= 3600 || p.bantime < 0) && ignore(j, RANIA) && ignore(j, POSTE.adresse);
+const ignore = (j: Game, ip: string) => f2b(j).load?.ignoreip.some((e) => covers(e, ip)) ?? false;
+const set = (j: Game) => {
+  const p = f2b(j).load;
+  return !!p && p.enabled && (p.bantime >= 3600 || p.bantime < 0) && ignore(j, RANIA) && ignore(j, WORKSTATION.address);
 };
-const bansJustes = (j: Jeu) => !f2b(j).bannis.includes(RANIA) && !f2b(j).bannis.includes(POSTE.adresse) && ROBOTS.every((r) => f2b(j).bannis.includes(r));
+const rightBans = (j: Game) => !f2b(j).banned.includes(RANIA) && !f2b(j).banned.includes(WORKSTATION.address) && ROBOTS.every((r) => f2b(j).banned.includes(r));
 
-export const sentinelle: Chapitre = {
+export const sentinel: Chapter = {
   id: 'sentinelle',
-  numero: 3,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'fail2ban-client'],
-  maison: M,
-  accueil: 'courriel_kofi.txt',
-  noms: true,
+  number: 3,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'fail2ban-client'],
+  home: M,
+  welcome: 'courriel_kofi.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'fourmis-2026',
-  comptes: () => {
-    const c = comptesParDefaut();
-    c.groupes.adm = { gid: 4, membres: ['vous'] };
+  password: 'fourmis-2026',
+  accounts: () => {
+    const c = accountsByDefault();
+    c.groups.adm = { gid: 4, members: ['vous'] };
     return c;
   },
-  activite: { pas: 15, avancer: robotsEnDirect },
-  etat: () => ({
+  activity: { not: 15, advance: robotsInDirect },
+  state: () => ({
     // Le second robot vient d'être relâché (09:35) : il recommence pendant qu'on joue, et fail2ban le rattrape.
-    fail2ban: { charge: null, bannis: [ROBOTS[0], RANIA], totalBannis: 6, journal: [], chargements: 0, consulte: false, remis: { [ROBOTS[1]]: Date.UTC(2026, 9, 22, 9, 35, 40) } } satisfies EtatFail2ban,
-    systemd: nouveauSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 22, 6, 0, 0), {
+    fail2ban: { load: null, banned: [ROBOTS[0], RANIA], bannedTotal: 6, log: [], loads: 0, consulted: false, restored: { [ROBOTS[1]]: Date.UTC(2026, 9, 22, 9, 35, 40) } } satisfies Fail2banState,
+    systemd: newSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 22, 6, 0, 0), {
       ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       fail2ban: {
         description: 'Fail2Ban Service',
         active: true,
         executable: 'fail2ban-server',
-        verifier: (j) => {
-          const e = lireConfig(j).erreurs;
+        check: (j) => {
+          const e = readConfig(j).errors;
           return e.length ? e : null;
         },
-        verifierAuRechargement: true,
-        charger: (j) => {
-          const etat = f2b(j);
-          if (!etat) return;
-          etat.charge = lireConfig(j).prison;
-          etat.chargements++;
-          etat.consulte = false;
-          appliquer(j, etat);
+        checkToReload: true,
+        load: (j) => {
+          const state = f2b(j);
+          if (!state) return;
+          state.load = readConfig(j).jail;
+          state.loads++;
+          state.consulted = false;
+          apply(j, state);
         },
       },
     }),
   }),
-  initialiser: (j) => {
-    f2b(j).charge = lireConfig(j).prison;
+  initialise: (j) => {
+    f2b(j).load = readConfig(j).jail;
     const sd = systemd(j)!;
-    ECHECS(j.joueur).forEach(([, message], i) => journaliser(sd, 'ssh.service', 'sshd', 1900 + i * 4, message, 6, true));
-    sd.horloge = Date.UTC(2026, 9, 22, 9, 40, 0);
+    FAILURES(j.player).forEach(([, message], i) => writeLog(sd, 'ssh.service', 'sshd', 1900 + i * 4, message, 6, true));
+    sd.clock = Date.UTC(2026, 9, 22, 9, 40, 0);
   },
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
+  createWorld: (t) => {
+    const root = { owner: 'root' };
     return d(
       {
         etc: d(
           {
-            ...fichiersComptes(),
+            ...accountsFiles(),
             fail2ban: d(
               {
-                'jail.conf': f(JAIL_CONF, { lignes: true, proprio: 'root' }),
-                'jail.d': d({ 'defaults-debian.conf': f('[sshd]\nenabled = true', { lignes: true, proprio: 'root' }) }, undefined, racine),
+                'jail.conf': f(JAIL_CONF, { lines: true, owner: 'root' }),
+                'jail.d': d({ 'defaults-debian.conf': f('[sshd]\nenabled = true', { lines: true, owner: 'root' }) }, undefined, root),
               },
               undefined,
-              racine,
+              root,
             ),
           },
           undefined,
-          racine,
+          root,
         ),
-        home: d({ vous: d({ 'courriel_kofi.txt': f(t('sentinelle-courriel-kofi')) }) }, undefined, racine),
+        home: d({ vous: d({ 'courriel_kofi.txt': f(t('sentinelle-courriel-kofi')) }) }, undefined, root),
         var: d(
           {
             log: d(
-              { 'fail2ban.log': f((j) => [LOG, ...f2b(j).journal].join('\n'), { lignes: true, proprio: 'root', groupe: 'adm', mode: 'rw-r-----' }) },
+              { 'fail2ban.log': f((j) => [LOG, ...f2b(j).log].join('\n'), { lines: true, owner: 'root', group: 'adm', mode: 'rw-r-----' }) },
               undefined,
-              racine,
+              root,
             ),
           },
           undefined,
-          racine,
+          root,
         ),
       },
       undefined,
-      racine,
+      root,
     );
   },
-  evenements: [
+  events: [
     {
       id: 'jail-conf',
-      condition: (j) => j.lire(`${DOSSIER}/jail.conf`) !== JAIL_CONF,
+      condition: (j) => j.read(`${DIRECTORY}/jail.conf`) !== JAIL_CONF,
       message: (j) => j.t('sentinelle-evenement-jail-conf'),
     },
     {
       id: 'erreur',
-      condition: (j) => lireConfig(j).erreurs.length > 0,
+      condition: (j) => readConfig(j).errors.length > 0,
       message: (j) => j.t('sentinelle-evenement-erreur'),
     },
     {
       id: 'rania',
-      condition: (j) => !f2b(j).bannis.includes(RANIA),
+      condition: (j) => !f2b(j).banned.includes(RANIA),
       message: (j) => j.t('sentinelle-evenement-rania'),
     },
     {
       id: 'banni-soi',
-      condition: (j) => f2b(j).bannis.includes(POSTE.adresse),
-      message: (j) => j.t('sentinelle-evenement-banni-soi', { adresse: POSTE.adresse }),
+      condition: (j) => f2b(j).banned.includes(WORKSTATION.address),
+      message: (j) => j.t('sentinelle-evenement-banni-soi', { adresse: WORKSTATION.address }),
     },
     {
       id: 'reglee',
-      condition: (j) => reglee(j) && f2b(j).chargements > 0,
+      condition: (j) => set(j) && f2b(j).loads > 0,
       message: (j) => j.t('sentinelle-evenement-reglee'),
     },
     {
       id: 'fin',
-      condition: (j) => j.drapeaux.has('reglee') && reglee(j) && bansJustes(j) && f2b(j).consulte,
+      condition: (j) => j.flags.has('reglee') && set(j) && rightBans(j) && f2b(j).consulted,
       message: (j) => j.t('sentinelle-evenement-fin'),
     },
   ],

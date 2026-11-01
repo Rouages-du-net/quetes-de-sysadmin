@@ -11,73 +11,73 @@
 // sans le dossier copié en trop (rsync --delete le retire).
 // Sources : https://man.openbsd.org/scp, https://download.samba.org/pub/rsync/rsync.1
 
-import { chemin, d, f, nom, type Chapitre, type Dossier, type Noeud } from '../world';
-import type { Jeu, Shell } from '../shell';
-import { genererCle } from '../access';
-import { chargerSshd, comptesMaison, dossierSsh, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE, planMaison } from './community-centre';
+import { path, d, f, name, type Chapter, type Directory, type Node } from '../world';
+import type { Game, Shell } from '../shell';
+import { generateKey } from '../access';
+import { loadSshd, homeAccounts, sshDirectory, homeState, internalHost, M, homeWorld, PASSWORD, homePlan } from './community-centre';
 
-const RAPPORT = 'rapport-2027.pdf';
-const PARTAGE = '/srv/partage';
-const SAUVEGARDE = '/srv/sauvegardes/partage';
+const REPORT = 'rapport-2027.pdf';
+const SHARE = '/srv/partage';
+const BACKUP = '/srv/sauvegardes/partage';
 // Un PDF (son début) : le contenu exact sert à vérifier que la copie est intacte.
 const PDF = '%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 12 >>\nendobj';
 // La clé de sauvegarde de maison vers archives (une clé par usage, pas celle d'une personne).
-const CLE_SAUVEGARDE = genererCle('maison-sauvegarde', 'sauvegarde@maison');
+const BACKUP_KEY = generateKey('maison-sauvegarde', 'sauvegarde@maison');
 
-const vous = { proprio: 'vous' };
-const fichier = (contenu: string) => f(contenu, { lignes: true, proprio: 'vous' });
+const you = { owner: 'vous' };
+const file = (content: string) => f(content, { lines: true, owner: 'vous' });
 
 // Le dossier partagé de maison : comptes rendus, affiches, planning.
-const partage = (t: (id: string) => string): Dossier =>
+const share = (t: (id: string) => string): Directory =>
   d(
     {
       'comptes-rendus': d(
-        { 'ag-2026.txt': fichier(t('transferts-cr-ag-2026')), 'ca-2027-09.txt': fichier(t('transferts-cr-ca-2027-09')) },
+        { 'ag-2026.txt': file(t('transferts-cr-ag-2026')), 'ca-2027-09.txt': file(t('transferts-cr-ca-2027-09')) },
         undefined,
-        vous,
+        you,
       ),
-      affiches: d({ 'fete-des-voisins.pdf': fichier('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj') }, undefined, vous),
-      'planning-salles.txt': fichier(t('transferts-planning')),
+      affiches: d({ 'fete-des-voisins.pdf': file('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj') }, undefined, you),
+      'planning-salles.txt': file(t('transferts-planning')),
     },
     undefined,
-    vous,
+    you,
   );
 
 // Tous les fichiers d'un dossier, par chemin relatif.
-function fichiers(j: Jeu, racine: string): Record<string, string> {
+function files(j: Game, root: string): Record<string, string> {
   const res: Record<string, string> = {};
-  const parcourir = (n: Noeud, chemin: string) => {
-    if (n.type === 'dossier') for (const [nom, e] of Object.entries(n.enfants)) parcourir(e, chemin ? `${chemin}/${nom}` : nom);
-    else res[chemin] = j.lire(`${racine}/${chemin}`) ?? '';
+  const walk = (n: Node, path: string) => {
+    if (n.type === 'dossier') for (const [name, e] of Object.entries(n.children)) walk(e, path ? `${path}/${name}` : name);
+    else res[path] = j.read(`${root}/${path}`) ?? '';
   };
-  const n = j.trouver(racine);
-  if (n?.type === 'dossier') parcourir(n, '');
+  const n = j.find(root);
+  if (n?.type === 'dossier') walk(n, '');
   return res;
 }
 
-const archives = (j: Jeu) => (j as Shell).interne('archives')!;
-const poste = (j: Jeu) => (j.etat.poste as (() => Shell) | undefined)?.();
+const archives = (j: Game) => (j as Shell).internal('archives')!;
+const workstation = (j: Game) => (j.state.poste as (() => Shell) | undefined)?.();
 
 // Le rapport, intact, quelque part dans la maison du poste.
-const rapportSurLePoste = (j: Jeu) => {
-  const p = poste(j);
+const reportOnWorkstation = (j: Game) => {
+  const p = workstation(j);
   if (!p) return false;
-  const tous = fichiers(p, p.resoudre('~'));
-  return Object.entries(tous).some(([c, contenu]) => c.split('/').at(-1) === nom(j.t, RAPPORT) && contenu === PDF);
+  const all = files(p, p.resolve('~'));
+  return Object.entries(all).some(([c, content]) => c.split('/').at(-1) === name(j.t, REPORT) && content === PDF);
 };
 
-const sauvegardeAJour = (j: Jeu) => {
-  const copie = fichiers(archives(j), chemin(j.t, SAUVEGARDE));
-  return Object.entries(fichiers(j, chemin(j.t, PARTAGE))).every(([c, contenu]) => copie[c] === contenu);
+const dayABackup = (j: Game) => {
+  const copyOf = files(archives(j), path(j.t, BACKUP));
+  return Object.entries(files(j, path(j.t, SHARE))).every(([c, content]) => copyOf[c] === content);
 };
 // La copie en trop : /srv/sauvegardes/partage/partage (dans la langue).
-const imbrique = (j: Jeu) => chemin(j.t, `${SAUVEGARDE}/partage`);
+const nested = (j: Game) => path(j.t, `${BACKUP}/partage`);
 
-export const transferts: Chapitre = {
+export const transfers: Chapter = {
   id: 'transferts',
-  numero: 4,
-  plan: planMaison(),
-  commandes: [
+  number: 4,
+  plan: homePlan(),
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -98,72 +98,72 @@ export const transferts: Chapitre = {
     'scp',
     'rsync',
   ],
-  maison: M,
-  accueil: 'courriel_yasmine.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_yasmine.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: comptesMaison,
-  clesDuJoueur: true,
-  surveillePoste: true,
-  etat: () => etatMaison(),
-  initialiser: chargerSshd,
-  hotes: {
-    wiki: hoteInterne('wiki', '10.20.0.11', {
-      commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'du', 'id', 'whoami', 'hostname'],
-      plus: () => ({
-        srv: d({ wiki: d({ exports: d({ [RAPPORT]: f(PDF, { lignes: true, proprio: 'www-data', mode: 'rw-r--r--' }) }) }) }, undefined, {
-          proprio: 'root',
+  password: PASSWORD,
+  accounts: homeAccounts,
+  playerKeys: true,
+  watchesWorkstation: true,
+  state: () => homeState(),
+  initialise: loadSshd,
+  hosts: {
+    wiki: internalHost('wiki', '10.20.0.11', {
+      commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'du', 'id', 'whoami', 'hostname'],
+      more: () => ({
+        srv: d({ wiki: d({ exports: d({ [REPORT]: f(PDF, { lines: true, owner: 'www-data', mode: 'rw-r--r--' }) }) }) }, undefined, {
+          owner: 'root',
         }),
       }),
     }),
-    archives: hoteInterne('archives', '10.20.0.12', {
-      commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'du', 'diff', 'id', 'whoami', 'hostname', 'rm', 'mv'],
-      maison: () => ({ '.ssh': dossierSsh({ authorized_keys: f(CLE_SAUVEGARDE.publique, { lignes: true, proprio: 'vous', mode: 'rw-------' }) }) }),
+    archives: internalHost('archives', '10.20.0.12', {
+      commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'du', 'diff', 'id', 'whoami', 'hostname', 'rm', 'mv'],
+      home: () => ({ '.ssh': sshDirectory({ authorized_keys: f(BACKUP_KEY.isPublic, { lines: true, owner: 'vous', mode: 'rw-------' }) }) }),
       // La sauvegarde de l'an dernier : un seul compte rendu.
-      plus: (t) => ({
+      more: (t) => ({
         srv: d(
           {
             sauvegardes: d(
-              { partage: d({ 'comptes-rendus': d({ 'ag-2026.txt': fichier(t('transferts-cr-ag-2026')) }, undefined, vous) }, undefined, vous) },
+              { partage: d({ 'comptes-rendus': d({ 'ag-2026.txt': file(t('transferts-cr-ag-2026')) }, undefined, you) }, undefined, you) },
               undefined,
-              vous,
+              you,
             ),
           },
           undefined,
-          { proprio: 'root' },
+          { owner: 'root' },
         ),
       }),
     }),
   },
-  creerMonde: (t) =>
-    mondeMaison({
-      motsDePasse: 'no',
-      maison: {
+  createWorld: (t) =>
+    homeWorld({
+      passwords: 'no',
+      home: {
         'courriel_yasmine.txt': f(t('transferts-courriel-yasmine')),
-        '.ssh': dossierSsh({
-          config: f('Host archives\n    IdentityFile ~/.ssh/id_sauvegarde', { lignes: true, proprio: 'vous', mode: 'rw-r--r--' }),
-          id_sauvegarde: f(CLE_SAUVEGARDE.prive, { lignes: true, proprio: 'vous', mode: 'rw-------' }),
-          'id_sauvegarde.pub': f(CLE_SAUVEGARDE.publique, { lignes: true, proprio: 'vous', mode: 'rw-r--r--' }),
+        '.ssh': sshDirectory({
+          config: f('Host archives\n    IdentityFile ~/.ssh/id_sauvegarde', { lines: true, owner: 'vous', mode: 'rw-r--r--' }),
+          id_sauvegarde: f(BACKUP_KEY.isPrivate, { lines: true, owner: 'vous', mode: 'rw-------' }),
+          'id_sauvegarde.pub': f(BACKUP_KEY.isPublic, { lines: true, owner: 'vous', mode: 'rw-r--r--' }),
         }),
       },
-      plus: { srv: d({ partage: partage(t) }, undefined, { proprio: 'root' }) },
+      more: { srv: d({ partage: share(t) }, undefined, { owner: 'root' }) },
     }),
-  evenements: [
-    { id: 'rapport', condition: rapportSurLePoste, message: (j) => j.t('transferts-evenement-rapport') },
+  events: [
+    { id: 'rapport', condition: reportOnWorkstation, message: (j) => j.t('transferts-evenement-rapport') },
     {
       id: 'imbrique',
-      condition: (j) => archives(j).existe(imbrique(j)),
-      message: (j) => j.t('transferts-evenement-imbrique', { dossier: imbrique(j) }),
+      condition: (j) => archives(j).exists(nested(j)),
+      message: (j) => j.t('transferts-evenement-imbrique', { dossier: nested(j) }),
     },
     {
       id: 'sauvegarde',
-      condition: (j) => sauvegardeAJour(j) && !archives(j).existe(imbrique(j)),
+      condition: (j) => dayABackup(j) && !archives(j).exists(nested(j)),
       message: (j) => j.t('transferts-evenement-sauvegarde'),
     },
     {
       id: 'fin',
-      condition: (j) => rapportSurLePoste(j) && sauvegardeAJour(j) && !archives(j).existe(imbrique(j)),
+      condition: (j) => reportOnWorkstation(j) && dayABackup(j) && !archives(j).exists(nested(j)),
       message: (j) => j.t('transferts-evenement-fin'),
     },
   ],

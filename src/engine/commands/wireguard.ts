@@ -4,191 +4,191 @@
 // https://man7.org/linux/man-pages/man8/wg-quick.8.html
 
 import type { Shell } from '../shell';
-import { dans, lan } from '../lan';
-import { confDe, confDistant, demonterWg, etatTunnel, genererCle, lireConfWg, monterWg, publique, wg, type Distant, type InterfaceWg } from '../wireguard';
+import { inside, lan } from '../lan';
+import { confFor, remoteConf, unmountWg, tunnelState, generateKey, readConfWg, mountWg, isPublic, wg, type Remote, type InterfaceWg } from '../wireguard';
 import { systemd } from '../systemd';
-import { modeAvecMasque } from '../tools';
-import type { Commande } from './index';
+import { modeWithMask } from '../tools';
+import type { Command } from './index';
 
-const PAS_ROOT = 'Unable to access interface: Operation not permitted';
+const NOT_ROOT = 'Unable to access interface: Operation not permitted';
 
 // Le nom public d'un routeur (en anglais dans toutes les langues, comme les sites publics).
-const NOMS_PUBLICS: Record<string, string> = { ruche: 'hive.example' };
+const PUBLIC_NAMES: Record<string, string> = { ruche: 'hive.example' };
 
 /** L'adresse publique du routeur (eth0) et ses noms, pour l'Endpoint des pairs. */
-export const publicDu = (jeu: Shell) => ({
-  adressePublique: lan(jeu)?.interfaces.eth0?.adresses[0]?.split('/')[0] ?? '',
-  noms: [jeu.hote, jeu.nomHote, NOMS_PUBLICS[jeu.hote] ?? `${jeu.hote}.example`],
+export const publicFields = (game: Shell) => ({
+  publicAddress: lan(game)?.interfaces.eth0?.addresses[0]?.split('/')[0] ?? '',
+  names: [game.host, game.hostName, PUBLIC_NAMES[game.host] ?? `${game.host}.example`],
 });
 
 // La poignée de main a-t-elle eu lieu (le routeur et le pair se sont reconnus) ?
 const serre = (e: string) => ['autorisees', 'route', 'transfert', 'ok'].includes(e);
 
-function montrer(jeu: Shell, nom: string, i: InterfaceWg): string[] {
-  const lignes = [`interface: ${nom}`];
-  if (i.conf.cle) lignes.push(`  public key: ${publique(i.conf.cle)}`, '  private key: (hidden)');
-  if (i.conf.port) lignes.push(`  listening port: ${i.conf.port}`);
-  const distants: Distant[] = lan(jeu)?.distants ?? [];
-  for (const p of i.conf.pairs) {
-    lignes.push('', `peer: ${p.cle}`);
-    const d = distants.find((x) => x.cle === p.cle);
-    const e = d ? etatTunnel(jeu, d, publicDu(jeu)) : null;
-    const actif = !!e && e.nom === nom && serre(e.etat);
-    if (actif) lignes.push(`  endpoint: ${d!.adresse}:41414`);
-    else if (p.endpoint) lignes.push(`  endpoint: ${p.endpoint}`);
-    lignes.push(`  allowed ips: ${p.autorisees.length ? p.autorisees.join(', ') : '(none)'}`);
-    if (actif) {
-      lignes.push('  latest handshake: 7 seconds ago');
-      lignes.push(e!.etat === 'ok' ? '  transfer: 48.62 KiB received, 312.07 KiB sent' : '  transfer: 2.18 KiB received, 1.02 KiB sent');
+function show(game: Shell, name: string, i: InterfaceWg): string[] {
+  const lines = [`interface: ${name}`];
+  if (i.conf.key) lines.push(`  public key: ${isPublic(i.conf.key)}`, '  private key: (hidden)');
+  if (i.conf.port) lines.push(`  listening port: ${i.conf.port}`);
+  const remotes: Remote[] = lan(game)?.remotes ?? [];
+  for (const p of i.conf.peers) {
+    lines.push('', `peer: ${p.key}`);
+    const d = remotes.find((x) => x.key === p.key);
+    const e = d ? tunnelState(game, d, publicFields(game)) : null;
+    const enabled = !!e && e.name === name && serre(e.state);
+    if (enabled) lines.push(`  endpoint: ${d!.address}:41414`);
+    else if (p.endpoint) lines.push(`  endpoint: ${p.endpoint}`);
+    lines.push(`  allowed ips: ${p.allowed.length ? p.allowed.join(', ') : '(none)'}`);
+    if (enabled) {
+      lines.push('  latest handshake: 7 seconds ago');
+      lines.push(e!.state === 'ok' ? '  transfer: 48.62 KiB received, 312.07 KiB sent' : '  transfer: 2.18 KiB received, 1.02 KiB sent');
     }
-    if (p.keepalive) lignes.push(`  persistent keepalive: every ${p.keepalive} seconds`);
+    if (p.keepalive) lines.push(`  persistent keepalive: every ${p.keepalive} seconds`);
   }
-  return lignes;
+  return lines;
 }
 
-function commandeWg(jeu: Shell, args: string[], entree: string | null): string {
-  const [action = 'show', ...reste] = args;
+function wgCommand(game: Shell, args: string[], input: string | null): string {
+  const [action = 'show', ...rest] = args;
   if (action === 'genkey' || action === 'genpsk') {
     // Comme wg : un avertissement si la clé part dans un fichier que tout le monde peut lire.
-    if (jeu.sortieVers) {
-      const n = jeu.trouver(jeu.sortieVers);
-      const mode = n?.mode ?? (n ? 'rw-r--r--' : modeAvecMasque(false, jeu.masque));
+    if (game.outputTo) {
+      const n = game.find(game.outputTo);
+      const mode = n?.mode ?? (n ? 'rw-r--r--' : modeWithMask(false, game.mask));
       if (/r|w|x/.test(mode.slice(6, 9)))
-        jeu.erreur('Warning: writing to world accessible file.\nConsider setting the umask to 077 and trying again.', 0);
+        game.error('Warning: writing to world accessible file.\nConsider setting the umask to 077 and trying again.', 0);
     }
-    return genererCle(jeu);
+    return generateKey(game);
   }
   if (action === 'pubkey') {
-    const p = publique((entree ?? '').trim());
-    if (!p) return jeu.erreur('pubkey: Key is not the correct length or format', 1);
+    const p = isPublic((input ?? '').trim());
+    if (!p) return game.error('pubkey: Key is not the correct length or format', 1);
     return p;
   }
   if (action === 'show' || action === 'showconf') {
-    if (jeu.qui !== 'root') return jeu.erreur(PAS_ROOT, 1);
-    const toutes = wg(jeu);
-    const cible = reste[0];
+    if (game.who !== 'root') return game.error(NOT_ROOT, 1);
+    const all = wg(game);
+    const target = rest[0];
     if (action === 'showconf') {
-      if (!cible) return jeu.erreur('Usage: wg showconf <interface>', 1);
-      const i = toutes[cible];
-      if (!i) return jeu.erreur(`Unable to access interface: No such device`, 1);
+      if (!target) return game.error('Usage: wg showconf <interface>', 1);
+      const i = all[target];
+      if (!i) return game.error(`Unable to access interface: No such device`, 1);
       return [
         '[Interface]',
         ...(i.conf.port ? [`ListenPort = ${i.conf.port}`] : []),
-        ...(i.conf.cle ? [`PrivateKey = ${i.conf.cle}`] : []),
-        ...i.conf.pairs.flatMap((p) => [
+        ...(i.conf.key ? [`PrivateKey = ${i.conf.key}`] : []),
+        ...i.conf.peers.flatMap((p) => [
           '',
           '[Peer]',
-          `PublicKey = ${p.cle}`,
-          ...(p.autorisees.length ? [`AllowedIPs = ${p.autorisees.join(', ')}`] : []),
+          `PublicKey = ${p.key}`,
+          ...(p.allowed.length ? [`AllowedIPs = ${p.allowed.join(', ')}`] : []),
           ...(p.endpoint ? [`Endpoint = ${p.endpoint}`] : []),
         ]),
       ].join('\n');
     }
-    if (cible === 'interfaces') return Object.keys(toutes).join(' ');
-    if (cible && cible !== 'all') {
-      if (!toutes[cible]) return jeu.erreur(`Unable to access interface: No such device`, 1);
-      return montrer(jeu, cible, toutes[cible]).join('\n');
+    if (target === 'interfaces') return Object.keys(all).join(' ');
+    if (target && target !== 'all') {
+      if (!all[target]) return game.error(`Unable to access interface: No such device`, 1);
+      return show(game, target, all[target]).join('\n');
     }
-    return Object.entries(toutes)
-      .map(([nom, i]) => montrer(jeu, nom, i).join('\n'))
+    return Object.entries(all)
+      .map(([name, i]) => show(game, name, i).join('\n'))
       .join('\n\n');
   }
-  if (action === 'set' || action === 'setconf' || action === 'addconf' || action === 'syncconf') return jeu.erreur(jeu.t('wg-set-non-simule'), 1);
-  return jeu.erreur(`Invalid subcommand: \`${action}'\n${jeu.t('wg-usage')}`, 1);
+  if (action === 'set' || action === 'setconf' || action === 'addconf' || action === 'syncconf') return game.error(game.t('wg-set-non-simule'), 1);
+  return game.error(`Invalid subcommand: \`${action}'\n${game.t('wg-usage')}`, 1);
 }
 
-function wgQuick(jeu: Shell, args: string[]): string {
-  const [action, nom] = args;
-  if (!action || !['up', 'down', 'strip', 'save'].includes(action) || !nom) return jeu.erreur(jeu.t('wg-quick-usage'), 1);
-  if (jeu.qui !== 'root') return jeu.erreur(`wg-quick must be run as root.`, 1);
+function wgQuick(game: Shell, args: string[]): string {
+  const [action, name] = args;
+  if (!action || !['up', 'down', 'strip', 'save'].includes(action) || !name) return game.error(game.t('wg-quick-usage'), 1);
+  if (game.who !== 'root') return game.error(`wg-quick must be run as root.`, 1);
   if (action === 'strip') {
-    const texte = jeu.lire(confDe(nom));
-    if (texte === null) return jeu.erreur(`wg-quick: \`${confDe(nom)}' does not exist`, 1);
-    return texte
+    const text = game.read(confFor(name));
+    if (text === null) return game.error(`wg-quick: \`${confFor(name)}' does not exist`, 1);
+    return text
       .split('\n')
       .filter((l) => !/^\s*(Address|DNS|MTU|Table|PreUp|PostUp|PreDown|PostDown|SaveConfig)\s*=/i.test(l))
       .join('\n');
   }
-  if (action === 'save') return jeu.erreur(jeu.t('wg-set-non-simule'), 1);
+  if (action === 'save') return game.error(game.t('wg-set-non-simule'), 1);
   if (action === 'down') {
-    const e = demonterWg(jeu, nom);
-    if (e) return jeu.erreur(e, 1);
-    return `[#] ip link delete dev ${nom}`;
+    const e = unmountWg(game, name);
+    if (e) return game.error(e, 1);
+    return `[#] ip link delete dev ${name}`;
   }
-  const avertissement = modeMonde(jeu, confDe(nom)) ? [`Warning: \`${confDe(nom)}' is world accessible`] : [];
-  const { lignes, erreur } = monterWg(jeu, nom, false);
-  if (erreur !== null) {
-    if (erreur) return jeu.erreur(erreur, 1);
-    jeu.erreur([...avertissement, ...lignes].join('\n'), 1);
+  const warning = worldMode(game, confFor(name)) ? [`Warning: \`${confFor(name)}' is world accessible`] : [];
+  const { lines, error } = mountWg(game, name, false);
+  if (error !== null) {
+    if (error) return game.error(error, 1);
+    game.error([...warning, ...lines].join('\n'), 1);
     return '';
   }
-  if (avertissement.length) jeu.erreur(avertissement[0], 0);
-  return lignes.join('\n');
+  if (warning.length) game.error(warning[0], 0);
+  return lines.join('\n');
 }
 
 // Le fichier est-il accessible aux autres (comme le teste wg-quick : stat -c '0%#a', & 0007) ?
-const modeMonde = (jeu: Shell, chemin: string) => {
-  const n = jeu.trouver(chemin);
+const worldMode = (game: Shell, path: string) => {
+  const n = game.find(path);
   if (!n) return false;
   const mode = n.mode ?? 'rw-r--r--';
   return /[rwx]/.test(mode.slice(6, 9));
 };
 
 /** Le service wg-quick@NOM : monte l'interface d'après son fichier, au démarrage s'il est activé. */
-export function serviceWg(nom: string) {
+export function serviceWg(name: string) {
   return {
-    description: `WireGuard via wg-quick(8) for ${nom}`,
+    description: `WireGuard via wg-quick(8) for ${name}`,
     active: false,
-    etat: 'inactive' as const,
+    state: 'inactive' as const,
     executable: 'wg-quick',
-    resteActif: true,
+    activeRest: true,
     processus: [],
-    verifier: (j: Parameters<typeof monterWg>[0]) => {
-      if (j.etat.wg?.[nom]) return [`wg-quick: \`${nom}' already exists`];
-      if (j.lire(confDe(nom)) === null) return [`wg-quick: \`${confDe(nom)}' does not exist`];
-      const c = lireConfWg(j.lire(confDe(nom))!);
-      return c.erreurs.length
-        ? [`[#] ip link add ${nom} type wireguard`, `[#] wg setconf ${nom} /dev/fd/63`, ...c.erreurs, `[#] ip link delete dev ${nom}`]
+    check: (j: Parameters<typeof mountWg>[0]) => {
+      if (j.state.wg?.[name]) return [`wg-quick: \`${name}' already exists`];
+      if (j.read(confFor(name)) === null) return [`wg-quick: \`${confFor(name)}' does not exist`];
+      const c = readConfWg(j.read(confFor(name))!);
+      return c.errors.length
+        ? [`[#] ip link add ${name} type wireguard`, `[#] wg setconf ${name} /dev/fd/63`, ...c.errors, `[#] ip link delete dev ${name}`]
         : null;
     },
-    charger: (j: Parameters<typeof monterWg>[0]) => {
-      const { lignes } = monterWg(j, nom, true);
+    load: (j: Parameters<typeof mountWg>[0]) => {
+      const { lines } = mountWg(j, name, true);
       const sd = systemd(j);
       if (sd)
-        for (const l of lignes)
-          sd.journal.push({
-            temps: sd.horloge,
-            demarrage: sd.demarrage,
-            unite: `wg-quick@${nom}.service`,
+        for (const l of lines)
+          sd.log.push({
+            time: sd.clock,
+            boot: sd.boot,
+            unit: `wg-quick@${name}.service`,
             ident: 'wg-quick',
             pid: 2210,
             message: l,
-            priorite: 6,
+            priority: 6,
           });
     },
-    arret: (j: Parameters<typeof monterWg>[0]) => {
-      demonterWg(j, nom);
+    stop: (j: Parameters<typeof mountWg>[0]) => {
+      unmountWg(j, name);
     },
   };
 }
 
-export const WIREGUARD: Record<string, Commande> = {
-  wg: { section: 8, propresOptions: true, lancer: ({ args, jeu, entree }) => commandeWg(jeu, args, entree) },
-  'wg-quick': { section: 8, propresOptions: true, lancer: ({ args, jeu }) => wgQuick(jeu, args) },
+export const WIREGUARD: Record<string, Command> = {
+  wg: { section: 8, ownOptions: true, launch: ({ args, game, input }) => wgCommand(game, args, input) },
+  'wg-quick': { section: 8, ownOptions: true, launch: ({ args, game }) => wgQuick(game, args) },
 };
 
 /** ping vers une adresse derrière un tunnel : « sans-pair » (aucun pair n'a cette adresse), « perdu » ou « ok ». */
-export function pingTunnel(jeu: Shell, ip: string): 'sans-pair' | 'perdu' | 'ok' {
-  for (const [nom, i] of Object.entries(wg(jeu))) {
-    const p = i.conf.pairs.find((x) => x.autorisees.some((a) => dans(ip, a)));
+export function pingTunnel(game: Shell, ip: string): 'sans-pair' | 'perdu' | 'ok' {
+  for (const [name, i] of Object.entries(wg(game))) {
+    const p = i.conf.peers.find((x) => x.allowed.some((a) => inside(ip, a)));
     if (!p) continue;
-    const d = lan(jeu)?.distants?.find((x) => x.cle === p.cle);
-    const e = d && etatTunnel(jeu, d, publicDu(jeu));
-    if (!d || !e || e.nom !== nom || !serre(e.etat)) return 'perdu';
-    const client = confDistant(jeu, d);
-    if (client.adresses[0]?.split('/')[0] === ip) return 'ok';
+    const d = lan(game)?.remotes?.find((x) => x.key === p.key);
+    const e = d && tunnelState(game, d, publicFields(game));
+    if (!d || !e || e.name !== name || !serre(e.state)) return 'perdu';
+    const client = remoteConf(game, d);
+    if (client.addresses[0]?.split('/')[0] === ip) return 'ok';
     // Un appareil du site derrière ce pair : seulement si le passage reste ouvert dans sa box.
-    return d.reseau && dans(ip, d.reseau) && (!d.derriereNat || client.pairs[0]?.keepalive) ? 'ok' : 'perdu';
+    return d.network && inside(ip, d.network) && (!d.behindNat || client.peers[0]?.keepalive) ? 'ok' : 'perdu';
   }
   return 'sans-pair';
 }

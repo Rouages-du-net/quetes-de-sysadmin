@@ -6,21 +6,21 @@
 // joint en rebondissant par maison (ssh -J, ProxyJump).
 // Sources : https://man.openbsd.org/sshd_config, https://man.openbsd.org/ssh
 
-import { d, f, fichiersComptes, type Comptes, type Dossier, type HoteInterne, type Noeud } from '../world';
-import { nomMachine } from '../machines';
-import type { Jeu } from '../shell';
-import type { Traduire } from '../../texts';
-import { nouveauSystemd, systemd, type DefinitionService } from '../systemd';
-import { lireConfig } from '../sshd';
+import { d, f, accountsFiles, type Accounts, type Directory, type InternalHost, type Node } from '../world';
+import { machineName } from '../machines';
+import type { Game } from '../shell';
+import type { Translate } from '../../texts';
+import { newSystemd, systemd, type DefinitionService } from '../systemd';
+import { readConfig } from '../sshd';
 import { internet, type ElementPlan } from '../plan';
 
 export const M = '/home/vous';
-export const MOT_DE_PASSE = 'lilas-2027';
+export const PASSWORD = 'lilas-2027';
 // Lundi 4 octobre 2027, 18 h 40.
-export const MAINTENANT = Date.UTC(2027, 9, 4, 18, 40, 0);
+export const NOW = Date.UTC(2027, 9, 4, 18, 40, 0);
 
 // sshd_config de Debian ; PasswordAuthentication donné en paramètre (null : la ligne commentée d'origine).
-const sshdConfig = (motsDePasse: 'yes' | 'no' | null) =>
+const sshdConfig = (passwords: 'yes' | 'no' | null) =>
   `
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -39,7 +39,7 @@ Include /etc/ssh/sshd_config.d/*.conf
 #PubkeyAuthentication yes
 
 # To disable tunneled clear text passwords, change to no here!
-${motsDePasse ? `PasswordAuthentication ${motsDePasse}` : '#PasswordAuthentication yes'}
+${passwords ? `PasswordAuthentication ${passwords}` : '#PasswordAuthentication yes'}
 #PermitEmptyPasswords no
 
 KbdInteractiveAuthentication no
@@ -61,159 +61,159 @@ export const HOSTS = `127.0.0.1\tlocalhost
 10.20.0.11\twiki.maison.internal wiki
 10.20.0.12\tarchives.maison.internal archives`;
 
-export interface EtatSshd {
-  charge: Record<string, string>;
+export interface SshdState {
+  load: Record<string, string>;
   // Connexions par clé reçues au moment du dernier chargement (se reconnecter après).
-  clesAuChargement: number;
-  recharges: number;
+  keysToLoad: number;
+  reloads: number;
 }
-export const sshd = (j: Jeu) => j.etat.sshd as EtatSshd;
-export const connexionsPar = (j: Jeu, comment: 'cle' | 'motDePasse') => (j.etat.connexionsSsh?.[comment] as number | undefined) ?? 0;
+export const sshd = (j: Game) => j.state.sshd as SshdState;
+export const connectionsBy = (j: Game, comment: 'cle' | 'motDePasse') => (j.state.connexionsSsh?.[comment] as number | undefined) ?? 0;
 
 // Le service ssh, comme celui de Debian : ExecReload vérifie d'abord (sshd -t).
 const serviceSsh = (): DefinitionService => ({
   description: 'OpenBSD Secure Shell server',
   active: true,
   executable: 'sshd',
-  processus: [{ pid: 588, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
-  verifier: (j) => {
-    const e = lireConfig(j).erreurs;
+  process: [{ pid: 588, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+  check: (j) => {
+    const e = readConfig(j).errors;
     return e.length ? e : null;
   },
-  verifierAuRechargement: true,
-  charger: (j) => {
+  checkToReload: true,
+  load: (j) => {
     const c = sshd(j);
     if (!c) return;
-    c.charge = lireConfig(j).valeurs;
-    c.clesAuChargement = connexionsPar(j, 'cle');
-    c.recharges++;
+    c.load = readConfig(j).values;
+    c.keysToLoad = connectionsBy(j, 'cle');
+    c.reloads++;
   },
 });
 
 /** L'état de maison : le vrai ssh, sshd et systemd (plus les services du chapitre). */
-export const etatMaison = (services: Record<string, DefinitionService> = {}, plus: Record<string, unknown> = {}) => ({
+export const homeState = (services: Record<string, DefinitionService> = {}, more: Record<string, unknown> = {}) => ({
   sshReel: true,
-  sshd: { charge: {}, clesAuChargement: 0, recharges: 0 },
-  systemd: nouveauSystemd('maison', MAINTENANT - 9 * 86_400_000, MAINTENANT, { ssh: serviceSsh(), ...services }),
-  ...plus,
+  sshd: { load: {}, keysToLoad: 0, reloads: 0 },
+  systemd: newSystemd('maison', NOW - 9 * 86_400_000, NOW, { ssh: serviceSsh(), ...services }),
+  ...more,
 });
 
 /** Au démarrage : sshd charge sa configuration. */
-export const chargerSshd = (j: Jeu) => {
-  sshd(j).charge = lireConfig(j).valeurs;
+export const loadSshd = (j: Game) => {
+  sshd(j).load = readConfig(j).values;
 };
 
-export const comptesMaison = (): Comptes => ({
-  utilisateurs: { root: { uid: 0, groupe: 'root', maison: '/root' }, vous: { uid: 1000, groupe: 'vous' }, yasmine: { uid: 1001, groupe: 'yasmine' } },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    adm: { gid: 4, membres: ['vous', 'yasmine'] },
-    sudo: { gid: 27, membres: ['vous', 'yasmine'] },
-    vous: { gid: 1000, membres: [] },
-    yasmine: { gid: 1001, membres: [] },
+export const homeAccounts = (): Accounts => ({
+  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' }, yasmine: { uid: 1001, group: 'yasmine' } },
+  groups: {
+    root: { gid: 0, members: [] },
+    adm: { gid: 4, members: ['vous', 'yasmine'] },
+    sudo: { gid: 27, members: ['vous', 'yasmine'] },
+    vous: { gid: 1000, members: [] },
+    yasmine: { gid: 1001, members: [] },
   },
 });
 
-const racine = { proprio: 'root' };
-const prive = { mode: 'rwx------' };
+const root = { owner: 'root' };
+const isPrivate = { mode: 'rwx------' };
 
 /** Le dossier ~/.ssh de vous (vide, ou avec ces fichiers). */
-export const dossierSsh = (fichiers: Record<string, Noeud> = {}) => d(fichiers, undefined, prive);
+export const sshDirectory = (files: Record<string, Node> = {}) => d(files, undefined, isPrivate);
 
 /** Le monde de maison : /etc (comptes, hosts, ssh), la maison de vous, et le reste du chapitre. */
-export function mondeMaison(o: { motsDePasse: 'yes' | 'no' | null; maison: Record<string, Noeud>; plus?: Record<string, Noeud> }): Dossier {
+export function homeWorld(o: { passwords: 'yes' | 'no' | null; home: Record<string, Node>; more?: Record<string, Node> }): Directory {
   return d(
     {
       etc: d(
         {
-          ...fichiersComptes(),
-          hostname: f('maison', { lignes: true, proprio: 'root' }),
-          hosts: f(HOSTS, { lignes: true, proprio: 'root' }),
+          ...accountsFiles(),
+          hostname: f('maison', { lines: true, owner: 'root' }),
+          hosts: f(HOSTS, { lines: true, owner: 'root' }),
           ssh: d(
-            { sshd_config: f(sshdConfig(o.motsDePasse), { lignes: true, proprio: 'root' }), 'sshd_config.d': d({}, undefined, racine) },
+            { sshd_config: f(sshdConfig(o.passwords), { lines: true, owner: 'root' }), 'sshd_config.d': d({}, undefined, root) },
             undefined,
-            racine,
+            root,
           ),
         },
         undefined,
-        racine,
+        root,
       ),
-      home: d({ vous: d(o.maison), yasmine: d({}, undefined, { proprio: 'yasmine', mode: 'rwx------' }) }, undefined, racine),
-      ...(o.plus ?? {}),
+      home: d({ vous: d(o.home), yasmine: d({}, undefined, { owner: 'yasmine', mode: 'rwx------' }) }, undefined, root),
+      ...(o.more ?? {}),
     },
     undefined,
-    racine,
+    root,
   );
 }
 
 // ——— Le réseau interne ———
 
-const comptesInternes = (): Comptes => ({
-  utilisateurs: { root: { uid: 0, groupe: 'root', maison: '/root' }, vous: { uid: 1000, groupe: 'vous' } },
-  groupes: { root: { gid: 0, membres: [] }, sudo: { gid: 27, membres: ['vous'] }, vous: { gid: 1000, membres: [] } },
+const internalAccounts = (): Accounts => ({
+  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' } },
+  groups: { root: { gid: 0, members: [] }, sudo: { gid: 27, members: ['vous'] }, vous: { gid: 1000, members: [] } },
 });
 
 /** Une machine interne : son nom, son adresse, ce qu'il y a dans sa maison et ailleurs. */
-export function hoteInterne(
-  nom: string,
-  adresse: string,
+export function internalHost(
+  name: string,
+  address: string,
   o: {
-    maison?: (t: Traduire) => Record<string, Noeud>;
-    plus?: (t: Traduire) => Record<string, Noeud>;
-    etat?: (t: Traduire) => Record<string, unknown>;
-    initialiser?: (j: Jeu) => void;
-    commandes?: string[];
+    home?: (t: Translate) => Record<string, Node>;
+    more?: (t: Translate) => Record<string, Node>;
+    state?: (t: Translate) => Record<string, unknown>;
+    initialise?: (j: Game) => void;
+    commands?: string[];
   } = {},
-): HoteInterne {
+): InternalHost {
   return {
-    adresse,
-    domaine: `${nom}.maison.internal`,
-    comptes: comptesInternes,
-    commandes: o.commandes,
-    etat: o.etat,
-    initialiser: o.initialiser,
-    creerMonde: (t) =>
+    address,
+    domain: `${name}.maison.internal`,
+    accounts: internalAccounts,
+    commands: o.commands,
+    state: o.state,
+    initialise: o.initialise,
+    createWorld: (t) =>
       d(
         {
           etc: d(
-            { ...fichiersComptes(), hostname: f(nom, { lignes: true, proprio: 'root' }), hosts: f(HOSTS, { lignes: true, proprio: 'root' }) },
+            { ...accountsFiles(), hostname: f(name, { lines: true, owner: 'root' }), hosts: f(HOSTS, { lines: true, owner: 'root' }) },
             undefined,
-            racine,
+            root,
           ),
-          home: d({ vous: d({ '.ssh': dossierSsh(), ...(o.maison?.(t) ?? {}) }) }, undefined, racine),
-          ...(o.plus?.(t) ?? {}),
+          home: d({ vous: d({ '.ssh': sshDirectory(), ...(o.home?.(t) ?? {}) }) }, undefined, root),
+          ...(o.more?.(t) ?? {}),
         },
         undefined,
-        racine,
+        root,
       ),
   };
 }
 
-export const sd = (j: Jeu) => systemd(j)!;
+export const sd = (j: Game) => systemd(j)!;
 
 /** Le plan du réseau de la Maison : la passerelle, et derrière elle le wiki et les archives ; l'hébergeur du site, sur internet. */
-export const planMaison =
-  (o: { hebergeur?: boolean } = {}) =>
-  (t: Traduire): ElementPlan =>
+export const homePlan =
+  (o: { host?: boolean } = {}) =>
+  (t: Translate): ElementPlan =>
     internet(
       t,
       {
         role: 'routeur',
-        nom: nomMachine(t, 'maison'),
-        adresse: '192.0.2.19',
+        name: machineName(t, 'maison'),
+        address: '192.0.2.19',
         note: t('plan-note-passerelle'),
-        hote: 'maison',
-        enfants: [
+        host: 'maison',
+        children: [
           {
             role: 'reseau',
-            nom: t('plan-reseau-interne'),
-            adresse: '10.20.0.0/24',
-            enfants: [
-              { role: 'serveur', nom: 'wiki', adresse: '10.20.0.11', note: t('plan-note-wiki'), hote: 'wiki' },
-              { role: 'serveur', nom: 'archives', adresse: '10.20.0.12', note: t('plan-note-archives'), hote: 'archives' },
+            name: t('plan-reseau-interne'),
+            address: '10.20.0.0/24',
+            children: [
+              { role: 'serveur', name: 'wiki', address: '10.20.0.11', note: t('plan-note-wiki'), host: 'wiki' },
+              { role: 'serveur', name: 'archives', address: '10.20.0.12', note: t('plan-note-archives'), host: 'archives' },
             ],
           },
         ],
       },
-      ...(o.hebergeur ? [{ role: 'serveur' as const, nom: 'ftp.hosting.example', adresse: '203.0.113.80', note: t('plan-note-hebergeur') }] : []),
+      ...(o.host ? [{ role: 'serveur' as const, name: 'ftp.hosting.example', address: '203.0.113.80', note: t('plan-note-hebergeur') }] : []),
     );

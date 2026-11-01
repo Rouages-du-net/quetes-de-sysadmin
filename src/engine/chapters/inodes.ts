@@ -13,165 +13,165 @@
 // https://www.gnu.org/software/findutils/manual/html_mono/find.html (-mtime, -delete),
 // https://man7.org/linux/man-pages/man2/execve.2.html (E2BIG, ARG_MAX)
 
-import { chemin, d, f, fichiersComptes, type Chapitre, type Comptes, type Dossier, type Droits, type Fichier } from '../world';
-import type { Jeu, Shell } from '../shell';
-import { journaliser, nouveauSystemd, systemd } from '../systemd';
-import { passer } from '../cron';
+import { path, d, f, accountsFiles, type Chapter, type Accounts, type Directory, type Rights, type File } from '../world';
+import type { Game, Shell } from '../shell';
+import { writeLog, newSystemd, systemd } from '../systemd';
+import { pass } from '../cron';
 
 const M = '/home/vous';
-const DONNEES = '/srv/radio';
+const DATA = '/srv/radio';
 const STATS = '/srv/radio/stats';
-const JOUR = 86_400_000;
+const DAY = 86_400_000;
 const INODES = 65_536;
 // Le soir de l'incident : dimanche 29 août 2027, 3 h 20 (heure locale lue comme UTC).
-const MAINTENANT = Date.UTC(2027, 7, 29, 3, 20, 0);
+const NOW = Date.UTC(2027, 7, 29, 3, 20, 0);
 // Les statistiques commencent le 1er mars : un fichier par écoute, environ 360 par jour.
-const DEBUT = Date.UTC(2027, 2, 1, 0, 0, 0);
-const ENREGISTREMENT = '/srv/radio/emissions/nuit-2027-08-29.ogg';
+const START = Date.UTC(2027, 2, 1, 0, 0, 0);
+const RECORD = '/srv/radio/emissions/nuit-2027-08-29.ogg';
 // L'enregistrement de cette nuit, dans la langue (/srv/radio/shows/… en anglais).
-const enregistrement = (j: Jeu) => chemin(j.t, ENREGISTREMENT);
+const record = (j: Game) => path(j.t, RECORD);
 
-const comptes = (): Comptes => ({
-  utilisateurs: {
-    root: { uid: 0, groupe: 'root', maison: '/root' },
-    radio: { uid: 996, groupe: 'radio', maison: '/var/lib/radio', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, groupe: 'vous' },
-    zoe: { uid: 1001, groupe: 'zoe' },
+const accounts = (): Accounts => ({
+  users: {
+    root: { uid: 0, group: 'root', home: '/root' },
+    radio: { uid: 996, group: 'radio', home: '/var/lib/radio', shell: '/usr/sbin/nologin' },
+    vous: { uid: 1000, group: 'vous' },
+    zoe: { uid: 1001, group: 'zoe' },
   },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    adm: { gid: 4, membres: ['vous', 'zoe'] },
-    sudo: { gid: 27, membres: ['vous', 'zoe'] },
-    radio: { gid: 996, membres: [] },
-    vous: { gid: 1000, membres: [] },
-    zoe: { gid: 1001, membres: [] },
+  groups: {
+    root: { gid: 0, members: [] },
+    adm: { gid: 4, members: ['vous', 'zoe'] },
+    sudo: { gid: 27, members: ['vous', 'zoe'] },
+    radio: { gid: 996, members: [] },
+    vous: { gid: 1000, members: [] },
+    zoe: { gid: 1001, members: [] },
   },
 });
 
-const sd = (j: Jeu) => systemd(j)!;
-const shell = (j: Jeu) => j as Shell;
-const volume = (j: Jeu) => shell(j).montage(DONNEES)!;
-const pourcentInodes = (j: Jeu) => Math.ceil((100 * shell(j).inodesUtilises(volume(j))) / INODES);
-const jourDe = (ms: number) => Math.floor(ms / JOUR);
-const deuxChiffres = (n: number) => String(n).padStart(2, '0');
+const sd = (j: Game) => systemd(j)!;
+const shell = (j: Game) => j as Shell;
+const volume = (j: Game) => shell(j).mount(DATA)!;
+const inodesPercent = (j: Game) => Math.ceil((100 * shell(j).usedInodes(volume(j))) / INODES);
+const dayFor = (ms: number) => Math.floor(ms / DAY);
+const twoDigits = (n: number) => String(n).padStart(2, '0');
 
 // Le nom d'un fichier de statistiques : la date de l'écoute, et un numéro.
-function nomStat(ms: number, n: number): string {
+function statName(ms: number, n: number): string {
   const dt = new Date(ms);
-  const date = `${dt.getUTCFullYear()}-${deuxChiffres(dt.getUTCMonth() + 1)}-${deuxChiffres(dt.getUTCDate())}`;
-  const heure = `${deuxChiffres(dt.getUTCHours())}-${deuxChiffres(dt.getUTCMinutes())}-${deuxChiffres(dt.getUTCSeconds())}`;
-  return `ecoute-${date}T${heure}-${String(n).padStart(5, '0')}.json`;
+  const date = `${dt.getUTCFullYear()}-${twoDigits(dt.getUTCMonth() + 1)}-${twoDigits(dt.getUTCDate())}`;
+  const timeOfDay = `${twoDigits(dt.getUTCHours())}-${twoDigits(dt.getUTCMinutes())}-${twoDigits(dt.getUTCSeconds())}`;
+  return `ecoute-${date}T${timeOfDay}-${String(n).padStart(5, '0')}.json`;
 }
 
-const stat = (ms: number): Fichier => ({
+const stat = (ms: number): File => ({
   type: 'fichier',
-  contenu: '{"listener":"203.0.113.0","seconds":1260}',
+  content: '{"listener":"203.0.113.0","seconds":1260}',
   mtime: ms,
-  proprio: 'radio',
-  lignes: true,
+  owner: 'radio',
+  lines: true,
 });
 
 // Combien de fichiers de statistiques de chaque jour sont encore là.
-function parJour(j: Jeu): Map<number, number> {
-  const lieu = j.trouver(STATS);
-  const compte = new Map<number, number>();
-  if (lieu?.type !== 'dossier') return compte;
-  for (const k in lieu.enfants) {
-    const e = lieu.enfants[k];
-    if (e.type === 'fichier' && e.mtime !== undefined) compte.set(jourDe(e.mtime), (compte.get(jourDe(e.mtime)) ?? 0) + 1);
+function byDay(j: Game): Map<number, number> {
+  const place = j.find(STATS);
+  const account = new Map<number, number>();
+  if (place?.type !== 'dossier') return account;
+  for (const k in place.children) {
+    const e = place.children[k];
+    if (e.type === 'fichier' && e.mtime !== undefined) account.set(dayFor(e.mtime), (account.get(dayFor(e.mtime)) ?? 0) + 1);
   }
-  return compte;
+  return account;
 }
 
 // Les statistiques de moins de 31 jours (find -mtime -31) sont-elles toutes là ?
-function recentesIntactes(j: Jeu): boolean {
-  const ecrits: Record<number, number> = j.etat.statsEcrites;
-  const presents = parJour(j);
-  const limite = jourDe(sd(j).horloge) - 30;
-  return Object.entries(ecrits).every(([jour, n]) => Number(jour) < limite || (presents.get(Number(jour)) ?? 0) >= n);
+function intactRecent(j: Game): boolean {
+  const written: Record<number, number> = j.state.statsEcrites;
+  const presents = byDay(j);
+  const limit = dayFor(sd(j).clock) - 30;
+  return Object.entries(written).every(([day, n]) => Number(day) < limit || (presents.get(Number(day)) ?? 0) >= n);
 }
 
 // L'âge du plus ancien fichier de statistiques, en jours entiers (comme find -mtime).
-const plusAncien = (j: Jeu) => {
-  const lieu = j.trouver(STATS);
+const moreOld = (j: Game) => {
+  const place = j.find(STATS);
   let min = Infinity;
-  if (lieu?.type === 'dossier')
-    for (const k in lieu.enfants) {
-      const e = lieu.enfants[k];
+  if (place?.type === 'dossier')
+    for (const k in place.children) {
+      const e = place.children[k];
       if (e.type === 'fichier' && e.mtime !== undefined && e.mtime < min) min = e.mtime;
     }
-  return min === Infinity ? 0 : Math.floor((sd(j).horloge - min) / JOUR);
+  return min === Infinity ? 0 : Math.floor((sd(j).clock - min) / DAY);
 };
 
 /** Écrire un fichier comme le compte radio : réussit seulement s'il reste un inode. */
-function ecrireCommeRadio(j: Jeu, chemin: string, n: Fichier): boolean {
-  const jeu = shell(j);
-  const avant = jeu.qui;
-  jeu.qui = 'radio';
+function writeAsRadio(j: Game, path: string, n: File): boolean {
+  const game = shell(j);
+  const before = game.who;
+  game.who = 'radio';
   try {
-    return jeu.placer('stream', chemin, n) === null;
+    return game.place('stream', path, n) === null;
   } finally {
-    jeu.qui = avant;
+    game.who = before;
   }
 }
 
 // Le relais note une écoute ; le compteur des fichiers écrits par jour suit.
-function noterEcoute(j: Jeu, ms: number): boolean {
-  const n = (j.etat.numeroStat = (j.etat.numeroStat ?? 0) + 1);
-  const ok = ecrireCommeRadio(j, `${STATS}/${nomStat(ms, n)}`, stat(ms));
-  if (ok) j.etat.statsEcrites[jourDe(ms)] = (j.etat.statsEcrites[jourDe(ms)] ?? 0) + 1;
+function noteListening(j: Game, ms: number): boolean {
+  const n = (j.state.numeroStat = (j.state.numeroStat ?? 0) + 1);
+  const ok = writeAsRadio(j, `${STATS}/${statName(ms, n)}`, stat(ms));
+  if (ok) j.state.statsEcrites[dayFor(ms)] = (j.state.statsEcrites[dayFor(ms)] ?? 0) + 1;
   return ok;
 }
 
 // Les crontabs qui parlent des statistiques (pour savoir quand faire passer une nuit).
-const empreinteCron = (j: Jeu) => JSON.stringify(j.etat.crontabs ?? {});
-const cronStats = (j: Jeu) => Object.values((j.etat.crontabs ?? {}) as Record<string, string>).some((t) => t.includes(STATS));
+const cronFingerprint = (j: Game) => JSON.stringify(j.state.crontabs ?? {});
+const cronStats = (j: Game) => Object.values((j.state.crontabs ?? {}) as Record<string, string>).some((t) => t.includes(STATS));
 
 /** La nuit suivante : une journée d'écoutes, puis cron. Renvoie le compte rendu du matin. */
-function nuit(j: Jeu): string {
+function night(j: Game): string {
   const s = sd(j);
-  const avant = parJour(j);
+  const before = byDay(j);
   const total = (m: Map<number, number>) => [...m.values()].reduce((a, b) => a + b, 0);
   // La journée : le relais note ses écoutes, tant qu'il reste des inodes.
-  const lendemain = (jourDe(s.horloge) + 1) * JOUR;
-  const libres = INODES - shell(j).inodesUtilises(volume(j));
-  const lieu = j.trouver(STATS);
-  const ecrits = lieu?.type === 'dossier' ? Math.max(0, Math.min(360, libres)) : 0;
-  for (let k = 0; k < ecrits; k++) {
-    const ms = s.horloge + Math.floor((k * (lendemain + 3 * 3600_000 - s.horloge)) / 360);
-    const n = (j.etat.numeroStat = (j.etat.numeroStat ?? 0) + 1);
-    (lieu as Dossier).enfants[nomStat(ms, n)] = stat(ms);
-    j.etat.statsEcrites[jourDe(ms)] = (j.etat.statsEcrites[jourDe(ms)] ?? 0) + 1;
+  const nextDay = (dayFor(s.clock) + 1) * DAY;
+  const free = INODES - shell(j).usedInodes(volume(j));
+  const place = j.find(STATS);
+  const written = place?.type === 'dossier' ? Math.max(0, Math.min(360, free)) : 0;
+  for (let k = 0; k < written; k++) {
+    const ms = s.clock + Math.floor((k * (nextDay + 3 * 3600_000 - s.clock)) / 360);
+    const n = (j.state.numeroStat = (j.state.numeroStat ?? 0) + 1);
+    (place as Directory).children[statName(ms, n)] = stat(ms);
+    j.state.statsEcrites[dayFor(ms)] = (j.state.statsEcrites[dayFor(ms)] ?? 0) + 1;
   }
   // La nuit : cron lance les tâches prévues jusqu'à 6 h.
-  const debut = s.horloge;
-  const fin = lendemain + 6 * 3600_000;
+  const start = s.clock;
+  const end = nextDay + 6 * 3600_000;
   // Les tâches voient l'heure du matin (find -mtime compte l'âge depuis l'horloge).
-  s.horloge = fin;
-  const executions = passer(shell(j), debut, fin);
-  const effaces = total(avant) + ecrits - total(parJour(j));
-  const courriers = executions
-    .filter((e) => e.sortie)
+  s.clock = end;
+  const executions = pass(shell(j), start, end);
+  const effaces = total(before) + written - total(byDay(j));
+  const mails = executions
+    .filter((e) => e.output)
     // Un courrier de milliers de lignes (une erreur par fichier) : seulement le début.
     .map((e) => {
-      const lignes = e.sortie.split('\n');
-      const sortie = lignes.length > 5 ? [...lignes.slice(0, 5), '[…]'].join('\n') : e.sortie;
-      return j.t('inodes-courrier', { commande: e.commande, sortie });
+      const lines = e.output.split('\n');
+      const output = lines.length > 5 ? [...lines.slice(0, 5), '[…]'].join('\n') : e.output;
+      return j.t('inodes-courrier', { commande: e.command, sortie: output });
     })
     .join('\n\n');
-  const resultat = [j.t('inodes-nuit', { taches: executions.length, effaces, ancien: plusAncien(j), pourcent: pourcentInodes(j) }), courriers];
-  if (!recentesIntactes(j)) resultat.push(j.t('inodes-nuit-recentes-perdues'));
-  else if (!executions.length) resultat.push(j.t('inodes-nuit-rien'));
-  else if (plusAncien(j) > 60) resultat.push(j.t('inodes-nuit-trop-vieux', { jours: plusAncien(j) }));
-  else if (pourcentInodes(j) >= 80) resultat.push(j.t('inodes-nuit-plein', { pourcent: pourcentInodes(j) }));
-  else j.etat.nuitReussie = true;
-  return resultat.filter(Boolean).join('\n\n');
+  const result = [j.t('inodes-nuit', { taches: executions.length, effaces, ancien: moreOld(j), pourcent: inodesPercent(j) }), mails];
+  if (!intactRecent(j)) result.push(j.t('inodes-nuit-recentes-perdues'));
+  else if (!executions.length) result.push(j.t('inodes-nuit-rien'));
+  else if (moreOld(j) > 60) result.push(j.t('inodes-nuit-trop-vieux', { jours: moreOld(j) }));
+  else if (inodesPercent(j) >= 80) result.push(j.t('inodes-nuit-plein', { pourcent: inodesPercent(j) }));
+  else j.state.nuitReussie = true;
+  return result.filter(Boolean).join('\n\n');
 }
 
-export const inodes: Chapitre = {
+export const inodes: Chapter = {
   id: 'inodes',
-  numero: 3,
-  commandes: [
+  number: 3,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -199,145 +199,145 @@ export const inodes: Chapitre = {
     'journalctl',
     'crontab',
   ],
-  maison: M,
-  accueil: 'message_de_zoe.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_de_zoe.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'antenne-2027',
-  comptes,
-  etat: () => ({
-    systemd: nouveauSystemd('radio', Date.UTC(2027, 7, 1, 6, 0, 0), MAINTENANT, {
+  password: 'antenne-2027',
+  accounts,
+  state: () => ({
+    systemd: newSystemd('radio', Date.UTC(2027, 7, 1, 6, 0, 0), NOW, {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,
         executable: 'sshd',
-        processus: [{ pid: 598, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+        process: [{ pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
       'radio-stream': {
         description: 'Radio Quartier stream relay',
         active: true,
         executable: 'stream',
-        processus: [{ pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/stream --config /etc/radio/stream.conf' }],
+        process: [{ pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' }],
       },
       cron: {
         description: 'Regular background program processing daemon',
         active: true,
         executable: 'cron',
-        processus: [{ pid: 611, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' }],
+        process: [{ pid: 611, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' }],
       },
     }),
     processus: [
-      { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
-      { pid: 598, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
-      { pid: 611, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' },
-      { pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
+      { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
+      { pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
+      { pid: 611, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
+      { pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
     montages: [
-      { chemin: '/', capacite: 20_000_000_000, nom: '/dev/vda1', systeme: 'ext4', inodes: 1_310_720, inodesBase: 61_204 },
+      { path: '/', capacity: 20_000_000_000, name: '/dev/vda1', system: 'ext4', inodes: 1_310_720, inodesBase: 61_204 },
       // Un petit volume de données : 1 Gio, donc 65 536 inodes (un pour 16 Kio, le réglage par défaut de mkfs.ext4).
-      { chemin: DONNEES, capacite: 1_073_741_824, nom: '/dev/vdb1', systeme: 'ext4', inodes: INODES, inodesBase: 11 },
+      { path: DATA, capacity: 1_073_741_824, name: '/dev/vdb1', system: 'ext4', inodes: INODES, inodesBase: 11 },
     ],
     crontabs: {},
     statsEcrites: {},
   }),
   // Les statistiques remplissent tous les inodes qui restent sur le volume.
-  initialiser: (j) => {
+  initialise: (j) => {
     const s = sd(j);
-    const lieu = j.trouver(STATS) as Dossier;
-    const reste = INODES - shell(j).inodesUtilises(volume(j));
-    const parJourPrevu = reste / ((MAINTENANT - DEBUT) / JOUR);
-    for (let k = 0; k < reste; k++) {
-      const ms = DEBUT + Math.floor((k * JOUR) / parJourPrevu);
-      const n = (j.etat.numeroStat = (j.etat.numeroStat ?? 0) + 1);
-      lieu.enfants[nomStat(ms, n)] = stat(ms);
-      j.etat.statsEcrites[jourDe(ms)] = (j.etat.statsEcrites[jourDe(ms)] ?? 0) + 1;
+    const place = j.find(STATS) as Directory;
+    const rest = INODES - shell(j).usedInodes(volume(j));
+    const byPlannedDay = rest / ((NOW - START) / DAY);
+    for (let k = 0; k < rest; k++) {
+      const ms = START + Math.floor((k * DAY) / byPlannedDay);
+      const n = (j.state.numeroStat = (j.state.numeroStat ?? 0) + 1);
+      place.children[statName(ms, n)] = stat(ms);
+      j.state.statsEcrites[dayFor(ms)] = (j.state.statsEcrites[dayFor(ms)] ?? 0) + 1;
     }
     // Ce soir, plus rien ne s'écrit sur le volume.
-    s.horloge = MAINTENANT - 40 * 60_000;
-    journaliser(s, 'radio-stream.service', 'stream', 1730, `stats: cannot create ${STATS}/${nomStat(s.horloge, 99_001)}: No space left on device`, 3);
-    s.horloge = MAINTENANT - 20 * 60_000;
-    journaliser(s, 'radio-stream.service', 'stream', 1730, `record: cannot create ${enregistrement(j)}: No space left on device`, 3);
-    journaliser(
+    s.clock = NOW - 40 * 60_000;
+    writeLog(s, 'radio-stream.service', 'stream', 1730, `stats: cannot create ${STATS}/${statName(s.clock, 99_001)}: No space left on device`, 3);
+    s.clock = NOW - 20 * 60_000;
+    writeLog(s, 'radio-stream.service', 'stream', 1730, `record: cannot create ${record(j)}: No space left on device`, 3);
+    writeLog(
       s,
       'radio-stream.service',
       'stream',
       1730,
-      `stats: cannot create ${STATS}/${nomStat(s.horloge, 99_002)}: No space left on device`,
+      `stats: cannot create ${STATS}/${statName(s.clock, 99_002)}: No space left on device`,
       3,
       false,
     );
-    s.horloge = MAINTENANT;
+    s.clock = NOW;
   },
   // À chaque instant, le relais note une écoute et réessaie d'enregistrer l'émission ; et si la crontab a changé, une nuit passe.
-  apresCommande: (j) => {
+  afterCommand: (j) => {
     const s = sd(j);
-    s.horloge += 30_000;
-    if (!noterEcoute(j, s.horloge))
-      journaliser(s, 'radio-stream.service', 'stream', 1730, `stats: cannot create ${STATS}/...: No space left on device`, 3, false);
+    s.clock += 30_000;
+    if (!noteListening(j, s.clock))
+      writeLog(s, 'radio-stream.service', 'stream', 1730, `stats: cannot create ${STATS}/...: No space left on device`, 3, false);
     if (
-      !j.trouver(enregistrement(j)) &&
-      ecrireCommeRadio(j, enregistrement(j), { type: 'fichier', contenu: '', taille: 48_000_000, proprio: 'radio', mtime: s.horloge })
+      !j.find(record(j)) &&
+      writeAsRadio(j, record(j), { type: 'fichier', content: '', size: 48_000_000, owner: 'radio', mtime: s.clock })
     )
-      journaliser(s, 'radio-stream.service', 'stream', 1730, `record: writing ${enregistrement(j)}`, 6, false);
-    if (j.etat.nuitReussie || !cronStats(j) || j.etat.empreinteNuit === empreinteCron(j)) return;
-    j.etat.empreinteNuit = empreinteCron(j);
-    return nuit(j);
+      writeLog(s, 'radio-stream.service', 'stream', 1730, `record: writing ${record(j)}`, 6, false);
+    if (j.state.nuitReussie || !cronStats(j) || j.state.empreinteNuit === cronFingerprint(j)) return;
+    j.state.empreinteNuit = cronFingerprint(j);
+    return night(j);
   },
-  creerMonde: (t) => {
-    const racine: Droits = { proprio: 'root' };
-    const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
-    const fichier = (texte: string, droits: Droits = racine) => f(texte, { lignes: true, ...droits });
-    const radio: Droits = { proprio: 'radio' };
-    return lieu({
-      etc: lieu({ ...fichiersComptes(), hostname: fichier('radio'), radio: lieu({ 'stream.conf': fichier(t('inodes-conf-flux')) }) }),
-      home: lieu({ vous: d({ 'message_de_zoe.txt': f(t('inodes-message-de-zoe')) }), zoe: lieu({}, { proprio: 'zoe', mode: 'rwx------' }) }),
-      srv: lieu({
-        radio: lieu(
+  createWorld: (t) => {
+    const root: Rights = { owner: 'root' };
+    const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
+    const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
+    const radio: Rights = { owner: 'radio' };
+    return place({
+      etc: place({ ...accountsFiles(), hostname: file('radio'), radio: place({ 'stream.conf': file(t('inodes-conf-flux')) }) }),
+      home: place({ vous: d({ 'message_de_zoe.txt': f(t('inodes-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      srv: place({
+        radio: place(
           {
-            'lost+found': lieu({}, { proprio: 'root', mode: 'rwx------' }),
-            emissions: lieu(
+            'lost+found': place({}, { owner: 'root', mode: 'rwx------' }),
+            emissions: place(
               {
-                'matinale-2027-08-27.ogg': f('', { proprio: 'radio', taille: 92_000_000 }),
-                'matinale-2027-08-28.ogg': f('', { proprio: 'radio', taille: 91_000_000 }),
-                'nuit-2027-08-28.ogg': f('', { proprio: 'radio', taille: 48_000_000 }),
+                'matinale-2027-08-27.ogg': f('', { owner: 'radio', size: 92_000_000 }),
+                'matinale-2027-08-28.ogg': f('', { owner: 'radio', size: 91_000_000 }),
+                'nuit-2027-08-28.ogg': f('', { owner: 'radio', size: 48_000_000 }),
               },
               radio,
             ),
-            stats: lieu({ 'LISEZMOI.txt': fichier(t('inodes-stats-lisezmoi'), radio) }, radio),
+            stats: place({ 'LISEZMOI.txt': file(t('inodes-stats-lisezmoi'), radio) }, radio),
           },
           radio,
         ),
       }),
-      tmp: lieu({}, { proprio: 'root', mode: 'rwxrwxrwt' }),
-      usr: lieu({
-        lib: f('', { proprio: 'root', taille: 3_200_000_000 }),
-        local: lieu({ bin: lieu({ stream: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 8_400_000 }) }) }),
+      tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
+      usr: place({
+        lib: f('', { owner: 'root', size: 3_200_000_000 }),
+        local: place({ bin: place({ stream: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 8_400_000 }) }) }),
       }),
-      var: lieu({ lib: lieu({ radio: lieu({}, radio) }) }),
+      var: place({ lib: place({ radio: place({}, radio) }) }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'presque-vide',
       condition: (j) =>
-        j.derniere.commandes.some((c) => c.includes('df')) &&
-        !j.derniere.commandes.some((c) => c.some((a) => /^-\w*i/.test(a))) &&
-        /\/srv\/radio/.test(j.derniere.sortie),
+        j.last.commands.some((c) => c.includes('df')) &&
+        !j.last.commands.some((c) => c.some((a) => /^-\w*i/.test(a))) &&
+        /\/srv\/radio/.test(j.last.output),
       message: (j) => j.t('inodes-evenement-presque-vide'),
     },
-    { id: 'plus-d-inodes', condition: (j) => /100% \/srv\/radio/.test(j.derniere.sortie), message: (j) => j.t('inodes-evenement-plus-d-inodes') },
+    { id: 'plus-d-inodes', condition: (j) => /100% \/srv\/radio/.test(j.last.output), message: (j) => j.t('inodes-evenement-plus-d-inodes') },
     {
       id: 'coupable',
       condition: (j) =>
-        /\b6\d{4}\b/.test(j.derniere.sortie) && /stats|^6\d{4}$/m.test(j.derniere.sortie) && !/100% \/srv\/radio/.test(j.derniere.sortie),
+        /\b6\d{4}\b/.test(j.last.output) && /stats|^6\d{4}$/m.test(j.last.output) && !/100% \/srv\/radio/.test(j.last.output),
       message: (j) => j.t('inodes-evenement-coupable'),
     },
-    { id: 'trop-long', condition: (j) => (j.etat.argumentsTropLongs ?? 0) > 0, message: (j) => j.t('inodes-evenement-trop-long') },
-    { id: 'recentes-perdues', condition: (j) => !recentesIntactes(j), message: (j) => j.t('inodes-evenement-recentes-perdues') },
-    { id: 'repart', condition: (j) => !!j.trouver(enregistrement(j)), message: (j) => j.t('inodes-evenement-repart', { pourcent: pourcentInodes(j) }) },
+    { id: 'trop-long', condition: (j) => (j.state.argumentsTropLongs ?? 0) > 0, message: (j) => j.t('inodes-evenement-trop-long') },
+    { id: 'recentes-perdues', condition: (j) => !intactRecent(j), message: (j) => j.t('inodes-evenement-recentes-perdues') },
+    { id: 'repart', condition: (j) => !!j.find(record(j)), message: (j) => j.t('inodes-evenement-repart', { pourcent: inodesPercent(j) }) },
     {
       id: 'fin',
-      condition: (j) => !!j.etat.nuitReussie && recentesIntactes(j) && pourcentInodes(j) < 80,
+      condition: (j) => !!j.state.nuitReussie && intactRecent(j) && inodesPercent(j) < 80,
       message: (j) => j.t('inodes-evenement-fin'),
     },
   ],

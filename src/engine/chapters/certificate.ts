@@ -13,50 +13,50 @@
 // Sources : https://eff-certbot.readthedocs.io/en/stable/using.html,
 // https://letsencrypt.org/docs/challenge-types/, https://docs.openssl.org/3.5/man1/openssl-x509/
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../world';
-import type { Jeu, Shell } from '../shell';
-import type { Traduire } from '../../texts';
-import { nouveauSystemd, systemd, versUtc, type Systemd } from '../systemd';
-import { chargerNginx, verifierNginx } from '../nginx';
-import { lire, EMETTEUR, type Certificat } from '../tls';
-import { BIENVENUE, MIME, NGINX_CONF, SITE_PAR_DEFAUT } from '../commands/apt';
+import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import type { Game, Shell } from '../shell';
+import type { Translate } from '../../texts';
+import { newSystemd, systemd, toUtc, type Systemd } from '../systemd';
+import { loadNginx, checkNginx } from '../nginx';
+import { read, ISSUER, type Certificate } from '../tls';
+import { WELCOME, MIME, NGINX_CONF, SITE_BY_DEFAULT } from '../commands/apt';
 import {
-  certificatServiBon,
-  ecrireRenouvellement,
-  fichiersCertificat,
-  LE,
-  rechargementAutomatique,
-  renouvellementPossible,
+  goodServedCertificate,
+  writeRenewal,
+  certificateFiles,
+  FOR,
+  automaticReload,
+  possibleRenewal,
   serviceCertbot,
 } from '../commands/certbot';
 
 const M = '/home/vous';
 const SITE = 'medialibrary.example';
-const NOMS = [SITE, `www.${SITE}`];
+const NAMES = [SITE, `www.${SITE}`];
 const ROBOT = '198.51.100.77';
 
 // Le certificat demandé le jour de l'incendie, valable 90 jours.
-const ANCIEN: Certificat = {
+const OLD: Certificate = {
   cn: SITE,
-  noms: NOMS,
-  emetteur: EMETTEUR,
-  serie: '04a1f3c9e27b58d6103fa9c7e2b4d85f61c0',
-  debut: Date.UTC(2026, 9, 23, 6, 40, 0),
-  fin: Date.UTC(2027, 0, 21, 6, 39, 59),
+  names: NAMES,
+  issuer: ISSUER,
+  serial: '04a1f3c9e27b58d6103fa9c7e2b4d85f61c0',
+  start: Date.UTC(2026, 9, 23, 6, 40, 0),
+  end: Date.UTC(2027, 0, 21, 6, 39, 59),
 };
 
-const comptes = (): Comptes => ({
-  utilisateurs: {
-    root: { uid: 0, groupe: 'root', maison: '/root' },
-    'www-data': { uid: 33, groupe: 'www-data', maison: '/var/www', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, groupe: 'vous' },
+const accounts = (): Accounts => ({
+  users: {
+    root: { uid: 0, group: 'root', home: '/root' },
+    'www-data': { uid: 33, group: 'www-data', home: '/var/www', shell: '/usr/sbin/nologin' },
+    vous: { uid: 1000, group: 'vous' },
   },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    adm: { gid: 4, membres: ['vous'] },
-    sudo: { gid: 27, membres: ['vous'] },
-    'www-data': { gid: 33, membres: [] },
-    vous: { gid: 1000, membres: [] },
+  groups: {
+    root: { gid: 0, members: [] },
+    adm: { gid: 4, members: ['vous'] },
+    sudo: { gid: 27, members: ['vous'] },
+    'www-data': { gid: 33, members: [] },
+    vous: { gid: 1000, members: [] },
   },
 });
 
@@ -64,7 +64,7 @@ const comptes = (): Comptes => ({
 const CONF_SITE = `server {
     listen 80 default_server;
     listen [::]:80 default_server;
-    server_name ${NOMS.join(' ')};
+    server_name ${NAMES.join(' ')};
 
     root /var/www/medialibrary;
     index index.html;
@@ -75,7 +75,7 @@ const CONF_SITE = `server {
 server {
     listen 443 ssl default_server;
     listen [::]:443 ssl default_server;
-    server_name ${NOMS.join(' ')};
+    server_name ${NAMES.join(' ')};
 
     ssl_certificate /etc/letsencrypt/live/${SITE}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${SITE}/privkey.pem;
@@ -86,19 +86,19 @@ server {
     include /etc/nginx/blocked.conf;
 }`;
 
-const bloques = (t: Traduire) => `# ${t('premier-jour-bloques-commentaire')}
+const blocked = (t: Translate) => `# ${t('premier-jour-bloques-commentaire')}
 deny 203.0.113.5;
 deny 192.0.2.99;
 deny ${ROBOT};`;
 
-const RENOUVELLEMENT = ecrireRenouvellement({
-  entete: {
+const RENEWAL = writeRenewal({
+  header: {
     version: '4.0.0',
-    archive_dir: `${LE}/archive/${SITE}`,
-    cert: `${LE}/live/${SITE}/cert.pem`,
-    privkey: `${LE}/live/${SITE}/privkey.pem`,
-    chain: `${LE}/live/${SITE}/chain.pem`,
-    fullchain: `${LE}/live/${SITE}/fullchain.pem`,
+    archive_dir: `${FOR}/archive/${SITE}`,
+    cert: `${FOR}/live/${SITE}/cert.pem`,
+    privkey: `${FOR}/live/${SITE}/privkey.pem`,
+    chain: `${FOR}/live/${SITE}/chain.pem`,
+    fullchain: `${FOR}/live/${SITE}/fullchain.pem`,
   },
   params: {
     account: '6f2a8c41d7e94b0a9c3e15b27d0f8a61',
@@ -107,13 +107,13 @@ const RENOUVELLEMENT = ecrireRenouvellement({
     server: 'https://acme-v02.api.letsencrypt.org/directory',
     key_type: 'ecdsa',
   },
-  carte: { [SITE]: '/var/www/html', [`www.${SITE}`]: '/var/www/html' },
+  map: { [SITE]: '/var/www/html', [`www.${SITE}`]: '/var/www/html' },
 });
 
 // Le journal de certbot : la dernière tentative a échoué, comme toutes depuis un mois.
-const JOURNAL_CERTBOT = `2027-01-21 03:24:11,307:DEBUG:certbot._internal.main:certbot version: 4.0.0
+const CERTBOT_LOG = `2027-01-21 03:24:11,307:DEBUG:certbot._internal.main:certbot version: 4.0.0
 2027-01-21 03:24:11,308:DEBUG:certbot._internal.main:Arguments: ['-q', '--no-random-sleep-on-renew']
-2027-01-21 03:24:11,512:INFO:certbot._internal.renewal:Renewing an existing certificate for ${NOMS.join(' and ')}
+2027-01-21 03:24:11,512:INFO:certbot._internal.renewal:Renewing an existing certificate for ${NAMES.join(' and ')}
 2027-01-21 03:24:13,904:INFO:certbot._internal.auth_handler:Waiting for verification...
 2027-01-21 03:24:15,118:INFO:certbot._internal.auth_handler:Challenge failed for domain ${SITE}
 2027-01-21 03:24:15,118:INFO:certbot._internal.auth_handler:Challenge failed for domain www.${SITE}
@@ -123,43 +123,43 @@ const JOURNAL_CERTBOT = `2027-01-21 03:24:11,307:DEBUG:certbot._internal.main:ce
   Detail: 192.0.2.11: Invalid response from http://${SITE}/.well-known/acme-challenge/Wk3pZ0aXq7cN2sR8vL1yT6eH4bG9dF5mJ0uK3oP7iQ: 404
 2027-01-21 03:24:15,121:ERROR:certbot._internal.renewal:Failed to renew certificate ${SITE} with error: Some challenges have failed.
 2027-01-21 03:24:15,122:ERROR:certbot._internal.renewal:All renewals failed. The following certificates could not be renewed:
-2027-01-21 03:24:15,122:ERROR:certbot._internal.renewal:  ${LE}/live/${SITE}/fullchain.pem (failure)`;
+2027-01-21 03:24:15,122:ERROR:certbot._internal.renewal:  ${FOR}/live/${SITE}/fullchain.pem (failure)`;
 
 // Depuis le 22 décembre (30 jours avant l'expiration), le timer lance certbot
 // deux fois par jour ; chaque fois, le renouvellement échoue.
-function journalDuServeur(): Systemd {
-  const sd = nouveauSystemd('datacenter', Date.UTC(2027, 0, 4, 9, 2, 0), Date.UTC(2027, 0, 21, 9, 20, 0), {
+function serverLog(): Systemd {
+  const sd = newSystemd('datacenter', Date.UTC(2027, 0, 4, 9, 2, 0), Date.UTC(2027, 0, 21, 9, 20, 0), {
     ssh: {
       description: 'OpenBSD Secure Shell server',
       active: true,
       executable: 'sshd',
-      processus: [{ pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+      process: [{ pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
     },
     cron: {
       description: 'Regular background program processing daemon',
       active: true,
       executable: 'cron',
-      processus: [{ pid: 598, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' }],
+      process: [{ pid: 598, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' }],
     },
     nginx: {
       description: 'A high performance web server and a reverse proxy server',
       active: true,
       executable: 'nginx',
-      processus: [
-        { pid: 801, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
-        { pid: 802, utilisateur: 'www-data', cpu: 0.2, mem: 0.6, commande: 'nginx: worker process' },
+      process: [
+        { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
+        { pid: 802, user: 'www-data', cpu: 0.2, mem: 0.6, command: 'nginx: worker process' },
       ],
-      verifier: verifierNginx,
-      charger: chargerNginx,
-      verifierAuRechargement: true,
+      check: checkNginx,
+      load: loadNginx,
+      checkToReload: true,
     },
     certbot: {
       description: 'Certbot',
-      etat: 'inactive',
+      state: 'inactive',
       active: false,
       executable: 'certbot',
-      ponctuel: true,
-      verifier: (j) => serviceCertbot(shell(j)),
+      oneshot: true,
+      check: (j) => serviceCertbot(shell(j)),
     },
   });
   const tentatives = [
@@ -170,23 +170,23 @@ function journalDuServeur(): Systemd {
     [2027, 0, 20, 15, 12],
     [2027, 0, 21, 3, 24],
   ];
-  const ecrire = (temps: number, ident: string, pid: number, message: string, priorite = 6) =>
-    sd.journal.push({ temps, demarrage: 1, unite: 'certbot.service', ident, pid, message, priorite });
+  const write = (time: number, ident: string, pid: number, message: string, priority = 6) =>
+    sd.log.push({ time, boot: 1, unit: 'certbot.service', ident, pid, message, priority });
   tentatives.forEach(([a, mo, j, h, mi], i) => {
     const t = Date.UTC(a, mo, j, h, mi, 0);
     const pid = 41200 + i * 317;
-    ecrire(t, 'systemd', 1, 'Starting certbot.service - Certbot...');
-    ecrire(t + 4000, 'certbot', pid, `Failed to renew certificate ${SITE} with error: Some challenges have failed.`, 3);
-    ecrire(t + 4000, 'certbot', pid, 'All renewals failed. The following certificates could not be renewed:', 3);
-    ecrire(t + 4000, 'certbot', pid, `  ${LE}/live/${SITE}/fullchain.pem (failure)`, 3);
-    ecrire(t + 4000, 'certbot', pid, '1 renew failure(s), 0 parse failure(s)', 3);
-    ecrire(t + 5000, 'systemd', 1, 'certbot.service: Main process exited, code=exited, status=1/FAILURE', 4);
-    ecrire(t + 5000, 'systemd', 1, "certbot.service: Failed with result 'exit-code'.", 4);
-    ecrire(t + 5000, 'systemd', 1, 'Failed to start certbot.service - Certbot.', 3);
+    write(t, 'systemd', 1, 'Starting certbot.service - Certbot...');
+    write(t + 4000, 'certbot', pid, `Failed to renew certificate ${SITE} with error: Some challenges have failed.`, 3);
+    write(t + 4000, 'certbot', pid, 'All renewals failed. The following certificates could not be renewed:', 3);
+    write(t + 4000, 'certbot', pid, `  ${FOR}/live/${SITE}/fullchain.pem (failure)`, 3);
+    write(t + 4000, 'certbot', pid, '1 renew failure(s), 0 parse failure(s)', 3);
+    write(t + 5000, 'systemd', 1, 'certbot.service: Main process exited, code=exited, status=1/FAILURE', 4);
+    write(t + 5000, 'systemd', 1, "certbot.service: Failed with result 'exit-code'.", 4);
+    write(t + 5000, 'systemd', 1, 'Failed to start certbot.service - Certbot.', 3);
   });
   // Le journal est dans l'ordre du temps (le démarrage du 4 janvier en premier).
-  sd.journal.sort((a, b) => a.temps - b.temps);
-  sd.services.certbot = { ...sd.services.certbot, etat: 'failed', depuis: Date.UTC(2027, 0, 21, 3, 24, 5) };
+  sd.log.sort((a, b) => a.time - b.time);
+  sd.services.certbot = { ...sd.services.certbot, state: 'failed', since: Date.UTC(2027, 0, 21, 3, 24, 5) };
   return sd;
 }
 
@@ -201,16 +201,16 @@ const VERSIONS: Record<string, string> = {
   certbot: '4.0.0-2',
 };
 
-const sd = (j: Jeu) => systemd(j)!;
-const surDisque = (j: Jeu) => lire(j.lire(`${LE}/live/${SITE}/fullchain.pem`));
+const sd = (j: Game) => systemd(j)!;
+const onDisk = (j: Game) => read(j.read(`${FOR}/live/${SITE}/fullchain.pem`));
 // Les événements reçoivent le shell de la machine.
-const shell = (j: Jeu) => j as Shell;
-const servi = (j: Jeu) => NOMS.every((n) => certificatServiBon(shell(j), n));
+const shell = (j: Game) => j as Shell;
+const served = (j: Game) => NAMES.every((n) => goodServedCertificate(shell(j), n));
 
-export const certificat: Chapitre = {
+export const certificate: Chapter = {
   id: 'certificat',
-  numero: 5,
-  commandes: [
+  number: 5,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -239,114 +239,114 @@ export const certificat: Chapitre = {
     'openssl',
     'whoami',
   ],
-  maison: M,
-  accueil: 'courriel_awa.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_awa.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'bienvenue-2026',
+  password: 'bienvenue-2026',
   // La machine reconstruite après l'incendie : même clé d'hôte qu'au chapitre 4.
-  cleHote: '-apres-incendie',
-  comptes,
-  etat: () => ({
-    systemd: journalDuServeur(),
+  hostKey: '-apres-incendie',
+  accounts,
+  state: () => ({
+    systemd: serverLog(),
     processus: [
-      { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
-      { pid: 598, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' },
-      { pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
-      { pid: 801, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
-      { pid: 802, utilisateur: 'www-data', cpu: 0.2, mem: 0.6, commande: 'nginx: worker process' },
+      { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
+      { pid: 598, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
+      { pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
+      { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
+      { pid: 802, user: 'www-data', cpu: 0.2, mem: 0.6, command: 'nginx: worker process' },
     ],
-    apt: { listes: true, installes: { ...VERSIONS } },
-    nginx: { charge: null, noms: ['datacenter', 'datacenter.internal', ...NOMS, '192.0.2.11'] },
+    apt: { lists: true, installed: { ...VERSIONS } },
+    nginx: { load: null, names: ['datacenter', 'datacenter.internal', ...NAMES, '192.0.2.11'] },
   }),
   // nginx tourne depuis le démarrage : il a chargé le certificat d'octobre.
-  initialiser: (j) => chargerNginx(j),
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
-    const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
-    const fichier = (texte: string, mode?: string) => f(texte, { lignes: true, proprio: 'root', mode });
-    const cert = fichiersCertificat(ANCIEN);
-    return lieu({
-      etc: lieu({
-        ...fichiersComptes(),
-        hostname: fichier('datacenter'),
-        nginx: lieu({
-          'nginx.conf': fichier(NGINX_CONF),
-          'mime.types': fichier(MIME),
-          'blocked.conf': fichier(bloques(t)),
-          'conf.d': lieu({}),
-          'modules-enabled': lieu({}),
-          'sites-available': lieu({ default: fichier(SITE_PAR_DEFAUT), medialibrary: fichier(CONF_SITE) }),
-          'sites-enabled': lieu({ medialibrary: fichier(CONF_SITE) }),
+  initialise: (j) => loadNginx(j),
+  createWorld: (t) => {
+    const root = { owner: 'root' };
+    const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
+    const file = (text: string, mode?: string) => f(text, { lines: true, owner: 'root', mode });
+    const cert = certificateFiles(OLD);
+    return place({
+      etc: place({
+        ...accountsFiles(),
+        hostname: file('datacenter'),
+        nginx: place({
+          'nginx.conf': file(NGINX_CONF),
+          'mime.types': file(MIME),
+          'blocked.conf': file(blocked(t)),
+          'conf.d': place({}),
+          'modules-enabled': place({}),
+          'sites-available': place({ default: file(SITE_BY_DEFAULT), medialibrary: file(CONF_SITE) }),
+          'sites-enabled': place({ medialibrary: file(CONF_SITE) }),
         }),
-        letsencrypt: lieu({
-          live: lieu(
+        letsencrypt: place({
+          live: place(
             {
-              [SITE]: lieu({
-                'cert.pem': fichier(cert['cert.pem']),
-                'chain.pem': fichier(cert['chain.pem']),
-                'fullchain.pem': fichier(cert['fullchain.pem']),
-                'privkey.pem': fichier(cert['privkey.pem'], 'rw-------'),
-                README: fichier(t('certificat-lisezmoi-live')),
+              [SITE]: place({
+                'cert.pem': file(cert['cert.pem']),
+                'chain.pem': file(cert['chain.pem']),
+                'fullchain.pem': file(cert['fullchain.pem']),
+                'privkey.pem': file(cert['privkey.pem'], 'rw-------'),
+                README: file(t('certificat-lisezmoi-live')),
               }),
             },
-            { proprio: 'root', mode: 'rwx------' },
+            { owner: 'root', mode: 'rwx------' },
           ),
-          renewal: lieu({ [`${SITE}.conf`]: fichier(RENOUVELLEMENT) }),
-          'renewal-hooks': lieu({ deploy: lieu({}), pre: lieu({}), post: lieu({}) }),
+          renewal: place({ [`${SITE}.conf`]: file(RENEWAL) }),
+          'renewal-hooks': place({ deploy: place({}), pre: place({}), post: place({}) }),
         }),
       }),
-      home: lieu({ vous: d({ 'courriel_awa.txt': f(t('certificat-courriel-awa')), 'message_de_lea.txt': f(t('certificat-message-de-lea')) }) }),
-      usr: lieu({
-        bin: lieu({
-          certbot: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 966 }),
-          openssl: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 1_014_808 }),
+      home: place({ vous: d({ 'courriel_awa.txt': f(t('certificat-courriel-awa')), 'message_de_lea.txt': f(t('certificat-message-de-lea')) }) }),
+      usr: place({
+        bin: place({
+          certbot: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 966 }),
+          openssl: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_014_808 }),
         }),
-        sbin: lieu({ nginx: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 1_342_520 }) }),
-        lib: lieu({ python3: lieu({ 'dist-packages': lieu({}) }) }),
+        sbin: place({ nginx: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_342_520 }) }),
+        lib: place({ python3: place({ 'dist-packages': place({}) }) }),
       }),
-      var: lieu({
-        www: lieu({
-          html: lieu({ 'index.nginx-debian.html': fichier(BIENVENUE) }),
-          medialibrary: lieu({ 'index.html': fichier(t('certificat-site-index')) }),
+      var: place({
+        www: place({
+          html: place({ 'index.nginx-debian.html': file(WELCOME) }),
+          medialibrary: place({ 'index.html': file(t('certificat-site-index')) }),
         }),
-        log: lieu({
-          letsencrypt: lieu({ 'letsencrypt.log': fichier(JOURNAL_CERTBOT) }, { proprio: 'root', mode: 'rwx------' }),
-          nginx: lieu(
-            { 'access.log': f('', { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }) },
-            { proprio: 'root', groupe: 'adm' },
+        log: place({
+          letsencrypt: place({ 'letsencrypt.log': file(CERTBOT_LOG) }, { owner: 'root', mode: 'rwx------' }),
+          nginx: place(
+            { 'access.log': f('', { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }) },
+            { owner: 'root', group: 'adm' },
           ),
         }),
       }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'expire',
-      condition: (j) => j.derniere.erreurs.some((e) => e.includes('certificate has expired')) || j.derniere.sortie.includes('INVALID: EXPIRED'),
+      condition: (j) => j.last.errors.some((e) => e.includes('certificate has expired')) || j.last.output.includes('INVALID: EXPIRED'),
       message: (j) => j.t('certificat-evenement-expire'),
     },
     {
       id: 'defi',
-      condition: (j) => j.etat.certbotDefiEchoue === true,
+      condition: (j) => j.state.certbotDefiEchoue === true,
       message: (j) => j.t('certificat-evenement-defi'),
     },
     {
       id: 'pas-recharge',
       condition: (j) => {
-        const c = surDisque(j);
-        return !!c && c.fin > versUtc(sd(j).horloge) && !servi(j);
+        const c = onDisk(j);
+        return !!c && c.end > toUtc(sd(j).clock) && !served(j);
       },
       message: (j) => j.t('certificat-evenement-pas-recharge'),
     },
     {
       id: 'sans-hook',
-      condition: (j) => servi(j) && renouvellementPossible(shell(j)) && !rechargementAutomatique(shell(j)),
+      condition: (j) => served(j) && possibleRenewal(shell(j)) && !automaticReload(shell(j)),
       message: (j) => j.t('certificat-evenement-sans-hook'),
     },
     {
       id: 'fin',
-      condition: (j) => servi(j) && renouvellementPossible(shell(j)) && rechargementAutomatique(shell(j)),
+      condition: (j) => served(j) && possibleRenewal(shell(j)) && automaticReload(shell(j)),
       message: (j) => j.t('certificat-evenement-fin'),
     },
   ],

@@ -10,81 +10,81 @@
 // Écarts : pas de swap, de montages réseau, ni de x-systemd.* autres que nofail
 // et noauto ; un seul type de système de fichiers par périphérique.
 
-import type { Jeu } from './shell';
-import type { Dossier } from './world';
-import { partitionDe, type Stockage } from './storage';
-import { lireLv } from './lvm';
+import type { Game } from './shell';
+import type { Directory } from './world';
+import { partitionFor, type Stockage } from './storage';
+import { readLv } from './lvm';
 
 /** Un système de fichiers sur un périphérique (/dev/md0, /dev/mapper/labo-photos, /dev/sde1). */
-export interface SystemeFichiers {
+export interface FilesSystem {
   type: string;
   uuid: string;
   label?: string;
   // Ce qu'il contient, pour un support qu'on monte pendant la partie (un disque USB).
-  arbre?: Dossier;
-  octets?: number;
+  tree?: Directory;
+  bytes?: number;
 }
 
-export interface EntreeFstab {
-  ligne: number;
+export interface FstabInput {
+  line: number;
   source: string;
-  cible: string;
+  target: string;
   type: string;
   options: string[];
-  passe: number;
+  pass: number;
 }
 
 /** Les lignes de fstab, et celles qu'on ne sait pas lire (moins de quatre champs). */
-export function lireFstab(texte: string): { entrees: EntreeFstab[]; erreurs: number[] } {
-  const entrees: EntreeFstab[] = [];
-  const erreurs: number[] = [];
-  texte.split('\n').forEach((brute, i) => {
-    const l = brute.trim();
+export function readFstab(text: string): { inputs: FstabInput[]; errors: number[] } {
+  const inputs: FstabInput[] = [];
+  const errors: number[] = [];
+  text.split('\n').forEach((rawValue, i) => {
+    const l = rawValue.trim();
     if (!l || l.startsWith('#')) return;
-    const champs = l.split(/\s+/);
-    if (champs.length < 4) {
-      erreurs.push(i + 1);
+    const fields = l.split(/\s+/);
+    if (fields.length < 4) {
+      errors.push(i + 1);
       return;
     }
-    entrees.push({ ligne: i + 1, source: champs[0], cible: champs[1], type: champs[2], options: champs[3].split(','), passe: Number(champs[5] ?? 0) });
+    inputs.push({ line: i + 1, source: fields[0], target: fields[1], type: fields[2], options: fields[3].split(','), pass: Number(fields[5] ?? 0) });
   });
-  return { entrees, erreurs };
+  return { inputs, errors };
 }
 
-export const systemes = (st: Stockage): Record<string, SystemeFichiers> => (st.fs ??= {});
+export const systems = (st: Stockage): Record<string, FilesSystem> => (st.fs ??= {});
 
 /** Le périphérique (/dev/…) que désigne une source de fstab ou de mount, s'il existe. */
-export function resoudreSource(st: Stockage, source: string): string | null {
-  const fs = systemes(st);
-  const par = (cle: 'uuid' | 'label', valeur: string) => Object.keys(fs).find((d) => fs[d][cle] === valeur) ?? null;
+export function resolveSource(st: Stockage, source: string): string | null {
+  const fs = systems(st);
+  const by = (key: 'uuid' | 'label', value: string) => Object.keys(fs).find((d) => fs[d][key] === value) ?? null;
   const m = /^(UUID|LABEL)=(.*)$/.exec(source);
-  if (m) return par(m[1] === 'UUID' ? 'uuid' : 'label', m[2].replace(/^"|"$/g, ''));
-  const lien = /^\/dev\/disk\/by-(uuid|label)\/(.+)$/.exec(source);
-  if (lien) return par(lien[1] === 'uuid' ? 'uuid' : 'label', lien[2]);
+  if (m) return by(m[1] === 'UUID' ? 'uuid' : 'label', m[2].replace(/^"|"$/g, ''));
+  const link = /^\/dev\/disk\/by-(uuid|label)\/(.+)$/.exec(source);
+  if (link) return by(link[1] === 'uuid' ? 'uuid' : 'label', link[2]);
   if (!source.startsWith('/dev/')) return null;
-  const lv = lireLv(st, source);
+  const lv = readLv(st, source);
   if (lv) return `/dev/mapper/${lv[0]}-${lv[1]}`;
   const n = source.slice(5);
-  return st.disques[n] || st.grappes[n] || partitionDe(st, n) ? source : null;
+  return st.disks[n] || st.arrays[n] || partitionFor(st, n) ? source : null;
 }
 
 /** Le système de fichiers d'un périphérique, s'il en a un. */
-export const systemeDe = (st: Stockage, dev: string): SystemeFichiers | null => systemes(st)[dev] ?? null;
+export const systemFor = (st: Stockage, dev: string): FilesSystem | null => systems(st)[dev] ?? null;
 
 /**
  * Ce que systemd trouverait au démarrage avec cette fstab : les entrées dont la
  * source manque (sans nofail), qui bloquent local-fs.target.
  */
-export function bloquantes(st: Stockage, texte: string): EntreeFstab[] {
-  return lireFstab(texte).entrees.filter(
-    (e) => e.type !== 'swap' && !e.options.includes('noauto') && !e.options.includes('nofail') && (!resoudreSource(st, e.source) || !systemeDe(st, resoudreSource(st, e.source)!)),
+export function blocking(st: Stockage, text: string): FstabInput[] {
+  return readFstab(text).inputs.filter(
+    (e) => e.type !== 'swap' && !e.options.includes('noauto') && !e.options.includes('nofail') && (!resolveSource(st, e.source) || !systemFor(st, resolveSource(st, e.source)!)),
   );
 }
 
 /** Le nom de l'unité de montage de systemd pour un point de montage (/srv/scans → srv-scans.mount). */
-export const uniteMontage = (cible: string) => (cible === '/' ? '-.mount' : `${cible.replace(/^\//, '').replace(/\//g, '-')}.mount`);
+export const mountUnit = (target: string) => (target === '/' ? '-.mount' : `${target.replace(/^\//, '').replace(/\//g, '-')}.mount`);
 /** Le nom de l'unité d'un périphérique (/dev/sdc1 → dev-sdc1.device). */
-export const uniteDevice = (source: string) => `${source.replace(/^\//, '').replace(/-/g, '\\x2d').replace(/\//g, '-')}.device`;
+export const deviceUnit = (source: string) => `${source.replace(/^\//, '').replace(/-/g, '\\x2d').replace(/\//g, '-')}.device`;
 
 /** La fstab telle que systemd l'a lue (au démarrage, ou au dernier daemon-reload). */
-export const fstabDeSystemd = (j: Jeu): string => j.etat.fstabLue ?? j.lire('/etc/fstab') ?? '';
+export const systemdFstab = (j: Game): string => j.state.fstabLue ?? j.read('/etc/fstab') ?? '';

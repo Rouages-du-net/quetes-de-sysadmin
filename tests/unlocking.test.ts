@@ -2,70 +2,70 @@
 // après les chapitres qu'elle déclare (apres), sans cycle, et toutes finissent
 // par s'ouvrir.
 import { describe, expect, it } from 'vitest';
-import { HISTOIRES } from '../src/engine/chapters';
-import { manquants, ouverte, prerequis, PREMIERE } from '../src/engine/unlocking';
+import { STORIES } from '../src/engine/chapters';
+import { missing, isOpen, prerequisites, FIRST } from '../src/engine/unlocking';
 import { Console } from '../src/engine/console';
 import { MACHINES } from '../src/engine/machines';
-import { incidentDuJour, INCIDENTS, placeDe } from '../src/engine/on-call';
+import { dayIncident, INCIDENTS, placeFor } from '../src/engine/on-call';
 
-const histoireDe = (chapitre: string) => HISTOIRES.find((h) => h.chapitres.some((c) => c.id === chapitre));
+const storyFor = (chapter: string) => STORIES.find((h) => h.chapters.some((c) => c.id === chapter));
 
 describe('Déverrouillage graduel', () => {
   it('chaque histoire, sauf la première, dit après quels chapitres elle s’ouvre', () => {
-    for (const h of HISTOIRES) {
-      if (h.id === PREMIERE) {
-        expect(h.apres).toBeUndefined();
+    for (const h of STORIES) {
+      if (h.id === FIRST) {
+        expect(h.after).toBeUndefined();
         continue;
       }
-      expect(h.apres?.length, h.id).toBeGreaterThan(0);
+      expect(h.after?.length, h.id).toBeGreaterThan(0);
       // Des chapitres qui existent, dans d'autres histoires.
-      for (const c of h.apres!) expect([h.id, histoireDe(c)?.id]).not.toEqual([h.id, h.id]);
-      for (const c of h.apres!) expect(histoireDe(c), c).toBeDefined();
+      for (const c of h.after!) expect([h.id, storyFor(c)?.id]).not.toEqual([h.id, h.id]);
+      for (const c of h.after!) expect(storyFor(c), c).toBeDefined();
     }
   });
 
   it('en jouant tout ce qui est ouvert, toutes les histoires finissent par s’ouvrir (pas de cycle)', () => {
-    const termines: string[] = [];
-    const vagues: string[][] = [];
+    const finished: string[] = [];
+    const waves: string[][] = [];
     for (;;) {
-      const ouvertes = HISTOIRES.filter((h) => ouverte(h.id, termines) && !h.chapitres.every((c) => termines.includes(c.id)));
-      if (!ouvertes.length) break;
-      vagues.push(ouvertes.map((h) => h.id));
-      termines.push(...ouvertes.flatMap((h) => h.chapitres.map((c) => c.id)));
+      const openOnes = STORIES.filter((h) => isOpen(h.id, finished) && !h.chapters.every((c) => finished.includes(c.id)));
+      if (!openOnes.length) break;
+      waves.push(openOnes.map((h) => h.id));
+      finished.push(...openOnes.flatMap((h) => h.chapters.map((c) => c.id)));
     }
-    expect(HISTOIRES.every((h) => ouverte(h.id, termines))).toBe(true);
+    expect(STORIES.every((h) => isOpen(h.id, finished))).toBe(true);
     // Une seule histoire au départ, puis plusieurs vagues : tout n'est pas ouvert d'un coup.
-    expect(vagues[0]).toEqual([PREMIERE]);
-    expect(vagues.length).toBeGreaterThan(3);
+    expect(waves[0]).toEqual([FIRST]);
+    expect(waves.length).toBeGreaterThan(3);
   });
 
   it('prerequis : de quoi ouvrir une histoire, sans rien d’elle', () => {
-    for (const h of HISTOIRES) {
-      const avant = prerequis(h.id);
-      expect(ouverte(h.id, avant), h.id).toBe(true);
-      expect(avant.some((c) => h.chapitres.some((x) => x.id === c))).toBe(false);
-      expect(new Set(avant).size).toBe(avant.length);
+    for (const h of STORIES) {
+      const before = prerequisites(h.id);
+      expect(isOpen(h.id, before), h.id).toBe(true);
+      expect(before.some((c) => h.chapters.some((x) => x.id === c))).toBe(false);
+      expect(new Set(before).size).toBe(before.length);
     }
-    expect(manquants('audit', ['sentinelle'])).toEqual(['droits']);
-    expect(prerequis('effaceur')).toEqual([]);
+    expect(missing('audit', ['sentinelle'])).toEqual(['droits']);
+    expect(prerequisites('effaceur')).toEqual([]);
   });
 
   it('le poste reçoit les clés vague par vague', () => {
-    const cles = (termines: string[]) => new Console({ langue: 'fr', termines }).poste.executer('ls ~/.ssh') ?? '';
-    const nom = (h: string) => `id_${MACHINES.find((m) => m.histoire === h)!.nom}`;
-    const racine = cles(['eveil', 'bourg', 'racine']);
-    expect(racine).toContain(nom('datacenter'));
-    expect(racine).not.toContain(nom('fabrique'));
-    expect(racine).not.toContain(nom('audit'));
-    expect(cles(prerequis('fabrique'))).toContain(nom('fabrique'));
+    const keys = (finished: string[]) => new Console({ language: 'fr', finished }).workstation.execute('ls ~/.ssh') ?? '';
+    const name = (h: string) => `id_${MACHINES.find((m) => m.story === h)!.name}`;
+    const root = keys(['eveil', 'bourg', 'racine']);
+    expect(root).toContain(name('datacenter'));
+    expect(root).not.toContain(name('fabrique'));
+    expect(root).not.toContain(name('audit'));
+    expect(keys(prerequisites('fabrique'))).toContain(name('fabrique'));
   });
 
   it("l'incident du jour : parmi les histoires ouvertes", () => {
-    expect(incidentDuJour('2027-01-19', () => false)).toBeNull();
-    const seule = (h: string) => (id: string) => id === h;
-    const id = incidentDuJour('2027-01-19', seule('datacenter'));
-    expect(id && HISTOIRES[placeDe(id).h].id).toBe('datacenter');
+    expect(dayIncident('2027-01-19', () => false)).toBeNull();
+    const only = (h: string) => (id: string) => id === h;
+    const id = dayIncident('2027-01-19', only('datacenter'));
+    expect(id && STORIES[placeFor(id).h].id).toBe('datacenter');
     // Toutes ouvertes : le tirage de toujours.
-    expect(INCIDENTS).toContain(incidentDuJour('2027-01-19'));
+    expect(INCIDENTS).toContain(dayIncident('2027-01-19'));
   });
 });

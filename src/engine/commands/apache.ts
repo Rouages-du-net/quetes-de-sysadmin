@@ -7,10 +7,10 @@
 // Écarts : apache2ctl configtest marche aussi hors de root ; sans argument,
 // a2ensite & co. listent les choix sans les demander.
 
-import type { Commande } from './index';
+import type { Command } from './index';
 import type { Shell } from '../shell';
-import { arreter, demarrer, recharger, systemd } from '../systemd';
-import { AH00558, DEPENDANCES, RACINE, SIGNATURE, modulesCharges, tester, vhosts } from '../apache';
+import { stop, start, reload, systemd } from '../systemd';
+import { AH00558, DEPENDENCIES, ROOT, SIGNATURE, modulesCharges, test, vhosts } from '../apache';
 
 // Ce que le script apache2ctl affiche sans argument valable.
 const USAGE = [
@@ -19,49 +19,49 @@ const USAGE = [
   '       /usr/sbin/apache2ctl -h            (for help on <apache2 args>)',
 ].join('\n');
 
-const installe = (jeu: Shell) => !!jeu.trouver('/usr/sbin/apache2ctl');
+const installed = (game: Shell) => !!game.find('/usr/sbin/apache2ctl');
 
 // Vérifier la configuration ; renvoie les lignes d'avertissement, ou l'erreur.
-function verifier(jeu: Shell, action: string): { lignes: string[]; erreur: string | null; config: ReturnType<typeof tester>['config'] } {
-  const res = tester(jeu);
-  if (!res.config) return { lignes: [], erreur: `${res.erreur}\nAction '${action}' failed.\nThe Apache error log may have more information.`, config: null };
-  return { lignes: [...res.config.avertissements, ...(res.config.nomGlobal ? [] : [AH00558])], erreur: null, config: res.config };
+function check(game: Shell, action: string): { lines: string[]; error: string | null; config: ReturnType<typeof test>['config'] } {
+  const res = test(game);
+  if (!res.config) return { lines: [], error: `${res.error}\nAction '${action}' failed.\nThe Apache error log may have more information.`, config: null };
+  return { lines: [...res.config.warnings, ...(res.config.globalName ? [] : [AH00558])], error: null, config: res.config };
 }
 
 // apache2ctl start|stop|restart|graceful : sous systemd, le script passe par systemctl.
-function piloter(jeu: Shell, action: string): string {
-  const sd = systemd(jeu);
+function drive(game: Shell, action: string): string {
+  const sd = systemd(game);
   const s = sd?.services.apache2;
-  if (!sd || !s) return jeu.erreur('Failed to start apache2.service: Unit apache2.service not found.');
-  if (jeu.qui !== 'root') return jeu.erreur(`Failed to ${action === 'graceful' ? 'reload' : action} apache2.service: Access denied\nAction '${action}' failed.`);
-  const echec = () =>
-    jeu.erreur(
+  if (!sd || !s) return game.error('Failed to start apache2.service: Unit apache2.service not found.');
+  if (game.who !== 'root') return game.error(`Failed to ${action === 'graceful' ? 'reload' : action} apache2.service: Access denied\nAction '${action}' failed.`);
+  const failure = () =>
+    game.error(
       `Job for apache2.service failed because the control process exited with error code.\nSee "systemctl status apache2.service" and "journalctl -xeu apache2.service" for details.\nAction '${action}' failed.\nThe Apache error log may have more information.`,
     );
   if (action === 'stop' || action === 'graceful-stop') {
-    if (s.etat === 'active') arreter(jeu, sd, 'apache2');
+    if (s.state === 'active') stop(game, sd, 'apache2');
     return '';
   }
-  if (action === 'graceful' && s.etat === 'active') {
+  if (action === 'graceful' && s.state === 'active') {
     // apache2ctl graceful vérifie d'abord la configuration.
-    const v = verifier(jeu, 'graceful');
-    if (v.erreur) return jeu.erreur(v.erreur);
-    return recharger(jeu, sd, 'apache2') ? '' : echec();
+    const v = check(game, 'graceful');
+    if (v.error) return game.error(v.error);
+    return reload(game, sd, 'apache2') ? '' : failure();
   }
-  if (action === 'restart' && s.etat === 'active') arreter(jeu, sd, 'apache2');
-  if (s.etat === 'active') return '';
-  return demarrer(jeu, sd, 'apache2') ? '' : echec();
+  if (action === 'restart' && s.state === 'active') stop(game, sd, 'apache2');
+  if (s.state === 'active') return '';
+  return start(game, sd, 'apache2') ? '' : failure();
 }
 
-const apache2ctl: Commande = {
+const apache2ctl: Command = {
   section: 8,
-  propresOptions: true,
-  lancer: ({ args, jeu }) => {
-    if (!installe(jeu)) return jeu.erreur(jeu.t('commande-introuvable', { commande: 'apache2ctl' }));
+  ownOptions: true,
+  launch: ({ args, game }) => {
+    if (!installed(game)) return game.error(game.t('commande-introuvable', { commande: 'apache2ctl' }));
     const a = args.filter((x) => x !== '-k');
-    const premier = a[0];
-    if (premier === '-v') return `Server version: ${SIGNATURE}\nServer built:   2025-07-29T15:46:03`;
-    if (premier === '-V')
+    const first = a[0];
+    if (first === '-v') return `Server version: ${SIGNATURE}\nServer built:   2025-07-29T15:46:03`;
+    if (first === '-V')
       return [
         `Server version: ${SIGNATURE}`,
         'Server built:   2025-07-29T15:46:03',
@@ -72,123 +72,123 @@ const apache2ctl: Commande = {
         '  threaded:     yes (fixed thread count)',
         '    forked:     yes (variable process count)',
         'Server compiled with....',
-        ` -D HTTPD_ROOT="${RACINE}"`,
+        ` -D HTTPD_ROOT="${ROOT}"`,
         ' -D SERVER_CONFIG_FILE="apache2.conf"',
       ].join('\n');
-    if (['start', 'stop', 'restart', 'graceful', 'graceful-stop'].includes(premier ?? '')) return piloter(jeu, premier);
-    if (premier === 'status' || premier === 'fullstatus')
-      return jeu.erreur(
+    if (['start', 'stop', 'restart', 'graceful', 'graceful-stop'].includes(first ?? '')) return drive(game, first);
+    if (first === 'status' || first === 'fullstatus')
+      return game.error(
         'Looking up localhost\nMaking HTTP connection to localhost\nAlert!: Unable to connect to remote host.\n\nlynx: Can\'t access startfile http://localhost/server-status\n\'www-browser -dump http://localhost:80/server-status\' failed.\nMaybe you need to install a package providing www-browser or you\nneed to adjust the APACHE_LYNX variable in /etc/apache2/envvars',
       );
-    const dump = (quoi: string) => a.includes('-D') && a[a.indexOf('-D') + 1] === quoi;
-    const vhost = premier === '-S' || dump('DUMP_VHOSTS');
-    const mods = premier === '-M' || dump('DUMP_MODULES');
-    if (premier === 'configtest' || premier === '-t' || vhost || mods) {
-      const v = verifier(jeu, premier === 'configtest' ? 'configtest' : '-t');
-      if (v.erreur) {
-        jeu.etat.apacheErreur = v.erreur;
-        return jeu.erreur(v.erreur);
+    const dump = (what: string) => a.includes('-D') && a[a.indexOf('-D') + 1] === what;
+    const vhost = first === '-S' || dump('DUMP_VHOSTS');
+    const mods = first === '-M' || dump('DUMP_MODULES');
+    if (first === 'configtest' || first === '-t' || vhost || mods) {
+      const v = check(game, first === 'configtest' ? 'configtest' : '-t');
+      if (v.error) {
+        game.state.apacheErreur = v.error;
+        return game.error(v.error);
       }
-      jeu.etat.apacheTeste = true;
-      if (vhost) jeu.etat.apacheVhosts = true;
-      const corps = vhost ? vhosts(v.config!) : mods ? modulesCharges(v.config!) : 'Syntax OK';
-      return [...v.lignes, corps].join('\n');
+      game.state.apacheTeste = true;
+      if (vhost) game.state.apacheVhosts = true;
+      const body = vhost ? vhosts(v.config!) : mods ? modulesCharges(v.config!) : 'Syntax OK';
+      return [...v.lines, body].join('\n');
     }
-    if (premier === 'help' || premier === '-h' || premier === '--help') return USAGE;
-    return jeu.erreur(premier ? `apache2: invalid option -- '${premier.replace(/^-+/, '')}'\n${USAGE}` : USAGE);
+    if (first === 'help' || first === '-h' || first === '--help') return USAGE;
+    return game.error(first ? `apache2: invalid option -- '${first.replace(/^-+/, '')}'\n${USAGE}` : USAGE);
   },
 };
 
 // a2ensite & co. : le type d'objet, ses dossiers, l'extension et la commande à lancer ensuite.
-interface Genre {
-  mot: string;
-  Mot: string;
-  dossier: string;
+interface Kind {
+  word: string;
+  Word: string;
+  directory: string;
   extensions: string[];
-  apres: 'reload' | 'restart';
+  after: 'reload' | 'restart';
 }
-const SITE: Genre = { mot: 'site', Mot: 'Site', dossier: 'sites', extensions: ['.conf'], apres: 'reload' };
-const MODULE: Genre = { mot: 'module', Mot: 'Module', dossier: 'mods', extensions: ['.load', '.conf'], apres: 'restart' };
-const CONF: Genre = { mot: 'conf', Mot: 'Conf', dossier: 'conf', extensions: ['.conf'], apres: 'reload' };
+const SITE: Kind = { word: 'site', Word: 'Site', directory: 'sites', extensions: ['.conf'], after: 'reload' };
+const MODULE: Kind = { word: 'module', Word: 'Module', directory: 'mods', extensions: ['.load', '.conf'], after: 'restart' };
+const CONF: Kind = { word: 'conf', Word: 'Conf', directory: 'conf', extensions: ['.conf'], after: 'reload' };
 
-const nomsDisponibles = (jeu: Shell, g: Genre) => {
-  const n = jeu.trouver(`${RACINE}/${g.dossier}-available`);
+const availableNames = (game: Shell, g: Kind) => {
+  const n = game.find(`${ROOT}/${g.directory}-available`);
   if (n?.type !== 'dossier') return [];
   const ext = g.extensions[0];
-  return Object.keys(n.enfants)
+  return Object.keys(n.children)
     .filter((f) => f.endsWith(ext))
     .map((f) => f.slice(0, -ext.length))
     .sort();
 };
 
-function activer(jeu: Shell, g: Genre, args: string[], activer: boolean): string {
-  if (!installe(jeu)) return jeu.erreur(jeu.t('commande-introuvable', { commande: `a2${activer ? 'en' : 'dis'}${g.mot === 'site' ? 'site' : g.mot === 'module' ? 'mod' : 'conf'}` }));
-  const noms = args.filter((x) => !x.startsWith('-'));
-  if (!noms.length)
-    return `Your choices are: ${nomsDisponibles(jeu, g).join(' ')}\nWhich ${g.mot}(s) do you want to ${activer ? 'enable' : 'disable'} (wildcards ok)?`;
-  const sorties: string[] = [];
+function enable(game: Shell, g: Kind, args: string[], enable: boolean): string {
+  if (!installed(game)) return game.error(game.t('commande-introuvable', { commande: `a2${enable ? 'en' : 'dis'}${g.word === 'site' ? 'site' : g.word === 'module' ? 'mod' : 'conf'}` }));
+  const names = args.filter((x) => !x.startsWith('-'));
+  if (!names.length)
+    return `Your choices are: ${availableNames(game, g).join(' ')}\nWhich ${g.word}(s) do you want to ${enable ? 'enable' : 'disable'} (wildcards ok)?`;
+  const outputs: string[] = [];
   let change = false;
-  const traiter = (brut: string) => {
-    const nom = brut.replace(/\.(conf|load)$/, '');
+  const handle = (raw: string) => {
+    const name = raw.replace(/\.(conf|load)$/, '');
     const ext = g.extensions[0];
-    const disponible = `${RACINE}/${g.dossier}-available/${nom}${ext}`;
-    const actif = `${RACINE}/${g.dossier}-enabled/${nom}${ext}`;
-    if (!jeu.trouver(disponible) && !(!activer && jeu.trouver(actif, false))) {
-      jeu.erreur(`ERROR: ${g.Mot} ${nom} does not exist!`, 1);
+    const available = `${ROOT}/${g.directory}-available/${name}${ext}`;
+    const enabled = `${ROOT}/${g.directory}-enabled/${name}${ext}`;
+    if (!game.find(available) && !(!enable && game.find(enabled, false))) {
+      game.error(`ERROR: ${g.Word} ${name} does not exist!`, 1);
       return;
     }
-    if (activer) {
-      for (const d of g === MODULE ? (DEPENDANCES[nom] ?? []) : []) {
-        sorties.push(`Considering dependency ${d} for ${nom}:`);
-        traiter(d);
+    if (enable) {
+      for (const d of g === MODULE ? (DEPENDENCIES[name] ?? []) : []) {
+        outputs.push(`Considering dependency ${d} for ${name}:`);
+        handle(d);
       }
-      if (jeu.trouver(actif, false)) {
-        sorties.push(`${g.Mot} ${nom} already enabled`);
+      if (game.find(enabled, false)) {
+        outputs.push(`${g.Word} ${name} already enabled`);
         return;
       }
       for (const e of g.extensions) {
-        const cible = `${RACINE}/${g.dossier}-enabled/${nom}${e}`;
-        if (!jeu.trouver(`${RACINE}/${g.dossier}-available/${nom}${e}`)) continue;
-        if (!jeu.ecritDans(cible)) {
-          jeu.erreur(`Could not create ${cible}: Permission denied`, 1);
+        const target = `${ROOT}/${g.directory}-enabled/${name}${e}`;
+        if (!game.find(`${ROOT}/${g.directory}-available/${name}${e}`)) continue;
+        if (!game.writtenIn(target)) {
+          game.error(`Could not create ${target}: Permission denied`, 1);
           return;
         }
-        const parent = jeu.trouver(`${RACINE}/${g.dossier}-enabled`);
+        const parent = game.find(`${ROOT}/${g.directory}-enabled`);
         if (parent?.type === 'dossier')
-          parent.enfants[`${nom}${e}`] = { type: 'fichier', contenu: '', lien: `../${g.dossier}-available/${nom}${e}`, proprio: 'root' };
+          parent.children[`${name}${e}`] = { type: 'fichier', content: '', link: `../${g.directory}-available/${name}${e}`, owner: 'root' };
       }
-      sorties.push(`Enabling ${g.mot} ${nom}.`);
+      outputs.push(`Enabling ${g.word} ${name}.`);
       change = true;
       return;
     }
-    if (!jeu.trouver(actif, false)) {
-      sorties.push(`${g.Mot} ${nom} already disabled`);
+    if (!game.find(enabled, false)) {
+      outputs.push(`${g.Word} ${name} already disabled`);
       return;
     }
     for (const e of g.extensions) {
-      const cible = `${RACINE}/${g.dossier}-enabled/${nom}${e}`;
-      if (!jeu.trouver(cible, false)) continue;
-      if (!jeu.ecritDans(cible)) {
-        jeu.erreur(`Could not remove ${cible}: Permission denied`, 1);
+      const target = `${ROOT}/${g.directory}-enabled/${name}${e}`;
+      if (!game.find(target, false)) continue;
+      if (!game.writtenIn(target)) {
+        game.error(`Could not remove ${target}: Permission denied`, 1);
         return;
       }
-      jeu.effacer(cible);
+      game.erase(target);
     }
-    sorties.push(`${g.Mot} ${nom} disabled.`);
+    outputs.push(`${g.Word} ${name} disabled.`);
     change = true;
   };
-  for (const n of noms) traiter(n);
-  if (change) sorties.push('To activate the new configuration, you need to run:', `  systemctl ${g.apres} apache2`);
-  return sorties.join('\n');
+  for (const n of names) handle(n);
+  if (change) outputs.push('To activate the new configuration, you need to run:', `  systemctl ${g.after} apache2`);
+  return outputs.join('\n');
 }
 
-export const APACHE: Record<string, Commande> = {
+export const APACHE: Record<string, Command> = {
   apache2ctl,
   apachectl: { ...apache2ctl },
-  a2ensite: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => activer(jeu, SITE, args, true) },
-  a2dissite: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => activer(jeu, SITE, args, false) },
-  a2enmod: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => activer(jeu, MODULE, args, true) },
-  a2dismod: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => activer(jeu, MODULE, args, false) },
-  a2enconf: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => activer(jeu, CONF, args, true) },
-  a2disconf: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => activer(jeu, CONF, args, false) },
+  a2ensite: { section: 8, ownOptions: true, launch: ({ args, game }) => enable(game, SITE, args, true) },
+  a2dissite: { section: 8, ownOptions: true, launch: ({ args, game }) => enable(game, SITE, args, false) },
+  a2enmod: { section: 8, ownOptions: true, launch: ({ args, game }) => enable(game, MODULE, args, true) },
+  a2dismod: { section: 8, ownOptions: true, launch: ({ args, game }) => enable(game, MODULE, args, false) },
+  a2enconf: { section: 8, ownOptions: true, launch: ({ args, game }) => enable(game, CONF, args, true) },
+  a2disconf: { section: 8, ownOptions: true, launch: ({ args, game }) => enable(game, CONF, args, false) },
 };

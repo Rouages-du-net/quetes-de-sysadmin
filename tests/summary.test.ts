@@ -3,36 +3,36 @@
 // de référence.
 import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/engine/shell';
-import { HISTOIRES } from '../src/engine/chapters';
-import { bilan } from '../src/engine/summary';
-import { indice } from '../src/engine/hints';
-import { traducteur } from '../src/texts';
-import { dansLaLangue } from './names';
+import { STORIES } from '../src/engine/chapters';
+import { summary } from '../src/engine/summary';
+import { hint } from '../src/engine/hints';
+import { translator } from '../src/texts';
+import { inLanguage } from './names';
 
-const chapitre = (id: string) => HISTOIRES.flatMap((h) => h.chapitres).find((c) => c.id === id)!;
-const L = (texte: string) => dansLaLangue(traducteur('fr'), texte);
+const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
+const L = (text: string) => inLanguage(translator('fr'), text);
 
 describe('Bilan de fin de chapitre', () => {
   it('compte les commandes, les erreurs, et note la commande de chaque étape', () => {
-    const s = new Shell(chapitre('eveil'), 'fr');
-    s.indicesDemandes.add(`${indice(s).etape}:piste`);
+    const s = new Shell(chapter('eveil'), 'fr');
+    s.requestsHints.add(`${hint(s).step}:piste`);
     for (const l of ['lss', 'cat message.txt', 'cd Colline/EcoleDesSignaux/SalleDExercice', 'mv crabe Seau', 'cd ~/Jetee', 'mv filet ~/Port/Hangar', 'cd ~/Port/Remise', 'mv .ampoule_de_secours ~/Jetee/Phare/Escalier/Lanterne/ampoule'])
-      s.executer(L(l));
-    expect(s.termine).toBe(true);
-    const b = bilan(s);
-    expect(b.commandes).toBe(8);
-    expect(b.erreurs).toBe(1);
-    expect(b.indices).toBe(1);
-    expect(b.etapes.length).toBeGreaterThan(0);
+      s.execute(L(l));
+    expect(s.finished).toBe(true);
+    const b = summary(s);
+    expect(b.commands).toBe(8);
+    expect(b.errors).toBe(1);
+    expect(b.hints).toBe(1);
+    expect(b.steps.length).toBeGreaterThan(0);
     // Chaque étape a sa solution de référence ; la dernière a été franchie par le mv final.
-    expect(b.etapes.every((e) => e.solution.length > 0)).toBe(true);
-    expect(b.etapes.some((e) => e.ligne === L('mv .ampoule_de_secours ~/Jetee/Phare/Escalier/Lanterne/ampoule'))).toBe(true);
+    expect(b.steps.every((e) => e.solution.length > 0)).toBe(true);
+    expect(b.steps.some((e) => e.line === L('mv .ampoule_de_secours ~/Jetee/Phare/Escalier/Lanterne/ampoule'))).toBe(true);
   });
 
   it('un mot de passe demandé par sudo n’est pas une commande de plus', () => {
-    const s = new Shell(chapitre('racine'), 'fr');
-    s.executer('sudo ls');
-    s.executer(chapitre('racine').motDePasse!);
-    expect(bilan(s).commandes).toBe(1);
+    const s = new Shell(chapter('racine'), 'fr');
+    s.execute('sudo ls');
+    s.execute(chapter('racine').password!);
+    expect(summary(s).commands).toBe(1);
   });
 });

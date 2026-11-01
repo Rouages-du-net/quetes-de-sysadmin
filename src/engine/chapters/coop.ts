@@ -4,56 +4,56 @@
 // déploiement partagé (deploy). Des bénévoles arrivent et partent : les
 // comptes, les groupes, sudo.
 
-import { d, f, fichiersComptes, type Comptes, type Dossier, type Noeud } from '../world';
-import { genererCle } from '../access';
+import { d, f, accountsFiles, type Accounts, type Directory, type Node } from '../world';
+import { generateKey } from '../access';
 
 export const M = '/home/vous';
-export const MOT_DE_PASSE = 'radis-2027';
+export const PASSWORD = 'radis-2027';
 // Mardi 19 octobre 2027, 9 h 30.
-export const MAINTENANT = Date.UTC(2027, 9, 19, 9, 30, 0);
-export const AUJOURDHUI = '2027-10-19';
+export const NOW = Date.UTC(2027, 9, 19, 9, 30, 0);
+export const TODAY = '2027-10-19';
 
 // Les clés publiques de l'équipe (fausses, de la bonne forme).
-export const CLES = {
-  marc: genererCle('cooperative-marc', 'marc@portable').publique,
-  lina: genererCle('cooperative-lina', 'lina@atelier').publique,
-  ci: genererCle('cooperative-ci', 'deploy@ci').publique,
+export const KEYS = {
+  marc: generateKey('cooperative-marc', 'marc@portable').isPublic,
+  lina: generateKey('cooperative-lina', 'lina@atelier').isPublic,
+  ci: generateKey('cooperative-ci', 'deploy@ci').isPublic,
 };
 
 // Les comptes ; après « Le départ », celui de Marc n'existe plus.
-export const comptesCooperative = (avecMarc = true): Comptes => {
-  const c: Comptes = {
-    utilisateurs: {
-      root: { uid: 0, groupe: 'root', maison: '/root' },
-      deploy: { uid: 998, groupe: 'deploy', maison: '/home/deploy' },
-      till: { uid: 997, groupe: 'till', maison: '/var/lib/till', shell: '/usr/sbin/nologin' },
-      vous: { uid: 1000, groupe: 'vous' },
-      marc: { uid: 1001, groupe: 'marc' },
-      lina: { uid: 1002, groupe: 'lina' },
-      karim: { uid: 1003, groupe: 'karim' },
+export const cooperativeAccounts = (withMarc = true): Accounts => {
+  const c: Accounts = {
+    users: {
+      root: { uid: 0, group: 'root', home: '/root' },
+      deploy: { uid: 998, group: 'deploy', home: '/home/deploy' },
+      till: { uid: 997, group: 'till', home: '/var/lib/till', shell: '/usr/sbin/nologin' },
+      vous: { uid: 1000, group: 'vous' },
+      marc: { uid: 1001, group: 'marc' },
+      lina: { uid: 1002, group: 'lina' },
+      karim: { uid: 1003, group: 'karim' },
     },
-    groupes: {
-      root: { gid: 0, membres: [] },
-      adm: { gid: 4, membres: ['vous', 'marc'] },
-      sudo: { gid: 27, membres: ['vous', 'marc'] },
-      till: { gid: 997, membres: ['marc', 'lina', 'karim'] },
-      deploy: { gid: 998, membres: [] },
-      vous: { gid: 1000, membres: [] },
-      marc: { gid: 1001, membres: [] },
-      lina: { gid: 1002, membres: [] },
-      karim: { gid: 1003, membres: [] },
+    groups: {
+      root: { gid: 0, members: [] },
+      adm: { gid: 4, members: ['vous', 'marc'] },
+      sudo: { gid: 27, members: ['vous', 'marc'] },
+      till: { gid: 997, members: ['marc', 'lina', 'karim'] },
+      deploy: { gid: 998, members: [] },
+      vous: { gid: 1000, members: [] },
+      marc: { gid: 1001, members: [] },
+      lina: { gid: 1002, members: [] },
+      karim: { gid: 1003, members: [] },
     },
   };
-  if (!avecMarc) {
-    delete c.utilisateurs.marc;
-    delete c.groupes.marc;
-    for (const g of Object.values(c.groupes)) g.membres = g.membres.filter((m) => m !== 'marc');
+  if (!withMarc) {
+    delete c.users.marc;
+    delete c.groups.marc;
+    for (const g of Object.values(c.groups)) g.members = g.members.filter((m) => m !== 'marc');
   }
   return c;
 };
 
-const racine = { proprio: 'root' };
-const fichier = (contenu: string, proprio = 'root', mode?: string) => f(contenu, { lignes: true, proprio, ...(mode ? { mode } : {}) });
+const root = { owner: 'root' };
+const file = (content: string, owner = 'root', mode?: string) => f(content, { lines: true, owner, ...(mode ? { mode } : {}) });
 
 // sudoers de Debian : le groupe sudo a tous les droits ; @includedir lit /etc/sudoers.d.
 export const SUDOERS = `#
@@ -109,60 +109,60 @@ const README_SUDOERS = `#
 #`;
 
 /** Le monde commun : /etc (comptes, sudoers), les maisons, et ce que le chapitre ajoute. */
-export function mondeCooperative(o: {
-  maison: Record<string, Noeud>;
-  maisons?: Record<string, Noeud>;
-  etc?: Record<string, Noeud>;
-  plus?: Record<string, Noeud>;
+export function cooperativeWorld(o: {
+  home: Record<string, Node>;
+  homes?: Record<string, Node>;
+  etc?: Record<string, Node>;
+  more?: Record<string, Node>;
   // Après « Le départ » : plus de clé de Marc dans deploy.
-  sansMarc?: boolean;
+  withoutMarc?: boolean;
   // Les programmes installés dans /usr/sbin (ex. nginx).
-  sbin?: Record<string, Noeud>;
-}): Dossier {
+  sbin?: Record<string, Node>;
+}): Directory {
   return d(
     {
       etc: d(
         {
-          ...fichiersComptes(),
-          hostname: fichier('cooperative'),
-          sudoers: fichier(SUDOERS, 'root', 'r--r-----'),
-          'sudoers.d': d({ README: fichier(README_SUDOERS, 'root', 'r--r-----') }, undefined, { proprio: 'root', mode: 'rwxr-xr-x' }),
-          'cron.d': d({ e2scrub_all: fichier(E2SCRUB) }, undefined, racine),
+          ...accountsFiles(),
+          hostname: file('cooperative'),
+          sudoers: file(SUDOERS, 'root', 'r--r-----'),
+          'sudoers.d': d({ README: file(README_SUDOERS, 'root', 'r--r-----') }, undefined, { owner: 'root', mode: 'rwxr-xr-x' }),
+          'cron.d': d({ e2scrub_all: file(E2SCRUB) }, undefined, root),
           ...(o.etc ?? {}),
         },
         undefined,
-        racine,
+        root,
       ),
       home: d(
         {
-          vous: d(o.maison),
+          vous: d(o.home),
           deploy: d(
             {
               '.ssh': d(
-                { authorized_keys: fichier((o.sansMarc ? [CLES.ci, CLES.lina] : [CLES.ci, CLES.marc, CLES.lina]).join('\n'), 'deploy', 'rw-------') },
+                { authorized_keys: file((o.withoutMarc ? [KEYS.ci, KEYS.lina] : [KEYS.ci, KEYS.marc, KEYS.lina]).join('\n'), 'deploy', 'rw-------') },
                 undefined,
-                { proprio: 'deploy', mode: 'rwx------' },
+                { owner: 'deploy', mode: 'rwx------' },
               ),
             },
             undefined,
-            { proprio: 'deploy', mode: 'rwxr-x---' },
+            { owner: 'deploy', mode: 'rwxr-x---' },
           ),
-          lina: d({}, undefined, { proprio: 'lina', mode: 'rwx------' }),
-          karim: d({}, undefined, { proprio: 'karim', mode: 'rwx------' }),
-          ...(o.maisons ?? {}),
+          lina: d({}, undefined, { owner: 'lina', mode: 'rwx------' }),
+          karim: d({}, undefined, { owner: 'karim', mode: 'rwx------' }),
+          ...(o.homes ?? {}),
         },
         undefined,
-        racine,
+        root,
       ),
-      tmp: d({}, undefined, { proprio: 'root', mode: 'rwxrwxrwt' }),
+      tmp: d({}, undefined, { owner: 'root', mode: 'rwxrwxrwt' }),
       usr: d(
-        { local: d({ bin: d({}, undefined, racine), sbin: d({}, undefined, racine) }, undefined, racine), sbin: d(o.sbin ?? {}, undefined, racine) },
+        { local: d({ bin: d({}, undefined, root), sbin: d({}, undefined, root) }, undefined, root), sbin: d(o.sbin ?? {}, undefined, root) },
         undefined,
-        racine,
+        root,
       ),
-      ...(o.plus ?? {}),
+      ...(o.more ?? {}),
     },
     undefined,
-    racine,
+    root,
   );
 }

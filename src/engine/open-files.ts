@@ -7,50 +7,50 @@
 //
 //   etat.ouverts = [{ service, pid, utilisateur, commande, fd, chemin, noeud }]
 
-import type { Fichier } from './world';
-import type { Jeu } from './shell';
+import type { File } from './world';
+import type { Game } from './shell';
 import { systemd } from './systemd';
 
-export interface Ouvert {
+export interface Open {
   service: string;
   pid: number;
-  utilisateur: string;
-  commande: string;
+  user: string;
+  command: string;
   fd: number;
   // Le chemin sous lequel le processus l'a ouvert (mis à jour si logrotate le renomme).
-  chemin: string;
-  noeud: Fichier;
+  path: string;
+  node: File;
 }
 
-export const ouverts = (j: Jeu): Ouvert[] => (j.etat.ouverts ??= []);
+export const openSet = (j: Game): Open[] => (j.state.ouverts ??= []);
 
 /** Le fichier tient-il encore (son service tourne) ? */
-export const tenu = (j: Jeu, o: Ouvert) => systemd(j)?.services[o.service]?.etat === 'active';
+export const held = (j: Game, o: Open) => systemd(j)?.services[o.service]?.state === 'active';
 
 /** Ce fichier a-t-il été effacé (plus aucun nom ne mène à lui) ? */
-export const efface = (j: Jeu, o: Ouvert) => j.trouver(o.chemin) !== o.noeud;
+export const erases = (j: Game, o: Open) => j.find(o.path) !== o.node;
 
 /**
  * Au démarrage d'un service : il ouvre son journal (le crée s'il n'existe
  * pas) en ajout. Remplace ce que le service tenait avant.
  */
-export function ouvrir(j: Jeu, o: Omit<Ouvert, 'noeud'>, proprio: string, groupe?: string): Fichier {
-  const ici = j.trouver(o.chemin);
-  let noeud: Fichier;
-  if (ici?.type === 'fichier') noeud = ici;
+export function open(j: Game, o: Omit<Open, 'node'>, owner: string, group?: string): File {
+  const here = j.find(o.path);
+  let node: File;
+  if (here?.type === 'fichier') node = here;
   else {
-    noeud = { type: 'fichier', contenu: '', lignes: true, proprio, ...(groupe ? { groupe } : {}), mode: 'rw-r-----', taille: 0 };
-    const parent = j.trouver(o.chemin.replace(/\/[^/]+$/, ''));
-    if (parent?.type === 'dossier') parent.enfants[o.chemin.split('/').at(-1)!] = noeud;
+    node = { type: 'fichier', content: '', lines: true, owner, ...(group ? { group } : {}), mode: 'rw-r-----', size: 0 };
+    const parent = j.find(o.path.replace(/\/[^/]+$/, ''));
+    if (parent?.type === 'dossier') parent.children[o.path.split('/').at(-1)!] = node;
   }
-  j.etat.ouverts = ouverts(j).filter((x) => x.service !== o.service);
-  ouverts(j).push({ ...o, noeud });
-  return noeud;
+  j.state.ouverts = openSet(j).filter((x) => x.service !== o.service);
+  openSet(j).push({ ...o, node });
+  return node;
 }
 
 /** La place que tiennent les fichiers effacés mais encore ouverts, sous un point de montage. */
-export function placeFantome(j: Jeu, montage: string): number {
-  return ouverts(j)
-    .filter((o) => tenu(j, o) && efface(j, o) && (montage === '/' || o.chemin === montage || o.chemin.startsWith(montage + '/')))
-    .reduce((t, o) => t + (o.noeud.taille ?? (typeof o.noeud.contenu === 'string' ? o.noeud.contenu.length : 0)), 0);
+export function ghostPlace(j: Game, mount: string): number {
+  return openSet(j)
+    .filter((o) => held(j, o) && erases(j, o) && (mount === '/' || o.path === mount || o.path.startsWith(mount + '/')))
+    .reduce((t, o) => t + (o.node.size ?? (typeof o.node.content === 'string' ? o.node.content.length : 0)), 0);
 }

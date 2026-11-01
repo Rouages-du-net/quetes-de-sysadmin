@@ -5,100 +5,100 @@
 // https://manpages.debian.org/trixie/ifupdown/ifup.8.en.html
 
 import type { Shell } from '../shell';
-import { cidr, creer, demonter, enService, lan, lireInterfaces, monter, reseauDe, supprimer, versIp, type Interface, type Lan } from '../lan';
-import { lireDnsmasq } from '../dnsmasq';
-import type { Commande, Contexte } from './index';
-import { colorer, sgr, type Quand } from '../colours';
+import { cidr, create, unmount, inService, lan, readInterfaces, mount, networkFor, remove, toIp, type Interface, type Lan } from '../lan';
+import { readDnsmasq } from '../dnsmasq';
+import type { Command, Context } from './index';
+import { colourise, sgr, type When } from '../colours';
 
-const NON_PERMIS = 'RTNETLINK answers: Operation not permitted';
+const NOT_ALLOWED = 'RTNETLINK answers: Operation not permitted';
 
 // Comme ip : « eth1.10@eth1 » pour un VLAN.
-const nomAffiche = (i: Interface) => (i.vlan ? `${i.nom}@${i.vlan.parent}` : i.nom);
+const showsName = (i: Interface) => (i.vlan ? `${i.name}@${i.vlan.parent}` : i.name);
 
-function etatLien(l: Lan, i: Interface): { drapeaux: string; etat: string } {
-  if (i.nom === 'lo') return { drapeaux: '<LOOPBACK,UP,LOWER_UP>', etat: 'UNKNOWN' };
-  if (i.wireguard) return { drapeaux: i.up ? '<POINTOPOINT,NOARP,UP,LOWER_UP>' : '<POINTOPOINT,NOARP>', etat: i.up ? 'UNKNOWN' : 'DOWN' };
-  if (!i.up) return { drapeaux: '<BROADCAST,MULTICAST>', etat: 'DOWN' };
-  if (!enService(l, i)) return { drapeaux: '<NO-CARRIER,BROADCAST,MULTICAST,UP>', etat: 'LOWERLAYERDOWN' };
-  return { drapeaux: '<BROADCAST,MULTICAST,UP,LOWER_UP>', etat: 'UP' };
+function linkState(l: Lan, i: Interface): { flags: string; state: string } {
+  if (i.name === 'lo') return { flags: '<LOOPBACK,UP,LOWER_UP>', state: 'UNKNOWN' };
+  if (i.wireguard) return { flags: i.up ? '<POINTOPOINT,NOARP,UP,LOWER_UP>' : '<POINTOPOINT,NOARP>', state: i.up ? 'UNKNOWN' : 'DOWN' };
+  if (!i.up) return { flags: '<BROADCAST,MULTICAST>', state: 'DOWN' };
+  if (!inService(l, i)) return { flags: '<NO-CARRIER,BROADCAST,MULTICAST,UP>', state: 'LOWERLAYERDOWN' };
+  return { flags: '<BROADCAST,MULTICAST,UP,LOWER_UP>', state: 'UP' };
 }
 
-function lignesLien(l: Lan, i: Interface, details: boolean): string[] {
-  const n = l.ordre.indexOf(i.nom) + 1;
-  const { drapeaux, etat } = etatLien(l, i);
-  const lo = i.nom === 'lo';
-  const lignes = [
-    `${n}: ${nomAffiche(i)}: ${drapeaux} mtu ${lo ? 65536 : i.wireguard ? 1420 : 1500} qdisc ${lo || i.vlan || i.wireguard ? 'noqueue' : 'fq_codel'} state ${etat} mode DEFAULT group default qlen 1000`,
+function linkLines(l: Lan, i: Interface, details: boolean): string[] {
+  const n = l.order.indexOf(i.name) + 1;
+  const { flags, state } = linkState(l, i);
+  const lo = i.name === 'lo';
+  const lines = [
+    `${n}: ${showsName(i)}: ${flags} mtu ${lo ? 65536 : i.wireguard ? 1420 : 1500} qdisc ${lo || i.vlan || i.wireguard ? 'noqueue' : 'fq_codel'} state ${state} mode DEFAULT group default qlen 1000`,
     lo
       ? '    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00'
       : i.wireguard
         ? '    link/none '
         : `    link/ether ${i.mac} brd ff:ff:ff:ff:ff:ff`,
   ];
-  if (details && i.vlan) lignes.push(`    vlan protocol 802.1Q id ${i.vlan.id} <REORDER_HDR>`);
-  return lignes;
+  if (details && i.vlan) lines.push(`    vlan protocol 802.1Q id ${i.vlan.id} <REORDER_HDR>`);
+  return lines;
 }
 
-function lignesAdresses(l: Lan, i: Interface): string[] {
-  const [premiere, ...reste] = lignesLien(l, i, false);
+function addressesLines(l: Lan, i: Interface): string[] {
+  const [first, ...rest] = linkLines(l, i, false);
   return [
-    premiere.replace(' mode DEFAULT', ''),
-    ...reste,
-    ...i.adresses.flatMap((a) => {
+    first.replace(' mode DEFAULT', ''),
+    ...rest,
+    ...i.addresses.flatMap((a) => {
       const c = cidr(a)!;
-      const brd = i.nom === 'lo' || i.wireguard ? '' : ` brd ${versIp(c.diffusion)}`;
-      return [`    inet ${a}${brd} scope ${i.nom === 'lo' ? 'host' : 'global'} ${i.nom}`, '       valid_lft forever preferred_lft forever'];
+      const brd = i.name === 'lo' || i.wireguard ? '' : ` brd ${toIp(c.broadcast)}`;
+      return [`    inet ${a}${brd} scope ${i.name === 'lo' ? 'host' : 'global'} ${i.name}`, '       valid_lft forever preferred_lft forever'];
     }),
   ];
 }
 
-const bref = (l: Lan, i: Interface, quoi: string) => {
-  const { etat } = etatLien(l, i);
-  return `${nomAffiche(i).padEnd(16)} ${etat.padEnd(14)} ${quoi}`.trimEnd();
+const short = (l: Lan, i: Interface, what: string) => {
+  const { state } = linkState(l, i);
+  return `${showsName(i).padEnd(16)} ${state.padEnd(14)} ${what}`.trimEnd();
 };
 
 function routes(l: Lan): string[] {
-  const lignes: string[] = [];
-  if (l.passerelle) lignes.push(`default via ${l.passerelle.via} dev ${l.passerelle.dev} onlink`);
-  for (const nom of l.ordre) {
-    const i = l.interfaces[nom];
-    if (!i || nom === 'lo' || !i.up) continue;
-    for (const a of i.adresses)
-      lignes.push(`${reseauDe(a)} dev ${nom} proto kernel scope link src ${a.split('/')[0]}${enService(l, i) ? '' : ' linkdown'}`);
-    for (const r of i.routes ?? []) lignes.push(`${r} dev ${nom} scope link`);
+  const lines: string[] = [];
+  if (l.gateway) lines.push(`default via ${l.gateway.via} dev ${l.gateway.dev} onlink`);
+  for (const name of l.order) {
+    const i = l.interfaces[name];
+    if (!i || name === 'lo' || !i.up) continue;
+    for (const a of i.addresses)
+      lines.push(`${networkFor(a)} dev ${name} proto kernel scope link src ${a.split('/')[0]}${inService(l, i) ? '' : ' linkdown'}`);
+    for (const r of i.routes ?? []) lines.push(`${r} dev ${name} scope link`);
   }
-  return lignes;
+  return lines;
 }
 
 // ip -c[olor][=always|auto|never] : sans valeur, toujours (comme iproute2).
 // Couleurs d'iproute2 : nom d'interface en cyan, état UP en vert et DOWN en
 // rouge, adresse MAC en jaune, IPv4 en magenta, IPv6 en bleu.
 // D'après https://man7.org/linux/man-pages/man8/ip.8.html (-color).
-function ipEnCouleur(c: Contexte): string {
-  let quand: Quand = 'never';
+function ipInColour(c: Context): string {
+  let when: When = 'never';
   const args: string[] = [];
   for (const a of c.args) {
     const m = /^--?c(?:o(?:l(?:o(?:r)?)?)?)?(?:=(always|auto|never))?$/.exec(a);
-    if (m) quand = (m[1] as Quand | undefined) ?? 'always';
+    if (m) when = (m[1] as When | undefined) ?? 'always';
     else args.push(a);
   }
-  const sortie = ip(c.jeu, args);
-  return colorer(c, quand) ? colorerIp(sortie) : sortie;
+  const output = ip(c.game, args);
+  return colourise(c, when) ? colourIp(output) : output;
 }
 
-const ETATS: Record<string, string> = { UP: '32', DOWN: '31', LOWERLAYERDOWN: '31' };
-export function colorerIp(texte: string): string {
-  const etat = (e: string) => sgr(ETATS[e] ?? '', e);
-  return texte
+const STATES: Record<string, string> = { UP: '32', DOWN: '31', LOWERLAYERDOWN: '31' };
+export function colourIp(text: string): string {
+  const state = (e: string) => sgr(STATES[e] ?? '', e);
+  return text
     .split('\n')
     .map((l) => {
       // ip -br : nom, état, adresses.
-      const bref = /^(\S+)(\s+)(UP|DOWN|UNKNOWN|LOWERLAYERDOWN)(\s*)(.*)$/.exec(l);
-      if (bref && !/^\d+:/.test(l))
-        return sgr('36', bref[1]) + bref[2] + etat(bref[3]) + bref[4] + bref[5].replace(/[0-9a-f:.]+\/\d+/g, (a) => sgr(a.includes(':') ? '34' : '35', a));
+      const short = /^(\S+)(\s+)(UP|DOWN|UNKNOWN|LOWERLAYERDOWN)(\s*)(.*)$/.exec(l);
+      if (short && !/^\d+:/.test(l))
+        return sgr('36', short[1]) + short[2] + state(short[3]) + short[4] + short[5].replace(/[0-9a-f:.]+\/\d+/g, (a) => sgr(a.includes(':') ? '34' : '35', a));
       return l
-        .replace(/^(\d+: )([^:@ ]+)/, (_, n, nom) => n + sgr('36', nom))
-        .replace(/ state (\S+)/, (_, e) => ` state ${etat(e)}`)
+        .replace(/^(\d+: )([^:@ ]+)/, (_, n, name) => n + sgr('36', name))
+        .replace(/ state (\S+)/, (_, e) => ` state ${state(e)}`)
         .replace(/(link\/ether )(\S+)/, (_, a, mac) => a + sgr('33', mac))
         .replace(/^(\s+inet )(\S+)/, (_, a, adr) => a + sgr('35', adr))
         .replace(/^(\s+inet6 )(\S+)/, (_, a, adr) => a + sgr('34', adr));
@@ -107,193 +107,193 @@ export function colorerIp(texte: string): string {
 }
 
 // La valeur qui suit un mot-clé (dev eth0, name eth1.10…).
-const apres = (mots: string[], mot: string) => (mots.includes(mot) ? mots[mots.indexOf(mot) + 1] : undefined);
+const after = (words: string[], word: string) => (words.includes(word) ? words[words.indexOf(word) + 1] : undefined);
 
-function ip(jeu: Shell, args: string[]): string {
-  const l = lan(jeu);
-  if (!l) return jeu.erreur('Cannot open netlink socket: Operation not permitted', 1);
+function ip(game: Shell, args: string[]): string {
+  const l = lan(game);
+  if (!l) return game.error('Cannot open netlink socket: Operation not permitted', 1);
   const options = args.filter((a) => a.startsWith('-'));
-  const [objet = '', action = 'show', ...reste] = args.filter((a) => !a.startsWith('-'));
+  const [object = '', action = 'show', ...rest] = args.filter((a) => !a.startsWith('-'));
   const brief = options.some((o) => o === '-br' || o === '-brief');
   const details = options.some((o) => o === '-d' || o === '-details');
-  const root = jeu.qui === 'root';
-  const interfaceDe = (nom: string | undefined) => (nom ? l.interfaces[nom] : undefined);
-  const introuvable = (nom: string) => jeu.erreur(`Cannot find device "${nom}"`, 1);
-  const liste = (dev: string | undefined) =>
-    (dev ? [interfaceDe(dev)].filter(Boolean) : l.ordre.map((n) => l.interfaces[n]).filter(Boolean)) as Interface[];
+  const root = game.who === 'root';
+  const interfaceFor = (name: string | undefined) => (name ? l.interfaces[name] : undefined);
+  const missing = (name: string) => game.error(`Cannot find device "${name}"`, 1);
+  const listing = (dev: string | undefined) =>
+    (dev ? [interfaceFor(dev)].filter(Boolean) : l.order.map((n) => l.interfaces[n]).filter(Boolean)) as Interface[];
 
-  if (['a', 'addr', 'address'].includes(objet)) {
+  if (['a', 'addr', 'address'].includes(object)) {
     if (['show', 'list', 'sh', 'ls'].includes(action)) {
-      const dev = apres(reste, 'dev') ?? reste.find((r) => r !== 'dev');
-      if (dev && !interfaceDe(dev)) return introuvable(dev);
-      return liste(dev)
-        .flatMap((i) => (brief ? [bref(l, i, i.adresses.join(' '))] : lignesAdresses(l, i)))
+      const dev = after(rest, 'dev') ?? rest.find((r) => r !== 'dev');
+      if (dev && !interfaceFor(dev)) return missing(dev);
+      return listing(dev)
+        .flatMap((i) => (brief ? [short(l, i, i.addresses.join(' '))] : addressesLines(l, i)))
         .join('\n');
     }
     if (['add', 'del', 'delete'].includes(action)) {
-      const adresse = reste[0];
-      const dev = apres(reste, 'dev');
-      if (!adresse || !dev) return jeu.erreur('Not enough information: "dev" argument is required.', 1);
-      if (!cidr(adresse)) return jeu.erreur(`Error: any valid prefix is expected rather than "${adresse}".`, 1);
-      const i = interfaceDe(dev);
-      if (!i) return introuvable(dev);
-      if (!root) return jeu.erreur(NON_PERMIS, 2);
-      const complete = adresse.includes('/') ? adresse : `${adresse}/32`;
+      const address = rest[0];
+      const dev = after(rest, 'dev');
+      if (!address || !dev) return game.error('Not enough information: "dev" argument is required.', 1);
+      if (!cidr(address)) return game.error(`Error: any valid prefix is expected rather than "${address}".`, 1);
+      const i = interfaceFor(dev);
+      if (!i) return missing(dev);
+      if (!root) return game.error(NOT_ALLOWED, 2);
+      const complete = address.includes('/') ? address : `${address}/32`;
       if (action === 'add') {
-        if (i.adresses.includes(complete)) return jeu.erreur('Error: ipv4: Address already assigned.', 2);
-        i.adresses.push(complete);
+        if (i.addresses.includes(complete)) return game.error('Error: ipv4: Address already assigned.', 2);
+        i.addresses.push(complete);
       } else {
-        if (!i.adresses.includes(complete)) return jeu.erreur('Error: ipv4: Address not found.', 2);
-        i.adresses = i.adresses.filter((a) => a !== complete);
+        if (!i.addresses.includes(complete)) return game.error('Error: ipv4: Address not found.', 2);
+        i.addresses = i.addresses.filter((a) => a !== complete);
       }
       return '';
     }
     if (action === 'flush') {
-      const i = interfaceDe(apres(reste, 'dev') ?? reste[0]);
-      if (!i) return introuvable(apres(reste, 'dev') ?? reste[0] ?? '');
-      if (!root) return jeu.erreur(NON_PERMIS, 2);
-      i.adresses = [];
+      const i = interfaceFor(after(rest, 'dev') ?? rest[0]);
+      if (!i) return missing(after(rest, 'dev') ?? rest[0] ?? '');
+      if (!root) return game.error(NOT_ALLOWED, 2);
+      i.addresses = [];
       return '';
     }
   }
 
-  if (['l', 'link'].includes(objet)) {
+  if (['l', 'link'].includes(object)) {
     if (['show', 'list', 'sh', 'ls'].includes(action)) {
-      const dev = apres(reste, 'dev') ?? reste.find((r) => r !== 'dev');
-      if (dev && !interfaceDe(dev)) return introuvable(dev);
-      return liste(dev)
+      const dev = after(rest, 'dev') ?? rest.find((r) => r !== 'dev');
+      if (dev && !interfaceFor(dev)) return missing(dev);
+      return listing(dev)
         .flatMap((i) =>
           brief
-            ? [bref(l, i, `${i.nom === 'lo' ? '00:00:00:00:00:00' : i.wireguard ? '' : i.mac} ${etatLien(l, i).drapeaux}`.trim())]
-            : lignesLien(l, i, details),
+            ? [short(l, i, `${i.name === 'lo' ? '00:00:00:00:00:00' : i.wireguard ? '' : i.mac} ${linkState(l, i).flags}`.trim())]
+            : linkLines(l, i, details),
         )
         .join('\n');
     }
     if (action === 'add') {
-      const parent = apres(reste, 'link');
-      const nom = apres(reste, 'name');
-      const type = apres(reste, 'type');
-      const id = Number(apres(reste, 'id'));
-      if (!nom) return jeu.erreur('Not enough information: "dev" argument is required.', 1);
-      if (type !== 'vlan') return jeu.erreur(`Error: Unknown device type.`, 2);
-      if (!parent || !interfaceDe(parent)) return introuvable(parent ?? '');
-      if (!Number.isInteger(id) || id < 1 || id > 4094) return jeu.erreur('Error: argument "id" is wrong: invalid VLAN id', 1);
-      if (!root) return jeu.erreur(NON_PERMIS, 2);
-      if (l.interfaces[nom]) return jeu.erreur('RTNETLINK answers: File exists', 2);
-      creer(l, nom, { parent, id });
+      const parent = after(rest, 'link');
+      const name = after(rest, 'name');
+      const type = after(rest, 'type');
+      const id = Number(after(rest, 'id'));
+      if (!name) return game.error('Not enough information: "dev" argument is required.', 1);
+      if (type !== 'vlan') return game.error(`Error: Unknown device type.`, 2);
+      if (!parent || !interfaceFor(parent)) return missing(parent ?? '');
+      if (!Number.isInteger(id) || id < 1 || id > 4094) return game.error('Error: argument "id" is wrong: invalid VLAN id', 1);
+      if (!root) return game.error(NOT_ALLOWED, 2);
+      if (l.interfaces[name]) return game.error('RTNETLINK answers: File exists', 2);
+      create(l, name, { parent, id });
       return '';
     }
     if (action === 'set') {
-      const dev = apres(reste, 'dev') ?? reste[0];
-      const i = interfaceDe(dev);
-      if (!i) return introuvable(dev ?? '');
-      if (!reste.includes('up') && !reste.includes('down')) return jeu.erreur('Not enough of information: "dev" argument is required.', 1);
-      if (!root) return jeu.erreur(NON_PERMIS, 2);
-      i.up = reste.includes('up');
+      const dev = after(rest, 'dev') ?? rest[0];
+      const i = interfaceFor(dev);
+      if (!i) return missing(dev ?? '');
+      if (!rest.includes('up') && !rest.includes('down')) return game.error('Not enough of information: "dev" argument is required.', 1);
+      if (!root) return game.error(NOT_ALLOWED, 2);
+      i.up = rest.includes('up');
       return '';
     }
     if (['del', 'delete'].includes(action)) {
-      const dev = apres(reste, 'dev') ?? reste[0];
-      if (!interfaceDe(dev)) return introuvable(dev ?? '');
-      if (!root) return jeu.erreur(NON_PERMIS, 2);
-      if (!interfaceDe(dev)!.vlan) return jeu.erreur('RTNETLINK answers: Operation not supported', 2);
-      supprimer(l, dev!);
+      const dev = after(rest, 'dev') ?? rest[0];
+      if (!interfaceFor(dev)) return missing(dev ?? '');
+      if (!root) return game.error(NOT_ALLOWED, 2);
+      if (!interfaceFor(dev)!.vlan) return game.error('RTNETLINK answers: Operation not supported', 2);
+      remove(l, dev!);
       return '';
     }
   }
 
-  if (['r', 'ro', 'route'].includes(objet)) {
+  if (['r', 'ro', 'route'].includes(object)) {
     if (['show', 'list', 'sh', 'ls'].includes(action)) return routes(l).join('\n');
-    if (['add', 'replace'].includes(action) && reste[0] === 'default') {
-      const via = apres(reste, 'via');
-      if (!via) return jeu.erreur('Error: either "to" is duplicate, or "via" is a garbage.', 1);
-      if (!root) return jeu.erreur(NON_PERMIS, 2);
-      const dev = apres(reste, 'dev') ?? Object.values(l.interfaces).find((i) => i.adresses.some((a) => dans4(via, a)))?.nom;
-      if (!dev) return jeu.erreur('Error: Nexthop has invalid gateway.', 2);
-      if (action === 'add' && l.passerelle) return jeu.erreur('RTNETLINK answers: File exists', 2);
-      l.passerelle = { via, dev };
+    if (['add', 'replace'].includes(action) && rest[0] === 'default') {
+      const via = after(rest, 'via');
+      if (!via) return game.error('Error: either "to" is duplicate, or "via" is a garbage.', 1);
+      if (!root) return game.error(NOT_ALLOWED, 2);
+      const dev = after(rest, 'dev') ?? Object.values(l.interfaces).find((i) => i.addresses.some((a) => dans4(via, a)))?.name;
+      if (!dev) return game.error('Error: Nexthop has invalid gateway.', 2);
+      if (action === 'add' && l.gateway) return game.error('RTNETLINK answers: File exists', 2);
+      l.gateway = { via, dev };
       return '';
     }
-    if (['del', 'delete'].includes(action) && reste[0] === 'default') {
-      if (!root) return jeu.erreur(NON_PERMIS, 2);
-      if (!l.passerelle) return jeu.erreur('RTNETLINK answers: No such process', 2);
-      l.passerelle = null;
+    if (['del', 'delete'].includes(action) && rest[0] === 'default') {
+      if (!root) return game.error(NOT_ALLOWED, 2);
+      if (!l.gateway) return game.error('RTNETLINK answers: No such process', 2);
+      l.gateway = null;
       return '';
     }
   }
-  if (!objet) return jeu.erreur(jeu.t('ip-usage'), 255);
-  if (!['a', 'addr', 'address', 'l', 'link', 'r', 'ro', 'route'].includes(objet))
-    return jeu.erreur(`Object "${objet}" is unknown, try "ip help".`, 255);
-  return jeu.erreur(`Command "${action}" is unknown, try "ip ${objet} help".`, 255);
+  if (!object) return game.error(game.t('ip-usage'), 255);
+  if (!['a', 'addr', 'address', 'l', 'link', 'r', 'ro', 'route'].includes(object))
+    return game.error(`Object "${object}" is unknown, try "ip help".`, 255);
+  return game.error(`Command "${action}" is unknown, try "ip ${object} help".`, 255);
 }
 
 // Une passerelle joignable par cette adresse d'interface ?
-const dans4 = (ip: string, adresse: string) => {
-  const c = cidr(adresse)!;
-  const autre = cidr(`${ip}/${c.longueur}`);
-  return !!autre && autre.reseau === c.reseau;
+const dans4 = (ip: string, address: string) => {
+  const c = cidr(address)!;
+  const other = cidr(`${ip}/${c.length}`);
+  return !!other && other.network === c.network;
 };
 
 // ifup / ifdown : -a (les interfaces « auto »), ou des noms.
-function ifupdown(jeu: Shell, args: string[], monte: boolean): string {
-  const programme = monte ? 'ifup' : 'ifdown';
-  const l = lan(jeu);
-  if (!l) return jeu.erreur(`${programme}: couldn't open interfaces file "/etc/network/interfaces"`, 1);
-  if (jeu.qui !== 'root') return jeu.erreur(`${programme}: failed to open lockfile /run/network/.ifstate.lock: Permission denied`, 1);
-  const { strophes, erreurs } = lireInterfaces(jeu);
-  if (erreurs.length) return jeu.erreur([...erreurs, `${programme}: couldn't read interfaces file "/etc/network/interfaces"`].join('\n'), 1);
-  const configurees: string[] = (jeu.etat.ifstate ??= []);
-  const noms = args.includes('-a')
-    ? Object.values(strophes)
+function ifupdown(game: Shell, args: string[], mounted: boolean): string {
+  const program = mounted ? 'ifup' : 'ifdown';
+  const l = lan(game);
+  if (!l) return game.error(`${program}: couldn't open interfaces file "/etc/network/interfaces"`, 1);
+  if (game.who !== 'root') return game.error(`${program}: failed to open lockfile /run/network/.ifstate.lock: Permission denied`, 1);
+  const { stanzas, errors } = readInterfaces(game);
+  if (errors.length) return game.error([...errors, `${program}: couldn't read interfaces file "/etc/network/interfaces"`].join('\n'), 1);
+  const configured: string[] = (game.state.ifstate ??= []);
+  const names = args.includes('-a')
+    ? Object.values(stanzas)
         .filter((s) => s.auto)
-        .map((s) => s.nom)
+        .map((s) => s.name)
     : args.filter((a) => !a.startsWith('-'));
-  if (!noms.length) return jeu.erreur(`Usage: ${programme} <options> <ifaces...>`, 1);
-  for (const nom of noms) {
-    const s = strophes[nom];
+  if (!names.length) return game.error(`Usage: ${program} <options> <ifaces...>`, 1);
+  for (const name of names) {
+    const s = stanzas[name];
     if (!s) {
-      jeu.erreur(`${programme}: unknown interface ${nom}`, 1);
+      game.error(`${program}: unknown interface ${name}`, 1);
       continue;
     }
-    if (monte) {
-      if (configurees.includes(nom)) {
-        if (!args.includes('-a')) jeu.erreur(`ifup: interface ${nom} already configured`, 0);
+    if (mounted) {
+      if (configured.includes(name)) {
+        if (!args.includes('-a')) game.error(`ifup: interface ${name} already configured`, 0);
         continue;
       }
-      const e = monter(jeu, l, s);
-      if (e) jeu.erreur(`${e}\nifup: failed to bring up ${nom}`, 1);
-      else configurees.push(nom);
+      const e = mount(game, l, s);
+      if (e) game.error(`${e}\nifup: failed to bring up ${name}`, 1);
+      else configured.push(name);
     } else {
-      if (!configurees.includes(nom)) {
-        if (!args.includes('-a')) jeu.erreur(`ifdown: interface ${nom} not configured`, 0);
+      if (!configured.includes(name)) {
+        if (!args.includes('-a')) game.error(`ifdown: interface ${name} not configured`, 0);
         continue;
       }
-      demonter(l, s);
-      jeu.etat.ifstate = configurees.filter((n) => n !== nom);
+      unmount(l, s);
+      game.state.ifstate = configured.filter((n) => n !== name);
     }
   }
   return '';
 }
 
-export const LAN: Record<string, Commande> = {
+export const LAN: Record<string, Command> = {
   // dnsmasq --test : vérifier la configuration (le service, lui, se pilote avec systemctl).
   dnsmasq: {
     section: 8,
-    propresOptions: true,
-    lancer: ({ args, jeu }) => {
+    ownOptions: true,
+    launch: ({ args, game }) => {
       if (args.includes('--test')) {
-        const { erreurs } = lireDnsmasq(jeu);
-        return erreurs.length ? jeu.erreur(erreurs[0], 1) : 'dnsmasq: syntax check OK.';
+        const { errors } = readDnsmasq(game);
+        return errors.length ? game.error(errors[0], 1) : 'dnsmasq: syntax check OK.';
       }
-      return jeu.erreur(
-        `dnsmasq: failed to create listening socket for port 53: ${jeu.qui === 'root' ? 'Address already in use' : 'Permission denied'}`,
+      return game.error(
+        `dnsmasq: failed to create listening socket for port 53: ${game.who === 'root' ? 'Address already in use' : 'Permission denied'}`,
         2,
       );
     },
   },
-  ip: { section: 8, propresOptions: true, lancer: (c) => ipEnCouleur(c) },
-  ifup: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => ifupdown(jeu, args, true) },
-  ifdown: { section: 8, propresOptions: true, lancer: ({ args, jeu }) => ifupdown(jeu, args, false) },
+  ip: { section: 8, ownOptions: true, launch: (c) => ipInColour(c) },
+  ifup: { section: 8, ownOptions: true, launch: ({ args, game }) => ifupdown(game, args, true) },
+  ifdown: { section: 8, ownOptions: true, launch: ({ args, game }) => ifupdown(game, args, false) },
   // La page de manuel du fichier (man 5 interfaces).
-  interfaces: { section: 5, lancer: () => '' },
+  interfaces: { section: 5, launch: () => '' },
 };

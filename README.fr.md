@@ -81,8 +81,8 @@ ce projet indépendant.
 - **En anglais d'abord**, et en français (page `/fr/`, attribut
   `lang="fr"`) ; d'autres langues viendront (allemand, espagnol, mandarin,
   coréen…) : les textes sont séparés du code. Le projet est né en
-  français : une bonne part du code et de la documentation l'est encore, et
-  passe peu à peu à l'anglais.
+  français : le code est maintenant en anglais, sauf des identifiants de
+  données (histoires, chapitres, lieux) et des commentaires qui suivent.
 
 ## Licences
 

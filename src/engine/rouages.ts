@@ -8,7 +8,7 @@
 export const ROUAGES = 'https://rouages.net';
 
 /** Les pages de rouages.net, par identifiant. */
-export const PAGES_ROUAGES: Record<string, string> = {
+export const ROUAGES_PAGES: Record<string, string> = {
   'entree-nom': '/modules/entree-a-la-page/#nom',
   'entree-box': '/modules/entree-a-la-page/#box',
   'entree-liaison': '/modules/entree-a-la-page/#liaison',
@@ -32,7 +32,7 @@ export const PAGES_ROUAGES: Record<string, string> = {
 };
 
 /** Pour chaque chapitre, les pages qui expliquent son concept. */
-export const LIENS_ROUAGES: Record<string, string[]> = {
+export const ROUAGES_LINKS: Record<string, string[]> = {
   racine: ['ordinateur-binaire'],
   'premier-jour': ['glossaire-datacenter'],
   incendie: ['glossaire-datacenter'],
@@ -62,4 +62,4 @@ export const LIENS_ROUAGES: Record<string, string[]> = {
 };
 
 /** Les liens d'un chapitre : adresse complète et identifiant (pour son texte). */
-export const liensRouages = (chapitre: string) => (LIENS_ROUAGES[chapitre] ?? []).map((id) => ({ id, adresse: `${ROUAGES}${PAGES_ROUAGES[id]}` }));
+export const rouagesLinks = (chapter: string) => (ROUAGES_LINKS[chapter] ?? []).map((id) => ({ id, address: `${ROUAGES}${ROUAGES_PAGES[id]}` }));

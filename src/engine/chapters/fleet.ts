@@ -5,27 +5,27 @@
 // Sources : https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html,
 // https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html
 
-import { d, f, fichiersComptes, joueur, type Comptes, type Dossier, type HoteInterne, type Noeud } from '../world';
-import type { Jeu, Shell } from '../shell';
-import type { Traduire } from '../../texts';
-import { genererCle } from '../access';
-import { lireConfig } from '../sshd';
-import { nouveauSystemd, systemd } from '../systemd';
-import { historique } from '../commands/ansible';
-import { cleHote } from '../machines';
+import { d, f, accountsFiles, player, type Accounts, type Directory, type InternalHost, type Node } from '../world';
+import type { Game, Shell } from '../shell';
+import type { Translate } from '../../texts';
+import { generateKey } from '../access';
+import { readConfig } from '../sshd';
+import { newSystemd, systemd } from '../systemd';
+import { history } from '../commands/ansible';
+import { hostKey } from '../machines';
 
 export const M = '/home/vous';
-export const DOSSIER = `${M}/ansible`;
+export const DIRECTORY = `${M}/ansible`;
 export const CENTRES: Record<string, string> = { north: '10.30.0.11', south: '10.30.0.12', east: '10.30.0.13' };
-export const NOMS = Object.keys(CENTRES);
-const MAINTENANT = Date.UTC(2027, 8, 14, 9, 0, 0);
+export const NAMES = Object.keys(CENTRES);
+const NOW = Date.UTC(2027, 8, 14, 9, 0, 0);
 
 // La clé du compte vous sur pilote ; sa partie publique est dans ~deploy/.ssh/authorized_keys sur chaque centre.
-export const CLE = genererCle('pilote-ansible', 'vous@pilote');
+export const KEY = generateKey('pilote-ansible', 'vous@pilote');
 
 export const HOSTS = `127.0.0.1\tlocalhost
 192.0.2.25\tpilote.internal pilote
-${NOMS.map((n) => `${CENTRES[n]}\t${n}.centres.internal ${n}`).join('\n')}`;
+${NAMES.map((n) => `${CENTRES[n]}\t${n}.centres.internal ${n}`).join('\n')}`;
 
 export const MOTD_DEBIAN = `
 The programs included with the Debian GNU/Linux system are free software;
@@ -56,15 +56,15 @@ AcceptEnv LANG LC_*
 Subsystem\tsftp\t/usr/lib/openssh/sftp-server`;
 
 // Les paquets que le miroir Debian connaît (apt), et ceux déjà installés.
-const DEPOT: Record<string, string> = { htop: '3.4.1-4', tree: '2.2.1-1', vim: '2:9.1.1230-2', curl: '8.14.1-2', nginx: '1.26.3-3', fail2ban: '1.1.0-8', chrony: '4.6.1-3', ncdu: '1.21-2' };
-const INSTALLES: Record<string, string> = { curl: '8.14.1-2', 'openssh-server': '1:10.0p1-7', sudo: '1.9.16p2-3' };
+const REPO: Record<string, string> = { htop: '3.4.1-4', tree: '2.2.1-1', vim: '2:9.1.1230-2', curl: '8.14.1-2', nginx: '1.26.3-3', fail2ban: '1.1.0-8', chrony: '4.6.1-3', ncdu: '1.21-2' };
+const INSTALLED: Record<string, string> = { curl: '8.14.1-2', 'openssh-server': '1:10.0p1-7', sudo: '1.9.16p2-3' };
 
-const comptesCentre = (): Comptes => ({
-  utilisateurs: {
-    root: { uid: 0, groupe: 'root', maison: '/root' },
-    deploy: { uid: 1001, groupe: 'deploy', maison: '/home/deploy', shell: '/bin/bash' },
+const centreAccounts = (): Accounts => ({
+  users: {
+    root: { uid: 0, group: 'root', home: '/root' },
+    deploy: { uid: 1001, group: 'deploy', home: '/home/deploy', shell: '/bin/bash' },
   },
-  groupes: { root: { gid: 0, membres: [] }, sudo: { gid: 27, membres: ['deploy'] }, deploy: { gid: 1001, membres: [] } },
+  groups: { root: { gid: 0, members: [] }, sudo: { gid: 27, members: ['deploy'] }, deploy: { gid: 1001, members: [] } },
 });
 
 // Le service ssh d'un centre : sshd charge sa configuration au démarrage et au rechargement.
@@ -72,157 +72,157 @@ const serviceSsh = {
   description: 'OpenBSD Secure Shell server',
   active: true,
   executable: 'sshd',
-  processus: [{ pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
-  verifier: (j: Jeu) => {
-    const e = lireConfig(j).erreurs;
+  processus: [{ pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+  check: (j: Game) => {
+    const e = readConfig(j).errors;
     return e.length ? e : null;
   },
-  verifierAuRechargement: true,
-  charger: (j: Jeu) => {
-    j.etat.sshd = { ...(j.etat.sshd ?? {}), charge: lireConfig(j).valeurs };
+  checkToReload: true,
+  load: (j: Game) => {
+    j.state.sshd = { ...(j.state.sshd ?? {}), load: readConfig(j).values };
   },
 };
 
-export interface EtatCentre {
-  motd?: (t: Traduire) => string;
-  partage?: boolean;
-  paquets?: string[];
+export interface CentreState {
+  motd?: (t: Translate) => string;
+  share?: boolean;
+  packages?: string[];
   sshd?: string;
 }
 
 /** Un centre : son monde (comptes, sshd, la clé autorisée de deploy, motd), ses paquets et son ssh. */
-export function centre(nom: string, e: EtatCentre = {}): HoteInterne {
+export function centre(name: string, e: CentreState = {}): InternalHost {
   return {
-    adresse: CENTRES[nom],
-    domaine: `${nom}.centres.internal`,
-    comptes: comptesCentre,
-    commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'mkdir', 'echo', 'sudo', 'systemctl', 'journalctl', 'sshd', 'id', 'whoami', 'exit', 'logout'],
-    etat: () => ({
-      paquets: { ...INSTALLES, ...Object.fromEntries((e.paquets ?? []).map((p) => [p, DEPOT[p]])) },
-      depot: DEPOT,
-      sshd: { charge: {} },
-      systemd: nouveauSystemd(nom, MAINTENANT - 20 * 86_400_000, MAINTENANT, { ssh: serviceSsh }),
+    address: CENTRES[name],
+    domain: `${name}.centres.internal`,
+    accounts: centreAccounts,
+    commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'mkdir', 'echo', 'sudo', 'systemctl', 'journalctl', 'sshd', 'id', 'whoami', 'exit', 'logout'],
+    state: () => ({
+      paquets: { ...INSTALLED, ...Object.fromEntries((e.packages ?? []).map((p) => [p, REPO[p]])) },
+      depot: REPO,
+      sshd: { load: {} },
+      systemd: newSystemd(name, NOW - 20 * 86_400_000, NOW, { ssh: serviceSsh }),
     }),
-    initialiser: (j) => serviceSsh.charger(j),
-    creerMonde: (t) => {
-      const racine = { proprio: 'root' };
-      const fichier = (texte: string) => f(texte, { lignes: true, proprio: 'root' });
+    initialise: (j) => serviceSsh.load(j),
+    createWorld: (t) => {
+      const root = { owner: 'root' };
+      const file = (text: string) => f(text, { lines: true, owner: 'root' });
       return d(
         {
           etc: d(
             {
-              ...fichiersComptes(),
-              hostname: fichier(nom),
-              hosts: fichier(HOSTS),
-              motd: fichier(e.motd?.(t) ?? MOTD_DEBIAN),
-              ssh: d({ sshd_config: fichier(e.sshd ?? SSHD_CONFIG), 'sshd_config.d': d({}, undefined, racine) }, undefined, racine),
-              'sudoers.d': d({ deploy: f('deploy ALL=(ALL) NOPASSWD: ALL', { lignes: true, proprio: 'root', mode: 'r--r-----' }) }, undefined, racine),
+              ...accountsFiles(),
+              hostname: file(name),
+              hosts: file(HOSTS),
+              motd: file(e.motd?.(t) ?? MOTD_DEBIAN),
+              ssh: d({ sshd_config: file(e.sshd ?? SSHD_CONFIG), 'sshd_config.d': d({}, undefined, root) }, undefined, root),
+              'sudoers.d': d({ deploy: f('deploy ALL=(ALL) NOPASSWD: ALL', { lines: true, owner: 'root', mode: 'r--r-----' }) }, undefined, root),
             },
             undefined,
-            racine,
+            root,
           ),
           home: d(
             {
               deploy: d(
-                { '.ssh': d({ authorized_keys: f(CLE.publique, { lignes: true, proprio: 'deploy', mode: 'rw-------' }) }, undefined, { proprio: 'deploy', mode: 'rwx------' }) },
+                { '.ssh': d({ authorized_keys: f(KEY.isPublic, { lines: true, owner: 'deploy', mode: 'rw-------' }) }, undefined, { owner: 'deploy', mode: 'rwx------' }) },
                 undefined,
-                { proprio: 'deploy', mode: 'rwxr-xr-x' },
+                { owner: 'deploy', mode: 'rwxr-xr-x' },
               ),
             },
             undefined,
-            racine,
+            root,
           ),
-          srv: d(e.partage ? { shared: d({}, undefined, { proprio: 'root', mode: 'rwxr-xr-x' }) } : {}, undefined, racine),
+          srv: d(e.share ? { shared: d({}, undefined, { owner: 'root', mode: 'rwxr-xr-x' }) } : {}, undefined, root),
         },
         undefined,
-        racine,
+        root,
       );
     },
   };
 }
 
-export const comptesPilote = (): Comptes => ({
-  utilisateurs: { root: { uid: 0, groupe: 'root', maison: '/root' }, vous: { uid: 1000, groupe: 'vous' }, theo: { uid: 1001, groupe: 'theo' } },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    sudo: { gid: 27, membres: ['vous', 'theo'] },
-    vous: { gid: 1000, membres: [] },
-    theo: { gid: 1001, membres: [] },
+export const pilotAccounts = (): Accounts => ({
+  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' }, theo: { uid: 1001, group: 'theo' } },
+  groups: {
+    root: { gid: 0, members: [] },
+    sudo: { gid: 27, members: ['vous', 'theo'] },
+    vous: { gid: 1000, members: [] },
+    theo: { gid: 1001, members: [] },
   },
 });
 
-export const etatPilote = () => ({
-  systemd: nouveauSystemd('pilote', MAINTENANT - 30 * 86_400_000, MAINTENANT, {
+export const pilotState = () => ({
+  systemd: newSystemd('pilote', NOW - 30 * 86_400_000, NOW, {
     ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
   }),
 });
 
 /** Le monde de pilote : /etc/hosts, la clé ssh de vous (et son known_hosts), ~/ansible, et Ansible. */
-export function mondePilote(t: Parameters<typeof joueur>[0], o: { connus: string[]; ansible: Record<string, Noeud>; maison: Record<string, Noeud> }): Dossier {
-  const racine = { proprio: 'root' };
-  const binaire = (taille: number) => f('', { proprio: 'root', mode: 'rwxr-xr-x', taille });
-  const prive = { mode: 'rwx------' };
-  const connus = o.connus.map((n) => `${n} ${cleHoteDe(n)}`).join('\n');
+export function pilotWorld(t: Parameters<typeof player>[0], o: { known: string[]; ansible: Record<string, Node>; home: Record<string, Node> }): Directory {
+  const root = { owner: 'root' };
+  const binary = (size: number) => f('', { owner: 'root', mode: 'rwxr-xr-x', size });
+  const isPrivate = { mode: 'rwx------' };
+  const known = o.known.map((n) => `${n} ${hostKeyFor(n)}`).join('\n');
   return d(
     {
       etc: d(
         {
-          ...fichiersComptes(),
-          hostname: f('pilote', { lignes: true, proprio: 'root' }),
-          hosts: f(HOSTS, { lignes: true, proprio: 'root' }),
-          ansible: d({ 'ansible.cfg': f('# Since Ansible 2.12 (core):\n# To generate an example config file (a "disabled" one with all default settings, commented out):\n#               $ ansible-config init --disabled > ansible.cfg', { lignes: true, proprio: 'root' }) }, undefined, racine),
+          ...accountsFiles(),
+          hostname: f('pilote', { lines: true, owner: 'root' }),
+          hosts: f(HOSTS, { lines: true, owner: 'root' }),
+          ansible: d({ 'ansible.cfg': f('# Since Ansible 2.12 (core):\n# To generate an example config file (a "disabled" one with all default settings, commented out):\n#               $ ansible-config init --disabled > ansible.cfg', { lines: true, owner: 'root' }) }, undefined, root),
         },
         undefined,
-        racine,
+        root,
       ),
       home: d(
         {
           vous: d({
             '.ssh': d(
               {
-                id_ed25519: f(CLE.prive, { lignes: true, mode: 'rw-------' }),
-                'id_ed25519.pub': f(CLE.publique.replace('vous@', `${joueur(t)}@`), { lignes: true }),
-                ...(connus ? { known_hosts: f(connus, { lignes: true, mode: 'rw-------' }) } : {}),
+                id_ed25519: f(KEY.isPrivate, { lines: true, mode: 'rw-------' }),
+                'id_ed25519.pub': f(KEY.isPublic.replace('vous@', `${player(t)}@`), { lines: true }),
+                ...(known ? { known_hosts: f(known, { lines: true, mode: 'rw-------' }) } : {}),
               },
               undefined,
-              prive,
+              isPrivate,
             ),
             ansible: d(o.ansible),
-            ...o.maison,
+            ...o.home,
           }),
-          theo: d({}, undefined, { proprio: 'theo', mode: 'rwx------' }),
+          theo: d({}, undefined, { owner: 'theo', mode: 'rwx------' }),
         },
         undefined,
-        racine,
+        root,
       ),
       usr: d(
-        { bin: d({ ansible: binaire(5_412), 'ansible-playbook': binaire(5_412), 'ansible-inventory': binaire(5_412), 'ansible-doc': binaire(5_412), python3: binaire(6_830_640) }, undefined, racine) },
+        { bin: d({ ansible: binary(5_412), 'ansible-playbook': binary(5_412), 'ansible-inventory': binary(5_412), 'ansible-doc': binary(5_412), python3: binary(6_830_640) }, undefined, root) },
         undefined,
-        racine,
+        root,
       ),
     },
     undefined,
-    racine,
+    root,
   );
 }
 
 // La clé d'hôte d'un centre, telle que known_hosts la garde (celle que connecterSansQuestion attend).
-export const cleHoteDe = (nom: string) => cleHote({ nom, domaine: `${nom}.centres.internal`, adresse: CENTRES[nom] }, '');
+export const hostKeyFor = (name: string) => hostKey({ name, domain: `${name}.centres.internal`, address: CENTRES[name] }, '');
 
 // ——— Ce que les chapitres vérifient ———
 
 /** Une session sur un centre (créée à la première demande). */
-export const surCentre = (j: Jeu, nom: string) => (j as Shell).interne(nom)!;
+export const onCentre = (j: Game, name: string) => (j as Shell).internal(name)!;
 
 /** La dernière exécution complète (sans --check, sans --limit) d'un playbook. */
-export function derniereComplete(j: Jeu) {
-  return [...historique(j as Shell).executions].reverse().find((e) => !e.verifier && !e.limite && NOMS.every((n) => e.hotes[n]));
+export function lastComplete(j: Game) {
+  return [...history(j as Shell).executions].reverse().find((e) => !e.check && !e.limit && NAMES.every((n) => e.hosts[n]));
 }
 
 /** Idempotent : la dernière exécution complète n'a rien changé, rien raté, joint tout le monde. */
-export const idempotent = (j: Jeu) => {
-  const e = derniereComplete(j);
-  return !!e && NOMS.every((n) => e.hotes[n].changed === 0 && e.hotes[n].failed === 0 && e.hotes[n].unreachable === 0);
+export const idempotent = (j: Game) => {
+  const e = lastComplete(j);
+  return !!e && NAMES.every((n) => e.hosts[n].changed === 0 && e.hosts[n].failed === 0 && e.hosts[n].unreachable === 0);
 };
 
-export const sdDe = (j: Jeu) => systemd(j)!;
+export const sdFor = (j: Game) => systemd(j)!;

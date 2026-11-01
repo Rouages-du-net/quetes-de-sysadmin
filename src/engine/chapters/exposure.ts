@@ -20,19 +20,19 @@
 // https://redis.io/docs/latest/operate/oss_and_stack/management/security/,
 // https://www.postgresql.org/docs/current/runtime-config-connection.html
 
-import { d, f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { POSTE } from '../machines';
-import { nouveauPareFeu, type PareFeu } from '../firewall';
-import { etatPort } from '../ports';
-import { nouveauSystemd, systemd } from '../systemd';
-import type { Ecoute } from '../commands/ss';
-import { chargerSshd, comptesFournil, fichier, INTERNET, M, MAINTENANT, MOT_DE_PASSE, mondeFournil, serviceSsh } from './audit';
+import { d, f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { WORKSTATION } from '../machines';
+import { newFirewall, type Firewall } from '../firewall';
+import { portState } from '../ports';
+import { newSystemd, systemd } from '../systemd';
+import type { Listening } from '../commands/ss';
+import { loadSshd, bakeryAccounts, file, INTERNET, M, NOW, PASSWORD, bakeryWorld, serviceSsh } from './audit';
 
 const REDIS_CONF = '/etc/redis/redis.conf';
 
 // Le balayage de Salomé, comme nmap l'affiche.
-const BALAYAGE = `Starting Nmap 7.94 ( https://nmap.org ) at 2028-03-13 17:41 CET
+const SCAN = `Starting Nmap 7.94 ( https://nmap.org ) at 2028-03-13 17:41 CET
 Nmap scan report for bakery.example (192.0.2.22)
 Host is up (0.011s latency).
 Not shown: 994 closed tcp ports (reset)
@@ -55,54 +55,54 @@ daemonize no
 supervised systemd
 dir /var/lib/redis`;
 
-const ecoute = (): Ecoute[] => [
-  { proto: 'tcp', adresse: '0.0.0.0', port: 22, processus: 'sshd', pid: 612 },
-  { proto: 'tcp', adresse: '0.0.0.0', port: 80, processus: 'nginx', pid: 701 },
-  { proto: 'tcp', adresse: '0.0.0.0', port: 443, processus: 'nginx', pid: 701 },
-  { proto: 'tcp', adresse: '0.0.0.0', port: 5432, processus: 'postgres', pid: 744 },
-  { proto: 'tcp', adresse: '0.0.0.0', port: 6379, processus: 'redis-server', pid: 760 },
-  { proto: 'tcp', adresse: '127.0.0.1', port: 3000, processus: 'node', pid: 731 },
+const listening = (): Listening[] => [
+  { proto: 'tcp', address: '0.0.0.0', port: 22, process: 'sshd', pid: 612 },
+  { proto: 'tcp', address: '0.0.0.0', port: 80, process: 'nginx', pid: 701 },
+  { proto: 'tcp', address: '0.0.0.0', port: 443, process: 'nginx', pid: 701 },
+  { proto: 'tcp', address: '0.0.0.0', port: 5432, process: 'postgres', pid: 744 },
+  { proto: 'tcp', address: '0.0.0.0', port: 6379, process: 'redis-server', pid: 760 },
+  { proto: 'tcp', address: '127.0.0.1', port: 3000, process: 'node', pid: 731 },
 ];
 
 /** Redis écoute-t-il seulement sur la boucle locale d'après ce redis.conf ? (sans « bind » : partout) */
 export const redisLocal = (conf: string) => {
-  const mots = conf
+  const words = conf
     .split('\n')
     .map((l) => l.replace(/#.*/, '').trim())
     .filter((l) => /^bind\s/i.test(l))
     .flatMap((l) => l.split(/\s+/).slice(1))
     .map((a) => a.replace(/^-/, ''));
-  return mots.length > 0 && mots.every((a) => ['127.0.0.1', '::1', 'localhost'].includes(a));
+  return words.length > 0 && words.every((a) => ['127.0.0.1', '::1', 'localhost'].includes(a));
 };
 
-const pf = (j: Jeu) => j.etat.ufw as PareFeu;
-const ouvert = (j: Jeu, port: number, source = INTERNET) => etatPort(j, port, false, source) === 'ouvert';
-const sshOuvert = (j: Jeu) => ouvert(j, 22, POSTE.adresse);
-const siteOuvert = (j: Jeu) => ouvert(j, 80) && ouvert(j, 443);
-const baseOuverte = (j: Jeu) => ouvert(j, 5432) || ouvert(j, 6379);
-const filtre = (j: Jeu) => pf(j).actif && pf(j).entrant !== 'allow' && sshOuvert(j) && siteOuvert(j) && !baseOuverte(j);
+const pf = (j: Game) => j.state.ufw as Firewall;
+const open = (j: Game, port: number, source = INTERNET) => portState(j, port, false, source) === 'ouvert';
+const openSsh = (j: Game) => open(j, 22, WORKSTATION.address);
+const openSite = (j: Game) => open(j, 80) && open(j, 443);
+const openBase = (j: Game) => open(j, 5432) || open(j, 6379);
+const filter = (j: Game) => pf(j).enabled && pf(j).incoming !== 'allow' && openSsh(j) && openSite(j) && !openBase(j);
 
-const redis = (j: Jeu) => (j.etat.ecoute as Ecoute[]).find((e) => e.port === 6379);
-const redisActif = (j: Jeu) => systemd(j)!.services['redis-server'].etat === 'active';
-const redisEcouteLocale = (j: Jeu) => redisActif(j) && redis(j)?.adresse === '127.0.0.1';
-const confLocale = (j: Jeu) => redisLocal(j.lire(REDIS_CONF) ?? '');
+const redis = (j: Game) => (j.state.ecoute as Listening[]).find((e) => e.port === 6379);
+const activeRedis = (j: Game) => systemd(j)!.services['redis-server'].state === 'active';
+const localeListeningRedis = (j: Game) => activeRedis(j) && redis(j)?.address === '127.0.0.1';
+const confLocale = (j: Game) => redisLocal(j.read(REDIS_CONF) ?? '');
 
-export const exposition: Chapitre = {
+export const exposure: Chapter = {
   id: 'exposition',
-  numero: 3,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'ps', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'ss', 'ufw'],
-  maison: M,
-  accueil: 'courriel_salome.txt',
-  noms: true,
+  number: 3,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'ps', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'ss', 'ufw'],
+  home: M,
+  welcome: 'courriel_salome.txt',
+  names: true,
   final: 'fin',
-  etapes: ['ecoute', 'pare-feu', 'redis-local', 'fin'],
-  motDePasse: MOT_DE_PASSE,
-  comptes: () => comptesFournil(false),
-  etat: () => ({
-    sshd: { charge: {}, connexionsAuChargement: 1, recharges: 0 },
-    ufw: nouveauPareFeu(),
-    ecoute: ecoute(),
-    systemd: nouveauSystemd('fournil', MAINTENANT - 5 * 86_400_000, MAINTENANT, {
+  steps: ['ecoute', 'pare-feu', 'redis-local', 'fin'],
+  password: PASSWORD,
+  accounts: () => bakeryAccounts(false),
+  state: () => ({
+    sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
+    ufw: newFirewall(),
+    ecoute: listening(),
+    systemd: newSystemd('fournil', NOW - 5 * 86_400_000, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       postgresql: { description: 'PostgreSQL RDBMS', active: true, executable: 'postgres' },
@@ -110,44 +110,44 @@ export const exposition: Chapitre = {
         description: 'Advanced key-value store',
         active: true,
         executable: 'redis-server',
-        processus: [{ pid: 760, utilisateur: 'redis', cpu: 0.2, mem: 0.6, commande: '/usr/bin/redis-server *:6379' }],
+        process: [{ pid: 760, user: 'redis', cpu: 0.2, mem: 0.6, command: '/usr/bin/redis-server *:6379' }],
         // Redis lit redis.conf au démarrage : c'est là qu'il choisit où écouter.
-        charger: (j) => {
+        load: (j) => {
           const e = redis(j);
-          if (e) e.adresse = redisLocal(j.lire(REDIS_CONF) ?? '') ? '127.0.0.1' : '0.0.0.0';
+          if (e) e.address = redisLocal(j.read(REDIS_CONF) ?? '') ? '127.0.0.1' : '0.0.0.0';
         },
       },
       ufw: { description: 'Uncomplicated firewall', active: true, executable: 'ufw' },
     }),
   }),
-  initialiser: (j) => chargerSshd(j),
-  creerMonde: (t) =>
-    mondeFournil(t, {
-      sansLucas: true,
-      maison: { 'courriel_salome.txt': f(t('exposition-courriel-salome')), 'balayage-audit.txt': f(BALAYAGE, { lignes: true }) },
-      etc: { redis: d({ 'redis.conf': f(REDIS_CONFIG, { lignes: true, proprio: 'redis', groupe: 'redis', mode: 'rw-r-----' }) }, undefined, { proprio: 'root' }) },
-      ssh: { 'sshd_config.d': d({ '00-hardening.conf': fichier('PermitRootLogin no', 'root') }, undefined, { proprio: 'root' }) },
+  initialise: (j) => loadSshd(j),
+  createWorld: (t) =>
+    bakeryWorld(t, {
+      withoutLucas: true,
+      home: { 'courriel_salome.txt': f(t('exposition-courriel-salome')), 'balayage-audit.txt': f(SCAN, { lines: true }) },
+      etc: { redis: d({ 'redis.conf': f(REDIS_CONFIG, { lines: true, owner: 'redis', group: 'redis', mode: 'rw-r-----' }) }, undefined, { owner: 'root' }) },
+      ssh: { 'sshd_config.d': d({ '00-hardening.conf': file('PermitRootLogin no', 'root') }, undefined, { owner: 'root' }) },
     }),
-  evenements: [
+  events: [
     {
       id: 'ecoute',
-      condition: (j) => j.derniere.commandes.some((c) => c[0] === 'ss') && /:(6379|redis)\b/.test(j.derniere.sortie),
+      condition: (j) => j.last.commands.some((c) => c[0] === 'ss') && /:(6379|redis)\b/.test(j.last.output),
       message: (j) => j.t('exposition-evenement-ecoute'),
     },
-    { id: 'enferme', condition: (j) => pf(j).actif && !sshOuvert(j), message: (j) => j.t('exposition-evenement-enferme') },
-    { id: 'site-coupe', condition: (j) => pf(j).actif && !siteOuvert(j), message: (j) => j.t('exposition-evenement-site-coupe') },
-    { id: 'base-ouverte', condition: (j) => pf(j).actif && baseOuverte(j), message: (j) => j.t('exposition-evenement-base-ouverte') },
-    { id: 'redis-arrete', condition: (j) => !redisActif(j), message: (j) => j.t('exposition-evenement-redis-arrete') },
+    { id: 'enferme', condition: (j) => pf(j).enabled && !openSsh(j), message: (j) => j.t('exposition-evenement-enferme') },
+    { id: 'site-coupe', condition: (j) => pf(j).enabled && !openSite(j), message: (j) => j.t('exposition-evenement-site-coupe') },
+    { id: 'base-ouverte', condition: (j) => pf(j).enabled && openBase(j), message: (j) => j.t('exposition-evenement-base-ouverte') },
+    { id: 'redis-arrete', condition: (j) => !activeRedis(j), message: (j) => j.t('exposition-evenement-redis-arrete') },
     {
       id: 'sans-effet',
-      condition: (j) => redisActif(j) && confLocale(j) && !redisEcouteLocale(j),
+      condition: (j) => activeRedis(j) && confLocale(j) && !localeListeningRedis(j),
       message: (j) => j.t('exposition-evenement-sans-effet'),
     },
-    { id: 'pare-feu', condition: filtre, message: (j) => j.t('exposition-evenement-pare-feu') },
-    { id: 'redis-local', condition: redisEcouteLocale, message: (j) => j.t('exposition-evenement-redis-local') },
+    { id: 'pare-feu', condition: filter, message: (j) => j.t('exposition-evenement-pare-feu') },
+    { id: 'redis-local', condition: localeListeningRedis, message: (j) => j.t('exposition-evenement-redis-local') },
     {
       id: 'fin',
-      condition: (j) => filtre(j) && redisEcouteLocale(j) && (j.etat.connexions ?? 1) > (pf(j).connexionsALActivation ?? Infinity),
+      condition: (j) => filter(j) && localeListeningRedis(j) && (j.state.connexions ?? 1) > (pf(j).activationAlConnections ?? Infinity),
       message: (j) => j.t('exposition-evenement-fin'),
     },
   ],

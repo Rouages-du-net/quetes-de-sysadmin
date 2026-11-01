@@ -14,45 +14,45 @@
 // https://restic.readthedocs.io/en/stable/050_restore.html,
 // https://man7.org/linux/man-pages/man8/mount.8.html
 
-import { motDePasse, chemin, d, f, fichiersComptes, nom, type Chapitre, type Comptes, type Dossier, type Droits, type Noeud } from '../world';
-import { nomMachine } from '../machines';
-import type { Jeu, Shell } from '../shell';
-import { journaliser, nouveauSystemd, systemd } from '../systemd';
-import type { Processus } from '../commands/system';
-import { ajouterInstantane, ecrireDepot, hex, type Depot, type Version } from '../commands/restic';
-import type { Peripherique } from '../commands/disks';
+import { password, path, d, f, accountsFiles, name, type Chapter, type Accounts, type Directory, type Rights, type Node } from '../world';
+import { machineName } from '../machines';
+import type { Game, Shell } from '../shell';
+import { writeLog, newSystemd, systemd } from '../systemd';
+import type { Process } from '../commands/system';
+import { addSnapshot, writeRepo, hex, type Repo, type Version } from '../commands/restic';
+import type { Device } from '../commands/disks';
 
 const M = '/home/vous';
-const PARTAGE = '/srv/partage';
+const SHARE = '/srv/partage';
 const NAS = '/mnt/nas';
-const CLE = '/mnt/cle';
+const KEY = '/mnt/cle';
 // Le dépôt restic du disque USB.
-const DEPOT = `${CLE}/depot`;
+const REPO = `${KEY}/depot`;
 const USB = '/dev/sdb1';
-const CHIFFREUR = '/home/accueil/.cache/.maj/maj-systeme';
+const ENCRYPTOR = '/home/accueil/.cache/.maj/maj-systeme';
 const NOTE = 'LISEZ-MOI-POUR-RECUPERER.txt';
-const MOT_DE_PASSE = 'pion-cavalier-tour-27';
+const PASSWORD = 'pion-cavalier-tour-27';
 const Go = 1_000_000_000;
 
-const comptes = (): Comptes => ({
-  utilisateurs: {
-    root: { uid: 0, groupe: 'root', maison: '/root' },
-    vous: { uid: 1000, groupe: 'vous' },
-    accueil: { uid: 1001, groupe: 'accueil' },
-    berenice: { uid: 1002, groupe: 'berenice' },
+const accounts = (): Accounts => ({
+  users: {
+    root: { uid: 0, group: 'root', home: '/root' },
+    vous: { uid: 1000, group: 'vous' },
+    accueil: { uid: 1001, group: 'accueil' },
+    berenice: { uid: 1002, group: 'berenice' },
   },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    sudo: { gid: 27, membres: ['vous', 'berenice'] },
-    vous: { gid: 1000, membres: [] },
-    accueil: { gid: 1001, membres: [] },
-    berenice: { gid: 1002, membres: [] },
-    ludo: { gid: 1100, membres: ['vous', 'accueil', 'berenice'] },
+  groups: {
+    root: { gid: 0, members: [] },
+    sudo: { gid: 27, members: ['vous', 'berenice'] },
+    vous: { gid: 1000, members: [] },
+    accueil: { gid: 1001, members: [] },
+    berenice: { gid: 1002, members: [] },
+    ludo: { gid: 1100, members: ['vous', 'accueil', 'berenice'] },
   },
 });
 
 // Les fichiers du partage (chemin relatif → identifiant du texte).
-const FICHIERS: Record<string, string> = {
+const FILES: Record<string, string> = {
   'inventaire.csv': 'rancon-inventaire',
   'planning-benevoles.txt': 'rancon-planning',
   'affiche-fete-du-jeu.txt': 'rancon-affiche',
@@ -62,80 +62,80 @@ const FICHIERS: Record<string, string> = {
 };
 
 // Un fichier chiffré : un nom en .locked et des octets illisibles.
-const illisible = (graine: string) =>
-  hex(`chiffre-${graine}`, 160)
+const unreadable = (seed: string) =>
+  hex(`chiffre-${seed}`, 160)
     .replace(/(.{40})/g, '$1\n')
     .trim();
 
 // La sauvegarde du dimanche 13 juin, sur le disque USB.
-function depotUsb(t: Jeu['t']): Depot {
-  const depot: Depot = { id: hex('depot-ludotheque'), motDePasse: motDePasse(t, MOT_DE_PASSE), instantanes: [], packs: [], verifie: true, aElaguer: false };
-  const dimanches = [Date.UTC(2027, 4, 30, 18, 0, 0), Date.UTC(2027, 5, 6, 18, 0, 0), Date.UTC(2027, 5, 13, 18, 0, 0)];
-  dimanches.forEach((temps, i) => {
-    const fichiers: Record<string, Version> = {};
-    for (const [rel, id] of Object.entries(FICHIERS)) {
-      const texte = t(id);
-      fichiers[chemin(t, `${PARTAGE}/${rel}`)] = { contenu: texte, taille: new TextEncoder().encode(texte).length, modifie: temps - 86_400_000 };
+function usbRepo(t: Game['t']): Repo {
+  const repo: Repo = { id: hex('depot-ludotheque'), password: password(t, PASSWORD), snapshotList: [], packs: [], checked: true, pruneA: false };
+  const sundays = [Date.UTC(2027, 4, 30, 18, 0, 0), Date.UTC(2027, 5, 6, 18, 0, 0), Date.UTC(2027, 5, 13, 18, 0, 0)];
+  sundays.forEach((time, i) => {
+    const files: Record<string, Version> = {};
+    for (const [rel, id] of Object.entries(FILES)) {
+      const text = t(id);
+      files[path(t, `${SHARE}/${rel}`)] = { content: text, size: new TextEncoder().encode(text).length, modified: time - 86_400_000 };
     }
-    ajouterInstantane(depot, { id: hex(`instantane-ludo-${i}`), temps, hote: 'ludotheque', chemins: [chemin(t, PARTAGE)], fichiers });
+    addSnapshot(repo, { id: hex(`instantane-ludo-${i}`), time, host: 'ludotheque', paths: [path(t, SHARE)], files });
   });
-  depot.verifie = true;
-  return depot;
+  repo.checked = true;
+  return repo;
 }
 
 // Le contenu attendu de chaque fichier restauré.
-const attendus = (j: Jeu) => Object.fromEntries(Object.entries(FICHIERS).map(([rel, id]) => [chemin(j.t, `${PARTAGE}/${rel}`), j.t(id)]));
+const expected = (j: Game) => Object.fromEntries(Object.entries(FILES).map(([rel, id]) => [path(j.t, `${SHARE}/${rel}`), j.t(id)]));
 
-const sd = (j: Jeu) => systemd(j)!;
-const processus = (j: Jeu): Processus[] => j.etat.processus ?? [];
-const chiffreurActif = (j: Jeu) => processus(j).some((p) => p.commande.startsWith(chemin(j.t, CHIFFREUR)));
-const persistance = (j: Jeu) => (j.etat.crontabs?.accueil ?? '').includes(nom(j.t, 'maj-systeme'));
-const verrouille = (j: Jeu) => (j.etat.comptesVerrouilles ?? []).includes('accueil');
-const cleMontee = (j: Jeu) => (j.etat.montages ?? []).some((m: { nom: string }) => m.nom === USB);
+const sd = (j: Game) => systemd(j)!;
+const process = (j: Game): Process[] => j.state.processus ?? [];
+const activeEncryptor = (j: Game) => process(j).some((p) => p.command.startsWith(path(j.t, ENCRYPTOR)));
+const persistence = (j: Game) => (j.state.crontabs?.accueil ?? '').includes(name(j.t, 'maj-systeme'));
+const locked = (j: Game) => (j.state.comptesVerrouilles ?? []).includes('accueil');
+const mountedKey = (j: Game) => (j.state.montages ?? []).some((m: { name: string }) => m.name === USB);
 
 // Tous les fichiers sous un lieu (chemins absolus).
-function tous(j: Jeu, lieu: string): string[] {
-  const n = j.trouver(lieu);
+function all(j: Game, place: string): string[] {
+  const n = j.find(place);
   if (n?.type !== 'dossier') return [];
-  return Object.entries(n.enfants).flatMap(([nom, e]) => (e.type === 'dossier' ? tous(j, `${lieu}/${nom}`) : [`${lieu}/${nom}`]));
+  return Object.entries(n.children).flatMap(([name, e]) => (e.type === 'dossier' ? all(j, `${place}/${name}`) : [`${place}/${name}`]));
 }
-const restes = (j: Jeu) => tous(j, chemin(j.t, PARTAGE)).filter((c) => c.endsWith('.locked') || c.endsWith(`/${nom(j.t, NOTE)}`));
-const restaures = (j: Jeu) => Object.entries(attendus(j)).filter(([c, texte]) => j.lire(c) === texte).length;
-const toutRestaure = (j: Jeu) => restaures(j) === Object.keys(FICHIERS).length;
+const remains = (j: Game) => all(j, path(j.t, SHARE)).filter((c) => c.endsWith('.locked') || c.endsWith(`/${name(j.t, NOTE)}`));
+const restored = (j: Game) => Object.entries(expected(j)).filter(([c, text]) => j.read(c) === text).length;
+const allRestored = (j: Game) => restored(j) === Object.keys(FILES).length;
 
 /**
  * Le chiffreur au travail : chaque fichier en clair du partage que le compte
  * accueil peut modifier devient illisible, renommé en .locked, avec une
  * demande de rançon dans son dossier. Renvoie le nombre de fichiers touchés.
  */
-function chiffrer(j: Jeu, lieu: string): number {
-  const n = j.trouver(lieu);
-  if (n?.type !== 'dossier' || !j.peut(n, 'w', 'accueil')) return 0;
-  const note = nom(j.t, NOTE);
+function encrypt(j: Game, place: string): number {
+  const n = j.find(place);
+  if (n?.type !== 'dossier' || !j.can(n, 'w', 'accueil')) return 0;
+  const note = name(j.t, NOTE);
   let touches = 0;
-  for (const [nom, e] of Object.entries(n.enfants)) {
-    if (e.type === 'dossier') touches += chiffrer(j, `${lieu}/${nom}`);
-    else if (!nom.endsWith('.locked') && nom !== note && e.lien === undefined) {
-      delete n.enfants[nom];
-      n.enfants[`${nom}.locked`] = {
+  for (const [name, e] of Object.entries(n.children)) {
+    if (e.type === 'dossier') touches += encrypt(j, `${place}/${name}`);
+    else if (!name.endsWith('.locked') && name !== note && e.link === undefined) {
+      delete n.children[name];
+      n.children[`${name}.locked`] = {
         type: 'fichier',
-        contenu: illisible(`${lieu}/${nom}`),
-        lignes: true,
-        proprio: 'accueil',
-        groupe: 'ludo',
+        content: unreadable(`${place}/${name}`),
+        lines: true,
+        owner: 'accueil',
+        group: 'ludo',
         mode: 'rw-rw-r--',
       };
       touches++;
     }
   }
-  if (touches && !n.enfants[note]) n.enfants[note] = { type: 'fichier', contenu: j.t('rancon-note'), proprio: 'accueil', groupe: 'ludo' };
+  if (touches && !n.children[note]) n.children[note] = { type: 'fichier', content: j.t('rancon-note'), owner: 'accueil', group: 'ludo' };
   return touches;
 }
 
-export const rancon: Chapitre = {
+export const ransom: Chapter = {
   id: 'rancon',
-  numero: 1,
-  commandes: [
+  number: 1,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -169,167 +169,167 @@ export const rancon: Chapitre = {
     'sudo',
     'nano',
   ],
-  maison: M,
-  accueil: 'message_de_berenice.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_de_berenice.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'ludo-2027',
-  comptes,
-  etat: (t) => {
-    const arbre = d({ [nom(t, 'depot')]: d({}, undefined, { proprio: 'root' }) }, undefined, { proprio: 'root', mode: 'rwxr-xr-x' });
-    const usb: Peripherique = {
-      disque: '/dev/sdb',
+  password: 'ludo-2027',
+  accounts,
+  state: (t) => {
+    const tree = d({ [name(t, 'depot')]: d({}, undefined, { owner: 'root' }) }, undefined, { owner: 'root', mode: 'rwxr-xr-x' });
+    const usb: Device = {
+      disk: '/dev/sdb',
       majmin: [8, 17],
-      amovible: true,
-      taille: 32 * Go,
-      systeme: 'exfat',
-      etiquette: 'SAUVEGARDE',
+      removable: true,
+      size: 32 * Go,
+      system: 'exfat',
+      label: 'SAUVEGARDE',
       uuid: '6A1C-3F2E',
-      arbre,
+      tree,
     };
     return {
-      systemd: nouveauSystemd('ludotheque', Date.UTC(2027, 5, 1, 7, 0, 0), Date.UTC(2027, 5, 21, 8, 45, 0), {
+      systemd: newSystemd('ludotheque', Date.UTC(2027, 5, 1, 7, 0, 0), Date.UTC(2027, 5, 21, 8, 45, 0), {
         ssh: {
           description: 'OpenBSD Secure Shell server',
           active: true,
           executable: 'sshd',
-          processus: [{ pid: 611, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+          process: [{ pid: 611, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
         },
         cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },
       }),
       processus: [
-        { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
-        { pid: 611, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
-        { pid: 640, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' },
-        { pid: 3141, utilisateur: 'accueil', cpu: 97.3, mem: 1.4, commande: `${chemin(t, CHIFFREUR)} --silencieux` },
+        { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
+        { pid: 611, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
+        { pid: 640, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
+        { pid: 3141, user: 'accueil', cpu: 97.3, mem: 1.4, command: `${path(t, ENCRYPTOR)} --silencieux` },
       ],
       crontabs: {
-        root: `# ${t('rancon-crontab-root')}\n30 2 * * * rsync -a --delete ${chemin(t, PARTAGE)}/ ${chemin(t, `${NAS}/partage`)}/`,
-        accueil: `*/10 * * * * ${chemin(t, CHIFFREUR)} --silencieux\n@reboot ${chemin(t, CHIFFREUR)} --silencieux`,
+        root: `# ${t('rancon-crontab-root')}\n30 2 * * * rsync -a --delete ${path(t, SHARE)}/ ${path(t, `${NAS}/partage`)}/`,
+        accueil: `*/10 * * * * ${path(t, ENCRYPTOR)} --silencieux\n@reboot ${path(t, ENCRYPTOR)} --silencieux`,
       },
       montages: [
-        { chemin: '/', capacite: 40 * Go, nom: '/dev/vda1', systeme: 'ext4' },
+        { path: '/', capacity: 40 * Go, name: '/dev/vda1', system: 'ext4' },
         {
-          chemin: NAS,
-          capacite: 2000 * Go,
-          nom: `//nas.${nomMachine(t, 'ludotheque')}.internal${chemin(t, '/sauvegardes')}`,
-          systeme: 'cifs',
+          path: NAS,
+          capacity: 2000 * Go,
+          name: `//nas.${machineName(t, 'ludotheque')}.internal${path(t, '/sauvegardes')}`,
+          system: 'cifs',
           options: 'relatime,vers=3.1.1,uid=0,file_mode=0777,dir_mode=0777',
         },
       ],
       peripheriques: { [USB]: usb },
-      restic: { [chemin(t, DEPOT)]: depotUsb(t) },
+      restic: { [path(t, REPO)]: usbRepo(t) },
       resticHorloge: Date.UTC(2027, 5, 21, 9, 0, 0),
     };
   },
-  initialiser: (j) => {
-    const jeu = j as Shell;
+  initialise: (j) => {
+    const game = j as Shell;
     // Les fichiers du dépôt restic, sur le disque USB (monté le temps de les écrire).
-    const lieu = j.trouver(chemin(j.t, CLE)) as Dossier;
-    const arbre = (j.etat.peripheriques[USB] as Peripherique).arbre;
-    const cache = lieu.enfants;
-    lieu.enfants = arbre.enfants;
-    ecrireDepot(jeu, chemin(j.t, DEPOT), j.etat.restic[chemin(j.t, DEPOT)]);
-    lieu.enfants = cache;
+    const place = j.find(path(j.t, KEY)) as Directory;
+    const tree = (j.state.peripheriques[USB] as Device).tree;
+    const cache = place.children;
+    place.children = tree.children;
+    writeRepo(game, path(j.t, REPO), j.state.restic[path(j.t, REPO)]);
+    place.children = cache;
     // La nuit : connexion réussie sur accueil après des essais, puis le chiffrement.
     const s = sd(j);
-    const maintenant = s.horloge;
-    s.horloge = Date.UTC(2027, 5, 21, 3, 11, 0);
+    const now = s.clock;
+    s.clock = Date.UTC(2027, 5, 21, 3, 11, 0);
     for (const n of [1, 2, 3])
-      journaliser(s, 'ssh.service', 'sshd', 4100 + n, `Failed password for accueil from 203.0.113.66 port ${51200 + n * 7} ssh2`, 6);
-    journaliser(s, 'ssh.service', 'sshd', 4104, 'Accepted password for accueil from 203.0.113.66 port 51240 ssh2');
-    s.horloge = Date.UTC(2027, 5, 21, 3, 14, 0);
-    journaliser(s, 'cron.service', 'CRON', 3140, `(accueil) CMD (${chemin(j.t, CHIFFREUR)} --silencieux)`);
-    s.horloge = maintenant;
+      writeLog(s, 'ssh.service', 'sshd', 4100 + n, `Failed password for accueil from 203.0.113.66 port ${51200 + n * 7} ssh2`, 6);
+    writeLog(s, 'ssh.service', 'sshd', 4104, 'Accepted password for accueil from 203.0.113.66 port 51240 ssh2');
+    s.clock = Date.UTC(2027, 5, 21, 3, 14, 0);
+    writeLog(s, 'cron.service', 'CRON', 3140, `(accueil) CMD (${path(j.t, ENCRYPTOR)} --silencieux)`);
+    s.clock = now;
     // Ce que le chiffreur a déjà fait, et ce que rsync a recopié cette nuit sur le NAS.
-    chiffrer(j, chemin(j.t, PARTAGE));
-    const nas = j.trouver(chemin(j.t, `${NAS}/partage`));
-    const partage = j.trouver(chemin(j.t, PARTAGE));
-    if (nas?.type === 'dossier' && partage?.type === 'dossier') nas.enfants = structuredClone(partage.enfants);
+    encrypt(j, path(j.t, SHARE));
+    const nas = j.find(path(j.t, `${NAS}/partage`));
+    const share = j.find(path(j.t, SHARE));
+    if (nas?.type === 'dossier' && share?.type === 'dossier') nas.children = structuredClone(share.children);
   },
   // Tant qu'il tourne, le chiffreur repasse ; tant que sa crontab existe, il revient.
-  apresCommande: (j) => {
+  afterCommand: (j) => {
     const messages: string[] = [];
-    if (chiffreurActif(j)) {
-      const touches = chiffrer(j, chemin(j.t, PARTAGE));
-      if (touches) j.etat.rechiffres = (j.etat.rechiffres ?? 0) + touches;
-    } else if (persistance(j)) {
-      j.etat.attente = (j.etat.attente ?? 0) + 1;
-      if (j.etat.attente >= 4) {
-        j.etat.attente = 0;
-        const pid = 3141 + (j.etat.retours = (j.etat.retours ?? 0) + 1) * 7;
-        processus(j).push({ pid, utilisateur: 'accueil', cpu: 97.3, mem: 1.4, commande: `${chemin(j.t, CHIFFREUR)} --silencieux` });
-        journaliser(sd(j), 'cron.service', 'CRON', pid - 1, `(accueil) CMD (${chemin(j.t, CHIFFREUR)} --silencieux)`);
-        chiffrer(j, chemin(j.t, PARTAGE));
+    if (activeEncryptor(j)) {
+      const touches = encrypt(j, path(j.t, SHARE));
+      if (touches) j.state.rechiffres = (j.state.rechiffres ?? 0) + touches;
+    } else if (persistence(j)) {
+      j.state.attente = (j.state.attente ?? 0) + 1;
+      if (j.state.attente >= 4) {
+        j.state.attente = 0;
+        const pid = 3141 + (j.state.retours = (j.state.retours ?? 0) + 1) * 7;
+        process(j).push({ pid, user: 'accueil', cpu: 97.3, mem: 1.4, command: `${path(j.t, ENCRYPTOR)} --silencieux` });
+        writeLog(sd(j), 'cron.service', 'CRON', pid - 1, `(accueil) CMD (${path(j.t, ENCRYPTOR)} --silencieux)`);
+        encrypt(j, path(j.t, SHARE));
         messages.push(j.t('rancon-retour'));
       }
     }
     return messages.join('\n\n') || undefined;
   },
-  creerMonde: (t) => {
-    const racine: Droits = { proprio: 'root' };
-    const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
-    const fichier = (texte: string, droits: Droits = racine) => f(texte, { lignes: true, ...droits });
-    const ludo = (proprio: string): Droits => ({ proprio, groupe: 'ludo', mode: 'rw-rw-r--' });
-    const partage: Record<string, Noeud> = {};
-    for (const [rel, id] of Object.entries(FICHIERS)) {
-      const [dossier, nom] = rel.includes('/') ? rel.split('/') : ['', rel];
-      const cible = dossier
-        ? ((partage[dossier] ??= lieu({}, { proprio: 'berenice', groupe: 'ludo', mode: 'rwxrwxr-x' })) as Dossier).enfants
-        : partage;
-      cible[nom] = fichier(t(id), ludo(dossier ? 'berenice' : 'accueil'));
+  createWorld: (t) => {
+    const root: Rights = { owner: 'root' };
+    const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
+    const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
+    const ludo = (owner: string): Rights => ({ owner, group: 'ludo', mode: 'rw-rw-r--' });
+    const share: Record<string, Node> = {};
+    for (const [rel, id] of Object.entries(FILES)) {
+      const [directory, name] = rel.includes('/') ? rel.split('/') : ['', rel];
+      const target = directory
+        ? ((share[directory] ??= place({}, { owner: 'berenice', group: 'ludo', mode: 'rwxrwxr-x' })) as Directory).children
+        : share;
+      target[name] = file(t(id), ludo(directory ? 'berenice' : 'accueil'));
     }
-    return lieu({
-      etc: lieu({ ...fichiersComptes(), hostname: fichier('ludotheque') }),
-      home: lieu({
+    return place({
+      etc: place({ ...accountsFiles(), hostname: file('ludotheque') }),
+      home: place({
         vous: d({ 'message_de_berenice.txt': f(t('rancon-message-de-berenice')) }),
-        accueil: lieu(
+        accueil: place(
           {
-            '.cache': lieu(
+            '.cache': place(
               {
-                '.maj': lieu(
-                  { 'maj-systeme': f(illisible('binaire'), { proprio: 'accueil', mode: 'rwxr-xr-x', taille: 2_481_336 }) },
-                  { proprio: 'accueil' },
+                '.maj': place(
+                  { 'maj-systeme': f(unreadable('binaire'), { owner: 'accueil', mode: 'rwxr-xr-x', size: 2_481_336 }) },
+                  { owner: 'accueil' },
                 ),
               },
-              { proprio: 'accueil' },
+              { owner: 'accueil' },
             ),
           },
-          { proprio: 'accueil', mode: 'rwxr-x---' },
+          { owner: 'accueil', mode: 'rwxr-x---' },
         ),
-        berenice: lieu({}, { proprio: 'berenice', mode: 'rwx------' }),
+        berenice: place({}, { owner: 'berenice', mode: 'rwx------' }),
       }),
-      tmp: lieu({}, { proprio: 'root', mode: 'rwxrwxrwt' }),
-      srv: lieu({ partage: lieu(partage, { proprio: 'root', groupe: 'ludo', mode: 'rwxrwxr-x' }) }),
-      mnt: lieu({
+      tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
+      srv: place({ partage: place(share, { owner: 'root', group: 'ludo', mode: 'rwxrwxr-x' }) }),
+      mnt: place({
         // Le partage du NAS, monté en permanence : tout le monde peut y écrire.
-        nas: lieu({ partage: lieu({}, { proprio: 'root', mode: 'rwxrwxrwx' }) }, { proprio: 'root', mode: 'rwxrwxrwx' }),
-        cle: lieu({}),
+        nas: place({ partage: place({}, { owner: 'root', mode: 'rwxrwxrwx' }) }, { owner: 'root', mode: 'rwxrwxrwx' }),
+        cle: place({}),
       }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'etendue',
-      condition: (j) => /\.locked/.test(j.derniere.sortie) && !j.derniere.commandes.some((c) => c.includes(NAS) || c.some((a) => a.startsWith(NAS))),
+      condition: (j) => /\.locked/.test(j.last.output) && !j.last.commands.some((c) => c.includes(NAS) || c.some((a) => a.startsWith(NAS))),
       message: (j) => j.t('rancon-evenement-etendue'),
     },
     {
       id: 'chiffreur-vu',
-      condition: (j) => j.derniere.sortie.includes(nom(j.t, 'maj-systeme')) && j.derniere.commandes.some((c) => c[0] === 'ps') && chiffreurActif(j),
+      condition: (j) => j.last.output.includes(name(j.t, 'maj-systeme')) && j.last.commands.some((c) => c[0] === 'ps') && activeEncryptor(j),
       message: (j) => j.t('rancon-evenement-chiffreur-vu'),
     },
     {
       id: 'nas',
-      condition: (j) => j.derniere.commandes.some((c) => c.some((a) => a.startsWith(NAS))) && /\.locked/.test(j.derniere.sortie),
+      condition: (j) => j.last.commands.some((c) => c.some((a) => a.startsWith(NAS))) && /\.locked/.test(j.last.output),
       message: (j) => j.t('rancon-evenement-nas'),
     },
-    { id: 'rechiffre', condition: (j) => (j.etat.rechiffres ?? 0) > 0, message: (j) => j.t('rancon-evenement-rechiffre') },
-    { id: 'cle-trop-tot', condition: (j) => cleMontee(j) && chiffreurActif(j), message: (j) => j.t('rancon-evenement-cle-trop-tot') },
-    { id: 'restaure', condition: (j) => toutRestaure(j) && !chiffreurActif(j), message: (j) => j.t('rancon-evenement-restaure') },
+    { id: 'rechiffre', condition: (j) => (j.state.rechiffres ?? 0) > 0, message: (j) => j.t('rancon-evenement-rechiffre') },
+    { id: 'cle-trop-tot', condition: (j) => mountedKey(j) && activeEncryptor(j), message: (j) => j.t('rancon-evenement-cle-trop-tot') },
+    { id: 'restaure', condition: (j) => allRestored(j) && !activeEncryptor(j), message: (j) => j.t('rancon-evenement-restaure') },
     {
       id: 'fin',
-      condition: (j) => !chiffreurActif(j) && !persistance(j) && verrouille(j) && toutRestaure(j) && restes(j).length === 0 && !cleMontee(j),
+      condition: (j) => !activeEncryptor(j) && !persistence(j) && locked(j) && allRestored(j) && remains(j).length === 0 && !mountedKey(j),
       message: (j) => j.t('rancon-evenement-fin'),
     },
   ],

@@ -19,139 +19,139 @@
 // https://man7.org/linux/man-pages/man8/wg.8.html (PersistentKeepalive),
 // https://man7.org/linux/man-pages/man8/wg-quick.8.html (routes)
 
-import { f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
+import { f, type Chapter } from '../world';
+import type { Game } from '../shell';
 import type { Shell } from '../shell';
-import { adresseDe, lan } from '../lan';
-import { auDemarrage, nft } from '../nftables';
-import { sysctlAuDemarrage } from '../commands/nftables';
-import { publicDu, serviceWg } from '../commands/wireguard';
+import { addressFor, lan } from '../lan';
+import { toBoot, nft } from '../nftables';
+import { sysctlToBoot } from '../commands/nftables';
+import { publicFields, serviceWg } from '../commands/wireguard';
 import {
-  confDe,
-  etatTunnel,
-  etatVersDistant,
-  lireConfWg,
-  monterWg,
-  publique,
+  confFor,
+  tunnelState,
+  stateToRemote,
+  readConfWg,
+  mountWg,
+  isPublic,
   wg,
-  type Distant,
-  type EtatTunnel,
+  type Remote,
+  type TunnelState,
   type InterfaceWg,
 } from '../wireguard';
 import { systemd } from '../systemd';
-import { sshOuvert } from './zones';
+import { openSsh } from './zones';
 import { FLUX_DMZ } from './dmz';
-import { MALIK, PUBLIQUE_MALIK } from './remote-work';
+import { MALIK, MALIK_PUBLIC } from './remote-work';
 import {
-  comptesRuche,
+  hiveAccounts,
   DNSMASQ_VLAN,
-  initialiserPareFeu,
+  initialiseFirewall,
   INTERFACES_DMZ,
   M,
-  mondeRuche,
-  MOT_DE_PASSE,
+  hiveWorld,
+  PASSWORD,
   NFTABLES_DMZ,
-  lanAvecDmz,
-  SYSCTL_ROUTEUR,
-  systemdRuche,
-  planRuche,
+  lanWithDmz,
+  ROUTER_SYSCTL,
+  hiveSystemd,
+  hivePlan,
 } from './hive';
 
 // La clé privée du routeur de La Ruche (créée au chapitre « Le télétravail »), et celle du routeur de l'Annexe (elle ne quitte pas l'Annexe).
-const CLE_ROUTEUR = '2H8lWIAEPk9kEtfgQW8ZQVaCUVKhwmA1PDgxbjXZqXk=';
-const CLE_ANNEXE = 'cDqmuXhcmm7LqTLk8TNfgPuG1GqnfxHaU2D7OWNw11U=';
-export const PUBLIQUE_ROUTEUR = publique(CLE_ROUTEUR)!;
-export const PUBLIQUE_ANNEXE = publique(CLE_ANNEXE)!;
-const CONF_ANNEXE = `${M}/annex-wg0.conf`;
+const ROUTER_KEY = '2H8lWIAEPk9kEtfgQW8ZQVaCUVKhwmA1PDgxbjXZqXk=';
+const ANNEX_KEY = 'cDqmuXhcmm7LqTLk8TNfgPuG1GqnfxHaU2D7OWNw11U=';
+export const ROUTER_PUBLIC = isPublic(ROUTER_KEY)!;
+export const ANNEX_PUBLIC = isPublic(ANNEX_KEY)!;
+const ANNEX_CONF = `${M}/annex-wg0.conf`;
 
 // Le routeur de l'Annexe : un poste de là-bas (10.20.10.15) va au NAS.
-export const ANNEXE: Distant = {
-  nom: 'annexe',
-  adresse: '203.0.113.60',
-  cle: PUBLIQUE_ANNEXE,
-  conf: CONF_ANNEXE,
-  vers: '10.10.10.5',
+export const ANNEX: Remote = {
+  name: 'annexe',
+  address: '203.0.113.60',
+  key: ANNEX_PUBLIC,
+  conf: ANNEX_CONF,
+  to: '10.10.10.5',
   port: 445,
-  reseau: '10.20.10.0/24',
+  network: '10.20.10.0/24',
   source: '10.20.10.15',
-  derriereNat: true,
+  behindNat: true,
 };
-const IMPRIMANTE_ANNEXE = '10.20.10.20';
+const ANNEX_PRINTER = '10.20.10.20';
 
 export const WG0 = `[Interface]
 Address = 10.10.99.1/24
 ListenPort = 51820
-PrivateKey = ${CLE_ROUTEUR}
+PrivateKey = ${ROUTER_KEY}
 
 # Malik (laptop)
 [Peer]
-PublicKey = ${PUBLIQUE_MALIK}
+PublicKey = ${MALIK_PUBLIC}
 AllowedIPs = 10.10.99.2/32`;
 
-export const PORTABLE_MALIK = `[Interface]
+export const MALIK_LAPTOP = `[Interface]
 Address = 10.10.99.2/32
 
 [Peer]
-PublicKey = ${PUBLIQUE_ROUTEUR}
+PublicKey = ${ROUTER_PUBLIC}
 Endpoint = hive.example:51820
 AllowedIPs = 10.10.10.0/24`;
 
 /** wg0.conf à la fin de « L'Annexe » : Malik et le routeur de l'Annexe. */
-export const WG0_ANNEXE = `${WG0}
+export const ANNEX_WG0 = `${WG0}
 
 # Annexe
 [Peer]
-PublicKey = ${PUBLIQUE_ANNEXE}
+PublicKey = ${ANNEX_PUBLIC}
 AllowedIPs = 10.10.99.3/32, 10.20.10.0/24`;
 
-type O = { interfaces?: Record<string, InterfaceWg>; ruleset?: ReturnType<typeof nft>; transfert?: boolean };
-const publicDe = (j: Jeu) => publicDu(j as Shell);
+type O = { interfaces?: Record<string, InterfaceWg>; ruleset?: ReturnType<typeof nft>; transfer?: boolean };
+const publicOf = (j: Game) => publicFields(j as Shell);
 
 // L'adresse d'un poste des bureaux (son bail DHCP).
-const posteBureaux = (j: Jeu) => {
-  const a = lan(j)?.appareils.find((x) => x.nom === 'poste-malik');
-  return (a && adresseDe(a)) ?? '10.10.10.150';
+const officesWorkstation = (j: Game) => {
+  const a = lan(j)?.devices.find((x) => x.name === 'poste-malik');
+  return (a && addressFor(a)) ?? '10.10.10.150';
 };
 
-const versNas = (j: Jeu, o: O = {}) => etatTunnel(j, ANNEXE, { ...publicDe(j), ...o }).etat;
-const versImprimante = (j: Jeu, o: O = {}) => etatVersDistant(j, ANNEXE, posteBureaux(j), IMPRIMANTE_ANNEXE, 631, { ...publicDe(j), ...o }).etat;
-const versCamera = (j: Jeu, o: O = {}) => etatTunnel(j, { ...ANNEXE, vers: '10.10.30.11', port: 554 }, { ...publicDe(j), ...o }).etat;
-const malik = (j: Jeu, o: O = {}) => etatTunnel(j, MALIK, { ...publicDe(j), ...o }).etat;
+const toNas = (j: Game, o: O = {}) => tunnelState(j, ANNEX, { ...publicOf(j), ...o }).state;
+const toPrinter = (j: Game, o: O = {}) => stateToRemote(j, ANNEX, officesWorkstation(j), ANNEX_PRINTER, 631, { ...publicOf(j), ...o }).state;
+const toCamera = (j: Game, o: O = {}) => tunnelState(j, { ...ANNEX, to: '10.10.30.11', port: 554 }, { ...publicOf(j), ...o }).state;
+const malik = (j: Game, o: O = {}) => tunnelState(j, MALIK, { ...publicOf(j), ...o }).state;
 
-const conforme = (j: Jeu, o: O = {}) => versNas(j, o) === 'ok' && versImprimante(j, o) === 'ok' && versCamera(j, o) !== 'ok' && malik(j, o) === 'ok';
+const compliant = (j: Game, o: O = {}) => toNas(j, o) === 'ok' && toPrinter(j, o) === 'ok' && toCamera(j, o) !== 'ok' && malik(j, o) === 'ok';
 
 // Au prochain démarrage : les wg-quick@ activés (leurs fichiers), nftables, les fichiers sysctl.
-function auRedemarrage(j: Jeu): O {
+function toReboot(j: Game): O {
   const sd = systemd(j);
   const interfaces: Record<string, InterfaceWg> = {};
-  for (const [nom, s] of Object.entries(sd?.services ?? {})) {
-    const m = /^wg-quick@(.+)$/.exec(nom);
-    const texte = m && s.active ? j.lire(confDe(m[1])) : null;
-    if (!m || texte === null) continue;
-    const c = lireConfWg(texte);
-    if (!c.erreurs.length) interfaces[m[1]] = { conf: c, parService: true };
+  for (const [name, s] of Object.entries(sd?.services ?? {})) {
+    const m = /^wg-quick@(.+)$/.exec(name);
+    const text = m && s.active ? j.read(confFor(m[1])) : null;
+    if (!m || text === null) continue;
+    const c = readConfWg(text);
+    if (!c.errors.length) interfaces[m[1]] = { conf: c, byService: true };
   }
   return {
     interfaces,
-    ruleset: (sd?.services.nftables?.active && auDemarrage(j)) || { tables: [] },
-    transfert: sysctlAuDemarrage(j, 'net.ipv4.ip_forward', '0') === '1',
+    ruleset: (sd?.services.nftables?.active && toBoot(j)) || { tables: [] },
+    transfer: sysctlToBoot(j, 'net.ipv4.ip_forward', '0') === '1',
   };
 }
 
 // Le fichier a un pair pour l'Annexe, mais wg0 tourne encore avec l'ancien.
-const pasRelu = (j: Jeu) => {
-  const fichier = lireConfWg(j.lire(confDe('wg0')) ?? '');
-  const enMarche = wg(j).wg0?.conf;
-  return fichier.pairs.some((p) => p.cle === PUBLIQUE_ANNEXE) && !enMarche?.pairs.some((p) => p.cle === PUBLIQUE_ANNEXE);
+const notReread = (j: Game) => {
+  const file = readConfWg(j.read(confFor('wg0')) ?? '');
+  const inWorks = wg(j).wg0?.conf;
+  return file.peers.some((p) => p.key === ANNEX_PUBLIC) && !inWorks?.peers.some((p) => p.key === ANNEX_PUBLIC);
 };
 
-const poigneeRatee = (e: EtatTunnel) => ['conf', 'adresse', 'filtre', 'cle-routeur', 'inconnu'].includes(e);
+const failedHandshake = (e: TunnelState) => ['conf', 'adresse', 'filtre', 'cle-routeur', 'inconnu'].includes(e);
 
-export const annexe: Chapitre = {
+export const annex: Chapter = {
   id: 'annexe',
-  numero: 6,
-  plan: planRuche({ teletravail: true, dmz: true, annexe: true }),
-  commandes: [
+  number: 6,
+  plan: hivePlan({ remoteWork: true, dmz: true, annex: true }),
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -176,56 +176,56 @@ export const annexe: Chapitre = {
     'wg',
     'wg-quick',
   ],
-  maison: M,
-  accueil: 'courriel_sami.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_sami.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: comptesRuche,
-  etat: () => {
-    const sd = systemdRuche({ 'wg-quick@wg0': serviceWg('wg0') });
-    for (const nom of ['nftables', 'wg-quick@wg0']) Object.assign(sd.services[nom], { active: true, etat: 'active' });
-    const l = lanAvecDmz();
-    return { lan: { ...l, flux: FLUX_DMZ.map(({ permis: _, ...x }) => x), distants: [MALIK, ANNEXE] }, systemd: sd, nft: { tables: [] }, wg: {} };
+  password: PASSWORD,
+  accounts: hiveAccounts,
+  state: () => {
+    const sd = hiveSystemd({ 'wg-quick@wg0': serviceWg('wg0') });
+    for (const name of ['nftables', 'wg-quick@wg0']) Object.assign(sd.services[name], { active: true, state: 'active' });
+    const l = lanWithDmz();
+    return { lan: { ...l, flux: FLUX_DMZ.map(({ permitted: _, ...x }) => x), remotes: [MALIK, ANNEX] }, systemd: sd, nft: { tables: [] }, wg: {} };
   },
-  initialiser: (j) => {
-    initialiserPareFeu(j);
-    monterWg(j, 'wg0', true);
+  initialise: (j) => {
+    initialiseFirewall(j);
+    mountWg(j, 'wg0', true);
   },
-  creerMonde: (t) =>
-    mondeRuche({
+  createWorld: (t) =>
+    hiveWorld({
       interfaces: INTERFACES_DMZ,
       dnsmasq: DNSMASQ_VLAN,
       nftables: NFTABLES_DMZ,
-      sysctl: SYSCTL_ROUTEUR,
+      sysctl: ROUTER_SYSCTL,
       etc: {
         wireguard: {
           type: 'dossier',
-          enfants: { 'wg0.conf': f(WG0, { lignes: true, proprio: 'root', mode: 'rw-------' }) },
-          proprio: 'root',
+          children: { 'wg0.conf': f(WG0, { lines: true, owner: 'root', mode: 'rw-------' }) },
+          owner: 'root',
           mode: 'rwx------',
         },
       },
-      maison: {
-        'courriel_sami.txt': f(t('annexe-courriel-sami', { cle: PUBLIQUE_ANNEXE })),
-        'annex-wg0.conf': f(t('annexe-conf'), { lignes: true }),
-        'malik-laptop.conf': f(PORTABLE_MALIK, { lignes: true }),
+      home: {
+        'courriel_sami.txt': f(t('annexe-courriel-sami', { cle: ANNEX_PUBLIC })),
+        'annex-wg0.conf': f(t('annexe-conf'), { lines: true }),
+        'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },
     }),
-  evenements: [
-    { id: 'pas-relu', condition: pasRelu, message: (j) => j.t('annexe-evenement-pas-relu') },
+  events: [
+    { id: 'pas-relu', condition: notReread, message: (j) => j.t('annexe-evenement-pas-relu') },
     {
       id: 'poignee',
-      condition: (j) => !pasRelu(j) && !!wg(j).wg0?.conf.pairs.some((p) => p.cle === PUBLIQUE_ANNEXE) && poigneeRatee(versNas(j)),
+      condition: (j) => !notReread(j) && !!wg(j).wg0?.conf.peers.some((p) => p.key === ANNEX_PUBLIC) && failedHandshake(toNas(j)),
       message: (j) => j.t('annexe-evenement-poignee'),
     },
-    { id: 'autorisees', condition: (j) => versNas(j) === 'autorisees', message: (j) => j.t('annexe-evenement-autorisees') },
-    { id: 'route', condition: (j) => versNas(j) === 'route', message: (j) => j.t('annexe-evenement-route') },
-    { id: 'endormi', condition: (j) => versNas(j) === 'ok' && versImprimante(j) === 'endormi', message: (j) => j.t('annexe-evenement-endormi') },
-    { id: 'cameras', condition: (j) => versCamera(j) === 'ok', message: (j) => j.t('annexe-evenement-cameras') },
+    { id: 'autorisees', condition: (j) => toNas(j) === 'autorisees', message: (j) => j.t('annexe-evenement-autorisees') },
+    { id: 'route', condition: (j) => toNas(j) === 'route', message: (j) => j.t('annexe-evenement-route') },
+    { id: 'endormi', condition: (j) => toNas(j) === 'ok' && toPrinter(j) === 'endormi', message: (j) => j.t('annexe-evenement-endormi') },
+    { id: 'cameras', condition: (j) => toCamera(j) === 'ok', message: (j) => j.t('annexe-evenement-cameras') },
     { id: 'malik', condition: (j) => !!wg(j).wg0 && malik(j) !== 'ok', message: (j) => j.t('annexe-evenement-malik') },
-    { id: 'ssh', condition: (j) => !sshOuvert(nft(j)), message: (j) => j.t('zones-evenement-ssh') },
-    { id: 'en-place', condition: (j) => conforme(j) && !conforme(j, auRedemarrage(j)), message: (j) => j.t('annexe-evenement-en-place') },
-    { id: 'fin', condition: (j) => conforme(j) && sshOuvert(nft(j)) && conforme(j, auRedemarrage(j)), message: (j) => j.t('annexe-evenement-fin') },
+    { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-evenement-ssh') },
+    { id: 'en-place', condition: (j) => compliant(j) && !compliant(j, toReboot(j)), message: (j) => j.t('annexe-evenement-en-place') },
+    { id: 'fin', condition: (j) => compliant(j) && openSsh(nft(j)) && compliant(j, toReboot(j)), message: (j) => j.t('annexe-evenement-fin') },
   ],
 };

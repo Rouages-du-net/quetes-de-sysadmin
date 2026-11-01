@@ -5,67 +5,67 @@
 // succes-<id>.description. Un succès « caché » ne montre son nom qu'une
 // fois obtenu (les clins d'œil).
 
-import { HISTOIRES } from './chapters';
+import { STORIES } from './chapters';
 import type { Shell } from './shell';
-import type { Carnet } from './notebook';
+import type { Notebook } from './notebook';
 
-export interface Contexte {
+export interface Context {
   // La session où la ligne a été tapée (null : vérification hors d'une ligne).
   sh: Shell | null;
-  termines: string[];
-  carnet: Carnet;
+  finished: string[];
+  notebook: Notebook;
   // Meilleurs temps en mode examen, par chapitre (ms).
   records: Record<string, number>;
 }
 
-export interface Succes {
+export interface Achievements {
   id: string;
   cache?: boolean;
-  obtenu: (c: Contexte) => boolean;
+  obtained: (c: Context) => boolean;
 }
 
-const histoiresFinies = (termines: string[]) => HISTOIRES.filter((h) => h.chapitres.every((c) => termines.includes(c.id)));
-const commandes = (c: Contexte) => c.sh?.derniere.commandes ?? [];
+const finishedStories = (finished: string[]) => STORIES.filter((h) => h.chapters.every((c) => finished.includes(c.id)));
+const commands = (c: Context) => c.sh?.last.commands ?? [];
 
-export const SUCCES: Succes[] = [
-  { id: 'premiere-commande', obtenu: (c) => Object.keys(c.carnet).length > 0 },
-  { id: 'manuel', obtenu: (c) => 'man' in c.carnet || 'apropos' in c.carnet },
-  { id: 'cache-ls', obtenu: (c) => commandes(c).some((a) => a[0] === 'ls' && a.slice(1).some((o) => /^-[a-zA-Z]*a/.test(o) || o === '--all')) },
-  { id: 'tube', obtenu: (c) => commandes(c).length >= 2 },
-  { id: 'redirection', obtenu: (c) => !!c.sh?.derniere.redirection },
-  { id: 'premier-chapitre', obtenu: (c) => c.termines.length >= 1 },
-  { id: 'effaceur', obtenu: (c) => histoiresFinies(c.termines).some((h) => h.id === 'effaceur') },
-  { id: 'restauration', obtenu: (c) => ['sauvegarde', 'versions', 'instantanes', 'base'].some((id) => c.termines.includes(id)) },
-  { id: 'reseau', obtenu: (c) => histoiresFinies(c.termines).some((h) => h.id === 'ruche') },
-  { id: 'trois-histoires', obtenu: (c) => histoiresFinies(c.termines).length >= 3 },
-  { id: 'toutes-histoires', obtenu: (c) => histoiresFinies(c.termines).length === HISTOIRES.length },
-  { id: 'cinquante-commandes', obtenu: (c) => Object.keys(c.carnet).length >= 50 },
-  { id: 'sans-indice', obtenu: (c) => !!c.sh?.termine && c.sh.chapitre.id !== 'poste' && c.sh.indicesDemandes.size === 0 },
-  { id: 'examen', obtenu: (c) => Object.keys(c.records).length > 0 },
-  { id: 'examen-eclair', obtenu: (c) => Object.values(c.records).some((ms) => ms < 5 * 60_000) },
+export const ACHIEVEMENTS: Achievements[] = [
+  { id: 'premiere-commande', obtained: (c) => Object.keys(c.notebook).length > 0 },
+  { id: 'manuel', obtained: (c) => 'man' in c.notebook || 'apropos' in c.notebook },
+  { id: 'cache-ls', obtained: (c) => commands(c).some((a) => a[0] === 'ls' && a.slice(1).some((o) => /^-[a-zA-Z]*a/.test(o) || o === '--all')) },
+  { id: 'tube', obtained: (c) => commands(c).length >= 2 },
+  { id: 'redirection', obtained: (c) => !!c.sh?.last.redirection },
+  { id: 'premier-chapitre', obtained: (c) => c.finished.length >= 1 },
+  { id: 'effaceur', obtained: (c) => finishedStories(c.finished).some((h) => h.id === 'effaceur') },
+  { id: 'restauration', obtained: (c) => ['sauvegarde', 'versions', 'instantanes', 'base'].some((id) => c.finished.includes(id)) },
+  { id: 'reseau', obtained: (c) => finishedStories(c.finished).some((h) => h.id === 'ruche') },
+  { id: 'trois-histoires', obtained: (c) => finishedStories(c.finished).length >= 3 },
+  { id: 'toutes-histoires', obtained: (c) => finishedStories(c.finished).length === STORIES.length },
+  { id: 'cinquante-commandes', obtained: (c) => Object.keys(c.notebook).length >= 50 },
+  { id: 'sans-indice', obtained: (c) => !!c.sh?.finished && c.sh.chapter.id !== 'poste' && c.sh.requestsHints.size === 0 },
+  { id: 'examen', obtained: (c) => Object.keys(c.records).length > 0 },
+  { id: 'examen-eclair', obtained: (c) => Object.values(c.records).some((ms) => ms < 5 * 60_000) },
   // Les clins d'œil : une ligne bien précise (voir OEUFS dans shell.ts).
-  { id: 'xyzzy', cache: true, obtenu: (c) => !!c.sh?.oeufs.has('xyzzy') },
-  { id: 'sandwich', cache: true, obtenu: (c) => !!c.sh?.oeufs.has('sandwich') },
-  { id: 'sl', cache: true, obtenu: (c) => !!c.sh?.oeufs.has('sl') },
+  { id: 'xyzzy', cache: true, obtained: (c) => !!c.sh?.eggs.has('xyzzy') },
+  { id: 'sandwich', cache: true, obtained: (c) => !!c.sh?.eggs.has('sandwich') },
+  { id: 'sl', cache: true, obtained: (c) => !!c.sh?.eggs.has('sl') },
 ];
 
 /** Les succès obtenus maintenant et pas encore notés (dans l'ordre de la liste). */
-export const nouveauxSucces = (c: Contexte, deja: Record<string, string>) => SUCCES.filter((s) => !deja[s.id] && s.obtenu(c)).map((s) => s.id);
+export const newAchievements = (c: Context, already: Record<string, string>) => ACHIEVEMENTS.filter((s) => !already[s.id] && s.obtained(c)).map((s) => s.id);
 
 // Les grades, du premier au dernier : le nombre de chapitres terminés pour l'atteindre.
-export const GRADES: { id: string; chapitres: number }[] = [
-  { id: 'stagiaire', chapitres: 0 },
-  { id: 'apprenti', chapitres: 1 },
-  { id: 'junior', chapitres: 4 },
-  { id: 'admin', chapitres: 15 },
-  { id: 'confirme', chapitres: 30 },
-  { id: 'senior', chapitres: 45 },
+export const GRADES: { id: string; chapters: number }[] = [
+  { id: 'stagiaire', chapters: 0 },
+  { id: 'apprenti', chapters: 1 },
+  { id: 'junior', chapters: 4 },
+  { id: 'admin', chapters: 15 },
+  { id: 'confirme', chapters: 30 },
+  { id: 'senior', chapters: 45 },
 ];
-const TOUS = () => HISTOIRES.reduce((n, h) => n + h.chapitres.length, 0);
+const ALL = () => STORIES.reduce((n, h) => n + h.chapters.length, 0);
 
 /** Le grade d'après les chapitres terminés : « SRE » pour tout le jeu. */
-export function grade(termines: string[]): string {
-  const n = termines.length;
-  if (n >= TOUS()) return 'sre';
-  return GRADES.filter((g) => n >= g.chapitres).at(-1)!.id;
+export function grade(finished: string[]): string {
+  const n = finished.length;
+  if (n >= ALL()) return 'sre';
+  return GRADES.filter((g) => n >= g.chapters).at(-1)!.id;
 }

@@ -84,7 +84,7 @@ several.
 - [x] **One world**: each story becomes a machine of the same simulated
       network, and you go from one to another with `ssh`
       (`ssh fourmiliere`). Finishing the Eraser gives the keys to the first
-      machines; the others open in waves (`apres`, `unlocking.ts`).
+      machines; the others open in waves (`after`, `unlocking.ts`).
       The story menu stays available (accessibility, teachers, embedding
       with the `story` attribute); a single progress.
 - [x] **Several hosts**: each with its file system and name, prompt
@@ -317,7 +317,7 @@ which works on machines rather than switches).
 
 ## Phase 12 — Hardware, and the following stories
 
-- [x] Gradual unlocking of the stories (`unlocking.ts`, `apres`)
+- [x] Gradual unlocking of the stories (`unlocking.ts`, `after`)
 - [x] **Le Labo** (story 15, machine `labo`): "Le disque qui fatigue"
       (smartd, `smartctl`, `/proc/mdstat`, `mdadm --fail/--remove`, the
       serial number) and "Le disque neuf" (`sfdisk -d | sfdisk`,
@@ -360,7 +360,7 @@ The architecture has prepared for it since phase 0 (see "Translations" in
 - [x] Translated, easy-to-type names of places and objects (`noms.ftl`, the
       Eraser and the workstation); completion tested in each language
 - [x] Names of the other stories' documents (emails, messages, help notes,
-      `LISEZMOI.txt`…: `noms: true` everywhere)
+      `LISEZMOI.txt`…: `names: true` everywhere)
 - [x] Names of the servers' data, right down to what keeps them (restic and
       rsnapshot snapshots, rsync copies, files tracked by git, scripts,
       crontabs, logs): the Archives' collection and the town hall's disk,
@@ -403,7 +403,7 @@ The architecture has prepared for it since phase 0 (see "Translations" in
   commands typed (and failed), hints; the detail compares, step by step,
   the command that passed it with the reference solution (the hints'), and
   reminds that another way is just as right.
-- [x] **Rescue snapshot** (Mission panel, `Console.restaurer`): take a
+- [x] **Rescue snapshot** (Mission panel, `Console.restore`): take a
   snapshot, go back to it, undo the last input. The engine is
   deterministic: reopening the chapter and replaying the inputs (commands,
   answers, nano saves) gives back the machine as it was. No snapshot in exam

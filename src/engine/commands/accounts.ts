@@ -8,53 +8,53 @@
 // fichier peut en changer le groupe pour un groupe dont il est membre ;
 // usermod -G remplace les groupes secondaires, usermod -aG en ajoute.
 
-import type { Noeud } from '../world';
+import type { Node } from '../world';
 import type { Shell } from '../shell';
 import { options } from '../tools';
-import type { Commande } from './index';
+import type { Command } from './index';
 
 // « 1000(vous) »
-const avecNumero = (nom: string, numero: number | undefined) => `${numero ?? '?'}(${nom})`;
+const withNumber = (name: string, number: number | undefined) => `${number ?? '?'}(${name})`;
 
 // Applique une modification à une cible, et à tout son contenu avec -R.
-function pourChaque(n: Noeud, recursif: boolean, faire: (n: Noeud) => void) {
-  faire(n);
-  if (recursif && n.type === 'dossier') for (const e of Object.values(n.enfants)) pourChaque(e, true, faire);
+function forEach(n: Node, recursive: boolean, run: (n: Node) => void) {
+  run(n);
+  if (recursive && n.type === 'dossier') for (const e of Object.values(n.children)) forEach(e, true, run);
 }
 
 // Les cibles de chown et chgrp : vérifie l'accès, puis applique `faire`.
-function changer(jeu: Shell, commande: string, cibles: string[], recursif: boolean, autorise: (n: Noeud) => boolean, faire: (n: Noeud) => void) {
-  for (const cible of cibles) {
-    const n = jeu.trouver(cible);
-    if (!n) jeu.erreur(jeu.t('erreur-acces-introuvable', { commande, cible }));
-    else if (!jeu.traverse(cible)) jeu.erreur(jeu.t('erreur-acces-permission', { commande, cible }));
-    else if (!autorise(n)) jeu.erreur(jeu.t(`${commande}-non-permise`, { cible }));
-    else pourChaque(n, recursif, faire);
+function change(game: Shell, command: string, targets: string[], recursive: boolean, allowed: (n: Node) => boolean, run: (n: Node) => void) {
+  for (const target of targets) {
+    const n = game.find(target);
+    if (!n) game.error(game.t('erreur-acces-introuvable', { commande: command, cible: target }));
+    else if (!game.traverses(target)) game.error(game.t('erreur-acces-permission', { commande: command, cible: target }));
+    else if (!allowed(n)) game.error(game.t(`${command}-non-permise`, { cible: target }));
+    else forEach(n, recursive, run);
   }
   return '';
 }
 
-export const COMPTES: Record<string, Commande> = {
+export const ACCOUNTS: Record<string, Command> = {
   id: {
-    lancer: ({ args, jeu }) => {
-      const nom = args[0] ?? jeu.qui;
-      const u = jeu.comptes.utilisateurs[nom];
-      if (!u) return jeu.erreur(jeu.t('id-inexistant', { utilisateur: nom }));
-      const gid = (g: string) => jeu.comptes.groupes[g]?.gid;
-      return jeu.t('id-ligne', {
-        uid: avecNumero(nom, u.uid),
-        gid: avecNumero(u.groupe, gid(u.groupe)),
-        groupes: jeu.groupesDe(nom).map((g) => avecNumero(g, gid(g))).join(','),
+    launch: ({ args, game }) => {
+      const name = args[0] ?? game.who;
+      const u = game.accounts.users[name];
+      if (!u) return game.error(game.t('id-inexistant', { utilisateur: name }));
+      const gid = (g: string) => game.accounts.groups[g]?.gid;
+      return game.t('id-ligne', {
+        uid: withNumber(name, u.uid),
+        gid: withNumber(u.group, gid(u.group)),
+        groupes: game.groupsFor(name).map((g) => withNumber(g, gid(g))).join(','),
       });
     },
   },
 
   groups: {
-    lancer: ({ args, jeu }) => {
-      if (!args.length) return jeu.groupesDe(jeu.qui).join(' ');
+    launch: ({ args, game }) => {
+      if (!args.length) return game.groupsFor(game.who).join(' ');
       return args
-        .map((nom) =>
-          jeu.comptes.utilisateurs[nom] ? `${nom} : ${jeu.groupesDe(nom).join(' ')}` : jeu.erreur(jeu.t('groups-inexistant', { utilisateur: nom })),
+        .map((name) =>
+          game.accounts.users[name] ? `${name} : ${game.groupsFor(name).join(' ')}` : game.error(game.t('groups-inexistant', { utilisateur: name })),
         )
         .filter(Boolean)
         .join('\n');
@@ -62,86 +62,86 @@ export const COMPTES: Record<string, Commande> = {
   },
 
   chgrp: {
-    lancer: ({ args, jeu }) => {
-      const { lettres, reste } = options(args);
-      const [groupe, ...cibles] = reste;
-      if (!groupe || !cibles.length) return jeu.erreur(jeu.t('chgrp-usage'));
-      if (!jeu.comptes.groupes[groupe]) return jeu.erreur(jeu.t('chgrp-groupe-incorrect', { groupe }));
-      const autorise = (n: Noeud) => jeu.qui === 'root' || ((n.proprio ?? jeu.joueur) === jeu.qui && jeu.groupesDe(jeu.qui).includes(groupe));
-      return changer(jeu, 'chgrp', cibles, lettres.has('R'), autorise, (n) => (n.groupe = groupe));
+    launch: ({ args, game }) => {
+      const { letters, rest } = options(args);
+      const [group, ...targets] = rest;
+      if (!group || !targets.length) return game.error(game.t('chgrp-usage'));
+      if (!game.accounts.groups[group]) return game.error(game.t('chgrp-groupe-incorrect', { groupe: group }));
+      const allowed = (n: Node) => game.who === 'root' || ((n.owner ?? game.player) === game.who && game.groupsFor(game.who).includes(group));
+      return change(game, 'chgrp', targets, letters.has('R'), allowed, (n) => (n.group = group));
     },
   },
 
   chown: {
-    lancer: ({ args, jeu }) => {
-      const { lettres, reste } = options(args);
-      const [proprio, ...cibles] = reste;
-      if (!proprio || !cibles.length) return jeu.erreur(jeu.t('chown-usage'));
+    launch: ({ args, game }) => {
+      const { letters, rest } = options(args);
+      const [owner, ...targets] = rest;
+      if (!owner || !targets.length) return game.error(game.t('chown-usage'));
       // Un numéro (uid, gid) est accepté même sans compte qui le porte : ls -l l'affiche alors tel quel.
-      const parUid = (x: string) => Object.entries(jeu.comptes.utilisateurs).find(([, u]) => String(u.uid) === x)?.[0] ?? x;
-      const parGid = (x: string) => Object.entries(jeu.comptes.groupes).find(([, g]) => String(g.gid) === x)?.[0] ?? x;
-      const [brutNom, brutGroupe] = proprio.split(':');
-      const nom = brutNom && /^\d+$/.test(brutNom) ? parUid(brutNom) : brutNom;
-      const groupe = brutGroupe && /^\d+$/.test(brutGroupe) ? parGid(brutGroupe) : brutGroupe;
-      if (nom && !/^\d+$/.test(nom) && !jeu.comptes.utilisateurs[nom]) return jeu.erreur(jeu.t('chown-utilisateur-incorrect', { proprio }));
-      if (groupe && !/^\d+$/.test(groupe) && !jeu.comptes.groupes[groupe]) return jeu.erreur(jeu.t('chown-groupe-incorrect', { proprio }));
+      const byUid = (x: string) => Object.entries(game.accounts.users).find(([, u]) => String(u.uid) === x)?.[0] ?? x;
+      const byGid = (x: string) => Object.entries(game.accounts.groups).find(([, g]) => String(g.gid) === x)?.[0] ?? x;
+      const [nameRaw, groupRaw] = owner.split(':');
+      const name = nameRaw && /^\d+$/.test(nameRaw) ? byUid(nameRaw) : nameRaw;
+      const group = groupRaw && /^\d+$/.test(groupRaw) ? byGid(groupRaw) : groupRaw;
+      if (name && !/^\d+$/.test(name) && !game.accounts.users[name]) return game.error(game.t('chown-utilisateur-incorrect', { proprio: owner }));
+      if (group && !/^\d+$/.test(group) && !game.accounts.groups[group]) return game.error(game.t('chown-groupe-incorrect', { proprio: owner }));
       // « chown malo: f » : le groupe principal de malo.
-      const nouveauGroupe = groupe || (proprio.endsWith(':') && nom ? (jeu.comptes.utilisateurs[nom]?.groupe ?? nom) : undefined);
-      return changer(jeu, 'chown', cibles, lettres.has('R'), () => jeu.qui === 'root', (n) => {
-        if (nom) n.proprio = nom;
-        if (nouveauGroupe) n.groupe = nouveauGroupe;
+      const newGroup = group || (owner.endsWith(':') && name ? (game.accounts.users[name]?.group ?? name) : undefined);
+      return change(game, 'chown', targets, letters.has('R'), () => game.who === 'root', (n) => {
+        if (name) n.owner = name;
+        if (newGroup) n.group = newGroup;
       });
     },
   },
 
   usermod: {
-    lancer: ({ args, jeu }) => {
-      let ajout = false;
-      let liste: string | null = null;
-      let verrou: boolean | null = null;
-      let expire: string | null = null;
+    launch: ({ args, game }) => {
+      let addition = false;
+      let listing: string | null = null;
+      let lock: boolean | null = null;
+      let expires: string | null = null;
       let shell: string | null = null;
-      const reste: string[] = [];
+      const rest: string[] = [];
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
         if (/^-[a-zA-Z]+$/.test(a)) {
-          if (a.includes('a')) ajout = true;
+          if (a.includes('a')) addition = true;
           // -L verrouille le mot de passe (un « ! » devant son empreinte dans /etc/shadow), -U le déverrouille.
-          if (a.includes('L')) verrou = true;
-          if (a.includes('U')) verrou = false;
-          if (a.includes('G')) liste = args[++i] ?? '';
+          if (a.includes('L')) lock = true;
+          if (a.includes('U')) lock = false;
+          if (a.includes('G')) listing = args[++i] ?? '';
           // -e : date de fin de validité du compte (AAAA-MM-JJ, ou 1 : le 2 janvier 1970) ; -s : le shell de connexion.
-          if (a.includes('e')) expire = args[++i] ?? '';
+          if (a.includes('e')) expires = args[++i] ?? '';
           if (a.includes('s')) shell = args[++i] ?? '';
-        } else reste.push(a);
+        } else rest.push(a);
       }
-      const nom = reste[0];
-      if (!nom || (liste === null && verrou === null && expire === null && shell === null))
-        return jeu.erreur(jeu.t(ajout && liste === null ? 'usermod-a-sans-G' : 'usermod-usage'));
-      if (ajout && liste === null) return jeu.erreur(jeu.t('usermod-a-sans-G'));
-      if (jeu.qui !== 'root') return jeu.erreur(jeu.t('usermod-permission'));
-      const u = jeu.comptes.utilisateurs[nom];
-      if (!u) return jeu.erreur(jeu.t('usermod-utilisateur-inexistant', { utilisateur: nom }));
+      const name = rest[0];
+      if (!name || (listing === null && lock === null && expires === null && shell === null))
+        return game.error(game.t(addition && listing === null ? 'usermod-a-sans-G' : 'usermod-usage'));
+      if (addition && listing === null) return game.error(game.t('usermod-a-sans-G'));
+      if (game.who !== 'root') return game.error(game.t('usermod-permission'));
+      const u = game.accounts.users[name];
+      if (!u) return game.error(game.t('usermod-utilisateur-inexistant', { utilisateur: name }));
       let date: string | undefined;
-      if (expire !== null && expire !== '') {
-        date = dateExpiration(expire) ?? undefined;
-        if (!date) return jeu.erreur(jeu.t('usermod-date-invalide', { date: expire }));
+      if (expires !== null && expires !== '') {
+        date = dateExpiration(expires) ?? undefined;
+        if (!date) return game.error(game.t('usermod-date-invalide', { date: expires }));
       }
-      if (liste !== null) {
-        const groupes = liste.split(',').filter(Boolean);
-        const inconnu = groupes.find((g) => !jeu.comptes.groupes[g]);
-        if (inconnu) return jeu.erreur(jeu.t('usermod-groupe-inexistant', { groupe: inconnu }));
+      if (listing !== null) {
+        const groups = listing.split(',').filter(Boolean);
+        const unknown = groups.find((g) => !game.accounts.groups[g]);
+        if (unknown) return game.error(game.t('usermod-groupe-inexistant', { groupe: unknown }));
         // Sans -a, les groupes secondaires sont REMPLACÉS par la liste.
-        if (!ajout) for (const g of Object.values(jeu.comptes.groupes)) g.membres = g.membres.filter((m) => m !== nom);
-        for (const g of groupes) if (!jeu.comptes.groupes[g].membres.includes(nom)) jeu.comptes.groupes[g].membres.push(nom);
+        if (!addition) for (const g of Object.values(game.accounts.groups)) g.members = g.members.filter((m) => m !== name);
+        for (const g of groups) if (!game.accounts.groups[g].members.includes(name)) game.accounts.groups[g].members.push(name);
       }
-      if (verrou !== null) {
-        const verrous: string[] = (jeu.etat.comptesVerrouilles ??= []);
-        jeu.etat.comptesVerrouilles = verrou ? [...new Set([...verrous, nom])] : verrous.filter((v) => v !== nom);
+      if (lock !== null) {
+        const locks: string[] = (game.state.comptesVerrouilles ??= []);
+        game.state.comptesVerrouilles = lock ? [...new Set([...locks, name])] : locks.filter((v) => v !== name);
       }
-      if (expire !== null) {
-        if (date) u.expire = date;
-        else delete u.expire;
+      if (expires !== null) {
+        if (date) u.expires = date;
+        else delete u.expires;
       }
       if (shell !== null) u.shell = shell;
       return '';
@@ -150,27 +150,27 @@ export const COMPTES: Record<string, Commande> = {
 
   // userdel : supprime un compte (et, avec -r, son dossier personnel et sa boîte aux lettres).
   userdel: {
-    lancer: ({ args, jeu }) => {
-      const { lettres, reste } = options(args);
-      const nom = reste[0];
-      if (!nom) return jeu.erreur(jeu.t('userdel-usage'));
-      if (jeu.qui !== 'root') return jeu.erreur(jeu.t('userdel-permission'));
-      const u = jeu.comptes.utilisateurs[nom];
-      if (!u) return jeu.erreur(jeu.t('userdel-inexistant', { utilisateur: nom }), 6);
+    launch: ({ args, game }) => {
+      const { letters, rest } = options(args);
+      const name = rest[0];
+      if (!name) return game.error(game.t('userdel-usage'));
+      if (game.who !== 'root') return game.error(game.t('userdel-permission'));
+      const u = game.accounts.users[name];
+      if (!u) return game.error(game.t('userdel-inexistant', { utilisateur: name }), 6);
       // Un compte encore utilisé par un processus n'est pas supprimé (sauf -f).
-      const p = ((jeu.etat.processus ?? []) as { pid: number; utilisateur: string }[]).find((x) => x.utilisateur === nom);
-      if (p && !lettres.has('f')) return jeu.erreur(jeu.t('userdel-utilise', { utilisateur: nom, pid: String(p.pid) }), 8);
-      delete jeu.comptes.utilisateurs[nom];
-      for (const g of Object.values(jeu.comptes.groupes)) g.membres = g.membres.filter((m) => m !== nom);
+      const p = ((game.state.processus ?? []) as { pid: number; user: string }[]).find((x) => x.user === name);
+      if (p && !letters.has('f')) return game.error(game.t('userdel-utilise', { utilisateur: name, pid: String(p.pid) }), 8);
+      delete game.accounts.users[name];
+      for (const g of Object.values(game.accounts.groups)) g.members = g.members.filter((m) => m !== name);
       // Son groupe personnel (même nom) part aussi, s'il n'a pas d'autre membre.
-      if (jeu.comptes.groupes[u.groupe] && u.groupe === nom && !jeu.comptes.groupes[nom].membres.length) delete jeu.comptes.groupes[nom];
-      if (lettres.has('r')) {
-        const maison = u.maison ?? `/home/${nom}`;
-        const sortie: string[] = [];
-        if (jeu.existe(maison)) jeu.effacer(maison);
-        if (jeu.existe(`/var/mail/${nom}`)) jeu.effacer(`/var/mail/${nom}`);
-        else sortie.push(jeu.t('userdel-sans-courrier', { utilisateur: nom }));
-        return sortie.join('\n');
+      if (game.accounts.groups[u.group] && u.group === name && !game.accounts.groups[name].members.length) delete game.accounts.groups[name];
+      if (letters.has('r')) {
+        const home = u.home ?? `/home/${name}`;
+        const output: string[] = [];
+        if (game.exists(home)) game.erase(home);
+        if (game.exists(`/var/mail/${name}`)) game.erase(`/var/mail/${name}`);
+        else output.push(game.t('userdel-sans-courrier', { utilisateur: name }));
+        return output.join('\n');
       }
       return '';
     },
@@ -178,45 +178,45 @@ export const COMPTES: Record<string, Commande> = {
 
   // gpasswd -a / -d : ajoute ou retire un compte d'un groupe.
   gpasswd: {
-    lancer: ({ args, jeu }) => {
+    launch: ({ args, game }) => {
       const i = args.findIndex((a) => a === '-a' || a === '-d');
-      const nom = args[i + 1];
-      const groupe = args.filter((_, k) => k !== i && k !== i + 1)[0];
-      if (i < 0 || !nom || !groupe) return jeu.erreur(jeu.t('gpasswd-usage'), 2);
-      if (jeu.qui !== 'root') return jeu.erreur(jeu.t('gpasswd-permission'), 1);
-      const g = jeu.comptes.groupes[groupe];
-      if (!g) return jeu.erreur(jeu.t('gpasswd-groupe-inexistant', { groupe }), 3);
-      if (!jeu.comptes.utilisateurs[nom]) return jeu.erreur(jeu.t('gpasswd-utilisateur-inexistant', { utilisateur: nom }), 3);
+      const name = args[i + 1];
+      const group = args.filter((_, k) => k !== i && k !== i + 1)[0];
+      if (i < 0 || !name || !group) return game.error(game.t('gpasswd-usage'), 2);
+      if (game.who !== 'root') return game.error(game.t('gpasswd-permission'), 1);
+      const g = game.accounts.groups[group];
+      if (!g) return game.error(game.t('gpasswd-groupe-inexistant', { groupe: group }), 3);
+      if (!game.accounts.users[name]) return game.error(game.t('gpasswd-utilisateur-inexistant', { utilisateur: name }), 3);
       if (args[i] === '-a') {
-        if (!g.membres.includes(nom)) g.membres.push(nom);
-        return jeu.t('gpasswd-ajout', { utilisateur: nom, groupe });
+        if (!g.members.includes(name)) g.members.push(name);
+        return game.t('gpasswd-ajout', { utilisateur: name, groupe: group });
       }
-      if (!g.membres.includes(nom)) return jeu.erreur(jeu.t('gpasswd-pas-membre', { utilisateur: nom, groupe }), 3);
-      g.membres = g.membres.filter((m) => m !== nom);
-      return jeu.t('gpasswd-retrait', { utilisateur: nom, groupe });
+      if (!g.members.includes(name)) return game.error(game.t('gpasswd-pas-membre', { utilisateur: name, groupe: group }), 3);
+      g.members = g.members.filter((m) => m !== name);
+      return game.t('gpasswd-retrait', { utilisateur: name, groupe: group });
     },
   },
 
   // chage -l (les dates du compte) et -E (sa fin de validité).
   chage: {
-    lancer: ({ args, jeu }) => {
+    launch: ({ args, game }) => {
       const i = args.indexOf('-E');
-      const liste = args.includes('-l');
-      const nom = args.filter((a, k) => !a.startsWith('-') && (i < 0 || k !== i + 1)).at(-1);
-      if (!nom || (i < 0 && !liste)) return jeu.erreur(jeu.t('chage-usage'), 2);
-      const u = jeu.comptes.utilisateurs[nom];
-      if (!u) return jeu.erreur(jeu.t('chage-inexistant', { utilisateur: nom }), 1);
-      if (liste && i < 0) {
-        if (jeu.qui !== 'root' && jeu.qui !== nom) return jeu.erreur(jeu.t('chage-permission'), 1);
-        return jeu.t('chage-liste', { expire: u.expire ?? 'never' });
+      const listing = args.includes('-l');
+      const name = args.filter((a, k) => !a.startsWith('-') && (i < 0 || k !== i + 1)).at(-1);
+      if (!name || (i < 0 && !listing)) return game.error(game.t('chage-usage'), 2);
+      const u = game.accounts.users[name];
+      if (!u) return game.error(game.t('chage-inexistant', { utilisateur: name }), 1);
+      if (listing && i < 0) {
+        if (game.who !== 'root' && game.who !== name) return game.error(game.t('chage-permission'), 1);
+        return game.t('chage-liste', { expire: u.expires ?? 'never' });
       }
-      if (jeu.qui !== 'root') return jeu.erreur(jeu.t('chage-permission'), 1);
-      const valeur = args[i + 1] ?? '';
-      if (valeur === '-1') delete u.expire;
+      if (game.who !== 'root') return game.error(game.t('chage-permission'), 1);
+      const value = args[i + 1] ?? '';
+      if (value === '-1') delete u.expires;
       else {
-        const date = valeur === '0' ? '1970-01-01' : dateExpiration(valeur);
-        if (!date) return jeu.erreur(jeu.t('chage-date-invalide', { date: valeur }), 2);
-        u.expire = date;
+        const date = value === '0' ? '1970-01-01' : dateExpiration(value);
+        if (!date) return game.error(game.t('chage-date-invalide', { date: value }), 2);
+        u.expires = date;
       }
       return '';
     },
@@ -224,8 +224,8 @@ export const COMPTES: Record<string, Commande> = {
 };
 
 // Une date de fin de validité : AAAA-MM-JJ, ou un nombre de jours depuis le 1er janvier 1970.
-function dateExpiration(texte: string): string | null {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(texte) && !Number.isNaN(Date.parse(texte))) return texte;
-  if (/^\d+$/.test(texte)) return new Date(Number(texte) * 86_400_000).toISOString().slice(0, 10);
+function dateExpiration(text: string): string | null {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text) && !Number.isNaN(Date.parse(text))) return text;
+  if (/^\d+$/.test(text)) return new Date(Number(text) * 86_400_000).toISOString().slice(0, 10);
   return null;
 }

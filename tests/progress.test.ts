@@ -3,86 +3,86 @@
 // l'ordre des chapitres dans le code ne fait que s'allonger.
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { HISTOIRES } from '../src/engine/chapters';
-import { codeDeProgression, fichierDeSauvegarde, lireCode, lireFichier, ORDRE_DU_CODE } from '../src/engine/progress';
+import { STORIES } from '../src/engine/chapters';
+import { progressCode, backupFile, readCode, readFile, CODE_ORDER } from '../src/engine/progress';
 
-const TOUS = HISTOIRES.flatMap((h) => h.chapitres.map((c) => c.id));
+const ALL = STORIES.flatMap((h) => h.chapters.map((c) => c.id));
 
 describe('Le code court', () => {
   it('connaît chaque chapitre, une seule fois', () => {
-    expect(new Set(ORDRE_DU_CODE).size).toBe(ORDRE_DU_CODE.length);
-    expect([...TOUS].sort()).toEqual([...ORDRE_DU_CODE].sort());
+    expect(new Set(CODE_ORDER).size).toBe(CODE_ORDER.length);
+    expect([...ALL].sort()).toEqual([...CODE_ORDER].sort());
   });
 
   it('n’a fait que s’allonger depuis les codes déjà donnés (tests/progress/order.txt)', () => {
     // Ajouter un chapitre : l'ajouter à la fin d'ORDRE_DU_CODE, puis à la fin de ce fichier.
-    const donne = readFileSync('tests/progress/order.txt', 'utf8').trim().split('\n');
-    expect(ORDRE_DU_CODE.slice(0, donne.length)).toEqual(donne);
-    expect(ORDRE_DU_CODE.length).toBe(donne.length);
+    const gives = readFileSync('tests/progress/order.txt', 'utf8').trim().split('\n');
+    expect(CODE_ORDER.slice(0, gives.length)).toEqual(gives);
+    expect(CODE_ORDER.length).toBe(gives.length);
   });
 
   it('aller et retour, du début à la fin du jeu', () => {
-    for (const termines of [[], ['eveil'], ['eveil', 'bourg', 'racine', 'sauvegarde', 'vlan', 'wifi'], TOUS]) {
-      const code = codeDeProgression(termines);
+    for (const finished of [[], ['eveil'], ['eveil', 'bourg', 'racine', 'sauvegarde', 'vlan', 'wifi'], ALL]) {
+      const code = progressCode(finished);
       expect(code).toMatch(/^QDS(-[0-9A-HJKMNP-TV-Z]{1,4})+$/);
-      expect(lireCode(code)).toEqual({ termines: ORDRE_DU_CODE.filter((id) => termines.includes(id)) });
+      expect(readCode(code)).toEqual({ finished: CODE_ORDER.filter((id) => finished.includes(id)) });
     }
     // Court au début, une petite trentaine de caractères à la fin.
-    expect(codeDeProgression(['eveil']).length).toBeLessThanOrEqual(12);
-    expect(codeDeProgression(TOUS).length).toBeLessThanOrEqual(31);
+    expect(progressCode(['eveil']).length).toBeLessThanOrEqual(12);
+    expect(progressCode(ALL).length).toBeLessThanOrEqual(31);
   });
 
   it('se recopie sans souci : minuscules, espaces, O pour 0, I ou L pour 1', () => {
-    const code = codeDeProgression(['eveil', 'bourg', 'racine', 'cles']);
-    const recopie = code.toLowerCase().replace(/-/g, ' ').replace(/0/g, 'o').replace(/1/g, 'l');
-    expect(lireCode(recopie)).toEqual(lireCode(code));
+    const code = progressCode(['eveil', 'bourg', 'racine', 'cles']);
+    const copy = code.toLowerCase().replace(/-/g, ' ').replace(/0/g, 'o').replace(/1/g, 'l');
+    expect(readCode(copy)).toEqual(readCode(code));
   });
 
   it('une faute de frappe est repérée, pas chargée', () => {
-    const code = codeDeProgression(['eveil', 'bourg', 'racine', 'sauvegarde', 'premier-jour']);
-    const corps = code.slice(4).replace(/-/g, '');
-    let reperees = 0;
-    for (let i = 0; i < corps.length; i++) {
-      const autre = corps[i] === 'A' ? 'B' : 'A';
-      const faux = lireCode(corps.slice(0, i) + autre + corps.slice(i + 1));
-      if ('erreur' in faux) reperees++;
+    const code = progressCode(['eveil', 'bourg', 'racine', 'sauvegarde', 'premier-jour']);
+    const body = code.slice(4).replace(/-/g, '');
+    let spotted = 0;
+    for (let i = 0; i < body.length; i++) {
+      const other = body[i] === 'A' ? 'B' : 'A';
+      const no = readCode(body.slice(0, i) + other + body.slice(i + 1));
+      if ('error' in no) spotted++;
     }
-    expect(reperees).toBe(corps.length);
-    expect(lireCode('QDS-ZZ')).toEqual({ erreur: 'code-illisible' });
-    expect(lireCode('n’importe quoi')).toEqual({ erreur: 'code-illisible' });
+    expect(spotted).toBe(body.length);
+    expect(readCode('QDS-ZZ')).toEqual({ error: 'code-illisible' });
+    expect(readCode('n’importe quoi')).toEqual({ error: 'code-illisible' });
   });
 });
 
 describe('Le fichier', () => {
-  const sauvegarde = {
-    termines: ['eveil', 'bourg'],
-    histoire: 'effaceur',
-    connus: 'royaume.internal ssh-ed25519 AAAA',
-    ssh: { fichiers: { config: 'Host wiki\n    ProxyJump maison' } },
-    carnet: { ls: { ligne: 'ls -a', chapitre: 'eveil' } },
-    examen: false,
+  const backup = {
+    finished: ['eveil', 'bourg'],
+    story: 'effaceur',
+    known: 'royaume.internal ssh-ed25519 AAAA',
+    ssh: { files: { config: 'Host wiki\n    ProxyJump maison' } },
+    notebook: { ls: { line: 'ls -a', chapter: 'eveil' } },
+    exam: false,
     records: { eveil: 61000 },
-    nom: 'Lina',
+    name: 'Lina',
   };
 
   it('aller et retour', () => {
-    expect(lireFichier(fichierDeSauvegarde(sauvegarde, new Date('2027-01-15T10:00:00Z')))).toEqual({ sauvegarde });
+    expect(readFile(backupFile(backup, new Date('2027-01-15T10:00:00Z')))).toEqual({ backup });
   });
 
   it('ne garde que ce que le jeu connaît', () => {
-    const lu = lireFichier(
+    const read = readFile(
       JSON.stringify({
         format: 'quetes-de-sysadmin',
         version: 1,
-        sauvegarde: { termines: ['eveil', 'inconnu', 42], histoire: 'nulle-part', carnet: { ls: 'pas un objet' }, records: { eveil: -1 }, nom: '  Lina\n\tB.  ' },
+        backup: { finished: ['eveil', 'inconnu', 42], story: 'nulle-part', notebook: { ls: 'pas un objet' }, records: { eveil: -1 }, name: '  Lina\n\tB.  ' },
       }),
     );
-    expect(lu).toEqual({ sauvegarde: { termines: ['eveil'], histoire: null, carnet: {}, examen: false, records: {}, nom: 'Lina B.' } });
+    expect(read).toEqual({ backup: { finished: ['eveil'], story: null, notebook: {}, exam: false, records: {}, name: 'Lina B.' } });
   });
 
   it('refuse ce qui n’est pas une sauvegarde du jeu', () => {
-    expect(lireFichier('pas du JSON')).toEqual({ erreur: 'fichier-illisible' });
-    expect(lireFichier('{"format":"autre"}')).toEqual({ erreur: 'fichier-autre' });
-    expect(lireFichier('{"format":"quetes-de-sysadmin","version":9,"sauvegarde":{}}')).toEqual({ erreur: 'fichier-trop-recent' });
+    expect(readFile('pas du JSON')).toEqual({ error: 'fichier-illisible' });
+    expect(readFile('{"format":"autre"}')).toEqual({ error: 'fichier-autre' });
+    expect(readFile('{"format":"quetes-de-sysadmin","version":9,"backup":{}}')).toEqual({ error: 'fichier-trop-recent' });
   });
 });

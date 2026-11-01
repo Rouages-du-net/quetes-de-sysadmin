@@ -4,21 +4,21 @@
 // dépassé). Les connexions locales (lo) ne passent pas par ufw. Un port
 // publié par Docker sur 0.0.0.0 contourne ufw (voir docker.ts).
 
-import type { Jeu } from './shell';
-import { verdict, type PareFeu } from './firewall';
-import { ecoutesDocker, publieAuMonde } from './docker';
-import type { Ecoute } from './commands/ss';
+import type { Game } from './shell';
+import { verdict, type Firewall } from './firewall';
+import { dockerListeners, publishedToWorld } from './docker';
+import type { Listening } from './commands/ss';
 
-export type EtatPort = 'ouvert' | 'refuse' | 'filtre';
+export type PortState = 'ouvert' | 'refuse' | 'filtre';
 
-export function etatPort(jeu: Jeu, port: number, local: boolean, source: string): EtatPort {
-  const ecoutes: Ecoute[] = [...(jeu.etat.ecoute ?? []), ...ecoutesDocker(jeu)].filter((e) => e.proto === 'tcp' && e.port === port);
-  const surToutes = ecoutes.some((e) => e.adresse === '0.0.0.0' || e.adresse === '[::]' || e.adresse === '*');
-  if (local) return ecoutes.length ? 'ouvert' : 'refuse';
-  if (publieAuMonde(jeu, port)) return 'ouvert';
-  const pf: PareFeu | undefined = jeu.etat.ufw;
-  const passe = pf ? verdict(pf, port, source) : 'accepte';
-  if (passe === 'bloque') return 'filtre';
-  if (passe === 'refuse') return 'refuse';
-  return surToutes ? 'ouvert' : 'refuse';
+export function portState(game: Game, port: number, local: boolean, source: string): PortState {
+  const listeners: Listening[] = [...(game.state.ecoute ?? []), ...dockerListeners(game)].filter((e) => e.proto === 'tcp' && e.port === port);
+  const onAll = listeners.some((e) => e.address === '0.0.0.0' || e.address === '[::]' || e.address === '*');
+  if (local) return listeners.length ? 'ouvert' : 'refuse';
+  if (publishedToWorld(game, port)) return 'ouvert';
+  const pf: Firewall | undefined = game.state.ufw;
+  const pass = pf ? verdict(pf, port, source) : 'accepte';
+  if (pass === 'bloque') return 'filtre';
+  if (pass === 'refuse') return 'refuse';
+  return onAll ? 'ouvert' : 'refuse';
 }

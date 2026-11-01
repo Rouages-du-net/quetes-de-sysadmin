@@ -11,92 +11,92 @@
 // de commands/ssh.ts (une clé donnée par le jeu).
 // Écarts : ni agent, ni certificats ; une seule clé d'hôte (ed25519).
 
-import type { Fichier } from './world';
+import type { File } from './world';
 import type { Shell } from './shell';
-import { joker } from './tools';
-import { base64, cleHote, condense, empreinte, MACHINES, POSTE } from './machines';
-import { autorise, methodes } from './sshd';
+import { wildcard } from './tools';
+import { base64, hostKey, condensed, fingerprint, MACHINES, WORKSTATION } from './machines';
+import { allowed, methods } from './sshd';
 
-export const CLES_PAR_DEFAUT = ['~/.ssh/id_ed25519', '~/.ssh/id_ecdsa', '~/.ssh/id_rsa'];
+export const KEYS_BY_DEFAULT = ['~/.ssh/id_ed25519', '~/.ssh/id_ecdsa', '~/.ssh/id_rsa'];
 
 /** Une machine joignable : son nom, son nom complet et son adresse. */
-export interface Hote {
-  nom: string;
-  domaine: string;
-  adresse: string;
+export interface Host {
+  name: string;
+  domain: string;
+  address: string;
 }
 
 /** Un saut : où l'on va, sous quel compte, et la session de la machine d'en face. */
-export interface Saut {
-  utilisateur: string;
+export interface Jump {
+  user: string;
   // Le nom tel qu'il est écrit dans known_hosts (HostName, sinon l'alias).
-  hote: string;
+  host: string;
   port: string;
-  identites: string[];
-  machine: Hote;
+  identities: string[];
+  machine: Host;
   shell: Shell;
   // Une machine d'histoire jointe depuis le poste (la console ouvre son chapitre).
-  histoire?: string;
+  story?: string;
 }
 
 // ——— Configuration du client (ssh_config) ———
 
 /** Les blocs « Host » de ~/.ssh/config qui s'appliquent ; la première valeur trouvée l'emporte. */
-export function configuration(jeu: Shell, alias: string): Record<string, string[]> {
+export function configuration(game: Shell, alias: string): Record<string, string[]> {
   const options: Record<string, string[]> = {};
-  let actif = false;
-  for (const brute of (jeu.lire('~/.ssh/config') ?? '').split('\n')) {
-    const ligne = brute.trim();
-    if (!ligne || ligne.startsWith('#')) continue;
-    const [cle, ...reste] = ligne.split(/\s+/);
-    const valeur = reste.join(' ');
-    if (cle.toLowerCase() === 'host') actif = reste.some((motif) => joker(motif).test(alias));
-    else if (actif) (options[cle.toLowerCase()] ??= []).push(valeur);
+  let enabled = false;
+  for (const rawValue of (game.read('~/.ssh/config') ?? '').split('\n')) {
+    const line = rawValue.trim();
+    if (!line || line.startsWith('#')) continue;
+    const [key, ...rest] = line.split(/\s+/);
+    const value = rest.join(' ');
+    if (key.toLowerCase() === 'host') enabled = rest.some((pattern) => wildcard(pattern).test(alias));
+    else if (enabled) (options[key.toLowerCase()] ??= []).push(value);
   }
   return options;
 }
 
 /** Un nom → une adresse, d'après /etc/hosts de la machine qui cherche. */
-export function resoudreNom(jeu: Shell, hote: string): string | null {
-  if (/^\d+\.\d+\.\d+\.\d+$/.test(hote)) return hote;
-  for (const ligne of (jeu.lire('/etc/hosts') ?? '').split('\n')) {
-    const [adresse, ...noms] = ligne.replace(/#.*/, '').trim().split(/\s+/);
-    if (noms.includes(hote)) return adresse;
+export function resolveName(game: Shell, host: string): string | null {
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) return host;
+  for (const line of (game.read('/etc/hosts') ?? '').split('\n')) {
+    const [address, ...names] = line.replace(/#.*/, '').trim().split(/\s+/);
+    if (names.includes(host)) return address;
   }
   return null;
 }
 
 // ——— Clés ———
 
-const ENTETE_PUBLIQUE = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI';
+const PUBLIC_HEADER = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI';
 
 /** Une paire de clés ed25519 (fausse, mais de la bonne forme), tirée d'une graine. */
-export function genererCle(graine: string, commentaire: string): { prive: string; publique: string } {
-  const corps = base64('cle-generee-' + graine, 70 * 5);
-  const prive = [
+export function generateKey(seed: string, comment: string): { isPrivate: string; isPublic: string } {
+  const body = base64('cle-generee-' + seed, 70 * 5);
+  const isPrivate = [
     '-----BEGIN OPENSSH PRIVATE KEY-----',
-    ...corps.match(/.{70}/g)!.map((l, i) => (i === 0 ? 'b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW' + l.slice(68) : l)),
+    ...body.match(/.{70}/g)!.map((l, i) => (i === 0 ? 'b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW' + l.slice(68) : l)),
     '-----END OPENSSH PRIVATE KEY-----',
   ].join('\n');
-  return { prive, publique: `${publiqueDe(prive)} ${commentaire}` };
+  return { isPrivate, isPublic: `${publicFor(isPrivate)} ${comment}` };
 }
 
 /** La clé publique (sans commentaire) qui va avec une clé privée. */
-export const publiqueDe = (prive: string) => `${ENTETE_PUBLIQUE}${base64(condense(prive.replace(/\s+/g, '')) + '-publique', 43)}`;
+export const publicFor = (isPrivate: string) => `${PUBLIC_HEADER}${base64(condensed(isPrivate.replace(/\s+/g, '')) + '-publique', 43)}`;
 
 // ——— Les sauts ———
 
 // La session d'en face : depuis le poste, une machine d'histoire ; depuis
 // une machine d'histoire (ou interne), une machine de son réseau interne.
-function machineEnFace(origine: Shell, adresse: string): { machine: Hote; shell: Shell; histoire?: string } | null {
-  if (origine.hote === 'poste') {
-    const m = MACHINES.find((x) => x.adresse === adresse);
-    const shell = m && (origine.etat.sessionDistante?.(m.nom) as Shell | undefined);
-    return m && shell ? { machine: m, shell, histoire: m.nom } : null;
+function machineInFace(origin: Shell, address: string): { machine: Host; shell: Shell; story?: string } | null {
+  if (origin.host === 'poste') {
+    const m = MACHINES.find((x) => x.address === address);
+    const shell = m && (origin.state.sessionDistante?.(m.name) as Shell | undefined);
+    return m && shell ? { machine: m, shell, story: m.name } : null;
   }
-  const interne = origine.internes_().find((h) => h.adresse === adresse);
-  const shell = interne && origine.interne(interne.nom);
-  return interne && shell ? { machine: interne, shell } : null;
+  const internal = origin.internal_().find((h) => h.address === address);
+  const shell = internal && origin.internal(internal.name);
+  return internal && shell ? { machine: internal, shell } : null;
 }
 
 /**
@@ -104,58 +104,58 @@ function machineEnFace(origine: Shell, adresse: string): { machine: Hote; shell:
  * (-J, ou ProxyJump de ~/.ssh/config) : renvoie les sauts, ou le message
  * d'erreur de ssh.
  */
-export function preparer(
-  origine: Shell,
-  cible: string,
-  o: { identites?: string[]; port?: string; saut?: string; programme?: string } = {},
-): Saut[] | string {
-  const programme = o.programme ?? 'ssh';
-  const etapes: string[] = [];
-  const [utilisateurCible, aliasCible] = cible.includes('@') ? cible.split('@', 2) : [null, cible];
-  const sauts = o.saut ?? configuration(origine, aliasCible).proxyjump?.[0];
-  if (sauts && sauts !== 'none') etapes.push(...sauts.split(','));
-  etapes.push(cible);
-  const resultat: Saut[] = [];
-  let depuis = origine;
-  for (const [i, etape] of etapes.entries()) {
-    const [utilisateurDonne, alias] = etape.includes('@') ? etape.split('@', 2) : [null, etape];
-    const config = configuration(origine, alias);
-    const derniere = i === etapes.length - 1;
-    const hote = (config.hostname?.[0] ?? alias).toLowerCase();
-    const port = (derniere ? o.port : '') || config.port?.[0] || '22';
-    const adresse = resoudreNom(depuis, hote);
-    if (!adresse) return `${programme}: Could not resolve hostname ${hote}: Name or service not known`;
-    if (adresse === POSTE.adresse || adresse.startsWith('127.') || port !== '22')
-      return `${programme}: connect to host ${hote} port ${port}: Connection refused`;
-    const enFace = machineEnFace(depuis, adresse);
-    if (!enFace) return `${programme}: connect to host ${hote} port ${port}: No route to host`;
-    resultat.push({
-      utilisateur: utilisateurDonne ?? (derniere ? utilisateurCible : null) ?? config.user?.[0] ?? origine.qui,
-      hote,
+export function prepare(
+  origin: Shell,
+  target: string,
+  o: { identities?: string[]; port?: string; hop?: string; program?: string } = {},
+): Jump[] | string {
+  const program = o.program ?? 'ssh';
+  const steps: string[] = [];
+  const [targetUser, targetAlias] = target.includes('@') ? target.split('@', 2) : [null, target];
+  const jumps = o.hop ?? configuration(origin, targetAlias).proxyjump?.[0];
+  if (jumps && jumps !== 'none') steps.push(...jumps.split(','));
+  steps.push(target);
+  const result: Jump[] = [];
+  let since = origin;
+  for (const [i, step] of steps.entries()) {
+    const [givesUser, alias] = step.includes('@') ? step.split('@', 2) : [null, step];
+    const config = configuration(origin, alias);
+    const last = i === steps.length - 1;
+    const host = (config.hostname?.[0] ?? alias).toLowerCase();
+    const port = (last ? o.port : '') || config.port?.[0] || '22';
+    const address = resolveName(since, host);
+    if (!address) return `${program}: Could not resolve hostname ${host}: Name or service not known`;
+    if (address === WORKSTATION.address || address.startsWith('127.') || port !== '22')
+      return `${program}: connect to host ${host} port ${port}: Connection refused`;
+    const inFace = machineInFace(since, address);
+    if (!inFace) return `${program}: connect to host ${host} port ${port}: No route to host`;
+    result.push({
+      user: givesUser ?? (last ? targetUser : null) ?? config.user?.[0] ?? origin.who,
+      host,
       port,
-      identites: [...(derniere ? (o.identites ?? []) : []), ...(config.identityfile ?? [])],
-      ...enFace,
+      identities: [...(last ? (o.identities ?? []) : []), ...(config.identityfile ?? [])],
+      ...inFace,
     });
-    depuis = enFace.shell;
+    since = inFace.shell;
   }
-  return resultat;
+  return result;
 }
 
 // ——— Franchir les sauts : clés d'hôte, puis authentification ———
 
 // Un échec de ssh : le message (affiché même en réponse à une question) et le code 255.
-function echec(origine: Shell, texte: string): string {
-  origine.statut = 255;
-  return texte;
+function failure(origin: Shell, text: string): string {
+  origin.status = 255;
+  return text;
 }
 
-const motDePasseDe = (s: Shell, compte: string): string | undefined =>
-  (s.etat.motsDePasse as Record<string, string> | undefined)?.[compte] ?? (compte === s.joueur ? s.motDePasseDuJoueur() : undefined);
+const passwordFor = (s: Shell, account: string): string | undefined =>
+  (s.state.motsDePasse as Record<string, string> | undefined)?.[account] ?? (account === s.player ? s.playerPassword() : undefined);
 
 // Les clés publiques autorisées pour ce compte, sur la machine d'en face.
-function clesAutorisees(s: Shell, compte: string): string[] {
-  const maison = compte === 'root' ? '/root' : (s.comptes.utilisateurs[compte]?.maison ?? `/home/${compte}`);
-  return (s.lire(`${maison}/.ssh/authorized_keys`) ?? '')
+function allowedKeys(s: Shell, account: string): string[] {
+  const home = account === 'root' ? '/root' : (s.accounts.users[account]?.home ?? `/home/${account}`);
+  return (s.read(`${home}/.ssh/authorized_keys`) ?? '')
     .split('\n')
     .map((l) => l.trim())
     .filter((l) => l && !l.startsWith('#'))
@@ -163,28 +163,28 @@ function clesAutorisees(s: Shell, compte: string): string[] {
 }
 
 // La machine d'en face garde trace des connexions (pour les histoires) : par clé, par mot de passe.
-function noter(s: Saut, comment: 'cle' | 'motDePasse') {
-  const connexions = (s.shell.etat.connexionsSsh ??= { cle: 0, motDePasse: 0 }) as Record<string, number>;
-  connexions[comment]++;
+function note(s: Jump, comment: 'cle' | 'motDePasse') {
+  const connections = (s.shell.state.connexionsSsh ??= { cle: 0, motDePasse: 0 }) as Record<string, number>;
+  connections[comment]++;
 }
 
 // Les clés publiques du poste, ajoutées à ~/.ssh/authorized_keys du joueur en face (si elles n'y sont pas).
-function recopierCles(poste: Shell, s: Shell) {
-  const dossier = poste.trouver('~/.ssh');
-  if (dossier?.type !== 'dossier') return;
-  const cles = Object.keys(dossier.enfants)
+function copyKeys(workstation: Shell, s: Shell) {
+  const directory = workstation.find('~/.ssh');
+  if (directory?.type !== 'dossier') return;
+  const keys = Object.keys(directory.children)
     .filter((n) => n.endsWith('.pub'))
-    .map((n) => (poste.lire(`~/.ssh/${n}`) ?? '').trim())
+    .map((n) => (workstation.read(`~/.ssh/${n}`) ?? '').trim())
     .filter((c) => c.startsWith('ssh-'));
-  const maison = s.comptes.utilisateurs[s.joueur]?.maison ?? `/home/${s.joueur}`;
-  const chemin = `${maison}/.ssh/authorized_keys`;
-  const deja = clesAutorisees(s, s.joueur);
-  const nouvelles = cles.filter((c) => !deja.includes(c.split(/\s+/).slice(0, 2).join(' ')));
-  if (!nouvelles.length) return;
-  const n = s.trouver(chemin);
-  if (n?.type === 'fichier') n.contenu = [s.lire(chemin), ...nouvelles].filter(Boolean).join('\n');
-  else if (s.trouver(`${maison}/.ssh`)?.type === 'dossier')
-    s.placer('ssh', chemin, { type: 'fichier', contenu: nouvelles.join('\n'), lignes: true, proprio: s.joueur, mode: 'rw-------' });
+  const home = s.accounts.users[s.player]?.home ?? `/home/${s.player}`;
+  const path = `${home}/.ssh/authorized_keys`;
+  const already = allowedKeys(s, s.player);
+  const fresh = keys.filter((c) => !already.includes(c.split(/\s+/).slice(0, 2).join(' ')));
+  if (!fresh.length) return;
+  const n = s.find(path);
+  if (n?.type === 'fichier') n.content = [s.read(path), ...fresh].filter(Boolean).join('\n');
+  else if (s.find(`${home}/.ssh`)?.type === 'dossier')
+    s.place('ssh', path, { type: 'fichier', content: fresh.join('\n'), lines: true, owner: s.player, mode: 'rw-------' });
 }
 
 const octal = (mode: string) =>
@@ -196,130 +196,130 @@ const octal = (mode: string) =>
  * les sauts et rend ce qu'il faut afficher. Renvoie ce que ssh affiche tout
  * de suite.
  */
-export function franchir(origine: Shell, sauts: Saut[], suite: () => string, i = 0): string {
-  if (i >= sauts.length) return suite();
-  const s = sauts[i];
-  const fichier = '~/.ssh/known_hosts';
-  const lignes = (origine.lire(fichier) ?? '').split('\n');
+export function pass(origin: Shell, jumps: Jump[], next: () => string, i = 0): string {
+  if (i >= jumps.length) return next();
+  const s = jumps[i];
+  const file = '~/.ssh/known_hosts';
+  const lines = (origin.read(file) ?? '').split('\n');
   // Une machine d'histoire réinstallée a changé de clé d'hôte (les machines internes gardent la leur).
-  const generation = s.histoire ? ((origine.etat.cleDistante?.(s.machine.nom) as string | undefined) ?? '') : '';
-  const cle = cleHote(s.machine, generation);
-  const numero = lignes.findIndex((l) => l.split(' ')[0].split(',').includes(s.hote));
-  if (numero >= 0) {
-    if (!lignes.some((l) => l.split(' ')[0].split(',').includes(s.hote) && l.endsWith(cle)))
-      return echec(
-        origine,
+  const generation = s.story ? ((origin.state.cleDistante?.(s.machine.name) as string | undefined) ?? '') : '';
+  const key = hostKey(s.machine, generation);
+  const number = lines.findIndex((l) => l.split(' ')[0].split(',').includes(s.host));
+  if (number >= 0) {
+    if (!lines.some((l) => l.split(' ')[0].split(',').includes(s.host) && l.endsWith(key)))
+      return failure(
+        origin,
         [
           '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@',
           '@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @',
           '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@',
-          `Host key for ${s.hote} has changed and you have requested strict checking.`,
-          `Offending ED25519 key in ${origine.resoudre(fichier)}:${numero + 1}`,
+          `Host key for ${s.host} has changed and you have requested strict checking.`,
+          `Offending ED25519 key in ${origin.resolve(file)}:${number + 1}`,
           'Host key verification failed.',
         ].join('\n'),
       );
-    return authentifier(origine, sauts, suite, i);
+    return authenticate(origin, jumps, next, i);
   }
-  const demander = (invite: string) =>
-    origine.demander(invite, (reponse) => {
-      if (reponse === 'yes' || reponse === empreinte(s.machine, generation)) {
-        const ligne = `${s.hote} ${cle}`;
-        const n = origine.trouver(fichier);
-        if (n?.type === 'fichier') n.contenu = [origine.lire(fichier), ligne].filter(Boolean).join('\n');
-        else origine.placer('ssh', fichier, { type: 'fichier', contenu: ligne, lignes: true, mode: 'rw-------' });
-        return [`Warning: Permanently added '${s.hote}' (ED25519) to the list of known hosts.`, authentifier(origine, sauts, suite, i)]
+  const ask = (prompt: string) =>
+    origin.ask(prompt, (response) => {
+      if (response === 'yes' || response === fingerprint(s.machine, generation)) {
+        const line = `${s.host} ${key}`;
+        const n = origin.find(file);
+        if (n?.type === 'fichier') n.content = [origin.read(file), line].filter(Boolean).join('\n');
+        else origin.place('ssh', file, { type: 'fichier', content: line, lines: true, mode: 'rw-------' });
+        return [`Warning: Permanently added '${s.host}' (ED25519) to the list of known hosts.`, authenticate(origin, jumps, next, i)]
           .filter(Boolean)
           .join('\n');
       }
-      if (reponse === 'no') return 'Host key verification failed.';
-      demander("Please type 'yes', 'no' or the fingerprint:");
+      if (response === 'no') return 'Host key verification failed.';
+      ask("Please type 'yes', 'no' or the fingerprint:");
       return '';
     });
-  demander('Are you sure you want to continue connecting (yes/no/[fingerprint])?');
+  ask('Are you sure you want to continue connecting (yes/no/[fingerprint])?');
   return [
-    `The authenticity of host '${s.hote} (${s.machine.adresse})' can't be established.`,
-    `ED25519 key fingerprint is ${empreinte(s.machine, generation)}.`,
+    `The authenticity of host '${s.host} (${s.machine.address})' can't be established.`,
+    `ED25519 key fingerprint is ${fingerprint(s.machine, generation)}.`,
     'This key is not known by any other names.',
   ].join('\n');
 }
 
-function authentifier(origine: Shell, sauts: Saut[], suite: () => string, i: number): string {
-  const s = sauts[i];
-  const avertissements: string[] = [];
+function authenticate(origin: Shell, jumps: Jump[], next: () => string, i: number): string {
+  const s = jumps[i];
+  const warnings: string[] = [];
   // La configuration appliquée par sshd d'en face (s'il est simulé), sinon celle par défaut de Debian.
-  const config: Record<string, string> = s.shell.etat.sshd?.charge ?? {};
-  const compteExiste = !!s.shell.comptes.utilisateurs[s.utilisateur];
-  const permis = compteExiste && autorise(config, s.utilisateur);
+  const config: Record<string, string> = s.shell.state.sshd?.load ?? {};
+  const existsAccount = !!s.shell.accounts.users[s.user];
+  const permitted = existsAccount && allowed(config, s.user);
   // Les clés du poste, tenues à jour sur les machines de l'histoire (d'où que parte la connexion).
-  const poste = origine.hote === 'poste' ? origine : (s.shell.principal.etat.poste?.() as Shell | undefined);
-  if (poste && s.shell.principal.chapitre.clesDuJoueur) recopierCles(poste, s.shell);
-  const autorisees = clesAutorisees(s.shell, s.utilisateur);
-  const chemins = [...new Set([...s.identites, ...CLES_PAR_DEFAUT])];
-  const refus = `${s.utilisateur}@${s.hote}: Permission denied (${methodes(config) || 'publickey'}).`;
-  const avec = (texte: string) => [...avertissements, texte].filter(Boolean).join('\n');
+  const workstation = origin.host === 'poste' ? origin : (s.shell.principal.state.poste?.() as Shell | undefined);
+  if (workstation && s.shell.principal.chapter.playerKeys) copyKeys(workstation, s.shell);
+  const authorised = allowedKeys(s.shell, s.user);
+  const paths = [...new Set([...s.identities, ...KEYS_BY_DEFAULT])];
+  const refusal = `${s.user}@${s.host}: Permission denied (${methods(config) || 'publickey'}).`;
+  const withValue = (text: string) => [...warnings, text].filter(Boolean).join('\n');
 
   // Après les clés : le mot de passe (trois essais), si sshd l'accepte.
-  const motDePasse = (): string => {
-    if (config.passwordauthentication !== 'yes') return echec(origine, avec(refus));
-    const essayer = (essai: number) =>
-      origine.demander(
-        `${s.utilisateur}@${s.hote}'s password:`,
-        (reponse) => {
-          if (permis && reponse === motDePasseDe(s.shell, s.utilisateur)) {
-            noter(s, 'motDePasse');
-            return franchir(origine, sauts, suite, i + 1);
+  const password = (): string => {
+    if (config.passwordauthentication !== 'yes') return failure(origin, withValue(refusal));
+    const attempt = (trial: number) =>
+      origin.ask(
+        `${s.user}@${s.host}'s password:`,
+        (response) => {
+          if (permitted && response === passwordFor(s.shell, s.user)) {
+            note(s, 'motDePasse');
+            return pass(origin, jumps, next, i + 1);
           }
-          if (essai >= 3) return echec(origine, refus);
-          essayer(essai + 1);
+          if (trial >= 3) return failure(origin, refusal);
+          attempt(trial + 1);
           return 'Permission denied, please try again.';
         },
         true,
       );
-    essayer(1);
-    return avec('');
+    attempt(1);
+    return withValue('');
   };
 
   // Les clés, une à une : celles demandées (-i, IdentityFile), puis celles par défaut.
-  const cle = (k: number): string => {
-    if (k >= chemins.length) return motDePasse();
-    const chemin = chemins[k];
-    const n = origine.trouver(chemin);
+  const key = (k: number): string => {
+    if (k >= paths.length) return password();
+    const path = paths[k];
+    const n = origin.find(path);
     if (!n || n.type !== 'fichier') {
-      if (s.identites.includes(chemin)) avertissements.push(`Warning: Identity file ${chemin} not accessible: No such file or directory.`);
-      return cle(k + 1);
+      if (s.identities.includes(path)) warnings.push(`Warning: Identity file ${path} not accessible: No such file or directory.`);
+      return key(k + 1);
     }
     const mode = n.mode ?? 'rw-r--r--';
     if (mode.slice(3) !== '------') {
-      avertissements.push(
+      warnings.push(
         '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@',
         '@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @',
         '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@',
-        `Permissions ${octal(mode)} for '${origine.resoudre(chemin)}' are too open.`,
+        `Permissions ${octal(mode)} for '${origin.resolve(path)}' are too open.`,
         'It is required that your private key files are NOT accessible by others.',
         'This private key will be ignored.',
       );
-      return cle(k + 1);
+      return key(k + 1);
     }
-    const texte = (n as Fichier).contenu;
-    if (!permis || typeof texte !== 'string' || !autorisees.includes(publiqueDe(texte))) return cle(k + 1);
+    const text = (n as File).content;
+    if (!permitted || typeof text !== 'string' || !authorised.includes(publicFor(text))) return key(k + 1);
     // Une clé protégée par une phrase de passe : ssh la demande avant de s'en servir.
-    const phrase = (origine.etat.phrasesDePasse as Record<string, string> | undefined)?.[origine.resoudre(chemin)];
+    const phrase = (origin.state.phrasesDePasse as Record<string, string> | undefined)?.[origin.resolve(path)];
     if (!phrase) {
-      noter(s, 'cle');
-      return avec(franchir(origine, sauts, suite, i + 1));
+      note(s, 'cle');
+      return withValue(pass(origin, jumps, next, i + 1));
     }
-    origine.demander(
-      `Enter passphrase for key '${origine.resoudre(chemin)}':`,
-      (reponse) => {
-        if (reponse !== phrase) return cle(k + 1);
-        noter(s, 'cle');
-        return franchir(origine, sauts, suite, i + 1);
+    origin.ask(
+      `Enter passphrase for key '${origin.resolve(path)}':`,
+      (response) => {
+        if (response !== phrase) return key(k + 1);
+        note(s, 'cle');
+        return pass(origin, jumps, next, i + 1);
       },
       true,
     );
-    return avec('');
+    return withValue('');
   };
-  return cle(0);
+  return key(0);
 }
 
 /**
@@ -328,27 +328,27 @@ function authentifier(origine: Shell, sauts: Saut[], suite: () => string, i: num
  * privée sans phrase de passe doit être autorisée en face. Renvoie la
  * session d'en face, ou le message d'erreur de ssh.
  */
-export function connecterSansQuestion(origine: Shell, cible: string, verifierCleHote = true): { shell: Shell } | { erreur: string } {
-  const sauts = preparer(origine, cible);
-  if (typeof sauts === 'string') return { erreur: sauts };
-  const lignes = (origine.lire('~/.ssh/known_hosts') ?? '').split('\n');
-  for (const s of sauts) {
-    const cle = cleHote(s.machine, '');
-    const connue = lignes.filter((l) => l.split(' ')[0].split(',').includes(s.hote));
-    if (verifierCleHote && !connue.length) return { erreur: 'Host key verification failed.' };
-    if (verifierCleHote && !connue.some((l) => l.endsWith(cle))) return { erreur: `Host key for ${s.hote} has changed and you have requested strict checking.\nHost key verification failed.` };
-    const config: Record<string, string> = s.shell.etat.sshd?.charge ?? {};
-    const permis = !!s.shell.comptes.utilisateurs[s.utilisateur] && autorise(config, s.utilisateur);
-    const autorisees = clesAutorisees(s.shell, s.utilisateur);
-    const phrases = (origine.etat.phrasesDePasse as Record<string, string> | undefined) ?? {};
-    const ok = [...new Set([...s.identites, ...CLES_PAR_DEFAUT])].some((chemin) => {
-      const n = origine.trouver(chemin);
-      if (!n || n.type !== 'fichier' || typeof n.contenu !== 'string') return false;
-      if ((n.mode ?? 'rw-r--r--').slice(3) !== '------' || phrases[origine.resoudre(chemin)]) return false;
-      return permis && autorisees.includes(publiqueDe(n.contenu));
+export function connectWithoutQuestion(origin: Shell, target: string, checkHostKey = true): { shell: Shell } | { error: string } {
+  const jumps = prepare(origin, target);
+  if (typeof jumps === 'string') return { error: jumps };
+  const lines = (origin.read('~/.ssh/known_hosts') ?? '').split('\n');
+  for (const s of jumps) {
+    const key = hostKey(s.machine, '');
+    const known = lines.filter((l) => l.split(' ')[0].split(',').includes(s.host));
+    if (checkHostKey && !known.length) return { error: 'Host key verification failed.' };
+    if (checkHostKey && !known.some((l) => l.endsWith(key))) return { error: `Host key for ${s.host} has changed and you have requested strict checking.\nHost key verification failed.` };
+    const config: Record<string, string> = s.shell.state.sshd?.load ?? {};
+    const permitted = !!s.shell.accounts.users[s.user] && allowed(config, s.user);
+    const authorised = allowedKeys(s.shell, s.user);
+    const phrases = (origin.state.phrasesDePasse as Record<string, string> | undefined) ?? {};
+    const ok = [...new Set([...s.identities, ...KEYS_BY_DEFAULT])].some((path) => {
+      const n = origin.find(path);
+      if (!n || n.type !== 'fichier' || typeof n.content !== 'string') return false;
+      if ((n.mode ?? 'rw-r--r--').slice(3) !== '------' || phrases[origin.resolve(path)]) return false;
+      return permitted && authorised.includes(publicFor(n.content));
     });
-    if (!ok) return { erreur: `${s.utilisateur}@${s.hote}: Permission denied (${methodes(config) || 'publickey'}).` };
-    noter(s, 'cle');
+    if (!ok) return { error: `${s.user}@${s.host}: Permission denied (${methods(config) || 'publickey'}).` };
+    note(s, 'cle');
   }
-  return { shell: sauts.at(-1)!.shell };
+  return { shell: jumps.at(-1)!.shell };
 }

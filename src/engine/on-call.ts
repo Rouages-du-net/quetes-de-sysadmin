@@ -6,13 +6,13 @@
 // de score à partager, en texte (comme on partage une grille de mots).
 // Le moteur ne lit pas l'heure : l'interface donne la date et le temps écoulé.
 
-import { HISTOIRES } from './chapters';
-import { PARCOURS } from './paths';
+import { STORIES } from './chapters';
+import { PATH } from './paths';
 
 // 30 minutes d'indisponibilité tolérée pour l'incident.
 export const BUDGET_MS = 30 * 60 * 1000;
-export const COUT_INDICE_MS = 3 * 60 * 1000;
-export const COUT_ERREUR_MS = 20 * 1000;
+export const MS_HINT_COST = 3 * 60 * 1000;
+export const MS_ERROR_COST = 20 * 1000;
 
 // Les incidents possibles : les chapitres des parcours qui parlent de pannes,
 // sans ceux des premiers pas (il faut déjà savoir se servir du terminal), ni
@@ -20,16 +20,16 @@ export const COUT_ERREUR_MS = 20 * 1000;
 // laissé (clés, ~/.ssh/config : surveillePoste, clesDuJoueur) : ouverts
 // directement, ils pourraient être impossibles à finir.
 const THEMES = ['production', 'web', 'securite', 'reseau', 'sauvegardes', 'deploiement'];
-const autonome = (id: string) => {
-  const c = HISTOIRES.flatMap((h) => h.chapitres).find((x) => x.id === id)!;
-  return !c.surveillePoste && !c.clesDuJoueur;
+const standalone = (id: string) => {
+  const c = STORIES.flatMap((h) => h.chapters).find((x) => x.id === id)!;
+  return !c.watchesWorkstation && !c.playerKeys;
 };
-export const INCIDENTS: string[] = [...new Set(PARCOURS.filter((p) => THEMES.includes(p.id)).flatMap((p) => p.chapitres))].filter(autonome);
+export const INCIDENTS: string[] = [...new Set(PATH.filter((p) => THEMES.includes(p.id)).flatMap((p) => p.chapters))].filter(standalone);
 
 // FNV-1a : un nombre stable tiré d'un texte.
-function condense(texte: string): number {
+function condensed(text: string): number {
   let h = 0x811c9dc5;
-  for (let i = 0; i < texte.length; i++) h = Math.imul(h ^ texte.charCodeAt(i), 0x01000193) >>> 0;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
   return h;
 }
 
@@ -38,27 +38,27 @@ function condense(texte: string): number {
  * des histoires déjà ouvertes (les histoires s'ouvrent peu à peu) ; null
  * s'il n'y en a encore aucun.
  */
-export function incidentDuJour(date: string, ouverte: (histoire: string) => boolean = () => true): string | null {
-  const possibles = INCIDENTS.filter((id) => ouverte(HISTOIRES[placeDe(id).h].id));
-  return possibles.length ? possibles[condense(`incident-${date}`) % possibles.length] : null;
+export function dayIncident(date: string, isOpen: (story: string) => boolean = () => true): string | null {
+  const possible = INCIDENTS.filter((id) => isOpen(STORIES[placeFor(id).h].id));
+  return possible.length ? possible[condensed(`incident-${date}`) % possible.length] : null;
 }
 
 /** Où trouver ce chapitre : son histoire et son rang (pour l'ouvrir). */
-export function placeDe(chapitre: string): { h: number; c: number } {
-  const h = HISTOIRES.findIndex((x) => x.chapitres.some((c) => c.id === chapitre));
-  return { h, c: HISTOIRES[h].chapitres.findIndex((c) => c.id === chapitre) };
+export function placeFor(chapter: string): { h: number; c: number } {
+  const h = STORIES.findIndex((x) => x.chapters.some((c) => c.id === chapter));
+  return { h, c: STORIES[h].chapters.findIndex((c) => c.id === chapter) };
 }
 
 /** Ce qui reste du budget (en ms, jamais négatif). */
-export function budgetRestant(ecoule: number, indices: number, erreurs: number): number {
-  return Math.max(0, BUDGET_MS - ecoule - indices * COUT_INDICE_MS - erreurs * COUT_ERREUR_MS);
+export function remainingBudget(elapsed: number, hints: number, errors: number): number {
+  return Math.max(0, BUDGET_MS - elapsed - hints * MS_HINT_COST - errors * MS_ERROR_COST);
 }
 
 /** La jauge en cinq cases, comme une grille de mots : 🟩 pleine, 🟨 entamée, ⬜ vide. */
-export function jauge(restant: number): string {
-  const part = (restant / BUDGET_MS) * 5;
+export function gauge(remaining: number): string {
+  const part = (remaining / BUDGET_MS) * 5;
   return Array.from({ length: 5 }, (_, i) => (part >= i + 1 ? '🟩' : part > i ? '🟨' : '⬜')).join('');
 }
 
 /** Le pourcentage du budget qui reste (entier). */
-export const pourcent = (restant: number) => Math.round((restant / BUDGET_MS) * 100);
+export const percent = (remaining: number) => Math.round((remaining / BUDGET_MS) * 100);

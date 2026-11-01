@@ -9,27 +9,27 @@
 // bannière « Linux royaume ». Les mots de passe des histoires aussi
 // (farine-2028 → flour-2028, voir mots-de-passe.ftl), partout où ils sont un mot entier.
 import { readFileSync } from 'node:fs';
-import { motDePasse, nom } from '../src/engine/world';
-import { MACHINES, nomMachine, POSTE } from '../src/engine/machines';
-import type { Traduire } from '../src/texts';
+import { password, name } from '../src/engine/world';
+import { MACHINES, machineName, WORKSTATION } from '../src/engine/machines';
+import type { Translate } from '../src/texts';
 
-const IDS = [POSTE, ...MACHINES].map((m) => m.nom).join('|');
-const HOTE = new RegExp(`(?<=@|\\bid_|^Linux |^\\s*(?:Host|HostName|ProxyJump)\\s+|-J )(${IDS})(?![\\w-])|(?<![\\w./-])(${IDS})(?=\\.internal\\b|:[~/\\w])`, 'gim');
-const RESEAU = /^\s*(?:sudo\s+)?(?:ssh|ssh-copy-id|sftp|scp|rsync|nc|ping|nmap|host|dig|curl)\b/;
+const IDS = [WORKSTATION, ...MACHINES].map((m) => m.name).join('|');
+const HOST = new RegExp(`(?<=@|\\bid_|^Linux |^\\s*(?:Host|HostName|ProxyJump)\\s+|-J )(${IDS})(?![\\w-])|(?<![\\w./-])(${IDS})(?=\\.internal\\b|:[~/\\w])`, 'gim');
+const NETWORK = /^\s*(?:sudo\s+)?(?:ssh|ssh-copy-id|sftp|scp|rsync|nc|ping|nmap|host|dig|curl)\b/;
 
-const MOTS_DE_PASSE = [...readFileSync(new URL('../src/texts/fr/mots-de-passe.ftl', import.meta.url), 'utf8').matchAll(/^mdp-(\S+) =/gm)].map((m) => m[1]);
-const MDP = new RegExp(`(?<![\\w-])(${MOTS_DE_PASSE.join('|')})(?![\\w-])`, 'g');
+const PASSWORDS = [...readFileSync(new URL('../src/texts/fr/mots-de-passe.ftl', import.meta.url), 'utf8').matchAll(/^mdp-(\S+) =/gm)].map((m) => m[1]);
+const MDP = new RegExp(`(?<![\\w-])(${PASSWORDS.join('|')})(?![\\w-])`, 'g');
 
-export const machinesDansLaLangue = (t: Traduire, ligne: string) => {
-  const traduite = ligne.replace(HOTE, (m) => nomMachine(t, m)).replace(MDP, (m) => motDePasse(t, m));
-  return RESEAU.test(traduite) ? traduite.replace(new RegExp(`(?<![\\w./-])(${IDS})(?![\\w./-])`, 'g'), (m) => nomMachine(t, m)) : traduite;
+export const machinesInLanguage = (t: Translate, line: string) => {
+  const translated = line.replace(HOST, (m) => machineName(t, m)).replace(MDP, (m) => password(t, m));
+  return NETWORK.test(translated) ? translated.replace(new RegExp(`(?<![\\w./-])(${IDS})(?![\\w./-])`, 'g'), (m) => machineName(t, m)) : translated;
 };
 
-export const dansLaLangue = (t: Traduire, ligne: string) =>
-  machinesDansLaLangue(
+export const inLanguage = (t: Translate, line: string) =>
+  machinesInLanguage(
     t,
-    ligne.replace(/[^\s/"'*@:]+/g, (m) => {
-      const copie = /^(.+?)(_\d+)$/.exec(m);
-      return copie && nom(t, copie[1]) !== copie[1] ? nom(t, copie[1]) + copie[2] : nom(t, m);
+    line.replace(/[^\s/"'*@:]+/g, (m) => {
+      const copyOf = /^(.+?)(_\d+)$/.exec(m);
+      return copyOf && name(t, copyOf[1]) !== copyOf[1] ? name(t, copyOf[1]) + copyOf[2] : name(t, m);
     }),
   );

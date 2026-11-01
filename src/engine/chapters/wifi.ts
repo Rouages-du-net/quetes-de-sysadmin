@@ -17,112 +17,112 @@
 // Sources : https://wiki.freeradius.org/modules/Rlm_ldap, https://wiki.freeradius.org/config/Users,
 // https://www.rfc-editor.org/rfc/rfc3580, https://wiki.debian.org/FreeRADIUS
 
-import { d, f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { BASE, MDP_ADMIN, annuaireDeDepart, serviceSlapd } from './directory';
-import { hacherAvecSel, type Annuaire } from '../ldap';
-import { dans } from '../lan';
-import { auDemarrage, nft, traverser } from '../nftables';
-import { chargerRadius, lireRadius, radius, traiter, vlanDe, type Demande } from '../radius';
+import { d, f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { BASE, MDP_ADMIN, departureDirectory, serviceSlapd } from './directory';
+import { hashWithSalt, type Directory } from '../ldap';
+import { inside } from '../lan';
+import { toBoot, nft, traverse } from '../nftables';
+import { loadRadius, readRadius, radius, handle, vlanFor, type Request } from '../radius';
 import { serviceWg } from '../commands/wireguard';
-import { monterWg } from '../wireguard';
+import { mountWg } from '../wireguard';
 import { systemd } from '../systemd';
 import { FLUX_DMZ } from './dmz';
-import { ANNEXE, PORTABLE_MALIK, WG0_ANNEXE } from './annex';
+import { ANNEX, MALIK_LAPTOP, ANNEX_WG0 } from './annex';
 import { MALIK } from './remote-work';
-import { sshOuvert } from './zones';
+import { openSsh } from './zones';
 import {
-  comptesRuche,
+  hiveAccounts,
   DNSMASQ_VLAN,
-  initialiserPareFeu,
+  initialiseFirewall,
   INTERFACES_DMZ,
-  lanAvecDmz,
+  lanWithDmz,
   M,
-  mondeRuche,
-  MOT_DE_PASSE,
+  hiveWorld,
+  PASSWORD,
   NFTABLES_DMZ,
-  SYSCTL_ROUTEUR,
-  systemdRuche,
-  planRuche,
+  ROUTER_SYSCTL,
+  hiveSystemd,
+  hivePlan,
 } from './hive';
 
-const BORNE = '10.10.30.20';
-export const SECRET_BORNE = 'Rk7-borne-2028';
+const BOUND = '10.10.30.20';
+export const BOUND_SECRET = 'Rk7-borne-2028';
 
 /** L'annuaire à la fin de « L'annuaire » : Camille partie, Sami arrivé ; et Léo, de l'équipe du café. */
-function annuaireDuWifi(): Annuaire {
-  const a = annuaireDeDepart();
-  a.entrees = a.entrees.filter((e) => !e.dn.startsWith('uid=camille'));
-  for (const e of a.entrees) if (e.attrs.memberuid) e.attrs.memberuid = e.attrs.memberuid.filter((m) => m !== 'camille');
-  const personne = (uid: string, prenom: string, nom: string, numero: number, mdp: string, sel: string) => ({
+function wifiDirectory(): Directory {
+  const a = departureDirectory();
+  a.inputs = a.inputs.filter((e) => !e.dn.startsWith('uid=camille'));
+  for (const e of a.inputs) if (e.attrs.memberuid) e.attrs.memberuid = e.attrs.memberuid.filter((m) => m !== 'camille');
+  const person = (uid: string, firstName: string, name: string, number: number, mdp: string, salt: string) => ({
     dn: `uid=${uid},ou=people,${BASE}`,
     attrs: {
       objectclass: ['inetOrgPerson', 'posixAccount'],
       uid: [uid],
-      cn: [`${prenom} ${nom}`],
-      sn: [nom],
-      givenname: [prenom],
-      uidnumber: [String(numero)],
+      cn: [`${firstName} ${name}`],
+      sn: [name],
+      givenname: [firstName],
+      uidnumber: [String(number)],
       gidnumber: ['10000'],
       homedirectory: [`/home/${uid}`],
-      userpassword: [hacherAvecSel(mdp, sel)],
+      userpassword: [hashWithSalt(mdp, salt)],
     },
   });
-  a.entrees.push(
-    personne('sami', 'Sami', 'Lemaire', 10004, 'choisi-par-sami', 'Mn34Op56'),
-    personne('leo', 'Leo', 'Garnier', 10005, 'cafe-leo-2028', 'Qr78St90'),
+  a.inputs.push(
+    person('sami', 'Sami', 'Lemaire', 10004, 'choisi-par-sami', 'Mn34Op56'),
+    person('leo', 'Leo', 'Garnier', 10005, 'cafe-leo-2028', 'Qr78St90'),
   );
-  for (const g of a.entrees.filter((e) => e.dn.startsWith('cn=equipe') || e.dn.startsWith('cn=bureaux'))) g.attrs.memberuid.push('sami');
-  a.entrees.find((e) => e.dn.startsWith('cn=equipe'))!.attrs.memberuid.push('leo');
+  for (const g of a.inputs.filter((e) => e.dn.startsWith('cn=equipe') || e.dn.startsWith('cn=bureaux'))) g.attrs.memberuid.push('sami');
+  a.inputs.find((e) => e.dn.startsWith('cn=equipe'))!.attrs.memberuid.push('leo');
   return a;
 }
 
 // Ce que la borne demande (chaque personne avec son mot de passe), et la réponse attendue.
-const ESSAIS: { utilisateur: string; motDePasse: string; attendu: number | 'refus' }[] = [
-  { utilisateur: 'malik', motDePasse: 'ruche-malik-2027', attendu: 10 },
-  { utilisateur: 'ines', motDePasse: 'ruche-ines-2027', attendu: 10 },
-  { utilisateur: 'sami', motDePasse: 'choisi-par-sami', attendu: 10 },
-  { utilisateur: 'leo', motDePasse: 'cafe-leo-2028', attendu: 20 },
-  { utilisateur: 'camille', motDePasse: 'ruche-camille-2026', attendu: 'refus' },
+const ATTEMPTS: { user: string; password: string; expected: number | 'refus' }[] = [
+  { user: 'malik', password: 'ruche-malik-2027', expected: 10 },
+  { user: 'ines', password: 'ruche-ines-2027', expected: 10 },
+  { user: 'sami', password: 'choisi-par-sami', expected: 10 },
+  { user: 'leo', password: 'cafe-leo-2028', expected: 20 },
+  { user: 'camille', password: 'ruche-camille-2026', expected: 'refus' },
 ];
-const demande = (e: (typeof ESSAIS)[number]): Demande => ({
-  client: BORNE,
+const request = (e: (typeof ATTEMPTS)[number]): Request => ({
+  client: BOUND,
   iif: 'eth1.30',
-  secret: SECRET_BORNE,
-  utilisateur: e.utilisateur,
-  motDePasse: e.motDePasse,
+  secret: BOUND_SECRET,
+  user: e.user,
+  password: e.password,
 });
-const DEMANDES = ESSAIS.map(demande);
+const REQUESTS = ATTEMPTS.map(request);
 
-type O = Parameters<typeof traiter>[2];
-const reponses = (j: Jeu, o: O = {}) => ESSAIS.map((e) => ({ e, r: traiter(j, demande(e), o) }));
-const conforme = (j: Jeu, o: O = {}) => reponses(j, o).every(({ e, r }) => (e.attendu === 'refus' ? r.quoi !== 'accept' : vlanDe(r) === e.attendu));
+type O = Parameters<typeof handle>[2];
+const responses = (j: Game, o: O = {}) => ATTEMPTS.map((e) => ({ e, r: handle(j, request(e), o) }));
+const compliant = (j: Game, o: O = {}) => responses(j, o).every(({ e, r }) => (e.expected === 'refus' ? r.what !== 'accept' : vlanFor(r) === e.expected));
 // Au prochain démarrage : la configuration des fichiers, nftables d'après son fichier, slapd et freeradius activés.
-const auDemarrageRadius = (j: Jeu): O => {
+const toRadiusBoot = (j: Game): O => {
   const sd = systemd(j);
   return {
-    conf: lireRadius(j).conf,
-    ruleset: (sd?.services.nftables?.active && auDemarrage(j)) || { tables: [] },
-    marche: !!sd?.services.freeradius?.active,
+    conf: readRadius(j).conf,
+    ruleset: (sd?.services.nftables?.active && toBoot(j)) || { tables: [] },
+    works: !!sd?.services.freeradius?.active,
   };
 };
 
 // Le paquet de la borne passe-t-il la chaîne input ?
-const borneFiltree = (j: Jeu) =>
-  !traverser(nft(j), 'input', 'filter', {
+const filteredBound = (j: Game) =>
+  !traverse(nft(j), 'input', 'filter', {
     iif: 'eth1.30',
     oif: '',
-    saddr: BORNE,
+    saddr: BOUND,
     daddr: '10.10.30.1',
     proto: 'udp',
     sport: 41234,
     dport: 1812,
     ct: 'new',
-    taille: 120,
-  }).passe;
-const charge = (j: Jeu) => radius(j)?.conf ?? null;
-const pasRelu = (j: Jeu) => JSON.stringify(lireRadius(j).conf) !== JSON.stringify(charge(j)) && !!lireRadius(j).conf;
-const malik = (j: Jeu) => reponses(j)[0].r;
+    size: 120,
+  }).pass;
+const load = (j: Game) => radius(j)?.conf ?? null;
+const notReread = (j: Game) => JSON.stringify(readRadius(j).conf) !== JSON.stringify(load(j)) && !!readRadius(j).conf;
+const malik = (j: Game) => responses(j)[0].r;
 
 const CLIENTS = `# -*- text -*-
 ##
@@ -225,15 +225,15 @@ const SITE = `server default {
 	}
 }`;
 
-const lien = (cible: string) => f('', { lignes: true, lien: cible, proprio: 'root', groupe: 'freerad' });
-const conf = (texte: string) => f(texte, { lignes: true, proprio: 'freerad', groupe: 'freerad', mode: 'rw-r-----' });
-const dossier = (enfants: Parameters<typeof d>[0]) => d(enfants, undefined, { proprio: 'freerad', groupe: 'freerad', mode: 'rwxr-s---' });
+const link = (target: string) => f('', { lines: true, link: target, owner: 'root', group: 'freerad' });
+const conf = (text: string) => f(text, { lines: true, owner: 'freerad', group: 'freerad', mode: 'rw-r-----' });
+const directory = (children: Parameters<typeof d>[0]) => d(children, undefined, { owner: 'freerad', group: 'freerad', mode: 'rwxr-s---' });
 
-export const wifi: Chapitre = {
+export const wifi: Chapter = {
   id: 'wifi',
-  numero: 8,
-  plan: planRuche({ teletravail: true, dmz: true, annexe: true, annuaire: true, wifi: true }),
-  commandes: [
+  number: 8,
+  plan: hivePlan({ remoteWork: true, dmz: true, annex: true, directory: true, wifi: true }),
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -257,126 +257,126 @@ export const wifi: Chapitre = {
     'freeradius',
     'radtest',
   ],
-  maison: M,
-  accueil: 'courriel_malik.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_malik.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: () => {
-    const c = comptesRuche();
-    c.utilisateurs.openldap = { uid: 112, groupe: 'openldap', maison: '/var/lib/ldap', shell: '/bin/false' };
-    c.utilisateurs.freerad = { uid: 113, groupe: 'freerad', maison: '/etc/freeradius', shell: '/bin/false' };
-    c.groupes.openldap = { gid: 118, membres: [] };
-    c.groupes.freerad = { gid: 119, membres: [] };
+  password: PASSWORD,
+  accounts: () => {
+    const c = hiveAccounts();
+    c.users.openldap = { uid: 112, group: 'openldap', home: '/var/lib/ldap', shell: '/bin/false' };
+    c.users.freerad = { uid: 113, group: 'freerad', home: '/etc/freeradius', shell: '/bin/false' };
+    c.groups.openldap = { gid: 118, members: [] };
+    c.groups.freerad = { gid: 119, members: [] };
     return c;
   },
-  etat: () => {
-    const sd = systemdRuche({
+  state: () => {
+    const sd = hiveSystemd({
       'wg-quick@wg0': serviceWg('wg0'),
       slapd: serviceSlapd(),
       freeradius: {
         description: 'FreeRADIUS multi-protocol policy server',
         active: true,
         executable: 'freeradius',
-        processus: [{ pid: 1630, utilisateur: 'freerad', cpu: 0, mem: 0.6, commande: '/usr/sbin/freeradius -f' }],
-        verifier: (j) => {
-          const { erreurs } = lireRadius(j);
-          return erreurs.length ? erreurs : null;
+        process: [{ pid: 1630, user: 'freerad', cpu: 0, mem: 0.6, command: '/usr/sbin/freeradius -f' }],
+        check: (j) => {
+          const { errors } = readRadius(j);
+          return errors.length ? errors : null;
         },
-        charger: (j) => chargerRadius(j, DEMANDES),
+        load: (j) => loadRadius(j, REQUESTS),
       },
     });
-    for (const nom of ['nftables', 'wg-quick@wg0']) Object.assign(sd.services[nom], { active: true, etat: 'active' });
+    for (const name of ['nftables', 'wg-quick@wg0']) Object.assign(sd.services[name], { active: true, state: 'active' });
     return {
-      lan: { ...lanAvecDmz(), flux: FLUX_DMZ.map(({ permis: _, ...x }) => x), distants: [MALIK, ANNEXE] },
+      lan: { ...lanWithDmz(), flux: FLUX_DMZ.map(({ permitted: _, ...x }) => x), remotes: [MALIK, ANNEX] },
       systemd: sd,
       nft: { tables: [] },
       wg: {},
-      ldap: annuaireDuWifi(),
+      ldap: wifiDirectory(),
       ldapAdmin: MDP_ADMIN,
-      radiusDemandes: DEMANDES,
+      radiusDemandes: REQUESTS,
     };
   },
-  initialiser: (j) => {
-    initialiserPareFeu(j);
-    monterWg(j, 'wg0', true);
-    chargerRadius(j, DEMANDES);
+  initialise: (j) => {
+    initialiseFirewall(j);
+    mountWg(j, 'wg0', true);
+    loadRadius(j, REQUESTS);
   },
-  creerMonde: (t) =>
-    mondeRuche({
+  createWorld: (t) =>
+    hiveWorld({
       interfaces: INTERFACES_DMZ,
       dnsmasq: DNSMASQ_VLAN,
       nftables: NFTABLES_DMZ,
-      sysctl: SYSCTL_ROUTEUR,
+      sysctl: ROUTER_SYSCTL,
       etc: {
-        wireguard: d({ 'wg0.conf': f(WG0_ANNEXE, { lignes: true, proprio: 'root', mode: 'rw-------' }) }, undefined, {
-          proprio: 'root',
+        wireguard: d({ 'wg0.conf': f(ANNEX_WG0, { lines: true, owner: 'root', mode: 'rw-------' }) }, undefined, {
+          owner: 'root',
           mode: 'rwx------',
         }),
         freeradius: d(
           {
-            '3.0': dossier({
+            '3.0': directory({
               'clients.conf': conf(CLIENTS),
-              'mods-available': dossier({
+              'mods-available': directory({
                 ldap: conf(MODULE_LDAP),
                 eap: conf('eap {\n\tdefault_eap_type = ttls\n}'),
                 files: conf('files {\n}'),
                 pap: conf('pap {\n}'),
               }),
-              'mods-enabled': dossier({
-                eap: lien('../mods-available/eap'),
-                files: lien('../mods-available/files'),
-                pap: lien('../mods-available/pap'),
+              'mods-enabled': directory({
+                eap: link('../mods-available/eap'),
+                files: link('../mods-available/files'),
+                pap: link('../mods-available/pap'),
               }),
-              'mods-config': dossier({ files: dossier({ authorize: conf(AUTHORIZE) }) }),
-              'sites-enabled': dossier({ default: conf(SITE) }),
+              'mods-config': directory({ files: directory({ authorize: conf(AUTHORIZE) }) }),
+              'sites-enabled': directory({ default: conf(SITE) }),
             }),
           },
           undefined,
-          { proprio: 'root' },
+          { owner: 'root' },
         ),
       },
-      maison: {
+      home: {
         'courriel_malik.txt': f(t('wifi-courriel-malik')),
-        'borne-bureaux.txt': f(t('wifi-borne', { secret: SECRET_BORNE, adresse: BORNE }), { lignes: true }),
-        'malik-laptop.conf': f(PORTABLE_MALIK, { lignes: true }),
+        'borne-bureaux.txt': f(t('wifi-borne', { secret: BOUND_SECRET, adresse: BOUND }), { lines: true }),
+        'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },
     }),
-  evenements: [
+  events: [
     {
       // Dès que la borne est déclarée : ses demandes ne passent pas la chaîne input.
       id: 'filtre',
-      condition: (j) => borneFiltree(j) && !!lireRadius(j).conf?.clients.some((c) => dans(BORNE, c.reseau)),
+      condition: (j) => filteredBound(j) && !!readRadius(j).conf?.clients.some((c) => inside(BOUND, c.network)),
       message: (j) => j.t('wifi-evenement-filtre'),
     },
-    { id: 'pas-relu', condition: (j) => !borneFiltree(j) && pasRelu(j), message: (j) => j.t('wifi-evenement-pas-relu') },
+    { id: 'pas-relu', condition: (j) => !filteredBound(j) && notReread(j), message: (j) => j.t('wifi-evenement-pas-relu') },
     {
       id: 'inconnue',
-      condition: (j) => !borneFiltree(j) && !pasRelu(j) && malik(j).quoi === 'rien' && systemd(j)?.services.freeradius?.etat === 'active',
+      condition: (j) => !filteredBound(j) && !notReread(j) && malik(j).what === 'rien' && systemd(j)?.services.freeradius?.state === 'active',
       message: (j) => j.t('wifi-evenement-inconnue'),
     },
     {
       id: 'sans-ldap',
-      condition: (j) => !pasRelu(j) && malik(j).quoi === 'reject' && !charge(j)?.ldap,
+      condition: (j) => !notReread(j) && malik(j).what === 'reject' && !load(j)?.ldap,
       message: (j) => j.t('wifi-evenement-sans-ldap'),
     },
     {
       id: 'anonyme',
-      condition: (j) => !pasRelu(j) && malik(j).quoi === 'reject' && !!charge(j)?.ldap && !charge(j)?.ldap?.identite,
+      condition: (j) => !notReread(j) && malik(j).what === 'reject' && !!load(j)?.ldap && !load(j)?.ldap?.identity,
       message: (j) => j.t('wifi-evenement-anonyme'),
     },
     {
       id: 'groupes',
-      condition: (j) => !pasRelu(j) && malik(j).quoi === 'accept' && vlanDe(malik(j)) !== 10 && !charge(j)?.ldap?.parMemberUid,
+      condition: (j) => !notReread(j) && malik(j).what === 'accept' && vlanFor(malik(j)) !== 10 && !load(j)?.ldap?.byMemberUid,
       message: (j) => j.t('wifi-evenement-groupes'),
     },
     {
       id: 'ordre',
-      condition: (j) => !pasRelu(j) && vlanDe(malik(j)) === 20 && !!charge(j)?.ldap?.parMemberUid,
+      condition: (j) => !notReread(j) && vlanFor(malik(j)) === 20 && !!load(j)?.ldap?.byMemberUid,
       message: (j) => j.t('wifi-evenement-ordre'),
     },
-    { id: 'ssh', condition: (j) => !sshOuvert(nft(j)), message: (j) => j.t('zones-evenement-ssh') },
-    { id: 'en-place', condition: (j) => conforme(j) && !conforme(j, auDemarrageRadius(j)), message: (j) => j.t('wifi-evenement-en-place') },
-    { id: 'fin', condition: (j) => conforme(j) && sshOuvert(nft(j)) && conforme(j, auDemarrageRadius(j)), message: (j) => j.t('wifi-evenement-fin') },
+    { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-evenement-ssh') },
+    { id: 'en-place', condition: (j) => compliant(j) && !compliant(j, toRadiusBoot(j)), message: (j) => j.t('wifi-evenement-en-place') },
+    { id: 'fin', condition: (j) => compliant(j) && openSsh(nft(j)) && compliant(j, toRadiusBoot(j)), message: (j) => j.t('wifi-evenement-fin') },
   ],
 };

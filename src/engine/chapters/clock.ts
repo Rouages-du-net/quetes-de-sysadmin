@@ -11,47 +11,47 @@
 // https://www.freedesktop.org/software/systemd/man/latest/timesyncd.conf.html,
 // https://wiki.debian.org/TimeZoneChanges
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../world';
-import type { Jeu } from '../shell';
-import { nouveauSystemd, systemd } from '../systemd';
-import { desynchroniser, heure, majAffichage, synchroniser } from '../time';
+import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import type { Game } from '../shell';
+import { newSystemd, systemd } from '../systemd';
+import { desync, timeOfDay, displayUpdate, synchronise } from '../time';
 
 const M = '/home/vous';
 // La vraie heure : lundi 30 août 2027, 9 h 12 à Paris (heure locale lue comme UTC).
-const MAINTENANT = Date.UTC(2027, 7, 30, 9, 12, 0);
+const NOW = Date.UTC(2027, 7, 30, 9, 12, 0);
 
-const comptes = (): Comptes => ({
-  utilisateurs: {
-    root: { uid: 0, groupe: 'root', maison: '/root' },
-    radio: { uid: 996, groupe: 'radio', maison: '/var/lib/radio', shell: '/usr/sbin/nologin' },
-    'systemd-timesync': { uid: 997, groupe: 'systemd-timesync', maison: '/', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, groupe: 'vous' },
-    zoe: { uid: 1001, groupe: 'zoe' },
+const accounts = (): Accounts => ({
+  users: {
+    root: { uid: 0, group: 'root', home: '/root' },
+    radio: { uid: 996, group: 'radio', home: '/var/lib/radio', shell: '/usr/sbin/nologin' },
+    'systemd-timesync': { uid: 997, group: 'systemd-timesync', home: '/', shell: '/usr/sbin/nologin' },
+    vous: { uid: 1000, group: 'vous' },
+    zoe: { uid: 1001, group: 'zoe' },
   },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    adm: { gid: 4, membres: ['vous', 'zoe'] },
-    sudo: { gid: 27, membres: ['vous', 'zoe'] },
-    radio: { gid: 996, membres: [] },
-    'systemd-timesync': { gid: 997, membres: [] },
-    vous: { gid: 1000, membres: [] },
-    zoe: { gid: 1001, membres: [] },
+  groups: {
+    root: { gid: 0, members: [] },
+    adm: { gid: 4, members: ['vous', 'zoe'] },
+    sudo: { gid: 27, members: ['vous', 'zoe'] },
+    radio: { gid: 996, members: [] },
+    'systemd-timesync': { gid: 997, members: [] },
+    vous: { gid: 1000, members: [] },
+    zoe: { gid: 1001, members: [] },
   },
 });
 
-const sd = (j: Jeu) => systemd(j)!;
-const h = (j: Jeu) => heure(j)!;
-const timesyncd = (j: Jeu) => sd(j).services['systemd-timesyncd'];
-const aParis = (j: Jeu) => h(j).fuseau === 'Europe/Paris';
+const sd = (j: Game) => systemd(j)!;
+const h = (j: Game) => timeOfDay(j)!;
+const timesyncd = (j: Game) => sd(j).services['systemd-timesyncd'];
+const aParis = (j: Game) => h(j).zone === 'Europe/Paris';
 // cron lit le fuseau à son démarrage : a-t-il redémarré depuis le changement ?
-const cronAJour = (j: Jeu) =>
-  h(j).fuseauChange !== undefined && sd(j).services.cron.etat === 'active' && sd(j).services.cron.depuis >= h(j).fuseauChange!;
-const commandes = (j: Jeu, ...noms: string[]) => j.derniere.commandes.some((c) => noms.includes(c[0]) || (c[0] === 'sudo' && noms.includes(c[1])));
+const dayACron = (j: Game) =>
+  h(j).changeZone !== undefined && sd(j).services.cron.state === 'active' && sd(j).services.cron.since >= h(j).changeZone!;
+const commands = (j: Game, ...names: string[]) => j.last.commands.some((c) => names.includes(c[0]) || (c[0] === 'sudo' && names.includes(c[1])));
 
-export const horloge: Chapitre = {
+export const clock: Chapter = {
   id: 'horloge',
-  numero: 4,
-  commandes: [
+  number: 4,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -74,56 +74,56 @@ export const horloge: Chapitre = {
     'date',
     'timedatectl',
   ],
-  maison: M,
-  accueil: 'message_de_zoe.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_de_zoe.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'antenne-2027',
-  comptes,
-  etat: () => ({
-    systemd: nouveauSystemd('radio', Date.UTC(2027, 7, 28, 22, 40, 0), MAINTENANT, {
+  password: 'antenne-2027',
+  accounts,
+  state: () => ({
+    systemd: newSystemd('radio', Date.UTC(2027, 7, 28, 22, 40, 0), NOW, {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,
         executable: 'sshd',
-        processus: [{ pid: 598, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+        process: [{ pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
       'radio-stream': {
         description: 'Radio Quartier stream relay',
         active: true,
         executable: 'stream',
-        processus: [{ pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/stream --config /etc/radio/stream.conf' }],
+        process: [{ pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' }],
       },
       cron: {
         description: 'Regular background program processing daemon',
         active: true,
         executable: 'cron',
-        processus: [{ pid: 611, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' }],
+        process: [{ pid: 611, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' }],
       },
       'systemd-timesyncd': {
         description: 'Network Time Synchronization',
         active: false,
-        etat: 'inactive',
+        state: 'inactive',
         executable: 'systemd-timesyncd',
-        processus: [{ pid: 702, utilisateur: 'systemd-timesync', cpu: 0, mem: 0.1, commande: '/lib/systemd/systemd-timesyncd' }],
-        charger: synchroniser,
-        arret: desynchroniser,
+        process: [{ pid: 702, user: 'systemd-timesync', cpu: 0, mem: 0.1, command: '/lib/systemd/systemd-timesyncd' }],
+        load: synchronise,
+        stop: desync,
       },
     }),
     processus: [
-      { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
-      { pid: 598, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
-      { pid: 611, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' },
-      { pid: 1730, utilisateur: 'radio', cpu: 3.2, mem: 1.1, commande: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
+      { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
+      { pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
+      { pid: 611, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
+      { pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
     // La machine : en UTC, et son horloge retarde de 9 minutes.
     heure: {
-      fuseau: 'Etc/UTC',
-      decalage: -9 * 60_000 - 17_000,
-      synchronise: false,
-      serveurs: { 'ntp.hosting.example': '192.0.2.123' },
+      zone: 'Etc/UTC',
+      offset: -9 * 60_000 - 17_000,
+      synchronised: false,
+      servers: { 'ntp.hosting.example': '192.0.2.123' },
       // Les serveurs NTP publics sont filtrés par l'hébergeur ; l'ancien ne répond plus.
-      muets: {
+      muted: {
         'ntp.old-hosting.example': '198.51.100.7',
         '0.debian.pool.ntp.org': '203.0.113.10',
         '1.debian.pool.ntp.org': '203.0.113.11',
@@ -135,64 +135,64 @@ export const horloge: Chapitre = {
       radio: '# m h  dom mon dow   command\n0 6 * * 1-5 /usr/local/bin/record matinale 180\n0 23 * * * /usr/local/bin/record nuit 240\n',
     },
   }),
-  initialiser: (j) => majAffichage(j),
+  initialise: (j) => displayUpdate(j),
   // Chaque commande, quelques secondes passent ; sans NTP, l'horloge prend encore du retard.
-  apresCommande: (j) => {
-    sd(j).horloge += 5000;
-    if (!h(j).synchronise) h(j).decalage -= 1000;
-    majAffichage(j);
+  afterCommand: (j) => {
+    sd(j).clock += 5000;
+    if (!h(j).synchronised) h(j).offset -= 1000;
+    displayUpdate(j);
   },
-  creerMonde: (t) => {
-    const racine: Droits = { proprio: 'root' };
-    const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
-    const fichier = (texte: string, droits: Droits = racine) => f(texte, { lignes: true, ...droits });
-    return lieu({
-      etc: lieu({
-        ...fichiersComptes(),
-        hostname: fichier('radio'),
-        timezone: fichier('Etc/UTC'),
-        localtime: f('', { proprio: 'root', lien: '/usr/share/zoneinfo/Etc/UTC' }),
-        systemd: lieu({ 'timesyncd.conf': fichier(t('horloge-timesyncd-conf')), system: lieu({}) }),
+  createWorld: (t) => {
+    const root: Rights = { owner: 'root' };
+    const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
+    const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
+    return place({
+      etc: place({
+        ...accountsFiles(),
+        hostname: file('radio'),
+        timezone: file('Etc/UTC'),
+        localtime: f('', { owner: 'root', link: '/usr/share/zoneinfo/Etc/UTC' }),
+        systemd: place({ 'timesyncd.conf': file(t('horloge-timesyncd-conf')), system: place({}) }),
       }),
-      home: lieu({
+      home: place({
         vous: d({ 'message_de_zoe.txt': f(t('horloge-message-de-zoe')), 'mail_hebergeur.txt': f(t('horloge-mail-hebergeur')) }),
-        zoe: lieu({}, { proprio: 'zoe', mode: 'rwx------' }),
+        zoe: place({}, { owner: 'zoe', mode: 'rwx------' }),
       }),
-      tmp: lieu({}, { proprio: 'root', mode: 'rwxrwxrwt' }),
-      usr: lieu({ local: lieu({ bin: lieu({ record: fichier(t('horloge-script-enregistrer'), { proprio: 'root', mode: 'rwxr-xr-x' }) }) }) }),
-      var: lieu({
-        log: lieu({
-          radio: lieu(
-            { 'record.log': f(t('horloge-journal-enregistrer'), { lignes: true, proprio: 'radio', groupe: 'adm', mode: 'rw-r-----' }) },
-            { proprio: 'radio', groupe: 'adm', mode: 'rwxr-x---' },
+      tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
+      usr: place({ local: place({ bin: place({ record: file(t('horloge-script-enregistrer'), { owner: 'root', mode: 'rwxr-xr-x' }) }) }) }),
+      var: place({
+        log: place({
+          radio: place(
+            { 'record.log': f(t('horloge-journal-enregistrer'), { lines: true, owner: 'radio', group: 'adm', mode: 'rw-r-----' }) },
+            { owner: 'radio', group: 'adm', mode: 'rwxr-x---' },
           ),
         }),
       }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'utc',
-      condition: (j) => commandes(j, 'date', 'timedatectl') && /\bUTC\b/.test(j.derniere.sortie) && !aParis(j),
+      condition: (j) => commands(j, 'date', 'timedatectl') && /\bUTC\b/.test(j.last.output) && !aParis(j),
       message: (j) => j.t('horloge-evenement-utc'),
     },
     {
       id: 'retard',
-      condition: (j) => commandes(j, 'timedatectl') && /synchronized: no/.test(j.derniere.sortie),
+      condition: (j) => commands(j, 'timedatectl') && /synchronized: no/.test(j.last.output),
       message: (j) => j.t('horloge-evenement-retard'),
     },
-    { id: 'manuel', condition: (j) => !!h(j).manuel && !h(j).synchronise, message: (j) => j.t('horloge-evenement-manuel') },
-    { id: 'muet', condition: (j) => timesyncd(j).etat === 'active' && !h(j).synchronise, message: (j) => j.t('horloge-evenement-muet') },
-    { id: 'synchro', condition: (j) => h(j).synchronise, message: (j) => j.t('horloge-evenement-synchro') },
-    { id: 'non-active', condition: (j) => h(j).synchronise && !timesyncd(j).active, message: (j) => j.t('horloge-evenement-non-active') },
+    { id: 'manuel', condition: (j) => !!h(j).manual && !h(j).synchronised, message: (j) => j.t('horloge-evenement-manuel') },
+    { id: 'muet', condition: (j) => timesyncd(j).state === 'active' && !h(j).synchronised, message: (j) => j.t('horloge-evenement-muet') },
+    { id: 'synchro', condition: (j) => h(j).synchronised, message: (j) => j.t('horloge-evenement-synchro') },
+    { id: 'non-active', condition: (j) => h(j).synchronised && !timesyncd(j).active, message: (j) => j.t('horloge-evenement-non-active') },
     {
       id: 'cron',
-      condition: (j) => aParis(j) && !cronAJour(j) && commandes(j, 'timedatectl', 'date', 'systemctl', 'crontab'),
+      condition: (j) => aParis(j) && !dayACron(j) && commands(j, 'timedatectl', 'date', 'systemctl', 'crontab'),
       message: (j) => j.t('horloge-evenement-cron'),
     },
     {
       id: 'fin',
-      condition: (j) => aParis(j) && h(j).synchronise && timesyncd(j).etat === 'active' && timesyncd(j).active && cronAJour(j),
+      condition: (j) => aParis(j) && h(j).synchronised && timesyncd(j).state === 'active' && timesyncd(j).active && dayACron(j),
       message: (j) => j.t('horloge-evenement-fin'),
     },
   ],

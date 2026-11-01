@@ -9,88 +9,88 @@
 // Chaque instance répond sur /health (200 ou 503, en JSON), comme le
 // recommandent les guides de déploiement (blue/green : https://martinfowler.com/bliki/BlueGreenDeployment.html).
 
-import { d, f, type Droits, type Noeud } from '../world';
-import type { Jeu } from '../shell';
+import { d, f, type Rights, type Node } from '../world';
+import type { Game } from '../shell';
 import type { DefinitionService } from '../systemd';
-import { requete, type Appli, type Configuration } from '../nginx';
-import { journaliser, systemd } from '../systemd';
-import { lireEnv } from '../compose';
+import { httpRequest, type App, type Configuration } from '../nginx';
+import { writeLog, systemd } from '../systemd';
+import { readEnv } from '../compose';
 
-export const KIOSQUE = '/srv/kiosk';
+export const KIOSK = '/srv/kiosk';
 export const ENV = '/etc/kiosk/kiosk.env';
 export const PORTS: Record<string, number> = { blue: 3001, green: 3002 };
 
-export interface VersionKiosque {
+export interface KioskVersion {
   // Les variables de configuration sans lesquelles elle ne fonctionne pas.
-  requiert: string[];
+  requires: string[];
   // Les pages qui plantent (un bogue que seul le vrai trafic révèle).
-  panne?: string[];
+  failure?: string[];
   // Le schéma de base de données qu'elle attend (et celui où elle le migre).
   schema: number;
 }
 
-export const VERSIONS: Record<string, VersionKiosque> = {
-  '1.4.2': { requiert: [], schema: 3 },
-  '1.5.0': { requiert: ['KIOSK_SMTP'], schema: 3 },
+export const VERSIONS: Record<string, KioskVersion> = {
+  '1.4.2': { requires: [], schema: 3 },
+  '1.5.0': { requires: ['KIOSK_SMTP'], schema: 3 },
   // La recherche dans les archives plante : /health n'en sait rien.
-  '1.6.0': { requiert: ['KIOSK_SMTP'], panne: ['/archives'], schema: 3 },
-  '1.6.1': { requiert: ['KIOSK_SMTP'], schema: 3 },
+  '1.6.0': { requires: ['KIOSK_SMTP'], failure: ['/archives'], schema: 3 },
+  '1.6.1': { requires: ['KIOSK_SMTP'], schema: 3 },
   // Migre la base au démarrage (schéma 4 : la colonne courriel devient email).
-  '2.0.0': { requiert: ['KIOSK_SMTP_URL'], schema: 4 },
-  '2.0.1': { requiert: ['KIOSK_SMTP_URL'], schema: 4 },
+  '2.0.0': { requires: ['KIOSK_SMTP_URL'], schema: 4 },
+  '2.0.1': { requires: ['KIOSK_SMTP_URL'], schema: 4 },
 };
 
 // La base du Kiosque : le schéma où elle en est (les migrations ne font qu'avancer).
-export const base = (j: Jeu): { schema: number } => (j.etat.kiosqueBase ??= { schema: 3 });
+export const base = (j: Game): { schema: number } => (j.state.kiosqueBase ??= { schema: 3 });
 
 export interface Instance {
   version: string;
   config: Record<string, string>;
 }
 
-export const instances = (j: Jeu): Record<string, Instance> => (j.etat.kiosk ??= {});
+export const instances = (j: Game): Record<string, Instance> => (j.state.kiosk ??= {});
 
 /** La version que vise le lien d'un emplacement (/srv/kiosk/green → versions/1.5.0). */
-export function versionDuLien(j: Jeu, couleur: string): string | null {
-  const lien = (j.trouver(`${KIOSQUE}/${couleur}`, false) as { lien?: string } | null)?.lien;
-  const nom = lien?.replace(/\/$/, '').split('/').at(-1);
-  return nom && VERSIONS[nom] && j.trouver(`${KIOSQUE}/${couleur}/serveur.js`)?.type === 'fichier' ? nom : null;
+export function linkVersion(j: Game, colour: string): string | null {
+  const link = (j.find(`${KIOSK}/${colour}`, false) as { link?: string } | null)?.link;
+  const name = link?.replace(/\/$/, '').split('/').at(-1);
+  return name && VERSIONS[name] && j.find(`${KIOSK}/${colour}/serveur.js`)?.type === 'fichier' ? name : null;
 }
 
 /** Le service systemd d'un emplacement. */
-export function serviceKiosque(couleur: string, pid: number, etat: 'active' | 'inactive' = 'active'): DefinitionService {
+export function kioskService(colour: string, pid: number, state: 'active' | 'inactive' = 'active'): DefinitionService {
   return {
-    description: `Gazette kiosk (${couleur})`,
-    etat,
-    active: etat === 'active',
+    description: `Gazette kiosk (${colour})`,
+    state,
+    active: state === 'active',
     executable: 'node',
-    processus: [{ pid, utilisateur: 'kiosk', cpu: 0.6, mem: 3.1, commande: `node ${KIOSQUE}/${couleur}/serveur.js` }],
-    verifier: (j) =>
-      versionDuLien(j, couleur)
+    process: [{ pid, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/${colour}/serveur.js` }],
+    check: (j) =>
+      linkVersion(j, colour)
         ? null
         : [
             `node:internal/modules/cjs/loader:1228`,
-            `Error: Cannot find module '${KIOSQUE}/${couleur}/serveur.js'`,
+            `Error: Cannot find module '${KIOSK}/${colour}/serveur.js'`,
             `  code: 'MODULE_NOT_FOUND'`,
             `Node.js v22.12.0`,
           ],
     // Au démarrage, le processus charge son code et sa configuration.
-    charger: (j) => {
-      const version = versionDuLien(j, couleur)!;
-      instances(j)[couleur] = { version, config: lireEnv(j.lire(ENV)) };
+    load: (j) => {
+      const version = linkVersion(j, colour)!;
+      instances(j)[colour] = { version, config: readEnv(j.read(ENV)) };
       const sd = systemd(j);
       if (!sd) return;
-      const ecrire = (message: string) => journaliser(sd, `kiosk-${couleur}.service`, 'node', pid, message, 6, false);
-      ecrire(`Kiosque ${version} starting (NODE_ENV=production)`);
+      const write = (message: string) => writeLog(sd, `kiosk-${colour}.service`, 'node', pid, message, 6, false);
+      write(`Kiosque ${version} starting (NODE_ENV=production)`);
       // Une version plus récente migre la base, comme les outils de migration
       // des frameworks : la base ne revient pas en arrière d'elle-même.
       const b = base(j);
       if (VERSIONS[version].schema > b.schema) {
-        for (let n = b.schema + 1; n <= VERSIONS[version].schema; n++) ecrire(`Running migration 00${n}_${MIGRATIONS[n] ?? 'update'}... done`);
-        ecrire(`Database schema is now at version ${VERSIONS[version].schema}`);
+        for (let n = b.schema + 1; n <= VERSIONS[version].schema; n++) write(`Running migration 00${n}_${MIGRATIONS[n] ?? 'update'}... done`);
+        write(`Database schema is now at version ${VERSIONS[version].schema}`);
         b.schema = VERSIONS[version].schema;
       }
-      ecrire(`Listening on http://127.0.0.1:${PORTS[couleur]}`);
+      write(`Listening on http://127.0.0.1:${PORTS[colour]}`);
     },
   };
 }
@@ -98,67 +98,67 @@ export function serviceKiosque(couleur: string, pid: number, etat: 'active' | 'i
 // Les migrations du Kiosque, par numéro de schéma.
 const MIGRATIONS: Record<number, string> = { 4: 'rename_abonnes_courriel_to_email' };
 
-const json = (code: number, objet: unknown) => ({ code, corps: JSON.stringify(objet), type: 'application/json; charset=utf-8' });
+const json = (code: number, object: unknown) => ({ code, body: JSON.stringify(object), type: 'application/json; charset=utf-8' });
 
 /** L'appli d'un emplacement, telle que nginx et curl la joignent. */
-export function appliKiosque(couleur: string): Appli {
+export function kioskApp(colour: string): App {
   return {
-    service: `kiosk-${couleur}`,
+    service: `kiosk-${colour}`,
     pages: {},
-    repondre: (j, chemin) => {
-      const ici = instances(j)[couleur];
-      const v = VERSIONS[ici.version];
-      const manque = v.requiert.filter((k) => !ici.config[k]);
+    answer: (j, path) => {
+      const here = instances(j)[colour];
+      const v = VERSIONS[here.version];
+      const missing = v.requires.filter((k) => !here.config[k]);
       // Une base migrée plus loin que ce que la version connaît : elle ne sait plus la lire.
-      const tropRecente = base(j).schema > v.schema;
-      if (chemin === '/health')
-        return tropRecente
-          ? json(503, { status: 'error', version: ici.version, error: `database schema ${base(j).schema} is newer than supported (${v.schema})` })
-          : manque.length
-            ? json(503, { status: 'error', version: ici.version, error: `${manque[0]} is not set` })
-            : json(200, { status: 'ok', version: ici.version });
-      if (tropRecente || manque.length || v.panne?.includes(chemin)) return { code: 500, corps: 'Internal Server Error' };
-      if (chemin === '/' || chemin === '') return { code: 200, corps: j.t('kiosque-accueil', { version: ici.version }) };
-      if (chemin === '/archives') return { code: 200, corps: j.t('kiosque-archives', { version: ici.version }) };
+      const recentTrop = base(j).schema > v.schema;
+      if (path === '/health')
+        return recentTrop
+          ? json(503, { status: 'error', version: here.version, error: `database schema ${base(j).schema} is newer than supported (${v.schema})` })
+          : missing.length
+            ? json(503, { status: 'error', version: here.version, error: `${missing[0]} is not set` })
+            : json(200, { status: 'ok', version: here.version });
+      if (recentTrop || missing.length || v.failure?.includes(path)) return { code: 500, body: 'Internal Server Error' };
+      if (path === '/' || path === '') return { code: 200, body: j.t('kiosque-accueil', { version: here.version }) };
+      if (path === '/archives') return { code: 200, body: j.t('kiosque-archives', { version: here.version }) };
       return {
         code: 404,
-        corps: `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET ${chemin}</pre>\n</body>\n</html>`,
+        body: `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET ${path}</pre>\n</body>\n</html>`,
       };
     },
   };
 }
 
 /** La santé d'un emplacement (null : il ne répond pas). */
-export function sante(j: Jeu, couleur: string): { status: string; version: string } | null {
-  const appli = appliKiosque(couleur);
-  if (j.etat.systemd?.services[appli.service]?.etat !== 'active' || !instances(j)[couleur]) return null;
-  return JSON.parse(appli.repondre!(j, '/health', { entetes: {}, adresse: '127.0.0.1' }).corps);
+export function health(j: Game, colour: string): { status: string; version: string } | null {
+  const app = kioskApp(colour);
+  if (j.state.systemd?.services[app.service]?.state !== 'active' || !instances(j)[colour]) return null;
+  return JSON.parse(app.answer!(j, '/health', { headers: {}, address: '127.0.0.1' }).body);
 }
 
 /** Les fichiers d'une version (/srv/kiosk/versions/1.5.0). */
-export function dossierVersion(t: Jeu['t'], version: string, notes?: string): Noeud {
-  const droits: Droits = { proprio: 'kiosk', groupe: 'kiosk' };
+export function versionDirectory(t: Game['t'], version: string, notes?: string): Node {
+  const rights: Rights = { owner: 'kiosk', group: 'kiosk' };
   return d(
     {
-      'serveur.js': f(`// Kiosque ${version}\nrequire('./app').listen(process.env.PORT);`, { lignes: true, ...droits }),
-      'package.json': f(JSON.stringify({ name: 'kiosk', version, main: 'serveur.js' }, null, 2), { lignes: true, ...droits }),
-      ...(notes ? { 'NOTES.txt': f(t(notes), droits) } : {}),
+      'serveur.js': f(`// Kiosque ${version}\nrequire('./app').listen(process.env.PORT);`, { lines: true, ...rights }),
+      'package.json': f(JSON.stringify({ name: 'kiosk', version, main: 'serveur.js' }, null, 2), { lines: true, ...rights }),
+      ...(notes ? { 'NOTES.txt': f(t(notes), rights) } : {}),
     },
     undefined,
-    droits,
+    rights,
   );
 }
 
 /** Le fichier d'unité systemd d'un emplacement (pour cat /etc/systemd/system/…). */
-export const uniteKiosque = (couleur: string) => `[Unit]
-Description=Gazette kiosk (${couleur})
+export const kioskUnit = (colour: string) => `[Unit]
+Description=Gazette kiosk (${colour})
 After=network.target
 
 [Service]
 User=kiosk
-Environment=PORT=${PORTS[couleur]}
+Environment=PORT=${PORTS[colour]}
 EnvironmentFile=${ENV}
-ExecStart=/usr/bin/node ${KIOSQUE}/${couleur}/serveur.js
+ExecStart=/usr/bin/node ${KIOSK}/${colour}/serveur.js
 Restart=on-failure
 
 [Install]
@@ -168,32 +168,32 @@ WantedBy=multi-user.target`;
  * La part du trafic de /kiosk/ que reçoit chaque emplacement, d'après la
  * configuration chargée de nginx (proxy_pass direct, ou upstream et ses poids).
  */
-export function repartition(j: Jeu): Record<string, number> {
-  const config: Configuration | null = j.etat.nginx?.charge ?? null;
-  const proxy = config?.serveurs.flatMap((s) => s.locations).find((l) => l.chemin === '/kiosk/')?.proxy ?? '';
-  const hote = /^https?:\/\/([^/]+)/.exec(proxy)?.[1] ?? '';
-  const couleur = (adresse: string) => Object.keys(PORTS).find((c) => adresse.endsWith(`:${PORTS[c]}`));
-  const amont = config?.amonts?.[hote];
+export function distribution(j: Game): Record<string, number> {
+  const config: Configuration | null = j.state.nginx?.load ?? null;
+  const proxy = config?.servers.flatMap((s) => s.locations).find((l) => l.path === '/kiosk/')?.proxy ?? '';
+  const host = /^https?:\/\/([^/]+)/.exec(proxy)?.[1] ?? '';
+  const colour = (address: string) => Object.keys(PORTS).find((c) => address.endsWith(`:${PORTS[c]}`));
+  const upstream = config?.upstreams?.[host];
   const parts: Record<string, number> = {};
-  if (!amont) {
-    const c = couleur(hote);
+  if (!upstream) {
+    const c = colour(host);
     if (c) parts[c] = 1;
     return parts;
   }
-  const actifs = amont.serveurs.filter((x) => !x.eteint && !x.secours);
-  const total = actifs.reduce((t, x) => t + x.poids, 0);
-  for (const x of actifs) {
-    const c = couleur(x.adresse);
-    if (c) parts[c] = (parts[c] ?? 0) + x.poids / total;
+  const active = upstream.servers.filter((x) => !x.off && !x.rescue);
+  const total = active.reduce((t, x) => t + x.weight, 0);
+  for (const x of active) {
+    const c = colour(x.address);
+    if (c) parts[c] = (parts[c] ?? 0) + x.weight / total;
   }
   return parts;
 }
 
-export interface Lot {
+export interface Batch {
   total: number;
   // Par version servie : visites et erreurs (5xx).
-  parVersion: Record<string, { visites: number; erreurs: number }>;
-  erreurs: number;
+  byVersion: Record<string, { visits: number; errors: number }>;
+  errors: number;
 }
 
 /**
@@ -201,30 +201,30 @@ export interface Lot {
  * archives) qui passent par nginx et s'écrivent dans access.log ; l'horloge
  * avance. Adresses de documentation (RFC 5737).
  */
-export function lecteurs(j: Jeu, nombre = 60): Lot {
+export function readers(j: Game, count = 60): Batch {
   const sd = systemd(j)!;
-  const lot: Lot = { total: 0, parVersion: {}, erreurs: 0 };
-  for (let i = 0; i < nombre; i++) {
-    const chemin = i % 3 === 1 ? '/kiosk/archives' : '/kiosk/';
+  const batch: Batch = { total: 0, byVersion: {}, errors: 0 };
+  for (let i = 0; i < count; i++) {
+    const path = i % 3 === 1 ? '/kiosk/archives' : '/kiosk/';
     const client = {
-      adresse: `198.51.100.${((i * 37) % 240) + 10}`,
-      temps: sd.horloge + i * 60_000,
+      address: `198.51.100.${((i * 37) % 240) + 10}`,
+      time: sd.clock + i * 60_000,
       agent: 'Mozilla/5.0 (X11; Linux x86_64; rv:139.0) Gecko/20100101 Firefox/139.0',
     };
-    j.etat.nginxDernierAmont = null;
-    const r = requete(j, 'gazette.example', chemin, 80, true, client);
-    const port = Number(String(j.etat.nginxDernierAmont ?? '').split(':')[1]);
-    const couleur = Object.keys(PORTS).find((c) => PORTS[c] === port);
-    const version = couleur ? instances(j)[couleur]?.version : undefined;
-    lot.total++;
-    const erreur = !r || r.code >= 500;
-    if (erreur) lot.erreurs++;
+    j.state.nginxDernierAmont = null;
+    const r = httpRequest(j, 'gazette.example', path, 80, true, client);
+    const port = Number(String(j.state.nginxDernierAmont ?? '').split(':')[1]);
+    const colour = Object.keys(PORTS).find((c) => PORTS[c] === port);
+    const version = colour ? instances(j)[colour]?.version : undefined;
+    batch.total++;
+    const error = !r || r.code >= 500;
+    if (error) batch.errors++;
     if (version) {
-      const v = (lot.parVersion[version] ??= { visites: 0, erreurs: 0 });
-      v.visites++;
-      if (erreur) v.erreurs++;
+      const v = (batch.byVersion[version] ??= { visits: 0, errors: 0 });
+      v.visits++;
+      if (error) v.errors++;
     }
   }
-  sd.horloge += nombre * 60_000;
-  return lot;
+  sd.clock += count * 60_000;
+  return batch;
 }

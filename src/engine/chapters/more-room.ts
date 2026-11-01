@@ -15,35 +15,35 @@
 // https://manpages.debian.org/trixie/mdadm/mdadm.conf.5.en.html,
 // https://wiki.debian.org/SoftwareRAID
 
-import { f, type Chapitre } from '../world';
-import type { Jeu, Shell } from '../shell';
-import { majDev } from '../storage';
-import { lvm, pvsDe, tailleLv } from '../lvm';
+import { f, type Chapter } from '../world';
+import type { Game, Shell } from '../shell';
+import { devUpdate } from '../storage';
+import { lvm, pvsFor, lvSize } from '../lvm';
 import { uuidMdadm } from '../commands/storage';
-import { avantCommandeLabo, comptesLabo, etatLabo, M, MOT_DE_PASSE, mondeLabo, noyauLabo, st } from './lab';
+import { beforeLabCommand, labAccounts, labState, M, PASSWORD, labWorld, labKernel, st } from './lab';
 
 const CONF = '/etc/mdadm/mdadm.conf';
-const BESOIN = 1.5e12;
+const NEED = 1.5e12;
 
-const photos = (j: Jeu) => lvm(st(j)).vgs.labo.lvs.photos;
+const photos = (j: Game) => lvm(st(j)).vgs.labo.lvs.photos;
 // La place libre sur /srv, comme df : la taille du système de fichiers moins ce qu'il contient.
-const libre = (j: Jeu) => photos(j).fs - (j as Shell).taille(j.trouver('/srv')!);
+const freeMem = (j: Game) => photos(j).fs - (j as Shell).size(j.find('/srv')!);
 // Les grappes créées pendant le chapitre.
-const nouvelles = (j: Jeu) => Object.entries(st(j).grappes).filter(([n]) => n !== 'md0' && n !== 'md1');
+const fresh = (j: Game) => Object.entries(st(j).arrays).filter(([n]) => n !== 'md0' && n !== 'md1');
 // Un disque seul (pas une grappe) dans le groupe labo : la redondance est perdue.
-const seuls = (j: Jeu) => pvsDe(st(j), 'labo').filter((pv) => !st(j).grappes[pv]);
-const etendu = (j: Jeu) => pvsDe(st(j), 'labo').some((pv) => nouvelles(j).some(([n]) => n === pv));
-const lignesArray = (j: Jeu) => (j.lire(CONF) ?? '').split('\n').filter((l) => /^\s*ARRAY\b/.test(l));
-const compte = (j: Jeu, uuid: string) => lignesArray(j).filter((l) => l.includes(uuidMdadm(uuid))).length;
-const doublons = (j: Jeu) => Object.values(st(j).grappes).some((g) => compte(j, g.uuid) > 1);
-const conf = (j: Jeu) => nouvelles(j).length > 0 && nouvelles(j).every(([, g]) => compte(j, g.uuid) === 1) && !doublons(j);
-const initramfs = (j: Jeu) => conf(j) && j.etat.initramfs?.mdadm === j.lire(CONF);
-const agrandi = (j: Jeu) => libre(j) >= BESOIN;
+const only = (j: Game) => pvsFor(st(j), 'labo').filter((pv) => !st(j).arrays[pv]);
+const extended = (j: Game) => pvsFor(st(j), 'labo').some((pv) => fresh(j).some(([n]) => n === pv));
+const arrayLines = (j: Game) => (j.read(CONF) ?? '').split('\n').filter((l) => /^\s*ARRAY\b/.test(l));
+const account = (j: Game, uuid: string) => arrayLines(j).filter((l) => l.includes(uuidMdadm(uuid))).length;
+const duplicates = (j: Game) => Object.values(st(j).arrays).some((g) => account(j, g.uuid) > 1);
+const conf = (j: Game) => fresh(j).length > 0 && fresh(j).every(([, g]) => account(j, g.uuid) === 1) && !duplicates(j);
+const initramfs = (j: Game) => conf(j) && j.state.initramfs?.mdadm === j.read(CONF);
+const grown = (j: Game) => freeMem(j) >= NEED;
 
-export const agrandir: Chapitre = {
+export const grow: Chapter = {
   id: 'agrandir',
-  numero: 3,
-  commandes: [
+  number: 3,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -77,54 +77,54 @@ export const agrandir: Chapitre = {
     'resize2fs',
     'update-initramfs',
   ],
-  maison: M,
-  accueil: 'message_d_odile.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_d_odile.txt',
+  names: true,
   final: 'fin',
-  etapes: ['plein', 'lvm', 'grappe', 'etendu', 'agrandi', 'conf', 'fin'],
-  motDePasse: MOT_DE_PASSE,
-  comptes: comptesLabo,
-  etat: () => etatLabo('place'),
-  initialiser: (j) => {
-    noyauLabo(j, 'place');
-    majDev(j);
+  steps: ['plein', 'lvm', 'grappe', 'etendu', 'agrandi', 'conf', 'fin'],
+  password: PASSWORD,
+  accounts: labAccounts,
+  state: () => labState('place'),
+  initialise: (j) => {
+    labKernel(j, 'place');
+    devUpdate(j);
   },
-  creerMonde: (t) => mondeLabo(t, { 'message_d_odile.txt': f(t('agrandir-message-d-odile')) }, { hiver: true }),
-  avantCommande: avantCommandeLabo,
-  apresCommande: (j) => majDev(j),
-  evenements: [
+  createWorld: (t) => labWorld(t, { 'message_d_odile.txt': f(t('agrandir-message-d-odile')) }, { winter: true }),
+  beforeCommand: beforeLabCommand,
+  afterCommand: (j) => devUpdate(j),
+  events: [
     {
       id: 'plein',
-      condition: (j) => /\b9\d% \/srv$/m.test(j.derniere.sortie),
+      condition: (j) => /\b9\d% \/srv$/m.test(j.last.output),
       message: (j) => j.t('agrandir-evenement-plein'),
     },
     {
       id: 'lvm',
-      condition: (j) => /VFree|PFree|LSize/.test(j.derniere.sortie),
+      condition: (j) => /VFree|PFree|LSize/.test(j.last.output),
       message: (j) => j.t('agrandir-evenement-lvm'),
     },
-    { id: 'seul', condition: (j) => seuls(j).length > 0, message: (j) => j.t('agrandir-evenement-seul', { disque: `/dev/${seuls(j)[0]}` }) },
+    { id: 'seul', condition: (j) => only(j).length > 0, message: (j) => j.t('agrandir-evenement-seul', { disque: `/dev/${only(j)[0]}` }) },
     {
       id: 'grappe',
-      condition: (j) => nouvelles(j).some(([, g]) => g.membres.length === 2),
-      message: (j) => j.t('agrandir-evenement-grappe', { grappe: `/dev/${nouvelles(j)[0][0]}` }),
+      condition: (j) => fresh(j).some(([, g]) => g.members.length === 2),
+      message: (j) => j.t('agrandir-evenement-grappe', { grappe: `/dev/${fresh(j)[0][0]}` }),
     },
-    { id: 'etendu', condition: etendu, message: (j) => j.t('agrandir-evenement-etendu') },
+    { id: 'etendu', condition: extended, message: (j) => j.t('agrandir-evenement-etendu') },
     {
       id: 'lv-seul',
-      condition: (j) => tailleLv(photos(j)) - photos(j).fs > 1e9,
+      condition: (j) => lvSize(photos(j)) - photos(j).fs > 1e9,
       message: (j) => j.t('agrandir-evenement-lv-seul'),
     },
     {
       id: 'agrandi',
-      condition: (j) => agrandi(j) && seuls(j).length === 0,
+      condition: (j) => grown(j) && only(j).length === 0,
       message: (j) => j.t('agrandir-evenement-agrandi'),
     },
-    { id: 'doublons', condition: doublons, message: (j) => j.t('agrandir-evenement-doublons') },
+    { id: 'doublons', condition: duplicates, message: (j) => j.t('agrandir-evenement-doublons') },
     { id: 'conf', condition: conf, message: (j) => j.t('agrandir-evenement-conf') },
     {
       id: 'fin',
-      condition: (j) => agrandi(j) && seuls(j).length === 0 && etendu(j) && initramfs(j),
+      condition: (j) => grown(j) && only(j).length === 0 && extended(j) && initramfs(j),
       message: (j) => j.t('agrandir-evenement-fin'),
     },
   ],

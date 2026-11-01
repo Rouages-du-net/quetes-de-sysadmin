@@ -13,33 +13,33 @@
 // https://nginx.org/en/docs/switches.html, https://nginx.org/en/docs/http/request_processing.html,
 // https://www.gnu.org/software/tar/manual/, https://man.openbsd.org/ssh-keygen
 
-import { chemin, d, f, fichiersComptes, type Chapitre, type Comptes, type Fichier } from '../world';
-import type { Jeu } from '../shell';
-import type { Traduire } from '../../texts';
-import { nouveauSystemd, systemd } from '../systemd';
-import { requete } from '../nginx';
+import { path, d, f, accountsFiles, type Chapter, type Accounts, type File } from '../world';
+import type { Game } from '../shell';
+import type { Translate } from '../../texts';
+import { newSystemd, systemd } from '../systemd';
+import { httpRequest } from '../nginx';
 
 const M = '/home/vous';
-const SAUVEGARDES = '/mnt/sauvegarde';
+const BACKUPS = '/mnt/sauvegarde';
 const SITE = 'medialibrary.example';
 const ROBOT = '198.51.100.77';
 // Les sauvegardes de chaque nuit (0 h 30) ; celle de cette nuit a été coupée
 // par l'incendie (0 h 47).
 const ARCHIVES = ['2026-10-21', '2026-10-22', '2026-10-23'];
-const archive = (jour: string) => `${SAUVEGARDES}/medialibrary-${jour}.tar.gz`;
+const archive = (day: string) => `${BACKUPS}/medialibrary-${day}.tar.gz`;
 
-const comptes = (): Comptes => ({
-  utilisateurs: {
-    root: { uid: 0, groupe: 'root', maison: '/root' },
-    'www-data': { uid: 33, groupe: 'www-data', maison: '/var/www', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, groupe: 'vous' },
+const accounts = (): Accounts => ({
+  users: {
+    root: { uid: 0, group: 'root', home: '/root' },
+    'www-data': { uid: 33, group: 'www-data', home: '/var/www', shell: '/usr/sbin/nologin' },
+    vous: { uid: 1000, group: 'vous' },
   },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    adm: { gid: 4, membres: ['vous'] },
-    sudo: { gid: 27, membres: ['vous'] },
-    'www-data': { gid: 33, membres: [] },
-    vous: { gid: 1000, membres: [] },
+  groups: {
+    root: { gid: 0, members: [] },
+    adm: { gid: 4, members: ['vous'] },
+    sudo: { gid: 27, members: ['vous'] },
+    'www-data': { gid: 33, members: [] },
+    vous: { gid: 1000, members: [] },
   },
 });
 
@@ -60,39 +60,39 @@ const CONF_SITE = `server {
     }
 }`;
 
-const bloques = (t: Traduire) => `# ${t('premier-jour-bloques-commentaire')}
+const blocked = (t: Translate) => `# ${t('premier-jour-bloques-commentaire')}
 deny 203.0.113.5;
 deny 192.0.2.99;
 deny ${ROBOT};`;
 
 // La page d'accueil dans chaque sauvegarde : 1 (mercredi), 2 (jeudi), 3 (vendredi, perdue).
-const accueil = (t: Traduire, version: number) => t(`incendie-site-index-${version}`);
+const welcome = (t: Translate, version: number) => t(`incendie-site-index-${version}`);
 
-function contenuArchive(t: Traduire, version: number): Record<string, Fichier> {
-  const fichier = (texte: string): Fichier => ({ type: 'fichier', contenu: texte, lignes: true, proprio: 'root', groupe: 'root' });
+function archiveContent(t: Translate, version: number): Record<string, File> {
+  const file = (text: string): File => ({ type: 'fichier', content: text, lines: true, owner: 'root', group: 'root' });
   return {
-    'etc/nginx/blocked.conf': fichier(bloques(t)),
-    'etc/nginx/sites-available/medialibrary': fichier(CONF_SITE),
-    'etc/nginx/sites-enabled/medialibrary': fichier(CONF_SITE),
-    'var/www/medialibrary/index.html': fichier(accueil(t, version)),
-    'var/www/medialibrary/horaires.html': fichier(t('incendie-site-horaires')),
+    'etc/nginx/blocked.conf': file(blocked(t)),
+    'etc/nginx/sites-available/medialibrary': file(CONF_SITE),
+    'etc/nginx/sites-enabled/medialibrary': file(CONF_SITE),
+    'var/www/medialibrary/index.html': file(welcome(t, version)),
+    'var/www/medialibrary/horaires.html': file(t('incendie-site-horaires')),
   };
 }
 
-const sauvegarde = (t: Traduire, version: number, taille: number, tronquee?: number) =>
-  f('', { proprio: 'root', taille, archive: { fichiers: contenuArchive(t, version), compresse: true, tronquee } });
+const backup = (t: Translate, version: number, size: number, truncated?: number) =>
+  f('', { owner: 'root', size, archive: { files: archiveContent(t, version), compressed: true, truncated } });
 
-const sd = (j: Jeu) => systemd(j)!;
-const page = (j: Jeu) => requete(j, SITE, '/', 80, false);
-const sert = (j: Jeu, version: number) => {
+const sd = (j: Game) => systemd(j)!;
+const page = (j: Game) => httpRequest(j, SITE, '/', 80, false);
+const serves = (j: Game, version: number) => {
   const r = page(j);
-  return r?.code === 200 && r.corps === accueil(j.t, version);
+  return r?.code === 200 && r.body === welcome(j.t, version);
 };
 
-export const incendie: Chapitre = {
+export const fire: Chapter = {
   id: 'incendie',
-  numero: 4,
-  commandes: [
+  number: 4,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -120,106 +120,106 @@ export const incendie: Chapitre = {
     'curl',
     'whoami',
   ],
-  maison: M,
-  accueil: 'courriel_awa.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_awa.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'bienvenue-2026',
+  password: 'bienvenue-2026',
   // Une machine neuve : la clé d'hôte n'est plus celle que le poste connaît.
-  cleHote: '-apres-incendie',
-  comptes,
-  etat: () => {
-    const vendredi = Date.UTC(2026, 9, 23, 7, 12, 0);
+  hostKey: '-apres-incendie',
+  accounts,
+  state: () => {
+    const friday = Date.UTC(2026, 9, 23, 7, 12, 0);
     return {
-      systemd: nouveauSystemd('datacenter', vendredi, Date.UTC(2026, 9, 23, 8, 5, 0), {
+      systemd: newSystemd('datacenter', friday, Date.UTC(2026, 9, 23, 8, 5, 0), {
         ssh: {
           description: 'OpenBSD Secure Shell server',
           active: true,
           executable: 'sshd',
-          processus: [{ pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+          process: [{ pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
         },
         cron: {
           description: 'Regular background program processing daemon',
           active: true,
           executable: 'cron',
-          processus: [{ pid: 598, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' }],
+          process: [{ pid: 598, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' }],
         },
       }),
       processus: [
-        { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
-        { pid: 598, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/usr/sbin/cron -f' },
-        { pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
+        { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
+        { pid: 598, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
+        { pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       ],
       // curl joint la machine elle-même sous ces noms (nginx.ts).
-      nginx: { charge: null, noms: ['datacenter', 'datacenter.internal', SITE, `www.${SITE}`, '192.0.2.11'] },
+      nginx: { load: null, names: ['datacenter', 'datacenter.internal', SITE, `www.${SITE}`, '192.0.2.11'] },
     };
   },
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
-    const lieu = (enfants: Parameters<typeof d>[0]) => d(enfants, undefined, racine);
-    return lieu({
-      etc: lieu({
-        ...fichiersComptes(),
-        hostname: f('datacenter', { lignes: true, proprio: 'root' }),
-        debian_version: f('13.1', { lignes: true, proprio: 'root' }),
-        apt: lieu({
-          'sources.list.d': lieu({
+  createWorld: (t) => {
+    const root = { owner: 'root' };
+    const place = (children: Parameters<typeof d>[0]) => d(children, undefined, root);
+    return place({
+      etc: place({
+        ...accountsFiles(),
+        hostname: f('datacenter', { lines: true, owner: 'root' }),
+        debian_version: f('13.1', { lines: true, owner: 'root' }),
+        apt: place({
+          'sources.list.d': place({
             'debian.sources': f(
               'Types: deb\nURIs: http://deb.debian.org/debian\nSuites: trixie trixie-updates\nComponents: main\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\n\nTypes: deb\nURIs: http://security.debian.org/debian-security\nSuites: trixie-security\nComponents: main\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg',
-              { lignes: true, proprio: 'root' },
+              { lines: true, owner: 'root' },
             ),
           }),
         }),
       }),
-      home: lieu({ vous: d({ 'courriel_awa.txt': f(t('incendie-courriel-awa')) }) }),
-      mnt: lieu({
-        sauvegarde: lieu({
-          'PRA.txt': f(t('incendie-pra'), { proprio: 'root' }),
-          [`medialibrary-${ARCHIVES[0]}.tar.gz`]: sauvegarde(t, 1, 48_213),
-          [`medialibrary-${ARCHIVES[1]}.tar.gz`]: sauvegarde(t, 2, 48_390),
+      home: place({ vous: d({ 'courriel_awa.txt': f(t('incendie-courriel-awa')) }) }),
+      mnt: place({
+        sauvegarde: place({
+          'PRA.txt': f(t('incendie-pra'), { owner: 'root' }),
+          [`medialibrary-${ARCHIVES[0]}.tar.gz`]: backup(t, 1, 48_213),
+          [`medialibrary-${ARCHIVES[1]}.tar.gz`]: backup(t, 2, 48_390),
           // Coupée après les trois fichiers de configuration.
-          [`medialibrary-${ARCHIVES[2]}.tar.gz`]: sauvegarde(t, 3, 20_480, 3),
+          [`medialibrary-${ARCHIVES[2]}.tar.gz`]: backup(t, 3, 20_480, 3),
         }),
       }),
-      usr: lieu({ sbin: lieu({}), bin: lieu({}) }),
-      var: lieu({ lib: lieu({ apt: lieu({ lists: lieu({}) }) }), log: lieu({}) }),
+      usr: place({ sbin: place({}), bin: place({}) }),
+      var: place({ lib: place({ apt: place({ lists: place({}) }) }), log: place({}) }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'liste-vide',
-      condition: (j) => j.etat.aptIntrouvable === true,
+      condition: (j) => j.state.aptIntrouvable === true,
       message: (j) => j.t('incendie-evenement-liste-vide'),
     },
     {
       id: 'nginx',
-      condition: (j) => sd(j).services.nginx?.etat === 'active',
+      condition: (j) => sd(j).services.nginx?.state === 'active',
       message: (j) => j.t('incendie-evenement-nginx'),
     },
     {
       id: 'tronquee',
-      condition: (j) => j.etat.archiveTronquee === chemin(j.t, archive(ARCHIVES[2])),
+      condition: (j) => j.state.archiveTronquee === path(j.t, archive(ARCHIVES[2])),
       message: (j) => j.t('incendie-evenement-tronquee'),
     },
     {
       id: 'mauvais-lieu',
-      condition: (j) => j.existe(chemin(j.t, `${M}/etc`)) || j.existe(chemin(j.t, `${M}/var`)),
+      condition: (j) => j.exists(path(j.t, `${M}/etc`)) || j.exists(path(j.t, `${M}/var`)),
       message: (j) => j.t('incendie-evenement-mauvais-lieu'),
     },
     {
       id: 'doublon',
       condition: (j) =>
-        (j.etat.nginxErreur ?? '').includes('duplicate default server') || sd(j).journal.some((e) => e.message.includes('duplicate default server')),
+        (j.state.nginxErreur ?? '').includes('duplicate default server') || sd(j).log.some((e) => e.message.includes('duplicate default server')),
       message: (j) => j.t('incendie-evenement-doublon'),
     },
     {
       id: 'mercredi',
-      condition: (j) => sert(j, 1),
+      condition: (j) => serves(j, 1),
       message: (j) => j.t('incendie-evenement-mercredi'),
     },
     {
       id: 'fin',
-      condition: (j) => sert(j, 2) && sd(j).services.nginx?.active === true,
+      condition: (j) => serves(j, 2) && sd(j).services.nginx?.active === true,
       message: (j) => j.t('incendie-evenement-fin'),
     },
   ],

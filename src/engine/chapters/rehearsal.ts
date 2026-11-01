@@ -12,59 +12,59 @@
 // Sources : https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_checkmode.html,
 // https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_handlers.html
 
-import { f, type Chapitre } from '../world';
-import type { Jeu, Shell } from '../shell';
-import { lireConfig } from '../sshd';
-import { historique } from '../commands/ansible';
-import { centre, comptesPilote, etatPilote, idempotent, M, mondePilote, NOMS, surCentre } from './fleet';
-import { CFG, INVENTAIRE } from './playbook';
+import { f, type Chapter } from '../world';
+import type { Game, Shell } from '../shell';
+import { readConfig } from '../sshd';
+import { history } from '../commands/ansible';
+import { centre, pilotAccounts, pilotState, idempotent, M, pilotWorld, NAMES, onCentre } from './fleet';
+import { CFG, INVENTORY } from './playbook';
 
-const etatCentre = (n: string) => centre(n, { motd: (t) => `${t('playbook-ligne-motd')}\n`, partage: true, paquets: ['htop'] });
-const fichierDit = (h: Shell) => lireConfig(h).valeurs.passwordauthentication;
-const chargeDit = (h: Shell) => (h.etat.sshd?.charge as Record<string, string> | undefined)?.passwordauthentication;
-const executions = (j: Jeu) => historique(j as Shell).executions;
-const vu = (j: Jeu, texte: string) => j.derniere.sortie.includes(texte) || j.derniere.erreurs.some((e) => e.includes(texte));
+const centreState = (n: string) => centre(n, { motd: (t) => `${t('playbook-ligne-motd')}\n`, share: true, packages: ['htop'] });
+const ditFile = (h: Shell) => readConfig(h).values.passwordauthentication;
+const ditLoad = (h: Shell) => (h.state.sshd?.load as Record<string, string> | undefined)?.passwordauthentication;
+const executions = (j: Game) => history(j as Shell).executions;
+const seen = (j: Game, text: string) => j.last.output.includes(text) || j.last.errors.some((e) => e.includes(text));
 
-export const repetition: Chapitre = {
+export const rehearsal: Chapter = {
   id: 'repetition',
-  numero: 3,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'cp', 'nano', 'sudo', 'id', 'whoami', 'ssh', 'exit', 'ansible', 'ansible-playbook', 'ansible-inventory', 'ansible-doc'],
-  maison: M,
-  accueil: 'note_de_theo.txt',
-  noms: true,
+  number: 3,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'cp', 'nano', 'sudo', 'id', 'whoami', 'ssh', 'exit', 'ansible', 'ansible-playbook', 'ansible-inventory', 'ansible-doc'],
+  home: M,
+  welcome: 'note_de_theo.txt',
+  names: true,
   final: 'fin',
-  etapes: ['repetition', 'gestionnaire', 'canari', 'fin'],
-  motDePasse: 'quartiers-2027',
-  comptes: comptesPilote,
-  hotes: Object.fromEntries(NOMS.map((n) => [n, etatCentre(n)])),
-  etat: etatPilote,
-  creerMonde: (t) =>
-    mondePilote(t, {
-      connus: NOMS,
+  steps: ['repetition', 'gestionnaire', 'canari', 'fin'],
+  password: 'quartiers-2027',
+  accounts: pilotAccounts,
+  hosts: Object.fromEntries(NAMES.map((n) => [n, centreState(n)])),
+  state: pilotState,
+  createWorld: (t) =>
+    pilotWorld(t, {
+      known: NAMES,
       ansible: {
-        'ansible.cfg': f(CFG, { lignes: true }),
-        'inventory.ini': f(INVENTAIRE, { lignes: true }),
-        'site.yml': f(t('repetition-site-yml'), { lignes: true }),
-        'ssh.yml': f(t('repetition-ssh-yml'), { lignes: true }),
+        'ansible.cfg': f(CFG, { lines: true }),
+        'inventory.ini': f(INVENTORY, { lines: true }),
+        'site.yml': f(t('repetition-site-yml'), { lines: true }),
+        'ssh.yml': f(t('repetition-ssh-yml'), { lines: true }),
       },
-      maison: { 'note_de_theo.txt': f(t('repetition-note-theo')) },
+      home: { 'note_de_theo.txt': f(t('repetition-note-theo')) },
     }),
-  evenements: [
-    { id: 'repetition', condition: (j) => executions(j).some((e) => e.verifier), message: (j) => j.t('repetition-evenement-repetition') },
-    { id: 'gestionnaire', condition: (j) => vu(j, 'The requested handler'), message: (j) => j.t('repetition-evenement-gestionnaire') },
+  events: [
+    { id: 'repetition', condition: (j) => executions(j).some((e) => e.check), message: (j) => j.t('repetition-evenement-repetition') },
+    { id: 'gestionnaire', condition: (j) => seen(j, 'The requested handler'), message: (j) => j.t('repetition-evenement-gestionnaire') },
     {
       id: 'canari',
-      condition: (j) => executions(j).some((e) => !e.verifier && !!e.limite && Object.values(e.changes).some((l) => l.includes('/etc/ssh/sshd_config'))),
+      condition: (j) => executions(j).some((e) => !e.check && !!e.limit && Object.values(e.changes).some((l) => l.includes('/etc/ssh/sshd_config'))),
       message: (j) => j.t('repetition-evenement-canari'),
     },
     {
       id: 'pas-recharge',
-      condition: (j) => NOMS.some((n) => fichierDit(surCentre(j, n)) === 'no' && chargeDit(surCentre(j, n)) !== 'no'),
+      condition: (j) => NAMES.some((n) => ditFile(onCentre(j, n)) === 'no' && ditLoad(onCentre(j, n)) !== 'no'),
       message: (j) => j.t('repetition-evenement-pas-recharge'),
     },
     {
       id: 'fin',
-      condition: (j) => NOMS.every((n) => fichierDit(surCentre(j, n)) === 'no' && chargeDit(surCentre(j, n)) === 'no') && idempotent(j),
+      condition: (j) => NAMES.every((n) => ditFile(onCentre(j, n)) === 'no' && ditLoad(onCentre(j, n)) === 'no') && idempotent(j),
       message: (j) => j.t('repetition-evenement-fin'),
     },
   ],

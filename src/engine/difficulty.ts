@@ -9,9 +9,9 @@
 // into five equal bands: about a fifth of the chapters have each level.
 // Within a story, a chapter is never easier than the one before it.
 
-import { HISTOIRES } from './chapters';
-import { prerequis } from './unlocking';
-import { fiches } from './sheets';
+import { STORIES } from './chapters';
+import { prerequisites } from './unlocking';
+import { allSheets } from './sheets';
 
 export type Level = 1 | 2 | 3 | 4 | 5;
 
@@ -28,20 +28,20 @@ function percentiles(values: number[]): number[] {
 let levels: Map<string, Level> | null = null;
 
 function compute(): Map<string, Level> {
-  const sheets = fiches();
+  const sheets = allSheets();
   const place = sheets.map((f) => {
-    const story = HISTOIRES.find((h) => h.id === f.histoire.id)!;
-    return new Set([...prerequis(story.id), ...story.chapitres.slice(0, story.chapitres.indexOf(f.chapitre)).map((c) => c.id)]).size;
+    const story = STORIES.find((h) => h.id === f.story.id)!;
+    return new Set([...prerequisites(story.id), ...story.chapters.slice(0, story.chapters.indexOf(f.chapter)).map((c) => c.id)]).size;
   });
-  const size = sheets.map((f) => f.chapitre.evenements.length + f.nouvelles.length);
+  const size = sheets.map((f) => f.chapter.events.length + f.fresh.length);
   const p = percentiles(place);
   const s = percentiles(size);
   const scores = sheets.map((_, i) => WEIGHT_PLACE * p[i] + WEIGHT_SIZE * s[i]);
   const ranks = percentiles(scores);
-  const result = new Map(sheets.map((f, i) => [f.chapitre.id, Math.min(5, 1 + Math.floor(ranks[i] * 5)) as Level]));
-  for (const story of HISTOIRES)
-    story.chapitres.forEach((c, i) => {
-      if (i > 0) result.set(c.id, Math.max(result.get(c.id)!, result.get(story.chapitres[i - 1].id)!) as Level);
+  const result = new Map(sheets.map((f, i) => [f.chapter.id, Math.min(5, 1 + Math.floor(ranks[i] * 5)) as Level]));
+  for (const story of STORIES)
+    story.chapters.forEach((c, i) => {
+      if (i > 0) result.set(c.id, Math.max(result.get(c.id)!, result.get(story.chapters[i - 1].id)!) as Level);
     });
   return result;
 }
@@ -56,7 +56,7 @@ export function difficulty(chapter: string): Level {
 
 /** The easiest and hardest chapters of a story. */
 export function storyDifficulty(story: string): { min: Level; max: Level } {
-  const all = HISTOIRES.find((h) => h.id === story)!.chapitres.map((c) => difficulty(c.id));
+  const all = STORIES.find((h) => h.id === story)!.chapters.map((c) => difficulty(c.id));
   return { min: Math.min(...all) as Level, max: Math.max(...all) as Level };
 }
 

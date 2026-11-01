@@ -16,118 +16,118 @@
 // machine hors périmètre. Le débrief dépend de ce qui a été sondé.
 // Sources : https://nmap.org/book/man.html, https://nmap.org/book/legal-issues.html
 
-import { chemin, f, nom, type Chapitre } from '../world';
-import type { Jeu, Shell } from '../shell';
-import { nouveauSystemd } from '../systemd';
-import type { Balayage } from '../scan';
-import { PAQUETS, INSTALLES_DE_BASE } from '../commands/apt';
-import { nomMachine } from '../machines';
-import { chargerSshd, comptesFournil, sectionsMd, ecouteFournil, fichier, M, MAINTENANT, MOT_DE_PASSE, mondeFournil, scanFournil, serviceSsh, VOISIN } from './audit';
+import { path, f, name, type Chapter } from '../world';
+import type { Game, Shell } from '../shell';
+import { newSystemd } from '../systemd';
+import type { Scan } from '../scan';
+import { PACKAGES, BASE_INSTALLED } from '../commands/apt';
+import { machineName } from '../machines';
+import { loadSshd, bakeryAccounts, sectionsMd, bakeryListening, file, M, NOW, PASSWORD, bakeryWorld, bakeryScan, serviceSsh, NEIGHBOUR } from './audit';
 
 const NOTES = `${M}/notes-audit.md`;
-const MODELE_NOTES = 'perimetre-notes-modele';
+const NOTES_TEMPLATE = 'perimetre-notes-modele';
 
-const balayages = (j: Jeu): Balayage[] => j.etat.scans ?? [];
-const sonde = (b: Balayage) => b.adresses.includes('192.0.2.22') || b.adresses.includes('127.0.0.1');
-const horsPerimetre = (j: Jeu) => balayages(j).some((b) => b.horsPerimetre.length > 0);
+const scans = (j: Game): Scan[] => j.state.scans ?? [];
+const probe = (b: Scan) => b.addresses.includes('192.0.2.22') || b.addresses.includes('127.0.0.1');
+const outsideScope = (j: Game) => scans(j).some((b) => b.outsideScope.length > 0);
 // Les adresses sondées hors de la lettre de mission, et si le voisin en fait partie.
-const adressesHors = (j: Jeu) => [...new Set(balayages(j).flatMap((b) => b.horsPerimetre))];
+const addressesOutside = (j: Game) => [...new Set(scans(j).flatMap((b) => b.outsideScope))];
 
 // Les fichiers de la maison : le texte de chacun (la trace nmap peut avoir n'importe quel nom).
-const textes = (j: Jeu): string[] => {
-  const maison = j.trouver((j as Shell).maison);
-  if (maison?.type !== 'dossier') return [];
-  return Object.entries(maison.enfants)
+const texts = (j: Game): string[] => {
+  const home = j.find((j as Shell).home);
+  if (home?.type !== 'dossier') return [];
+  return Object.entries(home.children)
     .filter(([, n]) => n.type === 'fichier')
-    .map(([nom]) => j.lire(`${(j as Shell).maison}/${nom}`) ?? '');
+    .map(([name]) => j.read(`${(j as Shell).home}/${name}`) ?? '');
 };
-const traceOk = (j: Jeu) => textes(j).some((t) => /^# Nmap .* as: nmap .*-sV/m.test(t) && t.includes(`Nmap scan report for ${nomMachine(j.t, 'fournil')}`) && /5432\/tcp/.test(t) && /6379\/tcp/.test(t));
+const traceOk = (j: Game) => texts(j).some((t) => /^# Nmap .* as: nmap .*-sV/m.test(t) && t.includes(`Nmap scan report for ${machineName(j.t, 'fournil')}`) && /5432\/tcp/.test(t) && /6379\/tcp/.test(t));
 
-const lireNotes = (j: Jeu) => j.lire(chemin(j.t, NOTES));
-const mots = (j: Jeu, cle: string) => j.t(cle).split(',').map((m) => m.trim().toLowerCase());
-const manques = (j: Jeu): string[] => {
-  const brut = lireNotes(j) ?? '';
-  const s = sectionsMd(j, brut, 'perimetre-section', ['perimetre', 'trouve', 'hors']);
-  const trouve = (s.trouve ?? '').toLowerCase();
-  const hors = (s.hors ?? '').toLowerCase();
+const readNotes = (j: Game) => j.read(path(j.t, NOTES));
+const words = (j: Game, key: string) => j.t(key).split(',').map((m) => m.trim().toLowerCase());
+const missing = (j: Game): string[] => {
+  const raw = readNotes(j) ?? '';
+  const s = sectionsMd(j, raw, 'perimetre-section', ['perimetre', 'trouve', 'hors']);
+  const found = (s.trouve ?? '').toLowerCase();
+  const outside = (s.hors ?? '').toLowerCase();
   const m: string[] = [];
-  if (brut.toLowerCase().includes(j.t('perimetre-a-completer').toLowerCase())) m.push('modele');
-  if (!trouve.includes('5432') || !trouve.includes('6379')) m.push('ports');
-  if (!hors.includes(VOISIN.adresse) && !hors.includes('voisin')) m.push('voisin');
-  else if (!mots(j, 'perimetre-mots-hors').some((x) => hors.includes(x))) m.push('hors');
+  if (raw.toLowerCase().includes(j.t('perimetre-a-completer').toLowerCase())) m.push('modele');
+  if (!found.includes('5432') || !found.includes('6379')) m.push('ports');
+  if (!outside.includes(NEIGHBOUR.address) && !outside.includes('voisin')) m.push('voisin');
+  else if (!words(j, 'perimetre-mots-hors').some((x) => outside.includes(x))) m.push('hors');
   return m;
 };
-const notesOk = (j: Jeu) => manques(j).length === 0;
+const notesOk = (j: Game) => missing(j).length === 0;
 
-export const perimetre: Chapitre = {
+export const scope: Chapter = {
   id: 'perimetre',
-  numero: 1,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'id', 'whoami', 'sudo', 'ss', 'nmap'],
-  maison: M,
-  accueil: 'courriel_salome.txt',
-  noms: true,
+  number: 1,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'id', 'whoami', 'sudo', 'ss', 'nmap'],
+  home: M,
+  welcome: 'courriel_salome.txt',
+  names: true,
   final: 'fin',
-  etapes: ['lettre', 'balayage', 'trace', 'fin'],
-  motDePasse: MOT_DE_PASSE,
-  comptes: () => comptesFournil(true),
-  etat: () => ({
-    sshd: { charge: {}, connexionsAuChargement: 1, recharges: 0 },
-    ecoute: ecouteFournil(),
-    scan: scanFournil(),
+  steps: ['lettre', 'balayage', 'trace', 'fin'],
+  password: PASSWORD,
+  accounts: () => bakeryAccounts(true),
+  state: () => ({
+    sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
+    ecoute: bakeryListening(),
+    scan: bakeryScan(),
     apt: {
-      listes: true,
-      installes: Object.fromEntries(INSTALLES_DE_BASE.map((p) => [p, PAQUETS[p].version])),
-      mises: {},
+      lists: true,
+      installed: Object.fromEntries(BASE_INSTALLED.map((p) => [p, PACKAGES[p].version])),
+      updates: {},
     },
-    systemd: nouveauSystemd('fournil', MAINTENANT - 5 * 86_400_000, MAINTENANT, { ssh: serviceSsh() }),
+    systemd: newSystemd('fournil', NOW - 5 * 86_400_000, NOW, { ssh: serviceSsh() }),
   }),
-  initialiser: (j) => {
-    chargerSshd(j);
+  initialise: (j) => {
+    loadSshd(j);
     // Salomé ne relit que ce qui a changé : le modèle de départ compte comme déjà lu.
-    j.etat.notesLues = lireNotes(j);
+    j.state.notesLues = readNotes(j);
   },
-  creerMonde: (t) =>
-    mondeFournil(t, {
-      maison: {
+  createWorld: (t) =>
+    bakeryWorld(t, {
+      home: {
         'courriel_salome.txt': f(t('perimetre-courriel-salome')),
-        'lettre-de-mission.txt': f(t('perimetre-lettre-de-mission'), { lignes: true }),
-        'notes-audit.md': f(t(MODELE_NOTES), { lignes: true }),
+        'lettre-de-mission.txt': f(t('perimetre-lettre-de-mission'), { lines: true }),
+        'notes-audit.md': f(t(NOTES_TEMPLATE), { lines: true }),
       },
-      sudoersD: { '90-cloud-init-users': fichier('# Created by cloud-init\n\nvous ALL=(ALL) NOPASSWD:ALL', 'root', 'r--r-----') },
+      sudoersD: { '90-cloud-init-users': file('# Created by cloud-init\n\nvous ALL=(ALL) NOPASSWD:ALL', 'root', 'r--r-----') },
     }),
   // Salomé relit les notes après chaque enregistrement.
-  apresCommande: (j) => {
-    const texte = lireNotes(j);
-    if (texte === j.etat.notesLues || j.etat.notesFinies) return;
-    j.etat.notesLues = texte;
-    const reste = manques(j);
-    if (!reste.length) {
-      j.etat.notesFinies = true;
+  afterCommand: (j) => {
+    const text = readNotes(j);
+    if (text === j.state.notesLues || j.state.notesFinies) return;
+    j.state.notesLues = text;
+    const rest = missing(j);
+    if (!rest.length) {
+      j.state.notesFinies = true;
       return;
     }
-    return [j.t('perimetre-relecture'), ...reste.map((m) => `- ${j.t(`perimetre-manque-${m}`)}`)].join('\n');
+    return [j.t('perimetre-relecture'), ...rest.map((m) => `- ${j.t(`perimetre-manque-${m}`)}`)].join('\n');
   },
-  evenements: [
+  events: [
     {
       id: 'lettre',
-      condition: (j) => j.derniere.commandes.some((c) => c.some((a) => a.endsWith(nom(j.t, 'lettre-de-mission.txt')))),
+      condition: (j) => j.last.commands.some((c) => c.some((a) => a.endsWith(name(j.t, 'lettre-de-mission.txt')))),
       message: (j) => j.t('perimetre-evenement-lettre'),
     },
     {
       id: 'balayage',
-      condition: (j) => balayages(j).some(sonde),
+      condition: (j) => scans(j).some(probe),
       message: (j) => j.t('perimetre-evenement-balayage'),
     },
     {
       id: 'hors-perimetre',
-      condition: horsPerimetre,
-      message: (j) => j.t('perimetre-evenement-hors-perimetre', { adresses: adressesHors(j).join(', '), voisin: adressesHors(j).includes(VOISIN.adresse) ? 'oui' : 'non' }),
+      condition: outsideScope,
+      message: (j) => j.t('perimetre-evenement-hors-perimetre', { adresses: addressesOutside(j).join(', '), voisin: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
     },
     { id: 'trace', condition: traceOk, message: (j) => j.t('perimetre-evenement-trace') },
     {
       id: 'fin',
       condition: (j) => traceOk(j) && notesOk(j),
-      message: (j) => j.t('perimetre-evenement-fin', { faute: horsPerimetre(j) ? 'oui' : 'non' }),
+      message: (j) => j.t('perimetre-evenement-fin', { faute: outsideScope(j) ? 'oui' : 'non' }),
     },
   ],
 };

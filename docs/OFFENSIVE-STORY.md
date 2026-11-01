@@ -57,7 +57,7 @@ And the wiring once the chapters are written: `src/engine/chapters/index.ts`
 (register the story), `src/engine/paths.ts` (each chapter in at least one
 learning path, otherwise `tests/paths.test.ts` fails),
 `src/texts/en/histoires.ftl` + `fr/...` (title, summary),
-`src/texts/en/noms.ftl` + `fr/...` (if `noms: true`).
+`src/texts/en/noms.ftl` + `fr/...` (if `names: true`).
 
 ## 4. The real sticking point: a new simulated tool
 

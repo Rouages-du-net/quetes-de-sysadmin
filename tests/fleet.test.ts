@@ -3,168 +3,168 @@
 
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
-import { HISTOIRES } from '../src/engine/chapters';
-import { prerequis } from '../src/engine/unlocking';
-import { LANGUES, traducteur } from '../src/texts';
-import { dansLaLangue } from './names';
+import { STORIES } from '../src/engine/chapters';
+import { prerequisites } from '../src/engine/unlocking';
+import { LANGUAGES, translator } from '../src/texts';
+import { inLanguage } from './names';
 
-const EFFACEUR = HISTOIRES.find((h) => h.id === 'effaceur')!.chapitres.map((c) => c.id);
-const AVANT = [...new Set([...EFFACEUR, ...prerequis('flotte')])];
+const ERASER = STORIES.find((h) => h.id === 'effaceur')!.chapters.map((c) => c.id);
+const BEFORE = [...new Set([...ERASER, ...prerequisites('flotte')])];
 
-for (const langue of LANGUES)
-  describe(`Langue : ${langue}`, () => {
-    const fr = langue === 'fr';
-    const L = (ligne: string) => dansLaLangue(traducteur(langue), ligne);
-    const partie = (termines: string[], chapitre: string) => {
-      const c = new Console({ langue, termines: [...AVANT, ...termines] });
-      const jouer = (lignes: string[]) => lignes.map((l) => c.executer(L(l)) ?? '').join('\n');
-      const ecrire = (fichier: string, changer: (texte: string) => string) => {
-        c.executer(`nano ${fichier}`);
-        c.enregistrer(changer(c.edition!.texte));
-        return c.quitterEdition();
+for (const language of LANGUAGES)
+  describe(`Langue : ${language}`, () => {
+    const fr = language === 'fr';
+    const L = (line: string) => inLanguage(translator(language), line);
+    const part = (finished: string[], chapter: string) => {
+      const c = new Console({ language, finished: [...BEFORE, ...finished] });
+      const play = (lines: string[]) => lines.map((l) => c.execute(L(l)) ?? '').join('\n');
+      const write = (file: string, change: (text: string) => string) => {
+        c.execute(`nano ${file}`);
+        c.save(change(c.edition!.text));
+        return c.quitEdition();
       };
-      jouer(['ssh pilote', 'yes']);
-      expect(c.distant?.shell.chapitre.id).toBe(chapitre);
-      const centre = (n: string) => c.distant!.shell.interne(n)!;
-      return { c, jouer, ecrire, centre };
+      play(['ssh pilote', 'yes']);
+      expect(c.remote?.shell.chapter.id).toBe(chapter);
+      const centre = (n: string) => c.remote!.shell.internal(n)!;
+      return { c, jouer: play, ecrire: write, centre };
     };
 
     describe("L'inventaire", () => {
       it('solution : le bon dossier, les clés d’hôte, le bon compte, le centre qui manque', () => {
-        const { c, jouer, ecrire } = partie([], 'inventaire');
-        let tout = jouer(['ansible centres -m ping']);
-        expect(tout).toContain('[WARNING]: No inventory was parsed, only implicit localhost is available');
-        tout = jouer(['cd ansible', 'ansible centres -m ping']);
-        expect(tout).toContain('north | UNREACHABLE! => {');
-        expect(tout).toContain('"msg": "Failed to connect to the host via ssh: Host key verification failed."');
-        if (fr) expect(tout).toContain('ne pose\njamais'.replace('\n', ' '));
-        for (const n of ['north', 'south', 'east']) jouer([`ssh deploy@${n}`, 'yes', 'exit']);
-        tout = jouer(['ansible centres -m ping']);
-        expect(tout).toContain('theo@north: Permission denied (publickey,password).');
-        ecrire('ansible.cfg', (t) => t.replace('remote_user = theo', 'remote_user = deploy'));
-        tout = jouer(['ansible centres -m ping', 'ansible-inventory --graph']);
-        expect(tout).toContain('"ping": "pong"');
-        expect(tout).toContain('  |--@centres:\n  |  |--north\n  |  |--south');
-        if (fr) expect(tout).toContain('connaît que deux');
-        expect(c.termines).not.toContain('inventaire');
-        ecrire('inventory.ini', (t) => `${t}\neast\n`);
-        tout = jouer(['ansible centres -m ping']);
-        expect(tout).toContain('east | SUCCESS => {');
-        if (fr) expect(tout).toContain('https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html');
-        expect(c.termines).toContain('inventaire');
+        const { c, jouer: play, ecrire: write } = part([], 'inventaire');
+        let all = play(['ansible centres -m ping']);
+        expect(all).toContain('[WARNING]: No inventory was parsed, only implicit localhost is available');
+        all = play(['cd ansible', 'ansible centres -m ping']);
+        expect(all).toContain('north | UNREACHABLE! => {');
+        expect(all).toContain('"msg": "Failed to connect to the host via ssh: Host key verification failed."');
+        if (fr) expect(all).toContain('ne pose\njamais'.replace('\n', ' '));
+        for (const n of ['north', 'south', 'east']) play([`ssh deploy@${n}`, 'yes', 'exit']);
+        all = play(['ansible centres -m ping']);
+        expect(all).toContain('theo@north: Permission denied (publickey,password).');
+        write('ansible.cfg', (t) => t.replace('remote_user = theo', 'remote_user = deploy'));
+        all = play(['ansible centres -m ping', 'ansible-inventory --graph']);
+        expect(all).toContain('"ping": "pong"');
+        expect(all).toContain('  |--@centres:\n  |  |--north\n  |  |--south');
+        if (fr) expect(all).toContain('connaît que deux');
+        expect(c.finished).not.toContain('inventaire');
+        write('inventory.ini', (t) => `${t}\neast\n`);
+        all = play(['ansible centres -m ping']);
+        expect(all).toContain('east | SUCCESS => {');
+        if (fr) expect(all).toContain('https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html');
+        expect(c.finished).toContain('inventaire');
       });
 
       it('autre solution : host_key_checking coupé, -u deploy ; et les commandes', () => {
-        const { c, jouer, ecrire } = partie([], 'inventaire');
-        jouer(['cd ansible']);
-        ecrire('ansible.cfg', (t) => `${t}\nhost_key_checking = False\n`);
-        ecrire('inventory.ini', (t) => `${t}\neast\n`);
-        let tout = jouer(['ansible --version', 'ansible-doc -l', 'ansible-doc ping', 'man ansible', 'ansible centres -x', 'ansible']);
-        expect(tout).toContain('ansible [core 2.18.6]');
-        expect(tout).toContain('ansible.builtin.lineinfile');
-        expect(tout).toContain('> ANSIBLE.BUILTIN.PING');
-        expect(tout).toContain('ansible: error: unrecognized arguments: -x');
-        expect(tout).toContain('ansible: error: the following arguments are required: pattern');
-        tout = jouer(['ansible centres -m ping -u deploy', 'ansible centres --list-hosts']);
-        expect(tout).toContain('  hosts (3):');
-        expect(c.termines).toContain('inventaire');
+        const { c, jouer: play, ecrire: write } = part([], 'inventaire');
+        play(['cd ansible']);
+        write('ansible.cfg', (t) => `${t}\nhost_key_checking = False\n`);
+        write('inventory.ini', (t) => `${t}\neast\n`);
+        let all = play(['ansible --version', 'ansible-doc -l', 'ansible-doc ping', 'man ansible', 'ansible centres -x', 'ansible']);
+        expect(all).toContain('ansible [core 2.18.6]');
+        expect(all).toContain('ansible.builtin.lineinfile');
+        expect(all).toContain('> ANSIBLE.BUILTIN.PING');
+        expect(all).toContain('ansible: error: unrecognized arguments: -x');
+        expect(all).toContain('ansible: error: the following arguments are required: pattern');
+        all = play(['ansible centres -m ping -u deploy', 'ansible centres --list-hosts']);
+        expect(all).toContain('  hosts (3):');
+        expect(c.finished).toContain('inventaire');
       });
     });
 
     describe('Le playbook', () => {
-      const corriger = (ligne: string) => (t: string) =>
+      const fix = (line: string) => (t: string) =>
         t
-          .replace(/shell: echo "(.*)" >> \/etc\/motd/, `copy:\n            content: "${ligne}\\n"\n            dest: /etc/motd`)
+          .replace(/shell: echo "(.*)" >> \/etc\/motd/, `copy:\n            content: "${line}\\n"\n            dest: /etc/motd`)
           .replace('command: mkdir /srv/shared', 'file:\n            path: /srv/shared\n            state: directory\n            mode: "0755"');
 
       it('solution : copy et file, puis une deuxième exécution qui ne change rien', () => {
-        const { c, jouer, ecrire, centre } = partie(['inventaire'], 'playbook');
-        let tout = jouer(['cd ansible', 'ansible-playbook site.yml']);
-        expect(tout).toMatch(/fatal: \[north\]: FAILED! => \{"changed": true, "cmd": \["mkdir", "\/srv\/shared"\], "rc": 1/);
-        expect(tout).toMatch(/north +: ok=3 +changed=1 +unreachable=0 +failed=1/);
-        if (fr) expect(tout).toContain('ligne en double');
-        expect(c.distant!.shell.statut).toBe(2);
-        const ligne = c.t('playbook-ligne-motd');
-        ecrire('site.yml', corriger(ligne));
+        const { c, jouer: play, ecrire: write, centre } = part(['inventaire'], 'playbook');
+        let all = play(['cd ansible', 'ansible-playbook site.yml']);
+        expect(all).toMatch(/fatal: \[north\]: FAILED! => \{"changed": true, "cmd": \["mkdir", "\/srv\/shared"\], "rc": 1/);
+        expect(all).toMatch(/north +: ok=3 +changed=1 +unreachable=0 +failed=1/);
+        if (fr) expect(all).toContain('ligne en double');
+        expect(c.remote!.shell.status).toBe(2);
+        const line = c.t('playbook-ligne-motd');
+        write('site.yml', fix(line));
         // La répétition ne change rien.
-        tout = jouer(['ansible-playbook site.yml --check --diff']);
-        expect(tout).toContain('--- before: /etc/motd');
-        expect(centre('south').lire('/etc/motd')!.split(ligne).length - 1).toBe(1);
-        tout = jouer(['ansible-playbook site.yml']);
-        expect(tout).toMatch(/south +: ok=4 +changed=1 +unreachable=0 +failed=0/);
-        if (fr) expect(tout).toContain('en le relançant');
-        expect(c.termines).not.toContain('playbook');
-        tout = jouer(['ansible-playbook site.yml', 'ansible centres -a "cat /etc/motd"']);
-        expect(tout).toMatch(/east +: ok=4 +changed=0 +unreachable=0 +failed=0/);
-        expect(centre('north').lire('/etc/motd')).toBe(`${ligne}\n`);
-        expect(c.termines).toContain('playbook');
+        all = play(['ansible-playbook site.yml --check --diff']);
+        expect(all).toContain('--- before: /etc/motd');
+        expect(centre('south').read('/etc/motd')!.split(line).length - 1).toBe(1);
+        all = play(['ansible-playbook site.yml']);
+        expect(all).toMatch(/south +: ok=4 +changed=1 +unreachable=0 +failed=0/);
+        if (fr) expect(all).toContain('en le relançant');
+        expect(c.finished).not.toContain('playbook');
+        all = play(['ansible-playbook site.yml', 'ansible centres -a "cat /etc/motd"']);
+        expect(all).toMatch(/east +: ok=4 +changed=0 +unreachable=0 +failed=0/);
+        expect(centre('north').read('/etc/motd')).toBe(`${line}\n`);
+        expect(c.finished).toContain('playbook');
       });
 
       it('autre solution : command avec creates ; fausses pistes : lineinfile qui garde le doublon, YAML et module mal écrits', () => {
-        const { c, jouer, ecrire, centre } = partie(['inventaire'], 'playbook');
-        const ligne = c.t('playbook-ligne-motd');
-        jouer(['cd ansible']);
+        const { c, jouer: play, ecrire: write, centre } = part(['inventaire'], 'playbook');
+        const line = c.t('playbook-ligne-motd');
+        play(['cd ansible']);
         // Une erreur de YAML : Ansible montre la ligne fautive.
-        ecrire('site.yml', (t) => t.replace('      apt:\n', '      apt: name: htop\n'));
-        let tout = jouer(['ansible-playbook site.yml --syntax-check']);
-        expect(tout).toContain('ERROR! Syntax Error while loading YAML.\n  mapping values are not allowed in this context');
-        ecrire('site.yml', (t) => t.replace('      apt: name: htop\n', '      aptt:\n'));
-        tout = jouer(['ansible-playbook site.yml']);
-        expect(tout).toContain("ERROR! couldn't resolve module/action 'aptt'");
-        ecrire('site.yml', (t) =>
+        write('site.yml', (t) => t.replace('      apt:\n', '      apt: name: htop\n'));
+        let all = play(['ansible-playbook site.yml --syntax-check']);
+        expect(all).toContain('ERROR! Syntax Error while loading YAML.\n  mapping values are not allowed in this context');
+        write('site.yml', (t) => t.replace('      apt: name: htop\n', '      aptt:\n'));
+        all = play(['ansible-playbook site.yml']);
+        expect(all).toContain("ERROR! couldn't resolve module/action 'aptt'");
+        write('site.yml', (t) =>
           t
             .replace('      aptt:\n', '      apt:\n')
-            .replace(/shell: echo "(.*)" >> \/etc\/motd/, `lineinfile:\n            path: /etc/motd\n            regexp: Ansible\n            line: "${ligne}"`)
+            .replace(/shell: echo "(.*)" >> \/etc\/motd/, `lineinfile:\n            path: /etc/motd\n            regexp: Ansible\n            line: "${line}"`)
             .replace('command: mkdir /srv/shared', 'command: mkdir /srv/shared creates=/srv/shared'),
         );
-        jouer(['ansible-playbook site.yml', 'ansible-playbook site.yml']);
+        play(['ansible-playbook site.yml', 'ansible-playbook site.yml']);
         // lineinfile remplace la dernière ligne trouvée : sur north, la ligne en double reste.
-        expect(centre('north').lire('/etc/motd')!.split(ligne).length - 1).toBe(2);
-        expect(c.termines).not.toContain('playbook');
-        ecrire('site.yml', (t) => t.replace(`lineinfile:\n            path: /etc/motd\n            regexp: Ansible\n            line: "${ligne}"`, `copy:\n            content: "${ligne}\\n"\n            dest: /etc/motd`));
-        jouer(['ansible-playbook site.yml', 'ansible-playbook site.yml']);
-        expect(c.termines).toContain('playbook');
+        expect(centre('north').read('/etc/motd')!.split(line).length - 1).toBe(2);
+        expect(c.finished).not.toContain('playbook');
+        write('site.yml', (t) => t.replace(`lineinfile:\n            path: /etc/motd\n            regexp: Ansible\n            line: "${line}"`, `copy:\n            content: "${line}\\n"\n            dest: /etc/motd`));
+        play(['ansible-playbook site.yml', 'ansible-playbook site.yml']);
+        expect(c.finished).toContain('playbook');
       });
     });
 
     describe('La répétition', () => {
-      const memeNom = (t: string) => t.replace(/notify: (\S+) ssh/, (_, mot: string) => `notify: ${mot.toLowerCase()} ssh`);
+      const sameName = (t: string) => t.replace(/notify: (\S+) ssh/, (_, word: string) => `notify: ${word.toLowerCase()} ssh`);
 
       it('solution : la répétition, le handler, un centre, puis tous', () => {
-        const { c, jouer, ecrire, centre } = partie(['inventaire', 'playbook'], 'repetition');
-        let tout = jouer(['cd ansible', 'ansible-playbook ssh.yml --check --diff']);
-        expect(tout).toContain('+PasswordAuthentication no');
-        expect(tout).toContain("ERROR! The requested handler '");
-        expect(centre('north').lire('/etc/ssh/sshd_config')).not.toContain('PasswordAuthentication no');
-        if (fr) expect(tout).toContain('majuscules comprises');
+        const { c, jouer: play, ecrire: write, centre } = part(['inventaire', 'playbook'], 'repetition');
+        let all = play(['cd ansible', 'ansible-playbook ssh.yml --check --diff']);
+        expect(all).toContain('+PasswordAuthentication no');
+        expect(all).toContain("ERROR! The requested handler '");
+        expect(centre('north').read('/etc/ssh/sshd_config')).not.toContain('PasswordAuthentication no');
+        if (fr) expect(all).toContain('majuscules comprises');
         // Sans corriger, sur north : le fichier change, sshd n'est pas rechargé.
-        tout = jouer(['ansible-playbook ssh.yml --limit north']);
-        expect(centre('north').etat.sshd.charge.passwordauthentication).toBe('yes');
-        if (fr) expect(tout).toContain('ne notifie plus');
-        ecrire('ssh.yml', memeNom);
-        tout = jouer(['ansible-playbook ssh.yml --limit north']);
-        expect(tout).toMatch(/north +: ok=2 +changed=0/);
-        tout = jouer(['ansible north -b -m service -a "name=ssh state=reloaded"', 'ansible north -m ping']);
-        expect(tout).toContain('north | CHANGED => {');
-        expect(centre('north').etat.sshd.charge.passwordauthentication).toBe('no');
-        tout = jouer(['ansible-playbook ssh.yml']);
-        expect(tout).toContain('RUNNING HANDLER [');
-        expect(c.termines).not.toContain('repetition');
-        tout = jouer(['ansible-playbook ssh.yml']);
-        expect(tout).toMatch(/east +: ok=2 +changed=0 +unreachable=0 +failed=0/);
-        if (fr) expect(tout).toContain('https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_handlers.html');
-        expect(c.termines).toContain('repetition');
+        all = play(['ansible-playbook ssh.yml --limit north']);
+        expect(centre('north').state.sshd.load.passwordauthentication).toBe('yes');
+        if (fr) expect(all).toContain('ne notifie plus');
+        write('ssh.yml', sameName);
+        all = play(['ansible-playbook ssh.yml --limit north']);
+        expect(all).toMatch(/north +: ok=2 +changed=0/);
+        all = play(['ansible north -b -m service -a "name=ssh state=reloaded"', 'ansible north -m ping']);
+        expect(all).toContain('north | CHANGED => {');
+        expect(centre('north').state.sshd.load.passwordauthentication).toBe('no');
+        all = play(['ansible-playbook ssh.yml']);
+        expect(all).toContain('RUNNING HANDLER [');
+        expect(c.finished).not.toContain('repetition');
+        all = play(['ansible-playbook ssh.yml']);
+        expect(all).toMatch(/east +: ok=2 +changed=0 +unreachable=0 +failed=0/);
+        if (fr) expect(all).toContain('https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_handlers.html');
+        expect(c.finished).toContain('repetition');
       });
 
       it('autre solution : le handler renommé dès la répétition, puis --limit et tous', () => {
-        const { c, jouer, ecrire } = partie(['inventaire', 'playbook'], 'repetition');
-        jouer(['cd ansible']);
-        ecrire('ssh.yml', (t) => t.replace(/- name: (\S+) ssh\n/, (_, mot: string) => `- name: ${mot[0].toUpperCase()}${mot.slice(1)} ssh\n`));
-        let tout = jouer(['ansible-playbook ssh.yml --check']);
-        expect(tout).not.toContain('ERROR!');
-        tout = jouer(['ansible-playbook ssh.yml -l north', 'ansible-playbook ssh.yml', 'ansible-playbook ssh.yml']);
-        if (fr) expect(tout).toContain("qu'on s'y connecte toujours");
-        expect(c.termines).toContain('repetition');
+        const { c, jouer: play, ecrire: write } = part(['inventaire', 'playbook'], 'repetition');
+        play(['cd ansible']);
+        write('ssh.yml', (t) => t.replace(/- name: (\S+) ssh\n/, (_, word: string) => `- name: ${word[0].toUpperCase()}${word.slice(1)} ssh\n`));
+        let all = play(['ansible-playbook ssh.yml --check']);
+        expect(all).not.toContain('ERROR!');
+        all = play(['ansible-playbook ssh.yml -l north', 'ansible-playbook ssh.yml', 'ansible-playbook ssh.yml']);
+        if (fr) expect(all).toContain("qu'on s'y connecte toujours");
+        expect(c.finished).toContain('repetition');
       });
     });
   });

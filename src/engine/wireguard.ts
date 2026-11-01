@@ -17,18 +17,18 @@
 // PresharedKey vérifiée, de PostUp exécuté, de routage de tout le trafic
 // (0.0.0.0/0) côté routeur ni d'IPv6.
 
-import { chemin } from './world';
-import type { Jeu } from './shell';
-import { cidr, creer, dans, estIp, lan, reseauDe, supprimer } from './lan';
-import { nft, routage, traverser, type Ruleset } from './nftables';
+import { path } from './world';
+import type { Game } from './shell';
+import { cidr, create, inside, isIp, lan, networkFor, remove } from './lan';
+import { nft, routing, traverse, type Ruleset } from './nftables';
 
-export const DOSSIER = '/etc/wireguard';
+export const DIRECTORY = '/etc/wireguard';
 
 // ——— Les clés (32 octets en base64) ———
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
-function versB64(o: number[]): string {
+function toB64(o: number[]): string {
   let s = '';
   for (let i = 0; i < o.length; i += 3) {
     const n = (o[i] << 16) | ((o[i + 1] ?? 0) << 8) | (o[i + 2] ?? 0);
@@ -37,7 +37,7 @@ function versB64(o: number[]): string {
   return s;
 }
 
-function depuisB64(s: string): number[] | null {
+function sinceB64(s: string): number[] | null {
   if (!/^[A-Za-z0-9+/]{43}=$/.test(s)) return null;
   const bits = s
     .slice(0, 43)
@@ -49,11 +49,11 @@ function depuisB64(s: string): number[] | null {
   return Array.from({ length: 32 }, (_, i) => parseInt(bits.slice(i * 8, i * 8 + 8), 2));
 }
 
-export const cleValide = (s: string) => depuisB64(s.trim()) !== null;
+export const validKey = (s: string) => sinceB64(s.trim()) !== null;
 
 /** wg genkey : une clé privée (toujours différente, mais rejouable : un compteur de l'état). */
-export function genererCle(j: Jeu): string {
-  const n = (j.etat.wgCompteur = (j.etat.wgCompteur ?? 0) + 1);
+export function generateKey(j: Game): string {
+  const n = (j.state.wgCompteur = (j.state.wgCompteur ?? 0) + 1);
   let x = (n * 2654435761) >>> 0 || 1;
   const o = Array.from({ length: 32 }, () => {
     x ^= x << 13;
@@ -66,109 +66,109 @@ export function genererCle(j: Jeu): string {
   // Comme une vraie clé Curve25519 : bits de poids faible et fort ajustés.
   o[0] &= 248;
   o[31] = (o[31] & 127) | 64;
-  return versB64(o);
+  return toB64(o);
 }
 
 /** wg pubkey : la clé publique d'une clé privée (une empreinte qui tient lieu de Curve25519) ; null si la clé est mal formée. */
-export function publique(cle: string): string | null {
-  const o = depuisB64(cle.trim());
+export function isPublic(key: string): string | null {
+  const o = sinceB64(key.trim());
   if (!o) return null;
   let h = 2166136261;
-  const sortie = Array.from({ length: 32 }, (_, i) => {
+  const output = Array.from({ length: 32 }, (_, i) => {
     for (const b of [...o, i]) {
       h ^= b;
       h = Math.imul(h, 16777619) >>> 0;
     }
     return (h >>> 8) & 255;
   });
-  return versB64(sortie);
+  return toB64(output);
 }
 
 // ——— La configuration (wg-quick) ———
 
-export interface Pair {
-  cle: string;
-  autorisees: string[];
+export interface Peer {
+  key: string;
+  allowed: string[];
   endpoint?: string;
   // PersistentKeepalive : un paquet toutes les N secondes, qui garde le passage ouvert dans une box (NAT).
   keepalive?: number;
 }
 
 export interface ConfWg {
-  adresses: string[];
+  addresses: string[];
   port?: number;
-  cle?: string;
-  pairs: Pair[];
+  key?: string;
+  peers: Peer[];
   // Les messages de wg setconf ou de wg-quick, s'il y a une faute.
-  erreurs: string[];
+  errors: string[];
 }
 
 const IFACE_WG_QUICK = ['address', 'dns', 'mtu', 'table', 'preup', 'postup', 'predown', 'postdown', 'saveconfig'];
 
 /** Lit un fichier de configuration comme wg-quick (ses clés à lui) puis wg setconf (le reste). */
-export function lireConfWg(texte: string): ConfWg {
-  const c: ConfWg = { adresses: [], pairs: [], erreurs: [] };
+export function readConfWg(text: string): ConfWg {
+  const c: ConfWg = { addresses: [], peers: [], errors: [] };
   let section: 'interface' | 'peer' | null = null;
-  for (const brute of texte.split('\n')) {
-    const ligne = brute.replace(/#.*/, '').trim();
-    if (!ligne) continue;
-    const titre = /^\[(\w+)\]$/.exec(ligne);
-    if (titre) {
-      const t = titre[1].toLowerCase();
+  for (const rawValue of text.split('\n')) {
+    const line = rawValue.replace(/#.*/, '').trim();
+    if (!line) continue;
+    const title = /^\[(\w+)\]$/.exec(line);
+    if (title) {
+      const t = title[1].toLowerCase();
       if (t === 'interface') section = 'interface';
       else if (t === 'peer') {
         section = 'peer';
-        c.pairs.push({ cle: '', autorisees: [] });
-      } else return { ...c, erreurs: [`Line unrecognized: \`${ligne}'`, 'Configuration parsing error'] };
+        c.peers.push({ key: '', allowed: [] });
+      } else return { ...c, errors: [`Line unrecognized: \`${line}'`, 'Configuration parsing error'] };
       continue;
     }
-    const k = ligne.indexOf('=');
-    const cle = (k < 0 ? ligne : ligne.slice(0, k)).trim().toLowerCase();
-    const valeur = k < 0 ? '' : ligne.slice(k + 1).trim();
-    const mauvais = (m: string) => ({ ...c, erreurs: [m, 'Configuration parsing error'] });
-    const nonReconnue = () => mauvais(`Line unrecognized: \`${ligne.replace(/\s+/g, '')}'`);
-    if (k < 0 || !section) return nonReconnue();
+    const k = line.indexOf('=');
+    const key = (k < 0 ? line : line.slice(0, k)).trim().toLowerCase();
+    const value = k < 0 ? '' : line.slice(k + 1).trim();
+    const bad = (m: string) => ({ ...c, errors: [m, 'Configuration parsing error'] });
+    const notRecognised = () => bad(`Line unrecognized: \`${line.replace(/\s+/g, '')}'`);
+    if (k < 0 || !section) return notRecognised();
     if (section === 'interface') {
-      if (cle === 'address') {
-        for (const a of valeur.split(',').map((x) => x.trim())) {
-          if (!cidr(a)) return { ...c, erreurs: [`Error: any valid prefix is expected rather than "${a}".`] };
-          c.adresses.push(a.includes('/') ? a : `${a}/32`);
+      if (key === 'address') {
+        for (const a of value.split(',').map((x) => x.trim())) {
+          if (!cidr(a)) return { ...c, errors: [`Error: any valid prefix is expected rather than "${a}".`] };
+          c.addresses.push(a.includes('/') ? a : `${a}/32`);
         }
-      } else if (IFACE_WG_QUICK.includes(cle)) continue;
-      else if (cle === 'listenport') {
-        if (!/^\d+$/.test(valeur) || Number(valeur) > 65535) return mauvais(`Unable to parse port: \`${valeur}'`);
-        c.port = Number(valeur);
-      } else if (cle === 'privatekey') {
-        if (!cleValide(valeur)) return mauvais(`Key is not the correct length or format: \`${valeur}'`);
-        c.cle = valeur;
-      } else if (cle === 'fwmark') continue;
-      else return nonReconnue();
+      } else if (IFACE_WG_QUICK.includes(key)) continue;
+      else if (key === 'listenport') {
+        if (!/^\d+$/.test(value) || Number(value) > 65535) return bad(`Unable to parse port: \`${value}'`);
+        c.port = Number(value);
+      } else if (key === 'privatekey') {
+        if (!validKey(value)) return bad(`Key is not the correct length or format: \`${value}'`);
+        c.key = value;
+      } else if (key === 'fwmark') continue;
+      else return notRecognised();
     } else {
-      const p = c.pairs.at(-1)!;
-      if (cle === 'publickey') {
-        if (!cleValide(valeur)) return mauvais(`Key is not the correct length or format: \`${valeur}'`);
-        p.cle = valeur;
-      } else if (cle === 'allowedips') {
-        for (const a of valeur
+      const p = c.peers.at(-1)!;
+      if (key === 'publickey') {
+        if (!validKey(value)) return bad(`Key is not the correct length or format: \`${value}'`);
+        p.key = value;
+      } else if (key === 'allowedips') {
+        for (const a of value
           .split(',')
           .map((x) => x.trim())
           .filter(Boolean)) {
-          if (!cidr(a)) return mauvais(`Unable to parse IP address: \`${a}'`);
-          p.autorisees.push(a.includes('/') ? a : `${a}/32`);
+          if (!cidr(a)) return bad(`Unable to parse IP address: \`${a}'`);
+          p.allowed.push(a.includes('/') ? a : `${a}/32`);
         }
-      } else if (cle === 'endpoint') {
-        if (!/^[\w.-]+:\d+$/.test(valeur)) return mauvais(`Unable to parse endpoint: \`${valeur}'`);
-        p.endpoint = valeur;
-      } else if (cle === 'presharedkey') {
-        if (!cleValide(valeur)) return mauvais(`Key is not the correct length or format: \`${valeur}'`);
-      } else if (cle === 'persistentkeepalive') {
-        if (valeur === 'off') continue;
-        if (!/^\d+$/.test(valeur) || Number(valeur) > 65535) return mauvais(`Unable to parse persistent keepalive interval: \`${valeur}'`);
-        p.keepalive = Number(valeur);
-      } else return nonReconnue();
+      } else if (key === 'endpoint') {
+        if (!/^[\w.-]+:\d+$/.test(value)) return bad(`Unable to parse endpoint: \`${value}'`);
+        p.endpoint = value;
+      } else if (key === 'presharedkey') {
+        if (!validKey(value)) return bad(`Key is not the correct length or format: \`${value}'`);
+      } else if (key === 'persistentkeepalive') {
+        if (value === 'off') continue;
+        if (!/^\d+$/.test(value) || Number(value) > 65535) return bad(`Unable to parse persistent keepalive interval: \`${value}'`);
+        p.keepalive = Number(value);
+      } else return notRecognised();
     }
   }
-  if (c.pairs.some((p) => !p.cle)) return { ...c, erreurs: ['A peer is missing a public key', 'Configuration parsing error'] };
+  if (c.peers.some((p) => !p.key)) return { ...c, errors: ['A peer is missing a public key', 'Configuration parsing error'] };
   return c;
 }
 
@@ -177,73 +177,73 @@ export function lireConfWg(texte: string): ConfWg {
 export interface InterfaceWg {
   conf: ConfWg;
   // Montée par le service (wg-quick@wg0) ou à la main (wg-quick up).
-  parService: boolean;
+  byService: boolean;
 }
 
-export const wg = (j: Jeu): Record<string, InterfaceWg> => (j.etat.wg ??= {});
-export const confDe = (nom: string) => `${DOSSIER}/${nom}.conf`;
+export const wg = (j: Game): Record<string, InterfaceWg> => (j.state.wg ??= {});
+export const confFor = (name: string) => `${DIRECTORY}/${name}.conf`;
 
 /** wg-quick up : renvoie les lignes « [#] … » et les erreurs, et monte l'interface si tout va bien. */
-export function monterWg(j: Jeu, nom: string, parService: boolean): { lignes: string[]; erreur: string | null } {
+export function mountWg(j: Game, name: string, byService: boolean): { lines: string[]; error: string | null } {
   const l = lan(j);
-  const texte = j.lire(confDe(nom));
-  if (texte === null) return { lignes: [], erreur: `wg-quick: \`${confDe(nom)}' does not exist` };
-  if (wg(j)[nom] || l?.interfaces[nom]) return { lignes: [], erreur: `wg-quick: \`${nom}' already exists` };
-  const c = lireConfWg(texte);
-  const lignes = [`[#] ip link add ${nom} type wireguard`, `[#] wg setconf ${nom} /dev/fd/63`];
-  if (c.erreurs.length) {
+  const text = j.read(confFor(name));
+  if (text === null) return { lines: [], error: `wg-quick: \`${confFor(name)}' does not exist` };
+  if (wg(j)[name] || l?.interfaces[name]) return { lines: [], error: `wg-quick: \`${name}' already exists` };
+  const c = readConfWg(text);
+  const lines = [`[#] ip link add ${name} type wireguard`, `[#] wg setconf ${name} /dev/fd/63`];
+  if (c.errors.length) {
     // Comme wg-quick : l'interface créée est retirée.
-    return { lignes: [...lignes, ...c.erreurs, `[#] ip link delete dev ${nom}`], erreur: '' };
+    return { lines: [...lines, ...c.errors, `[#] ip link delete dev ${name}`], error: '' };
   }
-  for (const a of c.adresses) lignes.push(`[#] ip -4 address add ${a} dev ${nom}`);
-  lignes.push(`[#] ip link set mtu 1420 up dev ${nom}`);
+  for (const a of c.addresses) lines.push(`[#] ip -4 address add ${a} dev ${name}`);
+  lines.push(`[#] ip link set mtu 1420 up dev ${name}`);
   // Comme wg-quick : une route pour chaque AllowedIPs que le réseau de l'interface ne couvre pas déjà.
-  const routes = [...new Set(c.pairs.flatMap((p) => p.autorisees))]
-    .map(reseauDe)
-    .filter((r) => !c.adresses.some((a) => dans(r.split('/')[0], reseauDe(a)) && Number(r.split('/')[1]) >= Number(a.split('/')[1])));
-  for (const r of routes) lignes.push(`[#] ip -4 route add ${r} dev ${nom}`);
-  wg(j)[nom] = { conf: c, parService };
+  const routes = [...new Set(c.peers.flatMap((p) => p.allowed))]
+    .map(networkFor)
+    .filter((r) => !c.addresses.some((a) => inside(r.split('/')[0], networkFor(a)) && Number(r.split('/')[1]) >= Number(a.split('/')[1])));
+  for (const r of routes) lines.push(`[#] ip -4 route add ${r} dev ${name}`);
+  wg(j)[name] = { conf: c, byService };
   if (l) {
-    const i = creer(l, nom);
+    const i = create(l, name);
     i.wireguard = true;
     i.up = true;
-    i.adresses = [...c.adresses];
+    i.addresses = [...c.addresses];
     i.routes = routes;
   }
-  return { lignes, erreur: null };
+  return { lines, error: null };
 }
 
-export function demonterWg(j: Jeu, nom: string): string | null {
-  if (!wg(j)[nom]) return `wg-quick: \`${nom}' is not a WireGuard interface`;
-  delete wg(j)[nom];
+export function unmountWg(j: Game, name: string): string | null {
+  if (!wg(j)[name]) return `wg-quick: \`${name}' is not a WireGuard interface`;
+  delete wg(j)[name];
   const l = lan(j);
-  if (l) supprimer(l, nom);
+  if (l) remove(l, name);
   return null;
 }
 
 // ——— Les pairs distants ———
 
 /** Un appareil sur internet qui se connecte au routeur par WireGuard (le portable de Malik…). */
-export interface Distant {
-  nom: string;
+export interface Remote {
+  name: string;
   // Son adresse publique (d'où viennent ses paquets UDP).
-  adresse: string;
+  address: string;
   // Sa clé publique (sa clé privée ne quitte jamais l'appareil).
-  cle: string;
+  key: string;
   // Son fichier de configuration, que le chapitre fait compléter (chemin
   // écrit avec les noms français, comme ceux des chapitres : voir chemin()).
   conf: string;
   // Ce qu'il essaie de joindre à travers le tunnel.
-  vers: string;
+  to: string;
   port: number;
   // Un site entier derrière ce pair (un autre routeur) : son réseau, et l'appareil d'où part l'échange.
-  reseau?: string;
+  network?: string;
   source?: string;
   // Derrière la box de son fournisseur (NAT) : on ne peut pas le joindre sans qu'il garde le passage ouvert.
-  derriereNat?: boolean;
+  behindNat?: boolean;
 }
 
-export type EtatTunnel =
+export type TunnelState =
   | 'eteint' // pas d'interface WireGuard montée
   | 'conf' // la configuration du pair est incomplète ou fausse
   | 'adresse' // Endpoint : pas le routeur, ou pas le bon port
@@ -259,94 +259,94 @@ export type EtatTunnel =
 interface Options {
   ruleset?: Ruleset;
   interfaces?: Record<string, InterfaceWg>;
-  transfert?: boolean;
-  adressePublique: string;
-  noms: string[];
+  transfer?: boolean;
+  publicAddress: string;
+  names: string[];
 }
 
-interface Poignee {
-  nom: string;
-  pair: Pair;
+interface Handshake {
+  name: string;
+  peer: Peer;
   client: ConfWg;
-  adresseClient: string;
+  clientAddress: string;
   ruleset: Ruleset;
-  transfert: boolean;
+  transfer: boolean;
 }
 
 /** La poignée de main entre le pair et le routeur : ce qu'il faut pour qu'ils se reconnaissent. */
 /** La configuration d'un pair distant, lue dans son fichier (sous son nom dans la langue). */
-export const confDistant = (j: Jeu, d: Distant): ConfWg => lireConfWg(j.lire(chemin(j.t, d.conf)) ?? '');
+export const remoteConf = (j: Game, d: Remote): ConfWg => readConfWg(j.read(path(j.t, d.conf)) ?? '');
 
-function poignee(j: Jeu, d: Distant, o: Options): Poignee | { etat: EtatTunnel; nom?: string } {
+function handshake(j: Game, d: Remote, o: Options): Handshake | { state: TunnelState; name?: string } {
   const interfaces = o.interfaces ?? wg(j);
   const ruleset = o.ruleset ?? nft(j);
-  const transfert = o.transfert ?? routage(j);
-  const entrees = Object.entries(interfaces);
-  if (!entrees.length) return { etat: 'eteint' };
-  const client = confDistant(j, d);
-  const pairRouteur = client.pairs[0];
-  const adresseClient = client.adresses[0]?.split('/')[0];
-  if (client.erreurs.length || !pairRouteur?.endpoint || !adresseClient) return { etat: 'conf' };
-  const [hote, port] = pairRouteur.endpoint.split(':');
-  if (hote !== o.adressePublique && !o.noms.includes(hote)) return { etat: 'adresse' };
-  const iface = entrees.find(([, i]) => i.conf.port === Number(port));
-  if (!iface) return { etat: 'adresse' };
-  const [nom, i] = iface;
-  const entree = {
+  const transfer = o.transfer ?? routing(j);
+  const inputs = Object.entries(interfaces);
+  if (!inputs.length) return { state: 'eteint' };
+  const client = remoteConf(j, d);
+  const routerPeer = client.peers[0];
+  const clientAddress = client.addresses[0]?.split('/')[0];
+  if (client.errors.length || !routerPeer?.endpoint || !clientAddress) return { state: 'conf' };
+  const [host, port] = routerPeer.endpoint.split(':');
+  if (host !== o.publicAddress && !o.names.includes(host)) return { state: 'adresse' };
+  const iface = inputs.find(([, i]) => i.conf.port === Number(port));
+  if (!iface) return { state: 'adresse' };
+  const [name, i] = iface;
+  const input = {
     iif: 'eth0',
     oif: '',
-    saddr: d.adresse,
-    daddr: o.adressePublique,
+    saddr: d.address,
+    daddr: o.publicAddress,
     proto: 'udp' as const,
     sport: 51820,
     dport: Number(port),
     ct: 'new' as const,
-    taille: 148,
+    size: 148,
   };
-  if (!traverser(ruleset, 'input', 'filter', entree).passe) return { etat: 'filtre', nom };
-  if (!i.conf.cle || pairRouteur.cle !== publique(i.conf.cle)) return { etat: 'cle-routeur', nom };
-  const pair = i.conf.pairs.find((p) => p.cle === d.cle);
-  if (!pair) return { etat: 'inconnu', nom };
-  return { nom, pair, client, adresseClient, ruleset, transfert };
+  if (!traverse(ruleset, 'input', 'filter', input).pass) return { state: 'filtre', name };
+  if (!i.conf.key || routerPeer.key !== isPublic(i.conf.key)) return { state: 'cle-routeur', name };
+  const peer = i.conf.peers.find((p) => p.key === d.key);
+  if (!peer) return { state: 'inconnu', name };
+  return { name, peer, client, clientAddress, ruleset, transfer };
 }
 
 // L'interface du routeur par où passe une adresse (hors tunnel).
-const sortiePour = (j: Jeu, ip: string, sauf: string) =>
-  Object.values(lan(j)?.interfaces ?? {}).find((x) => x.nom !== sauf && x.up && !x.wireguard && x.adresses.some((a) => dans(ip, reseauDe(a))));
+const outputFor = (j: Game, ip: string, except: string) =>
+  Object.values(lan(j)?.interfaces ?? {}).find((x) => x.name !== except && x.up && !x.wireguard && x.addresses.some((a) => inside(ip, networkFor(a))));
 
 // Un échange à travers la chaîne forward : le premier paquet, puis la réponse.
-function traverseForward(r: Ruleset, iif: string, oif: string, saddr: string, daddr: string, port: number): boolean {
-  const aller = { iif, oif, saddr, daddr, proto: 'tcp' as const, sport: 49152, dport: port, ct: 'new' as const, taille: 60 };
-  const retour = { ...aller, iif: oif, oif: iif, saddr: daddr, daddr: saddr, sport: port, dport: 49152, ct: 'established' as const, taille: 1500 };
-  return traverser(r, 'forward', 'filter', aller).passe && traverser(r, 'forward', 'filter', retour).passe;
+function traversesForward(r: Ruleset, iif: string, oif: string, saddr: string, daddr: string, port: number): boolean {
+  const go = { iif, oif, saddr, daddr, proto: 'tcp' as const, sport: 49152, dport: port, ct: 'new' as const, size: 60 };
+  const back = { ...go, iif: oif, oif: iif, saddr: daddr, daddr: saddr, sport: port, dport: 49152, ct: 'established' as const, size: 1500 };
+  return traverse(r, 'forward', 'filter', go).pass && traverse(r, 'forward', 'filter', back).pass;
 }
 
 /** Où en est le pair quand il essaie de joindre d.vers à travers le tunnel (maintenant, ou au démarrage). */
-export function etatTunnel(j: Jeu, d: Distant, o: Options): { etat: EtatTunnel; nom?: string } {
-  const p = poignee(j, d, o);
-  if ('etat' in p) return p;
-  const { nom, pair, client, adresseClient, ruleset, transfert } = p;
-  const source = d.source ?? adresseClient;
-  if (!pair.autorisees.some((a) => dans(source, a))) return { etat: 'autorisees', nom };
-  if (!estIp(d.vers) || !client.pairs[0].autorisees.some((a) => dans(d.vers, a))) return { etat: 'route', nom };
-  if (!transfert) return { etat: 'transfert', nom };
-  const sortie = sortiePour(j, d.vers, nom);
-  if (!traverseForward(ruleset, nom, sortie?.nom ?? '', source, d.vers, d.port)) return { etat: 'transfert', nom };
-  return { etat: 'ok', nom };
+export function tunnelState(j: Game, d: Remote, o: Options): { state: TunnelState; name?: string } {
+  const p = handshake(j, d, o);
+  if ('state' in p) return p;
+  const { name, peer, client, clientAddress, ruleset, transfer } = p;
+  const source = d.source ?? clientAddress;
+  if (!peer.allowed.some((a) => inside(source, a))) return { state: 'autorisees', name };
+  if (!isIp(d.to) || !client.peers[0].allowed.some((a) => inside(d.to, a))) return { state: 'route', name };
+  if (!transfer) return { state: 'transfert', name };
+  const output = outputFor(j, d.to, name);
+  if (!traversesForward(ruleset, name, output?.name ?? '', source, d.to, d.port)) return { state: 'transfert', name };
+  return { state: 'ok', name };
 }
 
 /** Un échange dans l'autre sens : un appareil du réseau local (son adresse) vers une adresse derrière le pair. */
-export function etatVersDistant(j: Jeu, d: Distant, de: string, vers: string, port: number, o: Options): { etat: EtatTunnel; nom?: string } {
-  const p = poignee(j, d, o);
-  if ('etat' in p) return p;
-  const { nom, pair, client, ruleset, transfert } = p;
+export function stateToRemote(j: Game, d: Remote, forEachOf: string, to: string, port: number, o: Options): { state: TunnelState; name?: string } {
+  const p = handshake(j, d, o);
+  if ('state' in p) return p;
+  const { name, peer, client, ruleset, transfer } = p;
   // Côté routeur, c'est l'AllowedIPs du pair qui dit par où envoyer (et les routes de wg-quick).
-  if (!pair.autorisees.some((a) => dans(vers, a))) return { etat: 'autorisees', nom };
+  if (!peer.allowed.some((a) => inside(to, a))) return { state: 'autorisees', name };
   // Côté pair, la réponse doit pouvoir repartir dans le tunnel (et le paquet être accepté).
-  if (!client.pairs[0].autorisees.some((a) => dans(de, a))) return { etat: 'route', nom };
-  if (d.derriereNat && !client.pairs[0].keepalive) return { etat: 'endormi', nom };
-  if (!transfert) return { etat: 'transfert', nom };
-  const entree = sortiePour(j, de, nom);
-  if (!traverseForward(ruleset, entree?.nom ?? '', nom, de, vers, port)) return { etat: 'transfert', nom };
-  return { etat: 'ok', nom };
+  if (!client.peers[0].allowed.some((a) => inside(forEachOf, a))) return { state: 'route', name };
+  if (d.behindNat && !client.peers[0].keepalive) return { state: 'endormi', name };
+  if (!transfer) return { state: 'transfert', name };
+  const input = outputFor(j, forEachOf, name);
+  if (!traversesForward(ruleset, input?.name ?? '', name, forEachOf, to, port)) return { state: 'transfert', name };
+  return { state: 'ok', name };
 }

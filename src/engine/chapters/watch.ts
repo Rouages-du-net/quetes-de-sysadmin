@@ -7,33 +7,33 @@
 // (CVE-2099-NNNNN), de la forme des vraies. On ne corrige qu'après avoir
 // vérifié que ça concerne ce serveur ; on ne casse rien ; on prouve.
 
-import { d, f, fichiersComptes, joueur, type Comptes, type Dossier, type Noeud } from '../world';
-import { clePublique, machineDeHistoire } from '../machines';
-import type { Traduire } from '../../texts';
-import type { EtatApt } from '../commands/apt';
+import { d, f, accountsFiles, player, type Accounts, type Directory, type Node } from '../world';
+import { publicKey, storyMachine } from '../machines';
+import type { Translate } from '../../texts';
+import type { AptState } from '../commands/apt';
 import { NGINX_CONF, MIME } from '../commands/apt';
-import { chargerNginx } from '../nginx';
-import type { EtatScan, HoteScan, ServiceScan } from '../scan';
-import type { Ecoute } from '../commands/ss';
-import type { Jeu } from '../shell';
+import { loadNginx } from '../nginx';
+import type { ScanState, ScanHost, ServiceScan } from '../scan';
+import type { Listening } from '../commands/ss';
+import type { Game } from '../shell';
 import { SUDOERS } from './coop';
-import { chargerSshd, fichier, journalSsh, sectionsMd, serviceSsh, sshd } from './audit';
+import { loadSshd, file, sshLog, sectionsMd, serviceSsh, sshd } from './audit';
 
-export { journalSsh, sectionsMd, serviceSsh, sshd, fichier };
+export { sshLog, sectionsMd, serviceSsh, sshd, file };
 
 /** Au début de chaque chapitre : sshd et nginx appliquent la configuration du disque. */
-export const initialiserVeille = (j: Jeu) => {
-  chargerSshd(j);
-  chargerNginx(j);
+export const initialiseWatch = (j: Game) => {
+  loadSshd(j);
+  loadNginx(j);
 };
 
 export const M = '/home/vous';
-export const MOT_DE_PASSE = 'levain-2028';
+export const PASSWORD = 'levain-2028';
 // Mardi 15 septembre 2028, 9 h 30 : six mois après « L'Audit ».
-export const MAINTENANT = Date.UTC(2028, 8, 15, 9, 30, 0);
+export const NOW = Date.UTC(2028, 8, 15, 9, 30, 0);
 // Une adresse quelconque d'internet (RFC 5737).
 export const INTERNET = '198.51.100.23';
-export const ADRESSE = '192.0.2.24';
+export const ADDRESS = '192.0.2.24';
 
 // Les CVE fictives du bulletin (forme des vraies, aucune n'existe). Les
 // versions suivent les paquets déjà simulés (src/engine/commands/apt.ts).
@@ -42,7 +42,7 @@ export const CVE = {
   // score plus bas que rsync.
   nginx: {
     id: 'CVE-2099-41042',
-    paquet: 'nginx',
+    pkg: 'nginx',
     cvss: 8.2,
     installee: '1.26.3-3+deb13u2',
     corrigee: '1.26.3-3+deb13u3',
@@ -51,7 +51,7 @@ export const CVE = {
   // main ou par une tâche planifiée) : à traiter après nginx malgré le score.
   rsync: {
     id: 'CVE-2099-37715',
-    paquet: 'rsync',
+    pkg: 'rsync',
     cvss: 9.8,
     installee: '3.4.1+ds1-4',
     corrigee: '3.4.1+ds1-5',
@@ -59,13 +59,13 @@ export const CVE = {
   // Sans objet : le paquet n'est pas installé sur ce serveur.
   certbot: {
     id: 'CVE-2099-50288',
-    paquet: 'python3-certbot-nginx',
+    pkg: 'python3-certbot-nginx',
     cvss: 5.3,
   },
   // Sans objet : la version installée est déjà au-delà de la version corrigée.
   curl: {
     id: 'CVE-2099-12003',
-    paquet: 'curl',
+    pkg: 'curl',
     cvss: 6.1,
     installee: '8.14.1-3',
     affecteeJusqua: '8.14.1-2',
@@ -76,12 +76,12 @@ export const CVE = {
   // n'existe encore.
   ssh: {
     id: 'CVE-2099-29107',
-    paquet: 'openssh-server',
+    pkg: 'openssh-server',
     cvss: 5.9,
   },
 };
 
-const racine = { proprio: 'root' };
+const root = { owner: 'root' };
 
 // sshd_config déjà durci (ce que « L'Audit » laisse derrière lui, repris sur
 // le nouveau serveur à l'installation).
@@ -134,25 +134,25 @@ const INDEX = `<!DOCTYPE html>
 </html>`;
 
 // Les comptes : Nadia (la gérante, pas d'accès sudo) et le compte du joueur.
-export const comptesVeille = (): Comptes => ({
-  utilisateurs: {
-    root: { uid: 0, groupe: 'root', maison: '/root' },
-    vous: { uid: 1000, groupe: 'vous' },
-    nadia: { uid: 1001, groupe: 'nadia' },
+export const watchAccounts = (): Accounts => ({
+  users: {
+    root: { uid: 0, group: 'root', home: '/root' },
+    vous: { uid: 1000, group: 'vous' },
+    nadia: { uid: 1001, group: 'nadia' },
   },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    adm: { gid: 4, membres: ['vous'] },
-    sudo: { gid: 27, membres: ['vous'] },
-    vous: { gid: 1000, membres: [] },
-    nadia: { gid: 1001, membres: [] },
+  groups: {
+    root: { gid: 0, members: [] },
+    adm: { gid: 4, members: ['vous'] },
+    sudo: { gid: 27, members: ['vous'] },
+    vous: { gid: 1000, members: [] },
+    nadia: { gid: 1001, members: [] },
   },
 });
 
 /** L'état d'apt au début d'un chapitre : le bulletin de la semaine, pas encore traité. */
-export const aptVeille = (listes = true): EtatApt => ({
-  listes,
-  installes: {
+export const watchApt = (lists = true): AptState => ({
+  lists,
+  installed: {
     curl: CVE.curl.installee,
     rsync: CVE.rsync.installee,
     tar: '1.35+dfsg-3.1',
@@ -161,90 +161,90 @@ export const aptVeille = (listes = true): EtatApt => ({
     'nginx-common': CVE.nginx.installee,
     openssl: '3.5.4-1~deb13u1',
   },
-  mises: { nginx: CVE.nginx.corrigee, rsync: CVE.rsync.corrigee },
+  updates: { nginx: CVE.nginx.corrigee, rsync: CVE.rsync.corrigee },
 });
 
 // La version que nginx annonce ne change pas avec un correctif Debian (le
 // numéro upstream seul est visible) : la preuve de « Le correctif » passe
 // par apt (dpkg -l, apt list --upgradable), pas par nmap.
 const SERVICES: ServiceScan[] = [
-  { port: 22, service: 'ssh', produit: 'OpenSSH 10.0p1 Debian 7+deb13u1 (protocol 2.0)' },
-  { port: 80, service: 'http', produit: 'nginx 1.26.3' },
-  { port: 443, service: 'http', ssl: true, produit: 'nginx 1.26.3' },
+  { port: 22, service: 'ssh', product: 'OpenSSH 10.0p1 Debian 7+deb13u1 (protocol 2.0)' },
+  { port: 80, service: 'http', product: 'nginx 1.26.3' },
+  { port: 443, service: 'http', ssl: true, product: 'nginx 1.26.3' },
 ];
 
 /** Ce que nmap voit du Fournil, vu d'internet (un seul hôte : le périmètre est déjà acquis). */
-export const scanVeille = (): EtatScan => ({
-  hotes: [{ adresse: ADRESSE, noms: ['petrin.internal', 'fournil.example', 'petrin'], local: true, services: SERVICES, latence: 0.012 }],
-  perimetre: [ADRESSE],
+export const watchScan = (): ScanState => ({
+  hosts: [{ address: ADDRESS, names: ['petrin.internal', 'fournil.example', 'petrin'], local: true, services: SERVICES, latency: 0.012 }],
+  scope: [ADDRESS],
 });
 
 /** L'état initial de nginx (avant chargerNginx) : les noms qu'il sert, pour que curl les résolve. */
-export const nginxVeille = () => ({ charge: null, noms: ['fournil.example', 'www.fournil.example', 'petrin', 'petrin.internal', ADRESSE] });
+export const watchNginx = () => ({ load: null, names: ['fournil.example', 'www.fournil.example', 'petrin', 'petrin.internal', ADDRESS] });
 
 /** Les sockets en écoute : nginx et sshd seulement (rsync n'est pas un service, juste un outil en ligne de commande). */
-export const ecouteVeille = (): Ecoute[] => [
-  { proto: 'tcp', adresse: '0.0.0.0', port: 22, processus: 'sshd', pid: 612 },
-  { proto: 'tcp', adresse: '0.0.0.0', port: 80, processus: 'nginx', pid: 701 },
-  { proto: 'tcp', adresse: '0.0.0.0', port: 443, processus: 'nginx', pid: 701 },
+export const watchListening = (): Listening[] => [
+  { proto: 'tcp', address: '0.0.0.0', port: 22, process: 'sshd', pid: 612 },
+  { proto: 'tcp', address: '0.0.0.0', port: 80, process: 'nginx', pid: 701 },
+  { proto: 'tcp', address: '0.0.0.0', port: 443, process: 'nginx', pid: 701 },
 ];
 
 /** Le monde commun : /etc (comptes, sudoers, ssh, nginx), les maisons, et ce que le chapitre ajoute. */
-export function mondeVeille(
-  t: Traduire,
-  o: { maison: Record<string, Noeud>; etc?: Record<string, Noeud>; plus?: Record<string, Noeud>; accesLog?: string },
-): Dossier {
-  const petrin = machineDeHistoire('veille')!;
+export function watchWorld(
+  t: Translate,
+  o: { home: Record<string, Node>; etc?: Record<string, Node>; more?: Record<string, Node>; logAccess?: string },
+): Directory {
+  const kneader = storyMachine('veille')!;
   return d(
     {
       etc: d(
         {
-          ...fichiersComptes(),
-          hostname: fichier('petrin'),
-          sudoers: fichier(SUDOERS, 'root', 'r--r-----'),
-          'sudoers.d': d({ README: fichier('# See sudoers(5): files here are read unless their name has a dot or ends in ~.', 'root', 'r--r-----') }, undefined, { proprio: 'root', mode: 'rwxr-xr-x' }),
-          ssh: d({ sshd_config: f(SSHD_CONFIG, { lignes: true, proprio: 'root' }) }, undefined, racine),
-          systemd: d({ system: d({}, undefined, racine) }, undefined, racine),
+          ...accountsFiles(),
+          hostname: file('petrin'),
+          sudoers: file(SUDOERS, 'root', 'r--r-----'),
+          'sudoers.d': d({ README: file('# See sudoers(5): files here are read unless their name has a dot or ends in ~.', 'root', 'r--r-----') }, undefined, { owner: 'root', mode: 'rwxr-xr-x' }),
+          ssh: d({ sshd_config: f(SSHD_CONFIG, { lines: true, owner: 'root' }) }, undefined, root),
+          systemd: d({ system: d({}, undefined, root) }, undefined, root),
           nginx: d(
             {
-              'nginx.conf': fichier(NGINX_CONF),
-              'mime.types': fichier(MIME),
-              'conf.d': d({}, undefined, racine),
-              'modules-enabled': d({}, undefined, racine),
-              'sites-available': d({ fournil: fichier(SITE) }, undefined, racine),
-              'sites-enabled': d({ fournil: f('', { proprio: 'root', lien: '/etc/nginx/sites-available/fournil' }) }, undefined, racine),
+              'nginx.conf': file(NGINX_CONF),
+              'mime.types': file(MIME),
+              'conf.d': d({}, undefined, root),
+              'modules-enabled': d({}, undefined, root),
+              'sites-available': d({ fournil: file(SITE) }, undefined, root),
+              'sites-enabled': d({ fournil: f('', { owner: 'root', link: '/etc/nginx/sites-available/fournil' }) }, undefined, root),
             },
             undefined,
-            racine,
+            root,
           ),
           ...(o.etc ?? {}),
         },
         undefined,
-        racine,
+        root,
       ),
       home: d(
         {
           vous: d({
-            ...o.maison,
-            '.ssh': d({ authorized_keys: f(clePublique(petrin, joueur(t)), { lignes: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
+            ...o.home,
+            '.ssh': d({ authorized_keys: f(publicKey(kneader, player(t)), { lines: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
           }),
-          nadia: d({}, undefined, { proprio: 'nadia', mode: 'rwx------' }),
+          nadia: d({}, undefined, { owner: 'nadia', mode: 'rwx------' }),
         },
         undefined,
-        racine,
+        root,
       ),
       var: d(
         {
-          www: d({ fournil: d({ 'index.html': fichier(INDEX, 'root') }, undefined, racine) }, undefined, racine),
-          log: d({ nginx: d({ 'access.log': f(o.accesLog ?? '', { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }) }, undefined, { proprio: 'root', groupe: 'adm' }) }, undefined, racine),
+          www: d({ fournil: d({ 'index.html': file(INDEX, 'root') }, undefined, root) }, undefined, root),
+          log: d({ nginx: d({ 'access.log': f(o.logAccess ?? '', { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }) }, undefined, { owner: 'root', group: 'adm' }) }, undefined, root),
         },
         undefined,
-        racine,
+        root,
       ),
-      tmp: d({}, undefined, { proprio: 'root', mode: 'rwxrwxrwt' }),
-      ...(o.plus ?? {}),
+      tmp: d({}, undefined, { owner: 'root', mode: 'rwxrwxrwt' }),
+      ...(o.more ?? {}),
     },
     undefined,
-    racine,
+    root,
   );
 }

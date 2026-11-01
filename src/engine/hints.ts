@@ -8,28 +8,28 @@
 // Une étape sans message n'a pas d'indice (une fausse piste, un avertissement).
 
 import type { Shell } from './shell';
-import { fiches } from './sheets';
+import { allSheets } from './sheets';
 
-export type Niveau = 'manuel' | 'piste' | 'solution';
-export const NIVEAUX: Niveau[] = ['manuel', 'piste', 'solution'];
+export type HintLevel = 'manuel' | 'piste' | 'solution';
+export const HINT_LEVELS: HintLevel[] = ['manuel', 'piste', 'solution'];
 
-export interface Indice {
+export interface Hint {
   // L'étape visée (l'identifiant de l'événement), ou null : plus rien à indiquer.
-  etape: string | null;
+  step: string | null;
   // Les pages du manuel utiles dans ce chapitre (les commandes qu'il fait découvrir).
-  manuel: string[];
-  piste: string | null;
+  manual: string[];
+  lead: string | null;
   solution: string | null;
 }
 
 /** L'indice du moment pour cette session (son chapitre, ses étapes déjà franchies). */
-export function indice(sh: Shell): Indice {
-  const c = sh.chapitre;
-  const fiche = fiches().find((f) => f.chapitre === c);
-  const manuel = fiche?.nouvelles.length ? fiche.nouvelles : c.commandes.filter((x) => !['ls', 'cd', 'pwd', 'cat', 'less'].includes(x)).slice(0, 4);
-  const ordre = c.etapes ?? c.evenements.map((e) => e.id);
-  const etape = ordre.find((e) => !sh.drapeaux.has(e) && sh.t.existe(`indice-${c.id}-${e}.piste`));
-  if (!etape) return { etape: null, manuel, piste: null, solution: null };
-  const id = `indice-${c.id}-${etape}`;
-  return { etape, manuel, piste: sh.t(`${id}.piste`), solution: sh.t(`${id}.solution`) };
+export function hint(sh: Shell): Hint {
+  const c = sh.chapter;
+  const sheet = allSheets().find((f) => f.chapter === c);
+  const manual = sheet?.fresh.length ? sheet.fresh : c.commands.filter((x) => !['ls', 'cd', 'pwd', 'cat', 'less'].includes(x)).slice(0, 4);
+  const order = c.steps ?? c.events.map((e) => e.id);
+  const step = order.find((e) => !sh.flags.has(e) && sh.t.exists(`indice-${c.id}-${e}.piste`));
+  if (!step) return { step: null, manual, lead: null, solution: null };
+  const id = `indice-${c.id}-${step}`;
+  return { step, manual, lead: sh.t(`${id}.piste`), solution: sh.t(`${id}.solution`) };
 }

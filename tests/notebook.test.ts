@@ -2,58 +2,58 @@
 // du manuel, la première ligne tapée, et l'export en Markdown.
 
 import { describe, expect, it } from 'vitest';
-import { machinesDansLaLangue } from './names';
-import { prerequis } from '../src/engine/unlocking';
+import { machinesInLanguage } from './names';
+import { prerequisites } from '../src/engine/unlocking';
 import { Console } from '../src/engine/console';
-import { enMarkdown, noter, description, type Carnet } from '../src/engine/notebook';
-import { traducteur, LANGUES } from '../src/texts';
-import { fiches } from '../src/engine/sheets';
-import { HISTOIRES } from '../src/engine/chapters';
+import { inMarkdown, note, description, type Notebook } from '../src/engine/notebook';
+import { translator, LANGUAGES } from '../src/texts';
+import { allSheets } from '../src/engine/sheets';
+import { STORIES } from '../src/engine/chapters';
 
-for (const langue of LANGUES)
-  describe(`Le carnet — ${langue}`, () => {
-    const t = traducteur(langue);
-    const partie = () => {
-      const c = new Console({ langue });
-      const carnet: Carnet = {};
-      const jouer = (ligne: string) => {
+for (const language of LANGUAGES)
+  describe(`Le carnet — ${language}`, () => {
+    const t = translator(language);
+    const part = () => {
+      const c = new Console({ language });
+      const notebook: Notebook = {};
+      const play = (line: string) => {
         const sh = c.shell;
-        const sortie = c.executer(machinesDansLaLangue(c.t, ligne));
-        noter(carnet, sh);
-        return sortie;
+        const output = c.execute(machinesInLanguage(c.t, line));
+        note(notebook, sh);
+        return output;
       };
-      return { c, carnet, jouer };
+      return { c, notebook, jouer: play };
     };
 
     it('note chaque commande une seule fois, avec sa première ligne et son chapitre', () => {
-      const { carnet, jouer } = partie();
-      jouer('ls -a | cat');
-      jouer('ls');
-      jouer('head -n 2 bienvenue.txt');
-      jouer('ssh royaume');
-      jouer('yes');
-      jouer('pwd');
-      expect(Object.keys(carnet).sort()).toEqual(['cat', 'ls', 'pwd', 'ssh']);
-      expect(carnet.ls).toEqual({ ligne: 'ls -a | cat', chapitre: '' });
-      expect(carnet.cat.ligne).toBe('ls -a | cat');
+      const { notebook, jouer: play } = part();
+      play('ls -a | cat');
+      play('ls');
+      play('head -n 2 bienvenue.txt');
+      play('ssh royaume');
+      play('yes');
+      play('pwd');
+      expect(Object.keys(notebook).sort()).toEqual(['cat', 'ls', 'pwd', 'ssh']);
+      expect(notebook.ls).toEqual({ line: 'ls -a | cat', chapter: '' });
+      expect(notebook.cat.line).toBe('ls -a | cat');
       // head n'existe pas encore sur le poste : il n'entre pas au carnet.
-      expect(carnet.head).toBeUndefined();
-      expect(carnet.pwd.chapitre).toBe('eveil');
+      expect(notebook.head).toBeUndefined();
+      expect(notebook.pwd.chapter).toBe('eveil');
     });
 
     it("ignore ce qui n'est pas une commande du jeu, mais garde man", () => {
-      const { carnet, jouer } = partie();
-      jouer('frobnicate --now');
-      jouer('man ls');
-      jouer('sshd_config');
-      expect(Object.keys(carnet)).toEqual(['man']);
+      const { notebook, jouer: play } = part();
+      play('frobnicate --now');
+      play('man ls');
+      play('sshd_config');
+      expect(Object.keys(notebook)).toEqual(['man']);
     });
 
     it('exporte en Markdown, trié, avec la ligne du manuel', () => {
-      const { carnet, jouer } = partie();
-      jouer('pwd');
-      jouer('ls');
-      const md = enMarkdown(carnet, t);
+      const { notebook, jouer: play } = part();
+      play('pwd');
+      play('ls');
+      const md = inMarkdown(notebook, t);
       expect(md.indexOf('## ls')).toBeLessThan(md.indexOf('## pwd'));
       expect(md).toContain('```\nls\n```');
       expect(md).toContain(`${description('ls', t)}.`);
@@ -62,52 +62,52 @@ for (const langue of LANGUES)
   });
 
 describe('Le carnet et la progression', () => {
-  const t = traducteur('fr');
+  const t = translator('fr');
   it('le Markdown commence par les chapitres terminés, histoire par histoire', () => {
-    const md = enMarkdown({}, t, ['eveil', 'bourg', 'fermer-la-porte']);
+    const md = inMarkdown({}, t, ['eveil', 'bourg', 'fermer-la-porte']);
     expect(md).toContain('## Progression');
     expect(md).toMatch(/- L.Effaceur : 2 chapitres terminés sur 4/);
     expect(md).toMatch(/- Les Lettres du quartier : 1 chapitre terminé sur 9/);
     expect(md).toContain('Fermer la porte');
-    expect(enMarkdown({}, t, [])).toContain('Aucun chapitre terminé');
+    expect(inMarkdown({}, t, [])).toContain('Aucun chapitre terminé');
   });
 });
 
 describe('Les fiches pour les enseignant·es', () => {
   it('chaque chapitre a sa fiche, ses commandes nouvelles une seule fois, une durée', () => {
-    const toutes = fiches();
-    expect(toutes.length).toBe(HISTOIRES.flatMap((h) => h.chapitres).length);
-    const vues = toutes.flatMap((f) => f.nouvelles);
-    expect(new Set(vues).size).toBe(vues.length);
-    expect(toutes.find((f) => f.chapitre.id === 'eveil')!.nouvelles).toContain('ls');
-    expect(toutes.find((f) => f.chapitre.id === 'goulot')!.nouvelles).toContain('iostat');
-    expect(toutes.find((f) => f.chapitre.id === 'bourg')!.avant?.id).toBe('eveil');
-    expect(toutes.every((f) => f.duree >= 15 && f.duree % 5 === 0)).toBe(true);
+    const all = allSheets();
+    expect(all.length).toBe(STORIES.flatMap((h) => h.chapters).length);
+    const views = all.flatMap((f) => f.fresh);
+    expect(new Set(views).size).toBe(views.length);
+    expect(all.find((f) => f.chapter.id === 'eveil')!.fresh).toContain('ls');
+    expect(all.find((f) => f.chapter.id === 'goulot')!.fresh).toContain('iostat');
+    expect(all.find((f) => f.chapter.id === 'bourg')!.before?.id).toBe('eveil');
+    expect(all.every((f) => f.duration >= 15 && f.duration % 5 === 0)).toBe(true);
   });
 });
 
 describe('Le mode examen', () => {
   it("sans indice, mais l'étape finale et son débrief s'affichent", () => {
-    const c = new Console({ langue: 'fr', termines: ['eveil', 'bourg', 'racine', 'sauvegarde', ...prerequis('lettres')] });
-    c.examen = true;
-    const jouer = (lignes: string[]) => lignes.map((l) => c.executer(machinesDansLaLangue(c.t, l)) ?? '').join('\n');
+    const c = new Console({ language: 'fr', finished: ['eveil', 'bourg', 'racine', 'sauvegarde', ...prerequisites('lettres')] });
+    c.exam = true;
+    const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
     // La Porte, avec la configuration de sshd : la faute de frappe ne donne plus d'indice.
-    let tout = jouer(['ssh lettres', 'yes']);
-    c.executer('sudo nano /etc/ssh/sshd_config');
-    c.executer(machinesDansLaLangue(c.t, 'fourmis-2026'));
-    c.enregistrer(c.edition!.texte.replace('PermitRootLogin yes', 'PermitRootLogin non'));
-    tout += c.quitterEdition();
-    tout += jouer(['sudo sshd -t']);
-    expect(tout).toContain('unsupported option "non"');
-    expect(tout).not.toContain('Il y a une erreur dans la configuration de SSH');
-    c.executer('sudo nano /etc/ssh/sshd_config.d/00-hardening.conf');
-    c.enregistrer('PermitRootLogin no\nPasswordAuthentication no\n');
-    c.quitterEdition();
-    c.executer('sudo nano /etc/ssh/sshd_config');
-    c.enregistrer(c.edition!.texte.replace('PermitRootLogin non', 'PermitRootLogin no'));
-    c.quitterEdition();
-    tout = jouer(['sudo systemctl reload ssh', 'exit', 'ssh lettres']);
-    expect(tout).toContain('https://man.openbsd.org/sshd_config');
-    expect(c.termines).toContain('fermer-la-porte');
+    let all = play(['ssh lettres', 'yes']);
+    c.execute('sudo nano /etc/ssh/sshd_config');
+    c.execute(machinesInLanguage(c.t, 'fourmis-2026'));
+    c.save(c.edition!.text.replace('PermitRootLogin yes', 'PermitRootLogin non'));
+    all += c.quitEdition();
+    all += play(['sudo sshd -t']);
+    expect(all).toContain('unsupported option "non"');
+    expect(all).not.toContain('Il y a une erreur dans la configuration de SSH');
+    c.execute('sudo nano /etc/ssh/sshd_config.d/00-hardening.conf');
+    c.save('PermitRootLogin no\nPasswordAuthentication no\n');
+    c.quitEdition();
+    c.execute('sudo nano /etc/ssh/sshd_config');
+    c.save(c.edition!.text.replace('PermitRootLogin non', 'PermitRootLogin no'));
+    c.quitEdition();
+    all = play(['sudo systemctl reload ssh', 'exit', 'ssh lettres']);
+    expect(all).toContain('https://man.openbsd.org/sshd_config');
+    expect(c.finished).toContain('fermer-la-porte');
   });
 });

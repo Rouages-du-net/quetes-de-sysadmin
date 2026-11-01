@@ -18,19 +18,19 @@
 // https://manpages.debian.org/bookworm/fail2ban/jail.conf.5.en.html,
 // https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html
 
-import { d, f, fichiersComptes, comptesParDefaut, type Chapitre } from '../world';
-import type { Jeu, Shell } from '../shell';
-import { nomMachine, POSTE } from '../machines';
-import { journaliser, nouveauSystemd, systemd } from '../systemd';
-import { lireConfig as lireSshd, portsSshd } from '../sshd';
-import { appliquer, bloquePort, lireConfig as lireFail2ban, type EtatFail2ban } from '../fail2ban';
-import { verdict, type PareFeu } from '../firewall';
+import { d, f, accountsFiles, accountsByDefault, type Chapter } from '../world';
+import type { Game, Shell } from '../shell';
+import { machineName, WORKSTATION } from '../machines';
+import { writeLog, newSystemd, systemd } from '../systemd';
+import { readConfig as readSshd, portsSshd } from '../sshd';
+import { apply, portBlocked, readConfig as readFail2ban, type Fail2banState } from '../fail2ban';
+import { verdict, type Firewall } from '../firewall';
 import { configuration } from '../access';
-import type { Ecoute } from '../commands/ss';
+import type { Listening } from '../commands/ss';
 import { JAIL_CONF } from './sentinel';
 
 const M = '/home/vous';
-const NOUVEAU = 2222;
+const NEW = 2222;
 const RANIA = '198.51.100.40';
 // Une adresse quelconque d'internet.
 const INTERNET = '203.0.113.200';
@@ -70,7 +70,7 @@ AcceptEnv LANG LC_*
 Subsystem	sftp	/usr/lib/openssh/sftp-server
 `.trim();
 
-const DURCISSEMENT = 'PermitRootLogin no\nPasswordAuthentication no';
+const HARDENING = 'PermitRootLogin no\nPasswordAuthentication no';
 
 // Le fichier de Debian 12 (paquet fail2ban) et le jail.local de « La sentinelle ».
 export const DEFAULTS_DEBIAN = `[DEFAULT]
@@ -82,50 +82,50 @@ backend = systemd
 enabled = true`;
 const JAIL_LOCAL = `[DEFAULT]
 bantime  = 1h
-ignoreip = ${RANIA} ${POSTE.adresse}`;
+ignoreip = ${RANIA} ${WORKSTATION.address}`;
 
 // La nuit : des robots, par centaines, sur le port 22.
 const ROBOTS = ['203.0.113.66', '198.51.100.23', '192.0.2.200', '203.0.113.91', '198.51.100.77', '192.0.2.45'];
-const NOMS = ['admin', 'oracle', 'ubuntu', 'test', 'git', 'pi', 'user', 'postgres', 'ftp', 'guest'];
+const NAMES = ['admin', 'oracle', 'ubuntu', 'test', 'git', 'pi', 'user', 'postgres', 'ftp', 'guest'];
 
-const ECOUTE_WEB: Ecoute[] = [
-  { proto: 'tcp', adresse: '0.0.0.0', port: 80, processus: 'nginx', pid: 701 },
-  { proto: 'tcp', adresse: '0.0.0.0', port: 443, processus: 'nginx', pid: 701 },
+const WEB_LISTENING: Listening[] = [
+  { proto: 'tcp', address: '0.0.0.0', port: 80, process: 'nginx', pid: 701 },
+  { proto: 'tcp', address: '0.0.0.0', port: 443, process: 'nginx', pid: 701 },
 ];
-const ecoute = (ports: number[]): Ecoute[] => [
-  ...ports.flatMap((port): Ecoute[] => [
-    { proto: 'tcp', adresse: '0.0.0.0', port, processus: 'sshd', pid: 612 },
-    { proto: 'tcp', adresse: '[::]', port, processus: 'sshd', pid: 612 },
+const listening = (ports: number[]): Listening[] => [
+  ...ports.flatMap((port): Listening[] => [
+    { proto: 'tcp', address: '0.0.0.0', port, process: 'sshd', pid: 612 },
+    { proto: 'tcp', address: '[::]', port, process: 'sshd', pid: 612 },
   ]),
-  ...ECOUTE_WEB,
+  ...WEB_LISTENING,
 ];
 
-interface EtatSshd {
-  charge: Record<string, string>;
-  recharges: number;
+interface SshdState {
+  load: Record<string, string>;
+  reloads: number;
 }
 
-const sshd = (j: Jeu) => j.etat.sshd as EtatSshd;
-const ports = (j: Jeu) => portsSshd(sshd(j).charge);
-const pf = (j: Jeu) => j.etat.ufw as PareFeu;
-const f2b = (j: Jeu) => j.etat.fail2ban as EtatFail2ban;
-const poste = (j: Jeu) => (j.etat.poste as (() => Shell) | undefined)?.();
-const ouvert = (j: Jeu, port: number, source = INTERNET) => verdict(pf(j), port, source) === 'accepte';
+const sshd = (j: Game) => j.state.sshd as SshdState;
+const ports = (j: Game) => portsSshd(sshd(j).load);
+const pf = (j: Game) => j.state.ufw as Firewall;
+const f2b = (j: Game) => j.state.fail2ban as Fail2banState;
+const workstation = (j: Game) => (j.state.poste as (() => Shell) | undefined)?.();
+const open = (j: Game, port: number, source = INTERNET) => verdict(pf(j), port, source) === 'accepte';
 
 // Un port où sshd écoute et que le pare-feu laisse passer depuis le poste.
-const joignable = (j: Jeu) => ports(j).some((p) => ouvert(j, p, POSTE.adresse));
-const deplace = (j: Jeu) => ports(j).length === 1 && ports(j)[0] === NOUVEAU;
-const pareFeuAJour = (j: Jeu) => pf(j).actif && ouvert(j, NOUVEAU) && !ouvert(j, 22);
-const sentinelle = (j: Jeu) => !!f2b(j).charge?.enabled && bloquePort(f2b(j).charge, NOUVEAU);
-const posteAJour = (j: Jeu) => {
-  const p = poste(j);
-  return !!p && configuration(p, nomMachine(j.t, 'lettres')).port?.[0] === String(NOUVEAU);
+const reachable = (j: Game) => ports(j).some((p) => open(j, p, WORKSTATION.address));
+const moved = (j: Game) => ports(j).length === 1 && ports(j)[0] === NEW;
+const dayAFirewall = (j: Game) => pf(j).enabled && open(j, NEW) && !open(j, 22);
+const sentinel = (j: Game) => !!f2b(j).load?.enabled && portBlocked(f2b(j).load, NEW);
+const dayAWorkstation = (j: Game) => {
+  const p = workstation(j);
+  return !!p && configuration(p, machineName(j.t, 'lettres')).port?.[0] === String(NEW);
 };
 
-export const port: Chapitre = {
+export const port: Chapter = {
   id: 'port',
-  numero: 7,
-  commandes: [
+  number: 7,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -146,53 +146,53 @@ export const port: Chapitre = {
     'fail2ban-client',
     'nft',
   ],
-  maison: M,
-  accueil: 'courriel_kofi.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_kofi.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'fourmis-2026',
-  surveillePoste: true,
-  comptes: () => {
-    const c = comptesParDefaut();
-    c.groupes.adm = { gid: 4, membres: ['vous'] };
+  password: 'fourmis-2026',
+  watchesWorkstation: true,
+  accounts: () => {
+    const c = accountsByDefault();
+    c.groups.adm = { gid: 4, members: ['vous'] };
     return c;
   },
-  etat: () => ({
-    sshd: { charge: {}, recharges: 0 } satisfies EtatSshd,
-    ecoute: ecoute([22]),
+  state: () => ({
+    sshd: { load: {}, reloads: 0 } satisfies SshdState,
+    ecoute: listening([22]),
     ufw: {
-      actif: true,
-      entrant: 'deny',
-      sortant: 'allow',
-      regles: [
-        { action: 'allow', vers: 'OpenSSH', ports: [22], de: null },
-        { action: 'allow', vers: 'Nginx Full', ports: [80, 443], de: null },
+      enabled: true,
+      incoming: 'deny',
+      outgoing: 'allow',
+      rules: [
+        { action: 'allow', to: 'OpenSSH', ports: [22], forEachOf: null },
+        { action: 'allow', to: 'Nginx Full', ports: [80, 443], forEachOf: null },
       ],
-    } satisfies PareFeu,
-    fail2ban: { charge: null, bannis: ROBOTS.slice(0, 2), totalBannis: 214, journal: [], chargements: 0, consulte: false } satisfies EtatFail2ban,
-    systemd: nouveauSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 10, 3, 8, 0, 0), {
+    } satisfies Firewall,
+    fail2ban: { load: null, banned: ROBOTS.slice(0, 2), bannedTotal: 214, log: [], loads: 0, consulted: false } satisfies Fail2banState,
+    systemd: newSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 10, 3, 8, 0, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,
         executable: 'sshd',
-        processus: [{ pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+        process: [{ pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
         // Comme le service ssh de Debian : ExecReload vérifie d'abord (sshd -t).
-        verifier: (j) => {
-          const e = lireSshd(j).erreurs;
+        check: (j) => {
+          const e = readSshd(j).errors;
           return e.length ? e : null;
         },
-        verifierAuRechargement: true,
-        charger: (j) => {
+        checkToReload: true,
+        load: (j) => {
           const s = sshd(j);
           if (!s) return;
-          s.charge = lireSshd(j).valeurs;
-          s.recharges++;
+          s.load = readSshd(j).values;
+          s.reloads++;
           // sshd relancé rouvre ses sockets : il écoute sur les ports de la nouvelle configuration.
-          j.etat.ecoute = ecoute(ports(j));
+          j.state.ecoute = listening(ports(j));
           const sd = systemd(j)!;
           for (const p of ports(j)) {
-            journaliser(sd, 'ssh.service', 'sshd', 612, `Server listening on 0.0.0.0 port ${p}.`);
-            journaliser(sd, 'ssh.service', 'sshd', 612, `Server listening on :: port ${p}.`);
+            writeLog(sd, 'ssh.service', 'sshd', 612, `Server listening on 0.0.0.0 port ${p}.`);
+            writeLog(sd, 'ssh.service', 'sshd', 612, `Server listening on :: port ${p}.`);
           }
         },
       },
@@ -202,96 +202,96 @@ export const port: Chapitre = {
         description: 'Fail2Ban Service',
         active: true,
         executable: 'fail2ban-server',
-        verifier: (j) => {
-          const e = lireFail2ban(j).erreurs;
+        check: (j) => {
+          const e = readFail2ban(j).errors;
           return e.length ? e : null;
         },
-        verifierAuRechargement: true,
-        charger: (j) => {
-          const etat = f2b(j);
-          if (!etat) return;
-          etat.charge = lireFail2ban(j).prison;
-          etat.chargements++;
-          etat.consulte = false;
-          appliquer(j, etat);
+        checkToReload: true,
+        load: (j) => {
+          const state = f2b(j);
+          if (!state) return;
+          state.load = readFail2ban(j).jail;
+          state.loads++;
+          state.consulted = false;
+          apply(j, state);
         },
       },
     }),
   }),
-  initialiser: (j) => {
-    sshd(j).charge = lireSshd(j).valeurs;
-    f2b(j).charge = lireFail2ban(j).prison;
+  initialise: (j) => {
+    sshd(j).load = readSshd(j).values;
+    f2b(j).load = readFail2ban(j).jail;
     const sd = systemd(j)!;
     // Une nuit ordinaire : une tentative toutes les deux minutes, d'une demi-douzaine d'adresses.
-    sd.horloge = Date.UTC(2026, 10, 3, 0, 0, 0);
+    sd.clock = Date.UTC(2026, 10, 3, 0, 0, 0);
     for (let i = 0; i < 40; i++) {
-      sd.horloge += 127_000;
+      sd.clock += 127_000;
       const ip = ROBOTS[i % ROBOTS.length];
-      const nom = NOMS[(i * 7) % NOMS.length];
-      journaliser(sd, 'ssh.service', 'sshd', 3000 + i * 5, `Invalid user ${nom} from ${ip} port ${40000 + i * 37}`, 6, false);
-      journaliser(
+      const name = NAMES[(i * 7) % NAMES.length];
+      writeLog(sd, 'ssh.service', 'sshd', 3000 + i * 5, `Invalid user ${name} from ${ip} port ${40000 + i * 37}`, 6, false);
+      writeLog(
         sd,
         'ssh.service',
         'sshd',
         3000 + i * 5,
-        `Connection closed by invalid user ${nom} ${ip} port ${40000 + i * 37} [preauth]`,
+        `Connection closed by invalid user ${name} ${ip} port ${40000 + i * 37} [preauth]`,
         6,
         false,
       );
     }
-    sd.horloge = Date.UTC(2026, 10, 3, 8, 0, 0);
+    sd.clock = Date.UTC(2026, 10, 3, 8, 0, 0);
   },
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
+  createWorld: (t) => {
+    const root = { owner: 'root' };
     return d(
       {
         etc: d(
           {
-            ...fichiersComptes(),
+            ...accountsFiles(),
             ssh: d(
               {
-                sshd_config: f(SSHD_CONFIG, { lignes: true, proprio: 'root' }),
-                'sshd_config.d': d({ '00-hardening.conf': f(DURCISSEMENT, { lignes: true, proprio: 'root' }) }, undefined, racine),
+                sshd_config: f(SSHD_CONFIG, { lines: true, owner: 'root' }),
+                'sshd_config.d': d({ '00-hardening.conf': f(HARDENING, { lines: true, owner: 'root' }) }, undefined, root),
               },
               undefined,
-              racine,
+              root,
             ),
             fail2ban: d(
               {
-                'jail.conf': f(JAIL_CONF, { lignes: true, proprio: 'root' }),
-                'jail.d': d({ 'defaults-debian.conf': f(DEFAULTS_DEBIAN, { lignes: true, proprio: 'root' }) }, undefined, racine),
-                'jail.local': f(JAIL_LOCAL, { lignes: true, proprio: 'root' }),
+                'jail.conf': f(JAIL_CONF, { lines: true, owner: 'root' }),
+                'jail.d': d({ 'defaults-debian.conf': f(DEFAULTS_DEBIAN, { lines: true, owner: 'root' }) }, undefined, root),
+                'jail.local': f(JAIL_LOCAL, { lines: true, owner: 'root' }),
               },
               undefined,
-              racine,
+              root,
             ),
           },
           undefined,
-          racine,
+          root,
         ),
-        home: d({ vous: d({ 'courriel_kofi.txt': f(t('port-courriel-kofi', { port: String(NOUVEAU) })) }) }, undefined, racine),
+        home: d({ vous: d({ 'courriel_kofi.txt': f(t('port-courriel-kofi', { port: String(NEW) })) }) }, undefined, root),
       },
       undefined,
-      racine,
+      root,
     );
   },
-  evenements: [
-    { id: 'enferme', condition: (j) => !joignable(j), message: (j) => j.t('port-evenement-enferme') },
+  events: [
+    { id: 'enferme', condition: (j) => !reachable(j), message: (j) => j.t('port-evenement-enferme') },
     {
       id: 'deux-ports',
-      condition: (j) => ports(j).includes(22) && ports(j).includes(NOUVEAU) && ouvert(j, NOUVEAU, POSTE.adresse),
-      message: (j) => j.t('port-evenement-deux-ports', { port: String(NOUVEAU) }),
+      condition: (j) => ports(j).includes(22) && ports(j).includes(NEW) && open(j, NEW, WORKSTATION.address),
+      message: (j) => j.t('port-evenement-deux-ports', { port: String(NEW) }),
     },
-    { id: 'essai', condition: (j) => j.etat.portSession === NOUVEAU, message: (j) => j.t('port-evenement-essai', { port: String(NOUVEAU) }) },
+    { id: 'essai', condition: (j) => j.state.portSession === NEW, message: (j) => j.t('port-evenement-essai', { port: String(NEW) }) },
     {
       id: 'defaut',
-      condition: (j) => /^\s*port\s*=\s*2222/m.test(j.lire('/etc/fail2ban/jail.local') ?? '') && f2b(j).chargements > 0 && !sentinelle(j),
+      condition: (j) => /^\s*port\s*=\s*2222/m.test(j.read('/etc/fail2ban/jail.local') ?? '') && f2b(j).loads > 0 && !sentinel(j),
       message: (j) => j.t('port-evenement-defaut'),
     },
-    { id: 'sentinelle', condition: (j) => deplace(j) && !sentinelle(j), message: (j) => j.t('port-evenement-sentinelle') },
+    { id: 'sentinelle', condition: (j) => moved(j) && !sentinel(j), message: (j) => j.t('port-evenement-sentinelle') },
     {
       id: 'fin',
-      condition: (j) => deplace(j) && pareFeuAJour(j) && sentinelle(j) && posteAJour(j) && j.etat.portSession === NOUVEAU,
+      condition: (j) => moved(j) && dayAFirewall(j) && sentinel(j) && dayAWorkstation(j) && j.state.portSession === NEW,
       message: (j) => j.t('port-evenement-fin'),
     },
   ],

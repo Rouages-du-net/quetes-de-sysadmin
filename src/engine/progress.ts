@@ -6,12 +6,12 @@
 //   - un fichier, toute la sauvegarde du navigateur (carnet, clés créées…).
 // Ni l'un ni l'autre n'est une preuve : ils se recopient et se modifient.
 
-import { HISTOIRES } from './chapters';
-import { SUCCES } from './achievements';
+import { STORIES } from './chapters';
+import { ACHIEVEMENTS } from './achievements';
 
 // L'ordre des chapitres dans le code court. On n'y fait qu'ajouter, à la
 // fin : un code donné hier doit rester valable demain (tests/progress.test.ts).
-export const ORDRE_DU_CODE = [
+export const CODE_ORDER = [
   'eveil', 'bourg', 'racine', 'sauvegarde',
   'premier-jour', 'deuxieme-jour', 'redemarrage', 'incendie', 'certificat',
   'paquet-perdu',
@@ -40,163 +40,163 @@ const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const VERSION = 1;
 
 // CRC-8 (polynôme 0x07) : une faute de frappe change la somme.
-function crc8(octets: number[]): number {
+function crc8(bytes: number[]): number {
   let crc = 0;
-  for (const o of octets) {
+  for (const o of bytes) {
     crc ^= o;
     for (let i = 0; i < 8; i++) crc = crc & 0x80 ? ((crc << 1) ^ 0x07) & 0xff : (crc << 1) & 0xff;
   }
   return crc;
 }
 
-function versBase32(octets: number[]): string {
+function toBase32(bytes: number[]): string {
   let bits = 0;
-  let valeur = 0;
-  let sortie = '';
-  for (const o of octets) {
-    valeur = (valeur << 8) | o;
+  let value = 0;
+  let output = '';
+  for (const o of bytes) {
+    value = (value << 8) | o;
     bits += 8;
     while (bits >= 5) {
-      sortie += ALPHABET[(valeur >>> (bits - 5)) & 31];
+      output += ALPHABET[(value >>> (bits - 5)) & 31];
       bits -= 5;
     }
   }
-  if (bits > 0) sortie += ALPHABET[(valeur << (5 - bits)) & 31];
-  return sortie;
+  if (bits > 0) output += ALPHABET[(value << (5 - bits)) & 31];
+  return output;
 }
 
-function depuisBase32(texte: string): number[] | null {
+function sinceBase32(text: string): number[] | null {
   let bits = 0;
-  let valeur = 0;
-  const octets: number[] = [];
-  for (const c of texte) {
+  let value = 0;
+  const bytes: number[] = [];
+  for (const c of text) {
     const i = ALPHABET.indexOf(c);
     if (i < 0) return null;
-    valeur = ((valeur << 5) | i) & 0xffff;
+    value = ((value << 5) | i) & 0xffff;
     bits += 5;
     if (bits >= 8) {
-      octets.push((valeur >>> (bits - 8)) & 0xff);
+      bytes.push((value >>> (bits - 8)) & 0xff);
       bits -= 8;
     }
   }
-  return octets;
+  return bytes;
 }
 
 /** Le code court des chapitres terminés : QDS-XXXX-XXXX… */
-export function codeDeProgression(termines: string[]): string {
+export function progressCode(finished: string[]): string {
   const cases: number[] = [];
-  ORDRE_DU_CODE.forEach((id, i) => {
-    if (termines.includes(id)) cases[i >> 3] = (cases[i >> 3] ?? 0) | (1 << (i & 7));
+  CODE_ORDER.forEach((id, i) => {
+    if (finished.includes(id)) cases[i >> 3] = (cases[i >> 3] ?? 0) | (1 << (i & 7));
   });
-  const octets = [VERSION, ...Array.from(cases, (o) => o ?? 0)];
-  const groupes = versBase32([...octets, crc8(octets)]).match(/.{1,4}/g)!;
-  return ['QDS', ...groupes].join('-');
+  const bytes = [VERSION, ...Array.from(cases, (o) => o ?? 0)];
+  const groups = toBase32([...bytes, crc8(bytes)]).match(/.{1,4}/g)!;
+  return ['QDS', ...groups].join('-');
 }
 
-export type ErreurDeCode = 'code-illisible' | 'code-faute' | 'code-trop-recent';
+export type CodeError = 'code-illisible' | 'code-faute' | 'code-trop-recent';
 
 /** Les chapitres terminés d'un code, ou ce qui ne va pas. Tolère minuscules, espaces, O pour 0, I et L pour 1. */
-export function lireCode(code: string): { termines: string[] } | { erreur: ErreurDeCode } {
+export function readCode(code: string): { finished: string[] } | { error: CodeError } {
   const net = code
     .toUpperCase()
     .replace(/[\s-]/g, '')
     .replace(/^QDS/, '')
     .replace(/O/g, '0')
     .replace(/[IL]/g, '1');
-  const octets = net.length >= 4 ? depuisBase32(net) : null;
-  if (!octets || octets.length < 2) return { erreur: 'code-illisible' };
+  const bytes = net.length >= 4 ? sinceBase32(net) : null;
+  if (!bytes || bytes.length < 2) return { error: 'code-illisible' };
   // Les derniers bits de remplissage du base32 ne forment pas d'octet : la somme est le dernier octet entier.
-  const somme = octets.at(-1)!;
-  const donnees = octets.slice(0, -1);
-  if (crc8(donnees) !== somme) return { erreur: 'code-faute' };
-  if (donnees[0] !== VERSION) return { erreur: 'code-trop-recent' };
-  const termines: string[] = [];
-  donnees.slice(1).forEach((o, j) => {
+  const sum = bytes.at(-1)!;
+  const data = bytes.slice(0, -1);
+  if (crc8(data) !== sum) return { error: 'code-faute' };
+  if (data[0] !== VERSION) return { error: 'code-trop-recent' };
+  const finished: string[] = [];
+  data.slice(1).forEach((o, j) => {
     for (let b = 0; b < 8; b++)
       if (o & (1 << b)) {
-        const id = ORDRE_DU_CODE[j * 8 + b];
+        const id = CODE_ORDER[j * 8 + b];
         if (!id) return;
-        termines.push(id);
+        finished.push(id);
       }
   });
   // Un chapitre au-delà de la liste : le code vient d'une version plus récente du jeu.
-  const cases = donnees.slice(1).reduce((n, o) => n + o.toString(2).replace(/0/g, '').length, 0);
-  if (cases !== termines.length) return { erreur: 'code-trop-recent' };
-  return { termines };
+  const cases = data.slice(1).reduce((n, o) => n + o.toString(2).replace(/0/g, '').length, 0);
+  if (cases !== finished.length) return { error: 'code-trop-recent' };
+  return { finished };
 }
 
 // ——— Le fichier ———
 
-export interface Sauvegarde {
-  termines?: string[];
-  histoire?: string | null;
-  connus?: string;
-  ssh?: { fichiers: Record<string, string>; phrases?: Record<string, string> };
-  carnet?: Record<string, { ligne: string; chapitre: string }>;
-  examen?: boolean;
+export interface Backup {
+  finished?: string[];
+  story?: string | null;
+  known?: string;
+  ssh?: { files: Record<string, string>; phrases?: Record<string, string> };
+  notebook?: Record<string, { line: string; chapter: string }>;
+  exam?: boolean;
   records?: Record<string, number>;
   // Le nom (facultatif) mis en tête du carnet : « Carnet de … ».
-  nom?: string;
+  name?: string;
   // Les succès obtenus (voir succes.ts) : identifiant → date (ISO).
-  succes?: Record<string, string>;
+  achievements?: Record<string, string>;
 }
 
 const FORMAT = 'quetes-de-sysadmin';
 
 /** Le fichier de sauvegarde : la sauvegarde du navigateur, datée. */
-export const fichierDeSauvegarde = (s: Sauvegarde, date: Date) =>
-  JSON.stringify({ format: FORMAT, version: VERSION, date: date.toISOString(), sauvegarde: s }, null, 2);
+export const backupFile = (s: Backup, date: Date) =>
+  JSON.stringify({ format: FORMAT, version: VERSION, date: date.toISOString(), backup: s }, null, 2);
 
-const chaine = (x: unknown): x is string => typeof x === 'string';
-const dictionnaire = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
-const deChaines = (x: unknown) => (dictionnaire(x) ? Object.fromEntries(Object.entries(x).filter(([, v]) => chaine(v))) as Record<string, string> : undefined);
+const string = (x: unknown): x is string => typeof x === 'string';
+const dictionary = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
+const strings = (x: unknown) => (dictionary(x) ? Object.fromEntries(Object.entries(x).filter(([, v]) => string(v))) as Record<string, string> : undefined);
 
-export type ErreurDeFichier = 'fichier-illisible' | 'fichier-autre' | 'fichier-trop-recent';
+export type FileError = 'fichier-illisible' | 'fichier-autre' | 'fichier-trop-recent';
 
 /** La sauvegarde d'un fichier, nettoyée (on ne garde que ce que le jeu connaît), ou ce qui ne va pas. */
-export function lireFichier(texte: string): { sauvegarde: Sauvegarde } | { erreur: ErreurDeFichier } {
-  let brut: unknown;
+export function readFile(text: string): { backup: Backup } | { error: FileError } {
+  let raw: unknown;
   try {
-    brut = JSON.parse(texte);
+    raw = JSON.parse(text);
   } catch {
-    return { erreur: 'fichier-illisible' };
+    return { error: 'fichier-illisible' };
   }
-  if (!dictionnaire(brut) || brut.format !== FORMAT || !dictionnaire(brut.sauvegarde)) return { erreur: 'fichier-autre' };
-  if (typeof brut.version !== 'number' || brut.version > VERSION) return { erreur: 'fichier-trop-recent' };
-  const s = brut.sauvegarde;
-  const chapitres = new Set(HISTOIRES.flatMap((h) => h.chapitres.map((c) => c.id)));
-  const histoires = new Set(HISTOIRES.map((h) => h.id));
-  const ssh = dictionnaire(s.ssh) ? { fichiers: deChaines(s.ssh.fichiers) ?? {}, phrases: deChaines(s.ssh.phrases) } : undefined;
-  const carnet = dictionnaire(s.carnet)
+  if (!dictionary(raw) || raw.format !== FORMAT || !dictionary(raw.backup)) return { error: 'fichier-autre' };
+  if (typeof raw.version !== 'number' || raw.version > VERSION) return { error: 'fichier-trop-recent' };
+  const s = raw.backup;
+  const chapters = new Set(STORIES.flatMap((h) => h.chapters.map((c) => c.id)));
+  const stories = new Set(STORIES.map((h) => h.id));
+  const ssh = dictionary(s.ssh) ? { files: strings(s.ssh.files) ?? {}, phrases: strings(s.ssh.phrases) } : undefined;
+  const notebook = dictionary(s.notebook)
     ? Object.fromEntries(
-        Object.entries(s.carnet)
-          .filter(([, e]) => dictionnaire(e) && chaine(e.ligne) && chaine(e.chapitre))
-          .map(([n, e]) => [n, { ligne: (e as { ligne: string }).ligne, chapitre: (e as { chapitre: string }).chapitre }]),
+        Object.entries(s.notebook)
+          .filter(([, e]) => dictionary(e) && string(e.line) && string(e.chapter))
+          .map(([n, e]) => [n, { line: (e as { line: string }).line, chapter: (e as { chapter: string }).chapter }]),
       )
     : undefined;
-  const records = dictionnaire(s.records)
-    ? (Object.fromEntries(Object.entries(s.records).filter(([id, ms]) => chapitres.has(id) && typeof ms === 'number' && ms > 0)) as Record<string, number>)
+  const records = dictionary(s.records)
+    ? (Object.fromEntries(Object.entries(s.records).filter(([id, ms]) => chapters.has(id) && typeof ms === 'number' && ms > 0)) as Record<string, number>)
     : undefined;
   return {
-    sauvegarde: {
-      termines: Array.isArray(s.termines) ? s.termines.filter((id): id is string => chaine(id) && chapitres.has(id)) : [],
-      histoire: chaine(s.histoire) && histoires.has(s.histoire) ? s.histoire : null,
-      ...(chaine(s.connus) ? { connus: s.connus } : {}),
+    backup: {
+      finished: Array.isArray(s.finished) ? s.finished.filter((id): id is string => string(id) && chapters.has(id)) : [],
+      story: string(s.story) && stories.has(s.story) ? s.story : null,
+      ...(string(s.known) ? { known: s.known } : {}),
       ...(ssh ? { ssh } : {}),
-      ...(carnet ? { carnet } : {}),
-      examen: s.examen === true,
+      ...(notebook ? { notebook } : {}),
+      exam: s.exam === true,
       ...(records ? { records } : {}),
-      ...(chaine(s.nom) && s.nom.trim() ? { nom: nettoyerNom(s.nom) } : {}),
-      ...(dictionnaire(s.succes)
-        ? { succes: Object.fromEntries(Object.entries(s.succes).filter(([id, date]) => SUCCES.some((x) => x.id === id) && chaine(date))) as Record<string, string> }
+      ...(string(s.name) && s.name.trim() ? { name: cleanName(s.name) } : {}),
+      ...(dictionary(s.achievements)
+        ? { achievements: Object.fromEntries(Object.entries(s.achievements).filter(([id, date]) => ACHIEVEMENTS.some((x) => x.id === id) && string(date))) as Record<string, string> }
         : {}),
     },
   };
 }
 
 /** Un nom pour le carnet : une ligne, sans caractère de contrôle, 60 caractères au plus. */
-export const nettoyerNom = (nom: string) =>
-  nom
+export const cleanName = (name: string) =>
+  name
     .replace(/[\u0000-\u001f\u007f]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()

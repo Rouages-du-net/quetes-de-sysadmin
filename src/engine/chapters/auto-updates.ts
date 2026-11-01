@@ -18,24 +18,24 @@
 // Sources : https://wiki.debian.org/UnattendedUpgrades,
 // https://github.com/mvo5/unattended-upgrades/blob/master/data/50unattended-upgrades.Debian
 
-import { d, f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { chargerNginx } from '../nginx';
+import { d, f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { loadNginx } from '../nginx';
 import { systemd } from '../systemd';
-import { lireConfApt, vrai } from '../apt-conf';
-import { INSTALLES_DE_BASE, PAQUETS, type EtatApt } from '../commands/apt';
-import { apresQuotidien, UU, verifierQuotidien } from '../commands/unattended';
-import { comptesCooperative, M, mondeCooperative, MOT_DE_PASSE } from './coop';
+import { readConfApt, yes } from '../apt-conf';
+import { BASE_INSTALLED, PACKAGES, type AptState } from '../commands/apt';
+import { afterDaily, UU, checkDaily } from '../commands/unattended';
+import { cooperativeAccounts, M, cooperativeWorld, PASSWORD } from './coop';
 import { SITE } from './updates';
-import { CLE_NOUVELLE, envCaisse, etatCaisse, mondeCaisse, NGINX_BINAIRE, nginxCooperative, systemdCaisse } from './till-web';
+import { NEW_KEY, tillEnv, tillState, tillWorld, BINARY_NGINX, nginxCooperative, tillSystemd } from './till-web';
 
-const NOYAU = '6.12.48+deb13-amd64';
-const NOUVEAU_NOYAU = '6.12.57+deb13-amd64';
+const KERNEL = '6.12.48+deb13-amd64';
+const NEW_KERNEL = '6.12.57+deb13-amd64';
 const NODE = '20.19.5-1nodesource1';
 
 // Après « Les mises à jour » : tout est à jour… jusqu'aux annonces de cette semaine.
-const INSTALLES: Record<string, string> = {
-  ...Object.fromEntries(INSTALLES_DE_BASE.map((p) => [p, PAQUETS[p].version])),
+const INSTALLED: Record<string, string> = {
+  ...Object.fromEntries(BASE_INSTALLED.map((p) => [p, PACKAGES[p].version])),
   nginx: '1.26.3-3+deb13u2',
   libc6: '2.41-12+deb13u1',
   openssl: '3.5.4-1~deb13u1',
@@ -43,17 +43,17 @@ const INSTALLES: Record<string, string> = {
   tzdata: '2025b-4',
   nodejs: NODE,
   'linux-image-amd64': '6.12.48-1',
-  [`linux-image-${NOYAU}`]: '6.12.48-1',
+  [`linux-image-${KERNEL}`]: '6.12.48-1',
 };
-const SECURITE: Record<string, string> = { openssl: '3.5.4-1~deb13u2', libssl3t64: '3.5.4-1~deb13u2', 'linux-image-amd64': '6.12.57-1' };
-const MISES: Record<string, string> = { ...SECURITE, tzdata: '2025b-4+deb13u1', nodejs: '22.21.0-1nodesource1' };
-const ORIGINES = {
+const SECURITY: Record<string, string> = { openssl: '3.5.4-1~deb13u2', libssl3t64: '3.5.4-1~deb13u2', 'linux-image-amd64': '6.12.57-1' };
+const UPDATES: Record<string, string> = { ...SECURITY, tzdata: '2025b-4+deb13u1', nodejs: '22.21.0-1nodesource1' };
+const ORIGINS = {
   tzdata: { o: 'Debian', n: 'trixie', l: 'Debian', site: 'deb.debian.org' },
   nodejs: { o: 'Node Source', n: 'nodistro', l: 'Node Source', site: 'deb.nodesource.com' },
 };
 
 // Le fichier livré par Debian (abrégé), tel que Marc l'a laissé.
-const CINQUANTE = `// Unattended-Upgrade::Origins-Pattern controls which packages are
+const FIFTY = `// Unattended-Upgrade::Origins-Pattern controls which packages are
 // upgraded.
 //
 // Lines below have the format "keyword=value,...".  A
@@ -121,29 +121,29 @@ Unattended-Upgrade::Package-Blacklist {
 `;
 
 // dpkg-reconfigure unattended-upgrades, à qui Marc a répondu « Non ».
-const VINGT = 'APT::Periodic::Update-Package-Lists "0";\nAPT::Periodic::Unattended-Upgrade "0";\n';
+const TWENTY = 'APT::Periodic::Update-Package-Lists "0";\nAPT::Periodic::Unattended-Upgrade "0";\n';
 
-const apt = (j: Jeu) => j.etat.apt as EtatApt;
-const conf = (j: Jeu) => lireConfApt(j);
-const active = (j: Jeu) => {
+const apt = (j: Game) => j.state.apt as AptState;
+const conf = (j: Game) => readConfApt(j);
+const active = (j: Game) => {
   const c = conf(j);
-  return !c.erreurs.length && vrai(c.valeurs['APT::Periodic::Update-Package-Lists']) && vrai(c.valeurs['APT::Periodic::Unattended-Upgrade']);
+  return !c.errors.length && yes(c.values['APT::Periodic::Update-Package-Lists']) && yes(c.values['APT::Periodic::Unattended-Upgrade']);
 };
-const securiteInstallee = (j: Jeu) => Object.entries(SECURITE).every(([n, v]) => apt(j).installes[n] === v);
-const nodeIntact = (j: Jeu) => apt(j).installes.nodejs === NODE;
+const installedSecurity = (j: Game) => Object.entries(SECURITY).every(([n, v]) => apt(j).installed[n] === v);
+const nodeIntact = (j: Game) => apt(j).installed.nodejs === NODE;
 // Une heure où la coopérative est fermée (20 h – 7 h).
-const laNuit = (j: Jeu) => {
-  const c = conf(j).valeurs;
+const night = (j: Game) => {
+  const c = conf(j).values;
   const m = /^(\d{1,2}):(\d{2})$/.exec(c[`${UU}::Automatic-Reboot-Time`] ?? 'now');
-  return vrai(c[`${UU}::Automatic-Reboot`]) && !!m && (Number(m[1]) >= 20 || Number(m[1]) < 7) && Number(m[1]) < 24;
+  return yes(c[`${UU}::Automatic-Reboot`]) && !!m && (Number(m[1]) >= 20 || Number(m[1]) < 7) && Number(m[1]) < 24;
 };
-const rapport = (j: Jeu) => !!conf(j).valeurs[`${UU}::Mail`];
-const caisseOk = (j: Jeu) => systemd(j)!.services.till.etat === 'active';
+const report = (j: Game) => !!conf(j).values[`${UU}::Mail`];
+const okTill = (j: Game) => systemd(j)!.services.till.state === 'active';
 
-export const automatiques: Chapitre = {
+export const automatic: Chapter = {
   id: 'automatiques',
-  numero: 6,
-  commandes: [
+  number: 6,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -165,124 +165,124 @@ export const automatiques: Chapitre = {
     'mail',
     'ps',
   ],
-  maison: M,
-  accueil: 'courriel_awa.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_awa.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: () => comptesCooperative(false),
-  etat: () => {
-    const e = etatCaisse(envCaisse(CLE_NOUVELLE, 'loopback'));
-    const s = systemdCaisse();
+  password: PASSWORD,
+  accounts: () => cooperativeAccounts(false),
+  state: () => {
+    const e = tillState(tillEnv(NEW_KEY, 'loopback'));
+    const s = tillSystemd();
     // La caisse ne démarre qu'avec Node.js 20 (son package.json l'exige).
-    s.services.till.verifier = (j) =>
-      /^20\./.test(apt(j).installes.nodejs ?? '')
+    s.services.till.check = (j) =>
+      /^20\./.test(apt(j).installed.nodejs ?? '')
         ? null
-        : [`till requires Node.js 20.x (found ${(apt(j).installes.nodejs ?? '').replace(/-.*/, '')})`, 'npm error engine Unsupported engine'];
-    for (const [nom, description] of [
+        : [`till requires Node.js 20.x (found ${(apt(j).installed.nodejs ?? '').replace(/-.*/, '')})`, 'npm error engine Unsupported engine'];
+    for (const [name, description] of [
       ['apt-daily', 'Daily apt download activities'],
       ['apt-daily-upgrade', 'Daily apt upgrade and clean activities'],
     ] as const)
-      s.services[nom] = {
+      s.services[name] = {
         description,
-        etat: 'inactive',
+        state: 'inactive',
         active: false,
-        processus: [],
+        process: [],
         executable: 'apt.systemd.daily',
-        depuis: s.horloge,
-        ponctuel: true,
-        ...(nom === 'apt-daily-upgrade' ? { verifier: verifierQuotidien, executer: (j: Jeu) => (apresQuotidien(j), 0) } : {}),
+        since: s.clock,
+        oneshot: true,
+        ...(name === 'apt-daily-upgrade' ? { check: checkDaily, execute: (j: Game) => (afterDaily(j), 0) } : {}),
       };
-    s.minuteries = {
+    s.timers = {
       'apt-daily': {
         description: 'Daily apt download activities',
-        unite: 'apt-daily',
-        calendrier: ['*-*-* 6,18:00'],
+        unit: 'apt-daily',
+        calendar: ['*-*-* 6,18:00'],
         active: true,
-        etat: 'active',
-        depuis: s.horloge,
-        fichier: '/usr/lib/systemd/system/apt-daily.timer',
+        state: 'active',
+        since: s.clock,
+        file: '/usr/lib/systemd/system/apt-daily.timer',
       },
       'apt-daily-upgrade': {
         description: 'Daily apt upgrade and clean activities',
-        unite: 'apt-daily-upgrade',
-        calendrier: ['*-*-* 6:00'],
+        unit: 'apt-daily-upgrade',
+        calendar: ['*-*-* 6:00'],
         active: true,
-        etat: 'active',
-        depuis: s.horloge,
-        fichier: '/usr/lib/systemd/system/apt-daily-upgrade.timer',
+        state: 'active',
+        since: s.clock,
+        file: '/usr/lib/systemd/system/apt-daily-upgrade.timer',
       },
     };
     return {
       ...e,
       systemd: s,
       apt: {
-        listes: true,
-        installes: { ...INSTALLES },
-        mises: { ...MISES },
-        nouveaux: { [`linux-image-${NOUVEAU_NOYAU}`]: '6.12.57-1' },
-        origines: ORIGINES,
+        lists: true,
+        installed: { ...INSTALLED },
+        updates: { ...UPDATES },
+        fresh: { [`linux-image-${NEW_KERNEL}`]: '6.12.57-1' },
+        origins: ORIGINS,
       },
-      noyau: { courant: NOYAU, installe: NOYAU },
+      noyau: { active: KERNEL, installed: KERNEL },
     };
   },
-  initialiser: (j) => {
-    chargerNginx(j);
+  initialise: (j) => {
+    loadNginx(j);
     const sd = systemd(j)!;
-    sd.horloge = Date.UTC(2027, 9, 19, 13, 10, 0);
-    for (const m of Object.values(sd.minuteries ?? {})) m.dernier = Date.UTC(2027, 9, 19, 4, 0, 0);
+    sd.clock = Date.UTC(2027, 9, 19, 13, 10, 0);
+    for (const m of Object.values(sd.timers ?? {})) m.last = Date.UTC(2027, 9, 19, 4, 0, 0);
   },
-  creerMonde: (t) =>
-    mondeCooperative({
-      sansMarc: true,
-      maison: { 'courriel_awa.txt': f(t('automatiques-courriel-awa')) },
+  createWorld: (t) =>
+    cooperativeWorld({
+      withoutMarc: true,
+      home: { 'courriel_awa.txt': f(t('automatiques-courriel-awa')) },
       etc: {
         ...nginxCooperative(SITE),
         apt: d(
           {
             'apt.conf.d': d(
               {
-                '20auto-upgrades': f(VINGT, { lignes: true, proprio: 'root' }),
-                '50unattended-upgrades': f(CINQUANTE, { lignes: true, proprio: 'root' }),
+                '20auto-upgrades': f(TWENTY, { lines: true, owner: 'root' }),
+                '50unattended-upgrades': f(FIFTY, { lines: true, owner: 'root' }),
               },
               undefined,
-              { proprio: 'root' },
+              { owner: 'root' },
             ),
             'sources.list.d': d(
               {
                 'debian.sources': f(
                   'Types: deb\nURIs: http://deb.debian.org/debian\nSuites: trixie trixie-updates\nComponents: main\n\nTypes: deb\nURIs: http://security.debian.org/debian-security\nSuites: trixie-security\nComponents: main',
-                  { lignes: true, proprio: 'root' },
+                  { lines: true, owner: 'root' },
                 ),
                 'nodesource.list': f('deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main', {
-                  lignes: true,
-                  proprio: 'root',
+                  lines: true,
+                  owner: 'root',
                 }),
               },
               undefined,
-              { proprio: 'root' },
+              { owner: 'root' },
             ),
           },
           undefined,
-          { proprio: 'root' },
+          { owner: 'root' },
         ),
       },
-      sbin: NGINX_BINAIRE,
-      plus: mondeCaisse({ env: envCaisse(CLE_NOUVELLE, 'loopback'), envMode: 'rw-------', accesLog: '', appLog: '' }),
+      sbin: BINARY_NGINX,
+      more: tillWorld({ env: tillEnv(NEW_KEY, 'loopback'), envMode: 'rw-------', logAccess: '', appLog: '' }),
     }),
-  evenements: [
-    { id: 'syntaxe', condition: (j) => conf(j).erreurs.length > 0, message: (j) => j.t('automatiques-evenement-syntaxe') },
-    { id: 'rien', condition: (j) => (j.etat.quotidiens ?? 0) > 0 && !(j.etat.passesAuto ?? 0), message: (j) => j.t('automatiques-evenement-rien') },
+  events: [
+    { id: 'syntaxe', condition: (j) => conf(j).errors.length > 0, message: (j) => j.t('automatiques-evenement-syntaxe') },
+    { id: 'rien', condition: (j) => (j.state.quotidiens ?? 0) > 0 && !(j.state.passesAuto ?? 0), message: (j) => j.t('automatiques-evenement-rien') },
     { id: 'nodejs', condition: (j) => !nodeIntact(j), message: (j) => j.t('automatiques-evenement-nodejs') },
-    { id: 'en-journee', condition: (j) => systemd(j)!.demarrage > 1, message: (j) => j.t('automatiques-evenement-en-journee') },
+    { id: 'en-journee', condition: (j) => systemd(j)!.boot > 1, message: (j) => j.t('automatiques-evenement-en-journee') },
     {
       id: 'sans-rapport',
-      condition: (j) => (j.etat.passesAuto ?? 0) > 0 && !conf(j).valeurs[`${UU}::Mail`],
+      condition: (j) => (j.state.passesAuto ?? 0) > 0 && !conf(j).values[`${UU}::Mail`],
       message: (j) => j.t('automatiques-evenement-sans-rapport'),
     },
     {
       id: 'fin',
-      condition: (j) => active(j) && (j.etat.passesAuto ?? 0) > 0 && securiteInstallee(j) && nodeIntact(j) && rapport(j) && laNuit(j) && caisseOk(j),
+      condition: (j) => active(j) && (j.state.passesAuto ?? 0) > 0 && installedSecurity(j) && nodeIntact(j) && report(j) && night(j) && okTill(j),
       message: (j) => j.t('automatiques-evenement-fin'),
     },
   ],

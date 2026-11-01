@@ -8,12 +8,12 @@
 // nouvelle connexion ssh réussie depuis l'activation.
 // Source : https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html
 
-import { d, f, fichiersComptes, comptesParDefaut, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { POSTE } from '../machines';
-import { nouveauPareFeu, verdict, type PareFeu } from '../firewall';
-import { nouveauSystemd } from '../systemd';
-import type { Ecoute } from '../commands/ss';
+import { d, f, accountsFiles, accountsByDefault, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { WORKSTATION } from '../machines';
+import { newFirewall, verdict, type Firewall } from '../firewall';
+import { newSystemd } from '../systemd';
+import type { Listening } from '../commands/ss';
 
 const M = '/home/vous';
 // Une adresse quelconque d'internet (un robot de la nuit).
@@ -32,91 +32,91 @@ PORT     STATE SERVICE
 
 Nmap done: 1 IP address (1 host up) scanned in 1.84 seconds`;
 
-const ECOUTE: Ecoute[] = [
-  { proto: 'tcp', adresse: '0.0.0.0', port: 22, processus: 'sshd', pid: 612 },
-  { proto: 'tcp', adresse: '0.0.0.0', port: 80, processus: 'nginx', pid: 701 },
-  { proto: 'tcp', adresse: '0.0.0.0', port: 443, processus: 'nginx', pid: 701 },
-  { proto: 'tcp', adresse: '0.0.0.0', port: 3306, processus: 'mariadbd', pid: 744 },
-  { proto: 'tcp', adresse: '127.0.0.1', port: 9000, processus: 'php-fpm8.2', pid: 733 },
+const LISTENING: Listening[] = [
+  { proto: 'tcp', address: '0.0.0.0', port: 22, process: 'sshd', pid: 612 },
+  { proto: 'tcp', address: '0.0.0.0', port: 80, process: 'nginx', pid: 701 },
+  { proto: 'tcp', address: '0.0.0.0', port: 443, process: 'nginx', pid: 701 },
+  { proto: 'tcp', address: '0.0.0.0', port: 3306, process: 'mariadbd', pid: 744 },
+  { proto: 'tcp', address: '127.0.0.1', port: 9000, process: 'php-fpm8.2', pid: 733 },
 ];
 
-const pf = (j: Jeu) => j.etat.ufw as PareFeu;
-const passe = (j: Jeu, port: number, source = INTERNET) => verdict(pf(j), port, source) === 'accepte';
-const sshOuvert = (j: Jeu) => passe(j, 22, POSTE.adresse);
-const siteOuvert = (j: Jeu) => passe(j, 80) && passe(j, 443);
-const filtre = (j: Jeu) => pf(j).actif && pf(j).entrant !== 'allow' && sshOuvert(j) && siteOuvert(j) && !passe(j, 3306);
+const pf = (j: Game) => j.state.ufw as Firewall;
+const pass = (j: Game, port: number, source = INTERNET) => verdict(pf(j), port, source) === 'accepte';
+const openSsh = (j: Game) => pass(j, 22, WORKSTATION.address);
+const openSite = (j: Game) => pass(j, 80) && pass(j, 443);
+const filter = (j: Game) => pf(j).enabled && pf(j).incoming !== 'allow' && openSsh(j) && openSite(j) && !pass(j, 3306);
 
-export const pareFeu: Chapitre = {
+export const firewall: Chapter = {
   id: 'pare-feu',
-  numero: 2,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'ss', 'ufw'],
-  maison: M,
-  accueil: 'courriel_kofi.txt',
-  noms: true,
+  number: 2,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'ss', 'ufw'],
+  home: M,
+  welcome: 'courriel_kofi.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'fourmis-2026',
-  comptes: () => {
-    const c = comptesParDefaut();
-    c.groupes.adm = { gid: 4, membres: ['vous'] };
+  password: 'fourmis-2026',
+  accounts: () => {
+    const c = accountsByDefault();
+    c.groups.adm = { gid: 4, members: ['vous'] };
     return c;
   },
-  etat: () => ({
-    ufw: nouveauPareFeu(),
-    ecoute: ECOUTE,
-    systemd: nouveauSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 21, 18, 30, 0), {
+  state: () => ({
+    ufw: newFirewall(),
+    ecoute: LISTENING,
+    systemd: newSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 21, 18, 30, 0), {
       ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       mariadb: { description: 'MariaDB 10.11.6 database server', active: true, executable: 'mariadbd' },
       ufw: { description: 'Uncomplicated firewall', active: true, executable: 'ufw' },
     }),
   }),
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
+  createWorld: (t) => {
+    const root = { owner: 'root' };
     return d(
       {
         etc: d(
           {
-            ...fichiersComptes(),
-            ssh: d({ 'sshd_config.d': d({ '00-hardening.conf': f('PermitRootLogin no\nPasswordAuthentication no', { lignes: true, proprio: 'root' }) }, undefined, racine) }, undefined, racine),
+            ...accountsFiles(),
+            ssh: d({ 'sshd_config.d': d({ '00-hardening.conf': f('PermitRootLogin no\nPasswordAuthentication no', { lines: true, owner: 'root' }) }, undefined, root) }, undefined, root),
           },
           undefined,
-          racine,
+          root,
         ),
-        home: d({ vous: d({ 'courriel_kofi.txt': f(t('pare-feu-courriel-kofi')), 'scan_yasmine.txt': f(SCAN, { lignes: true }) }) }, undefined, racine),
+        home: d({ vous: d({ 'courriel_kofi.txt': f(t('pare-feu-courriel-kofi')), 'scan_yasmine.txt': f(SCAN, { lines: true }) }) }, undefined, root),
       },
       undefined,
-      racine,
+      root,
     );
   },
-  evenements: [
+  events: [
     {
       id: 'ecoute',
-      condition: (j) => j.derniere.commandes.some((c) => c[0] === 'ss') && /:(3306|mysql)\b/.test(j.derniere.sortie),
+      condition: (j) => j.last.commands.some((c) => c[0] === 'ss') && /:(3306|mysql)\b/.test(j.last.output),
       message: (j) => j.t('pare-feu-evenement-ecoute'),
     },
     {
       id: 'enferme',
-      condition: (j) => pf(j).actif && !sshOuvert(j),
+      condition: (j) => pf(j).enabled && !openSsh(j),
       message: (j) => j.t('pare-feu-evenement-enferme'),
     },
     {
       id: 'site-coupe',
-      condition: (j) => pf(j).actif && !siteOuvert(j),
+      condition: (j) => pf(j).enabled && !openSite(j),
       message: (j) => j.t('pare-feu-evenement-site-coupe'),
     },
     {
       id: 'base-ouverte',
-      condition: (j) => pf(j).actif && passe(j, 3306),
+      condition: (j) => pf(j).enabled && pass(j, 3306),
       message: (j) => j.t('pare-feu-evenement-base-ouverte'),
     },
     {
       id: 'filtre',
-      condition: filtre,
+      condition: filter,
       message: (j) => j.t('pare-feu-evenement-filtre'),
     },
     {
       id: 'fin',
-      condition: (j) => j.drapeaux.has('filtre') && filtre(j) && (j.etat.connexions ?? 1) > (pf(j).connexionsALActivation ?? Infinity),
+      condition: (j) => j.flags.has('filtre') && filter(j) && (j.state.connexions ?? 1) > (pf(j).activationAlConnections ?? Infinity),
       message: (j) => j.t('pare-feu-evenement-fin'),
     },
   ],

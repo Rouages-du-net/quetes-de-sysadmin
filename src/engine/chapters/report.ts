@@ -17,55 +17,55 @@
 // Sources : https://man.openbsd.org/sshd_config, https://www.sudo.ws/docs/man/sudoers.man/,
 // https://man7.org/linux/man-pages/man8/userdel.8.html, https://man7.org/linux/man-pages/man1/chmod.1.html
 
-import { d, f, joueur, type Chapitre } from '../world';
-import type { Jeu, Shell } from '../shell';
-import { nouveauSystemd } from '../systemd';
-import { autorise } from '../sshd';
-import { lire, permis, reglesDe } from '../sudoers';
-import { chargerSshd, comptesFournil, fichier, M, MAINTENANT, MOT_DE_PASSE, mondeFournil, serviceSsh, sshd } from './audit';
+import { d, f, player, type Chapter } from '../world';
+import type { Game, Shell } from '../shell';
+import { newSystemd } from '../systemd';
+import { allowed } from '../sshd';
+import { read, permitted, rulesFor } from '../sudoers';
+import { loadSshd, bakeryAccounts, file, M, NOW, PASSWORD, bakeryWorld, serviceSsh, sshd } from './audit';
 
 const ENV = '/srv/commandes/.env';
-const sh = (j: Jeu) => j as Shell;
+const sh = (j: Game) => j as Shell;
 
 // Le cloud-init de l'hébergeur : le premier compte a sudo sans mot de passe.
-const cloudInitSudo = (compte: string) => `# Created by cloud-init v. 24.4 on Tue, 06 Dec 2027 15:51:43 +0000\n\n${compte} ALL=(ALL) NOPASSWD:ALL`;
+const cloudInitSudo = (account: string) => `# Created by cloud-init v. 24.4 on Tue, 06 Dec 2027 15:51:43 +0000\n\n${account} ALL=(ALL) NOPASSWD:ALL`;
 
-const ENV_CONTENU = `PORT=3000
+const CONTENT_ENV = `PORT=3000
 DATABASE_URL=postgres://commandes:brioche-beurre-91@localhost:5432/commandes
 REDIS_URL=redis://localhost:6379`;
 
-const racineFermee = (j: Jeu) => sshd(j).charge.permitrootlogin === 'no';
-const entre = (j: Jeu) => autorise(sshd(j).charge, j.joueur);
+const closedRoot = (j: Game) => sshd(j).load.permitrootlogin === 'no';
+const between = (j: Game) => allowed(sshd(j).load, j.player);
 
-const lucas = (j: Jeu) => j.comptes.utilisateurs.lucas;
-const lucasVerrouille = (j: Jeu) => ((j.etat.comptesVerrouilles ?? []) as string[]).includes('lucas');
-const lucasSudo = (j: Jeu) => !!j.comptes.groupes.sudo?.membres.includes('lucas');
-const compteOk = (j: Jeu) => !lucas(j) || (lucasVerrouille(j) && !!lucas(j).expire && !lucasSudo(j));
+const lucas = (j: Game) => j.accounts.users.lucas;
+const lockedLucas = (j: Game) => ((j.state.comptesVerrouilles ?? []) as string[]).includes('lucas');
+const lucasSudo = (j: Game) => !!j.accounts.groups.sudo?.members.includes('lucas');
+const okAccount = (j: Game) => !lucas(j) || (lockedLucas(j) && !!lucas(j).expires && !lucasSudo(j));
 // Verrouillé ou expiré, mais encore dans sudo : le constat n'est qu'à moitié traité.
-const compteIncomplet = (j: Jeu) => !!lucas(j) && !compteOk(j) && (lucasVerrouille(j) || !!lucas(j).expire || !lucasSudo(j));
+const incompleteAccount = (j: Game) => !!lucas(j) && !okAccount(j) && (lockedLucas(j) || !!lucas(j).expires || !lucasSudo(j));
 
-const politiqueValide = (j: Jeu) => !lire(sh(j)).erreur;
-const sansMotDePasse = (j: Jeu) => reglesDe(sh(j), j.joueur).some((r) => r.includes('NOPASSWD'));
-const sudoOk = (j: Jeu) => politiqueValide(j) && !sansMotDePasse(j) && permis(sh(j), j.joueur, '/usr/bin/bash');
+const validPolicy = (j: Game) => !read(sh(j)).error;
+const withoutPassword = (j: Game) => rulesFor(sh(j), j.player).some((r) => r.includes('NOPASSWD'));
+const sudoOk = (j: Game) => validPolicy(j) && !withoutPassword(j) && permitted(sh(j), j.player, '/usr/bin/bash');
 
-const env = (j: Jeu) => j.trouver(ENV);
-const fermeAuxAutres = (j: Jeu) => {
+const env = (j: Game) => j.find(ENV);
+const closedToOther = (j: Game) => {
   const n = env(j);
   return n?.type === 'fichier' && (n.mode ?? 'rw-r--r--').slice(6) === '---';
 };
 // L'appli (compte commandes) doit pouvoir lire son fichier : propriétaire, ou groupe.
-const lisibleParAppli = (j: Jeu) => {
+const readableByApp = (j: Game) => {
   const n = env(j);
   if (n?.type !== 'fichier') return false;
   const mode = n.mode ?? 'rw-r--r--';
-  return ((n.proprio ?? 'vous') === 'commandes' && mode[0] === 'r') || ((n.groupe ?? n.proprio) === 'commandes' && mode[3] === 'r');
+  return ((n.owner ?? 'vous') === 'commandes' && mode[0] === 'r') || ((n.group ?? n.owner) === 'commandes' && mode[3] === 'r');
 };
-const secretOk = (j: Jeu) => fermeAuxAutres(j) && lisibleParAppli(j);
+const secretOk = (j: Game) => closedToOther(j) && readableByApp(j);
 
-export const rapport: Chapitre = {
+export const report: Chapter = {
   id: 'rapport',
-  numero: 2,
-  commandes: [
+  number: 2,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -93,65 +93,65 @@ export const rapport: Chapitre = {
     'sshd',
     'last',
   ],
-  maison: M,
-  accueil: 'courriel_nadia.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_nadia.txt',
+  names: true,
   final: 'fin',
   // Dans l'ordre du rapport de Salomé.
-  etapes: ['ssh', 'compte', 'sudo', 'secret', 'fin'],
-  motDePasse: MOT_DE_PASSE,
-  comptes: () => comptesFournil(true),
-  etat: () => ({
-    sshd: { charge: {}, connexionsAuChargement: 1, recharges: 0 },
-    systemd: nouveauSystemd('fournil', MAINTENANT - 5 * 86_400_000, MAINTENANT, {
+  steps: ['ssh', 'compte', 'sudo', 'secret', 'fin'],
+  password: PASSWORD,
+  accounts: () => bakeryAccounts(true),
+  state: () => ({
+    sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
+    systemd: newSystemd('fournil', NOW - 5 * 86_400_000, NOW, {
       ssh: serviceSsh(),
       commandes: {
         description: 'Fournil orders (commandes)',
         active: true,
         executable: 'node',
-        processus: [{ pid: 731, utilisateur: 'commandes', cpu: 0.8, mem: 3.1, commande: '/usr/bin/node /srv/commandes/app/server.js' }],
+        process: [{ pid: 731, user: 'commandes', cpu: 0.8, mem: 3.1, command: '/usr/bin/node /srv/commandes/app/server.js' }],
       },
     }),
   }),
-  initialiser: (j) => chargerSshd(j),
-  creerMonde: (t) =>
-    mondeFournil(t, {
-      maison: { 'courriel_nadia.txt': f(t('rapport-courriel-nadia')), 'rapport-audit.txt': f(t('rapport-rapport-audit'), { lignes: true }) },
-      sudoersD: { '90-cloud-init-users': fichier(cloudInitSudo(joueur(t)), 'root', 'r--r-----') },
-      plus: {
+  initialise: (j) => loadSshd(j),
+  createWorld: (t) =>
+    bakeryWorld(t, {
+      home: { 'courriel_nadia.txt': f(t('rapport-courriel-nadia')), 'rapport-audit.txt': f(t('rapport-rapport-audit'), { lines: true }) },
+      sudoersD: { '90-cloud-init-users': file(cloudInitSudo(player(t)), 'root', 'r--r-----') },
+      more: {
         srv: d(
           {
             commandes: d(
               {
-                '.env': f(ENV_CONTENU, { lignes: true, proprio: 'commandes', groupe: 'commandes', mode: 'rw-r--r--' }),
-                app: d({ 'server.js': fichier('// orders application (excerpt)', 'commandes') }, undefined, { proprio: 'commandes' }),
+                '.env': f(CONTENT_ENV, { lines: true, owner: 'commandes', group: 'commandes', mode: 'rw-r--r--' }),
+                app: d({ 'server.js': file('// orders application (excerpt)', 'commandes') }, undefined, { owner: 'commandes' }),
               },
               undefined,
-              { proprio: 'commandes' },
+              { owner: 'commandes' },
             ),
           },
           undefined,
-          { proprio: 'root' },
+          { owner: 'root' },
         ),
       },
     }),
-  evenements: [
-    { id: 'sudoers-casse', condition: (j) => !politiqueValide(j), message: (j) => j.t('rapport-evenement-sudoers-casse') },
-    { id: 'enferme', condition: (j) => !entre(j), message: (j) => j.t('rapport-evenement-enferme') },
+  events: [
+    { id: 'sudoers-casse', condition: (j) => !validPolicy(j), message: (j) => j.t('rapport-evenement-sudoers-casse') },
+    { id: 'enferme', condition: (j) => !between(j), message: (j) => j.t('rapport-evenement-enferme') },
     {
       id: 'sans-effet',
-      condition: (j) => sshd(j).recharges === 0 && /^\s*PermitRootLogin\s+no\b/im.test(j.lire('/etc/ssh/sshd_config') ?? ''),
+      condition: (j) => sshd(j).reloads === 0 && /^\s*PermitRootLogin\s+no\b/im.test(j.read('/etc/ssh/sshd_config') ?? ''),
       message: (j) => j.t('rapport-evenement-sans-effet'),
     },
-    { id: 'compte-incomplet', condition: compteIncomplet, message: (j) => j.t('rapport-evenement-compte-incomplet') },
-    { id: 'appli-aveugle', condition: (j) => fermeAuxAutres(j) && !lisibleParAppli(j), message: (j) => j.t('rapport-evenement-appli-aveugle') },
-    { id: 'ssh', condition: (j) => racineFermee(j) && entre(j), message: (j) => j.t('rapport-evenement-ssh') },
-    { id: 'compte', condition: compteOk, message: (j) => j.t('rapport-evenement-compte') },
+    { id: 'compte-incomplet', condition: incompleteAccount, message: (j) => j.t('rapport-evenement-compte-incomplet') },
+    { id: 'appli-aveugle', condition: (j) => closedToOther(j) && !readableByApp(j), message: (j) => j.t('rapport-evenement-appli-aveugle') },
+    { id: 'ssh', condition: (j) => closedRoot(j) && between(j), message: (j) => j.t('rapport-evenement-ssh') },
+    { id: 'compte', condition: okAccount, message: (j) => j.t('rapport-evenement-compte') },
     { id: 'sudo', condition: sudoOk, message: (j) => j.t('rapport-evenement-sudo') },
     { id: 'secret', condition: secretOk, message: (j) => j.t('rapport-evenement-secret') },
     {
       id: 'fin',
-      condition: (j) => racineFermee(j) && entre(j) && compteOk(j) && sudoOk(j) && secretOk(j),
+      condition: (j) => closedRoot(j) && between(j) && okAccount(j) && sudoOk(j) && secretOk(j),
       message: (j) => j.t('rapport-evenement-fin'),
     },
   ],

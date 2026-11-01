@@ -9,11 +9,11 @@
 // l'ancienne configuration), un AllowUsers qui oublie son propre compte.
 // Sources : https://man.openbsd.org/sshd_config, https://man.openbsd.org/sshd
 
-import { comptesParDefaut, d, f, fichiersComptes, joueur, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { clePublique, machineDeHistoire, nomMachine } from '../machines';
-import { journaliser, nouveauSystemd, systemd } from '../systemd';
-import { autorise, CONFIG, lireConfig } from '../sshd';
+import { accountsByDefault, d, f, accountsFiles, player, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { publicKey, storyMachine, machineName } from '../machines';
+import { writeLog, newSystemd, systemd } from '../systemd';
+import { allowed, CONFIG, readConfig } from '../sshd';
 
 const M = '/home/vous';
 const SSH = 'OpenBSD Secure Shell server';
@@ -62,7 +62,7 @@ Subsystem	sftp	/usr/lib/openssh/sftp-server
 const CLOUD_INIT = 'PasswordAuthentication yes';
 
 // Les tentatives de force brute de la nuit, dans le journal de ssh.
-const ATTAQUES: [string, number, string][] = [
+const ATTACKS: [string, number, string][] = [
   ['203.0.113.66', 51022, 'Failed password for root from 203.0.113.66 port 51022 ssh2'],
   ['198.51.100.23', 40112, 'Invalid user admin from 198.51.100.23 port 40112'],
   ['198.51.100.23', 40112, 'Failed password for invalid user admin from 198.51.100.23 port 40112 ssh2'],
@@ -75,130 +75,130 @@ const ATTAQUES: [string, number, string][] = [
   ['203.0.113.66', 51202, 'Failed password for root from 203.0.113.66 port 51202 ssh2'],
 ];
 
-const config = (j: Jeu) => j.etat.sshd as { charge: Record<string, string>; connexionsAuChargement: number; recharges: number };
-const fermee = (v: Record<string, string>) => v.permitrootlogin === 'no' && v.passwordauthentication === 'no';
+const config = (j: Game) => j.state.sshd as { load: Record<string, string>; connectionsToLoad: number; reloads: number };
+const closed = (v: Record<string, string>) => v.permitrootlogin === 'no' && v.passwordauthentication === 'no';
 
-export const porte: Chapitre = {
+export const door: Chapter = {
   id: 'fermer-la-porte',
-  numero: 1,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'chmod', 'nano', 'sudo', 'systemctl', 'journalctl', 'sshd'],
-  maison: M,
-  accueil: 'courriel_kofi.txt',
-  noms: true,
+  number: 1,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'chmod', 'nano', 'sudo', 'systemctl', 'journalctl', 'sshd'],
+  home: M,
+  welcome: 'courriel_kofi.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'fourmis-2026',
-  comptes: () => {
-    const c = comptesParDefaut();
-    c.groupes.adm = { gid: 4, membres: ['vous'] };
+  password: 'fourmis-2026',
+  accounts: () => {
+    const c = accountsByDefault();
+    c.groups.adm = { gid: 4, members: ['vous'] };
     return c;
   },
-  etat: () => ({
-    sshd: { charge: {}, connexionsAuChargement: 1, recharges: 0 },
-    systemd: nouveauSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 20, 9, 15, 0), {
+  state: () => ({
+    sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
+    systemd: newSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 20, 9, 15, 0), {
       ssh: {
         description: SSH,
         active: true,
         executable: 'sshd',
-        processus: [{ pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+        process: [{ pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
         // Comme le service ssh de Debian : ExecReload vérifie d'abord (sshd -t).
-        verifier: (j) => {
-          const e = lireConfig(j).erreurs;
+        check: (j) => {
+          const e = readConfig(j).errors;
           return e.length ? e : null;
         },
-        verifierAuRechargement: true,
-        charger: (j) => {
+        checkToReload: true,
+        load: (j) => {
           const c = config(j);
           if (!c) return;
-          c.charge = lireConfig(j).valeurs;
-          c.connexionsAuChargement = j.etat.connexions ?? 1;
-          c.recharges++;
+          c.load = readConfig(j).values;
+          c.connectionsToLoad = j.state.connexions ?? 1;
+          c.reloads++;
           // Les robots reviennent… et se font éconduire avant même d'essayer un mot de passe.
-          if (fermee(c.charge)) {
+          if (closed(c.load)) {
             const sd = systemd(j)!;
-            journaliser(sd, 'ssh.service', 'sshd', 2690, 'Connection closed by authenticating user root 203.0.113.66 port 51533 [preauth]');
-            journaliser(sd, 'ssh.service', 'sshd', 2694, 'Connection closed by invalid user admin 198.51.100.23 port 40877 [preauth]');
+            writeLog(sd, 'ssh.service', 'sshd', 2690, 'Connection closed by authenticating user root 203.0.113.66 port 51533 [preauth]');
+            writeLog(sd, 'ssh.service', 'sshd', 2694, 'Connection closed by invalid user admin 198.51.100.23 port 40877 [preauth]');
           }
         },
       },
     }),
   }),
   // La configuration chargée au démarrage du serveur, et les attaques de la nuit.
-  initialiser: (j) => {
-    config(j).charge = lireConfig(j).valeurs;
+  initialise: (j) => {
+    config(j).load = readConfig(j).values;
     const sd = systemd(j)!;
-    sd.horloge = Date.UTC(2026, 9, 20, 3, 0, 0);
-    ATTAQUES.forEach(([, , message], i) => {
-      sd.horloge += 37_000;
-      journaliser(sd, 'ssh.service', 'sshd', 1800 + i * 3, message, 6, false);
+    sd.clock = Date.UTC(2026, 9, 20, 3, 0, 0);
+    ATTACKS.forEach(([, , message], i) => {
+      sd.clock += 37_000;
+      writeLog(sd, 'ssh.service', 'sshd', 1800 + i * 3, message, 6, false);
     });
-    sd.horloge = Date.UTC(2026, 9, 20, 9, 15, 0);
+    sd.clock = Date.UTC(2026, 9, 20, 9, 15, 0);
   },
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
-    const lettres = machineDeHistoire('lettres')!;
+  createWorld: (t) => {
+    const root = { owner: 'root' };
+    const letters = storyMachine('lettres')!;
     return d(
       {
         etc: d(
           {
-            ...fichiersComptes(),
+            ...accountsFiles(),
             ssh: d(
               {
-                sshd_config: f(SSHD_CONFIG, { lignes: true, proprio: 'root' }),
-                'sshd_config.d': d({ '50-cloud-init.conf': f(CLOUD_INIT, { lignes: true, proprio: 'root' }) }, undefined, racine),
+                sshd_config: f(SSHD_CONFIG, { lines: true, owner: 'root' }),
+                'sshd_config.d': d({ '50-cloud-init.conf': f(CLOUD_INIT, { lines: true, owner: 'root' }) }, undefined, root),
               },
               undefined,
-              racine,
+              root,
             ),
           },
           undefined,
-          racine,
+          root,
         ),
         home: d(
           {
             vous: d({
               'courriel_kofi.txt': f(t('porte-courriel-kofi')),
-              '.ssh': d({ authorized_keys: f(clePublique(lettres, joueur(t), nomMachine(t, 'poste')), { lignes: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
+              '.ssh': d({ authorized_keys: f(publicKey(letters, player(t), machineName(t, 'poste')), { lines: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
             }),
           },
           undefined,
-          racine,
+          root,
         ),
       },
       undefined,
-      racine,
+      root,
     );
   },
-  evenements: [
+  events: [
     {
       id: 'erreur',
-      condition: (j) => lireConfig(j).erreurs.length > 0,
+      condition: (j) => readConfig(j).errors.length > 0,
       message: (j) => j.t('porte-evenement-erreur', { config: CONFIG }),
     },
     {
       id: 'enferme',
-      condition: (j) => !autorise(config(j).charge, j.joueur),
+      condition: (j) => !allowed(config(j).load, j.player),
       message: (j) => j.t('porte-evenement-enferme'),
     },
     {
       id: 'sans-effet',
       condition: (j) =>
-        config(j).recharges > 0 &&
-        config(j).charge.passwordauthentication === 'yes' &&
-        /^\s*PasswordAuthentication\s+no\b/im.test(j.lire(CONFIG) ?? ''),
+        config(j).reloads > 0 &&
+        config(j).load.passwordauthentication === 'yes' &&
+        /^\s*PasswordAuthentication\s+no\b/im.test(j.read(CONFIG) ?? ''),
       message: (j) => j.t('porte-evenement-sans-effet'),
     },
     {
       id: 'fermee',
-      condition: (j) => fermee(config(j).charge) && autorise(config(j).charge, j.joueur),
+      condition: (j) => closed(config(j).load) && allowed(config(j).load, j.player),
       message: (j) => j.t('porte-evenement-fermee'),
     },
     {
       id: 'fin',
       condition: (j) =>
-        j.drapeaux.has('fermee') &&
-        fermee(config(j).charge) &&
-        autorise(config(j).charge, j.joueur) &&
-        (j.etat.connexions ?? 1) > config(j).connexionsAuChargement,
+        j.flags.has('fermee') &&
+        closed(config(j).load) &&
+        allowed(config(j).load, j.player) &&
+        (j.state.connexions ?? 1) > config(j).connectionsToLoad,
       message: (j) => j.t('porte-evenement-fin'),
     },
   ],

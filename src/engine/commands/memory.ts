@@ -8,41 +8,41 @@
 // main) ; pas de swap ; la colonne available vaut free (le cache ne se
 // libère pas dans le jeu).
 
-import { etatDisque, io } from '../disk-io';
+import { diskState, io } from '../disk-io';
 import type { Shell } from '../shell';
-import type { Processus } from './system';
-import { memoire, processus, tailleFree, utilisee } from '../memory';
+import type { Process } from './system';
+import { memory, process, freeSize, used } from '../memory';
 import { systemd } from '../systemd';
-import { processusDocker } from '../docker';
-import type { Commande } from './index';
+import { dockerProcess } from '../docker';
+import type { Command } from './index';
 
 // Le noyau lui-même, hors cache (le reste de « noyau » est du cache disque).
-const NOYAU_SEUL = 150 * 1024 * 1024;
+const ONLY_KERNEL = 150 * 1024 * 1024;
 
-function chiffresMemoire(jeu: Shell) {
-  const m = memoire(jeu)!;
+function memoryDigits(game: Shell) {
+  const m = memory(game)!;
   const total = m.total;
-  const occupee = Math.min(total, utilisee(jeu));
-  const cache = Math.max(0, m.noyau - NOYAU_SEUL);
-  const libre = total - occupee;
-  return { total, used: occupee - cache, free: libre, shared: 12 * 1024 * 1024, cache, available: libre };
+  const busy = Math.min(total, used(game));
+  const cache = Math.max(0, m.kernel - ONLY_KERNEL);
+  const freeMem = total - busy;
+  return { total, used: busy - cache, free: freeMem, shared: 12 * 1024 * 1024, cache, available: freeMem };
 }
 
 // Le démarrage de la machine : la première ligne du journal de ce démarrage.
-const demarrage = (jeu: Shell) => {
-  const sd = systemd(jeu)!;
-  return sd.journal.find((e) => e.demarrage === sd.demarrage)?.temps ?? sd.horloge;
+const boot = (game: Shell) => {
+  const sd = systemd(game)!;
+  return sd.log.find((e) => e.boot === sd.boot)?.time ?? sd.clock;
 };
 
-const nomCourt = (p: Processus) =>
-  p.zombie ? p.commande.replace(/^\[(.*)\].*$/, '$1') : p.commande.split(/\s+/)[0].split('/').at(-1)!.replace(/:$/, '');
+const shortName = (p: Process) =>
+  p.zombie ? p.command.replace(/^\[(.*)\].*$/, '$1') : p.command.split(/\s+/)[0].split('/').at(-1)!.replace(/:$/, '');
 
-function free(jeu: Shell, args: string[]): string {
-  const c = chiffresMemoire(jeu);
+function free(game: Shell, args: string[]): string {
+  const c = memoryDigits(game);
   const options = args.join('');
-  const unite = (o: number) =>
+  const unit = (o: number) =>
     /h/.test(options)
-      ? tailleFree(o)
+      ? freeSize(o)
       : /g/.test(options)
         ? String(Math.floor(o / 1024 ** 3))
         : /m/.test(options)
@@ -50,94 +50,94 @@ function free(jeu: Shell, args: string[]): string {
           : /b/.test(options)
             ? String(o)
             : String(Math.floor(o / 1024));
-  const ligne = (nom: string, valeurs: number[]) => nom.padEnd(8) + valeurs.map((v) => unite(v).padStart(12)).join('');
+  const line = (name: string, values: number[]) => name.padEnd(8) + values.map((v) => unit(v).padStart(12)).join('');
   return [
     ' '.repeat(8) + ['total', 'used', 'free', 'shared', 'buff/cache', 'available'].map((x) => x.padStart(12)).join(''),
-    ligne('Mem:', [c.total, c.used, c.free, c.shared, c.cache, c.available]),
-    ligne('Swap:', [0, 0, 0]),
+    line('Mem:', [c.total, c.used, c.free, c.shared, c.cache, c.available]),
+    line('Swap:', [0, 0, 0]),
   ].join('\n');
 }
 
-const heure = (ms: number) => new Date(ms).toISOString().slice(11, 19);
+const timeOfDay = (ms: number) => new Date(ms).toISOString().slice(11, 19);
 
-function top(jeu: Shell, args: string[]): string {
-  const sd = systemd(jeu)!;
-  const m = memoire(jeu)!;
-  const c = chiffresMemoire(jeu);
+function top(game: Shell, args: string[]): string {
+  const sd = systemd(game)!;
+  const m = memory(game)!;
+  const c = memoryDigits(game);
   const i = args.indexOf('-o');
-  const tri = i >= 0 ? args[i + 1] : '%CPU';
-  const complet = args.includes('-c');
-  const liste: Processus[] = [...processus(jeu), ...processusDocker(jeu)];
-  const zombies = liste.filter((p) => p.zombie).length;
-  const rss = (p: Processus) => Math.round((m.rss[p.pid] ?? 0) / 1024);
+  const sort = i >= 0 ? args[i + 1] : '%CPU';
+  const complete = args.includes('-c');
+  const listing: Process[] = [...process(game), ...dockerProcess(game)];
+  const zombies = listing.filter((p) => p.zombie).length;
+  const rss = (p: Process) => Math.round((m.rss[p.pid] ?? 0) / 1024);
   // RES : en Kio, puis en Mio (m) ou Gio (g) quand la colonne déborderait.
   const kio = (k: number) => (k >= 10_000_000 ? `${(k / 1024 ** 2).toFixed(1)}g` : k >= 1_000_000 ? `${(k / 1024).toFixed(1)}m` : String(k));
-  const cle = (p: Processus) => (tri === '%MEM' || tri === 'RES' ? rss(p) : tri === 'PID' ? -p.pid : p.cpu);
-  const trie = [...liste].sort((a, b) => cle(b) - cle(a) || a.pid - b.pid);
-  const disponible = Math.round(c.available / 1024 / 102.4) / 10;
-  const enMio = (o: number) => (o / 1024 / 1024).toFixed(1).padStart(8);
-  const uptime = sd.horloge - demarrage(jeu);
-  const jours = Math.floor(uptime / 86_400_000);
+  const key = (p: Process) => (sort === '%MEM' || sort === 'RES' ? rss(p) : sort === 'PID' ? -p.pid : p.cpu);
+  const trie = [...listing].sort((a, b) => key(b) - key(a) || a.pid - b.pid);
+  const available = Math.round(c.available / 1024 / 102.4) / 10;
+  const inMio = (o: number) => (o / 1024 / 1024).toFixed(1).padStart(8);
+  const uptime = sd.clock - boot(game);
+  const days = Math.floor(uptime / 86_400_000);
   const h = Math.floor((uptime % 86_400_000) / 3_600_000);
   const min = String(Math.floor((uptime % 3_600_000) / 60_000)).padStart(2, '0');
   // Le disque (s'il est suivi) : l'attente des entrées-sorties (wa) et la charge.
-  const disque = io(jeu) ? etatDisque(jeu) : null;
-  const wa = disque ? Math.min(95.7, disque.iowait) : 0.2;
-  const charge = disque ? [disque.charge, disque.charge * 0.85, disque.charge * 0.6].map((x) => x.toFixed(2)).join(', ') : '0.42, 0.38, 0.35';
+  const disk = io(game) ? diskState(game) : null;
+  const wa = disk ? Math.min(95.7, disk.iowait) : 0.2;
+  const load = disk ? [disk.load, disk.load * 0.85, disk.load * 0.6].map((x) => x.toFixed(2)).join(', ') : '0.42, 0.38, 0.35';
   return [
-    `top - ${heure(sd.horloge)} up ${jours ? `${jours} days, ` : ''}${String(h).padStart(2)}:${min},  1 user,  load average: ${charge}`,
-    `Tasks: ${String(liste.length).padStart(3)} total,   1 running, ${String(liste.length - 1 - zombies).padStart(3)} sleeping,   0 stopped, ${String(zombies).padStart(3)} zombie`,
+    `top - ${timeOfDay(sd.clock)} up ${days ? `${days} days, ` : ''}${String(h).padStart(2)}:${min},  1 user,  load average: ${load}`,
+    `Tasks: ${String(listing.length).padStart(3)} total,   1 running, ${String(listing.length - 1 - zombies).padStart(3)} sleeping,   0 stopped, ${String(zombies).padStart(3)} zombie`,
     `%Cpu(s):  3.1 us,  1.0 sy,  0.0 ni, ${(100 - 4.2 - wa).toFixed(1).padStart(4)} id, ${wa.toFixed(1).padStart(4)} wa,  0.0 hi,  0.1 si,  0.0 st`,
-    `MiB Mem : ${enMio(c.total)} total, ${enMio(c.free)} free, ${enMio(c.used)} used, ${enMio(c.cache)} buff/cache`,
-    `MiB Swap:      0.0 total,      0.0 free,      0.0 used. ${String(disponible.toFixed(1)).padStart(8)} avail Mem`,
+    `MiB Mem : ${inMio(c.total)} total, ${inMio(c.free)} free, ${inMio(c.used)} used, ${inMio(c.cache)} buff/cache`,
+    `MiB Swap:      0.0 total,      0.0 free,      0.0 used. ${String(available.toFixed(1)).padStart(8)} avail Mem`,
     '',
     '    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND',
     ...trie.map((p) => {
       const r = rss(p);
       const virt = p.zombie ? 0 : r + 180_000;
-      const etat = p.zombie ? 'Z' : 'S';
-      const commande = complet ? p.commande : nomCourt(p);
-      const temps = `${Math.floor(p.pid / 97)}:${String((p.pid * 7) % 60).padStart(2, '0')}.${String(p.pid % 100).padStart(2, '0')}`;
-      return `${String(p.pid).padStart(7)} ${p.utilisateur.slice(0, 8).padEnd(8)}  20   0 ${kio(virt).padStart(7)} ${kio(r).padStart(6)} ${String(p.zombie ? 0 : Math.min(r, 9800)).padStart(6)} ${etat} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${temps.padStart(9)} ${commande}`;
+      const state = p.zombie ? 'Z' : 'S';
+      const command = complete ? p.command : shortName(p);
+      const time = `${Math.floor(p.pid / 97)}:${String((p.pid * 7) % 60).padStart(2, '0')}.${String(p.pid % 100).padStart(2, '0')}`;
+      return `${String(p.pid).padStart(7)} ${p.user.slice(0, 8).padEnd(8)}  20   0 ${kio(virt).padStart(7)} ${kio(r).padStart(6)} ${String(p.zombie ? 0 : Math.min(r, 9800)).padStart(6)} ${state} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${time.padStart(9)} ${command}`;
     }),
   ].join('\n');
 }
 
-const JOURS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MOIS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function dmesg(jeu: Shell, args: string[]): string {
+function dmesg(game: Shell, args: string[]): string {
   // Debian règle kernel.dmesg_restrict = 1 : seul root lit les messages du noyau.
-  if (jeu.qui !== 'root') return jeu.erreur('dmesg: read kernel buffer failed: Operation not permitted');
-  const debut = demarrage(jeu);
-  const lisible = args.some((a) => /^-\w*T/.test(a) || a === '--ctime');
-  const lignes: { temps: number; texte: string }[] = (jeu.etat.noyau ?? []).filter((l: { temps: number }) => l.temps >= debut);
-  return lignes
-    .map(({ temps, texte }) => {
-      if (lisible) {
-        const d = new Date(temps);
-        const date = `${JOURS[d.getUTCDay()]} ${MOIS[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2)} ${heure(temps)} ${d.getUTCFullYear()}`;
-        return `[${date}] ${texte}`;
+  if (game.who !== 'root') return game.error('dmesg: read kernel buffer failed: Operation not permitted');
+  const start = boot(game);
+  const readable = args.some((a) => /^-\w*T/.test(a) || a === '--ctime');
+  const lines: { time: number; text: string }[] = (game.state.noyau ?? []).filter((l: { time: number }) => l.time >= start);
+  return lines
+    .map(({ time, text }) => {
+      if (readable) {
+        const d = new Date(time);
+        const date = `${DAYS[d.getUTCDay()]} ${MONTH[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2)} ${timeOfDay(time)} ${d.getUTCFullYear()}`;
+        return `[${date}] ${text}`;
       }
-      const s = (temps - debut) / 1000;
-      return `[${s.toFixed(6).padStart(12)}] ${texte}`;
+      const s = (time - start) / 1000;
+      return `[${s.toFixed(6).padStart(12)}] ${text}`;
     })
     .join('\n');
 }
 
-export const MEMOIRE: Record<string, Commande> = {
-  free: { lancer: ({ args, jeu }) => (memoire(jeu) ? free(jeu, args) : jeu.erreur('free: Unable to create meminfo structure')) },
+export const MEMORY: Record<string, Command> = {
+  free: { launch: ({ args, game }) => (memory(game) ? free(game, args) : game.error('free: Unable to create meminfo structure')) },
   top: {
-    propresOptions: true,
-    lancer: ({ args, jeu }) => {
-      const inconnue = args.find((a) => a.startsWith('-') && !['-b', '-c', '-o', '-n'].includes(a));
-      if (inconnue)
-        return jeu.erreur(
-          `top: unknown option '${inconnue.replace(/^-+/, '')}'\nUsage:\n  top -hv | -bcEeHiOSs1 -d secs -n max -u|U user -p pid(s) -o field -w [cols]`,
+    ownOptions: true,
+    launch: ({ args, game }) => {
+      const unknown = args.find((a) => a.startsWith('-') && !['-b', '-c', '-o', '-n'].includes(a));
+      if (unknown)
+        return game.error(
+          `top: unknown option '${unknown.replace(/^-+/, '')}'\nUsage:\n  top -hv | -bcEeHiOSs1 -d secs -n max -u|U user -p pid(s) -o field -w [cols]`,
         );
-      if (!memoire(jeu) || !systemd(jeu)) return jeu.erreur('top: failed tty get');
-      return top(jeu, args);
+      if (!memory(game) || !systemd(game)) return game.error('top: failed tty get');
+      return top(game, args);
     },
   },
-  dmesg: { lancer: ({ args, jeu }) => dmesg(jeu, args) },
+  dmesg: { launch: ({ args, game }) => dmesg(game, args) },
 };

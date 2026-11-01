@@ -14,28 +14,28 @@
 // Host $proxy_host et Connection close ; les autres en-têtes du client passent.
 // Écarts : une partie des directives seulement.
 
-import type { Jeu } from './shell';
-import { joker } from './tools';
-import { heureEte, systemd, versUtc } from './systemd';
-import { lire as lireCertificat } from './tls';
+import type { Game } from './shell';
+import { wildcard } from './tools';
+import { summerTime, systemd, toUtc } from './systemd';
+import { read as readCertificate } from './tls';
 
 export const VERSION = '1.26.3';
 export const CONF = '/etc/nginx/nginx.conf';
-const PREFIXE = '/etc/nginx';
+const PREFIX = '/etc/nginx';
 
 // Les directives connues : nombre d'arguments (min, max) et blocs autorisés
 // (main = hors de tout bloc). Un bloc « types » contient des types MIME, pas
 // des directives.
-type Regle = { min: number; max: number; dans: string[]; bloc?: boolean };
-const r = (min: number, max: number, dans: string[], bloc = false): Regle => ({ min, max, dans, bloc });
-const PARTOUT = ['main', 'events', 'http', 'server', 'location'];
+type Rule = { min: number; max: number; inside: string[]; block?: boolean };
+const r = (min: number, max: number, inside: string[], block = false): Rule => ({ min, max, inside, block });
+const EVERYWHERE = ['main', 'events', 'http', 'server', 'location'];
 const HTTP = ['http', 'server', 'location'];
-const DIRECTIVES: Record<string, Regle> = {
+const DIRECTIVES: Record<string, Rule> = {
   user: r(1, 2, ['main']),
   worker_processes: r(1, 1, ['main']),
   pid: r(1, 1, ['main']),
-  error_log: r(1, 2, PARTOUT),
-  include: r(1, 1, PARTOUT),
+  error_log: r(1, 2, EVERYWHERE),
+  include: r(1, 1, EVERYWHERE),
   events: r(0, 0, ['main'], true),
   worker_connections: r(1, 1, ['events']),
   http: r(0, 0, ['main'], true),
@@ -73,414 +73,414 @@ const DIRECTIVES: Record<string, Regle> = {
   least_conn: r(0, 0, ['upstream']),
 };
 // Dans un bloc upstream, server est une simple directive : server adresse [weight=N] [backup] [down]…
-const SERVEUR_AMONT = r(1, 9, ['upstream']);
+const UPSTREAM_SERVER = r(1, 9, ['upstream']);
 
 interface Directive {
-  nom: string;
+  name: string;
   args: string[];
-  fichier: string;
-  ligne: number;
-  enfants?: Directive[];
+  file: string;
+  line: number;
+  children?: Directive[];
 }
 
 // Un bloc location : le préfixe (ou le chemin exact, avec =, ou une
 // expression régulière, avec ~ ou ~*) et ce qu'on y fait.
 export interface Location {
   exact: boolean;
-  chemin: string;
+  path: string;
   regex?: RegExp;
   // ^~ : ce préfixe, s'il est le plus long, passe avant les expressions régulières.
-  prioritaire?: boolean;
+  priority?: boolean;
   // proxy_set_header : [en-tête, valeur avec ses variables].
-  entetes: [string, string][];
-  racine?: string;
+  headers: [string, string][];
+  root?: string;
   alias?: string;
   index?: string[];
   proxy?: string;
-  retour?: string[];
-  limite?: Limite;
-  refus: string[];
-  limiteStatut?: number;
+  back?: string[];
+  limit?: Limit;
+  refusal: string[];
+  statusLimit?: number;
 }
 
 // limit_req : la zone (clé et débit) et la rafale tolérée.
-export interface Limite {
+export interface Limit {
   zone: string;
-  rafale: number;
-  sansDelai: boolean;
+  burst: number;
+  withoutDelay: boolean;
 }
 
-export interface ZoneLimite {
+export interface LimitZone {
   // La clé : $binary_remote_addr (une par adresse), ou autre chose.
-  cle: string;
+  key: string;
   // Requêtes par seconde.
-  debit: number;
+  rate: number;
 }
 
-export interface Serveur {
+export interface Server {
   // Adresses d'écoute (« 0.0.0.0:80 », « [::]:80 ») ; celles où il est le serveur par défaut.
-  ecoute: string[];
-  parDefaut: string[];
-  noms: string[];
-  racine: string;
+  listening: string[];
+  byDefault: string[];
+  names: string[];
+  root: string;
   index: string[];
-  refus: string[];
+  refusal: string[];
   // Adresses en HTTPS (listen … ssl) et le certificat lu au chargement :
   // renouveler le fichier ne change rien tant que nginx n'a pas rechargé.
   ssl: string[];
-  certificat: string | null;
+  certificate: string | null;
   locations: Location[];
   // return au niveau du serveur (ex. redirection vers HTTPS).
-  retour?: string[];
-  limite?: Limite;
-  limiteStatut?: number;
+  back?: string[];
+  limit?: Limit;
+  statusLimit?: number;
 }
 
 // Un groupe de serveurs (upstream) : proxy_pass http://nom/ répartit entre eux.
-export interface Amont {
-  serveurs: { adresse: string; poids: number; secours: boolean; eteint: boolean }[];
+export interface Upstream {
+  servers: { address: string; weight: number; rescue: boolean; off: boolean }[];
 }
 
 export interface Configuration {
-  serveurs: Serveur[];
-  amonts: Record<string, Amont>;
+  servers: Server[];
+  upstreams: Record<string, Upstream>;
   // Les avertissements de nginx -t ([warn]) : la configuration reste valable.
-  avertissements: string[];
-  zones: Record<string, ZoneLimite>;
+  warnings: string[];
+  zones: Record<string, LimitZone>;
 }
 
-class ErreurConf extends Error {}
-const echec = (message: string, fichier: string, ligne: number): never => {
-  throw new ErreurConf(`${message} in ${fichier}:${ligne}`);
+class ConfError extends Error {}
+const failure = (message: string, file: string, line: number): never => {
+  throw new ConfError(`${message} in ${file}:${line}`);
 };
 
 // Découpe un fichier en mots, « ; », « { » et « } », avec leur ligne.
-function jetons(texte: string): { mot: string; ligne: number }[] {
-  const liste: { mot: string; ligne: number }[] = [];
-  texte.split('\n').forEach((brute, i) => {
-    const ligne = brute.replace(/(^|\s)#.*$/, '$1');
-    for (const m of ligne.matchAll(/"([^"]*)"|'([^']*)'|[;{}]|[^\s;{}"']+/g)) liste.push({ mot: m[1] ?? m[2] ?? m[0], ligne: i + 1 });
+function tokens(text: string): { word: string; line: number }[] {
+  const listing: { word: string; line: number }[] = [];
+  text.split('\n').forEach((rawValue, i) => {
+    const line = rawValue.replace(/(^|\s)#.*$/, '$1');
+    for (const m of line.matchAll(/"([^"]*)"|'([^']*)'|[;{}]|[^\s;{}"']+/g)) listing.push({ word: m[1] ?? m[2] ?? m[0], line: i + 1 });
   });
-  return liste;
+  return listing;
 }
 
 // Les fichiers d'un include : un chemin, ou un motif (*) qui peut ne rien trouver.
-function fichiersInclus(jeu: Jeu, motif: string, fichier: string, ligne: number): string[] {
-  const chemin = motif.startsWith('/') ? motif : `${PREFIXE}/${motif}`;
-  if (!chemin.includes('*') && !chemin.includes('?')) {
-    const n = jeu.trouver(chemin);
-    if (!n || n.type !== 'fichier') echec(`open() "${chemin}" failed (2: No such file or directory)`, fichier, ligne);
-    return [chemin];
+function includedFiles(game: Game, pattern: string, file: string, line: number): string[] {
+  const path = pattern.startsWith('/') ? pattern : `${PREFIX}/${pattern}`;
+  if (!path.includes('*') && !path.includes('?')) {
+    const n = game.find(path);
+    if (!n || n.type !== 'fichier') failure(`open() "${path}" failed (2: No such file or directory)`, file, line);
+    return [path];
   }
   // Un lien cassé dans sites-enabled/ fait échouer nginx -t.
-  const verifier = (chemin: string) => {
-    if (!jeu.trouver(chemin)) echec(`open() "${chemin}" failed (2: No such file or directory)`, fichier, ligne);
-    return chemin;
+  const check = (path: string) => {
+    if (!game.find(path)) failure(`open() "${path}" failed (2: No such file or directory)`, file, line);
+    return path;
   };
-  const dossier = chemin.slice(0, chemin.lastIndexOf('/')) || '/';
-  const n = jeu.trouver(dossier);
+  const directory = path.slice(0, path.lastIndexOf('/')) || '/';
+  const n = game.find(directory);
   if (!n || n.type !== 'dossier') return [];
-  const re = joker(chemin.slice(chemin.lastIndexOf('/') + 1));
-  return Object.keys(n.enfants)
-    .filter((nom) => re.test(nom) && n.enfants[nom].type === 'fichier')
+  const re = wildcard(path.slice(path.lastIndexOf('/') + 1));
+  return Object.keys(n.children)
+    .filter((name) => re.test(name) && n.children[name].type === 'fichier')
     .sort()
-    .map((nom) => verifier(`${dossier}/${nom}`));
+    .map((name) => check(`${directory}/${name}`));
 }
 
 // Lit un fichier et ses include ; renvoie ses directives (dans le bloc `contexte`).
 // `lus` reçoit les fichiers lus, dans l'ordre (pour nginx -T).
-function analyser(jeu: Jeu, fichier: string, contexte: string, lus: string[]): Directive[] {
-  lus.push(fichier);
-  const liste = jetons(jeu.lire(fichier) ?? '');
+function parse(game: Game, file: string, context: string, read: string[]): Directive[] {
+  read.push(file);
+  const listing = tokens(game.read(file) ?? '');
   let i = 0;
-  const bloc = (ctx: string, ouvert: boolean): Directive[] => {
+  const block = (ctx: string, open: boolean): Directive[] => {
     const directives: Directive[] = [];
-    let mots: { mot: string; ligne: number }[] = [];
-    while (i < liste.length) {
-      const j = liste[i++];
-      if (j.mot === ';' || j.mot === '{') {
-        if (!mots.length) echec(`unexpected "${j.mot}"`, fichier, j.ligne);
-        const [nom, ...args] = mots.map((m) => m.mot);
-        const ligne = mots[0].ligne;
-        mots = [];
+    let words: { word: string; line: number }[] = [];
+    while (i < listing.length) {
+      const j = listing[i++];
+      if (j.word === ';' || j.word === '{') {
+        if (!words.length) failure(`unexpected "${j.word}"`, file, j.line);
+        const [name, ...args] = words.map((m) => m.word);
+        const line = words[0].line;
+        words = [];
         // Dans « types », chaque ligne associe un type MIME à des extensions.
         if (ctx === 'types') continue;
-        const regle = ctx === 'upstream' && nom === 'server' ? SERVEUR_AMONT : DIRECTIVES[nom];
-        if (!regle) echec(`unknown directive "${nom}"`, fichier, ligne);
-        if (!regle.dans.includes(ctx)) echec(`"${nom}" directive is not allowed here`, fichier, ligne);
-        if (j.mot === '{' && !regle.bloc) echec(`directive "${nom}" is not terminated by ";"`, fichier, ligne);
-        if (j.mot === ';' && regle.bloc) echec(`directive "${nom}" has no opening "{"`, fichier, ligne);
-        if (args.length < regle.min || args.length > regle.max) echec(`invalid number of arguments in "${nom}" directive`, fichier, ligne);
-        if (nom === 'include') {
-          for (const inclus of fichiersInclus(jeu, args[0], fichier, ligne)) directives.push(...analyser(jeu, inclus, ctx, lus));
+        const rule = ctx === 'upstream' && name === 'server' ? UPSTREAM_SERVER : DIRECTIVES[name];
+        if (!rule) failure(`unknown directive "${name}"`, file, line);
+        if (!rule.inside.includes(ctx)) failure(`"${name}" directive is not allowed here`, file, line);
+        if (j.word === '{' && !rule.block) failure(`directive "${name}" is not terminated by ";"`, file, line);
+        if (j.word === ';' && rule.block) failure(`directive "${name}" has no opening "{"`, file, line);
+        if (args.length < rule.min || args.length > rule.max) failure(`invalid number of arguments in "${name}" directive`, file, line);
+        if (name === 'include') {
+          for (const included of includedFiles(game, args[0], file, line)) directives.push(...parse(game, included, ctx, read));
           continue;
         }
-        const d: Directive = { nom, args, fichier, ligne };
-        if (regle.bloc) d.enfants = bloc(nom, true);
+        const d: Directive = { name, args, file, line };
+        if (rule.block) d.children = block(name, true);
         directives.push(d);
-      } else if (j.mot === '}') {
-        if (mots.length) echec(`unexpected "}"`, fichier, j.ligne);
-        if (!ouvert) echec(`unexpected "}"`, fichier, j.ligne);
+      } else if (j.word === '}') {
+        if (words.length) failure(`unexpected "}"`, file, j.line);
+        if (!open) failure(`unexpected "}"`, file, j.line);
         return directives;
-      } else mots.push(j);
+      } else words.push(j);
     }
-    if (mots.length) echec(`unexpected end of file, expecting ";" or "}"`, fichier, mots.at(-1)!.ligne);
-    if (ouvert) echec(`unexpected end of file, expecting "}"`, fichier, (liste.at(-1)?.ligne ?? 0) + 1);
+    if (words.length) failure(`unexpected end of file, expecting ";" or "}"`, file, words.at(-1)!.line);
+    if (open) failure(`unexpected end of file, expecting "}"`, file, (listing.at(-1)?.line ?? 0) + 1);
     return directives;
   };
-  return bloc(contexte, false);
+  return block(context, false);
 }
 
 // nginx lit le certificat et sa clé au chargement ; messages d'OpenSSL 3.
-function chargerCertificat(jeu: Jeu, enfants: Directive[], http: Directive[], serveur: Directive): string {
-  const trouve = (nom: string) => enfants.find((d) => d.nom === nom) ?? http.find((d) => d.nom === nom);
-  const cert = trouve('ssl_certificate');
-  const cle = trouve('ssl_certificate_key');
-  const listen = enfants.find((d) => d.nom === 'listen' && d.args.includes('ssl')) ?? serveur;
-  if (!cert) echec(`no "ssl_certificate" is defined for the "listen ... ssl" directive`, listen.fichier, listen.ligne);
-  const ouvrir = (d: Directive, quoi: string) => {
-    const chemin = d.args[0];
-    const n = jeu.trouver(chemin);
+function loadCertificate(game: Game, children: Directive[], http: Directive[], server: Directive): string {
+  const found = (name: string) => children.find((d) => d.name === name) ?? http.find((d) => d.name === name);
+  const cert = found('ssl_certificate');
+  const key = found('ssl_certificate_key');
+  const listen = children.find((d) => d.name === 'listen' && d.args.includes('ssl')) ?? server;
+  if (!cert) failure(`no "ssl_certificate" is defined for the "listen ... ssl" directive`, listen.file, listen.line);
+  const open = (d: Directive, what: string) => {
+    const path = d.args[0];
+    const n = game.find(path);
     if (!n || n.type !== 'fichier')
-      echec(
-        `cannot load ${quoi} "${chemin}": BIO_new_file() failed (SSL: error:80000002:system library::No such file or directory:calling fopen(${chemin}, r) error:10000080:BIO routines::no such file)`,
-        d.fichier,
-        d.ligne,
+      failure(
+        `cannot load ${what} "${path}": BIO_new_file() failed (SSL: error:80000002:system library::No such file or directory:calling fopen(${path}, r) error:10000080:BIO routines::no such file)`,
+        d.file,
+        d.line,
       );
-    return jeu.lire(chemin) ?? '';
+    return game.read(path) ?? '';
   };
-  const contenu = ouvrir(cert!, 'certificate');
-  if (!lireCertificat(contenu))
-    echec(
+  const content = open(cert!, 'certificate');
+  if (!readCertificate(content))
+    failure(
       `cannot load certificate "${cert!.args[0]}": PEM_read_bio_X509_AUX() failed (SSL: error:0480006C:PEM routines::no start line:Expecting: TRUSTED CERTIFICATE)`,
-      cert!.fichier,
-      cert!.ligne,
+      cert!.file,
+      cert!.line,
     );
-  if (!cle) echec(`no "ssl_certificate_key" is defined for certificate "${cert!.args[0]}"`, listen.fichier, listen.ligne);
-  ouvrir(cle!, 'certificate key');
-  return contenu;
+  if (!key) failure(`no "ssl_certificate_key" is defined for certificate "${cert!.args[0]}"`, listen.file, listen.line);
+  open(key!, 'certificate key');
+  return content;
 }
 
 // limit_req_zone $binary_remote_addr zone=nom:10m rate=2r/s;
-function lireZones(http: Directive[]): Record<string, ZoneLimite> {
-  const zones: Record<string, ZoneLimite> = {};
-  for (const d of http.filter((x) => x.nom === 'limit_req_zone')) {
-    const [cle, ...params] = d.args;
+function readZones(http: Directive[]): Record<string, LimitZone> {
+  const zones: Record<string, LimitZone> = {};
+  for (const d of http.filter((x) => x.name === 'limit_req_zone')) {
+    const [key, ...params] = d.args;
     const zone = params.find((p) => p.startsWith('zone='))?.slice(5);
-    const debit = params.find((p) => p.startsWith('rate='))?.slice(5);
-    const inconnu = params.find((p) => !p.startsWith('zone=') && !p.startsWith('rate=') && p !== 'sync');
-    if (inconnu) echec(`invalid parameter "${inconnu}"`, d.fichier, d.ligne);
-    if (!zone || !/^[\w-]+:\d+[km]?$/i.test(zone)) echec(`no zone in "limit_req_zone" directive`, d.fichier, d.ligne);
-    const m = /^(\d+)r\/([sm])$/.exec(debit ?? '');
-    if (!m) echec(`invalid rate "${debit ?? ''}"`, d.fichier, d.ligne);
-    zones[zone!.split(':')[0]] = { cle, debit: Number(m![1]) / (m![2] === 'm' ? 60 : 1) };
+    const rate = params.find((p) => p.startsWith('rate='))?.slice(5);
+    const unknown = params.find((p) => !p.startsWith('zone=') && !p.startsWith('rate=') && p !== 'sync');
+    if (unknown) failure(`invalid parameter "${unknown}"`, d.file, d.line);
+    if (!zone || !/^[\w-]+:\d+[km]?$/i.test(zone)) failure(`no zone in "limit_req_zone" directive`, d.file, d.line);
+    const m = /^(\d+)r\/([sm])$/.exec(rate ?? '');
+    if (!m) failure(`invalid rate "${rate ?? ''}"`, d.file, d.line);
+    zones[zone!.split(':')[0]] = { key, rate: Number(m![1]) / (m![2] === 'm' ? 60 : 1) };
   }
   return zones;
 }
 
 // limit_req zone=nom [burst=N] [nodelay] : la zone doit exister.
-function lireLimite(d: Directive, zones: Record<string, ZoneLimite>): Limite {
+function readLimit(d: Directive, zones: Record<string, LimitZone>): Limit {
   const zone = d.args.find((a) => a.startsWith('zone='))?.slice(5);
-  const rafale = d.args.find((a) => a.startsWith('burst='))?.slice(6);
-  const inconnu = d.args.find((a) => !a.startsWith('zone=') && !a.startsWith('burst=') && a !== 'nodelay' && !a.startsWith('delay='));
-  if (inconnu) echec(`invalid parameter "${inconnu}"`, d.fichier, d.ligne);
-  if (!zone) echec(`no shared memory zone specified`, d.fichier, d.ligne);
-  if (rafale !== undefined && !/^\d+$/.test(rafale)) echec(`invalid burst value "${rafale}"`, d.fichier, d.ligne);
+  const burst = d.args.find((a) => a.startsWith('burst='))?.slice(6);
+  const unknown = d.args.find((a) => !a.startsWith('zone=') && !a.startsWith('burst=') && a !== 'nodelay' && !a.startsWith('delay='));
+  if (unknown) failure(`invalid parameter "${unknown}"`, d.file, d.line);
+  if (!zone) failure(`no shared memory zone specified`, d.file, d.line);
+  if (burst !== undefined && !/^\d+$/.test(burst)) failure(`invalid burst value "${burst}"`, d.file, d.line);
   // Une zone jamais déclarée : nginx -t le dit sans fichier ni ligne.
-  if (!zones[zone!]) throw new ErreurConf(`zero size shared memory zone "${zone}"`);
-  return { zone: zone!, rafale: Number(rafale ?? 0), sansDelai: d.args.includes('nodelay') };
+  if (!zones[zone!]) throw new ConfError(`zero size shared memory zone "${zone}"`);
+  return { zone: zone!, burst: Number(burst ?? 0), withoutDelay: d.args.includes('nodelay') };
 }
 
 // « 80 », « [::]:80 », « 192.0.2.11:80 » → adresse:port.
-const adresse = (valeur: string) => (/^\d+$/.test(valeur) ? `0.0.0.0:${valeur}` : valeur.includes(':') ? valeur : `${valeur}:80`);
+const address = (value: string) => (/^\d+$/.test(value) ? `0.0.0.0:${value}` : value.includes(':') ? value : `${value}:80`);
 
 /** Lit et vérifie toute la configuration ; lève une erreur au format de nginx. */
-function construire(jeu: Jeu, lus: string[] = []): Configuration {
-  if (!jeu.trouver(CONF)) echec(`open() "${CONF}" failed (2: No such file or directory)`, CONF, 0);
-  const racine = analyser(jeu, CONF, 'main', lus);
-  const http = racine.find((d) => d.nom === 'http')?.enfants ?? [];
-  const valeurs = (liste: Directive[], nom: string) => liste.filter((d) => d.nom === nom).flatMap((d) => d.args);
-  const zones = lireZones(http);
-  const parDefautVus: Record<string, true> = {};
-  const nomsVus = new Set<string>();
-  const avertissements: string[] = [];
-  const serveurs = http
-    .filter((d) => d.nom === 'server')
-    .map((s): Serveur => {
-      const enfants = s.enfants ?? [];
-      const ecoute: string[] = [];
-      const parDefaut: string[] = [];
+function build(game: Game, read: string[] = []): Configuration {
+  if (!game.find(CONF)) failure(`open() "${CONF}" failed (2: No such file or directory)`, CONF, 0);
+  const root = parse(game, CONF, 'main', read);
+  const http = root.find((d) => d.name === 'http')?.children ?? [];
+  const values = (listing: Directive[], name: string) => listing.filter((d) => d.name === name).flatMap((d) => d.args);
+  const zones = readZones(http);
+  const bySeenDefault: Record<string, true> = {};
+  const seenNames = new Set<string>();
+  const warnings: string[] = [];
+  const servers = http
+    .filter((d) => d.name === 'server')
+    .map((s): Server => {
+      const children = s.children ?? [];
+      const listening: string[] = [];
+      const byDefault: string[] = [];
       const ssl: string[] = [];
-      for (const l of enfants.filter((d) => d.nom === 'listen')) {
-        const a = adresse(l.args[0]);
-        ecoute.push(a);
+      for (const l of children.filter((d) => d.name === 'listen')) {
+        const a = address(l.args[0]);
+        listening.push(a);
         if (l.args.includes('ssl')) ssl.push(a);
         if (l.args.includes('default_server')) {
-          if (parDefautVus[a]) echec(`a duplicate default server for ${a}`, l.fichier, l.ligne);
-          parDefautVus[a] = true;
-          parDefaut.push(a);
+          if (bySeenDefault[a]) failure(`a duplicate default server for ${a}`, l.file, l.line);
+          bySeenDefault[a] = true;
+          byDefault.push(a);
         }
       }
-      const certificat = ssl.length ? chargerCertificat(jeu, enfants, http, s) : null;
+      const certificate = ssl.length ? loadCertificate(game, children, http, s) : null;
       // Un même nom sur la même adresse : le premier serveur lu le garde.
-      const noms: string[] = [];
-      for (const nom of valeurs(enfants, 'server_name').map((n) => n.toLowerCase())) {
-        const conflits = (ecoute.length ? ecoute : ['0.0.0.0:80']).filter((a) => nomsVus.has(`${nom} ${a}`));
-        for (const a of conflits) avertissements.push(`conflicting server name "${nom}" on ${a}, ignored`);
-        if (!conflits.length) noms.push(nom);
-        for (const a of ecoute.length ? ecoute : ['0.0.0.0:80']) nomsVus.add(`${nom} ${a}`);
+      const names: string[] = [];
+      for (const name of values(children, 'server_name').map((n) => n.toLowerCase())) {
+        const conflicts = (listening.length ? listening : ['0.0.0.0:80']).filter((a) => seenNames.has(`${name} ${a}`));
+        for (const a of conflicts) warnings.push(`conflicting server name "${name}" on ${a}, ignored`);
+        if (!conflicts.length) names.push(name);
+        for (const a of listening.length ? listening : ['0.0.0.0:80']) seenNames.add(`${name} ${a}`);
       }
-      const entetesDe = (ds: Directive[]) => ds.filter((d) => d.nom === 'proxy_set_header').map((d) => [d.args[0], d.args[1]] as [string, string]);
-      const entetesServeur = entetesDe(enfants).length ? entetesDe(enfants) : entetesDe(http);
-      const locations = enfants
-        .filter((d) => d.nom === 'location')
+      const headersFor = (ds: Directive[]) => ds.filter((d) => d.name === 'proxy_set_header').map((d) => [d.args[0], d.args[1]] as [string, string]);
+      const serverHeaders = headersFor(children).length ? headersFor(children) : headersFor(http);
+      const locations = children
+        .filter((d) => d.name === 'location')
         .map((l): Location => {
-          const modificateur = l.args.length === 2 ? l.args[0] : null;
-          if (modificateur && !['=', '~', '~*', '^~'].includes(modificateur))
-            echec(`invalid location modifier "${modificateur}"`, l.fichier, l.ligne);
-          const exact = modificateur === '=';
+          const modifier = l.args.length === 2 ? l.args[0] : null;
+          if (modifier && !['=', '~', '~*', '^~'].includes(modifier))
+            failure(`invalid location modifier "${modifier}"`, l.file, l.line);
+          const exact = modifier === '=';
           let regex: RegExp | undefined;
-          if (modificateur === '~' || modificateur === '~*')
+          if (modifier === '~' || modifier === '~*')
             try {
-              regex = new RegExp(l.args[1], modificateur === '~*' ? 'i' : '');
+              regex = new RegExp(l.args[1], modifier === '~*' ? 'i' : '');
             } catch (e) {
-              echec(
+              failure(
                 `pcre2_compile() failed: ${(e as Error).message.replace(/^Invalid regular expression: /, '')} in "${l.args[1]}"`,
-                l.fichier,
-                l.ligne,
+                l.file,
+                l.line,
               );
             }
-          const dedans = l.enfants ?? [];
-          const une = (nom: string) => dedans.find((d) => d.nom === nom)?.args;
-          const limite = dedans.find((d) => d.nom === 'limit_req');
+          const inside = l.children ?? [];
+          const one = (name: string) => inside.find((d) => d.name === name)?.args;
+          const limit = inside.find((d) => d.name === 'limit_req');
           return {
-            limite: limite ? lireLimite(limite, zones) : undefined,
-            refus: valeurs(dedans, 'deny'),
-            limiteStatut: une('limit_req_status') ? Number(une('limit_req_status')![0]) : undefined,
+            limit: limit ? readLimit(limit, zones) : undefined,
+            refusal: values(inside, 'deny'),
+            statusLimit: one('limit_req_status') ? Number(one('limit_req_status')![0]) : undefined,
             exact,
             regex,
-            prioritaire: modificateur === '^~',
-            entetes: entetesDe(dedans).length ? entetesDe(dedans) : entetesServeur,
-            chemin: l.args.at(-1)!,
-            racine: une('root')?.[0],
-            alias: une('alias')?.[0],
-            index: une('index'),
-            proxy: une('proxy_pass')?.[0],
-            retour: une('return'),
+            priority: modifier === '^~',
+            headers: headersFor(inside).length ? headersFor(inside) : serverHeaders,
+            path: l.args.at(-1)!,
+            root: one('root')?.[0],
+            alias: one('alias')?.[0],
+            index: one('index'),
+            proxy: one('proxy_pass')?.[0],
+            back: one('return'),
           };
         });
-      const limite = enfants.find((d) => d.nom === 'limit_req') ?? http.find((d) => d.nom === 'limit_req');
-      const statut = valeurs(enfants, 'limit_req_status')[0] ?? valeurs(http, 'limit_req_status')[0];
+      const limit = children.find((d) => d.name === 'limit_req') ?? http.find((d) => d.name === 'limit_req');
+      const status = values(children, 'limit_req_status')[0] ?? values(http, 'limit_req_status')[0];
       return {
-        limite: limite ? lireLimite(limite, zones) : undefined,
-        limiteStatut: statut ? Number(statut) : undefined,
+        limit: limit ? readLimit(limit, zones) : undefined,
+        statusLimit: status ? Number(status) : undefined,
         ssl,
-        certificat,
+        certificate,
         locations,
-        retour: enfants.find((d) => d.nom === 'return')?.args,
-        ecoute: ecoute.length ? ecoute : ['0.0.0.0:80'],
-        parDefaut,
-        noms,
-        racine: valeurs(enfants, 'root')[0] ?? valeurs(http, 'root')[0] ?? '/usr/share/nginx/html',
-        index: valeurs(enfants, 'index').length ? valeurs(enfants, 'index') : valeurs(http, 'index').length ? valeurs(http, 'index') : ['index.html'],
-        refus: [...valeurs(http, 'deny'), ...valeurs(enfants, 'deny')],
+        back: children.find((d) => d.name === 'return')?.args,
+        listening: listening.length ? listening : ['0.0.0.0:80'],
+        byDefault,
+        names,
+        root: values(children, 'root')[0] ?? values(http, 'root')[0] ?? '/usr/share/nginx/html',
+        index: values(children, 'index').length ? values(children, 'index') : values(http, 'index').length ? values(http, 'index') : ['index.html'],
+        refusal: [...values(http, 'deny'), ...values(children, 'deny')],
       };
     });
-  return { serveurs, avertissements, zones, amonts: lireAmonts(http) };
+  return { servers, warnings, zones, upstreams: readUpstreams(http) };
 }
 
 // upstream nom { server 127.0.0.1:3001 weight=9; server 127.0.0.1:3002 weight=1; }
 // https://nginx.org/en/docs/http/ngx_http_upstream_module.html#server
-function lireAmonts(http: Directive[]): Record<string, Amont> {
-  const amonts: Record<string, Amont> = {};
-  for (const u of http.filter((d) => d.nom === 'upstream')) {
-    const nom = u.args[0];
-    if (amonts[nom]) echec(`duplicate upstream "${nom}"`, u.fichier, u.ligne);
-    const serveurs = (u.enfants ?? [])
-      .filter((d) => d.nom === 'server')
+function readUpstreams(http: Directive[]): Record<string, Upstream> {
+  const upstreams: Record<string, Upstream> = {};
+  for (const u of http.filter((d) => d.name === 'upstream')) {
+    const name = u.args[0];
+    if (upstreams[name]) failure(`duplicate upstream "${name}"`, u.file, u.line);
+    const servers = (u.children ?? [])
+      .filter((d) => d.name === 'server')
       .map((d) => {
         const [adr, ...params] = d.args;
-        let poids = 1;
+        let weight = 1;
         for (const p of params) {
           if (p.startsWith('weight=')) {
-            poids = Number(p.slice(7));
-            if (!Number.isInteger(poids) || poids < 1) echec(`invalid parameter "${p}"`, d.fichier, d.ligne);
+            weight = Number(p.slice(7));
+            if (!Number.isInteger(weight) || weight < 1) failure(`invalid parameter "${p}"`, d.file, d.line);
           } else if (!['backup', 'down'].includes(p) && !/^(max_fails|fail_timeout|max_conns)=/.test(p))
-            echec(`invalid parameter "${p}"`, d.fichier, d.ligne);
+            failure(`invalid parameter "${p}"`, d.file, d.line);
         }
         return {
-          adresse: adr.includes(':') ? adr.replace(/^localhost/, '127.0.0.1') : `${adr}:80`,
-          poids,
-          secours: params.includes('backup'),
-          eteint: params.includes('down'),
+          address: adr.includes(':') ? adr.replace(/^localhost/, '127.0.0.1') : `${adr}:80`,
+          weight,
+          rescue: params.includes('backup'),
+          off: params.includes('down'),
         };
       });
-    if (!serveurs.length) echec(`no servers are inside upstream`, u.fichier, u.ligne);
-    amonts[nom] = { serveurs };
+    if (!servers.length) failure(`no servers are inside upstream`, u.file, u.line);
+    upstreams[name] = { servers };
   }
-  return amonts;
+  return upstreams;
 }
 
 // Le tourniquet pondéré de nginx (smooth weighted round-robin) : à chaque
 // requête, chaque serveur gagne son poids, le plus haut est choisi et perd la
 // somme des poids. Avec 9 et 1 : 9 requêtes sur 10 pour le premier.
-function tourniquet(jeu: Jeu, nom: string, amont: Amont, exclus: string[], trace: boolean): string | null {
-  const candidats = amont.serveurs.filter((x) => !x.eteint && !x.secours && !exclus.includes(x.adresse));
-  const liste = candidats.length ? candidats : amont.serveurs.filter((x) => !x.eteint && x.secours && !exclus.includes(x.adresse));
-  if (!liste.length) return null;
-  const etats: Record<string, Record<string, number>> = (jeu.etat.nginxTourniquets ??= {});
-  const courant = { ...(etats[nom] ?? {}) };
-  const total = liste.reduce((t, x) => t + x.poids, 0);
-  for (const x of liste) courant[x.adresse] = (courant[x.adresse] ?? 0) + x.poids;
-  const choisi = liste.reduce((a, b) => (courant[b.adresse] > courant[a.adresse] ? b : a));
-  courant[choisi.adresse] -= total;
+function tourniquet(game: Game, name: string, upstream: Upstream, excluded: string[], trace: boolean): string | null {
+  const candidates = upstream.servers.filter((x) => !x.off && !x.rescue && !excluded.includes(x.address));
+  const listing = candidates.length ? candidates : upstream.servers.filter((x) => !x.off && x.rescue && !excluded.includes(x.address));
+  if (!listing.length) return null;
+  const states: Record<string, Record<string, number>> = (game.state.nginxTourniquets ??= {});
+  const active = { ...(states[name] ?? {}) };
+  const total = listing.reduce((t, x) => t + x.weight, 0);
+  for (const x of listing) active[x.address] = (active[x.address] ?? 0) + x.weight;
+  const chosen = listing.reduce((a, b) => (active[b.address] > active[a.address] ? b : a));
+  active[chosen.address] -= total;
   // Les vérifications du jeu ne font pas tourner le tourniquet.
-  if (trace) etats[nom] = courant;
-  return choisi.adresse;
+  if (trace) states[name] = active;
+  return chosen.address;
 }
 
 /** Vérifie la configuration : null si elle est bonne, sinon le message [emerg]. */
-export function tester(jeu: Jeu): { config: Configuration; erreur: null } | { config: null; erreur: string } {
+export function test(game: Game): { config: Configuration; error: null } | { config: null; error: string } {
   try {
-    return { config: construire(jeu), erreur: null };
+    return { config: build(game), error: null };
   } catch (e) {
-    if (e instanceof ErreurConf) return { config: null, erreur: e.message };
+    if (e instanceof ConfError) return { config: null, error: e.message };
     throw e;
   }
 }
 
 /** Les fichiers de configuration lus, dans l'ordre (nginx -T). */
-export function fichiersLus(jeu: Jeu): string[] {
-  const lus: string[] = [];
-  construire(jeu, lus);
-  return lus;
+export function readFiles(game: Game): string[] {
+  const read: string[] = [];
+  build(game, read);
+  return read;
 }
 
 // L'heure de nginx dans ses journaux : « 2026/10/23 08:15:02 ».
-export const heureNginx = (ms: number) => new Date(ms).toISOString().slice(0, 19).replace('T', ' ').replaceAll('-', '/');
+export const nginxTime = (ms: number) => new Date(ms).toISOString().slice(0, 19).replace('T', ' ').replaceAll('-', '/');
 
 // Pour systemd : nginx refuse de démarrer (ou de recharger) une mauvaise configuration.
-export function verifierNginx(jeu: Jeu): string[] | null {
-  const { erreur } = tester(jeu);
-  if (!erreur) return null;
-  const h = heureNginx((systemd(jeu)?.horloge ?? 0) + 1000);
-  return [`${h} [emerg] 2411#2411: ${erreur}`, `nginx: configuration file ${CONF} test failed`];
+export function checkNginx(game: Game): string[] | null {
+  const { error } = test(game);
+  if (!error) return null;
+  const h = nginxTime((systemd(game)?.clock ?? 0) + 1000);
+  return [`${h} [emerg] 2411#2411: ${error}`, `nginx: configuration file ${CONF} test failed`];
 }
 
 /** Au démarrage et au rechargement : la configuration lue devient celle qui sert. */
-export function chargerNginx(jeu: Jeu) {
-  jeu.etat.nginx = { ...(jeu.etat.nginx ?? {}), charge: tester(jeu).config };
+export function loadNginx(game: Game) {
+  game.state.nginx = { ...(game.state.nginx ?? {}), load: test(game).config };
 }
 
-export interface Reponse {
+export interface Response {
   code: number;
-  corps: string;
-  entetes: string[];
+  body: string;
+  headers: string[];
   // En HTTPS : le certificat présenté par le serveur (PEM).
-  certificat?: string;
+  certificate?: string;
 }
 
-const RAISONS: Record<number, string> = {
+const REASONS: Record<number, string> = {
   200: 'OK',
   301: 'Moved Permanently',
   302: 'Found',
@@ -493,81 +493,81 @@ const RAISONS: Record<number, string> = {
   504: 'Gateway Time-out',
 };
 const page = (code: number) =>
-  `<html>\n<head><title>${code} ${RAISONS[code]}</title></head>\n<body>\n<center><h1>${code} ${RAISONS[code]}</h1></center>\n<hr><center>nginx/${VERSION}</center>\n</body>\n</html>`;
-const JOURS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MOIS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  `<html>\n<head><title>${code} ${REASONS[code]}</title></head>\n<body>\n<center><h1>${code} ${REASONS[code]}</h1></center>\n<hr><center>nginx/${VERSION}</center>\n</body>\n</html>`;
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 // En-tête Date (GMT) ; l'horloge de la machine est à l'heure de Paris.
 const dateHttp = (ms: number) => {
-  const d = new Date(versUtc(ms));
-  return `${JOURS[d.getUTCDay()]}, ${String(d.getUTCDate()).padStart(2, '0')} ${MOIS[d.getUTCMonth()]} ${d.getUTCFullYear()} ${d.toISOString().slice(11, 19)} GMT`;
+  const d = new Date(toUtc(ms));
+  return `${DAYS[d.getUTCDay()]}, ${String(d.getUTCDate()).padStart(2, '0')} ${MONTH[d.getUTCMonth()]} ${d.getUTCFullYear()} ${d.toISOString().slice(11, 19)} GMT`;
 };
 
 // Les programmes derrière nginx (proxy_pass) : etat.applis, par adresse
 // « 127.0.0.1:3000 ». Une appli répond tant que son service systemd tourne.
-export interface Appli {
+export interface App {
   service: string;
   // Les pages qu'elle sert, par chemin ; ailleurs, la page 404 d'Express.
   pages: Record<string, string>;
   // Ou une appli qui calcule sa réponse (version, configuration, santé…).
   // entetes : ceux qu'elle ajoute (Server, Location…).
-  repondre?: (jeu: Jeu, chemin: string, demande: Demande) => { code: number; corps: string; type?: string; entetes?: string[] };
+  answer?: (game: Game, path: string, request: Request) => { code: number; body: string; type?: string; headers?: string[] };
   // Requêtes par seconde qu'elle sait servir (sans limite si absent).
-  capacite?: number;
+  capacity?: number;
 }
 
 // Ce que l'appli voit d'une requête : les en-têtes reçus (noms en minuscules) et l'adresse de la connexion.
-export interface Demande {
-  entetes: Record<string, string>;
-  adresse: string;
+export interface Request {
+  headers: Record<string, string>;
+  address: string;
   // false : une vérification du jeu, qui ne laisse pas de trace dans les journaux.
   trace?: boolean;
 }
 
-const PAGE_EXPRESS = (chemin: string) =>
-  `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET ${chemin}</pre>\n</body>\n</html>`;
+const PAGE_EXPRESS = (path: string) =>
+  `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET ${path}</pre>\n</body>\n</html>`;
 
 /** Ce que répond une appli (sans passer par nginx). */
-export function repondreAppli(
-  jeu: Jeu,
-  appli: Appli,
-  chemin: string,
-  demande: Demande = { entetes: {}, adresse: '127.0.0.1' },
-): { code: number; corps: string; type?: string; entetes?: string[] } {
-  if (appli.repondre) return appli.repondre(jeu, chemin.split('?')[0], demande);
-  const corps = appli.pages[chemin.split('?')[0]];
-  return corps === undefined ? { code: 404, corps: PAGE_EXPRESS(chemin) } : { code: 200, corps };
+export function answerApp(
+  game: Game,
+  app: App,
+  path: string,
+  request: Request = { headers: {}, address: '127.0.0.1' },
+): { code: number; body: string; type?: string; headers?: string[] } {
+  if (app.answer) return app.answer(game, path.split('?')[0], request);
+  const body = app.pages[path.split('?')[0]];
+  return body === undefined ? { code: 404, body: PAGE_EXPRESS(path) } : { code: 200, body };
 }
 
 /** Une appli jointe directement sur son port (curl http://127.0.0.1:3001/) : null si personne n'écoute. */
-export function requeteAppli(
-  jeu: Jeu,
+export function appRequest(
+  game: Game,
   port: number,
-  chemin: string,
-  entetes: Record<string, string> = {},
-): { code: number; corps: string; type?: string; entetes?: string[] } | null {
-  const appli: Appli | undefined = jeu.etat.applis?.[`127.0.0.1:${port}`];
-  if (!appli || systemd(jeu)?.services[appli.service]?.etat !== 'active') return null;
-  return repondreAppli(jeu, appli, chemin, { entetes, adresse: '127.0.0.1' });
+  path: string,
+  headers: Record<string, string> = {},
+): { code: number; body: string; type?: string; headers?: string[] } | null {
+  const app: App | undefined = game.state.applis?.[`127.0.0.1:${port}`];
+  if (!app || systemd(game)?.services[app.service]?.state !== 'active') return null;
+  return answerApp(game, app, path, { headers, address: '127.0.0.1' });
 }
 
 // Une ligne de /var/log/nginx/error.log (si le fichier existe).
-function journalErreur(jeu: Jeu, niveau: string, message: string) {
-  if (!jeu.etat.nginxTrace) return;
-  const n = jeu.trouver('/var/log/nginx/error.log');
-  if (n?.type !== 'fichier' || typeof n.contenu !== 'string') return;
-  const numero = (jeu.etat.nginxConnexions = (jeu.etat.nginxConnexions ?? 0) + 1);
-  const ligne = `${heureNginx(systemd(jeu)?.horloge ?? 0)} [${niveau}] 2412#2412: *${numero} ${message}`;
-  n.contenu = n.contenu ? `${n.contenu}\n${ligne}` : ligne;
+function errorLog(game: Game, level: string, message: string) {
+  if (!game.state.nginxTrace) return;
+  const n = game.find('/var/log/nginx/error.log');
+  if (n?.type !== 'fichier' || typeof n.content !== 'string') return;
+  const number = (game.state.nginxConnexions = (game.state.nginxConnexions ?? 0) + 1);
+  const line = `${nginxTime(systemd(game)?.clock ?? 0)} [${level}] 2412#2412: *${number} ${message}`;
+  n.content = n.content ? `${n.content}\n${line}` : line;
 }
 
 /** Le bloc location qui traite ce chemin, comme nginx : = exact, le plus long préfixe (^~ s'arrête là), les expressions régulières dans l'ordre, sinon ce préfixe. */
-export function choisirLocation(serveur: Serveur, chemin: string): Location | null {
-  const exact = serveur.locations.find((l) => l.exact && l.chemin === chemin);
+export function chooseLocation(server: Server, path: string): Location | null {
+  const exact = server.locations.find((l) => l.exact && l.path === path);
   if (exact) return exact;
-  const prefixe =
-    serveur.locations.filter((l) => !l.exact && !l.regex && chemin.startsWith(l.chemin)).sort((a, b) => b.chemin.length - a.chemin.length)[0] ?? null;
-  if (prefixe?.prioritaire) return prefixe;
-  return serveur.locations.find((l) => l.regex?.test(chemin)) ?? prefixe;
+  const prefix =
+    server.locations.filter((l) => !l.exact && !l.regex && path.startsWith(l.path)).sort((a, b) => b.path.length - a.path.length)[0] ?? null;
+  if (prefix?.priority) return prefix;
+  return server.locations.find((l) => l.regex?.test(path)) ?? prefix;
 }
 
 /**
@@ -577,216 +577,216 @@ export function choisirLocation(serveur: Serveur, chemin: string): Location | nu
  * le bloc location, qui sert un fichier, renvoie (return) ou passe la
  * requête à une appli (proxy_pass).
  */
-export function requete(jeu: Jeu, hote: string, chemin: string, port = 80, trace = true, client?: Client): Reponse | null {
+export function httpRequest(game: Game, host: string, path: string, port = 80, trace = true, client?: Client): Response | null {
   // Les vérifications du jeu (objectifs) interrogent nginx sans laisser de trace au journal.
-  jeu.etat.nginxTrace = trace;
-  const qui = client ?? { adresse: '127.0.0.1', temps: systemd(jeu)?.horloge ?? 0, agent: 'curl/8.14.1' };
-  const r = traiter(jeu, hote, chemin, port, qui);
-  if (r && trace) journalAcces(jeu, qui, chemin, r);
+  game.state.nginxTrace = trace;
+  const who = client ?? { address: '127.0.0.1', time: systemd(game)?.clock ?? 0, agent: 'curl/8.14.1' };
+  const r = handle(game, host, path, port, who);
+  if (r && trace) accessLog(game, who, path, r);
   return r;
 }
 
 // Qui fait la requête : son adresse, l'heure (locale, en millisecondes), son
 // navigateur ; la méthode (GET par défaut) et les en-têtes qu'il envoie (noms en minuscules).
 export interface Client {
-  adresse: string;
-  temps: number;
+  address: string;
+  time: number;
   agent: string;
-  methode?: string;
-  entetes?: Record<string, string>;
+  method?: string;
+  headers?: Record<string, string>;
 }
 
 // « 27/Mar/2027:20:00:01 +0100 », comme $time_local.
-function heureLocale(ms: number): string {
+function localeTime(ms: number): string {
   const d = new Date(ms);
-  return `${String(d.getUTCDate()).padStart(2, '0')}/${MOIS[d.getUTCMonth()]}/${d.getUTCFullYear()}:${d.toISOString().slice(11, 19)} ${heureEte(ms) ? '+0200' : '+0100'}`;
+  return `${String(d.getUTCDate()).padStart(2, '0')}/${MONTH[d.getUTCMonth()]}/${d.getUTCFullYear()}:${d.toISOString().slice(11, 19)} ${summerTime(ms) ? '+0200' : '+0100'}`;
 }
 
 // Une ligne de /var/log/nginx/access.log (format combined), si le chapitre le demande.
-function journalAcces(jeu: Jeu, c: Client, chemin: string, r: Reponse) {
-  if (!jeu.etat.nginx?.journalAcces) return;
-  const n = jeu.trouver('/var/log/nginx/access.log');
-  if (n?.type !== 'fichier' || typeof n.contenu !== 'string') return;
-  const ligne = `${c.adresse} - - [${heureLocale(c.temps)}] "${c.methode ?? 'GET'} ${chemin} HTTP/1.1" ${r.code} ${new TextEncoder().encode(r.corps).length} "-" "${c.agent}"`;
-  n.contenu = n.contenu ? `${n.contenu}\n${ligne}` : ligne;
+function accessLog(game: Game, c: Client, path: string, r: Response) {
+  if (!game.state.nginx?.journalAcces) return;
+  const n = game.find('/var/log/nginx/access.log');
+  if (n?.type !== 'fichier' || typeof n.content !== 'string') return;
+  const line = `${c.address} - - [${localeTime(c.time)}] "${c.method ?? 'GET'} ${path} HTTP/1.1" ${r.code} ${new TextEncoder().encode(r.body).length} "-" "${c.agent}"`;
+  n.content = n.content ? `${n.content}\n${line}` : line;
 }
 
 // Une adresse couverte par une règle deny (adresse, plage CIDR ou all).
-function couvert(regle: string, adresse: string): boolean {
-  if (regle === 'all') return true;
-  const [base, bits = '32'] = regle.split('/');
-  const nombre = (ip: string) => ip.split('.').reduce((t, o) => t * 256 + Number(o), 0);
-  if (!/^\d+\.\d+\.\d+\.\d+$/.test(base) || !/^\d+\.\d+\.\d+\.\d+$/.test(adresse)) return regle === adresse;
-  const masque = Number(bits) === 0 ? 0 : 2 ** 32 - 2 ** (32 - Number(bits));
-  return (nombre(base) & masque) >>> 0 === (nombre(adresse) & masque) >>> 0;
+function couvert(rule: string, address: string): boolean {
+  if (rule === 'all') return true;
+  const [base, bits = '32'] = rule.split('/');
+  const count = (ip: string) => ip.split('.').reduce((t, o) => t * 256 + Number(o), 0);
+  if (!/^\d+\.\d+\.\d+\.\d+$/.test(base) || !/^\d+\.\d+\.\d+\.\d+$/.test(address)) return rule === address;
+  const mask = Number(bits) === 0 ? 0 : 2 ** 32 - 2 ** (32 - Number(bits));
+  return (count(base) & mask) >>> 0 === (count(address) & mask) >>> 0;
 }
 
-function traiter(jeu: Jeu, hote: string, chemin: string, port: number, client: Client): Reponse | null {
-  const sd = systemd(jeu);
-  const config: Configuration | null = jeu.etat.nginx?.charge ?? null;
-  if (!config || sd?.services.nginx?.etat !== 'active') return null;
-  const a = /^\[|:/.test(hote) ? `[::]:${port}` : `0.0.0.0:${port}`;
-  const candidats = config.serveurs.filter((s) => s.ecoute.includes(a));
-  const serveur = candidats.find((s) => s.noms.includes(hote.toLowerCase())) ?? candidats.find((s) => s.parDefaut.includes(a)) ?? candidats[0];
-  if (!serveur) return null;
+function handle(game: Game, host: string, path: string, port: number, client: Client): Response | null {
+  const sd = systemd(game);
+  const config: Configuration | null = game.state.nginx?.load ?? null;
+  if (!config || sd?.services.nginx?.state !== 'active') return null;
+  const a = /^\[|:/.test(host) ? `[::]:${port}` : `0.0.0.0:${port}`;
+  const candidates = config.servers.filter((s) => s.listening.includes(a));
+  const server = candidates.find((s) => s.names.includes(host.toLowerCase())) ?? candidates.find((s) => s.byDefault.includes(a)) ?? candidates[0];
+  if (!server) return null;
   // Un port en HTTPS ne répond pas en clair (et inversement) : on ne simule que le bon cas.
-  if (serveur.ssl.includes(a) !== (port === 443)) return null;
-  const reponse = (code: number, corps: string, plus: string[] = []): Reponse => ({
+  if (server.ssl.includes(a) !== (port === 443)) return null;
+  const response = (code: number, body: string, more: string[] = []): Response => ({
     code,
-    corps,
-    certificat: port === 443 ? (serveur.certificat ?? undefined) : undefined,
-    entetes: [
-      `HTTP/1.1 ${code} ${RAISONS[code] ?? ''}`.trimEnd(),
+    body,
+    certificate: port === 443 ? (server.certificate ?? undefined) : undefined,
+    headers: [
+      `HTTP/1.1 ${code} ${REASONS[code] ?? ''}`.trimEnd(),
       `Server: nginx/${VERSION}`,
-      `Date: ${dateHttp(sd!.horloge)}`,
+      `Date: ${dateHttp(sd!.clock)}`,
       'Content-Type: text/html',
-      `Content-Length: ${new TextEncoder().encode(corps).length}`,
+      `Content-Length: ${new TextEncoder().encode(body).length}`,
       'Connection: keep-alive',
-      ...plus,
+      ...more,
     ],
   });
-  const variables = (texte: string) =>
-    texte
-      .replaceAll('$request_uri', chemin)
-      .replaceAll('$host', hote.toLowerCase())
+  const variables = (text: string) =>
+    text
+      .replaceAll('$request_uri', path)
+      .replaceAll('$host', host.toLowerCase())
       .replaceAll('$scheme', port === 443 ? 'https' : 'http')
-      .replaceAll('$server_name', serveur.noms[0] ?? '');
+      .replaceAll('$server_name', server.names[0] ?? '');
   // return code [adresse ou texte] : 301/302 avec Location, sinon le texte.
-  const retourner = ([code, quoi = '']: string[]) => {
+  const back = ([code, what = '']: string[]) => {
     const n = Number(code);
-    if (n >= 300 && n < 400) return reponse(n, page(n), [`Location: ${variables(quoi)}`]);
-    return reponse(n, variables(quoi));
+    if (n >= 300 && n < 400) return response(n, page(n), [`Location: ${variables(what)}`]);
+    return response(n, variables(what));
   };
-  const loc = choisirLocation(serveur, chemin.split('?')[0]);
-  const contexte = `client: ${client.adresse}, server: ${serveur.noms[0] ?? '_'}, request: "GET ${chemin} HTTP/1.1", host: "${hote}"`;
+  const loc = chooseLocation(server, path.split('?')[0]);
+  const context = `client: ${client.address}, server: ${server.names[0] ?? '_'}, request: "GET ${path} HTTP/1.1", host: "${host}"`;
   // deny : 403 (http, puis server, puis location).
-  if ([...serveur.refus, ...(loc?.refus ?? [])].some((r) => couvert(r, client.adresse))) {
-    journalErreur(jeu, 'error', `access forbidden by rule, ${contexte}`);
-    return reponse(403, page(403));
+  if ([...server.refusal, ...(loc?.refusal ?? [])].some((r) => couvert(r, client.address))) {
+    errorLog(game, 'error', `access forbidden by rule, ${context}`);
+    return response(403, page(403));
   }
   // limit_req : un seau qui fuit au débit de la zone ; au-delà de la rafale, refus.
-  const limite = loc?.limite ?? serveur.limite;
-  if (limite) {
-    const zone = config.zones[limite.zone];
-    const cle = zone.cle === '$binary_remote_addr' || zone.cle === '$remote_addr' ? client.adresse : zone.cle;
-    const seaux: Record<string, { exces: number; dernier: number }> = (jeu.etat.nginxSeaux ??= {});
-    const seau = seaux[`${limite.zone}|${cle}`];
-    const exces = seau ? Math.max(0, seau.exces - (zone.debit * (client.temps - seau.dernier)) / 1000 + 1) : 0;
-    if (exces > limite.rafale) {
-      journalErreur(jeu, 'error', `limiting requests, excess: ${exces.toFixed(3)} by zone "${limite.zone}", ${contexte}`);
-      const statut = loc?.limiteStatut ?? serveur.limiteStatut ?? 503;
-      return reponse(statut, page(statut));
+  const limit = loc?.limit ?? server.limit;
+  if (limit) {
+    const zone = config.zones[limit.zone];
+    const key = zone.key === '$binary_remote_addr' || zone.key === '$remote_addr' ? client.address : zone.key;
+    const buckets: Record<string, { excess: number; last: number }> = (game.state.nginxSeaux ??= {});
+    const bucket = buckets[`${limit.zone}|${key}`];
+    const excess = bucket ? Math.max(0, bucket.excess - (zone.rate * (client.time - bucket.last)) / 1000 + 1) : 0;
+    if (excess > limit.burst) {
+      errorLog(game, 'error', `limiting requests, excess: ${excess.toFixed(3)} by zone "${limit.zone}", ${context}`);
+      const status = loc?.statusLimit ?? server.statusLimit ?? 503;
+      return response(status, page(status));
     }
     // Les vérifications du jeu ne remplissent pas le seau.
-    if (jeu.etat.nginxTrace) seaux[`${limite.zone}|${cle}`] = { exces, dernier: client.temps };
+    if (game.state.nginxTrace) buckets[`${limit.zone}|${key}`] = { excess, last: client.time };
   }
-  if (serveur.retour) return retourner(serveur.retour);
-  if (loc?.retour) return retourner(loc.retour);
+  if (server.back) return back(server.back);
+  if (loc?.back) return back(loc.back);
   if (loc?.proxy) {
     const m = /^https?:\/\/([^/]+)(\/.*)?$/.exec(loc.proxy);
-    const hoteAmont = (m?.[1] ?? '').replace(/^localhost(?=:|$)/, '127.0.0.1');
+    const upstreamHost = (m?.[1] ?? '').replace(/^localhost(?=:|$)/, '127.0.0.1');
     // Avec une partie chemin dans proxy_pass, elle remplace le préfixe de la location.
-    const amont = m?.[2] !== undefined ? m[2] + chemin.slice(loc.chemin.length) : chemin;
-    const groupe = config.amonts?.[hoteAmont];
-    const connexion = (adresse: string) =>
-      `connect() failed (111: Connection refused) while connecting to upstream, client: ${client.adresse}, server: ${serveur.noms[0] ?? '_'}, request: "GET ${chemin} HTTP/1.1", upstream: "http://${adresse}${amont}", host: "${hote}"`;
-    const joindre = (adresse: string): Appli | null => {
-      const a: Appli | undefined = jeu.etat.applis?.[adresse.includes(':') ? adresse : `${adresse}:80`];
-      return a && sd!.services[a.service]?.etat === 'active' ? a : null;
+    const upstream = m?.[2] !== undefined ? m[2] + path.slice(loc.path.length) : path;
+    const group = config.upstreams?.[upstreamHost];
+    const connection = (address: string) =>
+      `connect() failed (111: Connection refused) while connecting to upstream, client: ${client.address}, server: ${server.names[0] ?? '_'}, request: "GET ${path} HTTP/1.1", upstream: "http://${address}${upstream}", host: "${host}"`;
+    const reach = (address: string): App | null => {
+      const a: App | undefined = game.state.applis?.[address.includes(':') ? address : `${address}:80`];
+      return a && sd!.services[a.service]?.state === 'active' ? a : null;
     };
-    let adresse = hoteAmont;
-    let appli: Appli | null = null;
-    if (groupe) {
+    let address = upstreamHost;
+    let app: App | null = null;
+    if (group) {
       // Un serveur qui ne répond pas : nginx essaie le suivant (proxy_next_upstream error).
-      const essayes: string[] = [];
+      const tried: string[] = [];
       for (;;) {
-        const choisi = tourniquet(jeu, hoteAmont, groupe, essayes, !!jeu.etat.nginxTrace);
-        if (!choisi) {
-          journalErreur(
-            jeu,
+        const chosen = tourniquet(game, upstreamHost, group, tried, !!game.state.nginxTrace);
+        if (!chosen) {
+          errorLog(
+            game,
             'error',
-            `no live upstreams while connecting to upstream, client: ${client.adresse}, server: ${serveur.noms[0] ?? '_'}, request: "GET ${chemin} HTTP/1.1", upstream: "http://${hoteAmont}${amont}", host: "${hote}"`,
+            `no live upstreams while connecting to upstream, client: ${client.address}, server: ${server.names[0] ?? '_'}, request: "GET ${path} HTTP/1.1", upstream: "http://${upstreamHost}${upstream}", host: "${host}"`,
           );
-          return reponse(502, page(502));
+          return response(502, page(502));
         }
-        adresse = choisi;
-        appli = joindre(choisi);
-        if (appli) break;
-        journalErreur(jeu, 'error', connexion(choisi));
-        essayes.push(choisi);
+        address = chosen;
+        app = reach(chosen);
+        if (app) break;
+        errorLog(game, 'error', connection(chosen));
+        tried.push(chosen);
       }
     } else {
-      appli = joindre(adresse);
-      if (!appli) {
-        journalErreur(jeu, 'error', connexion(adresse));
-        return reponse(502, page(502));
+      app = reach(address);
+      if (!app) {
+        errorLog(game, 'error', connection(address));
+        return response(502, page(502));
       }
     }
-    jeu.etat.nginxDernierAmont = adresse;
+    game.state.nginxDernierAmont = address;
     // Une appli a une capacité : au-delà, elle ne répond plus à temps (504).
-    if (appli.capacite) {
-      const charge: Record<string, number> = (jeu.etat.appliCharge ??= {});
-      const seconde = `${adresse}|${Math.floor(client.temps / 1000)}`;
-      if (jeu.etat.nginxTrace) charge[seconde] = (charge[seconde] ?? 0) + 1;
-      if ((charge[seconde] ?? 0) > appli.capacite) {
-        journalErreur(
-          jeu,
+    if (app.capacity) {
+      const load: Record<string, number> = (game.state.appliCharge ??= {});
+      const seconde = `${address}|${Math.floor(client.time / 1000)}`;
+      if (game.state.nginxTrace) load[seconde] = (load[seconde] ?? 0) + 1;
+      if ((load[seconde] ?? 0) > app.capacity) {
+        errorLog(
+          game,
           'error',
-          `upstream timed out (110: Connection timed out) while reading response header from upstream, ${contexte}, upstream: "http://${adresse}${amont}"`,
+          `upstream timed out (110: Connection timed out) while reading response header from upstream, ${context}, upstream: "http://${address}${upstream}"`,
         );
-        return reponse(504, page(504));
+        return response(504, page(504));
       }
     }
     // Les en-têtes que l'appli reçoit : ceux du client, Host et Connection par défaut, puis proxy_set_header.
-    const recus: Record<string, string> = { ...(client.entetes ?? {}), host: hoteAmont, connection: 'close' };
-    const xff = client.entetes?.['x-forwarded-for'];
-    for (const [nom, valeur] of loc.entetes) {
-      const v = valeur
-        .replaceAll('$proxy_add_x_forwarded_for', xff ? `${xff}, ${client.adresse}` : client.adresse)
-        .replaceAll('$remote_addr', client.adresse)
-        .replaceAll('$proxy_host', hoteAmont)
-        .replaceAll('$http_host', hote)
+    const received: Record<string, string> = { ...(client.headers ?? {}), host: upstreamHost, connection: 'close' };
+    const xff = client.headers?.['x-forwarded-for'];
+    for (const [name, value] of loc.headers) {
+      const v = value
+        .replaceAll('$proxy_add_x_forwarded_for', xff ? `${xff}, ${client.address}` : client.address)
+        .replaceAll('$remote_addr', client.address)
+        .replaceAll('$proxy_host', upstreamHost)
+        .replaceAll('$http_host', host)
         // $http_nom : l'en-tête « nom » envoyé par le client (tirets écrits _), vide s'il n'en a pas envoyé.
-        .replace(/\$http_([a-z0-9_]+)/g, (_, n: string) => client.entetes?.[n.replace(/_/g, '-')] ?? '');
+        .replace(/\$http_([a-z0-9_]+)/g, (_, n: string) => client.headers?.[n.replace(/_/g, '-')] ?? '');
       // Une valeur vide : l'en-tête n'est pas envoyé.
-      if (variables(v) === '') delete recus[nom.toLowerCase()];
-      else recus[nom.toLowerCase()] = variables(v);
+      if (variables(v) === '') delete received[name.toLowerCase()];
+      else received[name.toLowerCase()] = variables(v);
     }
-    const r = repondreAppli(jeu, appli, amont, { entetes: recus, adresse: '127.0.0.1', trace: !!jeu.etat.nginxTrace });
+    const r = answerApp(game, app, upstream, { headers: received, address: '127.0.0.1', trace: !!game.state.nginxTrace });
     // Une redirection de l'appli passe telle quelle (proxy_redirect n'est pas simulé).
-    return reponse(r.code, r.corps, (r.entetes ?? []).filter((e) => e.startsWith('Location: ')));
+    return response(r.code, r.body, (r.headers ?? []).filter((e) => e.startsWith('Location: ')));
   }
   // Un fichier : root + chemin, ou alias à la place du préfixe de la location.
-  const sansRequete = chemin.split('?')[0] || '/';
-  const cible = loc?.alias
-    ? loc.alias.replace(/\/$/, '') + '/' + sansRequete.slice(loc.chemin.length).replace(/^\//, '')
-    : (loc?.racine ?? serveur.racine).replace(/\/$/, '') + sansRequete;
-  const index = loc?.index ?? serveur.index;
-  const demande = jeu.trouver(cible);
-  let fichier = demande;
-  if (demande?.type === 'dossier') {
-    const nom = index.find((i) => demande.enfants[i] && jeu.trouver(`${cible.replace(/\/$/, '')}/${i}`)?.type === 'fichier');
+  const withoutRequest = path.split('?')[0] || '/';
+  const target = loc?.alias
+    ? loc.alias.replace(/\/$/, '') + '/' + withoutRequest.slice(loc.path.length).replace(/^\//, '')
+    : (loc?.root ?? server.root).replace(/\/$/, '') + withoutRequest;
+  const index = loc?.index ?? server.index;
+  const request = game.find(target);
+  let file = request;
+  if (request?.type === 'dossier') {
+    const name = index.find((i) => request.children[i] && game.find(`${target.replace(/\/$/, '')}/${i}`)?.type === 'fichier');
     // Un lieu sans page d'index : nginx refuse d'en montrer la liste.
-    if (!nom) {
-      journalErreur(
-        jeu,
+    if (!name) {
+      errorLog(
+        game,
         'error',
-        `directory index of "${cible.replace(/\/?$/, '/')}" is forbidden, client: 127.0.0.1, server: ${serveur.noms[0] ?? '_'}, request: "GET ${chemin} HTTP/1.1", host: "${hote}"`,
+        `directory index of "${target.replace(/\/?$/, '/')}" is forbidden, client: 127.0.0.1, server: ${server.names[0] ?? '_'}, request: "GET ${path} HTTP/1.1", host: "${host}"`,
       );
-      return reponse(403, page(403));
+      return response(403, page(403));
     }
-    fichier = jeu.trouver(`${cible.replace(/\/$/, '')}/${nom}`);
+    file = game.find(`${target.replace(/\/$/, '')}/${name}`);
   }
-  if (!fichier || fichier.type !== 'fichier') {
-    journalErreur(
-      jeu,
+  if (!file || file.type !== 'fichier') {
+    errorLog(
+      game,
       'error',
-      `open() "${cible}" failed (2: No such file or directory), client: 127.0.0.1, server: ${serveur.noms[0] ?? '_'}, request: "GET ${chemin} HTTP/1.1", host: "${hote}"`,
+      `open() "${target}" failed (2: No such file or directory), client: 127.0.0.1, server: ${server.names[0] ?? '_'}, request: "GET ${path} HTTP/1.1", host: "${host}"`,
     );
-    return reponse(404, page(404));
+    return response(404, page(404));
   }
   // Les processus de travail de nginx tournent sous le compte www-data.
-  if (!jeu.peut(fichier, 'r', 'www-data')) return reponse(403, page(403));
-  const corps = typeof fichier.contenu === 'function' ? fichier.contenu(jeu) : fichier.contenu;
-  return reponse(200, corps);
+  if (!game.can(file, 'r', 'www-data')) return response(403, page(403));
+  const body = typeof file.content === 'function' ? file.content(game) : file.content;
+  return response(200, body);
 }

@@ -7,105 +7,105 @@
 // chmod o+r ouvre les journaux (adresses IP : données personnelles) à tous.
 // Les objectifs sont vérifiés sur l'état du système, pas sur la commande.
 
-import { chemin, d, f, fichiersComptes, type Chapitre, type Fichier } from '../world';
-import type { Jeu } from '../shell';
-import { comptesDatacenter, JOURNAL_NGINX } from './first-day';
+import { path, d, f, accountsFiles, type Chapter, type File } from '../world';
+import type { Game } from '../shell';
+import { datacenterAccounts, NGINX_LOG } from './first-day';
 
 const M = '/home/vous';
 const LOGS = '/var/log/nginx';
-const PARTAGE = '/srv/equipe';
+const SHARE = '/srv/equipe';
 
-const ERREURS = `2026/10/13 20:31:02 [error] 613#613: *1842 connect() to unix:/run/php/php-fpm.sock failed (11: Resource temporarily unavailable) while connecting to upstream, client: 198.51.100.77, server: medialibrary.example, request: "GET /catalogue/recherche?q=a HTTP/1.1"
+const ERRORS = `2026/10/13 20:31:02 [error] 613#613: *1842 connect() to unix:/run/php/php-fpm.sock failed (11: Resource temporarily unavailable) while connecting to upstream, client: 198.51.100.77, server: medialibrary.example, request: "GET /catalogue/recherche?q=a HTTP/1.1"
 2026/10/13 20:31:09 [error] 613#613: *1857 upstream timed out (110: Connection timed out) while reading response header from upstream, client: 192.0.2.31, server: medialibrary.example, request: "GET /agenda HTTP/1.1"
 2026/10/13 21:02:44 [notice] 612#612: signal process started`;
 
 // Sur Debian, les journaux de nginx appartiennent à www-data, groupe adm, en 640.
-const journal = (texte: string): Fichier => f(texte, { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' });
-const fichiers = (j: Jeu) => [`${LOGS}/access.log`, `${LOGS}/error.log`].map((c) => j.trouver(c)!);
+const log = (text: string): File => f(text, { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' });
+const files = (j: Game) => [`${LOGS}/access.log`, `${LOGS}/error.log`].map((c) => j.find(c)!);
 
 const malo = {
   // Malo lit les deux journaux, comme un membre d'adm, et toujours membre d'web-team.
-  lit: (j: Jeu) => fichiers(j).every((n) => j.peut(n, 'r', 'malo')) && j.groupesDe('malo').includes('web-team'),
+  lit: (j: Game) => files(j).every((n) => j.can(n, 'r', 'malo')) && j.groupsFor('malo').includes('web-team'),
 };
-const journauxOuverts = (j: Jeu) => fichiers(j).some((n) => j.peut(n, 'r', 'nobody'));
-const partage = (j: Jeu) => j.trouver(chemin(j.t, PARTAGE))!;
+const openLogs = (j: Game) => files(j).some((n) => j.can(n, 'r', 'nobody'));
+const share = (j: Game) => j.find(path(j.t, SHARE))!;
 
-export const deuxiemeJour: Chapitre = {
+export const secondDay: Chapter = {
   id: 'deuxieme-jour',
-  numero: 2,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'groups', 'whoami', 'usermod', 'chgrp', 'chown', 'chmod', 'touch', 'nano', 'sudo'],
-  maison: M,
-  accueil: 'courriel_awa.txt',
-  noms: true,
+  number: 2,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'groups', 'whoami', 'usermod', 'chgrp', 'chown', 'chmod', 'touch', 'nano', 'sudo'],
+  home: M,
+  welcome: 'courriel_awa.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'bienvenue-2026',
-  comptes: comptesDatacenter,
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
-    const maison = (nom: string) => d({}, undefined, { proprio: nom, mode: 'rwxr-x---' });
+  password: 'bienvenue-2026',
+  accounts: datacenterAccounts,
+  createWorld: (t) => {
+    const root = { owner: 'root' };
+    const home = (name: string) => d({}, undefined, { owner: name, mode: 'rwxr-x---' });
     return d(
       {
-        etc: d(fichiersComptes(), undefined, racine),
+        etc: d(accountsFiles(), undefined, root),
         home: d(
           {
             vous: d({ 'courriel_awa.txt': f(t('deuxieme-jour-courriel-awa')), 'notes_awa.txt': f(t('deuxieme-jour-notes-awa')) }),
-            awa: maison('awa'),
-            malo: maison('malo'),
+            awa: home('awa'),
+            malo: home('malo'),
           },
           undefined,
-          racine,
+          root,
         ),
-        srv: d({ equipe: d({}, undefined, racine) }, undefined, racine),
+        srv: d({ equipe: d({}, undefined, root) }, undefined, root),
         var: d(
           {
             log: d(
-              { nginx: d({ 'access.log': journal(JOURNAL_NGINX), 'error.log': journal(ERREURS) }, undefined, { proprio: 'root', groupe: 'adm' }) },
+              { nginx: d({ 'access.log': log(NGINX_LOG), 'error.log': log(ERRORS) }, undefined, { owner: 'root', group: 'adm' }) },
               undefined,
-              racine,
+              root,
             ),
-            www: d({}, undefined, racine),
+            www: d({}, undefined, root),
           },
           undefined,
-          racine,
+          root,
         ),
       },
       undefined,
-      racine,
+      root,
     );
   },
-  evenements: [
+  events: [
     {
       id: 'remplace',
-      condition: (j) => !j.groupesDe('malo').includes('web-team'),
+      condition: (j) => !j.groupsFor('malo').includes('web-team'),
       message: (j) => j.t('deuxieme-jour-evenement-remplace'),
     },
     {
       id: 'journaux-ouverts',
-      condition: journauxOuverts,
+      condition: openLogs,
       message: (j) => j.t('deuxieme-jour-evenement-journaux-ouverts', { logs: LOGS }),
     },
     {
       id: 'malo-lit',
-      condition: (j) => malo.lit(j) && !journauxOuverts(j),
+      condition: (j) => malo.lit(j) && !openLogs(j),
       message: (j) => j.t('deuxieme-jour-evenement-malo-lit'),
     },
     {
       id: 'partage-ouvert',
-      condition: (j) => j.peut(partage(j), 'w', 'nobody'),
-      message: (j) => j.t('deuxieme-jour-evenement-partage-ouvert', { partage: chemin(j.t, PARTAGE) }),
+      condition: (j) => j.can(share(j), 'w', 'nobody'),
+      message: (j) => j.t('deuxieme-jour-evenement-partage-ouvert', { partage: path(j.t, SHARE) }),
     },
     {
       id: 'partage',
       condition: (j) => {
-        const n = partage(j);
-        const equipe = [j.joueur, 'awa', 'malo'].every((u) => j.peut(n, 'w', u) && j.peut(n, 'x', u));
-        return equipe && !j.peut(n, 'r', 'www-data') && !j.peut(n, 'w', 'www-data');
+        const n = share(j);
+        const team = [j.player, 'awa', 'malo'].every((u) => j.can(n, 'w', u) && j.can(n, 'x', u));
+        return team && !j.can(n, 'r', 'www-data') && !j.can(n, 'w', 'www-data');
       },
-      message: (j) => j.t('deuxieme-jour-evenement-partage', { partage: chemin(j.t, PARTAGE) }),
+      message: (j) => j.t('deuxieme-jour-evenement-partage', { partage: path(j.t, SHARE) }),
     },
     {
       id: 'fin',
-      condition: (j) => j.drapeaux.has('malo-lit') && j.drapeaux.has('partage') && malo.lit(j) && !journauxOuverts(j),
+      condition: (j) => j.flags.has('malo-lit') && j.flags.has('partage') && malo.lit(j) && !openLogs(j),
       message: (j) => j.t('deuxieme-jour-evenement-fin'),
     },
   ],

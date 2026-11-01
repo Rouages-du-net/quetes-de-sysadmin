@@ -17,30 +17,30 @@
 // Sources : opendkim.conf(5), opendkim-genkey(8), opendkim-testkey(8),
 // https://www.postfix.org/MILTER_README.html, RFC 6376.
 
-import { f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { courrier, MAIL_LOG, verifierDkim } from '../mail';
+import { f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { mail, MAIL_LOG, checkDkim } from '../mail';
 import { systemd } from '../systemd';
-import { comptes, etatJardins, initialiserJardins, mondeJardins, signatureAttendue, SPF_BON, spfPasse, type Depart } from './gardens';
+import { accounts, gardensState, initialiseGardens, gardensWorld, expectedSignature, GOOD_SPF, passSpf, type Departure } from './gardens';
 
 const M = '/home/vous';
-const MAINTENANT = Date.UTC(2027, 4, 10, 18, 15, 0);
+const NOW = Date.UTC(2027, 4, 10, 18, 15, 0);
 
-const depart: Depart = { zone: [SPF_BON], serie: 2027050301, mainCf: [], opendkim: 'debian', maintenant: MAINTENANT };
+const departure: Departure = { zone: [GOOD_SPF], serial: 2027050301, mainCf: [], opendkim: 'debian', now: NOW };
 
-const dkim = (j: Jeu, vue: 'primaire' | 'secondaire') => {
-  const s = signatureAttendue(j);
-  return s ? verifierDkim(j, s, vue).resultat : 'none';
+const dkim = (j: Game, view: 'primary' | 'secondary') => {
+  const s = expectedSignature(j);
+  return s ? checkDkim(j, s, view).result : 'none';
 };
-const journalDkim = (j: Jeu, texte: string) => systemd(j)!.journal.some((e) => e.unite === 'opendkim.service' && e.message.includes(texte));
-const journalMail = (j: Jeu, texte: string) => (j.lire(MAIL_LOG) ?? '').includes(texte);
-const boite = (j: Jeu) => j.lire(`/var/mail/${j.joueur}`) ?? '';
-const vu = (j: Jeu, texte: string) => j.derniere.sortie.includes(texte) || j.derniere.erreurs.some((e) => e.includes(texte));
+const dkimLog = (j: Game, text: string) => systemd(j)!.log.some((e) => e.unit === 'opendkim.service' && e.message.includes(text));
+const mailLog = (j: Game, text: string) => (j.read(MAIL_LOG) ?? '').includes(text);
+const box = (j: Game) => j.read(`/var/mail/${j.player}`) ?? '';
+const seen = (j: Game, text: string) => j.last.output.includes(text) || j.last.errors.some((e) => e.includes(text));
 
-export const signature: Chapitre = {
+export const signature: Chapter = {
   id: 'signature',
-  numero: 2,
-  commandes: [
+  number: 2,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -71,46 +71,46 @@ export const signature: Chapitre = {
     'opendkim-genkey',
     'opendkim-testkey',
   ],
-  maison: M,
-  accueil: 'message_de_nour.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_de_nour.txt',
+  names: true,
   final: 'fin',
-  etapes: ['verifier', 'cle', 'opendkim', 'milter', 'fin'],
-  motDePasse: 'semis-2027',
-  comptes,
-  etat: (t) => etatJardins(t, depart),
-  initialiser: initialiserJardins,
-  creerMonde: (t) => mondeJardins(t, depart, { 'message_de_nour.txt': f(t('signature-message-nour')) }, ''),
-  evenements: [
-    { id: 'verifier', condition: (j) => /DKIM check: +none/.test(boite(j)), message: (j) => j.t('signature-evenement-verifier') },
+  steps: ['verifier', 'cle', 'opendkim', 'milter', 'fin'],
+  password: 'semis-2027',
+  accounts,
+  state: (t) => gardensState(t, departure),
+  initialise: initialiseGardens,
+  createWorld: (t) => gardensWorld(t, departure, { 'message_de_nour.txt': f(t('signature-message-nour')) }, ''),
+  events: [
+    { id: 'verifier', condition: (j) => /DKIM check: +none/.test(box(j)), message: (j) => j.t('signature-evenement-verifier') },
     {
       id: 'cle',
       condition: (j) => {
-        const n = j.trouver('/etc/dkimkeys');
-        return n?.type === 'dossier' && Object.keys(n.enfants).some((x) => x.endsWith('.private'));
+        const n = j.find('/etc/dkimkeys');
+        return n?.type === 'dossier' && Object.keys(n.children).some((x) => x.endsWith('.private'));
       },
       message: (j) => j.t('signature-evenement-cle'),
     },
-    { id: 'illisible', condition: (j) => journalDkim(j, 'Permission denied'), message: (j) => j.t('signature-evenement-illisible') },
-    { id: 'pas-sure', condition: (j) => journalDkim(j, 'key data is not secure'), message: (j) => j.t('signature-evenement-pas-sure') },
+    { id: 'illisible', condition: (j) => dkimLog(j, 'Permission denied'), message: (j) => j.t('signature-evenement-illisible') },
+    { id: 'pas-sure', condition: (j) => dkimLog(j, 'key data is not secure'), message: (j) => j.t('signature-evenement-pas-sure') },
     {
       id: 'opendkim',
-      condition: (j) => systemd(j)?.services.opendkim?.etat === 'active' && !!courrier(j)?.dkim?.cle && (courrier(j)?.dkim?.domaines.length ?? 0) > 0,
+      condition: (j) => systemd(j)?.services.opendkim?.state === 'active' && !!mail(j)?.dkim?.key && (mail(j)?.dkim?.domains.length ?? 0) > 0,
       message: (j) => j.t('signature-evenement-opendkim'),
     },
-    { id: 'chroot', condition: (j) => journalMail(j, 'connect to Milter service unix:'), message: (j) => j.t('signature-evenement-chroot') },
-    { id: 'prise', condition: (j) => journalMail(j, 'connect to Milter service inet'), message: (j) => j.t('signature-evenement-prise') },
+    { id: 'chroot', condition: (j) => mailLog(j, 'connect to Milter service unix:'), message: (j) => j.t('signature-evenement-chroot') },
+    { id: 'prise', condition: (j) => mailLog(j, 'connect to Milter service inet'), message: (j) => j.t('signature-evenement-prise') },
     {
       id: 'smtpd-seul',
       condition: (j) => {
-        const v = courrier(j)?.postfix?.valeurs ?? {};
+        const v = mail(j)?.postfix?.values ?? {};
         return !!v.smtpd_milters && !v.non_smtpd_milters;
       },
       message: (j) => j.t('signature-evenement-smtpd-seul'),
     },
-    { id: 'milter', condition: (j) => !!signatureAttendue(j), message: (j) => j.t('signature-evenement-milter') },
-    { id: 'pas-secure', condition: (j) => vu(j, 'key not secure'), message: (j) => j.t('signature-evenement-pas-secure') },
-    { id: 'serie', condition: (j) => dkim(j, 'primaire') === 'pass' && dkim(j, 'secondaire') !== 'pass', message: (j) => j.t('signature-evenement-serie') },
-    { id: 'fin', condition: (j) => spfPasse(j) && dkim(j, 'secondaire') === 'pass', message: (j) => j.t('signature-evenement-fin') },
+    { id: 'milter', condition: (j) => !!expectedSignature(j), message: (j) => j.t('signature-evenement-milter') },
+    { id: 'pas-secure', condition: (j) => seen(j, 'key not secure'), message: (j) => j.t('signature-evenement-pas-secure') },
+    { id: 'serie', condition: (j) => dkim(j, 'primary') === 'pass' && dkim(j, 'secondary') !== 'pass', message: (j) => j.t('signature-evenement-serie') },
+    { id: 'fin', condition: (j) => passSpf(j) && dkim(j, 'secondary') === 'pass', message: (j) => j.t('signature-evenement-fin') },
   ],
 };

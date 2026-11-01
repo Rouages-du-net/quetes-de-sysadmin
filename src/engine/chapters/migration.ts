@@ -12,28 +12,28 @@
 // contracter), https://www.postgresql.org/docs/current/app-pgdump.html,
 // https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../world';
-import type { Jeu } from '../shell';
-import { nouveauSystemd, systemd } from '../systemd';
-import { chargerNginx, requete, verifierNginx } from '../nginx';
+import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import type { Game } from '../shell';
+import { newSystemd, systemd } from '../systemd';
+import { loadNginx, httpRequest, checkNginx } from '../nginx';
 import { MIME, NGINX_CONF } from '../commands/apt';
-import { comptesGazette } from './bare-repo';
-import { KIOSQUE, appliKiosque, base, dossierVersion, repartition, sante, serviceKiosque, uniteKiosque } from './kiosk';
+import { gazetteAccounts } from './bare-repo';
+import { KIOSK, kioskApp, base, versionDirectory, distribution, health, kioskService, kioskUnit } from './kiosk';
 
 const M = '/home/vous';
 const GAZETTE = 'gazette.example';
 const SITE = '/etc/nginx/sites-available/gazette';
 
-const comptes = (): Comptes => {
-  const c = comptesGazette();
-  c.utilisateurs.kiosk = { uid: 997, groupe: 'kiosk', maison: KIOSQUE, shell: '/usr/sbin/nologin' };
-  c.groupes.kiosk = { gid: 997, membres: [] };
-  c.groupes.adm = { gid: 4, membres: ['vous'] };
+const accounts = (): Accounts => {
+  const c = gazetteAccounts();
+  c.users.kiosk = { uid: 997, group: 'kiosk', home: KIOSK, shell: '/usr/sbin/nologin' };
+  c.groups.kiosk = { gid: 997, members: [] };
+  c.groups.adm = { gid: 4, members: ['vous'] };
   return c;
 };
 
 // Théo a basculé nginx vers green, en 2.0.0.
-const conf = (t: Jeu['t']) => `server {
+const conf = (t: Game['t']) => `server {
     listen 80 default_server;
     listen [::]:80 default_server;
     server_name ${GAZETTE} www.${GAZETTE};
@@ -51,20 +51,20 @@ const conf = (t: Jeu['t']) => `server {
     }
 }`;
 
-const sd = (j: Jeu) => systemd(j)!;
-const actif = (j: Jeu, couleur: string) => sd(j).services[`kiosk-${couleur}`]?.etat === 'active';
-const enDeux = (j: Jeu, couleur: string) => {
-  const s = sante(j, couleur);
+const sd = (j: Game) => systemd(j)!;
+const enabled = (j: Game, colour: string) => sd(j).services[`kiosk-${colour}`]?.state === 'active';
+const inTwo = (j: Game, colour: string) => {
+  const s = health(j, colour);
   return s?.status === 'ok' && s.version.startsWith('2.');
 };
-const lecteursOk = (j: Jeu) => requete(j, GAZETTE, '/kiosk/', 80, false)?.code === 200;
-const servie = (j: Jeu) => Object.entries(repartition(j)).find(([, part]) => part === 1)?.[0] ?? null;
-const sortie = (j: Jeu) => [j.derniere.sortie, ...j.derniere.erreurs].join('\n');
+const okReaders = (j: Game) => httpRequest(j, GAZETTE, '/kiosk/', 80, false)?.code === 200;
+const served = (j: Game) => Object.entries(distribution(j)).find(([, part]) => part === 1)?.[0] ?? null;
+const output = (j: Game) => [j.last.output, ...j.last.errors].join('\n');
 
-export const migration: Chapitre = {
+export const migration: Chapter = {
   id: 'migration',
-  numero: 5,
-  commandes: [
+  number: 5,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -90,156 +90,156 @@ export const migration: Chapitre = {
     'journalctl',
     'ps',
   ],
-  maison: M,
-  accueil: 'message_de_samia.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_de_samia.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'gazette-2027',
-  comptes,
-  etat: () => ({
-    systemd: nouveauSystemd('gazette', Date.UTC(2027, 4, 2, 6, 40, 0), Date.UTC(2027, 5, 15, 8, 30, 0), {
+  password: 'gazette-2027',
+  accounts,
+  state: () => ({
+    systemd: newSystemd('gazette', Date.UTC(2027, 4, 2, 6, 40, 0), Date.UTC(2027, 5, 15, 8, 30, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,
         executable: 'sshd',
-        processus: [{ pid: 604, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+        process: [{ pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
       nginx: {
         description: 'A high performance web server and a reverse proxy server',
         active: true,
         executable: 'nginx',
-        processus: [
-          { pid: 801, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
-          { pid: 802, utilisateur: 'www-data', cpu: 0.1, mem: 0.6, commande: 'nginx: worker process' },
+        process: [
+          { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
+          { pid: 802, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
         ],
-        verifier: verifierNginx,
-        charger: chargerNginx,
-        verifierAuRechargement: true,
+        check: checkNginx,
+        load: loadNginx,
+        checkToReload: true,
       },
-      'kiosk-blue': serviceKiosque('blue', 1501),
-      'kiosk-green': serviceKiosque('green', 1502),
+      'kiosk-blue': kioskService('blue', 1501),
+      'kiosk-green': kioskService('green', 1502),
     }),
     processus: [
-      { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
-      { pid: 604, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
-      { pid: 801, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
-      { pid: 802, utilisateur: 'www-data', cpu: 0.1, mem: 0.6, commande: 'nginx: worker process' },
-      { pid: 1501, utilisateur: 'kiosk', cpu: 0.6, mem: 3.1, commande: `node ${KIOSQUE}/blue/serveur.js` },
-      { pid: 1502, utilisateur: 'kiosk', cpu: 0.6, mem: 3.1, commande: `node ${KIOSQUE}/green/serveur.js` },
+      { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
+      { pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
+      { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
+      { pid: 802, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
+      { pid: 1501, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/blue/serveur.js` },
+      { pid: 1502, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/green/serveur.js` },
     ],
-    nginx: { charge: null, noms: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'] },
-    applis: { '127.0.0.1:3001': appliKiosque('blue'), '127.0.0.1:3002': appliKiosque('green') },
+    nginx: { load: null, names: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'] },
+    applis: { '127.0.0.1:3001': kioskApp('blue'), '127.0.0.1:3002': kioskApp('green') },
   }),
-  initialiser: (j) => {
-    chargerNginx(j);
+  initialise: (j) => {
+    loadNginx(j);
     // Hier soir, 23 h : blue tourne en 1.6.1 ; Théo démarre green en 2.0.0, qui migre la base.
-    const maintenant = sd(j).horloge;
-    sd(j).horloge = Date.UTC(2027, 5, 14, 23, 4, 0);
+    const now = sd(j).clock;
+    sd(j).clock = Date.UTC(2027, 5, 14, 23, 4, 0);
     base(j).schema = 3;
-    sd(j).services['kiosk-blue'].charger!(j);
-    sd(j).services['kiosk-green'].charger!(j);
-    sd(j).horloge = maintenant;
+    sd(j).services['kiosk-blue'].load!(j);
+    sd(j).services['kiosk-green'].load!(j);
+    sd(j).clock = now;
   },
-  creerMonde: (t) => {
-    const racine: Droits = { proprio: 'root' };
-    const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
-    const fichier = (texte: string, droits: Droits = racine) => f(texte, { lignes: true, ...droits });
-    const kiosk: Droits = { proprio: 'kiosk', groupe: 'kiosk' };
-    return lieu({
-      etc: lieu({
-        ...fichiersComptes(),
-        hostname: fichier('gazette'),
-        kiosk: lieu({
-          'kiosk.env': fichier(
+  createWorld: (t) => {
+    const root: Rights = { owner: 'root' };
+    const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
+    const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
+    const kiosk: Rights = { owner: 'kiosk', group: 'kiosk' };
+    return place({
+      etc: place({
+        ...accountsFiles(),
+        hostname: file('gazette'),
+        kiosk: place({
+          'kiosk.env': file(
             'KIOSK_BASE=postgres://kiosk@localhost/kiosk\nKIOSK_LIST=lettre@gazette.example\nKIOSK_SMTP=smtp.gazette.example',
-            { proprio: 'root', groupe: 'kiosk', mode: 'rw-r-----' },
+            { owner: 'root', group: 'kiosk', mode: 'rw-r-----' },
           ),
         }),
-        nginx: lieu({
-          'nginx.conf': fichier(NGINX_CONF),
-          'mime.types': fichier(MIME),
-          'conf.d': lieu({}),
-          'modules-enabled': lieu({}),
-          'sites-available': lieu({ gazette: fichier(conf(t)) }),
-          'sites-enabled': lieu({ gazette: f('', { proprio: 'root', lien: SITE }) }),
+        nginx: place({
+          'nginx.conf': file(NGINX_CONF),
+          'mime.types': file(MIME),
+          'conf.d': place({}),
+          'modules-enabled': place({}),
+          'sites-available': place({ gazette: file(conf(t)) }),
+          'sites-enabled': place({ gazette: f('', { owner: 'root', link: SITE }) }),
         }),
-        systemd: lieu({
-          system: lieu({ 'kiosk-blue.service': fichier(uniteKiosque('blue')), 'kiosk-green.service': fichier(uniteKiosque('green')) }),
+        systemd: place({
+          system: place({ 'kiosk-blue.service': file(kioskUnit('blue')), 'kiosk-green.service': file(kioskUnit('green')) }),
         }),
       }),
-      home: lieu({
+      home: place({
         vous: d({ 'message_de_samia.txt': f(t('migration-message-de-samia')), 'mot_de_theo.txt': f(t('migration-mot-de-theo')) }),
-        samia: lieu({}, { proprio: 'samia', mode: 'rwx------' }),
-        theo: lieu({}, { proprio: 'theo', mode: 'rwx------' }),
+        samia: place({}, { owner: 'samia', mode: 'rwx------' }),
+        theo: place({}, { owner: 'theo', mode: 'rwx------' }),
       }),
-      srv: lieu({
-        gazette: lieu({
-          releases: lieu({ '20270524090000': lieu({ 'index.html': fichier(t('retour-arriere-site-accueil'), { proprio: 'vous' }) }) }),
-          current: f('', { proprio: 'vous', lien: '/srv/gazette/releases/20270524090000' }),
+      srv: place({
+        gazette: place({
+          releases: place({ '20270524090000': place({ 'index.html': file(t('retour-arriere-site-accueil'), { owner: 'vous' }) }) }),
+          current: f('', { owner: 'vous', link: '/srv/gazette/releases/20270524090000' }),
         }),
-        kiosk: lieu(
+        kiosk: place(
           {
-            versions: lieu(
+            versions: place(
               {
-                '1.4.2': dossierVersion(t, '1.4.2'),
-                '1.5.0': dossierVersion(t, '1.5.0', 'bleu-vert-notes-150'),
-                '1.6.0': dossierVersion(t, '1.6.0', 'canari-notes-160'),
-                '1.6.1': dossierVersion(t, '1.6.1', 'canari-notes-161'),
-                '2.0.0': dossierVersion(t, '2.0.0', 'migration-notes-200'),
+                '1.4.2': versionDirectory(t, '1.4.2'),
+                '1.5.0': versionDirectory(t, '1.5.0', 'bleu-vert-notes-150'),
+                '1.6.0': versionDirectory(t, '1.6.0', 'canari-notes-160'),
+                '1.6.1': versionDirectory(t, '1.6.1', 'canari-notes-161'),
+                '2.0.0': versionDirectory(t, '2.0.0', 'migration-notes-200'),
               },
               kiosk,
             ),
-            blue: f('', { ...kiosk, lien: `${KIOSQUE}/versions/1.6.1` }),
-            green: f('', { ...kiosk, lien: `${KIOSQUE}/versions/2.0.0` }),
+            blue: f('', { ...kiosk, link: `${KIOSK}/versions/1.6.1` }),
+            green: f('', { ...kiosk, link: `${KIOSK}/versions/2.0.0` }),
           },
-          { ...kiosk, groupe: 'redaction', mode: 'rwxrwxr-x' },
+          { ...kiosk, group: 'redaction', mode: 'rwxrwxr-x' },
         ),
       }),
-      usr: lieu({ sbin: lieu({ nginx: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 1_342_520 }) }) }),
-      var: lieu({
-        log: lieu({
-          nginx: lieu(
+      usr: place({ sbin: place({ nginx: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_342_520 }) }) }),
+      var: place({
+        log: place({
+          nginx: place(
             {
-              'access.log': f('', { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }),
-              'error.log': f('', { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }),
+              'access.log': f('', { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }),
+              'error.log': f('', { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }),
             },
-            { proprio: 'root', groupe: 'adm' },
+            { owner: 'root', group: 'adm' },
           ),
         }),
       }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'vert-malade',
-      condition: (j) => sortie(j).includes('KIOSK_SMTP_URL is not set'),
+      condition: (j) => output(j).includes('KIOSK_SMTP_URL is not set'),
       message: (j) => j.t('migration-evenement-vert-malade'),
     },
-    { id: 'schema', condition: (j) => sortie(j).includes('is newer than supported'), message: (j) => j.t('migration-evenement-schema') },
+    { id: 'schema', condition: (j) => output(j).includes('is newer than supported'), message: (j) => j.t('migration-evenement-schema') },
     {
       id: 'migration-vue',
-      condition: (j) => sortie(j).includes('rename_abonnes_courriel_to_email'),
+      condition: (j) => output(j).includes('rename_abonnes_courriel_to_email'),
       message: (j) => j.t('migration-evenement-migration-vue'),
     },
     {
       id: 'retour-impossible',
-      condition: (j) => servie(j) === 'blue' && !enDeux(j, 'blue') && !lecteursOk(j),
+      condition: (j) => served(j) === 'blue' && !inTwo(j, 'blue') && !okReaders(j),
       message: (j) => j.t('migration-evenement-retour-impossible'),
     },
     {
       id: 'repare',
       condition: (j) => {
-        const c = servie(j);
-        return !!c && enDeux(j, c) && lecteursOk(j);
+        const c = served(j);
+        return !!c && inTwo(j, c) && okReaders(j);
       },
       message: (j) => j.t('migration-evenement-repare'),
     },
     {
       id: 'fin',
       condition: (j) => {
-        const c = servie(j);
-        const autre = c === 'blue' ? 'green' : 'blue';
-        return !!c && enDeux(j, c) && lecteursOk(j) && actif(j, autre) && enDeux(j, autre);
+        const c = served(j);
+        const other = c === 'blue' ? 'green' : 'blue';
+        return !!c && inTwo(j, c) && okReaders(j) && enabled(j, other) && inTwo(j, other);
       },
       message: (j) => j.t('migration-evenement-fin'),
     },

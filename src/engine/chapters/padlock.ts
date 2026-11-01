@@ -19,32 +19,32 @@
 // https://caddyserver.com/docs/running#linux-service,
 // https://letsencrypt.org/docs/challenge-types/
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../world';
-import type { Jeu } from '../shell';
-import { nouveauSystemd, demarrer, systemd } from '../systemd';
-import { arreterCaddy, certificatDe, chargerCaddy, etatCaddy, nomsGeres, PID, reessayer, requeteCaddy, verifierCaddy, type EtatCaddy, type ReponseCaddy } from '../caddy';
-import type { PareFeu } from '../firewall';
-import type { Ecoute } from '../commands/ss';
+import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import type { Game } from '../shell';
+import { newSystemd, start, systemd } from '../systemd';
+import { stopCaddy, certificateFor, loadCaddy, caddyState, managedNames, PID, retry, caddyRequest, checkCaddy, type CaddyState, type CaddyResponse } from '../caddy';
+import type { Firewall } from '../firewall';
+import type { Listening } from '../commands/ss';
 
 const M = '/home/vous';
 export const SITE = 'cycles.example';
 export const WWW = `www.${SITE}`;
 export const IP = '203.0.113.40';
 
-const comptes = (): Comptes => ({
-  utilisateurs: {
-    root: { uid: 0, groupe: 'root', maison: '/root' },
-    caddy: { uid: 999, groupe: 'caddy', maison: '/var/lib/caddy', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, groupe: 'vous' },
-    ines: { uid: 1001, groupe: 'ines' },
+const accounts = (): Accounts => ({
+  users: {
+    root: { uid: 0, group: 'root', home: '/root' },
+    caddy: { uid: 999, group: 'caddy', home: '/var/lib/caddy', shell: '/usr/sbin/nologin' },
+    vous: { uid: 1000, group: 'vous' },
+    ines: { uid: 1001, group: 'ines' },
   },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    adm: { gid: 4, membres: ['vous'] },
-    sudo: { gid: 27, membres: ['vous', 'ines'] },
-    caddy: { gid: 999, membres: [] },
-    vous: { gid: 1000, membres: [] },
-    ines: { gid: 1001, membres: [] },
+  groups: {
+    root: { gid: 0, members: [] },
+    adm: { gid: 4, members: ['vous'] },
+    sudo: { gid: 27, members: ['vous', 'ines'] },
+    caddy: { gid: 999, members: [] },
+    vous: { gid: 1000, members: [] },
+    ines: { gid: 1001, members: [] },
   },
 });
 
@@ -76,7 +76,7 @@ export const CADDYFILE_INES = `# The Caddyfile is an easy way to configure your 
 # Refer to the Caddy docs for more information:
 # https://caddyserver.com/docs/caddyfile`;
 
-const BIENVENUE_CADDY = `<!DOCTYPE html>
+const CADDY_WELCOME = `<!DOCTYPE html>
 <html>
 <head>
 <title>Caddy works!</title>
@@ -88,37 +88,37 @@ const BIENVENUE_CADDY = `<!DOCTYPE html>
 </html>`;
 
 // La machine : SSH, et Caddy (son API d'administration, et le port 80 du site :80).
-const ECOUTE: Ecoute[] = [
-  { proto: 'tcp', adresse: '0.0.0.0', port: 22, processus: 'sshd', pid: 604 },
-  { proto: 'tcp', adresse: '[::]', port: 22, processus: 'sshd', pid: 604 },
+const LISTENING: Listening[] = [
+  { proto: 'tcp', address: '0.0.0.0', port: 22, process: 'sshd', pid: 604 },
+  { proto: 'tcp', address: '[::]', port: 22, process: 'sshd', pid: 604 },
 ];
 
-const DEBUT = Date.UTC(2027, 3, 12, 18, 5, 0);
-const MAINTENANT = Date.UTC(2027, 3, 13, 9, 40, 0);
+const START = Date.UTC(2027, 3, 12, 18, 5, 0);
+const NOW = Date.UTC(2027, 3, 13, 9, 40, 0);
 
-const sd = (j: Jeu) => systemd(j)!;
-const vu = (j: Jeu, texte: string) => j.derniere.sortie.includes(texte) || j.derniere.erreurs.some((e) => e.includes(texte));
-const curl = (j: Jeu) => j.derniere.commandes.some((c) => c[0] === 'curl');
-const site = (j: Jeu) => j.t('cadenas-site');
-const reponse = (r: ReponseCaddy | null) => (r && !('tls' in r) ? r : null);
-const lieu = (r: ReturnType<typeof reponse>) => r?.entetes.find((e) => /^location: /i.test(e))?.replace(/^location: /i, '') ?? '';
-const redirige = (r: ReturnType<typeof reponse>) => !!r && r.code >= 300 && r.code < 400 && /^https:\/\/cycles\.example(\/|$)/.test(lieu(r));
+const sd = (j: Game) => systemd(j)!;
+const seen = (j: Game, text: string) => j.last.output.includes(text) || j.last.errors.some((e) => e.includes(text));
+const curl = (j: Game) => j.last.commands.some((c) => c[0] === 'curl');
+const site = (j: Game) => j.t('cadenas-site');
+const response = (r: CaddyResponse | null) => (r && !('tls' in r) ? r : null);
+const place = (r: ReturnType<typeof response>) => r?.headers.find((e) => /^location: /i.test(e))?.replace(/^location: /i, '') ?? '';
+const redirects = (r: ReturnType<typeof response>) => !!r && r.code >= 300 && r.code < 400 && /^https:\/\/cycles\.example(\/|$)/.test(place(r));
 
 // Vu d'internet (le pare-feu compte), comme un visiteur.
-const visite = (j: Jeu, nom: string, port: number) => reponse(requeteCaddy(j, nom, '/', port, true));
-export const httpsServi = (j: Jeu) => visite(j, SITE, 443)?.code === 200 && visite(j, SITE, 443)!.corps === site(j);
-export const httpRedirige = (j: Jeu) => redirige(visite(j, SITE, 80));
-export const wwwServi = (j: Jeu) => {
-  const r = visite(j, WWW, 443);
-  return (r?.code === 200 && r.corps === site(j)) || redirige(r);
+const visit = (j: Game, name: string, port: number) => response(caddyRequest(j, name, '/', port, true));
+export const servedHttps = (j: Game) => visit(j, SITE, 443)?.code === 200 && visit(j, SITE, 443)!.body === site(j);
+export const redirectsHttp = (j: Game) => redirects(visit(j, SITE, 80));
+export const servedWww = (j: Game) => {
+  const r = visit(j, WWW, 443);
+  return (r?.code === 200 && r.body === site(j)) || redirects(r);
 };
-const caddyTourne = (j: Jeu) => sd(j).services.caddy.etat === 'active' && sd(j).services.caddy.active;
-const charge = (j: Jeu) => etatCaddy(j)?.charge ?? null;
+const runningCaddy = (j: Game) => sd(j).services.caddy.state === 'active' && sd(j).services.caddy.active;
+const load = (j: Game) => caddyState(j)?.load ?? null;
 
-export const cadenas: Chapitre = {
+export const padlock: Chapter = {
   id: 'cadenas',
-  numero: 1,
-  commandes: [
+  number: 1,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -143,108 +143,108 @@ export const cadenas: Chapitre = {
     'id',
     'whoami',
   ],
-  maison: M,
-  accueil: 'message_de_ines.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_de_ines.txt',
+  names: true,
   final: 'fin',
-  etapes: ['adresse', 'pare-feu', 'certificat', 'fin'],
-  motDePasse: 'rayons-2027',
-  comptes,
-  etat: () => ({
-    ecoute: ECOUTE.map((e) => ({ ...e })),
+  steps: ['adresse', 'pare-feu', 'certificat', 'fin'],
+  password: 'rayons-2027',
+  accounts,
+  state: () => ({
+    ecoute: LISTENING.map((e) => ({ ...e })),
     ufw: {
-      actif: true,
-      entrant: 'deny',
-      sortant: 'allow',
-      regles: [{ action: 'allow', vers: 'OpenSSH', ports: [22], de: null }],
-    } satisfies PareFeu,
-    systemd: nouveauSystemd('rustine', DEBUT, DEBUT, {
+      enabled: true,
+      incoming: 'deny',
+      outgoing: 'allow',
+      rules: [{ action: 'allow', to: 'OpenSSH', ports: [22], forEachOf: null }],
+    } satisfies Firewall,
+    systemd: newSystemd('rustine', START, START, {
       ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
-      ufw: { description: 'Uncomplicated firewall', active: true, executable: 'ufw', resteActif: true },
+      ufw: { description: 'Uncomplicated firewall', active: true, executable: 'ufw', activeRest: true },
       caddy: {
         description: 'Caddy',
-        etat: 'inactive',
+        state: 'inactive',
         active: true,
         executable: 'caddy',
-        processus: [{ pid: PID, utilisateur: 'caddy', cpu: 0.1, mem: 1.2, commande: '/usr/bin/caddy run --environ --config /etc/caddy/Caddyfile' }],
-        verifier: verifierCaddy,
-        charger: chargerCaddy,
-        arret: arreterCaddy,
-        verifierAuRechargement: true,
+        process: [{ pid: PID, user: 'caddy', cpu: 0.1, mem: 1.2, command: '/usr/bin/caddy run --environ --config /etc/caddy/Caddyfile' }],
+        check: checkCaddy,
+        load: loadCaddy,
+        stop: stopCaddy,
+        checkToReload: true,
       },
     }),
     processus: [
-      { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
-      { pid: 604, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
+      { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
+      { pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
     ],
     // Le DNS de cycles.example et de www.cycles.example mène déjà ici.
     caddy: {
-      charge: null,
-      noms: ['rustine', SITE, WWW, IP],
+      load: null,
+      names: ['rustine', SITE, WWW, IP],
       ip: IP,
       dns: { [SITE]: IP, [WWW]: IP },
-      attente: [],
-      essais: {},
-    } satisfies EtatCaddy,
+      waiting: [],
+      attempts: {},
+    } satisfies CaddyState,
   }),
-  initialiser: (j) => {
+  initialise: (j) => {
     // Le service a démarré avec le Caddyfile d'Inès, hier soir.
-    demarrer(j, sd(j), 'caddy', true);
-    sd(j).horloge = MAINTENANT;
+    start(j, sd(j), 'caddy', true);
+    sd(j).clock = NOW;
   },
-  avantCommande: (j) => reessayer(j),
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
-    const dossier = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
-    const fichier = (texte: string, droits: Droits = racine) => f(texte, { lignes: true, ...droits });
-    const caddy = { proprio: 'caddy', groupe: 'caddy', mode: 'rwx------' };
-    return dossier({
-      etc: dossier({
-        ...fichiersComptes(),
-        hostname: fichier('rustine'),
-        caddy: dossier({ Caddyfile: fichier(CADDYFILE_INES) }),
+  beforeCommand: (j) => retry(j),
+  createWorld: (t) => {
+    const root = { owner: 'root' };
+    const directory = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
+    const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
+    const caddy = { owner: 'caddy', group: 'caddy', mode: 'rwx------' };
+    return directory({
+      etc: directory({
+        ...accountsFiles(),
+        hostname: file('rustine'),
+        caddy: directory({ Caddyfile: file(CADDYFILE_INES) }),
       }),
-      home: dossier({
+      home: directory({
         vous: d({ 'message_de_ines.txt': f(t('cadenas-message-ines')) }),
-        ines: dossier({}, { proprio: 'ines', mode: 'rwx------' }),
+        ines: directory({}, { owner: 'ines', mode: 'rwx------' }),
       }),
-      usr: dossier({
-        bin: dossier({ caddy: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 41_984_160 }) }),
-        share: dossier({ caddy: dossier({ 'index.html': fichier(BIENVENUE_CADDY) }) }),
+      usr: directory({
+        bin: directory({ caddy: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 41_984_160 }) }),
+        share: directory({ caddy: directory({ 'index.html': file(CADDY_WELCOME) }) }),
       }),
-      var: dossier({
-        www: dossier({ cycles: dossier({ 'index.html': fichier(t('cadenas-site'), { proprio: 'ines' }) }, { proprio: 'ines' }) }),
-        lib: dossier({
-          caddy: dossier(
+      var: directory({
+        www: directory({ cycles: directory({ 'index.html': file(t('cadenas-site'), { owner: 'ines' }) }, { owner: 'ines' }) }),
+        lib: directory({
+          caddy: directory(
             {
-              '.local': dossier({ share: dossier({ caddy: dossier({}, caddy) }, caddy) }, caddy),
-              '.config': dossier({ caddy: dossier({}, caddy) }, caddy),
+              '.local': directory({ share: directory({ caddy: directory({}, caddy) }, caddy) }, caddy),
+              '.config': directory({ caddy: directory({}, caddy) }, caddy),
             },
-            { proprio: 'caddy', groupe: 'caddy', mode: 'rwxr-xr-x' },
+            { owner: 'caddy', group: 'caddy', mode: 'rwxr-xr-x' },
           ),
         }),
       }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'http-seul',
-      condition: (j) => vu(j, 'no automatic HTTPS will be applied') || (curl(j) && vu(j, 'port 443') && vu(j, "Couldn't connect")),
+      condition: (j) => seen(j, 'no automatic HTTPS will be applied') || (curl(j) && seen(j, 'port 443') && seen(j, "Couldn't connect")),
       message: (j) => j.t('cadenas-evenement-http-seul'),
     },
     {
       id: 'schema-http',
-      condition: (j) => !!charge(j)?.sites.some((s) => s.adresses.some((a) => a.hote === SITE && a.schema === 'http')),
+      condition: (j) => !!load(j)?.sites.some((s) => s.addresses.some((a) => a.host === SITE && a.schema === 'http')),
       message: (j) => j.t('cadenas-evenement-schema-http'),
     },
-    { id: 'adresse', condition: (j) => !!charge(j) && nomsGeres(charge(j)!).includes(SITE), message: (j) => j.t('cadenas-evenement-adresse') },
-    { id: 'pare-feu', condition: (j) => vu(j, 'Timeout during connect (likely firewall problem)'), message: (j) => j.t('cadenas-evenement-pare-feu') },
-    { id: 'alerte', condition: (j) => curl(j) && vu(j, 'tlsv1 alert internal error'), message: (j) => j.t('cadenas-evenement-alerte') },
-    { id: 'format', condition: (j) => vu(j, 'Caddyfile input is not formatted'), message: (j) => j.t('cadenas-evenement-format') },
-    { id: 'certificat', condition: (j) => !!certificatDe(j, SITE) && httpsServi(j), message: (j) => j.t('cadenas-evenement-certificat') },
+    { id: 'adresse', condition: (j) => !!load(j) && managedNames(load(j)!).includes(SITE), message: (j) => j.t('cadenas-evenement-adresse') },
+    { id: 'pare-feu', condition: (j) => seen(j, 'Timeout during connect (likely firewall problem)'), message: (j) => j.t('cadenas-evenement-pare-feu') },
+    { id: 'alerte', condition: (j) => curl(j) && seen(j, 'tlsv1 alert internal error'), message: (j) => j.t('cadenas-evenement-alerte') },
+    { id: 'format', condition: (j) => seen(j, 'Caddyfile input is not formatted'), message: (j) => j.t('cadenas-evenement-format') },
+    { id: 'certificat', condition: (j) => !!certificateFor(j, SITE) && servedHttps(j), message: (j) => j.t('cadenas-evenement-certificat') },
     {
       id: 'fin',
-      condition: (j) => caddyTourne(j) && httpsServi(j) && httpRedirige(j) && wwwServi(j),
+      condition: (j) => runningCaddy(j) && servedHttps(j) && redirectsHttp(j) && servedWww(j),
       message: (j) => j.t('cadenas-evenement-fin'),
     },
   ],

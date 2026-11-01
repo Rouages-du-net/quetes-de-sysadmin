@@ -12,27 +12,27 @@
 // eth0.
 // Sources : https://dnsmasq.org/docs/dnsmasq-man.html
 
-import { f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { dans, lan } from '../lan';
-import { repondSur } from '../dnsmasq';
-import { comptesRuche, initialiserRuche, INTERFACES_VLAN, M, mondeRuche, MOT_DE_PASSE, nouveauLan, systemdRuche, VLANS, planRuche } from './hive';
+import { f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { inside, lan } from '../lan';
+import { answersOn } from '../dnsmasq';
+import { hiveAccounts, initialiseHive, INTERFACES_VLAN, M, hiveWorld, PASSWORD, newLan, hiveSystemd, VLANS, hivePlan } from './hive';
 
-const DNSMASQ_A_PLAT = `# The DHCP server of the LAN
+const FLAT_A_DNSMASQ = `# The DHCP server of the LAN
 interface=eth1
 dhcp-range=192.168.1.100,192.168.1.200,12h`;
-const IMPRIMANTE = '10.10.30.10';
+const PRINTER = '10.10.30.10';
 
-const enDhcp = (j: Jeu) => lan(j)!.appareils.filter((a) => !a.fixe);
-const bienServi = (j: Jeu) =>
-  enDhcp(j).every((a) => a.bail && dans(a.bail, VLANS.find((v) => v.id === a.vlan)!.reseau)) &&
-  lan(j)!.appareils.find((a) => a.nom === 'imprimante')?.bail === IMPRIMANTE;
+const inDhcp = (j: Game) => lan(j)!.devices.filter((a) => !a.fixed);
+const servedWell = (j: Game) =>
+  inDhcp(j).every((a) => a.lease && inside(a.lease, VLANS.find((v) => v.id === a.vlan)!.reseau)) &&
+  lan(j)!.devices.find((a) => a.name === 'imprimante')?.lease === PRINTER;
 
-export const dhcp: Chapitre = {
+export const dhcp: Chapter = {
   id: 'dhcp',
-  numero: 2,
-  plan: planRuche(),
-  commandes: [
+  number: 2,
+  plan: hivePlan(),
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -54,26 +54,26 @@ export const dhcp: Chapitre = {
     'journalctl',
     'dnsmasq',
   ],
-  maison: M,
-  accueil: 'courriel_malik.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_malik.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: comptesRuche,
-  etat: () => ({ lan: nouveauLan(true), systemd: systemdRuche() }),
-  initialiser: initialiserRuche,
-  creerMonde: (t) =>
-    mondeRuche({ interfaces: INTERFACES_VLAN, dnsmasq: DNSMASQ_A_PLAT, maison: { 'courriel_malik.txt': f(t('dhcp-courriel-malik')) } }),
-  evenements: [
-    { id: 'wan', condition: (j) => repondSur(j, 'eth0'), message: (j) => j.t('dhcp-evenement-wan') },
+  password: PASSWORD,
+  accounts: hiveAccounts,
+  state: () => ({ lan: newLan(true), systemd: hiveSystemd() }),
+  initialise: initialiseHive,
+  createWorld: (t) =>
+    hiveWorld({ interfaces: INTERFACES_VLAN, dnsmasq: FLAT_A_DNSMASQ, home: { 'courriel_malik.txt': f(t('dhcp-courriel-malik')) } }),
+  events: [
+    { id: 'wan', condition: (j) => answersOn(j, 'eth0'), message: (j) => j.t('dhcp-evenement-wan') },
     {
       id: 'imprimante-ailleurs',
       condition: (j) => {
-        const b = lan(j)!.appareils.find((a) => a.nom === 'imprimante')?.bail;
-        return !!b && b !== IMPRIMANTE;
+        const b = lan(j)!.devices.find((a) => a.name === 'imprimante')?.lease;
+        return !!b && b !== PRINTER;
       },
-      message: (j) => j.t('dhcp-evenement-imprimante-ailleurs', { adresse: IMPRIMANTE }),
+      message: (j) => j.t('dhcp-evenement-imprimante-ailleurs', { adresse: PRINTER }),
     },
-    { id: 'fin', condition: (j) => bienServi(j) && !repondSur(j, 'eth0'), message: (j) => j.t('dhcp-evenement-fin') },
+    { id: 'fin', condition: (j) => servedWell(j) && !answersOn(j, 'eth0'), message: (j) => j.t('dhcp-evenement-fin') },
   ],
 };

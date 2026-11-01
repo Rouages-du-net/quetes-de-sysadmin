@@ -49,9 +49,9 @@ npm run test:browser    # checks the game in Chromium (1000 and 375 px, CSP, emb
 Want to write a quest, fix a bug or translate the game? Start with
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
-The project started in French: most of the code's identifiers are still in
-French, and are being moved to English little by little (see
-CONTRIBUTING.md).
+The project started in French: the code is now in English, apart from some
+data identifiers (stories, chapters, places) and comments still being moved
+(see CONTRIBUTING.md).
 
 ## Where this game comes from
 

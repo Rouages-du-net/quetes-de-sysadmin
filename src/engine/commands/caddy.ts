@@ -7,10 +7,10 @@
 // Écarts : run et start, quand le service est arrêté, le démarrent (au lieu de
 // lancer un Caddy à part) ; adapt donne une configuration JSON simplifiée.
 
-import type { Commande } from './index';
+import type { Command } from './index';
 import type { Shell } from '../shell';
-import { arreter, demarrer, systemd } from '../systemd';
-import { CADDYFILE, chargerCaddy, formater, lireConfigCaddy, noter as journaliserCaddy, VERSION, versJson, type ConfigCaddy } from '../caddy';
+import { stop, start, systemd } from '../systemd';
+import { CADDYFILE, loadCaddy, formatValue, readConfigCaddy, note as logCaddy, VERSION, toJson, type ConfigCaddy } from '../caddy';
 
 const USAGE = `Caddy is an extensible server platform written in Go.
 
@@ -122,14 +122,14 @@ Use "caddy [command] --help" for more information about a command.
 Full documentation is available at:
 https://caddyserver.com/docs/command-line`;
 
-const SOUS_COMMANDES = ['adapt', 'fmt', 'help', 'reload', 'run', 'start', 'stop', 'validate', 'version'];
+const UNDER_COMMANDS = ['adapt', 'fmt', 'help', 'reload', 'run', 'start', 'stop', 'validate', 'version'];
 
 // « 2026/11/20 09:31:02.123	INFO	message	{"champ": "valeur"} », comme la console de zap.
-function ligneConsole(jeu: Shell, niveau: string, msg: string, champs?: Record<string, unknown>): string {
-  const d = new Date(systemd(jeu)?.horloge ?? 0).toISOString();
-  const quand = `${d.slice(0, 10).replaceAll('-', '/')} ${d.slice(11, 23)}`;
-  const suite = champs ? `\t${JSON.stringify(champs).replace(/":/g, '": ').replace(/,"/g, ', "')}` : '';
-  return `${quand}\t${niveau}\t${msg}${suite}`;
+function consoleLine(game: Shell, level: string, msg: string, fields?: Record<string, unknown>): string {
+  const d = new Date(systemd(game)?.clock ?? 0).toISOString();
+  const when = `${d.slice(0, 10).replaceAll('-', '/')} ${d.slice(11, 23)}`;
+  const next = fields ? `\t${JSON.stringify(fields).replace(/":/g, '": ').replace(/,"/g, ', "')}` : '';
+  return `${when}\t${level}\t${msg}${next}`;
 }
 
 interface Options {
@@ -139,149 +139,149 @@ interface Options {
   overwrite: boolean;
   force: boolean;
   diff: boolean;
-  fichiers: string[];
+  files: string[];
 }
 
-function lireOptions(jeu: Shell, sous: string, args: string[]): Options | string {
-  const o: Options = { config: null, adapter: null, pretty: false, overwrite: false, force: false, diff: false, fichiers: [] };
+function readOptions(game: Shell, under: string, args: string[]): Options | string {
+  const o: Options = { config: null, adapter: null, pretty: false, overwrite: false, force: false, diff: false, files: [] };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
-    const [nom, valeur] = a.includes('=') ? [a.slice(0, a.indexOf('=')), a.slice(a.indexOf('=') + 1)] : [a, null];
-    const suivante = () => valeur ?? args[++i] ?? null;
-    if (nom === '--config' || nom === '-c') o.config = suivante();
-    else if (nom === '--adapter' || nom === '-a') o.adapter = suivante();
-    else if (nom === '--pretty' || nom === '-p') o.pretty = true;
-    else if (nom === '--overwrite' || nom === '-w') o.overwrite = true;
-    else if (nom === '--force' || nom === '-f') o.force = true;
-    else if (nom === '--diff' || nom === '-d') o.diff = true;
-    else if (['--environ', '-e', '--validate', '--resume', '--watch', '-w'].includes(nom)) continue;
-    else if (nom === '--address') suivante();
-    else if (a.startsWith('-')) return `Error: unknown flag: ${nom}\nRun 'caddy ${sous} --help' for usage.`;
-    else o.fichiers.push(a);
+    const [name, value] = a.includes('=') ? [a.slice(0, a.indexOf('=')), a.slice(a.indexOf('=') + 1)] : [a, null];
+    const next = () => value ?? args[++i] ?? null;
+    if (name === '--config' || name === '-c') o.config = next();
+    else if (name === '--adapter' || name === '-a') o.adapter = next();
+    else if (name === '--pretty' || name === '-p') o.pretty = true;
+    else if (name === '--overwrite' || name === '-w') o.overwrite = true;
+    else if (name === '--force' || name === '-f') o.force = true;
+    else if (name === '--diff' || name === '-d') o.diff = true;
+    else if (['--environ', '-e', '--validate', '--resume', '--watch', '-w'].includes(name)) continue;
+    else if (name === '--address') next();
+    else if (a.startsWith('-')) return `Error: unknown flag: ${name}\nRun 'caddy ${under} --help' for usage.`;
+    else o.files.push(a);
   }
-  if (o.config === '') return `Error: flag needs an argument: --config\nRun 'caddy ${sous} --help' for usage.`;
-  void jeu;
+  if (o.config === '') return `Error: flag needs an argument: --config\nRun 'caddy ${under} --help' for usage.`;
+  void game;
   return o;
 }
 
 // Le fichier de configuration : --config, sinon le Caddyfile du dossier courant.
-function fichierConfig(jeu: Shell, o: Options): string | null {
+function configFile(game: Shell, o: Options): string | null {
   if (o.config) return o.config;
-  return jeu.existe('Caddyfile') ? 'Caddyfile' : null;
+  return game.exists('Caddyfile') ? 'Caddyfile' : null;
 }
 
 // Lit et adapte la configuration ; les lignes de la console, ou l'erreur.
-function adapter(jeu: Shell, o: Options): { lignes: string[]; config: ConfigCaddy } | { erreur: string } {
-  const fichier = fichierConfig(jeu, o);
-  if (!fichier) return { erreur: 'Error: no config file to load' };
-  if (o.adapter && o.adapter !== 'caddyfile') return { erreur: `Error: unrecognized config adapter '${o.adapter}'` };
-  const absolu = jeu.resoudre(fichier);
-  const n = jeu.trouver(absolu);
-  if (!n) return { erreur: `Error: reading config from file: open ${fichier}: no such file or directory` };
-  if (n.type === 'dossier') return { erreur: `Error: reading config from file: read ${fichier}: is a directory` };
-  if (!jeu.peut(n, 'r')) return { erreur: `Error: reading config from file: open ${fichier}: permission denied` };
-  const r = lireConfigCaddy(jeu, absolu === CADDYFILE ? CADDYFILE : fichier);
-  if ('erreur' in r) return { erreur: `Error: ${r.erreur}` };
-  const lignes = [ligneConsole(jeu, 'INFO', 'using config from file', { file: fichier })];
-  if (r.config.nonFormate !== null)
-    lignes.push(ligneConsole(jeu, 'WARN', "Caddyfile input is not formatted; run 'caddy fmt --overwrite' to fix inconsistencies", { adapter: 'caddyfile', file: fichier, line: r.config.nonFormate }));
-  lignes.push(ligneConsole(jeu, 'INFO', 'adapted config to JSON', { adapter: 'caddyfile' }));
-  return { lignes, config: r.config };
+function adapter(game: Shell, o: Options): { lines: string[]; config: ConfigCaddy } | { error: string } {
+  const file = configFile(game, o);
+  if (!file) return { error: 'Error: no config file to load' };
+  if (o.adapter && o.adapter !== 'caddyfile') return { error: `Error: unrecognized config adapter '${o.adapter}'` };
+  const absolute = game.resolve(file);
+  const n = game.find(absolute);
+  if (!n) return { error: `Error: reading config from file: open ${file}: no such file or directory` };
+  if (n.type === 'dossier') return { error: `Error: reading config from file: read ${file}: is a directory` };
+  if (!game.can(n, 'r')) return { error: `Error: reading config from file: open ${file}: permission denied` };
+  const r = readConfigCaddy(game, absolute === CADDYFILE ? CADDYFILE : file);
+  if ('error' in r) return { error: `Error: ${r.error}` };
+  const lines = [consoleLine(game, 'INFO', 'using config from file', { file: file })];
+  if (r.config.notFormatted !== null)
+    lines.push(consoleLine(game, 'WARN', "Caddyfile input is not formatted; run 'caddy fmt --overwrite' to fix inconsistencies", { adapter: 'caddyfile', file: file, line: r.config.notFormatted }));
+  lines.push(consoleLine(game, 'INFO', 'adapted config to JSON', { adapter: 'caddyfile' }));
+  return { lines, config: r.config };
 }
 
 // Les lignes de journal de la console (sur la sortie d'erreur), sans faire échouer la commande.
-function journal(jeu: Shell, lignes: string[]) {
-  for (const l of lignes) jeu.erreur(l);
-  jeu.statut = 0;
+function log(game: Shell, lines: string[]) {
+  for (const l of lines) game.error(l);
+  game.status = 0;
 }
 
-const service = (jeu: Shell) => systemd(jeu)?.services.caddy;
+const service = (game: Shell) => systemd(game)?.services.caddy;
 
-const caddy: Commande = {
+const caddy: Command = {
   section: 8,
-  propresOptions: true,
-  lancer: ({ args, jeu }) => {
-    const sous = args[0];
-    if (!sous || sous === 'help' || sous === '-h') return USAGE;
-    if (sous === 'version' || sous === '-v' || sous === '--version') return VERSION;
-    if (!SOUS_COMMANDES.includes(sous)) return jeu.erreur(`Error: unknown command "${sous}" for "caddy"\nRun 'caddy --help' for usage.`);
-    const o = lireOptions(jeu, sous, args.slice(1));
-    if (typeof o === 'string') return jeu.erreur(o);
+  ownOptions: true,
+  launch: ({ args, game }) => {
+    const under = args[0];
+    if (!under || under === 'help' || under === '-h') return USAGE;
+    if (under === 'version' || under === '-v' || under === '--version') return VERSION;
+    if (!UNDER_COMMANDS.includes(under)) return game.error(`Error: unknown command "${under}" for "caddy"\nRun 'caddy --help' for usage.`);
+    const o = readOptions(game, under, args.slice(1));
+    if (typeof o === 'string') return game.error(o);
 
-    if (sous === 'fmt') {
-      const fichier = o.fichiers[0] ?? 'Caddyfile';
-      const n = jeu.trouver(fichier);
-      if (!n || n.type !== 'fichier') return jeu.erreur(`Error: reading input file: open ${fichier}: no such file or directory`);
-      if (!jeu.peut(n, 'r')) return jeu.erreur(`Error: reading input file: open ${fichier}: permission denied`);
-      const texte = jeu.lire(fichier) ?? '';
-      const propre = formater(texte);
+    if (under === 'fmt') {
+      const file = o.files[0] ?? 'Caddyfile';
+      const n = game.find(file);
+      if (!n || n.type !== 'fichier') return game.error(`Error: reading input file: open ${file}: no such file or directory`);
+      if (!game.can(n, 'r')) return game.error(`Error: reading input file: open ${file}: permission denied`);
+      const text = game.read(file) ?? '';
+      const own = formatValue(text);
       if (o.overwrite) {
-        if (propre === texte.replace(/\n+$/, '')) return '';
-        if (!jeu.peut(n, 'w')) return jeu.erreur(`Error: open ${fichier}: permission denied`);
-        n.contenu = `${propre}\n`;
+        if (own === text.replace(/\n+$/, '')) return '';
+        if (!game.can(n, 'w')) return game.error(`Error: open ${file}: permission denied`);
+        n.content = `${own}\n`;
         return '';
       }
       if (o.diff) {
-        const a = texte.replace(/\n+$/, '').split('\n');
-        const b = propre.split('\n');
+        const a = text.replace(/\n+$/, '').split('\n');
+        const b = own.split('\n');
         return a.map((l, k) => (l === b[k] ? `  ${l}` : `- ${l}\n+ ${b[k] ?? ''}`)).join('\n');
       }
-      return propre;
+      return own;
     }
 
-    if (sous === 'validate' || sous === 'adapt') {
-      const r = adapter(jeu, o);
-      if ('erreur' in r) return jeu.erreur(r.erreur);
-      if (sous === 'adapt') {
-        journal(jeu, r.lignes);
-        return JSON.stringify(versJson(r.config), null, o.pretty ? '\t' : undefined);
+    if (under === 'validate' || under === 'adapt') {
+      const r = adapter(game, o);
+      if ('error' in r) return game.error(r.error);
+      if (under === 'adapt') {
+        log(game, r.lines);
+        return JSON.stringify(toJson(r.config), null, o.pretty ? '\t' : undefined);
       }
-      journal(jeu, r.lignes);
+      log(game, r.lines);
       return 'Valid configuration';
     }
 
-    const s = service(jeu);
-    const sd = systemd(jeu);
-    const injoignable = 'Error: sending configuration to instance: performing request: Post "http://localhost:2019/load": dial tcp [::1]:2019: connect: connection refused';
+    const s = service(game);
+    const sd = systemd(game);
+    const unreachable = 'Error: sending configuration to instance: performing request: Post "http://localhost:2019/load": dial tcp [::1]:2019: connect: connection refused';
 
-    if (sous === 'reload') {
-      const r = adapter(jeu, o);
-      if ('erreur' in r) return jeu.erreur(r.erreur);
-      journal(jeu, r.lignes);
-      if (!sd || s?.etat !== 'active') return jeu.erreur(injoignable, 1);
+    if (under === 'reload') {
+      const r = adapter(game, o);
+      if ('error' in r) return game.error(r.error);
+      log(game, r.lines);
+      if (!sd || s?.state !== 'active') return game.error(unreachable, 1);
       // Caddy charge la configuration envoyée : on la relit depuis le même fichier.
-      journaliserCaddy(jeu, 'info', 'admin.api', 'received request', { method: 'POST', host: 'localhost:2019', uri: '/load', remote_ip: '127.0.0.1', remote_port: '43122', headers: { 'Content-Type': ['application/json'], 'User-Agent': ['Go-http-client/1.1'] } });
-      const absolu = jeu.resoudre(fichierConfig(jeu, o)!);
-      if (absolu !== CADDYFILE) {
+      logCaddy(game, 'info', 'admin.api', 'received request', { method: 'POST', host: 'localhost:2019', uri: '/load', remote_ip: '127.0.0.1', remote_port: '43122', headers: { 'Content-Type': ['application/json'], 'User-Agent': ['Go-http-client/1.1'] } });
+      const absolute = game.resolve(configFile(game, o)!);
+      if (absolute !== CADDYFILE) {
         // Une autre configuration que celle du service : Caddy la prend quand même.
-        const texte = jeu.lire(absolu) ?? '';
-        const garde = jeu.lire(CADDYFILE);
-        const n = jeu.trouver(CADDYFILE);
-        if (n?.type === 'fichier') n.contenu = texte;
-        chargerCaddy(jeu);
-        if (n?.type === 'fichier') n.contenu = garde ?? '';
-      } else chargerCaddy(jeu);
-      journaliserCaddy(jeu, 'info', 'admin.api', 'load complete');
+        const text = game.read(absolute) ?? '';
+        const kept = game.read(CADDYFILE);
+        const n = game.find(CADDYFILE);
+        if (n?.type === 'fichier') n.content = text;
+        loadCaddy(game);
+        if (n?.type === 'fichier') n.content = kept ?? '';
+      } else loadCaddy(game);
+      logCaddy(game, 'info', 'admin.api', 'load complete');
       return '';
     }
 
-    if (sous === 'stop') {
-      if (!sd || s?.etat !== 'active') return jeu.erreur('Error: performing request: Post "http://localhost:2019/stop": dial tcp [::1]:2019: connect: connection refused');
-      arreter(jeu, sd, 'caddy');
+    if (under === 'stop') {
+      if (!sd || s?.state !== 'active') return game.error('Error: performing request: Post "http://localhost:2019/stop": dial tcp [::1]:2019: connect: connection refused');
+      stop(game, sd, 'caddy');
       return '';
     }
 
     // run, start : le service tient déjà les ports.
-    if (s?.etat === 'active') {
+    if (s?.state === 'active') {
       // Sans fichier, Caddy démarre avec une configuration vide… et bute aussi sur l'API d'administration.
-      const r = fichierConfig(jeu, o) ? adapter(jeu, o) : { lignes: [] };
-      if ('erreur' in r) return jeu.erreur(r.erreur);
-      return jeu.erreur([...r.lignes, 'Error: loading initial config: loading new config: starting caddy administration endpoint: listen tcp 127.0.0.1:2019: bind: address already in use'].join('\n'));
+      const r = configFile(game, o) ? adapter(game, o) : { lines: [] };
+      if ('error' in r) return game.error(r.error);
+      return game.error([...r.lines, 'Error: loading initial config: loading new config: starting caddy administration endpoint: listen tcp 127.0.0.1:2019: bind: address already in use'].join('\n'));
     }
-    if (!sd || !s) return jeu.erreur('Error: no config file to load');
-    if (jeu.qui !== 'root') return jeu.erreur('Error: loading initial config: loading new config: http app module: start: listening on :80: listen tcp :80: bind: permission denied');
-    return demarrer(jeu, sd, 'caddy') ? '' : jeu.erreur(`Error: ${(lireConfigCaddy(jeu) as { erreur?: string }).erreur ?? 'loading initial config'}`);
+    if (!sd || !s) return game.error('Error: no config file to load');
+    if (game.who !== 'root') return game.error('Error: loading initial config: loading new config: http app module: start: listening on :80: listen tcp :80: bind: permission denied');
+    return start(game, sd, 'caddy') ? '' : game.error(`Error: ${(readConfigCaddy(game) as { error?: string }).error ?? 'loading initial config'}`);
   },
 };
 
-export const CADDY: Record<string, Commande> = { caddy };
+export const CADDY: Record<string, Command> = { caddy };

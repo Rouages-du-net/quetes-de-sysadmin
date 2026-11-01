@@ -13,170 +13,170 @@
 // https://docs.docker.com/reference/cli/docker/container/cp/,
 // https://docs.docker.com/engine/containers/start-containers-automatically/
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../world';
-import type { Jeu } from '../shell';
-import { nouveauSystemd, systemd } from '../systemd';
-import { APPLIS, demarrerDocker, docker, ecrireDans, identifiant, lireDans, nomImage, type Conteneur, type EtatDocker, type Image } from '../docker';
+import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import type { Game } from '../shell';
+import { newSystemd, systemd } from '../systemd';
+import { APPS, startDocker, docker, writeIn, identifier, readIn, imageName, type Container, type DockerState, type Image } from '../docker';
 
 const M = '/home/vous';
-const DEPOT = 'registry.example/outiltheque';
+const REPO = 'registry.example/outiltheque';
 const BASE = '/var/lib/outiltheque/outiltheque.db';
 const SCHEMAS: Record<string, number> = { '1.4': 3, '1.5': 4 };
-const PRETS = 37;
+const LOANS = 37;
 
 // La base de l'outilthèque : un fichier SQLite (son contenu est simulé :
 // l'en-tête de SQLite, puis les données lisibles par le jeu).
 interface Base {
   schema: number;
-  prets: { outil: string; personne: string; jusqua: string }[];
+  loans: { tool: string; person: string; until: string }[];
 }
-const ENTETE = 'SQLite format 3';
-export const ecrireBase = (b: Base) => `${ENTETE}\u0000${JSON.stringify(b)}`;
-export function lireBase(contenu: string | null): Base | null {
-  if (!contenu?.startsWith(ENTETE)) return null;
+const HEADER = 'SQLite format 3';
+export const writeBase = (b: Base) => `${HEADER}\u0000${JSON.stringify(b)}`;
+export function readBase(content: string | null): Base | null {
+  if (!content?.startsWith(HEADER)) return null;
   try {
-    return JSON.parse(contenu.slice(ENTETE.length + 1)) as Base;
+    return JSON.parse(content.slice(HEADER.length + 1)) as Base;
   } catch {
     return null;
   }
 }
 
-function prets(outils: string[], personnes: string[]): Base['prets'] {
-  return Array.from({ length: PRETS }, (_, i) => ({
-    outil: outils[(i * 5) % outils.length],
-    personne: personnes[(i * 7) % personnes.length],
-    jusqua: `2027-04-${String(5 + (i % 20)).padStart(2, '0')}`,
+function loans(tools: string[], people: string[]): Base['loans'] {
+  return Array.from({ length: LOANS }, (_, i) => ({
+    tool: tools[(i * 5) % tools.length],
+    person: people[(i * 7) % people.length],
+    until: `2027-04-${String(5 + (i % 20)).padStart(2, '0')}`,
   }));
 }
 
 // L'appli de l'image : elle lit et écrit sa base à chaque démarrage et requête.
-APPLIS.outiltheque = {
+APPS.outiltheque = {
   // L'image crée son propre compte et s'en sert (USER outil dans son Dockerfile).
-  utilisateur: 'outil',
-  comptes: { outil: 1000 },
-  demarrer: (jeu, c, image) => {
-    const ecrire = (texte: string) => c.journal.push({ temps: systemd(jeu)?.horloge ?? 0, texte });
+  user: 'outil',
+  accounts: { outil: 1000 },
+  start: (game, c, image) => {
+    const write = (text: string) => c.log.push({ time: systemd(game)?.clock ?? 0, text });
     const version = image.tag;
     const schema = SCHEMAS[version] ?? 4;
-    ecrire(`outiltheque ${version}.0 starting (pid 1)`);
-    const base = lireBase(lireDans(jeu, c, BASE));
+    write(`outiltheque ${version}.0 starting (pid 1)`);
+    const base = readBase(readIn(game, c, BASE));
     if (!base) {
-      ecrire(`No database found at ${BASE}, creating a new one`);
-      ecrireDans(jeu, c, BASE, ecrireBase({ schema, prets: [] }));
+      write(`No database found at ${BASE}, creating a new one`);
+      writeIn(game, c, BASE, writeBase({ schema, loans: [] }));
     } else if (base.schema > schema) {
-      ecrire(`FATAL: database schema ${base.schema} is newer than this version supports (${schema})`);
+      write(`FATAL: database schema ${base.schema} is newer than this version supports (${schema})`);
       return 1;
     } else if (base.schema < schema) {
-      ecrire(`Migrating database schema ${base.schema} -> ${schema}`);
-      ecrireDans(jeu, c, BASE, ecrireBase({ ...base, schema }));
-      ecrire(`Migration done: ${base.prets.length} loans kept`);
-    } else ecrire(`Database ready: ${base.prets.length} loans`);
-    ecrire('Listening on http://0.0.0.0:8080');
+      write(`Migrating database schema ${base.schema} -> ${schema}`);
+      writeIn(game, c, BASE, writeBase({ ...base, schema }));
+      write(`Migration done: ${base.loans.length} loans kept`);
+    } else write(`Database ready: ${base.loans.length} loans`);
+    write('Listening on http://0.0.0.0:8080');
     return null;
   },
-  repondre: (jeu, c, chemin) => {
-    const base = lireBase(lireDans(jeu, c, BASE));
+  answer: (game, c, path) => {
+    const base = readBase(readIn(game, c, BASE));
     const version = c.image.split(':').at(-1)!;
-    if (!base) return { code: 500, corps: 'Internal Server Error: database is missing' };
-    if (chemin === '/' || chemin === '') return { code: 200, corps: jeu.t('mise-a-jour-appli-accueil', { version, prets: base.prets.length }) };
-    if (chemin === '/prets')
+    if (!base) return { code: 500, body: 'Internal Server Error: database is missing' };
+    if (path === '/' || path === '') return { code: 200, body: game.t('mise-a-jour-appli-accueil', { version, prets: base.loans.length }) };
+    if (path === '/prets')
       return {
         code: 200,
-        corps: [
-          jeu.t('mise-a-jour-appli-prets', { prets: base.prets.length }),
-          ...base.prets.slice(0, 5).map((p) => `  ${p.outil} — ${p.personne} — ${p.jusqua}`),
+        body: [
+          game.t('mise-a-jour-appli-prets', { prets: base.loans.length }),
+          ...base.loans.slice(0, 5).map((p) => `  ${p.tool} — ${p.person} — ${p.until}`),
         ].join('\n'),
       };
-    return { code: 404, corps: 'Not Found' };
+    return { code: 404, body: 'Not Found' };
   },
 };
 
-const comptes = (): Comptes => ({
-  utilisateurs: { root: { uid: 0, groupe: 'root', maison: '/root' }, vous: { uid: 1000, groupe: 'vous' }, yasmine: { uid: 1001, groupe: 'yasmine' } },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    sudo: { gid: 27, membres: ['vous', 'yasmine'] },
-    docker: { gid: 999, membres: ['yasmine'] },
-    vous: { gid: 1000, membres: [] },
-    yasmine: { gid: 1001, membres: [] },
+const accounts = (): Accounts => ({
+  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' }, yasmine: { uid: 1001, group: 'yasmine' } },
+  groups: {
+    root: { gid: 0, members: [] },
+    sudo: { gid: 27, members: ['vous', 'yasmine'] },
+    docker: { gid: 999, members: ['yasmine'] },
+    vous: { gid: 1000, members: [] },
+    yasmine: { gid: 1001, members: [] },
   },
 });
 
-const image = (tag: string, cree: number): Image => ({
-  depot: DEPOT,
+const image = (tag: string, created: number): Image => ({
+  repo: REPO,
   tag,
-  id: identifiant(`${DEPOT}:${tag}`),
-  taille: tag === '1.4' ? 148_200_000 : 151_600_000,
-  cree,
-  appli: 'outiltheque',
+  id: identifier(`${REPO}:${tag}`),
+  size: tag === '1.4' ? 148_200_000 : 151_600_000,
+  created,
+  app: 'outiltheque',
   port: 8080,
-  commande: '/usr/local/bin/outiltheque serve',
+  command: '/usr/local/bin/outiltheque serve',
 });
 
-const etatDocker = (t: (id: string) => string): EtatDocker => {
+const dockerState = (t: (id: string) => string): DockerState => {
   const v14 = image('1.4', Date.UTC(2026, 11, 2, 10, 0, 0));
   const v15 = image('1.5', Date.UTC(2027, 3, 1, 9, 0, 0));
-  const base = ecrireBase({ schema: 3, prets: prets(t('mise-a-jour-outils').split(', '), t('mise-a-jour-personnes').split(', ')) });
+  const base = writeBase({ schema: 3, loans: loans(t('mise-a-jour-outils').split(', '), t('mise-a-jour-personnes').split(', ')) });
   // Lancé il y a deux semaines : docker run -d --name outiltheque -p 8080:8080 …:1.4
-  const ancien: Conteneur = {
-    id: identifiant('conteneur-outiltheque-1.4'),
-    nom: 'outiltheque',
-    image: nomImage(v14),
-    etat: 'running',
+  const old: Container = {
+    id: identifier('conteneur-outiltheque-1.4'),
+    name: 'outiltheque',
+    image: imageName(v14),
+    state: 'running',
     code: 0,
-    ports: [{ ip: '0.0.0.0', hote: 8080, conteneur: 8080 }],
-    montages: [],
+    ports: [{ ip: '0.0.0.0', host: 8080, container: 8080 }],
+    mounts: [],
     env: {},
-    redemarrage: 'no',
-    cree: Date.UTC(2027, 2, 20, 14, 2, 0),
-    debut: Date.UTC(2027, 2, 31, 8, 40, 0),
-    fin: Date.UTC(2027, 2, 31, 8, 39, 0),
-    couche: { [BASE]: base },
-    journal: [
-      { temps: Date.UTC(2027, 2, 20, 14, 2, 1), texte: 'outiltheque 1.4.0 starting (pid 1)' },
-      { temps: Date.UTC(2027, 2, 20, 14, 2, 1), texte: `No database found at ${BASE}, creating a new one` },
-      { temps: Date.UTC(2027, 2, 20, 14, 2, 2), texte: 'Listening on http://0.0.0.0:8080' },
-      { temps: Date.UTC(2027, 2, 31, 8, 40, 1), texte: 'outiltheque 1.4.0 starting (pid 1)' },
-      { temps: Date.UTC(2027, 2, 31, 8, 40, 1), texte: `Database ready: ${PRETS} loans` },
-      { temps: Date.UTC(2027, 2, 31, 8, 40, 2), texte: 'Listening on http://0.0.0.0:8080' },
+    reboot: 'no',
+    created: Date.UTC(2027, 2, 20, 14, 2, 0),
+    start: Date.UTC(2027, 2, 31, 8, 40, 0),
+    end: Date.UTC(2027, 2, 31, 8, 39, 0),
+    layer: { [BASE]: base },
+    log: [
+      { time: Date.UTC(2027, 2, 20, 14, 2, 1), text: 'outiltheque 1.4.0 starting (pid 1)' },
+      { time: Date.UTC(2027, 2, 20, 14, 2, 1), text: `No database found at ${BASE}, creating a new one` },
+      { time: Date.UTC(2027, 2, 20, 14, 2, 2), text: 'Listening on http://0.0.0.0:8080' },
+      { time: Date.UTC(2027, 2, 31, 8, 40, 1), text: 'outiltheque 1.4.0 starting (pid 1)' },
+      { time: Date.UTC(2027, 2, 31, 8, 40, 1), text: `Database ready: ${LOANS} loans` },
+      { time: Date.UTC(2027, 2, 31, 8, 40, 2), text: 'Listening on http://0.0.0.0:8080' },
     ],
     ip: '172.17.0.2',
   };
   return {
-    images: { [nomImage(v14)]: v14 },
-    registre: { [nomImage(v14)]: v14, [nomImage(v15)]: v15, [`${DEPOT}:latest`]: { ...v15, tag: 'latest' } },
-    conteneurs: [ancien],
+    images: { [imageName(v14)]: v14 },
+    registry: { [imageName(v14)]: v14, [imageName(v15)]: v15, [`${REPO}:latest`]: { ...v15, tag: 'latest' } },
+    containers: [old],
     volumes: {},
-    prochain: 1,
+    next: 1,
   };
 };
 
-const etat = (j: Jeu) => docker(j)!;
+const state = (j: Game) => docker(j)!;
 // Où se trouvent les prêts : une base qui en contient autant, n'importe où.
-const baseComplete = (contenu: string | null) => (lireBase(contenu)?.prets.length ?? 0) === PRETS;
+const baseComplete = (content: string | null) => (readBase(content)?.loans.length ?? 0) === LOANS;
 
-function quelquePart(j: Jeu): boolean {
-  const e = etat(j);
-  if (e.conteneurs.some((c) => baseComplete(lireDans(j, c, BASE)))) return true;
-  if (Object.values(e.volumes).some((v) => Object.values(v.donnees).some(baseComplete))) return true;
-  const chercher = (chemin: string, profondeur: number): boolean => {
-    const n = j.trouver(chemin);
-    if (!n || profondeur > 8) return false;
-    if (n.type === 'fichier') return baseComplete(j.lire(chemin));
-    return Object.keys(n.enfants).some((k) => chercher(`${chemin === '/' ? '' : chemin}/${k}`, profondeur + 1));
+function somePart(j: Game): boolean {
+  const e = state(j);
+  if (e.containers.some((c) => baseComplete(readIn(j, c, BASE)))) return true;
+  if (Object.values(e.volumes).some((v) => Object.values(v.data).some(baseComplete))) return true;
+  const search = (path: string, depth: number): boolean => {
+    const n = j.find(path);
+    if (!n || depth > 8) return false;
+    if (n.type === 'fichier') return baseComplete(j.read(path));
+    return Object.keys(n.children).some((k) => search(`${path === '/' ? '' : path}/${k}`, depth + 1));
   };
-  return chercher('/home', 0) || chercher('/srv', 0) || chercher('/tmp', 0) || chercher('/root', 0) || chercher('/opt', 0);
+  return search('/home', 0) || search('/srv', 0) || search('/tmp', 0) || search('/root', 0) || search('/opt', 0);
 }
 
 // Le conteneur à jour qui tourne et publie 8080.
-const nouveau = (j: Jeu) =>
-  etat(j).conteneurs.find((c) => c.etat === 'running' && c.image.endsWith(':1.5') && c.ports.some((p) => p.hote === 8080 && p.conteneur === 8080));
-const surMontage = (c: Conteneur) => c.montages.some((m) => BASE.startsWith(m.cible.replace(/\/$/, '') + '/'));
+const fresh = (j: Game) =>
+  state(j).containers.find((c) => c.state === 'running' && c.image.endsWith(':1.5') && c.ports.some((p) => p.host === 8080 && p.container === 8080));
+const onMount = (c: Container) => c.mounts.some((m) => BASE.startsWith(m.target.replace(/\/$/, '') + '/'));
 
-export const miseAJour: Chapitre = {
+export const update: Chapter = {
   id: 'mise-a-jour',
-  numero: 1,
-  commandes: [
+  number: 1,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -199,96 +199,96 @@ export const miseAJour: Chapitre = {
     'journalctl',
     'reboot',
   ],
-  maison: M,
-  accueil: 'message_de_yasmine.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_de_yasmine.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'fablab-2027',
-  comptes,
-  etat: (t) => ({
-    systemd: nouveauSystemd('fabrique', Date.UTC(2027, 2, 31, 8, 39, 0), Date.UTC(2027, 3, 3, 10, 0, 0), {
+  password: 'fablab-2027',
+  accounts,
+  state: (t) => ({
+    systemd: newSystemd('fabrique', Date.UTC(2027, 2, 31, 8, 39, 0), Date.UTC(2027, 3, 3, 10, 0, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,
         executable: 'sshd',
-        processus: [{ pid: 610, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+        process: [{ pid: 610, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
       containerd: {
         description: 'containerd container runtime',
         active: true,
         executable: 'containerd',
-        processus: [{ pid: 655, utilisateur: 'root', cpu: 0.3, mem: 1.2, commande: '/usr/bin/containerd' }],
+        process: [{ pid: 655, user: 'root', cpu: 0.3, mem: 1.2, command: '/usr/bin/containerd' }],
       },
       docker: {
         description: 'Docker Application Container Engine',
         active: true,
         executable: 'dockerd',
-        processus: [
-          { pid: 702, utilisateur: 'root', cpu: 0.4, mem: 2.1, commande: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
+        process: [
+          { pid: 702, user: 'root', cpu: 0.4, mem: 2.1, command: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
         ],
         // Au démarrage de la machine, docker relance les conteneurs selon --restart.
-        charger: (j) => demarrerDocker(j),
+        load: (j) => startDocker(j),
       },
     }),
     processus: [
-      { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
-      { pid: 702, utilisateur: 'root', cpu: 0.4, mem: 2.1, commande: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
-      { pid: 1188, utilisateur: '1000', cpu: 0.8, mem: 3.4, commande: '/usr/local/bin/outiltheque serve' },
+      { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
+      { pid: 702, user: 'root', cpu: 0.4, mem: 2.1, command: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
+      { pid: 1188, user: '1000', cpu: 0.8, mem: 3.4, command: '/usr/local/bin/outiltheque serve' },
     ],
-    docker: { ...etatDocker(t), noms: ['fabrique', 'fabrique.internal', '192.0.2.15'] },
+    docker: { ...dockerState(t), names: ['fabrique', 'fabrique.internal', '192.0.2.15'] },
   }),
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
-    const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
-    return lieu({
-      etc: lieu({ ...fichiersComptes(), hostname: f('fabrique', { lignes: true, proprio: 'root' }) }),
-      home: lieu({
+  createWorld: (t) => {
+    const root = { owner: 'root' };
+    const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
+    return place({
+      etc: place({ ...accountsFiles(), hostname: f('fabrique', { lines: true, owner: 'root' }) }),
+      home: place({
         vous: d({ 'message_de_yasmine.txt': f(t('mise-a-jour-message-de-yasmine')), 'notes_docker.txt': f(t('mise-a-jour-notes-docker')) }),
       }),
-      srv: lieu({}),
-      var: lieu({ lib: lieu({ docker: lieu({}, { proprio: 'root', mode: 'rwx--x---' }) }) }),
+      srv: place({}),
+      var: place({ lib: place({ docker: place({}, { owner: 'root', mode: 'rwx--x---' }) }) }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'couche',
       // docker inspect montre un conteneur sans volume ni dossier monté.
       condition: (j) =>
-        j.derniere.ligne.includes('docker') &&
-        (j.derniere.sortie.includes('"Mounts": []') || (j.derniere.ligne.includes('Mounts') && j.derniere.sortie.trim() === '[]')),
+        j.last.line.includes('docker') &&
+        (j.last.output.includes('"Mounts": []') || (j.last.line.includes('Mounts') && j.last.output.trim() === '[]')),
       message: (j) => j.t('mise-a-jour-evenement-couche'),
     },
     {
       id: 'port-occupe',
-      condition: (j) => j.derniere.erreurs.some((e) => e.includes('port is already allocated')),
+      condition: (j) => j.last.errors.some((e) => e.includes('port is already allocated')),
       message: (j) => j.t('mise-a-jour-evenement-port-occupe'),
     },
     {
       id: 'perdu',
-      condition: (j) => !quelquePart(j),
+      condition: (j) => !somePart(j),
       message: (j) => j.t('mise-a-jour-evenement-perdu'),
     },
     {
       id: 'neuf-vide',
       condition: (j) => {
-        const c = nouveau(j);
-        return !!c && (lireBase(lireDans(j, c, BASE))?.prets.length ?? 0) === 0;
+        const c = fresh(j);
+        return !!c && (readBase(readIn(j, c, BASE))?.loans.length ?? 0) === 0;
       },
       message: (j) => j.t('mise-a-jour-evenement-neuf-vide'),
     },
     {
       id: 'sans-redemarrage',
       condition: (j) => {
-        const c = nouveau(j);
-        return !!c && surMontage(c) && baseComplete(lireDans(j, c, BASE)) && !['always', 'unless-stopped'].includes(c.redemarrage);
+        const c = fresh(j);
+        return !!c && onMount(c) && baseComplete(readIn(j, c, BASE)) && !['always', 'unless-stopped'].includes(c.reboot);
       },
       message: (j) => j.t('mise-a-jour-evenement-sans-redemarrage'),
     },
     {
       id: 'fin',
       condition: (j) => {
-        const c = nouveau(j);
-        return !!c && surMontage(c) && baseComplete(lireDans(j, c, BASE)) && ['always', 'unless-stopped'].includes(c.redemarrage);
+        const c = fresh(j);
+        return !!c && onMount(c) && baseComplete(readIn(j, c, BASE)) && ['always', 'unless-stopped'].includes(c.reboot);
       },
       message: (j) => j.t('mise-a-jour-evenement-fin'),
     },

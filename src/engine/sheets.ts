@@ -4,32 +4,32 @@
 // (absentes des chapitres qui le précèdent dans l'ordre du jeu), et une durée
 // indicative, tirée du nombre d'étapes que le jeu vérifie.
 
-import { HISTOIRES } from './chapters';
-import type { Chapitre, Histoire } from './world';
+import { STORIES } from './chapters';
+import type { Chapter, Story } from './world';
 
-export interface Fiche {
-  histoire: Histoire;
-  chapitre: Chapitre;
+export interface Sheet {
+  story: Story;
+  chapter: Chapter;
   // Le chapitre à finir avant (null : aucun dans l'histoire).
-  avant: Chapitre | null;
-  nouvelles: string[];
+  before: Chapter | null;
+  fresh: string[];
   // Minutes, arrondies à 5.
-  duree: number;
+  duration: number;
 }
 
 // Les commandes de tous les jours, qu'on ne présente plus après l'Effaceur.
-const COURANTES = ['ls', 'cd', 'pwd', 'cat', 'less', 'id', 'whoami', 'clear', 'exit', 'help', 'man'];
+const CURRENT = ['ls', 'cd', 'pwd', 'cat', 'less', 'id', 'whoami', 'clear', 'exit', 'help', 'man'];
 
 /** Les fiches de toutes les histoires, dans l'ordre du jeu. */
-export function fiches(): Fiche[] {
-  const vues = new Set<string>();
-  return HISTOIRES.flatMap((histoire) =>
-    histoire.chapitres.map((chapitre, i) => {
-      const nouvelles = chapitre.commandes.filter((c) => !vues.has(c) && (histoire.id === 'effaceur' || !COURANTES.includes(c)));
-      chapitre.commandes.forEach((c) => vues.add(c));
+export function allSheets(): Sheet[] {
+  const views = new Set<string>();
+  return STORIES.flatMap((story) =>
+    story.chapters.map((chapter, i) => {
+      const fresh = chapter.commands.filter((c) => !views.has(c) && (story.id === 'effaceur' || !CURRENT.includes(c)));
+      chapter.commands.forEach((c) => views.add(c));
       // Une dizaine de minutes pour lire et s'installer, puis environ trois par étape vérifiée.
-      const duree = Math.max(15, Math.round((10 + 3 * chapitre.evenements.length) / 5) * 5);
-      return { histoire, chapitre, avant: i > 0 ? histoire.chapitres[i - 1] : null, nouvelles, duree };
+      const duration = Math.max(15, Math.round((10 + 3 * chapter.events.length) / 5) * 5);
+      return { story, chapter, before: i > 0 ? story.chapters[i - 1] : null, fresh, duration };
     }),
   );
 }

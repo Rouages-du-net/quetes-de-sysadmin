@@ -12,28 +12,28 @@
 // Sources : https://raid.wiki.kernel.org/index.php/Replacing_a_failed_drive,
 // sfdisk(8), mdadm(8), https://www.gnu.org/software/grub/manual/grub/html_node/BIOS-installation.html
 
-import { f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { majDev, saine } from '../storage';
-import { avantCommandeLabo, comptesLabo, etatLabo, M, MOT_DE_PASSE, mondeLabo, noyauLabo, st } from './lab';
+import { f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { devUpdate, healthy } from '../storage';
+import { beforeLabCommand, labAccounts, labState, M, PASSWORD, labWorld, labKernel, st } from './lab';
 
-const sdb = (j: Jeu) => st(j).disques.sdb;
+const sdb = (j: Game) => st(j).disks.sdb;
 // sdb découpé comme sda : mêmes partitions, mêmes types, mêmes tailles.
-const decoupe = (j: Jeu) => {
-  const a = st(j).disques.sda.partitions;
+const split = (j: Game) => {
+  const a = st(j).disks.sda.partitions;
   const b = sdb(j).partitions;
-  return a.length === b.length && a.every((p, i) => b[i].type === p.type && b[i].secteurs === p.secteurs && b[i].numero === p.numero);
+  return a.length === b.length && a.every((p, i) => b[i].type === p.type && b[i].sectors === p.sectors && b[i].number === p.number);
 };
-const dans = (j: Jeu, grappe: string, part: string) => st(j).grappes[grappe].membres.some((m) => m.part === part && m.etat !== 'defectueux');
-const ajoutes = (j: Jeu) => dans(j, 'md0', 'sdb2') && dans(j, 'md1', 'sdb3');
-const reconstruit = (j: Jeu) => saine(st(j).grappes.md0) && saine(st(j).grappes.md1) && ajoutes(j);
-const disqueEntier = (j: Jeu) => Object.values(st(j).grappes).some((g) => g.membres.some((m) => m.part === 'sdb'));
-const grub = (j: Jeu) => st(j).grub.includes('sdb');
+const inside = (j: Game, array: string, part: string) => st(j).arrays[array].members.some((m) => m.part === part && m.state !== 'defectueux');
+const added = (j: Game) => inside(j, 'md0', 'sdb2') && inside(j, 'md1', 'sdb3');
+const rebuilt = (j: Game) => healthy(st(j).arrays.md0) && healthy(st(j).arrays.md1) && added(j);
+const wholeDisk = (j: Game) => Object.values(st(j).arrays).some((g) => g.members.some((m) => m.part === 'sdb'));
+const grub = (j: Game) => st(j).grub.includes('sdb');
 
-export const disqueNeuf: Chapitre = {
+export const newDisk: Chapter = {
   id: 'disque-neuf',
-  numero: 2,
-  commandes: [
+  number: 2,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -57,49 +57,49 @@ export const disqueNeuf: Chapitre = {
     'sfdisk',
     'grub-install',
   ],
-  maison: M,
-  accueil: 'message_d_odile.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_d_odile.txt',
+  names: true,
   final: 'fin',
-  etapes: ['neuf', 'table', 'ajoutes', 'reconstruit', 'grub', 'fin'],
-  motDePasse: MOT_DE_PASSE,
-  comptes: comptesLabo,
-  etat: () => etatLabo('neuf'),
-  initialiser: (j) => {
-    noyauLabo(j, 'neuf');
-    majDev(j);
+  steps: ['neuf', 'table', 'ajoutes', 'reconstruit', 'grub', 'fin'],
+  password: PASSWORD,
+  accounts: labAccounts,
+  state: () => labState('neuf'),
+  initialise: (j) => {
+    labKernel(j, 'neuf');
+    devUpdate(j);
   },
-  creerMonde: (t) =>
-    mondeLabo(t, {
+  createWorld: (t) =>
+    labWorld(t, {
       'message_d_odile.txt': f(t('disque-neuf-message-d-odile')),
-      'procedure_hebergeur.txt': f(t('labo-procedure-hebergeur'), { lignes: true }),
+      'procedure_hebergeur.txt': f(t('labo-procedure-hebergeur'), { lines: true }),
     }),
-  avantCommande: avantCommandeLabo,
-  apresCommande: (j) => majDev(j),
-  evenements: [
+  beforeCommand: beforeLabCommand,
+  afterCommand: (j) => devUpdate(j),
+  events: [
     {
       id: 'neuf',
-      condition: (j) => /sdb\s+8:16\s+0\s+1\.8T\s+0 disk\s*$/m.test(j.derniere.sortie) || /Disk \/dev\/sdb: [^\n]*\nDisk model: [^\n]*\n(?![\s\S]*Disklabel)/.test(j.derniere.sortie),
+      condition: (j) => /sdb\s+8:16\s+0\s+1\.8T\s+0 disk\s*$/m.test(j.last.output) || /Disk \/dev\/sdb: [^\n]*\nDisk model: [^\n]*\n(?![\s\S]*Disklabel)/.test(j.last.output),
       message: (j) => j.t('disque-neuf-evenement-neuf'),
     },
     {
       id: 'trop-tot',
-      condition: (j) => j.derniere.erreurs.some((e) => /Cannot find \/dev\/sdb\d/.test(e)),
+      condition: (j) => j.last.errors.some((e) => /Cannot find \/dev\/sdb\d/.test(e)),
       message: (j) => j.t('disque-neuf-evenement-trop-tot'),
     },
     {
       id: 'sens',
-      condition: (j) => j.derniere.erreurs.some((e) => e.includes('This disk is currently in use')),
+      condition: (j) => j.last.errors.some((e) => e.includes('This disk is currently in use')),
       message: (j) => j.t('disque-neuf-evenement-sens'),
     },
-    { id: 'disque-entier', condition: disqueEntier, message: (j) => j.t('disque-neuf-evenement-disque-entier') },
-    { id: 'table', condition: decoupe, message: (j) => j.t('disque-neuf-evenement-table') },
-    { id: 'ajoutes', condition: ajoutes, message: (j) => j.t('disque-neuf-evenement-ajoutes') },
-    { id: 'reconstruit', condition: reconstruit, message: (j) => j.t('disque-neuf-evenement-reconstruit') },
+    { id: 'disque-entier', condition: wholeDisk, message: (j) => j.t('disque-neuf-evenement-disque-entier') },
+    { id: 'table', condition: split, message: (j) => j.t('disque-neuf-evenement-table') },
+    { id: 'ajoutes', condition: added, message: (j) => j.t('disque-neuf-evenement-ajoutes') },
+    { id: 'reconstruit', condition: rebuilt, message: (j) => j.t('disque-neuf-evenement-reconstruit') },
     { id: 'grub', condition: grub, message: (j) => j.t('disque-neuf-evenement-grub') },
     {
       id: 'fin',
-      condition: (j) => decoupe(j) && reconstruit(j) && grub(j) && !disqueEntier(j),
+      condition: (j) => split(j) && rebuilt(j) && grub(j) && !wholeDisk(j),
       message: (j) => j.t('disque-neuf-evenement-fin'),
     },
   ],

@@ -3,10 +3,10 @@
 // script (src/interface/classroom.ts) le monte dans #classe. Rien n'est envoyé :
 // les fichiers sont lus dans le navigateur de l'enseignant·e.
 interface Props {
-  langue: 'fr' | 'en';
+  lang: 'fr' | 'en';
 }
-const { langue } = Astro.props;
-const fr = langue === 'fr';
+const { lang } = Astro.props;
+const fr = lang === 'fr';
 ---
 <h1>{fr ? 'Tableau de classe' : 'Class table'}</h1>
 {fr ? (
@@ -30,10 +30,10 @@ const fr = langue === 'fr';
     : 'Nothing is sent: the files are read in this browser, and the table goes away when you close the page (download it as CSV to keep it). It is not proof of work: a file can be edited, a code can be copied.'}
 </p>
 <noscript><p class="avertissement">{fr ? 'Le tableau de classe a besoin de JavaScript.' : 'The class table needs JavaScript.'}</p></noscript>
-<div id="classe" data-langue={langue}></div>
+<div id="classe" data-lang={lang}></div>
 <script>
-  import { monterClasse } from '../interface/classroom';
-  import { langueDuJeu } from '../texts';
-  const racine = document.getElementById('classe');
-  if (racine) monterClasse(racine, langueDuJeu(racine.dataset.langue));
+  import { mountClass } from '../interface/classroom';
+  import { gameLanguage } from '../texts';
+  const root = document.getElementById('classe');
+  if (root) mountClass(root, gameLanguage(root.dataset.lang));
 </script>

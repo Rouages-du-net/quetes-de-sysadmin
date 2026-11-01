@@ -12,10 +12,10 @@
 // de sync_first ni de sauvegarde distante (user@host:) ; messages d'erreur
 // proches de ceux de rsnapshot 1.4.
 
-import type { Dossier, Fichier, Noeud } from '../world';
+import type { Directory, File, Node } from '../world';
 import type { Shell } from '../shell';
-import { contenu, lisible } from '../tools';
-import type { Commande } from './index';
+import { content, readable } from '../tools';
+import type { Command } from './index';
 
 export const CONF = '/etc/rsnapshot.conf';
 
@@ -93,7 +93,7 @@ backup\t/home/\t\tlocalhost/
 backup\t/etc/\t\tlocalhost/
 backup\t/usr/local/\tlocalhost/`;
 
-const CONNUES = [
+const KNOWN = [
   'config_version',
   'snapshot_root',
   'no_create_root',
@@ -121,48 +121,48 @@ const CONNUES = [
 ];
 
 export interface ConfRsnapshot {
-  racine: string;
-  niveaux: { nom: string; nombre: number }[];
-  sauvegardes: { source: string; destination: string }[];
-  sansCreerRacine: boolean;
+  root: string;
+  levels: { name: string; count: number }[];
+  backups: { source: string; destination: string }[];
+  withoutRootCreate: boolean;
 }
 
 /** Lit la configuration ; renvoie les erreurs au format de rsnapshot. */
-export function lireConf(texte: string, fichier = CONF): { conf: ConfRsnapshot; erreurs: string[] } {
-  const conf: ConfRsnapshot = { racine: '', niveaux: [], sauvegardes: [], sansCreerRacine: false };
-  const erreurs: string[] = [];
-  const erreur = (numero: number, ligne: string, raison: string) =>
-    erreurs.push(`ERROR: ${fichier} on line ${numero}:`, `ERROR: ${ligne} - ${raison}`);
-  texte.split('\n').forEach((ligne, i) => {
-    if (!ligne.trim() || ligne.trimStart().startsWith('#')) return;
-    const [cle, ...valeurs] = ligne.replace(/\s+$/, '').split(/\t+/);
-    if (!CONNUES.includes(cle)) return erreur(i + 1, ligne.trim(), 'Unknown config directive');
-    if (cle === 'snapshot_root') {
-      if (!valeurs[0]?.startsWith('/')) return erreur(i + 1, ligne.trim(), 'snapshot_root must be a full path');
-      conf.racine = valeurs[0].replace(/\/?$/, '/');
-    } else if (cle === 'retain' || cle === 'interval') {
-      const [nom, nombre] = valeurs;
-      if (!nom || !/^[a-zA-Z0-9_]+$/.test(nom)) return erreur(i + 1, ligne.trim(), 'Interval must be alphanumeric');
-      if (!/^\d+$/.test(nombre ?? '') || Number(nombre) < 1)
-        return erreur(i + 1, ligne.trim(), `"${nombre ?? ''}" is not a legal value for a retention count`);
-      conf.niveaux.push({ nom, nombre: Number(nombre) });
-    } else if (cle === 'backup') {
-      const [source, destination] = valeurs;
-      if (!source || !destination) return erreur(i + 1, ligne.trim(), 'backup point needs a source and a destination');
-      if (!source.startsWith('/')) return erreur(i + 1, ligne.trim(), `Source directory "${source}" doesn't exist`);
-      if (destination.startsWith('/')) return erreur(i + 1, ligne.trim(), `Backup destination ${destination} must be a local, relative path`);
-      conf.sauvegardes.push({ source: source.replace(/\/?$/, '/'), destination: destination.replace(/\/?$/, '/') });
-    } else if (cle === 'no_create_root') conf.sansCreerRacine = valeurs[0] === '1';
+export function readConf(text: string, file = CONF): { conf: ConfRsnapshot; errors: string[] } {
+  const conf: ConfRsnapshot = { root: '', levels: [], backups: [], withoutRootCreate: false };
+  const errors: string[] = [];
+  const error = (number: number, line: string, reason: string) =>
+    errors.push(`ERROR: ${file} on line ${number}:`, `ERROR: ${line} - ${reason}`);
+  text.split('\n').forEach((line, i) => {
+    if (!line.trim() || line.trimStart().startsWith('#')) return;
+    const [key, ...values] = line.replace(/\s+$/, '').split(/\t+/);
+    if (!KNOWN.includes(key)) return error(i + 1, line.trim(), 'Unknown config directive');
+    if (key === 'snapshot_root') {
+      if (!values[0]?.startsWith('/')) return error(i + 1, line.trim(), 'snapshot_root must be a full path');
+      conf.root = values[0].replace(/\/?$/, '/');
+    } else if (key === 'retain' || key === 'interval') {
+      const [name, count] = values;
+      if (!name || !/^[a-zA-Z0-9_]+$/.test(name)) return error(i + 1, line.trim(), 'Interval must be alphanumeric');
+      if (!/^\d+$/.test(count ?? '') || Number(count) < 1)
+        return error(i + 1, line.trim(), `"${count ?? ''}" is not a legal value for a retention count`);
+      conf.levels.push({ name, count: Number(count) });
+    } else if (key === 'backup') {
+      const [source, destination] = values;
+      if (!source || !destination) return error(i + 1, line.trim(), 'backup point needs a source and a destination');
+      if (!source.startsWith('/')) return error(i + 1, line.trim(), `Source directory "${source}" doesn't exist`);
+      if (destination.startsWith('/')) return error(i + 1, line.trim(), `Backup destination ${destination} must be a local, relative path`);
+      conf.backups.push({ source: source.replace(/\/?$/, '/'), destination: destination.replace(/\/?$/, '/') });
+    } else if (key === 'no_create_root') conf.withoutRootCreate = values[0] === '1';
   });
-  if (!erreurs.length) {
-    if (!conf.racine) erreurs.push('ERROR: snapshot_root was not defined. rsnapshot can not continue.');
-    if (!conf.niveaux.length) erreurs.push('ERROR: At least one backup level must be set. rsnapshot can not continue.');
-    if (!conf.sauvegardes.length) erreurs.push('ERROR: At least one backup point must be set. rsnapshot can not continue.');
+  if (!errors.length) {
+    if (!conf.root) errors.push('ERROR: snapshot_root was not defined. rsnapshot can not continue.');
+    if (!conf.levels.length) errors.push('ERROR: At least one backup level must be set. rsnapshot can not continue.');
+    if (!conf.backups.length) errors.push('ERROR: At least one backup point must be set. rsnapshot can not continue.');
   }
-  return { conf, erreurs };
+  return { conf, errors };
 }
 
-const BANNIERE = (args: string[]) =>
+const BANNER = (args: string[]) =>
   [
     '----------------------------------------------------------------------------',
     'rsnapshot encountered an error! The program was invoked with these options:',
@@ -171,159 +171,159 @@ const BANNIERE = (args: string[]) =>
   ].join('\n');
 
 // Une copie par liens physiques (cp -al) : de nouveaux lieux, les mêmes fichiers.
-const copieLiee = (n: Dossier): Dossier => ({
+const linkedCopy = (n: Directory): Directory => ({
   ...n,
-  enfants: Object.fromEntries(Object.entries(n.enfants).map(([k, e]) => [k, e.type === 'dossier' ? copieLiee(e) : e])),
+  children: Object.fromEntries(Object.entries(n.children).map(([k, e]) => [k, e.type === 'dossier' ? linkedCopy(e) : e])),
 });
 
 // rsync -a --delete de `source` vers `cible` : un fichier inchangé garde son
 // nœud (il reste lié aux instantanés précédents), un fichier changé est remplacé.
-function synchroniser(jeu: Shell, source: Dossier, cible: Dossier) {
-  for (const nom of Object.keys(cible.enfants)) if (!(nom in source.enfants)) delete cible.enfants[nom];
-  for (const [nom, e] of Object.entries(source.enfants)) {
-    const ici = cible.enfants[nom];
+function synchronise(game: Shell, source: Directory, target: Directory) {
+  for (const name of Object.keys(target.children)) if (!(name in source.children)) delete target.children[name];
+  for (const [name, e] of Object.entries(source.children)) {
+    const here = target.children[name];
     if (e.type === 'dossier') {
-      const lieu =
-        ici?.type === 'dossier' ? ici : (cible.enfants[nom] = { type: 'dossier', enfants: {}, proprio: e.proprio, groupe: e.groupe, mode: e.mode });
-      synchroniser(jeu, e, lieu);
-    } else if (!(ici?.type === 'fichier' && contenu(ici, jeu) === contenu(e, jeu) && ici.taille === e.taille)) {
-      cible.enfants[nom] = { ...(e as Fichier), contenu: contenu(e, jeu) };
+      const place =
+        here?.type === 'dossier' ? here : (target.children[name] = { type: 'dossier', children: {}, owner: e.owner, group: e.group, mode: e.mode });
+      synchronise(game, e, place);
+    } else if (!(here?.type === 'fichier' && content(here, game) === content(e, game) && here.size === e.size)) {
+      target.children[name] = { ...(e as File), content: content(e, game) };
     }
   }
 }
 
 // Le lieu `chemin` (absolu), créé au besoin.
-function lieu(jeu: Shell, chemin: string): Dossier {
-  let n = jeu.trouver('/') as Dossier;
-  for (const part of chemin.split('/').filter(Boolean)) {
-    const e = n.enfants[part];
-    n = e?.type === 'dossier' ? e : (n.enfants[part] = { type: 'dossier', enfants: {}, proprio: 'root', mode: 'rwxr-xr-x' });
+function place(game: Shell, path: string): Directory {
+  let n = game.find('/') as Directory;
+  for (const part of path.split('/').filter(Boolean)) {
+    const e = n.children[part];
+    n = e?.type === 'dossier' ? e : (n.children[part] = { type: 'dossier', children: {}, owner: 'root', mode: 'rwxr-xr-x' });
   }
   return n;
 }
 
 /** Fait tourner un niveau (rsnapshot daily) ; renvoie les commandes équivalentes. */
-export function tourner(jeu: Shell, conf: ConfRsnapshot, niveau: string, essai: boolean): { commandes: string[]; erreur?: string } {
-  const i = conf.niveaux.findIndex((n) => n.nom === niveau);
-  const { nombre } = conf.niveaux[i];
-  const r = conf.racine;
-  const commandes = ['echo 4242 > /var/run/rsnapshot.pid'];
-  const existe = (k: number, nom = niveau) => jeu.trouver(`${r}${nom}.${k}`)?.type === 'dossier';
-  if (!jeu.existe(r.replace(/\/$/, '') || '/')) {
-    if (conf.sansCreerRacine) return { commandes, erreur: 'rsnapshot refuses to create snapshot_root when no_create_root is enabled' };
-    commandes.push(`mkdir -m 0700 -p ${r}`);
-    if (!essai) {
-      const n = lieu(jeu, r);
+export function run(game: Shell, conf: ConfRsnapshot, level: string, trial: boolean): { commands: string[]; error?: string } {
+  const i = conf.levels.findIndex((n) => n.name === level);
+  const { count } = conf.levels[i];
+  const r = conf.root;
+  const commands = ['echo 4242 > /var/run/rsnapshot.pid'];
+  const exists = (k: number, name = level) => game.find(`${r}${name}.${k}`)?.type === 'dossier';
+  if (!game.exists(r.replace(/\/$/, '') || '/')) {
+    if (conf.withoutRootCreate) return { commands, error: 'rsnapshot refuses to create snapshot_root when no_create_root is enabled' };
+    commands.push(`mkdir -m 0700 -p ${r}`);
+    if (!trial) {
+      const n = place(game, r);
       n.mode = 'rwx------';
     }
   }
-  const racine = () => lieu(jeu, r);
+  const root = () => place(game, r);
   // Un niveau plus grand : il lui faut le plus vieux instantané du niveau d'avant.
   if (i > 0) {
-    const avant = conf.niveaux[i - 1];
-    const plusVieux = `${avant.nom}.${avant.nombre - 1}`;
-    if (!existe(avant.nombre - 1, avant.nom)) return { commandes: [...commandes, `${r}${plusVieux} not present (yet), nothing to copy`] };
+    const before = conf.levels[i - 1];
+    const moreOld = `${before.name}.${before.count - 1}`;
+    if (!exists(before.count - 1, before.name)) return { commands: [...commands, `${r}${moreOld} not present (yet), nothing to copy`] };
   }
-  if (existe(nombre - 1)) {
-    commandes.push(`/bin/rm -rf ${r}${niveau}.${nombre - 1}/`);
-    if (!essai) delete racine().enfants[`${niveau}.${nombre - 1}`];
+  if (exists(count - 1)) {
+    commands.push(`/bin/rm -rf ${r}${level}.${count - 1}/`);
+    if (!trial) delete root().children[`${level}.${count - 1}`];
   }
-  for (let k = nombre - 2; k >= 0; k--)
-    if (existe(k)) {
-      commandes.push(`mv ${r}${niveau}.${k}/ ${r}${niveau}.${k + 1}/`);
-      if (!essai) {
-        const n = racine();
-        n.enfants[`${niveau}.${k + 1}`] = n.enfants[`${niveau}.${k}`];
-        delete n.enfants[`${niveau}.${k}`];
+  for (let k = count - 2; k >= 0; k--)
+    if (exists(k)) {
+      commands.push(`mv ${r}${level}.${k}/ ${r}${level}.${k + 1}/`);
+      if (!trial) {
+        const n = root();
+        n.children[`${level}.${k + 1}`] = n.children[`${level}.${k}`];
+        delete n.children[`${level}.${k}`];
       }
     }
   if (i > 0) {
-    const avant = conf.niveaux[i - 1];
-    commandes.push(`mv ${r}${avant.nom}.${avant.nombre - 1}/ ${r}${niveau}.0/`);
-    if (!essai) {
-      const n = racine();
-      n.enfants[`${niveau}.0`] = n.enfants[`${avant.nom}.${avant.nombre - 1}`];
-      delete n.enfants[`${avant.nom}.${avant.nombre - 1}`];
+    const before = conf.levels[i - 1];
+    commands.push(`mv ${r}${before.name}.${before.count - 1}/ ${r}${level}.0/`);
+    if (!trial) {
+      const n = root();
+      n.children[`${level}.0`] = n.children[`${before.name}.${before.count - 1}`];
+      delete n.children[`${before.name}.${before.count - 1}`];
     }
   } else {
-    if (existe(1) || (essai && existe(0))) {
-      commandes.push(`/bin/cp -al ${r}${niveau}.1 ${r}${niveau}.0`);
-      if (!essai) racine().enfants[`${niveau}.0`] = copieLiee(racine().enfants[`${niveau}.1`] as Dossier);
+    if (exists(1) || (trial && exists(0))) {
+      commands.push(`/bin/cp -al ${r}${level}.1 ${r}${level}.0`);
+      if (!trial) root().children[`${level}.0`] = linkedCopy(root().children[`${level}.1`] as Directory);
     } else {
-      commandes.push(`mkdir -m 0755 -p ${r}${niveau}.0/`);
-      if (!essai) racine().enfants[`${niveau}.0`] = { type: 'dossier', enfants: {}, proprio: 'root', mode: 'rwxr-xr-x' };
+      commands.push(`mkdir -m 0755 -p ${r}${level}.0/`);
+      if (!trial) root().children[`${level}.0`] = { type: 'dossier', children: {}, owner: 'root', mode: 'rwxr-xr-x' };
     }
-    for (const b of conf.sauvegardes) {
-      const dest = `${r}${niveau}.0/${b.destination}`;
-      commandes.push(`/usr/bin/rsync -a --delete --numeric-ids --relative --delete-excluded ${b.source} ${dest}`);
-      if (essai) continue;
-      const source = jeu.trouver(b.source);
-      if (source?.type !== 'dossier') return { commandes, erreur: `rsync: [sender] change_dir "${b.source}" failed: No such file or directory (2)` };
+    for (const b of conf.backups) {
+      const dest = `${r}${level}.0/${b.destination}`;
+      commands.push(`/usr/bin/rsync -a --delete --numeric-ids --relative --delete-excluded ${b.source} ${dest}`);
+      if (trial) continue;
+      const source = game.find(b.source);
+      if (source?.type !== 'dossier') return { commands, error: `rsync: [sender] change_dir "${b.source}" failed: No such file or directory (2)` };
       // --relative : le chemin complet de la source est recréé sous la destination.
-      synchroniser(jeu, source, lieu(jeu, `${dest}${b.source}`));
+      synchronise(game, source, place(game, `${dest}${b.source}`));
     }
-    commandes.push(`touch ${r}${niveau}.0/`);
+    commands.push(`touch ${r}${level}.0/`);
   }
-  commandes.push('rm -f /var/run/rsnapshot.pid');
-  return { commandes };
+  commands.push('rm -f /var/run/rsnapshot.pid');
+  return { commands };
 }
 
-export const RSNAPSHOT: Record<string, Commande> = {
+export const RSNAPSHOT: Record<string, Command> = {
   rsnapshot: {
     section: 1,
-    propresOptions: true,
-    lancer: ({ args, jeu }) => {
-      let fichier = CONF;
+    ownOptions: true,
+    launch: ({ args, game }) => {
+      let file = CONF;
       const options = new Set<string>();
-      const reste: string[] = [];
+      const rest: string[] = [];
       for (let i = 0; i < args.length; i++) {
-        if (args[i] === '-c') fichier = args[++i] ?? CONF;
+        if (args[i] === '-c') file = args[++i] ?? CONF;
         else if (/^-[tvVqD]+$/.test(args[i])) for (const l of args[i].slice(1)) options.add(l);
-        else reste.push(args[i]);
+        else rest.push(args[i]);
       }
-      const commande = reste[0];
-      if (!commande) return jeu.erreur(jeu.t('rsnapshot-usage'));
-      const texte = jeu.lire(fichier);
-      if (texte === null) return jeu.erreur(`${BANNIERE(args)}\nERROR: Config file "${fichier}" does not exist or is not readable.`);
-      const { conf, erreurs } = lireConf(texte, fichier);
-      if (erreurs.length)
-        return jeu.erreur(
+      const command = rest[0];
+      if (!command) return game.error(game.t('rsnapshot-usage'));
+      const text = game.read(file);
+      if (text === null) return game.error(`${BANNER(args)}\nERROR: Config file "${file}" does not exist or is not readable.`);
+      const { conf, errors } = readConf(text, file);
+      if (errors.length)
+        return game.error(
           [
-            BANNIERE(args),
-            ...erreurs,
+            BANNER(args),
+            ...errors,
             'ERROR: ---------------------------------------------------------------------',
-            `ERROR: Errors were found in ${fichier},`,
+            `ERROR: Errors were found in ${file},`,
             'ERROR: rsnapshot can not continue. If you think an entry looks right, make',
             "ERROR: sure you don't have spaces where only tabs should be.",
           ].join('\n'),
         );
-      if (commande === 'configtest') return 'Syntax OK';
-      if (commande === 'du') {
-        const racine = jeu.trouver(conf.racine);
-        if (racine?.type !== 'dossier') return jeu.erreur(`${BANNIERE(args)}\nERROR: snapshot_root ${conf.racine} does not exist.`);
+      if (command === 'configtest') return 'Syntax OK';
+      if (command === 'du') {
+        const root = game.find(conf.root);
+        if (root?.type !== 'dossier') return game.error(`${BANNER(args)}\nERROR: snapshot_root ${conf.root} does not exist.`);
         // Comme du -csh : un fichier lié dans plusieurs instantanés n'est compté qu'une fois.
-        const vus = new Set<Noeud>();
-        const taille = (n: Noeud): number => {
-          if (n.type === 'dossier') return Object.values(n.enfants).reduce((t, e) => t + taille(e), 0) + 4096;
-          if (vus.has(n)) return 0;
-          vus.add(n);
-          return n.taille ?? new TextEncoder().encode(contenu(n, jeu)).length;
+        const seen = new Set<Node>();
+        const size = (n: Node): number => {
+          if (n.type === 'dossier') return Object.values(n.children).reduce((t, e) => t + size(e), 0) + 4096;
+          if (seen.has(n)) return 0;
+          seen.add(n);
+          return n.size ?? new TextEncoder().encode(content(n, game)).length;
         };
-        const noms = conf.niveaux.flatMap((n) => Array.from({ length: n.nombre }, (_, k) => `${n.nom}.${k}`)).filter((nom) => racine.enfants[nom]);
-        const lignes = noms.map((nom) => [taille(racine.enfants[nom]), `${conf.racine}${nom}/`] as const);
-        const total = lignes.reduce((t, [o]) => t + o, 0);
-        return [...lignes, [total, 'total'] as const].map(([o, nom]) => `${lisible(o, 'en').replace(',', '.')}\t${nom}`).join('\n');
+        const names = conf.levels.flatMap((n) => Array.from({ length: n.count }, (_, k) => `${n.name}.${k}`)).filter((name) => root.children[name]);
+        const lines = names.map((name) => [size(root.children[name]), `${conf.root}${name}/`] as const);
+        const total = lines.reduce((t, [o]) => t + o, 0);
+        return [...lines, [total, 'total'] as const].map(([o, name]) => `${readable(o, 'en').replace(',', '.')}\t${name}`).join('\n');
       }
-      if (!conf.niveaux.some((n) => n.nom === commande)) return jeu.erreur(jeu.t('rsnapshot-usage'));
-      if (jeu.qui !== 'root' && !options.has('t'))
-        return jeu.erreur(`${BANNIERE(args)}\nERROR: ${conf.racine} - snapshot_root is not writable (try sudo)`);
-      const r = tourner(jeu, conf, commande, options.has('t'));
-      if (r.erreur)
-        return jeu.erreur([...(options.has('t') || options.has('v') ? r.commandes : []), BANNIERE(args), `ERROR: ${r.erreur}`].join('\n'));
-      jeu.etat.rsnapshotTours = [...(jeu.etat.rsnapshotTours ?? []), commande];
+      if (!conf.levels.some((n) => n.name === command)) return game.error(game.t('rsnapshot-usage'));
+      if (game.who !== 'root' && !options.has('t'))
+        return game.error(`${BANNER(args)}\nERROR: ${conf.root} - snapshot_root is not writable (try sudo)`);
+      const r = run(game, conf, command, options.has('t'));
+      if (r.error)
+        return game.error([...(options.has('t') || options.has('v') ? r.commands : []), BANNER(args), `ERROR: ${r.error}`].join('\n'));
+      game.state.rsnapshotTours = [...(game.state.rsnapshotTours ?? []), command];
       return options.has('t') || options.has('v')
-        ? r.commandes.map((c) => `${c} `).join('\n')
-        : r.commandes.filter((c) => c.endsWith('nothing to copy')).join('\n');
+        ? r.commands.map((c) => `${c} `).join('\n')
+        : r.commands.filter((c) => c.endsWith('nothing to copy')).join('\n');
     },
   },
 };

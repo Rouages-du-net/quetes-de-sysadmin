@@ -4,33 +4,33 @@
 // indicative), tirées des histoires elles-mêmes à la construction du site.
 // Les textes des histoires viennent de src/texts/<langue>/ ; ceux de la page,
 // d'ici (une page par langue, comme le reste du site).
-import { HISTOIRES } from '../engine/chapters';
-import { fiches } from '../engine/sheets';
+import { STORIES } from '../engine/chapters';
+import { allSheets } from '../engine/sheets';
 import { difficulty, stars } from '../engine/difficulty';
-import { traducteur, typographie } from '../texts';
+import { translator, typography } from '../texts';
 
 interface Props {
-  langue: 'fr' | 'en';
+  lang: 'fr' | 'en';
 }
-const { langue } = Astro.props;
-const t = traducteur(langue);
-const typo = (texte: string) => typographie(texte, langue);
-const toutes = fiches();
-const total = toutes.reduce((s, f) => s + f.duree, 0);
-const heures = (minutes: number) =>
-  langue === 'en'
+const { lang } = Astro.props;
+const t = translator(lang);
+const typo = (text: string) => typography(text, lang);
+const sheets = allSheets();
+const total = sheets.reduce((s, f) => s + f.duration, 0);
+const hours = (minutes: number) =>
+  lang === 'en'
     ? minutes < 60
       ? `${minutes} min`
       : `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${String(minutes % 60).padStart(2, '0')} min` : ''}`
     : minutes < 60
       ? `${minutes} min`
       : `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${String(minutes % 60).padStart(2, '0')}` : ''}`;
-const fr = langue === 'fr';
+const fr = lang === 'fr';
 // Les chapitres à finir avant d'ouvrir une histoire, avec le titre de leur histoire.
-const histoireDe = (c: string) => HISTOIRES.find((h) => h.chapitres.some((x) => x.id === c))!;
-const apres = (ids: string[]) =>
-  new Intl.ListFormat(langue, { type: 'conjunction' }).format(
-    ids.map((c) => (fr ? `« ${t(`chapitre-${c}`)} » (${t(`histoire-${histoireDe(c).id}`)})` : `"${t(`chapitre-${c}`)}" (${t(`histoire-${histoireDe(c).id}`)})`)),
+const storyOf = (c: string) => STORIES.find((h) => h.chapters.some((x) => x.id === c))!;
+const after = (ids: string[]) =>
+  new Intl.ListFormat(lang, { type: 'conjunction' }).format(
+    ids.map((c) => (fr ? `« ${t(`chapitre-${c}`)} » (${t(`histoire-${storyOf(c).id}`)})` : `"${t(`chapitre-${c}`)}" (${t(`histoire-${storyOf(c).id}`)})`)),
   );
 ---
 <h1>{fr ? 'Pour les enseignant·es' : 'For teachers'}</h1>
@@ -51,8 +51,8 @@ const apres = (ids: string[]) =>
 )}
 <p class="intro">
   {fr
-    ? `${HISTOIRES.length} histoires, ${toutes.length} chapitres, environ ${heures(total)} en tout. Les durées sont indicatives (une dizaine de minutes pour s'installer, puis quelques minutes par étape vérifiée) : un groupe débutant prendra plus de temps. La difficulté, de 1 à 5, dit surtout ce que le chapitre suppose déjà vu dans le jeu, un peu sa taille.`
-    : `${HISTOIRES.length} stories, ${toutes.length} chapters, about ${heures(total)} in all. Durations are only a guide (ten minutes or so to settle in, then a few minutes per checked step): a beginner group will take longer. Difficulty, from 1 to 5, mostly says how much of the game the chapter takes for granted, and a little how big it is.`}
+    ? `${STORIES.length} histoires, ${sheets.length} chapitres, environ ${hours(total)} en tout. Les durées sont indicatives (une dizaine de minutes pour s'installer, puis quelques minutes par étape vérifiée) : un groupe débutant prendra plus de temps. La difficulté, de 1 à 5, dit surtout ce que le chapitre suppose déjà vu dans le jeu, un peu sa taille.`
+    : `${STORIES.length} stories, ${sheets.length} chapters, about ${hours(total)} in all. Durations are only a guide (ten minutes or so to settle in, then a few minutes per checked step): a beginner group will take longer. Difficulty, from 1 to 5, mostly says how much of the game the chapter takes for granted, and a little how big it is.`}
 </p>
 
 <section aria-labelledby="organiser">
@@ -80,45 +80,45 @@ const apres = (ids: string[]) =>
   )}
 </section>
 
-{HISTOIRES.map((h) => {
-  const liste = toutes.filter((f) => f.histoire === h);
-  const duree = heures(liste.reduce((s, f) => s + f.duree, 0));
+{STORIES.map((h) => {
+  const list = sheets.filter((f) => f.story === h);
+  const duration = hours(list.reduce((s, f) => s + f.duration, 0));
   return (
     <section class="fiche-histoire" aria-labelledby={`h-${h.id}`}>
       <h2 id={`h-${h.id}`}>{t(`histoire-${h.id}`)}</h2>
       <p>{typo(t(`histoire-${h.id}.resume`))}</p>
       <p class="discret">
         {fr
-          ? `${liste.length} ${liste.length > 1 ? 'chapitres' : 'chapitre'}, environ ${duree}.`
-          : `${liste.length} ${liste.length > 1 ? 'chapters' : 'chapter'}, about ${duree}.`}
-        {h.apres && (fr ? ` S'ouvre dans le jeu après ${apres(h.apres)}, sauf en ouverture directe :` : ` Opens in the game after ${apres(h.apres)}, unless opened directly:`)}
+          ? `${list.length} ${list.length > 1 ? 'chapitres' : 'chapitre'}, environ ${duration}.`
+          : `${list.length} ${list.length > 1 ? 'chapters' : 'chapter'}, about ${duration}.`}
+        {h.after && (fr ? ` S'ouvre dans le jeu après ${after(h.after)}, sauf en ouverture directe :` : ` Opens in the game after ${after(h.after)}, unless opened directly:`)}
       </p>
       {h.id !== 'effaceur' && <pre><code>{`<quetes-de-sysadmin story="${h.id}"${fr ? ' lang="fr"' : ' lang="en"'}></quetes-de-sysadmin>`}</code></pre>}
       <ol class="fiches">
-        {liste.map((f) => (
-          <li class="fiche" id={`c-${f.chapitre.id}`}>
-            <h3>{t('chapitre-numero', { numero: f.chapitre.numero })}{fr ? ' : ' : ': '}{t(`chapitre-${f.chapitre.id}`)}</h3>
+        {list.map((f) => (
+          <li class="fiche" id={`c-${f.chapter.id}`}>
+            <h3>{t('chapitre-numero', { numero: f.chapter.number })}{fr ? ' : ' : ': '}{t(`chapitre-${f.chapter.id}`)}</h3>
             <dl>
               <dt>{fr ? 'Objectif' : 'Goal'}</dt>
-              <dd>{typo(t(`chapitre-${f.chapitre.id}.resume`))}</dd>
+              <dd>{typo(t(`chapitre-${f.chapter.id}.resume`))}</dd>
               <dt>{fr ? 'Avant' : 'Before'}</dt>
               <dd>
-                {f.avant
-                  ? fr ? `« ${t(`chapitre-${f.avant.id}`)} »` : `"${t(`chapitre-${f.avant.id}`)}"`
+                {f.before
+                  ? fr ? `« ${t(`chapitre-${f.before.id}`)} »` : `"${t(`chapitre-${f.before.id}`)}"`
                   : h.id === 'effaceur'
                     ? fr ? 'Rien : on part de zéro.' : 'Nothing: you start from scratch.'
-                    : fr ? `${apres(h.apres ?? [])} (ou une ouverture directe).` : `${apres(h.apres ?? [])} (or a direct opening).`}
+                    : fr ? `${after(h.after ?? [])} (ou une ouverture directe).` : `${after(h.after ?? [])} (or a direct opening).`}
               </dd>
               <dt>{fr ? 'Commandes découvertes' : 'New commands'}</dt>
               <dd>
-                {f.nouvelles.length
-                  ? f.nouvelles.map((c, i) => <>{i > 0 && ', '}<code>{c}</code></>)
+                {f.fresh.length
+                  ? f.fresh.map((c, i) => <>{i > 0 && ', '}<code>{c}</code></>)
                   : fr ? "Aucune nouvelle : on réutilise ce qu'on connaît." : 'None: you reuse what you know.'}
               </dd>
               <dt>{fr ? 'Difficulté' : 'Difficulty'}</dt>
-              <dd><span aria-hidden="true">{stars(difficulty(f.chapitre.id))}</span> {fr ? `${difficulty(f.chapitre.id)} sur 5` : `${difficulty(f.chapitre.id)} out of 5`}</dd>
+              <dd><span aria-hidden="true">{stars(difficulty(f.chapter.id))}</span> {fr ? `${difficulty(f.chapter.id)} sur 5` : `${difficulty(f.chapter.id)} out of 5`}</dd>
               <dt>{fr ? 'Durée indicative' : 'Approximate time'}</dt>
-              <dd>{heures(f.duree)}</dd>
+              <dd>{hours(f.duration)}</dd>
             </dl>
           </li>
         ))}

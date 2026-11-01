@@ -56,12 +56,13 @@ agents, but its rules apply to everyone.
   messages and pull requests. French versions of the README, of this page
   and of the embedding guide are kept up to date; the other documents are in
   English only.
-- **Code in English, over time.** The project started in French, and most
-  identifiers (variables, functions, files, components) are still French
-  (`langue`, `chapitre`, `histoire`, `engine/`…). Write **new** code in
-  English. When you touch existing code, you may rename what you change
-  (keeping the change focused), but don't mix a large rename with a
-  feature in the same pull request. Public names get an English alias
+- **Code in English.** The project started in French. Files and
+  identifiers (variables, functions, types, components) are now in
+  English; some data identifiers are still French (the ids of stories,
+  chapters, places and machines, `.ftl` keys, CSS classes) and some
+  comments, and are being moved to English. Write **new** code in
+  English, and don't mix a large rename with a feature in the same pull
+  request. Public names get an English alias
   first, with the French one kept for compatibility (the embeddable element
   takes `lang`, `story`, `save-key` and `theme="light|dark"`, and still
   accepts `langue`, `histoire`, `cle` and `theme="clair|sombre"`).
@@ -85,25 +86,25 @@ simulated network. A chapter is:
 | `tests/<story>.test.ts` | the replayed game: the expected solution, another solution, the false leads |
 | `docs/SCENARIOS.md` | its sheet: the story, the commands learnt, the goal, the traps |
 
-A new chapter also goes at the end of `ORDRE_DU_CODE` in
+A new chapter also goes at the end of `CODE_ORDER` in
 `src/engine/progress.ts` and of `tests/progress/order.txt`, and in at
 least one learning path (`src/engine/paths.ts`). A new story declares in
-`src/engine/chapters/index.ts` which chapters unlock it (`apres`), and gets
+`src/engine/chapters/index.ts` which chapters unlock it (`after`), and gets
 a machine in `src/engine/machines.ts`.
 
-### The chapter (`Chapitre`, in `src/engine/world.ts`)
+### The chapter (`Chapter`, in `src/engine/world.ts`)
 
-- `id`, `numero`, and the story that holds it.
-- `commandes`: the commands the chapter knows (others answer "command not
+- `id`, `number`, and the story that holds it.
+- `commands`: the commands the chapter knows (others answer "command not
   found", as on a machine missing the package); their manual stays readable
   with `man`.
-- `creerMonde(t)`: the starting file system; texts come from `t('…')`,
+- `createWorld(t)`: the starting file system; texts come from `t('…')`,
   never from the code.
-- `etat()` and `initialiser(jeu)`: the state of the simulated tools
+- `state()` and `initialise(jeu)`: the state of the simulated tools
   (services, firewall, directory…) at the start.
-- `accueil`: the file read on arrival (often an email); `motDePasse` for
+- `welcome`: the file read on arrival (often an email); `password` for
   sudo.
-- `evenements`: conditions on the state, checked after each command and
+- `events`: conditions on the state, checked after each command and
   when the editor closes. Each shows its message only once. The `final`
   event ends the chapter: it is the debrief.
 
@@ -142,14 +143,14 @@ from its size: there is nothing to set by hand.
 Each chapter has at least:
 
 - a test that **replays the expected solution** to the end
-  (`expect(c.termines).toContain('<id>')`);
+  (`expect(c.finished).toContain('<id>')`);
 - a test of **another correct solution**, when there is one;
 - a test of the **false leads**: each hint event is triggered, and the
   chapter isn't finished while the mistake remains.
 
 The tests replay every quest in every available language. The scenarios in
 the tests are written with the French names of places and files (the
-`dansLaLangue()` helper translates them), and texts are checked in French.
+`inLanguage()` helper translates them), and texts are checked in French.
 
 ## A new simulated tool
 

@@ -11,30 +11,30 @@
 // Écarts : pas de DNS simulé ici (port, server… sont acceptés et ignorés),
 // les baux ne se renouvellent pas, une adresse est tirée de l'adresse MAC.
 
-import type { Jeu } from './shell';
-import { dans, estIp, interfaceDuVlan, lan, reseauDe, versIp, versNombre } from './lan';
-import { journaliser, systemd } from './systemd';
+import type { Game } from './shell';
+import { inside, isIp, vlanInterface, lan, networkFor, toIp, toCount } from './lan';
+import { writeLog, systemd } from './systemd';
 
 export const CONF = '/etc/dnsmasq.conf';
-export const DOSSIER = '/etc/dnsmasq.d';
-export const BAUX = '/var/lib/misc/dnsmasq.leases';
+export const DIRECTORY = '/etc/dnsmasq.d';
+export const LEASES = '/var/lib/misc/dnsmasq.leases';
 
-interface Plage {
-  debut: string;
-  fin: string;
-  duree: string;
+interface Range {
+  start: string;
+  end: string;
+  duration: string;
 }
 
 export interface ConfigDnsmasq {
   interfaces: string[];
-  exclues: string[];
-  plages: Plage[];
-  reservations: { mac: string; nom?: string; ip: string }[];
-  erreurs: string[];
+  excluded: string[];
+  ranges: Range[];
+  reservations: { mac: string; name?: string; ip: string }[];
+  errors: string[];
 }
 
 // Les options que le jeu connaît (les autres sont refusées, comme une faute de frappe).
-const CONNUES = new Set([
+const KNOWN = new Set([
   'interface',
   'except-interface',
   'no-dhcp-interface',
@@ -64,126 +64,126 @@ const CONNUES = new Set([
   'addn-hosts',
 ]);
 
-const duree = (t: string) => /^\d+[smhd]?$|^infinite$/.test(t);
+const duration = (t: string) => /^\d+[smhd]?$|^infinite$/.test(t);
 
 /** La configuration de dnsmasq, et ses erreurs au format de dnsmasq. */
-export function lireDnsmasq(j: Jeu): ConfigDnsmasq {
-  const c: ConfigDnsmasq = { interfaces: [], exclues: [], plages: [], reservations: [], erreurs: [] };
-  const lus = new Set<string>();
-  const lireFichier = (fichier: string) => {
-    if (lus.has(fichier)) return;
-    lus.add(fichier);
-    const texte = j.lire(fichier);
-    if (texte === null) return;
-    texte.split('\n').forEach((brute, i) => {
-      if (c.erreurs.length) return;
-      const ligne = brute.replace(/#.*/, '').trim();
-      if (!ligne) return;
-      const [cle, ...reste] = ligne.split('=');
-      const nom = cle.trim();
-      const valeur = reste.join('=').trim();
-      const mauvais = (quoi: string) => c.erreurs.push(`dnsmasq: ${quoi} at line ${i + 1} of ${fichier}`);
-      if (!CONNUES.has(nom)) return mauvais('bad option');
-      if (nom === 'interface') c.interfaces.push(...valeur.split(','));
-      else if (nom === 'except-interface' || nom === 'no-dhcp-interface') c.exclues.push(...valeur.split(','));
-      else if (nom === 'conf-dir') lireDossier(valeur.split(',')[0]);
-      else if (nom === 'conf-file') lireFichier(valeur);
-      else if (nom === 'dhcp-range') {
+export function readDnsmasq(j: Game): ConfigDnsmasq {
+  const c: ConfigDnsmasq = { interfaces: [], excluded: [], ranges: [], reservations: [], errors: [] };
+  const read = new Set<string>();
+  const readFile = (file: string) => {
+    if (read.has(file)) return;
+    read.add(file);
+    const text = j.read(file);
+    if (text === null) return;
+    text.split('\n').forEach((rawValue, i) => {
+      if (c.errors.length) return;
+      const line = rawValue.replace(/#.*/, '').trim();
+      if (!line) return;
+      const [key, ...rest] = line.split('=');
+      const name = key.trim();
+      const value = rest.join('=').trim();
+      const bad = (what: string) => c.errors.push(`dnsmasq: ${what} at line ${i + 1} of ${file}`);
+      if (!KNOWN.has(name)) return bad('bad option');
+      if (name === 'interface') c.interfaces.push(...value.split(','));
+      else if (name === 'except-interface' || name === 'no-dhcp-interface') c.excluded.push(...value.split(','));
+      else if (name === 'conf-dir') readDirectory(value.split(',')[0]);
+      else if (name === 'conf-file') readFile(value);
+      else if (name === 'dhcp-range') {
         // Devant les adresses : des étiquettes (set:, tag:) ou un nom, que le jeu ignore.
-        const champs = valeur.split(',').map((x) => x.trim());
-        const k = champs.findIndex(estIp);
-        const [debut, fin, ...suite] = k >= 0 ? champs.slice(k) : [];
-        if (!debut || !fin || !estIp(fin)) return mauvais('bad dhcp-range');
-        const masque = suite.find(estIp);
-        const d = suite.find((x) => !estIp(x));
-        if (d && !duree(d)) return mauvais('bad dhcp-range');
-        if (masque && !estIp(masque)) return mauvais('bad dhcp-range');
-        c.plages.push({ debut, fin, duree: d ?? '1h' });
-      } else if (nom === 'dhcp-host') {
-        const champs = valeur.split(',').map((x) => x.trim());
-        const mac = champs.find((x) => /^([0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(x));
-        const ip = champs.find(estIp);
-        if (!mac || !ip) return mauvais('bad dhcp-host');
-        const nomHote = champs.find((x) => x !== mac && x !== ip && !duree(x));
-        c.reservations.push({ mac: mac.toLowerCase(), ip, ...(nomHote ? { nom: nomHote } : {}) });
+        const fields = value.split(',').map((x) => x.trim());
+        const k = fields.findIndex(isIp);
+        const [start, end, ...next] = k >= 0 ? fields.slice(k) : [];
+        if (!start || !end || !isIp(end)) return bad('bad dhcp-range');
+        const mask = next.find(isIp);
+        const d = next.find((x) => !isIp(x));
+        if (d && !duration(d)) return bad('bad dhcp-range');
+        if (mask && !isIp(mask)) return bad('bad dhcp-range');
+        c.ranges.push({ start, end, duration: d ?? '1h' });
+      } else if (name === 'dhcp-host') {
+        const fields = value.split(',').map((x) => x.trim());
+        const mac = fields.find((x) => /^([0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(x));
+        const ip = fields.find(isIp);
+        if (!mac || !ip) return bad('bad dhcp-host');
+        const hostName = fields.find((x) => x !== mac && x !== ip && !duration(x));
+        c.reservations.push({ mac: mac.toLowerCase(), ip, ...(hostName ? { name: hostName } : {}) });
       }
     });
   };
-  const lireDossier = (dossier: string) => {
-    const d = j.trouver(dossier);
+  const readDirectory = (directory: string) => {
+    const d = j.find(directory);
     if (d?.type !== 'dossier') return;
-    for (const n of Object.keys(d.enfants).sort())
-      if (!n.startsWith('.') && !n.endsWith('~') && !/\.dpkg-(dist|old|new)$/.test(n)) lireFichier(`${dossier}/${n}`);
+    for (const n of Object.keys(d.children).sort())
+      if (!n.startsWith('.') && !n.endsWith('~') && !/\.dpkg-(dist|old|new)$/.test(n)) readFile(`${directory}/${n}`);
   };
-  lireFichier(CONF);
+  readFile(CONF);
   // Debian : /etc/default/dnsmasq ajoute -7 /etc/dnsmasq.d.
-  lireDossier(DOSSIER);
+  readDirectory(DIRECTORY);
   return c;
 }
 
 // Une adresse de la plage, tirée de l'adresse MAC (toujours la même pour un appareil).
-function adresseDans(p: Plage, mac: string, prises: Set<string>): string | null {
-  const debut = versNombre(p.debut);
-  const taille = versNombre(p.fin) - debut + 1;
-  if (taille <= 0) return null;
+function addressIn(p: Range, mac: string, sockets: Set<string>): string | null {
+  const start = toCount(p.start);
+  const size = toCount(p.end) - start + 1;
+  if (size <= 0) return null;
   let h = 0;
   for (const ch of mac) h = (h * 33 + ch.charCodeAt(0)) >>> 0;
-  for (let k = 0; k < taille; k++) {
-    const ip = versIp(debut + ((h + k) % taille));
-    if (!prises.has(ip)) return ip;
+  for (let k = 0; k < size; k++) {
+    const ip = toIp(start + ((h + k) % size));
+    if (!sockets.has(ip)) return ip;
   }
   return null;
 }
 
 /** Au démarrage de dnsmasq : chaque appareil en DHCP demande une adresse. */
-export function demarrerDnsmasq(j: Jeu) {
+export function startDnsmasq(j: Game) {
   const l = lan(j);
   const sd = systemd(j);
   if (!l || !sd) return;
-  const c = lireDnsmasq(j);
+  const c = readDnsmasq(j);
   const pid = 1450;
-  const noter = (m: string) => journaliser(sd, 'dnsmasq.service', 'dnsmasq-dhcp', pid, m);
-  journaliser(sd, 'dnsmasq.service', 'dnsmasq', pid, 'started, version 2.90 cachesize 150');
-  for (const p of c.plages) noter(`DHCP, IP range ${p.debut} -- ${p.fin}, lease time ${p.duree}`);
-  const prises = new Set<string>(c.reservations.map((r) => r.ip));
-  const baux: string[] = [];
-  const expiration = Math.floor(sd.horloge / 1000) + 12 * 3600;
-  for (const a of l.appareils) {
-    if (a.fixe) continue;
-    delete a.bail;
-    const i = interfaceDuVlan(l, a.vlan);
-    if (!i || !ecoute(c, i)) continue;
-    const reseaux = i.adresses.map(reseauDe);
-    noter(`DHCPDISCOVER(${i.nom}) ${a.mac}`);
-    const reservee = c.reservations.find((r) => r.mac === a.mac && reseaux.some((n) => dans(r.ip, n)));
-    const plage = c.plages.find((p) => reseaux.some((n) => dans(p.debut, n) && dans(p.fin, n)));
-    const ip = reservee?.ip ?? (plage ? adresseDans(plage, a.mac, prises) : null);
+  const note = (m: string) => writeLog(sd, 'dnsmasq.service', 'dnsmasq-dhcp', pid, m);
+  writeLog(sd, 'dnsmasq.service', 'dnsmasq', pid, 'started, version 2.90 cachesize 150');
+  for (const p of c.ranges) note(`DHCP, IP range ${p.start} -- ${p.end}, lease time ${p.duration}`);
+  const sockets = new Set<string>(c.reservations.map((r) => r.ip));
+  const leases: string[] = [];
+  const expiration = Math.floor(sd.clock / 1000) + 12 * 3600;
+  for (const a of l.devices) {
+    if (a.fixed) continue;
+    delete a.lease;
+    const i = vlanInterface(l, a.vlan);
+    if (!i || !listening(c, i)) continue;
+    const reseaux = i.addresses.map(networkFor);
+    note(`DHCPDISCOVER(${i.name}) ${a.mac}`);
+    const reserved = c.reservations.find((r) => r.mac === a.mac && reseaux.some((n) => inside(r.ip, n)));
+    const range = c.ranges.find((p) => reseaux.some((n) => inside(p.start, n) && inside(p.end, n)));
+    const ip = reserved?.ip ?? (range ? addressIn(range, a.mac, sockets) : null);
     if (!ip) {
-      noter(`DHCPDISCOVER(${i.nom}) ${a.mac} no address range available for DHCP request via ${i.nom}`);
+      note(`DHCPDISCOVER(${i.name}) ${a.mac} no address range available for DHCP request via ${i.name}`);
       continue;
     }
-    prises.add(ip);
-    a.bail = ip;
-    const nom = reservee?.nom ?? a.nom;
-    noter(`DHCPOFFER(${i.nom}) ${ip} ${a.mac}`);
-    noter(`DHCPREQUEST(${i.nom}) ${ip} ${a.mac}`);
-    noter(`DHCPACK(${i.nom}) ${ip} ${a.mac} ${nom}`);
-    baux.push(`${expiration} ${a.mac} ${ip} ${nom} *`);
+    sockets.add(ip);
+    a.lease = ip;
+    const name = reserved?.name ?? a.name;
+    note(`DHCPOFFER(${i.name}) ${ip} ${a.mac}`);
+    note(`DHCPREQUEST(${i.name}) ${ip} ${a.mac}`);
+    note(`DHCPACK(${i.name}) ${ip} ${a.mac} ${name}`);
+    leases.push(`${expiration} ${a.mac} ${ip} ${name} *`);
   }
-  const n = j.trouver(BAUX);
-  if (n?.type === 'fichier') n.contenu = baux.join('\n');
+  const n = j.find(LEASES);
+  if (n?.type === 'fichier') n.content = leases.join('\n');
 }
 
 // dnsmasq répond-il sur cette interface ?
 // Un nom d'interface, ou un préfixe suivi de * (interface=eth1* : eth1, eth1.10…).
-const correspond = (motif: string, nom: string) => (motif.endsWith('*') ? nom.startsWith(motif.slice(0, -1)) : motif === nom);
-const ecoute = (c: ConfigDnsmasq, i: { nom: string }) =>
-  (!c.interfaces.length || c.interfaces.some((m) => correspond(m, i.nom))) && !c.exclues.some((m) => correspond(m, i.nom));
+const correspond = (pattern: string, name: string) => (pattern.endsWith('*') ? name.startsWith(pattern.slice(0, -1)) : pattern === name);
+const listening = (c: ConfigDnsmasq, i: { name: string }) =>
+  (!c.interfaces.length || c.interfaces.some((m) => correspond(m, i.name))) && !c.excluded.some((m) => correspond(m, i.name));
 
 /** Les appareils qui ont reçu une adresse de dnsmasq, et celle qu'ils ont. */
-export const bauxDonnes = (j: Jeu) => (lan(j)?.appareils ?? []).filter((a) => a.bail).map((a) => ({ nom: a.nom, mac: a.mac, ip: a.bail! }));
+export const donnesLeases = (j: Game) => (lan(j)?.devices ?? []).filter((a) => a.lease).map((a) => ({ name: a.name, mac: a.mac, ip: a.lease! }));
 
 /** dnsmasq écoute-t-il (en DHCP) l'interface qui porte cette adresse ? */
-export function repondSur(j: Jeu, nomInterface: string): boolean {
-  return ecoute(lireDnsmasq(j), { nom: nomInterface });
+export function answersOn(j: Game, interfaceName: string): boolean {
+  return listening(readDnsmasq(j), { name: interfaceName });
 }

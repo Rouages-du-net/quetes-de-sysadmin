@@ -13,28 +13,28 @@
 // https://martinfowler.com/bliki/CanaryRelease.html,
 // https://sre.google/workbook/canarying-releases/
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../world';
-import type { Jeu } from '../shell';
-import { nouveauSystemd, systemd } from '../systemd';
-import { chargerNginx, requete, verifierNginx } from '../nginx';
+import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import type { Game } from '../shell';
+import { newSystemd, systemd } from '../systemd';
+import { loadNginx, httpRequest, checkNginx } from '../nginx';
 import { MIME, NGINX_CONF } from '../commands/apt';
-import { comptesGazette } from './bare-repo';
-import { KIOSQUE, appliKiosque, dossierVersion, lecteurs, repartition, sante, serviceKiosque, uniteKiosque, type Lot } from './kiosk';
+import { gazetteAccounts } from './bare-repo';
+import { KIOSK, kioskApp, versionDirectory, readers, distribution, health, kioskService, kioskUnit, type Batch } from './kiosk';
 
 const M = '/home/vous';
 const GAZETTE = 'gazette.example';
 const SITE = '/etc/nginx/sites-available/gazette';
 
-const comptes = (): Comptes => {
-  const c = comptesGazette();
-  c.utilisateurs.kiosk = { uid: 997, groupe: 'kiosk', maison: KIOSQUE, shell: '/usr/sbin/nologin' };
-  c.groupes.kiosk = { gid: 997, membres: [] };
-  c.groupes.adm = { gid: 4, membres: ['vous'] };
+const accounts = (): Accounts => {
+  const c = gazetteAccounts();
+  c.users.kiosk = { uid: 997, group: 'kiosk', home: KIOSK, shell: '/usr/sbin/nologin' };
+  c.groups.kiosk = { gid: 997, members: [] };
+  c.groups.adm = { gid: 4, members: ['vous'] };
   return c;
 };
 
 // La configuration de la fin du chapitre 3 : green sert le Kiosque.
-const conf = (t: Jeu['t']) => `server {
+const conf = (t: Game['t']) => `server {
     listen 80 default_server;
     listen [::]:80 default_server;
     server_name ${GAZETTE} www.${GAZETTE};
@@ -52,15 +52,15 @@ const conf = (t: Jeu['t']) => `server {
     }
 }`;
 
-const sd = (j: Jeu) => systemd(j)!;
-const actif = (j: Jeu, couleur: string) => sd(j).services[`kiosk-${couleur}`]?.etat === 'active';
-const dernierLot = (j: Jeu): Lot | undefined => j.etat.dernierLot;
-const sortie = (j: Jeu) => [j.derniere.sortie, ...j.derniere.erreurs].join('\n');
+const sd = (j: Game) => systemd(j)!;
+const enabled = (j: Game, colour: string) => sd(j).services[`kiosk-${colour}`]?.state === 'active';
+const lastBatch = (j: Game): Batch | undefined => j.state.dernierLot;
+const output = (j: Game) => [j.last.output, ...j.last.errors].join('\n');
 
-export const canari: Chapitre = {
+export const canary: Chapter = {
   id: 'canari',
-  numero: 4,
-  commandes: [
+  number: 4,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -91,178 +91,178 @@ export const canari: Chapitre = {
     'journalctl',
     'ps',
   ],
-  maison: M,
-  accueil: 'message_de_samia.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_de_samia.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'gazette-2027',
-  comptes,
-  etat: () => ({
-    systemd: nouveauSystemd('gazette', Date.UTC(2027, 4, 2, 6, 40, 0), Date.UTC(2027, 5, 7, 9, 0, 0), {
+  password: 'gazette-2027',
+  accounts,
+  state: () => ({
+    systemd: newSystemd('gazette', Date.UTC(2027, 4, 2, 6, 40, 0), Date.UTC(2027, 5, 7, 9, 0, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,
         executable: 'sshd',
-        processus: [{ pid: 604, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+        process: [{ pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
       nginx: {
         description: 'A high performance web server and a reverse proxy server',
         active: true,
         executable: 'nginx',
-        processus: [
-          { pid: 801, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
-          { pid: 802, utilisateur: 'www-data', cpu: 0.1, mem: 0.6, commande: 'nginx: worker process' },
+        process: [
+          { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
+          { pid: 802, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
         ],
-        verifier: verifierNginx,
-        charger: chargerNginx,
-        verifierAuRechargement: true,
+        check: checkNginx,
+        load: loadNginx,
+        checkToReload: true,
       },
-      'kiosk-blue': serviceKiosque('blue', 1501),
-      'kiosk-green': serviceKiosque('green', 1502),
+      'kiosk-blue': kioskService('blue', 1501),
+      'kiosk-green': kioskService('green', 1502),
     }),
     processus: [
-      { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
-      { pid: 604, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
-      { pid: 801, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
-      { pid: 802, utilisateur: 'www-data', cpu: 0.1, mem: 0.6, commande: 'nginx: worker process' },
-      { pid: 1501, utilisateur: 'kiosk', cpu: 0.6, mem: 3.1, commande: `node ${KIOSQUE}/blue/serveur.js` },
-      { pid: 1502, utilisateur: 'kiosk', cpu: 0.6, mem: 3.1, commande: `node ${KIOSQUE}/green/serveur.js` },
+      { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
+      { pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
+      { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
+      { pid: 802, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
+      { pid: 1501, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/blue/serveur.js` },
+      { pid: 1502, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/green/serveur.js` },
     ],
-    nginx: { charge: null, noms: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'], journalAcces: true },
-    applis: { '127.0.0.1:3001': appliKiosque('blue'), '127.0.0.1:3002': appliKiosque('green') },
+    nginx: { load: null, names: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'], journalAcces: true },
+    applis: { '127.0.0.1:3001': kioskApp('blue'), '127.0.0.1:3002': kioskApp('green') },
   }),
-  initialiser: (j) => {
-    chargerNginx(j);
-    sd(j).services['kiosk-blue'].charger!(j);
-    sd(j).services['kiosk-green'].charger!(j);
-    j.etat.configVue = JSON.stringify(j.etat.nginx.charge);
+  initialise: (j) => {
+    loadNginx(j);
+    sd(j).services['kiosk-blue'].load!(j);
+    sd(j).services['kiosk-green'].load!(j);
+    j.state.configVue = JSON.stringify(j.state.nginx.load);
   },
   // À chaque nouvelle configuration de nginx, une heure de lecteur·rices passe.
-  apresCommande: (j) => {
-    const vue = JSON.stringify(j.etat.nginx.charge);
-    if (vue === j.etat.configVue) return;
-    j.etat.configVue = vue;
-    const lot = lecteurs(j);
-    j.etat.dernierLot = lot;
-    j.etat.lots = [...(j.etat.lots ?? []), lot];
-    if (lot.parVersion['1.6.1']?.visites && !lot.parVersion['1.6.1'].erreurs && (repartition(j).blue ?? 0) < 1) j.etat.canariPropre = true;
-    return j.t('canari-une-heure', { visites: lot.total });
+  afterCommand: (j) => {
+    const view = JSON.stringify(j.state.nginx.load);
+    if (view === j.state.configVue) return;
+    j.state.configVue = view;
+    const batch = readers(j);
+    j.state.dernierLot = batch;
+    j.state.lots = [...(j.state.lots ?? []), batch];
+    if (batch.byVersion['1.6.1']?.visits && !batch.byVersion['1.6.1'].errors && (distribution(j).blue ?? 0) < 1) j.state.canariPropre = true;
+    return j.t('canari-une-heure', { visites: batch.total });
   },
-  creerMonde: (t) => {
-    const racine: Droits = { proprio: 'root' };
-    const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
-    const fichier = (texte: string, droits: Droits = racine) => f(texte, { lignes: true, ...droits });
-    const kiosk: Droits = { proprio: 'kiosk', groupe: 'kiosk' };
-    return lieu({
-      etc: lieu({
-        ...fichiersComptes(),
-        hostname: fichier('gazette'),
-        kiosk: lieu({
-          'kiosk.env': fichier(
+  createWorld: (t) => {
+    const root: Rights = { owner: 'root' };
+    const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
+    const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
+    const kiosk: Rights = { owner: 'kiosk', group: 'kiosk' };
+    return place({
+      etc: place({
+        ...accountsFiles(),
+        hostname: file('gazette'),
+        kiosk: place({
+          'kiosk.env': file(
             'KIOSK_BASE=postgres://kiosk@localhost/kiosk\nKIOSK_LIST=lettre@gazette.example\nKIOSK_SMTP=smtp.gazette.example',
-            { proprio: 'root', groupe: 'kiosk', mode: 'rw-r-----' },
+            { owner: 'root', group: 'kiosk', mode: 'rw-r-----' },
           ),
         }),
-        nginx: lieu({
-          'nginx.conf': fichier(NGINX_CONF),
-          'mime.types': fichier(MIME),
-          'conf.d': lieu({}),
-          'modules-enabled': lieu({}),
-          'sites-available': lieu({ gazette: fichier(conf(t)) }),
-          'sites-enabled': lieu({ gazette: f('', { proprio: 'root', lien: SITE }) }),
+        nginx: place({
+          'nginx.conf': file(NGINX_CONF),
+          'mime.types': file(MIME),
+          'conf.d': place({}),
+          'modules-enabled': place({}),
+          'sites-available': place({ gazette: file(conf(t)) }),
+          'sites-enabled': place({ gazette: f('', { owner: 'root', link: SITE }) }),
         }),
-        systemd: lieu({
-          system: lieu({ 'kiosk-blue.service': fichier(uniteKiosque('blue')), 'kiosk-green.service': fichier(uniteKiosque('green')) }),
+        systemd: place({
+          system: place({ 'kiosk-blue.service': file(kioskUnit('blue')), 'kiosk-green.service': file(kioskUnit('green')) }),
         }),
       }),
-      home: lieu({
+      home: place({
         vous: d({ 'message_de_samia.txt': f(t('canari-message-de-samia')) }),
-        samia: lieu({}, { proprio: 'samia', mode: 'rwx------' }),
-        theo: lieu({}, { proprio: 'theo', mode: 'rwx------' }),
+        samia: place({}, { owner: 'samia', mode: 'rwx------' }),
+        theo: place({}, { owner: 'theo', mode: 'rwx------' }),
       }),
-      srv: lieu({
-        gazette: lieu({
-          releases: lieu({ '20270524090000': lieu({ 'index.html': fichier(t('retour-arriere-site-accueil'), { proprio: 'vous' }) }) }),
-          current: f('', { proprio: 'vous', lien: '/srv/gazette/releases/20270524090000' }),
+      srv: place({
+        gazette: place({
+          releases: place({ '20270524090000': place({ 'index.html': file(t('retour-arriere-site-accueil'), { owner: 'vous' }) }) }),
+          current: f('', { owner: 'vous', link: '/srv/gazette/releases/20270524090000' }),
         }),
-        kiosk: lieu(
+        kiosk: place(
           {
-            versions: lieu(
+            versions: place(
               {
-                '1.4.2': dossierVersion(t, '1.4.2'),
-                '1.5.0': dossierVersion(t, '1.5.0', 'bleu-vert-notes-150'),
-                '1.6.0': dossierVersion(t, '1.6.0', 'canari-notes-160'),
+                '1.4.2': versionDirectory(t, '1.4.2'),
+                '1.5.0': versionDirectory(t, '1.5.0', 'bleu-vert-notes-150'),
+                '1.6.0': versionDirectory(t, '1.6.0', 'canari-notes-160'),
               },
               kiosk,
             ),
-            blue: f('', { ...kiosk, lien: `${KIOSQUE}/versions/1.4.2` }),
-            green: f('', { ...kiosk, lien: `${KIOSQUE}/versions/1.5.0` }),
+            blue: f('', { ...kiosk, link: `${KIOSK}/versions/1.4.2` }),
+            green: f('', { ...kiosk, link: `${KIOSK}/versions/1.5.0` }),
           },
-          { ...kiosk, groupe: 'redaction', mode: 'rwxrwxr-x' },
+          { ...kiosk, group: 'redaction', mode: 'rwxrwxr-x' },
         ),
       }),
-      usr: lieu({ sbin: lieu({ nginx: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 1_342_520 }) }) }),
-      var: lieu({
-        log: lieu({
-          nginx: lieu(
+      usr: place({ sbin: place({ nginx: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_342_520 }) }) }),
+      var: place({
+        log: place({
+          nginx: place(
             {
-              'access.log': f('', { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }),
-              'error.log': f('', { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }),
+              'access.log': f('', { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }),
+              'error.log': f('', { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }),
             },
-            { proprio: 'root', groupe: 'adm' },
+            { owner: 'root', group: 'adm' },
           ),
         }),
       }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'tout-d-un-coup',
-      condition: (j) => (repartition(j).blue ?? 0) === 1 && !!dernierLot(j)?.parVersion['1.6.0']?.erreurs && !j.etat.canari160,
-      message: (j) => j.t('canari-evenement-tout-d-un-coup', { erreurs: dernierLot(j)!.erreurs }),
+      condition: (j) => (distribution(j).blue ?? 0) === 1 && !!lastBatch(j)?.byVersion['1.6.0']?.errors && !j.state.canari160,
+      message: (j) => j.t('canari-evenement-tout-d-un-coup', { erreurs: lastBatch(j)!.errors }),
     },
     {
       id: 'canari-160',
       condition: (j) => {
-        const parts = repartition(j);
-        const ok = (parts.blue ?? 0) > 0 && (parts.blue ?? 0) <= 0.25 && !!dernierLot(j)?.parVersion['1.6.0'];
-        if (ok) j.etat.canari160 = true;
+        const parts = distribution(j);
+        const ok = (parts.blue ?? 0) > 0 && (parts.blue ?? 0) <= 0.25 && !!lastBatch(j)?.byVersion['1.6.0'];
+        if (ok) j.state.canari160 = true;
         return ok;
       },
       message: (j) => j.t('canari-evenement-canari-160'),
     },
     {
       id: 'trop-gros',
-      condition: (j) => (repartition(j).blue ?? 0) > 0.25 && (repartition(j).blue ?? 0) < 1,
+      condition: (j) => (distribution(j).blue ?? 0) > 0.25 && (distribution(j).blue ?? 0) < 1,
       message: (j) => j.t('canari-evenement-trop-gros'),
     },
     {
       id: 'trouve',
-      condition: (j) => !!j.etat.canari160 && /" 500 \d+ /.test(sortie(j)) && sortie(j).includes('/kiosk/archives'),
+      condition: (j) => !!j.state.canari160 && /" 500 \d+ /.test(output(j)) && output(j).includes('/kiosk/archives'),
       message: (j) => j.t('canari-evenement-trouve'),
     },
     {
       id: 'arrete',
-      condition: (j) => !!j.etat.canari160 && (repartition(j).blue ?? 0) === 0 && (repartition(j).green ?? 0) > 0,
+      condition: (j) => !!j.state.canari160 && (distribution(j).blue ?? 0) === 0 && (distribution(j).green ?? 0) > 0,
       message: (j) => j.t('canari-evenement-arrete'),
       // Les développeur·ses publient le correctif.
       action: (j) => {
-        const versions = j.trouver(`${KIOSQUE}/versions`);
-        if (versions?.type === 'dossier') versions.enfants['1.6.1'] = dossierVersion(j.t, '1.6.1', 'canari-notes-161');
+        const versions = j.find(`${KIOSK}/versions`);
+        if (versions?.type === 'dossier') versions.children['1.6.1'] = versionDirectory(j.t, '1.6.1', 'canari-notes-161');
       },
     },
-    { id: 'canari-161', condition: (j) => !!j.etat.canariPropre, message: (j) => j.t('canari-evenement-canari-161') },
+    { id: 'canari-161', condition: (j) => !!j.state.canariPropre, message: (j) => j.t('canari-evenement-canari-161') },
     {
       id: 'fin',
       condition: (j) => {
-        const s = sante(j, 'blue');
+        const s = health(j, 'blue');
         return (
-          !!j.etat.canariPropre &&
-          (repartition(j).blue ?? 0) === 1 &&
+          !!j.state.canariPropre &&
+          (distribution(j).blue ?? 0) === 1 &&
           s?.status === 'ok' &&
           s.version === '1.6.1' &&
-          actif(j, 'green') &&
-          requete(j, GAZETTE, '/kiosk/archives', 80, false)?.code === 200
+          enabled(j, 'green') &&
+          httpRequest(j, GAZETTE, '/kiosk/archives', 80, false)?.code === 200
         );
       },
       message: (j) => j.t('canari-evenement-fin'),

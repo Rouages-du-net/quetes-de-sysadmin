@@ -24,21 +24,21 @@
 // Sources : https://cisofy.com/documentation/lynis/, https://nmap.org/book/man.html,
 // https://man.openbsd.org/sshd_config
 
-import { chemin, d, f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { nouveauPareFeu, type Regle } from '../firewall';
-import { nouveauSystemd } from '../systemd';
-import { autorise, lireConfig } from '../sshd';
-import { misesDisponibles, type EtatApt } from '../commands/apt';
-import { constats, indice as indiceDe } from '../lynis';
-import type { Balayage } from '../scan';
-import { aptFournil, chargerSshd, sectionsMd, comptesFournil, ecouteFournil, fichier, M, MAINTENANT, MOT_DE_PASSE, mondeFournil, scanFournil, serviceSsh, sshd, VOISIN } from './audit';
+import { path, d, f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { newFirewall, type Rule } from '../firewall';
+import { newSystemd } from '../systemd';
+import { allowed, readConfig } from '../sshd';
+import { availableUpdates, type AptState } from '../commands/apt';
+import { findings, hint as hintFor } from '../lynis';
+import type { Scan } from '../scan';
+import { bakeryApt, loadSshd, sectionsMd, bakeryAccounts, bakeryListening, file, M, NOW, PASSWORD, bakeryWorld, bakeryScan, serviceSsh, sshd, NEIGHBOUR } from './audit';
 
-const RAPPORT = `${M}/rapport-cloture.md`;
-const CIBLE = 70;
-const CLES_SSH = ['permitrootlogin', 'x11forwarding', 'maxauthtries', 'allowtcpforwarding', 'allowagentforwarding'];
+const REPORT = `${M}/rapport-cloture.md`;
+const TARGET = 70;
+const SSH_KEYS = ['permitrootlogin', 'x11forwarding', 'maxauthtries', 'allowtcpforwarding', 'allowagentforwarding'];
 const SECTIONS = ['resume', 'constats', 'preuves', 'reste'];
-const SUJETS = ['ssh', 'compte', 'sudo', 'secret', 'reseau', 'cle'];
+const SUBJECTS = ['ssh', 'compte', 'sudo', 'secret', 'reseau', 'cle'];
 
 const LOGIN_DEFS = `# /etc/login.defs - Configuration control definitions for the login package.
 MAIL_DIR        /var/mail
@@ -52,147 +52,147 @@ PASS_WARN_AGE   7
 ENCRYPT_METHOD  YESCRYPT`;
 
 // Le pare-feu après « L'exposition » : SSH, 80 et 443.
-const REGLES: Regle[] = [
-  { action: 'allow', vers: 'OpenSSH', ports: [22], de: null },
-  { action: 'allow', vers: 'Nginx Full', ports: [80, 443], de: null },
+const RULES: Rule[] = [
+  { action: 'allow', to: 'OpenSSH', ports: [22], forEachOf: null },
+  { action: 'allow', to: 'Nginx Full', ports: [80, 443], forEachOf: null },
 ];
 
-const apt = (j: Jeu) => j.etat.apt as EtatApt;
-const balayages = (j: Jeu): Balayage[] => j.etat.scans ?? [];
-const enPerimetre = (b: Balayage) => b.versions && b.horsPerimetre.length === 0 && b.adresses.includes('192.0.2.22');
-const dernierBalayage = (j: Jeu) => balayages(j).filter(enPerimetre).at(-1);
-const horsPerimetre = (j: Jeu) => balayages(j).some((b) => b.horsPerimetre.length > 0);
-const adressesHors = (j: Jeu) => [...new Set(balayages(j).flatMap((b) => b.horsPerimetre))];
-const trois = (b: Balayage | undefined) => !!b && JSON.stringify(b.ouverts['192.0.2.22']) === JSON.stringify([22, 80, 443]);
-const sshAJour = (b: Balayage | undefined) => !!b && (b.produits['192.0.2.22'] ?? []).some((p) => /^OpenSSH.*\+deb13u1/.test(p));
+const apt = (j: Game) => j.state.apt as AptState;
+const scans = (j: Game): Scan[] => j.state.scans ?? [];
+const inScope = (b: Scan) => b.versions && b.outsideScope.length === 0 && b.addresses.includes('192.0.2.22');
+const lastScan = (j: Game) => scans(j).filter(inScope).at(-1);
+const outsideScope = (j: Game) => scans(j).some((b) => b.outsideScope.length > 0);
+const addressesOutside = (j: Game) => [...new Set(scans(j).flatMap((b) => b.outsideScope))];
+const three = (b: Scan | undefined) => !!b && JSON.stringify(b.openSet['192.0.2.22']) === JSON.stringify([22, 80, 443]);
+const dayASsh = (b: Scan | undefined) => !!b && (b.products['192.0.2.22'] ?? []).some((p) => /^OpenSSH.*\+deb13u1/.test(p));
 
-const aJour = (j: Jeu) => misesDisponibles(apt(j)).length === 0;
-const liste = (j: Jeu) => constats(j);
-const avertissements = (j: Jeu) => liste(j).filter((c) => c.type === 'warning').length;
-const indiceReel = (j: Jeu) => indiceDe(liste(j));
-const durci = (j: Jeu) => avertissements(j) === 0 && indiceReel(j) >= CIBLE;
-const lynis = (j: Jeu) => j.etat.lynis as { indice: number; ids: string[]; avertissements: number } | undefined;
-const preuveLynis = (j: Jeu) => !!lynis(j) && lynis(j)!.indice === indiceReel(j) && lynis(j)!.avertissements === 0 && lynis(j)!.indice >= CIBLE;
-const sshApplique = (j: Jeu) => {
-  const fichierSsh = lireConfig(j).valeurs;
-  return CLES_SSH.every((k) => fichierSsh[k] === sshd(j).charge[k]);
+const dayA = (j: Game) => availableUpdates(apt(j)).length === 0;
+const listing = (j: Game) => findings(j);
+const warnings = (j: Game) => listing(j).filter((c) => c.type === 'warning').length;
+const realHint = (j: Game) => hintFor(listing(j));
+const hardened = (j: Game) => warnings(j) === 0 && realHint(j) >= TARGET;
+const lynis = (j: Game) => j.state.lynis as { hint: number; ids: string[]; warnings: number } | undefined;
+const lynisProof = (j: Game) => !!lynis(j) && lynis(j)!.hint === realHint(j) && lynis(j)!.warnings === 0 && lynis(j)!.hint >= TARGET;
+const appliesSsh = (j: Game) => {
+  const sshFile = readConfig(j).values;
+  return SSH_KEYS.every((k) => sshFile[k] === sshd(j).load[k]);
 };
-const sshChange = (j: Jeu) => !sshApplique(j);
-const sshErreur = (j: Jeu) => lireConfig(j).erreurs.length > 0;
-const entre = (j: Jeu) => autorise(sshd(j).charge, j.joueur);
-const nmapOk = (j: Jeu) => {
-  const b = dernierBalayage(j);
-  return trois(b) && sshAJour(b);
+const sshChange = (j: Game) => !appliesSsh(j);
+const errorSsh = (j: Game) => readConfig(j).errors.length > 0;
+const between = (j: Game) => allowed(sshd(j).load, j.player);
+const nmapOk = (j: Game) => {
+  const b = lastScan(j);
+  return three(b) && dayASsh(b);
 };
 
-const sections = (j: Jeu, texte: string) => sectionsMd(j, texte, 'contre-visite-section', SECTIONS);
-const mots = (j: Jeu, cle: string) => j.t(cle).split(',').map((m) => m.trim().toLowerCase());
+const sections = (j: Game, text: string) => sectionsMd(j, text, 'contre-visite-section', SECTIONS);
+const words = (j: Game, key: string) => j.t(key).split(',').map((m) => m.trim().toLowerCase());
 // Les nombres écrits juste après le mot « indice » (ou « index », « hardening »…) : « indice de durcissement 80 ».
-const chiffres = (j: Jeu, texte: string) => {
-  const mot = mots(j, 'contre-visite-mots-indice').map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-  return [...texte.matchAll(new RegExp(`(?:${mot})\\D{0,40}(\\d+)`, 'gi'))].map((x) => Number(x[1]));
+const digits = (j: Game, text: string) => {
+  const word = words(j, 'contre-visite-mots-indice').map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  return [...text.matchAll(new RegExp(`(?:${word})\\D{0,40}(\\d+)`, 'gi'))].map((x) => Number(x[1]));
 };
-const lireRapport = (j: Jeu) => j.lire(chemin(j.t, RAPPORT));
+const readReport = (j: Game) => j.read(path(j.t, REPORT));
 
-const manques = (j: Jeu): string[] => {
-  const texte = lireRapport(j) ?? '';
-  const s = sections(j, texte);
+const missing = (j: Game): string[] => {
+  const text = readReport(j) ?? '';
+  const s = sections(j, text);
   const m: string[] = [];
-  if (texte.toLowerCase().includes(j.t('contre-visite-a-completer').toLowerCase())) m.push('modele');
+  if (text.toLowerCase().includes(j.t('contre-visite-a-completer').toLowerCase())) m.push('modele');
   if ((s.resume ?? '').trim().length < 30) m.push('resume');
   const bas = (s.constats ?? '').toLowerCase();
-  if (SUJETS.filter((x) => mots(j, `contre-visite-mots-${x}`).some((w) => bas.includes(w))).length < 5) m.push('constats');
+  if (SUBJECTS.filter((x) => words(j, `contre-visite-mots-${x}`).some((w) => bas.includes(w))).length < 5) m.push('constats');
   const l = lynis(j);
   if (!l) m.push('lynis');
-  else if (!chiffres(j, s.preuves ?? '').includes(l.indice) || !/443/.test(s.preuves ?? '')) m.push('preuves');
+  else if (!digits(j, s.preuves ?? '').includes(l.hint) || !/443/.test(s.preuves ?? '')) m.push('preuves');
   const ids = (s.reste ?? '').match(/\b[A-Z]{3,4}-\d{4}\b/g) ?? [];
   if (!ids.some((id) => lynis(j)?.ids.includes(id))) m.push('reste');
   return m;
 };
-const rapportOk = (j: Jeu) => manques(j).length === 0;
+const okReport = (j: Game) => missing(j).length === 0;
 
-export const contreVisite: Chapitre = {
+export const againstVisit: Chapter = {
   id: 'contre-visite',
-  numero: 5,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'nano', 'id', 'whoami', 'sudo', 'systemctl', 'journalctl', 'sshd', 'ss', 'ufw', 'apt', 'nmap', 'lynis'],
-  maison: M,
-  accueil: 'courriel_salome.txt',
-  noms: true,
+  number: 5,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'nano', 'id', 'whoami', 'sudo', 'systemctl', 'journalctl', 'sshd', 'ss', 'ufw', 'apt', 'nmap', 'lynis'],
+  home: M,
+  welcome: 'courriel_salome.txt',
+  names: true,
   final: 'fin',
-  etapes: ['balayage', 'lynis', 'mise-a-jour', 'durci', 'preuve-lynis', 'nmap-propre', 'fin'],
-  motDePasse: MOT_DE_PASSE,
-  comptes: () => comptesFournil(false),
-  etat: () => ({
-    sshd: { charge: {}, connexionsAuChargement: 1, recharges: 0 },
-    ufw: { ...nouveauPareFeu(), actif: true, regles: REGLES.map((r) => ({ ...r })) },
-    ecoute: ecouteFournil(true),
-    scan: scanFournil(),
-    apt: aptFournil(true),
-    systemd: nouveauSystemd('fournil', MAINTENANT - 5 * 86_400_000, MAINTENANT, {
+  steps: ['balayage', 'lynis', 'mise-a-jour', 'durci', 'preuve-lynis', 'nmap-propre', 'fin'],
+  password: PASSWORD,
+  accounts: () => bakeryAccounts(false),
+  state: () => ({
+    sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
+    ufw: { ...newFirewall(), enabled: true, rules: RULES.map((r) => ({ ...r })) },
+    ecoute: bakeryListening(true),
+    scan: bakeryScan(),
+    apt: bakeryApt(true),
+    systemd: newSystemd('fournil', NOW - 5 * 86_400_000, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },
     }),
   }),
-  initialiser: (j) => {
-    chargerSshd(j);
+  initialise: (j) => {
+    loadSshd(j);
     // Salomé ne relit que ce qui a changé : l'état de départ compte comme déjà lu.
-    j.etat.rapportLu = lireRapport(j);
+    j.state.rapportLu = readReport(j);
   },
-  creerMonde: (t) =>
-    mondeFournil(t, {
-      sansLucas: true,
-      maison: { 'courriel_salome.txt': f(t('contre-visite-courriel-salome')), 'rapport-cloture.md': f(t('contre-visite-modele'), { lignes: true }) },
+  createWorld: (t) =>
+    bakeryWorld(t, {
+      withoutLucas: true,
+      home: { 'courriel_salome.txt': f(t('contre-visite-courriel-salome')), 'rapport-cloture.md': f(t('contre-visite-modele'), { lines: true }) },
       etc: {
-        'login.defs': fichier(LOGIN_DEFS),
-        issue: fichier('Debian GNU/Linux 13 \\n \\l\n'),
+        'login.defs': file(LOGIN_DEFS),
+        issue: file('Debian GNU/Linux 13 \\n \\l\n'),
       },
-      ssh: { 'sshd_config.d': d({ '00-hardening.conf': fichier('PermitRootLogin no', 'root') }, undefined, { proprio: 'root' }) },
-      plus: { var: d({ log: d({}, undefined, { proprio: 'root' }) }, undefined, { proprio: 'root' }) },
+      ssh: { 'sshd_config.d': d({ '00-hardening.conf': file('PermitRootLogin no', 'root') }, undefined, { owner: 'root' }) },
+      more: { var: d({ log: d({}, undefined, { owner: 'root' }) }, undefined, { owner: 'root' }) },
     }),
   // Salomé relit le rapport de clôture après chaque enregistrement.
-  apresCommande: (j) => {
-    const texte = lireRapport(j);
-    if (texte === j.etat.rapportLu || j.etat.rapportFini) return;
-    j.etat.rapportLu = texte;
-    const reste = manques(j);
-    if (!reste.length) {
-      j.etat.rapportFini = true;
+  afterCommand: (j) => {
+    const text = readReport(j);
+    if (text === j.state.rapportLu || j.state.rapportFini) return;
+    j.state.rapportLu = text;
+    const rest = missing(j);
+    if (!rest.length) {
+      j.state.rapportFini = true;
       return;
     }
-    return [j.t('contre-visite-relecture'), ...reste.map((m) => `- ${j.t(`contre-visite-manque-${m}`, { cible: String(CIBLE) })}`)].join('\n');
+    return [j.t('contre-visite-relecture'), ...rest.map((m) => `- ${j.t(`contre-visite-manque-${m}`, { cible: String(TARGET) })}`)].join('\n');
   },
-  evenements: [
-    { id: 'erreur-ssh', condition: sshErreur, message: (j) => j.t('contre-visite-evenement-erreur-ssh') },
-    { id: 'enferme', condition: (j) => !entre(j), message: (j) => j.t('contre-visite-evenement-enferme') },
+  events: [
+    { id: 'erreur-ssh', condition: errorSsh, message: (j) => j.t('contre-visite-evenement-erreur-ssh') },
+    { id: 'enferme', condition: (j) => !between(j), message: (j) => j.t('contre-visite-evenement-enferme') },
     {
       id: 'hors-perimetre',
-      condition: horsPerimetre,
-      message: (j) => j.t('contre-visite-evenement-hors-perimetre', { adresses: adressesHors(j).join(', '), voisin: adressesHors(j).includes(VOISIN.adresse) ? 'oui' : 'non' }),
+      condition: outsideScope,
+      message: (j) => j.t('contre-visite-evenement-hors-perimetre', { adresses: addressesOutside(j).join(', '), voisin: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
     },
     {
       id: 'balayage',
-      condition: (j) => !!dernierBalayage(j),
-      message: (j) => j.t('contre-visite-evenement-balayage', { ancienne: sshAJour(dernierBalayage(j)) ? 'non' : 'oui' }),
+      condition: (j) => !!lastScan(j),
+      message: (j) => j.t('contre-visite-evenement-balayage', { ancienne: dayASsh(lastScan(j)) ? 'non' : 'oui' }),
     },
     {
       id: 'lynis',
       condition: (j) => !!lynis(j),
-      message: (j) => j.t('contre-visite-evenement-lynis', { indice: String(lynis(j)!.indice), avertissements: String(lynis(j)!.avertissements) }),
+      message: (j) => j.t('contre-visite-evenement-lynis', { indice: String(lynis(j)!.hint), avertissements: String(lynis(j)!.warnings) }),
     },
-    { id: 'mise-a-jour', condition: aJour, message: (j) => j.t('contre-visite-evenement-mise-a-jour') },
+    { id: 'mise-a-jour', condition: dayA, message: (j) => j.t('contre-visite-evenement-mise-a-jour') },
     {
       id: 'ssh-a-recharger',
-      condition: (j) => sshChange(j) && !sshErreur(j),
+      condition: (j) => sshChange(j) && !errorSsh(j),
       message: (j) => j.t('contre-visite-evenement-ssh-a-recharger'),
     },
-    { id: 'durci', condition: (j) => durci(j) && sshApplique(j), message: (j) => j.t('contre-visite-evenement-durci', { cible: String(CIBLE) }) },
-    { id: 'preuve-lynis', condition: (j) => preuveLynis(j) && sshApplique(j), message: (j) => j.t('contre-visite-evenement-preuve-lynis') },
+    { id: 'durci', condition: (j) => hardened(j) && appliesSsh(j), message: (j) => j.t('contre-visite-evenement-durci', { cible: String(TARGET) }) },
+    { id: 'preuve-lynis', condition: (j) => lynisProof(j) && appliesSsh(j), message: (j) => j.t('contre-visite-evenement-preuve-lynis') },
     { id: 'nmap-propre', condition: nmapOk, message: (j) => j.t('contre-visite-evenement-nmap-propre') },
     {
       id: 'fin',
-      condition: (j) => preuveLynis(j) && sshApplique(j) && nmapOk(j) && rapportOk(j),
-      message: (j) => j.t('contre-visite-evenement-fin', { faute: horsPerimetre(j) ? 'oui' : 'non' }),
+      condition: (j) => lynisProof(j) && appliesSsh(j) && nmapOk(j) && okReport(j),
+      message: (j) => j.t('contre-visite-evenement-fin', { faute: outsideScope(j) ? 'oui' : 'non' }),
     },
   ],
 };

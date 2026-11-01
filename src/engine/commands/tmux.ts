@@ -9,87 +9,87 @@
 
 import type { Shell } from '../shell';
 import { systemd } from '../systemd';
-import type { Commande } from './index';
+import type { Command } from './index';
 
 export interface SessionTmux {
-  cree: number;
-  lignes: string[];
+  created: number;
+  lines: string[];
 }
 
-const sessions = (jeu: Shell): Record<string, SessionTmux> => (jeu.etat.tmux ??= {});
-const JOURS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MOIS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const sessions = (game: Shell): Record<string, SessionTmux> => (game.state.tmux ??= {});
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 // « Tue Oct 19 21:32:10 2027 », comme tmux ls.
 const date = (ms: number) => {
   const d = new Date(ms);
-  return `${JOURS[d.getUTCDay()]} ${MOIS[d.getUTCMonth()]} ${d.getUTCDate()} ${d.toISOString().slice(11, 19)} ${d.getUTCFullYear()}`;
+  return `${DAYS[d.getUTCDay()]} ${MONTH[d.getUTCMonth()]} ${d.getUTCDate()} ${d.toISOString().slice(11, 19)} ${d.getUTCFullYear()}`;
 };
-const IMBRIQUEE = 'sessions should be nested with care, unset $TMUX to force';
-const SANS_SERVEUR = (jeu: Shell) => `no server running on /tmp/tmux-${jeu.comptes.utilisateurs[jeu.qui]?.uid ?? 1000}/default`;
+const NESTED = 'sessions should be nested with care, unset $TMUX to force';
+const WITHOUT_SERVER = (game: Shell) => `no server running on /tmp/tmux-${game.accounts.users[game.who]?.uid ?? 1000}/default`;
 
 /** Ce qui s'affiche dans une session tmux : on le garde pour la prochaine fois qu'on s'y rattache. */
-export function noterTmux(jeu: Shell, nom: string, texte: string) {
-  const s = sessions(jeu)[nom];
-  if (!s || !texte) return;
-  s.lignes.push(...texte.split('\n'));
-  if (s.lignes.length > 500) s.lignes.splice(0, s.lignes.length - 500);
+export function noteTmux(game: Shell, name: string, text: string) {
+  const s = sessions(game)[name];
+  if (!s || !text) return;
+  s.lines.push(...text.split('\n'));
+  if (s.lines.length > 500) s.lines.splice(0, s.lines.length - 500);
 }
 
 // La valeur d'une option (-s nom, -t nom).
-const valeur = (args: string[], option: string) => (args.includes(option) ? args[args.indexOf(option) + 1] : undefined);
+const value = (args: string[], option: string) => (args.includes(option) ? args[args.indexOf(option) + 1] : undefined);
 
-export const TMUX: Record<string, Commande> = {
+export const TMUX: Record<string, Command> = {
   tmux: {
-    propresOptions: true,
-    lancer: ({ args, jeu }) => {
-      const action = args.find((a) => !a.startsWith('-') && a !== valeur(args, '-s') && a !== valeur(args, '-t')) ?? 'new-session';
-      const liste = sessions(jeu);
-      const maintenant = systemd(jeu)?.horloge ?? 0;
+    ownOptions: true,
+    launch: ({ args, game }) => {
+      const action = args.find((a) => !a.startsWith('-') && a !== value(args, '-s') && a !== value(args, '-t')) ?? 'new-session';
+      const listing = sessions(game);
+      const now = systemd(game)?.clock ?? 0;
       if (['new', 'new-session'].includes(action)) {
-        if (jeu.tmux) return jeu.erreur(IMBRIQUEE, 1);
-        const nom = valeur(args, '-s') ?? String(Object.keys(liste).filter((n) => /^\d+$/.test(n)).length);
-        if (liste[nom]) return jeu.erreur(`duplicate session: ${nom}`, 1);
-        liste[nom] = { cree: maintenant, lignes: [] };
-        jeu.tmux = nom;
+        if (game.tmux) return game.error(NESTED, 1);
+        const name = value(args, '-s') ?? String(Object.keys(listing).filter((n) => /^\d+$/.test(n)).length);
+        if (listing[name]) return game.error(`duplicate session: ${name}`, 1);
+        listing[name] = { created: now, lines: [] };
+        game.tmux = name;
         return '';
       }
       if (['ls', 'list-sessions'].includes(action)) {
-        const noms = Object.keys(liste);
-        if (!noms.length) return jeu.erreur(SANS_SERVEUR(jeu), 1);
-        return noms.map((n) => `${n}: 1 windows (created ${date(liste[n].cree)})${jeu.tmux === n ? ' (attached)' : ''}`).join('\n');
+        const names = Object.keys(listing);
+        if (!names.length) return game.error(WITHOUT_SERVER(game), 1);
+        return names.map((n) => `${n}: 1 windows (created ${date(listing[n].created)})${game.tmux === n ? ' (attached)' : ''}`).join('\n');
       }
       if (['attach', 'a', 'attach-session', 'at'].includes(action)) {
-        if (jeu.tmux) return jeu.erreur(IMBRIQUEE, 1);
-        const noms = Object.keys(liste);
-        if (!noms.length) return jeu.erreur(SANS_SERVEUR(jeu), 1);
-        const cible = valeur(args, '-t') ?? noms.at(-1)!;
-        if (!liste[cible]) return jeu.erreur(`can't find session: ${cible}`, 1);
-        jeu.tmux = cible;
-        return liste[cible].lignes.slice(-60).join('\n');
+        if (game.tmux) return game.error(NESTED, 1);
+        const names = Object.keys(listing);
+        if (!names.length) return game.error(WITHOUT_SERVER(game), 1);
+        const target = value(args, '-t') ?? names.at(-1)!;
+        if (!listing[target]) return game.error(`can't find session: ${target}`, 1);
+        game.tmux = target;
+        return listing[target].lines.slice(-60).join('\n');
       }
       if (['detach', 'detach-client'].includes(action)) {
-        if (!jeu.tmux) return jeu.erreur('no current client', 1);
-        const nom = jeu.tmux;
-        jeu.tmux = null;
-        return `[detached (from session ${nom})]`;
+        if (!game.tmux) return game.error('no current client', 1);
+        const name = game.tmux;
+        game.tmux = null;
+        return `[detached (from session ${name})]`;
       }
       if (['kill-session', 'kill-ses'].includes(action)) {
-        const cible = valeur(args, '-t') ?? jeu.tmux ?? Object.keys(liste).at(-1);
-        if (!cible || !liste[cible]) return jeu.erreur(cible ? `can't find session: ${cible}` : SANS_SERVEUR(jeu), 1);
-        delete liste[cible];
-        if (jeu.tmux === cible) jeu.tmux = null;
+        const target = value(args, '-t') ?? game.tmux ?? Object.keys(listing).at(-1);
+        if (!target || !listing[target]) return game.error(target ? `can't find session: ${target}` : WITHOUT_SERVER(game), 1);
+        delete listing[target];
+        if (game.tmux === target) game.tmux = null;
         return '';
       }
-      return jeu.erreur(`unknown command: ${action}`, 1);
+      return game.error(`unknown command: ${action}`, 1);
     },
   },
 
   uname: {
-    lancer: ({ args, jeu }) => {
-      const noyau = (jeu.etat.noyau as { courant: string } | undefined)?.courant ?? '6.12.0-quetes';
-      const tout = args.some((a) => /^-\w*a/.test(a));
-      if (tout) return `Linux ${jeu.hote} ${noyau} #1 SMP PREEMPT_DYNAMIC Debian ${noyau.replace(/\+.*$/, '')}-1 x86_64 GNU/Linux`;
-      if (args.some((a) => /^-\w*r/.test(a))) return noyau;
+    launch: ({ args, game }) => {
+      const kernel = (game.state.noyau as { active: string } | undefined)?.active ?? '6.12.0-quetes';
+      const all = args.some((a) => /^-\w*a/.test(a));
+      if (all) return `Linux ${game.host} ${kernel} #1 SMP PREEMPT_DYNAMIC Debian ${kernel.replace(/\+.*$/, '')}-1 x86_64 GNU/Linux`;
+      if (args.some((a) => /^-\w*r/.test(a))) return kernel;
       return 'Linux';
     },
   },

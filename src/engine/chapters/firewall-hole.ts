@@ -14,42 +14,42 @@
 // https://docs.docker.com/engine/network/#published-ports,
 // https://docs.docker.com/engine/manage-resources/pruning/
 
-import { motDePasse, d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../world';
-import type { Jeu, Shell } from '../shell';
-import { nouveauSystemd, systemd } from '../systemd';
+import { password, d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import type { Game, Shell } from '../shell';
+import { newSystemd, systemd } from '../systemd';
 import {
-  demarrerDocker,
+  startDocker,
   docker,
-  ecrireDans,
-  identifiant,
-  majDisque,
-  nomImage,
-  requeteDocker,
-  type Conteneur,
-  type EtatDocker,
+  writeIn,
+  identifier,
+  diskUpdate,
+  imageName,
+  dockerRequest,
+  type Container,
+  type DockerState,
   type Image,
 } from '../docker';
-import { lireProjet, monter, conteneursDuProjet } from '../compose';
-import { nouveauPareFeu, type PareFeu } from '../firewall';
-import { etatPort } from '../ports';
-import { POSTE } from '../machines';
-import { connecter } from './compose';
-import { ecrireBase } from './update';
+import { readProject, mount, projectContainers } from '../compose';
+import { newFirewall, type Firewall } from '../firewall';
+import { portState } from '../ports';
+import { WORKSTATION } from '../machines';
+import { connect } from './compose';
+import { writeBase } from './update';
 
 const M = '/home/vous';
-const PROJET = '/srv/reservations';
+const PROJECT = '/srv/reservations';
 const Go = 1_000_000_000;
-const DISQUE = 20 * Go;
-const VOLUMES_UTILES = ['outiltheque-donnees', 'reservations_donnees', 'wiki-ancien'];
+const DISK = 20 * Go;
+const USEFUL_VOLUMES = ['outiltheque-donnees', 'reservations_donnees', 'wiki-ancien'];
 
-const comptes = (): Comptes => ({
-  utilisateurs: { root: { uid: 0, groupe: 'root', maison: '/root' }, vous: { uid: 1000, groupe: 'vous' }, yasmine: { uid: 1001, groupe: 'yasmine' } },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    sudo: { gid: 27, membres: ['vous', 'yasmine'] },
-    docker: { gid: 999, membres: ['yasmine'] },
-    vous: { gid: 1000, membres: [] },
-    yasmine: { gid: 1001, membres: [] },
+const accounts = (): Accounts => ({
+  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' }, yasmine: { uid: 1001, group: 'yasmine' } },
+  groups: {
+    root: { gid: 0, members: [] },
+    sudo: { gid: 27, members: ['vous', 'yasmine'] },
+    docker: { gid: 999, members: ['yasmine'] },
+    vous: { gid: 1000, members: [] },
+    yasmine: { gid: 1001, members: [] },
   },
 });
 
@@ -81,19 +81,19 @@ const COMPOSE = `services:
 volumes:
   donnees:`;
 
-const image = (depot: string, tag: string, appli: string, port: number, commande: string, taille: number, joursAvant: number): Image => ({
-  depot,
+const image = (repo: string, tag: string, app: string, port: number, command: string, size: number, daysBefore: number): Image => ({
+  repo,
   tag,
-  id: identifiant(`${depot}:${tag}:${taille}`),
-  taille,
-  cree: Date.UTC(2027, 3, 24, 10, 0, 0) - joursAvant * 86_400_000,
-  appli,
+  id: identifier(`${repo}:${tag}:${size}`),
+  size,
+  created: Date.UTC(2027, 3, 24, 10, 0, 0) - daysBefore * 86_400_000,
+  app,
   port,
-  commande,
+  command,
 });
 
-function etatDocker(): EtatDocker {
-  const liste = [
+function dockerState(): DockerState {
+  const listing = [
     image('registry.example/outiltheque', '1.4', 'outiltheque', 8080, '/usr/local/bin/outiltheque serve', 148_200_000, 140),
     image('registry.example/outiltheque', '1.5', 'outiltheque', 8080, '/usr/local/bin/outiltheque serve', 151_600_000, 23),
     image('registry.example/reservations', '2.0', 'reservations', 3000, 'docker-entrypoint.sh node serveur.js', 205_100_000, 40),
@@ -105,64 +105,64 @@ function etatDocker(): EtatDocker {
     image('node', '22', 'aucune', 0, 'docker-entrypoint.sh node', 1_120_000_000, 45),
     ...[0, 1, 2].map((k) => image('<none>', '<none>', 'aucune', 0, '', 410_000_000 + k * 7_000_000, 50 + k * 9)),
   ];
-  const images = Object.fromEntries(liste.map((i) => [i.depot === '<none>' ? `<none>@${i.id}` : nomImage(i), i]));
+  const images = Object.fromEntries(listing.map((i) => [i.repo === '<none>' ? `<none>@${i.id}` : imageName(i), i]));
   return {
     images,
-    registre: Object.fromEntries(liste.filter((i) => i.depot !== '<none>').map((i) => [nomImage(i), i])),
-    conteneurs: [],
+    registry: Object.fromEntries(listing.filter((i) => i.repo !== '<none>').map((i) => [imageName(i), i])),
+    containers: [],
     volumes: {
-      'outiltheque-donnees': { cree: Date.UTC(2027, 3, 3, 10, 12, 0), donnees: {}, taille: 2_400_000 },
-      reservations_donnees: { cree: Date.UTC(2027, 3, 10, 14, 30, 0), donnees: {}, taille: 162_000_000 },
+      'outiltheque-donnees': { created: Date.UTC(2027, 3, 3, 10, 12, 0), data: {}, size: 2_400_000 },
+      reservations_donnees: { created: Date.UTC(2027, 3, 10, 14, 30, 0), data: {}, size: 162_000_000 },
       // Les pages de l'ancien wiki du fablab, gardées pour les extraire un jour.
-      'wiki-ancien': { cree: Date.UTC(2026, 10, 2, 9, 0, 0), donnees: { 'wiki.sqlite': 'SQLite format 3' }, taille: 48_100_000 },
+      'wiki-ancien': { created: Date.UTC(2026, 10, 2, 9, 0, 0), data: { 'wiki.sqlite': 'SQLite format 3' }, size: 48_100_000 },
     },
-    prochain: 10,
+    next: 10,
   };
 }
 
-const conteneur = (
-  j: Jeu,
-  nom: string,
+const container = (
+  j: Game,
+  name: string,
   image: string,
-  ports: Conteneur['ports'],
+  ports: Container['ports'],
   volume: string | null,
-  redemarrage: string,
-  etat: Conteneur['etat'],
-): Conteneur => ({
-  id: identifiant(`conteneur-${nom}`),
-  nom,
+  reboot: string,
+  state: Container['state'],
+): Container => ({
+  id: identifier(`conteneur-${name}`),
+  name,
   image,
-  etat,
+  state,
   code: 0,
   ports,
-  montages: volume ? [{ type: 'volume', source: volume, cible: '/var/lib/outiltheque', lectureSeule: false }] : [],
+  mounts: volume ? [{ type: 'volume', source: volume, target: '/var/lib/outiltheque', onlyRead: false }] : [],
   env: {},
-  redemarrage,
-  cree: Date.UTC(2027, 3, 3, 10, 20, 0),
-  debut: systemd(j)?.horloge ?? 0,
-  fin: Date.UTC(2027, 3, 3, 10, 18, 0),
-  couche: {},
-  journal: [],
-  ip: `172.17.0.${etat === 'running' ? 2 : 3}`,
+  reboot,
+  created: Date.UTC(2027, 3, 3, 10, 20, 0),
+  start: systemd(j)?.clock ?? 0,
+  end: Date.UTC(2027, 3, 3, 10, 18, 0),
+  layer: {},
+  log: [],
+  ip: `172.17.0.${state === 'running' ? 2 : 3}`,
 });
 
-const sd = (j: Jeu) => systemd(j)!;
-const etat = (j: Jeu) => docker(j)!;
-const shell = (j: Jeu) => j as Shell;
-const ouvertAuMonde = (j: Jeu) => etatPort(j, 5432, false, POSTE.adresse) === 'ouvert';
-const occupation = (j: Jeu) => shell(j).taille(j.trouver('/')!) / DISQUE;
-const volumesPerdus = (j: Jeu) => VOLUMES_UTILES.filter((v) => !etat(j).volumes[v]);
-const appliOk = (j: Jeu) => {
-  const a = conteneursDuProjet(etat(j), 'reservations').find((c) => c.service === 'appli');
-  return a?.etat === 'running' && connecter(j, a) === null;
+const sd = (j: Game) => systemd(j)!;
+const state = (j: Game) => docker(j)!;
+const shell = (j: Game) => j as Shell;
+const openToWorld = (j: Game) => portState(j, 5432, false, WORKSTATION.address) === 'ouvert';
+const occupation = (j: Game) => shell(j).size(j.find('/')!) / DISK;
+const volumesPerdus = (j: Game) => USEFUL_VOLUMES.filter((v) => !state(j).volumes[v]);
+const okApp = (j: Game) => {
+  const a = projectContainers(state(j), 'reservations').find((c) => c.service === 'appli');
+  return a?.state === 'running' && connect(j, a) === null;
 };
-const outilOk = (j: Jeu) => requeteDocker(j, '127.0.0.1', 8080, '/')?.code === 200;
-const ufw = (j: Jeu) => j.etat.ufw as PareFeu;
+const okTool = (j: Game) => dockerRequest(j, '127.0.0.1', 8080, '/')?.code === 200;
+const ufw = (j: Game) => j.state.ufw as Firewall;
 
-export const contournement: Chapitre = {
+export const bypass: Chapter = {
   id: 'contournement',
-  numero: 3,
-  commandes: [
+  number: 3,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -192,116 +192,116 @@ export const contournement: Chapitre = {
     'ufw',
     'nc',
   ],
-  maison: M,
-  accueil: 'message_de_rania.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_de_rania.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'fablab-2027',
-  comptes,
-  etat: () => {
-    const pf = nouveauPareFeu();
-    pf.actif = true;
-    pf.regles = [
-      { action: 'allow', vers: 'OpenSSH', ports: [22], de: null },
-      { action: 'allow', vers: '8080/tcp', ports: [8080], de: null },
-      { action: 'allow', vers: '8081/tcp', ports: [8081], de: null },
+  password: 'fablab-2027',
+  accounts,
+  state: () => {
+    const pf = newFirewall();
+    pf.enabled = true;
+    pf.rules = [
+      { action: 'allow', to: 'OpenSSH', ports: [22], forEachOf: null },
+      { action: 'allow', to: '8080/tcp', ports: [8080], forEachOf: null },
+      { action: 'allow', to: '8081/tcp', ports: [8081], forEachOf: null },
     ];
     return {
-      systemd: nouveauSystemd('fabrique', Date.UTC(2027, 3, 20, 7, 10, 0), Date.UTC(2027, 3, 24, 10, 0, 0), {
+      systemd: newSystemd('fabrique', Date.UTC(2027, 3, 20, 7, 10, 0), Date.UTC(2027, 3, 24, 10, 0, 0), {
         ssh: {
           description: 'OpenBSD Secure Shell server',
           active: true,
           executable: 'sshd',
-          processus: [{ pid: 610, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+          process: [{ pid: 610, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
         },
         ufw: { description: 'Uncomplicated firewall', active: true, executable: 'ufw' },
         docker: {
           description: 'Docker Application Container Engine',
           active: true,
           executable: 'dockerd',
-          processus: [
-            { pid: 702, utilisateur: 'root', cpu: 0.4, mem: 2.1, commande: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
+          process: [
+            { pid: 702, user: 'root', cpu: 0.4, mem: 2.1, command: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
           ],
-          charger: (j) => demarrerDocker(j),
+          load: (j) => startDocker(j),
         },
       }),
       ufw: pf,
       ecoute: [
-        { proto: 'tcp', adresse: '0.0.0.0', port: 22, processus: 'sshd', pid: 610 },
-        { proto: 'tcp', adresse: '[::]', port: 22, processus: 'sshd', pid: 610 },
+        { proto: 'tcp', address: '0.0.0.0', port: 22, processus: 'sshd', pid: 610 },
+        { proto: 'tcp', address: '[::]', port: 22, processus: 'sshd', pid: 610 },
       ],
-      montages: [{ chemin: '/', capacite: DISQUE, nom: '/dev/vda1' }],
-      docker: { ...etatDocker(), noms: ['fabrique', 'fabrique.internal', '192.0.2.15'] },
+      montages: [{ path: '/', capacity: DISK, name: '/dev/vda1' }],
+      docker: { ...dockerState(), names: ['fabrique', 'fabrique.internal', '192.0.2.15'] },
     };
   },
   // Les conteneurs du fablab, tels qu'ils tournent depuis le dernier démarrage.
-  initialiser: (j) => {
-    const e = etat(j);
-    const outil = conteneur(
+  initialise: (j) => {
+    const e = state(j);
+    const tool = container(
       j,
       'outiltheque',
       'registry.example/outiltheque:1.5',
-      [{ ip: '0.0.0.0', hote: 8080, conteneur: 8080 }],
+      [{ ip: '0.0.0.0', host: 8080, container: 8080 }],
       'outiltheque-donnees',
       'unless-stopped',
       'running',
     );
-    const ancien = conteneur(
+    const old = container(
       j,
       'outiltheque-ancien',
       'registry.example/outiltheque:1.4',
-      [{ ip: '0.0.0.0', hote: 8080, conteneur: 8080 }],
+      [{ ip: '0.0.0.0', host: 8080, container: 8080 }],
       null,
       'no',
       'exited',
     );
-    e.conteneurs.push(ancien, outil);
-    ecrireDans(j, outil, '/var/lib/outiltheque/outiltheque.db', ecrireBase({ schema: 4, prets: [] }));
+    e.containers.push(old, tool);
+    writeIn(j, tool, '/var/lib/outiltheque/outiltheque.db', writeBase({ schema: 4, loans: [] }));
     // La base de réservations existe déjà dans son volume (mot de passe de .env).
-    e.volumes.reservations_donnees.donnees = {
+    e.volumes.reservations_donnees.data = {
       PG_VERSION: '17',
-      'pg_hba_qds.json': JSON.stringify({ utilisateur: 'fablab', motDePasse: motDePasse(j.t, 'atelier2027'), base: 'reservations' }),
+      'pg_hba_qds.json': JSON.stringify({ user: 'fablab', password: password(j.t, 'atelier2027'), base: 'reservations' }),
     };
-    monter(shell(j), lireProjet(j, PROJET), () => true);
-    majDisque(j);
-    sd(j).journal = sd(j).journal.filter((x) => x.unite !== 'docker.service');
+    mount(shell(j), readProject(j, PROJECT), () => true);
+    diskUpdate(j);
+    sd(j).log = sd(j).log.filter((x) => x.unit !== 'docker.service');
   },
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
-    const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
-    return lieu({
-      etc: lieu({ ...fichiersComptes(), hostname: f('fabrique', { lignes: true, proprio: 'root' }) }),
-      home: lieu({
+  createWorld: (t) => {
+    const root = { owner: 'root' };
+    const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
+    return place({
+      etc: place({ ...accountsFiles(), hostname: f('fabrique', { lines: true, owner: 'root' }) }),
+      home: place({
         vous: d({ 'message_de_rania.txt': f(t('contournement-message-de-rania')), 'mot_de_yasmine.txt': f(t('contournement-mot-de-yasmine')) }),
       }),
-      srv: lieu({
-        reservations: lieu({
-          'compose.yaml': f(COMPOSE, { lignes: true, proprio: 'root' }),
-          '.env': f(`POSTGRES_PASSWORD=${motDePasse(t, 'atelier2027')}`, { lignes: true, proprio: 'root', mode: 'rw-------' }),
+      srv: place({
+        reservations: place({
+          'compose.yaml': f(COMPOSE, { lines: true, owner: 'root' }),
+          '.env': f(`POSTGRES_PASSWORD=${password(t, 'atelier2027')}`, { lines: true, owner: 'root', mode: 'rw-------' }),
         }),
       }),
       // Le système et ses journaux : la place qui n'est pas à Docker.
-      usr: lieu({ systeme: f('', { taille: 3_100_000_000, proprio: 'root' }) }),
-      var: lieu({
-        lib: lieu({ docker: lieu({}, { proprio: 'root', mode: 'rwx--x---' }) }),
-        log: lieu({ journal: lieu({ 'system.journal': f('', { taille: 1_600_000_000, proprio: 'root' }) }) }),
+      usr: place({ systeme: f('', { size: 3_100_000_000, owner: 'root' }) }),
+      var: place({
+        lib: place({ docker: place({}, { owner: 'root', mode: 'rwx--x---' }) }),
+        log: place({ journal: place({ 'system.journal': f('', { size: 1_600_000_000, owner: 'root' }) }) }),
       }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'ss',
-      condition: (j) => j.derniere.sortie.includes('docker-proxy') && j.derniere.sortie.includes(':5432'),
+      condition: (j) => j.last.output.includes('docker-proxy') && j.last.output.includes(':5432'),
       message: (j) => j.t('contournement-evenement-ss'),
     },
     {
       id: 'ufw-inutile',
-      condition: (j) => ufw(j).regles.some((r) => r.ports.includes(5432) && r.action !== 'allow') && ouvertAuMonde(j),
+      condition: (j) => ufw(j).rules.some((r) => r.ports.includes(5432) && r.action !== 'allow') && openToWorld(j),
       message: (j) => j.t('contournement-evenement-ufw-inutile'),
     },
     {
       id: 'ferme',
-      condition: (j) => !ouvertAuMonde(j) && appliOk(j),
+      condition: (j) => !openToWorld(j) && okApp(j),
       message: (j) => j.t('contournement-evenement-ferme'),
     },
     {
@@ -316,7 +316,7 @@ export const contournement: Chapitre = {
     },
     {
       id: 'fin',
-      condition: (j) => !ouvertAuMonde(j) && appliOk(j) && outilOk(j) && occupation(j) < 0.75 && volumesPerdus(j).length === 0,
+      condition: (j) => !openToWorld(j) && okApp(j) && okTool(j) && occupation(j) < 0.75 && volumesPerdus(j).length === 0,
       message: (j) => j.t('contournement-evenement-fin'),
     },
   ],

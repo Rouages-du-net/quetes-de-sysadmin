@@ -8,9 +8,9 @@
 // attendre : une histoire « fait passer la nuit » et lance les tâches qui
 // tombent dans ce créneau (nuit()).
 
-import type { Jeu } from './shell';
+import type { Game } from './shell';
 
-export const MODELE = `# Edit this file to introduce tasks to be run by cron.
+export const TEMPLATE = `# Edit this file to introduce tasks to be run by cron.
 #
 # Each task to run has to be defined through a single line
 # indicating with different fields when the task will be run
@@ -35,23 +35,23 @@ export const MODELE = `# Edit this file to introduce tasks to be run by cron.
 # m h  dom mon dow   command
 `;
 
-export interface Tache {
-  ligne: string;
-  commande: string;
-  champs: Set<number>[];
+export interface Task {
+  line: string;
+  command: string;
+  fields: Set<number>[];
   // Jour du mois / jour de la semaine restreints (règle du « ou »).
-  domEtoile: boolean;
-  dowEtoile: boolean;
+  starDom: boolean;
+  starDow: boolean;
 }
 
-const BORNES: [string, number, number][] = [
+const BOUNDS: [string, number, number][] = [
   ['minute', 0, 59],
   ['hour', 0, 23],
   ['day-of-month', 1, 31],
   ['month', 1, 12],
   ['day-of-week', 0, 7],
 ];
-const RACCOURCIS: Record<string, string> = {
+const SHORTCUTS: Record<string, string> = {
   '@yearly': '0 0 1 1 *',
   '@annually': '0 0 1 1 *',
   '@monthly': '0 0 1 * *',
@@ -61,64 +61,64 @@ const RACCOURCIS: Record<string, string> = {
   '@hourly': '0 * * * *',
 };
 
-function champ(texte: string, min: number, max: number): Set<number> | null {
-  const valeurs = new Set<number>();
-  for (const partie of texte.split(',')) {
-    const m = /^(\*|(\d+)(?:-(\d+))?)(?:\/(\d+))?$/.exec(partie);
+function field(text: string, min: number, max: number): Set<number> | null {
+  const values = new Set<number>();
+  for (const part of text.split(',')) {
+    const m = /^(\*|(\d+)(?:-(\d+))?)(?:\/(\d+))?$/.exec(part);
     if (!m) return null;
-    const debut = m[1] === '*' ? min : Number(m[2]);
-    const fin = m[1] === '*' ? max : m[3] !== undefined ? Number(m[3]) : m[4] ? max : debut;
-    const pas = m[4] ? Number(m[4]) : 1;
-    if (debut < min || fin > max || debut > fin || pas < 1) return null;
-    for (let v = debut; v <= fin; v += pas) valeurs.add(v);
+    const start = m[1] === '*' ? min : Number(m[2]);
+    const end = m[1] === '*' ? max : m[3] !== undefined ? Number(m[3]) : m[4] ? max : start;
+    const not = m[4] ? Number(m[4]) : 1;
+    if (start < min || end > max || start > end || not < 1) return null;
+    for (let v = start; v <= end; v += not) values.add(v);
   }
   // 7 = dimanche, comme 0.
-  if (max === 7 && valeurs.has(7)) valeurs.add(0);
-  return valeurs;
+  if (max === 7 && values.has(7)) values.add(0);
+  return values;
 }
 
 /** Lit une crontab ; erreurs au format de crontab -e (fichier:ligne: bad champ). */
-export function analyser(texte: string, fichier: string): { taches: Tache[]; erreurs: string[]; auDemarrage: string[] } {
-  const taches: Tache[] = [];
-  const auDemarrage: string[] = [];
-  const erreurs: string[] = [];
-  texte.split('\n').forEach((brute, i) => {
-    const ligne = brute.trim();
-    if (!ligne || ligne.startsWith('#') || /^[A-Za-z_]+\s*=/.test(ligne)) return;
-    const mots = ligne.split(/\s+/);
-    if (mots[0] === '@reboot') {
-      if (mots.length < 2) erreurs.push(`"${fichier}":${i + 1}: bad command`);
-      else auDemarrage.push(mots.slice(1).join(' '));
+export function parse(text: string, file: string): { tasks: Task[]; errors: string[]; toBoot: string[] } {
+  const tasks: Task[] = [];
+  const toBoot: string[] = [];
+  const errors: string[] = [];
+  text.split('\n').forEach((rawValue, i) => {
+    const line = rawValue.trim();
+    if (!line || line.startsWith('#') || /^[A-Za-z_]+\s*=/.test(line)) return;
+    const words = line.split(/\s+/);
+    if (words[0] === '@reboot') {
+      if (words.length < 2) errors.push(`"${file}":${i + 1}: bad command`);
+      else toBoot.push(words.slice(1).join(' '));
       return;
     }
-    const [horaire, reste] = RACCOURCIS[mots[0]] ? [RACCOURCIS[mots[0]].split(' '), mots.slice(1)] : [mots.slice(0, 5), mots.slice(5)];
-    const champs: Set<number>[] = [];
+    const [schedule, rest] = SHORTCUTS[words[0]] ? [SHORTCUTS[words[0]].split(' '), words.slice(1)] : [words.slice(0, 5), words.slice(5)];
+    const fields: Set<number>[] = [];
     for (let k = 0; k < 5; k++) {
-      const c = horaire[k] === undefined ? null : champ(horaire[k], BORNES[k][1], BORNES[k][2]);
-      if (!c) return void erreurs.push(`"${fichier}":${i + 1}: bad ${BORNES[k][0]}`);
-      champs.push(c);
+      const c = schedule[k] === undefined ? null : field(schedule[k], BOUNDS[k][1], BOUNDS[k][2]);
+      if (!c) return void errors.push(`"${file}":${i + 1}: bad ${BOUNDS[k][0]}`);
+      fields.push(c);
     }
-    if (!reste.length) return void erreurs.push(`"${fichier}":${i + 1}: bad command`);
-    taches.push({ ligne, commande: reste.join(' '), champs, domEtoile: horaire[2] === '*', dowEtoile: horaire[4] === '*' });
+    if (!rest.length) return void errors.push(`"${file}":${i + 1}: bad command`);
+    tasks.push({ line, command: rest.join(' '), fields, starDom: schedule[2] === '*', starDow: schedule[4] === '*' });
   });
-  if (erreurs.length) erreurs.push("errors in crontab file, can't install.");
-  return { taches, erreurs, auDemarrage };
+  if (errors.length) errors.push("errors in crontab file, can't install.");
+  return { tasks, errors, toBoot };
 }
 
 /** La tâche tourne-t-elle à cette minute (date lue comme heure locale, en UTC) ? */
-export function tourneA(t: Tache, ms: number): boolean {
+export function aRunning(t: Task, ms: number): boolean {
   const d = new Date(ms);
-  const [mi, h, dom, mon, dow] = t.champs;
-  if (!mi.has(d.getUTCMinutes()) || !h.has(d.getUTCHours()) || !mon.has(d.getUTCMonth() + 1)) return false;
-  const jourMois = dom.has(d.getUTCDate());
-  const jourSemaine = dow.has(d.getUTCDay());
-  if (t.domEtoile || t.dowEtoile) return (t.domEtoile || jourMois) && (t.dowEtoile || jourSemaine);
-  return jourMois || jourSemaine;
+  const [mi, h, dom, my, dow] = t.fields;
+  if (!mi.has(d.getUTCMinutes()) || !h.has(d.getUTCHours()) || !my.has(d.getUTCMonth() + 1)) return false;
+  const monthDay = dom.has(d.getUTCDate());
+  const weekDay = dow.has(d.getUTCDay());
+  if (t.starDom || t.starDow) return (t.starDom || monthDay) && (t.starDow || weekDay);
+  return monthDay || weekDay;
 }
 
 export interface Execution {
-  commande: string;
-  sortie: string;
+  command: string;
+  output: string;
 }
 
 /**
@@ -126,26 +126,26 @@ export interface Execution {
  * crontab qui tombe dedans est lancée une fois, sous son compte, depuis sa
  * maison. Renvoie ce qui a tourné, avec ce que cron aurait envoyé par courrier.
  */
-export function passer(jeu: Jeu & { executerTache(ligne: string): string; qui: string }, debut: number, fin: number): Execution[] {
-  const crontabs: Record<string, string> = jeu.etat.crontabs ?? {};
+export function pass(game: Game & { runTask(line: string): string; who: string }, start: number, end: number): Execution[] {
+  const crontabs: Record<string, string> = game.state.crontabs ?? {};
   // Les tâches du créneau, dans l'ordre de leur heure (comme le vrai cron).
-  const prevues: { compte: string; commande: string; ms: number }[] = [];
-  for (const [compte, texte] of Object.entries(crontabs))
-    for (const t of analyser(texte, '').taches)
-      for (let ms = debut; ms < fin; ms += 60_000)
-        if (tourneA(t, ms)) {
-          prevues.push({ compte, commande: t.commande, ms });
+  const planned: { account: string; command: string; ms: number }[] = [];
+  for (const [account, text] of Object.entries(crontabs))
+    for (const t of parse(text, '').tasks)
+      for (let ms = start; ms < end; ms += 60_000)
+        if (aRunning(t, ms)) {
+          planned.push({ account, command: t.command, ms });
           break;
         }
-  prevues.sort((a, b) => a.ms - b.ms);
+  planned.sort((a, b) => a.ms - b.ms);
   const executions: Execution[] = [];
-  for (const p of prevues) {
-    const avant = jeu.qui;
-    jeu.qui = p.compte;
+  for (const p of planned) {
+    const before = game.who;
+    game.who = p.account;
     try {
-      executions.push({ commande: p.commande, sortie: jeu.executerTache(p.commande) });
+      executions.push({ command: p.command, output: game.runTask(p.command) });
     } finally {
-      jeu.qui = avant;
+      game.who = before;
     }
   }
   return executions;

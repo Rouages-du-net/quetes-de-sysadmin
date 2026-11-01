@@ -13,38 +13,38 @@
 // Sources : https://manpages.debian.org/trixie/vlan/vlan-interfaces.5.en.html,
 // https://man7.org/linux/man-pages/man8/ip-link.8.html, IEEE 802.1Q
 
-import { f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { enService, lan, lireInterfaces, vlanDe } from '../lan';
-import { comptesRuche, initialiserRuche, INTERFACES_A_PLAT, M, mondeRuche, MOT_DE_PASSE, nouveauLan, systemdRuche, VLANS, planRuche } from './hive';
+import { f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { inService, lan, readInterfaces, vlanFor } from '../lan';
+import { hiveAccounts, initialiseHive, FLAT_A_INTERFACES, M, hiveWorld, PASSWORD, newLan, hiveSystemd, VLANS, hivePlan } from './hive';
 
-const DNSMASQ_A_PLAT = `# The DHCP server of the LAN
+const FLAT_A_DNSMASQ = `# The DHCP server of the LAN
 interface=eth1
 dhcp-range=192.168.1.100,192.168.1.200,12h`;
 
 // En ce moment : l'interface montée du VLAN, avec l'adresse du routeur.
-const enPlace = (j: Jeu, v: (typeof VLANS)[number]) => {
+const inPlace = (j: Game, v: (typeof VLANS)[number]) => {
   const l = lan(j)!;
-  return Object.values(l.interfaces).some((i) => enService(l, i) && vlanDe(l, i) === v.id && i.adresses.includes(v.routeur));
+  return Object.values(l.interfaces).some((i) => inService(l, i) && vlanFor(l, i) === v.id && i.addresses.includes(v.routeur));
 };
 // Dans le fichier : une strophe auto, static, sur eth1, avec le bon numéro et la bonne adresse.
-const ecrit = (j: Jeu, v: (typeof VLANS)[number]) =>
-  Object.values(lireInterfaces(j).strophes).some(
-    (s) => s.auto && s.methode === 'static' && s.vlan?.parent === 'eth1' && s.vlan.id === v.id && s.adresse === v.routeur,
+const written = (j: Game, v: (typeof VLANS)[number]) =>
+  Object.values(readInterfaces(j).stanzas).some(
+    (s) => s.auto && s.method === 'static' && s.vlan?.parent === 'eth1' && s.vlan.id === v.id && s.address === v.routeur,
   );
 // Une interface VLAN dont l'adresse est celle d'un autre numéro (10.10.30.1 sur le VLAN 3…).
-const mauvaisNumero = (j: Jeu) => {
+const badNumber = (j: Game) => {
   const l = lan(j)!;
-  return Object.values(l.interfaces).some((i) => i.vlan && VLANS.some((v) => i.adresses.includes(v.routeur) && i.vlan!.id !== v.id));
+  return Object.values(l.interfaces).some((i) => i.vlan && VLANS.some((v) => i.addresses.includes(v.routeur) && i.vlan!.id !== v.id));
 };
-const tousEnPlace = (j: Jeu) => VLANS.every((v) => enPlace(j, v));
-const tousEcrits = (j: Jeu) => VLANS.every((v) => ecrit(j, v));
+const allInPlace = (j: Game) => VLANS.every((v) => inPlace(j, v));
+const allWritten = (j: Game) => VLANS.every((v) => written(j, v));
 
-export const vlan: Chapitre = {
+export const vlan: Chapter = {
   id: 'vlan',
-  numero: 1,
-  plan: planRuche(),
-  commandes: [
+  number: 1,
+  plan: hivePlan(),
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -65,23 +65,23 @@ export const vlan: Chapitre = {
     'systemctl',
     'journalctl',
   ],
-  maison: M,
-  accueil: 'courriel_malik.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_malik.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: comptesRuche,
-  etat: () => ({ lan: nouveauLan(false), systemd: systemdRuche() }),
-  initialiser: initialiserRuche,
-  creerMonde: (t) =>
-    mondeRuche({
-      interfaces: INTERFACES_A_PLAT,
-      dnsmasq: DNSMASQ_A_PLAT,
-      maison: { 'courriel_malik.txt': f(t('vlan-courriel-malik')), 'plan-commutateur.txt': f(t('vlan-plan-commutateur'), { lignes: true }) },
+  password: PASSWORD,
+  accounts: hiveAccounts,
+  state: () => ({ lan: newLan(false), systemd: hiveSystemd() }),
+  initialise: initialiseHive,
+  createWorld: (t) =>
+    hiveWorld({
+      interfaces: FLAT_A_INTERFACES,
+      dnsmasq: FLAT_A_DNSMASQ,
+      home: { 'courriel_malik.txt': f(t('vlan-courriel-malik')), 'plan-commutateur.txt': f(t('vlan-plan-commutateur'), { lines: true }) },
     }),
-  evenements: [
-    { id: 'mauvais-numero', condition: mauvaisNumero, message: (j) => j.t('vlan-evenement-mauvais-numero') },
-    { id: 'en-place', condition: (j) => tousEnPlace(j) && !tousEcrits(j), message: (j) => j.t('vlan-evenement-en-place') },
-    { id: 'fin', condition: (j) => tousEnPlace(j) && tousEcrits(j), message: (j) => j.t('vlan-evenement-fin') },
+  events: [
+    { id: 'mauvais-numero', condition: badNumber, message: (j) => j.t('vlan-evenement-mauvais-numero') },
+    { id: 'en-place', condition: (j) => allInPlace(j) && !allWritten(j), message: (j) => j.t('vlan-evenement-en-place') },
+    { id: 'fin', condition: (j) => allInPlace(j) && allWritten(j), message: (j) => j.t('vlan-evenement-fin') },
   ],
 };

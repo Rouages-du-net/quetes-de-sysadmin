@@ -6,42 +6,42 @@
 // Chaque chapitre qui a un réseau à montrer le déclare (Chapitre.plan) ; la
 // carte l'affiche dans son onglet « Réseau » (voir src/interface/game.ts).
 
-import type { Traduire } from '../texts';
-import { nomMachine } from './machines';
+import type { Translate } from '../texts';
+import { machineName } from './machines';
 
 export type Role = 'internet' | 'poste' | 'routeur' | 'serveur' | 'appareil' | 'reseau';
 
 export interface ElementPlan {
   role: Role;
   // Nom affiché : un nom de machine (tel quel) ou un texte déjà traduit.
-  nom: string;
+  name: string;
   // Adresse ou réseau (192.0.2.21, 10.10.10.0/24), ou « DHCP ».
-  adresse?: string;
+  address?: string;
   // Ce qu'elle fait, en quelques mots (texte traduit) : « routeur, DHCP ».
   note?: string;
   // Le nom de la machine dans le jeu (celui de l'invite), pour « tu es ici ».
-  hote?: string;
+  host?: string;
   // Le lien vers son parent passe par un tunnel (WireGuard) : en pointillés.
   tunnel?: boolean;
-  enfants?: ElementPlan[];
+  children?: ElementPlan[];
 }
 
 /** Le début de tout plan : internet, et le poste d'où l'on part. */
-export const internet = (t: Traduire, ...enfants: ElementPlan[]): ElementPlan => ({
+export const internet = (t: Translate, ...children: ElementPlan[]): ElementPlan => ({
   role: 'internet',
-  nom: t('plan-internet'),
-  enfants: [{ role: 'poste', nom: nomMachine(t, 'poste'), adresse: '192.0.2.2', note: t('plan-ton-poste'), hote: 'poste' }, ...enfants],
+  name: t('plan-internet'),
+  children: [{ role: 'poste', name: machineName(t, 'poste'), address: '192.0.2.2', note: t('plan-ton-poste'), host: 'poste' }, ...children],
 });
 
-export interface Repere {
-  ici: boolean;
-  visite: boolean;
+export interface Landmark {
+  here: boolean;
+  visit: boolean;
 }
 
 /** Les repères d'un élément pour la partie en cours. */
-export const reperes = (e: ElementPlan, ici: string, visitees: Set<string>): Repere => ({
-  ici: !!e.hote && e.hote === ici,
-  visite: !!e.hote && visitees.has(e.hote),
+export const landmarks = (e: ElementPlan, here: string, visited: Set<string>): Landmark => ({
+  here: !!e.host && e.host === here,
+  visit: !!e.host && visited.has(e.host),
 });
 
 // ——— Mise en place du schéma ———
@@ -52,20 +52,20 @@ export const reperes = (e: ElementPlan, ici: string, visitees: Set<string>): Rep
 export interface Place {
   element: ElementPlan;
   parent: Place | null;
-  colonne: number;
-  ligne: number;
+  column: number;
+  line: number;
 }
 
-export function disposer(racine: ElementPlan): { places: Place[]; colonnes: number; lignes: number } {
+export function layOut(root: ElementPlan): { places: Place[]; columns: number; lines: number } {
   const places: Place[] = [];
-  let feuilles = 0;
-  const placer = (e: ElementPlan, parent: Place | null, colonne: number): Place => {
-    const p: Place = { element: e, parent, colonne, ligne: 0 };
+  let leaves = 0;
+  const place = (e: ElementPlan, parent: Place | null, column: number): Place => {
+    const p: Place = { element: e, parent, column, line: 0 };
     places.push(p);
-    const enfants = (e.enfants ?? []).map((x) => placer(x, p, colonne + 1));
-    p.ligne = enfants.length ? (enfants[0].ligne + enfants.at(-1)!.ligne) / 2 : feuilles++;
+    const children = (e.children ?? []).map((x) => place(x, p, column + 1));
+    p.line = children.length ? (children[0].line + children.at(-1)!.line) / 2 : leaves++;
     return p;
   };
-  placer(racine, null, 0);
-  return { places, colonnes: Math.max(...places.map((p) => p.colonne)) + 1, lignes: feuilles };
+  place(root, null, 0);
+  return { places, columns: Math.max(...places.map((p) => p.column)) + 1, lines: leaves };
 }

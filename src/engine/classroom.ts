@@ -5,41 +5,41 @@
 // l'avancée dans chaque histoire. Ce n'est pas une preuve de travail (un
 // fichier se modifie, un code se recopie) : un point de situation.
 
-import { HISTOIRES } from './chapters';
+import { STORIES } from './chapters';
 import { grade } from './achievements';
-import { lireCode, lireFichier } from './progress';
+import { readCode, readFile } from './progress';
 
-export interface Eleve {
-  nom: string;
+export interface Student {
+  name: string;
   // D'où vient la ligne : un fichier (son nom) ou un code.
   source: string;
-  termines: string[];
-  succes: number;
+  finished: string[];
+  achievements: number;
   // Meilleurs temps en mode examen, par chapitre (ms).
   records: Record<string, number>;
   // Date de la sauvegarde (ISO), pour un fichier.
   date: string | null;
 }
 
-export type ErreurClasse = { source: string; erreur: string };
+export type ClassError = { source: string; error: string };
 
-const TOUS = () => HISTOIRES.flatMap((h) => h.chapitres.map((c) => c.id));
+const ALL = () => STORIES.flatMap((h) => h.chapters.map((c) => c.id));
 
 /** Un élève d'après son fichier de sauvegarde ; sans nom dans le fichier, celui du fichier. */
-export function eleveDeFichier(nomFichier: string, texte: string): Eleve | ErreurClasse {
-  const lu = lireFichier(texte);
-  if ('erreur' in lu) return { source: nomFichier, erreur: lu.erreur };
+export function fileStudent(fileName: string, text: string): Student | ClassError {
+  const read = readFile(text);
+  if ('error' in read) return { source: fileName, error: read.error };
   let date: string | null = null;
   try {
-    const brut = JSON.parse(texte);
-    if (typeof brut.date === 'string' && !Number.isNaN(Date.parse(brut.date))) date = brut.date;
+    const raw = JSON.parse(text);
+    if (typeof raw.date === 'string' && !Number.isNaN(Date.parse(raw.date))) date = raw.date;
   } catch {}
-  const s = lu.sauvegarde;
+  const s = read.backup;
   return {
-    nom: s.nom || nomFichier.replace(/\.json$/i, ''),
-    source: nomFichier,
-    termines: s.termines ?? [],
-    succes: Object.keys(s.succes ?? {}).length,
+    name: s.name || fileName.replace(/\.json$/i, ''),
+    source: fileName,
+    finished: s.finished ?? [],
+    achievements: Object.keys(s.achievements ?? {}).length,
     records: s.records ?? {},
     date,
   };
@@ -49,37 +49,37 @@ export function eleveDeFichier(nomFichier: string, texte: string): Eleve | Erreu
  * Des élèves d'après leurs codes, un par ligne : « Nom QDS-XXXX-… » (le nom
  * est tout ce qui précède le code ; sans nom, le code lui-même).
  */
-export function elevesDeCodes(texte: string): (Eleve | ErreurClasse)[] {
-  return texte
+export function codesStudents(text: string): (Student | ClassError)[] {
+  return text
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean)
-    .map((ligne) => {
-      const m = /^(.*?)[\s:;,]*\b(qds[\s-]*[0-9a-z][0-9a-z\s-]*)$/i.exec(ligne);
-      if (!m) return { source: ligne, erreur: 'code-illisible' };
-      const lu = lireCode(m[2]);
-      if ('erreur' in lu) return { source: ligne, erreur: lu.erreur };
-      return { nom: m[1].trim() || m[2].trim(), source: m[2].trim().toUpperCase(), termines: lu.termines, succes: 0, records: {}, date: null };
+    .map((line) => {
+      const m = /^(.*?)[\s:;,]*\b(qds[\s-]*[0-9a-z][0-9a-z\s-]*)$/i.exec(line);
+      if (!m) return { source: line, error: 'code-illisible' };
+      const read = readCode(m[2]);
+      if ('error' in read) return { source: line, error: read.error };
+      return { name: m[1].trim() || m[2].trim(), source: m[2].trim().toUpperCase(), finished: read.finished, achievements: 0, records: {}, date: null };
     });
 }
 
 /** Les chapitres terminés d'une histoire, et combien elle en a. */
-export const avancee = (e: Eleve, histoire: string) => {
-  const h = HISTOIRES.find((x) => x.id === histoire)!;
-  return { faits: h.chapitres.filter((c) => e.termines.includes(c.id)).length, total: h.chapitres.length };
+export const progress = (e: Student, story: string) => {
+  const h = STORIES.find((x) => x.id === story)!;
+  return { done: h.chapters.filter((c) => e.finished.includes(c.id)).length, total: h.chapters.length };
 };
 
-export const gradeDe = (e: Eleve) => grade(e.termines);
-export const meilleurTemps = (e: Eleve) => (Object.keys(e.records).length ? Math.min(...Object.values(e.records)) : null);
-export const totalChapitres = () => TOUS().length;
+export const gradeFor = (e: Student) => grade(e.finished);
+export const bestTime = (e: Student) => (Object.keys(e.records).length ? Math.min(...Object.values(e.records)) : null);
+export const chaptersTotal = () => ALL().length;
 
 /** Le tableau en CSV (séparateur ;, comme les tableurs en français), avec ses en-têtes ; sans formule possible. */
-export function enCSV(eleves: Eleve[], entetes: string[], ligne: (e: Eleve) => (string | number)[]): string {
-  const cellule = (x: string | number) => {
+export function inCsv(students: Student[], headers: string[], line: (e: Student) => (string | number)[]): string {
+  const cell = (x: string | number) => {
     // Un nom écrit par un·e élève qui commence par = + - @ deviendrait une formule
     // dans le tableur (injection CSV) : on le neutralise avec une apostrophe.
     const s = typeof x === 'string' && /^[=+\-@\t\r]/.test(x) ? `'${x}` : String(x);
     return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  return [entetes, ...eleves.map(ligne)].map((l) => l.map(cellule).join(';')).join('\n');
+  return [headers, ...students.map(line)].map((l) => l.map(cell).join(';')).join('\n');
 }

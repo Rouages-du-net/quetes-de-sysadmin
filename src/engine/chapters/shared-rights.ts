@@ -20,16 +20,16 @@
 // https://man7.org/linux/man-pages/man2/umask.2.html,
 // https://www.gnu.org/software/coreutils/manual/html_node/Directory-Setuid-and-Setgid.html
 
-import { chemin, d, f, type Chapitre, type Noeud } from '../world';
-import type { Jeu, Shell } from '../shell';
-import { nouveauSystemd } from '../systemd';
-import { fichiersInclus, lire, permis } from '../sudoers';
-import { comptesCooperative, M, MAINTENANT, mondeCooperative, MOT_DE_PASSE } from './coop';
+import { path, d, f, type Chapter, type Node } from '../world';
+import type { Game, Shell } from '../shell';
+import { newSystemd } from '../systemd';
+import { includedFiles, read, permitted } from '../sudoers';
+import { cooperativeAccounts, M, NOW, cooperativeWorld, PASSWORD } from './coop';
 
-const RELEVES = '/srv/till/releves';
-const RELANCER = '/usr/bin/systemctl restart till';
-const EQUIPE = ['lina', 'karim'];
-const sh = (j: Jeu) => j as Shell;
+const STATEMENTS = '/srv/till/releves';
+const RESTART = '/usr/bin/systemctl restart till';
+const TEAM = ['lina', 'karim'];
+const sh = (j: Game) => j as Shell;
 
 // Le ~/.profile de Debian (/etc/skel/.profile).
 const PROFILE = `# ~/.profile: executed by the command interpreter for login shells.
@@ -74,70 +74,70 @@ if [ -d /etc/profile.d ]; then
   unset i
 fi`;
 
-const fichier = (contenu: string, proprio: string, groupe?: string, mode?: string) =>
-  f(contenu, { lignes: true, proprio, ...(groupe ? { groupe } : {}), ...(mode ? { mode } : {}) });
+const file = (content: string, owner: string, group?: string, mode?: string) =>
+  f(content, { lines: true, owner, ...(group ? { group } : {}), ...(mode ? { mode } : {}) });
 
 // Le masque d'une session de ce compte : la dernière ligne « umask NNN » lue à
 // la connexion (/etc/profile, /etc/profile.d/*.sh, ~/.bashrc, ~/.profile), sinon 022.
-export function masqueDe(j: Jeu, compte: string): number {
-  const maison = j.comptes.utilisateurs[compte]?.maison ?? `/home/${compte}`;
-  const profileD = j.trouver('/etc/profile.d');
+export function maskFor(j: Game, account: string): number {
+  const home = j.accounts.users[account]?.home ?? `/home/${account}`;
+  const profileD = j.find('/etc/profile.d');
   const sources = [
     '/etc/profile',
     ...(profileD?.type === 'dossier'
-      ? Object.keys(profileD.enfants)
+      ? Object.keys(profileD.children)
           .filter((n) => n.endsWith('.sh'))
           .sort()
           .map((n) => `/etc/profile.d/${n}`)
       : []),
-    `${maison}/.bashrc`,
-    `${maison}/.profile`,
+    `${home}/.bashrc`,
+    `${home}/.profile`,
   ];
-  let masque = 0o022;
+  let mask = 0o022;
   for (const s of sources)
-    for (const l of (j.lire(s) ?? '').split('\n')) {
+    for (const l of (j.read(s) ?? '').split('\n')) {
       const m = /^\s*umask\s+([0-7]{1,4})\s*$/.exec(l);
-      if (m) masque = parseInt(m[1], 8);
+      if (m) mask = parseInt(m[1], 8);
     }
-  return masque;
+  return mask;
 }
 
-const dossierOk = (j: Jeu) => {
-  const n = j.trouver(chemin(j.t, RELEVES));
-  return n?.type === 'dossier' && (n.groupe ?? n.proprio) === 'till' && n.mode?.[4] === 'w' && n.mode?.[5] === 's';
+const okDirectory = (j: Game) => {
+  const n = j.find(path(j.t, STATEMENTS));
+  return n?.type === 'dossier' && (n.group ?? n.owner) === 'till' && n.mode?.[4] === 'w' && n.mode?.[5] === 's';
 };
-const fichiersOk = (j: Jeu) => {
-  const n = j.trouver(chemin(j.t, RELEVES));
+const okFiles = (j: Game) => {
+  const n = j.find(path(j.t, STATEMENTS));
   if (n?.type !== 'dossier') return false;
-  const tous = (x: Noeud): Noeud[] => (x.type === 'dossier' ? Object.values(x.enfants).flatMap(tous) : [x]);
-  return tous(n).every((x) => (x.groupe ?? x.proprio) === 'till' && (x.mode ?? 'rw-r--r--')[4] === 'w');
+  const all = (x: Node): Node[] => (x.type === 'dossier' ? Object.values(x.children).flatMap(all) : [x]);
+  return all(n).every((x) => (x.group ?? x.owner) === 'till' && (x.mode ?? 'rw-r--r--')[4] === 'w');
 };
-const masqueOk = (j: Jeu) => EQUIPE.every((c) => (masqueDe(j, c) & 0o020) === 0);
+const okMask = (j: Game) => TEAM.every((c) => (maskFor(j, c) & 0o020) === 0);
 
-const politiqueValide = (j: Jeu) => !lire(sh(j)).erreur;
-const relancent = (j: Jeu) => politiqueValide(j) && EQUIPE.every((c) => permis(sh(j), c, RELANCER));
+const validPolicy = (j: Game) => !read(sh(j)).error;
+const restart = (j: Game) => validPolicy(j) && TEAM.every((c) => permitted(sh(j), c, RESTART));
 // Ce que l'équipe caisse ne doit PAS pouvoir faire.
-const tropLarge = (j: Jeu) => politiqueValide(j) && EQUIPE.some((c) => permis(sh(j), c, '/usr/bin/bash') || permis(sh(j), c, '/usr/bin/su'));
-const systemctlEntier = (j: Jeu) =>
-  politiqueValide(j) && EQUIPE.some((c) => permis(sh(j), c, '/usr/bin/systemctl stop ssh') || permis(sh(j), c, '/usr/bin/systemctl restart ssh'));
-const sudoOk = (j: Jeu) => relancent(j) && !tropLarge(j) && !systemctlEntier(j) && permis(sh(j), j.joueur, '/usr/bin/bash');
+const tropLarge = (j: Game) => validPolicy(j) && TEAM.some((c) => permitted(sh(j), c, '/usr/bin/bash') || permitted(sh(j), c, '/usr/bin/su'));
+const wholeSystemctl = (j: Game) =>
+  validPolicy(j) && TEAM.some((c) => permitted(sh(j), c, '/usr/bin/systemctl stop ssh') || permitted(sh(j), c, '/usr/bin/systemctl restart ssh'));
+const sudoOk = (j: Game) => restart(j) && !tropLarge(j) && !wholeSystemctl(j) && permitted(sh(j), j.player, '/usr/bin/bash');
 
 // Un fichier de /etc/sudoers.d qui parle de la caisse, mais que sudo ne lit pas (un point, ou ~ à la fin).
-const fichierIgnore = (j: Jeu) => {
-  const dossier = j.trouver('/etc/sudoers.d');
-  if (dossier?.type !== 'dossier') return null;
-  const lus = fichiersInclus(sh(j), '/etc/sudoers.d');
+const ignoreFile = (j: Game) => {
+  const directory = j.find('/etc/sudoers.d');
+  if (directory?.type !== 'dossier') return null;
+  const read = includedFiles(sh(j), '/etc/sudoers.d');
   return (
-    Object.keys(dossier.enfants)
+    Object.keys(directory.children)
       .map((n) => `/etc/sudoers.d/${n}`)
-      .find((c) => !lus.includes(c) && /till/.test(j.lire(c) ?? '') && !c.endsWith('.tmp')) ?? null
+      .find((c) => !read.includes(c) && /till/.test(j.read(c) ?? '') && !c.endsWith('.tmp')) ?? null
   );
 };
 
-export const droits: Chapitre = {
+export const rights: Chapter = {
   id: 'droits',
-  numero: 2,
-  commandes: [
+  number: 2,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -166,72 +166,72 @@ export const droits: Chapitre = {
     'systemctl',
     'journalctl',
   ],
-  maison: M,
-  accueil: 'courriel_awa.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_awa.txt',
+  names: true,
   final: 'fin',
   // Dans l'ordre du courriel d'Awa : le dossier, le masque, puis sudo.
-  etapes: ['dossier', 'masque', 'sudo', 'fin'],
-  motDePasse: MOT_DE_PASSE,
-  comptes: () => comptesCooperative(false),
-  etat: () => ({
-    systemd: nouveauSystemd('cooperative', MAINTENANT - 6 * 86_400_000, MAINTENANT, {
+  steps: ['dossier', 'masque', 'sudo', 'fin'],
+  password: PASSWORD,
+  accounts: () => cooperativeAccounts(false),
+  state: () => ({
+    systemd: newSystemd('cooperative', NOW - 6 * 86_400_000, NOW, {
       till: {
         description: 'Cooperative till',
         active: true,
         executable: 'node',
-        processus: [{ pid: 731, utilisateur: 'till', cpu: 1.2, mem: 3.4, commande: '/usr/bin/node /srv/till/app/server.js' }],
+        process: [{ pid: 731, user: 'till', cpu: 1.2, mem: 3.4, command: '/usr/bin/node /srv/till/app/server.js' }],
       },
     }),
   }),
-  creerMonde: (t) =>
-    mondeCooperative({
-      sansMarc: true,
-      maison: { 'courriel_awa.txt': f(t('droits-courriel-awa')) },
-      maisons: {
-        lina: d({ '.profile': fichier(PROFILE, 'lina') }, undefined, { proprio: 'lina', mode: 'rwxr-x---' }),
-        karim: d({ '.profile': fichier(PROFILE, 'karim') }, undefined, { proprio: 'karim', mode: 'rwxr-x---' }),
+  createWorld: (t) =>
+    cooperativeWorld({
+      withoutMarc: true,
+      home: { 'courriel_awa.txt': f(t('droits-courriel-awa')) },
+      homes: {
+        lina: d({ '.profile': file(PROFILE, 'lina') }, undefined, { owner: 'lina', mode: 'rwxr-x---' }),
+        karim: d({ '.profile': file(PROFILE, 'karim') }, undefined, { owner: 'karim', mode: 'rwxr-x---' }),
       },
       etc: {
-        profile: fichier(ETC_PROFILE, 'root'),
-        'profile.d': d({}, undefined, { proprio: 'root' }),
-        'login.defs': fichier('# excerpt\nUMASK\t\t022\nUSERGROUPS_ENAB no', 'root'),
+        profile: file(ETC_PROFILE, 'root'),
+        'profile.d': d({}, undefined, { owner: 'root' }),
+        'login.defs': file('# excerpt\nUMASK\t\t022\nUSERGROUPS_ENAB no', 'root'),
       },
-      plus: {
+      more: {
         srv: d(
           {
             till: d(
               {
                 releves: d(
                   {
-                    '2027-10-17.txt': fichier(t('droits-releve-17'), 'lina', 'lina'),
-                    '2027-10-18.txt': fichier(t('droits-releve-18'), 'karim', 'karim'),
+                    '2027-10-17.txt': file(t('droits-releve-17'), 'lina', 'lina'),
+                    '2027-10-18.txt': file(t('droits-releve-18'), 'karim', 'karim'),
                   },
                   undefined,
-                  { proprio: 'root', groupe: 'root', mode: 'rwxr-xr-x' },
+                  { owner: 'root', group: 'root', mode: 'rwxr-xr-x' },
                 ),
               },
               undefined,
-              { proprio: 'till', groupe: 'till' },
+              { owner: 'till', group: 'till' },
             ),
           },
           undefined,
-          { proprio: 'root' },
+          { owner: 'root' },
         ),
       },
     }),
-  evenements: [
-    { id: 'sudoers-casse', condition: (j) => !politiqueValide(j), message: (j) => j.t('droits-evenement-sudoers-casse') },
+  events: [
+    { id: 'sudoers-casse', condition: (j) => !validPolicy(j), message: (j) => j.t('droits-evenement-sudoers-casse') },
     {
       id: 'fichier-ignore',
-      condition: (j) => !!fichierIgnore(j) && !relancent(j),
-      message: (j) => j.t('droits-evenement-fichier-ignore', { fichier: fichierIgnore(j) ?? '' }),
+      condition: (j) => !!ignoreFile(j) && !restart(j),
+      message: (j) => j.t('droits-evenement-fichier-ignore', { fichier: ignoreFile(j) ?? '' }),
     },
     { id: 'trop-large', condition: tropLarge, message: (j) => j.t('droits-evenement-trop-large') },
-    { id: 'systemctl-entier', condition: (j) => systemctlEntier(j) && !tropLarge(j), message: (j) => j.t('droits-evenement-systemctl-entier') },
+    { id: 'systemctl-entier', condition: (j) => wholeSystemctl(j) && !tropLarge(j), message: (j) => j.t('droits-evenement-systemctl-entier') },
     { id: 'sudo', condition: sudoOk, message: (j) => j.t('droits-evenement-sudo') },
-    { id: 'dossier', condition: dossierOk, message: (j) => j.t('droits-evenement-dossier', { dossier: chemin(j.t, RELEVES) }) },
-    { id: 'masque', condition: masqueOk, message: (j) => j.t('droits-evenement-masque') },
-    { id: 'fin', condition: (j) => dossierOk(j) && fichiersOk(j) && masqueOk(j) && sudoOk(j), message: (j) => j.t('droits-evenement-fin') },
+    { id: 'dossier', condition: okDirectory, message: (j) => j.t('droits-evenement-dossier', { dossier: path(j.t, STATEMENTS) }) },
+    { id: 'masque', condition: okMask, message: (j) => j.t('droits-evenement-masque') },
+    { id: 'fin', condition: (j) => okDirectory(j) && okFiles(j) && okMask(j) && sudoOk(j), message: (j) => j.t('droits-evenement-fin') },
   ],
 };

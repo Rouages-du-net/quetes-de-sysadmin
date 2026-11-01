@@ -17,69 +17,69 @@
 // Sources : https://wiki.nftables.org/wiki-nftables/index.php/Performing_Network_Address_Translation_(NAT),
 // https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks
 
-import { f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { lan, reseauAuDemarrage } from '../lan';
-import { auDemarrage, essayer, nft, resultats, routage, type Flux, type Resultat } from '../nftables';
-import { sysctlAuDemarrage } from '../commands/nftables';
+import { f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { lan, networkToBoot } from '../lan';
+import { toBoot, attempt, nft, results, routing, type Flux, type Result } from '../nftables';
+import { sysctlToBoot } from '../commands/nftables';
 import { systemd } from '../systemd';
-import { FLUX, sshOuvert } from './zones';
+import { FLUX, openSsh } from './zones';
 import {
-  comptesRuche,
+  hiveAccounts,
   DNSMASQ_VLAN,
-  initialiserPareFeu,
+  initialiseFirewall,
   INTERFACES_VLAN,
   M,
-  mondeRuche,
-  MOT_DE_PASSE,
-  NFTABLES_TELETRAVAIL,
-  lanAvecDmz,
-  SYSCTL_ROUTEUR,
-  systemdRuche,
-  planRuche,
+  hiveWorld,
+  PASSWORD,
+  REMOTE_WORK_NFTABLES,
+  lanWithDmz,
+  ROUTER_SYSCTL,
+  hiveSystemd,
+  hivePlan,
 } from './hive';
 
-export const PUBLIQUE = '192.0.2.21';
-const VISITEUR = '203.0.113.77';
+export const PUBLIC = '192.0.2.21';
+const VISITOR = '203.0.113.77';
 
 // Le trafic de la DMZ, et ce qui doit passer ; les zones du chapitre 3 restent vraies.
-export const FLUX_DMZ: (Flux & { permis: boolean })[] = [
+export const FLUX_DMZ: (Flux & { permitted: boolean })[] = [
   ...FLUX,
-  { de: VISITEUR, vers: PUBLIQUE, proto: 'tcp', port: 443, permis: true },
-  { de: VISITEUR, vers: PUBLIQUE, proto: 'tcp', port: 80, permis: true },
-  { de: VISITEUR, vers: PUBLIQUE, proto: 'tcp', port: 22, permis: false },
-  { de: 'web', vers: '198.51.100.80', proto: 'tcp', port: 443, permis: true },
-  { de: 'poste-malik', vers: 'web', proto: 'tcp', port: 22, permis: true },
-  { de: 'web', vers: 'nas', proto: 'tcp', port: 445, permis: false },
-  { de: 'web', vers: 'imprimante', proto: 'tcp', port: 631, permis: false },
+  { forEachOf: VISITOR, to: PUBLIC, proto: 'tcp', port: 443, permitted: true },
+  { forEachOf: VISITOR, to: PUBLIC, proto: 'tcp', port: 80, permitted: true },
+  { forEachOf: VISITOR, to: PUBLIC, proto: 'tcp', port: 22, permitted: false },
+  { forEachOf: 'web', to: '198.51.100.80', proto: 'tcp', port: 443, permitted: true },
+  { forEachOf: 'poste-malik', to: 'web', proto: 'tcp', port: 22, permitted: true },
+  { forEachOf: 'web', to: 'nas', proto: 'tcp', port: 445, permitted: false },
+  { forEachOf: 'web', to: 'imprimante', proto: 'tcp', port: 631, permitted: false },
 ];
-const permis = (r: Resultat) => FLUX_DMZ.find((x) => x.de === r.flux.de && x.vers === r.flux.vers && x.port === r.flux.port)!.permis;
+const permitted = (r: Result) => FLUX_DMZ.find((x) => x.forEachOf === r.flux.forEachOf && x.to === r.flux.to && x.port === r.flux.port)!.permitted;
 // Ce qui est interdit doit être jeté (ou impossible : le serveur n'a pas encore de réseau).
-const refuse = (r: Resultat) => r.etat === 'bloque' || r.etat === 'impossible';
-const conforme = (rs: Resultat[]) => rs.every((r) => (permis(r) ? r.etat === 'ok' : refuse(r)));
-const duSite = (r: Resultat) => r.flux.de === VISITEUR && r.flux.port !== 22;
+const refuse = (r: Result) => r.state === 'bloque' || r.state === 'impossible';
+const compliant = (rs: Result[]) => rs.every((r) => (permitted(r) ? r.state === 'ok' : refuse(r)));
+const site = (r: Result) => r.flux.forEachOf === VISITOR && r.flux.port !== 22;
 
-const maintenant = (j: Jeu) => conforme(resultats(j)) && sshOuvert(nft(j));
-const auRedemarrage = (j: Jeu) => {
-  const l = reseauAuDemarrage(j)!;
-  const rs = (systemd(j)?.services.nftables?.active && auDemarrage(j)) || { tables: [] };
-  const transfert = sysctlAuDemarrage(j, 'net.ipv4.ip_forward', '0') === '1';
-  return conforme(FLUX_DMZ.map((x) => essayer(l, rs, transfert, x))) && sshOuvert(rs);
+const now = (j: Game) => compliant(results(j)) && openSsh(nft(j));
+const toReboot = (j: Game) => {
+  const l = networkToBoot(j)!;
+  const rs = (systemd(j)?.services.nftables?.active && toBoot(j)) || { tables: [] };
+  const transfer = sysctlToBoot(j, 'net.ipv4.ip_forward', '0') === '1';
+  return compliant(FLUX_DMZ.map((x) => attempt(l, rs, transfer, x))) && openSsh(rs);
 };
 
 // Une règle de la chaîne forward qui attend l'adresse publique : elle ne verra jamais rien, le dnat a déjà eu lieu.
-const attendLaPublique = (j: Jeu) =>
+const waitsPublic = (j: Game) =>
   nft(j).tables.some((t) =>
-    t.chaines.some(
-      (c) => c.base?.hook === 'forward' && c.regles.some((r) => r.conditions.some((x) => x.champ === 'ip daddr' && x.valeurs.includes(PUBLIQUE))),
+    t.strings.some(
+      (c) => c.base?.hook === 'forward' && c.rules.some((r) => r.conditions.some((x) => x.field === 'ip daddr' && x.values.includes(PUBLIC))),
     ),
   );
 
-export const dmz: Chapitre = {
+export const dmz: Chapter = {
   id: 'dmz',
-  numero: 5,
-  plan: planRuche({ teletravail: true, dmz: true }),
-  commandes: [
+  number: 5,
+  plan: hivePlan({ remoteWork: true, dmz: true }),
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -104,42 +104,42 @@ export const dmz: Chapitre = {
     'nft',
     'conntrack',
   ],
-  maison: M,
-  accueil: 'courriel_ines.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_ines.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: comptesRuche,
-  etat: () => {
-    const sd = systemdRuche();
+  password: PASSWORD,
+  accounts: hiveAccounts,
+  state: () => {
+    const sd = hiveSystemd();
     sd.services.nftables.active = true;
-    sd.services.nftables.etat = 'active';
-    const l = lanAvecDmz();
-    return { lan: { ...l, flux: FLUX_DMZ.map(({ permis: _, ...x }) => x) }, systemd: sd, nft: { tables: [] } };
+    sd.services.nftables.state = 'active';
+    const l = lanWithDmz();
+    return { lan: { ...l, flux: FLUX_DMZ.map(({ permitted: _, ...x }) => x) }, systemd: sd, nft: { tables: [] } };
   },
-  initialiser: initialiserPareFeu,
-  creerMonde: (t) =>
-    mondeRuche({
+  initialise: initialiseFirewall,
+  createWorld: (t) =>
+    hiveWorld({
       interfaces: INTERFACES_VLAN,
       dnsmasq: DNSMASQ_VLAN,
-      nftables: NFTABLES_TELETRAVAIL,
-      sysctl: SYSCTL_ROUTEUR,
-      maison: { 'courriel_ines.txt': f(t('dmz-courriel-ines')), 'plan-commutateur.txt': f(t('dmz-plan-commutateur'), { lignes: true }) },
+      nftables: REMOTE_WORK_NFTABLES,
+      sysctl: ROUTER_SYSCTL,
+      home: { 'courriel_ines.txt': f(t('dmz-courriel-ines')), 'plan-commutateur.txt': f(t('dmz-plan-commutateur'), { lines: true }) },
     }),
-  evenements: [
-    { id: 'adresse-publique', condition: attendLaPublique, message: (j) => j.t('dmz-evenement-adresse-publique', { adresse: PUBLIQUE }) },
+  events: [
+    { id: 'adresse-publique', condition: waitsPublic, message: (j) => j.t('dmz-evenement-adresse-publique', { adresse: PUBLIC }) },
     {
       id: 'sans-forward',
-      condition: (j) => resultats(j).some((r) => duSite(r) && r.etat === 'bloque' && !!r.destination) && routage(j),
+      condition: (j) => results(j).some((r) => site(r) && r.state === 'bloque' && !!r.destination) && routing(j),
       message: (j) => j.t('dmz-evenement-sans-forward'),
     },
     {
       id: 'trop-ouvert',
-      condition: (j) => resultats(j).some((r) => !permis(r) && !refuse(r) && (r.flux.de === 'web' || r.flux.de === VISITEUR)),
+      condition: (j) => results(j).some((r) => !permitted(r) && !refuse(r) && (r.flux.forEachOf === 'web' || r.flux.forEachOf === VISITOR)),
       message: (j) => j.t('dmz-evenement-trop-ouvert'),
     },
-    { id: 'ssh', condition: (j) => !sshOuvert(nft(j)), message: (j) => j.t('zones-evenement-ssh') },
-    { id: 'en-place', condition: (j) => maintenant(j) && !auRedemarrage(j), message: (j) => j.t('dmz-evenement-en-place') },
-    { id: 'fin', condition: (j) => !!lan(j) && maintenant(j) && auRedemarrage(j), message: (j) => j.t('dmz-evenement-fin') },
+    { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-evenement-ssh') },
+    { id: 'en-place', condition: (j) => now(j) && !toReboot(j), message: (j) => j.t('dmz-evenement-en-place') },
+    { id: 'fin', condition: (j) => !!lan(j) && now(j) && toReboot(j), message: (j) => j.t('dmz-evenement-fin') },
   ],
 };

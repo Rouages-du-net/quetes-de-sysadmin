@@ -18,52 +18,52 @@
 // disparu (au lieu d'attendre le délai) ; localhost et les adresses IP ne
 // reçoivent pas de certificat interne.
 
-import type { Jeu, Shell } from './shell';
-import { journaliser, systemd, versUtc } from './systemd';
-import { verdict, type PareFeu } from './firewall';
-import { couvre, DUREE, EMETTEUR, lire as lireCertificat, pem, type Certificat } from './tls';
-import { clePrivee, INTERMEDIAIRE } from './commands/certbot';
-import { requeteAppli, type Reponse } from './nginx';
-import type { Ecoute } from './commands/ss';
+import type { Game, Shell } from './shell';
+import { writeLog, systemd, toUtc } from './systemd';
+import { verdict, type Firewall } from './firewall';
+import { covers, DURATION, ISSUER, read as readCertificate, pem, type Certificate } from './tls';
+import { privateKey, INTERMEDIATE } from './commands/certbot';
+import { appRequest, type Response } from './nginx';
+import type { Listening } from './commands/ss';
 
 export const CADDYFILE = '/etc/caddy/Caddyfile';
 export const PID = 812;
 export const VERSION = 'v2.10.2 h1:g/gTYjGMD0dec+UgMw8SnfmJ3I9+M2TdvoRL/Ovu6U8=';
-export const EMETTEUR_ACME = 'acme-v02.api.letsencrypt.org-directory';
-const CA = 'https://acme-v02.api.letsencrypt.org/directory';
+export const ACME_ISSUER = 'acme-v02.api.letsencrypt.org-directory';
+const IT = 'https://acme-v02.api.letsencrypt.org/directory';
 export const STOCKAGE = '/var/lib/caddy/.local/share/caddy';
-const AUTOSAUVEGARDE = '/var/lib/caddy/.config/caddy/autosave.json';
+const AUTOSAVE = '/var/lib/caddy/.config/caddy/autosave.json';
 // Une adresse des serveurs de validation de Let's Encrypt (pour le pare-feu).
-const VALIDATEUR = '198.51.100.77';
+const VALIDATOR = '198.51.100.77';
 
 // ——— Lecture du Caddyfile ———
 
 export interface Directive {
-  nom: string;
+  name: string;
   args: string[];
-  ligne: number;
-  bloc?: Directive[];
+  line: number;
+  block?: Directive[];
 }
 
-export interface Adresse {
+export interface Address {
   schema: string;
-  hote: string;
+  host: string;
   port: number;
   // Le texte tel qu'écrit (pour les messages).
-  texte: string;
+  text: string;
 }
 
 export interface Site {
-  adresses: Adresse[];
+  addresses: Address[];
   directives: Directive[];
-  ligne: number;
+  line: number;
 }
 
 export interface ConfigCaddy {
-  globales: Directive[];
+  global: Directive[];
   sites: Site[];
   // Le premier écart avec ce qu'écrirait caddy fmt (numéro de ligne), sinon null.
-  nonFormate: number | null;
+  notFormatted: number | null;
 }
 
 // Les directives connues des sites, d'après la documentation de Caddy 2.10.
@@ -73,332 +73,332 @@ const DIRECTIVES = new Set([
   'redir', 'request_body', 'request_header', 'respond', 'reverse_proxy', 'rewrite', 'root', 'route', 'templates', 'tls', 'tracing', 'try_files',
   'uri', 'vars',
 ]);
-const GLOBALES = new Set([
+const GLOBAL = new Set([
   'debug', 'http_port', 'https_port', 'default_bind', 'order', 'storage', 'storage_clean_interval', 'admin', 'persist_config', 'log', 'grace_period',
   'shutdown_delay', 'auto_https', 'email', 'default_sni', 'local_certs', 'skip_install_trust', 'acme_ca', 'acme_ca_root', 'acme_eab', 'acme_dns',
   'on_demand_tls', 'key_type', 'cert_issuer', 'renew_interval', 'ocsp_interval', 'ocsp_stapling', 'preferred_chains', 'servers', 'pki', 'events',
 ]);
 // Les directives qui demandent au moins un argument (sans bloc).
-const AVEC_ARGUMENT = new Set(['root', 'redir', 'respond', 'reverse_proxy', 'encode', 'rewrite', 'try_files', 'import', 'header', 'bind', 'tls']);
+const WITH_ARGUMENT = new Set(['root', 'redir', 'respond', 'reverse_proxy', 'encode', 'rewrite', 'try_files', 'import', 'header', 'bind', 'tls']);
 
-export class ErreurCaddy extends Error {}
+export class CaddyError extends Error {}
 
-interface LigneJetons {
-  ligne: number;
-  jetons: string[];
+interface TokensLine {
+  line: number;
+  tokens: string[];
 }
 
 // Découpe le texte en lignes de jetons (guillemets, accents graves, commentaires).
-function decouper(texte: string): LigneJetons[] {
-  const lignes: LigneJetons[] = [];
-  texte.split('\n').forEach((brute, i) => {
-    const jetons: string[] = [];
-    let courant = '';
-    let dans: string | null = null;
-    let enCours = false;
-    for (let k = 0; k < brute.length; k++) {
-      const c = brute[k];
-      if (dans) {
-        if (c === '\\' && dans === '"' && brute[k + 1] === '"') {
-          courant += '"';
+function split(text: string): TokensLine[] {
+  const lines: TokensLine[] = [];
+  text.split('\n').forEach((rawValue, i) => {
+    const tokens: string[] = [];
+    let active = '';
+    let inside: string | null = null;
+    let inCourse = false;
+    for (let k = 0; k < rawValue.length; k++) {
+      const c = rawValue[k];
+      if (inside) {
+        if (c === '\\' && inside === '"' && rawValue[k + 1] === '"') {
+          active += '"';
           k++;
-        } else if (c === dans) dans = null;
-        else courant += c;
+        } else if (c === inside) inside = null;
+        else active += c;
         continue;
       }
       if (c === '"' || c === '`') {
-        dans = c;
-        enCours = true;
+        inside = c;
+        inCourse = true;
         continue;
       }
-      if (c === '#' && !enCours) break;
+      if (c === '#' && !inCourse) break;
       if (/\s/.test(c)) {
-        if (enCours) jetons.push(courant);
-        courant = '';
-        enCours = false;
+        if (inCourse) tokens.push(active);
+        active = '';
+        inCourse = false;
         continue;
       }
-      courant += c;
-      enCours = true;
+      active += c;
+      inCourse = true;
     }
-    if (enCours) jetons.push(courant);
-    if (jetons.length) lignes.push({ ligne: i + 1, jetons });
+    if (inCourse) tokens.push(active);
+    if (tokens.length) lines.push({ line: i + 1, tokens });
   });
-  return lignes;
+  return lines;
 }
 
 /** Une adresse de site : [schéma://]hôte[:port], ou :port. */
-export function lireAdresse(texte: string): Adresse {
-  const m = /^(?:(https?):\/\/)?([^:/]*)(?::(\d+))?(\/.*)?$/.exec(texte);
+export function readAddress(text: string): Address {
+  const m = /^(?:(https?):\/\/)?([^:/]*)(?::(\d+))?(\/.*)?$/.exec(text);
   const schema = m?.[1] ?? '';
-  const hote = (m?.[2] ?? texte).toLowerCase();
+  const host = (m?.[2] ?? text).toLowerCase();
   const port = m?.[3] ? Number(m[3]) : schema === 'http' ? 80 : 443;
-  return { schema, hote, port, texte };
+  return { schema, host, port, text };
 }
 
-export const estIp = (s: string) => /^\d{1,3}(\.\d{1,3}){3}$/.test(s);
+export const isIp = (s: string) => /^\d{1,3}(\.\d{1,3}){3}$/.test(s);
 
 /** Lit un Caddyfile ; lance ErreurCaddy avec le message de Caddy (sans « Error: »). */
-export function lireCaddyfile(texte: string, fichier = CADDYFILE): ConfigCaddy {
-  const lignes = decouper(texte);
+export function readCaddyfile(text: string, file = CADDYFILE): ConfigCaddy {
+  const lines = split(text);
   let i = 0;
-  const finAttendue = (ligne: number) => new ErreurCaddy(`${fichier}:${ligne} - Error during parsing: Unexpected EOF`);
-  const bloc = (ouverture: number, verifier: (d: Directive) => void): Directive[] => {
+  const expectedEnd = (line: number) => new CaddyError(`${file}:${line} - Error during parsing: Unexpected EOF`);
+  const block = (opening: number, check: (d: Directive) => void): Directive[] => {
     const directives: Directive[] = [];
-    while (i < lignes.length) {
-      const { ligne, jetons } = lignes[i++];
-      if (jetons[0] === '}' && jetons.length === 1) return directives;
-      const ouvre = jetons.at(-1) === '{';
-      const d: Directive = { nom: jetons[0], args: (ouvre ? jetons.slice(1, -1) : jetons.slice(1)).filter((j) => j !== '}'), ligne };
-      verifier(d);
-      if (ouvre) d.bloc = bloc(ligne, () => {});
+    while (i < lines.length) {
+      const { line, tokens } = lines[i++];
+      if (tokens[0] === '}' && tokens.length === 1) return directives;
+      const opens = tokens.at(-1) === '{';
+      const d: Directive = { name: tokens[0], args: (opens ? tokens.slice(1, -1) : tokens.slice(1)).filter((j) => j !== '}'), line };
+      check(d);
+      if (opens) d.block = block(line, () => {});
       directives.push(d);
       // « respond ok }» : l'accolade fermante en fin de ligne n'est pas permise.
-      if (!ouvre && jetons.length > 1 && jetons.at(-1) === '}') throw new ErreurCaddy(`${fichier}:${ligne} - Error during parsing: Unexpected next token after '${jetons.at(-2)}' on same line`);
+      if (!opens && tokens.length > 1 && tokens.at(-1) === '}') throw new CaddyError(`${file}:${line} - Error during parsing: Unexpected next token after '${tokens.at(-2)}' on same line`);
     }
-    throw finAttendue(ouverture);
+    throw expectedEnd(opening);
   };
-  const directiveDeSite = (d: Directive) => {
-    if (!DIRECTIVES.has(d.nom)) {
-      const site = /[.:]/.test(d.nom) || d.nom.startsWith('http');
-      throw new ErreurCaddy(
-        `${fichier}:${d.ligne}: unrecognized directive: ${d.nom}${site ? '\nDid you mean to define a second site? If so, you must use curly braces around each site to separate their configurations.' : ''}`,
+  const siteDirective = (d: Directive) => {
+    if (!DIRECTIVES.has(d.name)) {
+      const site = /[.:]/.test(d.name) || d.name.startsWith('http');
+      throw new CaddyError(
+        `${file}:${d.line}: unrecognized directive: ${d.name}${site ? '\nDid you mean to define a second site? If so, you must use curly braces around each site to separate their configurations.' : ''}`,
       );
     }
-    if (AVEC_ARGUMENT.has(d.nom) && !d.args.length) throw new ErreurCaddy(`${fichier}:${d.ligne} - Error during parsing: Wrong argument count or unexpected line ending after '${d.nom}'`);
+    if (WITH_ARGUMENT.has(d.name) && !d.args.length) throw new CaddyError(`${file}:${d.line} - Error during parsing: Wrong argument count or unexpected line ending after '${d.name}'`);
   };
-  const config: ConfigCaddy = { globales: [], sites: [], nonFormate: null };
+  const config: ConfigCaddy = { global: [], sites: [], notFormatted: null };
   // Le bloc des options globales : des accolades seules, tout en haut.
-  if (lignes[0]?.jetons.length === 1 && lignes[0].jetons[0] === '{') {
+  if (lines[0]?.tokens.length === 1 && lines[0].tokens[0] === '{') {
     i = 1;
-    config.globales = bloc(lignes[0].ligne, (d) => {
-      if (!GLOBALES.has(d.nom)) throw new ErreurCaddy(`${fichier}:${d.ligne}: unrecognized global option: ${d.nom}`);
+    config.global = block(lines[0].line, (d) => {
+      if (!GLOBAL.has(d.name)) throw new CaddyError(`${file}:${d.line}: unrecognized global option: ${d.name}`);
     });
   }
-  while (i < lignes.length) {
-    const { ligne, jetons } = lignes[i++];
-    if (jetons[0] === '}') throw new ErreurCaddy(`${fichier}:${ligne} - Error during parsing: Unexpected '}' because no matching opening brace`);
-    const ouvre = jetons.at(-1) === '{';
-    const textes = (ouvre ? jetons.slice(0, -1) : jetons)
+  while (i < lines.length) {
+    const { line, tokens } = lines[i++];
+    if (tokens[0] === '}') throw new CaddyError(`${file}:${line} - Error during parsing: Unexpected '}' because no matching opening brace`);
+    const opens = tokens.at(-1) === '{';
+    const texts = (opens ? tokens.slice(0, -1) : tokens)
       .join(' ')
       .split(/[\s,]+/)
       .filter(Boolean);
-    if (!ouvre && config.sites.length) {
+    if (!opens && config.sites.length) {
       // Après un premier site entre accolades, une ligne sans accolade : une directive égarée.
-      directiveDeSite({ nom: jetons[0], args: [], ligne });
-      throw new ErreurCaddy(`${fichier}:${ligne}: unrecognized directive: ${jetons[0]}`);
+      siteDirective({ name: tokens[0], args: [], line });
+      throw new CaddyError(`${file}:${line}: unrecognized directive: ${tokens[0]}`);
     }
-    if (!textes.length) throw new ErreurCaddy(`${fichier}:${ligne} - Error during parsing: Unexpected '{'`);
+    if (!texts.length) throw new CaddyError(`${file}:${line} - Error during parsing: Unexpected '{'`);
     let directives: Directive[];
-    if (ouvre) directives = bloc(ligne, directiveDeSite);
+    if (opens) directives = block(line, siteDirective);
     else {
       // Un seul site, sans accolades : toute la suite du fichier lui appartient.
       directives = [];
-      while (i < lignes.length) {
-        const l = lignes[i++];
-        if (l.jetons[0] === '}' && l.jetons.length === 1) throw new ErreurCaddy(`${fichier}:${l.ligne} - Error during parsing: Unexpected '}' because no matching opening brace`);
-        const o = l.jetons.at(-1) === '{';
-        const d: Directive = { nom: l.jetons[0], args: o ? l.jetons.slice(1, -1) : l.jetons.slice(1), ligne: l.ligne };
-        directiveDeSite(d);
-        if (o) d.bloc = bloc(l.ligne, () => {});
+      while (i < lines.length) {
+        const l = lines[i++];
+        if (l.tokens[0] === '}' && l.tokens.length === 1) throw new CaddyError(`${file}:${l.line} - Error during parsing: Unexpected '}' because no matching opening brace`);
+        const o = l.tokens.at(-1) === '{';
+        const d: Directive = { name: l.tokens[0], args: o ? l.tokens.slice(1, -1) : l.tokens.slice(1), line: l.line };
+        siteDirective(d);
+        if (o) d.block = block(l.line, () => {});
         directives.push(d);
       }
     }
-    config.sites.push({ adresses: textes.map(lireAdresse), directives, ligne });
+    config.sites.push({ addresses: texts.map(readAddress), directives, line });
   }
   // Deux sites ne peuvent pas répondre à la même adresse.
-  const vues = new Set<string>();
+  const views = new Set<string>();
   config.sites.forEach((s, n) =>
-    s.adresses.forEach((a, k) => {
-      const cle = `${a.schema}|${a.hote}|${a.port}`;
-      if (vues.has(cle)) throw new ErreurCaddy(`server block ${n}, key ${k} (${a.texte}): ambiguous site definition: ${a.texte}`);
-      vues.add(cle);
+    s.addresses.forEach((a, k) => {
+      const key = `${a.schema}|${a.host}|${a.port}`;
+      if (views.has(key)) throw new CaddyError(`server block ${n}, key ${k} (${a.text}): ambiguous site definition: ${a.text}`);
+      views.add(key);
     }),
   );
-  const propre = formater(texte).split('\n');
-  const brut = texte.replace(/\n+$/, '').split('\n');
-  const ecart = brut.findIndex((l, k) => l !== propre[k]);
-  config.nonFormate = ecart !== -1 ? ecart + 1 : propre.length !== brut.length ? brut.length + 1 : null;
+  const own = formatValue(text).split('\n');
+  const raw = text.replace(/\n+$/, '').split('\n');
+  const difference = raw.findIndex((l, k) => l !== own[k]);
+  config.notFormatted = difference !== -1 ? difference + 1 : own.length !== raw.length ? raw.length + 1 : null;
   return config;
 }
 
 /** Ce qu'écrit caddy fmt : une tabulation par niveau d'accolades, un espace entre jetons, une ligne vide au plus. */
-export function formater(texte: string): string {
-  const sortie: string[] = [];
-  let niveau = 0;
-  let videAvant = false;
-  for (const brute of texte.split('\n')) {
-    const ligne = brute.trim();
-    if (!ligne) {
-      if (sortie.length && !videAvant) sortie.push('');
-      videAvant = true;
+export function formatValue(text: string): string {
+  const output: string[] = [];
+  let level = 0;
+  let emptyBefore = false;
+  for (const rawValue of text.split('\n')) {
+    const line = rawValue.trim();
+    if (!line) {
+      if (output.length && !emptyBefore) output.push('');
+      emptyBefore = true;
       continue;
     }
-    videAvant = false;
+    emptyBefore = false;
     // Un espace entre les jetons, hors des guillemets et des commentaires.
-    let compacte = '';
-    let dans: string | null = null;
-    for (let k = 0; k < ligne.length; k++) {
-      const c = ligne[k];
-      if (dans) {
-        compacte += c;
-        if (c === dans) dans = null;
+    let compact = '';
+    let inside: string | null = null;
+    for (let k = 0; k < line.length; k++) {
+      const c = line[k];
+      if (inside) {
+        compact += c;
+        if (c === inside) inside = null;
       } else if (c === '#') {
-        compacte += ligne.slice(k);
+        compact += line.slice(k);
         break;
       } else if (/\s/.test(c)) {
-        if (!compacte.endsWith(' ')) compacte += ' ';
+        if (!compact.endsWith(' ')) compact += ' ';
       } else {
-        if (c === '"' || c === '`') dans = c;
-        compacte += c;
+        if (c === '"' || c === '`') inside = c;
+        compact += c;
       }
     }
-    if (compacte.startsWith('}')) niveau = Math.max(0, niveau - 1);
-    sortie.push('\t'.repeat(niveau) + compacte);
-    if (compacte.endsWith('{') && !compacte.startsWith('#')) niveau++;
+    if (compact.startsWith('}')) level = Math.max(0, level - 1);
+    output.push('\t'.repeat(level) + compact);
+    if (compact.endsWith('{') && !compact.startsWith('#')) level++;
   }
-  while (sortie.at(-1) === '') sortie.pop();
-  return sortie.join('\n');
+  while (output.at(-1) === '') output.pop();
+  return output.join('\n');
 }
 
 // ——— Les sites tels que Caddy les sert ———
 
-const globale = (c: ConfigCaddy, nom: string) => c.globales.find((d) => d.nom === nom);
-const modeHttps = (c: ConfigCaddy) => globale(c, 'auto_https')?.args[0] ?? 'on';
+const global = (c: ConfigCaddy, name: string) => c.global.find((d) => d.name === name);
+const modeHttps = (c: ConfigCaddy) => global(c, 'auto_https')?.args[0] ?? 'on';
 
 /** L'adresse reçoit-elle le HTTPS automatique (certificat ACME) ? */
-export const geree = (c: ConfigCaddy, a: Adresse) =>
-  !['off', 'disable_certs', 'ignore_loaded_certs'].includes(modeHttps(c)) && a.schema !== 'http' && a.port !== 80 && !!a.hote && a.hote.includes('.') && !estIp(a.hote) && !a.hote.includes('*');
+export const managedOne = (c: ConfigCaddy, a: Address) =>
+  !['off', 'disable_certs', 'ignore_loaded_certs'].includes(modeHttps(c)) && a.schema !== 'http' && a.port !== 80 && !!a.host && a.host.includes('.') && !isIp(a.host) && !a.host.includes('*');
 
 /** Les noms dont Caddy gère le certificat. */
-export const nomsGeres = (c: ConfigCaddy) => [...new Set(c.sites.flatMap((s) => s.adresses.filter((a) => geree(c, a)).map((a) => a.hote)))];
+export const managedNames = (c: ConfigCaddy) => [...new Set(c.sites.flatMap((s) => s.addresses.filter((a) => managedOne(c, a)).map((a) => a.host)))];
 
 /** Les ports sur lesquels Caddy écoute avec cette configuration. */
-export function portsEcoutes(c: ConfigCaddy): number[] {
-  const ports = new Set(c.sites.flatMap((s) => s.adresses.map((a) => a.port)));
-  if (nomsGeres(c).length && !['off', 'disable_redirects'].includes(modeHttps(c))) ports.add(80);
+export function listenersPorts(c: ConfigCaddy): number[] {
+  const ports = new Set(c.sites.flatMap((s) => s.addresses.map((a) => a.port)));
+  if (managedNames(c).length && !['off', 'disable_redirects'].includes(modeHttps(c))) ports.add(80);
   return [...ports].sort((a, b) => a - b);
 }
 
 // ——— L'état de Caddy (etat.caddy) ———
 
-export interface EtatCaddy {
+export interface CaddyState {
   // La configuration en service (null : Caddy ne tourne pas).
-  charge: ConfigCaddy | null;
+  load: ConfigCaddy | null;
   // Les noms sous lesquels la machine se joint elle-même (pour curl).
-  noms: string[];
+  names: string[];
   // L'adresse publique de la machine, et ce que le DNS public dit de chaque nom.
   ip: string;
   dns: Record<string, string>;
   // Les noms dont l'obtention du certificat a échoué (Caddy retentera).
-  attente: string[];
-  essais: Record<string, number>;
+  waiting: string[];
+  attempts: Record<string, number>;
 }
 
-export const etatCaddy = (jeu: Jeu): EtatCaddy | undefined => jeu.etat.caddy;
+export const caddyState = (game: Game): CaddyState | undefined => game.state.caddy;
 
-const dossierCertificat = (nom: string) => `${STOCKAGE}/certificates/${EMETTEUR_ACME}/${nom}`;
+const certificateDirectory = (name: string) => `${STOCKAGE}/certificates/${ACME_ISSUER}/${name}`;
 
 /** Le certificat que Caddy a pour ce nom, s'il est encore valable. */
-export function certificatDe(jeu: Jeu, nom: string): { certificat: Certificat; contenu: string } | null {
-  const contenu = jeu.lire(`${dossierCertificat(nom)}/${nom}.crt`);
-  const c = lireCertificat(contenu);
-  const maintenant = versUtc(systemd(jeu)?.horloge ?? 0);
-  if (!c || !contenu || c.fin < maintenant || !couvre(c, nom)) return null;
-  return { certificat: c, contenu };
+export function certificateFor(game: Game, name: string): { certificate: Certificate; content: string } | null {
+  const content = game.read(`${certificateDirectory(name)}/${name}.crt`);
+  const c = readCertificate(content);
+  const now = toUtc(systemd(game)?.clock ?? 0);
+  if (!c || !content || c.end < now || !covers(c, name)) return null;
+  return { certificate: c, content };
 }
 
 // Un instant au format de zap (secondes depuis 1970, avec les millièmes).
-const ts = (jeu: Jeu) => (versUtc(systemd(jeu)?.horloge ?? 0) / 1000 + 0.123).toFixed(3);
+const ts = (game: Game) => (toUtc(systemd(game)?.clock ?? 0) / 1000 + 0.123).toFixed(3);
 
 /** Une ligne JSON au journal de caddy.service. */
-export function noter(jeu: Jeu, niveau: string, logger: string | null, msg: string, champs: Record<string, unknown> = {}, avance = false) {
-  const sd = systemd(jeu);
+export function note(game: Game, level: string, logger: string | null, msg: string, fields: Record<string, unknown> = {}, advance = false) {
+  const sd = systemd(game);
   if (!sd) return;
-  const ligne = JSON.stringify({ level: niveau, ts: 0, ...(logger ? { logger } : {}), msg, ...champs }).replace('"ts":0', `"ts":${ts(jeu)}`);
-  journaliser(sd, 'caddy.service', 'caddy', PID, ligne, niveau === 'error' ? 3 : niveau === 'warn' ? 4 : 6, avance);
+  const line = JSON.stringify({ level: level, ts: 0, ...(logger ? { logger } : {}), msg, ...fields }).replace('"ts":0', `"ts":${ts(game)}`);
+  writeLog(sd, 'caddy.service', 'caddy', PID, line, level === 'error' ? 3 : level === 'warn' ? 4 : 6, advance);
 }
 
 /** Le Caddyfile de la machine, lu ; ou l'erreur de Caddy. */
-export function lireConfigCaddy(jeu: Jeu, fichier = CADDYFILE): { config: ConfigCaddy } | { erreur: string } {
-  const texte = jeu.lire(fichier);
-  if (texte === null) return { erreur: `reading config from file: open ${fichier}: no such file or directory` };
+export function readConfigCaddy(game: Game, file = CADDYFILE): { config: ConfigCaddy } | { error: string } {
+  const text = game.read(file);
+  if (text === null) return { error: `reading config from file: open ${file}: no such file or directory` };
   try {
-    return { config: lireCaddyfile(texte, fichier) };
+    return { config: readCaddyfile(text, file) };
   } catch (e) {
-    if (e instanceof ErreurCaddy) return { erreur: `adapting config using caddyfile: ${e.message}` };
+    if (e instanceof CaddyError) return { error: `adapting config using caddyfile: ${e.message}` };
     throw e;
   }
 }
 
 /** Au démarrage et au rechargement du service : null si tout va bien, sinon les lignes d'erreur. */
-export function verifierCaddy(jeu: Jeu): string[] | null {
-  const r = lireConfigCaddy(jeu);
-  return 'erreur' in r ? [`Error: ${r.erreur}`] : null;
+export function checkCaddy(game: Game): string[] | null {
+  const r = readConfigCaddy(game);
+  return 'error' in r ? [`Error: ${r.error}`] : null;
 }
 
 // Les écoutes de Caddy (ss -tlnp) : celles de la configuration, et l'API d'administration.
-function ecouter(jeu: Jeu, c: ConfigCaddy | null) {
-  const autres = ((jeu.etat.ecoute ?? []) as Ecoute[]).filter((e) => e.processus !== 'caddy');
-  const caddy: Ecoute[] = c ? [{ proto: 'tcp', adresse: '127.0.0.1', port: 2019, processus: 'caddy', pid: PID }, ...portsEcoutes(c).map((port) => ({ proto: 'tcp' as const, adresse: '*', port, processus: 'caddy', pid: PID }))] : [];
-  if (c && portsEcoutes(c).includes(443)) caddy.push({ proto: 'udp', adresse: '*', port: 443, processus: 'caddy', pid: PID });
-  jeu.etat.ecoute = [...autres, ...caddy];
+function listen(game: Game, c: ConfigCaddy | null) {
+  const other = ((game.state.ecoute ?? []) as Listening[]).filter((e) => e.process !== 'caddy');
+  const caddy: Listening[] = c ? [{ proto: 'tcp', address: '127.0.0.1', port: 2019, process: 'caddy', pid: PID }, ...listenersPorts(c).map((port) => ({ proto: 'tcp' as const, address: '*', port, process: 'caddy', pid: PID }))] : [];
+  if (c && listenersPorts(c).includes(443)) caddy.push({ proto: 'udp', address: '*', port: 443, process: 'caddy', pid: PID });
+  game.state.ecoute = [...other, ...caddy];
 }
 
 /** Après un démarrage ou un rechargement réussi : Caddy applique sa configuration, et obtient les certificats qui manquent. */
-export function chargerCaddy(jeu: Jeu) {
-  const e = etatCaddy(jeu);
-  const r = lireConfigCaddy(jeu);
-  if (!e || 'erreur' in r) return;
+export function loadCaddy(game: Game) {
+  const e = caddyState(game);
+  const r = readConfigCaddy(game);
+  if (!e || 'error' in r) return;
   const c = r.config;
-  e.charge = c;
-  noter(jeu, 'info', null, 'using config from file', { file: CADDYFILE });
-  if (c.nonFormate !== null) noter(jeu, 'warn', null, "Caddyfile input is not formatted; run 'caddy fmt --overwrite' to fix inconsistencies", { adapter: 'caddyfile', file: CADDYFILE, line: c.nonFormate });
-  noter(jeu, 'info', null, 'adapted config to JSON', { adapter: 'caddyfile' });
-  noter(jeu, 'info', 'admin', 'admin endpoint started', { address: 'localhost:2019', enforce_origin: false, origins: ['//localhost:2019', '//[::1]:2019', '//127.0.0.1:2019'] });
+  e.load = c;
+  note(game, 'info', null, 'using config from file', { file: CADDYFILE });
+  if (c.notFormatted !== null) note(game, 'warn', null, "Caddyfile input is not formatted; run 'caddy fmt --overwrite' to fix inconsistencies", { adapter: 'caddyfile', file: CADDYFILE, line: c.notFormatted });
+  note(game, 'info', null, 'adapted config to JSON', { adapter: 'caddyfile' });
+  note(game, 'info', 'admin', 'admin endpoint started', { address: 'localhost:2019', enforce_origin: false, origins: ['//localhost:2019', '//[::1]:2019', '//127.0.0.1:2019'] });
   // Un « serveur » par port, comme l'adaptateur (srv0, srv1…).
-  const ports = [...new Set(c.sites.flatMap((s) => s.adresses.map((a) => a.port)))].sort((a, b) => b - a);
+  const ports = [...new Set(c.sites.flatMap((s) => s.addresses.map((a) => a.port)))].sort((a, b) => b - a);
   ports.forEach((port, n) => {
-    const geres = c.sites.flatMap((s) => s.adresses.filter((a) => a.port === port && geree(c, a)));
-    if (port === 80) noter(jeu, 'warn', 'http.auto_https', 'server is listening only on the HTTP port, so no automatic HTTPS will be applied to this server', { server_name: `srv${n}`, http_port: 80 });
-    else if (geres.length && !['off', 'disable_redirects'].includes(modeHttps(c))) noter(jeu, 'info', 'http.auto_https', 'enabling automatic HTTP->HTTPS redirects', { server_name: `srv${n}` });
+    const managed = c.sites.flatMap((s) => s.addresses.filter((a) => a.port === port && managedOne(c, a)));
+    if (port === 80) note(game, 'warn', 'http.auto_https', 'server is listening only on the HTTP port, so no automatic HTTPS will be applied to this server', { server_name: `srv${n}`, http_port: 80 });
+    else if (managed.length && !['off', 'disable_redirects'].includes(modeHttps(c))) note(game, 'info', 'http.auto_https', 'enabling automatic HTTP->HTTPS redirects', { server_name: `srv${n}` });
   });
-  if (portsEcoutes(c).includes(443)) noter(jeu, 'info', 'http', 'enabling HTTP/3 listener', { addr: ':443' });
-  portsEcoutes(c).forEach((port) =>
-    noter(jeu, 'info', 'http.log', 'server running', { name: ports.includes(port) ? `srv${ports.indexOf(port)}` : 'remaining_auto_https_redirects', protocols: ['h1', 'h2', 'h3'] }),
+  if (listenersPorts(c).includes(443)) note(game, 'info', 'http', 'enabling HTTP/3 listener', { addr: ':443' });
+  listenersPorts(c).forEach((port) =>
+    note(game, 'info', 'http.log', 'server running', { name: ports.includes(port) ? `srv${ports.indexOf(port)}` : 'remaining_auto_https_redirects', protocols: ['h1', 'h2', 'h3'] }),
   );
-  noter(jeu, 'info', null, 'autosaved config (load with --resume flag)', { file: AUTOSAUVEGARDE });
-  ecouter(jeu, c);
-  const noms = nomsGeres(c);
-  if (noms.length) noter(jeu, 'info', 'http', 'enabling automatic TLS certificate management', { domains: noms });
-  noter(jeu, 'info', null, 'serving initial configuration');
-  e.attente = [];
-  for (const nom of noms) if (!certificatDe(jeu, nom)) obtenir(jeu, nom);
+  note(game, 'info', null, 'autosaved config (load with --resume flag)', { file: AUTOSAVE });
+  listen(game, c);
+  const names = managedNames(c);
+  if (names.length) note(game, 'info', 'http', 'enabling automatic TLS certificate management', { domains: names });
+  note(game, 'info', null, 'serving initial configuration');
+  e.waiting = [];
+  for (const name of names) if (!certificateFor(game, name)) get(game, name);
 }
 
 /** À l'arrêt du service : plus rien n'écoute. */
-export function arreterCaddy(jeu: Jeu) {
-  const e = etatCaddy(jeu);
-  if (e) e.charge = null;
-  ecouter(jeu, null);
+export function stopCaddy(game: Game) {
+  const e = caddyState(game);
+  if (e) e.load = null;
+  listen(game, null);
 }
 
 // Pourquoi l'autorité n'arrive pas à valider ce nom (null : elle y arrive).
-function probleme(jeu: Jeu, nom: string): { type: string; detail: string } | null {
-  const e = etatCaddy(jeu)!;
-  const ip = e.dns[nom];
-  if (!ip) return { type: 'dns', detail: `DNS problem: NXDOMAIN looking up A for ${nom} - check that a DNS record exists for this domain` };
+function problem(game: Game, name: string): { type: string; detail: string } | null {
+  const e = caddyState(game)!;
+  const ip = e.dns[name];
+  if (!ip) return { type: 'dns', detail: `DNS problem: NXDOMAIN looking up A for ${name} - check that a DNS record exists for this domain` };
   if (ip !== e.ip) return { type: 'connection', detail: `${ip}: Timeout during connect (likely firewall problem)` };
-  const pf = jeu.etat.ufw as PareFeu | undefined;
-  const ouvert = (port: number) => !pf || verdict(pf, port, VALIDATEUR) === 'accepte';
-  if (!ouvert(80) && !ouvert(443)) return { type: 'connection', detail: `${ip}: Timeout during connect (likely firewall problem)` };
+  const pf = game.state.ufw as Firewall | undefined;
+  const open = (port: number) => !pf || verdict(pf, port, VALIDATOR) === 'accepte';
+  if (!open(80) && !open(443)) return { type: 'connection', detail: `${ip}: Timeout during connect (likely firewall problem)` };
   return null;
 }
 
 // Un numéro de série, tiré du nom et du nombre d'essais (déterministe).
-function serie(nom: string, n: number): string {
+function serial(name: string, n: number): string {
   let h = 0x811c9dc5;
-  for (const c of `${nom}#${n}`) h = Math.imul(h ^ c.charCodeAt(0), 0x01000193) >>> 0;
+  for (const c of `${name}#${n}`) h = Math.imul(h ^ c.charCodeAt(0), 0x01000193) >>> 0;
   return Array.from({ length: 5 }, (_, i) => ((Math.imul(h, i + 3) >>> 0) ^ (h >>> i)).toString(16).padStart(8, '0'))
     .join('')
     .slice(0, 36)
@@ -406,64 +406,64 @@ function serie(nom: string, n: number): string {
 }
 
 // Crée les dossiers qui manquent (au nom de caddy), puis pose le fichier.
-function poser(jeu: Jeu, chemin: string, contenu: string, mode: string) {
-  const s = jeu as Shell;
-  const avant = s.qui;
-  s.qui = 'root';
-  const morceaux = chemin.split('/').filter(Boolean);
-  for (let k = 1; k < morceaux.length; k++) {
-    const dossier = `/${morceaux.slice(0, k).join('/')}`;
-    if (!s.existe(dossier)) s.placer('caddy', dossier, { type: 'dossier', enfants: {}, proprio: 'caddy', groupe: 'caddy', mode: 'rwx------' });
+function put(game: Game, path: string, content: string, mode: string) {
+  const s = game as Shell;
+  const before = s.who;
+  s.who = 'root';
+  const chunks = path.split('/').filter(Boolean);
+  for (let k = 1; k < chunks.length; k++) {
+    const directory = `/${chunks.slice(0, k).join('/')}`;
+    if (!s.exists(directory)) s.place('caddy', directory, { type: 'dossier', children: {}, owner: 'caddy', group: 'caddy', mode: 'rwx------' });
   }
-  s.placer('caddy', chemin, { type: 'fichier', contenu, lignes: true, proprio: 'caddy', groupe: 'caddy', mode });
-  s.qui = avant;
+  s.place('caddy', path, { type: 'fichier', content, lines: true, owner: 'caddy', group: 'caddy', mode });
+  s.who = before;
 }
 
 /** Caddy demande un certificat pour ce nom : il l'obtient, ou note l'échec (il retentera). */
-export function obtenir(jeu: Jeu, nom: string): boolean {
-  const e = etatCaddy(jeu)!;
-  const essai = (e.essais[nom] = (e.essais[nom] ?? 0) + 1);
-  noter(jeu, 'info', 'tls.obtain', 'acquiring lock', { identifier: nom }, true);
-  noter(jeu, 'info', 'tls.obtain', 'lock acquired', { identifier: nom });
-  noter(jeu, 'info', 'tls.obtain', 'obtaining certificate', { identifier: nom });
-  const type = essai % 2 ? 'http-01' : 'tls-alpn-01';
-  noter(jeu, 'info', 'acme_client', 'trying to solve challenge', { identifier: nom, challenge_type: type, ca: CA });
-  const p = probleme(jeu, nom);
+export function get(game: Game, name: string): boolean {
+  const e = caddyState(game)!;
+  const trial = (e.attempts[name] = (e.attempts[name] ?? 0) + 1);
+  note(game, 'info', 'tls.obtain', 'acquiring lock', { identifier: name }, true);
+  note(game, 'info', 'tls.obtain', 'lock acquired', { identifier: name });
+  note(game, 'info', 'tls.obtain', 'obtaining certificate', { identifier: name });
+  const type = trial % 2 ? 'http-01' : 'tls-alpn-01';
+  note(game, 'info', 'acme_client', 'trying to solve challenge', { identifier: name, challenge_type: type, ca: IT });
+  const p = problem(game, name);
   if (p) {
     const urn = `urn:ietf:params:acme:error:${p.type}`;
-    noter(jeu, 'error', 'acme_client', 'challenge failed', { identifier: nom, challenge_type: type, problem: { type: urn, title: '', detail: p.detail, instance: '', subproblems: [] } }, true);
-    noter(jeu, 'error', 'acme_client', 'validating authorization', {
-      identifier: nom,
+    note(game, 'error', 'acme_client', 'challenge failed', { identifier: name, challenge_type: type, problem: { type: urn, title: '', detail: p.detail, instance: '', subproblems: [] } }, true);
+    note(game, 'error', 'acme_client', 'validating authorization', {
+      identifier: name,
       problem: { type: urn, title: '', detail: p.detail, instance: '', subproblems: [] },
-      order: `https://acme-v02.api.letsencrypt.org/acme/order/2398412/${3_841_290_117 + essai}`,
+      order: `https://acme-v02.api.letsencrypt.org/acme/order/2398412/${3_841_290_117 + trial}`,
       attempt: 1,
       max_attempts: 3,
     });
-    const erreur = `HTTP 400 ${urn} - ${p.detail}`;
-    noter(jeu, 'error', 'tls.obtain', 'could not get certificate from issuer', { identifier: nom, issuer: EMETTEUR_ACME, error: erreur });
-    noter(jeu, 'error', 'tls.obtain', 'will retry', {
-      error: `[${nom}] Obtain: [${nom}] solving challenge: ${nom}: [${nom}] authorization failed: ${erreur} (ca=${CA})`,
-      attempt: essai,
-      retrying_in: 60 * 2 ** Math.min(essai - 1, 5),
-      elapsed: 2.4 * essai,
+    const error = `HTTP 400 ${urn} - ${p.detail}`;
+    note(game, 'error', 'tls.obtain', 'could not get certificate from issuer', { identifier: name, issuer: ACME_ISSUER, error: error });
+    note(game, 'error', 'tls.obtain', 'will retry', {
+      error: `[${name}] Obtain: [${name}] solving challenge: ${name}: [${name}] authorization failed: ${error} (ca=${IT})`,
+      attempt: trial,
+      retrying_in: 60 * 2 ** Math.min(trial - 1, 5),
+      elapsed: 2.4 * trial,
       max_duration: 2_592_000,
     });
-    noter(jeu, 'info', 'tls.obtain', 'releasing lock', { identifier: nom });
-    if (!e.attente.includes(nom)) e.attente.push(nom);
+    note(game, 'info', 'tls.obtain', 'releasing lock', { identifier: name });
+    if (!e.waiting.includes(name)) e.waiting.push(name);
     return false;
   }
-  noter(jeu, 'info', 'acme_client', 'authorization finalized', { identifier: nom, authz_status: 'valid' }, true);
-  noter(jeu, 'info', 'acme_client', 'validations succeeded; finalizing order', { order: `https://acme-v02.api.letsencrypt.org/acme/order/2398412/${3_841_290_117 + essai}` });
-  noter(jeu, 'info', 'acme_client', 'successfully downloaded available certificate chains', { count: 2, first_url: `https://acme-v02.api.letsencrypt.org/acme/cert/${serie(nom, essai)}` });
-  const debut = Math.floor((versUtc(systemd(jeu)?.horloge ?? 0) - 3600_000) / 1000) * 1000;
-  const c: Certificat = { cn: nom, noms: [nom], emetteur: EMETTEUR, serie: serie(nom, essai), debut, fin: debut + DUREE - 1000 };
-  const dossier = dossierCertificat(nom);
-  poser(jeu, `${dossier}/${nom}.crt`, `${pem(c)}\n${INTERMEDIAIRE}`, 'rw-------');
-  poser(jeu, `${dossier}/${nom}.key`, clePrivee(c.serie), 'rw-------');
-  poser(jeu, `${dossier}/${nom}.json`, JSON.stringify({ sans: [nom], issuer_data: { url: `https://acme-v02.api.letsencrypt.org/acme/cert/${c.serie}`, ca: CA } }, null, '\t'), 'rw-------');
-  noter(jeu, 'info', 'tls.obtain', 'certificate obtained successfully', { identifier: nom, issuer: EMETTEUR_ACME });
-  noter(jeu, 'info', 'tls.obtain', 'releasing lock', { identifier: nom });
-  e.attente = e.attente.filter((n) => n !== nom);
+  note(game, 'info', 'acme_client', 'authorization finalized', { identifier: name, authz_status: 'valid' }, true);
+  note(game, 'info', 'acme_client', 'validations succeeded; finalizing order', { order: `https://acme-v02.api.letsencrypt.org/acme/order/2398412/${3_841_290_117 + trial}` });
+  note(game, 'info', 'acme_client', 'successfully downloaded available certificate chains', { count: 2, first_url: `https://acme-v02.api.letsencrypt.org/acme/cert/${serial(name, trial)}` });
+  const start = Math.floor((toUtc(systemd(game)?.clock ?? 0) - 3600_000) / 1000) * 1000;
+  const c: Certificate = { cn: name, names: [name], issuer: ISSUER, serial: serial(name, trial), start, end: start + DURATION - 1000 };
+  const directory = certificateDirectory(name);
+  put(game, `${directory}/${name}.crt`, `${pem(c)}\n${INTERMEDIATE}`, 'rw-------');
+  put(game, `${directory}/${name}.key`, privateKey(c.serial), 'rw-------');
+  put(game, `${directory}/${name}.json`, JSON.stringify({ sans: [name], issuer_data: { url: `https://acme-v02.api.letsencrypt.org/acme/cert/${c.serial}`, ca: IT } }, null, '\t'), 'rw-------');
+  note(game, 'info', 'tls.obtain', 'certificate obtained successfully', { identifier: name, issuer: ACME_ISSUER });
+  note(game, 'info', 'tls.obtain', 'releasing lock', { identifier: name });
+  e.waiting = e.waiting.filter((n) => n !== name);
   return true;
 }
 
@@ -472,87 +472,87 @@ export function obtenir(jeu: Jeu, nom: string): boolean {
  * réel (une minute, puis de plus en plus) est sauté dès que la cause a
  * disparu ; tant qu'elle reste, rien ne change.
  */
-export function reessayer(jeu: Jeu) {
-  const e = etatCaddy(jeu);
-  const sd = systemd(jeu);
-  if (!e?.charge || !e.attente.length || sd?.services.caddy?.etat !== 'active') return;
-  for (const nom of [...e.attente]) {
-    if (probleme(jeu, nom)) continue;
-    sd.horloge += 60_000;
-    obtenir(jeu, nom);
+export function retry(game: Game) {
+  const e = caddyState(game);
+  const sd = systemd(game);
+  if (!e?.load || !e.waiting.length || sd?.services.caddy?.state !== 'active') return;
+  for (const name of [...e.waiting]) {
+    if (problem(game, name)) continue;
+    sd.clock += 60_000;
+    get(game, name);
   }
 }
 
 // ——— Les requêtes ———
 
-const RAISONS: Record<number, string> = { 200: 'OK', 301: 'Moved Permanently', 302: 'Found', 307: 'Temporary Redirect', 308: 'Permanent Redirect', 404: 'Not Found', 502: 'Bad Gateway' };
-const JOURS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MOIS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const REASONS: Record<number, string> = { 200: 'OK', 301: 'Moved Permanently', 302: 'Found', 307: 'Temporary Redirect', 308: 'Permanent Redirect', 404: 'Not Found', 502: 'Bad Gateway' };
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const dateHttp = (ms: number) => {
-  const d = new Date(versUtc(ms));
-  return `${JOURS[d.getUTCDay()]}, ${String(d.getUTCDate()).padStart(2, '0')} ${MOIS[d.getUTCMonth()]} ${d.getUTCFullYear()} ${d.toISOString().slice(11, 19)} GMT`;
+  const d = new Date(toUtc(ms));
+  return `${DAYS[d.getUTCDay()]}, ${String(d.getUTCDate()).padStart(2, '0')} ${MONTH[d.getUTCMonth()]} ${d.getUTCFullYear()} ${d.toISOString().slice(11, 19)} GMT`;
 };
 
-export type ReponseCaddy = Reponse | { tls: 'alerte' };
+export type CaddyResponse = Response | { tls: 'alerte' };
 
-function reponse(jeu: Jeu, https: boolean, code: number, corps: string, entetes: [string, string][], certificat?: string): Reponse {
-  const date = dateHttp(systemd(jeu)?.horloge ?? 0);
-  const tous: [string, string][] = [...(https ? [['Alt-Svc', 'h3=":443"; ma=2592000'] as [string, string]] : []), ...entetes, ['Server', 'Caddy'], ['Date', date]];
-  if (!entetes.some(([n]) => n === 'Content-Length')) tous.push(['Content-Length', String(new TextEncoder().encode(corps).length)]);
-  const premiere = https ? `HTTP/2 ${code} ` : `HTTP/1.1 ${code} ${RAISONS[code] ?? ''}`.trimEnd();
-  return { code, corps, entetes: [premiere, ...tous.map(([n, v]) => `${https ? n.toLowerCase() : n}: ${v}`)], certificat };
+function response(game: Game, https: boolean, code: number, body: string, headers: [string, string][], certificate?: string): Response {
+  const date = dateHttp(systemd(game)?.clock ?? 0);
+  const all: [string, string][] = [...(https ? [['Alt-Svc', 'h3=":443"; ma=2592000'] as [string, string]] : []), ...headers, ['Server', 'Caddy'], ['Date', date]];
+  if (!headers.some(([n]) => n === 'Content-Length')) all.push(['Content-Length', String(new TextEncoder().encode(body).length)]);
+  const first = https ? `HTTP/2 ${code} ` : `HTTP/1.1 ${code} ${REASONS[code] ?? ''}`.trimEnd();
+  return { code, body, headers: [first, ...all.map(([n, v]) => `${https ? n.toLowerCase() : n}: ${v}`)], certificate };
 }
 
-const remplacer = (texte: string, hote: string, chemin: string, schema: string) =>
-  texte.replaceAll('{uri}', chemin).replaceAll('{path}', chemin.split('?')[0]).replaceAll('{host}', hote).replaceAll('{scheme}', schema).replaceAll('{http.request.uri}', chemin).replaceAll('{http.request.host}', hote);
+const replace = (text: string, host: string, path: string, schema: string) =>
+  text.replaceAll('{uri}', path).replaceAll('{path}', path.split('?')[0]).replaceAll('{host}', host).replaceAll('{scheme}', schema).replaceAll('{http.request.uri}', path).replaceAll('{http.request.host}', host);
 
 // Un matcher de chemin (/x, /x*, *) : le premier argument d'une directive, s'il commence par / ou vaut *.
-function correspond(matcher: string, chemin: string): boolean {
+function correspond(matcher: string, path: string): boolean {
   if (matcher === '*') return true;
-  const p = chemin.split('?')[0];
+  const p = path.split('?')[0];
   return matcher.endsWith('*') ? p.startsWith(matcher.slice(0, -1)) : p === matcher;
 }
 
 // Ce que sert un site, dans l'ordre des directives de Caddy (redir, respond, reverse_proxy, file_server).
-function servir(jeu: Jeu, site: Site, hote: string, chemin: string, https: boolean, certificat?: string): Reponse {
+function serve(game: Game, site: Site, host: string, path: string, https: boolean, certificate?: string): Response {
   const schema = https ? 'https' : 'http';
-  const avecMatcher = (d: Directive) => (d.args[0] === '*' || d.args[0]?.startsWith('/') ? { matcher: d.args[0], reste: d.args.slice(1) } : { matcher: '*', reste: d.args });
-  for (const d of site.directives.filter((x) => x.nom === 'redir')) {
-    const { matcher, reste } = d.args.length >= 2 && (d.args[0] === '*' || (d.args[0].startsWith('/') && !/^\d{3}$|^(permanent|temporary|html)$/.test(d.args[1] ?? ''))) ? avecMatcher(d) : { matcher: '*', reste: d.args };
-    if (!correspond(matcher, chemin)) continue;
-    const code = reste[1] === 'permanent' ? 301 : reste[1] === 'temporary' || !reste[1] ? 302 : /^\d{3}$/.test(reste[1]) ? Number(reste[1]) : 302;
-    return reponse(jeu, https, code, '', [['Location', remplacer(reste[0], hote, chemin, schema)]], certificat);
+  const withMatcher = (d: Directive) => (d.args[0] === '*' || d.args[0]?.startsWith('/') ? { matcher: d.args[0], rest: d.args.slice(1) } : { matcher: '*', rest: d.args });
+  for (const d of site.directives.filter((x) => x.name === 'redir')) {
+    const { matcher, rest } = d.args.length >= 2 && (d.args[0] === '*' || (d.args[0].startsWith('/') && !/^\d{3}$|^(permanent|temporary|html)$/.test(d.args[1] ?? ''))) ? withMatcher(d) : { matcher: '*', rest: d.args };
+    if (!correspond(matcher, path)) continue;
+    const code = rest[1] === 'permanent' ? 301 : rest[1] === 'temporary' || !rest[1] ? 302 : /^\d{3}$/.test(rest[1]) ? Number(rest[1]) : 302;
+    return response(game, https, code, '', [['Location', replace(rest[0], host, path, schema)]], certificate);
   }
-  for (const d of site.directives.filter((x) => x.nom === 'respond')) {
-    const { matcher, reste } = avecMatcher(d);
-    if (!correspond(matcher, chemin)) continue;
-    const code = /^\d{3}$/.test(reste[0] ?? '') ? Number(reste[0]) : /^\d{3}$/.test(reste[1] ?? '') ? Number(reste[1]) : 200;
-    const corps = /^\d{3}$/.test(reste[0] ?? '') ? '' : remplacer(reste[0] ?? '', hote, chemin, schema);
-    return reponse(jeu, https, code, corps, [['Content-Type', 'text/plain; charset=utf-8']], certificat);
+  for (const d of site.directives.filter((x) => x.name === 'respond')) {
+    const { matcher, rest } = withMatcher(d);
+    if (!correspond(matcher, path)) continue;
+    const code = /^\d{3}$/.test(rest[0] ?? '') ? Number(rest[0]) : /^\d{3}$/.test(rest[1] ?? '') ? Number(rest[1]) : 200;
+    const body = /^\d{3}$/.test(rest[0] ?? '') ? '' : replace(rest[0] ?? '', host, path, schema);
+    return response(game, https, code, body, [['Content-Type', 'text/plain; charset=utf-8']], certificate);
   }
-  for (const d of site.directives.filter((x) => x.nom === 'reverse_proxy')) {
-    const { matcher, reste } = avecMatcher(d);
-    if (!correspond(matcher, chemin)) continue;
-    const port = Number(/:(\d+)$/.exec(reste[0] ?? '')?.[1] ?? 80);
-    const r = requeteAppli(jeu, port, chemin, { host: hote, 'x-forwarded-proto': schema, 'x-forwarded-host': hote });
-    if (!r) return reponse(jeu, https, 502, '', [], certificat);
-    return reponse(jeu, https, r.code, r.corps, [['Content-Type', r.type ?? 'text/html; charset=utf-8']], certificat);
+  for (const d of site.directives.filter((x) => x.name === 'reverse_proxy')) {
+    const { matcher, rest } = withMatcher(d);
+    if (!correspond(matcher, path)) continue;
+    const port = Number(/:(\d+)$/.exec(rest[0] ?? '')?.[1] ?? 80);
+    const r = appRequest(game, port, path, { host: host, 'x-forwarded-proto': schema, 'x-forwarded-host': host });
+    if (!r) return response(game, https, 502, '', [], certificate);
+    return response(game, https, r.code, r.body, [['Content-Type', r.type ?? 'text/html; charset=utf-8']], certificate);
   }
-  const fichiers = site.directives.find((x) => x.nom === 'file_server');
-  if (fichiers) {
-    const root = site.directives.find((x) => x.nom === 'root');
-    const racine = root ? (root.args.length > 1 ? root.args[1] : root.args[0]) : '.';
-    const p = decodeURIComponent(chemin.split('?')[0]);
-    const base = `${racine.replace(/\/$/, '')}${p}`;
-    const noeud = jeu.trouver(base);
-    const cible = noeud?.type === 'dossier' ? `${base.replace(/\/$/, '')}/index.html` : base;
-    const n = jeu.trouver(cible);
-    if (n?.type !== 'fichier' || !jeu.peut(n, 'r', 'caddy')) return reponse(jeu, https, 404, '', [], certificat);
-    const corps = jeu.lire(cible) ?? '';
-    const type = cible.endsWith('.html') ? 'text/html; charset=utf-8' : cible.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/plain; charset=utf-8';
-    return reponse(jeu, https, 200, corps, [['Accept-Ranges', 'bytes'], ['Content-Type', type], ['Etag', `"${serie(cible, corps.length).slice(0, 13)}"`]], certificat);
+  const files = site.directives.find((x) => x.name === 'file_server');
+  if (files) {
+    const root = site.directives.find((x) => x.name === 'root');
+    const docRoot = root ? (root.args.length > 1 ? root.args[1] : root.args[0]) : '.';
+    const p = decodeURIComponent(path.split('?')[0]);
+    const base = `${docRoot.replace(/\/$/, '')}${p}`;
+    const node = game.find(base);
+    const target = node?.type === 'dossier' ? `${base.replace(/\/$/, '')}/index.html` : base;
+    const n = game.find(target);
+    if (n?.type !== 'fichier' || !game.can(n, 'r', 'caddy')) return response(game, https, 404, '', [], certificate);
+    const body = game.read(target) ?? '';
+    const type = target.endsWith('.html') ? 'text/html; charset=utf-8' : target.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/plain; charset=utf-8';
+    return response(game, https, 200, body, [['Accept-Ranges', 'bytes'], ['Content-Type', type], ['Etag', `"${serial(target, body.length).slice(0, 13)}"`]], certificate);
   }
-  return reponse(jeu, https, 200, '', [], certificat);
+  return response(game, https, 200, '', [], certificate);
 }
 
 /**
@@ -560,58 +560,58 @@ function servir(jeu: Jeu, site: Site, hote: string, chemin: string, https: boole
  * { tls: 'alerte' } si Caddy n'a pas de certificat pour ce nom (la poignée de
  * main TLS échoue). `dehors` : la requête vient d'internet (le pare-feu compte).
  */
-export function requeteCaddy(jeu: Jeu, hote: string, chemin: string, port: number, dehors = false): ReponseCaddy | null {
-  const e = etatCaddy(jeu);
-  const c = e?.charge;
-  if (!c || systemd(jeu)?.services.caddy?.etat !== 'active') return null;
-  if (!portsEcoutes(c).includes(port)) return null;
-  if (dehors) {
-    const pf = jeu.etat.ufw as PareFeu | undefined;
+export function caddyRequest(game: Game, host: string, path: string, port: number, outside = false): CaddyResponse | null {
+  const e = caddyState(game);
+  const c = e?.load;
+  if (!c || systemd(game)?.services.caddy?.state !== 'active') return null;
+  if (!listenersPorts(c).includes(port)) return null;
+  if (outside) {
+    const pf = game.state.ufw as Firewall | undefined;
     if (pf && verdict(pf, port, '192.0.2.99') !== 'accepte') return null;
   }
-  const nom = hote.toLowerCase().replace(/\.$/, '');
-  const https = port !== 80 && c.sites.some((s) => s.adresses.some((a) => a.port === port && a.schema !== 'http'));
+  const name = host.toLowerCase().replace(/\.$/, '');
+  const https = port !== 80 && c.sites.some((s) => s.addresses.some((a) => a.port === port && a.schema !== 'http'));
   // Le site qui répond : celui de ce nom sur ce port, sinon celui sans nom (:port).
   const site =
-    c.sites.find((s) => s.adresses.some((a) => a.port === port && a.hote === nom)) ?? c.sites.find((s) => s.adresses.some((a) => a.port === port && !a.hote));
+    c.sites.find((s) => s.addresses.some((a) => a.port === port && a.host === name)) ?? c.sites.find((s) => s.addresses.some((a) => a.port === port && !a.host));
   if (https) {
-    const cert = certificatDe(jeu, nom);
+    const cert = certificateFor(game, name);
     if (!site || !cert) return { tls: 'alerte' };
-    return servir(jeu, site, nom, chemin, true, cert.contenu);
+    return serve(game, site, name, path, true, cert.content);
   }
-  if (site) return servir(jeu, site, nom, chemin, false);
+  if (site) return serve(game, site, name, path, false);
   // Sur le port 80, les noms gérés sont redirigés vers HTTPS (308).
-  if (port === 80 && nomsGeres(c).includes(nom) && !['off', 'disable_redirects'].includes(modeHttps(c)))
-    return reponse(jeu, false, 308, '', [['Connection', 'close'], ['Location', `https://${nom}${chemin}`]]);
-  return reponse(jeu, false, 200, '', []);
+  if (port === 80 && managedNames(c).includes(name) && !['off', 'disable_redirects'].includes(modeHttps(c)))
+    return response(game, false, 308, '', [['Connection', 'close'], ['Location', `https://${name}${path}`]]);
+  return response(game, false, 200, '', []);
 }
 
 // ——— caddy adapt : la configuration JSON (simplifiée) ———
 
-export function versJson(c: ConfigCaddy): unknown {
-  const ports = [...new Set(c.sites.flatMap((s) => s.adresses.map((a) => a.port)))].sort((a, b) => b - a);
+export function toJson(c: ConfigCaddy): unknown {
+  const ports = [...new Set(c.sites.flatMap((s) => s.addresses.map((a) => a.port)))].sort((a, b) => b - a);
   const servers: Record<string, unknown> = {};
   ports.forEach((port, n) => {
     const routes = c.sites
-      .filter((s) => s.adresses.some((a) => a.port === port))
+      .filter((s) => s.addresses.some((a) => a.port === port))
       .map((s) => {
-        const hotes = s.adresses.filter((a) => a.port === port && a.hote).map((a) => a.hote);
+        const hosts = s.addresses.filter((a) => a.port === port && a.host).map((a) => a.host);
         const handle = s.directives
-          .filter((d) => ['root', 'file_server', 'respond', 'redir', 'reverse_proxy', 'encode'].includes(d.nom))
+          .filter((d) => ['root', 'file_server', 'respond', 'redir', 'reverse_proxy', 'encode'].includes(d.name))
           .map((d) =>
-            d.nom === 'root'
+            d.name === 'root'
               ? { handler: 'vars', root: d.args.at(-1) }
-              : d.nom === 'file_server'
+              : d.name === 'file_server'
                 ? { handler: 'file_server', hide: ['/etc/caddy/Caddyfile'] }
-                : d.nom === 'reverse_proxy'
+                : d.name === 'reverse_proxy'
                   ? { handler: 'reverse_proxy', upstreams: d.args.filter((a) => !a.startsWith('/')).map((dial) => ({ dial })) }
-                  : d.nom === 'redir'
+                  : d.name === 'redir'
                     ? { handler: 'static_response', headers: { Location: [d.args[0]] }, status_code: d.args[1] === 'permanent' ? 301 : 302 }
-                    : d.nom === 'encode'
+                    : d.name === 'encode'
                       ? { handler: 'encode', encodings: Object.fromEntries(d.args.map((a) => [a, {}])) }
                       : { handler: 'static_response', body: d.args[0] },
           );
-        return { ...(hotes.length ? { match: [{ host: hotes }] } : {}), handle: [{ handler: 'subroute', routes: [{ handle }] }], terminal: true };
+        return { ...(hosts.length ? { match: [{ host: hosts }] } : {}), handle: [{ handler: 'subroute', routes: [{ handle }] }], terminal: true };
       });
     servers[`srv${n}`] = { listen: [`:${port}`], routes };
   });

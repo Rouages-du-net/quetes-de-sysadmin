@@ -10,78 +10,78 @@
 // privée dans ~/.ssh de maison.
 // Sources : https://man.openbsd.org/ssh#J, https://man.openbsd.org/ssh_config#ProxyJump
 
-import { chemin, d, f, type Chapitre, type Dossier } from '../world';
-import { hoteDansLaLangue } from '../machines';
-import type { Jeu, Shell } from '../shell';
-import { configuration, resoudreNom } from '../access';
-import { chargerSshd, comptesMaison, connexionsPar, dossierSsh, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE, planMaison } from './community-centre';
+import { path, d, f, type Chapter, type Directory } from '../world';
+import { hostInLanguage } from '../machines';
+import type { Game, Shell } from '../shell';
+import { configuration, resolveName } from '../access';
+import { loadSshd, homeAccounts, connectionsBy, sshDirectory, homeState, internalHost, M, homeWorld, PASSWORD, homePlan } from './community-centre';
 
 const WIKI = '10.20.0.11';
-const COMMANDES_INTERNES = ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname'];
+const INTERNAL_COMMANDS = ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname'];
 
-const poste = (j: Jeu) => (j.etat.poste as (() => Shell) | undefined)?.();
-const wiki = (j: Jeu) => (j as Shell).interne('wiki');
-const connexionsAuWiki = (j: Jeu) => (wiki(j) ? connexionsPar(wiki(j)!, 'cle') : 0);
+const workstation = (j: Game) => (j.state.poste as (() => Shell) | undefined)?.();
+const wiki = (j: Game) => (j as Shell).internal('wiki');
+const connectionsToWiki = (j: Game) => (wiki(j) ? connectionsBy(wiki(j)!, 'cle') : 0);
 
 // Les noms écrits dans un bloc Host de ~/.ssh/config du poste (sans jokers).
 function alias(p: Shell): string[] {
-  return (p.lire('~/.ssh/config') ?? '')
+  return (p.read('~/.ssh/config') ?? '')
     .split('\n')
     .map((l) => l.trim().split(/\s+/))
-    .filter(([cle]) => cle?.toLowerCase() === 'host')
-    .flatMap(([, ...noms]) => noms.filter((n) => !/[*?!]/.test(n)));
+    .filter(([key]) => key?.toLowerCase() === 'host')
+    .flatMap(([, ...names]) => names.filter((n) => !/[*?!]/.test(n)));
 }
 
 // Un raccourci du poste qui mène au wiki en rebondissant par maison.
-const raccourci = (j: Jeu) => {
-  const p = poste(j);
+const shortcut = (j: Game) => {
+  const p = workstation(j);
   if (!p) return false;
   return alias(p).some((a) => {
     const c = configuration(p, a);
-    const saut = c.proxyjump?.[0]?.split(',').at(-1)?.split('@').at(-1);
-    if (!saut || !['maison', 'maison.internal', '192.0.2.19'].map((n) => hoteDansLaLangue(j.t, n)).includes(saut)) return false;
-    return resoudreNom(j as Shell, (c.hostname?.[0] ?? a).toLowerCase()) === WIKI;
+    const hop = c.proxyjump?.[0]?.split(',').at(-1)?.split('@').at(-1);
+    if (!hop || !['maison', 'maison.internal', '192.0.2.19'].map((n) => hostInLanguage(j.t, n)).includes(hop)) return false;
+    return resolveName(j as Shell, (c.hostname?.[0] ?? a).toLowerCase()) === WIKI;
   });
 };
 
 // Une clé privée laissée dans ~/.ssh de maison.
-const clePriveeSurMaison = (j: Jeu) => {
-  const ssh = j.trouver(chemin(j.t, `${M}/.ssh`)) as Dossier | null;
+const privateKeyOnHome = (j: Game) => {
+  const ssh = j.find(path(j.t, `${M}/.ssh`)) as Directory | null;
   if (ssh?.type !== 'dossier') return false;
-  return Object.keys(ssh.enfants).some((n) => (j.lire(`${chemin(j.t, M)}/.ssh/${n}`) ?? '').includes('PRIVATE KEY'));
+  return Object.keys(ssh.children).some((n) => (j.read(`${path(j.t, M)}/.ssh/${n}`) ?? '').includes('PRIVATE KEY'));
 };
 
-export const rebond: Chapitre = {
+export const jump: Chapter = {
   id: 'rebond',
-  numero: 2,
-  plan: planMaison(),
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname', 'chmod', 'rm', 'nano', 'ssh'],
-  maison: M,
-  accueil: 'courriel_yasmine.txt',
-  noms: true,
+  number: 2,
+  plan: homePlan(),
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname', 'chmod', 'rm', 'nano', 'ssh'],
+  home: M,
+  welcome: 'courriel_yasmine.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: comptesMaison,
-  clesDuJoueur: true,
-  surveillePoste: true,
-  etat: () => etatMaison(),
-  initialiser: chargerSshd,
-  hotes: {
-    wiki: hoteInterne('wiki', WIKI, {
-      commandes: COMMANDES_INTERNES,
-      maison: (t) => ({ 'note_gaspard.txt': f(t('rebond-note-gaspard')) }),
-      plus: (t) => ({ srv: d({ wiki: d({ pages: d({ 'accueil.md': f(t('rebond-wiki-accueil')) }) }) }, undefined, { proprio: 'root' }) }),
+  password: PASSWORD,
+  accounts: homeAccounts,
+  playerKeys: true,
+  watchesWorkstation: true,
+  state: () => homeState(),
+  initialise: loadSshd,
+  hosts: {
+    wiki: internalHost('wiki', WIKI, {
+      commands: INTERNAL_COMMANDS,
+      home: (t) => ({ 'note_gaspard.txt': f(t('rebond-note-gaspard')) }),
+      more: (t) => ({ srv: d({ wiki: d({ pages: d({ 'accueil.md': f(t('rebond-wiki-accueil')) }) }) }, undefined, { owner: 'root' }) }),
     }),
-    archives: hoteInterne('archives', '10.20.0.12', { commandes: COMMANDES_INTERNES }),
+    archives: internalHost('archives', '10.20.0.12', { commands: INTERNAL_COMMANDS }),
   },
-  creerMonde: (t) => mondeMaison({ motsDePasse: 'no', maison: { 'courriel_yasmine.txt': f(t('rebond-courriel-yasmine')), '.ssh': dossierSsh() } }),
-  evenements: [
-    { id: 'cle-privee', condition: clePriveeSurMaison, message: (j) => j.t('rebond-evenement-cle-privee') },
-    { id: 'au-wiki', condition: (j) => connexionsAuWiki(j) > 0 && !clePriveeSurMaison(j), message: (j) => j.t('rebond-evenement-au-wiki') },
-    { id: 'raccourci', condition: raccourci, message: (j) => j.t('rebond-evenement-raccourci') },
+  createWorld: (t) => homeWorld({ passwords: 'no', home: { 'courriel_yasmine.txt': f(t('rebond-courriel-yasmine')), '.ssh': sshDirectory() } }),
+  events: [
+    { id: 'cle-privee', condition: privateKeyOnHome, message: (j) => j.t('rebond-evenement-cle-privee') },
+    { id: 'au-wiki', condition: (j) => connectionsToWiki(j) > 0 && !privateKeyOnHome(j), message: (j) => j.t('rebond-evenement-au-wiki') },
+    { id: 'raccourci', condition: shortcut, message: (j) => j.t('rebond-evenement-raccourci') },
     {
       id: 'fin',
-      condition: (j) => j.drapeaux.has('raccourci') && raccourci(j) && connexionsAuWiki(j) > 0 && !clePriveeSurMaison(j),
+      condition: (j) => j.flags.has('raccourci') && shortcut(j) && connectionsToWiki(j) > 0 && !privateKeyOnHome(j),
       message: (j) => j.t('rebond-evenement-fin'),
     },
   ],

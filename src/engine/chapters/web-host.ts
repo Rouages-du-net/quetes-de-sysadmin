@@ -14,13 +14,13 @@
 // Sources : https://man.openbsd.org/sftp, https://lftp.yar.ru/lftp-man.html,
 // https://www.rfc-editor.org/rfc/rfc4217
 
-import { d, f, type Chapitre, type Dossier } from '../world';
-import type { Jeu, Shell } from '../shell';
-import { fichiersDe, hebergement, HEBERGEMENTS, noeud } from '../web-host';
-import { chargerSshd, comptesMaison, dossierSsh, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE, planMaison } from './community-centre';
+import { d, f, type Chapter, type Directory } from '../world';
+import type { Game, Shell } from '../shell';
+import { filesFor, hosting, HOSTINGS, node } from '../web-host';
+import { loadSshd, homeAccounts, sshDirectory, homeState, internalHost, M, homeWorld, PASSWORD, homePlan } from './community-centre';
 
-export const COMPTE = 'maisonasso';
-export const MOT_DE_PASSE_FTP = 'Kp7-hebergement-2028';
+export const ACCOUNT = 'maisonasso';
+export const FTP_PASSWORD = 'Kp7-hebergement-2028';
 const SITE = '/srv/wiki/site';
 
 const STYLE = `body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 40rem; }
@@ -28,82 +28,82 @@ header { border-bottom: 2px solid #2a6f4e; }
 a { color: #2a6f4e; }`;
 const LOGO = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#2a6f4e"/></svg>';
 
-const page = (t: (id: string) => string, id: string) => f(t(id), { lignes: true, proprio: 'www-data', mode: 'rw-r--r--' });
+const page = (t: (id: string) => string, id: string) => f(t(id), { lines: true, owner: 'www-data', mode: 'rw-r--r--' });
 
 // L'hébergement de la Maison : l'ancien site, en ligne depuis 2025.
-HEBERGEMENTS.hebergeur = {
-  noms: ['ftp.hosting.example', 'hosting.example', 'ftp.community.example'],
-  adresse: '203.0.113.80',
-  certificat: ['*.hosting.example', 'hosting.example'],
-  comptes: { [COMPTE]: MOT_DE_PASSE_FTP },
-  fichiers: (t) => ({
-    [COMPTE]: d({
+HOSTINGS.hebergeur = {
+  names: ['ftp.hosting.example', 'hosting.example', 'ftp.community.example'],
+  address: '203.0.113.80',
+  certificate: ['*.hosting.example', 'hosting.example'],
+  accounts: { [ACCOUNT]: FTP_PASSWORD },
+  files: (t) => ({
+    [ACCOUNT]: d({
       public_html: d({
-        'index.html': f(t('hebergeur-ancien-index'), { lignes: true }),
-        'agenda.html': f(t('hebergeur-ancien-agenda'), { lignes: true }),
-        'tarifs-2025.html': f(t('hebergeur-ancien-tarifs'), { lignes: true }),
+        'index.html': f(t('hebergeur-ancien-index'), { lines: true }),
+        'agenda.html': f(t('hebergeur-ancien-agenda'), { lines: true }),
+        'tarifs-2025.html': f(t('hebergeur-ancien-tarifs'), { lines: true }),
       }),
       tmp: d({}),
     }),
   }),
 };
 
-const poste = (j: Jeu) => (j.etat.poste as (() => Shell) | undefined)?.();
-const wiki = (j: Jeu) => (j as Shell).interne('wiki');
+const workstation = (j: Game) => (j.state.poste as (() => Shell) | undefined)?.();
+const wiki = (j: Game) => (j as Shell).internal('wiki');
 
 // Le site du wiki, par chemin relatif.
-function siteDuWiki(j: Jeu): Record<string, string> {
+function wikiSite(j: Game): Record<string, string> {
   const w = wiki(j);
   const res: Record<string, string> = {};
-  const parcourir = (chemin: string, rel: string) => {
-    const n = w?.trouver(chemin);
+  const walk = (path: string, rel: string) => {
+    const n = w?.find(path);
     if (!n) return;
-    if (n.type === 'dossier') for (const k of Object.keys(n.enfants)) parcourir(`${chemin}/${k}`, rel ? `${rel}/${k}` : k);
-    else res[rel] = w!.lire(chemin) ?? '';
+    if (n.type === 'dossier') for (const k of Object.keys(n.children)) walk(`${path}/${k}`, rel ? `${rel}/${k}` : k);
+    else res[rel] = w!.read(path) ?? '';
   };
-  parcourir(SITE, '');
+  walk(SITE, '');
   return res;
 }
 
-const enLigne = (j: Jeu) => {
-  const p = poste(j);
-  return p ? hebergement(p, 'hebergeur') : null;
+const inLine = (j: Game) => {
+  const p = workstation(j);
+  return p ? hosting(p, 'hebergeur') : null;
 };
-const publicHtml = (j: Jeu) => {
-  const h = enLigne(j);
-  return h ? (fichiersDe(h.racines[COMPTE], '/public_html') ?? {}) : {};
+const htmlPublic = (j: Game) => {
+  const h = inLine(j);
+  return h ? (filesFor(h.roots[ACCOUNT], '/public_html') ?? {}) : {};
 };
-const publie = (j: Jeu) => {
-  const enligne = publicHtml(j);
-  const site = siteDuWiki(j);
-  return Object.keys(site).length > 0 && Object.entries(site).every(([k, v]) => enligne[k] === v);
+const published = (j: Game) => {
+  const online = htmlPublic(j);
+  const site = wikiSite(j);
+  return Object.keys(site).length > 0 && Object.entries(site).every(([k, v]) => online[k] === v);
 };
-const exact = (j: Jeu) => publie(j) && Object.keys(publicHtml(j)).length === Object.keys(siteDuWiki(j)).length;
-const dernierEnvoi = (j: Jeu) =>
-  enLigne(j)
-    ?.journal.filter((e) => e.envoi)
+const exact = (j: Game) => published(j) && Object.keys(htmlPublic(j)).length === Object.keys(wikiSite(j)).length;
+const lastSend = (j: Game) =>
+  inLine(j)
+    ?.log.filter((e) => e.send)
     .at(-1);
-const refus = (j: Jeu, quoi: 'clair' | 'certificat') => !!(poste(j)?.etat.refusFtp as string[] | undefined)?.includes(quoi);
+const refusal = (j: Game, what: 'clair' | 'certificat') => !!(workstation(j)?.state.refusFtp as string[] | undefined)?.includes(what);
 
-export const hebergeur: Chapitre = {
+export const host: Chapter = {
   id: 'hebergeur',
-  numero: 5,
-  plan: planMaison({ hebergeur: true }),
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'id', 'whoami', 'hostname', 'ssh', 'scp', 'sftp', 'lftp'],
-  maison: M,
-  accueil: 'courriel_yasmine.txt',
-  noms: true,
+  number: 5,
+  plan: homePlan({ host: true }),
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'id', 'whoami', 'hostname', 'ssh', 'scp', 'sftp', 'lftp'],
+  home: M,
+  welcome: 'courriel_yasmine.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: comptesMaison,
-  clesDuJoueur: true,
-  surveillePoste: true,
-  etat: () => etatMaison(),
-  initialiser: chargerSshd,
-  hotes: {
-    wiki: hoteInterne('wiki', '10.20.0.11', {
-      commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'du', 'id', 'whoami', 'hostname'],
-      plus: (t) => ({
+  password: PASSWORD,
+  accounts: homeAccounts,
+  playerKeys: true,
+  watchesWorkstation: true,
+  state: () => homeState(),
+  initialise: loadSshd,
+  hosts: {
+    wiki: internalHost('wiki', '10.20.0.11', {
+      commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'du', 'id', 'whoami', 'hostname'],
+      more: (t) => ({
         srv: d(
           {
             wiki: d({
@@ -112,56 +112,56 @@ export const hebergeur: Chapitre = {
                   'index.html': page(t, 'hebergeur-index'),
                   'agenda.html': page(t, 'hebergeur-agenda'),
                   'adhesion.html': page(t, 'hebergeur-adhesion'),
-                  'style.css': f(STYLE, { lignes: true, proprio: 'www-data' }),
-                  images: d({ 'logo.svg': f(LOGO, { lignes: true, proprio: 'www-data' }) }, undefined, { proprio: 'www-data' }),
+                  'style.css': f(STYLE, { lines: true, owner: 'www-data' }),
+                  images: d({ 'logo.svg': f(LOGO, { lines: true, owner: 'www-data' }) }, undefined, { owner: 'www-data' }),
                 },
                 undefined,
-                { proprio: 'www-data' },
-              ) as Dossier,
+                { owner: 'www-data' },
+              ) as Directory,
             }),
           },
           undefined,
-          { proprio: 'root' },
+          { owner: 'root' },
         ),
       }),
     }),
   },
-  creerMonde: (t) =>
-    mondeMaison({
-      motsDePasse: 'no',
-      maison: {
-        '.ssh': dossierSsh(),
-        'courriel_yasmine.txt': f(t('hebergeur-courriel-yasmine', { compte: COMPTE, motdepasse: MOT_DE_PASSE_FTP })),
-        'courriel_hebergeur.txt': f(t('hebergeur-courriel-hebergeur'), { lignes: true }),
-        'notes-gaspard.txt': f(t('hebergeur-notes-gaspard'), { lignes: true }),
+  createWorld: (t) =>
+    homeWorld({
+      passwords: 'no',
+      home: {
+        '.ssh': sshDirectory(),
+        'courriel_yasmine.txt': f(t('hebergeur-courriel-yasmine', { compte: ACCOUNT, motdepasse: FTP_PASSWORD })),
+        'courriel_hebergeur.txt': f(t('hebergeur-courriel-hebergeur'), { lines: true }),
+        'notes-gaspard.txt': f(t('hebergeur-notes-gaspard'), { lines: true }),
       },
     }),
-  evenements: [
-    { id: 'clair', condition: (j) => refus(j, 'clair'), message: (j) => j.t('hebergeur-evenement-clair') },
-    { id: 'certificat', condition: (j) => refus(j, 'certificat'), message: (j) => j.t('hebergeur-evenement-certificat') },
+  events: [
+    { id: 'clair', condition: (j) => refusal(j, 'clair'), message: (j) => j.t('hebergeur-evenement-clair') },
+    { id: 'certificat', condition: (j) => refusal(j, 'certificat'), message: (j) => j.t('hebergeur-evenement-certificat') },
     {
       id: 'sans-verification',
-      condition: (j) => !!enLigne(j)?.journal.some((e) => !e.verifie),
+      condition: (j) => !!inLine(j)?.log.some((e) => !e.checked),
       message: (j) => j.t('hebergeur-evenement-sans-verification'),
     },
     {
       id: 'mauvais-sens',
-      condition: (j) => !!poste(j)?.lire('~/site/tarifs-2025.html') || !!poste(j)?.lire('~/public_html/tarifs-2025.html'),
+      condition: (j) => !!workstation(j)?.read('~/site/tarifs-2025.html') || !!workstation(j)?.read('~/public_html/tarifs-2025.html'),
       message: (j) => j.t('hebergeur-evenement-mauvais-sens'),
     },
     {
       id: 'mauvais-dossier',
       condition: (j) => {
-        const h = enLigne(j);
-        return !!h && Object.keys(h.racines[COMPTE].enfants).some((k) => !['public_html', 'tmp'].includes(k)) && !publie(j);
+        const h = inLine(j);
+        return !!h && Object.keys(h.roots[ACCOUNT].children).some((k) => !['public_html', 'tmp'].includes(k)) && !published(j);
       },
       message: (j) => j.t('hebergeur-evenement-mauvais-dossier'),
     },
     {
       id: 'reste',
-      condition: (j) => publie(j) && !!noeud(enLigne(j)!.racines[COMPTE], '/public_html/tarifs-2025.html'),
+      condition: (j) => published(j) && !!node(inLine(j)!.roots[ACCOUNT], '/public_html/tarifs-2025.html'),
       message: (j) => j.t('hebergeur-evenement-reste'),
     },
-    { id: 'fin', condition: (j) => exact(j) && !!dernierEnvoi(j)?.tls && !!dernierEnvoi(j)?.verifie, message: (j) => j.t('hebergeur-evenement-fin') },
+    { id: 'fin', condition: (j) => exact(j) && !!lastSend(j)?.tls && !!lastSend(j)?.checked, message: (j) => j.t('hebergeur-evenement-fin') },
   ],
 };

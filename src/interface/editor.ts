@@ -3,108 +3,108 @@
 // texte a changé : O, N ou ^C). Les raccourcis sont aussi des boutons, pour
 // les claviers sans touche Ctrl (mobiles).
 
-import type { Traduire } from '../texts';
+import type { Translate } from '../texts';
 
-export interface OptionsEditeur {
-  t: Traduire;
-  chemin: string;
-  texte: string;
+export interface EditorOptions {
+  t: Translate;
+  path: string;
+  text: string;
   message: string;
   /** Écrit le texte ; renvoie le message de nano, et si c'est écrit. */
-  enregistrer: (texte: string) => { message: string; ecrit: boolean };
+  save: (text: string) => { message: string; written: boolean };
   /** L'éditeur est fermé. */
-  fermer: () => void;
+  close: () => void;
 }
 
-function el<K extends keyof HTMLElementTagNameMap>(nom: K, attrs: Record<string, string> = {}, ...enfants: (Node | string)[]) {
-  const e = document.createElement(nom);
+function el<K extends keyof HTMLElementTagNameMap>(name: K, attrs: Record<string, string> = {}, ...children: (Node | string)[]) {
+  const e = document.createElement(name);
   for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
-  e.append(...enfants);
+  e.append(...children);
   return e;
 }
 
-const raccourci = (touche: string, libelle: string) =>
-  el('button', { type: 'button', class: 'nano-touche' }, el('kbd', {}, touche), ` ${libelle}`);
+const shortcut = (key: string, label: string) =>
+  el('button', { type: 'button', class: 'nano-touche' }, el('kbd', {}, key), ` ${label}`);
 
-export function editeur(o: OptionsEditeur): HTMLElement {
+export function editor(o: EditorOptions): HTMLElement {
   const { t } = o;
-  const modifie = el('span', { class: 'nano-modifie' });
+  const modified = el('span', { class: 'nano-modifie' });
   const zone = el('textarea', {
     class: 'nano-texte',
     spellcheck: 'false',
     autocapitalize: 'off',
     autocomplete: 'off',
-    'aria-label': t('nano-zone', { chemin: o.chemin }),
+    'aria-label': t('nano-zone', { chemin: o.path }),
   }) as HTMLTextAreaElement;
-  zone.value = o.texte;
-  const etat = el('div', { class: 'nano-etat', role: 'status', 'aria-live': 'polite' }, o.message);
+  zone.value = o.text;
+  const state = el('div', { class: 'nano-etat', role: 'status', 'aria-live': 'polite' }, o.message);
 
-  const ecrire = raccourci('^O', t('nano-ecrire'));
-  const quitter = raccourci('^X', t('nano-quitter'));
-  const aide = el('div', { class: 'nano-aide' }, ecrire, quitter);
-  const oui = raccourci('O', t('nano-oui'));
-  const non = raccourci('N', t('nano-non'));
-  const annuler = raccourci('^C', t('nano-annuler'));
-  const question = el('div', { class: 'nano-aide', hidden: '' }, oui, non, annuler);
+  const write = shortcut('^O', t('nano-ecrire'));
+  const quit = shortcut('^X', t('nano-quitter'));
+  const help = el('div', { class: 'nano-aide' }, write, quit);
+  const yes = shortcut('O', t('nano-oui'));
+  const not = shortcut('N', t('nano-non'));
+  const cancel = shortcut('^C', t('nano-annuler'));
+  const question = el('div', { class: 'nano-aide', hidden: '' }, yes, not, cancel);
 
-  const racine = el(
+  const root = el(
     'div',
-    { class: 'nano', role: 'group', 'aria-label': `nano ${o.chemin}` },
-    el('div', { class: 'nano-titre' }, el('span', {}, 'GNU nano 7.2'), el('span', { class: 'nano-chemin' }, o.chemin), modifie),
+    { class: 'nano', role: 'group', 'aria-label': `nano ${o.path}` },
+    el('div', { class: 'nano-titre' }, el('span', {}, 'GNU nano 7.2'), el('span', { class: 'nano-chemin' }, o.path), modified),
     zone,
-    etat,
-    aide,
+    state,
+    help,
     question,
   );
 
-  let enregistre = o.texte;
-  const majModifie = () => (modifie.textContent = zone.value !== enregistre ? t('nano-modifie') : '');
-  const fermer = () => {
-    racine.remove();
-    o.fermer();
+  let saves = o.text;
+  const modifiedUpdate = () => (modified.textContent = zone.value !== saves ? t('nano-modifie') : '');
+  const close = () => {
+    root.remove();
+    o.close();
   };
-  const sauver = () => {
-    const { message, ecrit } = o.enregistrer(zone.value);
-    if (ecrit) enregistre = zone.value;
-    etat.textContent = message;
-    majModifie();
+  const save = () => {
+    const { message, written } = o.save(zone.value);
+    if (written) saves = zone.value;
+    state.textContent = message;
+    modifiedUpdate();
   };
-  const demander = (oui: boolean) => {
-    aide.hidden = oui;
-    question.hidden = !oui;
-    etat.textContent = oui ? t('nano-sauver') : '';
-    (oui ? question.querySelector('button')! : zone).focus();
+  const ask = (yes: boolean) => {
+    help.hidden = yes;
+    question.hidden = !yes;
+    state.textContent = yes ? t('nano-sauver') : '';
+    (yes ? question.querySelector('button')! : zone).focus();
     // Sur un petit écran, la question doit se voir.
-    if (oui) question.scrollIntoView?.({ block: 'nearest' });
+    if (yes) question.scrollIntoView?.({ block: 'nearest' });
   };
-  const sortir = () => (zone.value === enregistre ? fermer() : demander(true));
+  const exit = () => (zone.value === saves ? close() : ask(true));
 
-  zone.addEventListener('input', majModifie);
-  ecrire.addEventListener('click', () => (sauver(), zone.focus()));
-  quitter.addEventListener('click', sortir);
-  oui.addEventListener('click', () => {
-    sauver();
-    if (zone.value === enregistre) fermer();
-    else demander(false);
+  zone.addEventListener('input', modifiedUpdate);
+  write.addEventListener('click', () => (save(), zone.focus()));
+  quit.addEventListener('click', exit);
+  yes.addEventListener('click', () => {
+    save();
+    if (zone.value === saves) close();
+    else ask(false);
   });
-  non.addEventListener('click', fermer);
-  annuler.addEventListener('click', () => demander(false));
-  racine.addEventListener('keydown', (e) => {
-    const touche = e.key.toLowerCase();
+  not.addEventListener('click', close);
+  cancel.addEventListener('click', () => ask(false));
+  root.addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase();
     if (!question.hidden) {
-      if (touche === 'o' || touche === 'y') oui.click();
-      else if (touche === 'n') non.click();
-      else if ((e.ctrlKey && touche === 'c') || e.key === 'Escape') annuler.click();
+      if (key === 'o' || key === 'y') yes.click();
+      else if (key === 'n') not.click();
+      else if ((e.ctrlKey && key === 'c') || e.key === 'Escape') cancel.click();
       else return;
       e.preventDefault();
       return;
     }
     if (!e.ctrlKey) return;
-    if (touche === 'o' || touche === 's') sauver();
-    else if (touche === 'x') sortir();
+    if (key === 'o' || key === 's') save();
+    else if (key === 'x') exit();
     else return;
     e.preventDefault();
   });
   queueMicrotask(() => zone.focus());
-  return racine;
+  return root;
 }

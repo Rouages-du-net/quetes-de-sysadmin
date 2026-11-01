@@ -10,30 +10,30 @@
 // Sources : https://man.openbsd.org/ssh-keygen, https://man.openbsd.org/sshd_config,
 // https://manpages.debian.org/bookworm/openssh-client/ssh-copy-id.1.en.html
 
-import { motDePasse, chemin, f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { autorise, CONFIG, lireConfig } from '../sshd';
-import { clePublique, MACHINES } from '../machines';
-import { chargerSshd, comptesMaison, connexionsPar, etatMaison, hoteInterne, M, mondeMaison, MOT_DE_PASSE, sshd, planMaison } from './community-centre';
+import { password, path, f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { allowed, CONFIG, readConfig } from '../sshd';
+import { publicKey, MACHINES } from '../machines';
+import { loadSshd, homeAccounts, connectionsBy, homeState, internalHost, M, homeWorld, PASSWORD, sshd, homePlan } from './community-centre';
 
 // Les clés autorisées pour vous sur maison (lignes « ssh-… »).
-const autorisees = (j: Jeu) =>
-  (j.lire(chemin(j.t, `${M}/.ssh/authorized_keys`)) ?? '')
+const authorised = (j: Game) =>
+  (j.read(path(j.t, `${M}/.ssh/authorized_keys`)) ?? '')
     .split('\n')
     .map((l) => l.trim())
     .filter((l) => l.startsWith('ssh-'))
     .map((l) => l.split(/\s+/).slice(0, 2).join(' '));
 // Les clés que le jeu a données (id_royaume…) : ssh ne les propose pas à maison.
-const DONNEES = MACHINES.map((m) => clePublique(m).split(' ').slice(0, 2).join(' '));
-const clesDeVous = (j: Jeu) => autorisees(j).filter((c) => !DONNEES.includes(c));
-const sansMotDePasse = (j: Jeu) => sshd(j).charge.passwordauthentication === 'no';
-const ferme = (j: Jeu) => sansMotDePasse(j) && clesDeVous(j).length > 0 && autorise(sshd(j).charge, j.joueur);
+const DATA = MACHINES.map((m) => publicKey(m).split(' ').slice(0, 2).join(' '));
+const youKeys = (j: Game) => authorised(j).filter((c) => !DATA.includes(c));
+const withoutPassword = (j: Game) => sshd(j).load.passwordauthentication === 'no';
+const closed = (j: Game) => withoutPassword(j) && youKeys(j).length > 0 && allowed(sshd(j).load, j.player);
 
-export const cles: Chapitre = {
+export const keys: Chapter = {
   id: 'cles',
-  numero: 1,
-  plan: planMaison(),
-  commandes: [
+  number: 1,
+  plan: homePlan(),
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -52,31 +52,31 @@ export const cles: Chapitre = {
     'journalctl',
     'sshd',
   ],
-  maison: M,
-  accueil: 'courriel_yasmine.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_yasmine.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: comptesMaison,
-  etat: () => etatMaison(),
-  initialiser: chargerSshd,
-  hotes: { wiki: hoteInterne('wiki', '10.20.0.11'), archives: hoteInterne('archives', '10.20.0.12') },
-  creerMonde: (t) =>
-    mondeMaison({ motsDePasse: null, maison: { 'courriel_yasmine.txt': f(t('cles-courriel-yasmine', { motdepasse: motDePasse(t, MOT_DE_PASSE) })) } }),
-  evenements: [
-    { id: 'erreur', condition: (j) => lireConfig(j).erreurs.length > 0, message: (j) => j.t('cles-evenement-erreur', { config: CONFIG }) },
-    { id: 'enferme', condition: (j) => sansMotDePasse(j) && !clesDeVous(j).length, message: (j) => j.t('cles-evenement-enferme') },
+  password: PASSWORD,
+  accounts: homeAccounts,
+  state: () => homeState(),
+  initialise: loadSshd,
+  hosts: { wiki: internalHost('wiki', '10.20.0.11'), archives: internalHost('archives', '10.20.0.12') },
+  createWorld: (t) =>
+    homeWorld({ passwords: null, home: { 'courriel_yasmine.txt': f(t('cles-courriel-yasmine', { motdepasse: password(t, PASSWORD) })) } }),
+  events: [
+    { id: 'erreur', condition: (j) => readConfig(j).errors.length > 0, message: (j) => j.t('cles-evenement-erreur', { config: CONFIG }) },
+    { id: 'enferme', condition: (j) => withoutPassword(j) && !youKeys(j).length, message: (j) => j.t('cles-evenement-enferme') },
     {
       id: 'cle-du-jeu',
-      condition: (j) => autorisees(j).some((c) => DONNEES.includes(c)) && !clesDeVous(j).length,
+      condition: (j) => authorised(j).some((c) => DATA.includes(c)) && !youKeys(j).length,
       message: (j) => j.t('cles-evenement-cle-du-jeu'),
     },
-    { id: 'copiee', condition: (j) => clesDeVous(j).length > 0, message: (j) => j.t('cles-evenement-copiee') },
-    { id: 'par-cle', condition: (j) => connexionsPar(j, 'cle') > 0 && !sansMotDePasse(j), message: (j) => j.t('cles-evenement-par-cle') },
-    { id: 'fermee', condition: ferme, message: (j) => j.t('cles-evenement-fermee') },
+    { id: 'copiee', condition: (j) => youKeys(j).length > 0, message: (j) => j.t('cles-evenement-copiee') },
+    { id: 'par-cle', condition: (j) => connectionsBy(j, 'cle') > 0 && !withoutPassword(j), message: (j) => j.t('cles-evenement-par-cle') },
+    { id: 'fermee', condition: closed, message: (j) => j.t('cles-evenement-fermee') },
     {
       id: 'fin',
-      condition: (j) => j.drapeaux.has('fermee') && ferme(j) && connexionsPar(j, 'cle') > sshd(j).clesAuChargement,
+      condition: (j) => j.flags.has('fermee') && closed(j) && connectionsBy(j, 'cle') > sshd(j).keysToLoad,
       message: (j) => j.t('cles-evenement-fin'),
     },
   ],

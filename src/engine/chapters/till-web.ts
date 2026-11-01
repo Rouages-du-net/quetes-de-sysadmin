@@ -9,192 +9,192 @@
 //   - loopback (ou une liste d'adresses) : on remonte X-Forwarded-For depuis la
 //     droite, et la première adresse non fiable est celle du client.
 
-import { d, f, type Dossier, type Noeud } from '../world';
-import type { Jeu } from '../shell';
-import { chargerNginx, requete, verifierNginx, type Appli, type Client, type Demande } from '../nginx';
-import { journaliser, nouveauSystemd, systemd, type DefinitionService } from '../systemd';
+import { d, f, type Directory, type Node } from '../world';
+import type { Game } from '../shell';
+import { loadNginx, httpRequest, checkNginx, type App, type Client, type Request } from '../nginx';
+import { writeLog, newSystemd, systemd, type DefinitionService } from '../systemd';
 import { MIME, NGINX_CONF } from '../commands/apt';
-import { MAINTENANT } from './coop';
+import { NOW } from './coop';
 
 export const SITE = '/etc/nginx/sites-available/coop';
-export const APPLI = '/srv/till/app';
-export const ENV = `${APPLI}/.env`;
-export const DOMAINE = 'coop.example';
-export const CLE_ANCIENNE = 'pk_live_coop_4f9a2c71e8b3';
-export const CLE_NOUVELLE = 'pk_live_coop_9d27be05c4a1';
-const JOURNAL = '/var/log/till/app.log';
+export const APP = '/srv/till/app';
+export const ENV = `${APP}/.env`;
+export const DOMAIN = 'coop.example';
+export const OLD_KEY = 'pk_live_coop_4f9a2c71e8b3';
+export const NEW_KEY = 'pk_live_coop_9d27be05c4a1';
+const LOG = '/var/log/till/app.log';
 
-export const envCaisse = (cle: string, confiance = 'false') => `NODE_ENV=production
+export const tillEnv = (key: string, trust = 'false') => `NODE_ENV=production
 PORT=3000
 DATABASE_URL=postgres://till:Pois-Chiches-42@localhost/till
-PAIEMENT_CLE=${cle}
-TRUST_PROXY=${confiance}`;
+PAIEMENT_CLE=${key}
+TRUST_PROXY=${trust}`;
 
 /** Les variables d'un .env (CLE=valeur, sans guillemets ni commentaires). */
-export function lireEnv(texte: string): Record<string, string> {
+export function readEnv(text: string): Record<string, string> {
   const v: Record<string, string> = {};
-  for (const l of texte.split('\n')) {
+  for (const l of text.split('\n')) {
     const m = /^\s*([A-Z_][A-Z0-9_]*)\s*=\s*"?([^"#]*?)"?\s*$/.exec(l);
     if (m) v[m[1]] = m[2];
   }
   return v;
 }
 
-interface EtatCaisse {
+interface TillState {
   // Les variables lues au dernier démarrage.
-  charge: Record<string, string>;
-  echecs: Record<string, number>;
-  bannis: string[];
-  connectes: string[];
+  load: Record<string, string>;
+  failures: Record<string, number>;
+  banned: string[];
+  connected: string[];
 }
-export const till = (j: Jeu) => j.etat.till as EtatCaisse;
+export const till = (j: Game) => j.state.till as TillState;
 
 // Une adresse fiable pour « trust proxy » : loopback (127.0.0.0/8, ::1), ou une liste.
-function fiable(adresse: string, reglage: string): boolean {
-  if (reglage === 'true') return true;
-  return reglage
+function reliable(address: string, setting: string): boolean {
+  if (setting === 'true') return true;
+  return setting
     .split(',')
     .map((x) => x.trim())
-    .some((r) => (r === 'loopback' ? /^127\./.test(adresse) || adresse === '::1' : r === adresse));
+    .some((r) => (r === 'loopback' ? /^127\./.test(address) || address === '::1' : r === address));
 }
 
 /** L'adresse du client selon l'appli (req.ip d'Express). */
-export function adresseClient(demande: Demande, reglage: string): string {
-  if (!reglage || reglage === 'false') return demande.adresse;
-  const xff = (demande.entetes['x-forwarded-for'] ?? '')
+export function clientAddress(request: Request, setting: string): string {
+  if (!setting || setting === 'false') return request.address;
+  const xff = (request.headers['x-forwarded-for'] ?? '')
     .split(',')
     .map((x) => x.trim())
     .filter(Boolean);
-  if (reglage === 'true') return xff[0] ?? demande.adresse;
-  const chaine = [demande.adresse, ...xff.reverse()];
-  return chaine.find((a) => !fiable(a, reglage)) ?? chaine.at(-1)!;
+  if (setting === 'true') return xff[0] ?? request.address;
+  const string = [request.address, ...xff.reverse()];
+  return string.find((a) => !reliable(a, setting)) ?? string.at(-1)!;
 }
 
-function noter(j: Jeu, ligne: string) {
-  const n = j.trouver(JOURNAL);
-  if (n?.type !== 'fichier' || typeof n.contenu !== 'string') return;
+function note(j: Game, line: string) {
+  const n = j.find(LOG);
+  if (n?.type !== 'fichier' || typeof n.content !== 'string') return;
   const sd = systemd(j);
-  const heure = new Date(sd?.horloge ?? MAINTENANT).toISOString().slice(0, 19).replace('T', ' ');
-  n.contenu = `${n.contenu}\n${heure} ${ligne}`;
+  const timeOfDay = new Date(sd?.clock ?? NOW).toISOString().slice(0, 19).replace('T', ' ');
+  n.content = `${n.content}\n${timeOfDay} ${line}`;
 }
 
 // L'appli : la page de connexion, /health, et /connexion (u=compte&p=mot de passe), avec un
 // verrou après 5 échecs depuis la même adresse.
-export const APPLI_CAISSE: Appli = {
+export const TILL_APP: App = {
   service: 'till',
   pages: {},
-  repondre: (j, chemin, demande) => {
+  answer: (j, path, request) => {
     const c = till(j);
-    const json = (code: number, corps: unknown) => ({ code, type: 'application/json; charset=utf-8', corps: JSON.stringify(corps) });
-    if (chemin === '/')
-      return { code: 200, corps: '<!DOCTYPE html>\n<title>Caisse</title>\n<form method="post" action="/till/connexion">…</form>' };
-    if (chemin === '/health') return json(200, { status: 'ok', paiement: c.charge.PAIEMENT_CLE === CLE_NOUVELLE ? 'ok' : 'cle_revoquee' });
-    if (chemin === '/connexion') {
-      const ip = adresseClient(demande, c.charge.TRUST_PROXY ?? 'false');
-      const compte = demande.entetes['x-compte'] ?? '';
-      if (c.bannis.includes(ip)) {
-        noter(j, `rejected login for ${compte} from ${ip} (locked)`);
+    const json = (code: number, body: unknown) => ({ code, type: 'application/json; charset=utf-8', body: JSON.stringify(body) });
+    if (path === '/')
+      return { code: 200, body: '<!DOCTYPE html>\n<title>Caisse</title>\n<form method="post" action="/till/connexion">…</form>' };
+    if (path === '/health') return json(200, { status: 'ok', paiement: c.load.PAIEMENT_CLE === NEW_KEY ? 'ok' : 'cle_revoquee' });
+    if (path === '/connexion') {
+      const ip = clientAddress(request, c.load.TRUST_PROXY ?? 'false');
+      const account = request.headers['x-compte'] ?? '';
+      if (c.banned.includes(ip)) {
+        note(j, `rejected login for ${account} from ${ip} (locked)`);
         return json(429, { error: 'Too many attempts, try again in 15 minutes' });
       }
-      if (demande.entetes['x-mot-de-passe'] === 'bon') {
-        if (!c.connectes.includes(compte)) c.connectes.push(compte);
-        noter(j, `login ok for ${compte} from ${ip}`);
+      if (request.headers['x-mot-de-passe'] === 'bon') {
+        if (!c.connected.includes(account)) c.connected.push(account);
+        note(j, `login ok for ${account} from ${ip}`);
         return json(200, { ok: true });
       }
-      c.echecs[ip] = (c.echecs[ip] ?? 0) + 1;
-      noter(j, `login failed for ${compte} from ${ip}`);
-      if (c.echecs[ip] >= 5 && !c.bannis.includes(ip)) {
-        c.bannis.push(ip);
-        noter(j, `locked ${ip} for 15 minutes`);
+      c.failures[ip] = (c.failures[ip] ?? 0) + 1;
+      note(j, `login failed for ${account} from ${ip}`);
+      if (c.failures[ip] >= 5 && !c.banned.includes(ip)) {
+        c.banned.push(ip);
+        note(j, `locked ${ip} for 15 minutes`);
       }
       return json(401, { error: 'Invalid credentials' });
     }
     return {
       code: 404,
-      corps: `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET ${chemin}</pre>\n</body>\n</html>`,
+      body: `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET ${path}</pre>\n</body>\n</html>`,
     };
   },
 };
 
 /** Une requête simulée, comme si elle venait d'internet, vers le site (sans trace si le jeu vérifie). */
-export function visite(j: Jeu, chemin: string, client: Partial<Client> & { adresse: string }, trace = true) {
-  return requete(j, DOMAINE, chemin, 80, trace, { temps: systemd(j)?.horloge ?? MAINTENANT, agent: 'Mozilla/5.0', ...client });
+export function visit(j: Game, path: string, client: Partial<Client> & { address: string }, trace = true) {
+  return httpRequest(j, DOMAIN, path, 80, trace, { time: systemd(j)?.clock ?? NOW, agent: 'Mozilla/5.0', ...client });
 }
 
 /** Les services de la machine : nginx, et l'appli (qui lit son .env à chaque démarrage). */
-export function systemdCaisse(apresNginx?: (j: Jeu) => void, apresCaisse?: (j: Jeu) => void) {
+export function tillSystemd(afterNginx?: (j: Game) => void, afterTill?: (j: Game) => void) {
   const nginx: DefinitionService = {
     description: 'A high performance web server and a reverse proxy server',
     active: true,
     executable: 'nginx',
-    processus: [
-      { pid: 801, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
-      { pid: 802, utilisateur: 'www-data', cpu: 0.1, mem: 0.6, commande: 'nginx: worker process' },
+    process: [
+      { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
+      { pid: 802, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
     ],
-    verifier: verifierNginx,
-    charger: (j) => {
-      chargerNginx(j);
-      apresNginx?.(j);
+    check: checkNginx,
+    load: (j) => {
+      loadNginx(j);
+      afterNginx?.(j);
     },
-    verifierAuRechargement: true,
+    checkToReload: true,
   };
-  const appli: DefinitionService = {
+  const app: DefinitionService = {
     description: 'Cooperative till',
     active: true,
     executable: 'node',
-    processus: [{ pid: 731, utilisateur: 'till', cpu: 1.2, mem: 3.4, commande: '/usr/bin/node /srv/till/app/server.js' }],
-    charger: (j) => {
+    process: [{ pid: 731, user: 'till', cpu: 1.2, mem: 3.4, command: '/usr/bin/node /srv/till/app/server.js' }],
+    load: (j) => {
       const c = till(j);
       if (!c) return;
       // Au démarrage : le .env relu, la mémoire des verrous vidée.
-      c.charge = lireEnv(j.lire(ENV) ?? '');
-      c.echecs = {};
-      c.bannis = [];
-      c.connectes = [];
+      c.load = readEnv(j.read(ENV) ?? '');
+      c.failures = {};
+      c.banned = [];
+      c.connected = [];
       const sd = systemd(j);
-      if (sd) journaliser(sd, 'till.service', 'node', 731, 'till listening on 127.0.0.1:3000');
-      apresCaisse?.(j);
+      if (sd) writeLog(sd, 'till.service', 'node', 731, 'till listening on 127.0.0.1:3000');
+      afterTill?.(j);
     },
   };
-  return nouveauSystemd('cooperative', MAINTENANT - 6 * 86_400_000, MAINTENANT, { nginx, till: appli });
+  return newSystemd('cooperative', NOW - 6 * 86_400_000, NOW, { nginx, till: app });
 }
 
 /** L'état du site : nginx (journal d'accès), l'appli et ses verrous. */
-export const etatCaisse = (env: string, plus: Record<string, unknown> = {}) => ({
-  systemd: systemdCaisse(),
-  nginx: { charge: null, noms: ['coop', DOMAINE, `www.${DOMAINE}`, '192.0.2.20', 'localhost', '127.0.0.1'], journalAcces: true },
-  applis: { '127.0.0.1:3000': APPLI_CAISSE },
-  till: { charge: lireEnv(env), echecs: {}, bannis: [], connectes: [] } satisfies EtatCaisse,
-  ...plus,
+export const tillState = (env: string, more: Record<string, unknown> = {}) => ({
+  systemd: tillSystemd(),
+  nginx: { load: null, names: ['coop', DOMAIN, `www.${DOMAIN}`, '192.0.2.20', 'localhost', '127.0.0.1'], journalAcces: true },
+  applis: { '127.0.0.1:3000': TILL_APP },
+  till: { load: readEnv(env), failures: {}, banned: [], connected: [] } satisfies TillState,
+  ...more,
 });
 
-const racine = { proprio: 'root' };
+const root = { owner: 'root' };
 
 /** /usr/sbin/nginx (installé). */
-export const NGINX_BINAIRE: Record<string, Noeud> = { nginx: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 1_342_520 }) };
-const fichier = (contenu: string, droits: { proprio?: string; groupe?: string; mode?: string } = racine) => f(contenu, { lignes: true, ...droits });
+export const BINARY_NGINX: Record<string, Node> = { nginx: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_342_520 }) };
+const file = (content: string, rights: { owner?: string; group?: string; mode?: string } = root) => f(content, { lines: true, ...rights });
 
 /** /etc/nginx (le site cooperative activé), et les journaux. */
-export function nginxCooperative(site: string): Record<string, Noeud> {
+export function nginxCooperative(site: string): Record<string, Node> {
   return {
     nginx: d(
       {
-        'nginx.conf': fichier(NGINX_CONF),
-        'mime.types': fichier(MIME),
-        'conf.d': d({}, undefined, racine),
-        'modules-enabled': d({}, undefined, racine),
-        'sites-available': d({ coop: fichier(site) }, undefined, racine),
-        'sites-enabled': d({ coop: f('', { proprio: 'root', lien: SITE }) }, undefined, racine),
+        'nginx.conf': file(NGINX_CONF),
+        'mime.types': file(MIME),
+        'conf.d': d({}, undefined, root),
+        'modules-enabled': d({}, undefined, root),
+        'sites-available': d({ coop: file(site) }, undefined, root),
+        'sites-enabled': d({ coop: f('', { owner: 'root', link: SITE }) }, undefined, root),
       },
       undefined,
-      racine,
+      root,
     ),
   };
 }
 
 /** /srv/till/app (le code, le .env, le dépôt git) et /var/log. */
-export function mondeCaisse(o: { env: string; envMode?: string; accesLog: string; appLog: string }): { srv: Dossier; var: Dossier } {
-  const caisseDroits = { proprio: 'till', groupe: 'till' };
+export function tillWorld(o: { env: string; envMode?: string; logAccess: string; appLog: string }): { srv: Directory; var: Directory } {
+  const rightsTill = { owner: 'till', group: 'till' };
   return {
     srv: d(
       {
@@ -202,41 +202,41 @@ export function mondeCaisse(o: { env: string; envMode?: string; accesLog: string
           {
             app: d(
               {
-                '.env': fichier(o.env, { ...caisseDroits, mode: o.envMode ?? 'rw-r--r--' }),
+                '.env': file(o.env, { ...rightsTill, mode: o.envMode ?? 'rw-r--r--' }),
                 '.git': d(
                   {
-                    config: fichier(
+                    config: file(
                       '[core]\n\trepositoryformatversion = 0\n\tbare = false\n[remote "origin"]\n\turl = https://deploy:ghp_coopExampleToken42@git.coop.example/till.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*',
-                      caisseDroits,
+                      rightsTill,
                     ),
-                    HEAD: fichier('ref: refs/heads/main', caisseDroits),
+                    HEAD: file('ref: refs/heads/main', rightsTill),
                   },
                   undefined,
-                  caisseDroits,
+                  rightsTill,
                 ),
-                'index.html': fichier(
+                'index.html': file(
                   '<!DOCTYPE html>\n<html lang="fr">\n<title>Cooperative</title>\n<h1>Cooperative</h1>\n<a href="/till/">Caisse</a>\n</html>',
-                  caisseDroits,
+                  rightsTill,
                 ),
-                'server.js': fichier(
+                'server.js': file(
                   "require('dotenv').config();\nconst app = require('express')();\napp.set('trust proxy', process.env.TRUST_PROXY);\n// ...",
-                  caisseDroits,
+                  rightsTill,
                 ),
-                'package.json': fichier(
+                'package.json': file(
                   '{\n  "name": "till",\n  "version": "2.3.1",\n  "dependencies": { "dotenv": "^16.4.5", "express": "^4.21.2" }\n}',
-                  caisseDroits,
+                  rightsTill,
                 ),
               },
               undefined,
-              caisseDroits,
+              rightsTill,
             ),
           },
           undefined,
-          caisseDroits,
+          rightsTill,
         ),
       },
       undefined,
-      racine,
+      root,
     ),
     var: d(
       {
@@ -244,21 +244,21 @@ export function mondeCaisse(o: { env: string; envMode?: string; accesLog: string
           {
             nginx: d(
               {
-                'access.log': f(o.accesLog, { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }),
-                'error.log': f('', { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }),
+                'access.log': f(o.logAccess, { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }),
+                'error.log': f('', { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }),
               },
               undefined,
-              { proprio: 'root', groupe: 'adm' },
+              { owner: 'root', group: 'adm' },
             ),
-            till: d({ 'app.log': f(o.appLog, { lignes: true, proprio: 'till', groupe: 'adm', mode: 'rw-r-----' }) }, undefined, caisseDroits),
+            till: d({ 'app.log': f(o.appLog, { lines: true, owner: 'till', group: 'adm', mode: 'rw-r-----' }) }, undefined, rightsTill),
           },
           undefined,
-          racine,
+          root,
         ),
-        run: d({}, undefined, racine),
+        run: d({}, undefined, root),
       },
       undefined,
-      racine,
+      root,
     ),
   };
 }

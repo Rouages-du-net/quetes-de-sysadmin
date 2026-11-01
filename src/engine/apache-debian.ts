@@ -4,12 +4,12 @@
 // https://salsa.debian.org/apache-team/apache2/-/tree/master/debian/config-dir
 // Les textes sont ceux des vrais fichiers, en anglais.
 
-import { d, f, type Dossier } from './world';
+import { d, f, type Directory } from './world';
 
-const racine = { proprio: 'root' };
-const fichier = (texte: string) => f(texte, { lignes: true, proprio: 'root' });
-const lieu = (enfants: Parameters<typeof d>[0]) => d(enfants, undefined, racine);
-const lien = (cible: string) => f('', { proprio: 'root', lien: cible });
+const root = { owner: 'root' };
+const file = (text: string) => f(text, { lines: true, owner: 'root' });
+const place = (children: Parameters<typeof d>[0]) => d(children, undefined, root);
+const link = (target: string) => f('', { owner: 'root', link: target });
 
 export const APACHE2_CONF = `# This is the main Apache server configuration file.  It contains the
 # configuration directives that give the server its instructions.
@@ -137,7 +137,7 @@ Listen 80
 	Listen 443
 </IfModule>`;
 
-export const DEFAUT_CONF = `<VirtualHost *:80>
+export const CONF_DEFAULT = `<VirtualHost *:80>
 	# The ServerName directive sets the request scheme, hostname and port that
 	# the server uses to identify itself. This is used when creating
 	# redirection URLs. In the context of virtual hosts, the ServerName
@@ -167,7 +167,7 @@ export const DEFAUT_CONF = `<VirtualHost *:80>
 	#Include conf-available/serve-cgi-bin.conf
 </VirtualHost>`;
 
-const DEFAUT_SSL_CONF = `<VirtualHost *:443>
+const CONF_SSL_DEFAULT = `<VirtualHost *:443>
 	ServerAdmin webmaster@localhost
 
 	DocumentRoot /var/www/html
@@ -216,7 +216,7 @@ ServerSignature On
 # Set to one of:  On | Off | extended
 TraceEnable Off`;
 
-const AUTRES_HOTES_CONF = `# Define an access log for VirtualHosts that don't define their own logfile
+const OTHER_CONF_HOSTS = `# Define an access log for VirtualHosts that don't define their own logfile
 CustomLog \${APACHE_LOG_DIR}/other_vhosts_access.log vhost_combined`;
 
 const CHARSET_CONF = `# Read the documentation before enabling AddDefaultCharset.
@@ -265,7 +265,7 @@ MaxRequestWorkers	  150
 MaxConnectionsPerChild   0`;
 
 // Les modules activés par le paquet, puis quelques autres de mods-available.
-export const MODULES_ACTIFS = [
+export const ACTIVE_MODULES = [
   'access_compat',
   'alias',
   'auth_basic',
@@ -286,53 +286,53 @@ export const MODULES_ACTIFS = [
   'setenvif',
   'status',
 ];
-const AUTRES_MODULES = ['expires', 'headers', 'proxy', 'proxy_http', 'rewrite', 'socache_shmcb', 'ssl', 'userdir'];
+const OTHER_MODULES = ['expires', 'headers', 'proxy', 'proxy_http', 'rewrite', 'socache_shmcb', 'ssl', 'userdir'];
 const CONFS_MODULES: Record<string, string> = { dir: DIR_CONF, mime: MIME_CONF, mpm_event: MPM_EVENT_CONF };
 
 /** /etc/apache2, avec `sites` en plus dans sites-available ; `actifs` : les modules activés. */
-export function etcApache2(sitesEnPlus: Record<string, string> = {}, sitesActifs: Record<string, string> = { '000-default.conf': '../sites-available/000-default.conf' }, actifs = MODULES_ACTIFS): Dossier {
-  const tous = [...MODULES_ACTIFS, ...AUTRES_MODULES].sort();
-  const disponibles: Record<string, ReturnType<typeof f>> = {};
-  for (const m of tous) {
-    disponibles[`${m}.load`] = fichier(`LoadModule ${m}_module /usr/lib/apache2/modules/mod_${m}.so`);
-    if (CONFS_MODULES[m]) disponibles[`${m}.conf`] = fichier(CONFS_MODULES[m]);
+export function etcApache2(sitesInMore: Record<string, string> = {}, activeSites: Record<string, string> = { '000-default.conf': '../sites-available/000-default.conf' }, active = ACTIVE_MODULES): Directory {
+  const all = [...ACTIVE_MODULES, ...OTHER_MODULES].sort();
+  const available: Record<string, ReturnType<typeof f>> = {};
+  for (const m of all) {
+    available[`${m}.load`] = file(`LoadModule ${m}_module /usr/lib/apache2/modules/mod_${m}.so`);
+    if (CONFS_MODULES[m]) available[`${m}.conf`] = file(CONFS_MODULES[m]);
   }
-  const enService: Record<string, ReturnType<typeof f>> = {};
-  for (const m of actifs) {
-    enService[`${m}.load`] = lien(`../mods-available/${m}.load`);
-    if (CONFS_MODULES[m]) enService[`${m}.conf`] = lien(`../mods-available/${m}.conf`);
+  const inService: Record<string, ReturnType<typeof f>> = {};
+  for (const m of active) {
+    inService[`${m}.load`] = link(`../mods-available/${m}.load`);
+    if (CONFS_MODULES[m]) inService[`${m}.conf`] = link(`../mods-available/${m}.conf`);
   }
-  return lieu({
-    'apache2.conf': fichier(APACHE2_CONF),
-    'ports.conf': fichier(PORTS_CONF),
-    envvars: fichier(
+  return place({
+    'apache2.conf': file(APACHE2_CONF),
+    'ports.conf': file(PORTS_CONF),
+    envvars: file(
       '# envvars - default environment variables for apache2ctl\n\nexport APACHE_RUN_USER=www-data\nexport APACHE_RUN_GROUP=www-data\nexport APACHE_PID_FILE=/var/run/apache2$SUFFIX/apache2.pid\nexport APACHE_RUN_DIR=/var/run/apache2$SUFFIX\nexport APACHE_LOCK_DIR=/var/lock/apache2$SUFFIX\nexport APACHE_LOG_DIR=/var/log/apache2$SUFFIX',
     ),
-    'mods-available': lieu(disponibles),
-    'mods-enabled': lieu(enService),
-    'conf-available': lieu({
-      'charset.conf': fichier(CHARSET_CONF),
-      'other-vhosts-access-log.conf': fichier(AUTRES_HOTES_CONF),
-      'security.conf': fichier(SECURITY_CONF),
+    'mods-available': place(available),
+    'mods-enabled': place(inService),
+    'conf-available': place({
+      'charset.conf': file(CHARSET_CONF),
+      'other-vhosts-access-log.conf': file(OTHER_CONF_HOSTS),
+      'security.conf': file(SECURITY_CONF),
     }),
-    'conf-enabled': lieu({
-      'charset.conf': lien('../conf-available/charset.conf'),
-      'other-vhosts-access-log.conf': lien('../conf-available/other-vhosts-access-log.conf'),
-      'security.conf': lien('../conf-available/security.conf'),
+    'conf-enabled': place({
+      'charset.conf': link('../conf-available/charset.conf'),
+      'other-vhosts-access-log.conf': link('../conf-available/other-vhosts-access-log.conf'),
+      'security.conf': link('../conf-available/security.conf'),
     }),
-    'sites-available': lieu({ '000-default.conf': fichier(DEFAUT_CONF), 'default-ssl.conf': fichier(DEFAUT_SSL_CONF), ...Object.fromEntries(Object.entries(sitesEnPlus).map(([n, t]) => [n, fichier(t)])) }),
-    'sites-enabled': lieu(Object.fromEntries(Object.entries(sitesActifs).map(([n, c]) => [n, lien(c)]))),
+    'sites-available': place({ '000-default.conf': file(CONF_DEFAULT), 'default-ssl.conf': file(CONF_SSL_DEFAULT), ...Object.fromEntries(Object.entries(sitesInMore).map(([n, t]) => [n, file(t)])) }),
+    'sites-enabled': place(Object.fromEntries(Object.entries(activeSites).map(([n, c]) => [n, link(c)]))),
   });
 }
 
 /** /usr/lib/apache2/modules : un fichier .so par module (LoadModule les ouvre). */
-export function modulesApache2(): Dossier {
-  const tous = [...MODULES_ACTIFS, ...AUTRES_MODULES].sort();
-  return lieu({ modules: lieu(Object.fromEntries(tous.map((m) => [`mod_${m}.so`, f('', { proprio: 'root', taille: 30_000 + m.length * 1_000 })]))) });
+export function modulesApache2(): Directory {
+  const all = [...ACTIVE_MODULES, ...OTHER_MODULES].sort();
+  return place({ modules: place(Object.fromEntries(all.map((m) => [`mod_${m}.so`, f('', { owner: 'root', size: 30_000 + m.length * 1_000 })]))) });
 }
 
 // La page d'accueil du paquet (abrégée), en anglais comme la vraie.
-export const BIENVENUE_APACHE = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+export const APACHE_WELCOME = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <title>Apache2 Debian Default Page: It works</title>

@@ -7,39 +7,39 @@
 
 import type { Shell } from '../shell';
 import {
-  APPLIS,
-  complet,
-  comptesImage,
+  APPS,
+  complete,
+  imageAccounts,
   docker,
-  ecrireDans,
-  horloge,
-  identifiant,
-  identite,
-  imageDu,
-  lancer,
-  noeudDans,
-  lireDans,
-  majDisque,
-  listerDans,
-  nomImage,
+  writeIn,
+  clock,
+  identifier,
+  identity,
+  imageOfContainer,
+  launch,
+  nodeIn,
+  readIn,
+  diskUpdate,
+  listIn,
+  imageName,
   rfc3339,
-  stopper,
-  tailleDocker,
-  trouverConteneur,
-  utilisateurImage,
-  type Conteneur,
-  type EtatDocker,
-  type Montage,
+  stop,
+  dockerSize,
+  findContainer,
+  imageUser,
+  type Container,
+  type DockerState,
+  type Mount,
   type Port,
 } from '../docker';
 import { systemd } from '../systemd';
-import { conteneursDuProjet, ErreurYaml, lireProjet, monter, type Projet } from '../compose';
-import type { Commande } from './index';
+import { projectContainers, YamlError, readProject, mount, type Project } from '../compose';
+import type { Command } from './index';
 
 const SOCKET = 'permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock';
 
 /** Une durée comme units.HumanDuration de Docker : « 3 days », « About an hour ». */
-export function duree(ms: number): string {
+export function duration(ms: number): string {
   const s = Math.round(ms / 1000);
   const m = Math.round(s / 60);
   const h = Math.round(m / 60);
@@ -56,140 +56,140 @@ export function duree(ms: number): string {
   return `${Math.floor(h / 24 / 365)} years`;
 }
 
-const NOMS_A = ['brave', 'calm', 'eager', 'gentle', 'happy', 'jolly', 'keen', 'lucid', 'nifty', 'quirky'];
-const NOMS_B = ['hopper', 'lovelace', 'noether', 'curie', 'turing', 'hamilton', 'germain', 'meitner', 'franklin', 'johnson'];
+const A_NAMES = ['brave', 'calm', 'eager', 'gentle', 'happy', 'jolly', 'keen', 'lucid', 'nifty', 'quirky'];
+const B_NAMES = ['hopper', 'lovelace', 'noether', 'curie', 'turing', 'hamilton', 'germain', 'meitner', 'franklin', 'johnson'];
 
-const ports = (c: Conteneur) =>
+const ports = (c: Container) =>
   c.ports
     .flatMap((p) =>
       p.ip === '0.0.0.0'
-        ? [`0.0.0.0:${p.hote}->${p.conteneur}/tcp`, `[::]:${p.hote}->${p.conteneur}/tcp`]
-        : [`${p.ip}:${p.hote}->${p.conteneur}/tcp`],
+        ? [`0.0.0.0:${p.host}->${p.container}/tcp`, `[::]:${p.host}->${p.container}/tcp`]
+        : [`${p.ip}:${p.host}->${p.container}/tcp`],
     )
     .join(', ');
 
-function statut(c: Conteneur, maintenant: number): string {
-  if (c.etat === 'running') return `Up ${duree(maintenant - c.debut)}`;
+function status(c: Container, now: number): string {
+  if (c.state === 'running') return `Up ${duration(now - c.start)}`;
   // Un conteneur qui s'arrête en erreur et que sa politique relance sans fin.
-  if (c.etat === 'exited' && c.code !== 0 && ['always', 'unless-stopped', 'on-failure'].includes(c.redemarrage.split(':')[0]))
-    return `Restarting (${c.code}) ${duree(Math.min(maintenant - c.fin, 9000))} ago`;
-  if (c.etat === 'exited') return `Exited (${c.code}) ${duree(maintenant - c.fin)} ago`;
+  if (c.state === 'exited' && c.code !== 0 && ['always', 'unless-stopped', 'on-failure'].includes(c.reboot.split(':')[0]))
+    return `Restarting (${c.code}) ${duration(Math.min(now - c.end, 9000))} ago`;
+  if (c.state === 'exited') return `Exited (${c.code}) ${duration(now - c.end)} ago`;
   return 'Created';
 }
 
 // Un tableau aligné, colonnes séparées par trois espaces (comme docker).
-function tableau(titres: string[], lignes: string[][]): string {
-  const largeurs = titres.map((t, i) => Math.max(t.length, ...lignes.map((l) => l[i].length)));
-  const ligne = (l: string[]) =>
+function grid(titres: string[], lines: string[][]): string {
+  const widths = titres.map((t, i) => Math.max(t.length, ...lines.map((l) => l[i].length)));
+  const line = (l: string[]) =>
     l
-      .map((x, i) => (i === l.length - 1 ? x : x.padEnd(largeurs[i])))
+      .map((x, i) => (i === l.length - 1 ? x : x.padEnd(widths[i])))
       .join('   ')
       .trimEnd();
-  return [ligne(titres), ...lignes.map(ligne)].join('\n');
+  return [line(titres), ...lines.map(line)].join('\n');
 }
 
-const imageDe = (d: EtatDocker, c: Conteneur) => Object.values(d.images).find((i) => nomImage(i) === c.image);
+const imageFor = (d: DockerState, c: Container) => Object.values(d.images).find((i) => imageName(i) === c.image);
 
-function ps(d: EtatDocker, jeu: Shell, tous: boolean): string {
-  const maintenant = horloge(jeu);
-  const liste = d.conteneurs.filter((c) => tous || c.etat === 'running').reverse();
-  return tableau(
+function ps(d: DockerState, game: Shell, all: boolean): string {
+  const now = clock(game);
+  const listing = d.containers.filter((c) => all || c.state === 'running').reverse();
+  return grid(
     ['CONTAINER ID', 'IMAGE', 'COMMAND', 'CREATED', 'STATUS', 'PORTS', 'NAMES'],
-    liste.map((c) => {
-      const commande = imageDe(d, c)?.commande ?? '';
+    listing.map((c) => {
+      const command = imageFor(d, c)?.command ?? '';
       return [
         c.id.slice(0, 12),
         c.image,
-        `"${commande.length > 20 ? commande.slice(0, 19) + '…' : commande}"`,
-        `${duree(maintenant - c.cree)} ago`,
-        statut(c, maintenant),
-        c.etat === 'running' ? ports(c) : '',
-        c.nom,
+        `"${command.length > 20 ? command.slice(0, 19) + '…' : command}"`,
+        `${duration(now - c.created)} ago`,
+        status(c, now),
+        c.state === 'running' ? ports(c) : '',
+        c.name,
       ];
     }),
   );
 }
 
-function images(d: EtatDocker, jeu: Shell): string {
-  const maintenant = horloge(jeu);
-  return tableau(
+function images(d: DockerState, game: Shell): string {
+  const now = clock(game);
+  return grid(
     ['REPOSITORY', 'TAG', 'IMAGE ID', 'CREATED', 'SIZE'],
-    Object.values(d.images).map((i) => [i.depot, i.tag, i.id.slice(0, 12), `${duree(maintenant - i.cree)} ago`, tailleDocker(i.taille)]),
+    Object.values(d.images).map((i) => [i.repo, i.tag, i.id.slice(0, 12), `${duration(now - i.created)} ago`, dockerSize(i.size)]),
   );
 }
 
 // Télécharge une image depuis le registre ; renvoie la sortie, ou null si elle n'existe pas.
-function tirer(d: EtatDocker, nom: string): string | null {
-  const plein = complet(nom);
-  const source = d.registre[plein];
+function pull(d: DockerState, name: string): string | null {
+  const full = complete(name);
+  const source = d.registry[full];
   if (!source) return null;
-  const [depot, tag] = [plein.slice(0, plein.lastIndexOf(':')), plein.slice(plein.lastIndexOf(':') + 1)];
-  const deja = d.images[plein]?.id === source.id;
-  if (deja)
-    return `${tag}: Pulling from ${depot.split('/').slice(1).join('/') || depot}\nDigest: sha256:${identifiant('digest' + source.id)}\nStatus: Image is up to date for ${plein}\n${plein}`;
-  d.images[plein] = { ...source };
-  const couches = [identifiant('couche-a' + depot), identifiant('couche-b' + source.id), identifiant('couche-c' + source.id)].map((c) =>
+  const [repo, tag] = [full.slice(0, full.lastIndexOf(':')), full.slice(full.lastIndexOf(':') + 1)];
+  const already = d.images[full]?.id === source.id;
+  if (already)
+    return `${tag}: Pulling from ${repo.split('/').slice(1).join('/') || repo}\nDigest: sha256:${identifier('digest' + source.id)}\nStatus: Image is up to date for ${full}\n${full}`;
+  d.images[full] = { ...source };
+  const layers = [identifier('couche-a' + repo), identifier('couche-b' + source.id), identifier('couche-c' + source.id)].map((c) =>
     c.slice(0, 12),
   );
-  const presentes = Object.values(d.images).some((i) => i.depot === depot && i.tag !== tag);
+  const present = Object.values(d.images).some((i) => i.repo === repo && i.tag !== tag);
   return [
-    `${tag}: Pulling from ${depot.split('/').slice(1).join('/') || depot}`,
-    `${couches[0]}: ${presentes ? 'Already exists' : 'Pull complete'}`,
-    `${couches[1]}: Pull complete`,
-    `${couches[2]}: Pull complete`,
-    `Digest: sha256:${identifiant('digest' + source.id)}`,
-    `Status: Downloaded newer image for ${plein}`,
-    plein,
+    `${tag}: Pulling from ${repo.split('/').slice(1).join('/') || repo}`,
+    `${layers[0]}: ${present ? 'Already exists' : 'Pull complete'}`,
+    `${layers[1]}: Pull complete`,
+    `${layers[2]}: Pull complete`,
+    `Digest: sha256:${identifier('digest' + source.id)}`,
+    `Status: Downloaded newer image for ${full}`,
+    full,
   ].join('\n');
 }
 
 interface OptionsRun {
-  detache: boolean;
-  nom?: string;
+  detached: boolean;
+  name?: string;
   ports: string[];
   volumes: string[];
   env: string[];
-  redemarrage: string;
-  supprimer: boolean;
-  utilisateur?: string;
-  lectureSeule: boolean;
+  reboot: string;
+  remove: boolean;
+  user?: string;
+  onlyRead: boolean;
   capDrop: string[];
-  securite: string[];
+  security: string[];
   image?: string;
-  inconnue?: string;
+  unknown?: string;
 }
 
-function analyserRun(args: string[]): OptionsRun {
+function parseRun(args: string[]): OptionsRun {
   const o: OptionsRun = {
-    detache: false,
+    detached: false,
     ports: [],
     volumes: [],
     env: [],
-    redemarrage: 'no',
-    supprimer: false,
-    lectureSeule: false,
+    reboot: 'no',
+    remove: false,
+    onlyRead: false,
     capDrop: [],
-    securite: [],
+    security: [],
   };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
-    const [cle, egal] = a.startsWith('--') && a.includes('=') ? [a.slice(0, a.indexOf('=')), a.slice(a.indexOf('=') + 1)] : [a, undefined];
-    const valeur = () => egal ?? args[++i] ?? '';
-    if (cle === '-d' || cle === '--detach') o.detache = true;
-    else if (/^-[dit]+$/.test(cle)) o.detache ||= cle.includes('d');
-    else if (cle === '--name') o.nom = valeur();
-    else if (cle === '-p' || cle === '--publish') o.ports.push(valeur());
-    else if (cle === '-v' || cle === '--volume') o.volumes.push(valeur());
-    else if (cle === '-e' || cle === '--env') o.env.push(valeur());
-    else if (cle === '--restart') o.redemarrage = valeur();
-    else if (cle === '--rm') o.supprimer = true;
-    else if (cle === '-u' || cle === '--user') o.utilisateur = valeur();
-    else if (cle === '--read-only') o.lectureSeule = true;
-    else if (cle === '--cap-drop') o.capDrop.push(valeur());
-    else if (cle === '--security-opt') o.securite.push(valeur());
-    else if (cle === '--interactive' || cle === '--tty') continue;
-    else if (cle.startsWith('-')) {
-      o.inconnue = cle;
+    const [key, egal] = a.startsWith('--') && a.includes('=') ? [a.slice(0, a.indexOf('=')), a.slice(a.indexOf('=') + 1)] : [a, undefined];
+    const value = () => egal ?? args[++i] ?? '';
+    if (key === '-d' || key === '--detach') o.detached = true;
+    else if (/^-[dit]+$/.test(key)) o.detached ||= key.includes('d');
+    else if (key === '--name') o.name = value();
+    else if (key === '-p' || key === '--publish') o.ports.push(value());
+    else if (key === '-v' || key === '--volume') o.volumes.push(value());
+    else if (key === '-e' || key === '--env') o.env.push(value());
+    else if (key === '--restart') o.reboot = value();
+    else if (key === '--rm') o.remove = true;
+    else if (key === '-u' || key === '--user') o.user = value();
+    else if (key === '--read-only') o.onlyRead = true;
+    else if (key === '--cap-drop') o.capDrop.push(value());
+    else if (key === '--security-opt') o.security.push(value());
+    else if (key === '--interactive' || key === '--tty') continue;
+    else if (key.startsWith('-')) {
+      o.unknown = key;
       return o;
     } else {
       // L'image, puis la commande (ignorée ici).
@@ -200,287 +200,287 @@ function analyserRun(args: string[]): OptionsRun {
   return o;
 }
 
-function run(d: EtatDocker, jeu: Shell, args: string[]): string {
-  const o = analyserRun(args);
-  if (o.inconnue) return jeu.erreur(`unknown flag: ${o.inconnue}\nSee 'docker run --help'.`);
+function run(d: DockerState, game: Shell, args: string[]): string {
+  const o = parseRun(args);
+  if (o.unknown) return game.error(`unknown flag: ${o.unknown}\nSee 'docker run --help'.`);
   if (!o.image)
-    return jeu.erreur(
+    return game.error(
       `docker: 'docker run' requires at least 1 argument.\n\nUsage:  docker run [OPTIONS] IMAGE [COMMAND] [ARG...]\n\nSee 'docker run --help' for more information`,
     );
-  if (!['no', 'always', 'unless-stopped', 'on-failure'].includes(o.redemarrage.split(':')[0]))
-    return jeu.erreur(`docker: invalid restart policy format: ${o.redemarrage}\n\nRun 'docker run --help' for more information`);
-  const sortie: string[] = [];
-  const plein = complet(o.image);
-  if (!d.images[plein]) {
-    const tire = tirer(d, o.image);
+  if (!['no', 'always', 'unless-stopped', 'on-failure'].includes(o.reboot.split(':')[0]))
+    return game.error(`docker: invalid restart policy format: ${o.reboot}\n\nRun 'docker run --help' for more information`);
+  const output: string[] = [];
+  const full = complete(o.image);
+  if (!d.images[full]) {
+    const tire = pull(d, o.image);
     if (!tire) {
-      return jeu.erreur(
-        `Unable to find image '${plein}' locally\ndocker: Error response from daemon: manifest for ${plein} not found: manifest unknown: manifest unknown\n\nRun 'docker run --help' for more information`,
+      return game.error(
+        `Unable to find image '${full}' locally\ndocker: Error response from daemon: manifest for ${full} not found: manifest unknown: manifest unknown\n\nRun 'docker run --help' for more information`,
       );
     }
-    sortie.push(`Unable to find image '${plein}' locally`, tire);
+    output.push(`Unable to find image '${full}' locally`, tire);
   }
-  const image = d.images[plein];
-  const nom = o.nom ?? `${NOMS_A[d.prochain % NOMS_A.length]}_${NOMS_B[(d.prochain * 3) % NOMS_B.length]}`;
-  const existant = d.conteneurs.find((c) => c.nom === nom);
-  if (existant)
-    return jeu.erreur(
-      `docker: Error response from daemon: Conflict. The container name "/${nom}" is already in use by container "${existant.id}". You have to remove (or rename) that container to be able to reuse that name.\n\nRun 'docker run --help' for more information`,
+  const image = d.images[full];
+  const name = o.name ?? `${A_NAMES[d.next % A_NAMES.length]}_${B_NAMES[(d.next * 3) % B_NAMES.length]}`;
+  const existing = d.containers.find((c) => c.name === name);
+  if (existing)
+    return game.error(
+      `docker: Error response from daemon: Conflict. The container name "/${name}" is already in use by container "${existing.id}". You have to remove (or rename) that container to be able to reuse that name.\n\nRun 'docker run --help' for more information`,
     );
   // -p [ip:]hôte:conteneur, ou -p conteneur (port de la machine au hasard).
-  const publies: Port[] = [];
+  const published: Port[] = [];
   for (const p of o.ports) {
-    const parties = p.replace(/\/tcp$/, '').split(':');
-    const [ip, hote, conteneur] =
-      parties.length === 3 ? parties : parties.length === 2 ? ['0.0.0.0', ...parties] : ['0.0.0.0', String(32768 + d.prochain), parties[0]];
-    if (!/^\d+$/.test(hote) || !/^\d+$/.test(conteneur))
-      return jeu.erreur(`docker: invalid publish opts format (should be name=value but got '${p}')\n\nRun 'docker run --help' for more information`);
-    publies.push({ ip, hote: Number(hote), conteneur: Number(conteneur) });
+    const parts = p.replace(/\/tcp$/, '').split(':');
+    const [ip, host, container] =
+      parts.length === 3 ? parts : parts.length === 2 ? ['0.0.0.0', ...parts] : ['0.0.0.0', String(32768 + d.next), parts[0]];
+    if (!/^\d+$/.test(host) || !/^\d+$/.test(container))
+      return game.error(`docker: invalid publish opts format (should be name=value but got '${p}')\n\nRun 'docker run --help' for more information`);
+    published.push({ ip, host: Number(host), container: Number(container) });
   }
   // -v nom:/chemin (volume) ou /dossier:/chemin (dossier de la machine), :ro en lecture seule.
-  const montages: Montage[] = [];
+  const mounts: Mount[] = [];
   for (const v of o.volumes) {
-    const [source, cible, mode] = v.split(':');
-    if (!cible || !cible.startsWith('/'))
-      return jeu.erreur(
-        `docker: Error response from daemon: invalid volume specification: '${v}': invalid mount config for type "volume": invalid mount path: '${cible ?? ''}' mount path must be absolute\n\nRun 'docker run --help' for more information`,
+    const [source, target, mode] = v.split(':');
+    if (!target || !target.startsWith('/'))
+      return game.error(
+        `docker: Error response from daemon: invalid volume specification: '${v}': invalid mount config for type "volume": invalid mount path: '${target ?? ''}' mount path must be absolute\n\nRun 'docker run --help' for more information`,
       );
     const bind = source.startsWith('/') || source.startsWith('.') || source.startsWith('~');
     if (bind) {
-      const chemin = jeu.resoudre(source);
+      const path = game.resolve(source);
       // Docker crée le dossier de la machine s'il n'existe pas (à root).
-      if (!jeu.existe(chemin)) {
-        const avant = jeu.qui;
-        jeu.qui = 'root';
-        jeu.placer('docker', chemin, { type: 'dossier', enfants: {}, proprio: 'root' });
-        jeu.qui = avant;
+      if (!game.exists(path)) {
+        const before = game.who;
+        game.who = 'root';
+        game.place('docker', path, { type: 'dossier', children: {}, owner: 'root' });
+        game.who = before;
       }
-      montages.push({ type: 'bind', source: chemin, cible, lectureSeule: mode === 'ro' });
+      mounts.push({ type: 'bind', source: path, target, onlyRead: mode === 'ro' });
     } else {
-      d.volumes[source] ??= { cree: horloge(jeu), donnees: {} };
-      montages.push({ type: 'volume', source, cible, lectureSeule: mode === 'ro' });
+      d.volumes[source] ??= { created: clock(game), data: {} };
+      mounts.push({ type: 'volume', source, target, onlyRead: mode === 'ro' });
     }
   }
-  const id = identifiant(`conteneur-${d.prochain}-${nom}`);
-  d.prochain++;
-  const c: Conteneur = {
+  const id = identifier(`conteneur-${d.next}-${name}`);
+  d.next++;
+  const c: Container = {
     id,
-    nom,
-    image: plein,
-    etat: 'created',
+    name,
+    image: full,
+    state: 'created',
     code: 0,
-    ports: publies,
-    montages,
+    ports: published,
+    mounts,
     env: Object.fromEntries(o.env.map((e) => [e.split('=')[0], e.split('=').slice(1).join('=')])),
-    redemarrage: o.redemarrage,
-    cree: horloge(jeu),
-    debut: 0,
-    fin: 0,
-    couche: { ...(APPLIS[image.appli]?.fichiers?.(image) ?? {}) },
-    journal: [],
-    ip: `172.17.0.${d.conteneurs.filter((x) => x.etat === 'running').length + 2}`,
-    ...(o.utilisateur ? { utilisateur: o.utilisateur } : {}),
-    ...(o.lectureSeule ? { lectureSeule: true } : {}),
+    reboot: o.reboot,
+    created: clock(game),
+    start: 0,
+    end: 0,
+    layer: { ...(APPS[image.app]?.files?.(image) ?? {}) },
+    log: [],
+    ip: `172.17.0.${d.containers.filter((x) => x.state === 'running').length + 2}`,
+    ...(o.user ? { user: o.user } : {}),
+    ...(o.onlyRead ? { onlyRead: true } : {}),
     ...(o.capDrop.length ? { capDrop: o.capDrop } : {}),
-    ...(o.securite.length ? { securite: o.securite } : {}),
+    ...(o.security.length ? { security: o.security } : {}),
   };
   // Un port de la machine déjà publié par un conteneur qui tourne : refus au démarrage.
-  const occupe = publies.find((p) => d.conteneurs.some((x) => x.etat === 'running' && x.ports.some((q) => q.hote === p.hote)));
-  d.conteneurs.push(c);
-  if (occupe) {
-    return jeu.erreur(
+  const busy = published.find((p) => d.containers.some((x) => x.state === 'running' && x.ports.some((q) => q.host === p.host)));
+  d.containers.push(c);
+  if (busy) {
+    return game.error(
       [
-        ...sortie,
-        `docker: Error response from daemon: driver failed programming external connectivity on endpoint ${nom} (${identifiant('ep' + id)}): Bind for 0.0.0.0:${occupe.hote} failed: port is already allocated.`,
+        ...output,
+        `docker: Error response from daemon: driver failed programming external connectivity on endpoint ${name} (${identifier('ep' + id)}): Bind for 0.0.0.0:${busy.host} failed: port is already allocated.`,
         '',
         "Run 'docker run --help' for more information",
       ].join('\n'),
     );
   }
-  const echec = lancer(jeu, c);
-  if (echec)
-    return jeu.erreur([...sortie, `docker: Error response from daemon: ${echec}.`, '', "Run 'docker run --help' for more information"].join('\n'));
-  jeu.etat.dockerRun = (jeu.etat.dockerRun ?? 0) + 1;
-  if (o.detache) return [...sortie, id].join('\n');
+  const failure = launch(game, c);
+  if (failure)
+    return game.error([...output, `docker: Error response from daemon: ${failure}.`, '', "Run 'docker run --help' for more information"].join('\n'));
+  game.state.dockerRun = (game.state.dockerRun ?? 0) + 1;
+  if (o.detached) return [...output, id].join('\n');
   // Sans -d, docker resterait attaché au conteneur : on montre son journal.
-  return [...sortie, ...c.journal.map((l) => l.texte), jeu.t('docker-attache')].join('\n');
+  return [...output, ...c.log.map((l) => l.text), game.t('docker-attache')].join('\n');
 }
 
 // docker cp conteneur:chemin chemin_machine, ou l'inverse.
-function cp(d: EtatDocker, jeu: Shell, args: string[]): string {
+function cp(d: DockerState, game: Shell, args: string[]): string {
   const [source, dest] = args.filter((a) => !a.startsWith('-'));
   if (!source || !dest)
-    return jeu.erreur(
+    return game.error(
       `docker: 'docker cp' requires 2 arguments.\n\nUsage:  docker cp [OPTIONS] CONTAINER:SRC_PATH DEST_PATH|-\n\tdocker cp [OPTIONS] SRC_PATH|- CONTAINER:DEST_PATH`,
     );
-  const cote = (x: string) => (/^[\w.-]+:\//.test(x) ? { conteneur: x.slice(0, x.indexOf(':')), chemin: x.slice(x.indexOf(':') + 1) } : null);
-  const de = cote(source);
-  const vers = cote(dest);
-  if (!!de === !!vers) return jeu.erreur('must specify at least one container source');
-  let octets = 0;
-  if (de) {
-    const c = trouverConteneur(d, de.conteneur);
-    if (!c) return jeu.erreur(`Error response from daemon: No such container: ${de.conteneur}`);
-    const base = de.chemin.replace(/\/\.?$/, '');
-    const fichiers = lireDans(jeu, c, base) !== null ? [base] : listerDans(jeu, c, base);
-    if (!fichiers.length) return jeu.erreur(`Error response from daemon: Could not find the file ${de.chemin} in container ${de.conteneur}`);
-    const unFichier = fichiers.length === 1 && fichiers[0] === base;
-    const lieuDest = jeu.resoudre(dest);
-    const existe = jeu.trouver(lieuDest);
+  const cote = (x: string) => (/^[\w.-]+:\//.test(x) ? { container: x.slice(0, x.indexOf(':')), path: x.slice(x.indexOf(':') + 1) } : null);
+  const forEachOf = cote(source);
+  const to = cote(dest);
+  if (!!forEachOf === !!to) return game.error('must specify at least one container source');
+  let bytes = 0;
+  if (forEachOf) {
+    const c = findContainer(d, forEachOf.container);
+    if (!c) return game.error(`Error response from daemon: No such container: ${forEachOf.container}`);
+    const base = forEachOf.path.replace(/\/\.?$/, '');
+    const files = readIn(game, c, base) !== null ? [base] : listIn(game, c, base);
+    if (!files.length) return game.error(`Error response from daemon: Could not find the file ${forEachOf.path} in container ${forEachOf.container}`);
+    const oneFile = files.length === 1 && files[0] === base;
+    const destPlace = game.resolve(dest);
+    const exists = game.find(destPlace);
     // Un dossier copié vers un lieu qui existe : il y garde son nom (sauf avec /.).
-    const racine = unFichier
-      ? existe?.type === 'dossier'
-        ? `${lieuDest}/${base.split('/').at(-1)}`
-        : lieuDest
-      : existe?.type === 'dossier' && !de.chemin.endsWith('/.')
-        ? `${lieuDest}/${base.split('/').at(-1)}`
-        : lieuDest;
-    if (!unFichier && !jeu.existe(racine)) {
-      const e = jeu.placer('docker', racine, { type: 'dossier', enfants: {}, proprio: jeu.qui });
-      if (e) return jeu.erreur(e);
+    const root = oneFile
+      ? exists?.type === 'dossier'
+        ? `${destPlace}/${base.split('/').at(-1)}`
+        : destPlace
+      : exists?.type === 'dossier' && !forEachOf.path.endsWith('/.')
+        ? `${destPlace}/${base.split('/').at(-1)}`
+        : destPlace;
+    if (!oneFile && !game.exists(root)) {
+      const e = game.place('docker', root, { type: 'dossier', children: {}, owner: game.who });
+      if (e) return game.error(e);
     }
-    for (const f of fichiers) {
-      const contenu = lireDans(jeu, c, f) ?? '';
-      const cible = unFichier ? racine : `${racine}/${f.slice(base.length + 1)}`;
-      const e = jeu.placer('docker', cible, { type: 'fichier', contenu, lignes: true, proprio: jeu.qui });
-      if (e) return jeu.erreur(e);
-      octets += new TextEncoder().encode(contenu).length;
+    for (const f of files) {
+      const content = readIn(game, c, f) ?? '';
+      const target = oneFile ? root : `${root}/${f.slice(base.length + 1)}`;
+      const e = game.place('docker', target, { type: 'fichier', content, lines: true, owner: game.who });
+      if (e) return game.error(e);
+      bytes += new TextEncoder().encode(content).length;
     }
-    jeu.etat.dockerCopie = (jeu.etat.dockerCopie ?? 0) + 1;
-    return `Successfully copied ${tailleDocker(octets)} to ${lieuDest}`;
+    game.state.dockerCopie = (game.state.dockerCopie ?? 0) + 1;
+    return `Successfully copied ${dockerSize(bytes)} to ${destPlace}`;
   }
-  const c = trouverConteneur(d, vers!.conteneur);
-  if (!c) return jeu.erreur(`Error response from daemon: No such container: ${vers!.conteneur}`);
-  const n = jeu.trouver(source);
-  if (!n) return jeu.erreur(`lstat ${jeu.resoudre(source)}: no such file or directory`);
-  const cibleBase = vers!.chemin.replace(/\/\.?$/, '');
-  const copier = (chemin: string, cible: string): string | null => {
-    const x = jeu.trouver(chemin);
+  const c = findContainer(d, to!.container);
+  if (!c) return game.error(`Error response from daemon: No such container: ${to!.container}`);
+  const n = game.find(source);
+  if (!n) return game.error(`lstat ${game.resolve(source)}: no such file or directory`);
+  const baseTarget = to!.path.replace(/\/\.?$/, '');
+  const copy = (path: string, target: string): string | null => {
+    const x = game.find(path);
     if (x?.type === 'fichier') {
-      const contenu = jeu.lire(chemin) ?? '';
-      octets += new TextEncoder().encode(contenu).length;
-      return ecrireDans(jeu, c, cible, contenu);
+      const content = game.read(path) ?? '';
+      bytes += new TextEncoder().encode(content).length;
+      return writeIn(game, c, target, content);
     }
     if (x?.type === 'dossier')
-      for (const k of Object.keys(x.enfants)) {
-        const e: string | null = copier(`${chemin}/${k}`, `${cible}/${k}`);
+      for (const k of Object.keys(x.children)) {
+        const e: string | null = copy(`${path}/${k}`, `${target}/${k}`);
         if (e) return e;
       }
     return null;
   };
   // Le contenu d'un dossier (source/.) va directement dans la cible.
-  const versLieu = n.type === 'dossier' && !source.endsWith('/.') ? `${cibleBase}/${jeu.resoudre(source).split('/').at(-1)}` : cibleBase;
-  const e = copier(jeu.resoudre(source), n.type === 'fichier' && listerDans(jeu, c, cibleBase).length ? `${cibleBase}/${jeu.nom(source)}` : versLieu);
-  if (e) return jeu.erreur(`Error response from daemon: ${e}`);
-  return `Successfully copied ${tailleDocker(octets)} to ${vers!.conteneur}:${vers!.chemin}`;
+  const toPlace = n.type === 'dossier' && !source.endsWith('/.') ? `${baseTarget}/${game.resolve(source).split('/').at(-1)}` : baseTarget;
+  const e = copy(game.resolve(source), n.type === 'fichier' && listIn(game, c, baseTarget).length ? `${baseTarget}/${game.name(source)}` : toPlace);
+  if (e) return game.error(`Error response from daemon: ${e}`);
+  return `Successfully copied ${dockerSize(bytes)} to ${to!.container}:${to!.path}`;
 }
 
-function exec(d: EtatDocker, jeu: Shell, args: string[]): string {
+function exec(d: DockerState, game: Shell, args: string[]): string {
   // Les options avant le conteneur : -i, -t, -it, -u utilisateur (--user).
   let i = 0;
-  let demande: string | undefined;
+  let request: string | undefined;
   for (; i < args.length && args[i].startsWith('-'); i++) {
-    if (args[i] === '-u' || args[i] === '--user') demande = args[++i];
-    else if (args[i].startsWith('--user=')) demande = args[i].slice(7);
+    if (args[i] === '-u' || args[i] === '--user') request = args[++i];
+    else if (args[i].startsWith('--user=')) request = args[i].slice(7);
   }
-  const [nom, commande, ...params] = args.slice(i);
-  if (!nom || !commande)
-    return jeu.erreur(`docker: 'docker exec' requires at least 2 arguments.\n\nUsage:  docker exec [OPTIONS] CONTAINER COMMAND [ARG...]`);
-  const c = trouverConteneur(d, nom);
-  if (!c) return jeu.erreur(`Error response from daemon: No such container: ${nom}`);
-  if (c.etat !== 'running') return jeu.erreur(`Error response from daemon: container ${c.id} is not running`);
-  const image = imageDe(d, c)!;
-  const id = identite(image, c, demande);
-  if ('erreur' in id) return jeu.erreur(`Error response from daemon: ${id.erreur}`);
-  if (commande === 'env')
+  const [name, command, ...params] = args.slice(i);
+  if (!name || !command)
+    return game.error(`docker: 'docker exec' requires at least 2 arguments.\n\nUsage:  docker exec [OPTIONS] CONTAINER COMMAND [ARG...]`);
+  const c = findContainer(d, name);
+  if (!c) return game.error(`Error response from daemon: No such container: ${name}`);
+  if (c.state !== 'running') return game.error(`Error response from daemon: container ${c.id} is not running`);
+  const image = imageFor(d, c)!;
+  const id = identity(image, c, request);
+  if ('error' in id) return game.error(`Error response from daemon: ${id.error}`);
+  if (command === 'env')
     return [
       `PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`,
       `HOSTNAME=${c.id.slice(0, 12)}`,
       ...Object.entries(c.env).map(([k, v]) => `${k}=${v}`),
     ].join('\n');
-  const avecNom = (n: number, nomDe: string | null) => (nomDe === null ? String(n) : `${n}(${nomDe})`);
-  if (commande === 'id') return `uid=${avecNom(id.uid, id.nom)} gid=${avecNom(id.gid, id.groupe)} groups=${avecNom(id.gid, id.groupe)}`;
-  if (commande === 'whoami') return id.nom ?? jeu.erreur(`whoami: cannot find name for user ID ${id.uid}`);
-  if (commande === 'cat') {
-    const sorties: string[] = [];
+  const withName = (n: number, nameFor: string | null) => (nameFor === null ? String(n) : `${n}(${nameFor})`);
+  if (command === 'id') return `uid=${withName(id.uid, id.name)} gid=${withName(id.gid, id.group)} groups=${withName(id.gid, id.group)}`;
+  if (command === 'whoami') return id.name ?? game.error(`whoami: cannot find name for user ID ${id.uid}`);
+  if (command === 'cat') {
+    const outputs: string[] = [];
     for (const p of params) {
-      const contenu = lireDans(jeu, c, p);
-      if (contenu === null) {
-        const dedans = listerDans(jeu, c, p);
-        jeu.erreur(`cat: ${p}: ${dedans.length ? 'Is a directory' : 'No such file or directory'}`);
-      } else sorties.push(contenu);
+      const content = readIn(game, c, p);
+      if (content === null) {
+        const inside = listIn(game, c, p);
+        game.error(`cat: ${p}: ${inside.length ? 'Is a directory' : 'No such file or directory'}`);
+      } else outputs.push(content);
     }
-    return sorties.join('\n');
+    return outputs.join('\n');
   }
-  if (commande === 'ls') {
+  if (command === 'ls') {
     const long = params.some((p) => /^-\w*l/.test(p));
-    const lieu = params.find((p) => !p.startsWith('-')) ?? '/';
-    const fichiers = lireDans(jeu, c, lieu) !== null ? [lieu] : listerDans(jeu, c, lieu);
-    if (!fichiers.length && lireDans(jeu, c, lieu) === null && !c.montages.some((m) => m.cible === lieu.replace(/\/$/, '')))
-      return jeu.erreur(`ls: cannot access '${lieu}': No such file or directory`);
-    const noms = [...new Set(fichiers.map((f) => (f === lieu ? f : f.slice(lieu.replace(/\/$/, '').length + 1).split('/')[0])))].sort();
-    if (!long) return noms.join('  ');
+    const place = params.find((p) => !p.startsWith('-')) ?? '/';
+    const files = readIn(game, c, place) !== null ? [place] : listIn(game, c, place);
+    if (!files.length && readIn(game, c, place) === null && !c.mounts.some((m) => m.target === place.replace(/\/$/, '')))
+      return game.error(`ls: cannot access '${place}': No such file or directory`);
+    const names = [...new Set(files.map((f) => (f === place ? f : f.slice(place.replace(/\/$/, '').length + 1).split('/')[0])))].sort();
+    if (!long) return names.join('  ');
     // Le propriétaire vu du conteneur : le nom de son uid dans l'image (sinon le numéro).
-    const comptes = comptesImage(image);
-    const nomDans = (uid: number) => Object.entries(comptes).find(([, x]) => x === uid)?.[0] ?? String(uid);
-    const parDefaut = utilisateurImage(image);
-    return noms
+    const accounts = imageAccounts(image);
+    const nameIn = (uid: number) => Object.entries(accounts).find(([, x]) => x === uid)?.[0] ?? String(uid);
+    const byDefault = imageUser(image);
+    return names
       .map((n) => {
-        const chemin = `${lieu.replace(/\/$/, '')}/${n}`;
-        const hote = noeudDans(jeu, c, chemin);
-        const uid = hote ? (jeu.comptes.utilisateurs[hote.proprio ?? jeu.joueur]?.uid ?? Number(hote.proprio)) : (comptes[parDefaut] ?? 0);
-        const proprio = Number.isNaN(uid) ? 'root' : nomDans(uid);
-        const dossier = hote?.type === 'dossier';
-        const mode = hote?.mode ?? (dossier ? 'rwxr-xr-x' : 'rw-r--r--');
-        const taille = dossier
+        const path = `${place.replace(/\/$/, '')}/${n}`;
+        const host = nodeIn(game, c, path);
+        const uid = host ? (game.accounts.users[host.owner ?? game.player]?.uid ?? Number(host.owner)) : (accounts[byDefault] ?? 0);
+        const owner = Number.isNaN(uid) ? 'root' : nameIn(uid);
+        const directory = host?.type === 'dossier';
+        const mode = host?.mode ?? (directory ? 'rwxr-xr-x' : 'rw-r--r--');
+        const size = directory
           ? 4096
-          : hote?.type === 'fichier' && hote.taille !== undefined
-            ? hote.taille
-            : new TextEncoder().encode(lireDans(jeu, c, chemin) ?? '').length;
-        return `${dossier ? 'd' : '-'}${mode} 1 ${proprio} ${proprio} ${String(taille).padStart(6)} ${n}`;
+          : host?.type === 'fichier' && host.size !== undefined
+            ? host.size
+            : new TextEncoder().encode(readIn(game, c, path) ?? '').length;
+        return `${directory ? 'd' : '-'}${mode} 1 ${owner} ${owner} ${String(size).padStart(6)} ${n}`;
       })
       .join('\n');
   }
-  return jeu.erreur(
-    `OCI runtime exec failed: exec failed: unable to start container process: exec: "${commande}": executable file not found in $PATH: unknown`,
+  return game.error(
+    `OCI runtime exec failed: exec failed: unable to start container process: exec: "${command}": executable file not found in $PATH: unknown`,
   );
 }
 
 // ——— Le disque : system df, prune, rmi ———
 
-const utilisees = (d: EtatDocker) => new Set(d.conteneurs.map((c) => c.image));
-const volumesUtilises = (d: EtatDocker) => new Set(d.conteneurs.flatMap((c) => c.montages.filter((m) => m.type === 'volume').map((m) => m.source)));
-const tailleVolume = (v: EtatDocker['volumes'][string]) => Object.values(v.donnees).reduce((t, x) => t + x.length, 0) + (v.taille ?? 0);
+const used = (d: DockerState) => new Set(d.containers.map((c) => c.image));
+const usedVolumes = (d: DockerState) => new Set(d.containers.flatMap((c) => c.mounts.filter((m) => m.type === 'volume').map((m) => m.source)));
+const volumeSize = (v: DockerState['volumes'][string]) => Object.values(v.data).reduce((t, x) => t + x.length, 0) + (v.size ?? 0);
 
-function systemeDf(d: EtatDocker): string {
+function dfSystem(d: DockerState): string {
   const imgs = Object.values(d.images);
-  const enService = utilisees(d);
-  const taille = imgs.reduce((t, i) => t + i.taille, 0);
-  const libre = imgs.filter((i) => !enService.has(nomImage(i))).reduce((t, i) => t + i.taille, 0);
+  const inService = used(d);
+  const size = imgs.reduce((t, i) => t + i.size, 0);
+  const freeMem = imgs.filter((i) => !inService.has(imageName(i))).reduce((t, i) => t + i.size, 0);
   const volumes = Object.entries(d.volumes);
-  const vUtilises = volumesUtilises(d);
-  const tailleVolumes = volumes.reduce((t, [, v]) => t + tailleVolume(v), 0);
-  const vLibre = volumes.filter(([n]) => !vUtilises.has(n)).reduce((t, [, v]) => t + tailleVolume(v), 0);
-  const pourcent = (a: number, b: number) => `${tailleDocker(a)} (${b ? Math.round((a / b) * 100) : 0}%)`;
-  const arretes = d.conteneurs.filter((c) => c.etat !== 'running');
-  return tableau(
+  const usedV = usedVolumes(d);
+  const volumesSize = volumes.reduce((t, [, v]) => t + volumeSize(v), 0);
+  const freeV = volumes.filter(([n]) => !usedV.has(n)).reduce((t, [, v]) => t + volumeSize(v), 0);
+  const percent = (a: number, b: number) => `${dockerSize(a)} (${b ? Math.round((a / b) * 100) : 0}%)`;
+  const stopped = d.containers.filter((c) => c.state !== 'running');
+  return grid(
     ['TYPE', 'TOTAL', 'ACTIVE', 'SIZE', 'RECLAIMABLE'],
     [
-      ['Images', String(imgs.length), String(imgs.filter((i) => enService.has(nomImage(i))).length), tailleDocker(taille), pourcent(libre, taille)],
+      ['Images', String(imgs.length), String(imgs.filter((i) => inService.has(imageName(i))).length), dockerSize(size), percent(freeMem, size)],
       [
         'Containers',
-        String(d.conteneurs.length),
-        String(d.conteneurs.length - arretes.length),
-        tailleDocker(d.conteneurs.length * 4096),
-        pourcent(arretes.length * 4096, d.conteneurs.length * 4096),
+        String(d.containers.length),
+        String(d.containers.length - stopped.length),
+        dockerSize(d.containers.length * 4096),
+        percent(stopped.length * 4096, d.containers.length * 4096),
       ],
-      ['Local Volumes', String(volumes.length), String(vUtilises.size), tailleDocker(tailleVolumes), pourcent(vLibre, tailleVolumes)],
+      ['Local Volumes', String(volumes.length), String(usedV.size), dockerSize(volumesSize), percent(freeV, volumesSize)],
       ['Build Cache', '0', '0', '0B', '0B'],
     ],
   );
 }
 
-const AVERTISSEMENTS = {
+const WARNINGS = {
   image: 'WARNING! This will remove all dangling images.',
   imageTout: 'WARNING! This will remove all images without at least one container associated to them.',
   container: 'WARNING! This will remove all stopped containers.',
@@ -489,484 +489,484 @@ const AVERTISSEMENTS = {
 };
 
 // docker image|container|volume|system prune : demande confirmation, sauf avec -f.
-function elaguer(d: EtatDocker, jeu: Shell, quoi: 'image' | 'container' | 'volume' | 'system', options: string[]): string {
-  const tout = options.some((o) => o === '-a' || o === '--all');
+function prune(d: DockerState, game: Shell, what: 'image' | 'container' | 'volume' | 'system', options: string[]): string {
+  const all = options.some((o) => o === '-a' || o === '--all');
   const force = options.some((o) => o === '-f' || o === '--force');
-  const avecVolumes = options.includes('--volumes');
-  const faire = (): string => {
-    const lignes: string[] = [];
-    let recupere = 0;
-    if (quoi === 'container' || quoi === 'system') {
-      const arretes = d.conteneurs.filter((c) => c.etat !== 'running');
-      d.conteneurs = d.conteneurs.filter((c) => c.etat === 'running');
-      if (arretes.length) lignes.push('Deleted Containers:', ...arretes.map((c) => c.id), '');
-      recupere += arretes.length * 4096;
+  const withVolumes = options.includes('--volumes');
+  const perform = (): string => {
+    const lines: string[] = [];
+    let recovered = 0;
+    if (what === 'container' || what === 'system') {
+      const stopped = d.containers.filter((c) => c.state !== 'running');
+      d.containers = d.containers.filter((c) => c.state === 'running');
+      if (stopped.length) lines.push('Deleted Containers:', ...stopped.map((c) => c.id), '');
+      recovered += stopped.length * 4096;
     }
-    if (quoi === 'image' || quoi === 'system') {
-      const enService = utilisees(d);
-      const parties = Object.entries(d.images).filter(([, i]) => !enService.has(nomImage(i)) && (tout || i.depot === '<none>'));
-      for (const [cle] of parties) delete d.images[cle];
-      if (parties.length)
-        lignes.push(
+    if (what === 'image' || what === 'system') {
+      const inService = used(d);
+      const parts = Object.entries(d.images).filter(([, i]) => !inService.has(imageName(i)) && (all || i.repo === '<none>'));
+      for (const [key] of parts) delete d.images[key];
+      if (parts.length)
+        lines.push(
           'Deleted Images:',
-          ...parties.flatMap(([, i]) => [...(i.depot === '<none>' ? [] : [`untagged: ${nomImage(i)}`]), `deleted: sha256:${i.id}`]),
+          ...parts.flatMap(([, i]) => [...(i.repo === '<none>' ? [] : [`untagged: ${imageName(i)}`]), `deleted: sha256:${i.id}`]),
           '',
         );
-      recupere += parties.reduce((t, [, i]) => t + i.taille, 0);
+      recovered += parts.reduce((t, [, i]) => t + i.size, 0);
     }
     // Les volumes nommés ne partent qu'avec volume prune -a (depuis Docker 23).
-    if (quoi === 'volume' && tout) {
-      const enService = volumesUtilises(d);
-      const partis = Object.keys(d.volumes).filter((n) => !enService.has(n));
-      recupere += partis.reduce((t, n) => t + tailleVolume(d.volumes[n]), 0);
+    if (what === 'volume' && all) {
+      const inService = usedVolumes(d);
+      const partis = Object.keys(d.volumes).filter((n) => !inService.has(n));
+      recovered += partis.reduce((t, n) => t + volumeSize(d.volumes[n]), 0);
       for (const n of partis) delete d.volumes[n];
-      if (partis.length) lignes.push('Deleted Volumes:', ...partis, '');
-      jeu.etat.dockerVolumesElagues = [...(jeu.etat.dockerVolumesElagues ?? []), ...partis];
+      if (partis.length) lines.push('Deleted Volumes:', ...partis, '');
+      game.state.dockerVolumesElagues = [...(game.state.dockerVolumesElagues ?? []), ...partis];
     }
-    majDisque(jeu);
-    return [...lignes, `Total reclaimed space: ${tailleDocker(recupere)}`].join('\n');
+    diskUpdate(game);
+    return [...lines, `Total reclaimed space: ${dockerSize(recovered)}`].join('\n');
   };
-  const avertissement =
-    quoi === 'system'
+  const warning =
+    what === 'system'
       ? [
           'WARNING! This will remove:',
           '  - all stopped containers',
           '  - all networks not used by at least one container',
-          ...(avecVolumes ? ['  - all anonymous volumes not used by at least one container'] : []),
-          tout ? '  - all images without at least one container associated to them' : '  - all dangling images',
+          ...(withVolumes ? ['  - all anonymous volumes not used by at least one container'] : []),
+          all ? '  - all images without at least one container associated to them' : '  - all dangling images',
           '  - unused build cache',
           '',
         ].join('\n')
-      : quoi === 'image'
-        ? tout
-          ? AVERTISSEMENTS.imageTout
-          : AVERTISSEMENTS.image
-        : quoi === 'volume'
-          ? tout
-            ? AVERTISSEMENTS.volumeTout
-            : AVERTISSEMENTS.volume
-          : AVERTISSEMENTS.container;
-  if (force) return faire();
-  jeu.demander('Are you sure you want to continue? [y/N] ', (reponse) => (/^y(es)?$/i.test(reponse) ? faire() : ''));
-  return avertissement;
+      : what === 'image'
+        ? all
+          ? WARNINGS.imageTout
+          : WARNINGS.image
+        : what === 'volume'
+          ? all
+            ? WARNINGS.volumeTout
+            : WARNINGS.volume
+          : WARNINGS.container;
+  if (force) return perform();
+  game.ask('Are you sure you want to continue? [y/N] ', (response) => (/^y(es)?$/i.test(response) ? perform() : ''));
+  return warning;
 }
 
 // docker rmi : une image utilisée par un conteneur (même arrêté) est protégée.
-function rmi(d: EtatDocker, jeu: Shell, args: string[]): string {
+function rmi(d: DockerState, game: Shell, args: string[]): string {
   const force = args.some((a) => a === '-f' || a === '--force');
-  const lignes: string[] = [];
-  for (const nom of args.filter((a) => !a.startsWith('-'))) {
-    const cle = Object.keys(d.images).find((k) => k === complet(nom) || d.images[k].id.startsWith(nom));
-    if (!cle) {
-      jeu.erreur(`Error response from daemon: No such image: ${complet(nom)}`);
+  const lines: string[] = [];
+  for (const name of args.filter((a) => !a.startsWith('-'))) {
+    const key = Object.keys(d.images).find((k) => k === complete(name) || d.images[k].id.startsWith(name));
+    if (!key) {
+      game.error(`Error response from daemon: No such image: ${complete(name)}`);
       continue;
     }
-    const i = d.images[cle];
-    const conteneur = d.conteneurs.find((c) => c.image === nomImage(i));
-    if (conteneur && !force) {
-      jeu.erreur(
-        `Error response from daemon: conflict: unable to remove repository reference "${nom}" (must force) - container ${conteneur.id.slice(0, 12)} is using its referenced image ${i.id.slice(0, 12)}`,
+    const i = d.images[key];
+    const container = d.containers.find((c) => c.image === imageName(i));
+    if (container && !force) {
+      game.error(
+        `Error response from daemon: conflict: unable to remove repository reference "${name}" (must force) - container ${container.id.slice(0, 12)} is using its referenced image ${i.id.slice(0, 12)}`,
       );
       continue;
     }
-    delete d.images[cle];
-    lignes.push(...(i.depot === '<none>' ? [] : [`Untagged: ${nomImage(i)}`]), `Deleted: sha256:${i.id}`);
+    delete d.images[key];
+    lines.push(...(i.repo === '<none>' ? [] : [`Untagged: ${imageName(i)}`]), `Deleted: sha256:${i.id}`);
   }
-  return lignes.join('\n');
+  return lines.join('\n');
 }
 
 // ——— docker compose ———
 
-function compose(d: EtatDocker, jeu: Shell, args: string[]): string {
-  const sorties: string[] = [];
-  let dossier = jeu.cwd;
-  const reste: string[] = [];
+function compose(d: DockerState, game: Shell, args: string[]): string {
+  const outputs: string[] = [];
+  let directory = game.cwd;
+  const rest: string[] = [];
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '-f' || args[i] === '--file') dossier = jeu.resoudre(args[++i] ?? '.').replace(/\/[^/]+$/, '');
-    else if (args[i] === '--project-directory') dossier = jeu.resoudre(args[++i] ?? '.');
-    else reste.push(args[i]);
+    if (args[i] === '-f' || args[i] === '--file') directory = game.resolve(args[++i] ?? '.').replace(/\/[^/]+$/, '');
+    else if (args[i] === '--project-directory') directory = game.resolve(args[++i] ?? '.');
+    else rest.push(args[i]);
   }
-  const [action, ...options] = reste;
-  if (!action) return jeu.erreur(jeu.t('compose-usage'));
-  let projet: Projet;
+  const [action, ...options] = rest;
+  if (!action) return game.error(game.t('compose-usage'));
+  let project: Project;
   try {
-    projet = lireProjet(jeu, dossier);
+    project = readProject(game, directory);
   } catch (e) {
-    if (e instanceof ErreurYaml) return jeu.erreur(e.message);
+    if (e instanceof YamlError) return game.error(e.message);
     throw e;
   }
-  const avertir = () => projet.avertissements.map((a) => `WARN[0000] ${a}`);
-  const conteneurs = () => conteneursDuProjet(d, projet.nom);
-  const service = (nom?: string) => conteneurs().find((c) => c.service === nom);
+  const warn = () => project.warnings.map((a) => `WARN[0000] ${a}`);
+  const containers = () => projectContainers(d, project.name);
+  const service = (name?: string) => containers().find((c) => c.service === name);
   switch (action) {
     case 'config':
-      return [...avertir(), afficherProjet(projet)].join('\n');
+      return [...warn(), showProject(project)].join('\n');
     case 'up': {
-      const detache = options.some((o) => o === '-d' || o === '--detach');
-      const { lignes, erreur } = monter(jeu, projet, (image) => !!d.images[complet(image)] || tirer(d, image) !== null);
-      jeu.etat.composeUp = (jeu.etat.composeUp ?? 0) + 1;
-      const tete = [...avertir(), `[+] Running ${lignes.length}/${lignes.length}`, ...lignes];
-      if (erreur) return jeu.erreur([...tete, erreur].join('\n'));
-      if (detache) return tete.join('\n');
-      const journaux = conteneurs().flatMap((c) => c.journal.map((l) => `${c.service.padEnd(6)} | ${l.texte}`));
+      const detached = options.some((o) => o === '-d' || o === '--detach');
+      const { lines, error } = mount(game, project, (image) => !!d.images[complete(image)] || pull(d, image) !== null);
+      game.state.composeUp = (game.state.composeUp ?? 0) + 1;
+      const head = [...warn(), `[+] Running ${lines.length}/${lines.length}`, ...lines];
+      if (error) return game.error([...head, error].join('\n'));
+      if (detached) return head.join('\n');
+      const logs = containers().flatMap((c) => c.log.map((l) => `${c.service.padEnd(6)} | ${l.text}`));
       return [
-        ...tete,
-        `Attaching to ${conteneurs()
-          .map((c) => c.nom)
+        ...head,
+        `Attaching to ${containers()
+          .map((c) => c.name)
           .join(', ')}`,
-        ...journaux,
-        jeu.t('docker-attache'),
+        ...logs,
+        game.t('docker-attache'),
       ].join('\n');
     }
     case 'down': {
       const volumes = options.some((o) => o === '-v' || o === '--volumes');
-      const lignes: string[] = [];
-      for (const c of [...conteneurs()].reverse()) {
-        stopper(jeu, c);
-        d.conteneurs = d.conteneurs.filter((x) => x !== c);
-        lignes.push(` ✔ Container ${c.nom}  Removed`);
+      const lines: string[] = [];
+      for (const c of [...containers()].reverse()) {
+        stop(game, c);
+        d.containers = d.containers.filter((x) => x !== c);
+        lines.push(` ✔ Container ${c.name}  Removed`);
       }
       // down -v efface aussi les volumes du projet : leurs données sont perdues.
       if (volumes)
-        for (const v of projet.volumes) {
-          const nom = `${projet.nom}_${v}`;
-          if (d.volumes[nom]) {
-            delete d.volumes[nom];
-            lignes.push(` ✔ Volume ${nom}  Removed`);
-            jeu.etat.composeVolumesEffaces = true;
+        for (const v of project.volumes) {
+          const name = `${project.name}_${v}`;
+          if (d.volumes[name]) {
+            delete d.volumes[name];
+            lines.push(` ✔ Volume ${name}  Removed`);
+            game.state.composeVolumesEffaces = true;
           }
         }
-      const reseaux: Record<string, true> = jeu.etat.dockerReseaux ?? {};
-      if (reseaux[`${projet.nom}_default`]) {
-        delete reseaux[`${projet.nom}_default`];
-        lignes.push(` ✔ Network ${projet.nom}_default  Removed`);
+      const reseaux: Record<string, true> = game.state.dockerReseaux ?? {};
+      if (reseaux[`${project.name}_default`]) {
+        delete reseaux[`${project.name}_default`];
+        lines.push(` ✔ Network ${project.name}_default  Removed`);
       }
-      return [...avertir(), `[+] Running ${lignes.length}/${lignes.length}`, ...lignes].join('\n');
+      return [...warn(), `[+] Running ${lines.length}/${lines.length}`, ...lines].join('\n');
     }
     case 'ps': {
-      const maintenant = horloge(jeu);
+      const now = clock(game);
       // Sans -a : ceux qui tournent, et ceux que leur politique relance en boucle.
-      const enBoucle = (c: Conteneur) => c.code !== 0 && ['always', 'unless-stopped', 'on-failure'].includes(c.redemarrage.split(':')[0]);
-      const liste = conteneurs().filter((c) => options.includes('-a') || options.includes('--all') || c.etat === 'running' || enBoucle(c));
+      const inLoop = (c: Container) => c.code !== 0 && ['always', 'unless-stopped', 'on-failure'].includes(c.reboot.split(':')[0]);
+      const listing = containers().filter((c) => options.includes('-a') || options.includes('--all') || c.state === 'running' || inLoop(c));
       return [
-        ...avertir(),
-        tableau(
+        ...warn(),
+        grid(
           ['NAME', 'IMAGE', 'COMMAND', 'SERVICE', 'CREATED', 'STATUS', 'PORTS'],
-          liste.map((c) => {
-            const commande = imageDe(d, c)?.commande ?? '';
+          listing.map((c) => {
+            const command = imageFor(d, c)?.command ?? '';
             return [
-              c.nom,
+              c.name,
               c.image,
-              `"${commande.length > 20 ? commande.slice(0, 19) + '…' : commande}"`,
+              `"${command.length > 20 ? command.slice(0, 19) + '…' : command}"`,
               c.service,
-              `${duree(maintenant - c.cree)} ago`,
-              statut(c, maintenant),
-              c.etat === 'running' ? ports(c) : '',
+              `${duration(now - c.created)} ago`,
+              status(c, now),
+              c.state === 'running' ? ports(c) : '',
             ];
           }),
         ),
       ].join('\n');
     }
     case 'logs': {
-      const nom = options.find((o, i) => !o.startsWith('-') && !['-n', '--tail'].includes(options[i - 1]));
-      const liste = nom ? conteneurs().filter((c) => c.service === nom) : conteneurs();
-      if (nom && !liste.length) return jeu.erreur(`no such service: ${nom}`);
-      const largeur = Math.max(...liste.map((c) => c.nom.length));
-      return liste.flatMap((c) => c.journal.map((l) => `${c.nom.padEnd(largeur)}  | ${l.texte}`)).join('\n');
+      const name = options.find((o, i) => !o.startsWith('-') && !['-n', '--tail'].includes(options[i - 1]));
+      const listing = name ? containers().filter((c) => c.service === name) : containers();
+      if (name && !listing.length) return game.error(`no such service: ${name}`);
+      const width = Math.max(...listing.map((c) => c.name.length));
+      return listing.flatMap((c) => c.log.map((l) => `${c.name.padEnd(width)}  | ${l.text}`)).join('\n');
     }
     case 'restart':
     case 'stop':
     case 'start': {
-      const noms = options.filter((o) => !o.startsWith('-'));
-      const liste = noms.length ? conteneurs().filter((c) => noms.includes(c.service)) : conteneurs();
-      for (const c of liste) {
-        if (action !== 'start') stopper(jeu, c);
-        const echec = action !== 'stop' ? lancer(jeu, c) : null;
-        if (echec) return jeu.erreur(`Error response from daemon: ${echec}`);
+      const names = options.filter((o) => !o.startsWith('-'));
+      const listing = names.length ? containers().filter((c) => names.includes(c.service)) : containers();
+      for (const c of listing) {
+        if (action !== 'start') stop(game, c);
+        const failure = action !== 'stop' ? launch(game, c) : null;
+        if (failure) return game.error(`Error response from daemon: ${failure}`);
       }
-      const verbe = { restart: 'Started', stop: 'Stopped', start: 'Started' }[action];
+      const verb = { restart: 'Started', stop: 'Stopped', start: 'Started' }[action];
       return [
-        ...avertir(),
-        `[+] ${action === 'stop' ? 'Stopping' : 'Restarting'} ${liste.length}/${liste.length}`,
-        ...liste.map((c) => ` ✔ Container ${c.nom}  ${verbe}`),
+        ...warn(),
+        `[+] ${action === 'stop' ? 'Stopping' : 'Restarting'} ${listing.length}/${listing.length}`,
+        ...listing.map((c) => ` ✔ Container ${c.name}  ${verb}`),
       ].join('\n');
     }
     case 'exec': {
-      const [nom, ...commande] = options.filter((o) => !/^-[it]+$/.test(o));
-      const c = service(nom);
-      if (!c) return jeu.erreur(`service "${nom ?? ''}" is not running`);
-      return exec(d, jeu, [c.nom, ...commande]);
+      const [name, ...command] = options.filter((o) => !/^-[it]+$/.test(o));
+      const c = service(name);
+      if (!c) return game.error(`service "${name ?? ''}" is not running`);
+      return exec(d, game, [c.name, ...command]);
     }
     case 'pull':
-      for (const s of projet.services) (sorties.push(` ✔ ${s.nom} Pulled`), tirer(d, s.image));
-      return [...avertir(), `[+] Pulling ${projet.services.length}/${projet.services.length}`, ...sorties].join('\n');
+      for (const s of project.services) (outputs.push(` ✔ ${s.name} Pulled`), pull(d, s.image));
+      return [...warn(), `[+] Pulling ${project.services.length}/${project.services.length}`, ...outputs].join('\n');
     default:
-      return jeu.erreur(`unknown docker command: "compose ${action}"`);
+      return game.error(`unknown docker command: "compose ${action}"`);
   }
 }
 
 // docker compose config : le projet tel que Compose l'a compris (variables remplacées).
-function afficherProjet(p: Projet): string {
-  const lignes = [`name: ${p.nom}`, 'services:'];
+function showProject(p: Project): string {
+  const lines = [`name: ${p.name}`, 'services:'];
   for (const s of p.services) {
-    lignes.push(`  ${s.nom}:`);
-    if (s.capDrop.length) lignes.push('    cap_drop:', ...s.capDrop.map((x) => `      - ${x}`));
-    if (s.dependances.length)
-      lignes.push('    depends_on:', ...s.dependances.map((d) => `      ${d}:\n        condition: service_started\n        required: true`));
-    if (Object.keys(s.env).length) lignes.push('    environment:', ...Object.entries(s.env).map(([k, v]) => `      ${k}: ${v === '' ? '""' : v}`));
-    lignes.push(`    image: ${s.image}`, '    networks:', '      default: null');
-    if (s.ports.length) lignes.push('    ports:', ...s.ports.map((x) => `      - ${x}`));
-    if (s.lectureSeule) lignes.push('    read_only: true');
-    if (s.redemarrage !== 'no') lignes.push(`    restart: ${s.redemarrage}`);
-    if (s.securite.length) lignes.push('    security_opt:', ...s.securite.map((x) => `      - ${x}`));
-    if (s.utilisateur) lignes.push(`    user: ${s.utilisateur}`);
-    if (s.volumes.length) lignes.push('    volumes:', ...s.volumes.map((v) => `      - ${v}`));
+    lines.push(`  ${s.name}:`);
+    if (s.capDrop.length) lines.push('    cap_drop:', ...s.capDrop.map((x) => `      - ${x}`));
+    if (s.dependencies.length)
+      lines.push('    depends_on:', ...s.dependencies.map((d) => `      ${d}:\n        condition: service_started\n        required: true`));
+    if (Object.keys(s.env).length) lines.push('    environment:', ...Object.entries(s.env).map(([k, v]) => `      ${k}: ${v === '' ? '""' : v}`));
+    lines.push(`    image: ${s.image}`, '    networks:', '      default: null');
+    if (s.ports.length) lines.push('    ports:', ...s.ports.map((x) => `      - ${x}`));
+    if (s.onlyRead) lines.push('    read_only: true');
+    if (s.reboot !== 'no') lines.push(`    restart: ${s.reboot}`);
+    if (s.security.length) lines.push('    security_opt:', ...s.security.map((x) => `      - ${x}`));
+    if (s.user) lines.push(`    user: ${s.user}`);
+    if (s.volumes.length) lines.push('    volumes:', ...s.volumes.map((v) => `      - ${v}`));
   }
-  lignes.push('networks:', '  default:', `    name: ${p.nom}_default`);
-  if (p.volumes.length) lignes.push('volumes:', ...p.volumes.flatMap((v) => [`  ${v}:`, `    name: ${p.nom}_${v}`]));
-  return lignes.join('\n');
+  lines.push('networks:', '  default:', `    name: ${p.name}_default`);
+  if (p.volumes.length) lines.push('volumes:', ...p.volumes.flatMap((v) => [`  ${v}:`, `    name: ${p.name}_${v}`]));
+  return lines.join('\n');
 }
 
 // --format '{{.State.Status}}' : un chemin dans l'objet JSON.
-function formatGo(objet: unknown, modele: string): string {
-  return modele.replace(/\{\{\s*(json\s+)?\.([\w.]*)\s*\}\}/g, (_, json: string | undefined, chemin: string) => {
-    let v: unknown = objet;
-    for (const p of chemin.split('.').filter(Boolean)) v = (v as Record<string, unknown> | undefined)?.[p];
+function formatGo(object: unknown, template: string): string {
+  return template.replace(/\{\{\s*(json\s+)?\.([\w.]*)\s*\}\}/g, (_, json: string | undefined, path: string) => {
+    let v: unknown = object;
+    for (const p of path.split('.').filter(Boolean)) v = (v as Record<string, unknown> | undefined)?.[p];
     if (json || (typeof v === 'object' && v !== null)) return JSON.stringify(v);
     return v === undefined ? '<no value>' : String(v);
   });
 }
 
-function inspecter(jeu: Shell, c: Conteneur) {
+function inspect(game: Shell, c: Container) {
   return {
     Id: c.id,
-    Created: rfc3339(c.cree),
-    State: { Status: c.etat, Running: c.etat === 'running', ExitCode: c.code, StartedAt: c.debut ? rfc3339(c.debut) : '0001-01-01T00:00:00Z' },
+    Created: rfc3339(c.created),
+    State: { Status: c.state, Running: c.state === 'running', ExitCode: c.code, StartedAt: c.start ? rfc3339(c.start) : '0001-01-01T00:00:00Z' },
     Image: c.image,
-    Name: `/${c.nom}`,
+    Name: `/${c.name}`,
     HostConfig: {
-      RestartPolicy: { Name: c.redemarrage.split(':')[0], MaximumRetryCount: Number(c.redemarrage.split(':')[1] ?? 0) },
-      ReadonlyRootfs: !!c.lectureSeule,
+      RestartPolicy: { Name: c.reboot.split(':')[0], MaximumRetryCount: Number(c.reboot.split(':')[1] ?? 0) },
+      ReadonlyRootfs: !!c.onlyRead,
       CapDrop: c.capDrop ?? null,
-      SecurityOpt: c.securite ?? null,
+      SecurityOpt: c.security ?? null,
       PortBindings: Object.fromEntries(
-        c.ports.map((p) => [`${p.conteneur}/tcp`, [{ HostIp: p.ip === '0.0.0.0' ? '' : p.ip, HostPort: String(p.hote) }]]),
+        c.ports.map((p) => [`${p.container}/tcp`, [{ HostIp: p.ip === '0.0.0.0' ? '' : p.ip, HostPort: String(p.host) }]]),
       ),
     },
-    Mounts: c.montages.map((m) => ({
+    Mounts: c.mounts.map((m) => ({
       Type: m.type,
       ...(m.type === 'volume' ? { Name: m.source, Source: `/var/lib/docker/volumes/${m.source}/_data` } : { Source: m.source }),
-      Destination: m.cible,
-      RW: !m.lectureSeule,
+      Destination: m.target,
+      RW: !m.onlyRead,
     })),
     Config: {
       Image: c.image,
-      User: c.utilisateur ?? (utilisateurImage(imageDu(jeu, c)) === 'root' ? '' : utilisateurImage(imageDu(jeu, c))),
+      User: c.user ?? (imageUser(imageOfContainer(game, c)) === 'root' ? '' : imageUser(imageOfContainer(game, c))),
       Env: Object.entries(c.env).map(([k, v]) => `${k}=${v}`),
     },
     NetworkSettings: { IPAddress: c.ip },
   };
 }
 
-const AIDE = (jeu: Shell) => jeu.erreur(jeu.t('docker-usage'));
+const HELP = (game: Shell) => game.error(game.t('docker-usage'));
 
-export const DOCKER: Record<string, Commande> = {
+export const DOCKER: Record<string, Command> = {
   // Le paquet docker-compose de Debian : la même chose que docker compose.
   'docker-compose': {
-    propresOptions: true,
-    lancer: (contexte) => DOCKER.docker.lancer({ ...contexte, args: ['compose', ...contexte.args] }),
+    ownOptions: true,
+    launch: (context) => DOCKER.docker.launch({ ...context, args: ['compose', ...context.args] }),
   },
   docker: {
-    propresOptions: true,
-    lancer: ({ args, jeu }) => {
+    ownOptions: true,
+    launch: ({ args, game }) => {
       if (args[0] === '--version' || args[0] === '-v') return 'Docker version 27.5.1, build 9f9e405';
-      const d = docker(jeu);
-      if (!d) return jeu.erreur(jeu.t('commande-introuvable', { commande: 'docker' }));
+      const d = docker(game);
+      if (!d) return game.error(game.t('commande-introuvable', { commande: 'docker' }));
       // Le groupe docker donne les droits de root sur la machine : ici, sudo.
-      if (jeu.qui !== 'root' && !jeu.groupesDe(jeu.qui).includes('docker'))
-        return jeu.erreur(
+      if (game.who !== 'root' && !game.groupsFor(game.who).includes('docker'))
+        return game.error(
           `${SOCKET}: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.47/containers/json": dial unix /var/run/docker.sock: connect: permission denied`,
         );
-      if (systemd(jeu)?.services.docker && systemd(jeu)!.services.docker.etat !== 'active')
-        return jeu.erreur('Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?');
+      if (systemd(game)?.services.docker && systemd(game)!.services.docker.state !== 'active')
+        return game.error('Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?');
       // Chaque commande prend un peu de temps (l'horloge de la machine avance).
-      const sd = systemd(jeu);
-      if (sd) sd.horloge += 2000;
-      const sortie = executer(d, jeu, args);
-      majDisque(jeu);
-      return sortie;
+      const sd = systemd(game);
+      if (sd) sd.clock += 2000;
+      const output = execute(d, game, args);
+      diskUpdate(game);
+      return output;
     },
   },
 };
 
-function executer(d: EtatDocker, jeu: Shell, args: string[]): string {
-  let [action, ...reste] = args;
+function execute(d: DockerState, game: Shell, args: string[]): string {
+  let [action, ...rest] = args;
   // docker container ls, docker image ls, docker container rm… : les mêmes commandes.
   if (action === 'container' || action === 'image') {
-    const groupe = action;
-    const sous = reste.shift() ?? '';
+    const group = action;
+    const under = rest.shift() ?? '';
     action =
-      sous === 'ls' || sous === 'list'
-        ? groupe === 'container'
+      under === 'ls' || under === 'list'
+        ? group === 'container'
           ? 'ps'
           : 'images'
-        : sous === 'prune'
-          ? `${groupe}-prune`
-          : groupe === 'image' && sous === 'rm'
+        : under === 'prune'
+          ? `${group}-prune`
+          : group === 'image' && under === 'rm'
             ? 'rmi'
-            : sous;
+            : under;
   }
   switch (action) {
     case 'system':
-      if (reste[0] === 'df') return systemeDf(d);
-      if (reste[0] === 'prune') return elaguer(d, jeu, 'system', reste.slice(1));
-      return jeu.erreur(`docker: unknown command: docker system ${reste[0] ?? ''}`);
+      if (rest[0] === 'df') return dfSystem(d);
+      if (rest[0] === 'prune') return prune(d, game, 'system', rest.slice(1));
+      return game.error(`docker: unknown command: docker system ${rest[0] ?? ''}`);
     case 'image-prune':
-      return elaguer(d, jeu, 'image', reste);
+      return prune(d, game, 'image', rest);
     case 'container-prune':
-      return elaguer(d, jeu, 'container', reste);
+      return prune(d, game, 'container', rest);
     case 'rmi':
-      return rmi(d, jeu, reste);
+      return rmi(d, game, rest);
     case 'ps':
-      return ps(d, jeu, reste.includes('-a') || reste.includes('--all'));
+      return ps(d, game, rest.includes('-a') || rest.includes('--all'));
     case 'images':
-      return images(d, jeu);
+      return images(d, game);
     case 'pull': {
-      const nom = reste.find((a) => !a.startsWith('-'));
-      if (!nom) return jeu.erreur(`"docker pull" requires exactly 1 argument.`);
-      return tirer(d, nom) ?? jeu.erreur(`Error response from daemon: manifest for ${complet(nom)} not found: manifest unknown: manifest unknown`);
+      const name = rest.find((a) => !a.startsWith('-'));
+      if (!name) return game.error(`"docker pull" requires exactly 1 argument.`);
+      return pull(d, name) ?? game.error(`Error response from daemon: manifest for ${complete(name)} not found: manifest unknown: manifest unknown`);
     }
     case 'run':
-      return run(d, jeu, reste);
+      return run(d, game, rest);
     case 'start':
     case 'stop':
     case 'restart':
     case 'rm': {
-      const force = reste.some((a) => a === '-f' || a === '--force');
-      const noms = reste.filter((a) => !a.startsWith('-'));
-      if (!noms.length) return jeu.erreur(`"docker ${action}" requires at least 1 argument.`);
-      const sorties: string[] = [];
-      for (const nom of noms) {
-        const c = trouverConteneur(d, nom);
+      const force = rest.some((a) => a === '-f' || a === '--force');
+      const names = rest.filter((a) => !a.startsWith('-'));
+      if (!names.length) return game.error(`"docker ${action}" requires at least 1 argument.`);
+      const outputs: string[] = [];
+      for (const name of names) {
+        const c = findContainer(d, name);
         if (!c) {
-          jeu.erreur(`Error response from daemon: No such container: ${nom}`);
+          game.error(`Error response from daemon: No such container: ${name}`);
           continue;
         }
         if (action === 'rm') {
-          if (c.etat === 'running' && !force) {
-            jeu.erreur(
-              `Error response from daemon: cannot remove container "/${c.nom}": container is running: stop the container before removing or force remove`,
+          if (c.state === 'running' && !force) {
+            game.error(
+              `Error response from daemon: cannot remove container "/${c.name}": container is running: stop the container before removing or force remove`,
             );
             continue;
           }
           // La couche du conteneur disparaît avec lui ; les volumes restent.
-          d.conteneurs = d.conteneurs.filter((x) => x !== c);
-          jeu.etat.dockerSupprimes = [...(jeu.etat.dockerSupprimes ?? []), c];
+          d.containers = d.containers.filter((x) => x !== c);
+          game.state.dockerSupprimes = [...(game.state.dockerSupprimes ?? []), c];
         } else {
-          if (action !== 'start') stopper(jeu, c);
+          if (action !== 'start') stop(game, c);
           if (action !== 'stop') {
-            const occupe = c.ports.find((p) => d.conteneurs.some((x) => x !== c && x.etat === 'running' && x.ports.some((q) => q.hote === p.hote)));
-            if (occupe) {
-              jeu.erreur(
-                `Error response from daemon: driver failed programming external connectivity on endpoint ${c.nom} (${identifiant('ep' + c.id)}): Bind for 0.0.0.0:${occupe.hote} failed: port is already allocated\nError: failed to start containers: ${nom}`,
+            const busy = c.ports.find((p) => d.containers.some((x) => x !== c && x.state === 'running' && x.ports.some((q) => q.host === p.host)));
+            if (busy) {
+              game.error(
+                `Error response from daemon: driver failed programming external connectivity on endpoint ${c.name} (${identifier('ep' + c.id)}): Bind for 0.0.0.0:${busy.host} failed: port is already allocated\nError: failed to start containers: ${name}`,
               );
               continue;
             }
-            const echec = lancer(jeu, c);
-            if (echec) {
-              jeu.erreur(`Error response from daemon: ${echec}\nError: failed to start containers: ${nom}`);
+            const failure = launch(game, c);
+            if (failure) {
+              game.error(`Error response from daemon: ${failure}\nError: failed to start containers: ${name}`);
               continue;
             }
           }
         }
-        sorties.push(nom);
+        outputs.push(name);
       }
-      return sorties.join('\n');
+      return outputs.join('\n');
     }
     case 'logs': {
-      const nom = reste.filter((a, i) => !a.startsWith('-') && !['-n', '--tail'].includes(reste[i - 1])).at(0);
-      const c = nom ? trouverConteneur(d, nom) : null;
-      if (!nom) return jeu.erreur(`"docker logs" requires exactly 1 argument.`);
-      if (!c) return jeu.erreur(`Error response from daemon: No such container: ${nom}`);
+      const name = rest.filter((a, i) => !a.startsWith('-') && !['-n', '--tail'].includes(rest[i - 1])).at(0);
+      const c = name ? findContainer(d, name) : null;
+      if (!name) return game.error(`"docker logs" requires exactly 1 argument.`);
+      if (!c) return game.error(`Error response from daemon: No such container: ${name}`);
       const n =
-        reste.indexOf('-n') >= 0 ? reste[reste.indexOf('-n') + 1] : reste.indexOf('--tail') >= 0 ? reste[reste.indexOf('--tail') + 1] : undefined;
-      const temps = reste.includes('-t') || reste.includes('--timestamps');
-      const lignes = c.journal.map((l) => (temps ? `${rfc3339(l.temps)} ${l.texte}` : l.texte));
-      return (n !== undefined && n !== 'all' ? lignes.slice(-Number(n)) : lignes).join('\n');
+        rest.indexOf('-n') >= 0 ? rest[rest.indexOf('-n') + 1] : rest.indexOf('--tail') >= 0 ? rest[rest.indexOf('--tail') + 1] : undefined;
+      const time = rest.includes('-t') || rest.includes('--timestamps');
+      const lines = c.log.map((l) => (time ? `${rfc3339(l.time)} ${l.text}` : l.text));
+      return (n !== undefined && n !== 'all' ? lines.slice(-Number(n)) : lines).join('\n');
     }
     case 'exec':
-      return exec(d, jeu, reste);
+      return exec(d, game, rest);
     case 'cp':
-      return cp(d, jeu, reste);
+      return cp(d, game, rest);
     case 'port': {
-      const c = trouverConteneur(d, reste[0] ?? '');
-      if (!c) return jeu.erreur(`Error response from daemon: No such container: ${reste[0] ?? ''}`);
+      const c = findContainer(d, rest[0] ?? '');
+      if (!c) return game.error(`Error response from daemon: No such container: ${rest[0] ?? ''}`);
       return c.ports
         .flatMap((p) =>
           p.ip === '0.0.0.0'
-            ? [`${p.conteneur}/tcp -> 0.0.0.0:${p.hote}`, `${p.conteneur}/tcp -> [::]:${p.hote}`]
-            : [`${p.conteneur}/tcp -> ${p.ip}:${p.hote}`],
+            ? [`${p.container}/tcp -> 0.0.0.0:${p.host}`, `${p.container}/tcp -> [::]:${p.host}`]
+            : [`${p.container}/tcp -> ${p.ip}:${p.host}`],
         )
         .join('\n');
     }
     case 'update': {
-      const i = reste.indexOf('--restart');
-      const politique = i >= 0 ? reste[i + 1] : reste.find((a) => a.startsWith('--restart='))?.slice(10);
-      const noms = reste.filter((a, k) => !a.startsWith('-') && reste[k - 1] !== '--restart');
-      if (!politique || !noms.length) return jeu.erreur(jeu.t('docker-update-usage'));
-      for (const nom of noms) {
-        const c = trouverConteneur(d, nom);
-        if (!c) jeu.erreur(`Error response from daemon: No such container: ${nom}`);
-        else c.redemarrage = politique;
+      const i = rest.indexOf('--restart');
+      const policy = i >= 0 ? rest[i + 1] : rest.find((a) => a.startsWith('--restart='))?.slice(10);
+      const names = rest.filter((a, k) => !a.startsWith('-') && rest[k - 1] !== '--restart');
+      if (!policy || !names.length) return game.error(game.t('docker-update-usage'));
+      for (const name of names) {
+        const c = findContainer(d, name);
+        if (!c) game.error(`Error response from daemon: No such container: ${name}`);
+        else c.reboot = policy;
       }
-      return noms.join('\n');
+      return names.join('\n');
     }
     case 'inspect': {
-      const i = reste.findIndex((a) => a === '-f' || a === '--format');
-      const modele = i >= 0 ? reste[i + 1] : reste.find((a) => a.startsWith('--format='))?.slice(9);
-      const noms = reste.filter((a, k) => !a.startsWith('-') && (i < 0 || k !== i + 1));
-      const objets = noms.map((n) => {
-        const c = trouverConteneur(d, n);
-        if (c) return inspecter(jeu, c);
+      const i = rest.findIndex((a) => a === '-f' || a === '--format');
+      const template = i >= 0 ? rest[i + 1] : rest.find((a) => a.startsWith('--format='))?.slice(9);
+      const names = rest.filter((a, k) => !a.startsWith('-') && (i < 0 || k !== i + 1));
+      const objets = names.map((n) => {
+        const c = findContainer(d, n);
+        if (c) return inspect(game, c);
         const v = d.volumes[n];
-        if (v) return { CreatedAt: rfc3339(v.cree), Driver: 'local', Mountpoint: `/var/lib/docker/volumes/${n}/_data`, Name: n, Scope: 'local' };
-        jeu.erreur(`Error: No such object: ${n}`);
+        if (v) return { CreatedAt: rfc3339(v.created), Driver: 'local', Mountpoint: `/var/lib/docker/volumes/${n}/_data`, Name: n, Scope: 'local' };
+        game.error(`Error: No such object: ${n}`);
         return null;
       });
-      const trouves = objets.filter(Boolean);
-      if (modele) return trouves.map((o) => formatGo(o, modele)).join('\n');
-      return trouves.length ? JSON.stringify(trouves, null, 4) : '[]';
+      const found = objets.filter(Boolean);
+      if (template) return found.map((o) => formatGo(o, template)).join('\n');
+      return found.length ? JSON.stringify(found, null, 4) : '[]';
     }
     case 'volume': {
-      const [sous, ...noms] = reste;
-      if (sous === 'ls' || sous === 'list')
-        return tableau(
+      const [under, ...names] = rest;
+      if (under === 'ls' || under === 'list')
+        return grid(
           ['DRIVER', 'VOLUME NAME'],
           Object.keys(d.volumes).map((n) => ['local', n]),
         );
-      if (sous === 'create') {
-        const nom = noms[0] ?? identifiant('volume' + d.prochain++);
-        d.volumes[nom] ??= { cree: horloge(jeu), donnees: {} };
-        return nom;
+      if (under === 'create') {
+        const name = names[0] ?? identifier('volume' + d.next++);
+        d.volumes[name] ??= { created: clock(game), data: {} };
+        return name;
       }
-      if (sous === 'inspect') return DOCKER.docker.lancer({ args: ['inspect', ...noms], jeu, entree: null, dernier: true });
-      if (sous === 'prune') return elaguer(d, jeu, 'volume', noms);
-      if (sous === 'rm') {
-        for (const n of noms) {
-          const utilise = d.conteneurs.find((c) => c.montages.some((m) => m.type === 'volume' && m.source === n));
-          if (!d.volumes[n]) jeu.erreur(`Error response from daemon: get ${n}: no such volume`);
-          else if (utilise) jeu.erreur(`Error response from daemon: remove ${n}: volume is in use - [${utilise.id}]`);
+      if (under === 'inspect') return DOCKER.docker.launch({ args: ['inspect', ...names], game, input: null, last: true });
+      if (under === 'prune') return prune(d, game, 'volume', names);
+      if (under === 'rm') {
+        for (const n of names) {
+          const inUse = d.containers.find((c) => c.mounts.some((m) => m.type === 'volume' && m.source === n));
+          if (!d.volumes[n]) game.error(`Error response from daemon: get ${n}: no such volume`);
+          else if (inUse) game.error(`Error response from daemon: remove ${n}: volume is in use - [${inUse.id}]`);
           else delete d.volumes[n];
         }
-        return noms.filter((n) => !d.volumes[n]).join('\n');
+        return names.filter((n) => !d.volumes[n]).join('\n');
       }
-      return jeu.erreur(jeu.t('docker-volume-usage'));
+      return game.error(game.t('docker-volume-usage'));
     }
     case 'compose':
-      return compose(d, jeu, reste);
+      return compose(d, game, rest);
     case undefined:
-      return AIDE(jeu);
+      return HELP(game);
     default:
-      return jeu.erreur(`docker: unknown command: docker ${action}\n\nRun 'docker --help' for more information`);
+      return game.error(`docker: unknown command: docker ${action}\n\nRun 'docker --help' for more information`);
   }
 }

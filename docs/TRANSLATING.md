@@ -8,8 +8,8 @@ the reference language: texts are written in English first, and every
 identifier exists in English. It is also the default and fallback language:
 without a requested language (no `lang` attribute on the element or the
 page), or in a language the game doesn't know, the game speaks English; a
-text missing from a translation shows in English (`LANGUE_PAR_DEFAUT` and
-`langueDuJeu()` in `src/texts/index.ts`). The `help` command works in every
+text missing from a translation shows in English (`LANGUAGE_BY_DEFAULT` and
+`gameLanguage()` in `src/texts/index.ts`). The `help` command works in every
 language, like bash's builtin; each language adds its own name for it
 (`commande-aide`: `aide` in French).
 
@@ -99,7 +99,7 @@ directory, two names must stay different, and they had better differ from
 their first letters, for Tab completion. The story's texts then use these
 names as they are, without explanation: "mv crab Bucket".
 
-Only the stories whose chapter declares `noms: true` translate their names:
+Only the stories whose chapter declares `names: true` translate their names:
 all of them do. The Eraser and the workstation translate all their places
 and objects; the other stories translate the documents you read in your
 home directory (emails, messages, notes, help notes, `LISEZMOI.txt`,
@@ -110,7 +110,7 @@ backups, the Coopérative's statements, the radio's folders… These names also
 live in whatever keeps a copy or a trace of the files: restic and rsnapshot
 snapshots, rsync copies, files tracked by git, scripts, crontabs, logs,
 processes. The code therefore writes them in the language when it creates or
-compares them (`chemin()`, `nom()`, see below), and the English texts use
+compares them (`path()`, `name()`, see below), and the English texts use
 the English names. Technical names that other settings refer to stay as they
 are: sites and addresses served over HTTP (`/var/www/…`, `/direct`),
 databases, Docker images and projects (a Compose project's directory name
@@ -133,8 +133,8 @@ account's name in the language (`you    ALL=(ALL:ALL) ALL`).
 type (`ssh kingdom`), the one in the prompt, in `/etc/hosts`, in the
 workstation's `~/.ssh/config` and keys (`~/.ssh/id_kingdom`), in
 `/etc/hostname` and in the logs. A valid host name (RFC 1123): lower case,
-digits and dashes. The engine keeps the French identifier (`nomMachine()`
-and `hoteDansLaLangue()` in `src/engine/machines.ts`); a save made in
+digits and dashes. The engine keeps the French identifier (`machineName()`
+and `hostInLanguage()` in `src/engine/machines.ts`); a save made in
 another language (`known_hosts`, `~/.ssh/config`) follows the game's
 language. In texts, write the language's name (`ssh kingdom`,
 `kingdom.internal`); public sites (`letters.example`) and configuration
@@ -143,7 +143,7 @@ files (`/etc/nginx/sites-available/letters`) keep theirs.
 The **passwords** the stories give (sudo, ssh, restic repositories,
 databases) are translated too, in `mots-de-passe.ftl` (`mdp-farine-2028 =
 flour-2028`): words of the language, no accent, no space. The code keeps the
-French password (`motDePasse()` in `src/engine/world.ts`); the texts quote
+French password (`password()` in `src/engine/world.ts`); the texts quote
 the language's one. `tests/machines.test.ts` checks that no translated text
 quotes a French machine name or password.
 
@@ -181,7 +181,7 @@ write in their language: read the comment above the message.
 2. `npm test`: checks that the files are valid, with no duplicate
    identifier, none unknown in English, none missing, and replays every quest
    in every language.
-3. If the language needs them, add its typographic rules in `typographie()`
+3. If the language needs them, add its typographic rules in `typography()`
    (`src/texts/index.ts`): French non-breaking spaces are an example.
 
 The Fluent format is supported by free translation platforms
@@ -190,26 +190,26 @@ which let you translate without touching Git.
 
 ## For developers
 
-- In the code: `t('identifier', { variable })` (interface) or `jeu.t(...)`
-  (engine, commands, chapters). `t.existe(id)` tests whether an optional
+- In the code: `t('identifier', { variable })` (interface) or `game.t(...)`
+  (engine, commands, chapters). `t.exists(id)` tests whether an optional
   text exists.
 - A number passed as a variable is formatted for the language ("1,234"):
   pass as text (`String(pid)`) what must stay as is.
 - One whole sentence per message, never a sentence assembled from pieces.
 - `tests/texts.test.ts` fails if accented French text remains in
   `src/engine/` or `src/interface/`, or if a key is missing in a language.
-- A chapter with translated names (`noms: true`) is written with the French
+- A chapter with translated names (`names: true`) is written with the French
   names; the world is renamed when it is created. Every path in the code
-  then goes through `chemin(j.t, '/Cabane/Jetee/filet')`, and a single name
-  through `nom(j.t, 'levain')` (see `src/engine/world.ts`). In tests, the
-  commands are written in French too and go through `dansLaLangue()`
+  then goes through `path(j.t, '/Cabane/Jetee/filet')`, and a single name
+  through `name(j.t, 'levain')` (see `src/engine/world.ts`). In tests, the
+  commands are written in French too and go through `inLanguage()`
   (`tests/names.ts`). Whatever the game builds from a path (snapshots,
   crontab, script, log line, a process's command, a unit's contents) also
-  takes the path in the language: `chemin(t, '/srv/partage')` in `etat(t)`
-  or `creerMonde(t)`, `chemin(j.t, …)` in events. A web address that looks
+  takes the path in the language: `path(t, '/srv/partage')` in `state(t)`
+  or `createWorld(t)`, `path(j.t, …)` in events. A web address that looks
   like a translated name (`-u /direct`) is typed in tests without `L()`.
-- The player's account is `jeu.joueur` (`vous`, `you`…), or `joueur(t)`
+- The player's account is `game.player` (`vous`, `you`…), or `player(t)`
   before the game exists (a chapter's state); never a hard-coded `'vous'`.
-  Chapters declare their accounts (`comptes()`) and owners
-  (`proprio: 'vous'`) in French: they are renamed on creation, like places
-  (`traduireComptes`, `traduireNoms`).
+  Chapters declare their accounts (`accounts()`) and owners
+  (`owner: 'vous'`) in French: they are renamed on creation, like places
+  (`translateAccounts`, `translateNames`).

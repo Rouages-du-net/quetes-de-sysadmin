@@ -4,36 +4,36 @@
 // Un joueur ou une joueuse avance ainsi par vagues, au lieu de tout voir
 // ouvert après La Racine.
 
-import { HISTOIRES } from './chapters';
-import type { Histoire } from './world';
+import { STORIES } from './chapters';
+import type { Story } from './world';
 
-export const PREMIERE = 'effaceur';
+export const FIRST = 'effaceur';
 
-const histoire = (id: string): Histoire | undefined => HISTOIRES.find((h) => h.id === id);
-const histoireDe = (chapitre: string): Histoire | undefined => HISTOIRES.find((h) => h.chapitres.some((c) => c.id === chapitre));
+const story = (id: string): Story | undefined => STORIES.find((h) => h.id === id);
+const storyFor = (chapter: string): Story | undefined => STORIES.find((h) => h.chapters.some((c) => c.id === chapter));
 
 /** Les chapitres qui manquent encore pour ouvrir cette histoire (vide : elle est ouverte). */
-export function manquants(id: string, termines: readonly string[]): string[] {
-  return (histoire(id)?.apres ?? []).filter((c) => !termines.includes(c));
+export function missing(id: string, finished: readonly string[]): string[] {
+  return (story(id)?.after ?? []).filter((c) => !finished.includes(c));
 }
 
 /** Une histoire est ouverte quand ses chapitres « apres » sont tous finis. */
-export const ouverte = (id: string, termines: readonly string[]): boolean => manquants(id, termines).length === 0;
+export const isOpen = (id: string, finished: readonly string[]): boolean => missing(id, finished).length === 0;
 
 /**
  * Tous les chapitres à finir, dans l'ordre, pour ouvrir cette histoire (et
  * celles dont elle dépend) : les chapitres d'une histoire se suivent, donc
  * finir l'un suppose d'avoir fini ceux d'avant.
  */
-export function prerequis(id: string): string[] {
-  const vus: string[] = [];
-  const ajouter = (h: string) => {
-    for (const c of histoire(h)?.apres ?? []) {
-      const source = histoireDe(c)!;
-      ajouter(source.id);
-      for (const x of source.chapitres.slice(0, source.chapitres.findIndex((y) => y.id === c) + 1)) if (!vus.includes(x.id)) vus.push(x.id);
+export function prerequisites(id: string): string[] {
+  const seen: string[] = [];
+  const add = (h: string) => {
+    for (const c of story(h)?.after ?? []) {
+      const source = storyFor(c)!;
+      add(source.id);
+      for (const x of source.chapters.slice(0, source.chapters.findIndex((y) => y.id === c) + 1)) if (!seen.includes(x.id)) seen.push(x.id);
     }
   };
-  ajouter(id);
-  return vus;
+  add(id);
+  return seen;
 }

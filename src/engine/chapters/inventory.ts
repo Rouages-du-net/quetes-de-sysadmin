@@ -10,71 +10,71 @@
 // Sources : https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html,
 // https://docs.ansible.com/ansible/latest/inventory_guide/connection_details.html
 
-import { chemin, f, type Chapitre } from '../world';
-import type { Jeu, Shell } from '../shell';
-import { hotesDu, lireConfig, lireInventaire } from '../ansible';
-import { historique } from '../commands/ansible';
-import { centre, comptesPilote, DOSSIER, etatPilote, M, mondePilote, NOMS } from './fleet';
+import { path, f, type Chapter } from '../world';
+import type { Game, Shell } from '../shell';
+import { hostsFor, readConfig, readInventory } from '../ansible';
+import { history } from '../commands/ansible';
+import { centre, pilotAccounts, DIRECTORY, pilotState, M, pilotWorld, NAMES } from './fleet';
 
 const CFG = `[defaults]
 inventory = inventory.ini
 remote_user = theo`;
-const INVENTAIRE = `[centres]
+const INVENTORY = `[centres]
 north
 south`;
 
 // Les hôtes du groupe centres, tels qu'Ansible les lit depuis ~/ansible.
-function centresInventaire(j: Jeu): string[] {
+function inventoryCentres(j: Game): string[] {
   const s = j as Shell;
   const cwd = s.cwd;
-  s.cwd = chemin(j.t, DOSSIER);
+  s.cwd = path(j.t, DIRECTORY);
   try {
-    const c = lireConfig(s);
-    return hotesDu(lireInventaire(s.lire(c.inventaire) ?? ''), 'centres');
+    const c = readConfig(s);
+    return hostsFor(readInventory(s.read(c.inventory) ?? ''), 'centres');
   } finally {
     s.cwd = cwd;
   }
 }
-const dernierPing = (j: Jeu) => historique(j as Shell).pings.at(-1) ?? {};
-const vu = (j: Jeu, texte: string) => j.derniere.sortie.includes(texte) || j.derniere.erreurs.some((e) => e.includes(texte));
+const lastPing = (j: Game) => history(j as Shell).pings.at(-1) ?? {};
+const seen = (j: Game, text: string) => j.last.output.includes(text) || j.last.errors.some((e) => e.includes(text));
 
-export const inventaire: Chapitre = {
+export const inventory: Chapter = {
   id: 'inventaire',
-  numero: 1,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'cp', 'nano', 'sudo', 'id', 'whoami', 'ssh', 'exit', 'ansible', 'ansible-inventory', 'ansible-doc'],
-  maison: M,
-  accueil: 'courriel_theo.txt',
-  noms: true,
+  number: 1,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'cp', 'nano', 'sudo', 'id', 'whoami', 'ssh', 'exit', 'ansible', 'ansible-inventory', 'ansible-doc'],
+  home: M,
+  welcome: 'courriel_theo.txt',
+  names: true,
   final: 'fin',
-  etapes: ['cle-hote', 'compte', 'manque', 'fin'],
-  motDePasse: 'quartiers-2027',
-  comptes: comptesPilote,
-  hotes: Object.fromEntries(NOMS.map((n) => [n, centre(n)])),
-  etat: etatPilote,
-  creerMonde: (t) =>
-    mondePilote(t, {
-      connus: [],
-      ansible: { 'ansible.cfg': f(CFG, { lignes: true }), 'inventory.ini': f(INVENTAIRE, { lignes: true }) },
-      maison: { 'courriel_theo.txt': f(t('inventaire-courriel-theo')) },
+  steps: ['cle-hote', 'compte', 'manque', 'fin'],
+  password: 'quartiers-2027',
+  accounts: pilotAccounts,
+  hosts: Object.fromEntries(NAMES.map((n) => [n, centre(n)])),
+  state: pilotState,
+  createWorld: (t) =>
+    pilotWorld(t, {
+      known: [],
+      ansible: { 'ansible.cfg': f(CFG, { lines: true }), 'inventory.ini': f(INVENTORY, { lines: true }) },
+      home: { 'courriel_theo.txt': f(t('inventaire-courriel-theo')) },
     }),
-  evenements: [
-    { id: 'sans-config', condition: (j) => vu(j, 'No inventory was parsed'), message: (j) => j.t('inventaire-evenement-sans-config') },
-    { id: 'cle-hote', condition: (j) => vu(j, 'Host key verification failed'), message: (j) => j.t('inventaire-evenement-cle-hote') },
-    { id: 'compte', condition: (j) => vu(j, 'theo@') && vu(j, 'Permission denied'), message: (j) => j.t('inventaire-evenement-compte') },
+  events: [
+    { id: 'sans-config', condition: (j) => seen(j, 'No inventory was parsed'), message: (j) => j.t('inventaire-evenement-sans-config') },
+    { id: 'cle-hote', condition: (j) => seen(j, 'Host key verification failed'), message: (j) => j.t('inventaire-evenement-cle-hote') },
+    { id: 'compte', condition: (j) => seen(j, 'theo@') && seen(j, 'Permission denied'), message: (j) => j.t('inventaire-evenement-compte') },
     {
       id: 'manque',
       condition: (j) => {
-        const p = dernierPing(j);
-        const liste = Object.keys(p);
-        return liste.length > 0 && liste.every((h) => p[h] === 'SUCCESS') && !NOMS.every((n) => n in p);
+        const p = lastPing(j);
+        const listing = Object.keys(p);
+        return listing.length > 0 && listing.every((h) => p[h] === 'SUCCESS') && !NAMES.every((n) => n in p);
       },
       message: (j) => j.t('inventaire-evenement-manque'),
     },
     {
       id: 'fin',
       condition: (j) => {
-        const p = dernierPing(j);
-        return NOMS.every((n) => centresInventaire(j).includes(n) && p[n] === 'SUCCESS');
+        const p = lastPing(j);
+        return NAMES.every((n) => inventoryCentres(j).includes(n) && p[n] === 'SUCCESS');
       },
       message: (j) => j.t('inventaire-evenement-fin'),
     },

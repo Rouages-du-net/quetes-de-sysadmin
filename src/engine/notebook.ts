@@ -4,76 +4,76 @@
 // progression, exportable en Markdown.
 
 import type { Shell } from './shell';
-import type { Traduire } from '../texts';
-import { COMMANDES } from './commands';
-import { page, resume } from './commands/manual';
-import { HISTOIRES } from './chapters';
+import type { Translate } from '../texts';
+import { COMMANDS } from './commands';
+import { page, recap } from './commands/manual';
+import { STORIES } from './chapters';
 import { grade } from './achievements';
 
-export interface EntreeCarnet {
+export interface NotebookInput {
   // La première ligne où la commande a servi, et le chapitre (identifiant ; vide sur le poste).
-  ligne: string;
-  chapitre: string;
+  line: string;
+  chapter: string;
 }
 
-export type Carnet = Record<string, EntreeCarnet>;
+export type Notebook = Record<string, NotebookInput>;
 
 // Les commandes du manuel lui-même, que le shell traite à part.
-const MANUEL = ['man', 'apropos', 'whatis'];
+const MANUAL = ['man', 'apropos', 'whatis'];
 
 /** Après une ligne tapée dans ce shell : les commandes lancées pour la première fois rejoignent le carnet. Renvoie les nouvelles. */
-export function noter(carnet: Carnet, sh: Shell): string[] {
-  const nouvelles: string[] = [];
-  const { ligne, commandes } = sh.derniere;
-  for (const args of commandes) {
-    const nom = (args[0] ?? '').split('/').at(-1)!;
-    const connue = MANUEL.includes(nom) || (sh.connues().includes(nom) && !!COMMANDES[nom] && COMMANDES[nom].section !== 5);
-    if (!nom || !connue || carnet[nom]) continue;
-    carnet[nom] = { ligne: ligne.trim(), chapitre: sh.chapitre.id === 'poste' ? '' : sh.chapitre.id };
-    nouvelles.push(nom);
+export function note(notebook: Notebook, sh: Shell): string[] {
+  const fresh: string[] = [];
+  const { line, commands } = sh.last;
+  for (const args of commands) {
+    const name = (args[0] ?? '').split('/').at(-1)!;
+    const known = MANUAL.includes(name) || (sh.known().includes(name) && !!COMMANDS[name] && COMMANDS[name].section !== 5);
+    if (!name || !known || notebook[name]) continue;
+    notebook[name] = { line: line.trim(), chapter: sh.chapter.id === 'poste' ? '' : sh.chapter.id };
+    fresh.push(name);
   }
-  return nouvelles;
+  return fresh;
 }
 
 /** La ligne du carnet : ce que fait la commande, en une phrase (comme whatis). */
-export const description = (nom: string, t: Traduire) => resume(t(page(nom)));
+export const description = (name: string, t: Translate) => recap(t(page(name)));
 
 /** La progression : pour chaque histoire commencée, les chapitres terminés. */
-export function progression(termines: string[], t: Traduire): string[] {
-  const lignes = HISTOIRES.flatMap((h) => {
-    const faits = h.chapitres.filter((c) => termines.includes(c.id));
-    if (!faits.length) return [];
+export function progress(finished: string[], t: Translate): string[] {
+  const lines = STORIES.flatMap((h) => {
+    const done = h.chapters.filter((c) => finished.includes(c.id));
+    if (!done.length) return [];
     return [
-      `- ${t('carnet-progression-histoire', { histoire: t(`histoire-${h.id}`), faits: faits.length, total: h.chapitres.length })}`,
-      ...faits.map((c) => `  - ${t('chapitre-numero', { numero: c.numero })} : ${t(`chapitre-${c.id}`)}`),
+      `- ${t('carnet-progression-histoire', { histoire: t(`histoire-${h.id}`), faits: done.length, total: h.chapters.length })}`,
+      ...done.map((c) => `  - ${t('chapitre-numero', { numero: c.number })} : ${t(`chapitre-${c.id}`)}`),
     ];
   });
-  return [`## ${t('carnet-progression')}`, '', ...(lignes.length ? lignes : [t('carnet-progression-vide')]), ''];
+  return [`## ${t('carnet-progression')}`, '', ...(lines.length ? lines : [t('carnet-progression-vide')]), ''];
 }
 
 /** Le carnet en Markdown : son titre (au nom de la joueuse ou du joueur, s'il est donné), la progression (si elle est donnée), puis les commandes, triées par nom. */
-export function enMarkdown(carnet: Carnet, t: Traduire, termines?: string[], nomJoueur = ''): string {
-  const noms = Object.keys(carnet).sort((a, b) => a.localeCompare(b));
+export function inMarkdown(notebook: Notebook, t: Translate, finished?: string[], playerName = ''): string {
+  const names = Object.keys(notebook).sort((a, b) => a.localeCompare(b));
   return [
-    `# ${nomJoueur ? t('carnet-titre-de', { nom: nomJoueur }) : t('carnet-titre')}`,
+    `# ${playerName ? t('carnet-titre-de', { nom: playerName }) : t('carnet-titre')}`,
     '',
-    t('carnet-markdown-intro', { nombre: noms.length }),
+    t('carnet-markdown-intro', { nombre: names.length }),
     '',
-    ...(termines ? [t('carnet-grade', { grade: t(`grade-${grade(termines)}`) }), ''] : []),
-    ...(termines ? progression(termines, t) : []),
-    ...noms.flatMap((nom) => {
-      const e = carnet[nom];
+    ...(finished ? [t('carnet-grade', { grade: t(`grade-${grade(finished)}`) }), ''] : []),
+    ...(finished ? progress(finished, t) : []),
+    ...names.flatMap((name) => {
+      const e = notebook[name];
       return [
-        `## ${nom}`,
+        `## ${name}`,
         '',
-        `${description(nom, t)}.`,
+        `${description(name, t)}.`,
         '',
         '```',
-        e.ligne,
+        e.line,
         '```',
         '',
-        ...(e.chapitre ? [t('carnet-decouverte', { chapitre: t(`chapitre-${e.chapitre}`) }), ''] : []),
-        t('carnet-manuel', { commande: `man ${nom}` }),
+        ...(e.chapter ? [t('carnet-decouverte', { chapitre: t(`chapitre-${e.chapter}`) }), ''] : []),
+        t('carnet-manuel', { commande: `man ${name}` }),
         '',
       ];
     }),

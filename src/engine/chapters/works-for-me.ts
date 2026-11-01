@@ -14,35 +14,35 @@
 // https://bind9.readthedocs.io/en/stable/manpages.html (named-checkzone, rndc, dig),
 // RFC 1034 et 1035 (TTL, SOA, CNAME).
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../world';
-import type { Jeu } from '../shell';
-import { nouveauSystemd, systemd, versUtc } from '../systemd';
-import { dns, interroger, rechargerZones, type EtatDns } from '../dns';
+import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import type { Game } from '../shell';
+import { newSystemd, systemd, toUtc } from '../systemd';
+import { dns, query, reloadZones, type DnsState } from '../dns';
 
 const M = '/home/vous';
-const NOUVELLE = '203.0.113.10';
-const ANCIENNE = '198.51.100.80';
+const NEW = '203.0.113.10';
+const OLD = '198.51.100.80';
 const ZONES = '/etc/bind/zones';
 
-const comptes = (): Comptes => ({
-  utilisateurs: {
-    root: { uid: 0, groupe: 'root', maison: '/root' },
-    bind: { uid: 104, groupe: 'bind', maison: '/var/cache/bind', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, groupe: 'vous' },
-    rania: { uid: 1001, groupe: 'rania' },
+const accounts = (): Accounts => ({
+  users: {
+    root: { uid: 0, group: 'root', home: '/root' },
+    bind: { uid: 104, group: 'bind', home: '/var/cache/bind', shell: '/usr/sbin/nologin' },
+    vous: { uid: 1000, group: 'vous' },
+    rania: { uid: 1001, group: 'rania' },
   },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    adm: { gid: 4, membres: ['vous'] },
-    sudo: { gid: 27, membres: ['vous', 'rania'] },
-    bind: { gid: 104, membres: [] },
-    vous: { gid: 1000, membres: [] },
-    rania: { gid: 1001, membres: [] },
+  groups: {
+    root: { gid: 0, members: [] },
+    adm: { gid: 4, members: ['vous'] },
+    sudo: { gid: 27, members: ['vous', 'rania'] },
+    bind: { gid: 104, members: [] },
+    vous: { gid: 1000, members: [] },
+    rania: { gid: 1001, members: [] },
   },
 });
 
-const SOA = (serie: string) => `@       IN SOA  ns1.letters.example. kofi.letters.example. (
-                ${serie} ; serial
+const SOA = (serial: string) => `@       IN SOA  ns1.letters.example. kofi.letters.example. (
+                ${serial} ; serial
                 3600       ; refresh
                 900        ; retry
                 1209600    ; expire
@@ -53,19 +53,19 @@ const ZONE_CAFE = `$TTL 86400
 ${SOA('2026091501')}
         IN NS   ns1.letters.example.
         IN NS   ns2.registry.example.
-        IN A    ${ANCIENNE}
+        IN A    ${OLD}
         IN MX   10 mail.letters.example.
         IN TXT  "v=spf1 mx -all"`;
 
 // La zone des Lettres : un bon modèle.
-const ZONE_LETTRES = `$TTL 3600
+const LETTERS_ZONE = `$TTL 3600
 ${SOA('2026111002')}
         IN NS   ns1.letters.example.
         IN NS   ns2.registry.example.
-        IN A    ${NOUVELLE}
+        IN A    ${NEW}
         IN MX   10 mail
-ns1     IN A    ${NOUVELLE}
-mail    IN A    ${NOUVELLE}
+ns1     IN A    ${NEW}
+mail    IN A    ${NEW}
 www     IN CNAME letters.example.`;
 
 const NAMED_CONF = `// This is the primary configuration file for the BIND DNS server named.
@@ -106,28 +106,28 @@ const NAMED_OPTIONS = `options {
     listen-on-v6 { any; };
 };`;
 
-const sd = (j: Jeu) => systemd(j)!;
-const etat = (j: Jeu): EtatDns => dns(j)!;
+const sd = (j: Game) => systemd(j)!;
+const state = (j: Game): DnsState => dns(j)!;
 // L'adresse finale d'un nom pour un serveur qui fait autorité (après les CNAME).
-const adresse = (j: Jeu, serveur: 'primaire' | 'secondaire', nom: string) =>
-  interroger(j, serveur, nom, 'A', 0)
-    .reponses.filter((r) => r.type === 'A')
-    .map((r) => r.donnees);
-const bon = (j: Jeu, serveur: 'primaire' | 'secondaire') =>
-  ['cafe.example', 'www.cafe.example'].every((n) => adresse(j, serveur, n).join() === NOUVELLE) &&
-  interroger(j, serveur, 'cafe.example', 'MX', 0).reponses.some((r) => r.type === 'MX') &&
-  adresse(j, serveur, 'letters.example').join() === NOUVELLE;
+const address = (j: Game, server: 'primary' | 'secondary', name: string) =>
+  query(j, server, name, 'A', 0)
+    .responses.filter((r) => r.type === 'A')
+    .map((r) => r.data);
+const good = (j: Game, server: 'primary' | 'secondary') =>
+  ['cafe.example', 'www.cafe.example'].every((n) => address(j, server, n).join() === NEW) &&
+  query(j, server, 'cafe.example', 'MX', 0).responses.some((r) => r.type === 'MX') &&
+  address(j, server, 'letters.example').join() === NEW;
 // Un nom de la zone écrit sans le point final dans les données.
-const pointOublie = (j: Jeu) =>
-  (etat(j).primaire['cafe.example']?.rrs ?? []).some(
-    (r) => /\.cafe\.example\.cafe\.example\.$/.test(r.donnees) || r.donnees.endsWith('.example.cafe.example.'),
+const forgottenPoint = (j: Game) =>
+  (state(j).primary['cafe.example']?.rrs ?? []).some(
+    (r) => /\.cafe\.example\.cafe\.example\.$/.test(r.data) || r.data.endsWith('.example.cafe.example.'),
   );
-const meme = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
-export const chezMoi: Chapitre = {
+export const atMe: Chapter = {
   id: 'chez-moi',
-  numero: 5,
-  commandes: [
+  number: 5,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -150,137 +150,137 @@ export const chezMoi: Chapitre = {
     'systemctl',
     'journalctl',
   ],
-  maison: M,
-  accueil: 'courriel_kofi.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_kofi.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'fourmis-2026',
-  comptes,
-  etat: () => {
-    const maintenant = Date.UTC(2027, 2, 20, 10, 0, 0);
-    const etatDns: EtatDns = {
+  password: 'fourmis-2026',
+  accounts,
+  state: () => {
+    const now = Date.UTC(2027, 2, 20, 10, 0, 0);
+    const dnsState: DnsState = {
       conf: '/etc/bind/named.conf.local',
-      primaire: {},
-      secondaire: {},
+      primary: {},
+      secondary: {},
       // Le résolveur public a demandé cafe.example hier à 16 h : il garde
       // l'ancienne adresse 24 heures (TTL 86400).
       cache: {
         'cafe.example. A': {
-          rrs: [{ nom: 'cafe.example.', ttl: 86400, type: 'A', donnees: ANCIENNE }],
-          expire: Date.UTC(2027, 2, 19, 15, 0, 0) + 86400 * 1000,
+          rrs: [{ name: 'cafe.example.', ttl: 86400, type: 'A', data: OLD }],
+          expires: Date.UTC(2027, 2, 19, 15, 0, 0) + 86400 * 1000,
         },
       },
-      serveurs: {
-        primaire: ['localhost', '127.0.0.1', 'lettres', 'letters.example', 'ns1.letters.example', NOUVELLE],
-        secondaire: ['ns2.registry.example', '192.0.2.53'],
-        resolveur: ['9.9.9.9', 'dns.quad9.net'],
+      servers: {
+        primary: ['localhost', '127.0.0.1', 'lettres', 'letters.example', 'ns1.letters.example', NEW],
+        secondary: ['ns2.registry.example', '192.0.2.53'],
+        resolver: ['9.9.9.9', 'dns.quad9.net'],
       },
       charges: {},
     };
     return {
-      systemd: nouveauSystemd('lettres', Date.UTC(2027, 2, 1, 6, 12, 0), maintenant, {
+      systemd: newSystemd('lettres', Date.UTC(2027, 2, 1, 6, 12, 0), now, {
         ssh: {
           description: 'OpenBSD Secure Shell server',
           active: true,
           executable: 'sshd',
-          processus: [{ pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+          process: [{ pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
         },
         named: {
           description: 'BIND Domain Name Server',
           active: true,
           executable: 'named',
-          processus: [{ pid: 733, utilisateur: 'bind', cpu: 0.1, mem: 1.4, commande: '/usr/sbin/named -f -u bind' }],
-          charger: (j) => void rechargerZones(j),
+          process: [{ pid: 733, user: 'bind', cpu: 0.1, mem: 1.4, command: '/usr/sbin/named -f -u bind' }],
+          load: (j) => void reloadZones(j),
         },
       }),
       processus: [
-        { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
-        { pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
-        { pid: 733, utilisateur: 'bind', cpu: 0.1, mem: 1.4, commande: '/usr/sbin/named -f -u bind' },
+        { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
+        { pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
+        { pid: 733, user: 'bind', cpu: 0.1, mem: 1.4, command: '/usr/sbin/named -f -u bind' },
       ],
-      dns: etatDns,
+      dns: dnsState,
     };
   },
   // named a chargé les zones au démarrage, et le registre en a une copie.
-  initialiser: (j) => {
-    rechargerZones(j);
-    const e = etat(j);
-    e.secondaire = JSON.parse(JSON.stringify(e.primaire));
+  initialise: (j) => {
+    reloadZones(j);
+    const e = state(j);
+    e.secondary = JSON.parse(JSON.stringify(e.primary));
     // Le journal de ce chargement ne date pas d'aujourd'hui : on le retire.
-    sd(j).journal = sd(j).journal.filter((x) => x.unite !== 'named.service');
+    sd(j).log = sd(j).log.filter((x) => x.unit !== 'named.service');
   },
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
-    const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
-    const fichier = (texte: string, droits: Droits = { proprio: 'root', groupe: 'bind' }) => f(texte, { lignes: true, ...droits });
-    return lieu({
-      etc: lieu({
-        ...fichiersComptes(),
-        hostname: fichier('lettres', racine),
-        'resolv.conf': fichier('nameserver 9.9.9.9', racine),
-        bind: lieu(
+  createWorld: (t) => {
+    const root = { owner: 'root' };
+    const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
+    const file = (text: string, rights: Rights = { owner: 'root', group: 'bind' }) => f(text, { lines: true, ...rights });
+    return place({
+      etc: place({
+        ...accountsFiles(),
+        hostname: file('lettres', root),
+        'resolv.conf': file('nameserver 9.9.9.9', root),
+        bind: place(
           {
-            'named.conf': fichier(NAMED_CONF),
-            'named.conf.local': fichier(NAMED_CONF_LOCAL),
-            'named.conf.options': fichier(NAMED_OPTIONS),
-            'named.conf.default-zones': fichier(
+            'named.conf': file(NAMED_CONF),
+            'named.conf.local': file(NAMED_CONF_LOCAL),
+            'named.conf.options': file(NAMED_OPTIONS),
+            'named.conf.default-zones': file(
               '// prime the server with knowledge of the root servers\nzone "." {\n    type hint;\n    file "/usr/share/dns/root.hints";\n};',
             ),
             'rndc.key': f('key "rndc-key" {\n    algorithm hmac-sha256;\n    secret "q2V0b3VybmVyLWxlLWpldQ==";\n};', {
-              lignes: true,
-              proprio: 'bind',
-              groupe: 'bind',
+              lines: true,
+              owner: 'bind',
+              group: 'bind',
               mode: 'rw-r-----',
             }),
-            zones: lieu({ 'db.letters.example': fichier(ZONE_LETTRES), 'db.cafe.example': fichier(ZONE_CAFE) }, { proprio: 'root', groupe: 'bind' }),
+            zones: place({ 'db.letters.example': file(LETTERS_ZONE), 'db.cafe.example': file(ZONE_CAFE) }, { owner: 'root', group: 'bind' }),
           },
-          { proprio: 'root', groupe: 'bind', mode: 'rwxr-sr-x' },
+          { owner: 'root', group: 'bind', mode: 'rwxr-sr-x' },
         ),
       }),
-      home: lieu({ vous: d({ 'courriel_kofi.txt': f(t('chez-moi-courriel-kofi')), 'aide_dns.txt': f(t('chez-moi-aide-dns')) }) }),
-      usr: lieu({ sbin: lieu({ named: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 1_201_664 }) }) }),
+      home: place({ vous: d({ 'courriel_kofi.txt': f(t('chez-moi-courriel-kofi')), 'aide_dns.txt': f(t('chez-moi-aide-dns')) }) }),
+      usr: place({ sbin: place({ named: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_201_664 }) }) }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'cache',
       // Juste après une question au résolveur public, qui répond encore l'ancienne adresse.
       condition: (j) => {
-        const q: { serveur: string; donnees: string[] } | undefined = j.etat.dnsQuestions?.at(-1);
+        const q: { server: string; data: string[] } | undefined = j.state.dnsQuestions?.at(-1);
         return (
-          j.derniere.commandes.some((c) => c[0] === 'dig' || c[0] === 'host') &&
-          q?.serveur === 'resolveur' &&
-          q.donnees.includes(ANCIENNE) &&
-          adresse(j, 'primaire', 'cafe.example').join() === NOUVELLE
+          j.last.commands.some((c) => c[0] === 'dig' || c[0] === 'host') &&
+          q?.server === 'resolver' &&
+          q.data.includes(OLD) &&
+          address(j, 'primary', 'cafe.example').join() === NEW
         );
       },
       message: (j) => {
-        const memo = etat(j).cache['cafe.example. A'];
-        const heures = Math.max(1, Math.round((memo.expire - versUtc(sd(j).horloge)) / 3_600_000));
-        return j.t('chez-moi-evenement-cache', { heures });
+        const memo = state(j).cache['cafe.example. A'];
+        const hours = Math.max(1, Math.round((memo.expires - toUtc(sd(j).clock)) / 3_600_000));
+        return j.t('chez-moi-evenement-cache', { heures: hours });
       },
     },
     {
       id: 'erreur-zone',
-      condition: (j) => j.derniere.erreurs.some((e) => e.includes("'reload' failed")),
+      condition: (j) => j.last.errors.some((e) => e.includes("'reload' failed")),
       message: (j) => j.t('chez-moi-evenement-erreur-zone'),
     },
     {
       id: 'serial',
       condition: (j) => {
-        const e = etat(j);
-        return !meme(e.primaire['cafe.example']?.rrs, e.secondaire['cafe.example']?.rrs);
+        const e = state(j);
+        return !same(e.primary['cafe.example']?.rrs, e.secondary['cafe.example']?.rrs);
       },
       message: (j) => j.t('chez-moi-evenement-serial'),
     },
     {
       id: 'point-final',
-      condition: pointOublie,
+      condition: forgottenPoint,
       message: (j) => j.t('chez-moi-evenement-point-final'),
     },
     {
       id: 'fin',
-      condition: (j) => bon(j, 'primaire') && bon(j, 'secondaire'),
+      condition: (j) => good(j, 'primary') && good(j, 'secondary'),
       message: (j) => j.t('chez-moi-evenement-fin'),
     },
   ],

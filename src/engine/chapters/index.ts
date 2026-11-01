@@ -1,187 +1,187 @@
 // Les histoires de Quêtes de Sysadmin et leurs chapitres, dans l'ordre. Voir
 // docs/SCENARIOS.md. Les histoires sont indépendantes ; dans une
 // histoire, un chapitre s'ouvre quand le précédent est terminé.
-import type { Chapitre, Histoire } from '../world';
-import { eveil } from './lighthouse';
-import { bourg } from './village';
-import { racine } from './root';
-import { sauvegarde } from './backup';
+import type { Chapter, Story } from '../world';
+import { awakening } from './lighthouse';
+import { village } from './village';
+import { root } from './root';
+import { backup } from './backup';
 import { datacenter } from './first-day';
-import { deuxiemeJour } from './second-day';
-import { redemarrage } from './reboot-night';
-import { incendie } from './fire';
-import { certificat } from './certificate';
-import { paquet } from './lost-packet';
-import { temps } from './manuscript';
+import { secondDay } from './second-day';
+import { reboot } from './reboot-night';
+import { fire } from './fire';
+import { certificate } from './certificate';
+import { pkg } from './lost-packet';
+import { time } from './manuscript';
 import { archives } from './archives';
 import { versions } from './versions';
-import { porte } from './shut-the-door';
-import { pareFeu } from './firewall';
-import { sentinelle } from './sentinel';
+import { door } from './shut-the-door';
+import { firewall } from './firewall';
+import { sentinel } from './sentinel';
 import { colocation } from './sharing';
-import { chezMoi } from './works-for-me';
+import { atMe } from './works-for-me';
 import { concert } from './concert';
 import { port } from './port';
-import { recidive } from './repeat-offenders';
-import { miseAJour } from './update';
+import { repeatOffence } from './repeat-offenders';
+import { update } from './update';
 import { composition } from './compose';
-import { contournement } from './firewall-hole';
-import { pleinsPouvoirs } from './full-powers';
-import { depotNu } from './bare-repo';
-import { retourArriere } from './rollback';
-import { bleuVert } from './blue-green';
-import { canari } from './canary';
+import { bypass } from './firewall-hole';
+import { powersFull } from './full-powers';
+import { bareRepo } from './bare-repo';
+import { rollback } from './rollback';
+import { greenBlue } from './blue-green';
+import { canary } from './canary';
 import { migration } from './migration';
-import { rancon } from './ransom';
-import { instantanesChapitre } from './snapshots';
+import { ransom } from './ransom';
+import { chapterSnapshots } from './snapshots';
 import { base } from './database';
-import { disquePlein } from './full-disk';
-import { memoireChapitre } from './memory';
+import { fullDisk } from './full-disk';
+import { chapterMemory } from './memory';
 import { inodes } from './inodes';
-import { horloge } from './clock';
-import { sonde } from './probe';
+import { clock } from './clock';
+import { probe } from './probe';
 import { postMortem } from './post-mortem';
-import { goulot } from './bottleneck';
-import { cles } from './keys';
-import { rebond } from './jump';
+import { bottleneck } from './bottleneck';
+import { keys } from './keys';
+import { jump } from './jump';
 import { tunnel } from './tunnel';
-import { transferts } from './transfers';
-import { hebergeur } from './web-host';
-import { depart } from './departure';
-import { droits } from './shared-rights';
+import { transfers } from './transfers';
+import { host } from './web-host';
+import { departure } from './departure';
+import { rights } from './shared-rights';
 import { secret } from './secret';
 import { proxy } from './proxy';
-import { misesAJour } from './updates';
-import { automatiques } from './auto-updates';
+import { updates } from './updates';
+import { automatic } from './auto-updates';
 import { vlan } from './vlan';
 import { dhcp } from './dhcp';
 import { zones } from './zones';
 import { vpn } from './remote-work';
 import { dmz } from './dmz';
-import { annexe } from './annex';
-import { annuaireChapitre } from './directory';
+import { annex } from './annex';
+import { chapterDirectory } from './directory';
 import { wifi } from './wifi';
-import { rapport } from './report';
-import { exposition } from './exposure';
+import { report } from './report';
+import { exposure } from './exposure';
 import { traces } from './traces';
-import { perimetre } from './scope';
-import { contreVisite } from './follow-up';
+import { scope } from './scope';
+import { againstVisit } from './follow-up';
 import { fatigue } from './tired-disk';
-import { disqueNeuf } from './new-disk';
-import { agrandir } from './more-room';
-import { secours } from './stuck-boot';
+import { newDisk } from './new-disk';
+import { grow } from './more-room';
+import { rescue } from './stuck-boot';
 import { bulletin } from './bulletin';
-import { priorite } from './priority';
-import { correctif } from './fix';
-import { preuve } from './proof';
+import { priority } from './priority';
+import { fix } from './fix';
+import { proof } from './proof';
 import { routine } from './routine';
-import { atelier } from './repair-cafe';
-import { facteur } from './postman';
+import { workshop } from './repair-cafe';
+import { postman } from './postman';
 import { signature } from './signature';
-import { politiqueChapitre } from './policy';
-import { inventaire } from './inventory';
+import { chapterPolicy } from './policy';
+import { inventory } from './inventory';
 import { playbook } from './playbook';
-import { repetition } from './rehearsal';
-import { cadenas } from './padlock';
+import { rehearsal } from './rehearsal';
+import { padlock } from './padlock';
 
 // Les histoires s'ouvrent peu à peu : chacune dit, dans `apres`, les chapitres
 // à finir avant d'en recevoir la clé (voir deverrouillage.ts et docs/SCENARIOS.md).
-export const HISTOIRES: Histoire[] = [
+export const STORIES: Story[] = [
   {
     id: 'effaceur',
-    chapitres: [eveil, bourg, racine, sauvegarde],
+    chapters: [awakening, village, root, backup],
   },
   {
     id: 'datacenter',
-    apres: ['racine'],
-    chapitres: [datacenter, deuxiemeJour, redemarrage, incendie, certificat],
+    after: ['racine'],
+    chapters: [datacenter, secondDay, reboot, fire, certificate],
   },
   {
     id: 'paquet',
-    apres: ['racine'],
-    chapitres: [paquet],
+    after: ['racine'],
+    chapters: [pkg],
   },
   {
     id: 'temps',
-    apres: ['racine'],
-    chapitres: [temps],
+    after: ['racine'],
+    chapters: [time],
   },
   {
     id: 'archives',
-    apres: ['racine'],
-    chapitres: [archives, versions],
+    after: ['racine'],
+    chapters: [archives, versions],
   },
   {
     id: 'lettres',
-    apres: ['redemarrage', 'paquet-perdu'],
-    chapitres: [porte, pareFeu, sentinelle, colocation, chezMoi, concert, port, recidive, atelier],
+    after: ['redemarrage', 'paquet-perdu'],
+    chapters: [door, firewall, sentinel, colocation, atMe, concert, port, repeatOffence, workshop],
   },
   {
     id: 'fabrique',
-    apres: ['redemarrage'],
-    chapitres: [miseAJour, composition, contournement, pleinsPouvoirs],
+    after: ['redemarrage'],
+    chapters: [update, composition, bypass, powersFull],
   },
   {
     id: 'gazette',
-    apres: ['manuscrit', 'redemarrage'],
-    chapitres: [depotNu, retourArriere, bleuVert, canari, migration],
+    after: ['manuscrit', 'redemarrage'],
+    chapters: [bareRepo, rollback, greenBlue, canary, migration],
   },
   {
     id: 'ludotheque',
-    apres: ['versions'],
-    chapitres: [rancon, instantanesChapitre, base],
+    after: ['versions'],
+    chapters: [ransom, chapterSnapshots, base],
   },
   {
     id: 'astreinte',
-    apres: ['redemarrage'],
-    chapitres: [disquePlein, memoireChapitre, inodes, horloge, sonde, postMortem, goulot],
+    after: ['redemarrage'],
+    chapters: [fullDisk, chapterMemory, inodes, clock, probe, postMortem, bottleneck],
   },
   {
     id: 'maison',
-    apres: ['fermer-la-porte'],
-    chapitres: [cles, rebond, tunnel, transferts, hebergeur],
+    after: ['fermer-la-porte'],
+    chapters: [keys, jump, tunnel, transfers, host],
   },
   {
     id: 'cooperative',
-    apres: ['colocation', 'deuxieme-jour'],
-    chapitres: [depart, droits, secret, proxy, misesAJour, automatiques],
+    after: ['colocation', 'deuxieme-jour'],
+    chapters: [departure, rights, secret, proxy, updates, automatic],
   },
   {
     id: 'ruche',
-    apres: ['pare-feu', 'rebond'],
-    chapitres: [vlan, dhcp, zones, vpn, dmz, annexe, annuaireChapitre, wifi],
+    after: ['pare-feu', 'rebond'],
+    chapters: [vlan, dhcp, zones, vpn, dmz, annex, chapterDirectory, wifi],
   },
   {
     id: 'audit',
-    apres: ['sentinelle', 'droits'],
-    chapitres: [perimetre, rapport, exposition, traces, contreVisite],
+    after: ['sentinelle', 'droits'],
+    chapters: [scope, report, exposure, traces, againstVisit],
   },
   {
     id: 'labo',
-    apres: ['disque-plein'],
-    chapitres: [fatigue, disqueNeuf, agrandir, secours],
+    after: ['disque-plein'],
+    chapters: [fatigue, newDisk, grow, rescue],
   },
   {
     id: 'veille',
-    apres: ['contre-visite'],
-    chapitres: [bulletin, priorite, correctif, preuve, routine],
+    after: ['contre-visite'],
+    chapters: [bulletin, priority, fix, proof, routine],
   },
   {
     id: 'courrier',
-    apres: ['chez-moi'],
-    chapitres: [facteur, signature, politiqueChapitre],
+    after: ['chez-moi'],
+    chapters: [postman, signature, chapterPolicy],
   },
   {
     id: 'flotte',
-    apres: ['cles'],
-    chapitres: [inventaire, playbook, repetition],
+    after: ['cles'],
+    chapters: [inventory, playbook, rehearsal],
   },
   {
     id: 'rustine',
-    apres: ['certificat', 'colocation'],
-    chapitres: [cadenas],
+    after: ['certificat', 'colocation'],
+    chapters: [padlock],
   },
 ];
 
 // Tous les chapitres, toutes histoires confondues (identifiants uniques).
-export const CHAPITRES: Chapitre[] = HISTOIRES.flatMap((h) => h.chapitres);
+export const CHAPTERS: Chapter[] = STORIES.flatMap((h) => h.chapters);

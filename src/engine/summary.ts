@@ -7,30 +7,30 @@
 
 import type { Shell } from './shell';
 
-export interface EtapeBilan {
-  etape: string;
+export interface SummaryStep {
+  step: string;
   // La commande qui a franchi l'étape ; null : l'étape a été passée autrement.
-  ligne: string | null;
+  line: string | null;
   solution: string;
 }
 
-export interface Bilan {
-  commandes: number;
-  erreurs: number;
-  indices: number;
-  etapes: EtapeBilan[];
+export interface Summary {
+  commands: number;
+  errors: number;
+  hints: number;
+  steps: SummaryStep[];
 }
 
 /** Le bilan d'un chapitre (sur sa session principale). */
-export function bilan(sh: Shell): Bilan {
-  const c = sh.chapitre;
-  const ordre = c.etapes ?? c.evenements.map((e) => e.id);
+export function summary(sh: Shell): Summary {
+  const c = sh.chapter;
+  const order = c.steps ?? c.events.map((e) => e.id);
   return {
-    commandes: sh.commandesTapees,
-    erreurs: sh.commandesEnErreur,
-    indices: sh.indicesDemandes.size,
-    etapes: ordre
-      .filter((e) => sh.t.existe(`indice-${c.id}-${e}.solution`))
-      .map((e) => ({ etape: e, ligne: sh.franchies[e] ?? null, solution: sh.t(`indice-${c.id}-${e}.solution`) })),
+    commands: sh.typedCommands,
+    errors: sh.commandsInError,
+    hints: sh.requestsHints.size,
+    steps: order
+      .filter((e) => sh.t.exists(`indice-${c.id}-${e}.solution`))
+      .map((e) => ({ step: e, line: sh.passed[e] ?? null, solution: sh.t(`indice-${c.id}-${e}.solution`) })),
   };
 }

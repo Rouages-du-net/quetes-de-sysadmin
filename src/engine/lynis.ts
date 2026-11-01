@@ -14,33 +14,33 @@
 // profils, ni de `show details` ; sans root, l'audit est refusé.
 // Sources : https://cisofy.com/documentation/lynis/, https://cisofy.com/lynis/controls/
 
-import type { Jeu } from './shell';
-import { lireConfig } from './sshd';
-import { misesDisponibles, type EtatApt } from './commands/apt';
-import type { PareFeu } from './firewall';
+import type { Game } from './shell';
+import { readConfig } from './sshd';
+import { availableUpdates, type AptState } from './commands/apt';
+import type { Firewall } from './firewall';
 
 export const VERSION_LYNIS = '3.1.4';
-export const RAPPORT = '/var/log/lynis-report.dat';
-export const JOURNAL = '/var/log/lynis.log';
+export const REPORT = '/var/log/lynis-report.dat';
+export const LOG = '/var/log/lynis.log';
 const TESTS = 238;
 
-export interface Constat {
+export interface Finding {
   id: string;
   type: 'warning' | 'suggestion';
-  texte: string;
+  text: string;
   detail?: string;
-  poids: number;
+  weight: number;
 }
 
 // Les mots qui font d'une bannière un avertissement légal (comme Lynis, BANN-7126).
-const MOTS_LEGAUX = /authori[sz]ed|unauthori[sz]ed|prohibited|forbidden|legal|monitor|audit|consent|restricted|private/i;
+const LEGAL_WORDS = /authori[sz]ed|unauthori[sz]ed|prohibited|forbidden|legal|monitor|audit|consent|restricted|private/i;
 
-const oui = (v: string | undefined, defaut = 'yes') => (v ?? defaut).toLowerCase();
+const yes = (v: string | undefined, fallback = 'yes') => (v ?? fallback).toLowerCase();
 
 /** L'umask par défaut de /etc/login.defs (la dernière ligne UMASK). */
-export function umaskDe(jeu: Jeu): string {
+export function umaskFor(game: Game): string {
   let u = '022';
-  for (const l of (jeu.lire('/etc/login.defs') ?? '').split('\n')) {
+  for (const l of (game.read('/etc/login.defs') ?? '').split('\n')) {
     const m = /^\s*UMASK\s+([0-7]{3,4})\s*(#.*)?$/.exec(l);
     if (m) u = m[1].slice(-3);
   }
@@ -48,50 +48,50 @@ export function umaskDe(jeu: Jeu): string {
 }
 
 /** Les constats d'un audit de cette machine, d'après son état. */
-export function constats(jeu: Jeu): Constat[] {
-  const c: Constat[] = [];
-  const apt: EtatApt | undefined = jeu.etat.apt;
-  if (apt && misesDisponibles(apt).length) c.push({ id: 'PKGS-7392', type: 'warning', texte: 'Found one or more vulnerable packages.', poids: 8 });
-  const ssh = lireConfig(jeu).valeurs;
-  const option = (id: string, detail: string, poids = 3) => c.push({ id, type: 'suggestion', texte: 'Consider hardening SSH configuration', detail, poids });
-  if (!['no', 'prohibit-password', 'without-password', 'forced-commands-only'].includes(oui(ssh.permitrootlogin, 'prohibit-password')))
+export function findings(game: Game): Finding[] {
+  const c: Finding[] = [];
+  const apt: AptState | undefined = game.state.apt;
+  if (apt && availableUpdates(apt).length) c.push({ id: 'PKGS-7392', type: 'warning', text: 'Found one or more vulnerable packages.', weight: 8 });
+  const ssh = readConfig(game).values;
+  const option = (id: string, detail: string, weight = 3) => c.push({ id, type: 'suggestion', text: 'Consider hardening SSH configuration', detail, weight });
+  if (!['no', 'prohibit-password', 'without-password', 'forced-commands-only'].includes(yes(ssh.permitrootlogin, 'prohibit-password')))
     option('SSH-7408', 'PermitRootLogin (set YES to (NO|PROHIBIT-PASSWORD|FORCED-COMMANDS-ONLY))', 4);
   if (Number(ssh.maxauthtries ?? 6) > 3) option('SSH-7408', `MaxAuthTries (set ${ssh.maxauthtries ?? 6} to 3)`);
-  if (oui(ssh.x11forwarding, 'no') === 'yes') option('SSH-7408', 'X11Forwarding (set YES to NO)');
-  if (oui(ssh.allowtcpforwarding) !== 'no') option('SSH-7408', `AllowTcpForwarding (set ${oui(ssh.allowtcpforwarding).toUpperCase()} to NO)`);
-  if (oui(ssh.allowagentforwarding) !== 'no') option('SSH-7408', `AllowAgentForwarding (set ${oui(ssh.allowagentforwarding).toUpperCase()} to NO)`);
-  if (!['027', '077'].includes(umaskDe(jeu)))
-    c.push({ id: 'AUTH-9328', type: 'suggestion', texte: 'Default umask in /etc/login.defs could be more strict like 027', poids: 4 });
-  if (!MOTS_LEGAUX.test(jeu.lire('/etc/issue') ?? ''))
-    c.push({ id: 'BANN-7126', type: 'suggestion', texte: 'Add a legal banner to /etc/issue, to warn unauthorized users', poids: 4 });
+  if (yes(ssh.x11forwarding, 'no') === 'yes') option('SSH-7408', 'X11Forwarding (set YES to NO)');
+  if (yes(ssh.allowtcpforwarding) !== 'no') option('SSH-7408', `AllowTcpForwarding (set ${yes(ssh.allowtcpforwarding).toUpperCase()} to NO)`);
+  if (yes(ssh.allowagentforwarding) !== 'no') option('SSH-7408', `AllowAgentForwarding (set ${yes(ssh.allowagentforwarding).toUpperCase()} to NO)`);
+  if (!['027', '077'].includes(umaskFor(game)))
+    c.push({ id: 'AUTH-9328', type: 'suggestion', text: 'Default umask in /etc/login.defs could be more strict like 027', weight: 4 });
+  if (!LEGAL_WORDS.test(game.read('/etc/issue') ?? ''))
+    c.push({ id: 'BANN-7126', type: 'suggestion', text: 'Add a legal banner to /etc/issue, to warn unauthorized users', weight: 4 });
   // Ce qui ne se corrige pas dans le jeu : de bonnes idées, pas des urgences.
   c.push(
-    { id: 'HRDN-7230', type: 'suggestion', texte: 'Harden the system by installing at least one malware scanner, to perform periodic file system scans', poids: 3 },
-    { id: 'FINT-4350', type: 'suggestion', texte: 'Install a file integrity tool to monitor changes to critical and sensitive files', poids: 3 },
-    { id: 'LOGG-2154', type: 'suggestion', texte: 'Enable logging to an external logging host for archiving purposes and additional protection', poids: 3 },
-    { id: 'ACCT-9628', type: 'suggestion', texte: 'Enable auditd to collect audit information', poids: 3 },
+    { id: 'HRDN-7230', type: 'suggestion', text: 'Harden the system by installing at least one malware scanner, to perform periodic file system scans', weight: 3 },
+    { id: 'FINT-4350', type: 'suggestion', text: 'Install a file integrity tool to monitor changes to critical and sensitive files', weight: 3 },
+    { id: 'LOGG-2154', type: 'suggestion', text: 'Enable logging to an external logging host for archiving purposes and additional protection', weight: 3 },
+    { id: 'ACCT-9628', type: 'suggestion', text: 'Enable auditd to collect audit information', weight: 3 },
   );
   return c;
 }
 
-export const indice = (liste: Constat[]) => Math.max(0, 100 - liste.reduce((n, x) => n + x.poids, 0));
+export const hint = (listing: Finding[]) => Math.max(0, 100 - listing.reduce((n, x) => n + x.weight, 0));
 
-const statut = (texte: string, etat: string) => `  ${texte.padEnd(58)}[ ${etat} ]`;
+const status = (text: string, state: string) => `  ${text.padEnd(58)}[ ${state} ]`;
 
 /** La sortie de « lynis audit system » et le contenu de /var/log/lynis-report.dat. */
-export function audit(jeu: Jeu): { sortie: string; rapport: string; indice: number; constats: Constat[] } {
-  const liste = constats(jeu);
-  const a = (id: string) => liste.some((x) => x.id === id);
-  const detail = (re: RegExp) => liste.some((x) => x.id === 'SSH-7408' && re.test(x.detail ?? ''));
-  const pf: PareFeu | undefined = jeu.etat.ufw;
-  const note = indice(liste);
-  const avert = liste.filter((x) => x.type === 'warning');
-  const sugg = liste.filter((x) => x.type === 'suggestion');
+export function audit(game: Game): { output: string; report: string; hint: number; findings: Finding[] } {
+  const listing = findings(game);
+  const a = (id: string) => listing.some((x) => x.id === id);
+  const detail = (re: RegExp) => listing.some((x) => x.id === 'SSH-7408' && re.test(x.detail ?? ''));
+  const pf: Firewall | undefined = game.state.ufw;
+  const note = hint(listing);
+  const avert = listing.filter((x) => x.type === 'warning');
+  const sugg = listing.filter((x) => x.type === 'suggestion');
   const sections: string[] = [
     '[+] Initializing program',
     '------------------------------------',
-    statut('- Detecting OS...', 'DONE'),
-    statut('- Checking profiles...', 'DONE'),
+    status('- Detecting OS...', 'DONE'),
+    status('- Checking profiles...', 'DONE'),
     '',
     '  ---------------------------------------------------',
     `  Program version:           ${VERSION_LYNIS}`,
@@ -100,70 +100,70 @@ export function audit(jeu: Jeu): { sortie: string; rapport: string; indice: numb
     '  Operating system version:  13',
     '  Kernel version:            6.12.48',
     '  Hardware platform:         x86_64',
-    `  Hostname:                  ${jeu.nomHote}`,
+    `  Hostname:                  ${game.hostName}`,
     '  ---------------------------------------------------',
     '  Profiles:                  /etc/lynis/default.prf',
-    `  Log file:                  ${JOURNAL}`,
-    `  Report file:               ${RAPPORT}`,
+    `  Log file:                  ${LOG}`,
+    `  Report file:               ${REPORT}`,
     '  Report version:            1.0',
     '  ---------------------------------------------------',
-    statut('- Program update status...', 'NO UPDATE'),
+    status('- Program update status...', 'NO UPDATE'),
     '',
     '[+] Software: firewalls',
     '------------------------------------',
-    statut('- Checking ufw status', pf?.actif ? 'ENABLED' : 'DISABLED'),
+    status('- Checking ufw status', pf?.enabled ? 'ENABLED' : 'DISABLED'),
     '',
     '[+] Software: package audit',
     '------------------------------------',
-    statut('- Checking package vulnerabilities (apt)', a('PKGS-7392') ? 'WARNING' : 'NONE'),
+    status('- Checking package vulnerabilities (apt)', a('PKGS-7392') ? 'WARNING' : 'NONE'),
     '',
     '[+] SSH Support',
     '------------------------------------',
-    statut('- Checking running SSH daemon', 'FOUND'),
-    statut('    - Searching SSH configuration', 'FOUND'),
-    statut('    - OpenSSH option: AllowAgentForwarding', detail(/AllowAgentForwarding/) ? 'SUGGESTION' : 'OK'),
-    statut('    - OpenSSH option: AllowTcpForwarding', detail(/AllowTcpForwarding/) ? 'SUGGESTION' : 'OK'),
-    statut('    - OpenSSH option: MaxAuthTries', detail(/MaxAuthTries/) ? 'SUGGESTION' : 'OK'),
-    statut('    - OpenSSH option: PermitRootLogin', detail(/PermitRootLogin/) ? 'SUGGESTION' : 'OK'),
-    statut('    - OpenSSH option: X11Forwarding', detail(/X11Forwarding/) ? 'SUGGESTION' : 'OK'),
+    status('- Checking running SSH daemon', 'FOUND'),
+    status('    - Searching SSH configuration', 'FOUND'),
+    status('    - OpenSSH option: AllowAgentForwarding', detail(/AllowAgentForwarding/) ? 'SUGGESTION' : 'OK'),
+    status('    - OpenSSH option: AllowTcpForwarding', detail(/AllowTcpForwarding/) ? 'SUGGESTION' : 'OK'),
+    status('    - OpenSSH option: MaxAuthTries', detail(/MaxAuthTries/) ? 'SUGGESTION' : 'OK'),
+    status('    - OpenSSH option: PermitRootLogin', detail(/PermitRootLogin/) ? 'SUGGESTION' : 'OK'),
+    status('    - OpenSSH option: X11Forwarding', detail(/X11Forwarding/) ? 'SUGGESTION' : 'OK'),
     '',
     '[+] Users, Groups and Authentication',
     '------------------------------------',
-    statut('- Default umask in /etc/login.defs', a('AUTH-9328') ? 'SUGGESTION' : 'OK'),
+    status('- Default umask in /etc/login.defs', a('AUTH-9328') ? 'SUGGESTION' : 'OK'),
     '',
     '[+] Banners and identification',
     '------------------------------------',
-    statut('- /etc/issue', a('BANN-7126') ? 'WEAK' : 'FOUND'),
-    statut('    - /etc/issue contents', a('BANN-7126') ? 'WEAK' : 'OK'),
+    status('- /etc/issue', a('BANN-7126') ? 'WEAK' : 'FOUND'),
+    status('    - /etc/issue contents', a('BANN-7126') ? 'WEAK' : 'OK'),
     '',
     '[+] Logging and files',
     '------------------------------------',
-    statut('- Checking for a running log daemon', 'OK'),
-    statut('- Checking logrotate presence', 'OK'),
-    statut('- Checking remote logging', 'NOT ENABLED'),
+    status('- Checking for a running log daemon', 'OK'),
+    status('- Checking logrotate presence', 'OK'),
+    status('- Checking remote logging', 'NOT ENABLED'),
     '',
     '[+] File integrity',
     '------------------------------------',
-    statut('- Checking file integrity tools', 'NOT FOUND'),
+    status('- Checking file integrity tools', 'NOT FOUND'),
     '',
     '[+] Malware',
     '------------------------------------',
-    statut('- Malware software components', 'NOT FOUND'),
+    status('- Malware software components', 'NOT FOUND'),
     '',
   ];
-  const blocs = [
-    ...(avert.length ? ['  Warnings (' + avert.length + '):', '  ----------------------------', ...avert.flatMap((x) => [`  ! ${x.texte} [${x.id}]`, `      https://cisofy.com/lynis/controls/${x.id}/`]), ''] : []),
+  const blocks = [
+    ...(avert.length ? ['  Warnings (' + avert.length + '):', '  ----------------------------', ...avert.flatMap((x) => [`  ! ${x.text} [${x.id}]`, `      https://cisofy.com/lynis/controls/${x.id}/`]), ''] : []),
     ...(sugg.length
       ? [
           `  Suggestions (${sugg.length}):`,
           '  ----------------------------',
-          ...sugg.flatMap((x) => [`  * ${x.texte} [${x.id}]`, ...(x.detail ? [`      - Details  : ${x.detail}`] : []), `      https://cisofy.com/lynis/controls/${x.id}/`]),
+          ...sugg.flatMap((x) => [`  * ${x.text} [${x.id}]`, ...(x.detail ? [`      - Details  : ${x.detail}`] : []), `      https://cisofy.com/lynis/controls/${x.id}/`]),
           '',
         ]
       : []),
   ];
-  const barre = '#'.repeat(Math.floor(note / 5)).padEnd(20);
-  const sortie = [
+  const bar = '#'.repeat(Math.floor(note / 5)).padEnd(20);
+  const output = [
     '',
     `[ Lynis ${VERSION_LYNIS} ]`,
     '',
@@ -181,23 +181,23 @@ export function audit(jeu: Jeu): { sortie: string; rapport: string; indice: numb
     '',
     `  -[ Lynis ${VERSION_LYNIS} Results ]-`,
     '',
-    ...blocs,
+    ...blocks,
     '  Follow-up:',
     '  ----------------------------',
     '  - Show details of a test (lynis show details TEST-ID)',
-    `  - Check the logfile for all details (less ${JOURNAL})`,
+    `  - Check the logfile for all details (less ${LOG})`,
     '  - Read security controls texts (https://cisofy.com)',
     '',
     '================================================================================',
     '',
     '  Lynis security scan details:',
     '',
-    `  Hardening index : ${note} [${barre}]`,
+    `  Hardening index : ${note} [${bar}]`,
     `  Tests performed : ${TESTS}`,
     '  Plugins enabled : 0',
     '',
     '  Components:',
-    `  - Firewall               [${pf?.actif ? 'V' : 'X'}]`,
+    `  - Firewall               [${pf?.enabled ? 'V' : 'X'}]`,
     '  - Malware scanner        [X]',
     '',
     '  Scan mode:',
@@ -209,8 +209,8 @@ export function audit(jeu: Jeu): { sortie: string; rapport: string; indice: numb
     '  - Vulnerability scan     [V]',
     '',
     '  Files:',
-    `  - Test and debug information      : ${JOURNAL}`,
-    `  - Report data                     : ${RAPPORT}`,
+    `  - Test and debug information      : ${LOG}`,
+    `  - Report data                     : ${REPORT}`,
     '',
     '================================================================================',
     `  Lynis ${VERSION_LYNIS}`,
@@ -221,15 +221,15 @@ export function audit(jeu: Jeu): { sortie: string; rapport: string; indice: numb
     '  Enterprise support available (compliance, plugins, interface and tools)',
     '================================================================================',
   ].join('\n');
-  const rapport = [
+  const report = [
     'report_version=1.0',
-    `hostname=${jeu.nomHote}`,
+    `hostname=${game.hostName}`,
     `lynis_version=${VERSION_LYNIS}`,
     `hardening_index=${note}`,
     `tests_executed=${TESTS}`,
-    `firewall_active=${pf?.actif ? 1 : 0}`,
-    ...avert.map((x) => `warning[]=${x.id}|${x.texte}|-|-|`),
-    ...sugg.map((x) => `suggestion[]=${x.id}|${x.texte}|${x.detail ?? '-'}|-|`),
+    `firewall_active=${pf?.enabled ? 1 : 0}`,
+    ...avert.map((x) => `warning[]=${x.id}|${x.text}|-|-|`),
+    ...sugg.map((x) => `suggestion[]=${x.id}|${x.text}|${x.detail ?? '-'}|-|`),
   ].join('\n');
-  return { sortie, rapport, indice: note, constats: liste };
+  return { output, report, hint: note, findings: listing };
 }

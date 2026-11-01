@@ -9,33 +9,33 @@
 // Sources : https://www.freedesktop.org/software/systemd/man/latest/systemctl.html,
 // https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
 
-import { d, f, fichiersComptes, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { nouveauSystemd, systemd, type Systemd } from '../systemd';
-import { comptesDatacenter, JOURNAL_NGINX } from './first-day';
+import { d, f, accountsFiles, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { newSystemd, systemd, type Systemd } from '../systemd';
+import { datacenterAccounts, NGINX_LOG } from './first-day';
 
 const M = '/home/vous';
 const LOGS = '/var/log/catalogue';
 
 const NGINX = 'A high performance web server and a reverse proxy server';
 const nginx = [
-  { pid: 801, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx' },
-  { pid: 802, utilisateur: 'www-data', cpu: 0.4, mem: 0.6, commande: 'nginx: worker process' },
+  { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx' },
+  { pid: 802, user: 'www-data', cpu: 0.4, mem: 0.6, command: 'nginx: worker process' },
 ];
-const catalogue = [{ pid: 835, utilisateur: 'root', cpu: 0.2, mem: 1.1, commande: 'php-fpm: master process (/etc/php/8.2/fpm/php-fpm.conf)' }];
+const catalogue = [{ pid: 835, user: 'root', cpu: 0.2, mem: 1.1, command: 'php-fpm: master process (/etc/php/8.2/fpm/php-fpm.conf)' }];
 
 // L'heure au format de php-fpm : « [19-Oct-2026 03:12:05] » (toujours en anglais).
-const MOIS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const heurePhp = (ms: number) => {
+const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const phpTime = (ms: number) => {
   const t = new Date(ms);
-  return `[${String(t.getUTCDate()).padStart(2, '0')}-${MOIS[t.getUTCMonth()]}-${t.getUTCFullYear()} ${t.toISOString().slice(11, 19)}]`;
+  return `[${String(t.getUTCDate()).padStart(2, '0')}-${MONTH[t.getUTCMonth()]}-${t.getUTCFullYear()} ${t.toISOString().slice(11, 19)}]`;
 };
 
 // php-fpm refuse de démarrer s'il ne peut pas écrire dans son dossier de journaux.
-function verifierCatalogue(j: Jeu): string[] | null {
-  const n = j.trouver(LOGS);
-  if (n && j.peut(n, 'w', 'www-data') && j.peut(n, 'x', 'www-data')) return null;
-  const h = heurePhp(systemd(j)!.horloge + 1000);
+function checkCatalogue(j: Game): string[] | null {
+  const n = j.find(LOGS);
+  if (n && j.can(n, 'w', 'www-data') && j.can(n, 'x', 'www-data')) return null;
+  const h = phpTime(systemd(j)!.clock + 1000);
   return [
     `${h} ERROR: failed to open error_log (${LOGS}/error.log): Permission denied (13)`,
     `${h} ERROR: failed to post process the configuration`,
@@ -45,115 +45,115 @@ function verifierCatalogue(j: Jeu): string[] | null {
 
 // Vendredi : nginx tourne, Awa l'arrête et le désactive pour un test ;
 // nuit de lundi : redémarrage après les mises à jour, le catalogue échoue.
-function histoireDuServeur(description: string): Systemd {
-  const sd = nouveauSystemd('datacenter', Date.UTC(2026, 9, 16, 8, 0, 0), Date.UTC(2026, 9, 16, 17, 42, 0), {
-    nginx: { description: NGINX, active: true, executable: 'nginx', processus: nginx },
-    catalogue: { description, active: true, executable: 'php-fpm', processus: catalogue, verifier: verifierCatalogue },
+function serverStory(description: string): Systemd {
+  const sd = newSystemd('datacenter', Date.UTC(2026, 9, 16, 8, 0, 0), Date.UTC(2026, 9, 16, 17, 42, 0), {
+    nginx: { description: NGINX, active: true, executable: 'nginx', process: nginx },
+    catalogue: { description, active: true, executable: 'php-fpm', process: catalogue, check: checkCatalogue },
   });
-  const ecrire = (temps: number, demarrage: number, unite: string, ident: string, pid: number, message: string, priorite = 6) =>
-    sd.journal.push({ temps, demarrage, unite, ident, pid, message, priorite });
-  const vendredi = (h: number, m: number, s: number) => Date.UTC(2026, 9, 16, h, m, s);
-  ecrire(vendredi(17, 42, 0), 1, 'nginx.service', 'systemd', 1, `Stopping nginx.service - ${NGINX}...`);
-  ecrire(vendredi(17, 42, 1), 1, 'nginx.service', 'systemd', 1, `Stopped nginx.service - ${NGINX}.`);
-  ecrire(vendredi(17, 42, 9), 1, '', 'systemd', 1, 'Reloading finished in 212 ms.');
-  ecrire(vendredi(17, 43, 30), 1, '', 'sudo', 4121, '     awa : TTY=pts/0 ; PWD=/home/awa ; USER=root ; COMMAND=/usr/bin/chown -R root: /var/log/catalogue');
-  const nuit = (s: number) => Date.UTC(2026, 9, 19, 3, 12, s);
-  ecrire(nuit(0), 1, 'unattended-upgrades.service', 'unattended-upgrade', 3310, 'Rebooting since a package requires it (linux-image-6.12.0-quetes).');
-  ecrire(nuit(40), 2, '', 'kernel', 0, 'Linux version 6.12.0-quetes (datacenter)');
-  ecrire(nuit(44), 2, 'catalogue.service', 'systemd', 1, `Starting catalogue.service - ${description}...`);
-  const h = heurePhp(nuit(45));
-  ecrire(nuit(45), 2, 'catalogue.service', 'php-fpm', 734, `${h} ERROR: failed to open error_log (${LOGS}/error.log): Permission denied (13)`, 3);
-  ecrire(nuit(45), 2, 'catalogue.service', 'php-fpm', 734, `${h} ERROR: failed to post process the configuration`, 3);
-  ecrire(nuit(45), 2, 'catalogue.service', 'php-fpm', 734, `${h} ERROR: FPM initialization failed`, 3);
-  ecrire(nuit(45), 2, 'catalogue.service', 'systemd', 1, 'catalogue.service: Main process exited, code=exited, status=78/CONFIG', 4);
-  ecrire(nuit(45), 2, 'catalogue.service', 'systemd', 1, "catalogue.service: Failed with result 'exit-code'.", 4);
-  ecrire(nuit(45), 2, 'catalogue.service', 'systemd', 1, `Failed to start catalogue.service - ${description}.`, 3);
-  sd.demarrage = 2;
-  sd.services.nginx = { ...sd.services.nginx, etat: 'inactive', active: false, depuis: nuit(40) };
-  sd.services.catalogue = { ...sd.services.catalogue, etat: 'failed', depuis: nuit(45) };
-  sd.horloge = Date.UTC(2026, 9, 19, 8, 30, 0);
+  const write = (time: number, boot: number, unit: string, ident: string, pid: number, message: string, priority = 6) =>
+    sd.log.push({ time, boot, unit, ident, pid, message, priority });
+  const friday = (h: number, m: number, s: number) => Date.UTC(2026, 9, 16, h, m, s);
+  write(friday(17, 42, 0), 1, 'nginx.service', 'systemd', 1, `Stopping nginx.service - ${NGINX}...`);
+  write(friday(17, 42, 1), 1, 'nginx.service', 'systemd', 1, `Stopped nginx.service - ${NGINX}.`);
+  write(friday(17, 42, 9), 1, '', 'systemd', 1, 'Reloading finished in 212 ms.');
+  write(friday(17, 43, 30), 1, '', 'sudo', 4121, '     awa : TTY=pts/0 ; PWD=/home/awa ; USER=root ; COMMAND=/usr/bin/chown -R root: /var/log/catalogue');
+  const night = (s: number) => Date.UTC(2026, 9, 19, 3, 12, s);
+  write(night(0), 1, 'unattended-upgrades.service', 'unattended-upgrade', 3310, 'Rebooting since a package requires it (linux-image-6.12.0-quetes).');
+  write(night(40), 2, '', 'kernel', 0, 'Linux version 6.12.0-quetes (datacenter)');
+  write(night(44), 2, 'catalogue.service', 'systemd', 1, `Starting catalogue.service - ${description}...`);
+  const h = phpTime(night(45));
+  write(night(45), 2, 'catalogue.service', 'php-fpm', 734, `${h} ERROR: failed to open error_log (${LOGS}/error.log): Permission denied (13)`, 3);
+  write(night(45), 2, 'catalogue.service', 'php-fpm', 734, `${h} ERROR: failed to post process the configuration`, 3);
+  write(night(45), 2, 'catalogue.service', 'php-fpm', 734, `${h} ERROR: FPM initialization failed`, 3);
+  write(night(45), 2, 'catalogue.service', 'systemd', 1, 'catalogue.service: Main process exited, code=exited, status=78/CONFIG', 4);
+  write(night(45), 2, 'catalogue.service', 'systemd', 1, "catalogue.service: Failed with result 'exit-code'.", 4);
+  write(night(45), 2, 'catalogue.service', 'systemd', 1, `Failed to start catalogue.service - ${description}.`, 3);
+  sd.boot = 2;
+  sd.services.nginx = { ...sd.services.nginx, state: 'inactive', active: false, since: night(40) };
+  sd.services.catalogue = { ...sd.services.catalogue, state: 'failed', since: night(45) };
+  sd.clock = Date.UTC(2026, 9, 19, 8, 30, 0);
   return sd;
 }
 
-const sd = (j: Jeu) => systemd(j)!;
-const tourne = (j: Jeu, nom: string) => sd(j).services[nom].etat === 'active';
-const logsOuverts = (j: Jeu) => j.peut(j.trouver(LOGS)!, 'w', 'nobody');
+const sd = (j: Game) => systemd(j)!;
+const running = (j: Game, name: string) => sd(j).services[name].state === 'active';
+const openLogs = (j: Game) => j.can(j.find(LOGS)!, 'w', 'nobody');
 
-export const redemarrage: Chapitre = {
+export const reboot: Chapter = {
   id: 'redemarrage',
-  numero: 3,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'ps', 'systemctl', 'journalctl', 'chown', 'chmod', 'nano', 'sudo', 'reboot', 'whoami'],
-  maison: M,
-  accueil: 'courriel_awa.txt',
-  noms: true,
+  number: 3,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'ps', 'systemctl', 'journalctl', 'chown', 'chmod', 'nano', 'sudo', 'reboot', 'whoami'],
+  home: M,
+  welcome: 'courriel_awa.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'bienvenue-2026',
-  comptes: () => {
-    const c = comptesDatacenter();
-    c.groupes.adm.membres.push('malo');
+  password: 'bienvenue-2026',
+  accounts: () => {
+    const c = datacenterAccounts();
+    c.groups.adm.members.push('malo');
     return c;
   },
-  etat: (t) => ({ systemd: histoireDuServeur(t('premier-jour-service-catalogue')), processus: [{ pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' }] }),
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
+  state: (t) => ({ systemd: serverStory(t('premier-jour-service-catalogue')), processus: [{ pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' }] }),
+  createWorld: (t) => {
+    const root = { owner: 'root' };
     return d(
       {
-        etc: d(fichiersComptes(), undefined, racine),
-        home: d({ vous: d({ 'courriel_awa.txt': f(t('redemarrage-courriel-awa')), 'notes_awa.txt': f(t('redemarrage-notes-awa')) }) }, undefined, racine),
+        etc: d(accountsFiles(), undefined, root),
+        home: d({ vous: d({ 'courriel_awa.txt': f(t('redemarrage-courriel-awa')), 'notes_awa.txt': f(t('redemarrage-notes-awa')) }) }, undefined, root),
         var: d(
           {
             log: d(
               {
                 // Après le « chown -R root: » de vendredi : php-fpm (www-data) ne peut plus y écrire.
-                catalogue: d({ 'error.log': f('', { lignes: true, proprio: 'root' }) }, undefined, racine),
+                catalogue: d({ 'error.log': f('', { lines: true, owner: 'root' }) }, undefined, root),
                 nginx: d(
-                  { 'access.log': f(JOURNAL_NGINX, { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }) },
+                  { 'access.log': f(NGINX_LOG, { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }) },
                   undefined,
-                  { proprio: 'root', groupe: 'adm' },
+                  { owner: 'root', group: 'adm' },
                 ),
               },
               undefined,
-              racine,
+              root,
             ),
           },
           undefined,
-          racine,
+          root,
         ),
       },
       undefined,
-      racine,
+      root,
     );
   },
-  evenements: [
+  events: [
     {
       id: 'logs-ouverts',
-      condition: logsOuverts,
+      condition: openLogs,
       message: (j) => j.t('redemarrage-evenement-logs-ouverts', { logs: LOGS }),
     },
     {
       id: 'nginx',
-      condition: (j) => tourne(j, 'nginx'),
+      condition: (j) => running(j, 'nginx'),
       message: (j) => j.t(sd(j).services.nginx.active ? 'redemarrage-evenement-nginx-active' : 'redemarrage-evenement-nginx'),
     },
     {
       id: 'catalogue',
-      condition: (j) => tourne(j, 'catalogue'),
+      condition: (j) => running(j, 'catalogue'),
       message: (j) => j.t('redemarrage-evenement-catalogue'),
     },
     {
       id: 'oubli',
-      condition: (j) => sd(j).demarrage > 2 && !tourne(j, 'nginx'),
+      condition: (j) => sd(j).boot > 2 && !running(j, 'nginx'),
       message: (j) => j.t('redemarrage-evenement-oubli'),
     },
     {
       id: 'fin',
       condition: (j) =>
-        sd(j).demarrage > 2 &&
-        sd(j).verifieApresDemarrage === true &&
-        !sd(j).demarreALaMain &&
-        tourne(j, 'nginx') &&
-        tourne(j, 'catalogue') &&
-        !logsOuverts(j),
+        sd(j).boot > 2 &&
+        sd(j).checkedAfterBoot === true &&
+        !sd(j).mainAStarted &&
+        running(j, 'nginx') &&
+        running(j, 'catalogue') &&
+        !openLogs(j),
       message: (j) => j.t('redemarrage-evenement-fin'),
     },
   ],

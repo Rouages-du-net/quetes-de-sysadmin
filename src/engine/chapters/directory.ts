@@ -16,69 +16,69 @@
 // https://manpages.debian.org/trixie/ldap-utils/ldapmodify.1.en.html,
 // https://wiki.debian.org/LDAP/OpenLDAPSetup
 
-import { d, f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { annuaire, enClair, hacherAvecSel, normaliser, trouver, type Annuaire, type Entree } from '../ldap';
+import { d, f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { directory, inClear, hashWithSalt, normalise, find, type Directory, type Input } from '../ldap';
 import { serviceWg } from '../commands/wireguard';
-import { monterWg } from '../wireguard';
+import { mountWg } from '../wireguard';
 import { systemd } from '../systemd';
 import { FLUX_DMZ } from './dmz';
-import { ANNEXE, PORTABLE_MALIK, WG0_ANNEXE } from './annex';
+import { ANNEX, MALIK_LAPTOP, ANNEX_WG0 } from './annex';
 import { MALIK } from './remote-work';
 import {
-  comptesRuche,
+  hiveAccounts,
   DNSMASQ_VLAN,
-  initialiserPareFeu,
+  initialiseFirewall,
   INTERFACES_DMZ,
-  lanAvecDmz,
+  lanWithDmz,
   M,
-  mondeRuche,
-  MOT_DE_PASSE,
+  hiveWorld,
+  PASSWORD,
   NFTABLES_DMZ,
-  SYSCTL_ROUTEUR,
-  systemdRuche,
-  planRuche,
+  ROUTER_SYSCTL,
+  hiveSystemd,
+  hivePlan,
 } from './hive';
 
 export const BASE = 'dc=thehive,dc=example';
 export const ADMIN = `cn=admin,${BASE}`;
 export const MDP_ADMIN = 'rayon-de-miel';
-export const BUREAUX = `cn=bureaux,ou=groups,${BASE}`;
+export const OFFICES = `cn=bureaux,ou=groups,${BASE}`;
 
-const personne = (uid: string, prenom: string, nom: string, numero: number, mdp: string, sel: string): Entree => ({
+const person = (uid: string, firstName: string, name: string, number: number, mdp: string, salt: string): Input => ({
   dn: `uid=${uid},ou=people,${BASE}`,
   attrs: {
     objectclass: ['inetOrgPerson', 'posixAccount'],
     uid: [uid],
-    cn: [`${prenom} ${nom}`],
-    sn: [nom],
-    givenname: [prenom],
+    cn: [`${firstName} ${name}`],
+    sn: [name],
+    givenname: [firstName],
     mail: [`${uid}@thehive.example`],
-    uidnumber: [String(numero)],
+    uidnumber: [String(number)],
     gidnumber: ['10000'],
     homedirectory: [`/home/${uid}`],
     loginshell: ['/bin/bash'],
-    userpassword: [hacherAvecSel(mdp, sel)],
+    userpassword: [hashWithSalt(mdp, salt)],
   },
 });
 
 /** L'annuaire de La Ruche, tel que Sacha l'a laissé. */
-export function annuaireDeDepart(): Annuaire {
+export function departureDirectory(): Directory {
   return {
     base: BASE,
     admin: ADMIN,
-    entrees: [
+    inputs: [
       { dn: BASE, attrs: { objectclass: ['top', 'dcObject', 'organization'], o: ['La Ruche'], dc: ['thehive'] } },
       { dn: `ou=people,${BASE}`, attrs: { objectclass: ['organizationalUnit'], ou: ['people'] } },
       { dn: `ou=groups,${BASE}`, attrs: { objectclass: ['organizationalUnit'], ou: ['groups'] } },
-      personne('malik', 'Malik', 'Ferrand', 10001, 'ruche-malik-2027', 'Ab12Cd34'),
-      personne('ines', 'Ines', 'Morel', 10002, 'ruche-ines-2027', 'Ef56Gh78'),
-      personne('camille', 'Camille', 'Roux', 10003, 'ruche-camille-2026', 'Ij90Kl12'),
+      person('malik', 'Malik', 'Ferrand', 10001, 'ruche-malik-2027', 'Ab12Cd34'),
+      person('ines', 'Ines', 'Morel', 10002, 'ruche-ines-2027', 'Ef56Gh78'),
+      person('camille', 'Camille', 'Roux', 10003, 'ruche-camille-2026', 'Ij90Kl12'),
       {
         dn: `cn=equipe,ou=groups,${BASE}`,
         attrs: { objectclass: ['posixGroup'], cn: ['equipe'], gidnumber: ['10000'], memberuid: ['malik', 'ines', 'camille'] },
       },
-      { dn: BUREAUX, attrs: { objectclass: ['posixGroup'], cn: ['bureaux'], gidnumber: ['10010'], memberuid: ['malik', 'ines', 'camille'] } },
+      { dn: OFFICES, attrs: { objectclass: ['posixGroup'], cn: ['bureaux'], gidnumber: ['10010'], memberuid: ['malik', 'ines', 'camille'] } },
     ],
   };
 }
@@ -95,7 +95,7 @@ URI	ldap://localhost
 
 TLS_CACERT	/etc/ssl/certs/ca-certificates.crt`;
 
-const MODELE_INES = `# The entry for Ines (Sacha, 2026)
+const INES_TEMPLATE = `# The entry for Ines (Sacha, 2026)
 dn: uid=ines,ou=people,${BASE}
 objectClass: inetOrgPerson
 objectClass: posixAccount
@@ -112,32 +112,32 @@ userPassword: ruche-ines-2027`;
 
 // ——— L'état de l'annuaire ———
 
-const personnes = (a: Annuaire) => a.entrees.filter((e) => (e.attrs.objectclass ?? []).some((c) => c.toLowerCase() === 'posixaccount'));
-const sami = (a: Annuaire) =>
-  a.entrees.find((e) => (e.attrs.uid ?? []).includes('sami') && normaliser(e.dn).endsWith(normaliser(`ou=people,${BASE}`)));
-const membres = (a: Annuaire, groupe: string) => trouver(a, groupe)?.attrs.memberuid ?? [];
-const traceDeCamille = (a: Annuaire) =>
-  a.entrees.some((e) => (e.attrs.uid ?? []).includes('camille') || (e.attrs.memberuid ?? []).includes('camille'));
-const uidDouble = (a: Annuaire) => {
-  const n = personnes(a).map((e) => e.attrs.uidnumber?.[0]);
+const people = (a: Directory) => a.inputs.filter((e) => (e.attrs.objectclass ?? []).some((c) => c.toLowerCase() === 'posixaccount'));
+const sami = (a: Directory) =>
+  a.inputs.find((e) => (e.attrs.uid ?? []).includes('sami') && normalise(e.dn).endsWith(normalise(`ou=people,${BASE}`)));
+const members = (a: Directory, group: string) => find(a, group)?.attrs.memberuid ?? [];
+const camilleTrace = (a: Directory) =>
+  a.inputs.some((e) => (e.attrs.uid ?? []).includes('camille') || (e.attrs.memberuid ?? []).includes('camille'));
+const uidDouble = (a: Directory) => {
+  const n = people(a).map((e) => e.attrs.uidnumber?.[0]);
   return n.some((x, i) => n.indexOf(x) !== i);
 };
-const motsEnClair = (a: Annuaire) => a.entrees.some((e) => (e.attrs.userpassword ?? []).some(enClair));
-const samiComplet = (a: Annuaire) => {
+const wordsInClear = (a: Directory) => a.inputs.some((e) => (e.attrs.userpassword ?? []).some(inClear));
+const completeSami = (a: Directory) => {
   const e = sami(a);
   const classes = (e?.attrs.objectclass ?? []).map((c) => c.toLowerCase());
   return !!e && classes.includes('inetorgperson') && classes.includes('posixaccount') && (e.attrs.userpassword ?? []).length > 0;
 };
 
-const fini = (j: Jeu) => {
-  const a = annuaire(j)!;
+const finished = (j: Game) => {
+  const a = directory(j)!;
   return (
-    systemd(j)?.services.slapd?.etat === 'active' &&
-    !traceDeCamille(a) &&
-    samiComplet(a) &&
+    systemd(j)?.services.slapd?.state === 'active' &&
+    !camilleTrace(a) &&
+    completeSami(a) &&
     !uidDouble(a) &&
-    !motsEnClair(a) &&
-    membres(a, BUREAUX).includes('sami')
+    !wordsInClear(a) &&
+    members(a, OFFICES).includes('sami')
   );
 };
 
@@ -149,19 +149,19 @@ export const serviceSlapd = () => ({
   processus: [
     {
       pid: 980,
-      utilisateur: 'openldap',
+      user: 'openldap',
       cpu: 0,
       mem: 0.4,
-      commande: '/usr/sbin/slapd -h ldap:/// ldapi:/// -g openldap -u openldap -F /etc/ldap/slapd.d',
+      command: '/usr/sbin/slapd -h ldap:/// ldapi:/// -g openldap -u openldap -F /etc/ldap/slapd.d',
     },
   ],
 });
 
-export const annuaireChapitre: Chapitre = {
+export const chapterDirectory: Chapter = {
   id: 'annuaire',
-  numero: 7,
-  plan: planRuche({ teletravail: true, dmz: true, annexe: true, annuaire: true }),
-  commandes: [
+  number: 7,
+  plan: hivePlan({ remoteWork: true, dmz: true, annex: true, directory: true }),
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -189,70 +189,70 @@ export const annuaireChapitre: Chapitre = {
     'slappasswd',
     'slapcat',
   ],
-  maison: M,
-  accueil: 'courriel_malik.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_malik.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: () => {
-    const c = comptesRuche();
-    c.utilisateurs.openldap = { uid: 112, groupe: 'openldap', maison: '/var/lib/ldap', shell: '/bin/false' };
-    c.groupes.openldap = { gid: 118, membres: [] };
+  password: PASSWORD,
+  accounts: () => {
+    const c = hiveAccounts();
+    c.users.openldap = { uid: 112, group: 'openldap', home: '/var/lib/ldap', shell: '/bin/false' };
+    c.groups.openldap = { gid: 118, members: [] };
     return c;
   },
-  etat: () => {
-    const sd = systemdRuche({ 'wg-quick@wg0': serviceWg('wg0'), slapd: serviceSlapd() });
-    for (const nom of ['nftables', 'wg-quick@wg0']) Object.assign(sd.services[nom], { active: true, etat: 'active' });
-    const l = lanAvecDmz();
+  state: () => {
+    const sd = hiveSystemd({ 'wg-quick@wg0': serviceWg('wg0'), slapd: serviceSlapd() });
+    for (const name of ['nftables', 'wg-quick@wg0']) Object.assign(sd.services[name], { active: true, state: 'active' });
+    const l = lanWithDmz();
     return {
-      lan: { ...l, flux: FLUX_DMZ.map(({ permis: _, ...x }) => x), distants: [MALIK, ANNEXE] },
+      lan: { ...l, flux: FLUX_DMZ.map(({ permitted: _, ...x }) => x), remotes: [MALIK, ANNEX] },
       systemd: sd,
       nft: { tables: [] },
       wg: {},
-      ldap: annuaireDeDepart(),
+      ldap: departureDirectory(),
       ldapAdmin: MDP_ADMIN,
     };
   },
-  initialiser: (j) => {
-    initialiserPareFeu(j);
-    monterWg(j, 'wg0', true);
+  initialise: (j) => {
+    initialiseFirewall(j);
+    mountWg(j, 'wg0', true);
   },
-  creerMonde: (t) =>
-    mondeRuche({
+  createWorld: (t) =>
+    hiveWorld({
       interfaces: INTERFACES_DMZ,
       dnsmasq: DNSMASQ_VLAN,
       nftables: NFTABLES_DMZ,
-      sysctl: SYSCTL_ROUTEUR,
+      sysctl: ROUTER_SYSCTL,
       etc: {
-        wireguard: d({ 'wg0.conf': f(WG0_ANNEXE, { lignes: true, proprio: 'root', mode: 'rw-------' }) }, undefined, {
-          proprio: 'root',
+        wireguard: d({ 'wg0.conf': f(ANNEX_WG0, { lines: true, owner: 'root', mode: 'rw-------' }) }, undefined, {
+          owner: 'root',
           mode: 'rwx------',
         }),
-        ldap: d({ 'ldap.conf': f(LDAP_CONF, { lignes: true, proprio: 'root' }) }, undefined, { proprio: 'root' }),
+        ldap: d({ 'ldap.conf': f(LDAP_CONF, { lines: true, owner: 'root' }) }, undefined, { owner: 'root' }),
       },
-      maison: {
+      home: {
         'courriel_malik.txt': f(t('annuaire-courriel-malik', { admin: ADMIN, motdepasse: MDP_ADMIN })),
-        'modele-ines.ldif': f(MODELE_INES, { lignes: true }),
-        'malik-laptop.conf': f(PORTABLE_MALIK, { lignes: true }),
+        'modele-ines.ldif': f(INES_TEMPLATE, { lines: true }),
+        'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },
     }),
-  evenements: [
-    { id: 'clair', condition: (j) => motsEnClair(annuaire(j)!), message: (j) => j.t('annuaire-evenement-clair') },
-    { id: 'uid-double', condition: (j) => uidDouble(annuaire(j)!), message: (j) => j.t('annuaire-evenement-uid-double') },
+  events: [
+    { id: 'clair', condition: (j) => wordsInClear(directory(j)!), message: (j) => j.t('annuaire-evenement-clair') },
+    { id: 'uid-double', condition: (j) => uidDouble(directory(j)!), message: (j) => j.t('annuaire-evenement-uid-double') },
     {
       id: 'camille-reste',
       condition: (j) => {
-        const a = annuaire(j)!;
-        return !trouver(a, `uid=camille,ou=people,${BASE}`) && traceDeCamille(a);
+        const a = directory(j)!;
+        return !find(a, `uid=camille,ou=people,${BASE}`) && camilleTrace(a);
       },
       message: (j) => j.t('annuaire-evenement-camille-reste'),
     },
     {
       id: 'sami-seul',
-      condition: (j) => samiComplet(annuaire(j)!) && !membres(annuaire(j)!, BUREAUX).includes('sami'),
+      condition: (j) => completeSami(directory(j)!) && !members(directory(j)!, OFFICES).includes('sami'),
       message: (j) => j.t('annuaire-evenement-sami-seul'),
     },
-    { id: 'arrete', condition: (j) => systemd(j)?.services.slapd?.etat !== 'active', message: (j) => j.t('annuaire-evenement-arrete') },
-    { id: 'fin', condition: fini, message: (j) => j.t('annuaire-evenement-fin') },
+    { id: 'arrete', condition: (j) => systemd(j)?.services.slapd?.state !== 'active', message: (j) => j.t('annuaire-evenement-arrete') },
+    { id: 'fin', condition: finished, message: (j) => j.t('annuaire-evenement-fin') },
   ],
 };

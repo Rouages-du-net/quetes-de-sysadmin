@@ -17,11 +17,11 @@
 // Sources : https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header,
 // https://expressjs.com/en/guide/behind-proxies.html
 
-import { f, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { chargerNginx } from '../nginx';
-import { comptesCooperative, M, mondeCooperative, MOT_DE_PASSE } from './coop';
-import { till, CLE_NOUVELLE, envCaisse, etatCaisse, mondeCaisse, NGINX_BINAIRE, nginxCooperative, systemdCaisse, visite } from './till-web';
+import { f, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { loadNginx } from '../nginx';
+import { cooperativeAccounts, M, cooperativeWorld, PASSWORD } from './coop';
+import { till, NEW_KEY, tillEnv, tillState, tillWorld, BINARY_NGINX, nginxCooperative, tillSystemd, visit } from './till-web';
 
 const ROBOT = '198.51.100.66';
 const LINA = '192.0.2.44';
@@ -49,7 +49,7 @@ const SITE = `server {
 
 const robot = (n: number) =>
   `${ROBOT} - - [19/Oct/2027:07:5${Math.floor(n / 10)}:${String((n % 10) * 6).padStart(2, '0')} +0200] "POST /till/connexion HTTP/1.1" ${n < 5 ? 401 : 429} 41 "-" "python-requests/2.32.3"`;
-const ACCES = [
+const ACCESS = [
   ...Array.from({ length: 12 }, (_, n) => robot(n)),
   `${LINA} - - [19/Oct/2027:08:58:30 +0200] "GET /till/ HTTP/1.1" 200 95 "-" "Mozilla/5.0 (X11; Linux x86_64)"`,
   `${LINA} - - [19/Oct/2027:08:58:44 +0200] "POST /till/connexion HTTP/1.1" 429 52 "-" "Mozilla/5.0 (X11; Linux x86_64)"`,
@@ -65,27 +65,27 @@ const APP_LOG = [
 ].join('\n');
 
 // Cinq minutes de trafic : le robot (un faux X-Forwarded-For à chaque essai), puis Lina.
-function simuler(j: Jeu) {
+function simulate(j: Game) {
   const c = till(j);
-  if (!c || !j.etat.nginx?.charge) return;
+  if (!c || !j.state.nginx?.load) return;
   for (let n = 0; n < 8; n++)
-    visite(j, '/till/connexion', {
-      adresse: ROBOT,
-      methode: 'POST',
+    visit(j, '/till/connexion', {
+      address: ROBOT,
+      method: 'POST',
       agent: 'python-requests/2.32.3',
-      entetes: { 'x-forwarded-for': `10.${n + 1}.${n * 7}.${n + 3}`, 'x-compte': 'admin', 'x-mot-de-passe': `essai${n}` },
+      headers: { 'x-forwarded-for': `10.${n + 1}.${n * 7}.${n + 3}`, 'x-compte': 'admin', 'x-mot-de-passe': `essai${n}` },
     });
-  const r = visite(j, '/till/connexion', { adresse: LINA, methode: 'POST', entetes: { 'x-compte': 'lina', 'x-mot-de-passe': 'bon' } });
-  j.etat.simulation = { lina: r?.code === 200, robotVerrouille: c.bannis.includes(ROBOT), bannis: [...c.bannis] };
+  const r = visit(j, '/till/connexion', { address: LINA, method: 'POST', headers: { 'x-compte': 'lina', 'x-mot-de-passe': 'bon' } });
+  j.state.simulation = { lina: r?.code === 200, lockedRobot: c.banned.includes(ROBOT), banned: [...c.banned] };
 }
 
-type Simulation = { lina: boolean; robotVerrouille: boolean; bannis: string[] } | undefined;
-const sim = (j: Jeu) => j.etat.simulation as Simulation;
+type Simulation = { lina: boolean; lockedRobot: boolean; banned: string[] } | undefined;
+const sim = (j: Game) => j.state.simulation as Simulation;
 
-export const proxy: Chapitre = {
+export const proxy: Chapter = {
   id: 'proxy',
-  numero: 4,
-  commandes: [
+  number: 4,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -107,40 +107,40 @@ export const proxy: Chapitre = {
     'nginx',
     'curl',
   ],
-  maison: M,
-  accueil: 'courriel_awa.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_awa.txt',
+  names: true,
   final: 'fin',
-  motDePasse: MOT_DE_PASSE,
-  comptes: () => comptesCooperative(false),
-  etat: () => ({ ...etatCaisse(envCaisse(CLE_NOUVELLE)), systemd: systemdCaisse(simuler, simuler) }),
-  initialiser: (j) => {
-    chargerNginx(j);
+  password: PASSWORD,
+  accounts: () => cooperativeAccounts(false),
+  state: () => ({ ...tillState(tillEnv(NEW_KEY)), systemd: tillSystemd(simulate, simulate) }),
+  initialise: (j) => {
+    loadNginx(j);
     // Ce matin : le robot a fait verrouiller 127.0.0.1, c'est-à-dire tout le monde.
-    till(j).bannis = ['127.0.0.1'];
+    till(j).banned = ['127.0.0.1'];
   },
-  creerMonde: (t) =>
-    mondeCooperative({
-      sansMarc: true,
-      maison: { 'courriel_awa.txt': f(t('proxy-courriel-awa')) },
+  createWorld: (t) =>
+    cooperativeWorld({
+      withoutMarc: true,
+      home: { 'courriel_awa.txt': f(t('proxy-courriel-awa')) },
       etc: nginxCooperative(SITE),
-      sbin: NGINX_BINAIRE,
-      plus: mondeCaisse({ env: envCaisse(CLE_NOUVELLE), envMode: 'rw-------', accesLog: ACCES, appLog: APP_LOG }),
+      sbin: BINARY_NGINX,
+      more: tillWorld({ env: tillEnv(NEW_KEY), envMode: 'rw-------', logAccess: ACCESS, appLog: APP_LOG }),
     }),
-  evenements: [
+  events: [
     {
       id: 'tout-le-monde',
-      condition: (j) => !!sim(j) && !sim(j)!.lina && sim(j)!.bannis.some((b) => b.startsWith('127.')),
+      condition: (j) => !!sim(j) && !sim(j)!.lina && sim(j)!.banned.some((b) => b.startsWith('127.')),
       message: (j) => j.t('proxy-evenement-tout-le-monde'),
     },
     {
       id: 'usurpe',
-      condition: (j) => !!sim(j) && sim(j)!.lina && !sim(j)!.robotVerrouille,
+      condition: (j) => !!sim(j) && sim(j)!.lina && !sim(j)!.lockedRobot,
       message: (j) => j.t('proxy-evenement-usurpe', { robot: ROBOT }),
     },
     {
       id: 'fin',
-      condition: (j) => !!sim(j) && sim(j)!.lina && sim(j)!.robotVerrouille,
+      condition: (j) => !!sim(j) && sim(j)!.lina && sim(j)!.lockedRobot,
       message: (j) => j.t('proxy-evenement-fin', { robot: ROBOT }),
     },
   ],

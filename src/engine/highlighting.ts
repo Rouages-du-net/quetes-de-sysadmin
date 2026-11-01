@@ -9,138 +9,138 @@
 // pour que l'interface puisse la dessiner sous le champ de saisie.
 
 import type { Shell } from './shell';
-import { COMMANDES } from './commands';
+import { COMMANDS } from './commands';
 
-export type Genre = 'commande' | 'inconnue' | 'option' | 'chaine' | 'operateur' | 'chemin' | 'joker' | 'texte';
+export type Kind = 'commande' | 'inconnue' | 'option' | 'chaine' | 'operateur' | 'chemin' | 'joker' | 'texte';
 
-export interface Jeton {
-  texte: string;
-  genre: Genre;
+export interface Token {
+  text: string;
+  kind: Kind;
 }
 
 // Un mot de la ligne : ses morceaux (entre guillemets ou non), sa position.
-interface Mot {
-  morceaux: { texte: string; cite: boolean }[];
+interface Word {
+  chunks: { text: string; city: boolean }[];
   // Le mot tel que le shell le lira (sans les guillemets).
-  valeur: string;
+  value: string;
   op?: '|' | '>' | '>>';
 }
 
 /** La ligne en morceaux : des mots, des opérateurs et des espaces, dans l'ordre. */
-function lexer(ligne: string): (Mot | string)[] {
-  const sortie: (Mot | string)[] = [];
-  let mot: Mot | null = null;
-  let guillemet = '';
-  const finir = () => {
-    if (mot) sortie.push(mot);
-    mot = null;
+function lexer(line: string): (Word | string)[] {
+  const output: (Word | string)[] = [];
+  let word: Word | null = null;
+  let quote = '';
+  const finish = () => {
+    if (word) output.push(word);
+    word = null;
   };
-  const ajouter = (c: string, cite: boolean) => {
-    mot ??= { morceaux: [], valeur: '' };
-    const dernier = mot.morceaux.at(-1);
-    if (dernier && dernier.cite === cite) dernier.texte += c;
-    else mot.morceaux.push({ texte: c, cite });
+  const add = (c: string, city: boolean) => {
+    word ??= { chunks: [], value: '' };
+    const last = word.chunks.at(-1);
+    if (last && last.city === city) last.text += c;
+    else word.chunks.push({ text: c, city });
   };
-  for (let i = 0; i < ligne.length; i++) {
-    const c = ligne[i];
-    if (guillemet) {
-      ajouter(c, true);
-      if (c === guillemet) guillemet = '';
-      else mot!.valeur += c;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quote) {
+      add(c, true);
+      if (c === quote) quote = '';
+      else word!.value += c;
     } else if (c === '"' || c === "'") {
-      guillemet = c;
+      quote = c;
       // Une nouvelle chaîne commence : un morceau à elle.
-      mot ??= { morceaux: [], valeur: '' };
-      mot.morceaux.push({ texte: c, cite: true });
+      word ??= { chunks: [], value: '' };
+      word.chunks.push({ text: c, city: true });
     } else if (/\s/.test(c)) {
-      finir();
-      if (typeof sortie.at(-1) === 'string') sortie[sortie.length - 1] += c;
-      else sortie.push(c);
+      finish();
+      if (typeof output.at(-1) === 'string') output[output.length - 1] += c;
+      else output.push(c);
     } else if (c === '|' || c === '>') {
-      finir();
-      const double = c === '>' && ligne[i + 1] === '>';
+      finish();
+      const double = c === '>' && line[i + 1] === '>';
       if (double) i++;
       const op = double ? '>>' : (c as '|' | '>');
-      sortie.push({ morceaux: [{ texte: op, cite: false }], valeur: op, op });
+      output.push({ chunks: [{ text: op, city: false }], value: op, op });
     } else {
-      ajouter(c, false);
-      mot!.valeur += c;
+      add(c, false);
+      word!.value += c;
     }
   }
-  finir();
-  return sortie;
+  finish();
+  return output;
 }
 
 /** La commande existe-t-elle ici (le shell la lancerait-il) ? */
-function existe(sh: Shell, nom: string): boolean {
-  if (!nom) return false;
-  if (nom.includes('/')) {
+function exists(sh: Shell, name: string): boolean {
+  if (!name) return false;
+  if (name.includes('/')) {
     // /usr/bin/ls : le chemin complet d'une commande du jeu.
-    const seul = nom.split('/').at(-1)!;
-    if (/^\/(usr\/)?s?bin\/[\w.-]+$/.test(nom) && COMMANDES[seul] && !COMMANDES[seul].dossier) return sh.connues().includes(seul);
-    if (COMMANDES[seul]?.dossier && nom === `${COMMANDES[seul].dossier}/${seul}`) return sh.connues().includes(seul);
+    const only = name.split('/').at(-1)!;
+    if (/^\/(usr\/)?s?bin\/[\w.-]+$/.test(name) && COMMANDS[only] && !COMMANDS[only].directory) return sh.known().includes(only);
+    if (COMMANDS[only]?.directory && name === `${COMMANDS[only].directory}/${only}`) return sh.known().includes(only);
     // Un script : il faut qu'il existe et qu'on puisse le lancer.
-    const n = sh.trouver(nom);
-    return !!n && n.type === 'fichier' && sh.peut(n, 'x');
+    const n = sh.find(name);
+    return !!n && n.type === 'fichier' && sh.can(n, 'x');
   }
-  if (COMMANDES[nom]?.section === 5) return false;
+  if (COMMANDS[name]?.section === 5) return false;
   // !!, !12, !cat : l'historique, que le shell développe avant de lancer la commande.
-  if (/^!(!|-?\d+|[A-Za-z_./])/.test(nom)) return true;
+  if (/^!(!|-?\d+|[A-Za-z_./])/.test(name)) return true;
   // help est intégré au shell (comme aide) : il répond toujours.
-  return nom === 'help' || sh.connues().includes(nom);
+  return name === 'help' || sh.known().includes(name);
 }
 
 /** Un argument qui désigne un fichier ou un dossier existant (comme le soulignement de zsh). */
-function chemin(sh: Shell, valeur: string): boolean {
-  if (!valeur || valeur.startsWith('-')) return false;
+function path(sh: Shell, value: string): boolean {
+  if (!value || value.startsWith('-')) return false;
   try {
-    return sh.trouver(valeur) !== null;
+    return sh.find(value) !== null;
   } catch {
     return false;
   }
 }
 
 /** La ligne découpée en jetons colorés ; leurs textes recollés redonnent la ligne. */
-export function colorer(sh: Shell, ligne: string): Jeton[] {
-  const jetons: Jeton[] = [];
-  const pousser = (texte: string, genre: Genre) => {
-    if (!texte) return;
-    const dernier = jetons.at(-1);
-    if (dernier && dernier.genre === genre) dernier.texte += texte;
-    else jetons.push({ texte, genre });
+export function colourise(sh: Shell, line: string): Token[] {
+  const tokens: Token[] = [];
+  const push = (text: string, kind: Kind) => {
+    if (!text) return;
+    const last = tokens.at(-1);
+    if (last && last.kind === kind) last.text += text;
+    else tokens.push({ text, kind });
   };
   // Où l'on en est dans la commande : on attend son nom, une option de sudo, ou des arguments.
-  let attendu: 'commande' | 'sudo' | 'valeur-sudo' | 'argument' | 'cible' = 'commande';
-  for (const x of lexer(ligne)) {
+  let expected: 'commande' | 'sudo' | 'valeur-sudo' | 'argument' | 'cible' = 'commande';
+  for (const x of lexer(line)) {
     if (typeof x === 'string') {
-      pousser(x, 'texte');
+      push(x, 'texte');
       continue;
     }
     if (x.op) {
-      pousser(x.valeur, 'operateur');
+      push(x.value, 'operateur');
       // Après une redirection vient un fichier ; après un tube, une commande.
-      attendu = x.op === '|' ? 'commande' : 'cible';
+      expected = x.op === '|' ? 'commande' : 'cible';
       continue;
     }
-    let genre: Genre;
-    const nonCite = x.morceaux.every((m) => !m.cite);
-    if (attendu === 'commande' || attendu === 'sudo') {
-      if (attendu === 'sudo' && x.valeur.startsWith('-')) {
-        genre = 'option';
-        if (x.valeur === '-u' || x.valeur === '-g') attendu = 'valeur-sudo';
+    let kind: Kind;
+    const notCity = x.chunks.every((m) => !m.city);
+    if (expected === 'commande' || expected === 'sudo') {
+      if (expected === 'sudo' && x.value.startsWith('-')) {
+        kind = 'option';
+        if (x.value === '-u' || x.value === '-g') expected = 'valeur-sudo';
       } else {
-        genre = existe(sh, x.valeur) ? 'commande' : 'inconnue';
-        attendu = x.valeur === 'sudo' && genre === 'commande' ? 'sudo' : 'argument';
+        kind = exists(sh, x.value) ? 'commande' : 'inconnue';
+        expected = x.value === 'sudo' && kind === 'commande' ? 'sudo' : 'argument';
       }
-    } else if (attendu === 'valeur-sudo') {
-      genre = 'texte';
-      attendu = 'sudo';
-    } else if (nonCite && /^-./.test(x.valeur) && attendu === 'argument') genre = 'option';
-    else if (nonCite && /[*?]/.test(x.valeur)) genre = sh.developper(x.valeur)[0] !== x.valeur ? 'joker' : 'texte';
-    else genre = chemin(sh, x.valeur) ? 'chemin' : 'texte';
-    if (attendu === 'cible') attendu = 'argument';
+    } else if (expected === 'valeur-sudo') {
+      kind = 'texte';
+      expected = 'sudo';
+    } else if (notCity && /^-./.test(x.value) && expected === 'argument') kind = 'option';
+    else if (notCity && /[*?]/.test(x.value)) kind = sh.expand(x.value)[0] !== x.value ? 'joker' : 'texte';
+    else kind = path(sh, x.value) ? 'chemin' : 'texte';
+    if (expected === 'cible') expected = 'argument';
     // Les morceaux entre guillemets restent des chaînes, sauf pour le nom de la commande.
-    for (const m of x.morceaux) pousser(m.texte, m.cite && genre !== 'commande' && genre !== 'inconnue' && genre !== 'chemin' ? 'chaine' : genre);
+    for (const m of x.chunks) push(m.text, m.city && kind !== 'commande' && kind !== 'inconnue' && kind !== 'chemin' ? 'chaine' : kind);
   }
-  return jetons;
+  return tokens;
 }

@@ -1,34 +1,34 @@
 // Chapitre 2 — Le Bourg : grep, rm, touch, cp, mkdir. Notre propre histoire
 // et nos propres énigmes, dans la suite de L'Île du Phare.
 
-import { chemin, d, f, nom, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
+import { path, d, f, name, type Chapter } from '../world';
+import type { Game } from '../shell';
 
 const M = '/Quai';
-const BOULANGERIE = `${M}/Boulangerie`;
-const ATELIER = `${M}/Atelier`;
-const RUELLE = `${M}/Ruelle`;
-const COUR = `${RUELLE}/Cour`;
-const EGOUT = `${COUR}/Egout`;
-const CLASSE = `${M}/Ecole/Classe`;
+const BAKERY = `${M}/Boulangerie`;
+const WORKSHOP = `${M}/Atelier`;
+const ALLEY = `${M}/Ruelle`;
+const YARD = `${ALLEY}/Cour`;
+const SEWER = `${YARD}/Egout`;
+const CLASS = `${M}/Ecole/Classe`;
 
 // Les engrenages de l'Atelier (engrenage, engrenage_2…), sous leur nom dans la langue.
-const engrenages = (j: Jeu) => j.compter(chemin(j.t, ATELIER), nom(j.t, 'engrenage'));
+const engrenages = (j: Game) => j.count(path(j.t, WORKSHOP), name(j.t, 'engrenage'));
 
 // Un avis : une phrase par ligne (grep les lit ligne par ligne).
-const affiche = (texte: string) => f(texte, { lignes: true });
+const shows = (text: string) => f(text, { lines: true });
 
-export const bourg: Chapitre = {
+export const village: Chapter = {
   id: 'bourg',
-  numero: 2,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv', 'grep', 'rm', 'touch', 'cp', 'mkdir'],
-  maison: M,
-  noms: true,
-  accueil: 'crieur.txt',
+  number: 2,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv', 'grep', 'rm', 'touch', 'cp', 'mkdir'],
+  home: M,
+  names: true,
+  welcome: 'crieur.txt',
   final: 'nour',
   // Dans le jeu : le levain, les engrenages, la barricade, les rats, puis Nour et sa Classe.
-  etapes: ['levain', 'engrenage', 'engrenages', 'barricade', 'rats', 'nour-sans-classe', 'classe', 'nour'],
-  creerMonde: (t) =>
+  steps: ['levain', 'engrenage', 'engrenages', 'barricade', 'rats', 'nour-sans-classe', 'classe', 'nour'],
+  createWorld: (t) =>
     d({
       Quai: d({
         'crieur.txt': f(t('bourg-crieur')),
@@ -38,13 +38,13 @@ export const bourg: Chapitre = {
           'pomme': f(t('bourg-pomme')),
           'pomme_2': f(t('bourg-pomme-2')),
           'fromage': f(t('bourg-fromage'), {
-            protege: { rm: t('bourg-fromage-protege-rm') },
+            isProtected: { rm: t('bourg-fromage-protege-rm') },
           }),
         }),
         Boulangerie: d({
           'boulanger.txt': f(t('bourg-boulanger')),
           'levain': f(t('bourg-levain'), {
-            protege: { rm: t('bourg-levain-protege-rm') },
+            isProtected: { rm: t('bourg-levain-protege-rm') },
           }),
         }),
         Atelier: d({
@@ -55,29 +55,29 @@ export const bourg: Chapitre = {
         }),
         Mairie: d({
           'greffiere.txt': f(t('bourg-greffiere')),
-          'avis_bal.txt': affiche(t('bourg-avis-bal')),
-          'avis_chat.txt': affiche(t('bourg-avis-chat')),
-          'avis_egouts.txt': affiche(t('bourg-avis-egouts')),
-          'avis_marche.txt': affiche(t('bourg-avis-marche')),
-          'avis_horloge.txt': affiche(t('bourg-avis-horloge')),
+          'avis_bal.txt': shows(t('bourg-avis-bal')),
+          'avis_chat.txt': shows(t('bourg-avis-chat')),
+          'avis_egouts.txt': shows(t('bourg-avis-egouts')),
+          'avis_marche.txt': shows(t('bourg-avis-marche')),
+          'avis_horloge.txt': shows(t('bourg-avis-horloge')),
           '.paillasson': f(t('bourg-paillasson'), {
-            lu: (j) => {
-              j.drapeaux.add('cle-archives');
+            read: (j) => {
+              j.flags.add('cle-archives');
               return j.t('bourg-paillasson-lu');
             },
           }),
           Archives: d(
             {
               'archiviste.txt': f(t('bourg-archiviste')),
-              'chronique.txt': f(t('bourg-chronique'), { lignes: true }),
+              'chronique.txt': f(t('bourg-chronique'), { lines: true }),
             },
-            (jeu) => (jeu.drapeaux.has('cle-archives') ? null : jeu.t('bourg-archives-bloque')),
+            (game) => (game.flags.has('cle-archives') ? null : game.t('bourg-archives-bloque')),
           ),
         }),
         Ruelle: d(
           {
             'barricade': f(t('bourg-barricade'), {
-              protege: { mv: t('bourg-barricade-protege-mv') },
+              isProtected: { mv: t('bourg-barricade-protege-mv') },
             }),
             Cour: d(
               {
@@ -88,28 +88,28 @@ export const bourg: Chapitre = {
                     Galerie: d(
                       {
                         'nour.txt': f(t('bourg-nour'), {
-                          lu: (j) => {
-                            j.drapeaux.add('nour-lue');
+                          read: (j) => {
+                            j.flags.add('nour-lue');
                           },
                         }),
                       },
-                      (jeu) => (jeu.existe(chemin(jeu.t, `${EGOUT}/rats.txt`)) ? jeu.t('bourg-galerie-bloque') : null),
+                      (game) => (game.exists(path(game.t, `${SEWER}/rats.txt`)) ? game.t('bourg-galerie-bloque') : null),
                     ),
                   },
                 ),
               },
-              (jeu) => (jeu.existe(chemin(jeu.t, `${RUELLE}/barricade`)) ? jeu.t('bourg-cour-bloque') : null),
+              (game) => (game.exists(path(game.t, `${ALLEY}/barricade`)) ? game.t('bourg-cour-bloque') : null),
             ),
           },
-          (jeu) =>
-            engrenages(jeu) >= 5 ? null : jeu.t('bourg-ruelle-bloque'),
+          (game) =>
+            engrenages(game) >= 5 ? null : game.t('bourg-ruelle-bloque'),
         ),
       }),
     }),
-  evenements: [
+  events: [
     {
       id: 'levain',
-      condition: (j) => j.compter(chemin(j.t, BOULANGERIE), nom(j.t, 'levain')) >= 3,
+      condition: (j) => j.count(path(j.t, BAKERY), name(j.t, 'levain')) >= 3,
       message: (j) => j.t('bourg-evenement-levain'),
     },
     {
@@ -124,34 +124,34 @@ export const bourg: Chapitre = {
     },
     {
       id: 'classe',
-      condition: (j) => j.trouver(chemin(j.t, CLASSE))?.type === 'dossier',
+      condition: (j) => j.find(path(j.t, CLASS))?.type === 'dossier',
       message: (j) =>
-        j.drapeaux.has('nour-lue')
+        j.flags.has('nour-lue')
           ? j.t('bourg-evenement-classe')
           : j.t('bourg-evenement-classe-sans-nour'),
     },
     {
       id: 'barricade',
-      condition: (j) => !j.existe(chemin(j.t, `${RUELLE}/barricade`)),
+      condition: (j) => !j.exists(path(j.t, `${ALLEY}/barricade`)),
       message: (j) => j.t('bourg-evenement-barricade'),
     },
     {
       id: 'rats',
-      condition: (j) => j.existe(chemin(j.t, `${EGOUT}/fromage`)),
+      condition: (j) => j.exists(path(j.t, `${SEWER}/fromage`)),
       action: (j) => {
-        j.effacer(chemin(j.t, `${EGOUT}/rats.txt`));
-        j.effacer(chemin(j.t, `${EGOUT}/fromage`));
+        j.erase(path(j.t, `${SEWER}/rats.txt`));
+        j.erase(path(j.t, `${SEWER}/fromage`));
       },
       message: (j) => j.t('bourg-evenement-rats'),
     },
     {
       id: 'nour-sans-classe',
-      condition: (j) => j.drapeaux.has('nour-lue') && j.trouver(chemin(j.t, CLASSE))?.type !== 'dossier',
+      condition: (j) => j.flags.has('nour-lue') && j.find(path(j.t, CLASS))?.type !== 'dossier',
       message: (j) => j.t('bourg-evenement-nour-sans-classe'),
     },
     {
       id: 'nour',
-      condition: (j) => j.drapeaux.has('nour-lue') && j.trouver(chemin(j.t, CLASSE))?.type === 'dossier',
+      condition: (j) => j.flags.has('nour-lue') && j.find(path(j.t, CLASS))?.type === 'dossier',
       message: (j) => j.t('bourg-evenement-nour'),
     },
   ],

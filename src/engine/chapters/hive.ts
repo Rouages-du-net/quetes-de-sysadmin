@@ -5,53 +5,53 @@
 // VLAN sur le commutateur (port 1 : trunk 802.1Q vers le routeur) ; le
 // routeur, lui, n'a pas suivi. Ce que les chapitres ont en commun.
 
-import { d, f, fichiersComptes, type Comptes, type Dossier, type Noeud } from '../world';
-import { nomMachine } from '../machines';
-import type { Jeu } from '../shell';
-import { creer, demarrerReseau, type Appareil, type Lan } from '../lan';
-import { demarrerDnsmasq, lireDnsmasq } from '../dnsmasq';
-import { nouveauSystemd, type DefinitionService } from '../systemd';
-import { journaliserTrafic, lireConf } from '../nftables';
-import { appliquerSysctl } from '../commands/nftables';
+import { d, f, accountsFiles, type Accounts, type Directory, type Node } from '../world';
+import { machineName } from '../machines';
+import type { Game } from '../shell';
+import { create, startNetwork, type Device, type Lan } from '../lan';
+import { startDnsmasq, readDnsmasq } from '../dnsmasq';
+import { newSystemd, type DefinitionService } from '../systemd';
+import { logTraffic, readConf } from '../nftables';
+import { applySysctl } from '../commands/nftables';
 import { internet, type ElementPlan } from '../plan';
-import type { Traduire } from '../../texts';
+import type { Translate } from '../../texts';
 
 export const M = '/home/vous';
-export const MOT_DE_PASSE = 'abeille-2027';
+export const PASSWORD = 'abeille-2027';
 // Lundi 8 novembre 2027, 8 h 15.
-export const MAINTENANT = Date.UTC(2027, 10, 8, 8, 15, 0);
+export const NOW = Date.UTC(2027, 10, 8, 8, 15, 0);
 
 // Le plan des VLAN (celui de l'électricien) : numéro, nom, réseau, adresse du routeur.
 export const VLANS = [
-  { id: 10, nom: 'bureaux', reseau: '10.10.10.0/24', routeur: '10.10.10.1/24' },
-  { id: 20, nom: 'invites', reseau: '10.10.20.0/24', routeur: '10.10.20.1/24' },
-  { id: 30, nom: 'equipements', reseau: '10.10.30.0/24', routeur: '10.10.30.1/24' },
+  { id: 10, name: 'bureaux', reseau: '10.10.10.0/24', routeur: '10.10.10.1/24' },
+  { id: 20, name: 'invites', reseau: '10.10.20.0/24', routeur: '10.10.20.1/24' },
+  { id: 30, name: 'equipements', reseau: '10.10.30.0/24', routeur: '10.10.30.1/24' },
 ];
 
 // Les appareils branchés au commutateur (adresses MAC de documentation, RFC 7042).
-export const appareils = (imprimanteEnDhcp: boolean): Appareil[] => [
-  { nom: 'nas', mac: '00:00:5e:00:53:05', vlan: 10, fixe: '10.10.10.5' },
-  { nom: 'poste-malik', mac: '00:00:5e:00:53:10', vlan: 10 },
-  { nom: 'poste-accueil', mac: '00:00:5e:00:53:11', vlan: 10 },
-  { nom: 'telephone-visiteur', mac: '00:00:5e:00:53:20', vlan: 20 },
-  imprimanteEnDhcp
-    ? { nom: 'imprimante', mac: '00:00:5e:00:53:30', vlan: 30 }
-    : { nom: 'imprimante', mac: '00:00:5e:00:53:30', vlan: 30, fixe: '10.10.30.10' },
-  { nom: 'camera-entree', mac: '00:00:5e:00:53:31', vlan: 30, fixe: '10.10.30.11' },
+export const devices = (printerInDhcp: boolean): Device[] => [
+  { name: 'nas', mac: '00:00:5e:00:53:05', vlan: 10, fixed: '10.10.10.5' },
+  { name: 'poste-malik', mac: '00:00:5e:00:53:10', vlan: 10 },
+  { name: 'poste-accueil', mac: '00:00:5e:00:53:11', vlan: 10 },
+  { name: 'telephone-visiteur', mac: '00:00:5e:00:53:20', vlan: 20 },
+  printerInDhcp
+    ? { name: 'imprimante', mac: '00:00:5e:00:53:30', vlan: 30 }
+    : { name: 'imprimante', mac: '00:00:5e:00:53:30', vlan: 30, fixed: '10.10.30.10' },
+  { name: 'camera-entree', mac: '00:00:5e:00:53:31', vlan: 30, fixed: '10.10.30.11' },
 ];
 
-export const comptesRuche = (): Comptes => ({
-  utilisateurs: { root: { uid: 0, groupe: 'root', maison: '/root' }, vous: { uid: 1000, groupe: 'vous' } },
-  groupes: {
-    root: { gid: 0, membres: [] },
-    adm: { gid: 4, membres: ['vous'] },
-    sudo: { gid: 27, membres: ['vous'] },
-    vous: { gid: 1000, membres: [] },
+export const hiveAccounts = (): Accounts => ({
+  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' } },
+  groups: {
+    root: { gid: 0, members: [] },
+    adm: { gid: 4, members: ['vous'] },
+    sudo: { gid: 27, members: ['vous'] },
+    vous: { gid: 1000, members: [] },
   },
 });
 
 // /etc/network/interfaces de Debian ; le LAN est encore un seul réseau à plat.
-export const INTERFACES_A_PLAT = `# This file describes the network interfaces available on your system
+export const FLAT_A_INTERFACES = `# This file describes the network interfaces available on your system
 # and how to activate them. For more information, see interfaces(5).
 
 source /etc/network/interfaces.d/*
@@ -72,8 +72,8 @@ iface eth1 inet static
     address 192.168.1.1/24`;
 
 /** Le même fichier, avec les trois VLAN (la solution du chapitre « Les VLAN »). */
-export const INTERFACES_VLAN = `${INTERFACES_A_PLAT.replace('# LAN: one flat network for everyone\nauto eth1\niface eth1 inet static\n    address 192.168.1.1/24', '# LAN: the trunk to the switch (VLANs 10, 20, 30)\nauto eth1\niface eth1 inet manual')}
-${VLANS.map((v) => `\n# VLAN ${v.id}: ${v.nom}\nauto eth1.${v.id}\niface eth1.${v.id} inet static\n    address ${v.routeur}`).join('\n')}`;
+export const INTERFACES_VLAN = `${FLAT_A_INTERFACES.replace('# LAN: one flat network for everyone\nauto eth1\niface eth1 inet static\n    address 192.168.1.1/24', '# LAN: the trunk to the switch (VLANs 10, 20, 30)\nauto eth1\niface eth1 inet manual')}
+${VLANS.map((v) => `\n# VLAN ${v.id}: ${v.name}\nauto eth1.${v.id}\niface eth1.${v.id} inet static\n    address ${v.routeur}`).join('\n')}`;
 
 /** dnsmasq une fois le chapitre « Le DHCP » fini : une plage par VLAN, l'imprimante réservée. */
 export const DNSMASQ_VLAN = `# The DHCP server of the LAN: one range per VLAN
@@ -136,7 +136,7 @@ const SYSCTL_CONF = `#
 #net.ipv6.conf.all.forwarding=1`;
 
 // Les réglages du noyau que le jeu connaît (/proc/sys), à leur valeur au démarrage.
-export const SYSCTL_DEFAUTS: Record<string, string> = {
+export const DEFAULTS_SYSCTL: Record<string, string> = {
   'kernel.hostname': 'ruche',
   'net.ipv4.conf.all.forwarding': '0',
   'net.ipv4.conf.all.rp_filter': '2',
@@ -148,99 +148,99 @@ export const SYSCTL_DEFAUTS: Record<string, string> = {
 };
 
 // /proc/sys en arborescence (net/ipv4/ip_forward…).
-function procSys(): Dossier {
-  const racineSys: Dossier = d({}, undefined, racine);
-  for (const [cle, v] of Object.entries(SYSCTL_DEFAUTS)) {
-    const morceaux = cle.split('.');
-    let dossier = racineSys;
-    for (const m of morceaux.slice(0, -1)) dossier = (dossier.enfants[m] ??= d({}, undefined, racine)) as Dossier;
-    dossier.enfants[morceaux.at(-1)!] = f(v, { proprio: 'root', mode: 'rw-r--r--' });
+function procSys(): Directory {
+  const sysRoot: Directory = d({}, undefined, root);
+  for (const [key, v] of Object.entries(DEFAULTS_SYSCTL)) {
+    const chunks = key.split('.');
+    let directory = sysRoot;
+    for (const m of chunks.slice(0, -1)) directory = (directory.children[m] ??= d({}, undefined, root)) as Directory;
+    directory.children[chunks.at(-1)!] = f(v, { owner: 'root', mode: 'rw-r--r--' });
   }
-  return racineSys;
+  return sysRoot;
 }
 
 /** L'état du réseau local de départ (reconstruit depuis /etc/network/interfaces au démarrage). */
-export function nouveauLan(imprimanteEnDhcp: boolean): Lan {
+export function newLan(printerInDhcp: boolean): Lan {
   const l: Lan = {
     interfaces: {},
-    passerelle: null,
+    gateway: null,
     trunk: 'eth1',
     vlans: VLANS.map((v) => v.id),
-    appareils: appareils(imprimanteEnDhcp),
-    ordre: [],
+    devices: devices(printerInDhcp),
+    order: [],
   };
-  for (const nom of ['lo', 'eth0', 'eth1']) creer(l, nom);
+  for (const name of ['lo', 'eth0', 'eth1']) create(l, name);
   return l;
 }
 
-const racine = { proprio: 'root' };
-const fichier = (contenu: string, proprio = 'root') => f(contenu, { lignes: true, proprio });
+const root = { owner: 'root' };
+const file = (content: string, owner = 'root') => f(content, { lines: true, owner });
 
 /** Les services : networking (ifup -a), systemd-sysctl, ssh, dnsmasq (le DHCP) et nftables (désactivé, comme sur Debian). */
-export function systemdRuche(services: Record<string, DefinitionService> = {}) {
-  return nouveauSystemd('ruche', MAINTENANT - 40 * 86_400_000, MAINTENANT, {
+export function hiveSystemd(services: Record<string, DefinitionService> = {}) {
+  return newSystemd('ruche', NOW - 40 * 86_400_000, NOW, {
     networking: {
       description: 'Raise network interfaces',
       active: true,
-      resteActif: true,
+      activeRest: true,
       executable: 'ifup',
-      processus: [],
-      charger: (j) => demarrerReseau(j),
+      process: [],
+      load: (j) => startNetwork(j),
     },
     'systemd-sysctl': {
       description: 'Apply Kernel Variables',
       active: true,
       executable: 'systemd-sysctl',
-      resteActif: true,
-      processus: [],
-      charger: (j) => appliquerSysctl(j, SYSCTL_DEFAUTS),
+      activeRest: true,
+      process: [],
+      load: (j) => applySysctl(j, DEFAULTS_SYSCTL),
     },
     ssh: {
       description: 'OpenBSD Secure Shell server',
       active: true,
       executable: 'sshd',
-      processus: [{ pid: 612, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+      process: [{ pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
     },
     dnsmasq: {
       description: 'dnsmasq - A lightweight DHCP and caching DNS server',
       active: true,
       executable: 'dnsmasq',
-      processus: [
+      process: [
         {
           pid: 1450,
-          utilisateur: 'dnsmasq',
+          user: 'dnsmasq',
           cpu: 0,
           mem: 0.1,
-          commande: '/usr/sbin/dnsmasq -x /run/dnsmasq/dnsmasq.pid -u dnsmasq -7 /etc/dnsmasq.d,.dpkg-dist,.dpkg-old,.dpkg-new',
+          command: '/usr/sbin/dnsmasq -x /run/dnsmasq/dnsmasq.pid -u dnsmasq -7 /etc/dnsmasq.d,.dpkg-dist,.dpkg-old,.dpkg-new',
         },
       ],
-      verifier: (j) => {
-        const e = lireDnsmasq(j).erreurs;
+      check: (j) => {
+        const e = readDnsmasq(j).errors;
         return e.length ? [...e, 'FAILED to start up'] : null;
       },
-      verifierAuRechargement: true,
-      charger: (j) => demarrerDnsmasq(j),
+      checkToReload: true,
+      load: (j) => startDnsmasq(j),
     },
     // ExecStart et ExecReload : nft -f /etc/nftables.conf ; ExecStop : nft flush ruleset.
     nftables: {
       description: 'nftables',
       active: false,
-      etat: 'inactive',
+      state: 'inactive',
       executable: 'nft',
-      resteActif: true,
-      processus: [],
-      verifier: (j) => {
-        const { erreur } = lireConf(j);
-        return erreur ? erreur.split('\n') : null;
+      activeRest: true,
+      process: [],
+      check: (j) => {
+        const { error } = readConf(j);
+        return error ? error.split('\n') : null;
       },
-      verifierAuRechargement: true,
-      charger: (j) => {
-        const { ruleset } = lireConf(j);
-        if (ruleset) j.etat.nft = ruleset;
-        journaliserTrafic(j);
+      checkToReload: true,
+      load: (j) => {
+        const { ruleset } = readConf(j);
+        if (ruleset) j.state.nft = ruleset;
+        logTraffic(j);
       },
-      arret: (j) => {
-        j.etat.nft = { tables: [] };
+      stop: (j) => {
+        j.state.nft = { tables: [] };
       },
     },
     ...services,
@@ -248,52 +248,52 @@ export function systemdRuche(services: Record<string, DefinitionService> = {}) {
 }
 
 /** Au début du chapitre : le réseau monté depuis le fichier, puis dnsmasq. */
-export function initialiserRuche(j: Jeu) {
-  demarrerReseau(j);
-  demarrerDnsmasq(j);
+export function initialiseHive(j: Game) {
+  startNetwork(j);
+  startDnsmasq(j);
 }
 
 /** Le monde commun : /etc (comptes, réseau, dnsmasq, nftables, sysctl), la maison de vous, /var/lib/misc, /proc/sys. */
-export function mondeRuche(o: {
+export function hiveWorld(o: {
   interfaces: string;
   dnsmasq: string;
-  maison: Record<string, Noeud>;
+  home: Record<string, Node>;
   nftables?: string;
-  sysctl?: Record<string, Noeud>;
-  etc?: Record<string, Noeud>;
-}): Dossier {
+  sysctl?: Record<string, Node>;
+  etc?: Record<string, Node>;
+}): Directory {
   return d(
     {
       etc: d(
         {
-          ...fichiersComptes(),
-          hostname: fichier('ruche'),
-          network: d({ interfaces: fichier(o.interfaces), 'interfaces.d': d({}, undefined, racine) }, undefined, racine),
-          'dnsmasq.conf': fichier('# Configuration file for dnsmasq.\n#\n# See /etc/dnsmasq.d for the local configuration.'),
-          'dnsmasq.d': d({ hive: fichier(o.dnsmasq) }, undefined, racine),
-          'nftables.conf': f(o.nftables ?? NFTABLES_DEBIAN, { lignes: true, proprio: 'root', mode: 'rwxr-xr-x' }),
-          'sysctl.conf': fichier(SYSCTL_CONF),
+          ...accountsFiles(),
+          hostname: file('ruche'),
+          network: d({ interfaces: file(o.interfaces), 'interfaces.d': d({}, undefined, root) }, undefined, root),
+          'dnsmasq.conf': file('# Configuration file for dnsmasq.\n#\n# See /etc/dnsmasq.d for the local configuration.'),
+          'dnsmasq.d': d({ hive: file(o.dnsmasq) }, undefined, root),
+          'nftables.conf': f(o.nftables ?? NFTABLES_DEBIAN, { lines: true, owner: 'root', mode: 'rwxr-xr-x' }),
+          'sysctl.conf': file(SYSCTL_CONF),
           ...o.etc,
           'sysctl.d': d(
-            { 'README.sysctl': fichier('Files in /etc/sysctl.d/ are read by systemd-sysctl and by sysctl --system.\nSee sysctl.d(5).'), ...o.sysctl },
+            { 'README.sysctl': file('Files in /etc/sysctl.d/ are read by systemd-sysctl and by sysctl --system.\nSee sysctl.d(5).'), ...o.sysctl },
             undefined,
-            racine,
+            root,
           ),
         },
         undefined,
-        racine,
+        root,
       ),
-      home: d({ vous: d(o.maison) }, undefined, racine),
+      home: d({ vous: d(o.home) }, undefined, root),
       var: d(
-        { lib: d({ misc: d({ 'dnsmasq.leases': f('', { lignes: true, proprio: 'dnsmasq' }) }, undefined, racine) }, undefined, racine) },
+        { lib: d({ misc: d({ 'dnsmasq.leases': f('', { lines: true, owner: 'dnsmasq' }) }, undefined, root) }, undefined, root) },
         undefined,
-        racine,
+        root,
       ),
-      tmp: d({}, undefined, { proprio: 'root', mode: 'rwxrwxrwt' }),
-      proc: d({ sys: procSys() }, undefined, racine),
+      tmp: d({}, undefined, { owner: 'root', mode: 'rwxrwxrwt' }),
+      proc: d({ sys: procSys() }, undefined, root),
     },
     undefined,
-    racine,
+    root,
   );
 }
 
@@ -332,17 +332,17 @@ table ip nat {
 }`;
 
 /** Au début : le réseau, les réglages du noyau et le pare-feu du chapitre « Les zones ». */
-export function initialiserPareFeu(j: Jeu) {
-  initialiserRuche(j);
-  appliquerSysctl(j, SYSCTL_DEFAUTS);
-  j.etat.nft = lireConf(j, { tables: [] }).ruleset ?? { tables: [] };
+export function initialiseFirewall(j: Game) {
+  initialiseHive(j);
+  applySysctl(j, DEFAULTS_SYSCTL);
+  j.state.nft = readConf(j, { tables: [] }).ruleset ?? { tables: [] };
 }
 
 // Le réglage du routage, écrit dans le chapitre « Les zones ».
-export const SYSCTL_ROUTEUR = { '90-router.conf': f('net.ipv4.ip_forward = 1', { lignes: true, proprio: 'root' }) };
+export const ROUTER_SYSCTL = { '90-router.conf': f('net.ipv4.ip_forward = 1', { lines: true, owner: 'root' }) };
 
 // Le pare-feu à la fin du « télétravail » : WireGuard entre (UDP 51820) et va vers les bureaux.
-export const NFTABLES_TELETRAVAIL = NFTABLES_ZONES.replace(
+export const REMOTE_WORK_NFTABLES = NFTABLES_ZONES.replace(
   'icmp type echo-request accept',
   'icmp type echo-request accept\n\t\t# WireGuard\n\t\tudp dport 51820 accept',
 ).replace('iifname "eth1.20" oifname "eth0" accept', 'iifname "eth1.20" oifname "eth0" accept\n\t\tiifname "wg0" oifname "eth1.10" accept');
@@ -355,7 +355,7 @@ auto eth1.40
 iface eth1.40 inet static
     address 10.10.40.1/24`;
 
-export const NFTABLES_DMZ = NFTABLES_TELETRAVAIL.replace(
+export const NFTABLES_DMZ = REMOTE_WORK_NFTABLES.replace(
   'iifname "wg0" oifname "eth1.10" accept',
   'iifname "wg0" oifname "eth1.10" accept\n\t\t# the DMZ: the site from the internet, the server to the internet only\n\t\tiifname "eth0" oifname "eth1.40" ip daddr 10.10.40.10 tcp dport { 80, 443 } accept\n\t\tiifname "eth1.40" oifname "eth0" accept',
 ).replace(
@@ -364,10 +364,10 @@ export const NFTABLES_DMZ = NFTABLES_TELETRAVAIL.replace(
 );
 
 /** Le réseau local avec la DMZ (VLAN 40, le serveur web). */
-export function lanAvecDmz(): Lan {
-  const l = nouveauLan(true);
+export function lanWithDmz(): Lan {
+  const l = newLan(true);
   l.vlans.push(40);
-  l.appareils.push({ nom: 'web', mac: '00:00:5e:00:53:40', vlan: 40, fixe: '10.10.40.10' });
+  l.devices.push({ name: 'web', mac: '00:00:5e:00:53:40', vlan: 40, fixed: '10.10.40.10' });
   return l;
 }
 
@@ -376,51 +376,51 @@ export function lanAvecDmz(): Lan {
  * plan-commutateur.txt) : le routeur, ses VLAN et leurs appareils ; puis, au
  * fil des chapitres, le télétravail, la DMZ, l'Annexe, l'annuaire, la borne Wi-Fi.
  */
-export const planRuche =
-  (o: { teletravail?: boolean; dmz?: boolean; annexe?: boolean; annuaire?: boolean; wifi?: boolean } = {}) =>
-  (t: Traduire): ElementPlan => {
+export const hivePlan =
+  (o: { remoteWork?: boolean; dmz?: boolean; annex?: boolean; directory?: boolean; wifi?: boolean } = {}) =>
+  (t: Translate): ElementPlan => {
     // Les rôles du routeur : des étiquettes, séparées comme sur un schéma.
-    const liste = (mots: string[]) => mots.join(' · ');
-    const vlans = [...VLANS, ...(o.dmz ? [{ id: 40, nom: 'dmz', reseau: '10.10.40.0/24' }] : [])];
-    const tous = [
-      ...appareils(false),
-      ...(o.dmz ? [{ nom: 'web', vlan: 40, fixe: '10.10.40.10' }] : []),
-      ...(o.wifi ? [{ nom: 'borne-wifi', vlan: 30, fixe: '10.10.30.20' }] : []),
+    const listing = (words: string[]) => words.join(' · ');
+    const vlans = [...VLANS, ...(o.dmz ? [{ id: 40, name: 'dmz', reseau: '10.10.40.0/24' }] : [])];
+    const all = [
+      ...devices(false),
+      ...(o.dmz ? [{ name: 'web', vlan: 40, fixed: '10.10.40.10' }] : []),
+      ...(o.wifi ? [{ name: 'borne-wifi', vlan: 30, fixed: '10.10.30.20' }] : []),
     ];
     return internet(t, {
       role: 'routeur',
-      nom: nomMachine(t, 'ruche'),
-      adresse: '192.0.2.21',
-      note: liste([t('plan-note-routeur'), 'DHCP', ...(o.annuaire || o.wifi ? ['LDAP'] : []), ...(o.wifi ? ['RADIUS'] : [])]),
-      hote: 'ruche',
-      enfants: [
+      name: machineName(t, 'ruche'),
+      address: '192.0.2.21',
+      note: listing([t('plan-note-routeur'), 'DHCP', ...(o.directory || o.wifi ? ['LDAP'] : []), ...(o.wifi ? ['RADIUS'] : [])]),
+      host: 'ruche',
+      children: [
         ...vlans.map((v) => ({
           role: 'reseau' as const,
-          nom: t('plan-vlan', { id: String(v.id), nom: v.nom }),
-          adresse: v.reseau,
-          enfants: tous
+          name: t('plan-vlan', { id: String(v.id), nom: v.name }),
+          address: v.reseau,
+          children: all
             .filter((a) => a.vlan === v.id)
-            .map((a) => ({ role: (a.nom === 'nas' || a.nom === 'web' ? 'serveur' : 'appareil') as ElementPlan['role'], nom: a.nom, adresse: a.fixe ?? t('plan-dhcp') })),
+            .map((a) => ({ role: (a.name === 'nas' || a.name === 'web' ? 'serveur' : 'appareil') as ElementPlan['role'], name: a.name, address: a.fixed ?? t('plan-dhcp') })),
         })),
-        ...(o.teletravail
-          ? [{ role: 'poste' as const, nom: 'malik-laptop', adresse: '198.51.100.23', note: t('plan-note-teletravail'), tunnel: true }]
+        ...(o.remoteWork
+          ? [{ role: 'poste' as const, name: 'malik-laptop', address: '198.51.100.23', note: t('plan-note-teletravail'), tunnel: true }]
           : []),
-        ...(o.annexe
+        ...(o.annex
           ? [
               {
                 role: 'routeur' as const,
-                nom: t('plan-annexe'),
-                adresse: '203.0.113.60',
+                name: t('plan-annexe'),
+                address: '203.0.113.60',
                 note: t('plan-note-annexe'),
                 tunnel: true,
-                enfants: [
+                children: [
                   {
                     role: 'reseau' as const,
-                    nom: t('plan-reseau-annexe'),
-                    adresse: '10.20.10.0/24',
-                    enfants: [
-                      { role: 'appareil' as const, nom: 'poste-annexe', adresse: '10.20.10.15' },
-                      { role: 'appareil' as const, nom: 'imprimante-annexe', adresse: '10.20.10.20' },
+                    name: t('plan-reseau-annexe'),
+                    address: '10.20.10.0/24',
+                    children: [
+                      { role: 'appareil' as const, name: 'poste-annexe', address: '10.20.10.15' },
+                      { role: 'appareil' as const, name: 'imprimante-annexe', address: '10.20.10.20' },
                     ],
                   },
                 ],

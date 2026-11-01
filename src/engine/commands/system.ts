@@ -5,57 +5,57 @@
 //   etat.surKill(jeu, processus), etat.surSystemctl(jeu, action, nom) :
 //   réactions propres à l'histoire, qui renvoient un message éventuel.
 
-import type { Commande } from './index';
-import { processusDocker } from '../docker';
+import type { Command } from './index';
+import { dockerProcess } from '../docker';
 
-export interface Processus {
+export interface Process {
   pid: number;
-  utilisateur: string;
+  user: string;
   cpu: number;
   mem: number;
-  commande: string;
+  command: string;
   // Le parent, et un processus zombie (terminé, que son parent n'a pas récupéré).
   ppid?: number;
   zombie?: boolean;
 }
 
-export const SYSTEME: Record<string, Commande> = {
+export const SYSTEM: Record<string, Command> = {
   ps: {
-    lancer: ({ args, jeu }) => {
-      const tous = args.some((a) => /^-?\w*[ae]/.test(a) && !/^-\w*u$/.test(a));
+    launch: ({ args, game }) => {
+      const all = args.some((a) => /^-?\w*[ae]/.test(a) && !/^-\w*u$/.test(a));
       // -u compte[,compte] : seulement les processus de ces comptes.
       const iu = args.findIndex((a) => /^-\w*u$/.test(a));
-      const comptes = iu >= 0 ? (args[iu + 1] ?? '').split(',') : null;
-      const liste: Processus[] = [...(jeu.etat.processus ?? []), ...processusDocker(jeu)]
-        .filter((p: Processus) => (comptes ? comptes.includes(p.utilisateur) : tous || p.utilisateur === jeu.qui || p.utilisateur === jeu.joueur))
-        .sort((a: Processus, b: Processus) => a.pid - b.pid);
+      const accounts = iu >= 0 ? (args[iu + 1] ?? '').split(',') : null;
+      const listing: Process[] = [...(game.state.processus ?? []), ...dockerProcess(game)]
+        .filter((p: Process) => (accounts ? accounts.includes(p.user) : all || p.user === game.who || p.user === game.player))
+        .sort((a: Process, b: Process) => a.pid - b.pid);
       // -f (ps -ef) : le format complet, avec le parent (PPID).
       if (args.some((a) => /^-\w*f/.test(a))) {
-        const ligneF = (p: Processus) =>
-          `${p.utilisateur.slice(0, 8).padEnd(8)} ${String(p.pid).padStart(7)} ${String(p.ppid ?? (p.pid === 1 ? 0 : 1)).padStart(7)}  0 04:00 ?        00:00:00 ${p.commande}`;
-        return ['UID          PID    PPID  C STIME TTY          TIME CMD', ...liste.map(ligneF)].join('\n');
+        const fLine = (p: Process) =>
+          `${p.user.slice(0, 8).padEnd(8)} ${String(p.pid).padStart(7)} ${String(p.ppid ?? (p.pid === 1 ? 0 : 1)).padStart(7)}  0 04:00 ?        00:00:00 ${p.command}`;
+        return ['UID          PID    PPID  C STIME TTY          TIME CMD', ...listing.map(fLine)].join('\n');
       }
-      const ligne = (p: Processus) =>
-        `${p.utilisateur.padEnd(10)} ${String(p.pid).padStart(6)} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${p.commande}`;
-      return ['USER          PID  %CPU  %MEM COMMAND', ...liste.map(ligne)].join('\n');
+      const line = (p: Process) =>
+        `${p.user.padEnd(10)} ${String(p.pid).padStart(6)} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${p.command}`;
+      return ['USER          PID  %CPU  %MEM COMMAND', ...listing.map(line)].join('\n');
     },
   },
 
   kill: {
-    lancer: ({ args, jeu }) => {
+    launch: ({ args, game }) => {
       const pids = args.filter((a) => !a.startsWith('-'));
-      if (!pids.length) return jeu.erreur(jeu.t('kill-usage'));
+      if (!pids.length) return game.error(game.t('kill-usage'));
       const messages: string[] = [];
-      for (const brut of pids) {
-        const liste: Processus[] = jeu.etat.processus ?? [];
-        const p = liste.find((q) => String(q.pid) === brut);
-        if (!p) jeu.erreur(jeu.t('kill-aucun', { pid: brut }));
-        else if (jeu.qui !== 'root' && p.utilisateur !== jeu.qui) jeu.erreur(jeu.t('kill-non-permise', { pid: brut }));
+      for (const raw of pids) {
+        const listing: Process[] = game.state.processus ?? [];
+        const p = listing.find((q) => String(q.pid) === raw);
+        if (!p) game.error(game.t('kill-aucun', { pid: raw }));
+        else if (game.who !== 'root' && p.user !== game.who) game.error(game.t('kill-non-permise', { pid: raw }));
         // Un zombie est déjà mort : aucun signal n'y fait rien, seul son parent peut le récupérer.
         else if (p.zombie) continue;
         else {
-          jeu.etat.processus = liste.filter((q) => q !== p);
-          const m = jeu.etat.surKill?.(jeu, p);
+          game.state.processus = listing.filter((q) => q !== p);
+          const m = game.state.surKill?.(game, p);
           if (m) messages.push(m);
         }
       }
@@ -66,33 +66,33 @@ export const SYSTEME: Record<string, Commande> = {
   // pkill : arrête les processus choisis par nom (motif dans le nom du programme) ou par compte (-u).
   // Code de retour 1 si aucun processus ne correspond (procps).
   pkill: {
-    lancer: ({ args, jeu }) => {
+    launch: ({ args, game }) => {
       const iu = args.indexOf('-u');
-      const comptes = iu >= 0 ? (args[iu + 1] ?? '').split(',') : null;
-      const motif = args.filter((a, k) => !a.startsWith('-') && (iu < 0 || k !== iu + 1))[0];
-      if (!motif && !comptes) return jeu.erreur(jeu.t('pkill-usage'), 2);
+      const accounts = iu >= 0 ? (args[iu + 1] ?? '').split(',') : null;
+      const pattern = args.filter((a, k) => !a.startsWith('-') && (iu < 0 || k !== iu + 1))[0];
+      if (!pattern && !accounts) return game.error(game.t('pkill-usage'), 2);
       let re: RegExp | null = null;
       try {
-        re = motif ? new RegExp(motif) : null;
+        re = pattern ? new RegExp(pattern) : null;
       } catch {
-        return jeu.erreur(`pkill: invalid regular expression: ${motif}`, 2);
+        return game.error(`pkill: invalid regular expression: ${pattern}`, 2);
       }
-      const liste: Processus[] = jeu.etat.processus ?? [];
+      const listing: Process[] = game.state.processus ?? [];
       // Le nom du programme : le premier mot de la commande, sans son chemin (comme /proc/pid/comm).
-      const nom = (p: Processus) => p.commande.split(/[\s:]/)[0].split('/').at(-1)!.replace(/^-/, '');
-      const choisis = liste.filter((p) => (!comptes || comptes.includes(p.utilisateur)) && (!re || re.test(nom(p))) && !p.zombie);
-      if (!choisis.length) {
-        jeu.statut = 1;
+      const name = (p: Process) => p.command.split(/[\s:]/)[0].split('/').at(-1)!.replace(/^-/, '');
+      const chosen = listing.filter((p) => (!accounts || accounts.includes(p.user)) && (!re || re.test(name(p))) && !p.zombie);
+      if (!chosen.length) {
+        game.status = 1;
         return '';
       }
       const messages: string[] = [];
-      for (const p of choisis) {
-        if (jeu.qui !== 'root' && p.utilisateur !== jeu.qui) {
-          jeu.erreur(`pkill: killing pid ${p.pid} failed: Operation not permitted`);
+      for (const p of chosen) {
+        if (game.who !== 'root' && p.user !== game.who) {
+          game.error(`pkill: killing pid ${p.pid} failed: Operation not permitted`);
           continue;
         }
-        jeu.etat.processus = (jeu.etat.processus as Processus[]).filter((q) => q !== p);
-        const m = jeu.etat.surKill?.(jeu, p);
+        game.state.processus = (game.state.processus as Process[]).filter((q) => q !== p);
+        const m = game.state.surKill?.(game, p);
         if (m) messages.push(m);
       }
       return messages.join('\n');
@@ -101,12 +101,12 @@ export const SYSTEME: Record<string, Commande> = {
 
   // who : les sessions ouvertes (une session vit tant que son processus sshd tourne).
   who: {
-    lancer: ({ jeu }) => {
-      const sessions: { utilisateur: string; tty: string; depuis: string; de: string; pid?: number }[] = jeu.etat.sessions ?? [];
-      const vivants = ((jeu.etat.processus ?? []) as Processus[]).map((p) => p.pid);
+    launch: ({ game }) => {
+      const sessions: { user: string; tty: string; since: string; forEachOf: string; pid?: number }[] = game.state.sessions ?? [];
+      const live = ((game.state.processus ?? []) as Process[]).map((p) => p.pid);
       return sessions
-        .filter((x) => x.pid === undefined || vivants.includes(x.pid))
-        .map((x) => `${x.utilisateur.padEnd(8)} ${x.tty.padEnd(12)} ${x.depuis} (${x.de})`)
+        .filter((x) => x.pid === undefined || live.includes(x.pid))
+        .map((x) => `${x.user.padEnd(8)} ${x.tty.padEnd(12)} ${x.since} (${x.forEachOf})`)
         .join('\n');
     },
   },

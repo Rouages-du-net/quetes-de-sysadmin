@@ -12,97 +12,97 @@
 // Sources : https://www.debian.org/security/, https://www.cve.org/,
 // https://www.first.org/cvss/calculator/4-0
 
-import { chemin, f, nom, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { nouveauSystemd } from '../systemd';
-import { CVE, M, MAINTENANT, MOT_DE_PASSE, aptVeille, comptesVeille, ecouteVeille, initialiserVeille, mondeVeille, nginxVeille, scanVeille, sectionsMd, serviceSsh } from './watch';
+import { path, f, name, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { newSystemd } from '../systemd';
+import { CVE, M, NOW, PASSWORD, watchApt, watchAccounts, watchListening, initialiseWatch, watchWorld, watchNginx, watchScan, sectionsMd, serviceSsh } from './watch';
 
 const DOC = `${M}/veille.md`;
 const SECTIONS = ['concerne', 'sansobjet'];
 // Dix jours avant le début du chapitre : la machine tourne déjà depuis un moment.
-const DEMARRE = MAINTENANT - 10 * 86_400_000;
+const STARTED = NOW - 10 * 86_400_000;
 
-const lireDoc = (j: Jeu) => j.lire(chemin(j.t, DOC));
-const sections = (j: Jeu) => sectionsMd(j, lireDoc(j) ?? '', 'bulletin-section', SECTIONS);
-const mots = (j: Jeu, cle: string) => j.t(cle).split(',').map((m) => m.trim().toLowerCase());
+const readDoc = (j: Game) => j.read(path(j.t, DOC));
+const sections = (j: Game) => sectionsMd(j, readDoc(j) ?? '', 'bulletin-section', SECTIONS);
+const words = (j: Game, key: string) => j.t(key).split(',').map((m) => m.trim().toLowerCase());
 
-const concerneOk = (j: Jeu) => {
+const concernsOk = (j: Game) => {
   const s = (sections(j).concerne ?? '').toLowerCase();
-  const sansObjet = (sections(j).sansobjet ?? '').toLowerCase();
+  const withoutObject = (sections(j).sansobjet ?? '').toLowerCase();
   return (
     [CVE.nginx.id, CVE.rsync.id, CVE.ssh.id].every((id) => s.includes(id.toLowerCase())) &&
     ![CVE.certbot.id, CVE.curl.id].some((id) => s.includes(id.toLowerCase())) &&
-    !sansObjet.includes(CVE.nginx.id.toLowerCase()) &&
-    !sansObjet.includes(CVE.rsync.id.toLowerCase())
+    !withoutObject.includes(CVE.nginx.id.toLowerCase()) &&
+    !withoutObject.includes(CVE.rsync.id.toLowerCase())
   );
 };
-const sansObjetOk = (j: Jeu) => {
+const withoutOkObject = (j: Game) => {
   const s = (sections(j).sansobjet ?? '').toLowerCase();
   return (
     s.includes(CVE.certbot.id.toLowerCase()) &&
     s.includes(CVE.curl.id.toLowerCase()) &&
-    mots(j, 'bulletin-mots-absent').some((m) => s.includes(m)) &&
-    mots(j, 'bulletin-mots-corrige').some((m) => s.includes(m))
+    words(j, 'bulletin-mots-absent').some((m) => s.includes(m)) &&
+    words(j, 'bulletin-mots-corrige').some((m) => s.includes(m))
   );
 };
-const modeleOk = (j: Jeu) => !(lireDoc(j) ?? '').toLowerCase().includes(j.t('bulletin-a-completer').toLowerCase());
-const triOk = (j: Jeu) => modeleOk(j) && concerneOk(j) && sansObjetOk(j);
+const okTemplate = (j: Game) => !(readDoc(j) ?? '').toLowerCase().includes(j.t('bulletin-a-completer').toLowerCase());
+const okSort = (j: Game) => okTemplate(j) && concernsOk(j) && withoutOkObject(j);
 
-const manques = (j: Jeu): string[] => {
+const missing = (j: Game): string[] => {
   const m: string[] = [];
-  if (!modeleOk(j)) m.push('modele');
-  if (!concerneOk(j)) m.push('concerne');
-  if (!sansObjetOk(j)) m.push('sansobjet');
+  if (!okTemplate(j)) m.push('modele');
+  if (!concernsOk(j)) m.push('concerne');
+  if (!withoutOkObject(j)) m.push('sansobjet');
   return m;
 };
 
-export const bulletin: Chapitre = {
+export const bulletin: Chapter = {
   id: 'bulletin',
-  numero: 1,
-  commandes: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'sudo', 'id', 'whoami', 'apt'],
-  maison: M,
-  accueil: 'courriel_salome.txt',
-  noms: true,
+  number: 1,
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'sudo', 'id', 'whoami', 'apt'],
+  home: M,
+  welcome: 'courriel_salome.txt',
+  names: true,
   final: 'fin',
-  etapes: ['lu', 'tri', 'fin'],
-  motDePasse: MOT_DE_PASSE,
-  comptes: comptesVeille,
-  etat: () => ({
-    sshd: { charge: {}, connexionsAuChargement: 1, recharges: 0 },
-    ecoute: ecouteVeille(),
-    nginx: nginxVeille(),
-    scan: scanVeille(),
-    apt: aptVeille(),
-    systemd: nouveauSystemd('petrin', DEMARRE, MAINTENANT, {
+  steps: ['lu', 'tri', 'fin'],
+  password: PASSWORD,
+  accounts: watchAccounts,
+  state: () => ({
+    sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
+    ecoute: watchListening(),
+    nginx: watchNginx(),
+    scan: watchScan(),
+    apt: watchApt(),
+    systemd: newSystemd('petrin', STARTED, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },
     }),
   }),
-  initialiser: initialiserVeille,
-  creerMonde: (t) =>
-    mondeVeille(t, {
-      maison: { 'courriel_salome.txt': f(t('bulletin-courriel-salome')), 'bulletin-securite.txt': f(t('bulletin-fichier'), { lignes: true }), 'veille.md': f(t('bulletin-modele'), { lignes: true }) },
+  initialise: initialiseWatch,
+  createWorld: (t) =>
+    watchWorld(t, {
+      home: { 'courriel_salome.txt': f(t('bulletin-courriel-salome')), 'bulletin-securite.txt': f(t('bulletin-fichier'), { lines: true }), 'veille.md': f(t('bulletin-modele'), { lines: true }) },
     }),
-  apresCommande: (j) => {
-    const texte = lireDoc(j);
-    if (texte === j.etat.veilleLue || j.etat.veilleFinie) return;
-    j.etat.veilleLue = texte;
-    const reste = manques(j);
-    if (!reste.length) {
-      j.etat.veilleFinie = true;
+  afterCommand: (j) => {
+    const text = readDoc(j);
+    if (text === j.state.veilleLue || j.state.veilleFinie) return;
+    j.state.veilleLue = text;
+    const rest = missing(j);
+    if (!rest.length) {
+      j.state.veilleFinie = true;
       return;
     }
-    return [j.t('bulletin-relecture'), ...reste.map((m) => `- ${j.t(`bulletin-manque-${m}`)}`)].join('\n');
+    return [j.t('bulletin-relecture'), ...rest.map((m) => `- ${j.t(`bulletin-manque-${m}`)}`)].join('\n');
   },
-  evenements: [
+  events: [
     {
       id: 'lu',
-      condition: (j) => j.derniere.commandes.some((c) => c.some((a) => a.endsWith(nom(j.t, 'bulletin-securite.txt')))),
+      condition: (j) => j.last.commands.some((c) => c.some((a) => a.endsWith(name(j.t, 'bulletin-securite.txt')))),
       message: (j) => j.t('bulletin-evenement-lu'),
     },
-    { id: 'tri', condition: triOk, message: (j) => j.t('bulletin-evenement-tri') },
-    { id: 'fin', condition: triOk, message: (j) => j.t('bulletin-evenement-fin') },
+    { id: 'tri', condition: okSort, message: (j) => j.t('bulletin-evenement-tri') },
+    { id: 'fin', condition: okSort, message: (j) => j.t('bulletin-evenement-fin') },
   ],
 };
 

@@ -7,28 +7,28 @@
 // la forme), pas de routage, de journalisation ni de règles sortantes.
 
 export type Action = 'allow' | 'deny' | 'reject' | 'limit';
-export type Politique = 'allow' | 'deny' | 'reject';
+export type Policy = 'allow' | 'deny' | 'reject';
 
-export interface Regle {
+export interface Rule {
   action: Action;
   // Ce que ufw affiche dans la colonne « Vers » (22/tcp, 80, OpenSSH…).
-  vers: string;
+  to: string;
   ports: number[];
   // Adresse d'origine, ou null pour « n'importe où ».
-  de: string | null;
+  forEachOf: string | null;
 }
 
-export interface PareFeu {
-  actif: boolean;
-  entrant: Politique;
-  sortant: Politique;
-  regles: Regle[];
+export interface Firewall {
+  enabled: boolean;
+  incoming: Policy;
+  outgoing: Policy;
+  rules: Rule[];
   // Nombre de connexions ssh au moment de l'activation (pour vérifier
   // qu'une nouvelle connexion passe toujours).
-  connexionsALActivation?: number;
+  activationAlConnections?: number;
 }
 
-export const nouveauPareFeu = (): PareFeu => ({ actif: false, entrant: 'deny', sortant: 'allow', regles: [] });
+export const newFirewall = (): Firewall => ({ enabled: false, incoming: 'deny', outgoing: 'allow', rules: [] });
 
 // Services de /etc/services et profils d'applications de /etc/ufw/applications.d.
 export const SERVICES: Record<string, { ports: number[]; proto?: string }> = {
@@ -47,9 +47,9 @@ export const APPLICATIONS: Record<string, number[]> = {
 export type Verdict = 'accepte' | 'refuse' | 'bloque';
 
 /** Une nouvelle connexion vers ce port, depuis cette adresse, passe-t-elle ? */
-export function verdict(pf: PareFeu, port: number, source: string): Verdict {
-  if (!pf.actif) return 'accepte';
-  const r = pf.regles.find((r) => r.ports.includes(port) && (r.de === null || r.de === source));
-  const action = r?.action ?? pf.entrant;
+export function verdict(pf: Firewall, port: number, source: string): Verdict {
+  if (!pf.enabled) return 'accepte';
+  const r = pf.rules.find((r) => r.ports.includes(port) && (r.forEachOf === null || r.forEachOf === source));
+  const action = r?.action ?? pf.incoming;
   return action === 'allow' || action === 'limit' ? 'accepte' : action === 'reject' ? 'refuse' : 'bloque';
 }

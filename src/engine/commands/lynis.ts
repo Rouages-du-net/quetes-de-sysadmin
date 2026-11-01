@@ -3,28 +3,28 @@
 // elle se lit dans src/engine/lynis.ts. Après l'audit, /var/log/lynis-report.dat
 // garde les constats (hardening_index=, warning[]=, suggestion[]=).
 
-import { audit, VERSION_LYNIS, RAPPORT, JOURNAL } from '../lynis';
-import type { Commande } from './index';
+import { audit, VERSION_LYNIS, REPORT, LOG } from '../lynis';
+import type { Command } from './index';
 
-export const LYNIS: Record<string, Commande> = {
+export const LYNIS: Record<string, Command> = {
   lynis: {
     section: 8,
-    propresOptions: true,
-    lancer: ({ args, jeu }) => {
-      const [action, ...reste] = args;
-      if (action === '--version' || action === '-V' || (action === 'show' && reste[0] === 'version')) return VERSION_LYNIS;
-      if (action === 'audit' && reste[0] === 'system') {
-        if (jeu.qui !== 'root') return jeu.erreur(jeu.t('lynis-sans-root'), 1);
-        const r = audit(jeu);
-        const droits = { type: 'fichier' as const, lignes: true, proprio: 'root', mode: 'rw-------' };
-        jeu.placer('lynis', RAPPORT, { ...droits, contenu: r.rapport });
-        jeu.placer('lynis', JOURNAL, { ...droits, contenu: `# Lynis ${VERSION_LYNIS}\n${r.rapport}` });
-        jeu.etat.lynis = { indice: r.indice, ids: r.constats.map((c) => c.id), avertissements: r.constats.filter((c) => c.type === 'warning').length };
-        return r.sortie;
+    ownOptions: true,
+    launch: ({ args, game }) => {
+      const [action, ...rest] = args;
+      if (action === '--version' || action === '-V' || (action === 'show' && rest[0] === 'version')) return VERSION_LYNIS;
+      if (action === 'audit' && rest[0] === 'system') {
+        if (game.who !== 'root') return game.error(game.t('lynis-sans-root'), 1);
+        const r = audit(game);
+        const rights = { type: 'fichier' as const, lines: true, owner: 'root', mode: 'rw-------' };
+        game.place('lynis', REPORT, { ...rights, content: r.report });
+        game.place('lynis', LOG, { ...rights, content: `# Lynis ${VERSION_LYNIS}\n${r.report}` });
+        game.state.lynis = { hint: r.hint, ids: r.findings.map((c) => c.id), warnings: r.findings.filter((c) => c.type === 'warning').length };
+        return r.output;
       }
-      if (action === 'audit') return jeu.erreur(jeu.t('lynis-audit-cible', { cible: reste[0] ?? '' }), 1);
-      if (!action) return jeu.erreur(jeu.t('lynis-usage'), 1);
-      return jeu.erreur(jeu.t('lynis-commande-inconnue', { commande: action }), 1);
+      if (action === 'audit') return game.error(game.t('lynis-audit-cible', { cible: rest[0] ?? '' }), 1);
+      if (!action) return game.error(game.t('lynis-usage'), 1);
+      return game.error(game.t('lynis-commande-inconnue', { commande: action }), 1);
     },
   },
 };

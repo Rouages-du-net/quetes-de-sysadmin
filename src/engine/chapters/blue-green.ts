@@ -13,26 +13,26 @@
 // https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass,
 // https://nginx.org/en/docs/beginners_guide.html#control
 
-import { d, f, fichiersComptes, type Chapitre, type Comptes, type Droits } from '../world';
-import type { Jeu } from '../shell';
-import { nouveauSystemd, systemd } from '../systemd';
-import { chargerNginx, requete, verifierNginx, type Configuration } from '../nginx';
+import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import type { Game } from '../shell';
+import { newSystemd, systemd } from '../systemd';
+import { loadNginx, httpRequest, checkNginx, type Configuration } from '../nginx';
 import { MIME, NGINX_CONF } from '../commands/apt';
-import { comptesGazette } from './bare-repo';
-import { KIOSQUE, PORTS, appliKiosque, dossierVersion, instances, sante, serviceKiosque, uniteKiosque, versionDuLien } from './kiosk';
+import { gazetteAccounts } from './bare-repo';
+import { KIOSK, PORTS, kioskApp, versionDirectory, instances, health, kioskService, kioskUnit, linkVersion } from './kiosk';
 
 const M = '/home/vous';
 const GAZETTE = 'gazette.example';
 const SITE = '/etc/nginx/sites-available/gazette';
 
-const comptes = (): Comptes => {
-  const c = comptesGazette();
-  c.utilisateurs.kiosk = { uid: 997, groupe: 'kiosk', maison: KIOSQUE, shell: '/usr/sbin/nologin' };
-  c.groupes.kiosk = { gid: 997, membres: [] };
+const accounts = (): Accounts => {
+  const c = gazetteAccounts();
+  c.users.kiosk = { uid: 997, group: 'kiosk', home: KIOSK, shell: '/usr/sbin/nologin' };
+  c.groups.kiosk = { gid: 997, members: [] };
   return c;
 };
 
-const conf = (t: Jeu['t']) => `server {
+const conf = (t: Game['t']) => `server {
     listen 80 default_server;
     listen [::]:80 default_server;
     server_name ${GAZETTE} www.${GAZETTE};
@@ -50,21 +50,21 @@ const conf = (t: Jeu['t']) => `server {
     }
 }`;
 
-const sd = (j: Jeu) => systemd(j)!;
-const actif = (j: Jeu, couleur: string) => sd(j).services[`kiosk-${couleur}`]?.etat === 'active';
+const sd = (j: Game) => systemd(j)!;
+const enabled = (j: Game, colour: string) => sd(j).services[`kiosk-${colour}`]?.state === 'active';
 // La couleur vers laquelle nginx envoie /kiosk/ (configuration chargée).
-const servie = (j: Jeu): string | null => {
-  const config: Configuration | null = j.etat.nginx?.charge ?? null;
-  const proxy = config?.serveurs.flatMap((s) => s.locations).find((l) => l.chemin === '/kiosk/')?.proxy ?? '';
+const served = (j: Game): string | null => {
+  const config: Configuration | null = j.state.nginx?.load ?? null;
+  const proxy = config?.servers.flatMap((s) => s.locations).find((l) => l.path === '/kiosk/')?.proxy ?? '';
   return Object.keys(PORTS).find((c) => proxy.includes(`:${PORTS[c]}`)) ?? null;
 };
-const lecteursOk = (j: Jeu) => requete(j, GAZETTE, '/kiosk/', 80, false)?.code === 200;
-const sortie = (j: Jeu) => [j.derniere.sortie, ...j.derniere.erreurs].join('\n');
+const okReaders = (j: Game) => httpRequest(j, GAZETTE, '/kiosk/', 80, false)?.code === 200;
+const output = (j: Game) => [j.last.output, ...j.last.errors].join('\n');
 
-export const bleuVert: Chapitre = {
+export const greenBlue: Chapter = {
   id: 'bleu-vert',
-  numero: 3,
-  commandes: [
+  number: 3,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -94,140 +94,140 @@ export const bleuVert: Chapitre = {
     'journalctl',
     'ps',
   ],
-  maison: M,
-  accueil: 'message_de_samia.txt',
-  noms: true,
+  home: M,
+  welcome: 'message_de_samia.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'gazette-2027',
-  comptes,
-  etat: () => ({
-    systemd: nouveauSystemd('gazette', Date.UTC(2027, 4, 2, 6, 40, 0), Date.UTC(2027, 4, 24, 14, 0, 0), {
+  password: 'gazette-2027',
+  accounts,
+  state: () => ({
+    systemd: newSystemd('gazette', Date.UTC(2027, 4, 2, 6, 40, 0), Date.UTC(2027, 4, 24, 14, 0, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
         active: true,
         executable: 'sshd',
-        processus: [{ pid: 604, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
+        process: [{ pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
       nginx: {
         description: 'A high performance web server and a reverse proxy server',
         active: true,
         executable: 'nginx',
-        processus: [
-          { pid: 801, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
-          { pid: 802, utilisateur: 'www-data', cpu: 0.1, mem: 0.6, commande: 'nginx: worker process' },
+        process: [
+          { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
+          { pid: 802, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
         ],
-        verifier: verifierNginx,
-        charger: chargerNginx,
-        verifierAuRechargement: true,
+        check: checkNginx,
+        load: loadNginx,
+        checkToReload: true,
       },
-      'kiosk-blue': serviceKiosque('blue', 1501),
-      'kiosk-green': serviceKiosque('green', 1502, 'inactive'),
+      'kiosk-blue': kioskService('blue', 1501),
+      'kiosk-green': kioskService('green', 1502, 'inactive'),
     }),
     processus: [
-      { pid: 1, utilisateur: 'root', cpu: 0, mem: 0.1, commande: '/sbin/init' },
-      { pid: 604, utilisateur: 'root', cpu: 0, mem: 0.2, commande: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
-      { pid: 801, utilisateur: 'root', cpu: 0, mem: 0.3, commande: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
-      { pid: 802, utilisateur: 'www-data', cpu: 0.1, mem: 0.6, commande: 'nginx: worker process' },
-      { pid: 1501, utilisateur: 'kiosk', cpu: 0.6, mem: 3.1, commande: `node ${KIOSQUE}/blue/serveur.js` },
+      { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
+      { pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
+      { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
+      { pid: 802, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
+      { pid: 1501, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/blue/serveur.js` },
     ],
-    nginx: { charge: null, noms: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'] },
-    applis: { '127.0.0.1:3001': appliKiosque('blue'), '127.0.0.1:3002': appliKiosque('green') },
+    nginx: { load: null, names: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'] },
+    applis: { '127.0.0.1:3001': kioskApp('blue'), '127.0.0.1:3002': kioskApp('green') },
   }),
-  initialiser: (j) => {
-    chargerNginx(j);
+  initialise: (j) => {
+    loadNginx(j);
     // blue tourne depuis le démarrage de la machine : sa version et sa configuration d'alors.
-    sd(j).services['kiosk-blue'].charger!(j);
+    sd(j).services['kiosk-blue'].load!(j);
   },
-  creerMonde: (t) => {
-    const racine: Droits = { proprio: 'root' };
-    const lieu = (enfants: Parameters<typeof d>[0], droits: Droits = racine) => d(enfants, undefined, droits);
-    const fichier = (texte: string, droits: Droits = racine) => f(texte, { lignes: true, ...droits });
-    const kiosk: Droits = { proprio: 'kiosk', groupe: 'kiosk' };
-    return lieu({
-      etc: lieu({
-        ...fichiersComptes(),
-        hostname: fichier('gazette'),
-        kiosk: lieu({
-          'kiosk.env': fichier('KIOSK_BASE=postgres://kiosk@localhost/kiosk\nKIOSK_LIST=lettre@gazette.example', {
-            proprio: 'root',
-            groupe: 'kiosk',
+  createWorld: (t) => {
+    const root: Rights = { owner: 'root' };
+    const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
+    const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
+    const kiosk: Rights = { owner: 'kiosk', group: 'kiosk' };
+    return place({
+      etc: place({
+        ...accountsFiles(),
+        hostname: file('gazette'),
+        kiosk: place({
+          'kiosk.env': file('KIOSK_BASE=postgres://kiosk@localhost/kiosk\nKIOSK_LIST=lettre@gazette.example', {
+            owner: 'root',
+            group: 'kiosk',
             mode: 'rw-r-----',
           }),
         }),
-        nginx: lieu({
-          'nginx.conf': fichier(NGINX_CONF),
-          'mime.types': fichier(MIME),
-          'conf.d': lieu({}),
-          'modules-enabled': lieu({}),
-          'sites-available': lieu({ gazette: fichier(conf(t)) }),
-          'sites-enabled': lieu({ gazette: f('', { proprio: 'root', lien: SITE }) }),
+        nginx: place({
+          'nginx.conf': file(NGINX_CONF),
+          'mime.types': file(MIME),
+          'conf.d': place({}),
+          'modules-enabled': place({}),
+          'sites-available': place({ gazette: file(conf(t)) }),
+          'sites-enabled': place({ gazette: f('', { owner: 'root', link: SITE }) }),
         }),
-        systemd: lieu({
-          system: lieu({ 'kiosk-blue.service': fichier(uniteKiosque('blue')), 'kiosk-green.service': fichier(uniteKiosque('green')) }),
+        systemd: place({
+          system: place({ 'kiosk-blue.service': file(kioskUnit('blue')), 'kiosk-green.service': file(kioskUnit('green')) }),
         }),
       }),
-      home: lieu({
+      home: place({
         vous: d({ 'message_de_samia.txt': f(t('bleu-vert-message-de-samia')) }),
-        samia: lieu({}, { proprio: 'samia', mode: 'rwx------' }),
-        theo: lieu({}, { proprio: 'theo', mode: 'rwx------' }),
+        samia: place({}, { owner: 'samia', mode: 'rwx------' }),
+        theo: place({}, { owner: 'theo', mode: 'rwx------' }),
       }),
-      srv: lieu({
-        gazette: lieu({
-          releases: lieu({ '20270524090000': lieu({ 'index.html': fichier(t('retour-arriere-site-accueil'), { proprio: 'vous' }) }) }),
-          current: f('', { proprio: 'vous', lien: '/srv/gazette/releases/20270524090000' }),
+      srv: place({
+        gazette: place({
+          releases: place({ '20270524090000': place({ 'index.html': file(t('retour-arriere-site-accueil'), { owner: 'vous' }) }) }),
+          current: f('', { owner: 'vous', link: '/srv/gazette/releases/20270524090000' }),
         }),
-        kiosk: lieu(
+        kiosk: place(
           {
-            versions: lieu({ '1.4.2': dossierVersion(t, '1.4.2'), '1.5.0': dossierVersion(t, '1.5.0', 'bleu-vert-notes-150') }, kiosk),
-            blue: f('', { ...kiosk, lien: `${KIOSQUE}/versions/1.4.2` }),
-            green: f('', { ...kiosk, lien: `${KIOSQUE}/versions/1.4.2` }),
+            versions: place({ '1.4.2': versionDirectory(t, '1.4.2'), '1.5.0': versionDirectory(t, '1.5.0', 'bleu-vert-notes-150') }, kiosk),
+            blue: f('', { ...kiosk, link: `${KIOSK}/versions/1.4.2` }),
+            green: f('', { ...kiosk, link: `${KIOSK}/versions/1.4.2` }),
           },
-          { ...kiosk, groupe: 'redaction', mode: 'rwxrwxr-x' },
+          { ...kiosk, group: 'redaction', mode: 'rwxrwxr-x' },
         ),
       }),
-      usr: lieu({ sbin: lieu({ nginx: f('', { proprio: 'root', mode: 'rwxr-xr-x', taille: 1_342_520 }) }) }),
-      var: lieu({
-        log: lieu({
-          nginx: lieu(
+      usr: place({ sbin: place({ nginx: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_342_520 }) }) }),
+      var: place({
+        log: place({
+          nginx: place(
             {
-              'access.log': f('', { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }),
-              'error.log': f('', { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }),
+              'access.log': f('', { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }),
+              'error.log': f('', { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }),
             },
-            { proprio: 'root', groupe: 'adm' },
+            { owner: 'root', group: 'adm' },
           ),
         }),
       }),
     });
   },
-  evenements: [
+  events: [
     {
       id: 'sante-ko',
-      condition: (j) => sortie(j).includes('"status":"error"') && sortie(j).includes('is not set'),
+      condition: (j) => output(j).includes('"status":"error"') && output(j).includes('is not set'),
       message: (j) => j.t('bleu-vert-evenement-sante-ko'),
     },
     {
       id: 'pas-redemarre',
       condition: (j) =>
-        actif(j, 'green') &&
+        enabled(j, 'green') &&
         !!instances(j).green &&
-        versionDuLien(j, 'green') !== instances(j).green.version &&
-        sortie(j).includes(`"version":"${instances(j).green.version}"`),
+        linkVersion(j, 'green') !== instances(j).green.version &&
+        output(j).includes(`"version":"${instances(j).green.version}"`),
       message: (j) => j.t('bleu-vert-evenement-pas-redemarre'),
     },
-    { id: 'trop-tot', condition: (j) => !lecteursOk(j), message: (j) => j.t('bleu-vert-evenement-trop-tot') },
+    { id: 'trop-tot', condition: (j) => !okReaders(j), message: (j) => j.t('bleu-vert-evenement-trop-tot') },
     {
       id: 'pas-recharge',
-      condition: (j) => (j.lire(SITE) ?? '').includes('127.0.0.1:3002') && servie(j) === 'blue' && j.derniere.commandes.some((c) => c[0] === 'curl'),
+      condition: (j) => (j.read(SITE) ?? '').includes('127.0.0.1:3002') && served(j) === 'blue' && j.last.commands.some((c) => c[0] === 'curl'),
       message: (j) => j.t('bleu-vert-evenement-pas-recharge'),
     },
-    { id: 'plus-de-filet', condition: (j) => servie(j) === 'green' && !actif(j, 'blue'), message: (j) => j.t('bleu-vert-evenement-plus-de-filet') },
+    { id: 'plus-de-filet', condition: (j) => served(j) === 'green' && !enabled(j, 'blue'), message: (j) => j.t('bleu-vert-evenement-plus-de-filet') },
     {
       id: 'fin',
       condition: (j) => {
-        const c = servie(j);
-        const autre = c === 'blue' ? 'green' : 'blue';
-        const s = c ? sante(j, c) : null;
-        return !!c && s?.status === 'ok' && s.version === '1.5.0' && lecteursOk(j) && actif(j, autre);
+        const c = served(j);
+        const other = c === 'blue' ? 'green' : 'blue';
+        const s = c ? health(j, c) : null;
+        return !!c && s?.status === 'ok' && s.version === '1.5.0' && okReaders(j) && enabled(j, other);
       },
       message: (j) => j.t('bleu-vert-evenement-fin'),
     },

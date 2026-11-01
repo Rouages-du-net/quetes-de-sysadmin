@@ -18,25 +18,25 @@
 // https://github.com/fail2ban/fail2ban/blob/master/config/filter.d/recidive.conf,
 // https://github.com/fail2ban/fail2ban/blob/master/config/filter.d/nginx-limit-req.conf
 
-import { d, f, fichiersComptes, comptesParDefaut, type Chapitre } from '../world';
-import type { Jeu } from '../shell';
-import { POSTE } from '../machines';
-import { nouveauSystemd, systemd } from '../systemd';
-import { actives, appliquer, bannisDe, DOSSIER, lireConfig, type EtatFail2ban } from '../fail2ban';
-import type { PareFeu } from '../firewall';
-import type { Ecoute } from '../commands/ss';
+import { d, f, accountsFiles, accountsByDefault, type Chapter } from '../world';
+import type { Game } from '../shell';
+import { WORKSTATION } from '../machines';
+import { newSystemd, systemd } from '../systemd';
+import { actives, apply, bannedFor, DIRECTORY, readConfig, type Fail2banState } from '../fail2ban';
+import type { Firewall } from '../firewall';
+import type { Listening } from '../commands/ss';
 import { JAIL_CONF } from './sentinel';
 import { DEFAULTS_DEBIAN } from './port';
 
 const M = '/home/vous';
 const RANIA = '198.51.100.40';
-const RECIDIVISTES = ['203.0.113.66', '198.51.100.23'];
-const OCCASIONNEL = '192.0.2.200';
-const ASPIRATEURS = ['198.51.100.24', '198.51.100.25', '198.51.100.26'];
-const VISITEUR = '203.0.113.41';
+const REPEAT_OFFENDERS = ['203.0.113.66', '198.51.100.23'];
+const OCCASIONAL = '192.0.2.200';
+const SCRAPERS = ['198.51.100.24', '198.51.100.25', '198.51.100.26'];
+const VISITOR = '203.0.113.41';
 
 // Les prisons de jail.conf que le jeu reprend (celles de fail2ban, abrégées).
-const JAIL_CONF_COMPLET = `${JAIL_CONF}
+const COMPLETE_CONF_JAIL = `${JAIL_CONF}
 
 
 #
@@ -97,29 +97,29 @@ findtime = 1d`;
 // Le jail.local laissé par « La sentinelle » et « Le port ».
 const JAIL_LOCAL = `[DEFAULT]
 bantime  = 1h
-ignoreip = ${RANIA} ${POSTE.adresse}
+ignoreip = ${RANIA} ${WORKSTATION.address}
 
 [sshd]
 port = 2222`;
 
 // fail2ban.log : depuis hier, les mêmes adresses bannies, débannies une heure plus tard, rebannies.
 const LOG = (() => {
-  const evenements: [number, string][] = [];
-  const bans = (ip: string, fois: number, debut: number, ecart: number) => {
-    for (let i = 0; i < fois; i++) {
-      const t = debut + i * ecart;
-      evenements.push([t, `Ban ${ip}`], [t + 3600, `Unban ${ip}`]);
+  const events: [number, string][] = [];
+  const bans = (ip: string, times: number, start: number, difference: number) => {
+    for (let i = 0; i < times; i++) {
+      const t = start + i * difference;
+      events.push([t, `Ban ${ip}`], [t + 3600, `Unban ${ip}`]);
     }
   };
-  bans(RECIDIVISTES[0], 9, 0, 9000);
-  bans(RECIDIVISTES[1], 7, 1500, 11000);
-  bans(OCCASIONNEL, 2, 4000, 30000);
-  const debut = Date.UTC(2026, 10, 11, 8, 0, 0);
+  bans(REPEAT_OFFENDERS[0], 9, 0, 9000);
+  bans(REPEAT_OFFENDERS[1], 7, 1500, 11000);
+  bans(OCCASIONAL, 2, 4000, 30000);
+  const start = Date.UTC(2026, 10, 11, 8, 0, 0);
   // Les deux récidivistes sont encore bannis à l'instant (leur dernier Unban n'a pas eu lieu).
-  const fin = Date.UTC(2026, 10, 12, 8, 50, 0);
-  return evenements
-    .map(([t, m]): [number, string] => [debut + t * 1000, m])
-    .filter(([t]) => t < fin)
+  const end = Date.UTC(2026, 10, 12, 8, 50, 0);
+  return events
+    .map(([t, m]): [number, string] => [start + t * 1000, m])
+    .filter(([t]) => t < end)
     .sort((a, b) => a[0] - b[0])
     .map(
       ([t, m]) =>
@@ -129,57 +129,57 @@ const LOG = (() => {
 })();
 
 // error.log de nginx : la limite de débit refuse le robot de l'agenda (et, parfois, d'autres).
-const ERREURS = (() => {
-  const qui: [string, number][] = [
-    [ASPIRATEURS[0], 15],
-    [ASPIRATEURS[1], 12],
-    [ASPIRATEURS[2], 9],
+const ERRORS = (() => {
+  const who: [string, number][] = [
+    [SCRAPERS[0], 15],
+    [SCRAPERS[1], 12],
+    [SCRAPERS[2], 9],
     [RANIA, 6],
-    [VISITEUR, 2],
+    [VISITOR, 2],
   ];
-  const lignes: string[] = [];
+  const lines: string[] = [];
   let n = 18300;
-  qui.forEach(([ip, fois], k) => {
-    for (let i = 0; i < fois; i++) {
+  who.forEach(([ip, times], k) => {
+    for (let i = 0; i < times; i++) {
       const s = 10 + k * 7 + i * 3;
-      const heure = `2026/11/11 ${String(20 + (Math.floor(s / 60) % 4)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}:${String((i * 17) % 60).padStart(2, '0')}`;
-      const exces = (10 + ((i * 37 + k * 11) % 900) / 1000).toFixed(3);
-      lignes.push(
-        `${heure} [error] 702#702: *${n++} limiting requests, excess: ${exces} by zone "agenda", client: ${ip}, server: letters.example, request: "GET /agenda/ HTTP/1.1", host: "letters.example"`,
+      const timeOfDay = `2026/11/11 ${String(20 + (Math.floor(s / 60) % 4)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}:${String((i * 17) % 60).padStart(2, '0')}`;
+      const excess = (10 + ((i * 37 + k * 11) % 900) / 1000).toFixed(3);
+      lines.push(
+        `${timeOfDay} [error] 702#702: *${n++} limiting requests, excess: ${excess} by zone "agenda", client: ${ip}, server: letters.example, request: "GET /agenda/ HTTP/1.1", host: "letters.example"`,
       );
     }
   });
-  return lignes.sort().join('\n');
+  return lines.sort().join('\n');
 })();
 
-const f2b = (j: Jeu) => j.etat.fail2ban as EtatFail2ban;
-const prison = (j: Jeu, nom: string) => actives(f2b(j)).find((p) => p.nom === nom);
-const banni = (j: Jeu, ip: string, nom: string) => !!prison(j, nom) && bannisDe(f2b(j), nom).includes(ip);
+const f2b = (j: Game) => j.state.fail2ban as Fail2banState;
+const jail = (j: Game, name: string) => actives(f2b(j)).find((p) => p.name === name);
+const banned = (j: Game, ip: string, name: string) => !!jail(j, name) && bannedFor(f2b(j), name).includes(ip);
 // recidive ne sert que si elle bannit plus longtemps que la prison sshd.
-const plusLongue = (j: Jeu) => {
-  const r = prison(j, 'recidive');
-  const s = prison(j, 'sshd');
+const moreLong = (j: Game) => {
+  const r = jail(j, 'recidive');
+  const s = jail(j, 'sshd');
   return !!r && (r.bantime < 0 || (!!s && s.bantime >= 0 && r.bantime > s.bantime));
 };
-const epargnes = (j: Jeu) => [RANIA, VISITEUR, POSTE.adresse].every((ip) => actives(f2b(j)).every((p) => !bannisDe(f2b(j), p.nom).includes(ip)));
-const reussi = (j: Jeu) =>
-  RECIDIVISTES.every((ip) => banni(j, ip, 'recidive')) &&
-  ASPIRATEURS.every((ip) => banni(j, ip, 'nginx-limit-req')) &&
-  !!prison(j, 'sshd') &&
-  plusLongue(j) &&
-  epargnes(j);
+const spared = (j: Game) => [RANIA, VISITOR, WORKSTATION.address].every((ip) => actives(f2b(j)).every((p) => !bannedFor(f2b(j), p.name).includes(ip)));
+const succeeded = (j: Game) =>
+  REPEAT_OFFENDERS.every((ip) => banned(j, ip, 'recidive')) &&
+  SCRAPERS.every((ip) => banned(j, ip, 'nginx-limit-req')) &&
+  !!jail(j, 'sshd') &&
+  moreLong(j) &&
+  spared(j);
 
-const ECOUTE: Ecoute[] = [
-  { proto: 'tcp', adresse: '0.0.0.0', port: 2222, processus: 'sshd', pid: 612 },
-  { proto: 'tcp', adresse: '[::]', port: 2222, processus: 'sshd', pid: 612 },
-  { proto: 'tcp', adresse: '0.0.0.0', port: 80, processus: 'nginx', pid: 701 },
-  { proto: 'tcp', adresse: '0.0.0.0', port: 443, processus: 'nginx', pid: 701 },
+const LISTENING: Listening[] = [
+  { proto: 'tcp', address: '0.0.0.0', port: 2222, process: 'sshd', pid: 612 },
+  { proto: 'tcp', address: '[::]', port: 2222, process: 'sshd', pid: 612 },
+  { proto: 'tcp', address: '0.0.0.0', port: 80, process: 'nginx', pid: 701 },
+  { proto: 'tcp', address: '0.0.0.0', port: 443, process: 'nginx', pid: 701 },
 ];
 
-export const recidive: Chapitre = {
+export const repeatOffence: Chapter = {
   id: 'recidive',
-  numero: 8,
-  commandes: [
+  number: 8,
+  commands: [
     'ls',
     'cd',
     'pwd',
@@ -204,31 +204,31 @@ export const recidive: Chapitre = {
     'ss',
     'nft',
   ],
-  maison: M,
-  accueil: 'courriel_rania.txt',
-  noms: true,
+  home: M,
+  welcome: 'courriel_rania.txt',
+  names: true,
   final: 'fin',
-  motDePasse: 'fourmis-2026',
-  comptes: () => {
-    const c = comptesParDefaut();
-    c.groupes.adm = { gid: 4, membres: ['vous'] };
+  password: 'fourmis-2026',
+  accounts: () => {
+    const c = accountsByDefault();
+    c.groups.adm = { gid: 4, members: ['vous'] };
     return c;
   },
-  etat: () => ({
+  state: () => ({
     // SSH écoute sur 2222 depuis « Le port ».
-    sshd: { charge: { port: '2222' }, recharges: 0 },
-    ecoute: ECOUTE,
+    sshd: { load: { port: '2222' }, reloads: 0 },
+    ecoute: LISTENING,
     ufw: {
-      actif: true,
-      entrant: 'deny',
-      sortant: 'allow',
-      regles: [
-        { action: 'allow', vers: '2222/tcp', ports: [2222], de: null },
-        { action: 'allow', vers: 'Nginx Full', ports: [80, 443], de: null },
+      enabled: true,
+      incoming: 'deny',
+      outgoing: 'allow',
+      rules: [
+        { action: 'allow', to: '2222/tcp', ports: [2222], forEachOf: null },
+        { action: 'allow', to: 'Nginx Full', ports: [80, 443], forEachOf: null },
       ],
-    } satisfies PareFeu,
-    fail2ban: { charge: null, bannis: [...RECIDIVISTES], totalBannis: 18, journal: [], chargements: 0, consulte: false } satisfies EtatFail2ban,
-    systemd: nouveauSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 10, 12, 9, 0, 0), {
+    } satisfies Firewall,
+    fail2ban: { load: null, banned: [...REPEAT_OFFENDERS], bannedTotal: 18, log: [], loads: 0, consulted: false } satisfies Fail2banState,
+    systemd: newSystemd('lettres', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 10, 12, 9, 0, 0), {
       ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       ufw: { description: 'Uncomplicated firewall', active: true, executable: 'ufw' },
@@ -236,91 +236,91 @@ export const recidive: Chapitre = {
         description: 'Fail2Ban Service',
         active: true,
         executable: 'fail2ban-server',
-        verifier: (j) => {
-          const e = lireConfig(j).erreurs;
+        check: (j) => {
+          const e = readConfig(j).errors;
           return e.length ? e : null;
         },
-        verifierAuRechargement: true,
-        charger: (j) => {
-          const etat = f2b(j);
-          if (!etat) return;
-          const { prison, prisons } = lireConfig(j);
-          etat.charge = prison;
-          etat.prisons = prisons;
-          etat.chargements++;
-          etat.consulte = false;
-          appliquer(j, etat);
+        checkToReload: true,
+        load: (j) => {
+          const state = f2b(j);
+          if (!state) return;
+          const { jail, jails } = readConfig(j);
+          state.load = jail;
+          state.jails = jails;
+          state.loads++;
+          state.consulted = false;
+          apply(j, state);
         },
       },
     }),
   }),
-  initialiser: (j) => {
-    const { prison, prisons } = lireConfig(j);
-    f2b(j).charge = prison;
-    f2b(j).prisons = prisons;
-    systemd(j)!.horloge = Date.UTC(2026, 10, 12, 9, 0, 0);
+  initialise: (j) => {
+    const { jail, jails } = readConfig(j);
+    f2b(j).load = jail;
+    f2b(j).jails = jails;
+    systemd(j)!.clock = Date.UTC(2026, 10, 12, 9, 0, 0);
   },
-  creerMonde: (t) => {
-    const racine = { proprio: 'root' };
+  createWorld: (t) => {
+    const root = { owner: 'root' };
     return d(
       {
         etc: d(
           {
-            ...fichiersComptes(),
+            ...accountsFiles(),
             fail2ban: d(
               {
-                'jail.conf': f(JAIL_CONF_COMPLET, { lignes: true, proprio: 'root' }),
-                'jail.d': d({ 'defaults-debian.conf': f(DEFAULTS_DEBIAN, { lignes: true, proprio: 'root' }) }, undefined, racine),
-                'jail.local': f(JAIL_LOCAL, { lignes: true, proprio: 'root' }),
+                'jail.conf': f(COMPLETE_CONF_JAIL, { lines: true, owner: 'root' }),
+                'jail.d': d({ 'defaults-debian.conf': f(DEFAULTS_DEBIAN, { lines: true, owner: 'root' }) }, undefined, root),
+                'jail.local': f(JAIL_LOCAL, { lines: true, owner: 'root' }),
               },
               undefined,
-              racine,
+              root,
             ),
           },
           undefined,
-          racine,
+          root,
         ),
-        home: d({ vous: d({ 'courriel_rania.txt': f(t('recidive-courriel-rania')) }) }, undefined, racine),
+        home: d({ vous: d({ 'courriel_rania.txt': f(t('recidive-courriel-rania')) }) }, undefined, root),
         var: d(
           {
             log: d(
               {
-                'fail2ban.log': f((j) => [LOG, ...f2b(j).journal].join('\n'), { lignes: true, proprio: 'root', groupe: 'adm', mode: 'rw-r-----' }),
+                'fail2ban.log': f((j) => [LOG, ...f2b(j).log].join('\n'), { lines: true, owner: 'root', group: 'adm', mode: 'rw-r-----' }),
                 nginx: d(
                   {
-                    'error.log': f(ERREURS, { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }),
-                    'access.log': f('', { lignes: true, proprio: 'www-data', groupe: 'adm', mode: 'rw-r-----' }),
+                    'error.log': f(ERRORS, { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }),
+                    'access.log': f('', { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }),
                   },
                   undefined,
-                  racine,
+                  root,
                 ),
               },
               undefined,
-              racine,
+              root,
             ),
           },
           undefined,
-          racine,
+          root,
         ),
       },
       undefined,
-      racine,
+      root,
     );
   },
-  evenements: [
+  events: [
     {
       id: 'jail-conf',
-      condition: (j) => j.lire(`${DOSSIER}/jail.conf`) !== JAIL_CONF_COMPLET,
+      condition: (j) => j.read(`${DIRECTORY}/jail.conf`) !== COMPLETE_CONF_JAIL,
       message: (j) => j.t('sentinelle-evenement-jail-conf'),
     },
     {
       id: 'tout-active',
-      condition: (j) => lireConfig(j).erreurs.some((e) => e.includes('Have not found any log file')),
+      condition: (j) => readConfig(j).errors.some((e) => e.includes('Have not found any log file')),
       message: (j) => j.t('recidive-evenement-tout-active'),
     },
-    { id: 'courte', condition: (j) => !!prison(j, 'recidive') && !plusLongue(j), message: (j) => j.t('recidive-evenement-courte') },
-    { id: 'recidive', condition: (j) => RECIDIVISTES.some((ip) => banni(j, ip, 'recidive')), message: (j) => j.t('recidive-evenement-recidive') },
-    { id: 'agenda', condition: (j) => ASPIRATEURS.some((ip) => banni(j, ip, 'nginx-limit-req')), message: (j) => j.t('recidive-evenement-agenda') },
-    { id: 'fin', condition: (j) => reussi(j) && f2b(j).consulte, message: (j) => j.t('recidive-evenement-fin') },
+    { id: 'courte', condition: (j) => !!jail(j, 'recidive') && !moreLong(j), message: (j) => j.t('recidive-evenement-courte') },
+    { id: 'recidive', condition: (j) => REPEAT_OFFENDERS.some((ip) => banned(j, ip, 'recidive')), message: (j) => j.t('recidive-evenement-recidive') },
+    { id: 'agenda', condition: (j) => SCRAPERS.some((ip) => banned(j, ip, 'nginx-limit-req')), message: (j) => j.t('recidive-evenement-agenda') },
+    { id: 'fin', condition: (j) => succeeded(j) && f2b(j).consulted, message: (j) => j.t('recidive-evenement-fin') },
   ],
 };
