@@ -3,16 +3,16 @@
 
 ## Chapter 1 — The Postman
 
-indice-facteur-differe =
+indice-postman-differe =
     .piste = Mail that didn't leave waits in Postfix's queue: mailq shows it, with the other server's answer. /var/log/mail.log tells each attempt.
     .solution = mailq (or postqueue -p), then grep deferred /var/log/mail.log: mailbox.example answers 451, "neither SPF nor DKIM passed".
-indice-facteur-ancien =
+indice-postman-ancien =
     .piste = SPF is a TXT record of the domain, starting with v=spf1 (man dig). Whom does it authorize to send?
     .solution = dig TXT gardens.example: "v=spf1 include:_spf.old-hosting.example -all", the old host's SPF.
-indice-facteur-spf =
+indice-postman-spf =
     .piste = The SPF is in gardens.example's zone, on this server (/etc/bind/zones). It must authorize this machine (mx, a or ip4:203.0.113.30). For the registry's secondary to copy it, the serial must go up.
     .solution = sudo nano /etc/bind/zones/db.gardens.example: replace the include with mx ("v=spf1 mx -all") and raise the serial; sudo named-checkzone gardens.example /etc/bind/zones/db.gardens.example, sudo rndc reload, then dig TXT gardens.example @ns2.registry.example
-indice-facteur-fin =
+indice-postman-fin =
     .piste = The SPF is right, but Postfix only retries after a few minutes. man postqueue.
     .solution = sudo postqueue -f, then mailq: "Mail queue is empty".
 
@@ -36,12 +36,12 @@ indice-signature-fin =
 
 ## Chapter 3 — The Policy
 
-indice-politique-rapport =
+indice-policy-rapport =
     .piste = The reports in dmarc_reports are XML: each "record" says who sent (source_ip), how many, and what SPF, DKIM and DMARC gave. Look for the addresses that aren't 203.0.113.30.
     .solution = grep source_ip dmarc_reports/*.xml, then less on the report: 198.51.100.77 (newsmail.example) passes SPF and DKIM for its own domain, not for gardens.example.
-indice-politique-aligne =
+indice-policy-aligne =
     .piste = The newsletter must be signed with d=gardens.example: newsmail_letter.txt says how to delegate a selector. Mind the trailing dot, and the serial.
     .solution = Add "nm1._domainkey IN CNAME nm1.dkim.newsmail.example." to the zone, raise the serial, sudo rndc reload; dig TXT nm1._domainkey.gardens.example @ns2.registry.example
-indice-politique-fin =
+indice-policy-fin =
     .piste = Now that the newsletter is aligned, the policy can be tightened: the p= tag of the _dmarc record (keep rua=).
     .solution = In the zone: _dmarc IN TXT "v=DMARC1; p=quarantine; rua=mailto:dmarc@gardens.example", serial, sudo rndc reload; dig TXT _dmarc.gardens.example @ns2.registry.example

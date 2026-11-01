@@ -98,7 +98,7 @@ export function exposedKey(j: Game): string | null {
 const finished = (j: Game) => now(j).state === 'ok' && toReboot(j) === 'ok' && openSsh(nft(j)) && sshToReboot(j) && !exposedKey(j);
 
 export const vpn: Chapter = {
-  id: 'vpn',
+  id: 'remote-work',
   number: 4,
   plan: hivePlan({ remoteWork: true }),
   commands: [
@@ -153,25 +153,25 @@ export const vpn: Chapter = {
       sysctl: ROUTER_SYSCTL,
       etc: { wireguard: d({}, undefined, { owner: 'root', mode: 'rwx------' }) },
       home: {
-        'courriel_malik.txt': f(t('vpn-courriel-malik', { cle: MALIK_PUBLIC })),
-        'malik-laptop.conf': f(t('vpn-portable-malik'), { lines: true }),
+        'courriel_malik.txt': f(t('remote-work-courriel-malik', { cle: MALIK_PUBLIC })),
+        'malik-laptop.conf': f(t('remote-work-portable-malik'), { lines: true }),
       },
     }),
   events: [
-    { id: 'cle-exposee', condition: (j) => !!exposedKey(j), message: (j) => j.t('vpn-evenement-cle-exposee', { fichier: exposedKey(j)! }) },
-    { id: 'filtre', condition: (j) => now(j).state === 'filtre', message: (j) => j.t('vpn-evenement-filtre') },
+    { id: 'cle-exposee', condition: (j) => !!exposedKey(j), message: (j) => j.t('remote-work-evenement-cle-exposee', { fichier: exposedKey(j)! }) },
+    { id: 'filtre', condition: (j) => now(j).state === 'filtre', message: (j) => j.t('remote-work-evenement-filtre') },
     {
       id: 'poignee',
       condition: (j) => Object.keys(wg(j)).length > 0 && ['conf', 'adresse', 'cle-routeur', 'inconnu'].includes(now(j).state),
-      message: (j) => j.t('vpn-evenement-poignee'),
+      message: (j) => j.t('remote-work-evenement-poignee'),
     },
     {
       id: 'sans-nas',
       condition: (j) => ['autorisees', 'route', 'transfert'].includes(now(j).state),
-      message: (j) => j.t('vpn-evenement-sans-nas'),
+      message: (j) => j.t('remote-work-evenement-sans-nas'),
     },
     { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-evenement-ssh') },
-    { id: 'en-place', condition: (j) => now(j).state === 'ok' && toReboot(j) !== 'ok', message: (j) => j.t('vpn-evenement-en-place') },
-    { id: 'fin', condition: finished, message: (j) => j.t('vpn-evenement-fin') },
+    { id: 'en-place', condition: (j) => now(j).state === 'ok' && toReboot(j) !== 'ok', message: (j) => j.t('remote-work-evenement-en-place') },
+    { id: 'fin', condition: finished, message: (j) => j.t('remote-work-evenement-fin') },
   ],
 };

@@ -63,7 +63,7 @@ const readableByApp = (j: Game) => {
 const secretOk = (j: Game) => closedToOther(j) && readableByApp(j);
 
 export const report: Chapter = {
-  id: 'rapport',
+  id: 'report',
   number: 2,
   commands: [
     'ls',
@@ -116,7 +116,7 @@ export const report: Chapter = {
   initialise: (j) => loadSshd(j),
   createWorld: (t) =>
     bakeryWorld(t, {
-      home: { 'courriel_nadia.txt': f(t('rapport-courriel-nadia')), 'rapport-audit.txt': f(t('rapport-rapport-audit'), { lines: true }) },
+      home: { 'courriel_nadia.txt': f(t('report-courriel-nadia')), 'rapport-audit.txt': f(t('report-rapport-audit'), { lines: true }) },
       sudoersD: { '90-cloud-init-users': file(cloudInitSudo(player(t)), 'root', 'r--r-----') },
       more: {
         srv: d(
@@ -136,23 +136,23 @@ export const report: Chapter = {
       },
     }),
   events: [
-    { id: 'sudoers-casse', condition: (j) => !validPolicy(j), message: (j) => j.t('rapport-evenement-sudoers-casse') },
-    { id: 'enferme', condition: (j) => !between(j), message: (j) => j.t('rapport-evenement-enferme') },
+    { id: 'sudoers-casse', condition: (j) => !validPolicy(j), message: (j) => j.t('report-evenement-sudoers-casse') },
+    { id: 'enferme', condition: (j) => !between(j), message: (j) => j.t('report-evenement-enferme') },
     {
       id: 'sans-effet',
       condition: (j) => sshd(j).reloads === 0 && /^\s*PermitRootLogin\s+no\b/im.test(j.read('/etc/ssh/sshd_config') ?? ''),
-      message: (j) => j.t('rapport-evenement-sans-effet'),
+      message: (j) => j.t('report-evenement-sans-effet'),
     },
-    { id: 'compte-incomplet', condition: incompleteAccount, message: (j) => j.t('rapport-evenement-compte-incomplet') },
-    { id: 'appli-aveugle', condition: (j) => closedToOther(j) && !readableByApp(j), message: (j) => j.t('rapport-evenement-appli-aveugle') },
-    { id: 'ssh', condition: (j) => closedRoot(j) && between(j), message: (j) => j.t('rapport-evenement-ssh') },
-    { id: 'compte', condition: okAccount, message: (j) => j.t('rapport-evenement-compte') },
-    { id: 'sudo', condition: sudoOk, message: (j) => j.t('rapport-evenement-sudo') },
-    { id: 'secret', condition: secretOk, message: (j) => j.t('rapport-evenement-secret') },
+    { id: 'compte-incomplet', condition: incompleteAccount, message: (j) => j.t('report-evenement-compte-incomplet') },
+    { id: 'appli-aveugle', condition: (j) => closedToOther(j) && !readableByApp(j), message: (j) => j.t('report-evenement-appli-aveugle') },
+    { id: 'ssh', condition: (j) => closedRoot(j) && between(j), message: (j) => j.t('report-evenement-ssh') },
+    { id: 'compte', condition: okAccount, message: (j) => j.t('report-evenement-compte') },
+    { id: 'sudo', condition: sudoOk, message: (j) => j.t('report-evenement-sudo') },
+    { id: 'secret', condition: secretOk, message: (j) => j.t('report-evenement-secret') },
     {
       id: 'fin',
       condition: (j) => closedRoot(j) && between(j) && okAccount(j) && sudoOk(j) && secretOk(j),
-      message: (j) => j.t('rapport-evenement-fin'),
+      message: (j) => j.t('report-evenement-fin'),
     },
   ],
 };

@@ -31,7 +31,7 @@ const openLogs = (j: Game) => files(j).some((n) => j.can(n, 'r', 'nobody'));
 const share = (j: Game) => j.find(path(j.t, SHARE))!;
 
 export const secondDay: Chapter = {
-  id: 'deuxieme-jour',
+  id: 'second-day',
   number: 2,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'groups', 'whoami', 'usermod', 'chgrp', 'chown', 'chmod', 'touch', 'nano', 'sudo'],
   home: M,
@@ -48,7 +48,7 @@ export const secondDay: Chapter = {
         etc: d(accountsFiles(), undefined, root),
         home: d(
           {
-            vous: d({ 'courriel_awa.txt': f(t('deuxieme-jour-courriel-awa')), 'notes_awa.txt': f(t('deuxieme-jour-notes-awa')) }),
+            vous: d({ 'courriel_awa.txt': f(t('second-day-courriel-awa')), 'notes_awa.txt': f(t('second-day-notes-awa')) }),
             awa: home('awa'),
             malo: home('malo'),
           },
@@ -77,22 +77,22 @@ export const secondDay: Chapter = {
     {
       id: 'remplace',
       condition: (j) => !j.groupsFor('malo').includes('web-team'),
-      message: (j) => j.t('deuxieme-jour-evenement-remplace'),
+      message: (j) => j.t('second-day-evenement-remplace'),
     },
     {
       id: 'journaux-ouverts',
       condition: openLogs,
-      message: (j) => j.t('deuxieme-jour-evenement-journaux-ouverts', { logs: LOGS }),
+      message: (j) => j.t('second-day-evenement-journaux-ouverts', { logs: LOGS }),
     },
     {
       id: 'malo-lit',
       condition: (j) => malo.lit(j) && !openLogs(j),
-      message: (j) => j.t('deuxieme-jour-evenement-malo-lit'),
+      message: (j) => j.t('second-day-evenement-malo-lit'),
     },
     {
       id: 'partage-ouvert',
       condition: (j) => j.can(share(j), 'w', 'nobody'),
-      message: (j) => j.t('deuxieme-jour-evenement-partage-ouvert', { partage: path(j.t, SHARE) }),
+      message: (j) => j.t('second-day-evenement-partage-ouvert', { partage: path(j.t, SHARE) }),
     },
     {
       id: 'partage',
@@ -101,12 +101,12 @@ export const secondDay: Chapter = {
         const team = [j.player, 'awa', 'malo'].every((u) => j.can(n, 'w', u) && j.can(n, 'x', u));
         return team && !j.can(n, 'r', 'www-data') && !j.can(n, 'w', 'www-data');
       },
-      message: (j) => j.t('deuxieme-jour-evenement-partage', { partage: path(j.t, SHARE) }),
+      message: (j) => j.t('second-day-evenement-partage', { partage: path(j.t, SHARE) }),
     },
     {
       id: 'fin',
       condition: (j) => j.flags.has('malo-lit') && j.flags.has('partage') && malo.lit(j) && !openLogs(j),
-      message: (j) => j.t('deuxieme-jour-evenement-fin'),
+      message: (j) => j.t('second-day-evenement-fin'),
     },
   ],
 };

@@ -38,7 +38,7 @@ for (const language of LANGUAGES)
     }
 
     it('chapitre 1 — solution : courriers, mdstat, SMART des deux disques, sdb sorti de md0 et md1, ticket', () => {
-      const { s, jouer: play, st } = part('fatigue');
+      const { s, jouer: play, st } = part('tired-disk');
       let all = play(['cat message_d_odile.txt', 'mail', 'cat /var/mail/vous', 'cat /proc/mdstat']);
       expect(all).toContain(`SMART error (CurrentPendingSector) detected on host: ${machineName(translator(language), 'labo')}`);
       expect(all).toContain('md0 : active raid1 sdb2[1] sda2[0]');
@@ -65,7 +65,7 @@ for (const language of LANGUAGES)
     });
 
     it('chapitre 1 — fausses pistes : retirer sans --fail, sortir le disque sain, un ticket au mauvais numéro', () => {
-      const { s, jouer: play, st } = part('fatigue');
+      const { s, jouer: play, st } = part('tired-disk');
       // Un membre actif ne se retire pas.
       let all = play(['sudo mdadm /dev/md0 --remove /dev/sdb2']);
       expect(all).toContain('mdadm: hot remove failed for /dev/sdb2: Device or resource busy');
@@ -93,7 +93,7 @@ for (const language of LANGUAGES)
     });
 
     it('chapitre 2 — solution : la table de sda recopiée, les deux partitions ajoutées, la reconstruction, GRUB', () => {
-      const { s, jouer: play, st } = part('disque-neuf');
+      const { s, jouer: play, st } = part('new-disk');
       let all = play(['cat message_d_odile.txt', 'lsblk', 'cat /proc/mdstat']);
       expect(all).toMatch(/^sdb\s+8:16\s+0 1\.8T\s+0 disk$/m);
       expect(all).toContain('[2/1] [U_]');
@@ -117,14 +117,14 @@ for (const language of LANGUAGES)
     });
 
     it('chapitre 2 — autre solution : GRUB d’abord, une seule commande mdadm par grappe, la table gardée dans un fichier', () => {
-      const { s, jouer: play } = part('disque-neuf');
+      const { s, jouer: play } = part('new-disk');
       play(['sudo sfdisk -d /dev/sda > table.txt', 'cat table.txt | sudo sfdisk /dev/sdb', 'sudo grub-install /dev/sdb', 'sudo mdadm /dev/md1 -a /dev/sdb3', 'sudo mdadm /dev/md0 -a /dev/sdb2']);
       for (let i = 0; i < 8 && !s.finished; i++) play(['sudo mdadm --detail /dev/md1']);
       expect(s.finished).toBe(true);
     });
 
     it('chapitre 2 — fausses pistes : ajouter trop tôt, le sens inversé, le disque entier, GRUB sur une partition', () => {
-      const { s, jouer: play, st } = part('disque-neuf');
+      const { s, jouer: play, st } = part('new-disk');
       let all = play(['sudo mdadm --manage /dev/md0 --add /dev/sdb2']);
       expect(all).toContain('mdadm: Cannot find /dev/sdb2: No such file or directory');
       contains(all, 'sdb est encore vierge');
@@ -150,7 +150,7 @@ for (const language of LANGUAGES)
     });
 
     it('les messages des outils : sans root, sans argument, inconnu, option inconnue', () => {
-      const { s, jouer: play } = part('fatigue');
+      const { s, jouer: play } = part('tired-disk');
       expect(s.execute('smartctl -a /dev/sda')).toContain('Smartctl open device: /dev/sda failed: Permission denied');
       expect(s.execute('mdadm --detail /dev/md0')).toContain('mdadm: cannot open /dev/md0: Permission denied');
       expect(s.execute('cat /proc/mdstat')).toContain('Personalities : [raid1]');
@@ -179,7 +179,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('Testing has begun.');
       expect(all).toMatch(/# 1  Short offline\s+Completed: read failure\s+90%/);
       // sfdisk et grub-install : au chapitre 2.
-      const two = part('disque-neuf');
+      const two = part('new-disk');
       const outputs = two.jouer(['sudo sfdisk -l /dev/sda', 'sudo sfdisk --force /dev/sdb', 'sudo sfdisk /dev/sdb', 'sudo sfdisk -d /dev/sda | sudo sfdisk /dev/sda', 'sudo grub-install /dev/sdz']);
       expect(outputs).toMatch(/\/dev\/sda3\s+67112960 3907029134 3839916175\s+1\.8T Linux RAID/);
       expect(outputs).toContain("sfdisk: unrecognized option '--force'");
@@ -196,7 +196,7 @@ for (const language of LANGUAGES)
     });
 
     it('chapitre 3 — solution : une grappe des disques neufs, pvcreate, vgextend, lvextend puis resize2fs, mdadm.conf, initramfs', () => {
-      const { s, jouer: play, st } = part('agrandir');
+      const { s, jouer: play, st } = part('more-room');
       let all = play(['cat message_d_odile.txt', 'df -h /srv', 'sudo vgs', 'lsblk']);
       expect(all).toMatch(/\/dev\/mapper\/labo-photos.* 97% \/srv/);
       expect(all).toMatch(/labo +1 +1 +0 wz--n- <1\.79t +0\n/);
@@ -228,7 +228,7 @@ for (const language of LANGUAGES)
     });
 
     it('chapitre 3 — autre solution : --run, vgextend sans pvcreate, lvextend -r -L, mdadm.conf écrit avec nano', () => {
-      const { s, jouer: play } = part('agrandir');
+      const { s, jouer: play } = part('more-room');
       let all = play(['sudo mdadm -C /dev/md2 -l1 -n2 --run /dev/sdc /dev/sdd', 'sudo vgextend labo /dev/md2', 'sudo lvextend -r -L +2T /dev/labo/photos']);
       expect(all).toContain('Physical volume "/dev/md2" successfully created.');
       expect(all).toContain('File system ext4 found on labo/photos mounted at /srv.');
@@ -243,7 +243,7 @@ for (const language of LANGUAGES)
     });
 
     it('chapitre 3 — fausse piste : un disque seul dans le groupe, réparé par une grappe dégradée et pvmove', () => {
-      const { s, jouer: play, st } = part('agrandir');
+      const { s, jouer: play, st } = part('more-room');
       // sdc donné tel quel à LVM, et le volume agrandi dessus : plus de redondance.
       let all = play(['sudo vgextend labo /dev/sdc', 'sudo lvextend -r -L +500G /dev/labo/photos']);
       expect(all).toContain('Volume group "labo" successfully extended');
@@ -276,7 +276,7 @@ for (const language of LANGUAGES)
     });
 
     it('chapitre 3 — fausses pistes : lvextend sans le système de fichiers, les doublons de --scan, l’initramfs refait trop tôt', () => {
-      const { s, jouer: play } = part('agrandir');
+      const { s, jouer: play } = part('more-room');
       play(['sudo mdadm --create /dev/md2 --level=1 --raid-devices=2 --run /dev/sdc /dev/sdd', 'sudo vgextend labo /dev/md2', 'sudo lvextend -l +100%FREE /dev/labo/photos']);
       let all = play(['sudo lvextend -l +100%FREE /dev/labo/photos', 'sudo update-initramfs -u', 'sudo resize2fs /dev/labo/photos', 'sudo resize2fs /dev/labo/photos']);
       expect(all).toMatch(/New size \(\d+ extents\) matches existing size/);
@@ -312,7 +312,7 @@ for (const language of LANGUAGES)
     const BY_UUID = 'UUID=c27a9e41-5b3d-4f8a-a1e6-9d0b2c4f7e13  /srv/scans  ext4  defaults,nofail  0  2';
 
     it('chapitre 4 — solution : le journal, lsblk -f, fstab par UUID avec nofail, findmnt --verify, daemon-reload, mount -a, systemctl default', () => {
-      const { s, jouer: play } = part('secours');
+      const { s, jouer: play } = part('stuck-boot');
       expect(s.who).toBe('root');
       let all = play(['cat message_d_odile.txt', 'journalctl -xb -p err', 'lsblk -f', 'findmnt --verify', 'mount -a']);
       expect(all).toContain('You are in emergency mode.');
@@ -336,7 +336,7 @@ for (const language of LANGUAGES)
     });
 
     it('chapitre 4 — autre solution : LABEL=, puis reboot (systemd relit fstab au démarrage)', () => {
-      const { s, jouer: play } = part('secours');
+      const { s, jouer: play } = part('stuck-boot');
       fix(s, 'LABEL=SCANS /srv/scans ext4 nofail 0 2');
       play(['blkid -L SCANS', 'reboot']);
       expect(s.state.secours).toBe(false);
@@ -344,7 +344,7 @@ for (const language of LANGUAGES)
     });
 
     it('chapitre 4 — fausses pistes : reprendre trop tôt, /dev/sde1, sans nofail, sans daemon-reload, la ligne effacée', () => {
-      const { s, jouer: play } = part('secours');
+      const { s, jouer: play } = part('stuck-boot');
       // Reprendre le démarrage sans rien corriger : retour en mode secours.
       let all = play(['exit']);
       expect(all).toContain('You are in emergency mode.');
@@ -377,7 +377,7 @@ for (const language of LANGUAGES)
     });
 
     it('chapitre 4 — les messages : blkid, findmnt, mount (une ligne illisible, une source inconnue)', () => {
-      const { s, jouer: play } = part('secours');
+      const { s, jouer: play } = part('stuck-boot');
       s.execute('nano /etc/fstab');
       s.saveEdition(s.edition!.text + '\n/dev/sdz9 /mnt\n');
       contains(s.quitEdition(), 'une ligne illisible');
@@ -391,12 +391,12 @@ for (const language of LANGUAGES)
 
     it('l’histoire s’ouvre après « Le disque plein », et se joue depuis le poste', () => {
       const before = prerequisites('labo');
-      expect(before).toContain('disque-plein');
+      expect(before).toContain('full-disk');
       const c = new Console({ language, finished: before });
       expect(c.isOpen('labo')).toBe(true);
       const all = [c.execute(machinesInLanguage(translator(language), 'ssh labo')), c.execute('yes')].join('\n');
       expect(all).toContain(machinesInLanguage(translator(language), 'labo.internal'));
-      expect(c.remote?.shell.chapter.id).toBe('fatigue');
-      expect(new Console({ language, finished: before.filter((x) => x !== 'disque-plein') }).isOpen('labo')).toBe(false);
+      expect(c.remote?.shell.chapter.id).toBe('tired-disk');
+      expect(new Console({ language, finished: before.filter((x) => x !== 'full-disk') }).isOpen('labo')).toBe(false);
     });
   });

@@ -102,7 +102,7 @@ APPS.reservations = {
   answer: (game, c, path) => {
     const error = connect(game, c);
     if (error) return { code: 500, body: `Internal Server Error: ${error}` };
-    if (path === '/' || path === '') return { code: 200, body: game.t('composition-appli-accueil') };
+    if (path === '/' || path === '') return { code: 200, body: game.t('compose-appli-accueil') };
     return { code: 404, body: `Cannot GET ${path}` };
   },
 };
@@ -203,7 +203,7 @@ const dayA = (j: Game) => {
 const onVolume = (j: Game) => service(j, 'db')?.mounts.some((m) => m.type === 'volume' && m.target.replace(/\/$/, '') === DATA) ?? false;
 
 export const composition: Chapter = {
-  id: 'composition',
+  id: 'compose',
   number: 2,
   commands: [
     'ls',
@@ -264,7 +264,7 @@ export const composition: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: f('fabrique', { lines: true, owner: 'root' }) }),
       home: place({
-        vous: d({ 'message_de_yasmine.txt': f(t('composition-message-de-yasmine')), 'aide_compose.txt': f(t('composition-aide-compose')) }),
+        vous: d({ 'message_de_yasmine.txt': f(t('compose-message-de-yasmine')), 'aide_compose.txt': f(t('compose-aide-compose')) }),
       }),
       srv: place({ reservations: place({ 'compose.yaml': f(COMPOSE.replaceAll('atelier2027', password(t, 'atelier2027')), { lines: true, owner: 'root' }) }) }),
     });
@@ -274,42 +274,42 @@ export const composition: Chapter = {
       id: 'localhost',
       condition: (j) =>
         (service(j, 'appli')?.log ?? []).some((l) => l.text.includes('ECONNREFUSED 127.0.0.1')) && j.last.line.includes('docker'),
-      message: (j) => j.t('composition-evenement-localhost'),
+      message: (j) => j.t('compose-evenement-localhost'),
     },
     {
       id: 'sans-mot-de-passe',
       condition: (j) => (service(j, 'db')?.log ?? []).some((l) => l.text.includes('superuser password is not specified')),
-      message: (j) => j.t('composition-evenement-sans-mot-de-passe'),
+      message: (j) => j.t('compose-evenement-sans-mot-de-passe'),
     },
     {
       id: 'authentification',
       condition: (j) => (service(j, 'appli')?.log ?? []).some((l) => l.text.includes('password authentication failed')),
-      message: (j) => j.t('composition-evenement-authentification'),
+      message: (j) => j.t('compose-evenement-authentification'),
     },
     {
       id: 'connectee',
       condition: connected,
-      message: (j) => j.t('composition-evenement-connectee'),
+      message: (j) => j.t('compose-evenement-connectee'),
     },
     {
       id: 'volumes-effaces',
       condition: (j) => j.state.composeVolumesEffaces === true,
-      message: (j) => j.t('composition-evenement-volumes-effaces'),
+      message: (j) => j.t('compose-evenement-volumes-effaces'),
     },
     {
       id: 'en-clair',
       condition: (j) => connected(j) && onVolume(j) && inClear(j),
-      message: (j) => j.t('composition-evenement-en-clair'),
+      message: (j) => j.t('compose-evenement-en-clair'),
     },
     {
       id: 'env-lisible',
       condition: (j) => connected(j) && onVolume(j) && !inClear(j) && envPassword(j) !== '' && !protectedEnv(j),
-      message: (j) => j.t('composition-evenement-env-lisible'),
+      message: (j) => j.t('compose-evenement-env-lisible'),
     },
     {
       id: 'sans-redemarrage',
       condition: (j) => connected(j) && onVolume(j) && !inClear(j) && protectedEnv(j) && !(restart(service(j, 'appli')) && restart(service(j, 'db'))),
-      message: (j) => j.t('composition-evenement-sans-redemarrage'),
+      message: (j) => j.t('compose-evenement-sans-redemarrage'),
     },
     {
       id: 'fin',
@@ -322,7 +322,7 @@ export const composition: Chapter = {
         protectedEnv(j) &&
         restart(service(j, 'appli')) &&
         restart(service(j, 'db')),
-      message: (j) => j.t('composition-evenement-fin'),
+      message: (j) => j.t('compose-evenement-fin'),
     },
   ],
 };

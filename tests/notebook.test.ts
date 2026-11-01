@@ -38,7 +38,7 @@ for (const language of LANGUAGES)
       expect(notebook.cat.line).toBe('ls -a | cat');
       // head n'existe pas encore sur le poste : il n'entre pas au carnet.
       expect(notebook.head).toBeUndefined();
-      expect(notebook.pwd.chapter).toBe('eveil');
+      expect(notebook.pwd.chapter).toBe('lighthouse');
     });
 
     it("ignore ce qui n'est pas une commande du jeu, mais garde man", () => {
@@ -64,7 +64,7 @@ for (const language of LANGUAGES)
 describe('Le carnet et la progression', () => {
   const t = translator('fr');
   it('le Markdown commence par les chapitres terminés, histoire par histoire', () => {
-    const md = inMarkdown({}, t, ['eveil', 'bourg', 'fermer-la-porte']);
+    const md = inMarkdown({}, t, ['lighthouse', 'village', 'shut-the-door']);
     expect(md).toContain('## Progression');
     expect(md).toMatch(/- L.Effaceur : 2 chapitres terminés sur 4/);
     expect(md).toMatch(/- Les Lettres du quartier : 1 chapitre terminé sur 9/);
@@ -79,16 +79,16 @@ describe('Les fiches pour les enseignant·es', () => {
     expect(all.length).toBe(STORIES.flatMap((h) => h.chapters).length);
     const views = all.flatMap((f) => f.fresh);
     expect(new Set(views).size).toBe(views.length);
-    expect(all.find((f) => f.chapter.id === 'eveil')!.fresh).toContain('ls');
-    expect(all.find((f) => f.chapter.id === 'goulot')!.fresh).toContain('iostat');
-    expect(all.find((f) => f.chapter.id === 'bourg')!.before?.id).toBe('eveil');
+    expect(all.find((f) => f.chapter.id === 'lighthouse')!.fresh).toContain('ls');
+    expect(all.find((f) => f.chapter.id === 'bottleneck')!.fresh).toContain('iostat');
+    expect(all.find((f) => f.chapter.id === 'village')!.before?.id).toBe('lighthouse');
     expect(all.every((f) => f.duration >= 15 && f.duration % 5 === 0)).toBe(true);
   });
 });
 
 describe('Le mode examen', () => {
   it("sans indice, mais l'étape finale et son débrief s'affichent", () => {
-    const c = new Console({ language: 'fr', finished: ['eveil', 'bourg', 'racine', 'sauvegarde', ...prerequisites('lettres')] });
+    const c = new Console({ language: 'fr', finished: ['lighthouse', 'village', 'root', 'backup', ...prerequisites('lettres')] });
     c.exam = true;
     const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
     // La Porte, avec la configuration de sshd : la faute de frappe ne donne plus d'indice.
@@ -108,6 +108,6 @@ describe('Le mode examen', () => {
     c.quitEdition();
     all = play(['sudo systemctl reload ssh', 'exit', 'ssh lettres']);
     expect(all).toContain('https://man.openbsd.org/sshd_config');
-    expect(c.finished).toContain('fermer-la-porte');
+    expect(c.finished).toContain('shut-the-door');
   });
 });

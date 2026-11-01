@@ -23,7 +23,7 @@ const succeededPing = (j: any, target: string) =>
 const repairedDns = (j: any) => /^\s*nameserver\s+(192\.168\.1\.1|9\.9\.9\.9)\s*$/m.test(j.read('/etc/resolv.conf') ?? '');
 
 export const pkg: Chapter = {
-  id: 'paquet-perdu',
+  id: 'lost-packet',
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'cp', 'ping', 'dig', 'traceroute', 'curl', 'sudo', 'grep'],
   home: M,
@@ -51,7 +51,7 @@ export const pkg: Chapter = {
       web: {
         [SITE]: {
           headers: ['HTTP/2 200', 'content-type: text/html; charset=utf-8', 'content-length: 1342', 'server: nginx', 'date: Tue, 13 Oct 2026 19:42:07 GMT'],
-          body: `<!doctype html>\n<html lang="${t.language}">\n<head><title>${t('paquet-perdu-site-titre')}</title></head>\n<body>\n<h1>${t('paquet-perdu-site-titre')}</h1>\n<p>${t('paquet-perdu-site-texte')}</p>\n</body>\n</html>`,
+          body: `<!doctype html>\n<html lang="${t.language}">\n<head><title>${t('lost-packet-site-titre')}</title></head>\n<body>\n<h1>${t('lost-packet-site-titre')}</h1>\n<p>${t('lost-packet-site-texte')}</p>\n</body>\n</html>`,
         },
       },
     },
@@ -62,8 +62,8 @@ export const pkg: Chapter = {
         home: d(
           {
             vous: d({
-              'note_de_kofi.txt': f(t('paquet-perdu-note-de-kofi')),
-              'carnet.txt': f(t('paquet-perdu-carnet')),
+              'note_de_kofi.txt': f(t('lost-packet-note-de-kofi')),
+              'carnet.txt': f(t('lost-packet-carnet')),
             }),
           },
           undefined,
@@ -73,14 +73,14 @@ export const pkg: Chapter = {
           {
             'resolv.conf': f(
               `
-# ${t('paquet-perdu-resolv-commentaire')}
+# ${t('lost-packet-resolv-commentaire')}
 nameserver 192.168.1.250
 `,
               { owner: 'root', lines: true },
             ),
             'resolv.conf.box': f(
               `
-# ${t('paquet-perdu-resolv-box-commentaire')}
+# ${t('lost-packet-resolv-box-commentaire')}
 nameserver 192.168.1.1
 `,
               { owner: 'root', lines: true },
@@ -97,47 +97,47 @@ nameserver 192.168.1.1
     {
       id: 'box',
       condition: (j) => succeededPing(j, '192.168.1.1'),
-      message: (j) => j.t('paquet-perdu-evenement-box'),
+      message: (j) => j.t('lost-packet-evenement-box'),
     },
     {
       id: 'internet',
       condition: (j) => succeededPing(j, '9.9.9.9'),
-      message: (j) => j.t('paquet-perdu-evenement-internet'),
+      message: (j) => j.t('lost-packet-evenement-internet'),
     },
     {
       id: 'nom',
       condition: (j) => last(j)[0] === 'ping' && j.last.errors.some((e) => e.includes('name resolution')),
-      message: (j) => j.t('paquet-perdu-evenement-nom'),
+      message: (j) => j.t('lost-packet-evenement-nom'),
     },
     {
       id: 'dns-muet',
       condition: (j) => last(j)[0] === 'dig' && /no servers could be reached|timed out/.test(j.last.output + j.last.errors.join()),
-      message: (j) => j.t('paquet-perdu-evenement-dns-muet'),
+      message: (j) => j.t('lost-packet-evenement-dns-muet'),
     },
     {
       id: 'dns-autre',
       condition: (j) => last(j)[0] === 'dig' && j.last.output.includes(IP_SITE),
-      message: (j) => j.t('paquet-perdu-evenement-dns-autre', { ip: IP_SITE }),
+      message: (j) => j.t('lost-packet-evenement-dns-autre', { ip: IP_SITE }),
     },
     {
       id: 'dns-repare',
       condition: repairedDns,
-      message: (j) => j.t('paquet-perdu-evenement-dns-repare'),
+      message: (j) => j.t('lost-packet-evenement-dns-repare'),
     },
     {
       id: 'ping-perdu',
       condition: (j) => repairedDns(j) && last(j)[0] === 'ping' && last(j).includes(SITE) && j.last.output.includes('100% packet loss'),
-      message: (j) => j.t('paquet-perdu-evenement-ping-perdu', { ip: IP_SITE }),
+      message: (j) => j.t('lost-packet-evenement-ping-perdu', { ip: IP_SITE }),
     },
     {
       id: 'route',
       condition: (j) => repairedDns(j) && last(j)[0] === 'traceroute' && j.last.output.includes('203.0.113.1'),
-      message: (j) => j.t('paquet-perdu-evenement-route'),
+      message: (j) => j.t('lost-packet-evenement-route'),
     },
     {
       id: 'curl',
       condition: (j) => repairedDns(j) && last(j)[0] === 'curl' && /HTTP\/2 200|<html/.test(j.last.output),
-      message: (j) => j.t('paquet-perdu-evenement-curl'),
+      message: (j) => j.t('lost-packet-evenement-curl'),
     },
   ],
 };

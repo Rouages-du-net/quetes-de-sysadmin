@@ -112,14 +112,14 @@ export const datacenterAccounts = (): Accounts => ({
   },
 });
 
-const initialBlocked = (t: Translate) => `# ${t('premier-jour-bloques-commentaire')}
+const initialBlocked = (t: Translate) => `# ${t('first-day-bloques-commentaire')}
 deny 203.0.113.5;
 deny 192.0.2.99;`;
 
 const catalogueStable = (): Process => ({ pid: 4243, user: 'www-data', cpu: 1.2, mem: 2.1, command: 'php-fpm: pool catalogue' });
 
 export const datacenter: Chapter = {
-  id: 'premier-jour',
+  id: 'first-day',
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'wc', 'grep', 'cut', 'sort', 'uniq', 'echo', 'tee', 'cp', 'mv', 'rm', 'ps', 'kill', 'systemctl', 'nano', 'sudo', 'whoami'],
   home: M,
@@ -149,7 +149,7 @@ export const datacenter: Chapter = {
         ],
       },
       // Ses processus sont gérés par l'histoire (surKill).
-      catalogue: { description: t('premier-jour-service-catalogue'), active: true, executable: 'php-fpm' },
+      catalogue: { description: t('first-day-service-catalogue'), active: true, executable: 'php-fpm' },
     }),
     // Configuration que nginx a réellement chargée (il ne relit le fichier
     // qu'au reload ou au restart).
@@ -165,7 +165,7 @@ export const datacenter: Chapter = {
       const blocked = game.state.confChargee.includes(`deny ${ROBOT};`);
       const fresh = blocked ? catalogueStable() : { ...catalogueStable(), pid: p.pid + 2, cpu: 99.1, mem: 37.9 };
       game.state.processus.push(fresh);
-      return game.t(blocked ? 'premier-jour-relance-calme' : 'premier-jour-relance-robot', { pid: String(fresh.pid) });
+      return game.t(blocked ? 'first-day-relance-calme' : 'first-day-relance-robot', { pid: String(fresh.pid) });
     },
   }),
   createWorld: (t) =>
@@ -174,8 +174,8 @@ export const datacenter: Chapter = {
         home: d(
           {
             vous: d({
-              'courriel_awa.txt': f(t('premier-jour-courriel-awa')),
-              'notes_awa.txt': f(t('premier-jour-notes-awa')),
+              'courriel_awa.txt': f(t('first-day-courriel-awa')),
+              'notes_awa.txt': f(t('first-day-notes-awa')),
             }),
           },
           undefined,
@@ -227,7 +227,7 @@ export const datacenter: Chapter = {
         j.last.commands.length === 1 &&
         ['cat', 'less', 'more'].includes(j.last.commands[0][0]) &&
         j.last.commands[0].some((a) => a.endsWith('access.log')),
-      message: (j) => j.t('premier-jour-evenement-tout-lire'),
+      message: (j) => j.t('first-day-evenement-tout-lire'),
     },
     {
       id: 'grep-seul',
@@ -235,7 +235,7 @@ export const datacenter: Chapter = {
         const cmds = j.last.commands.flat();
         return !j.flags.has('compte') && cmds.includes('grep') && !cmds.includes('wc') && j.last.output.split('\n').filter((l) => / 503 /.test(l)).length >= 20;
       },
-      message: (j) => j.t('premier-jour-evenement-grep-seul'),
+      message: (j) => j.t('first-day-evenement-grep-seul'),
     },
     {
       id: 'adresses-seules',
@@ -243,7 +243,7 @@ export const datacenter: Chapter = {
         const cmds = j.last.commands.flat();
         return !j.flags.has('robot') && cmds.includes('cut') && !cmds.includes('uniq') && j.last.output.split('\n').length >= 20;
       },
-      message: (j) => j.t('premier-jour-evenement-adresses-seules'),
+      message: (j) => j.t('first-day-evenement-adresses-seules'),
     },
     {
       id: 'compte',
@@ -252,27 +252,27 @@ export const datacenter: Chapter = {
         const cmds = j.last.commands.flat();
         return cmds.includes('grep') && j.last.output.trim().split(/\s+/)[0] === String(erreurs503(j));
       },
-      message: (j) => j.t('premier-jour-evenement-compte', { erreurs: String(erreurs503(j)) }),
+      message: (j) => j.t('first-day-evenement-compte', { erreurs: String(erreurs503(j)) }),
     },
     {
       id: 'robot',
       condition: (j) => j.last.commands.flat().includes('uniq') && j.last.output.includes(ROBOT),
-      message: (j) => j.t('premier-jour-evenement-robot', { robot: ROBOT, requetes: String(ROBOT_REQUESTS) }),
+      message: (j) => j.t('first-day-evenement-robot', { robot: ROBOT, requetes: String(ROBOT_REQUESTS) }),
     },
     {
       id: 'surcharge',
       condition: (j) => j.last.commands[0]?.[0] === 'ps' && j.last.output.includes('99.3'),
-      message: (j) => j.t('premier-jour-evenement-surcharge', { robot: ROBOT, bloques: BLOCKED }),
+      message: (j) => j.t('first-day-evenement-surcharge', { robot: ROBOT, bloques: BLOCKED }),
     },
     {
       id: 'ecrase',
       condition: (j) => !(j.read(BLOCKED) ?? '').includes('deny 203.0.113.5;'),
-      message: (j) => j.t('premier-jour-evenement-ecrase', { bloques: BLOCKED }),
+      message: (j) => j.t('first-day-evenement-ecrase', { bloques: BLOCKED }),
     },
     {
       id: 'regle',
       condition: (j) => (j.read(BLOCKED) ?? '').includes(`deny ${ROBOT};`),
-      message: (j) => j.t('premier-jour-evenement-regle'),
+      message: (j) => j.t('first-day-evenement-regle'),
     },
     {
       id: 'bloque',
@@ -280,15 +280,15 @@ export const datacenter: Chapter = {
       message: (j) => {
         const p = (j.state.processus as Process[]).find((q) => q.cpu > 90);
         return p
-          ? j.t('premier-jour-evenement-bloque-processus', { robot: ROBOT, pid: String(p.pid) })
-          : j.t('premier-jour-evenement-bloque', { robot: ROBOT });
+          ? j.t('first-day-evenement-bloque-processus', { robot: ROBOT, pid: String(p.pid) })
+          : j.t('first-day-evenement-bloque', { robot: ROBOT });
       },
     },
     {
       id: 'repare',
       condition: (j) =>
         j.flags.has('bloque') && !(j.state.processus as Process[]).some((p) => p.cpu > 90),
-      message: (j) => j.t('premier-jour-evenement-repare', { robot: ROBOT }),
+      message: (j) => j.t('first-day-evenement-repare', { robot: ROBOT }),
     },
     {
       id: 'rapport',
@@ -300,7 +300,7 @@ export const datacenter: Chapter = {
       message: (j) => {
         const r = j.read(path(j.t, `${M}/rapport.txt`)) ?? '';
         const n = reportCount(r).find((x) => x >= ERRORS_503 && x <= erreurs503(j)) ?? ERRORS_503;
-        return j.t('premier-jour-evenement-rapport', { erreurs: String(n) });
+        return j.t('first-day-evenement-rapport', { erreurs: String(n) });
       },
     },
   ],

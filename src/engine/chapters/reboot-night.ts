@@ -80,7 +80,7 @@ const running = (j: Game, name: string) => sd(j).services[name].state === 'activ
 const openLogs = (j: Game) => j.can(j.find(LOGS)!, 'w', 'nobody');
 
 export const reboot: Chapter = {
-  id: 'redemarrage',
+  id: 'reboot-night',
   number: 3,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'ps', 'systemctl', 'journalctl', 'chown', 'chmod', 'nano', 'sudo', 'reboot', 'whoami'],
   home: M,
@@ -93,13 +93,13 @@ export const reboot: Chapter = {
     c.groups.adm.members.push('malo');
     return c;
   },
-  state: (t) => ({ systemd: serverStory(t('premier-jour-service-catalogue')), processus: [{ pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' }] }),
+  state: (t) => ({ systemd: serverStory(t('first-day-service-catalogue')), processus: [{ pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' }] }),
   createWorld: (t) => {
     const root = { owner: 'root' };
     return d(
       {
         etc: d(accountsFiles(), undefined, root),
-        home: d({ vous: d({ 'courriel_awa.txt': f(t('redemarrage-courriel-awa')), 'notes_awa.txt': f(t('redemarrage-notes-awa')) }) }, undefined, root),
+        home: d({ vous: d({ 'courriel_awa.txt': f(t('reboot-night-courriel-awa')), 'notes_awa.txt': f(t('reboot-night-notes-awa')) }) }, undefined, root),
         var: d(
           {
             log: d(
@@ -128,22 +128,22 @@ export const reboot: Chapter = {
     {
       id: 'logs-ouverts',
       condition: openLogs,
-      message: (j) => j.t('redemarrage-evenement-logs-ouverts', { logs: LOGS }),
+      message: (j) => j.t('reboot-night-evenement-logs-ouverts', { logs: LOGS }),
     },
     {
       id: 'nginx',
       condition: (j) => running(j, 'nginx'),
-      message: (j) => j.t(sd(j).services.nginx.active ? 'redemarrage-evenement-nginx-active' : 'redemarrage-evenement-nginx'),
+      message: (j) => j.t(sd(j).services.nginx.active ? 'reboot-night-evenement-nginx-active' : 'reboot-night-evenement-nginx'),
     },
     {
       id: 'catalogue',
       condition: (j) => running(j, 'catalogue'),
-      message: (j) => j.t('redemarrage-evenement-catalogue'),
+      message: (j) => j.t('reboot-night-evenement-catalogue'),
     },
     {
       id: 'oubli',
       condition: (j) => sd(j).boot > 2 && !running(j, 'nginx'),
-      message: (j) => j.t('redemarrage-evenement-oubli'),
+      message: (j) => j.t('reboot-night-evenement-oubli'),
     },
     {
       id: 'fin',
@@ -154,7 +154,7 @@ export const reboot: Chapter = {
         running(j, 'nginx') &&
         running(j, 'catalogue') &&
         !openLogs(j),
-      message: (j) => j.t('redemarrage-evenement-fin'),
+      message: (j) => j.t('reboot-night-evenement-fin'),
     },
   ],
 };

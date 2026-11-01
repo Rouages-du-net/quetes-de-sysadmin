@@ -43,7 +43,7 @@ for (const language of LANGUAGES)
 
     describe('L’Effaceur', () => {
       it('chapitre 1 — L’Île du Phare', () => {
-        const { s, tout: all } = play('eveil', [
+        const { s, tout: all } = play('lighthouse', [
           'cat message.txt',
           'cd Colline/EcoleDesSignaux/SalleDExercice',
           'mv crabe Seau',
@@ -66,7 +66,7 @@ for (const language of LANGUAGES)
       });
 
       it('chapitre 1 — l’ampoule portée et renommée d’un coup', () => {
-        const { s } = play('eveil', [
+        const { s } = play('lighthouse', [
           'mv Jetee/filet Port/Hangar',
           'cd Port/Remise',
           'mv .ampoule_de_secours ~/Jetee/Phare/Escalier/Lanterne/ampoule',
@@ -75,7 +75,7 @@ for (const language of LANGUAGES)
       });
 
       it('chapitre 2 — Le Bourg', () => {
-        const { s, tout: all } = play('bourg', [
+        const { s, tout: all } = play('village', [
           'cd Mairie',
           'cd Archives',
           'grep Effaceur *',
@@ -114,7 +114,7 @@ for (const language of LANGUAGES)
       });
 
       it('chapitre 3 — La Racine', () => {
-        const { s, tout: all } = play('racine', [
+        const { s, tout: all } = play('root', [
           'cat arrivee.txt',
           'ls -l',
           'chmod o-w souvenirs',
@@ -144,7 +144,7 @@ for (const language of LANGUAGES)
       };
 
       it('solution : rsync, crontab, la nuit, la restauration', () => {
-        const { s, tout: all } = play('sauvegarde', [
+        const { s, tout: all } = play('backup', [
           'cat mot_de_maelle.txt',
           'rsync souvenirs /mnt/sauvegarde',
           'rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/',
@@ -167,7 +167,7 @@ for (const language of LANGUAGES)
       });
 
       it('une autre solution : @daily, copie dans un dossier, restauration avec cp', () => {
-        const s = new Shell(chapter('sauvegarde'), language);
+        const s = new Shell(chapter('backup'), language);
         crontab(s, (t) => t + L('@daily rsync -a souvenirs /mnt/sauvegarde/\n'));
         expect(s.flags.has('nuit-ok')).toBe(true);
         s.execute(L('cp /mnt/sauvegarde/souvenirs/premiere-lettre.txt souvenirs/'));
@@ -175,7 +175,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : une tâche qui ne tourne pas la nuit, une tâche fausse, --delete après l’effacement', () => {
-        const s = new Shell(chapter('sauvegarde'), language);
+        const s = new Shell(chapter('backup'), language);
         const nothing = crontab(s, (t) => t + L('0 12 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n'));
         contains(nothing, 'aucune tâche de ta crontab ne tombait cette nuit');
         const mail = crontab(s, (t) => t.replace('0 12', '0 2').replace(L('~/souvenirs/'), L('~/souvenirs/').replace(/s\/$/, '/')));
@@ -191,7 +191,7 @@ for (const language of LANGUAGES)
     describe('Autres histoires', () => {
       it('Le Datacenter', () => {
         const L = '/var/log/nginx/access.log';
-        const { s } = play('premier-jour', [
+        const { s } = play('first-day', [
           'cat notes_awa.txt',
           `grep " 503 " ${L} | wc -l`,
           `cut -d " " -f 1 ${L} | sort | uniq -c | sort -n | tail -3`,
@@ -214,7 +214,7 @@ for (const language of LANGUAGES)
         const tr = translator(language);
         // Le texte tel que le jeu l'affiche (paragraphes recollés, typographie de la langue).
         const t = (id: string, v?: Record<string, string>) => typography(clean(tr(id, v)), language);
-        const { s, outputs } = play('premier-jour', [
+        const { s, outputs } = play('first-day', [
           `cat ${J}`,
           `grep " 503 " ${J}`,
           `grep " 503 " ${J} | wc -l`,
@@ -222,17 +222,17 @@ for (const language of LANGUAGES)
           `cut -d " " -f 1 ${J} | sort | uniq -c | sort -n | tail -3`,
         ]);
         // Chaque piste trop longue renvoie aux notes d'Awa, sans donner la commande ; la bonne passe ensuite.
-        expect(outputs[1]).toContain(t('premier-jour-evenement-tout-lire'));
-        expect(outputs[2]).toContain(t('premier-jour-evenement-grep-seul'));
-        expect(outputs[3]).toContain(t('premier-jour-evenement-compte', { erreurs: outputs[3].split('\n')[0] }).slice(0, 12));
-        expect(outputs[4]).toContain(t('premier-jour-evenement-adresses-seules'));
+        expect(outputs[1]).toContain(t('first-day-evenement-tout-lire'));
+        expect(outputs[2]).toContain(t('first-day-evenement-grep-seul'));
+        expect(outputs[3]).toContain(t('first-day-evenement-compte', { erreurs: outputs[3].split('\n')[0] }).slice(0, 12));
+        expect(outputs[4]).toContain(t('first-day-evenement-adresses-seules'));
         expect(s.flags.has('robot')).toBe(true);
         // Une fois le compte fait, relire le journal ne redit rien.
-        expect(s.execute(`cat ${J}`)).not.toContain(t('premier-jour-evenement-tout-lire'));
+        expect(s.execute(`cat ${J}`)).not.toContain(t('first-day-evenement-tout-lire'));
       });
 
       it('Le Datacenter, chapitre 2 — Deuxième jour', () => {
-        const { s, tout: all } = play('deuxieme-jour', [
+        const { s, tout: all } = play('second-day', [
           'id',
           'id malo',
           'ls -l /var/log/nginx',
@@ -262,7 +262,7 @@ for (const language of LANGUAGES)
       });
 
       it('Le Datacenter, chapitre 2 — une autre solution correcte', () => {
-        const { s } = play('deuxieme-jour', [
+        const { s } = play('second-day', [
           'sudo usermod -aG adm malo',
           'bienvenue-2026',
           'sudo chown root:web-team /srv/equipe',
@@ -272,7 +272,7 @@ for (const language of LANGUAGES)
       });
 
       it('Le Datacenter, chapitre 3 — La nuit du redémarrage', () => {
-        const { s, tout: all } = play('redemarrage', [
+        const { s, tout: all } = play('reboot-night', [
           'systemctl --failed',
           'systemctl status nginx',
           'systemctl status catalogue',
@@ -305,7 +305,7 @@ for (const language of LANGUAGES)
       });
 
       it('Le Datacenter, chapitre 3 — une autre solution correcte', () => {
-        const { s } = play('redemarrage', [
+        const { s } = play('reboot-night', [
           'sudo chown -R www-data:www-data /var/log/catalogue',
           'bienvenue-2026',
           'sudo systemctl enable nginx',
@@ -316,7 +316,7 @@ for (const language of LANGUAGES)
       });
 
       it('Le Datacenter, chapitre 3 — réparer sans redémarrer ne suffit pas', () => {
-        const { s } = play('redemarrage', [
+        const { s } = play('reboot-night', [
           'sudo chown www-data: /var/log/catalogue',
           'bienvenue-2026',
           'sudo systemctl enable --now nginx',
@@ -327,7 +327,7 @@ for (const language of LANGUAGES)
       });
 
       it('Le Datacenter, chapitre 4 — Le grand incendie', () => {
-        const { s, tout: all } = play('incendie', [
+        const { s, tout: all } = play('fire', [
           'cat /mnt/sauvegarde/PRA.txt',
           // Fausse piste : une machine neuve ne connaît encore aucun paquet.
           'sudo apt install nginx',
@@ -362,7 +362,7 @@ for (const language of LANGUAGES)
       });
 
       it('Le Datacenter, chapitre 4 — restaurer d’abord, installer ensuite, garder le site Debian', () => {
-        const { s, tout: all } = play('incendie', [
+        const { s, tout: all } = play('fire', [
           'cd /',
           'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz',
           'bienvenue-2026',
@@ -386,7 +386,7 @@ for (const language of LANGUAGES)
       });
 
       it('Le Datacenter, chapitre 4 — fausses pistes : extraire dans ~, l’archive coupée, celle de mercredi', () => {
-        const { s, tout: all } = play('incendie', [
+        const { s, tout: all } = play('fire', [
           'sudo apt update',
           'bienvenue-2026',
           'sudo apt install -y nginx',
@@ -408,7 +408,7 @@ for (const language of LANGUAGES)
       });
 
       it('Le Datacenter, chapitre 5 — Le certificat a expiré', () => {
-        const { s, tout: all } = play('certificat', [
+        const { s, tout: all } = play('certificate', [
           'curl https://medialibrary.example',
           'journalctl -u certbot -n 8',
           'sudo certbot certificates',
@@ -438,7 +438,7 @@ for (const language of LANGUAGES)
       });
 
       it('Le Datacenter, chapitre 5 — corriger le fichier de renouvellement, script de deploy hook', () => {
-        const { s, tout: all } = play('certificat', [
+        const { s, tout: all } = play('certificate', [
           'sudo certbot renew',
           'bienvenue-2026',
           'sudo nano /etc/letsencrypt/renewal/medialibrary.example.conf',
@@ -460,7 +460,7 @@ for (const language of LANGUAGES)
       });
 
       it('Le Datacenter, chapitre 5 — le module nginx de certbot', () => {
-        const { s, tout: all } = play('certificat', [
+        const { s, tout: all } = play('certificate', [
           'sudo certbot renew --nginx',
           'bienvenue-2026',
           'sudo apt install -y python3-certbot-nginx',
@@ -473,7 +473,7 @@ for (const language of LANGUAGES)
       });
 
       it('Le Paquet perdu', () => {
-        const { s } = play('paquet-perdu', [
+        const { s } = play('lost-packet', [
           'cat carnet.txt',
           'ping 192.168.1.1',
           'ping 9.9.9.9',
@@ -491,7 +491,7 @@ for (const language of LANGUAGES)
       });
 
       it('La Machine à remonter le temps', () => {
-        const { s } = play('manuscrit', [
+        const { s } = play('manuscript', [
           'cd roman',
           'git log --oneline',
           'git diff HEAD~1 roman.txt',
@@ -586,7 +586,7 @@ for (const language of LANGUAGES)
       };
 
       it('solution, avec les fausses pistes : lien relatif, nom en double, 502, barre finale', () => {
-        const { s, tout: all } = play('colocation', [
+        const { s, tout: all } = play('sharing', [
           'curl http://cafe.example',
           'cd /etc/nginx',
           'sudo cp sites-available/letters sites-available/cafe',
@@ -624,7 +624,7 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : un nouveau fichier écrit à la main, location exacte du préfixe, agenda démarré puis activé', () => {
-        const { s } = play('colocation', ['sudo systemctl start agenda', 'fourmis-2026']);
+        const { s } = play('sharing', ['sudo systemctl start agenda', 'fourmis-2026']);
         s.execute('sudo nano /etc/nginx/sites-available/cafe');
         s.saveEdition('server {\n    listen 80;\n    server_name cafe.example;\n    root /var/www/cafe;\n}');
         s.quitEdition();
@@ -646,7 +646,7 @@ for (const language of LANGUAGES)
       };
 
       it('solution, avec les fausses pistes : serial oublié, point final oublié, zone fausse', () => {
-        const { s, tout: all } = play('chez-moi', ['dig cafe.example', 'dig @localhost cafe.example +short', 'dig www.cafe.example', 'sudo rndc status', 'fourmis-2026']);
+        const { s, tout: all } = play('works-for-me', ['dig cafe.example', 'dig @localhost cafe.example +short', 'dig www.cafe.example', 'sudo rndc status', 'fourmis-2026']);
         expect(all).toContain('198.51.100.80');
         expect(all).toContain('status: NXDOMAIN');
         expect(all).toContain('server is up and running');
@@ -675,7 +675,7 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : un enregistrement A pour www, et systemctl reload named', () => {
-        const { s } = play('chez-moi', ['sudo id', 'fourmis-2026']);
+        const { s } = play('works-for-me', ['sudo id', 'fourmis-2026']);
         modify(s, (t) => t.replace('2026091501', '2026091502').replaceAll('198.51.100.80', '203.0.113.10') + '\nwww 300 IN A 203.0.113.10');
         s.execute('sudo systemctl reload named');
         expect(s.finished).toBe(true);
@@ -730,13 +730,13 @@ for (const language of LANGUAGES)
 
     describe('La Fabrique, chapitre 1 — La mise à jour (docker)', () => {
       it('docker inspect sans -f donne le JSON du conteneur (pas [])', () => {
-        const { outputs } = play('mise-a-jour', ['sudo docker inspect outiltheque', 'fablab-2027']);
+        const { outputs } = play('update', ['sudo docker inspect outiltheque', 'fablab-2027']);
         expect(outputs.at(-1)).toContain('"Mounts"');
         expect(outputs.at(-1)).toContain('outiltheque');
       });
 
       it('solution : copier la base, volume, nouveau conteneur, --restart, et ça tient après un redémarrage', () => {
-        const { s, tout: all } = play('mise-a-jour', [
+        const { s, tout: all } = play('update', [
           'docker ps',
           'sudo docker ps -a',
           'fablab-2027',
@@ -765,7 +765,7 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : un dossier de la machine (bind mount), --restart always, l’ancien supprimé', () => {
-        const { s } = play('mise-a-jour', [
+        const { s } = play('update', [
           'sudo mkdir /srv/outiltheque',
           'fablab-2027',
           'sudo docker cp outiltheque:/var/lib/outiltheque/outiltheque.db /srv/outiltheque/',
@@ -776,7 +776,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausse piste : supprimer le conteneur avant de copier sa base', () => {
-        const { s, tout: all } = play('mise-a-jour', ['sudo docker rm outiltheque', 'fablab-2027', 'sudo docker rm -f outiltheque']);
+        const { s, tout: all } = play('update', ['sudo docker rm outiltheque', 'fablab-2027', 'sudo docker rm -f outiltheque']);
         expect(all).toContain('container is running: stop the container before removing or force remove');
         contains(all, 'Les 37 prêts ont disparu');
         s.execute('sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v outiltheque:/var/lib/outiltheque registry.example/outiltheque:1.5');
@@ -800,7 +800,7 @@ for (const language of LANGUAGES)
           .replace('      - POSTGRES_DB=reservations', '      - POSTGRES_DB=reservations\n    volumes:\n      - donnees:/var/lib/postgresql/data\n    restart: unless-stopped\n\nvolumes:\n  donnees:');
 
       it('solution, avec la fausse piste localhost', () => {
-        const { s, tout: all } = play('composition', ['cd /srv/reservations', 'sudo docker compose up -d', 'fablab-2027', 'sudo docker compose logs appli', 'curl http://localhost:8081']);
+        const { s, tout: all } = play('compose', ['cd /srv/reservations', 'sudo docker compose up -d', 'fablab-2027', 'sudo docker compose logs appli', 'curl http://localhost:8081']);
         expect(all).toContain('the attribute `version` is obsolete');
         expect(all).toContain('Error: connect ECONNREFUSED 127.0.0.1:5432');
         expect(all).toContain("curl: (7) Failed to connect to localhost port 8081");
@@ -819,7 +819,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausse piste : changer POSTGRES_PASSWORD après la création de la base, puis down -v', () => {
-        const { s } = play('composition', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
+        const { s } = play('compose', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
         modify(s, '/srv/reservations/compose.yaml', (t) => fix(t).replaceAll('${POSTGRES_PASSWORD}', L('atelier2027')));
         s.execute('sudo docker compose up -d');
         if (reference) expect(s.execute('curl http://localhost:8081')).toContain('base de données connectée');
@@ -838,7 +838,7 @@ for (const language of LANGUAGES)
     });
 
     describe('La Fabrique, chapitre 3 — Le trou dans le pare-feu (docker et ufw)', () => {
-      const BEFORE = [...prerequisites('fabrique'), 'mise-a-jour', 'composition'];
+      const BEFORE = [...prerequisites('fabrique'), 'update', 'compose'];
       const modify = (s: Shell, change: (text: string) => string) => {
         s.execute('sudo nano /srv/reservations/compose.yaml');
         s.saveEdition(change(s.edition!.text));
@@ -858,13 +858,13 @@ for (const language of LANGUAGES)
         playC(['ssh fabrique', 'cd /srv/reservations']);
         modify(c.shell, (t) => t.replace('      - "5432:5432"', '      - "127.0.0.1:5432:5432"'));
         playC(['sudo docker compose up -d', 'sudo docker image prune -a', 'y']);
-        expect(c.finished).toContain('contournement');
+        expect(c.finished).toContain('firewall-hole');
         const outside = playC(['exit', 'nc -zv fabrique 5432']);
         expect(outside).toContain('timed out');
       });
 
       it('autre solution : plus de port pour la base, docker system prune -a -f', () => {
-        const { s } = play('contournement', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
+        const { s } = play('firewall-hole', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
         modify(s, (t) => t.replace('    # Pour pgAdmin, depuis mon portable (Yasmine)\n    ports:\n      - "5432:5432"\n', ''));
         s.execute('sudo docker compose up -d');
         const menage = s.execute('sudo docker system prune -a -f') ?? '';
@@ -874,7 +874,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausse piste : docker volume prune -a emporte le wiki', () => {
-        const { s, tout: all } = play('contournement', ['sudo docker volume prune', 'fablab-2027', 'y', 'sudo docker volume ls', 'sudo docker volume prune -a', 'y']);
+        const { s, tout: all } = play('firewall-hole', ['sudo docker volume prune', 'fablab-2027', 'y', 'sudo docker volume ls', 'sudo docker volume prune -a', 'y']);
         expect(all).toContain('WARNING! This will remove anonymous local volumes not used by at least one container.');
         expect(all).toContain('Deleted Volumes:\nwiki-ancien');
         contains(all, 'Le volume wiki-ancien a disparu');
@@ -891,7 +891,7 @@ for (const language of LANGUAGES)
       const withUser = (u: string) => (t: string) => t.replace('    restart: unless-stopped', `    restart: unless-stopped\n    user: ${u}`);
 
       it('solution : user: "1001:1001" dans compose.yaml, puis chown -R', () => {
-        const { s, tout: all } = play('pleins-pouvoirs', [
+        const { s, tout: all } = play('full-powers', [
           'cd /srv/galerie',
           'sudo docker exec galerie-galerie-1 id',
           'fablab-2027',
@@ -923,7 +923,7 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : docker run -u node, le groupe de Yasmine et chmod -R g+w', () => {
-        const { s, tout: all } = play('pleins-pouvoirs', [
+        const { s, tout: all } = play('full-powers', [
           'sudo docker rm -f galerie-galerie-1',
           'fablab-2027',
           'sudo docker run -d --name galerie -u node -p 8082:3000 -v /srv/galerie/photos:/app/photos --restart unless-stopped registry.example/galerie:3.2',
@@ -942,7 +942,7 @@ for (const language of LANGUAGES)
       });
 
       it("fausses pistes : un nom inconnu de l'image, chmod 777, une photo effacée", () => {
-        const { s } = play('pleins-pouvoirs', ['cd /srv/galerie', 'sudo id', 'fablab-2027']);
+        const { s } = play('full-powers', ['cd /srv/galerie', 'sudo id', 'fablab-2027']);
         modify(s, withUser('galerie'));
         const unknown = s.execute('sudo docker compose up -d') ?? '';
         expect(unknown).toContain('unable to find user galerie: no matching entries in passwd file');
@@ -969,7 +969,7 @@ for (const language of LANGUAGES)
       const HOOK = '#!/bin/sh\ngit --work-tree=/var/www/gazette checkout -f main\necho "Site publié"';
 
       it("solution : la dérive d'abord, un dépôt nu à soi, un crochet exécutable, puis chaque correction par git push", () => {
-        const { s, tout: all } = play('depot-nu', ['diff -r gazette /var/www/gazette', 'sudo git init --bare /srv/git/gazette.git', 'gazette-2027']);
+        const { s, tout: all } = play('bare-repo', ['diff -r gazette /var/www/gazette', 'sudo git init --bare /srv/git/gazette.git', 'gazette-2027']);
         if (reference) expect(all).toContain('Seulement dans gazette : fete-des-voisins.html');
         if (reference) expect(all).toContain('> <h1>La Gazette du quartier</h1>');
         contains(all, 'Voilà la correction de Théo');
@@ -996,7 +996,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : dépôt à root, crochet non exécutable, checkout sans -f, correction de Théo perdue, retouche sur le serveur', () => {
-        const { s } = play('depot-nu', [
+        const { s } = play('bare-repo', [
           'sudo git init --bare /srv/git/gazette.git',
           'gazette-2027',
           'cd ~/gazette',
@@ -1049,7 +1049,7 @@ for (const language of LANGUAGES)
           .join('\n');
 
       it("solution : ln -sfn vers la version d'avant, tests.sh dans le crochet avant de basculer, puis la mise en page réparée", () => {
-        const { s, tout: all } = play('retour-arriere', [
+        const { s, tout: all } = play('rollback', [
           'curl -I http://gazette.example/',
           'ls -l /srv/gazette',
           'cd /srv/gazette',
@@ -1075,7 +1075,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : ln sans -n, tests après la bascule, tests lancés depuis le dépôt', () => {
-        const { s, tout: all } = play('retour-arriere', ['cd /srv/gazette', 'ln -sf releases/20270514101502 current', 'curl -I http://gazette.example/']);
+        const { s, tout: all } = play('rollback', ['cd /srv/gazette', 'ln -sf releases/20270514101502 current', 'curl -I http://gazette.example/']);
         contains(all, 'Le nouveau lien a été créé DANS la version cassée');
         expect(all).toContain('HTTP/1.1 403 Forbidden');
         s.execute('ln -sfn /srv/gazette/releases/20270514101502 /srv/gazette/current');
@@ -1101,7 +1101,7 @@ for (const language of LANGUAGES)
       const SMTP = (t: string) => `${t}\nKIOSK_SMTP=smtp.gazette.example`;
 
       it('solution : la 1.5.0 sur vert, /health, la configuration des notes, puis nginx bascule et bleu reste allumé', () => {
-        const { s, tout: all } = play('bleu-vert', [
+        const { s, tout: all } = play('blue-green', [
           'curl -s http://localhost:3001/health',
           'ln -sfn /srv/kiosk/versions/1.5.0 /srv/kiosk/green',
           'sudo systemctl start kiosk-green',
@@ -1125,7 +1125,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : sans redémarrer, bascule avant /health, sans reload, puis bleu arrêté trop tôt', () => {
-        const { s, tout: all } = play('bleu-vert', [
+        const { s, tout: all } = play('blue-green', [
           'sudo systemctl start kiosk-green',
           'gazette-2027',
           'ln -sfn /srv/kiosk/versions/1.5.0 /srv/kiosk/green',
@@ -1156,7 +1156,7 @@ for (const language of LANGUAGES)
       const reload = (s: Shell) => ['sudo nginx -t', 'sudo systemctl reload nginx'].map((l) => s.execute(l)).join('\n');
 
       it('solution : canari de la 1.6.0, les 500 dans access.log, arrêt, 1.6.1, canari propre, bascule', () => {
-        const { s } = play('canari', [
+        const { s } = play('canary', [
           'ln -sfn /srv/kiosk/versions/1.6.0 /srv/kiosk/blue',
           'sudo systemctl restart kiosk-blue',
           'gazette-2027',
@@ -1185,7 +1185,7 @@ for (const language of LANGUAGES)
       });
 
       it("fausses pistes : tout d'un coup sur la 1.6.0, puis un « canari » à 50 %", () => {
-        const { s } = play('canari', [
+        const { s } = play('canary', [
           'ln -sfn /srv/kiosk/versions/1.6.0 /srv/kiosk/blue',
           'sudo systemctl restart kiosk-blue',
           'gazette-2027',
@@ -1245,7 +1245,7 @@ for (const language of LANGUAGES)
       const MDP = 'pion-cavalier-tour-27';
 
       it('solution : arrêter le chiffreur et sa crontab, verrouiller le compte, restaurer depuis la clé en lecture seule, la démonter', () => {
-        const { s, tout: all } = play('rancon', [
+        const { s, tout: all } = play('ransom', [
           'find /srv/partage -name "*.locked" | wc -l',
           'ps aux',
           'sudo kill 3141',
@@ -1287,7 +1287,7 @@ for (const language of LANGUAGES)
       });
 
       it("fausses pistes : restaurer avant d'arrêter le chiffreur, l'oublier dans la crontab, démonter depuis dedans", () => {
-        const { s, tout: all } = play('rancon', [
+        const { s, tout: all } = play('ransom', [
           'sudo mount /dev/sdb1 /mnt/cle',
           'ludo-2027',
           `${RESTIC} restore latest --target /`,
@@ -1324,7 +1324,7 @@ for (const language of LANGUAGES)
       const P = L('/srv/partage');
 
       it("solution : la configuration (tabulations), configtest, cron de root, puis l'inventaire de la veille", () => {
-        const { s } = play('instantanes', ['sudo rsnapshot configtest', 'ludo-2027']);
+        const { s } = play('snapshots', ['sudo rsnapshot configtest', 'ludo-2027']);
         edit(s, 'sudo nano /etc/rsnapshot.conf', SETTINGS);
         expect(s.execute('sudo rsnapshot configtest')).toBe('Syntax OK');
         expect(s.execute('sudo rsnapshot -t daily')).toContain(
@@ -1354,7 +1354,7 @@ for (const language of LANGUAGES)
       });
 
       it("fausses pistes : des espaces au lieu de tabulations, la crontab d'un compte ordinaire, la version de cette nuit", () => {
-        const { s } = play('instantanes', ['sudo id', 'ludo-2027']);
+        const { s } = play('snapshots', ['sudo id', 'ludo-2027']);
         edit(s, 'sudo nano /etc/rsnapshot.conf', (t) => SETTINGS(t).replace(L('snapshot_root\t/mnt/instantanes/'), L('snapshot_root /mnt/instantanes/')));
         const error = s.execute('sudo rsnapshot configtest') ?? '';
         expect(error).toContain(L('ERROR: snapshot_root /mnt/instantanes/ - Unknown config directive'));
@@ -1374,7 +1374,7 @@ for (const language of LANGUAGES)
       const count = (s: Shell, base: string, table: string) => s.execute(`${PG} psql -d ${base} -c "SELECT count(*) FROM ${table};"`) ?? '';
 
       it('solution : pg_dump -Fc sous postgres, restauration dans ludo_test, la table prets remise, crontab de postgres', () => {
-        const { s, tout: all } = play('base', [
+        const { s, tout: all } = play('database', [
           'psql -l',
           `${PG} psql -l`,
           'ludo-2027',
@@ -1402,7 +1402,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : la redirection, restaurer par-dessus ludo, réinjecter dans une table pleine, cron de root', () => {
-        const { s, tout: all } = play('base', [
+        const { s, tout: all } = play('database', [
           'sudo -u postgres pg_dump ludo > /var/backups/postgresql/ludo.sql',
           'ludo-2027',
           `${PG} pg_dump -Fc -f ${DUMP} ludo`,
@@ -1429,7 +1429,7 @@ for (const language of LANGUAGES)
         `/var/log/radio/*.log {\n    daily\n    rotate 7\n    compress\n    delaycompress\n    missingok\n    notifempty\n${end}}`;
 
       it('solution : du, le debug, truncate, info, logrotate avec copytruncate', () => {
-        const { s, tout: all } = play('disque-plein', [
+        const { s, tout: all } = play('full-disk', [
           'df -h',
           'sudo du -sh /var/log/*',
           'antenne-2027',
@@ -1450,7 +1450,7 @@ for (const language of LANGUAGES)
       });
 
       it("fausses pistes : rm d'un fichier ouvert, logrotate qui renomme sans faire rouvrir, une directive inconnue", () => {
-        const { s, tout: all } = play('disque-plein', ['sudo rm /var/log/radio/stream.log', 'antenne-2027', 'df -h', 'sudo lsof +L1']);
+        const { s, tout: all } = play('full-disk', ['sudo rm /var/log/radio/stream.log', 'antenne-2027', 'df -h', 'sudo lsof +L1']);
         expect(all).toContain('100% /');
         expect(all).toContain('/var/log/radio/stream.log (deleted)');
         contains(all, 'df dit toujours plein, mais du ne trouve plus le fichier');
@@ -1471,7 +1471,7 @@ for (const language of LANGUAGES)
 
     describe("L'Astreinte, chapitre 2 — La mémoire (OOM killer, MemoryMax=, Restart=, zombies)", () => {
       it('solution : dmesg, top, systemctl edit (MemoryMax=, Restart=), le parent des zombies redémarré', () => {
-        const { s, tout: all } = play('memoire', [
+        const { s, tout: all } = play('memory', [
           'systemctl status radio-playlist',
           'sudo dmesg -T',
           'antenne-2027',
@@ -1502,7 +1502,7 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : systemctl set-property, puis Restart= écrit à la main et daemon-reload', () => {
-        const { s } = play('memoire', ['sudo systemctl set-property radio-playlist MemoryMax=512M', 'antenne-2027']);
+        const { s } = play('memory', ['sudo systemctl set-property radio-playlist MemoryMax=512M', 'antenne-2027']);
         expect(s.read('/etc/systemd/system.control/radio-playlist.service.d/50-MemoryMax.conf')).toContain('MemoryMax=536870912');
         expect(s.execute('sudo systemctl set-property radio-playlist Restart=on-failure')).toContain('Cannot set property Restart');
         s.execute('sudo mkdir -p /etc/systemd/system/radio-playlist.service.d');
@@ -1517,7 +1517,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : kill -9 sur un zombie, relancer sans limite, une limite sans relance', () => {
-        const { s, tout: all } = play('memoire', ['sudo kill -9 2411', 'antenne-2027', 'ps aux', 'sudo systemctl start radio-playlist']);
+        const { s, tout: all } = play('memory', ['sudo kill -9 2411', 'antenne-2027', 'ps aux', 'sudo systemctl start radio-playlist']);
         expect(all).toContain('[convertir] <defunct>');
         contains(all, 'kill ne fait rien à un zombie');
         let outputs = '';
@@ -1600,7 +1600,7 @@ for (const language of LANGUAGES)
       };
 
       it('solution : timedatectl, set-timezone, set-ntp, le bon serveur NTP, cron redémarré', () => {
-        const { s, tout: all } = play('horloge', [
+        const { s, tout: all } = play('clock', [
           'date',
           'timedatectl',
           'cat mail_hebergeur.txt',
@@ -1629,7 +1629,7 @@ for (const language of LANGUAGES)
       });
 
       it("autre solution : le serveur NTP d'abord, puis systemctl enable --now, le fuseau et cron", () => {
-        const { s } = play('horloge', ['sudo timedatectl', 'antenne-2027']);
+        const { s } = play('clock', ['sudo timedatectl', 'antenne-2027']);
         fixNtp(s);
         s.execute('sudo systemctl enable --now systemd-timesyncd');
         s.execute('sudo timedatectl set-timezone Europe/Paris');
@@ -1638,7 +1638,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : date -s à la main, un fuseau mal écrit, set-time avec NTP actif, démarrer sans activer', () => {
-        const { s, tout: all } = play('horloge', ['sudo date -s "2027-08-30 09:12:00"', 'antenne-2027', 'sudo timedatectl set-timezone Europe/Pariss']);
+        const { s, tout: all } = play('clock', ['sudo date -s "2027-08-30 09:12:00"', 'antenne-2027', 'sudo timedatectl set-timezone Europe/Pariss']);
         contains(all, 'pour l');
         expect(all).toContain("Failed to set time zone: Invalid or not installed time zone 'Europe/Pariss'");
         if (reference) expect(s.execute('date -s 09:00')).toContain('impossible de régler la date');
@@ -1668,7 +1668,7 @@ for (const language of LANGUAGES)
         `[Unit]\nDescription=Sonde toutes les 5 minutes\n\n[Timer]\n${trigger}\n\n[Install]\nWantedBy=timers.target\n`;
 
       it('solution : les plugins, la sonde complétée, un timer systemd, et la nuit d exercice', { timeout: 30_000 }, () => {
-        const { s, tout: all } = play('sonde', [
+        const { s, tout: all } = play('probe', [
           'check_disk -w 20% -c 10% -p /',
           '/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio',
           "systemd-analyze calendar '*:0/5'",
@@ -1697,7 +1697,7 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : une ligne de crontab, check_procs pour le relais', { timeout: 30_000 }, () => {
-        const { s } = play('sonde', ['sudo true', 'antenne-2027']);
+        const { s } = play('probe', ['sudo true', 'antenne-2027']);
         write(
           s,
           '/usr/local/bin/probe',
@@ -1712,7 +1712,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : la sonde de départ, OnUnitActiveSec seul, des seuils trop serrés', { timeout: 60_000 }, () => {
-        const { s } = play('sonde', ['sudo true', 'antenne-2027']);
+        const { s } = play('probe', ['sudo true', 'antenne-2027']);
         write(s, '/etc/systemd/system/probe.service', () => SERVICE);
         write(s, '/etc/systemd/system/probe.timer', () => TIMER('OnUnitActiveSec=5min'));
         let night = s.execute('sudo systemctl enable --now probe.timer')!;
@@ -1730,7 +1730,7 @@ for (const language of LANGUAGES)
 
     describe("L'Astreinte, chapitre 7 — Le goulot (iowait, iostat, pidstat, IOWriteBandwidthMax=)", () => {
       it('solution : top, iostat, pidstat, puis une limite de débit avec set-property', () => {
-        const { s, tout: all } = play('goulot', [
+        const { s, tout: all } = play('bottleneck', [
           'top',
           'iostat -x',
           'sudo pidstat -d',
@@ -1752,7 +1752,7 @@ for (const language of LANGUAGES)
       });
 
       it('une autre solution : systemctl edit, IOReadBandwidthMax= sur un chemin, daemon-reload', () => {
-        const { s } = play('goulot', ['sudo systemctl edit radio-archives', 'antenne-2027']);
+        const { s } = play('bottleneck', ['sudo systemctl edit radio-archives', 'antenne-2027']);
         s.saveEdition(`[Service]\nIOReadBandwidthMax=/srv 30M\n${s.edition!.text}`);
         s.quitEdition();
         s.execute('sudo systemctl daemon-reload');
@@ -1761,7 +1761,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : ionice (ordonnanceur none), arrêter l’archivage, le mauvais disque, trop bas', () => {
-        const { s, tout: all } = play('goulot', [
+        const { s, tout: all } = play('bottleneck', [
           'pidstat -d',
           'ionice -p 2190',
           'sudo ionice -c 3 -p 2190',
@@ -1880,7 +1880,7 @@ for (const language of LANGUAGES)
     });
 
     describe.runIf(reference)('Le manuel, premier réflexe', () => {
-      const s = new Shell(chapter('eveil'), language);
+      const s = new Shell(chapter('lighthouse'), language);
       it('man affiche une vraie page', () => {
         const page = s.execute('man ls')!;
         for (const section of ['NOM', 'SYNOPSIS', 'DESCRIPTION', 'OPTIONS', 'EXEMPLES', 'VOIR AUSSI']) expect(page).toContain(section);
@@ -1902,7 +1902,7 @@ for (const language of LANGUAGES)
       });
     });
     it('chaque commande du jeu a une page de manuel', () => {
-      const s = new Shell(chapter('eveil'), language);
+      const s = new Shell(chapter('lighthouse'), language);
       for (const h of STORIES)
         for (const c of h.chapters)
           for (const cmd of c.commands) expect(s.execute(`man ${cmd}`)).toMatch(new RegExp(`^${cmd.toUpperCase()}\\([18]\\)`));

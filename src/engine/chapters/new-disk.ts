@@ -31,7 +31,7 @@ const wholeDisk = (j: Game) => Object.values(st(j).arrays).some((g) => g.members
 const grub = (j: Game) => st(j).grub.includes('sdb');
 
 export const newDisk: Chapter = {
-  id: 'disque-neuf',
+  id: 'new-disk',
   number: 2,
   commands: [
     'ls',
@@ -71,7 +71,7 @@ export const newDisk: Chapter = {
   },
   createWorld: (t) =>
     labWorld(t, {
-      'message_d_odile.txt': f(t('disque-neuf-message-d-odile')),
+      'message_d_odile.txt': f(t('new-disk-message-d-odile')),
       'procedure_hebergeur.txt': f(t('labo-procedure-hebergeur'), { lines: true }),
     }),
   beforeCommand: beforeLabCommand,
@@ -80,27 +80,27 @@ export const newDisk: Chapter = {
     {
       id: 'neuf',
       condition: (j) => /sdb\s+8:16\s+0\s+1\.8T\s+0 disk\s*$/m.test(j.last.output) || /Disk \/dev\/sdb: [^\n]*\nDisk model: [^\n]*\n(?![\s\S]*Disklabel)/.test(j.last.output),
-      message: (j) => j.t('disque-neuf-evenement-neuf'),
+      message: (j) => j.t('new-disk-evenement-neuf'),
     },
     {
       id: 'trop-tot',
       condition: (j) => j.last.errors.some((e) => /Cannot find \/dev\/sdb\d/.test(e)),
-      message: (j) => j.t('disque-neuf-evenement-trop-tot'),
+      message: (j) => j.t('new-disk-evenement-trop-tot'),
     },
     {
       id: 'sens',
       condition: (j) => j.last.errors.some((e) => e.includes('This disk is currently in use')),
-      message: (j) => j.t('disque-neuf-evenement-sens'),
+      message: (j) => j.t('new-disk-evenement-sens'),
     },
-    { id: 'disque-entier', condition: wholeDisk, message: (j) => j.t('disque-neuf-evenement-disque-entier') },
-    { id: 'table', condition: split, message: (j) => j.t('disque-neuf-evenement-table') },
-    { id: 'ajoutes', condition: added, message: (j) => j.t('disque-neuf-evenement-ajoutes') },
-    { id: 'reconstruit', condition: rebuilt, message: (j) => j.t('disque-neuf-evenement-reconstruit') },
-    { id: 'grub', condition: grub, message: (j) => j.t('disque-neuf-evenement-grub') },
+    { id: 'disque-entier', condition: wholeDisk, message: (j) => j.t('new-disk-evenement-disque-entier') },
+    { id: 'table', condition: split, message: (j) => j.t('new-disk-evenement-table') },
+    { id: 'ajoutes', condition: added, message: (j) => j.t('new-disk-evenement-ajoutes') },
+    { id: 'reconstruit', condition: rebuilt, message: (j) => j.t('new-disk-evenement-reconstruit') },
+    { id: 'grub', condition: grub, message: (j) => j.t('new-disk-evenement-grub') },
     {
       id: 'fin',
       condition: (j) => split(j) && rebuilt(j) && grub(j) && !wholeDisk(j),
-      message: (j) => j.t('disque-neuf-evenement-fin'),
+      message: (j) => j.t('new-disk-evenement-fin'),
     },
   ],
 };

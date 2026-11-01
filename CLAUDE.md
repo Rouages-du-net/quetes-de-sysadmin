@@ -27,7 +27,7 @@ presents them for people.
   English ones); every other document is in English only.
 - **Code in English.** Files and identifiers (functions, variables,
   types, props) are in English. Some data identifiers are still French:
-  the ids of stories, chapters, places and machines, the keys of a
+  the ids of stories, places and machines, the keys of a
   machine's state (`state.montages`, `state.applis`…), `.ftl` keys, CSS
   classes and some comments; they are being moved to English. Write new
   code (files, functions, variables, props, CSS classes, new `.ftl` keys)
@@ -203,11 +203,11 @@ presents them for people.
   and VLANs); `freeradius` and `radtest` in `commands/radius.ts`.
 - `chapters/audit.ts`: what the chapters of "L'Audit" share (Le Fournil's
   server: accounts, `sshd_config`, sudoers, `bakeryWorld`, the network nmap
-  sees, `sectionsMd` to reread a player's document); `perimetre.ts`,
-  `rapport.ts`, `exposition.ts` (Redis's `bind` read on restart, by the
+  sees, `sectionsMd` to reread a player's document); `scope.ts`,
+  `report.ts`, `exposure.ts` (Redis's `bind` read on restart, by the
   service), `traces.ts` (ssh's log and `last` written by `initialiser`, key
   fingerprints, Nadia's crontab, the database password: `ALTER ROLE` and
-  `.env` read when the app starts) and `contre-visite.ts`.
+  `.env` read when the app starts) and `follow-up.ts`.
 - `src/engine/scan.ts` and `commands/nmap.ts`: nmap on the network declared
   by the story (`state.scan`: machines, services, scope; `state.scans` keeps
   each scan); `src/engine/lynis.ts` and `commands/lynis.ts`: Lynis
@@ -215,7 +215,7 @@ presents them for people.
 - `chapters/watch.ts`: what the chapters of "La Veille" share (the
   `petrin` server, six months after "L'Audit": accounts, `watchWorld`, the
   fictitious `CVE-2099-NNNNN` of the bulletin); `bulletin.ts`,
-  `priorite.ts`, `correctif.ts`, `preuve.ts` (an earlier attempt in nginx's
+  `priority.ts`, `fix.ts`, `proof.ts` (an earlier attempt in nginx's
   access log) and `routine.ts` (`unattended-upgrades` restricted to
   security via `src/engine/apt-conf.ts`, a hand-written timer or cron job,
   `src/engine/timers.ts`).
@@ -259,8 +259,8 @@ presents them for people.
   `machines.ftl`: the machines' names (royaume → kingdom; `machineName()`,
   `hostInLanguage()` of `machines.ts`, `Shell.hostName`; in tests,
   `machinesInLanguage()`); `mots-de-passe.ftl`: the stories' passwords
-  (`password()` of `world.ts`). Internal names (chapter, place and machine
-  identifiers) are the French ones.
+  (`password()` of `world.ts`). Chapter identifiers are English;
+  place and machine identifiers are still the French ones.
 - `tests/quests.test.ts`: each chapter replayed; `tests/browser.mjs`:
   Chromium, 1000 and 375 px, the CSP of `.htaccess` applied, the root's
   language choice, the 404 page, embedding in another page.

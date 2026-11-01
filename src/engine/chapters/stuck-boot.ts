@@ -95,7 +95,7 @@ function continueBoot(j: Shell): string {
 }
 
 export const rescue: Chapter = {
-  id: 'secours',
+  id: 'stuck-boot',
   number: 4,
   commands: [
     'ls',
@@ -142,46 +142,46 @@ export const rescue: Chapter = {
     enterInRescue(j);
     j.state.rechutes = 0;
   },
-  createWorld: (t) => labWorld(t, { 'message_d_odile.txt': f(t('secours-message-d-odile', { banniere: BANNER })) }, { winter: true, rescue: true }),
+  createWorld: (t) => labWorld(t, { 'message_d_odile.txt': f(t('stuck-boot-message-d-odile', { banniere: BANNER })) }, { winter: true, rescue: true }),
   events: [
     {
       id: 'journal',
       condition: (j) => j.last.output.includes('Timed out waiting for device'),
-      message: (j) => j.t('secours-evenement-journal'),
+      message: (j) => j.t('stuck-boot-evenement-journal'),
     },
     {
       id: 'disques',
       condition: (j) => j.last.output.includes(UUID_SCANS) || /sde1.*SCANS|SCANS.*sde1/.test(j.last.output),
-      message: (j) => j.t('secours-evenement-disques'),
+      message: (j) => j.t('stuck-boot-evenement-disques'),
     },
     {
       id: 'nom',
       condition: (j) => scansLine(j)?.source === '/dev/sde1',
-      message: (j) => j.t('secours-evenement-nom'),
+      message: (j) => j.t('stuck-boot-evenement-nom'),
     },
     {
       id: 'supprimee',
       condition: (j) => !scansLine(j),
-      message: (j) => j.t('secours-evenement-supprimee'),
+      message: (j) => j.t('stuck-boot-evenement-supprimee'),
     },
     {
       id: 'lecture',
       condition: (j) => readFstab(fstab(j)).errors.length > 0,
-      message: (j) => j.t('secours-evenement-lecture'),
+      message: (j) => j.t('stuck-boot-evenement-lecture'),
     },
     {
       id: 'sans-nofail',
       condition: (j) => byId(j) && !withNofail(j),
-      message: (j) => j.t('secours-evenement-sans-nofail'),
+      message: (j) => j.t('stuck-boot-evenement-sans-nofail'),
     },
-    { id: 'corrige', condition: fstabOk, message: (j) => j.t('secours-evenement-corrige') },
-    { id: 'rechute', condition: (j) => (j.state.rechutes ?? 0) > 0 && !fstabOk(j), message: (j) => j.t('secours-evenement-rechute') },
-    { id: 'rechute-reload', condition: (j) => !!j.state.rechuteSansReload, message: (j) => j.t('secours-evenement-rechute-reload') },
-    { id: 'monte', condition: mounted, message: (j) => j.t('secours-evenement-monte') },
+    { id: 'corrige', condition: fstabOk, message: (j) => j.t('stuck-boot-evenement-corrige') },
+    { id: 'rechute', condition: (j) => (j.state.rechutes ?? 0) > 0 && !fstabOk(j), message: (j) => j.t('stuck-boot-evenement-rechute') },
+    { id: 'rechute-reload', condition: (j) => !!j.state.rechuteSansReload, message: (j) => j.t('stuck-boot-evenement-rechute-reload') },
+    { id: 'monte', condition: mounted, message: (j) => j.t('stuck-boot-evenement-monte') },
     {
       id: 'fin',
       condition: (j) => fstabOk(j) && mounted(j) && !j.state.secours,
-      message: (j) => j.t('secours-evenement-fin'),
+      message: (j) => j.t('stuck-boot-evenement-fin'),
     },
   ],
 };

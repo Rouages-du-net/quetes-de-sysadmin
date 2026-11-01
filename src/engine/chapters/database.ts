@@ -43,7 +43,7 @@ const accounts = (): Accounts => ({
 
 // Des données déterministes : des jeux, des membres (par numéro de carte, sans nom) et leurs prêts.
 function tables(t: Game['t']): Record<string, Table> {
-  const names = t('base-noms-de-jeux').split(',');
+  const names = t('database-noms-de-jeux').split(',');
   const neighbourhoods = ['nord', 'sud', 'est', 'ouest', 'centre'];
   const day = (n: number) => new Date(Date.UTC(2025, 8, 1) + n * 86_400_000).toISOString().slice(0, 10);
   return {
@@ -102,7 +102,7 @@ const allIsFor = (j: Game) => Object.entries(NUMBERS).every(([table, n]) => line
 const output = (j: Game) => [j.last.output, ...j.last.errors].join('\n');
 
 export const base: Chapter = {
-  id: 'base',
+  id: 'database',
   number: 3,
   commands: [
     'ls',
@@ -168,7 +168,7 @@ export const base: Chapter = {
       roles: ['postgres', 'ludo'],
       archives: {},
     } satisfies PostgresState,
-    crontabs: { root: `# ${t('base-crontab-root')}\n30 3 * * * /usr/bin/rsnapshot daily\n0 3 * * 1 /usr/bin/rsnapshot weekly` },
+    crontabs: { root: `# ${t('database-crontab-root')}\n30 3 * * * /usr/bin/rsnapshot daily\n0 3 * * 1 /usr/bin/rsnapshot weekly` },
     montages: [{ path: '/', capacity: 40 * Go, name: '/dev/vda1', system: 'ext4' }],
     comptesVerrouilles: ['accueil'],
   }),
@@ -179,7 +179,7 @@ export const base: Chapter = {
     pg(j).bases.ludo.tables.prets.lines = [];
     const s = systemd(j)!;
     s.clock = Date.UTC(2027, 6, 14, 14, 5, 0);
-    return j.t('base-incident');
+    return j.t('database-incident');
   },
   createWorld: (t) => {
     const root: Rights = { owner: 'root' };
@@ -198,7 +198,7 @@ export const base: Chapter = {
         ),
       }),
       home: place({
-        vous: d({ 'message_de_berenice.txt': f(t('base-message-de-berenice')), 'mot_de_malo.txt': f(t('base-mot-de-malo')) }),
+        vous: d({ 'message_de_berenice.txt': f(t('database-message-de-berenice')), 'mot_de_malo.txt': f(t('database-mot-de-malo')) }),
         berenice: place({}, { owner: 'berenice', mode: 'rwx------' }),
       }),
       tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
@@ -224,27 +224,27 @@ export const base: Chapter = {
     });
   },
   events: [
-    { id: 'role', condition: (j) => new RegExp(`role "(${j.player}|root)" does not exist`).test(output(j)), message: (j) => j.t('base-evenement-role') },
+    { id: 'role', condition: (j) => new RegExp(`role "(${j.player}|root)" does not exist`).test(output(j)), message: (j) => j.t('database-evenement-role') },
     {
       id: 'sur-la-vraie',
       condition: (j) =>
         output(j).includes('already exists') && j.last.commands.some((c) => c.includes('pg_restore') && c.includes('ludo')) && !j.state.incident,
-      message: (j) => j.t('base-evenement-sur-la-vraie'),
+      message: (j) => j.t('database-evenement-sur-la-vraie'),
     },
     {
       id: 'test-reussi',
       condition: (j) => succeededTest(j),
       // L'incident arrive à la commande suivante.
       action: (j) => (j.state.testValide = true),
-      message: (j) => j.t('base-evenement-test-reussi'),
+      message: (j) => j.t('database-evenement-test-reussi'),
     },
     {
       id: 'doublons',
       condition: (j) => !!j.state.incident && output(j).includes('duplicate key value'),
-      message: (j) => j.t('base-evenement-doublons'),
+      message: (j) => j.t('database-evenement-doublons'),
     },
-    { id: 'cron-root', condition: (j) => dumpRoot(j), message: (j) => j.t('base-evenement-cron-root') },
-    { id: 'prets-revenus', condition: (j) => !!j.state.incident && allIsFor(j), message: (j) => j.t('base-evenement-prets-revenus') },
-    { id: 'fin', condition: (j) => !!j.state.incident && allIsFor(j) && dumpTask(j) && archive(j), message: (j) => j.t('base-evenement-fin') },
+    { id: 'cron-root', condition: (j) => dumpRoot(j), message: (j) => j.t('database-evenement-cron-root') },
+    { id: 'prets-revenus', condition: (j) => !!j.state.incident && allIsFor(j), message: (j) => j.t('database-evenement-prets-revenus') },
+    { id: 'fin', condition: (j) => !!j.state.incident && allIsFor(j) && dumpTask(j) && archive(j), message: (j) => j.t('database-evenement-fin') },
   ],
 };

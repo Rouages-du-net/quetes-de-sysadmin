@@ -64,17 +64,17 @@ time { font-weight: bold; }`;
 
 // L'agenda, avec la date du vide-grenier (dans le texte et dans datetime).
 export const agenda = (t: Game['t'], day: number) =>
-  t('depot-nu-site-agenda', { date: `2027-06-${String(day).padStart(2, '0')}`, jour: String(day) });
+  t('bare-repo-site-agenda', { date: `2027-06-${String(day).padStart(2, '0')}`, jour: String(day) });
 
 // L'historique du site dans ~/gazette : la première version (avec la faute
 // du titre), puis l'article de Samia, pas encore en ligne.
 export function history(t: Game['t']): Commit[] {
-  const v1 = { 'index.html': t('depot-nu-site-index-v1'), 'style.css': STYLE, 'agenda.html': agenda(t, 21) };
-  const c1 = newCommit(null, t('depot-nu-commit-1'), AUTHOR, 'Mon Apr 12 10:02:41 2027 +0200', v1);
-  const c2 = newCommit(c1, t('depot-nu-commit-2'), AUTHOR, 'Fri May 7 18:30:12 2027 +0200', {
+  const v1 = { 'index.html': t('bare-repo-site-index-v1'), 'style.css': STYLE, 'agenda.html': agenda(t, 21) };
+  const c1 = newCommit(null, t('bare-repo-commit-1'), AUTHOR, 'Mon Apr 12 10:02:41 2027 +0200', v1);
+  const c2 = newCommit(c1, t('bare-repo-commit-2'), AUTHOR, 'Fri May 7 18:30:12 2027 +0200', {
     ...v1,
-    'index.html': t('depot-nu-site-index-v2'),
-    'fete-des-voisins.html': t('depot-nu-site-article'),
+    'index.html': t('bare-repo-site-index-v2'),
+    'fete-des-voisins.html': t('bare-repo-site-article'),
   });
   return [c1, c2];
 }
@@ -90,7 +90,7 @@ const deployed = (j: Game) => {
   const c = head(j);
   return !!c && j.state.gitDeploiements?.[SITE] === c.id && Object.entries(c.files).every(([name, text]) => readSite(j, name) === text);
 };
-const withMistake = (j: Game) => (readSite(j, 'index.html') ?? '').includes(j.t('depot-nu-titre-faute'));
+const withMistake = (j: Game) => (readSite(j, 'index.html') ?? '').includes(j.t('bare-repo-titre-faute'));
 const withArticle = (j: Game) =>
   (readSite(j, 'index.html') ?? '').includes('href="fete-des-voisins.html"') && readSite(j, 'fete-des-voisins.html') !== null;
 const fixedAgenda = (j: Game) => {
@@ -101,7 +101,7 @@ const inLine = (j: Game) => deployed(j) && withArticle(j) && !withMistake(j);
 const output = (j: Game) => [j.last.output, ...j.last.errors].join('\n');
 
 export const bareRepo: Chapter = {
-  id: 'depot-nu',
+  id: 'bare-repo',
   number: 1,
   commands: [
     'ls',
@@ -185,8 +185,8 @@ export const bareRepo: Chapter = {
       }),
       home: place({
         vous: d({
-          'message_de_samia.txt': f(t('depot-nu-message-de-samia')),
-          'mot_de_theo.txt': f(t('depot-nu-mot-de-theo')),
+          'message_de_samia.txt': f(t('bare-repo-message-de-samia')),
+          'mot_de_theo.txt': f(t('bare-repo-mot-de-theo')),
           gazette: d({
             '.git': d({ HEAD: f('ref: refs/heads/main', { lines: true }) }),
             ...Object.fromEntries(Object.entries(last).map(([name, text]) => [name, f(text, { lines: true })])),
@@ -202,7 +202,7 @@ export const bareRepo: Chapter = {
           // La première version, posée à la main… et la faute du titre corrigée sur place par Théo.
           gazette: place(
             {
-              'index.html': redaction(t('depot-nu-site-index-theo'), 'theo'),
+              'index.html': redaction(t('bare-repo-site-index-theo'), 'theo'),
               'style.css': redaction(STYLE),
               'agenda.html': redaction(agenda(t, 21)),
             },
@@ -224,10 +224,10 @@ export const bareRepo: Chapter = {
   events: [
     {
       id: 'derive',
-      condition: (j) => j.last.commands.some((c) => c[0] === 'diff') && output(j).includes(j.t('depot-nu-titre-faute')),
-      message: (j) => j.t('depot-nu-evenement-derive'),
+      condition: (j) => j.last.commands.some((c) => c[0] === 'diff') && output(j).includes(j.t('bare-repo-titre-faute')),
+      message: (j) => j.t('bare-repo-evenement-derive'),
     },
-    { id: 'droits', condition: (j) => output(j).includes(j.t('git-push-droits').split('\n')[0]), message: (j) => j.t('depot-nu-evenement-droits') },
+    { id: 'droits', condition: (j) => output(j).includes(j.t('git-push-droits').split('\n')[0]), message: (j) => j.t('bare-repo-evenement-droits') },
     {
       id: 'sans-crochet',
       condition: (j) =>
@@ -235,29 +235,29 @@ export const bareRepo: Chapter = {
         !!head(j) &&
         !j.exists(`${REPO}/hooks/post-receive`) &&
         !j.state.gitDeploiements?.[SITE],
-      message: (j) => j.t('depot-nu-evenement-sans-crochet'),
+      message: (j) => j.t('bare-repo-evenement-sans-crochet'),
     },
     {
       id: 'crochet-ignore',
       condition: (j) => output(j).includes('hooks/post-receive') && output(j).includes('advice.ignoredHook'),
-      message: (j) => j.t('depot-nu-evenement-crochet-ignore'),
+      message: (j) => j.t('bare-repo-evenement-crochet-ignore'),
     },
     {
       id: 'non-suivis',
       condition: (j) => output(j).includes(j.t('git-checkout-non-suivis', { fichiers: '' }).split('\n')[0]),
-      message: (j) => j.t('depot-nu-evenement-non-suivis'),
+      message: (j) => j.t('bare-repo-evenement-non-suivis'),
     },
     {
       id: 'correction-perdue',
       condition: (j) => !!j.state.gitDeploiements?.[SITE] && withMistake(j),
-      message: (j) => j.t('depot-nu-evenement-correction-perdue'),
+      message: (j) => j.t('bare-repo-evenement-correction-perdue'),
     },
-    { id: 'en-ligne', condition: (j) => inLine(j), message: (j) => j.t('depot-nu-evenement-en-ligne') },
-    { id: 'a-la-main', condition: (j) => fixedAgenda(j) && !deployed(j), message: (j) => j.t('depot-nu-evenement-a-la-main') },
+    { id: 'en-ligne', condition: (j) => inLine(j), message: (j) => j.t('bare-repo-evenement-en-ligne') },
+    { id: 'a-la-main', condition: (j) => fixedAgenda(j) && !deployed(j), message: (j) => j.t('bare-repo-evenement-a-la-main') },
     {
       id: 'fin',
       condition: (j) => inLine(j) && fixedAgenda(j) && httpRequest(j, GAZETTE, '/agenda.html', 80, false)?.code === 200,
-      message: (j) => j.t('depot-nu-evenement-fin'),
+      message: (j) => j.t('bare-repo-evenement-fin'),
     },
   ],
 };

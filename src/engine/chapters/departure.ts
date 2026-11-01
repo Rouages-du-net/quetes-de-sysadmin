@@ -97,7 +97,7 @@ const entrustedBackup = (j: Game, accounts = ['root', 'deploy']) =>
 const closed = (j: Game) => !byItsAccount(j) && !byDeploy(j) && !sudoForMarc(j) && !marcProcess(j);
 
 export const departure: Chapter = {
-  id: 'depart',
+  id: 'departure',
   number: 1,
   commands: [
     'ls',
@@ -152,13 +152,13 @@ export const departure: Chapter = {
   }),
   createWorld: (t) =>
     cooperativeWorld({
-      home: { 'courriel_awa.txt': f(t('depart-courriel-awa')) },
+      home: { 'courriel_awa.txt': f(t('departure-courriel-awa')) },
       homes: {
         marc: d(
           {
             '.ssh': d({ authorized_keys: file(KEYS.marc, 'marc', 'rw-------') }, undefined, { owner: 'marc', mode: 'rwx------' }),
             bin: d({ [SCRIPT]: file(script(t), 'marc', 'rwxr-xr-x') }, undefined, { owner: 'marc' }),
-            'notes.txt': file(t('depart-notes-marc'), 'marc'),
+            'notes.txt': file(t('departure-notes-marc'), 'marc'),
           },
           undefined,
           { owner: 'marc', mode: 'rwxr-xr-x' },
@@ -188,21 +188,21 @@ export const departure: Chapter = {
     {
       id: 'verrou-seul',
       condition: (j) => ((j.state.comptesVerrouilles ?? []) as string[]).includes('marc') && byItsAccount(j),
-      message: (j) => j.t('depart-evenement-verrou-seul'),
+      message: (j) => j.t('departure-evenement-verrou-seul'),
     },
-    { id: 'deploy-vide', condition: (j) => !deployIntact(j), message: (j) => j.t('depart-evenement-deploy-vide', { fichier: DEPLOY }) },
+    { id: 'deploy-vide', condition: (j) => !deployIntact(j), message: (j) => j.t('departure-evenement-deploy-vide', { fichier: DEPLOY }) },
     {
       id: 'script-perdu',
       condition: (j) => !j.exists('/home/marc/bin') && !entrustedBackup(j),
-      message: (j) => j.t('depart-evenement-script-perdu'),
+      message: (j) => j.t('departure-evenement-script-perdu'),
     },
     {
       id: 'tache-personnelle',
       condition: (j) => entrustedBackup(j, [j.player]) && !entrustedBackup(j),
-      message: (j) => j.t('depart-evenement-tache-personnelle'),
+      message: (j) => j.t('departure-evenement-tache-personnelle'),
     },
-    { id: 'sauvegarde', condition: (j) => entrustedBackup(j), message: (j) => j.t('depart-evenement-sauvegarde') },
-    { id: 'ferme', condition: (j) => closed(j) && deployIntact(j), message: (j) => j.t('depart-evenement-ferme') },
-    { id: 'fin', condition: (j) => closed(j) && deployIntact(j) && entrustedBackup(j), message: (j) => j.t('depart-evenement-fin') },
+    { id: 'sauvegarde', condition: (j) => entrustedBackup(j), message: (j) => j.t('departure-evenement-sauvegarde') },
+    { id: 'ferme', condition: (j) => closed(j) && deployIntact(j), message: (j) => j.t('departure-evenement-ferme') },
+    { id: 'fin', condition: (j) => closed(j) && deployIntact(j) && entrustedBackup(j), message: (j) => j.t('departure-evenement-fin') },
   ],
 };

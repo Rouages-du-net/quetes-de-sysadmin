@@ -334,7 +334,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
           'UUID=0f9c2a4e-61d3-4b8a-9e57-c3d1a2b4e6f8 /             ext4   errors=remount-ro  0      1',
           'UUID=7b3e5d1f-2a4c-4e6b-8d9f-1a2b3c4d5e6f /srv          ext4   defaults           0      2',
           // Chapitre 4 : la ligne ajoutée par Théo, d'après un tutoriel suivi sur son portable.
-          ...(more.rescue ? ['', t('secours-fstab-commentaire'), '/dev/sdc1  /srv/scans  ext4  defaults  0  2'] : []),
+          ...(more.rescue ? ['', t('stuck-boot-fstab-commentaire'), '/dev/sdc1  /srv/scans  ext4  defaults  0  2'] : []),
         ].join('\n'),
       ),
       mdadm: place({

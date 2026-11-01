@@ -37,7 +37,7 @@ describe('Les succès', () => {
   });
 
   it('se gagnent sur la progression : chapitres, histoires, examen', () => {
-    const ctx = { sh: null, finished: ['eveil', 'bourg', 'racine', 'sauvegarde'], notebook: { man: { line: 'man ls', chapter: 'eveil' } }, records: { eveil: 4 * 60_000 } };
+    const ctx = { sh: null, finished: ['lighthouse', 'village', 'root', 'backup'], notebook: { man: { line: 'man ls', chapter: 'lighthouse' } }, records: { lighthouse: 4 * 60_000 } };
     expect(newAchievements(ctx, {})).toEqual(['premiere-commande', 'manuel', 'premier-chapitre', 'effaceur', 'restauration', 'examen', 'examen-eclair']);
   });
 
@@ -53,7 +53,7 @@ describe('Les succès', () => {
 
   it('le grade suit les chapitres terminés', () => {
     expect(grade([])).toBe('stagiaire');
-    expect(grade(['eveil'])).toBe('apprenti');
+    expect(grade(['lighthouse'])).toBe('apprenti');
     expect(grade(ALL.slice(0, 4))).toBe('junior');
     expect(grade(ALL.slice(0, 15))).toBe('admin');
     expect(grade(ALL)).toBe('sre');

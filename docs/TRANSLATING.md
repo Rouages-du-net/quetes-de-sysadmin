@@ -32,10 +32,10 @@ language, like bash's builtin; each language adds its own name for it
 
 ```ftl
 # A comment for translators
-eveil-evenement-crabe = The crab finds its bucket again.
+lighthouse-evenement-crabe = The crab finds its bucket again.
 
 # A text over several lines: each line is indented.
-eveil-message =
+lighthouse-message =
     "If you're reading this, the Eraser has been on the island.
 
     A creature is roaming the kingdom…"
@@ -171,7 +171,7 @@ write in their language: read the comment above the message.
 | Code | Language | Status |
 |---|---|---|
 | `en` | English | reference, default and fallback language; complete (texts, manual, tool messages as with `LANG=C`, names of the Eraser's and the workstation's places and objects, documents and data on the other stories' servers, `you` and `eraser` accounts) |
-| `fr` | French | complete; the project's original language: internal names (identifiers of chapters, places, machines) are French |
+| `fr` | French | complete; the project's original language: internal names (identifiers of places and machines) are French |
 
 ## Adding a language
 

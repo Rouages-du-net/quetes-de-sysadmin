@@ -78,12 +78,12 @@ APPS.outiltheque = {
     const base = readBase(readIn(game, c, BASE));
     const version = c.image.split(':').at(-1)!;
     if (!base) return { code: 500, body: 'Internal Server Error: database is missing' };
-    if (path === '/' || path === '') return { code: 200, body: game.t('mise-a-jour-appli-accueil', { version, prets: base.loans.length }) };
+    if (path === '/' || path === '') return { code: 200, body: game.t('update-appli-accueil', { version, prets: base.loans.length }) };
     if (path === '/prets')
       return {
         code: 200,
         body: [
-          game.t('mise-a-jour-appli-prets', { prets: base.loans.length }),
+          game.t('update-appli-prets', { prets: base.loans.length }),
           ...base.loans.slice(0, 5).map((p) => `  ${p.tool} — ${p.person} — ${p.until}`),
         ].join('\n'),
       };
@@ -116,7 +116,7 @@ const image = (tag: string, created: number): Image => ({
 const dockerState = (t: (id: string) => string): DockerState => {
   const v14 = image('1.4', Date.UTC(2026, 11, 2, 10, 0, 0));
   const v15 = image('1.5', Date.UTC(2027, 3, 1, 9, 0, 0));
-  const base = writeBase({ schema: 3, loans: loans(t('mise-a-jour-outils').split(', '), t('mise-a-jour-personnes').split(', ')) });
+  const base = writeBase({ schema: 3, loans: loans(t('update-outils').split(', '), t('update-personnes').split(', ')) });
   // Lancé il y a deux semaines : docker run -d --name outiltheque -p 8080:8080 …:1.4
   const old: Container = {
     id: identifier('conteneur-outiltheque-1.4'),
@@ -174,7 +174,7 @@ const fresh = (j: Game) =>
 const onMount = (c: Container) => c.mounts.some((m) => BASE.startsWith(m.target.replace(/\/$/, '') + '/'));
 
 export const update: Chapter = {
-  id: 'mise-a-jour',
+  id: 'update',
   number: 1,
   commands: [
     'ls',
@@ -243,7 +243,7 @@ export const update: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: f('fabrique', { lines: true, owner: 'root' }) }),
       home: place({
-        vous: d({ 'message_de_yasmine.txt': f(t('mise-a-jour-message-de-yasmine')), 'notes_docker.txt': f(t('mise-a-jour-notes-docker')) }),
+        vous: d({ 'message_de_yasmine.txt': f(t('update-message-de-yasmine')), 'notes_docker.txt': f(t('update-notes-docker')) }),
       }),
       srv: place({}),
       var: place({ lib: place({ docker: place({}, { owner: 'root', mode: 'rwx--x---' }) }) }),
@@ -256,17 +256,17 @@ export const update: Chapter = {
       condition: (j) =>
         j.last.line.includes('docker') &&
         (j.last.output.includes('"Mounts": []') || (j.last.line.includes('Mounts') && j.last.output.trim() === '[]')),
-      message: (j) => j.t('mise-a-jour-evenement-couche'),
+      message: (j) => j.t('update-evenement-couche'),
     },
     {
       id: 'port-occupe',
       condition: (j) => j.last.errors.some((e) => e.includes('port is already allocated')),
-      message: (j) => j.t('mise-a-jour-evenement-port-occupe'),
+      message: (j) => j.t('update-evenement-port-occupe'),
     },
     {
       id: 'perdu',
       condition: (j) => !somePart(j),
-      message: (j) => j.t('mise-a-jour-evenement-perdu'),
+      message: (j) => j.t('update-evenement-perdu'),
     },
     {
       id: 'neuf-vide',
@@ -274,7 +274,7 @@ export const update: Chapter = {
         const c = fresh(j);
         return !!c && (readBase(readIn(j, c, BASE))?.loans.length ?? 0) === 0;
       },
-      message: (j) => j.t('mise-a-jour-evenement-neuf-vide'),
+      message: (j) => j.t('update-evenement-neuf-vide'),
     },
     {
       id: 'sans-redemarrage',
@@ -282,7 +282,7 @@ export const update: Chapter = {
         const c = fresh(j);
         return !!c && onMount(c) && baseComplete(readIn(j, c, BASE)) && !['always', 'unless-stopped'].includes(c.reboot);
       },
-      message: (j) => j.t('mise-a-jour-evenement-sans-redemarrage'),
+      message: (j) => j.t('update-evenement-sans-redemarrage'),
     },
     {
       id: 'fin',
@@ -290,7 +290,7 @@ export const update: Chapter = {
         const c = fresh(j);
         return !!c && onMount(c) && baseComplete(readIn(j, c, BASE)) && ['always', 'unless-stopped'].includes(c.reboot);
       },
-      message: (j) => j.t('mise-a-jour-evenement-fin'),
+      message: (j) => j.t('update-evenement-fin'),
     },
   ],
 };

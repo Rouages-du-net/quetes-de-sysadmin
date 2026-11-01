@@ -29,10 +29,10 @@ indice-zones-fin =
 
 ## Chapitre 4 — Le télétravail
 
-indice-vpn-en-place =
+indice-remote-work-en-place =
     .piste = Il faut des clés au routeur (man wg : genkey, pubkey ; umask avant, pour que la clé privée ne soit lisible que par toi), un /etc/wireguard/wg0.conf avec [Interface] et un [Peer] pour Malik, malik-laptop.conf complété, et le pare-feu : le port UDP de WireGuard dans la chaîne input, wg0 vers les bureaux dans forward. man wg-quick pour monter l'interface.
     .solution = umask 077 puis wg genkey | tee privatekey | wg pubkey > publickey ; sudo nano /etc/wireguard/wg0.conf : Address = 10.10.99.1/24, ListenPort = 51820, PrivateKey = (privatekey), et [Peer] PublicKey = (la clé de Malik), AllowedIPs = 10.10.99.2/32 ; dans malik-laptop.conf : PublicKey = (publickey), Endpoint = hive.example:51820, AllowedIPs = 10.10.10.0/24 ; dans /etc/nftables.conf : « udp dport 51820 accept » (input) et « iifname "wg0" oifname "eth1.10" accept » (forward), sudo systemctl reload nftables ; enfin sudo systemctl enable --now wg-quick@wg0.
-indice-vpn-fin =
+indice-remote-work-fin =
     .piste = Le tunnel marche, mais au prochain démarrage ? wg0 ne revient que par son service s'il est activé, et le pare-feu que si ses règles sont dans /etc/nftables.conf. Une interface montée à la main avec wg-quick empêche le service de démarrer.
     .solution = sudo wg-quick down wg0 puis sudo systemctl enable --now wg-quick@wg0 ; les règles tapées avec nft recopiées dans /etc/nftables.conf, puis sudo systemctl reload nftables. Et pas de copie de la clé privée lisible par tous (chmod 600 privatekey).
 
@@ -47,16 +47,16 @@ indice-dmz-fin =
 
 ## Chapitre 6 — L'Annexe
 
-indice-annexe-en-place =
+indice-annex-en-place =
     .piste = L'Annexe est un pair de plus dans /etc/wireguard/wg0.conf. Pour WireGuard, ses AllowedIPs sont les adresses d'où ce pair peut envoyer ET celles qu'on lui envoie : pour un site, tout son réseau. Puis annex-wg0.conf à compléter (sudo wg show donne la clé publique du routeur), sans oublier que l'Annexe est derrière une box (man wg : PersistentKeepalive). wg-quick ne relit pas le fichier tout seul.
     .solution = Dans /etc/wireguard/wg0.conf, ajouter [Peer] PublicKey = (la clé de Sami), AllowedIPs = 10.10.99.3/32, 10.20.10.0/24 ; dans annex-wg0.conf : PublicKey = (celle de sudo wg show), Endpoint = hive.example:51820, AllowedIPs = 10.10.10.0/24, PersistentKeepalive = 25 ; puis sudo systemctl restart wg-quick@wg0, et ip route ou sudo wg show pour vérifier.
-indice-annexe-fin =
+indice-annex-fin =
     .piste = Les deux sites se parlent en ce moment. Au démarrage, wg0 repart de /etc/wireguard/wg0.conf par le service wg-quick@wg0, et le pare-feu de /etc/nftables.conf : tout ce qui a été réglé à la main doit y être.
     .solution = Le pair de l'Annexe (PublicKey, AllowedIPs = 10.10.99.3/32, 10.20.10.0/24) doit être dans /etc/wireguard/wg0.conf, et le service activé : sudo systemctl enable wg-quick@wg0, puis sudo systemctl restart wg-quick@wg0. Une règle nft tapée à la main va dans /etc/nftables.conf (ou s'efface avec sudo systemctl restart nftables).
 
 ## Chapitre 7 — L'annuaire
 
-indice-annuaire-fin =
+indice-directory-fin =
     .piste = Deux départs à traiter : Camille (son entrée, mais aussi son nom dans les groupes : memberUid ne se met pas à jour seul), et Sami (une entrée d'après modele-ines.ldif, un uidNumber libre, un mot de passe en empreinte, et le groupe bureaux). man ldapdelete, man ldapadd, man ldapmodify, man slappasswd ; il faut s'identifier pour écrire (courriel de Malik).
     .solution = ldapdelete -x -D cn=admin,dc=thehive,dc=example -w rayon-de-miel uid=camille,ou=people,dc=thehive,dc=example ; slappasswd pour l'empreinte {"{"}SSHA{"}"} ; sami.ldif d'après modele-ines.ldif (uid sami, cn Sami Lemaire, sn Lemaire, uidNumber 10004, userPassword = l'empreinte) et ldapadd -x -D … -w … -f sami.ldif ; puis un LDIF « changetype: modify » pour cn=bureaux (delete: memberUid camille, add: memberUid sami) et cn=equipe (delete: memberUid camille), passé à ldapmodify -x -D … -w … -f.
 

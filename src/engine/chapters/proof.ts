@@ -35,7 +35,7 @@ const okFound = (j: Game) =>
 const siteOk = (j: Game) => j.last.commands.some((c) => c[0] === 'curl') && /200/.test(j.last.output);
 
 export const proof: Chapter = {
-  id: 'preuve',
+  id: 'proof',
   number: 4,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'wc', 'sudo', 'id', 'whoami', 'apt', 'curl', 'nano'],
   home: M,
@@ -60,16 +60,16 @@ export const proof: Chapter = {
   initialise: initialiseWatch,
   createWorld: (t) =>
     watchWorld(t, {
-      home: { 'courriel_salome.txt': f(t('preuve-courriel-salome')) },
+      home: { 'courriel_salome.txt': f(t('proof-courriel-salome')) },
       logAccess: ACCESS,
     }),
   events: [
     {
       id: 'versions',
       condition: (j) => j.last.commands.some((c) => c[0] === 'apt') && okUpToDate(j) && /Listing\.\.\. Done/.test(j.last.output),
-      message: (j) => j.t('preuve-evenement-versions'),
+      message: (j) => j.t('proof-evenement-versions'),
     },
-    { id: 'trouve', condition: okFound, message: (j) => j.t('preuve-evenement-trouve', { adresse: SUSPICIOUS }) },
-    { id: 'fin', condition: (j) => okUpToDate(j) && j.flags.has('trouve') && siteOk(j), message: (j) => j.t('preuve-evenement-fin') },
+    { id: 'trouve', condition: okFound, message: (j) => j.t('proof-evenement-trouve', { adresse: SUSPICIOUS }) },
+    { id: 'fin', condition: (j) => okUpToDate(j) && j.flags.has('trouve') && siteOk(j), message: (j) => j.t('proof-evenement-fin') },
   ],
 };

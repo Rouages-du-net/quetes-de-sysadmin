@@ -135,7 +135,7 @@ const ignoreFile = (j: Game) => {
 };
 
 export const rights: Chapter = {
-  id: 'droits',
+  id: 'shared-rights',
   number: 2,
   commands: [
     'ls',
@@ -187,7 +187,7 @@ export const rights: Chapter = {
   createWorld: (t) =>
     cooperativeWorld({
       withoutMarc: true,
-      home: { 'courriel_awa.txt': f(t('droits-courriel-awa')) },
+      home: { 'courriel_awa.txt': f(t('shared-rights-courriel-awa')) },
       homes: {
         lina: d({ '.profile': file(PROFILE, 'lina') }, undefined, { owner: 'lina', mode: 'rwxr-x---' }),
         karim: d({ '.profile': file(PROFILE, 'karim') }, undefined, { owner: 'karim', mode: 'rwxr-x---' }),
@@ -204,8 +204,8 @@ export const rights: Chapter = {
               {
                 releves: d(
                   {
-                    '2027-10-17.txt': file(t('droits-releve-17'), 'lina', 'lina'),
-                    '2027-10-18.txt': file(t('droits-releve-18'), 'karim', 'karim'),
+                    '2027-10-17.txt': file(t('shared-rights-releve-17'), 'lina', 'lina'),
+                    '2027-10-18.txt': file(t('shared-rights-releve-18'), 'karim', 'karim'),
                   },
                   undefined,
                   { owner: 'root', group: 'root', mode: 'rwxr-xr-x' },
@@ -221,17 +221,17 @@ export const rights: Chapter = {
       },
     }),
   events: [
-    { id: 'sudoers-casse', condition: (j) => !validPolicy(j), message: (j) => j.t('droits-evenement-sudoers-casse') },
+    { id: 'sudoers-casse', condition: (j) => !validPolicy(j), message: (j) => j.t('shared-rights-evenement-sudoers-casse') },
     {
       id: 'fichier-ignore',
       condition: (j) => !!ignoreFile(j) && !restart(j),
-      message: (j) => j.t('droits-evenement-fichier-ignore', { fichier: ignoreFile(j) ?? '' }),
+      message: (j) => j.t('shared-rights-evenement-fichier-ignore', { fichier: ignoreFile(j) ?? '' }),
     },
-    { id: 'trop-large', condition: tropLarge, message: (j) => j.t('droits-evenement-trop-large') },
-    { id: 'systemctl-entier', condition: (j) => wholeSystemctl(j) && !tropLarge(j), message: (j) => j.t('droits-evenement-systemctl-entier') },
-    { id: 'sudo', condition: sudoOk, message: (j) => j.t('droits-evenement-sudo') },
-    { id: 'dossier', condition: okDirectory, message: (j) => j.t('droits-evenement-dossier', { dossier: path(j.t, STATEMENTS) }) },
-    { id: 'masque', condition: okMask, message: (j) => j.t('droits-evenement-masque') },
-    { id: 'fin', condition: (j) => okDirectory(j) && okFiles(j) && okMask(j) && sudoOk(j), message: (j) => j.t('droits-evenement-fin') },
+    { id: 'trop-large', condition: tropLarge, message: (j) => j.t('shared-rights-evenement-trop-large') },
+    { id: 'systemctl-entier', condition: (j) => wholeSystemctl(j) && !tropLarge(j), message: (j) => j.t('shared-rights-evenement-systemctl-entier') },
+    { id: 'sudo', condition: sudoOk, message: (j) => j.t('shared-rights-evenement-sudo') },
+    { id: 'dossier', condition: okDirectory, message: (j) => j.t('shared-rights-evenement-dossier', { dossier: path(j.t, STATEMENTS) }) },
+    { id: 'masque', condition: okMask, message: (j) => j.t('shared-rights-evenement-masque') },
+    { id: 'fin', condition: (j) => okDirectory(j) && okFiles(j) && okMask(j) && sudoOk(j), message: (j) => j.t('shared-rights-evenement-fin') },
   ],
 };

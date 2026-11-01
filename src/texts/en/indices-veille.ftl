@@ -17,37 +17,37 @@ indice-bulletin-fin =
 
 ## Chapter 2 — The priority
 
-indice-priorite-expose =
+indice-priority-expose =
     .piste = Before ranking, look at what actually listens on this server, and what has no port at all (man ss, man nmap).
     .solution = ss -tlnp (or nmap -sV petrin.internal): 80 and 443 answer any address, nothing listens for rsync.
-indice-priorite-ordre =
+indice-priority-ordre =
     .piste = rsync's score is higher, but a score measures how bad things get IF the service is reached, not how easy it is to reach. Write your decision in priority.md, nginx first, with why.
     .solution = sudo nano priority.md: nginx first (exposed to the internet, 80/443), rsync next (higher score, but no listening port); and a word on openssh-server (already protected, KbdInteractiveAuthentication set to no).
-indice-priorite-fin =
+indice-priority-fin =
     .piste = Check your text says WHY, not just the order: what makes nginx reachable, what keeps rsync from being reachable?
     .solution = Reread priority.md: the reason for the order must cite exposure (internet, port), not just the score.
 
 ## Chapter 3 — The fix
 
-indice-correctif-corrige =
+indice-fix-corrige =
     .piste = apt upgrade installs the available fixes, but only the ones apt knows about: refresh the package list first (man apt).
     .solution = sudo apt update, then sudo apt upgrade (both fixes, nginx and rsync, install together).
-indice-correctif-verifie =
+indice-fix-verifie =
     .piste = Before moving on: does the site still answer? (man curl)
     .solution = curl -I http://fournil.example/ (expect code 200).
-indice-correctif-fin =
+indice-fix-fin =
     .piste = Both packages must be at the bulletin's fixed version, and the site must still answer.
     .solution = apt list --installed | grep -E 'nginx|rsync' to check the versions, then curl -I http://fournil.example/.
 
 ## Chapter 4 — No proof, no certainty
 
-indice-preuve-versions =
+indice-proof-versions =
     .piste = A fix is reproven: ask apt what's still left to update (man apt).
     .solution = apt list --upgradable (nothing should show for nginx or rsync any more).
-indice-preuve-trouve =
+indice-proof-trouve =
     .piste = nginx's access log keeps a record of every request. The nginx flaw was in HTTP/2: look for a request of that kind (man grep).
     .solution = grep "HTTP/2" /var/log/nginx/access.log (a line with code 400, no declared browser, a few days before the fix).
-indice-preuve-fin =
+indice-proof-fin =
     .piste = You need two things: proof the packages are up to date, and to have checked the access log for an earlier attempt.
     .solution = apt list --upgradable (empty), then grep "HTTP/2" /var/log/nginx/access.log.
 

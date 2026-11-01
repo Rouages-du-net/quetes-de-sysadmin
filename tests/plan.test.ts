@@ -9,7 +9,7 @@ import { Console } from '../src/engine/console';
 import { LANGUAGES, translator } from '../src/texts';
 
 const all = (e: ElementPlan): ElementPlan[] => [e, ...(e.children ?? []).flatMap(all)];
-const ERASER = ['eveil', 'bourg', 'racine', 'sauvegarde'];
+const ERASER = ['lighthouse', 'village', 'root', 'backup'];
 
 for (const language of LANGUAGES)
   describe(`Plan du réseau en ${language}`, () => {

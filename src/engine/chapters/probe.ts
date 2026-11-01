@@ -149,34 +149,34 @@ function night(j: Game): string {
   if (relay(j).state !== 'active') start(j, s, 'radio-stream');
   const v = place();
   if (v) v.children = {};
-  const r: string[] = [j.t('sonde-nuit', { lancements: launches })];
+  const r: string[] = [j.t('probe-nuit', { lancements: launches })];
   r.push(
     alertRelay !== null
-      ? j.t('sonde-nuit-relais-vu', {
+      ? j.t('probe-nuit-relais-vu', {
           alerte: timeOfDay(alertRelay),
           repare: timeOfDay(repairedRelay ?? alertRelay),
           minutes: Math.round(((repairedRelay ?? alertRelay) - fallsRelay) / MINUTE),
         })
-      : j.t('sonde-nuit-relais-rate'),
+      : j.t('probe-nuit-relais-rate'),
   );
   r.push(
     alertInodes !== null && (fullInodes === null || alertInodes < fullInodes)
-      ? j.t('sonde-nuit-inodes-vu', { alerte: timeOfDay(alertInodes) })
-      : j.t('sonde-nuit-inodes-rate', { plein: timeOfDay(fullInodes ?? end) }),
+      ? j.t('probe-nuit-inodes-vu', { alerte: timeOfDay(alertInodes) })
+      : j.t('probe-nuit-inodes-rate', { plein: timeOfDay(fullInodes ?? end) }),
   );
-  if (no) r.push(j.t('sonde-nuit-fausses', { nombre: no }));
-  if (!launches) r.push(j.t('sonde-nuit-jamais'));
+  if (no) r.push(j.t('probe-nuit-fausses', { nombre: no }));
+  if (!launches) r.push(j.t('probe-nuit-jamais'));
   const okRelay = alertRelay !== null && alertRelay - fallsRelay <= RELAY_DELAY * MINUTE;
   const inodesOk = alertInodes !== null && (fullInodes === null || alertInodes < fullInodes);
   if (okRelay && inodesOk && !no) j.state.exerciceReussi = true;
-  else if (alertRelay !== null && !okRelay) r.push(j.t('sonde-nuit-relais-lent'));
+  else if (alertRelay !== null && !okRelay) r.push(j.t('probe-nuit-relais-lent'));
   // Le matin : 7 h.
   s.clock = end + 60 * MINUTE;
   return r.join('\n\n');
 }
 
 export const probe: Chapter = {
-  id: 'sonde',
+  id: 'probe',
   number: 5,
   commands: [
     'ls',
@@ -290,7 +290,7 @@ export const probe: Chapter = {
         aliases: file('# See man 5 aliases for format\npostmaster:    root\nroot: zoe'),
         systemd: place({ system: place({}) }),
       }),
-      home: place({ vous: d({ 'message_de_zoe.txt': f(t('sonde-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      home: place({ vous: d({ 'message_de_zoe.txt': f(t('probe-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       srv: place({
         radio: place(
           {
@@ -302,7 +302,7 @@ export const probe: Chapter = {
               },
               radio,
             ),
-            podcasts: place({ vignettes: place({}, radio), 'LISEZMOI.txt': file(t('sonde-podcasts-lisezmoi'), radio) }, radio),
+            podcasts: place({ vignettes: place({}, radio), 'LISEZMOI.txt': file(t('probe-podcasts-lisezmoi'), radio) }, radio),
           },
           radio,
         ),
@@ -315,7 +315,7 @@ export const probe: Chapter = {
         }),
         local: place({
           bin: place({
-            probe: file(t('sonde-script'), { owner: 'root', mode: 'rwxr-xr-x' }),
+            probe: file(t('probe-script'), { owner: 'root', mode: 'rwxr-xr-x' }),
             stream: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 8_400_000 }),
           }),
         }),
@@ -327,13 +327,13 @@ export const probe: Chapter = {
     {
       id: 'plugin-hors-path',
       condition: (j) => j.last.commands.some((c) => /^check_/.test(c[0]) || (c[0] === 'sudo' && /^check_/.test(c[1] ?? ''))),
-      message: (j) => j.t('sonde-evenement-plugin-hors-path', { dossier: PLUGINS }),
+      message: (j) => j.t('probe-evenement-plugin-hors-path', { dossier: PLUGINS }),
     },
     {
       id: 'premiere-alerte',
       condition: (j) => !j.state.empreinteNuit && alertsForZoe(j).length > 0,
-      message: (j) => j.t('sonde-evenement-premiere-alerte'),
+      message: (j) => j.t('probe-evenement-premiere-alerte'),
     },
-    { id: 'fin', condition: (j) => !!j.state.exerciceReussi, message: (j) => j.t('sonde-evenement-fin') },
+    { id: 'fin', condition: (j) => !!j.state.exerciceReussi, message: (j) => j.t('probe-evenement-fin') },
   ],
 };

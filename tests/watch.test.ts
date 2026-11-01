@@ -83,7 +83,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       expect(all).toContain(':80');
       expect(all.split('\n').filter((l) => l.startsWith('LISTEN')).join('\n')).not.toContain('rsync');
       edit('nano priorite.md', () => DOC_PRIORITY(false));
-      expect(c.finished).toContain('priorite');
+      expect(c.finished).toContain('priority');
     });
 
     it('chapitre 2 — fausse piste : classer par score seul (rsync avant nginx)', () => {
@@ -91,34 +91,34 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       const e = (id: string) => c.shell.flags.has(id);
       play(['nmap -sV petrin.internal']);
       edit('nano priorite.md', () => DOC_PRIORITY(true));
-      expect(e('score-seul') || !c.finished.includes('priorite')).toBe(true);
-      expect(c.finished).not.toContain('priorite');
+      expect(e('score-seul') || !c.finished.includes('priority')).toBe(true);
+      expect(c.finished).not.toContain('priority');
       edit('nano priorite.md', () => DOC_PRIORITY(false));
-      expect(c.finished).toContain('priorite');
+      expect(c.finished).toContain('priority');
     });
 
     // ——— Chapitre 3 : « Le correctif » ———
     it('chapitre 3 — solution : apt update puis upgrade, le site tient', () => {
-      const { c, jouer: play } = part(['bulletin', 'priorite']);
+      const { c, jouer: play } = part(['bulletin', 'priority']);
       let all = play(['sudo apt upgrade']);
       expect(all).toContain('Upgrading: 0');
-      expect(c.finished).not.toContain('correctif');
+      expect(c.finished).not.toContain('fix');
       play(['sudo apt update', 'sudo apt upgrade -y']);
       all = play(['curl -I http://fournil.example/']);
       expect(all).toContain('200');
-      expect(c.finished).toContain('correctif');
+      expect(c.finished).toContain('fix');
     });
 
     // ——— Chapitre 4 : « Sans preuve, pas de certitude » ———
     it('chapitre 4 — solution : apt confirme, la tentative est trouvée dans le journal', () => {
-      const { c, jouer: play } = part(['bulletin', 'priorite', 'correctif']);
+      const { c, jouer: play } = part(['bulletin', 'priority', 'fix']);
       let all = play(['apt list --upgradable']);
       expect(all).toContain('Listing... Done');
-      expect(c.finished).not.toContain('preuve');
+      expect(c.finished).not.toContain('proof');
       all = play(['grep "HTTP/2" /var/log/nginx/access.log']);
       expect(all).toContain('203.0.113.77');
       play(['curl -I http://fournil.example/']);
-      expect(c.finished).toContain('preuve');
+      expect(c.finished).toContain('proof');
     });
 
     // ——— Chapitre 5 : « Mettre en veille » ———
@@ -130,7 +130,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
         .replace('//Unattended-Upgrade::Mail "";', 'Unattended-Upgrade::Mail "root";');
 
     it('chapitre 5 — solution : unattended-upgrades restreint à la sécurité, une tâche cron hebdomadaire', () => {
-      const { c, jouer: play, editer: edit } = part(['bulletin', 'priorite', 'correctif', 'preuve']);
+      const { c, jouer: play, editer: edit } = part(['bulletin', 'priority', 'fix', 'proof']);
       edit('sudo nano /etc/apt/apt.conf.d/20auto-upgrades', TWENTY_ACTIVE);
       expect(c.finished).not.toContain('routine');
       edit('sudo nano /etc/apt/apt.conf.d/50unattended-upgrades', restrict);
@@ -140,7 +140,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
     });
 
     it('chapitre 5 — une autre voie : un timer systemd plutôt qu\'une tâche cron', () => {
-      const { c, jouer: play, editer: edit } = part(['bulletin', 'priorite', 'correctif', 'preuve']);
+      const { c, jouer: play, editer: edit } = part(['bulletin', 'priority', 'fix', 'proof']);
       edit('sudo nano /etc/apt/apt.conf.d/20auto-upgrades', TWENTY_ACTIVE);
       edit('sudo nano /etc/apt/apt.conf.d/50unattended-upgrades', restrict);
       edit(
@@ -156,7 +156,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
     });
 
     it('chapitre 5 — fausses pistes : actif sans restreindre à la sécurité, aucun rendez-vous', () => {
-      const { c, jouer: play, editer: edit } = part(['bulletin', 'priorite', 'correctif', 'preuve']);
+      const { c, jouer: play, editer: edit } = part(['bulletin', 'priority', 'fix', 'proof']);
       const e = (id: string) => c.shell.flags.has(id);
       edit('sudo nano /etc/apt/apt.conf.d/20auto-upgrades', TWENTY_ACTIVE);
       expect(e('active')).toBe(true);

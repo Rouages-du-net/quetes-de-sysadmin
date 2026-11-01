@@ -56,11 +56,11 @@ for (const language of LANGUAGES)
       all = play(['sudo pkill -u marc', 'who']);
       expect(all).not.toContain('marc     pts/1');
       contains(all, 'Marc ne peut plus entrer');
-      expect(c.finished).not.toContain('depart');
+      expect(c.finished).not.toContain('departure');
       play(['sudo cp /home/marc/bin/sauvegarde-caisse.sh /usr/local/bin/']);
       all = edit('sudo crontab -e', (t) => t + L('30 2 * * * /usr/local/bin/sauvegarde-caisse.sh\n'));
       contains(all, 'https://man7.org/linux/man-pages/man8/usermod.8.html');
-      expect(c.finished).toContain('depart');
+      expect(c.finished).toContain('departure');
     });
 
     it('chapitre 1 — autre solution : /etc/cron.d, puis userdel -r', () => {
@@ -76,7 +76,7 @@ for (const language of LANGUAGES)
       let all = play(['sudo userdel -r marc']);
       contains(all, 'actuellement utilisé par le processus 2741');
       all = play(['sudo kill 2741 2745 2790', 'sudo userdel -r marc', 'id marc']);
-      expect(c.finished).toContain('depart');
+      expect(c.finished).toContain('departure');
     });
 
     it('chapitre 1 — fausses pistes : vider deploy, la tâche dans sa propre crontab, userdel -r trop tôt', () => {
@@ -89,14 +89,14 @@ for (const language of LANGUAGES)
       play(['sudo cp /srv/sauvegardes/2027-10-18/home/marc/bin/sauvegarde-caisse.sh /home/vous/']);
       all = edit('crontab -e', (t) => t + L('30 2 * * * /home/vous/sauvegarde-caisse.sh\n'));
       contains(all, 'TA crontab');
-      expect(c.finished).not.toContain('depart');
+      expect(c.finished).not.toContain('departure');
       play(['sudo cp /home/vous/sauvegarde-caisse.sh /usr/local/bin/']);
       edit('sudo crontab -e', (t) => t + L('30 2 * * * /usr/local/bin/sauvegarde-caisse.sh\n'));
       // deploy est toujours vide : la CI et Lina sont bloquées.
-      expect(c.finished).not.toContain('depart');
+      expect(c.finished).not.toContain('departure');
     });
 
-    const DEPARTURE = ['depart'];
+    const DEPARTURE = ['departure'];
     const RULE = '%till ALL=(root) /usr/bin/systemctl restart till\n';
     const shareDirectory = (play: (l: string[]) => string) =>
       play(['sudo chgrp -R till /srv/till/releves', 'sudo chmod -R g+w /srv/till/releves', 'sudo chmod g+s /srv/till/releves']);
@@ -113,13 +113,13 @@ for (const language of LANGUAGES)
       c.save('%till ALL=(root) systemctl restart till\n');
       all = c.quitEdition();
       contains(all, 'nom de chemin totalement défini attendu');
-      expect(c.finished).not.toContain('droits');
+      expect(c.finished).not.toContain('shared-rights');
       play(['e']);
       c.save(RULE);
       all = c.quitEdition() + play(['sudo -l -U lina']);
       expect(all).toContain('(root) /usr/bin/systemctl restart till');
       contains(all, 'https://www.sudo.ws/docs/man/sudoers.man/');
-      expect(c.finished).toContain('droits');
+      expect(c.finished).toContain('shared-rights');
     });
 
     it('chapitre 2 — autre solution : chmod 2775, /etc/profile.d, un alias de commande', () => {
@@ -131,7 +131,7 @@ for (const language of LANGUAGES)
         'sudo visudo -f /etc/sudoers.d/till',
         () => 'Cmnd_Alias RELANCER_CAISSE = /usr/bin/systemctl restart till\n%till ALL=(root) RELANCER_CAISSE\n',
       );
-      expect(c.finished).toContain('droits');
+      expect(c.finished).toContain('shared-rights');
     });
 
     it('chapitre 2 — fausses pistes : un nom avec un point, trop large, systemctl entier, nano qui casse sudo', () => {
@@ -144,17 +144,17 @@ for (const language of LANGUAGES)
       contains(all, 'sudo bash');
       all = edit('sudo visudo -f /etc/sudoers.d/till', () => '%till ALL=(root) /usr/bin/systemctl\n');
       contains(all, 'arrêter ssh');
-      expect(c.finished).not.toContain('droits');
+      expect(c.finished).not.toContain('shared-rights');
       // nano au lieu de visudo : une faute, et sudo refuse tout.
       all = edit('sudo nano /etc/sudoers.d/till', () => '%till ALL=(root) systemctl restart till\n');
       contains(all, 'sudo est cassé');
       all = play(['sudo ls']);
       if (fr) expect(all).toContain("sudo: aucune source sudoers valide n'a été trouvée");
-      expect(c.finished).not.toContain('droits');
+      expect(c.finished).not.toContain('shared-rights');
     });
 
     const SITE = '/etc/nginx/sites-available/coop';
-    const BEFORE_SECRET = ['depart', 'droits'];
+    const BEFORE_SECRET = ['departure', 'shared-rights'];
     const newKey = (t: string) => t.replace(/PAIEMENT_CLE=.*/, 'PAIEMENT_CLE=pk_live_coop_9d27be05c4a1');
 
     it('chapitre 3 — solution : le journal, location ~ /\\., deny, la nouvelle clé', () => {
@@ -199,7 +199,7 @@ for (const language of LANGUAGES)
       expect(c.finished).not.toContain('secret');
     });
 
-    const BEFORE_PROXY = ['depart', 'droits', 'secret'];
+    const BEFORE_PROXY = ['departure', 'shared-rights', 'secret'];
     const withHeader = (header: string) => (t: string) =>
       t.replace('proxy_pass http://127.0.0.1:3000/;', `proxy_pass http://127.0.0.1:3000/;\n        proxy_set_header ${header};`);
     const trust = (value: string) => (t: string) => t.replace(/TRUST_PROXY=.*/, `TRUST_PROXY=${value}`);
@@ -243,7 +243,7 @@ for (const language of LANGUAGES)
       expect(c.finished).not.toContain('proxy');
     });
 
-    const BEFORE_UPDATE = ['depart', 'droits', 'secret', 'proxy'];
+    const BEFORE_UPDATE = ['departure', 'shared-rights', 'secret', 'proxy'];
 
     it('chapitre 5 — solution : apt update, upgrade dans tmux, la coupure, attach, reboot, enable', () => {
       const { c, jouer: play } = part(BEFORE_UPDATE);
@@ -269,7 +269,7 @@ for (const language of LANGUAGES)
       all = play(['ssh cooperative', 'uname -r', 'systemctl --failed', 'sudo systemctl enable --now till']);
       expect(all).toContain(machinesInLanguage(translator(language), 'Linux cooperative 6.12.48+deb13-amd64'));
       contains(all, 'https://man.openbsd.org/tmux');
-      expect(c.finished).toContain('mises-a-jour');
+      expect(c.finished).toContain('updates');
     });
 
     it('chapitre 5 — autre solution : sans tmux, dpkg --configure -a, et la caisse activée avant de redémarrer', () => {
@@ -283,7 +283,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('Setting up libc6 (2.41-12+deb13u1) ...');
       expect(all).toContain('Upgrading: 0, Installing: 0');
       play(['sudo systemctl enable till', 'sudo systemctl reboot', 'ssh cooperative']);
-      expect(c.finished).toContain('mises-a-jour');
+      expect(c.finished).toContain('updates');
     });
 
     it('chapitre 5 — fausses pistes : pas de redémarrage, tmux imbriqué, une session inconnue', () => {
@@ -297,11 +297,11 @@ for (const language of LANGUAGES)
       play(['tmux new -s maj', 'sudo apt update', 'sudo apt upgrade -y', 'ssh cooperative', 'sudo systemctl enable till']);
       all = play(['uname -r']);
       expect(all).toContain('6.12.38+deb13-amd64');
-      expect(c.finished).not.toContain('mises-a-jour');
+      expect(c.finished).not.toContain('updates');
     });
 
     // Chapitre 6 : les mises à jour automatiques.
-    const BEFORE_AUTO = ['depart', 'droits', 'secret', 'proxy', 'mises-a-jour'];
+    const BEFORE_AUTO = ['departure', 'shared-rights', 'secret', 'proxy', 'updates'];
     const SETTINGS = (t: string) =>
       t
         .replace('//Unattended-Upgrade::Mail "";', 'Unattended-Upgrade::Mail "root";')
@@ -310,7 +310,7 @@ for (const language of LANGUAGES)
 
     it('chapitre 6 — solution : 20auto-upgrades, rapport, redémarrage la nuit, essai, puis le service', () => {
       const { c, jouer: play, editer: edit } = part(BEFORE_AUTO);
-      expect(c.remote?.shell.chapter.id).toBe('automatiques');
+      expect(c.remote?.shell.chapter.id).toBe('auto-updates');
       let all = play([
         'ls /var/log/unattended-upgrades',
         'systemctl list-timers',
@@ -326,11 +326,11 @@ for (const language of LANGUAGES)
       all = play(['sudo unattended-upgrade --dry-run --debug']);
       expect(all).toContain('Packages that will be upgraded: libssl3t64 linux-image-6.12.57+deb13-amd64 linux-image-amd64 openssl tzdata');
       expect(all).toContain("Checking: nodejs ([<Origin component:'main' archive:'nodistro' origin:'Node Source'");
-      expect(c.finished).not.toContain('automatiques');
+      expect(c.finished).not.toContain('auto-updates');
       all = play(['sudo systemctl start apt-daily-upgrade', 'cat /var/log/unattended-upgrades/unattended-upgrades.log']);
       expect(all).toContain('Found /var/run/reboot-required, rebooting');
       contains(all, 'https://wiki.debian.org/UnattendedUpgrades');
-      expect(c.finished).toContain('automatiques');
+      expect(c.finished).toContain('auto-updates');
     });
 
     it('chapitre 6 — une autre solution : un fichier à soi, nodejs sur liste noire', () => {
@@ -341,7 +341,7 @@ for (const language of LANGUAGES)
           'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\nUnattended-Upgrade::Origins-Pattern { "origin=*"; };\nUnattended-Upgrade::Package-Blacklist { "nodejs"; };\nUnattended-Upgrade::Mail "lina";\nUnattended-Upgrade::Automatic-Reboot "true";\nUnattended-Upgrade::Automatic-Reboot-Time "21:30";\n',
       );
       play(['sudo systemctl start apt-daily-upgrade']);
-      expect(c.finished).toContain('automatiques');
+      expect(c.finished).toContain('auto-updates');
     });
 
     it('chapitre 6 — fausses pistes : point-virgule oublié, origin=*, redémarrage immédiat', () => {
@@ -372,6 +372,6 @@ for (const language of LANGUAGES)
       contains(all, 'nodejs vient de passer en version 22');
       expect(all).not.toContain('Bravo');
       expect(play(['systemctl status till'])).toContain('failed');
-      expect(c.finished).not.toContain('automatiques');
+      expect(c.finished).not.toContain('auto-updates');
     });
   });

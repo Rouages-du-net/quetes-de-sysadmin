@@ -79,7 +79,7 @@ const config = (j: Game) => j.state.sshd as { load: Record<string, string>; conn
 const closed = (v: Record<string, string>) => v.permitrootlogin === 'no' && v.passwordauthentication === 'no';
 
 export const door: Chapter = {
-  id: 'fermer-la-porte',
+  id: 'shut-the-door',
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'chmod', 'nano', 'sudo', 'systemctl', 'journalctl', 'sshd'],
   home: M,

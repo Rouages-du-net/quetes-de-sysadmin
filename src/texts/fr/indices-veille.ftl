@@ -17,37 +17,37 @@ indice-bulletin-fin =
 
 ## Chapitre 2 — La priorité
 
-indice-priorite-expose =
+indice-priority-expose =
     .piste = Avant de classer, regarde ce qui écoute vraiment sur ce serveur, et ce qui n'a aucun port du tout (man ss, man nmap).
     .solution = ss -tlnp (ou nmap -sV petrin.internal) : 80 et 443 répondent à toutes les adresses, rien n'écoute pour rsync.
-indice-priorite-ordre =
+indice-priority-ordre =
     .piste = Le score de rsync est plus haut, mais un score mesure la gravité SI on atteint le service, pas la facilité à l'atteindre. Écris ta décision dans priorite.md, nginx d'abord, avec pourquoi.
     .solution = sudo nano priorite.md : nginx en premier (exposé sur internet, 80/443), rsync ensuite (score plus haut, mais aucun port en écoute) ; et un mot sur openssh-server (déjà protégé, KbdInteractiveAuthentication à no).
-indice-priorite-fin =
+indice-priority-fin =
     .piste = Vérifie que ton texte dit POURQUOI, pas seulement l'ordre : qu'est-ce qui rend nginx joignable, qu'est-ce qui ne rend pas rsync joignable ?
     .solution = Relis priorite.md : la raison de l'ordre doit citer l'exposition (internet, port), pas seulement le score.
 
 ## Chapitre 3 — Le correctif
 
-indice-correctif-corrige =
+indice-fix-corrige =
     .piste = apt upgrade installe les correctifs disponibles, mais seulement ceux que apt connaît : rafraîchis la liste des paquets avant (man apt).
     .solution = sudo apt update, puis sudo apt upgrade (les deux correctifs, nginx et rsync, s'installent ensemble).
-indice-correctif-verifie =
+indice-fix-verifie =
     .piste = Avant de continuer : le site répond-il toujours ? (man curl)
     .solution = curl -I http://fournil.example/ (code 200 attendu).
-indice-correctif-fin =
+indice-fix-fin =
     .piste = Les deux paquets doivent être à la version corrigée du bulletin, et le site doit toujours répondre.
     .solution = apt list --installed | grep -E 'nginx|rsync' pour vérifier les versions, puis curl -I http://fournil.example/.
 
 ## Chapitre 4 — Sans preuve, pas de certitude
 
-indice-preuve-versions =
+indice-proof-versions =
     .piste = Un correctif se reprouve : demande à apt ce qu'il reste à mettre à jour (man apt).
     .solution = apt list --upgradable (rien ne doit plus apparaître pour nginx ni rsync).
-indice-preuve-trouve =
+indice-proof-trouve =
     .piste = Le journal d'accès de nginx garde une trace de chaque requête. La faille de nginx était en HTTP/2 : cherche une requête de ce genre (man grep).
     .solution = grep "HTTP/2" /var/log/nginx/access.log (une ligne en 400, sans navigateur déclaré, quelques jours avant le correctif).
-indice-preuve-fin =
+indice-proof-fin =
     .piste = Il te faut deux choses : la preuve que les paquets sont à jour, et avoir regardé le journal d'accès pour une tentative antérieure.
     .solution = apt list --upgradable (vide), puis grep "HTTP/2" /var/log/nginx/access.log.
 

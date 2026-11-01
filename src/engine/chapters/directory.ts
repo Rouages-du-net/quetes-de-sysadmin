@@ -158,7 +158,7 @@ export const serviceSlapd = () => ({
 });
 
 export const chapterDirectory: Chapter = {
-  id: 'annuaire',
+  id: 'directory',
   number: 7,
   plan: hivePlan({ remoteWork: true, dmz: true, annex: true, directory: true }),
   commands: [
@@ -231,28 +231,28 @@ export const chapterDirectory: Chapter = {
         ldap: d({ 'ldap.conf': f(LDAP_CONF, { lines: true, owner: 'root' }) }, undefined, { owner: 'root' }),
       },
       home: {
-        'courriel_malik.txt': f(t('annuaire-courriel-malik', { admin: ADMIN, motdepasse: MDP_ADMIN })),
+        'courriel_malik.txt': f(t('directory-courriel-malik', { admin: ADMIN, motdepasse: MDP_ADMIN })),
         'modele-ines.ldif': f(INES_TEMPLATE, { lines: true }),
         'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },
     }),
   events: [
-    { id: 'clair', condition: (j) => wordsInClear(directory(j)!), message: (j) => j.t('annuaire-evenement-clair') },
-    { id: 'uid-double', condition: (j) => uidDouble(directory(j)!), message: (j) => j.t('annuaire-evenement-uid-double') },
+    { id: 'clair', condition: (j) => wordsInClear(directory(j)!), message: (j) => j.t('directory-evenement-clair') },
+    { id: 'uid-double', condition: (j) => uidDouble(directory(j)!), message: (j) => j.t('directory-evenement-uid-double') },
     {
       id: 'camille-reste',
       condition: (j) => {
         const a = directory(j)!;
         return !find(a, `uid=camille,ou=people,${BASE}`) && camilleTrace(a);
       },
-      message: (j) => j.t('annuaire-evenement-camille-reste'),
+      message: (j) => j.t('directory-evenement-camille-reste'),
     },
     {
       id: 'sami-seul',
       condition: (j) => completeSami(directory(j)!) && !members(directory(j)!, OFFICES).includes('sami'),
-      message: (j) => j.t('annuaire-evenement-sami-seul'),
+      message: (j) => j.t('directory-evenement-sami-seul'),
     },
-    { id: 'arrete', condition: (j) => systemd(j)?.services.slapd?.state !== 'active', message: (j) => j.t('annuaire-evenement-arrete') },
-    { id: 'fin', condition: finished, message: (j) => j.t('annuaire-evenement-fin') },
+    { id: 'arrete', condition: (j) => systemd(j)?.services.slapd?.state !== 'active', message: (j) => j.t('directory-evenement-arrete') },
+    { id: 'fin', condition: finished, message: (j) => j.t('directory-evenement-fin') },
   ],
 };

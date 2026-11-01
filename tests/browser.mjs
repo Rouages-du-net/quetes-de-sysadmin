@@ -159,7 +159,7 @@ for (const width of [1000, 375]) {
   // Les fiches pour les enseignant·es : une page statique, générée à la construction.
   await page.goto(`${BASE}/fr/enseignants/`);
   check((await page.locator('.fiche').count()) > 50, `${width} px : les fiches des enseignant·es sont là`);
-  check((await page.locator('#c-goulot').textContent()).includes('iostat'), `${width} px : une fiche donne ses commandes nouvelles`);
+  check((await page.locator('#c-bottleneck').textContent()).includes('iostat'), `${width} px : une fiche donne ses commandes nouvelles`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${width} px : fiches sans défilement horizontal`);
   check(errors.length === 0, `${width} px : fiches sans erreur console ${errors.join(' ')}`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/enseignants-${width}.png` });
@@ -178,7 +178,7 @@ for (const width of [1000, 375]) {
   await page.addInitScript(() =>
     localStorage.setItem(
       'quetes-de-sysadmin',
-      JSON.stringify({ finished: ['eveil', 'bourg', 'racine', 'sauvegarde', 'premier-jour', 'deuxieme-jour', 'redemarrage', 'paquet-perdu', 'fermer-la-porte', 'pare-feu', 'cles', 'rebond'], story: 'ruche' }),
+      JSON.stringify({ finished: ['lighthouse', 'village', 'root', 'backup', 'first-day', 'second-day', 'reboot-night', 'lost-packet', 'shut-the-door', 'firewall', 'keys', 'jump'], story: 'ruche' }),
     ),
   );
   await page.goto(`${BASE}/fr/`);
@@ -221,7 +221,7 @@ for (const width of [1000, 375]) {
   await page.locator('a[href="/en/teachers/"]').click();
   await page.waitForURL(/\/en\/teachers\//);
   check((await page.locator('h1').textContent()).includes('For teachers'), `en ${width} px : la page des enseignant·es en anglais`);
-  check((await page.locator('#c-goulot dt').first().textContent()) === 'Goal', `en ${width} px : fiches en anglais`);
+  check((await page.locator('#c-bottleneck dt').first().textContent()) === 'Goal', `en ${width} px : fiches en anglais`);
   check((await page.locator('.langue a').getAttribute('href')) === '/fr/enseignants/', `en ${width} px : lien vers les fiches en français`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `en ${width} px : fiches sans défilement horizontal`);
   check(errors.length === 0, `en ${width} px : fiches sans erreur console ${errors.join(' ')}`);
@@ -258,7 +258,7 @@ for (const width of [1000, 375]) {
   await withCsp(page);
   await page.addInitScript(() => {
     if (!localStorage.getItem('quetes-de-sysadmin'))
-      localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['eveil', 'bourg', 'racine', 'sauvegarde', 'cles'], notebook: { ls: { line: 'ls -a', chapter: 'eveil' } } }));
+      localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['lighthouse', 'village', 'root', 'backup', 'keys'], notebook: { ls: { line: 'ls -a', chapter: 'lighthouse' } } }));
   });
   await page.goto(`${BASE}/fr/`);
   let game = page.locator('quetes-de-sysadmin');
@@ -295,7 +295,7 @@ for (const width of [1000, 375]) {
   await resumeCode.click();
   await other.waitForFunction(() => !document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('dialog.fenetre-progression')?.open);
   const stories = await other.evaluate(() => JSON.parse(localStorage.getItem('quetes-de-sysadmin')).finished);
-  check(['eveil', 'bourg', 'racine', 'sauvegarde', 'cles'].every((id) => stories.includes(id)), `progression ${width} px : le code reprend les chapitres terminés`);
+  check(['lighthouse', 'village', 'root', 'backup', 'keys'].every((id) => stories.includes(id)), `progression ${width} px : le code reprend les chapitres terminés`);
   // Le fichier, dans un troisième navigateur : tout revient, nom et carnet compris.
   const third = await (await browser.newContext({ viewport: { width: width, height: 900 } })).newPage();
   await withCsp(third);
@@ -495,8 +495,8 @@ for (const width of [1000, 375]) {
     buffer: Buffer.from(JSON.stringify({ format: 'quetes-de-sysadmin', version: 1, date: '2027-01-15T10:00:00Z', backup })),
   });
   await page.locator('#classe input[type="file"]').setInputFiles([
-    file('lina.json', { finished: ['eveil', 'bourg', 'racine', 'sauvegarde', 'cles'], name: 'Lina', achievements: { tube: 'x' }, records: { eveil: 61000 } }),
-    file('piege.json', { finished: ['eveil'], name: '=1+1' }),
+    file('lina.json', { finished: ['lighthouse', 'village', 'root', 'backup', 'keys'], name: 'Lina', achievements: { tube: 'x' }, records: { lighthouse: 61000 } }),
+    file('piege.json', { finished: ['lighthouse'], name: '=1+1' }),
   ]);
   await page.locator('#classe textarea').fill('Nour QDS-041H-R');
   await page.locator('#classe button', { hasText: 'Ajouter les codes' }).click();
@@ -601,7 +601,7 @@ for (const width of [1000, 375]) {
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   await withCsp(page);
   await page.goto(`${BASE}/fr/`);
-  await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['eveil', 'bourg', 'racine', 'sauvegarde', 'premier-jour', 'deuxieme-jour', 'redemarrage', 'paquet-perdu', 'fermer-la-porte'] })));
+  await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['lighthouse', 'village', 'root', 'backup', 'first-day', 'second-day', 'reboot-night', 'lost-packet', 'shut-the-door'] })));
   await page.reload();
   const game = page.locator('quetes-de-sysadmin');
   await game.locator('.choix-vue button', { hasText: 'Parcours' }).click();
@@ -630,7 +630,7 @@ for (const width of [1000, 375]) {
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   await withCsp(page);
   await page.goto(`${BASE}/fr/`);
-  await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['eveil', 'bourg', 'racine', 'sauvegarde'] })));
+  await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['lighthouse', 'village', 'root', 'backup'] })));
   await page.reload();
   const game = page.locator('quetes-de-sysadmin');
   for (const l of ['ssh datacenter', 'yes', 'tail -f /var/log/nginx/access.log']) {
@@ -666,7 +666,7 @@ for (const width of [1000, 375]) {
   await page.clock.install({ time: new Date('2027-01-14T10:00:00') });
   await withCsp(page);
   await page.goto(`${BASE}/fr/`);
-  await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['eveil', 'bourg', 'racine', 'sauvegarde'] })));
+  await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['lighthouse', 'village', 'root', 'backup'] })));
   await page.reload();
   const game = page.locator('quetes-de-sysadmin');
   check((await game.locator('.incident-texte').textContent()).includes('Premier jour'), `astreinte ${width} px : l’incident du jour est annoncé`);

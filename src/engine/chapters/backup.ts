@@ -34,7 +34,7 @@ const nightTasks = (j: Game) =>
   });
 
 export const backup: Chapter = {
-  id: 'sauvegarde',
+  id: 'backup',
   number: 4,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'mkdir', 'cp', 'mv', 'rm', 'nano', 'rsync', 'crontab'],
   home: M,
@@ -50,8 +50,8 @@ export const backup: Chapter = {
       home: d(
         {
           vous: d({
-            'mot_de_maelle.txt': f(t('sauvegarde-mot-de-maelle')),
-            souvenirs: d(Object.fromEntries(FILES.map((n) => [n, f(t(`sauvegarde-souvenir-${n.replace('.txt', '')}`))]))),
+            'mot_de_maelle.txt': f(t('backup-mot-de-maelle')),
+            souvenirs: d(Object.fromEntries(FILES.map((n) => [n, f(t(`backup-souvenir-${n.replace('.txt', '')}`))]))),
           }),
         },
         undefined,
@@ -69,10 +69,10 @@ export const backup: Chapter = {
       // Le souvenir du jour, arrivé avant la nuit : la tâche doit l'emporter.
       j.flags.add('jour');
       const n = j.find(path(j.t, MEMORIES));
-      if (n?.type === 'dossier') n.children[name(j.t, NEW)] = f(j.t('sauvegarde-souvenir-fete-du-phare'));
+      if (n?.type === 'dossier') n.children[name(j.t, NEW)] = f(j.t('backup-souvenir-fete-du-phare'));
       j.state.originaux[NEW] = j.read(path(j.t, `${MEMORIES}/${NEW}`));
-      chunks.push(j.t('sauvegarde-nuit-debut', { fichier: name(j.t, NEW) }));
-    } else chunks.push(j.t('sauvegarde-nuit-encore'));
+      chunks.push(j.t('backup-nuit-debut', { fichier: name(j.t, NEW) }));
+    } else chunks.push(j.t('backup-nuit-encore'));
     const executions = pass(j as Shell, NIGHT[0], NIGHT[1]);
     const mail = executions
       .filter((e) => e.output)
@@ -82,31 +82,31 @@ export const backup: Chapter = {
       j.flags.add('nuit-ok');
       // Au matin, l'erreur humaine.
       j.erase(path(j.t, `${MEMORIES}/${ERASES}`));
-      chunks.push(j.t('sauvegarde-nuit-ok', { fichier: name(j.t, NEW) }), j.t('sauvegarde-matin', { fichier: name(j.t, ERASES) }));
-    } else if (!executions.length) chunks.push(j.t('sauvegarde-nuit-rien'));
-    else chunks.push(mail ? j.t('sauvegarde-nuit-courrier', { courrier: mail }) : j.t('sauvegarde-nuit-echec'));
+      chunks.push(j.t('backup-nuit-ok', { fichier: name(j.t, NEW) }), j.t('backup-matin', { fichier: name(j.t, ERASES) }));
+    } else if (!executions.length) chunks.push(j.t('backup-nuit-rien'));
+    else chunks.push(mail ? j.t('backup-nuit-courrier', { courrier: mail }) : j.t('backup-nuit-echec'));
     return chunks.join('\n\n');
   },
   events: [
     {
       id: 'imbrique',
       condition: (j) => j.exists(path(j.t, `${BACKUP}/souvenirs`)),
-      message: (j) => j.t('sauvegarde-evenement-imbrique', { sauvegarde: path(j.t, BACKUP) }),
+      message: (j) => j.t('backup-evenement-imbrique', { sauvegarde: path(j.t, BACKUP) }),
     },
     {
       id: 'copie',
       condition: (j) => saved(j, FILES) && !j.flags.has('nuit-ok'),
-      message: (j) => j.t('sauvegarde-evenement-copie'),
+      message: (j) => j.t('backup-evenement-copie'),
     },
     {
       id: 'perdu',
       condition: (j) => j.flags.has('nuit-ok') && !j.exists(path(j.t, `${BACKUP}/${ERASES}`)) && !j.exists(path(j.t, `${MEMORIES}/${ERASES}`)),
-      message: (j) => j.t('sauvegarde-evenement-perdu', { fichier: name(j.t, ERASES) }),
+      message: (j) => j.t('backup-evenement-perdu', { fichier: name(j.t, ERASES) }),
     },
     {
       id: 'fin',
       condition: (j) => j.flags.has('nuit-ok') && j.read(path(j.t, `${MEMORIES}/${ERASES}`)) === originals(j)[ERASES] && nightTasks(j).length > 0,
-      message: (j) => j.t('sauvegarde-evenement-fin'),
+      message: (j) => j.t('backup-evenement-fin'),
     },
   ],
 };

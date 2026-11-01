@@ -3,13 +3,13 @@
 
 ## Chapter 1 — The Inventory
 
-indice-inventaire-cle-hote =
+indice-inventory-cle-hote =
     .piste = Ansible reads its configuration from the current directory (cd ~/ansible). Then it goes through ssh without ever asking a question: each centre must already be in ~/.ssh/known_hosts.
     .solution = cd ~/ansible, then for each centre: ssh deploy@north, yes, exit (likewise for south and east); then ansible centres -m ping
-indice-inventaire-compte =
+indice-inventory-compte =
     .piste = Ansible connects with the remote_user account from ansible.cfg. Which account has your key on the centres? (see Théo's email, and man ansible)
     .solution = In ~/ansible/ansible.cfg: remote_user = deploy
-indice-inventaire-manque =
+indice-inventory-manque =
     .piste = ansible-inventory --graph shows the hosts in the centres group. One is missing.
     .solution = Add east under [centres] in ~/ansible/inventory.ini, then ansible centres -m ping
 
@@ -27,15 +27,15 @@ indice-playbook-deuxieme =
 
 ## Chapter 3 — The Rehearsal
 
-indice-repetition-repetition =
+indice-rehearsal-repetition =
     .piste = Before changing anything: man ansible-playbook, the options that play without changing anything and that show the differences.
     .solution = ansible-playbook ssh.yml --check --diff
-indice-repetition-gestionnaire =
+indice-rehearsal-gestionnaire =
     .piste = Read the error: the notified name and the handler's name must be exactly the same.
     .solution = In ssh.yml: notify: reload ssh (the handler's name, in lowercase).
-indice-repetition-canari =
+indice-rehearsal-canari =
     .piste = One centre first: the --limit option. Then check you can still connect to it.
     .solution = ansible-playbook ssh.yml --limit north, then ansible north -m ping
-indice-repetition-fin =
+indice-rehearsal-fin =
     .piste = Each centre must have reloaded sshd (sshd -T on a centre). Where the line is already there, the handler won't be notified again: reload ssh yourself. Then run the playbook again to check changed=0.
     .solution = ansible centres -b -m service -a "name=ssh state=reloaded" if needed, ansible-playbook ssh.yml, then ansible-playbook ssh.yml again (changed=0).

@@ -46,7 +46,7 @@ const conf = (t: Game['t']) => `server {
         try_files $uri $uri/ =404;
     }
 
-    # ${t('bleu-vert-conf-commentaire')}
+    # ${t('blue-green-conf-commentaire')}
     location /kiosk/ {
         proxy_pass http://127.0.0.1:3002/;
     }
@@ -58,7 +58,7 @@ const lastBatch = (j: Game): Batch | undefined => j.state.dernierLot;
 const output = (j: Game) => [j.last.output, ...j.last.errors].join('\n');
 
 export const canary: Chapter = {
-  id: 'canari',
+  id: 'canary',
   number: 4,
   commands: [
     'ls',
@@ -146,7 +146,7 @@ export const canary: Chapter = {
     j.state.dernierLot = batch;
     j.state.lots = [...(j.state.lots ?? []), batch];
     if (batch.byVersion['1.6.1']?.visits && !batch.byVersion['1.6.1'].errors && (distribution(j).blue ?? 0) < 1) j.state.canariPropre = true;
-    return j.t('canari-une-heure', { visites: batch.total });
+    return j.t('canary-une-heure', { visites: batch.total });
   },
   createWorld: (t) => {
     const root: Rights = { owner: 'root' };
@@ -176,13 +176,13 @@ export const canary: Chapter = {
         }),
       }),
       home: place({
-        vous: d({ 'message_de_samia.txt': f(t('canari-message-de-samia')) }),
+        vous: d({ 'message_de_samia.txt': f(t('canary-message-de-samia')) }),
         samia: place({}, { owner: 'samia', mode: 'rwx------' }),
         theo: place({}, { owner: 'theo', mode: 'rwx------' }),
       }),
       srv: place({
         gazette: place({
-          releases: place({ '20270524090000': place({ 'index.html': file(t('retour-arriere-site-accueil'), { owner: 'vous' }) }) }),
+          releases: place({ '20270524090000': place({ 'index.html': file(t('rollback-site-accueil'), { owner: 'vous' }) }) }),
           current: f('', { owner: 'vous', link: '/srv/gazette/releases/20270524090000' }),
         }),
         kiosk: place(
@@ -190,8 +190,8 @@ export const canary: Chapter = {
             versions: place(
               {
                 '1.4.2': versionDirectory(t, '1.4.2'),
-                '1.5.0': versionDirectory(t, '1.5.0', 'bleu-vert-notes-150'),
-                '1.6.0': versionDirectory(t, '1.6.0', 'canari-notes-160'),
+                '1.5.0': versionDirectory(t, '1.5.0', 'blue-green-notes-150'),
+                '1.6.0': versionDirectory(t, '1.6.0', 'canary-notes-160'),
               },
               kiosk,
             ),
@@ -219,7 +219,7 @@ export const canary: Chapter = {
     {
       id: 'tout-d-un-coup',
       condition: (j) => (distribution(j).blue ?? 0) === 1 && !!lastBatch(j)?.byVersion['1.6.0']?.errors && !j.state.canari160,
-      message: (j) => j.t('canari-evenement-tout-d-un-coup', { erreurs: lastBatch(j)!.errors }),
+      message: (j) => j.t('canary-evenement-tout-d-un-coup', { erreurs: lastBatch(j)!.errors }),
     },
     {
       id: 'canari-160',
@@ -229,29 +229,29 @@ export const canary: Chapter = {
         if (ok) j.state.canari160 = true;
         return ok;
       },
-      message: (j) => j.t('canari-evenement-canari-160'),
+      message: (j) => j.t('canary-evenement-canari-160'),
     },
     {
       id: 'trop-gros',
       condition: (j) => (distribution(j).blue ?? 0) > 0.25 && (distribution(j).blue ?? 0) < 1,
-      message: (j) => j.t('canari-evenement-trop-gros'),
+      message: (j) => j.t('canary-evenement-trop-gros'),
     },
     {
       id: 'trouve',
       condition: (j) => !!j.state.canari160 && /" 500 \d+ /.test(output(j)) && output(j).includes('/kiosk/archives'),
-      message: (j) => j.t('canari-evenement-trouve'),
+      message: (j) => j.t('canary-evenement-trouve'),
     },
     {
       id: 'arrete',
       condition: (j) => !!j.state.canari160 && (distribution(j).blue ?? 0) === 0 && (distribution(j).green ?? 0) > 0,
-      message: (j) => j.t('canari-evenement-arrete'),
+      message: (j) => j.t('canary-evenement-arrete'),
       // Les développeur·ses publient le correctif.
       action: (j) => {
         const versions = j.find(`${KIOSK}/versions`);
-        if (versions?.type === 'dossier') versions.children['1.6.1'] = versionDirectory(j.t, '1.6.1', 'canari-notes-161');
+        if (versions?.type === 'dossier') versions.children['1.6.1'] = versionDirectory(j.t, '1.6.1', 'canary-notes-161');
       },
     },
-    { id: 'canari-161', condition: (j) => !!j.state.canariPropre, message: (j) => j.t('canari-evenement-canari-161') },
+    { id: 'canari-161', condition: (j) => !!j.state.canariPropre, message: (j) => j.t('canary-evenement-canari-161') },
     {
       id: 'fin',
       condition: (j) => {
@@ -265,7 +265,7 @@ export const canary: Chapter = {
           httpRequest(j, GAZETTE, '/kiosk/archives', 80, false)?.code === 200
         );
       },
-      message: (j) => j.t('canari-evenement-fin'),
+      message: (j) => j.t('canary-evenement-fin'),
     },
   ],
 };

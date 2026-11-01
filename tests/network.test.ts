@@ -10,7 +10,7 @@ import { LANGUAGES, translator } from '../src/texts';
 import { inLanguage } from './names';
 
 // Les trois chapitres qui donnent les clés (le quatrième, ajouté ensuite, ne compte pas).
-const ERASER = ['eveil', 'bourg', 'racine'];
+const ERASER = ['lighthouse', 'village', 'root'];
 
 for (const language of LANGUAGES)
   describe(`Langue : ${language}`, () => {
@@ -31,7 +31,7 @@ for (const language of LANGUAGES)
       expect(connection).toContain(L("Warning: Permanently added 'royaume.internal' (ED25519) to the list of known hosts."));
       expect(connection).toContain(L('Linux royaume'));
       expect(c.prompt()).toBe(L('vous@royaume:~$'));
-      expect(c.remote?.shell.chapter.id).toBe('eveil');
+      expect(c.remote?.shell.chapter.id).toBe('lighthouse');
       expect(play(c, ['exit'])).toBe(L('logout\nConnection to royaume.internal closed.'));
       expect(c.prompt()).toBe(L('vous@poste:~$'));
       // Deuxième fois : la machine est connue, pas de question ; le chapitre reprend, avec où relire ses consignes.
@@ -62,7 +62,7 @@ for (const language of LANGUAGES)
       expect(play(c, ['ssh datacenter', 'yes'])).toContain(L('vous@datacenter.internal: Permission denied (publickey).'));
       const end = new Console({ language, finished: ERASER.slice(0, 2) });
       end.connect('royaume');
-      expect(end.remote?.shell.chapter.id).toBe('racine');
+      expect(end.remote?.shell.chapter.id).toBe('root');
       const last = play(end, ['cat arrivee.txt', 'chmod o-w souvenirs', 'sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf', 'tournesol']);
       expect(end.finished).toEqual(ERASER);
       expect(last).toContain('~/.ssh/id_datacenter');
@@ -111,7 +111,7 @@ for (const language of LANGUAGES)
         .map((c) => c.id);
       const c = new Console({ language, finished: [...ERASER, ...finished] });
       play(c, ['ssh datacenter', 'yes']);
-      expect(c.remote?.shell.chapter.id).toBe('redemarrage');
+      expect(c.remote?.shell.chapter.id).toBe('reboot-night');
       const cut = play(c, ['sudo reboot', 'bienvenue-2026']);
       expect(cut).toContain(L('Connection to datacenter.internal closed by remote host.'));
       expect(c.prompt()).toBe(L('vous@poste:~$'));
@@ -141,7 +141,7 @@ for (const language of LANGUAGES)
       const question = play(c, ['ssh datacenter']);
       expect(question).toContain(`ED25519 key fingerprint is ${fingerprint(storyMachine('datacenter')!, '-apres-incendie')}.`);
       play(c, ['yes']);
-      expect(c.remote?.shell.chapter.id).toBe('incendie');
+      expect(c.remote?.shell.chapter.id).toBe('fire');
       // Se reconnecter ne pose plus de question : la nouvelle clé est connue.
       play(c, ['exit']);
       expect(play(c, ['ssh datacenter'])).not.toContain('WARNING');

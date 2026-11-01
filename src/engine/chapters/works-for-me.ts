@@ -125,7 +125,7 @@ const forgottenPoint = (j: Game) =>
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 export const atMe: Chapter = {
-  id: 'chez-moi',
+  id: 'works-for-me',
   number: 5,
   commands: [
     'ls',
@@ -237,7 +237,7 @@ export const atMe: Chapter = {
           { owner: 'root', group: 'bind', mode: 'rwxr-sr-x' },
         ),
       }),
-      home: place({ vous: d({ 'courriel_kofi.txt': f(t('chez-moi-courriel-kofi')), 'aide_dns.txt': f(t('chez-moi-aide-dns')) }) }),
+      home: place({ vous: d({ 'courriel_kofi.txt': f(t('works-for-me-courriel-kofi')), 'aide_dns.txt': f(t('works-for-me-aide-dns')) }) }),
       usr: place({ sbin: place({ named: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_201_664 }) }) }),
     });
   },
@@ -257,13 +257,13 @@ export const atMe: Chapter = {
       message: (j) => {
         const memo = state(j).cache['cafe.example. A'];
         const hours = Math.max(1, Math.round((memo.expires - toUtc(sd(j).clock)) / 3_600_000));
-        return j.t('chez-moi-evenement-cache', { heures: hours });
+        return j.t('works-for-me-evenement-cache', { heures: hours });
       },
     },
     {
       id: 'erreur-zone',
       condition: (j) => j.last.errors.some((e) => e.includes("'reload' failed")),
-      message: (j) => j.t('chez-moi-evenement-erreur-zone'),
+      message: (j) => j.t('works-for-me-evenement-erreur-zone'),
     },
     {
       id: 'serial',
@@ -271,17 +271,17 @@ export const atMe: Chapter = {
         const e = state(j);
         return !same(e.primary['cafe.example']?.rrs, e.secondary['cafe.example']?.rrs);
       },
-      message: (j) => j.t('chez-moi-evenement-serial'),
+      message: (j) => j.t('works-for-me-evenement-serial'),
     },
     {
       id: 'point-final',
       condition: forgottenPoint,
-      message: (j) => j.t('chez-moi-evenement-point-final'),
+      message: (j) => j.t('works-for-me-evenement-point-final'),
     },
     {
       id: 'fin',
       condition: (j) => good(j, 'primary') && good(j, 'secondary'),
-      message: (j) => j.t('chez-moi-evenement-fin'),
+      message: (j) => j.t('works-for-me-evenement-fin'),
     },
   ],
 };

@@ -39,7 +39,7 @@ const lastPing = (j: Game) => history(j as Shell).pings.at(-1) ?? {};
 const seen = (j: Game, text: string) => j.last.output.includes(text) || j.last.errors.some((e) => e.includes(text));
 
 export const inventory: Chapter = {
-  id: 'inventaire',
+  id: 'inventory',
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'cp', 'nano', 'sudo', 'id', 'whoami', 'ssh', 'exit', 'ansible', 'ansible-inventory', 'ansible-doc'],
   home: M,
@@ -55,12 +55,12 @@ export const inventory: Chapter = {
     pilotWorld(t, {
       known: [],
       ansible: { 'ansible.cfg': f(CFG, { lines: true }), 'inventory.ini': f(INVENTORY, { lines: true }) },
-      home: { 'courriel_theo.txt': f(t('inventaire-courriel-theo')) },
+      home: { 'courriel_theo.txt': f(t('inventory-courriel-theo')) },
     }),
   events: [
-    { id: 'sans-config', condition: (j) => seen(j, 'No inventory was parsed'), message: (j) => j.t('inventaire-evenement-sans-config') },
-    { id: 'cle-hote', condition: (j) => seen(j, 'Host key verification failed'), message: (j) => j.t('inventaire-evenement-cle-hote') },
-    { id: 'compte', condition: (j) => seen(j, 'theo@') && seen(j, 'Permission denied'), message: (j) => j.t('inventaire-evenement-compte') },
+    { id: 'sans-config', condition: (j) => seen(j, 'No inventory was parsed'), message: (j) => j.t('inventory-evenement-sans-config') },
+    { id: 'cle-hote', condition: (j) => seen(j, 'Host key verification failed'), message: (j) => j.t('inventory-evenement-cle-hote') },
+    { id: 'compte', condition: (j) => seen(j, 'theo@') && seen(j, 'Permission denied'), message: (j) => j.t('inventory-evenement-compte') },
     {
       id: 'manque',
       condition: (j) => {
@@ -68,7 +68,7 @@ export const inventory: Chapter = {
         const listing = Object.keys(p);
         return listing.length > 0 && listing.every((h) => p[h] === 'SUCCESS') && !NAMES.every((n) => n in p);
       },
-      message: (j) => j.t('inventaire-evenement-manque'),
+      message: (j) => j.t('inventory-evenement-manque'),
     },
     {
       id: 'fin',
@@ -76,7 +76,7 @@ export const inventory: Chapter = {
         const p = lastPing(j);
         return NAMES.every((n) => inventoryCentres(j).includes(n) && p[n] === 'SUCCESS');
       },
-      message: (j) => j.t('inventaire-evenement-fin'),
+      message: (j) => j.t('inventory-evenement-fin'),
     },
   ],
 };

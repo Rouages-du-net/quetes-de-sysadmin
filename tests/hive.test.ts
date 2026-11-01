@@ -312,7 +312,7 @@ table ip nat {
       all += play(['ip -br a']);
       expect(all).toContain('wg0              UNKNOWN        10.10.99.1/24');
       contains(all, 'https://www.wireguard.com/quickstart/');
-      expect(c.finished).toContain('vpn');
+      expect(c.finished).toContain('remote-work');
     });
 
     it('chapitre 4 — fausses pistes : la clé lisible, la porte fermée, les clés croisées, wg-quick puis le service', () => {
@@ -344,7 +344,7 @@ table ip nat {
       expect(all).toContain("wg-quick: `wg0' already exists");
       play(['sudo nft add rule inet filter forward iifname wg0 accept', 'chmod 600 privatekey']);
       // Tout marche… jusqu'au redémarrage : le pare-feu n'est pas dans le fichier.
-      expect(c.finished).not.toContain('vpn');
+      expect(c.finished).not.toContain('remote-work');
       all = play(['sudo wg-quick down wg0', 'sudo systemctl start wg-quick@wg0', 'sudo reboot', 'ssh ruche', 'sudo wg show wg0']);
       expect(all).toContain('[#] ip link delete dev wg0');
       // wg0 est revenu (le service), mais pas la règle tapée à la main : plus de poignée de main.
@@ -352,7 +352,7 @@ table ip nat {
       expect(all).not.toContain('latest handshake');
       edit('sudo nano /etc/nftables.conf', FIREWALL);
       play(['sudo systemctl restart nftables']);
-      expect(c.finished).toContain('vpn');
+      expect(c.finished).toContain('remote-work');
     });
 
     const ETH140 = '\nauto eth1.40\niface eth1.40 inet static\n    address 10.10.40.1/24\n';
@@ -368,7 +368,7 @@ table ip nat {
         );
 
     it('chapitre 5 — solution : eth1.40, dnat au prerouting, forward vers la DMZ seulement', () => {
-      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'vpn']);
+      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work']);
       let all = play([L('cat plan-commutateur.txt'), 'ping -c 1 web']);
       // Sans interface dans ce réseau, le ping part vers la box et s'y perd.
       expect(all).toContain('1 packets transmitted, 0 received, 100% packet loss');
@@ -385,7 +385,7 @@ table ip nat {
     });
 
     it('chapitre 5 — fausses pistes : sans forward, l’adresse publique, tout publier, la DMZ ouverte, à la main', () => {
-      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'vpn']);
+      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work']);
       let all = play([
         'sudo ip link add link eth1 name eth1.40 type vlan id 40',
         'sudo ip addr add 10.10.40.1/24 dev eth1.40',
@@ -438,7 +438,7 @@ table ip nat {
           .replace('AllowedIPs =', `AllowedIPs = ${allowed}${keepalive ? '\nPersistentKeepalive = 25' : ''}`);
 
     it('chapitre 6 — solution : un pair pour le site, ses AllowedIPs, PersistentKeepalive', () => {
-      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'vpn', 'dmz']);
+      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz']);
       let all = play(['sudo wg show']);
       const pub = all.match(/public key: (\S+)/)![1];
       edit('sudo nano /etc/wireguard/wg0.conf', ANNEX_PEER(annexKey(c)));
@@ -448,11 +448,11 @@ table ip nat {
       expect(all).toContain('allowed ips: 10.10.99.3/32, 10.20.10.0/24');
       expect(all).toContain('64 bytes from 10.20.10.20');
       contains(all, 'https://www.wireguard.com/#cryptokey-routing');
-      expect(c.finished).toContain('annexe');
+      expect(c.finished).toContain('annex');
     });
 
     it('chapitre 6 — fausses pistes : pas relu, l’adresse seule, l’Annexe qui s’endort, tout ouvert', () => {
-      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'vpn', 'dmz']);
+      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz']);
       const pub = play(['sudo wg show']).match(/public key: (\S+)/)![1];
       let all = edit('sudo nano /etc/wireguard/wg0.conf', ANNEX_PEER(annexKey(c), '10.10.99.3/32'));
       contains(all, 'ne relit pas le fichier');
@@ -468,10 +468,10 @@ table ip nat {
       edit('nano annex-wg0.conf', (t) => t.replace('AllowedIPs = 10.10.10.0/24', 'AllowedIPs = 10.10.0.0/16'));
       all = play(['sudo nft add rule inet filter forward iifname wg0 accept']);
       contains(all, 'les caméras de La Ruche');
-      expect(c.finished).not.toContain('annexe');
+      expect(c.finished).not.toContain('annex');
       play(['sudo systemctl restart nftables']);
       edit('nano annex-wg0.conf', (t) => t + '\nPersistentKeepalive = 25\n');
-      expect(c.finished).toContain('annexe');
+      expect(c.finished).toContain('annex');
     });
 
     const B = 'dc=thehive,dc=example';
@@ -481,7 +481,7 @@ table ip nat {
     const GROUPS = `dn: cn=bureaux,ou=groups,${B}\nchangetype: modify\ndelete: memberUid\nmemberUid: camille\n-\nadd: memberUid\nmemberUid: sami\n\ndn: cn=equipe,ou=groups,${B}\nchangetype: modify\ndelete: memberUid\nmemberUid: camille\n`;
 
     it('chapitre 7 — solution : ldapdelete, un LDIF avec slappasswd, les groupes', () => {
-      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe']);
+      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex']);
       let all = play([
         'cat modele-ines.ldif',
         'ldapsearch -x -LLL "(memberUid=camille)" dn',
@@ -504,11 +504,11 @@ table ip nat {
       expect(all).toContain(`modifying entry "cn=bureaux,ou=groups,${B}"`);
       expect(all).toContain(`dn:uid=sami,ou=people,${B}`);
       contains(all, 'https://www.openldap.org/doc/admin26/dbtools.html');
-      expect(c.finished).toContain('annuaire');
+      expect(c.finished).toContain('directory');
     });
 
     it('chapitre 7 — autre solution : en root par ldapi, ldappasswd qui demande le mot de passe', () => {
-      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe']);
+      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex']);
       const EXT = '-Q -Y EXTERNAL -H ldapi:///';
       edit('nano sami.ldif', () => SAMI('provisoire').replace('userPassword: provisoire\n', ''));
       edit('nano groupes.ldif', () => GROUPS);
@@ -517,16 +517,16 @@ table ip nat {
         `sudo ldapadd ${EXT} -f sami.ldif`,
         `sudo ldapmodify ${EXT} -f groupes.ldif`,
       ]);
-      expect(c.finished).not.toContain('annuaire');
+      expect(c.finished).not.toContain('directory');
       all = play([`ldappasswd -x -D cn=admin,${B} -W -S uid=sami,ou=people,${B}`]);
       for (const r of ['nouveau-sami', 'nouveau-sami', 'rayon-de-miel']) all += c.execute(r) ?? '';
       all += play([`sudo ldapsearch ${EXT} -LLL uid=sami userPassword`]);
       expect(all).toMatch(/userPassword: \{SSHA\}/);
-      expect(c.finished).toContain('annuaire');
+      expect(c.finished).toContain('directory');
     });
 
     it('chapitre 7 — fausses pistes : anonyme, un attribut manquant, en clair, le même numéro, le groupe oublié, slapd arrêté', () => {
-      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe']);
+      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex']);
       let all = play([`ldapdelete -x uid=camille,ou=people,${B}`, `ldapdelete -x -D cn=admin,${B} -w faux uid=camille,ou=people,${B}`]);
       expect(all).toContain('ldap_delete: Strong(er) authentication required (8)');
       expect(all).toContain('ldap_bind: Invalid credentials (49)');
@@ -551,7 +551,7 @@ table ip nat {
         `ldapmodify ${ADMIN} -f numero.ldif`,
         `ldappasswd ${ADMIN} -s sami-choisit uid=sami,ou=people,${B}`,
       ]);
-      expect(c.finished).toContain('annuaire');
+      expect(c.finished).toContain('directory');
     });
 
     const RAD = '/etc/freeradius/3.0';
@@ -573,7 +573,7 @@ table ip nat {
       );
 
     it('chapitre 8 — solution : le pare-feu, clients.conf, le module ldap, le fichier users', () => {
-      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe', 'annuaire']);
+      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex', 'directory']);
       let all = play([L('cat borne-bureaux.txt'), 'radtest sami choisi-par-sami localhost 0 testing123']);
       if (fr) expect(all).toContain('Secret partagé         : Rk7-borne-2028');
       expect(all).toContain('(0) -: Expected Access-Accept got Access-Reject');
@@ -603,7 +603,7 @@ table ip nat {
     });
 
     it('chapitre 8 — fausses pistes : la porte fermée, pas relu, sans ldap, anonyme, memberOf, l’ordre, freeradius -X', () => {
-      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe', 'annuaire']);
+      const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex', 'directory']);
       let all = play(['ls /etc/freeradius/3.0']);
       if (fr) expect(all).toContain('Permission non accordée');
       all = edit(`sudo nano ${RAD}/clients.conf`, (t) => t + '\n\nclient bornes {\n\tipaddr = 10.10.30.20\n\tsecret = mauvais\n}\n');

@@ -22,24 +22,24 @@ describe('Le code court', () => {
   });
 
   it('aller et retour, du début à la fin du jeu', () => {
-    for (const finished of [[], ['eveil'], ['eveil', 'bourg', 'racine', 'sauvegarde', 'vlan', 'wifi'], ALL]) {
+    for (const finished of [[], ['lighthouse'], ['lighthouse', 'village', 'root', 'backup', 'vlan', 'wifi'], ALL]) {
       const code = progressCode(finished);
       expect(code).toMatch(/^QDS(-[0-9A-HJKMNP-TV-Z]{1,4})+$/);
       expect(readCode(code)).toEqual({ finished: CODE_ORDER.filter((id) => finished.includes(id)) });
     }
     // Court au début, une petite trentaine de caractères à la fin.
-    expect(progressCode(['eveil']).length).toBeLessThanOrEqual(12);
+    expect(progressCode(['lighthouse']).length).toBeLessThanOrEqual(12);
     expect(progressCode(ALL).length).toBeLessThanOrEqual(31);
   });
 
   it('se recopie sans souci : minuscules, espaces, O pour 0, I ou L pour 1', () => {
-    const code = progressCode(['eveil', 'bourg', 'racine', 'cles']);
+    const code = progressCode(['lighthouse', 'village', 'root', 'keys']);
     const copy = code.toLowerCase().replace(/-/g, ' ').replace(/0/g, 'o').replace(/1/g, 'l');
     expect(readCode(copy)).toEqual(readCode(code));
   });
 
   it('une faute de frappe est repérée, pas chargée', () => {
-    const code = progressCode(['eveil', 'bourg', 'racine', 'sauvegarde', 'premier-jour']);
+    const code = progressCode(['lighthouse', 'village', 'root', 'backup', 'first-day']);
     const body = code.slice(4).replace(/-/g, '');
     let spotted = 0;
     for (let i = 0; i < body.length; i++) {
@@ -55,13 +55,13 @@ describe('Le code court', () => {
 
 describe('Le fichier', () => {
   const backup = {
-    finished: ['eveil', 'bourg'],
+    finished: ['lighthouse', 'village'],
     story: 'effaceur',
     known: 'royaume.internal ssh-ed25519 AAAA',
     ssh: { files: { config: 'Host wiki\n    ProxyJump maison' } },
-    notebook: { ls: { line: 'ls -a', chapter: 'eveil' } },
+    notebook: { ls: { line: 'ls -a', chapter: 'lighthouse' } },
     exam: false,
-    records: { eveil: 61000 },
+    records: { lighthouse: 61000 },
     name: 'Lina',
   };
 
@@ -74,10 +74,10 @@ describe('Le fichier', () => {
       JSON.stringify({
         format: 'quetes-de-sysadmin',
         version: 1,
-        backup: { finished: ['eveil', 'inconnu', 42], story: 'nulle-part', notebook: { ls: 'pas un objet' }, records: { eveil: -1 }, name: '  Lina\n\tB.  ' },
+        backup: { finished: ['lighthouse', 'inconnu', 42], story: 'nulle-part', notebook: { ls: 'pas un objet' }, records: { lighthouse: -1 }, name: '  Lina\n\tB.  ' },
       }),
     );
-    expect(read).toEqual({ backup: { finished: ['eveil'], story: null, notebook: {}, exam: false, records: {}, name: 'Lina B.' } });
+    expect(read).toEqual({ backup: { finished: ['lighthouse'], story: null, notebook: {}, exam: false, records: {}, name: 'Lina B.' } });
   });
 
   it('refuse ce qui n’est pas une sauvegarde du jeu', () => {

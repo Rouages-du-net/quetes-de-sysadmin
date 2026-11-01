@@ -39,7 +39,7 @@ for (const language of LANGUAGES)
       const t = translator(language);
       const { jouer: play } = part();
       const all = play(['ls', 'nmap -h']);
-      expect(all).not.toContain(t('perimetre-relecture'));
+      expect(all).not.toContain(t('scope-relecture'));
       expect(all).not.toContain('invalid option');
       contains(all, 'Utilisation : nmap');
       // Une adresse hors de la lettre, mais pas celle du voisin : le message dit laquelle, sans parler du voisin.
@@ -47,12 +47,12 @@ for (const language of LANGUAGES)
       expect(elsewhere).toContain('203.0.113.5');
       contains(elsewhere, 'pas dans ta lettre');
       if (fr) expect(elsewhere).not.toContain('voisin');
-      const against = part(['perimetre', 'rapport', 'exposition', 'traces']);
-      expect(against.jouer(['ls'])).not.toContain(t('contre-visite-relecture'));
+      const against = part(['scope', 'report', 'exposure', 'traces']);
+      expect(against.jouer(['ls'])).not.toContain(t('follow-up-relecture'));
     });
 
     it('chapitre 2 — solution : root fermé, Lucas supprimé, sudo avec mot de passe, secret en 600', () => {
-      const { c, jouer: play, editer: edit } = part(['perimetre']);
+      const { c, jouer: play, editer: edit } = part(['scope']);
       let all = play(['cat rapport-audit.txt', 'sudo -l', 'ls -l /srv/commandes']);
       contains(all, 'RAPPORT D\'AUDIT');
       expect(all).toContain('NOPASSWD');
@@ -60,24 +60,24 @@ for (const language of LANGUAGES)
       for (const id of ['ssh', 'compte', 'sudo', 'secret']) expect(c.shell.flags.has(id), id).toBe(false);
       edit('sudo nano /etc/ssh/sshd_config', (t) => t.replace('PermitRootLogin yes', 'PermitRootLogin no'));
       play(['sudo sshd -t', 'sudo systemctl reload ssh']);
-      expect(c.finished).not.toContain('rapport');
+      expect(c.finished).not.toContain('report');
       play(['sudo userdel lucas', 'sudo rm /etc/sudoers.d/90-cloud-init-users', 'sudo chmod 600 /srv/commandes/.env']);
       all = play(['sudo -l']);
       expect(all).not.toContain('NOPASSWD');
-      expect(c.finished).toContain('rapport');
+      expect(c.finished).toContain('report');
     });
 
     it('chapitre 2 — une autre solution : verrouiller et expirer Lucas, visudo, chmod 640', () => {
-      const { c, jouer: play, editer: edit } = part(['perimetre']);
+      const { c, jouer: play, editer: edit } = part(['scope']);
       edit('sudo nano /etc/ssh/sshd_config', (t) => t.replace('PermitRootLogin yes', 'PermitRootLogin no'));
       play(['sudo systemctl reload ssh', 'sudo usermod -L -e 1 lucas', 'sudo gpasswd -d lucas sudo']);
       edit('sudo nano /etc/sudoers.d/90-cloud-init-users', () => 'vous ALL=(ALL) ALL');
       play(['sudo chmod 640 /srv/commandes/.env']);
-      expect(c.finished).toContain('rapport');
+      expect(c.finished).toContain('report');
     });
 
     it('chapitre 2 — fausses pistes : fichier modifié sans recharger, compte à moitié fermé, secret fermé à l’appli', () => {
-      const { c, jouer: play, editer: edit } = part(['perimetre']);
+      const { c, jouer: play, editer: edit } = part(['scope']);
       const e = (id: string) => c.shell.flags.has(id);
       edit('sudo nano /etc/ssh/sshd_config', (t) => t.replace('PermitRootLogin yes', 'PermitRootLogin no'));
       expect(e('sans-effet')).toBe(true);
@@ -85,7 +85,7 @@ for (const language of LANGUAGES)
       expect(e('compte-incomplet')).toBe(true);
       play(['sudo chown root:root /srv/commandes/.env', 'sudo chmod 600 /srv/commandes/.env']);
       expect(e('appli-aveugle')).toBe(true);
-      expect(c.finished).not.toContain('rapport');
+      expect(c.finished).not.toContain('report');
     });
 
     
@@ -93,23 +93,23 @@ for (const language of LANGUAGES)
     const redisLocal = (t: string) => t.replace('bind * -::*', 'bind 127.0.0.1 -::1');
 
     it('chapitre 3 — solution : ss, ufw (SSH et le site d’abord), Redis en local, reconnexion', () => {
-      const { c, jouer: play, editer: edit } = part(['perimetre', 'rapport']);
+      const { c, jouer: play, editer: edit } = part(['scope', 'report']);
       let all = play(['cat balayage-audit.txt', 'sudo ss -tlnp']);
       expect(all).toContain('0.0.0.0:6379');
       expect(all).toContain('127.0.0.1:3000');
       play(['sudo ufw allow OpenSSH', 'sudo ufw allow "Nginx Full"', 'sudo ufw enable', 'y']);
-      expect(c.finished).not.toContain('exposition');
+      expect(c.finished).not.toContain('exposure');
       edit(`sudo nano ${REDIS}`, redisLocal);
       play(['sudo systemctl restart redis-server']);
       all = play(['sudo ss -tln', 'sudo ufw status verbose']);
       expect(all).toContain('127.0.0.1:6379');
-      expect(c.finished).not.toContain('exposition');
+      expect(c.finished).not.toContain('exposure');
       play(['exit', 'ssh fournil']);
-      expect(c.finished).toContain('exposition');
+      expect(c.finished).toContain('exposure');
     });
 
     it('chapitre 3 — une autre solution : règles par numéro de port, SSH depuis le poste seulement', () => {
-      const { c, jouer: play, editer: edit } = part(['perimetre', 'rapport']);
+      const { c, jouer: play, editer: edit } = part(['scope', 'report']);
       edit(`sudo nano ${REDIS}`, (t) => t.replace('bind * -::*', 'bind 127.0.0.1'));
       play([
         'sudo systemctl restart redis-server',
@@ -122,11 +122,11 @@ for (const language of LANGUAGES)
         'exit',
         'ssh fournil',
       ]);
-      expect(c.finished).toContain('exposition');
+      expect(c.finished).toContain('exposure');
     });
 
     it('chapitre 3 — fausses pistes : activer sans SSH, couper le site, tout autoriser, arrêter Redis, oublier le redémarrage', () => {
-      const { c, jouer: play, editer: edit } = part(['perimetre', 'rapport']);
+      const { c, jouer: play, editer: edit } = part(['scope', 'report']);
       const e = (id: string) => c.shell.flags.has(id);
       play(['sudo ufw allow 80/tcp', 'sudo ufw allow 443/tcp', 'sudo ufw enable', 'y']);
       expect(e('enferme')).toBe(true);
@@ -139,7 +139,7 @@ for (const language of LANGUAGES)
       play(['sudo systemctl start redis-server']);
       edit(`sudo nano ${REDIS}`, redisLocal);
       expect(e('sans-effet')).toBe(true);
-      expect(c.finished).not.toContain('exposition');
+      expect(c.finished).not.toContain('exposure');
     });
 
     
@@ -150,7 +150,7 @@ for (const language of LANGUAGES)
     const withoutTag = (t: string) => t.split('\n').filter((l) => !l.includes('203.0.113.99')).join('\n');
 
     it('chapitre 4 — solution : journal, last, empreinte, clé retirée, crontab nettoyée', () => {
-      const { c, jouer: play, editer: edit } = part(['perimetre', 'rapport', 'exposition']);
+      const { c, jouer: play, editer: edit } = part(['scope', 'report', 'exposure']);
       let all = play(['last nadia', 'journalctl -u ssh | grep Accepted']);
       expect(all).toContain('203.0.113.99');
       expect(all).toContain('Accepted publickey for nadia from 203.0.113.99 port 52144 ssh2: ED25519 SHA256:');
@@ -177,7 +177,7 @@ for (const language of LANGUAGES)
     });
 
     it('chapitre 4 — le mot de passe : trop court, un seul côté, oublier de relancer', () => {
-      const { c, jouer: play, editer: edit } = part(['perimetre', 'rapport', 'exposition']);
+      const { c, jouer: play, editer: edit } = part(['scope', 'report', 'exposure']);
       const e = (id: string) => c.shell.flags.has(id);
       edit(`sudo nano ${KEYS}`, withoutIntruder);
       edit('sudo crontab -u nadia -e', withoutTag);
@@ -193,7 +193,7 @@ for (const language of LANGUAGES)
       play(['sudo systemctl restart commandes']);
       expect(c.finished).toContain('traces');
       // Le même cas sans redémarrage : « à redémarrer ».
-      const b = part(['perimetre', 'rapport', 'exposition']);
+      const b = part(['scope', 'report', 'exposure']);
       b.editer(`sudo nano ${KEYS}`, withoutIntruder);
       b.editer('sudo crontab -u nadia -e', withoutTag);
       b.jouer([`sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD '${NEW}'"`]);
@@ -203,7 +203,7 @@ for (const language of LANGUAGES)
     });
 
     it('chapitre 4 — fausses pistes : tout effacer (Nadia dehors, sauvegarde perdue)', () => {
-      const { c, jouer: play, editer: edit } = part(['perimetre', 'rapport', 'exposition']);
+      const { c, jouer: play, editer: edit } = part(['scope', 'report', 'exposure']);
       const e = (id: string) => c.shell.flags.has(id);
       edit(`sudo nano ${KEYS}`, () => '');
       expect(e('nadia-enfermee')).toBe(true);
@@ -237,11 +237,11 @@ ${outside}`;
       all = play(['cat inventaire.txt']);
       expect(all).toMatch(new RegExp(`^# Nmap 7\\.95 scan initiated .* as: nmap -sV -oN \\S+ ${machinesInLanguage(translator(language), 'fournil.internal')}`, 'm'));
       expect(all).toMatch(/# Nmap done at .* -- 1 IP address \(1 host up\) scanned in/);
-      expect(c.finished).not.toContain('perimetre');
+      expect(c.finished).not.toContain('scope');
       const review = edit('nano notes-audit.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*/, 'x'));
       contains(review, 'Salomé relit tes notes');
       edit('nano notes-audit.md', () => NOTES(OUTSIDE));
-      expect(c.finished).toContain('perimetre');
+      expect(c.finished).toContain('scope');
       expect(c.shell.flags.has('hors-perimetre')).toBe(false);
     });
 
@@ -255,7 +255,7 @@ ${outside}`;
       expect(c.shell.flags.has('trace')).toBe(true);
       const end = edit('nano notes-audit.md', () => NOTES(OUTSIDE));
       contains(end, 'ton balayage a aussi sondé l\'adresse du voisin');
-      expect(c.finished).toContain('perimetre');
+      expect(c.finished).toContain('scope');
     });
 
     it('chapitre 1 — notes incomplètes : les ports, le voisin, « hors périmètre »', () => {
@@ -264,7 +264,7 @@ ${outside}`;
       contains(without, 'Il manque la machine que tu as repérée');
       const mi = edit('nano notes-audit.md', () => NOTES(fr ? 'Le serveur du voisin (192.0.2.24).' : 'The neighbour’s server (192.0.2.24).'));
       contains(mi, 'dis aussi que c\'est hors périmètre');
-      expect(c.finished).not.toContain('perimetre');
+      expect(c.finished).not.toContain('scope');
     });
 
     it('nmap — messages : sans cible, option inconnue, machine muette, nom inconnu, -sn, -p', () => {
@@ -286,7 +286,7 @@ ${outside}`;
     });
 
     // ——— Le chapitre 5, « La contre-visite » ———
-    const ALL = ['perimetre', 'rapport', 'exposition', 'traces'];
+    const ALL = ['scope', 'report', 'exposure', 'traces'];
     const REPORT = (hint: string) => `# ${fr ? 'Rapport de clôture' : 'Closing report'}
 ## ${fr ? 'Résumé' : 'Summary'}
 ${fr ? 'Les quatre parties du rapport sont corrigées et vérifiées : le serveur est nettement mieux protégé.' : 'The four parts of the report are fixed and verified: the server is much better protected.'}
@@ -319,9 +319,9 @@ ${fr ? 'FINT-4350 : choisir et installer un outil d’intégrité des fichiers.'
       expect(all).not.toContain('Warnings (');
       all = play(['nmap -sV fournil.internal']);
       expect(all).toContain('OpenSSH 10.0p1 Debian 7+deb13u1 (protocol 2.0)');
-      expect(c.finished).not.toContain('contre-visite');
+      expect(c.finished).not.toContain('follow-up');
       edit('nano rapport-cloture.md', () => REPORT('80'));
-      expect(c.finished).toContain('contre-visite');
+      expect(c.finished).toContain('follow-up');
     });
 
     it('chapitre 5 — une autre voie : l’avertissement et une seule suggestion suffisent (indice 71)', () => {
@@ -331,7 +331,7 @@ ${fr ? 'FINT-4350 : choisir et installer un outil d’intégrité des fichiers.'
       play(['sudo lynis audit system', 'nmap -sV fournil.internal']);
       expect(c.shell.state.lynis.hint).toBe(72);
       edit('nano rapport-cloture.md', () => REPORT('72'));
-      expect(c.finished).toContain('contre-visite');
+      expect(c.finished).toContain('follow-up');
     });
 
     it('chapitre 5 — fausses pistes : la configuration sans recharger, le rapport sans chiffre, un balayage hors périmètre', () => {
@@ -351,7 +351,7 @@ ${fr ? 'FINT-4350 : choisir et installer un outil d’intégrité des fichiers.'
       contains(without, 'cite l\'indice de durcissement de ton dernier audit Lynis');
       play(['nmap -sV 192.0.2.16/28']);
       expect(e('hors-perimetre')).toBe(true);
-      expect(c.finished).not.toContain('contre-visite');
+      expect(c.finished).not.toContain('follow-up');
     });
 
     it('lynis — messages : sans sudo, sans argument, la version ; le pare-feu change le balayage', () => {

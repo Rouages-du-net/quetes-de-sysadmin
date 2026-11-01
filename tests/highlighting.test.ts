@@ -14,7 +14,7 @@ const kinds = (sh: Shell, line: string) =>
     .map((j): [string, Kind] => [j.text.trim(), j.kind]);
 
 describe('Coloration de la ligne de commande', () => {
-  const sh = () => new Shell(chapter('racine'), 'fr');
+  const sh = () => new Shell(chapter('root'), 'fr');
 
   it('la commande : connue, inconnue, pas encore apprise', () => {
     const s = sh();

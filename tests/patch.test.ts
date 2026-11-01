@@ -55,7 +55,7 @@ for (const language of LANGUAGES)
         return c.quitEdition();
       };
       play(['ssh rustine', 'yes']);
-      expect(c.remote?.shell.chapter.id).toBe('cadenas');
+      expect(c.remote?.shell.chapter.id).toBe('padlock');
       return { c, jouer: play, ecrire: write, L };
     };
 
@@ -76,10 +76,10 @@ for (const language of LANGUAGES)
       all = play(['sudo ufw status', 'sudo ufw allow 80/tcp', 'sudo ufw allow 443/tcp', 'journalctl -u caddy -n 3', 'curl -I http://cycles.example', 'curl https://cycles.example']);
       expect(all).toContain('"msg":"certificate obtained successfully","identifier":"cycles.example"');
       expect(all).toContain('HTTP/1.1 308 Permanent Redirect\nConnection: close\nLocation: https://cycles.example/');
-      expect(all).toContain(c.t('cadenas-site').split('\n')[0]);
-      expect(all).toContain(c.t('cadenas-site').split('\n').at(-1));
+      expect(all).toContain(c.t('padlock-site').split('\n')[0]);
+      expect(all).toContain(c.t('padlock-site').split('\n').at(-1));
       if (fr) expect(all).toContain('adresse des affiches');
-      expect(c.finished).not.toContain('cadenas');
+      expect(c.finished).not.toContain('padlock');
       all = play(['curl https://www.cycles.example']);
       expect(all).toContain('tlsv1 alert internal error');
       write(CADDYFILE, (t) => `${t}\n${WWW}`);
@@ -87,7 +87,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('HTTP/2 301 \nalt-svc: h3=":443"; ma=2592000\nlocation: https://cycles.example/');
       expect(all).toContain('cycles.example/  www.cycles.example/');
       if (fr) expect(all).toContain('https://caddyserver.com/docs/automatic-https');
-      expect(c.finished).toContain('cadenas');
+      expect(c.finished).toContain('padlock');
     });
 
     it('autre solution : une liste d’adresses, ufw allow http et https, caddy reload', () => {
@@ -98,10 +98,10 @@ for (const language of LANGUAGES)
       expect(all).toContain('"identifier":"www.cycles.example"');
       expect(all).toContain('*:443');
       all = play(['curl https://www.cycles.example', 'caddy version', 'caddy adapt --config /etc/caddy/Caddyfile --pretty']);
-      expect(all).toContain(c.t('cadenas-site').split('\n')[0]);
+      expect(all).toContain(c.t('padlock-site').split('\n')[0]);
       expect(all).toContain('v2.10.2');
       expect(all).toContain('"listen": [\n\t\t\t\t\t\t":443"\n\t\t\t\t\t]');
-      expect(c.finished).toContain('cadenas');
+      expect(c.finished).toContain('padlock');
     });
 
     it('fausses pistes : http://, une directive mal écrite, caddy run, le seul port 443, le format', () => {
@@ -132,8 +132,8 @@ for (const language of LANGUAGES)
       write(CADDYFILE, (t) => `${t}\n${WWW}`);
       play(['sudo systemctl reload caddy', 'curl -I https://www.cycles.example']);
       expect(c.remote!.shell.flags.has('certificat')).toBe(true);
-      expect(c.finished).not.toContain('cadenas');
+      expect(c.finished).not.toContain('padlock');
       play(['sudo ufw allow 80/tcp']);
-      expect(c.finished).toContain('cadenas');
+      expect(c.finished).toContain('padlock');
     });
   });

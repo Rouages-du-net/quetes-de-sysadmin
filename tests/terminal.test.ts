@@ -22,14 +22,14 @@ describe('Le terminal', () => {
     expect(narrow.split('\n').every((l) => l.length <= 24)).toBe(true);
     expect(narrow.split('\n')[0].startsWith('alpha')).toBe(true);
     expect(inColumns(names, 3).split('\n')).toEqual(names);
-    const s = new Shell(chapter('eveil'), 'fr');
+    const s = new Shell(chapter('lighthouse'), 'fr');
     s.columns = 30;
     const output = s.execute('ls') ?? '';
     expect(output.split('\n').every((l) => l.length <= 30)).toBe(true);
   });
 
   it('double Tab : les possibilités, avec un / pour les lieux', () => {
-    const s = new Shell(chapter('eveil'), 'fr');
+    const s = new Shell(chapter('lighthouse'), 'fr');
     const places = s.suggestions('cd ');
     expect(places.length).toBeGreaterThan(1);
     expect(places).toEqual(expect.arrayContaining(['Colline/', 'Port/', 'message.txt']));
@@ -44,8 +44,8 @@ describe('Le terminal', () => {
   });
 
   it('la commande d’aide porte le nom de la langue, et help marche partout', () => {
-    const fr = new Shell(chapter('eveil'), 'fr');
-    const inside = new Shell(chapter('eveil'), 'en');
+    const fr = new Shell(chapter('lighthouse'), 'fr');
+    const inside = new Shell(chapter('lighthouse'), 'en');
     expect(fr.known()).toContain('aide');
     expect(inside.known()).toContain('help');
     expect(inside.known()).not.toContain('aide');
@@ -58,10 +58,10 @@ describe('Le terminal', () => {
   });
 
   it('cd - : retour au dossier d’avant, comme bash', () => {
-    let s = new Shell(chapter('eveil'), 'en');
+    let s = new Shell(chapter('lighthouse'), 'en');
     s.execute('cd -');
     expect(s.recoverErrors().join('')).toContain('cd: OLDPWD not set');
-    const fr = new Shell(chapter('eveil'), 'fr');
+    const fr = new Shell(chapter('lighthouse'), 'fr');
     fr.execute('cd -');
     expect(fr.recoverErrors().join('')).toContain('OLDPWD non défini');
     s = fr;
@@ -74,20 +74,20 @@ describe('Le terminal', () => {
   });
 
   it('le mot de passe noté dans le journal se traduit avec les noms (tournesol → sunflower)', () => {
-    const inside = new Shell(chapter('racine'), 'en');
+    const inside = new Shell(chapter('root'), 'en');
     expect(inside.execute('cat journal.txt')).toContain('sunflower');
     expect(inside.execute('cat journal.txt')).not.toContain('tournesol');
     inside.execute('sudo ls /root');
     expect(inside.execute('tournesol')).toContain('Sorry, try again.');
     expect(inside.execute('sunflower')).not.toContain('Sorry');
     expect(inside.execute('sudo ls /root')).not.toContain('password');
-    const fr = new Shell(chapter('racine'), 'fr');
+    const fr = new Shell(chapter('root'), 'fr');
     fr.execute('sudo ls /root');
     expect(fr.execute('tournesol')).not.toContain('Désolé');
   });
 
   it('history et !! : comme bash (sudo !!, !n, !-n, !début, event not found)', () => {
-    const s = new Shell(chapter('racine'), 'fr');
+    const s = new Shell(chapter('root'), 'fr');
     s.execute('ls');
     s.execute('cat /etc/effaceur.conf');
     s.execute(' whoami');

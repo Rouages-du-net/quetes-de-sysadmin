@@ -17,7 +17,7 @@ const shell = (id: string) => {
 
 describe('Couleurs des sorties', () => {
   it('ls : les lieux en bleu gras, le / hors de la couleur ; rien dans un tube ni un fichier', () => {
-    const s = shell('racine');
+    const s = shell('root');
     const screen = s.execute('ls')!;
     expect(screen).toContain(`${ESC}[01;34msouvenirs${ESC}[0m/`);
     expect(withoutColours(screen)).toContain('souvenirs/');
@@ -33,14 +33,14 @@ describe('Couleurs des sorties', () => {
   });
 
   it('ls -l : seul le nom est coloré ; --color=n’importe-quoi donne le message de coreutils', () => {
-    const s = shell('racine');
+    const s = shell('root');
     const long = s.execute('ls -l')!;
     expect(long.split('\n').find((l) => l.includes('souvenirs'))).toMatch(new RegExp(`^drwx.* ${ESC}\\[01;34msouvenirs${ESC}\\[0m/$`));
     expect(s.execute('ls --color=parfois')).toContain('argument « parfois » incorrect pour « --color »');
   });
 
   it('grep : le motif surligné, pas avec -v ; la sortie des événements reste sans codes', () => {
-    const s = shell('racine');
+    const s = shell('root');
     const found = s.execute('grep -i effaceur journal.txt')!;
     expect(found).toMatch(new RegExp(`${ESC}\\[01;31m[Ee]ffaceur${ESC}\\[0m`));
     expect(s.last.output).not.toContain(ESC);
@@ -62,7 +62,7 @@ describe('Couleurs des sorties', () => {
 
 describe('Couleurs de systemctl et de diff', () => {
   it('systemctl status : le point vert d’un service actif, la croix rouge d’un échec', () => {
-    const s = shell('redemarrage');
+    const s = shell('reboot-night');
     const failure = s.execute('systemctl status catalogue')!;
     expect(failure).toContain(`${ESC}[0;1;31m×${ESC}[0m catalogue.service`);
     expect(failure).toContain(`${ESC}[0;1;31mfailed${ESC}[0m (Result:`);
@@ -72,7 +72,7 @@ describe('Couleurs de systemctl et de diff', () => {
   });
 
   it('diff : sans couleur par défaut ; --color à l’écran : rouge et vert', () => {
-    const s = shell('depot-nu');
+    const s = shell('bare-repo');
     s.execute('echo un > a.txt');
     s.execute('echo deux > b.txt');
     expect(s.execute('diff a.txt b.txt')).not.toContain(ESC);
@@ -85,7 +85,7 @@ describe('Couleurs de systemctl et de diff', () => {
 
 describe('Couleurs de journalctl, ip -c et git', () => {
   it('journalctl : les erreurs en rouge gras, à l’écran seulement', () => {
-    const s = shell('redemarrage');
+    const s = shell('reboot-night');
     s.execute('sudo -l');
     s.execute(machinesInLanguage(s.t, 'bienvenue-2026'));
     const log = s.execute('sudo journalctl -u catalogue')!;
@@ -109,7 +109,7 @@ describe('Couleurs de journalctl, ip -c et git', () => {
   });
 
   it('git : diff en rouge et vert, status (non suivi en rouge), --no-color', () => {
-    const s = shell('depot-nu');
+    const s = shell('bare-repo');
     s.execute('cd gazette');
     s.execute('echo nouveau > essai.txt');
     expect(s.execute('git status')).toContain(`\t${ESC}[31messai.txt${ESC}[0m`);

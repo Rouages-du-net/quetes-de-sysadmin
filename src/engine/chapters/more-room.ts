@@ -41,7 +41,7 @@ const initramfs = (j: Game) => conf(j) && j.state.initramfs?.mdadm === j.read(CO
 const grown = (j: Game) => freeMem(j) >= NEED;
 
 export const grow: Chapter = {
-  id: 'agrandir',
+  id: 'more-room',
   number: 3,
   commands: [
     'ls',
@@ -89,43 +89,43 @@ export const grow: Chapter = {
     labKernel(j, 'place');
     devUpdate(j);
   },
-  createWorld: (t) => labWorld(t, { 'message_d_odile.txt': f(t('agrandir-message-d-odile')) }, { winter: true }),
+  createWorld: (t) => labWorld(t, { 'message_d_odile.txt': f(t('more-room-message-d-odile')) }, { winter: true }),
   beforeCommand: beforeLabCommand,
   afterCommand: (j) => devUpdate(j),
   events: [
     {
       id: 'plein',
       condition: (j) => /\b9\d% \/srv$/m.test(j.last.output),
-      message: (j) => j.t('agrandir-evenement-plein'),
+      message: (j) => j.t('more-room-evenement-plein'),
     },
     {
       id: 'lvm',
       condition: (j) => /VFree|PFree|LSize/.test(j.last.output),
-      message: (j) => j.t('agrandir-evenement-lvm'),
+      message: (j) => j.t('more-room-evenement-lvm'),
     },
-    { id: 'seul', condition: (j) => only(j).length > 0, message: (j) => j.t('agrandir-evenement-seul', { disque: `/dev/${only(j)[0]}` }) },
+    { id: 'seul', condition: (j) => only(j).length > 0, message: (j) => j.t('more-room-evenement-seul', { disque: `/dev/${only(j)[0]}` }) },
     {
       id: 'grappe',
       condition: (j) => fresh(j).some(([, g]) => g.members.length === 2),
-      message: (j) => j.t('agrandir-evenement-grappe', { grappe: `/dev/${fresh(j)[0][0]}` }),
+      message: (j) => j.t('more-room-evenement-grappe', { grappe: `/dev/${fresh(j)[0][0]}` }),
     },
-    { id: 'etendu', condition: extended, message: (j) => j.t('agrandir-evenement-etendu') },
+    { id: 'etendu', condition: extended, message: (j) => j.t('more-room-evenement-etendu') },
     {
       id: 'lv-seul',
       condition: (j) => lvSize(photos(j)) - photos(j).fs > 1e9,
-      message: (j) => j.t('agrandir-evenement-lv-seul'),
+      message: (j) => j.t('more-room-evenement-lv-seul'),
     },
     {
       id: 'agrandi',
       condition: (j) => grown(j) && only(j).length === 0,
-      message: (j) => j.t('agrandir-evenement-agrandi'),
+      message: (j) => j.t('more-room-evenement-agrandi'),
     },
-    { id: 'doublons', condition: duplicates, message: (j) => j.t('agrandir-evenement-doublons') },
-    { id: 'conf', condition: conf, message: (j) => j.t('agrandir-evenement-conf') },
+    { id: 'doublons', condition: duplicates, message: (j) => j.t('more-room-evenement-doublons') },
+    { id: 'conf', condition: conf, message: (j) => j.t('more-room-evenement-conf') },
     {
       id: 'fin',
       condition: (j) => grown(j) && only(j).length === 0 && extended(j) && initramfs(j),
-      message: (j) => j.t('agrandir-evenement-fin'),
+      message: (j) => j.t('more-room-evenement-fin'),
     },
   ],
 };

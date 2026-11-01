@@ -3,16 +3,16 @@
 
 ## Chapitre 1 — Le facteur
 
-indice-facteur-differe =
+indice-postman-differe =
     .piste = Le courrier qui n'est pas parti attend dans la file de Postfix : mailq la montre, avec la réponse du serveur d'en face. /var/log/mail.log raconte chaque essai.
     .solution = mailq (ou postqueue -p), puis grep deferred /var/log/mail.log : mailbox.example répond 451, « neither SPF nor DKIM passed ».
-indice-facteur-ancien =
+indice-postman-ancien =
     .piste = SPF est un enregistrement TXT du domaine, qui commence par v=spf1 (man dig). Qui autorise-t-il à envoyer ?
     .solution = dig TXT gardens.example : « v=spf1 include:_spf.old-hosting.example -all », le SPF de l'ancien hébergeur.
-indice-facteur-spf =
+indice-postman-spf =
     .piste = Le SPF est dans la zone de gardens.example, sur ce serveur (/etc/bind/zones). Il doit autoriser cette machine (mx, a ou ip4:203.0.113.30). Pour que le secondaire du registre le recopie, le serial doit augmenter.
     .solution = sudo nano /etc/bind/zones/db.gardens.example : remplacer l'include par mx (« v=spf1 mx -all ») et augmenter le serial ; sudo named-checkzone gardens.example /etc/bind/zones/db.gardens.example, sudo rndc reload, puis dig TXT gardens.example @ns2.registry.example
-indice-facteur-fin =
+indice-postman-fin =
     .piste = Le SPF est bon, mais Postfix ne réessaie qu'au bout de quelques minutes. man postqueue.
     .solution = sudo postqueue -f, puis mailq : « Mail queue is empty ».
 
@@ -36,12 +36,12 @@ indice-signature-fin =
 
 ## Chapitre 3 — La politique
 
-indice-politique-rapport =
+indice-policy-rapport =
     .piste = Les rapports de rapports_dmarc sont du XML : chaque « record » dit qui a envoyé (source_ip), combien, et ce qu'ont donné SPF, DKIM et DMARC. Cherche les adresses qui ne sont pas 203.0.113.30.
     .solution = grep source_ip rapports_dmarc/*.xml, puis less sur le rapport : 198.51.100.77 (newsmail.example) passe SPF et DKIM pour son domaine, pas pour gardens.example.
-indice-politique-aligne =
+indice-policy-aligne =
     .piste = La lettre doit être signée avec d=gardens.example : lettre_newsmail.txt dit comment déléguer un sélecteur. Attention au point final, et au serial.
     .solution = Ajouter « nm1._domainkey IN CNAME nm1.dkim.newsmail.example. » à la zone, augmenter le serial, sudo rndc reload ; dig TXT nm1._domainkey.gardens.example @ns2.registry.example
-indice-politique-fin =
+indice-policy-fin =
     .piste = Maintenant que la lettre est alignée, la politique peut se durcir : la balise p= de l'enregistrement _dmarc (garde rua=).
     .solution = Dans la zone : _dmarc IN TXT "v=DMARC1; p=quarantine; rua=mailto:dmarc@gardens.example", serial, sudo rndc reload ; dig TXT _dmarc.gardens.example @ns2.registry.example

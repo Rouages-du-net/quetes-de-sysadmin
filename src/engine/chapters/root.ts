@@ -17,7 +17,7 @@ const memory = (text: string) => f(text);
 const fixedTarget = (j: Game) => `${name(j.t, 'cible')} = ${path(j.t, '/Royaume/Corbeille')}`;
 
 export const root: Chapter = {
-  id: 'racine',
+  id: 'root',
   number: 3,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv', 'grep', 'rm', 'touch', 'cp', 'mkdir', 'chmod', 'whoami', 'sudo'],
   home: M,
@@ -32,25 +32,25 @@ export const root: Chapter = {
           {
             vous: d({
               'arrivee.txt': f(
-                t('racine-arrivee'),
+                t('root-arrivee'),
                 { read: (j) => void j.flags.add('arrivee') },
               ),
-              'manuel_admin.txt': f(t('racine-manuel-admin')),
+              'manuel_admin.txt': f(t('root-manuel-admin')),
               'journal.txt': f(
-                t('racine-journal'),
+                t('root-journal'),
                 { mode: 'rw-------', lines: true },
               ),
-              'effaceur.conf.corrige': f(t('racine-effaceur-conf-corrige'), { lines: true }),
+              'effaceur.conf.corrige': f(t('root-effaceur-conf-corrige'), { lines: true }),
               souvenirs: d(
                 {
-                  ecole: memory(t('racine-souvenir-ecole')),
-                  premier_programme: memory(t('racine-souvenir-premier-programme')),
-                  jardin: memory(t('racine-souvenir-jardin')),
-                  chanson: memory(t('racine-souvenir-chanson')),
-                  voyage: memory(t('racine-souvenir-voyage')),
-                  amie: memory(t('racine-souvenir-amie')),
-                  bibliotheque: memory(t('racine-souvenir-bibliotheque')),
-                  premier_serveur: memory(t('racine-souvenir-premier-serveur')),
+                  ecole: memory(t('root-souvenir-ecole')),
+                  premier_programme: memory(t('root-souvenir-premier-programme')),
+                  jardin: memory(t('root-souvenir-jardin')),
+                  chanson: memory(t('root-souvenir-chanson')),
+                  voyage: memory(t('root-souvenir-voyage')),
+                  amie: memory(t('root-souvenir-amie')),
+                  bibliotheque: memory(t('root-souvenir-bibliotheque')),
+                  premier_serveur: memory(t('root-souvenir-premier-serveur')),
                 },
                 undefined,
                 { mode: 'rwxrwxrwx' },
@@ -61,7 +61,7 @@ export const root: Chapter = {
                 'journal_intime.txt': f(
                   (j) =>
                     j.who === 'root'
-                      ? j.t('racine-journal-intime-root')
+                      ? j.t('root-journal-intime-root')
                       : '',
                   { owner: 'nour', mode: 'rw-------' },
                 ),
@@ -76,11 +76,11 @@ export const root: Chapter = {
         etc: d(
           {
             'effaceur.conf': f(
-              t('racine-effaceur-conf'),
+              t('root-effaceur-conf'),
               { owner: 'root', lines: true },
             ),
             sudoers: f(
-              t('racine-sudoers'),
+              t('root-sudoers'),
               { owner: 'root', mode: 'r--r-----', lines: true },
             ),
           },
@@ -92,7 +92,7 @@ export const root: Chapter = {
             log: d(
               {
                 'effaceur.log': f(
-                  t('racine-effaceur-log'),
+                  t('root-effaceur-log'),
                   { owner: 'root', lines: true },
                 ),
               },
@@ -106,7 +106,7 @@ export const root: Chapter = {
         root: d(
           {
             'notes.txt': f(
-              t('racine-notes-root'),
+              t('root-notes-root'),
               { owner: 'root', mode: 'rw-------' },
             ),
           },
@@ -126,13 +126,13 @@ export const root: Chapter = {
     const name = Object.keys(place.children).sort()[0];
     if (!name) return;
     delete place.children[name];
-    return j.t('racine-souvenir-efface', { souvenir: name });
+    return j.t('root-souvenir-efface', { souvenir: name });
   },
   events: [
     {
       id: 'alerte',
       condition: (j) => j.flags.has('arrivee'),
-      message: (j) => j.t('racine-evenement-alerte'),
+      message: (j) => j.t('root-evenement-alerte'),
     },
     {
       id: 'protege',
@@ -140,12 +140,12 @@ export const root: Chapter = {
         const place = j.find(path(j.t, MEMORIES));
         return j.flags.has('alerte') && !j.flags.has('corrige') && place?.type === 'dossier' && !(j.can(place, 'w', eraser(j)) && j.can(place, 'x', eraser(j)));
       },
-      message: (j) => j.t('racine-evenement-protege', { sauves: j.count(path(j.t, MEMORIES), ''), total: TOTAL }),
+      message: (j) => j.t('root-evenement-protege', { sauves: j.count(path(j.t, MEMORIES), ''), total: TOTAL }),
     },
     {
       id: 'conf-effacee',
       condition: (j) => !j.exists(path(j.t, CONF)),
-      message: (j) => j.t('racine-evenement-conf-effacee'),
+      message: (j) => j.t('root-evenement-conf-effacee'),
     },
     {
       id: 'corrige',
@@ -155,7 +155,7 @@ export const root: Chapter = {
       },
       message: (j) => {
         const saved = j.count(path(j.t, MEMORIES), '');
-        return j.t('racine-evenement-corrige', { sauves: saved, total: TOTAL, perte: saved < TOTAL ? 'oui' : 'non' });
+        return j.t('root-evenement-corrige', { sauves: saved, total: TOTAL, perte: saved < TOTAL ? 'oui' : 'non' });
       },
     },
   ],

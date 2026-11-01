@@ -13,27 +13,27 @@ export interface Path {
 }
 
 export const PATH: Path[] = [
-  { id: 'debuter', chapters: ['eveil', 'bourg', 'racine', 'sauvegarde', 'paquet-perdu', 'manuscrit', 'archives'] },
+  { id: 'debuter', chapters: ['lighthouse', 'village', 'root', 'backup', 'lost-packet', 'manuscript', 'archives'] },
   {
     id: 'securite',
     chapters: [
-      'fermer-la-porte', 'pare-feu', 'sentinelle', 'port', 'recidive', 'cles', 'depart', 'droits', 'secret', 'mises-a-jour', 'automatiques',
-      'perimetre', 'rapport', 'exposition', 'traces', 'contre-visite',
-      'bulletin', 'priorite', 'correctif', 'preuve', 'routine',
+      'shut-the-door', 'firewall', 'sentinel', 'port', 'repeat-offenders', 'keys', 'departure', 'shared-rights', 'secret', 'updates', 'auto-updates',
+      'scope', 'report', 'exposure', 'traces', 'follow-up',
+      'bulletin', 'priority', 'fix', 'proof', 'routine',
     ],
   },
   {
     id: 'web',
-    chapters: ['premier-jour', 'redemarrage', 'incendie', 'certificat', 'colocation', 'concert', 'proxy', 'atelier', 'facteur', 'signature', 'politique', 'cadenas'],
+    chapters: ['first-day', 'reboot-night', 'fire', 'certificate', 'sharing', 'concert', 'proxy', 'repair-cafe', 'postman', 'signature', 'policy', 'padlock'],
   },
-  { id: 'reseau', chapters: ['paquet-perdu', 'chez-moi', 'rebond', 'tunnel', 'vlan', 'dhcp', 'zones', 'vpn', 'dmz', 'annexe'] },
-  { id: 'sauvegardes', chapters: ['sauvegarde', 'archives', 'versions', 'rancon', 'instantanes', 'base', 'transferts', 'hebergeur'] },
+  { id: 'reseau', chapters: ['lost-packet', 'works-for-me', 'jump', 'tunnel', 'vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex'] },
+  { id: 'sauvegardes', chapters: ['backup', 'archives', 'versions', 'ransom', 'snapshots', 'database', 'transfers', 'web-host'] },
   {
     id: 'deploiement',
-    chapters: ['manuscrit', 'mise-a-jour', 'composition', 'contournement', 'pleins-pouvoirs', 'depot-nu', 'retour-arriere', 'bleu-vert', 'canari', 'migration', 'inventaire', 'playbook', 'repetition'],
+    chapters: ['manuscript', 'update', 'compose', 'firewall-hole', 'full-powers', 'bare-repo', 'rollback', 'blue-green', 'canary', 'migration', 'inventory', 'playbook', 'rehearsal'],
   },
-  { id: 'production', chapters: ['redemarrage', 'disque-plein', 'memoire', 'inodes', 'horloge', 'sonde', 'post-mortem', 'goulot', 'fatigue', 'disque-neuf', 'agrandir', 'secours'] },
-  { id: 'identites', chapters: ['deuxieme-jour', 'depart', 'droits', 'cles', 'annuaire', 'wifi'] },
+  { id: 'production', chapters: ['reboot-night', 'full-disk', 'memory', 'inodes', 'clock', 'probe', 'post-mortem', 'bottleneck', 'tired-disk', 'new-disk', 'more-room', 'stuck-boot'] },
+  { id: 'identites', chapters: ['second-day', 'departure', 'shared-rights', 'keys', 'directory', 'wifi'] },
 ];
 
 export type StepState = 'fait' | 'ouvert' | 'verrouille' | 'sans-cle';

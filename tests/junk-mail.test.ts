@@ -42,7 +42,7 @@ for (const language of LANGUAGES)
 
     describe('Le facteur', () => {
       it('solution : la file, le SPF de l’ancien hébergeur, le serial, postqueue -f', () => {
-        const { c, jouer: play, ecrire: write } = part([], 'facteur');
+        const { c, jouer: play, ecrire: write } = part([], 'postman');
         let all = play(['mailq', 'grep deferred /var/log/mail.log', 'dig TXT gardens.example +short']);
         expect(all).toContain('-- 7 Kbytes in 5 Requests.');
         expect(all).toContain('451 4.7.26 Unauthenticated mail from gardens.example: neither SPF nor DKIM passed for 203.0.113.30 (SPF: fail)');
@@ -58,16 +58,16 @@ for (const language of LANGUAGES)
         all = play(['sudo named-checkzone gardens.example /etc/bind/zones/db.gardens.example', 'sudo rndc reload', 'dig TXT gardens.example @ns2.registry.example +short']);
         expect(all).toContain('loaded serial 2027050301');
         expect(all).toContain('"v=spf1 mx -all"');
-        expect(c.finished).not.toContain('facteur');
+        expect(c.finished).not.toContain('postman');
         all = play(['sudo postqueue -f', 'mailq', 'sudo tail -2 /var/log/mail.log']);
         expect(all).toContain('Mail queue is empty');
         expect(all).toContain('status=sent (250 2.0.0 OK');
         if (fr) expect(all).toContain('https://www.rfc-editor.org/rfc/rfc7208');
-        expect(c.finished).toContain('facteur');
+        expect(c.finished).toContain('postman');
       });
 
       it('autre solution : ip4 et ~all ; fausse piste : deux enregistrements SPF', () => {
-        const { c, jouer: play, ecrire: write } = part([], 'facteur');
+        const { c, jouer: play, ecrire: write } = part([], 'postman');
         write(ZONE, (t) => serial('2027042801', '2027050301')(t) + '@       IN  TXT    "v=spf1 ip4:203.0.113.30 ~all"\n');
         let all = play(['sudo rndc reload', 'dig TXT gardens.example @ns2.registry.example +short', 'sudo postqueue -f', 'mailq']);
         expect(all).toContain('"v=spf1 ip4:203.0.113.30 ~all"');
@@ -76,11 +76,11 @@ for (const language of LANGUAGES)
         write(ZONE, (t) => serial('2027050301', '2027050302')(t).replace(/.*include:_spf\.old-hosting\.example.*\n/, ''));
         all = play(['sudo rndc reload', 'sudo postqueue -f', 'mailq']);
         expect(all).toContain('Mail queue is empty');
-        expect(c.finished).toContain('facteur');
+        expect(c.finished).toContain('postman');
       });
 
       it('les commandes : postconf, postfix check, postsuper, le manuel', () => {
-        const { jouer: play, ecrire: write } = part([], 'facteur');
+        const { jouer: play, ecrire: write } = part([], 'postman');
         let all = play(['postconf myorigin mydestination', 'postconf -x mydestination', 'postconf mydestinaton', 'man postqueue', 'mailq --help']);
         expect(all).toContain('myorigin = /etc/mailname');
         expect(all).toContain('mydestination = mail.gardens.example, gardens.example, localhost.localdomain, localhost');
@@ -105,7 +105,7 @@ for (const language of LANGUAGES)
           .replace('Socket\t\t\tlocal:/run/opendkim/opendkim.sock', socket);
 
       it('solution : la clé, opendkim, le milter, la clé publiée', () => {
-        const { c, jouer: play, ecrire: write, boite: box, read } = part(['facteur'], 'signature');
+        const { c, jouer: play, ecrire: write, boite: box, read } = part(['postman'], 'signature');
         play(['echo test | mail -s test check-auth@verifier.example']);
         expect(box()).toMatch(/DKIM check: +none/);
         let all = play(['mail']);
@@ -139,7 +139,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : clé lisible par tous, prise unix hors du chroot, smtpd_milters seul, serial oublié', () => {
-        const { c, jouer: play, ecrire: write, read } = part(['facteur'], 'signature');
+        const { c, jouer: play, ecrire: write, read } = part(['postman'], 'signature');
         play(['sudo -u opendkim opendkim-genkey -d gardens.example -s mail -D /etc/dkimkeys', 'sudo chmod 644 /etc/dkimkeys/mail.private']);
         write(CONF, configure());
         let all = play(['sudo systemctl restart opendkim', 'journalctl -u opendkim -n 4']);
@@ -173,7 +173,7 @@ for (const language of LANGUAGES)
     describe('La politique', () => {
       const CNAME = 'nm1._domainkey IN CNAME nm1.dkim.newsmail.example.';
       it('solution : lire les rapports, déléguer nm1, passer à quarantine', () => {
-        const { c, jouer: play, ecrire: write } = part(['facteur', 'signature'], 'politique');
+        const { c, jouer: play, ecrire: write } = part(['postman', 'signature'], 'policy');
         let all = play(['ls rapports_dmarc', 'grep source_ip rapports_dmarc/mailbox.example-2027-05-16.xml', 'dig TXT _dmarc.gardens.example +short']);
         expect(all).toContain('<source_ip>198.51.100.77</source_ip>');
         expect(all).toContain('"v=DMARC1; p=none; rua=mailto:dmarc@gardens.example"');
@@ -183,16 +183,16 @@ for (const language of LANGUAGES)
         all = play(['sudo rndc reload', 'dig TXT nm1._domainkey.gardens.example @ns2.registry.example']);
         expect(all).toContain('nm1._domainkey.gardens.example. 3600    IN\tCNAME\tnm1.dkim.newsmail.example.');
         if (fr) expect(all).toContain('d=gardens.example');
-        expect(c.finished).not.toContain('politique');
+        expect(c.finished).not.toContain('policy');
         write(ZONE, (t) => serial('2027052401', '2027052402')(t).replace('p=none', 'p=quarantine'));
         all = play(['sudo rndc reload', 'dig TXT _dmarc.gardens.example @ns2.registry.example +short']);
         expect(all).toContain('"v=DMARC1; p=quarantine; rua=mailto:dmarc@gardens.example"');
         if (fr) expect(all).toContain('https://www.rfc-editor.org/rfc/rfc7489');
-        expect(c.finished).toContain('politique');
+        expect(c.finished).toContain('policy');
       });
 
       it('fausses pistes : quarantine trop tôt, include du prestataire, CNAME sans point, deux DMARC ; reject accepté', () => {
-        const { c, jouer: play, ecrire: write } = part(['facteur', 'signature'], 'politique');
+        const { c, jouer: play, ecrire: write } = part(['postman', 'signature'], 'policy');
         write(ZONE, (t) => serial('2027051701', '2027052401')(t).replace('p=none', 'p=quarantine').replace('"v=spf1 mx -all"', '"v=spf1 mx include:_spf.newsmail.example -all"'));
         let all = play(['sudo rndc reload']);
         if (fr) expect(all).toContain('Aligne d\'abord');
@@ -202,14 +202,14 @@ for (const language of LANGUAGES)
         all += play(['sudo rndc reload', 'dig TXT nm1._domainkey.gardens.example']);
         expect(all).toContain('CNAME\tnm1.dkim.newsmail.example.gardens.example.');
         if (fr) expect(all).toContain('point final');
-        expect(c.finished).not.toContain('politique');
+        expect(c.finished).not.toContain('policy');
         write(ZONE, (t) => serial('2027052402', '2027052403')(t).replace('newsmail.example\n', 'newsmail.example.\n') + '_dmarc IN TXT "v=DMARC1; p=reject"\n');
         all = play(['sudo rndc reload']);
         if (fr) expect(all).toContain('deux enregistrements DMARC');
-        expect(c.finished).not.toContain('politique');
+        expect(c.finished).not.toContain('policy');
         write(ZONE, (t) => serial('2027052403', '2027052404')(t).replace('_dmarc IN TXT "v=DMARC1; p=reject"\n', '').replace('p=quarantine', 'p=reject'));
         play(['sudo rndc reload']);
-        expect(c.finished).toContain('politique');
+        expect(c.finished).toContain('policy');
       });
     });
   });

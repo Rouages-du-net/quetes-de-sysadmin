@@ -85,11 +85,11 @@ const nmapOk = (j: Game) => {
   return three(b) && dayASsh(b);
 };
 
-const sections = (j: Game, text: string) => sectionsMd(j, text, 'contre-visite-section', SECTIONS);
+const sections = (j: Game, text: string) => sectionsMd(j, text, 'follow-up-section', SECTIONS);
 const words = (j: Game, key: string) => j.t(key).split(',').map((m) => m.trim().toLowerCase());
 // Les nombres écrits juste après le mot « indice » (ou « index », « hardening »…) : « indice de durcissement 80 ».
 const digits = (j: Game, text: string) => {
-  const word = words(j, 'contre-visite-mots-indice').map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  const word = words(j, 'follow-up-mots-indice').map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   return [...text.matchAll(new RegExp(`(?:${word})\\D{0,40}(\\d+)`, 'gi'))].map((x) => Number(x[1]));
 };
 const readReport = (j: Game) => j.read(path(j.t, REPORT));
@@ -98,10 +98,10 @@ const missing = (j: Game): string[] => {
   const text = readReport(j) ?? '';
   const s = sections(j, text);
   const m: string[] = [];
-  if (text.toLowerCase().includes(j.t('contre-visite-a-completer').toLowerCase())) m.push('modele');
+  if (text.toLowerCase().includes(j.t('follow-up-a-completer').toLowerCase())) m.push('modele');
   if ((s.resume ?? '').trim().length < 30) m.push('resume');
   const bas = (s.constats ?? '').toLowerCase();
-  if (SUBJECTS.filter((x) => words(j, `contre-visite-mots-${x}`).some((w) => bas.includes(w))).length < 5) m.push('constats');
+  if (SUBJECTS.filter((x) => words(j, `follow-up-mots-${x}`).some((w) => bas.includes(w))).length < 5) m.push('constats');
   const l = lynis(j);
   if (!l) m.push('lynis');
   else if (!digits(j, s.preuves ?? '').includes(l.hint) || !/443/.test(s.preuves ?? '')) m.push('preuves');
@@ -112,7 +112,7 @@ const missing = (j: Game): string[] => {
 const okReport = (j: Game) => missing(j).length === 0;
 
 export const againstVisit: Chapter = {
-  id: 'contre-visite',
+  id: 'follow-up',
   number: 5,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'nano', 'id', 'whoami', 'sudo', 'systemctl', 'journalctl', 'sshd', 'ss', 'ufw', 'apt', 'nmap', 'lynis'],
   home: M,
@@ -142,7 +142,7 @@ export const againstVisit: Chapter = {
   createWorld: (t) =>
     bakeryWorld(t, {
       withoutLucas: true,
-      home: { 'courriel_salome.txt': f(t('contre-visite-courriel-salome')), 'rapport-cloture.md': f(t('contre-visite-modele'), { lines: true }) },
+      home: { 'courriel_salome.txt': f(t('follow-up-courriel-salome')), 'rapport-cloture.md': f(t('follow-up-modele'), { lines: true }) },
       etc: {
         'login.defs': file(LOGIN_DEFS),
         issue: file('Debian GNU/Linux 13 \\n \\l\n'),
@@ -160,39 +160,39 @@ export const againstVisit: Chapter = {
       j.state.rapportFini = true;
       return;
     }
-    return [j.t('contre-visite-relecture'), ...rest.map((m) => `- ${j.t(`contre-visite-manque-${m}`, { cible: String(TARGET) })}`)].join('\n');
+    return [j.t('follow-up-relecture'), ...rest.map((m) => `- ${j.t(`follow-up-manque-${m}`, { cible: String(TARGET) })}`)].join('\n');
   },
   events: [
-    { id: 'erreur-ssh', condition: errorSsh, message: (j) => j.t('contre-visite-evenement-erreur-ssh') },
-    { id: 'enferme', condition: (j) => !between(j), message: (j) => j.t('contre-visite-evenement-enferme') },
+    { id: 'erreur-ssh', condition: errorSsh, message: (j) => j.t('follow-up-evenement-erreur-ssh') },
+    { id: 'enferme', condition: (j) => !between(j), message: (j) => j.t('follow-up-evenement-enferme') },
     {
       id: 'hors-perimetre',
       condition: outsideScope,
-      message: (j) => j.t('contre-visite-evenement-hors-perimetre', { adresses: addressesOutside(j).join(', '), voisin: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
+      message: (j) => j.t('follow-up-evenement-hors-perimetre', { adresses: addressesOutside(j).join(', '), voisin: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
     },
     {
       id: 'balayage',
       condition: (j) => !!lastScan(j),
-      message: (j) => j.t('contre-visite-evenement-balayage', { ancienne: dayASsh(lastScan(j)) ? 'non' : 'oui' }),
+      message: (j) => j.t('follow-up-evenement-balayage', { ancienne: dayASsh(lastScan(j)) ? 'non' : 'oui' }),
     },
     {
       id: 'lynis',
       condition: (j) => !!lynis(j),
-      message: (j) => j.t('contre-visite-evenement-lynis', { indice: String(lynis(j)!.hint), avertissements: String(lynis(j)!.warnings) }),
+      message: (j) => j.t('follow-up-evenement-lynis', { indice: String(lynis(j)!.hint), avertissements: String(lynis(j)!.warnings) }),
     },
-    { id: 'mise-a-jour', condition: dayA, message: (j) => j.t('contre-visite-evenement-mise-a-jour') },
+    { id: 'mise-a-jour', condition: dayA, message: (j) => j.t('follow-up-evenement-mise-a-jour') },
     {
       id: 'ssh-a-recharger',
       condition: (j) => sshChange(j) && !errorSsh(j),
-      message: (j) => j.t('contre-visite-evenement-ssh-a-recharger'),
+      message: (j) => j.t('follow-up-evenement-ssh-a-recharger'),
     },
-    { id: 'durci', condition: (j) => hardened(j) && appliesSsh(j), message: (j) => j.t('contre-visite-evenement-durci', { cible: String(TARGET) }) },
-    { id: 'preuve-lynis', condition: (j) => lynisProof(j) && appliesSsh(j), message: (j) => j.t('contre-visite-evenement-preuve-lynis') },
-    { id: 'nmap-propre', condition: nmapOk, message: (j) => j.t('contre-visite-evenement-nmap-propre') },
+    { id: 'durci', condition: (j) => hardened(j) && appliesSsh(j), message: (j) => j.t('follow-up-evenement-durci', { cible: String(TARGET) }) },
+    { id: 'preuve-lynis', condition: (j) => lynisProof(j) && appliesSsh(j), message: (j) => j.t('follow-up-evenement-preuve-lynis') },
+    { id: 'nmap-propre', condition: nmapOk, message: (j) => j.t('follow-up-evenement-nmap-propre') },
     {
       id: 'fin',
       condition: (j) => lynisProof(j) && appliesSsh(j) && nmapOk(j) && okReport(j),
-      message: (j) => j.t('contre-visite-evenement-fin', { faute: outsideScope(j) ? 'oui' : 'non' }),
+      message: (j) => j.t('follow-up-evenement-fin', { faute: outsideScope(j) ? 'oui' : 'non' }),
     },
   ],
 };

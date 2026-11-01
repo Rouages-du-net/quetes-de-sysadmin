@@ -32,12 +32,12 @@ const share = (t: (id: string) => string): Directory =>
   d(
     {
       'comptes-rendus': d(
-        { 'ag-2026.txt': file(t('transferts-cr-ag-2026')), 'ca-2027-09.txt': file(t('transferts-cr-ca-2027-09')) },
+        { 'ag-2026.txt': file(t('transfers-cr-ag-2026')), 'ca-2027-09.txt': file(t('transfers-cr-ca-2027-09')) },
         undefined,
         you,
       ),
       affiches: d({ 'fete-des-voisins.pdf': file('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj') }, undefined, you),
-      'planning-salles.txt': file(t('transferts-planning')),
+      'planning-salles.txt': file(t('transfers-planning')),
     },
     undefined,
     you,
@@ -74,7 +74,7 @@ const dayABackup = (j: Game) => {
 const nested = (j: Game) => path(j.t, `${BACKUP}/partage`);
 
 export const transfers: Chapter = {
-  id: 'transferts',
+  id: 'transfers',
   number: 4,
   plan: homePlan(),
   commands: [
@@ -125,7 +125,7 @@ export const transfers: Chapter = {
         srv: d(
           {
             sauvegardes: d(
-              { partage: d({ 'comptes-rendus': d({ 'ag-2026.txt': file(t('transferts-cr-ag-2026')) }, undefined, you) }, undefined, you) },
+              { partage: d({ 'comptes-rendus': d({ 'ag-2026.txt': file(t('transfers-cr-ag-2026')) }, undefined, you) }, undefined, you) },
               undefined,
               you,
             ),
@@ -140,7 +140,7 @@ export const transfers: Chapter = {
     homeWorld({
       passwords: 'no',
       home: {
-        'courriel_yasmine.txt': f(t('transferts-courriel-yasmine')),
+        'courriel_yasmine.txt': f(t('transfers-courriel-yasmine')),
         '.ssh': sshDirectory({
           config: f('Host archives\n    IdentityFile ~/.ssh/id_sauvegarde', { lines: true, owner: 'vous', mode: 'rw-r--r--' }),
           id_sauvegarde: f(BACKUP_KEY.isPrivate, { lines: true, owner: 'vous', mode: 'rw-------' }),
@@ -150,21 +150,21 @@ export const transfers: Chapter = {
       more: { srv: d({ partage: share(t) }, undefined, { owner: 'root' }) },
     }),
   events: [
-    { id: 'rapport', condition: reportOnWorkstation, message: (j) => j.t('transferts-evenement-rapport') },
+    { id: 'rapport', condition: reportOnWorkstation, message: (j) => j.t('transfers-evenement-rapport') },
     {
       id: 'imbrique',
       condition: (j) => archives(j).exists(nested(j)),
-      message: (j) => j.t('transferts-evenement-imbrique', { dossier: nested(j) }),
+      message: (j) => j.t('transfers-evenement-imbrique', { dossier: nested(j) }),
     },
     {
       id: 'sauvegarde',
       condition: (j) => dayABackup(j) && !archives(j).exists(nested(j)),
-      message: (j) => j.t('transferts-evenement-sauvegarde'),
+      message: (j) => j.t('transfers-evenement-sauvegarde'),
     },
     {
       id: 'fin',
       condition: (j) => reportOnWorkstation(j) && dayABackup(j) && !archives(j).exists(nested(j)),
-      message: (j) => j.t('transferts-evenement-fin'),
+      message: (j) => j.t('transfers-evenement-fin'),
     },
   ],
 };

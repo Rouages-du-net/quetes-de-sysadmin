@@ -25,7 +25,7 @@ import { machineName } from '../machines';
 import { loadSshd, bakeryAccounts, sectionsMd, bakeryListening, file, M, NOW, PASSWORD, bakeryWorld, bakeryScan, serviceSsh, NEIGHBOUR } from './audit';
 
 const NOTES = `${M}/notes-audit.md`;
-const NOTES_TEMPLATE = 'perimetre-notes-modele';
+const NOTES_TEMPLATE = 'scope-notes-modele';
 
 const scans = (j: Game): Scan[] => j.state.scans ?? [];
 const probe = (b: Scan) => b.addresses.includes('192.0.2.22') || b.addresses.includes('127.0.0.1');
@@ -47,20 +47,20 @@ const readNotes = (j: Game) => j.read(path(j.t, NOTES));
 const words = (j: Game, key: string) => j.t(key).split(',').map((m) => m.trim().toLowerCase());
 const missing = (j: Game): string[] => {
   const raw = readNotes(j) ?? '';
-  const s = sectionsMd(j, raw, 'perimetre-section', ['perimetre', 'trouve', 'hors']);
+  const s = sectionsMd(j, raw, 'scope-section', ['perimetre', 'trouve', 'hors']);
   const found = (s.trouve ?? '').toLowerCase();
   const outside = (s.hors ?? '').toLowerCase();
   const m: string[] = [];
-  if (raw.toLowerCase().includes(j.t('perimetre-a-completer').toLowerCase())) m.push('modele');
+  if (raw.toLowerCase().includes(j.t('scope-a-completer').toLowerCase())) m.push('modele');
   if (!found.includes('5432') || !found.includes('6379')) m.push('ports');
   if (!outside.includes(NEIGHBOUR.address) && !outside.includes('voisin')) m.push('voisin');
-  else if (!words(j, 'perimetre-mots-hors').some((x) => outside.includes(x))) m.push('hors');
+  else if (!words(j, 'scope-mots-hors').some((x) => outside.includes(x))) m.push('hors');
   return m;
 };
 const notesOk = (j: Game) => missing(j).length === 0;
 
 export const scope: Chapter = {
-  id: 'perimetre',
+  id: 'scope',
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'id', 'whoami', 'sudo', 'ss', 'nmap'],
   home: M,
@@ -89,8 +89,8 @@ export const scope: Chapter = {
   createWorld: (t) =>
     bakeryWorld(t, {
       home: {
-        'courriel_salome.txt': f(t('perimetre-courriel-salome')),
-        'lettre-de-mission.txt': f(t('perimetre-lettre-de-mission'), { lines: true }),
+        'courriel_salome.txt': f(t('scope-courriel-salome')),
+        'lettre-de-mission.txt': f(t('scope-lettre-de-mission'), { lines: true }),
         'notes-audit.md': f(t(NOTES_TEMPLATE), { lines: true }),
       },
       sudoersD: { '90-cloud-init-users': file('# Created by cloud-init\n\nvous ALL=(ALL) NOPASSWD:ALL', 'root', 'r--r-----') },
@@ -105,29 +105,29 @@ export const scope: Chapter = {
       j.state.notesFinies = true;
       return;
     }
-    return [j.t('perimetre-relecture'), ...rest.map((m) => `- ${j.t(`perimetre-manque-${m}`)}`)].join('\n');
+    return [j.t('scope-relecture'), ...rest.map((m) => `- ${j.t(`scope-manque-${m}`)}`)].join('\n');
   },
   events: [
     {
       id: 'lettre',
       condition: (j) => j.last.commands.some((c) => c.some((a) => a.endsWith(name(j.t, 'lettre-de-mission.txt')))),
-      message: (j) => j.t('perimetre-evenement-lettre'),
+      message: (j) => j.t('scope-evenement-lettre'),
     },
     {
       id: 'balayage',
       condition: (j) => scans(j).some(probe),
-      message: (j) => j.t('perimetre-evenement-balayage'),
+      message: (j) => j.t('scope-evenement-balayage'),
     },
     {
       id: 'hors-perimetre',
       condition: outsideScope,
-      message: (j) => j.t('perimetre-evenement-hors-perimetre', { adresses: addressesOutside(j).join(', '), voisin: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
+      message: (j) => j.t('scope-evenement-hors-perimetre', { adresses: addressesOutside(j).join(', '), voisin: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
     },
-    { id: 'trace', condition: traceOk, message: (j) => j.t('perimetre-evenement-trace') },
+    { id: 'trace', condition: traceOk, message: (j) => j.t('scope-evenement-trace') },
     {
       id: 'fin',
       condition: (j) => traceOk(j) && notesOk(j),
-      message: (j) => j.t('perimetre-evenement-fin', { faute: outsideScope(j) ? 'oui' : 'non' }),
+      message: (j) => j.t('scope-evenement-fin', { faute: outsideScope(j) ? 'oui' : 'non' }),
     },
   ],
 };

@@ -93,37 +93,37 @@ export const STORIES: Story[] = [
   },
   {
     id: 'datacenter',
-    after: ['racine'],
+    after: ['root'],
     chapters: [datacenter, secondDay, reboot, fire, certificate],
   },
   {
     id: 'paquet',
-    after: ['racine'],
+    after: ['root'],
     chapters: [pkg],
   },
   {
     id: 'temps',
-    after: ['racine'],
+    after: ['root'],
     chapters: [time],
   },
   {
     id: 'archives',
-    after: ['racine'],
+    after: ['root'],
     chapters: [archives, versions],
   },
   {
     id: 'lettres',
-    after: ['redemarrage', 'paquet-perdu'],
+    after: ['reboot-night', 'lost-packet'],
     chapters: [door, firewall, sentinel, colocation, atMe, concert, port, repeatOffence, workshop],
   },
   {
     id: 'fabrique',
-    after: ['redemarrage'],
+    after: ['reboot-night'],
     chapters: [update, composition, bypass, powersFull],
   },
   {
     id: 'gazette',
-    after: ['manuscrit', 'redemarrage'],
+    after: ['manuscript', 'reboot-night'],
     chapters: [bareRepo, rollback, greenBlue, canary, migration],
   },
   {
@@ -133,52 +133,52 @@ export const STORIES: Story[] = [
   },
   {
     id: 'astreinte',
-    after: ['redemarrage'],
+    after: ['reboot-night'],
     chapters: [fullDisk, chapterMemory, inodes, clock, probe, postMortem, bottleneck],
   },
   {
     id: 'maison',
-    after: ['fermer-la-porte'],
+    after: ['shut-the-door'],
     chapters: [keys, jump, tunnel, transfers, host],
   },
   {
     id: 'cooperative',
-    after: ['colocation', 'deuxieme-jour'],
+    after: ['sharing', 'second-day'],
     chapters: [departure, rights, secret, proxy, updates, automatic],
   },
   {
     id: 'ruche',
-    after: ['pare-feu', 'rebond'],
+    after: ['firewall', 'jump'],
     chapters: [vlan, dhcp, zones, vpn, dmz, annex, chapterDirectory, wifi],
   },
   {
     id: 'audit',
-    after: ['sentinelle', 'droits'],
+    after: ['sentinel', 'shared-rights'],
     chapters: [scope, report, exposure, traces, againstVisit],
   },
   {
     id: 'labo',
-    after: ['disque-plein'],
+    after: ['full-disk'],
     chapters: [fatigue, newDisk, grow, rescue],
   },
   {
     id: 'veille',
-    after: ['contre-visite'],
+    after: ['follow-up'],
     chapters: [bulletin, priority, fix, proof, routine],
   },
   {
     id: 'courrier',
-    after: ['chez-moi'],
+    after: ['works-for-me'],
     chapters: [postman, signature, chapterPolicy],
   },
   {
     id: 'flotte',
-    after: ['cles'],
+    after: ['keys'],
     chapters: [inventory, playbook, rehearsal],
   },
   {
     id: 'rustine',
-    after: ['certificat', 'colocation'],
+    after: ['certificate', 'sharing'],
     chapters: [padlock],
   },
 ];

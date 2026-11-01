@@ -30,7 +30,7 @@ const withoutPassword = (j: Game) => sshd(j).load.passwordauthentication === 'no
 const closed = (j: Game) => withoutPassword(j) && youKeys(j).length > 0 && allowed(sshd(j).load, j.player);
 
 export const keys: Chapter = {
-  id: 'cles',
+  id: 'keys',
   number: 1,
   plan: homePlan(),
   commands: [
@@ -62,22 +62,22 @@ export const keys: Chapter = {
   initialise: loadSshd,
   hosts: { wiki: internalHost('wiki', '10.20.0.11'), archives: internalHost('archives', '10.20.0.12') },
   createWorld: (t) =>
-    homeWorld({ passwords: null, home: { 'courriel_yasmine.txt': f(t('cles-courriel-yasmine', { motdepasse: password(t, PASSWORD) })) } }),
+    homeWorld({ passwords: null, home: { 'courriel_yasmine.txt': f(t('keys-courriel-yasmine', { motdepasse: password(t, PASSWORD) })) } }),
   events: [
-    { id: 'erreur', condition: (j) => readConfig(j).errors.length > 0, message: (j) => j.t('cles-evenement-erreur', { config: CONFIG }) },
-    { id: 'enferme', condition: (j) => withoutPassword(j) && !youKeys(j).length, message: (j) => j.t('cles-evenement-enferme') },
+    { id: 'erreur', condition: (j) => readConfig(j).errors.length > 0, message: (j) => j.t('keys-evenement-erreur', { config: CONFIG }) },
+    { id: 'enferme', condition: (j) => withoutPassword(j) && !youKeys(j).length, message: (j) => j.t('keys-evenement-enferme') },
     {
       id: 'cle-du-jeu',
       condition: (j) => authorised(j).some((c) => DATA.includes(c)) && !youKeys(j).length,
-      message: (j) => j.t('cles-evenement-cle-du-jeu'),
+      message: (j) => j.t('keys-evenement-cle-du-jeu'),
     },
-    { id: 'copiee', condition: (j) => youKeys(j).length > 0, message: (j) => j.t('cles-evenement-copiee') },
-    { id: 'par-cle', condition: (j) => connectionsBy(j, 'cle') > 0 && !withoutPassword(j), message: (j) => j.t('cles-evenement-par-cle') },
-    { id: 'fermee', condition: closed, message: (j) => j.t('cles-evenement-fermee') },
+    { id: 'copiee', condition: (j) => youKeys(j).length > 0, message: (j) => j.t('keys-evenement-copiee') },
+    { id: 'par-cle', condition: (j) => connectionsBy(j, 'cle') > 0 && !withoutPassword(j), message: (j) => j.t('keys-evenement-par-cle') },
+    { id: 'fermee', condition: closed, message: (j) => j.t('keys-evenement-fermee') },
     {
       id: 'fin',
       condition: (j) => j.flags.has('fermee') && closed(j) && connectionsBy(j, 'cle') > sshd(j).keysToLoad,
-      message: (j) => j.t('cles-evenement-fin'),
+      message: (j) => j.t('keys-evenement-fin'),
     },
   ],
 };
