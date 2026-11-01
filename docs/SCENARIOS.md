@@ -1088,9 +1088,9 @@ the loans are back. Expected traps: the `>` redirection with `sudo -u`,
 restoring over the live database, reinjecting into a full table
 (duplicates), `pg_dump` in root's crontab.
 
-## Story 10: L'Astreinte (seven chapters)
+## Story 10: On Call (seven chapters)
 
-On-call nights for Radio Quartier (machine `radio`, 192.0.2.18), with Zoé, a
+On-call nights for Neighbourhood Radio (machine `radio`, 192.0.2.18), with Zoé, a
 technical volunteer. The classic failures, one per night, then monitoring
 that warns before things break. Phase 7 of the roadmap.
 
@@ -1189,8 +1189,8 @@ am).
 
 | Step | Command learnt |
 |---|---|
-| The plugins | `/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio`, `check_http -H localhost -p 8000 -u /direct`, `check_procs -C flux -c 1:` (outside the PATH) |
-| The alert | `… \| grep -v " OK" \| mail -E -s Alerte-radio root`, `/etc/aliases`, `/var/mail/zoe` |
+| The plugins | `/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio`, `check_http -H localhost -p 8000 -u /live`, `check_procs -C stream -c 1:` (outside the PATH) |
+| The alert | `… \| grep -v " OK" \| mail -E -s radio-alert root`, `/etc/aliases`, `/var/mail/zoe` |
 | Schedule | `probe.service` (`Type=oneshot`) and `probe.timer` (`OnCalendar=*:0/5`, `WantedBy=timers.target`), `systemd-analyze calendar`, `systemctl daemon-reload`, `enable --now`, `list-timers` (or a crontab line) |
 | Check | the drill night, `journalctl -u sonde` |
 
@@ -1245,9 +1245,9 @@ disk, `systemctl edit`. Debrief: iowait and load, `iostat -x`,
 `pidstat -d`, io.max versus ionice, `set-property` versus `edit`; links to
 `iostat(1)`, `systemd.resource-control(5)` and cgroup v2's io controller.
 
-## Story 11: La Maison des associations (five chapters)
+## Story 11: The Community Centre (five chapters)
 
-The neighbourhood's community centre (machine `maison`, 192.0.2.19): a
+The neighbourhood's community centre (machine `community`, 192.0.2.19): a
 gateway, the only machine visible from the internet, and behind it an
 internal network (`wiki`, 10.20.0.11, and `archives`, 10.20.0.12). Yasmine,
 the coordinator, hands IT over to the player; Gaspard, the former volunteer,
@@ -1262,9 +1262,9 @@ in English).
 | Step | Command learnt |
 |---|---|
 | Create your key pair | `ssh-keygen` (on the workstation), optional passphrase |
-| Install it | `ssh-copy-id maison` (password one last time), or `~/.ssh/authorized_keys` by hand |
+| Install it | `ssh-copy-id community` (password one last time), or `~/.ssh/authorized_keys` by hand |
 | Close | `PasswordAuthentication no` in `sshd_config` (or a file in `sshd_config.d`), `sshd -t`, `systemctl reload ssh` |
-| Check | `exit`, `ssh maison`: in by key |
+| Check | `exit`, `ssh community`: in by key |
 
 Goal checked on the state: sshd applies `PasswordAuthentication no`, a key
 of your own is authorised, and a key connection happened after this load.
@@ -1279,15 +1279,15 @@ private key there.
 
 | Step | Command learnt |
 |---|---|
-| Jump | `ssh -J maison wiki` (the wiki's host key is checked from the workstation) |
-| The shortcut | `Host wiki`, `HostName wiki`, `ProxyJump maison` in the workstation's `~/.ssh/config`; `ssh -G wiki` |
+| Jump | `ssh -J community wiki` (the wiki's host key is checked from the workstation) |
+| The shortcut | `Host wiki`, `HostName wiki`, `ProxyJump community` in the workstation's `~/.ssh/config`; `ssh -G wiki` |
 | Where am I? | `hostname`, the prompt |
 
 Goal checked on the state: a key connection to the wiki, a `Host` block on
-the workstation that leads there through maison (checked as ssh would read
-it), and no private key on maison. Expected traps: `ssh wiki` from the
-workstation (unknown name), from maison ("Permission denied"), a private key
-copied onto maison (`scp`).
+the workstation that leads there through community (checked as ssh would read
+it), and no private key on community. Expected traps: `ssh wiki` from the
+workstation (unknown name), from community ("Permission denied"), a private key
+copied onto community (`scp`).
 
 ### Chapter 3 — Le tunnel (done)
 
@@ -1298,13 +1298,13 @@ wiki has neither a browser nor curl; three sign-ups are waiting.
 |---|---|
 | Understand | `ss -tln`, `systemctl status wiki-admin` (on the wiki) |
 | The tunnel | `ssh -f -N -L 8080:localhost:8080 wiki` |
-| Act | `curl localhost:8080/admin`, `/admin/valider/samir`, `/admin/valider/lea` |
+| Act | `curl localhost:8080/admin`, `/admin/approve/samir`, `/admin/approve/lea` |
 | Close again | `ps`, `kill` |
 
 Goal checked on the state: Samir and Léa approved, the advertising account
 not, no tunnel left open on the workstation. Expected traps:
-`-L 8080:localhost:8080 maison` (localhost as seen from maison),
-`-L 8080:wiki:8080 maison` (the service doesn't listen on the wiki's
+`-L 8080:localhost:8080 community` (localhost as seen from community),
+`-L 8080:wiki:8080 community` (the service doesn't listen on the wiki's
 address), `-N` without `-f`, approving the advert (you can reject it
 afterwards).
 
@@ -1316,18 +1316,18 @@ directory's backup to redo.
 | Step | Command learnt |
 |---|---|
 | Bring back | `scp wiki:/srv/wiki/exports/rapport-2027.pdf .` (from the workstation, through the shortcut) |
-| Back up | from maison, with the dedicated `id_sauvegarde` key: `rsync -avn /srv/partage/ archives:/srv/sauvegardes/partage/`, then without `-n` |
+| Back up | from community, with the dedicated `id_backup` key: `rsync -avn /srv/share/ archives:/srv/backups/share/`, then without `-n` |
 | Repair | `rsync -av --delete …` (after a `-n` try) |
 
 Goal checked on the state: the report intact on the workstation, every file
 of the shared directory identical on archives, with no extra copied
 directory. Expected traps: the forgotten trailing slash (a
-`partage/partage` directory), `--delete` without a dry run. The debrief
+`share/share` directory), `--delete` without a dry run. The debrief
 talks about FTP and telnet, which send passwords in clear text.
 
 ### Chapter 5 — L'hébergeur (done)
 
-The Maison's new website is ready on the wiki (`/srv/wiki/site`); it is
+The Centre's new website is ready on the wiki (`/srv/wiki/site`); it is
 published on shared hosting that only offers FTP, and now refuses clear-text
 FTP. Gaspard used to publish with FileZilla, without encryption, to
 `ftp.community.example` (a name that points to the host, but that its
@@ -1336,7 +1336,7 @@ certificate doesn't cover).
 | Step | Command learnt |
 |---|---|
 | Bring back | from the workstation, `sftp wiki`: `cd /srv/wiki`, `ls`, `get -r site`, `lls`, `bye` |
-| Connect | `lftp -u maisonasso ftp.hosting.example` (the password asked, FTPS by default) |
+| Connect | `lftp -u commcentre ftp.hosting.example` (the password asked, FTPS by default) |
 | Publish | `mirror -R --delete --dry-run site public_html`, then without `--dry-run` |
 
 Goal checked on the state: `public_html` holds exactly the wiki's site, and

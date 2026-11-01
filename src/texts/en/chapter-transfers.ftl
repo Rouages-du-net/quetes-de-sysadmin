@@ -25,18 +25,18 @@ transfers-email-yasmine =
        /srv/backups/share: the same files, in the same places.
        Gaspard used rsync, from community: it only copies what has
        changed (man rsync). He even created a key just for that,
-       ~/.ssh/id_sauvegarde (look at ~/.ssh/config, here).
+       ~/.ssh/id_backup (look at ~/.ssh/config, here).
 
     Gaspard tells me on the phone: "Watch out for the trailing slash
     on the source, with rsync. And try with -n first."
 
-transfers-minutes-ag-2026 =
+transfers-minutes-agm-2026 =
     General meeting 2026 — minutes
 
     Present: 34 associations out of 41.
     Annual report adopted unanimously. Budget adopted (2 abstentions).
     Project of the year: a shared wiki for all the associations.
-transfers-minutes-it-2027-09 =
+transfers-minutes-board-2027-09 =
     Board meeting — September 2027
 
     Item 1: the Centre's IT is taken over by a new
@@ -84,7 +84,7 @@ transfers-event-end =
       /srv/share/ copies the contents, /srv/share copies the directory.
     - Always do a dry run first (rsync -n, or --dry-run), especially
       with --delete, which deletes on the other side what no longer exists at the source.
-    - A dedicated key for each automated task (id_sauvegarde), not
+    - A dedicated key for each automated task (id_backup), not
       a person's key; on the server, you can restrict it further
       in authorized_keys (restrict option).
     - Never FTP or telnet: they send passwords in

@@ -10,11 +10,11 @@ chapter-keys = The keys
 
 # { $password }: the account's temporary password
 keys-email-yasmine =
-    From:    Yasmine (coordinator of the Maison des associations)
+    From:    Yasmine (coordinator of the Community Centre)
     To:      you
     Subject: Welcome to the team!
 
-    Thanks for agreeing to take over the Maison's IT! Gaspard,
+    Thanks for agreeing to take over the Centre's IT! Gaspard,
     who looked after it for ten years, has moved to Lyon; he can still be
     reached, but he can't come by anymore.
 

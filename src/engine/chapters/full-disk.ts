@@ -1,5 +1,5 @@
-// Story "L'Astreinte" — chapter "The full disk": an on-call night for Radio
-// Quartier. The server's disk is full: the stream relay (radio-stream) has
+// Story "On Call" — chapter "The full disk": an on-call night for
+// Neighbourhood Radio. The server's disk is full: the stream relay (radio-stream) has
 // been writing its log in debug mode for three days (16 GB). Erasing the
 // file frees nothing: the program keeps it open (df full, du no longer sees
 // it, lsof +L1 shows it). You empty the file (truncate) or restart, set the
@@ -13,7 +13,7 @@
 // https://man7.org/linux/man-pages/man8/lsof.8.html,
 // https://www.gnu.org/software/coreutils/manual/html_node/truncate-invocation.html
 
-import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import { d, f, name, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game, Shell } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { erases, openSet, open, ghostPlace, held } from '../open-files';
@@ -111,7 +111,7 @@ export const fullDisk: Chapter = {
   final: 'end',
   password: 'antenna-2027',
   accounts,
-  state: () => ({
+  state: (t) => ({
     systemd: newSystemd('radio', Date.UTC(2027, 7, 1, 6, 0, 0), Date.UTC(2027, 7, 15, 2, 47, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
@@ -120,14 +120,14 @@ export const fullDisk: Chapter = {
         process: [{ pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
       'radio-stream': {
-        description: 'Radio Quartier stream relay',
+        description: t('radio-unit-stream'),
         active: true,
         executable: 'stream',
         process: [{ pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: `/usr/local/bin/stream --config ${CONF}` }],
         // On start (and on reload), the relay rereads its configuration and reopens its log.
         load: (j) => {
-          j.state.fluxLevel = configLevel(j);
-          open(j, { service: 'radio-stream', pid: 1730, user: 'radio', command: 'flux', fd: 3, path: LOG }, 'radio', 'adm');
+          j.state.streamLevel = configLevel(j);
+          open(j, { service: 'radio-stream', pid: 1730, user: 'radio', command: 'stream', fd: 3, path: LOG }, 'radio', 'adm');
         },
       },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },
@@ -146,7 +146,7 @@ export const fullDisk: Chapter = {
     const o = openSet(j).find((x) => x.service === 'radio-stream');
     if (!o) return;
     const freeMem = DISK - occupation(j) * DISK;
-    const addition = Math.min(Math.max(0, freeMem), j.state.fluxLevel === 'debug' ? 400_000_000 : 40_000);
+    const addition = Math.min(Math.max(0, freeMem), j.state.streamLevel === 'debug' ? 400_000_000 : 40_000);
     o.node.size = (o.node.size ?? 0) + addition;
   },
   createWorld: (t) => {
@@ -159,7 +159,7 @@ export const fullDisk: Chapter = {
       etc: place({
         ...accountsFiles(),
         hostname: file('radio'),
-        radio: place({ 'stream.conf': file(t('full-disk-conf-flux')) }),
+        radio: place({ 'stream.conf': file(t('full-disk-conf-stream')) }),
         'logrotate.conf': file(t('full-disk-logrotate-conf')),
         'logrotate.d': place({ rsyslog: file(t('full-disk-logrotate-rsyslog')), apt: file(t('full-disk-logrotate-apt')) }),
       }),
@@ -167,7 +167,7 @@ export const fullDisk: Chapter = {
       srv: place({
         radio: place({
           shows: place(
-            { 'matinale-2027-08-14.ogg': f(t('archives-its-ogg'), { lines: true, owner: 'radio', size: 92_000_000 }) },
+            { [`${name(t, 'morning-show')}-2027-08-14.ogg`]: f(t('archives-its-ogg'), { lines: true, owner: 'radio', size: 92_000_000 }) },
             { owner: 'radio' },
           ),
         }),
@@ -185,7 +185,7 @@ export const fullDisk: Chapter = {
           'syslog.2.gz': log('', 4_100_000),
           'auth.log': log('', 2_300_000),
           radio: place(
-            { 'stream.log': log(t('full-disk-flux-log'), 16_640_000_000, 'radio') },
+            { 'stream.log': log(t('full-disk-stream-log'), 16_640_000_000, 'radio') },
             { owner: 'radio', group: 'adm', mode: 'rwxr-x---' },
           ),
         }),
@@ -202,7 +202,7 @@ export const fullDisk: Chapter = {
       id: 'culprit',
       condition: (j) =>
         j.last.commands.some((c) => ['du', 'ls', 'find'].includes(c[0])) &&
-        /\b1[5-9]G\b|flux\.log/.test(j.last.output) &&
+        /\b1[5-9]G\b|stream\.log/.test(j.last.output) &&
         /radio/.test(j.last.line),
       message: (j) => j.t('full-disk-event-culprit'),
     },
@@ -224,7 +224,7 @@ export const fullDisk: Chapter = {
     },
     {
       id: 'end',
-      condition: (j) => occupation(j) < 0.8 && !ghost(j) && enabled(j) && j.state.fluxLevel !== 'debug' && validRotation(j),
+      condition: (j) => occupation(j) < 0.8 && !ghost(j) && enabled(j) && j.state.streamLevel !== 'debug' && validRotation(j),
       message: (j) => j.t('full-disk-event-end'),
     },
   ],

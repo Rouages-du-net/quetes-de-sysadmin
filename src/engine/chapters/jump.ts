@@ -74,7 +74,7 @@ export const jump: Chapter = {
     }),
     archives: internalHost('archives', '10.20.0.12', { commands: INTERNAL_COMMANDS }),
   },
-  createWorld: (t) => homeWorld({ passwords: 'no', home: { 'email_yasmine.txt': f(t('jump-email-yasmine')), '.ssh': sshDirectory() } }),
+  createWorld: (t) => homeWorld(t, { passwords: 'no', home: { 'email_yasmine.txt': f(t('jump-email-yasmine')), '.ssh': sshDirectory() } }),
   events: [
     { id: 'key-private', condition: privateKeyOnHome, message: (j) => j.t('jump-event-key-private') },
     { id: 'to-wiki', condition: (j) => connectionsToWiki(j) > 0 && !privateKeyOnHome(j), message: (j) => j.t('jump-event-to-wiki') },

@@ -19,10 +19,10 @@ inodes-message-zoe =
 
     PS: the listening statistics are used for the monthly report to the
     town hall. We must keep at least the last 30 days."
-inodes-conf-flux =
-    # Radio Quartier: stream relay (the radio-stream service)
+inodes-conf-stream =
+    # Neighbourhood Radio: stream relay (the radio-stream service)
     port = 8000
-    mount = /direct
+    mount = /live
     logfile = /var/log/radio/stream.log
     loglevel = info
     # Show recordings

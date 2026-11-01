@@ -19,7 +19,8 @@ export interface HostingDef {
   address: string;
   // The names covered by its certificate (*.hosting.example).
   certificate: string[];
-  accounts: Record<string, string>;
+  // Each account and its password (in the game's language).
+  accounts: (t: Translate) => Record<string, string>;
   // Each account's directory, at the start.
   files: (t: Translate) => Record<string, Directory>;
 }

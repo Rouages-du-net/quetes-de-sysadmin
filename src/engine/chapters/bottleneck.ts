@@ -1,5 +1,5 @@
-// Story "L'Astreinte" — chapter "The bottleneck": every day at 4 pm,
-// Radio Quartier's live stream stutters. The machine seems slow, but the
+// Story "On Call" — chapter "The bottleneck": every day at 4 pm,
+// Neighbourhood Radio's live stream stutters. The machine seems slow, but the
 // processor does almost nothing: it waits for the disk (iowait). The day's
 // archiving (radio-archives, an rsync started by a timer) copies the
 // recordings onto the same disk as fast as it can, and the live stream's
@@ -105,13 +105,13 @@ export const bottleneck: Chapter = {
           process: [proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups')],
         },
         'radio-stream': {
-          description: 'Radio Quartier stream relay',
+          description: t('radio-unit-stream'),
           active: true,
           executable: 'stream',
           process: [proc(FLUX, 'radio', '/usr/local/bin/stream --config /etc/radio/stream.conf', 3.2)],
         },
         'radio-archives': {
-          description: "Radio Quartier: archive the day's recordings",
+          description: t('radio-unit-archives'),
           active: false,
           executable: 'rsync',
           process: [proc(ARCHIVES, 'root', copyOf(t), 6.1)],
@@ -157,7 +157,7 @@ export const bottleneck: Chapter = {
     // The archiving started at 4 pm (by its timer), and the live stream has stuttered since.
     s.services['radio-archives'].state = 'active';
     s.clock = Date.UTC(2027, 8, 20, 16, 0, 0);
-    writeLog(s, 'radio-archives.service', 'systemd', 1, "Started radio-archives.service - Radio Quartier: archive the day's recordings.");
+    writeLog(s, 'radio-archives.service', 'systemd', 1, `Started radio-archives.service - ${j.t('radio-unit-archives')}.`);
     for (let i = 0; i < 9; i++) {
       s.clock = Date.UTC(2027, 8, 20, 16, 1 + i * 1.5, 7 * i);
       writeLog(
@@ -201,10 +201,10 @@ export const bottleneck: Chapter = {
           systemd: place({
             system: place({
               'radio-stream.service': file(
-                '[Unit]\nDescription=Radio Quartier stream relay\nAfter=network.target\n\n[Service]\nUser=radio\nExecStart=/usr/local/bin/stream --config /etc/radio/stream.conf\n\n[Install]\nWantedBy=multi-user.target',
+                `[Unit]\nDescription=${t('radio-unit-stream')}\nAfter=network.target\n\n[Service]\nUser=radio\nExecStart=/usr/local/bin/stream --config /etc/radio/stream.conf\n\n[Install]\nWantedBy=multi-user.target`,
               ),
               'radio-archives.service': file(
-                `[Unit]\nDescription=Radio Quartier: archive the day's recordings\n\n[Service]\nType=oneshot\nExecStart=/bin/sh -c 'rsync -a ${path(t, '/srv/radio/recordings')}/ /srv/archives/$(date +%%F)/'`,
+                `[Unit]\nDescription=${t('radio-unit-archives')}\n\n[Service]\nType=oneshot\nExecStart=/bin/sh -c 'rsync -a ${path(t, '/srv/radio/recordings')}/ /srv/archives/$(date +%%F)/'`,
               ),
               'radio-archives.timer': file(
                 "[Unit]\nDescription=Archive the day's recordings\n\n[Timer]\nOnCalendar=*-*-* 16:00\n\n[Install]\nWantedBy=timers.target",

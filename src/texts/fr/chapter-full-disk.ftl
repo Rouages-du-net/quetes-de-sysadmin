@@ -20,14 +20,14 @@ full-disk-message-zoe =
     faudrait que ça reparte, et que ça ne se reproduise pas.
 
     Pour sudo : antenne-2027. »
-full-disk-conf-flux =
+full-disk-conf-stream =
     # Radio Quartier : relais du flux (le service radio-stream)
     port = 8000
     mount = /direct
     logfile = /var/log/radio/stream.log
     # debug : tout, à chaque paquet ; info : l'essentiel (Zoé, 12/08 : debug pour l'enquête)
     loglevel = debug
-full-disk-flux-log =
+full-disk-stream-log =
     2027-08-15 02:46:58.112 DEBUG relay: packet 98412331 from source 127.0.0.1:41022 (4096 bytes)
     2027-08-15 02:46:58.113 DEBUG relay: buffer 61% full, 12 listeners
     2027-08-15 02:46:58.113 DEBUG relay: packet 98412332 from source 127.0.0.1:41022 (4096 bytes)

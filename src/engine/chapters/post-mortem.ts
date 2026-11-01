@@ -139,7 +139,7 @@ export const postMortem: Chapter = {
         process: [{ pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
       'radio-stream': {
-        description: 'Radio Quartier stream relay',
+        description: t('radio-unit-stream'),
         active: true,
         executable: 'stream',
         process: [{ pid: 25232, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' }],
@@ -157,7 +157,7 @@ export const postMortem: Chapter = {
         executable: 'unattended-upgrade',
         oneshot: true,
       },
-      probe: { description: 'Radio Quartier probe', active: false, state: 'inactive', executable: 'probe', oneshot: true },
+      probe: { description: t('radio-unit-probe'), active: false, state: 'inactive', executable: 'probe', oneshot: true },
     }),
     process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
@@ -180,7 +180,9 @@ export const postMortem: Chapter = {
       s.clock = ms;
       writeLog(s, unit, ident, pid, message, priority, false);
     };
-    const flux = 'radio-stream.service';
+    const relay = 'radio-stream.service';
+    const relayName = j.t('radio-unit-stream');
+    const probeName = j.t('radio-unit-probe');
     const sudo = (ms: number, pid: number, account: string, command: string) =>
       line(
         ms,
@@ -200,29 +202,29 @@ export const postMortem: Chapter = {
       1,
       'Starting apt-daily-upgrade.service - Daily apt upgrade and clean activities...',
     );
-    line(NIGHT(2, 13, 5), flux, 'systemd', 1, 'Stopping radio-stream.service - Radio Quartier stream relay...');
-    line(NIGHT(2, 13, 5), flux, 'systemd', 1, 'Stopped radio-stream.service - Radio Quartier stream relay.');
-    line(NIGHT(2, 13, 5), flux, 'systemd', 1, 'Started radio-stream.service - Radio Quartier stream relay.');
-    line(NIGHT(2, 13, 6), flux, 'stream', 24410, "/etc/radio/stream.conf:7: unknown option 'bitrate_max'", 3);
-    line(NIGHT(2, 13, 6), flux, 'systemd', 1, 'radio-stream.service: Main process exited, code=exited, status=1/FAILURE', 4);
-    line(NIGHT(2, 13, 6), flux, 'systemd', 1, "radio-stream.service: Failed with result 'exit-code'.", 4);
+    line(NIGHT(2, 13, 5), relay, 'systemd', 1, `Stopping radio-stream.service - ${relayName}...`);
+    line(NIGHT(2, 13, 5), relay, 'systemd', 1, `Stopped radio-stream.service - ${relayName}.`);
+    line(NIGHT(2, 13, 5), relay, 'systemd', 1, `Started radio-stream.service - ${relayName}.`);
+    line(NIGHT(2, 13, 6), relay, 'stream', 24410, "/etc/radio/stream.conf:7: unknown option 'bitrate_max'", 3);
+    line(NIGHT(2, 13, 6), relay, 'systemd', 1, 'radio-stream.service: Main process exited, code=exited, status=1/FAILURE', 4);
+    line(NIGHT(2, 13, 6), relay, 'systemd', 1, "radio-stream.service: Failed with result 'exit-code'.", 4);
     line(NIGHT(2, 13, 20), 'apt-daily-upgrade.service', 'systemd', 1, 'apt-daily-upgrade.service: Deactivated successfully.');
     line(NIGHT(2, 13, 20), 'apt-daily-upgrade.service', 'systemd', 1, 'Finished apt-daily-upgrade.service - Daily apt upgrade and clean activities.');
     // The previous chapter's probe, every 5 minutes: it alerts from 2:15 to 2:55.
     const alerts: string[] = [];
     for (let m = 15; m <= 55; m += 5) {
-      line(NIGHT(2, m), 'probe.service', 'systemd', 1, 'Starting probe.service - Sonde de Radio Quartier...');
-      line(NIGHT(2, m, 1), 'probe.service', 'systemd', 1, 'Finished probe.service - Sonde de Radio Quartier.');
+      line(NIGHT(2, m), 'probe.service', 'systemd', 1, `Starting probe.service - ${probeName}...`);
+      line(NIGHT(2, m, 1), 'probe.service', 'systemd', 1, `Finished probe.service - ${probeName}.`);
       alerts.push(
-        `From root@radio Sun Sep 12 02:${String(m).padStart(2, '0')}:01 2027\nTo: root\nSubject: Alerte-radio\nFrom: root <root@radio>\n\nconnect to address localhost and port 8000: Connection refused\nHTTP CRITICAL - Unable to open TCP socket\n`,
+        `From root@radio Sun Sep 12 02:${String(m).padStart(2, '0')}:01 2027\nTo: root\nSubject: ${j.t('radio-alert-subject')}\nFrom: root <root@radio>\n\nconnect to address localhost and port 8000: Connection refused\nHTTP CRITICAL - Unable to open TCP socket\n`,
       );
       if (m === 40) line(NIGHT(2, 41, 12), 'ssh.service', 'sshd', 25102, 'Accepted publickey for theo from 203.0.113.45 port 52114 ssh2');
       if (m === 40) sudo(NIGHT(2, 44, 30), 25140, 'theo', '/usr/bin/journalctl -u radio-stream');
       if (m === 50) sudo(NIGHT(2, 52, 10), 25188, 'theo', '/usr/bin/nano /etc/radio/stream.conf');
     }
     sudo(NIGHT(2, 58, 3), 25230, 'theo', '/usr/bin/systemctl restart radio-stream');
-    line(NIGHT(2, 58, 3), flux, 'systemd', 1, 'Starting radio-stream.service - Radio Quartier stream relay...');
-    line(NIGHT(2, 58, 4), flux, 'systemd', 1, 'Started radio-stream.service - Radio Quartier stream relay.');
+    line(NIGHT(2, 58, 3), relay, 'systemd', 1, `Starting radio-stream.service - ${relayName}...`);
+    line(NIGHT(2, 58, 4), relay, 'systemd', 1, `Started radio-stream.service - ${relayName}.`);
     line(NIGHT(3, 5, 40), 'ssh.service', 'sshd', 25102, 'Disconnected from user theo 203.0.113.45 port 52114');
     line(NOW - 60_000, 'ssh.service', 'sshd', 26011, `Accepted publickey for ${j.player} from 198.51.100.23 port 40388 ssh2`);
     s.services['radio-stream'].since = NIGHT(2, 58, 4);
@@ -258,7 +260,7 @@ export const postMortem: Chapter = {
         ...accountsFiles(),
         hostname: file('radio'),
         aliases: file('# See man 5 aliases for format\npostmaster:    root\nroot: zoe, theo'),
-        radio: place({ 'stream.conf': file(t('post-mortem-conf-flux')) }),
+        radio: place({ 'stream.conf': file(t('post-mortem-conf-stream')) }),
         apt: place({ 'apt.conf.d': place({ '50unattended-upgrades': file(t('post-mortem-unattended-conf')) }) }),
       }),
       home: place({

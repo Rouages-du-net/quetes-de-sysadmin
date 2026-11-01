@@ -20,3 +20,6 @@ password-radish-2027 = radish-2027
 password-bee-2027 = bee-2027
 password-flour-2028 = flour-2028
 password-film-2027 = film-2027
+
+## The Community Centre: the account at the web host
+password-Kp7-hosting-2028 = Kp7-hosting-2028

@@ -11,7 +11,7 @@ chapter-clock = The clock
 clock-message-zoe =
     A message from Zoé (Monday, 9:05 a.m.):
 
-    "The morning show ("matinale", 6 a.m. to 9 a.m.) was only recorded
+    "The morning show ("morning-show", 6 a.m. to 9 a.m.) was only recorded
     from 8:09 on: we lost two hours of broadcast! It's the cron job of
     the radio account that starts the recording (sudo crontab -u radio
     -l), and it hasn't changed.
@@ -57,15 +57,15 @@ clock-script-save =
     # record SHOW DURATION: records the live stream for DURATION minutes.
     # The time in the log is the machine's time (date).
     echo "$(date '+%F %T') $1: start ($2 min)" >> /var/log/radio/record.log
-    exec /usr/local/bin/stream-record --mount /direct --minutes "$2" --out "/srv/radio/shows/$1-$(date +%F).ogg"
+    exec /usr/local/bin/stream-record --mount /live --minutes "$2" --out "/srv/radio/shows/$1-$(date +%F).ogg"
 clock-journal-save =
-    2027-08-26 06:00:01 matinale: start (180 min)
-    2027-08-26 23:00:01 nuit: start (240 min)
-    2027-08-27 06:00:01 matinale: start (180 min)
-    2027-08-27 23:00:01 nuit: start (240 min)
-    2027-08-28 23:00:01 nuit: start (240 min)
-    2027-08-29 23:00:01 nuit: start (240 min)
-    2027-08-30 06:00:01 matinale: start (180 min)
+    2027-08-26 06:00:01 morning-show: start (180 min)
+    2027-08-26 23:00:01 night-show: start (240 min)
+    2027-08-27 06:00:01 morning-show: start (180 min)
+    2027-08-27 23:00:01 night-show: start (240 min)
+    2027-08-28 23:00:01 night-show: start (240 min)
+    2027-08-29 23:00:01 night-show: start (240 min)
+    2027-08-30 06:00:01 morning-show: start (180 min)
 
 ## Events
 

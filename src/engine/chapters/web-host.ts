@@ -14,13 +14,16 @@
 // Sources: https://man.openbsd.org/sftp, https://lftp.yar.ru/lftp-man.html,
 // https://www.rfc-editor.org/rfc/rfc4217
 
-import { d, f, type Chapter, type Directory } from '../world';
+import { d, f, name, password, type Chapter, type Directory } from '../world';
 import type { Game, Shell } from '../shell';
 import { filesFor, hosting, HOSTINGS, node } from '../web-host';
 import { loadSshd, homeAccounts, sshDirectory, homeState, internalHost, M, homeWorld, PASSWORD, homePlan } from './community-centre';
 
-export const ACCOUNT = 'maisonasso';
-export const FTP_PASSWORD = 'Kp7-hebergement-2028';
+// The Centre's account at the web host, and its password (in the language: name(), password()).
+export const ACCOUNT = 'commcentre';
+export const FTP_PASSWORD = 'Kp7-hosting-2028';
+const PRICES = 'prices-2025.html';
+const account = (j: Game) => name(j.t, ACCOUNT);
 const SITE = '/srv/wiki/site';
 
 const STYLE = `body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 40rem; }
@@ -31,17 +34,17 @@ const LOGO = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circl
 const page = (t: (id: string) => string, id: string) => f(t(id), { lines: true, owner: 'www-data', mode: 'rw-r--r--' });
 
 // The Centre's hosting: the old site, online since 2025.
-HOSTINGS.hebergeur = {
+HOSTINGS.centre = {
   names: ['ftp.hosting.example', 'hosting.example', 'ftp.community.example'],
   address: '203.0.113.80',
   certificate: ['*.hosting.example', 'hosting.example'],
-  accounts: { [ACCOUNT]: FTP_PASSWORD },
+  accounts: (t) => ({ [name(t, ACCOUNT)]: password(t, FTP_PASSWORD) }),
   files: (t) => ({
-    [ACCOUNT]: d({
+    [name(t, ACCOUNT)]: d({
       public_html: d({
         'index.html': f(t('web-host-old-index'), { lines: true }),
         'agenda.html': f(t('web-host-old-agenda'), { lines: true }),
-        'tarifs-2025.html': f(t('web-host-old-prices'), { lines: true }),
+        [name(t, PRICES)]: f(t('web-host-old-prices'), { lines: true }),
       }),
       tmp: d({}),
     }),
@@ -67,11 +70,11 @@ function wikiSite(j: Game): Record<string, string> {
 
 const inLine = (j: Game) => {
   const p = workstation(j);
-  return p ? hosting(p, 'hebergeur') : null;
+  return p ? hosting(p, 'centre') : null;
 };
 const htmlPublic = (j: Game) => {
   const h = inLine(j);
-  return h ? (filesFor(h.roots[ACCOUNT], '/public_html') ?? {}) : {};
+  return h ? (filesFor(h.roots[account(j)], '/public_html') ?? {}) : {};
 };
 const published = (j: Game) => {
   const online = htmlPublic(j);
@@ -111,7 +114,7 @@ export const host: Chapter = {
                 {
                   'index.html': page(t, 'web-host-index'),
                   'agenda.html': page(t, 'web-host-agenda'),
-                  'adhesion.html': page(t, 'web-host-membership'),
+                  'membership.html': page(t, 'web-host-membership'),
                   'style.css': f(STYLE, { lines: true, owner: 'www-data' }),
                   images: d({ 'logo.svg': f(LOGO, { lines: true, owner: 'www-data' }) }, undefined, { owner: 'www-data' }),
                 },
@@ -127,11 +130,11 @@ export const host: Chapter = {
     }),
   },
   createWorld: (t) =>
-    homeWorld({
+    homeWorld(t, {
       passwords: 'no',
       home: {
         '.ssh': sshDirectory(),
-        'email_yasmine.txt': f(t('web-host-email-yasmine', { account: ACCOUNT, password: FTP_PASSWORD })),
+        'email_yasmine.txt': f(t('web-host-email-yasmine', { account: name(t, ACCOUNT), password: password(t, FTP_PASSWORD) })),
         'email_hosting.txt': f(t('web-host-email-host'), { lines: true }),
         'notes-gaspard.txt': f(t('web-host-notes-gaspard'), { lines: true }),
       },
@@ -146,20 +149,21 @@ export const host: Chapter = {
     },
     {
       id: 'bad-direction',
-      condition: (j) => !!workstation(j)?.read('~/site/tarifs-2025.html') || !!workstation(j)?.read('~/public_html/tarifs-2025.html'),
+      condition: (j) =>
+        !!workstation(j)?.read(`~/site/${name(j.t, PRICES)}`) || !!workstation(j)?.read(`~/public_html/${name(j.t, PRICES)}`),
       message: (j) => j.t('web-host-event-bad-direction'),
     },
     {
       id: 'bad-directory',
       condition: (j) => {
         const h = inLine(j);
-        return !!h && Object.keys(h.roots[ACCOUNT].children).some((k) => !['public_html', 'tmp'].includes(k)) && !published(j);
+        return !!h && Object.keys(h.roots[account(j)].children).some((k) => !['public_html', 'tmp'].includes(k)) && !published(j);
       },
       message: (j) => j.t('web-host-event-bad-directory'),
     },
     {
       id: 'rest',
-      condition: (j) => published(j) && !!node(inLine(j)!.roots[ACCOUNT], '/public_html/tarifs-2025.html'),
+      condition: (j) => published(j) && !!node(inLine(j)!.roots[account(j)], `/public_html/${name(j.t, PRICES)}`),
       message: (j) => j.t('web-host-event-rest'),
     },
     { id: 'end', condition: (j) => exact(j) && !!lastSend(j)?.tls && !!lastSend(j)?.checked, message: (j) => j.t('web-host-event-end') },

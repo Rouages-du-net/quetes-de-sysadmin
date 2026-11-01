@@ -19,7 +19,7 @@ inodes-message-zoe =
 
     PS : les statistiques d'écoute servent au rapport mensuel pour la
     mairie. Il faut garder au moins les 30 derniers jours. »
-inodes-conf-flux =
+inodes-conf-stream =
     # Radio Quartier : relais du flux (le service radio-stream)
     port = 8000
     mount = /direct

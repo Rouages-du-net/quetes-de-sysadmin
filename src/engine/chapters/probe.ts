@@ -24,12 +24,12 @@ const DATA = '/srv/radio';
 const THUMBNAILS = '/srv/radio/podcasts/thumbnails';
 const MINUTE = 60_000;
 const INODES = 16_384;
-// Lundi 6 septembre 2027, 18 h 30.
+// Monday 6 September 2027, 6:30 p.m.
 const NOW = Date.UTC(2027, 8, 6, 18, 30, 0);
 // The drill's two failures, in minutes after midnight, and the time allowed to react.
-const RELAY_FAILURE = 70; // 1 h 10
+const RELAY_FAILURE = 70; // 1:10 a.m.
 const RELAY_DELAY = 15;
-const INODES_FAILURE = 100; // 1 h 40 : l'import commence
+const INODES_FAILURE = 100; // 1:40 a.m.: the import starts
 const BY_MINUTE = 120;
 
 const accounts = (): Accounts => ({
@@ -135,7 +135,7 @@ function night(j: Game): string {
           v.children[`${name(j.t, 'thumbnail')}-${String(++number).padStart(5, '0')}.jpg`] = { type: 'file', content: '', size: 0, owner: 'radio' };
       if (free <= BY_MINUTE) {
         fullInodes = t;
-        writeLog(s, 'radio-stream.service', 'stream', 1730, `record: cannot create ${path(j.t, '/srv/radio/shows')}/nuit.ogg: No space left on device`, 3, false);
+        writeLog(s, 'radio-stream.service', 'stream', 1730, `record: cannot create ${path(j.t, '/srv/radio/shows')}/${name(j.t, 'night-show')}.ogg: No space left on device`, 3, false);
       }
     }
     // Zoé stops the import and deletes the extra thumbnails, 10 minutes after the alert.
@@ -218,7 +218,7 @@ export const probe: Chapter = {
   final: 'end',
   password: 'antenna-2027',
   accounts,
-  state: () => ({
+  state: (t) => ({
     systemd: (() => {
       const s = newSystemd('radio', Date.UTC(2027, 7, 30, 9, 30, 0), NOW, {
         ssh: {
@@ -228,7 +228,7 @@ export const probe: Chapter = {
           process: [{ pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
         },
         'radio-stream': {
-          description: 'Radio Quartier stream relay',
+          description: t('radio-unit-stream'),
           active: true,
           executable: 'stream',
           process: [{ pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' }],
@@ -262,8 +262,8 @@ export const probe: Chapter = {
       { pid: 611, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
       { pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
-    // The relay serves the live stream on port 8000.
-    apps: { '127.0.0.1:8000': { service: 'radio-stream', pages: { '/live': 'OggS', '/': 'Radio Quartier relay' } } },
+    // The relay serves the live stream on port 8000 (/live in English).
+    apps: { '127.0.0.1:8000': { service: 'radio-stream', pages: { [`/${name(t, 'live')}`]: 'OggS', '/': t('radio-relay-page') } } },
     listening: [{ proto: 'tcp', address: '0.0.0.0', port: 8000, process: 'stream', pid: 1730 }],
     mounts: [
       { path: '/', capacity: 20_000_000_000, name: '/dev/vda1', system: 'ext4', inodes: 1_310_720, inodesBase: 61_204 },
@@ -297,8 +297,8 @@ export const probe: Chapter = {
             'lost+found': place({}, { owner: 'root', mode: 'rwx------' }),
             shows: place(
               {
-                'matinale-2027-09-06.ogg': f('', { owner: 'radio', size: 92_000_000 }),
-                'nuit-2027-09-06.ogg': f('', { owner: 'radio', size: 48_000_000 }),
+                [`${name(t, 'morning-show')}-2027-09-06.ogg`]: f('', { owner: 'radio', size: 92_000_000 }),
+                [`${name(t, 'night-show')}-2027-09-06.ogg`]: f('', { owner: 'radio', size: 48_000_000 }),
               },
               radio,
             ),

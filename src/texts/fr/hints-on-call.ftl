@@ -79,7 +79,7 @@ hint-clock-end =
 
 hint-probe-end =
     .lead = La sonde de Zoé (/usr/local/bin/probe) a trois « À FAIRE » : surveiller /srv/radio, place ET inodes (man check_disk : -W, -K), vérifier que le direct répond (man check_http, port 8000, /direct), et la lancer toutes les 5 minutes (un timer systemd ou cron). Des seuils trop serrés donnent des alertes pour rien.
-    .solution = Dans sudo nano /usr/local/bin/probe, ajouter : $P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERTE et $P/check_http -H localhost -p 8000 -u /direct | grep -v " OK" | $ALERTE ; puis sudo crontab -e : */5 * * * * /usr/local/bin/probe (ou probe.service + probe.timer avec OnCalendar=*:0/5, et sudo systemctl enable --now probe.timer).
+    .solution = Dans sudo nano /usr/local/bin/probe, ajouter : $P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERT et $P/check_http -H localhost -p 8000 -u /direct | grep -v " OK" | $ALERT ; puis sudo crontab -e : */5 * * * * /usr/local/bin/probe (ou probe.service + probe.timer avec OnCalendar=*:0/5, et sudo systemctl enable --now probe.timer).
 
 ## Chapitre 6 — Le post-mortem
 

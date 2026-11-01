@@ -10,7 +10,7 @@ import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
 import { LANGUAGES, translator, typography } from '../src/texts';
-import { clean } from '../src/engine/world';
+import { clean, name } from '../src/engine/world';
 import { inLanguage, machinesInLanguage } from './names';
 import { withoutColours } from '../src/engine/colours';
 
@@ -21,6 +21,8 @@ for (const language of LANGUAGES)
     const reference = language === 'fr';
     // A line written with the French names, in the game's language.
     const L = (line: string) => inLanguage(translator(language), line);
+    // A single name of the world, in the game's language (convert → convertir in French).
+    const N = (word: string) => name(translator(language), word);
     // An expected text, checked only in the reference language.
     const contains = (all: string, text: string) => {
       if (reference) expect(all).toContain(text);
@@ -1484,7 +1486,7 @@ for (const language of LANGUAGES)
         expect(all).toContain('Active: failed (Result: oom-kill)');
         expect(all).toContain('[Sun Aug 22 04:12:30 2027] Out of memory: Killed process 2601 (node)');
         expect(all).toMatch(/^Mem: +2\.0Gi +\d+Mi/m);
-        expect(all).toMatch(/radio +2411 +2305 .*\[convertir\] <defunct>/);
+        expect(all).toMatch(new RegExp(`radio +2411 +2305 .*\\[${N('convert')}\\] <defunct>`));
         contains(all, "l'OOM killer");
         s.saveEdition(`[Service]\nMemoryMax=600M\nRestart=on-failure\n${s.edition!.text}`);
         s.quitEdition();
@@ -1520,7 +1522,7 @@ for (const language of LANGUAGES)
 
       it('false leads: kill -9 on a zombie, restarting without a limit, a limit without restart', () => {
         const { s, tout: all } = play('memory', ['sudo kill -9 2411', 'antenna-2027', 'ps aux', 'sudo systemctl start radio-playlist']);
-        expect(all).toContain('[convertir] <defunct>');
+        expect(all).toContain(`[${N('convert')}] <defunct>`);
         contains(all, 'kill ne fait rien à un zombie');
         let outputs = '';
         for (let i = 0; i < 16; i++) outputs += s.execute('free -m');
@@ -1558,7 +1560,7 @@ for (const language of LANGUAGES)
         expect(all).toMatch(/\/dev\/vdb1 +65536 +65536 +0 +100% \/srv\/radio/);
         expect(all).toMatch(/^65519\t\/srv\/radio\/stats$/m);
         contains(all, "l'enregistrement de nuit a repris");
-        expect(s.find(L('/srv/radio/shows/nuit-2027-08-29.ogg'))).toBeTruthy();
+        expect(s.find(`${L('/srv/radio/shows')}/${N('night-show')}-2027-08-29.ogg`)).toBeTruthy();
         expect(s.finished).toBe(false);
         const night = crontab(s, 'sudo crontab -e', '15 4 * * * find /srv/radio/stats -type f -mtime +30 -delete');
         contains(night, 'Une journée et une nuit passent');
@@ -1569,13 +1571,13 @@ for (const language of LANGUAGES)
 
       it('another solution: the radio account’s cron job also does the big clean-up', { timeout: 30_000 }, () => {
         const { s } = play('inodes', ['sudo df -i /srv/radio', 'antenna-2027']);
-        const night = crontab(s, 'sudo crontab -u radio -e', '0 3 * * * find /srv/radio/stats -name "ecoute-*" -mtime +45 -delete');
+        const night = crontab(s, 'sudo crontab -u radio -e', `0 3 * * * find /srv/radio/stats -name "${N('listen')}-*" -mtime +45 -delete`);
         contains(night, 'Une journée et une nuit passent');
         expect(s.finished).toBe(true);
       });
 
       it('false leads: rm *, a crontab without the rights, a job that erases everything', { timeout: 30_000 }, () => {
-        const { s, tout: all } = play('inodes', ['sudo touch /srv/radio/essai', 'antenna-2027', 'cd /srv/radio/stats', 'sudo rm *']);
+        const { s, tout: all } = play('inodes', ['sudo touch /srv/radio/test', 'antenna-2027', 'cd /srv/radio/stats', 'sudo rm *']);
         if (reference) expect(all).toContain('Aucun espace disponible sur le périphérique');
         if (reference) expect(all).toContain("sudo: impossible d'exécuter /usr/bin/rm: Liste d'arguments trop longue");
         contains(all, 'le shell remplace * par tous les noms du lieu');
@@ -1663,11 +1665,12 @@ for (const language of LANGUAGES)
         s.saveEdition(change(s.edition!.text));
         return s.quitEdition();
       };
-      const CONTROLS =
-        '\n$P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERTE\n$P/check_http -H localhost -p 8000 -u /live | grep -v " OK" | $ALERTE\n';
-      const SERVICE = '[Unit]\nDescription=Sonde de Radio Quartier\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/probe\n';
+      // The relay's web address: /live in English, /direct in French.
+      const LIVE = `/${N('live')}`;
+      const CONTROLS = `\n$P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERT\n$P/check_http -H localhost -p 8000 -u ${LIVE} | grep -v " OK" | $ALERT\n`;
+      const SERVICE = '[Unit]\nDescription=Neighbourhood Radio probe\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/probe\n';
       const TIMER = (trigger: string) =>
-        `[Unit]\nDescription=Sonde toutes les 5 minutes\n\n[Timer]\n${trigger}\n\n[Install]\nWantedBy=timers.target\n`;
+        `[Unit]\nDescription=Probe every 5 minutes\n\n[Timer]\n${trigger}\n\n[Install]\nWantedBy=timers.target\n`;
 
       it('solution: the plugins, the probe completed, a systemd timer, and the drill night', { timeout: 30_000 }, () => {
         const { s, tout: all } = play('probe', [
@@ -1675,8 +1678,8 @@ for (const language of LANGUAGES)
           '/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio',
           "systemd-analyze calendar '*:0/5'",
         ]);
-        // A web address (/direct), not a path of the world: typed as is in every language.
-        expect(s.execute('/usr/lib/nagios/plugins/check_http -H localhost -p 8000 -u /live')).toContain('HTTP OK: HTTP/1.1 200 OK');
+        // A web address, not a path of the world: given in the language (LIVE), typed as is.
+        expect(s.execute(`/usr/lib/nagios/plugins/check_http -H localhost -p 8000 -u ${LIVE}`)).toContain('HTTP OK: HTTP/1.1 200 OK');
         if (reference) expect(all).toContain('check_disk : commande introuvable');
         contains(all, 'ne sont pas dans le PATH');
         expect(all).toContain('DISK OK - free space: /srv/radio 122 MB (47% inode=99%);');
@@ -1705,7 +1708,7 @@ for (const language of LANGUAGES)
           '/usr/local/bin/probe',
           (t) =>
             t.replace('$P/check_disk -w 20% -c 10% -p /', '$P/check_disk -w 20% -c 10% -W 20% -K 10% -p / -p /srv/radio') +
-            '\n$P/check_procs -C stream -c 1: | grep -v " OK" | $ALERTE\n',
+            '\n$P/check_procs -C stream -c 1: | grep -v " OK" | $ALERT\n',
         );
         s.execute('sudo crontab -e');
         s.saveEdition(`${s.edition!.text}*/5 * * * * /usr/local/bin/probe\n`);

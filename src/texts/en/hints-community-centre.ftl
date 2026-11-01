@@ -35,7 +35,7 @@ hint-jump-end =
 
 hint-tunnel-approved =
     .lead = The admin page only listens on 127.0.0.1:8080 OF THE WIKI: an ssh tunnel carries a port of your workstation all the way there (man ssh, -L, and -f -N so it stays open). Then curl, from your workstation, reads the page and its addresses.
-    .solution = On your workstation: ssh -f -N -L 8080:localhost:8080 wiki (or with -J community), curl localhost:8080/admin, then curl localhost:8080/admin/valider/samir and curl localhost:8080/admin/valider/lea (not promo-casino).
+    .solution = On your workstation: ssh -f -N -L 8080:localhost:8080 wiki (or with -J community), curl localhost:8080/admin, then curl localhost:8080/admin/approve/samir and curl localhost:8080/admin/approve/lea (not promo-casino).
 hint-tunnel-end =
     .lead = The tunnel is still running in the background on your workstation: find its process, then stop it.
     .solution = On your workstation: ps (the ssh -f -N -L… line), then kill followed by its PID.
@@ -56,4 +56,4 @@ hint-transfers-end =
 
 hint-web-host-end =
     .lead = First bring /srv/wiki/site back to your workstation, over SSH (man sftp, get -r). Then publish it with lftp under the name the host's certificate covers (email_hosting.txt, on community), into public_html: mirror -R sends to the hosting, --delete removes what is no longer in the site (man lftp).
-    .solution = On your workstation: sftp wiki, get -r /srv/wiki/site, bye; then lftp -u maisonasso ftp.hosting.example (password in email_yasmine.txt, on community), mirror -R --delete site public_html, bye.
+    .solution = On your workstation: sftp wiki, get -r /srv/wiki/site, bye; then lftp -u commcentre ftp.hosting.example (password in email_yasmine.txt, on community), mirror -R --delete site public_html, bye.

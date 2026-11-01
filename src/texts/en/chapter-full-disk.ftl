@@ -8,7 +8,7 @@ chapter-full-disk = The full disk
 ## Files
 
 full-disk-message-zoe =
-    A message from Zoé, tech volunteer at Radio Quartier (2:40 am):
+    A message from Zoé, tech volunteer at Neighbourhood Radio (2:40 am):
 
     "Sorry to wake you up on your first on-call shift… The automatic
     recording of the night show just failed: "No space left on
@@ -20,22 +20,22 @@ full-disk-message-zoe =
     get going again, and it mustn't happen again.
 
     For sudo: antenna-2027."
-full-disk-conf-flux =
-    # Radio Quartier: stream relay (the radio-stream service)
+full-disk-conf-stream =
+    # Neighbourhood Radio: stream relay (the radio-stream service)
     port = 8000
-    mount = /direct
+    mount = /live
     logfile = /var/log/radio/stream.log
     # debug: everything, on every packet; info: the essentials (Zoé, 12/08: debug for the investigation)
     loglevel = debug
-full-disk-flux-log =
+full-disk-stream-log =
     2027-08-15 02:46:58.112 DEBUG relay: packet 98412331 from source 127.0.0.1:41022 (4096 bytes)
     2027-08-15 02:46:58.113 DEBUG relay: buffer 61% full, 12 listeners
     2027-08-15 02:46:58.113 DEBUG relay: packet 98412332 from source 127.0.0.1:41022 (4096 bytes)
     2027-08-15 02:46:58.114 DEBUG relay: sent 4096 bytes to 12 listeners
     2027-08-15 02:46:58.114 DEBUG relay: packet 98412333 from source 127.0.0.1:41022 (4096 bytes)
-    2027-08-15 02:46:58.115 ERROR record: cannot write /srv/radio/shows/nuit-2027-08-15.ogg: No space left on device
+    2027-08-15 02:46:58.115 ERROR record: cannot write /srv/radio/shows/night-show-2027-08-15.ogg: No space left on device
 full-disk-syslog =
-    Aug 15 02:40:01 radio CRON[24117]: (radio) CMD (/usr/local/bin/record nuit)
+    Aug 15 02:40:01 radio CRON[24117]: (radio) CMD (/usr/local/bin/record night-show)
     Aug 15 02:40:03 radio record[24118]: write failed: No space left on device
 full-disk-logrotate-conf =
     # see "man logrotate" for details

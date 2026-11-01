@@ -52,10 +52,10 @@ post-mortem-template =
 
     ## Actions
     (to be completed: one "-" line per action)
-post-mortem-conf-flux =
-    # Radio Quartier: stream relay (the radio-stream service)
+post-mortem-conf-stream =
+    # Neighbourhood Radio: stream relay (the radio-stream service)
     port = 8000
-    mount = /direct
+    mount = /live
     logfile = /var/log/radio/stream.log
     loglevel = info
     record_dir = /srv/radio/shows

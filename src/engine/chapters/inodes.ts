@@ -13,10 +13,11 @@
 // https://www.gnu.org/software/findutils/manual/html_mono/find.html (-mtime, -delete),
 // https://man7.org/linux/man-pages/man2/execve.2.html (E2BIG, ARG_MAX)
 
-import { path, d, f, accountsFiles, type Chapter, type Accounts, type Directory, type Rights, type File } from '../world';
+import { path, name, d, f, accountsFiles, type Chapter, type Accounts, type Directory, type Rights, type File } from '../world';
 import type { Game, Shell } from '../shell';
 import { writeLog, newSystemd, systemd } from '../systemd';
 import { pass } from '../cron';
+import type { Translate } from '../../texts';
 
 const M = '/home/you';
 const DATA = '/srv/radio';
@@ -27,9 +28,8 @@ const INODES = 65_536;
 const NOW = Date.UTC(2027, 7, 29, 3, 20, 0);
 // The statistics start on 1 March: one file per listen, about 360 a day.
 const START = Date.UTC(2027, 2, 1, 0, 0, 0);
-const RECORD = '/srv/radio/shows/nuit-2027-08-29.ogg';
-// Tonight's recording, in the language (/srv/radio/shows/… in English).
-const record = (j: Game) => path(j.t, RECORD);
+// Tonight's recording, in the language (/srv/radio/shows/night-show-2027-08-29.ogg in English).
+const record = (j: Game) => `${path(j.t, '/srv/radio/shows')}/${name(j.t, 'night-show')}-2027-08-29.ogg`;
 
 const accounts = (): Accounts => ({
   users: {
@@ -55,12 +55,12 @@ const inodesPercent = (j: Game) => Math.ceil((100 * shell(j).usedInodes(volume(j
 const dayFor = (ms: number) => Math.floor(ms / DAY);
 const twoDigits = (n: number) => String(n).padStart(2, '0');
 
-// A statistics file's name: the date of the listen, and a number.
-function statName(ms: number, n: number): string {
+// A statistics file's name: the date of the listen, and a number (listen-… in English).
+function statName(t: Translate, ms: number, n: number): string {
   const dt = new Date(ms);
   const date = `${dt.getUTCFullYear()}-${twoDigits(dt.getUTCMonth() + 1)}-${twoDigits(dt.getUTCDate())}`;
   const timeOfDay = `${twoDigits(dt.getUTCHours())}-${twoDigits(dt.getUTCMinutes())}-${twoDigits(dt.getUTCSeconds())}`;
-  return `ecoute-${date}T${timeOfDay}-${String(n).padStart(5, '0')}.json`;
+  return `${name(t, 'listen')}-${date}T${timeOfDay}-${String(n).padStart(5, '0')}.json`;
 }
 
 const stat = (ms: number): File => ({
@@ -118,7 +118,7 @@ function writeAsRadio(j: Game, path: string, n: File): boolean {
 // The relay records a listen; the counter of files written per day follows.
 function noteListening(j: Game, ms: number): boolean {
   const n = (j.state.statNumber = (j.state.statNumber ?? 0) + 1);
-  const ok = writeAsRadio(j, `${STATS}/${statName(ms, n)}`, stat(ms));
+  const ok = writeAsRadio(j, `${STATS}/${statName(j.t, ms, n)}`, stat(ms));
   if (ok) j.state.statsWritten[dayFor(ms)] = (j.state.statsWritten[dayFor(ms)] ?? 0) + 1;
   return ok;
 }
@@ -140,7 +140,7 @@ function night(j: Game): string {
   for (let k = 0; k < written; k++) {
     const ms = s.clock + Math.floor((k * (nextDay + 3 * 3600_000 - s.clock)) / 360);
     const n = (j.state.statNumber = (j.state.statNumber ?? 0) + 1);
-    (place as Directory).children[statName(ms, n)] = stat(ms);
+    (place as Directory).children[statName(j.t, ms, n)] = stat(ms);
     j.state.statsWritten[dayFor(ms)] = (j.state.statsWritten[dayFor(ms)] ?? 0) + 1;
   }
   // The night: cron runs the scheduled jobs until 6:00.
@@ -205,7 +205,7 @@ export const inodes: Chapter = {
   final: 'end',
   password: 'antenna-2027',
   accounts,
-  state: () => ({
+  state: (t) => ({
     systemd: newSystemd('radio', Date.UTC(2027, 7, 1, 6, 0, 0), NOW, {
       ssh: {
         description: 'OpenBSD Secure Shell server',
@@ -214,7 +214,7 @@ export const inodes: Chapter = {
         process: [{ pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
       'radio-stream': {
-        description: 'Radio Quartier stream relay',
+        description: t('radio-unit-stream'),
         active: true,
         executable: 'stream',
         process: [{ pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' }],
@@ -249,12 +249,12 @@ export const inodes: Chapter = {
     for (let k = 0; k < rest; k++) {
       const ms = START + Math.floor((k * DAY) / byPlannedDay);
       const n = (j.state.statNumber = (j.state.statNumber ?? 0) + 1);
-      place.children[statName(ms, n)] = stat(ms);
+      place.children[statName(j.t, ms, n)] = stat(ms);
       j.state.statsWritten[dayFor(ms)] = (j.state.statsWritten[dayFor(ms)] ?? 0) + 1;
     }
     // Tonight, nothing can be written on the volume any more.
     s.clock = NOW - 40 * 60_000;
-    writeLog(s, 'radio-stream.service', 'stream', 1730, `stats: cannot create ${STATS}/${statName(s.clock, 99_001)}: No space left on device`, 3);
+    writeLog(s, 'radio-stream.service', 'stream', 1730, `stats: cannot create ${STATS}/${statName(j.t, s.clock, 99_001)}: No space left on device`, 3);
     s.clock = NOW - 20 * 60_000;
     writeLog(s, 'radio-stream.service', 'stream', 1730, `record: cannot create ${record(j)}: No space left on device`, 3);
     writeLog(
@@ -262,7 +262,7 @@ export const inodes: Chapter = {
       'radio-stream.service',
       'stream',
       1730,
-      `stats: cannot create ${STATS}/${statName(s.clock, 99_002)}: No space left on device`,
+      `stats: cannot create ${STATS}/${statName(j.t, s.clock, 99_002)}: No space left on device`,
       3,
       false,
     );
@@ -289,7 +289,7 @@ export const inodes: Chapter = {
     const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
     const radio: Rights = { owner: 'radio' };
     return place({
-      etc: place({ ...accountsFiles(), hostname: file('radio'), radio: place({ 'stream.conf': file(t('inodes-conf-flux')) }) }),
+      etc: place({ ...accountsFiles(), hostname: file('radio'), radio: place({ 'stream.conf': file(t('inodes-conf-stream')) }) }),
       home: place({ you: d({ 'message_from_zoe.txt': f(t('inodes-message-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       srv: place({
         radio: place(
@@ -297,9 +297,9 @@ export const inodes: Chapter = {
             'lost+found': place({}, { owner: 'root', mode: 'rwx------' }),
             shows: place(
               {
-                'matinale-2027-08-27.ogg': f('', { owner: 'radio', size: 92_000_000 }),
-                'matinale-2027-08-28.ogg': f('', { owner: 'radio', size: 91_000_000 }),
-                'nuit-2027-08-28.ogg': f('', { owner: 'radio', size: 48_000_000 }),
+                [`${name(t, 'morning-show')}-2027-08-27.ogg`]: f('', { owner: 'radio', size: 92_000_000 }),
+                [`${name(t, 'morning-show')}-2027-08-28.ogg`]: f('', { owner: 'radio', size: 91_000_000 }),
+                [`${name(t, 'night-show')}-2027-08-28.ogg`]: f('', { owner: 'radio', size: 48_000_000 }),
               },
               radio,
             ),
