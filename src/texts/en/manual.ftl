@@ -708,23 +708,57 @@ man-visudo = edits /etc/sudoers (or, with -f, another rules file, such as /etc/s
     .example-1 = edit the main policy
     .example-2 = write rules in a file of /etc/sudoers.d
     .example-3 = check the whole policy
-man-systemctl = manages services, those programs that run all the time (web server…), through systemd. status shows a service's state and its latest messages; start, stop, restart start it, stop it or restart it; reload makes it reread its configuration. enable makes it start with the machine, disable doesn't: start only lasts until the next reboot. --failed lists failed services. Only root can change a service's state. list-timers lists the timers (systemd's scheduled tasks) and when they next fire. To modify a service without touching the shipped file (in /usr/lib/systemd/system), you write an override (drop-in): edit opens it in the editor (/etc/systemd/system/service.service.d/override.conf), with the {"["}Service] section and only the lines to change, for example MemoryMax=512M (the memory beyond which systemd kills the service) or Restart=on-failure (restart it if it dies in failure). After writing an override by hand, daemon-reload makes systemd reread it. set-property changes a property right away and keeps it: systemctl set-property service MemoryMax=512M.
-    .synopsis = systemctl [status|start|stop|restart|reload|enable|disable|is-active|is-enabled|edit] service ; systemctl set-property service property=value ; systemctl daemon-reload ; systemctl --failed ; systemctl reboot
+man-systemctl = manages services, those programs that run all the time (web server…), through systemd. status shows a service's state and its latest messages; start, stop, restart start it, stop it or restart it; reload makes it reread its configuration. enable makes it start with the machine, disable doesn't: start only lasts until the next reboot. --failed lists failed services. Only root can change a service's state. list-timers lists the timers (systemd's scheduled tasks) and when they next fire. To modify a service without touching the shipped file (in /usr/lib/systemd/system), you write an override (drop-in): edit opens it in the editor (/etc/systemd/system/service.service.d/override.conf), with the section ({"["}Unit] or {"["}Service]) and only the lines to change, for example After=postgresql.service, MemoryMax=512M (the memory beyond which systemd kills the service) or Restart=on-failure (restart it if it dies in failure). After writing a unit file or an override by hand, daemon-reload makes systemd reread it. cat shows the unit file and its overrides, as systemd reads them; list-dependencies shows what a unit pulls in (Requires=, Wants=), and with --after what it waits for. After too many failed starts (start-limit-hit), reset-failed lets you start it again. set-property changes a property right away and keeps it: systemctl set-property service MemoryMax=512M.
+    .synopsis = systemctl [status|start|stop|restart|reload|enable|disable|is-active|is-enabled|edit|cat|reset-failed] service ; systemctl list-dependencies [--after|--before] [unit] ; systemctl set-property service property=value ; systemctl daemon-reload ; systemctl --failed ; systemctl reboot
     .example-1 = the state of nginx and its latest messages
     .example-2 = the failed services (the first reflex after a reboot)
     .example-3 = restart nginx
     .example-4 = start nginx now AND at every boot of the machine
-    .example-5 = write an override for a service (e.g. MemoryMax=, Restart=)
+    .example-5 = write an override for a service (e.g. After=, MemoryMax=, Restart=)
     .example-6 = limit a service's memory right away
-man-systemd-analyze = tools for systemd; here, calendar tests an OnCalendar= expression (a timer's): its normalized form, and when it will next fire. Format: day of the week (optional), date (*-*-*: every day), time H:M:S. *:0/5 every 5 minutes; *-*-* 03:30:00 every day at 3:30 a.m.; Mon..Fri 08:00 on weekdays; hourly, daily, weekly. To check a timer before enabling it.
-    .synopsis = systemd-analyze calendar EXPRESSION…
+    .example-7 = the unit file of menu and its overrides
+    .example-8 = what menu pulls in when it starts
+    .example-9 = what menu waits for (After=)
+    .example-10 = forget menu's failures and its start limit
+man-systemd-analyze = tools for systemd. calendar tests an OnCalendar= expression (a timer's): its normalized form, and when it will next fire (*:0/5 every 5 minutes; *-*-* 03:30:00 every day at 3:30 a.m.; Mon..Fri 08:00 on weekdays; hourly, daily, weekly). time says how long the last boot took (kernel, then userspace, until multi-user.target); blame lists the units by the time they took to start; critical-chain shows the chain of units that delayed the end of the boot, or a unit: after @ when the unit was ready, after + how long it took to start. verify reads a unit file the way systemd would, and says what it would ignore (an unknown key, a misspelled section, a required unit that doesn't exist); no output means nothing to report.
+    .synopsis = systemd-analyze calendar EXPRESSION… ; systemd-analyze time ; systemd-analyze blame ; systemd-analyze critical-chain [UNIT] ; systemd-analyze verify UNIT|FILE
     .example-1 = every 5 minutes
     .example-2 = every day at 3:30 a.m.
+    .example-3 = how long the last boot took
+    .example-4 = the units, slowest first
+    .example-5 = what delayed the end of the boot
+    .example-6 = check a unit file before using it
 man-systemd_timer = a systemd timer (NAME.timer, in /etc/systemd/system) runs a service (NAME.service, often Type=oneshot) at a fixed time or at intervals: the modern equivalent of a crontab line, with the journal as a bonus (journalctl -u NAME). In the {"["}Timer] section: OnCalendar= a time (*:0/5 every 5 minutes, daily…, to test with systemd-analyze calendar), or OnBootSec= (after boot) with OnUnitActiveSec= (after the last run: on its own, it never fires, since the service has never run yet). In {"["}Install], WantedBy=timers.target, so that it can be enabled. Then: systemctl daemon-reload, systemctl enable --now NAME.timer, and systemctl list-timers to check.
     .synopsis = /etc/systemd/system/NAME.timer and NAME.service
     .example-1 = write the timer
     .example-2 = enable and start it
     .example-3 = the list of timers, with when they next fire
+man-systemd_unit = a systemd unit file (NAME.service, NAME.target…): the package's in /usr/lib/systemd/system, yours in /etc/systemd/system, and overrides (drop-ins) in NAME.service.d/*.conf. Its {"["}Unit] section says what it needs. Requires= starts the listed units too, and doesn't start this one if they fail; Wants= is the soft version (start them, carry on even if they fail). After= and Before= only give the order: if both start, this one waits until the other is ready. Alone, Requires= starts both at the same time; alone, After= orders without pulling anything in: you usually write both. BindsTo= is a stronger Requires=: this unit stops when the other stops. PartOf= propagates stop and restart: when the other unit stops or restarts, this one does too. StartLimitIntervalSec= and StartLimitBurst= set the start limit (5 starts in 10 s by default). In {"["}Install], WantedBy=multi-user.target says what systemctl enable attaches it to. A list (After=…) can be reset in an override by an empty line: After=.
+    .synopsis = /etc/systemd/system/NAME.service, /usr/lib/systemd/system/NAME.service, NAME.service.d/*.conf
+    .example-1 = the unit file and its overrides
+    .example-2 = write an override (After=, Requires=…)
+    .example-3 = what the unit pulls in
+    .example-4 = look for mistakes in the file
+man-systemd_service = the {"["}Service] section of a unit file: what to run and how. ExecStart= the program (in an override, ExecStart= empty first clears the package's line, then a new ExecStart=), User= the account it runs as, EnvironmentFile= a file of NAME=value variables, Type= how systemd knows it is started (simple, forking, oneshot, notify). Restart= what to do when the program exits: no (default), on-failure (when it fails), always (even when it exits cleanly). RestartSec= how long to wait before restarting (100 ms by default: much too short if what it needs is restarting too). Past the start limit (StartLimitBurst= in StartLimitIntervalSec=, in {"["}Unit]), systemd gives up: "Start request repeated too quickly", Result: start-limit-hit; systemctl reset-failed then allows a new start.
+    .synopsis = {"["}Service] Type= ExecStart= User= EnvironmentFile= Restart= RestartSec=
+    .example-1 = read the service's settings
+    .example-2 = change Restart= or RestartSec= in an override
+    .example-3 = after a start-limit-hit, allow a new start
+man-systemd_network = systemd-networkd's configuration: one file per link, /etc/systemd/network/NAME.network. {"["}Match] Name= says which link (eth0, eth1…); {"["}Network] how to configure it: Address= and Gateway= (fixed address) or DHCP=yes. {"["}Link] RequiredForOnline=no tells systemd-networkd-wait-online not to wait for this link: the network counts as "online" without it (for a link that may be absent, like a second card not wired yet). networkctl reload rereads the files (and a reboot, of course).
+    .synopsis = /etc/systemd/network/NAME.network
+    .example-1 = the link files
+    .example-2 = change eth1's configuration
+    .example-3 = the links and how far each one got
+man-systemd-networkd-wait-online = the service behind network-online.target: at boot, it waits until the links configured by systemd-networkd are "online", then lets the units that wait for the network start (After=network-online.target, nginx's for example). By default it waits for every link that has a .network file and isn't marked RequiredForOnline=no; it gives up after 2 minutes (--timeout=) and the boot carries on. --any: one online link is enough; --interface=eth0 (or -i eth0): wait only for that link. To change its options, an override: ExecStart= empty, then ExecStart=/usr/lib/systemd/systemd-networkd-wait-online --any.
+    .synopsis = /usr/lib/systemd/systemd-networkd-wait-online [--any] [--interface=LINK] [--timeout=SECONDS]
+    .example-1 = what it did at the last boot
+    .example-2 = its unit file and its overrides
+    .example-3 = change its options in an override
+man-networkctl = shows the links systemd-networkd manages, and how far each one got. OPERATIONAL is the link's state: routable (configured, with an address and a route), carrier (cable connected), no-carrier (no cable), off. SETUP is the configuration's: configured, configuring (systemd-networkd is still waiting, e.g. for the cable), unmanaged (no .network file). status LINK gives the details, including the .network file used and whether the link is required for "online". reload makes systemd-networkd reread its files.
+    .synopsis = networkctl [list] ; networkctl status [LINK] ; networkctl reload
+    .example-1 = the links and their state
+    .example-2 = the details of eth1
+    .example-3 = reread the .network files
 man-tail = displays the end of a file (the last 10 lines, or N). Handy for logs, where the most recent is at the end. With -f, tail does not stop: it prints the lines as they are added, until Ctrl-C. That is how you watch a server live.
     .synopsis = tail [-n N] [-f] [file]
     .option-n = number of lines to display (10 by default): tail -n 3 file.

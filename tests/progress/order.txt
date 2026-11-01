@@ -79,3 +79,6 @@ inventory
 playbook
 rehearsal
 padlock
+boot-order
+restart-loop
+slow-boot

@@ -39,3 +39,5 @@ story-fleet = The Fleet
     .summary = Three neighbourhood centres, three servers, one person: manage them together with Ansible (inventory, playbook, idempotence, --check).
 story-patch = The Patch
     .summary = The bike workshop has a new server, with Caddy, which "does HTTPS by itself"… provided you give it the right name and let the certificate authority through. A short chapter to compare with nginx and certbot.
+story-canteen = The Canteen
+    .summary = The solidarity canteen's bookings app won't come back after a reboot, gives up after a database restart, waits two minutes for a missing cable: systemd's dependencies, Restart= and a slow boot.

@@ -99,8 +99,10 @@ several.
 - [x] **Services** (simulated `systemd`, `src/engine/systemd.ts`): state,
       start, failure, enabling at boot, `systemctl`, `journalctl`,
       `reboot`; quest "The night of the reboot" (Datacenter, chapter 3)
-- [ ] Dependencies between services, timers, editable unit files (planned:
-      the "services that depend on each other" story, phase 12)
+- [x] Dependencies between services (`After=`, `Requires=`, `Wants=`,
+      `BindsTo=`, `PartOf=`), the order of a boot, `Restart=` and the start
+      limit, editable unit files and drop-ins (`src/engine/units.ts`); "The
+      Canteen", phase 12
 - [x] **Simulated time**: systemd's clock, scheduled tasks (`cron`: a
       simulated night runs the tasks that fall in it)
 - [ ] systemd timers (done: hand-written units, `OnCalendar=`,
@@ -337,20 +339,16 @@ which works on machines rather than switches).
       The Rehearsal)
 - [x] Caddy, as a short comparison chapter (automatic HTTPS); "The Patch",
       one chapter (The Padlock)
-- [ ] **Next story: services that depend on each other** (systemd unit
-      dependencies). A small organisation's server whose boot goes wrong
-      after a change: the app starts before its database (`After=` without
-      `Requires=`, or the reverse), a service stops when another one
-      restarts (`BindsTo=`, `PartOf=`), a mount it needs isn't there yet
-      (`RequiresMountsFor=`), a restart loop (`Restart=`,
-      `StartLimitBurst=`). Tools: `systemctl list-dependencies`,
-      `systemctl cat`, `systemctl edit` (drop-ins), `systemd-analyze
-      verify`, `systemd-analyze critical-chain`, `journalctl -b -u`,
-      `daemon-reload`. Engine work: editable unit files read like systemd
-      (`[Unit]`/`[Service]`/`[Install]`), the dependency graph and the
-      order of a boot, and the `wants`/`requires` links (see "Dependencies
-      between services" in phase 1). Every chapter checks the state of the
-      machine after a reboot, not the command typed.
+- [x] **The Canteen** (story 20, machine `canteen`): services that depend
+      on each other, three chapters. "The Boot Order" (`After=` vs
+      `Requires=`/`Wants=`, `systemctl cat`, `list-dependencies`, drop-ins,
+      `systemd-analyze verify`), "The Restart Loop" (`Restart=`,
+      `RestartSec=`, start-limit-hit, `reset-failed`, `PartOf=` vs
+      `BindsTo=`), "The Slow Boot" (`systemd-analyze time` / `blame` /
+      `critical-chain`, `network-online.target`,
+      `systemd-networkd-wait-online`, `networkctl`, `RequiredForOnline=`)
+- [ ] The Canteen, a fourth chapter: a mount the app needs isn't there yet
+      at boot (`RequiresMountsFor=`, `x-systemd.automount`)
 
 ---
 

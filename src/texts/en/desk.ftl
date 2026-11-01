@@ -63,6 +63,7 @@ machine-lab-motd = The Lab — the photo club's server: the gallery and the memb
 machine-garden-motd = The Community Gardens — the association's website and mail (gardens.example). Please look after the seedlings and the server alike!
 machine-pilot-motd = The neighbourhood centres — the control machine: from here, Ansible looks after the three centres' servers.
 machine-patch-motd = The Patch — the community bike workshop (cycles.example). A brand-new server, with Caddy. Remember to pump up your tyres!
+machine-canteen-motd = The Canteen — the solidarity canteen's server: today's menu and the bookings. Pay what you can, eat together.
 machine-kneader-motd = The Bakery — new server (migration), six months after the audit. The security watch, now without Salomé.
 
 # When reconnecting to a machine whose chapter is in progress.

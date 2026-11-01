@@ -9,6 +9,10 @@ import { colourise, sgr } from '../colours';
 import { readSize } from '../memory';
 import { loadUnits, readCalendar, nextCalendar, nextTrigger, timerFor } from '../timers';
 import { toUtc } from '../systemd';
+import {
+  loadDependencies, startWithDependencies, stopWithDependents, restartWithDependents, runPending, dependencyTree, catUnit, verify,
+  analyzeDuration, criticalChain, mainFile, key,
+} from '../units';
 
 const CAPTION = [
   '',
@@ -38,7 +42,7 @@ function status(game: Shell, sd: Systemd, name: string, paint: Paint = raw): str
   const lines = [
     // × (×): systemd's failure symbol.
     `${s.state === 'failed' ? paint('0;1;31', '\u00d7') : s.state === 'active' ? paint('0;1;32', '●') : '○'} ${unit} - ${s.description}`,
-    `     Loaded: loaded (${s.file ?? `/usr/lib/systemd/system/${unit}`}; ${s.active ? 'enabled' : 'disabled'}; preset: enabled)`,
+    `     Loaded: loaded (${s.file ?? (sd.ordered ? mainFile(game, name, s) : null) ?? `/usr/lib/systemd/system/${unit}`}; ${s.active ? 'enabled' : 'disabled'}; preset: enabled)`,
     ...(s.overrides?.length
       ? s.overrides.flatMap((path, i) => {
           const place = path.replace(/\/[^/]+$/, '');
@@ -146,6 +150,7 @@ function readMoment(sd: Systemd, text: string): number | null {
 function reread(game: Shell, sd: Systemd) {
   loadUnits(game, sd);
   loadOverrides(game, sd);
+  if (sd.ordered) loadDependencies(game, sd);
 }
 
 const dateOrDash = (game: Shell, sd: Systemd, ms: number | null | undefined) => (ms ? dateComplete(ms, game.t.language, sd) : '-');
@@ -291,6 +296,7 @@ function editOverride(game: Shell, sd: Systemd, name: string): string {
         if (d?.type === 'directory') delete d.children['override.conf'];
       } else if (n?.type === 'file') n.content = kept;
       loadOverrides(game, sd);
+      if (sd.ordered) loadDependencies(game, sd);
       return '';
     },
   };
@@ -300,13 +306,133 @@ function editOverride(game: Shell, sd: Systemd, name: string): string {
 // systemctl without being root: systemd would ask for a password (polkit).
 const refuse = (game: Shell, action: string, name: string) => game.error(game.t('systemctl-access-refuse', { action, service: name }));
 
+// networkctl: the links systemd-networkd manages (state.links), and how
+// far each one got. After networkctl(1):
+// https://www.freedesktop.org/software/systemd/man/latest/networkctl.html
+export interface Link {
+  type: 'loopback' | 'ether';
+  carrier: boolean;
+}
+const networkFiles = (game: Shell) => {
+  const place = game.find('/etc/systemd/network');
+  return place?.type === 'directory' ? Object.keys(place.children).filter((f) => f.endsWith('.network')).sort().map((f) => `/etc/systemd/network/${f}`) : [];
+};
+/** The .network file that configures this link ([Match] Name=), and whether it is required for "online". */
+export function linkConfig(game: Shell, name: string): { file: string; required: boolean } | null {
+  for (const file of networkFiles(game)) {
+    let section = '';
+    let matches = false;
+    let required = true;
+    for (const raw of (game.read(file) ?? '').split('\n')) {
+      const l = raw.trim();
+      const s = /^\[(.+)\]$/.exec(l);
+      if (s) section = s[1];
+      const m = /^(\w+)\s*=\s*(.*)$/.exec(l);
+      if (!m) continue;
+      if (section === 'Match' && m[1] === 'Name') matches = m[2].split(/\s+/).includes(name);
+      if (section === 'Link' && m[1] === 'RequiredForOnline') required = !/^(no|false|0)$/i.test(m[2]);
+    }
+    if (matches) return { file, required };
+  }
+  return null;
+}
+const linkState = (game: Shell, name: string, l: Link) =>
+  l.type === 'loopback'
+    ? { operational: 'carrier', setup: 'unmanaged' }
+    : !linkConfig(game, name)
+      ? { operational: l.carrier ? 'carrier' : 'off', setup: 'unmanaged' }
+      : l.carrier
+        ? { operational: 'routable', setup: 'configured' }
+        : { operational: 'no-carrier', setup: 'configuring' };
+
 export const SYSTEMD: Record<string, Command> = {
+  // Manual pages only (configuration files and a service), see pages.ts.
+  'systemd.unit': { section: 5, launch: () => '' },
+  'systemd.service': { section: 5, launch: () => '' },
+  'systemd.network': { section: 5, launch: () => '' },
+  'systemd-networkd-wait-online': { section: 8, launch: () => '' },
+  networkctl: {
+    ownOptions: true,
+    launch: ({ args, game }) => {
+      const links = game.state.links as Record<string, Link> | undefined;
+      if (!links) return game.error('Failed to connect to systemd-networkd: No such file or directory');
+      const [verb = 'list', ...rest] = args.filter((a) => !a.startsWith('-'));
+      const names = Object.keys(links);
+      if (verb === 'list') {
+        const rows = names.map((n, i) => {
+          const st = linkState(game, n, links[n]);
+          return [String(i + 1).padStart(3), n.padEnd(4), links[n].type.padEnd(8), st.operational.padEnd(11), st.setup];
+        });
+        return ['IDX LINK TYPE     OPERATIONAL SETUP', ...rows.map((r) => r.join(' ')), '', `${rows.length} links listed.`].join('\n');
+      }
+      if (verb === 'status') {
+        const n = rest[0];
+        if (!n) return `State: ${names.every((x) => linkState(game, x, links[x]).setup !== 'configuring') ? 'routable' : 'degraded'}`;
+        if (!links[n]) return game.error(`Interface "${n}" not found.`);
+        const st = linkState(game, n, links[n]);
+        const c = linkConfig(game, n);
+        return [
+          `● ${names.indexOf(n) + 1}: ${n}`,
+          `                   Link File: /usr/lib/systemd/network/99-default.link`,
+          `                Network File: ${c?.file ?? 'n/a'}`,
+          `                       State: ${st.operational} (${st.setup})`,
+          `                Online state: ${st.setup === 'configured' ? 'online' : c && !c.required ? 'unknown' : 'offline'}`,
+          `            Required For Online: ${c ? (c.required ? 'yes' : 'no') : 'no'}`,
+        ].join('\n');
+      }
+      if (verb === 'reload') return game.who === 'root' ? '' : game.error('Failed to reload network settings: Access denied');
+      return game.error(`Unknown command verb '${verb}'.`);
+    },
+  },
+
   // systemd-analyze calendar: test an OnCalendar= expression before writing it in a timer.
   'systemd-analyze': {
     ownOptions: true,
     launch: ({ args, game }) => {
       const sd = systemd(game);
       const [verb, ...expressions] = args.filter((a) => !a.startsWith('--'));
+      const boot = sd?.lastBoot;
+      // time, blame, critical-chain: the timing of the last boot.
+      if (sd && boot && ['time', 'blame', 'critical-chain'].includes(verb)) sd.checkedAfterBoot = true;
+      if (verb === 'time') {
+        if (!sd || !boot) return game.error('Bootup is not yet finished. Please try again later.');
+        const total = boot.kernel + boot.userspace;
+        return [
+          `Startup finished in ${analyzeDuration(boot.kernel)} (kernel) + ${analyzeDuration(boot.userspace)} (userspace) = ${analyzeDuration(total)} `,
+          `multi-user.target reached after ${analyzeDuration(boot.userspace)} in userspace.`,
+        ].join('\n');
+      }
+      if (verb === 'blame') {
+        if (!sd || !boot) return game.error('Bootup is not yet finished. Please try again later.');
+        const units = Object.entries(boot.units)
+          .filter(([k, t]) => sd.services[k] && t.took > 0)
+          .sort((a, b) => b[1].took - a[1].took)
+          .map(([k, t]) => [analyzeDuration(t.took), `${k}.service`]);
+        const width = Math.max(...units.map((u) => u[0].length));
+        return units.map(([d, u]) => `${d.padStart(width)} ${u}`).join('\n');
+      }
+      if (verb === 'critical-chain') {
+        if (!sd || !boot) return game.error('Bootup is not yet finished. Please try again later.');
+        const root = expressions[0] ? key(expressions[0]) : 'multi-user.target';
+        if (!sd.services[root] && !sd.targets?.[root] && root !== 'multi-user.target') return game.error(`Failed to get ID: Unit ${expressions[0]} not loaded.`);
+        return criticalChain(sd, root);
+      }
+      // verify: reads a unit file like systemd would, and says what it ignores.
+      if (verb === 'verify') {
+        if (!expressions.length) return game.error('Too few arguments.');
+        const problems: string[] = [];
+        for (const e of expressions) {
+          const k = key(e.split('/').at(-1)!);
+          const file = e.includes('/') ? game.resolve(e) : sd ? mainFile(game, k, sd.services[k]) : null;
+          if (!file || game.find(file)?.type !== 'file') {
+            problems.push(`Failed to prepare filename ${e}: No such file or directory`);
+            continue;
+          }
+          if (sd) problems.push(...verify(game, sd, file, k));
+        }
+        if (problems.length) game.status = 1;
+        return problems.join('\n');
+      }
       if (verb !== 'calendar') return game.error(verb ? `Unknown command verb '${verb}'.` : 'Too few arguments.');
       if (!expressions.length) return game.error('Too few arguments.');
       const blocks: string[] = [];
@@ -345,7 +471,7 @@ export const SYSTEMD: Record<string, Command> = {
       if (unknown) return game.error(`systemctl: invalid option -- '${unknown[1]}'`);
       const words = args.filter((a) => !a.startsWith('--') || a === '--failed');
       const [action = 'list-units', ...names] = words;
-      const VERBS = ['status', 'start', 'stop', 'restart', 'reload', 'enable', 'disable', 'is-active', 'is-enabled', 'list-units', 'reboot', '--failed', 'edit', 'daemon-reload', 'set-property', 'list-timers', 'default'];
+      const VERBS = ['status', 'start', 'stop', 'restart', 'reload', 'enable', 'disable', 'is-active', 'is-enabled', 'list-units', 'reboot', '--failed', 'edit', 'daemon-reload', 'set-property', 'list-timers', 'default', 'cat', 'list-dependencies', 'reset-failed'];
       if (!VERBS.includes(action)) return game.error(`Unknown command verb '${action}'.`);
       // Looking at the services' state after a reboot: that is checking.
       const consulter = () => (sd.checkedAfterBoot = true);
@@ -365,6 +491,36 @@ export const SYSTEMD: Record<string, Command> = {
         return resume ? resume(game) : '';
       }
       if (action === 'list-timers') return timersList(game, sd, args.includes('--all'));
+      // list-dependencies: what a unit pulls in (Requires=, Wants=), or with --after / --before its ordering.
+      if (action === 'list-dependencies') {
+        const root = names[0] ? key(names[0]) : 'multi-user.target';
+        if (!sd.services[root] && !sd.targets?.[root] && !(root === 'multi-user.target')) return game.error(`Unit ${names[0]} could not be found.`);
+        if (root === 'multi-user.target' && !sd.targets?.[root])
+          return ['multi-user.target', ...Object.entries(sd.services).filter(([, x]) => x.active).map(([n], i, all) => `${sd.services[n].state === 'active' ? paint('0;1;32', '●') : sd.services[n].state === 'failed' ? paint('0;1;31', '●') : '○'} ${i === all.length - 1 ? '└─' : '├─'}${n}.service`)].join('\n');
+        return dependencyTree(sd, root, args.includes('--after') ? 'after' : args.includes('--before') ? 'before' : 'pulls', paint);
+      }
+      // cat: the unit file and its drop-ins, as systemd reads them.
+      if (action === 'cat') {
+        if (!names.length) return game.error('Too few arguments.');
+        const outputs: string[] = [];
+        for (const n of names) {
+          const text = catUnit(game, sd, key(n));
+          if (text === null) game.error(`No files found for ${key(n).includes('.') ? key(n) : `${key(n)}.service`}.`);
+          else outputs.push(text);
+        }
+        return outputs.join('\n\n');
+      }
+      // reset-failed: forget the failures and the start limit.
+      if (action === 'reset-failed') {
+        if (game.who !== 'root') return refuse(game, 'reset-failed', names[0] ?? 'units');
+        for (const [n, x] of Object.entries(sd.services))
+          if (!names.length || names.map(unitName).includes(n)) {
+            x.attempts = [];
+            if (x.state === 'failed') x.state = 'inactive';
+            x.result = undefined;
+          }
+        return '';
+      }
       // set-property: the limit applies at once, and stays (a file in system.control).
       if (action === 'set-property') {
         const name = unitName(names[0] ?? '');
@@ -449,8 +605,19 @@ export const SYSTEMD: Record<string, Command> = {
             s.active = false;
             if (now && s.state === 'active') stop(game, sd, name);
           } else if (action === 'stop') {
-            if (s.state === 'active') stop(game, sd, name);
+            if (sd.ordered) stopWithDependents(game, sd, name);
+            else if (s.state === 'active') stop(game, sd, name);
             else s.state = 'inactive';
+          } else if (sd.ordered && (action === 'start' || action === 'restart')) {
+            sd.mainAStarted = true;
+            const r = action === 'restart' ? restartWithDependents(game, sd, name) : startWithDependencies(game, sd, name);
+            runPending(game, sd);
+            if (r === 'failed') failure();
+            else if (r === 'dependency') game.error(`A dependency job for ${name}.service failed. See 'journalctl -xe' for details.`);
+            else if (r === 'limit')
+              game.error(
+                `Job for ${name}.service failed because start of the service was attempted too often.\nSee "systemctl status ${name}.service" and "journalctl -xeu ${name}.service" for details.\nTo force a start use "systemctl reset-failed ${name}.service"\nfollowed by "systemctl start ${name}.service" again.`,
+              );
           } else if (action === 'reload') {
             if (s.state !== 'active') game.error(`${name}.service is not active, cannot reload.`);
             else if (!reload(game, sd, name))

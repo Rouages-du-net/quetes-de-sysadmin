@@ -53,6 +53,14 @@ presents them for people.
   (`world.ts`), stories (`chapters/`). No dependency on the DOM.
 - `src/engine/systemd.ts`: a machine's services, journal and clock
   (`systemctl`, `journalctl`, `reboot` in `commands/systemd.ts`).
+- `src/engine/units.ts`: dependencies between units, read from the unit
+  files and their drop-ins (`After=`, `Requires=`, `Wants=`, `BindsTo=`,
+  `PartOf=`, `Restart=`, `RestartSec=`, the start limit), the order and
+  timing of a boot (`Systemd.ordered`, `bootUnits`), restarts scheduled by
+  `Restart=` (`runPending`); `systemctl cat`, `list-dependencies`,
+  `reset-failed`, `systemd-analyze time`/`blame`/`critical-chain`/`verify`
+  and `networkctl` in `commands/systemd.ts`; `chapters/canteen.ts`: what
+  The Canteen's chapters share.
 - `src/engine/sshd.ts`: a machine's SSH server (`sshd_config` read like
   OpenSSH, configuration applied on reload).
 - `src/engine/firewall.ts`: a machine's firewall (ufw rules; `ssh` runs into

@@ -38,3 +38,6 @@ password-hive-camille-2026 = hive-camille-2026
 password-Rk7-ap-2028 = Rk7-ap-2028
 ## The Game Library
 password-dice-2027 = dice-2027
+
+## The Canteen
+password-lentils-2028 = lentils-2028

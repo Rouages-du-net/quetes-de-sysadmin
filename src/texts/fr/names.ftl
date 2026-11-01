@@ -385,3 +385,7 @@ name-gamelib = ludo
 name-boardgames = jeux
 name-members = membres
 name-loans = prets
+
+## La Cantine
+name-message_from_ibrahim-txt = message_de_ibrahim.txt
+name-canteen = cantine

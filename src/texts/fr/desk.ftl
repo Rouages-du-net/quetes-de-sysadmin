@@ -63,6 +63,7 @@ machine-lab-motd = Le Labo — le serveur du club photo : la galerie et les arch
 machine-garden-motd = Les Jardins partagés — le site et le courrier de l'association (gardens.example). Merci de prendre soin des plants comme du serveur !
 machine-pilot-motd = Les maisons de quartier — le poste de pilotage : d'ici, Ansible s'occupe des serveurs des trois maisons.
 machine-patch-motd = La Rustine — l'atelier vélo associatif (cycles.example). Un serveur tout neuf, avec Caddy. Pensez à regonfler vos pneus !
+machine-canteen-motd = La Cantine — le serveur de la cantine solidaire : le menu du jour et les réservations. Prix libre, repas partagé.
 machine-kneader-motd = Le Fournil — nouveau serveur (migration), six mois après l'audit. La veille de sécurité, maintenant sans Salomé.
 
 # En se reconnectant à une machine dont le chapitre est en cours.

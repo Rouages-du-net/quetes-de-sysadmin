@@ -719,23 +719,57 @@ man-visudo = modifie /etc/sudoers (ou, avec -f, un autre fichier de règles, com
     .example-1 = modifier la politique principale
     .example-2 = écrire des règles dans un fichier de /etc/sudoers.d
     .example-3 = vérifier toute la politique
-man-systemctl = gère les services, ces programmes qui tournent en permanence (serveur web…), à travers systemd. status montre l'état d'un service et ses derniers messages ; start, stop, restart le démarrent, l'arrêtent ou le relancent ; reload lui fait relire sa configuration. enable le fait démarrer avec la machine, disable non : start ne vaut que jusqu'au prochain redémarrage. --failed liste les services en échec. Seul root peut changer l'état d'un service. list-timers liste les timers (les tâches planifiées de systemd) et leur prochain déclenchement. Pour modifier un service sans toucher au fichier livré (dans /usr/lib/systemd/system), on écrit une surcharge (drop-in) : edit l'ouvre dans l'éditeur (/etc/systemd/system/service.service.d/override.conf), avec la section {"["}Service] et les seules lignes à changer, par exemple MemoryMax=512M (la mémoire au-delà de laquelle systemd tue le service) ou Restart=on-failure (le relancer s'il meurt en échec). Après avoir écrit une surcharge à la main, daemon-reload la fait relire. set-property change une propriété tout de suite et la garde : systemctl set-property service MemoryMax=512M.
-    .synopsis = systemctl [status|start|stop|restart|reload|enable|disable|is-active|is-enabled|edit] service ; systemctl set-property service propriété=valeur ; systemctl daemon-reload ; systemctl --failed ; systemctl reboot
+man-systemctl = gère les services, ces programmes qui tournent en permanence (serveur web…), par systemd. status montre l'état d'un service et ses derniers messages ; start, stop, restart le démarrent, l'arrêtent ou le redémarrent ; reload lui fait relire sa configuration. enable le fait démarrer avec la machine, disable non : start ne dure que jusqu'au prochain redémarrage. --failed liste les services en échec. Seul root peut changer l'état d'un service. list-timers liste les timers (les tâches planifiées de systemd) et leur prochain déclenchement. Pour modifier un service sans toucher au fichier livré (dans /usr/lib/systemd/system), on écrit une surcharge (drop-in) : edit l'ouvre dans l'éditeur (/etc/systemd/system/service.service.d/override.conf), avec la section ({"["}Unit] ou {"["}Service]) et seulement les lignes à changer, par exemple After=postgresql.service, MemoryMax=512M (la mémoire au-delà de laquelle systemd tue le service) ou Restart=on-failure (le relancer s'il meurt en échec). Après avoir écrit à la main un fichier d'unité ou une surcharge, daemon-reload les fait relire par systemd. cat affiche le fichier d'unité et ses surcharges, tels que systemd les lit ; list-dependencies montre ce qu'une unité entraîne (Requires=, Wants=), et avec --after ce qu'elle attend. Après trop de démarrages ratés (start-limit-hit), reset-failed permet de la démarrer à nouveau. set-property change une propriété tout de suite et la garde : systemctl set-property service MemoryMax=512M.
+    .synopsis = systemctl [status|start|stop|restart|reload|enable|disable|is-active|is-enabled|edit|cat|reset-failed] service ; systemctl list-dependencies [--after|--before] [unité] ; systemctl set-property service propriété=valeur ; systemctl daemon-reload ; systemctl --failed ; systemctl reboot
     .example-1 = l'état de nginx et ses derniers messages
     .example-2 = les services en échec (le premier réflexe après un redémarrage)
-    .example-3 = relancer nginx
+    .example-3 = redémarrer nginx
     .example-4 = démarrer nginx maintenant ET à chaque démarrage de la machine
-    .example-5 = écrire une surcharge pour un service (ex. MemoryMax=, Restart=)
+    .example-5 = écrire une surcharge pour un service (ex. After=, MemoryMax=, Restart=)
     .example-6 = limiter tout de suite la mémoire d'un service
-man-systemd-analyze = des outils pour systemd ; ici, calendar teste une expression OnCalendar= (celle d'un timer) : sa forme normale, et quand elle se déclenchera la prochaine fois. Format : jour de la semaine (facultatif), date (*-*-* : tous les jours), heure H:M:S. *:0/5 toutes les 5 minutes ; *-*-* 03:30:00 chaque jour à 3 h 30 ; Mon..Fri 08:00 en semaine ; hourly, daily, weekly. Pour vérifier un timer avant de l'activer.
-    .synopsis = systemd-analyze calendar EXPRESSION…
+    .example-7 = le fichier d'unité de menu et ses surcharges
+    .example-8 = ce que menu entraîne quand il démarre
+    .example-9 = ce que menu attend (After=)
+    .example-10 = oublier les échecs de menu et sa limite de démarrages
+man-systemd-analyze = des outils pour systemd. calendar teste une expression OnCalendar= (celle d'un timer) : sa forme normalisée, et son prochain déclenchement (*:0/5 toutes les 5 minutes ; *-*-* 03:30:00 tous les jours à 3 h 30 ; Mon..Fri 08:00 en semaine ; hourly, daily, weekly). time dit combien de temps a pris le dernier démarrage (le noyau, puis l'espace utilisateur, jusqu'à multi-user.target) ; blame liste les unités selon le temps qu'elles ont mis à démarrer ; critical-chain montre la chaîne d'unités qui a retardé la fin du démarrage, ou une unité : après @ le moment où l'unité était prête, après + le temps qu'elle a mis à démarrer. verify lit un fichier d'unité comme le ferait systemd, et dit ce qu'il ignorerait (une clé inconnue, une section mal écrite, une unité requise qui n'existe pas) ; aucune sortie veut dire rien à signaler.
+    .synopsis = systemd-analyze calendar EXPRESSION… ; systemd-analyze time ; systemd-analyze blame ; systemd-analyze critical-chain [UNITÉ] ; systemd-analyze verify UNITÉ|FICHIER
     .example-1 = toutes les 5 minutes
-    .example-2 = chaque jour à 3 h 30
+    .example-2 = tous les jours à 3 h 30
+    .example-3 = combien de temps a pris le dernier démarrage
+    .example-4 = les unités, les plus lentes d'abord
+    .example-5 = ce qui a retardé la fin du démarrage
+    .example-6 = vérifier un fichier d'unité avant de s'en servir
 man-systemd_timer = un timer systemd (NOM.timer, dans /etc/systemd/system) lance un service (NOM.service, souvent Type=oneshot) à heure fixe ou à intervalle : l'équivalent moderne d'une ligne de crontab, avec le journal en plus (journalctl -u NOM). Dans la section {"["}Timer] : OnCalendar= une heure (*:0/5 toutes les 5 minutes, daily…, à tester avec systemd-analyze calendar), ou OnBootSec= (après le démarrage) avec OnUnitActiveSec= (après le dernier lancement : seul, il ne part jamais, le service n'ayant encore jamais tourné). Dans {"["}Install], WantedBy=timers.target, pour pouvoir l'activer. Puis : systemctl daemon-reload, systemctl enable --now NOM.timer, et systemctl list-timers pour vérifier.
     .synopsis = /etc/systemd/system/NOM.timer et NOM.service
     .example-1 = écrire le timer
     .example-2 = l'activer et le démarrer
     .example-3 = la liste des timers, avec leur prochain déclenchement
+man-systemd_unit = un fichier d'unité systemd (NOM.service, NOM.target…) : celui du paquet dans /usr/lib/systemd/system, le vôtre dans /etc/systemd/system, et les surcharges (drop-ins) dans NOM.service.d/*.conf. Sa section {"["}Unit] dit ce dont il a besoin. Requires= démarre aussi les unités citées, et ne démarre pas celle-ci si elles échouent ; Wants= en est la version souple (les démarrer, continuer même si elles échouent). After= et Before= ne donnent que l'ordre : si les deux démarrent, celle-ci attend que l'autre soit prête. Seul, Requires= démarre les deux en même temps ; seul, After= ordonne sans rien entraîner : on écrit en général les deux. BindsTo= est un Requires= plus fort : cette unité s'arrête quand l'autre s'arrête. PartOf= propage l'arrêt et le redémarrage : quand l'autre unité s'arrête ou redémarre, celle-ci aussi. StartLimitIntervalSec= et StartLimitBurst= règlent la limite de démarrages (5 démarrages en 10 s par défaut). Dans {"["}Install], WantedBy=multi-user.target dit à quoi systemctl enable la rattache. Une liste (After=…) se vide dans une surcharge par une ligne vide : After=.
+    .synopsis = /etc/systemd/system/NOM.service, /usr/lib/systemd/system/NOM.service, NOM.service.d/*.conf
+    .example-1 = le fichier d'unité et ses surcharges
+    .example-2 = écrire une surcharge (After=, Requires=…)
+    .example-3 = ce que l'unité entraîne
+    .example-4 = chercher les erreurs dans le fichier
+man-systemd_service = la section {"["}Service] d'un fichier d'unité : quoi lancer, et comment. ExecStart= le programme (dans une surcharge, ExecStart= vide efface d'abord la ligne du paquet, puis un nouvel ExecStart=), User= le compte sous lequel il tourne, EnvironmentFile= un fichier de variables NOM=valeur, Type= comment systemd sait qu'il est démarré (simple, forking, oneshot, notify). Restart= que faire quand le programme se termine : no (par défaut), on-failure (quand il échoue), always (même quand il s'arrête proprement). RestartSec= combien attendre avant de le relancer (100 ms par défaut : bien trop court si ce dont il a besoin redémarre aussi). Au-delà de la limite de démarrages (StartLimitBurst= en StartLimitIntervalSec=, dans {"["}Unit]), systemd abandonne : « Start request repeated too quickly », Result: start-limit-hit ; systemctl reset-failed permet alors un nouveau démarrage.
+    .synopsis = {"["}Service] Type= ExecStart= User= EnvironmentFile= Restart= RestartSec=
+    .example-1 = lire les réglages du service
+    .example-2 = changer Restart= ou RestartSec= dans une surcharge
+    .example-3 = après un start-limit-hit, permettre un nouveau démarrage
+man-systemd_network = la configuration de systemd-networkd : un fichier par lien, /etc/systemd/network/NOM.network. {"["}Match] Name= dit quel lien (eth0, eth1…) ; {"["}Network] comment le configurer : Address= et Gateway= (adresse fixe) ou DHCP=yes. {"["}Link] RequiredForOnline=no dit à systemd-networkd-wait-online de ne pas attendre ce lien : le réseau compte comme « en ligne » sans lui (pour un lien qui peut manquer, comme une deuxième carte pas encore câblée). networkctl reload relit les fichiers (et un redémarrage, bien sûr).
+    .synopsis = /etc/systemd/network/NOM.network
+    .example-1 = les fichiers des liens
+    .example-2 = modifier la configuration de eth1
+    .example-3 = les liens, et où en est chacun
+man-systemd-networkd-wait-online = le service derrière network-online.target : au démarrage, il attend que les liens configurés par systemd-networkd soient « en ligne », puis laisse démarrer les unités qui attendent le réseau (After=network-online.target, celle de nginx par exemple). Par défaut il attend chaque lien qui a un fichier .network et n'est pas marqué RequiredForOnline=no ; il abandonne au bout de 2 minutes (--timeout=) et le démarrage continue. --any : un seul lien en ligne suffit ; --interface=eth0 (ou -i eth0) : n'attendre que ce lien. Pour changer ses options, une surcharge : ExecStart= vide, puis ExecStart=/usr/lib/systemd/systemd-networkd-wait-online --any.
+    .synopsis = /usr/lib/systemd/systemd-networkd-wait-online [--any] [--interface=LIEN] [--timeout=SECONDES]
+    .example-1 = ce qu'il a fait au dernier démarrage
+    .example-2 = son fichier d'unité et ses surcharges
+    .example-3 = changer ses options dans une surcharge
+man-networkctl = montre les liens que gère systemd-networkd, et où en est chacun. OPERATIONAL est l'état du lien : routable (configuré, avec une adresse et une route), carrier (câble branché), no-carrier (pas de câble), off. SETUP est celui de la configuration : configured, configuring (systemd-networkd attend encore, le câble par exemple), unmanaged (pas de fichier .network). status LIEN donne le détail, dont le fichier .network utilisé et si le lien est requis pour « en ligne ». reload fait relire ses fichiers à systemd-networkd.
+    .synopsis = networkctl [list] ; networkctl status [LIEN] ; networkctl reload
+    .example-1 = les liens et leur état
+    .example-2 = le détail de eth1
+    .example-3 = relire les fichiers .network
 man-tail = affiche la fin d’un fichier (les 10 dernières lignes, ou N). Pratique pour les journaux, où le plus récent est à la fin. Avec -f, tail ne s’arrête pas : il affiche les lignes au fur et à mesure qu’elles s’ajoutent, jusqu’à Ctrl-C. On regarde ainsi un serveur vivre.
     .synopsis = tail [-n N] [-f] [fichier]
     .option-n = nombre de lignes à afficher (10 par défaut) : tail -n 3 fichier.

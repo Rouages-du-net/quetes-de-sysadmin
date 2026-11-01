@@ -83,6 +83,9 @@ import { inventory } from './inventory';
 import { playbook } from './playbook';
 import { rehearsal } from './rehearsal';
 import { padlock } from './padlock';
+import { bootOrder } from './boot-order';
+import { restartLoop } from './restart-loop';
+import { slowBoot } from './slow-boot';
 
 // Stories open little by little: each one says, in `after`, the chapters
 // to finish before receiving its key (see unlocking.ts and docs/SCENARIOS.md).
@@ -180,6 +183,11 @@ export const STORIES: Story[] = [
     id: 'patch',
     after: ['certificate', 'sharing'],
     chapters: [padlock],
+  },
+  {
+    id: 'canteen',
+    after: ['reboot-night', 'probe'],
+    chapters: [bootOrder, restartLoop, slowBoot],
   },
 ];
 

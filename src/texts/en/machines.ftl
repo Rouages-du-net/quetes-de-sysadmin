@@ -26,3 +26,6 @@ machine-patch = patch
 
 ## The Watch
 machine-kneader = kneader
+
+## The Canteen
+machine-canteen = canteen
