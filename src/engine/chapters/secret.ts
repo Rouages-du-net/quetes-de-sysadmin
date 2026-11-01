@@ -18,7 +18,7 @@
 import { f, type Chapter } from '../world';
 import type { Game } from '../shell';
 import { cooperativeAccounts, M, cooperativeWorld, PASSWORD } from './coop';
-import { till, BINARY_NGINX, OLD_KEY, NEW_KEY, ENV, tillEnv, tillState, tillWorld, nginxCooperative, visit } from './till-web';
+import { till, BINARY_NGINX, OLD_KEY, NEW_KEY, ENV, tillEnv, tillState, tillWorld, nginxCooperative, visit, paymentKey } from './till-web';
 import { loadNginx } from '../nginx';
 
 const ATTACKER = '203.0.113.77';
@@ -55,7 +55,7 @@ const status = (j: Game, path: string, address = '192.0.2.99') => visit(j, path,
 const leak = (j: Game, path: string) => status(j, path) === 200;
 const siteOk = (j: Game) => status(j, '/') === 200 && status(j, '/till/') === 200;
 const blockedAttacker = (j: Game) => status(j, '/', ATTACKER) === 403;
-const loadedKey = (j: Game) => till(j).load.PAIEMENT_CLE === NEW_KEY;
+const loadedKey = (j: Game) => till(j).load[paymentKey(j.t)] === NEW_KEY;
 const closed = (j: Game) => !leak(j, '/.env') && !leak(j, '/.git/config') && siteOk(j);
 
 export const secret: Chapter = {
@@ -97,11 +97,12 @@ export const secret: Chapter = {
   final: 'end',
   password: PASSWORD,
   accounts: () => cooperativeAccounts(false),
-  state: () => tillState(tillEnv(OLD_KEY)),
+  state: (t) => tillState(tillEnv(t, OLD_KEY)),
   initialise: (j) => loadNginx(j),
   createWorld: (t) => {
-    const webTill = tillWorld({ env: tillEnv(OLD_KEY), logAccess: ACCESS, appLog: APP_LOG });
+    const webTill = tillWorld(t, { env: tillEnv(t, OLD_KEY), logAccess: ACCESS, appLog: APP_LOG });
     return cooperativeWorld({
+      t,
       withoutMarc: true,
       home: { 'email_awa.txt': f(t('secret-email-awa', { key: NEW_KEY })) },
       etc: nginxCooperative(SITE),

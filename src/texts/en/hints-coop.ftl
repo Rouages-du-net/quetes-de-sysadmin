@@ -9,10 +9,10 @@ hint-departure-backup =
     .solution = sudo cp /home/marc/bin/till-backup.sh /usr/local/bin/, then sudo crontab -e and the line: 30 2 * * * /usr/local/bin/till-backup.sh (root's crontab)
 hint-departure-closed =
     .lead = Closing access means closing it everywhere: his account (usermod -L only blocks the password, not the SSH key: read man usermod again), the sudo group, his key in the deploy account (only his line), and his session still open (who, ps -u marc).
-    .solution = sudo usermod -e 1 marc (the account expires), sudo gpasswd -d marc sudo, sudo nano /home/deploy/.ssh/authorized_keys (delete only the marc@portable line), then sudo pkill -u marc
+    .solution = sudo usermod -e 1 marc (the account expires), sudo gpasswd -d marc sudo, sudo nano /home/deploy/.ssh/authorized_keys (delete only the marc@laptop line), then sudo pkill -u marc
 hint-departure-end =
     .lead = One piece is missing: go through Awa's email point by point. Marc must not get in by any route, the CI and Lina keep their keys in deploy, and the nightly backup runs as root or deploy.
-    .solution = sudo crontab -l (is the backup there?), sudo cat /home/deploy/.ssh/authorized_keys (deploy@ci and lina@atelier there, marc@portable gone), sudo chage -l marc, groups marc, who
+    .solution = sudo crontab -l (is the backup there?), sudo cat /home/deploy/.ssh/authorized_keys (deploy@ci and lina@workshop there, marc@laptop gone), sudo chage -l marc, groups marc, who
 
 ## Chapter 2 — Shared permissions
 
@@ -39,10 +39,10 @@ hint-secret-attacker =
     .solution = sudo grep '\.env' /var/log/nginx/access.log (it's 203.0.113.77), then deny 203.0.113.77; in the site's server block, and sudo systemctl reload nginx
 hint-secret-key-written =
     .lead = The old key is disabled: the new one is in Awa's email, and it belongs in the .env file of the till app (/srv/till/app).
-    .solution = sudo nano /srv/till/app/.env: replace the value of PAIEMENT_CLE= with the new key from the email
+    .solution = sudo nano /srv/till/app/.env: replace the value of PAYMENT_KEY= with the new key from the email
 hint-secret-end =
     .lead = The new key is written, but the app only reads its .env at startup. Its /health route tells you which key it uses.
-    .solution = sudo systemctl restart till, then curl http://127.0.0.1:3000/health ("paiement": "ok")
+    .solution = sudo systemctl restart till, then curl http://127.0.0.1:3000/health ("payment": "ok")
 
 ## Chapter 4 — The proxy
 
@@ -54,7 +54,7 @@ hint-proxy-end =
 
 hint-updates-a-day =
     .lead = apt only knows about new versions once it has re-read the repositories (man apt: update first, then upgrade). The wifi will drop: a long operation goes in a session that outlives the connection (man tmux). If dpkg was interrupted, apt tells you what to run.
-    .solution = sudo apt update, then tmux new -s upd and sudo apt upgrade; if the connection drops: ssh coop and tmux attach -t upd (without tmux: sudo dpkg --configure -a, then sudo apt upgrade)
+    .solution = sudo apt update, then tmux new -s upgrade and sudo apt upgrade; if the connection drops: ssh coop and tmux attach -t upgrade (without tmux: sudo dpkg --configure -a, then sudo apt upgrade)
 hint-updates-till-down =
     .lead = The packages are installed, but uname -r still gives the old kernel. A file in /var/run says why you need to reboot.
     .solution = cat /var/run/reboot-required.pkgs, then sudo reboot (and ssh coop to come back)

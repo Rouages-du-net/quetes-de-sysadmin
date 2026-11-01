@@ -49,7 +49,7 @@ for (const language of LANGUAGES)
 
     it('false leads: unknown name, wrong port, wrong user, the workstation itself', () => {
       const c = new Console({ language });
-      expect(play(c, ['ssh nulle-part'])).toBe('ssh: Could not resolve hostname nulle-part: Name or service not known');
+      expect(play(c, ['ssh nowhere'])).toBe('ssh: Could not resolve hostname nowhere: Name or service not known');
       expect(play(c, ['ssh -p 2222 kingdom'])).toBe(L('ssh: connect to host kingdom.internal port 2222: Connection refused'));
       expect(play(c, ['ssh desk'])).toBe(L('ssh: connect to host desk port 22: Connection refused'));
       expect(play(c, ['ssh', ''])).toContain('usage: ssh');

@@ -20,3 +20,14 @@ password-radish-2027 = radis-2027
 password-bee-2027 = abeille-2027
 password-flour-2028 = farine-2028
 password-film-2027 = argentique-2027
+
+## La Coopérative : la base de données de la caisse (dans son .env)
+password-Chickpeas-42 = Pois-Chiches-42
+
+## La Ruche : l'annuaire (administrateur, comptes) et le secret RADIUS de la borne Wi-Fi
+password-honeycomb = rayon-de-miel
+password-chosen-by-sami = choisi-par-sami
+password-hive-malik-2027 = ruche-malik-2027
+password-hive-ines-2027 = ruche-ines-2027
+password-hive-camille-2026 = ruche-camille-2026
+password-Rk7-ap-2028 = Rk7-borne-2028

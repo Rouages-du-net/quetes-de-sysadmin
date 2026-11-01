@@ -285,3 +285,18 @@ name-message_from_theo-txt = message_de_theo.txt
 
 ## La Rustine
 name-message_from_ines-txt = message_de_ines.txt
+
+## La Ruche : les appareils du réseau local (noms d'hôtes), les VLAN et
+## les groupes de l'annuaire (equipe : voir Le Datacenter), le modèle de Sacha
+name-printer = imprimante
+name-entrance-camera = camera-entree
+name-malik-pc = poste-malik
+name-reception-pc = poste-accueil
+name-visitor-phone = telephone-visiteur
+name-wifi-ap = borne-wifi
+name-annex-pc = poste-annexe
+name-annex-printer = imprimante-annexe
+name-offices = bureaux
+name-guests = invites
+name-equipment = equipements
+name-ines-template-ldif = modele-ines.ldif

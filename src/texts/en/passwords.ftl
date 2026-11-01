@@ -20,3 +20,14 @@ password-radish-2027 = radish-2027
 password-bee-2027 = bee-2027
 password-flour-2028 = flour-2028
 password-film-2027 = film-2027
+
+## The Co-op: the till's database (in its .env)
+password-Chickpeas-42 = Chickpeas-42
+
+## The Hive: the directory (administrator, accounts) and the Wi-Fi access point's RADIUS secret
+password-honeycomb = honeycomb
+password-chosen-by-sami = chosen-by-sami
+password-hive-malik-2027 = hive-malik-2027
+password-hive-ines-2027 = hive-ines-2027
+password-hive-camille-2026 = hive-camille-2026
+password-Rk7-ap-2028 = Rk7-ap-2028

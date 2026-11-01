@@ -20,7 +20,8 @@ import { f, type Chapter } from '../world';
 import type { Game } from '../shell';
 import { loadNginx } from '../nginx';
 import { cooperativeAccounts, M, cooperativeWorld, PASSWORD } from './coop';
-import { till, NEW_KEY, tillEnv, tillState, tillWorld, BINARY_NGINX, nginxCooperative, tillSystemd, visit } from './till-web';
+import { till, NEW_KEY, tillEnv, tillState, tillWorld, BINARY_NGINX, nginxCooperative, tillSystemd, visit, loginPath } from './till-web';
+import type { Translate } from '../../texts';
 
 const ROBOT = '198.51.100.66';
 const LINA = '192.0.2.44';
@@ -46,14 +47,18 @@ const SITE = `server {
     }
 }`;
 
-const robot = (n: number) =>
-  `${ROBOT} - - [19/Oct/2027:07:5${Math.floor(n / 10)}:${String((n % 10) * 6).padStart(2, '0')} +0200] "POST /till/connexion HTTP/1.1" ${n < 5 ? 401 : 429} 41 "-" "python-requests/2.32.3"`;
-const ACCESS = [
-  ...Array.from({ length: 12 }, (_, n) => robot(n)),
-  `${LINA} - - [19/Oct/2027:08:58:30 +0200] "GET /till/ HTTP/1.1" 200 95 "-" "Mozilla/5.0 (X11; Linux x86_64)"`,
-  `${LINA} - - [19/Oct/2027:08:58:44 +0200] "POST /till/connexion HTTP/1.1" 429 52 "-" "Mozilla/5.0 (X11; Linux x86_64)"`,
-  `192.0.2.51 - - [19/Oct/2027:09:12:03 +0200] "POST /till/connexion HTTP/1.1" 429 52 "-" "Mozilla/5.0 (Android 14)"`,
-].join('\n');
+// nginx's access log: the login page's path is the language's (/till/login…).
+const access = (t: Translate) => {
+  const login = `/till${loginPath(t)}`;
+  const robot = (n: number) =>
+    `${ROBOT} - - [19/Oct/2027:07:5${Math.floor(n / 10)}:${String((n % 10) * 6).padStart(2, '0')} +0200] "POST ${login} HTTP/1.1" ${n < 5 ? 401 : 429} 41 "-" "python-requests/2.32.3"`;
+  return [
+    ...Array.from({ length: 12 }, (_, n) => robot(n)),
+    `${LINA} - - [19/Oct/2027:08:58:30 +0200] "GET /till/ HTTP/1.1" 200 95 "-" "Mozilla/5.0 (X11; Linux x86_64)"`,
+    `${LINA} - - [19/Oct/2027:08:58:44 +0200] "POST ${login} HTTP/1.1" 429 52 "-" "Mozilla/5.0 (X11; Linux x86_64)"`,
+    `192.0.2.51 - - [19/Oct/2027:09:12:03 +0200] "POST ${login} HTTP/1.1" 429 52 "-" "Mozilla/5.0 (Android 14)"`,
+  ].join('\n');
+};
 
 const APP_LOG = [
   '2027-10-19 05:00:02 till listening on 127.0.0.1:3000',
@@ -67,14 +72,15 @@ const APP_LOG = [
 function simulate(j: Game) {
   const c = till(j);
   if (!c || !j.state.nginx?.load) return;
+  const login = `/till${loginPath(j.t)}`;
   for (let n = 0; n < 8; n++)
-    visit(j, '/till/connexion', {
+    visit(j, login, {
       address: ROBOT,
       method: 'POST',
       agent: 'python-requests/2.32.3',
-      headers: { 'x-forwarded-for': `10.${n + 1}.${n * 7}.${n + 3}`, 'x-compte': 'admin', 'x-mot-de-passe': `essai${n}` },
+      headers: { 'x-forwarded-for': `10.${n + 1}.${n * 7}.${n + 3}`, 'x-account': 'admin', 'x-password': `attempt${n}` },
     });
-  const r = visit(j, '/till/connexion', { address: LINA, method: 'POST', headers: { 'x-compte': 'lina', 'x-mot-de-passe': 'bon' } });
+  const r = visit(j, login, { address: LINA, method: 'POST', headers: { 'x-account': 'lina', 'x-password': 'good' } });
   j.state.simulation = { lina: r?.code === 200, lockedRobot: c.banned.includes(ROBOT), banned: [...c.banned] };
 }
 
@@ -112,7 +118,7 @@ export const proxy: Chapter = {
   final: 'end',
   password: PASSWORD,
   accounts: () => cooperativeAccounts(false),
-  state: () => ({ ...tillState(tillEnv(NEW_KEY)), systemd: tillSystemd(simulate, simulate) }),
+  state: (t) => ({ ...tillState(tillEnv(t, NEW_KEY)), systemd: tillSystemd(simulate, simulate) }),
   initialise: (j) => {
     loadNginx(j);
     // This morning: the bot got 127.0.0.1 locked, that is, everyone.
@@ -120,11 +126,12 @@ export const proxy: Chapter = {
   },
   createWorld: (t) =>
     cooperativeWorld({
+      t,
       withoutMarc: true,
       home: { 'email_awa.txt': f(t('proxy-email-awa')) },
       etc: nginxCooperative(SITE),
       sbin: BINARY_NGINX,
-      more: tillWorld({ env: tillEnv(NEW_KEY), envMode: 'rw-------', logAccess: ACCESS, appLog: APP_LOG }),
+      more: tillWorld(t, { env: tillEnv(t, NEW_KEY), envMode: 'rw-------', logAccess: access(t), appLog: APP_LOG }),
     }),
   events: [
     {

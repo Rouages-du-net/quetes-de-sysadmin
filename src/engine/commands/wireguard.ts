@@ -13,7 +13,7 @@ import type { Command } from './index';
 const NOT_ROOT = 'Unable to access interface: Operation not permitted';
 
 // A router's public name (in English in every language, like public sites).
-const PUBLIC_NAMES: Record<string, string> = { ruche: 'hive.example' };
+const PUBLIC_NAMES: Record<string, string> = { hive: 'hive.example' };
 
 /** The router's public address (eth0) and its names, for the peers' Endpoint. */
 export const publicFields = (game: Shell) => ({
@@ -22,7 +22,7 @@ export const publicFields = (game: Shell) => ({
 });
 
 // Has the handshake happened (the router and the peer recognised each other)?
-const serre = (e: string) => ['autorisees', 'route', 'forwarding', 'ok'].includes(e);
+const serre = (e: string) => ['allowed-ips', 'route', 'forwarding', 'ok'].includes(e);
 
 function show(game: Shell, name: string, i: InterfaceWg): string[] {
   const lines = [`interface: ${name}`];

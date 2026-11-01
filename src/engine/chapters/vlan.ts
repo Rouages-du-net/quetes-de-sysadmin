@@ -1,4 +1,4 @@
-// Story "La Ruche" — chapter "VLANs": the electrician split the network into
+// Story "The Hive" — chapter "VLANs": the electrician split the network into
 // three VLANs on the switch (offices, guests, equipment), with a trunk port
 // to the router. Since then, nothing works: the router still talks flat
 // (without an 802.1Q tag, so on the native VLAN, where nobody is left).
@@ -70,7 +70,7 @@ export const vlan: Chapter = {
   final: 'end',
   password: PASSWORD,
   accounts: hiveAccounts,
-  state: () => ({ lan: newLan(false), systemd: hiveSystemd() }),
+  state: (t) => ({ lan: newLan(t, false), systemd: hiveSystemd() }),
   initialise: initialiseHive,
   createWorld: (t) =>
     hiveWorld({

@@ -5,6 +5,7 @@
 
 import { d, f, accountsFiles, type Accounts, type Directory, type Node } from '../world';
 import { generateKey } from '../access';
+import type { Translate } from '../../texts';
 
 export const M = '/home/you';
 export const PASSWORD = 'radish-2027';
@@ -12,12 +13,13 @@ export const PASSWORD = 'radish-2027';
 export const NOW = Date.UTC(2027, 9, 19, 9, 30, 0);
 export const TODAY = '2027-10-19';
 
-// The team's public keys (fake, with the right shape).
-export const KEYS = {
-  marc: generateKey('cooperative-marc', 'marc@portable').isPublic,
-  lina: generateKey('cooperative-lina', 'lina@atelier').isPublic,
+// The team's public keys (fake, with the right shape); their comment names
+// the person's computer, in the language (marc@laptop, marc@portable…).
+export const keysIn = (t: Translate) => ({
+  marc: generateKey('cooperative-marc', `marc@${t('departure-host-marc')}`).isPublic,
+  lina: generateKey('cooperative-lina', `lina@${t('departure-host-lina')}`).isPublic,
   ci: generateKey('cooperative-ci', 'deploy@ci').isPublic,
-};
+});
 
 // The accounts; after "The departure", Marc's no longer exists.
 export const cooperativeAccounts = (withMarc = true): Accounts => {
@@ -109,6 +111,7 @@ const README_SUDOERS = `#
 
 /** The shared world: /etc (accounts, sudoers), the homes, and what the chapter adds. */
 export function cooperativeWorld(o: {
+  t: Translate;
   home: Record<string, Node>;
   homes?: Record<string, Node>;
   etc?: Record<string, Node>;
@@ -118,6 +121,7 @@ export function cooperativeWorld(o: {
   // The programs installed in /usr/sbin (e.g. nginx).
   sbin?: Record<string, Node>;
 }): Directory {
+  const keys = keysIn(o.t);
   return d(
     {
       etc: d(
@@ -138,7 +142,7 @@ export function cooperativeWorld(o: {
           deploy: d(
             {
               '.ssh': d(
-                { authorized_keys: file((o.withoutMarc ? [KEYS.ci, KEYS.lina] : [KEYS.ci, KEYS.marc, KEYS.lina]).join('\n'), 'deploy', 'rw-------') },
+                { authorized_keys: file((o.withoutMarc ? [keys.ci, keys.lina] : [keys.ci, keys.marc, keys.lina]).join('\n'), 'deploy', 'rw-------') },
                 undefined,
                 { owner: 'deploy', mode: 'rwx------' },
               ),

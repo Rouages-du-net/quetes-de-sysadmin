@@ -18,6 +18,8 @@ for (const language of LANGUAGES)
     // The player's account in the language (vous@poste, you@poste), like the names of places.
     const L = (line: string) => inLanguage(translator(language), line);
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);
+    // The end of Marc's key: his computer's name, in the language (marc@laptop, marc@portable).
+    const MARC_KEY = `marc@${translator(language)('departure-host-marc')}`;
     const part = (finished: string[] = []) => {
       const c = new Console({ language, finished: [...ERASER, ...finished] });
       // A line (written with the French names), with sudo's password if it is asked for.
@@ -41,7 +43,7 @@ for (const language of LANGUAGES)
       let all = play(['who', 'ps -u marc', 'sudo crontab -l -u marc', 'sudo cat /home/deploy/.ssh/authorized_keys']);
       expect(all).toContain('marc     pts/1');
       expect(all).toContain(L('30 2 * * * /home/marc/bin/till-backup.sh'));
-      expect(all).toContain('marc@portable');
+      expect(all).toContain(MARC_KEY);
       all = play(['sudo usermod -L marc']);
       contains(all, 'usermod -L n');
       all = play(['sudo usermod -e 1 marc', 'sudo chage -l marc', 'sudo gpasswd -d marc sudo']);
@@ -50,7 +52,7 @@ for (const language of LANGUAGES)
       edit('sudo nano /home/deploy/.ssh/authorized_keys', (t) =>
         t
           .split('\n')
-          .filter((l) => !l.includes('marc@portable'))
+          .filter((l) => !l.includes(MARC_KEY))
           .join('\n'),
       );
       all = play(['sudo pkill -u marc', 'who']);
@@ -66,11 +68,11 @@ for (const language of LANGUAGES)
     it('chapter 1 — another solution: /etc/cron.d, then userdel -r', () => {
       const { c, jouer: play, editer: edit } = part();
       play(['sudo mkdir -p /opt/coop', 'sudo cp /home/marc/bin/till-backup.sh /opt/coop/']);
-      edit('sudo nano /etc/cron.d/sauvegarde-till', () => L('30 2 * * * root /opt/coop/till-backup.sh\n'));
+      edit('sudo nano /etc/cron.d/till-backup', () => L('30 2 * * * root /opt/coop/till-backup.sh\n'));
       edit('sudo nano /home/deploy/.ssh/authorized_keys', (t) =>
         t
           .split('\n')
-          .filter((l) => !l.includes('marc@portable'))
+          .filter((l) => !l.includes(MARC_KEY))
           .join('\n'),
       );
       let all = play(['sudo userdel -r marc']);
@@ -126,10 +128,10 @@ for (const language of LANGUAGES)
       const { c, jouer: play, editer: edit } = part(DEPARTURE);
       play(['sudo chgrp -R till /srv/till/statements', 'sudo chmod 2775 /srv/till/statements']);
       play(['sudo chmod g+w /srv/till/statements/2027-10-17.txt /srv/till/statements/2027-10-18.txt']);
-      edit('sudo nano /etc/profile.d/umask-equipe.sh', () => 'umask 002\n');
+      edit('sudo nano /etc/profile.d/umask-team.sh', () => 'umask 002\n');
       edit(
         'sudo visudo -f /etc/sudoers.d/till',
-        () => 'Cmnd_Alias RELANCER_CAISSE = /usr/bin/systemctl restart till\n%till ALL=(root) RELANCER_CAISSE\n',
+        () => 'Cmnd_Alias RESTART_TILL = /usr/bin/systemctl restart till\n%till ALL=(root) RESTART_TILL\n',
       );
       expect(c.finished).toContain('shared-rights');
     });
@@ -155,12 +157,14 @@ for (const language of LANGUAGES)
 
     const SITE = '/etc/nginx/sites-available/coop';
     const BEFORE_SECRET = ['departure', 'shared-rights'];
-    const newKey = (t: string) => t.replace(/PAIEMENT_CLE=.*/, 'PAIEMENT_CLE=pk_live_coop_9d27be05c4a1');
+    // The till's words in the language: the payment key's variable, the field of /health.
+    const KEY = translator(language)('secret-till-env-payment');
+    const newKey = (t: string) => t.replace(new RegExp(`${KEY}=.*`), `${KEY}=pk_live_coop_9d27be05c4a1`);
 
     it('chapter 3 — solution: the log, location ~ /\\., deny, the new key', () => {
       const { c, jouer: play, editer: edit } = part(BEFORE_SECRET);
       let all = play(['curl http://coop.example/.env', "sudo grep '\\.env' /var/log/nginx/access.log"]);
-      expect(all).toContain('PAIEMENT_CLE=pk_live_coop_4f9a2c71e8b3');
+      expect(all).toContain(`${KEY}=pk_live_coop_4f9a2c71e8b3`);
       expect(all).toContain('203.0.113.77 - - [19/Oct/2027:03:12:40 +0200] "GET /.env HTTP/1.1" 200');
       edit(`sudo nano ${SITE}`, (t) =>
         t.replace('    location /till/', '    deny 203.0.113.77;\n\n    location ~ /\\. {\n        deny all;\n    }\n\n    location /till/'),
@@ -172,7 +176,7 @@ for (const language of LANGUAGES)
       contains(all, "l'appli ne lit son .env qu'au démarrage");
       expect(c.finished).not.toContain('secret');
       all = play(['sudo systemctl restart till', 'curl http://127.0.0.1:3000/health']);
-      expect(all).toContain('"paiement":"ok"');
+      expect(all).toContain(`"${translator(language)('secret-till-health-payment')}":"ok"`);
       contains(all, 'https://nginx.org/en/docs/http/ngx_http_core_module.html#location');
       expect(c.finished).toContain('secret');
     });
@@ -253,18 +257,18 @@ for (const language of LANGUAGES)
       all = play(['sudo apt update', 'apt list --upgradable']);
       expect(all).toContain("5 packages can be upgraded. Run 'apt list --upgradable' to see them.");
       expect(all).toContain('linux-image-amd64/trixie-security 6.12.48-1 amd64 [upgradable from: 6.12.38-1]');
-      play(['tmux new -s maj']);
-      expect(c.prompt()).toBe(L('[maj] you@coop:~$'));
+      play(['tmux new -s upgrade']);
+      expect(c.prompt()).toBe(L('[upgrade] you@coop:~$'));
       all = play(['sudo apt upgrade', 'y']);
       expect(all).toContain('client_loop: send disconnect: Broken pipe');
       expect(c.prompt()).toBe(L('you@desk:~$'));
-      all = play(['ssh coop', 'tmux ls', 'tmux attach -t maj']);
+      all = play(['ssh coop', 'tmux ls', 'tmux attach -t upgrade']);
       contains(all, 'la mise à jour tournait dans tmux');
-      expect(all).toContain('maj: 1 windows');
+      expect(all).toContain('upgrade: 1 windows');
       expect(all).toContain('Setting up linux-image-amd64 (6.12.48-1) ...');
       all = play(['cat /var/run/reboot-required.pkgs', 'tmux detach', 'sudo reboot']);
       expect(all).toContain('linux-image-6.12.48+deb13-amd64');
-      expect(all).toContain('[detached (from session maj)]');
+      expect(all).toContain('[detached (from session upgrade)]');
       contains(all, 'la caisse ne répond plus');
       all = play(['ssh coop', 'uname -r', 'systemctl --failed', 'sudo systemctl enable --now till']);
       expect(all).toContain(machinesInLanguage(translator(language), 'Linux coop 6.12.48+deb13-amd64'));
@@ -288,13 +292,13 @@ for (const language of LANGUAGES)
 
     it('chapter 5 — false leads: no reboot, nested tmux, an unknown session', () => {
       const { c, jouer: play } = part(BEFORE_UPDATE);
-      let all = play(['tmux attach', 'tmux new -s maj', 'tmux new -s autre', 'tmux attach -t inconnue']);
+      let all = play(['tmux attach', 'tmux new -s upgrade', 'tmux new -s other', 'tmux attach -t unknown']);
       expect(all).toContain('no server running on /tmp/tmux-1000/default');
       expect(all).toContain('sessions should be nested with care, unset $TMUX to force');
       all = play(['exit']);
       expect(all).toContain('[exited]');
       expect(c.prompt()).toBe(L('you@coop:~$'));
-      play(['tmux new -s maj', 'sudo apt update', 'sudo apt upgrade -y', 'ssh coop', 'sudo systemctl enable till']);
+      play(['tmux new -s upgrade', 'sudo apt update', 'sudo apt upgrade -y', 'ssh coop', 'sudo systemctl enable till']);
       all = play(['uname -r']);
       expect(all).toContain('6.12.38+deb13-amd64');
       expect(c.finished).not.toContain('updates');

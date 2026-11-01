@@ -9,7 +9,7 @@
 //   - enable the ldap module (mods-enabled/ldap, a link) and configure it:
 //     base_dn, an identity allowed to read passwords,
 //     membership_filter (posixGroup groups have no memberOf);
-//   - the users file: Ldap-Group == "bureaux" → VLAN 10, the other
+//   - the users file: Ldap-Group == "offices" → VLAN 10, the other
 //     accounts → VLAN 20 (order matters); and restart freeradius.
 // Objective checked on the state: the access point's simulated requests (Malik,
 // Inès, Sami → VLAN 10; Léo, from the café team → VLAN 20; Camille,
@@ -17,9 +17,10 @@
 // Sources: https://wiki.freeradius.org/modules/Rlm_ldap, https://wiki.freeradius.org/config/Users,
 // https://www.rfc-editor.org/rfc/rfc3580, https://wiki.debian.org/FreeRADIUS
 
-import { d, f, type Chapter } from '../world';
+import { d, f, name, password, type Chapter } from '../world';
+import type { Translate } from '../../texts';
 import type { Game } from '../shell';
-import { BASE, MDP_ADMIN, departureDirectory, serviceSlapd } from './directory';
+import { BASE, ADMIN_PASSWORD, departureDirectory, serviceSlapd } from './directory';
 import { hashWithSalt, type Directory } from '../ldap';
 import { inside } from '../lan';
 import { toBoot, nft, traverse } from '../nftables';
@@ -28,14 +29,14 @@ import { serviceWg } from '../commands/wireguard';
 import { mountWg } from '../wireguard';
 import { systemd } from '../systemd';
 import { FLUX_DMZ } from './dmz';
-import { ANNEX, MALIK_LAPTOP, ANNEX_WG0 } from './annex';
+import { ANNEX, MALIK_LAPTOP, annexWg0 } from './annex';
 import { MALIK } from './remote-work';
-import { openSsh } from './zones';
+import { openSsh, fluxFor } from './zones';
 import {
   hiveAccounts,
-  DNSMASQ_VLAN,
+  dnsmasqVlan,
   initialiseFirewall,
-  INTERFACES_DMZ,
+  interfacesDmz,
   lanWithDmz,
   M,
   hiveWorld,
@@ -47,11 +48,12 @@ import {
 } from './hive';
 
 const BOUND = '10.10.30.20';
-export const BOUND_SECRET = 'Rk7-borne-2028';
+// The access point's shared secret (password(): Rk7-ap-2028 → Rk7-borne-2028 in French).
+export const BOUND_SECRET = 'Rk7-ap-2028';
 
 /** The directory at the end of "The Directory": Camille gone, Sami arrived; and Léo, from the café team. */
-function wifiDirectory(): Directory {
-  const a = departureDirectory();
+function wifiDirectory(t: Translate): Directory {
+  const a = departureDirectory(t);
   a.inputs = a.inputs.filter((e) => !e.dn.startsWith('uid=camille'));
   for (const e of a.inputs) if (e.attrs.memberuid) e.attrs.memberuid = e.attrs.memberuid.filter((m) => m !== 'camille');
   const person = (uid: string, firstName: string, name: string, number: number, mdp: string, salt: string) => ({
@@ -65,37 +67,38 @@ function wifiDirectory(): Directory {
       uidnumber: [String(number)],
       gidnumber: ['10000'],
       homedirectory: [`/home/${uid}`],
-      userpassword: [hashWithSalt(mdp, salt)],
+      userpassword: [hashWithSalt(password(t, mdp), salt)],
     },
   });
   a.inputs.push(
-    person('sami', 'Sami', 'Lemaire', 10004, 'choisi-par-sami', 'Mn34Op56'),
+    person('sami', 'Sami', 'Lemaire', 10004, 'chosen-by-sami', 'Mn34Op56'),
     person('leo', 'Leo', 'Garnier', 10005, 'cafe-leo-2028', 'Qr78St90'),
   );
-  for (const g of a.inputs.filter((e) => e.dn.startsWith('cn=equipe') || e.dn.startsWith('cn=bureaux'))) g.attrs.memberuid.push('sami');
-  a.inputs.find((e) => e.dn.startsWith('cn=equipe'))!.attrs.memberuid.push('leo');
+  const team = `cn=${name(t, 'team')},`;
+  for (const g of a.inputs.filter((e) => e.dn.startsWith(team) || e.dn.startsWith(`cn=${name(t, 'offices')},`))) g.attrs.memberuid.push('sami');
+  a.inputs.find((e) => e.dn.startsWith(team))!.attrs.memberuid.push('leo');
   return a;
 }
 
-// What the access point asks (each person with their password), and the expected answer.
+// What the access point asks (each person with their password, in the language), and the expected answer.
 const ATTEMPTS: { user: string; password: string; expected: number | 'refused' }[] = [
-  { user: 'malik', password: 'ruche-malik-2027', expected: 10 },
-  { user: 'ines', password: 'ruche-ines-2027', expected: 10 },
-  { user: 'sami', password: 'choisi-par-sami', expected: 10 },
+  { user: 'malik', password: 'hive-malik-2027', expected: 10 },
+  { user: 'ines', password: 'hive-ines-2027', expected: 10 },
+  { user: 'sami', password: 'chosen-by-sami', expected: 10 },
   { user: 'leo', password: 'cafe-leo-2028', expected: 20 },
-  { user: 'camille', password: 'ruche-camille-2026', expected: 'refused' },
+  { user: 'camille', password: 'hive-camille-2026', expected: 'refused' },
 ];
-const request = (e: (typeof ATTEMPTS)[number]): Request => ({
+const request = (t: Translate, e: (typeof ATTEMPTS)[number]): Request => ({
   client: BOUND,
   iif: 'eth1.30',
-  secret: BOUND_SECRET,
+  secret: password(t, BOUND_SECRET),
   user: e.user,
-  password: e.password,
+  password: password(t, e.password),
 });
-const REQUESTS = ATTEMPTS.map(request);
+const requests = (t: Translate) => ATTEMPTS.map((e) => request(t, e));
 
 type O = Parameters<typeof handle>[2];
-const responses = (j: Game, o: O = {}) => ATTEMPTS.map((e) => ({ e, r: handle(j, request(e), o) }));
+const responses = (j: Game, o: O = {}) => ATTEMPTS.map((e) => ({ e, r: handle(j, request(j.t, e), o) }));
 const compliant = (j: Game, o: O = {}) => responses(j, o).every(({ e, r }) => (e.expected === 'refused' ? r.what !== 'accept' : vlanFor(r) === e.expected));
 // At the next boot: the files' configuration, nftables from its file, slapd and freeradius enabled.
 const toRadiusBoot = (j: Game): O => {
@@ -270,7 +273,7 @@ export const wifi: Chapter = {
     c.groups.freerad = { gid: 119, members: [] };
     return c;
   },
-  state: () => {
+  state: (t) => {
     const sd = hiveSystemd({
       'wg-quick@wg0': serviceWg('wg0'),
       slapd: serviceSlapd(),
@@ -283,33 +286,33 @@ export const wifi: Chapter = {
           const { errors } = readRadius(j);
           return errors.length ? errors : null;
         },
-        load: (j) => loadRadius(j, REQUESTS),
+        load: (j) => loadRadius(j, requests(j.t)),
       },
     });
     for (const name of ['nftables', 'wg-quick@wg0']) Object.assign(sd.services[name], { active: true, state: 'active' });
     return {
-      lan: { ...lanWithDmz(), flux: FLUX_DMZ.map(({ permitted: _, ...x }) => x), remotes: [MALIK, ANNEX] },
+      lan: { ...lanWithDmz(t), flux: fluxFor(t, FLUX_DMZ), remotes: [MALIK, ANNEX] },
       systemd: sd,
       nft: { tables: [] },
       wg: {},
-      ldap: wifiDirectory(),
-      ldapAdmin: MDP_ADMIN,
-      radiusRequests: REQUESTS,
+      ldap: wifiDirectory(t),
+      ldapAdmin: password(t, ADMIN_PASSWORD),
+      radiusRequests: requests(t),
     };
   },
   initialise: (j) => {
     initialiseFirewall(j);
     mountWg(j, 'wg0', true);
-    loadRadius(j, REQUESTS);
+    loadRadius(j, requests(j.t));
   },
   createWorld: (t) =>
     hiveWorld({
-      interfaces: INTERFACES_DMZ,
-      dnsmasq: DNSMASQ_VLAN,
+      interfaces: interfacesDmz(t),
+      dnsmasq: dnsmasqVlan(t),
       nftables: NFTABLES_DMZ,
       sysctl: ROUTER_SYSCTL,
       etc: {
-        wireguard: d({ 'wg0.conf': f(ANNEX_WG0, { lines: true, owner: 'root', mode: 'rw-------' }) }, undefined, {
+        wireguard: d({ 'wg0.conf': f(annexWg0(t), { lines: true, owner: 'root', mode: 'rw-------' }) }, undefined, {
           owner: 'root',
           mode: 'rwx------',
         }),
@@ -338,7 +341,7 @@ export const wifi: Chapter = {
       },
       home: {
         'email_malik.txt': f(t('wifi-email-malik')),
-        'ap-offices.txt': f(t('wifi-bound', { secret: BOUND_SECRET, address: BOUND }), { lines: true }),
+        'ap-offices.txt': f(t('wifi-bound', { secret: password(t, BOUND_SECRET), address: BOUND }), { lines: true }),
         'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },
     }),

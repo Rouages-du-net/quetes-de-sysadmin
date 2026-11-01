@@ -167,7 +167,7 @@ name-mail_hosting-txt = mail_hosting.txt
 name-email_yasmine-txt = email_yasmine.txt
 name-email_hosting-txt = email_hosting.txt
 
-## La Ruche
+## The Hive
 name-email_malik-txt = email_malik.txt
 name-switch-plan-txt = switch-plan.txt
 name-notes-from-sacha-txt = notes-from-sacha.txt
@@ -215,7 +215,7 @@ name-poems = poems
 ## Le Datacenter : le dossier de l'équipe
 name-team = team
 
-## La Coopérative : les relevés de caisse, la sauvegarde de Marc (/srv/sauvegardes sert aussi dans La Maison des associations)
+## The Co-op: the till's statements, Marc's backup (/srv/backups is also used in The Community Centre)
 name-statements = statements
 name-backups = backups
 name-till-backup-sh = till-backup.sh
@@ -283,3 +283,18 @@ name-message_from_theo-txt = message_from_theo.txt
 
 ## The Patch
 name-message_from_ines-txt = message_from_ines.txt
+
+## The Hive: the devices of the local network (host names), the VLANs and
+## the groups of the directory (team: see The Datacenter), Sacha's template
+name-printer = printer
+name-entrance-camera = entrance-camera
+name-malik-pc = malik-pc
+name-reception-pc = reception-pc
+name-visitor-phone = visitor-phone
+name-wifi-ap = wifi-ap
+name-annex-pc = annex-pc
+name-annex-printer = annex-printer
+name-offices = offices
+name-guests = guests
+name-equipment = equipment
+name-ines-template-ldif = ines-template.ldif

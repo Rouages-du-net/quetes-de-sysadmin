@@ -537,7 +537,7 @@ annex
 directory
   /home/you → /home/vous
   /home/you/email_malik.txt → /home/vous/courriel_malik.txt
-  /home/you/modele-ines.ldif → /home/vous/modele-ines.ldif
+  /home/you/ines-template.ldif → /home/vous/modele-ines.ldif
   /home/you/malik-laptop.conf → /home/vous/malik-laptop.conf
 
 wifi

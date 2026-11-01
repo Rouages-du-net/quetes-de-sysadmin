@@ -21,10 +21,10 @@
 // https://man7.org/linux/man-pages/man1/chage.1.html
 
 import { path, d, f, player, name, type Chapter } from '../world';
-import type { Translate } from '../../texts';
+import { translator, type Translate } from '../../texts';
 import type { Game, Shell } from '../shell';
 import { parse } from '../cron';
-import { TODAY, KEYS, cooperativeAccounts, M, cooperativeWorld, PASSWORD } from './coop';
+import { TODAY, keysIn, cooperativeAccounts, M, cooperativeWorld, PASSWORD } from './coop';
 
 // Marc's script, with the backups directory in the language (/srv/backups…).
 const script = (t: Translate) => {
@@ -32,10 +32,10 @@ const script = (t: Translate) => {
   return `#!/bin/sh
 # Nightly backup of the till and homes (Marc, 2024)
 set -e
-JOUR=$(date +%F)
-mkdir -p ${backups}/$JOUR
-tar -czf ${backups}/$JOUR/till.tar.gz /srv/till
-tar -czf ${backups}/$JOUR/home.tar.gz /home`;
+DAY=$(date +%F)
+mkdir -p ${backups}/$DAY
+tar -czf ${backups}/$DAY/till.tar.gz /srv/till
+tar -czf ${backups}/$DAY/home.tar.gz /home`;
 };
 const SCRIPT = 'till-backup.sh';
 const crontabMarc = (t: Translate) => `# m h  dom mon dow   command
@@ -44,6 +44,8 @@ const DEPLOY = '/home/deploy/.ssh/authorized_keys';
 const file = (content: string, owner: string, mode?: string) => f(content, { lines: true, owner, ...(mode ? { mode } : {}) });
 const sh = (j: Game) => j as Shell;
 const key = (line: string) => line.trim().split(/\s+/).slice(0, 2).join(' ');
+// The keys without their comment (which is the language's).
+const KEYS = keysIn(translator('en'));
 const MARC = key(KEYS.marc);
 
 // An account's authorised keys.
@@ -152,11 +154,12 @@ export const departure: Chapter = {
   }),
   createWorld: (t) =>
     cooperativeWorld({
+      t,
       home: { 'email_awa.txt': f(t('departure-email-awa')) },
       homes: {
         marc: d(
           {
-            '.ssh': d({ authorized_keys: file(KEYS.marc, 'marc', 'rw-------') }, undefined, { owner: 'marc', mode: 'rwx------' }),
+            '.ssh': d({ authorized_keys: file(keysIn(t).marc, 'marc', 'rw-------') }, undefined, { owner: 'marc', mode: 'rwx------' }),
             bin: d({ [SCRIPT]: file(script(t), 'marc', 'rwxr-xr-x') }, undefined, { owner: 'marc' }),
             'notes.txt': file(t('departure-notes-marc'), 'marc'),
           },

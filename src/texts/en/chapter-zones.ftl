@@ -37,7 +37,7 @@ zones-email-malik =
     For sudo: bee-2027
 
 zones-notes-sacha =
-    SACHA'S NOTES (La Ruche's network)
+    SACHA'S NOTES (The Hive's network)
 
     To get the network out to the internet, after a router reboot
     (one day I'll put this in a file):

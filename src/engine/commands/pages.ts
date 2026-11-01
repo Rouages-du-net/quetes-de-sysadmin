@@ -79,7 +79,7 @@ export const PAGES: Record<string, Page> = {
     examples: ['ls /etc/apt/apt.conf.d', 'sudo nano /etc/apt/apt.conf.d/20auto-upgrades', 'apt-config dump APT::Periodic'],
     see: ['apt-config', 'unattended-upgrade', 'apt'],
   },
-  tmux: { examples: ['tmux new -s maj', 'tmux detach', 'tmux ls', 'tmux attach -t maj', 'tmux kill-session -t maj'], see: ['ssh', 'apt'] },
+  tmux: { examples: ['tmux new -s upgrade', 'tmux detach', 'tmux ls', 'tmux attach -t upgrade', 'tmux kill-session -t upgrade'], see: ['ssh', 'apt'] },
   uname: { long: { 'kernel-release': 'r', 'all': 'a' }, options: ['r', 'a'], examples: ['uname -r', 'uname -a'], see: ['apt', 'reboot'] },
   awk: {
     examples: [
@@ -228,7 +228,7 @@ export const PAGES: Record<string, Page> = {
   },
   ldapmodify: {
     options: ['x', 'D', 'W', 'w', 'f', 'H', 'Y', 'a', 'c'],
-    examples: ['ldapmodify -x -D cn=admin,dc=thehive,dc=example -W -f groupes.ldif'],
+    examples: ['ldapmodify -x -D cn=admin,dc=thehive,dc=example -W -f groups.ldif'],
     see: ['ldapadd', 'ldapdelete', 'ldif'],
   },
   ldapdelete: {
@@ -249,9 +249,9 @@ export const PAGES: Record<string, Page> = {
     examples: ['ldapwhoami -x -D uid=sami,ou=people,dc=thehive,dc=example -W'],
     see: ['ldappasswd', 'ldapsearch'],
   },
-  slappasswd: { section: 8, options: ['s'], examples: ['slappasswd', 'slappasswd -s "un mot de passe"'], see: ['ldappasswd', 'ldif'] },
-  slapcat: { section: 8, examples: ['sudo slapcat', 'sudo slapcat > annuaire.ldif'], see: ['ldapsearch', 'ldif'] },
-  ldif: { section: 5, examples: ['cat modele-ines.ldif'], see: ['ldapadd', 'ldapmodify'] },
+  slappasswd: { section: 8, options: ['s'], examples: ['slappasswd', 'slappasswd -s "a password"'], see: ['ldappasswd', 'ldif'] },
+  slapcat: { section: 8, examples: ['sudo slapcat', 'sudo slapcat > directory.ldif'], see: ['ldapsearch', 'ldif'] },
+  ldif: { section: 5, examples: ['cat ines-template.ldif'], see: ['ldapadd', 'ldapmodify'] },
   freeradius: {
     section: 8,
     options: ['X', 'C'],
@@ -274,7 +274,7 @@ export const PAGES: Record<string, Page> = {
     examples: ['sudo lynis audit system', 'sudo grep suggestion /var/log/lynis-report.dat', 'sudo grep hardening_index /var/log/lynis-report.dat', 'lynis show version'],
     see: ['nmap', 'ss', 'sshd_config', 'apt'],
   },
-  radtest: { examples: ['radtest sami "son mot de passe" localhost 0 testing123'], see: ['freeradius'] },
+  radtest: { examples: ['radtest sami "their password" localhost 0 testing123'], see: ['freeradius'] },
   sftp: { options: ['P', 'J', 'i'], examples: ['sftp wiki', 'get -r /srv/wiki/site', 'put rapport.pdf', 'lls', 'bye'], see: ['scp', 'ssh', 'lftp'] },
   lftp: {
     options: ['u', 'e', 'c'],

@@ -19,7 +19,7 @@
 // https://man7.org/linux/man-pages/man8/wg.8.html (PersistentKeepalive),
 // https://man7.org/linux/man-pages/man8/wg-quick.8.html (routes)
 
-import { f, type Chapter } from '../world';
+import { f, name, type Chapter } from '../world';
 import type { Game } from '../shell';
 import type { Shell } from '../shell';
 import { addressFor, lan } from '../lan';
@@ -41,12 +41,13 @@ import {
 import { systemd } from '../systemd';
 import { openSsh } from './zones';
 import { FLUX_DMZ } from './dmz';
+import { fluxFor } from './zones';
 import { MALIK, MALIK_PUBLIC } from './remote-work';
 import {
   hiveAccounts,
-  DNSMASQ_VLAN,
+  dnsmasqVlan,
   initialiseFirewall,
-  INTERFACES_DMZ,
+  interfacesDmz,
   M,
   hiveWorld,
   PASSWORD,
@@ -56,6 +57,7 @@ import {
   hiveSystemd,
   hivePlan,
 } from './hive';
+import type { Translate } from '../../texts';
 
 // The private key of The Hive's router (created in the chapter "Working from home"), and that of the Annex's router (it never leaves the Annex).
 const ROUTER_KEY = '2H8lWIAEPk9kEtfgQW8ZQVaCUVKhwmA1PDgxbjXZqXk=';
@@ -66,7 +68,7 @@ const ANNEX_CONF = `${M}/annex-wg0.conf`;
 
 // The Annex's router: a computer over there (10.20.10.15) goes to the NAS.
 export const ANNEX: Remote = {
-  name: 'annexe',
+  name: 'annex',
   address: '203.0.113.60',
   key: ANNEX_PUBLIC,
   conf: ANNEX_CONF,
@@ -97,9 +99,9 @@ Endpoint = hive.example:51820
 AllowedIPs = 10.10.10.0/24`;
 
 /** wg0.conf at the end of "The Annex": Malik and the Annex's router. */
-export const ANNEX_WG0 = `${WG0}
+export const annexWg0 = (t: Translate) => `${WG0}
 
-# Annexe
+# ${t('annex-peer-comment')}
 [Peer]
 PublicKey = ${ANNEX_PUBLIC}
 AllowedIPs = 10.10.99.3/32, 10.20.10.0/24`;
@@ -109,7 +111,7 @@ const publicOf = (j: Game) => publicFields(j as Shell);
 
 // The address of a computer in the offices (its DHCP lease).
 const officesWorkstation = (j: Game) => {
-  const a = lan(j)?.devices.find((x) => x.name === 'poste-malik');
+  const a = lan(j)?.devices.find((x) => x.name === name(j.t, 'malik-pc'));
   return (a && addressFor(a)) ?? '10.10.10.150';
 };
 
@@ -145,7 +147,7 @@ const notReread = (j: Game) => {
   return file.peers.some((p) => p.key === ANNEX_PUBLIC) && !inWorks?.peers.some((p) => p.key === ANNEX_PUBLIC);
 };
 
-const failedHandshake = (e: TunnelState) => ['conf', 'address', 'filtered', 'cle-routeur', 'unknown'].includes(e);
+const failedHandshake = (e: TunnelState) => ['conf', 'address', 'filtered', 'router-key', 'unknown'].includes(e);
 
 export const annex: Chapter = {
   id: 'annex',
@@ -182,11 +184,11 @@ export const annex: Chapter = {
   final: 'end',
   password: PASSWORD,
   accounts: hiveAccounts,
-  state: () => {
+  state: (t) => {
     const sd = hiveSystemd({ 'wg-quick@wg0': serviceWg('wg0') });
     for (const name of ['nftables', 'wg-quick@wg0']) Object.assign(sd.services[name], { active: true, state: 'active' });
-    const l = lanWithDmz();
-    return { lan: { ...l, flux: FLUX_DMZ.map(({ permitted: _, ...x }) => x), remotes: [MALIK, ANNEX] }, systemd: sd, nft: { tables: [] }, wg: {} };
+    const l = lanWithDmz(t);
+    return { lan: { ...l, flux: fluxFor(t, FLUX_DMZ), remotes: [MALIK, ANNEX] }, systemd: sd, nft: { tables: [] }, wg: {} };
   },
   initialise: (j) => {
     initialiseFirewall(j);
@@ -194,8 +196,8 @@ export const annex: Chapter = {
   },
   createWorld: (t) =>
     hiveWorld({
-      interfaces: INTERFACES_DMZ,
-      dnsmasq: DNSMASQ_VLAN,
+      interfaces: interfacesDmz(t),
+      dnsmasq: dnsmasqVlan(t),
       nftables: NFTABLES_DMZ,
       sysctl: ROUTER_SYSCTL,
       etc: {
@@ -219,7 +221,7 @@ export const annex: Chapter = {
       condition: (j) => !notReread(j) && !!wg(j).wg0?.conf.peers.some((p) => p.key === ANNEX_PUBLIC) && failedHandshake(toNas(j)),
       message: (j) => j.t('annex-event-handshake'),
     },
-    { id: 'allowed', condition: (j) => toNas(j) === 'autorisees', message: (j) => j.t('annex-event-allowed') },
+    { id: 'allowed', condition: (j) => toNas(j) === 'allowed-ips', message: (j) => j.t('annex-event-allowed') },
     { id: 'route', condition: (j) => toNas(j) === 'route', message: (j) => j.t('annex-event-route') },
     { id: 'asleep', condition: (j) => toNas(j) === 'ok' && toPrinter(j) === 'asleep', message: (j) => j.t('annex-event-asleep') },
     { id: 'cameras', condition: (j) => toCamera(j) === 'ok', message: (j) => j.t('annex-event-cameras') },

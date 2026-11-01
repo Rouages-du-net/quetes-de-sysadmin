@@ -92,3 +92,6 @@ directory-event-end =
     - OpenLDAP (outils, LDIF) : https://www.openldap.org/doc/admin26/dbtools.html
     - ldapmodify : https://manpages.debian.org/trixie/ldap-utils/ldapmodify.1.en.html
     - OpenLDAP sur Debian : https://wiki.debian.org/LDAP/OpenLDAPSetup
+
+# L'organisation en haut de l'annuaire (attribut o).
+directory-organisation = La Ruche

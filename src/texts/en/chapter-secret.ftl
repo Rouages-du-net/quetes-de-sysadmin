@@ -79,3 +79,13 @@ secret-event-end =
     DOCUMENTATION
     - location: https://nginx.org/en/docs/http/ngx_http_core_module.html#location
     - deny: https://nginx.org/en/docs/http/ngx_http_access_module.html
+
+## The till app (shared with the next chapters, see till-web.ts): the words
+## the player sees, in the language
+secret-till-env-payment = PAYMENT_KEY
+secret-till-login = login
+secret-till-health-payment = payment
+secret-till-health-revoked = key_revoked
+secret-till-title = Till
+secret-till-site = The Co-op
+secret-till-lang = en
