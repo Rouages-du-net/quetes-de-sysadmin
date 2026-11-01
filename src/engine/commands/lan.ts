@@ -1,6 +1,6 @@
-// ip (iproute2), ifup et ifdown (ifupdown), sur le réseau local simulé
-// (../lan.ts). Sorties d'iproute2 6 et d'ifupdown 0.8, en anglais.
-// Sources : https://man7.org/linux/man-pages/man8/ip-address.8.html,
+// ip (iproute2), ifup and ifdown (ifupdown), on the simulated local network
+// (../lan.ts). Outputs of iproute2 6 and ifupdown 0.8, in English.
+// Sources: https://man7.org/linux/man-pages/man8/ip-address.8.html,
 // https://man7.org/linux/man-pages/man8/ip-link.8.html,
 // https://manpages.debian.org/trixie/ifupdown/ifup.8.en.html
 
@@ -12,7 +12,7 @@ import { colourise, sgr, type When } from '../colours';
 
 const NOT_ALLOWED = 'RTNETLINK answers: Operation not permitted';
 
-// Comme ip : « eth1.10@eth1 » pour un VLAN.
+// Like ip: "eth1.10@eth1" for a VLAN.
 const showsName = (i: Interface) => (i.vlan ? `${i.name}@${i.vlan.parent}` : i.name);
 
 function linkState(l: Lan, i: Interface): { flags: string; state: string } {
@@ -70,10 +70,10 @@ function routes(l: Lan): string[] {
   return lines;
 }
 
-// ip -c[olor][=always|auto|never] : sans valeur, toujours (comme iproute2).
-// Couleurs d'iproute2 : nom d'interface en cyan, état UP en vert et DOWN en
-// rouge, adresse MAC en jaune, IPv4 en magenta, IPv6 en bleu.
-// D'après https://man7.org/linux/man-pages/man8/ip.8.html (-color).
+// ip -c[olor][=always|auto|never]: with no value, always (like iproute2).
+// iproute2's colours: interface name in cyan, UP state in green and DOWN in
+// red, MAC address in yellow, IPv4 in magenta, IPv6 in blue.
+// Based on https://man7.org/linux/man-pages/man8/ip.8.html (-color).
 function ipInColour(c: Context): string {
   let when: When = 'never';
   const args: string[] = [];
@@ -92,7 +92,7 @@ export function colourIp(text: string): string {
   return text
     .split('\n')
     .map((l) => {
-      // ip -br : nom, état, adresses.
+      // ip -br: name, state, addresses.
       const short = /^(\S+)(\s+)(UP|DOWN|UNKNOWN|LOWERLAYERDOWN)(\s*)(.*)$/.exec(l);
       if (short && !/^\d+:/.test(l))
         return sgr('36', short[1]) + short[2] + state(short[3]) + short[4] + short[5].replace(/[0-9a-f:.]+\/\d+/g, (a) => sgr(a.includes(':') ? '34' : '35', a));
@@ -106,7 +106,7 @@ export function colourIp(text: string): string {
     .join('\n');
 }
 
-// La valeur qui suit un mot-clé (dev eth0, name eth1.10…).
+// The value following a keyword (dev eth0, name eth1.10…).
 const after = (words: string[], word: string) => (words.includes(word) ? words[words.indexOf(word) + 1] : undefined);
 
 function ip(game: Shell, args: string[]): string {
@@ -227,14 +227,14 @@ function ip(game: Shell, args: string[]): string {
   return game.error(`Command "${action}" is unknown, try "ip ${object} help".`, 255);
 }
 
-// Une passerelle joignable par cette adresse d'interface ?
+// A gateway reachable through this interface address?
 const dans4 = (ip: string, address: string) => {
   const c = cidr(address)!;
   const other = cidr(`${ip}/${c.length}`);
   return !!other && other.network === c.network;
 };
 
-// ifup / ifdown : -a (les interfaces « auto »), ou des noms.
+// ifup / ifdown: -a (the "auto" interfaces), or names.
 function ifupdown(game: Shell, args: string[], mounted: boolean): string {
   const program = mounted ? 'ifup' : 'ifdown';
   const l = lan(game);
@@ -276,7 +276,7 @@ function ifupdown(game: Shell, args: string[], mounted: boolean): string {
 }
 
 export const LAN: Record<string, Command> = {
-  // dnsmasq --test : vérifier la configuration (le service, lui, se pilote avec systemctl).
+  // dnsmasq --test: check the configuration (the service itself is controlled with systemctl).
   dnsmasq: {
     section: 8,
     ownOptions: true,
@@ -294,6 +294,6 @@ export const LAN: Record<string, Command> = {
   ip: { section: 8, ownOptions: true, launch: (c) => ipInColour(c) },
   ifup: { section: 8, ownOptions: true, launch: ({ args, game }) => ifupdown(game, args, true) },
   ifdown: { section: 8, ownOptions: true, launch: ({ args, game }) => ifupdown(game, args, false) },
-  // La page de manuel du fichier (man 5 interfaces).
+  // The file's manual page (man 5 interfaces).
   interfaces: { section: 5, launch: () => '' },
 };

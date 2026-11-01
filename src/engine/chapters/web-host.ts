@@ -1,17 +1,17 @@
-// Histoire « La Maison des associations » — chapitre « L'hébergeur » : le
-// nouveau site de la Maison est prêt sur le wiki (/srv/wiki/site). Il est
-// publié chez un hébergeur mutualisé, qui ne propose que FTP… et refuse
-// désormais le FTP en clair. Gaspard publiait avec FileZilla, sans
-// chiffrement, sur ftp.community.example (un nom qui pointe chez l'hébergeur,
-// mais que son certificat ne couvre pas).
-//   - rapatrier le site du wiki sur le poste, par SSH (sftp, get -r) ;
-//   - le publier en FTPS avec lftp, sur le nom de l'hébergeur
-//     (ftp.hosting.example), certificat vérifié ;
-//   - mirror -R (du poste vers l'hébergement), dans public_html, avec
-//     --delete (la page des tarifs de 2025 ne doit plus être en ligne).
-// Objectif vérifié sur l'état : public_html contient exactement le site du
-// wiki, et le dernier envoi est passé chiffré, certificat vérifié.
-// Sources : https://man.openbsd.org/sftp, https://lftp.yar.ru/lftp-man.html,
+// Story "The Community Centre", chapter "The web host": the
+// Centre's new site is ready on the wiki (/srv/wiki/site). It is
+// published on a shared web host that only offers FTP… and now refuses
+// plain-text FTP. Gaspard published with FileZilla, without
+// encryption, on ftp.community.example (a name that points to the host,
+// but that its certificate doesn't cover).
+//   - bring the site from the wiki to the workstation, over SSH (sftp, get -r);
+//   - publish it over FTPS with lftp, on the host's name
+//     (ftp.hosting.example), certificate verified;
+//   - mirror -R (from the workstation to the hosting), into public_html, with
+//     --delete (the 2025 price page must no longer be online).
+// Objective checked on the state: public_html contains exactly the wiki's
+// site, and the last upload went encrypted, certificate verified.
+// Sources: https://man.openbsd.org/sftp, https://lftp.yar.ru/lftp-man.html,
 // https://www.rfc-editor.org/rfc/rfc4217
 
 import { d, f, type Chapter, type Directory } from '../world';
@@ -30,7 +30,7 @@ const LOGO = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circl
 
 const page = (t: (id: string) => string, id: string) => f(t(id), { lines: true, owner: 'www-data', mode: 'rw-r--r--' });
 
-// L'hébergement de la Maison : l'ancien site, en ligne depuis 2025.
+// The Centre's hosting: the old site, online since 2025.
 HOSTINGS.hebergeur = {
   names: ['ftp.hosting.example', 'hosting.example', 'ftp.community.example'],
   address: '203.0.113.80',
@@ -51,14 +51,14 @@ HOSTINGS.hebergeur = {
 const workstation = (j: Game) => (j.state.workstation as (() => Shell) | undefined)?.();
 const wiki = (j: Game) => (j as Shell).internal('wiki');
 
-// Le site du wiki, par chemin relatif.
+// The wiki's site, by relative path.
 function wikiSite(j: Game): Record<string, string> {
   const w = wiki(j);
   const res: Record<string, string> = {};
   const walk = (path: string, rel: string) => {
     const n = w?.find(path);
     if (!n) return;
-    if (n.type === 'dossier') for (const k of Object.keys(n.children)) walk(`${path}/${k}`, rel ? `${rel}/${k}` : k);
+    if (n.type === 'directory') for (const k of Object.keys(n.children)) walk(`${path}/${k}`, rel ? `${rel}/${k}` : k);
     else res[rel] = w!.read(path) ?? '';
   };
   walk(SITE, '');
@@ -83,7 +83,7 @@ const lastSend = (j: Game) =>
   inLine(j)
     ?.log.filter((e) => e.send)
     .at(-1);
-const refusal = (j: Game, what: 'clair' | 'certificat') => !!(workstation(j)?.state.ftpRefusal as string[] | undefined)?.includes(what);
+const refusal = (j: Game, what: 'plain' | 'certificate') => !!(workstation(j)?.state.ftpRefusal as string[] | undefined)?.includes(what);
 
 export const host: Chapter = {
   id: 'web-host',
@@ -137,8 +137,8 @@ export const host: Chapter = {
       },
     }),
   events: [
-    { id: 'clear', condition: (j) => refusal(j, 'clair'), message: (j) => j.t('web-host-event-clear') },
-    { id: 'certificate', condition: (j) => refusal(j, 'certificat'), message: (j) => j.t('web-host-event-certificate') },
+    { id: 'clear', condition: (j) => refusal(j, 'plain'), message: (j) => j.t('web-host-event-clear') },
+    { id: 'certificate', condition: (j) => refusal(j, 'certificate'), message: (j) => j.t('web-host-event-certificate') },
     {
       id: 'without-verification',
       condition: (j) => !!inLine(j)?.log.some((e) => !e.checked),

@@ -1,15 +1,15 @@
-// Histoire « La Gazette » — chapitre « Le canari » : la 1.6.0 du Kiosque
-// change beaucoup de choses ; cette fois, pas de bascule d'un coup. On
-// l'installe sur blue (green sert la 1.5.0), puis un upstream nginx envoie
-// une visite sur dix à blue (weight). Après une heure de lecteur·rices
-// (simulée à chaque rechargement de nginx), access.log montre des 500 sur
-// /kiosk/archives : un bogue que /health ne voit pas. On arrête le
-// canari ; les développeur·ses publient la 1.6.1 ; nouveau canari, sans
-// erreur ; puis tout le trafic va à blue, green restant allumé.
-// Objectif vérifié sur l'état : nginx envoie tout /kiosk/ à une instance
-// en 1.6.1 en bonne santé, après un canari de la 1.6.1 sans erreur, et
-// l'autre instance tourne toujours.
-// Sources : https://nginx.org/en/docs/http/ngx_http_upstream_module.html,
+// Story "La Gazette" — chapter "The canary": version 1.6.0 of the Kiosque
+// changes a lot of things; this time, no switch all at once. We
+// install it on blue (green serves 1.5.0), then an nginx upstream sends
+// one visit in ten to blue (weight). After an hour of readers
+// (simulated at each nginx reload), access.log shows 500s on
+// /kiosk/archives: a bug /health doesn't see. We stop the
+// canary; the developers release 1.6.1; a new canary, without
+// errors; then all the traffic goes to blue, green staying on.
+// Objective checked on the state: nginx sends all of /kiosk/ to a healthy
+// 1.6.1 instance, after an error-free 1.6.1 canary, and
+// the other instance is still running.
+// Sources: https://nginx.org/en/docs/http/ngx_http_upstream_module.html,
 // https://martinfowler.com/bliki/CanaryRelease.html,
 // https://sre.google/workbook/canarying-releases/
 
@@ -33,7 +33,7 @@ const accounts = (): Accounts => {
   return c;
 };
 
-// La configuration de la fin du chapitre 3 : green sert le Kiosque.
+// The configuration from the end of chapter 3: green serves the Kiosque.
 const conf = (t: Game['t']) => `server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -137,7 +137,7 @@ export const canary: Chapter = {
     sd(j).services['kiosk-green'].load!(j);
     j.state.configSeen = JSON.stringify(j.state.nginx.load);
   },
-  // À chaque nouvelle configuration de nginx, une heure de lecteur·rices passe.
+  // With each new nginx configuration, an hour of readers passes.
   afterCommand: (j) => {
     const view = JSON.stringify(j.state.nginx.load);
     if (view === j.state.configSeen) return;
@@ -245,10 +245,10 @@ export const canary: Chapter = {
       id: 'stopped',
       condition: (j) => !!j.state.canary160 && (distribution(j).blue ?? 0) === 0 && (distribution(j).green ?? 0) > 0,
       message: (j) => j.t('canary-event-stopped'),
-      // Les développeur·ses publient le correctif.
+      // The developers release the fix.
       action: (j) => {
         const versions = j.find(`${KIOSK}/versions`);
-        if (versions?.type === 'dossier') versions.children['1.6.1'] = versionDirectory(j.t, '1.6.1', 'canary-notes-161');
+        if (versions?.type === 'directory') versions.children['1.6.1'] = versionDirectory(j.t, '1.6.1', 'canary-notes-161');
       },
     },
     { id: 'canary-161', condition: (j) => !!j.state.canaryClean, message: (j) => j.t('canary-event-canary-161') },

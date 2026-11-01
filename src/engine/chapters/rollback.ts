@@ -1,15 +1,15 @@
-// Histoire « La Gazette » — chapitre « Le retour arrière » : chaque push est
-// publié dans son propre dossier (releases/), et un lien current désigne la
-// version en ligne. Hier soir, Théo a poussé une nouvelle mise en page… sans
-// index.html : le site répond 403. Revenir à la version précédente, c'est
-// basculer le lien (ln -sfn), instantanément. Puis faire lancer tests.sh par
-// le crochet avant de basculer, pour qu'une version cassée ne soit jamais
-// mise en ligne ; Théo repousse pour vérifier. Enfin, réparer pour de bon
-// (git pull, le bon nom de fichier, git push).
-// Objectif vérifié sur l'état : le site sert la nouvelle mise en page,
-// publiée par le crochet après ses tests, et le push cassé de Théo n'a pas
-// été mis en ligne.
-// Sources : https://git-scm.com/docs/githooks#post-receive,
+// Story "The Gazette", chapter "Rolling back": each push is
+// published in its own directory (releases/), and a current link points to the
+// live version. Last night, Théo pushed a new layout… without
+// index.html: the site answers 403. Going back to the previous version means
+// switching the link (ln -sfn), instantly. Then have the hook run tests.sh
+// before switching, so that a broken version never goes
+// live; Théo pushes again to check. Finally, fix it for good
+// (git pull, the right file name, git push).
+// Objective checked on the state: the site serves the new layout,
+// published by the hook after its tests, and Théo's broken push did not
+// go live.
+// Sources: https://git-scm.com/docs/githooks#post-receive,
 // https://www.gnu.org/software/coreutils/manual/html_node/ln-invocation.html,
 // https://nginx.org/en/docs/http/ngx_http_core_module.html#root
 
@@ -33,8 +33,8 @@ const THEO = '/home/theo/gazette';
 const THEO_AUTHOR = 'Theo Martin <theo@gazette.example>';
 const GAZETTE = 'gazette.example';
 
-// L'historique : celui du chapitre 1 (titre corrigé, agenda), les tests de
-// Samia, puis la nouvelle mise en page de Théo (accueil.html au lieu d'index.html).
+// The history: chapter 1's (corrected title, agenda), Samia's
+// tests, then Théo's new layout (accueil.html instead of index.html).
 function commits(t: Game['t']): Commit[] {
   const [c1, c2] = history(t);
   const c3 = newCommit(c2, t('rollback-commit-3'), `${player(t)} <${player(t)}@gazette.example>`, 'Mon May 10 09:31:00 2027 +0200', {
@@ -57,7 +57,7 @@ function commits(t: Game['t']): Commit[] {
   return [c1, c2, c3, c4, c5, c6];
 }
 
-// Le crochet de déploiement : une version par push, puis le lien current.
+// The deployment hook: one version per push, then the current link.
 const HOOK = (t: Game['t']) => `#!/bin/sh
 # ${t('rollback-hook-comment')}
 set -e
@@ -69,7 +69,7 @@ echo "${t('rollback-hook-echo')}"`;
 
 const repo = (j: Game, path: string): Repo | undefined => j.state.git?.[path];
 const link = (j: Game) => (j.find(CURRENT, false) as { link?: string } | null)?.link ?? null;
-// La version en ligne : le dossier de releases/ que vise current.
+// The live version: the releases/ directory current points to.
 const inLine = (j: Game) => {
   const l = link(j);
   return l ? (l.startsWith('/') ? l : `${BASE}/${l}`).replace(/\/$/, '').split('/').at(-1)! : null;
@@ -78,19 +78,19 @@ const page = (j: Game) => httpRequest(j, GAZETTE, '/', 80, false);
 const works = (j: Game) => page(j)?.code === 200;
 const newUpdateInPage = (j: Game) => works(j) && (page(j)?.body ?? '').includes('class="une"');
 const hook = (j: Game) => j.read(`${REPO}/hooks/post-receive`) ?? '';
-// Un lien créé DANS la version cassée (ln -sf sans -n : ln est entré dans le lieu visé).
+// A link created INSIDE the broken version (ln -sf without -n: ln entered the target place).
 const insideLink = (j: Game) => {
   const n = j.find(`${RELEASES}/${BROKEN}`);
-  return n?.type === 'dossier' && Object.values(n.children).some((e) => e.type === 'fichier' && e.link !== undefined);
+  return n?.type === 'directory' && Object.values(n.children).some((e) => e.type === 'file' && e.link !== undefined);
 };
-// La version de releases/ où le crochet a extrait le dernier commit du serveur.
+// The releases/ version where the hook extracted the server's last commit.
 const deployedByHook = (j: Game) => {
   const head = repo(j, REPO)?.commits.at(-1);
   const here = Object.entries(j.state.gitDeployments ?? {}).find(([, id]) => id === head?.id)?.[0];
   return !!here && here.replace(/\/$/, '').split('/').at(-1) === inLine(j);
 };
 
-/** Théo repousse une mise en page sans index.html, comme s'il le faisait de chez lui. */
+/** Théo pushes a layout without index.html again, as if from home. */
 function theoRepousse(j: Game): string {
   const game = j as Shell;
   const server = repo(j, REPO)!;
@@ -179,7 +179,7 @@ export const rollback: Chapter = {
       nginx: { load: null, names: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'] },
       git: {
         [REPO]: { commits: all, index: {}, bare: true },
-        // Ta copie s'est arrêtée aux tests de Samia : la mise en page de Théo est sur le serveur.
+        // Your copy stopped at Samia's tests: Théo's layout is on the server.
         [path(t, LOCAL)]: { commits: all.slice(0, 5), index: { ...all[4].files }, remotes: { prod: REPO } },
       },
       author: `${player(t)} <${player(t)}@gazette.example>`,
@@ -188,8 +188,8 @@ export const rollback: Chapter = {
   },
   initialise: (j) => loadNginx(j),
   afterCommand: (j) => {
-    // Une fois le site rétabli et les tests ajoutés au crochet, Théo repousse
-    // sa mise en page (cassée) : à chaque nouvelle version du crochet.
+    // Once the site is back and the tests are added to the hook, Théo pushes
+    // his (broken) layout again: on each new version of the hook.
     const c = hook(j);
     if (!j.state.restored || !c.includes('tests.sh') || c === j.state.hookTested) return;
     j.state.hookTested = c;
@@ -235,7 +235,7 @@ export const rollback: Chapter = {
         theo: place({ gazette: place({ '.git': place({}, { owner: 'theo' }) }, { owner: 'theo' }) }, { owner: 'theo', mode: 'rwx------' }),
       }),
       srv: place({
-        // Le dépôt partagé par la rédaction (git init --bare --shared=group).
+        // The repository shared by the newsroom (git init --bare --shared=group).
         git: place({
           'gazette.git': place(
             {

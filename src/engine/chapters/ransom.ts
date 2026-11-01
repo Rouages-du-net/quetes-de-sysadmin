@@ -1,15 +1,15 @@
-// Histoire « La Ludothèque » — chapitre « La rançon » : lundi matin, les
-// fichiers partagés de la ludothèque sont chiffrés (.locked) et une demande
-// de rançon traîne dans chaque dossier. Le mot de passe du compte accueil a
-// été deviné ; un programme tourne encore sous ce compte, et sa crontab le
-// relance. La copie de cette nuit sur le NAS est chiffrée aussi : rsync
-// --delete a fidèlement recopié les dégâts. Reste le disque USB du tiroir,
-// hors ligne : un dépôt restic d'il y a une semaine.
-// Objectif vérifié sur l'état : le chiffreur est arrêté et ne revient plus
-// (crontab nettoyée), le compte accueil est verrouillé, tous les fichiers
-// sont restaurés, plus aucun .locked ni demande de rançon, et le disque de
-// sauvegarde est démonté (de nouveau hors ligne).
-// Sources : https://www.cisa.gov/stopransomware/ransomware-guide,
+// Story "La Ludothèque" — chapter "The ransom": Monday morning, the game
+// library's shared files are encrypted (.locked) and a ransom note lies in
+// every folder. The password of the accueil account was guessed; a program
+// still runs under this account, and its crontab starts it again. Last
+// night's copy on the NAS is encrypted too: rsync --delete faithfully copied
+// the damage. What is left is the USB disk in the drawer, offline: a restic
+// repository from a week ago.
+// Objective checked on the state: the encryptor is stopped and does not
+// come back (crontab cleaned), the accueil account is locked, all files are
+// restored, no more .locked file nor ransom note, and the backup disk is
+// unmounted (offline again).
+// Sources: https://www.cisa.gov/stopransomware/ransomware-guide,
 // https://cyber.gouv.fr/publications/attaques-par-rancongiciels-tous-concernes,
 // https://restic.readthedocs.io/en/stable/050_restore.html,
 // https://man7.org/linux/man-pages/man8/mount.8.html
@@ -26,7 +26,7 @@ const M = '/home/you';
 const SHARE = '/srv/share';
 const NAS = '/mnt/nas';
 const KEY = '/mnt/usb';
-// Le dépôt restic du disque USB.
+// The USB disk's restic repository.
 const REPO = `${KEY}/repo`;
 const USB = '/dev/sdb1';
 const ENCRYPTOR = '/home/accueil/.cache/.upd/system-update';
@@ -51,7 +51,7 @@ const accounts = (): Accounts => ({
   },
 });
 
-// Les fichiers du partage (chemin relatif → identifiant du texte).
+// The share's files (relative path → text identifier).
 const FILES: Record<string, string> = {
   'inventory.csv': 'ransom-inventory',
   'volunteer-rota.txt': 'ransom-schedule',
@@ -61,13 +61,13 @@ const FILES: Record<string, string> = {
   'rules/draughts.txt': 'ransom-rules-ladies',
 };
 
-// Un fichier chiffré : un nom en .locked et des octets illisibles.
+// An encrypted file: a name ending in .locked and unreadable bytes.
 const unreadable = (seed: string) =>
   hex(`chiffre-${seed}`, 160)
     .replace(/(.{40})/g, '$1\n')
     .trim();
 
-// La sauvegarde du dimanche 13 juin, sur le disque USB.
+// The backup of Sunday 13 June, on the USB disk.
 function usbRepo(t: Game['t']): Repo {
   const repo: Repo = { id: hex('depot-ludotheque'), password: password(t, PASSWORD), snapshotList: [], packs: [], checked: true, pruneA: false };
   const sundays = [Date.UTC(2027, 4, 30, 18, 0, 0), Date.UTC(2027, 5, 6, 18, 0, 0), Date.UTC(2027, 5, 13, 18, 0, 0)];
@@ -83,7 +83,7 @@ function usbRepo(t: Game['t']): Repo {
   return repo;
 }
 
-// Le contenu attendu de chaque fichier restauré.
+// The expected content of each restored file.
 const expected = (j: Game) => Object.fromEntries(Object.entries(FILES).map(([rel, id]) => [path(j.t, `${SHARE}/${rel}`), j.t(id)]));
 
 const sd = (j: Game) => systemd(j)!;
@@ -93,32 +93,32 @@ const persistence = (j: Game) => (j.state.crontabs?.accueil ?? '').includes(name
 const locked = (j: Game) => (j.state.lockedAccounts ?? []).includes('accueil');
 const mountedKey = (j: Game) => (j.state.mounts ?? []).some((m: { name: string }) => m.name === USB);
 
-// Tous les fichiers sous un lieu (chemins absolus).
+// All the files under a place (absolute paths).
 function all(j: Game, place: string): string[] {
   const n = j.find(place);
-  if (n?.type !== 'dossier') return [];
-  return Object.entries(n.children).flatMap(([name, e]) => (e.type === 'dossier' ? all(j, `${place}/${name}`) : [`${place}/${name}`]));
+  if (n?.type !== 'directory') return [];
+  return Object.entries(n.children).flatMap(([name, e]) => (e.type === 'directory' ? all(j, `${place}/${name}`) : [`${place}/${name}`]));
 }
 const remains = (j: Game) => all(j, path(j.t, SHARE)).filter((c) => c.endsWith('.locked') || c.endsWith(`/${name(j.t, NOTE)}`));
 const restored = (j: Game) => Object.entries(expected(j)).filter(([c, text]) => j.read(c) === text).length;
 const allRestored = (j: Game) => restored(j) === Object.keys(FILES).length;
 
 /**
- * Le chiffreur au travail : chaque fichier en clair du partage que le compte
- * accueil peut modifier devient illisible, renommé en .locked, avec une
- * demande de rançon dans son dossier. Renvoie le nombre de fichiers touchés.
+ * The encryptor at work: each clear file of the share that the accueil
+ * account can modify becomes unreadable, renamed to .locked, with a ransom
+ * note in its folder. Returns the number of files hit.
  */
 function encrypt(j: Game, place: string): number {
   const n = j.find(place);
-  if (n?.type !== 'dossier' || !j.can(n, 'w', 'accueil')) return 0;
+  if (n?.type !== 'directory' || !j.can(n, 'w', 'accueil')) return 0;
   const note = name(j.t, NOTE);
   let touches = 0;
   for (const [name, e] of Object.entries(n.children)) {
-    if (e.type === 'dossier') touches += encrypt(j, `${place}/${name}`);
+    if (e.type === 'directory') touches += encrypt(j, `${place}/${name}`);
     else if (!name.endsWith('.locked') && name !== note && e.link === undefined) {
       delete n.children[name];
       n.children[`${name}.locked`] = {
-        type: 'fichier',
+        type: 'file',
         content: unreadable(`${place}/${name}`),
         lines: true,
         owner: 'accueil',
@@ -128,7 +128,7 @@ function encrypt(j: Game, place: string): number {
       touches++;
     }
   }
-  if (touches && !n.children[note]) n.children[note] = { type: 'fichier', content: j.t('ransom-note'), owner: 'accueil', group: 'ludo' };
+  if (touches && !n.children[note]) n.children[note] = { type: 'file', content: j.t('ransom-note'), owner: 'accueil', group: 'ludo' };
   return touches;
 }
 
@@ -224,14 +224,14 @@ export const ransom: Chapter = {
   },
   initialise: (j) => {
     const game = j as Shell;
-    // Les fichiers du dépôt restic, sur le disque USB (monté le temps de les écrire).
+    // The restic repository's files, on the USB disk (mounted while they are written).
     const place = j.find(path(j.t, KEY)) as Directory;
     const tree = (j.state.devices[USB] as Device).tree;
     const cache = place.children;
     place.children = tree.children;
     writeRepo(game, path(j.t, REPO), j.state.restic[path(j.t, REPO)]);
     place.children = cache;
-    // La nuit : connexion réussie sur accueil après des essais, puis le chiffrement.
+    // The night: successful login on accueil after several attempts, then the encryption.
     const s = sd(j);
     const now = s.clock;
     s.clock = Date.UTC(2027, 5, 21, 3, 11, 0);
@@ -241,13 +241,13 @@ export const ransom: Chapter = {
     s.clock = Date.UTC(2027, 5, 21, 3, 14, 0);
     writeLog(s, 'cron.service', 'CRON', 3140, `(accueil) CMD (${path(j.t, ENCRYPTOR)} --silencieux)`);
     s.clock = now;
-    // Ce que le chiffreur a déjà fait, et ce que rsync a recopié cette nuit sur le NAS.
+    // What the encryptor has already done, and what rsync copied to the NAS last night.
     encrypt(j, path(j.t, SHARE));
     const nas = j.find(path(j.t, `${NAS}/share`));
     const share = j.find(path(j.t, SHARE));
-    if (nas?.type === 'dossier' && share?.type === 'dossier') nas.children = structuredClone(share.children);
+    if (nas?.type === 'directory' && share?.type === 'directory') nas.children = structuredClone(share.children);
   },
-  // Tant qu'il tourne, le chiffreur repasse ; tant que sa crontab existe, il revient.
+  // While it runs, the encryptor comes back over the files; while its crontab exists, it returns.
   afterCommand: (j) => {
     const messages: string[] = [];
     if (activeEncryptor(j)) {
@@ -302,7 +302,7 @@ export const ransom: Chapter = {
       tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
       srv: place({ share: place(share, { owner: 'root', group: 'ludo', mode: 'rwxrwxr-x' }) }),
       mnt: place({
-        // Le partage du NAS, monté en permanence : tout le monde peut y écrire.
+        // The NAS share, mounted permanently: everyone can write to it.
         nas: place({ share: place({}, { owner: 'root', mode: 'rwxrwxrwx' }) }, { owner: 'root', mode: 'rwxrwxrwx' }),
         usb: place({}),
       }),

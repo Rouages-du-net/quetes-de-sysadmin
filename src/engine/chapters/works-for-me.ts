@@ -1,18 +1,17 @@
-// Histoire « Les Lettres du quartier » — chapitre « Ça marche chez moi » :
-// le DNS. Kofi a « fait pointer » cafe.example vers le serveur… en ajoutant
-// une ligne dans le /etc/hosts de son propre ordinateur. Chez lui, le site du
-// café marche ; chez les clients, le nom mène toujours à l'ancien hébergeur.
-// Le serveur des Lettres fait autorité pour la zone (named, BIND 9) ; le
-// registre en garde une copie (serveur secondaire). Il faut corriger la
-// zone, augmenter son numéro de série, la vérifier, la recharger, ajouter
-// www, et comprendre pourquoi les résolveurs donnent encore l'ancienne
-// adresse (le TTL).
-// Objectif vérifié sur l'état : les deux serveurs qui font autorité
-// répondent la nouvelle adresse pour cafe.example et www.cafe.example, le
-// courrier (MX) est toujours là, et la zone des Lettres n'a pas bougé.
-// Sources : https://bind9.readthedocs.io/en/stable/chapter3.html (zones),
+// Story "The Neighbourhood Letters" — chapter "Works on my machine":
+// DNS. Kofi "pointed" cafe.example to the server… by adding a line to his
+// own computer's /etc/hosts. On his computer, the café's site works; for
+// customers, the name still leads to the former host.
+// The Letters' server is authoritative for the zone (named, BIND 9); the
+// registry keeps a copy (secondary server). The zone must be fixed, its
+// serial number increased, then checked, reloaded, www added, and the
+// player must understand why resolvers still give the old address (the TTL).
+// Objective checked on the state: both authoritative servers answer the
+// new address for cafe.example and www.cafe.example, the mail (MX) is still
+// there, and the Letters' zone hasn't changed.
+// Sources: https://bind9.readthedocs.io/en/stable/chapter3.html (zones),
 // https://bind9.readthedocs.io/en/stable/manpages.html (named-checkzone, rndc, dig),
-// RFC 1034 et 1035 (TTL, SOA, CNAME).
+// RFC 1034 and 1035 (TTL, SOA, CNAME).
 
 import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game } from '../shell';
@@ -48,7 +47,7 @@ const SOA = (serial: string) => `@       IN SOA  ns1.letters.example. kofi.lette
                 1209600    ; expire
                 3600 )     ; negative cache TTL`;
 
-// La zone du café, telle qu'elle était chez l'ancien hébergeur.
+// The café's zone, as it was at the former host.
 const ZONE_CAFE = `$TTL 86400
 ${SOA('2026091501')}
         IN NS   ns1.letters.example.
@@ -57,7 +56,7 @@ ${SOA('2026091501')}
         IN MX   10 mail.letters.example.
         IN TXT  "v=spf1 mx -all"`;
 
-// La zone des Lettres : un bon modèle.
+// The Letters' zone: a good model.
 const LETTERS_ZONE = `$TTL 3600
 ${SOA('2026111002')}
         IN NS   ns1.letters.example.
@@ -108,7 +107,7 @@ const NAMED_OPTIONS = `options {
 
 const sd = (j: Game) => systemd(j)!;
 const state = (j: Game): DnsState => dns(j)!;
-// L'adresse finale d'un nom pour un serveur qui fait autorité (après les CNAME).
+// The final address of a name for an authoritative server (after CNAMEs).
 const address = (j: Game, server: 'primary' | 'secondary', name: string) =>
   query(j, server, name, 'A', 0)
     .responses.filter((r) => r.type === 'A')
@@ -117,7 +116,7 @@ const good = (j: Game, server: 'primary' | 'secondary') =>
   ['cafe.example', 'www.cafe.example'].every((n) => address(j, server, n).join() === NEW) &&
   query(j, server, 'cafe.example', 'MX', 0).responses.some((r) => r.type === 'MX') &&
   address(j, server, 'letters.example').join() === NEW;
-// Un nom de la zone écrit sans le point final dans les données.
+// A name of the zone written without the trailing dot in the data.
 const forgottenPoint = (j: Game) =>
   (state(j).primary['cafe.example']?.rrs ?? []).some(
     (r) => /\.cafe\.example\.cafe\.example\.$/.test(r.data) || r.data.endsWith('.example.cafe.example.'),
@@ -162,8 +161,8 @@ export const atMe: Chapter = {
       conf: '/etc/bind/named.conf.local',
       primary: {},
       secondary: {},
-      // Le résolveur public a demandé cafe.example hier à 16 h : il garde
-      // l'ancienne adresse 24 heures (TTL 86400).
+      // The public resolver asked for cafe.example yesterday at 4 p.m.: it keeps
+      // the old address for 24 hours (TTL 86400).
       cache: {
         'cafe.example. A': {
           rrs: [{ name: 'cafe.example.', ttl: 86400, type: 'A', data: OLD }],
@@ -201,12 +200,12 @@ export const atMe: Chapter = {
       dns: dnsState,
     };
   },
-  // named a chargé les zones au démarrage, et le registre en a une copie.
+  // named loaded the zones at boot, and the registry has a copy.
   initialise: (j) => {
     reloadZones(j);
     const e = state(j);
     e.secondary = JSON.parse(JSON.stringify(e.primary));
-    // Le journal de ce chargement ne date pas d'aujourd'hui : on le retire.
+    // The log of this loading isn't from today: remove it.
     sd(j).log = sd(j).log.filter((x) => x.unit !== 'named.service');
   },
   createWorld: (t) => {
@@ -244,7 +243,7 @@ export const atMe: Chapter = {
   events: [
     {
       id: 'cache',
-      // Juste après une question au résolveur public, qui répond encore l'ancienne adresse.
+      // Right after a question to the public resolver, which still answers the old address.
       condition: (j) => {
         const q: { server: string; data: string[] } | undefined = j.state.dnsQueries?.at(-1);
         return (

@@ -1,12 +1,12 @@
-// La mémoire : free, top (un instantané, comme top -b -n 1) et dmesg (les
-// messages du noyau, dont ceux de l'OOM killer), sur le modèle de
-// ../memoire.ts. Sorties d'après procps-ng (free(1), top(1)) et
-// util-linux (dmesg(1)) : https://man7.org/linux/man-pages/man1/free.1.html,
+// Memory: free, top (a snapshot, like top -b -n 1) and dmesg (the
+// kernel's messages, including the OOM killer's), on the model of
+// ../memory.ts. Outputs based on procps-ng (free(1), top(1)) and
+// util-linux (dmesg(1)): https://man7.org/linux/man-pages/man1/free.1.html,
 // https://man7.org/linux/man-pages/man1/top.1.html,
 // https://man7.org/linux/man-pages/man1/dmesg.1.html
-// Écarts : top n'est pas interactif (il affiche un instantané et rend la
-// main) ; pas de swap ; la colonne available vaut free (le cache ne se
-// libère pas dans le jeu).
+// Differences: top is not interactive (it shows a snapshot and gives the
+// prompt back); no swap; the available column equals free (the cache is
+// never freed in the game).
 
 import { diskState, io } from '../disk-io';
 import type { Shell } from '../shell';
@@ -16,7 +16,7 @@ import { systemd } from '../systemd';
 import { dockerProcess } from '../docker';
 import type { Command } from './index';
 
-// Le noyau lui-même, hors cache (le reste de « noyau » est du cache disque).
+// The kernel itself, without cache (the rest of "kernel" is disk cache).
 const ONLY_KERNEL = 150 * 1024 * 1024;
 
 function memoryDigits(game: Shell) {
@@ -28,7 +28,7 @@ function memoryDigits(game: Shell) {
   return { total, used: busy - cache, free: freeMem, shared: 12 * 1024 * 1024, cache, available: freeMem };
 }
 
-// Le démarrage de la machine : la première ligne du journal de ce démarrage.
+// The machine's boot: the first line of this boot's journal.
 const boot = (game: Shell) => {
   const sd = systemd(game)!;
   return sd.log.find((e) => e.boot === sd.boot)?.time ?? sd.clock;
@@ -70,7 +70,7 @@ function top(game: Shell, args: string[]): string {
   const listing: Process[] = [...process(game), ...dockerProcess(game)];
   const zombies = listing.filter((p) => p.zombie).length;
   const rss = (p: Process) => Math.round((m.rss[p.pid] ?? 0) / 1024);
-  // RES : en Kio, puis en Mio (m) ou Gio (g) quand la colonne déborderait.
+  // RES: in KiB, then in MiB (m) or GiB (g) when the column would overflow.
   const kio = (k: number) => (k >= 10_000_000 ? `${(k / 1024 ** 2).toFixed(1)}g` : k >= 1_000_000 ? `${(k / 1024).toFixed(1)}m` : String(k));
   const key = (p: Process) => (sort === '%MEM' || sort === 'RES' ? rss(p) : sort === 'PID' ? -p.pid : p.cpu);
   const trie = [...listing].sort((a, b) => key(b) - key(a) || a.pid - b.pid);
@@ -80,7 +80,7 @@ function top(game: Shell, args: string[]): string {
   const days = Math.floor(uptime / 86_400_000);
   const h = Math.floor((uptime % 86_400_000) / 3_600_000);
   const min = String(Math.floor((uptime % 3_600_000) / 60_000)).padStart(2, '0');
-  // Le disque (s'il est suivi) : l'attente des entrées-sorties (wa) et la charge.
+  // The disk (if it is tracked): I/O wait (wa) and load.
   const disk = io(game) ? diskState(game) : null;
   const wa = disk ? Math.min(95.7, disk.iowait) : 0.2;
   const load = disk ? [disk.load, disk.load * 0.85, disk.load * 0.6].map((x) => x.toFixed(2)).join(', ') : '0.42, 0.38, 0.35';
@@ -107,7 +107,7 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function dmesg(game: Shell, args: string[]): string {
-  // Debian règle kernel.dmesg_restrict = 1 : seul root lit les messages du noyau.
+  // Debian sets kernel.dmesg_restrict = 1: only root reads the kernel's messages.
   if (game.who !== 'root') return game.error('dmesg: read kernel buffer failed: Operation not permitted');
   const start = boot(game);
   const readable = args.some((a) => /^-\w*T/.test(a) || a === '--ctime');

@@ -1,9 +1,9 @@
-// blkid et findmnt (util-linux 2.40) : qui est qui parmi les disques (UUID,
-// étiquette, type), ce qui est monté, et la vérification de /etc/fstab
-// (findmnt --verify), à faire avant tout redémarrage. D'après blkid(8) et
-// findmnt(8) : https://man7.org/linux/man-pages/man8/blkid.8.html,
+// blkid and findmnt (util-linux 2.40): who is who among the disks (UUID,
+// label, type), what is mounted, and checking /etc/fstab
+// (findmnt --verify), to do before any reboot. After blkid(8) and
+// findmnt(8): https://man7.org/linux/man-pages/man8/blkid.8.html,
 // https://man7.org/linux/man-pages/man8/findmnt.8.html
-// Écarts : voir docs/SCENARIOS.md (blkid, findmnt).
+// Differences: see docs/SCENARIOS.md (blkid, findmnt).
 
 import type { Shell } from '../shell';
 import type { Command } from './index';
@@ -12,7 +12,7 @@ import { arrayFor, storageOf, type StorageState } from '../storage';
 import { lvm } from '../lvm';
 import { readFstab, resolveSource, systemFor } from '../fstab';
 
-// Ce que blkid sait d'un périphérique : son système de fichiers, ou ce qu'il est (membre RAID, PV).
+// What blkid knows about a device: its file system, or what it is (RAID member, PV).
 function attributes(st: StorageState, dev: string): string | null {
   const n = dev.replace(/^\/dev\//, '');
   const fs = systemFor(st, dev);
@@ -30,7 +30,7 @@ function attributes(st: StorageState, dev: string): string | null {
   return fields.length ? `${dev}: ${fields.join(' ')}` : null;
 }
 
-// Tous les périphériques, dans l'ordre où blkid les trouve : disques et partitions, grappes, volumes logiques.
+// All devices, in the order blkid finds them: disks and partitions, arrays, logical volumes.
 function all(st: StorageState): string[] {
   const disks = Object.entries(st.disks)
     .sort(([, a], [, b]) => a.rank - b.rank)
@@ -54,7 +54,7 @@ function blkid(game: Shell, args: string[]): string {
   const targets = args.filter((a, i) => !a.startsWith('-') && !['-U', '-L'].includes(args[i - 1]));
   const lines = (targets.length ? targets : all(st)).map((d) => attributes(st, resolveSource(st, d) ?? d));
   const found = lines.filter((l): l is string => l !== null);
-  // Rien trouvé : blkid ne dit rien, et répond 2.
+  // Nothing found: blkid says nothing, and returns 2.
   if (!found.length) return game.error('', 2);
   return found.join('\n');
 }
@@ -71,7 +71,7 @@ function findmnt(game: Shell, args: string[]): string {
     return '';
   }
   const options = (m: (typeof listing)[0]) => `${m.onlyRead ? 'ro' : 'rw'},relatime${m.path === '/' ? ',errors=remount-ro' : ''}`;
-  // L'arbre : chaque montage sous celui qui le contient.
+  // The tree: each mount under the one that contains it.
   const depth = (m: (typeof listing)[0]) => (target ? 0 : listing.filter((x) => x !== m && (x.path === '/' || m.path.startsWith(x.path + '/'))).length);
   const targets = chosen.map((m) => `${depth(m) ? `${'  '.repeat(depth(m) - 1)}└─` : ''}${m.path}`);
   const widths = [Math.max(6, ...targets.map((c) => c.length)), Math.max(6, ...chosen.map((m) => m.name.length)), 6];
@@ -79,7 +79,7 @@ function findmnt(game: Shell, args: string[]): string {
   return [line('TARGET', 'SOURCE', 'FSTYPE', 'OPTIONS'), ...chosen.map((m, i) => line(targets[i], m.name, m.system ?? 'ext4', options(m)))].join('\n');
 }
 
-// findmnt --verify : chaque ligne de fstab, ses sources, ses points de montage.
+// findmnt --verify: each fstab line, its sources, its mount points.
 function check(game: Shell, verbose: boolean): string {
   const text = game.read('/etc/fstab') ?? '';
   const st = storageOf(game);
@@ -103,7 +103,7 @@ function check(game: Shell, verbose: boolean): string {
       }
     }
     const place = game.find(e.target);
-    if (e.type !== 'swap' && place?.type !== 'dossier') {
+    if (e.type !== 'swap' && place?.type !== 'directory') {
       warnings++;
       notes.push(`   [W] target does not exist`);
     }
@@ -122,7 +122,7 @@ function check(game: Shell, verbose: boolean): string {
 }
 
 export const FSTAB: Record<string, Command> = {
-  // La page de manuel de /etc/fstab (section 5), pas une commande.
+  // The manual page of /etc/fstab (section 5), not a command.
   fstab: { section: 5, launch: () => '' },
   blkid: {
     section: 8,

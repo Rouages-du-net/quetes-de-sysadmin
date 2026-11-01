@@ -1,20 +1,20 @@
-// Histoire « L'Audit » — chapitre « Le périmètre » : avant de balayer quoi que
-// ce soit, on lit la lettre de mission : elle dit ce qu'on a le droit de sonder
-// (le serveur fournil, 192.0.2.22) et ce qu'on n'a pas le droit de toucher. Le
-// serveur du voisin (la pizzeria, 192.0.2.24) partage la box et paraît
-// « intéressant » (une base ouverte) : il est hors périmètre. On fait
-// l'inventaire du Fournil vu d'internet avec nmap, on garde la trace (-oN), et
-// on rédige ses notes : ce qu'on a trouvé, et ce qu'on a repéré sans y toucher.
-//   - nmap -sV fournil.internal -oN inventaire.txt : les ports ouverts et les
-//     versions ; les ports 5432 (PostgreSQL) et 6379 (Redis) n'ont rien à faire là ;
-//   - un balayage de tout le réseau (192.0.2.0/24) sonde le voisin : la faute.
-//     Le jeu l'accepte (sans conséquence) et la raconte dans le débrief ;
-//   - notes-audit.md : périmètre, constats, hors périmètre. Salomé relit à chaque
-//     enregistrement et dit ce qui manque.
-// Objectif vérifié sur l'état : une trace nmap -sV du Fournil gardée dans un
-// fichier, des notes complétées qui nomment les ports 5432 et 6379 et la
-// machine hors périmètre. Le débrief dépend de ce qui a été sondé.
-// Sources : https://nmap.org/book/man.html, https://nmap.org/book/legal-issues.html
+// Story "L'Audit" — chapter "The scope": before scanning anything at all,
+// you read the engagement letter: it says what you are allowed to probe
+// (the fournil server, 192.0.2.22) and what you are not allowed to touch.
+// The neighbour's server (the pizzeria, 192.0.2.24) shares the router and
+// looks "interesting" (an open database): it is out of scope. You inventory
+// Le Fournil as seen from the internet with nmap, keep a record (-oN), and
+// write your notes: what you found, and what you spotted without touching it.
+//   - nmap -sV fournil.internal -oN inventaire.txt: the open ports and the
+//     versions; ports 5432 (PostgreSQL) and 6379 (Redis) have no business there;
+//   - a scan of the whole network (192.0.2.0/24) probes the neighbour: the mistake.
+//     The game accepts it (without consequence) and tells it in the debrief;
+//   - notes-audit.md: scope, findings, out of scope. Salomé rereads at each
+//     save and says what is missing.
+// Objective checked on the state: a record of nmap -sV of Le Fournil kept in
+// a file, completed notes that name ports 5432 and 6379 and the machine out
+// of scope. The debrief depends on what was probed.
+// Sources: https://nmap.org/book/man.html, https://nmap.org/book/legal-issues.html
 
 import { path, f, name, type Chapter } from '../world';
 import type { Game, Shell } from '../shell';
@@ -30,15 +30,15 @@ const NOTES_TEMPLATE = 'scope-notes-template';
 const scans = (j: Game): Scan[] => j.state.scans ?? [];
 const probe = (b: Scan) => b.addresses.includes('192.0.2.22') || b.addresses.includes('127.0.0.1');
 const outsideScope = (j: Game) => scans(j).some((b) => b.outsideScope.length > 0);
-// Les adresses sondées hors de la lettre de mission, et si le voisin en fait partie.
+// The addresses probed outside the engagement letter, and whether the neighbour is one of them.
 const addressesOutside = (j: Game) => [...new Set(scans(j).flatMap((b) => b.outsideScope))];
 
-// Les fichiers de la maison : le texte de chacun (la trace nmap peut avoir n'importe quel nom).
+// The files of the home folder: the text of each (the nmap record can have any name).
 const texts = (j: Game): string[] => {
   const home = j.find((j as Shell).home);
-  if (home?.type !== 'dossier') return [];
+  if (home?.type !== 'directory') return [];
   return Object.entries(home.children)
-    .filter(([, n]) => n.type === 'fichier')
+    .filter(([, n]) => n.type === 'file')
     .map(([name]) => j.read(`${(j as Shell).home}/${name}`) ?? '');
 };
 const traceOk = (j: Game) => texts(j).some((t) => /^# Nmap .* as: nmap .*-sV/m.test(t) && t.includes(`Nmap scan report for ${machineName(j.t, 'bakery')}`) && /5432\/tcp/.test(t) && /6379\/tcp/.test(t));
@@ -83,7 +83,7 @@ export const scope: Chapter = {
   }),
   initialise: (j) => {
     loadSshd(j);
-    // Salomé ne relit que ce qui a changé : le modèle de départ compte comme déjà lu.
+    // Salomé only rereads what changed: the starting template counts as already read.
     j.state.notesRead = readNotes(j);
   },
   createWorld: (t) =>
@@ -95,7 +95,7 @@ export const scope: Chapter = {
       },
       sudoersD: { '90-cloud-init-users': file('# Created by cloud-init\n\nvous ALL=(ALL) NOPASSWD:ALL', 'root', 'r--r-----') },
     }),
-  // Salomé relit les notes après chaque enregistrement.
+  // Salomé rereads the notes after each save.
   afterCommand: (j) => {
     const text = readNotes(j);
     if (text === j.state.notesRead || j.state.finishedNotes) return;
@@ -121,13 +121,13 @@ export const scope: Chapter = {
     {
       id: 'outside-scope',
       condition: outsideScope,
-      message: (j) => j.t('scope-event-outside-scope', { addresses: addressesOutside(j).join(', '), neighbour: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
+      message: (j) => j.t('scope-event-outside-scope', { addresses: addressesOutside(j).join(', '), neighbour: addressesOutside(j).includes(NEIGHBOUR.address) ? 'yes' : 'no' }),
     },
     { id: 'trace', condition: traceOk, message: (j) => j.t('scope-event-trace') },
     {
       id: 'end',
       condition: (j) => traceOk(j) && notesOk(j),
-      message: (j) => j.t('scope-event-end', { mistake: outsideScope(j) ? 'oui' : 'non' }),
+      message: (j) => j.t('scope-event-end', { mistake: outsideScope(j) ? 'yes' : 'no' }),
     },
   ],
 };

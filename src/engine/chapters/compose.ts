@@ -1,15 +1,15 @@
-// Histoire « La Fabrique » — chapitre « La composition » : Docker Compose.
-// Le fablab veut un site de réservation des machines (découpe laser,
-// imprimantes 3D) : une appli et sa base PostgreSQL, décrites dans un
-// compose.yaml copié d'un tutoriel. Il a quatre défauts : l'appli cherche la
-// base sur « localhost » (dans un conteneur, c'est lui-même), la base n'a pas
-// de volume, le mot de passe est écrit en clair dans le fichier (que Yasmine
-// veut publier sur le dépôt git du fablab), et rien ne redémarre.
-// Objectif vérifié sur l'état : les deux services tournent et l'appli est
-// connectée à la base, les données de la base sont dans un volume, le mot de
-// passe n'est que dans .env (lisible par root seulement), et les deux
-// services ont une politique de redémarrage.
-// Sources : https://docs.docker.com/compose/how-tos/networking/,
+// Story "The Workshop", chapter "The Composition": Docker Compose. The
+// fablab wants a site for booking its machines (laser cutter, 3D printers):
+// an app and its PostgreSQL database, described in a compose.yaml copied
+// from a tutorial. It has four flaws: the app looks for the database on
+// "localhost" (in a container, that is itself), the database has no volume,
+// the password is written in clear in the file (which Yasmine wants to
+// publish on the fablab's git repository), and nothing restarts.
+// Objective checked on the state: both services run and the app is
+// connected to the database, the database's data is in a volume, the
+// password is only in .env (readable by root only), and both services have
+// a restart policy.
+// Sources: https://docs.docker.com/compose/how-tos/networking/,
 // https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/,
 // https://hub.docker.com/_/postgres (POSTGRES_PASSWORD, initialisation)
 
@@ -27,8 +27,8 @@ const AUTH = `${DATA}/pg_hba_qds.json`;
 
 const log = (game: Game, c: Container, text: string) => c.log.push({ time: systemd(game)?.clock ?? 0, text });
 
-// PostgreSQL (image officielle) : la base n'est créée qu'une fois, quand le
-// dossier des données est vide ; POSTGRES_PASSWORD ne sert qu'à ce moment-là.
+// PostgreSQL (official image): the database is only created once, when the
+// data directory is empty; POSTGRES_PASSWORD is only used at that moment.
 APPS.postgres = {
   accounts: { postgres: 999 },
   start: (game, c) => {
@@ -61,18 +61,18 @@ APPS.postgres = {
     );
     return null;
   },
-  // PostgreSQL ne parle pas HTTP : une requête web reçoit une réponse vide.
+  // PostgreSQL doesn't speak HTTP: a web request gets an empty reply.
   answer: () => ({ code: 0, body: '' }),
 };
 
-// La connexion de l'appli à sa base, d'après DATABASE_URL.
+// The app's connection to its database, from DATABASE_URL.
 export function connect(game: Game, c: Container): string | null {
   const url = c.env.DATABASE_URL;
   if (!url) return 'Error: DATABASE_URL is not set';
   const m = /^postgres(?:ql)?:\/\/([^:@/]*)(?::([^@/]*))?@([^:/]+)(?::(\d+))?\/([^?]+)/.exec(url);
   if (!m) return `TypeError: Invalid URL: ${url}`;
   const [, user, password = '', host, port = '5432', base] = m;
-  // Dans un conteneur, localhost, c'est le conteneur lui-même.
+  // In a container, localhost is the container itself.
   if (['localhost', '127.0.0.1'].includes(host)) return `Error: connect ECONNREFUSED 127.0.0.1:${port}`;
   const db = reach(game, c, host);
   if (!db) return `Error: getaddrinfo ENOTFOUND ${host}`;
@@ -84,7 +84,7 @@ export function connect(game: Game, c: Container): string | null {
 }
 
 APPS.reservations = {
-  // Construite sur l'image node, qui a un compte node (uid 1000)… mais ne s'en sert pas.
+  // Built on the node image, which has a node account (uid 1000)… but doesn't use it.
   accounts: { node: 1000 },
   start: (game, c) => {
     log(game, c, '> reservations@2.1.0 start');
@@ -118,7 +118,7 @@ const accounts = (): Accounts => ({
   },
 });
 
-// Le fichier du tutoriel, tel que Yasmine l'a copié.
+// The tutorial's file, as Yasmine copied it.
 const COMPOSE = `version: "3.8"
 
 services:
@@ -177,7 +177,7 @@ const state = (j: Game) => docker(j)!;
 const project = (j: Game) => projectContainers(state(j), 'reservations');
 const service = (j: Game, name: string) => project(j).find((c) => c.service === name);
 const restart = (c?: Container) => !!c && ['always', 'unless-stopped'].includes(c.reboot);
-// Le mot de passe de la base, tel que .env le donne.
+// The database password, as .env gives it.
 const envPassword = (j: Game) => readEnv(j.read(`${PROJECT}/.env`)).POSTGRES_PASSWORD ?? '';
 const inClear = (j: Game) => {
   const mdp = service(j, 'db')?.env.POSTGRES_PASSWORD;
@@ -191,7 +191,7 @@ const connected = (j: Game) => {
   const a = service(j, 'appli');
   return a?.state === 'running' && connect(j, a) === null;
 };
-// Les conteneurs correspondent-ils au compose.yaml et au .env actuels (pas de up oublié) ?
+// Do the containers match the current compose.yaml and .env (no forgotten up)?
 const dayA = (j: Game) => {
   try {
     const p = readProject(j as Shell, PROJECT);

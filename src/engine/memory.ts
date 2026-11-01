@@ -1,13 +1,13 @@
-// La mémoire d'une machine : ce que chaque processus occupe (RSS), et ce que
-// fait le noyau quand il n'y en a plus (l'OOM killer tue le processus qui en
-// occupe le plus) ; une limite systemd (MemoryMax=) fait la même chose à
-// l'échelle d'un service. D'après https://www.kernel.org/doc/gorman/html/understand/understand016.html
-// et https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html#MemoryMax=bytes.
+// A machine's memory: what each process occupies (RSS), and what the kernel
+// does when there is none left (the OOM killer kills the process occupying
+// the most); a systemd limit (MemoryMax=) does the same at the scale of a
+// service. Based on https://www.kernel.org/doc/gorman/html/understand/understand016.html
+// and https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html#MemoryMax=bytes.
 //
-//   etat.memoire = { total, noyau, rss: { pid: octets } }
-//   etat.noyau = [{ temps, texte }]   (les messages du noyau, pour dmesg)
-// Écarts : pas de swap, pas de cache qui se libère tout seul ; le score de
-// l'OOM killer ne tient compte que de la mémoire occupée.
+//   state.memory = { total, kernel, rss: { pid: bytes } }
+//   state.kernel = [{ time, text }]   (the kernel's messages, for dmesg)
+// Differences: no swap, no cache that frees itself; the OOM killer's score
+// only takes the occupied memory into account.
 
 import type { Game } from './shell';
 import type { Process } from './commands/system';
@@ -15,7 +15,7 @@ import { start, writeLog, systemd, type Systemd } from './systemd';
 
 export interface Memory {
   total: number;
-  // Ce que prennent le noyau et les caches, hors processus.
+  // What the kernel and caches take, outside processes.
   kernel: number;
   rss: Record<number, number>;
 }
@@ -24,24 +24,24 @@ export const memory = (j: Game): Memory | undefined => j.state.memory;
 export const process = (j: Game): Process[] => j.state.process ?? [];
 const Mo = 1024 * 1024;
 
-/** La mémoire occupée (noyau compris). */
+/** The occupied memory (kernel included). */
 export const used = (j: Game) => {
   const m = memory(j)!;
   const live = new Set(process(j).map((p) => p.pid));
   return m.kernel + Object.entries(m.rss).reduce((t, [pid, o]) => t + (live.has(Number(pid)) ? o : 0), 0);
 };
 
-/** Une ligne du noyau (dmesg, journalctl -k). */
+/** A kernel line (dmesg, journalctl -k). */
 export function kernel(j: Game, text: string) {
   const sd = systemd(j);
   (j.state.kernel ??= []).push({ time: sd?.clock ?? 0, text });
   if (sd) writeLog(sd, '', 'kernel', 0, text, 3, false);
 }
 
-// Le service dont ce processus est le principal.
+// The service whose main process this is.
 const serviceFor = (sd: Systemd, pid: number) => Object.entries(sd.services).find(([, s]) => s.state === 'active' && s.process[0]?.pid === pid);
 
-/** Un processus tué par l'OOM killer : messages du noyau et de systemd, service relancé si Restart= le veut. */
+/** A process killed by the OOM killer: kernel and systemd messages, service restarted if Restart= says so. */
 function kill(j: Game, p: Process, group: string | null) {
   const m = memory(j)!;
   const rss = Math.round((m.rss[p.pid] ?? 0) / 1024);
@@ -68,7 +68,7 @@ function kill(j: Game, p: Process, group: string | null) {
   s.since = sd.clock;
   const restart = ['on-failure', 'always', 'on-abnormal'].includes(s.reboot ?? '');
   j.state.oomKilled = [...(j.state.oomKilled ?? []), { service: serviceName, cgroup: !!group, restart }];
-  // Restart=on-failure (ou always, on-abnormal) : systemd le relance.
+  // Restart=on-failure (or always, on-abnormal): systemd restarts it.
   if (restart) {
     const restarts = (j.state.restarts ??= {});
     restarts[serviceName] = (restarts[serviceName] ?? 0) + 1;
@@ -78,8 +78,8 @@ function kill(j: Game, p: Process, group: string | null) {
 }
 
 /**
- * Après chaque instant : une limite de service dépassée tue son processus ;
- * plus de mémoire du tout, le noyau tue le plus gros.
+ * After each instant: a service limit that is exceeded kills its process;
+ * with no memory left at all, the kernel kills the biggest.
  */
 export function checkMemory(j: Game) {
   const m = memory(j);
@@ -94,7 +94,7 @@ export function checkMemory(j: Game) {
   while (used(j) > m.total) {
     const moreBig = [...process(j)].filter((p) => (m.rss[p.pid] ?? 0) > 0).sort((a, b) => (m.rss[b.pid] ?? 0) - (m.rss[a.pid] ?? 0))[0];
     if (!moreBig) break;
-    // Le processus qui demandait de la mémoire (ici, celui qui grossit) déclenche l'OOM killer.
+    // The process that asked for memory (here, the one that grows) triggers the OOM killer.
     const requester = process(j).find((p) => p.pid === j.state.memoryRequester) ?? moreBig;
     kernel(
       j,
@@ -102,11 +102,11 @@ export function checkMemory(j: Game) {
     );
     kill(j, moreBig, null);
   }
-  // Les colonnes %MEM de ps et top suivent la mémoire réelle.
+  // The %MEM columns of ps and top follow the real memory.
   for (const p of process(j)) p.mem = Math.round((1000 * (m.rss[p.pid] ?? 0)) / m.total) / 10;
 }
 
-/** « 1.9Gi », « 61Mi », comme free -h. */
+/** "1.9Gi", "61Mi", like free -h. */
 export function freeSize(bytes: number): string {
   if (bytes === 0) return '0B';
   const units = ['B', 'Ki', 'Mi', 'Gi', 'Ti'];
@@ -121,7 +121,7 @@ export function freeSize(bytes: number): string {
 
 export const inMo = (bytes: number) => bytes / Mo;
 
-/** « 300M », « 1G », « 512K » (MemoryMax=) → octets ; null si illisible. */
+/** "300M", "1G", "512K" (MemoryMax=) → bytes; null if unreadable. */
 export function readSize(text: string): number | null {
   const m = /^(\d+(?:\.\d+)?)([KMGT]?)$/i.exec(text.trim());
   if (!m) return null;

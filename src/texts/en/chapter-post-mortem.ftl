@@ -94,11 +94,11 @@ post-mortem-unattended-dpkg =
 ## What the game checks in the post-mortem
 
 # The section titles (as in the template, without "##").
-post-mortem-section-resume = Summary
-post-mortem-section-chronologie = Timeline
+post-mortem-section-summary = Summary
+post-mortem-section-timeline = Timeline
 post-mortem-section-impact = Impact
 post-mortem-section-causes = Causes
-post-mortem-section-marche = What went well
+post-mortem-section-went-well = What went well
 post-mortem-section-actions = Actions
 # The beginning of the template lines to replace.
 post-mortem-a-complete = (to be completed

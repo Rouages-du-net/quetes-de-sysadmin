@@ -1,7 +1,7 @@
 ---
-// Le tableau de classe, dans une langue : la page présente l'outil, le
-// script (src/interface/classroom.ts) le monte dans #classe. Rien n'est envoyé :
-// les fichiers sont lus dans le navigateur de l'enseignant·e.
+// The class table, in one language: the page presents the tool, the
+// script (src/interface/classroom.ts) mounts it in #class. Nothing is sent:
+// the files are read in the teacher's browser.
 interface Props {
   lang: 'fr' | 'en';
 }
@@ -24,16 +24,16 @@ const fr = lang === 'fr';
     in each story.
   </p>
 )}
-<p class="intro discret">
+<p class="intro muted">
   {fr
     ? "Rien n'est envoyé : les fichiers sont lus dans ce navigateur, et le tableau disparaît quand tu fermes la page (télécharge-le en CSV pour le garder). Ce n'est pas une preuve de travail : un fichier se modifie, un code se recopie."
     : 'Nothing is sent: the files are read in this browser, and the table goes away when you close the page (download it as CSV to keep it). It is not proof of work: a file can be edited, a code can be copied.'}
 </p>
-<noscript><p class="avertissement">{fr ? 'Le tableau de classe a besoin de JavaScript.' : 'The class table needs JavaScript.'}</p></noscript>
-<div id="classe" data-lang={lang}></div>
+<noscript><p class="warning">{fr ? 'Le tableau de classe a besoin de JavaScript.' : 'The class table needs JavaScript.'}</p></noscript>
+<div id="class" data-lang={lang}></div>
 <script>
   import { mountClass } from '../interface/classroom';
   import { gameLanguage } from '../texts';
-  const root = document.getElementById('classe');
+  const root = document.getElementById('class');
   if (root) mountClass(root, gameLanguage(root.dataset.lang));
 </script>

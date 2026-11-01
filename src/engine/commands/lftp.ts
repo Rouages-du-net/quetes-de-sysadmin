@@ -1,13 +1,13 @@
-// lftp, le client FTP (et FTPS) en ligne de commande, vers un hébergement
-// mutualisé simulé (../hebergeur.ts). Une session interactive (lftp> ), ou
-// des commandes données par -c et -e. Sorties en anglais, comme lftp 4.9.
-// Par défaut, lftp chiffre (ftp:ssl-allow yes : AUTH TLS) et vérifie le
-// certificat (ssl:verify-certificate yes) : le nom demandé doit être celui
-// du certificat.
-// Sources : https://lftp.yar.ru/lftp-man.html
-// Écarts : FTP seulement (pas de SFTP ni de HTTP par lftp), pas de
-// ~/.lftprc ni de ~/.netrc, pas de transferts en arrière-plan ni de
-// file d'attente ; la connexion se fait à la première commande distante.
+// lftp, the command-line FTP (and FTPS) client, to a simulated shared
+// hosting (../web-host.ts). An interactive session (lftp> ), or commands
+// given with -c and -e. Outputs in English, like lftp 4.9.
+// By default, lftp encrypts (ftp:ssl-allow yes: AUTH TLS) and checks the
+// certificate (ssl:verify-certificate yes): the name requested must be the
+// certificate's.
+// Sources: https://lftp.yar.ru/lftp-man.html
+// Differences: FTP only (no SFTP nor HTTP through lftp), no ~/.lftprc nor
+// ~/.netrc, no background transfers nor queue; the connection is made at
+// the first remote command.
 
 import type { Directory, File, Node } from '../world';
 import type { Shell } from '../shell';
@@ -23,24 +23,24 @@ interface Session {
   remote: string;
   local: string;
   settings: Record<string, string>;
-  // La connexion en cours : chiffrée, certificat vérifié.
+  // The current connection: encrypted, certificate checked.
   tls: boolean;
   checked: boolean;
 }
 
 const TRUE = (v: string | undefined) => /^(yes|on|true|1)$/i.test(v ?? '');
 
-// Les arguments d'une ligne lftp (guillemets simples ou doubles).
+// The arguments of an lftp line (single or double quotes).
 const words = (line: string) => (line.match(/"[^"]*"|'[^']*'|\S+/g) ?? []).map((m) => m.replace(/^(['"])(.*)\1$/, '$2'));
 
-// Les commandes séparées par « ; » (dans -c et -e).
+// The commands separated by ";" (in -c and -e).
 const commands = (text: string) =>
   text
     .split(';')
     .map((c) => c.trim())
     .filter(Boolean);
 
-/** Se connecter (à la première commande distante) : le nom, TLS, le certificat, le compte. Renvoie l'erreur, ou null. */
+/** Connect (at the first remote command): the name, TLS, the certificate, the account. Returns the error, or null. */
 function connect(game: Shell, s: Session, command: string): string | null {
   if (s.connected) return null;
   if (!s.host) return `${command}: Not connected`;
@@ -51,11 +51,11 @@ function connect(game: Shell, s: Session, command: string): string | null {
   const checked = s.settings['ssl:verify-certificate'] !== 'no';
   const refusal = (what: string) => ((game.state.ftpRefusal ??= []) as string[]).push(what);
   if (!tls) {
-    refusal('clair');
+    refusal('plain');
     return `${command}: Login failed: 421 Sorry, cleartext sessions and weak ciphers are not accepted on this server.\nPlease reconnect using TLS security mechanisms.`;
   }
   if (checked && !covers(def.certificate, s.host)) {
-    refusal('certificat');
+    refusal('certificate');
     return `${command}: Fatal error: Certificate verification: certificate common name doesn't match requested host name \u2018${s.host}\u2019`;
   }
   if (!s.user || def.accounts[s.user] !== s.password) return `${command}: Login failed: 530 Login authentication failed`;
@@ -73,11 +73,11 @@ const rootFor = (game: Shell, s: Session): Directory => {
 
 const date = 'Nov 08 08:15';
 function lsLine(name: string, n: Node, account: string): string {
-  const size = n.type === 'dossier' ? 4096 : typeof n.content === 'string' ? n.content.length : 0;
-  return `${n.type === 'dossier' ? 'drwxr-xr-x' : '-rw-r--r--'}   ${n.type === 'dossier' ? 2 : 1} ${account.padEnd(8)} ${account.padEnd(8)} ${String(size).padStart(8)} ${date} ${name}`;
+  const size = n.type === 'directory' ? 4096 : typeof n.content === 'string' ? n.content.length : 0;
+  return `${n.type === 'directory' ? 'drwxr-xr-x' : '-rw-r--r--'}   ${n.type === 'directory' ? 2 : 1} ${account.padEnd(8)} ${account.padEnd(8)} ${String(size).padStart(8)} ${date} ${name}`;
 }
 
-// Copier un dossier (et ses fichiers) d'un côté à l'autre : mirror.
+// Copy a directory (and its files) from one side to the other: mirror.
 interface Summary {
   directories: number;
   fresh: number;
@@ -102,10 +102,10 @@ function mirror(game: Shell, s: Session, args: string[]): string {
   const root = rootFor(game, s);
   const summary: Summary = { directories: 0, fresh: 0, modified: 0, removed: 0, bytes: 0, lines: [] };
   if (inverse) {
-    // Local → distant.
+    // Local → remote.
     const src = game.resolve(source ? (source.startsWith('/') ? source : `${s.local}/${source}`) : s.local);
     const n = game.find(src);
-    if (n?.type !== 'dossier') return game.error(`mirror: ${source ?? src}: No such file or directory`, 1);
+    if (n?.type !== 'directory') return game.error(`mirror: ${source ?? src}: No such file or directory`, 1);
     const dest = normalise(s.remote, target ?? src.split('/').at(-1)!);
     walkLocal(
       game,
@@ -114,13 +114,13 @@ function mirror(game: Shell, s: Session, args: string[]): string {
       (rel, f) => {
         const text = content(f, game);
         const before = node(root, `${dest}/${rel}`);
-        if (before?.type === 'fichier' && before.content === text) return;
+        if (before?.type === 'file' && before.content === text) return;
         if (before) summary.modified++;
         else summary.fresh++;
         summary.bytes += text.length;
         const directory = rel.includes('/') ? `${dest}/${rel.split('/').slice(0, -1).join('/')}` : dest;
         summary.lines.push(trial ? `put -O ${directory} ${src}/${rel}` : `Transferring file \`${rel}'`);
-        if (!trial) remoteDirectory(root, directory).children[rel.split('/').at(-1)!] = { type: 'fichier', content: text, lines: true };
+        if (!trial) remoteDirectory(root, directory).children[rel.split('/').at(-1)!] = { type: 'file', content: text, lines: true };
       },
       (rel) => {
         summary.directories++;
@@ -142,15 +142,15 @@ function mirror(game: Shell, s: Session, args: string[]): string {
       log.push({ account: s.user!, tls: s.tls, checked: s.checked, send: true });
     }
   } else {
-    // Distant → local.
+    // Remote → local.
     const src = normalise(s.remote, source ?? '.');
     const n = node(root, src);
-    if (n?.type !== 'dossier') return game.error(`mirror: Access failed: 550 Can't change directory to ${src}: No such file or directory`, 1);
+    if (n?.type !== 'directory') return game.error(`mirror: Access failed: 550 Can't change directory to ${src}: No such file or directory`, 1);
     const dest = game.resolve(target ? (target.startsWith('/') ? target : `${s.local}/${target}`) : `${s.local}/${src.split('/').at(-1) || 'ftp'}`);
     for (const [rel, text] of Object.entries(filesFor(root, src) ?? {})) {
       const path = `${dest}/${rel}`;
       const before = game.find(path);
-      if (before?.type === 'fichier' && content(before, game) === text) continue;
+      if (before?.type === 'file' && content(before, game) === text) continue;
       if (before) summary.modified++;
       else summary.fresh++;
       summary.bytes += text.length;
@@ -159,11 +159,11 @@ function mirror(game: Shell, s: Session, args: string[]): string {
       const parts = rel.split('/');
       for (let k = 1; k < parts.length; k++) {
         const directory = `${dest}/${parts.slice(0, k).join('/')}`;
-        if (!game.find(directory)) game.place('mirror', directory, { type: 'dossier', children: {}, owner: game.who });
+        if (!game.find(directory)) game.place('mirror', directory, { type: 'directory', children: {}, owner: game.who });
       }
-      if (!game.find(dest)) game.place('mirror', dest, { type: 'dossier', children: {}, owner: game.who });
-      if (before?.type === 'fichier') Object.assign(before, { content: text, lines: true });
-      else game.place('mirror', path, { type: 'fichier', content: text, lines: true, owner: game.who });
+      if (!game.find(dest)) game.place('mirror', dest, { type: 'directory', children: {}, owner: game.who });
+      if (before?.type === 'file') Object.assign(before, { content: text, lines: true });
+      else game.place('mirror', path, { type: 'file', content: text, lines: true, owner: game.who });
     }
   }
   const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
@@ -181,16 +181,16 @@ function mirror(game: Shell, s: Session, args: string[]): string {
 }
 
 function walkLocal(game: Shell, n: Node, rel: string, file: (rel: string, f: File) => void, directory: (rel: string) => void) {
-  if (n.type === 'fichier') return file(rel, n);
+  if (n.type === 'file') return file(rel, n);
   directory(rel);
   for (const [k, e] of Object.entries(n.children)) walkLocal(game, e, rel ? `${rel}/${k}` : k, file, directory);
 }
 
-// Le dossier distant (créé, avec ses parents, s'il n'existe pas).
+// The remote directory (created, with its parents, if it doesn't exist).
 function remoteDirectory(root: Directory, path: string): Directory {
   let d = root;
   for (const p of path.split('/').filter(Boolean)) {
-    if (d.children[p]?.type !== 'dossier') d.children[p] = { type: 'dossier', children: {} };
+    if (d.children[p]?.type !== 'directory') d.children[p] = { type: 'directory', children: {} };
     d = d.children[p] as Directory;
   }
   return d;
@@ -199,10 +199,10 @@ function remoteDirectory(root: Directory, path: string): Directory {
 function remove(root: Directory, path: string) {
   const parts = path.split('/').filter(Boolean);
   const parent = node(root, '/' + parts.slice(0, -1).join('/'));
-  if (parent?.type === 'dossier') delete parent.children[parts.at(-1)!];
+  if (parent?.type === 'directory') delete parent.children[parts.at(-1)!];
 }
 
-/** Une commande lftp ; renvoie ce qu'elle affiche, ou null pour quitter. */
+/** An lftp command; returns what it prints, or null to quit. */
 function lftpCommand(game: Shell, s: Session, line: string): string | null {
   const [cmd, ...args] = words(line);
   if (!cmd) return '';
@@ -215,7 +215,7 @@ function lftpCommand(game: Shell, s: Session, line: string): string | null {
         .join('\n');
     if (!/^(ftp|ssl|net|mirror|cmd):[\w-]+$/.test(name)) return game.error(`set: no such variable \`${name}'`, 1);
     s.settings[name] = TRUE(value) ? 'yes' : /^(no|off|false|0)$/i.test(value ?? '') ? 'no' : (value ?? '');
-    // Un nouveau réglage s'applique à la prochaine connexion.
+    // A new setting applies to the next connection.
     s.connected = false;
     return '';
   }
@@ -239,14 +239,14 @@ function lftpCommand(game: Shell, s: Session, line: string): string | null {
   }
   if (cmd === 'lcd') {
     const dest = game.resolve(args[0] ? (args[0].startsWith('/') || args[0].startsWith('~') ? args[0] : `${s.local}/${args[0]}`) : '~');
-    if (game.find(dest)?.type !== 'dossier') return game.error(`lcd: ${dest}: No such file or directory`, 1);
+    if (game.find(dest)?.type !== 'directory') return game.error(`lcd: ${dest}: No such file or directory`, 1);
     s.local = dest;
     return `lcd ok, local cwd=${dest}`;
   }
   if (cmd === 'lpwd') return s.local;
   if (cmd === 'help') return game.t('lftp-help');
   if (cmd === 'mirror') return mirror(game, s, args);
-  // Les commandes distantes : la connexion d'abord.
+  // Remote commands: the connection first.
   if (!['ls', 'dir', 'cd', 'pwd', 'mkdir', 'rm', 'get', 'put', 'cat'].includes(cmd)) return game.error(`Unknown command \`${cmd}'.`, 1);
   if (cmd === 'pwd') return `ftp://${s.user ? `${s.user}@` : ''}${s.host ?? ''}${s.remote === '/' ? '' : s.remote}`;
   const e = connect(game, s, cmd);
@@ -256,59 +256,59 @@ function lftpCommand(game: Shell, s: Session, line: string): string | null {
     const path = normalise(s.remote, args.find((a) => !a.startsWith('-')) ?? '.');
     const n = node(root, path);
     if (!n) return game.error(`ls: Access failed: 550 ${path}: No such file or directory`, 1);
-    if (n.type === 'fichier') return lsLine(path.split('/').at(-1)!, n, s.user!);
+    if (n.type === 'file') return lsLine(path.split('/').at(-1)!, n, s.user!);
     return Object.entries(n.children)
       .map(([k, x]) => lsLine(k, x, s.user!))
       .join('\n');
   }
   if (cmd === 'cd') {
     const path = normalise(s.remote, args[0] ?? '~');
-    if (node(root, path)?.type !== 'dossier')
+    if (node(root, path)?.type !== 'directory')
       return game.error(`cd: Access failed: 550 Can't change directory to ${args[0]}: No such file or directory`, 1);
     s.remote = path;
     return `cd ok, cwd=${path === '/' ? '~' : `~${path}`}`;
   }
   if (cmd === 'cat') {
     const n = node(root, normalise(s.remote, args[0] ?? ''));
-    if (n?.type !== 'fichier') return game.error(`cat: Access failed: 550 ${args[0]}: No such file or directory`, 1);
+    if (n?.type !== 'file') return game.error(`cat: Access failed: 550 ${args[0]}: No such file or directory`, 1);
     return typeof n.content === 'string' ? n.content : '';
   }
   if (cmd === 'mkdir') {
     const path = normalise(s.remote, args.find((a) => !a.startsWith('-')) ?? '');
     const parent = node(root, path.split('/').slice(0, -1).join('/') || '/');
-    if (parent?.type !== 'dossier') return game.error(`mkdir: Access failed: 550 ${path}: No such file or directory`, 1);
-    parent.children[path.split('/').at(-1)!] ??= { type: 'dossier', children: {} };
+    if (parent?.type !== 'directory') return game.error(`mkdir: Access failed: 550 ${path}: No such file or directory`, 1);
+    parent.children[path.split('/').at(-1)!] ??= { type: 'directory', children: {} };
     return 'mkdir ok, `' + path.split('/').at(-1) + "' created";
   }
   if (cmd === 'rm') {
     const path = normalise(s.remote, args.find((a) => !a.startsWith('-')) ?? '');
     const n = node(root, path);
-    if (!n || (n.type === 'dossier' && !args.includes('-r'))) return game.error(`rm: Access failed: 550 ${path}: No such file or directory`, 1);
+    if (!n || (n.type === 'directory' && !args.includes('-r'))) return game.error(`rm: Access failed: 550 ${path}: No such file or directory`, 1);
     remove(root, path);
     return `rm ok, \`${path.split('/').at(-1)}' removed`;
   }
   if (cmd === 'put') {
     const local = game.resolve(args[0]?.startsWith('/') ? args[0] : `${s.local}/${args[0] ?? ''}`);
     const n = game.find(local);
-    if (n?.type !== 'fichier') return game.error(`put: ${local}: No such file or directory`, 1);
+    if (n?.type !== 'file') return game.error(`put: ${local}: No such file or directory`, 1);
     const name = local.split('/').at(-1)!;
     const directory = node(root, s.remote) as Directory;
-    directory.children[name] = { type: 'fichier', content: content(n, game), lines: true };
+    directory.children[name] = { type: 'file', content: content(n, game), lines: true };
     return `${content(n, game).length} bytes transferred`;
   }
   // get
   const n = node(root, normalise(s.remote, args[0] ?? ''));
-  if (n?.type !== 'fichier') return game.error(`get: Access failed: 550 ${args[0]}: No such file or directory`, 1);
+  if (n?.type !== 'file') return game.error(`get: Access failed: 550 ${args[0]}: No such file or directory`, 1);
   const name = (args[0] ?? '').split('/').at(-1)!;
   const text = typeof n.content === 'string' ? n.content : '';
-  const err = game.place('get', `${s.local}/${name}`, { type: 'fichier', content: text, lines: true, owner: game.who });
+  const err = game.place('get', `${s.local}/${name}`, { type: 'file', content: text, lines: true, owner: game.who });
   if (err) return game.error(`get: ${s.local}/${name}: Permission denied`, 1);
   return `${text.length} bytes transferred`;
 }
 
 const prompt = (s: Session) => `lftp ${s.user ? `${s.user}@` : ''}${s.host ?? ''}:${s.remote === '/' ? '~' : `~${s.remote}`}> `;
 
-// La session interactive : une question par commande, jusqu'à bye.
+// The interactive session: one prompt per command, until bye.
 function interactive(game: Shell, s: Session) {
   const who = game.who;
   game.ask(prompt(s), (line) => {
@@ -381,7 +381,7 @@ function lftp(game: Shell, args: string[]): string {
     if (!finished) interactive(game, s);
     return outputs.join('\n');
   };
-  // -u compte sans mot de passe : lftp le demande tout de suite.
+  // -u account without a password: lftp asks for it right away.
   if (s.user && s.password === null) {
     const who = game.who;
     game.ask(

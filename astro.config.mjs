@@ -1,18 +1,18 @@
 import { defineConfig } from 'astro/config';
 
-// Le site sysadmin.rouages.net : pages statiques servies par Apache (cPanel).
-// Le jeu lui-même est l'élément <quetes-de-sysadmin> (src/element.ts), inséré
-// dans les pages ; sa version à intégrer ailleurs est construite à part
+// The sysadmin.rouages.net site: static pages served by Apache (cPanel).
+// The game itself is the <quetes-de-sysadmin> element (src/element.ts), inserted
+// in the pages; its version to embed elsewhere is built separately
 // (vite.integration.config.ts).
 export default defineConfig({
   site: 'https://sysadmin.rouages.net',
   output: 'static',
-  // Comme sur rouages.net : la compression HTML d'Astro colle les mots aux
-  // balises placées en début de ligne. Apache compresse en gzip (.htaccess).
+  // As on rouages.net: Astro's HTML compression glues words to tags placed
+  // at the start of a line. Apache compresses with gzip (.htaccess).
   compressHTML: false,
-  // Apache sert /page/index.html pour /page/
+  // Apache serves /page/index.html for /page/
   build: { format: 'directory' },
-  // Aucun fichier intégré en data: (Vite le fait sous 4 Ko, pour les petits
-  // morceaux de la police) : la CSP n'autorise que les fichiers du site.
+  // No file inlined as data: (Vite does it under 4 KB, for the font's small
+  // pieces): the CSP only allows the site's files.
   vite: { build: { assetsInlineLimit: 0 } },
 });

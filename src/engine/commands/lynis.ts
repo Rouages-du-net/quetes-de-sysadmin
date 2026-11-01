@@ -1,7 +1,7 @@
-// lynis (https://cisofy.com/documentation/lynis/), l'outil d'audit d'un
-// serveur : « lynis audit system ». Sortie en anglais, comme le vrai outil ;
-// elle se lit dans src/engine/lynis.ts. Après l'audit, /var/log/lynis-report.dat
-// garde les constats (hardening_index=, warning[]=, suggestion[]=).
+// lynis (https://cisofy.com/documentation/lynis/), the server audit
+// tool: "lynis audit system". Output in English, like the real tool;
+// it is read in src/engine/lynis.ts. After the audit, /var/log/lynis-report.dat
+// keeps the findings (hardening_index=, warning[]=, suggestion[]=).
 
 import { audit, VERSION_LYNIS, REPORT, LOG } from '../lynis';
 import type { Command } from './index';
@@ -16,7 +16,7 @@ export const LYNIS: Record<string, Command> = {
       if (action === 'audit' && rest[0] === 'system') {
         if (game.who !== 'root') return game.error(game.t('lynis-without-root'), 1);
         const r = audit(game);
-        const rights = { type: 'fichier' as const, lines: true, owner: 'root', mode: 'rw-------' };
+        const rights = { type: 'file' as const, lines: true, owner: 'root', mode: 'rw-------' };
         game.place('lynis', REPORT, { ...rights, content: r.report });
         game.place('lynis', LOG, { ...rights, content: `# Lynis ${VERSION_LYNIS}\n${r.report}` });
         game.state.lynis = { hint: r.hint, ids: r.findings.map((c) => c.id), warnings: r.findings.filter((c) => c.type === 'warning').length };

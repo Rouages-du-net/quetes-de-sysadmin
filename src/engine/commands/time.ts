@@ -1,8 +1,8 @@
-// timedatectl : l'heure de la machine, son fuseau et NTP (systemd-timesyncd),
-// sur le modèle de ../heure.ts. Sorties d'après timedatectl(1) de systemd 252
-// (Debian 12) : https://www.freedesktop.org/software/systemd/man/latest/timedatectl.html
-// Écarts : status, show, list-timezones, set-timezone, set-ntp, set-time et
-// timesync-status seulement ; pas de RTC séparée (elle suit l'horloge).
+// timedatectl: the machine's time, its time zone and NTP (systemd-timesyncd),
+// on the model of ../time.ts. Outputs after timedatectl(1) of systemd 252
+// (Debian 12): https://www.freedesktop.org/software/systemd/man/latest/timedatectl.html
+// Differences: status, show, list-timezones, set-timezone, set-ntp, set-time and
+// timesync-status only; no separate RTC (it follows the clock).
 
 import type { Shell } from '../shell';
 import { changeZone, timeOfDay, machineTime, zonesList, validZone, setClock, configuresServers } from '../time';
@@ -90,11 +90,11 @@ export const TIME: Record<string, Command> = {
           if (!validZone(zone)) return game.error(`Failed to set time zone: Invalid or not installed time zone '${zone}'`);
           if (!root) return game.error('Failed to set time zone: Access denied');
           changeZone(game, zone);
-          // Comme timedatectl : /etc/localtime devient un lien vers le fichier du fuseau (et /etc/timezone le nomme, sur Debian).
+          // Like timedatectl: /etc/localtime becomes a link to the time zone file (and /etc/timezone names it, on Debian).
           const link = game.find('/etc/localtime', false);
-          if (link?.type === 'fichier') link.link = `/usr/share/zoneinfo/${zone}`;
+          if (link?.type === 'file') link.link = `/usr/share/zoneinfo/${zone}`;
           const name = game.find('/etc/timezone');
-          if (name?.type === 'fichier') name.content = zone;
+          if (name?.type === 'file') name.content = zone;
           return '';
         }
         case 'set-ntp': {
@@ -105,7 +105,7 @@ export const TIME: Record<string, Command> = {
           if (!root) return game.error('Failed to set ntp: Access denied');
           const s = sd.services[TIMESYNCD];
           if (!s) return game.error('Failed to set ntp: NTP not supported');
-          // Comme timedatectl : active et démarre systemd-timesyncd (ou l'arrête et le désactive).
+          // Like timedatectl: enables and starts systemd-timesyncd (or stops and disables it).
           s.active = yes;
           if (yes && s.state !== 'active') start(game, sd, TIMESYNCD);
           if (not && s.state === 'active') stop(game, sd, TIMESYNCD);

@@ -32,8 +32,8 @@ output-cut =
 workstation-title = Your workstation
 ## The story menu: two views
 view-title = How to show the stories
-view-reseau = Network map
-view-baies = Racks
+view-network = Network map
+view-racks = Racks
 view-internet = Internet
 input-label = Command
 credit = Quêtes de Sysadmin, a free game (GPL v3, texts CC BY-SA 4.0), inspired by Terminus, created at MIT by Shawn Conrad and Michele Pratusevich.
@@ -180,12 +180,12 @@ progress-confirm = Resume this save ({ $count ->
        *[other] { $count } finished chapters
     })? It will replace everything kept in this browser.
 progress-nothing-new = This code adds no chapter to the ones you have already finished here.
-progress-code-illisible = This is not a progress code: it starts with QDS, followed by groups of letters and digits.
-progress-code-faute = This code has a typo: check it, character by character.
-progress-code-trop-recent = This code comes from a newer version of the game: reload the page.
-progress-fichier-illisible = This file is not a readable save (JSON).
-progress-fichier-autre = This file is not a Sysadmin Quests save.
-progress-fichier-trop-recent = This save comes from a newer version of the game: reload the page.
+progress-code-unreadable = This is not a progress code: it starts with QDS, followed by groups of letters and digits.
+progress-code-mistake = This code has a typo: check it, character by character.
+progress-code-too-recent = This code comes from a newer version of the game: reload the page.
+progress-file-unreadable = This file is not a readable save (JSON).
+progress-file-other = This file is not a Sysadmin Quests save.
+progress-file-too-recent = This save comes from a newer version of the game: reload the page.
 
 ## The mission, the key bar, Ctrl-R
 
@@ -198,8 +198,8 @@ mission-nothing = Nothing yet: the story moves on as you act.
 # During tail -f or journalctl -f: the button that does Ctrl-C.
 follow-stop = Stop (Ctrl-C)
 keys-title = Terminal keys
-key-haut = Previous command
-key-bas = Next command
+key-up = Previous command
+key-down = Next command
 # What bash shows during Ctrl-R (readline).
 search-history = (reverse-i-search)`{ $pattern }': { $command }
 
@@ -262,8 +262,8 @@ achievements-sl = Locomotive
 
 hint-title = Need help?
 hint-intro = Three levels, to open one after the other: the manual first, like at work. The debrief will say how many you asked for.
-hint-button-manuel = The manual
-hint-button-piste = A lead
+hint-button-manual = The manual
+hint-button-lead = A lead
 hint-button-solution = Almost the answer
 # { $pages }: "man mv, man cp".
 hint-manual = Pages to read: { $pages }. Also search with man -k and a keyword.
@@ -314,7 +314,7 @@ rescue-restored = { $steps ->
        *[other] ↺ Machine put back as after { $steps } inputs of the chapter.
     }
 ## Themed paths ("Paths" menu; see src/engine/paths.ts)
-view-parcours = Paths
+view-paths = Paths
 path-choice = Choose a path
 path-start = First steps
     .description = Moving around, reading, searching, tidying up, then the network, git and archives: for anyone who has never opened a terminal.
@@ -412,10 +412,10 @@ class-col-date = Saved
 ## The terminal display
 
 display-theme = Terminal theme
-display-theme-phosphore = Phosphor
-display-theme-ambre = Amber
-display-theme-contraste = High contrast
-display-theme-papier = Paper
+display-theme-phosphor = Phosphor
+display-theme-amber = Amber
+display-theme-contrast = High contrast
+display-theme-paper = Paper
 display-more-small = Smaller text
 display-more-big = Larger text
 display-colours = Colours

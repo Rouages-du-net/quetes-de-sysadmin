@@ -1,24 +1,24 @@
-// LVM (le gestionnaire de volumes logiques de Linux) sur le stockage d'une
-// machine (stockage.ts) : des volumes physiques (PV : un disque, une
-// partition ou une grappe RAID), réunis en groupes de volumes (VG), où l'on
-// découpe des volumes logiques (LV) qui portent les systèmes de fichiers.
-// Un LV est une suite de morceaux (segments) pris sur les PV de son groupe,
-// en étendues de 4 Mio. Agrandir un LV ne change pas son système de
-// fichiers : resize2fs (ou lvextend -r) doit suivre. D'après lvm(8),
+// LVM (Linux's logical volume manager) on a machine's storage
+// (storage.ts): physical volumes (PV: a disk, a partition or a RAID
+// array), gathered into volume groups (VG), in which logical volumes (LV)
+// are carved out to hold the file systems.
+// An LV is a series of pieces (segments) taken from the PVs of its group,
+// in 4 MiB extents. Growing an LV does not change its file system:
+// resize2fs (or lvextend -r) must follow. Based on lvm(8),
 // lvextend(8), pvmove(8) (https://man7.org/linux/man-pages/man8/lvm.8.html)
-// et resize2fs(8) (https://man7.org/linux/man-pages/man8/resize2fs.8.html).
+// and resize2fs(8) (https://man7.org/linux/man-pages/man8/resize2fs.8.html).
 //
-//   etat.stockage.lvm = { pvs: { md1: { vg: 'labo', uuid } }, vgs: { labo: { uuid, lvs: { photos: { segments, fs } } } } }
+//   state.storage.lvm = { pvs: { md1: { vg: 'labo', uuid } }, vgs: { labo: { uuid, lvs: { photos: { segments, fs } } } } }
 //
-// Écarts : une seule taille d'étendue (4 Mio), pas de métadonnées réelles,
-// pas d'instantanés ni de volumes fins ; le système de fichiers est toujours
-// ext4, et sa taille est gardée à côté du LV.
+// Differences: a single extent size (4 MiB), no real metadata, no
+// snapshots or thin volumes; the file system is always ext4, and its size
+// is kept next to the LV.
 
 import type { Game } from './shell';
 import { SECTOR, partitionFor, type StorageState } from './storage';
 
 export const EXTENT = 4 * 1024 * 1024;
-// La place que LVM garde en tête de chaque PV pour ses métadonnées.
+// The space LVM keeps at the start of each PV for its metadata.
 const PV_HEADER = 1024 * 1024;
 
 export interface Segment {
@@ -28,10 +28,10 @@ export interface Segment {
 
 export interface LogicVolume {
   segments: Segment[];
-  // La taille du système de fichiers ext4 qu'il porte (octets), et où il est monté.
+  // The size of the ext4 file system it holds (bytes), and where it is mounted.
   fs: number;
   point?: string;
-  // Son numéro de périphérique (253:n, device-mapper).
+  // Its device number (253:n, device-mapper).
   minor: number;
 }
 
@@ -52,7 +52,7 @@ export interface Lvm {
 
 export const lvm = (st: StorageState): Lvm => (st.lvm ??= { pvs: {}, vgs: {} });
 
-/** La taille d'un périphérique (sda, sdb2, md1), en octets, ou null s'il n'existe pas. */
+/** The size of a device (sda, sdb2, md1), in bytes, or null if it does not exist. */
 export function sizeFor(st: StorageState, name: string): number | null {
   if (st.arrays[name]) return st.arrays[name].blocks * 1024;
   if (st.disks[name]) return st.disks[name].sectors * SECTOR;
@@ -60,9 +60,9 @@ export function sizeFor(st: StorageState, name: string): number | null {
   return p ? p.p.sectors * SECTOR : null;
 }
 
-/** Les étendues d'un PV. */
+/** A PV's extents. */
 export const pvExtents = (st: StorageState, pv: string) => Math.floor(((sizeFor(st, pv) ?? 0) - PV_HEADER) / EXTENT);
-/** Les étendues prises sur un PV par les LV de son groupe. */
+/** The extents taken on a PV by the LVs of its group. */
 export function socketsOn(st: StorageState, pv: string): number {
   const vg = lvm(st).pvs[pv]?.vg;
   if (!vg) return 0;
@@ -74,7 +74,7 @@ export const lvExtents = (lv: LogicVolume) => lv.segments.reduce((t, s) => t + s
 export const totalVg = (st: StorageState, vg: string) => pvsFor(st, vg).reduce((t, p) => t + pvExtents(st, p), 0);
 export const vgFree = (st: StorageState, vg: string) => pvsFor(st, vg).reduce((t, p) => t + freeOn(st, p), 0);
 
-/** « /dev/labo/photos », « labo/photos », « /dev/mapper/labo-photos » → [groupe, volume], ou null. */
+/** "/dev/labo/photos", "labo/photos", "/dev/mapper/labo-photos" → [group, volume], or null. */
 export function readLv(st: StorageState, name: string): [string, string] | null {
   const mapper = /^\/dev\/mapper\/([\w.+]+)-([\w.+]+)$/.exec(name);
   const path = /^(?:\/dev\/)?([\w.+-]+)\/([\w.+-]+)$/.exec(name);
@@ -82,7 +82,7 @@ export function readLv(st: StorageState, name: string): [string, string] | null 
   return vg && lv && lvm(st).vgs[vg]?.lvs[lv] ? [vg, lv] : null;
 }
 
-/** Prend `n` étendues pour un LV, sur les PV permis (dans l'ordre), en prolongeant son dernier segment si possible. */
+/** Takes `n` extents for an LV, on the allowed PVs (in order), extending its last segment if possible. */
 export function allocate(st: StorageState, lv: LogicVolume, n: number, pvs: string[]): void {
   let rest = n;
   for (const pv of pvs) {
@@ -96,16 +96,16 @@ export function allocate(st: StorageState, lv: LogicVolume, n: number, pvs: stri
   }
 }
 
-/** Le périphérique est-il tenu par LVM (un PV dans un groupe) ? */
+/** Is the device held by LVM (a PV in a group)? */
 export const heldByLvm = (st: StorageState, name: string) => !!lvm(st).pvs[name];
 
-/** La taille d'un LV en octets. */
+/** An LV's size in bytes. */
 export const lvSize = (lv: LogicVolume) => lvExtents(lv) * EXTENT;
 
 /**
- * Comme LVM écrit une taille : « <1.79t » (pvs, vgs, lvs : unités de 1024,
- * deux décimales, « < » quand l'arrondi dépasse la vraie valeur), ou « <1.79 TiB »
- * dans ses messages.
+ * The way LVM writes a size: "<1.79t" (pvs, vgs, lvs: units of 1024,
+ * two decimals, "<" when rounding exceeds the real value), or "<1.79 TiB"
+ * in its messages.
  */
 export function lvmSize(bytes: number, long = false): string {
   if (bytes === 0) return long ? '0 ' : '0';
@@ -122,7 +122,7 @@ export function lvmSize(bytes: number, long = false): string {
   return `${less}${rounded.toFixed(2)}${long ? ` ${longOptions[i]}` : units[i]}`;
 }
 
-/** Le montage d'un LV (pour df) suit la taille de son système de fichiers. */
+/** An LV's mount (for df) follows the size of its file system. */
 export function mountsUpdate(j: Game, st: StorageState): void {
   const mounts: { path: string; name: string; capacity: number }[] = j.state.mounts ?? [];
   for (const [vg, g] of Object.entries(lvm(st).vgs))

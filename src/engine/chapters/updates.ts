@@ -1,16 +1,16 @@
-// Histoire « La Coopérative » — chapitre « Les mises à jour » : le serveur
-// n'a pas été mis à jour depuis des mois. Avant l'ouverture : apt update,
-// apt list --upgradable, apt upgrade… pendant que le wifi de la coopérative
-// coupe (la connexion tombe une fois, au milieu de la mise à jour).
-//   - sans tmux : dpkg meurt avec la session ; apt refuse de continuer tant
-//     qu'on n'a pas lancé dpkg --configure -a ;
-//   - dans tmux : la mise à jour va au bout ; on s'y rattache (tmux attach) ;
-//   - un nouveau noyau : /var/run/reboot-required, uname -r ; redémarrer ;
-//   - après le redémarrage, la caisse ne repart pas (son service n'a jamais
-//     été activé, Marc la lançait à la main) : systemctl enable --now.
-// Objectif vérifié sur l'état : plus de mise à jour en attente, dpkg propre,
-// le nouveau noyau tourne, nginx et la caisse actifs, la caisse activée.
-// Sources : https://manpages.debian.org/trixie/apt/apt.8.en.html,
+// Story "The Co-op", chapter "Updates": the server hasn't been updated for
+// months. Before opening: apt update, apt list --upgradable, apt upgrade…
+// while the co-op's Wi-Fi cuts out (the connection drops once, in the
+// middle of the update).
+//   - without tmux: dpkg dies with the session; apt refuses to continue
+//     until dpkg --configure -a has been run;
+//   - in tmux: the update runs to the end; you reattach to it (tmux attach);
+//   - a new kernel: /var/run/reboot-required, uname -r; reboot;
+//   - after the reboot, the till doesn't come back (its service was never
+//     enabled, Marc started it by hand): systemctl enable --now.
+// Objective checked on the state: no update pending, dpkg clean, the new
+// kernel runs, nginx and the till active, the till enabled.
+// Sources: https://manpages.debian.org/trixie/apt/apt.8.en.html,
 // https://man.openbsd.org/tmux, https://www.debian.org/doc/manuals/debian-reference/ch02.en.html
 
 import { f, type Chapter } from '../world';
@@ -24,7 +24,7 @@ import { NEW_KEY, tillEnv, tillState, tillWorld, BINARY_NGINX, nginxCooperative,
 const OLD_KERNEL = '6.12.38+deb13-amd64';
 const NEW_KERNEL = '6.12.48+deb13-amd64';
 
-// Le site, tel qu'il est après « Le secret » et « Le proxy ».
+// The site, as it is after "The secret" and "The proxy".
 export const SITE = `server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -46,7 +46,7 @@ export const SITE = `server {
     }
 }`;
 
-// Les paquets installés, et les mises à jour de sécurité qui attendent.
+// The installed packages, and the security updates waiting.
 const INSTALLED: Record<string, string> = {
   ...Object.fromEntries(BASE_INSTALLED.map((p) => [p, PACKAGES[p].version])),
   nginx: '1.26.3-3+deb13u1',
@@ -108,14 +108,14 @@ export const updates: Chapter = {
   state: () => {
     const e = tillState(tillEnv(NEW_KEY, 'loopback'));
     const s = tillSystemd();
-    // Marc lançait la caisse à la main : elle tourne, mais son service n'est pas activé.
+    // Marc started the till by hand: it runs, but its service isn't enabled.
     s.services.till.active = false;
     return {
       ...e,
       systemd: s,
       apt: { lists: false, installed: { ...INSTALLED }, updates: { ...UPDATES }, fresh: { [`linux-image-${NEW_KERNEL}`]: '6.12.48-1' } },
       kernel: { active: OLD_KERNEL, installed: OLD_KERNEL },
-      // Le wifi de la coopérative coupe une fois, au milieu de la mise à jour.
+      // The co-op's Wi-Fi cuts out once, in the middle of the update.
       networkCut: true,
     };
   },

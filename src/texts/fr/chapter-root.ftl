@@ -148,8 +148,8 @@ root-event-fixed =
         [one] { $saved } souvenir
        *[other] { $saved } souvenirs
     } sur { $total }.{ $loss ->
-        [oui] {" "}Ceux qui sont partis ne reviendront pas : rm ne passe par aucune corbeille… à moins d'avoir fait des sauvegardes. Mais ça, c'est une autre histoire.
-       *[non] {""}
+        [yes] {" "}Ceux qui sont partis ne reviendront pas : rm ne passe par aucune corbeille… à moins d'avoir fait des sauvegardes. Mais ça, c'est une autre histoire.
+       *[no] {""}
     }
 
     LE ROYAUME EST SAUVÉ. (Un dernier chapitre t'attend : La Sauvegarde,

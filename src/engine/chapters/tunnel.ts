@@ -1,15 +1,15 @@
-// Histoire « La Maison des associations » — chapitre « Le tunnel » : la page
-// d'administration du wiki n'écoute que sur 127.0.0.1:8080 du wiki (exprès :
-// elle n'est pas faite pour internet), et le wiki n'a pas de navigateur.
-// Ouvrir un tunnel depuis son poste (ssh -f -N -L 8080:localhost:8080 wiki),
-// valider les inscriptions en attente (sauf le compte publicitaire), puis
-// refermer le tunnel (ps, kill).
-// Pièges réels : « localhost » dans -L s'entend du côté de la machine d'en
-// face (-L 8080:localhost:8080 maison mène à maison, où rien n'écoute ;
-// -L 8080:wiki:8080 maison arrive par l'adresse du wiki, pas par 127.0.0.1).
-// Objectif vérifié sur l'état : les deux inscriptions validées, la
-// publicitaire non, et plus aucun tunnel ouvert sur le poste.
-// Sources : https://man.openbsd.org/ssh#L, https://man.openbsd.org/ssh#N
+// Story "La Maison des associations" — chapter "The tunnel": the wiki's
+// admin page only listens on the wiki's 127.0.0.1:8080 (on purpose:
+// it isn't made for the internet), and the wiki has no browser.
+// Open a tunnel from your workstation (ssh -f -N -L 8080:localhost:8080 wiki),
+// approve the pending sign-ups (except the advertising account), then
+// close the tunnel (ps, kill).
+// Real traps: "localhost" in -L is understood on the remote machine's
+// side (-L 8080:localhost:8080 maison leads to maison, where nothing listens;
+// -L 8080:wiki:8080 maison arrives through the wiki's address, not through 127.0.0.1).
+// Objective checked on the state: both sign-ups approved, the
+// advertising one not, and no tunnel left open on the workstation.
+// Sources: https://man.openbsd.org/ssh#L, https://man.openbsd.org/ssh#N
 
 import { f, type Chapter } from '../world';
 import type { Game, Shell } from '../shell';
@@ -17,14 +17,14 @@ import type { App } from '../nginx';
 import { newSystemd } from '../systemd';
 import { loadSshd, homeAccounts, sshDirectory, homeState, internalHost, M, NOW, homeWorld, PASSWORD, homePlan } from './community-centre';
 
-type Signup = 'attente' | 'validee' | 'refusee';
+type Signup = 'pending' | 'approved' | 'refused';
 const VALIDATE = ['samir', 'lea'];
 const ADVERT = 'promo-casino';
-const SIGNUPS = (): Record<string, Signup> => ({ samir: 'attente', lea: 'attente', [ADVERT]: 'attente' });
+const SIGNUPS = (): Record<string, Signup> => ({ samir: 'pending', lea: 'pending', [ADVERT]: 'pending' });
 
 const signups = (j: Game) => j.state.signups as Record<string, Signup>;
 
-// La page d'administration du wiki : la liste des inscriptions, et une adresse pour valider ou refuser chacune.
+// The wiki's admin page: the list of sign-ups, and an address to approve or refuse each one.
 const ADMIN: App = {
   service: 'wiki-admin',
   pages: {},
@@ -36,7 +36,7 @@ const ADMIN: App = {
     }
     const m = /^\/admin\/(valider|refuser)\/([\w-]+)\/?$/.exec(path);
     if (m && listing[m[2]]) {
-      listing[m[2]] = m[1] === 'valider' ? 'validee' : 'refusee';
+      listing[m[2]] = m[1] === 'valider' ? 'approved' : 'refused';
       return { code: 200, type: 'text/plain; charset=utf-8', body: j.t(`tunnel-admin-${m[1]}`, { name: m[2] }) };
     }
     return { code: 404, type: 'text/plain; charset=utf-8', body: j.t('tunnel-admin-introuvable') };
@@ -45,15 +45,15 @@ const ADMIN: App = {
 
 const wiki = (j: Game) => (j as Shell).internal('wiki')!;
 const workstation = (j: Game) => (j.state.workstation as (() => Shell) | undefined)?.();
-// Les tunnels du poste encore ouverts (leur processus ssh tourne).
+// The workstation's tunnels still open (their ssh process is running).
 const openTunnels = (j: Game) => {
   const p = workstation(j);
   if (!p) return 0;
   const live = ((p.state.process ?? []) as { pid: number }[]).map((x) => x.pid);
   return ((p.state.tunnels ?? []) as { pid: number }[]).filter((t) => live.includes(t.pid)).length;
 };
-const approved = (j: Game) => VALIDATE.every((n) => signups(wiki(j))[n] === 'validee');
-const approvedAdvert = (j: Game) => signups(wiki(j))[ADVERT] === 'validee';
+const approved = (j: Game) => VALIDATE.every((n) => signups(wiki(j))[n] === 'approved');
+const approvedAdvert = (j: Game) => signups(wiki(j))[ADVERT] === 'approved';
 
 export const tunnel: Chapter = {
   id: 'tunnel',

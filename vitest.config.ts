@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 
-// Tests du moteur : chaque quête rejouée jusqu'au bout (tests/*.test.ts).
+// Engine tests: each quest replayed to the end (tests/*.test.ts).
 export default defineConfig({
   test: { include: ['tests/**/*.test.ts'] },
 });

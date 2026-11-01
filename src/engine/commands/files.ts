@@ -1,5 +1,5 @@
-// Commandes de fichiers : se déplacer, lire, créer, copier, effacer,
-// permissions, archives, place disque.
+// File commands: moving around, reading, creating, copying, deleting,
+// permissions, archives, disk space.
 
 import type { File, Node } from '../world';
 import type { Shell } from '../shell';
@@ -8,11 +8,11 @@ import { ghostPlace } from '../open-files';
 import { colourise, lsColour, visibleWidth, readColour, invalidColourMessage, sgr } from '../colours';
 import { COMMANDS, type Command, type Context } from './index';
 
-// Les commandes intégrées au shell : which ne les trouve pas.
+// Shell builtins: which doesn't find them.
 const BUILT_IN = ['cd', 'exit', 'umask', 'echo', 'pwd', 'help', 'aide', 'test', 'history'];
 
-// Le numéro d'inode d'un fichier (ls -i) : un par nœud, donné à la première
-// demande. Deux noms pour le même nœud (lien physique) ont le même numéro.
+// A file's inode number (ls -i): one per node, given on the first
+// request. Two names for the same node (hard link) have the same number.
 const INODES = new WeakMap<Node, number>();
 let nextInode = 1_311_201;
 export const inode = (n: Node) => {
@@ -20,79 +20,79 @@ export const inode = (n: Node) => {
   return INODES.get(n)!;
 };
 
-const modeFor = (n: Node) => n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--');
+const modeFor = (n: Node) => n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--');
 
-// Une ligne de « ls -l ». Écart volontaire : on omet le nombre de liens et
-// la date.
-// Le nom d'une entrée de ls, en couleur si ls colore (voir couleurs.ts).
+// A line of "ls -l". Deliberate difference: the link count and
+// the date are left out.
+// The name of an ls entry, in colour if ls colours (see couleurs.ts).
 type Paint = (name: string, n: Node) => string;
 const withoutPainting: Paint = (name) => name;
-const painting = (enabled: boolean): Paint => (enabled ? (name, n) => sgr(lsColour(name, n.type, n.type === 'fichier' && n.link !== undefined, modeFor(n)), name) : withoutPainting);
+const painting = (enabled: boolean): Paint => (enabled ? (name, n) => sgr(lsColour(name, n.type, n.type === 'file' && n.link !== undefined, modeFor(n)), name) : withoutPainting);
 
 function longLine(game: Shell, name: string, n: Node, human: boolean, numeric = false, paint: Paint = withoutPainting): string {
-  // -n : les numéros (uid, gid) au lieu des noms.
+  // -n: the numbers (uid, gid) instead of the names.
   const ownerName = n.owner ?? game.player;
   const groupName = n.group ?? ownerName;
   const owner = numeric ? String(game.accounts.users[ownerName]?.uid ?? ownerName) : ownerName;
   const group = numeric ? String(game.accounts.groups[groupName]?.gid ?? groupName) : groupName;
-  const bytes = n.type === 'dossier' ? 4096 : sizeFor(n, game);
+  const bytes = n.type === 'directory' ? 4096 : sizeFor(n, game);
   const size = human ? readable(bytes, game.t.language) : String(bytes);
-  const suffix = n.type === 'dossier' && name !== '.' && name !== '..' ? '/' : '';
-  // Un lien symbolique : « l », droits rwxrwxrwx, taille = longueur du chemin visé.
-  if (n.type === 'fichier' && n.link !== undefined)
+  const suffix = n.type === 'directory' && name !== '.' && name !== '..' ? '/' : '';
+  // A symbolic link: "l", rwxrwxrwx permissions, size = length of the target path.
+  if (n.type === 'file' && n.link !== undefined)
     return `lrwxrwxrwx ${owner.padEnd(8)} ${group.padEnd(8)} ${String(n.link.length).padStart(6)} ${paint(name, n)} -> ${n.link}`;
-  return `${n.type === 'dossier' ? 'd' : '-'}${modeFor(n)} ${owner.padEnd(8)} ${group.padEnd(8)} ${size.padStart(6)} ${paint(name, n)}${suffix}`;
+  return `${n.type === 'directory' ? 'd' : '-'}${modeFor(n)} ${owner.padEnd(8)} ${group.padEnd(8)} ${size.padStart(6)} ${paint(name, n)}${suffix}`;
 }
 
-// Source → (lieu de destination, nom final), comme mv et cp sous Linux :
-// si la destination est un lieu, l'objet y garde son nom ; sinon, c'est un
-// nouveau nom dans un lieu existant.
+// Source → (destination place, final name), like mv and cp on Linux:
+// if the destination is a place, the object keeps its name there; otherwise it's a
+// new name in an existing place.
 function destination(game: Shell, source: string, dest: string): string {
   const target = game.find(dest);
-  return target?.type === 'dossier' ? `${game.resolve(dest)}/${game.name(source)}`.replace('//', '/') : game.resolve(dest);
+  return target?.type === 'directory' ? `${game.resolve(dest)}/${game.name(source)}`.replace('//', '/') : game.resolve(dest);
 }
 
 const copy = (n: Node, owner: string): Node =>
-  n.type === 'fichier'
+  n.type === 'file'
     ? { ...n, owner, group: undefined, read: undefined, isProtected: undefined }
-    : { type: 'dossier', owner, mode: n.mode, children: Object.fromEntries(Object.entries(n.children).map(([k, e]) => [k, copy(e, owner)])) };
+    : { type: 'directory', owner, mode: n.mode, children: Object.fromEntries(Object.entries(n.children).map(([k, e]) => [k, copy(e, owner)])) };
 
-// ls d'un seul lieu (ou fichier).
+// ls of a single place (or file).
 function list({ args, game, last }: Context, paint: Paint = withoutPainting): string {
   const { letters, rest } = options(args);
   const target = rest[0] ?? '.';
-  // ls -l d'un lien montre le lien lui-même ; sans -l, ls entre dans le lieu visé.
+  // ls -l of a link shows the link itself; without -l, ls enters the target place.
   const link = game.find(target, false);
-  const n = (letters.has('l') || letters.has('n')) && link?.type === 'fichier' && link.link !== undefined ? link : game.find(target);
+  const n = (letters.has('l') || letters.has('n')) && link?.type === 'file' && link.link !== undefined ? link : game.find(target);
   if (!n) return game.error(game.t('ls-access-missing', { target: target }));
   const reason = game.block(target);
   if (reason) return game.error(reason);
   if (!game.traverses(target)) return game.error(game.t('ls-access-permission', { target: target }));
-  // -n est un -l qui montre les numéros.
+  // -n is a -l that shows the numbers.
   const long = letters.has('l') || letters.has('n');
-  // -i : le numéro d'inode devant chaque nom.
+  // -i: the inode number in front of each name.
   const ino = (e: Node, text: string) => (letters.has('i') ? `${String(inode(e)).padStart(7)} ${text}` : text);
-  // -d : le lieu lui-même, pas son contenu.
-  if (n.type === 'fichier' || letters.has('d')) return ino(n, long ? longLine(game, target, n, letters.has('h'), letters.has('n'), paint) : paint(target, n));
+  // -d: the place itself, not its contents.
+  if (n.type === 'file' || letters.has('d')) return ino(n, long ? longLine(game, target, n, letters.has('h'), letters.has('n'), paint) : paint(target, n));
   if (!game.can(n, 'r')) return game.error(game.t('ls-open-permission', { target: target }));
   const inputs: [string, Node][] = Object.entries(n.children)
     .filter(([name]) => letters.has('a') || !name.startsWith('.'))
     .sort(([a], [b]) => compareNames(a, b));
   if (letters.has('a')) inputs.unshift(['.', n], ['..', game.find(target + '/..') ?? n]);
   if (long) return inputs.map(([name, e]) => ino(e, longLine(game, name, e, letters.has('h'), letters.has('n'), paint))).join('\n');
-  // Le / ajouté aux lieux reste hors de la couleur (comme ls -F) : la couleur n'est jamais le seul signe.
-  const shows = (name: string, e: Node) => paint(name, e) + (e.type === 'dossier' && name !== '.' && name !== '..' ? '/' : '');
+  // The / added to places stays outside the colour (like ls -F): colour is never the only sign.
+  const shows = (name: string, e: Node) => paint(name, e) + (e.type === 'directory' && name !== '.' && name !== '..' ? '/' : '');
   if (letters.has('i')) return inputs.map(([name, e]) => ino(e, last ? shows(name, e) : paint(name, e))).join(last ? '    ' : '\n');
-  // Comme le vrai ls : en colonnes à l'écran, un nom par ligne dans un
-  // tube ou un fichier (et sans le / ajouté aux lieux).
+  // Like the real ls: in columns on screen, one name per line in a
+  // pipe or a file (and without the / added to places).
   if (!last) return inputs.map(([name, e]) => paint(name, e)).join('\n');
   return inColumns(inputs.map(([name, e]) => shows(name, e)), game.columns);
 }
 
 /**
- * Comme ls de GNU dans un terminal : le plus de colonnes possible dans la
- * largeur de l'écran ($COLUMNS), remplies de haut en bas, chaque colonne
- * aussi large que son plus long nom, plus deux espaces.
+ * Like GNU ls in a terminal: as many columns as possible within the
+ * screen's width ($COLUMNS), filled top to bottom, each column
+ * as wide as its longest name, plus two spaces.
  */
 export function inColumns(names: string[], screenWidth: number): string {
   const sizes = names.map((n) => visibleWidth(n));
@@ -124,10 +124,10 @@ export const FILES: Record<string, Command> = {
     launch: ({ game }) => game.who,
   },
 
-  // umask : le masque des droits des fichiers créés (commande intégrée à bash).
-  // Sans argument, l'affiche (-S : sous forme symbolique) ; sinon, le change pour cette session.
-  // history, comme celui de bash : les commandes tapées sur cette machine, numérotées
-  // (!n les relance, !! la dernière : voir Shell.developperHistorique).
+  // umask: the permission mask of created files (a bash builtin).
+  // With no argument, shows it (-S: in symbolic form); otherwise, changes it for this session.
+  // history, like bash's: the commands typed on this machine, numbered
+  // (!n reruns one, !! the last: see Shell.developperHistorique).
   history: {
     launch: ({ args, game }) => {
       if (args[0] === '-c') {
@@ -154,8 +154,8 @@ export const FILES: Record<string, Command> = {
     },
   },
 
-  // which : le chemin complet d'une commande (le premier trouvé dans le PATH) ;
-  // rien, et le code 1, pour une commande intégrée au shell ou inconnue.
+  // which: the full path of a command (the first found in the PATH);
+  // nothing, and exit code 1, for a shell builtin or an unknown command.
   which: {
     launch: ({ args, game }) => {
       const names = args.filter((a) => !a.startsWith('-'));
@@ -169,7 +169,7 @@ export const FILES: Record<string, Command> = {
     },
   },
 
-  // hostname : le nom de la machine ; -f, le nom complet (celui que /etc/hosts donne en premier).
+  // hostname: the machine's name; -f, the full name (the first one /etc/hosts gives).
   hostname: {
     launch: ({ args, game }) => {
       const name = game.read('/etc/hostname')?.trim() || game.hostName;
@@ -181,7 +181,7 @@ export const FILES: Record<string, Command> = {
 
   ls: {
     launch: (raw) => {
-      // --color : comme l'alias « ls --color=auto » du ~/.bashrc de Debian, ls colore à l'écran par défaut.
+      // --color: like the "ls --color=auto" alias of Debian's ~/.bashrc, ls colours on screen by default.
       const { when, args, invalid } = readColour(raw.args, 'auto');
       if (invalid !== undefined) return raw.game.error(invalidColourMessage(raw, 'ls', invalid));
       const c = { ...raw, args };
@@ -189,10 +189,10 @@ export const FILES: Record<string, Command> = {
       const list_ = (ctx: Context) => list(ctx, paint);
       const { rest } = options(c.args);
       if (rest.length <= 1) return list_(c);
-      // Plusieurs cibles : les fichiers d'abord, puis un bloc par lieu, avec son nom (comme ls).
+      // Several targets: files first, then one block per place, with its name (like ls).
       const letters = c.args.filter((a) => a.startsWith('-'));
-      const files = rest.filter((r) => c.game.find(r)?.type !== 'dossier');
-      const places = rest.filter((r) => c.game.find(r)?.type === 'dossier');
+      const files = rest.filter((r) => c.game.find(r)?.type !== 'directory');
+      const places = rest.filter((r) => c.game.find(r)?.type === 'directory');
       const blocks = files.map((f) => list_({ ...c, args: [...letters, f] })).filter(Boolean);
       for (const l of places) blocks.push(`${l}:\n${list_({ ...c, args: [...letters, l] })}`);
       return blocks.join('\n\n');
@@ -201,11 +201,11 @@ export const FILES: Record<string, Command> = {
 
   cd: {
     launch: ({ args, game }) => {
-      // cd - : retour au dossier d'avant ($OLDPWD), que bash affiche.
+      // cd -: back to the previous directory ($OLDPWD), which bash prints.
       if (args[0] === '-') {
         if (game.old === null) return game.error(game.t('cd-old-missing'));
         const old = game.old;
-        if (game.find(old)?.type !== 'dossier') return game.error(game.t('error-missing', { command: 'cd', target: old }));
+        if (game.find(old)?.type !== 'directory') return game.error(game.t('error-missing', { command: 'cd', target: old }));
         game.old = game.cwd;
         game.cwd = old;
         game.visits.add(old);
@@ -214,7 +214,7 @@ export const FILES: Record<string, Command> = {
       const target = args[0] ?? '~';
       const n = game.find(target);
       if (!n) return game.error(game.t('error-missing', { command: 'cd', target: target }));
-      if (n.type !== 'dossier') return game.error(game.t('cd-not-one-directory', { target: target }));
+      if (n.type !== 'directory') return game.error(game.t('cd-not-one-directory', { target: target }));
       const reason = game.block(target);
       if (reason) return game.error(reason);
       if (!game.traverses(target) || !game.can(n, 'x')) return game.error(game.t('error-permission', { command: 'cd', target: target }));
@@ -251,7 +251,7 @@ export const FILES: Record<string, Command> = {
       const text = input ?? '';
       for (const target of rest) {
         const n = game.find(target);
-        if (n?.type === 'fichier') {
+        if (n?.type === 'file') {
           if (!game.traverses(target) || !game.can(n, 'w')) {
             game.error(game.t('error-permission', { command: 'tee', target: target }));
             continue;
@@ -261,7 +261,7 @@ export const FILES: Record<string, Command> = {
           n.lines = true;
           delete n.size;
         } else {
-          const error = game.place('tee', target, { type: 'fichier', content: text, owner: game.who, lines: true });
+          const error = game.place('tee', target, { type: 'file', content: text, owner: game.who, lines: true });
           if (error) game.error(error);
         }
       }
@@ -275,8 +275,8 @@ export const FILES: Record<string, Command> = {
       if (!source || !dest) return game.error(game.t('mv-usage'));
       const n = game.find(source);
       if (!n) return game.error(game.t('mv-missing', { target: source }));
-      // Simplification du jeu : on déplace des objets, jamais des lieux.
-      if (n.type === 'dossier') return game.error(game.t('mv-place', { target: source }));
+      // Game simplification: objects are moved, never places.
+      if (n.type === 'directory') return game.error(game.t('mv-place', { target: source }));
       if (n.isProtected?.mv) return game.error(n.isProtected.mv);
       const target = destination(game, source, dest);
       const reason = game.block(source) ?? game.block(target + '/..');
@@ -297,7 +297,7 @@ export const FILES: Record<string, Command> = {
       if (!source || !dest) return game.error(game.t('cp-usage'));
       const n = game.find(source);
       if (!n) return game.error(game.t('cp-missing', { target: source }));
-      if (n.type === 'dossier' && !letters.has('r')) return game.error(game.t('cp-directory', { target: source }));
+      if (n.type === 'directory' && !letters.has('r')) return game.error(game.t('cp-directory', { target: source }));
       const target = destination(game, source, dest);
       const reason = game.block(source) ?? game.block(target + '/..');
       if (reason) return game.error(reason);
@@ -312,14 +312,14 @@ export const FILES: Record<string, Command> = {
     launch: ({ args, game }) => {
       if (!args.length) return game.error(game.t('rm-usage'));
       for (const target of args.filter((a) => !a.startsWith('-'))) {
-        // rm efface le lien lui-même, jamais ce qu'il vise.
+        // rm deletes the link itself, never its target.
         const n = game.find(target, false);
         if (!n) game.error(game.t('rm-missing', { target: target }));
-        else if (n.type === 'dossier') game.error(game.t('rm-directory', { target: target }));
+        else if (n.type === 'directory') game.error(game.t('rm-directory', { target: target }));
         else if (n.isProtected?.rm) game.error(n.isProtected.rm);
         else if (game.block(target)) game.error(game.block(target)!);
-        // Effacer un fichier, c'est modifier le lieu qui le contient : il faut
-        // le droit d'écrire dans ce lieu, pas sur le fichier.
+        // Deleting a file means changing the place that holds it: it takes
+        // write permission on that place, not on the file.
         else if (!game.writtenIn(target)) game.error(game.t('rm-permission', { target: target }));
         else game.erase(target);
       }
@@ -327,19 +327,19 @@ export const FILES: Record<string, Command> = {
     },
   },
 
-  // ln : lien symbolique (-s) ou physique. Comme coreutils : si la
-  // destination est un lieu, le lien y prend le nom de la cible ; le chemin
-  // visé est enregistré tel quel (relatif au lieu du lien, pas au lieu courant).
+  // ln: symbolic (-s) or hard link. Like coreutils: if the
+  // destination is a place, the link takes the target's name there; the target
+  // path is stored as is (relative to the link's place, not the current place).
   ln: {
     launch: ({ args, game }) => {
       const { letters, rest } = options(args);
       if (!rest.length) return game.error(game.t('ln-operand-missing'));
       const [target, dest = '.'] = rest;
-      // -n : si la destination est un lien vers un lieu, on remplace le lien
-      // au lieu d'entrer dans le lieu (ln -sfn, pour basculer un lien « current »).
+      // -n: if the destination is a link to a place, the link is replaced
+      // instead of entering the place (ln -sfn, to switch a "current" link).
       const place = letters.has('n') ? game.find(dest, false) : game.find(dest);
-      const path = place?.type === 'dossier' ? `${game.resolve(dest)}/${target.replace(/\/$/, '').split('/').at(-1)}` : game.resolve(dest);
-      const shows = place?.type === 'dossier' ? path : dest;
+      const path = place?.type === 'directory' ? `${game.resolve(dest)}/${target.replace(/\/$/, '').split('/').at(-1)}` : game.resolve(dest);
+      const shows = place?.type === 'directory' ? path : dest;
       const symbolic = letters.has('s');
       const what = symbolic ? 'ln-impossible-symbolic' : 'ln-impossible-physical';
       if (game.find(path, false)) {
@@ -350,14 +350,14 @@ export const FILES: Record<string, Command> = {
       if (!symbolic) {
         const source = game.find(target);
         if (!source) return game.error(game.t('ln-access-impossible', { target: target }));
-        if (source.type === 'dossier') return game.error(game.t('ln-physical-directory', { target: target }));
+        if (source.type === 'directory') return game.error(game.t('ln-physical-directory', { target: target }));
       }
-      if (game.find(path + '/..')?.type !== 'dossier') return game.error(game.t(what, { target: shows, reason: game.t('ln-missing') }));
+      if (game.find(path + '/..')?.type !== 'directory') return game.error(game.t(what, { target: shows, reason: game.t('ln-missing') }));
       if (!game.writtenIn(path)) return game.error(game.t(what, { target: shows, reason: game.t('ln-permission') }));
-      // Un lien physique est un deuxième nom pour le même fichier : le même nœud.
-      const node: Node = symbolic ? { type: 'fichier', content: '', link: target, owner: game.who } : game.find(target)!;
+      // A hard link is a second name for the same file: the same node.
+      const node: Node = symbolic ? { type: 'file', content: '', link: target, owner: game.who } : game.find(target)!;
       const parent = game.find(path + '/..');
-      if (parent?.type === 'dossier') parent.children[game.name(path)] = node;
+      if (parent?.type === 'directory') parent.children[game.name(path)] = node;
       return letters.has('v') ? `'${shows}' -> '${target}'` : '';
     },
   },
@@ -367,7 +367,7 @@ export const FILES: Record<string, Command> = {
       if (!args.length) return game.error(game.t('touch-usage'));
       for (const target of args) {
         if (game.exists(target)) continue;
-        const error = game.place('touch', target, { type: 'fichier', content: '', owner: game.who });
+        const error = game.place('touch', target, { type: 'file', content: '', owner: game.who });
         if (error) game.error(error);
       }
       return '';
@@ -376,7 +376,7 @@ export const FILES: Record<string, Command> = {
 
   mkdir: {
     launch: ({ args, game }) => {
-      // -p : crée aussi les lieux parents, sans erreur s'ils existent déjà.
+      // -p: also creates the parent places, with no error if they already exist.
       const parents = args.includes('-p') || args.includes('--parents');
       const targets = args.filter((a) => a !== '-p' && a !== '--parents');
       if (!targets.length) return game.error(game.t('mkdir-usage'));
@@ -386,8 +386,8 @@ export const FILES: Record<string, Command> = {
           for (let i = 1; i <= chunks.length; i++) {
             const path = '/' + chunks.slice(0, i).join('/');
             const n = game.find(path);
-            if (n?.type === 'dossier') continue;
-            const error = n ? game.t('mkdir-exists', { target: path }) : game.place('mkdir', path, { type: 'dossier', children: {}, owner: game.who });
+            if (n?.type === 'directory') continue;
+            const error = n ? game.t('mkdir-exists', { target: path }) : game.place('mkdir', path, { type: 'directory', children: {}, owner: game.who });
             if (error) {
               game.error(error);
               break;
@@ -395,7 +395,7 @@ export const FILES: Record<string, Command> = {
           }
         } else if (game.exists(target)) game.error(game.t('mkdir-exists', { target: target }));
         else {
-          const error = game.place('mkdir', target, { type: 'dossier', children: {}, owner: game.who });
+          const error = game.place('mkdir', target, { type: 'directory', children: {}, owner: game.who });
           if (error) game.error(error);
         }
       }
@@ -404,8 +404,8 @@ export const FILES: Record<string, Command> = {
   },
 
   chmod: {
-    // -R (récursif) ; les autres arguments qui commencent par « - » sont des
-    // modes (chmod -w fichier), comme pour le vrai chmod.
+    // -R (recursive); the other arguments starting with "-" are
+    // modes (chmod -w file), as with the real chmod.
     ownOptions: true,
     launch: ({ args, game }) => {
       const recursive = args.some((a) => a === '-R' || a === '--recursive');
@@ -414,7 +414,7 @@ export const FILES: Record<string, Command> = {
       const apply = (n: Node) => {
         const fresh = applyMode(modeFor(n), rights);
         if (fresh) n.mode = fresh;
-        if (recursive && n.type === 'dossier') Object.values(n.children).forEach(apply);
+        if (recursive && n.type === 'directory') Object.values(n.children).forEach(apply);
         return fresh;
       };
       for (const target of targets) {
@@ -436,7 +436,7 @@ export const FILES: Record<string, Command> = {
       let name: RegExp | null = null;
       let type: string | null = null;
       let erase = false;
-      // -mtime +N : modifié il y a plus de N jours (l'âge en jours entiers, comme find) ; -N : moins ; N : exactement.
+      // -mtime +N: modified more than N days ago (age in whole days, like find); -N: less; N: exactly.
       let age: { sign: string; days: number } | null = null;
       let depth = Infinity;
       for (let i = 0; i < crit.length; i++) {
@@ -458,16 +458,16 @@ export const FILES: Record<string, Command> = {
       const now: number = game.state.systemd?.clock ?? 0;
       const ageOk = (e: Node) => {
         if (!age) return true;
-        const days = e.type === 'fichier' && e.mtime !== undefined ? Math.floor((now - e.mtime) / 86_400_000) : 0;
+        const days = e.type === 'file' && e.mtime !== undefined ? Math.floor((now - e.mtime) / 86_400_000) : 0;
         return age.sign === '+' ? days > age.days : age.sign === '-' ? days < age.days : days === age.days;
       };
       const n = game.find(departure);
       if (!n) return game.error(game.t('find-missing', { target: departure }));
       const found: string[] = [];
       const walk = (path: string, e: Node, level: number) => {
-        const kept = (!name || name.test(path.split('/').pop()!)) && (!type || (type === 'd') === (e.type === 'dossier')) && ageOk(e);
+        const kept = (!name || name.test(path.split('/').pop()!)) && (!type || (type === 'd') === (e.type === 'directory')) && ageOk(e);
         if (kept) found.push(path);
-        if (e.type !== 'dossier' || level >= depth) return;
+        if (e.type !== 'directory' || level >= depth) return;
         if (!game.can(e, 'r') || !game.can(e, 'x')) return void game.error(game.t('find-permission', { target: path }));
         for (const [k, child] of Object.entries(e.children).sort(([a], [b]) => compareNames(a, b)))
           walk(`${path.replace(/\/$/, '')}/${k}`, child, level + 1);
@@ -476,7 +476,7 @@ export const FILES: Record<string, Command> = {
       if (!erase) return found.join('\n');
       for (const path of found.reverse()) {
         const e = game.find(path)!;
-        if (e.type === 'dossier' && Object.keys(e.children).length) game.error(game.t('find-remove-not-empty', { target: path }));
+        if (e.type === 'directory' && Object.keys(e.children).length) game.error(game.t('find-remove-not-empty', { target: path }));
         else if (!game.writtenIn(path)) game.error(game.t('find-remove-permission', { target: path }));
         else game.erase(path);
       }
@@ -486,7 +486,7 @@ export const FILES: Record<string, Command> = {
 
   du: {
     launch: ({ args, game }) => {
-      // --inodes : compter les fichiers (et lieux) au lieu des octets ; -d N (--max-depth=N) : n'afficher que N niveaux.
+      // --inodes: count files (and places) instead of bytes; -d N (--max-depth=N): show only N levels.
       const inodes = args.includes('--inodes');
       let depth = Infinity;
       const raw: string[] = [];
@@ -500,10 +500,10 @@ export const FILES: Record<string, Command> = {
       const { letters, rest } = options(raw);
       const fmt = (o: number) => (inodes ? String(o) : letters.has('h') ? readable(o, game.t.language) : String(Math.ceil(o / 1024)));
       const lines: string[] = [];
-      // Comme du : un fichier qui a plusieurs noms (liens physiques) n'est compté qu'une fois.
+      // Like du: a file with several names (hard links) is counted only once.
       const seen = new Set<Node>();
       const walk = (path: string, e: Node, level = 0): number => {
-        if (e.type === 'fichier') {
+        if (e.type === 'file') {
           if (seen.has(e)) return 0;
           seen.add(e);
           return inodes ? 1 : sizeFor(e, game);
@@ -520,7 +520,7 @@ export const FILES: Record<string, Command> = {
           continue;
         }
         const total = walk(target, n);
-        if (letters.has('s') || n.type === 'fichier') lines.push(`${fmt(total)}\t${target}`);
+        if (letters.has('s') || n.type === 'file') lines.push(`${fmt(total)}\t${target}`);
       }
       return lines.join('\n');
     },
@@ -532,9 +532,9 @@ export const FILES: Record<string, Command> = {
       const fmt = (o: number) => (letters.has('h') ? readable(o, game.t.language) : String(Math.ceil(o / 1024)));
       const mounts: { path: string; capacity: number; name: string; inodes?: number; inodesBase?: number }[] = game.state.mounts ?? [];
       const chosen = (rest.length ? rest.map((r) => game.mount(game.resolve(r))).filter(Boolean) : mounts) as typeof mounts;
-      // -i : les inodes (un par fichier ou lieu) au lieu des octets.
+      // -i: inodes (one per file or place) instead of bytes.
       if (letters.has('i')) {
-        // -h avec -i : 64K plutôt que 65536, comme GNU df -ih.
+        // -h with -i: 64K rather than 65536, like GNU df -ih.
         const n = (v: number) => (letters.has('h') ? readable(v, game.t.language) : String(v));
         const iLines = [game.t('df-header-inodes')];
         for (const m of chosen) {
@@ -550,8 +550,8 @@ export const FILES: Record<string, Command> = {
       const lines = [game.t('df-header')];
       for (const m of chosen) {
         const place = game.find(m.path);
-        // Les fichiers effacés mais encore ouverts par un processus occupent toujours leur place.
-        // Sans compter les autres supports montés dedans (/srv/radio n'est pas sur /).
+        // Deleted files still held open by a process still take up their space.
+        // Not counting the other media mounted inside (/srv/radio isn't on /).
         const inside = mounts.filter((x) => x.path !== m.path && (m.path === '/' || x.path.startsWith(m.path + '/')));
         const other = inside.reduce((t, x) => t + ((n) => (n ? game.size(n) : 0))(game.find(x.path)), 0);
         const inUse = Math.min(m.capacity, (place ? game.size(place) : 0) - other + ghostPlace(game, m.path));
@@ -566,7 +566,7 @@ export const FILES: Record<string, Command> = {
 
   tar: {
     launch: ({ args, game }) => {
-      // -C lieu (ou --directory=lieu) : se placer dans ce lieu avant d'extraire.
+      // -C place (or --directory=place): move to that place before extracting.
       let cPlace = '';
       const withoutC: string[] = [];
       for (let i = 0; i < args.length; i++) {
@@ -581,7 +581,7 @@ export const FILES: Record<string, Command> = {
         if (!sources.length) return game.error(game.t('tar-archive-empty'));
         const files: Record<string, File> = {};
         const add = (path: string, e: Node) => {
-          if (e.type === 'fichier') {
+          if (e.type === 'file') {
             if (!game.can(e, 'r')) return void game.error(game.t('error-permission', { command: 'tar', target: path }));
             files[path] = { ...e, read: undefined } as File;
           } else for (const [k, child] of Object.entries(e.children)) add(`${path.replace(/\/$/, '')}/${k}`, child);
@@ -592,24 +592,24 @@ export const FILES: Record<string, Command> = {
           else add(s.replace(/^\.?\/+/, ''), e);
         }
         const compressed = letters.has('z');
-        // Taille : 512 octets d'en-tête par fichier ; gzip réduit beaucoup le
-        // texte (environ au tiers) et presque pas les images, sons et vidéos,
-        // déjà compressés.
+        // Size: a 512-byte header per file; gzip shrinks text a lot
+        // (to about a third) and images, sounds and videos hardly at all,
+        // since they are already compressed.
         const already = /\.(png|jpe?g|gif|webp|mp3|ogg|mp4|webm|zip|gz|pdf)$/i;
         const size = Object.entries(files).reduce((t, [path, f]) => {
           const raw = sizeFor(f, game);
           return t + 512 + (compressed ? Math.round(raw * (already.test(path) ? 0.98 : 0.35)) : raw);
         }, 0);
-        const archive: File = { type: 'fichier', content: '', size, owner: game.who, archive: { files, compressed } };
+        const archive: File = { type: 'file', content: '', size, owner: game.who, archive: { files, compressed } };
         const error = game.place('tar', archiveName, archive);
         if (error) return game.error(error);
         return letters.has('v') ? Object.keys(files).join('\n') : '';
       }
       const n = game.find(archiveName);
       if (!n) return game.error(game.t('tar-open-impossible', { target: archiveName }));
-      if (n.type !== 'fichier' || !n.archive) return game.error(game.t('tar-not-one-archive', { target: archiveName }));
-      // Une archive coupée (disque plein, machine éteinte pendant l'écriture) :
-      // tar lit ce qui précède la coupure, puis s'arrête sur une erreur.
+      if (n.type !== 'file' || !n.archive) return game.error(game.t('tar-not-one-archive', { target: archiveName }));
+      // A truncated archive (disk full, machine turned off while writing):
+      // tar reads what comes before the cut, then stops on an error.
       const { truncated } = n.archive;
       const inputs = Object.entries(n.archive.files).slice(0, truncated);
       const cut = () => {
@@ -619,7 +619,7 @@ export const FILES: Record<string, Command> = {
       if (letters.has('t')) {
         const listing = inputs.map(([path]) => path).join('\n');
         if (truncated === undefined) return listing;
-        // La liste, puis l'erreur à l'endroit de la coupure.
+        // The list, then the error where the archive was cut.
         game.state.truncatedArchive = game.resolve(archiveName);
         return game.error([listing, game.t('tar-truncated')].filter(Boolean).join('\n'));
       }
@@ -627,7 +627,7 @@ export const FILES: Record<string, Command> = {
         const base = cPlace || '.';
         if (cPlace) {
           const l = game.find(cPlace);
-          if (!l || l.type !== 'dossier') return game.error(game.t('tar-place-missing', { target: cPlace }));
+          if (!l || l.type !== 'directory') return game.error(game.t('tar-place-missing', { target: cPlace }));
         }
         const inside = (path: string) => `${base.replace(/\/$/, '')}/${path}`;
         for (const [path, f] of inputs) {
@@ -635,10 +635,10 @@ export const FILES: Record<string, Command> = {
           let place = '';
           for (const p of parts.slice(0, -1)) {
             place = place ? `${place}/${p}` : p;
-            if (!game.exists(inside(place))) game.place('tar', inside(place), { type: 'dossier', children: {}, owner: game.who });
+            if (!game.exists(inside(place))) game.place('tar', inside(place), { type: 'directory', children: {}, owner: game.who });
           }
-          // root garde le propriétaire et les droits enregistrés dans l'archive ;
-          // les autres deviennent propriétaires de ce qu'ils extraient.
+          // root keeps the owner and permissions stored in the archive;
+          // others become owners of what they extract.
           const error = game.place('tar', inside(path), game.who === 'root' ? { ...f } : { ...f, owner: game.who, group: undefined });
           if (error) game.error(error);
         }

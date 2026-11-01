@@ -1,21 +1,21 @@
-// Histoire « La Veille » — chapitre « Mettre en veille » : une vérification
-// ponctuelle ne suffit pas, la veille est une habitude. Deux choses à
-// mettre en place, qui tournent seules sans remplacer la décision humaine :
-//   - unattended-upgrades, restreint aux mises à jour de SÉCURITÉ
-//     seulement (pas tout, qui casserait sans prévenir) : activer les deux
-//     tâches périodiques (20auto-upgrades), et dans
-//     50unattended-upgrades, ne garder que les lignes Origins-Pattern
-//     « Debian-Security », avec une adresse pour le rapport ;
-//   - un rendez-vous hebdomadaire qui rappelle de lire le prochain bulletin :
-//     un timer systemd (ou une tâche cron) qui envoie par courrier la liste
-//     des paquets en attente de mise à jour.
-// Objectif vérifié sur l'état : les deux tâches de 20auto-upgrades
-// activées, 50unattended-upgrades limité aux mises à jour de sécurité avec
-// un rapport par courrier, et un timer (ou une tâche cron) actif et
-// persistant qui envoie un résumé hebdomadaire.
-// Pièges prévus : activer sans restreindre aux mises à jour de sécurité (ou
-// l'inverse), un timer qui ne survit pas au redémarrage (pas dans /etc).
-// Sources : https://wiki.debian.org/UnattendedUpgrades,
+// Story "The Watch" — chapter "Settling Into a Routine": a one-off check
+// isn't enough, watching is a habit. Two things to set up, which run on
+// their own without replacing the human decision:
+//   - unattended-upgrades, restricted to SECURITY updates only (not
+//     everything, which would break things without warning): enable the two
+//     periodic tasks (20auto-upgrades), and in 50unattended-upgrades, keep
+//     only the "Debian-Security" Origins-Pattern lines, with an address for
+//     the report;
+//   - a weekly appointment that reminds you to read the next bulletin: a
+//     systemd timer (or a cron job) that mails the list of packages waiting
+//     to be updated.
+// Objective checked on the state: both tasks of 20auto-upgrades enabled,
+// 50unattended-upgrades limited to security updates with a report by mail,
+// and an active and persistent timer (or cron job) that sends a weekly
+// summary.
+// Planned traps: enabling without restricting to security updates (or
+// the reverse), a timer that doesn't survive a reboot (not in /etc).
+// Sources: https://wiki.debian.org/UnattendedUpgrades,
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html,
 // https://manpages.debian.org/bookworm/cron/crontab.5.en.html
 
@@ -61,8 +61,8 @@ const okOnlySecurity = (j: Game) => {
 };
 const okReport = (j: Game) => fiftyLines(j).some((l) => !/^\s*\/\//.test(l) && /Unattended-Upgrade::Mail\s+"[^"]/.test(l));
 
-// Un timer (ou une tâche cron) actif, écrit à la main (persistant), dont la
-// commande s'intéresse aux mises à jour ET en envoie le résultat par courrier.
+// An active timer (or cron job), written by hand (persistent), whose
+// command deals with updates AND mails the result.
 const sd = (j: Game) => systemd(j)!;
 const timerOk = (j: Game) =>
   Object.values(sd(j).timers ?? {}).some((m) => {

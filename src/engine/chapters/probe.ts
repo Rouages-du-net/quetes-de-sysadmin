@@ -1,16 +1,16 @@
-// Histoire « L'Astreinte » — chapitre « La sonde » : après quatre nuits à
-// réparer après coup, Zoé veut être prévenue avant que ça casse. Elle a
-// commencé une sonde (/usr/local/bin/probe) qui lance des plugins de
-// supervision (monitoring-plugins : check_disk, check_http, check_procs) et
-// envoie par courrier tout ce qui n'est pas OK. À compléter (le volume des
-// données et ses inodes, le direct) et à planifier toutes les 5 minutes
-// (un timer systemd, ou cron). Puis Zoé organise un exercice : cette nuit,
-// elle provoquera deux pannes (le relais qui tombe, des milliers de petits
-// fichiers qui épuisent les inodes du volume des données).
-// Objectif vérifié sur l'état, après la nuit simulée : chaque panne a donné
-// une alerte à temps (le relais en moins de 15 minutes, les inodes avant
-// d'être épuisés), et aucune alerte n'est partie quand tout allait bien.
-// Sources : https://www.monitoring-plugins.org/doc/guidelines.html,
+// Story "On Call", chapter "The Probe": after four nights of
+// repairing after the fact, Zoé wants to be warned before things break. She
+// started a probe (/usr/local/bin/probe) that runs monitoring
+// plugins (monitoring-plugins: check_disk, check_http, check_procs) and
+// mails everything that isn't OK. It remains to complete it (the data
+// volume and its inodes, the live stream) and to schedule it every 5 minutes
+// (a systemd timer, or cron). Then Zoé organises a drill: tonight,
+// she will cause two failures (the relay going down, thousands of small
+// files exhausting the data volume's inodes).
+// Objective checked on the state, after the simulated night: each failure
+// raised an alert in time (the relay within 15 minutes, the inodes before
+// running out), and no alert went out while everything was fine.
+// Sources: https://www.monitoring-plugins.org/doc/guidelines.html,
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html
 
 import { path, d, f, accountsFiles, name, type Chapter, type Accounts, type Directory, type Rights } from '../world';
@@ -26,7 +26,7 @@ const MINUTE = 60_000;
 const INODES = 16_384;
 // Lundi 6 septembre 2027, 18 h 30.
 const NOW = Date.UTC(2027, 8, 6, 18, 30, 0);
-// Les deux pannes de l'exercice, en minutes après minuit, et le délai pour réagir.
+// The drill's two failures, in minutes after midnight, and the time allowed to react.
 const RELAY_FAILURE = 70; // 1 h 10
 const RELAY_DELAY = 15;
 const INODES_FAILURE = 100; // 1 h 40 : l'import commence
@@ -55,10 +55,10 @@ const shell = (j: Game) => j as Shell;
 const relay = (j: Game) => sd(j).services['radio-stream'];
 const volume = (j: Game) => shell(j).mount(DATA)!;
 const timeOfDay = (ms: number) => new Date(ms).toISOString().slice(11, 16);
-// Les alertes que Zoé reçoit (directement, ou par l'alias de root).
+// The alerts Zoé receives (directly, or through root's alias).
 const alertsForZoe = (j: Game) => mails(shell(j)).filter((c) => c.a === 'zoe');
 
-// Ce qui décide d'une nouvelle nuit : la sonde, les crontabs, et les timers tels que systemd les a chargés.
+// What decides a new night: the probe, the crontabs, and the timers as systemd loaded them.
 function fingerprint(j: Game): string {
   const timers = Object.entries(sd(j).timers ?? {}).map(([n, m]) => [
     n,
@@ -75,12 +75,12 @@ function fingerprint(j: Game): string {
   return JSON.stringify([j.read('/usr/local/bin/probe'), j.state.crontabs, timers, services]);
 }
 
-// Quelque chose est-il planifié (un timer actif, une ligne de crontab) ?
+// Is anything scheduled (an active timer, a crontab line)?
 const scheduled = (j: Game) =>
   Object.values(sd(j).timers ?? {}).some((m) => m.state === 'active' && m.file.startsWith('/etc/')) ||
   Object.values((j.state.crontabs ?? {}) as Record<string, string>).some((t) => t.split('\n').some((l) => l.trim() && !l.trim().startsWith('#')));
 
-/** La nuit d'exercice : de maintenant à 6 h, deux pannes ; Zoé réagit aux alertes qu'elle reçoit. */
+/** The drill night: from now until 6 a.m., two failures; Zoé reacts to the alerts she receives. */
 function night(j: Game): string {
   const s = sd(j);
   const startTime = s.clock;
@@ -88,7 +88,7 @@ function night(j: Game): string {
   const end = midnight + 6 * 60 * MINUTE;
   const alreadyReceived = alertsForZoe(j).length;
   const place = () => j.find(path(j.t, THUMBNAILS)) as Directory | null;
-  // Les fenêtres où une alerte est attendue : [début, réparation + 15 min].
+  // The windows where an alert is expected: [start, repair + 15 min].
   const fallsRelay = midnight + RELAY_FAILURE * MINUTE;
   const startImport = midnight + INODES_FAILURE * MINUTE;
   let alertRelay: number | null = null;
@@ -101,7 +101,7 @@ function night(j: Game): string {
   let number = 0;
   const during = (t: number, failureStart: number, repaired: number | null) => t >= failureStart && t <= (repaired ?? Infinity) + 15 * MINUTE;
   const launches = passTime(shell(j), startTime, end, (t) => {
-    // Les courriers arrivés depuis la minute d'avant : Zoé les lit.
+    // Mails arrived since the previous minute: Zoé reads them.
     const received = alertsForZoe(j);
     for (const c of received.slice(views)) {
       const relayInFailure = during(c.time, fallsRelay, repairedRelay);
@@ -111,7 +111,7 @@ function night(j: Game): string {
       if (!relayInFailure && !inodesInFailure) no++;
     }
     views = received.length;
-    // Panne 1 : le relais tombe.
+    // Failure 1: the relay goes down.
     if (t === fallsRelay) {
       relay(j).state = 'failed';
       relay(j).result = 'signal';
@@ -120,32 +120,32 @@ function night(j: Game): string {
       writeLog(s, 'radio-stream.service', 'systemd', 1, 'radio-stream.service: Main process exited, code=killed, status=11/SEGV', 4, false);
       writeLog(s, 'radio-stream.service', 'systemd', 1, "radio-stream.service: Failed with result 'signal'.", 4, false);
     }
-    // Zoé relance le relais 10 minutes après l'alerte (ou à son réveil, à 6 h).
+    // Zoé restarts the relay 10 minutes after the alert (or when she wakes up, at 6 a.m.).
     if (alertRelay !== null && repairedRelay === null && t >= alertRelay + 10 * MINUTE) {
       start(j, s, 'radio-stream');
       repairedRelay = t;
     }
-    // Panne 2 : l'import des vignettes crée des milliers de petits fichiers, jusqu'à ce que Zoé l'arrête.
+    // Failure 2: the thumbnail import creates thousands of small files, until Zoé stops it.
     if (t >= startImport && stoppedInodes === null && fullInodes === null) {
       const v = place();
       const free = INODES - shell(j).usedInodes(volume(j));
       const howMany = Math.min(BY_MINUTE, free);
       if (v)
         for (let k = 0; k < howMany; k++)
-          v.children[`${name(j.t, 'thumbnail')}-${String(++number).padStart(5, '0')}.jpg`] = { type: 'fichier', content: '', size: 0, owner: 'radio' };
+          v.children[`${name(j.t, 'thumbnail')}-${String(++number).padStart(5, '0')}.jpg`] = { type: 'file', content: '', size: 0, owner: 'radio' };
       if (free <= BY_MINUTE) {
         fullInodes = t;
         writeLog(s, 'radio-stream.service', 'stream', 1730, `record: cannot create ${path(j.t, '/srv/radio/shows')}/nuit.ogg: No space left on device`, 3, false);
       }
     }
-    // Zoé arrête l'import et efface les vignettes en trop, 10 minutes après l'alerte.
+    // Zoé stops the import and deletes the extra thumbnails, 10 minutes after the alert.
     if (alertInodes !== null && stoppedInodes === null && t >= alertInodes + 10 * MINUTE) {
       stoppedInodes = t;
       const v = place();
       if (v) v.children = {};
     }
   });
-  // Au matin, Zoé remet tout d'aplomb (et note ce qui s'est passé).
+  // In the morning, Zoé sets everything right (and notes what happened).
   if (relay(j).state !== 'active') start(j, s, 'radio-stream');
   const v = place();
   if (v) v.children = {};
@@ -170,7 +170,7 @@ function night(j: Game): string {
   const inodesOk = alertInodes !== null && (fullInodes === null || alertInodes < fullInodes);
   if (okRelay && inodesOk && !no) j.state.drillSucceeded = true;
   else if (alertRelay !== null && !okRelay) r.push(j.t('probe-night-relay-slow'));
-  // Le matin : 7 h.
+  // Morning: 7 a.m.
   s.clock = end + 60 * MINUTE;
   return r.join('\n\n');
 }
@@ -241,7 +241,7 @@ export const probe: Chapter = {
         },
         logrotate: { description: 'Rotate log files', active: false, state: 'inactive', executable: 'logrotate', oneshot: true },
       });
-      // Les timers livrés avec Debian.
+      // The timers shipped with Debian.
       s.timers = {
         logrotate: {
           description: 'Daily rotation of log files',
@@ -262,7 +262,7 @@ export const probe: Chapter = {
       { pid: 611, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
       { pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
-    // Le relais sert le direct sur le port 8000.
+    // The relay serves the live stream on port 8000.
     apps: { '127.0.0.1:8000': { service: 'radio-stream', pages: { '/live': 'OggS', '/': 'Radio Quartier relay' } } },
     listening: [{ proto: 'tcp', address: '0.0.0.0', port: 8000, process: 'stream', pid: 1730 }],
     mounts: [

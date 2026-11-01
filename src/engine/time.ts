@@ -1,37 +1,37 @@
-// L'heure d'une machine : son fuseau horaire, l'écart de son horloge avec
-// la vraie heure, et la synchronisation NTP (systemd-timesyncd). La vraie
-// heure est celle de systemd (sd.horloge, heure de Paris lue comme UTC) ;
-// la machine affiche la sienne : vraie heure UTC + décalage, dans son
-// fuseau. D'après timedatectl(1) et timesyncd.conf(5) :
+// A machine's time: its time zone, the gap between its clock and the real
+// time, and NTP synchronisation (systemd-timesyncd). The real time is
+// systemd's (sd.clock, Paris time read as UTC); the machine shows its own:
+// real UTC time + offset, in its time zone. Based on timedatectl(1) and
+// timesyncd.conf(5):
 // https://www.freedesktop.org/software/systemd/man/latest/timedatectl.html,
 // https://www.freedesktop.org/software/systemd/man/latest/timesyncd.conf.html
 //
-//   etat.heure = { fuseau, decalage, synchronise, serveur?, serveurs, fuseauChange? }
-// Écarts : la synchronisation est immédiate (pas d'ajustement progressif) ;
-// les fuseaux viennent de Intl (ICU), sans /usr/share/zoneinfo.
+//   state.clockTime = { zone, offset, synchronised, server?, servers, changeZone? }
+// Differences: synchronisation is immediate (no gradual adjustment);
+// time zones come from Intl (ICU), without /usr/share/zoneinfo.
 
 import type { Game } from './shell';
 import { writeLog, systemd, toUtc } from './systemd';
 
 export interface Time {
   zone: string;
-  // Horloge de la machine moins la vraie heure (ms) : négatif, elle retarde.
+  // The machine's clock minus the real time (ms): negative, it is behind.
   offset: number;
   synchronised: boolean;
-  // Le serveur NTP qui a répondu (nom), une fois synchronisée.
+  // The NTP server that answered (name), once synchronised.
   server?: string;
-  // Les serveurs NTP que la machine peut joindre (nom → adresse), et ceux qui ne répondent pas.
+  // The NTP servers the machine can reach (name → address), and those that do not answer.
   servers: Record<string, string>;
   muted: Record<string, string>;
-  // La vraie heure du dernier changement de fuseau.
+  // The real time of the last time zone change.
   changeZone?: number;
-  // L'horloge a été réglée à la main (date -s, timedatectl set-time).
+  // The clock was set by hand (date -s, timedatectl set-time).
   manual?: boolean;
 }
 
 export const timeOfDay = (j: Game): Time | undefined => j.state.clockTime;
 
-/** Le fuseau existe-t-il (comme les fichiers de /usr/share/zoneinfo) ? */
+/** Does the time zone exist (like the files of /usr/share/zoneinfo)? */
 export function validZone(name: string): boolean {
   if (name === 'UTC' || name === 'Etc/UTC') return true;
   try {
@@ -52,7 +52,7 @@ export function zonesList(): string[] {
   return [...new Set([...listing, 'Etc/UTC', 'UTC'])].sort();
 }
 
-/** L'écart d'un fuseau avec UTC à cet instant (ms). */
+/** A time zone's offset from UTC at this instant (ms). */
 function zoneDifference(zone: string, utc: number): number {
   if (zone === 'UTC' || zone === 'Etc/UTC') return 0;
   const p = Object.fromEntries(
@@ -72,7 +72,7 @@ function zoneDifference(zone: string, utc: number): number {
   return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - Math.floor(utc / 1000) * 1000;
 }
 
-/** L'abréviation du fuseau (CEST, UTC…) et son écart (+0200). */
+/** The time zone's abbreviation (CEST, UTC…) and its offset (+0200). */
 function zoneName(zone: string, utc: number): { abbrev: string; z: string } {
   const e = zoneDifference(zone, utc) / 60_000;
   const z = `${e < 0 ? '-' : '+'}${String(Math.floor(Math.abs(e) / 60)).padStart(2, '0')}${String(Math.abs(e) % 60).padStart(2, '0')}`;
@@ -85,8 +85,8 @@ function zoneName(zone: string, utc: number): { abbrev: string; z: string } {
 }
 
 /**
- * L'heure telle que la machine la voit : `utc` (son horloge, en UTC), `mur`
- * (l'heure affichée dans son fuseau, lue comme UTC), son abréviation.
+ * The time as the machine sees it: `utc` (its clock, in UTC), `wall`
+ * (the time displayed in its time zone, read as UTC), its abbreviation.
  */
 export function machineTime(j: Game): { utc: number; wall: number; abbrev: string; z: string } {
   const sd = systemd(j)!;
@@ -97,7 +97,7 @@ export function machineTime(j: Game): { utc: number; wall: number; abbrev: strin
   return { utc, wall: utc + zoneDifference(h.zone, utc), ...zoneName(h.zone, utc) };
 }
 
-/** Le journal et systemctl affichent l'heure de la machine : on recalcule leur écart. */
+/** The journal and systemctl show the machine's time: their offset is recomputed. */
 export function displayUpdate(j: Game) {
   const sd = systemd(j);
   if (!sd || !timeOfDay(j)) return;
@@ -106,7 +106,7 @@ export function displayUpdate(j: Game) {
   sd.zone = m.abbrev;
 }
 
-/** Régler l'horloge (date -s, timedatectl set-time) : `mur` est l'heure voulue dans le fuseau de la machine. */
+/** Setting the clock (date -s, timedatectl set-time): `wall` is the wanted time in the machine's time zone. */
 export function setClock(j: Game, wall: number) {
   const h = timeOfDay(j)!;
   const sd = systemd(j)!;
@@ -124,7 +124,7 @@ export function changeZone(j: Game, zone: string) {
   displayUpdate(j);
 }
 
-/** Les serveurs NTP de /etc/systemd/timesyncd.conf (NTP=, sinon FallbackNTP=), comme timesyncd. */
+/** The NTP servers of /etc/systemd/timesyncd.conf (NTP=, else FallbackNTP=), like timesyncd. */
 export function configuresServers(j: Game): string[] {
   let section = '';
   const values: Record<string, string[]> = {};
@@ -139,7 +139,7 @@ export function configuresServers(j: Game): string[] {
     : (values.FallbackNTP ?? ['0.debian.pool.ntp.org', '1.debian.pool.ntp.org', '2.debian.pool.ntp.org', '3.debian.pool.ntp.org']);
 }
 
-/** systemd-timesyncd démarre : il essaie ses serveurs dans l'ordre ; le premier qui répond règle l'horloge. */
+/** systemd-timesyncd starts: it tries its servers in order; the first that answers sets the clock. */
 export function synchronise(j: Game) {
   const h = timeOfDay(j)!;
   const sd = systemd(j)!;
@@ -164,7 +164,7 @@ export function synchronise(j: Game) {
   h.server = undefined;
 }
 
-/** timesyncd arrêté : l'horloge n'est plus suivie. */
+/** timesyncd stopped: the clock is no longer followed. */
 export function desync(j: Game) {
   const h = timeOfDay(j);
   if (!h) return;

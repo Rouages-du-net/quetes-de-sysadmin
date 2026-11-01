@@ -1,6 +1,6 @@
-// wg et wg-quick (wireguard-tools), sur le routeur simulé (../wireguard.ts).
-// Sorties en anglais, comme les vrais outils.
-// Sources : https://man7.org/linux/man-pages/man8/wg.8.html,
+// wg and wg-quick (wireguard-tools), on the simulated router (../wireguard.ts).
+// Outputs in English, like the real tools.
+// Sources: https://man7.org/linux/man-pages/man8/wg.8.html,
 // https://man7.org/linux/man-pages/man8/wg-quick.8.html
 
 import type { Shell } from '../shell';
@@ -12,17 +12,17 @@ import type { Command } from './index';
 
 const NOT_ROOT = 'Unable to access interface: Operation not permitted';
 
-// Le nom public d'un routeur (en anglais dans toutes les langues, comme les sites publics).
+// A router's public name (in English in every language, like public sites).
 const PUBLIC_NAMES: Record<string, string> = { ruche: 'hive.example' };
 
-/** L'adresse publique du routeur (eth0) et ses noms, pour l'Endpoint des pairs. */
+/** The router's public address (eth0) and its names, for the peers' Endpoint. */
 export const publicFields = (game: Shell) => ({
   publicAddress: lan(game)?.interfaces.eth0?.addresses[0]?.split('/')[0] ?? '',
   names: [game.host, game.hostName, PUBLIC_NAMES[game.host] ?? `${game.host}.example`],
 });
 
-// La poignée de main a-t-elle eu lieu (le routeur et le pair se sont reconnus) ?
-const serre = (e: string) => ['autorisees', 'route', 'transfert', 'ok'].includes(e);
+// Has the handshake happened (the router and the peer recognised each other)?
+const serre = (e: string) => ['autorisees', 'route', 'forwarding', 'ok'].includes(e);
 
 function show(game: Shell, name: string, i: InterfaceWg): string[] {
   const lines = [`interface: ${name}`];
@@ -49,7 +49,7 @@ function show(game: Shell, name: string, i: InterfaceWg): string[] {
 function wgCommand(game: Shell, args: string[], input: string | null): string {
   const [action = 'show', ...rest] = args;
   if (action === 'genkey' || action === 'genpsk') {
-    // Comme wg : un avertissement si la clé part dans un fichier que tout le monde peut lire.
+    // Like wg: a warning if the key goes into a file everyone can read.
     if (game.outputTo) {
       const n = game.find(game.outputTo);
       const mode = n?.mode ?? (n ? 'rw-r--r--' : modeWithMask(false, game.mask));
@@ -126,7 +126,7 @@ function wgQuick(game: Shell, args: string[]): string {
   return lines.join('\n');
 }
 
-// Le fichier est-il accessible aux autres (comme le teste wg-quick : stat -c '0%#a', & 0007) ?
+// Is the file accessible to others (as wg-quick tests it: stat -c '0%#a', & 0007)?
 const worldMode = (game: Shell, path: string) => {
   const n = game.find(path);
   if (!n) return false;
@@ -134,7 +134,7 @@ const worldMode = (game: Shell, path: string) => {
   return /[rwx]/.test(mode.slice(6, 9));
 };
 
-/** Le service wg-quick@NOM : monte l'interface d'après son fichier, au démarrage s'il est activé. */
+/** The wg-quick@NAME service: brings the interface up from its file, at boot if it is enabled. */
 export function serviceWg(name: string) {
   return {
     description: `WireGuard via wg-quick(8) for ${name}`,
@@ -177,18 +177,18 @@ export const WIREGUARD: Record<string, Command> = {
   'wg-quick': { section: 8, ownOptions: true, launch: ({ args, game }) => wgQuick(game, args) },
 };
 
-/** ping vers une adresse derrière un tunnel : « sans-pair » (aucun pair n'a cette adresse), « perdu » ou « ok ». */
-export function pingTunnel(game: Shell, ip: string): 'sans-pair' | 'perdu' | 'ok' {
+/** ping to an address behind a tunnel: "no-peer" (no peer has this address), "lost" or "ok". */
+export function pingTunnel(game: Shell, ip: string): 'no-peer' | 'lost' | 'ok' {
   for (const [name, i] of Object.entries(wg(game))) {
     const p = i.conf.peers.find((x) => x.allowed.some((a) => inside(ip, a)));
     if (!p) continue;
     const d = lan(game)?.remotes?.find((x) => x.key === p.key);
     const e = d && tunnelState(game, d, publicFields(game));
-    if (!d || !e || e.name !== name || !serre(e.state)) return 'perdu';
+    if (!d || !e || e.name !== name || !serre(e.state)) return 'lost';
     const client = remoteConf(game, d);
     if (client.addresses[0]?.split('/')[0] === ip) return 'ok';
-    // Un appareil du site derrière ce pair : seulement si le passage reste ouvert dans sa box.
-    return d.network && inside(ip, d.network) && (!d.behindNat || client.peers[0]?.keepalive) ? 'ok' : 'perdu';
+    // A device of the site behind this peer: only if the way stays open in its router.
+    return d.network && inside(ip, d.network) && (!d.behindNat || client.peers[0]?.keepalive) ? 'ok' : 'lost';
   }
-  return 'sans-pair';
+  return 'no-peer';
 }

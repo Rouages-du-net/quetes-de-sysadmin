@@ -1,14 +1,13 @@
-// Histoire « Le courrier indésirable » — chapitre « Le facteur » : SPF. Les
-// Jardins partagés ont quitté leur hébergeur pour leur propre serveur ; depuis,
-// les courriels de bienvenue du site restent dans la file d'attente de Postfix :
-// mailbox.example les refuse (pour l'instant) parce que ni SPF ni DKIM ne
-// passent. Le SPF publié est encore celui de l'ancien hébergeur.
-// Commandes : mailq, grep sur /var/log/mail.log, dig TXT, la zone BIND
-// (le serial !), rndc reload, dig @ns2.registry.example, postqueue -f.
-// Objectif vérifié sur l'état : ce que publie internet (le secondaire)
-// autorise 203.0.113.30 à envoyer pour gardens.example, et les cinq
-// courriels sont partis (la file est vide).
-// Sources : RFC 7208 (https://www.rfc-editor.org/rfc/rfc7208),
+// Story "Junk Mail" — chapter "The Postman": SPF. The Shared Gardens left
+// their host for their own server; since then, the site's welcome emails
+// stay in Postfix's queue: mailbox.example rejects them (for now) because
+// neither SPF nor DKIM passes. The published SPF is still the former host's.
+// Commands: mailq, grep on /var/log/mail.log, dig TXT, the BIND zone
+// (the serial!), rndc reload, dig @ns2.registry.example, postqueue -f.
+// Objective checked on the state: what the internet publishes (the
+// secondary) authorizes 203.0.113.30 to send for gardens.example, and the
+// five emails have left (the queue is empty).
+// Sources: RFC 7208 (https://www.rfc-editor.org/rfc/rfc7208),
 // https://www.postfix.org/postqueue.1.html, https://bind9.readthedocs.io/
 
 import { f, type Chapter } from '../world';
@@ -24,7 +23,7 @@ const MEMBERS = ['amina', 'jules', 'leo', 'sami', 'ines'];
 const IDS = ['3F2A9C1B7D', '41C07E2A93', '4A9D1F0C52', '52E8B3D716', '5C0F2A94E1'];
 const REASON = `host ${MAILBOX.mx}[${MAILBOX.ip}] said: 451 4.7.26 Unauthenticated mail from ${DOMAIN}: neither SPF nor DKIM passed for ${IP} (SPF: fail). Try again later. See https://support.mailbox.example/senders (in reply to end of DATA command)`;
 
-// Les cinq courriels de bienvenue du site, en attente depuis hier.
+// The site's five welcome emails, waiting since yesterday.
 const file = (t: Translate): Message[] =>
   MEMBERS.map((who, i) => ({
     id: IDS[i],
@@ -38,7 +37,7 @@ const file = (t: Translate): Message[] =>
     reason: REASON,
   }));
 
-// mail.log depuis hier : chaque courriel reçu, refusé, puis réessayé.
+// mail.log since yesterday: each email received, rejected, then retried.
 const LOG = (() => {
   const lines: [number, string][] = [];
   MEMBERS.forEach((who, i) => {

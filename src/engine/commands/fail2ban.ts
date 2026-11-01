@@ -1,14 +1,14 @@
-// fail2ban-client (https://manpages.debian.org/bookworm/fail2ban/fail2ban-client.1.en.html) :
-// status [prison], set <prison> banip|unbanip <ip>, unban <ip>, get <prison>
-// bantime|findtime|maxretry|ignoreip|logpath, reload, ping, -t (tester la
-// configuration). Plusieurs prisons (sshd, nginx-limit-req, recidive…).
-// Réservé à root (socket du serveur). Sortie en anglais, comme le vrai outil.
+// fail2ban-client (https://manpages.debian.org/bookworm/fail2ban/fail2ban-client.1.en.html):
+// status [jail], set <jail> banip|unbanip <ip>, unban <ip>, get <jail>
+// bantime|findtime|maxretry|ignoreip|logpath, reload, ping, -t (test the
+// configuration). Several jails (sshd, nginx-limit-req, recidive…).
+// Reserved for root (the server's socket). Output in English, like the real tool.
 
 import { actives, bannedFor, failuresFor, readConfig, note, type Fail2banState } from '../fail2ban';
 import { systemd } from '../systemd';
 import type { Command } from './index';
 
-// Les arbres de fail2ban-client status : « |- » pour un élément, « `- » pour le dernier.
+// The trees of fail2ban-client status: "|- " for an item, "`- " for the last one.
 const tree = (lines: [string, string][], indent = '') =>
   lines.map(([key, value], i) => `${indent}${i === lines.length - 1 ? '`-' : '|-'} ${key}:\t${value}`).join('\n');
 
@@ -28,7 +28,7 @@ export const FAIL2BAN: Record<string, Command> = {
       if (service && service.state !== 'active') return game.error('ERROR  Failed to access socket path: /var/run/fail2ban/fail2ban.sock. Is fail2ban running?');
       if (action === 'ping') return 'Server replied: pong';
       if (action === 'reload') {
-        // Comme systemctl reload fail2ban : vérifier, puis charger.
+        // Like systemctl reload fail2ban: check, then load.
         const { errors } = readConfig(game);
         if (errors.length) return game.error(errors.join('\n'));
         service?.load?.(game);
@@ -37,7 +37,7 @@ export const FAIL2BAN: Record<string, Command> = {
       const jails = actives(f2b);
       const names = jails.map((p) => p.name).sort();
       if (action === 'status' && !jail) return ['Status', tree([['Number of jail', String(names.length)], ['Jail list', names.join(', ')]])].join('\n');
-      // unban : lever le bannissement d'une adresse dans toutes les prisons.
+      // unban: lift an address's ban in every jail.
       if (action === 'unban' && jail) {
         if (args.slice(1).some((ip) => !/^\d+\.\d+\.\d+\.\d+$/.test(ip))) return game.error('ERROR  NOK: (\'Invalid IP address\',)');
         const ips = args.slice(1);
@@ -104,6 +104,6 @@ export const FAIL2BAN: Record<string, Command> = {
       return game.error('Sorry but the command is invalid');
     },
   },
-  // Une page de manuel de la section 5 (fichier de configuration).
+  // A section 5 manual page (configuration file).
   'jail.conf': { section: 5, launch: () => '' },
 };

@@ -1,9 +1,9 @@
-// La carte de la machine où l'on est : les lieux (dossiers) qu'on connaît,
-// en arbre depuis la racine, avec l'endroit où l'on se trouve. Pour ne rien
-// dévoiler, elle montre seulement les lieux où l'on est entré (cd), le
-// chemin qui y mène, et les lieux qu'on aperçoit depuis eux (leurs
-// sous-dossiers visibles) ; un lieu caché (.nom) n'y paraît qu'une fois
-// visité. Ni les fichiers, ni ce qu'il y a dans les lieux seulement aperçus.
+// The map of the machine you're on: the places (directories) you know,
+// as a tree from the root, with where you are. To give nothing
+// away, it only shows the places you've entered (cd), the
+// path leading to them, and the places you can glimpse from them (their
+// visible subdirectories); a hidden place (.name) only appears once
+// visited. Neither files, nor what is inside the places only glimpsed.
 
 import type { Directory } from './world';
 import type { Shell } from './shell';
@@ -11,7 +11,7 @@ import type { Shell } from './shell';
 export interface Place {
   name: string;
   path: string;
-  // On y est entré ; on y est ; c'est la maison (~) ; on ne peut pas encore y entrer.
+  // You've entered it; you're in it; it's home (~); you can't enter it yet.
   visit: boolean;
   here: boolean;
   home: boolean;
@@ -24,15 +24,15 @@ const parents = (path: string) => {
   return chunks.map((_, i) => '/' + chunks.slice(0, i + 1).join('/'));
 };
 
-/** La carte de la session : l'arbre des lieux connus, depuis la racine (/). */
+/** The session's map: the tree of known places, from the root (/). */
 export function map(sh: Shell): Place {
-  // Les lieux visités, et tout le chemin qui y mène (on y est passé).
+  // The places visited, and the whole path leading to them (you went through it).
   const walked = new Set<string>(['/']);
   for (const v of [...sh.visits, sh.cwd]) for (const p of parents(v)) walked.add(p);
   const place = (name: string, path: string, d: Directory, showChildren: boolean): Place => {
     const children = showChildren
       ? Object.entries(d.children)
-          .filter(([n, e]) => e.type === 'dossier' && (!n.startsWith('.') || walked.has(`${path === '/' ? '' : path}/${n}`)))
+          .filter(([n, e]) => e.type === 'directory' && (!n.startsWith('.') || walked.has(`${path === '/' ? '' : path}/${n}`)))
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([n, e]) => {
             const c = `${path === '/' ? '' : path}/${n}`;
@@ -49,6 +49,6 @@ export function map(sh: Shell): Place {
       children,
     };
   };
-  // Un lieu visité montre ses sous-dossiers ; un lieu de passage aussi (on les a vus en chemin).
+  // A visited place shows its subdirectories; so does a place passed through (you saw them on the way).
   return place('/', '/', sh.root, true);
 }

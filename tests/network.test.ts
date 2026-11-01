@@ -1,6 +1,6 @@
-// Le réseau simulé : du poste, on se connecte en ssh aux machines des
-// histoires ; finir l'Effaceur donne les autres clés. Messages d'OpenSSH
-// fidèles (en anglais, comme le vrai ssh). Rejoué dans chaque langue.
+// The simulated network: from the workstation, ssh to the stories'
+// machines; finishing the Eraser gives the other keys. Faithful OpenSSH
+// messages (in English, like the real ssh). Replayed in each language.
 
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
@@ -9,16 +9,16 @@ import { hostKey, fingerprint, storyMachine } from '../src/engine/machines';
 import { LANGUAGES, translator } from '../src/texts';
 import { inLanguage } from './names';
 
-// Les trois chapitres qui donnent les clés (le quatrième, ajouté ensuite, ne compte pas).
+// The three chapters that give the keys (the fourth, added later, doesn't count).
 const ERASER = ['lighthouse', 'village', 'root'];
 
 for (const language of LANGUAGES)
-  describe(`Langue : ${language}`, () => {
-    // Les lignes s'écrivent avec les noms français (voir noms.ts).
+  describe(`Language: ${language}`, () => {
+    // The lines are written with the French names (see names.ts).
     const L = (line: string) => inLanguage(translator(language), line);
     const play = (c: Console, lines: string[]) => lines.map((l) => c.execute(L(l)) ?? '').join('\n');
 
-    it('première connexion : empreinte, yes, bannière, chapitre, exit', () => {
+    it('first connection: fingerprint, yes, banner, chapter, exit', () => {
       const c = new Console({ language });
       expect(c.prompt()).toBe(L('you@desk:~$'));
       const question = play(c, ['ssh kingdom']);
@@ -34,20 +34,20 @@ for (const language of LANGUAGES)
       expect(c.remote?.shell.chapter.id).toBe('lighthouse');
       expect(play(c, ['exit'])).toBe(L('logout\nConnection to kingdom.internal closed.'));
       expect(c.prompt()).toBe(L('you@desk:~$'));
-      // Deuxième fois : la machine est connue, pas de question ; le chapitre reprend, avec où relire ses consignes.
+      // Second time: the machine is known, no question; the chapter resumes, with where to reread its instructions.
       const reprise = play(c, ['ssh kingdom']);
       expect(reprise).not.toContain('authenticity');
       expect(reprise).toContain(L('cat welcome.txt'));
       expect(c.prompt()).toBe(L('you@kingdom:~$'));
     });
 
-    it('no : la vérification de la clé d’hôte échoue', () => {
+    it('no: host key verification fails', () => {
       const c = new Console({ language });
       expect(play(c, ['ssh kingdom', 'no'])).toContain('Host key verification failed.');
       expect(c.prompt()).toBe(L('you@desk:~$'));
     });
 
-    it('fausses pistes : nom inconnu, mauvais port, mauvais utilisateur, poste lui-même', () => {
+    it('false leads: unknown name, wrong port, wrong user, the workstation itself', () => {
       const c = new Console({ language });
       expect(play(c, ['ssh nulle-part'])).toBe('ssh: Could not resolve hostname nulle-part: Name or service not known');
       expect(play(c, ['ssh -p 2222 kingdom'])).toBe(L('ssh: connect to host kingdom.internal port 2222: Connection refused'));
@@ -56,7 +56,7 @@ for (const language of LANGUAGES)
       expect(play(c, ['ssh root@kingdom', 'yes'])).toContain(L('root@kingdom.internal: Permission denied (publickey).'));
     });
 
-    it('sans la clé : Permission denied, puis la clé gagnée en finissant l’Effaceur', () => {
+    it('without the key: Permission denied, then the key earned by finishing the Eraser', () => {
       const c = new Console({ language });
       expect(c.isOpen('datacenter')).toBe(false);
       expect(play(c, ['ssh datacenter', 'yes'])).toContain(L('you@datacenter.internal: Permission denied (publickey).'));
@@ -72,7 +72,7 @@ for (const language of LANGUAGES)
       expect(end.remote?.story.id).toBe(L('datacenter'));
     });
 
-    it('une clé privée trop ouverte est ignorée, comme avec le vrai ssh', () => {
+    it('a private key that is too open is ignored, as with the real ssh', () => {
       const c = new Console({ language });
       const output = play(c, ['chmod 644 ~/.ssh/id_kingdom', 'ssh kingdom', 'yes']);
       expect(output).toContain('WARNING: UNPROTECTED PRIVATE KEY FILE!');
@@ -82,30 +82,30 @@ for (const language of LANGUAGES)
       expect(c.prompt()).toBe(L('you@kingdom:~$'));
     });
 
-    it('-i : une clé copiée ailleurs marche aussi', () => {
+    it('-i: a key copied elsewhere works too', () => {
       const c = new Console({ language, knownHosts: '' });
       play(c, ['ssh -i ~/.ssh/id_kingdom you@192.0.2.10', 'yes']);
       expect(c.prompt()).toBe(L('you@kingdom:~$'));
     });
 
-    it('hôtes connus gardés d’une partie à l’autre', () => {
+    it('known hosts kept from one game to the next', () => {
       const c = new Console({ language });
       play(c, ['ssh kingdom', 'yes', 'exit']);
       const next = new Console({ language, knownHosts: c.knownHosts() });
       expect(play(next, ['ssh kingdom'])).not.toContain('authenticity');
     });
 
-    it('la machine garde son état d’une connexion à l’autre', () => {
+    it('the machine keeps its state from one connection to the next', () => {
       const c = new Console({ language });
       play(c, ['ssh kingdom', 'yes', 'cd Hill/SignalSchool/PracticeRoom', 'mv crab Bucket', 'exit']);
       const back = play(c, ['ssh kingdom']);
       expect(back).toContain('— ');
-      // Comme une nouvelle connexion : on repart de sa maison, le monde n'a pas bougé.
+      // Like a new connection: start again from your home, the world hasn't changed.
       expect(c.prompt()).toBe(L('you@kingdom:~$'));
       expect(play(c, ['ls Hill/SignalSchool/PracticeRoom/Bucket'])).toBe(L('crab'));
     });
 
-    it('reboot coupe la session ssh ; la machine a redémarré quand on revient', () => {
+    it('reboot cuts the ssh session; the machine has restarted when you come back', () => {
       const finished = STORIES.find((h) => h.id === 'datacenter')!
         .chapters.slice(0, 2)
         .map((c) => c.id);
@@ -119,20 +119,20 @@ for (const language of LANGUAGES)
       expect(play(c, ['journalctl -b -u catalogue -n 1'])).toContain('Failed to start catalogue.service');
     });
 
-    it('la machine réinstallée après l’incendie : nouvelle clé d’hôte, ssh refuse, ssh-keygen -R', () => {
+    it('the machine reinstalled after the fire: new host key, ssh refuses, ssh-keygen -R', () => {
       const finished = STORIES.find((h) => h.id === 'datacenter')!
         .chapters.slice(0, 3)
         .map((c) => c.id);
       const c = new Console({ language, finished: [...ERASER, ...finished] });
-      // La clé de l'ancien serveur, connue depuis les chapitres précédents.
+      // The old server's key, known from the previous chapters.
       const old = `datacenter.internal ${hostKey(storyMachine('datacenter')!)}`;
-      c.workstation.place('test', '~/.ssh/known_hosts', { type: 'fichier', content: old, lines: true });
+      c.workstation.place('test', '~/.ssh/known_hosts', { type: 'file', content: old, lines: true });
       const refusal = play(c, ['ssh datacenter']);
       expect(refusal).toContain('WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!');
       expect(refusal).toContain(L("ssh-keygen -f '/home/you/.ssh/known_hosts' -R 'datacenter.internal'"));
       expect(refusal).toContain('Host key verification failed.');
       expect(c.prompt()).toBe(L('you@desk:~$'));
-      // Le nom court n'est pas celui écrit dans known_hosts.
+      // The short name is not the one written in known_hosts.
       expect(play(c, ['ssh-keygen -R datacenter'])).toContain(L('Host datacenter not found'));
       expect(play(c, ['ssh-keygen -F datacenter.internal'])).toContain(L('# Host datacenter.internal found: line 1'));
       const retire = play(c, ['ssh-keygen -R datacenter.internal']);
@@ -142,7 +142,7 @@ for (const language of LANGUAGES)
       expect(question).toContain(`ED25519 key fingerprint is ${fingerprint(storyMachine('datacenter')!, '-apres-incendie')}.`);
       play(c, ['yes']);
       expect(c.remote?.shell.chapter.id).toBe('fire');
-      // Se reconnecter ne pose plus de question : la nouvelle clé est connue.
+      // Reconnecting asks no more questions: the new key is known.
       play(c, ['exit']);
       expect(play(c, ['ssh datacenter'])).not.toContain('WARNING');
       expect(c.prompt()).toBe(L('you@datacenter:~$'));
@@ -151,15 +151,15 @@ for (const language of LANGUAGES)
       );
     });
 
-    it('Tab complète les machines de ~/.ssh/config', () => {
+    it('Tab completes the machines of ~/.ssh/config', () => {
       const c = new Console({ language });
-      // Les trois premières lettres du nom dans la langue (roy, kin) : Tab complète le reste.
+      // The first three letters of the name in the language (roy, kin): Tab completes the rest.
       const start = (id: string) => L(`ssh ${id}`).slice(0, 7);
       expect(c.complete(start('kingdom'))).toBe(L('ssh kingdom '));
       expect(c.complete(start('library'))).toBe(L('ssh library '));
     });
 
-    it.runIf(language === 'fr')('exit sur le poste explique où l’on est', () => {
+    it.runIf(language === 'fr')('exit on the workstation explains where you are', () => {
       expect(play(new Console({ language }), ['exit'])).toContain(L('Tu es sur ton propre poste'));
     });
   });

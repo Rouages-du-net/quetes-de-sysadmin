@@ -1,16 +1,16 @@
-// Ansible simulé : ansible.cfg, l'inventaire (format INI), les playbooks (YAML),
-// et l'exécution sur les machines internes de l'histoire (Chapitre.hotes),
-// jointes en ssh sans question (acces.ts : clé d'hôte connue, clé autorisée).
-// Modules : ping, apt, copy, file, lineinfile, user, service/systemd,
-// command, shell, debug (ansible.builtin). become, notify et handlers,
-// --check, --diff, --limit, --syntax-check ; la sortie suit celle
-// d'ansible-core (bannières PLAY/TASK, ok/changed/fatal, PLAY RECAP).
-// D'après la documentation d'Ansible : https://docs.ansible.com/ansible/latest/
+// Simulated Ansible: ansible.cfg, the inventory (INI format), playbooks (YAML),
+// and execution on the story's internal machines (Chapter.hosts),
+// reached over ssh without questions (access.ts: known host key, authorised key).
+// Modules: ping, apt, copy, file, lineinfile, user, service/systemd,
+// command, shell, debug (ansible.builtin). become, notify and handlers,
+// --check, --diff, --limit, --syntax-check; the output follows
+// ansible-core's (PLAY/TASK banners, ok/changed/fatal, PLAY RECAP).
+// Based on Ansible's documentation: https://docs.ansible.com/ansible/latest/
 // (inventory_guide/intro_inventory.html, playbook_guide/, collections/ansible/builtin/).
-// Écarts : YAML réduit (correspondances, listes, chaînes, blocs | et >,
-// listes et dictionnaires sur une ligne) ; pas de rôles, de boucles, de
-// conditions (when), de register ni de templates Jinja2 (seulement
-// {{ variable }}) ; les faits (Gathering Facts) ne sont pas collectés.
+// Differences: reduced YAML (mappings, lists, strings, | and > blocks,
+// flow lists and dictionaries); no roles, loops, conditions (when),
+// register nor Jinja2 templates (only {{ variable }}); facts (Gathering
+// Facts) are not collected.
 
 import type { Shell } from './shell';
 import { connectWithoutQuestion } from './access';
@@ -39,7 +39,7 @@ interface YamlLine {
   rawValue: string;
 }
 
-// Un # commence un commentaire en début de mot, hors guillemets.
+// A # starts a comment at the start of a word, outside quotes.
 function withoutComment(line: string): string {
   let quote: string | null = null;
   for (let i = 0; i < line.length; i++) {
@@ -79,7 +79,7 @@ function scalar(raw: string, line: number, column: number): Value {
   return v;
 }
 
-/** Lit un YAML (le sous-ensemble des playbooks) ; lève ErreurYaml avec la ligne et la colonne. */
+/** Reads YAML (the playbooks' subset); throws YamlError with the line and column. */
 export function readYaml(text: string): Value {
   const raw = text.split('\n');
   raw.forEach((b, i) => {
@@ -90,14 +90,14 @@ export function readYaml(text: string): Value {
     .map((rawValue, i) => ({ number: i + 1, rawValue, text: withoutComment(rawValue) }))
     .filter((l) => l.text.trim() !== '' && l.text.trim() !== '---' && l.text.trim() !== '...')
     .map((l) => ({ ...l, indent: l.text.length - l.text.trimStart().length, text: l.text.trim() }));
-  // Les blocs de texte (| et >) gardent leurs lignes telles quelles, commentaires compris.
+  // Text blocks (| and >) keep their lines as they are, comments included.
   let i = 0;
   const textBlock = (style: string, keyIndent: number): string => {
     const start = lines[i - 1].number;
     const content: string[] = [];
     let indentation: number | null = null;
     const all = raw;
-    let k = start; // index dans brutes (0-based) de la ligne suivante
+    let k = start; // index in the raw lines (0-based) of the next line
     while (k < all.length) {
       const b = all[k];
       const r = b.length - b.trimStart().length;
@@ -113,7 +113,7 @@ export function readYaml(text: string): Value {
       k++;
     }
     while (content.length && content.at(-1) === '') content.pop();
-    // Sauter les lignes consommées.
+    // Skip the lines consumed.
     while (i < lines.length && lines[i].number <= k) i++;
     const keep = style.includes('-') ? '' : '\n';
     const blockText = style.startsWith('>') ? content.join(' ').replace(/ {2,}/g, ' ') : content.join('\n');
@@ -137,7 +137,7 @@ export function readYaml(text: string): Value {
           i++;
           listing.push(i < lines.length && lines[i].indent > indent ? block(lines[i].indent) : '');
         } else if (/^("[^"]*"|'[^']*'|[^\s"'[{][^:]*?):(\s|$)/.test(rest)) {
-          // « - clé: valeur » : une correspondance, dont les autres clés sont alignées sur la première.
+          // "- key: value": a mapping, whose other keys are aligned on the first one.
           lines[i] = { ...l, indent: column, text: rest };
           listing.push(block(column));
         } else {
@@ -173,7 +173,7 @@ export function readYaml(text: string): Value {
   return root;
 }
 
-// ——— ansible.cfg et inventaire ———
+// ——— ansible.cfg and inventory ———
 
 export interface Config {
   inventory: string;
@@ -182,7 +182,7 @@ export interface Config {
   file: string | null;
 }
 
-// INI : [section] puis « clé = valeur ».
+// INI: [section] then "key = value".
 function readIni(text: string): Record<string, Record<string, string>> {
   const sections: Record<string, Record<string, string>> = {};
   let current = '';
@@ -204,9 +204,9 @@ function readIni(text: string): Record<string, Record<string, string>> {
 const yes = (v: string | undefined) => /^(yes|true|1|on)$/i.test(v ?? '');
 const no = (v: string | undefined) => /^(no|false|0|off)$/i.test(v ?? '');
 
-/** La configuration : ./ansible.cfg, puis ~/.ansible.cfg, puis /etc/ansible/ansible.cfg (la première trouvée). */
+/** The configuration: ./ansible.cfg, then ~/.ansible.cfg, then /etc/ansible/ansible.cfg (the first one found). */
 export function readConfig(game: Shell): Config {
-  const file = [`${game.cwd}/ansible.cfg`, '~/.ansible.cfg', '/etc/ansible/ansible.cfg'].map((c) => game.resolve(c)).find((c) => game.find(c)?.type === 'fichier') ?? null;
+  const file = [`${game.cwd}/ansible.cfg`, '~/.ansible.cfg', '/etc/ansible/ansible.cfg'].map((c) => game.resolve(c)).find((c) => game.find(c)?.type === 'file') ?? null;
   const ini = file ? readIni(game.read(file) ?? '') : {};
   const d = ini.defaults ?? {};
   const directory = file ? file.slice(0, file.lastIndexOf('/')) : game.cwd;
@@ -220,20 +220,20 @@ export interface Inventory {
   order: string[];
 }
 
-/** Un inventaire INI : [groupe], « hôte clé=valeur… », [groupe:vars], [groupe:children]. */
+/** An INI inventory: [group], "host key=value…", [group:vars], [group:children]. */
 export function readInventory(text: string): Inventory {
   const inv: Inventory = { hosts: {}, groups: { all: [], ungrouped: [] }, order: [] };
   const variables: Record<string, Record<string, string>> = {};
   const children: Record<string, string[]> = {};
   let group = 'ungrouped';
-  let mode: 'hotes' | 'vars' | 'children' = 'hotes';
+  let mode: 'hosts' | 'vars' | 'children' = 'hosts';
   for (const rawValue of text.split('\n')) {
     const l = rawValue.replace(/(^|\s)[#;].*$/, '').trim();
     if (!l) continue;
     const s = /^\[([^\]:]+)(?::(vars|children))?\]$/.exec(l);
     if (s) {
       group = s[1];
-      mode = (s[2] as 'vars' | 'children') ?? 'hotes';
+      mode = (s[2] as 'vars' | 'children') ?? 'hosts';
       inv.groups[group] ??= [];
       continue;
     }
@@ -259,13 +259,13 @@ export function readInventory(text: string): Inventory {
   for (const [g, listing] of Object.entries(children)) for (const e of listing) for (const h of inv.groups[e] ?? []) if (!inv.groups[g].includes(h)) inv.groups[g].push(h);
   inv.groups.ungrouped = inv.groups.ungrouped.filter((h) => !Object.entries(inv.groups).some(([g, l]) => g !== 'ungrouped' && g !== 'all' && l.includes(h)));
   inv.groups.all = [...inv.order];
-  // Les variables de groupe, sans écraser celles de l'hôte.
+  // The group variables, without overwriting the host's.
   for (const [g, vars] of Object.entries(variables))
     for (const h of g === 'all' ? inv.order : (inv.groups[g] ?? [])) inv.hosts[h] = { ...vars, ...inv.hosts[h] };
   return inv;
 }
 
-/** Les hôtes qui correspondent à un motif : all, un groupe, un hôte, plusieurs séparés par « , » ou « : », !exclusion. */
+/** The hosts matching a pattern: all, a group, a host, several separated by "," or ":", !exclusion. */
 export function hostsFor(inv: Inventory, pattern: string): string[] {
   const result: string[] = [];
   const excluded: string[] = [];
@@ -278,7 +278,7 @@ export function hostsFor(inv: Inventory, pattern: string): string[] {
   return [...new Set(result)].filter((h) => !excluded.includes(h));
 }
 
-/** Le motif ne correspond-il à rien de connu (pour l'avertissement d'Ansible) ? */
+/** Does the pattern match nothing known (for Ansible's warning)? */
 export const unknownPattern = (inv: Inventory, pattern: string) =>
   pattern
     .split(/[,:]/)
@@ -286,7 +286,7 @@ export const unknownPattern = (inv: Inventory, pattern: string) =>
     .filter(Boolean)
     .some((p) => p !== 'all' && p !== '*' && !inv.groups[p] && !inv.hosts[p]);
 
-// ——— La connexion aux hôtes ———
+// ——— Connecting to the hosts ———
 
 export interface Context {
   game: Shell;
@@ -295,7 +295,7 @@ export interface Context {
   check: boolean;
   difference: boolean;
   outputs: string[];
-  // Hôte → session (connexion faite une fois par commande).
+  // Host → session (connection made once per command).
   sessions: Record<string, Shell | string>;
   forceUser?: string;
   become?: boolean;
@@ -313,7 +313,7 @@ function reach(c: Context, host: string): Shell | string {
   return s;
 }
 
-// ——— Le JSON des résultats, comme Ansible l'affiche ———
+// ——— The results' JSON, as Ansible displays it ———
 
 export function json(v: unknown, indent = 0): string {
   const pad = ' '.repeat(indent);
@@ -325,7 +325,7 @@ export function json(v: unknown, indent = 0): string {
   return e.length ? `{\n${e.map(([k, x]) => `${pad}    ${JSON.stringify(k)}: ${json(x, indent + 4)}`).join(',\n')}\n${pad}}` : '{}';
 }
 
-/** Le JSON sur une ligne, comme json.dumps de Python (« , » et « : » suivis d'une espace). */
+/** JSON on one line, like Python's json.dumps ("," and ":" followed by a space). */
 export function lineJson(v: unknown): string {
   if (v === null || v === undefined) return 'null';
   if (typeof v !== 'object') return JSON.stringify(v);
@@ -333,17 +333,17 @@ export function lineJson(v: unknown): string {
   return `{${Object.entries(v as Record<string, unknown>).map(([k, x]) => `${JSON.stringify(k)}: ${lineJson(x)}`).join(', ')}}`;
 }
 
-// ——— Les modules ———
+// ——— The modules ———
 
 export interface Result {
   changed: boolean;
   failed?: boolean;
   skipped?: boolean;
   msg?: string;
-  // Ce qu'Ansible affiche après « => » (pour debug, échecs, ad-hoc).
+  // What Ansible displays after "=>" (for debug, failures, ad-hoc).
   data?: Record<string, unknown>;
   diff?: string;
-  // command/shell en ad-hoc : rc et sortie.
+  // command/shell ad-hoc: rc and output.
   rc?: number;
   stdout?: string;
 }
@@ -356,7 +356,7 @@ const listing = (v: Value | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v.map((x) => String(x)) : String(v).split(',').map((x) => x.trim()).filter(Boolean);
 const boolean = (v: Value | undefined, fallback = false) => (v === undefined ? fallback : typeof v === 'string' ? yes(v) : fallback);
 
-// Un mode « 0644 », « 644 » ou « u=rw,g=r,o=r » → « rw-r--r-- ».
+// A mode "0644", "644" or "u=rw,g=r,o=r" → "rw-r--r--".
 function toMode(v: string | undefined): string | null {
   if (!v) return null;
   const o = /^0?([0-7]{3,4})$/.exec(v.replace(/^'|'$/g, ''));
@@ -375,10 +375,10 @@ function toMode(v: string | undefined): string | null {
   return null;
 }
 
-// Écrire sur l'hôte demande d'être root, sauf là où le compte peut écrire.
+// Writing on the host requires being root, except where the account can write.
 const canWrite = (h: Shell, path: string) => h.who === 'root' || h.writtenIn(path);
 
-// Le diff de --diff : les lignes gardées, retirées (-) et ajoutées (+), à leur place (plus longue sous-suite commune).
+// The --diff diff: lines kept, removed (-) and added (+), in place (longest common subsequence).
 function diff(path: string, before: string, after: string): string {
   const a = before === '' ? [] : before.replace(/\n$/, '').split('\n');
   const b = after === '' ? [] : after.replace(/\n$/, '').split('\n');
@@ -401,17 +401,17 @@ const notWritable = (directory: string): Result => ({ changed: false, failed: tr
 
 function writeFile(h: Shell, path: string, content: string, a: Args): void {
   const n = h.find(path);
-  if (n?.type === 'fichier') n.content = content;
-  else h.place('ansible', path, { type: 'fichier', content, lines: true, owner: 'root', group: 'root', mode: 'rw-r--r--' });
+  if (n?.type === 'file') n.content = content;
+  else h.place('ansible', path, { type: 'file', content, lines: true, owner: 'root', group: 'root', mode: 'rw-r--r--' });
   applyAttributes(h, path, a);
 }
 
-// owner, group, mode : renvoie vrai si quelque chose change (sans rien changer en mode vérification).
+// owner, group, mode: returns true if something changes (without changing anything in check mode).
 function changeAttributes(h: Shell, path: string, a: Args): boolean {
   const n = h.find(path);
   if (!n) return false;
   const mode = toMode(string(a.mode));
-  return (!!a.owner && n.owner !== string(a.owner)) || (!!a.group && (n.group ?? n.owner) !== string(a.group)) || (!!mode && (n.mode ?? (n.type === 'dossier' ? 'rwxr-xr-x' : 'rw-r--r--')) !== mode);
+  return (!!a.owner && n.owner !== string(a.owner)) || (!!a.group && (n.group ?? n.owner) !== string(a.group)) || (!!mode && (n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--')) !== mode);
 }
 function applyAttributes(h: Shell, path: string, a: Args) {
   const n = h.find(path);
@@ -461,7 +461,7 @@ const MODULES: Record<string, Module> = {
         if (content === undefined) return { changed: false, failed: true, msg: `Could not find or access '${src}'\nSearched in:\n\t${c.game.cwd}/files/${src}\n\t${c.game.cwd}/${src} on the Ansible Controller.\nIf you are using a module and expect the file to exist on the remote, see the remote_src option` };
       }
       const directory = directoryFor(dest);
-      if (h.find(directory)?.type !== 'dossier') return { changed: false, failed: true, msg: `Destination directory ${directory} does not exist` };
+      if (h.find(directory)?.type !== 'directory') return { changed: false, failed: true, msg: `Destination directory ${directory} does not exist` };
       const before = h.read(dest);
       const change = before !== content || changeAttributes(h, dest, a);
       if (change && !canWrite(h, dest)) return notWritable(directory);
@@ -483,11 +483,11 @@ const MODULES: Record<string, Module> = {
         return { changed: true };
       }
       if (state === 'directory') {
-        if (n && n.type !== 'dossier') return { changed: false, failed: true, msg: `${path} already exists as a file` };
+        if (n && n.type !== 'directory') return { changed: false, failed: true, msg: `${path} already exists as a file` };
         if (!n) {
           if (!canWrite(h, path)) return { changed: false, failed: true, msg: `There was an issue creating ${path} as requested: [Errno 13] Permission denied: b'${path}'` };
           if (!c.check) {
-            h.place('ansible', path, { type: 'dossier', children: {}, owner: 'root', group: 'root', mode: 'rwxr-xr-x' });
+            h.place('ansible', path, { type: 'directory', children: {}, owner: 'root', group: 'root', mode: 'rwxr-xr-x' });
             applyAttributes(h, path, a);
           }
           return { changed: true };
@@ -560,7 +560,7 @@ const MODULES: Record<string, Module> = {
           const uid = Math.max(1000, ...Object.values(h.accounts.users).map((u) => u.uid)) + 1;
           h.accounts.groups[name] ??= { gid: uid, members: [] };
           h.accounts.users[name] = { uid, group: name, home: `/home/${name}`, shell: wantedShell ?? '/bin/sh' };
-          if (boolean(a.create_home, true) && !h.find(`/home/${name}`)) h.place('ansible', `/home/${name}`, { type: 'dossier', children: {}, owner: name, group: name, mode: 'rwxr-xr-x' });
+          if (boolean(a.create_home, true) && !h.find(`/home/${name}`)) h.place('ansible', `/home/${name}`, { type: 'directory', children: {}, owner: name, group: name, mode: 'rwxr-xr-x' });
         } else if (wantedShell) h.accounts.users[name].shell = wantedShell;
         for (const g of groups) if (!inside(g)) h.accounts.groups[g].members.push(name);
       }
@@ -614,18 +614,18 @@ const MODULES: Record<string, Module> = {
 MODULES.systemd = MODULES.service;
 MODULES.systemd_service = MODULES.service;
 
-// command et shell : la commande tourne sur l'hôte ; « changed » à chaque fois (Ansible ne peut pas savoir).
+// command and shell: the command runs on the host; "changed" every time (Ansible cannot know).
 function execute(h: Shell, a: Args, c: Context, shell: boolean): Result {
   const cmd = string(a._raw_params ?? a.cmd) ?? '';
   const creates = string(a.creates);
   if (creates && h.find(creates)) return { changed: false, msg: `Did not run command since '${creates}' exists`, rc: 0, stdout: `skipped, since ${creates} exists` };
   if (c.check) return { changed: false, skipped: true, msg: 'Command would have run if not in check mode' };
-  // command ne passe pas par un shell : ni redirection, ni tube, ni variable.
+  // command does not go through a shell: no redirection, no pipe, no variable.
   const line = shell ? cmd : cmd.replace(/[|>&;]/g, (x) => `'${x}'`);
   const r = h.underCommand(line, string(a.chdir) ?? h.accounts.users[h.who]?.home ?? '/');
   const errors = h.recoverErrors().join('\n');
   const fails = r.code !== 0;
-  // En échec, ce que la commande a écrit est son erreur (stderr).
+  // On failure, what the command wrote is its error (stderr).
   const stdout = fails ? '' : r.output;
   const stderr = fails ? [errors, r.output].filter(Boolean).join('\n') : errors;
   const data = { cmd: shell ? cmd : cmd.split(/\s+/), rc: r.code, stderr, stderr_lines: stderr ? stderr.split('\n') : [], stdout, stdout_lines: stdout ? stdout.split('\n') : [] };
@@ -633,13 +633,13 @@ function execute(h: Shell, a: Args, c: Context, shell: boolean): Result {
   return { changed: true, rc: 0, stdout: r.output, data };
 }
 
-/** Le nom court d'un module (ansible.builtin.copy → copy), ou null s'il est inconnu. */
+/** A module's short name (ansible.builtin.copy → copy), or null if it is unknown. */
 export const moduleFor = (name: string): string | null => {
   const short = name.replace(/^ansible\.(builtin|legacy)\./, '');
   return MODULES[short] ? short : null;
 };
 
-// « name=htop state=present » : les arguments en ligne (k=v), ou la commande de command/shell.
+// "name=htop state=present": inline arguments (k=v), or the command of command/shell.
 export function argumentsInLine(module: string, text: string): Args {
   if (module === 'command' || module === 'shell') {
     const args: Args = {};
@@ -655,7 +655,7 @@ export function argumentsInLine(module: string, text: string): Args {
   return args;
 }
 
-// {{ variable }} : remplacé par la valeur (variables de l'hôte, puis du play).
+// {{ variable }}: replaced by the value (the host's variables, then the play's).
 function replace(v: Value, vars: Record<string, string>): Value {
   if (typeof v === 'string')
     return v.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (all, name: string) => {
@@ -666,7 +666,7 @@ function replace(v: Value, vars: Record<string, string>): Value {
   return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, replace(x, vars)]));
 }
 
-/** Lance un module sur un hôte, avec ou sans become. */
+/** Runs a module on a host, with or without become. */
 export function launchModule(c: Context, h: Shell, module: string, args: Args, become: boolean): Result {
   const m = MODULES[module];
   const unknown = Object.keys(args).filter((k) => !m.params.includes(k) && k !== '_raw_params');
@@ -687,7 +687,7 @@ export function launchModule(c: Context, h: Shell, module: string, args: Args, b
   }
 }
 
-// ——— Les playbooks ———
+// ——— The playbooks ———
 
 export interface Task {
   name: string;
@@ -715,7 +715,7 @@ export class AnsibleError extends Error {}
 const TASK_WORDS = ['name', 'become', 'become_user', 'notify', 'changed_when', 'tags', 'listen', 'check_mode', 'ignore_errors', 'vars', 'register', 'when', 'loop'];
 const PLAY_WORDS = ['name', 'hosts', 'become', 'become_user', 'gather_facts', 'vars', 'tasks', 'handlers', 'remote_user', 'pre_tasks', 'post_tasks', 'serial'];
 
-// « The offending line appears to be » : la ligne, et un ^ sous la colonne.
+// "The offending line appears to be": the line, and a ^ under the column.
 const appears = (file: string, text: string, line: number, column: number) => {
   const l = text.split('\n')[line - 1] ?? '';
   const before = text.split('\n')[line - 2];
@@ -751,7 +751,7 @@ function readTask(t: Value, file: string, text: string, line: number): Task {
   };
 }
 
-/** Lit un playbook : une liste de plays ; lève ErreurAnsible au format d'Ansible. */
+/** Reads a playbook: a list of plays; throws AnsibleError in Ansible's format. */
 export function readPlaybook(text: string, file: string): Play[] {
   let data: Value;
   try {
@@ -761,7 +761,7 @@ export function readPlaybook(text: string, file: string): Play[] {
     throw new AnsibleError(`ERROR! Syntax Error while loading YAML.\n  ${e.message}\n\n${appears(file, text, e.line, e.column)}`);
   }
   if (!Array.isArray(data)) throw new AnsibleError(`ERROR! A playbook must be a list of plays, got a ${typeof data === 'string' ? 'AnsibleUnicode' : 'AnsibleMapping'} instead\n\nThe error appears to be in '${file}': line 1, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.`);
-  // Les numéros de ligne des « - name: » (pour les messages).
+  // The line numbers of the "- name:" (for the messages).
   const tasksLines = text.split('\n').map((l, i) => (/^\s*- /.test(l) ? i + 1 : 0)).filter(Boolean);
   let k = 0;
   return data.map((p) => {
@@ -777,7 +777,7 @@ export function readPlaybook(text: string, file: string): Play[] {
   });
 }
 
-// La bannière d'Ansible : le titre, puis des * jusqu'à 80 colonnes.
+// Ansible's banner: the title, then * up to 80 columns.
 export const banner = (title: string) => `${title} ${'*'.repeat(Math.max(3, 79 - title.length))}`;
 
 export interface Summary {
@@ -796,11 +796,11 @@ export interface Execution {
   file?: string;
   check: boolean;
   hosts: Record<string, Summary>;
-  // Les chemins changés sur chaque hôte (pour les histoires).
+  // The paths changed on each host (for the stories).
   changes: Record<string, string[]>;
 }
 
-/** Joue un playbook ; renvoie la sortie, le bilan et le code de retour. */
+/** Plays a playbook; returns the output, the recap and the exit code. */
 export function play(c: Context, plays: Play[], limit: string | null, forcer = false): { execution: Execution; code: number } {
   const execution: Execution = { check: c.check, hosts: {}, changes: {} };
   const summaries = execution.hosts;
@@ -821,7 +821,7 @@ export function play(c: Context, plays: Play[], limit: string | null, forcer = f
     const live = () => hosts.filter((h) => !morts.has(h));
     const notified: Record<string, Set<string>> = {};
     const task = (t: Task, handler = false) => {
-      // --force-handlers : un handler notifié tourne même sur un hôte qui a échoué ensuite (pas sur un hôte injoignable).
+      // --force-handlers: a notified handler runs even on a host that failed afterwards (not on an unreachable host).
       const candidates = handler && forcer ? hosts.filter((h) => summaries[h].unreachable === 0) : live();
       const active = candidates.filter((h) => !handler || notified[t.name]?.has(h) || t.listening?.some((e) => notified[e]?.has(h)));
       if (!active.length) return;
@@ -904,7 +904,7 @@ export function play(c: Context, plays: Play[], limit: string | null, forcer = f
   return { execution, code };
 }
 
-/** Les commandes ad-hoc (ansible MOTIF -m MODULE -a ARGS) : une ligne par hôte. */
+/** Ad-hoc commands (ansible PATTERN -m MODULE -a ARGS): one line per host. */
 export function adhoc(c: Context, pattern: string, module: string, text: string, become: boolean): { lines: string[]; code: number; results: Record<string, 'SUCCESS' | 'CHANGED' | 'FAILED' | 'UNREACHABLE'> } {
   const lines: string[] = [];
   const results: Record<string, 'SUCCESS' | 'CHANGED' | 'FAILED' | 'UNREACHABLE'> = {};
@@ -940,7 +940,7 @@ export function adhoc(c: Context, pattern: string, module: string, text: string,
 
 // ——— ansible-doc ———
 
-// La documentation des modules (abrégée, en anglais comme ansible-doc).
+// The modules' documentation (abridged, in English like ansible-doc).
 export const DOCS: Record<string, { short: string; options: Record<string, string>; example: string }> = {
   ping: { short: 'Try to connect to host, verify a usable python and return `pong\' on success', options: { data: 'Data to return for the `ping\' return value.' }, example: '- name: Example from an Ansible Playbook\n  ansible.builtin.ping:' },
   apt: {

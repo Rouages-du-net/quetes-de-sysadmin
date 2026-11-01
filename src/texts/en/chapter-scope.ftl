@@ -118,8 +118,8 @@ scope-event-scan =
 scope-event-outside-scope =
     WARNING: you have just probed an address that is not in your letter of
     engagement ({ $addresses }{ $neighbour ->
-        [oui] , including the neighbour's server
-       *[non] {""}
+        [yes] , including the neighbour's server
+       *[no] {""}
     }). Here nothing happened;
     for real, it is a professional fault, and depending on the country an
     offence: the client's authorisation does not cover other people's
@@ -150,8 +150,8 @@ scope-event-end =
     file. And you noted, without touching it, an "interesting" machine that is
     not yours: the neighbour's server.
     { $mistake ->
-        [oui] But your scan also probed the neighbour's address: the most common mistake, because scanning "the whole network" is a reflex. Here it costs nothing; for real, it is the fault that ends a mission, sometimes a career.
-       *[non] Your scan stayed within the scope: that is what is expected of an auditor.
+        [yes] But your scan also probed the neighbour's address: the most common mistake, because scanning "the whole network" is a reflex. Here it costs nothing; for real, it is the fault that ends a mission, sometimes a career.
+       *[no] Your scan stayed within the scope: that is what is expected of an auditor.
     }
 
     GOOD PRACTICE

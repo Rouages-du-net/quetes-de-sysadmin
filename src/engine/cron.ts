@@ -1,12 +1,12 @@
-// cron : les tâches planifiées d'une machine (crontab(5) :
+// cron: a machine's scheduled jobs (crontab(5):
 // https://manpages.debian.org/bookworm/cron/crontab.5.en.html).
-//   m h dom mon dow commande, avec *, listes (1,5), plages (1-5), pas (*/15),
-//   et les raccourcis @hourly, @daily, @weekly, @monthly, @yearly, @reboot.
-//   Si jour du mois ET jour de la semaine sont restreints, l'un OU l'autre
-//   suffit (comme le vrai cron).
-// Les crontabs vivent dans etat.crontabs (par compte). Le jeu ne peut pas
-// attendre : une histoire « fait passer la nuit » et lance les tâches qui
-// tombent dans ce créneau (nuit()).
+//   m h dom mon dow command, with *, lists (1,5), ranges (1-5), steps (*/15),
+//   and the shortcuts @hourly, @daily, @weekly, @monthly, @yearly, @reboot.
+//   If both day of month AND day of week are restricted, either one is
+//   enough (like the real cron).
+// Crontabs live in state.crontabs (per account). The game cannot wait: a
+// story "lets the night pass" and runs the jobs that fall in that slot
+// (pass()).
 
 import type { Game } from './shell';
 
@@ -39,7 +39,7 @@ export interface Task {
   line: string;
   command: string;
   fields: Set<number>[];
-  // Jour du mois / jour de la semaine restreints (règle du « ou »).
+  // Day of month / day of week restricted (the "or" rule).
   starDom: boolean;
   starDow: boolean;
 }
@@ -72,12 +72,12 @@ function field(text: string, min: number, max: number): Set<number> | null {
     if (start < min || end > max || start > end || not < 1) return null;
     for (let v = start; v <= end; v += not) values.add(v);
   }
-  // 7 = dimanche, comme 0.
+  // 7 = Sunday, like 0.
   if (max === 7 && values.has(7)) values.add(0);
   return values;
 }
 
-/** Lit une crontab ; erreurs au format de crontab -e (fichier:ligne: bad champ). */
+/** Reads a crontab; errors in crontab -e's format (file:line: bad field). */
 export function parse(text: string, file: string): { tasks: Task[]; errors: string[]; toBoot: string[] } {
   const tasks: Task[] = [];
   const toBoot: string[] = [];
@@ -105,7 +105,7 @@ export function parse(text: string, file: string): { tasks: Task[]; errors: stri
   return { tasks, errors, toBoot };
 }
 
-/** La tâche tourne-t-elle à cette minute (date lue comme heure locale, en UTC) ? */
+/** Does the job run at this minute (date read as local time, in UTC)? */
 export function aRunning(t: Task, ms: number): boolean {
   const d = new Date(ms);
   const [mi, h, dom, my, dow] = t.fields;
@@ -122,13 +122,13 @@ export interface Execution {
 }
 
 /**
- * Fait passer un créneau (de `debut` à `fin`) : chaque tâche de chaque
- * crontab qui tombe dedans est lancée une fois, sous son compte, depuis sa
- * maison. Renvoie ce qui a tourné, avec ce que cron aurait envoyé par courrier.
+ * Lets a time slot pass (from `start` to `end`): each job of each crontab
+ * that falls in it is run once, under its account, from its home folder.
+ * Returns what ran, with what cron would have sent by mail.
  */
 export function pass(game: Game & { runTask(line: string): string; who: string }, start: number, end: number): Execution[] {
   const crontabs: Record<string, string> = game.state.crontabs ?? {};
-  // Les tâches du créneau, dans l'ordre de leur heure (comme le vrai cron).
+  // The slot's jobs, in order of their time (like the real cron).
   const planned: { account: string; command: string; ms: number }[] = [];
   for (const [account, text] of Object.entries(crontabs))
     for (const t of parse(text, '').tasks)

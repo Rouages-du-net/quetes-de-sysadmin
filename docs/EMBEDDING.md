@@ -53,25 +53,27 @@ mode.
 ```css
 quetes-de-sysadmin {
   --qds-accent: #0b6e4f;
-  --qds-ambre: #8a4f00;
-  --qds-fond: #ffffff;
-  --qds-carte: #f5f5f5;
-  --qds-texte: #111111;
-  --qds-discret: #555555;
-  --qds-bord: #dddddd;
-  --qds-terminal-fond: #101010;
-  --qds-terminal-texte: #e0ffe0;
-  --qds-terminal-invite: #ffcc66;
-  --qds-police: system-ui, sans-serif;
-  --qds-police-mono: ui-monospace, monospace;
+  --qds-amber: #8a4f00;
+  --qds-background: #ffffff;
+  --qds-card: #f5f5f5;
+  --qds-text: #111111;
+  --qds-muted: #555555;
+  --qds-border: #dddddd;
+  --qds-terminal-background: #101010;
+  --qds-terminal-text: #e0ffe0;
+  --qds-terminal-prompt: #ffcc66;
+  --qds-font: system-ui, sans-serif;
+  --qds-font-mono: ui-monospace, monospace;
 }
 ```
 
 `--qds-accent` colours the links, the buttons and the LEDs of finished
-chapters; `--qds-ambre`, the LED of the next chapter to play and the
+chapters; `--qds-amber`, the LED of the next chapter to play and the
 difficulty stars. Keep enough contrast (WCAG AA) between text and background.
-(`ambre` is amber, `fond` background, `carte` card, `texte` text, `discret`
-muted, `bord` border, `invite` prompt, `police` font.)
+The French names of earlier versions (`--qds-ambre`, `--qds-fond`,
+`--qds-carte`, `--qds-texte`, `--qds-discret`, `--qds-bord`,
+`--qds-terminal-fond`, `--qds-terminal-texte`, `--qds-terminal-invite`,
+`--qds-police`, `--qds-police-mono`, `--qds-taille-terminal`) still work.
 
 ## Licence and credit
 

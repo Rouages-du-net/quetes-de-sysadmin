@@ -1,10 +1,10 @@
-// Les commandes du courrier : postconf, postfix, postqueue, mailq, postsuper
-// (Postfix) et opendkim-genkey, opendkim-testkey (OpenDKIM). Messages
-// d'après postconf(1), postfix(1), postqueue(1), postsuper(1),
-// opendkim-genkey(8) et opendkim-testkey(8). Le moteur est dans courrier.ts.
-// Écarts : postconf ne connaît qu'une partie des paramètres ; postfix
-// start/stop/reload passent par systemd ; opendkim-testkey interroge le
-// serveur DNS de la machine.
+// The mail commands: postconf, postfix, postqueue, mailq, postsuper
+// (Postfix) and opendkim-genkey, opendkim-testkey (OpenDKIM). Messages
+// based on postconf(1), postfix(1), postqueue(1), postsuper(1),
+// opendkim-genkey(8) and opendkim-testkey(8). The engine is in mail.ts.
+// Differences: postconf only knows part of the parameters; postfix
+// start/stop/reload go through systemd; opendkim-testkey queries the
+// machine's DNS server.
 
 import type { Shell } from '../shell';
 import type { Command } from './index';
@@ -29,7 +29,7 @@ import {
 
 const reserve = (game: Shell, program: string) => game.error(`${program}: fatal: use of this command is reserved for the superuser`);
 
-// postconf : lire et changer main.cf.
+// postconf: read and change main.cf.
 function postconf(game: Shell, args: string[]): string {
   const options = new Set(args.filter((a) => /^-[a-zA-Z]+$/.test(a)).flatMap((a) => [...a.slice(1)]));
   const badOption = [...options].find((o) => !'ndxeh'.includes(o));
@@ -37,7 +37,7 @@ function postconf(game: Shell, args: string[]): string {
   const names = args.filter((a) => !a.startsWith('-'));
   const text = game.read(MAIN_CF) ?? '';
   const { values, unknown, order } = readMainCf(text);
-  // nom=valeur (avec ou sans -e) : on modifie main.cf.
+  // name=value (with or without -e): main.cf is modified.
   const changes = names.filter((n) => n.includes('='));
   if (changes.length) {
     if (game.who !== 'root') return game.error(`postconf: fatal: open ${MAIN_CF}.tmp: Permission denied`);
@@ -49,7 +49,7 @@ function postconf(game: Shell, args: string[]): string {
       fresh = re.test(fresh) ? fresh.replace(re, line) : `${fresh.replace(/\n*$/, '')}\n${line}\n`;
     }
     const n = game.find(MAIN_CF);
-    if (n?.type === 'fichier') n.content = fresh;
+    if (n?.type === 'file') n.content = fresh;
     return '';
   }
   const warn = () => unknown.forEach((n) => game.error(`postconf: warning: ${MAIN_CF}: unused parameter: ${n}=${values[n]}`, 0));
@@ -92,7 +92,7 @@ const POSTERS_DEFAULTS: Record<string, string> = {
   queue_run_delay: '300s',
 };
 
-// postfix start|stop|reload|status|check|flush : le script de contrôle.
+// postfix start|stop|reload|status|check|flush: the control script.
 function postfix(game: Shell, args: string[]): string {
   const action = args.find((a) => !a.startsWith('-'));
   const sd = systemd(game);
@@ -158,7 +158,7 @@ function postsuper(game: Shell, args: string[]): string {
   return game.error(lines.join('\n'), 0);
 }
 
-// opendkim-genkey : une paire de clés, NOM.private et NOM.txt (l'enregistrement à publier).
+// opendkim-genkey: a key pair, NAME.private and NAME.txt (the record to publish).
 function genkey(game: Shell, args: string[]): string {
   let bits = 2048;
   let domain = 'example.com';
@@ -182,17 +182,17 @@ function genkey(game: Shell, args: string[]): string {
   }
   if (!Number.isInteger(bits) || bits < 1024) return game.error(`opendkim-genkey: invalid key size ${bits}`);
   const place = game.resolve(directory);
-  if (game.find(place)?.type !== 'dossier') return game.error(`opendkim-genkey: ${directory}: No such file or directory`);
+  if (game.find(place)?.type !== 'directory') return game.error(`opendkim-genkey: ${directory}: No such file or directory`);
   const c = mail(game);
   const draw = (game.state.dkimKeys = (game.state.dkimKeys ?? 0) + 1);
   const isPrivate = privateKey(`${domain}:${selector}:${bits}:${draw}:${c?.ip ?? ''}`, bits);
   const output: string[] = [];
   if (verbose) output.push('opendkim-genkey: generating private key');
-  const error = game.place('opendkim-genkey', `${place}/${selector}.private`, { type: 'fichier', content: isPrivate, lines: true, owner: game.who, group: game.who, mode: 'rw-------' });
+  const error = game.place('opendkim-genkey', `${place}/${selector}.private`, { type: 'file', content: isPrivate, lines: true, owner: game.who, group: game.who, mode: 'rw-------' });
   if (error) return game.error(`opendkim-genkey: ${selector}.private: Permission denied`);
   if (verbose) output.push(`opendkim-genkey: private key written to ${selector}.private`, 'opendkim-genkey: extracting public key');
   game.place('opendkim-genkey', `${place}/${selector}.txt`, {
-    type: 'fichier',
+    type: 'file',
     content: dkimRecord(selector, domain, publicKey(isPrivate)!),
     lines: true,
     owner: game.who,
@@ -203,7 +203,7 @@ function genkey(game: Shell, args: string[]): string {
   return output.join('\n');
 }
 
-// opendkim-testkey : la clé publiée dans le DNS correspond-elle à la clé privée ?
+// opendkim-testkey: does the key published in DNS match the private key?
 function testkey(game: Shell, args: string[]): string {
   let domain = '';
   let selector = '';
@@ -228,7 +228,7 @@ function testkey(game: Shell, args: string[]): string {
   if (!domain || !selector) return game.error('opendkim-testkey: selector and domain must be specified');
   const name = `${selector}._domainkey.${domain}`;
   if (verbosity >= 2) lines.push(`opendkim-testkey: checking key '${name}'`);
-  // Le résolveur de la machine (le serveur DNS local).
+  // The machine's resolver (the local DNS server).
   const d = dns(game);
   const r = d ? query(game, 'primary', name, 'TXT', systemd(game)?.clock ?? 0) : null;
   const record = r?.responses.filter((x) => x.type === 'TXT').map((x) => txtText(x.data))[0];
@@ -237,11 +237,11 @@ function testkey(game: Shell, args: string[]): string {
   if (!p) return game.error([...lines, `opendkim-testkey: '${name}' key revoked`].join('\n'));
   if (key) {
     const n = game.find(key);
-    if (!n || n.type !== 'fichier') return game.error([...lines, `opendkim-testkey: ${key}: open(): No such file or directory`].join('\n'));
+    if (!n || n.type !== 'file') return game.error([...lines, `opendkim-testkey: ${key}: open(): No such file or directory`].join('\n'));
     if (!game.can(n, 'r')) return game.error([...lines, `opendkim-testkey: ${key}: open(): Permission denied`].join('\n'));
     if (publicKey(game.read(key) ?? '') !== p) return game.error([...lines, 'opendkim-testkey: key data does not match private key'].join('\n'));
   }
-  // Sans DNSSEC, opendkim-testkey dit toujours « key not secure » : ce n'est pas une erreur.
+  // Without DNSSEC, opendkim-testkey always says "key not secure": it is not an error.
   if (verbosity >= 1) lines.push('opendkim-testkey: key not secure', 'opendkim-testkey: key OK');
   return lines.join('\n');
 }

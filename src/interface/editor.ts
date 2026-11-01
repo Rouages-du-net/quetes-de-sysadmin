@@ -1,7 +1,7 @@
-// L'éditeur nano dans le terminal : barre de titre, zone de texte, ligne
-// d'état et raccourcis. ^O écrit, ^X quitte (en proposant d'enregistrer si le
-// texte a changé : O, N ou ^C). Les raccourcis sont aussi des boutons, pour
-// les claviers sans touche Ctrl (mobiles).
+// The nano editor in the terminal: title bar, text area, status
+// line and shortcuts. ^O writes, ^X exits (offering to save if the
+// text has changed: O, N or ^C). The shortcuts are also buttons, for
+// keyboards without a Ctrl key (mobiles).
 
 import type { Translate } from '../texts';
 
@@ -10,9 +10,9 @@ export interface EditorOptions {
   path: string;
   text: string;
   message: string;
-  /** Écrit le texte ; renvoie le message de nano, et si c'est écrit. */
+  /** Writes the text; returns nano's message, and whether it was written. */
   save: (text: string) => { message: string; written: boolean };
-  /** L'éditeur est fermé. */
+  /** The editor is closed. */
   close: () => void;
 }
 
@@ -24,33 +24,33 @@ function el<K extends keyof HTMLElementTagNameMap>(name: K, attrs: Record<string
 }
 
 const shortcut = (key: string, label: string) =>
-  el('button', { type: 'button', class: 'nano-touche' }, el('kbd', {}, key), ` ${label}`);
+  el('button', { type: 'button', class: 'nano-key' }, el('kbd', {}, key), ` ${label}`);
 
 export function editor(o: EditorOptions): HTMLElement {
   const { t } = o;
-  const modified = el('span', { class: 'nano-modifie' });
+  const modified = el('span', { class: 'nano-modified' });
   const zone = el('textarea', {
-    class: 'nano-texte',
+    class: 'nano-text',
     spellcheck: 'false',
     autocapitalize: 'off',
     autocomplete: 'off',
     'aria-label': t('nano-zone', { path: o.path }),
   }) as HTMLTextAreaElement;
   zone.value = o.text;
-  const state = el('div', { class: 'nano-etat', role: 'status', 'aria-live': 'polite' }, o.message);
+  const state = el('div', { class: 'nano-status', role: 'status', 'aria-live': 'polite' }, o.message);
 
   const write = shortcut('^O', t('nano-write'));
   const quit = shortcut('^X', t('nano-quit'));
-  const help = el('div', { class: 'nano-aide' }, write, quit);
+  const help = el('div', { class: 'nano-help' }, write, quit);
   const yes = shortcut('O', t('nano-yes'));
   const not = shortcut('N', t('nano-not'));
   const cancel = shortcut('^C', t('nano-cancel'));
-  const question = el('div', { class: 'nano-aide', hidden: '' }, yes, not, cancel);
+  const question = el('div', { class: 'nano-help', hidden: '' }, yes, not, cancel);
 
   const root = el(
     'div',
     { class: 'nano', role: 'group', 'aria-label': `nano ${o.path}` },
-    el('div', { class: 'nano-titre' }, el('span', {}, 'GNU nano 7.2'), el('span', { class: 'nano-chemin' }, o.path), modified),
+    el('div', { class: 'nano-title' }, el('span', {}, 'GNU nano 7.2'), el('span', { class: 'nano-path' }, o.path), modified),
     zone,
     state,
     help,
@@ -74,7 +74,7 @@ export function editor(o: EditorOptions): HTMLElement {
     question.hidden = !yes;
     state.textContent = yes ? t('nano-save') : '';
     (yes ? question.querySelector('button')! : zone).focus();
-    // Sur un petit écran, la question doit se voir.
+    // On a small screen, the question must be visible.
     if (yes) question.scrollIntoView?.({ block: 'nearest' });
   };
   const exit = () => (zone.value === saves ? close() : ask(true));

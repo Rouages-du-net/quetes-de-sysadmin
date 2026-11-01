@@ -1,28 +1,27 @@
-// Les indices gradués, demandés par le joueur ou la joueuse (le panneau
-// « Mission ») : d'abord le manuel à lire, puis une piste, puis presque la
-// réponse. Ils suivent la partie : l'indice est celui de la première étape
-// du chapitre pas encore franchie. Le mode examen n'en donne aucun, et le
-// débrief dit combien on en a demandé.
-// Textes : src/texts/<langue>/hints-<story>.ftl, un message par étape
-// (indice-<chapitre>-<événement>) avec ses attributs .piste et .solution.
-// Une étape sans message n'a pas d'indice (une fausse piste, un avertissement).
+// Graded hints, asked for by the player (the "Mission" panel): first the
+// manual page to read, then a lead, then almost the answer. They follow the
+// game: the hint is the one for the chapter's first step not yet passed.
+// Exam mode gives none, and the debrief says how many were asked for.
+// Texts: src/texts/<language>/hints-<story>.ftl, one message per step
+// (hint-<chapter>-<event>) with its .lead and .solution attributes.
+// A step with no message has no hint (a false lead, a warning).
 
 import type { Shell } from './shell';
 import { allSheets } from './sheets';
 
-export type HintLevel = 'manuel' | 'piste' | 'solution';
-export const HINT_LEVELS: HintLevel[] = ['manuel', 'piste', 'solution'];
+export type HintLevel = 'manual' | 'lead' | 'solution';
+export const HINT_LEVELS: HintLevel[] = ['manual', 'lead', 'solution'];
 
 export interface Hint {
-  // L'étape visée (l'identifiant de l'événement), ou null : plus rien à indiquer.
+  // The targeted step (the event's identifier), or null: nothing left to point to.
   step: string | null;
-  // Les pages du manuel utiles dans ce chapitre (les commandes qu'il fait découvrir).
+  // The manual pages useful in this chapter (the commands it introduces).
   manual: string[];
   lead: string | null;
   solution: string | null;
 }
 
-/** L'indice du moment pour cette session (son chapitre, ses étapes déjà franchies). */
+/** The current hint for this session (its chapter, its steps already passed). */
 export function hint(sh: Shell): Hint {
   const c = sh.chapter;
   const sheet = allSheets().find((f) => f.chapter === c);

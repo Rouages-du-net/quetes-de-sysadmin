@@ -1,6 +1,6 @@
-// La page « Tableau de classe » : l'enseignant·e y glisse les fichiers de
-// sauvegarde de ses élèves (ou colle leurs codes) ; tout est lu dans son
-// navigateur, rien n'est envoyé. La logique est dans src/engine/classroom.ts.
+// The "Class table" page: the teacher drops their students' save files
+// there (or pastes their codes); everything is read in their browser,
+// nothing is sent. The logic is in src/engine/classroom.ts.
 
 import { STORIES } from '../engine/chapters';
 import { progress, fileStudent, codesStudents, inCsv, gradeFor, bestTime, chaptersTotal, type Student, type ClassError } from '../engine/classroom';
@@ -19,15 +19,15 @@ export function mountClass(root: HTMLElement, language: Language) {
   const errors: ClassError[] = [];
 
   const filesField = el('input', { type: 'file', id: 'class-files', accept: '.json,application/json', multiple: '' }) as HTMLInputElement;
-  const zone = el('div', { class: 'classe-zone' }, el('p', {}, el('label', { for: filesField.id }, t('class-files')), ' ', filesField), el('p', { class: 'discret' }, t('class-slide')));
+  const zone = el('div', { class: 'class-zone' }, el('p', {}, el('label', { for: filesField.id }, t('class-files')), ' ', filesField), el('p', { class: 'muted' }, t('class-slide')));
   const codesField = el('textarea', { id: 'class-codes', rows: '4', spellcheck: 'false', placeholder: t('class-codes-example') }) as HTMLTextAreaElement;
   const addCodes = el('button', { type: 'button' }, t('class-codes-add'));
   const codes = el('p', {}, el('label', { for: codesField.id }, t('class-codes')), el('br'), codesField, el('br'), addCodes);
-  const state = el('p', { class: 'classe-etat', role: 'status' });
+  const state = el('p', { class: 'class-state', role: 'status' });
   const exported = el('button', { type: 'button' }, t('class-export'));
   const empty = el('button', { type: 'button' }, t('class-empty'));
-  const actions = el('p', { class: 'classe-actions' }, exported, ' ', empty);
-  const grid = el('div', { class: 'classe-tableau', tabindex: '0', role: 'region', 'aria-label': t('class-table') });
+  const actions = el('p', { class: 'class-actions' }, exported, ' ', empty);
+  const grid = el('div', { class: 'class-table', tabindex: '0', role: 'region', 'aria-label': t('class-table') });
   root.replaceChildren(zone, codes, state, actions, grid);
 
   const minutes = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
@@ -59,7 +59,7 @@ export function mountClass(root: HTMLElement, language: Language) {
     actions.hidden = students.length === 0;
     state.replaceChildren(
       t('class-account', { count: students.length }),
-      ...errors.map((x) => el('span', { class: 'classe-erreur' }, ' ', t('class-error', { source: x.source, reason: t(`progress-${x.error}`) }))),
+      ...errors.map((x) => el('span', { class: 'class-error' }, ' ', t('class-error', { source: x.source, reason: t(`progress-${x.error}`) }))),
     );
     if (!students.length) return grid.replaceChildren();
     grid.replaceChildren(
@@ -78,7 +78,7 @@ export function mountClass(root: HTMLElement, language: Language) {
               ...line(e).map((x, i) => {
                 const story = i - 6;
                 const finished = story >= 0 && progress(e, STORIES[story].id).done === STORIES[story].chapters.length;
-                return i === 0 ? el('th', { scope: 'row' }, String(x)) : el('td', finished ? { class: 'fini' } : {}, String(x));
+                return i === 0 ? el('th', { scope: 'row' }, String(x)) : el('td', finished ? { class: 'finished' } : {}, String(x));
               }),
             ),
           ),
@@ -91,7 +91,7 @@ export function mountClass(root: HTMLElement, language: Language) {
     for (const x of read) {
       if ('error' in x) errors.push(x);
       else {
-        // Le même élève (même nom) remplace sa ligne : la sauvegarde la plus récente l'emporte.
+        // The same student (same name) replaces their row: the most recent save wins.
         const i = students.findIndex((e) => e.name === x.name);
         if (i >= 0) students[i] = x;
         else students.push(x);
@@ -108,12 +108,12 @@ export function mountClass(root: HTMLElement, language: Language) {
   });
   zone.addEventListener('dragover', (e) => {
     e.preventDefault();
-    zone.classList.add('survol');
+    zone.classList.add('hover');
   });
-  zone.addEventListener('dragleave', () => zone.classList.remove('survol'));
+  zone.addEventListener('dragleave', () => zone.classList.remove('hover'));
   zone.addEventListener('drop', (e) => {
     e.preventDefault();
-    zone.classList.remove('survol');
+    zone.classList.remove('hover');
     if (e.dataTransfer?.files) readFiles(e.dataTransfer.files);
   });
   addCodes.addEventListener('click', () => {

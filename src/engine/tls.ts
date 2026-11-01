@@ -1,12 +1,12 @@
-// Certificats TLS simulés. Un certificat est un vrai fichier PEM
-// (-----BEGIN CERTIFICATE-----, base64) : ce que contient le base64 est
-// propre au jeu (les informations utiles, lisibles par openssl et curl), au
-// lieu d'une structure X.509. Copier, déplacer ou abîmer le fichier fait donc
-// ce qu'on attend : un certificat abîmé ne se lit plus.
-// Formats d'affichage d'après OpenSSL 3 (https://docs.openssl.org/3.5/man1/openssl-x509/).
+// Simulated TLS certificates. A certificate is a real PEM file
+// (-----BEGIN CERTIFICATE-----, base64): what the base64 holds is the
+// game's own (the useful information, readable by openssl and curl),
+// instead of an X.509 structure. Copying, moving or damaging the file
+// therefore does what you expect: a damaged certificate can't be read.
+// Display formats based on OpenSSL 3 (https://docs.openssl.org/3.5/man1/openssl-x509/).
 
 export interface Certificate {
-  // Nom commun (CN) et noms couverts (subjectAltName).
+  // Common name (CN) and covered names (subjectAltName).
   cn: string;
   names: string[];
   issuer: string;
@@ -18,18 +18,18 @@ export interface Certificate {
 
 const MARK = 'quetes-x509:';
 
-// Encodage base64 d'un texte ASCII (navigateur comme Node).
+// Base64 encoding of an ASCII text (browser and Node alike).
 const base64 = (text: string) => btoa(text);
 
-/** Le fichier PEM d'un certificat (lignes de 64 caractères, comme OpenSSL). */
+/** A certificate's PEM file (lines of 64 characters, like OpenSSL). */
 export function pem(c: Certificate): string {
-  // Un vrai certificat ECDSA fait une quinzaine de lignes : on complète.
+  // A real ECDSA certificate is about fifteen lines long: pad it out.
   const text = MARK + JSON.stringify(c) + '\u0000';
   const body = base64(text + c.serial.repeat(Math.ceil(Math.max(0, 760 - text.length) / c.serial.length))).match(/.{1,64}/g)!;
   return ['-----BEGIN CERTIFICATE-----', ...body, '-----END CERTIFICATE-----'].join('\n');
 }
 
-/** Lit le premier certificat d'un texte PEM ; null s'il n'y en a pas ou s'il est abîmé. */
+/** Reads the first certificate of a PEM text; null if there is none or it is damaged. */
 export function read(text: string | null): Certificate | null {
   const m = /-----BEGIN CERTIFICATE-----\n([\s\S]*?)\n-----END CERTIFICATE-----/.exec(text ?? '');
   if (!m) return null;
@@ -44,18 +44,18 @@ export function read(text: string | null): Certificate | null {
 
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** « Jan 21 06:39:59 2027 GMT », comme OpenSSL. */
+/** "Jan 21 06:39:59 2027 GMT", like OpenSSL. */
 export function dateOpenssl(ms: number): string {
   const d = new Date(ms);
   return `${MONTH[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, ' ')} ${d.toISOString().slice(11, 19)} ${d.getUTCFullYear()} GMT`;
 }
 
-/** « 2027-01-21 06:39:59+00:00 », comme certbot. */
+/** "2027-01-21 06:39:59+00:00", like certbot. */
 export const dateCertbot = (ms: number) => `${new Date(ms).toISOString().slice(0, 19).replace('T', ' ')}+00:00`;
 
 export const subject = (c: Certificate) => `CN=${c.cn}`;
 
-/** Le certificat couvre-t-il ce nom ? (noms exacts, ou joker *.domaine sur un niveau) */
+/** Does the certificate cover this name? (exact names, or a *.domain wildcard one level deep) */
 export const covers = (c: Certificate, name: string) =>
   c.names.some((n) => n === name.toLowerCase() || (n.startsWith('*.') && name.toLowerCase().split('.').slice(1).join('.') === n.slice(2)));
 

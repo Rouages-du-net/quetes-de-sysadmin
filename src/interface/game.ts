@@ -1,8 +1,8 @@
-// L'interface du jeu : le terminal simulé (une console qui part du poste et
-// se connecte en ssh aux machines des histoires), le menu des histoires et
-// des chapitres (des raccourcis), la progression gardée dans le navigateur.
-// monter() construit tout dans un conteneur (un élément ou la racine
-// fantôme d'un composant), sans rien supposer de la page qui l'accueille.
+// The game's interface: the simulated terminal (a console that starts from the
+// workstation and connects with ssh to the stories' machines), the menu of
+// stories and chapters (shortcuts), the progress kept in the browser.
+// mount() builds everything inside a container (an element or a component's
+// shadow root), assuming nothing about the page that hosts it.
 
 import { difficulty, stars, storyDifficulty, type Level } from '../engine/difficulty';
 import { Console } from '../engine/console';
@@ -27,9 +27,9 @@ import { translator, typography, type Language } from '../texts';
 
 export interface Options {
   language?: Language;
-  /** Histoire à ouvrir au départ (identifiant, ex. « datacenter »), même sans sa clé. */
+  /** Story to open at start (identifier, e.g. "datacenter"), even without its key. */
   story?: string;
-  /** Clé de sauvegarde dans localStorage (à changer si plusieurs jeux partagent un site). */
+  /** Save key in localStorage (change it if several games share a site). */
   saveKey?: string;
 }
 
@@ -41,9 +41,9 @@ function el<K extends keyof HTMLElementTagNameMap>(name: K, attrs: Record<string
   return e;
 }
 
-// Les lignes gardées à l'écran pour une seule sortie.
+// The lines kept on screen for a single output.
 const LINES_MAX = 2000;
-// Pendant un suivi (tail -f), les secondes qui passent sur la machine à chaque seconde réelle.
+// During a follow (tail -f), the seconds that pass on the machine for each real second.
 const SECONDS_FOLLOW = 3;
 
 export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
@@ -52,17 +52,17 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const storyTitle = (h: number) => t(`story-${STORIES[h].id}`);
   const KEY = options.saveKey ?? 'quetes-de-sysadmin';
   const chapters = (h: number) => STORIES[h].chapters;
-  // L'affichage (thème, taille, vue du menu, couleurs) : un réglage de ce navigateur seulement.
-  const DISPLAY_KEY = `${KEY}-affichage`;
+  // Display (theme, size, menu view, colours): a setting of this browser only.
+  const DISPLAY_KEY = `${KEY}-display`;
   const SIZES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
-  let display = { theme: 'phosphore', size: 2, vue: 'reseau', colours: true, parcours: PATH[0].id };
+  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id };
   try {
     display = { ...display, ...JSON.parse(localStorage.getItem(DISPLAY_KEY) ?? '{}') };
   } catch {}
 
-  // ——— Construction ———
-  // Le nom et l'adresse de la machine, montrés sur la carte du réseau (des identifiants techniques, jamais traduits).
-  const host = (m: Machine | undefined) => el('span', { class: 'hote' }, m ? `${machineDomain(t, m)} ${m.address}` : '');
+  // ——— Building ———
+  // The machine's name and address, shown on the network map (technical identifiers, never translated).
+  const host = (m: Machine | undefined) => el('span', { class: 'host' }, m ? `${machineDomain(t, m)} ${m.address}` : '');
   // The difficulty: stars for the eye, the level in words for screen readers (see difficulty.ts).
   const level = (min: Level, max: Level = min) =>
     el(
@@ -72,135 +72,135 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       el('span', { class: 'visually-hidden' }, min === max ? t('difficulty', { level: min }) : t('difficulty-tidy', { min, max })),
     );
   const storiesBoutons = STORIES.map((h, i) =>
-    el('button', { type: 'button', 'data-histoire': String(i) },
-      el('span', { class: 'titre' }, storyTitle(i)),
+    el('button', { type: 'button', 'data-story': String(i) },
+      el('span', { class: 'title' }, storyTitle(i)),
       host(storyMachine(h.id)),
-      el('span', { class: 'resume' }, typo(t(`story-${h.id}.summary`))),
+      el('span', { class: 'abstract' }, typo(t(`story-${h.id}.summary`))),
       level(storyDifficulty(h.id).min, storyDifficulty(h.id).max),
-      el('span', { class: 'etat' }),
-      // Une diode par chapitre, comme sur une baie de serveur (l'état en toutes lettres est dans .etat).
+      el('span', { class: 'state' }),
+      // One LED per chapter, as on a server rack (the state in plain words is in .etat).
       el('span', { class: 'diodes', 'aria-hidden': 'true' }, ...h.chapters.map(() => el('span', { class: 'diode' })))),
   );
-  const workstationButton = el('button', { type: 'button', 'data-poste': '' }, el('span', { class: 'titre' }, t('workstation-title')), host(WORKSTATION));
-  const keyHelp = el('p', { class: 'cle-aide' }, typo(t('key-help')));
-  // Deux vues du menu : la carte du réseau (le poste, internet, puis une
-  // machine par histoire, branchée sur le même câble, qui s'allume à mesure
-  // qu'on avance) et les baies (les mêmes boutons, en grille, avec leur
-  // résumé). Ce sont les mêmes boutons dans la même liste : seule la mise en
-  // page change, et les lecteurs d'écran lisent la même chose.
-  const VIEWS = ['reseau', 'baies', 'parcours'] as const;
+  const workstationButton = el('button', { type: 'button', 'data-workstation': '' }, el('span', { class: 'title' }, t('workstation-title')), host(WORKSTATION));
+  const keyHelp = el('p', { class: 'key-help' }, typo(t('key-help')));
+  // Two views of the menu: the network map (the workstation, the internet, then
+  // one machine per story, plugged into the same cable, lighting up as the
+  // player progresses) and the racks (the same buttons, in a grid, with their
+  // summary). They are the same buttons in the same list: only the layout
+  // changes, and screen readers read the same thing.
+  const VIEWS = ['network', 'racks', 'paths'] as const;
   const viewBoutons = Object.fromEntries(
-    VIEWS.map((v) => [v, el('button', { type: 'button', class: 'bouton-vue', 'aria-pressed': 'false', 'data-vue': v }, t(`view-${v}`))]),
+    VIEWS.map((v) => [v, el('button', { type: 'button', class: 'view-button', 'aria-pressed': 'false', 'data-view': v }, t(`view-${v}`))]),
   ) as Record<(typeof VIEWS)[number], HTMLButtonElement>;
-  const viewChoice = el('p', { class: 'choix-vue', role: 'group', 'aria-label': t('view-title') }, ...VIEWS.map((v) => viewBoutons[v]));
+  const viewChoice = el('p', { class: 'view-choice', role: 'group', 'aria-label': t('view-title') }, ...VIEWS.map((v) => viewBoutons[v]));
   const storiesList = el(
     'ol',
     {},
-    el('li', { class: 'noeud-poste' }, workstationButton),
-    // Internet, entre le poste et les machines : un repère, pas un bouton.
-    el('li', { class: 'noeud-internet', 'aria-hidden': 'true' }, el('span', {}, t('view-internet'))),
-    ...storiesBoutons.map((b, i) => el('li', { class: 'noeud', 'data-cote': i % 2 ? 'droite' : 'gauche' }, b)),
+    el('li', { class: 'node-workstation' }, workstationButton),
+    // The internet, between the workstation and the machines: a landmark, not a button.
+    el('li', { class: 'node-internet', 'aria-hidden': 'true' }, el('span', {}, t('view-internet'))),
+    ...storiesBoutons.map((b, i) => el('li', { class: 'node', 'data-side': i % 2 ? 'right' : 'left' }, b)),
   );
-  // La vue « Parcours » : un thème, et ses chapitres pris dans plusieurs histoires (voir parcours.ts).
-  const pathId = `qds-parcours-${Math.random().toString(36).slice(2, 8)}`;
+  // The "Paths" view: a theme, and its chapters taken from several stories (see paths.ts).
+  const pathId = `qds-paths-${Math.random().toString(36).slice(2, 8)}`;
   const pathChoice = el(
     'select',
     { id: pathId },
     ...PATH.map((p) => el('option', { value: p.id }, t(`path-${p.id}`))),
   ) as HTMLSelectElement;
-  const descriptionPath = el('p', { class: 'parcours-description' });
-  const progressPath = el('p', { class: 'parcours-avancee' });
-  const pathList = el('ol', { class: 'parcours-liste' });
+  const descriptionPath = el('p', { class: 'paths-description' });
+  const progressPath = el('p', { class: 'paths-progress' });
+  const pathList = el('ol', { class: 'paths-list' });
   const pathBlock = el(
     'div',
-    { class: 'parcours', hidden: '' },
-    el('p', { class: 'parcours-choix' }, el('label', { for: pathId }, t('path-choice')), ' ', pathChoice),
+    { class: 'paths', hidden: '' },
+    el('p', { class: 'paths-choice' }, el('label', { for: pathId }, t('path-choice')), ' ', pathChoice),
     descriptionPath,
     progressPath,
     pathList,
   );
-  // L'incident du jour (voir astreinte.ts) : le même chapitre pour tout le monde, à rejouer d'astreinte.
-  const incidentButton = el('button', { type: 'button', class: 'bouton-incident', 'aria-haspopup': 'dialog' }, t('on-call-button'));
-  const incidentText = el('span', { class: 'incident-texte' });
+  // The incident of the day (see on-call.ts): the same chapter for everyone, to replay on call.
+  const incidentButton = el('button', { type: 'button', class: 'incident-button', 'aria-haspopup': 'dialog' }, t('on-call-button'));
+  const incidentText = el('span', { class: 'incident-text' });
   const incidentBlock = el('p', { class: 'incident' }, incidentButton, ' ', incidentText);
-  const storiesNav = el('nav', { class: 'histoires', 'aria-label': t('stories-title') }, viewChoice, incidentBlock, storiesList, pathBlock, keyHelp);
+  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, incidentBlock, storiesList, pathBlock, keyHelp);
 
   const chaptersNavs = STORIES.map((h, i) =>
-    el('nav', { class: 'chapitres', 'aria-label': t('chapters-title', { story: storyTitle(i) }), 'data-chapitres': String(i) },
+    el('nav', { class: 'chapters', 'aria-label': t('chapters-title', { story: storyTitle(i) }), 'data-chapters': String(i) },
       el('ol', {}, ...h.chapters.map((c, j) =>
-        el('li', {}, el('button', { type: 'button', 'data-chapitre': String(j) },
+        el('li', {}, el('button', { type: 'button', 'data-chapter': String(j) },
           el('span', { class: 'num' }, t('chapter-number', { number: c.number })),
-          el('span', { class: 'titre' }, t(`chapter-${c.id}`)),
-          el('span', { class: 'resume' }, typo(t(`chapter-${c.id}.summary`))),
+          el('span', { class: 'title' }, t(`chapter-${c.id}`)),
+          el('span', { class: 'abstract' }, typo(t(`chapter-${c.id}.summary`))),
           level(difficulty(c.id)),
-          el('span', { class: 'etat' })))))),
+          el('span', { class: 'state' })))))),
   );
 
-  // Le mode examen : pas d'indice, un chrono ; la case recommence le chapitre en cours.
+  // Exam mode: no hints, a timer; the checkbox restarts the current chapter.
   const examCase = el('input', { type: 'checkbox' }) as HTMLInputElement;
-  const stopwatch = el('span', { class: 'chrono', role: 'timer' });
-  // La carte : un bouton à côté du terminal ouvre, dans une fenêtre, les lieux
-  // connus de la machine où l'on est (voir carte.ts).
-  const mapButton = el('button', { type: 'button', class: 'bouton-carte', 'aria-haspopup': 'dialog' }, t('map-button'));
-  // L'affichage du terminal : thème, taille du texte, plein écran (réglages de ce navigateur).
-  const THEMES = ['phosphore', 'ambre', 'contraste', 'papier'];
+  const stopwatch = el('span', { class: 'timer', role: 'timer' });
+  // The map: a button next to the terminal opens, in a dialog, the known
+  // places of the machine the player is on (see map.ts).
+  const mapButton = el('button', { type: 'button', class: 'map-button', 'aria-haspopup': 'dialog' }, t('map-button'));
+  // The terminal's display: theme, text size, full screen (settings of this browser).
+  const THEMES = ['phosphor', 'amber', 'contrast', 'paper'];
   const themeChoice = el(
     'select',
     { 'aria-label': t('display-theme') },
     ...THEMES.map((x) => el('option', { value: x }, t(`display-theme-${x}`))),
   ) as HTMLSelectElement;
-  const moreSmall = el('button', { type: 'button', class: 'bouton-reglage', 'aria-label': t('display-more-small') }, 'A−');
-  const moreGrand = el('button', { type: 'button', class: 'bouton-reglage', 'aria-label': t('display-more-big') }, 'A+');
-  const focusButton = el('button', { type: 'button', class: 'bouton-reglage', 'aria-pressed': 'false' }, t('display-focus'));
-  const coloursButton = el('button', { type: 'button', class: 'bouton-reglage', 'aria-pressed': 'true' }, t('display-colours'));
-  const settings = el('span', { class: 'reglages' }, themeChoice, moreSmall, moreGrand, coloursButton, focusButton);
-  // La mission : l'objectif du chapitre, ses consignes, et ce qui s'est déjà passé.
-  const missionButton = el('button', { type: 'button', class: 'bouton-mission', 'aria-haspopup': 'dialog' }, t('mission-button'));
-  const onCallGauge = el('span', { class: 'jauge-astreinte', role: 'timer', hidden: '' });
+  const moreSmall = el('button', { type: 'button', class: 'setting-button', 'aria-label': t('display-more-small') }, 'A−');
+  const moreGrand = el('button', { type: 'button', class: 'setting-button', 'aria-label': t('display-more-big') }, 'A+');
+  const focusButton = el('button', { type: 'button', class: 'setting-button', 'aria-pressed': 'false' }, t('display-focus'));
+  const coloursButton = el('button', { type: 'button', class: 'setting-button', 'aria-pressed': 'true' }, t('display-colours'));
+  const settings = el('span', { class: 'settings' }, themeChoice, moreSmall, moreGrand, coloursButton, focusButton);
+  // The mission: the chapter's objective, its instructions, and what has already happened.
+  const missionButton = el('button', { type: 'button', class: 'mission-button', 'aria-haspopup': 'dialog' }, t('mission-button'));
+  const onCallGauge = el('span', { class: 'on-call-gauge', role: 'timer', hidden: '' });
   const examBar = el(
     'p',
-    { class: 'examen' },
+    { class: 'exam' },
     el('label', {}, examCase, el('span', {}, t('exam-case'))),
     stopwatch,
     onCallGauge,
-    el('span', { class: 'outils' }, missionButton, mapButton, settings),
+    el('span', { class: 'tools' }, missionButton, mapButton, settings),
   );
   const idMission = `qds-mission-${Math.random().toString(36).slice(2, 8)}`;
   const titleMission = el('h2', { id: idMission });
-  const goalMission = el('p', { class: 'carte-legende' });
-  const instructionsMission = el('pre', { class: 'mission-texte' });
-  const logMission = el('ol', { class: 'mission-journal' });
-  const emptyMission = el('p', { class: 'carte-legende' }, typo(t('mission-nothing')));
-  const closeMission = el('button', { type: 'button', class: 'bouton' }, t('map-close'));
-  // Besoin d'aide ? Trois niveaux, l'un après l'autre (voir indices.ts) ; rien en mode examen.
+  const goalMission = el('p', { class: 'map-legend' });
+  const instructionsMission = el('pre', { class: 'mission-text' });
+  const logMission = el('ol', { class: 'mission-log' });
+  const emptyMission = el('p', { class: 'map-legend' }, typo(t('mission-nothing')));
+  const closeMission = el('button', { type: 'button', class: 'button' }, t('map-close'));
+  // Need help? Three levels, one after the other (see hints.ts); nothing in exam mode.
   const hintBoutons = Object.fromEntries(
-    HINT_LEVELS.map((n) => [n, el('button', { type: 'button', class: 'bouton-indice', 'data-niveau': n }, t(`hint-button-${n}`))]),
+    HINT_LEVELS.map((n) => [n, el('button', { type: 'button', class: 'hint-button', 'data-level': n }, t(`hint-button-${n}`))]),
   ) as Record<HintLevel, HTMLButtonElement>;
-  const hintText = el('div', { class: 'indice-texte', 'aria-live': 'polite' });
+  const hintText = el('div', { class: 'hint-text', 'aria-live': 'polite' });
   const help = el(
     'section',
-    { class: 'aide' },
+    { class: 'help' },
     el('h3', {}, t('hint-title')),
-    el('p', { class: 'carte-legende' }, typo(t('hint-intro'))),
-    el('p', { class: 'indice-boutons' }, ...HINT_LEVELS.map((n) => hintBoutons[n])),
+    el('p', { class: 'map-legend' }, typo(t('hint-intro'))),
+    el('p', { class: 'hint-buttons' }, ...HINT_LEVELS.map((n) => hintBoutons[n])),
     hintText,
   );
-  // L'instantané de secours (voir Console.restaurer) : comme celui d'une machine virtuelle.
-  const takeSnapshot = el('button', { type: 'button', class: 'bouton-secours' }, t('rescue-take'));
-  const goBackSnapshot = el('button', { type: 'button', class: 'bouton-secours' }, t('rescue-go-back'));
-  const cancelInput = el('button', { type: 'button', class: 'bouton-secours' }, t('rescue-cancel'));
-  const rescueState = el('p', { class: 'carte-legende secours-etat', role: 'status' });
+  // The rescue snapshot (see Console.restore): like a virtual machine's.
+  const takeSnapshot = el('button', { type: 'button', class: 'rescue-button' }, t('rescue-take'));
+  const goBackSnapshot = el('button', { type: 'button', class: 'rescue-button' }, t('rescue-go-back'));
+  const cancelInput = el('button', { type: 'button', class: 'rescue-button' }, t('rescue-cancel'));
+  const rescueState = el('p', { class: 'map-legend rescue-state', role: 'status' });
   const rescue = el(
     'section',
-    { class: 'secours' },
+    { class: 'rescue' },
     el('h3', {}, t('rescue-title')),
-    el('p', { class: 'carte-legende' }, typo(t('rescue-intro'))),
-    el('p', { class: 'indice-boutons' }, takeSnapshot, goBackSnapshot, cancelInput),
+    el('p', { class: 'map-legend' }, typo(t('rescue-intro'))),
+    el('p', { class: 'hint-buttons' }, takeSnapshot, goBackSnapshot, cancelInput),
     rescueState,
   );
   const missionWindow = el(
     'dialog',
-    { class: 'fenetre-mission', 'aria-labelledby': idMission },
+    { class: 'mission-window', 'aria-labelledby': idMission },
     titleMission,
     goalMission,
     el('h3', {}, t('mission-instructions')),
@@ -210,63 +210,63 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     logMission,
     help,
     rescue,
-    el('p', { class: 'carte-actions' }, closeMission),
+    el('p', { class: 'map-actions' }, closeMission),
   ) as HTMLDialogElement;
-  const mapId = `qds-carte-${Math.random().toString(36).slice(2, 8)}`;
+  const mapId = `qds-map-${Math.random().toString(36).slice(2, 8)}`;
   const titleMap = el('h2', { id: mapId });
-  const treeMap = el('div', { class: 'carte-arbre' });
-  const closeMap = el('button', { type: 'button', class: 'bouton' }, t('map-close'));
-  // Deux onglets quand l'histoire a un réseau : les lieux de la machine, et le plan du réseau (voir plan.ts).
+  const treeMap = el('div', { class: 'map-tree' });
+  const closeMap = el('button', { type: 'button', class: 'button' }, t('map-close'));
+  // Two tabs when the story has a network: the machine's places, and the network plan (see plan.ts).
   const tab = (suffix: string, text: string) =>
-    el('button', { type: 'button', role: 'tab', id: `${mapId}-onglet-${suffix}`, 'aria-controls': `${mapId}-${suffix}` }, text);
-  const placesTab = tab('lieux', t('map-tab-places'));
-  const networkTab = tab('reseau', t('map-tab-network'));
-  const tabs = el('div', { role: 'tablist', class: 'carte-onglets' }, placesTab, networkTab);
+    el('button', { type: 'button', role: 'tab', id: `${mapId}-tab-${suffix}`, 'aria-controls': `${mapId}-${suffix}` }, text);
+  const placesTab = tab('places', t('map-tab-places'));
+  const networkTab = tab('network', t('map-tab-network'));
+  const tabs = el('div', { role: 'tablist', class: 'map-tabs' }, placesTab, networkTab);
   const placesPanel = el(
     'div',
-    { role: 'tabpanel', id: `${mapId}-lieux`, 'aria-labelledby': placesTab.id },
-    el('p', { class: 'carte-legende' }, typo(t('map-caption'))),
+    { role: 'tabpanel', id: `${mapId}-places`, 'aria-labelledby': placesTab.id },
+    el('p', { class: 'map-legend' }, typo(t('map-caption'))),
     treeMap,
   );
-  const planSchema = el('div', { class: 'plan-schema' });
-  const listPlan = el('div', { class: 'carte-arbre' });
-  const textPlan = el('details', { class: 'plan-texte' }, el('summary', {}, t('plan-version-text')), listPlan);
+  const planSchema = el('div', { class: 'plan-diagram' });
+  const listPlan = el('div', { class: 'map-tree' });
+  const textPlan = el('details', { class: 'plan-text' }, el('summary', {}, t('plan-version-text')), listPlan);
   const networkPanel = el(
     'div',
-    { role: 'tabpanel', id: `${mapId}-reseau`, 'aria-labelledby': networkTab.id },
-    el('p', { class: 'carte-legende' }, typo(t('plan-caption'))),
+    { role: 'tabpanel', id: `${mapId}-network`, 'aria-labelledby': networkTab.id },
+    el('p', { class: 'map-legend' }, typo(t('plan-caption'))),
     planSchema,
     textPlan,
   );
   const mapWindow = el(
     'dialog',
-    { class: 'fenetre-carte', 'aria-labelledby': mapId },
+    { class: 'map-window', 'aria-labelledby': mapId },
     titleMap,
     tabs,
     placesPanel,
     networkPanel,
-    el('p', { class: 'carte-actions' }, closeMap),
+    el('p', { class: 'map-actions' }, closeMap),
   ) as HTMLDialogElement;
-  const output = el('div', { class: 'sortie', role: 'log', 'aria-live': 'polite' });
-  const id = `qds-saisie-${Math.random().toString(36).slice(2, 8)}`;
-  const prompt = el('label', { class: 'invite', for: id });
+  const output = el('div', { class: 'output', role: 'log', 'aria-live': 'polite' });
+  const id = `qds-input-${Math.random().toString(36).slice(2, 8)}`;
+  const prompt = el('label', { class: 'prompt', for: id });
   const input = el('input', {
     id, type: 'text', spellcheck: 'false', autocapitalize: 'off', autocorrect: 'off', autocomplete: 'off',
     'aria-label': t('input-label'),
   }) as HTMLInputElement;
-  // Ctrl-R : la recherche dans l'historique, comme bash ; la commande trouvée s'affiche sous la ligne.
-  const match = el('p', { class: 'recherche', 'aria-live': 'polite' });
-  // La coloration de la ligne (voir coloration.ts) : une copie colorée du
-  // texte, dessinée exactement sous le champ, qui reste un champ ordinaire
-  // (clavier, complétion, lecteurs d'écran) au texte rendu transparent.
-  const coloration = el('div', { class: 'coloration', 'aria-hidden': 'true' });
-  const field = el('span', { class: 'champ' }, coloration, input);
+  // Ctrl-R: history search, like bash; the command found is shown below the line.
+  const match = el('p', { class: 'search', 'aria-live': 'polite' });
+  // Highlighting of the line (see highlighting.ts): a coloured copy of the
+  // text, drawn exactly under the field, which stays an ordinary field
+  // (keyboard, completion, screen readers) with its text made transparent.
+  const coloration = el('div', { class: 'highlighting', 'aria-hidden': 'true' });
+  const field = el('span', { class: 'field' }, coloration, input);
   const form = el('form', { autocomplete: 'off' }, prompt, field, match);
-  // tail -f, journalctl -f : la commande garde la main jusqu'à Ctrl-C (ce bouton, le clavier ou la barre de touches).
-  const followStop = el('button', { type: 'button', class: 'arret-suivi', hidden: '' }, el('kbd', {}, '^C'), ` ${t('follow-stop')}`);
+  // tail -f, journalctl -f: the command keeps control until Ctrl-C (this button, the keyboard or the key bar).
+  const followStop = el('button', { type: 'button', class: 'stop-follow', hidden: '' }, el('kbd', {}, '^C'), ` ${t('follow-stop')}`);
   const terminal = el('div', { class: 'terminal' }, output, form, followStop);
-  const quitFocus = el('button', { type: 'button', class: 'quitter-focus' }, t('display-quit-focus'));
-  // Les touches qui manquent aux claviers des téléphones (affichées sur les écrans tactiles).
+  const quitFocus = el('button', { type: 'button', class: 'leave-focus' }, t('display-quit-focus'));
+  // The keys that phone keyboards lack (shown on touch screens).
   const TOUCHES: [string, string][] = [
     ['Tab', 'Tab'],
     ['↑', 'ArrowUp'],
@@ -283,163 +283,163 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   ];
   const touchesBar = el(
     'div',
-    { class: 'touches', role: 'toolbar', 'aria-label': t('keys-title') },
+    { class: 'keys', role: 'toolbar', 'aria-label': t('keys-title') },
     ...TOUCHES.map(([text, pressedKey]) =>
-      el('button', { type: 'button', 'data-touche': pressedKey, ...(pressedKey.startsWith('Arrow') ? { 'aria-label': t(`key-${pressedKey === 'ArrowUp' ? 'haut' : 'bas'}`) } : {}) }, text),
+      el('button', { type: 'button', 'data-key': pressedKey, ...(pressedKey.startsWith('Arrow') ? { 'aria-label': t(`key-${pressedKey === 'ArrowUp' ? 'up' : 'down'}`) } : {}) }, text),
     ),
-    // Pendant nano : ses raccourcis, qu'un téléphone ne sait pas taper (pas de touche Ctrl).
-    el('button', { type: 'button', class: 'pour-nano', 'data-touche': 'ctrl-o' }, `^O ${t('nano-write')}`),
-    el('button', { type: 'button', class: 'pour-nano', 'data-touche': 'ctrl-x' }, `^X ${t('nano-quit')}`),
+    // During nano: its shortcuts, which a phone cannot type (no Ctrl key).
+    el('button', { type: 'button', class: 'for-nano', 'data-key': 'ctrl-o' }, `^O ${t('nano-write')}`),
+    el('button', { type: 'button', class: 'for-nano', 'data-key': 'ctrl-x' }, `^X ${t('nano-quit')}`),
   );
-  const following = el('button', { type: 'button', class: 'bouton principal' }, t('button-next'));
-  const end = el('div', { class: 'fin', hidden: '' }, following);
-  // Après un chapitre : la page de Les rouages du net qui explique son concept.
+  const following = el('button', { type: 'button', class: 'button primary' }, t('button-next'));
+  const end = el('div', { class: 'end', hidden: '' }, following);
+  // After a chapter: the Les rouages du net page that explains its concept.
   const rouagesList = el('ul', {});
-  const forUnderstand = el('aside', { class: 'pour-comprendre', hidden: '' }, el('p', {}, typo(t('rouages-intro'))), rouagesList);
-  // Le carnet du sysadmin : les commandes déjà lancées, avec leur ligne du manuel.
-  const accountNotebook = el('span', { class: 'compte' });
+  const forUnderstand = el('aside', { class: 'to-understand', hidden: '' }, el('p', {}, typo(t('rouages-intro'))), rouagesList);
+  // The sysadmin's notebook: the commands already run, with their line from the manual.
+  const accountNotebook = el('span', { class: 'account' });
   const titleNotebook = el('span', {});
   const listNotebook = el('dl', {});
   const emptyNotebook = el('p', {}, typo(t('notebook-empty')));
-  const exported = el('button', { type: 'button', class: 'lien' }, t('notebook-export'));
-  const copyNotebook = el('button', { type: 'button', class: 'lien' }, t('notebook-copy-button'));
-  const stateNotebook = el('span', { class: 'carnet-etat', role: 'status' });
-  const actionsNotebook = el('p', { class: 'carnet-actions' }, exported, ' · ', copyNotebook, ' ', stateNotebook);
+  const exported = el('button', { type: 'button', class: 'link' }, t('notebook-export'));
+  const copyNotebook = el('button', { type: 'button', class: 'link' }, t('notebook-copy-button'));
+  const stateNotebook = el('span', { class: 'notebook-state', role: 'status' });
+  const actionsNotebook = el('p', { class: 'notebook-actions' }, exported, ' · ', copyNotebook, ' ', stateNotebook);
   const notebookPanel = el(
     'details',
-    { class: 'carnet' },
+    { class: 'notebook' },
     el('summary', {}, titleNotebook, ' ', accountNotebook),
-    el('p', { class: 'carnet-aide' }, typo(t('notebook-help'))),
+    el('p', { class: 'notebook-help' }, typo(t('notebook-help'))),
     emptyNotebook,
     listNotebook,
     actionsNotebook,
   );
-  const restart = el('button', { type: 'button', class: 'lien' }, t('button-restart'));
-  // Ma progression : un nom pour le carnet, et de quoi continuer sur une autre
-  // machine (le code court, ou le fichier ; voir progression.ts).
-  const progressButton = el('button', { type: 'button', class: 'lien', 'aria-haspopup': 'dialog' }, t('progress-button'));
-  // Les succès et le grade : une fenêtre (voir succes.ts).
-  const achievementsButton = el('button', { type: 'button', class: 'lien', 'aria-haspopup': 'dialog' });
-  const tips = el('p', { class: 'astuces' }, typo(t('tips')), ' ', restart, ' · ', progressButton, ' · ', achievementsButton);
-  const achievementsId = `qds-succes-${Math.random().toString(36).slice(2, 8)}`;
-  const gradeAchievements = el('p', { class: 'succes-grade' });
-  const listAchievements = el('ul', { class: 'succes-liste' });
-  const closeAchievements = el('button', { type: 'button', class: 'bouton' }, t('map-close'));
+  const restart = el('button', { type: 'button', class: 'link' }, t('button-restart'));
+  // My progress: a name for the notebook, and a way to continue on another
+  // device (the short code, or the file; see progress.ts).
+  const progressButton = el('button', { type: 'button', class: 'link', 'aria-haspopup': 'dialog' }, t('progress-button'));
+  // Achievements and rank: a dialog (see achievements.ts).
+  const achievementsButton = el('button', { type: 'button', class: 'link', 'aria-haspopup': 'dialog' });
+  const tips = el('p', { class: 'tips' }, typo(t('tips')), ' ', restart, ' · ', progressButton, ' · ', achievementsButton);
+  const achievementsId = `qds-achievements-${Math.random().toString(36).slice(2, 8)}`;
+  const gradeAchievements = el('p', { class: 'achievement-rank' });
+  const listAchievements = el('ul', { class: 'achievement-list' });
+  const closeAchievements = el('button', { type: 'button', class: 'button' }, t('map-close'));
   const achievementsWindow = el(
     'dialog',
-    { class: 'fenetre-succes', 'aria-labelledby': achievementsId },
+    { class: 'achievements-window', 'aria-labelledby': achievementsId },
     el('h2', { id: achievementsId }, t('achievements-title')),
     gradeAchievements,
     listAchievements,
-    el('p', { class: 'carte-actions' }, closeAchievements),
+    el('p', { class: 'map-actions' }, closeAchievements),
   ) as HTMLDialogElement;
-  // L'astreinte : la fenêtre qui la propose, et celle de la carte de score à la fin.
-  const onCallId = `qds-astreinte-${Math.random().toString(36).slice(2, 8)}`;
+  // On-call duty: the dialog that offers it, and the score card's at the end.
+  const onCallId = `qds-on-call-${Math.random().toString(36).slice(2, 8)}`;
   const titleOnCall = el('h2', { id: onCallId });
-  const chapterOnCall = el('p', { class: 'astreinte-chapitre' });
-  const takeOnCall = el('button', { type: 'button', class: 'bouton' }, t('on-call-take'));
-  const cancelOnCall = el('button', { type: 'button', class: 'bouton bouton-second' }, t('on-call-cancel'));
+  const chapterOnCall = el('p', { class: 'on-call-chapter' });
+  const takeOnCall = el('button', { type: 'button', class: 'button' }, t('on-call-take'));
+  const cancelOnCall = el('button', { type: 'button', class: 'button button-secondary' }, t('on-call-cancel'));
   const onCallWindow = el(
     'dialog',
-    { class: 'fenetre-astreinte', 'aria-labelledby': onCallId },
+    { class: 'on-call-window', 'aria-labelledby': onCallId },
     titleOnCall,
-    el('p', { class: 'carte-legende' }, typo(t('on-call-intro'))),
+    el('p', { class: 'map-legend' }, typo(t('on-call-intro'))),
     chapterOnCall,
-    el('p', { class: 'carte-legende' }, typo(t('on-call-rules'))),
-    el('p', { class: 'carte-actions' }, cancelOnCall, ' ', takeOnCall),
+    el('p', { class: 'map-legend' }, typo(t('on-call-rules'))),
+    el('p', { class: 'map-actions' }, cancelOnCall, ' ', takeOnCall),
   ) as HTMLDialogElement;
-  const onCallEndId = `qds-fin-astreinte-${Math.random().toString(36).slice(2, 8)}`;
-  const scoreMap = el('pre', { class: 'carte-score' });
-  const copyMap = el('button', { type: 'button', class: 'bouton' }, t('on-call-copy'));
-  const mapState = el('p', { class: 'carte-legende', role: 'status' });
-  const closeOnCallEnd = el('button', { type: 'button', class: 'bouton bouton-second' }, t('map-close'));
+  const onCallEndId = `qds-on-call-end-${Math.random().toString(36).slice(2, 8)}`;
+  const scoreMap = el('pre', { class: 'score-card' });
+  const copyMap = el('button', { type: 'button', class: 'button' }, t('on-call-copy'));
+  const mapState = el('p', { class: 'map-legend', role: 'status' });
+  const closeOnCallEnd = el('button', { type: 'button', class: 'button button-secondary' }, t('map-close'));
   const onCallEndWindow = el(
     'dialog',
-    { class: 'fenetre-astreinte', 'aria-labelledby': onCallEndId },
+    { class: 'on-call-window', 'aria-labelledby': onCallEndId },
     el('h2', { id: onCallEndId }, t('on-call-end-title')),
-    el('p', { class: 'carte-legende' }, typo(t('on-call-end-intro'))),
+    el('p', { class: 'map-legend' }, typo(t('on-call-end-intro'))),
     scoreMap,
     mapState,
-    el('p', { class: 'carte-actions' }, closeOnCallEnd, ' ', copyMap),
+    el('p', { class: 'map-actions' }, closeOnCallEnd, ' ', copyMap),
   ) as HTMLDialogElement;
-  // Le bilan de fin de chapitre : le détail, étape par étape (voir bilan.ts).
-  const summaryId = `qds-bilan-${Math.random().toString(36).slice(2, 8)}`;
+  // The end-of-chapter summary: the details, step by step (see summary.ts).
+  const summaryId = `qds-summary-${Math.random().toString(36).slice(2, 8)}`;
   const titleSummary = el('h2', { id: summaryId });
-  const mapCaption = el('p', { class: 'carte-legende' });
-  const tableSummary = el('div', { class: 'bilan-tableau', tabindex: '0', role: 'region', 'aria-labelledby': summaryId });
-  const encourageSummary = el('p', { class: 'carte-legende' });
-  const closeSummary = el('button', { type: 'button', class: 'bouton' }, t('map-close'));
+  const mapCaption = el('p', { class: 'map-legend' });
+  const tableSummary = el('div', { class: 'summary-table', tabindex: '0', role: 'region', 'aria-labelledby': summaryId });
+  const encourageSummary = el('p', { class: 'map-legend' });
+  const closeSummary = el('button', { type: 'button', class: 'button' }, t('map-close'));
   const summaryWindow = el(
     'dialog',
-    { class: 'fenetre-bilan', 'aria-labelledby': summaryId },
+    { class: 'summary-window', 'aria-labelledby': summaryId },
     titleSummary,
     mapCaption,
-    el('p', { class: 'carte-legende' }, typo(t('summary-intro'))),
+    el('p', { class: 'map-legend' }, typo(t('summary-intro'))),
     tableSummary,
     encourageSummary,
-    el('p', { class: 'carte-actions' }, closeSummary),
+    el('p', { class: 'map-actions' }, closeSummary),
   ) as HTMLDialogElement;
-  const progressId = `qds-progression-${Math.random().toString(36).slice(2, 8)}`;
-  const nameField = el('input', { type: 'text', id: `${progressId}-nom`, maxlength: '60', autocomplete: 'name', spellcheck: 'false' }) as HTMLInputElement;
-  const currentCode = el('code', { class: 'code-progression' });
-  const copyCode = el('button', { type: 'button', class: 'lien' }, t('progress-copy'));
+  const progressId = `qds-progress-${Math.random().toString(36).slice(2, 8)}`;
+  const nameField = el('input', { type: 'text', id: `${progressId}-name`, maxlength: '60', autocomplete: 'name', spellcheck: 'false' }) as HTMLInputElement;
+  const currentCode = el('code', { class: 'progress-code' });
+  const copyCode = el('button', { type: 'button', class: 'link' }, t('progress-copy'));
   const codeField = el('input', { type: 'text', id: `${progressId}-code`, autocomplete: 'off', spellcheck: 'false', autocapitalize: 'characters', placeholder: 'QDS-…' }) as HTMLInputElement;
-  const resumeCode = el('button', { type: 'button', class: 'bouton' }, t('progress-resume'));
-  const download = el('button', { type: 'button', class: 'bouton' }, t('progress-download'));
-  const fileField = el('input', { type: 'file', id: `${progressId}-fichier`, accept: '.json,application/json' }) as HTMLInputElement;
-  const progressState = el('p', { class: 'progression-etat', role: 'status' });
-  const closeProgress = el('button', { type: 'button', class: 'bouton' }, t('map-close'));
+  const resumeCode = el('button', { type: 'button', class: 'button' }, t('progress-resume'));
+  const download = el('button', { type: 'button', class: 'button' }, t('progress-download'));
+  const fileField = el('input', { type: 'file', id: `${progressId}-file`, accept: '.json,application/json' }) as HTMLInputElement;
+  const progressState = el('p', { class: 'progress-state', role: 'status' });
+  const closeProgress = el('button', { type: 'button', class: 'button' }, t('map-close'));
   const progressWindow = el(
     'dialog',
-    { class: 'fenetre-progression', 'aria-labelledby': progressId },
+    { class: 'progress-window', 'aria-labelledby': progressId },
     el('h2', { id: progressId }, t('progress-title')),
-    el('p', { class: 'carte-legende' }, typo(t('progress-intro'))),
+    el('p', { class: 'map-legend' }, typo(t('progress-intro'))),
     el('h3', {}, el('label', { for: nameField.id }, t('progress-name'))),
     el('p', {}, nameField),
-    el('p', { class: 'carte-legende' }, typo(t('progress-name-help'))),
+    el('p', { class: 'map-legend' }, typo(t('progress-name-help'))),
     el('h3', {}, t('progress-code-title')),
-    el('p', { class: 'carte-legende' }, typo(t('progress-code-help'))),
+    el('p', { class: 'map-legend' }, typo(t('progress-code-help'))),
     el('p', {}, currentCode, ' ', copyCode),
-    el('p', { class: 'progression-saisie' }, el('label', { for: codeField.id }, t('progress-code-input')), ' ', codeField, ' ', resumeCode),
+    el('p', { class: 'progress-input' }, el('label', { for: codeField.id }, t('progress-code-input')), ' ', codeField, ' ', resumeCode),
     el('h3', {}, t('progress-file-title')),
-    el('p', { class: 'carte-legende' }, typo(t('progress-file-help'))),
+    el('p', { class: 'map-legend' }, typo(t('progress-file-help'))),
     el('p', {}, download),
-    el('p', { class: 'progression-saisie' }, el('label', { for: fileField.id }, t('progress-file-input')), ' ', fileField),
+    el('p', { class: 'progress-input' }, el('label', { for: fileField.id }, t('progress-file-input')), ' ', fileField),
     progressState,
-    el('p', { class: 'carte-actions' }, closeProgress),
+    el('p', { class: 'map-actions' }, closeProgress),
   ) as HTMLDialogElement;
   const credit = el('p', { class: 'credit' }, typo(t('credit')), ' ',
     el('a', { href: 'https://github.com/Rouages-du-net/quetes-de-sysadmin' }, t('credit-link-project')), ' · ',
     el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-link-original')));
 
-  // Le terminal et sa barre de touches : ensemble en plein écran.
-  const screen = el('div', { class: 'ecran' }, quitFocus, terminal, touchesBar);
-  // La confirmation du mode examen : il fait recommencer le chapitre en cours.
-  const examId = `qds-examen-${Math.random().toString(36).slice(2, 8)}`;
+  // The terminal and its key bar: together in full screen.
+  const screen = el('div', { class: 'screen' }, quitFocus, terminal, touchesBar);
+  // Confirmation of exam mode: it restarts the current chapter.
+  const examId = `qds-exam-${Math.random().toString(36).slice(2, 8)}`;
   const titleExam = el('h2', { id: examId });
-  const textExam = el('p', { class: 'carte-legende' });
-  const yesExam = el('button', { type: 'button', class: 'bouton' });
-  const notExam = el('button', { type: 'button', class: 'bouton bouton-second' }, t('exam-cancel'));
+  const textExam = el('p', { class: 'map-legend' });
+  const yesExam = el('button', { type: 'button', class: 'button' });
+  const notExam = el('button', { type: 'button', class: 'button button-secondary' }, t('exam-cancel'));
   const examWindow = el(
     'dialog',
-    { class: 'fenetre-examen', 'aria-labelledby': examId },
+    { class: 'exam-window', 'aria-labelledby': examId },
     titleExam,
     textExam,
-    el('p', { class: 'carte-actions' }, notExam, ' ', yesExam),
+    el('p', { class: 'map-actions' }, notExam, ' ', yesExam),
   ) as HTMLDialogElement;
   const game = el('div', { class: 'qds', lang: t.language }, storiesNav, ...chaptersNavs, examBar, screen, end, forUnderstand, notebookPanel, tips, credit, mapWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow);
   root.append(game);
 
-  // ——— Progression gardée dans ce navigateur ———
-  // Meilleurs temps en mode examen (records, en ms) ; nom mis en tête du carnet (voir progression.ts).
+  // ——— Progress kept in this browser ———
+  // Best times in exam mode (records, in ms); name shown at the top of the notebook (see progress.ts).
   let saved: Backup = {};
   try {
     saved = JSON.parse(localStorage.getItem(KEY) ?? '{}');
   } catch {}
   const gameTerminal = new Console({ language: t.language, finished: saved.finished, knownHosts: saved.known, ssh: saved.ssh });
-  // La largeur du terminal en caractères ($COLUMNS) : ls range ses colonnes dedans,
-  // pour qu'un écran de téléphone n'ait pas à défiler de côté.
-  const measure = el('span', { class: 'mesure', 'aria-hidden': 'true' }, '0'.repeat(20));
+  // The terminal's width in characters ($COLUMNS): ls fits its columns in it,
+  // so that a phone screen doesn't have to scroll sideways.
+  const measure = el('span', { class: 'measure', 'aria-hidden': 'true' }, '0'.repeat(20));
   output.appendChild(measure);
   const columnsUpdate = () => {
     const character = measure.getBoundingClientRect().width / 20;
@@ -454,9 +454,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const achievements: Record<string, string> = saved.achievements && typeof saved.achievements === 'object' ? { ...saved.achievements } : {};
   gameTerminal.exam = saved.exam === true;
   examCase.checked = gameTerminal.exam;
-  // Le début du chapitre en cours, en mode examen (null : pas de chrono).
+  // The start of the current chapter, in exam mode (null: no timer).
   let examStart: number | null = null;
-  // Histoire et chapitre en cours (-1 : sur le poste).
+  // Current story and chapter (-1: on the workstation).
   const story = () => (gameTerminal.remote ? STORIES.indexOf(gameTerminal.remote.story) : -1);
   const active = () => (gameTerminal.remote ? gameTerminal.remote.story.chapters.indexOf(gameTerminal.remote.shell.chapter) : -1);
   const backupState = (): Backup => ({
@@ -476,52 +476,52 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     } catch {}
   };
   const open = (h: number, c: number) => c === 0 || finished.includes(chapters(h)[c - 1].id);
-  // L'attribut histoire ouvre son histoire même sans la clé (intégration dans un cours).
+  // The story attribute opens its story even without the key (embedding in a course).
   const accessible = (h: number) => gameTerminal.isOpen(STORIES[h].id) || STORIES[h].id === options.story;
 
   const history: string[] = [];
-  // La ligne après le dernier Tab (pour le double Tab de bash).
+  // The line after the last Tab (for bash's double Tab).
   let previousTab: string | null = null;
   let position = 0;
 
-  // Les tableaux d'au moins trois colonnes (ls -l, ufw status, ss, ps…) ne
-  // se replient pas : sur un petit écran, le bloc défile de côté. Le reste,
-  // paragraphes et consignes (« tape :   ls »), passe à la ligne. Les traits
-  // qui soulignent un tableau (------, ======) restent aussi d'un seul tenant.
-  // Une tabulation sépare aussi des colonnes (dig).
+  // Tables of at least three columns (ls -l, ufw status, ss, ps…) don't
+  // wrap: on a small screen, the block scrolls sideways. The rest,
+  // paragraphs and instructions ("type:   ls"), wraps. The rules
+  // that underline a table (------, ======) also stay in one piece.
+  // A tab also separates columns (dig).
   const inColumns = (line: string) => (line.match(/\S(?: {2,}|\t)(?=\S)/g) ?? []).length >= 2 || /^[-=]{20,}$/.test(line);
   const show = (text: string, cls?: string) => {
     if (!text) return;
     const pre = document.createElement('pre');
     let lines = text.split('\n');
-    // Une sortie géante (ls d'un lieu de 60 000 fichiers) : comme l'historique
-    // d'un terminal, on n'en garde que la fin, pour que la page reste fluide.
+    // A huge output (ls of a place with 60,000 files): like a terminal's
+    // scrollback, only the end is kept, so the page stays smooth.
     if (lines.length > LINES_MAX) {
       const coupees = lines.length - LINES_MAX;
       lines = lines.slice(-LINES_MAX);
-      output.appendChild(el('p', { class: 'coupure' }, t('output-cut', { lines: coupees })));
+      output.appendChild(el('p', { class: 'cut' }, t('output-cut', { lines: coupees })));
     }
-    // Une ligne soulignée par ^~~~ (sudo, compilateurs) : la ligne et son soulignement ne se replient pas.
+    // A line underlined by ^~~~ (sudo, compilers): the line and its underline don't wrap.
     const underlined = (i: number) => /^\s*\^~*\s*$/.test(lines[i] ?? '');
-    // Les couleurs des outils (séquences ANSI, voir couleurs.ts) deviennent des spans.
+    // The tools' colours (ANSI sequences, see colours.ts) become spans.
     const inColours = (line: string): (Node | string)[] =>
       line.includes('\x1b')
         ? chunks(line).map((m) => {
-            const classes = [m.bold ? 'a-gras' : '', m.before !== null ? `a-${m.before}` : '', m.background !== null ? `a-${m.background}` : ''].filter(Boolean);
+            const classes = [m.bold ? 'a-bold' : '', m.before !== null ? `a-${m.before}` : '', m.background !== null ? `a-${m.background}` : ''].filter(Boolean);
             return classes.length ? el('span', { class: classes.join(' ') }, m.text) : m.text;
           })
         : [line];
     lines.forEach((line, i) => {
       const end = i < lines.length - 1 ? '\n' : '';
       const visible = withoutColours(line);
-      if (inColumns(visible) || /^\s*\^~*\s*$/.test(visible) || underlined(i + 1)) pre.append(el('span', { class: 'colonnes' }, ...inColours(line), end));
+      if (inColumns(visible) || /^\s*\^~*\s*$/.test(visible) || underlined(i + 1)) pre.append(el('span', { class: 'columns' }, ...inColours(line), end));
       else pre.append(...inColours(line), end);
     });
     if (cls) pre.className = cls;
     output.appendChild(pre);
   };
 
-  // Ctrl-R : null hors recherche ; sinon ce que contenait la ligne avant, et la commande trouvée.
+  // Ctrl-R: null outside a search; otherwise what the line held before, and the command found.
   let query: { before: string; match: string } | null = null;
   const promptUpdate = () => {
     prompt.textContent = gameTerminal.prompt();
@@ -529,55 +529,55 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     colourInput();
   };
 
-  // Les jetons colorés d'une ligne ; rien pour une réponse à une question
-  // (yes/no, mot de passe, sftp>) ni quand la coloration est coupée.
+  // The coloured tokens of a line; nothing for an answer to a question
+  // (yes/no, password, sftp>) nor when highlighting is turned off.
   const tokens = (line: string): Token[] | null => {
     const sh = gameTerminal.shell;
     if (!display.colours || sh.maskedInput() || sh.question || sh.waiting) return null;
     return colourise(sh, line);
   };
-  const inSpans = (js: Token[]) => js.map((j) => (j.kind === 'texte' ? j.text : el('span', { class: `c-${j.kind}` }, j.text)));
+  const inSpans = (js: Token[]) => js.map((j) => (j.kind === 'text' ? j.text : el('span', { class: `c-${j.kind}` }, j.text)));
   const colourInput = () => {
     const js = query ? null : tokens(input.value);
-    field.classList.toggle('colore', js !== null);
+    field.classList.toggle('coloured', js !== null);
     coloration.replaceChildren(...(js ? inSpans(js) : []));
     coloration.scrollLeft = input.scrollLeft;
   };
-  // La commande recopiée au-dessus de sa sortie, colorée comme pendant la frappe.
+  // The command copied above its output, coloured as while typing.
   const showCommand = (line: string, js: Token[] | null) => {
     if (!js) return show(`${prompt.textContent} ${line}`, 'cmd');
     output.appendChild(el('pre', { class: 'cmd' }, `${prompt.textContent} `, ...inSpans(js)));
   };
 
-  // Le parcours choisi : chaque chapitre, son histoire, son état ; le prochain à faire est mis en avant.
+  // The chosen path: each chapter, its story, its state; the next one to do is highlighted.
   const pathUpdate = () => {
-    const p = PATH.find((x) => x.id === display.parcours) ?? PATH[0];
+    const p = PATH.find((x) => x.id === display.path) ?? PATH[0];
     const { steps, next } = pathSteps(p, finished, (id) => accessible(STORIES.findIndex((x) => x.id === id)));
-    const done = steps.filter((e) => e.state === 'fait').length;
+    const done = steps.filter((e) => e.state === 'done').length;
     descriptionPath.textContent = typo(t(`path-${p.id}.description`));
     progressPath.textContent = done === steps.length ? t('path-finished') : t('path-progress', { finished: done, total: steps.length });
     pathList.replaceChildren(
       ...steps.map((e, i) => {
         const state =
-          e.state === 'fait'
+          e.state === 'done'
             ? t('path-done')
-            : e.state === 'sans-cle'
+            : e.state === 'no-key'
               ? t('path-without-key')
-              : e.state === 'verrouille'
+              : e.state === 'locked'
                 ? t('path-locked', { chapter: t(`chapter-${e.before}`) })
                 : i === next
                   ? t('path-next')
                   : t('path-open');
         const b = el(
           'button',
-          { type: 'button', 'data-h': String(e.h), 'data-c': String(e.c), 'data-etat': e.state },
-          el('span', { class: 'titre' }, t(`chapter-${e.chapter}`)),
-          el('span', { class: 'resume' }, t('path-in', { story: storyTitle(e.h) })),
+          { type: 'button', 'data-h': String(e.h), 'data-c': String(e.c), 'data-state': e.state },
+          el('span', { class: 'title' }, t(`chapter-${e.chapter}`)),
+          el('span', { class: 'abstract' }, t('path-in', { story: storyTitle(e.h) })),
           level(difficulty(e.chapter)),
-          el('span', { class: 'etat' }, state),
+          el('span', { class: 'state' }, state),
         );
-        b.disabled = e.state === 'verrouille' || e.state === 'sans-cle';
-        b.toggleAttribute('data-prochain', i === next);
+        b.disabled = e.state === 'locked' || e.state === 'no-key';
+        b.toggleAttribute('data-next', i === next);
         b.setAttribute('aria-current', String(e.h === story() && e.c === active()));
         return el('li', {}, b);
       }),
@@ -589,20 +589,20 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     storiesBoutons.forEach((b, h) => {
       b.setAttribute('aria-current', String(h === story()));
       b.disabled = !accessible(h);
-      // Les histoires sans leur clé sont grisées : on avance de l'une à l'autre.
-      b.toggleAttribute('data-verrouillee', !accessible(h));
+      // Stories without their key are greyed out: the player moves from one to the next.
+      b.toggleAttribute('data-locked', !accessible(h));
       const done = chapters(h).filter((c) => finished.includes(c.id)).length;
       const next = chapters(h).findIndex((c) => !finished.includes(c.id));
       b.querySelectorAll('.diode').forEach((d, c) => {
-        d.classList.toggle('allumee', finished.includes(chapters(h)[c].id));
-        d.classList.toggle('en-cours', accessible(h) && c === next);
+        d.classList.toggle('lit', finished.includes(chapters(h)[c].id));
+        d.classList.toggle('in-progress', accessible(h) && c === next);
       });
       const total = chapters(h).length;
-      // L'état de la machine sur la carte : son câble et son cadre s'allument.
-      b.parentElement!.dataset.etat = !accessible(h) ? 'verrouillee' : done === chapters(h).length ? 'terminee' : done > 0 || h === story() ? 'en-cours' : 'ouverte';
-      // Verrouillée : les chapitres qui manquent encore pour en recevoir la clé.
+      // The machine's state on the map: its cable and frame light up.
+      b.parentElement!.dataset.state = !accessible(h) ? 'locked' : done === chapters(h).length ? 'finished' : done > 0 || h === story() ? 'in-progress' : 'open';
+      // Locked: the chapters still missing to receive its key.
       const rest = missing(STORIES[h].id, finished);
-      b.querySelector('.etat')!.textContent = !accessible(h)
+      b.querySelector('.state')!.textContent = !accessible(h)
         ? rest.length
           ? t('state-key-after', { chapters: new Intl.ListFormat(t.language, { type: 'conjunction' }).format(rest.map((c) => t('state-key-chapter', { title: t(`chapter-${c}`) }))) })
           : t('state-key-missing')
@@ -612,21 +612,21 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
             ? t('state-chapters-done', { finished: done, total })
             : '';
     });
-    keyHelp.hidden = storiesBoutons.every((b) => !b.disabled) || display.vue === 'parcours';
+    keyHelp.hidden = storiesBoutons.every((b) => !b.disabled) || display.view === 'paths';
     pathUpdate();
     chaptersNavs.forEach((nav, h) => {
       nav.hidden = h !== story() || chapters(h).length < 2;
-      nav.querySelectorAll<HTMLButtonElement>('[data-chapitre]').forEach((b, c) => {
+      nav.querySelectorAll<HTMLButtonElement>('[data-chapter]').forEach((b, c) => {
         b.disabled = !open(h, c);
         b.setAttribute('aria-current', String(h === story() && c === active()));
-        b.querySelector('.etat')!.textContent = finished.includes(chapters(h)[c].id)
+        b.querySelector('.state')!.textContent = finished.includes(chapters(h)[c].id)
           ? t('state-chapter-finished')
           : open(h, c)
             ? ''
             : t('state-locked');
       });
     });
-    // « Chapitre suivant » : après un chapitre fini, s'il en reste un.
+    // "Next chapter": after a finished chapter, if one remains.
     const h = story();
     end.hidden = !(h >= 0 && gameTerminal.remote!.shell.finished && active() < chapters(h).length - 1);
     const links = h >= 0 && gameTerminal.remote!.shell.finished ? rouagesLinks(gameTerminal.remote!.shell.chapter.id) : [];
@@ -645,12 +645,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     listNotebook.replaceChildren(
       ...names.flatMap((name) => [
         el('dt', {}, el('code', {}, name)),
-        el('dd', {}, typo(description(name, t)), ' ', el('code', { class: 'exemple' }, notebook[name].line)),
+        el('dd', {}, typo(description(name, t)), ' ', el('code', { class: 'example' }, notebook[name].line)),
       ]),
     );
   };
 
-  // mm:ss (ou h:mm:ss) : des chiffres, comme un chronomètre.
+  // mm:ss (or h:mm:ss): digits, like a stopwatch.
   const minutes = (ms: number) => {
     const s = Math.floor(ms / 1000);
     const h = Math.floor(s / 3600);
@@ -664,30 +664,30 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (examStart !== null) timerUpdate();
     if (onCall) onCallUpdate();
   }, 1000);
-  // Fin du chapitre en mode examen : le temps, et le record de ce navigateur.
+  // End of the chapter in exam mode: the time, and this browser's record.
   const examEnd = () => {
     if (examStart === null || !gameTerminal.remote?.shell.finished) return;
     const id = gameTerminal.remote.shell.chapter.id;
     const time = Date.now() - examStart;
     const old = records[id];
     if (old === undefined || time < old) records[id] = time;
-    show(t(old === undefined || time < old ? 'exam-finished-record' : 'exam-finished', { time: minutes(time), record: minutes(records[id]) }), 'examen-resultat');
+    show(t(old === undefined || time < old ? 'exam-finished-record' : 'exam-finished', { time: minutes(time), record: minutes(records[id]) }), 'exam-result');
     examStart = null;
     timerUpdate();
   };
 
-  // Les succès obtenus par la dernière ligne (sh : sa session ; null : hors d'une ligne).
+  // The achievements earned by the last line (sh: its session; null: outside a line).
   const checkAchievements = (sh: Shell | null) => {
     for (const id of newAchievements({ sh, finished, notebook, records }, achievements)) {
       achievements[id] = new Date().toISOString();
-      show(t('achievements-obtained', { name: t(`achievements-${id}`) }), 'succes');
+      show(t('achievements-obtained', { name: t(`achievements-${id}`) }), 'achievements');
     }
     achievementsUpdate();
   };
   const achievementsUpdate = () => {
     achievementsButton.textContent = t('achievements-button', { earned: Object.keys(achievements).length, total: ACHIEVEMENTS.length });
   };
-  // Le bilan : le temps passé se compte depuis la première fois qu'on voit le chapitre en cours.
+  // The summary: time spent counts from the first time the current chapter is seen.
   const debuts = new WeakMap<Shell, number>();
   const inCourse = new WeakSet<Shell>();
   const doneSummary = new WeakSet<Shell>();
@@ -713,8 +713,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
               'tr',
               {},
               el('th', { scope: 'row' }, String(i + 1)),
-              el('td', { 'data-titre': t('summary-col-you') }, e.line === null ? el('span', { class: 'bilan-autrement' }, t('summary-otherwise')) : el('code', {}, e.line)),
-              el('td', { 'data-titre': t('summary-col-reference') }, typo(e.solution)),
+              el('td', { 'data-title': t('summary-col-you') }, e.line === null ? el('span', { class: 'summary-other' }, t('summary-otherwise')) : el('code', {}, e.line)),
+              el('td', { 'data-title': t('summary-col-reference') }, typo(e.solution)),
             ),
           ),
         ),
@@ -727,13 +727,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (!sh) return;
     if (!debuts.has(sh)) debuts.set(sh, Date.now());
     if (!sh.finished) inCourse.add(sh);
-    // Un chapitre qu'on a vu en cours et qui vient de finir : son bilan, une fois.
+    // A chapter seen in progress that has just finished: its summary, once.
     if (!sh.finished || !inCourse.has(sh) || doneSummary.has(sh)) return;
     doneSummary.add(sh);
     const recap = summaryText(sh);
-    const detail = el('button', { type: 'button', class: 'lien bouton-bilan', 'aria-haspopup': 'dialog' }, t('summary-button'));
+    const detail = el('button', { type: 'button', class: 'link summary-button', 'aria-haspopup': 'dialog' }, t('summary-button'));
     detail.addEventListener('click', () => openSummary(sh, recap));
-    output.appendChild(el('p', { class: 'bilan' }, recap, ' ', detail));
+    output.appendChild(el('p', { class: 'summary' }, recap, ' ', detail));
   };
   closeSummary.addEventListener('click', () => summaryWindow.close());
   summaryWindow.addEventListener('close', () => setTimeout(() => input.focus()));
@@ -750,7 +750,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     terminal.scrollTop = terminal.scrollHeight;
   };
 
-  // Les raccourcis du menu : un écran neuf, directement sur la bonne machine.
+  // The menu's shortcuts: a fresh screen, straight on the right machine.
   const goWorkstation = () => {
     followEnd();
     examStart = null;
@@ -767,9 +767,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const chapter = c === undefined ? undefined : chapters(h)[c];
     if (gameTerminal.remote?.story === STORIES[h] && chapter) show(gameTerminal.open(chapter));
     else show(gameTerminal.connect(storyMachine(STORIES[h].id)!.name, chapter));
-    // En mode examen, un chapitre qui (re)commence lance le chrono ; un chapitre déjà fini, non.
+    // In exam mode, a chapter that (re)starts starts the timer; an already finished chapter doesn't.
     examStart = gameTerminal.exam && !gameTerminal.remote?.shell.finished ? Date.now() : null;
-    if (examStart !== null) show(t('exam-start'), 'examen-resultat');
+    if (examStart !== null) show(t('exam-start'), 'exam-result');
     timerUpdate();
     after();
   };
@@ -777,7 +777,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const line = input.value;
-    // Un mot de passe ne s'affiche pas et ne va pas dans l'historique.
+    // A password is not displayed and doesn't go into the history.
     const secret = gameTerminal.shell.maskedInput();
     const response = secret || gameTerminal.shell.question !== null;
     if (secret) show(prompt.textContent ?? '', 'cmd');
@@ -786,31 +786,31 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     position = history.length;
     const shell = gameTerminal.shell;
     const hostBefore = shell.host;
-    // La taille du texte a pu changer (A+, A−) : la largeur en caractères aussi.
+    // The text size may have changed (A+, A−): so has the width in characters.
     columnsUpdate();
     const result = gameTerminal.execute(line);
-    // Une réponse à une question (un mot de passe…) n'est pas une commande pour le carnet.
+    // An answer to a question (a password…) is not a command for the notebook.
     if (!response) note(notebook, shell);
     const lineFor = response ? null : shell;
     if (result === null) output.replaceChildren(measure);
     else show(result);
-    // Les mises en scène : la connexion à une autre machine, le redémarrage.
-    if (gameTerminal.shell.host !== hostBefore) putInScene(shell.last.commands.some((c) => c.includes('reboot')) ? 'reboot' : 'connexion');
+    // The staging: connecting to another machine, rebooting.
+    if (gameTerminal.shell.host !== hostBefore) putInScene(shell.last.commands.some((c) => c.includes('reboot')) ? 'reboot' : 'connection');
     input.value = '';
     after(lineFor);
     openEditor();
     openFollow();
   });
 
-  // Un suivi (tail -f, journalctl -f) : l'écran fait passer le temps sur la
-  // machine (SUIVI_SECONDES par seconde réelle) et affiche ce qui arrive.
+  // A follow (tail -f, journalctl -f): the screen makes time pass on the
+  // machine (SECONDS_FOLLOW per real second) and shows what arrives.
   let followTimer: number | null = null;
   const followEnd = () => {
     if (followTimer !== null) clearInterval(followTimer);
     followTimer = null;
     followStop.hidden = true;
     form.hidden = false;
-    if (touchesBar.dataset.mode === 'suivi') delete touchesBar.dataset.mode;
+    if (touchesBar.dataset.mode === 'follow') delete touchesBar.dataset.mode;
   };
   const stopFollow = () => {
     if (followTimer === null) return;
@@ -822,13 +822,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const openFollow = () => {
     if (!gameTerminal.follows) return;
     form.hidden = true;
-    touchesBar.dataset.mode = 'suivi';
+    touchesBar.dataset.mode = 'follow';
     followStop.hidden = false;
     followStop.focus();
     followTimer = window.setInterval(() => {
       const fresh = gameTerminal.follow(SECONDS_FOLLOW);
       if (!fresh) return;
-      show(fresh, 'suivi');
+      show(fresh, 'follow');
       after();
     }, 1000);
   };
@@ -840,7 +840,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     }
   });
 
-  // nano : l'éditeur prend la place de la ligne de commande jusqu'à ^X.
+  // nano: the editor takes the place of the command line until ^X.
   const openEditor = () => {
     const edition = gameTerminal.edition;
     if (!edition) return;
@@ -887,7 +887,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     search();
     colourInput();
   });
-  // Après une touche (Tab, ↑, Ctrl-R…), la ligne a pu changer ; le champ a pu défiler.
+  // After a key (Tab, ↑, Ctrl-R…), the line may have changed; the field may have scrolled.
   input.addEventListener('keydown', () => setTimeout(colourInput));
   for (const event of ['scroll', 'select', 'keyup', 'click']) input.addEventListener(event, () => (coloration.scrollLeft = input.scrollLeft));
   input.addEventListener('keydown', (e) => {
@@ -911,7 +911,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       if (e.key === 'Enter' || e.key.startsWith('Arrow') || e.key === 'Tab') finishSearch(true);
       if (e.key === 'Enter') return;
     }
-    // Ctrl-C sans rien de sélectionné : la ligne est abandonnée, comme dans bash.
+    // Ctrl-C with nothing selected: the line is abandoned, as in bash.
     if (e.ctrlKey && e.key.toLowerCase() === 'c' && input.selectionStart === input.selectionEnd) {
       e.preventDefault();
       show(`${prompt.textContent} ${input.value}^C`, 'cmd');
@@ -923,7 +923,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       e.preventDefault();
       const before = input.value;
       input.value = gameTerminal.complete(before);
-      // Comme bash : un deuxième Tab sans rien de plus à compléter montre les possibilités.
+      // Like bash: a second Tab with nothing more to complete shows the possibilities.
       if (input.value === before && previousTab === before) {
         const listing = gameTerminal.suggestions(before);
         if (listing) {
@@ -946,11 +946,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     }
   });
 
-  // Copier-coller comme dans la plupart des terminaux Linux : le texte
-  // sélectionné est copié, le clic droit (ou celui du milieu) le colle.
-  // Maj + clic droit garde le menu du navigateur. Au doigt (ou au stylet),
-  // l'appui long sélectionne le texte et ouvre le menu du téléphone : le jeu
-  // n'y touche pas (un appui long envoie lui aussi contextmenu).
+  // Copy and paste as in most Linux terminals: the selected text is
+  // copied, the right click (or the middle one) pastes it.
+  // Shift + right click keeps the browser's menu. With a finger (or a stylus),
+  // a long press selects the text and opens the phone's menu: the game
+  // leaves it alone (a long press also sends contextmenu).
   let pointer = 'mouse';
   terminal.addEventListener('pointerdown', (e) => (pointer = e.pointerType), { passive: true });
   const mouse = (e: MouseEvent) => ((e as PointerEvent).pointerType || pointer) === 'mouse';
@@ -969,7 +969,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (!text) text = (await navigator.clipboard?.readText().catch(() => '')) ?? '';
     if (!text) return;
     const nano = terminal.querySelector('textarea');
-    // Dans nano, le texte garde ses lignes ; sur la ligne de commande, il tient sur une ligne.
+    // In nano, the text keeps its lines; on the command line, it fits on one line.
     const target = nano ?? input;
     if (!nano) text = text.replace(/\s*\n\s*/g, ' ').trim();
     const start = target.selectionStart ?? target.value.length;
@@ -994,7 +994,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     input.focus();
   });
   pathChoice.addEventListener('change', () => {
-    display.parcours = pathChoice.value;
+    display.path = pathChoice.value;
     applyDisplay();
   });
   workstationButton.addEventListener('click', () => {
@@ -1008,7 +1008,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     }),
   );
   chaptersNavs.forEach((nav, h) =>
-    nav.querySelectorAll<HTMLButtonElement>('[data-chapitre]').forEach((b, c) =>
+    nav.querySelectorAll<HTMLButtonElement>('[data-chapter]').forEach((b, c) =>
       b.addEventListener('click', () => {
         launch(h, c);
         input.focus();
@@ -1019,7 +1019,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     launch(story(), active() + 1);
     input.focus();
   });
-  // Le carnet s'emporte : un fichier Markdown, ou le presse-papiers.
+  // The notebook can be taken away: a Markdown file, or the clipboard.
   const markdown = () => inMarkdown(notebook, t, finished, playerName);
   exported.addEventListener('click', () => {
     const link = el('a', { href: URL.createObjectURL(new Blob([markdown()], { type: 'text/markdown' })), download: t('notebook-file') });
@@ -1032,22 +1032,22 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       .then(() => (stateNotebook.textContent = t('notebook-copy')))
       .catch(() => (stateNotebook.textContent = t('notebook-copy-impossible')));
   });
-  // ——— L'astreinte ———
-  // Les résultats des jours passés, dans ce navigateur (le meilleur de chaque jour).
-  const ON_CALL_KEY = `${KEY}-astreinte`;
+  // ——— On-call duty ———
+  // The results of past days, in this browser (the best of each day).
+  const ON_CALL_KEY = `${KEY}-on-call`;
   type Result = { chapter: string; remaining: number; time: number; hints: number; errors: number };
   let results: Record<string, Result> = {};
   try {
     results = JSON.parse(localStorage.getItem(ON_CALL_KEY) ?? '{}') ?? {};
   } catch {}
-  // La date du jour (AAAA-MM-JJ, heure locale) : la même partout le même jour.
+  // Today's date (YYYY-MM-DD, local time): the same everywhere on the same day.
   const today = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
   const longDate = (iso: string) => new Intl.DateTimeFormat(t.language, { dateStyle: 'long' }).format(new Date(`${iso}T12:00:00`));
   let onCall: { date: string; chapter: string; start: number; sh: Shell | null; epuise: boolean } | null = null;
-  // L'incident du jour est tiré parmi les histoires déjà ouvertes (null : aucune encore).
+  // The incident of the day is drawn among the stories already open (null: none yet).
   const incident = (date = today()) => dayIncident(date, (h) => gameTerminal.isOpen(h));
   const incidentUpdate = () => {
     const id = incident();
@@ -1073,19 +1073,19 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const date = today();
     const chapter = incident(date);
     if (!chapter) return;
-    // D'astreinte, les indices sont permis (ils coûtent) : pas de mode examen.
+    // On call, hints are allowed (they cost points): no exam mode.
     examCase.checked = false;
     gameTerminal.exam = false;
     const { h, c } = placeFor(chapter);
     launch(h, c);
     onCall = { date, chapter, start: Date.now(), sh: gameTerminal.remote?.shell ?? null, epuise: false };
-    // Pendant l'astreinte, pas de seconde astreinte : le bouton revient à la fin (ou à l'abandon).
+    // During on-call duty, no second on-call: the button comes back at the end (or on giving up).
     incidentButton.disabled = true;
-    show(t('on-call-start'), 'succes');
+    show(t('on-call-start'), 'achievements');
     onCallUpdate();
     input.focus();
   });
-  // À chaque seconde et après chaque commande : la jauge, l'abandon, la fin.
+  // Every second and after each command: the gauge, giving up, the end.
   const onCallUpdate = () => {
     if (!onCall) {
       onCallGauge.hidden = true;
@@ -1093,7 +1093,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       return;
     }
     const here = gameTerminal.remote?.shell;
-    // Un autre chapitre ouvert : l'astreinte est abandonnée (passer par le poste, non).
+    // Another chapter opened: on-call duty is abandoned (going through the workstation is not).
     if (here && here.chapter.id !== onCall.chapter) {
       onCall = null;
       show(t('on-call-abandon'));
@@ -1106,13 +1106,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const remaining = remainingBudget(elapsed, sh.requestsHints.size, sh.commandsInError);
     onCallGauge.hidden = false;
     onCallGauge.textContent = t('on-call-gauge', { time: minutes(remaining), percent: percent(remaining) });
-    onCallGauge.classList.toggle('bas', remaining < 5 * 60 * 1000);
+    onCallGauge.classList.toggle('low', remaining < 5 * 60 * 1000);
     if (remaining === 0 && !onCall.epuise) {
       onCall.epuise = true;
-      show(t('on-call-exhausted'), 'examen-resultat');
+      show(t('on-call-exhausted'), 'exam-result');
     }
     if (!sh.finished) return;
-    // L'incident est réglé : le résultat (le meilleur du jour est gardé), puis la carte de score.
+    // The incident is solved: the result (the day's best is kept), then the score card.
     const r: Result = { chapter: onCall.chapter, remaining, time: elapsed, hints: sh.requestsHints.size, errors: sh.commandsInError };
     const before = results[onCall.date];
     if (!before || r.remaining > before.remaining) results[onCall.date] = r;
@@ -1146,7 +1146,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const applyExam = (yes: boolean) => {
     examCase.checked = yes;
     gameTerminal.exam = yes;
-    // Le chapitre en cours recommence : en examen, sur une machine neuve et chrono à zéro.
+    // The current chapter restarts: in exam mode, on a fresh machine with the timer at zero.
     if (story() >= 0) launch(story(), active());
     else after();
   };
@@ -1154,7 +1154,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   examCase.addEventListener('change', () => {
     const wanted = examCase.checked;
     const sh = gameTerminal.remote?.shell;
-    // Un chapitre commencé et pas fini : on demande avant de le faire recommencer.
+    // A chapter started and not finished: ask before restarting it.
     const inCourse = !!sh && !sh.finished && (gameTerminal.not ?? 1) > 0;
     if (!inCourse) return applyExam(wanted);
     examCase.checked = !wanted;
@@ -1171,20 +1171,20 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   });
   notExam.addEventListener('click', () => examWindow.close());
   examWindow.addEventListener('close', () => setTimeout(() => input.focus()));
-  // Un lieu de la carte : son nom, ses repères en toutes lettres (lus aussi
-  // par les lecteurs d'écran), puis les lieux qu'il contient.
+  // A place on the map: its name, its markers in plain words (also read
+  // by screen readers), then the places it contains.
   const drawPlace = (l: Place): HTMLElement => {
     const landmarks = [l.home && t('map-home'), l.closed && t('map-closed'), !l.visit && t('map-preview')].filter(Boolean).join(', ');
     return el(
       'li',
-      { class: [l.visit ? 'visite' : 'apercu', l.here ? 'ici' : ''].join(' ').trim(), ...(l.here ? { 'aria-current': 'location' } : {}) },
-      el('span', { class: 'nom' }, l.name === '/' ? '/' : `${l.name}/`),
-      ...(landmarks ? [' ', el('span', { class: 'reperes' }, `(${landmarks})`)] : []),
-      ...(l.here ? [' ', el('strong', { class: 'vous-etes-ici' }, t('map-here'))] : []),
+      { class: [l.visit ? 'visited' : 'preview', l.here ? 'here' : ''].join(' ').trim(), ...(l.here ? { 'aria-current': 'location' } : {}) },
+      el('span', { class: 'name' }, l.name === '/' ? '/' : `${l.name}/`),
+      ...(landmarks ? [' ', el('span', { class: 'markers' }, `(${landmarks})`)] : []),
+      ...(l.here ? [' ', el('strong', { class: 'you-are-here' }, t('map-here'))] : []),
       ...(l.children.length ? [el('ul', {}, ...l.children.map(drawPlace))] : []),
     );
   };
-  // Le plan du réseau : un schéma (arbre couché, une colonne par niveau) et la même chose en liste.
+  // The network plan: a diagram (a sideways tree, one column per level) and the same thing as a list.
   const SVG = 'http://www.w3.org/2000/svg';
   const svg = (name: string, attrs: Record<string, string>, ...children: (Node | string)[]) => {
     const e = document.createElementNS(SVG, name);
@@ -1198,7 +1198,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const Y_DIFFERENCE = 22;
   const classesPlan = (e: ElementPlan, here: string, visited: Set<string>) => {
     const r = planLandmarks(e, here, visited);
-    return [e.role, r.here ? 'ici' : '', e.host && !r.visit ? 'pas-visite' : ''].filter(Boolean).join(' ');
+    return [e.role, r.here ? 'here' : '', e.host && !r.visit ? 'not-visited' : ''].filter(Boolean).join(' ');
   };
   const drawPlan = (root: ElementPlan, here: string, visited: Set<string>) => {
     const { places, columns, lines } = layOut(root);
@@ -1212,7 +1212,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
         const forEachOf = p.parent!;
         const middle = x(forEachOf.column) + WIDTH + X_DIFFERENCE / 2;
         return svg('path', {
-          class: p.element.tunnel ? 'lien tunnel' : 'lien',
+          class: p.element.tunnel ? 'link tunnel' : 'link',
           d: `M${x(forEachOf.column) + WIDTH} ${y(forEachOf.line) + HEIGHT / 2} H${middle} V${y(p.line) + HEIGHT / 2} H${x(p.column)}`,
         });
       });
@@ -1222,13 +1222,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       const by = y(p.line);
       return svg(
         'g',
-        { class: `boite ${classesPlan(e, here, visited)}` },
+        { class: `box ${classesPlan(e, here, visited)}` },
         svg('rect', { x: String(bx), y: String(by), width: String(WIDTH), height: String(HEIGHT), rx: e.role === 'internet' ? '27' : '6' }),
-        // Un nom seul (Internet) se centre dans sa boîte.
-        svg('text', { x: String(bx + 10), y: String(by + (e.address || e.note ? 19 : HEIGHT / 2 + 5)), class: 'nom' }, e.name),
-        ...(e.address ? [svg('text', { x: String(bx + 10), y: String(by + 34), class: 'adresse' }, e.address)] : []),
+        // A name alone (Internet) is centred in its box.
+        svg('text', { x: String(bx + 10), y: String(by + (e.address || e.note ? 19 : HEIGHT / 2 + 5)), class: 'name' }, e.name),
+        ...(e.address ? [svg('text', { x: String(bx + 10), y: String(by + 34), class: 'address' }, e.address)] : []),
         ...(e.note ? [svg('text', { x: String(bx + 10), y: String(by + 48), class: 'note' }, e.note)] : []),
-        ...(planLandmarks(e, here, visited).here ? [svg('text', { x: String(bx), y: String(by - 6), class: 'repere-ici' }, `▼ ${t('plan-here')}`)] : []),
+        ...(planLandmarks(e, here, visited).here ? [svg('text', { x: String(bx), y: String(by - 6), class: 'marker-here' }, `▼ ${t('plan-here')}`)] : []),
       );
     });
     return svg('svg', { viewBox: `0 0 ${width} ${height}`, width: String(width), height: String(height), 'aria-hidden': 'true', focusable: 'false' }, ...links, ...boites);
@@ -1239,10 +1239,10 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     return el(
       'li',
       { class: classesPlan(e, here, visited), ...(r.here ? { 'aria-current': 'location' } : {}) },
-      el('span', { class: 'nom' }, e.name),
+      el('span', { class: 'name' }, e.name),
       ...(e.address ? [' ', el('code', {}, e.address)] : []),
-      ...(notes ? [' ', el('span', { class: 'reperes' }, `(${notes})`)] : []),
-      ...(r.here ? [' ', el('strong', { class: 'vous-etes-ici' }, `← ${t('plan-here')}`)] : []),
+      ...(notes ? [' ', el('span', { class: 'markers' }, `(${notes})`)] : []),
+      ...(r.here ? [' ', el('strong', { class: 'you-are-here' }, `← ${t('plan-here')}`)] : []),
       ...(e.children?.length ? [el('ul', {}, ...e.children.map((x) => drawElement(x, here, visited)))] : []),
     );
   };
@@ -1256,7 +1256,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   };
   placesTab.addEventListener('click', () => chooseTab(false));
   networkTab.addEventListener('click', () => chooseTab(true));
-  // Les flèches passent d'un onglet à l'autre (comme dans toute liste d'onglets).
+  // The arrow keys move from one tab to another (as in any tab list).
   tabs.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const network = placesTab.getAttribute('aria-selected') === 'true';
@@ -1267,45 +1267,45 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   mapButton.addEventListener('click', () => {
     const sh = gameTerminal.shell;
     titleMap.textContent = t('map-title', { machine: sh.host });
-    treeMap.replaceChildren(el('ul', { class: 'arbre' }, drawPlace(map(sh))));
+    treeMap.replaceChildren(el('ul', { class: 'tree' }, drawPlace(map(sh))));
     const plan = gameTerminal.remote?.shell.chapter.plan?.(t);
     tabs.hidden = !plan;
     if (plan) {
       planSchema.replaceChildren(drawPlan(plan, sh.host, gameTerminal.visited));
-      listPlan.replaceChildren(el('ul', { class: 'arbre' }, drawElement(plan, sh.host, gameTerminal.visited)));
-      // Sur un petit écran, le schéma défile dans sa boîte : la liste s'ouvre d'office.
+      listPlan.replaceChildren(el('ul', { class: 'tree' }, drawElement(plan, sh.host, gameTerminal.visited)));
+      // On a small screen, the diagram scrolls in its box: the list opens by default.
       textPlan.open = matchMedia('(max-width: 40rem)').matches;
     }
     chooseTab(false);
     mapWindow.showModal();
-    mapWindow.querySelector('.ici')?.scrollIntoView({ block: 'center' });
+    mapWindow.querySelector('.here')?.scrollIntoView({ block: 'center' });
   });
-  // La fenêtre fermée (bouton ou Échap), on reprend la ligne de commande :
-  // après que le navigateur a rendu le focus au bouton qui l'avait ouverte.
+  // Once the dialog is closed (button or Escape), the command line gets focus back:
+  // after the browser has returned focus to the button that opened it.
   closeMap.addEventListener('click', () => mapWindow.close());
   mapWindow.addEventListener('close', () => setTimeout(() => input.focus()));
-  // La barre de touches : chaque bouton agit sur la ligne sans lui prendre le
-  // focus (le clavier du téléphone reste ouvert).
+  // The key bar: each button acts on the line without taking its
+  // focus (the phone's keyboard stays open).
   touchesBar.addEventListener('pointerdown', (e) => {
     if ((e.target as HTMLElement).closest('button')) e.preventDefault();
   });
   touchesBar.addEventListener('click', (e) => {
-    const pressedKey = (e.target as HTMLElement).closest('button')?.dataset.touche;
+    const pressedKey = (e.target as HTMLElement).closest('button')?.dataset.key;
     if (!pressedKey) return;
-    // Pendant un suivi (tail -f), Ctrl-C l'arrête.
+    // During a follow (tail -f), Ctrl-C stops it.
     if (followTimer !== null) {
       if (pressedKey === 'ctrl-c') stopFollow();
       return;
     }
-    // Dans nano, ^O, ^X et ^C vont à l'éditeur, comme tapés au clavier.
-    const zone = terminal.querySelector<HTMLTextAreaElement>('.nano-texte');
+    // In nano, ^O, ^X and ^C go to the editor, as if typed on the keyboard.
+    const zone = terminal.querySelector<HTMLTextAreaElement>('.nano-text');
     if (form.hidden) {
       if (zone && pressedKey.startsWith('ctrl-')) zone.dispatchEvent(new KeyboardEvent('keydown', { key: pressedKey.slice(5), ctrlKey: true, bubbles: true, cancelable: true }));
       return;
     }
     if (pressedKey.length === 1) {
-      // Comme une frappe : le clavier du téléphone (et sa saisie en cours) le voit passer,
-      // et la ligne colorée est redessinée tout de suite (événement input).
+      // Like a keystroke: the phone's keyboard (and its ongoing input) sees it go by,
+      // and the coloured line is redrawn at once (input event).
       input.focus();
       if (!document.execCommand?.('insertText', false, pressedKey)) {
         input.setRangeText(pressedKey, input.selectionStart ?? input.value.length, input.selectionEnd ?? input.value.length, 'end');
@@ -1318,7 +1318,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     }
     input.focus();
   });
-  // La mission du chapitre en cours.
+  // The current chapter's mission.
   missionButton.addEventListener('click', () => {
     const sh = gameTerminal.remote?.shell;
     const c = sh?.chapter;
@@ -1327,13 +1327,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     instructionsMission.textContent = (sh ?? gameTerminal.workstation).read(`${(sh ?? gameTerminal.workstation).home}/${(sh ?? gameTerminal.workstation).welcome}`) ?? '';
     const log = sh?.log ?? [];
     emptyMission.hidden = log.length > 0;
-    logMission.replaceChildren(...log.map((m) => el('li', {}, el('pre', { class: 'mission-texte' }, m))));
+    logMission.replaceChildren(...log.map((m) => el('li', {}, el('pre', { class: 'mission-text' }, m))));
     helpUpdate();
     rescueUpdate();
     missionWindow.showModal();
   });
   closeMission.addEventListener('click', () => missionWindow.close());
-  // L'instantané pris : sa série (l'ouverture du chapitre) et le nombre de saisies rejouées.
+  // The snapshot taken: its series (the chapter's opening) and the number of inputs replayed.
   let snapshot: { serial: number; not: number } | null = null;
   const rescueUpdate = () => {
     const sh = gameTerminal.remote?.shell;
@@ -1359,7 +1359,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     snapshot = { serial: gameTerminal.serial, not };
     rescueUpdate();
   });
-  // Revenir en arrière : la machine du chapitre est rejouée jusqu'à ce point ; le temps du bilan continue.
+  // Going back: the chapter's machine is replayed up to this point; the summary's time keeps running.
   const restore = (not: number) => {
     const old = gameTerminal.remote?.shell;
     followEnd();
@@ -1370,9 +1370,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (doneSummary.has(old) && fresh.finished) doneSummary.add(fresh);
     missionWindow.close();
     output.replaceChildren(measure);
-    show(t('rescue-restored', { steps: not }), 'succes');
+    show(t('rescue-restored', { steps: not }), 'achievements');
     after();
-    // Revenu au milieu d'un tail -f : il continue.
+    // Back in the middle of a tail -f: it continues.
     openFollow();
   };
   goBackSnapshot.addEventListener('click', () => snapshot && restore(snapshot.not));
@@ -1380,54 +1380,54 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const not = gameTerminal.not;
     if (not) restore(not - 1);
   });
-  // L'aide du chapitre en cours : les niveaux déjà ouverts pour cette étape restent visibles.
+  // Help for the current chapter: the levels already opened for this step stay visible.
   const helpUpdate = () => {
     const sh = gameTerminal.remote?.shell;
     help.hidden = !sh || gameTerminal.exam || sh.finished;
     if (help.hidden || !sh) return;
     const i = hint(sh);
-    const openSet = HINT_LEVELS.filter((n) => sh.requestsHints.has(`${i.step ?? ''}:${n}`) || (n === 'manuel' && sh.requestsHints.has(`:${n}`)));
+    const openSet = HINT_LEVELS.filter((n) => sh.requestsHints.has(`${i.step ?? ''}:${n}`) || (n === 'manual' && sh.requestsHints.has(`:${n}`)));
     const blocks: HTMLElement[] = [];
-    if (openSet.includes('manuel')) blocks.push(el('p', {}, t('hint-manual', { pages: i.manual.map((c) => `man ${c}`).join(', ') })));
-    if (openSet.includes('piste') && i.lead) blocks.push(el('p', {}, typo(i.lead)));
-    if (openSet.includes('solution') && i.solution) blocks.push(el('pre', { class: 'mission-texte' }, i.solution));
-    if (!i.step && openSet.length < 3) blocks.push(el('p', { class: 'carte-legende' }, typo(t('hint-more-nothing'))));
+    if (openSet.includes('manual')) blocks.push(el('p', {}, t('hint-manual', { pages: i.manual.map((c) => `man ${c}`).join(', ') })));
+    if (openSet.includes('lead') && i.lead) blocks.push(el('p', {}, typo(i.lead)));
+    if (openSet.includes('solution') && i.solution) blocks.push(el('pre', { class: 'mission-text' }, i.solution));
+    if (!i.step && openSet.length < 3) blocks.push(el('p', { class: 'map-legend' }, typo(t('hint-more-nothing'))));
     hintText.replaceChildren(...blocks);
-    // Un niveau à la fois : le suivant s'ouvre quand le précédent a été lu.
+    // One level at a time: the next opens once the previous one has been read.
     HINT_LEVELS.forEach((n, k) => {
       const b = hintBoutons[n];
-      b.hidden = openSet.includes(n) || (k > 0 && !openSet.includes(HINT_LEVELS[k - 1])) || (n !== 'manuel' && !i.step);
+      b.hidden = openSet.includes(n) || (k > 0 && !openSet.includes(HINT_LEVELS[k - 1])) || (n !== 'manual' && !i.step);
     });
   };
   help.addEventListener('click', (e) => {
-    const n = (e.target as HTMLElement).closest('button')?.dataset.niveau as HintLevel | undefined;
+    const n = (e.target as HTMLElement).closest('button')?.dataset.level as HintLevel | undefined;
     const sh = gameTerminal.remote?.shell;
     if (!n || !sh) return;
-    sh.requestsHints.add(`${n === 'manuel' ? '' : (hint(sh).step ?? '')}:${n}`);
+    sh.requestsHints.add(`${n === 'manual' ? '' : (hint(sh).step ?? '')}:${n}`);
     helpUpdate();
     hintText.lastElementChild?.scrollIntoView({ block: 'nearest' });
   });
   missionWindow.addEventListener('close', () => setTimeout(() => input.focus()));
-  // ——— L'affichage du terminal ———
-  // Un réglage de ce navigateur seulement (pas de la progression).
+  // ——— The terminal's display ———
+  // A setting of this browser only (not of the progress).
   const applyDisplay = () => {
-    if (!THEMES.includes(display.theme)) display.theme = 'phosphore';
+    if (!THEMES.includes(display.theme)) display.theme = 'phosphor';
     display.size = Math.max(0, Math.min(SIZES.length - 1, Math.round(display.size) || 0));
     terminal.dataset.theme = display.theme;
-    terminal.style.setProperty('--qds-taille-terminal', `${SIZES[display.size]}rem`);
+    terminal.style.setProperty('--qds-terminal-size', `${SIZES[display.size]}rem`);
     themeChoice.value = display.theme;
-    if (!(VIEWS as readonly string[]).includes(display.vue)) display.vue = 'reseau';
-    storiesNav.dataset.vue = display.vue;
-    storiesList.hidden = display.vue === 'parcours';
-    pathBlock.hidden = display.vue !== 'parcours';
-    if (!PATH.some((p) => p.id === display.parcours)) display.parcours = PATH[0].id;
-    pathChoice.value = display.parcours;
+    if (!(VIEWS as readonly string[]).includes(display.view)) display.view = 'network';
+    storiesNav.dataset.view = display.view;
+    storiesList.hidden = display.view === 'paths';
+    pathBlock.hidden = display.view !== 'paths';
+    if (!PATH.some((p) => p.id === display.path)) display.path = PATH[0].id;
+    pathChoice.value = display.path;
     navUpdate();
     display.colours = display.colours !== false;
     gameTerminal.colours = display.colours;
     coloursButton.setAttribute('aria-pressed', String(display.colours));
     colourInput();
-    VIEWS.forEach((v) => viewBoutons[v].setAttribute('aria-pressed', String(v === display.vue)));
+    VIEWS.forEach((v) => viewBoutons[v].setAttribute('aria-pressed', String(v === display.view)));
     moreSmall.disabled = display.size === 0;
     moreGrand.disabled = display.size === SIZES.length - 1;
     try {
@@ -1436,7 +1436,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   };
   VIEWS.forEach((v) =>
     viewBoutons[v].addEventListener('click', () => {
-      display.vue = v;
+      display.view = v;
       applyDisplay();
     }),
   );
@@ -1456,7 +1456,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     display.size++;
     applyDisplay();
   });
-  // Le plein écran : le terminal (et sa barre de touches) prend toute la fenêtre ; Échap en sort.
+  // Full screen: the terminal (and its key bar) takes the whole window; Escape leaves it.
   const toggleFocus = (enabled: boolean) => {
     screen.classList.toggle('focus', enabled);
     focusButton.setAttribute('aria-pressed', String(enabled));
@@ -1468,16 +1468,16 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (e.key === 'Escape' && screen.classList.contains('focus') && !query) toggleFocus(false);
   });
   applyDisplay();
-  // Les mises en scène (sauf si le système demande moins d'animations) : une
-  // connexion qui s'établit, un écran qui s'éteint au redémarrage.
-  const putInScene = (what: 'connexion' | 'reboot') => {
+  // The staging (unless the system asks for less motion): a connection
+  // being established, a screen going dark on reboot.
+  const putInScene = (what: 'connection' | 'reboot') => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    terminal.classList.remove('scene-connexion', 'scene-reboot');
+    terminal.classList.remove('scene-connection', 'scene-reboot');
     void terminal.offsetWidth;
     terminal.classList.add(`scene-${what}`);
   };
-  terminal.addEventListener('animationend', () => terminal.classList.remove('scene-connexion', 'scene-reboot'));
-  // ——— Les succès et le grade ———
+  terminal.addEventListener('animationend', () => terminal.classList.remove('scene-connection', 'scene-reboot'));
+  // ——— Achievements and rank ———
   achievementsButton.addEventListener('click', () => {
     const current = grade(finished);
     const following = GRADES.find((g) => g.chapters > finished.length);
@@ -1492,11 +1492,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
         const visible = obtained || !x.cache;
         return el(
           'li',
-          { class: obtained ? 'obtenu' : 'a-obtenir' },
-          el('span', { class: 'succes-nom' }, `${obtained ? '🏆' : '·'} ${visible ? t(`achievements-${x.id}`) : t('achievements-cache')}`),
+          { class: obtained ? 'earned' : 'to-earn' },
+          el('span', { class: 'achievement-name' }, `${obtained ? '🏆' : '·'} ${visible ? t(`achievements-${x.id}`) : t('achievements-cache')}`),
           ' ',
-          el('span', { class: 'succes-description' }, visible ? typo(t(`achievements-${x.id}.description`)) : typo(t('achievements-cache.description'))),
-          ...(obtained ? [' ', el('span', { class: 'succes-date' }, t('achievements', { date: date(obtained) }))] : []),
+          el('span', { class: 'achievement-description' }, visible ? typo(t(`achievements-${x.id}.description`)) : typo(t('achievements-cache.description'))),
+          ...(obtained ? [' ', el('span', { class: 'achievement-date' }, t('achievements', { date: date(obtained) }))] : []),
         );
       }),
     );
@@ -1504,8 +1504,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   });
   closeAchievements.addEventListener('click', () => achievementsWindow.close());
   achievementsWindow.addEventListener('close', () => setTimeout(() => input.focus()));
-  // ——— Ma progression ———
-  // Une sauvegarde reprise (code ou fichier) : on l'écrit, puis le jeu repart d'elle.
+  // ——— My progress ———
+  // A restored save (code or file): it is written, then the game restarts from it.
   const resume = (s: Backup) => {
     try {
       localStorage.setItem(KEY, JSON.stringify(s));
@@ -1538,7 +1538,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       .then(() => (progressState.textContent = t('notebook-copy')))
       .catch(() => (progressState.textContent = t('notebook-copy-impossible')));
   });
-  // Le code ne donne que des chapitres terminés : on les ajoute, sans rien perdre d'ici.
+  // The code only gives finished chapters: they are added, losing nothing from here.
   const tryCode = () => {
     const read = readCode(codeField.value);
     if ('error' in read) {
@@ -1566,7 +1566,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
     progressState.textContent = t('progress-downloaded');
   });
-  // Le fichier remplace tout ce qui est gardé ici : on demande d'abord.
+  // The file replaces everything kept here: ask first.
   fileField.addEventListener('change', async () => {
     const file = fileField.files?.[0];
     if (!file) return;
@@ -1585,8 +1585,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     input.focus();
   });
 
-  // Au départ : l'histoire demandée par l'attribut, sinon celle où l'on
-  // s'était arrêté, sinon le poste.
+  // At start: the story requested by the attribute, otherwise the one where the
+  // player stopped, otherwise the workstation.
   const departure = STORIES.findIndex((h) => h.id === (options.story ?? saved.story));
   if (departure >= 0 && accessible(departure)) launch(departure);
   else goWorkstation();

@@ -1,12 +1,12 @@
-// Histoire « Le Datacenter » — chapitre « La nuit du redémarrage » :
-// services systemd. Après les mises à jour automatiques, le serveur a
-// redémarré cette nuit et le site est tombé : nginx avait été désactivé
-// (disable), et le catalogue (php-fpm) ne peut plus écrire son journal car
-// /var/log/catalogue appartient à root. Commandes : systemctl (status,
-// --failed, start, restart, enable --now), journalctl -u / -xeu, chown,
-// reboot. Objectif vérifié sur l'état : après un redémarrage lancé par le
-// joueur ou la joueuse, les deux services tournent, et on l'a vérifié.
-// Sources : https://www.freedesktop.org/software/systemd/man/latest/systemctl.html,
+// Story "Le Datacenter" — chapter "The reboot night": systemd services.
+// After the automatic updates, the server rebooted last night and the site
+// went down: nginx had been disabled (disable), and the catalogue (php-fpm)
+// can no longer write its log because /var/log/catalogue belongs to root.
+// Commands: systemctl (status, --failed, start, restart, enable --now),
+// journalctl -u / -xeu, chown, reboot. Objective checked on the state:
+// after a reboot started by the player, both services run, and this was
+// checked.
+// Sources: https://www.freedesktop.org/software/systemd/man/latest/systemctl.html,
 // https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
 
 import { d, f, accountsFiles, type Chapter } from '../world';
@@ -24,14 +24,14 @@ const nginx = [
 ];
 const catalogue = [{ pid: 835, user: 'root', cpu: 0.2, mem: 1.1, command: 'php-fpm: master process (/etc/php/8.2/fpm/php-fpm.conf)' }];
 
-// L'heure au format de php-fpm : « [19-Oct-2026 03:12:05] » (toujours en anglais).
+// The time in php-fpm's format: "[19-Oct-2026 03:12:05]" (always in English).
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const phpTime = (ms: number) => {
   const t = new Date(ms);
   return `[${String(t.getUTCDate()).padStart(2, '0')}-${MONTH[t.getUTCMonth()]}-${t.getUTCFullYear()} ${t.toISOString().slice(11, 19)}]`;
 };
 
-// php-fpm refuse de démarrer s'il ne peut pas écrire dans son dossier de journaux.
+// php-fpm refuses to start if it cannot write into its log folder.
 function checkCatalogue(j: Game): string[] | null {
   const n = j.find(LOGS);
   if (n && j.can(n, 'w', 'www-data') && j.can(n, 'x', 'www-data')) return null;
@@ -43,8 +43,8 @@ function checkCatalogue(j: Game): string[] | null {
   ];
 }
 
-// Vendredi : nginx tourne, Awa l'arrête et le désactive pour un test ;
-// nuit de lundi : redémarrage après les mises à jour, le catalogue échoue.
+// Friday: nginx runs, Awa stops and disables it for a test;
+// Monday night: reboot after the updates, the catalogue fails.
 function serverStory(description: string): Systemd {
   const sd = newSystemd('datacenter', Date.UTC(2026, 9, 16, 8, 0, 0), Date.UTC(2026, 9, 16, 17, 42, 0), {
     nginx: { description: NGINX, active: true, executable: 'nginx', process: nginx },
@@ -104,7 +104,7 @@ export const reboot: Chapter = {
           {
             log: d(
               {
-                // Après le « chown -R root: » de vendredi : php-fpm (www-data) ne peut plus y écrire.
+                // After Friday's "chown -R root:": php-fpm (www-data) can no longer write there.
                 catalogue: d({ 'error.log': f('', { lines: true, owner: 'root' }) }, undefined, root),
                 nginx: d(
                   { 'access.log': f(NGINX_LOG, { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' }) },

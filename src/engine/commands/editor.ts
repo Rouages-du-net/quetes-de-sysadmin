@@ -1,7 +1,7 @@
-// nano : un éditeur de texte minimal, comme GNU nano (https://www.nano-editor.org/dist/latest/nano.html).
-// La commande ouvre le fichier (jeu.edition) ; l'interface affiche l'éditeur
-// et appelle enregistrerEdition() (^O) et quitterEdition() (^X).
-// Les messages suivent la traduction française de nano.
+// nano: a minimal text editor, like GNU nano (https://www.nano-editor.org/dist/latest/nano.html).
+// The command opens the file (game.edition); the interface shows the editor
+// and calls saveEdition() (^O) and quitEdition() (^X).
+// The messages follow nano's French translation.
 
 import type { Command } from './index';
 import { content } from '../tools';
@@ -15,7 +15,7 @@ export const EDITOR: Record<string, Command> = {
       const n = game.find(target);
       const reason = game.block(target);
       if (reason) return game.error(reason);
-      if (n?.type === 'dossier') return game.error(game.t('nano-directory', { path: path }));
+      if (n?.type === 'directory') return game.error(game.t('nano-directory', { path: path }));
       let text = '';
       let message: string;
       if (!n) message = game.t('nano-new');

@@ -1,20 +1,17 @@
-// Histoire « Le Labo » — chapitre « Le redémarrage qui coince » : cette
-// nuit, le serveur a redémarré (un nouveau noyau) et ne s'en est pas remis.
-// Théo, bénévole, avait ajouté le disque USB des numérisations dans
-// /etc/fstab par son nom, /dev/sdc1, d'après un tutoriel suivi sur son
-// portable. Depuis le chapitre 3, sdc est un des disques de 4 To (dans
-// md2) : le disque USB s'appelle maintenant sde. systemd attend /dev/sdc1,
-// abandonne au bout de 90 secondes, et la machine s'arrête en mode secours.
-// On lit le journal (journalctl -xb), on trouve le disque par son UUID
-// (lsblk -f, blkid), on corrige fstab (UUID=…, nofail : Théo l'emporte
-// parfois), on vérifie (findmnt --verify, mount -a), on fait relire fstab à
-// systemd (daemon-reload), et on reprend le démarrage (systemctl default,
-// exit ou reboot).
-// Objectif vérifié sur l'état : fstab désigne le disque des scans par son
-// UUID (ou son étiquette), avec nofail, aucune ligne ne bloque plus le
-// démarrage, le disque est monté sur /srv/scans, et la machine a quitté le
-// mode secours.
-// Sources : fstab(5), systemd.mount(5), findmnt(8), blkid(8),
+// Story "The Lab" — chapter "The stuck reboot": last night, the server
+// rebooted (a new kernel) and did not recover. Théo, a volunteer, had added
+// the scans' USB disk to /etc/fstab by its name, /dev/sdc1, following a
+// tutorial on his laptop. Since chapter 3, sdc is one of the 4 TB disks (in
+// md2): the USB disk is now called sde. systemd waits for /dev/sdc1, gives
+// up after 90 seconds, and the machine stops in emergency mode.
+// We read the journal (journalctl -xb), find the disk by its UUID
+// (lsblk -f, blkid), fix fstab (UUID=…, nofail: Théo sometimes takes it
+// with him), check (findmnt --verify, mount -a), make systemd reread fstab
+// (daemon-reload), and resume booting (systemctl default, exit or reboot).
+// Objective checked on the state: fstab designates the scans disk by its
+// UUID (or its label), with nofail, no line blocks the boot any more, the
+// disk is mounted on /srv/scans, and the machine has left emergency mode.
+// Sources: fstab(5), systemd.mount(5), findmnt(8), blkid(8),
 // https://wiki.debian.org/fstab, https://www.freedesktop.org/software/systemd/man/latest/systemd-fstab-generator.html
 
 import { f, type Chapter } from '../world';
@@ -34,7 +31,7 @@ const BANNER = [
 
 const fstab = (j: Game) => j.read('/etc/fstab') ?? '';
 const scansLine = (j: Game) => readFstab(fstab(j)).inputs.find((e) => e.target === '/srv/scans');
-// La ligne des scans désigne le disque par ce qui ne change pas : son UUID ou son étiquette.
+// The scans line designates the disk by what does not change: its UUID or its label.
 const byId = (j: Game) => {
   const e = scansLine(j);
   return !!e && /^(UUID=|LABEL=|\/dev\/disk\/by-(uuid|label)\/)/.test(e.source) && resolveSource(st(j), e.source) === '/dev/sde1';
@@ -44,7 +41,7 @@ const healthy = (j: Game) => blocking(st(j), fstab(j)).length === 0 && readFstab
 const mounted = (j: Game) => ((j.state.mounts ?? []) as { path: string; name: string }[]).some((m) => m.path === '/srv/scans' && m.name === '/dev/sde1');
 const fstabOk = (j: Game) => byId(j) && withNofail(j) && healthy(j);
 
-// La machine s'arrête en mode secours : ce que systemd écrit au journal.
+// The machine stops in emergency mode: what systemd writes to the journal.
 function enterInRescue(j: Game): void {
   const sd = systemd(j)!;
   const e = blocking(st(j), j.state.fstabRead ?? fstab(j))[0];
@@ -62,11 +59,11 @@ function enterInRescue(j: Game): void {
   writeLog(sd, 'emergency.target', 'systemd', 1, 'Reached target emergency.target - Emergency Mode.');
   j.state.rescue = true;
   j.state.relapses = (j.state.relapses ?? 0) + 1;
-  // Rechute avec une fstab déjà juste : systemd n'a simplement pas relu le fichier.
+  // Relapse with an fstab already correct: systemd simply has not reread the file.
   if (fstabOk(j)) j.state.relapseWithoutReload = true;
 }
 
-// Au démarrage (reboot) : systemd lit fstab tel qu'il est sur le disque.
+// On boot (reboot): systemd reads fstab as it is on disk.
 function startMounts(j: Game): boolean {
   j.state.fstabRead = fstab(j);
   if (blocking(st(j), fstab(j)).length) {
@@ -78,7 +75,7 @@ function startMounts(j: Game): boolean {
   return true;
 }
 
-// systemctl default (ou exit) : systemd reprend le démarrage avec fstab tel qu'il l'a lu (daemon-reload).
+// systemctl default (or exit): systemd resumes booting with fstab as it read it (daemon-reload).
 function continueBoot(j: Shell): string {
   if (!j.state.rescue) return '';
   if (blocking(st(j), j.state.fstabRead ?? fstab(j)).length) {
@@ -127,17 +124,17 @@ export const rescue: Chapter = {
   final: 'end',
   steps: ['journal', 'disks', 'fixed', 'mounted', 'end'],
   accounts: labAccounts,
-  state: () => ({ ...labState('secours'), rescue: true, hostConsole: true }),
+  state: () => ({ ...labState('rescue'), rescue: true, hostConsole: true }),
   initialise: (j) => {
-    labKernel(j, 'secours');
+    labKernel(j, 'rescue');
     devUpdate(j);
-    // On travaille en root sur la console de l'hébergeur.
+    // We work as root on the hosting provider's console.
     j.who = 'root';
     j.state.fstabRead = fstab(j);
     j.state.startMounts = startMounts;
     j.state.continueBoot = continueBoot;
     j.state.rescueBanner = BANNER;
-    // La machine est arrêtée en mode secours : aucun service n'a démarré.
+    // The machine is stopped in emergency mode: no service has started.
     for (const s of Object.values(systemd(j)!.services)) s.state = 'inactive';
     enterInRescue(j);
     j.state.relapses = 0;

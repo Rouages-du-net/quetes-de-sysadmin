@@ -1,16 +1,15 @@
-// Histoire « Les Archives » — chapitre « Les versions » : restic. Depuis
-// janvier, la bibliothèque sauvegarde son fonds chaque nuit avec restic, sur
-// le disque partagé de la mairie (/mnt/mairie). Il y a quatre nuits, un
-// script de « correction » automatique a abîmé la transcription du journal
-// de Marie ; les sauvegardes suivantes ont fidèlement gardé la version
-// abîmée. Il faut retrouver la bonne version dans un instantané plus ancien,
-// la restaurer, puis faire de la place sur le disque (forget --prune), sans
-// jeter la bonne version, vérifier le dépôt (check), et protéger le fichier
-// du mot de passe.
-// Objectif vérifié sur l'état : le journal est revenu à l'identique, le
-// fichier du mot de passe n'est plus lisible par les autres comptes, le
-// disque a retrouvé de la place, et le dépôt a été vérifié après.
-// Sources : https://restic.readthedocs.io/en/stable/045_working_with_repos.html,
+// Story "The Archives", chapter "The versions": restic. Since January, the
+// library has backed up its collection every night with restic, onto the
+// town hall's shared disk (/mnt/mairie). Four nights ago, an automatic
+// "correction" script damaged the transcription of Marie's diary; the
+// following backups faithfully kept the damaged version. You must find the
+// good version in an older snapshot, restore it, then free space on the
+// disk (forget --prune) without throwing away the good version, check the
+// repository (check), and protect the password file.
+// Objective checked on the state: the diary is back exactly as it was, the
+// password file is no longer readable by other accounts, the disk has
+// regained space, and the repository was checked afterwards.
+// Sources: https://restic.readthedocs.io/en/stable/045_working_with_repos.html,
 // https://restic.readthedocs.io/en/stable/050_restore.html,
 // https://restic.readthedocs.io/en/stable/060_forget.html
 
@@ -27,17 +26,17 @@ const PASSWORD = 'lantern-paper-cherry-41';
 const LOG = `${COLLECTION}/manuscripts/marie_diary.txt`;
 const Mo = 1024 * 1024;
 const CAPACITY = 1800 * Mo;
-// L'heure d'une sauvegarde : chaque nuit à 23 h 30 (heure de la machine).
+// The time of a backup: every night at 23:30 (machine time).
 const night = (day: number) => Date.UTC(2027, 0, day, 23, 30, 2);
-// Le script de « correction » est passé dans la nuit du 1er au 2 février, à 2 h.
+// The "correction" script ran in the night of 1 to 2 February, at 2:00.
 const CORRECTION = Date.UTC(2027, 1, 2, 2, 0, 13);
 
 const text = (content: string, modified: number): Version => ({ content, size: new TextEncoder().encode(content).length, modified });
 const media = (description: string, mo: number, modified: number): Version => ({ content: description, size: Math.round(mo * Mo), modified });
 
-// Le fonds tel qu'il était un jour donné (jour de janvier ; 32 = 1er février…),
-// avec les noms français : le monde est créé ainsi (puis renommé), et les
-// instantanés prennent les chemins dans la langue (fondsTraduit).
+// The collection as it was on a given day (day of January; 32 = 1 February…),
+// with the French names: the world is created that way (then renamed), and
+// the snapshots take the paths in the language (translatedCollection).
 function collection(t: Translate, day: number): Record<string, Version> {
   const base = COLLECTION;
   const before = Date.UTC(2026, 11, 14, 16, 2, 0);
@@ -56,7 +55,7 @@ function collection(t: Translate, day: number): Record<string, Version> {
     [`${base}/recordings/market_songs.ogg`]: media(t('archives-its-ogg'), 12, before),
     [`${base}/recordings/interview_fatou.ogg`]: media(t('archives-its-ogg'), 15, before),
   };
-  // Du 8 au 14 janvier, les numérisations brutes (énormes) attendaient d'être traitées.
+  // From 8 to 14 January, the raw scans (huge) were waiting to be processed.
   if (day >= 8 && day <= 14)
     for (const n of [1, 2, 3])
       v[`${base}/scans/brut_registre_${n}.tiff`] = media(t('versions-image-tiff'), 540, Date.UTC(2027, 0, 8, 10, n, 0));
@@ -65,10 +64,10 @@ function collection(t: Translate, day: number): Record<string, Version> {
   return v;
 }
 
-// Le fonds d'un jour, rangé sous ses chemins dans la langue (/home/you/collection…).
+// A day's collection, filed under its paths in the language (/home/you/collection…).
 const translatedCollection = (t: Translate, day: number) => Object.fromEntries(Object.entries(collection(t, day)).map(([c, v]) => [path(t, c), v]));
 
-// Trente nuits de sauvegardes, du 7 janvier au 5 février.
+// Thirty nights of backups, from 7 January to 5 February.
 function initialRepo(t: Translate): Repo {
   const repo: Repo = { id: hex('depot-bibliotheque'), password: password(t, PASSWORD), snapshotList: [], packs: [], checked: true, pruneA: false };
   for (let day = 7; day <= 36; day++)
@@ -80,7 +79,7 @@ function initialRepo(t: Translate): Repo {
 const shell = (j: Game) => j as Shell;
 const repo = (j: Game): Repo => j.state.restic[path(j.t, REPO)];
 const restored = (j: Game) => j.read(path(j.t, LOG)) === j.t('versions-journal');
-// Le fichier du mot de passe : lisible par les autres comptes de la machine ?
+// The password file: readable by the machine's other accounts?
 const openMdp = (j: Game) => {
   const n = j.find(path(j.t, MDP));
   return !!n && j.can(n, 'r', 'rosa');
@@ -122,14 +121,14 @@ export const versions: Chapter = {
   }),
   state: (t) => ({
     restic: { [path(t, REPO)]: initialRepo(t) },
-    // L'heure des prochaines sauvegardes à la main : samedi 6 février, 9 h 40.
+    // The time of the next backups by hand: Saturday 6 February, 9:40.
     resticClock: Date.UTC(2027, 1, 6, 9, 40, 0),
     mounts: [
       { path: path(t, '/mnt/townhall'), capacity: CAPACITY, name: `townhall.example:${path(t, '/share/backups')}` },
       { path: '/', capacity: 20 * 1024 * Mo, name: '/dev/sda1' },
     ],
   }),
-  // Les fichiers du dépôt sur le disque, d'après son contenu.
+  // The repository's files on the disk, from its contents.
   initialise: (j) => writeRepo(shell(j), path(j.t, REPO), repo(j)),
   createWorld: (t) => {
     const current = collection(t, 37);
@@ -199,14 +198,14 @@ export const versions: Chapter = {
   ],
 };
 
-// Une copie de la bonne version restaurée sous un autre lieu (restic recrée le chemin complet).
+// A copy of the good version restored somewhere else (restic recreates the full path).
 function findElsewhereRestore(j: Game): boolean {
   const good = j.t('versions-journal');
   const log = path(j.t, LOG);
   const search = (path: string, depth: number): boolean => {
     const n = j.find(path);
     if (!n || depth > 9) return false;
-    if (n.type === 'fichier') return path !== log && j.read(path) === good;
+    if (n.type === 'file') return path !== log && j.read(path) === good;
     return Object.keys(n.children).some((name) => search(`${path === '/' ? '' : path}/${name}`, depth + 1));
   };
   return search('/tmp', 0) || search(path(j.t, M), 0);

@@ -1,18 +1,18 @@
-// Le réseau local d'une machine qui sert de routeur (etat.lan) : ses
-// interfaces (physiques, et VLAN 802.1Q sur une interface « trunk » reliée
-// au commutateur), leurs adresses, les routes, et les appareils branchés au
-// commutateur (chacun dans un VLAN, avec une adresse fixe ou donnée par DHCP).
-//   - la configuration persistante : /etc/network/interfaces, lu comme
-//     ifupdown (https://manpages.debian.org/trixie/ifupdown/interfaces.5.en.html) :
-//     auto, iface … inet static|manual|loopback, address (CIDR, ou netmask),
-//     gateway, vlan-raw-device, source ; une interface « eth1.10 » est le
-//     VLAN 10 de eth1 (paquet vlan, https://manpages.debian.org/trixie/vlan/vlan-interfaces.5.en.html) ;
-//   - l'état courant, que changent ip, ifup et ifdown, et que le démarrage
-//     reconstruit depuis le fichier (les interfaces « auto ») ;
-//   - ping : un appareil répond s'il est dans le VLAN de l'interface dont le
-//     réseau contient son adresse, et que cette interface est montée.
-// Écarts : IPv4 seulement, pas d'ARP visible, pas de MTU ni de bonding ; le
-// commutateur est décrit par le chapitre (ports déjà configurés).
+// The local network of a machine acting as a router (state.lan): its
+// interfaces (physical, and 802.1Q VLANs on a "trunk" interface linked to
+// the switch), their addresses, the routes, and the devices plugged into
+// the switch (each in a VLAN, with a fixed address or one given by DHCP).
+//   - the persistent configuration: /etc/network/interfaces, read like
+//     ifupdown (https://manpages.debian.org/trixie/ifupdown/interfaces.5.en.html):
+//     auto, iface … inet static|manual|loopback, address (CIDR, or netmask),
+//     gateway, vlan-raw-device, source; an interface "eth1.10" is VLAN 10
+//     of eth1 (vlan package, https://manpages.debian.org/trixie/vlan/vlan-interfaces.5.en.html);
+//   - the current state, which ip, ifup and ifdown change, and which boot
+//     rebuilds from the file (the "auto" interfaces);
+//   - ping: a device answers if it is in the VLAN of the interface whose
+//     network contains its address, and that interface is up.
+// Differences: IPv4 only, no visible ARP, no MTU or bonding; the switch is
+// described by the chapter (ports already configured).
 
 import type { Game } from './shell';
 import type { Flux } from './nftables';
@@ -21,53 +21,53 @@ import type { Remote } from './wireguard';
 export interface Interface {
   name: string;
   up: boolean;
-  // Adresses au format CIDR (10.10.10.1/24).
+  // Addresses in CIDR format (10.10.10.1/24).
   addresses: string[];
   mac: string;
   vlan?: { parent: string; id: number };
-  // Une interface WireGuard (wg0), montée par wg-quick (voir wireguard.ts).
+  // A WireGuard interface (wg0), brought up by wg-quick (see wireguard.ts).
   wireguard?: boolean;
-  // Les réseaux joints par cette interface en plus du sien (les routes que wg-quick ajoute).
+  // The networks reached through this interface besides its own (the routes wg-quick adds).
   routes?: string[];
 }
 
 export interface Device {
   name: string;
   mac: string;
-  // Le VLAN de son port sur le commutateur (non étiqueté) ; 1 : le VLAN natif.
+  // The VLAN of its port on the switch (untagged); 1: the native VLAN.
   vlan: number;
-  // Adresse fixe (configurée sur l'appareil) ; sinon il la demande en DHCP.
+  // Fixed address (configured on the device); otherwise it asks for one by DHCP.
   fixed?: string;
-  // Adresse obtenue par DHCP (bail).
+  // Address obtained by DHCP (lease).
   lease?: string;
 }
 
 export interface Lan {
   interfaces: Record<string, Interface>;
-  // La passerelle par défaut (route default via … dev …).
+  // The default gateway (route default via … dev …).
   gateway: { via: string; dev: string } | null;
-  // L'interface reliée au port « trunk » du commutateur, et les VLAN qu'il transporte.
+  // The interface linked to the switch's "trunk" port, and the VLANs it carries.
   trunk: string;
   vlans: number[];
   devices: Device[];
-  // Un numéro par interface, dans l'ordre de création (ip a).
+  // One number per interface, in order of creation (ip a).
   order: string[];
-  // Le trafic que les appareils essaient à travers le routeur (voir nftables.ts).
+  // The traffic the devices attempt through the router (see nftables.ts).
   flux?: Flux[];
-  // Les appareils qui se connectent depuis internet par WireGuard (voir wireguard.ts).
+  // The devices that connect from the internet through WireGuard (see wireguard.ts).
   remotes?: Remote[];
 }
 
 export const INTERFACES = '/etc/network/interfaces';
 export const lan = (j: Game) => j.state.lan as Lan | undefined;
 
-// ——— Adresses ———
+// ——— Addresses ———
 
 export const toCount = (ip: string) => ip.split('.').reduce((t, o) => t * 256 + Number(o), 0);
 export const toIp = (n: number) => [24, 16, 8, 0].map((d) => (n >>> d) & 255).join('.');
 export const isIp = (s: string) => /^\d{1,3}(\.\d{1,3}){3}$/.test(s) && s.split('.').every((o) => Number(o) <= 255);
 
-/** « 10.10.10.1/24 » → adresse, longueur, réseau, diffusion ; null si la forme est fausse. */
+/** "10.10.10.1/24" → address, length, network, broadcast; null if the form is wrong. */
 export function cidr(text: string): { ip: string; length: number; network: number; broadcast: number } | null {
   const [ip, l] = text.split('/');
   const length = l === undefined ? 32 : Number(l);
@@ -77,14 +77,14 @@ export function cidr(text: string): { ip: string; length: number; network: numbe
   return { ip, length, network, broadcast: (network | (~mask >>> 0)) >>> 0 };
 }
 
-/** Le masque « 255.255.255.0 » en longueur (24) ; null s'il n'est pas contigu. */
+/** The mask "255.255.255.0" as a length (24); null if it is not contiguous. */
 export function maskLength(mask: string): number | null {
   if (!isIp(mask)) return null;
   const bits = toCount(mask).toString(2).padStart(32, '0');
   return /^1*0*$/.test(bits) ? (bits.indexOf('0') === -1 ? 32 : bits.indexOf('0')) : null;
 }
 
-/** Cette adresse est-elle dans ce réseau (10.10.10.0/24) ? */
+/** Is this address in this network (10.10.10.0/24)? */
 export function inside(ip: string, network: string): boolean {
   const c = cidr(network);
   if (!c || !isIp(ip)) return false;
@@ -92,29 +92,29 @@ export function inside(ip: string, network: string): boolean {
   return (toCount(ip) & mask) >>> 0 === c.network;
 }
 
-/** Le réseau d'une adresse CIDR (10.10.10.1/24 → 10.10.10.0/24). */
+/** The network of a CIDR address (10.10.10.1/24 → 10.10.10.0/24). */
 export const networkFor = (address: string) => {
   const c = cidr(address)!;
   return `${toIp(c.network)}/${c.length}`;
 };
 
-// Une adresse MAC de documentation (RFC 7042) pour une interface du routeur.
+// A documentation MAC address (RFC 7042) for one of the router's interfaces.
 const macFor = (name: string) => {
   let h = 0;
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return `52:54:00:${[16, 8, 0].map((d) => ((h >>> d) & 255).toString(16).padStart(2, '0')).join(':')}`;
 };
 
-/** Le VLAN d'une interface, vu du commutateur : son id si c'est un VLAN du trunk, 1 si c'est le trunk lui-même ; null sinon. */
+/** An interface's VLAN, as seen from the switch: its id if it is a VLAN of the trunk, 1 if it is the trunk itself; null otherwise. */
 export function vlanFor(l: Lan, i: Interface): number | null {
   if (i.vlan) return i.vlan.parent === l.trunk ? i.vlan.id : null;
   return i.name === l.trunk ? 1 : null;
 }
 
-/** L'interface est-elle vraiment en service (montée, et son parent aussi) ? */
+/** Is the interface really in service (up, and its parent too)? */
 export const inService = (l: Lan, i: Interface) => i.up && (!i.vlan || !!l.interfaces[i.vlan.parent]?.up);
 
-// ——— Le fichier /etc/network/interfaces (ifupdown) ———
+// ——— The /etc/network/interfaces file (ifupdown) ———
 
 export interface Strophe {
   name: string;
@@ -125,7 +125,7 @@ export interface Strophe {
   vlan?: { parent: string; id: number };
 }
 
-/** Lit /etc/network/interfaces (et ses « source ») ; les erreurs au format d'ifup. */
+/** Reads /etc/network/interfaces (and its "source" lines); errors in ifup's format. */
 export function readInterfaces(j: Game): { stanzas: Record<string, Strophe>; errors: string[] } {
   const stanzas: Record<string, Strophe> = {};
   const autos = new Set<string>();
@@ -161,7 +161,7 @@ export function readInterfaces(j: Game): { stanzas: Record<string, Strophe>; err
               .replace(/\./g, '\\.')
               .replace(/\*/g, '.*')}$`,
           );
-          if (directory?.type === 'dossier') for (const n of Object.keys(directory.children).sort()) if (re.test(n)) read(`${pattern.slice(0, k)}/${n}`);
+          if (directory?.type === 'directory') for (const n of Object.keys(directory.children).sort()) if (re.test(n)) read(`${pattern.slice(0, k)}/${n}`);
         }
         return;
       }
@@ -198,9 +198,9 @@ export function readInterfaces(j: Game): { stanzas: Record<string, Strophe>; err
   return { stanzas, errors };
 }
 
-// ——— Changer l'état (ip, ifup, ifdown) ———
+// ——— Changing the state (ip, ifup, ifdown) ———
 
-/** Crée une interface (VLAN, ou physique pour le monde de départ). */
+/** Creates an interface (VLAN, or physical for the starting world). */
 export function create(l: Lan, name: string, vlan?: { parent: string; id: number }): Interface {
   const i: Interface = {
     name,
@@ -216,12 +216,12 @@ export function create(l: Lan, name: string, vlan?: { parent: string; id: number
 
 export function remove(l: Lan, name: string) {
   delete l.interfaces[name];
-  // Les VLAN d'une interface supprimée disparaissent avec elle.
+  // The VLANs of a deleted interface disappear with it.
   for (const [n, i] of Object.entries(l.interfaces)) if (i.vlan?.parent === name) delete l.interfaces[n];
   if (l.gateway?.dev === name) l.gateway = null;
 }
 
-/** ifup : monte une interface d'après sa strophe ; renvoie le message d'erreur d'ifup, ou null. */
+/** ifup: brings up an interface from its stanza; returns ifup's error message, or null. */
 export function mount(j: Game, l: Lan, s: Strophe): string | null {
   if (s.method === 'loopback') return null;
   let i = l.interfaces[s.name];
@@ -230,7 +230,7 @@ export function mount(j: Game, l: Lan, s: Strophe): string | null {
     if (!l.interfaces[s.vlan.parent]) return `Cannot find device "${s.vlan.parent}"`;
     i = create(l, s.name, s.vlan);
   }
-  // Monter un VLAN monte aussi son interface parente (comme le fait ifupdown avec le paquet vlan).
+  // Bringing up a VLAN also brings up its parent interface (as ifupdown does with the vlan package).
   if (i.vlan) l.interfaces[i.vlan.parent].up = true;
   i.up = true;
   if (s.method === 'static' && s.address) {
@@ -246,19 +246,19 @@ export function unmount(l: Lan, s: Strophe) {
   i.up = false;
   i.addresses = [];
   if (l.gateway?.dev === s.name) l.gateway = null;
-  // ifdown d'un VLAN le supprime.
+  // ifdown on a VLAN deletes it.
   if (i.vlan) delete l.interfaces[s.name];
 }
 
-/** Au démarrage (et à systemctl restart networking) : l'état repart du fichier, interfaces « auto ». */
+/** On boot (and on systemctl restart networking): the state starts again from the file, "auto" interfaces. */
 export function startNetwork(j: Game) {
   const l = lan(j);
   if (!l) return;
-  // L'état d'ifupdown (/run/network/ifstate) : ce qui a été monté.
+  // ifupdown's state (/run/network/ifstate): what has been brought up.
   j.state.ifstate = goUp(j, l);
 }
 
-/** Le réseau local tel qu'il serait au prochain démarrage (une copie, montée d'après le fichier). */
+/** The local network as it would be at the next boot (a copy, brought up from the file). */
 export function networkToBoot(j: Game): Lan | null {
   const l = lan(j);
   if (!l) return null;
@@ -270,7 +270,7 @@ export function networkToBoot(j: Game): Lan | null {
 
 function goUp(j: Game, l: Lan): string[] {
   for (const [name, i] of Object.entries(l.interfaces)) {
-    // Les interfaces WireGuard ne sont pas dans ce fichier : wg-quick les gère.
+    // WireGuard interfaces are not in this file: wg-quick manages them.
     if (i.wireguard) continue;
     if (i.vlan) delete l.interfaces[name];
     else Object.assign(i, { up: name === 'lo', addresses: name === 'lo' ? ['127.0.0.1/8'] : [] });
@@ -283,9 +283,9 @@ function goUp(j: Game, l: Lan): string[] {
   return mounted;
 }
 
-// ——— Joindre une adresse ———
+// ——— Reaching an address ———
 
-/** L'interface (en service) dont le réseau contient cette adresse. */
+/** The interface (in service) whose network contains this address. */
 export function interfaceFor(l: Lan, ip: string): Interface | null {
   return (
     Object.values(l.interfaces).find((i) => inService(l, i) && i.addresses.some((a) => inside(ip, networkFor(a)))) ??
@@ -294,38 +294,38 @@ export function interfaceFor(l: Lan, ip: string): Interface | null {
   );
 }
 
-/** L'interface du routeur (en service, avec une adresse) qui reçoit ce VLAN. */
+/** The router's interface (in service, with an address) that receives this VLAN. */
 export function vlanInterface(l: Lan, vlan: number): Interface | null {
   return Object.values(l.interfaces).find((i) => inService(l, i) && i.addresses.length && vlanFor(l, i) === vlan) ?? null;
 }
 
-/** Une adresse privée (RFC 1918) ? */
+/** A private address (RFC 1918)? */
 export const isPrivate = (ip: string) => inside(ip, '10.0.0.0/8') || inside(ip, '172.16.0.0/12') || inside(ip, '192.168.0.0/16');
 
-/** L'adresse d'un appareil (fixe, ou son bail DHCP). */
+/** A device's address (fixed, or its DHCP lease). */
 export const addressFor = (a: Device) => a.fixed ?? a.lease;
 
 /**
- * Ce que donne un ping depuis le routeur : « local » (une de ses adresses),
- * « appareil » (il répond), « injoignable » (personne ne répond sur ce
- * réseau, l'adresse source de l'erreur), « internet » (par la passerelle),
- * « perdu » (une adresse privée envoyée à la passerelle) ou « pas-de-route ».
+ * What a ping from the router gives: "local" (one of its addresses),
+ * "device" (it answers), "injoignable" (nobody answers on that
+ * network; the error's source address), "internet" (through the gateway),
+ * "lost" (a private address sent to the gateway) or "no-route".
  */
 export function reach(
   l: Lan,
   ip: string,
-): { what: 'local' | 'appareil' | 'internet' | 'perdu' | 'pas-de-route'; source?: string } | { what: 'injoignable'; source: string } {
+): { what: 'local' | 'device' | 'internet' | 'lost' | 'no-route'; source?: string } | { what: 'injoignable'; source: string } {
   if (ip.startsWith('127.') || Object.values(l.interfaces).some((i) => i.addresses.some((a) => a.split('/')[0] === ip))) return { what: 'local' };
   const i = interfaceFor(l, ip);
   if (i) {
     const source = (i.addresses.find((a) => inside(ip, networkFor(a))) ?? i.addresses[0] ?? '').split('/')[0];
     const vlan = vlanFor(l, i);
     const ok = vlan !== null && l.vlans.concat(1).includes(vlan) && l.devices.some((a) => a.vlan === vlan && addressFor(a) === ip);
-    return ok ? { what: 'appareil', source } : { what: 'injoignable', source };
+    return ok ? { what: 'device', source } : { what: 'injoignable', source };
   }
   const gw = l.gateway;
   if (gw && l.interfaces[gw.dev] && inService(l, l.interfaces[gw.dev]))
-    // Une adresse privée (RFC 1918) ne se route pas sur internet : la box la jette.
-    return { what: isPrivate(ip) ? 'perdu' : 'internet', source: l.interfaces[gw.dev].addresses[0]?.split('/')[0] };
-  return { what: 'pas-de-route' };
+    // A private address (RFC 1918) is not routed on the internet: the ISP box drops it.
+    return { what: isPrivate(ip) ? 'lost' : 'internet', source: l.interfaces[gw.dev].addresses[0]?.split('/')[0] };
+  return { what: 'no-route' };
 }

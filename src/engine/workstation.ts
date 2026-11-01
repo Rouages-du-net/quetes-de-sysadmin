@@ -1,7 +1,7 @@
-// Le poste : la machine de la joueuse ou du joueur, d'où l'on se connecte
-// en ssh aux machines des histoires (machines.ts). Ce n'est pas un chapitre
-// à finir : il n'a pas d'événement final. Les clés SSH de ~/.ssh dépendent
-// de la progression (voir console.ts).
+// The workstation: the player's machine, from which they connect over ssh
+// to the stories' machines (machines.ts). It is not a chapter to finish: it
+// has no final event. The SSH keys in ~/.ssh depend on the progress (see
+// console.ts).
 
 import { d, f, player, type Chapter } from './world';
 import type { Translate } from '../texts';
@@ -9,8 +9,8 @@ import { privateKey, publicKey, machineDomain, MACHINES, machineName, WORKSTATIO
 
 const HOME = '/home/you';
 
-// Le /etc/hosts du poste ; en tête, pourquoi ces noms en .internal et
-// .example (ils ne mènent jamais chez quelqu'un de réel).
+// The workstation's /etc/hosts; at the top, why these .internal and
+// .example names (they never lead to anyone real).
 const hosts = (t: Translate) =>
   [
     ...t('workstation-hosts-comment').split('\n').map((l) => `# ${l}`),
@@ -21,7 +21,7 @@ const hosts = (t: Translate) =>
     ...MACHINES.map((m) => `${m.address}\t${machineDomain(t, m)} ${machineName(t, m.name)}`),
   ].join('\n');
 
-/** Le ~/.ssh/config que le jeu donne au poste, dans une langue. */
+/** The ~/.ssh/config the game gives the workstation, in one language. */
 export const config = (t: Translate) =>
   [
     ...t('workstation-config-comment').split('\n').map((l) => `# ${l}`),
@@ -37,16 +37,16 @@ export const config = (t: Translate) =>
     .join('\n')
     .trim();
 
-/** Le nom du fichier de la clé d'une machine, dans la langue : id_royaume, id_kingdom. */
+/** The file name of a machine's key, in the language: id_kingdom, id_royaume. */
 export const keyFor = (t: Translate, m: Machine) => `id_${machineName(t, m.name)}`;
 
-/** Les fichiers d'une clé SSH : privée (lisible par soi seul) et publique. */
+/** The files of an SSH key: private (readable by oneself only) and public. */
 export const keyFiles = (t: Translate, m: Machine) => ({
   [keyFor(t, m)]: f(privateKey(m), { lines: true, mode: 'rw-------' }),
   [`${keyFor(t, m)}.pub`]: f(publicKey(m, player(t), machineName(t, WORKSTATION.name)), { lines: true }),
 });
 
-/** Le poste, avec les clés des machines déjà ouvertes. */
+/** The workstation, with the keys of the machines already opened. */
 export function workstation(keys: Machine[]): Chapter {
   return {
     id: 'desk',

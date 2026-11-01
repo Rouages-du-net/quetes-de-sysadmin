@@ -1,17 +1,16 @@
-// restic : des sauvegardes chiffrées, dédupliquées, en instantanés
-// (snapshots). D'après la documentation de restic 0.18
-// (https://restic.readthedocs.io/en/stable/) : backup, snapshots, ls, find,
-// diff, dump, restore, forget (politiques --keep-*), prune, check, stats,
-// init. Le dépôt est rangé dans etat.restic (comme les dépôts git) ; ses
-// fichiers sur le disque (config, keys/, snapshots/, data/…) sont illisibles
-// sans le mot de passe, et leur taille suit ce que le dépôt contient : df
-// voit la place libérée par prune.
+// restic: encrypted, deduplicated backups, as snapshots. Based on the
+// documentation of restic 0.18 (https://restic.readthedocs.io/en/stable/):
+// backup, snapshots, ls, find, diff, dump, restore, forget (--keep-*
+// policies), prune, check, stats, init. The repository is kept in
+// state.restic (like git repositories); its files on disk (config, keys/,
+// snapshots/, data/…) are unreadable without the password, and their size
+// follows what the repository contains: df sees the space freed by prune.
 //
-//   etat.restic = { [chemin du dépôt]: Depot }
+//   state.restic = { [repository path]: Repo }
 //
-// Écarts : pas de variables d'environnement (RESTIC_REPOSITORY…), il faut
-// -r et --password-file (ou taper le mot de passe) ; une ligne de sortie
-// par étape au lieu des barres de progression ; un « pack » par instantané.
+// Differences: no environment variables (RESTIC_REPOSITORY…), -r and
+// --password-file are required (or typing the password); one output line
+// per step instead of progress bars; one "pack" per snapshot.
 
 import type { File, Node } from '../world';
 import type { Shell } from '../shell';
@@ -21,7 +20,7 @@ import type { Command } from './index';
 export interface Version {
   content: string;
   size: number;
-  // Date de modification (heure locale de la machine, millisecondes).
+  // Modification date (the machine's local time, milliseconds).
   modified: number;
 }
 
@@ -37,15 +36,15 @@ export interface Repo {
   id: string;
   password: string;
   snapshotList: Snapshot[];
-  // Les données rangées : un pack par sauvegarde, avec ses blobs (taille stockée).
+  // The stored data: one pack per backup, with its blobs (stored size).
   packs: { id: string; blobs: Record<string, number> }[];
-  // check a été lancé depuis la dernière modification du dépôt.
+  // check was run since the repository's last modification.
   checked: boolean;
-  // forget a retiré des instantanés, sans prune : la place n'est pas encore rendue.
+  // forget removed snapshots, without prune: the space is not given back yet.
   pruneA: boolean;
 }
 
-// Empreinte hexadécimale tirée d'un texte (FNV-1a), toujours la même.
+// Hexadecimal hash derived from a text (FNV-1a), always the same.
 export function hex(seed: string, length = 64): string {
   let h = 0x811c9dc5;
   for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 0x01000193) >>> 0;
@@ -57,12 +56,12 @@ export function hex(seed: string, length = 64): string {
   return s.slice(0, length);
 }
 
-// Un blob par contenu de fichier : la même version n'est stockée qu'une fois.
+// One blob per file content: the same version is stored only once.
 const blob = (path: string, v: Version) => hex(`${path}|${v.size}|${v.content}`);
-// restic compresse (zstd) : le texte se réduit, les médias presque pas.
+// restic compresses (zstd): text shrinks, media hardly at all.
 const stores = (path: string, v: Version) => Math.round(v.size * (/\.(png|jpe?g|ogg|mp3|pdf|tiff?|gz)$/i.test(path) ? 0.99 : 0.4));
 
-/** Ajoute un instantané au dépôt (sauvegarde) ; renvoie ce qui était nouveau. */
+/** Adds a snapshot to the repository (backup); returns what was new. */
 export function addSnapshot(repo: Repo, i: Snapshot) {
   const known = new Set(repo.packs.flatMap((p) => Object.keys(p.blobs)));
   const previous = repo.snapshotList.filter((s) => s.paths.join() === i.paths.join()).at(-1);
@@ -95,7 +94,7 @@ export const repoSize = (d: Repo) => d.packs.reduce((t, p) => t + Object.values(
 
 // ——— Affichage ———
 
-/** « 54.120 MiB », comme restic. */
+/** "54.120 MiB", like restic. */
 export function size(bytes: number): string {
   const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
   let v = bytes;
@@ -110,11 +109,11 @@ export function size(bytes: number): string {
 const date = (ms: number) => new Date(ms).toISOString().slice(0, 19).replace('T', ' ');
 const short = (id: string) => id.slice(0, 8);
 
-// ——— Le dépôt sur le disque ———
+// ——— The repository on disk ———
 
-// Un fichier chiffré : du texte illisible, de la taille voulue.
+// An encrypted file: unreadable text, of the wanted size.
 const digit = (seed: string, bytes?: number): File => ({
-  type: 'fichier',
+  type: 'file',
   content: hex(seed, 96)
     .replace(/(.{48})/g, '$1\n')
     .trim(),
@@ -123,11 +122,11 @@ const digit = (seed: string, bytes?: number): File => ({
   mode: 'r--r--r--',
 });
 
-/** Réécrit les fichiers du dépôt (sous `chemin`) selon son contenu. */
+/** Rewrites the repository's files (under `path`) according to its content. */
 export function writeRepo(game: Shell, path: string, repo: Repo) {
   const n = game.find(path);
-  if (n?.type !== 'dossier') return;
-  const place = (children: Record<string, Node>) => ({ type: 'dossier' as const, children, mode: 'rwx------' });
+  if (n?.type !== 'directory') return;
+  const place = (children: Record<string, Node>) => ({ type: 'directory' as const, children, mode: 'rwx------' });
   n.children = {
     config: digit(`config-${repo.id}`, 155),
     keys: place({ [hex(`key-${repo.id}`)]: digit(`key-${repo.id}`, 455) }),
@@ -138,7 +137,7 @@ export function writeRepo(game: Shell, path: string, repo: Repo) {
   };
 }
 
-// ——— Politique de rétention (forget) ———
+// ——— Retention policy (forget) ———
 
 const isoWeek = (ms: number) => {
   const d = new Date(ms);
@@ -156,7 +155,7 @@ const POLITIQUES: { option: string; name: string; bucket: (ms: number, i: number
   { option: '--keep-yearly', name: 'yearly', bucket: (ms) => date(ms).slice(0, 4) },
 ];
 
-/** Les instantanés gardés par une politique, avec leurs raisons (comme restic). */
+/** The snapshots kept by a policy, with their reasons (like restic). */
 export function applyPolicy(snapshotList: Snapshot[], policy: Record<string, number>) {
   const reasons = new Map<string, string[]>();
   const recent = [...snapshotList].sort((a, b) => b.time - a.time);
@@ -177,7 +176,7 @@ export function applyPolicy(snapshotList: Snapshot[], policy: Record<string, num
   return reasons;
 }
 
-// ——— La commande ———
+// ——— The command ———
 
 interface Context {
   game: Shell;
@@ -216,7 +215,7 @@ function grid(listing: Snapshot[], reasons?: Map<string, string[]>) {
   );
 }
 
-// Les blobs encore utilisés par un instantané : prune garde ceux-là.
+// The blobs still used by a snapshot: prune keeps those.
 function prune(c: Context): string[] {
   const { repo } = c;
   const used = new Set(repo.snapshotList.flatMap((s) => Object.entries(s.files).map(([path, v]) => blob(path, v))));
@@ -274,7 +273,7 @@ function launch(c: Context, action: string, args: string[]): string {
     });
     return listing;
   };
-  // Les arguments qui ne sont pas des options (ni leurs valeurs).
+  // The arguments that are not options (nor their values).
   const withValue = ['--target', '--include', '-i', '--exclude', '-e', '--host', '--tag', '--path', ...POLITIQUES.map((p) => p.option), '--mode'];
   const positional = args.filter((a, i) => !a.startsWith('-') && !withValue.includes(args[i - 1] ?? ''));
 
@@ -365,7 +364,7 @@ function launch(c: Context, action: string, args: string[]): string {
         included.some((i) => p === i || p.startsWith(i.replace(/\/$/, '') + '/') || wildcard(i).test(p) || wildcard(i).test(p.split('/').at(-1)!)),
     );
     const base = game.resolve(target).replace(/\/$/, '');
-    // restic recrée le chemin complet sous --target.
+    // restic recreates the full path under --target.
     const errors: string[] = [];
     let bytes = 0;
     if (!options.has('--dry-run'))
@@ -374,15 +373,15 @@ function launch(c: Context, action: string, args: string[]): string {
         const parts = p.split('/').filter(Boolean);
         let place = base === '' ? '' : base;
         if (place && !game.exists(place)) {
-          const e = game.place('restic', place, { type: 'dossier', children: {}, owner: game.who });
+          const e = game.place('restic', place, { type: 'directory', children: {}, owner: game.who });
           if (e) errors.push(e);
         }
         for (const part of parts.slice(0, -1)) {
           place = `${place}/${part}`;
-          if (!game.exists(place)) game.place('restic', place, { type: 'dossier', children: {}, owner: game.who });
+          if (!game.exists(place)) game.place('restic', place, { type: 'directory', children: {}, owner: game.who });
         }
         const e = game.place('restic', `${place}/${parts.at(-1)}`, {
-          type: 'fichier',
+          type: 'file',
           content: v.content,
           size: v.size === v.content.length ? undefined : v.size,
           lines: true,
@@ -407,7 +406,7 @@ function launch(c: Context, action: string, args: string[]): string {
     const walk = (path: string) => {
       const n = game.find(path);
       if (!n) return;
-      if (n.type === 'fichier') {
+      if (n.type === 'file') {
         const content = game.read(path) ?? '';
         files[path] = {
           content,
@@ -537,7 +536,7 @@ export const RESTIC: Record<string, Command> = {
     ownOptions: true,
     launch: ({ args, game }) => {
       if (args.includes('version')) return 'restic 0.18.0 compiled with go1.24.4 on linux/amd64';
-      // Les options globales : -r dépôt, --password-file / -p fichier.
+      // The global options: -r repository, --password-file / -p file.
       let pathRepo = '';
       let mdpFile = '';
       const rest: string[] = [];
@@ -556,7 +555,7 @@ export const RESTIC: Record<string, Command> = {
       if (!pathRepo) return game.error('Fatal: Please specify repository location (-r or --repository-file)');
       const path = game.resolve(pathRepo).replace(/\/$/, '');
       const depots: Record<string, Repo> = (game.state.restic ??= {});
-      // Un dépôt se reconnaît à son fichier config, où qu'il soit monté (une clé USB, par exemple).
+      // A repository is recognised by its config file, wherever it is mounted (a USB key, for example).
       const repo = depots[path] ?? Object.values(depots).find((d) => game.read(`${path}/config`) === digit(`config-${d.id}`).content);
       if (action === 'init') {
         if (repo || game.exists(`${path}/config`))
@@ -577,18 +576,18 @@ export const RESTIC: Record<string, Command> = {
       };
       if (mdpFile) {
         const n = game.find(mdpFile);
-        if (!n || n.type !== 'fichier') return game.error(`Fatal: Load(<password file>): open ${mdpFile}: no such file or directory`);
+        if (!n || n.type !== 'file') return game.error(`Fatal: Load(<password file>): open ${mdpFile}: no such file or directory`);
         if (!game.traverses(mdpFile) || !game.can(n, 'r')) return game.error(`Fatal: Load(<password file>): open ${mdpFile}: permission denied`);
         game.state.resticPasswordFile = game.resolve(mdpFile);
         return execute((game.read(mdpFile) ?? '').trim());
       }
-      // Sans fichier, restic demande le mot de passe (la saisie suit, en clair ici).
+      // Without a file, restic asks for the password (the input follows, in clear text here).
       const who = game.who;
       game.ask('enter password for repository: ', (response) => {
         const before = game.who;
         game.who = who;
         try {
-          // Les erreurs d'une réponse s'affichent avec elle.
+          // The errors of a reply are displayed with it.
           const output = execute(response);
           return [...game.recoverErrors(), output].filter(Boolean).join('\n');
         } finally {

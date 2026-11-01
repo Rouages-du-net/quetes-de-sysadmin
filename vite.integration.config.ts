@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
 
-// Le jeu à intégrer dans d'autres sites : un seul fichier JavaScript, sans
-// dépendance, qui définit l'élément <quetes-de-sysadmin>. Publié avec le site
-// dans dist/integration/.
+// The game to embed in other sites: a single JavaScript file, without
+// dependencies, that defines the <quetes-de-sysadmin> element. Published
+// with the site in dist/integration/.
 export default defineConfig({
   publicDir: false,
   build: {

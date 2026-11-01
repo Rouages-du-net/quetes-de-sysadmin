@@ -1,19 +1,19 @@
-// Histoire « La Rustine » — chapitre « Le cadenas » : Caddy, pour comparer
-// avec nginx et certbot. L'atelier vélo associatif a un petit serveur neuf ;
-// Inès y a installé Caddy « parce qu'il fait le HTTPS tout seul »… mais le
-// site n'est servi qu'en HTTP : son Caddyfile commence par :80 (le modèle du
-// paquet), et une adresse sans nom ne reçoit pas de certificat. Une fois le
-// nom écrit, Caddy demande un certificat à Let's Encrypt, qui n'arrive pas
-// à joindre la machine : le pare-feu ne laisse passer que ssh. Enfin, les
-// affiches portent www.cycles.example.
-// Commandes : systemctl status caddy, journalctl -u caddy, le Caddyfile,
-// caddy validate, caddy fmt, systemctl reload caddy (ou caddy reload), ufw,
+// Story "The Patch", chapter "The Padlock": Caddy, to compare
+// with nginx and certbot. The community bike workshop has a small new server;
+// Inès installed Caddy on it "because it does HTTPS by itself"… but the
+// site is only served over HTTP: her Caddyfile starts with :80 (the package's
+// template), and an address without a name gets no certificate. Once the
+// name is written, Caddy asks Let's Encrypt for a certificate, which can't
+// reach the machine: the firewall only lets ssh through. Finally, the
+// posters show www.cycles.example.
+// Commands: systemctl status caddy, journalctl -u caddy, the Caddyfile,
+// caddy validate, caddy fmt, systemctl reload caddy (or caddy reload), ufw,
 // curl -I, openssl x509.
-// Objectif vérifié sur l'état : vu d'internet, https://cycles.example sert
-// le site avec un certificat valable, http://cycles.example renvoie vers
-// HTTPS, et https://www.cycles.example sert le site ou y renvoie ; Caddy
-// tourne et démarrera avec la machine.
-// Sources : https://caddyserver.com/docs/automatic-https,
+// Objective checked on the state: seen from the internet, https://cycles.example serves
+// the site with a valid certificate, http://cycles.example redirects to
+// HTTPS, and https://www.cycles.example serves the site or redirects to it; Caddy
+// is running and will start with the machine.
+// Sources: https://caddyserver.com/docs/automatic-https,
 // https://caddyserver.com/docs/caddyfile/concepts#addresses,
 // https://caddyserver.com/docs/caddyfile/directives/redir,
 // https://caddyserver.com/docs/running#linux-service,
@@ -48,7 +48,7 @@ const accounts = (): Accounts => ({
   },
 });
 
-// Le Caddyfile du paquet, où Inès a seulement changé le dossier du site.
+// The package's Caddyfile, where Inès only changed the site's directory.
 export const CADDYFILE_INES = `# The Caddyfile is an easy way to configure your Caddy web server.
 #
 # Unless the file starts with a global options block, the first
@@ -87,7 +87,7 @@ const CADDY_WELCOME = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// La machine : SSH, et Caddy (son API d'administration, et le port 80 du site :80).
+// The machine: SSH, and Caddy (its admin API, and port 80 of the :80 site).
 const LISTENING: Listening[] = [
   { proto: 'tcp', address: '0.0.0.0', port: 22, process: 'sshd', pid: 604 },
   { proto: 'tcp', address: '[::]', port: 22, process: 'sshd', pid: 604 },
@@ -104,7 +104,7 @@ const response = (r: CaddyResponse | null) => (r && !('tls' in r) ? r : null);
 const place = (r: ReturnType<typeof response>) => r?.headers.find((e) => /^location: /i.test(e))?.replace(/^location: /i, '') ?? '';
 const redirects = (r: ReturnType<typeof response>) => !!r && r.code >= 300 && r.code < 400 && /^https:\/\/cycles\.example(\/|$)/.test(place(r));
 
-// Vu d'internet (le pare-feu compte), comme un visiteur.
+// Seen from the internet (the firewall counts), like a visitor.
 const visit = (j: Game, name: string, port: number) => response(caddyRequest(j, name, '/', port, true));
 export const servedHttps = (j: Game) => visit(j, SITE, 443)?.code === 200 && visit(j, SITE, 443)!.body === site(j);
 export const redirectsHttp = (j: Game) => redirects(visit(j, SITE, 80));
@@ -177,7 +177,7 @@ export const padlock: Chapter = {
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
     ],
-    // Le DNS de cycles.example et de www.cycles.example mène déjà ici.
+    // The DNS of cycles.example and www.cycles.example already leads here.
     caddy: {
       load: null,
       names: ['patch', SITE, WWW, IP],
@@ -188,7 +188,7 @@ export const padlock: Chapter = {
     } satisfies CaddyState,
   }),
   initialise: (j) => {
-    // Le service a démarré avec le Caddyfile d'Inès, hier soir.
+    // The service started with Inès's Caddyfile, last night.
     start(j, sd(j), 'caddy', true);
     sd(j).clock = NOW;
   },

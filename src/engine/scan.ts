@@ -1,63 +1,63 @@
-// nmap simulé (https://nmap.org/book/man.html) : le balayage de ports d'un
-// réseau décrit par l'histoire (etat.scan), vu d'internet.
-//   - le chapitre déclare les machines qu'on peut sonder (adresse, noms, services
-//     avec leur version) et le périmètre autorisé (les adresses de la lettre de
-//     mission) ; une adresse inconnue ne répond jamais ;
-//   - pour la machine où l'on joue (`local`), l'état de chaque port vient du
-//     vrai modèle (ports.ts : qui écoute, ufw) : un correctif change donc le
-//     résultat du balayage suivant ; 127.0.0.1 la voit de l'intérieur ;
-//   - -sV affiche la version des services ; -oN garde la trace dans un fichier ;
-//   - chaque balayage est noté dans etat.scans (le chapitre y lit si l'on est
-//     sorti du périmètre).
-// Écarts : TCP seulement (pas de -sU), pas de -O, de scripts (-sC, -A) ni de
-// sortie XML ; les 1000 ports les plus courants se réduisent aux services
-// déclarés ; le temps est une durée calculée, sans attente réelle.
-// Source : https://nmap.org/book/man.html
+// Simulated nmap (https://nmap.org/book/man.html): the port scan of a
+// network described by the story (state.scan), seen from the internet.
+//   - the chapter declares the machines that can be probed (address, names,
+//     services with their version) and the authorised scope (the addresses
+//     in the engagement letter); an unknown address never answers;
+//   - for the machine being played (`local`), each port's state comes from
+//     the real model (ports.ts: who listens, ufw): a fix therefore changes
+//     the result of the next scan; 127.0.0.1 sees it from the inside;
+//   - -sV shows the services' versions; -oN keeps a record in a file;
+//   - each scan is recorded in state.scans (the chapter reads there whether
+//     the player went outside the scope).
+// Differences: TCP only (no -sU), no -O, no scripts (-sC, -A) and no XML
+// output; the 1000 most common ports come down to the declared services;
+// the time is a computed duration, with no real wait.
+// Source: https://nmap.org/book/man.html
 
 import type { Game } from './shell';
 import { portState } from './ports';
 import type { Firewall } from './firewall';
 
 export const VERSION_NMAP = '7.95';
-// Le point de vue du balayage : une adresse quelconque d'internet (RFC 5737).
+// The scan's point of view: any address on the internet (RFC 5737).
 const INTERNET = '198.51.100.23';
 
 export interface ServiceScan {
   port: number;
-  // Le nom du service, et sa version telle que nmap -sV la devine (une fonction : elle suit l'état, ex. apt).
+  // The service's name, and its version as nmap -sV guesses it (a function: it follows the state, e.g. apt).
   service: string;
   product?: string | ((j: Game) => string);
-  // TLS : nmap -sV écrit « ssl/http ».
+  // TLS: nmap -sV writes "ssl/http".
   ssl?: boolean;
 }
 
 export interface ScanHost {
   address: string;
-  // Le premier nom sert à l'affichage (« fournil.internal (192.0.2.22) »).
+  // The first name is used for display ("fournil.internal (192.0.2.22)").
   names: string[];
-  // La machine où l'on joue : l'état de ses ports vient du modèle, et 127.0.0.1 est elle-même.
+  // The machine being played: its ports' state comes from the model, and 127.0.0.1 is itself.
   local?: boolean;
   services: ServiceScan[];
-  // Latence affichée (secondes).
+  // Displayed latency (seconds).
   latency?: number;
 }
 
 export interface ScanState {
   hosts: ScanHost[];
-  // Les adresses que la lettre de mission autorise à sonder.
+  // The addresses the engagement letter authorises probing.
   scope: string[];
 }
 
 export interface Scan {
-  // Les adresses visées (la commande, telle que tapée), et si l'une est hors du périmètre.
+  // The targeted addresses (the command, as typed), and whether one is outside the scope.
   command: string;
   addresses: string[];
   outsideScope: string[];
   versions: boolean;
   file?: string;
-  // Les hôtes qui ont répondu, avec leurs ports ouverts.
+  // The hosts that answered, with their open ports.
   openSet: Record<string, number[]>;
-  // Ce que -sV a lu sur chaque port ouvert (le produit et sa version), par adresse.
+  // What -sV read on each open port (the product and its version), by address.
   products: Record<string, string[]>;
 }
 
@@ -67,14 +67,14 @@ export interface Options {
   withoutPing: boolean;
   numbers: boolean;
   onlyOpen: boolean;
-  // null : les 1000 ports courants ; sinon la liste, ou « tous ».
-  ports: number[] | 'tous' | 'rapide' | null;
+  // null: the 1000 common ports; otherwise the list, or "all".
+  ports: number[] | 'all' | 'fast' | null;
   file?: string;
 }
 
-// /etc/services, pour la colonne SERVICE sans -sV.
+// /etc/services, for the SERVICE column without -sV.
 const NAMES: Record<number, string> = { 22: 'ssh', 25: 'smtp', 53: 'domain', 80: 'http', 110: 'pop3', 143: 'imap', 443: 'https', 3000: 'ppp', 3306: 'mysql', 5432: 'postgresql', 6379: 'redis', 8080: 'http-proxy' };
-// Les 100 ports les plus courants que nous reconnaissons (-F).
+// The 100 most common ports that we recognise (-F).
 const FAST = new Set([22, 25, 53, 80, 110, 143, 443, 3306, 8080]);
 
 export const scanState = (game: Game): ScanState | undefined => game.state.scan;
@@ -83,7 +83,7 @@ const toCount = (a: string) => a.split('.').reduce((n, o) => n * 256 + Number(o)
 const toAddress = (n: number) => [24, 16, 8, 0].map((s) => (n >>> s) & 255).join('.');
 const validAddress = (a: string) => /^(\d{1,3})(\.\d{1,3}){3}$/.test(a) && a.split('.').every((o) => Number(o) <= 255);
 
-/** Les adresses d'une cible : un nom, une adresse, un réseau (192.0.2.0/29) ou une plage (192.0.2.20-25). null : impossible à résoudre. */
+/** A target's addresses: a name, an address, a network (192.0.2.0/29) or a range (192.0.2.20-25). null: cannot be resolved. */
 export function expand(game: Game, target: string): { addresses: string[]; name?: string } | null {
   const e = scanState(game);
   const cidr = /^(\d+\.\d+\.\d+\.\d+)\/(\d{1,2})$/.exec(target);
@@ -106,13 +106,13 @@ export function expand(game: Game, target: string): { addresses: string[]; name?
 
 type LineState = 'open' | 'closed' | 'filtered';
 
-// L'état d'un port de cet hôte, vu d'internet (ou de l'intérieur pour 127.0.0.1).
+// The state of one of this host's ports, seen from the internet (or from the inside for 127.0.0.1).
 function state(game: Game, h: ScanHost, port: number, inside: boolean): LineState {
   const declare = h.services.some((s) => s.port === port);
   if (!h.local) return declare ? 'open' : 'closed';
   const e = portState(game, port, inside, INTERNET);
-  if (declare || e !== 'refuse') return e === 'ouvert' ? 'open' : e === 'filtre' ? 'filtered' : 'closed';
-  // Un port où rien n'écoute : fermé, ou jeté en silence par le pare-feu.
+  if (declare || e !== 'refused') return e === 'open' ? 'open' : e === 'filtered' ? 'filtered' : 'closed';
+  // A port where nothing listens: closed, or silently dropped by the firewall.
   const pf: Firewall | undefined = game.state.ufw;
   return !inside && pf?.enabled && pf.incoming === 'deny' ? 'filtered' : 'closed';
 }
@@ -122,12 +122,12 @@ const hhmm = (ms: number) => new Date(ms).toISOString().slice(0, 16).replace('T'
 const timeOfDay = (game: Game) => hhmm(game.state.systemd?.clock ?? Date.UTC(2028, 2, 14, 9, 30));
 const decimals = (n: number, d = 2) => n.toFixed(d);
 
-/** Les ports à examiner pour cet hôte : ceux qu'il déclare parmi ceux demandés, et le nombre total de ports du balayage. */
+/** The ports to examine for this host: those it declares among those requested, and the scan's total number of ports. */
 function portsExamines(h: ScanHost, o: Options): { ports: number[]; total: number } {
   const declares = h.services.map((s) => s.port);
   if (Array.isArray(o.ports)) return { ports: o.ports, total: o.ports.length };
-  if (o.ports === 'tous') return { ports: declares, total: 65535 };
-  if (o.ports === 'rapide') return { ports: declares.filter((p) => FAST.has(p)), total: 100 };
+  if (o.ports === 'all') return { ports: declares, total: 65535 };
+  if (o.ports === 'fast') return { ports: declares.filter((p) => FAST.has(p)), total: 100 };
   return { ports: declares, total: 1000 };
 }
 
@@ -135,13 +135,13 @@ function grid(game: Game, h: ScanHost, o: Options, inside: boolean): { lines: st
   const { ports, total } = portsExamines(h, o);
   const unique = [...new Set(ports)].sort((a, b) => a - b);
   const states = unique.map((p) => [p, state(game, h, p, inside)] as const);
-  // Les ports qu'on n'a pas nommés : tous dans l'état « par défaut » de la machine.
+  // The ports not named: all in the machine's "default" state.
   const fallback = state(game, h, -1, inside) === 'open' ? 'closed' : state(game, h, -1, inside);
   const other = total - unique.length;
   const account: Record<LineState, number> = { open: 0, closed: 0, filtered: 0 };
   for (const [, e] of states) account[e]++;
   account[fallback] += other;
-  // nmap regroupe l'état le plus courant s'il couvre plus de 25 ports ; les ports ouverts sont toujours listés.
+  // nmap groups the most common state if it covers more than 25 ports; open ports are always listed.
   const groups = (['closed', 'filtered'] as LineState[]).filter((e) => account[e] > 25).sort((a, b) => account[b] - account[a])[0];
   const visibles = states.filter(([, e]) => e === 'open' || (e !== groups && !o.onlyOpen));
   const openSet = states.filter(([, e]) => e === 'open').map(([p]) => p);
@@ -163,7 +163,7 @@ function grid(game: Game, h: ScanHost, o: Options, inside: boolean): { lines: st
     for (const l of portsLines) lines.push(line(l));
     if (o.versions && openSet.some((p) => /^OpenSSH/.test(product(game, h.services.find((s) => s.port === p)!)))) lines.push('Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel');
   }
-  // La durée : les ports filtrés font attendre, la détection de versions aussi.
+  // The duration: filtered ports make it wait, and so does version detection.
   const duration = 0.9 + account.closed * 0.0004 + account.filtered * 0.0052 + (o.versions ? openSet.length * 2.4 : 0) + total * 0.00002;
   const products = openSet.map((p) => h.services.find((s) => s.port === p)).filter((s) => !!s).map((s) => product(game, s!));
   return { lines, openSet, products, duration };
@@ -214,7 +214,7 @@ export function scan(game: Game, targets: string[], o: Options, command: string)
       continue;
     }
     const host: ScanHost = h ?? { address: a, names: [], services: [] };
-    // Un hôte joint par 127.0.0.1 s'affiche sous ce nom.
+    // A host reached through 127.0.0.1 is shown under that name.
     const t = grid(game, host, o, inside);
     openSet[a] = t.openSet;
     if (o.versions) products[a] = t.products;
@@ -240,7 +240,7 @@ export function scan(game: Game, targets: string[], o: Options, command: string)
     `# Nmap done at ${readable(t0 + Math.round(duration2) * 1000)} -- ${total} IP address${total === 1 ? '' : 'es'} (${live} host${live === 1 ? '' : 's'} up) scanned in ${decimals(duration2)} seconds`,
   ]
     .join('\n');
-  // Le temps passe : l'horloge de la machine avance de la durée du balayage.
+  // Time passes: the machine's clock moves on by the scan's duration.
   if (game.state.systemd) game.state.systemd.clock += Math.round(duration2) * 1000;
   const listing: Scan[] = (game.state.scans ??= []);
   listing.push({ command, addresses: [...new Set(addresses)], outsideScope, versions: o.versions, file: o.file, openSet, products });

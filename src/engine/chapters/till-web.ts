@@ -1,13 +1,13 @@
-// Histoire « La Coopérative » : le site et l'appli de caisse, communs aux
-// chapitres « Le secret » et « Le proxy ». nginx sert le site et passe
-// /till/ à l'appli (Node.js, Express, 127.0.0.1:3000), qui lit son .env
-// au démarrage.
-// L'adresse du client, vue par l'appli : comme Express et son réglage
-// « trust proxy » (https://expressjs.com/en/guide/behind-proxies.html) :
-//   - false : l'adresse de la connexion (127.0.0.1 derrière nginx) ;
-//   - true : la première adresse de X-Forwarded-For (que le client peut écrire) ;
-//   - loopback (ou une liste d'adresses) : on remonte X-Forwarded-For depuis la
-//     droite, et la première adresse non fiable est celle du client.
+// Story "The Co-op": the site and the till app, shared by the chapters
+// "The secret" and "The proxy". nginx serves the site and passes /till/ to
+// the app (Node.js, Express, 127.0.0.1:3000), which reads its .env on
+// start.
+// The client's address, as the app sees it: like Express and its
+// "trust proxy" setting (https://expressjs.com/en/guide/behind-proxies.html):
+//   - false: the connection's address (127.0.0.1 behind nginx);
+//   - true: the first address in X-Forwarded-For (which the client can write);
+//   - loopback (or a list of addresses): X-Forwarded-For is walked from the
+//     right, and the first untrusted address is the client's.
 
 import { d, f, type Directory, type Node } from '../world';
 import type { Game } from '../shell';
@@ -30,7 +30,7 @@ DATABASE_URL=postgres://till:Pois-Chiches-42@localhost/till
 PAIEMENT_CLE=${key}
 TRUST_PROXY=${trust}`;
 
-/** Les variables d'un .env (CLE=valeur, sans guillemets ni commentaires). */
+/** The variables of a .env (KEY=value, without quotes or comments). */
 export function readEnv(text: string): Record<string, string> {
   const v: Record<string, string> = {};
   for (const l of text.split('\n')) {
@@ -41,7 +41,7 @@ export function readEnv(text: string): Record<string, string> {
 }
 
 interface TillState {
-  // Les variables lues au dernier démarrage.
+  // The variables read at the last start.
   load: Record<string, string>;
   failures: Record<string, number>;
   banned: string[];
@@ -49,7 +49,7 @@ interface TillState {
 }
 export const till = (j: Game) => j.state.till as TillState;
 
-// Une adresse fiable pour « trust proxy » : loopback (127.0.0.0/8, ::1), ou une liste.
+// A trusted address for "trust proxy": loopback (127.0.0.0/8, ::1), or a list.
 function reliable(address: string, setting: string): boolean {
   if (setting === 'true') return true;
   return setting
@@ -58,7 +58,7 @@ function reliable(address: string, setting: string): boolean {
     .some((r) => (r === 'loopback' ? /^127\./.test(address) || address === '::1' : r === address));
 }
 
-/** L'adresse du client selon l'appli (req.ip d'Express). */
+/** The client's address according to the app (Express's req.ip). */
 export function clientAddress(request: Request, setting: string): string {
   if (!setting || setting === 'false') return request.address;
   const xff = (request.headers['x-forwarded-for'] ?? '')
@@ -72,14 +72,14 @@ export function clientAddress(request: Request, setting: string): string {
 
 function note(j: Game, line: string) {
   const n = j.find(LOG);
-  if (n?.type !== 'fichier' || typeof n.content !== 'string') return;
+  if (n?.type !== 'file' || typeof n.content !== 'string') return;
   const sd = systemd(j);
   const timeOfDay = new Date(sd?.clock ?? NOW).toISOString().slice(0, 19).replace('T', ' ');
   n.content = `${n.content}\n${timeOfDay} ${line}`;
 }
 
-// L'appli : la page de connexion, /health, et /connexion (u=compte&p=mot de passe), avec un
-// verrou après 5 échecs depuis la même adresse.
+// The app: the login page, /health, and /connexion (u=account&p=password), with a
+// lock after 5 failures from the same address.
 export const TILL_APP: App = {
   service: 'till',
   pages: {},
@@ -116,12 +116,12 @@ export const TILL_APP: App = {
   },
 };
 
-/** Une requête simulée, comme si elle venait d'internet, vers le site (sans trace si le jeu vérifie). */
+/** A simulated request to the site, as if it came from the internet (leaves no trace if the game is checking). */
 export function visit(j: Game, path: string, client: Partial<Client> & { address: string }, trace = true) {
   return httpRequest(j, DOMAIN, path, 80, trace, { time: systemd(j)?.clock ?? NOW, agent: 'Mozilla/5.0', ...client });
 }
 
-/** Les services de la machine : nginx, et l'appli (qui lit son .env à chaque démarrage). */
+/** The machine's services: nginx, and the app (which reads its .env on every start). */
 export function tillSystemd(afterNginx?: (j: Game) => void, afterTill?: (j: Game) => void) {
   const nginx: DefinitionService = {
     description: 'A high performance web server and a reverse proxy server',
@@ -146,7 +146,7 @@ export function tillSystemd(afterNginx?: (j: Game) => void, afterTill?: (j: Game
     load: (j) => {
       const c = till(j);
       if (!c) return;
-      // Au démarrage : le .env relu, la mémoire des verrous vidée.
+      // On start: the .env reread, the memory of locks cleared.
       c.load = readEnv(j.read(ENV) ?? '');
       c.failures = {};
       c.banned = [];
@@ -159,7 +159,7 @@ export function tillSystemd(afterNginx?: (j: Game) => void, afterTill?: (j: Game
   return newSystemd('coop', NOW - 6 * 86_400_000, NOW, { nginx, till: app });
 }
 
-/** L'état du site : nginx (journal d'accès), l'appli et ses verrous. */
+/** The site's state: nginx (access log), the app and its locks. */
 export const tillState = (env: string, more: Record<string, unknown> = {}) => ({
   systemd: tillSystemd(),
   nginx: { load: null, names: ['coop', DOMAIN, `www.${DOMAIN}`, '192.0.2.20', 'localhost', '127.0.0.1'], journalAcces: true },
@@ -170,11 +170,11 @@ export const tillState = (env: string, more: Record<string, unknown> = {}) => ({
 
 const root = { owner: 'root' };
 
-/** /usr/sbin/nginx (installé). */
+/** /usr/sbin/nginx (installed). */
 export const BINARY_NGINX: Record<string, Node> = { nginx: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_342_520 }) };
 const file = (content: string, rights: { owner?: string; group?: string; mode?: string } = root) => f(content, { lines: true, ...rights });
 
-/** /etc/nginx (le site cooperative activé), et les journaux. */
+/** /etc/nginx (the cooperative site enabled), and the logs. */
 export function nginxCooperative(site: string): Record<string, Node> {
   return {
     nginx: d(
@@ -192,7 +192,7 @@ export function nginxCooperative(site: string): Record<string, Node> {
   };
 }
 
-/** /srv/till/app (le code, le .env, le dépôt git) et /var/log. */
+/** /srv/till/app (the code, the .env, the git repository) and /var/log. */
 export function tillWorld(o: { env: string; envMode?: string; logAccess: string; appLog: string }): { srv: Directory; var: Directory } {
   const rightsTill = { owner: 'till', group: 'till' };
   return {

@@ -1,5 +1,5 @@
-// La Veille : le serveur petrin, six mois après « L'Audit ». Rejoué avec la
-// console, dans chaque langue.
+// La Veille: the petrin server, six months after "L'Audit". Replayed with
+// the console, in every language.
 
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
@@ -13,7 +13,7 @@ const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.
 const MDP = 'levain-2028';
 
 for (const language of LANGUAGES)
-  describe(`La Veille — ${language}`, () => {
+  describe(`The Watch — ${language}`, () => {
     const fr = language === 'fr';
     const L = (line: string) => inLanguage(translator(language), line);
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);
@@ -34,7 +34,7 @@ for (const language of LANGUAGES)
       return { c, jouer: play, editer: edit };
     };
 
-    // ——— Chapitre 1 : « Le bulletin » ———
+    // ——— Chapter 1: "The bulletin" ———
     const DOC_WATCH = () => `# ${fr ? 'Veille' : 'Watch'} — ${fr ? 'Le Fournil' : 'The Bakery'}
 
 ## ${fr ? 'Concerne ce serveur' : 'Concerns this server'}
@@ -44,7 +44,7 @@ ${CVE.nginx.id} (nginx), ${CVE.rsync.id} (rsync), ${CVE.ssh.id} (openssh-server)
 ${CVE.certbot.id} (python3-certbot-nginx) : ${fr ? "n'est pas installé sur ce serveur" : 'is not installed on this server'}.
 ${CVE.curl.id} (curl) : ${fr ? 'déjà corrigé, la version installée est au-delà de la version corrigée' : 'already fixed, the installed version is past the fixed version'}.`;
 
-    it('chapitre 1 — solution : trier le bulletin, le reste sans objet', () => {
+    it('chapter 1 — solution: sort the bulletin, the rest not applicable', () => {
       const { c, jouer: play, editer: edit } = part();
       let all = play(['cat security_bulletin.txt']);
       contains(all, 'BULLETIN DE SÉCURITÉ');
@@ -57,18 +57,18 @@ ${CVE.curl.id} (curl) : ${fr ? 'déjà corrigé, la version installée est au-de
       expect(c.finished).toContain('bulletin');
     });
 
-    it('chapitre 1 — fausses pistes : certbot ou curl classés « concerne »', () => {
+    it('chapter 1 — false leads: certbot or curl classed as "concerns us"', () => {
       const { c, editer: edit } = part();
       const bad = () => `# ${fr ? 'Veille' : 'Watch'}
 ## ${fr ? 'Concerne ce serveur' : 'Concerns this server'}
 ${CVE.nginx.id}, ${CVE.rsync.id}, ${CVE.ssh.id}, ${CVE.certbot.id}, ${CVE.curl.id}
 ## ${fr ? 'Sans objet' : 'Not applicable'}
-${fr ? 'rien' : 'nothing'}`;
+${fr ? 'nothing' : 'nothing'}`;
       edit('nano watch.md', bad);
       expect(c.finished).not.toContain('bulletin');
     });
 
-    // ——— Chapitre 2 : « La priorité » ———
+    // ——— Chapter 2: "The priority" ———
     const DOC_PRIORITY = (inverse = false) => {
       const ids = inverse ? [CVE.rsync.id, CVE.nginx.id] : [CVE.nginx.id, CVE.rsync.id];
       return `# ${fr ? 'Priorité' : 'Priority'}
@@ -77,7 +77,7 @@ ${fr ? 'rien' : 'nothing'}`;
 ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthentication à no), rien à faire' : 'already protected (KbdInteractiveAuthentication set to no), nothing to do'}`;
     };
 
-    it('chapitre 2 — solution : nginx avant rsync, avec pourquoi', () => {
+    it('chapter 2 — solution: nginx before rsync, with the reason why', () => {
       const { c, jouer: play, editer: edit } = part(['bulletin']);
       const all = play(['ss -tlnp']);
       expect(all).toContain(':80');
@@ -86,7 +86,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       expect(c.finished).toContain('priority');
     });
 
-    it('chapitre 2 — fausse piste : classer par score seul (rsync avant nginx)', () => {
+    it('chapter 2 — false lead: ranking by score alone (rsync before nginx)', () => {
       const { c, jouer: play, editer: edit } = part(['bulletin']);
       const e = (id: string) => c.shell.flags.has(id);
       play(['nmap -sV petrin.internal']);
@@ -97,8 +97,8 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       expect(c.finished).toContain('priority');
     });
 
-    // ——— Chapitre 3 : « Le correctif » ———
-    it('chapitre 3 — solution : apt update puis upgrade, le site tient', () => {
+    // ——— Chapter 3: "The fix" ———
+    it('chapter 3 — solution: apt update then upgrade, the site holds', () => {
       const { c, jouer: play } = part(['bulletin', 'priority']);
       let all = play(['sudo apt upgrade']);
       expect(all).toContain('Upgrading: 0');
@@ -109,8 +109,8 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       expect(c.finished).toContain('fix');
     });
 
-    // ——— Chapitre 4 : « Sans preuve, pas de certitude » ———
-    it('chapitre 4 — solution : apt confirme, la tentative est trouvée dans le journal', () => {
+    // ——— Chapter 4: "Without proof, no certainty" ———
+    it('chapter 4 — solution: apt confirms, the attempt is found in the log', () => {
       const { c, jouer: play } = part(['bulletin', 'priority', 'fix']);
       let all = play(['apt list --upgradable']);
       expect(all).toContain('Listing... Done');
@@ -121,7 +121,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       expect(c.finished).toContain('proof');
     });
 
-    // ——— Chapitre 5 : « Mettre en veille » ———
+    // ——— Chapter 5: "Keeping watch" ———
     const TWENTY_ACTIVE = (t: string) => t.replace('"0"', '"1"').replace('"0"', '"1"');
     const restrict = (t: string) =>
       t
@@ -129,7 +129,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
         .replace(/^(\s*)"origin=Debian,codename=\$\{distro_codename\},label=Debian";$/m, '$1//"origin=Debian,codename=${distro_codename},label=Debian";')
         .replace('//Unattended-Upgrade::Mail "";', 'Unattended-Upgrade::Mail "root";');
 
-    it('chapitre 5 — solution : unattended-upgrades restreint à la sécurité, une tâche cron hebdomadaire', () => {
+    it('chapter 5 — solution: unattended-upgrades restricted to security, a weekly cron job', () => {
       const { c, jouer: play, editer: edit } = part(['bulletin', 'priority', 'fix', 'proof']);
       edit('sudo nano /etc/apt/apt.conf.d/20auto-upgrades', TWENTY_ACTIVE);
       expect(c.finished).not.toContain('routine');
@@ -139,7 +139,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       expect(c.finished).toContain('routine');
     });
 
-    it('chapitre 5 — une autre voie : un timer systemd plutôt qu\'une tâche cron', () => {
+    it('chapter 5 — another way: a systemd timer rather than a cron job', () => {
       const { c, jouer: play, editer: edit } = part(['bulletin', 'priority', 'fix', 'proof']);
       edit('sudo nano /etc/apt/apt.conf.d/20auto-upgrades', TWENTY_ACTIVE);
       edit('sudo nano /etc/apt/apt.conf.d/50unattended-upgrades', restrict);
@@ -155,7 +155,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       expect(c.finished).toContain('routine');
     });
 
-    it('chapitre 5 — fausses pistes : actif sans restreindre à la sécurité, aucun rendez-vous', () => {
+    it('chapter 5 — false leads: active without restricting to security, no schedule', () => {
       const { c, jouer: play, editer: edit } = part(['bulletin', 'priority', 'fix', 'proof']);
       const e = (id: string) => c.shell.flags.has(id);
       edit('sudo nano /etc/apt/apt.conf.d/20auto-upgrades', TWENTY_ACTIVE);

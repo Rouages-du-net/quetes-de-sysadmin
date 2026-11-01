@@ -1,15 +1,15 @@
-// Histoire « Le Datacenter » — chapitre « Le grand incendie » : reconstruire
-// un serveur à partir des sauvegardes. Le datacenter de l'hébergeur a brûlé
-// cette nuit ; une machine neuve (même nom, même adresse, nouvelle clé
-// d'hôte SSH) attend, vide. Les sauvegardes de chaque nuit sont ailleurs,
-// montées sur /mnt/sauvegarde, avec le plan de reprise d'Awa. Commandes :
-// ssh-keygen -R (sur le poste), apt update/install, tar -tzf / -xzf -C,
-// nginx -t, systemctl reload, curl. Pièges : apt install avant apt update,
-// la dernière archive coupée par l'incendie, une extraction dans ~, les deux
-// sites « default_server » (celui de Debian et celui restauré).
-// Objectif vérifié sur l'état : nginx tourne, démarre avec la machine, et
-// sert pour medialibrary.example la dernière sauvegarde intacte.
-// Sources : https://manpages.debian.org/trixie/apt/apt.8.en.html,
+// Story "Le Datacenter" — chapter "The great fire": rebuilding a server from
+// the backups. The hosting provider's datacenter burned last night; a new
+// machine (same name, same address, new SSH host key) waits, empty. Each
+// night's backups are elsewhere, mounted on /mnt/backup, with Awa's
+// recovery plan. Commands: ssh-keygen -R (on the workstation), apt
+// update/install, tar -tzf / -xzf -C, nginx -t, systemctl reload, curl.
+// Traps: apt install before apt update, the last archive cut off by the
+// fire, an extraction into ~, the two "default_server" sites (Debian's and
+// the restored one).
+// Objective checked on the state: nginx runs, starts with the machine, and
+// serves the last intact backup for medialibrary.example.
+// Sources: https://manpages.debian.org/trixie/apt/apt.8.en.html,
 // https://nginx.org/en/docs/switches.html, https://nginx.org/en/docs/http/request_processing.html,
 // https://www.gnu.org/software/tar/manual/, https://man.openbsd.org/ssh-keygen
 
@@ -23,8 +23,8 @@ const M = '/home/you';
 const BACKUPS = '/mnt/backup';
 const SITE = 'medialibrary.example';
 const ROBOT = '198.51.100.77';
-// Les sauvegardes de chaque nuit (0 h 30) ; celle de cette nuit a été coupée
-// par l'incendie (0 h 47).
+// The backups of each night (0:30); last night's was cut off by the fire
+// (0:47).
 const ARCHIVES = ['2026-10-21', '2026-10-22', '2026-10-23'];
 const archive = (day: string) => `${BACKUPS}/medialibrary-${day}.tar.gz`;
 
@@ -43,8 +43,8 @@ const accounts = (): Accounts => ({
   },
 });
 
-// La configuration du site, telle qu'Awa l'avait écrite (sans commentaire :
-// le fichier est le même dans toutes les langues).
+// The site's configuration, as Awa had written it (without comments: the
+// file is the same in every language).
 const CONF_SITE = `server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -65,11 +65,11 @@ deny 203.0.113.5;
 deny 192.0.2.99;
 deny ${ROBOT};`;
 
-// La page d'accueil dans chaque sauvegarde : 1 (mercredi), 2 (jeudi), 3 (vendredi, perdue).
+// The home page in each backup: 1 (Wednesday), 2 (Thursday), 3 (Friday, lost).
 const welcome = (t: Translate, version: number) => t(`fire-site-index-${version}`);
 
 function archiveContent(t: Translate, version: number): Record<string, File> {
-  const file = (text: string): File => ({ type: 'fichier', content: text, lines: true, owner: 'root', group: 'root' });
+  const file = (text: string): File => ({ type: 'file', content: text, lines: true, owner: 'root', group: 'root' });
   return {
     'etc/nginx/blocked.conf': file(blocked(t)),
     'etc/nginx/sites-available/medialibrary': file(CONF_SITE),
@@ -125,7 +125,7 @@ export const fire: Chapter = {
   names: true,
   final: 'end',
   password: 'welcome-2026',
-  // Une machine neuve : la clé d'hôte n'est plus celle que le poste connaît.
+  // A new machine: the host key is no longer the one the workstation knows.
   hostKey: '-apres-incendie',
   accounts,
   state: () => {
@@ -150,7 +150,7 @@ export const fire: Chapter = {
         { pid: 598, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
         { pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       ],
-      // curl joint la machine elle-même sous ces noms (nginx.ts).
+      // curl reaches the machine itself under these names (nginx.ts).
       nginx: { load: null, names: ['datacenter', 'datacenter.internal', SITE, `www.${SITE}`, '192.0.2.11'] },
     };
   },
@@ -177,7 +177,7 @@ export const fire: Chapter = {
           'DRP.txt': f(t('fire-drp'), { owner: 'root' }),
           [`medialibrary-${ARCHIVES[0]}.tar.gz`]: backup(t, 1, 48_213),
           [`medialibrary-${ARCHIVES[1]}.tar.gz`]: backup(t, 2, 48_390),
-          // Coupée après les trois fichiers de configuration.
+          // Cut off after the three configuration files.
           [`medialibrary-${ARCHIVES[2]}.tar.gz`]: backup(t, 3, 20_480, 3),
         }),
       }),

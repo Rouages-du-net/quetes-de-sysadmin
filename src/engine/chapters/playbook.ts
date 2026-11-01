@@ -1,13 +1,13 @@
-// Histoire « La flotte » — chapitre « Le playbook » : l'idempotence. Lucie a
-// écrit site.yml : htop (avec le module apt), le message d'accueil (shell :
-// echo >> /etc/motd) et le dossier partagé (command : mkdir). Lancé deux fois
-// sur north, il a doublé la ligne du message, puis échoué sur mkdir.
-// Commandes : ansible-playbook, ansible-doc, nano (copy ou lineinfile, file),
-// ansible -a pour regarder.
-// Objectif vérifié sur l'état : sur les trois centres, htop, une seule ligne
-// « Ansible » dans /etc/motd, /srv/shared ; et la dernière exécution
-// complète du playbook n'a rien changé (changed=0, failed=0).
-// Sources : https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html,
+// Story "The Fleet", chapter "The Playbook": idempotence. Lucie wrote
+// site.yml: htop (with the apt module), the welcome message (shell:
+// echo >> /etc/motd) and the shared directory (command: mkdir). Run twice
+// on north, it doubled the message's line, then failed on mkdir.
+// Commands: ansible-playbook, ansible-doc, nano (copy or lineinfile, file),
+// ansible -a to look.
+// Objective checked on the state: on all three centres, htop, a single
+// "Ansible" line in /etc/motd, /srv/shared; and the last complete run of
+// the playbook changed nothing (changed=0, failed=0).
+// Sources: https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html,
 // https://docs.ansible.com/ansible/latest/reference_appendices/glossary.html#term-Idempotency
 
 import { path, f, type Chapter } from '../world';
@@ -26,7 +26,7 @@ east`;
 const ansibleLines = (h: Shell) => (h.read('/etc/motd') ?? '').split('\n').filter((l) => l.includes('Ansible')).length;
 const ready = (j: Game, n: string) => {
   const h = onCentre(j, n);
-  return !!h.state.packages?.htop && ansibleLines(h) === 1 && h.find('/srv/shared')?.type === 'dossier';
+  return !!h.state.packages?.htop && ansibleLines(h) === 1 && h.find('/srv/shared')?.type === 'directory';
 };
 const executions = (j: Game) => history(j as Shell).executions;
 
@@ -42,7 +42,7 @@ export const playbook: Chapter = {
   password: 'districts-2027',
   accounts: pilotAccounts,
   hosts: {
-    // north a reçu le playbook deux fois : la ligne en double, htop et le dossier.
+    // north received the playbook twice: the duplicated line, htop and the directory.
     north: centre('north', { motd: (t) => `${MOTD_DEBIAN}\n${t('playbook-line-motd')}\n${t('playbook-line-motd')}`, share: true, packages: ['htop'] }),
     south: centre('south'),
     east: centre('east'),

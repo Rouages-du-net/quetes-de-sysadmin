@@ -1,13 +1,13 @@
-// Histoire « La Maison des associations » — chapitre « Les clés » : un
-// compte tout neuf sur la passerelle, avec un mot de passe provisoire.
-// Créer sa paire de clés sur son poste (ssh-keygen), poser la clé publique
-// en face (ssh-copy-id, ou à la main dans ~/.ssh/authorized_keys), entrer
-// par la clé, puis fermer la porte aux mots de passe (PasswordAuthentication
-// no, sshd -t, reload) et vérifier qu'on entre toujours.
-// Objectif vérifié sur l'état : sshd applique PasswordAuthentication no, une
-// clé est autorisée pour vous, et une connexion par clé a eu lieu après ce
-// chargement.
-// Sources : https://man.openbsd.org/ssh-keygen, https://man.openbsd.org/sshd_config,
+// Story "La Maison des associations" — chapter "The keys": a
+// brand-new account on the gateway, with a temporary password.
+// Create your key pair on your workstation (ssh-keygen), put the public key
+// on the other side (ssh-copy-id, or by hand in ~/.ssh/authorized_keys), log in
+// with the key, then close the door to passwords (PasswordAuthentication
+// no, sshd -t, reload) and check that you can still log in.
+// Objective checked on the state: sshd applies PasswordAuthentication no, a
+// key is authorised for the player, and a key login happened after this
+// reload.
+// Sources: https://man.openbsd.org/ssh-keygen, https://man.openbsd.org/sshd_config,
 // https://manpages.debian.org/bookworm/openssh-client/ssh-copy-id.1.en.html
 
 import { password, path, f, type Chapter } from '../world';
@@ -16,14 +16,14 @@ import { allowed, CONFIG, readConfig } from '../sshd';
 import { publicKey, MACHINES } from '../machines';
 import { loadSshd, homeAccounts, connectionsBy, homeState, internalHost, M, homeWorld, PASSWORD, sshd, homePlan } from './community-centre';
 
-// Les clés autorisées pour vous sur maison (lignes « ssh-… »).
+// The keys authorised for the player on community ("ssh-…" lines).
 const authorised = (j: Game) =>
   (j.read(path(j.t, `${M}/.ssh/authorized_keys`)) ?? '')
     .split('\n')
     .map((l) => l.trim())
     .filter((l) => l.startsWith('ssh-'))
     .map((l) => l.split(/\s+/).slice(0, 2).join(' '));
-// Les clés que le jeu a données (id_royaume…) : ssh ne les propose pas à maison.
+// The keys the game gave (id_kingdom…): ssh doesn't offer them to community.
 const DATA = MACHINES.map((m) => publicKey(m).split(' ').slice(0, 2).join(' '));
 const youKeys = (j: Game) => authorised(j).filter((c) => !DATA.includes(c));
 const withoutPassword = (j: Game) => sshd(j).load.passwordauthentication === 'no';
@@ -72,11 +72,11 @@ export const keys: Chapter = {
       message: (j) => j.t('keys-event-key-game'),
     },
     { id: 'copied', condition: (j) => youKeys(j).length > 0, message: (j) => j.t('keys-event-copied') },
-    { id: 'by-key', condition: (j) => connectionsBy(j, 'cle') > 0 && !withoutPassword(j), message: (j) => j.t('keys-event-by-key') },
+    { id: 'by-key', condition: (j) => connectionsBy(j, 'key') > 0 && !withoutPassword(j), message: (j) => j.t('keys-event-by-key') },
     { id: 'closed', condition: closed, message: (j) => j.t('keys-event-closed') },
     {
       id: 'end',
-      condition: (j) => j.flags.has('closed') && closed(j) && connectionsBy(j, 'cle') > sshd(j).keysToLoad,
+      condition: (j) => j.flags.has('closed') && closed(j) && connectionsBy(j, 'key') > sshd(j).keysToLoad,
       message: (j) => j.t('keys-event-end'),
     },
   ],

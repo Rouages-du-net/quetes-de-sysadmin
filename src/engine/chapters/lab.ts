@@ -1,10 +1,10 @@
-// Histoire « Le Labo » : ce que ses chapitres ont en commun. Le serveur du
-// Labo, le club photo du quartier (machine labo), loué chez un hébergeur :
-// deux disques de 2 To en RAID 1 logiciel (mdadm). md0 porte le système (/),
-// md1 les photos des membres (/srv). Odile, la présidente, n'est pas
-// technicienne ; l'hébergeur change les disques sur demande (un ticket avec
-// le numéro de série), mais c'est au client de s'occuper du RAID.
-// Le stockage est décrit par stockage.ts (disques, SMART, partitions, grappes).
+// Story "Le Labo": what its chapters share. The server of the
+// Labo, the neighbourhood photo club (machine lab), rented from a host:
+// two 2 TB disks in software RAID 1 (mdadm). md0 holds the system (/),
+// md1 the members' photos (/srv). Odile, the president, is not
+// technical; the host replaces disks on request (a ticket with the
+// serial number), but the RAID is the customer's job.
+// The storage is described by storage.ts (disks, SMART, partitions, arrays).
 
 import { d, f, accountsFiles, type Accounts, type Directory, type Rights } from '../world';
 import type { Game, Shell } from '../shell';
@@ -16,18 +16,18 @@ import { timeWhoPass } from '../commands/storage';
 
 export const M = '/home/you';
 export const PASSWORD = 'film-2027';
-// Samedi 13 novembre 2027, 7 h 42.
+// Saturday 13 November 2027, 7:42 am.
 export const NOW = Date.UTC(2027, 10, 13, 7, 42, 0);
 const BOOT = Date.UTC(2027, 9, 2, 4, 11, 0);
-// Le chapitre 3 : samedi 15 janvier 2028, 10 h ; le serveur a redémarré pour brancher les disques.
+// Chapter 3: Saturday 15 January 2028, 10 am; the server was rebooted to plug in the disks.
 export const PLACE_NOW = Date.UTC(2028, 0, 15, 10, 0, 0);
 const PLACE_BOOT = Date.UTC(2028, 0, 15, 6, 40, 0);
-// Le chapitre 4 : mardi 25 janvier 2028, le redémarrage de la nuit (un nouveau noyau) n'a pas abouti.
+// Chapter 4: Tuesday 25 January 2028, the nightly reboot (a new kernel) did not complete.
 const RESCUE_BOOT = Date.UTC(2028, 0, 25, 4, 2, 0);
 const RESCUE_NOW = Date.UTC(2028, 0, 25, 7, 55, 0);
 const SECTORS = 3_907_029_168;
 
-// Les numéros de série : celui du disque qui fatigue, de l'autre, et du neuf.
+// The serial numbers: the failing disk's, the other one's, and the new one's.
 export const SERIES = { sda: 'LB7K2A0F31C4', sdb: 'LB7K2A0F58E9', neuf: 'LB7K2B1D07A2', sdc: 'LB4K2C0E19F3', sdd: 'LB4K2C0E2A47' };
 export const TEMPLATE = 'LB2000-7K2';
 const TEMPLATE_4T = 'LB4000-7K2';
@@ -53,8 +53,8 @@ export const labAccounts = (): Accounts => ({
   },
 });
 
-// La table GPT des disques du serveur : la petite partition de GRUB, puis
-// une partition par grappe.
+// The GPT table of the server's disks: GRUB's small partition, then
+// one partition per array.
 const partitions = (seed: string): Partition[] => [
   { number: 1, start: 2048, sectors: 2048, type: 'bios', uuid: `3C1F0A2E-${seed}-4B7D-9E21-0D5A6C8B1F01` },
   { number: 2, start: 4096, sectors: 67_108_864, type: 'raid', uuid: `8E4D2B6A-${seed}-4F3C-A1D7-2B9E5C0F7A02` },
@@ -71,28 +71,28 @@ const disk = (rank: number, serial: string, smart: Smart, table: string | null, 
   rank,
 });
 
-export type Moment = 'fatigue' | 'neuf' | 'place' | 'secours';
-// Les moments où le disque sdb a déjà été remplacé, et où sdc et sdd sont branchés.
-const afterReplacement = (m: Moment) => m === 'place' || m === 'secours';
+export type Moment = 'tired' | 'new' | 'replaced' | 'rescue';
+// The moments when disk sdb has already been replaced, and when sdc and sdd are plugged in.
+const afterReplacement = (m: Moment) => m === 'replaced' || m === 'rescue';
 
 /**
- * Le stockage du serveur au début d'un chapitre : 'fatigue' (sdb s'abîme,
- * tout est encore en RAID), 'neuf' (sdb vient d'être remplacé par un disque
- * vierge, les grappes tournent sur sda seul) ou 'place' (tout est réparé, et
- * l'hébergeur a branché deux disques neufs de 4 To, sdc et sdd). Les photos
- * sont dans un volume logique (LVM) posé sur md1, comme l'installateur de
- * Debian le propose (« RAID puis LVM »).
+ * The server's storage at the start of a chapter: 'tired' (sdb is wearing
+ * out, everything is still in RAID), 'new' (sdb has just been replaced by a
+ * blank disk, the arrays run on sda alone) or 'replaced' (everything is
+ * repaired, and the host has plugged in two new 4 TB disks, sdc and sdd).
+ * The photos are in a logical volume (LVM) on top of md1, as Debian's
+ * installer suggests ("RAID then LVM").
  */
 export function labStorage(moment: Moment): StorageState {
-  const fresh = moment === 'neuf';
+  const fresh = moment === 'new';
   const sdb = fresh
     ? disk(1, SERIES.neuf, healthySmart(3), null, [])
     : afterReplacement(moment)
       ? disk(1, SERIES.neuf, healthySmart(412), '6A1B3C5D-7E9F-4012-8A3B-C4D5E6F70812', partitions('1A3B'))
     : disk(1, SERIES.sdb, { hours: 28_509, temperature: 37, reallocated: 1208, inWaiting: 8, unreadable: 8, crc: 0, ataErrors: 37 }, '6A1B3C5D-7E9F-4012-8A3B-C4D5E6F70812', partitions('2B4C'));
   const members = (n: number) => [
-    { part: `sda${n}`, number: 0, role: 0, state: 'actif' as const },
-    ...(fresh ? [] : [{ part: `sdb${n}`, number: 1, role: 1, state: 'actif' as const }]),
+    { part: `sda${n}`, number: 0, role: 0, state: 'active' as const },
+    ...(fresh ? [] : [{ part: `sdb${n}`, number: 1, role: 1, state: 'active' as const }]),
   ];
   const st: StorageState = {
     disks: {
@@ -104,8 +104,8 @@ export function labStorage(moment: Moment): StorageState {
             sdd: { ...disk(3, SERIES.sdd, healthySmart(2), null, []), template: TEMPLATE_4T, sectors: SECTORS_4T },
           }
         : {}),
-      // Chapitre 4 : le disque USB des numérisations de Théo, branché au serveur.
-      ...(moment === 'secours'
+      // Chapter 4: Théo's USB disk of scans, plugged into the server.
+      ...(moment === 'rescue'
         ? {
             sde: {
               ...disk(4, 'NA7Q3K1P', healthySmart(1210), '9B2E4F61-3C8A-4D17-A5E2-7F0C6B9D1A33', [
@@ -124,12 +124,12 @@ export function labStorage(moment: Moment): StorageState {
     },
     grub: fresh ? ['sda'] : ['sda', 'sdb'],
   };
-  // Le volume des photos prend tout le groupe labo (un seul PV : md1).
+  // The photos volume takes the whole lab group (a single PV: md1).
   const photos: LogicVolume = { segments: [], fs: 0, point: '/srv', minor: 0 };
   st.lvm = { pvs: { md1: { vg: 'labo', uuid: 'q3Xk7v-Lb2N-9fRt-Wm4P-cH8s-Jd5Y-a1ZeQo' } }, vgs: { labo: { uuid: 'Hn4w2B-pT6e-Rk9M-sL3v-Qa7X-dF1c-Zg8Y0u', lvs: { photos } } } };
   allocate(st, photos, pvExtents(st, 'md1'), ['md1']);
-  // Chapitre 4 : la fin du chapitre 3, md2 faite des disques neufs et donnée au volume des photos.
-  if (moment === 'secours') {
+  // Chapter 4: the end of chapter 3, md2 made of the new disks and given to the photos volume.
+  if (moment === 'rescue') {
     st.arrays.md2 = {
       level: 'raid1',
       wanted: 2,
@@ -137,8 +137,8 @@ export function labStorage(moment: Moment): StorageState {
       uuid: 'e3b9d1c7-4a2f-4c8e-b5d6-7f1a9c3e2b40',
       name: 'lab:2',
       members: [
-        { part: 'sdc', number: 0, role: 0, state: 'actif' },
-        { part: 'sdd', number: 1, role: 1, state: 'actif' },
+        { part: 'sdc', number: 0, role: 0, state: 'active' },
+        { part: 'sdd', number: 1, role: 1, state: 'active' },
       ],
       events: 2210,
       creation: PLACE_NOW,
@@ -149,18 +149,18 @@ export function labStorage(moment: Moment): StorageState {
     allocate(st, photos, pvExtents(st, 'md2'), ['md2']);
   }
   photos.fs = lvSize(photos);
-  // Les systèmes de fichiers, et leurs UUID (ceux de /etc/fstab).
+  // The file systems, and their UUIDs (those of /etc/fstab).
   st.fs = {
     '/dev/md0': { type: 'ext4', uuid: '0f9c2a4e-61d3-4b8a-9e57-c3d1a2b4e6f8' },
     '/dev/mapper/labo-photos': { type: 'ext4', uuid: '7b3e5d1f-2a4c-4e6b-8d9f-1a2b3c4d5e6f' },
-    ...(moment === 'secours' ? { '/dev/sde1': { type: 'ext4', uuid: UUID_SCANS, label: 'SCANS', bytes: 984_000_000_000, tree: scans() } } : {}),
+    ...(moment === 'rescue' ? { '/dev/sde1': { type: 'ext4', uuid: UUID_SCANS, label: 'SCANS', bytes: 984_000_000_000, tree: scans() } } : {}),
   };
   return st;
 }
 
 export const st = (j: Game) => storageOf(j)!;
 
-// Le disque des numérisations : des dossiers de scans d'archives du club.
+// The scans disk: folders of scans from the club's archives.
 export const UUID_SCANS = 'c27a9e41-5b3d-4f8a-a1e6-9d0b2c4f7e13';
 const scans = (): Directory => {
   const scan = (size: number) => f('', { owner: 'theo', group: 'theo', size });
@@ -174,7 +174,7 @@ const scans = (): Directory => {
   );
 };
 
-// Les services de la machine : ssh, smartd (smartmontools), mdmonitor, et nginx pour la galerie.
+// The machine's services: ssh, smartd (smartmontools), mdmonitor, and nginx for the gallery.
 const services = (): Record<string, DefinitionService> => ({
   ssh: {
     description: 'OpenBSD Secure Shell server',
@@ -202,14 +202,14 @@ const services = (): Record<string, DefinitionService> => ({
   },
 });
 
-/** L'état de la machine au début d'un chapitre (systemd, stockage, montages). */
+/** The machine's state at the start of a chapter (systemd, storage, mounts). */
 export const labState = (moment: Moment) => {
   const storage = labStorage(moment);
   return {
     systemd: newSystemd(
       'labo',
-      moment === 'place' ? PLACE_BOOT : moment === 'secours' ? RESCUE_BOOT : BOOT,
-      moment === 'place' ? PLACE_NOW : moment === 'secours' ? RESCUE_NOW : NOW,
+      moment === 'replaced' ? PLACE_BOOT : moment === 'rescue' ? RESCUE_BOOT : BOOT,
+      moment === 'replaced' ? PLACE_NOW : moment === 'rescue' ? RESCUE_NOW : NOW,
       services(),
     ),
     storage,
@@ -220,18 +220,18 @@ export const labState = (moment: Moment) => {
   };
 };
 
-/** Les messages du noyau : les erreurs de lecture de sdb (chapitre 1), ou son remplacement (chapitre 2). */
+/** Kernel messages: sdb's read errors (chapter 1), or its replacement (chapter 2). */
 export function labKernel(j: Game, moment: Moment): void {
-  const start = moment === 'place' ? PLACE_BOOT : moment === 'secours' ? RESCUE_BOOT : BOOT;
+  const start = moment === 'replaced' ? PLACE_BOOT : moment === 'rescue' ? RESCUE_BOOT : BOOT;
   const newDisks = (['sdc', 'sdd'] as const).flatMap((d, i): [number, string][] => [
     [start + 3000 + i * 10, `ata${i + 3}.00: ATA-11: LB4000-7K2, LB07, max UDMA/133`],
     [start + 3100 + i * 10, `sd ${i + 2}:0:0:0: [${d}] 7814037168 512-byte logical blocks: (4.00 TB/3.64 TiB)`],
     [start + 3200 + i * 10, `sd ${i + 2}:0:0:0: [${d}] Attached SCSI disk`],
   ]);
   const lines: [number, string][] =
-    moment === 'place'
+    moment === 'replaced'
       ? newDisks
-      : moment === 'secours'
+      : moment === 'rescue'
         ? [
             ...newDisks,
             [start + 3400, 'md/raid1:md2: active with 2 out of 2 mirrors'],
@@ -241,7 +241,7 @@ export function labKernel(j: Game, moment: Moment): void {
             [start + 6300, ' sde: sde1'],
             [start + 6400, 'sd 6:0:0:0: [sde] Attached SCSI removable disk'],
           ]
-      : moment === 'fatigue'
+      : moment === 'tired'
       ? [
           [Date.UTC(2027, 10, 11, 3, 12, 40), 'ata2.00: exception Emask 0x0 SAct 0x40000 SErr 0x0 action 0x0'],
           [Date.UTC(2027, 10, 11, 3, 12, 40), 'ata2.00: irq_stat 0x40000008'],
@@ -279,7 +279,7 @@ export function labKernel(j: Game, moment: Moment): void {
   ];
 }
 
-// Un courrier de smartd (format de smartmontools 7.4), dans la boîte de vous (root: vous dans /etc/aliases).
+// A mail from smartd (smartmontools 7.4 format), in the player's mailbox (root: the player's account in /etc/aliases).
 const smartdMail = (host: string, time: string, subject: string, warning: string, first: string) =>
   [
     `From root@${host} ${time}`,
@@ -307,7 +307,7 @@ const smartdMail = (host: string, time: string, subject: string, warning: string
     '',
   ].join('\n');
 
-/** Les courriers de smartd, depuis la machine (son nom dans la langue : labo, lab). */
+/** smartd's mails, from the machine (its name in the language: labo, lab). */
 export const smartdBox = (host: string) =>
   [
     smartdMail(host, 'Thu Nov 11 03:12:44 2027', 'CurrentPendingSector', '8 Currently unreadable (pending) sectors', 'Thu Nov 11 03:12:44 2027'),
@@ -315,7 +315,7 @@ export const smartdBox = (host: string) =>
     smartdMail(host, 'Sat Nov 13 03:12:44 2027', 'CurrentPendingSector', '8 Currently unreadable (pending) sectors', 'Thu Nov 11 03:12:44 2027'),
   ].join('\n');
 
-/** Le monde de la machine : le système, les photos, et ce que le chapitre ajoute dans la maison et ailleurs. */
+/** The machine's world: the system, the photos, and what the chapter adds in the home directory and elsewhere. */
 export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>>, more: { mail?: string; winter?: boolean; rescue?: boolean } = {}): Directory {
   const root: Rights = { owner: 'root' };
   const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
@@ -333,7 +333,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
           '# <file system>                           <mount point> <type> <options>          <dump> <pass>',
           'UUID=0f9c2a4e-61d3-4b8a-9e57-c3d1a2b4e6f8 /             ext4   errors=remount-ro  0      1',
           'UUID=7b3e5d1f-2a4c-4e6b-8d9f-1a2b3c4d5e6f /srv          ext4   defaults           0      2',
-          // Chapitre 4 : la ligne ajoutée par Théo, d'après un tutoriel suivi sur son portable.
+          // Chapter 4: the line added by Théo, following a tutorial on his laptop.
           ...(more.rescue ? ['', t('stuck-boot-fstab-comment'), '/dev/sdc1  /srv/scans  ext4  defaults  0  2'] : []),
         ].join('\n'),
       ),
@@ -361,7 +361,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
       ),
     }),
     home: place({ you: d(more.rescue ? {} : home), odile: place({}, { owner: 'odile', mode: 'rwx------' }) }),
-    // Chapitre 4 : on travaille en root, sur la console de l'hébergeur.
+    // Chapter 4: we work as root, on the host's console.
     ...(more.rescue ? { root: place(home, { owner: 'root', mode: 'rwx------' }) } : {}),
     proc: place({ mdstat: f((j) => mdstat(storageOf(j)!), { lines: true, owner: 'root', mode: 'r--r--r--' }) }),
     srv: place({
@@ -372,7 +372,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
           '2027': place(
             {
               'concours-nuit': place({ 'raw.tar': photo(391_000_000_000) }, { owner: 'www-data' }),
-              // Chapitre 3 : les archives de l'automne, versées d'un coup.
+              // Chapter 3: the autumn archives, poured in all at once.
               ...(more.winter ? { 'archives-automne': place({ 'raw.tar': photo(1_259_000_000_000) }, { owner: 'www-data' }) } : {}),
             },
             { owner: 'www-data' },
@@ -380,7 +380,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
         },
         { owner: 'www-data', group: 'www-data' },
       ),
-      // Le point de montage du disque des numérisations (chapitre 4).
+      // The mount point of the scans disk (chapter 4).
       ...(more.rescue ? { scans: place({}, { owner: 'root' }) } : {}),
     }),
     tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
@@ -396,7 +396,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
   });
 }
 
-/** Avant chaque commande : le temps a passé depuis la précédente (la reconstruction avance). */
+/** Before each command: time has passed since the previous one (the rebuild progresses). */
 export function beforeLabCommand(j: Game): void {
   timeWhoPass(j as Shell);
   devUpdate(j);

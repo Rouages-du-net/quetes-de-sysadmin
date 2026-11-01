@@ -1,6 +1,6 @@
-// systemctl, journalctl et reboot, sur le systemd simulé (../systemd.ts).
-// Messages d'après systemd (https://www.freedesktop.org/software/systemd/man/latest/) :
-// ils restent en anglais, comme ceux du vrai systemctl.
+// systemctl, journalctl and reboot, on the simulated systemd (../systemd.ts).
+// Messages based on systemd (https://www.freedesktop.org/software/systemd/man/latest/):
+// they stay in English, like those of the real systemctl.
 
 import type { Shell } from '../shell';
 import { stop, dateComplete, start, duration, writeLog, logLine, reload, restart, systemd, type Systemd } from '../systemd';
@@ -20,7 +20,7 @@ const CAPTION = [
 const underState = (state: string) => (state === 'active' ? 'running' : state === 'failed' ? 'failed' : 'dead');
 const unitName = (raw: string) => raw.replace(/\.service$/, '');
 
-// Comme systemctl sur un terminal : le point vert d'un service actif, la croix rouge d'un échec.
+// Like systemctl on a terminal: the green dot of an active service, the red cross of a failure.
 type Paint = (code: string, text: string) => string;
 const raw: Paint = (_code, text) => text;
 
@@ -36,7 +36,7 @@ function status(game: Shell, sd: Systemd, name: string, paint: Paint = raw): str
         ? `${paint('0;1;31', 'failed')} (Result: ${s.result ?? 'exit-code'}) ${since}`
         : `inactive (dead)`;
   const lines = [
-    // × (\u00d7) : le symbole d'échec de systemd.
+    // × (×): systemd's failure symbol.
     `${s.state === 'failed' ? paint('0;1;31', '\u00d7') : s.state === 'active' ? paint('0;1;32', '●') : '○'} ${unit} - ${s.description}`,
     `     Loaded: loaded (${s.file ?? `/usr/lib/systemd/system/${unit}`}; ${s.active ? 'enabled' : 'disabled'}; preset: enabled)`,
     ...(s.overrides?.length
@@ -51,7 +51,7 @@ function status(game: Shell, sd: Systemd, name: string, paint: Paint = raw): str
     ...(timerFor(sd, name) ? [`TriggeredBy: ● ${timerFor(sd, name)}.timer`] : []),
   ];
   if (s.state === 'active' && s.process[0]) lines.push(`   Main PID: ${s.process[0].pid} (${s.executable})`);
-  // La mémoire du service (et sa limite, MemoryMax=), si la machine la suit.
+  // The service's memory (and its limit, MemoryMax=), if the machine tracks it.
   const rss = game.state.memory?.rss?.[s.process[0]?.pid ?? -1];
   if (s.state === 'active' && rss !== undefined) {
     const mo = (o: number) => `${(o / 1048576).toFixed(1)}M`;
@@ -75,21 +75,21 @@ function listing(sd: Systemd, onlyFailures: boolean, paint: Paint = raw): string
   return [...lines, ...CAPTION, '', `${units.length} loaded units listed.`].join('\n');
 }
 
-// Les fichiers de surcharge (/etc/systemd/system/NOM.service.d/*.conf, et
-// ceux de systemctl set-property dans /etc/systemd/system.control) :
-// MemoryMax=, IOReadBandwidthMax=, IOWriteBandwidthMax= et Restart= de la
-// section [Service], relus par daemon-reload
-// (systemctl edit et set-property le font tout seuls). D'après
+// The override files (/etc/systemd/system/NAME.service.d/*.conf, and
+// those of systemctl set-property in /etc/systemd/system.control):
+// MemoryMax=, IOReadBandwidthMax=, IOWriteBandwidthMax= and Restart= of the
+// [Service] section, reread by daemon-reload
+// (systemctl edit and set-property do it by themselves). Based on
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
-// (« drop-in »). Écart : les autres clés sont ignorées.
+// ("drop-in"). Difference: the other keys are ignored.
 const OVERRIDES_PLACES = ['/etc/systemd/system.control', '/etc/systemd/system'];
 const overridesPaths = (game: Shell, name: string) =>
   OVERRIDES_PLACES.flatMap((base) => {
     const place = game.find(`${base}/${name}.service.d`);
-    return place?.type === 'dossier' ? Object.keys(place.children).filter((f) => f.endsWith('.conf')).sort().map((f) => `${base}/${name}.service.d/${f}`) : [];
+    return place?.type === 'directory' ? Object.keys(place.children).filter((f) => f.endsWith('.conf')).sort().map((f) => `${base}/${name}.service.d/${f}`) : [];
   });
-// Ce que disent les surcharges sur le disque (pour voir si elles ont changé depuis la dernière lecture).
-// Le fichier d'unité écrit à la main (s'il y en a un) et ses surcharges, tels qu'ils sont sur le disque.
+// What the overrides on disk say (to see whether they changed since the last read).
+// The hand-written unit file (if there is one) and its overrides, as they are on disk.
 const fingerprint = (game: Shell, name: string) =>
   [`/etc/systemd/system/${name}.service`, ...overridesPaths(game, name)].map((c) => `${c}\n${game.read(c) ?? ''}`).join('\n');
 export function loadOverrides(game: Shell, sd: Systemd) {
@@ -101,7 +101,7 @@ export function loadOverrides(game: Shell, sd: Systemd) {
     s.reboot = undefined;
     s.readIo = undefined;
     s.writeIo = undefined;
-    // Le dernier fichier lu l'emporte (comme systemd : les noms sont triés, /etc/systemd/system après system.control ici).
+    // The last file read wins (like systemd: names are sorted, /etc/systemd/system after system.control here).
     for (const path of paths) {
       let section = '';
       for (const line of (game.read(path) ?? '').split('\n')) {
@@ -119,14 +119,14 @@ export function loadOverrides(game: Shell, sd: Systemd) {
   }
 }
 
-/** « /dev/vda 20M » (IOWriteBandwidthMax=) → le disque et des octets par seconde ; null si illisible. */
+/** "/dev/vda 20M" (IOWriteBandwidthMax=) → the disk and bytes per second; null if unreadable. */
 function readIoLimit(text: string): { device: string; bytes: number } | null {
   const [device, rate, ...rest] = text.trim().split(/\s+/);
   const bytes = rate ? readSize(rate) : null;
   return device?.startsWith('/') && bytes !== null && !rest.length ? { device, bytes } : null;
 }
 
-/** Un moment pour journalctl --since/--until (heure de la machine, lue comme UTC) ; null si illisible. */
+/** A moment for journalctl --since/--until (machine time, read as UTC); null if unreadable. */
 function readMoment(sd: Systemd, text: string): number | null {
   const now = sd.clock + (sd.difference ?? 0);
   const day = Math.floor(now / 86_400_000) * 86_400_000;
@@ -142,7 +142,7 @@ function readMoment(sd: Systemd, text: string): number | null {
   return base + (m[4] ? (Number(m[4]) * 3600 + Number(m[5]) * 60 + Number(m[6] ?? 0)) * 1000 : 0);
 }
 
-/** daemon-reload : les unités écrites à la main, puis les surcharges. */
+/** daemon-reload: the hand-written units, then the overrides. */
 function reread(game: Shell, sd: Systemd) {
   loadUnits(game, sd);
   loadOverrides(game, sd);
@@ -165,7 +165,7 @@ function timersList(game: Shell, sd: Systemd, all: boolean): string {
     ]);
   const header = ['NEXT', 'LEFT', 'LAST', 'PASSED', 'UNIT', 'ACTIVATES'];
   const widths = header.map((e, i) => Math.max(e.length, ...lines.map((l) => l[i].length)));
-  // Deux espaces entre les colonnes : le tableau reste d'un seul tenant à l'écran.
+  // Two spaces between columns: the table stays in one piece on screen.
   const aligner = (l: string[]) => l.map((c, i) => (i === l.length - 1 ? c : c.padEnd(widths[i]))).join('  ');
   return [
     aligner(header),
@@ -176,7 +176,7 @@ function timersList(game: Shell, sd: Systemd, all: boolean): string {
   ].join('\n');
 }
 
-// systemctl start, stop, enable, status… d'un timer.
+// systemctl start, stop, enable, status… of a timer.
 function actionTimer(game: Shell, sd: Systemd, action: string, name: string, now: boolean): string {
   if (!sd.timers?.[name] && game.exists(`/etc/systemd/system/${name}.timer`)) reread(game, sd);
   const m = sd.timers?.[name];
@@ -238,7 +238,7 @@ function actionTimer(game: Shell, sd: Systemd, action: string, name: string, now
       startTimer();
       return '';
     case 'enable': {
-      // Sans section [Install] (WantedBy=timers.target), rien à activer.
+      // Without an [Install] section (WantedBy=timers.target), nothing to enable.
       if (!/^\s*WantedBy\s*=/m.test(game.read(m.file) ?? 'WantedBy=timers.target'))
         return [
           'The unit files have no installation config (WantedBy=, RequiredBy=, UpheldBy=,',
@@ -261,12 +261,12 @@ function actionTimer(game: Shell, sd: Systemd, action: string, name: string, now
   }
 }
 
-// systemctl edit : la surcharge s'ouvre dans l'éditeur ; à la fermeture, systemd la relit.
+// systemctl edit: the override opens in the editor; on closing, systemd rereads it.
 function editOverride(game: Shell, sd: Systemd, name: string): string {
   const place = `/etc/systemd/system/${name}.service.d`;
   const file = `${place}/override.conf`;
   for (const path of ['/etc/systemd', '/etc/systemd/system', place])
-    if (!game.exists(path)) game.place('systemctl', path, { type: 'dossier', children: {}, owner: 'root' });
+    if (!game.exists(path)) game.place('systemctl', path, { type: 'directory', children: {}, owner: 'root' });
   const existing = game.read(file);
   const template = `### Editing ${file}\n### Anything between here and the comment below will become the contents of the drop-in file\n\n\n\n### Edits below this comment will be discarded\n`;
   const text = existing ?? template;
@@ -277,7 +277,7 @@ function editOverride(game: Shell, sd: Systemd, name: string): string {
     conclude: true,
     message: game.t('nano-lines-read', { lines: text.split('\n').length }),
     after: () => {
-      // Seules les lignes au-dessus du commentaire « Edits below… » sont gardées.
+      // Only the lines above the "Edits below…" comment are kept.
       const raw = game.read(file) ?? '';
       const kept = raw
         .split('### Edits below this comment will be discarded')[0]
@@ -288,8 +288,8 @@ function editOverride(game: Shell, sd: Systemd, name: string): string {
       const n = game.find(file);
       if (!kept) {
         const d = game.find(place);
-        if (d?.type === 'dossier') delete d.children['override.conf'];
-      } else if (n?.type === 'fichier') n.content = kept;
+        if (d?.type === 'directory') delete d.children['override.conf'];
+      } else if (n?.type === 'file') n.content = kept;
       loadOverrides(game, sd);
       return '';
     },
@@ -297,11 +297,11 @@ function editOverride(game: Shell, sd: Systemd, name: string): string {
   return '';
 }
 
-// systemctl sans être root : systemd demanderait un mot de passe (polkit).
+// systemctl without being root: systemd would ask for a password (polkit).
 const refuse = (game: Shell, action: string, name: string) => game.error(game.t('systemctl-access-refuse', { action, service: name }));
 
 export const SYSTEMD: Record<string, Command> = {
-  // systemd-analyze calendar : tester une expression OnCalendar= avant de l'écrire dans un timer.
+  // systemd-analyze calendar: test an OnCalendar= expression before writing it in a timer.
   'systemd-analyze': {
     ownOptions: true,
     launch: ({ args, game }) => {
@@ -336,7 +336,7 @@ export const SYSTEMD: Record<string, Command> = {
   systemctl: {
     launch: (c) => {
       const { args, game } = c;
-      // Sur un terminal, systemctl colore (pas dans un tube ni un fichier).
+      // On a terminal, systemctl colours (not in a pipe or a file).
       const paint: Paint = colourise(c, 'auto') ? sgr : raw;
       const sd = systemd(game);
       if (!sd) return game.error('System has not been booted with systemd as init system (PID 1). Can\'t operate.');
@@ -347,25 +347,25 @@ export const SYSTEMD: Record<string, Command> = {
       const [action = 'list-units', ...names] = words;
       const VERBS = ['status', 'start', 'stop', 'restart', 'reload', 'enable', 'disable', 'is-active', 'is-enabled', 'list-units', 'reboot', '--failed', 'edit', 'daemon-reload', 'set-property', 'list-timers', 'default'];
       if (!VERBS.includes(action)) return game.error(`Unknown command verb '${action}'.`);
-      // Consulter l'état des services après un redémarrage : c'est vérifier.
+      // Looking at the services' state after a reboot: that is checking.
       const consulter = () => (sd.checkedAfterBoot = true);
       if (action === '--failed' || (action === 'list-units' && args.includes('--failed'))) return consulter(), listing(sd, true, paint);
       if (action === 'list-units') return consulter(), listing(sd, false, paint);
       if (action === 'daemon-reload') {
         if (game.who !== 'root') return refuse(game, 'daemon-reload', 'systemd');
         reread(game, sd);
-        // systemd relit aussi /etc/fstab (ses unités .mount en sont tirées).
+        // systemd also rereads /etc/fstab (its .mount units are derived from it).
         if (game.state.fstabRead !== undefined) game.state.fstabRead = game.read('/etc/fstab') ?? '';
         return '';
       }
-      // default : quitter le mode secours, reprendre le démarrage normal (multi-user.target).
+      // default: leave rescue mode, resume the normal boot (multi-user.target).
       if (action === 'default') {
         if (game.who !== 'root') return refuse(game, 'default', 'system');
         const resume = game.state.continueBoot as ((j: Shell) => string) | undefined;
         return resume ? resume(game) : '';
       }
       if (action === 'list-timers') return timersList(game, sd, args.includes('--all'));
-      // set-property : la limite s'applique tout de suite, et reste (un fichier dans system.control).
+      // set-property: the limit applies at once, and stays (a file in system.control).
       if (action === 'set-property') {
         const name = unitName(names[0] ?? '');
         const properties = names.slice(1);
@@ -381,13 +381,13 @@ export const SYSTEMD: Record<string, Command> = {
           if (!io && m[2] !== 'infinity' && readSize(m[2]) === null) return game.error(`Failed to parse MemoryMax= value: ${m[2]}`);
           const place = `/etc/systemd/system.control/${name}.service.d`;
           for (const path of ['/etc/systemd', '/etc/systemd/system.control', place])
-            if (!game.exists(path)) game.place('systemctl', path, { type: 'dossier', children: {}, owner: 'root' });
+            if (!game.exists(path)) game.place('systemctl', path, { type: 'directory', children: {}, owner: 'root' });
           const file = `${place}/50-${m[1]}.conf`;
           const value = io ? `${readIoLimit(m[2])!.device} ${readIoLimit(m[2])!.bytes}` : m[2] === 'infinity' ? 'infinity' : readSize(m[2]);
           const content = `# This is a drop-in unit file extension, created via "systemctl set-property"\n# or an equivalent operation. Do not edit.\n[Service]\n${m[1]}=${value}`;
           const n = game.find(file);
-          if (n?.type === 'fichier') n.content = content;
-          else game.place('systemctl', file, { type: 'fichier', content, lines: true, owner: 'root' });
+          if (n?.type === 'file') n.content = content;
+          else game.place('systemctl', file, { type: 'file', content, lines: true, owner: 'root' });
         }
         loadOverrides(game, sd);
         return '';
@@ -414,7 +414,7 @@ export const SYSTEMD: Record<string, Command> = {
           continue;
         }
         const name = unitName(raw);
-        // Une unité écrite à la main et jamais chargée : systemd la lit à la demande.
+        // A hand-written unit never loaded: systemd reads it on demand.
         if (!sd.services[name] && game.exists(`/etc/systemd/system/${name}.service`)) reread(game, sd);
         const s = sd.services[name];
         if (!s) {
@@ -422,8 +422,8 @@ export const SYSTEMD: Record<string, Command> = {
           else game.error(`Failed to ${action} ${name}.service: Unit ${name}.service not found.`);
           continue;
         }
-        // Une surcharge écrite à la main n'est lue qu'après daemon-reload : systemctl le rappelle.
-        // (Jamais relue : l'état de départ, sans fichier d'unité ni surcharge.)
+        // A hand-written override is only read after daemon-reload: systemctl reminds you.
+        // (Never reread: the initial state, with no unit file or override.)
         if (fingerprint(game, name) !== (s.overridesFingerprint ?? `/etc/systemd/system/${name}.service\n`))
           outputs.push(`Warning: The unit file, source configuration file or drop-ins of ${name}.service changed on disk. Run 'systemctl daemon-reload' to reload units.`);
         if (action === 'status') {
@@ -470,11 +470,11 @@ export const SYSTEMD: Record<string, Command> = {
   },
 
   journalctl: {
-    // -n20, -xeu nginx : journalctl lit ses options lui-même.
+    // -n20, -xeu nginx: journalctl reads its options itself.
     ownOptions: true,
     launch: (c) => {
       const { args, game } = c;
-      // Sur un terminal, les messages graves sont mis en valeur (pas dans un tube).
+      // On a terminal, serious messages are highlighted (not in a pipe).
       const colour = colourise(c, 'auto');
       const sd = systemd(game);
       if (!sd) return '-- No entries --';
@@ -492,7 +492,7 @@ export const SYSTEMD: Record<string, Command> = {
           if (a.startsWith('--unit=')) unit = a.slice(7);
           else if (a === '--follow') follow = true;
           else if (a === '--no-pager' || a === '--pager-end') continue;
-          // --since / --until : une date (« 2027-09-12 02:00 »), une heure (aujourd'hui), today, yesterday.
+          // --since / --until: a date ("2027-09-12 02:00"), a time (today), today, yesterday.
           else if (/^--(since|until)(=|$)/.test(a)) {
             const value = a.includes('=') ? a.slice(a.indexOf('=') + 1) : args[++i];
             const ms = value === undefined ? null : readMoment(sd, value);
@@ -504,7 +504,7 @@ export const SYSTEMD: Record<string, Command> = {
           continue;
         }
         if (!a.startsWith('-')) return game.error(game.t('journalctl-argument', { argument: a }));
-        // Options courtes groupées, comme -xeu nginx : la dernière peut prendre une valeur.
+        // Grouped short options, like -xeu nginx: the last one may take a value.
         for (let j = 1; j < a.length; j++) {
           const l = a[j];
           if ('unp'.includes(l)) {
@@ -516,17 +516,17 @@ export const SYSTEMD: Record<string, Command> = {
             break;
           }
           if (l === 'b') onlyBoot = true;
-          // -k : les messages du noyau, depuis ce démarrage.
+          // -k: the kernel's messages, since this boot.
           else if (l === 'k') {
             onlyKernel = true;
             onlyBoot = true;
           }
-          // -f : les dernières lignes, puis ce qui arrive, jusqu'à Ctrl-C (Shell.suivi).
+          // -f: the last lines, then what arrives, until Ctrl-C (Shell.follow).
           else if (l === 'f') follow = true;
           else if (l !== 'x' && l !== 'e' && l !== 'q') return game.error(`journalctl: invalid option -- '${l}'`);
         }
       }
-      // Lire tout le journal : root, ou les groupes adm et systemd-journal.
+      // Reading the whole journal: root, or the adm and systemd-journal groups.
       const allowed = game.who === 'root' || game.groupsFor(game.who).some((g) => g === 'adm' || g === 'systemd-journal');
       if (!allowed)
         return [
@@ -536,7 +536,7 @@ export const SYSTEMD: Record<string, Command> = {
           '-- No entries --',
         ].join('\n');
       const u = unit && (unit.endsWith('.service') ? unit : `${unit}.service`);
-      // Les dates se lisent à l'heure de la machine (celle que le journal affiche).
+      // Dates are read in the machine's time (the one the journal displays).
       const shows = (e: { time: number }) => e.time + (sd.difference ?? 0);
       const kept = (e: (typeof sd.log)[number]) =>
         (!u || e.unit === u) &&
@@ -546,7 +546,7 @@ export const SYSTEMD: Record<string, Command> = {
         (since === null || shows(e) >= since) &&
         (until === null || shows(e) <= until);
       let inputs = sd.log.filter(kept);
-      // Comme le vrai journalctl, -f montre les 10 dernières lignes puis suit.
+      // Like the real journalctl, -f shows the last 10 lines, then follows.
       if (count === null && follow) count = 10;
       if (count !== null) inputs = inputs.slice(-count);
       if (follow && c.last) {

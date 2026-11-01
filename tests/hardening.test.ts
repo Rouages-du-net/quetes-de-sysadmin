@@ -1,5 +1,5 @@
-// Les Lettres du quartier, « Fermer la porte » : durcir SSH. Rejoué avec la
-// console (la fin demande de se reconnecter), dans chaque langue.
+// The Neighbourhood Letters, "Closing the door": hardening SSH. Replayed with
+// the console (the end requires reconnecting), in every language.
 
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
@@ -8,20 +8,20 @@ import { prerequisites } from '../src/engine/unlocking';
 import { LANGUAGES, translator } from '../src/texts';
 import { inLanguage, machinesInLanguage } from './names';
 
-// L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
+// The Eraser, then the chapters to finish to receive the story's key.
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('letters')])];
 const CONFIG = '/etc/ssh/sshd_config';
 
 for (const language of LANGUAGES)
-  describe(`Langue : ${language}`, () => {
+  describe(`Language: ${language}`, () => {
     const fr = language === 'fr';
-    // Le compte du joueur dans la langue (vous@poste, you@poste), comme les noms des lieux.
+    // The player's account in the language (vous@poste, you@poste), like the places' names.
     const L = (line: string) => inLanguage(translator(language), line);
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);
     const part = () => {
       const c = new Console({ language, finished: ERASER });
       const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
-      // nano : remplacer du texte dans un fichier, puis ^O et ^X.
+      // nano: replace text in a file, then ^O and ^X.
       const modify = (file: string, change: (text: string) => string) => {
         c.execute(`sudo nano ${file}`);
         if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'ants-2026'));
@@ -31,7 +31,7 @@ for (const language of LANGUAGES)
       return { c, jouer: play, modifier: modify };
     };
 
-    it('solution : faute de frappe, piège de l’Include, reconnexion', () => {
+    it('solution: typo, the Include trap, reconnecting', () => {
       const { c, jouer: play, modifier: modify } = part();
       let all = play(['ssh letters', 'yes', 'journalctl -u ssh', 'sshd -t']);
       contains(all, 'Failed password for root from 203.0.113.66');
@@ -55,7 +55,7 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('shut-the-door');
     });
 
-    it('une autre solution : un fichier 00-… dans sshd_config.d, lu en premier', () => {
+    it('another solution: a 00-… file in sshd_config.d, read first', () => {
       const { c, jouer: play, modifier: modify } = part();
       play(['ssh letters', 'yes']);
       c.execute('sudo nano /etc/ssh/sshd_config.d/00-hardening.conf');
@@ -66,7 +66,7 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('shut-the-door');
     });
 
-    it('s’enfermer dehors, puis la console de secours (le menu)', () => {
+    it('locking yourself out, then the rescue console (the menu)', () => {
       const { c, jouer: play, modifier: modify } = part();
       play(['ssh letters', 'yes']);
       const alert = modify('/etc/ssh/sshd_config.d/00-hardening.conf', () => 'PermitRootLogin no\nPasswordAuthentication no\nAllowUsers kofi\n');
@@ -76,14 +76,14 @@ for (const language of LANGUAGES)
       expect(outside).toContain(L('you@letters.internal: Permission denied (publickey).'));
       contains(outside, 'tu t’es enfermé·e dehors'.replace('’', "'"));
       expect(c.prompt()).toBe(L('you@desk:~$'));
-      // Le menu : comme la console de secours de l'hébergeur.
+      // The menu: like the hosting provider's rescue console.
       c.connect('letters');
       modify('/etc/ssh/sshd_config.d/00-hardening.conf', (t) => t.replace('AllowUsers kofi', L('AllowUsers you')));
       play(['sudo systemctl reload ssh', 'exit', 'ssh letters']);
       expect(c.finished).toContain('shut-the-door');
     });
 
-    it('fausse piste : modifier le fichier sans recharger ne change rien', () => {
+    it('false lead: editing the file without reloading changes nothing', () => {
       const { c, jouer: play, modifier: modify } = part();
       play(['ssh letters', 'yes']);
       modify('/etc/ssh/sshd_config.d/50-cloud-init.conf', () => 'PermitRootLogin no\nPasswordAuthentication no\n');
@@ -92,11 +92,11 @@ for (const language of LANGUAGES)
     });
   });
 
-// Les Lettres du quartier, « Le pare-feu » : ufw.
+// The Neighbourhood Letters, "The firewall": ufw.
 for (const language of LANGUAGES)
-  describe(`Le pare-feu — ${language}`, () => {
+  describe(`The firewall — ${language}`, () => {
     const fr = language === 'fr';
-    // Le compte du joueur dans la langue (vous@poste, you@poste), comme les noms des lieux.
+    // The player's account in the language (vous@poste, you@poste), like the places' names.
     const L = (line: string) => inLanguage(translator(language), line);
     const part = () => {
       const c = new Console({ language, finished: [...ERASER, 'shut-the-door'] });
@@ -106,7 +106,7 @@ for (const language of LANGUAGES)
       return { c, jouer: play };
     };
 
-    it('solution : ss, ufw, le piège de l’activation, la reconnexion', () => {
+    it('solution: ss, ufw, the enabling trap, reconnecting', () => {
       const { c, jouer: play } = part();
       let all = play(['cat scan_yasmine.txt', 'ss -tln', 'ufw status', 'sudo ufw allow "Nginx Full"', 'ants-2026', 'sudo ufw enable', 'o']);
       expect(all).toContain('0.0.0.0:3306');
@@ -118,7 +118,7 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('firewall');
     });
 
-    it('une autre solution : reject par défaut, SSH depuis le poste seulement', () => {
+    it('another solution: reject by default, SSH from the workstation only', () => {
       const { c, jouer: play } = part();
       play([
         'sudo ufw default reject incoming', 'ants-2026', 'sudo ufw allow from 192.0.2.2 to any port 22 proto tcp',
@@ -127,7 +127,7 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('firewall');
     });
 
-    it('s’enfermer dehors : timeout, puis la console de secours', () => {
+    it('locking yourself out: timeout, then the rescue console', () => {
       const { c, jouer: play } = part();
       play(['sudo ufw allow http', 'ants-2026', 'sudo ufw allow https', 'sudo ufw enable', 'o']);
       const outside = play(['exit', 'ssh letters']);
@@ -138,7 +138,7 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('firewall');
     });
 
-    it('fausses pistes : laisser la base ouverte, couper le site, ne pas activer', () => {
+    it('false leads: leaving the database open, cutting the site, not enabling', () => {
       const { c, jouer: play } = part();
       const all = play(['sudo ufw allow OpenSSH', 'ants-2026', 'sudo ufw default allow', 'sudo ufw enable', 'o', 'sudo ufw default deny', 'exit', 'ssh letters']);
       if (fr) expect(all).toContain('la base de données (3306) est toujours');
@@ -149,9 +149,9 @@ for (const language of LANGUAGES)
     });
   });
 
-// Les Lettres du quartier, « La sentinelle » : fail2ban.
+// The Neighbourhood Letters, "The sentinel": fail2ban.
 for (const language of LANGUAGES)
-  describe(`La sentinelle — ${language}`, () => {
+  describe(`The sentinel — ${language}`, () => {
     const fr = language === 'fr';
     const part = () => {
       const c = new Console({ language, finished: [...ERASER, 'shut-the-door', 'firewall'] });
@@ -168,11 +168,11 @@ for (const language of LANGUAGES)
     };
     const GOOD = '[DEFAULT]\nbantime = 1h\nignoreip = 127.0.0.1/8 ::1 192.0.2.2 198.51.100.40\n';
 
-    it('solution : lire le journal, débannir Rania, jail.local, recharger, vérifier', () => {
+    it('solution: read the log, unban Rania, jail.local, reload, check', () => {
       const { c, jouer: play, ecrire: write } = part();
       let all = play(['cat /var/log/fail2ban.log', 'sudo fail2ban-client status sshd', 'ants-2026', 'sudo fail2ban-client set sshd unbanip 198.51.100.40']);
       expect(all).toContain('Ban 198.51.100.40');
-      // Le second robot, relâché à 09:35, attaque encore : il n'est pas (encore) banni.
+      // The second robot, released at 09:35, still attacks: it is not banned (yet).
       expect(all).toContain('`- Banned IP list:\t203.0.113.66 198.51.100.40\n');
       all += write('/etc/fail2ban/jail.local', GOOD);
       all += play(['sudo fail2ban-client -t', 'sudo systemctl reload fail2ban', 'sudo fail2ban-client get sshd bantime']);
@@ -184,14 +184,14 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('sentinel');
     });
 
-    it('une autre solution : jail.d/*.local, bantime -1, ignoreip en CIDR', () => {
+    it('another solution: jail.d/*.local, bantime -1, ignoreip in CIDR', () => {
       const { c, jouer: play, ecrire: write } = part();
       write('/etc/fail2ban/jail.d/lettres.local', '[sshd]\nbantime = -1\nignoreip = 192.0.2.0/24 198.51.100.40\n');
       play(['sudo fail2ban-client reload', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client status sshd']);
       expect(c.finished).toContain('sentinel');
     });
 
-    it('se bannir soi-même : Connection refused, puis la console de secours', () => {
+    it('banning yourself: Connection refused, then the rescue console', () => {
       const { c, jouer: play, ecrire: write } = part();
       const alert = write('/etc/fail2ban/jail.local', '[DEFAULT]\nmaxretry = 3\n') + play(['sudo systemctl reload fail2ban']);
       if (fr) expect(alert).toContain("l'adresse de ton propre");
@@ -206,7 +206,7 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('sentinel');
     });
 
-    it('fausses pistes : syntaxe, ne pas recharger, oublier Rania, modifier jail.conf', () => {
+    it('false leads: syntax, not reloading, forgetting Rania, editing jail.conf', () => {
       const { c, jouer: play, ecrire: write } = part();
       let all = write('/etc/fail2ban/jail.local', '[DEFAULT]\nbantime 1h\n') + play(['sudo fail2ban-client -t', 'sudo systemctl reload fail2ban']);
       expect(all).toContain("Source contains parsing errors: '/etc/fail2ban/jail.local'");
@@ -221,11 +221,11 @@ for (const language of LANGUAGES)
     });
   });
 
-// Les Lettres du quartier, « Le port » : déplacer SSH sur 2222 sans s'enfermer dehors.
+// The Neighbourhood Letters, "The port": moving SSH to 2222 without locking yourself out.
 const LETTERS = ['shut-the-door', 'firewall', 'sentinel', 'sharing', 'works-for-me', 'concert'];
 
 for (const language of LANGUAGES)
-  describe(`Le port — ${language}`, () => {
+  describe(`The port — ${language}`, () => {
     const fr = language === 'fr';
     const part = () => {
       const c = new Console({ language, finished: [...ERASER, ...LETTERS] });
@@ -244,7 +244,7 @@ for (const language of LANGUAGES)
     const workstationPort = (t: string) =>
       t.replace(M('Host letters\n    HostName letters.internal'), M('Host letters\n    HostName letters.internal\n    Port 2222'));
 
-    it('solution : les deux ports, tester, fermer le 22, la prison sshd', () => {
+    it('solution: both ports, test, close 22, the sshd jail', () => {
       const { c, jouer: play, ecrire: write } = part();
       let all = play(['journalctl -u ssh -n 4', 'sudo ufw status', 'ants-2026', 'sudo nft list ruleset']);
       expect(all).toContain('Invalid user');
@@ -271,11 +271,11 @@ for (const language of LANGUAGES)
       if (fr) expect(all).toContain('https://man.openbsd.org/sshd_config#Port');
       expect(c.finished).toContain('port');
       expect(play(['sudo nft list ruleset'])).toContain('tcp dport { 2222 } ip saddr @addr-set-sshd');
-      // Le 22 est bien fermé, vu du poste.
+      // Port 22 is indeed closed, seen from the workstation.
       expect(play(['exit', 'ssh -p 22 letters'])).toContain('port 22: Connection refused');
     });
 
-    it('fausses pistes : fermer le 22 trop tôt, port = 2222 dans [DEFAULT]', () => {
+    it('false leads: closing 22 too early, port = 2222 in [DEFAULT]', () => {
       const { c, jouer: play, ecrire: write } = part();
       let all = write('/etc/ssh/sshd_config', (t) => t.replace('#Port 22', 'Port 2222'));
       all += play(['sudo systemctl reload ssh', 'ants-2026']);
@@ -284,7 +284,7 @@ for (const language of LANGUAGES)
       expect(all).toContain(machinesInLanguage(translator(language), 'ssh: connect to host letters.internal port 22: Connection refused'));
       if (fr) expect(all).toContain('écoute maintenant sur 2222');
       expect(all).toContain('port 2222: Connection timed out');
-      // La console de secours : ouvrir 2222 dans ufw.
+      // The rescue console: open 2222 in ufw.
       c.connect('letters');
       play(['sudo ufw allow 2222/tcp', 'ants-2026', 'sudo ufw delete allow OpenSSH']);
       all = write('/etc/fail2ban/jail.local', (t) => t.replace('[DEFAULT]', '[DEFAULT]\nport = 2222'));
@@ -299,7 +299,7 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('port');
     });
 
-    it('nft ne fait que regarder sous ufw', () => {
+    it('nft only looks under ufw', () => {
       const { jouer: play } = part();
       const all = play(['nft list ruleset', 'sudo nft list tables', 'ants-2026', 'sudo nft add rule ip filter INPUT tcp dport 2222 accept']);
       expect(all).toContain('Operation not permitted');
@@ -308,9 +308,9 @@ for (const language of LANGUAGES)
     });
   });
 
-// Les Lettres du quartier, « La récidive » : les prisons recidive et nginx-limit-req.
+// The Neighbourhood Letters, "Repeat offenders": the recidive and nginx-limit-req jails.
 for (const language of LANGUAGES)
-  describe(`La récidive — ${language}`, () => {
+  describe(`Repeat offenders — ${language}`, () => {
     const fr = language === 'fr';
     const part = () => {
       const c = new Console({ language, finished: [...ERASER, ...LETTERS, 'port'] });
@@ -321,7 +321,7 @@ for (const language of LANGUAGES)
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
-      // Le chapitre commence avec SSH sur le port 2222 (« Le port »).
+      // The chapter starts with SSH on port 2222 ("The port").
       const input = play(['ssh letters', 'ssh -p 2222 letters', 'yes']);
       expect(input).toContain('port 22: Connection refused');
       expect(c.remote?.shell.chapter.id).toBe('repeat-offenders');
@@ -329,7 +329,7 @@ for (const language of LANGUAGES)
     };
     const JAILS = '\n[recidive]\nenabled = true\n\n[nginx-limit-req]\nenabled = true\n';
 
-    it('solution : lire les journaux, activer recidive et nginx-limit-req dans jail.local', () => {
+    it('solution: read the logs, enable recidive and nginx-limit-req in jail.local', () => {
       const { c, jouer: play, ecrire: write } = part();
       let all = play([
         'grep -c "Ban 203.0.113.66" /var/log/fail2ban.log',
@@ -351,7 +351,7 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('repeat-offenders');
     });
 
-    it('une autre solution : jail.d/*.local, et recidive bannie pour toujours', () => {
+    it('another solution: jail.d/*.local, and recidive banned forever', () => {
       const { c, jouer: play, ecrire: write } = part();
       write(
         '/etc/fail2ban/jail.d/prisons.local',
@@ -361,7 +361,7 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('repeat-offenders');
     });
 
-    it('fausses pistes : tout activer dans [DEFAULT], une recidive trop courte, oublier Rania', () => {
+    it('false leads: enabling everything in [DEFAULT], a recidive too short, forgetting Rania', () => {
       const { c, jouer: play, ecrire: write } = part();
       let all = write('/etc/fail2ban/jail.local', (t) => t.replace('[DEFAULT]', '[DEFAULT]\nenabled = true'));
       all += play(['sudo fail2ban-client -t', 'sudo systemctl reload fail2ban']);
@@ -371,7 +371,7 @@ for (const language of LANGUAGES)
       write('/etc/fail2ban/jail.local', (t) => t.replace('enabled = true\n', '') + '\n[recidive]\nenabled = true\nbantime = 1h\n');
       all = play(['sudo systemctl reload fail2ban']);
       if (fr) expect(all).toContain('pas plus longtemps');
-      // Rania sortie d'ignoreip : la prison nginx la bannit.
+      // Rania taken out of ignoreip: the nginx jail bans her.
       write(
         '/etc/fail2ban/jail.local',
         (t) =>

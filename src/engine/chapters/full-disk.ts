@@ -1,15 +1,15 @@
-// Histoire « L'Astreinte » — chapitre « Le disque plein » : une nuit
-// d'astreinte pour Radio Quartier. Le disque du serveur est plein : le relais
-// du flux (radio-stream) écrit son journal en mode debug depuis trois jours
-// (16 Go). Effacer le fichier ne rend rien : le programme le tient ouvert
-// (df plein, du ne le voit plus, lsof +L1 le montre). On vide le fichier
-// (truncate) ou on redémarre, on remet le niveau de journal normal, et on
-// confie le journal à logrotate pour que ça ne recommence pas.
-// Objectif vérifié sur l'état : le disque est sous 80 %, aucun fichier
-// effacé n'est encore tenu ouvert, le relais tourne sans debug, et une
-// configuration logrotate valable couvre son journal (et sait le faire
-// rouvrir : copytruncate, ou un postrotate qui recharge le relais).
-// Sources : https://man7.org/linux/man-pages/man8/logrotate.8.html,
+// Story "L'Astreinte" — chapter "The full disk": an on-call night for Radio
+// Quartier. The server's disk is full: the stream relay (radio-stream) has
+// been writing its log in debug mode for three days (16 GB). Erasing the
+// file frees nothing: the program keeps it open (df full, du no longer sees
+// it, lsof +L1 shows it). You empty the file (truncate) or restart, set the
+// log level back to normal, and hand the log over to logrotate so that it
+// does not happen again.
+// Objective checked on the state: the disk is under 80 %, no erased file is
+// still held open, the relay runs without debug, and a valid logrotate
+// configuration covers its log (and knows how to make it reopen:
+// copytruncate, or a postrotate that reloads the relay).
+// Sources: https://man7.org/linux/man-pages/man8/logrotate.8.html,
 // https://man7.org/linux/man-pages/man8/lsof.8.html,
 // https://www.gnu.org/software/coreutils/manual/html_node/truncate-invocation.html
 
@@ -42,7 +42,7 @@ const accounts = (): Accounts => ({
   },
 });
 
-// Le niveau de journal du relais, lu dans sa configuration (au démarrage).
+// The relay's log level, read from its configuration (at start).
 const configLevel = (j: Game) => /^\s*loglevel\s*=\s*(\w+)/m.exec(j.read(CONF) ?? '')?.[1] ?? 'info';
 
 const sd = (j: Game) => systemd(j)!;
@@ -51,14 +51,14 @@ const occupation = (j: Game) => Math.min(1, (shell(j).size(j.find('/')!) + ghost
 const ghost = (j: Game) => openSet(j).some((o) => held(j, o) && erases(j, o));
 const enabled = (j: Game) => sd(j).services['radio-stream']?.state === 'active';
 
-// La configuration logrotate du relais est-elle bonne ?
+// Is the relay's logrotate configuration right?
 function validRotation(j: Game): boolean {
   const text = j.read(ROTATION);
   if (!text) return false;
   const game = shell(j);
   const before = game.who;
   game.who = 'root';
-  // logrotate -d ne touche à rien : s'il ne dit aucune erreur, la configuration se lit.
+  // logrotate -d touches nothing: if it reports no error, the configuration can be read.
   const r = game.underCommand(`logrotate -d ${ROTATION}`, '/');
   game.who = before;
   const block = /([^\n{]*)\{([^}]*)\}/.exec(text);
@@ -124,7 +124,7 @@ export const fullDisk: Chapter = {
         active: true,
         executable: 'stream',
         process: [{ pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: `/usr/local/bin/stream --config ${CONF}` }],
-        // Au démarrage (et au rechargement), le relais relit sa configuration et rouvre son journal.
+        // On start (and on reload), the relay rereads its configuration and reopens its log.
         load: (j) => {
           j.state.fluxLevel = configLevel(j);
           open(j, { service: 'radio-stream', pid: 1730, user: 'radio', command: 'flux', fd: 3, path: LOG }, 'radio', 'adm');
@@ -140,7 +140,7 @@ export const fullDisk: Chapter = {
     mounts: [{ path: '/', capacity: DISK, name: '/dev/vda1', system: 'ext4' }],
   }),
   initialise: (j) => sd(j).services['radio-stream'].load!(j),
-  // Le relais écrit : en debug, le journal enfle à chaque instant.
+  // The relay writes: in debug, the log swells at every moment.
   afterCommand: (j) => {
     if (!enabled(j)) return;
     const o = openSet(j).find((x) => x.service === 'radio-stream');

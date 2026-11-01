@@ -1,14 +1,14 @@
-// Histoire « La Gazette » — chapitre « Le dépôt nu » : déployer par git.
-// Le site du journal du quartier est servi par nginx depuis /var/www/gazette,
-// où chacun·e copiait ses fichiers à la main. Le code est déjà suivi par git
-// dans ~/gazette. Il faut un dépôt nu sur le serveur (/srv/git/gazette.git)
-// et un crochet post-receive qui extrait chaque push dans /var/www/gazette.
-// Piège : Théo a corrigé une faute directement sur le serveur ; elle n'est
-// pas dans git, et le premier déploiement l'efface.
-// Objectif vérifié sur l'état : le site est exactement le dernier commit du
-// dépôt du serveur, extrait par son crochet ; il contient l'article de Samia,
-// la correction de Théo, puis la date corrigée de l'agenda.
-// Sources : https://git-scm.com/book/fr/v2/Git-sur-le-serveur-Mise-en-place-du-serveur,
+// Story "The Gazette" — chapter "The bare repository": deploying with git.
+// The neighbourhood paper's site is served by nginx from /var/www/gazette,
+// where everyone copied their files by hand. The code is already tracked by
+// git in ~/gazette. The server needs a bare repository (/srv/git/gazette.git)
+// and a post-receive hook that checks out each push into /var/www/gazette.
+// Trap: Théo fixed a typo directly on the server; it is not in git, and the
+// first deployment erases it.
+// Objective checked on the state: the site is exactly the last commit of the
+// server's repository, checked out by its hook; it contains Samia's article,
+// Théo's fix, then the corrected date in the events page.
+// Sources: https://git-scm.com/book/fr/v2/Git-sur-le-serveur-Mise-en-place-du-serveur,
 // https://git-scm.com/docs/githooks#post-receive, https://git-scm.com/docs/git#Documentation/git.txt---work-treeltpathgt
 
 import { path, d, f, accountsFiles, player, type Chapter, type Accounts, type Rights } from '../world';
@@ -62,12 +62,12 @@ export const STYLE = `body { font-family: Georgia, serif; max-width: 40em; margi
 h1 { border-bottom: 3px double; }
 time { font-weight: bold; }`;
 
-// L'agenda, avec la date du vide-grenier (dans le texte et dans datetime).
+// The events page, with the date of the jumble sale (in the text and in datetime).
 export const agenda = (t: Game['t'], day: number) =>
   t('bare-repo-site-agenda', { date: `2027-06-${String(day).padStart(2, '0')}`, day: String(day) });
 
-// L'historique du site dans ~/gazette : la première version (avec la faute
-// du titre), puis l'article de Samia, pas encore en ligne.
+// The site's history in ~/gazette: the first version (with the typo in the
+// title), then Samia's article, not yet online.
 export function history(t: Game['t']): Commit[] {
   const v1 = { 'index.html': t('bare-repo-site-index-v1'), 'style.css': STYLE, 'agenda.html': agenda(t, 21) };
   const c1 = newCommit(null, t('bare-repo-commit-1'), AUTHOR, 'Mon Apr 12 10:02:41 2027 +0200', v1);
@@ -83,9 +83,9 @@ const repo = (j: Game, path: string): Repo | undefined => j.state.git?.[path];
 const head = (j: Game) => repo(j, REPO)?.commits.at(-1);
 const readSite = (j: Game, name: string) => {
   const n = j.find(`${SITE}/${name}`);
-  return n?.type === 'fichier' ? content(n, j) : null;
+  return n?.type === 'file' ? content(n, j) : null;
 };
-// Le site est-il exactement le dernier commit du serveur, extrait par son crochet ?
+// Is the site exactly the server's last commit, checked out by its hook?
 const deployed = (j: Game) => {
   const c = head(j);
   return !!c && j.state.gitDeployments?.[SITE] === c.id && Object.entries(c.files).every(([name, text]) => readSite(j, name) === text);
@@ -199,7 +199,7 @@ export const bareRepo: Chapter = {
       usr: place({ sbin: place({ nginx: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_342_520 }) }) }),
       var: place({
         www: place({
-          // La première version, posée à la main… et la faute du titre corrigée sur place par Théo.
+          // The first version, put there by hand… and the typo in the title fixed in place by Théo.
           gazette: place(
             {
               'index.html': redaction(t('bare-repo-site-index-theo'), 'theo'),

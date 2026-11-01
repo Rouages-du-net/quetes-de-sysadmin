@@ -1,11 +1,10 @@
-// Copier vers une autre machine : ssh-copy-id (installer sa clé publique
-// dans ~/.ssh/authorized_keys d'en face) et scp (copier des fichiers par
-// ssh). D'après https://man.openbsd.org/scp et ssh-copy-id(1) (paquet
-// openssh-client de Debian). Les sauts, les clés d'hôte et
-// l'authentification passent par ../acces.ts.
-// Écarts : scp copie entre la machine où l'on est et une seule autre ; pas
-// d'options de vitesse ni de compression ; la barre de progression est
-// immédiate.
+// Copying to another machine: ssh-copy-id (installing your public key in
+// the other side's ~/.ssh/authorized_keys) and scp (copying files over
+// ssh). Based on https://man.openbsd.org/scp and ssh-copy-id(1) (Debian's
+// openssh-client package). Jumps, host keys and authentication go through
+// ../access.ts.
+// Differences: scp copies between the current machine and a single other
+// one; no speed or compression options; the progress bar is immediate.
 
 import type { Directory, File, Node } from '../world';
 import type { Shell } from '../shell';
@@ -15,11 +14,11 @@ import type { Command } from './index';
 
 const ID_COPY_SSH_NAME = '/usr/bin/ssh-copy-id';
 
-// La clé publique à installer : -i (avec ou sans .pub), sinon la plus récente de ~/.ssh/id_*.pub.
+// The public key to install: -i (with or without .pub), otherwise the most recent of ~/.ssh/id_*.pub.
 function chosenPublicKey(game: Shell, data?: string): string | null {
   if (data) return data.endsWith('.pub') ? data : `${data}.pub`;
   const ssh = game.find('~/.ssh');
-  if (ssh?.type !== 'dossier') return null;
+  if (ssh?.type !== 'directory') return null;
   const pub = Object.keys(ssh.children).filter((n) => /^id_.*\.pub$/.test(n));
   return pub.includes('id_ed25519.pub') ? '~/.ssh/id_ed25519.pub' : pub.length ? `~/.ssh/${pub[0]}` : null;
 }
@@ -54,18 +53,18 @@ function sshCopyId(game: Shell, args: string[]): string {
     ].join('\n');
   start.push(`${ID_COPY_SSH_NAME}: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys`);
   const output = pass(game, jumps, () => {
-    // Comme le script : mkdir -p ~/.ssh (700), puis la clé ajoutée à authorized_keys (600), au nom du compte d'en face.
+    // Like the script: mkdir -p ~/.ssh (700), then the key appended to authorized_keys (600), owned by the remote account.
     const s = d.shell;
     const before = s.who;
     s.who = d.user;
     try {
       if (!s.exists(`${home}/.ssh`))
-        s.place('mkdir', `${home}/.ssh`, { type: 'dossier', children: {}, owner: d.user, mode: 'rwx------' });
+        s.place('mkdir', `${home}/.ssh`, { type: 'directory', children: {}, owner: d.user, mode: 'rwx------' });
       const n = s.find(`${home}/.ssh/authorized_keys`);
-      if (n?.type === 'fichier') n.content = [s.read(`${home}/.ssh/authorized_keys`), key].filter(Boolean).join('\n');
+      if (n?.type === 'file') n.content = [s.read(`${home}/.ssh/authorized_keys`), key].filter(Boolean).join('\n');
       else
         s.place('ssh-copy-id', `${home}/.ssh/authorized_keys`, {
-          type: 'fichier',
+          type: 'file',
           content: key,
           lines: true,
           owner: d.user,
@@ -86,11 +85,11 @@ function sshCopyId(game: Shell, args: string[]): string {
   return [...start, output].filter((l) => l !== undefined).join('\n');
 }
 
-// « [compte@]machine:chemin » (un chemin local peut contenir « : » s'il commence par / ou ./).
+// "[account@]machine:path" (a local path may contain ":" if it starts with / or ./).
 const remote = (text: string) =>
   /^[^/.][^/]*:/.test(text) ? { target: text.slice(0, text.indexOf(':')), path: text.slice(text.indexOf(':') + 1) } : null;
 
-/** Copier `chemin` de la machine `src` vers `dest` sur `dst` (récursif avec -r) ; renvoie les lignes de scp. */
+/** Copies `path` from machine `src` to `dest` on `dst` (recursive with -r); returns scp's lines. */
 export function copy(src: Shell, dst: Shell, path: string, dest: string, recursive: boolean, errors: string[]): string[] {
   const n = src.find(path);
   const absolute = src.resolve(path);
@@ -98,19 +97,19 @@ export function copy(src: Shell, dst: Shell, path: string, dest: string, recursi
     errors.push(`scp: ${absolute}: No such file or directory`);
     return [];
   }
-  if (n.type === 'dossier' && !recursive) {
+  if (n.type === 'directory' && !recursive) {
     errors.push(`scp: ${absolute}: not a regular file`);
     return [];
   }
   const name = absolute.split('/').at(-1)!;
   const existsTarget = dst.find(dest);
-  const destination = existsTarget?.type === 'dossier' ? `${dst.resolve(dest)}/${name}` : dst.resolve(dest);
+  const destination = existsTarget?.type === 'directory' ? `${dst.resolve(dest)}/${name}` : dst.resolve(dest);
   const lines: string[] = [];
   const put = (source: Node, to: string) => {
-    if (source.type === 'dossier') {
+    if (source.type === 'directory') {
       if (!src.can(source, 'r') || !src.can(source, 'x')) return void errors.push(`scp: ${to}: Permission denied`);
-      if (dst.find(to)?.type !== 'dossier') {
-        const e = dst.place('scp', to, { type: 'dossier', children: {}, owner: dst.who });
+      if (dst.find(to)?.type !== 'directory') {
+        const e = dst.place('scp', to, { type: 'directory', children: {}, owner: dst.who });
         if (e) return void errors.push(`scp: ${to}: Permission denied`);
       }
       for (const [k, e] of Object.entries((source as Directory).children)) put(e, `${to}/${k}`);
@@ -119,7 +118,7 @@ export function copy(src: Shell, dst: Shell, path: string, dest: string, recursi
     const f = source as File;
     if (!src.can(f, 'r')) return void errors.push(`scp: ${src.resolve(path)}: Permission denied`);
     const copyOf: File = {
-      type: 'fichier',
+      type: 'file',
       content: content(f, src),
       lines: f.lines,
       prose: f.prose,
@@ -130,7 +129,7 @@ export function copy(src: Shell, dst: Shell, path: string, dest: string, recursi
     };
     const old = dst.find(to);
     const e =
-      old?.type === 'fichier' && dst.can(old, 'w')
+      old?.type === 'file' && dst.can(old, 'w')
         ? (Object.assign(old, { content: copyOf.content, size: copyOf.size }), null)
         : dst.place('scp', to, copyOf);
     if (e) return void errors.push(`scp: ${to}: Permission denied`);
@@ -170,7 +169,7 @@ function scp(game: Shell, args: string[]): string {
   const toRemote = remote(dest);
   const since = paths.map(remote);
   const other = toRemote ?? since.find(Boolean);
-  // Sans machine d'en face : une simple copie locale, comme cp.
+  // With no remote machine: a plain local copy, like cp.
   if (!other) return game.error(game.t('scp-local'));
   if (toRemote && since.some(Boolean)) return game.error(game.t('scp-two-remote'));
   const jumps = prepare(game, other.target, { identities, port, hop, program: 'ssh' });
@@ -200,5 +199,5 @@ export const TRANSFERS: Record<string, Command> = {
   scp: { ownOptions: true, launch: ({ args, game }) => scp(game, args) },
 };
 
-// Pour rsync vers ou depuis une autre machine (sauvegarde.ts).
+// For rsync to or from another machine (backup.ts).
 export { remote as remotePath };

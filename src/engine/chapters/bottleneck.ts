@@ -1,20 +1,20 @@
-// Histoire « L'Astreinte » — chapitre « Le goulot » : chaque jour à 16 h,
-// le direct de Radio Quartier hoquette. La machine semble lente, mais le
-// processeur ne fait presque rien : il attend le disque (iowait). L'archivage
-// du jour (radio-archives, un rsync lancé par un timer) recopie les
-// enregistrements sur le même disque aussi vite qu'il peut, et le relais du
-// direct n'obtient plus ses lectures à temps.
-//   - comprendre : top (wa), iostat -x (%util, r_await), pidstat -d (qui) ;
-//   - piège réel : ionice -c3 est accepté… et ne change rien, l'ordonnanceur
-//     du disque virtuel (none, /sys/block/vda/queue/scheduler) ignore les
-//     priorités ;
-//   - limiter le débit de l'archivage avec systemd (IOWriteBandwidthMax=,
-//     cgroup v2 io.max), pour aujourd'hui et pour demain, sans l'arrêter :
-//     les émissions du jour doivent être archivées.
-// Objectif vérifié sur l'état : le relais du direct est servi à temps,
-// l'archivage tourne toujours, avec une limite de débit enregistrée (dans
-// /etc) sur le bon disque, ni trop basse ni trop haute.
-// Sources : https://man7.org/linux/man-pages/man1/iostat.1.html,
+// Story "L'Astreinte" — chapter "The bottleneck": every day at 4 pm,
+// Radio Quartier's live stream stutters. The machine seems slow, but the
+// processor does almost nothing: it waits for the disk (iowait). The day's
+// archiving (radio-archives, an rsync started by a timer) copies the
+// recordings onto the same disk as fast as it can, and the live stream's
+// relay no longer gets its reads in time.
+//   - understand: top (wa), iostat -x (%util, r_await), pidstat -d (who);
+//   - a real trap: ionice -c3 is accepted… and changes nothing, the virtual
+//     disk's scheduler (none, /sys/block/vda/queue/scheduler) ignores
+//     priorities;
+//   - limit the archiving's bandwidth with systemd (IOWriteBandwidthMax=,
+//     cgroup v2 io.max), for today and tomorrow, without stopping it:
+//     the day's programmes must be archived.
+// Objective checked on the state: the live relay is served in time,
+// the archiving still runs, with a bandwidth limit saved (in
+// /etc) on the right disk, neither too low nor too high.
+// Sources: https://man7.org/linux/man-pages/man1/iostat.1.html,
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html#IOReadBandwidthMax=device%20bytes,
 // https://docs.kernel.org/admin-guide/cgroup-v2.html#io
 
@@ -28,12 +28,12 @@ import type { Process } from '../commands/system';
 const M = '/home/you';
 const Mo = 1024 * 1024;
 const ARCHIVES = 2190;
-// La copie du jour (rsync), dans la langue : /srv/radio/recordings/… en anglais.
+// The day's copy (rsync), in the language: /srv/radio/recordings/… in English.
 const copyOf = (t: Translate) => `rsync -a ${path(t, '/srv/radio/recordings')}/ /srv/archives/2027-09-20/`;
-// Le relais lit le direct ici.
+// The relay reads the live stream here.
 const buffer = (t: Translate) => path(t, '/srv/radio/live/buffer.ts');
 const FLUX = 1730;
-// Lundi 20 septembre 2027, 16 h 14 : l'émission de l'après-midi est en direct.
+// Monday 20 September 2027, 4:14 pm: the afternoon programme is live.
 const NOW = Date.UTC(2027, 8, 20, 16, 14, 0);
 const CAPACITY = 150_000;
 
@@ -59,7 +59,7 @@ const sd = (j: Game) => systemd(j)!;
 const archives = (j: Game): Service => sd(j).services['radio-archives'];
 const running = (j: Game) => archives(j).state === 'active' && (j.state.process ?? []).some((p: Process) => p.pid === archives(j).process[0]?.pid);
 const limit = (j: Game) => [archives(j).writeIo, archives(j).readIo].filter((l) => l && targetsPartition(l.device, (io(j) as IoState).disk));
-// Assez lente pour laisser le direct, assez rapide pour finir dans la soirée (au moins 5 Mio/s).
+// Slow enough to leave room for the live stream, fast enough to finish in the evening (at least 5 MiB/s).
 const reasonable = (j: Game) => limit(j).length > 0 && limit(j).every((l) => l!.bytes >= 5 * Mo) && timeAServed(j);
 
 export const bottleneck: Chapter = {
@@ -154,7 +154,7 @@ export const bottleneck: Chapter = {
   }),
   initialise: (j) => {
     const s = sd(j);
-    // L'archivage a démarré à 16 h (par son timer), et le direct hoquette depuis.
+    // The archiving started at 4 pm (by its timer), and the live stream has stuttered since.
     s.services['radio-archives'].state = 'active';
     s.clock = Date.UTC(2027, 8, 20, 16, 0, 0);
     writeLog(s, 'radio-archives.service', 'systemd', 1, "Started radio-archives.service - Radio Quartier: archive the day's recordings.");
@@ -172,7 +172,7 @@ export const bottleneck: Chapter = {
     }
     s.clock = NOW;
   },
-  // Chaque commande, une demi-minute : tant que le disque est saturé, le direct hoquette encore.
+  // Each command, half a minute: as long as the disk is saturated, the live stream keeps stuttering.
   afterCommand: (j) => {
     const s = sd(j);
     s.clock += 30_000;

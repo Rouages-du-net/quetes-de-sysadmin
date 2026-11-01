@@ -52,9 +52,9 @@ tunnel-admin-page =
     Refuser :   /admin/refuser/<compte>
 # { $name } : le compte ; { $state } : attente, validee ou refusee
 tunnel-admin-ligne = { $state ->
-        [validee] - { $name } : validée
-        [refusee] - { $name } : refusée
-       *[attente] - { $name } : en attente
+        [approved] - { $name } : validée
+        [refused] - { $name } : refusée
+       *[pending] - { $name } : en attente
     }
 tunnel-admin-valider = Inscription de { $name } validée.
 tunnel-admin-refuser = Inscription de { $name } refusée.

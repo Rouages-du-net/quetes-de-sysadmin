@@ -1,15 +1,16 @@
-// Histoire « Les Lettres du quartier » — chapitre « La colocation » : hôtes
-// virtuels et reverse proxy avec nginx. Le café associatif veut son site,
-// cafe.example, sur le serveur des Lettres ; et l'agenda des ateliers de
-// Rania (un petit programme Node.js qui écoute sur 127.0.0.1:3000) doit
-// être publié sous http://letters.example/agenda/.
-// Commandes : cp, nano, ln -s (sites-available → sites-enabled, comme
-// Debian), nginx -t, systemctl reload, curl -H "Host: …", proxy_pass,
+// Story "Les Lettres du quartier" — chapter "The flatshare": virtual hosts
+// and reverse proxy with nginx. The community café wants its site,
+// cafe.example, on the Letters' server; and Rania's workshop calendar (a
+// small Node.js program listening on 127.0.0.1:3000) must be published
+// under http://letters.example/agenda/.
+// Commands: cp, nano, ln -s (sites-available → sites-enabled, like Debian),
+// nginx -t, systemctl reload, curl -H "Host: …", proxy_pass,
 // /var/log/nginx/error.log, systemctl enable --now.
-// Objectif vérifié sur l'état : nginx sert le site du café pour son nom, le
-// site des Lettres reste intact, l'agenda répond sous /agenda/ (y compris
-// ses sous-pages), et le service agenda démarrera avec la machine.
-// Sources : https://nginx.org/en/docs/http/request_processing.html,
+// Objective checked on the state: nginx serves the café's site for its
+// name, the Letters' site stays intact, the calendar answers under /agenda/
+// (including its subpages), and the agenda service will start with the
+// machine.
+// Sources: https://nginx.org/en/docs/http/request_processing.html,
 // https://nginx.org/en/docs/http/server_names.html,
 // https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass
 
@@ -42,7 +43,7 @@ const accounts = (): Accounts => ({
   },
 });
 
-// Le site des Lettres, tel que Rania l'a installé (site par défaut du port 80).
+// The Letters' site, as Rania installed it (default site of port 80).
 const LETTERS_CONF = `server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -123,7 +124,7 @@ export const colocation: Chapter = {
         load: loadNginx,
         checkToReload: true,
       },
-      // Rania l'a installé, mais ne l'a jamais démarré.
+      // Rania installed it, but never started it.
       agenda: {
         description: 'Agenda des ateliers (Node.js)',
         state: 'inactive',
@@ -138,7 +139,7 @@ export const colocation: Chapter = {
       { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
       { pid: 802, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
     ],
-    // Le DNS de cafe.example pointe déjà ici (Kofi s'en est occupé).
+    // cafe.example's DNS already points here (Kofi took care of it).
     nginx: { load: null, names: ['letters', LETTERS, `www.${LETTERS}`, CAFE, `www.${CAFE}`, '203.0.113.10'] },
     apps: {
       '127.0.0.1:3000': {
@@ -162,7 +163,7 @@ export const colocation: Chapter = {
           'conf.d': place({}),
           'modules-enabled': place({}),
           'sites-available': place({ default: file(SITE_BY_DEFAULT), letters: file(LETTERS_CONF) }),
-          // Comme sur Debian : un site activé est un lien vers sites-available.
+          // Like on Debian: an enabled site is a link to sites-available.
           'sites-enabled': place({ letters: f('', { owner: 'root', link: '/etc/nginx/sites-available/letters' }) }),
         }),
       }),
@@ -184,7 +185,7 @@ export const colocation: Chapter = {
         www: place({
           html: place({ 'index.nginx-debian.html': file(WELCOME) }),
           letters: place({ 'index.html': file(t('sharing-site-letters')) }),
-          // Rania a déjà déposé les pages du café.
+          // Rania has already put the café's pages in place.
           cafe: place({ 'index.html': file(t('sharing-site-cafe'), { owner: 'rania' }) }, { owner: 'rania' }),
         }),
         log: place({

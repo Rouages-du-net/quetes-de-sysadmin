@@ -1,8 +1,8 @@
-// /etc/apache2 tel que le paquet apache2 de Debian l'installe (abrégé : les
-// commentaires d'apache2.conf sont raccourcis, et seuls quelques modules de
-// mods-available sont là). D'après les fichiers du paquet :
+// /etc/apache2 as Debian's apache2 package installs it (abridged: the
+// comments of apache2.conf are shortened, and only a few modules of
+// mods-available are there). Based on the package's files:
 // https://salsa.debian.org/apache-team/apache2/-/tree/master/debian/config-dir
-// Les textes sont ceux des vrais fichiers, en anglais.
+// The texts are those of the real files, in English.
 
 import { d, f, type Directory } from './world';
 
@@ -264,7 +264,7 @@ ThreadsPerChild		 25
 MaxRequestWorkers	  150
 MaxConnectionsPerChild   0`;
 
-// Les modules activés par le paquet, puis quelques autres de mods-available.
+// The modules enabled by the package, then a few others from mods-available.
 export const ACTIVE_MODULES = [
   'access_compat',
   'alias',
@@ -289,7 +289,7 @@ export const ACTIVE_MODULES = [
 const OTHER_MODULES = ['expires', 'headers', 'proxy', 'proxy_http', 'rewrite', 'socache_shmcb', 'ssl', 'userdir'];
 const CONFS_MODULES: Record<string, string> = { dir: DIR_CONF, mime: MIME_CONF, mpm_event: MPM_EVENT_CONF };
 
-/** /etc/apache2, avec `sites` en plus dans sites-available ; `actifs` : les modules activés. */
+/** /etc/apache2, plus `sites` in sites-available; `active`: the enabled modules. */
 export function etcApache2(sitesInMore: Record<string, string> = {}, activeSites: Record<string, string> = { '000-default.conf': '../sites-available/000-default.conf' }, active = ACTIVE_MODULES): Directory {
   const all = [...ACTIVE_MODULES, ...OTHER_MODULES].sort();
   const available: Record<string, ReturnType<typeof f>> = {};
@@ -325,13 +325,13 @@ export function etcApache2(sitesInMore: Record<string, string> = {}, activeSites
   });
 }
 
-/** /usr/lib/apache2/modules : un fichier .so par module (LoadModule les ouvre). */
+/** /usr/lib/apache2/modules: one .so file per module (LoadModule opens them). */
 export function modulesApache2(): Directory {
   const all = [...ACTIVE_MODULES, ...OTHER_MODULES].sort();
   return place({ modules: place(Object.fromEntries(all.map((m) => [`mod_${m}.so`, f('', { owner: 'root', size: 30_000 + m.length * 1_000 })]))) });
 }
 
-// La page d'accueil du paquet (abrégée), en anglais comme la vraie.
+// The package's welcome page (abridged), in English like the real one.
 export const APACHE_WELCOME = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>

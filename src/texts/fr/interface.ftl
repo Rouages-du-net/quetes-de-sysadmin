@@ -32,8 +32,8 @@ output-cut =
 workstation-title = Ton poste
 ## Le menu des histoires : deux vues
 view-title = Présentation des histoires
-view-reseau = Carte du réseau
-view-baies = Baies
+view-network = Carte du réseau
+view-racks = Baies
 view-internet = Internet
 input-label = Commande
 credit = Quêtes de Sysadmin, jeu libre (GPL v3, textes CC BY-SA 4.0), inspiré de Terminus, créé au MIT par Shawn Conrad et Michele Pratusevich.
@@ -180,12 +180,12 @@ progress-confirm = Reprendre cette sauvegarde ({ $count ->
        *[other] { $count } chapitres terminés
     }) ? Elle remplacera tout ce qui est gardé dans ce navigateur.
 progress-nothing-new = Ce code n'ajoute aucun chapitre à ceux que tu as déjà terminés ici.
-progress-code-illisible = Ce n'est pas un code de progression : il commence par QDS, suivi de groupes de lettres et de chiffres.
-progress-code-faute = Ce code contient une faute de frappe : vérifie-le, caractère par caractère.
-progress-code-trop-recent = Ce code vient d'une version plus récente du jeu : recharge la page.
-progress-fichier-illisible = Ce fichier n'est pas une sauvegarde lisible (JSON).
-progress-fichier-autre = Ce fichier n'est pas une sauvegarde de Quêtes de Sysadmin.
-progress-fichier-trop-recent = Cette sauvegarde vient d'une version plus récente du jeu : recharge la page.
+progress-code-unreadable = Ce n'est pas un code de progression : il commence par QDS, suivi de groupes de lettres et de chiffres.
+progress-code-mistake = Ce code contient une faute de frappe : vérifie-le, caractère par caractère.
+progress-code-too-recent = Ce code vient d'une version plus récente du jeu : recharge la page.
+progress-file-unreadable = Ce fichier n'est pas une sauvegarde lisible (JSON).
+progress-file-other = Ce fichier n'est pas une sauvegarde de Quêtes de Sysadmin.
+progress-file-too-recent = Cette sauvegarde vient d'une version plus récente du jeu : recharge la page.
 
 ## La mission, la barre de touches, Ctrl-R
 
@@ -198,8 +198,8 @@ mission-nothing = Rien encore : l'histoire avance à mesure que tu agis.
 keys-title = Touches du terminal
 # Pendant tail -f ou journalctl -f : le bouton qui fait Ctrl-C.
 follow-stop = Arrêter (Ctrl-C)
-key-haut = Commande précédente
-key-bas = Commande suivante
+key-up = Commande précédente
+key-down = Commande suivante
 # Ce qu'affiche bash pendant Ctrl-R (en anglais, comme readline).
 search-history = (reverse-i-search)`{ $pattern }': { $command }
 
@@ -262,8 +262,8 @@ achievements-sl = Locomotive
 
 hint-title = Besoin d'aide ?
 hint-intro = Trois niveaux, à ouvrir l'un après l'autre : le manuel d'abord, comme au travail. Le débrief dira combien tu en as demandé.
-hint-button-manuel = Le manuel
-hint-button-piste = Une piste
+hint-button-manual = Le manuel
+hint-button-lead = Une piste
 hint-button-solution = Presque la réponse
 # { $pages } : « man mv, man cp ».
 hint-manual = Les pages à lire : { $pages }. Cherche aussi avec man -k et un mot-clé.
@@ -314,7 +314,7 @@ rescue-restored = { $steps ->
        *[other] ↺ Machine remise comme après { $steps } saisies du chapitre.
     }
 ## Les parcours thématiques (menu « Parcours » ; voir src/engine/paths.ts)
-view-parcours = Parcours
+view-paths = Parcours
 path-choice = Choisir un parcours
 path-start = Premiers pas
     .description = Se déplacer, lire, chercher, ranger, puis le réseau, git et les archives : pour qui n'a jamais ouvert un terminal.
@@ -412,10 +412,10 @@ class-col-date = Sauvegarde
 ## L'affichage du terminal
 
 display-theme = Thème du terminal
-display-theme-phosphore = Phosphore
-display-theme-ambre = Ambre
-display-theme-contraste = Contraste élevé
-display-theme-papier = Papier
+display-theme-phosphor = Phosphore
+display-theme-amber = Ambre
+display-theme-contrast = Contraste élevé
+display-theme-paper = Papier
 display-more-small = Texte plus petit
 display-more-big = Texte plus grand
 display-colours = Couleurs

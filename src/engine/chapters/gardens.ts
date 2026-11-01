@@ -1,12 +1,12 @@
-// Ce que les chapitres du « Courrier indésirable » ont en commun : le serveur
-// des Jardins partagés (jardin, 203.0.113.30, gardens.example), son DNS (BIND,
-// primaire sur la machine, secondaire chez le registre), Postfix et OpenDKIM
-// tels que Debian les installe, et les serveurs de courrier d'en face :
-// mailbox.example (une grosse messagerie, exigeante), verifier.example (qui
-// répond avec le résultat de SPF, DKIM et DMARC, comme check-auth) et
-// newsmail.example (le service qui envoie la lettre d'information).
-// Sources : https://www.postfix.org/MILTER_README.html, le opendkim.conf de
-// Debian, RFC 7208 (SPF), 6376 (DKIM), 7489 (DMARC).
+// What the chapters of "Junk Mail" share: the server of the Shared
+// Gardens (jardin, 203.0.113.30, gardens.example), its DNS (BIND, primary
+// on the machine, secondary at the registry), Postfix and OpenDKIM as
+// Debian installs them, and the mail servers on the other side:
+// mailbox.example (a large, demanding mail provider), verifier.example (which
+// answers with the result of SPF, DKIM and DMARC, like check-auth) and
+// newsmail.example (the service that sends the newsletter).
+// Sources: https://www.postfix.org/MILTER_README.html, Debian's
+// opendkim.conf, RFC 7208 (SPF), 6376 (DKIM), 7489 (DMARC).
 
 import { d, f, accountsFiles, player, type Accounts, type Directory, type Rights } from '../world';
 import type { Game } from '../shell';
@@ -40,16 +40,16 @@ export const ZONE = `/etc/bind/zones/db.${DOMAIN}`;
 export const MAILBOX = { domain: 'mailbox.example', mx: 'mx.mailbox.example', ip: '198.51.100.25' };
 export const CHECKER = { domain: 'verifier.example', mx: 'mx.verifier.example', ip: '198.51.100.30', address: 'check-auth@verifier.example' };
 export const NEWSMAIL = { domain: 'newsmail.example', ip: '198.51.100.77', selector: 'nm1' };
-// L'ancien hébergeur : ses serveurs d'envoi, que son SPF autorise.
+// The former host: its sending servers, which its SPF authorizes.
 export const OLD = { domain: 'old-hosting.example', network: '192.0.2.80/28' };
-// La clé DKIM de newsmail.example (publiée chez eux, sous nm1.dkim.newsmail.example).
+// newsmail.example's DKIM key (published on their side, under nm1.dkim.newsmail.example).
 export const NEWSMAIL_KEY = publicKey(privateKey('newsmail.example:nm1:2048:1'))!;
-// La clé du serveur des Jardins, créée au chapitre « La signature » (et reprise au suivant).
+// The Gardens server's key, created in the chapter "The Signature" (and reused in the next one).
 export const GARDENS_PRIVATE = privateKey(`${DOMAIN}:mail:2048:jardins`);
 
 const rr = (name: string, type: string, data: string, ttl = 3600): Rr => ({ name: name.replace(/\.?$/, '.'), ttl, type, data });
 
-// Les zones des autres, telles qu'internet les voit.
+// The others' zones, as the internet sees them.
 function externalZones(): Record<string, Zone> {
   return {
     [OLD.domain]: { serial: 1, rrs: [rr(`_spf.${OLD.domain}`, 'TXT', `"v=spf1 ip4:${OLD.network} -all"`)] },
@@ -67,7 +67,7 @@ function externalZones(): Record<string, Zone> {
   };
 }
 
-/** Le fichier de zone de gardens.example, avec ces enregistrements en plus (après le CNAME de www). */
+/** The zone file of gardens.example, with these extra records (after www's CNAME). */
 export const zone = (serial: number, inMore: string[]) => `$TTL 3600
 @       IN  SOA ns1.${DOMAIN}. hostmaster.${DOMAIN}. (
                 ${serial} ; serial
@@ -88,7 +88,7 @@ ${inMore.join('\n')}
 
 export const OLD_SPF = `@       IN  TXT    "v=spf1 include:_spf.${OLD.domain} -all"`;
 export const GOOD_SPF = `@       IN  TXT    "v=spf1 mx -all"`;
-/** L'enregistrement DKIM du serveur, tel qu'opendkim-genkey l'a écrit. */
+/** The server's DKIM record, as opendkim-genkey wrote it. */
 export const goodDkim = () => {
   const p = publicKey(GARDENS_PRIVATE)!;
   return `mail._domainkey IN TXT ( "v=DKIM1; h=sha256; k=rsa; "\n          "p=${p.slice(0, 250)}"\n          "${p.slice(250)}" )`;
@@ -106,7 +106,7 @@ zone "${DOMAIN}" {
     also-notify { 192.0.2.53; };
 };`;
 
-// main.cf tel que Debian l'installe (« Internet Site »), puis l'adresse de la machine.
+// main.cf as Debian installs it ("Internet Site"), then the machine's address.
 export const MAIN_CF_DEBIAN = (inMore: string[] = []) => `# See /usr/share/postfix/main.cf.dist for a commented, more complete version
 
 
@@ -158,7 +158,7 @@ ${inMore.join('\n')}`;
 
 export const MILTERS = ['', '# DKIM (opendkim)', 'smtpd_milters = inet:localhost:8891', 'non_smtpd_milters = $smtpd_milters', 'milter_default_action = accept'];
 
-// /etc/opendkim.conf tel que Debian l'installe.
+// /etc/opendkim.conf as Debian installs it.
 export const OPENDKIM_DEBIAN = `# This is a basic configuration for signing and verifying. It can easily be
 # adapted to suit a basic installation. See opendkim.conf(5) and
 # /usr/share/doc/opendkim/examples/opendkim.conf.sample for complete
@@ -210,7 +210,7 @@ PidFile			/run/opendkim/opendkim.pid
 TrustAnchorFile		/usr/share/dns/root.key
 #Nameservers		127.0.0.1`;
 
-/** opendkim.conf configuré pour signer gardens.example (chapitre « La politique »). */
+/** opendkim.conf configured to sign gardens.example (chapter "The Policy"). */
 export const OPENDKIM_CONFIGURE = OPENDKIM_DEBIAN.replace('#Domain\t\t\texample.com', `Domain\t\t\t${DOMAIN}`)
   .replace('#Selector\t\t2020', 'Selector\t\tmail')
   .replace('#KeyFile\t\t/etc/dkimkeys/example.private', 'KeyFile\t\t/etc/dkimkeys/mail.private')
@@ -240,9 +240,9 @@ export const accounts = (): Accounts => ({
   },
 });
 
-// ——— Les serveurs d'en face ———
+// ——— The servers on the other side ———
 
-// La signature qu'aurait un message déposé sur la machine, envoyé maintenant (sans rien écrire au journal).
+// The signature a message submitted on the machine would have if sent now (without writing to the log).
 export function expectedSignature(game: Game): Signature | null {
   const c = mail(game);
   if (!c || systemd(game)?.services.postfix?.state !== 'active' || systemd(game)?.services.opendkim?.state !== 'active') return null;
@@ -262,7 +262,7 @@ export function expectedSignature(game: Game): Signature | null {
   return isPublic ? { d: DOMAIN, s: conf.selector, key: isPublic } : null;
 }
 
-/** Un message des Jardins, tel qu'un serveur distant le recevrait maintenant. */
+/** A message from the Gardens, as a remote server would receive it now. */
 export const gardensMessage = (game: Game): Message => ({
   id: 'TEST',
   forEachOf: `${game.player}@${DOMAIN}`,
@@ -276,7 +276,7 @@ export const gardensMessage = (game: Game): Message => ({
   ip: IP,
 });
 
-/** La lettre d'information, envoyée par newsmail.example : signée pour gardens.example si le CNAME de nm1 est publié. */
+/** The newsletter, sent by newsmail.example: signed for gardens.example if nm1's CNAME is published. */
 export function letter(game: Game): Message {
   const delegated = checkDkim(game, { d: DOMAIN, s: NEWSMAIL.selector, key: NEWSMAIL_KEY }).result === 'pass';
   return {
@@ -311,7 +311,7 @@ function providers(t: Translate): MailState['providers'] {
     [CHECKER.domain]: {
       mx: CHECKER.mx,
       ip: CHECKER.ip,
-      // Le vérificateur répond à l'expéditeur avec le résultat de ses vérifications.
+      // The verifier answers the sender with the result of its checks.
       receive: (j, a, m) => {
         const response: Message = {
           id: 'R' + m.id.slice(1),
@@ -336,13 +336,13 @@ export interface Departure {
   zone: string[];
   serial: number;
   mainCf: string[];
-  // opendkim : absent (pas encore installé), la configuration de Debian, ou configuré avec la clé.
+  // opendkim: absent (not installed yet), Debian's configuration, or configured with the key.
   opendkim: 'absent' | 'debian' | 'configure';
   now: number;
   file?: (t: Translate) => Message[];
 }
 
-/** L'état d'un chapitre : systemd (named, postfix, opendkim), le DNS, le courrier. */
+/** A chapter's state: systemd (named, postfix, opendkim), DNS, mail. */
 export function gardensState(t: Translate, departure: Departure): Record<string, unknown> {
   const services: Record<string, DefinitionService> = {
     ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },
@@ -406,7 +406,7 @@ export function gardensState(t: Translate, departure: Departure): Record<string,
   };
 }
 
-/** Une fois le monde créé : named charge la zone (le registre en a la copie), Postfix et OpenDKIM leur configuration. */
+/** Once the world is created: named loads the zone (the registry has the copy), Postfix and OpenDKIM their configuration. */
 export function initialiseGardens(j: Game) {
   reloadZones(j);
   const d = j.state.dns as DnsState;
@@ -417,7 +417,7 @@ export function initialiseGardens(j: Game) {
   if (sd.services.opendkim) loadDkim(j);
 }
 
-/** Le monde : /etc (comptes, BIND, Postfix, OpenDKIM), /var/log/mail.log, /var/mail, et la maison. */
+/** The world: /etc (accounts, BIND, Postfix, OpenDKIM), /var/log/mail.log, /var/mail, and the home. */
 export function gardensWorld(t: Translate, departure: Departure, home: Record<string, Parameters<typeof d>[0][string]>, log: string, box = ''): Directory {
   const root = { owner: 'root' };
   const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
@@ -472,6 +472,6 @@ export function gardensWorld(t: Translate, departure: Departure, home: Record<st
   });
 }
 
-/** Ce que voit un serveur distant pour un message des Jardins : SPF, DKIM, DMARC. */
+/** What a remote server sees for a message from the Gardens: SPF, DKIM, DMARC. */
 export const gardensAuth = (j: Game) => authenticate(j, gardensMessage(j));
 export const letterAuth = (j: Game) => authenticate(j, letter(j));

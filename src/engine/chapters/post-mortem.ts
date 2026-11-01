@@ -1,17 +1,16 @@
-// Histoire « L'Astreinte » — chapitre « Le post-mortem » : dimanche nuit,
-// Théo était d'astreinte et le direct a coupé 45 minutes. Pour
-// l'association, on écrit un post-mortem sans reproche. Les notes de Théo
-// sont approximatives : les vraies heures et la vraie cause sont dans les
-// journaux (journalctl --since/--until, last, l'historique d'apt, le
-// courrier d'alerte). La mise à jour automatique (unattended-upgrades, avec
-// needrestart) a relancé le relais à 2 h 13 ; il n'a pas pu repartir à
-// cause d'une option inconnue écrite dans sa configuration le 20 août, et
-// jamais appliquée depuis.
-// Objectif vérifié sur l'état : le fichier ~/postmortem.md, complété (plus
-// de « à compléter »), avec les heures exactes (2 h 13, 2 h 15, 2 h 58),
-// l'impact (45 minutes), le déclencheur et la cause (stream.conf, depuis le
-// 20 août), au moins deux actions, ce qui a marché, et sans reproche.
-// Source : https://sre.google/sre-book/postmortem-culture/
+// Story "On Call" — chapter "The Post-Mortem": on Sunday night, Théo was on
+// call and the live stream went down for 45 minutes. For the association,
+// we write a blameless post-mortem. Théo's notes are approximate: the real
+// times and the real cause are in the logs (journalctl --since/--until,
+// last, apt's history, the alert email). The automatic update
+// (unattended-upgrades, with needrestart) restarted the relay at 2:13; it
+// could not come back up because of an unknown option written into its
+// configuration on 20 August, and never applied since.
+// Objective checked on the state: the file ~/postmortem.md, filled in (no
+// more "to be completed"), with the exact times (2:13, 2:15, 2:58), the
+// impact (45 minutes), the trigger and the cause (stream.conf, since
+// 20 August), at least two actions, what went well, and blameless.
+// Source: https://sre.google/sre-book/postmortem-culture/
 
 import { path, d, f, accountsFiles, player, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game } from '../shell';
@@ -19,7 +18,7 @@ import { writeLog, newSystemd, systemd } from '../systemd';
 
 const M = '/home/you';
 const FILE = `${M}/postmortem.md`;
-// Lundi 13 septembre 2027, 10 h.
+// Monday 13 September 2027, 10:00.
 const NOW = Date.UTC(2027, 8, 13, 10, 0, 0);
 const NIGHT = (h: number, m: number, s = 0) => Date.UTC(2027, 8, 12, h, m, s);
 
@@ -45,9 +44,9 @@ const accounts = (): Accounts => ({
 
 const sd = (j: Game) => systemd(j)!;
 
-// Le texte du post-mortem, section par section (titres « ## », dans la langue du jeu).
+// The post-mortem's text, section by section ("##" headings, in the game's language).
 function sections(j: Game, text: string): Record<string, string> {
-  const names = ['resume', 'chronologie', 'impact', 'causes', 'marche', 'actions'];
+  const names = ['summary', 'timeline', 'impact', 'causes', 'went-well', 'actions'];
   const titres = Object.fromEntries(names.map((n) => [j.t(`post-mortem-section-${n}`).toLowerCase(), n]));
   const r: Record<string, string> = {};
   let current = '';
@@ -62,7 +61,7 @@ function sections(j: Game, text: string): Record<string, string> {
   return r;
 }
 
-// Une heure, écrite 02:13, 2:13, 2 h 13 ou 2h13.
+// A time, written 02:13, 2:13, 2 h 13 or 2h13.
 const timeOfDay = (h: number, m: number) => new RegExp(`\\b0?${h}\\s*(?::|h)\\s*${String(m).padStart(2, '0')}\\b`, 'i');
 const words = (j: Game, key: string) =>
   j
@@ -72,25 +71,25 @@ const words = (j: Game, key: string) =>
     .filter(Boolean);
 const containsOne = (text: string, listing: string[]) => listing.some((m) => text.toLowerCase().includes(m));
 
-/** Ce qui manque encore au post-mortem (identifiants de messages), vide s'il est complet. */
+/** What the post-mortem is still missing (message identifiers), empty if it is complete. */
 export function missing(j: Game): string[] {
   const text = j.read(path(j.t, FILE)) ?? '';
   const s = sections(j, text);
   const full = (n: string) => (s[n] ?? '').trim().length > 0;
   const m: string[] = [];
   if (text.includes(j.t('post-mortem-a-complete'))) m.push('template');
-  const timer = s.chronologie ?? '';
+  const timer = s.timeline ?? '';
   if (!timeOfDay(2, 13).test(timer) || !timeOfDay(2, 15).test(timer) || !timeOfDay(2, 58).test(timer)) m.push('timeline');
   if (!/\b45\b/.test(s.impact ?? '')) m.push('impact');
   const causes = s.causes ?? '';
   if (!/stream\.conf|bitrate_max/i.test(causes) || !containsOne(causes, words(j, 'post-mortem-words-trigger'))) m.push('cause');
   if (!containsOne(causes, words(j, 'post-mortem-words-origin'))) m.push('origin');
   if ((s.actions ?? '').split('\n').filter((l) => /^\s*[-*]\s+\S/.test(l)).length < 2) m.push('actions');
-  if (!full('marche') || !full('resume')) m.push('works');
+  if (!full('went-well') || !full('summary')) m.push('works');
   return m;
 }
 
-// Un mot qui cherche un coupable, dans les sections (pas dans l'en-tête du modèle).
+// A word that looks for someone to blame, in the sections (not in the template's header).
 const blame = (j: Game) => {
   const text = Object.values(sections(j, j.read(path(j.t, FILE)) ?? ''))
     .join('\n')
@@ -173,7 +172,7 @@ export const postMortem: Chapter = {
       { account: player(t), tty: 'pts/0', since: '198.51.100.23', start: NOW - 60_000, end: null },
     ],
   }),
-  // La nuit du 11 au 12 septembre, telle que le journal l'a gardée.
+  // The night of 11 to 12 September, as the journal kept it.
   initialise: (j) => {
     const s = sd(j);
     const now = s.clock;
@@ -209,7 +208,7 @@ export const postMortem: Chapter = {
     line(NIGHT(2, 13, 6), flux, 'systemd', 1, "radio-stream.service: Failed with result 'exit-code'.", 4);
     line(NIGHT(2, 13, 20), 'apt-daily-upgrade.service', 'systemd', 1, 'apt-daily-upgrade.service: Deactivated successfully.');
     line(NIGHT(2, 13, 20), 'apt-daily-upgrade.service', 'systemd', 1, 'Finished apt-daily-upgrade.service - Daily apt upgrade and clean activities.');
-    // La sonde du chapitre précédent, toutes les 5 minutes : elle alerte de 2 h 15 à 2 h 55.
+    // The previous chapter's probe, every 5 minutes: it alerts from 2:15 to 2:55.
     const alerts: string[] = [];
     for (let m = 15; m <= 55; m += 5) {
       line(NIGHT(2, m), 'probe.service', 'systemd', 1, 'Starting probe.service - Sonde de Radio Quartier...');
@@ -229,10 +228,10 @@ export const postMortem: Chapter = {
     s.services['radio-stream'].since = NIGHT(2, 58, 4);
     s.clock = now;
     const box = j.find('/var/mail/theo');
-    if (box?.type === 'fichier') box.content = alerts.join('\n');
+    if (box?.type === 'file') box.content = alerts.join('\n');
     j.state.readPostMortem = j.read(path(j.t, FILE));
   },
-  // Après chaque enregistrement du post-mortem, Zoé le relit.
+  // After each save of the post-mortem, Zoé rereads it.
   afterCommand: (j) => {
     const text = j.read(path(j.t, FILE));
     if (text === j.state.readPostMortem || j.state.finishedPostMortem) return;

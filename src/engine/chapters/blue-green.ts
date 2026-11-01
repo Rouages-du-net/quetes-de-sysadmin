@@ -1,15 +1,14 @@
-// Histoire « La Gazette » — chapitre « Bleu et green » : mettre à jour le
-// Kiosque (l'appli des abonnements) sans coupure. La 1.4.2 tourne sur
-// l'emplacement blue (port 3001), que nginx sert sous /kiosk/. On installe
-// la 1.5.0 sur l'emplacement green (port 3002), on vérifie sa santé
-// (/health) : il lui manque une variable de configuration, que ses notes de
-// version annoncent. Une fois green en bonne santé, nginx bascule vers lui
-// (proxy_pass, nginx -t, reload) ; blue reste allumé pour un retour arrière
-// instantané.
-// Objectif vérifié sur l'état : nginx (configuration chargée) envoie
-// /kiosk/ vers une instance en 1.5.0 en bonne santé, et l'autre instance
-// tourne toujours.
-// Sources : https://martinfowler.com/bliki/BlueGreenDeployment.html,
+// Story "La Gazette" — chapter "Blue and green": updating the Kiosk (the
+// subscriptions app) without downtime. 1.4.2 runs on the blue slot (port
+// 3001), which nginx serves under /kiosk/. You install 1.5.0 on the green
+// slot (port 3002) and check its health (/health): it lacks a configuration
+// variable, which its release notes announce. Once green is healthy, nginx
+// switches to it (proxy_pass, nginx -t, reload); blue stays up for an
+// instant rollback.
+// Objective checked on the state: nginx (configuration loaded) sends
+// /kiosk/ to a healthy 1.5.0 instance, and the other instance is still
+// running.
+// Sources: https://martinfowler.com/bliki/BlueGreenDeployment.html,
 // https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass,
 // https://nginx.org/en/docs/beginners_guide.html#control
 
@@ -52,7 +51,7 @@ const conf = (t: Game['t']) => `server {
 
 const sd = (j: Game) => systemd(j)!;
 const enabled = (j: Game, colour: string) => sd(j).services[`kiosk-${colour}`]?.state === 'active';
-// La couleur vers laquelle nginx envoie /kiosk/ (configuration chargée).
+// The colour nginx sends /kiosk/ to (configuration loaded).
 const served = (j: Game): string | null => {
   const config: Configuration | null = j.state.nginx?.load ?? null;
   const proxy = config?.servers.flatMap((s) => s.locations).find((l) => l.path === '/kiosk/')?.proxy ?? '';
@@ -135,7 +134,7 @@ export const greenBlue: Chapter = {
   }),
   initialise: (j) => {
     loadNginx(j);
-    // blue tourne depuis le démarrage de la machine : sa version et sa configuration d'alors.
+    // blue has been running since the machine booted: its version and configuration from back then.
     sd(j).services['kiosk-blue'].load!(j);
   },
   createWorld: (t) => {

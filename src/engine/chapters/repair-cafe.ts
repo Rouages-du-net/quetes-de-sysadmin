@@ -1,19 +1,19 @@
-// Histoire « Les Lettres du quartier » — chapitre « L'atelier de réparation » :
-// Apache, pour comparer avec nginx. Le site de l'atelier de réparation quitte
-// son ancien hébergeur ; il tournait sous Apache, avec un .htaccess qui
-// réécrit les adresses courtes des fiches (/guide/42, imprimées sur les
-// affiches). Rania a installé apache2 sur le serveur des Lettres, mais il ne
-// démarre pas : nginx tient déjà le port 80. On le met derrière nginx, sur
-// 127.0.0.1:8080, comme l'agenda.
-// Commandes : systemctl status, journalctl -u apache2, ss -tlnp, ports.conf
-// (Listen), <VirtualHost>, a2ensite (un lien fait à la main sans .conf est
-// ignoré), apache2ctl configtest et -S, AllowOverride, a2enmod rewrite,
-// le journal d'erreurs du site, nginx devant (ln -s, proxy_pass, Host).
-// Objectif vérifié sur l'état : Apache tourne et démarrera avec la machine,
-// n'écoute que sur la boucle locale ; par nginx, repair.example sert
-// l'accueil de l'atelier et /guide/42 la fiche 42 ; letters.example reste
+// Story "Les Lettres du quartier" — chapter "The repair workshop":
+// Apache, to compare with nginx. The repair workshop's site leaves
+// its old host; it ran under Apache, with a .htaccess that
+// rewrites the short addresses of the guides (/guide/42, printed on the
+// posters). Rania installed apache2 on the Lettres server, but it doesn't
+// start: nginx already holds port 80. We put it behind nginx, on
+// 127.0.0.1:8080, like the calendar.
+// Commands: systemctl status, journalctl -u apache2, ss -tlnp, ports.conf
+// (Listen), <VirtualHost>, a2ensite (a link made by hand without .conf is
+// ignored), apache2ctl configtest and -S, AllowOverride, a2enmod rewrite,
+// the site's error log, nginx in front (ln -s, proxy_pass, Host).
+// Objective checked on the state: Apache runs and will start with the machine,
+// listens only on the loopback; through nginx, repair.example serves
+// the workshop's home page and /guide/42 guide 42; letters.example stays
 // intact.
-// Sources : https://httpd.apache.org/docs/2.4/bind.html,
+// Sources: https://httpd.apache.org/docs/2.4/bind.html,
 // https://httpd.apache.org/docs/2.4/vhosts/name-based.html,
 // https://httpd.apache.org/docs/2.4/howto/htaccess.html,
 // https://httpd.apache.org/docs/2.4/mod/mod_rewrite.html,
@@ -64,7 +64,7 @@ const site = (name: string, root: string, fallback = false) => `server {
     }
 }`;
 
-// Le site nginx de l'atelier, préparé par Rania : nginx passe tout à Apache.
+// The workshop's nginx site, prepared by Rania: nginx passes everything to Apache.
 const WORKSHOP_NGINX = `server {
     listen 80;
     listen [::]:80;
@@ -75,7 +75,7 @@ const WORKSHOP_NGINX = `server {
     }
 }`;
 
-// Le site Apache de l'atelier, recopié de l'ancien hébergeur (où Apache écoutait sur le port 80).
+// The workshop's Apache site, copied from the old host (where Apache listened on port 80).
 export const WORKSHOP_APACHE = `<VirtualHost *:80>
     ServerName ${WORKSHOP}
     ServerAlias www.${WORKSHOP}
@@ -86,12 +86,12 @@ export const WORKSHOP_APACHE = `<VirtualHost *:80>
     CustomLog \${APACHE_LOG_DIR}/repair-access.log combined
 </VirtualHost>`;
 
-// Les règles de l'ancien hébergeur : /guide/42 sert guides/42.html (le commentaire vient des textes).
+// The old host's rules: /guide/42 serves guides/42.html (the comment comes from the texts).
 const HTACCESS = `RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^guide/([0-9]+)/?$ guides/$1.html [L]`;
 
-// Les machines du chapitre : SSH sur 2222 (« Le port »), nginx sur 80 et 443.
+// The chapter's machines: SSH on 2222 ("Le port"), nginx on 80 and 443.
 const LISTENING: Listening[] = [
   { proto: 'tcp', address: '0.0.0.0', port: 2222, process: 'sshd', pid: 612 },
   { proto: 'tcp', address: '[::]', port: 2222, process: 'sshd', pid: 612 },
@@ -105,7 +105,7 @@ const APACHE_PROCESS = [
   { pid: PID + 2, user: 'www-data', cpu: 0, mem: 0.3, command: '/usr/sbin/apache2 -k start' },
 ];
 
-// Hier, apt install apache2 : le paquet a voulu démarrer Apache, qui n'a pas pu (le port 80 est à nginx).
+// Yesterday, apt install apache2: the package tried to start Apache, which couldn't (port 80 belongs to nginx).
 const INSTALLATION = Date.UTC(2026, 10, 19, 18, 42, 0);
 const NOW = Date.UTC(2026, 10, 20, 9, 30, 0);
 
@@ -113,9 +113,9 @@ const sd = (j: Game) => systemd(j)!;
 const serves = (r: Response | { code: number; body: string } | null, text: string) => r?.code === 200 && r.body === text;
 const welcome = (j: Game) => j.t('repair-cafe-site-welcome');
 const sheet = (j: Game) => j.t('repair-cafe-sheet-42');
-// Par nginx (sans trace dans les journaux), comme un visiteur.
+// Through nginx (leaving no trace in the logs), like a visitor.
 const byNginx = (j: Game, path: string) => httpRequest(j, WORKSHOP, path, 80, false);
-// Apache lui-même, sur l'un de ses ports.
+// Apache itself, on one of its ports.
 const byApache = (j: Game, path: string, text: string) => apacheListeners(j).some((e) => serves(ask(j, e.port, path, WORKSHOP), text));
 const runningApache = (j: Game) => sd(j).services.apache2.state === 'active';
 const servedSite = (j: Game) => serves(byNginx(j, '/'), welcome(j));
@@ -172,7 +172,7 @@ export const workshop: Chapter = {
   password: 'ants-2026',
   accounts,
   state: () => ({
-    // SSH écoute sur 2222 depuis « Le port ».
+    // SSH has listened on 2222 since "Le port".
     sshd: { load: { port: '2222' }, reloads: 0 },
     listening: LISTENING.map((e) => ({ ...e })),
     ufw: {
@@ -199,7 +199,7 @@ export const workshop: Chapter = {
         checkToReload: true,
       },
       ufw: { description: 'Uncomplicated firewall', active: true, executable: 'ufw' },
-      // Installé hier : activé par le paquet, mais en échec.
+      // Installed yesterday: enabled by the package, but failed.
       apache2: {
         description: 'The Apache HTTP Server',
         state: 'inactive',
@@ -218,14 +218,14 @@ export const workshop: Chapter = {
       { pid: 701, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
       { pid: 702, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
     ],
-    // Le DNS de repair.example pointe déjà ici (Kofi s'en est occupé).
+    // repair.example's DNS already points here (Kofi took care of it).
     nginx: { load: null, names: ['letters', LETTERS, `www.${LETTERS}`, CAFE, `www.${CAFE}`, WORKSHOP, `www.${WORKSHOP}`, '203.0.113.10'] },
     apps: {},
     apache: { load: null },
   }),
   initialise: (j) => {
     loadNginx(j);
-    // Le paquet a essayé de démarrer Apache à l'installation : le journal en garde la trace.
+    // The package tried to start Apache on installation: the journal keeps a trace of it.
     const s = sd(j);
     start(j, s, 'apache2', true);
     s.clock = NOW;
@@ -256,7 +256,7 @@ export const workshop: Chapter = {
             cafe: f('', { owner: 'root', link: '/etc/nginx/sites-available/cafe' }),
           }),
         }),
-        // Rania a « activé » le site comme pour nginx : un lien, mais sans .conf.
+        // Rania "enabled" the site as for nginx: a link, but without .conf.
         apache2: etcApache2(
           { 'repair.conf': WORKSHOP_APACHE },
           { '000-default.conf': '../sites-available/000-default.conf', repair: '/etc/apache2/sites-available/repair.conf' },
@@ -286,7 +286,7 @@ export const workshop: Chapter = {
           html: place({ 'index.html': file(APACHE_WELCOME), 'index.nginx-debian.html': file(WELCOME) }),
           letters: place({ 'index.html': file(t('sharing-site-letters')) }),
           cafe: place({ 'index.html': file(t('sharing-site-cafe')) }),
-          // Le site de l'atelier, tel qu'il était chez l'ancien hébergeur.
+          // The workshop's site, as it was at the old host.
           repair: place(
             {
               'index.html': file(t('repair-cafe-site-welcome'), { owner: 'rania' }),

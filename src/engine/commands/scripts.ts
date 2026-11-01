@@ -1,8 +1,8 @@
-// Les commandes des scripts : sh (et bash) pour lancer un script, test (ou
-// [ … ] dans un script) pour vérifier une condition, date et readlink. Les scripts eux-mêmes
-// sont interprétés par script.ts.
-// D'après dash (https://manpages.debian.org/dash), test et date des
-// coreutils (https://www.gnu.org/software/coreutils/manual/).
+// The scripts' commands: sh (and bash) to run a script, test (or [ … ] in a
+// script) to check a condition, date and readlink. The scripts themselves
+// are interpreted by script.ts.
+// Based on dash (https://manpages.debian.org/dash), and coreutils' test and
+// date (https://www.gnu.org/software/coreutils/manual/).
 
 import type { Shell } from '../shell';
 import { runScript } from '../script';
@@ -11,16 +11,16 @@ import { timeOfDay, machineTime, setClock } from '../time';
 import { content } from '../tools';
 import type { Command } from './index';
 
-/** Lance un fichier comme un script /bin/sh ; renvoie sa sortie (échec si son code n'est pas 0). */
+/** Runs a file as a /bin/sh script; returns its output (failure if its code is not 0). */
 export function launchScript(game: Shell, file: string, args: string[], name = file): string {
   const n = game.find(file);
-  if (n?.type !== 'fichier') return game.error(game.t('sh-missing', { file: file }));
+  if (n?.type !== 'file') return game.error(game.t('sh-missing', { file: file }));
   const r = runScript(game, content(n, game), { cwd: game.cwd, name, arguments: args });
   if (r.code !== 0) game.error('');
   return r.output;
 }
 
-// test EXPRESSION : réussit (rien) ou échoue (code 1, sans message).
+// test EXPRESSION: succeeds (nothing) or fails (code 1, without a message).
 function evaluate(game: Shell, a: string[]): boolean | string {
   if (a[0] === '!') {
     const r = evaluate(game, a.slice(1));
@@ -35,14 +35,14 @@ function evaluate(game: Shell, a: string[]): boolean | string {
       case '-e':
         return !!n;
       case '-f':
-        return n?.type === 'fichier';
+        return n?.type === 'file';
       case '-d':
-        return n?.type === 'dossier';
+        return n?.type === 'directory';
       case '-L':
       case '-h':
-        return game.find(x, false)?.type === 'fichier' && (game.find(x, false) as { link?: string }).link !== undefined;
+        return game.find(x, false)?.type === 'file' && (game.find(x, false) as { link?: string }).link !== undefined;
       case '-s':
-        return n?.type === 'fichier' && content(n, game) !== '';
+        return n?.type === 'file' && content(n, game) !== '';
       case '-r':
       case '-w':
       case '-x':
@@ -82,15 +82,15 @@ function evaluate(game: Shell, a: string[]): boolean | string {
   return game.t('test-too-arguments');
 }
 
-// « [ … ] » est la même commande : script.ts le réécrit en test.
+// "[ … ]" is the same command: script.ts rewrites it as test.
 const test = ({ args, game }: { args: string[]; game: Shell }) => {
   const r = evaluate(game, args);
   if (typeof r === 'string') return game.error(`test: ${r}`);
   return r ? '' : game.error('');
 };
 
-// date +FORMAT : les directives courantes de strftime.
-// `zone` : le fuseau de la machine, s'il n'est pas celui de Paris (voir ../heure.ts).
+// date +FORMAT: the common strftime directives.
+// `zone`: the machine's time zone, if it is not Paris's (see ../time.ts).
 export function formatValue(ms: number, format: string, language: string, zone?: { abbrev: string; z: string; utc: number }): string {
   const d = new Date(ms);
   const two = (n: number) => String(n).padStart(2, '0');
@@ -119,7 +119,7 @@ export function formatValue(ms: number, format: string, language: string, zone?:
   return format.replace(/%(.)/g, (all, c: string) => directives[c]?.() ?? all);
 }
 
-/** « 2027-08-30 09:12[:00] » ou « 09:12[:00] » (aujourd'hui) → heure murale (lue comme UTC) ; null si illisible. */
+/** "2027-08-30 09:12[:00]" or "09:12[:00]" (today) → wall-clock time (read as UTC); null if unreadable. */
 export function readDate(game: Shell, text: string): number | null {
   const m = /^(?:(\d{4})-(\d{2})-(\d{2})\s+)?(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(text.trim());
   if (!m) return null;
@@ -151,7 +151,7 @@ export const SCRIPTS: Record<string, Command> = {
   date: {
     ownOptions: true,
     launch: ({ args, game }) => {
-      // -s « 2027-08-30 09:12 » (ou --set=…) : régler l'horloge, réservé à root.
+      // -s "2027-08-30 09:12" (or --set=…): set the clock, reserved to root.
       const i = args.findIndex((a) => a === '-s' || a.startsWith('--set='));
       if (i >= 0) {
         const text = args[i] === '-s' ? args[i + 1] : args[i].slice(6);
@@ -168,7 +168,7 @@ export const SCRIPTS: Record<string, Command> = {
       const format = args.find((a) => a.startsWith('+'));
       const unknown = args.find((a) => !a.startsWith('+'));
       if (unknown) return game.error(game.t('date-invalid', { argument: unknown }));
-      // Sans format : comme date en français (LANG=fr_FR.UTF-8).
+      // Without a format: like date in French (LANG=fr_FR.UTF-8).
       return formatValue(ms, format ? format.slice(1) : game.t('date-format'), game.t.language, machine ?? undefined);
     },
   },
@@ -179,7 +179,7 @@ export const SCRIPTS: Record<string, Command> = {
       const [target] = args.filter((a) => !a.startsWith('-'));
       if (!target) return game.error(game.t('readlink-operand'));
       if (canonical) {
-        // Le chemin absolu, tous les liens suivis.
+        // The absolute path, all links followed.
         let path = game.resolve(target);
         for (let i = 0; i < 20; i++) {
           const n = game.find(path, false) as { link?: string } | null;

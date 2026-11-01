@@ -1,9 +1,9 @@
-// ss (iproute2, https://man7.org/linux/man-pages/man8/ss.8.html) : les
-// sockets d'une machine. -t TCP, -u UDP, -l en écoute, -a toutes, -n sans
-// résoudre les noms de services, -p le processus (seulement pour root,
-// comme le vrai ss pour les sockets des autres comptes).
-// Les sockets viennent de etat.ecoute ; la session ssh en cours apparaît
-// comme connexion établie. Sortie en anglais (iproute2 n'est pas traduit).
+// ss (iproute2, https://man7.org/linux/man-pages/man8/ss.8.html): a
+// machine's sockets. -t TCP, -u UDP, -l listening, -a all, -n without
+// resolving service names, -p the process (only for root,
+// like the real ss for other accounts' sockets).
+// The sockets come from state.listening; the current ssh session appears
+// as an established connection. Output in English (iproute2 isn't translated).
 
 import { MACHINES, WORKSTATION } from '../machines';
 import { dockerListeners } from '../docker';
@@ -29,7 +29,7 @@ export const SS: Record<string, Command> = {
       const established = !letters.has('l') || letters.has('a');
       const port = (p: number) => (letters.has('n') ? String(p) : (NAMES[p] ?? String(p)));
       const lines: string[][] = [['State', 'Recv-Q', 'Send-Q', 'Local Address:Port', 'Peer Address:Port', 'Process']];
-      // Les sockets du chapitre, et celles de docker-proxy pour les ports publiés.
+      // The chapter's sockets, and docker-proxy's for the published ports.
       const listening: Listening[] = [...(game.state.listening ?? []), ...dockerListeners(game)];
       if (inListening)
         for (const e of listening.filter((s) => (s.proto === 'tcp' ? tcp : udp)))
@@ -41,7 +41,7 @@ export const SS: Record<string, Command> = {
             `${e.address === '*' ? '*' : e.address.includes(':') ? '[::]' : '0.0.0.0'}:*`,
             letters.has('p') && game.who === 'root' ? `users:(("${e.process}",pid=${e.pid},fd=3))` : '',
           ]);
-      // La session ssh en cours, depuis le poste (sur le port par lequel on est entré).
+      // The current ssh session, from the workstation (on the port we came in through).
       const here = MACHINES.find((m) => m.name === game.host);
       const portSession: number = game.state.portSession ?? 22;
       if (established && tcp && here && listening.some((e) => e.process === 'sshd'))

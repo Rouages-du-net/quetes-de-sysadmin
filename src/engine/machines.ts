@@ -1,20 +1,19 @@
-// Le réseau simulé : le poste de la joueuse ou du joueur, et une machine par
-// histoire. Adresses de documentation (RFC 5737), domaine réservé aux
-// exemples (RFC 6761). Les clés SSH et les empreintes sont fausses mais ont
-// la forme des vraies (ed25519), et ne changent jamais : le jeu reste
-// déterministe.
+// The simulated network: the player's workstation, and one machine per
+// story. Documentation addresses (RFC 5737), domain reserved for examples
+// (RFC 6761). The SSH keys and fingerprints are fake but have the shape of
+// real ones (ed25519), and never change: the game stays deterministic.
 
 import type { Translate } from '../texts';
 
 export interface Machine {
-  // L'identifiant de la machine (en français) ; le nom qu'on tape dépend de la langue (nomMachine).
+  // The machine's identifier (in French); the name you type depends on the language (machineName).
   name: string;
-  // Nom complet, résolu par /etc/hosts du poste.
+  // Full name, resolved by the workstation's /etc/hosts.
   domain: string;
   address: string;
-  // Histoire jouée sur cette machine (absent pour le poste).
+  // Story played on this machine (absent for the workstation).
   story?: string;
-  // Le jeu ne donne pas de clé : on crée la sienne (ssh-keygen, ssh-copy-id).
+  // The game gives no key: you create your own (ssh-keygen, ssh-copy-id).
   withoutKey?: boolean;
 }
 
@@ -34,36 +33,36 @@ export const MACHINES: Machine[] = [
   machine('anthill', '192.0.2.12', 'packet'),
   machine('manuscript', '192.0.2.13', 'time-machine'),
   machine('library', '192.0.2.14', 'archives'),
-  // Le serveur des Lettres du quartier : la même adresse que letters.example
-  // dans Le Paquet perdu.
+  // The Neighbourhood Letters' server: the same address as letters.example
+  // in The Lost Package.
   machine('letters', '203.0.113.10', 'letters'),
   machine('workshop', '192.0.2.15', 'fablab'),
   machine('gazette', '192.0.2.16', 'gazette'),
   machine('games', '192.0.2.17', 'game-library'),
   machine('radio', '192.0.2.18', 'on-call'),
-  // La Maison des associations : une passerelle, devant son réseau interne.
+  // The Community Centre: a gateway, in front of its internal network.
   machine('community', '192.0.2.19', 'community-centre', true),
   machine('coop', '192.0.2.20', 'coop'),
   machine('hive', '192.0.2.21', 'hive'),
   machine('bakery', '192.0.2.22', 'audit'),
   machine('lab', '192.0.2.23', 'lab'),
-  // Le Fournil, six mois plus tard (histoire 16) : un nouveau serveur
-  // (migration pendant la croissance de l'activité), mêmes personnages.
+  // Le Fournil, six months later (story 16): a new server (migration as the
+  // business grew), same characters.
   machine('petrin', '192.0.2.24', 'watch'),
-  // Les Jardins partagés : leur serveur, avec leur nom public gardens.example (même adresse).
+  // The Shared Gardens: their server, with their public name gardens.example (same address).
   machine('garden', '203.0.113.30', 'junk-mail'),
-  // Le poste de pilotage des maisons de quartier : Ansible, et derrière lui trois serveurs.
+  // The community centres' control station: Ansible, and behind it three servers.
   machine('pilot', '192.0.2.25', 'fleet'),
-  // La Rustine, l'atelier vélo : son petit serveur public (cycles.example), avec Caddy.
+  // La Rustine, the bike workshop: its small public server (cycles.example), with Caddy.
   machine('patch', '203.0.113.40', 'patch'),
 ];
 
-/** Le nom d'une machine dans la langue (machines.ftl : royaume → kingdom) ; une machine sans traduction garde le sien. */
+/** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */
 export const machineName = (t: Translate, id: string) => (t.exists(`machine-${id}`) ? t(`machine-${id}`) : id);
-/** Son nom complet (royaume.internal → kingdom.internal). */
+/** Its full name (royaume.internal → kingdom.internal). */
 export const machineDomain = (t: Translate, m: Machine) => `${machineName(t, m.name)}.internal`;
 
-/** Un nom d'hôte dans la langue : royaume → kingdom, royaume.internal → kingdom.internal, wiki.maison.internal → wiki.community.internal. */
+/** A host name in the language: royaume → kingdom, royaume.internal → kingdom.internal, wiki.maison.internal → wiki.community.internal. */
 export function hostInLanguage(t: Translate, n: string): string {
   const id = (x: string) => [WORKSTATION, ...MACHINES].some((m) => m.name === x);
   if (id(n)) return machineName(t, n);
@@ -71,9 +70,9 @@ export function hostInLanguage(t: Translate, n: string): string {
 }
 
 /**
- * Les noms de machines d'un texte sauvegardé (known_hosts, ~/.ssh/config)
- * passés dans la langue de la partie : une sauvegarde faite en français
- * (royaume, royaume.internal, id_royaume) sert aussi en anglais (kingdom…).
+ * The machine names of a saved text (known_hosts, ~/.ssh/config) put into
+ * the game's language: a save made in French (royaume, royaume.internal,
+ * id_royaume) also works in English (kingdom…).
  */
 export function translateHosts(text: string, t: Translate, other: Translate[]): string {
   let r = text;
@@ -91,7 +90,7 @@ export function translateHosts(text: string, t: Translate, other: Translate[]): 
 export const storyMachine = (story: string) => MACHINES.find((m) => m.story === story);
 export const machineByAddress = (address: string) => [WORKSTATION, ...MACHINES].find((m) => m.address === address);
 
-// Suite de caractères base64 tirée d'un nom (FNV-1a), toujours la même.
+// A string of base64 characters derived from a name (FNV-1a), always the same.
 export function base64(seed: string, length: number): string {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   let h = 0x811c9dc5;
@@ -104,26 +103,26 @@ export function base64(seed: string, length: number): string {
   return s;
 }
 
-// Une machine réinstallée a une nouvelle clé d'hôte : `generation` vient du
-// chapitre joué (Chapitre.cleHote), vide pour la clé d'origine.
+// A reinstalled machine has a new host key: `generation` comes from the
+// chapter being played (Chapter.hostKey), empty for the original key.
 
-/** Clé publique d'hôte (ligne de known_hosts, sans le nom). */
+/** Public host key (known_hosts line, without the name). */
 export const hostKey = (m: Machine, generation = '') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-hote-' + m.name + generation, 43)}`;
 
-/** Un texte de toute longueur résumé en 8 chiffres hexadécimaux (FNV-1a) : base64 ne lit que le début de sa graine. */
+/** A text of any length summed up in 8 hexadecimal digits (FNV-1a): base64 only reads the start of its seed. */
 export function condensed(text: string): string {
   let h = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
   return h.toString(16).padStart(8, '0');
 }
 
-/** Empreinte d'une clé publique, comme ssh l'affiche : SHA256:… (43 caractères). */
+/** Fingerprint of a public key, as ssh shows it: SHA256:… (43 characters). */
 export const keyFingerprint = (key: string) => `SHA256:${base64(condensed(key.split(' ').slice(0, 2).join(' ')) + '-empreinte', 43)}`;
 
-/** Empreinte de la clé d'hôte d'une machine. */
+/** Fingerprint of a machine's host key. */
 export const fingerprint = (m: Machine, generation = '') => keyFingerprint(hostKey(m, generation));
 
-/** La clé privée qui ouvre une session sur la machine. */
+/** The private key that opens a session on the machine. */
 export const privateKey = (m: Machine) =>
   [
     '-----BEGIN OPENSSH PRIVATE KEY-----',
@@ -133,5 +132,5 @@ export const privateKey = (m: Machine) =>
     '-----END OPENSSH PRIVATE KEY-----',
   ].join('\n');
 
-/** La clé publique correspondante (~/.ssh/id_<machine>.pub), commentée du compte qui l'a créée sur le poste (vous@poste, you@desk…). */
+/** The matching public key (~/.ssh/id_<machine>.pub), with the comment of the account that created it on the workstation (vous@poste, you@desk…). */
 export const publicKey = (m: Machine, account = 'you', workstation = 'desk') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-publique-' + m.name, 43)} ${account}@${workstation}`;

@@ -1,36 +1,36 @@
-// Le plan du réseau d'une histoire : le schéma que l'équipe aurait affiché
-// au mur ou sur son wiki. C'est le réseau PRÉVU, pas son état : vérifier que
-// la réalité lui ressemble (ip a, ip route, wg show…), c'est le travail du
-// joueur ou de la joueuse. Seuls deux repères suivent la partie : la machine
-// où l'on est (« tu es ici ») et celles où l'on s'est déjà connecté·e.
-// Chaque chapitre qui a un réseau à montrer le déclare (Chapitre.plan) ; la
-// carte l'affiche dans son onglet « Réseau » (voir src/interface/game.ts).
+// A story's network plan: the diagram the team would have pinned on the
+// wall or on its wiki. It is the PLANNED network, not its state: checking
+// that reality matches it (ip a, ip route, wg show…) is the player's job.
+// Only two markers follow the game: the machine you are on ("you are here")
+// and the ones you have already connected to.
+// Each chapter that has a network to show declares it (Chapter.plan); the
+// map shows it in its "Network" tab (see src/interface/game.ts).
 
 import type { Translate } from '../texts';
 import { machineName } from './machines';
 
-export type Role = 'internet' | 'poste' | 'routeur' | 'serveur' | 'appareil' | 'reseau';
+export type Role = 'internet' | 'workstation' | 'router' | 'server' | 'device' | 'network';
 
 export interface ElementPlan {
   role: Role;
-  // Nom affiché : un nom de machine (tel quel) ou un texte déjà traduit.
+  // Displayed name: a machine name (as is) or an already translated text.
   name: string;
-  // Adresse ou réseau (192.0.2.21, 10.10.10.0/24), ou « DHCP ».
+  // Address or network (192.0.2.21, 10.10.10.0/24), or "DHCP".
   address?: string;
-  // Ce qu'elle fait, en quelques mots (texte traduit) : « routeur, DHCP ».
+  // What it does, in a few words (translated text): "router, DHCP".
   note?: string;
-  // Le nom de la machine dans le jeu (celui de l'invite), pour « tu es ici ».
+  // The machine's name in the game (the prompt's), for "you are here".
   host?: string;
-  // Le lien vers son parent passe par un tunnel (WireGuard) : en pointillés.
+  // The link to its parent goes through a tunnel (WireGuard): dotted.
   tunnel?: boolean;
   children?: ElementPlan[];
 }
 
-/** Le début de tout plan : internet, et le poste d'où l'on part. */
+/** The start of every plan: the internet, and the workstation you start from. */
 export const internet = (t: Translate, ...children: ElementPlan[]): ElementPlan => ({
   role: 'internet',
   name: t('plan-internet'),
-  children: [{ role: 'poste', name: machineName(t, 'desk'), address: '192.0.2.2', note: t('plan-your-workstation'), host: 'desk' }, ...children],
+  children: [{ role: 'workstation', name: machineName(t, 'desk'), address: '192.0.2.2', note: t('plan-your-workstation'), host: 'desk' }, ...children],
 });
 
 export interface Landmark {
@@ -38,16 +38,16 @@ export interface Landmark {
   visit: boolean;
 }
 
-/** Les repères d'un élément pour la partie en cours. */
+/** An element's markers for the current game. */
 export const landmarks = (e: ElementPlan, here: string, visited: Set<string>): Landmark => ({
   here: !!e.host && e.host === here,
   visit: !!e.host && visited.has(e.host),
 });
 
-// ——— Mise en place du schéma ———
-// Un arbre couché : une colonne par niveau (internet, puis les machines,
-// puis les réseaux, puis les appareils), une ligne par feuille ; chaque
-// parent est centré sur ses enfants.
+// ——— Laying out the diagram ———
+// A sideways tree: one column per level (the internet, then the machines,
+// then the networks, then the devices), one row per leaf; each
+// parent is centred on its children.
 
 export interface Place {
   element: ElementPlan;

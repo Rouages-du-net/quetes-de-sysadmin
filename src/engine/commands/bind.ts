@@ -1,7 +1,7 @@
-// BIND 9 : dig et host (les questions), named-checkzone, named-checkconf et
-// rndc (le serveur). D'après https://bind9.readthedocs.io/en/stable/manpages.html.
-// Le DNS simulé est dans dns.ts ; sans etat.dns, dig garde son ancien
-// fonctionnement (Le Paquet perdu, reseau.ts).
+// BIND 9: dig and host (the questions), named-checkzone, named-checkconf and
+// rndc (the server). Based on https://bind9.readthedocs.io/en/stable/manpages.html.
+// The simulated DNS is in dns.ts; without state.dns, dig keeps its old
+// behaviour (The Lost Packet, network.ts).
 
 import type { Shell } from '../shell';
 import { dns, query, readZone, reloadZones, serverFor, declaredZones, type Rr } from '../dns';
@@ -13,7 +13,7 @@ const TYPES = ['A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'SOA'];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-// « Sat Mar 20 10:00:00 CET 2027 », comme dig.
+// "Sat Mar 20 10:00:00 CET 2027", like dig.
 const when = (local: number) => {
   const d = new Date(local);
   return `${DAYS[d.getUTCDay()]} ${MONTH[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, '0')} ${d.toISOString().slice(11, 19)} ${summerTime(local) ? 'CEST' : 'CET'} ${d.getUTCFullYear()}`;
@@ -21,14 +21,14 @@ const when = (local: number) => {
 
 const rrLine = (r: Rr) => `${r.name.padEnd(23)} ${String(r.ttl).padEnd(7)} IN\t${r.type}\t${r.data}`;
 
-// Les noms et adresses des serveurs (pour @serveur et SERVER:).
+// The servers' names and addresses (for @server and SERVER:).
 function addressFor(game: Shell, name: string): string {
   const d = dns(game)!;
   const s = serverFor(d, name)!;
   return d.servers[s].find((x) => /^\d+\.\d+\.\d+\.\d+$/.test(x)) ?? name;
 }
 
-/** Le serveur que le système interroge (/etc/resolv.conf). */
+/** The server the system queries (/etc/resolv.conf). */
 const systemResolver = (game: Shell) => /^\s*nameserver\s+(\S+)/m.exec(game.read('/etc/resolv.conf') ?? '')?.[1] ?? '127.0.0.1';
 
 export function digDns(args: string[], game: Shell): string {
@@ -52,7 +52,7 @@ export function digDns(args: string[], game: Shell): string {
     if (request) return game.error(`dig: couldn't get address for '${request}': not found`);
     return game.error(`;; communications error to ${target}#53: timed out\n;; no servers could be reached`);
   }
-  // named arrêté : le serveur de la machine ne répond plus.
+  // named stopped: the machine's server no longer answers.
   if (server === 'primary' && sd?.services.named?.state !== 'active')
     return game.error(`;; communications error to ${addressFor(game, target)}#53: connection refused\n;; no servers could be reached`);
   const r = query(game, server, name, type, toUtc(local));
@@ -128,7 +128,7 @@ export const BIND: Record<string, Command> = {
       const [zone, file] = args.filter((a) => !a.startsWith('-'));
       if (!zone || !file) return game.error(game.t('named-checkzone-usage'));
       const n = game.find(file);
-      if (!n || n.type !== 'fichier' || !game.can(n, 'r'))
+      if (!n || n.type !== 'file' || !game.can(n, 'r'))
         return game.error(
           `zone ${zone}/IN: loading from master file ${file} failed: ${!n ? 'file not found' : 'permission denied'}\nzone ${zone}/IN: not loaded due to errors.`,
         );
@@ -153,7 +153,7 @@ export const BIND: Record<string, Command> = {
       const d = dns(game);
       if (!d) return '';
       const text = game.read(d.conf) ?? '';
-      // Les accolades, et les fichiers de zone qui manquent.
+      // The braces, and the missing zone files.
       const openOnes = (text.match(/\{/g) ?? []).length;
       const closed = (text.match(/\}/g) ?? []).length;
       if (openOnes !== closed) return game.error(`${d.conf}:${text.split('\n').length}: unexpected end of input`);

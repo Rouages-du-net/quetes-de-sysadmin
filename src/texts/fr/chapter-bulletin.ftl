@@ -86,8 +86,8 @@ bulletin-template =
     ## Sans objet
     (à compléter : les CVE qui ne s'appliquent pas, avec leur identifiant et pourquoi)
 
-bulletin-section-concerne = Concerne ce serveur
-bulletin-section-sansobjet = Sans objet
+bulletin-section-affected = Concerne ce serveur
+bulletin-section-not-applicable = Sans objet
 bulletin-a-complete = (à compléter
 bulletin-words-missing = n'est pas installé, pas installé, non installé, absent, aucun paquet, n'existe pas sur ce serveur
 bulletin-words-fixed = déjà corrigé, déjà à jour, version installée, au-delà de la version corrigée, supérieure à la version corrigée, plus récente

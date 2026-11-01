@@ -1,11 +1,11 @@
-// iostat et pidstat (sysstat), ionice (util-linux), sur le modèle de
-// ../entrees-sorties.ts. Sorties en anglais, colonnes de sysstat 12.7.
-// Sources : https://man7.org/linux/man-pages/man1/iostat.1.html,
+// iostat and pidstat (sysstat), ionice (util-linux), on the model of
+// ../entrees-sorties.ts. Outputs in English, sysstat 12.7's columns.
+// Sources: https://man7.org/linux/man-pages/man1/iostat.1.html,
 // https://man7.org/linux/man-pages/man1/pidstat.1.html,
 // https://man7.org/linux/man-pages/man1/ionice.1.html
-// Écarts : iostat -c, -d, -x, -k, -m, -y, -z et un intervalle ; pidstat -d,
-// -u et un intervalle ; ionice -p (lire), -c, -n, -p (régler) ; tous les
-// rapports donnent les chiffres de l'instant.
+// Differences: iostat -c, -d, -x, -k, -m, -y, -z and an interval; pidstat -d,
+// -u and an interval; ionice -p (read), -c, -n, -p (set); all
+// reports give the current figures.
 
 import type { Shell } from '../shell';
 import { systemd } from '../systemd';
@@ -15,7 +15,7 @@ import type { Command } from './index';
 
 const f2 = (n: number) => n.toFixed(2);
 
-// L'en-tête de sysstat : noyau, machine, date (au format de la langue), architecture, processeurs.
+// sysstat's header: kernel, machine, date (in the language's format), architecture, CPUs.
 function header(game: Shell): string {
   const sd = systemd(game)!;
   const date = new Date(sd.clock);
@@ -26,7 +26,7 @@ function header(game: Shell): string {
   return `Linux 6.12.0-quetes (${sd.host}) \t${day} \t_x86_64_\t(${io(game)!.cpus} CPU)`;
 }
 
-// Intervalle et nombre de rapports (iostat 1 3).
+// Interval and number of reports (iostat 1 3).
 function repetitions(args: string[]): { count: number; interval: boolean } | null {
   const numbers = args.filter((a) => /^\d+$/.test(a)).map(Number);
   if (numbers.some((n) => n === 0) && numbers[0] === 0) return null;
@@ -52,7 +52,7 @@ function iostat(game: Shell, args: string[]): string {
   const name = unit === 1 ? 'kB' : 'MB';
   const read = rates.reduce((t, d) => t + d.read, 0);
   const write = rates.reduce((t, d) => t + d.write, 0);
-  // Des requêtes d'environ 240 ko (lecture séquentielle), le compte des opérations s'en déduit.
+  // Requests of about 240 kB (sequential read), the operation count follows from it.
   const rs = read / 236;
   const ws = write / 240;
   const system = Math.min(9, 1.2 + utilisation / 40);
@@ -167,7 +167,7 @@ function ionice(game: Shell, args: string[]): string {
       continue;
     }
     const owner = (game.state.process ?? []).find((p: { pid: number }) => p.pid === pid)?.user;
-    // Le temps réel est réservé à root ; changer la classe d'un processus d'un autre compte aussi.
+    // Real-time is reserved for root; so is changing the class of another account's process.
     if (game.who !== 'root' && (cls === 1 || owner !== game.who)) return game.error('ionice: ioprio_set failed: Operation not permitted', 1);
     if (e) e.classes[pid] = { cls, prio: cls === 3 ? 0 : (prio ?? 4) };
   }

@@ -1,8 +1,8 @@
-// Les pages du manuel, partie technique : options courtes comprises par le
-// jeu, commandes d’exemple et renvois (VOIR AUSSI). Les explications sont
-// dans src/texts/<langue>/manual.ftl (man-<commande>, .option-X, .example-N).
-// Une option absente d’ici donne le vrai message d’erreur, qui renvoie vers --help ;
-// longues : les options longues de GNU comprises (--all → -a), les autres sont refusées.
+// The manual's pages, technical part: short options understood by the
+// game, example commands and cross-references (SEE ALSO). The explanations are
+// in src/texts/<language>/manual.ftl (man-<command>, .option-X, .example-N).
+// An option missing here gives the real error message, which points to --help;
+// long: the GNU long options understood (--all → -a), the others are rejected.
 
 import type { Command } from './index';
 

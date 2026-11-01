@@ -1,20 +1,20 @@
-// Les succès et le grade : de petites récompenses, vérifiées sur ce qui
-// s'est vraiment passé (la ligne tapée, l'état de la partie), jamais
-// déclarées par le joueur ou la joueuse. Les textes (nom, description)
-// sont dans src/texts/<langue>/interface.ftl : succes-<id>, et
-// succes-<id>.description. Un succès « caché » ne montre son nom qu'une
-// fois obtenu (les clins d'œil).
+// Achievements and rank: small rewards, checked against what really
+// happened (the line typed, the state of the game), never declared by the
+// player. The texts (name, description) are in
+// src/texts/<language>/interface.ftl: succes-<id> and
+// succes-<id>.description. A "hidden" achievement only shows its name once
+// earned (the easter eggs).
 
 import { STORIES } from './chapters';
 import type { Shell } from './shell';
 import type { Notebook } from './notebook';
 
 export interface Context {
-  // La session où la ligne a été tapée (null : vérification hors d'une ligne).
+  // The session where the line was typed (null: check made outside a line).
   sh: Shell | null;
   finished: string[];
   notebook: Notebook;
-  // Meilleurs temps en mode examen, par chapitre (ms).
+  // Best times in exam mode, per chapter (ms).
   records: Record<string, number>;
 }
 
@@ -43,16 +43,16 @@ export const ACHIEVEMENTS: Achievements[] = [
   { id: 'without-hint', obtained: (c) => !!c.sh?.finished && c.sh.chapter.id !== 'desk' && c.sh.requestsHints.size === 0 },
   { id: 'exam', obtained: (c) => Object.keys(c.records).length > 0 },
   { id: 'exam-lightning', obtained: (c) => Object.values(c.records).some((ms) => ms < 5 * 60_000) },
-  // Les clins d'œil : une ligne bien précise (voir OEUFS dans shell.ts).
+  // The easter eggs: one very precise line (see EGGS in shell.ts).
   { id: 'xyzzy', cache: true, obtained: (c) => !!c.sh?.eggs.has('xyzzy') },
   { id: 'sandwich', cache: true, obtained: (c) => !!c.sh?.eggs.has('sandwich') },
   { id: 'sl', cache: true, obtained: (c) => !!c.sh?.eggs.has('sl') },
 ];
 
-/** Les succès obtenus maintenant et pas encore notés (dans l'ordre de la liste). */
+/** The achievements earned now and not yet recorded (in the order of the list). */
 export const newAchievements = (c: Context, already: Record<string, string>) => ACHIEVEMENTS.filter((s) => !already[s.id] && s.obtained(c)).map((s) => s.id);
 
-// Les grades, du premier au dernier : le nombre de chapitres terminés pour l'atteindre.
+// The ranks, from first to last: the number of finished chapters needed to reach each.
 export const GRADES: { id: string; chapters: number }[] = [
   { id: 'intern', chapters: 0 },
   { id: 'apprentice', chapters: 1 },
@@ -63,7 +63,7 @@ export const GRADES: { id: string; chapters: number }[] = [
 ];
 const ALL = () => STORIES.reduce((n, h) => n + h.chapters.length, 0);
 
-/** Le grade d'après les chapitres terminés : « SRE » pour tout le jeu. */
+/** The rank from the finished chapters: "SRE" for the whole game. */
 export function grade(finished: string[]): string {
   const n = finished.length;
   if (n >= ALL()) return 'sre';

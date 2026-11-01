@@ -67,7 +67,7 @@ chage-list =
     Mot de passe désactivé						: jamais
     Fin de validité du compte					: { $expire ->
         [never] jamais
-       *[autre] { $expire }
+       *[other] { $expire }
     }
     Nombre minimum de jours entre les changements de mot de passe		: 0
     Nombre maximum de jours entre les changements de mot de passe		: 99999

@@ -1,6 +1,6 @@
-// Chapitre 3 — La Racine : ls -l, permissions (rwx), chmod, whoami, sudo.
-// Ici, l'arborescence ressemble enfin à un vrai Linux : /home, /etc,
-// /var/log, /root. Fin de l'histoire de l'Effaceur.
+// Chapter 3 — The Root: ls -l, permissions (rwx), chmod, whoami, sudo.
+// Here, the tree finally looks like a real Linux: /home, /etc,
+// /var/log, /root. End of the Eraser's story.
 
 import { path, account, d, f, name, type Chapter } from '../world';
 import type { Game } from '../shell';
@@ -9,11 +9,11 @@ const M = '/home/you';
 const MEMORIES = `${M}/memories`;
 const CONF = '/etc/eraser.conf';
 const TOTAL = 8;
-// L'utilisateur système de l'Effaceur, sous son nom dans la langue (effaceur, eraser…).
+// The Eraser's system user, under its name in the language (effaceur, eraser…).
 const eraser = (j: Game) => account(j.t, 'eraser');
 
 const memory = (text: string) => f(text);
-// La ligne corrigée de la configuration, dans la langue : « cible = /Royaume/Corbeille ».
+// The fixed configuration line, in the language: "target = /Kingdom/Bin".
 const fixedTarget = (j: Game) => `${name(j.t, 'target')} = ${path(j.t, '/Kingdom/Bin')}`;
 
 export const root: Chapter = {
@@ -117,12 +117,12 @@ export const root: Chapter = {
       undefined,
       { owner: 'root' },
     ),
-  // L'Effaceur avance : à chaque commande, il efface un souvenir, tant que
-  // les autres utilisateurs ont le droit d'écrire dans le lieu.
+  // The Eraser moves on: at each command, it erases a memory, as long as
+  // other users are allowed to write in the place.
   afterCommand: (j) => {
     if (!j.flags.has('alert') || j.flags.has('fixed') || !j.exists(path(j.t, CONF))) return;
     const place = j.find(path(j.t, MEMORIES));
-    if (place?.type !== 'dossier' || !j.can(place, 'w', eraser(j)) || !j.can(place, 'x', eraser(j))) return;
+    if (place?.type !== 'directory' || !j.can(place, 'w', eraser(j)) || !j.can(place, 'x', eraser(j))) return;
     const name = Object.keys(place.children).sort()[0];
     if (!name) return;
     delete place.children[name];
@@ -138,7 +138,7 @@ export const root: Chapter = {
       id: 'protected',
       condition: (j) => {
         const place = j.find(path(j.t, MEMORIES));
-        return j.flags.has('alert') && !j.flags.has('fixed') && place?.type === 'dossier' && !(j.can(place, 'w', eraser(j)) && j.can(place, 'x', eraser(j)));
+        return j.flags.has('alert') && !j.flags.has('fixed') && place?.type === 'directory' && !(j.can(place, 'w', eraser(j)) && j.can(place, 'x', eraser(j)));
       },
       message: (j) => j.t('root-event-protected', { saved: j.count(path(j.t, MEMORIES), ''), total: TOTAL }),
     },
@@ -151,11 +151,11 @@ export const root: Chapter = {
       id: 'fixed',
       condition: (j) => {
         const conf = j.find(path(j.t, CONF));
-        return conf?.type === 'fichier' && typeof conf.content === 'string' && conf.content.includes(fixedTarget(j));
+        return conf?.type === 'file' && typeof conf.content === 'string' && conf.content.includes(fixedTarget(j));
       },
       message: (j) => {
         const saved = j.count(path(j.t, MEMORIES), '');
-        return j.t('root-event-fixed', { saved: saved, total: TOTAL, loss: saved < TOTAL ? 'oui' : 'non' });
+        return j.t('root-event-fixed', { saved: saved, total: TOTAL, loss: saved < TOTAL ? 'yes' : 'no' });
       },
     },
   ],

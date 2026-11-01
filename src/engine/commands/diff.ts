@@ -1,23 +1,23 @@
-// diff (GNU diffutils) : les différences entre deux fichiers, ou entre deux
-// lieux (-r). Format normal (« 3c3 », « < », « --- », « > ») ou unifié
-// (-u, trois lignes de contexte), -q pour dire seulement s'ils diffèrent.
-// D'après https://www.gnu.org/software/diffutils/manual/diffutils.html.
-// Écart : l'heure des fichiers, dans l'en-tête de -u, est celle de la
-// machine au moment de la commande.
+// diff (GNU diffutils): the differences between two files, or between two
+// places (-r). Normal format ("3c3", "<", "---", ">") or unified
+// (-u, three lines of context), -q to say only whether they differ.
+// Based on https://www.gnu.org/software/diffutils/manual/diffutils.html.
+// Difference: the files' time, in the -u header, is the machine's time
+// when the command runs.
 
 import type { Shell } from '../shell';
 import { systemd } from '../systemd';
 import type { Command } from './index';
 import { colourise, readColour, invalidColourMessage, sgr } from '../colours';
 
-// --color : la palette par défaut de GNU diff (hd=1, ad=32, de=31, ln=36).
+// --color: GNU diff's default palette (hd=1, ad=32, de=31, ln=36).
 type Paint = (code: string, text: string) => string;
 const raw: Paint = (_code, text) => text;
 
 type Op = { t: ' ' | '-' | '+'; l: string; a: number; b: number };
 
-// Le script d'édition (plus longue sous-suite commune) : chaque ligne gardée,
-// retirée ou ajoutée, avec ses numéros dans chaque fichier (à partir de 1).
+// The edit script (longest common subsequence): each line kept,
+// removed or added, with its numbers in each file (starting at 1).
 function edit(a: string[], b: string[]): Op[] {
   const l = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0));
   for (let i = a.length - 1; i >= 0; i--)
@@ -36,7 +36,7 @@ function edit(a: string[], b: string[]): Op[] {
 const lines = (text: string) => (text === '' ? [] : text.replace(/\n$/, '').split('\n'));
 const range = (start: number, end: number) => (end > start ? `${start},${end}` : String(start));
 
-// Le format normal : un bloc par groupe de changements.
+// The normal format: one block per group of changes.
 function normal(ops: Op[], paint: Paint = raw): string {
   const output: string[] = [];
   for (let k = 0; k < ops.length; ) {
@@ -60,7 +60,7 @@ function normal(ops: Op[], paint: Paint = raw): string {
   return output.join('\n');
 }
 
-// Le format unifié : des morceaux (« @@ -a,n +b,m @@ ») avec 3 lignes de contexte.
+// The unified format: hunks ("@@ -a,n +b,m @@") with 3 lines of context.
 function unified(ops: Op[], aName: string, bName: string, date: string, paint: Paint = raw): string {
   const changes = ops.map((o, k) => (o.t === ' ' ? -1 : k)).filter((k) => k >= 0);
   if (!changes.length) return '';
@@ -101,7 +101,7 @@ export const DIFF: Record<string, Command> = {
   diff: {
     options: ['u', 'r', 'q'],
     launch: (c) => {
-      // --color[=QUAND] : sans option, diff ne colore pas ; « --color » seul vaut « auto ».
+      // --color[=WHEN]: without the option, diff doesn't colour; "--color" alone means "auto".
       const colour = readColour(c.args, 'never', 'auto');
       if (colour.invalid !== undefined) return c.game.error(invalidColourMessage(c, 'diff', colour.invalid));
       const { args } = colour;
@@ -119,7 +119,7 @@ export const DIFF: Record<string, Command> = {
           [b, nb],
         ] as const)
           if (!n) return void game.error(game.t('diff-missing', { target: path }));
-        if (na!.type === 'dossier' && nb!.type === 'dossier') {
+        if (na!.type === 'directory' && nb!.type === 'directory') {
           if (!root && !letters.has('r')) return void outputs.push(game.t('diff-under-directories', { a, b }));
           const names = [...new Set([...Object.keys(na!.children), ...Object.keys(nb!.children)])].sort();
           for (const name of names) {
@@ -129,10 +129,10 @@ export const DIFF: Record<string, Command> = {
           }
           return;
         }
-        // Un fichier et un lieu : on compare au fichier de même nom dans le lieu.
-        if (na!.type === 'dossier' || nb!.type === 'dossier') {
+        // A file and a place: compare with the file of the same name in the place.
+        if (na!.type === 'directory' || nb!.type === 'directory') {
           if (!root) return void outputs.push(game.t('diff-types', { a, b }));
-          return compare(na!.type === 'dossier' ? `${a}/${game.name(b)}` : a, nb!.type === 'dossier' ? `${b}/${game.name(a)}` : b, false);
+          return compare(na!.type === 'directory' ? `${a}/${game.name(b)}` : a, nb!.type === 'directory' ? `${b}/${game.name(a)}` : b, false);
         }
         const ta = game.readFor('diff', a);
         const tb = game.readFor('diff', b);

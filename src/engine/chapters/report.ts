@@ -1,20 +1,20 @@
-// Histoire « L'Audit » — chapitre « Le rapport » : Salomé, auditrice, a relevé
-// quatre constats d'hygiène sur le serveur du Fournil. À corriger sans rien
-// casser :
-//   - SSH : root peut entrer (PermitRootLogin yes dans sshd_config) ; la
-//     configuration n'est appliquée qu'au rechargement (sshd -t, reload) ;
-//   - un compte qui ne devrait plus exister : Lucas, le stagiaire parti fin
-//     février, a toujours son compte et sudo (userdel, ou verrouiller +
-//     expirer + le retirer de sudo) ;
-//   - sudo sans mot de passe : /etc/sudoers.d/90-cloud-init-users donne à
-//     « vous » NOPASSWD: ALL (sudo -l le montre) ;
-//   - un secret lisible par tous : /srv/commandes/.env (mot de passe de la
-//     base) en rw-r--r-- ; chmod 600 sans retirer l'accès à l'appli.
-// Objectif vérifié sur l'état : root refusé par sshd (rechargé) sans
-// s'enfermer dehors, plus de compte actif pour Lucas, plus de règle
-// NOPASSWD pour « vous » (sudo marche encore), le fichier fermé aux autres
-// mais lisible par l'appli.
-// Sources : https://man.openbsd.org/sshd_config, https://www.sudo.ws/docs/man/sudoers.man/,
+// Story "L'Audit" — chapter "The report": Salomé, an auditor, noted four
+// hygiene findings on Le Fournil's server. To be fixed without breaking
+// anything:
+//   - SSH: root can log in (PermitRootLogin yes in sshd_config); the
+//     configuration is only applied on reload (sshd -t, reload);
+//   - an account that should no longer exist: Lucas, the intern who left at
+//     the end of February, still has his account and sudo (userdel, or lock +
+//     expire + remove from sudo);
+//   - sudo without a password: /etc/sudoers.d/90-cloud-init-users gives
+//     "vous" NOPASSWD: ALL (sudo -l shows it);
+//   - a secret readable by all: /srv/commandes/.env (the database password)
+//     in rw-r--r--; chmod 600 without removing the app's access.
+// Objective checked on the state: root refused by sshd (reloaded) without
+// locking yourself out, no more active account for Lucas, no more NOPASSWD
+// rule for "vous" (sudo still works), the file closed to others but
+// readable by the app.
+// Sources: https://man.openbsd.org/sshd_config, https://www.sudo.ws/docs/man/sudoers.man/,
 // https://man7.org/linux/man-pages/man8/userdel.8.html, https://man7.org/linux/man-pages/man1/chmod.1.html
 
 import { d, f, player, type Chapter } from '../world';
@@ -27,7 +27,7 @@ import { loadSshd, bakeryAccounts, file, M, NOW, PASSWORD, bakeryWorld, serviceS
 const ENV = '/srv/commandes/.env';
 const sh = (j: Game) => j as Shell;
 
-// Le cloud-init de l'hébergeur : le premier compte a sudo sans mot de passe.
+// The hosting provider's cloud-init: the first account has sudo without a password.
 const cloudInitSudo = (account: string) => `# Created by cloud-init v. 24.4 on Tue, 06 Dec 2027 15:51:43 +0000\n\n${account} ALL=(ALL) NOPASSWD:ALL`;
 
 const CONTENT_ENV = `PORT=3000
@@ -41,7 +41,7 @@ const lucas = (j: Game) => j.accounts.users.lucas;
 const lockedLucas = (j: Game) => ((j.state.lockedAccounts ?? []) as string[]).includes('lucas');
 const lucasSudo = (j: Game) => !!j.accounts.groups.sudo?.members.includes('lucas');
 const okAccount = (j: Game) => !lucas(j) || (lockedLucas(j) && !!lucas(j).expires && !lucasSudo(j));
-// Verrouillé ou expiré, mais encore dans sudo : le constat n'est qu'à moitié traité.
+// Locked or expired, but still in sudo: the finding is only half dealt with.
 const incompleteAccount = (j: Game) => !!lucas(j) && !okAccount(j) && (lockedLucas(j) || !!lucas(j).expires || !lucasSudo(j));
 
 const validPolicy = (j: Game) => !read(sh(j)).error;
@@ -51,12 +51,12 @@ const sudoOk = (j: Game) => validPolicy(j) && !withoutPassword(j) && permitted(s
 const env = (j: Game) => j.find(ENV);
 const closedToOther = (j: Game) => {
   const n = env(j);
-  return n?.type === 'fichier' && (n.mode ?? 'rw-r--r--').slice(6) === '---';
+  return n?.type === 'file' && (n.mode ?? 'rw-r--r--').slice(6) === '---';
 };
-// L'appli (compte commandes) doit pouvoir lire son fichier : propriétaire, ou groupe.
+// The app (commandes account) must be able to read its file: owner, or group.
 const readableByApp = (j: Game) => {
   const n = env(j);
-  if (n?.type !== 'fichier') return false;
+  if (n?.type !== 'file') return false;
   const mode = n.mode ?? 'rw-r--r--';
   return ((n.owner ?? 'you') === 'commandes' && mode[0] === 'r') || ((n.group ?? n.owner) === 'commandes' && mode[3] === 'r');
 };
@@ -97,7 +97,7 @@ export const report: Chapter = {
   welcome: 'email_nadia.txt',
   names: true,
   final: 'end',
-  // Dans l'ordre du rapport de Salomé.
+  // In the order of Salomé's report.
   steps: ['ssh', 'account', 'sudo', 'secret', 'end'],
   password: PASSWORD,
   accounts: () => bakeryAccounts(true),

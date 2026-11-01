@@ -1,20 +1,20 @@
-// unattended-upgrades : les mises à jour automatiques de Debian, et
-// apt-config. Comme le paquet unattended-upgrades (Debian 13) :
-//   - /etc/apt/apt.conf.d/20auto-upgrades active les deux tâches du service
-//     apt-daily-upgrade (APT::Periodic::Update-Package-Lists et
-//     ::Unattended-Upgrade, « 0 » ou absent : rien ne se passe) ;
-//   - 50unattended-upgrades dit quoi installer : Origins-Pattern (chaque
-//     motif « clé=valeur,… » doit correspondre à l'origine du paquet ; par
-//     défaut, Debian et ses mises à jour de sécurité), Package-Blacklist
-//     (expressions régulières), Mail, MailReport, Automatic-Reboot,
-//     Automatic-Reboot-Time ;
-//   - le journal dans /var/log/unattended-upgrades/unattended-upgrades.log.
-// Sources : https://wiki.debian.org/UnattendedUpgrades,
+// unattended-upgrades: Debian's automatic updates, and apt-config. Like the
+// unattended-upgrades package (Debian 13):
+//   - /etc/apt/apt.conf.d/20auto-upgrades enables the two tasks of the
+//     apt-daily-upgrade service (APT::Periodic::Update-Package-Lists and
+//     ::Unattended-Upgrade; "0" or absent: nothing happens);
+//   - 50unattended-upgrades says what to install: Origins-Pattern (each
+//     "key=value,…" pattern must match the package's origin; by default,
+//     Debian and its security updates), Package-Blacklist (regular
+//     expressions), Mail, MailReport, Automatic-Reboot,
+//     Automatic-Reboot-Time;
+//   - the log in /var/log/unattended-upgrades/unattended-upgrades.log.
+// Sources: https://wiki.debian.org/UnattendedUpgrades,
 // https://manpages.debian.org/trixie/unattended-upgrades/unattended-upgrade.8.en.html,
 // https://github.com/mvo5/unattended-upgrades/blob/master/data/50unattended-upgrades.Debian
-// Écarts : pas d'autoremove, de MinimalSteps ni de mise en pause sur
-// batterie ; les origines des paquets sont décrites par le chapitre ; la
-// sortie de --debug est abrégée ; le redémarrage programmé n'est pas joué.
+// Differences: no autoremove, MinimalSteps nor pausing on battery; the
+// packages' origins are described by the chapter; the --debug output is
+// abridged; the scheduled reboot is not played.
 
 import type { Game, Shell } from '../shell';
 import { writeLog, restart, systemd } from '../systemd';
@@ -28,7 +28,7 @@ const CODENAME = 'trixie';
 const LOG = '/var/log/unattended-upgrades/unattended-upgrades.log';
 export const UU = 'Unattended-Upgrade';
 
-// Un motif d'Origins-Pattern correspond-il à cette origine ? (clés et alias d'unattended-upgrades)
+// Does an Origins-Pattern pattern match this origin? (unattended-upgrades' keys and aliases)
 function correspond(pattern: string, o: Origin): boolean {
   const fields: Record<string, keyof Origin> = {
     o: 'o',
@@ -62,20 +62,20 @@ function correspond(pattern: string, o: Origin): boolean {
 const patterns = (c: ConfApt) =>
   (c.lists[`${UU}::Origins-Pattern`] ?? []).map((m) => m.replace(/\$\{distro_codename\}/g, CODENAME).replace(/\$\{distro_id\}/g, 'Debian'));
 
-/** Ce qu'unattended-upgrades installerait, et ce qu'il laisse (origine non permise, liste noire). */
+/** What unattended-upgrades would install, and what it leaves (origin not allowed, blacklist). */
 export function updatesSort(game: Shell, c: ConfApt) {
   const e = state(game);
   const permitted = patterns(c);
   const black = (c.lists[`${UU}::Package-Blacklist`] ?? []).map((m) => new RegExp(`^(?:${m})`));
   const sockets: [string, string][] = [];
-  const left: { pkg: string; reason: 'origine' | 'noire' }[] = [];
+  const left: { pkg: string; reason: 'origin' | 'blacklist' }[] = [];
   for (const [n, v] of availableUpdates(e)) {
     const o = e.origins?.[n] ?? SECURITY;
-    if (!permitted.some((m) => correspond(m, o))) left.push({ pkg: n, reason: 'origine' });
-    else if (black.some((re) => re.test(n))) left.push({ pkg: n, reason: 'noire' });
+    if (!permitted.some((m) => correspond(m, o))) left.push({ pkg: n, reason: 'origin' });
+    else if (black.some((re) => re.test(n))) left.push({ pkg: n, reason: 'blacklist' });
     else sockets.push([n, v]);
   }
-  // Le nouveau noyau suit linux-image-amd64.
+  // The new kernel follows linux-image-amd64.
   const fresh = Object.entries(e.fresh ?? {}).filter(
     ([n]) => !e.installed[n] && sockets.some(([m]) => m === 'linux-image-amd64') && n.startsWith('linux-image-'),
   );
@@ -90,21 +90,21 @@ const timestamp = (game: Game) => {
 function note(game: Shell, lines: string[]) {
   const text = lines.map((l) => `${timestamp(game)} INFO ${l}`).join('\n');
   const n = game.find(LOG);
-  if (n?.type === 'fichier' && typeof n.content === 'string') n.content = n.content ? `${n.content}\n${text}` : text;
+  if (n?.type === 'file' && typeof n.content === 'string') n.content = n.content ? `${n.content}\n${text}` : text;
   else {
     if (!game.exists('/var/log/unattended-upgrades'))
-      game.place('unattended-upgrade', '/var/log/unattended-upgrades', { type: 'dossier', children: {}, owner: 'root' });
-    game.place('unattended-upgrade', LOG, { type: 'fichier', content: text, lines: true, owner: 'root', mode: 'rw-r--r--' });
+      game.place('unattended-upgrade', '/var/log/unattended-upgrades', { type: 'directory', children: {}, owner: 'root' });
+    game.place('unattended-upgrade', LOG, { type: 'file', content: text, lines: true, owner: 'root', mode: 'rw-r--r--' });
   }
 }
 
 export interface UuResult {
   installed: string[];
-  // Le redémarrage : « now » (fait), une heure (programmé), ou null.
+  // The reboot: "now" (done), a time (scheduled), or null.
   reboot: string | null;
 }
 
-/** Une passe d'unattended-upgrade, comme le lance apt-daily-upgrade.service (ou root à la main). */
+/** A run of unattended-upgrade, as apt-daily-upgrade.service starts it (or root by hand). */
 export function uuPass(game: Shell, o: { dry?: boolean; verbose?: boolean } = {}): { output: string[]; result: UuResult } {
   const c = readConfApt(game);
   const { prises: sockets, laissees: left, permitted } = updatesSort(game, c);
@@ -119,7 +119,7 @@ export function uuPass(game: Shell, o: { dry?: boolean; verbose?: boolean } = {}
   const detail = o.verbose
     ? left.map(({ pkg, reason }) => {
         const or = state(game).origins?.[pkg] ?? SECURITY;
-        return reason === 'noire'
+        return reason === 'blacklist'
           ? `${pkg} is blacklisted`
           : `Checking: ${pkg} ([<Origin component:'main' archive:'${or.n}' origin:'${or.o}' label:'${or.l}' site:'${or.site}' isTrusted:True>])\nadjusting candidate version: ${pkg} not in allowed origins`;
       })
@@ -129,7 +129,7 @@ export function uuPass(game: Shell, o: { dry?: boolean; verbose?: boolean } = {}
     const end = [...info, 'No packages found that can be upgraded unattended and no pending auto-removals'];
     if (!o.dry) {
       note(game, end);
-      // MailReport « always » : un rapport même quand il n'y avait rien à faire.
+      // MailReport "always": a report even when there was nothing to do.
       if (c.values[`${UU}::Mail`] && c.values[`${UU}::MailReport`] === 'always') report(game, c, [], false, end);
     }
     return { output: o.verbose ? [...end.slice(0, -1), ...detail, end.at(-1)!] : [], result };
@@ -145,7 +145,7 @@ export function uuPass(game: Shell, o: { dry?: boolean; verbose?: boolean } = {}
   result.installed = names;
   lines.push('All upgrades installed');
   const restartA = game.exists('/var/run/reboot-required');
-  // Le rapport par courrier (MailReport : on-change par défaut).
+  // The report by mail (MailReport: on-change by default).
   if (c.values[`${UU}::Mail`] && (c.values[`${UU}::MailReport`] ?? 'on-change') !== 'only-on-error') report(game, c, names, restartA, lines);
   if (restartA && yes(c.values[`${UU}::Automatic-Reboot`])) {
     const when = c.values[`${UU}::Automatic-Reboot-Time`] ?? 'now';
@@ -156,7 +156,7 @@ export function uuPass(game: Shell, o: { dry?: boolean; verbose?: boolean } = {}
   return { output: o.verbose ? [...lines.slice(0, info.length), ...detail, ...lines.slice(info.length)] : [], result };
 }
 
-// Le rapport par courrier, envoyé par root (MailReport : on-change par défaut).
+// The report by mail, sent by root (MailReport: on-change by default).
 function report(game: Shell, c: ConfApt, names: string[], restartA: boolean, lines: string[]) {
   const host = systemd(game)?.host ?? 'localhost';
   const who = game.who;
@@ -177,7 +177,7 @@ function report(game: Shell, c: ConfApt, names: string[], restartA: boolean, lin
   game.who = who;
 }
 
-/** Applique le redémarrage demandé par une passe : tout de suite, ou programmé (shutdown -r HH:MM). */
+/** Applies the reboot requested by a run: right away, or scheduled (shutdown -r HH:MM). */
 export function restartAfter(game: Shell, r: UuResult) {
   const sd = systemd(game);
   if (!r.reboot || !sd) return;
@@ -190,7 +190,7 @@ export function restartAfter(game: Shell, r: UuResult) {
   }
 }
 
-/** apt-daily-upgrade.service : apt.systemd.daily ne lance unattended-upgrade que si 20auto-upgrades le demande. */
+/** apt-daily-upgrade.service: apt.systemd.daily only starts unattended-upgrade if 20auto-upgrades asks for it. */
 export function afterDaily(game: Game) {
   const sh = game as Shell;
   const c = readConfApt(sh);
@@ -202,7 +202,7 @@ export function afterDaily(game: Game) {
   restartAfter(sh, result);
 }
 
-/** Vérification au démarrage d'apt-daily-upgrade.service : une configuration illisible le fait échouer. */
+/** Check when apt-daily-upgrade.service starts: an unreadable configuration makes it fail. */
 export const checkDaily = (game: Game) => {
   const e = readConfApt(game).errors;
   return e.length ? e : null;
@@ -248,6 +248,6 @@ export const UNATTENDED: Record<string, Command> = {
       return game.error(`E: Invalid operation ${action}`, 100);
     },
   },
-  // La page de manuel du fichier de configuration d'apt.
+  // The manual page of apt's configuration file.
   'apt.conf': { section: 5, launch: () => '' },
 };

@@ -1,15 +1,15 @@
-// PostgreSQL simulé : des bases, leurs tables (colonnes et lignes), et ce
-// qu'il faut pour les sauvegarder et les restaurer comme le font pg_dump,
-// pg_restore et psql (PostgreSQL 16 : https://www.postgresql.org/docs/16/).
+// Simulated PostgreSQL: databases, their tables (columns and rows), and what
+// is needed to back them up and restore them as pg_dump,
+// pg_restore and psql do (PostgreSQL 16: https://www.postgresql.org/docs/16/).
 //
 //   etat.postgres = { bases: { nom: Base }, archives: { id: Instantane } }
 //
-// On se connecte par le socket local avec l'authentification « peer » : le
-// compte du système est le rôle de la base (sudo -u postgres pour le
-// superutilisateur). Écarts : du SQL très réduit (voir commands/postgres.ts),
-// une seule clé primaire (la première colonne), pas de transactions ni de
-// droits par table ; un fichier « custom » (pg_dump -Fc) ne contient qu'une
-// référence à l'instantané gardé par le jeu.
+// Connections go through the local socket with "peer" authentication: the
+// system account is the database role (sudo -u postgres for the
+// superuser). Differences: very reduced SQL (see commands/postgres.ts),
+// a single primary key (the first column), no transactions nor
+// per-table privileges; a "custom" file (pg_dump -Fc) only contains a
+// reference to the snapshot kept by the game.
 
 import type { Game } from './shell';
 import { systemd } from './systemd';
@@ -26,18 +26,18 @@ export interface Base {
 
 export interface PostgresState {
   bases: Record<string, Base>;
-  // Les rôles (comptes de la base) ; postgres est superutilisateur.
+  // The roles (database accounts); postgres is superuser.
   roles: string[];
-  // Le mot de passe des rôles qui se connectent par le réseau (ALTER ROLE … PASSWORD) : role → mot de passe.
+  // The password of roles that connect over the network (ALTER ROLE … PASSWORD): role → password.
   passwords?: Record<string, string>;
-  // Les archives au format custom, par identifiant (écrit dans le fichier).
+  // The custom-format archives, by identifier (written in the file).
   archives: Record<string, { base: string; tables: Record<string, Table>; time: number }>;
 }
 
 export const SOCKET = '/var/run/postgresql/.s.PGSQL.5432';
 export const postgres = (j: Game): PostgresState | undefined => j.state.postgres;
 
-/** Le serveur tourne-t-il ? Sinon, le message de connexion de libpq. */
+/** Is the server running? Otherwise, libpq's connection message. */
 export function connection(j: Game, tool: string, base: string): string | null {
   const pg = postgres(j);
   const service = systemd(j)?.services.postgresql;
@@ -51,7 +51,7 @@ export function connection(j: Game, tool: string, base: string): string | null {
 export const copyOf = (tables: Record<string, Table>): Record<string, Table> =>
   Object.fromEntries(Object.entries(tables).map(([name, t]) => [name, { columns: [...t.columns], lines: t.lines.map((l) => [...l]) }]));
 
-/** Un tableau au format de psql (colonnes alignées, « (3 rows) »). */
+/** A table in psql's format (aligned columns, "(3 rows)"). */
 export function grid(columns: string[], lines: string[][], title?: string): string {
   const widths = columns.map((c, i) => Math.max(c.length, ...lines.map((l) => (l[i] ?? '').length)));
   const numeric = columns.map((_, i) => lines.length > 0 && lines.every((l) => /^-?\d+$/.test(l[i] ?? '')));
@@ -67,7 +67,7 @@ export function grid(columns: string[], lines: string[][], title?: string): stri
   ].join('\n');
 }
 
-/** Le contenu d'un dump au format texte (SQL) : ce qu'écrit pg_dump sans -Fc. */
+/** The contents of a dump in text format (SQL): what pg_dump writes without -Fc. */
 export function dumpSql(base: string, tables: Record<string, Table>, owner: string): string {
   const lines = [
     '--',
@@ -98,7 +98,7 @@ export function dumpSql(base: string, tables: Record<string, Table>, owner: stri
   return lines.join('\n');
 }
 
-/** Relit un dump texte (le nôtre) : ses tables, ou null si ce n'en est pas un. */
+/** Rereads a text dump (ours): its tables, or null if it isn't one. */
 export function readDumpSql(text: string): Record<string, Table> | null {
   if (!text.includes('-- PostgreSQL database dump')) return null;
   const tables: Record<string, Table> = {};

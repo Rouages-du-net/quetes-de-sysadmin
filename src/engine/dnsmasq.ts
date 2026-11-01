@@ -1,15 +1,15 @@
-// dnsmasq, le serveur DHCP du réseau local (https://dnsmasq.org/docs/dnsmasq-man.html).
-// Configuration : /etc/dnsmasq.conf et les fichiers de /etc/dnsmasq.d (comme
-// le paquet Debian : sauf les fichiers cachés, finissant par ~, .dpkg-dist,
-// .dpkg-old, .dpkg-new). Une option par ligne : interface, except-interface,
+// dnsmasq, the local network's DHCP server (https://dnsmasq.org/docs/dnsmasq-man.html).
+// Configuration: /etc/dnsmasq.conf and the files of /etc/dnsmasq.d (like
+// Debian's package: except hidden files and those ending in ~, .dpkg-dist,
+// .dpkg-old, .dpkg-new). One option per line: interface, except-interface,
 // no-dhcp-interface, dhcp-range, dhcp-host, dhcp-option…
-// À chaque démarrage, les appareils qui demandent une adresse (DHCP) la
-// reçoivent si dnsmasq écoute l'interface du routeur de leur VLAN et qu'une
-// plage correspond à son réseau ; une réservation (dhcp-host) passe avant.
-// Les baux sont écrits dans /var/lib/misc/dnsmasq.leases, et l'échange dans
-// le journal (DHCPDISCOVER, DHCPOFFER, DHCPREQUEST, DHCPACK).
-// Écarts : pas de DNS simulé ici (port, server… sont acceptés et ignorés),
-// les baux ne se renouvellent pas, une adresse est tirée de l'adresse MAC.
+// At each start, the devices asking for an address (DHCP) get one if
+// dnsmasq listens on the router's interface for their VLAN and a range
+// matches its network; a reservation (dhcp-host) comes first.
+// Leases are written to /var/lib/misc/dnsmasq.leases, and the exchange to
+// the journal (DHCPDISCOVER, DHCPOFFER, DHCPREQUEST, DHCPACK).
+// Differences: no simulated DNS here (port, server… are accepted and
+// ignored), leases are not renewed, an address is derived from the MAC address.
 
 import type { Game } from './shell';
 import { inside, isIp, vlanInterface, lan, networkFor, toIp, toCount } from './lan';
@@ -33,7 +33,7 @@ export interface ConfigDnsmasq {
   errors: string[];
 }
 
-// Les options que le jeu connaît (les autres sont refusées, comme une faute de frappe).
+// The options the game knows (the others are refused, like a typo).
 const KNOWN = new Set([
   'interface',
   'except-interface',
@@ -66,7 +66,7 @@ const KNOWN = new Set([
 
 const duration = (t: string) => /^\d+[smhd]?$|^infinite$/.test(t);
 
-/** La configuration de dnsmasq, et ses erreurs au format de dnsmasq. */
+/** dnsmasq's configuration, and its errors in dnsmasq's format. */
 export function readDnsmasq(j: Game): ConfigDnsmasq {
   const c: ConfigDnsmasq = { interfaces: [], excluded: [], ranges: [], reservations: [], errors: [] };
   const read = new Set<string>();
@@ -89,7 +89,7 @@ export function readDnsmasq(j: Game): ConfigDnsmasq {
       else if (name === 'conf-dir') readDirectory(value.split(',')[0]);
       else if (name === 'conf-file') readFile(value);
       else if (name === 'dhcp-range') {
-        // Devant les adresses : des étiquettes (set:, tag:) ou un nom, que le jeu ignore.
+        // Before the addresses: tags (set:, tag:) or a name, which the game ignores.
         const fields = value.split(',').map((x) => x.trim());
         const k = fields.findIndex(isIp);
         const [start, end, ...next] = k >= 0 ? fields.slice(k) : [];
@@ -111,7 +111,7 @@ export function readDnsmasq(j: Game): ConfigDnsmasq {
   };
   const readDirectory = (directory: string) => {
     const d = j.find(directory);
-    if (d?.type !== 'dossier') return;
+    if (d?.type !== 'directory') return;
     for (const n of Object.keys(d.children).sort())
       if (!n.startsWith('.') && !n.endsWith('~') && !/\.dpkg-(dist|old|new)$/.test(n)) readFile(`${directory}/${n}`);
   };
@@ -121,7 +121,7 @@ export function readDnsmasq(j: Game): ConfigDnsmasq {
   return c;
 }
 
-// Une adresse de la plage, tirée de l'adresse MAC (toujours la même pour un appareil).
+// An address of the range, derived from the MAC address (always the same for a device).
 function addressIn(p: Range, mac: string, sockets: Set<string>): string | null {
   const start = toCount(p.start);
   const size = toCount(p.end) - start + 1;
@@ -135,7 +135,7 @@ function addressIn(p: Range, mac: string, sockets: Set<string>): string | null {
   return null;
 }
 
-/** Au démarrage de dnsmasq : chaque appareil en DHCP demande une adresse. */
+/** When dnsmasq starts: each DHCP device asks for an address. */
 export function startDnsmasq(j: Game) {
   const l = lan(j);
   const sd = systemd(j);
@@ -171,19 +171,19 @@ export function startDnsmasq(j: Game) {
     leases.push(`${expiration} ${a.mac} ${ip} ${name} *`);
   }
   const n = j.find(LEASES);
-  if (n?.type === 'fichier') n.content = leases.join('\n');
+  if (n?.type === 'file') n.content = leases.join('\n');
 }
 
-// dnsmasq répond-il sur cette interface ?
-// Un nom d'interface, ou un préfixe suivi de * (interface=eth1* : eth1, eth1.10…).
+// Does dnsmasq answer on this interface?
+// An interface name, or a prefix followed by * (interface=eth1*: eth1, eth1.10…).
 const correspond = (pattern: string, name: string) => (pattern.endsWith('*') ? name.startsWith(pattern.slice(0, -1)) : pattern === name);
 const listening = (c: ConfigDnsmasq, i: { name: string }) =>
   (!c.interfaces.length || c.interfaces.some((m) => correspond(m, i.name))) && !c.excluded.some((m) => correspond(m, i.name));
 
-/** Les appareils qui ont reçu une adresse de dnsmasq, et celle qu'ils ont. */
+/** The devices that received an address from dnsmasq, and the one they have. */
 export const donnesLeases = (j: Game) => (lan(j)?.devices ?? []).filter((a) => a.lease).map((a) => ({ name: a.name, mac: a.mac, ip: a.lease! }));
 
-/** dnsmasq écoute-t-il (en DHCP) l'interface qui porte cette adresse ? */
+/** Does dnsmasq listen (for DHCP) on the interface carrying this address? */
 export function answersOn(j: Game, interfaceName: string): boolean {
   return listening(readDnsmasq(j), { name: interfaceName });
 }

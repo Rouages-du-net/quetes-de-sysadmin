@@ -1,26 +1,26 @@
-// Le courrier d'une machine : Postfix (main.cf lu comme postconf, la file
-// d'attente, les remises et /var/log/mail.log), OpenDKIM (opendkim.conf, la
-// clé, la signature au passage du milter) et, en face, des serveurs de
-// courrier distants qui vérifient SPF, DKIM et DMARC avec le DNS simulé
-// (dns.ts : ils voient ce que le secondaire publie, comme le reste d'internet).
-// D'après la documentation de Postfix (https://www.postfix.org/postconf.5.html,
+// A machine's mail: Postfix (main.cf read like postconf, the queue,
+// deliveries and /var/log/mail.log), OpenDKIM (opendkim.conf, the key,
+// signing as mail goes through the milter) and, on the other side, remote
+// mail servers that check SPF, DKIM and DMARC with the simulated DNS
+// (dns.ts: they see what the secondary publishes, like the rest of the internet).
+// Based on the documentation of Postfix (https://www.postfix.org/postconf.5.html,
 // https://www.postfix.org/MILTER_README.html, https://www.postfix.org/postqueue.1.html),
-// d'OpenDKIM (opendkim.conf(5), opendkim-genkey(8), opendkim-testkey(8), le
-// opendkim.conf de Debian) et des RFC 7208 (SPF), 6376 (DKIM) et 7489 (DMARC).
+// OpenDKIM (opendkim.conf(5), opendkim-genkey(8), opendkim-testkey(8), Debian's
+// opendkim.conf) and RFC 7208 (SPF), 6376 (DKIM) and 7489 (DMARC).
 //
-//   etat.courrier = {
-//     ip: l'adresse publique de la machine (celle que voient les destinataires),
-//     file: les messages en attente (deferred), compteur: pour leurs identifiants,
-//     postfix: main.cf chargé, dkim: opendkim.conf chargé,
-//     fournisseurs: les serveurs distants, par domaine (déclarés par le chapitre),
-//     remis: ce qui a été accepté ailleurs (pour les vérifications),
+//   state.mail = {
+//     ip: the machine's public address (the one recipients see),
+//     file: the waiting messages (deferred), counter: for their identifiers,
+//     postfix: main.cf loaded, dkim: opendkim.conf loaded,
+//     providers: the remote servers, by domain (declared by the chapter),
+//     restored: what was accepted elsewhere (for the checks),
 //   }
 //
-// Écarts : pas de vrai SMTP ni de vraie cryptographie (une clé « publique »
-// est calculée à partir de la privée) ; les serveurs distants interrogent le
-// DNS sans cache ; Postfix ne réessaie pas tout seul (postqueue -f) ; le
-// chroot de Postfix n'est simulé que pour la prise du milter ; pas de
-// KeyTable/SigningTable ni de DNSSEC.
+// Differences: no real SMTP nor real cryptography (a "public" key is
+// computed from the private one); the remote servers query DNS without a
+// cache; Postfix doesn't retry on its own (postqueue -f); Postfix's chroot is
+// only simulated for the milter's socket; no KeyTable/SigningTable nor
+// DNSSEC.
 
 import type { Game } from './shell';
 import { dns, query, txtText, type Rr } from './dns';
@@ -28,20 +28,20 @@ import { systemd } from './systemd';
 
 export interface Message {
   id: string;
-  // L'expéditeur de l'enveloppe (MAIL FROM) et les destinataires qui restent.
+  // The envelope sender (MAIL FROM) and the remaining recipients.
   forEachOf: string;
   a: string[];
-  // L'en-tête From: (son domaine compte pour DMARC), le sujet, le corps.
+  // The From: header (its domain counts for DMARC), the subject, the body.
   from: string;
   subject: string;
   body: string;
   arrives: number;
   size: number;
-  // La dernière raison d'attente (postqueue -p).
+  // The last reason for waiting (postqueue -p).
   reason?: string;
-  // La signature DKIM posée par le milter (d= et s=, et la clé qui a signé).
+  // The DKIM signature added by the milter (d= and s=, and the key that signed).
   signature?: Signature | null;
-  // La machine qui l'envoie vraiment (pour SPF) ; par défaut, celle-ci.
+  // The machine that really sends it (for SPF); by default, this one.
   ip?: string;
 }
 
@@ -55,7 +55,7 @@ export type SpfResult = 'pass' | 'fail' | 'softfail' | 'neutral' | 'none' | 'per
 
 export interface Authentication {
   spf: SpfResult;
-  // Le domaine que SPF a vérifié (celui de l'enveloppe).
+  // The domain SPF checked (the envelope's).
   domainSpf: string;
   dkim: 'pass' | 'fail' | 'none' | 'permerror';
   domainDkim?: string;
@@ -65,11 +65,11 @@ export interface Authentication {
   domainFrom: string;
 }
 
-// Un serveur de courrier distant : son MX, son adresse, et ce qu'il répond à un message.
+// A remote mail server: its MX, its address, and what it answers to a message.
 export interface Provider {
   mx: string;
   ip: string;
-  // « 250 … » : accepté ; « 4xx » : à réessayer ; « 5xx » : refusé.
+  // "250 …": accepted; "4xx": retry later; "5xx": rejected.
   receive: (game: Game, auth: Authentication, m: Message, recipient: string) => string;
 }
 
@@ -98,11 +98,11 @@ export interface MailState {
 
 export const mail = (game: Game): MailState | undefined => game.state.mail;
 
-// ——— Postfix : main.cf ———
+// ——— Postfix: main.cf ———
 
 export const MAIN_CF = '/etc/postfix/main.cf';
 
-// Les valeurs par défaut utiles (postconf -d), dans la version de Debian.
+// The useful default values (postconf -d), in Debian's version.
 const DEFAULTS: Record<string, string> = {
   myhostname: '',
   mydomain: '',
@@ -172,7 +172,7 @@ const DEFAULTS: Record<string, string> = {
 };
 export const PARAMETERS = Object.keys(DEFAULTS);
 
-/** Lit main.cf comme Postfix : « nom = valeur », une ligne qui commence par une espace continue la précédente. */
+/** Reads main.cf like Postfix: "name = value", a line starting with a space continues the previous one. */
 export function readMainCf(text: string): { values: Record<string, string>; unknown: string[]; order: string[] } {
   const values: Record<string, string> = {};
   const order: string[] = [];
@@ -195,7 +195,7 @@ export function readMainCf(text: string): { values: Record<string, string>; unkn
   return { values, unknown: order.filter((n) => !(n in DEFAULTS)), order };
 }
 
-/** La valeur d'un paramètre, $variables développées (comme postconf -x). */
+/** A parameter's value, with $variables expanded (like postconf -x). */
 export function parameter(game: Game, name: string, values?: Record<string, string>): string {
   const v = values ?? mail(game)?.postfix?.values ?? readMainCf(game.read(MAIN_CF) ?? '').values;
   const host = (game.read('/etc/hostname') ?? systemd(game)?.host ?? 'localhost').trim();
@@ -210,13 +210,13 @@ export function parameter(game: Game, name: string, values?: Record<string, stri
   return expand(raw(name));
 }
 
-// myorigin peut nommer un fichier (/etc/mailname, comme sur Debian).
+// myorigin may name a file (/etc/mailname, as on Debian).
 export function origin(game: Game): string {
   const o = parameter(game, 'myorigin');
   return (o.startsWith('/') ? (game.read(o) ?? '').trim() : o).toLowerCase();
 }
 
-/** postfix reload / start : main.cf devient la configuration servie. */
+/** postfix reload / start: main.cf becomes the configuration in use. */
 export function loadPostfix(game: Game) {
   const c = mail(game);
   if (c) c.postfix = { values: readMainCf(game.read(MAIN_CF) ?? '').values };
@@ -226,7 +226,7 @@ export function loadPostfix(game: Game) {
 
 export const OPENDKIM_CONF = '/etc/opendkim.conf';
 
-/** Lit opendkim.conf : « Nom valeur », une directive par ligne. */
+/** Reads opendkim.conf: "Name value", one directive per line. */
 export function readDkim(text: string): ConfDkim {
   const v: Record<string, string> = {};
   for (const l of text.split('\n')) {
@@ -243,14 +243,14 @@ export function readDkim(text: string): ConfDkim {
   };
 }
 
-// La clé privée est-elle lisible par d'autres que son propriétaire (et son groupe) ? (RequireSafeKeys)
+// Is the private key readable by others than its owner (and its group)? (RequireSafeKeys)
 const notSure = (game: Game, path: string) => {
   const n = game.find(path);
   const mode = n?.mode ?? 'rw-r--r--';
   return /[rw]/.test(mode.slice(6, 9));
 };
 
-// Le compte opendkim peut-il traverser chaque dossier qui mène au fichier ?
+// Can the opendkim account traverse every directory leading to the file?
 const traversable = (game: Game, path: string, account: string) => {
   const parts = path.split('/').filter(Boolean).slice(0, -1);
   for (let i = 1; i <= parts.length; i++) {
@@ -260,12 +260,12 @@ const traversable = (game: Game, path: string, account: string) => {
   return true;
 };
 
-/** Pour systemd : opendkim refuse de démarrer si la clé manque, est illisible ou n'est pas sûre. */
+/** For systemd: opendkim refuses to start if the key is missing, unreadable or unsafe. */
 export function checkOpendkim(game: Game): string[] | null {
   const conf = readDkim(game.read(OPENDKIM_CONF) ?? '');
   if (!conf.key) return null;
   const n = game.find(conf.key);
-  if (!n || n.type !== 'fichier') return [`opendkim: ${OPENDKIM_CONF}: ${conf.key}: open(): No such file or directory`];
+  if (!n || n.type !== 'file') return [`opendkim: ${OPENDKIM_CONF}: ${conf.key}: open(): No such file or directory`];
   if (!game.can(n, 'r', 'opendkim') || !traversable(game, conf.key, 'opendkim')) return [`opendkim: ${OPENDKIM_CONF}: ${conf.key}: open(): Permission denied`];
   if (conf.safe && notSure(game, conf.key))
     return [`opendkim: ${OPENDKIM_CONF}: ${conf.key}: key data is not secure: ${conf.key} can be read or written by other users`];
@@ -282,7 +282,7 @@ export function stopDkim(game: Game) {
   if (c) c.dkim = null;
 }
 
-// Une empreinte déterministe d'un texte (FNV-1a), pour fabriquer des clés qui ont l'air vraies.
+// A deterministic fingerprint of a text (FNV-1a), to make keys that look real.
 function fingerprint(text: string, seed = 0): number {
   let h = 0x811c9dc5 ^ seed;
   for (let i = 0; i < text.length; i++) {
@@ -292,21 +292,21 @@ function fingerprint(text: string, seed = 0): number {
   return h;
 }
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-/** Une suite base64 déterministe de `longueur` caractères, tirée d'une graine. */
+/** A deterministic base64 string of `length` characters, drawn from a seed. */
 export function base64For(seed: string, length: number): string {
   let s = '';
   for (let i = 0; s.length < length; i++) s += B64[fingerprint(`${seed}:${i}`) % 64];
   return s;
 }
 
-/** La clé privée PEM que fabrique opendkim-genkey (bits, domaine, sélecteur, tirage). */
+/** The PEM private key opendkim-genkey makes (bits, domain, selector, draw). */
 export function privateKey(seed: string, bits = 2048): string {
   const body = base64For(`prive:${seed}`, bits === 1024 ? 848 : 1624);
   const lines = body.match(/.{1,64}/g)!;
   return ['-----BEGIN PRIVATE KEY-----', ...lines, '-----END PRIVATE KEY-----'].join('\n');
 }
 
-/** La clé publique (p=) qui va avec une clé privée : la même pour le même fichier. */
+/** The public key (p=) that goes with a private key: the same for the same file. */
 export function publicKey(isPrivate: string): string | null {
   const body = /-----BEGIN (?:RSA )?PRIVATE KEY-----([\s\S]*?)-----END/.exec(isPrivate)?.[1].replace(/\s+/g, '');
   if (!body) return null;
@@ -314,16 +314,16 @@ export function publicKey(isPrivate: string): string | null {
   return `MII${long ? 'BIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA' : 'GfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC'}${base64For(`public:${body}`, long ? 342 : 174)}IDAQAB`;
 }
 
-/** Le fichier .txt d'opendkim-genkey : l'enregistrement à publier, coupé en chaînes de 250 caractères au plus. */
+/** opendkim-genkey's .txt file: the record to publish, cut into strings of at most 250 characters. */
 export function dkimRecord(selector: string, domain: string, isPublic: string): string {
   const chunks = [`"v=DKIM1; h=sha256; k=rsa; "`, ...`p=${isPublic}`.match(/.{1,250}/g)!.map((m) => `"${m}"`)];
   return `${selector}._domainkey\tIN\tTXT\t( ${chunks.join('\n\t  ')} )  ; ----- DKIM key ${selector} for ${domain}`;
 }
 
-// ——— DNS vu d'internet ———
+// ——— DNS as seen from the internet ———
 
-// Les serveurs distants interrogent ce que publie internet (le secondaire, et les zones des autres).
-// vue « primaire » : ce que publie le serveur de la machine (avant que le secondaire ait recopié).
+// The remote servers query what the internet publishes (the secondary, and the others' zones).
+// "primary" view: what the machine's server publishes (before the secondary has copied it).
 export type View = 'secondary' | 'primary';
 const ask = (game: Game, name: string, type: string, view: View = 'secondary'): { rrs: Rr[]; exists: boolean } => {
   const d = dns(game);
@@ -344,7 +344,7 @@ const inNetwork = (ip: string, cidr: string) => {
   return (n(base) & mask) >>> 0 === (n(ip) & mask) >>> 0;
 };
 
-/** Le résultat SPF pour une adresse qui envoie au nom d'un domaine (check_host de la RFC 7208). */
+/** The SPF result for an address sending on behalf of a domain (check_host of RFC 7208). */
 export function checkSpf(game: Game, ip: string, domain: string, account = { requetes: 0 }, view: View = 'secondary'): { result: SpfResult; reason: string } {
   const records = txt(game, domain, view).filter((t) => /^v=spf1(\s|$)/i.test(t));
   if (!records.length) return { result: 'none', reason: `no SPF record for ${domain}` };
@@ -387,9 +387,9 @@ export function checkSpf(game: Game, ip: string, domain: string, account = { req
   return { result: 'neutral', reason: `no mechanism matched ${ip} for ${domain}` };
 }
 
-// ——— DKIM et DMARC ———
+// ——— DKIM and DMARC ———
 
-/** Les balises d'un enregistrement DKIM ou DMARC : « v=DKIM1; k=rsa; p=… ». */
+/** The tags of a DKIM or DMARC record: "v=DKIM1; k=rsa; p=…". */
 export const tags = (text: string): Record<string, string> =>
   Object.fromEntries(
     text
@@ -412,11 +412,11 @@ export function checkDkim(game: Game, sig: Signature | null | undefined, view: V
   return { result: 'pass' };
 }
 
-// Le domaine organisationnel (ici, les deux derniers niveaux : gardens.example).
+// The organizational domain (here, the last two levels: gardens.example).
 const organisation = (d: string) => d.toLowerCase().split('.').slice(-2).join('.');
 const domainFor = (address: string) => (/@([^>\s]+)>?\s*$/.exec(address)?.[1] ?? '').toLowerCase();
 
-/** La politique DMARC publiée pour un domaine (null : aucune ; « permerror » : plusieurs ou illisible). */
+/** The DMARC policy published for a domain (null: none; "permerror": several or unreadable). */
 export function dmarcPolicy(game: Game, domain: string, view: View = 'secondary'): Record<string, string> | 'permerror' | null {
   const listing = txt(game, `_dmarc.${domain}`, view).filter((t) => /^v=DMARC1(\s*;|$)/i.test(t));
   if (!listing.length) return null;
@@ -426,7 +426,7 @@ export function dmarcPolicy(game: Game, domain: string, view: View = 'secondary'
   return b;
 }
 
-/** Ce que vérifie un serveur destinataire : SPF (enveloppe), DKIM (signature), DMARC (alignement sur From:). */
+/** What a receiving server checks: SPF (envelope), DKIM (signature), DMARC (alignment with From:). */
 export function authenticate(game: Game, m: Message): Authentication {
   const ip = m.ip ?? mail(game)?.ip ?? '';
   const domainSpf = domainFor(m.forEachOf) || domainFor(`<${m.forEachOf}>`);
@@ -443,11 +443,11 @@ export function authenticate(game: Game, m: Message): Authentication {
   return { ...base, dmarc: aligne ? 'pass' : 'fail', policy: policy.p.toLowerCase() };
 }
 
-// ——— Le journal (/var/log/mail.log) ———
+// ——— The log (/var/log/mail.log) ———
 
 export const MAIL_LOG = '/var/log/mail.log';
 
-// « 2027-05-03T09:30:01.123456+02:00 », comme rsyslog sur Debian.
+// "2027-05-03T09:30:01.123456+02:00", like rsyslog on Debian.
 export function logTime(local: number): string {
   const d = new Date(local);
   const summer = (() => {
@@ -463,27 +463,27 @@ export function logTime(local: number): string {
 }
 
 let currentPid = 0;
-/** Une ligne de mail.log : « hôte postfix/smtp[pid]: message ». */
+/** A mail.log line: "host postfix/smtp[pid]: message". */
 export function writeLog(game: Game, program: string, message: string) {
   const sd = systemd(game);
   const n = game.find(MAIL_LOG);
-  if (!sd || n?.type !== 'fichier' || typeof n.content !== 'string') return;
+  if (!sd || n?.type !== 'file' || typeof n.content !== 'string') return;
   const pids: Record<string, number> = { pickup: 2401, cleanup: 2402, qmgr: 1188, smtp: 2404, local: 2405, smtpd: 2406, postqueue: 2407, postsuper: 2408, opendkim: 812 };
   currentPid = pids[program.replace(/^postfix\//, '')] ?? 2409;
   const line = `${logTime(sd.clock)} ${sd.host} ${program}[${currentPid}]: ${message}`;
   n.content = n.content ? `${n.content}\n${line}` : line;
 }
 
-// ——— La remise ———
+// ——— Delivery ———
 
-/** Un identifiant de file d'attente, comme ceux de Postfix (10 chiffres hexadécimaux, en capitales). */
+/** A queue identifier, like Postfix's (10 hexadecimal digits, upper case). */
 export function newId(game: Game): string {
   const c = mail(game)!;
   c.counter++;
   return (fingerprint(`file:${c.counter}`) >>> 0).toString(16).toUpperCase().padStart(8, '0') + String.fromCharCode(65 + (c.counter % 6)) + String(c.counter % 10);
 }
 
-// La prise d'un milter dans main.cf (inet:localhost:8891, unix:/chemin) comparée à celle d'opendkim (inet:8891@localhost, local:/chemin).
+// A milter's socket in main.cf (inet:localhost:8891, unix:/path) compared with opendkim's (inet:8891@localhost, local:/path).
 function joinedSocket(game: Game, milter: string): { ok: boolean; error?: string } {
   const c = mail(game)!;
   const enabled = systemd(game)?.services.opendkim?.state === 'active' && !!c.dkim;
@@ -500,16 +500,16 @@ function joinedSocket(game: Game, milter: string): { ok: boolean; error?: string
     const ok = !!p && p[1] === inet[2] && (!p[2] || local.includes(p[2])) && local.includes(host);
     return ok ? { ok } : { ok: false, error: refusal };
   }
-  // Postfix tourne dans un chroot (/var/spool/postfix) : le chemin de la prise y est relatif.
+  // Postfix runs in a chroot (/var/spool/postfix): the socket's path is relative to it.
   const l = /^(?:local|unix):(.+)$/.exec(socket);
   const ok = !!l && l[1] === `/var/spool/postfix${unix![1]}`;
   return ok ? { ok } : { ok: false, error: refusal };
 }
 
 /**
- * Le passage par cleanup : les milters (non_smtpd_milters pour le courrier
- * déposé sur la machine) posent la signature DKIM. Renvoie null si le
- * message doit attendre (milter injoignable avec milter_default_action =
+ * Going through cleanup: the milters (non_smtpd_milters for mail
+ * submitted on the machine) add the DKIM signature. Returns null if the
+ * message must wait (milter unreachable with milter_default_action =
  * tempfail).
  */
 function signer(game: Game, m: Message): boolean {
@@ -538,7 +538,7 @@ function signer(game: Game, m: Message): boolean {
   return true;
 }
 
-// La remise à un destinataire : locale (nos domaines) ou vers un serveur distant.
+// Delivery to one recipient: local (our domains) or to a remote server.
 function putBack(game: Game, m: Message, recipient: string): 'sent' | 'deferred' | 'bounced' {
   const c = mail(game)!;
   const domain = domainFor(recipient);
@@ -572,7 +572,7 @@ function putBack(game: Game, m: Message, recipient: string): 'sent' | 'deferred'
   return status;
 }
 
-// La boîte d'un compte de la machine (/var/mail/compte, format mbox).
+// The mailbox of a machine account (/var/mail/account, mbox format).
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const dateMbox = (ms: number) => {
@@ -598,10 +598,10 @@ export function drop(game: Game, address: string, m: Message, headers: string[] 
   ].join('\n');
   const path = `/var/mail/${account}`;
   const n = game.find(path);
-  if (n?.type === 'fichier') n.content = `${typeof n.content === 'string' && n.content ? n.content + '\n' : ''}${text}`;
-  else if (game.find('/var/mail')?.type === 'dossier')
+  if (n?.type === 'file') n.content = `${typeof n.content === 'string' && n.content ? n.content + '\n' : ''}${text}`;
+  else if (game.find('/var/mail')?.type === 'directory')
     (game.find('/var/mail') as { children: Record<string, unknown> }).children[account] = {
-      type: 'fichier',
+      type: 'file',
       content: text,
       lines: true,
       owner: account,
@@ -610,7 +610,7 @@ export function drop(game: Game, address: string, m: Message, headers: string[] 
     };
 }
 
-/** Essaie de remettre un message ; il reste dans la file (deferred) tant qu'un destinataire attend. */
+/** Tries to deliver a message; it stays in the queue (deferred) while a recipient is waiting. */
 export function attempt(game: Game, m: Message) {
   const c = mail(game)!;
   const remaining: string[] = [];
@@ -622,7 +622,7 @@ export function attempt(game: Game, m: Message) {
   } else if (!c.file.includes(m)) c.file.push(m);
 }
 
-/** Le courrier déposé sur la machine (mail, sendmail) : pickup, cleanup (milters), qmgr, puis la remise. */
+/** Mail submitted on the machine (mail, sendmail): pickup, cleanup (milters), qmgr, then delivery. */
 export function submit(game: Game, forEachOf: string, a: string[], subject: string, body: string, uid: number, from?: string): Message | null {
   const c = mail(game);
   if (!c) return null;
@@ -641,7 +641,7 @@ export function submit(game: Game, forEachOf: string, a: string[], subject: stri
   };
   m.id = newId(game);
   writeLog(game, 'postfix/pickup', `${m.id}: uid=${uid} from=<${forEachOf}>`);
-  // Postfix arrêté : le message attend dans maildrop.
+  // Postfix stopped: the message waits in maildrop.
   if (systemd(game)?.services.postfix?.state !== 'active') {
     m.reason = 'mail system is down';
     c.file.push(m);
@@ -657,7 +657,7 @@ export function submit(game: Game, forEachOf: string, a: string[], subject: stri
   return m;
 }
 
-/** postqueue -f : Postfix réessaie tout ce qui attend (et resigne ce qui n'était pas passé par le milter). */
+/** postqueue -f: Postfix retries everything waiting (and re-signs what hadn't gone through the milter). */
 export function empty(game: Game) {
   const c = mail(game)!;
   for (const m of [...c.file]) {
@@ -670,7 +670,7 @@ export function empty(game: Game) {
   }
 }
 
-/** postqueue -p (mailq) : la file d'attente. */
+/** postqueue -p (mailq): the queue. */
 export function showFile(game: Game): string {
   const c = mail(game)!;
   if (!c.file.length) return 'Mail queue is empty';
@@ -688,7 +688,7 @@ export function showFile(game: Game): string {
   return ['-Queue ID-  --Size-- ----Arrival Time---- -Sender/Recipient-------', ...blocks, `-- ${ko} Kbytes in ${c.file.length} Request${c.file.length > 1 ? 's' : ''}.`].join('\n');
 }
 
-/** Le rapport d'un vérificateur (comme check-auth) : les résultats, et l'en-tête Authentication-Results. */
+/** A checker's report (like check-auth): the results, and the Authentication-Results header. */
 export function verificationReport(auth: Authentication, m: Message, mx: string): string {
   const dkim =
     auth.dkim === 'pass' ? `dkim=pass header.d=${auth.domainDkim} header.s=${m.signature?.s}` : `dkim=${auth.dkim} (${auth.reasonDkim ?? 'message not signed'})`;

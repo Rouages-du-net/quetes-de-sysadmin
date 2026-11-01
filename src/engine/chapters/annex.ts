@@ -1,21 +1,21 @@
-// Histoire « La Ruche » — chapitre « L'Annexe » : La Ruche ouvre un second
-// lieu, l'Annexe, dans un ancien atelier de l'autre côté de la ville. Son
-// routeur (Debian aussi, derrière la box de son fournisseur) a son réseau,
-// 10.20.10.0/24. Sami, bénévole là-bas, a créé ses clés ; il faut relier les
-// deux sites par le VPN WireGuard qui sert déjà au télétravail de Malik :
-//   - un [Peer] de plus dans /etc/wireguard/wg0.conf : la clé publique de
-//     l'Annexe, et ses AllowedIPs : son adresse dans le tunnel ET tout son
-//     réseau (pour WireGuard, ce sont les adresses d'où ce pair a le droit
-//     d'envoyer, et celles qu'on lui envoie : wg-quick en fait des routes) ;
-//   - relancer wg0 (wg-quick ne relit pas le fichier tout seul) ;
-//   - compléter annex-wg0.conf : la clé publique du routeur, l'Endpoint,
-//     AllowedIPs = le réseau des bureaux, et PersistentKeepalive : derrière
-//     une box, le routeur de La Ruche ne peut pas joindre l'Annexe si elle ne
-//     garde pas le passage ouvert.
-// Objectif vérifié sur l'état : un poste de l'Annexe joint le NAS, un poste
-// des bureaux imprime à l'Annexe, l'Annexe ne voit pas les caméras, Malik
-// joint toujours le NAS, maintenant ET au prochain démarrage.
-// Sources : https://www.wireguard.com/#cryptokey-routing,
+// Story "The Hive", chapter "The Annex": The Hive opens a second place,
+// the Annex, in a former workshop across town. Its router (Debian too,
+// behind its provider's box) has its own network, 10.20.10.0/24. Sami, a
+// volunteer there, has created its keys; the two sites must be linked by
+// the WireGuard VPN already used for Malik's remote work:
+//   - one more [Peer] in /etc/wireguard/wg0.conf: the Annex's public key,
+//     and its AllowedIPs: its address in the tunnel AND its whole network
+//     (for WireGuard, these are the addresses this peer may send from, and
+//     those sent to it: wg-quick turns them into routes);
+//   - restart wg0 (wg-quick doesn't reread the file by itself);
+//   - complete annex-wg0.conf: the router's public key, the Endpoint,
+//     AllowedIPs = the offices' network, and PersistentKeepalive: behind a
+//     box, The Hive's router can't reach the Annex unless the Annex keeps
+//     the way open.
+// Objective checked on the state: a computer at the Annex reaches the NAS,
+// a computer in the offices prints at the Annex, the Annex doesn't see the
+// cameras, Malik still reaches the NAS, now AND at the next boot.
+// Sources: https://www.wireguard.com/#cryptokey-routing,
 // https://man7.org/linux/man-pages/man8/wg.8.html (PersistentKeepalive),
 // https://man7.org/linux/man-pages/man8/wg-quick.8.html (routes)
 
@@ -57,14 +57,14 @@ import {
   hivePlan,
 } from './hive';
 
-// La clé privée du routeur de La Ruche (créée au chapitre « Le télétravail »), et celle du routeur de l'Annexe (elle ne quitte pas l'Annexe).
+// The private key of The Hive's router (created in the chapter "Working from home"), and that of the Annex's router (it never leaves the Annex).
 const ROUTER_KEY = '2H8lWIAEPk9kEtfgQW8ZQVaCUVKhwmA1PDgxbjXZqXk=';
 const ANNEX_KEY = 'cDqmuXhcmm7LqTLk8TNfgPuG1GqnfxHaU2D7OWNw11U=';
 export const ROUTER_PUBLIC = isPublic(ROUTER_KEY)!;
 export const ANNEX_PUBLIC = isPublic(ANNEX_KEY)!;
 const ANNEX_CONF = `${M}/annex-wg0.conf`;
 
-// Le routeur de l'Annexe : un poste de là-bas (10.20.10.15) va au NAS.
+// The Annex's router: a computer over there (10.20.10.15) goes to the NAS.
 export const ANNEX: Remote = {
   name: 'annexe',
   address: '203.0.113.60',
@@ -96,7 +96,7 @@ PublicKey = ${ROUTER_PUBLIC}
 Endpoint = hive.example:51820
 AllowedIPs = 10.10.10.0/24`;
 
-/** wg0.conf à la fin de « L'Annexe » : Malik et le routeur de l'Annexe. */
+/** wg0.conf at the end of "The Annex": Malik and the Annex's router. */
 export const ANNEX_WG0 = `${WG0}
 
 # Annexe
@@ -107,7 +107,7 @@ AllowedIPs = 10.10.99.3/32, 10.20.10.0/24`;
 type O = { interfaces?: Record<string, InterfaceWg>; ruleset?: ReturnType<typeof nft>; transfer?: boolean };
 const publicOf = (j: Game) => publicFields(j as Shell);
 
-// L'adresse d'un poste des bureaux (son bail DHCP).
+// The address of a computer in the offices (its DHCP lease).
 const officesWorkstation = (j: Game) => {
   const a = lan(j)?.devices.find((x) => x.name === 'poste-malik');
   return (a && addressFor(a)) ?? '10.10.10.150';
@@ -120,7 +120,7 @@ const malik = (j: Game, o: O = {}) => tunnelState(j, MALIK, { ...publicOf(j), ..
 
 const compliant = (j: Game, o: O = {}) => toNas(j, o) === 'ok' && toPrinter(j, o) === 'ok' && toCamera(j, o) !== 'ok' && malik(j, o) === 'ok';
 
-// Au prochain démarrage : les wg-quick@ activés (leurs fichiers), nftables, les fichiers sysctl.
+// At the next boot: the enabled wg-quick@ units (their files), nftables, the sysctl files.
 function toReboot(j: Game): O {
   const sd = systemd(j);
   const interfaces: Record<string, InterfaceWg> = {};
@@ -138,14 +138,14 @@ function toReboot(j: Game): O {
   };
 }
 
-// Le fichier a un pair pour l'Annexe, mais wg0 tourne encore avec l'ancien.
+// The file has a peer for the Annex, but wg0 still runs with the old one.
 const notReread = (j: Game) => {
   const file = readConfWg(j.read(confFor('wg0')) ?? '');
   const inWorks = wg(j).wg0?.conf;
   return file.peers.some((p) => p.key === ANNEX_PUBLIC) && !inWorks?.peers.some((p) => p.key === ANNEX_PUBLIC);
 };
 
-const failedHandshake = (e: TunnelState) => ['conf', 'adresse', 'filtre', 'cle-routeur', 'inconnu'].includes(e);
+const failedHandshake = (e: TunnelState) => ['conf', 'address', 'filtered', 'cle-routeur', 'unknown'].includes(e);
 
 export const annex: Chapter = {
   id: 'annex',
@@ -200,7 +200,7 @@ export const annex: Chapter = {
       sysctl: ROUTER_SYSCTL,
       etc: {
         wireguard: {
-          type: 'dossier',
+          type: 'directory',
           children: { 'wg0.conf': f(WG0, { lines: true, owner: 'root', mode: 'rw-------' }) },
           owner: 'root',
           mode: 'rwx------',
@@ -221,7 +221,7 @@ export const annex: Chapter = {
     },
     { id: 'allowed', condition: (j) => toNas(j) === 'autorisees', message: (j) => j.t('annex-event-allowed') },
     { id: 'route', condition: (j) => toNas(j) === 'route', message: (j) => j.t('annex-event-route') },
-    { id: 'asleep', condition: (j) => toNas(j) === 'ok' && toPrinter(j) === 'endormi', message: (j) => j.t('annex-event-asleep') },
+    { id: 'asleep', condition: (j) => toNas(j) === 'ok' && toPrinter(j) === 'asleep', message: (j) => j.t('annex-event-asleep') },
     { id: 'cameras', condition: (j) => toCamera(j) === 'ok', message: (j) => j.t('annex-event-cameras') },
     { id: 'malik', condition: (j) => !!wg(j).wg0 && malik(j) !== 'ok', message: (j) => j.t('annex-event-malik') },
     { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-event-ssh') },

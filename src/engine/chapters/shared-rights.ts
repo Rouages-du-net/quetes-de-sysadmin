@@ -1,22 +1,22 @@
-// Histoire « La Coopérative » — chapitre « Les droits partagés » : Lina et
-// Karim (groupe till) tiennent les relevés de la caisse dans
-// /srv/till/releves, mais chacun·e ne peut pas modifier les fichiers de
-// l'autre (créés -rw-r--r--, à son propre groupe). Et quand la caisse se
-// fige, il leur faut quelqu'un qui a sudo pour la relancer.
-//   - le dossier : groupe till, écriture pour le groupe, bit setgid (ce
-//     qu'on y crée prend le groupe du dossier) ; les fichiers existants :
-//     chgrp -R, chmod -R g+w ;
-//   - le masque : umask 002 pour Lina et Karim (~/.profile, ou
-//     /etc/profile.d) ;
-//   - sudo : une règle dans /etc/sudoers.d (avec visudo) qui ne permet au
-//     groupe till QUE de relancer la caisse.
-// Pièges réels : un fichier de sudoers.d dont le nom contient un point
-// (ignoré), une commande sans chemin complet (refusée par visudo), une erreur
-// écrite avec nano (sudo refuse tout), une règle trop large (ALL, ou
-// systemctl sans arguments).
-// Objectif vérifié sur l'état : le dossier, les fichiers, le masque de Lina et
-// de Karim, et la politique de sudo (ce qu'elle permet et refuse).
-// Sources : https://www.sudo.ws/docs/man/sudoers.man/,
+// Story "La Coopérative" — chapter "Shared rights": Lina and
+// Karim (group till) keep the till's statements in
+// /srv/till/statements, but neither can modify the other's
+// files (created -rw-r--r--, with their own group). And when the till
+// freezes, they need someone with sudo to restart it.
+//   - the directory: group till, group write, setgid bit (what
+//     is created in it takes the directory's group); the existing files:
+//     chgrp -R, chmod -R g+w;
+//   - the mask: umask 002 for Lina and Karim (~/.profile, or
+//     /etc/profile.d);
+//   - sudo: a rule in /etc/sudoers.d (with visudo) that allows the
+//     till group ONLY to restart the till.
+// Real traps: a sudoers.d file whose name contains a dot
+// (ignored), a command without a full path (refused by visudo), a mistake
+// written with nano (sudo refuses everything), a rule too broad (ALL, or
+// systemctl without arguments).
+// Objective checked on the state: the directory, the files, Lina's and
+// Karim's mask, and sudo's policy (what it allows and refuses).
+// Sources: https://www.sudo.ws/docs/man/sudoers.man/,
 // https://man7.org/linux/man-pages/man2/umask.2.html,
 // https://www.gnu.org/software/coreutils/manual/html_node/Directory-Setuid-and-Setgid.html
 
@@ -31,7 +31,7 @@ const RESTART = '/usr/bin/systemctl restart till';
 const TEAM = ['lina', 'karim'];
 const sh = (j: Game) => j as Shell;
 
-// Le ~/.profile de Debian (/etc/skel/.profile).
+// Debian's ~/.profile (/etc/skel/.profile).
 const PROFILE = `# ~/.profile: executed by the command interpreter for login shells.
 # This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
 # exists.
@@ -77,14 +77,14 @@ fi`;
 const file = (content: string, owner: string, group?: string, mode?: string) =>
   f(content, { lines: true, owner, ...(group ? { group } : {}), ...(mode ? { mode } : {}) });
 
-// Le masque d'une session de ce compte : la dernière ligne « umask NNN » lue à
-// la connexion (/etc/profile, /etc/profile.d/*.sh, ~/.bashrc, ~/.profile), sinon 022.
+// The mask of a session of this account: the last "umask NNN" line read at
+// login (/etc/profile, /etc/profile.d/*.sh, ~/.bashrc, ~/.profile), otherwise 022.
 export function maskFor(j: Game, account: string): number {
   const home = j.accounts.users[account]?.home ?? `/home/${account}`;
   const profileD = j.find('/etc/profile.d');
   const sources = [
     '/etc/profile',
-    ...(profileD?.type === 'dossier'
+    ...(profileD?.type === 'directory'
       ? Object.keys(profileD.children)
           .filter((n) => n.endsWith('.sh'))
           .sort()
@@ -104,28 +104,28 @@ export function maskFor(j: Game, account: string): number {
 
 const okDirectory = (j: Game) => {
   const n = j.find(path(j.t, STATEMENTS));
-  return n?.type === 'dossier' && (n.group ?? n.owner) === 'till' && n.mode?.[4] === 'w' && n.mode?.[5] === 's';
+  return n?.type === 'directory' && (n.group ?? n.owner) === 'till' && n.mode?.[4] === 'w' && n.mode?.[5] === 's';
 };
 const okFiles = (j: Game) => {
   const n = j.find(path(j.t, STATEMENTS));
-  if (n?.type !== 'dossier') return false;
-  const all = (x: Node): Node[] => (x.type === 'dossier' ? Object.values(x.children).flatMap(all) : [x]);
+  if (n?.type !== 'directory') return false;
+  const all = (x: Node): Node[] => (x.type === 'directory' ? Object.values(x.children).flatMap(all) : [x]);
   return all(n).every((x) => (x.group ?? x.owner) === 'till' && (x.mode ?? 'rw-r--r--')[4] === 'w');
 };
 const okMask = (j: Game) => TEAM.every((c) => (maskFor(j, c) & 0o020) === 0);
 
 const validPolicy = (j: Game) => !read(sh(j)).error;
 const restart = (j: Game) => validPolicy(j) && TEAM.every((c) => permitted(sh(j), c, RESTART));
-// Ce que l'équipe caisse ne doit PAS pouvoir faire.
+// What the till team must NOT be able to do.
 const tropLarge = (j: Game) => validPolicy(j) && TEAM.some((c) => permitted(sh(j), c, '/usr/bin/bash') || permitted(sh(j), c, '/usr/bin/su'));
 const wholeSystemctl = (j: Game) =>
   validPolicy(j) && TEAM.some((c) => permitted(sh(j), c, '/usr/bin/systemctl stop ssh') || permitted(sh(j), c, '/usr/bin/systemctl restart ssh'));
 const sudoOk = (j: Game) => restart(j) && !tropLarge(j) && !wholeSystemctl(j) && permitted(sh(j), j.player, '/usr/bin/bash');
 
-// Un fichier de /etc/sudoers.d qui parle de la caisse, mais que sudo ne lit pas (un point, ou ~ à la fin).
+// A file in /etc/sudoers.d about the till, but that sudo doesn't read (a dot, or ~ at the end).
 const ignoreFile = (j: Game) => {
   const directory = j.find('/etc/sudoers.d');
-  if (directory?.type !== 'dossier') return null;
+  if (directory?.type !== 'directory') return null;
   const read = includedFiles(sh(j), '/etc/sudoers.d');
   return (
     Object.keys(directory.children)
@@ -170,7 +170,7 @@ export const rights: Chapter = {
   welcome: 'email_awa.txt',
   names: true,
   final: 'end',
-  // Dans l'ordre du courriel d'Awa : le dossier, le masque, puis sudo.
+  // In the order of Awa's email: the directory, the mask, then sudo.
   steps: ['directory', 'mask', 'sudo', 'end'],
   password: PASSWORD,
   accounts: () => cooperativeAccounts(false),

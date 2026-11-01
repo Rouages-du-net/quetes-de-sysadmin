@@ -1,6 +1,6 @@
-// Briques du monde du jeu : un vrai système de fichiers miniature.
-// Un dossier = un lieu, un fichier = un objet ou un personnage.
-// Chaque chapitre (voir chapters/) construit son propre monde.
+// Building blocks of the game world: a real miniature file system.
+// A directory = a place, a file = an object or a character.
+// Each chapter (see chapters/) builds its own world.
 
 import type { Game } from './shell';
 import type { Activity } from './activity';
@@ -8,62 +8,62 @@ import type { Translate } from '../texts';
 import type { ElementPlan } from './plan';
 
 export type File = {
-  type: 'fichier';
+  type: 'file';
   content: string | ((game: Game) => string);
-  // Effet de la lecture (cat), ex. tirer un levier. Renvoie un message en plus.
+  // Effect of reading (cat), e.g. pulling a lever. Returns an extra message.
   read?: (game: Game) => string | void;
-  // Si présent, l'objet refuse d'être déplacé ou effacé, avec ce message.
+  // If present, the object refuses to be moved or deleted, with this message.
   isProtected?: { mv?: string; rm?: string };
-  // Fichier « ligne par ligne » (journal, liste, configuration) : chaque
-  // ligne compte (pour grep notamment), on ne recolle pas les paragraphes.
+  // "Line by line" file (log, list, configuration): every
+  // line counts (for grep in particular), paragraphs are not joined.
   lines?: boolean;
-  // Texte écrit (histoire, dialogue) : reçoit la typographie de la langue à
-  // l'affichage (voir typographie() dans src/texts/).
+  // Written text (story, dialogue): gets the language's typography when
+  // displayed (see typographie() in src/texts/).
   prose?: boolean;
-  // Taille simulée en octets (images, vidéos…), sinon celle du texte.
+  // Simulated size in bytes (images, videos…), otherwise the text's.
   size?: number;
-  // Contenu d'une archive tar : chemins relatifs → copies des fichiers.
-  // `tronquee` : l'archive a été coupée en cours d'écriture ; seuls ses
-  // `tronquee` premiers fichiers sont lisibles.
+  // Contents of a tar archive: relative paths → copies of the files.
+  // `tronquee`: the archive was cut off while being written; only its
+  // first `tronquee` files are readable.
   archive?: { files: Record<string, File>; compressed: boolean; truncated?: number };
-  // Lien symbolique (ln -s) : le chemin visé, tel qu'il a été écrit (relatif
-  // au lieu du lien, ou absolu). On le suit pour lire, écrire, entrer.
+  // Symbolic link (ln -s): the target path, as it was written (relative
+  // to the link's place, or absolute). It is followed to read, write, enter.
   link?: string;
-  // Date de dernière modification (ms, heure locale lue comme UTC, comme
-  // l'horloge de systemd) ; sans elle, le fichier est considéré comme récent.
+  // Last modification date (ms, local time read as UTC, like
+  // systemd's clock); without it, the file is considered recent.
   mtime?: number;
 } & Rights;
-// Propriétaire, groupe et permissions Unix (rwx pour le propriétaire, le
-// groupe, les autres). Par défaut : « vous », le groupe qui porte le nom du
-// propriétaire, rw-r--r-- (fichier), rwxr-xr-x (lieu).
+// Unix owner, group and permissions (rwx for the owner, the
+// group, the others). By default: "you", the group named after the
+// owner, rw-r--r-- (file), rwxr-xr-x (place).
 export type Rights = { owner?: string; group?: string; mode?: string };
 
-// Les comptes d'une machine, comme /etc/passwd et /etc/group : chaque
-// utilisateur·rice a un groupe principal et peut être membre d'autres
-// groupes (groupes secondaires).
+// A machine's accounts, like /etc/passwd and /etc/group: each
+// user has a primary group and can be a member of other
+// groups (supplementary groups).
 export interface Accounts {
-  // expire : fin de validité du compte (AAAA-MM-JJ, usermod -e, chage -E).
+  // expire: end of the account's validity (YYYY-MM-DD, usermod -e, chage -E).
   users: Record<string, { uid: number; group: string; home?: string; shell?: string; expires?: string }>;
   groups: Record<string, { gid: number; members: string[] }>;
 }
 
-// Les comptes de toutes les machines qui n'en déclarent pas : root, et
-// « vous », membre du groupe sudo (comme le premier compte d'une Debian).
+// The accounts of every machine that declares none: root, and
+// "you", member of the sudo group (like the first account on Debian).
 export const accountsByDefault = (): Accounts => ({
   users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' } },
   groups: { root: { gid: 0, members: [] }, sudo: { gid: 27, members: ['you'] }, you: { gid: 1000, members: [] } },
 });
 export type Directory = {
-  type: 'dossier';
+  type: 'directory';
   children: Record<string, Node>;
-  // Raison du blocage si on ne peut pas encore y entrer, sinon null.
+  // Why it is blocked if it can't be entered yet, otherwise null.
   blocked?: (game: Game) => string | null;
 } & Rights;
 export type Node = File | Directory;
 
-// Une machine du réseau interne d'une histoire : son monde, ses comptes,
-// son état ; ses événements sont ceux du chapitre (vérifiés sur la
-// machine principale).
+// A machine on a story's internal network: its world, its accounts,
+// its state; its events are the chapter's (checked on the
+// main machine).
 export interface InternalHost {
   address: string;
   domain: string;
@@ -71,13 +71,13 @@ export interface InternalHost {
   accounts?: () => Accounts;
   state?: (t: Translate) => Record<string, unknown>;
   initialise?: (game: Game) => void;
-  // Commandes connues (par défaut, celles du chapitre).
+  // Known commands (by default, the chapter's).
   commands?: string[];
 }
 
-// Un événement de l'histoire : quand `condition` devient vraie (vérifiée
-// après chaque commande), `action` modifie le monde et `message` s'affiche.
-// Chaque événement ne se produit qu'une fois.
+// A story event: when `condition` becomes true (checked
+// after each command), `action` changes the world and `message` is shown.
+// Each event happens only once.
 export interface Event {
   id: string;
   condition: (game: Game) => boolean;
@@ -85,80 +85,80 @@ export interface Event {
   message: string | ((game: Game) => string);
 }
 
-// Les textes d'un chapitre sont dans src/texts/<langue>/<histoire>.ftl :
-// son titre (chapitre-<id>, avec l'attribut .resume) et tout ce qu'il
-// affiche, sous des identifiants qui commencent par le sien.
+// A chapter's texts are in src/texts/<language>/<story>.ftl:
+// its title (chapitre-<id>, with the .resume attribute) and everything it
+// displays, under identifiers that start with its own.
 export interface Chapter {
   id: string;
   number: number;
-  // Commandes connues dans ce chapitre (les autres sont « pas encore apprises »).
+  // Commands known in this chapter (the others are "not learned yet").
   commands: string[];
-  // Le dossier « maison » (~), où l'on commence.
+  // The "home" directory (~), where you start.
   home: string;
-  // Le plan du réseau de l'histoire à ce chapitre (le réseau prévu, voir plan.ts).
+  // The story's network plan at this chapter (the planned network, see plan.ts).
   plan?: (t: Translate) => ElementPlan;
-  // Les noms des lieux et des objets se traduisent (voir nom() et chemin()) :
-  // le monde est créé avec les noms français, puis chacun est remplacé par
-  // celui de la langue. Les chemins des événements passent alors par chemin().
+  // Names of places and objects are translated (see nom() and chemin()):
+  // the world is created with the French names, then each is replaced by
+  // the language's. Event paths then go through chemin().
   names?: boolean;
-  // Fichier de la maison affiché au début du chapitre.
+  // File in the home directory shown at the start of the chapter.
   welcome: string;
   createWorld: (t: Translate) => Directory;
   events: Event[];
-  // Le chapitre est réussi quand cet événement s'est produit.
+  // The chapter is passed when this event has happened.
   final: string;
-  // L'ordre des étapes dans le jeu, pour les indices (voir indices.ts), quand
-  // il diffère de celui des événements.
+  // The order of the steps in the game, for hints (see indices.ts), when
+  // it differs from the events' order.
   steps?: string[];
-  // Appelé après chaque commande (ex. l'Effaceur qui avance) ; renvoie un message.
+  // Called after each command (e.g. the Eraser moving forward); returns a message.
   afterCommand?: (game: Game) => string | void;
-  // Appelé juste avant de lancer chaque commande (ex. le temps qui passe : la
-  // commande voit déjà le monde tel qu'il est devenu depuis la précédente).
+  // Called just before running each command (e.g. time passing: the
+  // command already sees the world as it has become since the previous one).
   beforeCommand?: (game: Game) => void;
-  // La vie de la machine pendant qu'on joue (visiteurs, robots, attaques) : voir activite.ts.
+  // The machine living while you play (visitors, bots, attacks): see activite.ts.
   activity?: Activity;
-  // Mot de passe de « vous » pour sudo (absent : sudo pas encore appris).
+  // "you"'s password for sudo (absent: sudo not learned yet).
   password?: string;
-  // Comptes et groupes de la machine (par défaut : comptesParDefaut).
+  // The machine's accounts and groups (by default: comptesParDefaut).
   accounts?: () => Accounts;
-  // Appelé une fois le monde et l'état créés (ex. charger la configuration
-  // d'un service à partir des fichiers du monde).
+  // Called once the world and state are created (e.g. to load a service's
+  // configuration from the world's files).
   initialise?: (game: Game) => void;
-  // État propre à l'histoire (processus, réseau, dépôts git…), recréé à
-  // chaque partie. Les commandes spécialisées le lisent et le modifient.
+  // The story's own state (processes, network, git repositories…), recreated
+  // for each game. The specialised commands read and change it.
   state?: (t: Translate) => Record<string, unknown>;
-  // La machine a été réinstallée pour ce chapitre : nouvelle clé d'hôte SSH
-  // (voir machines.ts), que le known_hosts du poste ne connaît pas encore.
+  // The machine was reinstalled for this chapter: new SSH host key
+  // (see machines.ts), which the workstation's known_hosts doesn't know yet.
   hostKey?: string;
-  // Les machines du réseau interne de l'histoire (derrière la machine
-  // principale), qu'on joint en ssh depuis elle (ou avec ssh -J).
+  // The machines of the story's internal network (behind the main
+  // machine), reached over ssh from it (or with ssh -J).
   hosts?: Record<string, InternalHost>;
-  // Les clés publiques du poste sont recopiées sur les machines de l'histoire
-  // à chaque connexion (une coordinatrice qui tient les clés à jour).
+  // The workstation's public keys are copied to the story's machines
+  // on each connection (a coordinator who keeps the keys up to date).
   playerKeys?: boolean;
-  // Les événements se vérifient aussi après les commandes tapées sur le
-  // poste (le chapitre regarde ce qu'on y fait : ~/.ssh/config, tunnels…).
+  // Events are also checked after commands typed on the
+  // workstation (the chapter watches what you do there: ~/.ssh/config, tunnels…).
   watchesWorkstation?: boolean;
 }
 
-// Une histoire : une suite de chapitres. Les histoires sont indépendantes.
-// Titre et résumé : histoire-<id> dans src/texts/<langue>/stories.ftl.
+// A story: a sequence of chapters. Stories are independent.
+// Title and summary: histoire-<id> in src/texts/<language>/stories.ftl.
 export interface Story {
   id: string;
   chapters: Chapter[];
-  // Les chapitres (d'autres histoires) à finir avant d'en recevoir la clé :
-  // les histoires s'ouvrent peu à peu (voir deverrouillage.ts). Sans : la
-  // première histoire, ouverte d'emblée.
+  // The chapters (of other stories) to finish before receiving its key:
+  // stories open little by little (see deverrouillage.ts). Without it: the
+  // first story, open from the start.
   after?: string[];
 }
 
-// Les textes sont écrits avec des retours à la ligne pour être lisibles dans
-// le code ; on recolle les lignes d'un même paragraphe pour que le terminal
-// les fasse passer à la ligne selon la largeur de l'écran. On garde tels
-// quels les lignes indentées et les tableaux (alignés par des doubles espaces).
-// Un titre en capitales (« CE QUI S'EST PASSÉ ») reste aussi sur sa ligne.
+// Texts are written with line breaks to be readable in the
+// code; the lines of a paragraph are joined so that the terminal
+// wraps them according to the screen's width. Indented lines and
+// tables (aligned with double spaces) are kept as they are.
+// A title in capitals ("WHAT HAPPENED") also stays on its own line.
 const title = (l: string) => /\p{Lu}/u.test(l) && l === l.toUpperCase();
-// Une liste numérotée (« 1. », « 2) ») garde un élément par ligne.
+// A numbered list ("1.", "2)") keeps one item per line.
 const number = (l: string) => /^\d+[.)] /.test(l);
 const raw = (l: string) => l === '' || l.startsWith(' ') || l.startsWith('- ') || l.includes('  ') || title(l) || number(l);
 export const clean = (t: string) =>
@@ -174,22 +174,22 @@ export const clean = (t: string) =>
     .join('\n');
 
 export const f = (content: File['content'], options: Omit<File, 'type' | 'content'> = {}): File => ({
-  type: 'fichier',
+  type: 'file',
   content: typeof content !== 'string' ? content : options.lines ? content.replace(/^\n+|\s+$/g, '') : clean(content),
   prose: typeof content === 'string' && !options.lines,
   ...options,
 });
 
-// Les noms des lieux et des objets d'une histoire (les dossiers et les
-// fichiers qu'on tape) : le nom français sert d'identifiant, chaque langue
-// donne le sien dans src/texts/<langue>/names.ftl, sous nom-<nom> (le point
-// initial devient « point- », les autres points des tirets). Un nom absent
-// reste tel quel (home, etc, les noms des vrais outils).
-const nameKey = (french: string) => `name-${french.replace(/^\./, 'point-').replace(/\./g, '-')}`;
-/** Un mot de passe donné par une histoire, dans la langue (passwords.ftl : farine-2028 → flour-2028). */
-export const password = (t: Translate, french: string) => (t.exists(`password-${french}`) ? t(`password-${french}`) : french);
+// The names of a story's places and objects (the directories and
+// files you type): the French name is the identifier, each language
+// gives its own in src/texts/<language>/names.ftl, under nom-<name> (the
+// leading dot becomes "point-", the other dots hyphens). A missing name
+// stays as it is (home, etc, the names of real tools).
+const nameKey = (id: string) => `name-${id.replace(/^\./, 'point-').replace(/\./g, '-')}`;
+/** A password given by a story, in the language (passwords.ftl: farine-2028 → flour-2028). */
+export const password = (t: Translate, id: string) => (t.exists(`password-${id}`) ? t(`password-${id}`) : id);
 export const name = (t: Translate, french: string) => (t.exists(nameKey(french)) ? t(nameKey(french)) : french);
-/** Un chemin du monde, traduit nom par nom : /Cabane/Jetee/filet → /Hut/Pier/net. */
+/** A path of the world, translated name by name: /Cabane/Jetee/filet → /Hut/Pier/net. */
 export const path = (t: Translate, english: string) =>
   english
     .split('/')
@@ -202,19 +202,19 @@ export const path = (t: Translate, english: string) =>
 const SYSTEM_DIRECTORIES = ['/usr/share', '/var/backups', '/proc/sys/net', '/etc/letsencrypt/live', '/srv/scans'];
 export const systemDirectory = (p: string) => SYSTEM_DIRECTORIES.includes(p) || p.endsWith('/.local/share');
 
-// Les comptes qui se traduisent : celui du joueur ou de la joueuse
-// (« vous », you en anglais) et l'utilisateur système de l'Effaceur. Les
-// autres comptes (root, www-data, les personnages : malo, yasmine…) gardent
-// leur nom. Comme les lieux, les chapitres sont écrits avec le nom
-// français ; le monde (propriétaires, /home/vous) et les comptes sont
-// renommés à la création, et le code désigne le compte du joueur par
-// `jeu.joueur` (ou `joueur(t)` avant que le jeu existe).
+// The accounts that are translated: the player's
+// ("vous" in French, you in English) and the Eraser's system user. The
+// other accounts (root, www-data, the characters: malo, yasmine…) keep
+// their name. Like places, chapters are written with the French
+// name; the world (owners, /home/vous) and the accounts are
+// renamed on creation, and the code refers to the player's account as
+// `jeu.joueur` (or `joueur(t)` before the game exists).
 const TRANSLATED_ACCOUNTS = ['you', 'eraser'];
 export const account = (t: Translate, french: string) => (TRANSLATED_ACCOUNTS.includes(french) ? name(t, french) : french);
-/** Le compte du joueur ou de la joueuse dans la langue : vous, you… */
+/** The player's account in the language: vous, you… */
 export const player = (t: Translate) => account(t, 'you');
 
-/** Le monde dans la langue : chaque dossier et chaque fichier prend son nom traduit, ses propriétaires aussi. */
+/** The world in the language: each directory and each file takes its translated name, and so do its owners. */
 export function translateNames(t: Translate, directory: Directory, at = ''): Directory {
   const rights = (n: Node) => {
     if (n.owner) n.owner = account(t, n.owner);
@@ -223,12 +223,12 @@ export function translateNames(t: Translate, directory: Directory, at = ''): Dir
   };
   rights(directory);
   directory.children = Object.fromEntries(
-    Object.entries(directory.children).map(([n, e]) => [systemDirectory(`${at}/${n}`) ? n : name(t, n), e.type === 'dossier' ? translateNames(t, e, `${at}/${n}`) : rights(e)]),
+    Object.entries(directory.children).map(([n, e]) => [systemDirectory(`${at}/${n}`) ? n : name(t, n), e.type === 'directory' ? translateNames(t, e, `${at}/${n}`) : rights(e)]),
   );
   return directory;
 }
 
-/** Les comptes dans la langue : noms des utilisateurs et des groupes, membres, maisons. */
+/** The accounts in the language: names of users and groups, members, homes. */
 export const translateAccounts = (t: Translate, c: Accounts): Accounts => ({
   users: Object.fromEntries(
     Object.entries(c.users).map(([n, u]) => [account(t, n), { ...u, group: account(t, u.group), ...(u.home ? { home: path(t, u.home) } : {}) }]),
@@ -237,14 +237,14 @@ export const translateAccounts = (t: Translate, c: Accounts): Accounts => ({
 });
 
 export const d = (children: Record<string, Node>, blocked?: Directory['blocked'], rights: Rights = {}): Directory => ({
-  type: 'dossier',
+  type: 'directory',
   children,
   blocked,
   ...rights,
 });
 
-// /etc/passwd et /etc/group, tenus à jour à partir des comptes de la
-// machine (usermod les modifie) : à poser dans le /etc d'un monde.
+// /etc/passwd and /etc/group, kept up to date from the machine's
+// accounts (usermod changes them): to put in a world's /etc.
 export const accountsFiles = (): Record<string, File> => ({
   passwd: f(
     (game) =>

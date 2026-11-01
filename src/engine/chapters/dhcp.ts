@@ -1,16 +1,16 @@
-// Histoire « La Ruche » — chapitre « Le DHCP » : les VLAN sont là, mais les
-// ordinateurs et les téléphones n'ont plus d'adresse : dnsmasq sert encore
-// l'ancien réseau à plat (interface=eth1, 192.168.1.x). La nouvelle
-// imprimante, elle, doit garder 10.10.30.10 (tous les postes l'ont configurée).
-//   - une plage par VLAN (dhcp-range), dans le réseau de chaque interface ;
-//   - dnsmasq doit écouter les VLAN (interface=eth1.10…, ou eth1*), et
-//     surtout pas eth0, le réseau du fournisseur d'accès ;
-//   - une réservation pour l'imprimante (dhcp-host=MAC,nom,adresse) ;
-//   - dnsmasq --test, puis systemctl restart dnsmasq.
-// Objectif vérifié sur l'état : chaque appareil en DHCP a reçu une adresse
-// dans le réseau de son VLAN, l'imprimante la sienne, et dnsmasq n'écoute pas
+// Story "The Hive", chapter "DHCP": the VLANs are there, but the
+// computers and phones no longer get an address: dnsmasq still serves
+// the old flat network (interface=eth1, 192.168.1.x). The new
+// printer must keep 10.10.30.10 (every workstation has it configured).
+//   - one range per VLAN (dhcp-range), in each interface's network;
+//   - dnsmasq must listen on the VLANs (interface=eth1.10…, or eth1*), and
+//     above all not on eth0, the ISP's network;
+//   - a reservation for the printer (dhcp-host=MAC,name,address);
+//   - dnsmasq --test, then systemctl restart dnsmasq.
+// Objective checked on the state: each DHCP device got an address
+// in its VLAN's network, the printer its own, and dnsmasq doesn't listen on
 // eth0.
-// Sources : https://dnsmasq.org/docs/dnsmasq-man.html
+// Sources: https://dnsmasq.org/docs/dnsmasq-man.html
 
 import { f, type Chapter } from '../world';
 import type { Game } from '../shell';

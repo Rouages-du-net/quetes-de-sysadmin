@@ -1,12 +1,12 @@
-// Histoire « La Veille » — chapitre « Le correctif » : corriger nginx et
-// rsync, dans cet ordre décidé au chapitre précédent, sans rien casser.
-// apt upgrade installe les deux correctifs d'un coup (les paquets Debian ne
-// se mettent pas à jour un par un), mais encore faut-il rafraîchir la liste
-// avant : sans apt update, apt upgrade ne trouve rien à faire.
-// Objectif vérifié sur l'état : nginx et rsync à la version corrigée, et le
-// site du Fournil toujours servi (curl).
-// Pièges prévus : apt upgrade sans apt update d'abord (« 0 upgraded »).
-// Sources : https://manpages.debian.org/trixie/apt/apt.8.en.html
+// Story "La Veille" — chapter "The fix": fix nginx and rsync, in the order
+// decided in the previous chapter, without breaking anything. apt upgrade
+// installs both fixes at once (Debian packages are not updated one by one),
+// but the list must still be refreshed first: without apt update, apt
+// upgrade finds nothing to do.
+// Objective checked on the state: nginx and rsync at the fixed version, and
+// Le Fournil's site still served (curl).
+// Expected traps: apt upgrade without apt update first ("0 upgraded").
+// Sources: https://manpages.debian.org/trixie/apt/apt.8.en.html
 
 import { f, type Chapter } from '../world';
 import type { Game } from '../shell';
@@ -20,7 +20,7 @@ const apt = (j: Game) => j.state.apt as AptState;
 const nginxOk = (j: Game) => apt(j).installed.nginx === CVE.nginx.corrigee;
 const rsyncOk = (j: Game) => apt(j).installed.rsync === CVE.rsync.corrigee;
 const okFixed = (j: Game) => nginxOk(j) && rsyncOk(j);
-// Une tentative d'apt upgrade sans apt update d'abord (0 mise à jour trouvée).
+// An attempt at apt upgrade without apt update first (0 updates found).
 const triesWithoutUpdate = (j: Game) =>
   j.last.commands.some((c) => c[0] === 'apt' && (c[1] === 'upgrade' || c[1] === 'full-upgrade')) && /Upgrading: 0/.test(j.last.output) && !okFixed(j);
 const siteOk = (j: Game) => j.last.commands.some((c) => c[0] === 'curl') && /200/.test(j.last.output);

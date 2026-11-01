@@ -1,16 +1,16 @@
-// La politique de sudo : /etc/sudoers et les fichiers qu'il inclut, lus
-// comme sudoers(5) (https://www.sudo.ws/docs/man/sudoers.man/) :
-//   - « @includedir /etc/sudoers.d » (ou l'ancienne forme #includedir) lit
-//     chaque fichier du dossier, dans l'ordre, SAUF ceux dont le nom contient
-//     un point ou finit par ~ (un « till.conf » est ignoré) ;
-//   - une règle : « qui machines = (comptes) [NOPASSWD:] commandes » ; qui :
-//     un compte, %groupe ou ALL ; une commande : ALL, ou un chemin complet
-//     (sans arguments : tous les arguments sont permis ; avec : ceux-là
-//     seulement ; * en joker) ;
-//   - les lignes Defaults et les alias (Cmnd_Alias…) sont acceptés ; les
-//     alias de commandes sont développés.
-// Écarts : pas d'alias d'utilisateurs ni de machines, pas de Runas_Alias,
-// pas de « ! » (négation), pas de digest ; la machine est toujours ALL.
+// sudo's policy: /etc/sudoers and the files it includes, read like
+// sudoers(5) (https://www.sudo.ws/docs/man/sudoers.man/):
+//   - "@includedir /etc/sudoers.d" (or the old form #includedir) reads
+//     each file of the directory, in order, EXCEPT those whose name contains
+//     a dot or ends with ~ (a "till.conf" is ignored);
+//   - a rule: "who machines = (accounts) [NOPASSWD:] commands"; who: an
+//     account, %group or ALL; a command: ALL, or a full path (without
+//     arguments: all arguments are allowed; with some: only those; * as a
+//     wildcard);
+//   - Defaults lines and aliases (Cmnd_Alias…) are accepted; command
+//     aliases are expanded.
+// Differences: no user or host aliases, no Runas_Alias, no "!" (negation),
+// no digest; the machine is always ALL.
 
 import type { Shell } from './shell';
 import { wildcard } from './tools';
@@ -23,7 +23,7 @@ export interface Rule {
   asText: string;
   withoutPassword: boolean;
   commands: string[];
-  // Où elle est écrite (pour sudo -l).
+  // Where it is written (for sudo -l).
   file: string;
 }
 
@@ -31,23 +31,23 @@ export interface SudoersError {
   file: string;
   line: number;
   column: number;
-  // Une clé de texte (sudoers-erreur-…), traduite par l'appelant.
+  // A text key (sudoers-error-…), translated by the caller.
   key: string;
   text: string;
   length: number;
 }
 
-// Les fichiers qu'un @includedir lit : sans point ni ~ final, triés.
+// The files an @includedir reads: with no dot nor trailing ~, sorted.
 export function includedFiles(game: Shell, directory: string): string[] {
   const d = game.find(directory);
-  if (d?.type !== 'dossier') return [];
+  if (d?.type !== 'directory') return [];
   return Object.keys(d.children)
-    .filter((n) => !n.includes('.') && !n.endsWith('~') && d.children[n].type === 'fichier')
+    .filter((n) => !n.includes('.') && !n.endsWith('~') && d.children[n].type === 'file')
     .sort()
     .map((n) => `${directory}/${n}`);
 }
 
-/** Analyse un texte sudoers : les règles, et la première erreur de syntaxe. */
+/** Parses a sudoers text: the rules, and the first syntax error. */
 export function parse(text: string, file: string): { rules: Rule[]; included: string[]; defaults: string[]; error: SudoersError | null } {
   const rules: Rule[] = [];
   const defaults: string[] = [];
@@ -89,7 +89,7 @@ export function parse(text: string, file: string): { rules: Rule[]; included: st
     rules.push({
       who: r[1].split(',').map((q) => q.trim()),
       as: (r[3] ?? 'root').split(',').map((c) => c.trim().split(':')[0] || 'root'),
-      // Tel que sudo -l l'affiche : « ALL : ALL ».
+      // As sudo -l displays it: "ALL : ALL".
       asText: (r[3] ?? 'root').replace(/\s*:\s*/, ' : '),
       withoutPassword: /NOPASSWD:/.test(r[4]),
       commands,
@@ -99,7 +99,7 @@ export function parse(text: string, file: string): { rules: Rule[]; included: st
   return { rules, included, defaults, error: null };
 }
 
-/** Toute la politique : /etc/sudoers et ses inclusions ; la première erreur trouvée. */
+/** The whole policy: /etc/sudoers and its includes; the first error found. */
 export function read(game: Shell): { rules: Rule[]; defaults: string[]; files: string[]; error: SudoersError | null } {
   const rules: Rule[] = [];
   const defaults: string[] = [];
@@ -123,11 +123,11 @@ export function read(game: Shell): { rules: Rule[]; defaults: string[]; files: s
   return { rules, defaults, files: [...seen], error };
 }
 
-// Une règle s'applique-t-elle à ce compte (son nom, %un de ses groupes, ALL) ?
+// Does a rule apply to this account (its name, %one of its groups, ALL)?
 const forEachOf = (game: Shell, r: Rule, account: string) =>
   r.who.some((q) => q === 'ALL' || q === account || (q.startsWith('%') && game.groupsFor(account).includes(q.slice(1))));
 
-// Une commande de la règle couvre-t-elle cette commande (chemin complet et arguments) ?
+// Does one of the rule's commands cover this command (full path and arguments)?
 function covers(allowedOne: string, requested: string): boolean {
   if (allowedOne === 'ALL') return true;
   const [path, ...args] = allowedOne.split(/\s+/);
@@ -138,14 +138,14 @@ function covers(allowedOne: string, requested: string): boolean {
   return wildcard(args.join(' ')).test(argsD.join(' '));
 }
 
-/** Ce compte peut-il lancer cette commande (chemin complet) en root avec sudo ? */
+/** Can this account run this command (full path) as root with sudo? */
 export function permitted(game: Shell, account: string, command: string, as = 'root'): boolean {
   return read(game).rules.some(
     (r) => forEachOf(game, r, account) && (r.as.includes(as) || r.as.includes('ALL')) && r.commands.some((c) => covers(c, command)),
   );
 }
 
-/** Les règles d'un compte, comme sudo -l les affiche : « (root) NOPASSWD: /usr/bin/… ». */
+/** An account's rules, as sudo -l displays them: "(root) NOPASSWD: /usr/bin/…". */
 export function rulesFor(game: Shell, account: string): string[] {
   return read(game)
     .rules.filter((r) => forEachOf(game, r, account))

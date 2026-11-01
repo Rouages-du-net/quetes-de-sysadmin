@@ -1,12 +1,12 @@
-// La configuration d'apt, lue comme apt.conf(5) : /etc/apt/apt.conf.d/*,
-// dans l'ordre alphabétique (les fichiers dont le nom contient autre chose
-// que lettres, chiffres, « _ », « - » et « . » sont ignorés), puis
-// /etc/apt/apt.conf. Une valeur lue plus tard remplace la précédente ; une
-// liste ({ "a"; "b"; }) s'allonge d'un fichier à l'autre. Commentaires //,
-// /* */ et #. Chaque affectation finit par « ; ».
-// Source : https://manpages.debian.org/trixie/apt/apt.conf.5.en.html
-// Écarts : pas de #include ni de #clear, pas de portée « Clé::Sous { … } »
-// imbriquée sur plusieurs niveaux (seulement les listes).
+// apt's configuration, read like apt.conf(5): /etc/apt/apt.conf.d/*,
+// in alphabetical order (files whose name contains anything other than
+// letters, digits, "_", "-" and "." are ignored), then
+// /etc/apt/apt.conf. A value read later replaces the previous one; a
+// list ({ "a"; "b"; }) grows from one file to the next. Comments //,
+// /* */ and #. Each assignment ends with ";".
+// Source: https://manpages.debian.org/trixie/apt/apt.conf.5.en.html
+// Differences: no #include nor #clear, no "Key::Sub { … }" scope
+// nested on several levels (only lists).
 
 import type { Game } from './shell';
 
@@ -18,19 +18,19 @@ export interface ConfApt {
   errors: string[];
 }
 
-// Les fichiers lus, dans l'ordre.
+// The files read, in order.
 function files(game: Game): string[] {
   const n = game.find(APT_DIRECTORY);
   const names =
-    n?.type === 'dossier'
+    n?.type === 'directory'
       ? Object.keys(n.children)
-          .filter((f) => /^[A-Za-z0-9_.-]+$/.test(f) && n.children[f].type === 'fichier')
+          .filter((f) => /^[A-Za-z0-9_.-]+$/.test(f) && n.children[f].type === 'file')
           .sort()
       : [];
   return [...names.map((f) => `${APT_DIRECTORY}/${f}`), ...(game.exists('/etc/apt/apt.conf') ? ['/etc/apt/apt.conf'] : [])];
 }
 
-/** Lit toute la configuration d'apt ; les erreurs sont celles d'apt (« E: Syntax error … »). */
+/** Reads all of apt's configuration; the errors are apt's ("E: Syntax error …"). */
 export function readConfApt(game: Game): ConfApt {
   const values: Record<string, string> = {};
   const lists: Record<string, string[]> = {};
@@ -85,10 +85,10 @@ export function readConfApt(game: Game): ConfApt {
   return { values, lists, errors };
 }
 
-/** Une option booléenne d'apt : « 1 », « true », « yes », « on ». */
+/** A boolean apt option: "1", "true", "yes", "on". */
 export const yes = (v: string | undefined) => /^(1|true|yes|on|enable)$/i.test(v ?? '');
 
-/** Ce qu'affiche apt-config dump : une ligne par valeur, les listes en « Clé:: ». */
+/** What apt-config dump shows: one line per value, lists as "Key::". */
 export function empty(c: ConfApt): string {
   const lines = Object.entries(c.values).map(([k, v]) => `${k} "${v}";`);
   for (const [k, l] of Object.entries(c.lists)) lines.push(`${k} "";`, ...l.map((v) => `${k}:: "${v}";`));

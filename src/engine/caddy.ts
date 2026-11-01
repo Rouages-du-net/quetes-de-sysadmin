@@ -1,22 +1,22 @@
-// Caddy d'une machine : le Caddyfile lu comme le fait l'adaptateur
-// caddyfile, la configuration appliquée au démarrage et au rechargement, et
-// le HTTPS automatique. Pour chaque site dont l'adresse est un nom de domaine
-// (ni http://, ni :80), Caddy obtient lui-même un certificat auprès de Let's
-// Encrypt (ACME) et redirige HTTP vers HTTPS. L'autorité vérifie, depuis
-// internet, que la machine répond pour ce nom sur le port 80 (défi HTTP-01)
-// ou 443 (TLS-ALPN-01) : le DNS du nom doit mener ici, et le pare-feu laisser
-// passer. Les journaux de Caddy sont des lignes JSON (zap).
-// Sources : https://caddyserver.com/docs/caddyfile/concepts,
+// A machine's Caddy: the Caddyfile read the way the caddyfile adapter reads
+// it, the configuration applied on start and reload, and automatic HTTPS.
+// For each site whose address is a domain name (neither http:// nor :80),
+// Caddy itself obtains a certificate from Let's Encrypt (ACME) and redirects
+// HTTP to HTTPS. The authority checks, from the internet, that the machine
+// answers for that name on port 80 (HTTP-01 challenge) or 443 (TLS-ALPN-01):
+// the name's DNS must lead here, and the firewall must let it through.
+// Caddy's logs are JSON lines (zap).
+// Sources: https://caddyserver.com/docs/caddyfile/concepts,
 // https://caddyserver.com/docs/automatic-https,
 // https://caddyserver.com/docs/caddyfile/directives,
 // https://caddyserver.com/docs/command-line,
 // https://letsencrypt.org/docs/challenge-types/
-// Écarts : un sous-ensemble des directives est appliqué (root, file_server,
-// respond, redir, reverse_proxy) ; les autres sont reconnues mais sans effet ;
-// pas de matchers nommés ni de blocs handle ; une seule autorité (Let's
-// Encrypt, sans ZeroSSL) ; un défi raté est retenté dès que la cause a
-// disparu (au lieu d'attendre le délai) ; localhost et les adresses IP ne
-// reçoivent pas de certificat interne.
+// Differences: a subset of the directives is applied (root, file_server,
+// respond, redir, reverse_proxy); the others are recognised but have no
+// effect; no named matchers or handle blocks; a single authority (Let's
+// Encrypt, no ZeroSSL); a failed challenge is retried as soon as its cause
+// has gone (instead of waiting for the delay); localhost and IP addresses
+// get no internal certificate.
 
 import type { Game, Shell } from './shell';
 import { writeLog, systemd, toUtc } from './systemd';
@@ -33,10 +33,10 @@ export const ACME_ISSUER = 'acme-v02.api.letsencrypt.org-directory';
 const IT = 'https://acme-v02.api.letsencrypt.org/directory';
 export const STOCKAGE = '/var/lib/caddy/.local/share/caddy';
 const AUTOSAVE = '/var/lib/caddy/.config/caddy/autosave.json';
-// Une adresse des serveurs de validation de Let's Encrypt (pour le pare-feu).
+// An address of Let's Encrypt's validation servers (for the firewall).
 const VALIDATOR = '198.51.100.77';
 
-// ——— Lecture du Caddyfile ———
+// ——— Reading the Caddyfile ———
 
 export interface Directive {
   name: string;
@@ -49,7 +49,7 @@ export interface Address {
   schema: string;
   host: string;
   port: number;
-  // Le texte tel qu'écrit (pour les messages).
+  // The text as written (for messages).
   text: string;
 }
 
@@ -62,11 +62,11 @@ export interface Site {
 export interface ConfigCaddy {
   global: Directive[];
   sites: Site[];
-  // Le premier écart avec ce qu'écrirait caddy fmt (numéro de ligne), sinon null.
+  // The first difference with what caddy fmt would write (line number), otherwise null.
   notFormatted: number | null;
 }
 
-// Les directives connues des sites, d'après la documentation de Caddy 2.10.
+// The directives known in sites, according to the Caddy 2.10 documentation.
 const DIRECTIVES = new Set([
   'abort', 'acme_server', 'basic_auth', 'basicauth', 'bind', 'encode', 'error', 'file_server', 'forward_auth', 'fs', 'handle', 'handle_errors',
   'handle_path', 'header', 'import', 'intercept', 'invoke', 'log', 'log_append', 'log_skip', 'map', 'method', 'metrics', 'php_fastcgi', 'push',
@@ -78,7 +78,7 @@ const GLOBAL = new Set([
   'shutdown_delay', 'auto_https', 'email', 'default_sni', 'local_certs', 'skip_install_trust', 'acme_ca', 'acme_ca_root', 'acme_eab', 'acme_dns',
   'on_demand_tls', 'key_type', 'cert_issuer', 'renew_interval', 'ocsp_interval', 'ocsp_stapling', 'preferred_chains', 'servers', 'pki', 'events',
 ]);
-// Les directives qui demandent au moins un argument (sans bloc).
+// The directives that need at least one argument (without a block).
 const WITH_ARGUMENT = new Set(['root', 'redir', 'respond', 'reverse_proxy', 'encode', 'rewrite', 'try_files', 'import', 'header', 'bind', 'tls']);
 
 export class CaddyError extends Error {}
@@ -88,7 +88,7 @@ interface TokensLine {
   tokens: string[];
 }
 
-// Découpe le texte en lignes de jetons (guillemets, accents graves, commentaires).
+// Splits the text into lines of tokens (quotes, backticks, comments).
 function split(text: string): TokensLine[] {
   const lines: TokensLine[] = [];
   text.split('\n').forEach((rawValue, i) => {
@@ -127,7 +127,7 @@ function split(text: string): TokensLine[] {
   return lines;
 }
 
-/** Une adresse de site : [schéma://]hôte[:port], ou :port. */
+/** A site address: [scheme://]host[:port], or :port. */
 export function readAddress(text: string): Address {
   const m = /^(?:(https?):\/\/)?([^:/]*)(?::(\d+))?(\/.*)?$/.exec(text);
   const schema = m?.[1] ?? '';
@@ -138,7 +138,7 @@ export function readAddress(text: string): Address {
 
 export const isIp = (s: string) => /^\d{1,3}(\.\d{1,3}){3}$/.test(s);
 
-/** Lit un Caddyfile ; lance ErreurCaddy avec le message de Caddy (sans « Error: »). */
+/** Reads a Caddyfile; throws CaddyError with Caddy's message (without "Error:"). */
 export function readCaddyfile(text: string, file = CADDYFILE): ConfigCaddy {
   const lines = split(text);
   let i = 0;
@@ -153,7 +153,7 @@ export function readCaddyfile(text: string, file = CADDYFILE): ConfigCaddy {
       check(d);
       if (opens) d.block = block(line, () => {});
       directives.push(d);
-      // « respond ok }» : l'accolade fermante en fin de ligne n'est pas permise.
+      // "respond ok }": a closing brace at the end of a line is not allowed.
       if (!opens && tokens.length > 1 && tokens.at(-1) === '}') throw new CaddyError(`${file}:${line} - Error during parsing: Unexpected next token after '${tokens.at(-2)}' on same line`);
     }
     throw expectedEnd(opening);
@@ -168,7 +168,7 @@ export function readCaddyfile(text: string, file = CADDYFILE): ConfigCaddy {
     if (WITH_ARGUMENT.has(d.name) && !d.args.length) throw new CaddyError(`${file}:${d.line} - Error during parsing: Wrong argument count or unexpected line ending after '${d.name}'`);
   };
   const config: ConfigCaddy = { global: [], sites: [], notFormatted: null };
-  // Le bloc des options globales : des accolades seules, tout en haut.
+  // The global options block: braces on their own, at the very top.
   if (lines[0]?.tokens.length === 1 && lines[0].tokens[0] === '{') {
     i = 1;
     config.global = block(lines[0].line, (d) => {
@@ -184,7 +184,7 @@ export function readCaddyfile(text: string, file = CADDYFILE): ConfigCaddy {
       .split(/[\s,]+/)
       .filter(Boolean);
     if (!opens && config.sites.length) {
-      // Après un premier site entre accolades, une ligne sans accolade : une directive égarée.
+      // After a first site in braces, a line without braces: a stray directive.
       siteDirective({ name: tokens[0], args: [], line });
       throw new CaddyError(`${file}:${line}: unrecognized directive: ${tokens[0]}`);
     }
@@ -192,7 +192,7 @@ export function readCaddyfile(text: string, file = CADDYFILE): ConfigCaddy {
     let directives: Directive[];
     if (opens) directives = block(line, siteDirective);
     else {
-      // Un seul site, sans accolades : toute la suite du fichier lui appartient.
+      // A single site, without braces: the whole rest of the file belongs to it.
       directives = [];
       while (i < lines.length) {
         const l = lines[i++];
@@ -206,7 +206,7 @@ export function readCaddyfile(text: string, file = CADDYFILE): ConfigCaddy {
     }
     config.sites.push({ addresses: texts.map(readAddress), directives, line });
   }
-  // Deux sites ne peuvent pas répondre à la même adresse.
+  // Two sites cannot answer at the same address.
   const views = new Set<string>();
   config.sites.forEach((s, n) =>
     s.addresses.forEach((a, k) => {
@@ -222,7 +222,7 @@ export function readCaddyfile(text: string, file = CADDYFILE): ConfigCaddy {
   return config;
 }
 
-/** Ce qu'écrit caddy fmt : une tabulation par niveau d'accolades, un espace entre jetons, une ligne vide au plus. */
+/** What caddy fmt writes: one tab per brace level, one space between tokens, at most one blank line. */
 export function formatValue(text: string): string {
   const output: string[] = [];
   let level = 0;
@@ -235,7 +235,7 @@ export function formatValue(text: string): string {
       continue;
     }
     emptyBefore = false;
-    // Un espace entre les jetons, hors des guillemets et des commentaires.
+    // One space between tokens, outside quotes and comments.
     let compact = '';
     let inside: string | null = null;
     for (let k = 0; k < line.length; k++) {
@@ -261,36 +261,36 @@ export function formatValue(text: string): string {
   return output.join('\n');
 }
 
-// ——— Les sites tels que Caddy les sert ———
+// ——— The sites as Caddy serves them ———
 
 const global = (c: ConfigCaddy, name: string) => c.global.find((d) => d.name === name);
 const modeHttps = (c: ConfigCaddy) => global(c, 'auto_https')?.args[0] ?? 'on';
 
-/** L'adresse reçoit-elle le HTTPS automatique (certificat ACME) ? */
+/** Does the address get automatic HTTPS (ACME certificate)? */
 export const managedOne = (c: ConfigCaddy, a: Address) =>
   !['off', 'disable_certs', 'ignore_loaded_certs'].includes(modeHttps(c)) && a.schema !== 'http' && a.port !== 80 && !!a.host && a.host.includes('.') && !isIp(a.host) && !a.host.includes('*');
 
-/** Les noms dont Caddy gère le certificat. */
+/** The names whose certificate Caddy manages. */
 export const managedNames = (c: ConfigCaddy) => [...new Set(c.sites.flatMap((s) => s.addresses.filter((a) => managedOne(c, a)).map((a) => a.host)))];
 
-/** Les ports sur lesquels Caddy écoute avec cette configuration. */
+/** The ports Caddy listens on with this configuration. */
 export function listenersPorts(c: ConfigCaddy): number[] {
   const ports = new Set(c.sites.flatMap((s) => s.addresses.map((a) => a.port)));
   if (managedNames(c).length && !['off', 'disable_redirects'].includes(modeHttps(c))) ports.add(80);
   return [...ports].sort((a, b) => a - b);
 }
 
-// ——— L'état de Caddy (etat.caddy) ———
+// ——— Caddy's state (state.caddy) ———
 
 export interface CaddyState {
-  // La configuration en service (null : Caddy ne tourne pas).
+  // The configuration in service (null: Caddy is not running).
   load: ConfigCaddy | null;
-  // Les noms sous lesquels la machine se joint elle-même (pour curl).
+  // The names under which the machine reaches itself (for curl).
   names: string[];
-  // L'adresse publique de la machine, et ce que le DNS public dit de chaque nom.
+  // The machine's public address, and what public DNS says about each name.
   ip: string;
   dns: Record<string, string>;
-  // Les noms dont l'obtention du certificat a échoué (Caddy retentera).
+  // The names for which obtaining the certificate failed (Caddy will retry).
   waiting: string[];
   attempts: Record<string, number>;
 }
@@ -299,7 +299,7 @@ export const caddyState = (game: Game): CaddyState | undefined => game.state.cad
 
 const certificateDirectory = (name: string) => `${STOCKAGE}/certificates/${ACME_ISSUER}/${name}`;
 
-/** Le certificat que Caddy a pour ce nom, s'il est encore valable. */
+/** The certificate Caddy has for this name, if it is still valid. */
 export function certificateFor(game: Game, name: string): { certificate: Certificate; content: string } | null {
   const content = game.read(`${certificateDirectory(name)}/${name}.crt`);
   const c = readCertificate(content);
@@ -308,10 +308,10 @@ export function certificateFor(game: Game, name: string): { certificate: Certifi
   return { certificate: c, content };
 }
 
-// Un instant au format de zap (secondes depuis 1970, avec les millièmes).
+// An instant in zap's format (seconds since 1970, with milliseconds).
 const ts = (game: Game) => (toUtc(systemd(game)?.clock ?? 0) / 1000 + 0.123).toFixed(3);
 
-/** Une ligne JSON au journal de caddy.service. */
+/** A JSON line in caddy.service's journal. */
 export function note(game: Game, level: string, logger: string | null, msg: string, fields: Record<string, unknown> = {}, advance = false) {
   const sd = systemd(game);
   if (!sd) return;
@@ -319,7 +319,7 @@ export function note(game: Game, level: string, logger: string | null, msg: stri
   writeLog(sd, 'caddy.service', 'caddy', PID, line, level === 'error' ? 3 : level === 'warn' ? 4 : 6, advance);
 }
 
-/** Le Caddyfile de la machine, lu ; ou l'erreur de Caddy. */
+/** The machine's Caddyfile, read; or Caddy's error. */
 export function readConfigCaddy(game: Game, file = CADDYFILE): { config: ConfigCaddy } | { error: string } {
   const text = game.read(file);
   if (text === null) return { error: `reading config from file: open ${file}: no such file or directory` };
@@ -331,13 +331,13 @@ export function readConfigCaddy(game: Game, file = CADDYFILE): { config: ConfigC
   }
 }
 
-/** Au démarrage et au rechargement du service : null si tout va bien, sinon les lignes d'erreur. */
+/** On service start and reload: null if all is well, otherwise the error lines. */
 export function checkCaddy(game: Game): string[] | null {
   const r = readConfigCaddy(game);
   return 'error' in r ? [`Error: ${r.error}`] : null;
 }
 
-// Les écoutes de Caddy (ss -tlnp) : celles de la configuration, et l'API d'administration.
+// Caddy's listening sockets (ss -tlnp): those of the configuration, and the admin API.
 function listen(game: Game, c: ConfigCaddy | null) {
   const other = ((game.state.listening ?? []) as Listening[]).filter((e) => e.process !== 'caddy');
   const caddy: Listening[] = c ? [{ proto: 'tcp', address: '127.0.0.1', port: 2019, process: 'caddy', pid: PID }, ...listenersPorts(c).map((port) => ({ proto: 'tcp' as const, address: '*', port, process: 'caddy', pid: PID }))] : [];
@@ -345,7 +345,7 @@ function listen(game: Game, c: ConfigCaddy | null) {
   game.state.listening = [...other, ...caddy];
 }
 
-/** Après un démarrage ou un rechargement réussi : Caddy applique sa configuration, et obtient les certificats qui manquent. */
+/** After a successful start or reload: Caddy applies its configuration and obtains the missing certificates. */
 export function loadCaddy(game: Game) {
   const e = caddyState(game);
   const r = readConfigCaddy(game);
@@ -356,7 +356,7 @@ export function loadCaddy(game: Game) {
   if (c.notFormatted !== null) note(game, 'warn', null, "Caddyfile input is not formatted; run 'caddy fmt --overwrite' to fix inconsistencies", { adapter: 'caddyfile', file: CADDYFILE, line: c.notFormatted });
   note(game, 'info', null, 'adapted config to JSON', { adapter: 'caddyfile' });
   note(game, 'info', 'admin', 'admin endpoint started', { address: 'localhost:2019', enforce_origin: false, origins: ['//localhost:2019', '//[::1]:2019', '//127.0.0.1:2019'] });
-  // Un « serveur » par port, comme l'adaptateur (srv0, srv1…).
+  // One "server" per port, like the adapter (srv0, srv1…).
   const ports = [...new Set(c.sites.flatMap((s) => s.addresses.map((a) => a.port)))].sort((a, b) => b - a);
   ports.forEach((port, n) => {
     const managed = c.sites.flatMap((s) => s.addresses.filter((a) => a.port === port && managedOne(c, a)));
@@ -376,26 +376,26 @@ export function loadCaddy(game: Game) {
   for (const name of names) if (!certificateFor(game, name)) get(game, name);
 }
 
-/** À l'arrêt du service : plus rien n'écoute. */
+/** When the service stops: nothing listens any more. */
 export function stopCaddy(game: Game) {
   const e = caddyState(game);
   if (e) e.load = null;
   listen(game, null);
 }
 
-// Pourquoi l'autorité n'arrive pas à valider ce nom (null : elle y arrive).
+// Why the authority cannot validate this name (null: it can).
 function problem(game: Game, name: string): { type: string; detail: string } | null {
   const e = caddyState(game)!;
   const ip = e.dns[name];
   if (!ip) return { type: 'dns', detail: `DNS problem: NXDOMAIN looking up A for ${name} - check that a DNS record exists for this domain` };
   if (ip !== e.ip) return { type: 'connection', detail: `${ip}: Timeout during connect (likely firewall problem)` };
   const pf = game.state.ufw as Firewall | undefined;
-  const open = (port: number) => !pf || verdict(pf, port, VALIDATOR) === 'accepte';
+  const open = (port: number) => !pf || verdict(pf, port, VALIDATOR) === 'accepted';
   if (!open(80) && !open(443)) return { type: 'connection', detail: `${ip}: Timeout during connect (likely firewall problem)` };
   return null;
 }
 
-// Un numéro de série, tiré du nom et du nombre d'essais (déterministe).
+// A serial number, derived from the name and the number of attempts (deterministic).
 function serial(name: string, n: number): string {
   let h = 0x811c9dc5;
   for (const c of `${name}#${n}`) h = Math.imul(h ^ c.charCodeAt(0), 0x01000193) >>> 0;
@@ -405,7 +405,7 @@ function serial(name: string, n: number): string {
     .replace(/^./, '0');
 }
 
-// Crée les dossiers qui manquent (au nom de caddy), puis pose le fichier.
+// Creates the missing directories (owned by caddy), then writes the file.
 function put(game: Game, path: string, content: string, mode: string) {
   const s = game as Shell;
   const before = s.who;
@@ -413,13 +413,13 @@ function put(game: Game, path: string, content: string, mode: string) {
   const chunks = path.split('/').filter(Boolean);
   for (let k = 1; k < chunks.length; k++) {
     const directory = `/${chunks.slice(0, k).join('/')}`;
-    if (!s.exists(directory)) s.place('caddy', directory, { type: 'dossier', children: {}, owner: 'caddy', group: 'caddy', mode: 'rwx------' });
+    if (!s.exists(directory)) s.place('caddy', directory, { type: 'directory', children: {}, owner: 'caddy', group: 'caddy', mode: 'rwx------' });
   }
-  s.place('caddy', path, { type: 'fichier', content, lines: true, owner: 'caddy', group: 'caddy', mode });
+  s.place('caddy', path, { type: 'file', content, lines: true, owner: 'caddy', group: 'caddy', mode });
   s.who = before;
 }
 
-/** Caddy demande un certificat pour ce nom : il l'obtient, ou note l'échec (il retentera). */
+/** Caddy requests a certificate for this name: it gets it, or records the failure (it will retry). */
 export function get(game: Game, name: string): boolean {
   const e = caddyState(game)!;
   const trial = (e.attempts[name] = (e.attempts[name] ?? 0) + 1);
@@ -468,9 +468,9 @@ export function get(game: Game, name: string): boolean {
 }
 
 /**
- * Avant chaque commande : Caddy retente les certificats en échec. Le délai
- * réel (une minute, puis de plus en plus) est sauté dès que la cause a
- * disparu ; tant qu'elle reste, rien ne change.
+ * Before each command: Caddy retries the failed certificates. The real
+ * delay (one minute, then longer and longer) is skipped as soon as the cause
+ * has gone; as long as it remains, nothing changes.
  */
 export function retry(game: Game) {
   const e = caddyState(game);
@@ -483,7 +483,7 @@ export function retry(game: Game) {
   }
 }
 
-// ——— Les requêtes ———
+// ——— Requests ———
 
 const REASONS: Record<number, string> = { 200: 'OK', 301: 'Moved Permanently', 302: 'Found', 307: 'Temporary Redirect', 308: 'Permanent Redirect', 404: 'Not Found', 502: 'Bad Gateway' };
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -506,14 +506,14 @@ function response(game: Game, https: boolean, code: number, body: string, header
 const replace = (text: string, host: string, path: string, schema: string) =>
   text.replaceAll('{uri}', path).replaceAll('{path}', path.split('?')[0]).replaceAll('{host}', host).replaceAll('{scheme}', schema).replaceAll('{http.request.uri}', path).replaceAll('{http.request.host}', host);
 
-// Un matcher de chemin (/x, /x*, *) : le premier argument d'une directive, s'il commence par / ou vaut *.
+// A path matcher (/x, /x*, *): a directive's first argument, if it starts with / or is *.
 function correspond(matcher: string, path: string): boolean {
   if (matcher === '*') return true;
   const p = path.split('?')[0];
   return matcher.endsWith('*') ? p.startsWith(matcher.slice(0, -1)) : p === matcher;
 }
 
-// Ce que sert un site, dans l'ordre des directives de Caddy (redir, respond, reverse_proxy, file_server).
+// What a site serves, in the order of Caddy's directives (redir, respond, reverse_proxy, file_server).
 function serve(game: Game, site: Site, host: string, path: string, https: boolean, certificate?: string): Response {
   const schema = https ? 'https' : 'http';
   const withMatcher = (d: Directive) => (d.args[0] === '*' || d.args[0]?.startsWith('/') ? { matcher: d.args[0], rest: d.args.slice(1) } : { matcher: '*', rest: d.args });
@@ -545,9 +545,9 @@ function serve(game: Game, site: Site, host: string, path: string, https: boolea
     const p = decodeURIComponent(path.split('?')[0]);
     const base = `${docRoot.replace(/\/$/, '')}${p}`;
     const node = game.find(base);
-    const target = node?.type === 'dossier' ? `${base.replace(/\/$/, '')}/index.html` : base;
+    const target = node?.type === 'directory' ? `${base.replace(/\/$/, '')}/index.html` : base;
     const n = game.find(target);
-    if (n?.type !== 'fichier' || !game.can(n, 'r', 'caddy')) return response(game, https, 404, '', [], certificate);
+    if (n?.type !== 'file' || !game.can(n, 'r', 'caddy')) return response(game, https, 404, '', [], certificate);
     const body = game.read(target) ?? '';
     const type = target.endsWith('.html') ? 'text/html; charset=utf-8' : target.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/plain; charset=utf-8';
     return response(game, https, 200, body, [['Accept-Ranges', 'bytes'], ['Content-Type', type], ['Etag', `"${serial(target, body.length).slice(0, 13)}"`]], certificate);
@@ -556,9 +556,9 @@ function serve(game: Game, site: Site, host: string, path: string, https: boolea
 }
 
 /**
- * Une requête à Caddy, sur la machine : null si rien n'écoute sur ce port ;
- * { tls: 'alerte' } si Caddy n'a pas de certificat pour ce nom (la poignée de
- * main TLS échoue). `dehors` : la requête vient d'internet (le pare-feu compte).
+ * A request to Caddy, on the machine: null if nothing listens on this port;
+ * { tls: 'alerte' } if Caddy has no certificate for this name (the TLS
+ * handshake fails). `outside`: the request comes from the internet (the firewall counts).
  */
 export function caddyRequest(game: Game, host: string, path: string, port: number, outside = false): CaddyResponse | null {
   const e = caddyState(game);
@@ -567,11 +567,11 @@ export function caddyRequest(game: Game, host: string, path: string, port: numbe
   if (!listenersPorts(c).includes(port)) return null;
   if (outside) {
     const pf = game.state.ufw as Firewall | undefined;
-    if (pf && verdict(pf, port, '192.0.2.99') !== 'accepte') return null;
+    if (pf && verdict(pf, port, '192.0.2.99') !== 'accepted') return null;
   }
   const name = host.toLowerCase().replace(/\.$/, '');
   const https = port !== 80 && c.sites.some((s) => s.addresses.some((a) => a.port === port && a.schema !== 'http'));
-  // Le site qui répond : celui de ce nom sur ce port, sinon celui sans nom (:port).
+  // The site that answers: the one with this name on this port, otherwise the one without a name (:port).
   const site =
     c.sites.find((s) => s.addresses.some((a) => a.port === port && a.host === name)) ?? c.sites.find((s) => s.addresses.some((a) => a.port === port && !a.host));
   if (https) {
@@ -580,13 +580,13 @@ export function caddyRequest(game: Game, host: string, path: string, port: numbe
     return serve(game, site, name, path, true, cert.content);
   }
   if (site) return serve(game, site, name, path, false);
-  // Sur le port 80, les noms gérés sont redirigés vers HTTPS (308).
+  // On port 80, managed names are redirected to HTTPS (308).
   if (port === 80 && managedNames(c).includes(name) && !['off', 'disable_redirects'].includes(modeHttps(c)))
     return response(game, false, 308, '', [['Connection', 'close'], ['Location', `https://${name}${path}`]]);
   return response(game, false, 200, '', []);
 }
 
-// ——— caddy adapt : la configuration JSON (simplifiée) ———
+// ——— caddy adapt: the JSON configuration (simplified) ———
 
 export function toJson(c: ConfigCaddy): unknown {
   const ports = [...new Set(c.sites.flatMap((s) => s.addresses.map((a) => a.port)))].sort((a, b) => b - a);

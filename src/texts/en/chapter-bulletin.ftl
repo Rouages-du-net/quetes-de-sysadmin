@@ -84,8 +84,8 @@ bulletin-template =
     ## Not applicable
     (to complete: the CVEs that don't apply, with their identifier and why)
 
-bulletin-section-concerne = Concerns this server
-bulletin-section-sansobjet = Not applicable
+bulletin-section-affected = Concerns this server
+bulletin-section-not-applicable = Not applicable
 bulletin-a-complete = (to complete
 bulletin-words-missing = is not installed, not installed, absent, no such package, doesn't exist on this server
 bulletin-words-fixed = already fixed, already up to date, installed version, past the fixed version, newer than the fixed version, more recent

@@ -1,20 +1,20 @@
-// Histoire « La Ruche » — chapitre « La DMZ » : La Ruche héberge elle-même
-// son site de réservation des salles, sur un petit serveur (web). Inès,
-// bénévole, l'a installé et branché sur le port 21 du commutateur, que
-// l'électricien a mis dans un nouveau VLAN 40, la DMZ. Il faut :
-//   - l'interface eth1.40 du routeur (10.10.40.1/24), dans le fichier ;
-//   - une traduction de destination (dnat, chaîne nat au hook prerouting) :
-//     ce qui arrive sur eth0 en TCP 80 et 443 part vers 10.10.40.10 ;
-//   - la chaîne forward : internet → le serveur, sur ces ports-là seulement
-//     (la règle voit l'adresse APRÈS traduction), et le serveur → internet
-//     (ses mises à jour) ; mais rien du serveur vers le réseau interne : s'il
-//     est piraté, il ne doit rien voir d'autre.
-// Objectif vérifié sur l'état : le trafic simulé (internet vers le site,
-// le serveur vers ses mises à jour et vers le NAS, les bureaux vers le
-// serveur, et les zones du chapitre 3) passe ou est bloqué comme prévu,
-// maintenant ET au prochain démarrage (interfaces, nftables), ssh restant
-// ouvert au poste d'administration.
-// Sources : https://wiki.nftables.org/wiki-nftables/index.php/Performing_Network_Address_Translation_(NAT),
+// Story "The Hive", chapter "The DMZ": The Hive hosts its own room-booking
+// site, on a small server (web). Inès, a volunteer, installed it and plugged
+// it into port 21 of the switch, which the electrician put in a new
+// VLAN 40, the DMZ. You need:
+//   - the router's eth1.40 interface (10.10.40.1/24), in the file;
+//   - a destination translation (dnat, nat chain on the prerouting hook):
+//     what arrives on eth0 in TCP 80 and 443 goes to 10.10.40.10;
+//   - the forward chain: internet → the server, on those ports only (the
+//     rule sees the address AFTER translation), and the server → internet
+//     (its updates); but nothing from the server to the internal network:
+//     if it is compromised, it must see nothing else.
+// Objective checked on the state: the simulated traffic (internet to the
+// site, the server to its updates and to the NAS, the offices to the
+// server, and the zones of chapter 3) passes or is blocked as intended,
+// now AND at the next boot (interfaces, nftables), with ssh staying open
+// to the administration computer.
+// Sources: https://wiki.nftables.org/wiki-nftables/index.php/Performing_Network_Address_Translation_(NAT),
 // https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks
 
 import { f, type Chapter } from '../world';
@@ -42,7 +42,7 @@ import {
 export const PUBLIC = '192.0.2.21';
 const VISITOR = '203.0.113.77';
 
-// Le trafic de la DMZ, et ce qui doit passer ; les zones du chapitre 3 restent vraies.
+// The DMZ's traffic, and what must get through; the zones of chapter 3 still hold.
 export const FLUX_DMZ: (Flux & { permitted: boolean })[] = [
   ...FLUX,
   { forEachOf: VISITOR, to: PUBLIC, proto: 'tcp', port: 443, permitted: true },
@@ -54,8 +54,8 @@ export const FLUX_DMZ: (Flux & { permitted: boolean })[] = [
   { forEachOf: 'web', to: 'imprimante', proto: 'tcp', port: 631, permitted: false },
 ];
 const permitted = (r: Result) => FLUX_DMZ.find((x) => x.forEachOf === r.flux.forEachOf && x.to === r.flux.to && x.port === r.flux.port)!.permitted;
-// Ce qui est interdit doit être jeté (ou impossible : le serveur n'a pas encore de réseau).
-const refuse = (r: Result) => r.state === 'bloque' || r.state === 'impossible';
+// What is forbidden must be dropped (or impossible: the server has no network yet).
+const refuse = (r: Result) => r.state === 'blocked' || r.state === 'impossible';
 const compliant = (rs: Result[]) => rs.every((r) => (permitted(r) ? r.state === 'ok' : refuse(r)));
 const site = (r: Result) => r.flux.forEachOf === VISITOR && r.flux.port !== 22;
 
@@ -67,7 +67,7 @@ const toReboot = (j: Game) => {
   return compliant(FLUX_DMZ.map((x) => attempt(l, rs, transfer, x))) && openSsh(rs);
 };
 
-// Une règle de la chaîne forward qui attend l'adresse publique : elle ne verra jamais rien, le dnat a déjà eu lieu.
+// A forward-chain rule expecting the public address: it will never see anything, the dnat has already happened.
 const waitsPublic = (j: Game) =>
   nft(j).tables.some((t) =>
     t.strings.some(
@@ -130,7 +130,7 @@ export const dmz: Chapter = {
     { id: 'address-public', condition: waitsPublic, message: (j) => j.t('dmz-event-address-public', { address: PUBLIC }) },
     {
       id: 'without-forward',
-      condition: (j) => results(j).some((r) => site(r) && r.state === 'bloque' && !!r.destination) && routing(j),
+      condition: (j) => results(j).some((r) => site(r) && r.state === 'blocked' && !!r.destination) && routing(j),
       message: (j) => j.t('dmz-event-without-forward'),
     },
     {

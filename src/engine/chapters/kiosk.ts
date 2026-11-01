@@ -1,13 +1,13 @@
-// Le Kiosque de la Gazette : l'appli Node.js des abonnements à la lettre
-// d'information, derrière nginx (location /kiosk/). Deux emplacements
-// tournent côte à côte, blue (port 3001) et green (port 3002), chacun avec
-// son service systemd ; /srv/kiosk/blue et /srv/kiosk/green sont des
-// liens vers une version de /srv/kiosk/versions/. Comme un vrai
-// processus, une instance lit son code et sa configuration
-// (/etc/kiosk/kiosk.env) à son démarrage : changer le lien ou la
-// configuration ne compte qu'après un redémarrage.
-// Chaque instance répond sur /health (200 ou 503, en JSON), comme le
-// recommandent les guides de déploiement (blue/green : https://martinfowler.com/bliki/BlueGreenDeployment.html).
+// La Gazette's Kiosk: the Node.js app for newsletter
+// subscriptions, behind nginx (location /kiosk/). Two slots
+// run side by side, blue (port 3001) and green (port 3002), each with
+// its systemd service; /srv/kiosk/blue and /srv/kiosk/green are
+// links to a version in /srv/kiosk/versions/. Like a real
+// process, an instance reads its code and configuration
+// (/etc/kiosk/kiosk.env) when it starts: changing the link or the
+// configuration only counts after a restart.
+// Each instance answers on /health (200 or 503, in JSON), as
+// deployment guides recommend (blue/green: https://martinfowler.com/bliki/BlueGreenDeployment.html).
 
 import { d, f, type Rights, type Node } from '../world';
 import type { Game } from '../shell';
@@ -21,26 +21,26 @@ export const ENV = '/etc/kiosk/kiosk.env';
 export const PORTS: Record<string, number> = { blue: 3001, green: 3002 };
 
 export interface KioskVersion {
-  // Les variables de configuration sans lesquelles elle ne fonctionne pas.
+  // The configuration variables it can't work without.
   requires: string[];
-  // Les pages qui plantent (un bogue que seul le vrai trafic révèle).
+  // The pages that crash (a bug only real traffic reveals).
   failure?: string[];
-  // Le schéma de base de données qu'elle attend (et celui où elle le migre).
+  // The database schema it expects (and the one it migrates it to).
   schema: number;
 }
 
 export const VERSIONS: Record<string, KioskVersion> = {
   '1.4.2': { requires: [], schema: 3 },
   '1.5.0': { requires: ['KIOSK_SMTP'], schema: 3 },
-  // La recherche dans les archives plante : /health n'en sait rien.
+  // Searching the archives crashes: /health knows nothing about it.
   '1.6.0': { requires: ['KIOSK_SMTP'], failure: ['/archives'], schema: 3 },
   '1.6.1': { requires: ['KIOSK_SMTP'], schema: 3 },
-  // Migre la base au démarrage (schéma 4 : la colonne courriel devient email).
+  // Migrates the database on start (schema 4: the courriel column becomes email).
   '2.0.0': { requires: ['KIOSK_SMTP_URL'], schema: 4 },
   '2.0.1': { requires: ['KIOSK_SMTP_URL'], schema: 4 },
 };
 
-// La base du Kiosque : le schéma où elle en est (les migrations ne font qu'avancer).
+// The Kiosk's database: the schema it is at (migrations only go forward).
 export const base = (j: Game): { schema: number } => (j.state.kioskBase ??= { schema: 3 });
 
 export interface Instance {
@@ -50,14 +50,14 @@ export interface Instance {
 
 export const instances = (j: Game): Record<string, Instance> => (j.state.kiosk ??= {});
 
-/** La version que vise le lien d'un emplacement (/srv/kiosk/green → versions/1.5.0). */
+/** The version a slot's link points to (/srv/kiosk/green → versions/1.5.0). */
 export function linkVersion(j: Game, colour: string): string | null {
   const link = (j.find(`${KIOSK}/${colour}`, false) as { link?: string } | null)?.link;
   const name = link?.replace(/\/$/, '').split('/').at(-1);
-  return name && VERSIONS[name] && j.find(`${KIOSK}/${colour}/serveur.js`)?.type === 'fichier' ? name : null;
+  return name && VERSIONS[name] && j.find(`${KIOSK}/${colour}/serveur.js`)?.type === 'file' ? name : null;
 }
 
-/** Le service systemd d'un emplacement. */
+/** A slot's systemd service. */
 export function kioskService(colour: string, pid: number, state: 'active' | 'inactive' = 'active'): DefinitionService {
   return {
     description: `Gazette kiosk (${colour})`,
@@ -74,7 +74,7 @@ export function kioskService(colour: string, pid: number, state: 'active' | 'ina
             `  code: 'MODULE_NOT_FOUND'`,
             `Node.js v22.12.0`,
           ],
-    // Au démarrage, le processus charge son code et sa configuration.
+    // On start, the process loads its code and configuration.
     load: (j) => {
       const version = linkVersion(j, colour)!;
       instances(j)[colour] = { version, config: readEnv(j.read(ENV)) };
@@ -82,8 +82,8 @@ export function kioskService(colour: string, pid: number, state: 'active' | 'ina
       if (!sd) return;
       const write = (message: string) => writeLog(sd, `kiosk-${colour}.service`, 'node', pid, message, 6, false);
       write(`Kiosque ${version} starting (NODE_ENV=production)`);
-      // Une version plus récente migre la base, comme les outils de migration
-      // des frameworks : la base ne revient pas en arrière d'elle-même.
+      // A newer version migrates the database, like frameworks' migration
+      // tools: the database doesn't go back by itself.
       const b = base(j);
       if (VERSIONS[version].schema > b.schema) {
         for (let n = b.schema + 1; n <= VERSIONS[version].schema; n++) write(`Running migration 00${n}_${MIGRATIONS[n] ?? 'update'}... done`);
@@ -95,12 +95,12 @@ export function kioskService(colour: string, pid: number, state: 'active' | 'ina
   };
 }
 
-// Les migrations du Kiosque, par numéro de schéma.
+// The Kiosk's migrations, by schema number.
 const MIGRATIONS: Record<number, string> = { 4: 'rename_abonnes_courriel_to_email' };
 
 const json = (code: number, object: unknown) => ({ code, body: JSON.stringify(object), type: 'application/json; charset=utf-8' });
 
-/** L'appli d'un emplacement, telle que nginx et curl la joignent. */
+/** A slot's app, as nginx and curl reach it. */
 export function kioskApp(colour: string): App {
   return {
     service: `kiosk-${colour}`,
@@ -109,7 +109,7 @@ export function kioskApp(colour: string): App {
       const here = instances(j)[colour];
       const v = VERSIONS[here.version];
       const missing = v.requires.filter((k) => !here.config[k]);
-      // Une base migrée plus loin que ce que la version connaît : elle ne sait plus la lire.
+      // A database migrated further than the version knows: it can no longer read it.
       const recentTrop = base(j).schema > v.schema;
       if (path === '/health')
         return recentTrop
@@ -128,14 +128,14 @@ export function kioskApp(colour: string): App {
   };
 }
 
-/** La santé d'un emplacement (null : il ne répond pas). */
+/** A slot's health (null: it doesn't answer). */
 export function health(j: Game, colour: string): { status: string; version: string } | null {
   const app = kioskApp(colour);
   if (j.state.systemd?.services[app.service]?.state !== 'active' || !instances(j)[colour]) return null;
   return JSON.parse(app.answer!(j, '/health', { headers: {}, address: '127.0.0.1' }).body);
 }
 
-/** Les fichiers d'une version (/srv/kiosk/versions/1.5.0). */
+/** The files of a version (/srv/kiosk/versions/1.5.0). */
 export function versionDirectory(t: Game['t'], version: string, notes?: string): Node {
   const rights: Rights = { owner: 'kiosk', group: 'kiosk' };
   return d(
@@ -149,7 +149,7 @@ export function versionDirectory(t: Game['t'], version: string, notes?: string):
   );
 }
 
-/** Le fichier d'unité systemd d'un emplacement (pour cat /etc/systemd/system/…). */
+/** A slot's systemd unit file (for cat /etc/systemd/system/…). */
 export const kioskUnit = (colour: string) => `[Unit]
 Description=Gazette kiosk (${colour})
 After=network.target
@@ -165,8 +165,8 @@ Restart=on-failure
 WantedBy=multi-user.target`;
 
 /**
- * La part du trafic de /kiosk/ que reçoit chaque emplacement, d'après la
- * configuration chargée de nginx (proxy_pass direct, ou upstream et ses poids).
+ * The share of /kiosk/ traffic each slot receives, according to nginx's
+ * loaded configuration (direct proxy_pass, or upstream and its weights).
  */
 export function distribution(j: Game): Record<string, number> {
   const config: Configuration | null = j.state.nginx?.load ?? null;
@@ -191,15 +191,15 @@ export function distribution(j: Game): Record<string, number> {
 
 export interface Batch {
   total: number;
-  // Par version servie : visites et erreurs (5xx).
+  // Per served version: visits and errors (5xx).
   byVersion: Record<string, { visits: number; errors: number }>;
   errors: number;
 }
 
 /**
- * Une heure de lecteur·rices sur le Kiosque : des visites (accueil et
- * archives) qui passent par nginx et s'écrivent dans access.log ; l'horloge
- * avance. Adresses de documentation (RFC 5737).
+ * One hour of readers on the Kiosk: visits (home page and
+ * archives) that go through nginx and are written to access.log; the clock
+ * moves forward. Documentation addresses (RFC 5737).
  */
 export function readers(j: Game, count = 60): Batch {
   const sd = systemd(j)!;

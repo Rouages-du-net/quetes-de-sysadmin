@@ -1,15 +1,15 @@
-// Ce que nft montre sur une machine gérée par ufw et fail2ban : ufw écrit
-// ses règles avec iptables, qui sur Debian passe par nftables (iptables-nft,
-// table ip filter et chaînes ufw-*) ; fail2ban, avec l'action nftables de
-// Debian, ajoute sa table inet f2b-table (un ensemble d'adresses bannies
-// par prison, et une règle qui les rejette sur les ports de la prison).
-// Sources : https://manpages.ubuntu.com/manpages/noble/man8/ufw-framework.8.html,
+// What nft shows on a machine managed by ufw and fail2ban: ufw writes
+// its rules with iptables, which on Debian goes through nftables (iptables-nft,
+// table ip filter and ufw-* chains); fail2ban, with Debian's nftables
+// action, adds its table inet f2b-table (one set of banned addresses
+// per jail, and a rule that rejects them on the jail's ports).
+// Sources: https://manpages.ubuntu.com/manpages/noble/man8/ufw-framework.8.html,
 // https://wiki.nftables.org/wiki-nftables/index.php/Legacy_xtables_tools,
-// /etc/fail2ban/action.d/nftables.conf (paquet fail2ban de Debian 12).
-// Écarts : un aperçu en lecture seule (nft list ruleset, list tables,
-// list table) ; ni la table ip6 filter, ni les chaînes de journalisation et
-// de routage de ufw ; les compteurs restent à zéro ; plusieurs ports d'un
-// profil (Nginx Full) en un seul ensemble { 80, 443 }.
+// /etc/fail2ban/action.d/nftables.conf (Debian 12's fail2ban package).
+// Differences: a read-only preview (nft list ruleset, list tables,
+// list table); neither the ip6 filter table, nor ufw's logging and
+// routing chains; counters stay at zero; several ports of a
+// profile (Nginx Full) in a single set { 80, 443 }.
 
 import type { Game } from './shell';
 import type { Firewall, Rule } from './firewall';
@@ -18,7 +18,7 @@ import { systemd } from './systemd';
 
 const COUNTER = 'counter packets 0 bytes 0';
 
-// Les protocoles d'une règle de ufw : « 22/tcp », un profil (tcp), ou un port nu (tcp et udp).
+// The protocols of a ufw rule: "22/tcp", a profile (tcp), or a bare port (tcp and udp).
 function protocols(r: Rule): string[] {
   const m = /\/(tcp|udp)$/.exec(r.to);
   if (m) return [m[1]];
@@ -32,7 +32,7 @@ function ruleLines(r: Rule): string[] {
   return protocols(r).flatMap((p) => {
     const ports = r.ports.length > 1 ? `{ ${r.ports.join(', ')} }` : String(r.ports[0]);
     const filter = `${source}meta l4proto ${p} ${p} dport ${ports}`;
-    // limit : ufw passe par le module recent d'iptables, que nft n'affiche qu'en « xt match ».
+    // limit: ufw uses iptables' recent module, which nft only shows as "xt match".
     if (r.action === 'limit')
       return [
         `${filter} ct state new xt match "recent" ${COUNTER}`,
@@ -80,7 +80,7 @@ function tableFail2ban(f2b: Fail2banState): string[] {
     const banned = bannedFor(f2b, p.name);
     return [`\tset addr-set-${p.name} {`, '\t\ttype ipv4_addr', ...(banned.length ? [`\t\telements = { ${banned.join(', ')} }`] : []), '\t}', ''];
   });
-  // Une règle par prison : ses ports (ou tous, pour banaction_allports), puis les adresses de son ensemble.
+  // One rule per jail: its ports (or all of them, for banaction_allports), then the addresses of its set.
   const rules = jails.map(
     (p) =>
       `${p.ports.length ? `tcp dport { ${p.ports.join(', ')} } ` : 'meta l4proto { tcp } '}ip saddr @addr-set-${p.name} reject with icmp port-unreachable`,
@@ -93,7 +93,7 @@ function tableFail2ban(f2b: Fail2banState): string[] {
   ];
 }
 
-/** Les tables que ufw et fail2ban ont écrites, par « famille nom ». */
+/** The tables ufw and fail2ban wrote, by "family name". */
 export function previewTables(game: Game): Map<string, string[]> {
   const tables = new Map<string, string[]>();
   const pf = game.state.ufw as Firewall | undefined;
@@ -104,5 +104,5 @@ export function previewTables(game: Game): Map<string, string[]> {
   return tables;
 }
 
-/** Une machine dont le pare-feu passe par ufw ou fail2ban, sans règles nftables écrites à la main. */
+/** A machine whose firewall goes through ufw or fail2ban, with no hand-written nftables rules. */
 export const onlyPreview = (game: Game) => !game.state.lan && !game.state.nft && (!!game.state.ufw || !!game.state.fail2ban);

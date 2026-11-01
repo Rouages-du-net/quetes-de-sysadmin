@@ -1,15 +1,15 @@
-// Histoire « La Gazette » — chapitre « La migration » : hier soir, Théo a
-// mis la 2.0.0 du Kiosque sur green et basculé nginx. Au démarrage, la 2.0.0
-// a migré la base (schéma 3 → 4 : la colonne courriel est devenue email).
-// Elle ne marche pas (une variable de configuration a changé de nom), et le
-// retour arrière vers blue (1.6.1) ne marche pas non plus : la 1.6.1 ne sait
-// pas lire une base migrée. Il faut réparer en avant (la configuration
-// annoncée dans les notes de version), puis mettre blue en 2.0.0 pour qu'il
-// redevienne un vrai filet de sécurité.
-// Objectif vérifié sur l'état : nginx sert une instance 2.x en bonne santé,
-// l'autre instance tourne aussi en 2.x, en bonne santé.
-// Sources : https://martinfowler.com/bliki/ParallelChange.html (étendre puis
-// contracter), https://www.postgresql.org/docs/current/app-pgdump.html,
+// Story "The Gazette" — chapter "The migration": last night, Théo put
+// version 2.0.0 of the Kiosk on green and switched nginx over. At start,
+// 2.0.0 migrated the database (schema 3 → 4: the courriel column became
+// email). It doesn't work (a configuration variable was renamed), and
+// rolling back to blue (1.6.1) doesn't work either: 1.6.1 can't read a
+// migrated database. The fix has to go forward (the configuration
+// announced in the release notes), then blue must be moved to 2.0.0 so that
+// it becomes a real safety net again.
+// Objective checked on the state: nginx serves a healthy 2.x instance,
+// the other instance also runs 2.x, healthy.
+// Sources: https://martinfowler.com/bliki/ParallelChange.html (expand then
+// contract), https://www.postgresql.org/docs/current/app-pgdump.html,
 // https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
 
 import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
@@ -32,7 +32,7 @@ const accounts = (): Accounts => {
   return c;
 };
 
-// Théo a basculé nginx vers green, en 2.0.0.
+// Théo switched nginx to green, on 2.0.0.
 const conf = (t: Game['t']) => `server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -132,7 +132,7 @@ export const migration: Chapter = {
   }),
   initialise: (j) => {
     loadNginx(j);
-    // Hier soir, 23 h : blue tourne en 1.6.1 ; Théo démarre green en 2.0.0, qui migre la base.
+    // Last night, 11 p.m.: blue runs 1.6.1; Théo starts green on 2.0.0, which migrates the database.
     const now = sd(j).clock;
     sd(j).clock = Date.UTC(2027, 5, 14, 23, 4, 0);
     base(j).schema = 3;

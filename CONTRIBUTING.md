@@ -59,8 +59,7 @@ agents, but its rules apply to everyone.
 - **Code in English.** The project started in French. Files and
   identifiers (variables, functions, types, components) are now in
   English, and so is the world (places, machines, accounts, passwords);
-  CSS classes and some comments are still French and are being moved to
-  English. Write **new** code in
+  so are CSS classes, internal values and comments. Write **new** code in
   English, and don't mix a large rename with a feature in the same pull
   request. Public names get an English alias
   first, with the French one kept for compatibility (the embeddable element

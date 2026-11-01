@@ -1,16 +1,15 @@
-// Emporter sa progression d'une machine à l'autre (une salle de TP, puis
-// une autre), sans compte et sans serveur :
-//   - un code court, à recopier à la main (QDS-XXXX-XXXX) : les chapitres
-//     terminés, rien d'autre, avec une somme de contrôle contre les fautes
-//     de frappe ;
-//   - un fichier, toute la sauvegarde du navigateur (carnet, clés créées…).
-// Ni l'un ni l'autre n'est une preuve : ils se recopient et se modifient.
+// Taking your progress from one machine to another (one computer lab, then
+// another), without an account and without a server:
+//   - a short code, to copy by hand (QDS-XXXX-XXXX): the finished chapters,
+//     nothing else, with a checksum against typos;
+//   - a file, the browser's whole save (notebook, keys created…).
+// Neither one is a proof: they can be copied and modified.
 
 import { STORIES } from './chapters';
 import { ACHIEVEMENTS } from './achievements';
 
-// L'ordre des chapitres dans le code court. On n'y fait qu'ajouter, à la
-// fin : un code donné hier doit rester valable demain (tests/progress.test.ts).
+// The order of the chapters in the short code. Only ever add to it, at the
+// end: a code given yesterday must stay valid tomorrow (tests/progress.test.ts).
 export const CODE_ORDER = [
   'lighthouse', 'village', 'root', 'backup',
   'first-day', 'second-day', 'reboot-night', 'fire', 'certificate',
@@ -35,11 +34,11 @@ export const CODE_ORDER = [
   'padlock',
 ];
 
-// Base32 de Crockford : pas de I, L, O ni U, qu'on confondrait en recopiant.
+// Crockford's Base32: no I, L, O nor U, which would be confused when copying.
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const VERSION = 1;
 
-// CRC-8 (polynôme 0x07) : une faute de frappe change la somme.
+// CRC-8 (polynomial 0x07): a typo changes the checksum.
 function crc8(bytes: number[]): number {
   let crc = 0;
   for (const o of bytes) {
@@ -82,7 +81,7 @@ function sinceBase32(text: string): number[] | null {
   return bytes;
 }
 
-/** Le code court des chapitres terminés : QDS-XXXX-XXXX… */
+/** The short code of the finished chapters: QDS-XXXX-XXXX… */
 export function progressCode(finished: string[]): string {
   const cases: number[] = [];
   CODE_ORDER.forEach((id, i) => {
@@ -93,9 +92,9 @@ export function progressCode(finished: string[]): string {
   return ['QDS', ...groups].join('-');
 }
 
-export type CodeError = 'code-illisible' | 'code-faute' | 'code-trop-recent';
+export type CodeError = 'code-unreadable' | 'code-mistake' | 'code-too-recent';
 
-/** Les chapitres terminés d'un code, ou ce qui ne va pas. Tolère minuscules, espaces, O pour 0, I et L pour 1. */
+/** The finished chapters of a code, or what is wrong. Tolerates lower case, spaces, O for 0, I and L for 1. */
 export function readCode(code: string): { finished: string[] } | { error: CodeError } {
   const net = code
     .toUpperCase()
@@ -104,12 +103,12 @@ export function readCode(code: string): { finished: string[] } | { error: CodeEr
     .replace(/O/g, '0')
     .replace(/[IL]/g, '1');
   const bytes = net.length >= 4 ? sinceBase32(net) : null;
-  if (!bytes || bytes.length < 2) return { error: 'code-illisible' };
-  // Les derniers bits de remplissage du base32 ne forment pas d'octet : la somme est le dernier octet entier.
+  if (!bytes || bytes.length < 2) return { error: 'code-unreadable' };
+  // The last padding bits of base32 do not make a byte: the checksum is the last whole byte.
   const sum = bytes.at(-1)!;
   const data = bytes.slice(0, -1);
-  if (crc8(data) !== sum) return { error: 'code-faute' };
-  if (data[0] !== VERSION) return { error: 'code-trop-recent' };
+  if (crc8(data) !== sum) return { error: 'code-mistake' };
+  if (data[0] !== VERSION) return { error: 'code-too-recent' };
   const finished: string[] = [];
   data.slice(1).forEach((o, j) => {
     for (let b = 0; b < 8; b++)
@@ -119,13 +118,13 @@ export function readCode(code: string): { finished: string[] } | { error: CodeEr
         finished.push(id);
       }
   });
-  // Un chapitre au-delà de la liste : le code vient d'une version plus récente du jeu.
+  // A chapter beyond the list: the code comes from a newer version of the game.
   const cases = data.slice(1).reduce((n, o) => n + o.toString(2).replace(/0/g, '').length, 0);
-  if (cases !== finished.length) return { error: 'code-trop-recent' };
+  if (cases !== finished.length) return { error: 'code-too-recent' };
   return { finished };
 }
 
-// ——— Le fichier ———
+// ——— The file ———
 
 export interface Backup {
   finished?: string[];
@@ -135,15 +134,15 @@ export interface Backup {
   notebook?: Record<string, { line: string; chapter: string }>;
   exam?: boolean;
   records?: Record<string, number>;
-  // Le nom (facultatif) mis en tête du carnet : « Carnet de … ».
+  // The (optional) name put at the top of the notebook: "Notebook of …".
   name?: string;
-  // Les succès obtenus (voir succes.ts) : identifiant → date (ISO).
+  // The achievements earned (see achievements.ts): identifier → date (ISO).
   achievements?: Record<string, string>;
 }
 
 const FORMAT = 'quetes-de-sysadmin';
 
-/** Le fichier de sauvegarde : la sauvegarde du navigateur, datée. */
+/** The save file: the browser's save, dated. */
 export const backupFile = (s: Backup, date: Date) =>
   JSON.stringify({ format: FORMAT, version: VERSION, date: date.toISOString(), backup: s }, null, 2);
 
@@ -151,18 +150,18 @@ const string = (x: unknown): x is string => typeof x === 'string';
 const dictionary = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
 const strings = (x: unknown) => (dictionary(x) ? Object.fromEntries(Object.entries(x).filter(([, v]) => string(v))) as Record<string, string> : undefined);
 
-export type FileError = 'fichier-illisible' | 'fichier-autre' | 'fichier-trop-recent';
+export type FileError = 'file-unreadable' | 'file-other' | 'file-too-recent';
 
-/** La sauvegarde d'un fichier, nettoyée (on ne garde que ce que le jeu connaît), ou ce qui ne va pas. */
+/** A file's save, cleaned (only what the game knows is kept), or what is wrong. */
 export function readFile(text: string): { backup: Backup } | { error: FileError } {
   let raw: unknown;
   try {
     raw = JSON.parse(text);
   } catch {
-    return { error: 'fichier-illisible' };
+    return { error: 'file-unreadable' };
   }
-  if (!dictionary(raw) || raw.format !== FORMAT || !dictionary(raw.backup)) return { error: 'fichier-autre' };
-  if (typeof raw.version !== 'number' || raw.version > VERSION) return { error: 'fichier-trop-recent' };
+  if (!dictionary(raw) || raw.format !== FORMAT || !dictionary(raw.backup)) return { error: 'file-other' };
+  if (typeof raw.version !== 'number' || raw.version > VERSION) return { error: 'file-too-recent' };
   const s = raw.backup;
   const chapters = new Set(STORIES.flatMap((h) => h.chapters.map((c) => c.id)));
   const stories = new Set(STORIES.map((h) => h.id));
@@ -194,7 +193,7 @@ export function readFile(text: string): { backup: Backup } | { error: FileError 
   };
 }
 
-/** Un nom pour le carnet : une ligne, sans caractère de contrôle, 60 caractères au plus. */
+/** A name for the notebook: one line, without control characters, 60 characters at most. */
 export const cleanName = (name: string) =>
   name
     .replace(/[\u0000-\u001f\u007f]/g, ' ')

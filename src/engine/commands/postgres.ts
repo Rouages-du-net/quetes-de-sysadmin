@@ -1,13 +1,13 @@
-// Les outils de PostgreSQL 16 : psql (une requête avec -c, un fichier avec
-// -f, la liste des bases avec -l), pg_dump (texte ou -Fc), pg_restore,
-// createdb et dropdb. Le serveur est simulé dans postgres.ts.
-// D'après https://www.postgresql.org/docs/16/app-pgdump.html,
-// https://www.postgresql.org/docs/16/app-pgrestore.html et
+// The PostgreSQL 16 tools: psql (a query with -c, a file with
+// -f, the list of databases with -l), pg_dump (text or -Fc), pg_restore,
+// createdb and dropdb. The server is simulated in postgres.ts.
+// After https://www.postgresql.org/docs/16/app-pgdump.html,
+// https://www.postgresql.org/docs/16/app-pgrestore.html and
 // https://www.postgresql.org/docs/16/app-psql.html.
-// Écarts : SQL réduit à SELECT count(*), SELECT … [WHERE col = v] [ORDER BY]
+// Differences: SQL reduced to SELECT count(*), SELECT … [WHERE col = v] [ORDER BY]
 // [LIMIT], DELETE [WHERE col = v], TRUNCATE, DROP TABLE, ALTER ROLE … PASSWORD
-// (le mot de passe d'un rôle, par le compte postgres), et aux méta-commandes
-// \l, \dt, \d, \du ; psql sans -c ni -f ne s'ouvre pas en mode interactif.
+// (a role's password, by the postgres account), and to the meta-commands
+// \l, \dt, \d, \du; psql without -c or -f doesn't open in interactive mode.
 
 import type { Shell } from '../shell';
 import { connection, copyOf, dumpSql, readDumpSql, postgres, grid, type Table } from '../postgres';
@@ -15,7 +15,7 @@ import { hex } from './restic';
 import { systemd } from '../systemd';
 import type { Command } from './index';
 
-// Les options d'une commande : -x valeur, --long=valeur, -Fc.
+// A command's options: -x value, --long=value, -Fc.
 function readOptions(args: string[], withValue: string[]) {
   const options: Record<string, string> = {};
   const lists: Record<string, string[]> = {};
@@ -32,7 +32,7 @@ function readOptions(args: string[], withValue: string[]) {
     } else if (/^-[A-Za-z]./.test(a) && withValue.includes(a.slice(0, 2))) {
       options[a.slice(0, 2)] = a.slice(2);
       (lists[a.slice(0, 2)] ??= []).push(a.slice(2));
-    } else if (a.startsWith('-')) options[a] = 'oui';
+    } else if (a.startsWith('-')) options[a] = 'yes';
     else positional.push(a);
   }
   return { options, lists, positionnels: positional };
@@ -40,7 +40,7 @@ function readOptions(args: string[], withValue: string[]) {
 
 const value = (v: string) => v.replace(/^'(.*)'$/, '$1');
 
-/** Exécute une instruction SQL (ou une méta-commande) ; renvoie la sortie de psql. */
+/** Runs an SQL statement (or a meta-command); returns psql's output. */
 function sql(game: Shell, base: string, httpRequest: string): string {
   const pg = postgres(game)!;
   const b = pg.bases[base];
@@ -73,7 +73,7 @@ function sql(game: Shell, base: string, httpRequest: string): string {
       `Table "public.${d[1]}"`,
     );
   }
-  // Les rôles : \du, et ALTER ROLE … PASSWORD (le mot de passe d'un compte de la base).
+  // Roles: \du, and ALTER ROLE … PASSWORD (the password of a database account).
   if (/^\\du\+?$/.test(r))
     return grid(
       ['Role name', 'Attributes'],
@@ -87,7 +87,7 @@ function sql(game: Shell, base: string, httpRequest: string): string {
     (pg.passwords ??= {})[alter[1]] = alter[2];
     return 'ALTER ROLE';
   }
-  // WHERE col = valeur (une seule condition).
+  // WHERE col = value (a single condition).
   const filter = (t: Table, or?: string): string[][] | string => {
     if (!or) return t.lines;
     const m = /^(\w+)\s*=\s*('?[^']*'?|\d+)$/.exec(or.trim());
@@ -150,7 +150,7 @@ function sql(game: Shell, base: string, httpRequest: string): string {
   return game.error(`ERROR:  syntax error at or near "${r.split(/\s+/)[0]}"\nLINE 1: ${r}\n        ^`);
 }
 
-/** Restaure des tables dans une base, comme pg_restore (ou psql -f) ; renvoie les erreurs. */
+/** Restores tables into a database, like pg_restore (or psql -f); returns the errors. */
 function restore(game: Shell, base: string, tables: Record<string, Table>, onlyData: boolean, clean: boolean): string[] {
   const b = postgres(game)!.bases[base];
   const errors: string[] = [];
@@ -168,7 +168,7 @@ function restore(game: Shell, base: string, tables: Record<string, Table>, onlyD
       errors.push(`pg_restore: error: could not execute query: ERROR:  relation "public.${name}" does not exist`);
       continue;
     }
-    // La clé primaire (la première colonne) : un doublon fait échouer tout le COPY de la table.
+    // The primary key (the first column): a duplicate makes the table's whole COPY fail.
     const keys = new Set(target.lines.map((l) => l[0]));
     const duplicate = t.lines.find((l) => keys.has(l[0]));
     if (duplicate) {
@@ -252,13 +252,13 @@ export const POSTGRES: Record<string, Command> = {
       const file = options['-f'] ?? options['--file'];
       if (!file) return text;
       const n = game.find(file);
-      if (n?.type === 'fichier') {
+      if (n?.type === 'file') {
         if (!game.can(n, 'w')) return game.error(`pg_dump: error: could not open output file "${file}": Permission denied`);
         n.content = text;
         delete n.size;
         return '';
       }
-      const error = game.place('pg_dump', file, { type: 'fichier', content: text, lines: true, owner: game.who, mode: 'rw-r--r--' });
+      const error = game.place('pg_dump', file, { type: 'file', content: text, lines: true, owner: game.who, mode: 'rw-r--r--' });
       return error
         ? game.error(
             `pg_dump: error: could not open output file "${file}": ${game.find(file + '/..') ? 'Permission denied' : 'No such file or directory'}`,
@@ -298,7 +298,7 @@ export const POSTGRES: Record<string, Command> = {
           ]),
         ].join('\n');
       const base = options['-d'] ?? options['--dbname'];
-      // Sans -d, pg_restore écrit le SQL (comme un dump texte).
+      // Without -d, pg_restore writes the SQL (like a text dump).
       if (!base) return dumpSql(archive.base, tables, 'ludo');
       const e = connection(game, 'pg_restore', base);
       if (e) return game.error(e);

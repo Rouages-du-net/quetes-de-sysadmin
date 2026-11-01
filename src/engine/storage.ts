@@ -1,23 +1,22 @@
-// Le stockage d'une machine : ses disques (et ce que SMART en dit), leurs
-// partitions (GPT), et les grappes RAID logiciel (md) qui les assemblent.
-// C'est ce que lisent lsblk, smartctl, mdadm, sfdisk et grub-install, et ce
-// que montre /proc/mdstat. D'après la documentation du noyau
+// A machine's storage: its disks (and what SMART says about them), their
+// partitions (GPT), and the software RAID arrays (md) that assemble them.
+// It is what lsblk, smartctl, mdadm, sfdisk and grub-install read, and what
+// /proc/mdstat shows. Based on the kernel's documentation
 // (https://docs.kernel.org/admin-guide/md.html), mdadm(8)
 // (https://man7.org/linux/man-pages/man8/mdadm.8.html), smartctl(8)
 // (https://www.smartmontools.org/browser/trunk/smartmontools/smartctl.8.in)
-// et sfdisk(8) (https://man7.org/linux/man-pages/man8/sfdisk.8.html).
+// and sfdisk(8) (https://man7.org/linux/man-pages/man8/sfdisk.8.html).
 //
-//   etat.stockage = { disques: { sda: Disque, … }, grappes: { md0: Grappe, … }, grub: ['sda'] }
+//   state.storage = { disks: { sda: Disk, … }, arrays: { md0: Array, … }, grub: ['sda'] }
 //
-// Une grappe RAID 1 garde le même contenu sur chacun de ses membres (des
-// partitions). Un membre peut être actif, défectueux (F), ou en
-// reconstruction : il reçoit la copie des autres, une grappe à la fois
-// (les autres attendent : DELAYED). Le temps passe à chaque commande
-// (avancer) : la reconstruction d'un gros disque prend quelques commandes.
-// Écarts : RAID 1 seulement ; une seule taille de secteur (512 octets) ;
-// pas de bitmap d'écriture réelle (--re-add reconstruit comme --add, mais
-// plus vite) ; le contenu des disques n'est pas copié (le monde reste celui
-// de la machine).
+// A RAID 1 array keeps the same content on each of its members
+// (partitions). A member can be active, faulty (F), or rebuilding: it
+// receives the copy from the others, one array at a time (the others
+// wait: DELAYED). Time passes with each command (advance): rebuilding a
+// big disk takes a few commands.
+// Differences: RAID 1 only; a single sector size (512 bytes); no real
+// write-intent bitmap (--re-add rebuilds like --add, but faster); the
+// disks' content is not copied (the world stays the machine's).
 
 import type { Game } from './shell';
 import type { Directory } from './world';
@@ -28,13 +27,13 @@ export const SECTOR = 512;
 
 export type TypePartition = 'bios' | 'raid' | 'linux';
 
-/** Les identifiants GPT des types de partition (sfdisk -d). */
+/** The GPT identifiers of partition types (sfdisk -d). */
 export const GUID_TYPE: Record<TypePartition, string> = {
   bios: '21686148-6449-6E6F-744E-656564454649',
   raid: 'A19D880F-05FC-4D3B-A006-743F0F84911E',
   linux: '0FC63DAF-8483-4772-8E79-3D69D8477DE4',
 };
-/** Leur nom, comme sfdisk et fdisk l'affichent. */
+/** Their names, as sfdisk and fdisk show them. */
 export const TYPE_NAME: Record<TypePartition, string> = { bios: 'BIOS boot', raid: 'Linux RAID', linux: 'Linux filesystem' };
 
 export interface Partition {
@@ -48,14 +47,14 @@ export interface Partition {
 export interface Smart {
   hours: number;
   temperature: number;
-  // Secteurs réalloués (5), en attente de réallocation (197), illisibles hors ligne (198).
+  // Reallocated sectors (5), pending reallocation (197), offline uncorrectable (198).
   reallocated: number;
   inWaiting: number;
   unreadable: number;
-  // Erreurs de liaison (199, UDMA_CRC) et erreurs ATA journalisées.
+  // Link errors (199, UDMA_CRC) and logged ATA errors.
   crc: number;
   ataErrors: number;
-  // Le verdict global (PASSED tant qu'aucun attribut n'a franchi son seuil).
+  // The overall verdict (PASSED as long as no attribute has crossed its threshold).
   failure?: boolean;
 }
 
@@ -63,45 +62,45 @@ export interface Disk {
   template: string;
   serial: string;
   sectors: number;
-  // L'identifiant de la table GPT (label-id), ou null : disque vierge.
+  // The GPT table's identifier (label-id), or null: blank disk.
   table: string | null;
   partitions: Partition[];
   smart: Smart;
-  // Le rang du disque (sda : 0, sdb : 1…), pour ses numéros MAJ:MIN.
+  // The disk's rank (sda: 0, sdb: 1…), for its MAJ:MIN numbers.
   rank: number;
-  // Un disque amovible (USB) : RM = 1 dans lsblk.
+  // A removable disk (USB): RM = 1 in lsblk.
   removable?: boolean;
 }
 
-// spare : un membre de rechange, qui prendra la place d'un défectueux.
-export type MemberState = 'actif' | 'defectueux' | 'reconstruction' | 'spare';
+// spare: a spare member, which will take the place of a faulty one.
+export type MemberState = 'active' | 'faulty' | 'rebuilding' | 'spare';
 
 export interface Member {
-  // La partition, sans /dev/ (sda2).
+  // The partition, without /dev/ (sda2).
   part: string;
-  // Son numéro dans la grappe (le [n] de /proc/mdstat), et sa place (RaidDevice).
+  // Its number in the array (the [n] of /proc/mdstat), and its slot (RaidDevice).
   number: number;
   role: number | null;
   state: MemberState;
-  // Reconstruction : la part déjà copiée (0 à 1).
+  // Rebuild: the part already copied (0 to 1).
   copyOf?: number;
-  // Revenu par --re-add : seuls les blocs changés depuis son départ sont recopiés.
+  // Back through --re-add: only the blocks changed since it left are copied again.
   fast?: boolean;
 }
 
 export interface Array {
   level: 'raid1';
   wanted: number;
-  // La taille utile, en blocs de 1 Kio (comme /proc/mdstat).
+  // The usable size, in 1 KiB blocks (like /proc/mdstat).
   blocks: number;
   uuid: string;
   name: string;
   members: Member[];
   events: number;
   creation: number;
-  // Les grosses grappes ont un bitmap d'écriture (ligne bitmap: de /proc/mdstat).
+  // Large arrays have a write-intent bitmap (bitmap: line of /proc/mdstat).
   bitmap?: boolean;
-  // Une grappe toute neuve synchronise ses membres (resync) : la part déjà faite.
+  // A brand new array synchronizes its members (resync): the part already done.
   synchro?: number;
   rank: number;
 }
@@ -109,21 +108,21 @@ export interface Array {
 export interface StorageState {
   disks: Record<string, Disk>;
   arrays: Record<string, Array>;
-  // Les disques où GRUB est installé (dans leur zone de démarrage).
+  // The disks where GRUB is installed (in their boot area).
   grub: string[];
-  // LVM par-dessus (voir lvm.ts).
+  // LVM on top (see lvm.ts).
   lvm?: Lvm;
-  // Les systèmes de fichiers, par périphérique (/dev/md0…), voir fstab.ts.
+  // The file systems, by device (/dev/md0…), see fstab.ts.
   fs?: Record<string, FilesSystem>;
 }
 
-// Débit de reconstruction (Kio/s), et temps simulé à chaque commande.
+// Rebuild speed (KiB/s), and simulated time per command.
 const SPEED = 180_000;
 export const SECONDS_BY_COMMAND = 1800;
 
 export const storageOf = (j: Game): StorageState | null => (j.state.storage as StorageState | undefined) ?? null;
 
-/** « sdb2 » → le disque sdb et sa partition 2 (ou null). */
+/** "sdb2" → the disk sdb and its partition 2 (or null). */
 export function partitionFor(st: StorageState, name: string): { disk: string; d: Disk; p: Partition } | null {
   const m = /^(?:\/dev\/)?(sd[a-z])(\d+)$/.exec(name);
   if (!m) return null;
@@ -132,11 +131,11 @@ export function partitionFor(st: StorageState, name: string): { disk: string; d:
   return d && p ? { disk: m[1], d, p } : null;
 }
 
-/** La grappe dont cette partition est membre (sans /dev/), ou null. */
+/** The array this partition is a member of (without /dev/), or null. */
 export const arrayFor = (st: StorageState, part: string): [string, Array] | null =>
   Object.entries(st.arrays).find(([, g]) => g.members.some((m) => m.part === part)) ?? null;
 
-/** Une partition est-elle tenue par une grappe ou un montage ? (sfdisk refuse de toucher son disque.) */
+/** Is a partition held by an array or a mount? (sfdisk refuses to touch its disk.) */
 export const busyDisk = (st: StorageState, disk: string) =>
   [disk, ...(st.disks[disk]?.partitions.map((p) => `${disk}${p.number}`) ?? [])].some((n) => arrayFor(st, n) !== null || !!st.lvm?.pvs[n]);
 
@@ -146,28 +145,28 @@ export const majmin = (st: StorageState, name: string): [number, number] => {
   return [9, st.arrays[name]?.rank ?? 0];
 };
 
-/** Les membres en état de marche (actifs, ou à jour) et le compte des places tenues. */
-export const active = (g: Array) => g.members.filter((m) => m.state === 'actif');
-export const inRebuild = (g: Array) => g.members.filter((m) => m.state === 'reconstruction');
+/** The working members (active, or up to date) and the count of slots held. */
+export const active = (g: Array) => g.members.filter((m) => m.state === 'active');
+export const inRebuild = (g: Array) => g.members.filter((m) => m.state === 'rebuilding');
 export const degraded = (g: Array) => active(g).length < g.wanted;
-export const healthy = (g: Array) => active(g).length === g.wanted && g.members.every((m) => m.state === 'actif');
+export const healthy = (g: Array) => active(g).length === g.wanted && g.members.every((m) => m.state === 'active');
 
-// La grappe qui reconstruit en ce moment : la première (dans l'ordre md0, md1…) ; les autres attendent.
+// The array rebuilding right now: the first one (in the order md0, md1…); the others wait.
 export function rebuiltInThisMoment(st: StorageState): string | null {
   return Object.keys(st.arrays)
     .sort((a, b) => st.arrays[a].rank - st.arrays[b].rank)
     .find((n) => inRebuild(st.arrays[n]).length > 0 || st.arrays[n].synchro !== undefined) ?? null;
 }
 
-/** Le temps passe (une commande) : la reconstruction avance. */
+/** Time passes (one command): the rebuild progresses. */
 export function advance(st: StorageState, seconds = SECONDS_BY_COMMAND): void {
   let rest = seconds;
-  // Une grappe finie, la suivante commence dans le temps qui reste.
+  // Once an array is done, the next one starts in the remaining time.
   while (rest > 0) {
     const name = rebuiltInThisMoment(st);
     if (!name) return;
     const g = st.arrays[name];
-    // Une grappe neuve : la synchronisation de ses membres.
+    // A new array: synchronizing its members.
     if (g.synchro !== undefined) {
       const done = g.synchro * g.blocks;
       if (done + SPEED * rest < g.blocks) {
@@ -188,19 +187,19 @@ export function advance(st: StorageState, seconds = SECONDS_BY_COMMAND): void {
       return;
     }
     rest -= Math.ceil((total - done) / SPEED);
-    m.state = 'actif';
+    m.state = 'active';
     delete m.copyOf;
     delete m.fast;
     g.events += 1;
   }
 }
 
-/** Le premier numéro libre d'une grappe ([n] dans /proc/mdstat). */
+/** The first free number in an array ([n] in /proc/mdstat). */
 export const freeNumber = (g: Array) => Math.max(-1, ...g.members.map((m) => m.number)) + 1;
 
-/** La place libre (RaidDevice) d'une grappe dégradée, ou null. */
+/** The free slot (RaidDevice) of a degraded array, or null. */
 export function freePlace(g: Array): number | null {
-  for (let r = 0; r < g.wanted; r++) if (!g.members.some((m) => m.role === r && m.state !== 'defectueux')) return r;
+  for (let r = 0; r < g.wanted; r++) if (!g.members.some((m) => m.role === r && m.state !== 'faulty')) return r;
   return null;
 }
 
@@ -211,20 +210,20 @@ const bar = (copyOf: number) => {
   return `[${'='.repeat(full)}>${'.'.repeat(19 - full)}]`;
 };
 
-/** Le contenu de /proc/mdstat. */
+/** The content of /proc/mdstat. */
 export function mdstat(st: StorageState): string {
   const lines = ['Personalities : [raid1] [linear] [multipath] [raid0] [raid6] [raid5] [raid4] [raid10] '];
   const inCourse = rebuiltInThisMoment(st);
   const names = Object.keys(st.arrays).sort((a, b) => st.arrays[b].rank - st.arrays[a].rank);
   for (const name of names) {
     const g = st.arrays[name];
-    // Les membres, du plus récent au plus ancien, (F) pour les défectueux.
+    // The members, from the most recent to the oldest, (F) for faulty ones.
     const members = [...g.members]
       .sort((a, b) => b.number - a.number)
-      .map((m) => `${m.part}[${m.number}]${m.state === 'defectueux' ? '(F)' : m.state === 'spare' ? '(S)' : ''}`)
+      .map((m) => `${m.part}[${m.number}]${m.state === 'faulty' ? '(F)' : m.state === 'spare' ? '(S)' : ''}`)
       .join(' ');
     lines.push(`${name} : active ${g.level} ${members}`);
-    const places = Array.from({ length: g.wanted }, (_, r) => (g.members.some((m) => m.role === r && m.state === 'actif') ? 'U' : '_')).join('');
+    const places = Array.from({ length: g.wanted }, (_, r) => (g.members.some((m) => m.role === r && m.state === 'active') ? 'U' : '_')).join('');
     lines.push(`      ${g.blocks} blocks super 1.2 [${g.wanted}/${active(g).length}] [${places}]`);
     const r = inRebuild(g)[0];
     if (r && name === inCourse) {
@@ -251,9 +250,9 @@ export function mdstat(st: StorageState): string {
   return lines.join('\n');
 }
 
-// ——— Tailles, comme les outils les écrivent ———
+// ——— Sizes, as the tools write them ———
 
-/** « 1.8T », « 32G », « 1M » : comme lsblk (puissances de 1024, un chiffre après la virgule). */
+/** "1.8T", "32G", "1M": like lsblk (powers of 1024, one digit after the decimal point). */
 export function shortSize(bytes: number): string {
   const units = ['B', 'K', 'M', 'G', 'T'];
   let v = bytes;
@@ -266,7 +265,7 @@ export function shortSize(bytes: number): string {
   return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}${units[i]}`;
 }
 
-/** « 1.82 TiB » (fdisk, sfdisk) et « 31.97 GiB 34.33 GB » (mdadm). */
+/** "1.82 TiB" (fdisk, sfdisk) and "31.97 GiB 34.33 GB" (mdadm). */
 export function binarySize(bytes: number): string {
   const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
   let v = bytes;
@@ -290,19 +289,19 @@ export function decimalSize(bytes: number): string {
 
 // ——— /dev ———
 
-/** Les fichiers de périphérique de /dev suivent les disques, partitions et grappes (pour ls et la complétion). */
+/** The device files of /dev follow the disks, partitions and arrays (for ls and completion). */
 export function devUpdate(j: Game): void {
   const st = storageOf(j);
   const dev = j.find('/dev');
-  if (!st || dev?.type !== 'dossier') return;
+  if (!st || dev?.type !== 'directory') return;
   const names = [
     ...Object.entries(st.disks).flatMap(([n, d]) => [n, ...d.partitions.map((p) => `${n}${p.number}`)]),
     ...Object.keys(st.arrays),
   ];
   for (const k of Object.keys(dev.children)) if (/^(sd[a-z]\d*|md\d+)$/.test(k) && !names.includes(k)) delete dev.children[k];
   for (const n of names)
-    dev.children[n] ??= { type: 'fichier', content: '', owner: 'root', group: 'disk', mode: 'rw-rw----', lines: true };
+    dev.children[n] ??= { type: 'file', content: '', owner: 'root', group: 'disk', mode: 'rw-rw----', lines: true };
 }
 
-/** Un dossier /dev de départ (rempli par majDev). */
-export const devDirectory = (): Directory => ({ type: 'dossier', children: {}, owner: 'root', mode: 'rwxr-xr-x' });
+/** A starting /dev directory (filled by devUpdate). */
+export const devDirectory = (): Directory => ({ type: 'directory', children: {}, owner: 'root', mode: 'rwxr-xr-x' });

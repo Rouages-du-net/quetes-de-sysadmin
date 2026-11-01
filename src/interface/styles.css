@@ -1,62 +1,63 @@
-/* Styles du jeu. Tout est rangé sous .qds pour ne rien changer à la page qui
-   l'accueille. Un site règle les couleurs avec les variables --qds-fond,
-   --qds-accent… (posées sur l'élément ou au-dessus) ; le jeu les lit dans
-   ses variables internes --_fond, --_accent…, qui ont des valeurs par
-   défaut claires et sombres. Thème clair et sombre selon le système, ou
-   forcé par l'attribut theme="light" | "dark" de l'élément (ou "clair" | "sombre").
-   Par défaut, « la salle des machines » : lumière de console (phosphore
-   vert, voyants ambre) sur fond anthracite, ou « la salle blanche » en clair. */
+/* The game's styles. Everything is under .qds so as to change nothing on the
+   host page. A site sets the colours with the variables --qds-background,
+   --qds-accent… (set on the element or above it; the French names such as
+   --qds-fond still work); the game reads them into its internal variables
+   --_background, --_accent…, which have light and dark defaults. Light and
+   dark theme follow the system, or are forced by the element's attribute
+   theme="light" | "dark" (or "clair" | "sombre").
+   By default, "the machine room": console light (green phosphor, amber
+   lights) on a charcoal background, or "the clean room" in light mode. */
 
 .qds {
-  --_fond: var(--qds-fond, #eef2ee);
-  --_carte: var(--qds-carte, #ffffff);
-  --_texte: var(--qds-texte, #13201a);
-  --_discret: var(--qds-discret, #4a5b52);
-  --_bord: var(--qds-bord, #c3cfc7);
+  --_background: var(--qds-background, var(--qds-fond, #eef2ee));
+  --_card: var(--qds-card, var(--qds-carte, #ffffff));
+  --_text: var(--qds-text, var(--qds-texte, #13201a));
+  --_muted: var(--qds-muted, var(--qds-discret, #4a5b52));
+  --_border: var(--qds-border, var(--qds-bord, #c3cfc7));
   --_accent: var(--qds-accent, #0f6b37);
-  --_ambre: var(--qds-ambre, #8a4f00);
-  --_terminal-fond: var(--qds-terminal-fond, #0b1410);
-  --_terminal-texte: var(--qds-terminal-texte, #c8f5d3);
-  --_terminal-invite: var(--qds-terminal-invite, #ffb84d);
-  --_police: var(--qds-police, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif);
-  --_police-mono: var(--qds-police-mono, ui-monospace, 'SF Mono', 'Cascadia Mono', 'DejaVu Sans Mono', 'Noto Sans Mono', Menlo, Consolas, monospace);
-  color: var(--_texte);
-  font-family: var(--_police);
+  --_amber: var(--qds-amber, var(--qds-ambre, #8a4f00));
+  --_terminal-background: var(--qds-terminal-background, var(--qds-terminal-fond, #0b1410));
+  --_terminal-text: var(--qds-terminal-text, var(--qds-terminal-texte, #c8f5d3));
+  --_terminal-prompt: var(--qds-terminal-prompt, var(--qds-terminal-invite, #ffb84d));
+  --_font: var(--qds-font, var(--qds-police, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif));
+  --_font-mono: var(--qds-font-mono, var(--qds-police-mono, ui-monospace, 'SF Mono', 'Cascadia Mono', 'DejaVu Sans Mono', 'Noto Sans Mono', Menlo, Consolas, monospace));
+  color: var(--_text);
+  font-family: var(--_font);
   line-height: 1.5;
 }
 
-/* Thème sombre : seulement les valeurs par défaut ; les variables --qds-*
-   données par la page d'accueil gardent la priorité. */
+/* Dark theme: only the defaults; the --qds-* variables given by the host
+   page keep priority. */
 @media (prefers-color-scheme: dark) {
   :host(:not([theme='clair']):not([theme='light'])) .qds,
   .qds:not([data-theme='clair']) {
-    --_fond: var(--qds-fond, #0e1319);
-    --_carte: var(--qds-carte, #16202a);
-    --_texte: var(--qds-texte, #d8e1ea);
-    --_discret: var(--qds-discret, #93a4b6);
-    --_bord: var(--qds-bord, #283645);
+    --_background: var(--qds-background, var(--qds-fond, #0e1319));
+    --_card: var(--qds-card, var(--qds-carte, #16202a));
+    --_text: var(--qds-text, var(--qds-texte, #d8e1ea));
+    --_muted: var(--qds-muted, var(--qds-discret, #93a4b6));
+    --_border: var(--qds-border, var(--qds-bord, #283645));
     --_accent: var(--qds-accent, #5fe08a);
-    --_ambre: var(--qds-ambre, #ffb84d);
-    --_terminal-fond: var(--qds-terminal-fond, #070b0f);
+    --_amber: var(--qds-amber, var(--qds-ambre, #ffb84d));
+    --_terminal-background: var(--qds-terminal-background, var(--qds-terminal-fond, #070b0f));
   }
 }
 :host([theme='sombre']) .qds,
 :host([theme='dark']) .qds,
 .qds[data-theme='sombre'] {
-  --_fond: var(--qds-fond, #0e1319);
-  --_carte: var(--qds-carte, #16202a);
-  --_texte: var(--qds-texte, #d8e1ea);
-  --_discret: var(--qds-discret, #93a4b6);
-  --_bord: var(--qds-bord, #283645);
+  --_background: var(--qds-background, var(--qds-fond, #0e1319));
+  --_card: var(--qds-card, var(--qds-carte, #16202a));
+  --_text: var(--qds-text, var(--qds-texte, #d8e1ea));
+  --_muted: var(--qds-muted, var(--qds-discret, #93a4b6));
+  --_border: var(--qds-border, var(--qds-bord, #283645));
   --_accent: var(--qds-accent, #5fe08a);
-  --_ambre: var(--qds-ambre, #ffb84d);
-  --_terminal-fond: var(--qds-terminal-fond, #070b0f);
+  --_amber: var(--qds-amber, var(--qds-ambre, #ffb84d));
+  --_terminal-background: var(--qds-terminal-background, var(--qds-terminal-fond, #070b0f));
 }
 
 .qds *, .qds *::before, .qds *::after { box-sizing: border-box; }
 .qds [hidden] { display: none !important; }
 
-.qds .histoires ol, .qds .chapitres ol {
+.qds .stories ol, .qds .chapters ol {
   list-style: none;
   margin: 0 0 1rem;
   padding: 0;
@@ -64,14 +65,14 @@
   gap: 0.75rem;
   grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
 }
-/* Les histoires en lignes : le titre et l'état sur une ligne, le résumé dessous. */
-.qds .histoires ol { grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 0.5rem; margin-bottom: 0.5rem; align-items: start; }
-.qds .histoires button { height: auto; grid-template-columns: 1fr auto; align-content: start; column-gap: 0.75rem; padding: 0.55rem 0.9rem; }
-.qds .histoires .resume { grid-column: 1 / -1; }
-.qds .histoires .etat { grid-row: 1; grid-column: 2; align-self: center; }
-.qds .cle-aide { font-size: 0.85rem; color: var(--_discret); margin: 0 0 1rem; }
-.qds .chapitres ol { grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
-.qds .histoires button, .qds .chapitres button {
+/* The stories in rows: title and state on one line, the summary below. */
+.qds .stories ol { grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 0.5rem; margin-bottom: 0.5rem; align-items: start; }
+.qds .stories button { height: auto; grid-template-columns: 1fr auto; align-content: start; column-gap: 0.75rem; padding: 0.55rem 0.9rem; }
+.qds .stories .abstract { grid-column: 1 / -1; }
+.qds .stories .state { grid-row: 1; grid-column: 2; align-self: center; }
+.qds .key-help { font-size: 0.85rem; color: var(--_muted); margin: 0 0 1rem; }
+.qds .chapters ol { grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.qds .stories button, .qds .chapters button {
   display: grid;
   gap: 0.15rem;
   width: 100%;
@@ -79,132 +80,132 @@
   text-align: left;
   font: inherit;
   padding: 0.8rem 1rem;
-  border: 1px solid var(--_bord);
-  border-left: 3px solid var(--_bord);
+  border: 1px solid var(--_border);
+  border-left: 3px solid var(--_border);
   border-radius: 0.4rem;
-  background: var(--_carte);
-  color: var(--_texte);
+  background: var(--_card);
+  color: var(--_text);
   cursor: pointer;
 }
-.qds .histoires button:not(:disabled):hover, .qds .chapitres button:not(:disabled):hover { border-color: var(--_accent); }
-/* Une baie de serveur par histoire : une diode par chapitre (éteinte, ambre
-   pour le prochain à faire, verte quand il est fini). L'état en toutes
-   lettres reste dans .etat, pour les lecteurs d'écran. */
+.qds .stories button:not(:disabled):hover, .qds .chapters button:not(:disabled):hover { border-color: var(--_accent); }
+/* One server rack per story: one LED per chapter (off, amber for the next
+   one to do, green when it is finished). The state in full words stays in
+   .state, for screen readers. */
 .qds .diodes { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
-.qds .diode { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--_bord); }
-.qds .diode.allumee { background: var(--_accent); box-shadow: 0 0 0.35rem color-mix(in oklab, var(--_accent) 70%, transparent); }
-.qds .diode.en-cours { background: var(--_ambre); box-shadow: 0 0 0.35rem color-mix(in oklab, var(--_ambre) 70%, transparent); animation: qds-veille 2.4s ease-in-out infinite; }
-@keyframes qds-veille { 50% { opacity: 0.45; } }
-@media (prefers-reduced-motion: reduce) { .qds .diode.en-cours { animation: none; } }
-.qds .chapitres button { background: var(--_fond); }
-.qds .chapitres button:disabled { cursor: default; opacity: 0.6; }
-/* Histoire sans sa clé : grisée (couleurs discrètes plutôt que transparence,
-   qui nuirait au contraste), bordure en pointillés, sans résumé. */
-.qds .histoires button:disabled { cursor: default; border-style: dashed; background: var(--_fond); }
-.qds .histoires button[data-verrouillee] .titre { font-weight: 600; color: var(--_discret); }
-.qds .histoires button[data-verrouillee] .etat { color: var(--_discret); font-weight: 400; }
-.qds .histoires button[data-verrouillee] .resume { display: none; }
-/* Le choix de la vue du menu : la carte du réseau ou les baies. */
-.qds .choix-vue { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 0.75rem; }
-.qds .histoires .bouton-vue { display: inline-block; width: auto; height: auto; font: inherit; font-size: 0.85rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 999px; background: var(--_fond); color: var(--_discret); cursor: pointer; }
-.qds .histoires .bouton-vue[aria-pressed='true'] { border-color: var(--_accent); color: var(--_texte); box-shadow: inset 0 0 0 1px var(--_accent); }
-.qds .hote { display: none; font-family: var(--_police-mono); font-size: 0.75rem; color: var(--_discret); overflow-wrap: anywhere; }
-.qds .noeud-internet { display: none; }
+.qds .diode { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--_border); }
+.qds .diode.lit { background: var(--_accent); box-shadow: 0 0 0.35rem color-mix(in oklab, var(--_accent) 70%, transparent); }
+.qds .diode.in-progress { background: var(--_amber); box-shadow: 0 0 0.35rem color-mix(in oklab, var(--_amber) 70%, transparent); animation: qds-standby 2.4s ease-in-out infinite; }
+@keyframes qds-standby { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .qds .diode.in-progress { animation: none; } }
+.qds .chapters button { background: var(--_background); }
+.qds .chapters button:disabled { cursor: default; opacity: 0.6; }
+/* A story without its key: greyed out (muted colours rather than
+   transparency, which would hurt contrast), dotted border, no summary. */
+.qds .stories button:disabled { cursor: default; border-style: dashed; background: var(--_background); }
+.qds .stories button[data-locked] .title { font-weight: 600; color: var(--_muted); }
+.qds .stories button[data-locked] .state { color: var(--_muted); font-weight: 400; }
+.qds .stories button[data-locked] .abstract { display: none; }
+/* The choice of the menu's view: the network map or the racks. */
+.qds .view-choice { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 0.75rem; }
+.qds .stories .view-button { display: inline-block; width: auto; height: auto; font: inherit; font-size: 0.85rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_border); border-radius: 999px; background: var(--_background); color: var(--_muted); cursor: pointer; }
+.qds .stories .view-button[aria-pressed='true'] { border-color: var(--_accent); color: var(--_text); box-shadow: inset 0 0 0 1px var(--_accent); }
+.qds .host { display: none; font-family: var(--_font-mono); font-size: 0.75rem; color: var(--_muted); overflow-wrap: anywhere; }
+.qds .node-internet { display: none; }
 
-/* La carte du réseau : le poste en haut, internet dessous, et un câble (un
-   bus) d'où part une branche vers chaque machine. Le câble d'une machine
-   est en pointillés tant qu'elle est verrouillée, ambre quand on y joue,
-   vert quand l'histoire est finie. Sur un écran large, les machines se
-   rangent de part et d'autre du câble ; sur un écran étroit, à sa droite. */
-.qds .histoires[data-vue='reseau'] { --_cable: 2px; --_branche: 1.5rem; }
-.qds .histoires[data-vue='reseau'] ol { position: relative; grid-template-columns: 1fr; gap: 0.6rem; padding-left: calc(var(--_branche) + 0.5rem); }
-.qds .histoires[data-vue='reseau'] ol::before {
+/* The network map: the workstation at the top, the internet below, and a
+   cable (a bus) from which a branch goes to each machine. A machine's cable
+   is dotted while it is locked, amber when you are playing there, green
+   when the story is finished. On a wide screen, the machines sit on both
+   sides of the cable; on a narrow screen, to its right. */
+.qds .stories[data-view='network'] { --_cable: 2px; --_branch: 1.5rem; }
+.qds .stories[data-view='network'] ol { position: relative; grid-template-columns: 1fr; gap: 0.6rem; padding-left: calc(var(--_branch) + 0.5rem); }
+.qds .stories[data-view='network'] ol::before {
   content: '';
   position: absolute;
   left: 0.5rem;
   top: 1.25rem;
   bottom: 1.25rem;
-  border-left: var(--_cable) solid var(--_bord);
+  border-left: var(--_cable) solid var(--_border);
 }
-.qds .histoires[data-vue='reseau'] li { position: relative; }
-.qds .histoires[data-vue='reseau'] li::before {
+.qds .stories[data-view='network'] li { position: relative; }
+.qds .stories[data-view='network'] li::before {
   content: '';
   position: absolute;
   top: 1.25rem;
-  left: calc(-1 * var(--_branche));
-  width: var(--_branche);
-  border-top: var(--_cable) solid var(--_bord);
+  left: calc(-1 * var(--_branch));
+  width: var(--_branch);
+  border-top: var(--_cable) solid var(--_border);
 }
-.qds .histoires[data-vue='reseau'] .resume { display: none; }
-.qds .histoires[data-vue='reseau'] .hote { display: block; grid-column: 1 / -1; }
-.qds .histoires[data-vue='reseau'] .noeud-internet { display: block; }
-.qds .noeud-internet span {
+.qds .stories[data-view='network'] .abstract { display: none; }
+.qds .stories[data-view='network'] .host { display: block; grid-column: 1 / -1; }
+.qds .stories[data-view='network'] .node-internet { display: block; }
+.qds .node-internet span {
   display: inline-block;
-  font-family: var(--_police-mono);
+  font-family: var(--_font-mono);
   font-size: 0.8rem;
   padding: 0.2rem 0.9rem;
-  border: 1px dashed var(--_discret);
+  border: 1px dashed var(--_muted);
   border-radius: 999px;
-  color: var(--_discret);
-  background: var(--_fond);
+  color: var(--_muted);
+  background: var(--_background);
 }
-.qds .histoires[data-vue='reseau'] .noeud-internet::before { top: 50%; }
-.qds .histoires[data-vue='reseau'] li[data-etat='verrouillee']::before { border-top-style: dashed; }
-.qds .histoires[data-vue='reseau'] li[data-etat='en-cours']::before { border-top-color: var(--_ambre); }
-.qds .histoires[data-vue='reseau'] li[data-etat='terminee']::before { border-top-color: var(--_accent); box-shadow: 0 0 0.35rem color-mix(in oklab, var(--_accent) 60%, transparent); }
-.qds .histoires[data-vue='reseau'] li[data-etat='terminee'] button { border-left-color: var(--_accent); }
-.qds .histoires[data-vue='reseau'] li[data-etat='en-cours'] button { border-left-color: var(--_ambre); }
-/* Un paquet file sur la branche de la machine où l'on joue. */
-.qds .histoires[data-vue='reseau'] li:has(> button[aria-current='true'])::after {
+.qds .stories[data-view='network'] .node-internet::before { top: 50%; }
+.qds .stories[data-view='network'] li[data-state='locked']::before { border-top-style: dashed; }
+.qds .stories[data-view='network'] li[data-state='in-progress']::before { border-top-color: var(--_amber); }
+.qds .stories[data-view='network'] li[data-state='finished']::before { border-top-color: var(--_accent); box-shadow: 0 0 0.35rem color-mix(in oklab, var(--_accent) 60%, transparent); }
+.qds .stories[data-view='network'] li[data-state='finished'] button { border-left-color: var(--_accent); }
+.qds .stories[data-view='network'] li[data-state='in-progress'] button { border-left-color: var(--_amber); }
+/* A packet runs along the branch of the machine being played. */
+.qds .stories[data-view='network'] li:has(> button[aria-current='true'])::after {
   content: '';
   position: absolute;
   top: calc(1.25rem - 0.2rem);
-  left: calc(-1 * var(--_branche));
+  left: calc(-1 * var(--_branch));
   width: 0.45rem;
   height: 0.45rem;
   border-radius: 50%;
   background: var(--_accent);
-  animation: qds-paquet 2.2s ease-in-out infinite;
+  animation: qds-packet 2.2s ease-in-out infinite;
 }
-@keyframes qds-paquet { 0% { transform: translateX(0); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(calc(var(--_branche) - 0.45rem)); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .qds .histoires[data-vue='reseau'] li::after { animation: none; display: none; } }
+@keyframes qds-packet { 0% { transform: translateX(0); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(calc(var(--_branch) - 0.45rem)); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .qds .stories[data-view='network'] li::after { animation: none; display: none; } }
 @media (min-width: 46rem) {
-  /* Deux colonnes, le câble au milieu : la poste et internet le surmontent. */
-  .qds .histoires[data-vue='reseau'] ol { grid-template-columns: 1fr 1fr; column-gap: calc(2 * var(--_branche)); padding-left: 0; }
-  .qds .histoires[data-vue='reseau'] ol::before { left: calc(50% - var(--_cable) / 2); top: 3rem; }
-  .qds .histoires[data-vue='reseau'] .noeud-poste, .qds .histoires[data-vue='reseau'] .noeud-internet { grid-column: 1 / -1; justify-self: center; text-align: center; }
-  .qds .histoires[data-vue='reseau'] .noeud-poste button { width: auto; min-width: 16rem; }
-  .qds .histoires[data-vue='reseau'] .noeud-poste::before, .qds .histoires[data-vue='reseau'] .noeud-internet::before {
+  /* Two columns, the cable in the middle: the workstation and the internet sit above it. */
+  .qds .stories[data-view='network'] ol { grid-template-columns: 1fr 1fr; column-gap: calc(2 * var(--_branch)); padding-left: 0; }
+  .qds .stories[data-view='network'] ol::before { left: calc(50% - var(--_cable) / 2); top: 3rem; }
+  .qds .stories[data-view='network'] .node-workstation, .qds .stories[data-view='network'] .node-internet { grid-column: 1 / -1; justify-self: center; text-align: center; }
+  .qds .stories[data-view='network'] .node-workstation button { width: auto; min-width: 16rem; }
+  .qds .stories[data-view='network'] .node-workstation::before, .qds .stories[data-view='network'] .node-internet::before {
     left: 50%;
     top: 100%;
     width: 0;
     height: 0.6rem;
     border-top: none;
-    border-left: var(--_cable) solid var(--_bord);
+    border-left: var(--_cable) solid var(--_border);
   }
-  .qds .histoires[data-vue='reseau'] .noeud-poste::after { display: none; }
-  .qds .histoires[data-vue='reseau'] li[data-cote='droite']::before, .qds .histoires[data-vue='reseau'] li[data-cote='droite']::after { left: calc(-1 * var(--_branche)); }
-  .qds .histoires[data-vue='reseau'] li[data-cote='gauche']::before { left: 100%; }
-  .qds .histoires[data-vue='reseau'] li[data-cote='gauche']::after { left: 100%; animation-direction: reverse; }
-  .qds .histoires[data-vue='reseau'] li[data-cote='gauche'] { text-align: left; }
+  .qds .stories[data-view='network'] .node-workstation::after { display: none; }
+  .qds .stories[data-view='network'] li[data-side='right']::before, .qds .stories[data-view='network'] li[data-side='right']::after { left: calc(-1 * var(--_branch)); }
+  .qds .stories[data-view='network'] li[data-side='left']::before { left: 100%; }
+  .qds .stories[data-view='network'] li[data-side='left']::after { left: 100%; animation-direction: reverse; }
+  .qds .stories[data-view='network'] li[data-side='left'] { text-align: left; }
 }
 
 .qds button[aria-current='true'] { border-color: var(--_accent); border-left-width: 3px; box-shadow: inset 0 0 0 1px var(--_accent); }
 .qds button:focus-visible, .qds a:focus-visible { outline: 3px solid var(--_accent); outline-offset: 2px; }
-.qds .num { font-size: 0.8rem; color: var(--_discret); }
-.qds .titre { font-weight: 700; font-family: var(--_police-mono); letter-spacing: -0.01em; }
-.qds .resume { font-size: 0.9rem; color: var(--_discret); }
-.qds .etat { font-size: 0.85rem; font-weight: 600; color: var(--_accent); }
+.qds .num { font-size: 0.8rem; color: var(--_muted); }
+.qds .title { font-weight: 700; font-family: var(--_font-mono); letter-spacing: -0.01em; }
+.qds .abstract { font-size: 0.9rem; color: var(--_muted); }
+.qds .state { font-size: 0.85rem; font-weight: 600; color: var(--_accent); }
 /* Difficulty, from 1 to 5 stars (the level in words is for screen readers). */
-.qds .difficulty { font-size: 0.8rem; color: var(--_ambre); letter-spacing: 0.05em; }
-.qds .histoires .difficulty { grid-column: 1 / -1; }
+.qds .difficulty { font-size: 0.8rem; color: var(--_amber); letter-spacing: 0.05em; }
+.qds .stories .difficulty { grid-column: 1 / -1; }
 .qds .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 .qds .terminal {
-  background: var(--_terminal-fond);
-  color: var(--_terminal-texte);
-  font: var(--qds-taille-terminal, 0.95rem)/1.5 var(--_police-mono);
-  border: 1px solid color-mix(in oklab, var(--_accent) 35%, var(--_bord));
+  background: var(--_terminal-background);
+  color: var(--_terminal-text);
+  font: var(--qds-terminal-size, var(--qds-taille-terminal, 0.95rem))/1.5 var(--_font-mono);
+  border: 1px solid color-mix(in oklab, var(--_accent) 35%, var(--_border));
   border-radius: 0.4rem;
   box-shadow: 0 0 0 1px rgb(0 0 0 / 0.2), 0 0.75rem 2rem rgb(0 0 0 / 0.25);
   padding: 1rem;
@@ -213,23 +214,23 @@
   overflow-y: auto;
   cursor: text;
 }
-.qds .sortie pre { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: inherit; overflow-x: auto; }
-/* Un tableau trop large pour l'écran défile de côté : une ombre sur le bord
-   montre qu'il en reste à voir (elle disparaît une fois au bout). */
-.qds .sortie pre {
+.qds .output pre { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: inherit; overflow-x: auto; }
+/* A table too wide for the screen scrolls sideways: a shadow on the edge
+   shows there is more to see (it disappears once at the end). */
+.qds .output pre {
   background:
-    linear-gradient(to right, var(--_terminal-fond) 40%, transparent) left / 1.5rem 100% no-repeat local,
-    linear-gradient(to left, var(--_terminal-fond) 40%, transparent) right / 1.5rem 100% no-repeat local,
-    radial-gradient(farthest-side at 0 50%, color-mix(in oklab, var(--_terminal-texte) 45%, transparent), transparent) left / 0.6rem 100% no-repeat scroll,
-    radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--_terminal-texte) 45%, transparent), transparent) right / 0.6rem 100% no-repeat scroll;
+    linear-gradient(to right, var(--_terminal-background) 40%, transparent) left / 1.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--_terminal-background) 40%, transparent) right / 1.5rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, color-mix(in oklab, var(--_terminal-text) 45%, transparent), transparent) left / 0.6rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--_terminal-text) 45%, transparent), transparent) right / 0.6rem 100% no-repeat scroll;
 }
-.qds .sortie .colonnes { white-space: pre; word-break: normal; }
-/* Pour mesurer la largeur d'un caractère (la largeur du terminal en colonnes). */
-.qds .sortie .mesure { position: absolute; visibility: hidden; pointer-events: none; white-space: pre; }
-.qds .sortie .coupure { margin: 0; font-style: italic; color: var(--_terminal-invite); }
-.qds .sortie .cmd { color: color-mix(in oklab, var(--_terminal-texte) 75%, var(--_terminal-fond)); }
+.qds .output .columns { white-space: pre; word-break: normal; }
+/* To measure a character's width (the terminal's width in columns). */
+.qds .output .measure { position: absolute; visibility: hidden; pointer-events: none; white-space: pre; }
+.qds .output .cut { margin: 0; font-style: italic; color: var(--_terminal-prompt); }
+.qds .output .cmd { color: color-mix(in oklab, var(--_terminal-text) 75%, var(--_terminal-background)); }
 .qds form { display: flex; flex-wrap: wrap; gap: 0 0.5ch; margin: 0; }
-.qds .invite { color: var(--_terminal-invite); overflow-wrap: anywhere; }
+.qds .prompt { color: var(--_terminal-prompt); overflow-wrap: anywhere; }
 .qds form input {
   flex: 1;
   min-width: 12ch;
@@ -238,227 +239,226 @@
   color: inherit;
   font: inherit;
   outline: none;
-  caret-color: var(--_terminal-texte);
+  caret-color: var(--_terminal-text);
 }
 
-.qds .fin { margin-top: 1rem; }
-.qds .bouton {
+.qds .end { margin-top: 1rem; }
+.qds .button {
   font: inherit;
   font-weight: 600;
   padding: 0.5rem 1rem;
   border-radius: 0.35rem;
   border: 1px solid var(--_accent);
   background: var(--_accent);
-  color: var(--_fond);
+  color: var(--_background);
   cursor: pointer;
 }
-/* Le mode examen : une case au-dessus du terminal, et le chrono. */
-.qds .examen { margin: 0.75rem 0 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; }
-.qds .examen label { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
-.qds .examen input { accent-color: var(--_accent); width: 1.1rem; height: 1.1rem; margin: 0.2rem 0 0; flex: none; }
-/* La carte : le bouton au bout de la barre, la fenêtre et l'arbre des lieux. */
-.qds .outils { margin-left: auto; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; }
-.qds .bouton-carte,
-.qds .bouton-mission,
-.qds .bouton-indice,
-.qds .bouton-secours,
-.qds .bouton-reglage { font: inherit; font-size: 0.9rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }
-.qds .bouton-carte:hover, .qds .bouton-carte:focus-visible,
-.qds .bouton-mission:hover, .qds .bouton-mission:focus-visible,
-.qds .bouton-indice:hover, .qds .bouton-indice:focus-visible,
-.qds .bouton-secours:hover:not(:disabled), .qds .bouton-secours:focus-visible,
-.qds .bouton-reglage:hover, .qds .bouton-reglage:focus-visible { border-color: var(--_accent); }
-.qds .fenetre-carte,
-.qds .fenetre-progression,
-.qds .fenetre-mission,
-.qds .fenetre-succes { width: min(36rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
-.qds .fenetre-carte::backdrop,
-.qds .fenetre-progression::backdrop,
-.qds .fenetre-mission::backdrop,
-.qds .fenetre-succes::backdrop { background: rgb(0 0 0 / 0.5); }
-.qds .fenetre-carte h2,
-.qds .fenetre-progression h2,
-.qds .fenetre-mission h2,
-.qds .fenetre-succes h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
-.qds .carte-legende { margin: 0 0 0.75rem; font-size: 0.85rem; color: var(--_discret); }
-.qds .carte-arbre { font-family: var(--_police-mono); font-size: 0.9rem; overflow-wrap: anywhere; }
-.qds .carte-arbre ul { list-style: none; margin: 0; padding-left: 1.1rem; border-left: 1px dotted var(--_bord); }
-.qds .carte-arbre ul.arbre { padding-left: 0; border-left: 0; }
-.qds .carte-arbre li { margin: 0.1rem 0; }
-.qds .carte-arbre .apercu > .nom { color: var(--_discret); font-style: italic; }
-.qds .carte-arbre .reperes { color: var(--_discret); font-size: 0.85em; }
-.qds .carte-arbre .ici > .nom { font-weight: 700; color: var(--_accent); }
-.qds .carte-arbre .vous-etes-ici { color: var(--_accent); }
-.qds .carte-onglets { display: flex; gap: 0.25rem; margin: 0 0 0.75rem; border-bottom: 1px solid var(--_bord); }
-.qds .carte-onglets[hidden] { display: none; }
-.qds .carte-onglets [role='tab'] { font: inherit; font-size: 0.95rem; padding: 0.35rem 0.9rem; border: 1px solid transparent; border-bottom: 0; border-radius: 0.4rem 0.4rem 0 0; background: none; color: var(--_discret); cursor: pointer; margin-bottom: -1px; }
-.qds .carte-onglets [role='tab'][aria-selected='true'] { color: var(--_texte); font-weight: 600; border-color: var(--_bord); background: var(--_fond); }
-/* Le plan du réseau : le schéma défile dans sa boîte s'il est plus large que l'écran. */
-.qds .fenetre-carte:has([role='tabpanel']:not([hidden]) .plan-schema) { width: min(62rem, calc(100vw - 2rem)); }
-.qds .plan-schema { overflow-x: auto; margin: 0 0 0.75rem; }
-.qds .plan-schema svg { display: block; font-family: var(--_police); }
-.qds .plan-schema .lien { fill: none; stroke: var(--_discret); stroke-width: 1.5; }
-.qds .plan-schema .lien.tunnel { stroke-dasharray: 3 4; stroke: var(--_accent); }
-.qds .plan-schema rect { fill: var(--_carte); stroke: var(--_bord); stroke-width: 1.5; }
-.qds .plan-schema .reseau rect { fill: var(--_fond); stroke: var(--_discret); stroke-dasharray: 6 3; }
-.qds .plan-schema .internet rect { fill: var(--_fond); stroke: var(--_discret); }
-.qds .plan-schema .pas-visite rect { stroke-dasharray: 2 3; }
-.qds .plan-schema .ici rect { stroke: var(--_accent); stroke-width: 3; }
-.qds .plan-schema text { fill: var(--_texte); font-size: 13px; }
-.qds .plan-schema .nom { font-weight: 600; }
-.qds .plan-schema .pas-visite .nom { font-style: italic; }
-.qds .plan-schema .adresse { font-family: var(--_police-mono); font-size: 12px; }
-.qds .plan-schema .note { fill: var(--_discret); font-size: 11px; }
-.qds .plan-schema .repere-ici { fill: var(--_accent); font-size: 12px; font-weight: 700; }
-.qds .plan-texte summary { cursor: pointer; font-size: 0.9rem; }
-.qds .plan-texte .carte-arbre { margin-top: 0.5rem; }
-/* Ma progression : le nom, le code à recopier, le fichier. */
-.qds .fenetre-progression h3,
-.qds .fenetre-mission h3 { margin: 1rem 0 0.25rem; font-size: 1rem; }
-.qds .fenetre-progression input[type='text'] { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid var(--_bord); border-radius: 0.3rem; background: var(--_carte); color: var(--_texte); max-width: 100%; }
-.qds .fenetre-progression input[type='file'] { font: inherit; font-size: 0.9rem; max-width: 100%; }
-.qds .code-progression { font-family: var(--_police-mono); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.05em; overflow-wrap: anywhere; }
-.qds .progression-saisie { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.qds .progression-etat { min-height: 1.5em; color: var(--_accent); font-weight: 600; }
-/* La mission : consignes et messages de l'histoire, relus. */
-.qds .mission-texte { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: 0.85rem/1.5 var(--_police-mono); background: var(--_carte); border: 1px solid var(--_bord); border-radius: 0.3rem; padding: 0.5rem 0.75rem; max-height: 20rem; overflow-y: auto; }
-.qds .mission-journal { padding-left: 1.5rem; margin: 0; }
-/* Ctrl-R : la commande trouvée, sous la ligne. */
-.qds .recherche { flex-basis: 100%; margin: 0.25rem 0 0; color: var(--_terminal-invite); font-size: 0.85rem; }
-.qds .recherche:empty { display: none; }
-/* La barre de touches : seulement sur les écrans tactiles. */
-.qds .touches { display: none; }
+/* Exam mode: a checkbox above the terminal, and the timer. */
+.qds .exam { margin: 0.75rem 0 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; }
+.qds .exam label { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
+.qds .exam input { accent-color: var(--_accent); width: 1.1rem; height: 1.1rem; margin: 0.2rem 0 0; flex: none; }
+/* The map: the button at the end of the bar, the window and the tree of places. */
+.qds .tools { margin-left: auto; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; }
+.qds .map-button,
+.qds .mission-button,
+.qds .hint-button,
+.qds .rescue-button,
+.qds .setting-button { font: inherit; font-size: 0.9rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_border); border-radius: 0.4rem; background: var(--_card); color: var(--_text); cursor: pointer; }
+.qds .map-button:hover, .qds .map-button:focus-visible,
+.qds .mission-button:hover, .qds .mission-button:focus-visible,
+.qds .hint-button:hover, .qds .hint-button:focus-visible,
+.qds .rescue-button:hover:not(:disabled), .qds .rescue-button:focus-visible,
+.qds .setting-button:hover, .qds .setting-button:focus-visible { border-color: var(--_accent); }
+.qds .map-window,
+.qds .progress-window,
+.qds .mission-window,
+.qds .achievements-window { width: min(36rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_background); color: var(--_text); font-family: var(--_font); }
+.qds .map-window::backdrop,
+.qds .progress-window::backdrop,
+.qds .mission-window::backdrop,
+.qds .achievements-window::backdrop { background: rgb(0 0 0 / 0.5); }
+.qds .map-window h2,
+.qds .progress-window h2,
+.qds .mission-window h2,
+.qds .achievements-window h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.qds .map-legend { margin: 0 0 0.75rem; font-size: 0.85rem; color: var(--_muted); }
+.qds .map-tree { font-family: var(--_font-mono); font-size: 0.9rem; overflow-wrap: anywhere; }
+.qds .map-tree ul { list-style: none; margin: 0; padding-left: 1.1rem; border-left: 1px dotted var(--_border); }
+.qds .map-tree ul.tree { padding-left: 0; border-left: 0; }
+.qds .map-tree li { margin: 0.1rem 0; }
+.qds .map-tree .preview > .name { color: var(--_muted); font-style: italic; }
+.qds .map-tree .markers { color: var(--_muted); font-size: 0.85em; }
+.qds .map-tree .here > .name { font-weight: 700; color: var(--_accent); }
+.qds .map-tree .you-are-here { color: var(--_accent); }
+.qds .map-tabs { display: flex; gap: 0.25rem; margin: 0 0 0.75rem; border-bottom: 1px solid var(--_border); }
+.qds .map-tabs[hidden] { display: none; }
+.qds .map-tabs [role='tab'] { font: inherit; font-size: 0.95rem; padding: 0.35rem 0.9rem; border: 1px solid transparent; border-bottom: 0; border-radius: 0.4rem 0.4rem 0 0; background: none; color: var(--_muted); cursor: pointer; margin-bottom: -1px; }
+.qds .map-tabs [role='tab'][aria-selected='true'] { color: var(--_text); font-weight: 600; border-color: var(--_border); background: var(--_background); }
+/* The network plan: the diagram scrolls in its box if it is wider than the screen. */
+.qds .map-window:has([role='tabpanel']:not([hidden]) .plan-diagram) { width: min(62rem, calc(100vw - 2rem)); }
+.qds .plan-diagram { overflow-x: auto; margin: 0 0 0.75rem; }
+.qds .plan-diagram svg { display: block; font-family: var(--_font); }
+.qds .plan-diagram .link { fill: none; stroke: var(--_muted); stroke-width: 1.5; }
+.qds .plan-diagram .link.tunnel { stroke-dasharray: 3 4; stroke: var(--_accent); }
+.qds .plan-diagram rect { fill: var(--_card); stroke: var(--_border); stroke-width: 1.5; }
+.qds .plan-diagram .network rect { fill: var(--_background); stroke: var(--_muted); stroke-dasharray: 6 3; }
+.qds .plan-diagram .internet rect { fill: var(--_background); stroke: var(--_muted); }
+.qds .plan-diagram .not-visited rect { stroke-dasharray: 2 3; }
+.qds .plan-diagram .here rect { stroke: var(--_accent); stroke-width: 3; }
+.qds .plan-diagram text { fill: var(--_text); font-size: 13px; }
+.qds .plan-diagram .name { font-weight: 600; }
+.qds .plan-diagram .not-visited .name { font-style: italic; }
+.qds .plan-diagram .address { font-family: var(--_font-mono); font-size: 12px; }
+.qds .plan-diagram .note { fill: var(--_muted); font-size: 11px; }
+.qds .plan-diagram .marker-here { fill: var(--_accent); font-size: 12px; font-weight: 700; }
+.qds .plan-text summary { cursor: pointer; font-size: 0.9rem; }
+.qds .plan-text .map-tree { margin-top: 0.5rem; }
+/* My progress: the name, the code to copy, the file. */
+.qds .progress-window h3,
+.qds .mission-window h3 { margin: 1rem 0 0.25rem; font-size: 1rem; }
+.qds .progress-window input[type='text'] { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid var(--_border); border-radius: 0.3rem; background: var(--_card); color: var(--_text); max-width: 100%; }
+.qds .progress-window input[type='file'] { font: inherit; font-size: 0.9rem; max-width: 100%; }
+.qds .progress-code { font-family: var(--_font-mono); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.05em; overflow-wrap: anywhere; }
+.qds .progress-input { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.qds .progress-state { min-height: 1.5em; color: var(--_accent); font-weight: 600; }
+/* The mission: the story's instructions and messages, to reread. */
+.qds .mission-text { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: 0.85rem/1.5 var(--_font-mono); background: var(--_card); border: 1px solid var(--_border); border-radius: 0.3rem; padding: 0.5rem 0.75rem; max-height: 20rem; overflow-y: auto; }
+.qds .mission-log { padding-left: 1.5rem; margin: 0; }
+/* Ctrl-R: the command found, under the line. */
+.qds .search { flex-basis: 100%; margin: 0.25rem 0 0; color: var(--_terminal-prompt); font-size: 0.85rem; }
+.qds .search:empty { display: none; }
+/* The key bar: only on touch screens. */
+.qds .keys { display: none; }
 @media (pointer: coarse) {
-  .qds .touches { display: flex; gap: 0.35rem; overflow-x: auto; padding: 0.5rem 0 0.25rem; scrollbar-width: none; }
-  .qds .touches button { flex: none; min-width: 2.75rem; min-height: 2.75rem; padding: 0 0.6rem; font: 600 0.95rem var(--_police-mono); color: var(--_texte); background: var(--_carte); border: 1px solid var(--_bord); border-radius: 0.35rem; }
-  .qds .touches button:active { border-color: var(--_accent); color: var(--_accent); }
-  /* Pendant nano, la barre ne garde que ses raccourcis (et Ctrl-C). */
-  .qds .touches:not([data-mode='nano']) .pour-nano,
-  .qds .touches[data-mode='nano'] button:not(.pour-nano):not([data-touche='ctrl-c']) { display: none; }
-  /* Pendant un suivi (tail -f), seulement Ctrl-C. */
-  .qds .touches[data-mode='suivi'] button:not([data-touche='ctrl-c']) { display: none; }
+  .qds .keys { display: flex; gap: 0.35rem; overflow-x: auto; padding: 0.5rem 0 0.25rem; scrollbar-width: none; }
+  .qds .keys button { flex: none; min-width: 2.75rem; min-height: 2.75rem; padding: 0 0.6rem; font: 600 0.95rem var(--_font-mono); color: var(--_text); background: var(--_card); border: 1px solid var(--_border); border-radius: 0.35rem; }
+  .qds .keys button:active { border-color: var(--_accent); color: var(--_accent); }
+  /* While in nano, the bar keeps only its shortcuts (and Ctrl-C). */
+  .qds .keys:not([data-mode='nano']) .for-nano,
+  .qds .keys[data-mode='nano'] button:not(.for-nano):not([data-key='ctrl-c']) { display: none; }
+  /* While following (tail -f), only Ctrl-C. */
+  .qds .keys[data-mode='follow'] button:not([data-key='ctrl-c']) { display: none; }
 }
-/* Les succès : obtenus en clair, les autres en discret ; l'annonce dans le terminal. */
-.qds .succes-grade { margin: 0 0 0.75rem; }
-.qds .succes-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
-.qds .succes-liste li { padding: 0.4rem 0.6rem; border: 1px solid var(--_bord); border-radius: 0.3rem; }
-.qds .succes-liste .obtenu { border-color: var(--_accent); }
-.qds .succes-nom { font-weight: 700; font-family: var(--_police-mono); }
-.qds .succes-description, .qds .succes-date { color: var(--_discret); font-size: 0.9rem; }
-.qds .succes-description { display: block; }
-.qds .a-obtenir .succes-nom { color: var(--_discret); }
-.qds .sortie pre.succes { color: var(--_terminal-invite); font-weight: 700; }
-/* Besoin d'aide ? Les niveaux d'indice dans la mission. */
-.qds .aide { margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed var(--_bord); }
-.qds .indice-boutons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.qds .indice-texte p { margin: 0.5rem 0; }
-/* L'affichage : thème du terminal, taille, plein écran. */
-.qds .reglages { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
-.qds .reglages select { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.3rem; border: 1px solid var(--_bord); border-radius: 0.35rem; background: var(--_carte); color: var(--_texte); }
-.qds .reglages button:disabled { opacity: 0.5; cursor: default; }
-.qds .reglages [aria-pressed='true'] { border-color: var(--_accent); color: var(--_accent); }
-.qds .terminal[data-theme='ambre'] { --_terminal-fond: #140e04; --_terminal-texte: #ffcf87; --_terminal-invite: #ffe7b3; }
-.qds .terminal[data-theme='contraste'] { --_terminal-fond: #000000; --_terminal-texte: #ffffff; --_terminal-invite: #ffff3d; }
-.qds .terminal[data-theme='papier'] { --_terminal-fond: #fbfaf4; --_terminal-texte: #1b1f1b; --_terminal-invite: #0f6b37; }
-.qds .quitter-focus { display: none; }
-.qds .ecran.focus { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem; background: var(--_fond); }
-.qds .ecran.focus .terminal { flex: 1; max-height: none; min-height: 0; }
-.qds .ecran.focus .quitter-focus { display: block; align-self: flex-end; font: inherit; font-size: 0.85rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_bord); border-radius: 0.35rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }
-/* Les mises en scène : une connexion qui s'établit (balayage), un redémarrage (écran éteint). */
-.qds .terminal.scene-connexion { animation: qds-connexion 0.6s ease-out; }
-@keyframes qds-connexion { from { box-shadow: inset 0 0 0 100vmax color-mix(in oklab, var(--_accent) 18%, transparent); } }
+/* Achievements: obtained ones in full, the others muted; the announcement in the terminal. */
+.qds .achievement-rank { margin: 0 0 0.75rem; }
+.qds .achievement-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.qds .achievement-list li { padding: 0.4rem 0.6rem; border: 1px solid var(--_border); border-radius: 0.3rem; }
+.qds .achievement-list .earned { border-color: var(--_accent); }
+.qds .achievement-name { font-weight: 700; font-family: var(--_font-mono); }
+.qds .achievement-description, .qds .achievement-date { color: var(--_muted); font-size: 0.9rem; }
+.qds .achievement-description { display: block; }
+.qds .to-earn .achievement-name { color: var(--_muted); }
+.qds .output pre.achievements { color: var(--_terminal-prompt); font-weight: 700; }
+/* Need help? The hint levels in the mission. */
+.qds .help { margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed var(--_border); }
+.qds .hint-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.qds .hint-text p { margin: 0.5rem 0; }
+/* Display: terminal theme, size, full screen. */
+.qds .settings { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+.qds .settings select { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.3rem; border: 1px solid var(--_border); border-radius: 0.35rem; background: var(--_card); color: var(--_text); }
+.qds .settings button:disabled { opacity: 0.5; cursor: default; }
+.qds .settings [aria-pressed='true'] { border-color: var(--_accent); color: var(--_accent); }
+.qds .terminal[data-theme='amber'] { --_terminal-background: #140e04; --_terminal-text: #ffcf87; --_terminal-prompt: #ffe7b3; }
+.qds .terminal[data-theme='contrast'] { --_terminal-background: #000000; --_terminal-text: #ffffff; --_terminal-prompt: #ffff3d; }
+.qds .terminal[data-theme='paper'] { --_terminal-background: #fbfaf4; --_terminal-text: #1b1f1b; --_terminal-prompt: #0f6b37; }
+.qds .leave-focus { display: none; }
+.qds .screen.focus { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem; background: var(--_background); }
+.qds .screen.focus .terminal { flex: 1; max-height: none; min-height: 0; }
+.qds .screen.focus .leave-focus { display: block; align-self: flex-end; font: inherit; font-size: 0.85rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_border); border-radius: 0.35rem; background: var(--_card); color: var(--_text); cursor: pointer; }
+/* The staging: a connection being established (a sweep), a reboot (screen off). */
+.qds .terminal.scene-connection { animation: qds-connection 0.6s ease-out; }
+@keyframes qds-connection { from { box-shadow: inset 0 0 0 100vmax color-mix(in oklab, var(--_accent) 18%, transparent); } }
 .qds .terminal.scene-reboot { animation: qds-reboot 1.4s steps(1) both; }
 @keyframes qds-reboot { 0%, 70% { filter: brightness(0); } 100% { filter: none; } }
-@media (prefers-reduced-motion: reduce) { .qds .terminal.scene-connexion, .qds .terminal.scene-reboot { animation: none; } }
-.qds .carte-actions { margin: 0.75rem 0 0; text-align: right; }
-.qds .chrono { font-family: var(--_police-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--_accent); }
-.qds .sortie pre.examen-resultat { font-weight: 600; color: var(--_terminal-invite); }
-/* Après un chapitre : les pages de Les rouages du net qui expliquent son concept. */
-.qds .pour-comprendre { margin-top: 1rem; padding: 0.5rem 0.75rem; border-left: 3px solid var(--_accent); background: var(--_carte); }
-.qds .pour-comprendre p { margin: 0 0 0.25rem; }
-.qds .pour-comprendre ul { margin: 0; padding-left: 1.25rem; }
-/* Le carnet du sysadmin : un panneau replié sous le terminal. */
-.qds .carnet { margin-top: 1rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_carte); padding: 0.5rem 0.75rem; }
-.qds .carnet summary { cursor: pointer; font-weight: 600; }
-.qds .carnet summary .compte { font-weight: normal; color: var(--_discret); }
-.qds .carnet-aide { font-size: 0.85rem; color: var(--_discret); }
-.qds .carnet dl { margin: 0.5rem 0; display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 0.75rem; }
-.qds .carnet dd { margin: 0; overflow-wrap: anywhere; }
-.qds .carnet code { font-family: var(--_police-mono); }
-.qds .carnet .exemple { display: block; font-size: 0.85rem; color: var(--_discret); }
-.qds .carnet-actions { font-size: 0.9rem; }
-.qds .carnet-etat { color: var(--_discret); }
+@media (prefers-reduced-motion: reduce) { .qds .terminal.scene-connection, .qds .terminal.scene-reboot { animation: none; } }
+.qds .map-actions { margin: 0.75rem 0 0; text-align: right; }
+.qds .timer { font-family: var(--_font-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--_accent); }
+.qds .output pre.exam-result { font-weight: 600; color: var(--_terminal-prompt); }
+/* After a chapter: the pages of Les rouages du net that explain its concept. */
+.qds .to-understand { margin-top: 1rem; padding: 0.5rem 0.75rem; border-left: 3px solid var(--_accent); background: var(--_card); }
+.qds .to-understand p { margin: 0 0 0.25rem; }
+.qds .to-understand ul { margin: 0; padding-left: 1.25rem; }
+/* The sysadmin's notebook: a folded panel under the terminal. */
+.qds .notebook { margin-top: 1rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_card); padding: 0.5rem 0.75rem; }
+.qds .notebook summary { cursor: pointer; font-weight: 600; }
+.qds .notebook summary .account { font-weight: normal; color: var(--_muted); }
+.qds .notebook-help { font-size: 0.85rem; color: var(--_muted); }
+.qds .notebook dl { margin: 0.5rem 0; display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 0.75rem; }
+.qds .notebook dd { margin: 0; overflow-wrap: anywhere; }
+.qds .notebook code { font-family: var(--_font-mono); }
+.qds .notebook .example { display: block; font-size: 0.85rem; color: var(--_muted); }
+.qds .notebook-actions { font-size: 0.9rem; }
+.qds .notebook-state { color: var(--_muted); }
 @media (max-width: 40rem) {
-  .qds .carnet dl { grid-template-columns: 1fr; }
-  .qds .carnet dd { margin-bottom: 0.5rem; }
+  .qds .notebook dl { grid-template-columns: 1fr; }
+  .qds .notebook dd { margin-bottom: 0.5rem; }
 }
-.qds .astuces, .qds .credit { font-size: 0.85rem; color: var(--_discret); margin: 1rem 0 0; }
+.qds .tips, .qds .credit { font-size: 0.85rem; color: var(--_muted); margin: 1rem 0 0; }
 .qds a { color: var(--_accent); }
-.qds .lien { font: inherit; background: none; border: none; padding: 0; color: var(--_accent); text-decoration: underline; cursor: pointer; }
+.qds .link { font: inherit; background: none; border: none; padding: 0; color: var(--_accent); text-decoration: underline; cursor: pointer; }
 
 @media (max-width: 40rem) {
-  .qds .histoires ol, .qds .chapitres ol { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-  .qds .histoires button { grid-template-columns: 1fr; }
-  .qds .histoires .etat { grid-row: auto; grid-column: auto; align-self: start; }
-  .qds .resume { display: none; }
-  /* Les tabulations (nft list ruleset, nftables.conf) prennent moins de place sur un écran étroit. */
-  .qds .sortie pre, .qds .nano-texte { tab-size: 2; }
+  .qds .stories ol, .qds .chapters ol { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .qds .stories button { grid-template-columns: 1fr; }
+  .qds .stories .state { grid-row: auto; grid-column: auto; align-self: start; }
+  .qds .abstract { display: none; }
+  /* Tabs (nft list ruleset, nftables.conf) take less room on a narrow screen. */
+  .qds .output pre, .qds .nano-text { tab-size: 2; }
 }
 @media (prefers-reduced-motion: reduce) {
   .qds * { scroll-behavior: auto !important; transition: none !important; }
 }
 
-/* tail -f, journalctl -f : les lignes qui arrivent se suivent sans espace ; le bouton qui fait Ctrl-C, à la place de la ligne de commande. */
-.qds .sortie pre.suivi { margin-top: -0.5rem; }
-.qds .arret-suivi {
-  font: inherit; color: var(--_terminal-invite); background: none; cursor: pointer;
-  border: 1px dashed color-mix(in oklab, var(--_terminal-texte) 40%, transparent); border-radius: 0.25rem; padding: 0.1rem 0.4rem;
+/* tail -f, journalctl -f: incoming lines follow one another with no gap; the button that does Ctrl-C replaces the command line. */
+.qds .output pre.follow { margin-top: -0.5rem; }
+.qds .stop-follow {
+  font: inherit; color: var(--_terminal-prompt); background: none; cursor: pointer;
+  border: 1px dashed color-mix(in oklab, var(--_terminal-text) 40%, transparent); border-radius: 0.25rem; padding: 0.1rem 0.4rem;
 }
-.qds .arret-suivi:focus-visible { outline: 2px solid var(--_terminal-invite); outline-offset: 1px; }
-.qds .arret-suivi kbd { font: inherit; background: var(--_terminal-texte); color: var(--_terminal-fond); padding: 0 0.2ch; }
+.qds .stop-follow:focus-visible { outline: 2px solid var(--_terminal-prompt); outline-offset: 1px; }
+.qds .stop-follow kbd { font: inherit; background: var(--_terminal-text); color: var(--_terminal-background); padding: 0 0.2ch; }
 
-/* L'éditeur nano, dans le terminal. */
+/* The nano editor, in the terminal. */
 .qds .nano { display: flex; flex-direction: column; gap: 0.25rem; }
-.qds .nano-titre {
+.qds .nano-title {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 1ch;
-  background: var(--_terminal-texte); color: var(--_terminal-fond); padding: 0 1ch;
+  background: var(--_terminal-text); color: var(--_terminal-background); padding: 0 1ch;
 }
-.qds .nano-chemin { overflow-wrap: anywhere; }
-.qds .nano-texte {
+.qds .nano-path { overflow-wrap: anywhere; }
+.qds .nano-text {
   width: 100%; min-height: min(16rem, 40vh); resize: vertical; box-sizing: border-box;
-  background: transparent; color: inherit; font: inherit; border: 1px dashed color-mix(in oklab, var(--_terminal-texte) 40%, transparent);
-  padding: 0.25rem; caret-color: var(--_terminal-texte);
+  background: transparent; color: inherit; font: inherit; border: 1px dashed color-mix(in oklab, var(--_terminal-text) 40%, transparent);
+  padding: 0.25rem; caret-color: var(--_terminal-text);
 }
-.qds .nano-texte:focus-visible { outline: 2px solid var(--_terminal-invite); outline-offset: 1px; }
-.qds .nano-etat { min-height: 1.5em; text-align: center; color: var(--_terminal-invite); }
-.qds .nano-aide { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
-.qds .nano-touche {
+.qds .nano-text:focus-visible { outline: 2px solid var(--_terminal-prompt); outline-offset: 1px; }
+.qds .nano-status { min-height: 1.5em; text-align: center; color: var(--_terminal-prompt); }
+.qds .nano-help { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
+.qds .nano-key {
   font: inherit; color: inherit; background: none; border: 1px solid transparent; border-radius: 0.25rem;
   padding: 0.1rem 0.3rem; cursor: pointer;
 }
-.qds .nano-touche:focus-visible { outline: 2px solid var(--_terminal-invite); }
-.qds .nano-touche kbd { font: inherit; background: var(--_terminal-texte); color: var(--_terminal-fond); padding: 0 0.2ch; }
+.qds .nano-key:focus-visible { outline: 2px solid var(--_terminal-prompt); }
+.qds .nano-key kbd { font: inherit; background: var(--_terminal-text); color: var(--_terminal-background); padding: 0 0.2ch; }
 
-/* La coloration de la ligne de commande (voir src/engine/highlighting.ts) :
-   la copie colorée est dessinée sous le champ, dont le texte devient
-   transparent (le curseur reste visible). Les couleurs ont un contraste AA
-   au moins sur le fond de chaque thème ; une commande inconnue est aussi
-   soulignée d'une vague, un chemin existant d'un trait : la couleur n'est
-   jamais le seul signe. */
+/* Command-line highlighting (see src/engine/highlighting.ts): the
+   coloured copy is drawn under the field, whose text becomes transparent
+   (the cursor stays visible). The colours have at least AA contrast on
+   each theme's background; an unknown command is also underlined with a
+   wave, an existing path with a line: colour is never the only sign. */
 .qds .terminal {
-  --_c-commande: #5fe08a;
-  --_c-inconnue: #ff7a6b;
+  --_c-command: #5fe08a;
+  --_c-unknown: #ff7a6b;
   --_c-option: #7cc7ff;
-  --_c-chaine: #ffd479;
-  --_c-operateur: #d7a6ff;
-  --_c-joker: #7fe3e3;
+  --_c-string: #ffd479;
+  --_c-operator: #d7a6ff;
+  --_c-glob: #7fe3e3;
 }
-.qds .terminal[data-theme='ambre'] { --_c-commande: #9be07a; --_c-inconnue: #ff8a70; --_c-option: #8fd0ff; --_c-chaine: #ffe7b3; --_c-operateur: #e0b3ff; --_c-joker: #8fe3d6; }
-.qds .terminal[data-theme='contraste'] { --_c-commande: #3dff7a; --_c-inconnue: #ff7070; --_c-option: #70d0ff; --_c-chaine: #ffe066; --_c-operateur: #e6b3ff; --_c-joker: #66ffff; }
-.qds .terminal[data-theme='papier'] { --_c-commande: #0f6b37; --_c-inconnue: #b3261e; --_c-option: #0b57a4; --_c-chaine: #7a4d00; --_c-operateur: #6b2fa3; --_c-joker: #00657a; }
-.qds .champ { position: relative; flex: 1; min-width: 12ch; display: flex; }
-.qds .champ input { flex: 1; min-width: 0; padding: 0; margin: 0; letter-spacing: normal; line-height: inherit; height: 1.5em; }
-.qds .coloration {
+.qds .terminal[data-theme='amber'] { --_c-command: #9be07a; --_c-unknown: #ff8a70; --_c-option: #8fd0ff; --_c-string: #ffe7b3; --_c-operator: #e0b3ff; --_c-glob: #8fe3d6; }
+.qds .terminal[data-theme='contrast'] { --_c-command: #3dff7a; --_c-unknown: #ff7070; --_c-option: #70d0ff; --_c-string: #ffe066; --_c-operator: #e6b3ff; --_c-glob: #66ffff; }
+.qds .terminal[data-theme='paper'] { --_c-command: #0f6b37; --_c-unknown: #b3261e; --_c-option: #0b57a4; --_c-string: #7a4d00; --_c-operator: #6b2fa3; --_c-glob: #00657a; }
+.qds .field { position: relative; flex: 1; min-width: 12ch; display: flex; }
+.qds .field input { flex: 1; min-width: 0; padding: 0; margin: 0; letter-spacing: normal; line-height: inherit; height: 1.5em; }
+.qds .highlighting {
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -467,21 +467,21 @@
   display: none;
   line-height: inherit;
 }
-/* En bloc, pas en flex : dans une boîte flex, les espaces entre deux mots colorés disparaîtraient. */
-.qds .champ.colore .coloration { display: block; }
-.qds .champ.colore input { color: transparent; }
-.qds .champ.colore input::selection { color: var(--_terminal-texte); }
-.qds .c-commande { color: var(--_c-commande); }
-.qds .c-inconnue { color: var(--_c-inconnue); text-decoration: underline wavy; text-underline-offset: 0.2em; }
+/* Block, not flex: in a flex box, the spaces between two coloured words would disappear. */
+.qds .field.coloured .highlighting { display: block; }
+.qds .field.coloured input { color: transparent; }
+.qds .field.coloured input::selection { color: var(--_terminal-text); }
+.qds .c-command { color: var(--_c-command); }
+.qds .c-unknown { color: var(--_c-unknown); text-decoration: underline wavy; text-underline-offset: 0.2em; }
 .qds .c-option { color: var(--_c-option); }
-.qds .c-chaine { color: var(--_c-chaine); }
-.qds .c-operateur { color: var(--_c-operateur); font-weight: 700; }
-.qds .c-joker { color: var(--_c-joker); }
-.qds .c-chemin { text-decoration: underline; text-underline-offset: 0.2em; }
+.qds .c-string { color: var(--_c-string); }
+.qds .c-operator { color: var(--_c-operator); font-weight: 700; }
+.qds .c-glob { color: var(--_c-glob); }
+.qds .c-path { text-decoration: underline; text-underline-offset: 0.2em; }
 
-/* Les couleurs des sorties (ls, grep, diff --color, systemctl), lues dans
-   les séquences ANSI (voir src/engine/colours.ts). Contraste AA au moins
-   sur le fond de chaque thème. */
+/* The outputs' colours (ls, grep, diff --color, systemctl), read from the
+   ANSI sequences (see src/engine/colours.ts). At least AA contrast on each
+   theme's background. */
 .qds .terminal {
   --_a-31: #ff7a6b;
   --_a-32: #5fe08a;
@@ -490,10 +490,10 @@
   --_a-35: #e59cff;
   --_a-36: #66d9e8;
   --_a-37: #e8edf2;
-  --_a-fond-41: #b3261e;
-  --_a-fond-42: #5fe08a;
+  --_a-bg-41: #b3261e;
+  --_a-bg-42: #5fe08a;
 }
-.qds .terminal[data-theme='papier'] {
+.qds .terminal[data-theme='paper'] {
   --_a-31: #b3261e;
   --_a-32: #0f6b37;
   --_a-33: #7a4d00;
@@ -501,10 +501,10 @@
   --_a-35: #8a2f8f;
   --_a-36: #00657a;
   --_a-37: #3c4248;
-  --_a-fond-42: #0f6b37;
+  --_a-bg-42: #0f6b37;
 }
-.qds .a-gras { font-weight: 700; }
-.qds .a-30 { color: var(--_terminal-fond); }
+.qds .a-bold { font-weight: 700; }
+.qds .a-30 { color: var(--_terminal-background); }
 .qds .a-31 { color: var(--_a-31); }
 .qds .a-32 { color: var(--_a-32); }
 .qds .a-33 { color: var(--_a-33); }
@@ -512,60 +512,60 @@
 .qds .a-35 { color: var(--_a-35); }
 .qds .a-36 { color: var(--_a-36); }
 .qds .a-37 { color: var(--_a-37); }
-.qds .a-41 { background: var(--_a-fond-41); color: #ffffff; }
-.qds .a-42 { background: var(--_a-fond-42); }
+.qds .a-41 { background: var(--_a-bg-41); color: #ffffff; }
+.qds .a-42 { background: var(--_a-bg-42); }
 .qds .a-41.a-37 { color: #ffffff; }
 
-/* Le bilan de fin de chapitre (voir src/engine/summary.ts) : une ligne dans
-   le terminal, et le détail dans une fenêtre (le tableau défile de côté sur
-   un petit écran). */
-.qds .sortie .bilan { margin: 0 0 0.5rem; color: var(--_terminal-invite); font-weight: 700; }
-.qds .sortie .bilan .lien { color: inherit; font-weight: 400; }
-.qds .fenetre-bilan, .qds .fenetre-examen { width: min(44rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
-.qds .fenetre-bilan::backdrop, .qds .fenetre-examen::backdrop { background: rgb(0 0 0 / 0.5); }
-.qds .fenetre-bilan h2, .qds .fenetre-examen h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
-.qds .bilan-tableau { overflow-x: auto; margin: 0.75rem 0; }
-.qds .bilan-tableau table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-.qds .bilan-tableau th, .qds .bilan-tableau td { border: 1px solid var(--_bord); padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; }
-.qds .bilan-tableau thead th { background: var(--_carte); }
-.qds .bilan-tableau code { font-family: var(--_police-mono); overflow-wrap: anywhere; }
-.qds .bilan-autrement { color: var(--_discret); font-style: italic; }
-/* Sur un écran étroit, une carte par étape : chaque case dit ce qu'elle contient. */
+/* The end-of-chapter summary (see src/engine/summary.ts): one line in the
+   terminal, and the details in a window (the table scrolls sideways on a
+   small screen). */
+.qds .output .summary { margin: 0 0 0.5rem; color: var(--_terminal-prompt); font-weight: 700; }
+.qds .output .summary .link { color: inherit; font-weight: 400; }
+.qds .summary-window, .qds .exam-window { width: min(44rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_background); color: var(--_text); font-family: var(--_font); }
+.qds .summary-window::backdrop, .qds .exam-window::backdrop { background: rgb(0 0 0 / 0.5); }
+.qds .summary-window h2, .qds .exam-window h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.qds .summary-table { overflow-x: auto; margin: 0.75rem 0; }
+.qds .summary-table table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+.qds .summary-table th, .qds .summary-table td { border: 1px solid var(--_border); padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; }
+.qds .summary-table thead th { background: var(--_card); }
+.qds .summary-table code { font-family: var(--_font-mono); overflow-wrap: anywhere; }
+.qds .summary-other { color: var(--_muted); font-style: italic; }
+/* On a narrow screen, one card per step: each cell says what it holds. */
 @media (max-width: 40rem) {
-  .qds .bilan-tableau table, .qds .bilan-tableau tbody, .qds .bilan-tableau tr, .qds .bilan-tableau th, .qds .bilan-tableau td { display: block; width: auto; }
-  .qds .bilan-tableau thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .qds .bilan-tableau tr { border: 1px solid var(--_bord); border-radius: 0.35rem; margin-bottom: 0.5rem; }
-  .qds .bilan-tableau th, .qds .bilan-tableau td { border: none; }
-  .qds .bilan-tableau tbody th { background: var(--_carte); }
-  .qds .bilan-tableau td::before { content: attr(data-titre); display: block; font-size: 0.8rem; font-weight: 700; color: var(--_discret); }
+  .qds .summary-table table, .qds .summary-table tbody, .qds .summary-table tr, .qds .summary-table th, .qds .summary-table td { display: block; width: auto; }
+  .qds .summary-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .qds .summary-table tr { border: 1px solid var(--_border); border-radius: 0.35rem; margin-bottom: 0.5rem; }
+  .qds .summary-table th, .qds .summary-table td { border: none; }
+  .qds .summary-table tbody th { background: var(--_card); }
+  .qds .summary-table td::before { content: attr(data-titre); display: block; font-size: 0.8rem; font-weight: 700; color: var(--_muted); }
 }
 
-/* L'instantané de secours : des boutons grisés quand ce n'est pas possible. */
-.qds .bouton-secours:disabled { cursor: default; color: var(--_discret); border-style: dashed; }
+/* The rescue snapshot: buttons greyed out when it isn't possible. */
+.qds .rescue-button:disabled { cursor: default; color: var(--_muted); border-style: dashed; }
 
-/* La vue « Parcours » : un thème, ses chapitres (les mêmes cartes que les baies). */
-.qds .parcours-choix { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin: 0 0 0.5rem; }
-.qds .parcours-choix select { font: inherit; padding: 0.25rem 0.5rem; border: 1px solid var(--_bord); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); max-width: 100%; }
-.qds .parcours-description { margin: 0 0 0.25rem; color: var(--_discret); }
-.qds .parcours-avancee { margin: 0 0 0.75rem; font-weight: 700; color: var(--_accent); }
-.qds .parcours .resume { display: block; }
-.qds .parcours button[data-etat='fait'] { border-left-color: var(--_accent); }
-.qds .parcours button[data-prochain] { border-left-color: var(--_ambre); box-shadow: inset 0 0 0 1px var(--_ambre); }
-.qds .parcours button[data-prochain] .etat { color: var(--_ambre); }
-.qds .parcours button:disabled .etat { color: var(--_discret); font-weight: 400; }
+/* The "Paths" view: a theme, its chapters (the same cards as the racks). */
+.qds .paths-choice { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin: 0 0 0.5rem; }
+.qds .paths-choice select { font: inherit; padding: 0.25rem 0.5rem; border: 1px solid var(--_border); border-radius: 0.4rem; background: var(--_card); color: var(--_text); max-width: 100%; }
+.qds .paths-description { margin: 0 0 0.25rem; color: var(--_muted); }
+.qds .paths-progress { margin: 0 0 0.75rem; font-weight: 700; color: var(--_accent); }
+.qds .paths .abstract { display: block; }
+.qds .paths button[data-state='done'] { border-left-color: var(--_accent); }
+.qds .paths button[data-next] { border-left-color: var(--_amber); box-shadow: inset 0 0 0 1px var(--_amber); }
+.qds .paths button[data-next] .state { color: var(--_amber); }
+.qds .paths button:disabled .state { color: var(--_muted); font-weight: 400; }
 
-/* L'astreinte (voir src/engine/on-call.ts) : l'entrée dans le menu, la
-   jauge du budget dans la barre, et les deux fenêtres. */
+/* On-call duty (see src/engine/on-call.ts): the entry in the menu, the
+   budget gauge in the bar, and the two windows. */
 .qds .incident { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; margin: 0 0 0.75rem; }
-.qds .bouton-incident { font: inherit; font-size: 0.9rem; font-weight: 600; padding: 0.3rem 0.8rem; border: 1px solid var(--_ambre); border-radius: 0.4rem; background: var(--_carte); color: var(--_texte); cursor: pointer; }
-.qds .bouton-incident:hover:not(:disabled), .qds .bouton-incident:focus-visible { box-shadow: inset 0 0 0 1px var(--_ambre); }
-.qds .bouton-incident:disabled { cursor: default; border-style: dashed; border-color: var(--_bord); color: var(--_discret); }
-.qds .incident-texte { font-size: 0.9rem; color: var(--_discret); }
-.qds .jauge-astreinte { font-family: var(--_police-mono); font-variant-numeric: tabular-nums; font-weight: 700; color: var(--_ambre); }
-.qds .jauge-astreinte.bas { text-decoration: underline wavy; text-underline-offset: 0.25em; }
-.qds .fenetre-astreinte { width: min(34rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_bord); border-radius: 0.5rem; background: var(--_fond); color: var(--_texte); font-family: var(--_police); }
-.qds .fenetre-astreinte::backdrop { background: rgb(0 0 0 / 0.5); }
-.qds .fenetre-astreinte h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
-.qds .astreinte-chapitre { font-weight: 700; font-family: var(--_police-mono); }
-.qds .carte-score { font-family: var(--_police-mono); white-space: pre-wrap; background: var(--_carte); border: 1px solid var(--_bord); border-radius: 0.4rem; padding: 0.75rem; }
-.qds .bouton-second { background: var(--_carte); color: var(--_texte); border-color: var(--_bord); }
+.qds .incident-button { font: inherit; font-size: 0.9rem; font-weight: 600; padding: 0.3rem 0.8rem; border: 1px solid var(--_amber); border-radius: 0.4rem; background: var(--_card); color: var(--_text); cursor: pointer; }
+.qds .incident-button:hover:not(:disabled), .qds .incident-button:focus-visible { box-shadow: inset 0 0 0 1px var(--_amber); }
+.qds .incident-button:disabled { cursor: default; border-style: dashed; border-color: var(--_border); color: var(--_muted); }
+.qds .incident-text { font-size: 0.9rem; color: var(--_muted); }
+.qds .on-call-gauge { font-family: var(--_font-mono); font-variant-numeric: tabular-nums; font-weight: 700; color: var(--_amber); }
+.qds .on-call-gauge.low { text-decoration: underline wavy; text-underline-offset: 0.25em; }
+.qds .on-call-window { width: min(34rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_background); color: var(--_text); font-family: var(--_font); }
+.qds .on-call-window::backdrop { background: rgb(0 0 0 / 0.5); }
+.qds .on-call-window h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.qds .on-call-chapter { font-weight: 700; font-family: var(--_font-mono); }
+.qds .score-card { font-family: var(--_font-mono); white-space: pre-wrap; background: var(--_card); border: 1px solid var(--_border); border-radius: 0.4rem; padding: 0.75rem; }
+.qds .button-secondary { background: var(--_card); color: var(--_text); border-color: var(--_border); }

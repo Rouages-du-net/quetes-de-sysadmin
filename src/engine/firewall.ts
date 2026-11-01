@@ -1,20 +1,20 @@
-// Le pare-feu d'une machine, tel que ufw le gère (https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html) :
-// une politique par défaut (entrant, sortant) et une liste ordonnée de
-// règles ; la PREMIÈRE règle qui correspond décide, sinon la politique par
-// défaut. Pare-feu inactif : tout passe. Les connexions déjà établies
-// (comme la session ssh en cours) ne sont jamais coupées.
-// Écarts : IPv4 et IPv6 confondus (les lignes « (v6) » sont affichées pour
-// la forme), pas de routage, de journalisation ni de règles sortantes.
+// A machine's firewall, as ufw manages it (https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html):
+// a default policy (incoming, outgoing) and an ordered list of
+// rules; the FIRST matching rule decides, otherwise the default
+// policy. Inactive firewall: everything goes through. Already established connections
+// (like the current ssh session) are never cut.
+// Differences: IPv4 and IPv6 merged (the "(v6)" lines are shown for
+// form's sake), no routing, logging or outgoing rules.
 
 export type Action = 'allow' | 'deny' | 'reject' | 'limit';
 export type Policy = 'allow' | 'deny' | 'reject';
 
 export interface Rule {
   action: Action;
-  // Ce que ufw affiche dans la colonne « Vers » (22/tcp, 80, OpenSSH…).
+  // What ufw shows in the "To" column (22/tcp, 80, OpenSSH…).
   to: string;
   ports: number[];
-  // Adresse d'origine, ou null pour « n'importe où ».
+  // Source address, or null for "anywhere".
   forEachOf: string | null;
 }
 
@@ -23,14 +23,14 @@ export interface Firewall {
   incoming: Policy;
   outgoing: Policy;
   rules: Rule[];
-  // Nombre de connexions ssh au moment de l'activation (pour vérifier
-  // qu'une nouvelle connexion passe toujours).
+  // Number of ssh connections at activation time (to check
+  // that a new connection still gets through).
   activationAlConnections?: number;
 }
 
 export const newFirewall = (): Firewall => ({ enabled: false, incoming: 'deny', outgoing: 'allow', rules: [] });
 
-// Services de /etc/services et profils d'applications de /etc/ufw/applications.d.
+// Services from /etc/services and application profiles from /etc/ufw/applications.d.
 export const SERVICES: Record<string, { ports: number[]; proto?: string }> = {
   ssh: { ports: [22], proto: 'tcp' },
   http: { ports: [80], proto: 'tcp' },
@@ -44,12 +44,12 @@ export const APPLICATIONS: Record<string, number[]> = {
   OpenSSH: [22],
 };
 
-export type Verdict = 'accepte' | 'refuse' | 'bloque';
+export type Verdict = 'accepted' | 'refused' | 'blocked';
 
-/** Une nouvelle connexion vers ce port, depuis cette adresse, passe-t-elle ? */
+/** Does a new connection to this port, from this address, get through? */
 export function verdict(pf: Firewall, port: number, source: string): Verdict {
-  if (!pf.enabled) return 'accepte';
+  if (!pf.enabled) return 'accepted';
   const r = pf.rules.find((r) => r.ports.includes(port) && (r.forEachOf === null || r.forEachOf === source));
   const action = r?.action ?? pf.incoming;
-  return action === 'allow' || action === 'limit' ? 'accepte' : action === 'reject' ? 'refuse' : 'bloque';
+  return action === 'allow' || action === 'limit' ? 'accepted' : action === 'reject' ? 'refused' : 'blocked';
 }

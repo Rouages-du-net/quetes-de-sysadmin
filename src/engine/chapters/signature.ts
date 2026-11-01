@@ -1,20 +1,20 @@
-// Histoire « Le courrier indésirable » — chapitre « La signature » : DKIM avec
-// OpenDKIM. Les courriels partent, mais mailbox.example les range dans les
-// indésirables : SPF passe, DKIM manque. Nour a installé opendkim (la
-// configuration de Debian, qui ne signe rien) ; un vérificateur
-// (check-auth@verifier.example) répond avec ce qu'il voit.
-// Commandes : mail, opendkim-genkey, chown, opendkim.conf (Domain, Selector,
+// Story "Junk Mail", chapter "The Signature": DKIM with
+// OpenDKIM. Mails go out, but mailbox.example files them as
+// junk: SPF passes, DKIM is missing. Nour installed opendkim (Debian's
+// configuration, which signs nothing); a checker
+// (check-auth@verifier.example) answers with what it sees.
+// Commands: mail, opendkim-genkey, chown, opendkim.conf (Domain, Selector,
 // KeyFile, Socket), systemctl restart opendkim, journalctl -u opendkim,
-// main.cf (non_smtpd_milters), la zone (enregistrement mail._domainkey,
+// main.cf (non_smtpd_milters), the zone (mail._domainkey record,
 // serial), opendkim-testkey.
-// Pièges réels : la clé créée par root qu'opendkim ne peut pas lire, une clé
-// lisible par tous (« key data is not secure »), la prise du milter (syntaxes
-// différentes, chroot de Postfix), smtpd_milters seul (le courrier déposé sur
-// la machine passe par non_smtpd_milters), « key not secure » d'opendkim-testkey
-// (sans DNSSEC, ce n'est pas une erreur).
-// Objectif vérifié sur l'état : un courriel déposé sur la machine serait
-// signé (d=gardens.example) et la signature vérifiée avec la clé que publie internet.
-// Sources : opendkim.conf(5), opendkim-genkey(8), opendkim-testkey(8),
+// Real traps: the key created by root that opendkim can't read, a key
+// readable by everyone ("key data is not secure"), the milter's socket (different
+// syntaxes, Postfix's chroot), smtpd_milters alone (mail submitted on
+// the machine goes through non_smtpd_milters), opendkim-testkey's "key not secure"
+// (without DNSSEC, it isn't an error).
+// Objective checked on the state: a mail submitted on the machine would be
+// signed (d=gardens.example) and the signature verified with the key the internet publishes.
+// Sources: opendkim.conf(5), opendkim-genkey(8), opendkim-testkey(8),
 // https://www.postfix.org/MILTER_README.html, RFC 6376.
 
 import { f, type Chapter } from '../world';
@@ -87,7 +87,7 @@ export const signature: Chapter = {
       id: 'key',
       condition: (j) => {
         const n = j.find('/etc/dkimkeys');
-        return n?.type === 'dossier' && Object.keys(n.children).some((x) => x.endsWith('.private'));
+        return n?.type === 'directory' && Object.keys(n.children).some((x) => x.endsWith('.private'));
       },
       message: (j) => j.t('signature-event-key'),
     },

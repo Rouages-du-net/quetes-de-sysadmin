@@ -1,7 +1,7 @@
-// Les outils d'OpenLDAP (ldap-utils et slapd) sur l'annuaire simulé
-// (../ldap.ts) : ldapsearch, ldapadd, ldapmodify, ldapdelete, ldappasswd,
-// ldapwhoami, slappasswd, slapcat. Sorties en anglais, comme les vrais outils.
-// Sources : https://manpages.debian.org/trixie/ldap-utils/ldapsearch.1.en.html,
+// OpenLDAP's tools (ldap-utils and slapd) on the simulated directory
+// (../ldap.ts): ldapsearch, ldapadd, ldapmodify, ldapdelete, ldappasswd,
+// ldapwhoami, slappasswd, slapcat. Outputs in English, like the real tools.
+// Sources: https://manpages.debian.org/trixie/ldap-utils/ldapsearch.1.en.html,
 // https://manpages.debian.org/trixie/ldap-utils/ldapmodify.1.en.html,
 // https://manpages.debian.org/trixie/ldap-utils/ldappasswd.1.en.html,
 // https://manpages.debian.org/trixie/slapd/slappasswd.8.en.html
@@ -48,7 +48,7 @@ interface Options {
   rest: string[];
 }
 
-function readOptions(args: string[], withS: 'portee' | 'nouveau'): Options | string {
+function readOptions(args: string[], withS: 'scope' | 'new'): Options | string {
   const o: Options = {
     simple: false,
     uri: null,
@@ -93,7 +93,7 @@ function readOptions(args: string[], withS: 'portee' | 'nouveau'): Options | str
         else if (l === 'Y') o.mechanism = v.toUpperCase();
         else if (l === 'b') o.base = v;
         else if (l === 'f') o.file = v;
-        else if (l === 's' && withS === 'portee') o.scope = v;
+        else if (l === 's' && withS === 'scope') o.scope = v;
         else if (l === 's') o.fresh = v;
         k = letters.length;
       } else return l;
@@ -102,7 +102,7 @@ function readOptions(args: string[], withS: 'portee' | 'nouveau'): Options | str
   return o;
 }
 
-// /etc/ldap/ldap.conf : BASE et URI par défaut.
+// /etc/ldap/ldap.conf: default BASE and URI.
 function defaults(game: Shell): { base: string | null; uri: string } {
   const text = game.read('/etc/ldap/ldap.conf') ?? '';
   const value = (key: string) =>
@@ -114,9 +114,9 @@ function defaults(game: Shell): { base: string | null; uri: string } {
   return { base: value('BASE'), uri: value('URI') ?? 'ldap://localhost' };
 }
 
-type Identity = { who: 'anonyme' } | { who: 'admin' } | { who: 'racine' } | { who: 'personne'; dn: string } | { who: 'local'; uid: number };
+type Identity = { who: 'anonymous' } | { who: 'admin' } | { who: 'root' } | { who: 'person'; dn: string } | { who: 'local'; uid: number };
 
-/** Se présenter à slapd (bind) ; renvoie l'identité, ou l'erreur à afficher (avec son code de retour). */
+/** Introduce yourself to slapd (bind); returns the identity, or the error to show (with its exit code). */
 function bindSelf(game: Shell, o: Options, mdp: string | null): { id: Identity; log: string[] } | { error: string; code: number } {
   const a = directory(game);
   const uri = o.uri ?? defaults(game).uri;
@@ -138,9 +138,9 @@ function bindSelf(game: Shell, o: Options, mdp: string | null): { id: Identity; 
           `SASL username: ${game.who === 'root' ? EXTERNAL_ROOT : `gidNumber=1000+uidNumber=1000,cn=peercred,cn=external,cn=auth`}`,
           'SASL SSF: 0',
         ];
-    return { id: game.who === 'root' ? { who: 'racine' } : { who: 'local', uid: 1000 }, log };
+    return { id: game.who === 'root' ? { who: 'root' } : { who: 'local', uid: 1000 }, log };
   }
-  if (!o.dn) return { id: { who: 'anonyme' }, log: [] };
+  if (!o.dn) return { id: { who: 'anonymous' }, log: [] };
   if (normalise(o.dn) === normalise(a.admin)) {
     if (mdp !== null && check(adminMdp(game), mdp)) return { id: { who: 'admin' }, log: [] };
     return { error: 'ldap_bind: Invalid credentials (49)', code: 49 };
@@ -148,13 +148,13 @@ function bindSelf(game: Shell, o: Options, mdp: string | null): { id: Identity; 
   const e = find(a, o.dn);
   if (!e || mdp === null || !(e.attrs.userpassword ?? []).some((v) => check(v, mdp)))
     return { error: 'ldap_bind: Invalid credentials (49)', code: 49 };
-  return { id: { who: 'personne', dn: e.dn }, log: [] };
+  return { id: { who: 'person', dn: e.dn }, log: [] };
 }
 
 const adminMdp = (game: Shell): string => game.state.ldapAdmin ?? '';
-const written = (id: Identity) => id.who === 'admin' || id.who === 'racine';
+const written = (id: Identity) => id.who === 'admin' || id.who === 'root';
 
-/** Lance `faire` une fois le mot de passe connu : donné (-w), demandé (-W), ou sans (anonyme, SASL). */
+/** Runs `run` once the password is known: given (-w), prompted (-W), or none (anonymous, SASL). */
 function withMdp(game: Shell, o: Options, run: (mdp: string | null) => string): string {
   if (!o.askMdp || o.mdp !== null) return run(o.mdp);
   const who = game.who;
@@ -175,7 +175,7 @@ function withMdp(game: Shell, o: Options, run: (mdp: string | null) => string): 
   return '';
 }
 
-// « # sami, people, thehive.example » : le commentaire de ldapsearch devant chaque entrée.
+// "# sami, people, thehive.example": ldapsearch's comment before each entry.
 function title(dn: string): string {
   const rdns = dn.split(',').map((r) => r.split('=').map((x) => x.trim()));
   const dcs = rdns.filter(([a]) => a.toLowerCase() === 'dc').map(([, v]) => v);
@@ -187,15 +187,15 @@ function inputLines(e: Input, id: Identity, requests: string[]): string[] {
   const lines = [`dn: ${e.dn}`];
   for (const [a, values] of Object.entries(e.attrs)) {
     if (requests.length && !requests.includes('*') && !requests.some((d) => d.toLowerCase() === a)) continue;
-    // userPassword : seulement pour l'administrateur, root, ou la personne elle-même.
-    if (a === 'userpassword' && !(written(id) || (id.who === 'personne' && normalise(id.dn) === normalise(e.dn)))) continue;
+    // userPassword: only for the administrator, root, or the person themselves.
+    if (a === 'userpassword' && !(written(id) || (id.who === 'person' && normalise(id.dn) === normalise(e.dn)))) continue;
     for (const v of values) lines.push(`${attributeName(a)}: ${v}`);
   }
   return lines;
 }
 
 function ldapsearch(game: Shell, args: string[]): string {
-  const o = readOptions(args, 'portee');
+  const o = readOptions(args, 'scope');
   if (typeof o === 'string') return game.error(`ldapsearch: invalid option -- '${o}'\nldapsearch: unrecognized option -${o}`, 1);
   const [textFilter = '(objectclass=*)', ...requests] = o.rest;
   const filter = readFilter(textFilter);
@@ -249,9 +249,9 @@ function ldapsearch(game: Shell, args: string[]): string {
   });
 }
 
-// ldapadd, ldapmodify, ldapdelete : écrire dans l'annuaire.
+// ldapadd, ldapmodify, ldapdelete: writing to the directory.
 function writeIn(game: Shell, name: 'ldapadd' | 'ldapmodify' | 'ldapdelete', args: string[], input: string | null): string {
-  const o = readOptions(args, 'portee');
+  const o = readOptions(args, 'scope');
   if (typeof o === 'string') return game.error(`${name}: invalid option -- '${o}'`, 1);
   let changes: Change[];
   if (name === 'ldapdelete') {
@@ -280,7 +280,7 @@ function writeIn(game: Shell, name: 'ldapadd' | 'ldapmodify' | 'ldapdelete', arg
       if (name !== 'ldapdelete') outputs.push(`${verb} "${dn}"`);
       const op = c.what === 'add' ? 'ldap_add' : c.what === 'delete' ? 'ldap_delete' : 'ldap_modify';
       let e: LdapError | null;
-      if (link.id.who === 'anonyme') e = { code: 8, text: 'Strong(er) authentication required', info: 'modifications require authentication' };
+      if (link.id.who === 'anonymous') e = { code: 8, text: 'Strong(er) authentication required', info: 'modifications require authentication' };
       else if (!written(link.id) && !mine(link.id, c)) e = { code: 50, text: 'Insufficient access', info: `no write access to parent` };
       else e = apply(a, c);
       if (e) {
@@ -293,15 +293,15 @@ function writeIn(game: Shell, name: 'ldapadd' | 'ldapmodify' | 'ldapdelete', arg
   });
 }
 
-// Une personne peut changer son propre mot de passe (et rien d'autre).
+// A person can change their own password (and nothing else).
 const mine = (id: Identity, c: Change) =>
-  id.who === 'personne' &&
+  id.who === 'person' &&
   c.what === 'modify' &&
   normalise(c.dn) === normalise(id.dn) &&
   c.ops.every((o) => o.attr.toLowerCase() === 'userpassword');
 
 function ldappasswd(game: Shell, args: string[]): string {
-  const o = readOptions(args, 'nouveau');
+  const o = readOptions(args, 'new');
   if (typeof o === 'string') return game.error(`ldappasswd: invalid option -- '${o}'`, 1);
   const who = game.who;
   const resume = (run: () => string) => {
@@ -320,14 +320,14 @@ function ldappasswd(game: Shell, args: string[]): string {
       if ('error' in link) return game.error(link.error, link.code);
       link.log.forEach((l) => game.error(l, 0));
       const a = directory(game)!;
-      const target = o.rest[0] ?? (link.id.who === 'personne' ? link.id.dn : null);
+      const target = o.rest[0] ?? (link.id.who === 'person' ? link.id.dn : null);
       if (!target) return game.error('Result: Unwilling to perform (53)\nAdditional info: password modify extended operation requires a user', 53);
       const e = find(a, target);
       if (!e) return game.error('Result: No such object (32)', 32);
-      if (!written(link.id) && !(link.id.who === 'personne' && normalise(link.id.dn) === normalise(e.dn)))
+      if (!written(link.id) && !(link.id.who === 'person' && normalise(link.id.dn) === normalise(e.dn)))
         return game.error(
-          link.id.who === 'anonyme' ? 'Result: Strong(er) authentication required (8)' : 'Result: Insufficient access (50)',
-          link.id.who === 'anonyme' ? 8 : 50,
+          link.id.who === 'anonymous' ? 'Result: Strong(er) authentication required (8)' : 'Result: Insufficient access (50)',
+          link.id.who === 'anonymous' ? 8 : 50,
         );
       const word = fresh ?? generated(game);
       e.attrs.userpassword = [hash(game, word)];
@@ -351,14 +351,14 @@ function ldappasswd(game: Shell, args: string[]): string {
   return '';
 }
 
-// Le mot de passe que choisit ldappasswd quand on ne lui en donne pas.
+// The password ldappasswd chooses when it isn't given one.
 const generated = (game: Shell) => {
   const n = (game.state.ldapGenerated = (game.state.ldapGenerated ?? 0) + 1);
   return ['aB3dEf9h', 'Qw7rTy2u', 'Zx5cVb8n'][(n - 1) % 3];
 };
 
 function ldapwhoami(game: Shell, args: string[]): string {
-  const o = readOptions(args, 'portee');
+  const o = readOptions(args, 'scope');
   if (typeof o === 'string') return game.error(`ldapwhoami: invalid option -- '${o}'`, 1);
   return withMdp(game, o, (mdp) => {
     const link = bindSelf(game, o, mdp);
@@ -366,9 +366,9 @@ function ldapwhoami(game: Shell, args: string[]): string {
     link.log.forEach((l) => game.error(l, 0));
     const id = link.id;
     const a = directory(game)!;
-    if (id.who === 'anonyme') return 'anonymous';
+    if (id.who === 'anonymous') return 'anonymous';
     if (id.who === 'admin') return `dn:${a.admin}`;
-    if (id.who === 'racine') return `dn:${EXTERNAL_ROOT}`;
+    if (id.who === 'root') return `dn:${EXTERNAL_ROOT}`;
     if (id.who === 'local') return `dn:gidNumber=${id.uid}+uidNumber=${id.uid},cn=peercred,cn=external,cn=auth`;
     return `dn:${id.dn}`;
   });
@@ -410,7 +410,7 @@ function slapcat(game: Shell): string {
   const a: Directory | undefined = directory(game);
   if (!a) return '';
   return a.inputs
-    .flatMap((e) => [...inputLines(e, { who: 'racine' }, []), ''])
+    .flatMap((e) => [...inputLines(e, { who: 'root' }, []), ''])
     .join('\n')
     .trimEnd();
 }

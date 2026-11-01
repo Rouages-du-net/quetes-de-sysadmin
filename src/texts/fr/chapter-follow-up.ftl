@@ -52,10 +52,10 @@ follow-up-template =
     ## Reste à faire
     (à compléter : ce qui n'est pas corrigé et pourquoi, avec les identifiants Lynis)
 
-follow-up-section-resume = Résumé
-follow-up-section-constats = Constats corrigés
-follow-up-section-preuves = Preuves
-follow-up-section-reste = Reste à faire
+follow-up-section-summary = Résumé
+follow-up-section-findings = Constats corrigés
+follow-up-section-evidence = Preuves
+follow-up-section-remaining = Reste à faire
 follow-up-a-complete = (à compléter
 
 ## Mots que la relecture cherche (séparés par des virgules, sans tenir compte des majuscules)
@@ -90,8 +90,8 @@ follow-up-event-locked-out =
 follow-up-event-outside-scope =
     Tu as sondé une adresse hors de la lettre de mission ({ $addresses }). Même pour
     une contre-visite, on reste dans le périmètre : { $neighbour ->
-        [oui] le serveur du voisin n'est toujours pas à nous.
-       *[non] ce qui n'y figure pas n'est pas à nous.
+        [yes] le serveur du voisin n'est toujours pas à nous.
+       *[no] ce qui n'y figure pas n'est pas à nous.
     }
 # { $outdated } : « oui » si la version de SSH affichée n'est pas à jour
 follow-up-event-scan =
@@ -99,8 +99,8 @@ follow-up-event-scan =
     ports 5432 (PostgreSQL) et 6379 (Redis) ne répondent plus, il reste SSH, le
     site et son port sécurisé. Les correctifs de pare-feu tiennent.
     { $outdated ->
-        [oui] Mais regarde la version de SSH : elle n'est pas celle d'une machine à jour. Une mise à jour de sécurité attend (apt list --upgradable) ; c'est le genre de détail que nmap -sV révèle et que personne ne regarde.
-       *[non] Et la version de SSH est celle d'une machine à jour.
+        [yes] Mais regarde la version de SSH : elle n'est pas celle d'une machine à jour. Une mise à jour de sécurité attend (apt list --upgradable) ; c'est le genre de détail que nmap -sV révèle et que personne ne regarde.
+       *[no] Et la version de SSH est celle d'une machine à jour.
     }
 follow-up-event-lynis =
     Voilà l'audit : un indice de durcissement de { $hint }, et
@@ -152,8 +152,8 @@ follow-up-event-end =
     faire. Une contre-visite ne cherche pas à tout corriger : elle montre ce qui
     est corrigé, et dit franchement ce qui ne l'est pas.
     { $mistake ->
-        [oui] Ton balayage a aussi touché une adresse qui n'était pas dans la lettre de mission : à noter pour la prochaine mission.
-       *[non] Tous tes balayages sont restés dans le périmètre.
+        [yes] Ton balayage a aussi touché une adresse qui n'était pas dans la lettre de mission : à noter pour la prochaine mission.
+       *[no] Tous tes balayages sont restés dans le périmètre.
     }
 
     LA BONNE PRATIQUE
