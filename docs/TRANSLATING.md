@@ -18,15 +18,15 @@ language, like bash's builtin; each language adds its own name for it
 | File | Contents |
 |---|---|
 | `interface.ftl` | menus, buttons, progress |
-| `histoires.ftl` | each story's title and summary |
-| `chapitre-<id>.ftl` | a chapter: its title, the texts of its places and objects, its events |
+| `stories.ftl` | each story's title and summary |
+| `chapter-<id>.ftl` | a chapter: its title, the texts of its places and objects, its events |
 | `shell.ftl` | prompt, sudo, pipes, common error messages |
-| `manuel.ftl` | each command's `man` page, and `--help` |
-| `commandes-*.ftl` | the commands' messages (`ls`, `tar`, `git`…) |
-| `noms.ftl` | the names of places, objects and accounts that you type |
+| `manual.ftl` | each command's `man` page, and `--help` |
+| `commands-*.ftl` | the commands' messages (`ls`, `tar`, `git`…) |
+| `names.ftl` | the names of places, objects and accounts that you type |
 | `machines.ftl` | the names of the network's machines (`kingdom` → `royaume` in French) |
-| `mots-de-passe.ftl` | the passwords the stories give (`flour-2028` → `farine-2028` in French) |
-| `indices-<story>.ftl` | the graduated hints of a story's chapters |
+| `passwords.ftl` | the passwords the stories give (`flour-2028` → `farine-2028` in French) |
+| `hints-<story>.ftl` | the graduated hints of a story's chapters |
 
 ## The format in short
 
@@ -52,7 +52,7 @@ state-chapters-done =
 
 # An attribute: .name = …
 story-eraser = The Eraser
-    .resume = A creature is erasing everything in the kingdom.
+    .summary = A creature is erasing everything in the kingdom.
 ```
 
 Pitfalls of the format:
@@ -79,7 +79,7 @@ Pitfalls of the format:
 ### Names of places and objects
 
 The directories and files you type (`Lighthouse`, `crab`, `.spare_bulb`,
-`memories`) are translated in `noms.ftl`. The English name is the
+`memories`) are translated in `names.ftl`. The English name is the
 identifier: `name-<name>`, where a leading dot becomes `point-` and the other
 dots become dashes. English gives each name as it is; French (and every
 other language) gives its own:
@@ -121,7 +121,7 @@ names its containers), systemd units, programs and scripts in the `PATH`
 `matinale-…` and `nuit-…` shows). A story's internal machines (the wiki and
 archives of the Maison des associations) are renamed like its main machine.
 
-Two accounts are translated too, in `noms.ftl`: the player's
+Two accounts are translated too, in `names.ftl`: the player's
 (`name-you = vous` in French: prompt `vous@royaume:~$`, `/home/vous`, owner
 of files, `whoami`, `User vous` in the workstation's `~/.ssh/config`, author
 of commits…) and the Eraser's system user (`name-eraser = effaceur`). A Unix
@@ -143,7 +143,7 @@ language. In texts, write the language's name (`ssh kingdom`,
 files (`/etc/nginx/sites-available/letters`) keep theirs.
 
 The **passwords** the stories give (sudo, ssh, restic repositories,
-databases) are translated too, in `mots-de-passe.ftl` (`password-flour-2028 =
+databases) are translated too, in `passwords.ftl` (`password-flour-2028 =
 farine-2028` in French): words of the language, no accent, no space. The
 code uses the English password (`password()` in `src/engine/world.ts`); the
 texts quote the language's one. `tests/machines.test.ts` checks that no text
@@ -151,18 +151,18 @@ quotes a machine name or a password of another language.
 
 The commands in the manual's examples are in the code (`pages.ts`). When one
 of them contains words (`grep "mot de passe" journal.txt`), a language can
-replace it with a `.commande-N` attribute of the page:
+replace it with a `.command-N` attribute of the page:
 
 ```ftl
 man-grep = prints the lines that contain the pattern…
-    .exemple-3 = search for several words: quotes keep the spaces
-    .commande-3 = grep "my password" journal.txt
+    .example-3 = search for several words: quotes keep the spaces
+    .command-3 = grep "my password" journal.txt
 ```
 
-The **hints** (`indices-<story>.ftl`) have one message per step, with no
-value, and two attributes: `.piste` (a direction, without the command) and
+The **hints** (`hints-<story>.ftl`) have one message per step, with no
+value, and two attributes: `.lead` (a direction, without the command) and
 `.solution` (the command, almost the answer). They use your language's names
-from `noms.ftl`.
+from `names.ftl`.
 
 The messages the game **checks** (titles and keywords of the post-mortem,
 names of datasets in the database…) are translated as what the player would

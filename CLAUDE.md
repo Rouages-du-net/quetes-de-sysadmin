@@ -27,10 +27,10 @@ presents them for people.
   English ones); every other document is in English only.
 - **Code in English.** Files and identifiers (functions, variables,
   types, props), and the world (places, machines, accounts, passwords) are
-  in English, and so are the `.ftl` keys. Some identifiers are still
-  French: the keys of a machine's state (`state.montages`, `state.applis`…),
-  the `.ftl` file names and attributes (`.piste`, `.resume`…), CSS classes
-  and some comments; they are being moved to English. Write new
+  in English, and so are the `.ftl` files and keys. Some identifiers are
+  still French: the keys of a machine's state (`state.montages`,
+  `state.applis`…), CSS classes and some comments; they are being moved to
+  English. Write new
   code (files, functions, variables, props, CSS classes, new `.ftl` keys)
   in English; never mix a large rename with a feature. A public name (attribute of
   the element, URL) gets its English form first and keeps the French one
@@ -240,7 +240,7 @@ presents them for people.
   least one path, `tests/paths.test.ts` checks it), the end-of-chapter
   summary in `src/engine/summary.ts` (`Shell.passed`, `typedCommands`),
   graduated hints in `src/engine/hints.ts`, their texts in
-  `src/texts/<language>/indices-<story>.ftl`: every new chapter has some,
+  `src/texts/<language>/hints-<story>.ftl`: every new chapter has some,
   `tests/hints.test.ts` checks it) and styles (`styles.css`, everything
   under `.qds`, colours in `--qds-*` variables).
 - `src/element.ts`: the `<quetes-de-sysadmin>` element (Shadow DOM);
@@ -254,12 +254,12 @@ presents them for people.
   `src/interface/classroom.ts`, logic in `src/engine/classroom.ts`) reads the
   students' saves in the browser.
 - `src/texts/<language>/*.ftl`: every text (Fluent), loaded by
-  `src/texts/index.ts` (`translator()`, `typography()`); `noms.ftl`: the
+  `src/texts/index.ts` (`translator()`, `typography()`); `names.ftl`: the
   names of places and objects of chapters with `names: true` (in the code,
   `path()` and `name()` of `world.ts`; in tests, `inLanguage()`);
   `machines.ftl`: the machines' names (kingdom → royaume in French; `machineName()`,
   `hostInLanguage()` of `machines.ts`, `Shell.hostName`; in tests,
-  `machinesInLanguage()`); `mots-de-passe.ftl`: the stories' passwords
+  `machinesInLanguage()`); `passwords.ftl`: the stories' passwords
   (`password()` of `world.ts`). Every identifier is English (chapters,
   stories, machines, places, accounts, passwords); French is a translation.
 - `tests/quests.test.ts`: each chapter replayed; `tests/browser.mjs`:

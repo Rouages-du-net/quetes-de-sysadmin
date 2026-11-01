@@ -86,7 +86,7 @@ const after = (ids: string[]) =>
   return (
     <section class="fiche-histoire" aria-labelledby={`h-${h.id}`}>
       <h2 id={`h-${h.id}`}>{t(`story-${h.id}`)}</h2>
-      <p>{typo(t(`story-${h.id}.resume`))}</p>
+      <p>{typo(t(`story-${h.id}.summary`))}</p>
       <p class="discret">
         {fr
           ? `${list.length} ${list.length > 1 ? 'chapitres' : 'chapitre'}, environ ${duration}.`
@@ -100,7 +100,7 @@ const after = (ids: string[]) =>
             <h3>{t('chapter-number', { numero: f.chapter.number })}{fr ? ' : ' : ': '}{t(`chapter-${f.chapter.id}`)}</h3>
             <dl>
               <dt>{fr ? 'Objectif' : 'Goal'}</dt>
-              <dd>{typo(t(`chapter-${f.chapter.id}.resume`))}</dd>
+              <dd>{typo(t(`chapter-${f.chapter.id}.summary`))}</dd>
               <dt>{fr ? 'Avant' : 'Before'}</dt>
               <dd>
                 {f.before

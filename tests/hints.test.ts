@@ -12,7 +12,7 @@ import { LANGUAGES } from '../src/texts';
 // Les messages d'indice d'une langue, avec leurs attributs.
 const messages = (language: string) => {
   const all: Record<string, string[]> = {};
-  for (const f of readdirSync(`src/texts/${language}`).filter((n) => n.startsWith('indices-'))) {
+  for (const f of readdirSync(`src/texts/${language}`).filter((n) => n.startsWith('hints-'))) {
     let active = '';
     for (const l of readFileSync(`src/texts/${language}/${f}`, 'utf8').split('\n')) {
       const m = /^(hint-[a-z0-9-]+) =/.exec(l);
@@ -33,7 +33,7 @@ for (const h of STORIES)
           const valid = new Set(c.events.map((e) => `hint-${c.id}-${e.id}`));
           const itsOwn = Object.keys(all).filter((id) => valid.has(id));
           expect(itsOwn.length, `${language} : ${c.id} n'a aucun indice`).toBeGreaterThan(0);
-          for (const id of itsOwn) expect(all[id].sort(), `${language} : ${id}`).toEqual(['piste', 'solution']);
+          for (const id of itsOwn) expect(all[id].sort(), `${language} : ${id}`).toEqual(['lead', 'solution']);
           for (const e of c.steps ?? []) expect(c.events.some((x) => x.id === e), `${c.id} : étape ${e}`).toBe(true);
           // Au début du chapitre, un indice est là.
           expect(hint(new Shell(c, language)).step, `${language} : ${c.id}`).not.toBeNull();

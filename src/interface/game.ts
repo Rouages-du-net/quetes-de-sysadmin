@@ -75,7 +75,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     el('button', { type: 'button', 'data-histoire': String(i) },
       el('span', { class: 'titre' }, storyTitle(i)),
       host(storyMachine(h.id)),
-      el('span', { class: 'resume' }, typo(t(`story-${h.id}.resume`))),
+      el('span', { class: 'resume' }, typo(t(`story-${h.id}.summary`))),
       level(storyDifficulty(h.id).min, storyDifficulty(h.id).max),
       el('span', { class: 'etat' }),
       // Une diode par chapitre, comme sur une baie de serveur (l'état en toutes lettres est dans .etat).
@@ -131,7 +131,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
         el('li', {}, el('button', { type: 'button', 'data-chapitre': String(j) },
           el('span', { class: 'num' }, t('chapter-number', { numero: c.number })),
           el('span', { class: 'titre' }, t(`chapter-${c.id}`)),
-          el('span', { class: 'resume' }, typo(t(`chapter-${c.id}.resume`))),
+          el('span', { class: 'resume' }, typo(t(`chapter-${c.id}.summary`))),
           level(difficulty(c.id)),
           el('span', { class: 'etat' })))))),
   );
@@ -1323,7 +1323,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const sh = gameTerminal.remote?.shell;
     const c = sh?.chapter;
     titleMission.textContent = c ? t('mission-title', { chapitre: t('chapter-number', { numero: c.number }), titre: t(`chapter-${c.id}`) }) : t('workstation-title');
-    goalMission.textContent = c ? typo(t(`chapter-${c.id}.resume`)) : '';
+    goalMission.textContent = c ? typo(t(`chapter-${c.id}.summary`)) : '';
     instructionsMission.textContent = (sh ?? gameTerminal.workstation).read(`${(sh ?? gameTerminal.workstation).home}/${(sh ?? gameTerminal.workstation).welcome}`) ?? '';
     const log = sh?.log ?? [];
     emptyMission.hidden = log.length > 0;

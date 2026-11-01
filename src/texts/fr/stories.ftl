@@ -1,0 +1,41 @@
+### Les histoires : titre et résumé (affichés dans le menu du jeu). Le titre
+### et le résumé de chaque chapitre sont dans le fichier de son histoire.
+
+story-eraser = L’Effaceur
+    .summary = Une créature efface tout dans le royaume. Se déplacer, créer, chercher, les permissions et sudo, puis les sauvegardes.
+story-datacenter = Le Datacenter
+    .summary = Un site en panne, une nouvelle recrue, une nuit de redémarrage, un incendie, un certificat expiré : journaux, tubes |, comptes et groupes, systemd, apt, nginx, sauvegardes, TLS.
+story-packet = Le Paquet perdu
+    .summary = « Internet ne marche plus » : enquête de proche en proche avec ping, dig, traceroute et curl.
+story-time-machine = La Machine à remonter le temps
+    .summary = Le manuscrit d’Inès est abîmé : voyager dans ses versions avec git.
+story-archives = Les Archives
+    .summary = Sauver le fonds d’une bibliothèque sur une petite clé, puis retrouver la bonne version d’un manuscrit : du, df, find, tar, restic.
+story-letters = Les Lettres du quartier
+    .summary = Un serveur tout neuf, déjà attaqué : durcir SSH, le pare-feu, fail2ban ; puis héberger deux sites, le DNS, et tenir le soir du concert, déplacer SSH sans s’enfermer dehors, chasser les récidivistes, et accueillir un site sous Apache.
+story-fablab = La Fabrique
+    .summary = Le fablab du quartier passe aux conteneurs : docker, volumes, docker compose, le pare-feu que Docker contourne, et des conteneurs qui ne tournent plus en root.
+story-gazette = La Gazette
+    .summary = Le journal en ligne du quartier apprend à déployer : git push, crochets, et revenir en arrière quand ça casse.
+story-game-library = La Ludothèque
+    .summary = Le serveur de la ludothèque du quartier : un rançongiciel, des sauvegardes qui tiennent le coup, et une base de données à sauver proprement.
+story-on-call = L'Astreinte
+    .summary = Des nuits d'astreinte pour Radio Quartier : disque plein, mémoire, inodes, horloge… puis la supervision qui prévient avant que ça casse, et le disque qui sature chaque après-midi.
+story-community-centre = La Maison des associations
+    .summary = Une passerelle et un réseau interne derrière elle : ses propres clés SSH, ssh -J, les tunnels, scp et rsync entre machines.
+story-coop = La Coopérative
+    .summary = L'épicerie coopérative du quartier : les comptes de celles et ceux qui arrivent et qui partent, les droits partagés, sudo bien réglé, le site de la caisse et ses mises à jour, à la main puis automatiques.
+story-hive = La Ruche
+    .summary = Le réseau d'un tiers-lieu : des VLAN pour séparer bureaux, invité·es et équipements, le DHCP, le NAT et un pare-feu entre les zones, un VPN, une DMZ pour le site, un second site, un annuaire et un Wi-Fi d'entreprise.
+story-audit = L'Audit
+    .summary = L'assureur de la boulangerie veut un audit : lire la lettre de mission et faire l'inventaire avec nmap sans sortir du périmètre, corriger les constats d'une auditrice (SSH, comptes, sudo, secrets), fermer ce qui est exposé sur le réseau, remonter la trace d'une connexion inattendue, puis prouver avec nmap et Lynis que tout tient.
+story-lab = Le Labo
+    .summary = Le serveur du club photo : un disque qui fatigue, ce que SMART dit vraiment, le RAID logiciel, remplacer un disque sans rien perdre ni se tromper de disque, agrandir la place avec LVM, puis sortir du mode secours.
+story-watch = La Veille
+    .summary = Six mois après l'audit, la boulangerie a migré sur un nouveau serveur : prendre l'habitude de la veille de sécurité, trier un bulletin de CVE, corriger ce qui compte, prouver que ça tient, puis automatiser ce qui peut l'être.
+story-junk-mail = Le courrier indésirable
+    .summary = Les courriels des Jardins partagés n'arrivent pas, ou finissent dans les indésirables : SPF, DKIM et DMARC, avec Postfix, OpenDKIM et le DNS.
+story-fleet = La flotte
+    .summary = Trois maisons de quartier, trois serveurs, une seule personne : les gérer ensemble avec Ansible (inventaire, playbook, idempotence, --check).
+story-patch = La Rustine
+    .summary = L'atelier vélo a un serveur neuf, avec Caddy, qui « fait le HTTPS tout seul »… à condition de lui donner le bon nom et de laisser passer l'autorité de certification. Un court chapitre pour comparer avec nginx et certbot.

@@ -258,7 +258,7 @@ achievements-sandwich = With the rights
 achievements-sl = Locomotive
     .description = sl instead of ls: the most famous typo, punished by a train.
 
-## Graded hints (see src/engine/hints.ts; the hints themselves: indices-<story>.ftl)
+## Graded hints (see src/engine/hints.ts; the hints themselves: hints-<story>.ftl)
 
 hint-title = Need help?
 hint-intro = Three levels, to open one after the other: the manual first, like at work. The debrief will say how many you asked for.

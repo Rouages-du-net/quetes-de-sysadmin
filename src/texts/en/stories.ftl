@@ -1,0 +1,41 @@
+### The stories: title and summary (shown in the game menu). The title
+### and summary of each chapter are in the file of its story.
+
+story-eraser = The Eraser
+    .summary = A creature is erasing everything in the kingdom. Moving around, creating, searching, permissions and sudo, then backups.
+story-datacenter = The Data Centre
+    .summary = A site down, a new recruit, a night of reboots, a fire, an expired certificate: logs, pipes |, accounts and groups, systemd, apt, nginx, backups, TLS.
+story-packet = The Lost Packet
+    .summary = "The internet doesn't work any more": an investigation, hop by hop, with ping, dig, traceroute and curl.
+story-time-machine = The Time Machine
+    .summary = Inès's manuscript is damaged: travel through its versions with git.
+story-archives = The Archives
+    .summary = Save a library's collection onto a small USB stick, then find the right version of a manuscript: du, df, find, tar, restic.
+story-letters = The Neighbourhood Letters
+    .summary = A brand-new server, already under attack: harden SSH, the firewall, fail2ban; then host two sites, DNS, survive the night of the concert, move SSH without locking yourself out, hunt down repeat offenders, and take in a site that runs on Apache.
+story-fablab = The Workshop
+    .summary = The neighbourhood fablab moves to containers: docker, volumes, docker compose, the firewall Docker bypasses, and containers that no longer run as root.
+story-gazette = The Gazette
+    .summary = The neighbourhood's online newspaper learns to deploy: git push, hooks, and rolling back when things break.
+story-game-library = The Game Library
+    .summary = The server of the neighbourhood game library: ransomware, backups that hold up, and a database to rescue properly.
+story-on-call = On Call
+    .summary = Nights on call for Radio Quartier: full disk, memory, inodes, clock… then monitoring that warns you before things break, and the disk that saturates every afternoon.
+story-community-centre = The Community Centre
+    .summary = A gateway and an internal network behind it: your own SSH keys, ssh -J, tunnels, scp and rsync between machines.
+story-coop = The Co-op
+    .summary = The neighbourhood food co-op: accounts for the people who arrive and leave, shared permissions, a well-tuned sudo, the till's website and its updates, by hand and then automatic.
+story-hive = The Hive
+    .summary = The network of a community space: VLANs to separate offices, guests and equipment, DHCP, NAT and a firewall between zones, a VPN, a DMZ for the website, a second site, a directory and enterprise Wi-Fi.
+story-audit = The Audit
+    .summary = The bakery's insurer wants an audit: read the letter of engagement and take an inventory with nmap without leaving the scope, fix an auditor's findings (SSH, accounts, sudo, secrets), close what is exposed on the network, trace an unexpected login, then prove with nmap and Lynis that everything holds.
+story-lab = The Lab
+    .summary = The photo club's server: a disk wearing out, what SMART really says, software RAID, replacing a disk without losing anything or picking the wrong disk, growing the space with LVM, then getting out of emergency mode.
+story-watch = The Watch
+    .summary = Six months after the audit, the bakery has migrated to a new server: building the habit of a security watch, sorting a bulletin of CVEs, fixing what matters, proving it holds, then automating what can be automated.
+story-junk-mail = Junk Mail
+    .summary = The Community Gardens' emails don't arrive, or end up in junk folders: SPF, DKIM and DMARC, with Postfix, OpenDKIM and DNS.
+story-fleet = The Fleet
+    .summary = Three neighbourhood centres, three servers, one person: manage them together with Ansible (inventory, playbook, idempotence, --check).
+story-patch = The Patch
+    .summary = The bike workshop has a new server, with Caddy, which "does HTTPS by itself"… provided you give it the right name and let the certificate authority through. A short chapter to compare with nginx and certbot.

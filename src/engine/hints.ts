@@ -3,7 +3,7 @@
 // réponse. Ils suivent la partie : l'indice est celui de la première étape
 // du chapitre pas encore franchie. Le mode examen n'en donne aucun, et le
 // débrief dit combien on en a demandé.
-// Textes : src/texts/<langue>/indices-<histoire>.ftl, un message par étape
+// Textes : src/texts/<langue>/hints-<story>.ftl, un message par étape
 // (indice-<chapitre>-<événement>) avec ses attributs .piste et .solution.
 // Une étape sans message n'a pas d'indice (une fausse piste, un avertissement).
 
@@ -28,8 +28,8 @@ export function hint(sh: Shell): Hint {
   const sheet = allSheets().find((f) => f.chapter === c);
   const manual = sheet?.fresh.length ? sheet.fresh : c.commands.filter((x) => !['ls', 'cd', 'pwd', 'cat', 'less'].includes(x)).slice(0, 4);
   const order = c.steps ?? c.events.map((e) => e.id);
-  const step = order.find((e) => !sh.flags.has(e) && sh.t.exists(`hint-${c.id}-${e}.piste`));
+  const step = order.find((e) => !sh.flags.has(e) && sh.t.exists(`hint-${c.id}-${e}.lead`));
   if (!step) return { step: null, manual, lead: null, solution: null };
   const id = `hint-${c.id}-${step}`;
-  return { step, manual, lead: sh.t(`${id}.piste`), solution: sh.t(`${id}.solution`) };
+  return { step, manual, lead: sh.t(`${id}.lead`), solution: sh.t(`${id}.solution`) };
 }

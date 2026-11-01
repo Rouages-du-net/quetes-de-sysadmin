@@ -1,6 +1,6 @@
 // Les pages du manuel, partie technique : options courtes comprises par le
 // jeu, commandes d’exemple et renvois (VOIR AUSSI). Les explications sont
-// dans src/texts/<langue>/manuel.ftl (man-<commande>, .option-X, .exemple-N).
+// dans src/texts/<langue>/manual.ftl (man-<commande>, .option-X, .example-N).
 // Une option absente d’ici donne le vrai message d’erreur, qui renvoie vers --help ;
 // longues : les options longues de GNU comprises (--all → -a), les autres sont refusées.
 

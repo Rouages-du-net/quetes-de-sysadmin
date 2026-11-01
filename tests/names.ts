@@ -7,7 +7,7 @@
 // see machines.ftl), and translated where they are host names: after ssh and
 // its cousins, after @, in kingdom.internal, id_kingdom, kingdom:path (scp),
 // ~/.ssh/config (Host, HostName, ProxyJump) and the banner "Linux kingdom". Les mots de passe des histoires aussi
-// (farine-2028 → flour-2028, voir mots-de-passe.ftl), partout où ils sont un mot entier.
+// (farine-2028 → flour-2028, voir passwords.ftl), partout où ils sont un mot entier.
 import { readFileSync } from 'node:fs';
 import { password, name, systemDirectory } from '../src/engine/world';
 import { MACHINES, machineName, WORKSTATION } from '../src/engine/machines';
@@ -17,7 +17,7 @@ const IDS = [WORKSTATION, ...MACHINES].map((m) => m.name).join('|');
 const HOST = new RegExp(`(?<=@|\\bid_|^Linux |^\\s*(?:Host|HostName|ProxyJump)\\s+|-J )(${IDS})(?![\\w-])|(?<![\\w./-])(${IDS})(?=\\.internal\\b|:[~/\\w])`, 'gim');
 const NETWORK = /^\s*(?:sudo\s+)?(?:ssh|ssh-copy-id|sftp|scp|rsync|nc|ping|nmap|host|dig|curl)\b/;
 
-const PASSWORDS = [...readFileSync(new URL('../src/texts/fr/mots-de-passe.ftl', import.meta.url), 'utf8').matchAll(/^password-(\S+) =/gm)].map((m) => m[1]);
+const PASSWORDS = [...readFileSync(new URL('../src/texts/fr/passwords.ftl', import.meta.url), 'utf8').matchAll(/^password-(\S+) =/gm)].map((m) => m[1]);
 const MDP = new RegExp(`(?<![\\w-])(${PASSWORDS.join('|')})(?![\\w-])`, 'g');
 
 export const machinesInLanguage = (t: Translate, line: string) => {

@@ -142,7 +142,7 @@ export interface Chapter {
 }
 
 // Une histoire : une suite de chapitres. Les histoires sont indépendantes.
-// Titre et résumé : histoire-<id> dans src/texts/<langue>/histoires.ftl.
+// Titre et résumé : histoire-<id> dans src/texts/<langue>/stories.ftl.
 export interface Story {
   id: string;
   chapters: Chapter[];
@@ -182,11 +182,11 @@ export const f = (content: File['content'], options: Omit<File, 'type' | 'conten
 
 // Les noms des lieux et des objets d'une histoire (les dossiers et les
 // fichiers qu'on tape) : le nom français sert d'identifiant, chaque langue
-// donne le sien dans src/texts/<langue>/noms.ftl, sous nom-<nom> (le point
+// donne le sien dans src/texts/<langue>/names.ftl, sous nom-<nom> (le point
 // initial devient « point- », les autres points des tirets). Un nom absent
 // reste tel quel (home, etc, les noms des vrais outils).
 const nameKey = (french: string) => `name-${french.replace(/^\./, 'point-').replace(/\./g, '-')}`;
-/** Un mot de passe donné par une histoire, dans la langue (mots-de-passe.ftl : farine-2028 → flour-2028). */
+/** Un mot de passe donné par une histoire, dans la langue (passwords.ftl : farine-2028 → flour-2028). */
 export const password = (t: Translate, french: string) => (t.exists(`password-${french}`) ? t(`password-${french}`) : french);
 export const name = (t: Translate, french: string) => (t.exists(nameKey(french)) ? t(nameKey(french)) : french);
 /** Un chemin du monde, traduit nom par nom : /Cabane/Jetee/filet → /Hut/Pier/net. */
