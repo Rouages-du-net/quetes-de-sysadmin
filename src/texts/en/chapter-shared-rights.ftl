@@ -45,9 +45,9 @@ shared-rights-event-sudoers-broken =
 
     On a real server, you would need the hosting provider's rescue console
     (or pkexec). Here: "Restart this chapter", below the terminal.
-# { $fichier }: the ignored rules file
+# { $file }: the ignored rules file
 shared-rights-event-file-ignore =
-    Your rule is in { $fichier }… which sudo doesn't read! @includedir
+    Your rule is in { $file }… which sudo doesn't read! @includedir
     ignores files whose name contains a dot or ends with ~ (reread
     /etc/sudoers.d/README). Give it a name without a dot, like
     /etc/sudoers.d/till.
@@ -63,9 +63,9 @@ shared-rights-event-systemctl-whole =
 shared-rights-event-sudo =
     sudo -l -U lina confirms it: the till team can restart the till, and
     nothing else.
-# { $dossier }: the shared directory
+# { $directory }: the shared directory
 shared-rights-event-directory =
-    { $dossier } now belongs to the till group, which can write to it, and
+    { $directory } now belongs to the till group, which can write to it, and
     has the setgid bit (the s in drwxrwsr-x): everything created in it will
     get the till group. What remains is what's already there, and the
     permissions Lina and Karim will give their next files (umask).

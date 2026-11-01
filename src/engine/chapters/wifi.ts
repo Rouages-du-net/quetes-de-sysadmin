@@ -338,7 +338,7 @@ export const wifi: Chapter = {
       },
       home: {
         'email_malik.txt': f(t('wifi-email-malik')),
-        'ap-offices.txt': f(t('wifi-bound', { secret: BOUND_SECRET, adresse: BOUND }), { lines: true }),
+        'ap-offices.txt': f(t('wifi-bound', { secret: BOUND_SECRET, address: BOUND }), { lines: true }),
         'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },
     }),

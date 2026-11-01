@@ -72,7 +72,7 @@ export const dhcp: Chapter = {
         const b = lan(j)!.devices.find((a) => a.name === 'imprimante')?.lease;
         return !!b && b !== PRINTER;
       },
-      message: (j) => j.t('dhcp-event-printer-elsewhere', { adresse: PRINTER }),
+      message: (j) => j.t('dhcp-event-printer-elsewhere', { address: PRINTER }),
     },
     { id: 'end', condition: (j) => servedWell(j) && !answersOn(j, 'eth0'), message: (j) => j.t('dhcp-event-end') },
   ],

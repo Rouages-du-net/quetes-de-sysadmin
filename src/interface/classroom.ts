@@ -58,8 +58,8 @@ export function mountClass(root: HTMLElement, language: Language) {
     students.sort((a, b) => a.name.localeCompare(b.name, t.language));
     actions.hidden = students.length === 0;
     state.replaceChildren(
-      t('class-account', { nombre: students.length }),
-      ...errors.map((x) => el('span', { class: 'classe-erreur' }, ' ', t('class-error', { source: x.source, raison: t(`progress-${x.error}`) }))),
+      t('class-account', { count: students.length }),
+      ...errors.map((x) => el('span', { class: 'classe-erreur' }, ' ', t('class-error', { source: x.source, reason: t(`progress-${x.error}`) }))),
     );
     if (!students.length) return grid.replaceChildren();
     grid.replaceChildren(

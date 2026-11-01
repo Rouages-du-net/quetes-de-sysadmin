@@ -7,11 +7,11 @@ ssh-locked-out = (Your key is fine, but the sshd configuration on { $machine } r
 ssh-firewall = (The firewall of { $machine } blocks the SSH port: you have locked yourself out. The session you had is no longer there to fix it. Here, the game menu acts as the hosting provider's rescue console: open the story from the menu, allow SSH in ufw, then come back and test with ssh { $machine }.)
 # { $machine }: the machine; { $port }: the requested port; { $ports }: those sshd listens on
 ssh-other-port = (Nobody is listening on port { $port } of { $machine }: its SSH server now listens on { $ports }. To connect to it: ssh -p, or Port in ~/.ssh/config (man ssh_config).)
-# { $machine }: the name of the machine; { $adresse }: the workstation's address
-ssh-banned = (fail2ban, on { $machine }, has banned your workstation's address ({ $adresse }): you have locked yourself out. Here, the game menu acts as the hosting provider's rescue console: open the story from the menu, unban your address, add it to ignoreip, then come back and test with ssh { $machine }.)
+# { $machine }: the name of the machine; { $address }: the workstation's address
+ssh-banned = (fail2ban, on { $machine }, has banned your workstation's address ({ $address }): you have locked yourself out. Here, the game menu acts as the hosting provider's rescue console: open the story from the menu, unban your address, add it to ignoreip, then come back and test with ssh { $machine }.)
 
-# ssh refuses a host key that has changed. { $empreinte }: the announced fingerprint.
-ssh-key-changed = (The machine { $machine } no longer presents the same key as before. That's normal if it has just been reinstalled; otherwise, someone may be impersonating it. Never remove the old key without checking: the hosting provider announced the new key's fingerprint by email, { $empreinte }. If it is indeed the one shown above, remove the old key from known_hosts (the command is written just above; man ssh-keygen), then reconnect.)
+# ssh refuses a host key that has changed. { $fingerprint }: the announced fingerprint.
+ssh-key-changed = (The machine { $machine } no longer presents the same key as before. That's normal if it has just been reinstalled; otherwise, someone may be impersonating it. Never remove the old key without checking: the hosting provider announced the new key's fingerprint by email, { $fingerprint }. If it is indeed the one shown above, remove the old key from known_hosts (the command is written just above; man ssh-keygen), then reconnect.)
 # ssh-keygen with no option: the game does not create keys.
 ssh-keygen-generate = ssh-keygen: here, you don't create a new key (the game gives you the keys you need). Try ssh-keygen -R, -F or -l (man ssh-keygen).
 # { $type }: the requested key type

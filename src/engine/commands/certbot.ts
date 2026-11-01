@@ -439,7 +439,7 @@ export const CERTBOT: Record<string, Command> = {
   certbot: {
     ownOptions: true,
     launch: ({ args, game }) => {
-      if (!game.find('/usr/bin/certbot')) return game.error(game.t('command-missing', { commande: 'certbot' }));
+      if (!game.find('/usr/bin/certbot')) return game.error(game.t('command-missing', { command: 'certbot' }));
       const [action = 'run', ...rest] = args[0]?.startsWith('-') ? ['run', ...args] : args;
       const o = parse(rest);
       if (o.unknown)
@@ -486,7 +486,7 @@ export const CERTBOT: Record<string, Command> = {
           const wanted = [...new Set(o.domains.map((d) => d.toLowerCase()))].sort();
           if (!wanted.length) return game.error(`${LOG}\n${game.t('certbot-without-domain')}`);
           if (c && wanted.join(' ') !== [...c.names].sort().join(' '))
-            return game.error(`${LOG}\n${game.t('certbot-other-domains', { noms: c.names.join(', ') })}`);
+            return game.error(`${LOG}\n${game.t('certbot-other-domains', { names: c.names.join(', ') })}`);
         }
         if (action === 'reconfigure' && o.certName && o.certName !== name)
           return game.error(`${LOG}\nThe certificate name ${o.certName} was not found.`);

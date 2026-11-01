@@ -37,9 +37,9 @@ dhcp-event-wan =
     (un « DHCP pirate »), c'est le genre de panne qui coupe tout un quartier.
     Dis à dnsmasq où il a le droit d'écouter (interface=, ou
     except-interface=eth0).
-# { $adresse } : l'adresse attendue de l'imprimante
+# { $address } : l'adresse attendue de l'imprimante
 dhcp-event-printer-elsewhere =
-    L'imprimante a reçu une adresse… mais pas { $adresse }, et les postes ne
+    L'imprimante a reçu une adresse… mais pas { $address }, et les postes ne
     la trouvent pas. dnsmasq sait réserver une adresse à un appareil, d'après
     son adresse MAC (man dnsmasq : dhcp-host).
 dhcp-event-end =

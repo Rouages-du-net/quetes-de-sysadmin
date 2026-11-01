@@ -76,13 +76,13 @@ second-day-event-malo-reads =
 
     Au passage, sur une vraie machine, Malo devra se reconnecter : les
     groupes d'une session sont lus à la connexion.
-# { $partage } : le chemin du dossier partagé
+# { $share } : le chemin du dossier partagé
 second-day-event-share-open =
-    Prudence : n'importe quel compte peut maintenant écrire dans { $partage },
+    Prudence : n'importe quel compte peut maintenant écrire dans { $share },
     y compris www-data. Si le site est piraté, l'attaquant pourra y déposer
     ce qu'il veut. Retire tout droit aux autres (le dernier chiffre à 0).
 second-day-event-share =
-    Le dossier { $partage } est prêt : l'équipe web peut y entrer, y lire et
+    Le dossier { $share } est prêt : l'équipe web peut y entrer, y lire et
     y écrire, et les autres comptes n'y voient rien.
 second-day-event-end =
     Awa passe la tête par la porte : « Parfait. Malo lit les journaux, le

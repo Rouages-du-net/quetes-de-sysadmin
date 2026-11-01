@@ -2,15 +2,15 @@
 ### the real git prints them with LANG=C, plus a few remarks from the
 ### game. Technical identifiers (main, HEAD, .git, options) are not
 ### translated.
-### { $chemin }: path of a directory; { $fichier }: name of a file.
+### { $path }: path of a directory; { $file }: name of a file.
 
 ## git's messages
 
 git-not-repo = fatal: not a git repository (or any of the parent directories): .git
-git-init-existing = Reinitialized existing Git repository in { $chemin }/.git/
-git-init-empty = Initialized empty Git repository in { $chemin }/.git/
-git-write-permission = error: unable to create file { $fichier }: Permission denied
-git-path-unknown = fatal: pathspec '{ $fichier }' did not match any files
+git-init-existing = Reinitialized existing Git repository in { $path }/.git/
+git-init-empty = Initialized empty Git repository in { $path }/.git/
+git-write-permission = error: unable to create file { $file }: Permission denied
+git-path-unknown = fatal: pathspec '{ $file }' did not match any files
 git-nothing-a-validate =
     On branch main
     nothing to commit (create/copy files and use "git add" to track)
@@ -19,7 +19,7 @@ git-none-commit-branch = fatal: your current branch 'main' does not have any com
 git-revision-ambiguous = fatal: ambiguous argument '{ $revision }': unknown revision or path not in the working tree.
 git-restore-without-path = fatal: you must specify path(s) to restore
 git-reference-invalid = fatal: invalid reference: { $revision }
-git-restore-unknown = error: pathspec '{ $fichier }' did not match any file(s) known to git
+git-restore-unknown = error: pathspec '{ $file }' did not match any file(s) known to git
 
 git-not-tree = fatal: this operation must be run in a work tree
 # { $option }: the unknown option
@@ -29,32 +29,32 @@ git-option-unknown =
 
 ## Bare repositories, remotes, push and pull (https://git-scm.com/book/en/v2/Git-on-the-Server-Setting-Up-the-Server)
 
-git-init-existing-bare = Reinitialized existing Git repository in { $chemin }/
-git-init-empty-bare = Initialized empty Git repository in { $chemin }/
-git-init-impossible = fatal: cannot mkdir { $chemin }: Permission denied
-git-work-tree-missing = fatal: cannot chdir to '{ $chemin }'
-# { $fichiers }: one file per line, preceded by a tab
+git-init-existing-bare = Reinitialized existing Git repository in { $path }/
+git-init-empty-bare = Initialized empty Git repository in { $path }/
+git-init-impossible = fatal: cannot mkdir { $path }: Permission denied
+git-work-tree-missing = fatal: cannot chdir to '{ $path }'
+# { $files }: one file per line, preceded by a tab
 git-checkout-not-tracked =
     error: The following untracked working tree files would be overwritten by checkout:
-    { $fichiers }
+    { $files }
     Please move or remove them before you switch branches.
     Aborting
 git-checkout-changes-local =
     error: Your local changes to the following files would be overwritten by checkout:
-    { $fichiers }
+    { $files }
     Please commit your changes or stash them before you switch branches.
     Aborting
 git-rm-usage = fatal: No pathspec was given. Which files should I remove?
 git-clone-usage = fatal: You must specify a repository to clone.
-# { $depot }: the path or name of the remote repository
+# { $repository }: the path or name of the remote repository
 git-remote-missing =
-    fatal: '{ $depot }' does not appear to be a git repository
+    fatal: '{ $repository }' does not appear to be a git repository
     fatal: Could not read from remote repository.
 
     Please make sure you have the correct access rights
     and the repository exists.
-git-clone-exists = fatal: destination path '{ $chemin }' already exists and is not an empty directory.
-git-clone-in = Cloning into '{ $chemin }'...
+git-clone-exists = fatal: destination path '{ $path }' already exists and is not an empty directory.
+git-clone-in = Cloning into '{ $path }'...
 git-done = done.
 git-clone-empty = warning: You appear to have cloned an empty repository.
 git-remote-usage =
@@ -62,9 +62,9 @@ git-remote-usage =
        or: git remote add <name> <url>
        or: git remote remove <name>
        or: git remote set-url <name> <newurl>
-# { $nom }: the name of the remote (origin, prod…)
-git-remote-exists = error: remote { $nom } already exists.
-git-remote-unknown = error: No such remote: '{ $nom }'
+# { $name }: the name of the remote (origin, prod…)
+git-remote-exists = error: remote { $name } already exists.
+git-remote-unknown = error: No such remote: '{ $name }'
 git-push-without-destination =
     fatal: No configured push destination.
     Either specify the URL from the command-line or configure a remote repository using
@@ -74,8 +74,8 @@ git-push-without-destination =
     and then push using the remote name
 
         git push <name>
-git-to = To { $depot }
-git-push-impossible = error: failed to push some refs to '{ $depot }'
+git-to = To { $repository }
+git-push-impossible = error: failed to push some refs to '{ $repository }'
 # { $ref }: the requested branch
 git-refspec-unknown = error: src refspec { $ref } does not match any
 git-all-a-day = Everything up-to-date
@@ -84,14 +84,14 @@ git-push-rejected-tip =
     hint: not have locally. This is usually caused by another repository pushing
     hint: to the same ref. You may want to first integrate the remote changes
     hint: (e.g., 'git pull ...') before pushing again.
-# { $objets }, { $octets }: numbers, already formatted
+# { $objects }, { $bytes }: numbers, already formatted
 git-push-progress =
-    Enumerating objects: { $objets }, done.
-    Counting objects: 100% ({ $objets }/{ $objets }), done.
+    Enumerating objects: { $objects }, done.
+    Counting objects: 100% ({ $objects }/{ $objects }), done.
     Delta compression using up to 2 threads
-    Compressing objects: 100% ({ $objets }/{ $objets }), done.
-    Writing objects: 100% ({ $objets }/{ $objets }), { $octets } bytes | { $octets }.00 KiB/s, done.
-    Total { $objets } (delta 0), reused 0 (delta 0), pack-reused 0
+    Compressing objects: 100% ({ $objects }/{ $objects }), done.
+    Writing objects: 100% ({ $objects }/{ $objects }), { $bytes } bytes | { $bytes }.00 KiB/s, done.
+    Total { $objects } (delta 0), reused 0 (delta 0), pack-reused 0
 git-push-rights =
     error: insufficient permission for adding an object to repository database ./objects
     fatal: failed to write object
@@ -102,31 +102,31 @@ git-push-branch-extracted =
     remote: error: is denied, because it will make the index and work tree inconsistent
     remote: error: with what you pushed, and will require 'git reset --hard' to match
     remote: error: the work tree to HEAD.
-# { $crochet }: the path of the hook
+# { $hook }: the path of the hook
 git-hook-ignore =
-    hint: The '{ $crochet }' hook was ignored because it's not set as executable.
+    hint: The '{ $hook }' hook was ignored because it's not set as executable.
     hint: You can disable this warning with `git config advice.ignoredHook false`.
-# { $distant }: the name of the remote
-git-push-follow = branch 'main' set up to track '{ $distant }/main'.
+# { $remote }: the name of the remote
+git-push-follow = branch 'main' set up to track '{ $remote }/main'.
 git-pull-without-remote =
     There is no tracking information for the current branch.
     Please specify which branch you want to merge with.
 
         git pull <remote> <branch>
-git-since = From { $depot }
+git-since = From { $repository }
 git-already-a-day = Already up to date.
 git-pull-diverge = fatal: Not possible to fast-forward, aborting.
-# { $avant }, { $apres }: commit identifiers (7 characters)
-git-update = Updating { $avant }..{ $apres }
+# { $before }, { $after }: commit identifiers (7 characters)
+git-update = Updating { $before }..{ $after }
 git-advance-fast = Fast-forward
 
 ## git status (the file labels are aligned on the same column)
 
 git-status-branch = On branch main
 git-status-none-commit = No commits yet
-git-status-deleted = deleted:    { $fichier }
-git-status-new = new file:   { $fichier }
-git-status-modified = modified:   { $fichier }
+git-status-deleted = deleted:    { $file }
+git-status-new = new file:   { $file }
+git-status-modified = modified:   { $file }
 git-status-indexes =
     Changes to be committed:
       (use "git restore --staged <file>..." to unstage)
@@ -148,19 +148,19 @@ git-commit-header = [main { $id }] { $message }
 git-commit-header-root = [main (root-commit) { $id }] { $message }
 # Summary: "1 file changed, 3 insertions(+), 3 deletions(-)"
 git-commit-files =
-    { $nombre ->
-        [one] { $nombre } file changed
-       *[other] { $nombre } files changed
+    { $count ->
+        [one] { $count } file changed
+       *[other] { $count } files changed
     }
 git-commit-insertions =
-    { $nombre ->
-        [one] { $nombre } insertion(+)
-       *[other] { $nombre } insertions(+)
+    { $count ->
+        [one] { $count } insertion(+)
+       *[other] { $count } insertions(+)
     }
 git-commit-deletions =
-    { $nombre ->
-        [one] { $nombre } deletion(-)
-       *[other] { $nombre } deletions(-)
+    { $count ->
+        [one] { $count } deletion(-)
+       *[other] { $count } deletions(-)
     }
 
 ## Game remarks (where the real git behaves differently)
@@ -178,5 +178,5 @@ git-checkout-usage =
 git-usage =
     usage: git <command> [<args>]
     (see man git)
-# { $commandes }: the game's subcommands, separated by commas
-git-under-command-unknown = git: '{ $commande }' is not a git command (in this game: { $commandes }).
+# { $commands }: the game's subcommands, separated by commas
+git-under-command-unknown = git: '{ $command }' is not a git command (in this game: { $commands }).

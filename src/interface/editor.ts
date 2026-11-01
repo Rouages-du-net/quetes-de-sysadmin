@@ -34,7 +34,7 @@ export function editor(o: EditorOptions): HTMLElement {
     spellcheck: 'false',
     autocapitalize: 'off',
     autocomplete: 'off',
-    'aria-label': t('nano-zone', { chemin: o.path }),
+    'aria-label': t('nano-zone', { path: o.path }),
   }) as HTMLTextAreaElement;
   zone.value = o.text;
   const state = el('div', { class: 'nano-etat', role: 'status', 'aria-live': 'polite' }, o.message);

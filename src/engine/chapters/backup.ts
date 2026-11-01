@@ -71,7 +71,7 @@ export const backup: Chapter = {
       const n = j.find(path(j.t, MEMORIES));
       if (n?.type === 'dossier') n.children[name(j.t, NEW)] = f(j.t('backup-memory-lighthouse-festival'));
       j.state.originals[NEW] = j.read(path(j.t, `${MEMORIES}/${NEW}`));
-      chunks.push(j.t('backup-night-start', { fichier: name(j.t, NEW) }));
+      chunks.push(j.t('backup-night-start', { file: name(j.t, NEW) }));
     } else chunks.push(j.t('backup-night-still'));
     const executions = pass(j as Shell, NIGHT[0], NIGHT[1]);
     const mail = executions
@@ -82,16 +82,16 @@ export const backup: Chapter = {
       j.flags.add('night-ok');
       // Au matin, l'erreur humaine.
       j.erase(path(j.t, `${MEMORIES}/${ERASES}`));
-      chunks.push(j.t('backup-night-ok', { fichier: name(j.t, NEW) }), j.t('backup-morning', { fichier: name(j.t, ERASES) }));
+      chunks.push(j.t('backup-night-ok', { file: name(j.t, NEW) }), j.t('backup-morning', { file: name(j.t, ERASES) }));
     } else if (!executions.length) chunks.push(j.t('backup-night-nothing'));
-    else chunks.push(mail ? j.t('backup-night-mail', { courrier: mail }) : j.t('backup-night-failure'));
+    else chunks.push(mail ? j.t('backup-night-mail', { mail: mail }) : j.t('backup-night-failure'));
     return chunks.join('\n\n');
   },
   events: [
     {
       id: 'nested',
       condition: (j) => j.exists(path(j.t, `${BACKUP}/memories`)),
-      message: (j) => j.t('backup-event-nested', { sauvegarde: path(j.t, BACKUP) }),
+      message: (j) => j.t('backup-event-nested', { backup: path(j.t, BACKUP) }),
     },
     {
       id: 'copy',
@@ -101,7 +101,7 @@ export const backup: Chapter = {
     {
       id: 'lost',
       condition: (j) => j.flags.has('night-ok') && !j.exists(path(j.t, `${BACKUP}/${ERASES}`)) && !j.exists(path(j.t, `${MEMORIES}/${ERASES}`)),
-      message: (j) => j.t('backup-event-lost', { fichier: name(j.t, ERASES) }),
+      message: (j) => j.t('backup-event-lost', { file: name(j.t, ERASES) }),
     },
     {
       id: 'end',

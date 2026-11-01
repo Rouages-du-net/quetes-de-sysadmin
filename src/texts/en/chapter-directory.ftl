@@ -7,7 +7,7 @@ chapter-directory = The Directory
 
 ## Files
 
-# { $admin }: the DN of the directory administrator; { $motdepasse }: their password
+# { $admin }: the DN of the directory administrator; { $password }: their password
 directory-email-malik =
     From:    Malik
     To:      you
@@ -26,7 +26,7 @@ directory-email-malik =
 
     To read the directory: ldapsearch -x (the base is already in
     /etc/ldap/ldap.conf). To write, you have to authenticate:
-    { $admin }, password { $motdepasse }; or, as root on this
+    { $admin }, password { $password }; or, as root on this
     machine, sudo … -Y EXTERNAL -H ldapi:/// (no password).
     It's all in man ldapsearch, man ldapadd, man ldapmodify.
 

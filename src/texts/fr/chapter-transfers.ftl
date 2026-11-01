@@ -54,9 +54,9 @@ transfers-schedule =
 transfers-event-report =
     Le rapport d'activité est sur ton poste : scp est passé par maison (le
     ProxyJump de ton raccourci), comme ssh.
-# { $dossier } : le dossier créé en trop
+# { $directory } : le dossier créé en trop
 transfers-event-nested =
-    Regarde sur archives : il y a maintenant un dossier { $dossier }. Sans
+    Regarde sur archives : il y a maintenant un dossier { $directory }. Sans
     barre oblique finale, rsync a copié le DOSSIER partage dans la
     sauvegarde, au lieu de son CONTENU.
 

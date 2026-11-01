@@ -190,7 +190,7 @@ export const departure: Chapter = {
       condition: (j) => ((j.state.lockedAccounts ?? []) as string[]).includes('marc') && byItsAccount(j),
       message: (j) => j.t('departure-event-lock-only'),
     },
-    { id: 'deploy-empty', condition: (j) => !deployIntact(j), message: (j) => j.t('departure-event-deploy-empty', { fichier: DEPLOY }) },
+    { id: 'deploy-empty', condition: (j) => !deployIntact(j), message: (j) => j.t('departure-event-deploy-empty', { file: DEPLOY }) },
     {
       id: 'script-lost',
       condition: (j) => !j.exists('/home/marc/bin') && !entrustedBackup(j),

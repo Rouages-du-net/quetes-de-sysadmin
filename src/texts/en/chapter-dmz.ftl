@@ -51,9 +51,9 @@ dmz-plan-switch =
 
 ## Events
 
-# { $adresse }: the router's public address
+# { $address }: the router's public address
 dmz-event-address-public =
-    A rule in the forward chain expects the address { $adresse }… but it
+    A rule in the forward chain expects the address { $address }… but it
     will never see it: destination translation (dnat) happens earlier,
     at the prerouting hook. When the packet reaches forward, it is already
     going to 10.10.40.10. That is the address forward must let through.

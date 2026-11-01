@@ -160,7 +160,7 @@ export const againstVisit: Chapter = {
       j.state.finishedReport = true;
       return;
     }
-    return [j.t('follow-up-review'), ...rest.map((m) => `- ${j.t(`follow-up-missing-${m}`, { cible: String(TARGET) })}`)].join('\n');
+    return [j.t('follow-up-review'), ...rest.map((m) => `- ${j.t(`follow-up-missing-${m}`, { target: String(TARGET) })}`)].join('\n');
   },
   events: [
     { id: 'error-ssh', condition: errorSsh, message: (j) => j.t('follow-up-event-error-ssh') },
@@ -168,17 +168,17 @@ export const againstVisit: Chapter = {
     {
       id: 'outside-scope',
       condition: outsideScope,
-      message: (j) => j.t('follow-up-event-outside-scope', { adresses: addressesOutside(j).join(', '), voisin: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
+      message: (j) => j.t('follow-up-event-outside-scope', { addresses: addressesOutside(j).join(', '), neighbour: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
     },
     {
       id: 'scan',
       condition: (j) => !!lastScan(j),
-      message: (j) => j.t('follow-up-event-scan', { ancienne: dayASsh(lastScan(j)) ? 'non' : 'oui' }),
+      message: (j) => j.t('follow-up-event-scan', { outdated: dayASsh(lastScan(j)) ? 'non' : 'oui' }),
     },
     {
       id: 'lynis',
       condition: (j) => !!lynis(j),
-      message: (j) => j.t('follow-up-event-lynis', { indice: String(lynis(j)!.hint), avertissements: String(lynis(j)!.warnings) }),
+      message: (j) => j.t('follow-up-event-lynis', { hint: String(lynis(j)!.hint), warnings: String(lynis(j)!.warnings) }),
     },
     { id: 'update', condition: dayA, message: (j) => j.t('follow-up-event-update') },
     {
@@ -186,13 +186,13 @@ export const againstVisit: Chapter = {
       condition: (j) => sshChange(j) && !errorSsh(j),
       message: (j) => j.t('follow-up-event-ssh-a-reload'),
     },
-    { id: 'hardened', condition: (j) => hardened(j) && appliesSsh(j), message: (j) => j.t('follow-up-event-hardened', { cible: String(TARGET) }) },
+    { id: 'hardened', condition: (j) => hardened(j) && appliesSsh(j), message: (j) => j.t('follow-up-event-hardened', { target: String(TARGET) }) },
     { id: 'proof-lynis', condition: (j) => lynisProof(j) && appliesSsh(j), message: (j) => j.t('follow-up-event-proof-lynis') },
     { id: 'nmap-own', condition: nmapOk, message: (j) => j.t('follow-up-event-nmap-own') },
     {
       id: 'end',
       condition: (j) => lynisProof(j) && appliesSsh(j) && nmapOk(j) && okReport(j),
-      message: (j) => j.t('follow-up-event-end', { faute: outsideScope(j) ? 'oui' : 'non' }),
+      message: (j) => j.t('follow-up-event-end', { mistake: outsideScope(j) ? 'oui' : 'non' }),
     },
   ],
 };

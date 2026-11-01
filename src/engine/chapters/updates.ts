@@ -134,7 +134,7 @@ export const updates: Chapter = {
     {
       id: 'a-day',
       condition: (j) => dayA(j) && !restarts(j),
-      message: (j) => j.t('updates-event-a-day', { ancien: OLD_KERNEL, nouveau: NEW_KERNEL }),
+      message: (j) => j.t('updates-event-a-day', { oldest: OLD_KERNEL, new: NEW_KERNEL }),
     },
     {
       id: 'till-down',

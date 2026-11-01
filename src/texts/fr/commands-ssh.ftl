@@ -7,11 +7,11 @@ ssh-locked-out = (Ta clé est bonne, mais la configuration de sshd sur { $machin
 ssh-firewall = (Le pare-feu de { $machine } bloque le port de SSH : tu t'es enfermé·e dehors. La session que tu avais n'est plus là pour corriger. Ici, le menu du jeu sert de console de secours de l'hébergeur : ouvre l'histoire depuis le menu, autorise SSH dans ufw, puis reviens tester avec ssh { $machine }.)
 # { $machine } : la machine ; { $port } : le port demandé ; { $ports } : ceux où sshd écoute
 ssh-other-port = (Personne n'écoute sur le port { $port } de { $machine } : son serveur SSH écoute maintenant sur { $ports }. Pour s'y connecter : ssh -p, ou Port dans ~/.ssh/config (man ssh_config).)
-# { $machine } : le nom de la machine ; { $adresse } : l'adresse du poste
-ssh-banned = (fail2ban, sur { $machine }, a banni l'adresse de ton poste ({ $adresse }) : tu t'es enfermé·e dehors. Ici, le menu du jeu sert de console de secours de l'hébergeur : ouvre l'histoire depuis le menu, débannis ton adresse, ajoute-la à ignoreip, puis reviens tester avec ssh { $machine }.)
+# { $machine } : le nom de la machine ; { $address } : l'adresse du poste
+ssh-banned = (fail2ban, sur { $machine }, a banni l'adresse de ton poste ({ $address }) : tu t'es enfermé·e dehors. Ici, le menu du jeu sert de console de secours de l'hébergeur : ouvre l'histoire depuis le menu, débannis ton adresse, ajoute-la à ignoreip, puis reviens tester avec ssh { $machine }.)
 
-# ssh refuse une clé d'hôte qui a changé. { $empreinte } : l'empreinte annoncée.
-ssh-key-changed = (La machine { $machine } ne présente plus la même clé qu'avant. C'est normal si elle vient d'être réinstallée ; sinon, quelqu'un se fait peut-être passer pour elle. Ne retire jamais l'ancienne clé sans vérifier : l'hébergeur a annoncé par courriel l'empreinte de la nouvelle clé, { $empreinte }. Si c'est bien celle affichée plus haut, retire l'ancienne clé de known_hosts (la commande est écrite juste au-dessus ; man ssh-keygen), puis reconnecte-toi.)
+# ssh refuse une clé d'hôte qui a changé. { $fingerprint } : l'empreinte annoncée.
+ssh-key-changed = (La machine { $machine } ne présente plus la même clé qu'avant. C'est normal si elle vient d'être réinstallée ; sinon, quelqu'un se fait peut-être passer pour elle. Ne retire jamais l'ancienne clé sans vérifier : l'hébergeur a annoncé par courriel l'empreinte de la nouvelle clé, { $fingerprint }. Si c'est bien celle affichée plus haut, retire l'ancienne clé de known_hosts (la commande est écrite juste au-dessus ; man ssh-keygen), puis reconnecte-toi.)
 # ssh-keygen sans option : le jeu ne crée pas de clés.
 ssh-keygen-generate = ssh-keygen : ici, on ne crée pas de nouvelle clé (le jeu donne les clés dont tu as besoin). Essaie ssh-keygen -R, -F ou -l (man ssh-keygen).
 # { $type } : le type de clé demandé

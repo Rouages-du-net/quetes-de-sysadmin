@@ -29,10 +29,10 @@ proof-email-salome =
 proof-event-versions =
     apt confirms: nothing left to update for nginx or rsync. It's only once
     checked that it's really fixed.
-# { $adresse }: the address of the attempt that was found
+# { $address }: the address of the attempt that was found
 proof-event-found =
     One line of the access log stands out: an empty HTTP/2 request, with no
-    declared browser, refused by nginx (code 400), from { $adresse }, a few
+    declared browser, refused by nginx (code 400), from { $address }, a few
     days before the fix. It isn't proof of a successful intrusion (nginx
     refused it), but it's a trace worth keeping: someone was already
     looking.

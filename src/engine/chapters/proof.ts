@@ -69,7 +69,7 @@ export const proof: Chapter = {
       condition: (j) => j.last.commands.some((c) => c[0] === 'apt') && okUpToDate(j) && /Listing\.\.\. Done/.test(j.last.output),
       message: (j) => j.t('proof-event-versions'),
     },
-    { id: 'found', condition: okFound, message: (j) => j.t('proof-event-found', { adresse: SUSPICIOUS }) },
+    { id: 'found', condition: okFound, message: (j) => j.t('proof-event-found', { address: SUSPICIOUS }) },
     { id: 'end', condition: (j) => okUpToDate(j) && j.flags.has('found') && siteOk(j), message: (j) => j.t('proof-event-end') },
   ],
 };

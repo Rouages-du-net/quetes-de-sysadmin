@@ -231,7 +231,7 @@ export const chapterDirectory: Chapter = {
         ldap: d({ 'ldap.conf': f(LDAP_CONF, { lines: true, owner: 'root' }) }, undefined, { owner: 'root' }),
       },
       home: {
-        'email_malik.txt': f(t('directory-email-malik', { admin: ADMIN, motdepasse: MDP_ADMIN })),
+        'email_malik.txt': f(t('directory-email-malik', { admin: ADMIN, password: MDP_ADMIN })),
         'modele-ines.ldif': f(INES_TEMPLATE, { lines: true }),
         'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },

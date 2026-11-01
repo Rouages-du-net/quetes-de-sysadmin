@@ -46,7 +46,7 @@ const accounts = (): Accounts => ({
 
 // L'inventaire au soir du jour n (un jeu de plus chaque jour).
 const inventory = (t: Game['t'], n: number) =>
-  [t('ransom-inventory'), ...Array.from({ length: n }, (_, k) => t('snapshots-line-inventory', { numero: k + 1 }))].join('\n');
+  [t('ransom-inventory'), ...Array.from({ length: n }, (_, k) => t('snapshots-line-inventory', { number: k + 1 }))].join('\n');
 
 const sd = (j: Game) => systemd(j)!;
 const conf = (j: Game) => readConf(j.read(CONF) ?? '');
@@ -233,7 +233,7 @@ export const chapterSnapshots: Chapter = {
       condition: (j) => ((j.state.cronMails ?? []) as string[]).some((m) => m.includes('ERROR')),
       message: (j) =>
         j.t('snapshots-event-mails', {
-          exemple: ((j.state.cronMails ?? []) as string[])
+          example: ((j.state.cronMails ?? []) as string[])
             .find((m) => m.includes('ERROR'))!
             .split('\n')
             .slice(0, 7)

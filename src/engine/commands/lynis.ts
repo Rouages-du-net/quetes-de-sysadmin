@@ -22,9 +22,9 @@ export const LYNIS: Record<string, Command> = {
         game.state.lynis = { hint: r.hint, ids: r.findings.map((c) => c.id), warnings: r.findings.filter((c) => c.type === 'warning').length };
         return r.output;
       }
-      if (action === 'audit') return game.error(game.t('lynis-audit-target', { cible: rest[0] ?? '' }), 1);
+      if (action === 'audit') return game.error(game.t('lynis-audit-target', { target: rest[0] ?? '' }), 1);
       if (!action) return game.error(game.t('lynis-usage'), 1);
-      return game.error(game.t('lynis-command-unknown', { commande: action }), 1);
+      return game.error(game.t('lynis-command-unknown', { command: action }), 1);
     },
   },
 };

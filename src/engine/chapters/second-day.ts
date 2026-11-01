@@ -92,7 +92,7 @@ export const secondDay: Chapter = {
     {
       id: 'share-open',
       condition: (j) => j.can(share(j), 'w', 'nobody'),
-      message: (j) => j.t('second-day-event-share-open', { partage: path(j.t, SHARE) }),
+      message: (j) => j.t('second-day-event-share-open', { share: path(j.t, SHARE) }),
     },
     {
       id: 'share',
@@ -101,7 +101,7 @@ export const secondDay: Chapter = {
         const team = [j.player, 'awa', 'malo'].every((u) => j.can(n, 'w', u) && j.can(n, 'x', u));
         return team && !j.can(n, 'r', 'www-data') && !j.can(n, 'w', 'www-data');
       },
-      message: (j) => j.t('second-day-event-share', { partage: path(j.t, SHARE) }),
+      message: (j) => j.t('second-day-event-share', { share: path(j.t, SHARE) }),
     },
     {
       id: 'end',

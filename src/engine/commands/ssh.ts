@@ -132,7 +132,7 @@ function changedKey(game: Shell, d: Destination, m: Machine, line: number): stri
     `  ssh-keygen -f '${file}' -R '${d.known}'`,
     `Host key for ${d.known} has changed and you have requested strict checking.`,
     'Host key verification failed.',
-    game.t('ssh-key-changed', { machine: machineName(game.t, m.name), empreinte: fingerprint(m, generation(game, m)) }),
+    game.t('ssh-key-changed', { machine: machineName(game.t, m.name), fingerprint: fingerprint(m, generation(game, m)) }),
   ].join('\n');
 }
 
@@ -385,7 +385,7 @@ export const SSH: Record<string, Command> = {
       // rejette (REJECT) les paquets de l'adresse vers les ports de la prison.
       if ((game.state.remoteBanned?.(m.name, Number(d.port)) ?? []).includes(WORKSTATION.address))
         return game.error(
-          `ssh: connect to host ${d.host} port ${d.port}: Connection refused\n` + game.t('ssh-banned', { machine: machineName(game.t, m.name), adresse: WORKSTATION.address }),
+          `ssh: connect to host ${d.host} port ${d.port}: Connection refused\n` + game.t('ssh-banned', { machine: machineName(game.t, m.name), address: WORKSTATION.address }),
         );
       // Le pare-feu d'en face : deny laisse attendre (timeout), reject refuse tout de suite.
       const pf: Firewall | null = game.state.remoteFirewall?.(m.name) ?? null;

@@ -8,7 +8,7 @@ chapter-web-host = The web host
 
 ## Files
 
-# { $compte }: the FTP account at the web host; { $motdepasse }: its password
+# { $account }: the FTP account at the web host; { $password }: its password
 web-host-email-yasmine =
     From:    Yasmine
     To:      you
@@ -23,8 +23,8 @@ web-host-email-yasmine =
     since 1 March, no more plain FTP.
 
     His credentials, which the web host sent me again:
-        account      : { $compte }
-        password     : { $motdepasse }
+        account      : { $account }
+        password     : { $password }
 
     You get to the wiki as usual from your workstation (the shortcut
     ssh wiki); to look before you take: man sftp. For the web host,

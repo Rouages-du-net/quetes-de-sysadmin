@@ -86,23 +86,23 @@ follow-up-event-locked-out =
     account would be refused. Your session stays open: fix it BEFORE you
     disconnect.
 follow-up-event-outside-scope =
-    You probed an address outside the letter of engagement ({ $adresses }). Even
-    for a follow-up visit, you stay in the scope: { $voisin ->
+    You probed an address outside the letter of engagement ({ $addresses }). Even
+    for a follow-up visit, you stay in the scope: { $neighbour ->
         [oui] the neighbour's server is still not ours.
        *[non] what is not listed in it is not ours.
     }
-# { $ancienne }: "oui" if the SSH version shown is not up to date
+# { $outdated }: "oui" if the SSH version shown is not up to date
 follow-up-event-scan =
     That is what the internet sees now. Compare with day one: ports 5432
     (PostgreSQL) and 6379 (Redis) no longer answer, SSH, the website and its
     secure port remain. The firewall fixes hold.
-    { $ancienne ->
+    { $outdated ->
         [oui] But look at the SSH version: it is not that of an up-to-date machine. A security update is waiting (apt list --upgradable); that is the kind of detail nmap -sV reveals and nobody looks at.
        *[non] And the SSH version is that of an up-to-date machine.
     }
 follow-up-event-lynis =
-    There is the audit: a hardening index of { $indice }, and
-    { $avertissements } warning(s). An index is for comparing, not for chasing
+    There is the audit: a hardening index of { $hint }, and
+    { $warnings } warning(s). An index is for comparing, not for chasing
     100: read each suggestion, its identifier (SSH-7408…) and its explanation
     page. Some can be fixed here; others (file integrity, antimalware, remote
     logs, auditd) are real projects that go in the report.
@@ -118,9 +118,9 @@ follow-up-event-ssh-a-reload =
     one: a service rereads its configuration when told to (sudo sshd -t to
     check, then sudo systemctl reload ssh). Lynis reads the file: its new index
     does not tell you what is applied.
-# { $cible }: the index to reach
+# { $target }: the index to reach
 follow-up-event-hardened =
-    No warning and an index of at least { $cible }, with the SSH configuration
+    No warning and an index of at least { $target }, with the SSH configuration
     applied. That is a good level for this server; the rest is a project, not an
     emergency.
 
@@ -132,7 +132,7 @@ follow-up-event-nmap-own =
     The last scan sees only SSH, the website and its secure port, with the SSH
     version up to date. That is the proof, from the internet's side, that
     everything holds. The closing report remains.
-# { $faute }: "oui" if a scan went beyond the scope
+# { $mistake }: "oui" if a scan went beyond the scope
 follow-up-event-end =
     Salomé: "It is complete, and it is honest. I'll pass it on to Nadia and her
     insurer. I'll come back in six months: security gets rechecked."
@@ -145,7 +145,7 @@ follow-up-event-end =
     worth the effort, then redid both to prove it. The new index and the new scan
     are in your report, with what remains to be done. A follow-up visit does not
     try to fix everything: it shows what is fixed, and says frankly what is not.
-    { $faute ->
+    { $mistake ->
         [oui] Your scan also touched an address that was not in the letter of engagement: note it for the next mission.
        *[non] All your scans stayed within the scope.
     }

@@ -2,15 +2,15 @@
 ### tels que le vrai git les affiche avec LANG=fr (traduction officielle de
 ### git), plus quelques remarques du jeu. Les identifiants techniques (main,
 ### HEAD, .git, les options) ne se traduisent pas.
-### { $chemin } : chemin d'un dossier ; { $fichier } : nom d'un fichier.
+### { $path } : chemin d'un dossier ; { $file } : nom d'un fichier.
 
 ## Messages de git
 
 git-not-repo = fatal: ni ceci ni aucun de ses répertoires parents n'est un dépôt git : .git
-git-init-existing = Dépôt Git existant réinitialisé dans { $chemin }/.git/
-git-init-empty = Dépôt Git vide initialisé dans { $chemin }/.git/
-git-write-permission = error: impossible d'ouvrir '{ $fichier }' : Permission non accordée
-git-path-unknown = fatal: le chemin '{ $fichier }' ne correspond à aucun fichier
+git-init-existing = Dépôt Git existant réinitialisé dans { $path }/.git/
+git-init-empty = Dépôt Git vide initialisé dans { $path }/.git/
+git-write-permission = error: impossible d'ouvrir '{ $file }' : Permission non accordée
+git-path-unknown = fatal: le chemin '{ $file }' ne correspond à aucun fichier
 git-nothing-a-validate =
     Sur la branche main
     rien à valider (utilisez "git add" pour indiquer ce qu’il faut valider)
@@ -19,7 +19,7 @@ git-none-commit-branch = fatal: votre branche actuelle 'main' ne contient encore
 git-revision-ambiguous = fatal: argument '{ $revision }' ambigu : révision inconnue ou chemin inexistant.
 git-restore-without-path = fatal: vous devez spécifier un ou plusieurs chemins à restaurer
 git-reference-invalid = fatal: référence invalide : { $revision }
-git-restore-unknown = error: la spécification de chemin '{ $fichier }' ne correspond à aucun fichier connu de git
+git-restore-unknown = error: la spécification de chemin '{ $file }' ne correspond à aucun fichier connu de git
 
 git-not-tree = fatal: cette opération doit être effectuée dans un arbre de travail
 # { $option } : l'option inconnue
@@ -29,32 +29,32 @@ git-option-unknown =
 
 ## Dépôts nus, distants, push et pull (https://git-scm.com/book/fr/v2/Git-sur-le-serveur-Mise-en-place-du-serveur)
 
-git-init-existing-bare = Dépôt Git existant réinitialisé dans { $chemin }/
-git-init-empty-bare = Dépôt Git vide initialisé dans { $chemin }/
-git-init-impossible = fatal: impossible de créer le répertoire '{ $chemin }' : Permission non accordée
-git-work-tree-missing = fatal: impossible de se déplacer dans '{ $chemin }'
-# { $fichiers } : un fichier par ligne, précédé d'une tabulation
+git-init-existing-bare = Dépôt Git existant réinitialisé dans { $path }/
+git-init-empty-bare = Dépôt Git vide initialisé dans { $path }/
+git-init-impossible = fatal: impossible de créer le répertoire '{ $path }' : Permission non accordée
+git-work-tree-missing = fatal: impossible de se déplacer dans '{ $path }'
+# { $files } : un fichier par ligne, précédé d'une tabulation
 git-checkout-not-tracked =
     error: Les fichiers suivants non suivis de la copie de travail seraient écrasés par l'extraction :
-    { $fichiers }
+    { $files }
     Veuillez renommer ou déplacer ces fichiers avant de basculer de branche.
     Abandon
 git-checkout-changes-local =
     error: Vos modifications locales aux fichiers suivants seraient écrasées par l'extraction :
-    { $fichiers }
+    { $files }
     Veuillez valider ou remiser vos modifications avant de basculer de branche.
     Abandon
 git-rm-usage = fatal: Aucune spécification de chemin fournie. Que faut-il supprimer ?
 git-clone-usage = fatal: Vous devez spécifier un dépôt à cloner.
-# { $depot } : le chemin ou le nom du dépôt distant
+# { $repository } : le chemin ou le nom du dépôt distant
 git-remote-missing =
-    fatal: '{ $depot }' ne semble pas être un dépôt git
+    fatal: '{ $repository }' ne semble pas être un dépôt git
     fatal: Impossible de lire le dépôt distant.
 
     Veuillez vérifier que vous avez les droits d'accès
     et que le dépôt existe.
-git-clone-exists = fatal: le chemin de destination '{ $chemin }' existe déjà et n'est pas un répertoire vide.
-git-clone-in = Clonage dans '{ $chemin }'...
+git-clone-exists = fatal: le chemin de destination '{ $path }' existe déjà et n'est pas un répertoire vide.
+git-clone-in = Clonage dans '{ $path }'...
 git-done = fait.
 git-clone-empty = warning: Vous semblez avoir cloné un dépôt vide.
 git-remote-usage =
@@ -62,9 +62,9 @@ git-remote-usage =
        ou : git remote add <nom> <url>
        ou : git remote remove <nom>
        ou : git remote set-url <nom> <nouvelle-url>
-# { $nom } : le nom du dépôt distant (origin, prod…)
-git-remote-exists = error: le distant { $nom } existe déjà.
-git-remote-unknown = error: Pas de serveur remote : '{ $nom }'
+# { $name } : le nom du dépôt distant (origin, prod…)
+git-remote-exists = error: le distant { $name } existe déjà.
+git-remote-unknown = error: Pas de serveur remote : '{ $name }'
 git-push-without-destination =
     fatal: Pas de destination pour pousser.
     Spécifiez une URL depuis la ligne de commande ou configurez un dépôt distant en utilisant
@@ -74,8 +74,8 @@ git-push-without-destination =
     puis poussez en utilisant le dépôt distant
 
         git push <nom>
-git-to = Vers { $depot }
-git-push-impossible = error: impossible de pousser des références vers '{ $depot }'
+git-to = Vers { $repository }
+git-push-impossible = error: impossible de pousser des références vers '{ $repository }'
 # { $ref } : la branche demandée
 git-refspec-unknown = error: le spécificateur de référence source { $ref } ne correspond à aucune référence
 git-all-a-day = Tout est à jour
@@ -84,14 +84,14 @@ git-push-rejected-tip =
     astuce: vous n'avez pas en local. Ceci est généralement causé par un autre dépôt poussé
     astuce: vers la même référence. Vous pourriez intégrer d'abord les changements distants
     astuce: (par exemple 'git pull ...') avant de pousser à nouveau.
-# { $objets }, { $octets } : des nombres, déjà écrits
+# { $objects }, { $bytes } : des nombres, déjà écrits
 git-push-progress =
-    Énumération des objets: { $objets }, fait.
-    Décompte des objets: 100% ({ $objets }/{ $objets }), fait.
+    Énumération des objets: { $objects }, fait.
+    Décompte des objets: 100% ({ $objects }/{ $objects }), fait.
     Compression par delta en utilisant jusqu'à 2 fils d'exécution
-    Compression des objets: 100% ({ $objets }/{ $objets }), fait.
-    Écriture des objets: 100% ({ $objets }/{ $objets }), { $octets } octets | { $octets }.00 Kio/s, fait.
-    Total { $objets } (delta 0), réutilisés 0 (delta 0), réutilisés du pack 0
+    Compression des objets: 100% ({ $objects }/{ $objects }), fait.
+    Écriture des objets: 100% ({ $objects }/{ $objects }), { $bytes } octets | { $bytes }.00 Kio/s, fait.
+    Total { $objects } (delta 0), réutilisés 0 (delta 0), réutilisés du pack 0
 git-push-rights =
     error: droits insuffisants pour ajouter un objet à la base de données ./objects du dépôt
     fatal: échec d'écriture de l'objet
@@ -102,31 +102,31 @@ git-push-branch-extracted =
     remote: error: est refusée, car cela rendrait l'index et l'arbre de travail incohérents
     remote: error: avec ce que vous avez poussé, et nécessiterait 'git reset --hard' pour
     remote: error: retrouver un arbre de travail cohérent avec HEAD.
-# { $crochet } : le chemin du crochet
+# { $hook } : le chemin du crochet
 git-hook-ignore =
-    astuce: Le crochet '{ $crochet }' a été ignoré parce qu'il n'est pas marqué comme exécutable.
+    astuce: Le crochet '{ $hook }' a été ignoré parce qu'il n'est pas marqué comme exécutable.
     astuce: Vous pouvez désactiver cet avertissement avec `git config advice.ignoredHook false`.
-# { $distant } : le nom du dépôt distant
-git-push-follow = la branche 'main' est paramétrée pour suivre '{ $distant }/main'.
+# { $remote } : le nom du dépôt distant
+git-push-follow = la branche 'main' est paramétrée pour suivre '{ $remote }/main'.
 git-pull-without-remote =
     Il n'y a pas d'information de suivi pour la branche actuelle.
     Veuillez spécifier une branche avec laquelle fusionner :
 
         git pull <distant> <branche>
-git-since = Depuis { $depot }
+git-since = Depuis { $repository }
 git-already-a-day = Déjà à jour.
 git-pull-diverge = fatal: Pas possible d'avancer rapidement, abandon.
-# { $avant }, { $apres } : des identifiants de commit (7 caractères)
-git-update = Mise à jour { $avant }..{ $apres }
+# { $before }, { $after } : des identifiants de commit (7 caractères)
+git-update = Mise à jour { $before }..{ $after }
 git-advance-fast = Avance rapide
 
 ## git status (les libellés des fichiers sont alignés sur la même colonne)
 
 git-status-branch = Sur la branche main
 git-status-none-commit = Aucun commit
-git-status-deleted = supprimé :        { $fichier }
-git-status-new = nouveau fichier : { $fichier }
-git-status-modified = modifié :         { $fichier }
+git-status-deleted = supprimé :        { $file }
+git-status-new = nouveau fichier : { $file }
+git-status-modified = modifié :         { $file }
 git-status-indexes =
     Modifications qui seront validées :
       (utilisez "git restore --staged <fichier>..." pour désindexer)
@@ -148,19 +148,19 @@ git-commit-header = [main { $id }] { $message }
 git-commit-header-root = [main (commit racine) { $id }] { $message }
 # Bilan : « 1 fichier modifié, 3 insertions(+), 3 suppressions(-) »
 git-commit-files =
-    { $nombre ->
-        [one] { $nombre } fichier modifié
-       *[other] { $nombre } fichiers modifiés
+    { $count ->
+        [one] { $count } fichier modifié
+       *[other] { $count } fichiers modifiés
     }
 git-commit-insertions =
-    { $nombre ->
-        [one] { $nombre } insertion(+)
-       *[other] { $nombre } insertions(+)
+    { $count ->
+        [one] { $count } insertion(+)
+       *[other] { $count } insertions(+)
     }
 git-commit-deletions =
-    { $nombre ->
-        [one] { $nombre } suppression(-)
-       *[other] { $nombre } suppressions(-)
+    { $count ->
+        [one] { $count } suppression(-)
+       *[other] { $count } suppressions(-)
     }
 
 ## Remarques du jeu (là où le vrai git se comporte autrement)
@@ -178,5 +178,5 @@ git-checkout-usage =
 git-usage =
     usage : git <commande> [<args>]
     (voir man git)
-# { $commandes } : les sous-commandes du jeu, séparées par des virgules
-git-under-command-unknown = git : '{ $commande }' n'est pas une commande git (dans ce jeu : { $commandes }).
+# { $commands } : les sous-commandes du jeu, séparées par des virgules
+git-under-command-unknown = git : '{ $command }' n'est pas une commande git (dans ce jeu : { $commands }).

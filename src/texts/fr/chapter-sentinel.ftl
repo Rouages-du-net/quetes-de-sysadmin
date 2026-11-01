@@ -49,9 +49,9 @@ sentinel-event-error =
 sentinel-event-rania =
     Rania n'est plus bannie : elle peut de nouveau se connecter. Mais si elle
     se trompe encore cinq fois, fail2ban la bannira de nouveau…
-# { $adresse } : l'adresse du poste
+# { $address } : l'adresse du poste
 sentinel-event-banned-self =
-    ATTENTION : fail2ban vient de bannir { $adresse }… l'adresse de ton propre
+    ATTENTION : fail2ban vient de bannir { $address }… l'adresse de ton propre
     poste ! Hier, tu avais raté trois connexions (cherche « Failed publickey »
     dans journalctl -u ssh), et avec ces réglages, ça suffit. Débannis-toi,
     et ajoute ton adresse à ignoreip, avant de te déconnecter.

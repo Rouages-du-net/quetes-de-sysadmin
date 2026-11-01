@@ -62,9 +62,9 @@ firewall-hole-event-volume-lost =
     have a name and matter. On a real server, it would be lost. Here, you
     can restart the chapter from the menu. Before a prune: docker system
     df, docker volume ls, and read the warning.
-# { $pourcent }: disk usage
+# { $percent }: disk usage
 firewall-hole-event-disk =
-    The disk can breathe again: { $pourcent }% used. Images no container
+    The disk can breathe again: { $percent }% used. Images no container
     uses (old versions, forgotten tests, unnamed images) were taking up
     almost all the space.
 firewall-hole-event-end =

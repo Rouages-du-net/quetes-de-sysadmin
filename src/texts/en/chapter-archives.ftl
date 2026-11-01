@@ -76,9 +76,9 @@ archives-event-cleanup =
     archive directly on the stick:
 
       tar -czf /media/usb/collection.tar.gz collection
-# { $taille }: size of the archive in MB (number, with one decimal)
+# { $size }: size of the archive in MB (number, with one decimal)
 archives-event-saved =
-    The archive is on the stick: { NUMBER($taille, minimumFractionDigits: 1, maximumFractionDigits: 1) } MB, with the whole collection. The texts were
+    The archive is on the stick: { NUMBER($size, minimumFractionDigits: 1, maximumFractionDigits: 1) } MB, with the whole collection. The texts were
     highly compressed; the images, sounds and PDFs, already compressed,
     hardly at all. To check its contents without extracting it:
     tar -tzf /media/usb/collection.tar.gz

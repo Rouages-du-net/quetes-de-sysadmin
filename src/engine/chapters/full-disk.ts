@@ -220,7 +220,7 @@ export const fullDisk: Chapter = {
     {
       id: 'breathes',
       condition: (j) => occupation(j) < 0.8 && !ghost(j),
-      message: (j) => j.t('full-disk-event-breathes', { pourcent: Math.round(occupation(j) * 100) }),
+      message: (j) => j.t('full-disk-event-breathes', { percent: Math.round(occupation(j) * 100) }),
     },
     {
       id: 'end',

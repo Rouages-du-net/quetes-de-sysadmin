@@ -103,7 +103,7 @@ export const secret: Chapter = {
     const webTill = tillWorld({ env: tillEnv(OLD_KEY), logAccess: ACCESS, appLog: APP_LOG });
     return cooperativeWorld({
       withoutMarc: true,
-      home: { 'email_awa.txt': f(t('secret-email-awa', { cle: NEW_KEY })) },
+      home: { 'email_awa.txt': f(t('secret-email-awa', { key: NEW_KEY })) },
       etc: nginxCooperative(SITE),
       sbin: BINARY_NGINX,
       more: webTill,
@@ -113,7 +113,7 @@ export const secret: Chapter = {
     { id: 'env-only', condition: (j) => !leak(j, '/.env') && leak(j, '/.git/config'), message: (j) => j.t('secret-event-env-only') },
     { id: 'site-broken', condition: (j) => !leak(j, '/.env') && !siteOk(j), message: (j) => j.t('secret-event-site-broken') },
     { id: 'closed', condition: closed, message: (j) => j.t('secret-event-closed') },
-    { id: 'attacker', condition: blockedAttacker, message: (j) => j.t('secret-event-attacker', { adresse: ATTACKER }) },
+    { id: 'attacker', condition: blockedAttacker, message: (j) => j.t('secret-event-attacker', { address: ATTACKER }) },
     {
       id: 'key-written',
       condition: (j) => (j.read(ENV) ?? '').includes(NEW_KEY) && !loadedKey(j),

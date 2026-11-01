@@ -275,7 +275,7 @@ function editOverride(game: Shell, sd: Systemd, name: string): string {
     text,
     root: true,
     conclude: true,
-    message: game.t('nano-lines-read', { lignes: text.split('\n').length }),
+    message: game.t('nano-lines-read', { lines: text.split('\n').length }),
     after: () => {
       // Seules les lignes au-dessus du commentaire « Edits below… » sont gardées.
       const raw = game.read(file) ?? '';

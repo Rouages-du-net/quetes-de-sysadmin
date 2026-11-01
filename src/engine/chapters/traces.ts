@@ -222,7 +222,7 @@ export const traces: Chapter = {
     {
       id: 'found',
       condition: (j) => j.last.commands.some((c) => ['journalctl', 'last', 'grep'].includes(c[0])) && j.last.output.includes(INTRUDER),
-      message: (j) => j.t('traces-event-found', { adresse: INTRUDER }),
+      message: (j) => j.t('traces-event-found', { address: INTRUDER }),
     },
     {
       id: 'key-identified',

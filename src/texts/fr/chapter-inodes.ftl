@@ -37,22 +37,22 @@ inodes-stats-readme =
 
 ## La nuit simulée
 
-# { $commande } : la commande de la tâche cron ; { $sortie } : ce qu'elle a écrit
+# { $command } : la commande de la tâche cron ; { $output } : ce qu'elle a écrit
 inodes-mail =
-    Courrier de cron (Cron Daemon) au sujet de : { $commande }
-    { $sortie }
-# { $taches } : tâches lancées ; { $effaces } : fichiers effacés ; { $ancien } : âge du plus ancien, en jours ; { $pourcent } : inodes occupés
+    Courrier de cron (Cron Daemon) au sujet de : { $command }
+    { $output }
+# { $jobs } : tâches lancées ; { $deleted } : fichiers effacés ; { $oldest } : âge du plus ancien, en jours ; { $percent } : inodes occupés
 inodes-night =
     Une journée et une nuit passent. Le relais note ses écoutes ; cron
-    lance { $taches ->
+    lance { $jobs ->
         [0] aucune tâche
         [one] une tâche
-       *[other] { $taches } tâches
-    }. Au matin : { $effaces ->
-        [one] { $effaces } fichier de statistiques en moins
-       *[other] { $effaces } fichiers de statistiques en moins
+       *[other] { $jobs } tâches
+    }. Au matin : { $deleted ->
+        [one] { $deleted } fichier de statistiques en moins
+       *[other] { $deleted } fichiers de statistiques en moins
     }, le plus
-    ancien a { $ancien } jours, et { $pourcent } % des inodes de /srv/radio
+    ancien a { $oldest } jours, et { $percent } % des inodes de /srv/radio
     sont occupés.
 inodes-night-recent-lost =
     Aïe : des statistiques de moins de 30 jours ont disparu, celles du
@@ -63,14 +63,14 @@ inodes-night-nothing =
     Ta tâche n'a pas tourné cette nuit : son horaire ne tombe pas dans la
     nuit. Les cinq champs (minute, heure, jour du mois, mois, jour de la
     semaine) sont expliqués dans man crontab.
-# { $jours } : âge du plus ancien fichier
+# { $days } : âge du plus ancien fichier
 inodes-night-too-old =
-    Au matin, il reste des statistiques de { $jours } jours : la tâche n'a
+    Au matin, il reste des statistiques de { $days } jours : la tâche n'a
     pas fait le ménage. Lance sa commande à la main pour voir ce qu'elle
     fait (et sudo crontab -l, pour relire la ligne).
-# { $pourcent } : inodes occupés
+# { $percent } : inodes occupés
 inodes-night-full =
-    { $pourcent } % des inodes sont encore occupés : le volume se remplira
+    { $percent } % des inodes sont encore occupés : le volume se remplira
     de nouveau très vite. Il faudrait garder moins longtemps (mais au moins
     30 jours).
 
@@ -102,9 +102,9 @@ inodes-event-recent-lost =
     Attention : des statistiques de moins de 30 jours ont disparu, celles
     dont la mairie a besoin. Recommence le chapitre pour essayer autrement
     (lien sous le terminal).
-# { $pourcent } : inodes occupés
+# { $percent } : inodes occupés
 inodes-event-restarts =
-    Des inodes se sont libérés ({ $pourcent } % occupés) : l'enregistrement
+    Des inodes se sont libérés ({ $percent } % occupés) : l'enregistrement
     de nuit a repris, et le relais note de nouveau les écoutes. Reste à
     éviter que ça recommence : une tâche cron, chaque nuit, pour ne garder
     que le dernier mois (le jeu fera passer une nuit pour la voir à

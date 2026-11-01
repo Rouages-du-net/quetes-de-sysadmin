@@ -146,7 +146,7 @@ export const canary: Chapter = {
     j.state.lastBatch = batch;
     j.state.batches = [...(j.state.batches ?? []), batch];
     if (batch.byVersion['1.6.1']?.visits && !batch.byVersion['1.6.1'].errors && (distribution(j).blue ?? 0) < 1) j.state.canaryClean = true;
-    return j.t('canary-one-time', { visites: batch.total });
+    return j.t('canary-one-time', { visits: batch.total });
   },
   createWorld: (t) => {
     const root: Rights = { owner: 'root' };
@@ -219,7 +219,7 @@ export const canary: Chapter = {
     {
       id: 'all-one-coup',
       condition: (j) => (distribution(j).blue ?? 0) === 1 && !!lastBatch(j)?.byVersion['1.6.0']?.errors && !j.state.canary160,
-      message: (j) => j.t('canary-event-all-one-coup', { erreurs: lastBatch(j)!.errors }),
+      message: (j) => j.t('canary-event-all-one-coup', { errors: lastBatch(j)!.errors }),
     },
     {
       id: 'canary-160',

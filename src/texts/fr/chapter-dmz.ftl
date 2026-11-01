@@ -52,9 +52,9 @@ dmz-plan-switch =
 
 ## Événements
 
-# { $adresse } : l'adresse publique du routeur
+# { $address } : l'adresse publique du routeur
 dmz-event-address-public =
-    Une règle de la chaîne forward attend l'adresse { $adresse }… mais elle
+    Une règle de la chaîne forward attend l'adresse { $address }… mais elle
     ne la verra jamais : la traduction de destination (dnat) a lieu avant,
     au hook prerouting. Quand le paquet arrive dans forward, il va déjà à
     10.10.40.10. C'est cette adresse-là que forward doit laisser passer.

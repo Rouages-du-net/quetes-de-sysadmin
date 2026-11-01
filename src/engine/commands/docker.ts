@@ -781,7 +781,7 @@ export const DOCKER: Record<string, Command> = {
     launch: ({ args, game }) => {
       if (args[0] === '--version' || args[0] === '-v') return 'Docker version 27.5.1, build 9f9e405';
       const d = docker(game);
-      if (!d) return game.error(game.t('command-missing', { commande: 'docker' }));
+      if (!d) return game.error(game.t('command-missing', { command: 'docker' }));
       // Le groupe docker donne les droits de root sur la machine : ici, sudo.
       if (game.who !== 'root' && !game.groupsFor(game.who).includes('docker'))
         return game.error(

@@ -73,17 +73,17 @@ rollback-commit-3 = Title: Gazette, spelled right
 rollback-commit-4 = Calendar: the jumble sale is on 12 June
 rollback-commit-5 = Add tests.sh: checks before publishing
 rollback-commit-6 = New home page layout
-# { $numero }: the attempt number
-rollback-commit-theo = New layout, attempt { $numero }
+# { $number }: the attempt number
+rollback-commit-theo = New layout, attempt { $number }
 
 ## Events
 
-# { $sortie }: what git showed Théo (indented lines)
+# { $output }: what git showed Théo (indented lines)
 rollback-theo-push =
     Théo, from home: "Trying my layout again…" He pushes
     (still without index.html). Here's what git tells him:
 
-    { $sortie }
+    { $output }
 rollback-event-failure =
     403 Forbidden: nginx serves /srv/gazette/current, but finds no
     home page in it (index.html). Look at what current points to (ls -l

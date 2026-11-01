@@ -44,9 +44,9 @@ traces-email-salome =
 
 ## Events
 
-# { $adresse }: the address the login came from
+# { $address }: the address the login came from
 traces-event-found =
-    There is the login: a session of the "nadia" account from { $adresse },
+    There is the login: a session of the "nadia" account from { $address },
     at 3:12 a.m., whereas Nadia usually connects from the shop
     (198.51.100.7), in the evening. The ssh journal kept the fingerprint of
     the key used: "ED25519 SHA256:…".

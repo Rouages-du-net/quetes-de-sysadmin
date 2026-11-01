@@ -126,7 +126,7 @@ export const root: Chapter = {
     const name = Object.keys(place.children).sort()[0];
     if (!name) return;
     delete place.children[name];
-    return j.t('root-memory-erases', { souvenir: name });
+    return j.t('root-memory-erases', { memory: name });
   },
   events: [
     {
@@ -140,7 +140,7 @@ export const root: Chapter = {
         const place = j.find(path(j.t, MEMORIES));
         return j.flags.has('alert') && !j.flags.has('fixed') && place?.type === 'dossier' && !(j.can(place, 'w', eraser(j)) && j.can(place, 'x', eraser(j)));
       },
-      message: (j) => j.t('root-event-protected', { sauves: j.count(path(j.t, MEMORIES), ''), total: TOTAL }),
+      message: (j) => j.t('root-event-protected', { saved: j.count(path(j.t, MEMORIES), ''), total: TOTAL }),
     },
     {
       id: 'conf-erased',
@@ -155,7 +155,7 @@ export const root: Chapter = {
       },
       message: (j) => {
         const saved = j.count(path(j.t, MEMORIES), '');
-        return j.t('root-event-fixed', { sauves: saved, total: TOTAL, perte: saved < TOTAL ? 'oui' : 'non' });
+        return j.t('root-event-fixed', { saved: saved, total: TOTAL, loss: saved < TOTAL ? 'oui' : 'non' });
       },
     },
   ],

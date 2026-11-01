@@ -7,7 +7,7 @@ chapter-directory = L'annuaire
 
 ## Fichiers
 
-# { $admin } : le DN de l'administrateur de l'annuaire ; { $motdepasse } : son mot de passe
+# { $admin } : le DN de l'administrateur de l'annuaire ; { $password } : son mot de passe
 directory-email-malik =
     De :     Malik
     À :      toi
@@ -26,7 +26,7 @@ directory-email-malik =
 
     Pour lire l'annuaire : ldapsearch -x (la base est déjà dans
     /etc/ldap/ldap.conf). Pour écrire, il faut s'identifier :
-    { $admin }, mot de passe { $motdepasse } ; ou, en root sur cette
+    { $admin }, mot de passe { $password } ; ou, en root sur cette
     machine, sudo … -Y EXTERNAL -H ldapi:/// (sans mot de passe).
     Tout est dans man ldapsearch, man ldapadd, man ldapmodify.
 

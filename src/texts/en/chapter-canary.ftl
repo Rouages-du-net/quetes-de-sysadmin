@@ -36,13 +36,13 @@ canary-notes-161 =
 
 ## Events
 
-# { $visites }: the number of simulated visits
+# { $visits }: the number of simulated visits
 canary-one-time =
-    An hour goes by: { $visites } visits to the Kiosk, through nginx.
+    An hour goes by: { $visits } visits to the Kiosk, through nginx.
     Everything is written in /var/log/nginx/access.log.
-# { $erreurs }: the number of visits that got an error
+# { $errors }: the number of visits that got an error
 canary-event-all-one-coup =
-    All the traffic moved to 1.6.0 at once… and { $erreurs } visits
+    All the traffic moved to 1.6.0 at once… and { $errors } visits
     in that hour got a 500 error: everyone gets to enjoy it. That's
     what the canary would have avoided. Go back to green (proxy_pass,
     nginx -t, reload), then try with a small share of the traffic.

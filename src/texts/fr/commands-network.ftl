@@ -34,8 +34,8 @@ wg-usage =
 wg-quick-usage = Usage: wg-quick [ up | down | save | strip ] [ CONFIG_FILE | INTERFACE ]
 # wg set, setconf… : changer une interface en marche n'est pas simulé.
 wg-set-not-simulated = Le jeu ne simule pas les changements d'une interface en marche : modifie /etc/wireguard/wg0.conf, puis wg-quick down wg0 et wg-quick up wg0 (ou systemctl restart wg-quick@wg0).
-# { $commande } : ldapadd, ldapmodify ou ldapdelete, sans fichier ni entrée
-ldap-nothing-a-do = { $commande } attend ses changements dans un fichier LDIF (-f fichier) ou par un tube (cat fichier.ldif | { $commande } …) : le jeu ne lit pas le clavier.
+# { $command } : ldapadd, ldapmodify ou ldapdelete, sans fichier ni entrée
+ldap-nothing-a-do = { $command } attend ses changements dans un fichier LDIF (-f fichier) ou par un tube (cat fichier.ldif | { $command } …) : le jeu ne lit pas le clavier.
 radtest-usage = Usage: radtest [OPTIONS] user passwd radius-server[:port] nas-port-number secret [ppphint] [nasname]
 freeradius-usage = Usage: freeradius [-d <raddb>] [-n <name>] [-C] [-X] [-v]
 # Après freeradius -X : le vrai serveur reste au premier plan jusqu'à Ctrl+C.

@@ -97,7 +97,7 @@ const after = (ids: string[]) =>
       <ol class="fiches">
         {list.map((f) => (
           <li class="fiche" id={`c-${f.chapter.id}`}>
-            <h3>{t('chapter-number', { numero: f.chapter.number })}{fr ? ' : ' : ': '}{t(`chapter-${f.chapter.id}`)}</h3>
+            <h3>{t('chapter-number', { number: f.chapter.number })}{fr ? ' : ' : ': '}{t(`chapter-${f.chapter.id}`)}</h3>
             <dl>
               <dt>{fr ? 'Objectif' : 'Goal'}</dt>
               <dd>{typo(t(`chapter-${f.chapter.id}.summary`))}</dd>

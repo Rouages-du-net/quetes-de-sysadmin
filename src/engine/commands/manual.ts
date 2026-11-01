@@ -71,7 +71,7 @@ export function help(name: string, c: Command, t: Translate): string {
     lines.push('');
     for (const [o, d] of opts) lines.push(`  -${o.padEnd(5)} ${d}`);
   }
-  lines.push('', t('manual-complete', { commande: name }));
+  lines.push('', t('manual-complete', { command: name }));
   return lines.join('\n');
 }
 
@@ -104,10 +104,10 @@ export function invalidOption(name: string, c: Command, args: string[], t: Trans
     if (a.startsWith('--')) {
       const long = a.slice(2).split('=')[0];
       if (c.long && long in c.long) continue;
-      return t('manual-option-long-unknown', { commande: name, option: a.split('=')[0] });
+      return t('manual-option-long-unknown', { command: name, option: a.split('=')[0] });
     }
     if (!a.startsWith('-') || a === '-' || /^-\d+$/.test(a)) continue;
-    for (const letter of a.slice(1)) if (!c.options.includes(letter)) return t('manual-option-invalid', { commande: name, lettre: letter });
+    for (const letter of a.slice(1)) if (!c.options.includes(letter)) return t('manual-option-invalid', { command: name, letter: letter });
   }
   return null;
 }

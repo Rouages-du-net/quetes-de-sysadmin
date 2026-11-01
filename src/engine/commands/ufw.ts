@@ -69,7 +69,7 @@ export const UFW: Record<string, Command> = {
         if (detail)
           header.push(
             game.t('ufw-journalisation'),
-            game.t('ufw-defaults', { entrant: pf.incoming, sortant: pf.outgoing }),
+            game.t('ufw-defaults', { incoming: pf.incoming, outgoing: pf.outgoing }),
             game.t('ufw-profiles'),
           );
         if (!pf.rules.length) return header.join('\n');
@@ -94,7 +94,7 @@ export const UFW: Record<string, Command> = {
         if (!['allow', 'deny', 'reject'].includes(policy) || !['incoming', 'outgoing'].includes(sens)) return game.error(game.t('ufw-syntax'));
         if (sens === 'incoming') pf.incoming = policy as Policy;
         else pf.outgoing = policy as Policy;
-        return game.t(sens === 'incoming' ? 'ufw-default-incoming' : 'ufw-default-outgoing', { politique: policy });
+        return game.t(sens === 'incoming' ? 'ufw-default-incoming' : 'ufw-default-outgoing', { policy: policy });
       }
       if (action === 'app' && rest[0] === 'list') return [game.t('ufw-applications'), ...Object.keys(APPLICATIONS).sort().map((a) => `  ${a}`)].join('\n');
       if (action === 'delete') {
@@ -102,8 +102,8 @@ export const UFW: Record<string, Command> = {
           // La numérotation de ufw status numbered compte aussi les lignes (v6).
           const lines = pf.rules.flatMap((r) => (r.forEachOf ? [r] : [r, r]));
           const r = lines[Number(rest[0]) - 1];
-          if (!r) return game.error(game.t('ufw-number', { numero: rest[0] }));
-          game.ask(game.t('ufw-question-deletion', { regle: ruleText(r) }), (rep) => {
+          if (!r) return game.error(game.t('ufw-number', { number: rest[0] }));
+          game.ask(game.t('ufw-question-deletion', { rule: ruleText(r) }), (rep) => {
             if (!/^(y|yes|o|oui)$/i.test(rep)) return game.t('ufw-abandon');
             pf.rules = pf.rules.filter((q) => q !== r);
             return r.forEachOf ? game.t('ufw-rule-deleted') : v6('ufw-rule-deleted');

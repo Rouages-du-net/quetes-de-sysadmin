@@ -6,7 +6,7 @@ chapter-secret = The secret
 
 ## Files
 
-# { $cle }: the new payment key
+# { $key }: the new payment key
 secret-email-awa =
     From:    Awa
     To:      you
@@ -15,7 +15,7 @@ secret-email-awa =
     The payment terminal provider just called: our secret key was seen on
     the internet last night. They disabled it, and gave us a new one:
 
-      { $cle }
+      { $key }
 
     As long as the till uses the old one, no more card payments!
     The key is in the .env file of the till app (/srv/till/app), which
@@ -42,9 +42,9 @@ secret-event-site-broken =
     configuration (sudo nginx -t).
 secret-event-closed =
     Hidden files no longer get out, and the website still answers.
-# { $adresse }: the blocked address
+# { $address }: the blocked address
 secret-event-attacker =
-    { $adresse } now gets 403: this is the address that downloaded
+    { $address } now gets 403: this is the address that downloaded
     the .env and .git/config files last night (python-requests, at 3:12 a.m.). It won't come back
     through this site… but what it took, it already has: the secrets have
     to be changed.

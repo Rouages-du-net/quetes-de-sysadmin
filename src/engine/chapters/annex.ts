@@ -207,7 +207,7 @@ export const annex: Chapter = {
         },
       },
       home: {
-        'email_sami.txt': f(t('annex-email-sami', { cle: ANNEX_PUBLIC })),
+        'email_sami.txt': f(t('annex-email-sami', { key: ANNEX_PUBLIC })),
         'annex-wg0.conf': f(t('annex-conf'), { lines: true }),
         'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },

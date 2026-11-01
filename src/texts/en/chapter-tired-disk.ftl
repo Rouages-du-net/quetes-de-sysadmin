@@ -76,19 +76,19 @@ tired-disk-event-healthy =
     it (--remove), then put it back (--re-add): it will be brought up to
     date and the array will get its healthy copy back. Only then deal with
     sdb.
-# { $partition }: the sdb partition still in place; { $grappe }: its array
+# { $partition }: the sdb partition still in place; { $array }: its array
 tired-disk-event-half =
     One array is done. But sdb is in the other one too: { $partition } is
-    still part of { $grappe }. A disk being replaced leaves all its arrays.
+    still part of { $array }. A disk being replaced leaves all its arrays.
 tired-disk-event-removed =
     sdb is no longer part of any array: /proc/mdstat shows [U_] for both.
     The server runs on sda alone, without a safety net: the disk must be
     replaced quickly. The ticket remains, ~/ticket.txt, with what the
     host's procedure asks for.
-# { $fichier }: the ticket's name
+# { $file }: the ticket's name
 tired-disk-event-ticket-false =
     The ticket contains sda's serial number: that's the HEALTHY disk! The
-    host would unplug the only disk that still works. Fix { $fichier }:
+    host would unplug the only disk that still works. Fix { $file }:
     only sdb's serial number.
 tired-disk-event-ticket =
     The ticket gives the serial number of the disk to replace. Odile will

@@ -1183,14 +1183,14 @@ manual-section-examples = EXAMPLES
 manual-section-see-also = SEE ALSO
 # First line of "command --help"
 manual-use = Usage: { $synopsis }
-manual-complete = Full manual: man { $commande }
+manual-complete = Full manual: man { $command }
 manual-option-invalid =
-    { $commande }: invalid option -- '{ $lettre }'
-    Try '{ $commande } --help' for more information.
+    { $command }: invalid option -- '{ $letter }'
+    Try '{ $command } --help' for more information.
 # An unknown long option (--frobnicate), as getopt prints it in coreutils. { $option }: the option typed
 manual-option-long-unknown =
-    { $commande }: unrecognized option '{ $option }'
-    Try '{ $commande } --help' for more information.
+    { $command }: unrecognized option '{ $option }'
+    Try '{ $command } --help' for more information.
 
 man-nmap = the network explorer: it sends packets to a machine (or a whole range of addresses) and says, for each TCP port, whether it is open (a program answers), closed (the machine answers "nobody here") or filtered (a firewall drops the packet: no answer at all). The ports are "seen from the internet": that is what an attacker, or an auditor, sees. -sV also asks the version of the service that answers (useful to spot outdated software); -p chooses the ports (-p 22,80; -p 1-1024; -p- for all of them); -sn only says which machines answer; -Pn ignores a missing answer to ping; -oN keeps the result in a file (evidence to attach to the report); -F looks only at the most common ports; -n does not look up names. Use nmap only on what is in your letter of engagement: probing a machine you have no right to probe is a fault, sometimes a crime. 127.0.0.1 is the machine itself, seen from the inside (the firewall does not apply there).
     .synopsis = nmap [options] target...  (a name, an address, a network 192.0.2.0/29, a range 192.0.2.20-25)

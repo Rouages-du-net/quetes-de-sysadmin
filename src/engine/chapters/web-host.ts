@@ -131,7 +131,7 @@ export const host: Chapter = {
       passwords: 'no',
       home: {
         '.ssh': sshDirectory(),
-        'email_yasmine.txt': f(t('web-host-email-yasmine', { compte: ACCOUNT, motdepasse: FTP_PASSWORD })),
+        'email_yasmine.txt': f(t('web-host-email-yasmine', { account: ACCOUNT, password: FTP_PASSWORD })),
         'email_hosting.txt': f(t('web-host-email-host'), { lines: true }),
         'notes-gaspard.txt': f(t('web-host-notes-gaspard'), { lines: true }),
       },

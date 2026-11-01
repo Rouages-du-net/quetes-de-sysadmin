@@ -27,11 +27,11 @@ presents them for people.
   English ones); every other document is in English only.
 - **Code in English.** Files and identifiers (functions, variables,
   types, props), and the world (places, machines, accounts, passwords) are
-  in English, and so are the `.ftl` files and keys and the keys of a
-  machine's state (`state.mounts`, `state.apps`…). Still French: CSS
-  classes, Fluent variables (`{ $cible }`) and some comments; they are being
-  moved to English. Write new
-  code (files, functions, variables, props, CSS classes, new `.ftl` keys)
+  in English, and so are the `.ftl` files, keys and variables (`{ $target }`)
+  and the keys of a machine's state (`state.mounts`, `state.apps`…). Still
+  French: CSS classes and some comments; they are being moved to English.
+  Write new code (files, functions, variables, props, CSS classes, new
+  `.ftl` keys and variables)
   in English; never mix a large rename with a feature. A public name (attribute of
   the element, URL) gets its English form first and keeps the French one
   as an alias.

@@ -109,7 +109,7 @@ export const DIFF: Record<string, Command> = {
       const paint: Paint = colourise(c, colour.when) ? sgr : raw;
       const letters = new Set(args.filter((a) => /^-[a-zA-Z]+$/.test(a)).flatMap((a) => [...a.slice(1)]));
       const [gauche, right] = args.filter((a) => !a.startsWith('-'));
-      if (!gauche || !right) return game.error(game.t('diff-usage', { operande: gauche ?? 'diff' }));
+      if (!gauche || !right) return game.error(game.t('diff-usage', { operand: gauche ?? 'diff' }));
       const outputs: string[] = [];
       const compare = (a: string, b: string, root: boolean) => {
         const na = game.find(a);
@@ -118,13 +118,13 @@ export const DIFF: Record<string, Command> = {
           [a, na],
           [b, nb],
         ] as const)
-          if (!n) return void game.error(game.t('diff-missing', { cible: path }));
+          if (!n) return void game.error(game.t('diff-missing', { target: path }));
         if (na!.type === 'dossier' && nb!.type === 'dossier') {
           if (!root && !letters.has('r')) return void outputs.push(game.t('diff-under-directories', { a, b }));
           const names = [...new Set([...Object.keys(na!.children), ...Object.keys(nb!.children)])].sort();
           for (const name of names) {
-            if (!(name in nb!.children)) outputs.push(game.t('diff-only', { lieu: a, nom: name }));
-            else if (!(name in na!.children)) outputs.push(game.t('diff-only', { lieu: b, nom: name }));
+            if (!(name in nb!.children)) outputs.push(game.t('diff-only', { place: a, name: name }));
+            else if (!(name in na!.children)) outputs.push(game.t('diff-only', { place: b, name: name }));
             else compare(`${a.replace(/\/$/, '')}/${name}`, `${b.replace(/\/$/, '')}/${name}`, false);
           }
           return;

@@ -116,23 +116,23 @@ root-event-conf-erased =
     une configuration correcte dans /etc : le démon ne lit que le fichier
     /etc/effaceur.conf, sous ce nom exact.
 
-# { $souvenir } : nom du fichier effacé (identifiant technique)
-root-memory-erases = ✗ Un souvenir s’efface : { $souvenir }
-# { $sauves } : souvenirs sauvés ; { $total } : nombre de souvenirs au départ
+# { $memory } : nom du fichier effacé (identifiant technique)
+root-memory-erases = ✗ Un souvenir s’efface : { $memory }
+# { $saved } : souvenirs sauvés ; { $total } : nombre de souvenirs au départ
 root-event-protected =
     L'Effaceur s'acharne sur tes souvenirs… « Permission non accordée ». Il
     recule. Sous Linux, effacer un fichier, c'est modifier le lieu qui le
     contient : sans le droit d'écrire dans ce lieu, impossible d'y effacer.
 
-    Tu as sauvé { $sauves ->
-        [one] { $sauves } souvenir
-       *[other] { $sauves } souvenirs
+    Tu as sauvé { $saved ->
+        [one] { $saved } souvenir
+       *[other] { $saved } souvenirs
     } sur { $total }. Mais l'Effaceur continue ailleurs, dans
     tout le royaume. D'où vient son ordre ? Les démons écrivent ce qu'ils font
     dans un journal :
 
       cat /var/log/effaceur.log
-# { $perte } : « oui » si des souvenirs ont été effacés, sinon « non »
+# { $loss } : « oui » si des souvenirs ont été effacés, sinon « non »
 root-event-fixed =
     Le démon relit sa configuration : « cible = /Royaume/Corbeille ». Une
     seule cible, cette fois. L'Effaceur s'arrête net… puis se met à vider la
@@ -144,10 +144,10 @@ root-event-fixed =
     faisait deux cibles, dont le royaume entier. Il n'était pas méchant : il
     faisait exactement ce qu'on lui avait écrit.
 
-    Tu as sauvé { $sauves ->
-        [one] { $sauves } souvenir
-       *[other] { $sauves } souvenirs
-    } sur { $total }.{ $perte ->
+    Tu as sauvé { $saved ->
+        [one] { $saved } souvenir
+       *[other] { $saved } souvenirs
+    } sur { $total }.{ $loss ->
         [oui] {" "}Ceux qui sont partis ne reviendront pas : rm ne passe par aucune corbeille… à moins d'avoir fait des sauvegardes. Mais ça, c'est une autre histoire.
        *[non] {""}
     }

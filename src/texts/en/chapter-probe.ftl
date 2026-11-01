@@ -48,18 +48,18 @@ probe-podcasts-readme =
 
 ## The drill night
 
-# { $lancements }: how many times the probe (or a scheduled job) ran
+# { $runs }: how many times the probe (or a scheduled job) ran
 probe-night =
     Your probe is scheduled: Zoé starts the drill. The evening, then the night
-    go by ({ $lancements ->
+    go by ({ $runs ->
         [0] no scheduled job ran
         [one] a scheduled job ran once
-       *[other] the scheduled jobs ran { $lancements } times
+       *[other] the scheduled jobs ran { $runs } times
     }).
-# { $alerte }, { $repare }: times; { $minutes }: length of the silence
+# { $alert }, { $repaired }: times; { $minutes }: length of the silence
 probe-night-relay-seen =
-    1:10 am: Zoé stops the stream relay, all of a sudden. At { $alerte }, her
-    phone rings; she restarts the relay at { $repare }. The live stream was
+    1:10 am: Zoé stops the stream relay, all of a sudden. At { $alert }, her
+    phone rings; she restarts the relay at { $repaired }. The live stream was
     silent for { $minutes } minutes.
 probe-night-relay-missed =
     1:10 am: Zoé stops the stream relay, all of a sudden… and nobody is
@@ -69,23 +69,23 @@ probe-night-relay-slow =
     The alert arrived, but more than 15 minutes after the outage: for
     a radio station, that's long. How often does the probe run?
     (systemctl list-timers, systemd-analyze calendar)
-# { $alerte }: time
+# { $alert }: time
 probe-night-inodes-seen =
     1:40 am: the thumbnail import runs wild and creates thousands of
-    small files on /srv/radio. At { $alerte }, well before the inodes
+    small files on /srv/radio. At { $alert }, well before the inodes
     run out, Zoé is warned and stops the import.
-# { $plein }: time
+# { $full }: time
 probe-night-inodes-missed =
     1:40 am: the thumbnail import runs wild and creates thousands of
-    small files on /srv/radio. At { $plein }, not a single free inode left:
+    small files on /srv/radio. At { $full }, not a single free inode left:
     the night recording fails, without anyone being warned.
     Does check_disk watch this volume, and its inodes? (man check_disk:
     -W and -K)
-# { $nombre }: alerts received when everything was fine
+# { $count }: alerts received when everything was fine
 probe-night-false =
-    { $nombre ->
+    { $count ->
         [one] Zoé received one alert
-       *[other] Zoé received { $nombre } alerts
+       *[other] Zoé received { $count } alerts
     } while everything was fine. Alerts for nothing, and after
     a few nights nobody reads them any more: a threshold too tight, a
     check that writes even when all is well (cron also mails
@@ -98,10 +98,10 @@ probe-night-never =
 
 ## Events
 
-# { $dossier }: the plugins directory
+# { $directory }: the plugins directory
 probe-event-plugin-outside-path =
     The monitoring plugins are not in the PATH: on Debian, they
-    live in { $dossier }, and are run by their full path (as
+    live in { $directory }, and are run by their full path (as
     in Zoé's probe).
 probe-event-first-alert =
     Zoé: "Got your mail!" Testing an alert before you

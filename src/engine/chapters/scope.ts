@@ -121,13 +121,13 @@ export const scope: Chapter = {
     {
       id: 'outside-scope',
       condition: outsideScope,
-      message: (j) => j.t('scope-event-outside-scope', { adresses: addressesOutside(j).join(', '), voisin: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
+      message: (j) => j.t('scope-event-outside-scope', { addresses: addressesOutside(j).join(', '), neighbour: addressesOutside(j).includes(NEIGHBOUR.address) ? 'oui' : 'non' }),
     },
     { id: 'trace', condition: traceOk, message: (j) => j.t('scope-event-trace') },
     {
       id: 'end',
       condition: (j) => traceOk(j) && notesOk(j),
-      message: (j) => j.t('scope-event-end', { faute: outsideScope(j) ? 'oui' : 'non' }),
+      message: (j) => j.t('scope-event-end', { mistake: outsideScope(j) ? 'oui' : 'non' }),
     },
   ],
 };

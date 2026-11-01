@@ -31,13 +31,13 @@ const ADMIN: App = {
   answer: (j, path) => {
     const listing = signups(j);
     if (path === '/' || path === '/admin' || path === '/admin/') {
-      const lines = Object.entries(listing).map(([name, state]) => j.t('tunnel-admin-ligne', { nom: name, etat: state }));
-      return { code: 200, type: 'text/plain; charset=utf-8', body: j.t('tunnel-admin-page', { lignes: lines.join('\n') }) };
+      const lines = Object.entries(listing).map(([name, state]) => j.t('tunnel-admin-ligne', { name: name, state: state }));
+      return { code: 200, type: 'text/plain; charset=utf-8', body: j.t('tunnel-admin-page', { lines: lines.join('\n') }) };
     }
     const m = /^\/admin\/(valider|refuser)\/([\w-]+)\/?$/.exec(path);
     if (m && listing[m[2]]) {
       listing[m[2]] = m[1] === 'valider' ? 'validee' : 'refusee';
-      return { code: 200, type: 'text/plain; charset=utf-8', body: j.t(`tunnel-admin-${m[1]}`, { nom: m[2] }) };
+      return { code: 200, type: 'text/plain; charset=utf-8', body: j.t(`tunnel-admin-${m[1]}`, { name: m[2] }) };
     }
     return { code: 404, type: 'text/plain; charset=utf-8', body: j.t('tunnel-admin-introuvable') };
   },
@@ -97,7 +97,7 @@ export const tunnel: Chapter = {
   },
   createWorld: (t) => homeWorld({ passwords: 'no', home: { 'email_yasmine.txt': f(t('tunnel-email-yasmine')), '.ssh': sshDirectory() } }),
   events: [
-    { id: 'advert', condition: approvedAdvert, message: (j) => j.t('tunnel-event-advert', { compte: ADVERT }) },
+    { id: 'advert', condition: approvedAdvert, message: (j) => j.t('tunnel-event-advert', { account: ADVERT }) },
     { id: 'approved', condition: (j) => approved(j) && !approvedAdvert(j), message: (j) => j.t('tunnel-event-approved') },
     { id: 'end', condition: (j) => approved(j) && !approvedAdvert(j) && openTunnels(j) === 0, message: (j) => j.t('tunnel-event-end') },
   ],

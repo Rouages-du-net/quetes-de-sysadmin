@@ -1,11 +1,11 @@
 ### sudo -l and visudo: sudo's original English messages
-### (plugins/sudoers). { $fichier }, { $compte } and { $hote } are
+### (plugins/sudoers). { $file }, { $account } and { $host } are
 ### technical identifiers.
 
 visudo-usage = usage: visudo [-chqsV] [[-f] sudoers ]
-visudo-permission = visudo: unable to open { $fichier }: Permission denied
-visudo-missing = visudo: unable to open { $fichier }: No such file or directory
-visudo-analysis-succeeded = { $fichier }: parsed OK
+visudo-permission = visudo: unable to open { $file }: Permission denied
+visudo-missing = visudo: unable to open { $file }: No such file or directory
+visudo-analysis-succeeded = { $file }: parsed OK
 visudo-and-now = What now?
 visudo-options =
     Options are:
@@ -15,11 +15,11 @@ visudo-options =
 sudoers-error-syntax = syntax error
 sudoers-error-path = expected a fully-qualified path name
 sudo-sources-invalid = sudo: no valid sudoers sources found, quitting
-# { $defauts }: the Defaults options; { $regles }: one rule per line, already indented
+# { $defaults }: the Defaults options; { $rules }: one rule per line, already indented
 sudo =
-    Matching Defaults entries for { $compte } on { $hote }:
-        { $defauts }
+    Matching Defaults entries for { $account } on { $host }:
+        { $defaults }
 
-    User { $compte } may run the following commands on { $hote }:
-    { $regles }
-sudo-none = User { $compte } is not allowed to run sudo on { $hote }.
+    User { $account } may run the following commands on { $host }:
+    { $rules }
+sudo-none = User { $account } is not allowed to run sudo on { $host }.

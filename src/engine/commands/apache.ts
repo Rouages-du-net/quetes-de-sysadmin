@@ -57,7 +57,7 @@ const apache2ctl: Command = {
   section: 8,
   ownOptions: true,
   launch: ({ args, game }) => {
-    if (!installed(game)) return game.error(game.t('command-missing', { commande: 'apache2ctl' }));
+    if (!installed(game)) return game.error(game.t('command-missing', { command: 'apache2ctl' }));
     const a = args.filter((x) => x !== '-k');
     const first = a[0];
     if (first === '-v') return `Server version: ${SIGNATURE}\nServer built:   2025-07-29T15:46:03`;
@@ -122,7 +122,7 @@ const availableNames = (game: Shell, g: Kind) => {
 };
 
 function enable(game: Shell, g: Kind, args: string[], enable: boolean): string {
-  if (!installed(game)) return game.error(game.t('command-missing', { commande: `a2${enable ? 'en' : 'dis'}${g.word === 'site' ? 'site' : g.word === 'module' ? 'mod' : 'conf'}` }));
+  if (!installed(game)) return game.error(game.t('command-missing', { command: `a2${enable ? 'en' : 'dis'}${g.word === 'site' ? 'site' : g.word === 'module' ? 'mod' : 'conf'}` }));
   const names = args.filter((x) => !x.startsWith('-'));
   if (!names.length)
     return `Your choices are: ${availableNames(game, g).join(' ')}\nWhich ${g.word}(s) do you want to ${enable ? 'enable' : 'disable'} (wildcards ok)?`;

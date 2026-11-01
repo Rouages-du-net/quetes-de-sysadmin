@@ -114,10 +114,10 @@ scope-event-scan =
     An auditor's question: among these open services, which ones have a
     reason to be reachable by anyone? Keep the trace in a file (the -oN
     option): a finding without proof is only an opinion.
-# { $adresses }: the addresses probed outside the letter of engagement; { $voisin }: "oui" if the neighbour's server is one of them
+# { $addresses }: the addresses probed outside the letter of engagement; { $neighbour }: "oui" if the neighbour's server is one of them
 scope-event-outside-scope =
     WARNING: you have just probed an address that is not in your letter of
-    engagement ({ $adresses }{ $voisin ->
+    engagement ({ $addresses }{ $neighbour ->
         [oui] , including the neighbour's server
        *[non] {""}
     }). Here nothing happened;
@@ -135,7 +135,7 @@ scope-event-trace =
 
     Your notes remain to be written (audit_notes.md): what you found, and
     what you saw without touching it.
-# { $faute }: "oui" if the scan went beyond the scope, "non" otherwise
+# { $mistake }: "oui" if the scan went beyond the scope, "non" otherwise
 scope-event-end =
     Salomé: "That is a clean inventory: a scope, proof, and honest notes. We
     can use it for the report."
@@ -149,7 +149,7 @@ scope-event-end =
     version that is not the latest. You kept the trace of the scan in a
     file. And you noted, without touching it, an "interesting" machine that is
     not yours: the neighbour's server.
-    { $faute ->
+    { $mistake ->
         [oui] But your scan also probed the neighbour's address: the most common mistake, because scanning "the whole network" is a reflex. Here it costs nothing; for real, it is the fault that ends a mission, sometimes a career.
        *[non] Your scan stayed within the scope: that is what is expected of an auditor.
     }

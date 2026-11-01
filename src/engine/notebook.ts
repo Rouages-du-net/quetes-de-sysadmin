@@ -44,8 +44,8 @@ export function progress(finished: string[], t: Translate): string[] {
     const done = h.chapters.filter((c) => finished.includes(c.id));
     if (!done.length) return [];
     return [
-      `- ${t('notebook-progress-story', { histoire: t(`story-${h.id}`), faits: done.length, total: h.chapters.length })}`,
-      ...done.map((c) => `  - ${t('chapter-number', { numero: c.number })} : ${t(`chapter-${c.id}`)}`),
+      `- ${t('notebook-progress-story', { story: t(`story-${h.id}`), finished: done.length, total: h.chapters.length })}`,
+      ...done.map((c) => `  - ${t('chapter-number', { number: c.number })} : ${t(`chapter-${c.id}`)}`),
     ];
   });
   return [`## ${t('notebook-progress')}`, '', ...(lines.length ? lines : [t('notebook-progress-empty')]), ''];
@@ -55,9 +55,9 @@ export function progress(finished: string[], t: Translate): string[] {
 export function inMarkdown(notebook: Notebook, t: Translate, finished?: string[], playerName = ''): string {
   const names = Object.keys(notebook).sort((a, b) => a.localeCompare(b));
   return [
-    `# ${playerName ? t('notebook-title-of', { nom: playerName }) : t('notebook-title')}`,
+    `# ${playerName ? t('notebook-title-of', { name: playerName }) : t('notebook-title')}`,
     '',
-    t('notebook-markdown-intro', { nombre: names.length }),
+    t('notebook-markdown-intro', { count: names.length }),
     '',
     ...(finished ? [t('notebook-grade', { grade: t(`grade-${grade(finished)}`) }), ''] : []),
     ...(finished ? progress(finished, t) : []),
@@ -72,8 +72,8 @@ export function inMarkdown(notebook: Notebook, t: Translate, finished?: string[]
         e.line,
         '```',
         '',
-        ...(e.chapter ? [t('notebook-discovery', { chapitre: t(`chapter-${e.chapter}`) }), ''] : []),
-        t('notebook-manual', { commande: `man ${name}` }),
+        ...(e.chapter ? [t('notebook-discovery', { chapter: t(`chapter-${e.chapter}`) }), ''] : []),
+        t('notebook-manual', { command: `man ${name}` }),
         '',
       ];
     }),

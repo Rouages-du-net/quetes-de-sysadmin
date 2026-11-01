@@ -41,9 +41,9 @@ concert-help-logs =
 
 # Après chaque rechargement de nginx : une minute de trafic.
 concert-minute =
-    Une minute passe. Visiteur·ses : { $servis } requêtes servies sur { $humains }.
-    Robot : { $refuses } requêtes refusées sur { $robot }. Délais dépassés
-    (504) : { $depasses }. (Le détail est à la fin de access.log.)
+    Une minute passe. Visiteur·ses : { $served } requêtes servies sur { $humans }.
+    Robot : { $refused } requêtes refusées sur { $robot }. Délais dépassés
+    (504) : { $exceeded }. (Le détail est à la fin de access.log.)
 concert-event-robot =
     Trois adresses voisines (198.51.100.23, .24, .25), un même « navigateur »
     (AgendaScraper), des centaines de pages d'agenda par minute : c'est un

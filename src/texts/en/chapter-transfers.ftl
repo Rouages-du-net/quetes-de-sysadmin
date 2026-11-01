@@ -54,9 +54,9 @@ transfers-schedule =
 transfers-event-report =
     The annual report is on your workstation: scp went through community (the
     ProxyJump of your shortcut), just like ssh.
-# { $dossier }: the extra directory that was created
+# { $directory }: the extra directory that was created
 transfers-event-nested =
-    Look on archives: there is now a directory { $dossier }. Without
+    Look on archives: there is now a directory { $directory }. Without
     a trailing slash, rsync copied the DIRECTORY share into the
     backup, instead of its CONTENTS.
 

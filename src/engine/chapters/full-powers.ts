@@ -127,7 +127,7 @@ APPS.galerie = {
   },
   answer: (game, _c, path) => {
     if (path === '/' || path === '')
-      return { code: 200, body: game.t('full-powers-gallery-welcome', { nombre: presentPhotos(game).length }) };
+      return { code: 200, body: game.t('full-powers-gallery-welcome', { count: presentPhotos(game).length }) };
     return { code: 404, body: `Cannot GET ${path}` };
   },
 };
@@ -327,7 +327,7 @@ export const powersFull: Chapter = {
     {
       id: 'photos-lost',
       condition: (j) => !photosAll(j),
-      message: (j) => j.t('full-powers-event-photos-lost', { nombre: PHOTOS_NAMES.length - presentPhotos(j).length }),
+      message: (j) => j.t('full-powers-event-photos-lost', { count: PHOTOS_NAMES.length - presentPhotos(j).length }),
     },
     {
       id: 'end',

@@ -62,9 +62,9 @@ firewall-hole-event-volume-lost =
     même s'ils ont un nom et comptent. Sur un vrai serveur, ce serait perdu.
     Ici, tu peux recommencer le chapitre depuis le menu. Avant un prune :
     docker system df, docker volume ls, et lire l'avertissement.
-# { $pourcent } : l'occupation du disque
+# { $percent } : l'occupation du disque
 firewall-hole-event-disk =
-    Le disque respire : { $pourcent } % occupés. Les images qu'aucun
+    Le disque respire : { $percent } % occupés. Les images qu'aucun
     conteneur n'utilise (anciennes versions, essais oubliés, images sans
     nom) prenaient presque toute la place.
 firewall-hole-event-end =

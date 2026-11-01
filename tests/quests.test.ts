@@ -224,7 +224,7 @@ for (const language of LANGUAGES)
         // Chaque piste trop longue renvoie aux notes d'Awa, sans donner la commande ; la bonne passe ensuite.
         expect(outputs[1]).toContain(t('first-day-event-all-read'));
         expect(outputs[2]).toContain(t('first-day-event-grep-only'));
-        expect(outputs[3]).toContain(t('first-day-event-account', { erreurs: outputs[3].split('\n')[0] }).slice(0, 12));
+        expect(outputs[3]).toContain(t('first-day-event-account', { errors: outputs[3].split('\n')[0] }).slice(0, 12));
         expect(outputs[4]).toContain(t('first-day-event-addresses-only'));
         expect(s.flags.has('robot')).toBe(true);
         // Une fois le compte fait, relire le journal ne redit rien.

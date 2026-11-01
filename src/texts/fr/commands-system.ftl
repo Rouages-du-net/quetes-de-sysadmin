@@ -22,11 +22,11 @@ truncate-size = truncate: vous devez spécifier « --size »
 truncate-operand =
     truncate: opérande de fichier manquant
     Saisissez « truncate --help » pour plus d'informations.
-# { $taille } : la taille donnée
-truncate-size-incorrect = truncate: Taille incorrecte : « { $taille } »
-# { $fichier } : le fichier
-truncate-directory = truncate: impossible d'ouvrir '{ $fichier }' en écriture: Est un dossier
-truncate-permission = truncate: impossible d'ouvrir '{ $fichier }' en écriture: Permission non accordée
+# { $size } : la taille donnée
+truncate-size-incorrect = truncate: Taille incorrecte : « { $size } »
+# { $file } : le fichier
+truncate-directory = truncate: impossible d'ouvrir '{ $file }' en écriture: Est un dossier
+truncate-permission = truncate: impossible d'ouvrir '{ $file }' en écriture: Permission non accordée
 logrotate-usage =
     logrotate 3.21.0 - Copyright (C) 1995-2001 Red Hat, Inc.
     This may be freely redistributed under the terms of the GNU General Public License

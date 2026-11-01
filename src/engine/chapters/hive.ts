@@ -396,7 +396,7 @@ export const hivePlan =
       children: [
         ...vlans.map((v) => ({
           role: 'reseau' as const,
-          name: t('plan-vlan', { id: String(v.id), nom: v.name }),
+          name: t('plan-vlan', { id: String(v.id), name: v.name }),
           address: v.network,
           children: all
             .filter((a) => a.vlan === v.id)

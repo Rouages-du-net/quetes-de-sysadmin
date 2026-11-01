@@ -110,8 +110,8 @@ post-mortem-words-origin = 20 août, 20/08, 2027-08-20, aug 20, août
 post-mortem-words-blame = faute, coupable, négligence, négligent, aurait dû, auraient dû, incompétent, erreur de théo, erreur de zoé
 
 post-mortem-review = Zoé relit ton post-mortem :
-# { $mot } : le mot qui cherche un coupable
-post-mortem-blame = « { $mot } » : on cherche ce qui a permis la panne, pas qui l'a causée. Personne n'a mal agi ; c'est le système (les outils, les habitudes) qu'on améliore. Tu peux reformuler ?
+# { $word } : le mot qui cherche un coupable
+post-mortem-blame = « { $word } » : on cherche ce qui a permis la panne, pas qui l'a causée. Personne n'a mal agi ; c'est le système (les outils, les habitudes) qu'on améliore. Tu peux reformuler ?
 post-mortem-missing-template = Il reste des lignes « (à compléter) » du modèle.
 post-mortem-missing-timeline = La chronologie doit donner, vérifiées dans les journaux, l'heure de la coupure, celle de la première alerte et celle du retour du direct (journalctl --since … --until …, le courrier de l'alerte).
 post-mortem-missing-impact = L'impact : combien de minutes de silence pour les auditeur·rices ?

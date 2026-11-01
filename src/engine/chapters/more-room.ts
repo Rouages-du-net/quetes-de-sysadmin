@@ -103,11 +103,11 @@ export const grow: Chapter = {
       condition: (j) => /VFree|PFree|LSize/.test(j.last.output),
       message: (j) => j.t('more-room-event-lvm'),
     },
-    { id: 'only', condition: (j) => only(j).length > 0, message: (j) => j.t('more-room-event-only', { disque: `/dev/${only(j)[0]}` }) },
+    { id: 'only', condition: (j) => only(j).length > 0, message: (j) => j.t('more-room-event-only', { disk: `/dev/${only(j)[0]}` }) },
     {
       id: 'array',
       condition: (j) => fresh(j).some(([, g]) => g.members.length === 2),
-      message: (j) => j.t('more-room-event-array', { grappe: `/dev/${fresh(j)[0][0]}` }),
+      message: (j) => j.t('more-room-event-array', { array: `/dev/${fresh(j)[0][0]}` }),
     },
     { id: 'extended', condition: extended, message: (j) => j.t('more-room-event-extended') },
     {

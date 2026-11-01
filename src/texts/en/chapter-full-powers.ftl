@@ -52,10 +52,10 @@ full-powers-readme =
     It works under any uid, as long as it can write
     to /app/photos.
 
-# { $nombre }: the number of photos
-full-powers-gallery-welcome = { $nombre ->
+# { $count }: the number of photos
+full-powers-gallery-welcome = { $count ->
         [one] Fablab gallery: one project photo. Send yours!
-       *[other] Fablab gallery: { $nombre } project photos. Send yours!
+       *[other] Fablab gallery: { $count } project photos. Send yours!
     }
 
 ## Events
@@ -93,11 +93,11 @@ full-powers-event-open-a-all =
     but then any account, any program on the machine can
     drop or delete files there. Instead, give the directory to the
     right owner (chown), without opening up the others' permissions.
-# { $nombre }: the number of missing photos
+# { $count }: the number of missing photos
 full-powers-event-photos-lost =
-    { $nombre ->
+    { $count ->
         [one] One photo has disappeared from /srv/galerie/photos. On a real server, without a backup, it would be lost.
-       *[other] { $nombre } photos have disappeared from /srv/galerie/photos. On a real server, without a backup, they would be lost.
+       *[other] { $count } photos have disappeared from /srv/galerie/photos. On a real server, without a backup, they would be lost.
     } Here, you can restart the chapter from the menu.
 full-powers-event-end =
     The gallery runs under an ordinary account, Yasmine manages the photos

@@ -64,7 +64,7 @@ time { font-weight: bold; }`;
 
 // L'agenda, avec la date du vide-grenier (dans le texte et dans datetime).
 export const agenda = (t: Game['t'], day: number) =>
-  t('bare-repo-site-agenda', { date: `2027-06-${String(day).padStart(2, '0')}`, jour: String(day) });
+  t('bare-repo-site-agenda', { date: `2027-06-${String(day).padStart(2, '0')}`, day: String(day) });
 
 // L'historique du site dans ~/gazette : la première version (avec la faute
 // du titre), puis l'article de Samia, pas encore en ligne.
@@ -244,7 +244,7 @@ export const bareRepo: Chapter = {
     },
     {
       id: 'not-tracked',
-      condition: (j) => output(j).includes(j.t('git-checkout-not-tracked', { fichiers: '' }).split('\n')[0]),
+      condition: (j) => output(j).includes(j.t('git-checkout-not-tracked', { files: '' }).split('\n')[0]),
       message: (j) => j.t('bare-repo-event-not-tracked'),
     },
     {
