@@ -35,18 +35,18 @@ more-room-event-lvm =
     libre. Les deux disques neufs, sdc et sdd, attendent : d'abord une
     grappe RAID 1 avec eux, pour garder la sécurité des deux disques
     (man mdadm, --create).
-# { $disque } : le disque seul dans le groupe
+# { $disk } : le disque seul dans le groupe
 more-room-event-only =
-    Attention : { $disque } est entré dans le groupe labo tel quel, sans
+    Attention : { $disk } est entré dans le groupe labo tel quel, sans
     RAID. Si ce disque lâche, tout ce que LVM y aura posé est perdu, et
     avec lui le volume des photos entier. Ressors-le du groupe (man
     vgreduce). S'il porte déjà des données, il faut d'abord les déménager
     (man pvmove) vers une grappe : une grappe peut naître avec un seul
     disque et une place vide (« missing », man mdadm), et recevoir son
     second disque plus tard.
-# { $grappe } : la nouvelle grappe
+# { $array } : la nouvelle grappe
 more-room-event-array =
-    { $grappe } est créée, et sert déjà : sa première synchronisation
+    { $array } est créée, et sert déjà : sa première synchronisation
     (resync, dans /proc/mdstat) se fait en arrière-plan. Elle devient
     maintenant un volume physique du groupe labo (man pvcreate, man
     vgextend).

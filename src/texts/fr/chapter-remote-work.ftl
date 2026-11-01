@@ -7,7 +7,7 @@ chapter-remote-work = Le télétravail
 
 ## Fichiers
 
-# { $cle } : la clé publique WireGuard du portable de Malik
+# { $key } : la clé publique WireGuard du portable de Malik
 remote-work-email-malik =
     De :     Malik
     À :      toi
@@ -21,7 +21,7 @@ remote-work-email-malik =
     J'ai installé l'appli sur mon portable. Elle a créé mes clés, et me
     donne ma clé publique :
 
-        { $cle }
+        { $key }
 
     Dans le tunnel, mon portable aura l'adresse 10.10.99.2. L'appli me
     demande la clé publique du routeur, son adresse (hive.example, ou
@@ -51,9 +51,9 @@ remote-work-laptop-malik =
 
 ## Événements
 
-# { $fichier } : le fichier qui contient la clé privée
+# { $file } : le fichier qui contient la clé privée
 remote-work-event-key-exposed =
-    Attention : { $fichier } contient la clé privée du routeur, et tous les
+    Attention : { $file } contient la clé privée du routeur, et tous les
     comptes de la machine peuvent le lire. Avec cette clé, n'importe qui
     pourrait se faire passer pour le routeur. Une clé privée n'est lisible
     que par son propriétaire (chmod 600, ou umask 077 avant de la créer) ;

@@ -248,7 +248,7 @@ export const BACKUP: Record<string, Command> = {
           path: file,
           text: text.endsWith('\n') ? text : text + '\n',
           root: game.who === 'root',
-          message: game.t('nano-lines-read', { lignes: text.split('\n').length - (text.endsWith('\n') ? 1 : 0) }),
+          message: game.t('nano-lines-read', { lines: text.split('\n').length - (text.endsWith('\n') ? 1 : 0) }),
           // La crontab est installée pour le compte qui l'a ouverte (root avec sudo), à la fermeture de l'éditeur.
           after: () => {
             const who = game.who;

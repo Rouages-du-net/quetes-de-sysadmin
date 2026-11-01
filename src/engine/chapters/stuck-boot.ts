@@ -142,7 +142,7 @@ export const rescue: Chapter = {
     enterInRescue(j);
     j.state.relapses = 0;
   },
-  createWorld: (t) => labWorld(t, { 'message_from_odile.txt': f(t('stuck-boot-message-odile', { banniere: BANNER })) }, { winter: true, rescue: true }),
+  createWorld: (t) => labWorld(t, { 'message_from_odile.txt': f(t('stuck-boot-message-odile', { banner: BANNER })) }, { winter: true, rescue: true }),
   events: [
     {
       id: 'journal',

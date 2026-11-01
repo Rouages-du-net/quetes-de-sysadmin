@@ -47,15 +47,15 @@ update-app-welcome =
     <head><meta charset="utf-8"><title>Fablab tool library</title></head>
     <body>
     <h1>Fablab tool library</h1>
-    <p>{ $prets ->
+    <p>{ $loans ->
         [0] No current loans.
         [one] One current loan.
-       *[other] { $prets } current loans.
+       *[other] { $loans } current loans.
     } <a href="/prets">See the loans</a></p>
     <footer>outiltheque { $version }</footer>
     </body>
     </html>
-update-app-loans = Current loans: { $prets } (the first five)
+update-app-loans = Current loans: { $loans } (the first five)
 
 ## Events
 

@@ -127,7 +127,7 @@ export const dmz: Chapter = {
       home: { 'email_ines.txt': f(t('dmz-email-ines')), 'switch-plan.txt': f(t('dmz-plan-switch'), { lines: true }) },
     }),
   events: [
-    { id: 'address-public', condition: waitsPublic, message: (j) => j.t('dmz-event-address-public', { adresse: PUBLIC }) },
+    { id: 'address-public', condition: waitsPublic, message: (j) => j.t('dmz-event-address-public', { address: PUBLIC }) },
     {
       id: 'without-forward',
       condition: (j) => results(j).some((r) => site(r) && r.state === 'bloque' && !!r.destination) && routing(j),

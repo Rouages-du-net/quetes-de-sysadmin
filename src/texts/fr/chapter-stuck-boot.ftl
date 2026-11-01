@@ -10,7 +10,7 @@ chapter-stuck-boot = Le redémarrage qui coince
 
 # La ligne ajoutée par Théo dans /etc/fstab (un commentaire)
 stuck-boot-fstab-comment = # Disque USB des numérisations (Théo, d'après un tuto suivi sur mon portable)
-# { $banniere } : le message du mode secours, en anglais comme sur la vraie console
+# { $banner } : le message du mode secours, en anglais comme sur la vraie console
 stuck-boot-message-odile =
     Un message d'Odile (mardi 25 janvier, 7 h 50) :
 
@@ -20,7 +20,7 @@ stuck-boot-message-odile =
     comme si on était devant l'écran du serveur, en root. Voilà ce qui y
     est écrit :
 
-    { $banniere }
+    { $banner }
 
     Théo a branché la semaine dernière son disque USB, celui des
     numérisations des vieux négatifs, et il l'a ajouté “pour qu'il se

@@ -44,10 +44,10 @@ backup-memory-lighthouse-festival =
 
 ## The night (cron)
 
-# { $fichier }: the memory that arrived during the day
+# { $file }: the memory that arrived during the day
 backup-night-start =
     Evening falls on the kingdom. During the day, a new memory
-    arrived: ~/memories/{ $fichier }.
+    arrived: ~/memories/{ $file }.
 
     The night goes by. Between midnight and 6 am, cron wakes up and runs
     what your crontab asks of it…
@@ -55,22 +55,22 @@ backup-night-still =
     Another night goes by. Between midnight and 6 am, cron runs what your
     crontab asks of it…
 backup-night-ok =
-    In the morning, the backup is up to date: { $fichier } is there,
+    In the morning, the backup is up to date: { $file } is there,
     without you typing anything. That's an automatic backup.
 backup-morning =
     But Maëlle arrives, distraught: "I wanted to tidy up… and I deleted
-    ~/memories/{ $fichier }!" On Linux, rm doesn't go through a trash
+    ~/memories/{ $file }!" On Linux, rm doesn't go through a trash
     can. Luckily, you have a backup. Restore this memory.
 backup-night-nothing =
     In the morning, nothing has changed: none of your crontab's jobs fell
     during the night, between midnight and 6 am. Read the five time fields
     again (man crontab): minute, hour, day of month, month, day of week.
-# { $courrier }: what the jobs wrote
+# { $mail }: what the jobs wrote
 backup-night-mail =
     In the morning, the backup isn't up to date. Cron left you this mail,
     with what your job wrote:
 
-    { $courrier }
+    { $mail }
 backup-night-failure =
     In the morning, the backup isn't up to date: your job ran, but it
     didn't copy the memories to the right place. Check the command by
@@ -78,9 +78,9 @@ backup-night-failure =
 
 ## Events
 
-# { $sauvegarde }: the backup directory
+# { $backup }: the backup directory
 backup-event-nested =
-    Look closely: you now have { $sauvegarde }/memories, a memories
+    Look closely: you now have { $backup }/memories, a memories
     directory INSIDE the memories directory. For rsync, the source's
     trailing slash matters: "memories/" means "the contents of
     memories", "memories" means "the directory itself". This extra
@@ -90,9 +90,9 @@ backup-event-copy =
     The memories are copied to the backup disk. But a backup you have to
     remember to do by hand always ends up forgotten. Ask cron to redo it
     every night: crontab -e.
-# { $fichier }: the deleted memory
+# { $file }: the deleted memory
 backup-event-lost =
-    { $fichier } has disappeared… from the backup too! With --delete,
+    { $file } has disappeared… from the backup too! With --delete,
     rsync copied the deletion: a mirror reproduces mistakes like
     everything else. That's why you keep several versions (rsnapshot,
     restic: that's for later). Here, restart the chapter to try again.

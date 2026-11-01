@@ -8,7 +8,7 @@ chapter-keys = Les clés
 
 ## Fichiers
 
-# { $motdepasse } : le mot de passe provisoire du compte
+# { $password } : le mot de passe provisoire du compte
 keys-email-yasmine =
     De :     Yasmine (coordinatrice de la Maison des associations)
     À :      toi
@@ -23,7 +23,7 @@ keys-email-yasmine =
     serveur des archives (tu les découvriras bientôt).
 
     Je t'ai créé un compte (vous) avec un mot de passe provisoire :
-    { $motdepasse }. C'est avec lui que tu entres, pour l'instant. Gaspard disait
+    { $password }. C'est avec lui que tu entres, pour l'instant. Gaspard disait
     qu'un mot de passe sur un serveur ouvert à internet, c'est une porte
     entrouverte. Alors avant toute chose :
 

@@ -35,17 +35,17 @@ more-room-event-lvm =
     left. The two new disks, sdc and sdd, are waiting: first a RAID 1
     array with them, to keep the safety of two disks (man mdadm,
     --create).
-# { $disque }: the lone disk in the group
+# { $disk }: the lone disk in the group
 more-room-event-only =
-    Careful: { $disque } joined the labo group as is, without RAID. If
+    Careful: { $disk } joined the labo group as is, without RAID. If
     this disk dies, everything LVM put on it is lost, and with it the
     whole photos volume. Take it out of the group (man vgreduce). If data
     is already on it, move it first (man pvmove) to an array: an array can
     be born with a single disk and an empty slot ("missing", man mdadm),
     and get its second disk later.
-# { $grappe }: the new array
+# { $array }: the new array
 more-room-event-array =
-    { $grappe } is created, and already usable: its first
+    { $array } is created, and already usable: its first
     synchronization (resync, in /proc/mdstat) runs in the background. It
     now becomes a physical volume of the labo group (man pvcreate, man
     vgextend).

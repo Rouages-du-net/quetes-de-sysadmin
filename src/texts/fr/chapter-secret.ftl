@@ -7,7 +7,7 @@ chapter-secret = Le secret
 
 ## Fichiers
 
-# { $cle } : la nouvelle clé de paiement
+# { $key } : la nouvelle clé de paiement
 secret-email-awa =
     De :     Awa
     À :      toi
@@ -17,7 +17,7 @@ secret-email-awa =
     secrète a été vue sur internet cette nuit. Ils l'ont désactivée, et nous
     en ont donné une nouvelle :
 
-      { $cle }
+      { $key }
 
     Tant que la caisse utilise l'ancienne, plus aucun paiement par carte !
     La clé est dans le fichier .env de l'appli de caisse (/srv/till/app),
@@ -44,9 +44,9 @@ secret-event-site-broken =
     (sudo nginx -t).
 secret-event-closed =
     Les fichiers cachés ne sortent plus, et le site répond toujours.
-# { $adresse } : l'adresse bloquée
+# { $address } : l'adresse bloquée
 secret-event-attacker =
-    { $adresse } reçoit maintenant 403 : c'est elle qui a téléchargé
+    { $address } reçoit maintenant 403 : c'est elle qui a téléchargé
     les fichiers .env et .git/config cette nuit (python-requests, à 3 h 12). Elle ne reviendra pas
     par ce site… mais ce qu'elle a pris, elle l'a déjà : il faut changer les
     secrets.

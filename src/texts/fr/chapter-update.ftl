@@ -47,15 +47,15 @@ update-app-welcome =
     <head><meta charset="utf-8"><title>Outilthèque du fablab</title></head>
     <body>
     <h1>Outilthèque du fablab</h1>
-    <p>{ $prets ->
+    <p>{ $loans ->
         [0] Aucun prêt en cours.
         [one] Un prêt en cours.
-       *[other] { $prets } prêts en cours.
+       *[other] { $loans } prêts en cours.
     } <a href="/prets">Voir les prêts</a></p>
     <footer>outiltheque { $version }</footer>
     </body>
     </html>
-update-app-loans = Prêts en cours : { $prets } (les cinq premiers)
+update-app-loans = Prêts en cours : { $loans } (les cinq premiers)
 
 ## Événements
 

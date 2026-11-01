@@ -31,11 +31,11 @@ proof-email-salome =
 proof-event-versions =
     apt confirme : plus rien à mettre à jour pour nginx ni rsync. Ce n'est
     qu'une fois vérifié que c'est vraiment corrigé.
-# { $adresse } : l'adresse de la tentative trouvée
+# { $address } : l'adresse de la tentative trouvée
 proof-event-found =
     Une ligne du journal d'accès attire l'œil : une requête HTTP/2 vide,
     sans navigateur déclaré, refusée par nginx (code 400), depuis
-    { $adresse }, quelques jours avant le correctif. Ce n'est pas une preuve
+    { $address }, quelques jours avant le correctif. Ce n'est pas une preuve
     d'intrusion réussie (nginx l'a refusée), mais c'est une trace qu'il vaut
     la peine de garder : quelqu'un cherchait déjà.
 proof-event-end =

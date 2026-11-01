@@ -126,10 +126,10 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const storiesNav = el('nav', { class: 'histoires', 'aria-label': t('stories-title') }, viewChoice, incidentBlock, storiesList, pathBlock, keyHelp);
 
   const chaptersNavs = STORIES.map((h, i) =>
-    el('nav', { class: 'chapitres', 'aria-label': t('chapters-title', { histoire: storyTitle(i) }), 'data-chapitres': String(i) },
+    el('nav', { class: 'chapitres', 'aria-label': t('chapters-title', { story: storyTitle(i) }), 'data-chapitres': String(i) },
       el('ol', {}, ...h.chapters.map((c, j) =>
         el('li', {}, el('button', { type: 'button', 'data-chapitre': String(j) },
-          el('span', { class: 'num' }, t('chapter-number', { numero: c.number })),
+          el('span', { class: 'num' }, t('chapter-number', { number: c.number })),
           el('span', { class: 'titre' }, t(`chapter-${c.id}`)),
           el('span', { class: 'resume' }, typo(t(`chapter-${c.id}.summary`))),
           level(difficulty(c.id)),
@@ -499,7 +499,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (lines.length > LINES_MAX) {
       const coupees = lines.length - LINES_MAX;
       lines = lines.slice(-LINES_MAX);
-      output.appendChild(el('p', { class: 'coupure' }, t('output-cut', { lignes: coupees })));
+      output.appendChild(el('p', { class: 'coupure' }, t('output-cut', { lines: coupees })));
     }
     // Une ligne soulignée par ^~~~ (sudo, compilateurs) : la ligne et son soulignement ne se replient pas.
     const underlined = (i: number) => /^\s*\^~*\s*$/.test(lines[i] ?? '');
@@ -555,7 +555,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const { steps, next } = pathSteps(p, finished, (id) => accessible(STORIES.findIndex((x) => x.id === id)));
     const done = steps.filter((e) => e.state === 'fait').length;
     descriptionPath.textContent = typo(t(`path-${p.id}.description`));
-    progressPath.textContent = done === steps.length ? t('path-finished') : t('path-progress', { faits: done, total: steps.length });
+    progressPath.textContent = done === steps.length ? t('path-finished') : t('path-progress', { finished: done, total: steps.length });
     pathList.replaceChildren(
       ...steps.map((e, i) => {
         const state =
@@ -564,7 +564,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
             : e.state === 'sans-cle'
               ? t('path-without-key')
               : e.state === 'verrouille'
-                ? t('path-locked', { chapitre: t(`chapter-${e.before}`) })
+                ? t('path-locked', { chapter: t(`chapter-${e.before}`) })
                 : i === next
                   ? t('path-next')
                   : t('path-open');
@@ -572,7 +572,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
           'button',
           { type: 'button', 'data-h': String(e.h), 'data-c': String(e.c), 'data-etat': e.state },
           el('span', { class: 'titre' }, t(`chapter-${e.chapter}`)),
-          el('span', { class: 'resume' }, t('path-in', { histoire: storyTitle(e.h) })),
+          el('span', { class: 'resume' }, t('path-in', { story: storyTitle(e.h) })),
           level(difficulty(e.chapter)),
           el('span', { class: 'etat' }, state),
         );
@@ -604,12 +604,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       const rest = missing(STORIES[h].id, finished);
       b.querySelector('.etat')!.textContent = !accessible(h)
         ? rest.length
-          ? t('state-key-after', { chapitres: new Intl.ListFormat(t.language, { type: 'conjunction' }).format(rest.map((c) => t('state-key-chapter', { titre: t(`chapter-${c}`) }))) })
+          ? t('state-key-after', { chapters: new Intl.ListFormat(t.language, { type: 'conjunction' }).format(rest.map((c) => t('state-key-chapter', { title: t(`chapter-${c}`) }))) })
           : t('state-key-missing')
         : done === total
           ? t('state-story-finished')
           : total > 1
-            ? t('state-chapters-done', { faits: done, total })
+            ? t('state-chapters-done', { finished: done, total })
             : '';
     });
     keyHelp.hidden = storiesBoutons.every((b) => !b.disabled) || display.vue === 'parcours';
@@ -638,8 +638,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
 
   const notebookUpdate = () => {
     const names = Object.keys(notebook).sort((a, b) => a.localeCompare(b));
-    titleNotebook.textContent = playerName ? t('notebook-title-of', { nom: playerName }) : t('notebook-title');
-    accountNotebook.textContent = t('notebook-account', { nombre: names.length });
+    titleNotebook.textContent = playerName ? t('notebook-title-of', { name: playerName }) : t('notebook-title');
+    accountNotebook.textContent = t('notebook-account', { count: names.length });
     emptyNotebook.hidden = names.length > 0;
     actionsNotebook.hidden = names.length === 0;
     listNotebook.replaceChildren(
@@ -658,7 +658,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     return h ? `${h}:${mmss}` : mmss;
   };
   const timerUpdate = () => {
-    stopwatch.textContent = examStart === null ? '' : t('exam-timer', { temps: minutes(Date.now() - examStart) });
+    stopwatch.textContent = examStart === null ? '' : t('exam-timer', { time: minutes(Date.now() - examStart) });
   };
   const timer = setInterval(() => {
     if (examStart !== null) timerUpdate();
@@ -671,7 +671,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const time = Date.now() - examStart;
     const old = records[id];
     if (old === undefined || time < old) records[id] = time;
-    show(t(old === undefined || time < old ? 'exam-finished-record' : 'exam-finished', { temps: minutes(time), record: minutes(records[id]) }), 'examen-resultat');
+    show(t(old === undefined || time < old ? 'exam-finished-record' : 'exam-finished', { time: minutes(time), record: minutes(records[id]) }), 'examen-resultat');
     examStart = null;
     timerUpdate();
   };
@@ -680,12 +680,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const checkAchievements = (sh: Shell | null) => {
     for (const id of newAchievements({ sh, finished, notebook, records }, achievements)) {
       achievements[id] = new Date().toISOString();
-      show(t('achievements-obtained', { nom: t(`achievements-${id}`) }), 'succes');
+      show(t('achievements-obtained', { name: t(`achievements-${id}`) }), 'succes');
     }
     achievementsUpdate();
   };
   const achievementsUpdate = () => {
-    achievementsButton.textContent = t('achievements-button', { obtenus: Object.keys(achievements).length, total: ACHIEVEMENTS.length });
+    achievementsButton.textContent = t('achievements-button', { earned: Object.keys(achievements).length, total: ACHIEVEMENTS.length });
   };
   // Le bilan : le temps passé se compte depuis la première fois qu'on voit le chapitre en cours.
   const debuts = new WeakMap<Shell, number>();
@@ -693,13 +693,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const doneSummary = new WeakSet<Shell>();
   const summaryText = (sh: Shell) => {
     const b = summary(sh);
-    return t('summary-summary', { temps: minutes(Date.now() - (debuts.get(sh) ?? Date.now())), commandes: b.commands, erreurs: b.errors, indices: b.hints });
+    return t('summary-summary', { time: minutes(Date.now() - (debuts.get(sh) ?? Date.now())), commands: b.commands, errors: b.errors, hints: b.hints });
   };
   const openSummary = (sh: Shell, recap: string) => {
     const b = summary(sh);
-    titleSummary.textContent = t('summary-title', { chapitre: t(`chapter-${sh.chapter.id}`) });
+    titleSummary.textContent = t('summary-title', { chapter: t(`chapter-${sh.chapter.id}`) });
     mapCaption.textContent = recap;
-    encourageSummary.textContent = t('summary-encourage', { indices: b.hints });
+    encourageSummary.textContent = t('summary-encourage', { hints: b.hints });
     tableSummary.replaceChildren(
       el(
         'table',
@@ -875,7 +875,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
         break;
       }
     if (found || !moreOld) query.match = found;
-    match.textContent = t('search-history', { motif: input.value, commande: query.match });
+    match.textContent = t('search-history', { pattern: input.value, command: query.match });
   };
   const finishSearch = (keep: boolean) => {
     if (!query) return;
@@ -1056,14 +1056,14 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     incidentText.textContent = !id
       ? t('on-call-locked')
       : done
-        ? t('on-call-already', { pourcent: percent(done.remaining) })
-        : t('on-call-today', { chapitre: t(`chapter-${id}`), histoire: storyTitle(placeFor(id).h) });
+        ? t('on-call-already', { percent: percent(done.remaining) })
+        : t('on-call-today', { chapter: t(`chapter-${id}`), story: storyTitle(placeFor(id).h) });
   };
   incidentButton.addEventListener('click', () => {
     const id = incident();
     if (!id) return;
     titleOnCall.textContent = t('on-call-title', { date: longDate(today()) });
-    chapterOnCall.textContent = t('on-call-today', { chapitre: t(`chapter-${id}`), histoire: storyTitle(placeFor(id).h) });
+    chapterOnCall.textContent = t('on-call-today', { chapter: t(`chapter-${id}`), story: storyTitle(placeFor(id).h) });
     onCallWindow.showModal();
   });
   cancelOnCall.addEventListener('click', () => onCallWindow.close());
@@ -1105,7 +1105,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const elapsed = Date.now() - onCall.start;
     const remaining = remainingBudget(elapsed, sh.requestsHints.size, sh.commandsInError);
     onCallGauge.hidden = false;
-    onCallGauge.textContent = t('on-call-gauge', { temps: minutes(remaining), pourcent: percent(remaining) });
+    onCallGauge.textContent = t('on-call-gauge', { time: minutes(remaining), percent: percent(remaining) });
     onCallGauge.classList.toggle('bas', remaining < 5 * 60 * 1000);
     if (remaining === 0 && !onCall.epuise) {
       onCall.epuise = true;
@@ -1121,13 +1121,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     } catch {}
     scoreMap.textContent = t('on-call-map', {
       date: onCall.date,
-      chapitre: t(`chapter-${r.chapter}`),
-      temps: minutes(r.time),
-      jauge: gauge(r.remaining),
-      pourcent: percent(r.remaining),
-      indices: r.hints,
-      erreurs: r.errors,
-      adresse: 'https://sysadmin.rouages.net',
+      chapter: t(`chapter-${r.chapter}`),
+      time: minutes(r.time),
+      gauge: gauge(r.remaining),
+      percent: percent(r.remaining),
+      hints: r.hints,
+      errors: r.errors,
+      address: 'https://sysadmin.rouages.net',
     });
     mapState.textContent = '';
     onCall = null;
@@ -1322,7 +1322,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   missionButton.addEventListener('click', () => {
     const sh = gameTerminal.remote?.shell;
     const c = sh?.chapter;
-    titleMission.textContent = c ? t('mission-title', { chapitre: t('chapter-number', { numero: c.number }), titre: t(`chapter-${c.id}`) }) : t('workstation-title');
+    titleMission.textContent = c ? t('mission-title', { chapter: t('chapter-number', { number: c.number }), title: t(`chapter-${c.id}`) }) : t('workstation-title');
     goalMission.textContent = c ? typo(t(`chapter-${c.id}.summary`)) : '';
     instructionsMission.textContent = (sh ?? gameTerminal.workstation).read(`${(sh ?? gameTerminal.workstation).home}/${(sh ?? gameTerminal.workstation).welcome}`) ?? '';
     const log = sh?.log ?? [];
@@ -1350,7 +1350,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       : not === null
         ? t('rescue-impossible')
         : snapshot
-          ? t('rescue-taken', { pas: snapshot.not })
+          ? t('rescue-taken', { steps: snapshot.not })
           : t('rescue-none');
   };
   takeSnapshot.addEventListener('click', () => {
@@ -1370,7 +1370,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (doneSummary.has(old) && fresh.finished) doneSummary.add(fresh);
     missionWindow.close();
     output.replaceChildren(measure);
-    show(t('rescue-restored', { pas: not }), 'succes');
+    show(t('rescue-restored', { steps: not }), 'succes');
     after();
     // Revenu au milieu d'un tail -f : il continue.
     openFollow();
@@ -1483,7 +1483,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const following = GRADES.find((g) => g.chapters > finished.length);
     gradeAchievements.replaceChildren(
       el('strong', {}, t('achievements-grade', { grade: t(`grade-${current}`) })),
-      ...(current === 'sre' ? [] : [' ', t('achievements-grade-next', { grade: t(`grade-${following?.id ?? 'sre'}`), chapitres: following?.chapters ?? finished.length })]),
+      ...(current === 'sre' ? [] : [' ', t('achievements-grade-next', { grade: t(`grade-${following?.id ?? 'sre'}`), chapters: following?.chapters ?? finished.length })]),
     );
     const date = (iso: string) => new Intl.DateTimeFormat(t.language, { dateStyle: 'medium' }).format(new Date(iso));
     listAchievements.replaceChildren(
@@ -1576,7 +1576,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       progressState.textContent = t(`progress-${read.error}`);
       return;
     }
-    if (!confirm(t('progress-confirm', { nombre: read.backup.finished?.length ?? 0 }))) return;
+    if (!confirm(t('progress-confirm', { count: read.backup.finished?.length ?? 0 }))) return;
     resume(read.backup);
   });
   restart.addEventListener('click', () => {

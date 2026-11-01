@@ -30,11 +30,11 @@ wifi-email-malik =
 
     Pour sudo : abeille-2027
 
-# { $secret } : le secret partagé de la borne ; { $adresse } : son adresse
+# { $secret } : le secret partagé de la borne ; { $address } : son adresse
 wifi-bound =
     BORNE WI-FI « BUREAUX » — réglages (l'électricien, février 2028)
 
-    Adresse de la borne    : { $adresse } (VLAN 30, équipements)
+    Adresse de la borne    : { $address } (VLAN 30, équipements)
     Réseau Wi-Fi (SSID)    : LaRuche-Bureaux
     Sécurité               : WPA2-Entreprise (802.1X), EAP-TTLS / PAP
     Serveur RADIUS         : 10.10.30.1, port 1812 (UDP)

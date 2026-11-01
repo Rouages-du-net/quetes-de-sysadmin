@@ -84,7 +84,7 @@ first-day-service-catalogue = Media library online catalogue (php-fpm)
 first-day-restart-calm = systemd restarts the catalogue service: new process { $pid }. With the robot blocked, it stays calm.
 first-day-restart-robot = systemd immediately restarts the catalogue service: new process { $pid }… and the robot starts again. It's already at 99%!
 
-## Events ({ $robot }: the robot's IP address; { $bloques }: path of blocked.conf)
+## Events ({ $robot }: the robot's IP address; { $blocked }: path of blocked.conf)
 
 # Nudges, when the player heads down a path that is too long (without giving the command).
 first-day-event-all-read =
@@ -101,16 +101,16 @@ first-day-event-addresses-only =
     Sort them so that identical ones follow each other, then count the
     duplicates: Awa's notes chain four small commands for that.
 
-# { $erreurs }: number of 503 errors in the log
+# { $errors }: number of 503 errors in the log
 first-day-event-account =
-    Correct: { $erreurs } 503 errors. You just chained two small tools:
+    Correct: { $errors } 503 errors. You just chained two small tools:
     grep filters the lines, wc counts them. That's the whole Unix philosophy:
     simple tools that you plug into each other.
 
     Next question: who is sending so many requests? (see ~/notes_awa.txt)
-# { $requetes }: number of requests from the robot
+# { $requests }: number of requests from the robot
 first-day-event-robot =
-    { $robot }: { $requetes } requests in a few minutes, all to
+    { $robot }: { $requests } requests in a few minutes, all to
     /catalogue/recherche. That's not a human: it's a robot scraping
     the catalogue, and the "catalogue" service can't keep up anymore.
 
@@ -124,12 +124,12 @@ first-day-event-override =
     the >> redirection is done by YOUR shell, not by sudo. The classic
     trick is tee, which writes whatever it receives to a file:
 
-      echo "deny { $robot };" | sudo tee -a { $bloques }
+      echo "deny { $robot };" | sudo tee -a { $blocked }
 first-day-event-overwritten =
     Oops! The old rules in blocked.conf are gone: the file was
     OVERWRITTEN (> or tee without -a) instead of appended to (>> or tee -a). Don't
     panic: a backup copy exists. Restore it with
-    sudo cp /etc/nginx/blocked.conf.bak { $bloques }, then try again with -a.
+    sudo cp /etc/nginx/blocked.conf.bak { $blocked }, then try again with -a.
 first-day-event-rule = The rule is written. But nginx doesn't reread its file by itself: sudo systemctl reload nginx
 first-day-event-blocked =
     nginx has reloaded its configuration: { $robot } now gets "403 Forbidden"
@@ -147,7 +147,7 @@ first-day-event-repaired =
       grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt
       echo "Culprit: { $robot }" >> ~/rapport.txt
 first-day-event-report =
-    Awa comes out of her meeting and reads your report: "{ $erreurs } errors, robot
+    Awa comes out of her meeting and reads your report: "{ $errors } errors, robot
     identified, blocked, service restarted. For a first day… well done!"
 
     END OF CHAPTER "FIRST DAY".

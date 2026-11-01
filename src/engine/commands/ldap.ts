@@ -256,12 +256,12 @@ function writeIn(game: Shell, name: 'ldapadd' | 'ldapmodify' | 'ldapdelete', arg
   let changes: Change[];
   if (name === 'ldapdelete') {
     const dns = o.rest.length ? o.rest : (o.file ? (game.read(o.file) ?? '') : (input ?? '')).split('\n').filter((l) => l.trim());
-    if (!dns.length) return game.error(game.t('ldap-nothing-a-do', { commande: name }), 1);
+    if (!dns.length) return game.error(game.t('ldap-nothing-a-do', { command: name }), 1);
     changes = dns.map((dn, i) => ({ what: 'delete', dn, line: i + 1 }));
   } else {
     const text = o.file !== null ? game.read(o.file) : input;
     if (o.file !== null && text === null) return game.error(`${name}: ${o.file}: No such file or directory`, 1);
-    if (text === null) return game.error(game.t('ldap-nothing-a-do', { commande: name }), 1);
+    if (text === null) return game.error(game.t('ldap-nothing-a-do', { command: name }), 1);
     try {
       changes = readLdif(text, name === 'ldapadd' || o.addition);
     } catch (e) {

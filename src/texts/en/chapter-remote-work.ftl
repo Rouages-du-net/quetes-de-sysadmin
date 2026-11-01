@@ -7,7 +7,7 @@ chapter-remote-work = Working from home
 
 ## Files
 
-# { $cle }: the WireGuard public key of Malik's laptop
+# { $key }: the WireGuard public key of Malik's laptop
 remote-work-email-malik =
     From:    Malik
     To:      you
@@ -21,7 +21,7 @@ remote-work-email-malik =
     installed the app on my laptop. It created my keys, and gives me my
     public key:
 
-        { $cle }
+        { $key }
 
     In the tunnel, my laptop will have the address 10.10.99.2. The app
     asks me for the router's public key, its address (hive.example, or
@@ -51,9 +51,9 @@ remote-work-laptop-malik =
 
 ## Events
 
-# { $fichier }: the file containing the private key
+# { $file }: the file containing the private key
 remote-work-event-key-exposed =
-    Careful: { $fichier } contains the router's private key, and every
+    Careful: { $file } contains the router's private key, and every
     account on the machine can read it. With this key, anyone could
     pretend to be the router. A private key is readable only by its owner
     (chmod 600, or umask 077 before creating it); once copied into

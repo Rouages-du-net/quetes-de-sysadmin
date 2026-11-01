@@ -49,14 +49,14 @@ works-for-me-help-dns =
 
 ## Events
 
-# { $heures }: the time left before the resolver forgets the old address
+# { $hours }: the time left before the resolver forgets the old address
 works-for-me-event-cache =
     Our server gives the new address… but the public resolver still
     answers with the old one. Look at the number before IN: it's the TTL
     left. The resolver kept yesterday's answer in its cache, and will keep
-    it for { $heures ->
+    it for { $hours ->
         [one] about one more hour
-       *[other] about { $heures } more hours
+       *[other] about { $hours } more hours
     }, like every resolver in the world that asked for it. This is what
     people wrongly call "propagation": nothing propagates, caches expire.
     You can't flush them; you can only plan ahead (a short TTL before a

@@ -257,7 +257,7 @@ export const atMe: Chapter = {
       message: (j) => {
         const memo = state(j).cache['cafe.example. A'];
         const hours = Math.max(1, Math.round((memo.expires - toUtc(sd(j).clock)) / 3_600_000));
-        return j.t('works-for-me-event-cache', { heures: hours });
+        return j.t('works-for-me-event-cache', { hours: hours });
       },
     },
     {

@@ -252,22 +252,22 @@ export const datacenter: Chapter = {
         const cmds = j.last.commands.flat();
         return cmds.includes('grep') && j.last.output.trim().split(/\s+/)[0] === String(erreurs503(j));
       },
-      message: (j) => j.t('first-day-event-account', { erreurs: String(erreurs503(j)) }),
+      message: (j) => j.t('first-day-event-account', { errors: String(erreurs503(j)) }),
     },
     {
       id: 'robot',
       condition: (j) => j.last.commands.flat().includes('uniq') && j.last.output.includes(ROBOT),
-      message: (j) => j.t('first-day-event-robot', { robot: ROBOT, requetes: String(ROBOT_REQUESTS) }),
+      message: (j) => j.t('first-day-event-robot', { robot: ROBOT, requests: String(ROBOT_REQUESTS) }),
     },
     {
       id: 'override',
       condition: (j) => j.last.commands[0]?.[0] === 'ps' && j.last.output.includes('99.3'),
-      message: (j) => j.t('first-day-event-override', { robot: ROBOT, bloques: BLOCKED }),
+      message: (j) => j.t('first-day-event-override', { robot: ROBOT, blocked: BLOCKED }),
     },
     {
       id: 'overwritten',
       condition: (j) => !(j.read(BLOCKED) ?? '').includes('deny 203.0.113.5;'),
-      message: (j) => j.t('first-day-event-overwritten', { bloques: BLOCKED }),
+      message: (j) => j.t('first-day-event-overwritten', { blocked: BLOCKED }),
     },
     {
       id: 'rule',
@@ -300,7 +300,7 @@ export const datacenter: Chapter = {
       message: (j) => {
         const r = j.read(path(j.t, `${M}/rapport.txt`)) ?? '';
         const n = reportCount(r).find((x) => x >= ERRORS_503 && x <= erreurs503(j)) ?? ERRORS_503;
-        return j.t('first-day-event-report', { erreurs: String(n) });
+        return j.t('first-day-event-report', { errors: String(n) });
       },
     },
   ],

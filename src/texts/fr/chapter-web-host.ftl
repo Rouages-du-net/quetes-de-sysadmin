@@ -8,7 +8,7 @@ chapter-web-host = L'hébergeur
 
 ## Fichiers
 
-# { $compte } : le compte FTP chez l'hébergeur ; { $motdepasse } : son mot de passe
+# { $account } : le compte FTP chez l'hébergeur ; { $password } : son mot de passe
 web-host-email-yasmine =
     De :     Yasmine
     À :      toi
@@ -23,8 +23,8 @@ web-host-email-yasmine =
     depuis le 1er mars, plus de FTP en clair.
 
     Ses identifiants, que l'hébergeur m'a renvoyés :
-        compte       : { $compte }
-        mot de passe : { $motdepasse }
+        compte       : { $account }
+        mot de passe : { $password }
 
     Le wiki, tu y vas comme d'habitude depuis ton poste (le raccourci
     ssh wiki) ; pour regarder avant de prendre : man sftp. Pour

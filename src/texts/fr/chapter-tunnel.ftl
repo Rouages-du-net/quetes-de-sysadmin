@@ -41,30 +41,30 @@ tunnel-note-gaspard =
 
 ## La page d'administration (servie par le wiki)
 
-# { $lignes } : une ligne par inscription (tunnel-admin-ligne)
+# { $lines } : une ligne par inscription (tunnel-admin-ligne)
 tunnel-admin-page =
     Wiki des associations — administration
 
     Inscriptions :
-    { $lignes }
+    { $lines }
 
     Valider :   /admin/valider/<compte>
     Refuser :   /admin/refuser/<compte>
-# { $nom } : le compte ; { $etat } : attente, validee ou refusee
-tunnel-admin-ligne = { $etat ->
-        [validee] - { $nom } : validée
-        [refusee] - { $nom } : refusée
-       *[attente] - { $nom } : en attente
+# { $name } : le compte ; { $state } : attente, validee ou refusee
+tunnel-admin-ligne = { $state ->
+        [validee] - { $name } : validée
+        [refusee] - { $name } : refusée
+       *[attente] - { $name } : en attente
     }
-tunnel-admin-valider = Inscription de { $nom } validée.
-tunnel-admin-refuser = Inscription de { $nom } refusée.
+tunnel-admin-valider = Inscription de { $name } validée.
+tunnel-admin-refuser = Inscription de { $name } refusée.
 tunnel-admin-introuvable = Page introuvable.
 
 ## Événements
 
-# { $compte } : le compte publicitaire
+# { $account } : le compte publicitaire
 tunnel-event-advert =
-    Oups : le compte { $compte } est validé. Yasmine : « Il va remplir le wiki
+    Oups : le compte { $account } est validé. Yasmine : « Il va remplir le wiki
     de publicités ! » Refuse-le (l'adresse est sur la page d'administration).
 tunnel-event-approved =
     Samir et Léa sont inscrit·es, et la publicité reste à la porte.

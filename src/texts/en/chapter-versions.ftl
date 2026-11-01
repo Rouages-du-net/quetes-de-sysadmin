@@ -74,9 +74,9 @@ versions-image-tiff = (TIFF image, raw scan)
 
 ## Events
 
-# { $fichier }: the password file
+# { $file }: the password file
 versions-event-password =
-    The repository is encrypted… but its password is in { $fichier },
+    The repository is encrypted… but its password is in { $file },
     readable by every account on the machine (ls -l). Rosa has an account
     here, and tomorrow maybe one more intern. Who should be able to read it?
 versions-event-bad-password =

@@ -43,10 +43,10 @@ backup-memory-lighthouse-festival =
 
 ## La nuit (cron)
 
-# { $fichier } : le souvenir arrivé pendant la journée
+# { $file } : le souvenir arrivé pendant la journée
 backup-night-start =
     Le soir tombe sur le royaume. Pendant la journée, un nouveau souvenir est
-    arrivé : ~/souvenirs/{ $fichier }.
+    arrivé : ~/souvenirs/{ $file }.
 
     La nuit passe. Entre minuit et 6 h, cron se réveille et lance ce que ta
     crontab lui demande…
@@ -54,22 +54,22 @@ backup-night-still =
     Une nouvelle nuit passe. Entre minuit et 6 h, cron lance ce que ta
     crontab lui demande…
 backup-night-ok =
-    Au matin, la sauvegarde est à jour : { $fichier } y est, sans que tu aies
+    Au matin, la sauvegarde est à jour : { $file } y est, sans que tu aies
     rien tapé. C'est ça, une sauvegarde automatique.
 backup-morning =
     Mais Maëlle arrive, catastrophée : « J'ai voulu ranger… et j'ai effacé
-    ~/souvenirs/{ $fichier } ! » Sous Linux, rm ne passe pas par une
+    ~/souvenirs/{ $file } ! » Sous Linux, rm ne passe pas par une
     corbeille. Heureusement, tu as une sauvegarde. Restaure ce souvenir.
 backup-night-nothing =
     Au matin, rien n'a bougé : aucune tâche de ta crontab ne tombait cette
     nuit, entre minuit et 6 h. Relis les cinq champs de l'heure (man crontab) :
     minute, heure, jour du mois, mois, jour de la semaine.
-# { $courrier } : ce que les tâches ont écrit
+# { $mail } : ce que les tâches ont écrit
 backup-night-mail =
     Au matin, la sauvegarde n'est pas à jour. Cron t'a laissé ce courrier,
     avec ce que ta tâche a écrit :
 
-    { $courrier }
+    { $mail }
 backup-night-failure =
     Au matin, la sauvegarde n'est pas à jour : ta tâche a tourné, mais elle
     n'a pas copié les souvenirs au bon endroit. Vérifie la commande à la main,
@@ -77,9 +77,9 @@ backup-night-failure =
 
 ## Événements
 
-# { $sauvegarde } : le dossier de sauvegarde
+# { $backup } : le dossier de sauvegarde
 backup-event-nested =
-    Regarde bien : tu as maintenant { $sauvegarde }/souvenirs, un dossier
+    Regarde bien : tu as maintenant { $backup }/souvenirs, un dossier
     souvenirs DANS le dossier souvenirs. Pour rsync, la barre finale de la
     source compte : « souvenirs/ » veut dire « le contenu de souvenirs »,
     « souvenirs » veut dire « le dossier lui-même ». Ce dossier en trop ne
@@ -89,9 +89,9 @@ backup-event-copy =
     Les souvenirs sont copiés sur le disque de sauvegarde. Mais une sauvegarde
     qu'il faut penser à faire à la main, on finit toujours par l'oublier.
     Demande à cron de la refaire chaque nuit : crontab -e.
-# { $fichier } : le souvenir effacé
+# { $file } : le souvenir effacé
 backup-event-lost =
-    { $fichier } a disparu… de la sauvegarde aussi ! Avec --delete, rsync a
+    { $file } a disparu… de la sauvegarde aussi ! Avec --delete, rsync a
     recopié l'effacement : un miroir reproduit les erreurs comme le reste.
     C'est pour ça qu'on garde plusieurs versions (rsnapshot, restic : ce sera
     pour plus tard). Ici, recommence le chapitre pour réessayer.

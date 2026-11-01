@@ -159,7 +159,7 @@ export const versions: Chapter = {
     {
       id: 'password',
       condition: (j) => !!j.state.resticPasswordFile && openMdp(j),
-      message: (j) => j.t('versions-event-password', { fichier: path(j.t, MDP) }),
+      message: (j) => j.t('versions-event-password', { file: path(j.t, MDP) }),
     },
     {
       id: 'bad-password',

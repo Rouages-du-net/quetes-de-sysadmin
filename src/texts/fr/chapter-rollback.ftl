@@ -73,17 +73,17 @@ rollback-commit-3 = Titre : Gazette, sans faute
 rollback-commit-4 = Agenda : le vide-grenier est le 12 juin
 rollback-commit-5 = Ajout de tests.sh : vérifications avant publication
 rollback-commit-6 = Nouvelle mise en page de l'accueil
-# { $numero } : le numéro de l'essai
-rollback-commit-theo = Nouvelle mise en page, essai { $numero }
+# { $number } : le numéro de l'essai
+rollback-commit-theo = Nouvelle mise en page, essai { $number }
 
 ## Événements
 
-# { $sortie } : ce que git a affiché à Théo (lignes en retrait)
+# { $output } : ce que git a affiché à Théo (lignes en retrait)
 rollback-theo-push =
     Théo, depuis chez lui : « Je retente ma mise en page… » Il pousse
     (toujours sans index.html). Voici ce que git lui répond :
 
-    { $sortie }
+    { $output }
 rollback-event-failure =
     403 Forbidden : nginx sert /srv/gazette/current, mais n'y trouve pas de
     page d'accueil (index.html). Regarde ce que vise current (ls -l

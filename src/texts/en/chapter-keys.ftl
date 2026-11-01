@@ -8,7 +8,7 @@ chapter-keys = The keys
 
 ## Files
 
-# { $motdepasse }: the account's temporary password
+# { $password }: the account's temporary password
 keys-email-yasmine =
     From:    Yasmine (coordinator of the Maison des associations)
     To:      you
@@ -23,7 +23,7 @@ keys-email-yasmine =
     archives server (you'll discover them soon).
 
     I've created an account for you (user name: you) with a temporary password:
-    { $motdepasse }. That's how you get in, for now. Gaspard used to say
+    { $password }. That's how you get in, for now. Gaspard used to say
     that a password on a server open to the internet is a door left
     ajar. So before anything else:
 

@@ -5,5 +5,5 @@
 nmap-none-target = WARNING: No targets were specified, so 0 hosts scanned.
 lynis-without-root = Lynis needs root to read the whole configuration (try: sudo lynis audit system).
 lynis-usage = Usage: lynis audit system  (see man lynis)
-lynis-audit-target = Lynis here can only audit "audit system" (received: "audit { $cible }").
-lynis-command-unknown = lynis: "{ $commande }" is not a command this game knows (see man lynis).
+lynis-audit-target = Lynis here can only audit "audit system" (received: "audit { $target }").
+lynis-command-unknown = lynis: "{ $command }" is not a command this game knows (see man lynis).

@@ -22,11 +22,11 @@ truncate-size = truncate: you must specify either '--size' or '--reference'
 truncate-operand =
     truncate: missing file operand
     Try 'truncate --help' for more information.
-# { $taille }: the size given
-truncate-size-incorrect = truncate: Invalid number: '{ $taille }'
-# { $fichier }: the file
-truncate-directory = truncate: cannot open '{ $fichier }' for writing: Is a directory
-truncate-permission = truncate: cannot open '{ $fichier }' for writing: Permission denied
+# { $size }: the size given
+truncate-size-incorrect = truncate: Invalid number: '{ $size }'
+# { $file }: the file
+truncate-directory = truncate: cannot open '{ $file }' for writing: Is a directory
+truncate-permission = truncate: cannot open '{ $file }' for writing: Permission denied
 logrotate-usage =
     logrotate 3.21.0 - Copyright (C) 1995-2001 Red Hat, Inc.
     This may be freely redistributed under the terms of the GNU General Public License

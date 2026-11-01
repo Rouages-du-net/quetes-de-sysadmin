@@ -215,11 +215,11 @@ export const concert: Chapter = {
     const b = minute(j, Math.ceil(systemd(j)!.clock / 60_000) * 60_000);
     j.state.concertSummary = b;
     return j.t('concert-minute', {
-      humains: b.humans,
-      servis: b.servedHumans,
+      humans: b.humans,
+      served: b.servedHumans,
       robot: b.robot,
-      refuses: b.limitRobot + b.forbiddenRobot,
-      depasses: b.exceeded,
+      refused: b.limitRobot + b.forbiddenRobot,
+      exceeded: b.exceeded,
     });
   },
   createWorld: (t) => {

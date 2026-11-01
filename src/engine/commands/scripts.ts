@@ -14,7 +14,7 @@ import type { Command } from './index';
 /** Lance un fichier comme un script /bin/sh ; renvoie sa sortie (échec si son code n'est pas 0). */
 export function launchScript(game: Shell, file: string, args: string[], name = file): string {
   const n = game.find(file);
-  if (n?.type !== 'fichier') return game.error(game.t('sh-missing', { fichier: file }));
+  if (n?.type !== 'fichier') return game.error(game.t('sh-missing', { file: file }));
   const r = runScript(game, content(n, game), { cwd: game.cwd, name, arguments: args });
   if (r.code !== 0) game.error('');
   return r.output;
@@ -52,7 +52,7 @@ function evaluate(game: Shell, a: string[]): boolean | string {
       case '-z':
         return x === '';
     }
-    return game.t('test-operator', { operateur: op });
+    return game.t('test-operator', { operator: op });
   }
   if (a.length === 3) {
     const [x, op, y] = a;
@@ -77,7 +77,7 @@ function evaluate(game: Shell, a: string[]): boolean | string {
       case '-ge':
         return nx >= ny;
     }
-    return game.t('test-operator', { operateur: op });
+    return game.t('test-operator', { operator: op });
   }
   return game.t('test-too-arguments');
 }

@@ -41,9 +41,9 @@ concert-help-logs =
 
 # After each nginx reload: one minute of traffic.
 concert-minute =
-    A minute goes by. Visitors: { $servis } requests served out of { $humains }.
-    Robot: { $refuses } requests refused out of { $robot }. Timeouts
-    (504): { $depasses }. (The details are at the end of access.log.)
+    A minute goes by. Visitors: { $served } requests served out of { $humans }.
+    Robot: { $refused } requests refused out of { $robot }. Timeouts
+    (504): { $exceeded }. (The details are at the end of access.log.)
 concert-event-robot =
     Three neighbouring addresses (198.51.100.23, .24, .25), the same
     "browser" (AgendaScraper), hundreds of calendar pages per minute: it's

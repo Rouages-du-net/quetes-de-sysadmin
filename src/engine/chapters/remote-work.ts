@@ -153,12 +153,12 @@ export const vpn: Chapter = {
       sysctl: ROUTER_SYSCTL,
       etc: { wireguard: d({}, undefined, { owner: 'root', mode: 'rwx------' }) },
       home: {
-        'email_malik.txt': f(t('remote-work-email-malik', { cle: MALIK_PUBLIC })),
+        'email_malik.txt': f(t('remote-work-email-malik', { key: MALIK_PUBLIC })),
         'malik-laptop.conf': f(t('remote-work-laptop-malik'), { lines: true }),
       },
     }),
   events: [
-    { id: 'key-exposed', condition: (j) => !!exposedKey(j), message: (j) => j.t('remote-work-event-key-exposed', { fichier: exposedKey(j)! }) },
+    { id: 'key-exposed', condition: (j) => !!exposedKey(j), message: (j) => j.t('remote-work-event-key-exposed', { file: exposedKey(j)! }) },
     { id: 'filter', condition: (j) => now(j).state === 'filtre', message: (j) => j.t('remote-work-event-filter') },
     {
       id: 'handshake',

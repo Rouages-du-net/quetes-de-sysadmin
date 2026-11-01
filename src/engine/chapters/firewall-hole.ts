@@ -312,7 +312,7 @@ export const bypass: Chapter = {
     {
       id: 'disk',
       condition: (j) => occupation(j) < 0.75,
-      message: (j) => j.t('firewall-hole-event-disk', { pourcent: Math.round(occupation(j) * 100) }),
+      message: (j) => j.t('firewall-hole-event-disk', { percent: Math.round(occupation(j) * 100) }),
     },
     {
       id: 'end',

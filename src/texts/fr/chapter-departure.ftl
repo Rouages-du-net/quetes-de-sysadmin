@@ -46,9 +46,9 @@ departure-event-lock-only =
     SSH, et usermod -L n'y change rien. Relis man usermod : pour fermer
     vraiment un compte, il faut aussi le faire expirer (ou lui retirer son
     shell de connexion, ou ses clés).
-# { $fichier } : le fichier des clés du compte deploy
+# { $file } : le fichier des clés du compte deploy
 departure-event-deploy-empty =
-    Attention : il manque des clés dans { $fichier } ! La CI et Lina ne
+    Attention : il manque des clés dans { $file } ! La CI et Lina ne
     pourront plus mettre la caisse en ligne. On ne retire que la ligne de
     Marc (sa clé finit par marc@portable). Remets les autres : nano, en
     gardant les lignes deploy@ci et lina@atelier.

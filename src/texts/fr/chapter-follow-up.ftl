@@ -88,23 +88,23 @@ follow-up-event-locked-out =
     connexion de ton compte serait refusée. Ta session reste ouverte : corrige
     AVANT de te déconnecter.
 follow-up-event-outside-scope =
-    Tu as sondé une adresse hors de la lettre de mission ({ $adresses }). Même pour
-    une contre-visite, on reste dans le périmètre : { $voisin ->
+    Tu as sondé une adresse hors de la lettre de mission ({ $addresses }). Même pour
+    une contre-visite, on reste dans le périmètre : { $neighbour ->
         [oui] le serveur du voisin n'est toujours pas à nous.
        *[non] ce qui n'y figure pas n'est pas à nous.
     }
-# { $ancienne } : « oui » si la version de SSH affichée n'est pas à jour
+# { $outdated } : « oui » si la version de SSH affichée n'est pas à jour
 follow-up-event-scan =
     Voilà ce que voit internet maintenant. Compare avec le premier jour : les
     ports 5432 (PostgreSQL) et 6379 (Redis) ne répondent plus, il reste SSH, le
     site et son port sécurisé. Les correctifs de pare-feu tiennent.
-    { $ancienne ->
+    { $outdated ->
         [oui] Mais regarde la version de SSH : elle n'est pas celle d'une machine à jour. Une mise à jour de sécurité attend (apt list --upgradable) ; c'est le genre de détail que nmap -sV révèle et que personne ne regarde.
        *[non] Et la version de SSH est celle d'une machine à jour.
     }
 follow-up-event-lynis =
-    Voilà l'audit : un indice de durcissement de { $indice }, et
-    { $avertissements } avertissement(s). Un indice sert à comparer, pas à
+    Voilà l'audit : un indice de durcissement de { $hint }, et
+    { $warnings } avertissement(s). Un indice sert à comparer, pas à
     viser 100 : lis chaque suggestion, son identifiant (SSH-7408…) et sa page
     d'explication. Certaines se corrigent ici ; d'autres (intégrité des
     fichiers, antimalware, journaux distants, auditd) sont de vrais chantiers
@@ -122,9 +122,9 @@ follow-up-event-ssh-a-reload =
     l'ancienne : un service relit sa configuration quand on le lui demande
     (sudo sshd -t pour vérifier, puis sudo systemctl reload ssh). Lynis, lui,
     lit le fichier : son nouvel indice ne dit pas ce qui est appliqué.
-# { $cible } : l'indice à atteindre
+# { $target } : l'indice à atteindre
 follow-up-event-hardened =
-    Aucun avertissement et un indice d'au moins { $cible }, avec une
+    Aucun avertissement et un indice d'au moins { $target }, avec une
     configuration de SSH appliquée. C'est un bon niveau pour ce serveur ; le
     reste est de l'ordre du chantier, pas de l'urgence.
 
@@ -137,7 +137,7 @@ follow-up-event-nmap-own =
     Le dernier balayage ne voit que SSH, le site et son port sécurisé, avec la
     version de SSH à jour. C'est la preuve, côté internet, que tout tient.
     Reste le rapport de clôture.
-# { $faute } : « oui » si un balayage a débordé du périmètre
+# { $mistake } : « oui » si un balayage a débordé du périmètre
 follow-up-event-end =
     Salomé : « C'est complet, et c'est honnête. Je le transmets à Nadia et à son
     assureur. Je repasserai dans six mois : la sécurité, ça se revérifie. »
@@ -151,7 +151,7 @@ follow-up-event-end =
     indice et le nouveau balayage sont dans ton rapport, avec ce qui reste à
     faire. Une contre-visite ne cherche pas à tout corriger : elle montre ce qui
     est corrigé, et dit franchement ce qui ne l'est pas.
-    { $faute ->
+    { $mistake ->
         [oui] Ton balayage a aussi touché une adresse qui n'était pas dans la lettre de mission : à noter pour la prochaine mission.
        *[non] Tous tes balayages sont restés dans le périmètre.
     }

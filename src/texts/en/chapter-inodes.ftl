@@ -37,22 +37,22 @@ inodes-stats-readme =
 
 ## The simulated night
 
-# { $commande }: the cron job's command; { $sortie }: what it wrote
+# { $command }: the cron job's command; { $output }: what it wrote
 inodes-mail =
-    Mail from cron (Cron Daemon) about: { $commande }
-    { $sortie }
-# { $taches }: jobs run; { $effaces }: files deleted; { $ancien }: age of the oldest, in days; { $pourcent }: inodes in use
+    Mail from cron (Cron Daemon) about: { $command }
+    { $output }
+# { $jobs }: jobs run; { $deleted }: files deleted; { $oldest }: age of the oldest, in days; { $percent }: inodes in use
 inodes-night =
     A day and a night go by. The relay logs its listens; cron
-    runs { $taches ->
+    runs { $jobs ->
         [0] no job
         [one] one job
-       *[other] { $taches } jobs
-    }. In the morning: { $effaces ->
-        [one] { $effaces } statistics file fewer
-       *[other] { $effaces } statistics files fewer
+       *[other] { $jobs } jobs
+    }. In the morning: { $deleted ->
+        [one] { $deleted } statistics file fewer
+       *[other] { $deleted } statistics files fewer
     }, the
-    oldest is { $ancien } days old, and { $pourcent } % of the inodes of
+    oldest is { $oldest } days old, and { $percent } % of the inodes of
     /srv/radio are in use.
 inodes-night-recent-lost =
     Ouch: statistics less than 30 days old have disappeared, the ones for
@@ -64,14 +64,14 @@ inodes-night-nothing =
     Your job didn't run tonight: its schedule doesn't fall during the
     night. The five fields (minute, hour, day of month, month, day of
     week) are explained in man crontab.
-# { $jours }: age of the oldest file
+# { $days }: age of the oldest file
 inodes-night-too-old =
-    In the morning, there are still statistics { $jours } days old: the
+    In the morning, there are still statistics { $days } days old: the
     job didn't clean up. Run its command by hand to see what it does
     (and sudo crontab -l, to reread the line).
-# { $pourcent }: inodes in use
+# { $percent }: inodes in use
 inodes-night-full =
-    { $pourcent } % of the inodes are still in use: the volume will fill
+    { $percent } % of the inodes are still in use: the volume will fill
     up again very quickly. You should keep them for less time (but at
     least 30 days).
 
@@ -103,9 +103,9 @@ inodes-event-recent-lost =
     Careful: statistics less than 30 days old have disappeared, the ones
     the town hall needs. Restart the chapter to try another way (link
     below the terminal).
-# { $pourcent }: inodes in use
+# { $percent }: inodes in use
 inodes-event-restarts =
-    Some inodes have been freed ({ $pourcent } % in use): the night
+    Some inodes have been freed ({ $percent } % in use): the night
     recording has resumed, and the relay is logging listens again. Now
     to stop it happening again: a cron job, every night, to keep only
     the last month (the game will let a night go by to see it at

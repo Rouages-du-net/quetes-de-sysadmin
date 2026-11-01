@@ -58,7 +58,7 @@ export function readColour(args: string[], fallback: When, withoutValue: When = 
 export const colourise = (c: Context, when: When) => when === 'always' || (when === 'auto' && c.last && c.game.colours);
 
 /** Le message de GNU coreutils pour une valeur de --color inconnue (dans la langue du système). */
-export const invalidColourMessage = (c: Context, command: string, value: string) => c.game.t('colour-argument-invalid', { commande: command, valeur: value });
+export const invalidColourMessage = (c: Context, command: string, value: string) => c.game.t('colour-argument-invalid', { command: command, value: value });
 
 // ls : les couleurs par défaut de dircolors (coreutils), pour les types les plus courants.
 const ARCHIVES = /\.(tar|tgz|gz|bz2|xz|zst|zip|7z|deb|rpm)$/i;

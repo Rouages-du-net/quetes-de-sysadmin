@@ -34,14 +34,14 @@ workstation-hosts-comment =
     198.51.100.x and 203.0.113.x are reserved for documentation (RFC 5737).
     None of these names or addresses leads to anyone real.
 workstation-exit = (You are on your own workstation: exit would close your terminal. To connect to a machine: ssh name, for example ssh kingdom.)
-# { $cles }: the list of new keys, separated by commas
+# { $keys }: the list of new keys, separated by commas
 workstation-keys-received =
     🔑 The kingdom thanks you: new SSH keys are waiting for you on your
-    workstation ({ $cles }). Go back there (exit), look at ~/.ssh/config, and
+    workstation ({ $keys }). Go back there (exit), look at ~/.ssh/config, and
     connect to the machine of your choice.
 workstation-keys-received-next =
     🔑 Another milestone: more stories open up, their keys are waiting on
-    your workstation ({ $cles }).
+    your workstation ({ $keys }).
 
 ## Welcome messages of the machines (motd), shown on login
 
@@ -66,5 +66,5 @@ machine-patch-motd = The Patch — the community bike workshop (cycles.example).
 machine-petrin-motd = The Bakery — new server (migration), six months after the audit. The security watch, now without Salomé.
 
 # When reconnecting to a machine whose chapter is in progress.
-# { $fichier }: the chapter's welcome file (e.g. welcome.txt)
-resumed-chapter = You are resuming this chapter where you left it. To read again what awaits you:   cat { $fichier }
+# { $file }: the chapter's welcome file (e.g. welcome.txt)
+resumed-chapter = You are resuming this chapter where you left it. To read again what awaits you:   cat { $file }

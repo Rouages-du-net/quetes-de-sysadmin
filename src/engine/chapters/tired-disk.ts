@@ -104,14 +104,14 @@ export const fatigue: Chapter = {
       condition: (j) => !outSdb(j) && Object.values(st(j).arrays).some((g) => !g.members.some((m) => m.part.startsWith('sdb'))),
       message: (j) => {
         const rest = sdbRemains(j)[0].part;
-        return j.t('tired-disk-event-half', { partition: `/dev/${rest}`, grappe: `/dev/${arrayFor(st(j), rest)![0]}` });
+        return j.t('tired-disk-event-half', { partition: `/dev/${rest}`, array: `/dev/${arrayFor(st(j), rest)![0]}` });
       },
     },
     { id: 'removed', condition: (j) => outSdb(j) && sdaIntact(j), message: (j) => j.t('tired-disk-event-removed') },
     {
       id: 'ticket-false',
       condition: (j) => ticket(j).includes(SERIES.sda),
-      message: (j) => j.t('tired-disk-event-ticket-false', { fichier: name(j.t, 'ticket.txt') }),
+      message: (j) => j.t('tired-disk-event-ticket-false', { file: name(j.t, 'ticket.txt') }),
     },
     { id: 'ticket', condition: ticketOk, message: (j) => j.t('tired-disk-event-ticket') },
     {

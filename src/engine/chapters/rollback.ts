@@ -97,7 +97,7 @@ function theoRepousse(j: Game): string {
   const head = server.commits.at(-1)!;
   const number = (j.state.theoAttempts = (j.state.theoAttempts ?? 0) + 1);
   const { 'index.html': _index, ...withoutIndex } = head.files;
-  const c = newCommit(head, j.t('rollback-commit-theo', { numero: number }), THEO_AUTHOR, 'Mon May 17 21:05:00 2027 +0200', {
+  const c = newCommit(head, j.t('rollback-commit-theo', { number: number }), THEO_AUTHOR, 'Mon May 17 21:05:00 2027 +0200', {
     ...withoutIndex,
     'accueil.html': `${j.t('rollback-site-welcome')}\n<!-- ${number} -->`,
   });
@@ -107,7 +107,7 @@ function theoRepousse(j: Game): string {
   try {
     const r = game.underCommand('git push prod main', THEO);
     j.state.theoPushed = c.id;
-    return j.t('rollback-theo-push', { sortie: r.output.replace(/^/gm, '  ') });
+    return j.t('rollback-theo-push', { output: r.output.replace(/^/gm, '  ') });
   } finally {
     game.who = before;
   }

@@ -46,10 +46,10 @@ traces-email-salome =
 
 ## Événements
 
-# { $adresse } : l'adresse d'où est venue la connexion
+# { $address } : l'adresse d'où est venue la connexion
 traces-event-found =
     Voilà la connexion : une session du compte « nadia » venue de
-    { $adresse }, à 3 h 12, alors que Nadia se connecte d'habitude de la
+    { $address }, à 3 h 12, alors que Nadia se connecte d'habitude de la
     boutique (198.51.100.7), le soir. Le journal de ssh a gardé l'empreinte
     de la clé utilisée : « ED25519 SHA256:… ».
 

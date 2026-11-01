@@ -62,7 +62,7 @@ export const keys: Chapter = {
   initialise: loadSshd,
   hosts: { wiki: internalHost('wiki', '10.20.0.11'), archives: internalHost('archives', '10.20.0.12') },
   createWorld: (t) =>
-    homeWorld({ passwords: null, home: { 'email_yasmine.txt': f(t('keys-email-yasmine', { motdepasse: password(t, PASSWORD) })) } }),
+    homeWorld({ passwords: null, home: { 'email_yasmine.txt': f(t('keys-email-yasmine', { password: password(t, PASSWORD) })) } }),
   events: [
     { id: 'error', condition: (j) => readConfig(j).errors.length > 0, message: (j) => j.t('keys-event-error', { config: CONFIG }) },
     { id: 'locked-out', condition: (j) => withoutPassword(j) && !youKeys(j).length, message: (j) => j.t('keys-event-locked-out') },

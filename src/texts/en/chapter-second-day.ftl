@@ -76,13 +76,13 @@ second-day-event-malo-reads =
 
     By the way, on a real machine, Malo will have to log in again: a
     session's groups are read at login.
-# { $partage }: the path of the shared directory
+# { $share }: the path of the shared directory
 second-day-event-share-open =
-    Careful: any account can now write in { $partage },
+    Careful: any account can now write in { $share },
     including www-data. If the site gets hacked, the attacker can drop
     whatever they want there. Remove all permissions for others (last digit 0).
 second-day-event-share =
-    The directory { $partage } is ready: the web team can enter it, read
+    The directory { $share } is ready: the web team can enter it, read
     and write there, and other accounts see nothing in it.
 second-day-event-end =
     Awa pops her head through the door: "Perfect. Malo reads the logs, the

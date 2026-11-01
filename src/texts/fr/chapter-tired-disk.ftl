@@ -76,21 +76,21 @@ tired-disk-event-healthy =
     s'abîme. Retire-le (--remove), puis remets-le (--re-add) : il sera
     remis à jour et la grappe retrouvera sa copie saine. Ensuite seulement,
     occupe-toi de sdb.
-# { $partition } : la partition de sdb encore en place ; { $grappe } : sa grappe
+# { $partition } : la partition de sdb encore en place ; { $array } : sa grappe
 tired-disk-event-half =
     Une grappe est faite. Mais sdb est aussi dans l'autre : { $partition }
-    fait encore partie de { $grappe }. Un disque qu'on remplace sort de
+    fait encore partie de { $array }. Un disque qu'on remplace sort de
     toutes ses grappes.
 tired-disk-event-removed =
     sdb ne fait plus partie d'aucune grappe : /proc/mdstat montre [U_] pour
     les deux. Le serveur tourne sur sda seul, sans filet : il faut faire
     changer le disque vite. Reste le ticket, ~/ticket.txt, avec ce que
     demande la procédure de l'hébergeur.
-# { $fichier } : le nom du ticket
+# { $file } : le nom du ticket
 tired-disk-event-ticket-false =
     Le ticket contient le numéro de série de sda : c'est le disque SAIN !
     L'hébergeur débrancherait le seul disque qui marche encore. Corrige
-    { $fichier } : seulement le numéro de série de sdb.
+    { $file } : seulement le numéro de série de sdb.
 tired-disk-event-ticket =
     Le ticket donne le numéro de série du disque à remplacer. Odile
     l'enverra dès que le disque sera sorti de ses grappes.

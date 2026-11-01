@@ -30,7 +30,7 @@ bare-repo-word-theo =
     dans le titre du site, directement dans /var/www/gazette/index.html.
     Je n'ai pas eu le temps de la mettre dans git… »
 
-## Le site (HTML ; { $date } : AAAA-MM-JJ, { $jour } : le jour du mois)
+## Le site (HTML ; { $date } : AAAA-MM-JJ, { $day } : le jour du mois)
 
 bare-repo-title-mistake = La Gazzette du quartier
 bare-repo-site-index-v1 =
@@ -86,7 +86,7 @@ bare-repo-site-agenda =
     <head><meta charset="utf-8"><title>L'agenda du mois</title><link rel="stylesheet" href="style.css"></head>
     <body>
     <h1>L'agenda du mois</h1>
-    <p>Vide-grenier de la rue : samedi <time datetime="{ $date }">{ $jour } juin</time>, de 8 h à 18 h.</p>
+    <p>Vide-grenier de la rue : samedi <time datetime="{ $date }">{ $day } juin</time>, de 8 h à 18 h.</p>
     </body>
     </html>
 bare-repo-commit-1 = Première version du site

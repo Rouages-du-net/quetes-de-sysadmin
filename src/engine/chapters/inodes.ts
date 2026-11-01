@@ -149,21 +149,21 @@ function night(j: Game): string {
   // Les tâches voient l'heure du matin (find -mtime compte l'âge depuis l'horloge).
   s.clock = end;
   const executions = pass(shell(j), start, end);
-  const effaces = total(before) + written - total(byDay(j));
+  const deleted = total(before) + written - total(byDay(j));
   const mails = executions
     .filter((e) => e.output)
     // Un courrier de milliers de lignes (une erreur par fichier) : seulement le début.
     .map((e) => {
       const lines = e.output.split('\n');
       const output = lines.length > 5 ? [...lines.slice(0, 5), '[…]'].join('\n') : e.output;
-      return j.t('inodes-mail', { commande: e.command, sortie: output });
+      return j.t('inodes-mail', { command: e.command, output: output });
     })
     .join('\n\n');
-  const result = [j.t('inodes-night', { taches: executions.length, effaces, ancien: moreOld(j), pourcent: inodesPercent(j) }), mails];
+  const result = [j.t('inodes-night', { jobs: executions.length, deleted, oldest: moreOld(j), percent: inodesPercent(j) }), mails];
   if (!intactRecent(j)) result.push(j.t('inodes-night-recent-lost'));
   else if (!executions.length) result.push(j.t('inodes-night-nothing'));
-  else if (moreOld(j) > 60) result.push(j.t('inodes-night-too-old', { jours: moreOld(j) }));
-  else if (inodesPercent(j) >= 80) result.push(j.t('inodes-night-full', { pourcent: inodesPercent(j) }));
+  else if (moreOld(j) > 60) result.push(j.t('inodes-night-too-old', { days: moreOld(j) }));
+  else if (inodesPercent(j) >= 80) result.push(j.t('inodes-night-full', { percent: inodesPercent(j) }));
   else j.state.nightSucceeded = true;
   return result.filter(Boolean).join('\n\n');
 }
@@ -334,7 +334,7 @@ export const inodes: Chapter = {
     },
     { id: 'too-long', condition: (j) => (j.state.argumentsTooLong ?? 0) > 0, message: (j) => j.t('inodes-event-too-long') },
     { id: 'recent-lost', condition: (j) => !intactRecent(j), message: (j) => j.t('inodes-event-recent-lost') },
-    { id: 'restarts', condition: (j) => !!j.find(record(j)), message: (j) => j.t('inodes-event-restarts', { pourcent: inodesPercent(j) }) },
+    { id: 'restarts', condition: (j) => !!j.find(record(j)), message: (j) => j.t('inodes-event-restarts', { percent: inodesPercent(j) }) },
     {
       id: 'end',
       condition: (j) => !!j.state.nightSucceeded && intactRecent(j) && inodesPercent(j) < 80,

@@ -41,13 +41,13 @@ lighthouse-message =
     A creature is roaming the kingdom…"
 
 # A variable: { $name }. Don't translate its name.
-error-missing = { $commande }: { $cible }: No such file or directory
+error-missing = { $command }: { $target }: No such file or directory
 
 # A plural, following each language's rules (Intl.PluralRules)
 state-chapters-done =
-    { $faits ->
-        [one] { $faits } chapter
-       *[other] { $faits } chapters
+    { $finished ->
+        [one] { $finished } chapter
+       *[other] { $finished } chapters
     } of { $total }
 
 # An attribute: .name = …

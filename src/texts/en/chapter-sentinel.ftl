@@ -49,9 +49,9 @@ sentinel-event-error =
 sentinel-event-rania =
     Rania is no longer banned: she can log in again. But if she
     gets it wrong five more times, fail2ban will ban her again…
-# { $adresse }: the address of the workstation
+# { $address }: the address of the workstation
 sentinel-event-banned-self =
-    WARNING: fail2ban just banned { $adresse }… the address of your own
+    WARNING: fail2ban just banned { $address }… the address of your own
     workstation! Yesterday you had three failed logins (look for "Failed publickey"
     in journalctl -u ssh), and with these settings, that's enough. Unban yourself,
     and add your address to ignoreip, before you disconnect.

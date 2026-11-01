@@ -32,7 +32,7 @@ bare-repo-word-theo =
     in the site title, directly in /var/www/gazette/index.html. I didn't
     have time to put it in git…"
 
-## The site (HTML; { $date }: YYYY-MM-DD, { $jour }: the day of the month)
+## The site (HTML; { $date }: YYYY-MM-DD, { $day }: the day of the month)
 
 bare-repo-title-mistake = The Neighbourhood Gazzette
 bare-repo-site-index-v1 =
@@ -88,7 +88,7 @@ bare-repo-site-agenda =
     <head><meta charset="utf-8"><title>This month's calendar</title><link rel="stylesheet" href="style.css"></head>
     <body>
     <h1>This month's calendar</h1>
-    <p>Street yard sale: Saturday <time datetime="{ $date }">June { $jour }</time>, from 8 a.m. to 6 p.m.</p>
+    <p>Street yard sale: Saturday <time datetime="{ $date }">June { $day }</time>, from 8 a.m. to 6 p.m.</p>
     </body>
     </html>
 bare-repo-commit-1 = First version of the site

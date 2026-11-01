@@ -40,10 +40,10 @@ updates-event-in-tmux =
     Ta connexion est tombée… mais la mise à jour tournait dans tmux : elle
     est allée au bout, sans toi. Rattache-toi à ta session (tmux ls, puis
     tmux attach) pour voir comment elle s'est terminée.
-# { $ancien } : le noyau qui tourne ; { $nouveau } : celui qui vient d'être installé
+# { $oldest } : le noyau qui tourne ; { $new } : celui qui vient d'être installé
 updates-event-a-day =
-    Les mises à jour sont installées. Mais le nouveau noyau ({ $nouveau }) ne
-    tourne pas encore : uname -r dit toujours { $ancien }. Regarde
+    Les mises à jour sont installées. Mais le nouveau noyau ({ $new }) ne
+    tourne pas encore : uname -r dit toujours { $oldest }. Regarde
     /var/run/reboot-required.pkgs : il faut redémarrer (avant 10 h !).
 updates-event-till-down =
     Le serveur a redémarré sur le nouveau noyau… mais la caisse ne répond plus.

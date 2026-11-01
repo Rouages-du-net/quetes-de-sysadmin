@@ -76,9 +76,9 @@ archives-event-cleanup =
     compressée directement sur la clé :
 
       tar -czf /media/cle/fonds.tar.gz fonds
-# { $taille } : taille de l'archive en Mo (nombre, avec une décimale)
+# { $size } : taille de l'archive en Mo (nombre, avec une décimale)
 archives-event-saved =
-    L'archive est sur la clé : { NUMBER($taille, minimumFractionDigits: 1, maximumFractionDigits: 1) } Mo, avec tout le fonds. Les textes ont été
+    L'archive est sur la clé : { NUMBER($size, minimumFractionDigits: 1, maximumFractionDigits: 1) } Mo, avec tout le fonds. Les textes ont été
     fortement compressés ; les images, les sons et les PDF, déjà compressés,
     presque pas. Pour vérifier son contenu sans l'ouvrir :
     tar -tzf /media/cle/fonds.tar.gz

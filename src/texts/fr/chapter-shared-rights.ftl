@@ -45,9 +45,9 @@ shared-rights-event-sudoers-broken =
 
     Sur un vrai serveur, il faudrait la console de secours de l'hébergeur
     (ou pkexec). Ici : « Recommencer ce chapitre », sous le terminal.
-# { $fichier } : le fichier de règles ignoré
+# { $file } : le fichier de règles ignoré
 shared-rights-event-file-ignore =
-    Ta règle est dans { $fichier }… que sudo ne lit pas ! @includedir ignore
+    Ta règle est dans { $file }… que sudo ne lit pas ! @includedir ignore
     les fichiers dont le nom contient un point ou finit par ~ (relis
     /etc/sudoers.d/README). Donne-lui un nom sans point, comme
     /etc/sudoers.d/till.
@@ -63,9 +63,9 @@ shared-rights-event-systemctl-whole =
 shared-rights-event-sudo =
     sudo -l -U lina le confirme : l'équipe caisse peut relancer la caisse,
     et rien d'autre.
-# { $dossier } : le dossier partagé
+# { $directory } : le dossier partagé
 shared-rights-event-directory =
-    { $dossier } appartient maintenant au groupe till, qui peut y écrire, et
+    { $directory } appartient maintenant au groupe till, qui peut y écrire, et
     porte le bit setgid (le s de drwxrwsr-x) : tout ce qui y sera créé prendra
     le groupe till. Reste ce qui y est déjà, et les droits que Lina et Karim
     donneront à leurs prochains fichiers (umask).

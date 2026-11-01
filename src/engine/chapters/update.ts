@@ -78,12 +78,12 @@ APPS.outiltheque = {
     const base = readBase(readIn(game, c, BASE));
     const version = c.image.split(':').at(-1)!;
     if (!base) return { code: 500, body: 'Internal Server Error: database is missing' };
-    if (path === '/' || path === '') return { code: 200, body: game.t('update-app-welcome', { version, prets: base.loans.length }) };
+    if (path === '/' || path === '') return { code: 200, body: game.t('update-app-welcome', { version, loans: base.loans.length }) };
     if (path === '/prets')
       return {
         code: 200,
         body: [
-          game.t('update-app-loans', { prets: base.loans.length }),
+          game.t('update-app-loans', { loans: base.loans.length }),
           ...base.loans.slice(0, 5).map((p) => `  ${p.tool} — ${p.person} — ${p.until}`),
         ].join('\n'),
       };

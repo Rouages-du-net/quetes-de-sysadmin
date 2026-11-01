@@ -36,9 +36,9 @@ dhcp-event-wan =
     neighbours' (a "rogue DHCP server") is the kind of failure that cuts
     off a whole neighbourhood. Tell dnsmasq where it is allowed to listen
     (interface=, or except-interface=eth0).
-# { $adresse }: the printer's expected address
+# { $address }: the printer's expected address
 dhcp-event-printer-elsewhere =
-    The printer got an address… but not { $adresse }, and the computers
+    The printer got an address… but not { $address }, and the computers
     can't find it. dnsmasq can reserve an address for a device, based on
     its MAC address (man dnsmasq: dhcp-host).
 dhcp-event-end =

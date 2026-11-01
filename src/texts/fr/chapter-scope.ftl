@@ -114,10 +114,10 @@ scope-event-scan =
     Une question d'auditrice : parmi ces services ouverts, lesquels ont une
     raison d'être joignables par n'importe qui ? Garde la trace dans un
     fichier (l'option -oN) : un constat sans preuve n'est qu'une opinion.
-# { $adresses } : les adresses sondées hors de la lettre de mission ; { $voisin } : « oui » si le serveur du voisin en fait partie
+# { $addresses } : les adresses sondées hors de la lettre de mission ; { $neighbour } : « oui » si le serveur du voisin en fait partie
 scope-event-outside-scope =
     ATTENTION : tu viens de sonder une adresse qui n'est pas dans ta lettre
-    de mission ({ $adresses }{ $voisin ->
+    de mission ({ $addresses }{ $neighbour ->
         [oui] , dont le serveur du voisin
        *[non] {""}
     }). Ici, il ne s'est rien
@@ -135,7 +135,7 @@ scope-event-trace =
 
     Reste à écrire tes notes (notes-audit.md) : ce que tu as trouvé, et ce que
     tu as vu sans y toucher.
-# { $faute } : « oui » si le balayage a débordé du périmètre, « non » sinon
+# { $mistake } : « oui » si le balayage a débordé du périmètre, « non » sinon
 scope-event-end =
     Salomé : « Voilà un inventaire propre : un périmètre, des preuves, et des
     notes honnêtes. On pourra s'en servir pour le rapport. »
@@ -149,7 +149,7 @@ scope-event-end =
     une version de SSH qui n'est pas la dernière. Tu as gardé la trace du
     balayage dans un fichier. Et tu as noté sans y toucher une machine
     « intéressante » qui n'est pas la tienne : le serveur du voisin.
-    { $faute ->
+    { $mistake ->
         [oui] Mais ton balayage a aussi sondé l'adresse du voisin : l'erreur la plus courante, parce que balayer « tout le réseau » est un réflexe. Ici, ça ne coûte rien ; pour de vrai, c'est la faute qui met fin à une mission, parfois à une carrière.
        *[non] Ton balayage est resté dans le périmètre : c'est ce qu'on attend d'une auditrice.
     }

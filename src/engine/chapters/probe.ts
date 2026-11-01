@@ -149,22 +149,22 @@ function night(j: Game): string {
   if (relay(j).state !== 'active') start(j, s, 'radio-stream');
   const v = place();
   if (v) v.children = {};
-  const r: string[] = [j.t('probe-night', { lancements: launches })];
+  const r: string[] = [j.t('probe-night', { runs: launches })];
   r.push(
     alertRelay !== null
       ? j.t('probe-night-relay-seen', {
-          alerte: timeOfDay(alertRelay),
-          repare: timeOfDay(repairedRelay ?? alertRelay),
+          alert: timeOfDay(alertRelay),
+          repaired: timeOfDay(repairedRelay ?? alertRelay),
           minutes: Math.round(((repairedRelay ?? alertRelay) - fallsRelay) / MINUTE),
         })
       : j.t('probe-night-relay-missed'),
   );
   r.push(
     alertInodes !== null && (fullInodes === null || alertInodes < fullInodes)
-      ? j.t('probe-night-inodes-seen', { alerte: timeOfDay(alertInodes) })
-      : j.t('probe-night-inodes-missed', { plein: timeOfDay(fullInodes ?? end) }),
+      ? j.t('probe-night-inodes-seen', { alert: timeOfDay(alertInodes) })
+      : j.t('probe-night-inodes-missed', { full: timeOfDay(fullInodes ?? end) }),
   );
-  if (no) r.push(j.t('probe-night-false', { nombre: no }));
+  if (no) r.push(j.t('probe-night-false', { count: no }));
   if (!launches) r.push(j.t('probe-night-never'));
   const okRelay = alertRelay !== null && alertRelay - fallsRelay <= RELAY_DELAY * MINUTE;
   const inodesOk = alertInodes !== null && (fullInodes === null || alertInodes < fullInodes);
@@ -327,7 +327,7 @@ export const probe: Chapter = {
     {
       id: 'plugin-outside-path',
       condition: (j) => j.last.commands.some((c) => /^check_/.test(c[0]) || (c[0] === 'sudo' && /^check_/.test(c[1] ?? ''))),
-      message: (j) => j.t('probe-event-plugin-outside-path', { dossier: PLUGINS }),
+      message: (j) => j.t('probe-event-plugin-outside-path', { directory: PLUGINS }),
     },
     {
       id: 'first-alert',

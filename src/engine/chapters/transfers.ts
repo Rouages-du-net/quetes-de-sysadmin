@@ -154,7 +154,7 @@ export const transfers: Chapter = {
     {
       id: 'nested',
       condition: (j) => archives(j).exists(nested(j)),
-      message: (j) => j.t('transfers-event-nested', { dossier: nested(j) }),
+      message: (j) => j.t('transfers-event-nested', { directory: nested(j) }),
     },
     {
       id: 'backup',

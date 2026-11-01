@@ -109,9 +109,9 @@ full-disk-event-renamed =
     le fichier qu'il a ouvert, pas son nom. Pour logrotate, il faut soit
     copytruncate (copier puis vider), soit lui faire rouvrir son journal
     (postrotate … systemctl reload radio-stream … endscript).
-# { $pourcent } : l'occupation du disque
+# { $percent } : l'occupation du disque
 full-disk-event-breathes =
-    Le disque respire : { $pourcent } % occupés. L'enregistrement de nuit
+    Le disque respire : { $percent } % occupés. L'enregistrement de nuit
     pourra reprendre. Reste à éviter la prochaine fois.
 full-disk-event-end =
     Le disque a de la place, le relais tourne en mode normal, et logrotate

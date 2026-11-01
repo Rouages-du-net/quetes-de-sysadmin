@@ -9,7 +9,7 @@ chapter-stuck-boot = The stuck reboot
 
 # The line Théo added to /etc/fstab (a comment)
 stuck-boot-fstab-comment = # USB disk for the scans (Theo, from a tutorial I followed on my laptop)
-# { $banniere }: the emergency mode message, in English as on the real console
+# { $banner }: the emergency mode message, in English as on the real console
 stuck-boot-message-odile =
     A message from Odile (Tuesday 25 January, 7:50 am):
 
@@ -18,7 +18,7 @@ stuck-boot-message-odile =
     emergency mode”. They opened their console for us: it's as if we were
     in front of the server's screen, as root. Here is what it says:
 
-    { $banniere }
+    { $banner }
 
     Last week Théo plugged in his USB disk, the one with the scans of the
     old negatives, and added it “so that it mounts by itself”. He

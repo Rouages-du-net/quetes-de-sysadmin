@@ -2,32 +2,32 @@
 ### progression. Une phrase entière par message ; variables entre { }.
 
 stories-title = Histoires
-# { $histoire } : titre de l'histoire
-chapters-title = Chapitres de « { $histoire } »
-chapter-number = Chapitre { $numero }
-chapter-title-complete = { $histoire } — chapitre { $numero } : { $titre }
+# { $story } : titre de l'histoire
+chapters-title = Chapitres de « { $story } »
+chapter-number = Chapitre { $number }
+chapter-title-complete = { $story } — chapitre { $number } : { $title }
 state-story-finished = ✓ Terminée
 state-chapters-done =
-    { $faits ->
-        [one] { $faits } chapitre
-       *[other] { $faits } chapitres
+    { $finished ->
+        [one] { $finished } chapitre
+       *[other] { $finished } chapitres
     } sur { $total }
 state-chapter-finished = ✓ Terminé
 state-locked = 🔒 Termine le chapitre précédent
 state-key-missing = 🔒 Verrouillée
-# { $chapitres } : les titres des chapitres qui restent à finir (liste mise en forme)
-state-key-after = 🔒 Après { $chapitres }
-# { $titre } : le titre d'un chapitre, dans la liste ci-dessus
-state-key-chapter = « { $titre } »
+# { $chapters } : les titres des chapitres qui restent à finir (liste mise en forme)
+state-key-after = 🔒 Après { $chapters }
+# { $title } : le titre d'un chapitre, dans la liste ci-dessus
+state-key-chapter = « { $title } »
 key-help = 🔑 Les histoires grisées s'ouvrent peu à peu : chacune dit sous son nom les chapitres à finir avant d'en recevoir la clé. Les premières s'ouvrent après La Racine (L'Effaceur, chapitre 3).
 button-next = Chapitre suivant →
 button-restart = Recommencer ce chapitre
 tips = Astuces : Tab complète les noms, ↑ rappelle les commandes, « aide » liste celles que tu connais, « man commande » ouvre le manuel, « exit » ramène à ton poste. Comme dans la plupart des terminaux Linux, sélectionner du texte le copie et le clic droit le colle. Ta progression est gardée dans ce navigateur.
-# { $lignes } : nombre de lignes non affichées
+# { $lines } : nombre de lignes non affichées
 output-cut =
-    { $lignes ->
-        [one] (… { $lignes } ligne plus haut, non affichée)
-       *[other] (… { $lignes } lignes plus haut, non affichées)
+    { $lines ->
+        [one] (… { $lines } ligne plus haut, non affichée)
+       *[other] (… { $lines } lignes plus haut, non affichées)
     }
 workstation-title = Ton poste
 ## Le menu des histoires : deux vues
@@ -43,11 +43,11 @@ credit-link-original = Terminus (en anglais)
 ## Le carnet du sysadmin
 
 notebook-title = Le carnet du sysadmin
-# { $nombre } : le nombre de commandes notées
-notebook-account = { $nombre ->
+# { $count } : le nombre de commandes notées
+notebook-account = { $count ->
     [0] (vide)
-    [one] ({ $nombre } commande)
-   *[other] ({ $nombre } commandes)
+    [one] ({ $count } commande)
+   *[other] ({ $count } commandes)
 }
 notebook-help = Chaque commande que tu lances pour la première fois s'ajoute ici, avec ce qu'elle fait et la ligne que tu as tapée. Ton aide-mémoire, à emporter.
 notebook-empty = Rien encore : lance une commande (ls, par exemple), elle viendra s'inscrire ici.
@@ -57,22 +57,22 @@ notebook-copy = Copié dans le presse-papiers.
 notebook-copy-impossible = Ce navigateur refuse l'accès au presse-papiers : utilise plutôt le téléchargement.
 # Le nom du fichier téléchargé : sans espace ni caractère difficile.
 notebook-file = carnet-du-sysadmin.md
-# En tête du fichier Markdown. { $nombre } : le nombre de commandes
-notebook-markdown-intro = { $nombre ->
+# En tête du fichier Markdown. { $count } : le nombre de commandes
+notebook-markdown-intro = { $count ->
     [one] Une commande apprise en jouant à Quêtes de Sysadmin.
-   *[other] { $nombre } commandes apprises en jouant à Quêtes de Sysadmin.
+   *[other] { $count } commandes apprises en jouant à Quêtes de Sysadmin.
 }
 notebook-progress = Progression
 notebook-progress-empty = Aucun chapitre terminé pour l'instant.
-# { $histoire } : le titre de l'histoire ; { $faits } et { $total } : chapitres terminés et en tout
-notebook-progress-story = { $histoire } : { $faits ->
-    [one] { $faits } chapitre terminé
-   *[other] { $faits } chapitres terminés
+# { $story } : le titre de l'histoire ; { $finished } et { $total } : chapitres terminés et en tout
+notebook-progress-story = { $story } : { $finished ->
+    [one] { $finished } chapitre terminé
+   *[other] { $finished } chapitres terminés
 } sur { $total }
-# { $chapitre } : le titre du chapitre où la commande a servi la première fois
-notebook-discovery = Découverte dans « { $chapitre } ».
-# { $commande } : la commande qui ouvre le manuel (man ls)
-notebook-manual = Pour aller plus loin : { $commande }
+# { $chapter } : le titre du chapitre où la commande a servi la première fois
+notebook-discovery = Découverte dans « { $chapter } ».
+# { $command } : la commande qui ouvre le manuel (man ls)
+notebook-manual = Pour aller plus loin : { $command }
 
 ## Liens vers Les rouages du net (après un chapitre)
 
@@ -101,8 +101,8 @@ rouages-link-glossaire-octet = Glossaire : octet
 ## Le mode examen
 
 exam-case = Mode examen : sans indice, avec un chrono (le chapitre recommence)
-# { $temps } : le temps écoulé, en minutes:secondes
-exam-timer = ⏱ { $temps }
+# { $time } : le temps écoulé, en minutes:secondes
+exam-timer = ⏱ { $time }
 # La confirmation, quand un chapitre est en cours (le mode examen le fait recommencer).
 exam-confirm-title = Passer en mode examen ?
 exam-confirm-text = Le chapitre en cours va recommencer depuis le début, sur une machine neuve : ce que tu y as déjà fait sera perdu. Les chapitres terminés restent acquis.
@@ -112,9 +112,9 @@ exam-quit-text = Le chapitre en cours va recommencer depuis le début, avec les 
 exam-quit = Recommencer sans le mode examen
 exam-cancel = Annuler
 exam-start = Mode examen : aucun indice ne s'affichera, le chrono tourne. Ta mission est dans le message d'accueil (relis-le avec cat). Le débrief viendra à la fin. Pour repartir de zéro, machine et chrono : « Recommencer ce chapitre », sous le terminal.
-# { $temps } : le temps de cette partie ; { $record } : le meilleur temps de ce navigateur
-exam-finished = Examen réussi en { $temps }. Ton meilleur temps sur ce chapitre : { $record }.
-exam-finished-record = Examen réussi en { $temps } : c'est ton meilleur temps sur ce chapitre.
+# { $time } : le temps de cette partie ; { $record } : le meilleur temps de ce navigateur
+exam-finished = Examen réussi en { $time }. Ton meilleur temps sur ce chapitre : { $record }.
+exam-finished-record = Examen réussi en { $time } : c'est ton meilleur temps sur ce chapitre.
 
 ## La carte (un bouton à côté du terminal ; voir src/engine/map.ts)
 
@@ -147,8 +147,8 @@ plan-note-wiki = wiki
 plan-note-archives = sauvegardes
 plan-note-host = hébergeur du site
 plan-note-router = routeur
-# { $id } : le numéro du VLAN ; { $nom } : son nom dans la configuration (bureaux, invites…).
-plan-vlan = VLAN { $id } · { $nom }
+# { $id } : le numéro du VLAN ; { $name } : son nom dans la configuration (bureaux, invites…).
+plan-vlan = VLAN { $id } · { $name }
 plan-note-remote-work = télétravail
 plan-annex = routeur de l'Annexe
 plan-note-annex = second site
@@ -157,7 +157,7 @@ plan-network-annex = réseau de l'Annexe
 ## Ma progression (voir src/engine/progress.ts)
 
 # Le titre du carnet quand on a donné son nom.
-notebook-title-of = Le carnet de { $nom }
+notebook-title-of = Le carnet de { $name }
 progress-button = Ma progression
 progress-title = Ma progression
 progress-intro = Ta progression reste dans ce navigateur. Pour continuer sur une autre machine (une autre salle de TP, chez toi), emporte-la avec le code ou le fichier. Rien n'est envoyé nulle part.
@@ -174,10 +174,10 @@ progress-download = Télécharger ma sauvegarde
 progress-file-input = Reprendre avec un fichier :
 progress-name-file = quetes-de-sysadmin.json
 progress-downloaded = Sauvegarde téléchargée.
-# { $nombre } : les chapitres terminés dans le fichier.
-progress-confirm = Reprendre cette sauvegarde ({ $nombre ->
-        [one] { $nombre } chapitre terminé
-       *[other] { $nombre } chapitres terminés
+# { $count } : les chapitres terminés dans le fichier.
+progress-confirm = Reprendre cette sauvegarde ({ $count ->
+        [one] { $count } chapitre terminé
+       *[other] { $count } chapitres terminés
     }) ? Elle remplacera tout ce qui est gardé dans ce navigateur.
 progress-nothing-new = Ce code n'ajoute aucun chapitre à ceux que tu as déjà terminés ici.
 progress-code-illisible = Ce n'est pas un code de progression : il commence par QDS, suivi de groupes de lettres et de chiffres.
@@ -190,8 +190,8 @@ progress-fichier-trop-recent = Cette sauvegarde vient d'une version plus récent
 ## La mission, la barre de touches, Ctrl-R
 
 mission-button = Mission
-# { $chapitre } : « Chapitre 2 » ; { $titre } : son titre.
-mission-title = { $chapitre } : { $titre }
+# { $chapter } : « Chapitre 2 » ; { $title } : son titre.
+mission-title = { $chapter } : { $title }
 mission-instructions = Les consignes
 mission-journal = Ce qui s'est passé
 mission-nothing = Rien encore : l'histoire avance à mesure que tu agis.
@@ -201,17 +201,17 @@ follow-stop = Arrêter (Ctrl-C)
 key-haut = Commande précédente
 key-bas = Commande suivante
 # Ce qu'affiche bash pendant Ctrl-R (en anglais, comme readline).
-search-history = (reverse-i-search)`{ $motif }': { $commande }
+search-history = (reverse-i-search)`{ $pattern }': { $command }
 
 ## Succès et grades (voir src/engine/achievements.ts)
 
 achievements-title = Succès
-# { $obtenus } sur { $total } : le compte affiché sur le lien.
-achievements-button = Succès ({ $obtenus }/{ $total })
+# { $earned } sur { $total } : le compte affiché sur le lien.
+achievements-button = Succès ({ $earned }/{ $total })
 # Annoncé dans le terminal quand un succès est obtenu.
-achievements-obtained = 🏆 Succès : { $nom }
+achievements-obtained = 🏆 Succès : { $name }
 achievements-grade = Ton grade : { $grade }.
-achievements-grade-next = Prochain grade, { $grade }, à { $chapitres } chapitres terminés.
+achievements-grade-next = Prochain grade, { $grade }, à { $chapters } chapitres terminés.
 achievements = (le { $date })
 achievements-cache = Succès caché
     .description = Un clin d'œil à la culture du terminal. À toi de le trouver.
@@ -269,27 +269,27 @@ hint-button-solution = Presque la réponse
 hint-manual = Les pages à lire : { $pages }. Cherche aussi avec man -k et un mot-clé.
 hint-more-nothing = Plus d'indice pour ce chapitre : relis les consignes et ce qui s'est passé.
 ## Le bilan de fin de chapitre (voir src/engine/summary.ts)
-# { $temps } : « 6:12 » ; { $commandes }, { $erreurs }, { $indices } : des nombres
-summary-summary = Bilan : { $temps } · { $commandes ->
+# { $time } : « 6:12 » ; { $commands }, { $errors }, { $hints } : des nombres
+summary-summary = Bilan : { $time } · { $commands ->
         [one] une commande
-       *[other] { $commandes } commandes
-    }{ $erreurs ->
+       *[other] { $commands } commandes
+    }{ $errors ->
         [0] {""}
-       *[other] {" "}(dont { $erreurs } en erreur)
-    } · { $indices ->
+       *[other] {" "}(dont { $errors } en erreur)
+    } · { $hints ->
         [0] aucun indice
         [one] un indice
-       *[other] { $indices } indices
+       *[other] { $hints } indices
     }
 summary-button = Voir le détail
-# { $chapitre } : le titre du chapitre
-summary-title = Bilan : { $chapitre }
+# { $chapter } : le titre du chapitre
+summary-title = Bilan : { $chapter }
 summary-intro = Ta commande à côté de la solution de référence, étape par étape. Le jeu vérifie l'état de la machine, pas la commande tapée : une autre façon de faire est tout aussi juste si elle arrive au même résultat.
 summary-col-step = Étape
 summary-col-you = Ta commande
 summary-col-reference = La solution de référence
 summary-otherwise = (passée autrement)
-summary-encourage = { $indices ->
+summary-encourage = { $hints ->
         [0] Sans indice : bravo. Rejoue-le en mode examen pour battre ton temps ?
        *[other] La prochaine fois, avec moins d'indices ?
     }
@@ -300,18 +300,18 @@ rescue-take = Prendre un instantané
 rescue-go-back = Revenir à l'instantané
 rescue-cancel = Annuler la dernière saisie
 rescue-none = Pas encore d'instantané dans ce chapitre.
-# { $pas } : le nombre de saisies (commandes, réponses, enregistrements de nano) depuis le début du chapitre
-rescue-taken = { $pas ->
+# { $steps } : le nombre de saisies (commandes, réponses, enregistrements de nano) depuis le début du chapitre
+rescue-taken = { $steps ->
         [0] Instantané pris au début du chapitre.
         [one] Instantané pris après une saisie.
-       *[other] Instantané pris après { $pas } saisies.
+       *[other] Instantané pris après { $steps } saisies.
     }
 rescue-impossible = Pas d'instantané possible ici : le chapitre a été repris ou on est passé par le poste. « Recommencer ce chapitre » repart de zéro.
 rescue-exam = Pas d'instantané en mode examen.
-rescue-restored = { $pas ->
+rescue-restored = { $steps ->
         [0] ↺ Machine remise comme au début du chapitre.
         [one] ↺ Machine remise comme après la première saisie du chapitre.
-       *[other] ↺ Machine remise comme après { $pas } saisies du chapitre.
+       *[other] ↺ Machine remise comme après { $steps } saisies du chapitre.
     }
 ## Les parcours thématiques (menu « Parcours » ; voir src/engine/paths.ts)
 view-parcours = Parcours
@@ -332,24 +332,24 @@ path-production = Diagnostiquer en production
     .description = Un service qui ne redémarre pas, un disque plein, la mémoire, les inodes, l'heure, la supervision et le post-mortem.
 path-identities = Comptes et identités
     .description = Groupes, départ d'un collègue, droits partagés, clés SSH, annuaire LDAP et Wi-Fi d'entreprise.
-# { $faits } / { $total } : des nombres
-path-progress = { $faits } sur { $total } chapitres faits
+# { $finished } / { $total } : des nombres
+path-progress = { $finished } sur { $total } chapitres faits
 path-finished = ✓ Parcours terminé
-# { $histoire } : le titre de l'histoire
-path-in = dans « { $histoire } »
+# { $story } : le titre de l'histoire
+path-in = dans « { $story } »
 path-done = ✓ Terminé
 path-open = À faire
 path-next = ▶ Le prochain
-# { $chapitre } : le titre du chapitre à finir d'abord
-path-locked = 🔒 D'abord : { $chapitre }
+# { $chapter } : le titre du chapitre à finir d'abord
+path-locked = 🔒 D'abord : { $chapter }
 path-without-key = 🔒 Histoire verrouillée
 ## L'astreinte et l'incident du jour (voir src/engine/on-call.ts)
 on-call-button = 🚨 Incident du jour
-# { $chapitre } : titre du chapitre ; { $histoire } : titre de l'histoire
-on-call-today = Aujourd'hui : « { $chapitre } » ({ $histoire })
+# { $chapter } : titre du chapitre ; { $story } : titre de l'histoire
+on-call-today = Aujourd'hui : « { $chapter } » ({ $story })
 on-call-locked = 🔒 L'astreinte s'ouvre quand tu termines La Racine (L'Effaceur, chapitre 3).
-# { $pourcent } : budget restant
-on-call-already = Fait aujourd'hui : { $pourcent } % du budget gardé.
+# { $percent } : budget restant
+on-call-already = Fait aujourd'hui : { $percent } % du budget gardé.
 # { $date } : la date du jour, écrite en toutes lettres
 on-call-title = Astreinte du { $date }
 on-call-intro = Le téléphone d'astreinte sonne : un incident à régler. Le même pour tout le monde aujourd'hui ; demain, un autre.
@@ -357,8 +357,8 @@ on-call-rules = Tu as un budget d'erreur de 30 minutes, comme l'objectif de disp
 on-call-take = Prendre l'astreinte
 on-call-cancel = Pas maintenant
 on-call-start = 🚨 Astreinte : le budget d'erreur commence à fondre.
-# { $temps } : « 24:10 » ; { $pourcent } : un nombre
-on-call-gauge = Budget : { $temps } ({ $pourcent } %)
+# { $time } : « 24:10 » ; { $percent } : un nombre
+on-call-gauge = Budget : { $time } ({ $percent } %)
 on-call-exhausted = Budget épuisé : SLA dépassé. Termine quand même, l'incident doit être réglé.
 on-call-abandon = L'astreinte est abandonnée : tu as quitté l'incident.
 on-call-end-title = Fin d'astreinte
@@ -366,21 +366,21 @@ on-call-end-intro = L'incident est réglé. Voici ta carte de score, à partager
 on-call-copy = Copier la carte
 on-call-copied = Carte copiée.
 # La carte de score, comme une grille de mots partagée.
-# { $date } (AAAA-MM-JJ), { $chapitre }, { $jauge } (cinq cases), { $pourcent }, { $temps }, { $indices }, { $erreurs }, { $adresse }
+# { $date } (AAAA-MM-JJ), { $chapter }, { $gauge } (cinq cases), { $percent }, { $time }, { $hints }, { $errors }, { $address }
 on-call-map =
     Quêtes de Sysadmin · astreinte du { $date }
-    « { $chapitre } » réglé en { $temps }
-    { $jauge } { $pourcent } % du budget
-    { $indices ->
+    « { $chapter } » réglé en { $time }
+    { $gauge } { $percent } % du budget
+    { $hints ->
         [0] sans indice
         [one] un indice
-       *[other] { $indices } indices
-    } · { $erreurs ->
+       *[other] { $hints } indices
+    } · { $errors ->
         [0] aucune erreur
         [one] une erreur
-       *[other] { $erreurs } erreurs
+       *[other] { $errors } erreurs
     }
-    { $adresse }
+    { $address }
 achievements-without-hint = Sans filet
     .description = Terminer un chapitre sans demander d'indice.
 
@@ -395,13 +395,13 @@ class-export = Télécharger le tableau (CSV)
 class-empty = Vider le tableau
 class-name-file = tableau-de-classe.csv
 class-table = La classe
-class-account = { $nombre ->
+class-account = { $count ->
         [0] Aucun élève pour l'instant.
         [one] Un élève.
-       *[other] { $nombre } élèves.
+       *[other] { $count } élèves.
     }
-# { $source } : le fichier ou la ligne ; { $raison } : ce qui ne va pas.
-class-error = { $source } : { $raison }
+# { $source } : le fichier ou la ligne ; { $reason } : ce qui ne va pas.
+class-error = { $source } : { $reason }
 class-col-student = Élève
 class-col-chapters = Chapitres
 class-col-grade = Grade

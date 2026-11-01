@@ -94,7 +94,7 @@ export const archives: Chapter = {
     },
     {
       id: 'full',
-      condition: (j) => j.last.errors.some((e) => WRITERS.some((command) => e === j.t('error-space', { commande: command }))),
+      condition: (j) => j.last.errors.some((e) => WRITERS.some((command) => e === j.t('error-space', { command: command }))),
       message: (j) => j.t('archives-event-full'),
     },
     {
@@ -115,7 +115,7 @@ export const archives: Chapter = {
     {
       id: 'saved',
       condition: (j) => !!archiveComplete(j),
-      message: (j) => j.t('archives-event-saved', { taille: (archiveComplete(j)!.size ?? 0) / Mo }),
+      message: (j) => j.t('archives-event-saved', { size: (archiveComplete(j)!.size ?? 0) / Mo }),
     },
   ],
 };

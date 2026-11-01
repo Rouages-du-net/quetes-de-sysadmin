@@ -2,32 +2,32 @@
 ### progress. One whole sentence per message; variables between { }.
 
 stories-title = Stories
-# { $histoire }: title of the story
-chapters-title = Chapters of "{ $histoire }"
-chapter-number = Chapter { $numero }
-chapter-title-complete = { $histoire } — chapter { $numero }: { $titre }
+# { $story }: title of the story
+chapters-title = Chapters of "{ $story }"
+chapter-number = Chapter { $number }
+chapter-title-complete = { $story } — chapter { $number }: { $title }
 state-story-finished = ✓ Completed
 state-chapters-done =
-    { $faits ->
-        [one] { $faits } chapter
-       *[other] { $faits } chapters
+    { $finished ->
+        [one] { $finished } chapter
+       *[other] { $finished } chapters
     } of { $total }
 state-chapter-finished = ✓ Completed
 state-locked = 🔒 Finish the previous chapter
 state-key-missing = 🔒 Locked
-# { $chapitres }: the titles of the chapters still to finish (formatted list)
-state-key-after = 🔒 After { $chapitres }
-# { $titre }: a chapter title, in the list above
-state-key-chapter = “{ $titre }”
+# { $chapters }: the titles of the chapters still to finish (formatted list)
+state-key-after = 🔒 After { $chapters }
+# { $title }: a chapter title, in the list above
+state-key-chapter = “{ $title }”
 key-help = 🔑 The greyed-out stories open little by little: each one shows under its name the chapters to finish before you receive its key. The first ones open after The Root (The Eraser, chapter 3).
 button-next = Next chapter →
 button-restart = Restart this chapter
 tips = Tips: Tab completes names, ↑ recalls commands, "help" lists the ones you know, "man command" opens the manual, "exit" takes you back to your workstation. As in most Linux terminals, selecting text copies it and right-clicking pastes it. Your progress is saved in this browser.
-# { $lignes }: number of lines not shown
+# { $lines }: number of lines not shown
 output-cut =
-    { $lignes ->
-        [one] (… { $lignes } line above, not shown)
-       *[other] (… { $lignes } lines above, not shown)
+    { $lines ->
+        [one] (… { $lines } line above, not shown)
+       *[other] (… { $lines } lines above, not shown)
     }
 workstation-title = Your workstation
 ## The story menu: two views
@@ -43,11 +43,11 @@ credit-link-original = Terminus
 ## The sysadmin's notebook
 
 notebook-title = The sysadmin's notebook
-# { $nombre }: the number of commands noted
-notebook-account = { $nombre ->
+# { $count }: the number of commands noted
+notebook-account = { $count ->
     [0] (empty)
-    [one] ({ $nombre } command)
-   *[other] ({ $nombre } commands)
+    [one] ({ $count } command)
+   *[other] ({ $count } commands)
 }
 notebook-help = Every command you run for the first time is added here, with what it does and the line you typed. Your cheat sheet, to take with you.
 notebook-empty = Nothing yet: run a command (ls, for example) and it will be written here.
@@ -57,22 +57,22 @@ notebook-copy = Copied to the clipboard.
 notebook-copy-impossible = This browser refuses access to the clipboard: use the download instead.
 # The name of the downloaded file: no spaces or hard-to-type characters.
 notebook-file = sysadmin-notebook.md
-# At the top of the Markdown file. { $nombre }: the number of commands
-notebook-markdown-intro = { $nombre ->
+# At the top of the Markdown file. { $count }: the number of commands
+notebook-markdown-intro = { $count ->
     [one] One command learnt while playing Quêtes de Sysadmin.
-   *[other] { $nombre } commands learnt while playing Quêtes de Sysadmin.
+   *[other] { $count } commands learnt while playing Quêtes de Sysadmin.
 }
 notebook-progress = Progress
 notebook-progress-empty = No chapter completed yet.
-# { $histoire }: the title of the story; { $faits } and { $total }: chapters completed and in total
-notebook-progress-story = { $histoire }: { $faits ->
-    [one] { $faits } chapter completed
-   *[other] { $faits } chapters completed
+# { $story }: the title of the story; { $finished } and { $total }: chapters completed and in total
+notebook-progress-story = { $story }: { $finished ->
+    [one] { $finished } chapter completed
+   *[other] { $finished } chapters completed
 } of { $total }
-# { $chapitre }: the title of the chapter where the command was first used
-notebook-discovery = Discovered in "{ $chapitre }".
-# { $commande }: the command that opens the manual (man ls)
-notebook-manual = To go further: { $commande }
+# { $chapter }: the title of the chapter where the command was first used
+notebook-discovery = Discovered in "{ $chapter }".
+# { $command }: the command that opens the manual (man ls)
+notebook-manual = To go further: { $command }
 
 ## Links to Les rouages du net (after a chapter)
 
@@ -101,8 +101,8 @@ rouages-link-glossaire-octet = Glossary: byte
 ## Exam mode
 
 exam-case = Exam mode: no hints, with a timer (the chapter restarts)
-# { $temps }: the elapsed time, in minutes:seconds
-exam-timer = ⏱ { $temps }
+# { $time }: the elapsed time, in minutes:seconds
+exam-timer = ⏱ { $time }
 # The confirmation, when a chapter is in progress (exam mode restarts it).
 exam-confirm-title = Switch to exam mode?
 exam-confirm-text = The current chapter will restart from the beginning, on a fresh machine: what you have already done in it will be lost. Finished chapters stay finished.
@@ -112,9 +112,9 @@ exam-quit-text = The current chapter will restart from the beginning, with hints
 exam-quit = Restart without exam mode
 exam-cancel = Cancel
 exam-start = Exam mode: no hints will be shown, the timer is running. Your mission is in the welcome message (read it again with cat). The debrief will come at the end. To start from scratch, machine and timer: "Restart this chapter", below the terminal.
-# { $temps }: the time of this game; { $record }: the best time in this browser
-exam-finished = Exam passed in { $temps }. Your best time on this chapter: { $record }.
-exam-finished-record = Exam passed in { $temps }: that's your best time on this chapter.
+# { $time }: the time of this game; { $record }: the best time in this browser
+exam-finished = Exam passed in { $time }. Your best time on this chapter: { $record }.
+exam-finished-record = Exam passed in { $time }: that's your best time on this chapter.
 
 ## The map (a button next to the terminal; see src/engine/map.ts)
 
@@ -147,8 +147,8 @@ plan-note-wiki = wiki
 plan-note-archives = backups
 plan-note-host = website host
 plan-note-router = router
-# { $id }: the VLAN number; { $nom }: its name in the configuration (bureaux, invites…).
-plan-vlan = VLAN { $id } · { $nom }
+# { $id }: the VLAN number; { $name }: its name in the configuration (bureaux, invites…).
+plan-vlan = VLAN { $id } · { $name }
 plan-note-remote-work = remote work
 plan-annex = Annexe router
 plan-note-annex = second site
@@ -157,7 +157,7 @@ plan-network-annex = Annexe network
 ## My progress (see src/engine/progress.ts)
 
 # The notebook's title when a name is given.
-notebook-title-of = { $nom }'s notebook
+notebook-title-of = { $name }'s notebook
 progress-button = My progress
 progress-title = My progress
 progress-intro = Your progress stays in this browser. To carry on on another machine (another lab room, at home), take it with you with the code or the file. Nothing is sent anywhere.
@@ -174,10 +174,10 @@ progress-download = Download my save
 progress-file-input = Resume from a file:
 progress-name-file = quetes-de-sysadmin.json
 progress-downloaded = Save downloaded.
-# { $nombre }: the finished chapters in the file.
-progress-confirm = Resume this save ({ $nombre ->
-        [one] { $nombre } finished chapter
-       *[other] { $nombre } finished chapters
+# { $count }: the finished chapters in the file.
+progress-confirm = Resume this save ({ $count ->
+        [one] { $count } finished chapter
+       *[other] { $count } finished chapters
     })? It will replace everything kept in this browser.
 progress-nothing-new = This code adds no chapter to the ones you have already finished here.
 progress-code-illisible = This is not a progress code: it starts with QDS, followed by groups of letters and digits.
@@ -190,8 +190,8 @@ progress-fichier-trop-recent = This save comes from a newer version of the game:
 ## The mission, the key bar, Ctrl-R
 
 mission-button = Mission
-# { $chapitre }: "Chapter 2"; { $titre }: its title.
-mission-title = { $chapitre }: { $titre }
+# { $chapter }: "Chapter 2"; { $title }: its title.
+mission-title = { $chapter }: { $title }
 mission-instructions = The instructions
 mission-journal = What has happened
 mission-nothing = Nothing yet: the story moves on as you act.
@@ -201,17 +201,17 @@ keys-title = Terminal keys
 key-haut = Previous command
 key-bas = Next command
 # What bash shows during Ctrl-R (readline).
-search-history = (reverse-i-search)`{ $motif }': { $commande }
+search-history = (reverse-i-search)`{ $pattern }': { $command }
 
 ## Achievements and ranks (see src/engine/achievements.ts)
 
 achievements-title = Achievements
-# { $obtenus } of { $total }: the count shown on the link.
-achievements-button = Achievements ({ $obtenus }/{ $total })
+# { $earned } of { $total }: the count shown on the link.
+achievements-button = Achievements ({ $earned }/{ $total })
 # Announced in the terminal when an achievement is earned.
-achievements-obtained = 🏆 Achievement: { $nom }
+achievements-obtained = 🏆 Achievement: { $name }
 achievements-grade = Your rank: { $grade }.
-achievements-grade-next = Next rank, { $grade }, at { $chapitres } finished chapters.
+achievements-grade-next = Next rank, { $grade }, at { $chapters } finished chapters.
 achievements = ({ $date })
 achievements-cache = Hidden achievement
     .description = A nod to terminal culture. Up to you to find it.
@@ -269,27 +269,27 @@ hint-button-solution = Almost the answer
 hint-manual = Pages to read: { $pages }. Also search with man -k and a keyword.
 hint-more-nothing = No more hints for this chapter: reread the instructions and what has happened.
 ## The end-of-chapter summary (see src/engine/summary.ts)
-# { $temps }: "6:12"; { $commandes }, { $erreurs }, { $indices }: numbers
-summary-summary = Summary: { $temps } · { $commandes ->
+# { $time }: "6:12"; { $commands }, { $errors }, { $hints }: numbers
+summary-summary = Summary: { $time } · { $commands ->
         [one] one command
-       *[other] { $commandes } commands
-    }{ $erreurs ->
+       *[other] { $commands } commands
+    }{ $errors ->
         [0] {""}
-       *[other] {" "}({ $erreurs } with an error)
-    } · { $indices ->
+       *[other] {" "}({ $errors } with an error)
+    } · { $hints ->
         [0] no hints
         [one] one hint
-       *[other] { $indices } hints
+       *[other] { $hints } hints
     }
 summary-button = See the details
-# { $chapitre }: the chapter's title
-summary-title = Summary: { $chapitre }
+# { $chapter }: the chapter's title
+summary-title = Summary: { $chapter }
 summary-intro = Your command next to the reference solution, step by step. The game checks the state of the machine, not the command you typed: another way of doing it is just as right if it reaches the same result.
 summary-col-step = Step
 summary-col-you = Your command
 summary-col-reference = The reference solution
 summary-otherwise = (reached another way)
-summary-encourage = { $indices ->
+summary-encourage = { $hints ->
         [0] No hints: well done. Replay it in exam mode to beat your time?
        *[other] Next time, with fewer hints?
     }
@@ -300,18 +300,18 @@ rescue-take = Take a snapshot
 rescue-go-back = Go back to the snapshot
 rescue-cancel = Undo the last input
 rescue-none = No snapshot yet in this chapter.
-# { $pas }: the number of inputs (commands, answers, nano saves) since the chapter started
-rescue-taken = { $pas ->
+# { $steps }: the number of inputs (commands, answers, nano saves) since the chapter started
+rescue-taken = { $steps ->
         [0] Snapshot taken at the start of the chapter.
         [one] Snapshot taken after one input.
-       *[other] Snapshot taken after { $pas } inputs.
+       *[other] Snapshot taken after { $steps } inputs.
     }
 rescue-impossible = No snapshot possible here: the chapter was resumed or you went through your workstation. "Restart this chapter" starts from scratch.
 rescue-exam = No snapshots in exam mode.
-rescue-restored = { $pas ->
+rescue-restored = { $steps ->
         [0] ↺ Machine put back as at the start of the chapter.
         [one] ↺ Machine put back as after the chapter's first input.
-       *[other] ↺ Machine put back as after { $pas } inputs of the chapter.
+       *[other] ↺ Machine put back as after { $steps } inputs of the chapter.
     }
 ## Themed paths ("Paths" menu; see src/engine/paths.ts)
 view-parcours = Paths
@@ -332,24 +332,24 @@ path-production = Troubleshooting in production
     .description = A service that won't restart, a full disk, memory, inodes, time, monitoring and the post-mortem.
 path-identities = Accounts and identities
     .description = Groups, a colleague leaving, shared permissions, SSH keys, LDAP directory and enterprise Wi-Fi.
-# { $faits } / { $total }: numbers
-path-progress = { $faits } of { $total } chapters done
+# { $finished } / { $total }: numbers
+path-progress = { $finished } of { $total } chapters done
 path-finished = ✓ Path complete
-# { $histoire }: the story's title
-path-in = in "{ $histoire }"
+# { $story }: the story's title
+path-in = in "{ $story }"
 path-done = ✓ Done
 path-open = To do
 path-next = ▶ Next
-# { $chapitre }: the title of the chapter to finish first
-path-locked = 🔒 First: { $chapitre }
+# { $chapter }: the title of the chapter to finish first
+path-locked = 🔒 First: { $chapter }
 path-without-key = 🔒 Story locked
 ## On-call and the incident of the day (see src/engine/on-call.ts)
 on-call-button = 🚨 Incident of the day
-# { $chapitre }: chapter title; { $histoire }: story title
-on-call-today = Today: "{ $chapitre }" ({ $histoire })
+# { $chapter }: chapter title; { $story }: story title
+on-call-today = Today: "{ $chapter }" ({ $story })
 on-call-locked = 🔒 On-call opens once you finish The Root (The Eraser, chapter 3).
-# { $pourcent }: budget left
-on-call-already = Done today: { $pourcent }% of the budget kept.
+# { $percent }: budget left
+on-call-already = Done today: { $percent }% of the budget kept.
 # { $date }: today's date, spelled out
 on-call-title = On call, { $date }
 on-call-intro = The on-call phone rings: an incident to fix. The same one for everyone today; tomorrow, another.
@@ -357,8 +357,8 @@ on-call-rules = You have an error budget of 30 minutes, like a service's availab
 on-call-take = Take the call
 on-call-cancel = Not now
 on-call-start = 🚨 On call: the error budget starts melting.
-# { $temps }: "24:10"; { $pourcent }: a number
-on-call-gauge = Budget: { $temps } ({ $pourcent }%)
+# { $time }: "24:10"; { $percent }: a number
+on-call-gauge = Budget: { $time } ({ $percent }%)
 on-call-exhausted = Budget spent: SLA breached. Finish anyway, the incident must be fixed.
 on-call-abandon = On-call abandoned: you left the incident.
 on-call-end-title = End of on-call
@@ -366,21 +366,21 @@ on-call-end-intro = The incident is fixed. Here is your score card, to share (no
 on-call-copy = Copy the card
 on-call-copied = Card copied.
 # The score card, like a shared word grid.
-# { $date } (YYYY-MM-DD), { $chapitre }, { $jauge } (five squares), { $pourcent }, { $temps }, { $indices }, { $erreurs }, { $adresse }
+# { $date } (YYYY-MM-DD), { $chapter }, { $gauge } (five squares), { $percent }, { $time }, { $hints }, { $errors }, { $address }
 on-call-map =
     Quêtes de Sysadmin · on call, { $date }
-    "{ $chapitre }" fixed in { $temps }
-    { $jauge } { $pourcent }% of the budget
-    { $indices ->
+    "{ $chapter }" fixed in { $time }
+    { $gauge } { $percent }% of the budget
+    { $hints ->
         [0] no hints
         [one] one hint
-       *[other] { $indices } hints
-    } · { $erreurs ->
+       *[other] { $hints } hints
+    } · { $errors ->
         [0] no errors
         [one] one error
-       *[other] { $erreurs } errors
+       *[other] { $errors } errors
     }
-    { $adresse }
+    { $address }
 achievements-without-hint = No safety net
     .description = Finish a chapter without asking for a hint.
 
@@ -395,13 +395,13 @@ class-export = Download the table (CSV)
 class-empty = Clear the table
 class-name-file = class-table.csv
 class-table = The class
-class-account = { $nombre ->
+class-account = { $count ->
         [0] No student yet.
         [one] One student.
-       *[other] { $nombre } students.
+       *[other] { $count } students.
     }
-# { $source }: the file or line; { $raison }: what is wrong.
-class-error = { $source }: { $raison }
+# { $source }: the file or line; { $reason }: what is wrong.
+class-error = { $source }: { $reason }
 class-col-student = Student
 class-col-chapters = Chapters
 class-col-grade = Rank

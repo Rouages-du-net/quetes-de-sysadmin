@@ -42,30 +42,30 @@ tunnel-note-gaspard =
 
 ## The admin page (served by the wiki)
 
-# { $lignes }: one line per sign-up (tunnel-admin-ligne)
+# { $lines }: one line per sign-up (tunnel-admin-ligne)
 tunnel-admin-page =
     Community wiki — administration
 
     Sign-ups:
-    { $lignes }
+    { $lines }
 
     Approve:   /admin/valider/<account>
     Reject:    /admin/refuser/<account>
-# { $nom }: the account; { $etat }: attente (pending), validee (approved) or refusee (rejected)
-tunnel-admin-ligne = { $etat ->
-        [validee] - { $nom }: approved
-        [refusee] - { $nom }: rejected
-       *[attente] - { $nom }: pending
+# { $name }: the account; { $state }: attente (pending), validee (approved) or refusee (rejected)
+tunnel-admin-ligne = { $state ->
+        [validee] - { $name }: approved
+        [refusee] - { $name }: rejected
+       *[attente] - { $name }: pending
     }
-tunnel-admin-valider = Sign-up of { $nom } approved.
-tunnel-admin-refuser = Sign-up of { $nom } rejected.
+tunnel-admin-valider = Sign-up of { $name } approved.
+tunnel-admin-refuser = Sign-up of { $name } rejected.
 tunnel-admin-introuvable = Page not found.
 
 ## Events
 
-# { $compte }: the advertising account
+# { $account }: the advertising account
 tunnel-event-advert =
-    Oops: the account { $compte } is approved. Yasmine: "It's going to fill
+    Oops: the account { $account } is approved. Yasmine: "It's going to fill
     the wiki with ads!" Reject it (the address is on the admin page).
 tunnel-event-approved =
     Samir and Léa are signed up, and the advertising stays outside.

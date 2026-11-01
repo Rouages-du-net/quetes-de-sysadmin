@@ -7,7 +7,7 @@ chapter-annex = The Annex
 
 ## Files
 
-# { $cle }: the WireGuard public key of the Annex router
+# { $key }: the WireGuard public key of the Annex router
 annex-email-sami =
     From:    Sami (volunteer at the Annex)
     To:      you
@@ -27,7 +27,7 @@ annex-email-sami =
     more peer on wg0. It took the address 10.10.99.3 in the tunnel,
     and its public key is:
 
-        { $cle }
+        { $key }
 
     I've prepared annex-wg0.conf: fill in the Peer part (your router)
     and I'll copy it over here. For your router's public key:

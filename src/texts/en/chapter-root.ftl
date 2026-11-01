@@ -119,23 +119,23 @@ root-event-conf-erased =
     configuration is missing in /etc: the daemon only reads the file
     /etc/eraser.conf, under that exact name.
 
-# { $souvenir }: name of the deleted file (technical identifier)
-root-memory-erases = ✗ A memory fades away: { $souvenir }
-# { $sauves }: memories saved; { $total }: number of memories at the start
+# { $memory }: name of the deleted file (technical identifier)
+root-memory-erases = ✗ A memory fades away: { $memory }
+# { $saved }: memories saved; { $total }: number of memories at the start
 root-event-protected =
     The Eraser keeps attacking your memories… "Permission denied". It
     backs off. On Linux, deleting a file means changing the place that
     contains it: without the right to write in that place, nothing can be deleted there.
 
-    You saved { $sauves ->
-        [one] { $sauves } memory
-       *[other] { $sauves } memories
+    You saved { $saved ->
+        [one] { $saved } memory
+       *[other] { $saved } memories
     } out of { $total }. But the Eraser carries on elsewhere, throughout
     the kingdom. Where do its orders come from? Daemons write what they do
     in a log:
 
       cat /var/log/eraser.log
-# { $perte }: "oui" if memories were deleted, otherwise "non"
+# { $loss }: "oui" if memories were deleted, otherwise "non"
 root-event-fixed =
     The daemon rereads its configuration: "target = /Kingdom/Bin". Just one
     target, this time. The Eraser stops dead… then starts emptying the
@@ -147,10 +147,10 @@ root-event-fixed =
     made two targets, one of them the whole kingdom. It wasn't evil: it
     did exactly what it had been told.
 
-    You saved { $sauves ->
-        [one] { $sauves } memory
-       *[other] { $sauves } memories
-    } out of { $total }.{ $perte ->
+    You saved { $saved ->
+        [one] { $saved } memory
+       *[other] { $saved } memories
+    } out of { $total }.{ $loss ->
         [oui] {" "}The ones that are gone won't come back: rm goes through no bin… unless you made backups. But that's another story.
        *[non] {""}
     }

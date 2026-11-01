@@ -17,7 +17,7 @@ certbot-none-certificate = (Here, certbot only manages the certificate already r
 certbot-authenticator = (certbot would ask you here how to prove that you control the site. Tell it: --webroot -w site_directory, or --nginx; see man certbot.)
 certbot-webroot-without-path = (With --webroot, you must tell certbot which directory to put the challenge in: -w site_directory.)
 certbot-without-domain = (Give the certificate's names with -d, one -d per name.)
-certbot-other-domains = (Here, certbot only manages the existing certificate, for the names: { $noms }. Give exactly these names again with -d.)
+certbot-other-domains = (Here, certbot only manages the existing certificate, for the names: { $names }. Give exactly these names again with -d.)
 openssl-usage =
     help:
     (Here: openssl x509 -in file -noout -dates, openssl s_client -connect machine:443; see man openssl)

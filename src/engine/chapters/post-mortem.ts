@@ -245,7 +245,7 @@ export const postMortem: Chapter = {
     }
     return [
       j.t('post-mortem-review'),
-      ...(word ? [j.t('post-mortem-blame', { mot: word })] : []),
+      ...(word ? [j.t('post-mortem-blame', { word: word })] : []),
       ...rest.map((m) => `- ${j.t(`post-mortem-missing-${m}`)}`),
     ].join('\n');
   },

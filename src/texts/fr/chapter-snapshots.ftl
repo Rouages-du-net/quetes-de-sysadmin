@@ -24,8 +24,8 @@ snapshots-message-berenice =
 
     Malo a laissé un conseil : « rsnapshot configtest avant tout, et
     attention aux tabulations ». Pour sudo : ludo-2027. »
-# { $numero } : le numéro du jeu ajouté
-snapshots-line-inventory = jeu offert n°{ $numero };1;neuf
+# { $number } : le numéro du jeu ajouté
+snapshots-line-inventory = jeu offert n°{ $number };1;neuf
 snapshots-inventory-old =
     jeu;exemplaires;etat
     jeu de l'oie;3;bon
@@ -54,12 +54,12 @@ snapshots-event-same-disk =
     Les instantanés sont rangés sur le disque du système, à côté des
     données : si ce disque lâche, tout part avec. Malo voulait le second
     disque, /mnt/instantanes (snapshot_root).
-# { $exemple } : le début d'un courriel de cron
+# { $example } : le début d'un courriel de cron
 snapshots-event-mails =
     cron a envoyé du courrier : ses tâches ont écrit des erreurs. Par
     exemple :
 
-    { $exemple }
+    { $example }
 
     Une tâche de la crontab d'un compte ordinaire n'a pas les droits de
     root ; celle de root, si (sudo crontab -e).

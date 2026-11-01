@@ -1153,14 +1153,14 @@ manual-section-examples = EXEMPLES
 manual-section-see-also = VOIR AUSSI
 # Première ligne de « commande --help »
 manual-use = Utilisation : { $synopsis }
-manual-complete = Manuel complet : man { $commande }
+manual-complete = Manuel complet : man { $command }
 manual-option-invalid =
-    { $commande } : option invalide -- '{ $lettre }'
-    Saisissez « { $commande } --help » pour plus d'informations.
+    { $command } : option invalide -- '{ $letter }'
+    Saisissez « { $command } --help » pour plus d'informations.
 # Une option longue inconnue (--frobnicate), comme getopt dans les coreutils. { $option } : l'option tapée
 manual-option-long-unknown =
-    { $commande } : option non reconnue « { $option } »
-    Saisissez « { $commande } --help » pour plus d'informations.
+    { $command } : option non reconnue « { $option } »
+    Saisissez « { $command } --help » pour plus d'informations.
 
 man-nmap = l'explorateur de réseau : il envoie des paquets à une machine (ou à toute une plage d'adresses) et dit, pour chaque port TCP, s'il est ouvert (un programme répond), fermé (la machine répond « personne ici ») ou filtré (un pare-feu jette le paquet : aucune réponse). Les ports sont « vus d'internet » : c'est ce que voit un attaquant, ou une auditrice. -sV demande aussi la version du service qui répond (utile pour repérer un logiciel périmé) ; -p choisit les ports (-p 22,80 ; -p 1-1024 ; -p- pour tous) ; -sn ne fait que dire quelles machines répondent ; -Pn ne tient pas compte de l'absence de réponse au ping ; -oN garde le résultat dans un fichier (une preuve à joindre au rapport) ; -F ne regarde que les ports les plus courants ; -n ne cherche pas les noms. N'utilise nmap que sur ce qui est dans ta lettre de mission : sonder une machine qu'on n'a pas le droit de sonder est une faute, parfois une infraction. 127.0.0.1 désigne la machine elle-même, vue de l'intérieur (le pare-feu ne s'y applique pas).
     .synopsis = nmap [options] cible...  (un nom, une adresse, un réseau 192.0.2.0/29, une plage 192.0.2.20-25)

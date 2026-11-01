@@ -110,8 +110,8 @@ post-mortem-words-origin = august, aug 20, 20 aug, 20/08, 08/20, 2027-08-20
 post-mortem-words-blame = at fault, to blame, guilty, negligence, negligent, careless, should have, incompetent, théo's mistake, theo's mistake, zoé's mistake, zoe's mistake, théo's fault, theo's fault, zoé's fault, zoe's fault
 
 post-mortem-review = Zoé rereads your post-mortem:
-# { $mot }: the word that looks for someone to blame
-post-mortem-blame = "{ $mot }": we're looking for what made the outage possible, not who caused it. Nobody acted wrongly; it's the system (the tools, the habits) that we improve. Could you rephrase?
+# { $word }: the word that looks for someone to blame
+post-mortem-blame = "{ $word }": we're looking for what made the outage possible, not who caused it. Nobody acted wrongly; it's the system (the tools, the habits) that we improve. Could you rephrase?
 post-mortem-missing-template = There are still "(to be completed)" lines from the template.
 post-mortem-missing-timeline = The timeline must give, checked in the logs, the time of the outage, of the first alert and of the live broadcast's return (journalctl --since … --until …, the alert's mail).
 post-mortem-missing-impact = The impact: how many minutes of silence for the listeners?

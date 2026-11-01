@@ -46,9 +46,9 @@ departure-event-lock-only =
     key, and usermod -L changes nothing about that. Read man usermod again: to really
     close an account, you also have to expire it (or take away its
     login shell, or its keys).
-# { $fichier }: the deploy account's key file
+# { $file }: the deploy account's key file
 departure-event-deploy-empty =
-    Watch out: keys are missing from { $fichier }! The CI and Lina
+    Watch out: keys are missing from { $file }! The CI and Lina
     won't be able to release the till anymore. Only remove Marc's
     line (his key ends with marc@portable). Put the others back: nano, keeping
     the deploy@ci and lina@atelier lines.

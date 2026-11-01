@@ -34,14 +34,14 @@ workstation-hosts-comment =
     198.51.100.x et 203.0.113.x sont réservées à la documentation (RFC 5737).
     Aucun de ces noms ni de ces adresses ne mène chez quelqu'un de réel.
 workstation-exit = (Tu es sur ton propre poste : exit fermerait ton terminal. Pour te connecter à une machine : ssh nom, par exemple ssh royaume.)
-# { $cles } : la liste des nouvelles clés, séparées par des virgules
+# { $keys } : la liste des nouvelles clés, séparées par des virgules
 workstation-keys-received =
     🔑 Le royaume te remercie : de nouvelles clés SSH t'attendent sur ton poste
-    ({ $cles }). Reviens-y (exit), regarde ~/.ssh/config, et connecte-toi à la
+    ({ $keys }). Reviens-y (exit), regarde ~/.ssh/config, et connecte-toi à la
     machine de ton choix.
 workstation-keys-received-next =
     🔑 Nouvelle étape franchie : d'autres histoires s'ouvrent, leurs clés
-    t'attendent sur ton poste ({ $cles }).
+    t'attendent sur ton poste ({ $keys }).
 
 ## Messages d'accueil des machines (motd), affichés à la connexion
 
@@ -66,5 +66,5 @@ machine-patch-motd = La Rustine — l'atelier vélo associatif (cycles.example).
 machine-petrin-motd = Le Fournil — nouveau serveur (migration), six mois après l'audit. La veille de sécurité, maintenant sans Salomé.
 
 # En se reconnectant à une machine dont le chapitre est en cours.
-# { $fichier } : le fichier d'accueil du chapitre (ex. bienvenue.txt)
-resumed-chapter = Tu reprends ce chapitre là où tu l'avais laissé. Pour relire ce qui t'attend :   cat { $fichier }
+# { $file } : le fichier d'accueil du chapitre (ex. bienvenue.txt)
+resumed-chapter = Tu reprends ce chapitre là où tu l'avais laissé. Pour relire ce qui t'attend :   cat { $file }

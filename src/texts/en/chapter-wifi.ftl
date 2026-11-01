@@ -30,11 +30,11 @@ wifi-email-malik =
 
     For sudo: bee-2027
 
-# { $secret }: the access point's shared secret; { $adresse }: its address
+# { $secret }: the access point's shared secret; { $address }: its address
 wifi-bound =
     "BUREAUX" WI-FI ACCESS POINT — settings (the electrician, February 2028)
 
-    Access point address   : { $adresse } (VLAN 30, equipment)
+    Access point address   : { $address } (VLAN 30, equipment)
     Wi-Fi network (SSID)   : LaRuche-Bureaux
     Security               : WPA2-Enterprise (802.1X), EAP-TTLS / PAP
     RADIUS server          : 10.10.30.1, port 1812 (UDP)

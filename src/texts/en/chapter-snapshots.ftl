@@ -24,8 +24,8 @@ snapshots-message-berenice =
 
     Malo left a tip: "rsnapshot configtest before anything else, and
     watch out for tabs". For sudo: ludo-2027."
-# { $numero }: the number of the added game
-snapshots-line-inventory = donated game no. { $numero };1;new
+# { $number }: the number of the added game
+snapshots-line-inventory = donated game no. { $number };1;new
 snapshots-inventory-old =
     game;copies;condition
     snakes and ladders;3;good
@@ -53,12 +53,12 @@ snapshots-event-same-disk =
     The snapshots are stored on the system disk, next to the data: if
     that disk fails, everything goes with it. Malo wanted the second
     disk, /mnt/snapshots (snapshot_root).
-# { $exemple }: the beginning of an email from cron
+# { $example }: the beginning of an email from cron
 snapshots-event-mails =
     cron sent mail: its jobs wrote errors. For
     example:
 
-    { $exemple }
+    { $example }
 
     A job in an ordinary account's crontab doesn't have root's
     permissions; one in root's crontab does (sudo crontab -e).

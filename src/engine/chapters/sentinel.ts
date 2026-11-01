@@ -258,7 +258,7 @@ export const sentinel: Chapter = {
     {
       id: 'banned-self',
       condition: (j) => f2b(j).banned.includes(WORKSTATION.address),
-      message: (j) => j.t('sentinel-event-banned-self', { adresse: WORKSTATION.address }),
+      message: (j) => j.t('sentinel-event-banned-self', { address: WORKSTATION.address }),
     },
     {
       id: 'set',

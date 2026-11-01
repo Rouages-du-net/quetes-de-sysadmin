@@ -49,14 +49,14 @@ works-for-me-help-dns =
 
 ## Événements
 
-# { $heures } : le temps qu'il reste au résolveur avant d'oublier l'ancienne adresse
+# { $hours } : le temps qu'il reste au résolveur avant d'oublier l'ancienne adresse
 works-for-me-event-cache =
     Notre serveur donne la nouvelle adresse… mais le résolveur public
     répond encore l'ancienne. Regarde le nombre avant IN : c'est le TTL qui
     reste. Le résolveur a gardé la réponse d'hier en cache, et la gardera
-    encore { $heures ->
+    encore { $hours ->
         [one] environ une heure
-       *[other] environ { $heures } heures
+       *[other] environ { $hours } heures
     }, comme tous les résolveurs du monde qui l'ont demandée. C'est ce qu'on
     appelle à tort la « propagation » : rien ne se propage, les caches
     expirent. On ne peut pas les vider ; on peut seulement prévoir (un TTL

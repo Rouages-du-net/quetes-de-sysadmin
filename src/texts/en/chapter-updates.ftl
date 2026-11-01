@@ -40,10 +40,10 @@ updates-event-in-tmux =
     Your connection dropped… but the update was running in tmux: it went
     all the way, without you. Reattach to your session (tmux ls, then
     tmux attach) to see how it ended.
-# { $ancien }: the running kernel; { $nouveau }: the one just installed
+# { $oldest }: the running kernel; { $new }: the one just installed
 updates-event-a-day =
-    The updates are installed. But the new kernel ({ $nouveau }) isn't
-    running yet: uname -r still says { $ancien }. Look at
+    The updates are installed. But the new kernel ({ $new }) isn't
+    running yet: uname -r still says { $oldest }. Look at
     /var/run/reboot-required.pkgs: you need to reboot (before 10 a.m.!).
 updates-event-till-down =
     The server rebooted on the new kernel… but the till no longer answers.

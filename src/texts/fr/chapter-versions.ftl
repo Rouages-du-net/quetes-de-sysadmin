@@ -73,9 +73,9 @@ versions-image-tiff = (image TIFF, numérisation brute)
 
 ## Événements
 
-# { $fichier } : le fichier du mot de passe
+# { $file } : le fichier du mot de passe
 versions-event-password =
-    Le dépôt est chiffré… mais son mot de passe est dans { $fichier },
+    Le dépôt est chiffré… mais son mot de passe est dans { $file },
     lisible par tous les comptes de la machine (ls -l). Rosa a un compte
     ici, et demain peut-être un stagiaire de plus. Qui doit pouvoir le lire ?
 versions-event-bad-password =
