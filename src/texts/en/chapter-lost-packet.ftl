@@ -10,7 +10,7 @@ chapter-lost-packet = The Lost Packet
 ## Files
 
 lost-packet-note-kofi =
-    A note from Kofi, volunteer at La Fourmilière, the community café:
+    A note from Kofi, volunteer at The Anthill, the community café:
 
     "Help! The internet isn't working anymore on the café's computer. The
     Neighbourhood Letters website (letters.example) won't open, and that's

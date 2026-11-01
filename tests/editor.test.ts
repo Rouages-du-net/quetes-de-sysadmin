@@ -56,8 +56,8 @@ for (const language of LANGUAGES)
       s.execute(machinesInLanguage(s.t, 'welcome-2026'));
       s.saveEdition(s.edition!.text + 'deny 198.51.100.77;\n');
       s.quitEdition();
-      for (const l of ['sudo systemctl reload nginx', 'ps aux', 'sudo kill 4242', 'grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt', 'echo "Coupable : 198.51.100.77" >> rapport.txt'])
-        s.execute(l);
+      for (const l of ['sudo systemctl reload nginx', 'ps aux', 'sudo kill 4242', 'grep " 503 " /var/log/nginx/access.log | wc -l > ~/report.txt', 'echo "Culprit: 198.51.100.77" >> report.txt'])
+        s.execute(L(l));
       expect(s.finished).toBe(true);
     });
 
@@ -77,10 +77,10 @@ for (const language of LANGUAGES)
       const dc = STORIES.find((h) => h.id === 'datacenter')!;
       const c = new Console({ language, finished: ['lighthouse', 'village', 'root'] });
       c.connect('datacenter', dc.chapters[0]);
-      for (const l of ['sudo kill 4242', 'welcome-2026', 'echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf', 'sudo systemctl reload nginx', 'ps aux', 'sudo kill 4244', 'grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt'])
-        c.execute(machinesInLanguage(c.t, l));
-      c.execute('nano rapport.txt');
-      c.save(c.edition!.text + 'Coupable : 198.51.100.77\n');
+      for (const l of ['sudo kill 4242', 'welcome-2026', 'echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf', 'sudo systemctl reload nginx', 'ps aux', 'sudo kill 4244', 'grep " 503 " /var/log/nginx/access.log | wc -l > ~/report.txt'])
+        c.execute(L(l));
+      c.execute(L('nano report.txt'));
+      c.save(c.edition!.text + 'Culprit: 198.51.100.77\n');
       c.quitEdition();
       expect(c.finished).toContain('first-day');
     });

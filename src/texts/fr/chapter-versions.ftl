@@ -100,7 +100,7 @@ versions-event-lost =
     perdu (sauf une autre copie ailleurs). Ici, tu peux recommencer le
     chapitre depuis le menu. Avant de supprimer, forget --dry-run montre ce
     qui partirait.
-versions-event-forgotten-without-plum =
+versions-event-forgotten-without-prune =
     forget a retiré des instantanés de la liste… mais df -h /mnt/mairie ne
     bouge pas : forget n'efface que les « étiquettes ». Les données ne
     partent qu'avec prune (ou forget --prune).

@@ -289,3 +289,11 @@ name-message_from_ines-txt = message_de_ines.txt
 ## Les Lettres du quartier (les pages de l'agenda, « La colocation » et « Le soir du concert »)
 name-week = semaine
 name-workshops = ateliers
+## Le Datacenter : le rapport pour Awa, les pages du site de la médiathèque (journal d'accès, sauvegardes)
+name-report-txt = rapport.txt
+name-events = agenda
+name-opening-hours = horaires
+name-opening-hours-html = horaires.html
+name-book = livre
+name-exhibitions = expositions
+name-search = recherche

@@ -287,3 +287,11 @@ name-message_from_ines-txt = message_from_ines.txt
 ## The Neighbourhood Letters (the calendar's routes, "Sharing a home" and "Concert night")
 name-week = week
 name-workshops = workshops
+## The Datacenter: Awa's report, the pages of the media library's site (access log, backups)
+name-report-txt = report.txt
+name-events = events
+name-opening-hours = opening-hours
+name-opening-hours-html = opening-hours.html
+name-book = book
+name-exhibitions = exhibitions
+name-search = search

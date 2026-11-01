@@ -139,7 +139,7 @@ for (const language of LANGUAGES)
       expect(retire).toContain(L('/home/you/.ssh/known_hosts updated.'));
       expect(c.workstation.read('~/.ssh/known_hosts.old')).toBe(old);
       const question = play(c, ['ssh datacenter']);
-      expect(question).toContain(`ED25519 key fingerprint is ${fingerprint(storyMachine('datacenter')!, '-apres-incendie')}.`);
+      expect(question).toContain(`ED25519 key fingerprint is ${fingerprint(storyMachine('datacenter')!, '-after-fire')}.`);
       play(c, ['yes']);
       expect(c.remote?.shell.chapter.id).toBe('fire');
       // Reconnecting asks no more questions: the new key is known.
@@ -147,7 +147,7 @@ for (const language of LANGUAGES)
       expect(play(c, ['ssh datacenter'])).not.toContain('WARNING');
       expect(c.prompt()).toBe(L('you@datacenter:~$'));
       expect(play(c, ['exit', 'ssh-keygen -l -f ~/.ssh/known_hosts'])).toContain(
-        `${fingerprint(storyMachine('datacenter')!, '-apres-incendie')} datacenter.internal (ED25519)`,
+        `${fingerprint(storyMachine('datacenter')!, '-after-fire')} datacenter.internal (ED25519)`,
       );
     });
 

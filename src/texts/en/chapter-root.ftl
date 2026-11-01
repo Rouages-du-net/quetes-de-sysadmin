@@ -60,7 +60,7 @@ root-journal =
     Year 103: I found the mistake in the configuration. I prepared a fixed version, here, in my home.
     Year 103: it must be installed with sudo before the Eraser reaches me.
 # Configuration file: keep the line "target = /Kingdom/Bin"
-# as is (the game checks it: nom-cible = /nom-Royaume/nom-Corbeille in names.ftl).
+# as is (the game checks it: name-target = /name-Kingdom/name-Bin in names.ftl).
 root-eraser-conf-fixed =
     # The Eraser's configuration — fixed version (year 103)
     # On every pass, the daemon deletes everything found in the target.

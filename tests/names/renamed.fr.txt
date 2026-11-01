@@ -200,9 +200,9 @@ versions
   /home/you/collection/recordings/market_songs.ogg → /home/vous/fonds/enregistrements/chants_du_marche.ogg
   /home/you/collection/recordings/interview_fatou.ogg → /home/vous/fonds/enregistrements/entretien_fatou.ogg
   /home/you/collection/scans → /home/vous/fonds/numerisations
-  /home/you/collection/scans/registre_1.png → /home/vous/fonds/numerisations/registre_1.png
-  /home/you/collection/scans/registre_2.png → /home/vous/fonds/numerisations/registre_2.png
-  /home/you/collection/scans/registre_3.png → /home/vous/fonds/numerisations/registre_3.png
+  /home/you/collection/scans/register_1.png → /home/vous/fonds/numerisations/registre_1.png
+  /home/you/collection/scans/register_2.png → /home/vous/fonds/numerisations/registre_2.png
+  /home/you/collection/scans/register_3.png → /home/vous/fonds/numerisations/registre_3.png
   /mnt/townhall → /mnt/mairie
   /mnt/townhall/restic-library → /mnt/mairie/restic-bibliotheque
 
