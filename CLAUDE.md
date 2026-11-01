@@ -27,7 +27,7 @@ presents them for people.
   English ones); every other document is in English only.
 - **Code in English.** Files and identifiers (functions, variables,
   types, props) are in English. Some data identifiers are still French:
-  the ids of stories, places and machines, the keys of a
+  the ids of places and machines, the keys of a
   machine's state (`state.montages`, `state.applis`…), `.ftl` keys, CSS
   classes and some comments; they are being moved to English. Write new
   code (files, functions, variables, props, CSS classes, new `.ftl` keys)
@@ -259,7 +259,7 @@ presents them for people.
   `machines.ftl`: the machines' names (royaume → kingdom; `machineName()`,
   `hostInLanguage()` of `machines.ts`, `Shell.hostName`; in tests,
   `machinesInLanguage()`); `mots-de-passe.ftl`: the stories' passwords
-  (`password()` of `world.ts`). Chapter identifiers are English;
+  (`password()` of `world.ts`). Chapter and story identifiers are English;
   place and machine identifiers are still the French ones.
 - `tests/quests.test.ts`: each chapter replayed; `tests/browser.mjs`:
   Chromium, 1000 and 375 px, the CSP of `.htaccess` applied, the root's

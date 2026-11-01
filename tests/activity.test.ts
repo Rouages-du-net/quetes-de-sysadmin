@@ -12,7 +12,7 @@ import { instants } from '../src/engine/activity';
 import { LANGUAGES } from '../src/texts';
 import { machinesInLanguage } from './names';
 
-const BEFORE = [...new Set([...STORIES.find((h) => h.id === 'effaceur')!.chapters.map((c) => c.id), ...prerequisites('lettres'), 'shut-the-door', 'firewall'])];
+const BEFORE = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('letters'), 'shut-the-door', 'firewall'])];
 const ROBOT = '198.51.100.23';
 
 describe('instants', () => {
@@ -89,7 +89,7 @@ for (const language of LANGUAGES)
 
 for (const language of LANGUAGES)
   describe(`Premier jour en direct — ${language}`, () => {
-    const eraser = STORIES.find((h) => h.id === 'effaceur')!.chapters.map((c) => c.id);
+    const eraser = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
     it('tail -f : le robot reçoit des 503 tant que le service sature, des 403 une fois bloqué', () => {
       const c = new Console({ language, finished: eraser });
       const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');

@@ -17,8 +17,8 @@ describe('Difficulty', () => {
   });
 
   it('the first story is the easiest, and stories that assume most of the game are hard', () => {
-    expect(storyDifficulty('effaceur')).toEqual({ min: 1, max: 1 });
-    expect(storyDifficulty('veille').min).toBeGreaterThanOrEqual(4);
+    expect(storyDifficulty('eraser')).toEqual({ min: 1, max: 1 });
+    expect(storyDifficulty('watch').min).toBeGreaterThanOrEqual(4);
   });
 
   it('within a story, a chapter is never easier than the one before', () => {

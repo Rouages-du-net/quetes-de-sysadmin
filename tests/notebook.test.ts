@@ -88,7 +88,7 @@ describe('Les fiches pour les enseignant·es', () => {
 
 describe('Le mode examen', () => {
   it("sans indice, mais l'étape finale et son débrief s'affichent", () => {
-    const c = new Console({ language: 'fr', finished: ['lighthouse', 'village', 'root', 'backup', ...prerequisites('lettres')] });
+    const c = new Console({ language: 'fr', finished: ['lighthouse', 'village', 'root', 'backup', ...prerequisites('letters')] });
     c.exam = true;
     const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
     // La Porte, avec la configuration de sshd : la faute de frappe ne donne plus d'indice.

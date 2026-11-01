@@ -14,8 +14,8 @@ describe('Le tableau de classe', () => {
     expect(e).toMatchObject({ name: 'Lina', source: 'lina.json', achievements: 2, date: '2027-01-15T10:00:00.000Z' });
     expect(gradeFor(e)).toBe('junior');
     expect(bestTime(e)).toBe(61_000);
-    expect(progress(e, 'effaceur')).toEqual({ done: 4, total: 4 });
-    expect(progress(e, 'maison')).toEqual({ done: 1, total: 5 });
+    expect(progress(e, 'eraser')).toEqual({ done: 4, total: 4 });
+    expect(progress(e, 'community-centre')).toEqual({ done: 1, total: 5 });
   });
 
   it('sans nom dans le fichier, celui du fichier ; un fichier étranger est signalé', () => {

@@ -7,7 +7,7 @@
 import { STORIES } from './chapters';
 import type { Story } from './world';
 
-export const FIRST = 'effaceur';
+export const FIRST = 'eraser';
 
 const story = (id: string): Story | undefined => STORIES.find((h) => h.id === id);
 const storyFor = (chapter: string): Story | undefined => STORIES.find((h) => h.chapters.some((c) => c.id === chapter));

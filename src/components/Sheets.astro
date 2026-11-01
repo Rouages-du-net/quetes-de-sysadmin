@@ -93,7 +93,7 @@ const after = (ids: string[]) =>
           : `${list.length} ${list.length > 1 ? 'chapters' : 'chapter'}, about ${duration}.`}
         {h.after && (fr ? ` S'ouvre dans le jeu après ${after(h.after)}, sauf en ouverture directe :` : ` Opens in the game after ${after(h.after)}, unless opened directly:`)}
       </p>
-      {h.id !== 'effaceur' && <pre><code>{`<quetes-de-sysadmin story="${h.id}"${fr ? ' lang="fr"' : ' lang="en"'}></quetes-de-sysadmin>`}</code></pre>}
+      {h.id !== 'eraser' && <pre><code>{`<quetes-de-sysadmin story="${h.id}"${fr ? ' lang="fr"' : ' lang="en"'}></quetes-de-sysadmin>`}</code></pre>}
       <ol class="fiches">
         {list.map((f) => (
           <li class="fiche" id={`c-${f.chapter.id}`}>
@@ -105,7 +105,7 @@ const after = (ids: string[]) =>
               <dd>
                 {f.before
                   ? fr ? `« ${t(`chapitre-${f.before.id}`)} »` : `"${t(`chapitre-${f.before.id}`)}"`
-                  : h.id === 'effaceur'
+                  : h.id === 'eraser'
                     ? fr ? 'Rien : on part de zéro.' : 'Nothing: you start from scratch.'
                     : fr ? `${after(h.after ?? [])} (ou une ouverture directe).` : `${after(h.after ?? [])} (or a direct opening).`}
               </dd>

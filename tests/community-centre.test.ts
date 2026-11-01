@@ -7,7 +7,7 @@ import { STORIES } from '../src/engine/chapters';
 import { LANGUAGES, translator } from '../src/texts';
 import { inLanguage, machinesInLanguage } from './names';
 
-const ERASER = STORIES.find((h) => h.id === 'effaceur')!.chapters.map((c) => c.id);
+const ERASER = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
 const CONFIG = '/etc/ssh/sshd_config';
 
 for (const language of LANGUAGES)

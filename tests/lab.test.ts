@@ -390,13 +390,13 @@ for (const language of LANGUAGES)
     });
 
     it('l’histoire s’ouvre après « Le disque plein », et se joue depuis le poste', () => {
-      const before = prerequisites('labo');
+      const before = prerequisites('lab');
       expect(before).toContain('full-disk');
       const c = new Console({ language, finished: before });
-      expect(c.isOpen('labo')).toBe(true);
+      expect(c.isOpen('lab')).toBe(true);
       const all = [c.execute(machinesInLanguage(translator(language), 'ssh labo')), c.execute('yes')].join('\n');
       expect(all).toContain(machinesInLanguage(translator(language), 'labo.internal'));
       expect(c.remote?.shell.chapter.id).toBe('tired-disk');
-      expect(new Console({ language, finished: before.filter((x) => x !== 'full-disk') }).isOpen('labo')).toBe(false);
+      expect(new Console({ language, finished: before.filter((x) => x !== 'full-disk') }).isOpen('lab')).toBe(false);
     });
   });

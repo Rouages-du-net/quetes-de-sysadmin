@@ -9,8 +9,8 @@ import { prerequisites } from '../src/engine/unlocking';
 import { LANGUAGES } from '../src/texts';
 import { machinesInLanguage } from './names';
 
-const LETTERS = STORIES.find((h) => h.id === 'lettres')!.chapters.map((c) => c.id);
-const BEFORE = [...new Set([...STORIES.find((h) => h.id === 'effaceur')!.chapters.map((c) => c.id), ...prerequisites('lettres'), ...LETTERS.slice(0, LETTERS.indexOf('repair-cafe'))])];
+const LETTERS = STORIES.find((h) => h.id === 'letters')!.chapters.map((c) => c.id);
+const BEFORE = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('letters'), ...LETTERS.slice(0, LETTERS.indexOf('repair-cafe'))])];
 const REPAIR = '/etc/apache2/sites-available/repair.conf';
 const DIRECTORY = '    <Directory /var/www/repair>\n        AllowOverride All\n    </Directory>\n</VirtualHost>';
 

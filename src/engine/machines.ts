@@ -29,33 +29,33 @@ const machine = (name: string, address: string, story?: string, withoutKey = fal
 export const WORKSTATION = machine('poste', '192.0.2.2');
 
 export const MACHINES: Machine[] = [
-  machine('royaume', '192.0.2.10', 'effaceur'),
+  machine('royaume', '192.0.2.10', 'eraser'),
   machine('datacenter', '192.0.2.11', 'datacenter'),
-  machine('fourmiliere', '192.0.2.12', 'paquet'),
-  machine('manuscrit', '192.0.2.13', 'temps'),
+  machine('fourmiliere', '192.0.2.12', 'packet'),
+  machine('manuscrit', '192.0.2.13', 'time-machine'),
   machine('bibliotheque', '192.0.2.14', 'archives'),
   // Le serveur des Lettres du quartier : la même adresse que letters.example
   // dans Le Paquet perdu.
-  machine('lettres', '203.0.113.10', 'lettres'),
-  machine('fabrique', '192.0.2.15', 'fabrique'),
+  machine('lettres', '203.0.113.10', 'letters'),
+  machine('fabrique', '192.0.2.15', 'fablab'),
   machine('gazette', '192.0.2.16', 'gazette'),
-  machine('ludotheque', '192.0.2.17', 'ludotheque'),
-  machine('radio', '192.0.2.18', 'astreinte'),
+  machine('ludotheque', '192.0.2.17', 'game-library'),
+  machine('radio', '192.0.2.18', 'on-call'),
   // La Maison des associations : une passerelle, devant son réseau interne.
-  machine('maison', '192.0.2.19', 'maison', true),
-  machine('cooperative', '192.0.2.20', 'cooperative'),
-  machine('ruche', '192.0.2.21', 'ruche'),
+  machine('maison', '192.0.2.19', 'community-centre', true),
+  machine('cooperative', '192.0.2.20', 'coop'),
+  machine('ruche', '192.0.2.21', 'hive'),
   machine('fournil', '192.0.2.22', 'audit'),
-  machine('labo', '192.0.2.23', 'labo'),
+  machine('labo', '192.0.2.23', 'lab'),
   // Le Fournil, six mois plus tard (histoire 16) : un nouveau serveur
   // (migration pendant la croissance de l'activité), mêmes personnages.
-  machine('petrin', '192.0.2.24', 'veille'),
+  machine('petrin', '192.0.2.24', 'watch'),
   // Les Jardins partagés : leur serveur, avec leur nom public gardens.example (même adresse).
-  machine('jardin', '203.0.113.30', 'courrier'),
+  machine('jardin', '203.0.113.30', 'junk-mail'),
   // Le poste de pilotage des maisons de quartier : Ansible, et derrière lui trois serveurs.
-  machine('pilote', '192.0.2.25', 'flotte'),
+  machine('pilote', '192.0.2.25', 'fleet'),
   // La Rustine, l'atelier vélo : son petit serveur public (cycles.example), avec Caddy.
-  machine('rustine', '203.0.113.40', 'rustine'),
+  machine('rustine', '203.0.113.40', 'patch'),
 ];
 
 /** Le nom d'une machine dans la langue (machines.ftl : royaume → kingdom) ; une machine sans traduction garde le sien. */

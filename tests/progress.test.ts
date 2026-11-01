@@ -56,7 +56,7 @@ describe('Le code court', () => {
 describe('Le fichier', () => {
   const backup = {
     finished: ['lighthouse', 'village'],
-    story: 'effaceur',
+    story: 'eraser',
     known: 'royaume.internal ssh-ed25519 AAAA',
     ssh: { files: { config: 'Host wiki\n    ProxyJump maison' } },
     notebook: { ls: { line: 'ls -a', chapter: 'lighthouse' } },

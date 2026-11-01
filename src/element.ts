@@ -12,6 +12,26 @@
 // règlent de l'extérieur avec les variables --qds-* (voir styles.css).
 
 import { mount } from './interface/game';
+
+// The stories' French ids, from before they were English: a page that
+// still uses them opens the same story.
+const OLD_STORY_IDS: Record<string, string> = {
+  effaceur: 'eraser',
+  paquet: 'packet',
+  temps: 'time-machine',
+  lettres: 'letters',
+  fabrique: 'fablab',
+  ludotheque: 'game-library',
+  astreinte: 'on-call',
+  maison: 'community-centre',
+  cooperative: 'coop',
+  ruche: 'hive',
+  labo: 'lab',
+  veille: 'watch',
+  courrier: 'junk-mail',
+  flotte: 'fleet',
+  rustine: 'patch',
+};
 import styles from './interface/styles.css?inline';
 
 export class SysadminQuests extends HTMLElement {
@@ -23,8 +43,9 @@ export class SysadminQuests extends HTMLElement {
     root.append(style);
     // The English attribute first, then its older French name.
     const attribute = (name: string, old: string) => this.getAttribute(name) ?? this.getAttribute(old) ?? undefined;
+    const story = attribute('story', 'histoire');
     mount(root, {
-      story: attribute('story', 'histoire'),
+      story: story && Object.hasOwn(OLD_STORY_IDS, story) ? OLD_STORY_IDS[story] : story,
       saveKey: attribute('save-key', 'cle'),
       // lang on the element, then langue, then the page's language (lang), otherwise English.
       language: this.getAttribute('lang') ?? this.getAttribute('langue') ?? this.closest('[lang]')?.getAttribute('lang') ?? undefined,

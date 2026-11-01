@@ -88,7 +88,7 @@ import { padlock } from './padlock';
 // à finir avant d'en recevoir la clé (voir deverrouillage.ts et docs/SCENARIOS.md).
 export const STORIES: Story[] = [
   {
-    id: 'effaceur',
+    id: 'eraser',
     chapters: [awakening, village, root, backup],
   },
   {
@@ -97,12 +97,12 @@ export const STORIES: Story[] = [
     chapters: [datacenter, secondDay, reboot, fire, certificate],
   },
   {
-    id: 'paquet',
+    id: 'packet',
     after: ['root'],
     chapters: [pkg],
   },
   {
-    id: 'temps',
+    id: 'time-machine',
     after: ['root'],
     chapters: [time],
   },
@@ -112,12 +112,12 @@ export const STORIES: Story[] = [
     chapters: [archives, versions],
   },
   {
-    id: 'lettres',
+    id: 'letters',
     after: ['reboot-night', 'lost-packet'],
     chapters: [door, firewall, sentinel, colocation, atMe, concert, port, repeatOffence, workshop],
   },
   {
-    id: 'fabrique',
+    id: 'fablab',
     after: ['reboot-night'],
     chapters: [update, composition, bypass, powersFull],
   },
@@ -127,27 +127,27 @@ export const STORIES: Story[] = [
     chapters: [bareRepo, rollback, greenBlue, canary, migration],
   },
   {
-    id: 'ludotheque',
+    id: 'game-library',
     after: ['versions'],
     chapters: [ransom, chapterSnapshots, base],
   },
   {
-    id: 'astreinte',
+    id: 'on-call',
     after: ['reboot-night'],
     chapters: [fullDisk, chapterMemory, inodes, clock, probe, postMortem, bottleneck],
   },
   {
-    id: 'maison',
+    id: 'community-centre',
     after: ['shut-the-door'],
     chapters: [keys, jump, tunnel, transfers, host],
   },
   {
-    id: 'cooperative',
+    id: 'coop',
     after: ['sharing', 'second-day'],
     chapters: [departure, rights, secret, proxy, updates, automatic],
   },
   {
-    id: 'ruche',
+    id: 'hive',
     after: ['firewall', 'jump'],
     chapters: [vlan, dhcp, zones, vpn, dmz, annex, chapterDirectory, wifi],
   },
@@ -157,27 +157,27 @@ export const STORIES: Story[] = [
     chapters: [scope, report, exposure, traces, againstVisit],
   },
   {
-    id: 'labo',
+    id: 'lab',
     after: ['full-disk'],
     chapters: [fatigue, newDisk, grow, rescue],
   },
   {
-    id: 'veille',
+    id: 'watch',
     after: ['follow-up'],
     chapters: [bulletin, priority, fix, proof, routine],
   },
   {
-    id: 'courrier',
+    id: 'junk-mail',
     after: ['works-for-me'],
     chapters: [postman, signature, chapterPolicy],
   },
   {
-    id: 'flotte',
+    id: 'fleet',
     after: ['keys'],
     chapters: [inventory, playbook, rehearsal],
   },
   {
-    id: 'rustine',
+    id: 'patch',
     after: ['certificate', 'sharing'],
     chapters: [padlock],
   },

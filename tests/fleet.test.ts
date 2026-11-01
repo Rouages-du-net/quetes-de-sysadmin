@@ -8,8 +8,8 @@ import { prerequisites } from '../src/engine/unlocking';
 import { LANGUAGES, translator } from '../src/texts';
 import { inLanguage } from './names';
 
-const ERASER = STORIES.find((h) => h.id === 'effaceur')!.chapters.map((c) => c.id);
-const BEFORE = [...new Set([...ERASER, ...prerequisites('flotte')])];
+const ERASER = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
+const BEFORE = [...new Set([...ERASER, ...prerequisites('fleet')])];
 
 for (const language of LANGUAGES)
   describe(`Langue : ${language}`, () => {

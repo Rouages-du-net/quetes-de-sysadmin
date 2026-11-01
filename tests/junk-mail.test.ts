@@ -8,8 +8,8 @@ import { prerequisites } from '../src/engine/unlocking';
 import { LANGUAGES, translator } from '../src/texts';
 import { inLanguage } from './names';
 
-const ERASER = STORIES.find((h) => h.id === 'effaceur')!.chapters.map((c) => c.id);
-const BEFORE = [...new Set([...ERASER, ...prerequisites('courrier')])];
+const ERASER = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
+const BEFORE = [...new Set([...ERASER, ...prerequisites('junk-mail')])];
 const ZONE = '/etc/bind/zones/db.gardens.example';
 
 for (const language of LANGUAGES)
