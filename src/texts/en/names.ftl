@@ -159,11 +159,11 @@ name-message_from_samia-txt = message_from_samia.txt
 name-message_from_berenice-txt = message_from_berenice.txt
 name-note_from_malo-txt = note_from_malo.txt
 
-## L'Astreinte
+## On Call
 name-message_from_zoe-txt = message_from_zoe.txt
 name-mail_hosting-txt = mail_hosting.txt
 
-## La Maison des associations
+## The Community Centre
 name-email_yasmine-txt = email_yasmine.txt
 name-email_hosting-txt = email_hosting.txt
 
@@ -236,7 +236,7 @@ name-system-update = system-update
 name-repo = repo
 name-snapshots = snapshots
 
-## La Maison des associations : le partage (sauvegardé par rsync sur archives) et le wiki
+## The Community Centre: the share (backed up by rsync onto archives) and the wiki
 name-minutes = minutes
 name-agm-2026-txt = agm-2026.txt
 name-board-2027-09-txt = board-2027-09.txt
@@ -246,7 +246,7 @@ name-room-bookings-txt = room-bookings.txt
 name-home-md = home.md
 name-report-2027-pdf = report-2027.pdf
 
-## L'Astreinte : les données de la radio (enregistrements sert aussi dans Les Archives ; vignette : les images que crée l'import des podcasts)
+## On Call: the radio's data (recordings is also used in The Archives; thumbnail: the images the podcast import creates)
 name-live = live
 name-shows = shows
 name-thumbnails = thumbnails
@@ -283,3 +283,19 @@ name-message_from_theo-txt = message_from_theo.txt
 
 ## The Patch
 name-message_from_ines-txt = message_from_ines.txt
+
+## On Call: the shows (the recorder's argument, and the start of the recordings' names), the podcast converter, the listening statistics
+name-morning-show = morning-show
+name-night-show = night-show
+name-convert = convert
+name-convert-py = convert.py
+name-listen = listen
+
+## The Community Centre: the wiki admin page's addresses, the backup key, the account at the web host and the site's pages
+name-approve = approve
+name-reject = reject
+name-id_backup = id_backup
+name-id_backup-pub = id_backup.pub
+name-commcentre = commcentre
+name-membership-html = membership.html
+name-prices-2025-html = prices-2025.html

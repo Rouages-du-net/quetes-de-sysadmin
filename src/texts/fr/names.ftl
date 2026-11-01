@@ -285,3 +285,19 @@ name-message_from_theo-txt = message_de_theo.txt
 
 ## La Rustine
 name-message_from_ines-txt = message_de_ines.txt
+
+## L'Astreinte : les émissions (l'argument de l'enregistreur, et le début du nom des enregistrements), le convertisseur des podcasts, les statistiques d'écoute
+name-morning-show = matinale
+name-night-show = nuit
+name-convert = convertir
+name-convert-py = convertir.py
+name-listen = ecoute
+
+## La Maison des associations : les adresses de la page d'administration du wiki, la clé de sauvegarde, le compte chez l'hébergeur et les pages du site
+name-approve = valider
+name-reject = refuser
+name-id_backup = id_sauvegarde
+name-id_backup-pub = id_sauvegarde.pub
+name-commcentre = maisonasso
+name-membership-html = adhesion.html
+name-prices-2025-html = tarifs-2025.html

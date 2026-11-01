@@ -279,10 +279,10 @@ export const PAGES: Record<string, Page> = {
   lftp: {
     options: ['u', 'e', 'c'],
     examples: [
-      'lftp -u maisonasso ftp.hosting.example',
+      'lftp -u commcentre ftp.hosting.example',
       'mirror -R --dry-run site public_html',
       'mirror -R --delete site public_html',
-      'lftp -u maisonasso -e "mirror -R --delete site public_html; bye" ftp.hosting.example',
+      'lftp -u commcentre -e "mirror -R --delete site public_html; bye" ftp.hosting.example',
     ],
     see: ['sftp', 'scp', 'rsync'],
   },
@@ -357,7 +357,7 @@ export const PAGES: Record<string, Page> = {
     examples: ['sudo logrotate -d /etc/logrotate.d/radio', 'sudo logrotate -f /etc/logrotate.d/radio', 'cat /etc/logrotate.d/rsyslog'],
     see: ['truncate', 'lsof', 'crontab', 'systemctl'],
   },
-  mail: { examples: ['echo "Bonjour" | mail -s Essai zoe', 'commande | mail -E -s Alerte zoe', 'mail'], see: ['crontab', 'check_disk'] },
+  mail: { examples: ['echo "Hello" | mail -s Test zoe', 'command | mail -E -s Alert zoe', 'mail'], see: ['crontab', 'check_disk'] },
   man: { options: ['k'], examples: ['man ls', 'man -k copie', 'ls --help'], see: ['apropos', 'whatis'] },
   mkdir: { long: { 'parents': 'p' }, options: ['p'], examples: ['mkdir Classroom', 'mkdir -p /srv/site/releases/1'], see: ['touch', 'cd'] },
   mv: { examples: ['mv crab Bucket', 'mv brouillon.txt lettre.txt', 'mv brouillon.txt ~/Harbour/lettre.txt'], see: ['cp', 'rm'] },

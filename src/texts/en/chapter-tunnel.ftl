@@ -42,24 +42,24 @@ tunnel-note-gaspard =
 
 ## The admin page (served by the wiki)
 
-# { $lines }: one line per sign-up (tunnel-admin-ligne)
+# { $lines }: one line per sign-up (tunnel-admin-line)
 tunnel-admin-page =
     Community wiki — administration
 
     Sign-ups:
     { $lines }
 
-    Approve:   /admin/valider/<account>
-    Reject:    /admin/refuser/<account>
-# { $name }: the account; { $state }: attente (pending), validee (approved) or refusee (rejected)
-tunnel-admin-ligne = { $state ->
+    Approve:   /admin/approve/<account>
+    Reject:    /admin/reject/<account>
+# { $name }: the account; { $state }: pending, approved or refused
+tunnel-admin-line = { $state ->
         [approved] - { $name }: approved
         [refused] - { $name }: rejected
        *[pending] - { $name }: pending
     }
-tunnel-admin-valider = Sign-up of { $name } approved.
-tunnel-admin-refuser = Sign-up of { $name } rejected.
-tunnel-admin-introuvable = Page not found.
+tunnel-admin-approve = Sign-up of { $name } approved.
+tunnel-admin-reject = Sign-up of { $name } rejected.
+tunnel-admin-not-found = Page not found.
 
 ## Events
 

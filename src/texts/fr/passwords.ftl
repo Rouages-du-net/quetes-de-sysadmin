@@ -20,3 +20,6 @@ password-radish-2027 = radis-2027
 password-bee-2027 = abeille-2027
 password-flour-2028 = farine-2028
 password-film-2027 = argentique-2027
+
+## La Maison des associations : le compte chez l'hébergeur
+password-Kp7-hosting-2028 = Kp7-hebergement-2028

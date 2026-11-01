@@ -1,13 +1,13 @@
 // Story "The Community Centre", chapter "Transfers":
 // bring the wiki's activity report back to your workstation (scp, jumping
-// through maison thanks to the previous chapter's shortcut), then update the
-// backup of the shared directory on archives (rsync, from maison,
+// through community thanks to the previous chapter's shortcut), then update the
+// backup of the shared directory on archives (rsync, from community,
 // with the backup key Gaspard created for that).
-// A real trap: the trailing slash of rsync's source (/srv/partage/
-// copies the CONTENTS; /srv/partage copies the directory itself, which ends up
-// in /srv/sauvegardes/partage/partage).
+// A real trap: the trailing slash of rsync's source (/srv/share/
+// copies the CONTENTS; /srv/share copies the directory itself, which ends up
+// in /srv/backups/share/share).
 // Objective checked on the state: the report (intact) on the workstation, and every
-// file of /srv/partage present, identical, at the same place on archives,
+// file of /srv/share present, identical, at the same place on archives,
 // without the extra copied directory (rsync --delete removes it).
 // Sources: https://man.openbsd.org/scp, https://download.samba.org/pub/rsync/rsync.1
 
@@ -21,18 +21,18 @@ const SHARE = '/srv/share';
 const BACKUP = '/srv/backups/share';
 // A PDF (its beginning): the exact content is used to check that the copy is intact.
 const PDF = '%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 12 >>\nendobj';
-// The backup key from maison to archives (one key per use, not a person's).
-const BACKUP_KEY = generateKey('maison-sauvegarde', 'backup@community');
+// The backup key from community to archives (one key per use, not a person's).
+const BACKUP_KEY = generateKey('community-backup', 'backup@community');
 
 const you = { owner: 'you' };
 const file = (content: string) => f(content, { lines: true, owner: 'you' });
 
-// maison's shared directory: minutes, posters, schedule.
+// community's shared directory: minutes, posters, schedule.
 const share = (t: (id: string) => string): Directory =>
   d(
     {
       'minutes': d(
-        { 'agm-2026.txt': file(t('transfers-minutes-ag-2026')), 'board-2027-09.txt': file(t('transfers-minutes-it-2027-09')) },
+        { 'agm-2026.txt': file(t('transfers-minutes-agm-2026')), 'board-2027-09.txt': file(t('transfers-minutes-board-2027-09')) },
         undefined,
         you,
       ),
@@ -70,7 +70,7 @@ const dayABackup = (j: Game) => {
   const copyOf = files(archives(j), path(j.t, BACKUP));
   return Object.entries(files(j, path(j.t, SHARE))).every(([c, content]) => copyOf[c] === content);
 };
-// The extra copy: /srv/sauvegardes/partage/partage (in the language).
+// The extra copy: /srv/backups/share/share (in the language).
 const nested = (j: Game) => path(j.t, `${BACKUP}/share`);
 
 export const transfers: Chapter = {
@@ -125,7 +125,7 @@ export const transfers: Chapter = {
         srv: d(
           {
             backups: d(
-              { share: d({ 'minutes': d({ 'agm-2026.txt': file(t('transfers-minutes-ag-2026')) }, undefined, you) }, undefined, you) },
+              { share: d({ 'minutes': d({ 'agm-2026.txt': file(t('transfers-minutes-agm-2026')) }, undefined, you) }, undefined, you) },
               undefined,
               you,
             ),
@@ -137,14 +137,14 @@ export const transfers: Chapter = {
     }),
   },
   createWorld: (t) =>
-    homeWorld({
+    homeWorld(t, {
       passwords: 'no',
       home: {
         'email_yasmine.txt': f(t('transfers-email-yasmine')),
         '.ssh': sshDirectory({
-          config: f('Host archives\n    IdentityFile ~/.ssh/id_sauvegarde', { lines: true, owner: 'you', mode: 'rw-r--r--' }),
-          id_sauvegarde: f(BACKUP_KEY.isPrivate, { lines: true, owner: 'you', mode: 'rw-------' }),
-          'id_sauvegarde.pub': f(BACKUP_KEY.isPublic, { lines: true, owner: 'you', mode: 'rw-r--r--' }),
+          config: f(`Host archives\n    IdentityFile ~/.ssh/${name(t, 'id_backup')}`, { lines: true, owner: 'you', mode: 'rw-r--r--' }),
+          id_backup: f(BACKUP_KEY.isPrivate, { lines: true, owner: 'you', mode: 'rw-------' }),
+          'id_backup.pub': f(BACKUP_KEY.isPublic, { lines: true, owner: 'you', mode: 'rw-r--r--' }),
         }),
       },
       more: { srv: d({ share: share(t) }, undefined, { owner: 'root' }) },

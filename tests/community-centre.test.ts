@@ -52,7 +52,7 @@ for (const language of LANGUAGES)
 
     it('chapter 1 — other solution: the public key copied by hand, with a passphrase', () => {
       const { c, jouer: play, modifier: modify } = part();
-      play([L('ssh-keygen -t ed25519 -C you@desk'), '', 'une longue phrase', 'une longue phrase']);
+      play([L('ssh-keygen -t ed25519 -C you@desk'), '', 'a long phrase', 'a long phrase']);
       const isPublic = c.workstation.read('~/.ssh/id_ed25519.pub')!;
       play(['ssh community', 'yes', 'lilac-2027', 'mkdir .ssh']);
       c.execute('nano .ssh/authorized_keys');
@@ -60,10 +60,10 @@ for (const language of LANGUAGES)
       c.quitEdition();
       play(['chmod 600 .ssh/authorized_keys', 'exit', 'ssh community']);
       expect(c.prompt()).toBe(L("Enter passphrase for key '/home/you/.ssh/id_ed25519':"));
-      play(['une longue phrase']);
+      play(['a long phrase']);
       expect(c.prompt()).toBe(L('you@community:~$'));
-      modify('/etc/ssh/sshd_config.d/00-cles.conf', () => 'PasswordAuthentication no\n');
-      play(['sudo systemctl restart ssh', 'exit', 'ssh community', 'une longue phrase']);
+      modify('/etc/ssh/sshd_config.d/00-keys.conf', () => 'PasswordAuthentication no\n');
+      play(['sudo systemctl restart ssh', 'exit', 'ssh community', 'a long phrase']);
       expect(c.finished).toContain('keys');
     });
 
@@ -161,7 +161,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('127.0.0.1:8080');
       all = play(['ssh -f -N -L 8080:localhost:8080 wiki', 'curl localhost:8080/admin']);
       contains(all, 'promo-casino : en attente');
-      all = play(['curl localhost:8080/admin/valider/samir', 'curl http://127.0.0.1:8080/admin/valider/lea']);
+      all = play([L('curl localhost:8080/admin/approve/samir'), L('curl http://127.0.0.1:8080/admin/approve/lea')]);
       contains(all, 'Inscription de lea validée.');
       contains(all, 'Reste à refermer le tunnel');
       expect(c.finished).not.toContain('tunnel');
@@ -175,11 +175,11 @@ for (const language of LANGUAGES)
     it('chapter 3 — other solution: -J without a shortcut, and the advert refused afterwards', () => {
       const { c, jouer: play } = withKey(['keys', 'jump']);
       play(['ssh -f -N -J community -L 8080:localhost:8080 wiki', 'yes', 'yes']);
-      let all = play(['curl localhost:8080/admin/valider/promo-casino']);
+      let all = play([L('curl localhost:8080/admin/approve/promo-casino')]);
       contains(all, 'Oups');
-      play(['curl localhost:8080/admin/valider/samir', 'curl localhost:8080/admin/valider/lea', `kill ${pidTunnel(c)}`]);
+      play([L('curl localhost:8080/admin/approve/samir'), L('curl localhost:8080/admin/approve/lea'), `kill ${pidTunnel(c)}`]);
       expect(c.finished).not.toContain('tunnel');
-      play(['ssh -fN -L 8080:localhost:8080 -J community wiki', 'curl localhost:8080/admin/refuser/promo-casino']);
+      play(['ssh -fN -L 8080:localhost:8080 -J community wiki', L('curl localhost:8080/admin/reject/promo-casino')]);
       play([`kill ${pidTunnel(c)}`]);
       expect(c.finished).toContain('tunnel');
     });
@@ -229,8 +229,8 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('transfers');
     });
 
-    const LFTP = 'lftp -u maisonasso ftp.hosting.example';
-    const MDP_FTP = 'Kp7-hebergement-2028';
+    const LFTP = L('lftp -u commcentre ftp.hosting.example');
+    const MDP_FTP = 'Kp7-hosting-2028';
 
     it('chapter 5 — solution: sftp from the wiki, then lftp over FTPS, mirror -R --delete', () => {
       const { c, jouer: play } = team(['keys', 'jump', 'tunnel', 'transfers']);
@@ -240,7 +240,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('Connected to wiki.');
       expect(all).toContain(L('Remote working directory: /home/you'));
       expect(all).toContain('Fetching /srv/wiki/site/ to site');
-      expect(all).toContain('adhesion.html');
+      expect(all).toContain(L('membership.html'));
       all = play([
         LFTP,
         MDP_FTP,
@@ -250,8 +250,8 @@ for (const language of LANGUAGES)
         'ls public_html',
         'bye',
       ]);
-      expect(all).toContain('tarifs-2025.html');
-      expect(all).toContain('rm /public_html/tarifs-2025.html');
+      expect(all).toContain(L('prices-2025.html'));
+      expect(all).toContain(L('rm /public_html/prices-2025.html'));
       expect(all).toContain('Removed: 1 file, 0 directories, 0 symlinks');
       contains(all, 'https://lftp.yar.ru/lftp-man.html');
       expect(c.finished).toContain('web-host');
@@ -260,7 +260,7 @@ for (const language of LANGUAGES)
     it('chapter 5 — false leads: in clear text, Gaspard\'s name, without verification, backwards, without a target, without --delete', () => {
       const { c, jouer: play } = team(['keys', 'jump', 'tunnel', 'transfers']);
       play(['ssh community', 'exit']);
-      let all = play(['lftp -u maisonasso -e "set ftp:ssl-allow no; ls" ftp.community.example', MDP_FTP]);
+      let all = play([L('lftp -u commcentre -e "set ftp:ssl-allow no; ls" ftp.community.example'), MDP_FTP]);
       expect(all).toContain('ls: Login failed: 421 Sorry, cleartext sessions and weak ciphers are not accepted on this server.');
       contains(all, 'plus de FTP en clair');
       all = play(['set ftp:ssl-allow yes', 'ls']);
@@ -269,10 +269,10 @@ for (const language of LANGUAGES)
       );
       contains(all, 'le nom que son\ncertificat porte'.replace('\n', ' '));
       all = play(['set ssl:verify-certificate no', 'ls public_html', 'mirror public_html site']);
-      expect(all).toContain('tarifs-2025.html');
+      expect(all).toContain(L('prices-2025.html'));
       contains(all, 'la vérification du certificat est coupée');
       contains(all, 'mirror sans -R');
-      all = play(['bye', 'rm site/tarifs-2025.html', 'sftp wiki', 'get -r /srv/wiki/site', 'bye', LFTP, MDP_FTP, 'mirror -R site']);
+      all = play(['bye', L('rm site/prices-2025.html'), 'sftp wiki', 'get -r /srv/wiki/site', 'bye', LFTP, MDP_FTP, 'mirror -R site']);
       contains(all, 'pas dans public_html');
       all = play(['rm -r site', 'mirror -R site public_html']);
       contains(all, '--delete');

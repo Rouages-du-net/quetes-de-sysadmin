@@ -1,5 +1,5 @@
-// Story "L'Astreinte" — chapter "Memory": at 4:12 am, Radio
-// Quartier's live stream goes silent. The automatic night playlist
+// Story "On Call" — chapter "Memory": at 4:12 am, Neighbourhood
+// Radio's live stream goes silent. The automatic night playlist
 // (radio-playlist, a Node program) was killed by the kernel's OOM killer:
 // it keeps in memory everything it reads, never forgetting anything (a
 // leak). Restarting it isn't enough: it grows again, and the kernel ends up
@@ -14,7 +14,7 @@
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#Restart=,
 // https://man7.org/linux/man-pages/man1/free.1.html, https://man7.org/linux/man-pages/man2/wait.2.html
 
-import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import { d, f, name, path, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game } from '../shell';
 import { writeLog, newSystemd, systemd, type Service } from '../systemd';
 import { memory, kernel, process, checkMemory } from '../memory';
@@ -73,7 +73,7 @@ function launchPodcast(j: Game) {
   // On the first start, the zombies' parent; afterwards, a new process.
   const pid = j.state.podcastStarted ? (j.state.nextPid = (j.state.nextPid ?? 2600) + 1) : PODCAST;
   j.state.podcastStarted = true;
-  s.process = [{ pid, user: 'radio', cpu: 0.3, mem: 0, command: '/usr/bin/python3 /opt/podcast/convertir.py' }];
+  s.process = [{ pid, user: 'radio', cpu: 0.3, mem: 0, command: `/usr/bin/python3 ${path(j.t, '/opt/podcast/convert.py')}` }];
   memory(j)!.rss[pid] = 160 * Mo;
 }
 
@@ -122,7 +122,7 @@ export const chapterMemory: Chapter = {
   final: 'end',
   password: 'antenna-2027',
   accounts,
-  state: () => ({
+  state: (t) => ({
     systemd: newSystemd('radio', Date.UTC(2027, 7, 1, 6, 0, 0), Date.UTC(2027, 7, 22, 4, 12, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
@@ -131,13 +131,13 @@ export const chapterMemory: Chapter = {
         process: [proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups')],
       },
       'radio-stream': {
-        description: 'Radio Quartier stream relay',
+        description: t('radio-unit-stream'),
         active: true,
         executable: 'stream',
         process: [proc(1730, 'radio', '/usr/local/bin/stream --config /etc/radio/stream.conf', { cpu: 3.2 })],
       },
-      'radio-playlist': { description: 'Radio Quartier night playlist', active: true, executable: 'node', load: launchPlaylist },
-      'radio-podcast': { description: 'Radio Quartier podcast converter', active: true, executable: 'python3', load: launchPodcast },
+      'radio-playlist': { description: t('radio-unit-playlist'), active: true, executable: 'node', load: launchPlaylist },
+      'radio-podcast': { description: t('radio-unit-podcast'), active: true, executable: 'python3', load: launchPodcast },
       cron: {
         description: 'Regular background program processing daemon',
         active: true,
@@ -150,7 +150,7 @@ export const chapterMemory: Chapter = {
       proc(598, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups'),
       proc(611, 'root', '/usr/sbin/cron -f'),
       proc(1730, 'radio', '/usr/local/bin/stream --config /etc/radio/stream.conf', { cpu: 3.2 }),
-      ...ZOMBIES.map((pid) => proc(pid, 'radio', '[convertir] <defunct>', { ppid: PODCAST, zombie: true })),
+      ...ZOMBIES.map((pid) => proc(pid, 'radio', `[${name(t, 'convert')}] <defunct>`, { ppid: PODCAST, zombie: true })),
     ],
     memory: { total: 2048 * Mo, kernel: 380 * Mo, rss: { 1: 12 * Mo, 598: 8 * Mo, 611: 4 * Mo, 1730: 420 * Mo } },
   }),
@@ -208,16 +208,16 @@ export const chapterMemory: Chapter = {
       home: place({ you: d({ 'message_from_zoe.txt': f(t('memory-message-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       opt: place({
         playlist: place({ 'server.js': file(t('memory-server-js')) }),
-        podcast: place({ 'convertir.py': file(t('memory-convert-py')) }),
+        podcast: place({ 'convert.py': file(t('memory-convert-py')) }),
       }),
       tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
       usr: place({
         lib: place({
           systemd: place({
             system: place({
-              'radio-playlist.service': unit('Radio Quartier night playlist', '/usr/bin/node /opt/playlist/server.js'),
-              'radio-podcast.service': unit('Radio Quartier podcast converter', '/usr/bin/python3 /opt/podcast/convertir.py'),
-              'radio-stream.service': unit('Radio Quartier stream relay', '/usr/local/bin/stream --config /etc/radio/stream.conf'),
+              'radio-playlist.service': unit(t('radio-unit-playlist'), '/usr/bin/node /opt/playlist/server.js'),
+              'radio-podcast.service': unit(t('radio-unit-podcast'), `/usr/bin/python3 ${path(t, '/opt/podcast/convert.py')}`),
+              'radio-stream.service': unit(t('radio-unit-stream'), '/usr/local/bin/stream --config /etc/radio/stream.conf'),
             }),
           }),
         }),

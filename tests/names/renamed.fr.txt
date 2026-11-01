@@ -353,6 +353,7 @@ full-disk
 memory
   /home/you → /home/vous
   /home/you/message_from_zoe.txt → /home/vous/message_de_zoe.txt
+  /opt/podcast/convert.py → /opt/podcast/convertir.py
 
 inodes
   /home/you → /home/vous
@@ -435,8 +436,8 @@ transfers
   /home/you/email_yasmine.txt → /home/vous/courriel_yasmine.txt
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/config → /home/vous/.ssh/config
-  /home/you/.ssh/id_sauvegarde → /home/vous/.ssh/id_sauvegarde
-  /home/you/.ssh/id_sauvegarde.pub → /home/vous/.ssh/id_sauvegarde.pub
+  /home/you/.ssh/id_backup → /home/vous/.ssh/id_sauvegarde
+  /home/you/.ssh/id_backup.pub → /home/vous/.ssh/id_sauvegarde.pub
   /srv/share → /srv/partage
   /srv/share/minutes → /srv/partage/comptes-rendus
   /srv/share/minutes/agm-2026.txt → /srv/partage/comptes-rendus/ag-2026.txt
@@ -469,6 +470,7 @@ web-host
 web-host:wiki
   /home/you → /home/vous
   /home/you/.ssh → /home/vous/.ssh
+  /srv/wiki/site/membership.html → /srv/wiki/site/adhesion.html
 
 departure
   /home/you → /home/vous

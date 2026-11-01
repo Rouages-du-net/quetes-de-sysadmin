@@ -53,7 +53,7 @@ post-mortem-template =
 
     ## Actions
     (à compléter : une ligne « - » par action)
-post-mortem-conf-flux =
+post-mortem-conf-stream =
     # Radio Quartier : relais du flux (le service radio-stream)
     port = 8000
     mount = /direct

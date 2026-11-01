@@ -30,13 +30,13 @@ transfers-email-yasmine =
     Gaspard me dit au téléphone : « Attention à la barre oblique à la fin
     de la source, avec rsync. Et essaie d'abord avec -n. »
 
-transfers-minutes-ag-2026 =
+transfers-minutes-agm-2026 =
     Assemblée générale 2026 — compte rendu
 
     Présent·es : 34 associations sur 41.
     Rapport moral adopté à l'unanimité. Budget adopté (2 abstentions).
     Projet de l'année : un wiki commun pour toutes les associations.
-transfers-minutes-it-2027-09 =
+transfers-minutes-board-2027-09 =
     Conseil d'administration — septembre 2027
 
     Point 1 : l'informatique de la Maison est reprise par une nouvelle

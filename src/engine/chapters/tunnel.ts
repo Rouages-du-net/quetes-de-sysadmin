@@ -1,17 +1,17 @@
-// Story "La Maison des associations" — chapter "The tunnel": the wiki's
+// Story "The Community Centre" — chapter "The tunnel": the wiki's
 // admin page only listens on the wiki's 127.0.0.1:8080 (on purpose:
 // it isn't made for the internet), and the wiki has no browser.
 // Open a tunnel from your workstation (ssh -f -N -L 8080:localhost:8080 wiki),
 // approve the pending sign-ups (except the advertising account), then
 // close the tunnel (ps, kill).
 // Real traps: "localhost" in -L is understood on the remote machine's
-// side (-L 8080:localhost:8080 maison leads to maison, where nothing listens;
-// -L 8080:wiki:8080 maison arrives through the wiki's address, not through 127.0.0.1).
+// side (-L 8080:localhost:8080 community leads to community, where nothing listens;
+// -L 8080:wiki:8080 community arrives through the wiki's address, not through 127.0.0.1).
 // Objective checked on the state: both sign-ups approved, the
 // advertising one not, and no tunnel left open on the workstation.
 // Sources: https://man.openbsd.org/ssh#L, https://man.openbsd.org/ssh#N
 
-import { f, type Chapter } from '../world';
+import { f, name, type Chapter } from '../world';
 import type { Game, Shell } from '../shell';
 import type { App } from '../nginx';
 import { newSystemd } from '../systemd';
@@ -31,15 +31,17 @@ const ADMIN: App = {
   answer: (j, path) => {
     const listing = signups(j);
     if (path === '/' || path === '/admin' || path === '/admin/') {
-      const lines = Object.entries(listing).map(([name, state]) => j.t('tunnel-admin-ligne', { name: name, state: state }));
+      const lines = Object.entries(listing).map(([account, state]) => j.t('tunnel-admin-line', { name: account, state: state }));
       return { code: 200, type: 'text/plain; charset=utf-8', body: j.t('tunnel-admin-page', { lines: lines.join('\n') }) };
     }
-    const m = /^\/admin\/(valider|refuser)\/([\w-]+)\/?$/.exec(path);
-    if (m && listing[m[2]]) {
-      listing[m[2]] = m[1] === 'valider' ? 'approved' : 'refused';
-      return { code: 200, type: 'text/plain; charset=utf-8', body: j.t(`tunnel-admin-${m[1]}`, { name: m[2] }) };
+    // /admin/approve/<account> and /admin/reject/<account> (in the language).
+    const m = /^\/admin\/([\w-]+)\/([\w-]+)\/?$/.exec(path);
+    const action = (['approve', 'reject'] as const).find((a) => m?.[1] === name(j.t, a));
+    if (m && action && listing[m[2]]) {
+      listing[m[2]] = action === 'approve' ? 'approved' : 'refused';
+      return { code: 200, type: 'text/plain; charset=utf-8', body: j.t(`tunnel-admin-${action}`, { name: m[2] }) };
     }
-    return { code: 404, type: 'text/plain; charset=utf-8', body: j.t('tunnel-admin-introuvable') };
+    return { code: 404, type: 'text/plain; charset=utf-8', body: j.t('tunnel-admin-not-found') };
   },
 };
 
@@ -95,7 +97,7 @@ export const tunnel: Chapter = {
     }),
     archives: internalHost('archives', '10.20.0.12'),
   },
-  createWorld: (t) => homeWorld({ passwords: 'no', home: { 'email_yasmine.txt': f(t('tunnel-email-yasmine')), '.ssh': sshDirectory() } }),
+  createWorld: (t) => homeWorld(t, { passwords: 'no', home: { 'email_yasmine.txt': f(t('tunnel-email-yasmine')), '.ssh': sshDirectory() } }),
   events: [
     { id: 'advert', condition: approvedAdvert, message: (j) => j.t('tunnel-event-advert', { account: ADVERT }) },
     { id: 'approved', condition: (j) => approved(j) && !approvedAdvert(j), message: (j) => j.t('tunnel-event-approved') },

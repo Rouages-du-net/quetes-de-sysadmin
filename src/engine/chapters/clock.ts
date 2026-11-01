@@ -11,7 +11,7 @@
 // https://www.freedesktop.org/software/systemd/man/latest/timesyncd.conf.html,
 // https://wiki.debian.org/TimeZoneChanges
 
-import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import { d, f, name, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { desync, timeOfDay, displayUpdate, synchronise } from '../time';
@@ -80,7 +80,7 @@ export const clock: Chapter = {
   final: 'end',
   password: 'antenna-2027',
   accounts,
-  state: () => ({
+  state: (t) => ({
     systemd: newSystemd('radio', Date.UTC(2027, 7, 28, 22, 40, 0), NOW, {
       ssh: {
         description: 'OpenBSD Secure Shell server',
@@ -89,7 +89,7 @@ export const clock: Chapter = {
         process: [{ pid: 598, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
       },
       'radio-stream': {
-        description: 'Radio Quartier stream relay',
+        description: t('radio-unit-stream'),
         active: true,
         executable: 'stream',
         process: [{ pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' }],
@@ -132,7 +132,7 @@ export const clock: Chapter = {
       },
     },
     crontabs: {
-      radio: '# m h  dom mon dow   command\n0 6 * * 1-5 /usr/local/bin/record matinale 180\n0 23 * * * /usr/local/bin/record nuit 240\n',
+      radio: `# m h  dom mon dow   command\n0 6 * * 1-5 /usr/local/bin/record ${name(t, 'morning-show')} 180\n0 23 * * * /usr/local/bin/record ${name(t, 'night-show')} 240\n`,
     },
   }),
   initialise: (j) => displayUpdate(j),
