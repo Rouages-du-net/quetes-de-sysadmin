@@ -76,13 +76,13 @@ presents them for people.
   on the other side with the simulated DNS); `postconf`, `postfix`,
   `postqueue`, `mailq`, `postsuper`, `opendkim-genkey`, `opendkim-testkey`
   in `commands/mail.ts`; `chapters/gardens.ts`: what the chapters of
-  "Le courrier indésirable" share.
+  "Junk Mail" share.
 - `src/engine/ansible.ts`: Ansible (a subset of YAML, `ansible.cfg`, INI
   inventory, modules, `become`, `--check`, `--diff`, handlers, PLAY RECAP);
   connections go through `connectWithoutQuestion` in `access.ts` (like
   BatchMode); `ansible`, `ansible-playbook`, `ansible-inventory`,
   `ansible-doc` in `commands/ansible.ts`; `chapters/fleet.ts`: what the
-  chapters of "La flotte" share.
+  chapters of "The Fleet" share.
 - `src/engine/caddy.ts`: a machine's Caddy (`state.caddy`: Caddyfile read
   like the adapter, `caddy fmt`, automatic HTTPS with a simulated ACME
   authority that DNS and the firewall can block, JSON logs, what Caddy
@@ -101,7 +101,7 @@ presents them for people.
   (`sh`, `./script`, `test`, `date` in `commands/scripts.ts`); git (bare
   repositories, `push`, hooks) in `commands/git.ts`, `diff` in
   `commands/diff.ts`.
-- `chapters/kiosk.ts`: the app of La Gazette's deployment chapters
+- `chapters/kiosk.ts`: the app of The Gazette's deployment chapters
   (blue/green, `/health`, migration, simulated visits); nginx can balance
   between several servers (`upstream`).
 - `commands/disks.ts` (`lsblk`, `mount`, `umount`, `state.devices`),
@@ -140,7 +140,7 @@ presents them for people.
   and emergency mode: `state.startMounts`, `state.continueBoot`
   called by `reboot`, `systemctl default` and `exit`) in
   `src/engine/fstab.ts`, `mount -a` in `commands/disks.ts`, `blkid` and
-  `findmnt` in `commands/fstab.ts`; `chapters/lab.ts`: what Le Labo's
+  `findmnt` in `commands/fstab.ts`; `chapters/lab.ts`: what The Lab's
   chapters share.
 - `commands/restic.ts`: restic repositories (snapshots, deduplication,
   `forget` policies, `prune`), kept in `state.restic`.
@@ -169,7 +169,7 @@ presents them for people.
   rules); `visudo` and `sudo -l` in `commands/sudoers.ts`; `userdel`,
   `gpasswd`, `chage` in `commands/accounts.ts`; `umask` (the session's mask,
   `Shell.mask`) and setgid applied on creation (`place`).
-- `chapters/till-web.ts`: La Coopérative's site and till app (simulated
+- `chapters/till-web.ts`: The Co-op's site and till app (simulated
   Express: `.env` read at start, `trust proxy`, locks per address); nginx
   passes `proxy_set_header` to the app (`Request`), and `grep` reads
   regular expressions (`toBasicRegex`).
@@ -200,7 +200,7 @@ presents them for people.
 - `src/engine/radius.ts`: FreeRADIUS (`state.radius`: configuration read at
   start, `clients.conf`, ldap module, `users` file, access points' requests
   and VLANs); `freeradius` and `radtest` in `commands/radius.ts`.
-- `chapters/audit.ts`: what the chapters of "L'Audit" share (Le Fournil's
+- `chapters/audit.ts`: what the chapters of "The Audit" share (The Bakery's
   server: accounts, `sshd_config`, sudoers, `bakeryWorld`, the network nmap
   sees, `sectionsMd` to reread a player's document); `scope.ts`,
   `report.ts`, `exposure.ts` (Redis's `bind` read on restart, by the
@@ -211,8 +211,8 @@ presents them for people.
   by the story (`state.scan`: machines, services, scope; `state.scans` keeps
   each scan); `src/engine/lynis.ts` and `commands/lynis.ts`: Lynis
   (findings read from the machine's state, `/var/log/lynis-report.dat`).
-- `chapters/watch.ts`: what the chapters of "La Veille" share (the
-  `kneader` server (`petrin` in French), six months after "L'Audit": accounts, `watchWorld`, the
+- `chapters/watch.ts`: what the chapters of "The Watch" share (the
+  `kneader` server (`petrin` in French), six months after "The Audit": accounts, `watchWorld`, the
   fictitious `CVE-2099-NNNNN` of the bulletin); `bulletin.ts`,
   `priority.ts`, `fix.ts`, `proof.ts` (an earlier attempt in nginx's
   access log) and `routine.ts` (`unattended-upgrades` restricted to

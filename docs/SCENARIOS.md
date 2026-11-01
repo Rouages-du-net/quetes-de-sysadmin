@@ -60,17 +60,17 @@ translates them (`src/texts/en/`).
 
   | Story | opens after |
   |---|---|
-  | L'Effaceur (The Eraser) | (from the start) |
-  | Le Datacenter, Le Paquet perdu, La Machine à remonter le temps, Les Archives | "La Racine" (L'Effaceur) |
-  | La Fabrique, L'Astreinte | "La nuit du redémarrage" (Le Datacenter) |
-  | Les Lettres du quartier | "La nuit du redémarrage", "Le Paquet perdu" |
-  | La Gazette | "La Machine à remonter le temps", "La nuit du redémarrage" |
-  | La Ludothèque | "Les versions" (Les Archives) |
-  | La Maison des associations | "Fermer la porte" (Les Lettres) |
-  | La Coopérative | "La colocation" (Les Lettres), "Deuxième jour" (Le Datacenter) |
-  | La Ruche | "Le pare-feu" (Les Lettres), "Le rebond" (La Maison) |
-  | L'Audit | "La sentinelle" (Les Lettres), "Les droits partagés" (La Coopérative) |
-  | Le Labo, La Veille, Le courrier indésirable, La flotte, La Rustine | see their sections below |
+  | The Eraser (The Eraser) | (from the start) |
+  | The Data Centre, The Lost Packet, The Time Machine, The Archives | "The Root" (The Eraser) |
+  | The Workshop, On Call | "The night of the reboot" (The Data Centre) |
+  | The Neighbourhood Letters | "The night of the reboot", "The Lost Packet" |
+  | The Gazette | "The Time Machine", "The night of the reboot" |
+  | The Game Library | "The versions" (The Archives) |
+  | The Community Centre | "Shut the Door" (The Neighbourhood Letters) |
+  | The Co-op | "Sharing a home" (The Neighbourhood Letters), "Second day" (The Data Centre) |
+  | The Hive | "The firewall" (The Neighbourhood Letters), "The Jump" (The Community Centre) |
+  | The Audit | "The sentinel" (The Neighbourhood Letters), "Shared permissions" (The Co-op) |
+  | The Lab, The Watch, Junk Mail, The Fleet, The Patch | see their sections below |
 - **Stories and chapters**: in a story, each chapter has its world, its
   commands and its ending, and opens when the previous one is finished.
   Progress is kept in the browser (`localStorage`, key
@@ -141,7 +141,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | scripts (`sh`, hooks) | a reduced `/bin/sh` (`script.ts`): one command per line, `#`, `set -e`, `exit`, variables, `$(…)`, `read`, `&&`, `\|\|`, `[ … ]`; no `if`, `for`, `while`, `case` nor functions; a command succeeds if it wrote no error | the full language |
 | `diff` | normal format, `-u` (three lines of context), `-r`, `-q`; the time in the `-u` header is the machine's | every option |
 | `date`, `test`, `readlink` | `date` without option or `+FORMAT` (common directives); `test` (and `[ … ]` in a script): `-e -f -d -L -s -r -w -x -n -z`, `=`, `!=`, numeric comparisons; `readlink [-f]` | `date -d`, `-u`…; full `test`; `realpath` |
-| Le Kiosque (La Gazette) | a simulated Node.js app: version read at start through a link, `/health` as JSON, configuration in a `.env` file, schema migration at start (never backwards); an hour of simulated visits on each nginx reload in "Le canari" | a real app and its PostgreSQL database |
+| The Kiosk (The Gazette) | a simulated Node.js app: version read at start through a link, `/health` as JSON, configuration in a `.env` file, schema migration at start (never backwards); an hour of simulated visits on each nginx reload in "The canary" | a real app and its PostgreSQL database |
 | nginx log | "combined" format without the referrer and the user agent | two more fields at the end of the line |
 | `ssh` | two models: on most machines, a key is accepted if it is the one the game gave for that machine; on `maison` and its internal network (`access.ts`), the real behaviour: the other side's `authorized_keys`, passphrase, password if sshd accepts it (three tries), `-J`/`ProxyJump` (the next name is resolved by the jump machine), `-L` with `-f -N` (a process to stop with `kill`), remote command, `-G` (excerpt); no agent, `-R`, `-D` nor certificates; a single host key (ed25519); shortened usage message | all of it, agent, `ForwardAgent`, remote and dynamic forwarding |
 | `exit` | has its `man` page | a bash builtin: `help exit` |
@@ -195,13 +195,13 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | Caddy | the Caddyfile (addresses, global options, one or several sites, the adapter's errors), `caddy validate`, `adapt` (simplified JSON), `fmt`, `reload` (through the admin API), `version`; automatic HTTPS: a Let's Encrypt certificate for domain names, 308 redirection, a failed challenge if DNS doesn't lead to the machine or if the firewall closes 80 and 443; directives applied: `root`, `file_server`, `respond`, `redir`, `reverse_proxy` (others are recognised with no effect); a failed challenge is retried as soon as its cause is gone; JSON logs | named matchers, `handle`, ZeroSSL, internal certificates (`localhost`, IPs), renewal, `caddy run` beside the service |
 | SPF, DKIM, DMARC | SPF (RFC 7208): `ip4`, `a`, `mx`, `include`, `all`, `redirect=`, qualifiers, at most ten lookups, two records = `permerror`; DKIM: the key published under `selector._domainkey`, CNAMEs followed; DMARC (RFC 7489): `p=`, `rua=`, relaxed alignment (organisational domain: the last two labels); aggregate reports are files given by the story | `ip6`, `exists`, `ptr`, SPF macros, strict alignment, `sp=`, `pct=` applied, reports received as attachments |
 | `awk` | program in single quotes: patterns, `BEGIN`/`END`, fields, arrays, `printf`, common functions, `-F`, `-v`; no `getline`, redirection in `print`, user-defined functions nor `?:` | the full language (mawk on Debian) |
-| web traffic | in "Le soir du concert", one minute of simulated traffic after each nginx reload; `limit_req` follows nginx's algorithm (leaky bucket, burst, `nodelay`); no `delay=` nor `limit_conn` | real, continuous traffic |
+| web traffic | in "Concert night", one minute of simulated traffic after each nginx reload; `limit_req` follows nginx's algorithm (leaky bucket, burst, `nodelay`); no `delay=` nor `limit_conn` | real, continuous traffic |
 | Docker | images from a simulated registry, containers (layer, volumes, bind mounts, ports, `--restart`), `run`, `ps`, `images`, `pull`, `logs` (`-n`, `-t`), `exec` (`-u`; `ls`, `cat`, `env`, `id`, `whoami`), `cp`, `stop`, `start`, `restart`, `rm`, `port`, `update --restart`, `inspect` (`-f '{{.Field}}'`), `volume`; without `-d`, `run` returns; no network between containers outside Compose, no `build` | all of Docker |
 | Docker Compose | `compose.yaml` in reduced YAML (mappings, lists, strings, `[a, b]`); keys `image`, `ports`, `volumes`, `environment`, `env_file`, `depends_on`, `restart`, `user`, `read_only`, `cap_drop`, `security_opt`; `up` (recreates what changed), `down` (`-v`), `ps`, `logs`, `config`, `restart`, `stop`, `start`, `exec`, `pull`; a service that fails to start is restarted once if it has a `restart` policy | the whole Compose specification, `build`, `healthcheck`, profiles |
 | Docker and the firewall | a port published on 0.0.0.0 answers from outside whatever the ufw rules (like Docker's iptables rules); `nc -zv` from another machine; `system df`, `image prune` (`-a`), `container prune`, `volume prune` (`-a`), `system prune` (`-a`, `--volumes`), `rmi` | the DOCKER-USER chain, ufw-docker, `iptables -L` |
 | A container's user | `--user`/`-u` and `user:` (a name from the image or `uid[:gid]`, an uid unknown to the image gets gid 0), `docker exec -u`; the container's uid is the machine's (no userns-remap): Unix rights applied by number on bind mounts, files created as that uid, processes visible in `ps aux`; `--read-only` prevents writing outside volumes; `--cap-drop` and `--security-opt` are kept (and shown by `inspect`) with no other effect; a fallen container is restarted on each command (no doubling delay) | userns-remap, rootless mode, real capabilities, seccomp, AppArmor, rights on named volumes |
 | `nc` | `-z`, `-v`, a port range; without `-z`, returns | full netcat (listen, send, proxy) |
-| disks (`lsblk`, `mount`, `umount`) | devices described by the chapter; `mount` without an argument, `-o ro`; a read-only medium refuses any creation (an existing file's contents can still be changed by a redirection); on a machine with described storage (`storage.ts`, Le Labo), `lsblk` shows disks, partitions and RAID arrays, with `-d` and `-o` (NAME, MAJ:MIN, RM, SIZE, RO, TYPE, MOUNTPOINT(S), MODEL, SERIAL, FSTYPE, UUID) | every option, real file systems; RM and RO always 0 |
+| disks (`lsblk`, `mount`, `umount`) | devices described by the chapter; `mount` without an argument, `-o ro`; a read-only medium refuses any creation (an existing file's contents can still be changed by a redirection); on a machine with described storage (`storage.ts`, The Lab), `lsblk` shows disks, partitions and RAID arrays, with `-d` and `-o` (NAME, MAJ:MIN, RM, SIZE, RO, TYPE, MOUNTPOINT(S), MODEL, SERIAL, FSTYPE, UUID) | every option, real file systems; RM and RO always 0 |
 | `smartctl` | `-a`, `-x`, `-H`, `-i`, `-A`, `-l error`, `-l selftest`, `-t short/long` (the test is logged at once, without waiting); an ATA disk's attributes, values derived from the chapter's counts; exit code as a bit mask (64, 128) | NVMe, SCSI, `-d`, `-s`, `-X`, the drive database, every attribute |
 | `mdadm` | RAID 1 only: `--detail` (`-D`), `--detail --scan`, "manage" mode (`--fail`, `--remove` including `failed`, `--add`, `--re-add`, several in a row); the real kernel's refusals (removing an active member, failing the last up-to-date member, a partition already in use); one array rebuilt at a time, half an hour per command; a whole disk in an array erases its table | `--assemble`, `--grow`, `--examine`, `--zero-superblock`, `--monitor`, other RAID levels, a real bitmap (`--re-add` catches up faster) |
 | `mdadm --create` | RAID 1 only (`--level`, `--raid-devices`, `--run`, `missing`), on free disks or partitions; the real "Continue creating array?" question; the initial sync progresses with the commands | other levels, `--chunk`, `--bitmap`, `--name`, `--homehost` |
@@ -211,7 +211,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | fstab, emergency mode (`mount -a`, `blkid`, `findmnt`, `systemctl default`) | fstab read like mount and systemd (`UUID=`, `LABEL=`, `/dev/…`, `/dev/disk/by-*`, `nofail`, `noauto`); at boot, a missing source without `nofail` stops the machine in emergency mode (faithful systemd log, the 90 s wait played at once); `systemctl default`/`exit` resume with the fstab read at the last `daemon-reload`; `mount -a`'s hint when fstab has changed; `findmnt --verify` (sources, types, mount points); `blkid` (`-U`, `-L`) | swap, network mounts, `x-systemd.*`, `fsck`, hand-written `.mount` units, `findmnt` on /proc and /sys |
 | `resize2fs`, `update-initramfs` | `resize2fs` grows an LV's ext4 to its size (online); `update-initramfs -u` keeps a copy of `mdadm.conf` | shrinking, a given size, other file systems; the initramfs's real contents |
 | `rsnapshot` | `configtest`, `-t`, `-v`, `du`, rotation of the levels (`cp -al` then `rsync`); some of the directives; messages close to rsnapshot 1.4 | `backup_script`, `link_dest`, `sync_first`, remote backups |
-| PostgreSQL | roles and "peer" authentication; `psql -c/-f/-l` with a reduced SQL (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `ALTER ROLE … PASSWORD` by the `postgres` account, `\l`, `\dt`, `\d`, `\du`); a role's password is only read by one chapter's app ("Les traces"); `pg_dump` (text, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb`; a `-Fc` archive only holds a reference kept by the game; one primary key per table | all of PostgreSQL, interactive psql, WAL and point-in-time recovery |
+| PostgreSQL | roles and "peer" authentication; `psql -c/-f/-l` with a reduced SQL (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `ALTER ROLE … PASSWORD` by the `postgres` account, `\l`, `\dt`, `\d`, `\du`); a role's password is only read by one chapter's app ("The Traces"); `pg_dump` (text, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb`; a `-Fc` archive only holds a reference kept by the game; one primary key per table | all of PostgreSQL, interactive psql, WAL and point-in-time recovery |
 | `lsof`, `truncate`, `logrotate` | `lsof` only knows the open files described by the chapter (`+L1`, `-p`, `-u`, a file); `logrotate`: some of the directives, `-d`, `-f`, `-v`, shortened outputs | every option, every open file of the system |
 | memory (`free`, `top`, `dmesg`) | each process's memory is described by the chapter; no swap, the cache isn't freed (`available` = `free`); the OOM killer kills the biggest process (no `oom_score_adj`); `top` shows a snapshot and returns (`-b`, `-n`, `-o`, `-c`); `dmesg` (`-T`) for root only | swap, cache reclaim, the OOM killer's score, interactive `top`, `htop` |
 | `iostat`, `pidstat`, `ionice` | `iostat` `-c`, `-d`, `-x`, `-k`, `-m`, `-y`, interval and count; `pidstat -d`, `-u`; `ionice -p`, `-c`, `-n`; one disk, a simplified queue model (waiting climbs beyond 60 % of capacity); ionice priorities only count with `mq-deadline` or `bfq`; every report gives the current instant | several disks, partitions (`-p`), `iotop`, `ionice` on a command to start, cgroup v1 `blkio` |
@@ -230,7 +230,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | locking yourself out | the game's menu reopens the session | the host's rescue console (VNC, KVM) |
 | `nano` | a text area: `^O` write, `^X` exit (with `Y`/`N`/`^C`), buttons for keyboards without Ctrl; no search, cut and paste nor line numbers; the text wraps; messages close to nano's in the game's language | every shortcut of the help bar, no automatic wrapping |
 
-## Story 1: L'Effaceur (The Eraser)
+## Story 1: The Eraser
 
 A creature, the Eraser, roams the kingdom and erases everything it touches.
 We find out it isn't wicked: it is a program obeying an old order, written
@@ -243,12 +243,12 @@ internal names; the English game translates them (`Phare` → `Lighthouse`,
 
 ```mermaid
 flowchart LR
-  C1["Chapter 1 · L'Île du Phare<br/>ls, cd, pwd, cat, less, ls -a, mv"] --> C2["Chapter 2 · Le Bourg<br/>grep, touch, cp, mkdir, rm"]
-  C2 --> C3["Chapter 3 · La Racine<br/>ls -l, chmod, whoami, sudo"]
-  C3 --> C4["Chapter 4 · La Sauvegarde<br/>rsync, crontab"]
+  C1["Chapter 1 · Lighthouse Island<br/>ls, cd, pwd, cat, less, ls -a, mv"] --> C2["Chapter 2 · The Village<br/>grep, touch, cp, mkdir, rm"]
+  C2 --> C3["Chapter 3 · The Root<br/>ls -l, chmod, whoami, sudo"]
+  C3 --> C4["Chapter 4 · The Backup<br/>rsync, crontab"]
 ```
 
-### Chapter 1 — L'Île du Phare (done)
+### Chapter 1 — Lighthouse Island (done)
 
 The Eraser has erased the lighthouse's bulb: without light, no boat can leave
 the island for the Town.
@@ -262,7 +262,7 @@ the island for the Town.
 | Jetee | move the net blocking the Lighthouse to the Harbour's Shed | `mv filet ~/Port/Hangar` (path from `~`) |
 | Port/Remise → Phare/Escalier/Lanterne | bring back the spare bulb, hidden, under the exact name `ampoule` | `ls -a`, `mv .ampoule_de_secours …/Lanterne/ampoule` |
 
-### Chapter 2 — Le Bourg (done)
+### Chapter 2 — The Village (done)
 
 The boat drops the character at the harbour Town.
 
@@ -277,7 +277,7 @@ The boat drops the character at the harbour Town.
 | Egout/Galerie | find Nour at the edge of the Slide | — |
 | Ecole | rebuild Nour's Classroom (a place) | `mkdir` |
 
-### Chapter 3 — La Racine (done)
+### Chapter 3 — The Root (done)
 
 Why "The Root" and not "The Kernel": on Linux, the kernel is the system's
 central program; the file tree starts from the root `/`, and the
@@ -301,11 +301,11 @@ one who wrote the configuration, with one space too many. The Eraser wasn't
 wicked: it did exactly what had been written for it. `sudo`'s message
 ("Think before you type") is the real one.
 
-### Chapter 4 — La Sauvegarde (done)
+### Chapter 4 — The Backup (done)
 
 Maëlle wants memories never to disappear again: a backup disk is mounted on
 `/mnt/sauvegarde`. The chapter plays on `royaume`; the keys to the other
-machines are still given at the end of La Racine (chapter 3).
+machines are still given at the end of The Root (chapter 3).
 
 | Step | Command learnt |
 |---|---|
@@ -327,7 +327,7 @@ directory, restoring with `cp`. Debrief: trailing slash, `-n`, scheduling,
 testing the restore, the 3-2-1 rule and versions; links to `rsync(1)` and
 `crontab(5)`.
 
-## Story 2: Le Datacenter (done, five chapters)
+## Story 2: The Data Centre (done, five chapters)
 
 First day of the internship: the media library's website answers with 503
 errors. Awa, the operations lead, is in a meeting; her notes guide you.
@@ -347,7 +347,7 @@ Expected traps: `kill` before blocking (the service goes back to 99 %),
 `tee` without `-a` or `>` overwriting `blocked.conf` (a `.bak` backup
 exists).
 
-### Chapter 2 — Deuxième jour (done)
+### Chapter 2 — Second day (done)
 
 Malo comes to help: he must read nginx's logs without `sudo`, and the web
 team needs a shared directory closed to other accounts. The machine has real
@@ -370,7 +370,7 @@ Expected traps: `usermod -G` without `-a` (Malo loses `web-team`),
 privilege, `-aG`, setgid to go further, links to `usermod(8)`, `chmod(1)`
 and Debian's system groups.
 
-### Chapter 3 — La nuit du redémarrage (done)
+### Chapter 3 — The night of the reboot (done)
 
 The server rebooted last night (automatic updates) and the site went down.
 Two problems hidden since Friday: `nginx` was disabled during a test, and a
@@ -395,7 +395,7 @@ Debrief: `--failed` after every reboot, `journalctl -xeu`, start isn't
 enable, a service's directory belongs to its account, links to `systemctl`
 and `journalctl` (freedesktop.org).
 
-### Chapter 4 — Le grand incendie (done)
+### Chapter 4 — The great fire (done)
 
 Last night, the host's datacenter burned down (a nod to the OVHcloud fire in
 Strasbourg, in March 2021). The host delivers a new machine, same name and
@@ -428,7 +428,7 @@ without `-C`. Debrief: 3-2-1 with a far copy, a written and tried recovery
 plan, rereading your backups, accepted loss (one day), host key, `nginx -t`;
 links to apt(8), nginx's documentation, GNU tar and ssh-keygen.
 
-### Chapter 5 — Le certificat a expiré (done)
+### Chapter 5 — The certificate has expired (done)
 
 Three months after the fire, the media library's HTTPS certificate expired
 this morning; browsers show a warning. On the day of the fire, the
@@ -463,7 +463,7 @@ restarting the `certbot` service. Debrief: 90 days and 30 days, monitoring
 expiry yourself, `--dry-run`, the HTTP-01 challenge, deploy hook; links to
 certbot's documentation, Let's Encrypt's challenges and `openssl x509`.
 
-## Story 3: Le Paquet perdu (done)
+## Story 3: The Lost Packet (done)
 
 "The internet doesn't work any more" at the community café. Kofi's notebook
 gives the method: test step by step, from near to far.
@@ -480,7 +480,7 @@ gives the method: test step by step, from near to far.
 | `traceroute letters.example` | home router, ISP, exchange point, host, then silence |
 | `curl -I https://letters.example` | `HTTP/2 200`: the server was just ignoring ping |
 
-## Story 4: La Machine à remonter le temps (done)
+## Story 4: The Time Machine (done)
 
 The cat of Inès, a novelist, walked on the keyboard; she saved and made a
 commit. `git log`, `git show HEAD`, `git diff HEAD~1 roman.txt`,
@@ -488,7 +488,7 @@ commit. `git log`, `git show HEAD`, `git diff HEAD~1 roman.txt`,
 record the repaired version (without erasing history). Then, putting her
 poems in safety: `git init`, `git add .`, `git commit -m`.
 
-## Story 5: Les Archives (done, two chapters)
+## Story 5: The Archives (done, two chapters)
 
 The neighbourhood library's server shuts down at midnight; Rosa only has a
 64 MB USB stick. `du -sh` and `df -h` show that the collection (174 MB)
@@ -497,7 +497,7 @@ doesn't fit; `tar` fails ("No space left on device"). `find fonds -name
 compressed archive (`tar -czf`) is then 48 MB; `tar -tzf` checks it. An
 archivist's moral: a single copy isn't a backup.
 
-### Chapter 2 — Les versions (done)
+### Chapter 2 — The versions (done)
 
 Since January, the collection lives on a new server, backed up every night
 with restic on the disk the town hall lends (`/mnt/mairie`, almost full).
@@ -528,14 +528,14 @@ shorter policy. Debrief: versions rather than a mirror, retention policy,
 forget isn't prune, check and test restores, encryption and keeping the
 password; links to restic's documentation.
 
-## Story 6: Les Lettres du quartier (nine chapters)
+## Story 6: The Neighbourhood Letters (nine chapters)
 
-Kofi's association (seen in Le Paquet perdu) rents a small server for its
-site, `letters.example` (machine `lettres`, the same address as in Le Paquet
-perdu). The host delivered it with the default configuration: root login and
+Kofi's association (seen in The Lost Packet) rents a small server for its
+site, `letters.example` (machine `letters`, the same address as in The Lost
+Packet). The host delivered it with the default configuration: root login and
 passwords accepted.
 
-### Chapter 1 — Fermer la porte (done)
+### Chapter 1 — Shut the Door (done)
 
 The simulated SSH server (`src/engine/sshd.ts`) reads `/etc/ssh/sshd_config`
 like OpenSSH: keywords, `Include` read in its place, **the first value read
@@ -549,7 +549,7 @@ command checks to accept or refuse a connection.
 | Change the configuration | `sudo nano /etc/ssh/sshd_config`: `PermitRootLogin no`, `PasswordAuthentication no` |
 | Check | `sudo sshd -t` (file and line of the error), `sudo sshd -T` (effective configuration) |
 | Apply | `sudo systemctl reload ssh` (refused if the configuration is wrong: the old one stays) |
-| Prove you can still get in | `exit`, then `ssh lettres` |
+| Prove you can still get in | `exit`, then `ssh letters` |
 
 Goal checked on the state: the *applied* configuration refuses root and
 passwords, still accepts the player's account, and a new connection has
@@ -564,7 +564,7 @@ accepted solution: a `sshd_config.d/00-…conf` file, read first. Debrief:
 keys only, never root directly, `sshd -t` and `sshd -T`, keep a session
 open, links to `sshd_config(5)` and `sshd(8)` (man.openbsd.org).
 
-### Chapter 2 — Le pare-feu (done)
+### Chapter 2 — The firewall (done)
 
 A scan (nmap's output) shows the site's database (MariaDB, 3306) reachable
 from the internet. The simulated firewall (`src/engine/firewall.ts`) follows
@@ -577,7 +577,7 @@ it: `deny` gives `Connection timed out`, `reject` `Connection refused`.
 | Who listens, and where? | `ss -tln`, `sudo ss -tlnp` (0.0.0.0 versus 127.0.0.1) |
 | Allow the useful doors | `sudo ufw allow "Nginx Full"`, `sudo ufw limit OpenSSH` (or `allow from 192.0.2.2 to any port 22`) |
 | Enable | `sudo ufw enable` (y/n question) |
-| Check | `sudo ufw status verbose`, then `exit` and `ssh lettres` |
+| Check | `sudo ufw status verbose`, then `exit` and `ssh letters` |
 
 Goal checked on the state: firewall active, incoming denied by default, SSH
 reachable from the workstation, 80 and 443 from the internet, 3306 closed,
@@ -590,7 +590,7 @@ solution: `default reject` and SSH from the workstation's address only.
 Debrief: `ss -tlnp` first, allow SSH before `enable`, `limit`,
 `bind-address`, links to `ufw(8)` and `ss(8)`.
 
-### Chapter 3 — La sentinelle (done)
+### Chapter 3 — The sentinel (done)
 
 fail2ban runs with Debian's settings (`sshd` jail, 10-minute ban).
 `/var/log/fail2ban.log` shows robots coming back as soon as their ban ends,
@@ -621,9 +621,9 @@ editing `jail.conf` (it works, but a warning explains why it's a bad idea).
 Other accepted solutions: `jail.d/*.local`, `bantime = -1`, `ignoreip` in
 CIDR.
 
-### Chapter 4 — La colocation (done)
+### Chapter 4 — Sharing a home (done)
 
-The community café (the one from Le Paquet perdu) moves onto the Lettres'
+The community café (the one from The Lost Packet) moves onto the Lettres'
 server: two sites on one machine. And Rania's workshop calendar, a small
 Node.js program listening only on `127.0.0.1:3000`, must show under
 `http://letters.example/agenda/`.
@@ -653,7 +653,7 @@ default_server and server_name, testing with `Host`, proxy_pass's trailing
 slash, 502 and error.log, an app behind a proxy on 127.0.0.1; links to
 nginx's documentation.
 
-### Chapter 5 — Ça marche chez moi (done)
+### Chapter 5 — Works on my machine (done)
 
 Kofi "pointed" cafe.example at the server… in his own computer's
 `/etc/hosts`. At his place, the café's site works; elsewhere, the name leads
@@ -682,7 +682,7 @@ like the others, authoritative servers versus resolver, serial,
 `named-checkzone`, trailing dot, lowering the TTL before a move; links to
 BIND's documentation and RFC 1034.
 
-### Chapter 6 — Le soir du concert (done)
+### Chapter 6 — Concert night (done)
 
 Concert night at the café: the calendar (an app serving some twenty pages
 per second) no longer answers, visitors get 504s. A robot is scraping the
@@ -710,7 +710,7 @@ before acting, limit per address where it is costly, burst and `nodelay`,
 429, `deny` versus a lasting rule; links to `limit_req`, the log format and
 awk (POSIX).
 
-### Chapter 7 — Le port (done)
+### Chapter 7 — The port (done)
 
 SSH's log overflows with robots, all on port 22. Rania suggests moving SSH
 to port 2222: it protects from nothing, but the log will be readable again.
@@ -739,7 +739,7 @@ port isn't a protection, open before closing, everything that mentions the
 port follows, ufw and fail2ban write nftables rules, `ssh.socket` on Ubuntu;
 links to `sshd_config(5)`, `ssh_config(5)`, `jail.conf(5)` and ufw.
 
-### Chapter 8 — La récidive (done)
+### Chapter 8 — Repeat offenders (done)
 
 Since the port change, the same addresses are banned for an hour, unbanned,
 banned again, over and over; and the calendar's robot, which nginx has
@@ -766,7 +766,7 @@ log, filter, action; enable in its own section; `dbpurgeage`;
 `bantime.increment`; links to `jail.conf(5)`, fail2ban's `jail.conf` and
 `limit_req`.
 
-### Chapter 9 — L'atelier de réparation (done)
+### Chapter 9 — The Repair Café (done)
 
 The repair workshop's old host is closing; their site ran on Apache, with a
 `.htaccess` that rewrites the short addresses of the repair guides
@@ -800,15 +800,15 @@ by side, one program per port, `-S`, `Host` behind a proxy, `.htaccess` and
 performance; links to Apache's documentation (virtual hosts, `.htaccess`,
 `mod_rewrite`).
 
-## Story 7: La Fabrique (four chapters)
+## Story 7: The Workshop (four chapters)
 
-The neighbourhood fablab (machine `fabrique`, 192.0.2.15) lends tools to
+The neighbourhood fablab (machine `workshop`, 192.0.2.15) lends tools to
 residents through the tool library, a small web app running in Docker.
 Yasmine looks after it. Docker is simulated in `src/engine/docker.ts`
 (images, containers and their layer, volumes, bind mounts, published ports,
 restart policies); the images' apps are described by the chapters.
 
-### Chapter 1 — La mise à jour (done)
+### Chapter 1 — The Update (done)
 
 The tool library was started two weeks ago with a plain `docker run`,
 without a volume: its database lives in the container's layer. Version 1.5
@@ -838,7 +838,7 @@ database into the volume before starting, `docker update --restart`,
 replacing without deleting too early, `--restart`, the docker group equals
 root; links to Docker's documentation.
 
-### Chapter 2 — La composition (done)
+### Chapter 2 — The Composition (done)
 
 The fablab wants a site to book its machines: the `reservations` app and its
 PostgreSQL database, described in a `compose.yaml` copied from a tutorial
@@ -868,7 +868,7 @@ volumes), a `.env` readable by everyone, forgetting `restart`. Debrief:
 service names, named volume, secrets in `.env`, `config`, `down -v`,
 `restart`; links to Compose's documentation and the PostgreSQL image.
 
-### Chapter 3 — Le trou dans le pare-feu (done)
+### Chapter 3 — The hole in the firewall (done)
 
 Rania tested the server from home: PostgreSQL answers on port 5432, whereas
 ufw only allows SSH, 8080 and 8081. Yasmine had added
@@ -897,7 +897,7 @@ tunnel, test from outside, `system df` and `prune`, the danger of
 `volume prune -a`; links to Docker's documentation (ufw, published ports,
 pruning).
 
-### Chapter 4 — Les pleins pouvoirs (done)
+### Chapter 4 — Full powers (done)
 
 The fablab's photo gallery (`/srv/gallery`, port 8082) receives photos sent
 by visitors. Its image declares no user and `compose.yaml` has no `user:`:
@@ -929,13 +929,13 @@ accepted solutions: `docker run -u`, another uid with Yasmine's group and
 `--read-only`, neither `--privileged` nor a mounted Docker socket, rootless
 mode; links to Docker's documentation.
 
-## Story 8: La Gazette (five chapters)
+## Story 8: The Gazette (five chapters)
 
 The neighbourhood's online newspaper (machine `gazette`, 192.0.2.16) learns
 to deploy: Samia (editor-in-chief) and Théo (intern). Phase 6 of the
 roadmap.
 
-### Chapter 1 — Le dépôt nu (done)
+### Chapter 1 — The bare repository (done)
 
 The site is served by nginx from `/var/www/gazette`, where everyone copied
 their files by hand. The code is tracked by git in `~/gazette`.
@@ -956,7 +956,7 @@ no hook, a non-executable hook (git's hint), `checkout` without `-f`
 directly on the server. Debrief: a single source, bare repository, hooks,
 `--shared=group`; links to the git book and githooks.
 
-### Chapter 2 — Le retour arrière (done)
+### Chapter 2 — Rolling back (done)
 
 Each push is published in `/srv/gazette/releases/<date>`, and the link
 `/srv/gazette/current` (served by nginx) points to the online version.
@@ -976,7 +976,7 @@ hook runs the tests) wasn't put online. Expected traps: `ln -sf` without
 switch, tests run from the repository (everything is refused), `push`
 refused until you have fetched Théo's commits.
 
-### Chapter 3 — Bleu et vert (done)
+### Chapter 3 — Blue and green (done)
 
 The Kiosk (newsletter subscriptions, Node.js) runs on the blue slot (port
 3001) behind nginx; the green slot (3002) is free.
@@ -992,7 +992,7 @@ healthy 1.5.0 instance, and the other instance still runs. Expected traps:
 changing the link without restarting, switching before `/health`,
 forgetting the `reload`, stopping blue at once.
 
-### Chapter 4 — Le canari (done)
+### Chapter 4 — The canary (done)
 
 1.6.0 passes `/health` but crashes on `/archives`. Green serves 1.5.0.
 
@@ -1006,7 +1006,7 @@ Goal checked on the state: all of `/kiosk/` goes to a healthy 1.6.1, after
 an error-free 1.6.1 canary, green still on. Expected traps: switching
 everything at once to 1.6.0 (every archive visit a 500), a 50 % "canary".
 
-### Chapter 5 — La migration (done)
+### Chapter 5 — The migration (done)
 
 Théo put 2.0.0 on green and switched nginx; at start, it migrated the
 database (schema 3 → 4). It doesn't work (a renamed variable), and blue
@@ -1023,12 +1023,12 @@ other instance also runs a healthy 2.x. Expected trap: going back to blue
 (1.6.1), which answers 500. Debrief: back up before a migration
 (`pg_dump`), expand then contract, fix forward.
 
-## Story 9: La Ludothèque (three chapters)
+## Story 9: The Game Library (three chapters)
 
 The neighbourhood toy library's server (machine `games`, 192.0.2.17):
 Bérénice (president) and Malo (volunteer). Phase 7 of the roadmap.
 
-### Chapter 1 — La rançon (done)
+### Chapter 1 — The ransom (done)
 
 Monday morning, the share (`/srv/share`) is encrypted (`.locked`); a
 ransom note lies in every directory. The `frontdesk` account's password was
@@ -1049,7 +1049,7 @@ stopping the encryptor (the files are encrypted again), forgetting the
 crontab (it comes back), plugging in the backup during the attack,
 unmounting from inside the mount point ("target is busy").
 
-### Chapter 2 — Les instantanés (done)
+### Chapter 2 — Snapshots (done)
 
 Setting up rsnapshot (Debian's configuration) for `/srv/share/` to the
 second disk, 7 dailies and 4 weeklies, and running it with cron. The game
@@ -1069,7 +1069,7 @@ before. Expected traps: spaces instead of tabs, an ordinary account's
 crontab (cron's mail says so), the latest snapshot (taken after the
 mistake).
 
-### Chapter 3 — La base (done)
+### Chapter 3 — The Database (done)
 
 The loans live in a PostgreSQL database; Malo copies its files with
 rsnapshot while it runs.
@@ -1094,7 +1094,7 @@ On-call nights for Neighbourhood Radio (machine `radio`, 192.0.2.18), with Zoé,
 technical volunteer. The classic failures, one per night, then monitoring
 that warns before things break. Phase 7 of the roadmap.
 
-### Chapter 1 — Le disque plein (done)
+### Chapter 1 — The full disk (done)
 
 2:47 am: the night recording fails, "No space left on device". The stream
 relay (`radio-stream`) has been writing its log in debug mode for three days
@@ -1114,7 +1114,7 @@ covers its log and knows how to have it reopened. Expected traps: `rm` of an
 open file, a rotation that renames without having the file reopened (the
 relay writes into `stream.log.1`), a misspelt directive.
 
-### Chapter 2 — La mémoire (done)
+### Chapter 2 — Memory (done)
 
 4:31 am: the live stream only broadcasts silence. The night playlist
 (`radio-playlist`, a Node program) was killed by the OOM killer: it keeps
@@ -1135,7 +1135,7 @@ killer comes back), a limit without `Restart=` (the playlist stays stopped),
 too low a limit (killed at start) or too high, a hand-written override
 without `daemon-reload`.
 
-### Chapter 3 — Les inodes (done)
+### Chapter 3 — Inodes (done)
 
 3:20 am: the night recording fails again, "No space left on device", but
 `df -h` says the data volume (`/srv/radio`, 1 GiB) is almost empty. The
@@ -1157,7 +1157,7 @@ crontab (not allowed to delete `radio`'s files: cron's mail), a job that
 deletes everything (the month's report is lost), a schedule that doesn't
 fall in the night.
 
-### Chapter 4 — L'horloge (done)
+### Chapter 4 — The clock (done)
 
 Monday, 9:12 am: the morning show (6 am – 9 am) only recorded from 8:09. The
 server, migrated this weekend to a standard image, lives in UTC (cron starts
@@ -1178,7 +1178,7 @@ Expected traps: `date -s` by hand (the clock drifts again), a misspelt time
 zone, `set-time` with NTP active, timesyncd started without being enabled,
 cron not restarted.
 
-### Chapter 5 — La sonde (done)
+### Chapter 5 — The Probe (done)
 
 After four nights of repairing after the fact, Zoé wants to be warned before
 things break. Her probe (`/usr/local/bin/probe`) runs monitoring plugins and
@@ -1202,7 +1202,7 @@ was well. Expected traps: plugins called without their path,
 `daemon-reload`, too tight a threshold (false alerts), a probe that watches
 neither the inodes nor the live stream.
 
-### Chapter 6 — Le post-mortem (done)
+### Chapter 6 — The Post-Mortem (done)
 
 Sunday night, Théo was on call: the live stream cut out for 45 minutes. His
 notes are approximate; the facts are in the logs. The automatic update
@@ -1222,7 +1222,7 @@ cause (`stream.conf`, since 20 August), at least two actions, and no word
 that looks for someone to blame (a list in the texts file). Zoé rereads at
 each save and says what is missing.
 
-### Chapter 7 — Le goulot (done)
+### Chapter 7 — The bottleneck (done)
 
 Every day at 4 pm, the live stream has half-second gaps. The machine looks
 overloaded, but the processor does nothing: the day's archiving (an `rsync`
@@ -1254,7 +1254,7 @@ the coordinator, hands IT over to the player; Gaspard, the former volunteer,
 has moved away. Here, ssh works for real (`access.ts`): no key given by the
 game. Phase 2 of the roadmap.
 
-### Chapter 1 — Les clés (done)
+### Chapter 1 — The keys (done)
 
 A brand-new account, with a temporary password (`lilas-2027`, `lilac-2027`
 in English).
@@ -1272,7 +1272,7 @@ Expected traps: `ssh-copy-id` before `ssh-keygen` (it installs the kingdom's
 key, the most recent in `~/.ssh`, which ssh won't offer), closing the door
 before installing your key (the menu serves as a rescue console).
 
-### Chapter 2 — Le rebond (done)
+### Chapter 2 — The Jump (done)
 
 The wiki is only reachable from the gateway; Gaspard used to leave his
 private key there.
@@ -1289,7 +1289,7 @@ it), and no private key on community. Expected traps: `ssh wiki` from the
 workstation (unknown name), from community ("Permission denied"), a private key
 copied onto community (`scp`).
 
-### Chapter 3 — Le tunnel (done)
+### Chapter 3 — The tunnel (done)
 
 The wiki's admin page only listens on the wiki's 127.0.0.1:8080, and the
 wiki has neither a browser nor curl; three sign-ups are waiting.
@@ -1308,7 +1308,7 @@ not, no tunnel left open on the workstation. Expected traps:
 address), `-N` without `-f`, approving the advert (you can reject it
 afterwards).
 
-### Chapter 4 — Les transferts (done)
+### Chapter 4 — Transfers (done)
 
 Before the general meeting: the activity report to bring back, the shared
 directory's backup to redo.
@@ -1325,7 +1325,7 @@ directory. Expected traps: the forgotten trailing slash (a
 `share/share` directory), `--delete` without a dry run. The debrief
 talks about FTP and telnet, which send passwords in clear text.
 
-### Chapter 5 — L'hébergeur (done)
+### Chapter 5 — The web host (done)
 
 The Centre's new website is ready on the wiki (`/srv/wiki/site`); it is
 published on shared hosting that only offers FTP, and now refuses clear-text
@@ -1348,16 +1348,16 @@ back to the workstation), `mirror -R site` without a target (a `site`
 directory beside `public_html`), without `--delete` (the 2025 prices stay
 online).
 
-## Story 12: La Coopérative (six chapters)
+## Story 12: The Co-op (six chapters)
 
-The neighbourhood's cooperative grocery (machine `cooperative`,
+The neighbourhood's cooperative grocery (machine `coop`,
 192.0.2.20): the till (a service), the till team (Lina, Karim), a shared
 deployment account (`deploy`). Awa, the coordinator, hands the server over
 to the player when Marc, who ran it, leaves. The roadmap's gaps: accounts,
 sudoers, shared rights, a secret exposed by nginx, `X-Forwarded-For`,
 `apt upgrade` and tmux.
 
-### Chapter 1 — Le départ (done)
+### Chapter 1 — The departure (done)
 
 | Step | Command learnt |
 |---|---|
@@ -1374,7 +1374,7 @@ key gets through), emptying deploy's whole `authorized_keys`, `userdel -r`
 before taking the script over (yesterday's backup contains it), the job in
 your own crontab.
 
-### Chapter 2 — Les droits partagés (done)
+### Chapter 2 — Shared permissions (done)
 
 | Step | Command learnt |
 |---|---|
@@ -1389,7 +1389,7 @@ Expected traps: a command without a path (visudo refuses and asks "What
 now?"), a `till.conf` file (ignored), an `ALL` rule, `systemctl` without
 arguments, a mistake written with nano (sudo refuses everything).
 
-### Chapter 3 — Le secret (done)
+### Chapter 3 — The secret (done)
 
 The payment key is lying around on the internet: the site is served from
 the app's directory (`root /srv/till/app`), with its `.env` and its `.git`.
@@ -1407,7 +1407,7 @@ are no longer served, `/` and `/till/` answer, the offending address gets
 `/.env` (the token in `.git/config` still leaks), a `deny all` that closes
 the whole site, the key written without restarting the app.
 
-### Chapter 4 — Le proxy (done)
+### Chapter 4 — The proxy (done)
 
 Nobody can log in to the till any more: a robot is trying passwords, and the
 app (Express), which sees everyone as 127.0.0.1 behind nginx, has locked
@@ -1427,7 +1427,7 @@ locked. Expected traps: nothing on nginx's side (everyone stays 127.0.0.1),
 `$http_x_forwarded_for` (nginx passes on the client's header without
 appending to it).
 
-### Chapter 5 — Les mises à jour (done)
+### Chapter 5 — Updates (done)
 
 Months without an update; before opening time, the cooperative's Wi-Fi drops
 once, in the middle of the upgrade.
@@ -1446,7 +1446,7 @@ upgrade outside tmux (dpkg interrupted, apt refuses everything), forgetting
 to reboot (the old kernel runs), the till never enabled (it doesn't come
 back), nested tmux.
 
-### Chapter 6 — Les mises à jour automatiques (done)
+### Chapter 6 — Automatic updates (done)
 
 New vulnerabilities, already. Marc had installed `unattended-upgrades`
 without ever enabling it (`20auto-upgrades` at "0"); Awa wants security
@@ -1474,15 +1474,15 @@ night time, another recipient. Debrief: 20auto-upgrades (when) and
 scheduled reboot; links to the Debian wiki, `unattended-upgrade(8)` and
 `apt.conf(5)`.
 
-## Story 13: La Ruche (phase 9)
+## Story 13: The Hive (phase 9)
 
 A third place (offices of associations, a café with a guest Wi-Fi, a
-printer and cameras). Its router is a Debian (machine `ruche`, 192.0.2.21):
+printer and cameras). Its router is a Debian (machine `hive`, 192.0.2.21):
 `eth0` to the ISP's home router, `eth1` to the switch. Malik, the manager;
 the electrician has split the network into VLANs on the switch. Phase 9 of
 the roadmap.
 
-### Chapter 1 — Les VLAN (done)
+### Chapter 1 — VLANs (done)
 
 The switch has three VLANs (10 offices, 20 guests, 30 equipment), port 1 as
 an 802.1Q trunk to the router; the router still talks flat.
@@ -1499,7 +1499,7 @@ right number and the `.1` address of its network, and the same in
 (`Destination Host Unreachable`), only `ip` (doesn't survive a reboot), a
 wrong mask in the file, `ip` without sudo.
 
-### Chapter 2 — Le DHCP (done)
+### Chapter 2 — DHCP (done)
 
 dnsmasq still serves the old flat network; the new printer can only ask for
 its address over DHCP, but must keep `10.10.30.10`.
@@ -1516,7 +1516,7 @@ traps: keeping `interface=eth1` (doesn't listen on `eth1.10`), no
 restriction (dnsmasq hears the home router: a "rogue DHCP"), a misspelt
 option (`bad option`), the printer without a reservation.
 
-### Chapter 3 — Les zones (done)
+### Chapter 3 — The Zones (done)
 
 The addresses are there, but nothing goes out: the router doesn't forward
 packets, and nobody translates the private addresses. Sacha, the former
@@ -1542,7 +1542,7 @@ without `ct state` (replies are dropped), the `input` chain closing ssh, a
 mistake in the file (`syntax error`, the service doesn't start), everything
 by hand (lost at `reboot`), `nft` and `sysctl -w` without sudo.
 
-### Chapter 4 — Le télétravail (done)
+### Chapter 4 — Working from home (done)
 
 Malik wants to open the NAS from home; someone suggests "opening port 445 on
 the home router". Instead: a WireGuard VPN on the router. Malik's laptop
@@ -1567,7 +1567,7 @@ the private key given instead of the public one, `wg-quick up` then the
 service ("already exists"), a rule typed by hand and lost at reboot,
 `wg show` without sudo.
 
-### Chapter 5 — La DMZ (done)
+### Chapter 5 — The DMZ (done)
 
 The room-booking site now runs on site, on a small server (`web`,
 10.10.40.10) that the electrician put in a new VLAN 40, the DMZ. Inès, a
@@ -1591,9 +1591,9 @@ sees it), publishing everything (`dnat` without a port: the server's ssh
 visible from the internet), a DMZ that can open connections inwards,
 everything by hand (lost at reboot).
 
-### Chapter 6 — L'Annexe (done)
+### Chapter 6 — The Annex (done)
 
-La Ruche opens a second place, the Annexe (network 10.20.10.0/24, a router
+The Hive opens a second place, the Annexe (network 10.20.10.0/24, a router
 behind its ISP's home router). Sami, a volunteer there, has created his keys
 and prepared `annex-wg0.conf`; the Annexe's router becomes one more peer on
 the remote-work `wg0`.
@@ -1613,7 +1613,7 @@ network missing on the Annexe's side, no `PersistentKeepalive` (the Annexe
 falls asleep behind its home router), opening everything from the tunnel
 (the Annexe sees the cameras), `wg-quick up` on an interface already up.
 
-### Chapter 7 — L'annuaire (done)
+### Chapter 7 — The Directory (done)
 
 The team's accounts are in an OpenLDAP directory installed by Sacha on the
 router (`dc=thehive,dc=example`). Before the offices' Wi-Fi, which will rely
@@ -1636,7 +1636,7 @@ clear-text password (Sacha's template had one), a `uidNumber` already taken,
 Camille still in the groups after `ldapdelete`, Sami outside the group,
 `slapd` stopped.
 
-### Chapter 8 — Le Wi-Fi des bureaux (done)
+### Chapter 8 — The Office Wi-Fi (done)
 
 No more shared Wi-Fi password on a sticky note: a WPA2-Enterprise access
 point (802.1X, on VLAN 30) asks the router's RADIUS server (FreeRADIUS)
@@ -1661,21 +1661,21 @@ everyone before the group's, a syntax error (`Expecting section start
 brace`), `freeradius -X` with the service running (`Address already in
 use`).
 
-## Story 14: L'Audit (five chapters)
+## Story 14: The Audit (five chapters)
 
 Nadia's bakery takes its orders online; her insurer wants a security audit
 before renewing the contract. Salomé, an independent auditor, goes through
-the server (machine `fournil`, 192.0.2.22: nginx, the order app under the
+the server (machine `bakery`, 192.0.2.22: nginx, the order app under the
 `commandes` account, PostgreSQL, Redis) with a fine-tooth comb and hands in
 her report. The closing story: it brings together what the others teach
 separately (SSH, accounts, sudo, rights, firewall, logs, cron) and asks you
 to **check** as much as to fix. Everything stays defensive: you take stock,
 read a report, repair, trace an intrusion back. Phase 11 of the roadmap.
 
-### Chapter 1 — Le périmètre (done)
+### Chapter 1 — The Scope (done)
 
 Salomé has you take stock before starting: you read the engagement letter
-(the scope is ONE server, `fournil.internal`, 192.0.2.22), scan with `nmap`
+(the scope is ONE server, `bakery.internal`, 192.0.2.22), scan with `nmap`
 and write your notes. The neighbour's server (the pizzeria, 192.0.2.24,
 which shares the home router) looks "interesting" — an open database: it is
 **out of scope**.
@@ -1683,8 +1683,8 @@ which shares the home router) looks "interesting" — an open database: it is
 | Step | Command learnt |
 |---|---|
 | The framework | `cat lettre-de-mission.txt` |
-| The inventory | `nmap -sV fournil.internal` (open ports and versions) |
-| The evidence | `nmap -sV -oN inventaire.txt fournil.internal` |
+| The inventory | `nmap -sV bakery.internal` (open ports and versions) |
+| The evidence | `nmap -sV -oN inventaire.txt bakery.internal` |
 | The notes | `nano notes-audit.md`: scope, what you found (5432 and 6379), out of scope |
 
 Goal checked on the state: a `nmap -sV` trace of the Fournil kept in a file,
@@ -1695,7 +1695,7 @@ it and the debrief tells it (`{ $faute }`): nothing blocks, everything is
 said. Debrief: the ethics of auditing (written authorisation, exact scope,
 observe without exploiting).
 
-### Chapter 2 — Le rapport (done)
+### Chapter 2 — The Report (done)
 
 Four hygiene findings: C1 root can log in over SSH, C2 a forgotten account
 (Lucas, an intern who left, still in sudo), C3 passwordless sudo for the
@@ -1717,7 +1717,7 @@ Expected traps: the file changed without reloading sshd ("no effect"), a new
 `sshd_config` that locks the account out, an account locked but still in
 sudo, a broken sudoers file, a secret closed to the app (`chown root`).
 
-### Chapter 3 — L'exposition (done)
+### Chapter 3 — The Exposure (done)
 
 Salomé's port scan (`balayage-audit.txt`) finds PostgreSQL (5432) and Redis
 (6379) reachable from the internet; ufw is installed but off; Redis has no
@@ -1728,7 +1728,7 @@ password and listens everywhere (`bind * -::*`).
 | See | `sudo ss -tlnp` (`0.0.0.0` everywhere, `127.0.0.1` only) |
 | Filter | `sudo ufw allow OpenSSH`, `sudo ufw allow "Nginx Full"`, then `sudo ufw enable` |
 | Close at the source | `bind 127.0.0.1 -::1` in `/etc/redis/redis.conf`, `sudo systemctl restart redis-server` |
-| Check | `ss -tln`, `ufw status verbose`, a new `ssh fournil` connection |
+| Check | `ss -tln`, `ufw status verbose`, a new `ssh bakery` connection |
 
 Goal checked on the state: firewall active (incoming denied by default), SSH
 from the workstation, 80 and 443 reachable from the internet, 5432 and 6379
@@ -1738,7 +1738,7 @@ cutting the site, too broad a rule on the database or Redis, stopping Redis
 (the app needs it), changing `redis.conf` without restarting (the program
 doesn't reread its configuration by itself).
 
-### Chapter 4 — Les traces (done)
+### Chapter 4 — The Traces (done)
 
 In ssh's log, a login to Nadia's account in the night of 13 March at 3:12
 am, from 203.0.113.99; Nadia was asleep. Her `authorized_keys` holds two
@@ -1751,7 +1751,7 @@ keys: the other one passes itself off as one of Nadia's keys
 | Identify | `sudo ssh-keygen -l -f /home/nadia/.ssh/authorized_keys`, compared with the fingerprint in the log |
 | Revoke | remove that line (and only that one) from `authorized_keys` |
 | Look for persistence | `sudo crontab -u nadia -l`, then `sudo crontab -u nadia -e` (remove `curl … \| sh`, keep `sauvegarde.sh`) |
-| What it read | `sudo cat /home/nadia/.bash_history`: the intruder read `/srv/commandes/.env` (world-readable before "Le rapport") |
+| What it read | `sudo cat /home/nadia/.bash_history`: the intruder read `/srv/commandes/.env` (world-readable before "The Report") |
 | Change the secret | `sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD '…'"`, the same password in `.env`'s `DATABASE_URL`, `sudo systemctl restart commandes` |
 
 Goal checked on the state: the intruder's key removed and Nadia's kept; the
@@ -1765,7 +1765,7 @@ The debrief recalls what the game doesn't simulate: keeping a copy of the
 logs, notifying whoever must be (data protection authorities of several
 countries are cited).
 
-### Chapter 5 — La contre-visite (done)
+### Chapter 5 — The Follow-up Visit (done)
 
 The fixes of chapters 2 to 4 are in place (firewall active, Redis on
 localhost, root closed). Salomé comes back to check: you show it, you don't
@@ -1773,7 +1773,7 @@ just say it.
 
 | Step | Command learnt |
 |---|---|
-| Look again | `nmap -sV fournil.internal`: only 22, 80 and 443 left; but OpenSSH's version is the one from before the update |
+| Look again | `nmap -sV bakery.internal`: only 22, 80 and 443 left; but OpenSSH's version is the one from before the update |
 | Audit | `sudo lynis audit system`: a warning (`PKGS-7392`, vulnerable packages) and suggestions; `sudo grep suggestion /var/log/lynis-report.dat` |
 | Fix | `sudo apt update`, `sudo apt upgrade`; `sshd_config` (`X11Forwarding`, `MaxAuthTries`, `AllowTcpForwarding`, `AllowAgentForwarding`), `UMASK` in `/etc/login.defs`, the `/etc/issue` banner; `sudo sshd -t`, `sudo systemctl reload ssh` |
 | Prove | run `lynis` and `nmap -sV` again (OpenSSH's version has changed) |
@@ -1796,27 +1796,27 @@ itself**, from the signed engagement to the follow-up visit, alongside the
 original three chapters that had the player as **the audited party** (read
 the report, fix, trace back). Everything stays defensive: nothing is
 exploited; you observe, report, have things fixed and check. It became the
-five chapters above: *Le périmètre* (new: the scan done by the player with
-`nmap` replaces the provided `balayage-audit.txt`), *Le rapport*,
-*L'exposition*, *Les traces* (the original three), and *La contre-visite*
+five chapters above: *The Scope* (new: the scan done by the player with
+`nmap` replaces the provided `balayage-audit.txt`), *The Report*,
+*The Exposure*, *The Traces* (the original three), and *The Follow-up Visit*
 (new: `nmap` and Lynis again, and the closing report written in `nano`).
 The new tool, `nmap` (with its `man` page, `--help`, the real outputs), is
 simulated on the story's network only: an address outside the simulated
 network never answers. Debrief links: nmap's official documentation
 (https://nmap.org/book/man.html) and ANSSI's guides.
 
-## Story 15: Le Labo (four chapters)
+## Story 15: The Lab (four chapters)
 
-The server of the Labo, the neighbourhood photo club (machine `labo`),
+The server of the Labo, the neighbourhood photo club (machine `lab`),
 rented from a host: two 2 TB disks in software RAID 1. `md0` holds the
 system (`/`), `md1` the members' photos (`/srv`). Odile, the president,
 isn't a technician; the host replaces a disk on request (a ticket with the
 serial number), but the RAID is the customer's business. Storage is
 described by `storage.ts` (disks, SMART, GPT partitions, arrays); the
-commands in `commands/storage.ts`. The story opens after "Le disque plein"
-(L'Astreinte).
+commands in `commands/storage.ts`. The story opens after "The full disk"
+(On Call).
 
-### Chapter 1 — Le disque qui fatigue (done)
+### Chapter 1 — The tired disk (done)
 
 For two days, smartd has been writing that `sdb` has unreadable sectors, and
 the kernel has reread blocks from the other mirror. Yet SMART says
@@ -1835,7 +1835,7 @@ taking out a member on `sda`, the healthy disk (put it back with
 `--re-add`); only one array of the two; a ticket giving `sda`'s serial
 number.
 
-### Chapter 2 — Le disque neuf (done)
+### Chapter 2 — The new disk (done)
 
 The disk has been replaced, blank; the arrays run on `sda` alone.
 
@@ -1855,7 +1855,7 @@ Since chapter 1, the photos are in an LVM logical volume (`labo/photos`,
 mounted on `/srv`) on top of `md1`, as Debian's installer suggests ("RAID
 then LVM"); `lvm.ts` describes LVM.
 
-### Chapter 3 — La place qui manque (done)
+### Chapter 3 — Running out of room (done)
 
 `/srv` is 97 % full and the winter competition needs 1.5 TB; the `labo`
 group has no space left. The host has plugged in two new 4 TB disks.
@@ -1875,7 +1875,7 @@ False leads: a single disk in the group (repaired with a degraded array
 `mdadm --detail --scan` appended (md0 and md1 twice); the initramfs rebuilt
 before the last change to `mdadm.conf`.
 
-### Chapter 4 — Le redémarrage qui coince (done)
+### Chapter 4 — The stuck reboot (done)
 
 After a reboot (a new kernel), the server stopped in emergency mode. Théo
 had added the scans' USB disk to `fstab` by its name, `/dev/sdc1`; since
@@ -1896,12 +1896,12 @@ mode); `/dev/sde1` (right today, fragile tomorrow); the UUID without
 `nofail`; resuming without `daemon-reload` (systemd keeps the old fstab);
 deleting the line (the server boots, but no more scans); an unreadable line.
 
-## Story 16: La Veille (five chapters)
+## Story 16: The Watch (five chapters)
 
-Six months after "L'Audit" (story 14, "I'll come back in six months:
+Six months after "The Audit" (story 14, "I'll come back in six months:
 security has to be checked again"), Salomé returns — no longer to audit,
 but to pass on a habit: the weekly security watch, which you keep up on
-your own once she's gone. Le Fournil's business has grown: the machine
+your own once she's gone. The Bakery's business has grown: the machine
 (`kneader`, 192.0.2.24) is a new server (a migration), Salomé and Nadia take
 up their roles again. Each chapter matches a real sysadmin gesture: reading
 a bulletin, sorting, fixing without breaking, proving, then automating what
@@ -1912,7 +1912,7 @@ everything relies on what the game already does (`apt`, `nmap`, `lynis`,
 `ss`, `curl`, `grep`, `systemctl`, `crontab`/timers,
 `unattended-upgrades`).
 
-### Chapter 1 — Le bulletin (done)
+### Chapter 1 — The Bulletin (done)
 
 A weekly file (like a security advisory mailing list: Debian Security
 Advisories, oss-security…) lists five fictitious CVEs, each with its
@@ -1934,13 +1934,13 @@ python3-certbot-nginx (not installed) and curl (already up to date) under
 "Not applicable". Expected traps: marking certbot or curl as relevant,
 forgetting nginx, rsync or openssh-server.
 
-### Chapter 2 — La priorité (done)
+### Chapter 2 — The Priority (done)
 
 Two CVEs remain to handle (nginx, rsync), with a CVSS score and a different
 exposure: nginx (80, 443) is reachable from the internet; rsync has no
 listening port (a command-line tool, not a service). The score alone isn't
-enough: it must be crossed with exposure, already learnt in "Le périmètre"
-and "L'exposition".
+enough: it must be crossed with exposure, already learnt in "The Scope"
+and "The Exposure".
 
 | Step | Command learnt |
 |---|---|
@@ -1952,7 +1952,7 @@ though its score is lower), with a justification that cites exposure (not
 just the score), and notes that openssh-server has nothing to do here.
 Expected trap: sorting only by decreasing CVSS score (rsync before nginx).
 
-### Chapter 3 — Le correctif (done)
+### Chapter 3 — The Fix (done)
 
 nginx and rsync each have a Debian fix already published. `apt upgrade`
 installs all available updates at once (not one by one), after refreshing
@@ -1968,7 +1968,7 @@ Goal checked on the state: nginx and rsync at the fixed version, and the
 site still served (200). Expected trap: `apt upgrade` without `apt update`
 first ("Upgrading: 0").
 
-### Chapter 4 — Sans preuve, pas de certitude (done)
+### Chapter 4 — No Proof, No Certainty (done)
 
 A fix that isn't checked is only an intention (the lesson of "La
 contre-visite", taken up again). You prove again that both packages are up
@@ -1985,7 +1985,7 @@ Goal checked on the state: both packages confirmed up to date, an earlier
 attempt found in the access log (an empty HTTP/2 request, refused by nginx,
 a few days before the fix), and the site still served.
 
-### Chapter 5 — Mettre en veille (done)
+### Chapter 5 — Settling Into a Routine (done)
 
 A one-off check isn't enough: the watch is a habit. Two things to set up,
 which run on their own without replacing the human decision:
@@ -2025,7 +2025,7 @@ reconnaissance tools) would remain a separate story, with its own
 safeguards, to design separately if the project decides so (see
 `docs/OFFENSIVE-STORY.md`).
 
-## Story 17: Le courrier indésirable (three chapters)
+## Story 17: Junk Mail (three chapters)
 
 The Community Gardens (server `jardin`, 203.0.113.30, `gardens.example`)
 left their host for their own server: website, mail (Postfix) and DNS
@@ -2036,7 +2036,7 @@ verifier.example (which answers with its results, like check-auth) and
 newsmail.example (the newsletter provider). The story opens after "Ça
 marche chez moi" (DNS).
 
-### Chapter 1 — Le facteur (done)
+### Chapter 1 — The Postman (done)
 
 | Step | Command learnt |
 |---|---|
@@ -2050,7 +2050,7 @@ Goal checked on the state: the secondary publishes an SPF that allows
 records (`permerror`), the forgotten serial. Other accepted solutions: `a`,
 `ip4:203.0.113.30`, `~all`.
 
-### Chapter 2 — La signature (done)
+### Chapter 2 — The Signature (done)
 
 | Step | Command learnt |
 |---|---|
@@ -2067,7 +2067,7 @@ world-readable key ("key data is not secure"), Debian's local socket seen
 from Postfix's chroot, the two network socket syntaxes, `smtpd_milters`
 alone, "key not secure" (DNSSEC, harmless), the serial.
 
-### Chapter 3 — La politique (done)
+### Chapter 3 — The Policy (done)
 
 | Step | Command learnt |
 |---|---|
@@ -2080,15 +2080,15 @@ rua=, the newsletter and the server's emails pass DMARC. Expected traps:
 quarantine before alignment, the provider's SPF include (which aligns
 nothing), the CNAME without a trailing dot, two DMARC records.
 
-## Story 18: La flotte (three chapters)
+## Story 18: The Fleet (three chapters)
 
 The neighbourhood centres have three servers (north, south, east, on
 10.30.0.0/24, a `deploy` account with passwordless sudo) and a control
 machine, `pilote` (192.0.2.25, `pilot` in English), where Ansible is
 installed. Théo started an `~/ansible` directory before leaving. The story
-opens after "Les clés" (ssh by key).
+opens after "The keys" (ssh by key).
 
-### Chapter 1 — L'inventaire (done)
+### Chapter 1 — The Inventory (done)
 
 | Step | Command learnt |
 |---|---|
@@ -2101,7 +2101,7 @@ Goal checked on the state: the inventory's `centres` group holds the three
 centres, and the last ping reached them all. Other accepted solution:
 `host_key_checking = False`.
 
-### Chapter 2 — Le playbook (done)
+### Chapter 2 — The Playbook (done)
 
 | Step | Command learnt |
 |---|---|
@@ -2116,7 +2116,7 @@ run changed nothing. Expected traps: `lineinfile` leaving the duplicate that
 was already there, a YAML error, a misspelt module. Other accepted solution:
 `command` with `creates=`.
 
-### Chapter 3 — La répétition (done)
+### Chapter 3 — The Rehearsal (done)
 
 | Step | Command learnt |
 |---|---|
@@ -2130,15 +2130,15 @@ configuration loaded by sshd say `PasswordAuthentication no`, and the last
 full run changed nothing. Expected trap: the file changed without sshd being
 reloaded (the handler is only notified on a change).
 
-## Story 19: La Rustine (one chapter)
+## Story 19: The Patch (one chapter)
 
-La Rustine ("The Patch"), the community bike workshop, has a small public
+The Patch ("The Patch"), the community bike workshop, has a small public
 server (`rustine`, `patch` in English, 203.0.113.40, `cycles.example`) where
 Inès installed Caddy "because it does HTTPS by itself". A short chapter to
-compare with nginx and certbot ("Le certificat a expiré", Datacenter). The
-story opens after "Le certificat a expiré" and "La colocation".
+compare with nginx and certbot ("The certificate has expired", Datacenter). The
+story opens after "The certificate has expired" and "Sharing a home".
 
-### Chapter 1 — Le cadenas (done)
+### Chapter 1 — The Padlock (done)
 
 | Step | Command learnt |
 |---|---|
@@ -2161,7 +2161,7 @@ accepted solutions: `cycles.example, www.cycles.example`, `caddy reload`,
 
 ## Ideas for later
 
-- Le Paquet perdu, chapter 2: the local network (`ip a`, private addresses,
+- The Lost Packet, chapter 2: the local network (`ip a`, private addresses,
   NAT), linked with "the home router".
 - More in `docs/ROADMAP.md`.
 
