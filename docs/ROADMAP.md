@@ -351,6 +351,23 @@ which works on machines rather than switches).
       there yet at boot (`nofail`, what a mount point hides,
       `RequiresMountsFor=`)
 
+### Next stories (proposals)
+
+- [ ] **Resources**: a server that crawls. The load average and what it
+      counts, `top`, a process that hogs the CPU (`nice`, `renice`,
+      `CPUQuota=`), "Too many open files" (`ulimit`, `LimitNOFILE=`), a stuck
+      process (`kill` and its signals). The engine already has processes,
+      memory (OOM killer) and systemd's limits.
+- [ ] **File sharing**: an association's NAS. NFS (`/etc/exports`, mounting
+      it, `root_squash`) and Samba for the Windows desktops, permissions and
+      quotas. Needs network mounts, not simulated yet.
+- [ ] **Monitoring and logs**: several machines' logs gathered in one place
+      (rsyslog, remote journald), alerts on thresholds, a few metrics; a story
+      across several machines.
+- [ ] **A database in production**: PostgreSQL day to day. Connections
+      exhausted (`max_connections`), a slow query (`EXPLAIN`), replication
+      and failover, permissions (`GRANT`).
+
 ---
 
 ## Phase 10 — Translations
@@ -373,7 +390,8 @@ The architecture has prepared for it since phase 0 (see "Translations" in
       databases, groups, services, hosts, routes, passwords, organisation
       names: English identifiers, French through `names.ftl`,
       `passwords.ftl`, `machines.ftl` and the stories' texts)
-- [ ] German, Spanish, Mandarin, Korean, then other languages
+- [ ] German, Spanish, Mandarin, Korean, then other languages (on hold:
+      more playtesting of the English and French versions first)
 - [x] Outputs of the simulated commands according to `LANG`, like the real
       tools (in English: the original messages, as with `LANG=C`)
 - [x] Translated, easy-to-type names of places and objects (`names.ftl`, the
@@ -395,8 +413,6 @@ The architecture has prepared for it since phase 0 (see "Translations" in
       names translated too (`royaume` → `kingdom`, `machines.ftl`)
 - [ ] Paragraph joining and typography per language (Chinese and Korean
       don't separate lines with a space)
-- [ ] Translation platform (hosted Weblate, free for libre projects)
-      connected to `src/texts/`
 - [ ] Simulated terminal compatible with wide characters (CJK)
 - [ ] Review by native speakers, technical glossary per language
 - [x] Quests replayed automatically in each language
