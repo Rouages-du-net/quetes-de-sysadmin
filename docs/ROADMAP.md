@@ -351,6 +351,23 @@ which works on machines rather than switches).
       there yet at boot (`nofail`, what a mount point hides,
       `RequiresMountsFor=`)
 
+### Next stories (proposals)
+
+- [ ] **Resources**: a server that crawls. The load average and what it
+      counts, `top`, a process that hogs the CPU (`nice`, `renice`,
+      `CPUQuota=`), "Too many open files" (`ulimit`, `LimitNOFILE=`), a stuck
+      process (`kill` and its signals). The engine already has processes,
+      memory (OOM killer) and systemd's limits.
+- [ ] **File sharing**: an association's NAS. NFS (`/etc/exports`, mounting
+      it, `root_squash`) and Samba for the Windows desktops, permissions and
+      quotas. Needs network mounts, not simulated yet.
+- [ ] **Monitoring and logs**: several machines' logs gathered in one place
+      (rsyslog, remote journald), alerts on thresholds, a few metrics; a story
+      across several machines.
+- [ ] **A database in production**: PostgreSQL day to day. Connections
+      exhausted (`max_connections`), a slow query (`EXPLAIN`), replication
+      and failover, permissions (`GRANT`).
+
 ---
 
 ## Phase 10 — Translations
