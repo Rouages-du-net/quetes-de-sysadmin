@@ -148,7 +148,7 @@ const notReread = (j: Game) => {
 const failedHandshake = (e: TunnelState) => ['conf', 'adresse', 'filtre', 'cle-routeur', 'inconnu'].includes(e);
 
 export const annex: Chapter = {
-  id: 'annexe',
+  id: 'annex',
   number: 6,
   plan: hivePlan({ remoteWork: true, dmz: true, annex: true }),
   commands: [
@@ -207,25 +207,25 @@ export const annex: Chapter = {
         },
       },
       home: {
-        'courriel_sami.txt': f(t('annexe-courriel-sami', { cle: ANNEX_PUBLIC })),
-        'annex-wg0.conf': f(t('annexe-conf'), { lines: true }),
+        'courriel_sami.txt': f(t('annex-courriel-sami', { cle: ANNEX_PUBLIC })),
+        'annex-wg0.conf': f(t('annex-conf'), { lines: true }),
         'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },
     }),
   events: [
-    { id: 'pas-relu', condition: notReread, message: (j) => j.t('annexe-evenement-pas-relu') },
+    { id: 'pas-relu', condition: notReread, message: (j) => j.t('annex-evenement-pas-relu') },
     {
       id: 'poignee',
       condition: (j) => !notReread(j) && !!wg(j).wg0?.conf.peers.some((p) => p.key === ANNEX_PUBLIC) && failedHandshake(toNas(j)),
-      message: (j) => j.t('annexe-evenement-poignee'),
+      message: (j) => j.t('annex-evenement-poignee'),
     },
-    { id: 'autorisees', condition: (j) => toNas(j) === 'autorisees', message: (j) => j.t('annexe-evenement-autorisees') },
-    { id: 'route', condition: (j) => toNas(j) === 'route', message: (j) => j.t('annexe-evenement-route') },
-    { id: 'endormi', condition: (j) => toNas(j) === 'ok' && toPrinter(j) === 'endormi', message: (j) => j.t('annexe-evenement-endormi') },
-    { id: 'cameras', condition: (j) => toCamera(j) === 'ok', message: (j) => j.t('annexe-evenement-cameras') },
-    { id: 'malik', condition: (j) => !!wg(j).wg0 && malik(j) !== 'ok', message: (j) => j.t('annexe-evenement-malik') },
+    { id: 'autorisees', condition: (j) => toNas(j) === 'autorisees', message: (j) => j.t('annex-evenement-autorisees') },
+    { id: 'route', condition: (j) => toNas(j) === 'route', message: (j) => j.t('annex-evenement-route') },
+    { id: 'endormi', condition: (j) => toNas(j) === 'ok' && toPrinter(j) === 'endormi', message: (j) => j.t('annex-evenement-endormi') },
+    { id: 'cameras', condition: (j) => toCamera(j) === 'ok', message: (j) => j.t('annex-evenement-cameras') },
+    { id: 'malik', condition: (j) => !!wg(j).wg0 && malik(j) !== 'ok', message: (j) => j.t('annex-evenement-malik') },
     { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-evenement-ssh') },
-    { id: 'en-place', condition: (j) => compliant(j) && !compliant(j, toReboot(j)), message: (j) => j.t('annexe-evenement-en-place') },
-    { id: 'fin', condition: (j) => compliant(j) && openSsh(nft(j)) && compliant(j, toReboot(j)), message: (j) => j.t('annexe-evenement-fin') },
+    { id: 'en-place', condition: (j) => compliant(j) && !compliant(j, toReboot(j)), message: (j) => j.t('annex-evenement-en-place') },
+    { id: 'fin', condition: (j) => compliant(j) && openSsh(nft(j)) && compliant(j, toReboot(j)), message: (j) => j.t('annex-evenement-fin') },
   ],
 };

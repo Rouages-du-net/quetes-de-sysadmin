@@ -67,7 +67,7 @@ const inWaiting = (j: Game) => mail(j)?.file.length ?? 0;
 const seen = (j: Game, text: string) => j.last.output.includes(text) || j.last.errors.some((e) => e.includes(text));
 
 export const postman: Chapter = {
-  id: 'facteur',
+  id: 'postman',
   number: 1,
   commands: [
     'ls',
@@ -107,18 +107,18 @@ export const postman: Chapter = {
   accounts,
   state: (t) => gardensState(t, departure),
   initialise: initialiseGardens,
-  createWorld: (t) => gardensWorld(t, departure, { 'courriel_nour.txt': f(t('facteur-courriel-nour')) }, LOG),
+  createWorld: (t) => gardensWorld(t, departure, { 'courriel_nour.txt': f(t('postman-courriel-nour')) }, LOG),
   events: [
-    { id: 'differe', condition: (j) => seen(j, 'status=deferred') || seen(j, '451 4.7.26'), message: (j) => j.t('facteur-evenement-differe') },
-    { id: 'ancien', condition: (j) => seen(j, `include:_spf.old-hosting.example`), message: (j) => j.t('facteur-evenement-ancien') },
+    { id: 'differe', condition: (j) => seen(j, 'status=deferred') || seen(j, '451 4.7.26'), message: (j) => j.t('postman-evenement-differe') },
+    { id: 'ancien', condition: (j) => seen(j, `include:_spf.old-hosting.example`), message: (j) => j.t('postman-evenement-ancien') },
     {
       id: 'deux',
       condition: (j) => txt(j, DOMAIN, 'primary').filter((x) => /^v=spf1(\s|$)/i.test(x)).length > 1,
-      message: (j) => j.t('facteur-evenement-deux'),
+      message: (j) => j.t('postman-evenement-deux'),
     },
-    { id: 'serie', condition: (j) => spf(j, 'primary') === 'pass' && spf(j, 'secondary') !== 'pass', message: (j) => j.t('facteur-evenement-serie') },
-    { id: 'spf', condition: passSpf, message: (j) => j.t('facteur-evenement-spf') },
-    { id: 'fin', condition: (j) => passSpf(j) && inWaiting(j) === 0 && (mail(j)?.restored.length ?? 0) >= MEMBERS.length, message: (j) => j.t('facteur-evenement-fin') },
+    { id: 'serie', condition: (j) => spf(j, 'primary') === 'pass' && spf(j, 'secondary') !== 'pass', message: (j) => j.t('postman-evenement-serie') },
+    { id: 'spf', condition: passSpf, message: (j) => j.t('postman-evenement-spf') },
+    { id: 'fin', condition: (j) => passSpf(j) && inWaiting(j) === 0 && (mail(j)?.restored.length ?? 0) >= MEMBERS.length, message: (j) => j.t('postman-evenement-fin') },
   ],
 };
 

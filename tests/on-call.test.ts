@@ -9,11 +9,11 @@ const ALL = STORIES.flatMap((h) => h.chapters.map((c) => c.id));
 describe('Astreinte', () => {
   it('l’incident du jour : un chapitre existant, toujours le même pour une date, et qui change d’un jour à l’autre', () => {
     expect(INCIDENTS.every((id) => ALL.includes(id))).toBe(true);
-    expect(INCIDENTS).not.toContain('eveil');
+    expect(INCIDENTS).not.toContain('lighthouse');
     // Pas de chapitre qui dépend de ce que les précédents ont laissé sur le poste.
     const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
     expect(INCIDENTS.filter((id) => chapter(id).watchesWorkstation || chapter(id).playerKeys)).toEqual([]);
-    expect(INCIDENTS).not.toContain('rebond');
+    expect(INCIDENTS).not.toContain('jump');
     expect(dayIncident('2026-10-24')).toBe(dayIncident('2026-10-24'));
     const month = Array.from({ length: 31 }, (_, i) => dayIncident(`2026-10-${String(i + 1).padStart(2, '0')}`));
     expect(new Set(month).size).toBeGreaterThan(10);

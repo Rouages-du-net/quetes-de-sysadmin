@@ -7,7 +7,7 @@ import { progressCode, backupFile } from '../src/engine/progress';
 describe('Le tableau de classe', () => {
   it('lit un fichier de sauvegarde : nom, chapitres, succès, records, date', () => {
     const text = backupFile(
-      { finished: ['eveil', 'bourg', 'racine', 'sauvegarde', 'cles'], name: 'Lina', achievements: { tube: 'x', manuel: 'y' }, records: { eveil: 90_000, bourg: 61_000 } },
+      { finished: ['lighthouse', 'village', 'root', 'backup', 'keys'], name: 'Lina', achievements: { tube: 'x', manuel: 'y' }, records: { lighthouse: 90_000, village: 61_000 } },
       new Date('2027-01-15T10:00:00Z'),
     );
     const e = fileStudent('lina.json', text) as Student;
@@ -24,10 +24,10 @@ describe('Le tableau de classe', () => {
   });
 
   it('lit des codes, un par ligne, avec ou sans nom', () => {
-    const code = progressCode(['eveil', 'bourg']);
+    const code = progressCode(['lighthouse', 'village']);
     const [lina, anonymous, no] = codesStudents(`Lina B. : ${code}\n\n${code.toLowerCase()}\nNour QDS-ZZZZ-ZZZZ`);
-    expect(lina).toMatchObject({ name: 'Lina B.', finished: ['eveil', 'bourg'] });
-    expect(anonymous).toMatchObject({ name: code.toLowerCase(), finished: ['eveil', 'bourg'] });
+    expect(lina).toMatchObject({ name: 'Lina B.', finished: ['lighthouse', 'village'] });
+    expect(anonymous).toMatchObject({ name: code.toLowerCase(), finished: ['lighthouse', 'village'] });
     expect(no).toMatchObject({ error: expect.stringMatching(/^code-/) });
   });
 

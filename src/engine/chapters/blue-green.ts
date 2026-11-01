@@ -44,7 +44,7 @@ const conf = (t: Game['t']) => `server {
         try_files $uri $uri/ =404;
     }
 
-    # ${t('bleu-vert-conf-commentaire')}
+    # ${t('blue-green-conf-commentaire')}
     location /kiosk/ {
         proxy_pass http://127.0.0.1:3001/;
     }
@@ -62,7 +62,7 @@ const okReaders = (j: Game) => httpRequest(j, GAZETTE, '/kiosk/', 80, false)?.co
 const output = (j: Game) => [j.last.output, ...j.last.errors].join('\n');
 
 export const greenBlue: Chapter = {
-  id: 'bleu-vert',
+  id: 'blue-green',
   number: 3,
   commands: [
     'ls',
@@ -167,18 +167,18 @@ export const greenBlue: Chapter = {
         }),
       }),
       home: place({
-        vous: d({ 'message_de_samia.txt': f(t('bleu-vert-message-de-samia')) }),
+        vous: d({ 'message_de_samia.txt': f(t('blue-green-message-de-samia')) }),
         samia: place({}, { owner: 'samia', mode: 'rwx------' }),
         theo: place({}, { owner: 'theo', mode: 'rwx------' }),
       }),
       srv: place({
         gazette: place({
-          releases: place({ '20270524090000': place({ 'index.html': file(t('retour-arriere-site-accueil'), { owner: 'vous' }) }) }),
+          releases: place({ '20270524090000': place({ 'index.html': file(t('rollback-site-accueil'), { owner: 'vous' }) }) }),
           current: f('', { owner: 'vous', link: '/srv/gazette/releases/20270524090000' }),
         }),
         kiosk: place(
           {
-            versions: place({ '1.4.2': versionDirectory(t, '1.4.2'), '1.5.0': versionDirectory(t, '1.5.0', 'bleu-vert-notes-150') }, kiosk),
+            versions: place({ '1.4.2': versionDirectory(t, '1.4.2'), '1.5.0': versionDirectory(t, '1.5.0', 'blue-green-notes-150') }, kiosk),
             blue: f('', { ...kiosk, link: `${KIOSK}/versions/1.4.2` }),
             green: f('', { ...kiosk, link: `${KIOSK}/versions/1.4.2` }),
           },
@@ -203,7 +203,7 @@ export const greenBlue: Chapter = {
     {
       id: 'sante-ko',
       condition: (j) => output(j).includes('"status":"error"') && output(j).includes('is not set'),
-      message: (j) => j.t('bleu-vert-evenement-sante-ko'),
+      message: (j) => j.t('blue-green-evenement-sante-ko'),
     },
     {
       id: 'pas-redemarre',
@@ -212,15 +212,15 @@ export const greenBlue: Chapter = {
         !!instances(j).green &&
         linkVersion(j, 'green') !== instances(j).green.version &&
         output(j).includes(`"version":"${instances(j).green.version}"`),
-      message: (j) => j.t('bleu-vert-evenement-pas-redemarre'),
+      message: (j) => j.t('blue-green-evenement-pas-redemarre'),
     },
-    { id: 'trop-tot', condition: (j) => !okReaders(j), message: (j) => j.t('bleu-vert-evenement-trop-tot') },
+    { id: 'trop-tot', condition: (j) => !okReaders(j), message: (j) => j.t('blue-green-evenement-trop-tot') },
     {
       id: 'pas-recharge',
       condition: (j) => (j.read(SITE) ?? '').includes('127.0.0.1:3002') && served(j) === 'blue' && j.last.commands.some((c) => c[0] === 'curl'),
-      message: (j) => j.t('bleu-vert-evenement-pas-recharge'),
+      message: (j) => j.t('blue-green-evenement-pas-recharge'),
     },
-    { id: 'plus-de-filet', condition: (j) => served(j) === 'green' && !enabled(j, 'blue'), message: (j) => j.t('bleu-vert-evenement-plus-de-filet') },
+    { id: 'plus-de-filet', condition: (j) => served(j) === 'green' && !enabled(j, 'blue'), message: (j) => j.t('blue-green-evenement-plus-de-filet') },
     {
       id: 'fin',
       condition: (j) => {
@@ -229,7 +229,7 @@ export const greenBlue: Chapter = {
         const s = c ? health(j, c) : null;
         return !!c && s?.status === 'ok' && s.version === '1.5.0' && okReaders(j) && enabled(j, other);
       },
-      message: (j) => j.t('bleu-vert-evenement-fin'),
+      message: (j) => j.t('blue-green-evenement-fin'),
     },
   ],
 };

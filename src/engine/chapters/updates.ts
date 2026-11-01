@@ -73,7 +73,7 @@ const servicesOk = (j: Game) => sd(j).services.nginx.state === 'active' && sd(j)
 const openTmux = (j: Game) => Object.keys(j.state.tmux ?? {}).length > 0 && !(j as Shell).tmux;
 
 export const updates: Chapter = {
-  id: 'mises-a-jour',
+  id: 'updates',
   number: 5,
   commands: [
     'ls',
@@ -123,24 +123,24 @@ export const updates: Chapter = {
   createWorld: (t) =>
     cooperativeWorld({
       withoutMarc: true,
-      home: { 'courriel_awa.txt': f(t('mises-a-jour-courriel-awa')) },
+      home: { 'courriel_awa.txt': f(t('updates-courriel-awa')) },
       etc: nginxCooperative(SITE),
       sbin: BINARY_NGINX,
       more: tillWorld({ env: tillEnv(NEW_KEY, 'loopback'), envMode: 'rw-------', logAccess: '', appLog: '' }),
     }),
   events: [
-    { id: 'interrompu', condition: (j) => !!apt(j).interrupted?.length, message: (j) => j.t('mises-a-jour-evenement-interrompu') },
-    { id: 'dans-tmux', condition: (j) => dayA(j) && openTmux(j) && !restarts(j), message: (j) => j.t('mises-a-jour-evenement-dans-tmux') },
+    { id: 'interrompu', condition: (j) => !!apt(j).interrupted?.length, message: (j) => j.t('updates-evenement-interrompu') },
+    { id: 'dans-tmux', condition: (j) => dayA(j) && openTmux(j) && !restarts(j), message: (j) => j.t('updates-evenement-dans-tmux') },
     {
       id: 'a-jour',
       condition: (j) => dayA(j) && !restarts(j),
-      message: (j) => j.t('mises-a-jour-evenement-a-jour', { ancien: OLD_KERNEL, nouveau: NEW_KERNEL }),
+      message: (j) => j.t('updates-evenement-a-jour', { ancien: OLD_KERNEL, nouveau: NEW_KERNEL }),
     },
     {
       id: 'caisse-tombee',
       condition: (j) => restarts(j) && sd(j).services.till.state !== 'active',
-      message: (j) => j.t('mises-a-jour-evenement-caisse-tombee'),
+      message: (j) => j.t('updates-evenement-caisse-tombee'),
     },
-    { id: 'fin', condition: (j) => dayA(j) && restarts(j) && servicesOk(j), message: (j) => j.t('mises-a-jour-evenement-fin') },
+    { id: 'fin', condition: (j) => dayA(j) && restarts(j) && servicesOk(j), message: (j) => j.t('updates-evenement-fin') },
   ],
 };

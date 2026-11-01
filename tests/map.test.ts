@@ -18,7 +18,7 @@ for (const language of LANGUAGES)
     const L = (text: string) => inLanguage(translator(language), text);
 
     it('au départ : la maison, ce qu’on y aperçoit, et la racine', () => {
-      const s = new Shell(chapter('eveil'), language);
+      const s = new Shell(chapter('lighthouse'), language);
       const c = places(map(s));
       expect(c['/'].visit).toBe(true);
       expect(c[L('/Cabane')]).toMatchObject({ here: true, home: true, visit: true });
@@ -32,7 +32,7 @@ for (const language of LANGUAGES)
     });
 
     it('en avançant : le lieu visité, puis ce qu’on y aperçoit ; un lieu fermé', () => {
-      const s = new Shell(chapter('eveil'), language);
+      const s = new Shell(chapter('lighthouse'), language);
       s.execute(L('cd Jetee'));
       let c = places(map(s));
       expect(c[L('/Cabane/Jetee')]).toMatchObject({ here: true, visit: true });
@@ -55,7 +55,7 @@ for (const language of LANGUAGES)
     });
 
     it('sur un serveur : la vraie arborescence depuis /, les maisons des autres aperçues en passant', () => {
-      const c = places(map(new Shell(chapter('racine'), language)));
+      const c = places(map(new Shell(chapter('root'), language)));
       expect(c['/home'].visit).toBe(true);
       expect(c['/etc']).toMatchObject({ visit: false });
       expect(c['/home/nour']).toMatchObject({ visit: false });

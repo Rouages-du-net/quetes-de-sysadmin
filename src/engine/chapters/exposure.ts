@@ -88,7 +88,7 @@ const localeListeningRedis = (j: Game) => activeRedis(j) && redis(j)?.address ==
 const confLocale = (j: Game) => redisLocal(j.read(REDIS_CONF) ?? '');
 
 export const exposure: Chapter = {
-  id: 'exposition',
+  id: 'exposure',
   number: 3,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'ps', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'ss', 'ufw'],
   home: M,
@@ -124,7 +124,7 @@ export const exposure: Chapter = {
   createWorld: (t) =>
     bakeryWorld(t, {
       withoutLucas: true,
-      home: { 'courriel_salome.txt': f(t('exposition-courriel-salome')), 'balayage-audit.txt': f(SCAN, { lines: true }) },
+      home: { 'courriel_salome.txt': f(t('exposure-courriel-salome')), 'balayage-audit.txt': f(SCAN, { lines: true }) },
       etc: { redis: d({ 'redis.conf': f(REDIS_CONFIG, { lines: true, owner: 'redis', group: 'redis', mode: 'rw-r-----' }) }, undefined, { owner: 'root' }) },
       ssh: { 'sshd_config.d': d({ '00-hardening.conf': file('PermitRootLogin no', 'root') }, undefined, { owner: 'root' }) },
     }),
@@ -132,23 +132,23 @@ export const exposure: Chapter = {
     {
       id: 'ecoute',
       condition: (j) => j.last.commands.some((c) => c[0] === 'ss') && /:(6379|redis)\b/.test(j.last.output),
-      message: (j) => j.t('exposition-evenement-ecoute'),
+      message: (j) => j.t('exposure-evenement-ecoute'),
     },
-    { id: 'enferme', condition: (j) => pf(j).enabled && !openSsh(j), message: (j) => j.t('exposition-evenement-enferme') },
-    { id: 'site-coupe', condition: (j) => pf(j).enabled && !openSite(j), message: (j) => j.t('exposition-evenement-site-coupe') },
-    { id: 'base-ouverte', condition: (j) => pf(j).enabled && openBase(j), message: (j) => j.t('exposition-evenement-base-ouverte') },
-    { id: 'redis-arrete', condition: (j) => !activeRedis(j), message: (j) => j.t('exposition-evenement-redis-arrete') },
+    { id: 'enferme', condition: (j) => pf(j).enabled && !openSsh(j), message: (j) => j.t('exposure-evenement-enferme') },
+    { id: 'site-coupe', condition: (j) => pf(j).enabled && !openSite(j), message: (j) => j.t('exposure-evenement-site-coupe') },
+    { id: 'base-ouverte', condition: (j) => pf(j).enabled && openBase(j), message: (j) => j.t('exposure-evenement-base-ouverte') },
+    { id: 'redis-arrete', condition: (j) => !activeRedis(j), message: (j) => j.t('exposure-evenement-redis-arrete') },
     {
       id: 'sans-effet',
       condition: (j) => activeRedis(j) && confLocale(j) && !localeListeningRedis(j),
-      message: (j) => j.t('exposition-evenement-sans-effet'),
+      message: (j) => j.t('exposure-evenement-sans-effet'),
     },
-    { id: 'pare-feu', condition: filter, message: (j) => j.t('exposition-evenement-pare-feu') },
-    { id: 'redis-local', condition: localeListeningRedis, message: (j) => j.t('exposition-evenement-redis-local') },
+    { id: 'pare-feu', condition: filter, message: (j) => j.t('exposure-evenement-pare-feu') },
+    { id: 'redis-local', condition: localeListeningRedis, message: (j) => j.t('exposure-evenement-redis-local') },
     {
       id: 'fin',
       condition: (j) => filter(j) && localeListeningRedis(j) && (j.state.connexions ?? 1) > (pf(j).activationAlConnections ?? Infinity),
-      message: (j) => j.t('exposition-evenement-fin'),
+      message: (j) => j.t('exposure-evenement-fin'),
     },
   ],
 };

@@ -62,14 +62,14 @@ const serves = (j: Game, host: string, path: string, text: string) => {
   const r = page(j, host, path);
   return r?.code === 200 && r.body === text;
 };
-const servedCafe = (j: Game) => serves(j, CAFE, '/', j.t('colocation-site-cafe'));
-const servedLetters = (j: Game) => serves(j, LETTERS, '/', j.t('colocation-site-lettres'));
+const servedCafe = (j: Game) => serves(j, CAFE, '/', j.t('sharing-site-cafe'));
+const servedLetters = (j: Game) => serves(j, LETTERS, '/', j.t('sharing-site-lettres'));
 const servedAgenda = (j: Game) =>
-  serves(j, LETTERS, '/agenda/', j.t('colocation-agenda-accueil')) && serves(j, LETTERS, '/agenda/semaine', j.t('colocation-agenda-semaine'));
+  serves(j, LETTERS, '/agenda/', j.t('sharing-agenda-accueil')) && serves(j, LETTERS, '/agenda/semaine', j.t('sharing-agenda-semaine'));
 const lastCurl = (j: Game) => j.last.commands.some((c) => c[0] === 'curl');
 
 export const colocation: Chapter = {
-  id: 'colocation',
+  id: 'sharing',
   number: 4,
   commands: [
     'ls',
@@ -143,7 +143,7 @@ export const colocation: Chapter = {
     applis: {
       '127.0.0.1:3000': {
         service: 'agenda',
-        pages: { '/': t('colocation-agenda-accueil'), '/semaine': t('colocation-agenda-semaine'), '/ateliers': t('colocation-agenda-ateliers') },
+        pages: { '/': t('sharing-agenda-accueil'), '/semaine': t('sharing-agenda-semaine'), '/ateliers': t('sharing-agenda-ateliers') },
       } satisfies App,
     },
   }),
@@ -167,14 +167,14 @@ export const colocation: Chapter = {
         }),
       }),
       home: place({
-        vous: d({ 'courriel_kofi.txt': f(t('colocation-courriel-kofi')), 'note_de_rania.txt': f(t('colocation-note-de-rania')) }),
+        vous: d({ 'courriel_kofi.txt': f(t('sharing-courriel-kofi')), 'note_de_rania.txt': f(t('sharing-note-de-rania')) }),
         rania: place({}, { owner: 'rania', mode: 'rwx------' }),
       }),
       opt: place({
         agenda: place(
           {
-            'serveur.js': file(t('colocation-agenda-code'), { owner: 'agenda' }),
-            'LISEZMOI.txt': file(t('colocation-agenda-lisezmoi'), { owner: 'agenda' }),
+            'serveur.js': file(t('sharing-agenda-code'), { owner: 'agenda' }),
+            'LISEZMOI.txt': file(t('sharing-agenda-lisezmoi'), { owner: 'agenda' }),
           },
           { owner: 'agenda' },
         ),
@@ -183,9 +183,9 @@ export const colocation: Chapter = {
       var: place({
         www: place({
           html: place({ 'index.nginx-debian.html': file(WELCOME) }),
-          letters: place({ 'index.html': file(t('colocation-site-lettres')) }),
+          letters: place({ 'index.html': file(t('sharing-site-lettres')) }),
           // Rania a déjà déposé les pages du café.
-          cafe: place({ 'index.html': file(t('colocation-site-cafe'), { owner: 'rania' }) }, { owner: 'rania' }),
+          cafe: place({ 'index.html': file(t('sharing-site-cafe'), { owner: 'rania' }) }, { owner: 'rania' }),
         }),
         log: place({
           nginx: place(
@@ -205,43 +205,43 @@ export const colocation: Chapter = {
       condition: (j) =>
         /open\(\) "\/etc\/nginx\/sites-enabled\/[^"]+" failed/.test(j.state.nginxErreur ?? '') ||
         sd(j).log.some((e) => /open\(\) "\/etc\/nginx\/sites-enabled\//.test(e.message)),
-      message: (j) => j.t('colocation-evenement-lien-casse'),
+      message: (j) => j.t('sharing-evenement-lien-casse'),
     },
     {
       id: 'conflit',
       condition: (j) =>
         j.last.output.includes('conflicting server name') || j.last.errors.some((e) => e.includes('conflicting server name')),
-      message: (j) => j.t('colocation-evenement-conflit'),
+      message: (j) => j.t('sharing-evenement-conflit'),
     },
     {
       id: 'mauvais-site',
-      condition: (j) => lastCurl(j) && j.last.line.includes(CAFE) && j.last.output === j.t('colocation-site-lettres'),
-      message: (j) => j.t('colocation-evenement-mauvais-site'),
+      condition: (j) => lastCurl(j) && j.last.line.includes(CAFE) && j.last.output === j.t('sharing-site-lettres'),
+      message: (j) => j.t('sharing-evenement-mauvais-site'),
     },
     {
       id: 'cafe',
       condition: servedCafe,
-      message: (j) => j.t('colocation-evenement-cafe'),
+      message: (j) => j.t('sharing-evenement-cafe'),
     },
     {
       id: 'passerelle',
       condition: (j) => lastCurl(j) && j.last.output.includes('502 Bad Gateway'),
-      message: (j) => j.t('colocation-evenement-passerelle'),
+      message: (j) => j.t('sharing-evenement-passerelle'),
     },
     {
       id: 'cannot-get',
       condition: (j) => lastCurl(j) && j.last.output.includes('Cannot GET /agenda'),
-      message: (j) => j.t('colocation-evenement-cannot-get'),
+      message: (j) => j.t('sharing-evenement-cannot-get'),
     },
     {
       id: 'agenda-sans-enable',
       condition: (j) => servedAgenda(j) && !sd(j).services.agenda.active,
-      message: (j) => j.t('colocation-evenement-agenda-sans-enable'),
+      message: (j) => j.t('sharing-evenement-agenda-sans-enable'),
     },
     {
       id: 'fin',
       condition: (j) => servedCafe(j) && servedLetters(j) && servedAgenda(j) && sd(j).services.agenda.active,
-      message: (j) => j.t('colocation-evenement-fin'),
+      message: (j) => j.t('sharing-evenement-fin'),
     },
   ],
 };

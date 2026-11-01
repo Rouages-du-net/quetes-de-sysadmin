@@ -39,9 +39,9 @@ HOSTINGS.hebergeur = {
   files: (t) => ({
     [ACCOUNT]: d({
       public_html: d({
-        'index.html': f(t('hebergeur-ancien-index'), { lines: true }),
-        'agenda.html': f(t('hebergeur-ancien-agenda'), { lines: true }),
-        'tarifs-2025.html': f(t('hebergeur-ancien-tarifs'), { lines: true }),
+        'index.html': f(t('web-host-ancien-index'), { lines: true }),
+        'agenda.html': f(t('web-host-ancien-agenda'), { lines: true }),
+        'tarifs-2025.html': f(t('web-host-ancien-tarifs'), { lines: true }),
       }),
       tmp: d({}),
     }),
@@ -86,7 +86,7 @@ const lastSend = (j: Game) =>
 const refusal = (j: Game, what: 'clair' | 'certificat') => !!(workstation(j)?.state.refusFtp as string[] | undefined)?.includes(what);
 
 export const host: Chapter = {
-  id: 'hebergeur',
+  id: 'web-host',
   number: 5,
   plan: homePlan({ host: true }),
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'id', 'whoami', 'hostname', 'ssh', 'scp', 'sftp', 'lftp'],
@@ -109,9 +109,9 @@ export const host: Chapter = {
             wiki: d({
               site: d(
                 {
-                  'index.html': page(t, 'hebergeur-index'),
-                  'agenda.html': page(t, 'hebergeur-agenda'),
-                  'adhesion.html': page(t, 'hebergeur-adhesion'),
+                  'index.html': page(t, 'web-host-index'),
+                  'agenda.html': page(t, 'web-host-agenda'),
+                  'adhesion.html': page(t, 'web-host-adhesion'),
                   'style.css': f(STYLE, { lines: true, owner: 'www-data' }),
                   images: d({ 'logo.svg': f(LOGO, { lines: true, owner: 'www-data' }) }, undefined, { owner: 'www-data' }),
                 },
@@ -131,23 +131,23 @@ export const host: Chapter = {
       passwords: 'no',
       home: {
         '.ssh': sshDirectory(),
-        'courriel_yasmine.txt': f(t('hebergeur-courriel-yasmine', { compte: ACCOUNT, motdepasse: FTP_PASSWORD })),
-        'courriel_hebergeur.txt': f(t('hebergeur-courriel-hebergeur'), { lines: true }),
-        'notes-gaspard.txt': f(t('hebergeur-notes-gaspard'), { lines: true }),
+        'courriel_yasmine.txt': f(t('web-host-courriel-yasmine', { compte: ACCOUNT, motdepasse: FTP_PASSWORD })),
+        'courriel_hebergeur.txt': f(t('web-host-courriel-hebergeur'), { lines: true }),
+        'notes-gaspard.txt': f(t('web-host-notes-gaspard'), { lines: true }),
       },
     }),
   events: [
-    { id: 'clair', condition: (j) => refusal(j, 'clair'), message: (j) => j.t('hebergeur-evenement-clair') },
-    { id: 'certificat', condition: (j) => refusal(j, 'certificat'), message: (j) => j.t('hebergeur-evenement-certificat') },
+    { id: 'clair', condition: (j) => refusal(j, 'clair'), message: (j) => j.t('web-host-evenement-clair') },
+    { id: 'certificat', condition: (j) => refusal(j, 'certificat'), message: (j) => j.t('web-host-evenement-certificat') },
     {
       id: 'sans-verification',
       condition: (j) => !!inLine(j)?.log.some((e) => !e.checked),
-      message: (j) => j.t('hebergeur-evenement-sans-verification'),
+      message: (j) => j.t('web-host-evenement-sans-verification'),
     },
     {
       id: 'mauvais-sens',
       condition: (j) => !!workstation(j)?.read('~/site/tarifs-2025.html') || !!workstation(j)?.read('~/public_html/tarifs-2025.html'),
-      message: (j) => j.t('hebergeur-evenement-mauvais-sens'),
+      message: (j) => j.t('web-host-evenement-mauvais-sens'),
     },
     {
       id: 'mauvais-dossier',
@@ -155,13 +155,13 @@ export const host: Chapter = {
         const h = inLine(j);
         return !!h && Object.keys(h.roots[ACCOUNT].children).some((k) => !['public_html', 'tmp'].includes(k)) && !published(j);
       },
-      message: (j) => j.t('hebergeur-evenement-mauvais-dossier'),
+      message: (j) => j.t('web-host-evenement-mauvais-dossier'),
     },
     {
       id: 'reste',
       condition: (j) => published(j) && !!node(inLine(j)!.roots[ACCOUNT], '/public_html/tarifs-2025.html'),
-      message: (j) => j.t('hebergeur-evenement-reste'),
+      message: (j) => j.t('web-host-evenement-reste'),
     },
-    { id: 'fin', condition: (j) => exact(j) && !!lastSend(j)?.tls && !!lastSend(j)?.checked, message: (j) => j.t('hebergeur-evenement-fin') },
+    { id: 'fin', condition: (j) => exact(j) && !!lastSend(j)?.tls && !!lastSend(j)?.checked, message: (j) => j.t('web-host-evenement-fin') },
   ],
 };

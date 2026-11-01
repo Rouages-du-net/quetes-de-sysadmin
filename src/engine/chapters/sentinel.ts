@@ -157,7 +157,7 @@ const set = (j: Game) => {
 const rightBans = (j: Game) => !f2b(j).banned.includes(RANIA) && !f2b(j).banned.includes(WORKSTATION.address) && ROBOTS.every((r) => f2b(j).banned.includes(r));
 
 export const sentinel: Chapter = {
-  id: 'sentinelle',
+  id: 'sentinel',
   number: 3,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'fail2ban-client'],
   home: M,
@@ -222,7 +222,7 @@ export const sentinel: Chapter = {
           undefined,
           root,
         ),
-        home: d({ vous: d({ 'courriel_kofi.txt': f(t('sentinelle-courriel-kofi')) }) }, undefined, root),
+        home: d({ vous: d({ 'courriel_kofi.txt': f(t('sentinel-courriel-kofi')) }) }, undefined, root),
         var: d(
           {
             log: d(
@@ -243,32 +243,32 @@ export const sentinel: Chapter = {
     {
       id: 'jail-conf',
       condition: (j) => j.read(`${DIRECTORY}/jail.conf`) !== JAIL_CONF,
-      message: (j) => j.t('sentinelle-evenement-jail-conf'),
+      message: (j) => j.t('sentinel-evenement-jail-conf'),
     },
     {
       id: 'erreur',
       condition: (j) => readConfig(j).errors.length > 0,
-      message: (j) => j.t('sentinelle-evenement-erreur'),
+      message: (j) => j.t('sentinel-evenement-erreur'),
     },
     {
       id: 'rania',
       condition: (j) => !f2b(j).banned.includes(RANIA),
-      message: (j) => j.t('sentinelle-evenement-rania'),
+      message: (j) => j.t('sentinel-evenement-rania'),
     },
     {
       id: 'banni-soi',
       condition: (j) => f2b(j).banned.includes(WORKSTATION.address),
-      message: (j) => j.t('sentinelle-evenement-banni-soi', { adresse: WORKSTATION.address }),
+      message: (j) => j.t('sentinel-evenement-banni-soi', { adresse: WORKSTATION.address }),
     },
     {
       id: 'reglee',
       condition: (j) => set(j) && f2b(j).loads > 0,
-      message: (j) => j.t('sentinelle-evenement-reglee'),
+      message: (j) => j.t('sentinel-evenement-reglee'),
     },
     {
       id: 'fin',
       condition: (j) => j.flags.has('reglee') && set(j) && rightBans(j) && f2b(j).consulted,
-      message: (j) => j.t('sentinelle-evenement-fin'),
+      message: (j) => j.t('sentinel-evenement-fin'),
     },
   ],
 };

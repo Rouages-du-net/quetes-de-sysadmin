@@ -37,35 +37,35 @@ const GAZETTE = 'gazette.example';
 // Samia, puis la nouvelle mise en page de Théo (accueil.html au lieu d'index.html).
 function commits(t: Game['t']): Commit[] {
   const [c1, c2] = history(t);
-  const c3 = newCommit(c2, t('retour-arriere-commit-3'), `${player(t)} <${player(t)}@gazette.example>`, 'Mon May 10 09:31:00 2027 +0200', {
+  const c3 = newCommit(c2, t('rollback-commit-3'), `${player(t)} <${player(t)}@gazette.example>`, 'Mon May 10 09:31:00 2027 +0200', {
     ...c2.files,
-    'index.html': t('retour-arriere-site-index'),
+    'index.html': t('rollback-site-index'),
   });
-  const c4 = newCommit(c3, t('retour-arriere-commit-4'), `${player(t)} <${player(t)}@gazette.example>`, 'Mon May 10 09:40:00 2027 +0200', {
+  const c4 = newCommit(c3, t('rollback-commit-4'), `${player(t)} <${player(t)}@gazette.example>`, 'Mon May 10 09:40:00 2027 +0200', {
     ...c3.files,
     'agenda.html': agenda(t, 12),
   });
-  const c5 = newCommit(c4, t('retour-arriere-commit-5'), AUTHOR, 'Fri May 14 10:14:51 2027 +0200', {
+  const c5 = newCommit(c4, t('rollback-commit-5'), AUTHOR, 'Fri May 14 10:14:51 2027 +0200', {
     ...c4.files,
-    'tests.sh': t('retour-arriere-tests'),
+    'tests.sh': t('rollback-tests'),
   });
   const { 'index.html': _index, ...withoutIndex } = c5.files;
-  const c6 = newCommit(c5, t('retour-arriere-commit-6'), THEO_AUTHOR, 'Mon May 17 20:29:40 2027 +0200', {
+  const c6 = newCommit(c5, t('rollback-commit-6'), THEO_AUTHOR, 'Mon May 17 20:29:40 2027 +0200', {
     ...withoutIndex,
-    'accueil.html': t('retour-arriere-site-accueil'),
+    'accueil.html': t('rollback-site-accueil'),
   });
   return [c1, c2, c3, c4, c5, c6];
 }
 
 // Le crochet de déploiement : une version par push, puis le lien current.
 const HOOK = (t: Game['t']) => `#!/bin/sh
-# ${t('retour-arriere-crochet-commentaire')}
+# ${t('rollback-crochet-commentaire')}
 set -e
 VERSION=$(date +%Y%m%d%H%M%S)
 mkdir -p ${RELEASES}/$VERSION
 git --work-tree=${RELEASES}/$VERSION checkout -f main
 ln -sfn ${RELEASES}/$VERSION ${CURRENT}
-echo "${t('retour-arriere-crochet-echo')}"`;
+echo "${t('rollback-crochet-echo')}"`;
 
 const repo = (j: Game, path: string): Repo | undefined => j.state.git?.[path];
 const link = (j: Game) => (j.find(CURRENT, false) as { link?: string } | null)?.link ?? null;
@@ -97,9 +97,9 @@ function theoRepousse(j: Game): string {
   const head = server.commits.at(-1)!;
   const number = (j.state.essaisTheo = (j.state.essaisTheo ?? 0) + 1);
   const { 'index.html': _index, ...withoutIndex } = head.files;
-  const c = newCommit(head, j.t('retour-arriere-commit-theo', { numero: number }), THEO_AUTHOR, 'Mon May 17 21:05:00 2027 +0200', {
+  const c = newCommit(head, j.t('rollback-commit-theo', { numero: number }), THEO_AUTHOR, 'Mon May 17 21:05:00 2027 +0200', {
     ...withoutIndex,
-    'accueil.html': `${j.t('retour-arriere-site-accueil')}\n<!-- ${number} -->`,
+    'accueil.html': `${j.t('rollback-site-accueil')}\n<!-- ${number} -->`,
   });
   j.state.git[THEO] = { commits: [...server.commits, c], index: { ...c.files }, remotes: { prod: REPO } };
   const before = game.who;
@@ -107,14 +107,14 @@ function theoRepousse(j: Game): string {
   try {
     const r = game.underCommand('git push prod main', THEO);
     j.state.theoAPousse = c.id;
-    return j.t('retour-arriere-theo-pousse', { sortie: r.output.replace(/^/gm, '  ') });
+    return j.t('rollback-theo-pousse', { sortie: r.output.replace(/^/gm, '  ') });
   } finally {
     game.who = before;
   }
 }
 
 export const rollback: Chapter = {
-  id: 'retour-arriere',
+  id: 'rollback',
   number: 2,
   commands: [
     'ls',
@@ -225,7 +225,7 @@ export const rollback: Chapter = {
       }),
       home: place({
         vous: d({
-          'message_de_samia.txt': f(t('retour-arriere-message-de-samia')),
+          'message_de_samia.txt': f(t('rollback-message-de-samia')),
           gazette: d({
             '.git': d({ HEAD: f('ref: refs/heads/main', { lines: true }) }),
             ...Object.fromEntries(Object.entries(all[4].files).map(([name, text]) => [name, f(text, { lines: true })])),
@@ -274,9 +274,9 @@ export const rollback: Chapter = {
     {
       id: 'panne',
       condition: (j) => j.last.commands.some((c) => c[0] === 'curl') && page(j)?.code === 403,
-      message: (j) => j.t('retour-arriere-evenement-panne'),
+      message: (j) => j.t('rollback-evenement-panne'),
     },
-    { id: 'sans-n', condition: (j) => insideLink(j), message: (j) => j.t('retour-arriere-evenement-sans-n') },
+    { id: 'sans-n', condition: (j) => insideLink(j), message: (j) => j.t('rollback-evenement-sans-n') },
     {
       id: 'retabli',
       condition: (j) => {
@@ -284,7 +284,7 @@ export const rollback: Chapter = {
         if (ok) j.state.retabli = true;
         return ok;
       },
-      message: (j) => j.t('retour-arriere-evenement-retabli'),
+      message: (j) => j.t('rollback-evenement-retabli'),
     },
     {
       id: 'garde-fou',
@@ -293,21 +293,21 @@ export const rollback: Chapter = {
         if (ok) j.state.gardeFou = true;
         return ok;
       },
-      message: (j) => j.t('retour-arriere-evenement-garde-fou'),
+      message: (j) => j.t('rollback-evenement-garde-fou'),
     },
-    { id: 'garde-fou-perce', condition: (j) => !!j.state.theoAPousse && !works(j), message: (j) => j.t('retour-arriere-evenement-garde-fou-perce') },
+    { id: 'garde-fou-perce', condition: (j) => !!j.state.theoAPousse && !works(j), message: (j) => j.t('rollback-evenement-garde-fou-perce') },
     {
       id: 'tests-ailleurs',
       condition: (j) =>
         j.last.commands.some((c) => c[0] === 'git' && c.includes('push')) &&
         'index.html' in (repo(j, REPO)?.commits.at(-1)?.files ?? {}) &&
         !deployedByHook(j),
-      message: (j) => j.t('retour-arriere-evenement-tests-ailleurs'),
+      message: (j) => j.t('rollback-evenement-tests-ailleurs'),
     },
     {
       id: 'fin',
       condition: (j) => !!j.state.gardeFou && newUpdateInPage(j) && deployedByHook(j) && hook(j).includes('tests.sh'),
-      message: (j) => j.t('retour-arriere-evenement-fin'),
+      message: (j) => j.t('rollback-evenement-fin'),
     },
   ],
 };

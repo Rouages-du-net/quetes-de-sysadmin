@@ -45,7 +45,7 @@ const conf = (t: Game['t']) => `server {
         try_files $uri $uri/ =404;
     }
 
-    # ${t('bleu-vert-conf-commentaire')}
+    # ${t('blue-green-conf-commentaire')}
     location /kiosk/ {
         proxy_pass http://127.0.0.1:3002/;
     }
@@ -174,7 +174,7 @@ export const migration: Chapter = {
       }),
       srv: place({
         gazette: place({
-          releases: place({ '20270524090000': place({ 'index.html': file(t('retour-arriere-site-accueil'), { owner: 'vous' }) }) }),
+          releases: place({ '20270524090000': place({ 'index.html': file(t('rollback-site-accueil'), { owner: 'vous' }) }) }),
           current: f('', { owner: 'vous', link: '/srv/gazette/releases/20270524090000' }),
         }),
         kiosk: place(
@@ -182,9 +182,9 @@ export const migration: Chapter = {
             versions: place(
               {
                 '1.4.2': versionDirectory(t, '1.4.2'),
-                '1.5.0': versionDirectory(t, '1.5.0', 'bleu-vert-notes-150'),
-                '1.6.0': versionDirectory(t, '1.6.0', 'canari-notes-160'),
-                '1.6.1': versionDirectory(t, '1.6.1', 'canari-notes-161'),
+                '1.5.0': versionDirectory(t, '1.5.0', 'blue-green-notes-150'),
+                '1.6.0': versionDirectory(t, '1.6.0', 'canary-notes-160'),
+                '1.6.1': versionDirectory(t, '1.6.1', 'canary-notes-161'),
                 '2.0.0': versionDirectory(t, '2.0.0', 'migration-notes-200'),
               },
               kiosk,

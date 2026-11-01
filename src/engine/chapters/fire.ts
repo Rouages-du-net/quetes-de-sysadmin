@@ -60,13 +60,13 @@ const CONF_SITE = `server {
     }
 }`;
 
-const blocked = (t: Translate) => `# ${t('premier-jour-bloques-commentaire')}
+const blocked = (t: Translate) => `# ${t('first-day-bloques-commentaire')}
 deny 203.0.113.5;
 deny 192.0.2.99;
 deny ${ROBOT};`;
 
 // La page d'accueil dans chaque sauvegarde : 1 (mercredi), 2 (jeudi), 3 (vendredi, perdue).
-const welcome = (t: Translate, version: number) => t(`incendie-site-index-${version}`);
+const welcome = (t: Translate, version: number) => t(`fire-site-index-${version}`);
 
 function archiveContent(t: Translate, version: number): Record<string, File> {
   const file = (text: string): File => ({ type: 'fichier', content: text, lines: true, owner: 'root', group: 'root' });
@@ -75,7 +75,7 @@ function archiveContent(t: Translate, version: number): Record<string, File> {
     'etc/nginx/sites-available/medialibrary': file(CONF_SITE),
     'etc/nginx/sites-enabled/medialibrary': file(CONF_SITE),
     'var/www/medialibrary/index.html': file(welcome(t, version)),
-    'var/www/medialibrary/horaires.html': file(t('incendie-site-horaires')),
+    'var/www/medialibrary/horaires.html': file(t('fire-site-horaires')),
   };
 }
 
@@ -90,7 +90,7 @@ const serves = (j: Game, version: number) => {
 };
 
 export const fire: Chapter = {
-  id: 'incendie',
+  id: 'fire',
   number: 4,
   commands: [
     'ls',
@@ -171,10 +171,10 @@ export const fire: Chapter = {
           }),
         }),
       }),
-      home: place({ vous: d({ 'courriel_awa.txt': f(t('incendie-courriel-awa')) }) }),
+      home: place({ vous: d({ 'courriel_awa.txt': f(t('fire-courriel-awa')) }) }),
       mnt: place({
         sauvegarde: place({
-          'PRA.txt': f(t('incendie-pra'), { owner: 'root' }),
+          'PRA.txt': f(t('fire-pra'), { owner: 'root' }),
           [`medialibrary-${ARCHIVES[0]}.tar.gz`]: backup(t, 1, 48_213),
           [`medialibrary-${ARCHIVES[1]}.tar.gz`]: backup(t, 2, 48_390),
           // Coupée après les trois fichiers de configuration.
@@ -189,38 +189,38 @@ export const fire: Chapter = {
     {
       id: 'liste-vide',
       condition: (j) => j.state.aptIntrouvable === true,
-      message: (j) => j.t('incendie-evenement-liste-vide'),
+      message: (j) => j.t('fire-evenement-liste-vide'),
     },
     {
       id: 'nginx',
       condition: (j) => sd(j).services.nginx?.state === 'active',
-      message: (j) => j.t('incendie-evenement-nginx'),
+      message: (j) => j.t('fire-evenement-nginx'),
     },
     {
       id: 'tronquee',
       condition: (j) => j.state.archiveTronquee === path(j.t, archive(ARCHIVES[2])),
-      message: (j) => j.t('incendie-evenement-tronquee'),
+      message: (j) => j.t('fire-evenement-tronquee'),
     },
     {
       id: 'mauvais-lieu',
       condition: (j) => j.exists(path(j.t, `${M}/etc`)) || j.exists(path(j.t, `${M}/var`)),
-      message: (j) => j.t('incendie-evenement-mauvais-lieu'),
+      message: (j) => j.t('fire-evenement-mauvais-lieu'),
     },
     {
       id: 'doublon',
       condition: (j) =>
         (j.state.nginxErreur ?? '').includes('duplicate default server') || sd(j).log.some((e) => e.message.includes('duplicate default server')),
-      message: (j) => j.t('incendie-evenement-doublon'),
+      message: (j) => j.t('fire-evenement-doublon'),
     },
     {
       id: 'mercredi',
       condition: (j) => serves(j, 1),
-      message: (j) => j.t('incendie-evenement-mercredi'),
+      message: (j) => j.t('fire-evenement-mercredi'),
     },
     {
       id: 'fin',
       condition: (j) => serves(j, 2) && sd(j).services.nginx?.active === true,
-      message: (j) => j.t('incendie-evenement-fin'),
+      message: (j) => j.t('fire-evenement-fin'),
     },
   ],
 };

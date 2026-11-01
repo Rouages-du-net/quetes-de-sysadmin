@@ -26,7 +26,7 @@ const executions = (j: Game) => history(j as Shell).executions;
 const seen = (j: Game, text: string) => j.last.output.includes(text) || j.last.errors.some((e) => e.includes(text));
 
 export const rehearsal: Chapter = {
-  id: 'repetition',
+  id: 'rehearsal',
   number: 3,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'cp', 'nano', 'sudo', 'id', 'whoami', 'ssh', 'exit', 'ansible', 'ansible-playbook', 'ansible-inventory', 'ansible-doc'],
   home: M,
@@ -44,28 +44,28 @@ export const rehearsal: Chapter = {
       ansible: {
         'ansible.cfg': f(CFG, { lines: true }),
         'inventory.ini': f(INVENTORY, { lines: true }),
-        'site.yml': f(t('repetition-site-yml'), { lines: true }),
-        'ssh.yml': f(t('repetition-ssh-yml'), { lines: true }),
+        'site.yml': f(t('rehearsal-site-yml'), { lines: true }),
+        'ssh.yml': f(t('rehearsal-ssh-yml'), { lines: true }),
       },
-      home: { 'note_de_theo.txt': f(t('repetition-note-theo')) },
+      home: { 'note_de_theo.txt': f(t('rehearsal-note-theo')) },
     }),
   events: [
-    { id: 'repetition', condition: (j) => executions(j).some((e) => e.check), message: (j) => j.t('repetition-evenement-repetition') },
-    { id: 'gestionnaire', condition: (j) => seen(j, 'The requested handler'), message: (j) => j.t('repetition-evenement-gestionnaire') },
+    { id: 'repetition', condition: (j) => executions(j).some((e) => e.check), message: (j) => j.t('rehearsal-evenement-repetition') },
+    { id: 'gestionnaire', condition: (j) => seen(j, 'The requested handler'), message: (j) => j.t('rehearsal-evenement-gestionnaire') },
     {
       id: 'canari',
       condition: (j) => executions(j).some((e) => !e.check && !!e.limit && Object.values(e.changes).some((l) => l.includes('/etc/ssh/sshd_config'))),
-      message: (j) => j.t('repetition-evenement-canari'),
+      message: (j) => j.t('rehearsal-evenement-canari'),
     },
     {
       id: 'pas-recharge',
       condition: (j) => NAMES.some((n) => ditFile(onCentre(j, n)) === 'no' && ditLoad(onCentre(j, n)) !== 'no'),
-      message: (j) => j.t('repetition-evenement-pas-recharge'),
+      message: (j) => j.t('rehearsal-evenement-pas-recharge'),
     },
     {
       id: 'fin',
       condition: (j) => NAMES.every((n) => ditFile(onCentre(j, n)) === 'no' && ditLoad(onCentre(j, n)) === 'no') && idempotent(j),
-      message: (j) => j.t('repetition-evenement-fin'),
+      message: (j) => j.t('rehearsal-evenement-fin'),
     },
   ],
 };

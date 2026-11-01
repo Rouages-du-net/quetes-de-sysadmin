@@ -53,12 +53,12 @@ const accounts = (): Accounts => ({
 
 // Les fichiers du partage (chemin relatif → identifiant du texte).
 const FILES: Record<string, string> = {
-  'inventaire.csv': 'rancon-inventaire',
-  'planning-benevoles.txt': 'rancon-planning',
-  'affiche-fete-du-jeu.txt': 'rancon-affiche',
-  'regles/jeu-de-l-oie.txt': 'rancon-regles-oie',
-  'regles/petits-chevaux.txt': 'rancon-regles-chevaux',
-  'regles/dames.txt': 'rancon-regles-dames',
+  'inventaire.csv': 'ransom-inventaire',
+  'planning-benevoles.txt': 'ransom-planning',
+  'affiche-fete-du-jeu.txt': 'ransom-affiche',
+  'regles/jeu-de-l-oie.txt': 'ransom-regles-oie',
+  'regles/petits-chevaux.txt': 'ransom-regles-chevaux',
+  'regles/dames.txt': 'ransom-regles-dames',
 };
 
 // Un fichier chiffré : un nom en .locked et des octets illisibles.
@@ -128,12 +128,12 @@ function encrypt(j: Game, place: string): number {
       touches++;
     }
   }
-  if (touches && !n.children[note]) n.children[note] = { type: 'fichier', content: j.t('rancon-note'), owner: 'accueil', group: 'ludo' };
+  if (touches && !n.children[note]) n.children[note] = { type: 'fichier', content: j.t('ransom-note'), owner: 'accueil', group: 'ludo' };
   return touches;
 }
 
 export const ransom: Chapter = {
-  id: 'rancon',
+  id: 'ransom',
   number: 1,
   commands: [
     'ls',
@@ -204,7 +204,7 @@ export const ransom: Chapter = {
         { pid: 3141, user: 'accueil', cpu: 97.3, mem: 1.4, command: `${path(t, ENCRYPTOR)} --silencieux` },
       ],
       crontabs: {
-        root: `# ${t('rancon-crontab-root')}\n30 2 * * * rsync -a --delete ${path(t, SHARE)}/ ${path(t, `${NAS}/partage`)}/`,
+        root: `# ${t('ransom-crontab-root')}\n30 2 * * * rsync -a --delete ${path(t, SHARE)}/ ${path(t, `${NAS}/partage`)}/`,
         accueil: `*/10 * * * * ${path(t, ENCRYPTOR)} --silencieux\n@reboot ${path(t, ENCRYPTOR)} --silencieux`,
       },
       montages: [
@@ -261,7 +261,7 @@ export const ransom: Chapter = {
         process(j).push({ pid, user: 'accueil', cpu: 97.3, mem: 1.4, command: `${path(j.t, ENCRYPTOR)} --silencieux` });
         writeLog(sd(j), 'cron.service', 'CRON', pid - 1, `(accueil) CMD (${path(j.t, ENCRYPTOR)} --silencieux)`);
         encrypt(j, path(j.t, SHARE));
-        messages.push(j.t('rancon-retour'));
+        messages.push(j.t('ransom-retour'));
       }
     }
     return messages.join('\n\n') || undefined;
@@ -282,7 +282,7 @@ export const ransom: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: file('ludotheque') }),
       home: place({
-        vous: d({ 'message_de_berenice.txt': f(t('rancon-message-de-berenice')) }),
+        vous: d({ 'message_de_berenice.txt': f(t('ransom-message-de-berenice')) }),
         accueil: place(
           {
             '.cache': place(
@@ -312,25 +312,25 @@ export const ransom: Chapter = {
     {
       id: 'etendue',
       condition: (j) => /\.locked/.test(j.last.output) && !j.last.commands.some((c) => c.includes(NAS) || c.some((a) => a.startsWith(NAS))),
-      message: (j) => j.t('rancon-evenement-etendue'),
+      message: (j) => j.t('ransom-evenement-etendue'),
     },
     {
       id: 'chiffreur-vu',
       condition: (j) => j.last.output.includes(name(j.t, 'maj-systeme')) && j.last.commands.some((c) => c[0] === 'ps') && activeEncryptor(j),
-      message: (j) => j.t('rancon-evenement-chiffreur-vu'),
+      message: (j) => j.t('ransom-evenement-chiffreur-vu'),
     },
     {
       id: 'nas',
       condition: (j) => j.last.commands.some((c) => c.some((a) => a.startsWith(NAS))) && /\.locked/.test(j.last.output),
-      message: (j) => j.t('rancon-evenement-nas'),
+      message: (j) => j.t('ransom-evenement-nas'),
     },
-    { id: 'rechiffre', condition: (j) => (j.state.rechiffres ?? 0) > 0, message: (j) => j.t('rancon-evenement-rechiffre') },
-    { id: 'cle-trop-tot', condition: (j) => mountedKey(j) && activeEncryptor(j), message: (j) => j.t('rancon-evenement-cle-trop-tot') },
-    { id: 'restaure', condition: (j) => allRestored(j) && !activeEncryptor(j), message: (j) => j.t('rancon-evenement-restaure') },
+    { id: 'rechiffre', condition: (j) => (j.state.rechiffres ?? 0) > 0, message: (j) => j.t('ransom-evenement-rechiffre') },
+    { id: 'cle-trop-tot', condition: (j) => mountedKey(j) && activeEncryptor(j), message: (j) => j.t('ransom-evenement-cle-trop-tot') },
+    { id: 'restaure', condition: (j) => allRestored(j) && !activeEncryptor(j), message: (j) => j.t('ransom-evenement-restaure') },
     {
       id: 'fin',
       condition: (j) => !activeEncryptor(j) && !persistence(j) && locked(j) && allRestored(j) && remains(j).length === 0 && !mountedKey(j),
-      message: (j) => j.t('rancon-evenement-fin'),
+      message: (j) => j.t('ransom-evenement-fin'),
     },
   ],
 };

@@ -28,10 +28,10 @@ indice-zones-fin =
 
 ## Chapter 4 — Working from home
 
-indice-vpn-en-place =
+indice-remote-work-en-place =
     .piste = The router needs keys (man wg: genkey, pubkey; umask first, so that only you can read the private key), a /etc/wireguard/wg0.conf with [Interface] and a [Peer] for Malik, malik-laptop.conf filled in, and the firewall: WireGuard's UDP port in the input chain, wg0 to the offices in forward. man wg-quick to bring the interface up.
     .solution = umask 077 then wg genkey | tee privatekey | wg pubkey > publickey; sudo nano /etc/wireguard/wg0.conf: Address = 10.10.99.1/24, ListenPort = 51820, PrivateKey = (privatekey), and [Peer] PublicKey = (Malik's key), AllowedIPs = 10.10.99.2/32; in malik-laptop.conf: PublicKey = (publickey), Endpoint = hive.example:51820, AllowedIPs = 10.10.10.0/24; in /etc/nftables.conf: "udp dport 51820 accept" (input) and "iifname "wg0" oifname "eth1.10" accept" (forward), sudo systemctl reload nftables; finally sudo systemctl enable --now wg-quick@wg0.
-indice-vpn-fin =
+indice-remote-work-fin =
     .piste = The tunnel works, but at the next boot? wg0 only comes back through its service if it is enabled, and the firewall only if its rules are in /etc/nftables.conf. An interface brought up by hand with wg-quick stops the service from starting.
     .solution = sudo wg-quick down wg0 then sudo systemctl enable --now wg-quick@wg0; rules typed with nft copied into /etc/nftables.conf, then sudo systemctl reload nftables. And no copy of the private key readable by everyone (chmod 600 privatekey).
 
@@ -46,16 +46,16 @@ indice-dmz-fin =
 
 ## Chapter 6 — The Annex
 
-indice-annexe-en-place =
+indice-annex-en-place =
     .piste = The Annex is one more peer in /etc/wireguard/wg0.conf. For WireGuard, its AllowedIPs are the addresses this peer may send from AND those sent to it: for a site, its whole network. Then fill in annex-wg0.conf (sudo wg show gives the router's public key), remembering that the Annex sits behind an ISP box (man wg: PersistentKeepalive). wg-quick does not reread the file by itself.
     .solution = In /etc/wireguard/wg0.conf, add [Peer] PublicKey = (Sami's key), AllowedIPs = 10.10.99.3/32, 10.20.10.0/24; in annex-wg0.conf: PublicKey = (the one from sudo wg show), Endpoint = hive.example:51820, AllowedIPs = 10.10.10.0/24, PersistentKeepalive = 25; then sudo systemctl restart wg-quick@wg0, and ip route or sudo wg show to check.
-indice-annexe-fin =
+indice-annex-fin =
     .piste = The two sites talk right now. At boot, wg0 starts again from /etc/wireguard/wg0.conf through the wg-quick@wg0 service, and the firewall from /etc/nftables.conf: everything set by hand must be in there.
     .solution = The Annex peer (PublicKey, AllowedIPs = 10.10.99.3/32, 10.20.10.0/24) must be in /etc/wireguard/wg0.conf, and the service enabled: sudo systemctl enable wg-quick@wg0, then sudo systemctl restart wg-quick@wg0. An nft rule typed by hand goes into /etc/nftables.conf (or is cleared with sudo systemctl restart nftables).
 
 ## Chapter 7 — The Directory
 
-indice-annuaire-fin =
+indice-directory-fin =
     .piste = Two people to deal with: Camille (her entry, but also her name in the groups: memberUid is not updated by itself), and Sami (an entry based on modele-ines.ldif, a free uidNumber, a hashed password, and the bureaux group). man ldapdelete, man ldapadd, man ldapmodify, man slappasswd; writing requires binding as someone (Malik's email).
     .solution = ldapdelete -x -D cn=admin,dc=thehive,dc=example -w rayon-de-miel uid=camille,ou=people,dc=thehive,dc=example; slappasswd for the {"{"}SSHA{"}"} hash; sami.ldif based on modele-ines.ldif (uid sami, cn Sami Lemaire, sn Lemaire, uidNumber 10004, userPassword = the hash) and ldapadd -x -D … -w … -f sami.ldif; then an LDIF with "changetype: modify" for cn=bureaux (delete: memberUid camille, add: memberUid sami) and cn=equipe (delete: memberUid camille), fed to ldapmodify -x -D … -w … -f.
 

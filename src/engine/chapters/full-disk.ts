@@ -73,7 +73,7 @@ function validRotation(j: Game): boolean {
 }
 
 export const fullDisk: Chapter = {
-  id: 'disque-plein',
+  id: 'full-disk',
   number: 1,
   commands: [
     'ls',
@@ -159,11 +159,11 @@ export const fullDisk: Chapter = {
       etc: place({
         ...accountsFiles(),
         hostname: file('radio'),
-        radio: place({ 'stream.conf': file(t('disque-plein-conf-flux')) }),
-        'logrotate.conf': file(t('disque-plein-logrotate-conf')),
-        'logrotate.d': place({ rsyslog: file(t('disque-plein-logrotate-rsyslog')), apt: file(t('disque-plein-logrotate-apt')) }),
+        radio: place({ 'stream.conf': file(t('full-disk-conf-flux')) }),
+        'logrotate.conf': file(t('full-disk-logrotate-conf')),
+        'logrotate.d': place({ rsyslog: file(t('full-disk-logrotate-rsyslog')), apt: file(t('full-disk-logrotate-apt')) }),
       }),
-      home: place({ vous: d({ 'message_de_zoe.txt': f(t('disque-plein-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      home: place({ vous: d({ 'message_de_zoe.txt': f(t('full-disk-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       srv: place({
         radio: place({
           emissions: place(
@@ -180,12 +180,12 @@ export const fullDisk: Chapter = {
       var: place({
         lib: place({ radio: place({}, { owner: 'radio' }), logrotate: place({ status: file('logrotate state -- version 2') }) }),
         log: place({
-          syslog: log(t('disque-plein-syslog'), 41_000_000),
+          syslog: log(t('full-disk-syslog'), 41_000_000),
           'syslog.1': log('', 38_000_000),
           'syslog.2.gz': log('', 4_100_000),
           'auth.log': log('', 2_300_000),
           radio: place(
-            { 'stream.log': log(t('disque-plein-flux-log'), 16_640_000_000, 'radio') },
+            { 'stream.log': log(t('full-disk-flux-log'), 16_640_000_000, 'radio') },
             { owner: 'radio', group: 'adm', mode: 'rwxr-x---' },
           ),
         }),
@@ -196,7 +196,7 @@ export const fullDisk: Chapter = {
     {
       id: 'plein',
       condition: (j) => j.last.commands.some((c) => c[0] === 'df') && occupation(j) > 0.97,
-      message: (j) => j.t('disque-plein-evenement-plein'),
+      message: (j) => j.t('full-disk-evenement-plein'),
     },
     {
       id: 'coupable',
@@ -204,28 +204,28 @@ export const fullDisk: Chapter = {
         j.last.commands.some((c) => ['du', 'ls', 'find'].includes(c[0])) &&
         /\b1[5-9]G\b|flux\.log/.test(j.last.output) &&
         /radio/.test(j.last.line),
-      message: (j) => j.t('disque-plein-evenement-coupable'),
+      message: (j) => j.t('full-disk-evenement-coupable'),
     },
-    { id: 'debug', condition: (j) => j.last.output.includes('DEBUG'), message: (j) => j.t('disque-plein-evenement-debug') },
+    { id: 'debug', condition: (j) => j.last.output.includes('DEBUG'), message: (j) => j.t('full-disk-evenement-debug') },
     {
       id: 'fantome',
       condition: (j) => ghost(j) && j.last.commands.some((c) => c[0] === 'df' || c[0] === 'du'),
-      message: (j) => j.t('disque-plein-evenement-fantome'),
+      message: (j) => j.t('full-disk-evenement-fantome'),
     },
     {
       id: 'renomme',
       condition: (j) => openSet(j).some((o) => held(j, o) && o.service === 'radio-stream' && o.path !== LOG),
-      message: (j) => j.t('disque-plein-evenement-renomme'),
+      message: (j) => j.t('full-disk-evenement-renomme'),
     },
     {
       id: 'respire',
       condition: (j) => occupation(j) < 0.8 && !ghost(j),
-      message: (j) => j.t('disque-plein-evenement-respire', { pourcent: Math.round(occupation(j) * 100) }),
+      message: (j) => j.t('full-disk-evenement-respire', { pourcent: Math.round(occupation(j) * 100) }),
     },
     {
       id: 'fin',
       condition: (j) => occupation(j) < 0.8 && !ghost(j) && enabled(j) && j.state.fluxNiveau !== 'debug' && validRotation(j),
-      message: (j) => j.t('disque-plein-evenement-fin'),
+      message: (j) => j.t('full-disk-evenement-fin'),
     },
   ],
 };

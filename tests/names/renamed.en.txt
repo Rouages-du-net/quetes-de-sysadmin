@@ -1,4 +1,4 @@
-eveil
+lighthouse
   /Cabane → /Hut
   /Cabane/bienvenue.txt → /Hut/welcome.txt
   /Cabane/message.txt → /Hut/message.txt
@@ -39,7 +39,7 @@ eveil
   /Cabane/Jetee/Phare/Escalier/Lanterne → /Hut/Pier/Lighthouse/Stairs/Lantern
   /Cabane/Jetee/Phare/Escalier/Lanterne/lanterne.txt → /Hut/Pier/Lighthouse/Stairs/Lantern/lantern.txt
 
-bourg
+village
   /Quai → /Quay
   /Quai/crieur.txt → /Quay/crier.txt
   /Quai/parchemin_des_sorts.txt → /Quay/scroll_of_spells.txt
@@ -75,7 +75,7 @@ bourg
   /Quai/Ruelle/Cour/Egout/Galerie → /Quay/Alley/Yard/Sewer/Tunnel
   /Quai/Ruelle/Cour/Egout/Galerie/nour.txt → /Quay/Alley/Yard/Sewer/Tunnel/nour.txt
 
-racine
+root
   /home/vous → /home/you
   /home/vous/arrivee.txt → /home/you/arrival.txt
   /home/vous/manuel_admin.txt → /home/you/admin_manual.txt
@@ -94,7 +94,7 @@ racine
   /etc/effaceur.conf → /etc/eraser.conf
   /var/log/effaceur.log → /var/log/eraser.log
 
-sauvegarde
+backup
   /home/vous → /home/you
   /home/vous/mot_de_maelle.txt → /home/you/note_from_maelle.txt
   /home/vous/souvenirs → /home/you/memories
@@ -105,23 +105,23 @@ sauvegarde
   /home/vous/souvenirs/effaceur.txt → /home/you/memories/eraser.txt
   /mnt/sauvegarde → /mnt/backup
 
-premier-jour
+first-day
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
   /home/vous/notes_awa.txt → /home/you/notes_awa.txt
 
-deuxieme-jour
+second-day
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
   /home/vous/notes_awa.txt → /home/you/notes_awa.txt
   /srv/equipe → /srv/team
 
-redemarrage
+reboot-night
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
   /home/vous/notes_awa.txt → /home/you/notes_awa.txt
 
-incendie
+fire
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
   /mnt/sauvegarde → /mnt/backup
@@ -130,17 +130,17 @@ incendie
   /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz → /mnt/backup/medialibrary-2026-10-22.tar.gz
   /mnt/sauvegarde/medialibrary-2026-10-23.tar.gz → /mnt/backup/medialibrary-2026-10-23.tar.gz
 
-certificat
+certificate
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
   /home/vous/message_de_lea.txt → /home/you/message_from_lea.txt
 
-paquet-perdu
+lost-packet
   /home/vous → /home/you
   /home/vous/note_de_kofi.txt → /home/you/note_from_kofi.txt
   /home/vous/carnet.txt → /home/you/notebook.txt
 
-manuscrit
+manuscript
   /home/vous → /home/you
   /home/vous/message_d_ines.txt → /home/you/message_from_ines.txt
   /home/vous/roman → /home/you/novel
@@ -206,28 +206,28 @@ versions
   /mnt/mairie → /mnt/townhall
   /mnt/mairie/restic-bibliotheque → /mnt/townhall/restic-library
 
-fermer-la-porte
+shut-the-door
   /home/vous → /home/you
   /home/vous/courriel_kofi.txt → /home/you/email_kofi.txt
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
-pare-feu
+firewall
   /home/vous → /home/you
   /home/vous/courriel_kofi.txt → /home/you/email_kofi.txt
   /home/vous/scan_yasmine.txt → /home/you/scan_yasmine.txt
 
-sentinelle
+sentinel
   /home/vous → /home/you
   /home/vous/courriel_kofi.txt → /home/you/email_kofi.txt
 
-colocation
+sharing
   /home/vous → /home/you
   /home/vous/courriel_kofi.txt → /home/you/email_kofi.txt
   /home/vous/note_de_rania.txt → /home/you/note_from_rania.txt
   /opt/agenda/LISEZMOI.txt → /opt/agenda/README.txt
 
-chez-moi
+works-for-me
   /home/vous → /home/you
   /home/vous/courriel_kofi.txt → /home/you/email_kofi.txt
   /home/vous/aide_dns.txt → /home/you/help_dns.txt
@@ -241,37 +241,37 @@ port
   /home/vous → /home/you
   /home/vous/courriel_kofi.txt → /home/you/email_kofi.txt
 
-recidive
+repeat-offenders
   /home/vous → /home/you
   /home/vous/courriel_rania.txt → /home/you/email_rania.txt
 
-atelier
+repair-cafe
   /home/vous → /home/you
   /home/vous/courriel_kofi.txt → /home/you/email_kofi.txt
   /home/vous/note_de_rania.txt → /home/you/note_from_rania.txt
 
-mise-a-jour
+update
   /home/vous → /home/you
   /home/vous/message_de_yasmine.txt → /home/you/message_from_yasmine.txt
   /home/vous/notes_docker.txt → /home/you/notes_docker.txt
 
-composition
+compose
   /home/vous → /home/you
   /home/vous/message_de_yasmine.txt → /home/you/message_from_yasmine.txt
   /home/vous/aide_compose.txt → /home/you/help_compose.txt
 
-contournement
+firewall-hole
   /home/vous → /home/you
   /home/vous/message_de_rania.txt → /home/you/message_from_rania.txt
   /home/vous/mot_de_yasmine.txt → /home/you/note_from_yasmine.txt
 
-pleins-pouvoirs
+full-powers
   /home/vous → /home/you
   /home/vous/message_de_yasmine.txt → /home/you/message_from_yasmine.txt
   /home/vous/mot_de_rania.txt → /home/you/note_from_rania.txt
   /srv/galerie/LISEZMOI.txt → /srv/galerie/README.txt
 
-depot-nu
+bare-repo
   /home/vous → /home/you
   /home/vous/message_de_samia.txt → /home/you/message_from_samia.txt
   /home/vous/mot_de_theo.txt → /home/you/note_from_theo.txt
@@ -283,7 +283,7 @@ depot-nu
   /home/vous/gazette/agenda.html → /home/you/gazette/agenda.html
   /home/vous/gazette/fete-des-voisins.html → /home/you/gazette/fete-des-voisins.html
 
-retour-arriere
+rollback
   /home/vous → /home/you
   /home/vous/message_de_samia.txt → /home/you/message_from_samia.txt
   /home/vous/gazette → /home/you/gazette
@@ -295,11 +295,11 @@ retour-arriere
   /home/vous/gazette/fete-des-voisins.html → /home/you/gazette/fete-des-voisins.html
   /home/vous/gazette/tests.sh → /home/you/gazette/tests.sh
 
-bleu-vert
+blue-green
   /home/vous → /home/you
   /home/vous/message_de_samia.txt → /home/you/message_from_samia.txt
 
-canari
+canary
   /home/vous → /home/you
   /home/vous/message_de_samia.txt → /home/you/message_from_samia.txt
 
@@ -308,7 +308,7 @@ migration
   /home/vous/message_de_samia.txt → /home/you/message_from_samia.txt
   /home/vous/mot_de_theo.txt → /home/you/note_from_theo.txt
 
-rancon
+ransom
   /home/vous → /home/you
   /home/vous/message_de_berenice.txt → /home/you/message_from_berenice.txt
   /home/accueil/.cache/.maj → /home/accueil/.cache/.upd
@@ -324,7 +324,7 @@ rancon
   /mnt/nas/partage → /mnt/nas/share
   /mnt/cle → /mnt/usb
 
-instantanes
+snapshots
   /home/vous → /home/you
   /home/vous/message_de_berenice.txt → /home/you/message_from_berenice.txt
   /srv/partage → /srv/share
@@ -339,18 +339,18 @@ instantanes
   /mnt/instantanes → /mnt/snapshots
   /mnt/cle → /mnt/usb
 
-base
+database
   /home/vous → /home/you
   /home/vous/message_de_berenice.txt → /home/you/message_from_berenice.txt
   /home/vous/mot_de_malo.txt → /home/you/note_from_malo.txt
 
-disque-plein
+full-disk
   /home/vous → /home/you
   /home/vous/message_de_zoe.txt → /home/you/message_from_zoe.txt
   /srv/radio/emissions → /srv/radio/shows
   /srv/radio/emissions/matinale-2027-08-14.ogg → /srv/radio/shows/matinale-2027-08-14.ogg
 
-memoire
+memory
   /home/vous → /home/you
   /home/vous/message_de_zoe.txt → /home/you/message_from_zoe.txt
 
@@ -363,12 +363,12 @@ inodes
   /srv/radio/emissions/nuit-2027-08-28.ogg → /srv/radio/shows/nuit-2027-08-28.ogg
   /srv/radio/stats/LISEZMOI.txt → /srv/radio/stats/README.txt
 
-horloge
+clock
   /home/vous → /home/you
   /home/vous/message_de_zoe.txt → /home/you/message_from_zoe.txt
   /home/vous/mail_hebergeur.txt → /home/you/mail_hosting.txt
 
-sonde
+probe
   /home/vous → /home/you
   /home/vous/message_de_zoe.txt → /home/you/message_from_zoe.txt
   /srv/radio/emissions → /srv/radio/shows
@@ -383,36 +383,36 @@ post-mortem
   /home/vous/notes_theo.txt → /home/you/notes_theo.txt
   /home/vous/postmortem.md → /home/you/postmortem.md
 
-goulot
+bottleneck
   /home/vous → /home/you
   /home/vous/message_de_zoe.txt → /home/you/message_from_zoe.txt
   /srv/radio/enregistrements → /srv/radio/recordings
   /srv/radio/direct → /srv/radio/live
 
-cles
+keys
   /home/vous → /home/you
   /home/vous/courriel_yasmine.txt → /home/you/email_yasmine.txt
 
-cles:wiki
+keys:wiki
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
 
-cles:archives
+keys:archives
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
 
-rebond
+jump
   /home/vous → /home/you
   /home/vous/courriel_yasmine.txt → /home/you/email_yasmine.txt
   /home/vous/.ssh → /home/you/.ssh
 
-rebond:wiki
+jump:wiki
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/note_gaspard.txt → /home/you/note_gaspard.txt
   /srv/wiki/pages/accueil.md → /srv/wiki/pages/home.md
 
-rebond:archives
+jump:archives
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
 
@@ -430,7 +430,7 @@ tunnel:archives
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
 
-transferts
+transfers
   /home/vous → /home/you
   /home/vous/courriel_yasmine.txt → /home/you/email_yasmine.txt
   /home/vous/.ssh → /home/you/.ssh
@@ -445,12 +445,12 @@ transferts
   /srv/partage/affiches/fete-des-voisins.pdf → /srv/share/posters/street-party.pdf
   /srv/partage/planning-salles.txt → /srv/share/room-bookings.txt
 
-transferts:wiki
+transfers:wiki
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
   /srv/wiki/exports/rapport-2027.pdf → /srv/wiki/exports/report-2027.pdf
 
-transferts:archives
+transfers:archives
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
@@ -459,18 +459,18 @@ transferts:archives
   /srv/sauvegardes/partage/comptes-rendus → /srv/backups/share/minutes
   /srv/sauvegardes/partage/comptes-rendus/ag-2026.txt → /srv/backups/share/minutes/agm-2026.txt
 
-hebergeur
+web-host
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/courriel_yasmine.txt → /home/you/email_yasmine.txt
   /home/vous/courriel_hebergeur.txt → /home/you/email_hosting.txt
   /home/vous/notes-gaspard.txt → /home/you/notes-gaspard.txt
 
-hebergeur:wiki
+web-host:wiki
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
 
-depart
+departure
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
   /home/marc/bin/sauvegarde-caisse.sh → /home/marc/bin/till-backup.sh
@@ -481,7 +481,7 @@ depart
   /srv/sauvegardes/2027-10-18/home/marc/bin → /srv/backups/2027-10-18/home/marc/bin
   /srv/sauvegardes/2027-10-18/home/marc/bin/sauvegarde-caisse.sh → /srv/backups/2027-10-18/home/marc/bin/till-backup.sh
 
-droits
+shared-rights
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
   /srv/till/releves → /srv/till/statements
@@ -496,11 +496,11 @@ proxy
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
 
-mises-a-jour
+updates
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
 
-automatiques
+auto-updates
   /home/vous → /home/you
   /home/vous/courriel_awa.txt → /home/you/email_awa.txt
 
@@ -518,7 +518,7 @@ zones
   /home/vous/courriel_malik.txt → /home/you/email_malik.txt
   /home/vous/notes-de-sacha.txt → /home/you/notes-from-sacha.txt
 
-vpn
+remote-work
   /home/vous → /home/you
   /home/vous/courriel_malik.txt → /home/you/email_malik.txt
   /home/vous/malik-laptop.conf → /home/you/malik-laptop.conf
@@ -528,13 +528,13 @@ dmz
   /home/vous/courriel_ines.txt → /home/you/email_ines.txt
   /home/vous/plan-commutateur.txt → /home/you/switch-plan.txt
 
-annexe
+annex
   /home/vous → /home/you
   /home/vous/courriel_sami.txt → /home/you/email_sami.txt
   /home/vous/annex-wg0.conf → /home/you/annex-wg0.conf
   /home/vous/malik-laptop.conf → /home/you/malik-laptop.conf
 
-annuaire
+directory
   /home/vous → /home/you
   /home/vous/courriel_malik.txt → /home/you/email_malik.txt
   /home/vous/modele-ines.ldif → /home/you/modele-ines.ldif
@@ -546,7 +546,7 @@ wifi
   /home/vous/borne-bureaux.txt → /home/you/ap-offices.txt
   /home/vous/malik-laptop.conf → /home/you/malik-laptop.conf
 
-perimetre
+scope
   /home/vous → /home/you
   /home/vous/courriel_salome.txt → /home/you/email_salome.txt
   /home/vous/lettre-de-mission.txt → /home/you/engagement_letter.txt
@@ -554,14 +554,14 @@ perimetre
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
-rapport
+report
   /home/vous → /home/you
   /home/vous/courriel_nadia.txt → /home/you/email_nadia.txt
   /home/vous/rapport-audit.txt → /home/you/audit_report.txt
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
-exposition
+exposure
   /home/vous → /home/you
   /home/vous/courriel_salome.txt → /home/you/email_salome.txt
   /home/vous/balayage-audit.txt → /home/you/audit_scan.txt
@@ -574,29 +574,29 @@ traces
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
-contre-visite
+follow-up
   /home/vous → /home/you
   /home/vous/courriel_salome.txt → /home/you/email_salome.txt
   /home/vous/rapport-cloture.md → /home/you/closing_report.md
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
-fatigue
+tired-disk
   /home/vous → /home/you
   /home/vous/message_d_odile.txt → /home/you/message_from_odile.txt
   /home/vous/procedure_hebergeur.txt → /home/you/host_procedure.txt
   /var/mail/vous → /var/mail/you
 
-disque-neuf
+new-disk
   /home/vous → /home/you
   /home/vous/message_d_odile.txt → /home/you/message_from_odile.txt
   /home/vous/procedure_hebergeur.txt → /home/you/host_procedure.txt
 
-agrandir
+more-room
   /home/vous → /home/you
   /home/vous/message_d_odile.txt → /home/you/message_from_odile.txt
 
-secours
+stuck-boot
   /home/vous → /home/you
   /root/message_d_odile.txt → /root/message_from_odile.txt
 
@@ -608,20 +608,20 @@ bulletin
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
-priorite
+priority
   /home/vous → /home/you
   /home/vous/courriel_salome.txt → /home/you/email_salome.txt
   /home/vous/priorite.md → /home/you/priority.md
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
-correctif
+fix
   /home/vous → /home/you
   /home/vous/courriel_salome.txt → /home/you/email_salome.txt
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
-preuve
+proof
   /home/vous → /home/you
   /home/vous/courriel_salome.txt → /home/you/email_salome.txt
   /home/vous/.ssh → /home/you/.ssh
@@ -633,7 +633,7 @@ routine
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/authorized_keys → /home/you/.ssh/authorized_keys
 
-facteur
+postman
   /home/vous → /home/you
   /home/vous/courriel_nour.txt → /home/you/email_nour.txt
 
@@ -641,7 +641,7 @@ signature
   /home/vous → /home/you
   /home/vous/message_de_nour.txt → /home/you/message_from_nour.txt
 
-politique
+policy
   /home/vous → /home/you
   /home/vous/courriel_nour.txt → /home/you/email_nour.txt
   /home/vous/lettre_newsmail.txt → /home/you/newsmail_letter.txt
@@ -649,7 +649,7 @@ politique
   /home/vous/rapports_dmarc/mailbox.example-2027-05-16.xml → /home/you/dmarc_reports/mailbox.example-2027-05-16.xml
   /home/vous/rapports_dmarc/post.example-2027-05-16.xml → /home/you/dmarc_reports/post.example-2027-05-16.xml
 
-inventaire
+inventory
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/id_ed25519 → /home/you/.ssh/id_ed25519
@@ -671,7 +671,7 @@ playbook
   /home/vous/ansible/site.yml → /home/you/ansible/site.yml
   /home/vous/message_de_theo.txt → /home/you/message_from_theo.txt
 
-repetition
+rehearsal
   /home/vous → /home/you
   /home/vous/.ssh → /home/you/.ssh
   /home/vous/.ssh/id_ed25519 → /home/you/.ssh/id_ed25519
@@ -684,7 +684,7 @@ repetition
   /home/vous/ansible/ssh.yml → /home/you/ansible/ssh.yml
   /home/vous/note_de_theo.txt → /home/you/note_from_theo.txt
 
-cadenas
+padlock
   /home/vous → /home/you
   /home/vous/message_de_ines.txt → /home/you/message_from_ines.txt
 

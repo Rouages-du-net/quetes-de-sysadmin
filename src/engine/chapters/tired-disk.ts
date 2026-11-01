@@ -30,7 +30,7 @@ const ticket = (j: Game) => j.read(path(j.t, TICKET)) ?? '';
 const ticketOk = (j: Game) => ticket(j).includes(SERIES.sdb) && !ticket(j).includes(SERIES.sda);
 
 export const fatigue: Chapter = {
-  id: 'fatigue',
+  id: 'tired-disk',
   number: 1,
   commands: [
     'ls',
@@ -70,7 +70,7 @@ export const fatigue: Chapter = {
     labWorld(
       t,
       {
-        'message_d_odile.txt': f(t('fatigue-message-d-odile')),
+        'message_d_odile.txt': f(t('tired-disk-message-d-odile')),
         'procedure_hebergeur.txt': f(t('labo-procedure-hebergeur'), { lines: true }),
       },
       { mail: smartdBox(machineName(t, 'labo')) },
@@ -81,43 +81,43 @@ export const fatigue: Chapter = {
     {
       id: 'alerte',
       condition: (j) => /Currently unreadable|CurrentPendingSector|I\/O error, dev sdb/.test(j.last.output),
-      message: (j) => j.t('fatigue-evenement-alerte'),
+      message: (j) => j.t('tired-disk-evenement-alerte'),
     },
     {
       id: 'grappes',
       condition: (j) => /md1 : active raid1|Raid Level : raid1/.test(j.last.output),
-      message: (j) => j.t('fatigue-evenement-grappes'),
+      message: (j) => j.t('tired-disk-evenement-grappes'),
     },
     {
       id: 'smart',
       condition: (j) => j.last.output.includes(`Serial Number:    ${SERIES.sdb}`) && j.last.output.includes('Current_Pending_Sector'),
-      message: (j) => j.t('fatigue-evenement-smart'),
+      message: (j) => j.t('tired-disk-evenement-smart'),
     },
     {
       id: 'occupe',
       condition: (j) => j.last.errors.some((e) => /hot remove failed for \/dev\/sdb\d: Device or resource busy/.test(e)),
-      message: (j) => j.t('fatigue-evenement-occupe'),
+      message: (j) => j.t('tired-disk-evenement-occupe'),
     },
-    { id: 'sain', condition: keySda, message: (j) => j.t('fatigue-evenement-sain') },
+    { id: 'sain', condition: keySda, message: (j) => j.t('tired-disk-evenement-sain') },
     {
       id: 'moitie',
       condition: (j) => !outSdb(j) && Object.values(st(j).arrays).some((g) => !g.members.some((m) => m.part.startsWith('sdb'))),
       message: (j) => {
         const rest = sdbRemains(j)[0].part;
-        return j.t('fatigue-evenement-moitie', { partition: `/dev/${rest}`, grappe: `/dev/${arrayFor(st(j), rest)![0]}` });
+        return j.t('tired-disk-evenement-moitie', { partition: `/dev/${rest}`, grappe: `/dev/${arrayFor(st(j), rest)![0]}` });
       },
     },
-    { id: 'retire', condition: (j) => outSdb(j) && sdaIntact(j), message: (j) => j.t('fatigue-evenement-retire') },
+    { id: 'retire', condition: (j) => outSdb(j) && sdaIntact(j), message: (j) => j.t('tired-disk-evenement-retire') },
     {
       id: 'ticket-faux',
       condition: (j) => ticket(j).includes(SERIES.sda),
-      message: (j) => j.t('fatigue-evenement-ticket-faux', { fichier: name(j.t, 'ticket.txt') }),
+      message: (j) => j.t('tired-disk-evenement-ticket-faux', { fichier: name(j.t, 'ticket.txt') }),
     },
-    { id: 'ticket', condition: ticketOk, message: (j) => j.t('fatigue-evenement-ticket') },
+    { id: 'ticket', condition: ticketOk, message: (j) => j.t('tired-disk-evenement-ticket') },
     {
       id: 'fin',
       condition: (j) => outSdb(j) && sdaIntact(j) && !keySda(j) && ticketOk(j),
-      message: (j) => j.t('fatigue-evenement-fin'),
+      message: (j) => j.t('tired-disk-evenement-fin'),
     },
   ],
 };

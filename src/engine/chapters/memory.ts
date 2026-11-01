@@ -87,7 +87,7 @@ const proc = (pid: number, user: string, command: string, extra: Partial<Process
 });
 
 export const chapterMemory: Chapter = {
-  id: 'memoire',
+  id: 'memory',
   number: 2,
   commands: [
     'ls',
@@ -205,10 +205,10 @@ export const chapterMemory: Chapter = {
       );
     return place({
       etc: place({ ...accountsFiles(), hostname: file('radio'), systemd: place({ system: place({}) }) }),
-      home: place({ vous: d({ 'message_de_zoe.txt': f(t('memoire-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      home: place({ vous: d({ 'message_de_zoe.txt': f(t('memory-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       opt: place({
-        playlist: place({ 'server.js': file(t('memoire-server-js')) }),
-        podcast: place({ 'convertir.py': file(t('memoire-convertir-py')) }),
+        playlist: place({ 'server.js': file(t('memory-server-js')) }),
+        podcast: place({ 'convertir.py': file(t('memory-convertir-py')) }),
       }),
       tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
       usr: place({
@@ -226,16 +226,16 @@ export const chapterMemory: Chapter = {
     });
   },
   events: [
-    { id: 'oom', condition: (j) => /Out of memory|oom-kill|OOM killer/.test(j.last.output), message: (j) => j.t('memoire-evenement-oom') },
+    { id: 'oom', condition: (j) => /Out of memory|oom-kill|OOM killer/.test(j.last.output), message: (j) => j.t('memory-evenement-oom') },
     {
       id: 'zombies',
       condition: (j) => /<defunct>| Z /.test(j.last.output) && j.last.commands.some((c) => c.includes('ps') || c.includes('top')),
-      message: (j) => j.t('memoire-evenement-zombies'),
+      message: (j) => j.t('memory-evenement-zombies'),
     },
     {
       id: 'kill-zombie',
       condition: (j) => j.last.commands.some((c) => c.includes('kill') && c.some((a) => ZOMBIES.includes(Number(a)))) && zombies(j).length > 0,
-      message: (j) => j.t('memoire-evenement-kill-zombie'),
+      message: (j) => j.t('memory-evenement-kill-zombie'),
     },
     {
       id: 'grossit',
@@ -246,18 +246,18 @@ export const chapterMemory: Chapter = {
         j.last.commands.some(
           (c) => ['free', 'top', 'ps', 'systemctl'].includes(c[0]) || (c[0] === 'sudo' && ['free', 'top', 'ps', 'systemctl'].includes(c[1])),
         ),
-      message: (j) => j.t('memoire-evenement-grossit'),
+      message: (j) => j.t('memory-evenement-grossit'),
     },
-    { id: 'encore', condition: (j) => killed(j).some((t) => !t.cgroup), message: (j) => j.t('memoire-evenement-encore') },
-    { id: 'trop-bas', condition: (j) => (playlist(j).maxMemory ?? Infinity) < 256 * Mo, message: (j) => j.t('memoire-evenement-trop-bas') },
-    { id: 'trop-haut', condition: (j) => (playlist(j).maxMemory ?? 0) > 1024 * Mo, message: (j) => j.t('memoire-evenement-trop-haut') },
-    { id: 'sans-relance', condition: (j) => killed(j).some((t) => t.cgroup) && !active(j), message: (j) => j.t('memoire-evenement-sans-relance') },
-    { id: 'contenue', condition: (j) => killed(j).some((t) => t.cgroup && t.restart) && active(j), message: (j) => j.t('memoire-evenement-contenue') },
-    { id: 'sans-zombies', condition: (j) => zombies(j).length === 0, message: (j) => j.t('memoire-evenement-sans-zombies') },
+    { id: 'encore', condition: (j) => killed(j).some((t) => !t.cgroup), message: (j) => j.t('memory-evenement-encore') },
+    { id: 'trop-bas', condition: (j) => (playlist(j).maxMemory ?? Infinity) < 256 * Mo, message: (j) => j.t('memory-evenement-trop-bas') },
+    { id: 'trop-haut', condition: (j) => (playlist(j).maxMemory ?? 0) > 1024 * Mo, message: (j) => j.t('memory-evenement-trop-haut') },
+    { id: 'sans-relance', condition: (j) => killed(j).some((t) => t.cgroup) && !active(j), message: (j) => j.t('memory-evenement-sans-relance') },
+    { id: 'contenue', condition: (j) => killed(j).some((t) => t.cgroup && t.restart) && active(j), message: (j) => j.t('memory-evenement-contenue') },
+    { id: 'sans-zombies', condition: (j) => zombies(j).length === 0, message: (j) => j.t('memory-evenement-sans-zombies') },
     {
       id: 'fin',
       condition: (j) => active(j) && reasonableLimit(j) && restart(j) && zombies(j).length === 0 && sd(j).services['radio-stream'].state === 'active',
-      message: (j) => j.t('memoire-evenement-fin'),
+      message: (j) => j.t('memory-evenement-fin'),
     },
   ],
 };

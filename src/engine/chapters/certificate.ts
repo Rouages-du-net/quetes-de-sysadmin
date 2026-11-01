@@ -86,7 +86,7 @@ server {
     include /etc/nginx/blocked.conf;
 }`;
 
-const blocked = (t: Translate) => `# ${t('premier-jour-bloques-commentaire')}
+const blocked = (t: Translate) => `# ${t('first-day-bloques-commentaire')}
 deny 203.0.113.5;
 deny 192.0.2.99;
 deny ${ROBOT};`;
@@ -208,7 +208,7 @@ const shell = (j: Game) => j as Shell;
 const served = (j: Game) => NAMES.every((n) => goodServedCertificate(shell(j), n));
 
 export const certificate: Chapter = {
-  id: 'certificat',
+  id: 'certificate',
   number: 5,
   commands: [
     'ls',
@@ -287,7 +287,7 @@ export const certificate: Chapter = {
                 'chain.pem': file(cert['chain.pem']),
                 'fullchain.pem': file(cert['fullchain.pem']),
                 'privkey.pem': file(cert['privkey.pem'], 'rw-------'),
-                README: file(t('certificat-lisezmoi-live')),
+                README: file(t('certificate-lisezmoi-live')),
               }),
             },
             { owner: 'root', mode: 'rwx------' },
@@ -296,7 +296,7 @@ export const certificate: Chapter = {
           'renewal-hooks': place({ deploy: place({}), pre: place({}), post: place({}) }),
         }),
       }),
-      home: place({ vous: d({ 'courriel_awa.txt': f(t('certificat-courriel-awa')), 'message_de_lea.txt': f(t('certificat-message-de-lea')) }) }),
+      home: place({ vous: d({ 'courriel_awa.txt': f(t('certificate-courriel-awa')), 'message_de_lea.txt': f(t('certificate-message-de-lea')) }) }),
       usr: place({
         bin: place({
           certbot: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 966 }),
@@ -308,7 +308,7 @@ export const certificate: Chapter = {
       var: place({
         www: place({
           html: place({ 'index.nginx-debian.html': file(WELCOME) }),
-          medialibrary: place({ 'index.html': file(t('certificat-site-index')) }),
+          medialibrary: place({ 'index.html': file(t('certificate-site-index')) }),
         }),
         log: place({
           letsencrypt: place({ 'letsencrypt.log': file(CERTBOT_LOG) }, { owner: 'root', mode: 'rwx------' }),
@@ -324,12 +324,12 @@ export const certificate: Chapter = {
     {
       id: 'expire',
       condition: (j) => j.last.errors.some((e) => e.includes('certificate has expired')) || j.last.output.includes('INVALID: EXPIRED'),
-      message: (j) => j.t('certificat-evenement-expire'),
+      message: (j) => j.t('certificate-evenement-expire'),
     },
     {
       id: 'defi',
       condition: (j) => j.state.certbotDefiEchoue === true,
-      message: (j) => j.t('certificat-evenement-defi'),
+      message: (j) => j.t('certificate-evenement-defi'),
     },
     {
       id: 'pas-recharge',
@@ -337,17 +337,17 @@ export const certificate: Chapter = {
         const c = onDisk(j);
         return !!c && c.end > toUtc(sd(j).clock) && !served(j);
       },
-      message: (j) => j.t('certificat-evenement-pas-recharge'),
+      message: (j) => j.t('certificate-evenement-pas-recharge'),
     },
     {
       id: 'sans-hook',
       condition: (j) => served(j) && possibleRenewal(shell(j)) && !automaticReload(shell(j)),
-      message: (j) => j.t('certificat-evenement-sans-hook'),
+      message: (j) => j.t('certificate-evenement-sans-hook'),
     },
     {
       id: 'fin',
       condition: (j) => served(j) && possibleRenewal(shell(j)) && automaticReload(shell(j)),
-      message: (j) => j.t('certificat-evenement-fin'),
+      message: (j) => j.t('certificate-evenement-fin'),
     },
   ],
 };

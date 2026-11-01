@@ -160,7 +160,7 @@ const okTool = (j: Game) => dockerRequest(j, '127.0.0.1', 8080, '/')?.code === 2
 const ufw = (j: Game) => j.state.ufw as Firewall;
 
 export const bypass: Chapter = {
-  id: 'contournement',
+  id: 'firewall-hole',
   number: 3,
   commands: [
     'ls',
@@ -272,7 +272,7 @@ export const bypass: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: f('fabrique', { lines: true, owner: 'root' }) }),
       home: place({
-        vous: d({ 'message_de_rania.txt': f(t('contournement-message-de-rania')), 'mot_de_yasmine.txt': f(t('contournement-mot-de-yasmine')) }),
+        vous: d({ 'message_de_rania.txt': f(t('firewall-hole-message-de-rania')), 'mot_de_yasmine.txt': f(t('firewall-hole-mot-de-yasmine')) }),
       }),
       srv: place({
         reservations: place({
@@ -292,32 +292,32 @@ export const bypass: Chapter = {
     {
       id: 'ss',
       condition: (j) => j.last.output.includes('docker-proxy') && j.last.output.includes(':5432'),
-      message: (j) => j.t('contournement-evenement-ss'),
+      message: (j) => j.t('firewall-hole-evenement-ss'),
     },
     {
       id: 'ufw-inutile',
       condition: (j) => ufw(j).rules.some((r) => r.ports.includes(5432) && r.action !== 'allow') && openToWorld(j),
-      message: (j) => j.t('contournement-evenement-ufw-inutile'),
+      message: (j) => j.t('firewall-hole-evenement-ufw-inutile'),
     },
     {
       id: 'ferme',
       condition: (j) => !openToWorld(j) && okApp(j),
-      message: (j) => j.t('contournement-evenement-ferme'),
+      message: (j) => j.t('firewall-hole-evenement-ferme'),
     },
     {
       id: 'volume-perdu',
       condition: (j) => volumesPerdus(j).length > 0,
-      message: (j) => j.t('contournement-evenement-volume-perdu', { volumes: volumesPerdus(j).join(', ') }),
+      message: (j) => j.t('firewall-hole-evenement-volume-perdu', { volumes: volumesPerdus(j).join(', ') }),
     },
     {
       id: 'disque',
       condition: (j) => occupation(j) < 0.75,
-      message: (j) => j.t('contournement-evenement-disque', { pourcent: Math.round(occupation(j) * 100) }),
+      message: (j) => j.t('firewall-hole-evenement-disque', { pourcent: Math.round(occupation(j) * 100) }),
     },
     {
       id: 'fin',
       condition: (j) => !openToWorld(j) && okApp(j) && okTool(j) && occupation(j) < 0.75 && volumesPerdus(j).length === 0,
-      message: (j) => j.t('contournement-evenement-fin'),
+      message: (j) => j.t('firewall-hole-evenement-fin'),
     },
   ],
 };

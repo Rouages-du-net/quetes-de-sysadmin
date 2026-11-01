@@ -35,7 +35,7 @@ export const ACHIEVEMENTS: Achievements[] = [
   { id: 'redirection', obtained: (c) => !!c.sh?.last.redirection },
   { id: 'premier-chapitre', obtained: (c) => c.finished.length >= 1 },
   { id: 'effaceur', obtained: (c) => finishedStories(c.finished).some((h) => h.id === 'effaceur') },
-  { id: 'restauration', obtained: (c) => ['sauvegarde', 'versions', 'instantanes', 'base'].some((id) => c.finished.includes(id)) },
+  { id: 'restauration', obtained: (c) => ['backup', 'versions', 'snapshots', 'database'].some((id) => c.finished.includes(id)) },
   { id: 'reseau', obtained: (c) => finishedStories(c.finished).some((h) => h.id === 'ruche') },
   { id: 'trois-histoires', obtained: (c) => finishedStories(c.finished).length >= 3 },
   { id: 'toutes-histoires', obtained: (c) => finishedStories(c.finished).length === STORIES.length },

@@ -47,7 +47,7 @@ const openSite = (j: Game) => pass(j, 80) && pass(j, 443);
 const filter = (j: Game) => pf(j).enabled && pf(j).incoming !== 'allow' && openSsh(j) && openSite(j) && !pass(j, 3306);
 
 export const firewall: Chapter = {
-  id: 'pare-feu',
+  id: 'firewall',
   number: 2,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'ss', 'ufw'],
   home: M,
@@ -82,7 +82,7 @@ export const firewall: Chapter = {
           undefined,
           root,
         ),
-        home: d({ vous: d({ 'courriel_kofi.txt': f(t('pare-feu-courriel-kofi')), 'scan_yasmine.txt': f(SCAN, { lines: true }) }) }, undefined, root),
+        home: d({ vous: d({ 'courriel_kofi.txt': f(t('firewall-courriel-kofi')), 'scan_yasmine.txt': f(SCAN, { lines: true }) }) }, undefined, root),
       },
       undefined,
       root,
@@ -92,32 +92,32 @@ export const firewall: Chapter = {
     {
       id: 'ecoute',
       condition: (j) => j.last.commands.some((c) => c[0] === 'ss') && /:(3306|mysql)\b/.test(j.last.output),
-      message: (j) => j.t('pare-feu-evenement-ecoute'),
+      message: (j) => j.t('firewall-evenement-ecoute'),
     },
     {
       id: 'enferme',
       condition: (j) => pf(j).enabled && !openSsh(j),
-      message: (j) => j.t('pare-feu-evenement-enferme'),
+      message: (j) => j.t('firewall-evenement-enferme'),
     },
     {
       id: 'site-coupe',
       condition: (j) => pf(j).enabled && !openSite(j),
-      message: (j) => j.t('pare-feu-evenement-site-coupe'),
+      message: (j) => j.t('firewall-evenement-site-coupe'),
     },
     {
       id: 'base-ouverte',
       condition: (j) => pf(j).enabled && pass(j, 3306),
-      message: (j) => j.t('pare-feu-evenement-base-ouverte'),
+      message: (j) => j.t('firewall-evenement-base-ouverte'),
     },
     {
       id: 'filtre',
       condition: filter,
-      message: (j) => j.t('pare-feu-evenement-filtre'),
+      message: (j) => j.t('firewall-evenement-filtre'),
     },
     {
       id: 'fin',
       condition: (j) => j.flags.has('filtre') && filter(j) && (j.state.connexions ?? 1) > (pf(j).activationAlConnections ?? Infinity),
-      message: (j) => j.t('pare-feu-evenement-fin'),
+      message: (j) => j.t('firewall-evenement-fin'),
     },
   ],
 };

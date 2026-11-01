@@ -26,7 +26,7 @@ const triesWithoutUpdate = (j: Game) =>
 const siteOk = (j: Game) => j.last.commands.some((c) => c[0] === 'curl') && /200/.test(j.last.output);
 
 export const fix: Chapter = {
-  id: 'correctif',
+  id: 'fix',
   number: 3,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'sudo', 'id', 'whoami', 'apt', 'curl', 'systemctl'],
   home: M,
@@ -51,12 +51,12 @@ export const fix: Chapter = {
   initialise: initialiseWatch,
   createWorld: (t) =>
     watchWorld(t, {
-      home: { 'courriel_salome.txt': f(t('correctif-courriel-salome')) },
+      home: { 'courriel_salome.txt': f(t('fix-courriel-salome')) },
     }),
   events: [
-    { id: 'sans-maj', condition: triesWithoutUpdate, message: (j) => j.t('correctif-evenement-sans-maj') },
-    { id: 'corrige', condition: okFixed, message: (j) => j.t('correctif-evenement-corrige') },
-    { id: 'verifie', condition: (j) => okFixed(j) && siteOk(j), message: (j) => j.t('correctif-evenement-verifie') },
-    { id: 'fin', condition: (j) => okFixed(j) && siteOk(j), message: (j) => j.t('correctif-evenement-fin') },
+    { id: 'sans-maj', condition: triesWithoutUpdate, message: (j) => j.t('fix-evenement-sans-maj') },
+    { id: 'corrige', condition: okFixed, message: (j) => j.t('fix-evenement-corrige') },
+    { id: 'verifie', condition: (j) => okFixed(j) && siteOk(j), message: (j) => j.t('fix-evenement-verifie') },
+    { id: 'fin', condition: (j) => okFixed(j) && siteOk(j), message: (j) => j.t('fix-evenement-fin') },
   ],
 };

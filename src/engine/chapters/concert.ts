@@ -190,9 +190,9 @@ export const concert: Chapter = {
         service: 'agenda',
         capacity: 20,
         pages: {
-          '/': t('colocation-agenda-accueil'),
-          '/semaine': t('colocation-agenda-semaine'),
-          '/ateliers': t('colocation-agenda-ateliers'),
+          '/': t('sharing-agenda-accueil'),
+          '/semaine': t('sharing-agenda-semaine'),
+          '/ateliers': t('sharing-agenda-ateliers'),
           '/style.css': '(CSS)',
           '/app.js': '(JavaScript)',
           '/logo.png': '(PNG)',
@@ -242,7 +242,7 @@ export const concert: Chapter = {
       home: place({ vous: d({ 'message_de_kofi.txt': f(t('concert-message-de-kofi')), 'aide_journaux.txt': f(t('concert-aide-journaux')) }) }),
       usr: place({ sbin: place({ nginx: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_342_520 }) }) }),
       var: place({
-        www: place({ letters: place({ 'index.html': file(t('colocation-site-lettres')) }) }),
+        www: place({ letters: place({ 'index.html': file(t('sharing-site-lettres')) }) }),
         log: place({
           nginx: place(
             {

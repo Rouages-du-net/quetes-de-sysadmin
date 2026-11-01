@@ -7,7 +7,7 @@
 // game speaks English, and a text missing from a translation shows in
 // English. The code only uses identifiers:
 //
-//   t('eveil-message')                       a message
+//   t('lighthouse-message')                       a message
 //   t('histoire-effaceur.resume')            an attribute
 //   t('ls-acces-impossible', { cible })      with named variables
 //

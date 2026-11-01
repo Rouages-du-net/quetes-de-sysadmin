@@ -6,7 +6,7 @@ import { translator } from '../src/texts';
 import { inLanguage } from './names';
 
 const L = (text: string) => inLanguage(translator('fr'), text);
-const ERASER = ['eveil', 'bourg', 'racine', 'sauvegarde'];
+const ERASER = ['lighthouse', 'village', 'root', 'backup'];
 
 describe('Instantané de secours', () => {
   it('revenir à l’instantané annule ce qui a été fait après, et garde ce qui a été fait avant', () => {
@@ -32,7 +32,7 @@ describe('Instantané de secours', () => {
   });
 
   it('les enregistrements de nano se rejouent aussi', () => {
-    const c = new Console({ language: 'fr', finished: [...ERASER, 'datacenter', 'deuxieme-jour'] });
+    const c = new Console({ language: 'fr', finished: [...ERASER, 'datacenter', 'second-day'] });
     c.execute('ssh datacenter');
     c.execute('yes');
     c.execute('nano note.txt');

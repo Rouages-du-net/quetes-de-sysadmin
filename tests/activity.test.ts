@@ -12,7 +12,7 @@ import { instants } from '../src/engine/activity';
 import { LANGUAGES } from '../src/texts';
 import { machinesInLanguage } from './names';
 
-const BEFORE = [...new Set([...STORIES.find((h) => h.id === 'effaceur')!.chapters.map((c) => c.id), ...prerequisites('lettres'), 'fermer-la-porte', 'pare-feu'])];
+const BEFORE = [...new Set([...STORIES.find((h) => h.id === 'effaceur')!.chapters.map((c) => c.id), ...prerequisites('lettres'), 'shut-the-door', 'firewall'])];
 const ROBOT = '198.51.100.23';
 
 describe('instants', () => {
@@ -29,7 +29,7 @@ for (const language of LANGUAGES)
       const c = new Console({ language, finished: BEFORE });
       const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
       play(['ssh lettres', 'yes']);
-      expect(c.remote?.shell.chapter.id).toBe('sentinelle');
+      expect(c.remote?.shell.chapter.id).toBe('sentinel');
       return { c, jouer: play };
     };
 
@@ -109,7 +109,7 @@ describe('Suivre un fichier', () => {
   const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
 
   it('sans activité, tail -f attend ; dans un tube, il affiche une fois sans suivre', () => {
-    const s = new Shell(chapter('deuxieme-jour'), 'fr');
+    const s = new Shell(chapter('second-day'), 'fr');
     s.execute('tail -f /var/log/nginx/access.log');
     expect(s.follow).not.toBeNull();
     expect(s.follow!.read()).toBe('');

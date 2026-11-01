@@ -177,7 +177,7 @@ const LISTENING: Listening[] = [
 ];
 
 export const repeatOffence: Chapter = {
-  id: 'recidive',
+  id: 'repeat-offenders',
   number: 8,
   commands: [
     'ls',
@@ -280,7 +280,7 @@ export const repeatOffence: Chapter = {
           undefined,
           root,
         ),
-        home: d({ vous: d({ 'courriel_rania.txt': f(t('recidive-courriel-rania')) }) }, undefined, root),
+        home: d({ vous: d({ 'courriel_rania.txt': f(t('repeat-offenders-courriel-rania')) }) }, undefined, root),
         var: d(
           {
             log: d(
@@ -311,16 +311,16 @@ export const repeatOffence: Chapter = {
     {
       id: 'jail-conf',
       condition: (j) => j.read(`${DIRECTORY}/jail.conf`) !== COMPLETE_CONF_JAIL,
-      message: (j) => j.t('sentinelle-evenement-jail-conf'),
+      message: (j) => j.t('sentinel-evenement-jail-conf'),
     },
     {
       id: 'tout-active',
       condition: (j) => readConfig(j).errors.some((e) => e.includes('Have not found any log file')),
-      message: (j) => j.t('recidive-evenement-tout-active'),
+      message: (j) => j.t('repeat-offenders-evenement-tout-active'),
     },
-    { id: 'courte', condition: (j) => !!jail(j, 'recidive') && !moreLong(j), message: (j) => j.t('recidive-evenement-courte') },
-    { id: 'recidive', condition: (j) => REPEAT_OFFENDERS.some((ip) => banned(j, ip, 'recidive')), message: (j) => j.t('recidive-evenement-recidive') },
-    { id: 'agenda', condition: (j) => SCRAPERS.some((ip) => banned(j, ip, 'nginx-limit-req')), message: (j) => j.t('recidive-evenement-agenda') },
-    { id: 'fin', condition: (j) => succeeded(j) && f2b(j).consulted, message: (j) => j.t('recidive-evenement-fin') },
+    { id: 'courte', condition: (j) => !!jail(j, 'recidive') && !moreLong(j), message: (j) => j.t('repeat-offenders-evenement-courte') },
+    { id: 'recidive', condition: (j) => REPEAT_OFFENDERS.some((ip) => banned(j, ip, 'recidive')), message: (j) => j.t('repeat-offenders-evenement-recidive') },
+    { id: 'agenda', condition: (j) => SCRAPERS.some((ip) => banned(j, ip, 'nginx-limit-req')), message: (j) => j.t('repeat-offenders-evenement-agenda') },
+    { id: 'fin', condition: (j) => succeeded(j) && f2b(j).consulted, message: (j) => j.t('repeat-offenders-evenement-fin') },
   ],
 };

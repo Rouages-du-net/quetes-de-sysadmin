@@ -25,7 +25,7 @@ const readDoc = (j: Game) => j.read(path(j.t, DOC)) ?? '';
 const text = (j: Game) => readDoc(j).toLowerCase();
 const words = (j: Game, key: string) => j.t(key).split(',').map((m) => m.trim().toLowerCase());
 
-const okTemplate = (j: Game) => !text(j).includes(j.t('priorite-a-completer').toLowerCase());
+const okTemplate = (j: Game) => !text(j).includes(j.t('priority-a-completer').toLowerCase());
 const okCity = (j: Game) => text(j).includes(CVE.nginx.id.toLowerCase()) && text(j).includes(CVE.rsync.id.toLowerCase());
 const order = (j: Game) => {
   const t = text(j);
@@ -35,8 +35,8 @@ const order = (j: Game) => {
 };
 const okOrder = (j: Game) => (order(j) ?? 1) < 0;
 const onlyScore = (j: Game) => okCity(j) && !okOrder(j);
-const okExposure = (j: Game) => words(j, 'priorite-mots-expose').some((m) => text(j).includes(m)) && words(j, 'priorite-mots-local').some((m) => text(j).includes(m));
-const sshOk = (j: Game) => text(j).includes(CVE.ssh.id.toLowerCase()) && words(j, 'priorite-mots-protege').some((m) => text(j).includes(m));
+const okExposure = (j: Game) => words(j, 'priority-mots-expose').some((m) => text(j).includes(m)) && words(j, 'priority-mots-local').some((m) => text(j).includes(m));
+const sshOk = (j: Game) => text(j).includes(CVE.ssh.id.toLowerCase()) && words(j, 'priority-mots-protege').some((m) => text(j).includes(m));
 const docOk = (j: Game) => okTemplate(j) && okCity(j) && okOrder(j) && okExposure(j) && sshOk(j);
 
 const missing = (j: Game): string[] => {
@@ -49,7 +49,7 @@ const missing = (j: Game): string[] => {
 };
 
 export const priority: Chapter = {
-  id: 'priorite',
+  id: 'priority',
   number: 2,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'sudo', 'id', 'whoami', 'ss', 'nmap'],
   home: M,
@@ -74,27 +74,27 @@ export const priority: Chapter = {
   initialise: initialiseWatch,
   createWorld: (t) =>
     watchWorld(t, {
-      home: { 'courriel_salome.txt': f(t('priorite-courriel-salome')), 'priorite.md': f(t('priorite-modele'), { lines: true }) },
+      home: { 'courriel_salome.txt': f(t('priority-courriel-salome')), 'priorite.md': f(t('priority-modele'), { lines: true }) },
     }),
   afterCommand: (j) => {
     const text = readDoc(j);
     if (text === j.state.prioriteLue || j.state.prioriteFinie) return;
     j.state.prioriteLue = text;
-    if (onlyScore(j)) return j.t('priorite-evenement-score-seul');
+    if (onlyScore(j)) return j.t('priority-evenement-score-seul');
     const rest = missing(j);
     if (!rest.length) {
       j.state.prioriteFinie = true;
       return;
     }
-    return [j.t('priorite-relecture'), ...rest.map((m) => `- ${j.t(`priorite-manque-${m}`)}`)].join('\n');
+    return [j.t('priority-relecture'), ...rest.map((m) => `- ${j.t(`priority-manque-${m}`)}`)].join('\n');
   },
   events: [
     {
       id: 'expose',
       condition: (j) => j.last.commands.some((c) => c[0] === 'ss' || c[0] === 'nmap') && (/:(80|443)\b/.test(j.last.output) || /80\/tcp|443\/tcp/.test(j.last.output)),
-      message: (j) => j.t('priorite-evenement-expose'),
+      message: (j) => j.t('priority-evenement-expose'),
     },
-    { id: 'ordre', condition: docOk, message: (j) => j.t('priorite-evenement-ordre') },
-    { id: 'fin', condition: docOk, message: (j) => j.t('priorite-evenement-fin') },
+    { id: 'ordre', condition: docOk, message: (j) => j.t('priority-evenement-ordre') },
+    { id: 'fin', condition: docOk, message: (j) => j.t('priority-evenement-fin') },
   ],
 };

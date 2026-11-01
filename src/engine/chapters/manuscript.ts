@@ -11,11 +11,11 @@ const NOVEL = `${M}/roman`;
 const POEMS = `${M}/poemes`;
 
 // Les versions du roman, les commits et les poèmes sont des textes de
-// l'histoire, dans la langue du jeu (chapitre-manuscrit.ftl).
+// l'histoire, dans la langue du jeu (chapitre-manuscript.ftl).
 const INES_POEMS = ['mer.txt', 'phare.txt', 'zohra.txt'];
 
 function versions(t: Translate) {
-  const [ch1, ch2, ch3, damage] = ['1', '2', '3', '3-abime'].map((n) => t(`manuscrit-roman-chapitre-${n}`));
+  const [ch1, ch2, ch3, damage] = ['1', '2', '3', '3-abime'].map((n) => t(`manuscript-roman-chapitre-${n}`));
   return {
     v1: ch1,
     v2: `${ch1}\n\n${ch2}`,
@@ -30,16 +30,16 @@ function history(t: Translate): Repo {
   // Le fichier suivi, sous son nom dans la langue (novel.txt…).
   const novel = name(t, 'roman.txt');
   const add = (message: string, date: string, text: string) =>
-    commits.push(newCommit(commits.at(-1) ?? null, message, t('manuscrit-autrice'), date, { [novel]: text }));
-  add(t('manuscrit-commit-1'), 'Mon Oct 5 22:14:09 2026 +0200', v.v1);
-  add(t('manuscrit-commit-2'), 'Thu Oct 8 21:40:33 2026 +0200', v.v2);
-  add(t('manuscrit-commit-3'), 'Sun Oct 11 23:02:51 2026 +0200', v.v3);
-  add(t('manuscrit-commit-4'), 'Mon Oct 12 07:55:12 2026 +0200', v.v4);
+    commits.push(newCommit(commits.at(-1) ?? null, message, t('manuscript-autrice'), date, { [novel]: text }));
+  add(t('manuscript-commit-1'), 'Mon Oct 5 22:14:09 2026 +0200', v.v1);
+  add(t('manuscript-commit-2'), 'Thu Oct 8 21:40:33 2026 +0200', v.v2);
+  add(t('manuscript-commit-3'), 'Sun Oct 11 23:02:51 2026 +0200', v.v3);
+  add(t('manuscript-commit-4'), 'Mon Oct 12 07:55:12 2026 +0200', v.v4);
   return { commits, index: { [novel]: v.v4 } };
 }
 
 export const time: Chapter = {
-  id: 'manuscrit',
+  id: 'manuscript',
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'git'],
   home: M,
@@ -48,20 +48,20 @@ export const time: Chapter = {
   final: 'fin',
   state: (t) => ({
     git: { [path(t, NOVEL)]: history(t) },
-    auteur: t('manuscrit-autrice'),
+    auteur: t('manuscript-autrice'),
     date: 'Tue Oct 13 10:30:00 2026 +0200',
   }),
   createWorld: (t) => {
     return d({
       home: d({
         vous: d({
-          'message_d_ines.txt': f(t('manuscrit-message-d-ines')),
+          'message_d_ines.txt': f(t('manuscript-message-d-ines')),
           roman: d({
             '.git': d({ HEAD: f('ref: refs/heads/main', { lines: true }) }),
             'roman.txt': f(versions(t).v4, { lines: true }),
           }),
-          poemes: d(Object.fromEntries(INES_POEMS.map((poem) => [poem, f(t(`manuscrit-poeme-${poem.replace('.txt', '')}`), { lines: true })]))),
-          'aide_git.txt': f(t('manuscrit-aide-git')),
+          poemes: d(Object.fromEntries(INES_POEMS.map((poem) => [poem, f(t(`manuscript-poeme-${poem.replace('.txt', '')}`), { lines: true })]))),
+          'aide_git.txt': f(t('manuscript-aide-git')),
         }),
       }),
     });
@@ -70,12 +70,12 @@ export const time: Chapter = {
     {
       id: 'historique',
       condition: (j) => j.last.commands[0]?.[0] === 'git' && j.last.commands[0]?.[1] === 'log',
-      message: (j) => j.t('manuscrit-evenement-historique'),
+      message: (j) => j.t('manuscript-evenement-historique'),
     },
     {
       id: 'restaure',
       condition: (j) => j.read(path(j.t, `${NOVEL}/roman.txt`)) === versions(j.t).v3,
-      message: (j) => j.t('manuscrit-evenement-restaure'),
+      message: (j) => j.t('manuscript-evenement-restaure'),
     },
     {
       id: 'sauve',
@@ -83,7 +83,7 @@ export const time: Chapter = {
         const repo: Repo = j.state.git[path(j.t, NOVEL)];
         return repo.commits.length > 4 && repo.commits.at(-1)!.files[name(j.t, 'roman.txt')] === versions(j.t).v3;
       },
-      message: (j) => j.t('manuscrit-evenement-sauve'),
+      message: (j) => j.t('manuscript-evenement-sauve'),
     },
     {
       id: 'poemes',
@@ -92,12 +92,12 @@ export const time: Chapter = {
         const c = repo?.commits.at(-1);
         return !!c && INES_POEMS.every((poem) => name(j.t, poem) in c.files);
       },
-      message: (j) => j.t('manuscrit-evenement-poemes'),
+      message: (j) => j.t('manuscript-evenement-poemes'),
     },
     {
       id: 'fin',
       condition: (j) => j.flags.has('sauve') && j.flags.has('poemes'),
-      message: (j) => j.t('manuscrit-evenement-fin'),
+      message: (j) => j.t('manuscript-evenement-fin'),
     },
   ],
 };

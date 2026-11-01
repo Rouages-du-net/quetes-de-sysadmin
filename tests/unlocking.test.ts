@@ -46,14 +46,14 @@ describe('Déverrouillage graduel', () => {
       expect(before.some((c) => h.chapters.some((x) => x.id === c))).toBe(false);
       expect(new Set(before).size).toBe(before.length);
     }
-    expect(missing('audit', ['sentinelle'])).toEqual(['droits']);
+    expect(missing('audit', ['sentinel'])).toEqual(['shared-rights']);
     expect(prerequisites('effaceur')).toEqual([]);
   });
 
   it('le poste reçoit les clés vague par vague', () => {
     const keys = (finished: string[]) => new Console({ language: 'fr', finished }).workstation.execute('ls ~/.ssh') ?? '';
     const name = (h: string) => `id_${MACHINES.find((m) => m.story === h)!.name}`;
-    const root = keys(['eveil', 'bourg', 'racine']);
+    const root = keys(['lighthouse', 'village', 'root']);
     expect(root).toContain(name('datacenter'));
     expect(root).not.toContain(name('fabrique'));
     expect(root).not.toContain(name('audit'));

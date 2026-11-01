@@ -99,7 +99,7 @@ const NOW = Date.UTC(2027, 3, 13, 9, 40, 0);
 const sd = (j: Game) => systemd(j)!;
 const seen = (j: Game, text: string) => j.last.output.includes(text) || j.last.errors.some((e) => e.includes(text));
 const curl = (j: Game) => j.last.commands.some((c) => c[0] === 'curl');
-const site = (j: Game) => j.t('cadenas-site');
+const site = (j: Game) => j.t('padlock-site');
 const response = (r: CaddyResponse | null) => (r && !('tls' in r) ? r : null);
 const place = (r: ReturnType<typeof response>) => r?.headers.find((e) => /^location: /i.test(e))?.replace(/^location: /i, '') ?? '';
 const redirects = (r: ReturnType<typeof response>) => !!r && r.code >= 300 && r.code < 400 && /^https:\/\/cycles\.example(\/|$)/.test(place(r));
@@ -116,7 +116,7 @@ const runningCaddy = (j: Game) => sd(j).services.caddy.state === 'active' && sd(
 const load = (j: Game) => caddyState(j)?.load ?? null;
 
 export const padlock: Chapter = {
-  id: 'cadenas',
+  id: 'padlock',
   number: 1,
   commands: [
     'ls',
@@ -205,7 +205,7 @@ export const padlock: Chapter = {
         caddy: directory({ Caddyfile: file(CADDYFILE_INES) }),
       }),
       home: directory({
-        vous: d({ 'message_de_ines.txt': f(t('cadenas-message-ines')) }),
+        vous: d({ 'message_de_ines.txt': f(t('padlock-message-ines')) }),
         ines: directory({}, { owner: 'ines', mode: 'rwx------' }),
       }),
       usr: directory({
@@ -213,7 +213,7 @@ export const padlock: Chapter = {
         share: directory({ caddy: directory({ 'index.html': file(CADDY_WELCOME) }) }),
       }),
       var: directory({
-        www: directory({ cycles: directory({ 'index.html': file(t('cadenas-site'), { owner: 'ines' }) }, { owner: 'ines' }) }),
+        www: directory({ cycles: directory({ 'index.html': file(t('padlock-site'), { owner: 'ines' }) }, { owner: 'ines' }) }),
         lib: directory({
           caddy: directory(
             {
@@ -230,22 +230,22 @@ export const padlock: Chapter = {
     {
       id: 'http-seul',
       condition: (j) => seen(j, 'no automatic HTTPS will be applied') || (curl(j) && seen(j, 'port 443') && seen(j, "Couldn't connect")),
-      message: (j) => j.t('cadenas-evenement-http-seul'),
+      message: (j) => j.t('padlock-evenement-http-seul'),
     },
     {
       id: 'schema-http',
       condition: (j) => !!load(j)?.sites.some((s) => s.addresses.some((a) => a.host === SITE && a.schema === 'http')),
-      message: (j) => j.t('cadenas-evenement-schema-http'),
+      message: (j) => j.t('padlock-evenement-schema-http'),
     },
-    { id: 'adresse', condition: (j) => !!load(j) && managedNames(load(j)!).includes(SITE), message: (j) => j.t('cadenas-evenement-adresse') },
-    { id: 'pare-feu', condition: (j) => seen(j, 'Timeout during connect (likely firewall problem)'), message: (j) => j.t('cadenas-evenement-pare-feu') },
-    { id: 'alerte', condition: (j) => curl(j) && seen(j, 'tlsv1 alert internal error'), message: (j) => j.t('cadenas-evenement-alerte') },
-    { id: 'format', condition: (j) => seen(j, 'Caddyfile input is not formatted'), message: (j) => j.t('cadenas-evenement-format') },
-    { id: 'certificat', condition: (j) => !!certificateFor(j, SITE) && servedHttps(j), message: (j) => j.t('cadenas-evenement-certificat') },
+    { id: 'adresse', condition: (j) => !!load(j) && managedNames(load(j)!).includes(SITE), message: (j) => j.t('padlock-evenement-adresse') },
+    { id: 'pare-feu', condition: (j) => seen(j, 'Timeout during connect (likely firewall problem)'), message: (j) => j.t('padlock-evenement-pare-feu') },
+    { id: 'alerte', condition: (j) => curl(j) && seen(j, 'tlsv1 alert internal error'), message: (j) => j.t('padlock-evenement-alerte') },
+    { id: 'format', condition: (j) => seen(j, 'Caddyfile input is not formatted'), message: (j) => j.t('padlock-evenement-format') },
+    { id: 'certificat', condition: (j) => !!certificateFor(j, SITE) && servedHttps(j), message: (j) => j.t('padlock-evenement-certificat') },
     {
       id: 'fin',
       condition: (j) => runningCaddy(j) && servedHttps(j) && redirectsHttp(j) && servedWww(j),
-      message: (j) => j.t('cadenas-evenement-fin'),
+      message: (j) => j.t('padlock-evenement-fin'),
     },
   ],
 };

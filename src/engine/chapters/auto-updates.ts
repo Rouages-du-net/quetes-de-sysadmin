@@ -141,7 +141,7 @@ const report = (j: Game) => !!conf(j).values[`${UU}::Mail`];
 const okTill = (j: Game) => systemd(j)!.services.till.state === 'active';
 
 export const automatic: Chapter = {
-  id: 'automatiques',
+  id: 'auto-updates',
   number: 6,
   commands: [
     'ls',
@@ -235,7 +235,7 @@ export const automatic: Chapter = {
   createWorld: (t) =>
     cooperativeWorld({
       withoutMarc: true,
-      home: { 'courriel_awa.txt': f(t('automatiques-courriel-awa')) },
+      home: { 'courriel_awa.txt': f(t('auto-updates-courriel-awa')) },
       etc: {
         ...nginxCooperative(SITE),
         apt: d(
@@ -271,19 +271,19 @@ export const automatic: Chapter = {
       more: tillWorld({ env: tillEnv(NEW_KEY, 'loopback'), envMode: 'rw-------', logAccess: '', appLog: '' }),
     }),
   events: [
-    { id: 'syntaxe', condition: (j) => conf(j).errors.length > 0, message: (j) => j.t('automatiques-evenement-syntaxe') },
-    { id: 'rien', condition: (j) => (j.state.quotidiens ?? 0) > 0 && !(j.state.passesAuto ?? 0), message: (j) => j.t('automatiques-evenement-rien') },
-    { id: 'nodejs', condition: (j) => !nodeIntact(j), message: (j) => j.t('automatiques-evenement-nodejs') },
-    { id: 'en-journee', condition: (j) => systemd(j)!.boot > 1, message: (j) => j.t('automatiques-evenement-en-journee') },
+    { id: 'syntaxe', condition: (j) => conf(j).errors.length > 0, message: (j) => j.t('auto-updates-evenement-syntaxe') },
+    { id: 'rien', condition: (j) => (j.state.quotidiens ?? 0) > 0 && !(j.state.passesAuto ?? 0), message: (j) => j.t('auto-updates-evenement-rien') },
+    { id: 'nodejs', condition: (j) => !nodeIntact(j), message: (j) => j.t('auto-updates-evenement-nodejs') },
+    { id: 'en-journee', condition: (j) => systemd(j)!.boot > 1, message: (j) => j.t('auto-updates-evenement-en-journee') },
     {
       id: 'sans-rapport',
       condition: (j) => (j.state.passesAuto ?? 0) > 0 && !conf(j).values[`${UU}::Mail`],
-      message: (j) => j.t('automatiques-evenement-sans-rapport'),
+      message: (j) => j.t('auto-updates-evenement-sans-rapport'),
     },
     {
       id: 'fin',
       condition: (j) => active(j) && (j.state.passesAuto ?? 0) > 0 && installedSecurity(j) && nodeIntact(j) && report(j) && night(j) && okTill(j),
-      message: (j) => j.t('automatiques-evenement-fin'),
+      message: (j) => j.t('auto-updates-evenement-fin'),
     },
   ],
 };

@@ -21,7 +21,7 @@ describe('Liens vers Les rouages du net', () => {
     }
   });
   it('un chapitre donne des adresses complètes vers rouages.net', () => {
-    expect(rouagesLinks('certificat')[0].address).toBe('https://rouages.net/modules/entree-a-la-page/#cadenas');
-    expect(rouagesLinks('eveil')).toEqual([]);
+    expect(rouagesLinks('certificate')[0].address).toBe('https://rouages.net/modules/entree-a-la-page/#cadenas');
+    expect(rouagesLinks('lighthouse')).toEqual([]);
   });
 });
