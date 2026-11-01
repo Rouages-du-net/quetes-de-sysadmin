@@ -38,7 +38,7 @@ describe('Parcours thématiques', () => {
 
   it('l’état des étapes : fait, ouvert, verrouillé (avec le chapitre à finir d’abord), sans clé', () => {
     const security = PATH.find((p) => p.id === 'securite')!;
-    const { steps, next } = pathSteps(security, ['shut-the-door'], (h) => h !== 'cooperative');
+    const { steps, next } = pathSteps(security, ['shut-the-door'], (h) => h !== 'coop');
     expect(steps[0].state).toBe('fait');
     expect(steps[1]).toMatchObject({ chapter: 'firewall', state: 'ouvert' });
     expect(steps[2]).toMatchObject({ chapter: 'sentinel', state: 'verrouille', before: 'firewall' });

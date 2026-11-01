@@ -28,7 +28,7 @@ configure le même en-tête.
 | Attribut | Valeurs | Effet |
 |---|---|---|
 | `lang` | `en`, `fr` | langue du jeu ; sans l'attribut, la langue de la page (`lang` d'un élément parent), sinon l'anglais ; une langue inconnue donne l'anglais |
-| `story` | l'identifiant d'une histoire : `effaceur`, `datacenter`, `paquet`, `temps`, `archives`… | histoire ouverte au départ, directement sur sa machine, même sans sa clé SSH (sans l'attribut, on part du poste, ou de l'histoire en cours) |
+| `story` | l'identifiant d'une histoire : `eraser`, `datacenter`, `packet`, `time-machine`, `archives`… (les anciens identifiants français, `effaceur`, `paquet`…, marchent toujours) | histoire ouverte au départ, directement sur sa machine, même sans sa clé SSH (sans l'attribut, on part du poste, ou de l'histoire en cours) |
 | `save-key` | texte | clé de sauvegarde dans `localStorage` (par défaut `quetes-de-sysadmin`) ; à changer pour séparer plusieurs jeux sur un même site |
 | `theme` | `light`, `dark` | force un thème (par défaut, celui du système) |
 
@@ -38,7 +38,7 @@ et `theme="clair"` / `"sombre"`.
 Exemple : un cours sur le réseau qui ouvre directement « Le Paquet perdu » :
 
 ```html
-<quetes-de-sysadmin story="paquet" save-key="cours-reseau" lang="fr"></quetes-de-sysadmin>
+<quetes-de-sysadmin story="packet" save-key="cours-reseau" lang="fr"></quetes-de-sysadmin>
 ```
 
 ## Couleurs

@@ -174,11 +174,11 @@ for (const width of [1000, 375]) {
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   await withCsp(page);
-  // L'Effaceur, et ce qu'il faut avoir fini pour recevoir la clé de La Ruche (prerequis('ruche')).
+  // L'Effaceur, et ce qu'il faut avoir fini pour recevoir la clé de La Ruche (prerequisites('hive')).
   await page.addInitScript(() =>
     localStorage.setItem(
       'quetes-de-sysadmin',
-      JSON.stringify({ finished: ['lighthouse', 'village', 'root', 'backup', 'first-day', 'second-day', 'reboot-night', 'lost-packet', 'shut-the-door', 'firewall', 'keys', 'jump'], story: 'ruche' }),
+      JSON.stringify({ finished: ['lighthouse', 'village', 'root', 'backup', 'first-day', 'second-day', 'reboot-night', 'lost-packet', 'shut-the-door', 'firewall', 'keys', 'jump'], story: 'hive' }),
     ),
   );
   await page.goto(`${BASE}/fr/`);

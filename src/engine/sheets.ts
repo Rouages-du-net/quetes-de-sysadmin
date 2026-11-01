@@ -25,7 +25,7 @@ export function allSheets(): Sheet[] {
   const views = new Set<string>();
   return STORIES.flatMap((story) =>
     story.chapters.map((chapter, i) => {
-      const fresh = chapter.commands.filter((c) => !views.has(c) && (story.id === 'effaceur' || !CURRENT.includes(c)));
+      const fresh = chapter.commands.filter((c) => !views.has(c) && (story.id === 'eraser' || !CURRENT.includes(c)));
       chapter.commands.forEach((c) => views.add(c));
       // Une dizaine de minutes pour lire et s'installer, puis environ trois par étape vérifiée.
       const duration = Math.max(15, Math.round((10 + 3 * chapter.events.length) / 5) * 5);

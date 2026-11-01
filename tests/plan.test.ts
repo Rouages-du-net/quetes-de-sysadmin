@@ -16,7 +16,7 @@ for (const language of LANGUAGES)
     const t = translator(language);
 
     it('les histoires à réseau ont un plan à chaque chapitre, avec leurs machines', () => {
-      for (const id of ['maison', 'ruche']) {
+      for (const id of ['community-centre', 'hive']) {
         const h = STORIES.find((x) => x.id === id)!;
         for (const c of h.chapters) {
           expect(c.plan, c.id).toBeDefined();
@@ -35,7 +35,7 @@ for (const language of LANGUAGES)
     });
 
     it('le plan grandit au fil de La Ruche : télétravail, DMZ, Annexe, borne Wi-Fi', () => {
-      const plan = (id: string) => all(STORIES.find((h) => h.id === 'ruche')!.chapters.find((c) => c.id === id)!.plan!(t)).map((e) => e.name);
+      const plan = (id: string) => all(STORIES.find((h) => h.id === 'hive')!.chapters.find((c) => c.id === id)!.plan!(t)).map((e) => e.name);
       expect(plan('vlan')).not.toContain('web');
       expect(plan('dmz')).toContain('web');
       expect(plan('dmz')).not.toContain('borne-wifi');
@@ -53,7 +53,7 @@ for (const language of LANGUAGES)
 
     it('tu es ici, et les machines où l’on s’est connecté·e', () => {
       const c = new Console({ language, finished: ERASER });
-      const plan = STORIES.find((h) => h.id === 'ruche')!.chapters[0].plan!(t);
+      const plan = STORIES.find((h) => h.id === 'hive')!.chapters[0].plan!(t);
       const hive = all(plan).find((e) => e.host === 'ruche')!;
       expect(landmarks(hive, c.shell.host, c.visited)).toEqual({ here: false, visit: false });
       c.connect('ruche');

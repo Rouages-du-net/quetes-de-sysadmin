@@ -135,7 +135,7 @@ export const door: Chapter = {
   },
   createWorld: (t) => {
     const root = { owner: 'root' };
-    const letters = storyMachine('lettres')!;
+    const letters = storyMachine('letters')!;
     return d(
       {
         etc: d(

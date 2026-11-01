@@ -27,7 +27,7 @@ than your page, set the same header.
 | Attribute | Values | Effect |
 |---|---|---|
 | `lang` | `en`, `fr` | the game's language; without it, the page's language (`lang` of a parent element), otherwise English; an unknown language gives English |
-| `story` | a story's identifier: `effaceur`, `datacenter`, `paquet`, `temps`, `archives`… | the story opened at start, directly on its machine, even without its SSH key (without the attribute, you start from the workstation, or from the story in progress) |
+| `story` | a story's identifier: `eraser`, `datacenter`, `packet`, `time-machine`, `archives`… (the older French ids, `effaceur`, `paquet`…, still work) | the story opened at start, directly on its machine, even without its SSH key (without the attribute, you start from the workstation, or from the story in progress) |
 | `save-key` | text | the save's key in `localStorage` (default `quetes-de-sysadmin`); change it to keep several games apart on one site |
 | `theme` | `light`, `dark` | forces a theme (default: the system's) |
 
@@ -38,7 +38,7 @@ see CONTRIBUTING.md). The French attribute names used before still work:
 Example: a networking course that opens "The Lost Packet" directly:
 
 ```html
-<quetes-de-sysadmin story="paquet" save-key="networking-course" lang="en"></quetes-de-sysadmin>
+<quetes-de-sysadmin story="packet" save-key="networking-course" lang="en"></quetes-de-sysadmin>
 ```
 
 ## Colours

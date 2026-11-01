@@ -9,7 +9,7 @@ import { LANGUAGES, translator } from '../src/texts';
 import { inLanguage } from './names';
 import { CVE } from '../src/engine/chapters/watch';
 
-const ERASER = [...new Set([...STORIES.find((h) => h.id === 'effaceur')!.chapters.map((c) => c.id), ...prerequisites('veille')])];
+const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('watch')])];
 const MDP = 'levain-2028';
 
 for (const language of LANGUAGES)

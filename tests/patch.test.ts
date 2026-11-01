@@ -10,8 +10,8 @@ import { LANGUAGES } from '../src/texts';
 import { formatValue, readCaddyfile } from '../src/engine/caddy';
 import { inLanguage, machinesInLanguage } from './names';
 
-const ERASER = STORIES.find((h) => h.id === 'effaceur')!.chapters.map((c) => c.id);
-const BEFORE = [...new Set([...ERASER, ...prerequisites('rustine')])];
+const ERASER = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
+const BEFORE = [...new Set([...ERASER, ...prerequisites('patch')])];
 const CADDYFILE = '/etc/caddy/Caddyfile';
 const WWW = '\nwww.cycles.example {\n\tredir https://cycles.example{uri} permanent\n}\n';
 

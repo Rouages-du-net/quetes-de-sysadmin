@@ -194,7 +194,7 @@ export function watchWorld(
   t: Translate,
   o: { home: Record<string, Node>; etc?: Record<string, Node>; more?: Record<string, Node>; logAccess?: string },
 ): Directory {
-  const kneader = storyMachine('veille')!;
+  const kneader = storyMachine('watch')!;
   return d(
     {
       etc: d(

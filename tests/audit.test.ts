@@ -10,7 +10,7 @@ import { LANGUAGES, translator } from '../src/texts';
 import { inLanguage, machinesInLanguage } from './names';
 
 // L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
-const ERASER = [...new Set([...STORIES.find((h) => h.id === 'effaceur')!.chapters.map((c) => c.id), ...prerequisites('audit')])];
+const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('audit')])];
 const MDP = 'farine-2028';
 
 for (const language of LANGUAGES)

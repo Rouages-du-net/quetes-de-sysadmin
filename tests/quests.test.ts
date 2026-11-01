@@ -838,7 +838,7 @@ for (const language of LANGUAGES)
     });
 
     describe('La Fabrique, chapitre 3 — Le trou dans le pare-feu (docker et ufw)', () => {
-      const BEFORE = [...prerequisites('fabrique'), 'update', 'compose'];
+      const BEFORE = [...prerequisites('fablab'), 'update', 'compose'];
       const modify = (s: Shell, change: (text: string) => string) => {
         s.execute('sudo nano /srv/reservations/compose.yaml');
         s.saveEdition(change(s.edition!.text));

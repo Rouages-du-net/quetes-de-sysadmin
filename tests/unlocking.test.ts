@@ -47,7 +47,7 @@ describe('Déverrouillage graduel', () => {
       expect(new Set(before).size).toBe(before.length);
     }
     expect(missing('audit', ['sentinel'])).toEqual(['shared-rights']);
-    expect(prerequisites('effaceur')).toEqual([]);
+    expect(prerequisites('eraser')).toEqual([]);
   });
 
   it('le poste reçoit les clés vague par vague', () => {
@@ -55,9 +55,9 @@ describe('Déverrouillage graduel', () => {
     const name = (h: string) => `id_${MACHINES.find((m) => m.story === h)!.name}`;
     const root = keys(['lighthouse', 'village', 'root']);
     expect(root).toContain(name('datacenter'));
-    expect(root).not.toContain(name('fabrique'));
+    expect(root).not.toContain(name('fablab'));
     expect(root).not.toContain(name('audit'));
-    expect(keys(prerequisites('fabrique'))).toContain(name('fabrique'));
+    expect(keys(prerequisites('fablab'))).toContain(name('fablab'));
   });
 
   it("l'incident du jour : parmi les histoires ouvertes", () => {
