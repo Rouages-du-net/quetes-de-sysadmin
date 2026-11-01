@@ -26,3 +26,6 @@ machine-patch = rustine
 
 ## La Veille
 machine-kneader = petrin
+
+## La Cantine
+machine-canteen = cantine

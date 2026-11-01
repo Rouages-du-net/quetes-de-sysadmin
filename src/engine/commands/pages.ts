@@ -425,10 +425,44 @@ export const PAGES: Record<string, Page> = {
   ssh_config: { section: 5, examples: ['nano ~/.ssh/config', 'ssh -G wiki'], see: ['ssh', 'sshd_config'] },
   sudo: { examples: ['sudo cat /etc/sudoers', 'sudo -u postgres psql -l', 'sudo -l', 'sudo -l -U lina'], see: ['whoami', 'sudoers', 'visudo'] },
   sudoers: { section: 5, examples: ['sudo cat /etc/sudoers', 'sudo ls /etc/sudoers.d', 'sudo visudo -f /etc/sudoers.d/till'], see: ['sudo', 'visudo'] },
-  systemctl: { examples: ['systemctl status nginx', 'systemctl --failed', 'sudo systemctl restart nginx', 'sudo systemctl enable --now nginx', 'sudo systemctl edit radio-playlist', 'sudo systemctl set-property radio-playlist MemoryMax=512M'], see: ['journalctl', 'ps', 'sudo', 'reboot', 'top'] },
+  systemctl: {
+    examples: [
+      'systemctl status nginx', 'systemctl --failed', 'sudo systemctl restart nginx', 'sudo systemctl enable --now nginx', 'sudo systemctl edit radio-playlist',
+      'sudo systemctl set-property radio-playlist MemoryMax=512M', 'systemctl cat menu', 'systemctl list-dependencies menu', 'systemctl list-dependencies --after menu',
+      'sudo systemctl reset-failed menu',
+    ],
+    see: ['journalctl', 'systemd.unit', 'systemd.service', 'systemd-analyze', 'ps', 'sudo', 'reboot', 'top'],
+  },
+  'systemd.unit': {
+    section: 5,
+    examples: ['systemctl cat menu', 'sudo systemctl edit menu', 'systemctl list-dependencies menu', 'systemd-analyze verify menu.service'],
+    see: ['systemd.service', 'systemctl', 'systemd-analyze'],
+  },
+  'systemd.service': {
+    section: 5,
+    examples: ['systemctl cat menu', 'sudo systemctl edit menu', 'sudo systemctl reset-failed menu'],
+    see: ['systemd.unit', 'systemctl', 'journalctl'],
+  },
+  'systemd.network': {
+    section: 5,
+    examples: ['ls /etc/systemd/network', 'sudo nano /etc/systemd/network/20-eth1.network', 'networkctl'],
+    see: ['networkctl', 'systemd-networkd-wait-online'],
+  },
+  'systemd-networkd-wait-online': {
+    section: 8,
+    examples: ['systemctl status systemd-networkd-wait-online', 'systemctl cat systemd-networkd-wait-online', 'sudo systemctl edit systemd-networkd-wait-online'],
+    see: ['systemd.network', 'networkctl', 'systemd-analyze'],
+  },
+  networkctl: { examples: ['networkctl', 'networkctl status eth1', 'sudo networkctl reload'], see: ['systemd.network', 'systemd-networkd-wait-online', 'ip'] },
   test: { examples: ['test -f index.html', '[ -d /srv/site/releases ]', 'test -f index.html || exit 1'], see: ['sh', 'grep'] },
   truncate: { examples: ['sudo truncate -s 0 /var/log/radio/stream.log'], see: ['rm', 'logrotate', 'lsof'] },
-  'systemd-analyze': { examples: ["systemd-analyze calendar '*:0/5'", "systemd-analyze calendar '*-*-* 03:30:00'"], see: ['systemd.timer', 'systemctl'] },
+  'systemd-analyze': {
+    examples: [
+      "systemd-analyze calendar '*:0/5'", "systemd-analyze calendar '*-*-* 03:30:00'", 'systemd-analyze time', 'systemd-analyze blame', 'systemd-analyze critical-chain',
+      'systemd-analyze verify menu.service',
+    ],
+    see: ['systemd.timer', 'systemd.unit', 'systemctl'],
+  },
   'systemd.timer': { examples: ['sudo nano /etc/systemd/system/probe.timer', 'sudo systemctl enable --now probe.timer', 'systemctl list-timers'], see: ['systemctl', 'systemd-analyze', 'crontab', 'journalctl'] },
   tail: { long: { follow: 'f' }, options: ['n', 'f', 'F'], examples: ['tail -n 5 /var/log/syslog', 'tail -f /var/log/nginx/access.log'], see: ['head', 'cat', 'journalctl'] },
   tar: { long: { 'create': 'c', 'list': 't', 'extract': 'x', 'get': 'x', 'gzip': 'z', 'verbose': 'v', 'directory': '' }, options: ['c', 't', 'x', 'z', 'v', 'f', 'C'], examples: ['tar -czf backup.tar.gz Folder', 'tar -tzf backup.tar.gz', 'tar -xzf backup.tar.gz', 'sudo tar -xzf /mnt/backup/site.tar.gz -C /'], see: ['du', 'df', 'rsync', 'restic'] },

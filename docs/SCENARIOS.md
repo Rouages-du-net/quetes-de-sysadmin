@@ -133,6 +133,8 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `rm` of a write-protected file | deletes without asking | asks for confirmation |
 | `sudo` | asks for the password again only on the chapter's first use | remembers it for about 15 minutes |
 | `cat` of an archive | an error message | shows unreadable bytes |
+| systemd's dependencies (`After=`, `Requires=`, `Wants=`, `BindsTo=`, `PartOf=`, `Restart=`, the start limit) | units that start "in parallel" start one after the other in the order of their definition (the race is always lost the same way); a few targets only, declared by the chapter (`network-online.target`); a service is ready when it starts (no `Type=notify` handshake); PostgreSQL is a single service; no `Conflicts=`, `Requisite=`, slices nor sockets | a real job queue, every target, `postgresql@17-main.service` behind `postgresql.service` |
+| `systemd-analyze`, `networkctl` | `calendar`, `time`, `blame`, `critical-chain`, `verify` (unknown sections and keys, required units that don't exist); `networkctl list`, `status`, `reload` | every verb (`plot`, `dot`, `security`…), every option |
 | `ping` | 4 pings by default | goes on until Ctrl+C |
 | `traceroute` | stops 3 hops after the last one that answers | goes on up to 30 hops |
 | `ps aux` | user, PID, %CPU, %MEM, command | adds VSZ, RSS, TTY, STAT, START, TIME |
@@ -2158,6 +2160,68 @@ service, only port 443 open (certificate obtained, but HTTP closed from
 outside), an unformatted Caddyfile (`caddy fmt --overwrite`). Other
 accepted solutions: `cycles.example, www.cycles.example`, `caddy reload`,
 `ufw allow http`.
+
+## Story 20: The Canteen (three chapters)
+
+The Canteen, the neighbourhood's solidarity canteen, has a server
+(`canteen`, `cantine` in French, 192.0.2.26) for its menu and bookings app
+(`menu`, Node.js), its PostgreSQL database and nginx in front. Ibrahim, the
+coordinator, wrote the app's unit file himself
+(`/etc/systemd/system/menu.service`). The story is about the dependencies
+between systemd units: the order of a boot, what happens when a service
+dies, and what a boot waits for. It opens after "The night of the reboot"
+and "The Probe".
+
+### Chapter 1 — The Boot Order (done)
+
+| Step | Command learnt |
+|---|---|
+| Why the app failed at boot | `systemctl status menu`, `journalctl -b -u menu` ("connect ECONNREFUSED 127.0.0.1:5432") |
+| What the unit says | `systemctl cat menu`, `systemctl list-dependencies menu` |
+| Give the order | `systemctl edit menu` (`After=postgresql.service`, `Requires=` or `Wants=`), or the unit file and `daemon-reload` |
+| Check | `systemctl list-dependencies --after menu`, `reboot`, `systemctl --failed` |
+
+Goal checked on the state: after a reboot started by the player,
+PostgreSQL, the app and nginx run without having been started by hand, and
+this was checked. Expected traps: starting the app by hand (it works until
+the next boot), `Requires=` without `After=` (both start together, the app
+still loses the race), a misspelt unit (`postgres.service`: ignored;
+`systemd-analyze verify` reports it for `Requires=`). Other accepted
+solutions: `Wants=` instead of `Requires=`, the unit file instead of a
+drop-in.
+
+### Chapter 2 — The Restart Loop (done)
+
+| Step | Command learnt |
+|---|---|
+| What systemd did last night | `systemctl status menu` (Result: start-limit-hit), `journalctl -u menu` (the restarts 100 ms apart) |
+| Tie the app to PostgreSQL | `systemctl edit menu`: `PartOf=postgresql.service` |
+| Start again after the limit | `systemctl reset-failed menu`, `systemctl start menu` |
+| Replay the night | `systemctl restart postgresql`, `systemctl status menu` |
+
+Goal checked on the state: after a restart of PostgreSQL by the player,
+the app runs again without having been started by hand since. Expected
+traps: the test without a fix (the same loop, then "start of the service
+was attempted too often"), `BindsTo=` (the app stops with PostgreSQL and
+doesn't come back). Other accepted solution: `Restart=on-failure` with
+`RestartSec=5s` (PostgreSQL has time to come back).
+
+### Chapter 3 — The Slow Boot (done)
+
+| Step | Command learnt |
+|---|---|
+| What took so long | `systemd-analyze time`, `systemd-analyze blame`, `systemd-analyze critical-chain` |
+| What wait-online waits for | `networkctl`, `networkctl status eth1` (no-carrier), the `.network` files |
+| Tell it | `RequiredForOnline=no` in `20-eth1.network` |
+| Check | `reboot`, `systemd-analyze time` |
+
+Goal checked on the state: after a reboot started by the player, userspace
+takes less than 30 s, PostgreSQL, the app and nginx run, and this was
+checked. Expected traps: removing `network-online.target` from the app only
+(nginx still waits for it). Other accepted solutions: a drop-in for
+`systemd-networkd-wait-online` (`--any`, `--interface=eth0`), no
+configuration for eth1, or wait-online disabled (accepted, with a word on
+what network-online.target then means).
 
 ## Ideas for later
 

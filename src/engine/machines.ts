@@ -55,6 +55,8 @@ export const MACHINES: Machine[] = [
   machine('pilot', '192.0.2.25', 'fleet'),
   // La Rustine, the bike workshop: its small public server (cycles.example), with Caddy.
   machine('patch', '203.0.113.40', 'patch'),
+  // The Canteen: the neighbourhood's solidarity canteen, its menu and bookings server.
+  machine('canteen', '192.0.2.26', 'canteen'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

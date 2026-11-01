@@ -3,12 +3,15 @@
 // (https://www.freedesktop.org/software/systemd/man/latest/systemctl.html,
 // .../journalctl.html): systemctl and journalctl answer in English, dates
 // follow the system's language, as on a real Linux.
-// Differences: no targets nor dependencies between units, a single main
-// process per service, a clock that moves one second per action.
+// Dependencies between units (After=, Requires=, Wants=, BindsTo=,
+// PartOf=), the order of a boot, Restart= and the start limit: see units.ts.
+// Differences: a single main process per service, a clock that moves one
+// second per action, a few targets only (declared by the chapter).
 
 import { sgr } from './colours';
 import type { Game } from './shell';
 import type { Process } from './commands/system';
+import { bootUnits } from './units';
 
 export interface Service {
   description: string;
@@ -51,6 +54,23 @@ export interface Service {
   // and what it runs (ExecStart=); returns the exit code.
   file?: string;
   execute?: (game: Game) => number;
+  // Dependencies (units.ts): read from the unit file and its drop-ins.
+  deps?: import('./units').Dependencies;
+  // The unit file of a service the chapter models (its behaviour stays the
+  // chapter's: check, process): /usr/lib/systemd/system/NAME.service by default.
+  unitFile?: string;
+  modelled?: boolean;
+  // Restart= delay (RestartSec=, ms), and the start limit (StartLimitBurst=,
+  // StartLimitIntervalSec=): systemd's defaults are 100 ms, 5 starts in 10 s.
+  restartSec?: number;
+  startLimitBurst?: number;
+  startLimitInterval?: number;
+  // The recent starts (to count them against the start limit).
+  attempts?: number[];
+  // ExecStart= as read in the unit file and its drop-ins.
+  execStart?: string;
+  // How long the service takes to start (ms; systemd-analyze blame), 100 ms by default.
+  startDuration?: number | ((game: Game) => number);
 }
 
 export interface Input {
@@ -82,6 +102,14 @@ export interface Systemd {
   zone?: string;
   // The timers (NAME.timer), see timers.ts.
   timers?: Record<string, import('./timers').Timer>;
+  // Boot with dependencies (units.ts): the targets the chapter declares
+  // (network-online.target…), and the timing of the last boot.
+  ordered?: boolean;
+  targets?: Record<string, import('./units').Target>;
+  lastBoot?: import('./units').BootTiming;
+  // Restarts scheduled by Restart= (run by runPending, units.ts).
+  pending?: { unit: string; at: number; counter: number }[];
+  shuttingDown?: boolean;
 }
 
 export const systemd = (game: Game): Systemd | undefined => game.state.systemd;
@@ -98,17 +126,28 @@ export function start(game: Game, sd: Systemd, name: string, toBoot = false): bo
   const s = sd.services[name];
   if (!toBoot) sd.mainAStarted = true;
   const unit = `${name}.service`;
+  // The start limit (StartLimitBurst= starts in StartLimitIntervalSec=): systemd refuses.
+  if (sd.ordered && limitHit(sd, s, sd.clock)) {
+    startLimitHit(sd, name, false);
+    return false;
+  }
   writeLog(sd, unit, 'systemd', 1, `Starting ${unit} - ${s.description}...`);
+  // Starting takes time (ms): the service is ready once it is over.
+  const duration = typeof s.startDuration === 'function' ? s.startDuration(game) : (s.startDuration ?? 0);
+  sd.clock += duration;
   const errors = s.check?.(game) ?? null;
   const pid = s.process[0]?.pid ?? 1;
   if (errors) {
     errors.forEach((e, i) => writeLog(sd, unit, s.executable, pid, e, 3, i === 0));
-    writeLog(sd, unit, 'systemd', 1, `${unit}: Control process exited, code=exited, status=1/FAILURE`, 4, false);
+    writeLog(sd, unit, 'systemd', 1, `${unit}: ${s.process.length ? 'Main' : 'Control'} process exited, code=exited, status=1/FAILURE`, 4, false);
     writeLog(sd, unit, 'systemd', 1, `${unit}: Failed with result 'exit-code'.`, 4, false);
     writeLog(sd, unit, 'systemd', 1, `Failed to start ${unit} - ${s.description}.`, 3, false);
     s.state = 'failed';
+    s.result = 'exit-code';
     s.since = sd.clock;
     processRetirer(game, s);
+    // Restart=: systemd tries again after RestartSec=.
+    if (sd.ordered && !toBoot) scheduleRestart(sd, name, sd.clock, 1);
     return false;
   }
   if (s.oneshot) {
@@ -155,6 +194,41 @@ function processRetirer(game: Game, s: Service) {
     );
 }
 
+// ——— Restart= and the start limit (systemd.service(5), systemd.unit(5)) ———
+
+/** True if a new start would go beyond StartLimitBurst= starts in StartLimitIntervalSec=. */
+export function limitHit(sd: Systemd, s: Service, at: number): boolean {
+  const interval = s.startLimitInterval ?? 10_000;
+  s.attempts = (s.attempts ?? []).filter((t) => t > at - interval);
+  if (interval > 0 && s.attempts.length >= (s.startLimitBurst ?? 5)) return true;
+  s.attempts.push(at);
+  return false;
+}
+
+/** systemd refuses to start the service again: Result: start-limit-hit. */
+export function startLimitHit(sd: Systemd, name: string, at: number | false) {
+  const s = sd.services[name];
+  const unit = `${name}.service`;
+  const write = (message: string, priority: number) =>
+    at === false ? writeLog(sd, unit, 'systemd', 1, message, priority) : sd.log.push({ time: at, boot: sd.boot, unit, ident: 'systemd', pid: 1, message, priority });
+  write(`${unit}: Start request repeated too quickly.`, 4);
+  write(`${unit}: Failed with result 'start-limit-hit'.`, 4);
+  write(`Failed to start ${unit} - ${s.description}.`, 3);
+  s.state = 'failed';
+  s.result = 'start-limit-hit';
+  s.since = at === false ? sd.clock : at;
+}
+
+/** Restart=always or on-failure: the next attempt, RestartSec= after the failure. */
+export function scheduleRestart(sd: Systemd, name: string, failed: number, counter: number) {
+  const s = sd.services[name];
+  if (sd.shuttingDown || !['always', 'on-failure', 'on-abnormal'].includes(s.reboot ?? '')) return;
+  (sd.pending ??= []).push({ unit: name, at: failed + (s.restartSec ?? 100), counter });
+}
+
+/** The service is running, and was ready at that moment. */
+export const readyAt = (sd: Systemd, name: string, at: number) => sd.services[name]?.state === 'active' && sd.services[name].since <= at;
+
 export function stop(game: Game, sd: Systemd, name: string) {
   const s = sd.services[name];
   const unit = `${name}.service`;
@@ -169,7 +243,10 @@ export function stop(game: Game, sd: Systemd, name: string) {
 /** Machine reboot: only the enabled services (enable) come back. */
 export function restart(game: Game, sd: Systemd) {
   writeLog(sd, '', 'systemd-logind', 512, 'The system will reboot now!');
+  sd.shuttingDown = true;
   for (const [name, s] of Object.entries(sd.services)) if (s.state === 'active') stop(game, sd, name);
+  sd.shuttingDown = false;
+  sd.pending = [];
   sd.clock += 90_000;
   sd.boot++;
   game.state.process = (game.state.process as Process[] | undefined)?.filter((p) => p.pid === 1) ?? [];
@@ -198,11 +275,13 @@ export function restart(game: Game, sd: Systemd) {
     sd.mainAStarted = false;
     return;
   }
-  for (const [name, s] of Object.entries(sd.services)) {
-    s.state = 'inactive';
-    s.since = sd.clock;
-    if (s.active) start(game, sd, name, true);
-  }
+  if (sd.ordered) bootUnits(game, sd);
+  else
+    for (const [name, s] of Object.entries(sd.services)) {
+      s.state = 'inactive';
+      s.since = sd.clock;
+      if (s.active) start(game, sd, name, true);
+    }
   sd.checkedAfterBoot = false;
   sd.mainAStarted = false;
 }
